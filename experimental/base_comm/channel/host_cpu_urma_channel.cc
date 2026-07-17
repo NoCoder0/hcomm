@@ -106,11 +106,11 @@ HcclResult HostCpuUrmaChannel::BuildSocket()
     Hccl::IpAddress locAddr = linkData.GetLocalAddr();
     Hccl::IpAddress rmtAddr = linkData.GetRemoteAddr();
     if (envLocalIp) {
-        locAddr = Hccl::IpAddress(std::string(envLocalIp), AF_INET6);
+        locAddr = Hccl::IpAddress(std::string(envLocalIp));
         HCCL_INFO("[HostCpuUrmaChannel::%s] override local IP from env: %s", __func__, envLocalIp);
     }
     if (envRemoteIp) {
-        rmtAddr = Hccl::IpAddress(std::string(envRemoteIp), AF_INET6);
+        rmtAddr = Hccl::IpAddress(std::string(envRemoteIp));
         HCCL_INFO("[HostCpuUrmaChannel::%s] override remote IP from env: %s", __func__, envRemoteIp);
     }
     linkData = Hccl::LinkData(linkData.GetType(), linkData.GetLinkProtocol(), linkData.GetLocalRankId(),
