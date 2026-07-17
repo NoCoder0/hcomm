@@ -103,14 +103,19 @@ HcclResult HostCpuUrmaChannel::BuildSocket()
     CHK_RET(hcomm::EndpointDescPairToLinkData(localEp_, remoteEp_, linkData));
     const char *envLocalIp = getenv("HCOMM_TEST_LOCAL_IP");
     const char *envRemoteIp = getenv("HCOMM_TEST_REMOTE_IP");
+    Hccl::IpAddress locAddr = linkData.GetLocalAddr();
+    Hccl::IpAddress rmtAddr = linkData.GetRemoteAddr();
     if (envLocalIp) {
-        linkData.localAddr_ = Hccl::IpAddress(std::string(envLocalIp), AF_INET6);
+        locAddr = Hccl::IpAddress(std::string(envLocalIp), AF_INET6);
         HCCL_INFO("[HostCpuUrmaChannel::%s] override local IP from env: %s", __func__, envLocalIp);
     }
     if (envRemoteIp) {
-        linkData.remoteAddr_ = Hccl::IpAddress(std::string(envRemoteIp), AF_INET6);
+        rmtAddr = Hccl::IpAddress(std::string(envRemoteIp), AF_INET6);
         HCCL_INFO("[HostCpuUrmaChannel::%s] override remote IP from env: %s", __func__, envRemoteIp);
     }
+    linkData = Hccl::LinkData(linkData.GetType(), linkData.GetLinkProtocol(), linkData.GetLocalRankId(),
+        linkData.GetRemoteRankId(), locAddr, rmtAddr, 0, linkData.GetRemoteDeviceId(),
+        std::stoi(linkData.GetReuseIdx()));
     HCCL_INFO("[HostCpuUrmaChannel::%s] built linkData: %s", __func__, linkData.Describe().c_str());
     uint16_t port = channelDesc_.port;
     if (port == 0) {
@@ -195,12 +200,17 @@ HcclResult HostCpuUrmaChannel::BuildUbMemTransport()
     CHK_RET(hcomm::EndpointDescPairToLinkData(localEp_, remoteEp_, linkData));
     const char *envLocalIp = getenv("HCOMM_TEST_LOCAL_IP");
     const char *envRemoteIp = getenv("HCOMM_TEST_REMOTE_IP");
+    Hccl::IpAddress locAddr = linkData.GetLocalAddr();
+    Hccl::IpAddress rmtAddr = linkData.GetRemoteAddr();
     if (envLocalIp) {
-        linkData.localAddr_ = Hccl::IpAddress(std::string(envLocalIp), AF_INET6);
+        locAddr = Hccl::IpAddress(std::string(envLocalIp), AF_INET6);
     }
     if (envRemoteIp) {
-        linkData.remoteAddr_ = Hccl::IpAddress(std::string(envRemoteIp), AF_INET6);
+        rmtAddr = Hccl::IpAddress(std::string(envRemoteIp), AF_INET6);
     }
+    linkData = Hccl::LinkData(linkData.GetType(), linkData.GetLinkProtocol(), linkData.GetLocalRankId(),
+        linkData.GetRemoteRankId(), locAddr, rmtAddr, 0, linkData.GetRemoteDeviceId(),
+        std::stoi(linkData.GetReuseIdx()));
 
     // make_unique / make_shared / release 包一层抛异常的宏
     EXCEPTION_CATCH(
