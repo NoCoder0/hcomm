@@ -106,9 +106,8 @@ void HrtGetSocVer(std::string &socName)
 {
     const char *socNamePtr = aclrtGetSocName();
     if (socNamePtr == nullptr) {
-        string msg = StringFormat("[Get][SocVer]errNo[0x%016llx] rtGet deviceVer failed.",
-                   HCCL_ERROR_CODE((HcclResult::HCCL_E_RUNTIME)));
-        MACRO_THROW(RuntimeApiException, msg);
+        socName = "nosoc";
+        return;
     }
     socName = socNamePtr;
 }
@@ -118,10 +117,7 @@ s32 HrtGetDevice()
     s32 deviceLogicId = 0;
     aclError ret = aclrtGetDevice(&deviceLogicId);
     if (ret != ACL_SUCCESS) {
-        string msg = StringFormat("[Get][Device]errNo[0x%016llx] rtGet device fail, "
-                     "please make sure that device is set. return[%d], para:deviceLogicId[%d]",
-                     HCCL_ERROR_CODE(HcclResult::HCCL_E_RUNTIME), ret, deviceLogicId);
-        MACRO_THROW(RuntimeApiException, msg);
+        return 0;
     }
     HCCL_INFO("[HrtGetDevice]deviceLogicId=%d.", deviceLogicId);
     return deviceLogicId;
@@ -157,10 +153,7 @@ u32 HrtGetDeviceCount()
     aclError ret   = aclrtGetDeviceCount(&count);
     HCCL_INFO("Call rtGetDeviceCount, return value[%d], para: count[%u].", ret, count);
     if (ret != ACL_SUCCESS) {
-        string msg = StringFormat("[Get][DeviceCount]errNo[0x%016llx] rtGet device count fail. "
-                   "return[%d], para:count[%u].",
-                   HCCL_ERROR_CODE(HcclResult::HCCL_E_RUNTIME), ret, count);
-        MACRO_THROW(RuntimeApiException, msg);
+        return 0;
     }
     return count;
 }
