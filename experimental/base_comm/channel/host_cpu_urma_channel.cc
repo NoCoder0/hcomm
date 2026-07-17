@@ -101,6 +101,16 @@ HcclResult HostCpuUrmaChannel::BuildSocket()
 
     Hccl::LinkData linkData = hcomm::BuildDefaultLinkData();
     CHK_RET(hcomm::EndpointDescPairToLinkData(localEp_, remoteEp_, linkData));
+    const char *envLocalIp = getenv("HCOMM_TEST_LOCAL_IP");
+    const char *envRemoteIp = getenv("HCOMM_TEST_REMOTE_IP");
+    if (envLocalIp) {
+        linkData.localAddr_ = Hccl::IpAddress(std::string(envLocalIp), AF_INET6);
+        HCCL_INFO("[HostCpuUrmaChannel::%s] override local IP from env: %s", __func__, envLocalIp);
+    }
+    if (envRemoteIp) {
+        linkData.remoteAddr_ = Hccl::IpAddress(std::string(envRemoteIp), AF_INET6);
+        HCCL_INFO("[HostCpuUrmaChannel::%s] override remote IP from env: %s", __func__, envRemoteIp);
+    }
     HCCL_INFO("[HostCpuUrmaChannel::%s] built linkData: %s", __func__, linkData.Describe().c_str());
     uint16_t port = channelDesc_.port;
     if (port == 0) {
@@ -183,6 +193,14 @@ HcclResult HostCpuUrmaChannel::BuildUbMemTransport()
 
     Hccl::LinkData linkData = hcomm::BuildDefaultLinkData();
     CHK_RET(hcomm::EndpointDescPairToLinkData(localEp_, remoteEp_, linkData));
+    const char *envLocalIp = getenv("HCOMM_TEST_LOCAL_IP");
+    const char *envRemoteIp = getenv("HCOMM_TEST_REMOTE_IP");
+    if (envLocalIp) {
+        linkData.localAddr_ = Hccl::IpAddress(std::string(envLocalIp), AF_INET6);
+    }
+    if (envRemoteIp) {
+        linkData.remoteAddr_ = Hccl::IpAddress(std::string(envRemoteIp), AF_INET6);
+    }
 
     // make_unique / make_shared / release 包一层抛异常的宏
     EXCEPTION_CATCH(
