@@ -44,9 +44,9 @@ int RsUbGetDevEidInfoNum(unsigned int phyId, unsigned int *num)
 
     // urma_init() 必须在 urma_get_device_list() 之前调用，
     // 否则 vendor 驱动插件未加载，g_driver_list 为空，设备列表为空
-    ret = RsUrmaInit(NULL);
-    if (ret != 0) {
-        hccp_warn("rs_urma_init returned %d, device enumeration may fail", ret);
+    int initRet = RsUrmaInit(NULL);
+    if (initRet != 0) {
+        hccp_warn("rs_urma_init returned %d, device enumeration may fail", initRet);
     }
 
     devList = RsUrmaGetDeviceList(&devNum);
