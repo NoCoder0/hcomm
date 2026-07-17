@@ -52,7 +52,7 @@ HcclResult CpuTsThread::Init()
     if (ret != HCCL_SUCCESS) {
         devType_ = DevType::DEV_TYPE_NOSOC;
     }
-    if (!isDeviceSide_) {
+    if (!isDeviceSide_ || devType_ == DevType::DEV_TYPE_NOSOC) {
         s32 deviceLogicId = 0;
         ret = hrtGetDevice(&deviceLogicId);
         if (ret != HCCL_SUCCESS) {
