@@ -44,9 +44,11 @@ CpuTsThread::~CpuTsThread()
 
 HcclResult CpuTsThread::Init()
 {
-    // Host 侧初始化
-    CHK_RET(GetRunSideIsDevice(isDeviceSide_));
-    HcclResult ret = hrtGetDeviceType(devType_);
+    HcclResult ret = GetRunSideIsDevice(isDeviceSide_);
+    if (ret != HCCL_SUCCESS) {
+        isDeviceSide_ = false;
+    }
+    ret = hrtGetDeviceType(devType_);
     if (ret != HCCL_SUCCESS) {
         devType_ = DevType::DEV_TYPE_NOSOC;
     }
