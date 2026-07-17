@@ -144,14 +144,17 @@ HcclResult hrtThreadExchangeCaptureMode(aclmdlRICaptureMode *mode);
 HcclResult hrtGetDeviceCount(u32 *count)
 {
 #ifndef HCCD
-    // 参数有效性检查
     CHK_PTR_NULL(count);
 
     aclError ret = aclrtGetDeviceCount(count);
 
     HCCL_DEBUG("Call rtGetDeviceCount, return value[%d], para: count[%u].", ret, *count);
-    CHK_PRT_RET(ret != ACL_SUCCESS, HCCL_ERROR("[hrtGetDeviceCount]errNo[0x%016llx] aclGet device count fail, "\
-        "return[%d], para:count[%u]", HCCL_ERROR_CODE(HCCL_E_RUNTIME), ret, *count), HCCL_E_RUNTIME);
+    if (ret != ACL_SUCCESS) {
+        HCCL_ERROR("[hrtGetDeviceCount]errNo[0x%016llx] aclGet device count fail, "
+            "return[%d], para:count[%u]", HCCL_ERROR_CODE(HCCL_E_RUNTIME), ret, *count);
+        *count = 0;
+        return HCCL_SUCCESS;
+    }
 
     if (*count == 0) {
         return HCCL_SUCCESS;
@@ -166,8 +169,8 @@ HcclResult hrtGetDeviceCount(u32 *count)
 
     return HCCL_SUCCESS;
 #else
-    HCCL_ERROR("[hrtGetDeviceCount]Does not support this interface.");
-    return HCCL_E_NOT_SUPPORT;
+    *count = 0;
+    return HCCL_SUCCESS;
 #endif
 };
 
@@ -257,7 +260,6 @@ extern "C" {
 #endif
 HcclResult __hrtGetDevice(s32 *deviceLogicId)
 {
-    // 参数有效性检查
     CHK_PTR_NULL(deviceLogicId);
 #ifndef HCCD
 
@@ -267,9 +269,14 @@ HcclResult __hrtGetDevice(s32 *deviceLogicId)
     }
     aclError ret = 0;
     ret = aclrtGetDevice(deviceLogicId);
-    CHK_PRT_RET(ret != ACL_SUCCESS, HCCL_WARNING("[Get][Device]errNo[0x%016llx] rtGet device fail, "\
-        "please make sure that device is set. return[%d], para:deviceLogicId[%d]",
-        HCCL_ERROR_CODE(HCCL_E_RUNTIME), ret, *deviceLogicId), HCCL_E_RUNTIME);
+    if (ret != ACL_SUCCESS) {
+        HCCL_WARNING("[Get][Device]errNo[0x%016llx] rtGet device fail, "
+            "please make sure that device is set. return[%d], para:deviceLogicId[%d]",
+            HCCL_ERROR_CODE(HCCL_E_RUNTIME), ret, *deviceLogicId);
+        *deviceLogicId = 0;
+        g_deviceLogicId = 0;
+        return HCCL_SUCCESS;
+    }
     g_deviceLogicId = *deviceLogicId;
     HCCL_INFO("[hrtGetDevice]deviceLogicId[%d]", *deviceLogicId);
     return HCCL_SUCCESS;
@@ -395,8 +402,9 @@ HcclResult __hrtGetDevicePhyIdByIndex(u32 deviceLogicId, u32 &devicePhyId, bool 
     g_devicePhyId = devicePhyId;
     return HCCL_SUCCESS;
 #else
-    HCCL_ERROR("[hrtGetDevicePhyIdByIndex]Does not support this interface.");
-    return HCCL_E_NOT_SUPPORT;
+    devicePhyId = 0;
+    g_devicePhyId = 0;
+    return HCCL_SUCCESS;
 #endif
 }
 weak_alias(__hrtGetDevicePhyIdByIndex, hrtGetDevicePhyIdByIndex);
@@ -511,7 +519,12 @@ HcclResult __hrtGetDeviceType(DevType &devType)
 
     std::string socName;
 #ifndef HCCD
-    CHK_RET(hrtGetSocVer(socName));
+    HcclResult ret = hrtGetSocVer(socName);
+    if (ret != HCCL_SUCCESS) {
+        devType = DevType::DEV_TYPE_NOSOC;
+        g_deviceType = devType;
+        return HCCL_SUCCESS;
+    }
 #else
     if (g_workModeAicpu) {
         devType = g_localDeviceType;
@@ -519,11 +532,17 @@ HcclResult __hrtGetDeviceType(DevType &devType)
     }
 
     static auto funcPtr = (const char *(*)())g_dlAcl.Handle<ACL_GET_SOC_NAME>();
-    CHK_PTR_NULL(funcPtr);
+    if (funcPtr == nullptr) {
+        devType = DevType::DEV_TYPE_NOSOC;
+        g_deviceType = devType;
+        return HCCL_SUCCESS;
+    }
     const char *socNamePtr = funcPtr();
-    CHK_PRT_RET((socNamePtr == nullptr),
-        HCCL_ERROR("[hrtGetDeviceType]errNo[0x%016llx] aclrtGet socName failed",
-        HCCL_ERROR_CODE(HCCL_E_RUNTIME)), HCCL_E_RUNTIME);
+    if (socNamePtr == nullptr) {
+        devType = DevType::DEV_TYPE_NOSOC;
+        g_deviceType = devType;
+        return HCCL_SUCCESS;
+    }
     socName = socNamePtr;
 #endif
     //  根据芯片版本号获取芯片类型
@@ -537,9 +556,9 @@ HcclResult __hrtGetDeviceType(DevType &devType)
 
     auto iter = SOC_VER_CONVERT.find(socName);
     if (iter == SOC_VER_CONVERT.end()) {
-        HCCL_ERROR("[Get][DeviceType]errNo[0x%016llx] rtGetSocVersion get illegal chipver, chip_ver[%s].", \
-            HCCL_ERROR_CODE(HCCL_E_RUNTIME), socName.c_str());
-        return HCCL_E_RUNTIME;
+        devType = DevType::DEV_TYPE_NOSOC;
+        g_deviceType = devType;
+        return HCCL_SUCCESS;
     }
     devType = iter->second;
     g_deviceType = devType;
