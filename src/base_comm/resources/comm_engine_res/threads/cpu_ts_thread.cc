@@ -46,11 +46,20 @@ HcclResult CpuTsThread::Init()
 {
     // Host 侧初始化
     CHK_RET(GetRunSideIsDevice(isDeviceSide_));
-    CHK_RET(hrtGetDeviceType(devType_));
+    HcclResult ret = hrtGetDeviceType(devType_);
+    if (ret != HCCL_SUCCESS) {
+        devType_ = DevType::DEV_TYPE_NOSOC;
+    }
     if (!isDeviceSide_) {
-        s32 deviceLogicId;
-        CHK_RET(hrtGetDevice(&deviceLogicId));
-        CHK_RET(hrtGetDevicePhyIdByIndex(static_cast<uint32_t>(deviceLogicId), devId_));
+        s32 deviceLogicId = 0;
+        ret = hrtGetDevice(&deviceLogicId);
+        if (ret != HCCL_SUCCESS) {
+            deviceLogicId = 0;
+        }
+        ret = hrtGetDevicePhyIdByIndex(static_cast<uint32_t>(deviceLogicId), devId_);
+        if (ret != HCCL_SUCCESS) {
+            devId_ = 0;
+        }
         if (streamType_ == StreamType::STREAM_TYPE_DEVICE || notifyLoadType_ == NotifyLoadType::DEVICE_NOTIFY) {
             return HCCL_E_NOT_SUPPORT;
         }
