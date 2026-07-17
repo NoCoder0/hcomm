@@ -59,6 +59,19 @@ HcclResult DlUrmaFunction::DlUrmaFunctionInit()
     }
  
     CHK_RET(DlUrmaFunctionApiInit());
+
+    // urma_init() 加载 vendor 驱动插件（如 libudma.so），
+    // 否则 urma_get_device_list() 会因 g_driver_list 为空而返回 ENODEV
+    auto dlUrmaInit = (urma_status_t (*)(urma_init_attr_t *))HcclNextDlsym(handle_, "urma_init");
+    if (dlUrmaInit != nullptr) {
+        urma_status_t urmaInitRet = dlUrmaInit(NULL);
+        if (urmaInitRet != 0) {
+            HCCL_WARNING("[%s] urma_init returned %d, device enumeration may fail", __func__, urmaInitRet);
+        }
+    } else {
+        HCCL_WARNING("[%s] urma_init symbol not found in liburma.so", __func__);
+    }
+
     return HCCL_SUCCESS;
 }
 }
