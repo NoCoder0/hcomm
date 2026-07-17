@@ -148,8 +148,14 @@ u32 GetUbToken()
 {
     std::lock_guard<std::mutex> lock(ubTokenMutex);
     if (!isInitialized) {
-        s32 devLogicId = HrtGetDevice();
-        u32 devPhyId = HrtGetDevicePhyIdByIndex(devLogicId);
+        u32 devPhyId = 0;
+        try {
+            s32 devLogicId = HrtGetDevice();
+            devPhyId = HrtGetDevicePhyIdByIndex(devLogicId);
+        } catch (...) {
+            // 通用服务器无 NPU 设备，host-only 场景下 phyId 恒为 0
+            devPhyId = 0;
+        }
         HrtRaGetSecRandom(&token, devPhyId);
         isInitialized = true;
     }
