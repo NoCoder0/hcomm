@@ -86,7 +86,7 @@ HcclResult CpuUrmaEndpoint::ServerSocketListen(const uint32_t port)
             raInfo.phyId = devPhyId;
             auto eidInfoList = Hccl::HrtRaGetDevEidInfoList(raInfo);
             for (const auto &info : eidInfoList) {
-                if (info.ipAddress != ipAddr) {
+                if (!(info.ipAddress == ipAddr)) {
                     HCCL_INFO("[CpuUrmaEndpoint::%s] resolved bonding EID to primary IP: %s",
                         __func__, info.ipAddress.Describe().c_str());
                     ipAddr = info.ipAddress;
@@ -127,7 +127,7 @@ inline HcclResult CpuUrmaEndpoint::ServerSocketStopListenImpl(const uint32_t por
             raInfo.phyId = devPhyId;
             auto eidInfoList = Hccl::HrtRaGetDevEidInfoList(raInfo);
             for (const auto &info : eidInfoList) {
-                if (info.ipAddress != ipAddr) {
+                if (!(info.ipAddress == ipAddr)) {
                     ipAddr = info.ipAddress;
                     break;
                 }
