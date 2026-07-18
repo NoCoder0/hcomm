@@ -462,6 +462,18 @@ STATIC int RsUrmaApiInit(void)
         return ret;
     }
 
+    // 在 dlopen+dlsym 全部完成后调用一次 urma_init()，把厂商 provider 加载进 liburma 的
+    // g_driver_list。否则后续 urma_get_device_list 会因 g_driver_list 为空返回 ENODEV。
+    // URMA_EEXIST(-17) 表示同进程内已被初始化过，视为成功。
+    static bool gUrmaInited = false;
+    if (!gUrmaInited) {
+        int initRet = RsUrmaInit(NULL);
+        if (initRet != 0 && initRet != -17) {  // -17 == URMA_EEXIST
+            hccp_warn("[rs_urma_api_init] RsUrmaInit returned %d, device enumeration may fail.", initRet);
+        }
+        gUrmaInited = true;
+    }
+
     return 0;
 }
 

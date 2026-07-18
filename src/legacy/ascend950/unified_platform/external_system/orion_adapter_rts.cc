@@ -18,6 +18,7 @@
 #include "not_support_exception.h"
 #include "adapter_error_manager_pub.h"
 #include "dlrts_function_v2.h"
+#include "host_mode_detector.h"
 
 using namespace std;
 namespace Hccl {
@@ -104,6 +105,12 @@ s32 HrtDeviceGetBareTgid()
 
 void HrtGetSocVer(std::string &socName)
 {
+    // host-only 模式没有 NPU，按 nosoc 返回避免抛异常。
+    if (hccl::HostModeDetector::IsHostOnly()) {
+        socName = "nosoc";
+        HCCL_INFO("[HrtGetSocVer] host-only mode fallback socName[nosoc].");
+        return;
+    }
     const char *socNamePtr = aclrtGetSocName();
     if (socNamePtr == nullptr) {
         string msg = StringFormat("[Get][SocVer]errNo[0x%016llx] rtGet deviceVer failed.",
@@ -115,6 +122,11 @@ void HrtGetSocVer(std::string &socName)
 
 s32 HrtGetDevice()
 {
+    // host-only 模式（通用服务器无 NPU）返回 devLogicId=0，避免抛异常打断上层调用链。
+    if (hccl::HostModeDetector::IsHostOnly()) {
+        HCCL_INFO("[HrtGetDevice] host-only mode fallback deviceLogicId[0].");
+        return 0;
+    }
     s32 deviceLogicId = 0;
     aclError ret = aclrtGetDevice(&deviceLogicId);
     if (ret != ACL_SUCCESS) {
@@ -153,6 +165,11 @@ void HrtResetDevice(s32 deviceLogicId)
 
 u32 HrtGetDeviceCount()
 {
+    // host-only 模式直接返回 0，避免抛异常打断上层调用链。
+    if (hccl::HostModeDetector::IsHostOnly()) {
+        HCCL_INFO("[HrtGetDeviceCount] host-only mode fallback count[0].");
+        return 0;
+    }
     u32       count = 0;
     aclError ret   = aclrtGetDeviceCount(&count);
     HCCL_INFO("Call rtGetDeviceCount, return value[%d], para: count[%u].", ret, count);

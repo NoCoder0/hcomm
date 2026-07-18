@@ -21,6 +21,7 @@
 #include "device_capacity.h"
 #include "config_plf_log.h"
 #include "adapter_rts.h"
+#include "host_mode_detector.h"
 
 using namespace hccl;
 using namespace std;
@@ -265,6 +266,14 @@ HcclResult __hrtGetDevice(s32 *deviceLogicId)
         *deviceLogicId = g_deviceLogicId;
         return HCCL_SUCCESS;
     }
+    // host-only 模式（通用服务器无 NPU）下 NPU 调用必然失败，使用 devLogicId=0 兜底；
+    // NPU 模式分支保持原语义，行为零变化。
+    if (HostModeDetector::IsHostOnly()) {
+        *deviceLogicId = 0;
+        g_deviceLogicId = 0;
+        HCCL_INFO("[hrtGetDevice] host-only mode fallback deviceLogicId[0].");
+        return HCCL_SUCCESS;
+    }
     aclError ret = 0;
     ret = aclrtGetDevice(deviceLogicId);
     CHK_PRT_RET(ret != ACL_SUCCESS, HCCL_WARNING("[Get][Device]errNo[0x%016llx] rtGet device fail, "\
@@ -506,6 +515,15 @@ HcclResult __hrtGetDeviceType(DevType &devType)
 {
     if (LIKELY((g_deviceType != DevType::DEV_TYPE_COUNT))) {
         devType = g_deviceType;
+        return HCCL_SUCCESS;
+    }
+
+    // host-only 模式下没有真实 socName，统一返回 DEV_TYPE_NOSOC；
+    // NPU 模式分支保持原语义。
+    if (HostModeDetector::IsHostOnly()) {
+        devType = DevType::DEV_TYPE_NOSOC;
+        g_deviceType = devType;
+        HCCL_INFO("[hrtGetDeviceType] host-only mode fallback DEV_TYPE_NOSOC.");
         return HCCL_SUCCESS;
     }
 

@@ -47,6 +47,7 @@
 #include "endpoint_monitor.h"
 #include "hcomm_adapter_runtime.h"
 #include "adapter_rts_common.h"
+#include "host_mode_detector.h"
 
 
 namespace hcomm {
@@ -96,6 +97,25 @@ HcclResult ValidateEndpointDesc(const EndpointDesc *endpoint, EndpointHandle *en
                    "endpoint->loc.locType is %d",
             __func__,
             endpoint->loc.locType);
+        return HCCL_E_PARA;
+    }
+    // 防止 host-only 模式误配 DEVICE loc，或 NPU 模式误配 HOST loc 而后走错路径。
+    // HostOnly 下 DEVICE loc 必然失败；NPU 模式下 HOST loc 不被允许（应通过 DEVICE loc 触发 NPU 路径）。
+    const bool hostOnly = hccl::HostModeDetector::IsHostOnly();
+    if (hostOnly && endpoint->loc.locType == ENDPOINT_LOC_TYPE_DEVICE) {
+        HCCL_ERROR("[%s] host-only mode detected but ENDPOINT_LOC_TYPE_DEVICE requested; "
+                   "use ENDPOINT_LOC_TYPE_HOST or set HCOMM_HOST_ONLY=0.", __func__);
+        return HCCL_E_PARA;
+    }
+    return HCCL_SUCCESS;
+}
+
+HcclResult ValidateCommEngineAgainstHostMode(CommEngine engine)
+{
+    const bool hostOnly = hccl::HostModeDetector::IsHostOnly();
+    if (hostOnly && (engine == COMM_ENGINE_AICPU || engine == COMM_ENGINE_AICPU_TS)) {
+        HCCL_ERROR("[%s] host-only mode detected but AICPU engine[%d] requested; "
+                   "use COMM_ENGINE_CPU.", __func__, static_cast<int>(engine));
         return HCCL_E_PARA;
     }
     return HCCL_SUCCESS;
@@ -646,6 +666,7 @@ HcommResult HcommChannelCreate(EndpointHandle endpointHandle, CommEngine engine,
         CHK_RET(RefreshEndpointContext(endpoint->GetEndpointDesc()));
     }
     (void)HcommResMgrInit();
+    CHK_RET(ValidateCommEngineAgainstHostMode(engine));
     std::vector<HcommChannelDesc> channelDescFinals;
     CHK_RET(static_cast<HcclResult>(NormalizeHcommChannelDescs(channelDescs, channelNum, channelDescFinals)));
 

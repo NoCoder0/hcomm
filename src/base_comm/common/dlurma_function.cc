@@ -57,7 +57,24 @@ HcclResult DlUrmaFunction::DlUrmaFunctionInit()
             (errMsg == nullptr) ? "please check the file exist or permission denied." : errMsg),\
             HCCL_E_OPEN_FILE_FAILURE);
     }
- 
+
+    // liburma 的 vendor provider 仅在 urma_init() 调用后才会挂载到 g_driver_list；
+    // 不调用 urma_init() 时 urma_post_jetty_send_wr / urma_poll_jfc 都会在未初始化的
+    // liburma 上工作。幂等调用：URMA_EEXIST(-17) 视为成功。
+    static bool gDlUrmaInited = false;
+    if (!gDlUrmaInited) {
+        auto dlUrmaInit = (int (*)(urma_init_attr_t *))HcclNextDlsym(handle_, "urma_init");
+        if (dlUrmaInit != nullptr) {
+            int initRet = dlUrmaInit(NULL);
+            if (initRet != 0 && initRet != -17) {  // -17 == URMA_EEXIST
+                HCCL_WARNING("[DlUrmaFunctionInit] urma_init returned %d, data plane may fail.", initRet);
+            }
+        } else {
+            HCCL_WARNING("[DlUrmaFunctionInit] urma_init symbol not found in liburma.so.");
+        }
+        gDlUrmaInited = true;
+    }
+
     CHK_RET(DlUrmaFunctionApiInit());
     return HCCL_SUCCESS;
 }

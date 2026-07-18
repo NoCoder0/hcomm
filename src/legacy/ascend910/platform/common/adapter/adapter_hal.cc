@@ -14,6 +14,7 @@
 #include "log.h"
 #include "sal_pub.h"
 #include "aicpu_schedule/aicpu_mc2_maintenance_thread.h"
+#include "host_mode_detector.h"
 
 using namespace hccl;
 
@@ -538,6 +539,15 @@ HcclResult GetRunSideIsDevice(bool &isDeviceSide)
     static bool deviceSide = false;
     static bool init = false;
     if (UNLIKELY(!init)) {
+        // host-only 模式（通用服务器无 NPU/HAL 驱动）下直接判为 host 侧。
+        // NPU 模式分支保持原语义。
+        if (HostModeDetector::IsHostOnly()) {
+            deviceSide = false;
+            init = true;
+            HCCL_INFO("[GetRunSideIsDevice] host-only mode fallback isDeviceSide[false].");
+            isDeviceSide = deviceSide;
+            return HCCL_SUCCESS;
+        }
         if (UNLIKELY(!hccl::DlHalFunction::GetInstance().DlHalFunctionIsInit())) {
             CHK_RET(DlHalFunction::GetInstance().DlHalFunctionInit());
         }

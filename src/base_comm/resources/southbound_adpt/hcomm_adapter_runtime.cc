@@ -11,6 +11,7 @@
 #include "hcomm_adapter_runtime.h"
 
 #include "adapter_rts_common.h"
+#include "host_mode_detector.h"
 
 namespace hcomm {
 
@@ -25,12 +26,15 @@ HcclResult ResolveRuntimeDevicePhyId(uint32_t &devicePhyId, bool &noDevice)
             __func__, ret, kDefaultResourceId);
         devicePhyId = kDefaultResourceId;
         noDevice = true;
+        // 把探测结果回填给 HostModeDetector；env 已显式指定时无作用。
+        hccl::HostModeDetector::SetFromProbe(true);
         return HCCL_SUCCESS;
     }
 
     if (deviceCount == 0) {
         devicePhyId = kDefaultResourceId;
         noDevice = true;
+        hccl::HostModeDetector::SetFromProbe(true);
         return HCCL_SUCCESS;
     }
 
@@ -38,6 +42,7 @@ HcclResult ResolveRuntimeDevicePhyId(uint32_t &devicePhyId, bool &noDevice)
     CHK_RET(hrtGetDevice(&devLogicId));
     CHK_RET(hrtGetDevicePhyIdByIndex(static_cast<uint32_t>(devLogicId), devicePhyId));
     noDevice = false;
+    hccl::HostModeDetector::SetFromProbe(false);
     HCCL_INFO("[HcommAdapterRuntime][%s] deviceCount[%u], devLogicId[%d], devicePhyId[%u].",
         __func__, deviceCount, devLogicId, devicePhyId);
     return HCCL_SUCCESS;
