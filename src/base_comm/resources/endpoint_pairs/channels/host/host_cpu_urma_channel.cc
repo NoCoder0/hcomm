@@ -101,26 +101,15 @@ HcclResult HostCpuUrmaChannel::BuildSocket()
     // host-only 时 EID→IP 转出的地址可能不在本地网卡上，用环境变量覆盖
     const char *envLocalIp = getenv("HCOMM_TEST_LOCAL_IP");
     const char *envRemoteIp = getenv("HCOMM_TEST_REMOTE_IP");
-    if (envLocalIp != nullptr || envRemoteIp != nullptr) {
-        Hccl::IpAddress localAddr = linkData.GetLocalAddr();
-        Hccl::IpAddress remoteAddr = linkData.GetRemoteAddr();
-        if (envLocalIp != nullptr) {
-            int family = (std::strchr(envLocalIp, ':') != nullptr) ? AF_INET6 : AF_INET;
-            localAddr = Hccl::IpAddress(std::string(envLocalIp), family);
-            HCCL_INFO("[HostCpuUrmaChannel::%s] override local IP from env: %s", __func__, envLocalIp);
-        }
-        if (envRemoteIp != nullptr) {
-            int family = (std::strchr(envRemoteIp, ':') != nullptr) ? AF_INET6 : AF_INET;
-            remoteAddr = Hccl::IpAddress(std::string(envRemoteIp), family);
-            HCCL_INFO("[HostCpuUrmaChannel::%s] override remote IP from env: %s", __func__, envRemoteIp);
-        }
-        linkData = Hccl::LinkData(
-            linkData.GetType(), linkData.GetLinkProtocol(),
-            linkData.GetLocalRankId(), linkData.GetRemoteRankId(),
-            localAddr, remoteAddr,
-            localEp_.loc.device.devPhyId, remoteEp_.loc.device.devPhyId,
-            0
-        );
+    if (envLocalIp != nullptr) {
+        int family = (std::strchr(envLocalIp, ':') != nullptr) ? AF_INET6 : AF_INET;
+        linkData.localAddr_ = Hccl::IpAddress(std::string(envLocalIp), family);
+        HCCL_INFO("[HostCpuUrmaChannel::%s] override local IP from env: %s", __func__, envLocalIp);
+    }
+    if (envRemoteIp != nullptr) {
+        int family = (std::strchr(envRemoteIp, ':') != nullptr) ? AF_INET6 : AF_INET;
+        linkData.remoteAddr_ = Hccl::IpAddress(std::string(envRemoteIp), family);
+        HCCL_INFO("[HostCpuUrmaChannel::%s] override remote IP from env: %s", __func__, envRemoteIp);
     }
 
     HCCL_INFO("[HostCpuUrmaChannel::%s] built linkData: %s", __func__, linkData.Describe().c_str());
@@ -189,24 +178,13 @@ HcclResult HostCpuUrmaChannel::BuildUbMemTransport()
     // 与 BuildSocket 保持一致：允许环境变量覆盖 IP
     const char *envLocalIp = getenv("HCOMM_TEST_LOCAL_IP");
     const char *envRemoteIp = getenv("HCOMM_TEST_REMOTE_IP");
-    if (envLocalIp != nullptr || envRemoteIp != nullptr) {
-        Hccl::IpAddress localAddr = linkData.GetLocalAddr();
-        Hccl::IpAddress remoteAddr = linkData.GetRemoteAddr();
-        if (envLocalIp != nullptr) {
-            int family = (std::strchr(envLocalIp, ':') != nullptr) ? AF_INET6 : AF_INET;
-            localAddr = Hccl::IpAddress(std::string(envLocalIp), family);
-        }
-        if (envRemoteIp != nullptr) {
-            int family = (std::strchr(envRemoteIp, ':') != nullptr) ? AF_INET6 : AF_INET;
-            remoteAddr = Hccl::IpAddress(std::string(envRemoteIp), family);
-        }
-        linkData = Hccl::LinkData(
-            linkData.GetType(), linkData.GetLinkProtocol(),
-            linkData.GetLocalRankId(), linkData.GetRemoteRankId(),
-            localAddr, remoteAddr,
-            localEp_.loc.device.devPhyId, remoteEp_.loc.device.devPhyId,
-            0
-        );
+    if (envLocalIp != nullptr) {
+        int family = (std::strchr(envLocalIp, ':') != nullptr) ? AF_INET6 : AF_INET;
+        linkData.localAddr_ = Hccl::IpAddress(std::string(envLocalIp), family);
+    }
+    if (envRemoteIp != nullptr) {
+        int family = (std::strchr(envRemoteIp, ':') != nullptr) ? AF_INET6 : AF_INET;
+        linkData.remoteAddr_ = Hccl::IpAddress(std::string(envRemoteIp), family);
     }
 
     // make_unique / make_shared / release 包一层抛异常的宏
