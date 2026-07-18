@@ -81,9 +81,7 @@ HcclResult CpuUrmaEndpoint::ServerSocketListen(const uint32_t port)
     // 取代。HrtRaGetDevEidInfoList 返回设备上所有 EID 的 IP 列表，取首个与 bonding 不同的。
     if (endpointDesc_.commAddr.type == COMM_ADDR_TYPE_EID) {
         try {
-            Hccl::HRaInfo raInfo;
-            raInfo.mode = Hccl::HrtNetworkMode::PEER;
-            raInfo.phyId = devPhyId;
+            Hccl::HRaInfo raInfo(Hccl::HrtNetworkMode::PEER, devPhyId);
             auto eidInfoList = Hccl::HrtRaGetDevEidInfoList(raInfo);
             for (const auto &info : eidInfoList) {
                 if (!(info.ipAddress == ipAddr)) {
@@ -122,9 +120,7 @@ inline HcclResult CpuUrmaEndpoint::ServerSocketStopListenImpl(const uint32_t por
 
     if (endpointDesc_.commAddr.type == COMM_ADDR_TYPE_EID) {
         try {
-            Hccl::HRaInfo raInfo;
-            raInfo.mode = Hccl::HrtNetworkMode::PEER;
-            raInfo.phyId = devPhyId;
+            Hccl::HRaInfo raInfo(Hccl::HrtNetworkMode::PEER, devPhyId);
             auto eidInfoList = Hccl::HrtRaGetDevEidInfoList(raInfo);
             for (const auto &info : eidInfoList) {
                 if (!(info.ipAddress == ipAddr)) {
