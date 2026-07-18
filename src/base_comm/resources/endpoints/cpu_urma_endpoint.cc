@@ -9,8 +9,6 @@
 */
 #include "cpu_urma_endpoint.h"
 #include <algorithm>
-#include <cstdlib>
-#include <cstring>
 #include "endpoint_mgr.h"
 #include "log.h"
 #include "urma_mem.h"
@@ -78,14 +76,6 @@ HcclResult CpuUrmaEndpoint::ServerSocketListen(const uint32_t port)
     u32 devPhyId = 0;
     CHK_RET(hrtGetDevicePhyIdByIndex(devId, devPhyId));
 
-    // host-only 时 EID→IP 转出的 IPv6 地址可能不在本地网卡上，允许用环境变量覆盖
-    const char *envLocalIp = getenv("HCOMM_TEST_LOCAL_IP");
-    if (envLocalIp != nullptr) {
-        int family = (std::strchr(envLocalIp, ':') != nullptr) ? AF_INET6 : AF_INET;
-        ipAddr = Hccl::IpAddress(std::string(envLocalIp), family);
-        HCCL_INFO("[CpuUrmaEndpoint::%s] override local IP from env: %s", __func__, envLocalIp);
-    }
-
     Hccl::DevNetPortType type = Hccl::DevNetPortType(Hccl::ConnectProtoType::UB);
     Hccl::PortData localPort = Hccl::PortData(devPhyId, type, 0, ipAddr);
 
@@ -107,14 +97,6 @@ inline HcclResult CpuUrmaEndpoint::ServerSocketStopListenImpl(const uint32_t por
     CHK_RET(hrtGetDevice(&devId));
     u32 devPhyId = 0;
     CHK_RET(hrtGetDevicePhyIdByIndex(devId, devPhyId));
-
-    // 与 ServerSocketListen 保持一致的 IP 覆盖
-    const char *envLocalIp = getenv("HCOMM_TEST_LOCAL_IP");
-    if (envLocalIp != nullptr) {
-        int family = (std::strchr(envLocalIp, ':') != nullptr) ? AF_INET6 : AF_INET;
-        ipAddr = Hccl::IpAddress(std::string(envLocalIp), family);
-    }
-
     Hccl::DevNetPortType type = Hccl::DevNetPortType(Hccl::ConnectProtoType::UB);
     Hccl::PortData localPort = Hccl::PortData(devPhyId, type, 0, ipAddr);
     CHK_RET(ServerSocketManager::GetInstance().ServerSocketStopListen(localPort, Hccl::NicType::HOST_NIC_TYPE, port));

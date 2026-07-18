@@ -13,9 +13,6 @@
 #include "orion_adpt_utils.h"
 #include "hcomm_adapter_urma.h"
 
-#include <cstdlib>
-#include <cstring>
-
 // Orion
 #include "topo_common_types.h"
 #include "virtual_topo.h"
@@ -97,21 +94,6 @@ HcclResult HostCpuUrmaChannel::BuildSocket()
 
     Hccl::LinkData linkData = BuildDefaultLinkData();
     CHK_RET(EndpointDescPairToLinkData(localEp_, remoteEp_, linkData));
-
-    // host-only 时 EID→IP 转出的地址可能不在本地网卡上，用环境变量覆盖
-    const char *envLocalIp = getenv("HCOMM_TEST_LOCAL_IP");
-    const char *envRemoteIp = getenv("HCOMM_TEST_REMOTE_IP");
-    if (envLocalIp != nullptr) {
-        int family = (std::strchr(envLocalIp, ':') != nullptr) ? AF_INET6 : AF_INET;
-        linkData.localAddr_ = Hccl::IpAddress(std::string(envLocalIp), family);
-        HCCL_INFO("[HostCpuUrmaChannel::%s] override local IP from env: %s", __func__, envLocalIp);
-    }
-    if (envRemoteIp != nullptr) {
-        int family = (std::strchr(envRemoteIp, ':') != nullptr) ? AF_INET6 : AF_INET;
-        linkData.remoteAddr_ = Hccl::IpAddress(std::string(envRemoteIp), family);
-        HCCL_INFO("[HostCpuUrmaChannel::%s] override remote IP from env: %s", __func__, envRemoteIp);
-    }
-
     HCCL_INFO("[HostCpuUrmaChannel::%s] built linkData: %s", __func__, linkData.Describe().c_str());
     uint16_t port = channelDesc_.port;
     if (port == 0) {
@@ -174,18 +156,6 @@ HcclResult HostCpuUrmaChannel::BuildUbMemTransport()
 
     Hccl::LinkData linkData = BuildDefaultLinkData();
     CHK_RET(EndpointDescPairToLinkData(localEp_, remoteEp_, linkData));
-
-    // 与 BuildSocket 保持一致：允许环境变量覆盖 IP
-    const char *envLocalIp = getenv("HCOMM_TEST_LOCAL_IP");
-    const char *envRemoteIp = getenv("HCOMM_TEST_REMOTE_IP");
-    if (envLocalIp != nullptr) {
-        int family = (std::strchr(envLocalIp, ':') != nullptr) ? AF_INET6 : AF_INET;
-        linkData.localAddr_ = Hccl::IpAddress(std::string(envLocalIp), family);
-    }
-    if (envRemoteIp != nullptr) {
-        int family = (std::strchr(envRemoteIp, ':') != nullptr) ? AF_INET6 : AF_INET;
-        linkData.remoteAddr_ = Hccl::IpAddress(std::string(envRemoteIp), family);
-    }
 
     // make_unique / make_shared / release 包一层抛异常的宏
     EXCEPTION_CATCH(
