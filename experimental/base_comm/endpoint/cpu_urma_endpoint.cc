@@ -65,6 +65,11 @@ HcclResult CpuUrmaEndpoint::ServerSocketListen(const uint32_t port)
 {
     Hccl::IpAddress ipAddr{};
     CHK_RET(hcomm::CommAddrToIpAddress(endpointDesc_.commAddr, ipAddr));
+    const char *envLocalIp = getenv("HCOMM_TEST_LOCAL_IP");
+    if (envLocalIp) {
+        ipAddr = Hccl::IpAddress(std::string(envLocalIp));
+        HCCL_INFO("[CpuUrmaEndpoint::%s] override listen IP from env: %s", __func__, envLocalIp);
+    }
 
     Hccl::DevNetPortType type = Hccl::DevNetPortType(Hccl::ConnectProtoType::UB);
     Hccl::PortData localPort = Hccl::PortData(kHostResourceId, type, 0, ipAddr);
