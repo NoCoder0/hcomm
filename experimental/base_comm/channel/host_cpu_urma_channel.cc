@@ -15,9 +15,6 @@
 #include "hcomm_adapter_urma.h"
 #include "urma_api.h"
 
-#include <cstdlib>
-#include <cstring>
-
 // Orion
 #include "coll_alg_param.h"
 #include "topo_common_types.h"
@@ -104,31 +101,6 @@ HcclResult HostCpuUrmaChannel::BuildSocket()
 
     Hccl::LinkData linkData = hcomm::BuildDefaultLinkData();
     CHK_RET(hcomm::EndpointDescPairToLinkData(localEp_, remoteEp_, linkData));
-
-    const char *envLocalIp = getenv("HCOMM_TEST_LOCAL_IP");
-    const char *envRemoteIp = getenv("HCOMM_TEST_REMOTE_IP");
-    if (envLocalIp != nullptr || envRemoteIp != nullptr) {
-        Hccl::IpAddress localAddr = linkData.GetLocalAddr();
-        Hccl::IpAddress remoteAddr = linkData.GetRemoteAddr();
-        if (envLocalIp != nullptr) {
-            int family = (std::strchr(envLocalIp, ':') != nullptr) ? AF_INET6 : AF_INET;
-            localAddr = Hccl::IpAddress(std::string(envLocalIp), family);
-            HCCL_INFO("[HostCpuUrmaChannel::%s] override local IP from env: %s", __func__, envLocalIp);
-        }
-        if (envRemoteIp != nullptr) {
-            int family = (std::strchr(envRemoteIp, ':') != nullptr) ? AF_INET6 : AF_INET;
-            remoteAddr = Hccl::IpAddress(std::string(envRemoteIp), family);
-            HCCL_INFO("[HostCpuUrmaChannel::%s] override remote IP from env: %s", __func__, envRemoteIp);
-        }
-        linkData = Hccl::LinkData(
-            linkData.GetType(), linkData.GetLinkProtocol(),
-            linkData.GetLocalRankId(), linkData.GetRemoteRankId(),
-            localAddr, remoteAddr,
-            localEp_.loc.device.devPhyId, remoteEp_.loc.device.devPhyId,
-            0
-        );
-    }
-
     HCCL_INFO("[HostCpuUrmaChannel::%s] built linkData: %s", __func__, linkData.Describe().c_str());
     uint16_t port = channelDesc_.port;
     if (port == 0) {
@@ -211,28 +183,6 @@ HcclResult HostCpuUrmaChannel::BuildUbMemTransport()
 
     Hccl::LinkData linkData = hcomm::BuildDefaultLinkData();
     CHK_RET(hcomm::EndpointDescPairToLinkData(localEp_, remoteEp_, linkData));
-
-    const char *envLocalIp = getenv("HCOMM_TEST_LOCAL_IP");
-    const char *envRemoteIp = getenv("HCOMM_TEST_REMOTE_IP");
-    if (envLocalIp != nullptr || envRemoteIp != nullptr) {
-        Hccl::IpAddress localAddr = linkData.GetLocalAddr();
-        Hccl::IpAddress remoteAddr = linkData.GetRemoteAddr();
-        if (envLocalIp != nullptr) {
-            int family = (std::strchr(envLocalIp, ':') != nullptr) ? AF_INET6 : AF_INET;
-            localAddr = Hccl::IpAddress(std::string(envLocalIp), family);
-        }
-        if (envRemoteIp != nullptr) {
-            int family = (std::strchr(envRemoteIp, ':') != nullptr) ? AF_INET6 : AF_INET;
-            remoteAddr = Hccl::IpAddress(std::string(envRemoteIp), family);
-        }
-        linkData = Hccl::LinkData(
-            linkData.GetType(), linkData.GetLinkProtocol(),
-            linkData.GetLocalRankId(), linkData.GetRemoteRankId(),
-            localAddr, remoteAddr,
-            localEp_.loc.device.devPhyId, remoteEp_.loc.device.devPhyId,
-            0
-        );
-    }
 
     // make_unique / make_shared / release 包一层抛异常的宏
     EXCEPTION_CATCH(

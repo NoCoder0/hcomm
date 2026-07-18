@@ -9,8 +9,6 @@
 */
 #include "cpu_urma_endpoint.h"
 #include <algorithm>
-#include <cstdlib>
-#include <cstring>
 #include "endpoint_mgr.h"
 #include "host_peer_ra_init.h"
 #include "log.h"
@@ -68,13 +66,6 @@ HcclResult CpuUrmaEndpoint::ServerSocketListen(const uint32_t port)
     Hccl::IpAddress ipAddr{};
     CHK_RET(hcomm::CommAddrToIpAddress(endpointDesc_.commAddr, ipAddr));
 
-    const char *envLocalIp = getenv("HCOMM_TEST_LOCAL_IP");
-    if (envLocalIp != nullptr) {
-        int family = (std::strchr(envLocalIp, ':') != nullptr) ? AF_INET6 : AF_INET;
-        ipAddr = Hccl::IpAddress(std::string(envLocalIp), family);
-        HCCL_INFO("[CpuUrmaEndpoint::%s] override local IP from env: %s", __func__, envLocalIp);
-    }
-
     Hccl::DevNetPortType type = Hccl::DevNetPortType(Hccl::ConnectProtoType::UB);
     Hccl::PortData localPort = Hccl::PortData(kHostResourceId, type, 0, ipAddr);
 
@@ -92,12 +83,6 @@ HcclResult CpuUrmaEndpoint::ServerSocketStopListen(const uint32_t port)
 {
     Hccl::IpAddress ipAddr{};
     CHK_RET(hcomm::CommAddrToIpAddress(endpointDesc_.commAddr, ipAddr));
-
-    const char *envLocalIp = getenv("HCOMM_TEST_LOCAL_IP");
-    if (envLocalIp != nullptr) {
-        int family = (std::strchr(envLocalIp, ':') != nullptr) ? AF_INET6 : AF_INET;
-        ipAddr = Hccl::IpAddress(std::string(envLocalIp), family);
-    }
 
     Hccl::DevNetPortType type = Hccl::DevNetPortType(Hccl::ConnectProtoType::UB);
     Hccl::PortData localPort = Hccl::PortData(kHostResourceId, type, 0, ipAddr);
