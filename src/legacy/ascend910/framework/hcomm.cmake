@@ -96,7 +96,6 @@ target_include_directories(hcomm PRIVATE
     ${HCOMM_DIR}/src/base_comm/resources/hccp/inc
     ${HCOMM_DIR}/src/base_comm/resources/hccp/inc/network
     ${HCOMM_DIR}/src/base_comm/resources/hccp/external_depends/ubengine
-    ${HCOMM_DIR}/src/base_comm/resources/hccp/rdma_service/ctx
 
     ${HCOMM_DIR}/src/
     ${HCOMM_DIR}

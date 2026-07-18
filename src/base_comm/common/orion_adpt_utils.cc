@@ -17,7 +17,17 @@
 #include "tp_manager.h"
 #include "topo_common_types.h"
 #include "virtual_topo.h"
-#include "dl_urma_function.h"
+#include "urma_api.h"
+
+// 从 dl_urma_function.c 导出的 URMA 封装，避免 include dl_urma_function.h 引发 list_entry 等宏冲突
+extern "C" {
+    int RsUbApiInit(void);
+    urma_device_t **RsUrmaGetDeviceList(int *numDevices);
+    urma_device_t *RsUrmaGetDeviceByEid(urma_eid_t eid, urma_transport_type_t type);
+    void RsUrmaFreeDeviceList(urma_device_t **deviceList);
+    urma_eid_info_t *RsUrmaGetEidList(urma_device_t *dev, uint32_t *cnt);
+    void RsUrmaFreeEidList(urma_eid_info_t *eidList);
+}
 
 namespace hcomm {
 
