@@ -200,10 +200,9 @@ HcclResult HostCpuUrmaChannel::Init()
     CHK_RET(ParseInputParam());
 
     // bonding EID 转 IPv6 是虚拟地址，跨主机 TCP 不可达；
-    // 在 BuildSocket / BuildConnection 之前将本端 bonding EID 解析为物理端口 primary EID IP
-    // 注意: 远端 EID 不能通过 HrtRaGetDevEidInfoList 解析（该函数只返回本机 EID），
-    // 所以只解析 localEp_，remoteEp_ 保持原样由 Orion 层处理。
+    // 在 BuildSocket / BuildConnection 之前将 bonding EID 解析为物理端口 primary EID IP
     (void)hcomm::ResolveEidToPrimaryIp(localEp_.commAddr, devicePhyId_);
+    (void)hcomm::ResolveEidToPrimaryIp(remoteEp_.commAddr, devicePhyId_);
 
     if (channelDesc_.role != HCOMM_SOCKET_ROLE_CLIENT) {
         CHK_RET(StartListen());
