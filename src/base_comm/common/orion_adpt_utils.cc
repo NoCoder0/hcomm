@@ -17,8 +17,62 @@
 #include "tp_manager.h"
 #include "topo_common_types.h"
 #include "virtual_topo.h"
+#include "urma_api.h"
+
+// 从 dl_urma_function.c 导出的 URMA 封装，避免 include dl_urma_function.h 引发 list_entry 等宏冲突
+extern "C" {
+    int RsUbApiInit(void);
+    urma_device_t **RsUrmaGetDeviceList(int *numDevices);
+    urma_device_t *RsUrmaGetDeviceByEid(urma_eid_t eid, urma_transport_type_t type);
+    void RsUrmaFreeDeviceList(urma_device_t **deviceList);
+    urma_eid_info_t *RsUrmaGetEidList(urma_device_t *dev, uint32_t *cnt);
+    void RsUrmaFreeEidList(urma_eid_info_t *eidList);
+}
 
 namespace hcomm {
+
+static bool TryResolveEidToPrimary(const Hccl::Eid &inputEid, Hccl::Eid &outputEid)
+{
+    (void)RsUbApiInit();
+
+    int devNum = 0;
+    urma_device_t **devList = RsUrmaGetDeviceList(&devNum);
+    if (devList == NULL || devNum == 0) {
+        return false;
+    }
+
+    urma_eid_t urmaEid;
+    (void)memcpy(urmaEid.raw, inputEid.raw, Hccl::URMA_EID_LEN);
+
+    urma_device_t *dev = RsUrmaGetDeviceByEid(urmaEid, URMA_TRANSPORT_UB);
+    if (dev == NULL) {
+        RsUrmaFreeDeviceList(devList);
+        return false;
+    }
+
+    uint32_t eidCount = 0;
+    urma_eid_info_t *eidList = RsUrmaGetEidList(dev, &eidCount);
+    if (eidList == NULL || eidCount == 0) {
+        RsUrmaFreeDeviceList(devList);
+        return false;
+    }
+
+    // 在 EID 列表中寻找与 bonding EID 不同的首个 EID（即为物理端口 primary EID）
+    for (uint32_t i = 0; i < eidCount; i++) {
+        if (memcmp(eidList[i].eid.raw, inputEid.raw, Hccl::URMA_EID_LEN) != 0) {
+            (void)memcpy(outputEid.raw, eidList[i].eid.raw, Hccl::URMA_EID_LEN);
+            RsUrmaFreeEidList(eidList);
+            RsUrmaFreeDeviceList(devList);
+            return true;
+        }
+    }
+
+    // 若全部相同（非 bonding 设备），直接用自身
+    (void)memcpy(outputEid.raw, eidList[0].eid.raw, Hccl::URMA_EID_LEN);
+    RsUrmaFreeEidList(eidList);
+    RsUrmaFreeDeviceList(devList);
+    return true;
+}
 
 const char *CommAddrTypeToStr(CommAddrType type)
 {
@@ -64,7 +118,13 @@ HcclResult CommAddrToIpAddress(const CommAddr &commAddr, Hccl::IpAddress &ipAddr
         Hccl::Eid inputEid;
         s32 sret = memcpy_s(inputEid.raw, Hccl::URMA_EID_LEN, commAddr.eid, Hccl::URMA_EID_LEN);
         CHK_PRT_RET(sret != EOK, HCCL_ERROR("memcpy failed. errorno[%d]:", sret), HCCL_E_MEMORY);
-        ipAddr = Hccl::IpAddress(inputEid);
+
+        Hccl::Eid resolvedEid;
+        if (TryResolveEidToPrimary(inputEid, resolvedEid)) {
+            ipAddr = Hccl::IpAddress(resolvedEid);
+        } else {
+            ipAddr = Hccl::IpAddress(inputEid);
+        }
         return HCCL_SUCCESS;
     }
 

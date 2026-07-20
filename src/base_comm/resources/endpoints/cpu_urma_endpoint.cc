@@ -15,7 +15,6 @@
 #include "adapter_rts_common.h"
 #include "server_socket_manager.h"
 #include "hccp_peer_manager.h"
-#include "orion_adapter_hccp.h"
 
 namespace hcomm {
 CpuUrmaEndpoint::CpuUrmaEndpoint(const EndpointDesc &endpointDesc)
@@ -77,27 +76,6 @@ HcclResult CpuUrmaEndpoint::ServerSocketListen(const uint32_t port)
     u32 devPhyId = 0;
     CHK_RET(hrtGetDevicePhyIdByIndex(devId, devPhyId));
 
-    // bonding EID 转出的虚拟 IPv6 跨主机 TCP 不可达，尝试用物理端口 primary EID 的 IP
-    // 取代。HrtRaGetDevEidInfoList 返回设备上所有 EID 的 IP 列表，取首个与 bonding 不同的。
-    if (endpointDesc_.commAddr.type == COMM_ADDR_TYPE_EID) {
-        try {
-            Hccl::HRaInfo raInfo;
-            raInfo.mode = Hccl::HrtNetworkMode::PEER;
-            raInfo.phyId = devPhyId;
-            auto eidInfoList = Hccl::HrtRaGetDevEidInfoList(raInfo);
-            for (const auto &info : eidInfoList) {
-                if (info.ipAddress != ipAddr) {
-                    HCCL_INFO("[CpuUrmaEndpoint::%s] resolved bonding EID to primary IP: %s",
-                        __func__, info.ipAddress.Describe().c_str());
-                    ipAddr = info.ipAddress;
-                    break;
-                }
-            }
-        } catch (...) {
-            // URMA 未初始化或查询失败，维持原始 IP
-        }
-    }
-
     Hccl::DevNetPortType type = Hccl::DevNetPortType(Hccl::ConnectProtoType::UB);
     Hccl::PortData localPort = Hccl::PortData(devPhyId, type, 0, ipAddr);
 
@@ -119,22 +97,6 @@ inline HcclResult CpuUrmaEndpoint::ServerSocketStopListenImpl(const uint32_t por
     CHK_RET(hrtGetDevice(&devId));
     u32 devPhyId = 0;
     CHK_RET(hrtGetDevicePhyIdByIndex(devId, devPhyId));
-
-    if (endpointDesc_.commAddr.type == COMM_ADDR_TYPE_EID) {
-        try {
-            Hccl::HRaInfo raInfo;
-            raInfo.mode = Hccl::HrtNetworkMode::PEER;
-            raInfo.phyId = devPhyId;
-            auto eidInfoList = Hccl::HrtRaGetDevEidInfoList(raInfo);
-            for (const auto &info : eidInfoList) {
-                if (info.ipAddress != ipAddr) {
-                    ipAddr = info.ipAddress;
-                    break;
-                }
-            }
-        } catch (...) {}
-    }
-
     Hccl::DevNetPortType type = Hccl::DevNetPortType(Hccl::ConnectProtoType::UB);
     Hccl::PortData localPort = Hccl::PortData(devPhyId, type, 0, ipAddr);
     CHK_RET(ServerSocketManager::GetInstance().ServerSocketStopListen(localPort, Hccl::NicType::HOST_NIC_TYPE, port));
