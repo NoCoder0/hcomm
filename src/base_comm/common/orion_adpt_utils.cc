@@ -89,6 +89,31 @@ HcclResult IpAddressToCommAddr(const Hccl::IpAddress &ipAddr, CommAddr &commAddr
     return HcclResult::HCCL_SUCCESS;
 }
 
+HcclResult ResolveEidToPrimaryIp(CommAddr &commAddr, uint32_t devPhyId)
+{
+    if (commAddr.type != COMM_ADDR_TYPE_EID) {
+        return HCCL_SUCCESS;
+    }
+
+    Hccl::IpAddress bondingIp;
+    CHK_RET(CommAddrToIpAddress(commAddr, bondingIp));
+
+    try {
+        Hccl::HRaInfo raInfo(Hccl::HrtNetworkMode::PEER, devPhyId);
+        auto eidInfoList = Hccl::HrtRaGetDevEidInfoList(raInfo);
+        for (const auto &info : eidInfoList) {
+            if (!(info.ipAddress == bondingIp)) {
+                HCCL_INFO("[ResolveEidToPrimaryIp] resolved bonding EID to primary IP: %s",
+                    info.ipAddress.Describe().c_str());
+                return IpAddressToCommAddr(info.ipAddress, commAddr);
+            }
+        }
+    } catch (...) {
+        HCCL_INFO("[ResolveEidToPrimaryIp] EID resolution failed (URMA not ready?), keeping original EID.");
+    }
+    return HCCL_SUCCESS;
+}
+
 HcclResult CommProtocolToLinkProtocol(CommProtocol commProtocol, Hccl::LinkProtocol &linkProtocol)
 {
     switch (commProtocol) {

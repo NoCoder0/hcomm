@@ -22,6 +22,7 @@ namespace hcomm {
 
 HcclResult CommAddrToIpAddress(const CommAddr &commAddr, Hccl::IpAddress &ipAddr);
 HcclResult IpAddressToCommAddr(const Hccl::IpAddress &ipAddr, CommAddr &commAddr);
+HcclResult ResolveEidToPrimaryIp(CommAddr &commAddr, uint32_t devPhyId);
 HcclResult CommProtocolToLinkProtocol(CommProtocol commProtocol, Hccl::LinkProtocol &linkProtocol);
 HcclResult CommAddrTypeToHcclAddressType(CommAddrType commAddrType, HcclAddressType &hcclAddressType);
 Hccl::LinkData BuildDefaultLinkData();
