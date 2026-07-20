@@ -198,12 +198,6 @@ HcclResult HostCpuUrmaChannel::Init()
 {
     devicePhyId_ = kHostResourceId;
     CHK_RET(ParseInputParam());
-
-    // bonding EID 转 IPv6 是虚拟地址，跨主机 TCP 不可达；
-    // 在 BuildSocket / BuildConnection 之前将 bonding EID 解析为物理端口 primary EID IP
-    (void)hcomm::ResolveEidToPrimaryIp(localEp_.commAddr, devicePhyId_);
-    (void)hcomm::ResolveEidToPrimaryIp(remoteEp_.commAddr, devicePhyId_);
-
     if (channelDesc_.role != HCOMM_SOCKET_ROLE_CLIENT) {
         CHK_RET(StartListen());
     }

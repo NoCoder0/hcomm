@@ -13,7 +13,6 @@
 #include "log.h"
 #include "urma_mem.h"
 #include "adapter_rts_common.h"
-#include "orion_adpt_utils.h"
 #include "server_socket_manager.h"
 #include "hccp_peer_manager.h"
 #include "orion_adapter_hccp.h"
@@ -70,16 +69,32 @@ HcclResult CpuUrmaEndpoint::Init()
 
 HcclResult CpuUrmaEndpoint::ServerSocketListen(const uint32_t port)
 {
+    Hccl::IpAddress ipAddr{};
+    CHK_RET(CommAddrToIpAddress(endpointDesc_.commAddr, ipAddr));
+
     s32 devId = 0;
     CHK_RET(hrtGetDevice(&devId));
     u32 devPhyId = 0;
     CHK_RET(hrtGetDevicePhyIdByIndex(devId, devPhyId));
 
     // bonding EID 转出的虚拟 IPv6 跨主机 TCP 不可达，尝试用物理端口 primary EID 的 IP
-    (void)ResolveEidToPrimaryIp(endpointDesc_.commAddr, devPhyId);
-
-    Hccl::IpAddress ipAddr{};
-    CHK_RET(CommAddrToIpAddress(endpointDesc_.commAddr, ipAddr));
+    // 取代。HrtRaGetDevEidInfoList 返回设备上所有 EID 的 IP 列表，取首个与 bonding 不同的。
+    if (endpointDesc_.commAddr.type == COMM_ADDR_TYPE_EID) {
+        try {
+            Hccl::HRaInfo raInfo(Hccl::HrtNetworkMode::PEER, devPhyId);
+            auto eidInfoList = Hccl::HrtRaGetDevEidInfoList(raInfo);
+            for (const auto &info : eidInfoList) {
+                if (!(info.ipAddress == ipAddr)) {
+                    HCCL_INFO("[CpuUrmaEndpoint::%s] resolved bonding EID to primary IP: %s",
+                        __func__, info.ipAddress.Describe().c_str());
+                    ipAddr = info.ipAddress;
+                    break;
+                }
+            }
+        } catch (...) {
+            // URMA 未初始化或查询失败，维持原始 IP
+        }
+    }
 
     Hccl::DevNetPortType type = Hccl::DevNetPortType(Hccl::ConnectProtoType::UB);
     Hccl::PortData localPort = Hccl::PortData(devPhyId, type, 0, ipAddr);
@@ -95,15 +110,26 @@ HcclResult CpuUrmaEndpoint::ServerSocketListen(const uint32_t port)
 
 inline HcclResult CpuUrmaEndpoint::ServerSocketStopListenImpl(const uint32_t port)
 {
+    Hccl::IpAddress ipAddr{};
+    CHK_RET(CommAddrToIpAddress(endpointDesc_.commAddr, ipAddr));
+
     s32 devId = 0;
     CHK_RET(hrtGetDevice(&devId));
     u32 devPhyId = 0;
     CHK_RET(hrtGetDevicePhyIdByIndex(devId, devPhyId));
 
-    (void)ResolveEidToPrimaryIp(endpointDesc_.commAddr, devPhyId);
-
-    Hccl::IpAddress ipAddr{};
-    CHK_RET(CommAddrToIpAddress(endpointDesc_.commAddr, ipAddr));
+    if (endpointDesc_.commAddr.type == COMM_ADDR_TYPE_EID) {
+        try {
+            Hccl::HRaInfo raInfo(Hccl::HrtNetworkMode::PEER, devPhyId);
+            auto eidInfoList = Hccl::HrtRaGetDevEidInfoList(raInfo);
+            for (const auto &info : eidInfoList) {
+                if (!(info.ipAddress == ipAddr)) {
+                    ipAddr = info.ipAddress;
+                    break;
+                }
+            }
+        } catch (...) {}
+    }
 
     Hccl::DevNetPortType type = Hccl::DevNetPortType(Hccl::ConnectProtoType::UB);
     Hccl::PortData localPort = Hccl::PortData(devPhyId, type, 0, ipAddr);
@@ -120,15 +146,13 @@ HcclResult CpuUrmaEndpoint::ServerSocketStopListen(const uint32_t port)
 HcclResult CpuUrmaEndpoint::ServerSocketGetListenPort(uint32_t *port)
 {
     std::lock_guard<std::mutex> lock(portMutex_);
+    Hccl::IpAddress localIpAddr{};
+    CHK_RET(CommAddrToIpAddress(endpointDesc_.commAddr, localIpAddr));
+
     s32 deviceId = 0;
     CHK_RET(hrtGetDevice(&deviceId));
     u32 devicePhyId = 0;
     CHK_RET(hrtGetDevicePhyIdByIndex(deviceId, devicePhyId));
-
-    (void)ResolveEidToPrimaryIp(endpointDesc_.commAddr, devicePhyId);
-
-    Hccl::IpAddress localIpAddr{};
-    CHK_RET(CommAddrToIpAddress(endpointDesc_.commAddr, localIpAddr));
 
     Hccl::DevNetPortType portType = Hccl::DevNetPortType(Hccl::ConnectProtoType::UB);
     Hccl::PortData portData = Hccl::PortData(devicePhyId, portType, 0, localIpAddr);
