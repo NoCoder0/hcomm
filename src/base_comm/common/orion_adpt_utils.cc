@@ -17,7 +17,7 @@
 #include "tp_manager.h"
 #include "topo_common_types.h"
 #include "virtual_topo.h"
-#include "dl_urma_function.h"
+#include "rdma_service/ctx/dl_urma_function.h"
 
 namespace hcomm {
 
