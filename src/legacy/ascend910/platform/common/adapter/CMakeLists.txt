@@ -15,6 +15,7 @@ set(src_list
     adapter_hccp.cc
     adapter_verbs.cc
     adapter_trace.cc
+    host_mode_detector.cc
 )
 
 if(TARGET hccl_plf)
@@ -30,6 +31,7 @@ if(TARGET hccd)
         adapter_rts.cc
         adapter_tdt.cc
         adapter_verbs.cc
+        host_mode_detector.cc
     )
 endif()
 
