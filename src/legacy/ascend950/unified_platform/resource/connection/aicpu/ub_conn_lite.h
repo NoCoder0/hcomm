@@ -24,6 +24,24 @@
 namespace Hccl {
 
 enum class SlicePosition { ONLY = 0, FIRST = 1, MIDDLE = 2, LAST = 3 };
+
+struct UbBatchWqeTiming {
+    static constexpr u16 SAMPLE_STRIDE = 64;
+
+    u64 sampleCount{0};
+    u64 timerProbeNs{0};
+    u64 slotInitNs{0};
+    u64 remoteNs{0};
+    u64 localOrderNs{0};
+    u64 sqWriteNs{0};
+    u64 stepStartNs{0};
+
+    void Reset();
+    bool Begin(u16 currentPi);
+    void Record(u64 &stageNs);
+    u64 Average(u64 stageNs) const;
+};
+
 struct UbConnLiteParam {
     u32 dieId;
     u32 funcId;
@@ -100,6 +118,12 @@ public:
                            const SqeConfigLite &cfg, const StreamLite &stream, ConnLiteOperationOut &out) override;
     void BatchOneSidedWrite(const vector<RmaBufSliceLite> &loc, const vector<RmtRmaBufSliceLite> &rmt,
                             const SqeConfigLite &cfg, const StreamLite &stream, ConnLiteOperationOut &out) override;
+
+    const UbBatchWqeTiming &GetBatchWqeTiming() const
+    {
+        return batchWqeTiming_;
+    }
+
 private:
     u16  pi{0};
     u16  ci{0};
@@ -107,6 +131,7 @@ private:
     u32  ciDetourCount{0};
     u32  maxReadSize{0};
     u32  maxWriteSize{0};
+    UbBatchWqeTiming batchWqeTiming_{};
     void ProcessSlices(const RmaBufSliceLite &loc, const RmtRmaBufSliceLite &rmt, u32 maxSliceSize,
         std::function<void(const RmaBufSliceLite &, const RmtRmaBufSliceLite &, SlicePosition)> processOneSlice,
         DataType dataType = DataType::INVALID) const;

@@ -16,6 +16,7 @@
 #include "string_util.h"
 #include "binary_stream.h"
 #include "data_type.h"
+#include "sal.h"
 
 constexpr u32 MAX_LOG_TIMEOUT_MS        = 500;
 namespace Hccl {
@@ -38,6 +39,36 @@ static std::map<DataType, u32> g_ubmaDataTypeMap
        {DataType::BFP16, 0x8},  {DataType::BF16_SAT, 0x9}};
 
 static std::map<ReduceOp, u32> g_ubmaDataOpMap = {{ReduceOp::SUM, 0xA}, {ReduceOp::MAX, 0x8}, {ReduceOp::MIN, 0x9}};
+
+void UbBatchWqeTiming::Reset()
+{
+    *this = {};
+}
+
+bool UbBatchWqeTiming::Begin(u16 currentPi)
+{
+    if ((currentPi & (SAMPLE_STRIDE - 1)) != 0) {
+        return false;
+    }
+
+    ++sampleCount;
+    const u64 probeStartNs = GetCurAicpuTimestamp();
+    stepStartNs = GetCurAicpuTimestamp();
+    timerProbeNs += stepStartNs - probeStartNs;
+    return true;
+}
+
+void UbBatchWqeTiming::Record(u64 &stageNs)
+{
+    const u64 nowNs = GetCurAicpuTimestamp();
+    stageNs += nowNs - stepStartNs;
+    stepStartNs = nowNs;
+}
+
+u64 UbBatchWqeTiming::Average(u64 stageNs) const
+{
+    return sampleCount == 0 ? 0 : stageNs / sampleCount;
+}
 
 void UbConnLite::FillCommSqe(UdmaSqeCommon *sqe, const RmtRmaBufSliceLite &rmt, const SqeConfigLite &cfg, u32 opCode,
                              SlicePosition slicePos)
@@ -496,6 +527,7 @@ void UbConnLite::FillBatchOneWqe(const RmaBufSliceLite &loc, const RmtRmaBufSlic
                                  bool isLastWqe, u32 opCode, const StreamLite &stream)
 {
     (void)stream;
+    const bool recordTiming = batchWqeTiming_.Begin(pi);
 
     // pi is the u16 doorbell value; sqOffset only selects the ring slot.
     u32 sqOffset = pi % sqDepth_;
@@ -507,7 +539,15 @@ void UbConnLite::FillBatchOneWqe(const RmaBufSliceLite &loc, const RmtRmaBufSlic
     UdmaSqeWrite sqe{};
     sqe.comm.inlineEn = 0;
     const SlicePosition slicePos = isLastWqe ? SlicePosition::LAST : SlicePosition::MIDDLE;
+    if (recordTiming) {
+        batchWqeTiming_.Record(batchWqeTiming_.slotInitNs);
+    }
+
     FillCommSqe(&(sqe.comm), rmt, cfg, opCode, slicePos);
+    if (recordTiming) {
+        batchWqeTiming_.Record(batchWqeTiming_.remoteNs);
+    }
+
     sqe.comm.owner = (sqOffset == (sqDepth_ - 1)) ? 1 : 0;
     FillLocalSgeSqe(&(sqe.u.sge), loc);
 
@@ -516,6 +556,9 @@ void UbConnLite::FillBatchOneWqe(const RmaBufSliceLite &loc, const RmtRmaBufSlic
     }
 
     CustomizeSqeByOneSidedComm(&(sqe.comm), cfg, isLastWqe);
+    if (recordTiming) {
+        batchWqeTiming_.Record(batchWqeTiming_.localOrderNs);
+    }
 
     u8 *va = reinterpret_cast<u8 *>(sqVa_ + sqOffset * SQE_SIZE_64);
     if (dwqeCacheLocked_ == false) {
@@ -528,6 +571,9 @@ void UbConnLite::FillBatchOneWqe(const RmaBufSliceLite &loc, const RmtRmaBufSlic
         }
     }
     pi = pi + 1;
+    if (recordTiming) {
+        batchWqeTiming_.Record(batchWqeTiming_.sqWriteNs);
+    }
 }
 
 void UbConnLite::BatchProcessOneSlice(const RmaBufSliceLite &loc, const RmtRmaBufSliceLite &rmt, const SqeConfigLite &cfg,
@@ -580,6 +626,7 @@ void UbConnLite::BatchCommDataProcess(const vector<RmaBufSliceLite> &loc, const 
 void UbConnLite::BatchOneSidedRead(const vector<RmaBufSliceLite> &loc, const vector<RmtRmaBufSliceLite> &rmt,
                                    const SqeConfigLite &cfg, const StreamLite &stream, ConnLiteOperationOut &out)
 {
+    batchWqeTiming_.Reset();
     const u16 startPi = pi;
     const u32 startPiDetourCount = piDetourCount;
     const u64 sliceNum = loc.size();

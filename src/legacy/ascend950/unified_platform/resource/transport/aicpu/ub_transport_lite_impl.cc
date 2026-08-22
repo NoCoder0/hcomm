@@ -938,11 +938,17 @@ HcclResult UbTransportLiteImpl::ExecuteBatchRead(
             return HCCL_E_INTERNAL);
     }
     const u64 batchEndNs = GetCurAicpuTimestamp();
+    const auto &wqeTiming = static_cast<UbConnLite *>(connVec[0])->GetBatchWqeTiming();
     HCCL_ERROR("[TEMP_TIMING][%s] descNum[%u] externalFence[%u] totalBytes[%llu] prepareNs[%llu] "
-               "wqeBuildNs[%llu] buildDbTaskNs[%llu] profilingNs[%llu] totalNs[%llu].",
+               "wqeBuildNs[%llu] buildDbTaskNs[%llu] profilingNs[%llu] totalNs[%llu] "
+               "wqeSampleStride[%u] wqeSamples[%llu] timerProbeAvgNs[%llu] slotInitAvgNs[%llu] "
+               "remoteAvgNs[%llu] localOrderAvgNs[%llu] sqWriteAvgNs[%llu].",
         __func__, transferDescNum, static_cast<u32>(cfg.externalFenceCompletion && !cfg.userConfig), totalBytes,
         prepareEndNs - batchStartNs, wqeBuildEndNs - wqeBuildStartNs, buildDbTaskEndNs - buildDbTaskStartNs,
-        batchEndNs - profilingStartNs, batchEndNs - batchStartNs);
+        batchEndNs - profilingStartNs, batchEndNs - batchStartNs, UbBatchWqeTiming::SAMPLE_STRIDE,
+        wqeTiming.sampleCount, wqeTiming.Average(wqeTiming.timerProbeNs), wqeTiming.Average(wqeTiming.slotInitNs),
+        wqeTiming.Average(wqeTiming.remoteNs), wqeTiming.Average(wqeTiming.localOrderNs),
+        wqeTiming.Average(wqeTiming.sqWriteNs));
     return HCCL_SUCCESS;
 }
 
