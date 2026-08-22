@@ -167,6 +167,13 @@ private:
 
     bool IsReportTask();
 
+    HcclResult ExecuteBatchRead(
+        StreamLite *streamLitePtr, const HcommBatchTransferDesc *transferDescs, uint32_t transferDescNum);
+    HcclResult PrepareBatchRead(const HcommBatchTransferDesc *transferDescs, uint32_t transferDescNum,
+        std::vector<RmaBufSliceLite> &locSlices, std::vector<RmtRmaBufSliceLite> &rmtSlices, u64 &totalBytes);
+    bool FindLocReadSlice(u64 addr, u64 size, RmaBufSliceLite &slice) const;
+    bool FindRmtReadSlice(u64 addr, u64 size, RmtRmaBufSliceLite &slice) const;
+
     void ExecProfiling(const std::vector<RmaBufferLite> &loc, const std::vector<Buffer> &rmt, 
                  const std::vector<BaseTransportLiteImpl::TransferOp> &transferOp, const StreamLite &stream, u32 taskId);
 

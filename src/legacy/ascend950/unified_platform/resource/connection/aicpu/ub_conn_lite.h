@@ -85,7 +85,7 @@ public:
                                const RmtRmaBufSliceLite &rmt, const SqeConfigLite &cfg, const StreamLite &stream,
                                ConnLiteOperationOut &out, const RmtRmaBufSliceLite &notify, u64 notifyData) override;
 
-    void CustomizeSqeByOneSidedComm(UdmaSqeCommon *sqe, bool isLastWqe) const;
+    void CustomizeSqeByOneSidedComm(UdmaSqeCommon *sqe, const SqeConfigLite &cfg, bool isLastWqe) const;
 
     void FillBatchOneWqe(const RmaBufSliceLite &loc, const RmtRmaBufSliceLite &rmt, const SqeConfigLite &cfg,
                          bool isLastWqe, u32 opCode, const StreamLite &stream);

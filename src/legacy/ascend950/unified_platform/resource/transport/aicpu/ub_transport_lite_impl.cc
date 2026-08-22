@@ -24,6 +24,8 @@ constexpr u32 UB_STRONG_ORDER      = 0X02; // Strong Order表示当前SQE有保�
 constexpr u32 UB_NO_COMPLETION     = 0;    // 表示当前报文和前面报文没有completion序要求，报文对应的CQE可以乱序上报
 constexpr u32 UB_COMPLETION        = 1;    // 表示当前报文和前面报文有completion序要求，报文对应的CQE需要保序上报
 constexpr u8  UB_FENCE_ENABLED     = 1;    // fence使能
+// Internal opt-in: "MFEX" means a later strong fence/read joins all relaxed READ WQEs.
+constexpr u8 HCOMM_BATCH_EXTERNAL_FENCE_MAGIC[] = {'M', 'F', 'E', 'X'};
 UbTransportLiteImpl::UbTransportLiteImpl(
     std::vector<char> &uniqueId, std::function<void(u32 streamId, u32 taskId, const TaskParam &taskParam)> callback)
 {
@@ -306,6 +308,50 @@ HcclResult UbTransportLiteImpl::BuildLocRmaBufferLite(const uintptr_t addr, cons
     return HCCL_SUCCESS;
 }
 
+bool UbTransportLiteImpl::FindLocReadSlice(u64 addr, u64 size, RmaBufSliceLite &slice) const
+{
+    if (locBufferMap.empty()) {
+        return false;
+    }
+    auto it = locBufferMap.upper_bound(addr);
+    while (it != locBufferMap.begin()) {
+        --it;
+        const LocUbBufLite &buffer = it->second;
+        Buffer iterBuf(buffer.addr, buffer.size);
+        if (!iterBuf.Contains(addr, size)) {
+            continue;
+        }
+        slice = RmaBufSliceLite(addr, size, 0, buffer.tokenId);
+        return true;
+    }
+
+    const LocUbBufLite &buffer = locBufferMap.begin()->second;
+    HCCL_WARNING("[%s] addr[0x%llx], size[0x%llx] not in any range of locBufferMap, use the first in map "
+                 "addr[0x%llx] size[0x%llx]",
+        __func__, addr, size, buffer.addr, buffer.size);
+    slice = RmaBufSliceLite(addr, size, 0, buffer.tokenId);
+    return true;
+}
+
+bool UbTransportLiteImpl::FindRmtReadSlice(u64 addr, u64 size, RmtRmaBufSliceLite &slice) const
+{
+    auto it = rmtBufferMap.upper_bound(addr);
+    if (it == rmtBufferMap.begin()) {
+        return false;
+    }
+    --it;
+    const RmtUbBufLite &buffer = it->second;
+    if (addr < buffer.addr || size > buffer.size) {
+        return false;
+    }
+    const u64 offset = addr - buffer.addr;
+    if (offset > buffer.size - size) {
+        return false;
+    }
+    slice = RmtRmaBufSliceLite(addr, size, 0, buffer.tokenId, buffer.tokenValue, UINT32_MAX);
+    return true;
+}
+
 void UbTransportLiteImpl::ClearConnOut()
 {
     wqeData.clear();
@@ -343,6 +389,7 @@ void UbTransportLiteImpl::Post(u32 index, const StreamLite &stream)
         cfg.cqeEn     = true;
         cfg.placeOdr  = UB_STRONG_ORDER;
         cfg.compOrder = UB_COMPLETION;
+        cfg.userConfig = true;
     }
     u32           inlineData = 1;
 
@@ -571,9 +618,13 @@ void UbTransportLiteImpl::WriteReduce(const RmaBufferLite &loc, const Buffer &rm
                             locRmaBufSlicelite.GetSize(), reduceIn, stream, taskId);
 }
 
-void UbTransportLiteImpl::ExecProfiling(const std::vector<RmaBufferLite> &loc, const std::vector<Buffer> &rmt, 
-                const std::vector<BaseTransportLiteImpl::TransferOp> &transferOp, const StreamLite &stream, u32 taskId)
+void UbTransportLiteImpl::ExecProfiling(const std::vector<RmaBufferLite> &loc, const std::vector<Buffer> &rmt,
+    const std::vector<BaseTransportLiteImpl::TransferOp> &transferOp, const StreamLite &stream, u32 taskId)
 {
+    if (!IsReportTask()) {
+        return;
+    }
+
     u32 insNum = loc.size();
     u64 totalSize = 0;
     for (u32 i = 0; i < insNum; i++) {
@@ -594,10 +645,14 @@ void UbTransportLiteImpl::ExecProfiling(const std::vector<RmaBufferLite> &loc, c
     }
 }
 
-void UbTransportLiteImpl::ExecProfilingAll(const std::vector<RmaBufferLite> &loc, const std::vector<Buffer> &rmt, 
-                const std::vector<BaseTransportLiteImpl::TransferOp> &transferOp, const StreamLite &stream, u32 taskId,
-                const std::vector<uint32_t> &notifyIdxs)
+void UbTransportLiteImpl::ExecProfilingAll(const std::vector<RmaBufferLite> &loc, const std::vector<Buffer> &rmt,
+    const std::vector<BaseTransportLiteImpl::TransferOp> &transferOp, const StreamLite &stream, u32 taskId,
+    const std::vector<uint32_t> &notifyIdxs)
 {
+    if (!IsReportTask()) {
+        return;
+    }
+
     u32 insNum = loc.size();
     u64 totalSize = 0;
     for (u32 i = 0; i < insNum; i++) {
@@ -648,6 +703,7 @@ void UbTransportLiteImpl::BatchTransfer(const std::vector<RmaBufferLite> &loc, c
         cfg.cqeEn     = (i == insNum - 1) ? true : false; // 返回最后一个sqe的cqe
         cfg.placeOdr  = UB_RELAX_ORDER;
         cfg.compOrder = UB_NO_COMPLETION;
+        cfg.userConfig = true;
 
         auto localBuffer  = GetRmaBufSlicelite(loc[i]);
         auto remoteBuffer = GetRmtRmaBufSliceLite(rmt[i]);
@@ -783,9 +839,120 @@ static HcclResult ParseData(const HcommBatchTransferDesc &transferDesc, void* &r
     return HCCL_SUCCESS;
 }
 constexpr uint32_t       NOTIFYIDX_INVALID_VALUE  = 0xFFFFFFFF; // NOTIFY idex非法值
+
+static bool IsPureReadBatch(const HcommBatchTransferDesc *transferDescs, uint32_t transferDescNum)
+{
+    for (uint32_t i = 0; i < transferDescNum; ++i) {
+        if (transferDescs[i].transType != HCOMM_TRANSFER_TYPE_READ) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool HasExternalFenceCompletion(const HcommBatchTransferDesc *transferDescs, uint32_t transferDescNum)
+{
+    if (transferDescNum == 0) {
+        return false;
+    }
+    for (uint32_t i = 0; i < transferDescNum; ++i) {
+        for (size_t byte = 0; byte < sizeof(HCOMM_BATCH_EXTERNAL_FENCE_MAGIC); ++byte) {
+            if (transferDescs[i].reserved[byte] != HCOMM_BATCH_EXTERNAL_FENCE_MAGIC[byte]) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+HcclResult UbTransportLiteImpl::PrepareBatchRead(const HcommBatchTransferDesc *transferDescs, uint32_t transferDescNum,
+    std::vector<RmaBufSliceLite> &locSlices, std::vector<RmtRmaBufSliceLite> &rmtSlices, u64 &totalBytes)
+{
+    locSlices.reserve(transferDescNum);
+    rmtSlices.reserve(transferDescNum);
+    totalBytes = 0;
+    for (uint32_t i = 0; i < transferDescNum; ++i) {
+        const auto &read = transferDescs[i].transferInfo.read;
+        if (read.dst == nullptr || read.src == nullptr) {
+            HCCL_ERROR("[%s] invalid READ descriptor index[%u], remote[%p], local[%p], len[0x%llx].", __func__, i,
+                read.src, read.dst, read.len);
+            return HCCL_E_PTR;
+        }
+
+        RmaBufSliceLite locSlice(0, 0, 0, 0);
+        RmtRmaBufSliceLite rmtSlice(0, 0, 0, 0, 0, UINT32_MAX);
+        if (!FindLocReadSlice(reinterpret_cast<u64>(read.dst), read.len, locSlice)) {
+            HCCL_ERROR("[%s] local READ registration lookup failed, index[%u], local[%p], len[0x%llx], mapSize[%llu].",
+                __func__, i, read.dst, read.len, static_cast<u64>(locBufferMap.size()));
+            return HCCL_E_INTERNAL;
+        }
+        if (!FindRmtReadSlice(reinterpret_cast<u64>(read.src), read.len, rmtSlice)) {
+            HCCL_ERROR("[%s] remote READ registration lookup failed, index[%u], remote[%p], len[0x%llx], "
+                       "mapSize[%llu].",
+                __func__, i, read.src, read.len, static_cast<u64>(rmtBufferMap.size()));
+            return HCCL_E_INTERNAL;
+        }
+        if (read.len > UINT64_MAX - totalBytes) {
+            HCCL_ERROR("[%s] READ byte count overflow at index[%u], remote[%p], local[%p], len[0x%llx].", __func__, i,
+                read.src, read.dst, read.len);
+            return HCCL_E_PARA;
+        }
+        locSlices.push_back(locSlice);
+        rmtSlices.push_back(rmtSlice);
+        totalBytes += read.len;
+    }
+    return HCCL_SUCCESS;
+}
+
+HcclResult UbTransportLiteImpl::ExecuteBatchRead(
+    StreamLite *streamLitePtr, const HcommBatchTransferDesc *transferDescs, uint32_t transferDescNum)
+{
+    const u64 batchStartNs = GetCurAicpuTimestamp();
+    std::vector<RmaBufSliceLite> locSlices;
+    std::vector<RmtRmaBufSliceLite> rmtSlices;
+    u64 totalBytes = 0;
+    HcclResult ret = HCCL_SUCCESS;
+    EXCEPTION_CATCH(ret = PrepareBatchRead(transferDescs, transferDescNum, locSlices, rmtSlices, totalBytes),
+        return HCCL_E_INTERNAL);
+    CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[%s] failed to prepare pure READ batch.", __func__), ret);
+    const u64 prepareEndNs = GetCurAicpuTimestamp();
+
+    SqeConfigLite cfg;
+    SetFenceConfig(cfg);
+    cfg.externalFenceCompletion = HasExternalFenceCompletion(transferDescs, transferDescNum);
+    const u64 wqeBuildStartNs = GetCurAicpuTimestamp();
+    EXCEPTION_CATCH(
+        connVec[0]->BatchOneSidedRead(locSlices, rmtSlices, cfg, *streamLitePtr, connOut), return HCCL_E_INTERNAL);
+    const u64 wqeBuildEndNs = GetCurAicpuTimestamp();
+    const u64 buildDbTaskStartNs = GetCurAicpuTimestamp();
+    EXCEPTION_CATCH(
+        BuildUbDbSendTask(*streamLitePtr, connVec[0]->GetUbJettyLiteId(), connOut.pi), return HCCL_E_INTERNAL);
+    const u64 buildDbTaskEndNs = GetCurAicpuTimestamp();
+
+    const u64 profilingStartNs = GetCurAicpuTimestamp();
+    if (IsReportTask()) {
+        const u32 taskId = streamLitePtr->GetRtsq()->GetTaskId();
+        EXCEPTION_CATCH(ProfilingProcess(reinterpret_cast<void *>(locSlices.back().GetAddr()),
+                            reinterpret_cast<void *>(rmtSlices.back().GetAddr()), totalBytes, *streamLitePtr,
+                            DmaOp::HCCL_DMA_READ, taskId),
+            return HCCL_E_INTERNAL);
+    }
+    const u64 batchEndNs = GetCurAicpuTimestamp();
+    HCCL_ERROR("[TEMP_TIMING][%s] descNum[%u] externalFence[%u] totalBytes[%llu] prepareNs[%llu] "
+               "wqeBuildNs[%llu] buildDbTaskNs[%llu] profilingNs[%llu] totalNs[%llu].",
+        __func__, transferDescNum, static_cast<u32>(cfg.externalFenceCompletion && !cfg.userConfig), totalBytes,
+        prepareEndNs - batchStartNs, wqeBuildEndNs - wqeBuildStartNs, buildDbTaskEndNs - buildDbTaskStartNs,
+        batchEndNs - profilingStartNs, batchEndNs - batchStartNs);
+    return HCCL_SUCCESS;
+}
+
 HcclResult UbTransportLiteImpl::ExecuteBatchTransfer(StreamLite *streamLitePtr,
     const HcommBatchTransferDesc *transferDescs, uint32_t transferDescNum)
 {
+    if (transferDescNum > 0 && IsPureReadBatch(transferDescs, transferDescNum)) {
+        return ExecuteBatchRead(streamLitePtr, transferDescs, transferDescNum);
+    }
+
     const u64 executeStartNs = GetCurAicpuTimestamp();
     std::vector<Hccl::RmaBufferLite> locSlices;
     std::vector<Hccl::Buffer> rmtSlices;
@@ -861,6 +1028,7 @@ void UbTransportLiteImpl::BatchTransferAll(const std::vector<RmaBufferLite> &loc
         cfg.cqeEn     = (i == insNum - 1) ? true : false; // 返回最后一个sqe的cqe
         cfg.placeOdr  = (i == insNum - 1) ? UB_STRONG_ORDER : UB_RELAX_ORDER; // 最后一个要求保序
         cfg.compOrder = (i == insNum - 1) ? UB_COMPLETION : UB_NO_COMPLETION;
+        cfg.userConfig = true;
 
         if (transferOp[i].transType == TransferType::NOTIFY_RECORD) { // notifyRecord操作没有loc/rmt，因此单独处理
             if (notifyIdxs[i] == 1) { // PostFin场景
@@ -893,19 +1061,19 @@ void UbTransportLiteImpl::BatchTransferAll(const std::vector<RmaBufferLite> &loc
         }
     }
     const u64 wqeBuildEndNs = GetCurAicpuTimestamp();
-    const u64 launchTaskStartNs = GetCurAicpuTimestamp();
+    const u64 buildDbTaskStartNs = GetCurAicpuTimestamp();
     BuildUbDbSendTask(stream, connVec[0]->GetUbJettyLiteId(), connOut.pi); // 约束使用一批wqe的个数不会导致反压
-    const u64 launchTaskEndNs = GetCurAicpuTimestamp();
+    const u64 buildDbTaskEndNs = GetCurAicpuTimestamp();
 
     const u64 profilingStartNs = GetCurAicpuTimestamp();
     ExecProfilingAll(loc, rmt, transferOp, stream, taskId, notifyIdxs);
     const u64 batchEndNs = GetCurAicpuTimestamp();
     const u64 wqeBuildNs = wqeBuildEndNs - wqeBuildStartNs;
-    const u64 launchTaskNs = launchTaskEndNs - launchTaskStartNs;
+    const u64 buildDbTaskNs = buildDbTaskEndNs - buildDbTaskStartNs;
     const u64 profilingNs = batchEndNs - profilingStartNs;
     // Temporary diagnostic. Keep one aggregate log outside the WQE loop to limit measurement disturbance.
-    HCCL_ERROR("[TEMP_TIMING][%s] insNum[%u] wqeBuildNs[%llu] launchTaskNs[%llu] profilingNs[%llu] totalNs[%llu].",
-        __func__, insNum, wqeBuildNs, launchTaskNs, profilingNs, batchEndNs - batchStartNs);
+    HCCL_ERROR("[TEMP_TIMING][%s] insNum[%u] wqeBuildNs[%llu] buildDbTaskNs[%llu] profilingNs[%llu] totalNs[%llu].",
+        __func__, insNum, wqeBuildNs, buildDbTaskNs, profilingNs, batchEndNs - batchStartNs);
 }
 
 void UbTransportLiteImpl::WriteWithNotify(const RmaBufferLite &loc, const Buffer &rmt, const WithNotifyIn &withNotify,
@@ -1051,6 +1219,7 @@ void UbTransportLiteImpl::SetFenceConfig(SqeConfigLite &cfg)
         cfg.fence = UB_FENCE_ENABLED;
         cfg.placeOdr  = UB_STRONG_ORDER;
         cfg.compOrder = UB_COMPLETION;
+        cfg.userConfig = true;
     }
     fence_ = false;
 }

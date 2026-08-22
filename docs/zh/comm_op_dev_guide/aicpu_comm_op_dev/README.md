@@ -8,3 +8,4 @@
 - [任务编排](task_sched.md)  
 - [算子下发](op_dispatch.md)  
 - [编译部署](build_deploy.md)  
+- [AICPU UB 离散小包 Batch READ 性能优化说明](batch_read_performance_optimization.md)
