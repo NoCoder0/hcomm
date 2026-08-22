@@ -942,13 +942,15 @@ HcclResult UbTransportLiteImpl::ExecuteBatchRead(
     HCCL_ERROR("[TEMP_TIMING][%s] descNum[%u] externalFence[%u] totalBytes[%llu] prepareNs[%llu] "
                "wqeBuildNs[%llu] buildDbTaskNs[%llu] profilingNs[%llu] totalNs[%llu] "
                "wqeSampleStride[%u] wqeSamples[%llu] timerProbeAvgNs[%llu] slotInitAvgNs[%llu] "
-               "remoteAvgNs[%llu] localOrderAvgNs[%llu] sqWriteAvgNs[%llu].",
+               "remoteAvgNs[%llu] localOrderAvgNs[%llu] directSqWriteAvgNs[%llu] "
+               "bulkCopyCalls[%llu] bulkCopyWqes[%llu] bulkCopyAvgNs[%llu].",
         __func__, transferDescNum, static_cast<u32>(cfg.externalFenceCompletion && !cfg.userConfig), totalBytes,
         prepareEndNs - batchStartNs, wqeBuildEndNs - wqeBuildStartNs, buildDbTaskEndNs - buildDbTaskStartNs,
         batchEndNs - profilingStartNs, batchEndNs - batchStartNs, UbBatchWqeTiming::SAMPLE_STRIDE,
         wqeTiming.sampleCount, wqeTiming.Average(wqeTiming.timerProbeNs), wqeTiming.Average(wqeTiming.slotInitNs),
         wqeTiming.Average(wqeTiming.remoteNs), wqeTiming.Average(wqeTiming.localOrderNs),
-        wqeTiming.Average(wqeTiming.sqWriteNs));
+        wqeTiming.Average(wqeTiming.sqWriteNs), wqeTiming.bulkCopyCalls, wqeTiming.bulkCopyWqeCount,
+        wqeTiming.BulkCopyAverage());
     return HCCL_SUCCESS;
 }
 

@@ -32,6 +32,9 @@ constexpr u32 ADDR_BIT_LOW               = 0xffffffff;
 constexpr u32 UB_DMA_MAX_READ_WEITE_SIZE = 256 * 1024 * 1024; // Byte, UB协议一次传输的最大size
 constexpr u32 UB_RELAX_ORDER             = 0x1; // Relax Order表示当前SQE与后续Strong Order SQE有保序要求
 constexpr u32 UB_STRONG_ORDER            = 0x2; // Strong Order表示当前SQE有保序要求，该SQE不能超越前面的Relax Order SQE
+constexpr u32 BATCH_READ_WQE_COPY_CHUNK  = 32;
+
+static_assert(sizeof(UdmaSqeWrite) == SQE_SIZE_64, "UB READ WQE must occupy one SQ slot");
 
 static std::map<DataType, u32> g_ubmaDataTypeMap
     = {{DataType::INT8, 0x0},   {DataType::INT16, 0x1},   {DataType::INT32, 0x2}, {DataType::UINT8, 0x3},
@@ -68,6 +71,11 @@ void UbBatchWqeTiming::Record(u64 &stageNs)
 u64 UbBatchWqeTiming::Average(u64 stageNs) const
 {
     return sampleCount == 0 ? 0 : stageNs / sampleCount;
+}
+
+u64 UbBatchWqeTiming::BulkCopyAverage() const
+{
+    return bulkCopyWqeCount == 0 ? 0 : bulkCopyNs / bulkCopyWqeCount;
 }
 
 void UbConnLite::FillCommSqe(UdmaSqeCommon *sqe, const RmtRmaBufSliceLite &rmt, const SqeConfigLite &cfg, u32 opCode,
@@ -523,20 +531,10 @@ void UbConnLite::CustomizeSqeByOneSidedComm(UdmaSqeCommon *sqe, const SqeConfigL
     sqe->fence = strongTail ? 1 : 0;
 }
 
-void UbConnLite::FillBatchOneWqe(const RmaBufSliceLite &loc, const RmtRmaBufSliceLite &rmt, const SqeConfigLite &cfg,
-                                 bool isLastWqe, u32 opCode, const StreamLite &stream)
+void UbConnLite::FillBatchWqe(UdmaSqeWrite &sqe, const RmaBufSliceLite &loc, const RmtRmaBufSliceLite &rmt,
+                              const SqeConfigLite &cfg, bool isLastWqe, u32 opCode, u32 sqOffset, bool recordTiming)
 {
-    (void)stream;
-    const bool recordTiming = batchWqeTiming_.Begin(pi);
-
-    // pi is the u16 doorbell value; sqOffset only selects the ring slot.
-    u32 sqOffset = pi % sqDepth_;
-    if (sqOffset < sqDepth_ && (sqOffset + 1) >= sqDepth_) {
-        piDetourCount++;
-    }
-
-    // 写入wqe数据到out.data
-    UdmaSqeWrite sqe{};
+    sqe = {};
     sqe.comm.inlineEn = 0;
     const SlicePosition slicePos = isLastWqe ? SlicePosition::LAST : SlicePosition::MIDDLE;
     if (recordTiming) {
@@ -559,7 +557,20 @@ void UbConnLite::FillBatchOneWqe(const RmaBufSliceLite &loc, const RmtRmaBufSlic
     if (recordTiming) {
         batchWqeTiming_.Record(batchWqeTiming_.localOrderNs);
     }
+}
 
+void UbConnLite::FillBatchOneWqe(const RmaBufSliceLite &loc, const RmtRmaBufSliceLite &rmt, const SqeConfigLite &cfg,
+                                 bool isLastWqe, u32 opCode, const StreamLite &stream)
+{
+    (void)stream;
+    const bool recordTiming = batchWqeTiming_.Begin(pi);
+    const u32 sqOffset = pi % sqDepth_;
+    if ((sqOffset + 1) >= sqDepth_) {
+        piDetourCount++;
+    }
+
+    UdmaSqeWrite sqe{};
+    FillBatchWqe(sqe, loc, rmt, cfg, isLastWqe, opCode, sqOffset, recordTiming);
     u8 *va = reinterpret_cast<u8 *>(sqVa_ + sqOffset * SQE_SIZE_64);
     if (dwqeCacheLocked_ == false) {
         auto ret = memcpy_sp(va, SQE_SIZE_64, &sqe, sizeof(UdmaSqeWrite));
@@ -573,6 +584,80 @@ void UbConnLite::FillBatchOneWqe(const RmaBufSliceLite &loc, const RmtRmaBufSlic
     pi = pi + 1;
     if (recordTiming) {
         batchWqeTiming_.Record(batchWqeTiming_.sqWriteNs);
+    }
+}
+
+void UbConnLite::CopyBatchWqes(const UdmaSqeWrite *sqes, u32 wqeCount, u32 sqOffset)
+{
+    if (dwqeCacheLocked_) {
+        return;
+    }
+
+    const u32 copySize = wqeCount * SQE_SIZE_64;
+    u8 *va = reinterpret_cast<u8 *>(sqVa_ + sqOffset * SQE_SIZE_64);
+    const u64 copyStartNs = GetCurAicpuTimestamp();
+    const s32 ret = memcpy_sp(va, copySize, sqes, copySize);
+    batchWqeTiming_.bulkCopyNs += GetCurAicpuTimestamp() - copyStartNs;
+    batchWqeTiming_.bulkCopyWqeCount += wqeCount;
+    ++batchWqeTiming_.bulkCopyCalls;
+    if (UNLIKELY(ret != 0)) {
+        HCCL_ERROR("[%s] memcpy_sp failed, pi[%u], sqOffset[%u], sqDepth[%u], wqeCount[%u], copySize[%u], ret[%d]",
+            __func__, pi, sqOffset, sqDepth_, wqeCount, copySize, ret);
+        THROW<InternalException>(StringFormat("[%s] memcpy_sp failed, ret = %d", __func__, ret));
+    }
+}
+
+u32 UbConnLite::BuildAndCopySmallReadWqes(const vector<RmaBufSliceLite> &loc, const vector<RmtRmaBufSliceLite> &rmt,
+                                          const SqeConfigLite &cfg, u64 startIndex, UdmaSqeWrite *sqes, u32 capacity)
+{
+    const u32 sqOffset = pi % sqDepth_;
+    u32 wqeCount = capacity;
+    const u64 remaining = loc.size() - startIndex;
+    if (remaining < wqeCount) {
+        wqeCount = static_cast<u32>(remaining);
+    }
+    const u32 sqRemaining = sqDepth_ - sqOffset;
+    if (sqRemaining < wqeCount) {
+        wqeCount = sqRemaining;
+    }
+
+    u32 builtWqeCount = 0;
+    while (builtWqeCount < wqeCount && loc[startIndex + builtWqeCount].GetSize() <= maxReadSize) {
+        const u16 wqePi = static_cast<u16>(pi + builtWqeCount);
+        const bool isLastWqe = (startIndex + builtWqeCount + 1) == loc.size();
+        const bool recordTiming = batchWqeTiming_.Begin(wqePi);
+        FillBatchWqe(sqes[builtWqeCount], loc[startIndex + builtWqeCount], rmt[startIndex + builtWqeCount], cfg,
+            isLastWqe, UdmaSqOpcode::UDMA_OPC_READ, sqOffset + builtWqeCount, recordTiming);
+        ++builtWqeCount;
+    }
+    if (builtWqeCount == 0) {
+        return 0;
+    }
+
+    CopyBatchWqes(sqes, builtWqeCount, sqOffset);
+    if ((sqOffset + builtWqeCount) == sqDepth_) {
+        ++piDetourCount;
+    }
+    pi = static_cast<u16>(pi + builtWqeCount);
+    return builtWqeCount;
+}
+
+void UbConnLite::BatchExternalFenceRead(const vector<RmaBufSliceLite> &loc, const vector<RmtRmaBufSliceLite> &rmt,
+                                        const SqeConfigLite &cfg, const StreamLite &stream)
+{
+    UdmaSqeWrite sqes[BATCH_READ_WQE_COPY_CHUNK]{};
+    u64 index = 0;
+    while (index < loc.size()) {
+        const u32 builtWqeCount = BuildAndCopySmallReadWqes(loc, rmt, cfg, index, sqes, BATCH_READ_WQE_COPY_CHUNK);
+        if (builtWqeCount > 0) {
+            index += builtWqeCount;
+            continue;
+        }
+
+        const bool isLastSlice = index == (loc.size() - 1);
+        BatchProcessOneSlice(
+            loc[index], rmt[index], cfg, maxReadSize, isLastSlice, UdmaSqOpcode::UDMA_OPC_READ, stream);
+        ++index;
     }
 }
 
@@ -631,13 +716,17 @@ void UbConnLite::BatchOneSidedRead(const vector<RmaBufSliceLite> &loc, const vec
     const u32 startPiDetourCount = piDetourCount;
     const u64 sliceNum = loc.size();
     try {
-        for (u64 i = 0; i < sliceNum; ++i) {
-            const bool isLastSlice = i == sliceNum - 1;
-            if (loc[i].GetSize() <= maxReadSize) {
-                FillBatchOneWqe(loc[i], rmt[i], cfg, isLastSlice, UdmaSqOpcode::UDMA_OPC_READ, stream);
-            } else {
-                BatchProcessOneSlice(
-                    loc[i], rmt[i], cfg, maxReadSize, isLastSlice, UdmaSqOpcode::UDMA_OPC_READ, stream);
+        if (cfg.externalFenceCompletion && !cfg.userConfig) {
+            BatchExternalFenceRead(loc, rmt, cfg, stream);
+        } else {
+            for (u64 i = 0; i < sliceNum; ++i) {
+                const bool isLastSlice = i == sliceNum - 1;
+                if (loc[i].GetSize() <= maxReadSize) {
+                    FillBatchOneWqe(loc[i], rmt[i], cfg, isLastSlice, UdmaSqOpcode::UDMA_OPC_READ, stream);
+                } else {
+                    BatchProcessOneSlice(
+                        loc[i], rmt[i], cfg, maxReadSize, isLastSlice, UdmaSqOpcode::UDMA_OPC_READ, stream);
+                }
             }
         }
     } catch (...) {

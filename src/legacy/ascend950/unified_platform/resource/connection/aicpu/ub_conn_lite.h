@@ -34,12 +34,16 @@ struct UbBatchWqeTiming {
     u64 remoteNs{0};
     u64 localOrderNs{0};
     u64 sqWriteNs{0};
+    u64 bulkCopyNs{0};
+    u64 bulkCopyWqeCount{0};
+    u64 bulkCopyCalls{0};
     u64 stepStartNs{0};
 
     void Reset();
     bool Begin(u16 currentPi);
     void Record(u64 &stageNs);
     u64 Average(u64 stageNs) const;
+    u64 BulkCopyAverage() const;
 };
 
 struct UbConnLiteParam {
@@ -147,6 +151,13 @@ private:
     void FillCommSqeReduceInfo(UdmaSqeCommon &sqeComm, ReduceOp reduceOp, DataType dataType, u32 udfType = 0) const;
     void FillOneSqeWrite(const RmaBufSliceLite &loc, const RmtRmaBufSliceLite &rmt, const SqeConfigLite &cfg,
                          UdmaSqeWrite *sqe, UdmaSqOpcode opCode, SlicePosition slicePos);
+    void FillBatchWqe(UdmaSqeWrite &sqe, const RmaBufSliceLite &loc, const RmtRmaBufSliceLite &rmt,
+                      const SqeConfigLite &cfg, bool isLastWqe, u32 opCode, u32 sqOffset, bool recordTiming);
+    void CopyBatchWqes(const UdmaSqeWrite *sqes, u32 wqeCount, u32 sqOffset);
+    u32 BuildAndCopySmallReadWqes(const vector<RmaBufSliceLite> &loc, const vector<RmtRmaBufSliceLite> &rmt,
+                                  const SqeConfigLite &cfg, u64 startIndex, UdmaSqeWrite *sqes, u32 capacity);
+    void BatchExternalFenceRead(const vector<RmaBufSliceLite> &loc, const vector<RmtRmaBufSliceLite> &rmt,
+                                const SqeConfigLite &cfg, const StreamLite &stream);
     void MemorySetAndCopy(u8 *va, u32 sqeSize, void *sqe);
 };
 } // namespace Hccl
