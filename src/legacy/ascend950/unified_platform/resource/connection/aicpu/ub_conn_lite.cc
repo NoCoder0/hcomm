@@ -19,13 +19,6 @@
 #include "data_type.h"
 #include "sal.h"
 
-#ifndef HCOMM_AICPU_UB_WQE_COPY_MODE
-#define HCOMM_AICPU_UB_WQE_COPY_MODE 0
-#endif
-
-static_assert((HCOMM_AICPU_UB_WQE_COPY_MODE >= 0) && (HCOMM_AICPU_UB_WQE_COPY_MODE <= 2),
-              "HCOMM_AICPU_UB_WQE_COPY_MODE must be 0, 1, or 2");
-
 constexpr u32 MAX_LOG_TIMEOUT_MS        = 500;
 namespace Hccl {
 constexpr u32 ADDR_BIT_OFFSET            = 32;
@@ -41,30 +34,40 @@ constexpr u32 UB_DMA_MAX_READ_WEITE_SIZE = 256 * 1024 * 1024; // Byte, UB协议�
 constexpr u32 UB_RELAX_ORDER             = 0x1; // Relax Order表示当前SQE与后续Strong Order SQE有保序要求
 constexpr u32 UB_STRONG_ORDER            = 0x2; // Strong Order表示当前SQE有保序要求，该SQE不能超越前面的Relax Order SQE
 constexpr u32 UB_WQE_COPY_SAMPLE_STRIDE  = 64;
+constexpr u32 UB_WQE_COPY_MODE_MAX       = 2;
+constexpr char HCOMM_AICPU_UB_WQE_COPY_MODE_ENV[] = "HCOMM_AICPU_UB_WQE_COPY_MODE";
 
 static_assert(sizeof(UdmaSqeWrite) == 64, "UdmaSqeWrite must be 64 bytes");
 
-namespace {
-#if HCOMM_AICPU_UB_WQE_COPY_MODE == 0
-static inline s32 CopyBatchReadWqe(void *dst, const void *src)
+u32 GetWqeCopyModeFromEnv()
 {
-    return memcpy_sp(dst, SQE_SIZE_64, src, SQE_SIZE_64);
+    const std::string envValue = SalGetEnv(HCOMM_AICPU_UB_WQE_COPY_MODE_ENV);
+    if (envValue.empty() || envValue == "EmptyString") {
+        return 0;
+    }
+
+    u32 mode = 0;
+    if (SalStrToULong(envValue, HCCL_BASE_DECIMAL, mode) != HCCL_SUCCESS || mode > UB_WQE_COPY_MODE_MAX) {
+        HCCL_WARNING("[UbConnLite] env[%s] value[%s] is invalid, expected [0, 1, 2], use default mode[0]",
+                     HCOMM_AICPU_UB_WQE_COPY_MODE_ENV, envValue.c_str());
+        return 0;
+    }
+    return mode;
 }
-#elif HCOMM_AICPU_UB_WQE_COPY_MODE == 1
-static inline s32 CopyBatchReadWqe(void *dst, const void *src)
+
+static inline s32 CopyBatchReadWqe(void *dst, const void *src, u32 mode)
 {
-    (void)std::memcpy(dst, src, SQE_SIZE_64);
-    return 0;
-}
-#elif HCOMM_AICPU_UB_WQE_COPY_MODE == 2
-static inline __attribute__((always_inline)) s32 CopyBatchReadWqe(void *dst, const void *src)
-{
-    __builtin_memcpy(dst, src, SQE_SIZE_64);
-    return 0;
-}
-#else
-#error "HCOMM_AICPU_UB_WQE_COPY_MODE must be 0, 1, or 2"
-#endif
+    switch (mode) {
+        case 1:
+            (void)std::memcpy(dst, src, SQE_SIZE_64);
+            return 0;
+        case 2:
+            __builtin_memcpy(dst, src, SQE_SIZE_64);
+            return 0;
+        case 0:
+        default:
+            return memcpy_sp(dst, SQE_SIZE_64, src, SQE_SIZE_64);
+    }
 }
 
 static std::map<DataType, u32> g_ubmaDataTypeMap
@@ -280,12 +283,12 @@ void UbConnLite::ProcessOneWqe(UdmaSqeWrite *sqe, UdmaSqOpcode opCode, const Str
             const u64 probeStartNs = GetCurAicpuTimestamp();
             const u64 probeEndNs = GetCurAicpuTimestamp();
             const u64 copyStartNs = GetCurAicpuTimestamp();
-            ret = CopyBatchReadWqe(va, sqe);
+            ret = CopyBatchReadWqe(va, sqe, wqeCopyMode_);
             const u64 copyEndNs = GetCurAicpuTimestamp();
             timerProbeNs = probeEndNs - probeStartNs;
             rawCopyNs = copyEndNs - copyStartNs;
         } else if (isReadWqe) {
-            ret = CopyBatchReadWqe(va, sqe);
+            ret = CopyBatchReadWqe(va, sqe, wqeCopyMode_);
         } else {
             ret = memcpy_sp(va, SQE_SIZE_64, sqe, SQE_SIZE_64);
         }
@@ -603,7 +606,7 @@ UbConnLite::WqeCopyTimingStats UbConnLite::GetWqeCopyTimingStats() const
     stats.sampleCount = wqeCopySampleCount_;
     stats.sampleStride = UB_WQE_COPY_SAMPLE_STRIDE;
     stats.samplePhase = wqeCopySamplePhase_;
-    stats.copyMode = HCOMM_AICPU_UB_WQE_COPY_MODE;
+    stats.copyMode = wqeCopyMode_;
     return stats;
 }
 
@@ -706,6 +709,7 @@ UbConnLite::UbConnLite(const UbConnLiteParam &liteParam)
 
     maxReadSize = liteParam.maxReadSize;
     maxWriteSize = liteParam.maxWriteSize;
+    wqeCopyMode_ = GetWqeCopyModeFromEnv();
 
     (void)memcpy_sp(rmtEid_.raw, URMA_EID_LEN, liteParam.rmtEid.raw, URMA_EID_LEN);
     (void)memcpy_sp(locEid_.raw, URMA_EID_LEN, liteParam.locEid.raw, URMA_EID_LEN);
@@ -715,7 +719,8 @@ UbConnLite::UbConnLite(const UbConnLiteParam &liteParam)
 UbConnLite::UbConnLite(const UbJettyLiteId &id, const UbJettyLiteAttr &attr, const Eid &rmtInfo)
     : RmaConnLite(id, attr, rmtInfo),
       maxReadSize(UB_DMA_MAX_READ_WEITE_SIZE),
-      maxWriteSize(UB_DMA_MAX_READ_WEITE_SIZE)
+      maxWriteSize(UB_DMA_MAX_READ_WEITE_SIZE),
+      wqeCopyMode_(GetWqeCopyModeFromEnv())
 {
 }
 

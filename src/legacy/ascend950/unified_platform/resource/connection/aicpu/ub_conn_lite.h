@@ -120,6 +120,7 @@ private:
     u32  ciDetourCount{0};
     u32  maxReadSize{0};
     u32  maxWriteSize{0};
+    u32  wqeCopyMode_{0};
     u32  wqeCopySamplePhase_{0};
     u32  wqeCopyNextSamplePhase_{0};
     u32  wqeCopySampleCount_{0};
