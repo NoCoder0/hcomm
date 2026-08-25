@@ -8,6 +8,7 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 #include <chrono>
+#include <cstring>
 #include "ub_conn_lite.h"
 #include "log.h"
 #include "exception_util.h"
@@ -16,6 +17,14 @@
 #include "string_util.h"
 #include "binary_stream.h"
 #include "data_type.h"
+#include "sal.h"
+
+#ifndef HCOMM_AICPU_UB_WQE_COPY_MODE
+#define HCOMM_AICPU_UB_WQE_COPY_MODE 0
+#endif
+
+static_assert((HCOMM_AICPU_UB_WQE_COPY_MODE >= 0) && (HCOMM_AICPU_UB_WQE_COPY_MODE <= 2),
+              "HCOMM_AICPU_UB_WQE_COPY_MODE must be 0, 1, or 2");
 
 constexpr u32 MAX_LOG_TIMEOUT_MS        = 500;
 namespace Hccl {
@@ -31,6 +40,32 @@ constexpr u32 ADDR_BIT_LOW               = 0xffffffff;
 constexpr u32 UB_DMA_MAX_READ_WEITE_SIZE = 256 * 1024 * 1024; // Byte, UB协议一次传输的最大size
 constexpr u32 UB_RELAX_ORDER             = 0x1; // Relax Order表示当前SQE与后续Strong Order SQE有保序要求
 constexpr u32 UB_STRONG_ORDER            = 0x2; // Strong Order表示当前SQE有保序要求，该SQE不能超越前面的Relax Order SQE
+constexpr u32 UB_WQE_COPY_SAMPLE_STRIDE  = 64;
+
+static_assert(sizeof(UdmaSqeWrite) == 64, "UdmaSqeWrite must be 64 bytes");
+
+namespace {
+#if HCOMM_AICPU_UB_WQE_COPY_MODE == 0
+static inline s32 CopyBatchReadWqe(void *dst, const void *src)
+{
+    return memcpy_sp(dst, SQE_SIZE_64, src, SQE_SIZE_64);
+}
+#elif HCOMM_AICPU_UB_WQE_COPY_MODE == 1
+static inline s32 CopyBatchReadWqe(void *dst, const void *src)
+{
+    (void)std::memcpy(dst, src, SQE_SIZE_64);
+    return 0;
+}
+#elif HCOMM_AICPU_UB_WQE_COPY_MODE == 2
+static inline __attribute__((always_inline)) s32 CopyBatchReadWqe(void *dst, const void *src)
+{
+    __builtin_memcpy(dst, src, SQE_SIZE_64);
+    return 0;
+}
+#else
+#error "HCOMM_AICPU_UB_WQE_COPY_MODE must be 0, 1, or 2"
+#endif
+}
 
 static std::map<DataType, u32> g_ubmaDataTypeMap
     = {{DataType::INT8, 0x0},   {DataType::INT16, 0x1},   {DataType::INT32, 0x2}, {DataType::UINT8, 0x3},
@@ -234,10 +269,33 @@ void UbConnLite::ProcessOneWqe(UdmaSqeWrite *sqe, UdmaSqOpcode opCode, const Str
 
     // 写wqe到va
     u8 *va = reinterpret_cast<u8 *>(sqVa_ + sqOffset * SQE_SIZE_64);
+    const bool isReadWqe = (opCode == UdmaSqOpcode::UDMA_OPC_READ);
+    const bool sampleCopy = isReadWqe && !dwqeCacheLocked_ &&
+        ((static_cast<u32>(pi) & (UB_WQE_COPY_SAMPLE_STRIDE - 1)) == wqeCopySamplePhase_);
+    u64 rawCopyNs = 0;
+    u64 timerProbeNs = 0;
+    s32 ret = 0;
     if (!dwqeCacheLocked_) {
-        auto ret = memcpy_sp(va, SQE_SIZE_64, sqe, SQE_SIZE_64);
+        if (isReadWqe && UNLIKELY(sampleCopy)) {
+            const u64 probeStartNs = GetCurAicpuTimestamp();
+            const u64 probeEndNs = GetCurAicpuTimestamp();
+            const u64 copyStartNs = GetCurAicpuTimestamp();
+            ret = CopyBatchReadWqe(va, sqe);
+            const u64 copyEndNs = GetCurAicpuTimestamp();
+            timerProbeNs = probeEndNs - probeStartNs;
+            rawCopyNs = copyEndNs - copyStartNs;
+        } else if (isReadWqe) {
+            ret = CopyBatchReadWqe(va, sqe);
+        } else {
+            ret = memcpy_sp(va, SQE_SIZE_64, sqe, SQE_SIZE_64);
+        }
         if (UNLIKELY(ret != 0)) {
             THROW<InternalException>(StringFormat("[UbConnLite::%s] memcpy_sp failed, ret = %d", __func__, ret));
+        }
+        if (UNLIKELY(sampleCopy)) {
+            wqeCopySampleCount_++;
+            wqeCopyRawNs_ += rawCopyNs;
+            wqeCopyTimerProbeNs_ += timerProbeNs;
         }
     }
 
@@ -526,6 +584,27 @@ void UbConnLite::FillBatchOneWqe(const RmaBufSliceLite &loc, const RmtRmaBufSlic
         }
     }
     HCCL_INFO("UbConnLite BatchWrite cp data to va end va(%p)", va);
+}
+
+void UbConnLite::BeginWqeCopyTimingSample()
+{
+    wqeCopySamplePhase_ = wqeCopyNextSamplePhase_;
+    wqeCopyNextSamplePhase_ = (wqeCopyNextSamplePhase_ + 1) % UB_WQE_COPY_SAMPLE_STRIDE;
+    wqeCopySampleCount_ = 0;
+    wqeCopyRawNs_ = 0;
+    wqeCopyTimerProbeNs_ = 0;
+}
+
+UbConnLite::WqeCopyTimingStats UbConnLite::GetWqeCopyTimingStats() const
+{
+    WqeCopyTimingStats stats;
+    stats.rawCopyNs = wqeCopyRawNs_;
+    stats.timerProbeNs = wqeCopyTimerProbeNs_;
+    stats.sampleCount = wqeCopySampleCount_;
+    stats.sampleStride = UB_WQE_COPY_SAMPLE_STRIDE;
+    stats.samplePhase = wqeCopySamplePhase_;
+    stats.copyMode = HCOMM_AICPU_UB_WQE_COPY_MODE;
+    return stats;
 }
 
 void UbConnLite::BatchProcessOneSlice(const RmaBufSliceLite &loc, const RmtRmaBufSliceLite &rmt, const SqeConfigLite &cfg,

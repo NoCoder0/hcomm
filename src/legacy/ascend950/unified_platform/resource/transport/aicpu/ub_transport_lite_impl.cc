@@ -857,6 +857,7 @@ void UbTransportLiteImpl::BatchTransferAll(const std::vector<RmaBufferLite> &loc
     SetFenceConfig(cfg);
     u32 insNum = loc.size();
     const u64 wqeBuildStartNs = GetCurAicpuTimestamp();
+    connVec[0]->BeginWqeCopyTimingSample();
     for (u32 i = 0; i < insNum; i++) {
         cfg.cqeEn     = (i == insNum - 1) ? true : false; // 返回最后一个sqe的cqe
         cfg.placeOdr  = (i == insNum - 1) ? UB_STRONG_ORDER : UB_RELAX_ORDER; // 最后一个要求保序
@@ -893,6 +894,11 @@ void UbTransportLiteImpl::BatchTransferAll(const std::vector<RmaBufferLite> &loc
         }
     }
     const u64 wqeBuildEndNs = GetCurAicpuTimestamp();
+    const auto wqeCopyStats = connVec[0]->GetWqeCopyTimingStats();
+    const u64 wqeCopyRawAvgNs = (wqeCopyStats.sampleCount == 0) ? 0 :
+        wqeCopyStats.rawCopyNs / wqeCopyStats.sampleCount;
+    const u64 wqeCopyTimerProbeAvgNs = (wqeCopyStats.sampleCount == 0) ? 0 :
+        wqeCopyStats.timerProbeNs / wqeCopyStats.sampleCount;
     const u64 launchTaskStartNs = GetCurAicpuTimestamp();
     BuildUbDbSendTask(stream, connVec[0]->GetUbJettyLiteId(), connOut.pi); // 约束使用一批wqe的个数不会导致反压
     const u64 launchTaskEndNs = GetCurAicpuTimestamp();
@@ -904,8 +910,13 @@ void UbTransportLiteImpl::BatchTransferAll(const std::vector<RmaBufferLite> &loc
     const u64 launchTaskNs = launchTaskEndNs - launchTaskStartNs;
     const u64 profilingNs = batchEndNs - profilingStartNs;
     // Temporary diagnostic. Keep one aggregate log outside the WQE loop to limit measurement disturbance.
-    HCCL_ERROR("[TEMP_TIMING][%s] insNum[%u] wqeBuildNs[%llu] launchTaskNs[%llu] profilingNs[%llu] totalNs[%llu].",
-        __func__, insNum, wqeBuildNs, launchTaskNs, profilingNs, batchEndNs - batchStartNs);
+    HCCL_ERROR("[TEMP_TIMING][%s] insNum[%u] wqeBuildNs[%llu] wqeCopyMode[%u] "
+               "wqeCopySampleCount[%u] wqeCopySampleStride[%u] wqeCopySamplePhase[%u] "
+               "wqeCopyRawAvgNs[%llu] wqeCopyTimerProbeAvgNs[%llu] launchTaskNs[%llu] "
+               "profilingNs[%llu] totalNs[%llu].",
+        __func__, insNum, wqeBuildNs, wqeCopyStats.copyMode, wqeCopyStats.sampleCount,
+        wqeCopyStats.sampleStride, wqeCopyStats.samplePhase, wqeCopyRawAvgNs, wqeCopyTimerProbeAvgNs,
+        launchTaskNs, profilingNs, batchEndNs - batchStartNs);
 }
 
 void UbTransportLiteImpl::WriteWithNotify(const RmaBufferLite &loc, const Buffer &rmt, const WithNotifyIn &withNotify,

@@ -50,6 +50,15 @@ struct UbConnLiteParam {
 
 class UbConnLite : public RmaConnLite {
 public:
+    struct WqeCopyTimingStats {
+        u64 rawCopyNs{0};
+        u64 timerProbeNs{0};
+        u32 sampleCount{0};
+        u32 sampleStride{0};
+        u32 samplePhase{0};
+        u32 copyMode{0};
+    };
+
     UbConnLite(const UbJettyLiteId &id, const UbJettyLiteAttr &attr, const Eid &rmtInfo);
 
     explicit UbConnLite(const UbConnLiteParam &liteParam);
@@ -100,6 +109,10 @@ public:
                            const SqeConfigLite &cfg, const StreamLite &stream, ConnLiteOperationOut &out) override;
     void BatchOneSidedWrite(const vector<RmaBufSliceLite> &loc, const vector<RmtRmaBufSliceLite> &rmt,
                             const SqeConfigLite &cfg, const StreamLite &stream, ConnLiteOperationOut &out) override;
+
+    WqeCopyTimingStats GetWqeCopyTimingStats() const;
+    void BeginWqeCopyTimingSample();
+
 private:
     u16  pi{0};
     u16  ci{0};
@@ -107,6 +120,12 @@ private:
     u32  ciDetourCount{0};
     u32  maxReadSize{0};
     u32  maxWriteSize{0};
+    u32  wqeCopySamplePhase_{0};
+    u32  wqeCopyNextSamplePhase_{0};
+    u32  wqeCopySampleCount_{0};
+    u64  wqeCopyRawNs_{0};
+    u64  wqeCopyTimerProbeNs_{0};
+
     void ProcessSlices(const RmaBufSliceLite &loc, const RmtRmaBufSliceLite &rmt, u32 maxSliceSize,
         std::function<void(const RmaBufSliceLite &, const RmtRmaBufSliceLite &, SlicePosition)> processOneSlice,
         DataType dataType = DataType::INVALID) const;
