@@ -45,7 +45,7 @@ static std::map<ReduceOp, u32> g_ubmaDataOpMap = {{ReduceOp::SUM, 0xA}, {ReduceO
 
 bool UbConnLite::IsLegalWqeStagingChunk(u32 chunk)
 {
-    return chunk == 0 || chunk == 1 || chunk == 4 || chunk == 8 || chunk == 16 || chunk == 32;
+    return chunk == 0 || chunk == 1 || chunk == 2 || chunk == 8 || chunk == 16 || chunk == 32;
 }
 
 u32 UbConnLite::GetWqeStagingChunkFromEnv()
@@ -80,7 +80,7 @@ void UbConnLite::FillCommSqe(UdmaSqeCommon *sqe, const RmtRmaBufSliceLite &rmt, 
     sqe->tpn       = tpn_;
 
     // 当前片是ONLY片(只有一片的情况)和最后一片的情况，全严格保序
-    if (slicePos == SlicePosition::ONLY || slicePos == SlicePosition::LAST) {
+    if (slicePos == SlicePosition::LAST) {
         sqe->placeOdr = UB_STRONG_ORDER;
         sqe->compOrder = 1;
         sqe->fence = 1;

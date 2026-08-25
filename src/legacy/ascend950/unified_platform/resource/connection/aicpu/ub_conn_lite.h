@@ -106,7 +106,7 @@ public:
     void BatchOneSidedWrite(const vector<RmaBufSliceLite> &loc, const vector<RmtRmaBufSliceLite> &rmt,
                             const SqeConfigLite &cfg, const StreamLite &stream, ConnLiteOperationOut &out) override;
 private:
-    static constexpr u32 WQE_STAGING_CHUNK_DEFAULT = 32;
+    static constexpr u32 WQE_STAGING_CHUNK_DEFAULT = 2;
     static constexpr u32 WQE_STAGING_CHUNK_MAX = 32;
 
     struct BatchStagingStats {
