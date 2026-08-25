@@ -857,7 +857,8 @@ void UbTransportLiteImpl::BatchTransferAll(const std::vector<RmaBufferLite> &loc
     SetFenceConfig(cfg);
     u32 insNum = loc.size();
     const u64 wqeBuildStartNs = GetCurAicpuTimestamp();
-    connVec[0]->BeginWqeCopyTimingSample();
+    auto *ubConn = static_cast<UbConnLite *>(connVec[0]);
+    ubConn->BeginWqeCopyTimingSample();
     for (u32 i = 0; i < insNum; i++) {
         cfg.cqeEn     = (i == insNum - 1) ? true : false; // 返回最后一个sqe的cqe
         cfg.placeOdr  = (i == insNum - 1) ? UB_STRONG_ORDER : UB_RELAX_ORDER; // 最后一个要求保序
@@ -894,7 +895,7 @@ void UbTransportLiteImpl::BatchTransferAll(const std::vector<RmaBufferLite> &loc
         }
     }
     const u64 wqeBuildEndNs = GetCurAicpuTimestamp();
-    const auto wqeCopyStats = connVec[0]->GetWqeCopyTimingStats();
+    const auto wqeCopyStats = ubConn->GetWqeCopyTimingStats();
     const u64 wqeCopyRawAvgNs = (wqeCopyStats.sampleCount == 0) ? 0 :
         wqeCopyStats.rawCopyNs / wqeCopyStats.sampleCount;
     const u64 wqeCopyTimerProbeAvgNs = (wqeCopyStats.sampleCount == 0) ? 0 :
