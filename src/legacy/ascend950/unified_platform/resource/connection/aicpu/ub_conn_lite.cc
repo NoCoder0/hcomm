@@ -443,7 +443,7 @@ void UbConnLite::BatchRead(const vector<RmaBufSliceLite> &loc, const vector<RmtR
                 wqeCfg.cqeEn = isLastDescriptor;
                 wqeCfg.placeOdr = isLastDescriptor ? UB_STRONG_ORDER : UB_RELAX_ORDER;
                 wqeCfg.compOrder = isLastDescriptor ? 1 : 0;
-                FillOneSqeWrite(&staging[builtWqeCount], loc[descriptorIndex], rmt[descriptorIndex], wqeCfg,
+                FillOneSqeWrite(loc[descriptorIndex], rmt[descriptorIndex], wqeCfg, &staging[builtWqeCount],
                     UdmaSqOpcode::UDMA_OPC_READ, SlicePosition::ONLY);
 
                 // FillCommSqe historically derives owner from logical PI. Staging has not committed
