@@ -857,44 +857,83 @@ void UbTransportLiteImpl::BatchTransferAll(const std::vector<RmaBufferLite> &loc
     SetFenceConfig(cfg);
     u32 insNum = loc.size();
     const u64 wqeBuildStartNs = GetCurAicpuTimestamp();
-    for (u32 i = 0; i < insNum; i++) {
-        cfg.cqeEn     = (i == insNum - 1) ? true : false; // 返回最后一个sqe的cqe
-        cfg.placeOdr  = (i == insNum - 1) ? UB_STRONG_ORDER : UB_RELAX_ORDER; // 最后一个要求保序
-        cfg.compOrder = (i == insNum - 1) ? UB_COMPLETION : UB_NO_COMPLETION;
+    const UbConnLite::BatchStagingStats *stagingStats = nullptr;
+    UbConnLite *stagingConn = nullptr;
+    u16 stagingStartPi = 0;
+    u32 stagingStartPiDetourCount = 0;
+    auto *ubConn = static_cast<UbConnLite *>(connVec[0]);
+    ubConn->batchStagingStats_ = {};
+    ubConn->batchStagingStats_.stagingChunk = ubConn->GetWqeStagingChunk();
+    bool allRead = (transferOp.size() == insNum && notifyIdxs.size() == insNum);
+    for (u32 i = 0; allRead && i < insNum; ++i) {
+        allRead = (transferOp[i].transType == TransferType::READ &&
+                   notifyIdxs[i] == NOTIFYIDX_INVALID_VALUE);
+    }
+    if (allRead && ubConn->GetWqeStagingChunk() != 0) {
+        std::vector<RmaBufSliceLite> readLoc;
+        std::vector<RmtRmaBufSliceLite> readRmt;
+        readLoc.reserve(insNum);
+        readRmt.reserve(insNum);
+        for (u32 i = 0; i < insNum; ++i) {
+            readLoc.push_back(GetRmaBufSlicelite(loc[i]));
+            readRmt.push_back(GetRmtRmaBufSliceLite(rmt[i]));
+        }
+        stagingStartPi = ubConn->pi;
+        stagingStartPiDetourCount = ubConn->piDetourCount;
+        ubConn->BatchRead(readLoc, readRmt, cfg, insNum - 1, stream, connOut);
+        stagingStats = &ubConn->GetBatchStagingStats();
+        if (stagingStats->stagingUsed) {
+            stagingConn = ubConn;
+        }
+    } else {
+        for (u32 i = 0; i < insNum; i++) {
+            cfg.cqeEn     = (i == insNum - 1) ? true : false; // 返回最后一个sqe的cqe
+            cfg.placeOdr  = (i == insNum - 1) ? UB_STRONG_ORDER : UB_RELAX_ORDER; // 最后一个要求保序
+            cfg.compOrder = (i == insNum - 1) ? UB_COMPLETION : UB_NO_COMPLETION;
 
-        if (transferOp[i].transType == TransferType::NOTIFY_RECORD) { // notifyRecord操作没有loc/rmt，因此单独处理
-            if (notifyIdxs[i] == 1) { // PostFin场景
-                cfg.cqeEn     = true;
-                cfg.placeOdr  = UB_STRONG_ORDER;
-                cfg.compOrder = UB_COMPLETION;
-            }
-            u32           inlineData = 1;
-            // 当前使用1个connection，下标为0 构建sqe
-            connVec[0]->InlineWrite(reinterpret_cast<u8 *>(&inlineData), UB_INLINE_WRITE_SIZE, GetRmtNotifySliceLite(notifyIdxs[i]),
-                                    cfg, stream, connOut);
-        } else {
-            auto localBuffer  = GetRmaBufSlicelite(loc[i]);
-            auto remoteBuffer = GetRmtRmaBufSliceLite(rmt[i]);
+            if (transferOp[i].transType == TransferType::NOTIFY_RECORD) { // notifyRecord操作没有loc/rmt，因此单独处理
+                if (notifyIdxs[i] == 1) { // PostFin场景
+                    cfg.cqeEn     = true;
+                    cfg.placeOdr  = UB_STRONG_ORDER;
+                    cfg.compOrder = UB_COMPLETION;
+                }
+                u32           inlineData = 1;
+                // 当前使用1个connection，下标为0 构建sqe
+                connVec[0]->InlineWrite(reinterpret_cast<u8 *>(&inlineData), UB_INLINE_WRITE_SIZE, GetRmtNotifySliceLite(notifyIdxs[i]),
+                                        cfg, stream, connOut);
+            } else {
+                auto localBuffer  = GetRmaBufSlicelite(loc[i]);
+                auto remoteBuffer = GetRmtRmaBufSliceLite(rmt[i]);
 
-            if (transferOp[i].transType == TransferType::WRITE) {
-                connVec[0]->Write(localBuffer, remoteBuffer, cfg, stream, connOut);
-            } else if (transferOp[i].transType == TransferType::WRITE_REDUCE) {
-                connVec[0]->WriteReduce(transferOp[i].reduceIn.dataType, transferOp[i].reduceIn.reduceOp, localBuffer, stream, remoteBuffer, cfg, connOut);
-            } else if (transferOp[i].transType == TransferType::READ) {
-                connVec[0]->Read(localBuffer, remoteBuffer, cfg, stream, connOut);
-            } else if (transferOp[i].transType == TransferType::READ_REDUCE) {
-                connVec[0]->ReadReduce(transferOp[i].reduceIn, localBuffer, remoteBuffer, stream, cfg, connOut);
-            } else if (transferOp[i].transType == TransferType::WRITE_WITH_NOTIFY) {
-                connVec[0]->WriteWithNotify(localBuffer, remoteBuffer, cfg, connOut, GetRmtNotifySliceLite(notifyIdxs[i]), stream, notifyData); // 当前使用1个connection，下标为0
-            } else if (transferOp[i].transType == TransferType::WRITE_REDUCE_WITH_NOTIFY) {
-                connVec[0]->WriteReduceWithNotify(transferOp[i].reduceIn.dataType, transferOp[i].reduceIn.reduceOp, localBuffer,
-                                                remoteBuffer, cfg, stream, connOut, GetRmtNotifySliceLite(notifyIdxs[i]), notifyData); // 当前使用1个connection，下标为0
+                if (transferOp[i].transType == TransferType::WRITE) {
+                    connVec[0]->Write(localBuffer, remoteBuffer, cfg, stream, connOut);
+                } else if (transferOp[i].transType == TransferType::WRITE_REDUCE) {
+                    connVec[0]->WriteReduce(transferOp[i].reduceIn.dataType, transferOp[i].reduceIn.reduceOp, localBuffer, stream, remoteBuffer, cfg, connOut);
+                } else if (transferOp[i].transType == TransferType::READ) {
+                    connVec[0]->Read(localBuffer, remoteBuffer, cfg, stream, connOut);
+                } else if (transferOp[i].transType == TransferType::READ_REDUCE) {
+                    connVec[0]->ReadReduce(transferOp[i].reduceIn, localBuffer, remoteBuffer, stream, cfg, connOut);
+                } else if (transferOp[i].transType == TransferType::WRITE_WITH_NOTIFY) {
+                    connVec[0]->WriteWithNotify(localBuffer, remoteBuffer, cfg, connOut, GetRmtNotifySliceLite(notifyIdxs[i]), stream, notifyData); // 当前使用1个connection，下标为0
+                } else if (transferOp[i].transType == TransferType::WRITE_REDUCE_WITH_NOTIFY) {
+                    connVec[0]->WriteReduceWithNotify(transferOp[i].reduceIn.dataType, transferOp[i].reduceIn.reduceOp, localBuffer,
+                                                    remoteBuffer, cfg, stream, connOut, GetRmtNotifySliceLite(notifyIdxs[i]), notifyData); // 当前使用1个connection，下标为0
+                }
             }
         }
     }
     const u64 wqeBuildEndNs = GetCurAicpuTimestamp();
     const u64 launchTaskStartNs = GetCurAicpuTimestamp();
-    BuildUbDbSendTask(stream, connVec[0]->GetUbJettyLiteId(), connOut.pi); // 约束使用一批wqe的个数不会导致反压
+    try {
+        BuildUbDbSendTask(stream, connVec[0]->GetUbJettyLiteId(), connOut.pi); // 约束使用一批wqe的个数不会导致反压
+    } catch (...) {
+        if (stagingConn != nullptr) {
+            stagingConn->pi = stagingStartPi;
+            stagingConn->piDetourCount = stagingStartPiDetourCount;
+            connOut.pi = stagingStartPi;
+        }
+        throw;
+    }
     const u64 launchTaskEndNs = GetCurAicpuTimestamp();
 
     const u64 profilingStartNs = GetCurAicpuTimestamp();
@@ -904,8 +943,20 @@ void UbTransportLiteImpl::BatchTransferAll(const std::vector<RmaBufferLite> &loc
     const u64 launchTaskNs = launchTaskEndNs - launchTaskStartNs;
     const u64 profilingNs = batchEndNs - profilingStartNs;
     // Temporary diagnostic. Keep one aggregate log outside the WQE loop to limit measurement disturbance.
-    HCCL_ERROR("[TEMP_TIMING][%s] insNum[%u] wqeBuildNs[%llu] launchTaskNs[%llu] profilingNs[%llu] totalNs[%llu].",
-        __func__, insNum, wqeBuildNs, launchTaskNs, profilingNs, batchEndNs - batchStartNs);
+    const u64 stagingBuildNs = stagingStats == nullptr ? 0 : stagingStats->stagingBuildNs;
+    const u64 bulkCopyNs = stagingStats == nullptr ? 0 : stagingStats->bulkCopyNs;
+    const u64 bulkCopyCalls = stagingStats == nullptr ? 0 : stagingStats->bulkCopyCalls;
+    const u64 bulkCopyWqeCount = stagingStats == nullptr ? 0 : stagingStats->bulkCopyWqeCount;
+    const u64 bulkCopyAvgNsPerWqe = stagingStats == nullptr ? 0 : stagingStats->BulkCopyAvgNsPerWqe();
+    const u64 ringWrapCount = stagingStats == nullptr ? 0 : stagingStats->ringWrapCount;
+    const u64 timerProbeNs = stagingStats == nullptr ? 0 : stagingStats->timerProbeNs;
+    const u32 stagingChunk = ubConn->GetWqeStagingChunk();
+    HCCL_ERROR("[TEMP_TIMING][%s] insNum[%u] wqeBuildNs[%llu] stagingBuildNs[%llu] bulkCopyNs[%llu] "
+               "bulkCopyCalls[%llu] bulkCopyWqeCount[%llu] bulkCopyAvgNsPerWqe[%llu] stagingChunk[%u] "
+               "ringWrapCount[%llu] timerProbeNs[%llu] launchTaskNs[%llu] profilingNs[%llu] totalNs[%llu].",
+        __func__, insNum, wqeBuildNs, stagingBuildNs, bulkCopyNs, bulkCopyCalls, bulkCopyWqeCount,
+        bulkCopyAvgNsPerWqe, stagingChunk, ringWrapCount, timerProbeNs, launchTaskNs,
+        profilingNs, batchEndNs - batchStartNs);
 }
 
 void UbTransportLiteImpl::WriteWithNotify(const RmaBufferLite &loc, const Buffer &rmt, const WithNotifyIn &withNotify,

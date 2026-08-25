@@ -8,6 +8,7 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 #include <chrono>
+#include <limits>
 #include "ub_conn_lite.h"
 #include "log.h"
 #include "exception_util.h"
@@ -16,6 +17,7 @@
 #include "string_util.h"
 #include "binary_stream.h"
 #include "data_type.h"
+#include "sal.h"
 
 constexpr u32 MAX_LOG_TIMEOUT_MS        = 500;
 namespace Hccl {
@@ -32,12 +34,41 @@ constexpr u32 UB_DMA_MAX_READ_WEITE_SIZE = 256 * 1024 * 1024; // Byte, UB协议�
 constexpr u32 UB_RELAX_ORDER             = 0x1; // Relax Order表示当前SQE与后续Strong Order SQE有保序要求
 constexpr u32 UB_STRONG_ORDER            = 0x2; // Strong Order表示当前SQE有保序要求，该SQE不能超越前面的Relax Order SQE
 
+static_assert(sizeof(UdmaSqeWrite) == SQE_SIZE_64, "UB READ WQE must occupy one 64-byte SQ slot");
+
 static std::map<DataType, u32> g_ubmaDataTypeMap
     = {{DataType::INT8, 0x0},   {DataType::INT16, 0x1},   {DataType::INT32, 0x2}, {DataType::UINT8, 0x3},
        {DataType::UINT16, 0x4}, {DataType::UINT32, 0x5},  {DataType::FP16, 0x6},  {DataType::FP32, 0x7},
        {DataType::BFP16, 0x8},  {DataType::BF16_SAT, 0x9}};
 
 static std::map<ReduceOp, u32> g_ubmaDataOpMap = {{ReduceOp::SUM, 0xA}, {ReduceOp::MAX, 0x8}, {ReduceOp::MIN, 0x9}};
+
+bool UbConnLite::IsLegalWqeStagingChunk(u32 chunk)
+{
+    return chunk == 0 || chunk == 1 || chunk == 4 || chunk == 8 || chunk == 16 || chunk == 32;
+}
+
+u32 UbConnLite::GetWqeStagingChunkFromEnv()
+{
+    constexpr char envName[] = "HCOMM_AICPU_UB_WQE_STAGING_CHUNK";
+    const std::string envValue = SalGetEnv(envName);
+    if (envValue.empty() || envValue == "EmptyString") {
+        HCCL_INFO("[UbConnLite] env[%s] is not set, stagingChunk[%u]", envName, WQE_STAGING_CHUNK_DEFAULT);
+        return WQE_STAGING_CHUNK_DEFAULT;
+    }
+
+    u32 chunk = 0;
+    const bool exactValue = envValue == "0" || envValue == "1" || envValue == "4" || envValue == "8" ||
+                            envValue == "16" || envValue == "32";
+    if (SalStrToULong(envValue, HCCL_BASE_DECIMAL, chunk) != HCCL_SUCCESS || !exactValue ||
+        !IsLegalWqeStagingChunk(chunk)) {
+        HCCL_WARNING("[UbConnLite] env[%s] value[%s] is invalid, expected [0, 1, 4, 8, 16, 32], use default[%u]",
+                     envName, envValue.c_str(), WQE_STAGING_CHUNK_DEFAULT);
+        return WQE_STAGING_CHUNK_DEFAULT;
+    }
+    HCCL_INFO("[UbConnLite] env[%s] value[%s], stagingChunk[%u]", envName, envValue.c_str(), chunk);
+    return chunk;
+}
 
 void UbConnLite::FillCommSqe(UdmaSqeCommon *sqe, const RmtRmaBufSliceLite &rmt, const SqeConfigLite &cfg, u32 opCode,
                              SlicePosition slicePos)
@@ -311,6 +342,165 @@ void UbConnLite::Read(const RmaBufSliceLite &loc, const RmtRmaBufSliceLite &rmt,
 
     out.pi = pi;
     HCCL_INFO("[UbConnLite::%s] end, ConnLiteOperationOut.pi = %u, conn[%s]", __func__, out.pi, Describe().c_str());
+}
+
+void UbConnLite::BatchRead(const vector<RmaBufSliceLite> &loc, const vector<RmtRmaBufSliceLite> &rmt,
+    const SqeConfigLite &cfg, u32 lastDescriptorIndex, const StreamLite &stream, ConnLiteOperationOut &out)
+{
+    batchStagingStats_ = {};
+    batchStagingStats_.stagingChunk = wqeStagingChunk_;
+    if (loc.size() != rmt.size()) {
+        THROW<InternalException>(StringFormat(
+            "[UbConnLite::%s] local/remote size mismatch, loc[%llu], rmt[%llu]", __func__, loc.size(), rmt.size()));
+    }
+    if (loc.empty()) {
+        out.pi = pi;
+        return;
+    }
+    if (loc.size() > UINT32_MAX || lastDescriptorIndex >= loc.size()) {
+        THROW<InternalException>(StringFormat("[UbConnLite::%s] invalid descriptor count[%llu] or last index[%u]",
+            __func__, loc.size(), lastDescriptorIndex));
+    }
+
+    auto processDirect = [&]() {
+        for (u64 i = 0; i < loc.size(); ++i) {
+            const bool isLastDescriptor = (i == lastDescriptorIndex);
+            SqeConfigLite wqeCfg = cfg;
+            wqeCfg.cqeEn = isLastDescriptor;
+            wqeCfg.placeOdr = isLastDescriptor ? UB_STRONG_ORDER : UB_RELAX_ORDER;
+            wqeCfg.compOrder = isLastDescriptor ? 1 : 0;
+            Read(loc[i], rmt[i], wqeCfg, stream, out);
+        }
+    };
+
+    if (wqeStagingChunk_ == 0) {
+        processDirect();
+        return;
+    }
+    if (UNLIKELY(!IsLegalWqeStagingChunk(wqeStagingChunk_) || wqeStagingChunk_ > WQE_STAGING_CHUNK_MAX)) {
+        THROW<InternalException>(StringFormat("[UbConnLite::%s] invalid staging chunk[%u]",
+            __func__, wqeStagingChunk_));
+    }
+
+    bool allSmallRead = true;
+    bool hasWqe = false;
+    for (const auto &localSlice : loc) {
+        if (localSlice.GetSize() != 0) {
+            hasWqe = true;
+        }
+        if (localSlice.GetSize() > maxReadSize) {
+            allSmallRead = false;
+            break;
+        }
+    }
+    if (UNLIKELY(maxReadSize == 0 && hasWqe)) {
+        THROW<InternalException>(StringFormat("[UbConnLite::%s] invalid read limit[%u]", __func__, maxReadSize));
+    }
+    if (!allSmallRead) {
+        processDirect();
+        return;
+    }
+    if (!hasWqe) {
+        out.pi = pi;
+        return;
+    }
+    if (UNLIKELY(maxReadSize == 0 || sqDepth_ == 0)) {
+        THROW<InternalException>(
+            StringFormat("[UbConnLite::%s] invalid read limit[%u] or SQ depth[%u]", __func__, maxReadSize, sqDepth_));
+    }
+
+    batchStagingStats_.stagingUsed = true;
+    // One timestamp pair is enough to report the timer probe without adding a timestamp per WQE.
+    const u64 timerProbeStartNs = GetCurAicpuTimestamp();
+    const u64 timerProbeEndNs = GetCurAicpuTimestamp();
+    batchStagingStats_.timerProbeNs = timerProbeEndNs - timerProbeStartNs;
+
+    const u16 batchStartPi = pi;
+    const u32 batchStartPiDetourCount = piDetourCount;
+    UdmaSqeWrite staging[WQE_STAGING_CHUNK_MAX]{};
+    u64 descriptorIndex = 0;
+    try {
+        while (descriptorIndex < loc.size()) {
+            const u32 sqOffset = static_cast<u32>(pi) % sqDepth_;
+            const u32 sqRemaining = sqDepth_ - sqOffset;
+            const u32 chunkLimit = (sqRemaining < wqeStagingChunk_) ? sqRemaining : wqeStagingChunk_;
+            if (UNLIKELY(chunkLimit == 0)) {
+                THROW<InternalException>(StringFormat(
+                    "[UbConnLite::%s] invalid staging chunk, sqOffset[%u], sqDepth[%u]", __func__, sqOffset, sqDepth_));
+            }
+
+            u32 builtWqeCount = 0;
+            const u64 buildStartNs = GetCurAicpuTimestamp();
+            while (builtWqeCount < chunkLimit && descriptorIndex < loc.size()) {
+                if (loc[descriptorIndex].GetSize() == 0) {
+                    ++descriptorIndex;
+                    continue;
+                }
+
+                staging[builtWqeCount] = {};
+                const bool isLastDescriptor = (descriptorIndex == lastDescriptorIndex);
+                SqeConfigLite wqeCfg = cfg;
+                wqeCfg.cqeEn = isLastDescriptor;
+                wqeCfg.placeOdr = isLastDescriptor ? UB_STRONG_ORDER : UB_RELAX_ORDER;
+                wqeCfg.compOrder = isLastDescriptor ? 1 : 0;
+                FillOneSqeWrite(&staging[builtWqeCount], loc[descriptorIndex], rmt[descriptorIndex], wqeCfg,
+                    UdmaSqOpcode::UDMA_OPC_READ, SlicePosition::ONLY);
+
+                // FillCommSqe historically derives owner from logical PI. Staging has not committed
+                // the chunk yet, so use the physical ring slot explicitly for every cached WQE.
+                staging[builtWqeCount].comm.owner
+                    = (static_cast<u64>(sqOffset) + builtWqeCount + 1 == sqDepth_) ? 1 : 0;
+                ++builtWqeCount;
+                ++descriptorIndex;
+            }
+            if (builtWqeCount == 0) {
+                continue;
+            }
+            batchStagingStats_.stagingBuildNs += GetCurAicpuTimestamp() - buildStartNs;
+
+            const u64 copySize64 = static_cast<u64>(builtWqeCount) * SQE_SIZE_64;
+            const u64 sqByteOffset = static_cast<u64>(sqOffset) * SQE_SIZE_64;
+            const u64 maxAddress = std::numeric_limits<u64>::max();
+            if (UNLIKELY(copySize64 > UINT32_MAX || sqVa_ > maxAddress - sqByteOffset
+                         || copySize64 > maxAddress - (sqVa_ + sqByteOffset))) {
+                THROW<InternalException>(StringFormat("[UbConnLite::%s] staging copy arithmetic overflow, pi[%u], "
+                                                      "sqOffset[%u], wqeCount[%u], sqDepth[%u]",
+                    __func__, pi, sqOffset, builtWqeCount, sqDepth_));
+            }
+
+            if (!dwqeCacheLocked_) {
+                u8 *va = reinterpret_cast<u8 *>(sqVa_ + sqByteOffset);
+                const u32 copySize = static_cast<u32>(copySize64);
+                const u64 copyStartNs = GetCurAicpuTimestamp();
+                const s32 ret = memcpy_sp(va, copySize, staging, copySize);
+                batchStagingStats_.bulkCopyNs += GetCurAicpuTimestamp() - copyStartNs;
+                ++batchStagingStats_.bulkCopyCalls;
+                batchStagingStats_.bulkCopyWqeCount += builtWqeCount;
+                if (UNLIKELY(ret != 0)) {
+                    HCCL_ERROR("[UbConnLite::%s] memcpy_sp failed, pi[%u], sqOffset[%u], sqDepth[%u], "
+                               "wqeCount[%u], copySize[%u], ret[%d]",
+                        __func__, pi, sqOffset, sqDepth_, builtWqeCount, copySize, ret);
+                    THROW<InternalException>(
+                        StringFormat("[UbConnLite::%s] memcpy_sp failed, ret = %d", __func__, ret));
+                }
+            }
+
+            if (static_cast<u64>(sqOffset) + builtWqeCount == sqDepth_) {
+                ++piDetourCount;
+                ++batchStagingStats_.ringWrapCount;
+            }
+            // PI is committed only after the complete chunk has been copied successfully.
+            pi = static_cast<u16>(static_cast<u32>(pi) + builtWqeCount);
+        }
+        out.pi = pi;
+    } catch (...) {
+        // A successful earlier chunk may already occupy SQ slots without a DB task. Restore
+        // the logical producer state so a retry starts at the original slot and overwrites it.
+        pi = batchStartPi;
+        piDetourCount = batchStartPiDetourCount;
+        out.pi = batchStartPi;
+        throw;
+    }
 }
 
 void UbConnLite::ReadReduce(ReduceIn reduceIn, const RmaBufSliceLite &loc, const RmtRmaBufSliceLite &rmt,
@@ -613,6 +803,7 @@ std::string UbConnLite::Describe()
 constexpr uint32_t UB_WQE_NUM_PER_SQE = 4; // URMA约束每个SQE包含4个WQEBB
 UbConnLite::UbConnLite(const UbConnLiteParam &liteParam)
 {
+    wqeStagingChunk_ = GetWqeStagingChunkFromEnv();
     HCCL_INFO("[UbConnLite::%s] liteParam[%s]", __func__, liteParam.Describe().c_str());
     dieId_           = liteParam.dieId;
     funcId_          = liteParam.funcId;
@@ -636,7 +827,8 @@ UbConnLite::UbConnLite(const UbConnLiteParam &liteParam)
 UbConnLite::UbConnLite(const UbJettyLiteId &id, const UbJettyLiteAttr &attr, const Eid &rmtInfo)
     : RmaConnLite(id, attr, rmtInfo),
       maxReadSize(UB_DMA_MAX_READ_WEITE_SIZE),
-      maxWriteSize(UB_DMA_MAX_READ_WEITE_SIZE)
+      maxWriteSize(UB_DMA_MAX_READ_WEITE_SIZE),
+      wqeStagingChunk_(GetWqeStagingChunkFromEnv())
 {
 }
 

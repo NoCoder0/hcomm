@@ -23,7 +23,10 @@
 
 namespace Hccl {
 
+class UbTransportLiteImpl;
+
 enum class SlicePosition { ONLY = 0, FIRST = 1, MIDDLE = 2, LAST = 3 };
+
 struct UbConnLiteParam {
     u32 dieId;
     u32 funcId;
@@ -50,6 +53,8 @@ struct UbConnLiteParam {
 
 class UbConnLite : public RmaConnLite {
 public:
+    friend class UbTransportLiteImpl;
+
     UbConnLite(const UbJettyLiteId &id, const UbJettyLiteAttr &attr, const Eid &rmtInfo);
 
     explicit UbConnLite(const UbConnLiteParam &liteParam);
@@ -101,12 +106,51 @@ public:
     void BatchOneSidedWrite(const vector<RmaBufSliceLite> &loc, const vector<RmtRmaBufSliceLite> &rmt,
                             const SqeConfigLite &cfg, const StreamLite &stream, ConnLiteOperationOut &out) override;
 private:
+    static constexpr u32 WQE_STAGING_CHUNK_DEFAULT = 32;
+    static constexpr u32 WQE_STAGING_CHUNK_MAX = 32;
+
+    struct BatchStagingStats {
+        u64 stagingBuildNs{0};
+        u64 bulkCopyNs{0};
+        u64 bulkCopyCalls{0};
+        u64 bulkCopyWqeCount{0};
+        u64 ringWrapCount{0};
+        u64 timerProbeNs{0};
+        u32 stagingChunk{WQE_STAGING_CHUNK_DEFAULT};
+        bool stagingUsed{false};
+
+        u64 BulkCopyAvgNsPerWqe() const
+        {
+            return bulkCopyWqeCount == 0 ? 0 : bulkCopyNs / bulkCopyWqeCount;
+        }
+    };
+
     u16  pi{0};
     u16  ci{0};
     u32  piDetourCount{0};
     u32  ciDetourCount{0};
     u32  maxReadSize{0};
     u32  maxWriteSize{0};
+    u32  wqeStagingChunk_{WQE_STAGING_CHUNK_DEFAULT};
+    BatchStagingStats batchStagingStats_{};
+
+    static u32 GetWqeStagingChunkFromEnv();
+    static bool IsLegalWqeStagingChunk(u32 chunk);
+
+    u32 GetWqeStagingChunk() const
+    {
+        return wqeStagingChunk_;
+    }
+
+    // ExecuteBatchTransfer 专用的全 READ 批量构造入口，不扩展 HCOMM 对外接口。
+    void BatchRead(const vector<RmaBufSliceLite> &loc, const vector<RmtRmaBufSliceLite> &rmt,
+                   const SqeConfigLite &cfg, u32 lastDescriptorIndex, const StreamLite &stream,
+                   ConnLiteOperationOut &out);
+
+    const BatchStagingStats &GetBatchStagingStats() const
+    {
+        return batchStagingStats_;
+    }
     void ProcessSlices(const RmaBufSliceLite &loc, const RmtRmaBufSliceLite &rmt, u32 maxSliceSize,
         std::function<void(const RmaBufSliceLite &, const RmtRmaBufSliceLite &, SlicePosition)> processOneSlice,
         DataType dataType = DataType::INVALID) const;
