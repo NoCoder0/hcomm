@@ -786,7 +786,6 @@ constexpr uint32_t       NOTIFYIDX_INVALID_VALUE  = 0xFFFFFFFF; // NOTIFY idexÈù
 HcclResult UbTransportLiteImpl::ExecuteBatchTransfer(StreamLite *streamLitePtr,
     const HcommBatchTransferDesc *transferDescs, uint32_t transferDescNum)
 {
-    transferDescNum = 3;
     const u64 executeStartNs = GetCurAicpuTimestamp();
     std::vector<Hccl::RmaBufferLite> locSlices;
     std::vector<Hccl::Buffer> rmtSlices;

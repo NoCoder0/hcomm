@@ -462,18 +462,12 @@ void UbConnLite::BatchRead(const vector<RmaBufSliceLite> &loc, const vector<RmtR
 
             if (!dwqeCacheLocked_) {
                 u8 *va = reinterpret_cast<u8 *>(sqVa_ + sqByteOffset);
-                constexpr u32 copySize192 = 3 * SQE_SIZE_64;
-                HCCL_ERROR("[UbConnLite::%s][COPY_192_CONST_PRE] pi[%u], sqOffset[%u], builtWqeCount[%u], "
-                           "bytes[%u], src[%p], dst[%p]",
-                    __func__, pi, sqOffset, builtWqeCount, copySize192, staging, va);
+                const u32 copyBytes = static_cast<u32>(copySize64);
                 const u64 copyStartNs = GetCurAicpuTimestamp();
-                const s32 ret192 = memcpy_sp(va, copySize192, staging, copySize192);
-                HCCL_ERROR("[UbConnLite::%s][COPY_192_CONST_POST] pi[%u], sqOffset[%u], builtWqeCount[%u], "
-                           "bytes[%u], src[%p], dst[%p], ret[%d]",
-                    __func__, pi, sqOffset, builtWqeCount, copySize192, staging, va, ret192);
-                if (UNLIKELY(ret192 != 0)) {
+                const s32 ret = memcpy_sp(va, copyBytes, staging, copyBytes);
+                if (UNLIKELY(ret != 0)) {
                     THROW<InternalException>(
-                        StringFormat("[UbConnLite::%s] memcpy_sp 192 B failed, ret = %d", __func__, ret192));
+                        StringFormat("[UbConnLite::%s] memcpy_sp failed, ret = %d", __func__, ret));
                 }
 
                 batchStagingStats_.bulkCopyNs += GetCurAicpuTimestamp() - copyStartNs;
