@@ -106,7 +106,6 @@ public:
     void BatchOneSidedWrite(const vector<RmaBufSliceLite> &loc, const vector<RmtRmaBufSliceLite> &rmt,
                             const SqeConfigLite &cfg, const StreamLite &stream, ConnLiteOperationOut &out) override;
 private:
-    static constexpr u32 WQE_STAGING_CHUNK_DEFAULT = 2;
     static constexpr u32 WQE_STAGING_CHUNK_MAX = 32;
 
     struct BatchStagingStats {
@@ -116,7 +115,7 @@ private:
         u64 bulkCopyWqeCount{0};
         u64 ringWrapCount{0};
         u64 timerProbeNs{0};
-        u32 stagingChunk{WQE_STAGING_CHUNK_DEFAULT};
+        u32 stagingChunk{WQE_STAGING_CHUNK_MAX};
         bool stagingUsed{false};
 
         u64 BulkCopyAvgNsPerWqe() const
@@ -131,10 +130,9 @@ private:
     u32  ciDetourCount{0};
     u32  maxReadSize{0};
     u32  maxWriteSize{0};
-    u32  wqeStagingChunk_{WQE_STAGING_CHUNK_DEFAULT};
+    u32  wqeStagingChunk_{WQE_STAGING_CHUNK_MAX};
     BatchStagingStats batchStagingStats_{};
 
-    static u32 GetWqeStagingChunkFromEnv();
     static bool IsLegalWqeStagingChunk(u32 chunk);
 
     u32 GetWqeStagingChunk() const

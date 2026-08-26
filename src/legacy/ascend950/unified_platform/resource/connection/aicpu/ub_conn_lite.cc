@@ -48,28 +48,6 @@ bool UbConnLite::IsLegalWqeStagingChunk(u32 chunk)
     return chunk == 0 || chunk == 1 || chunk == 2 || chunk == 8 || chunk == 16 || chunk == 32;
 }
 
-u32 UbConnLite::GetWqeStagingChunkFromEnv()
-{
-    constexpr char envName[] = "HCOMM_AICPU_UB_WQE_STAGING_CHUNK";
-    const std::string envValue = SalGetEnv(envName);
-    if (envValue.empty() || envValue == "EmptyString") {
-        HCCL_INFO("[UbConnLite] env[%s] is not set, stagingChunk[%u]", envName, WQE_STAGING_CHUNK_DEFAULT);
-        return WQE_STAGING_CHUNK_DEFAULT;
-    }
-
-    u32 chunk = 0;
-    const bool exactValue = envValue == "0" || envValue == "1" || envValue == "4" || envValue == "8" ||
-                            envValue == "16" || envValue == "32";
-    if (SalStrToULong(envValue, HCCL_BASE_DECIMAL, chunk) != HCCL_SUCCESS || !exactValue ||
-        !IsLegalWqeStagingChunk(chunk)) {
-        HCCL_WARNING("[UbConnLite] env[%s] value[%s] is invalid, expected [0, 1, 4, 8, 16, 32], use default[%u]",
-                     envName, envValue.c_str(), WQE_STAGING_CHUNK_DEFAULT);
-        return WQE_STAGING_CHUNK_DEFAULT;
-    }
-    HCCL_INFO("[UbConnLite] env[%s] value[%s], stagingChunk[%u]", envName, envValue.c_str(), chunk);
-    return chunk;
-}
-
 void UbConnLite::FillCommSqe(UdmaSqeCommon *sqe, const RmtRmaBufSliceLite &rmt, const SqeConfigLite &cfg, u32 opCode,
                              SlicePosition slicePos)
 {
@@ -470,19 +448,39 @@ void UbConnLite::BatchRead(const vector<RmaBufSliceLite> &loc, const vector<RmtR
 
             if (!dwqeCacheLocked_) {
                 u8 *va = reinterpret_cast<u8 *>(sqVa_ + sqByteOffset);
-                const u32 copySize = static_cast<u32>(copySize64);
+                constexpr u32 copySize128 = 128;
+                constexpr u32 copySize64Part = 64;
+                HCCL_ERROR("[UbConnLite::%s][COPY_128_PRE] pi[%u], sqOffset[%u], builtWqeCount[%u], bytes[%u], "
+                           "src[%p], dst[%p]",
+                    __func__, pi, sqOffset, builtWqeCount, copySize128, staging, va);
                 const u64 copyStartNs = GetCurAicpuTimestamp();
-                const s32 ret = memcpy_sp(va, copySize, staging, copySize);
-                batchStagingStats_.bulkCopyNs += GetCurAicpuTimestamp() - copyStartNs;
-                ++batchStagingStats_.bulkCopyCalls;
-                batchStagingStats_.bulkCopyWqeCount += builtWqeCount;
-                if (UNLIKELY(ret != 0)) {
-                    HCCL_ERROR("[UbConnLite::%s] memcpy_sp failed, pi[%u], sqOffset[%u], sqDepth[%u], "
-                               "wqeCount[%u], copySize[%u], ret[%d]",
-                        __func__, pi, sqOffset, sqDepth_, builtWqeCount, copySize, ret);
+                const s32 ret128 = memcpy_sp(va, copySize128, staging, copySize128);
+                HCCL_ERROR("[UbConnLite::%s][COPY_128_POST] pi[%u], sqOffset[%u], builtWqeCount[%u], bytes[%u], "
+                           "src[%p], dst[%p], ret[%d]",
+                    __func__, pi, sqOffset, builtWqeCount, copySize128, staging, va, ret128);
+                if (UNLIKELY(ret128 != 0)) {
                     THROW<InternalException>(
-                        StringFormat("[UbConnLite::%s] memcpy_sp failed, ret = %d", __func__, ret));
+                        StringFormat("[UbConnLite::%s] memcpy_sp 128 B failed, ret = %d", __func__, ret128));
                 }
+
+                HCCL_ERROR("[UbConnLite::%s][COPY_64_PRE] pi[%u], sqOffset[%u], builtWqeCount[%u], bytes[%u], "
+                           "src[%p], dst[%p]",
+                    __func__, pi, sqOffset, builtWqeCount, copySize64Part, reinterpret_cast<u8 *>(staging) + 128,
+                    va + 128);
+                const s32 ret64
+                    = memcpy_sp(va + 128, copySize64Part, reinterpret_cast<u8 *>(staging) + 128, copySize64Part);
+                HCCL_ERROR("[UbConnLite::%s][COPY_64_POST] pi[%u], sqOffset[%u], builtWqeCount[%u], bytes[%u], "
+                           "src[%p], dst[%p], ret[%d]",
+                    __func__, pi, sqOffset, builtWqeCount, copySize64Part, reinterpret_cast<u8 *>(staging) + 128,
+                    va + 128, ret64);
+                if (UNLIKELY(ret64 != 0)) {
+                    THROW<InternalException>(
+                        StringFormat("[UbConnLite::%s] memcpy_sp 64 B failed, ret = %d", __func__, ret64));
+                }
+
+                batchStagingStats_.bulkCopyNs += GetCurAicpuTimestamp() - copyStartNs;
+                batchStagingStats_.bulkCopyCalls += 2;
+                batchStagingStats_.bulkCopyWqeCount += builtWqeCount;
             }
 
             if (static_cast<u64>(sqOffset) + builtWqeCount == sqDepth_) {
@@ -803,7 +801,7 @@ std::string UbConnLite::Describe()
 constexpr uint32_t UB_WQE_NUM_PER_SQE = 4; // URMA约束每个SQE包含4个WQEBB
 UbConnLite::UbConnLite(const UbConnLiteParam &liteParam)
 {
-    wqeStagingChunk_ = GetWqeStagingChunkFromEnv();
+    wqeStagingChunk_ = WQE_STAGING_CHUNK_MAX;
     HCCL_INFO("[UbConnLite::%s] liteParam[%s]", __func__, liteParam.Describe().c_str());
     dieId_           = liteParam.dieId;
     funcId_          = liteParam.funcId;
@@ -828,7 +826,7 @@ UbConnLite::UbConnLite(const UbJettyLiteId &id, const UbJettyLiteAttr &attr, con
     : RmaConnLite(id, attr, rmtInfo),
       maxReadSize(UB_DMA_MAX_READ_WEITE_SIZE),
       maxWriteSize(UB_DMA_MAX_READ_WEITE_SIZE),
-      wqeStagingChunk_(GetWqeStagingChunkFromEnv())
+      wqeStagingChunk_(WQE_STAGING_CHUNK_MAX)
 {
 }
 
