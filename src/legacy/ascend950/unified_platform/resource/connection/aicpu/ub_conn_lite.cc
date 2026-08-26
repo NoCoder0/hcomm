@@ -9,6 +9,7 @@
  */
 #include <chrono>
 #include <limits>
+#include <new>
 #include "ub_conn_lite.h"
 #include "log.h"
 #include "exception_util.h"
@@ -395,7 +396,20 @@ void UbConnLite::BatchRead(const vector<RmaBufSliceLite> &loc, const vector<RmtR
 
     const u16 batchStartPi = pi;
     const u32 batchStartPiDetourCount = piDetourCount;
-    UdmaSqeWrite staging[WQE_STAGING_CHUNK_MAX]{};
+    constexpr u32 stagingAlignment = 64;
+    constexpr u32 stagingStorageSize = WQE_STAGING_CHUNK_MAX * sizeof(UdmaSqeWrite) + stagingAlignment - 1;
+    u8 stagingStorage[stagingStorageSize]{};
+    const u64 stagingStorageAddr = reinterpret_cast<u64>(stagingStorage);
+    const u64 stagingAddr = (stagingStorageAddr + stagingAlignment - 1)
+        & ~static_cast<u64>(stagingAlignment - 1);
+    UdmaSqeWrite *staging = reinterpret_cast<UdmaSqeWrite *>(stagingAddr);
+    for (u32 i = 0; i < WQE_STAGING_CHUNK_MAX; ++i) {
+        ::new (static_cast<void *>(staging + i)) UdmaSqeWrite;
+    }
+    if (UNLIKELY((stagingAddr & (stagingAlignment - 1)) != 0)) {
+        THROW<InternalException>(StringFormat("[UbConnLite::%s] staging address is not 64-byte aligned, addr[%p]",
+            __func__, staging));
+    }
     u64 descriptorIndex = 0;
     try {
         while (descriptorIndex < loc.size()) {
