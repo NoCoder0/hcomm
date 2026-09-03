@@ -8,6 +8,7 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
+#include <string>
 #include "ub_transport_lite_impl.h"
 #include "binary_stream.h"
 #include "ub_conn_lite_mgr.h"
@@ -24,6 +25,25 @@ constexpr u32 UB_STRONG_ORDER      = 0X02; // Strong Order表示当前SQE有保�
 constexpr u32 UB_NO_COMPLETION     = 0;    // 表示当前报文和前面报文没有completion序要求，报文对应的CQE可以乱序上报
 constexpr u32 UB_COMPLETION        = 1;    // 表示当前报文和前面报文有completion序要求，报文对应的CQE需要保序上报
 constexpr u8  UB_FENCE_ENABLED     = 1;    // fence使能
+
+namespace {
+// Change this call-site mode only for an experiment. Parallel mode additionally needs the compile gate,
+// two provider barriers, and a runtime callback-join implementation that is safe on submit failure.
+enum class BatchSqCopyMode : u32 { DISABLED = 0, SERIAL_K2 = 1, PARALLEL = 2, PARALLEL_DIAGNOSTIC = 3 };
+constexpr BatchSqCopyMode kBatchSqCopyMode = BatchSqCopyMode::DISABLED;
+constexpr u32 kBatchSqCopyExperimentParallelism = 16;
+constexpr bool kBatchSqCopyRuntimeJoinGuaranteed = false;
+// aicpu_sharder.cc emits AICPUE_LOGI per ParallelFor/shard; keep this false until that level is disabled.
+constexpr bool kBatchSqCopyRuntimeLogsQuiet = false;
+constexpr BatchSqCopyBarrier kBatchSqCopyWorkerCompletionBarrier = nullptr;
+constexpr BatchSqCopyBarrier kBatchSqCopyPublisherBarrier = nullptr;
+
+bool IsParallelBatchSqCopy(BatchSqCopyMode mode)
+{
+    return mode == BatchSqCopyMode::PARALLEL || mode == BatchSqCopyMode::PARALLEL_DIAGNOSTIC;
+}
+} // namespace
+
 UbTransportLiteImpl::UbTransportLiteImpl(
     std::vector<char> &uniqueId, std::function<void(u32 streamId, u32 taskId, const TaskParam &taskParam)> callback)
 {
@@ -862,14 +882,24 @@ void UbTransportLiteImpl::BatchTransferAll(const std::vector<RmaBufferLite> &loc
     u16 stagingStartPi = 0;
     u32 stagingStartPiDetourCount = 0;
     auto *ubConn = static_cast<UbConnLite *>(connVec[0]);
+    const bool parallelCopy = IsParallelBatchSqCopy(kBatchSqCopyMode);
+    const bool diagnosticMode = kBatchSqCopyMode == BatchSqCopyMode::PARALLEL_DIAGNOSTIC;
+    const bool serialK2 = kBatchSqCopyMode == BatchSqCopyMode::SERIAL_K2;
+    const u32 batchStagingChunk = (parallelCopy || serialK2) ? 2 : ubConn->GetWqeStagingChunk();
+    const u32 batchParallelism = parallelCopy ? kBatchSqCopyExperimentParallelism : 1;
     ubConn->batchStagingStats_ = {};
-    ubConn->batchStagingStats_.stagingChunk = ubConn->GetWqeStagingChunk();
+    ubConn->batchStagingStats_.stagingChunk = batchStagingChunk;
+    ubConn->batchStagingStats_.requestedParallelism = batchParallelism;
     bool allRead = (transferOp.size() == insNum && notifyIdxs.size() == insNum);
     for (u32 i = 0; allRead && i < insNum; ++i) {
         allRead = (transferOp[i].transType == TransferType::READ &&
                    notifyIdxs[i] == NOTIFYIDX_INVALID_VALUE);
     }
-    if (allRead && ubConn->GetWqeStagingChunk() != 0) {
+    if (allRead && batchStagingChunk != 0) {
+        if (UNLIKELY(parallelCopy && !kBatchSqCopyRuntimeLogsQuiet)) {
+            THROW<InternalException>(StringFormat(
+                "[%s] parallel SQ copy requires AICPU scheduler informational logs to be disabled", __func__));
+        }
         std::vector<RmaBufSliceLite> readLoc;
         std::vector<RmtRmaBufSliceLite> readRmt;
         readLoc.reserve(insNum);
@@ -880,7 +910,16 @@ void UbTransportLiteImpl::BatchTransferAll(const std::vector<RmaBufferLite> &loc
         }
         stagingStartPi = ubConn->pi;
         stagingStartPiDetourCount = ubConn->piDetourCount;
-        ubConn->BatchRead(readLoc, readRmt, cfg, insNum - 1, stream, connOut);
+        u32 lastReadDescriptorIndex = insNum - 1;
+        for (u32 i = insNum; i > 0; --i) {
+            if (readLoc[i - 1].GetSize() != 0) {
+                lastReadDescriptorIndex = i - 1;
+                break;
+            }
+        }
+        ubConn->BatchRead(readLoc, readRmt, cfg, lastReadDescriptorIndex, stream, connOut, batchStagingChunk,
+                          parallelCopy, batchParallelism, kBatchSqCopyWorkerCompletionBarrier,
+                          kBatchSqCopyPublisherBarrier, kBatchSqCopyRuntimeJoinGuaranteed, diagnosticMode);
         stagingStats = &ubConn->GetBatchStagingStats();
         if (stagingStats->stagingUsed) {
             stagingConn = ubConn;
@@ -924,8 +963,11 @@ void UbTransportLiteImpl::BatchTransferAll(const std::vector<RmaBufferLite> &loc
     }
     const u64 wqeBuildEndNs = GetCurAicpuTimestamp();
     const u64 launchTaskStartNs = GetCurAicpuTimestamp();
+    u64 dbBuildNs = 0;
     try {
+        const u64 dbBuildStartNs = GetCurAicpuTimestamp();
         BuildUbDbSendTask(stream, connVec[0]->GetUbJettyLiteId(), connOut.pi); // 约束使用一批wqe的个数不会导致反压
+        dbBuildNs = GetCurAicpuTimestamp() - dbBuildStartNs;
     } catch (...) {
         if (stagingConn != nullptr) {
             stagingConn->pi = stagingStartPi;
@@ -936,27 +978,69 @@ void UbTransportLiteImpl::BatchTransferAll(const std::vector<RmaBufferLite> &loc
     }
     const u64 launchTaskEndNs = GetCurAicpuTimestamp();
 
+    if (stagingConn != nullptr) {
+        stagingConn->FinalizeBatchSqCopyMetrics();
+    }
+
     const u64 profilingStartNs = GetCurAicpuTimestamp();
     ExecProfilingAll(loc, rmt, transferOp, stream, taskId, notifyIdxs);
     const u64 batchEndNs = GetCurAicpuTimestamp();
     const u64 wqeBuildNs = wqeBuildEndNs - wqeBuildStartNs;
     const u64 launchTaskNs = launchTaskEndNs - launchTaskStartNs;
     const u64 profilingNs = batchEndNs - profilingStartNs;
-    // Temporary diagnostic. Keep one aggregate log outside the WQE loop to limit measurement disturbance.
+    // Keep one aggregate log outside the descriptor loop. Per-worker detail is diagnostic-mode only.
     const u64 stagingBuildNs = stagingStats == nullptr ? 0 : stagingStats->stagingBuildNs;
+    const u64 stagingAllocationNs = stagingStats == nullptr ? 0 : stagingStats->stagingAllocationNs;
+    const u64 stagingPreparationNs = stagingStats == nullptr ? 0 : stagingStats->stagingPreparationNs;
     const u64 bulkCopyNs = stagingStats == nullptr ? 0 : stagingStats->bulkCopyNs;
     const u64 bulkCopyCalls = stagingStats == nullptr ? 0 : stagingStats->bulkCopyCalls;
     const u64 bulkCopyWqeCount = stagingStats == nullptr ? 0 : stagingStats->bulkCopyWqeCount;
     const u64 bulkCopyAvgNsPerWqe = stagingStats == nullptr ? 0 : stagingStats->BulkCopyAvgNsPerWqe();
     const u64 ringWrapCount = stagingStats == nullptr ? 0 : stagingStats->ringWrapCount;
     const u64 timerProbeNs = stagingStats == nullptr ? 0 : stagingStats->timerProbeNs;
-    const u32 stagingChunk = ubConn->GetWqeStagingChunk();
-    HCCL_ERROR("[TEMP_TIMING][%s] insNum[%u] wqeBuildNs[%llu] stagingBuildNs[%llu] bulkCopyNs[%llu] "
-               "bulkCopyCalls[%llu] bulkCopyWqeCount[%llu] bulkCopyAvgNsPerWqe[%llu] stagingChunk[%u] "
-               "ringWrapCount[%llu] timerProbeNs[%llu] launchTaskNs[%llu] profilingNs[%llu] totalNs[%llu].",
-        __func__, insNum, wqeBuildNs, stagingBuildNs, bulkCopyNs, bulkCopyCalls, bulkCopyWqeCount,
-        bulkCopyAvgNsPerWqe, stagingChunk, ringWrapCount, timerProbeNs, launchTaskNs,
-        profilingNs, batchEndNs - batchStartNs);
+    const u64 parallelDispatchJoinNs = stagingStats == nullptr ? 0 : stagingStats->parallelDispatchJoinNs;
+    const u64 sqCopyWallNs = stagingStats == nullptr ? 0 : stagingStats->sqCopyWallNs;
+    const u64 workerBusyNs = stagingStats == nullptr ? 0 : stagingStats->workerBusyNs;
+    const u64 sqCopyBytes = stagingStats == nullptr ? 0 : stagingStats->sqCopyBytes;
+    const u64 sqCopyCalls = stagingStats == nullptr ? 0 : stagingStats->sqCopyCalls;
+    const u64 piCommitNs = stagingStats == nullptr ? 0 : stagingStats->piCommitNs;
+    const u64 publisherBarrierNs = stagingStats == nullptr ? 0 : stagingStats->publisherBarrierNs;
+    const u32 callbackCount = stagingStats == nullptr ? 0 : stagingStats->callbackCount;
+    const u32 nonEmptyCallbackCount = stagingStats == nullptr ? 0 : stagingStats->nonEmptyCallbackCount;
+    const u32 activeCopyTidCount = stagingStats == nullptr ? 0 : stagingStats->activeCopyTidCount;
+    const u32 activeCopyAicpuIndexCount = stagingStats == nullptr ? 0 : stagingStats->activeCopyAicpuIndexCount;
+    const u32 maxOverlap = stagingStats == nullptr ? 0 : stagingStats->maxOverlap;
+    const s32 dispatchTid = stagingStats == nullptr ? -1 : stagingStats->dispatchTid;
+    const u32 callerParticipated = stagingStats == nullptr ? 0 : (stagingStats->callerParticipated ? 1 : 0);
+    const u32 parallelCopyFailed = stagingStats == nullptr ? 0 : (stagingStats->parallelCopyFailed ? 1 : 0);
+    const u32 stagingChunk = stagingStats == nullptr ? batchStagingChunk : stagingStats->stagingChunk;
+    std::string workerMetrics;
+    if (stagingStats != nullptr && stagingStats->diagnosticMode) {
+        for (u32 i = 0; i < stagingStats->requestedParallelism; ++i) {
+            const auto &worker = stagingStats->workerStats[i];
+            workerMetrics += StringFormat("%u:%u:%llu:%llu:%d:%d:%d;", i, worker.entered ? 1 : 0,
+                worker.bytes, worker.copyNs, worker.tid, worker.aicpuIndex, worker.ret);
+        }
+    }
+    HCCL_ERROR("[TEMP_TIMING][%s] insNum[%u] mode[%u] requestedP[%u] registeredCpu[%u] callbacks[%u] "
+               "nonEmptyCallbacks[%u] activeCopyTids[%u] activeCopyAicpuIndices[%u] maxOverlap[%u] "
+               "dispatchTid[%d] callerParticipated[%u] parallelCopyFailed[%u] wqeBuildNs[%llu] "
+               "stagingBuildNs[%llu] stagingAllocationNs[%llu] stagingPreparationNs[%llu] "
+               "parallelDispatchJoinNs[%llu] sqCopyWallNs[%llu] workerBusyNs[%llu] sqCopyBytes[%llu] "
+               "sqCopyCalls[%llu] bulkCopyNs[%llu] bulkCopyCalls[%llu] bulkCopyWqeCount[%llu] "
+               "bulkCopyAvgNsPerWqe[%llu] stagingChunk[%u] ringWrapCount[%llu] timerProbeNs[%llu] "
+               "publisherBarrierNs[%llu] piCommitNs[%llu] "
+               "dbBuildNs[%llu] launchTaskNs[%llu] "
+               "profilingNs[%llu] totalNs[%llu] workerMetrics[%s].",
+        __func__, insNum, static_cast<u32>(kBatchSqCopyMode), batchParallelism,
+        stagingStats == nullptr ? 0 : stagingStats->registeredCpuNum, callbackCount, nonEmptyCallbackCount,
+        activeCopyTidCount, activeCopyAicpuIndexCount, maxOverlap, dispatchTid, callerParticipated,
+        parallelCopyFailed, wqeBuildNs, stagingBuildNs, stagingAllocationNs, stagingPreparationNs,
+        parallelDispatchJoinNs, sqCopyWallNs,
+        workerBusyNs, sqCopyBytes, sqCopyCalls, bulkCopyNs, bulkCopyCalls, bulkCopyWqeCount,
+        bulkCopyAvgNsPerWqe, stagingChunk, ringWrapCount, timerProbeNs, publisherBarrierNs, piCommitNs,
+        dbBuildNs, launchTaskNs, profilingNs, batchEndNs - batchStartNs,
+        workerMetrics.c_str());
 }
 
 void UbTransportLiteImpl::WriteWithNotify(const RmaBufferLite &loc, const Buffer &rmt, const WithNotifyIn &withNotify,

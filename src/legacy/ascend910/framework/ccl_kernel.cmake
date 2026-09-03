@@ -15,6 +15,7 @@ add_library(ccl_kernel SHARED)
 target_compile_definitions(ccl_kernel PRIVATE
     HCCD
     CCL_KERNEL_AICPU
+    HCOMM_ENABLE_AICPU_PARALLEL_SQ_COPY=0
 )
 
 if(BUILD_OPEN_PROJECT)
@@ -130,6 +131,18 @@ target_include_directories(ccl_kernel PRIVATE
     ${LEGACY_ASCEND950_INCLUDE_LIST}
 )
 
+# The public aicpu_sharder target must export aicpu_sharder.h before the compile gate is enabled.
+# Do not use the runtime source tree as an include path: an installed package is a build prerequisite.
+if(BUILD_OPEN_PROJECT)
+    target_include_directories(ccl_kernel PRIVATE
+        $<TARGET_PROPERTY:aicpu_sharder,INTERFACE_INCLUDE_DIRECTORIES>
+    )
+else()
+    target_include_directories(ccl_kernel PRIVATE
+        ${TOP_DIR}/inc/aicpu/aicpu_schedule/aicpu_sharder
+    )
+endif()
+
 if(BUILD_OPEN_PROJECT)
     target_compile_definitions(ccl_kernel PRIVATE
         OPEN_BUILD_PROJECT
@@ -151,6 +164,7 @@ if(BUILD_OPEN_PROJECT)
         -Wl,--no-as-needed
         ascend_hal
         c_sec
+        aicpu_sharder
         mmpa
         ccl_kernel_plf
         -Wl,--as-needed
@@ -194,6 +208,7 @@ else()
         $<BUILD_INTERFACE:kernel_tiling_headers>
         -Wl,--no-as-needed
         c_sec
+        aicpu_sharder
         ccl_kernel_plf
         mmpa
         -Wl,--as-needed

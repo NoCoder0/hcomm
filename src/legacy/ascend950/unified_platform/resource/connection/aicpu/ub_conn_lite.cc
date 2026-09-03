@@ -7,10 +7,17 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+#include <algorithm>
+#include <array>
 #include <chrono>
 #include <limits>
 #include <new>
+#include <utility>
 #include "ub_conn_lite.h"
+#if defined(CCL_KERNEL_AICPU) && HCOMM_ENABLE_AICPU_PARALLEL_SQ_COPY
+#include "aicpu_sharder.h"
+#include "aicpu_schedule/aicpu_context.h"
+#endif
 #include "log.h"
 #include "exception_util.h"
 #include "udma_data_struct.h"
@@ -36,6 +43,46 @@ constexpr u32 UB_RELAX_ORDER             = 0x1; // Relax Order表示当前SQE与
 constexpr u32 UB_STRONG_ORDER            = 0x2; // Strong Order表示当前SQE有保序要求，该SQE不能超越前面的Relax Order SQE
 
 static_assert(sizeof(UdmaSqeWrite) == SQE_SIZE_64, "UB READ WQE must occupy one 64-byte SQ slot");
+
+namespace {
+struct BatchSqCopySpan {
+    u32 stagingIndex{0};
+    u32 sqOffset{0};
+    u32 wqeCount{0};
+};
+
+struct BatchSqCopyJob {
+    BatchSqCopySpan spans[2]{};
+    u32 spanCount{0};
+};
+
+struct alignas(64) BatchSqCopyJobResult {
+    bool entered{false};
+    bool callbackEntered{false};
+    u64 bytes{0};
+    u64 calls{0};
+    s32 ret{0};
+    bool completed{false};
+};
+static_assert(sizeof(BatchSqCopyJobResult) % 64 == 0,
+    "batch SQ copy job results must occupy whole cache lines");
+
+bool IsLegalBatchSqCopyParallelism(u32 parallelism)
+{
+    return parallelism == 1 || parallelism == 2 || parallelism == 4 || parallelism == 8 || parallelism == 16;
+}
+
+s32 GetCurrentAicpuIndex()
+{
+#if defined(CCL_KERNEL_AICPU) && HCOMM_ENABLE_AICPU_PARALLEL_SQ_COPY
+    const u32 threadIndex = aicpu::GetAicpuThreadIndex();
+    return threadIndex <= static_cast<u32>(std::numeric_limits<s32>::max())
+        ? static_cast<s32>(threadIndex) : -1;
+#else
+    return -1;
+#endif
+}
+} // namespace
 
 static std::map<DataType, u32> g_ubmaDataTypeMap
     = {{DataType::INT8, 0x0},   {DataType::INT16, 0x1},   {DataType::INT32, 0x2}, {DataType::UINT8, 0x3},
@@ -324,10 +371,13 @@ void UbConnLite::Read(const RmaBufSliceLite &loc, const RmtRmaBufSliceLite &rmt,
 }
 
 void UbConnLite::BatchRead(const vector<RmaBufSliceLite> &loc, const vector<RmtRmaBufSliceLite> &rmt,
-    const SqeConfigLite &cfg, u32 lastDescriptorIndex, const StreamLite &stream, ConnLiteOperationOut &out)
+    const SqeConfigLite &cfg, u32 lastDescriptorIndex, const StreamLite &stream, ConnLiteOperationOut &out,
+    u32 stagingChunk, bool parallelCopy, u32 parallelism, BatchSqCopyBarrier workerCompletionBarrier,
+    BatchSqCopyBarrier publisherBarrier, bool schedulerJoinGuaranteed, bool diagnosticMode)
 {
     batchStagingStats_ = {};
-    batchStagingStats_.stagingChunk = wqeStagingChunk_;
+    batchStagingStats_.stagingChunk = stagingChunk;
+    batchStagingStats_.requestedParallelism = parallelism;
     if (loc.size() != rmt.size()) {
         THROW<InternalException>(StringFormat(
             "[UbConnLite::%s] local/remote size mismatch, loc[%llu], rmt[%llu]", __func__, loc.size(), rmt.size()));
@@ -352,13 +402,13 @@ void UbConnLite::BatchRead(const vector<RmaBufSliceLite> &loc, const vector<RmtR
         }
     };
 
-    if (wqeStagingChunk_ == 0) {
+    if (stagingChunk == 0) {
         processDirect();
         return;
     }
-    if (UNLIKELY(!IsLegalWqeStagingChunk(wqeStagingChunk_) || wqeStagingChunk_ > WQE_STAGING_CHUNK_MAX)) {
+    if (UNLIKELY(!IsLegalWqeStagingChunk(stagingChunk) || stagingChunk > WQE_STAGING_CHUNK_MAX)) {
         THROW<InternalException>(StringFormat("[UbConnLite::%s] invalid staging chunk[%u]",
-            __func__, wqeStagingChunk_));
+            __func__, stagingChunk));
     }
 
     bool allSmallRead = true;
@@ -388,6 +438,12 @@ void UbConnLite::BatchRead(const vector<RmaBufSliceLite> &loc, const vector<RmtR
             StringFormat("[UbConnLite::%s] invalid read limit[%u] or SQ depth[%u]", __func__, maxReadSize, sqDepth_));
     }
 
+    if (parallelCopy) {
+        BatchReadParallel(loc, rmt, cfg, lastDescriptorIndex, stream, out, stagingChunk, parallelism,
+                          workerCompletionBarrier, publisherBarrier, schedulerJoinGuaranteed, diagnosticMode);
+        return;
+    }
+
     batchStagingStats_.stagingUsed = true;
     // One timestamp pair is enough to report the timer probe without adding a timestamp per WQE.
     const u64 timerProbeStartNs = GetCurAicpuTimestamp();
@@ -415,7 +471,7 @@ void UbConnLite::BatchRead(const vector<RmaBufSliceLite> &loc, const vector<RmtR
         while (descriptorIndex < loc.size()) {
             const u32 sqOffset = static_cast<u32>(pi) % sqDepth_;
             const u32 sqRemaining = sqDepth_ - sqOffset;
-            const u32 chunkLimit = (sqRemaining < wqeStagingChunk_) ? sqRemaining : wqeStagingChunk_;
+            const u32 chunkLimit = (sqRemaining < stagingChunk) ? sqRemaining : stagingChunk;
             if (UNLIKELY(chunkLimit == 0)) {
                 THROW<InternalException>(StringFormat(
                     "[UbConnLite::%s] invalid staging chunk, sqOffset[%u], sqDepth[%u]", __func__, sqOffset, sqDepth_));
@@ -491,6 +547,455 @@ void UbConnLite::BatchRead(const vector<RmaBufSliceLite> &loc, const vector<RmtR
         out.pi = batchStartPi;
         throw;
     }
+}
+
+void UbConnLite::BatchReadParallel(const vector<RmaBufSliceLite> &loc,
+    const vector<RmtRmaBufSliceLite> &rmt, const SqeConfigLite &cfg, u32 lastDescriptorIndex,
+    const StreamLite &stream, ConnLiteOperationOut &out, u32 stagingChunk, u32 parallelism,
+    BatchSqCopyBarrier workerCompletionBarrier, BatchSqCopyBarrier publisherBarrier,
+    bool schedulerJoinGuaranteed, bool diagnosticMode)
+{
+#if !HCOMM_ENABLE_AICPU_PARALLEL_SQ_COPY
+    (void)loc;
+    (void)rmt;
+    (void)cfg;
+    (void)lastDescriptorIndex;
+    (void)stream;
+    (void)out;
+    (void)stagingChunk;
+    (void)parallelism;
+    (void)workerCompletionBarrier;
+    (void)publisherBarrier;
+    (void)schedulerJoinGuaranteed;
+    (void)diagnosticMode;
+    THROW<InternalException>(StringFormat(
+        "[UbConnLite::%s] parallel SQ copy compile gate is disabled", __func__));
+#elif !defined(CCL_KERNEL_AICPU)
+    (void)loc;
+    (void)rmt;
+    (void)cfg;
+    (void)lastDescriptorIndex;
+    (void)stream;
+    (void)out;
+    (void)stagingChunk;
+    (void)parallelism;
+    (void)workerCompletionBarrier;
+    (void)publisherBarrier;
+    (void)schedulerJoinGuaranteed;
+    (void)diagnosticMode;
+    THROW<InternalException>(StringFormat("[UbConnLite::%s] parallel copy is only available in AICPU kernel",
+        __func__));
+#else
+    (void)stream;
+    batchStagingStats_.stagingUsed = true;
+    batchStagingStats_.parallelCopyUsed = true;
+    batchStagingStats_.stagingChunk = stagingChunk;
+    batchStagingStats_.requestedParallelism = parallelism;
+    batchStagingStats_.diagnosticMode = diagnosticMode;
+    const u16 batchStartPi = pi;
+    const u32 batchStartPiDetourCount = piDetourCount;
+    try {
+        if (UNLIKELY(!schedulerJoinGuaranteed)) {
+            THROW<InternalException>(StringFormat(
+                "[UbConnLite::%s] parallel SQ copy requires a runtime callback-join contract", __func__));
+        }
+        if (UNLIKELY(workerCompletionBarrier == nullptr || publisherBarrier == nullptr)) {
+            THROW<InternalException>(StringFormat(
+                "[UbConnLite::%s] parallel SQ copy requires worker and publisher barriers", __func__));
+        }
+        if (UNLIKELY(!IsLegalBatchSqCopyParallelism(parallelism))) {
+            THROW<InternalException>(StringFormat("[UbConnLite::%s] invalid parallelism[%u]",
+                __func__, parallelism));
+        }
+        if (UNLIKELY(stagingChunk == 0 || !IsLegalWqeStagingChunk(stagingChunk)
+                     || stagingChunk > WQE_STAGING_CHUNK_MAX)) {
+            THROW<InternalException>(StringFormat("[UbConnLite::%s] invalid staging chunk[%u]",
+                __func__, stagingChunk));
+        }
+        if (UNLIKELY(dwqeCacheLocked_)) {
+            THROW<InternalException>(StringFormat(
+                "[UbConnLite::%s] parallel copy does not support dwqeCacheLocked", __func__));
+        }
+        constexpr u32 piModulus = 1U << 16;
+        if (UNLIKELY(sqDepth_ == 0 || sqDepth_ > piModulus || (piModulus % sqDepth_) != 0)) {
+            THROW<InternalException>(StringFormat(
+                "[UbConnLite::%s] SQ depth[%u] is incompatible with u16 PI wrap", __func__, sqDepth_));
+        }
+        if (UNLIKELY(sqVa_ == 0 || (sqVa_ & (SQE_SIZE_64 - 1)) != 0)) {
+            THROW<InternalException>(StringFormat(
+                "[UbConnLite::%s] SQ base[%p] is null or not 64-byte aligned", __func__,
+                reinterpret_cast<void *>(sqVa_)));
+        }
+
+        const u32 registeredCpuNum = ::GetCPUNum();
+        batchStagingStats_.registeredCpuNum = registeredCpuNum;
+        const u64 maxShardNum = static_cast<u64>(registeredCpuNum) * 2;
+        if (UNLIKELY(parallelism > 1 && (registeredCpuNum <= 1
+                                         || static_cast<u64>(parallelism) > maxShardNum))) {
+            THROW<InternalException>(StringFormat(
+                "[UbConnLite::%s] scheduler cannot generate requested shards[%u], cpuCoreNum[%u], maxShards[%llu]",
+                __func__, parallelism, registeredCpuNum, maxShardNum));
+        }
+
+        u32 wqeCount = 0;
+        for (const auto &localSlice : loc) {
+            if (localSlice.GetSize() != 0) {
+                ++wqeCount;
+            }
+        }
+        if (wqeCount == 0) {
+            out.pi = pi;
+            return;
+        }
+        if (UNLIKELY(wqeCount > sqDepth_)) {
+            // ci/sqCiAddr is not exposed as a validated free-space query here; the caller must guarantee
+            // that the requested slots are available before selecting this experiment path.
+            THROW<InternalException>(StringFormat(
+                "[UbConnLite::%s] batch WQE count[%u] exceeds SQ depth[%u]", __func__, wqeCount, sqDepth_));
+        }
+
+        const u32 sqOffset = static_cast<u32>(pi) % sqDepth_;
+        const u32 firstWqeCount = std::min(wqeCount, sqDepth_ - sqOffset);
+        const u32 secondWqeCount = wqeCount - firstWqeCount;
+        const u64 maxAddress = std::numeric_limits<u64>::max();
+        auto checkSqSpan = [&](u32 spanSqOffset, u32 spanWqeCount) {
+            if (spanWqeCount == 0) {
+                return;
+            }
+            const u64 copySize = static_cast<u64>(spanWqeCount) * SQE_SIZE_64;
+            const u64 byteOffset = static_cast<u64>(spanSqOffset) * SQE_SIZE_64;
+            if (UNLIKELY(spanSqOffset >= sqDepth_ || spanWqeCount > sqDepth_ - spanSqOffset
+                         || copySize > UINT32_MAX || sqVa_ > maxAddress - byteOffset
+                         || copySize > maxAddress - (sqVa_ + byteOffset))) {
+                THROW<InternalException>(StringFormat(
+                    "[UbConnLite::%s] SQ span arithmetic overflow, sqOffset[%u], wqeCount[%u], sqDepth[%u]",
+                    __func__, spanSqOffset, spanWqeCount, sqDepth_));
+            }
+        };
+        checkSqSpan(sqOffset, firstWqeCount);
+        checkSqSpan(0, secondWqeCount);
+
+        constexpr u32 stagingAlignment = 64;
+        const size_t stagingStorageSize = static_cast<size_t>(wqeCount) * sizeof(UdmaSqeWrite) + stagingAlignment - 1;
+        const u64 stagingAllocationStartNs = GetCurAicpuTimestamp();
+        std::vector<u8> stagingStorage(stagingStorageSize, 0);
+        batchStagingStats_.stagingAllocationNs = GetCurAicpuTimestamp() - stagingAllocationStartNs;
+        const u64 stagingPreparationStartNs = GetCurAicpuTimestamp();
+        const u64 stagingStorageAddr = reinterpret_cast<u64>(stagingStorage.data());
+        const u64 stagingAddr = (stagingStorageAddr + stagingAlignment - 1)
+            & ~static_cast<u64>(stagingAlignment - 1);
+        if (UNLIKELY((stagingAddr & (stagingAlignment - 1)) != 0)) {
+            THROW<InternalException>(StringFormat("[UbConnLite::%s] staging address is not 64-byte aligned, addr[%p]",
+                __func__, reinterpret_cast<void *>(stagingAddr)));
+        }
+        UdmaSqeWrite *staging = reinterpret_cast<UdmaSqeWrite *>(stagingAddr);
+        for (u32 i = 0; i < wqeCount; ++i) {
+            ::new (static_cast<void *>(staging + i)) UdmaSqeWrite;
+        }
+
+        const u64 timerProbeStartNs = GetCurAicpuTimestamp();
+        const u64 timerProbeEndNs = GetCurAicpuTimestamp();
+        batchStagingStats_.timerProbeNs = timerProbeEndNs - timerProbeStartNs;
+
+        u64 descriptorIndex = 0;
+        u32 stagingIndex = 0;
+        while (descriptorIndex < loc.size()) {
+            u32 builtWqeCount = 0;
+            const u64 buildStartNs = GetCurAicpuTimestamp();
+            while (builtWqeCount < stagingChunk && descriptorIndex < loc.size()) {
+                if (loc[descriptorIndex].GetSize() == 0) {
+                    ++descriptorIndex;
+                    continue;
+                }
+
+                staging[stagingIndex] = {};
+                const bool isLastDescriptor = (descriptorIndex == lastDescriptorIndex);
+                SqeConfigLite wqeCfg = cfg;
+                wqeCfg.cqeEn = isLastDescriptor;
+                wqeCfg.placeOdr = isLastDescriptor ? UB_STRONG_ORDER : UB_RELAX_ORDER;
+                wqeCfg.compOrder = isLastDescriptor ? 1 : 0;
+                FillOneSqeWrite(loc[descriptorIndex], rmt[descriptorIndex], wqeCfg, &staging[stagingIndex],
+                    UdmaSqOpcode::UDMA_OPC_READ, SlicePosition::ONLY);
+
+                const u32 physicalOffset = static_cast<u32>(
+                    (static_cast<u64>(sqOffset) + stagingIndex) % sqDepth_);
+                staging[stagingIndex].comm.owner = (physicalOffset == sqDepth_ - 1) ? 1 : 0;
+                ++stagingIndex;
+                ++builtWqeCount;
+                ++descriptorIndex;
+            }
+            batchStagingStats_.stagingBuildNs += GetCurAicpuTimestamp() - buildStartNs;
+        }
+        if (UNLIKELY(stagingIndex != wqeCount)) {
+            THROW<InternalException>(StringFormat(
+                "[UbConnLite::%s] staging count mismatch, built[%u], expected[%u]", __func__, stagingIndex, wqeCount));
+        }
+
+        BatchSqCopySpan firstSpan;
+        firstSpan.stagingIndex = 0;
+        firstSpan.sqOffset = sqOffset;
+        firstSpan.wqeCount = firstWqeCount;
+        BatchSqCopySpan secondSpan;
+        secondSpan.stagingIndex = firstWqeCount;
+        secondSpan.sqOffset = 0;
+        secondSpan.wqeCount = secondWqeCount;
+
+        std::array<BatchSqCopyJob, BATCH_SQ_COPY_MAX_PARALLELISM> jobs{};
+        auto assignSpan = [&](u32 jobBegin, u32 jobCount, const BatchSqCopySpan &span) {
+            for (u32 i = 0; i < jobCount; ++i) {
+                const u32 begin = static_cast<u32>(static_cast<u64>(span.wqeCount) * i / jobCount);
+                const u32 end = static_cast<u32>(static_cast<u64>(span.wqeCount) * (i + 1) / jobCount);
+                BatchSqCopyJob &job = jobs[jobBegin + i];
+                job.spanCount = 1;
+                job.spans[0].stagingIndex = span.stagingIndex + begin;
+                job.spans[0].sqOffset = span.sqOffset + begin;
+                job.spans[0].wqeCount = end - begin;
+            }
+        };
+        if (secondWqeCount == 0) {
+            assignSpan(0, parallelism, firstSpan);
+        } else if (parallelism == 1) {
+            jobs[0].spanCount = 2;
+            jobs[0].spans[0] = firstSpan;
+            jobs[0].spans[1] = secondSpan;
+        } else {
+            u32 firstJobCount = static_cast<u32>((static_cast<u64>(parallelism) * firstWqeCount
+                + wqeCount / 2) / wqeCount);
+            firstJobCount = std::max(1U, std::min(parallelism - 1, firstJobCount));
+            assignSpan(0, firstJobCount, firstSpan);
+            assignSpan(firstJobCount, parallelism - firstJobCount, secondSpan);
+        }
+
+        const u64 stagingPreparationElapsedNs = GetCurAicpuTimestamp() - stagingPreparationStartNs;
+        batchStagingStats_.stagingPreparationNs = stagingPreparationElapsedNs >= batchStagingStats_.stagingBuildNs
+            ? stagingPreparationElapsedNs - batchStagingStats_.stagingBuildNs : 0;
+
+        // This array is local and explicitly aligned; it does not change UbConnLite's alignment requirement.
+        alignas(64) std::array<BatchSqCopyJobResult, BATCH_SQ_COPY_MAX_PARALLELISM> jobResults{};
+        batchStagingStats_.dispatchTid = diagnosticMode ? SalGetTid() : -1;
+        // ParallelFor has no return status. The runtime join contract is a prerequisite; without it this path
+        // is rejected before dispatch because a failed submission may leave a late callback using stack state.
+        const auto work = [&](int64_t start, int64_t limit) {
+            if (start < 0 || limit <= start || static_cast<u64>(start) >= parallelism
+                || static_cast<u64>(limit) > parallelism) {
+                return;
+            }
+            const u32 workerIndex = static_cast<u32>(start);
+            jobResults[workerIndex].callbackEntered = true;
+            BatchSqCopyWorkerStats *workerStats = diagnosticMode
+                ? &batchStagingStats_.workerStats[workerIndex] : nullptr;
+            if (workerStats != nullptr) {
+                workerStats->entered = true;
+            }
+            u64 workerBytes = 0;
+            s32 workerRet = 0;
+            u32 completedJobCount = 0;
+            try {
+                if (workerStats != nullptr) {
+                    workerStats->tid = SalGetTid();
+                    workerStats->aicpuIndex = GetCurrentAicpuIndex();
+                }
+                for (int64_t jobIndex = start; jobIndex < limit; ++jobIndex) {
+                    BatchSqCopyJobResult &jobResult = jobResults[static_cast<size_t>(jobIndex)];
+                    jobResult.entered = true;
+                    u64 jobBytes = 0;
+                    u64 jobCalls = 0;
+                    const BatchSqCopyJob &job = jobs[static_cast<size_t>(jobIndex)];
+                    for (u32 spanIndex = 0; spanIndex < job.spanCount; ++spanIndex) {
+                        const BatchSqCopySpan &span = job.spans[spanIndex];
+                        if (span.wqeCount == 0) {
+                            continue;
+                        }
+                        const u32 copyBytes = span.wqeCount * SQE_SIZE_64;
+                        u8 *dst = reinterpret_cast<u8 *>(sqVa_ + static_cast<u64>(span.sqOffset) * SQE_SIZE_64);
+                        const u8 *src = reinterpret_cast<const u8 *>(staging + span.stagingIndex);
+                        const u64 copyStartNs = diagnosticMode ? GetCurAicpuTimestamp() : 0;
+                        const s32 ret = memcpy_sp(dst, copyBytes, src, copyBytes);
+                        const u64 copyEndNs = diagnosticMode ? GetCurAicpuTimestamp() : 0;
+                        if (workerStats != nullptr) {
+                            if (workerStats->startNs == 0) {
+                                workerStats->startNs = copyStartNs;
+                            }
+                            workerStats->copyNs += copyEndNs - copyStartNs;
+                            workerStats->endNs = copyEndNs;
+                        }
+                        if (UNLIKELY(ret != 0)) {
+                            jobResult.ret = ret;
+                            workerRet = ret;
+                            break;
+                        }
+                        jobBytes += copyBytes;
+                        ++jobCalls;
+                    }
+                    jobResult.bytes = jobBytes;
+                    jobResult.calls = jobCalls;
+                    workerBytes += jobBytes;
+                    if (workerRet != 0) {
+                        break;
+                    }
+                    ++completedJobCount;
+                }
+                if (workerRet != 0) {
+                    if (workerStats != nullptr) {
+                        workerStats->bytes = workerBytes;
+                        workerStats->ret = workerRet;
+                    }
+                    return;
+                }
+
+                workerCompletionBarrier();
+                if (workerStats != nullptr) {
+                    workerStats->bytes = workerBytes;
+                    workerStats->ret = workerRet;
+                }
+                for (u32 completedJob = 0; completedJob < completedJobCount; ++completedJob) {
+                    jobResults[static_cast<size_t>(start) + completedJob].completed = true;
+                }
+            } catch (...) {
+                const s32 workerFailure = workerRet == 0 ? -1 : workerRet;
+                if (workerStats != nullptr) {
+                    workerStats->bytes = workerBytes;
+                    workerStats->ret = workerFailure;
+                }
+                for (int64_t jobIndex = start; jobIndex < limit; ++jobIndex) {
+                    BatchSqCopyJobResult &jobResult = jobResults[static_cast<size_t>(jobIndex)];
+                    jobResult.entered = true;
+                    jobResult.ret = workerFailure;
+                    jobResult.completed = false;
+                }
+            }
+        };
+
+        const u64 dispatchStartNs = GetCurAicpuTimestamp();
+        ::ParallelFor(static_cast<int64_t>(parallelism), 1, work);
+        batchStagingStats_.parallelDispatchJoinNs = GetCurAicpuTimestamp() - dispatchStartNs;
+
+        u32 callbackCount = 0;
+        for (u32 workerIndex = 0; workerIndex < parallelism; ++workerIndex) {
+            if (jobResults[workerIndex].callbackEntered) {
+                ++callbackCount;
+            }
+        }
+        batchStagingStats_.callbackCount = callbackCount;
+        u64 sqCopyBytes = 0;
+        u64 sqCopyCalls = 0;
+        for (u32 jobIndex = 0; jobIndex < parallelism; ++jobIndex) {
+            const auto &jobResult = jobResults[jobIndex];
+            if (UNLIKELY(!jobResult.entered || !jobResult.completed || jobResult.ret != 0)) {
+                batchStagingStats_.parallelCopyFailed = true;
+                THROW<InternalException>(StringFormat(
+                    "[UbConnLite::%s] parallel SQ copy job failed, entered[%u], completed[%u], ret[%d]",
+                    __func__, jobResult.entered, jobResult.completed, jobResult.ret));
+            }
+            sqCopyBytes += jobResult.bytes;
+            sqCopyCalls += jobResult.calls;
+        }
+        const u64 expectedSqCopyBytes = static_cast<u64>(wqeCount) * SQE_SIZE_64;
+        if (UNLIKELY(sqCopyBytes != expectedSqCopyBytes || sqCopyCalls == 0)) {
+            batchStagingStats_.parallelCopyFailed = true;
+            THROW<InternalException>(StringFormat(
+                "[UbConnLite::%s] SQ copy result mismatch, bytes[%llu/%llu], calls[%llu]",
+                __func__, sqCopyBytes, expectedSqCopyBytes, sqCopyCalls));
+        }
+        batchStagingStats_.sqCopyBytes = sqCopyBytes;
+        batchStagingStats_.sqCopyCalls = sqCopyCalls;
+        batchStagingStats_.bulkCopyWqeCount = wqeCount;
+
+        const u64 publisherBarrierStartNs = GetCurAicpuTimestamp();
+        // The provider contract, not a CPU atomic fence, establishes SQ visibility before PI publication.
+        publisherBarrier();
+        batchStagingStats_.publisherBarrierNs = GetCurAicpuTimestamp() - publisherBarrierStartNs;
+
+        const u64 piCommitStartNs = GetCurAicpuTimestamp();
+        if (static_cast<u64>(sqOffset) + wqeCount >= sqDepth_) {
+            ++piDetourCount;
+            ++batchStagingStats_.ringWrapCount;
+        }
+        pi = static_cast<u16>(static_cast<u32>(pi) + wqeCount);
+        out.pi = pi;
+        batchStagingStats_.piCommitNs = GetCurAicpuTimestamp() - piCommitStartNs;
+    } catch (...) {
+        pi = batchStartPi;
+        piDetourCount = batchStartPiDetourCount;
+        out.pi = batchStartPi;
+        batchStagingStats_.parallelCopyFailed = true;
+        throw;
+    }
+#endif
+}
+
+void UbConnLite::FinalizeBatchSqCopyMetrics()
+{
+    if (!batchStagingStats_.parallelCopyUsed || !batchStagingStats_.diagnosticMode) {
+        return;
+    }
+
+    std::array<s32, BATCH_SQ_COPY_MAX_PARALLELISM> tids{};
+    std::array<s32, BATCH_SQ_COPY_MAX_PARALLELISM> aicpuIndices{};
+    std::array<std::pair<u64, s32>, BATCH_SQ_COPY_MAX_PARALLELISM * 2> overlapEvents{};
+    u32 tidCount = 0;
+    u32 aicpuIndexCount = 0;
+    u32 overlapEventCount = 0;
+    u64 minCopyStartNs = std::numeric_limits<u64>::max();
+    u64 maxCopyEndNs = 0;
+
+    for (u32 workerIndex = 0; workerIndex < batchStagingStats_.requestedParallelism; ++workerIndex) {
+        const auto &workerStats = batchStagingStats_.workerStats[workerIndex];
+        if (!workerStats.entered) {
+            continue;
+        }
+        if (workerStats.tid == batchStagingStats_.dispatchTid) {
+            batchStagingStats_.callerParticipated = true;
+        }
+        if (workerStats.bytes == 0 || workerStats.startNs >= workerStats.endNs) {
+            continue;
+        }
+
+        ++batchStagingStats_.nonEmptyCallbackCount;
+        batchStagingStats_.workerBusyNs += workerStats.copyNs;
+        minCopyStartNs = std::min(minCopyStartNs, workerStats.startNs);
+        maxCopyEndNs = std::max(maxCopyEndNs, workerStats.endNs);
+
+        bool tidSeen = false;
+        for (u32 index = 0; index < tidCount; ++index) {
+            tidSeen = tidSeen || tids[index] == workerStats.tid;
+        }
+        if (!tidSeen && workerStats.tid >= 0) {
+            tids[tidCount++] = workerStats.tid;
+        }
+
+        bool aicpuIndexSeen = false;
+        for (u32 index = 0; index < aicpuIndexCount; ++index) {
+            aicpuIndexSeen = aicpuIndexSeen || aicpuIndices[index] == workerStats.aicpuIndex;
+        }
+        if (!aicpuIndexSeen && workerStats.aicpuIndex >= 0) {
+            aicpuIndices[aicpuIndexCount++] = workerStats.aicpuIndex;
+        }
+
+        overlapEvents[overlapEventCount++] = std::make_pair(workerStats.startNs, 1);
+        overlapEvents[overlapEventCount++] = std::make_pair(workerStats.endNs, -1);
+    }
+
+    batchStagingStats_.activeCopyTidCount = tidCount;
+    batchStagingStats_.activeCopyAicpuIndexCount = aicpuIndexCount;
+    batchStagingStats_.sqCopyWallNs = maxCopyEndNs >= minCopyStartNs
+        ? maxCopyEndNs - minCopyStartNs : 0;
+
+    std::sort(overlapEvents.begin(), overlapEvents.begin() + overlapEventCount,
+        [](const auto &lhs, const auto &rhs) {
+            if (lhs.first != rhs.first) {
+                return lhs.first < rhs.first;
+            }
+            return lhs.second < rhs.second;
+        });
+    s32 activeCopies = 0;
+    for (u32 eventIndex = 0; eventIndex < overlapEventCount; ++eventIndex) {
+        activeCopies += overlapEvents[eventIndex].second;
+        batchStagingStats_.maxOverlap = std::max(batchStagingStats_.maxOverlap,
+            static_cast<u32>(activeCopies));
+    }
+    batchStagingStats_.bulkCopyNs = batchStagingStats_.workerBusyNs;
+    batchStagingStats_.bulkCopyCalls = batchStagingStats_.sqCopyCalls;
 }
 
 void UbConnLite::ReadReduce(ReduceIn reduceIn, const RmaBufSliceLite &loc, const RmtRmaBufSliceLite &rmt,
