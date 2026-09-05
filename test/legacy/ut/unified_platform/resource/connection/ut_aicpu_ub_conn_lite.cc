@@ -78,6 +78,33 @@ TEST_F(AicpuUbConnLiteTest, test_UBConnLite_construct_by_unique_id)
     UbConnLite ubConn(data);
 }
 
+TEST_F(AicpuUbConnLiteTest, test_UBConnLite_FillCommSqe_OrderConfigBySlicePosition)
+{
+    UbJettyLiteId id(1, 1, 1);
+    UbJettyLiteAttr attr(1, 1, 1, 1, false);
+    Eid rmtEid;
+    rmtEid.raw[0] = 1;
+    UbConnLite ubConn(id, attr, rmtEid);
+
+    RmtRmaBufSliceLite rmt(0x2222, 64, 1, 1, 1, UINT32_MAX);
+    SqeConfigLite cfg;
+    cfg.placeOdr = 1;
+    cfg.compOrder = 0;
+    cfg.fence = 0;
+
+    UdmaSqeCommon onlySqe{};
+    ubConn.FillCommSqe(&onlySqe, rmt, cfg, 0, SlicePosition::ONLY);
+    EXPECT_EQ(cfg.placeOdr, onlySqe.placeOdr);
+    EXPECT_EQ(cfg.compOrder, onlySqe.compOrder);
+    EXPECT_EQ(cfg.fence, onlySqe.fence);
+
+    UdmaSqeCommon lastSqe{};
+    ubConn.FillCommSqe(&lastSqe, rmt, cfg, 0, SlicePosition::LAST);
+    EXPECT_EQ(2, lastSqe.placeOdr);
+    EXPECT_EQ(1, lastSqe.compOrder);
+    EXPECT_EQ(1, lastSqe.fence);
+}
+
 TEST_F(AicpuUbConnLiteTest, test_UBConnLite_Read)
 {
     UbJettyLiteId   id(1, 1, 1);

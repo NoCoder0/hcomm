@@ -48,8 +48,9 @@ void UbConnLite::FillCommSqe(UdmaSqeCommon *sqe, const RmtRmaBufSliceLite &rmt, 
     sqe->opcode    = opCode;
     sqe->tpn       = tpn_;
 
-    // 当前片是ONLY片(只有一片的情况)和最后一片的情况，全严格保序
-    if (slicePos == SlicePosition::ONLY || slicePos == SlicePosition::LAST) {
+    // LAST片用于收束同一次读写的多个切片，需要严格保序。
+    // ONLY片未发生切片，应保留上层配置，避免覆盖 BatchTransfer 的批量保序语义。
+    if (slicePos == SlicePosition::LAST) {
         sqe->placeOdr = UB_STRONG_ORDER;
         sqe->compOrder = 1;
         sqe->fence = 1;
