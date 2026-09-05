@@ -16,7 +16,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdlib>
-#include <cstring>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -24,6 +23,7 @@
 #include <vector>
 
 #include "hcomm_result_defs.h"
+#include "hcomm_adapter_runtime.h"
 #include "log.h"
 #include "param_check_pub.h"
 
@@ -209,9 +209,13 @@ void LoadPluginsOnce()
     uint32_t deviceCount = 0;
     const aclError ret = aclrtGetDeviceCount(&deviceCount);
     if (ret == ACL_SUCCESS && deviceCount != 0) {
-        HCCL_RUN_INFO("[NicPlugin] plugin loading skipped, aclrtGetDeviceCount ret[%d], count[%u].",
-            ret, deviceCount);
-        return;
+        if (!IsHostNicPluginForceLoadEnabled()) {
+            HCCL_RUN_INFO("[NicPlugin] plugin loading skipped, aclrtGetDeviceCount ret[%d], count[%u].",
+                ret, deviceCount);
+            return;
+        }
+        HCCL_RUN_WARNING("[NicPlugin] force loading Host NIC plugins with aclrtGetDeviceCount ret[%d], count[%u], "
+            "env[%s]=1, test only.", ret, deviceCount, HCOMM_FORCE_HOST_NIC_PLUGIN_ENV);
     }
 
     const char *ascendHomePath = getenv("ASCEND_HOME_PATH");

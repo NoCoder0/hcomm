@@ -216,6 +216,9 @@ private:
     std::mutex &GetReqCtxMutex(const TpProtocol tpProtocol);
 };
 
+/// Host UB 建链使用的 TP manager 资源：测试开关开启时使用独立槽位、映射到 Host resource 0；默认沿用当前 runtime device。
+int32_t ResolveHostUbTpManagerResourceId();
+
 /// UbConnection 释放 TpInfo：Release 键须与 GetTpInfo 时的业务 QoS 一致
 void ReleaseUbConnectionTp(int32_t devLogicId, const IpAddress &locAddr, const IpAddress &rmtAddr,
     TpProtocol tpProtocol, TpInfo &tpInfo, uint32_t requestQos);

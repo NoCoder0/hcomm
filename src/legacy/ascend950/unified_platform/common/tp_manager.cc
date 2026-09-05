@@ -12,6 +12,8 @@
 
 #include <algorithm>
 #include <arpa/inet.h>
+#include <cstdlib>
+#include <cstring>
 #include <string>
 
 #include "exception_util.h"
@@ -41,6 +43,17 @@ constexpr uint32_t kTpAttrBitmapUboeNetWithDscp = 0x1FCU;
 
 namespace {
 
+constexpr char kForceHostNicPluginEnv[] = "HCOMM_FORCE_HOST_NIC_PLUGIN";
+constexpr int32_t kHostResourceId = 0;
+// TpManager 的 0 号槽也可能是正常逻辑 device 0；Host UB 使用预留末槽，避免污染设备路径。
+constexpr int32_t kHostUbTpManagerResourceId = static_cast<int32_t>(MAX_MODULE_DEVICE_NUM);
+
+bool IsHostNicPluginForceLoadEnabled()
+{
+    const char *forceLoad = std::getenv(kForceHostNicPluginEnv);
+    return forceLoad != nullptr && std::strcmp(forceLoad, "1") == 0;
+}
+
 constexpr uint32_t kGetTpAttrOpcode = 106U;
 constexpr uint32_t kGetTpAttrVersion = 2U;
 
@@ -60,6 +73,12 @@ static constexpr size_t kIpv4MappedOffset = kMappedIpArrayLen - kIpv4OctetCount;
 static HcclResult IsPcieStdMainboard(uint32_t devLogicId, bool &isPcieStd)
 {
     isPcieStd = false;
+    if (IsHostNicPluginForceLoadEnabled() &&
+        devLogicId == static_cast<uint32_t>(kHostUbTpManagerResourceId)) {
+        HCCL_WARNING("[TpManager][%s] skip device mainboard lookup for Host-only TP manager resource id[%u], "
+            "env[%s]=1, test only.", __func__, devLogicId, kForceHostNicPluginEnv);
+        return HcclResult::HCCL_SUCCESS;
+    }
     HcclMainboardId mainboardId = HcclMainboardId::MAINBOARD_OTHERS;
     CHK_RET(HrtGetMainboardId(devLogicId, mainboardId));
     isPcieStd = (mainboardId == HcclMainboardId::MAINBOARD_PCIE_STD);
@@ -349,13 +368,31 @@ TpManager& TpManager::GetInstance(const int32_t deviceLogicId)
     return tpManager[deviceLogicId];
 }
 
+int32_t ResolveHostUbTpManagerResourceId()
+{
+    if (!IsHostNicPluginForceLoadEnabled()) {
+        return HrtGetDevice();
+    }
+
+    HCCL_WARNING("[TpManager][%s] use dedicated Host-only TP manager resource id[%d], env[%s]=1, test only.",
+        __func__, kHostUbTpManagerResourceId, kForceHostNicPluginEnv);
+    return kHostUbTpManagerResourceId;
+}
+
 void TpManager::Init()
 {
     if (initFlag) {
         return;
     }
 
-    devPhyId = HrtGetDevicePhyIdByIndex(devLogicId);
+    if (IsHostNicPluginForceLoadEnabled() &&
+        devLogicId == static_cast<uint32_t>(kHostUbTpManagerResourceId)) {
+        devPhyId = static_cast<uint32_t>(kHostResourceId);
+        HCCL_WARNING("[TpManager][%s] force Host-only phyId[%u] for resource id[%u], env[%s]=1, test only.",
+            __func__, devPhyId, devLogicId, kForceHostNicPluginEnv);
+    } else {
+        devPhyId = HrtGetDevicePhyIdByIndex(devLogicId);
+    }
     initFlag = true;
 }
 

@@ -10,14 +10,31 @@
 
 #include "hcomm_adapter_runtime.h"
 
+#include <cstdlib>
+#include <cstring>
+
 #include "adapter_rts_common.h"
 
 namespace hcomm {
 
 constexpr uint32_t kDefaultResourceId = 0U;
 
+bool IsHostNicPluginForceLoadEnabled()
+{
+    const char *forceLoad = std::getenv(HCOMM_FORCE_HOST_NIC_PLUGIN_ENV);
+    return forceLoad != nullptr && std::strcmp(forceLoad, "1") == 0;
+}
+
 HcclResult ResolveRuntimeDevicePhyId(uint32_t &devicePhyId, bool &noDevice)
 {
+    if (IsHostNicPluginForceLoadEnabled()) {
+        devicePhyId = kDefaultResourceId;
+        noDevice = true;
+        HCCL_WARNING("[HcommAdapterRuntime][%s] force Host-only resource id[%u], env[%s]=1, test only.",
+            __func__, devicePhyId, HCOMM_FORCE_HOST_NIC_PLUGIN_ENV);
+        return HCCL_SUCCESS;
+    }
+
     uint32_t deviceCount = 0;
     HcclResult ret = hrtGetDeviceCount(&deviceCount);
     if (ret != HCCL_SUCCESS) {

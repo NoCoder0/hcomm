@@ -127,9 +127,10 @@ HcclResult HostCpuUrmaChannel::BuildConnection()
     CHK_RET(hcomm::CommAddrToIpAddress(localEp_.commAddr, locAddr));
     CHK_RET(hcomm::CommAddrToIpAddress(remoteEp_.commAddr, rmtAddr));
 
-    HCCL_INFO("[HostCpuUrmaChannel::%s] init TpManager with hostResourceId[%u].",
-        __func__, kHostResourceId);
-    Hccl::TpManager::GetInstance(kHostResourceId).Init();
+    const int32_t tpManagerResourceId = Hccl::ResolveHostUbTpManagerResourceId();
+    HCCL_INFO("[HostCpuUrmaChannel::%s] init TpManager with resourceId[%d].",
+        __func__, tpManagerResourceId);
+    Hccl::TpManager::GetInstance(tpManagerResourceId).Init();
 
     std::unique_ptr<Hccl::HostUbConnection> ubConn = nullptr;
     switch (protocol) {
