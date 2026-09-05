@@ -305,7 +305,7 @@ bool HostUbConnection::GetTpInfo()
         ThrowAbnormalStatus(std::string(__func__));
     }
 
-    int32_t devLogicId = HrtGetDevice();
+    const int32_t devLogicId = ResolveHostUbTpManagerResourceId();
     RaUbGetTpInfoParam p{};
     p.locAddr = locAddr;
     p.rmtAddr = rmtAddr;
@@ -361,7 +361,8 @@ void HostUbConnection::SetImportInfo()
 
 void HostUbConnection::ReleaseTp()
 {
-    ReleaseUbConnectionTp(HrtGetDevice(), locAddr, rmtAddr, tpProtocol, tpInfo, static_cast<uint32_t>(qos_));
+    const int32_t devLogicId = ResolveHostUbTpManagerResourceId();
+    ReleaseUbConnectionTp(devLogicId, locAddr, rmtAddr, tpProtocol, tpInfo, static_cast<uint32_t>(qos_));
 }
 
 void HostUbConnection::ReleaseResource()

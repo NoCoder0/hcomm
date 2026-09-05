@@ -17,6 +17,9 @@
 
 namespace hcomm {
 
+constexpr const char *HCOMM_FORCE_HOST_NIC_PLUGIN_ENV = "HCOMM_FORCE_HOST_NIC_PLUGIN";
+
+bool IsHostNicPluginForceLoadEnabled();
 HcclResult ResolveRuntimeDevicePhyId(uint32_t &devicePhyId, bool &noDevice);
 
 } // namespace hcomm
