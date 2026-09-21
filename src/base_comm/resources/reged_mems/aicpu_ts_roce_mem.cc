@@ -16,6 +16,7 @@
 #include "hccl_network.h"
 #include "log.h"
 #include "rma_buffer.h"
+#include "exchange_rdma_buffer_dto.h"
 
 namespace {
 using LocalRdmaRmaBufferMgr = hccl::NetDevContext::LocalRdmaRmaBufferMgr;
@@ -244,6 +245,40 @@ HcclResult AicpuTsRoceRegedMemMgr::GetParamsFromMemDesc(const void *memDesc, uin
         return HCCL_E_INTERNAL;
     }
     rdmaBlob.assign(base, base + descLen - sizeof(EndpointDesc));
+    if (endpointDesc.loc.locType == ENDPOINT_LOC_TYPE_HOST && endpointDesc.protocol == COMM_PROTOCOL_ROCE) {
+        // Host RoCE plugin exports ExchangeRdmaBufferDto, whereas A2/A3 exports
+        // LocalRdmaRmaBuffer's wire format. Translate inside hcomm so applications
+        // can continue passing opaque HcommMemExport/Import descriptors unchanged.
+        constexpr size_t fixedBytes = sizeof(u64) * 2 + sizeof(u32) + sizeof(size_t);
+        CHK_PRT_RET(rdmaBlob.size() < fixedBytes,
+            HCCL_ERROR("[GetParamsFromMemDesc] truncated Host RoCE descriptor"), HCCL_E_PARA);
+        size_t tagBytes = 0;
+        CHK_SAFETY_FUNC_RET(memcpy_s(&tagBytes, sizeof(tagBytes),
+            rdmaBlob.data() + sizeof(u64) * 2 + sizeof(u32), sizeof(tagBytes)));
+        // BinaryStream does not bound string allocations: validate before parsing.
+        CHK_PRT_RET(tagBytes != rdmaBlob.size() - fixedBytes,
+            HCCL_ERROR("[GetParamsFromMemDesc] invalid Host RoCE tag length"), HCCL_E_PARA);
+        std::vector<char> wire(rdmaBlob.begin(), rdmaBlob.end());
+        Hccl::BinaryStream stream(wire);
+        Hccl::ExchangeRdmaBufferDto dto;
+        dto.Deserialize(stream);
+        CHK_PRT_RET(dto.addr == 0 || dto.size == 0 || dto.size > UINT64_MAX - dto.addr,
+            HCCL_ERROR("[GetParamsFromMemDesc] invalid Host RoCE address range"), HCCL_E_PARA);
+
+        const u8 type = static_cast<u8>(hccl::RmaType::RDMA_RMA);
+        const auto address = reinterpret_cast<void *>(static_cast<uintptr_t>(dto.addr));
+        const auto memType = hccl::RmaMemType::HOST;
+        std::ostringstream translated;
+        translated.write(reinterpret_cast<const char *>(&type), sizeof(type));
+        translated.write(reinterpret_cast<const char *>(&address), sizeof(address));
+        translated.write(reinterpret_cast<const char *>(&dto.size), sizeof(dto.size));
+        // Remote Host memory is addressed by its exported VA. This is an RDMA
+        // remote address, not a local mapping into NPU HBM.
+        translated.write(reinterpret_cast<const char *>(&address), sizeof(address));
+        translated.write(reinterpret_cast<const char *>(&memType), sizeof(memType));
+        translated.write(reinterpret_cast<const char *>(&dto.rkey), sizeof(dto.rkey));
+        rdmaBlob = translated.str();
+    }
     return HCCL_SUCCESS;
 }
 
@@ -278,7 +313,8 @@ HcclResult AicpuTsRoceRegedMemMgr::MemoryImport(const void *memDesc, uint32_t de
 
     outMem->addr = remoteBuf->GetAddr();
     outMem->size = remoteBuf->GetSize();
-    outMem->type = COMM_MEM_TYPE_DEVICE;
+    outMem->type = remoteBuf->GetMemType() == hccl::RmaMemType::HOST
+        ? COMM_MEM_TYPE_HOST : COMM_MEM_TYPE_DEVICE;
     HCCL_INFO("[AicpuTsRoceRegedMemMgr][MemoryImport] success descLen[%u] outMem addr[%p] size[%llu], mgrCnt[%zu]",
         descLen, outMem->addr, static_cast<unsigned long long>(outMem->size), remoteRdmaRmaBufferMgrs_.size());
     return HCCL_SUCCESS;

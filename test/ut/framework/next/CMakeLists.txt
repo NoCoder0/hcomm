@@ -62,6 +62,7 @@ set(src_to_test_list
     comms/endpoints/reged_mems/ut_hccs_reged_mem_mgr_test.cc
     coll_comms/api_c_adpt/ut_coll_comm_res_c_adpt.cc
     comms/endpoints/reged_mems/ut_aicpu_ts_roce_mem.cc
+    comms/endpoints/reged_mems/ut_aicpu_host_roce_import.cc
     # Ns recovery相关测试用例
     comms/endpoint_pairs/channels/aicpu/ut_aicpu_ts_urma_channel.cc
     comms/endpoint_pairs/channels/aicpu/ut_aicpu_ts_p2p_channel.cc

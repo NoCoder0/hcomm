@@ -185,7 +185,9 @@ HcclResult HostCpuRoceChannel::BuildSocket()
         port = DEFAULT_LISTENING_PORT;
         HCCL_INFO("[HostCpuRoceChannel::%s] channelDesc port is 0, use default port [%u]", __func__, port);
     }
-    std::string socketTag = "AUTOMATIC_SOCKET_TAG";
+    // Match the public channelName just like the built-in Host RoCE channel.
+    std::string socketTag = channelDesc_.channelName != nullptr
+        ? std::string(channelDesc_.channelName) : "AUTOMATIC_SOCKET_TAG";
     Hccl::SocketConfig socketConfig = (channelDesc_.role != HCOMM_SOCKET_ROLE_RESERVED)
         ? Hccl::SocketConfig(linkData, port, socketTag, channelDesc_.role == HCOMM_SOCKET_ROLE_SERVER)
         : Hccl::SocketConfig(linkData, port, socketTag);
@@ -1552,6 +1554,16 @@ HcclResult HostCpuRoceChannel::RegisterUserMemHybird()
 
 HcclResult HostCpuRoceChannel::BuildExchangeDataLengthHybird()
 {
+    if (channelDesc_.exchangeAllMems) {
+        // A2/A3 resource channels use userMemEnable=false, drainEnable=true,
+        // isIndOp=true. Their wire format differs from the collective channel:
+        // qp count | drain destination | drain source | atomic flag | two counts.
+        // Application memory has already been exported/imported via HcommMem*.
+        CHK_PRT_RET(connections_.size() != 1 || notifyNum_ != 0,
+            HCCL_ERROR("Hybrid resource channel supports one QP and zero user notifies"), HCCL_E_NOT_SUPPORT);
+        exchangeDataTotalSize_ = sizeof(u32) * 3 + sizeof(hccl::MemMsg) * 2 + sizeof(u8);
+        return HCCL_SUCCESS;
+    }
     exchangeDataTotalSize_ = 0;
     exchangeDataTotalSize_ += sizeof(u32); // qp数量
     exchangeDataTotalSize_ += sizeof(hccl::MemMsg) * 2; // output、input buffer
@@ -1574,6 +1586,19 @@ HcclResult HostCpuRoceChannel::BuildExchangeDataHybird()
     CHK_SAFETY_FUNC_RET(memcpy_s(data, size, reinterpret_cast<void *>(&qpNum), sizeof(u32)));
     data += sizeof(u32);
     size -= sizeof (u32);
+
+    if (channelDesc_.exchangeAllMems) {
+        CHK_RET(CreateNotifyBufferHybird(hccl::DATA_NOTIFY_MEM, 1, data, size));
+        CHK_RET(CreateNotifyValueBufferHybird());
+        CHK_SAFETY_FUNC_RET(memcpy_s(data, size, &localMemMsg_[hccl::NOTIFY_SRC_MEM], sizeof(hccl::MemMsg)));
+        data += sizeof(hccl::MemMsg);
+        size -= sizeof(hccl::MemMsg);
+        // resize value-initializes the tail to zero: no atomic-write capability,
+        // no additional device/host MR records. READ uses the imported real rkey.
+        CHK_PRT_RET(size != sizeof(u8) + 2 * sizeof(u32),
+            HCCL_ERROR("Invalid hybrid resource exchange tail"), HCCL_E_INTERNAL);
+        return HCCL_SUCCESS;
+    }
 
     CHK_SAFETY_FUNC_RET(memcpy_s(data, size, reinterpret_cast<void *>(&localMemMsg_[hccl::USER_OUTPUT_MEM]), sizeof(hccl::MemMsg)));
     data += sizeof(hccl::MemMsg);
@@ -1610,6 +1635,8 @@ HcclResult HostCpuRoceChannel::GetRemoteAddrHybird(hccl::MemType memType, u8 *&d
 
 HcclResult HostCpuRoceChannel::ParseRecvExchangeDataHybird()
 {
+    CHK_PRT_RET(exchangeDataForRecv_.size() != exchangeDataTotalSize_ || exchangeDataTotalSize_ < sizeof(u32),
+        HCCL_ERROR("Truncated hybrid exchange data"), HCCL_E_PARA);
     u8 *data = exchangeDataForRecv_.data();
     u64 size = exchangeDataTotalSize_;
 
@@ -1617,6 +1644,24 @@ HcclResult HostCpuRoceChannel::ParseRecvExchangeDataHybird()
     CHK_SAFETY_FUNC_RET(memcpy_s(reinterpret_cast<void *>(&remoteQpNum), sizeof(u32), data, sizeof(u32)));
     data += sizeof(u32);
     size -= sizeof(u32);
+
+    if (channelDesc_.exchangeAllMems) {
+        CHK_PRT_RET(remoteQpNum != 1, HCCL_ERROR("Invalid hybrid resource QP count"), HCCL_E_PARA);
+        CHK_RET(GetRemoteAddrHybird(hccl::DATA_NOTIFY_MEM, data, size));
+        CHK_RET(GetRemoteAddrHybird(hccl::NOTIFY_SRC_MEM, data, size));
+        CHK_PRT_RET(size != sizeof(u8) + 2 * sizeof(u32),
+            HCCL_ERROR("Invalid hybrid resource exchange tail"), HCCL_E_PARA);
+        // The resource-channel transport exchanges zero extra MR records; its
+        // application MRs are managed separately by HcommMemExport/Import.
+        u32 deviceCount = 0;
+        u32 hostCount = 0;
+        CHK_SAFETY_FUNC_RET(memcpy_s(&deviceCount, sizeof(deviceCount), data + sizeof(u8), sizeof(deviceCount)));
+        CHK_SAFETY_FUNC_RET(memcpy_s(&hostCount, sizeof(hostCount),
+            data + sizeof(u8) + sizeof(u32), sizeof(hostCount)));
+        CHK_PRT_RET(deviceCount != 0 || hostCount != 0,
+            HCCL_ERROR("Unexpected hybrid resource MR records"), HCCL_E_NOT_SUPPORT);
+        return HCCL_SUCCESS;
+    }
 
     CHK_RET(GetRemoteAddrHybird(hccl::USER_OUTPUT_MEM, data, size));
     CHK_RET(GetRemoteAddrHybird(hccl::USER_INPUT_MEM, data, size));
@@ -1684,7 +1729,9 @@ HcclResult HostCpuRoceChannel::ExchangeDataHybird()
 {
     HCCL_INFO("[Hybrid] Starting hybrid data exchange");
 
-    CHK_RET(RegisterUserMemHybird());
+    if (!channelDesc_.exchangeAllMems) {
+        CHK_RET(RegisterUserMemHybird());
+    }
 
     CHK_RET(BuildExchangeDataHybird());
 
