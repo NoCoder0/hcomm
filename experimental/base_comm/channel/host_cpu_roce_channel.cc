@@ -15,6 +15,7 @@
 #include "hcomm_c_adpt.h"
 #include "exception_handler.h"
 #include "cpu_roce_endpoint.h"
+#include "roce_mem.h"
 #include "adapter_error_manager_pub.h"
 
 // Orion
@@ -1113,7 +1114,7 @@ HcclResult HostCpuRoceChannel::WriteWithNotify(
 }
 
 void HostCpuRoceChannel::BuildRdmaWr(const char *caller, ibv_wr_opcode opcode, void *localAddr, const void *remoteAddr, uint64_t len,
-                     size_t localIdx, size_t rmtIdx, struct ibv_send_wr &wr, struct ibv_sge &sg) const
+                     size_t localIdx, uint32_t rkey, struct ibv_send_wr &wr, struct ibv_sge &sg) const
 {
     (void)caller;
     wr.sg_list             = &sg;
@@ -1126,7 +1127,7 @@ void HostCpuRoceChannel::BuildRdmaWr(const char *caller, ibv_wr_opcode opcode, v
     wr.next                = nullptr;
     wr.num_sge             = 1;
     wr.wr_id               = 0;
-    wr.wr.rdma.rkey        = rmtRmaBuffers_[rmtIdx]->GetRkey();
+    wr.wr.rdma.rkey        = rkey;
     wr.wr.rdma.remote_addr = reinterpret_cast<uint64_t>(remoteAddr);
 }
 
@@ -1164,8 +1165,6 @@ HcclResult HostCpuRoceChannel::PostRdmaOp(const char *caller, ibv_wr_opcode opco
     CHK_PRT_RET(GetQpInfos().empty(), HCCL_ERROR("[HostCpuRoceChannel::%s] qpInfos is Empty", caller), HCCL_E_ROCE_CONNECT);
     CHK_PRT_RET(localRmaBuffers_.empty(), HCCL_ERROR("[HostCpuRoceChannel::%s] localRmaBuffer is Empty", caller),
                 HCCL_E_ROCE_CONNECT);
-    CHK_PRT_RET(rmtRmaBuffers_.empty(), HCCL_ERROR("[HostCpuRoceChannel::%s] rmtRmaBuffers is Empty", caller),
-                HCCL_E_ROCE_CONNECT);
     if (len > maxMsgSize_) {
         HCCL_WARNING(
             "[HostCpuRoceChannel::%s] len[0x%llx] exceeds maxMsgSize_[0x%llx], caller should slice before posting.",
@@ -1176,8 +1175,22 @@ HcclResult HostCpuRoceChannel::PostRdmaOp(const char *caller, ibv_wr_opcode opco
     auto startTime = std::chrono::steady_clock::now();
     size_t localIdx = 0;
     CHK_RET(FindLocalBuffer(reinterpret_cast<uint64_t>(localAddr), len, localIdx));
-    size_t rmtIdx = 0;
-    CHK_RET(FindRemoteBuffer(reinterpret_cast<uint64_t>(remoteAddr), len, rmtIdx));
+    uint32_t rkey = 0;
+    std::shared_ptr<Hccl::RemoteRdmaRmaBuffer> importedBuffer;
+    if (isHybridMode_ && channelDesc_.exchangeAllMems) {
+        // A3 resource wire carries Drain resources, not application MR records.
+        // Use the MR installed by HcommMemImport instead of an empty channel list.
+        auto *endpoint = static_cast<Endpoint *>(endpointHandle_);
+        CHK_PTR_NULL(endpoint);
+        auto manager = std::dynamic_pointer_cast<RoceRegedMemMgr>(endpoint->GetRegedMemMgr());
+        CHK_SMART_PTR_NULL(manager);
+        CHK_RET(manager->FindImportedBuffer(remoteEp_, reinterpret_cast<uint64_t>(remoteAddr), len, importedBuffer));
+        rkey = importedBuffer->GetRkey();
+    } else {
+        size_t rmtIdx = 0;
+        CHK_RET(FindRemoteBuffer(reinterpret_cast<uint64_t>(remoteAddr), len, rmtIdx));
+        rkey = rmtRmaBuffers_[rmtIdx]->GetRkey();
+    }
     auto endTime = std::chrono::steady_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
     HCCL_INFO("[HostCpuRoceChannel::%s] check buffer takes time [%lld]us", caller, elapsed);
@@ -1210,7 +1223,7 @@ HcclResult HostCpuRoceChannel::PostRdmaOp(const char *caller, ibv_wr_opcode opco
         }
         struct ibv_send_wr wr{};
         struct ibv_sge sg;
-        BuildRdmaWr(caller, opcode, static_cast<char*>(localAddr) + tileLen * i, static_cast<const char*>(remoteAddr) + tileLen * i, wrLen, localIdx, rmtIdx, wr, sg);
+        BuildRdmaWr(caller, opcode, static_cast<char*>(localAddr) + tileLen * i, static_cast<const char*>(remoteAddr) + tileLen * i, wrLen, localIdx, rkey, wr, sg);
         CHK_RET(PostAndCheckSend(qpInfo[i].qp, i, caller, wr));
         HCCL_INFO("[HostCpuRoceChannel::%s] Slice SUCCESS. qp[%u] wrLen[0x%llx], wqeNums_[%u]=%d", caller, i, wrLen, i, wqeNums_[i]);
     }

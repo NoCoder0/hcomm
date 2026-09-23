@@ -42,6 +42,11 @@ public:
     HcclResult GetMemDesc(const EndpointDesc endpointDesc, Hccl::LocalRdmaRmaBuffer *localRdmaRmaBuffer);
     HcclResult GetParamsFromMemDesc(const void *memDesc, uint32_t descLen, 
                                         EndpointDesc &endpointDesc, Hccl::ExchangeRdmaBufferDto &dto);
+
+    // Imported application MRs are independent of the hybrid Drain resource wire.
+    // Callers retain the import until all operations have completed.
+    HcclResult FindImportedBuffer(const EndpointDesc &peer, uint64_t addr, uint64_t len,
+        std::shared_ptr<Hccl::RemoteRdmaRmaBuffer> &buffer) const;
  
 private:
     std::unique_ptr<LocalRdmaRmaBufferMgr> localRdmaRmaBufferMgr_{};
