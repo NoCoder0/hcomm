@@ -9,6 +9,8 @@
  */
 
 #include "orion_adapter_rts.h"
+#include <cstdlib>
+#include <cstring>
 #include "runtime_api_exception.h"
 #include "exception_util.h"
 #include "invalid_params_exception.h"
@@ -27,6 +29,14 @@ constexpr u32 TOKEN_ID_RIGHT_SHIF = 8; // URMA_TOKEN_ID_RIGHT_SHIF，因URMA配�
 namespace {
     constexpr char RT_SET_XPU_DEVICE[] = "rtSetXpuDevice";
     constexpr char RT_RESET_XPU_DEVICE[] = "rtResetXpuDevice";
+
+    // Set HCOMM_HOST_ONLY before starting the process; no mode cache or automatic probing.
+    bool IsHostOnly()
+    {
+        const char *value = std::getenv("HCOMM_HOST_ONLY");
+        return value != nullptr &&
+            (std::strcmp(value, "1") == 0 || std::strcmp(value, "true") == 0 || std::strcmp(value, "TRUE") == 0);
+    }
 }
 const std::unordered_map<std::string, DevType> SOC_VER_CONVERT{{"Ascend310P1", DevType::DEV_TYPE_V51_310_P1},
                                                                {"Ascend310P3", DevType::DEV_TYPE_V51_310_P3},
@@ -104,6 +114,12 @@ s32 HrtDeviceGetBareTgid()
 
 void HrtGetSocVer(std::string &socName)
 {
+    // host-only 模式没有 NPU，按 nosoc 返回避免抛异常。
+    if (IsHostOnly()) {
+        socName = "nosoc";
+        HCCL_INFO("[HrtGetSocVer] host-only mode fallback socName[nosoc].");
+        return;
+    }
     const char *socNamePtr = aclrtGetSocName();
     if (socNamePtr == nullptr) {
         string msg = StringFormat("[Get][SocVer]errNo[0x%016llx] rtGet deviceVer failed.",
@@ -115,6 +131,11 @@ void HrtGetSocVer(std::string &socName)
 
 s32 HrtGetDevice()
 {
+    // host-only 模式（通用服务器无 NPU）返回 devLogicId=0，避免抛异常打断上层调用链。
+    if (IsHostOnly()) {
+        HCCL_INFO("[HrtGetDevice] host-only mode fallback deviceLogicId[0].");
+        return 0;
+    }
     s32 deviceLogicId = 0;
     aclError ret = aclrtGetDevice(&deviceLogicId);
     if (ret != ACL_SUCCESS) {

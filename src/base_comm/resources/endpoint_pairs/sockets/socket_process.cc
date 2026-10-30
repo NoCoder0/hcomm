@@ -15,6 +15,7 @@
 #include "exception_handler.h"
 #include "adapter_rts_common.h"
 #include "endpoint.h"
+#include "hcomm_adapter_runtime.h"
 
 using namespace std;
 
@@ -212,19 +213,17 @@ HcclResult SocketProcess::Init()
         return HCCL_SUCCESS;
     }
 
-    uint32_t deviceCount = 0;
-    HcclResult ret = hrtGetDeviceCount(&deviceCount);
-    if (ret != HCCL_SUCCESS || deviceCount == 0) {
-        devicePhyId_ = 0;
+    bool noDevice = false;
+    CHK_RET(ResolveRuntimeDevicePhyId(devicePhyId_, noDevice));
+    if (noDevice) {
         isInit_.store(true, std::memory_order_release);
-        HCCL_RUN_INFO("[SocketProcess][%s] host resource initialized. get device count ret[%d], count[%u], "
-            "devicePhyId: %u, this: %p", __func__, ret, deviceCount, devicePhyId_, static_cast<void *>(this));
+        HCCL_RUN_INFO("[SocketProcess][%s] host resource initialized. devicePhyId: %u, this: %p",
+            __func__, devicePhyId_, static_cast<void *>(this));
         return HCCL_SUCCESS;
     }
 
     s32 devLogicId = 0;
     CHK_RET(hrtGetDevice(&devLogicId));
-    CHK_RET(hrtGetDevicePhyIdByIndex(static_cast<u32>(devLogicId), devicePhyId_));
 
     isInit_.store(true, std::memory_order_release);
     HCCL_RUN_INFO("[SocketProcess][%s] initialized successfully. deviceLogicId: %d, devicePhyId: %u, this: %p",

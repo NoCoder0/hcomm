@@ -113,6 +113,24 @@ HcclResult WaitClientSocketLinkEstablished(const std::shared_ptr<hccl::HcclSocke
 
 HcclResult AicpuTsRoceChannel::BuildSocketTagName(std::string &outTag) const
 {
+    if (remoteEp_.loc.locType == ENDPOINT_LOC_TYPE_HOST) {
+        // Host SocketConfig uses <channelName>_<server IP>_<client IP>_<port>.
+        // Preserve the existing device-device tag convention below, but use the
+        // Host convention for this mixed pair so RA can match the same socket.
+        hccl::HcclIpAddress localIp{};
+        hccl::HcclIpAddress remoteIp{};
+        CHK_RET(CommAddrToHcclIp(localEp_.commAddr, localIp));
+        CHK_RET(CommAddrToHcclIp(remoteEp_.commAddr, remoteIp));
+        const std::string serverIp(isLocalIpClient_ ? remoteIp.GetReadableIP() : localIp.GetReadableIP());
+        const std::string clientIp(isLocalIpClient_ ? localIp.GetReadableIP() : remoteIp.GetReadableIP());
+        const uint32_t port = channelDesc_.port != 0 ? channelDesc_.port : kDefaultRocePort;
+        outTag = (channelDesc_.channelName != nullptr ? std::string(channelDesc_.channelName)
+                                                     : "AUTOMATIC_SOCKET_TAG")
+            + "_" + serverIp + "_" + clientIp + "_" + std::to_string(port);
+        CHK_PRT_RET(outTag.size() + 1U > SOCK_CONN_TAG_SIZE,
+            HCCL_ERROR("[AicpuTsRoceChannel] Host socket tag too long"), HCCL_E_PARA);
+        return HCCL_SUCCESS;
+    }
     if (channelDesc_.channelName != nullptr) {
         outTag = std::string(channelDesc_.channelName);
         if (outTag.size() + 1U > SOCK_CONN_TAG_SIZE) {

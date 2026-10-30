@@ -21,6 +21,7 @@
 void TcRsAbnormal();
 void TcRsAbnormal2();
 void TcRsInit();
+void TcRsHostPeerWithoutNpu();
 void TcRsSocketListen();
 void TcRsSocketListenIpv6();
 void TcRsSocketConnect();

@@ -20,6 +20,7 @@
 #include "orion_adapter_hccp.h"
 #include "server_socket_manager.h"
 #include "hccp.h"
+#include "dlra_function.h"
 
 using Hccl::HcclException;
 using std::string;
@@ -54,6 +55,14 @@ HcclResult CpuRoceEndpoint::Init()
     }
     Hccl::IpAddress ipAddr{};
     CHK_RET(hcomm::CommAddrToIpAddress(endpointDesc_.commAddr, ipAddr));
+    // Hybrid channels use A2/A3 RA adapters as well as the Host PEER adapters.
+    // Host-only endpoints do not enter GlobalNetDevMgr, so initialize the
+    // RA symbol table here before any hybrid MR/QP operation can use it.
+    CHK_RET(hccl::DlRaFunction::GetInstance().DlRaFunctionInit());
+    // Match CpuUrmaEndpoint and the device HCCP handshake: the peer validates
+    // its IP/tag and waits for the whitelist ACK before exchanging channel data.
+    // Set this before PEER initialization, which snapshots the switch value.
+    TRY_CATCH_RETURN(Hccl::HrtRaSocketSetWhiteListStatus(1));
     CHK_RET(InitHostPeerRaOnce(kHostResourceId, "CpuRoceEndpoint"));
     auto &rdmaHandleMgr = Hccl::RdmaHandleManager::GetInstance();
     TRY_CATCH_RETURN(ctxHandle_ = static_cast<void *>(

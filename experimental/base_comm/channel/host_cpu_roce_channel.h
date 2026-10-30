@@ -173,12 +173,13 @@ private:
     // 1. 能力协商结果
     RoCECapability remoteCap_;            // 对端能力
     bool isHybridMode_ = false;           // 是否为混合模式
+    bool connectWithA3Rdma_{false};        // CONNECT_WITH_A3_RDMA: A3 resource-channel wire format
     
     uint32_t localNotifySize_;
     uint32_t localNotifyAccess_;
 
-    std::array<hccl::MemMsg, static_cast<u32>(hccl::MemType::MEM_TYPE_RESERVED)> localMemMsg_;
-    std::array<hccl::MemMsg, static_cast<u32>(hccl::MemType::MEM_TYPE_RESERVED)> remoteMemMsg_;
+    std::array<hccl::MemMsg, static_cast<u32>(hccl::MemType::MEM_TYPE_RESERVED)> localMemMsg_{};
+    std::array<hccl::MemMsg, static_cast<u32>(hccl::MemType::MEM_TYPE_RESERVED)> remoteMemMsg_{};
     uint64_t exchangeDataTotalSize_;
     std::vector<uint8_t> exchangeDataForSend_;
     std::vector<uint8_t> exchangeDataForRecv_;

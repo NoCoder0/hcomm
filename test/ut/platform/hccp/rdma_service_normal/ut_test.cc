@@ -46,6 +46,7 @@ protected:
 };
 
 TEST_M(RS, TcRsSocketListen);
+TEST_M(RS, TcRsHostPeerWithoutNpu);
 TEST_M(RS, TcRsSocketListenIpv6);
 
 TEST_M(RS, TcRsQpCreate);

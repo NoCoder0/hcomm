@@ -264,6 +264,30 @@ int DlHalQueryDevPidSharemem(struct halQueryDevpidInfo info, pid_t *devPid)
 }
 
 extern int SprintfS(char *strDest, size_t destMax, const char *format, ...);
+extern int RsGetChipLogicId(unsigned int chipId, enum NetworkMode hccpMode, unsigned int *logicId);
+
+void TcRsHostPeerWithoutNpu()
+{
+    struct RsInitConfig cfg = {0};
+    unsigned int logicId = 99;
+
+    mocker((stub_fn_t)DlDrvDeviceGetIndexByPhyId, 20, -7);
+    mocker((stub_fn_t)DlHalGetChipInfo, 20, -7);
+    EXPECT_INT_EQ(RsGetChipLogicId(7, NETWORK_PEER_ONLINE, &logicId), 0);
+    EXPECT_INT_EQ(logicId, 7);
+    EXPECT_INT_EQ(RsGetChipLogicId(7, NETWORK_OFFLINE, &logicId), -ENODEV);
+
+    cfg.hccpMode = NETWORK_PEER_ONLINE;
+    EXPECT_INT_EQ(RsInit(&cfg), 0);
+    EXPECT_INT_EQ(RsGetProductType(0), PRODUCT_TYPE_HOST);
+    EXPECT_INT_EQ(RsIsCustomInterfaceSupported(), false);
+    EXPECT_INT_EQ(RsIsRdmaSupported(), false);
+    EXPECT_INT_EQ(RsIsUdmaSupported(), false);
+    EXPECT_INT_EQ(RsIsTlvSupported(), false);
+    EXPECT_INT_EQ(RsDeinit(&cfg), 0);
+    mocker_clean();
+}
+
 void TcRsInit()
 {
 	int ret = 0;

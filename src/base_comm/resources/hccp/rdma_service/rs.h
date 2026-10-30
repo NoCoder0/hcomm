@@ -273,6 +273,7 @@ enum ProductType {
     PRODUCT_TYPE_910_96,
     PRODUCT_TYPE_350,
     PRODUCT_TYPE_OTHERS,
+    PRODUCT_TYPE_HOST,
 };
 
 enum RsSocketStatus {
@@ -371,7 +372,7 @@ static inline bool RsIsCustomInterfaceSupported(void)
 {
     enum ProductType productType;
     productType = RsGetProductType(0);
-    return (productType != PRODUCT_TYPE_310p);
+    return (productType != PRODUCT_TYPE_310p && productType != PRODUCT_TYPE_HOST);
 }
 #ifdef __cplusplus
 }

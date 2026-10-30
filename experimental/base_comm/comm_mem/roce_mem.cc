@@ -159,6 +159,7 @@ HcclResult RoceRegedMemMgr::MemoryExport(const EndpointDesc endpointDesc, void *
 HcclResult RoceRegedMemMgr::GetParamsFromMemDesc(const void *memDesc, uint32_t descLen, 
                                                 EndpointDesc &endpointDesc, Hccl::ExchangeRdmaBufferDto &dto) 
 {
+    CHK_PTR_NULL(memDesc);
     const char *description = static_cast<const char *>(memDesc);
 
      if (descLen < sizeof(EndpointDesc)) {
@@ -171,6 +172,33 @@ HcclResult RoceRegedMemMgr::GetParamsFromMemDesc(const void *memDesc, uint32_t d
         return HCCL_E_INTERNAL;
     }
 
+    if (endpointDesc.loc.locType == ENDPOINT_LOC_TYPE_DEVICE && endpointDesc.protocol == COMM_PROTOCOL_ROCE) {
+        // A2/A3 LocalRdmaRmaBuffer::Serialize writes type, logical VA, size,
+        // device VA, memory type and key. It is NOT ExchangeRdmaBufferDto.
+        const size_t payloadBytes = descLen - sizeof(EndpointDesc);
+        constexpr size_t deviceBytes = sizeof(u8) + 3 * sizeof(u64) + 2 * sizeof(u32);
+        CHK_PRT_RET(payloadBytes != deviceBytes, HCCL_ERROR("Invalid A3 RoCE descriptor size"), HCCL_E_PARA);
+        const char *cursor = description;
+        auto read = [&cursor](void *value, size_t bytes) {
+            memcpy(value, cursor, bytes);
+            cursor += bytes;
+        };
+        u8 type = 0;
+        u64 logicalAddr = 0, devAddr = 0;
+        u32 memType = 0;
+        read(&type, sizeof(type));
+        read(&logicalAddr, sizeof(logicalAddr));
+        read(&dto.size, sizeof(dto.size));
+        read(&devAddr, sizeof(devAddr));
+        read(&memType, sizeof(memType));
+        read(&dto.rkey, sizeof(dto.rkey));
+        CHK_PRT_RET(type != 1 || memType > 1 || logicalAddr == 0 || devAddr == 0 || dto.size == 0 ||
+            dto.size > UINT64_MAX - devAddr || dto.size > UINT64_MAX - logicalAddr,
+            HCCL_ERROR("Invalid A3 RoCE memory range/type"), HCCL_E_PARA);
+        dto.addr = devAddr; // Host NIC must address the VA registered with the NPU RDMA MR.
+        dto.memInfo = "aicpu-imported";
+        return HCCL_SUCCESS;
+    }
     // 反序列化
     std::vector<char> tempDesc{};
     tempDesc.resize(TRANSPORT_EMD_ESC_SIZE);
@@ -183,6 +211,7 @@ HcclResult RoceRegedMemMgr::GetParamsFromMemDesc(const void *memDesc, uint32_t d
 HcclResult RoceRegedMemMgr::MemoryImport(const void *memDesc, uint32_t descLen, HcommMem *outMem)
 {
     HCCL_INFO("[%s] Begin", __FUNCTION__);
+    CHK_PTR_NULL(outMem);
 
     EndpointDesc endpointDesc;
     Hccl::ExchangeRdmaBufferDto dto;
@@ -214,6 +243,11 @@ HcclResult RoceRegedMemMgr::MemoryImport(const void *memDesc, uint32_t descLen, 
 
     outMem->addr   = reinterpret_cast<void *>(remoteRdmaRmaBuffer->GetAddr());
     outMem->size    = remoteRdmaRmaBuffer->GetSize();
+    if (endpointDesc.loc.locType == ENDPOINT_LOC_TYPE_DEVICE && endpointDesc.protocol == COMM_PROTOCOL_ROCE) {
+        u32 memType = 0;
+        memcpy(&memType, static_cast<const char *>(memDesc) + sizeof(u8) + 3 * sizeof(u64), sizeof(memType));
+        outMem->type = memType == 0 ? COMM_MEM_TYPE_DEVICE : COMM_MEM_TYPE_HOST;
+    }
 
     return HCCL_SUCCESS;
 }

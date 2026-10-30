@@ -240,6 +240,11 @@ STATIC int RsGetChipLogicId(unsigned int chipId, enum NetworkMode hccpMode, unsi
 {
     int ret = 0;
 
+    if (hccpMode == NETWORK_PEER_ONLINE) {
+        *logicId = chipId;
+        return 0;
+    }
+
     ret = DlDrvDeviceGetIndexByPhyId(chipId, logicId);
     CHK_PRT_RETURN(ret != 0, hccp_err("hal get logicId failed, chipId[%u], ret[%d]", chipId, ret), -ENODEV);
 
@@ -282,11 +287,11 @@ STATIC int RsInitRscbCfg(struct rs_cb *rscb)
     ret = RsGetChipLogicId(rscb->chipId, rscb->hccpMode, &rscb->logicId);
     CHK_PRT_RETURN(ret != 0, hccp_err("rs_get_chip_logic_id failed, ret[%d]", ret), ret);
 
-    productType = RsGetProductType(rscb->logicId);
+    productType = rscb->hccpMode == NETWORK_PEER_ONLINE ? PRODUCT_TYPE_HOST : RsGetProductType(rscb->logicId);
     CHK_PRT_RETURN(productType == PRODUCT_TYPE_INVALID, hccp_err("RsGetProductType failed, logicId:%u", rscb->logicId),
         -EINVAL);
 #ifdef CUSTOM_INTERFACE
-    if (RsIsUdmaSupported() || RsIsRdmaSupported()) {
+    if (rscb->hccpMode != NETWORK_PEER_ONLINE && (RsIsUdmaSupported() || RsIsRdmaSupported())) {
         ret = RsGetChipProtocol(rscb->chipId, rscb->hccpMode, &rscb->protocol, rscb->logicId);
         CHK_PRT_RETURN(ret != 0, hccp_err("rs_get_chip_protocol failed, ret[%d]", ret), ret);
         // make sure RsRoceGetApiVersion and RsNetGetApiVersion are valid
@@ -329,7 +334,7 @@ create_pthread_err:
     rs_ssl_deinit(rscb);
 ssl_init_err:
 #ifdef CUSTOM_INTERFACE
-    if (RsIsUdmaSupported() || RsIsRdmaSupported()) {
+    if (rscb->hccpMode != NETWORK_PEER_ONLINE && (RsIsUdmaSupported() || RsIsRdmaSupported())) {
         RsDeInitNetAdapt(rscb);
 net_adapt_init_err:
         RsEschedDeinit(rscb->protocol);
@@ -347,7 +352,7 @@ STATIC void RsDeinitRscbCfg(struct rs_cb *rscb)
     int ret;
 
 #ifdef CUSTOM_INTERFACE
-    if (RsIsUdmaSupported() || RsIsRdmaSupported()) {
+    if (rscb->hccpMode != NETWORK_PEER_ONLINE && (RsIsUdmaSupported() || RsIsRdmaSupported())) {
         RsDeInitNetAdapt(rscb);
         RsEschedDeinit(rscb->protocol);
         (void)RsCtxApiDeinit(rscb->hccpMode, rscb->protocol);
@@ -2203,6 +2208,11 @@ RS_ATTRI_VISI_DEF enum ProductType RsGetProductType(int devId)
     static enum ProductType type = PRODUCT_TYPE_NO_VALUE;
     static halChipInfo chipInfo = {0};
     int ret;
+
+    // Host PEER resources use standard verbs and have no NPU product to query.
+    if (gRsCb != NULL && gRsCb->hccpMode == NETWORK_PEER_ONLINE) {
+        return PRODUCT_TYPE_HOST;
+    }
 
     if (type != PRODUCT_TYPE_NO_VALUE) { // Cache result after first query
         hccp_info("[Get][ChipInfo]chip name is %s, type:%d", chipInfo.name, type);
