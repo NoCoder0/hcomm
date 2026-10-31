@@ -37,6 +37,8 @@ public:
     HcclResult GetAllMemHandles(void **memHandles, uint32_t *memHandleNum) override;
 
     HcclResult GetAllMemDetails(std::vector<RoceMemDetails> &localOut, std::vector<RoceMemDetails> &remoteOut) const;
+    HcclResult GetPeerMemDetails(const EndpointDesc &peer, std::vector<RoceMemDetails> &localOut,
+        std::vector<RoceMemDetails> &remoteOut) const;
 
 private:
     using RemoteRdmaRmaBufferMgr =
@@ -54,7 +56,8 @@ private:
 
     HcclResult GatherLocalMemDetails(std::vector<RoceMemDetails> &localOut) const;
     HcclResult AppendLocalNotifyMemDetails(std::vector<RoceMemDetails> &localOut) const;
-    void GatherRemoteMemDetails(std::vector<RoceMemDetails> &remoteOut) const;
+    void GatherRemoteMemDetails(std::vector<RoceMemDetails> &remoteOut,
+        const EndpointDesc *peer = nullptr) const;
 
     HcclNetDev netDev_{nullptr};
     std::shared_ptr<hccl::NetDevContext::LocalRdmaRmaBufferMgr> localRdmaRmaBufferMgr_{nullptr};

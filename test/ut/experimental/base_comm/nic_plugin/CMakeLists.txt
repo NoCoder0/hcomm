@@ -39,3 +39,15 @@ target_link_libraries(hccl_ut_experimental_nic_plugin PRIVATE
 
 enable_testing()
 add_test(NAME hccl_ut_experimental_nic_plugin COMMAND hccl_ut_experimental_nic_plugin)
+
+# Exercise the active experimental CPU RoCE implementation without a NIC.
+if(TARGET hcomm_cpu_roce_plugin)
+    add_executable(hccl_ut_experimental_roce_mem_import main.cc ut_experimental_roce_mem_import.cc)
+    get_target_property(roce_plugin_includes hcomm_cpu_roce_plugin INCLUDE_DIRECTORIES)
+    target_include_directories(hccl_ut_experimental_roce_mem_import PRIVATE
+        ${UT_COMMON_INCLUDE_LIST} ${roce_plugin_includes})
+    target_compile_definitions(hccl_ut_experimental_roce_mem_import PRIVATE _GLIBCXX_USE_CXX11_ABI=0)
+    target_link_libraries(hccl_ut_experimental_roce_mem_import PRIVATE
+        hcomm_cpu_roce_plugin hccl_plf c_sec unified_dlog $<BUILD_INTERFACE:intf_llt_pub> -pthread -lrt)
+    add_test(NAME hccl_ut_experimental_roce_mem_import COMMAND hccl_ut_experimental_roce_mem_import)
+endif()

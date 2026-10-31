@@ -65,7 +65,8 @@ public:
     }
 };
 
-HcclResult StubGetAllMemDetailsForSerialize(AicpuTsRoceRegedMemMgr * /*self*/, std::vector<RoceMemDetails> &localOut,
+HcclResult StubGetPeerMemDetailsForSerialize(AicpuTsRoceRegedMemMgr * /*self*/,
+    const EndpointDesc & /*peer*/, std::vector<RoceMemDetails> &localOut,
     std::vector<RoceMemDetails> &remoteOut)
 {
     localOut.clear();
@@ -586,7 +587,7 @@ TEST_F(AicpuTsRoceChannelTest, Ut_Serialize_WhenInitedAndDepsStubbed_Returns_SUC
     ch.inited_ = true;
     ch.transport_ = std::make_unique<hccl::Transport>();
 
-    MOCKER_CPP(&AicpuTsRoceRegedMemMgr::GetAllMemDetails).stubs().will(invoke(StubGetAllMemDetailsForSerialize));
+    MOCKER_CPP(&AicpuTsRoceRegedMemMgr::GetPeerMemDetails).stubs().will(invoke(StubGetPeerMemDetailsForSerialize));
     MOCKER_CPP(&hccl::Transport::GetAiQpInfo).stubs().will(invoke(StubTransportGetAiQpInfo));
     MOCKER_CPP(&AicpuTsRoceChannel::SerializeDrainNotifyInfo).stubs().will(returnValue(HCCL_SUCCESS));
     using DeviceMemAllocRetByValue = hccl::DeviceMem (*)(u64, bool);

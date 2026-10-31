@@ -243,6 +243,7 @@ HcclResult RoceRegedMemMgr::MemoryImport(const void *memDesc, uint32_t descLen, 
 
     outMem->addr   = reinterpret_cast<void *>(remoteRdmaRmaBuffer->GetAddr());
     outMem->size    = remoteRdmaRmaBuffer->GetSize();
+    outMem->type = COMM_MEM_TYPE_HOST;
     if (endpointDesc.loc.locType == ENDPOINT_LOC_TYPE_DEVICE && endpointDesc.protocol == COMM_PROTOCOL_ROCE) {
         u32 memType = 0;
         memcpy(&memType, static_cast<const char *>(memDesc) + sizeof(u8) + 3 * sizeof(u64), sizeof(memType));

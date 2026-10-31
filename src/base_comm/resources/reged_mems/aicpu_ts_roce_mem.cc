@@ -418,9 +418,13 @@ HcclResult AicpuTsRoceRegedMemMgr::AppendLocalNotifyMemDetails(std::vector<RoceM
     return HCCL_SUCCESS;
 }
 
-void AicpuTsRoceRegedMemMgr::GatherRemoteMemDetails(std::vector<RoceMemDetails> &remoteOut) const
+void AicpuTsRoceRegedMemMgr::GatherRemoteMemDetails(std::vector<RoceMemDetails> &remoteOut,
+    const EndpointDesc *peer) const
 {
     for (const auto &epMgr : remoteRdmaRmaBufferMgrs_) {
+        if (peer != nullptr && std::memcmp(&epMgr.first, peer, sizeof(EndpointDesc)) != 0) {
+            continue;
+        }
         const auto &mgr = epMgr.second;
         if (mgr == nullptr) {
             continue;
@@ -456,6 +460,17 @@ HcclResult AicpuTsRoceRegedMemMgr::GetAllMemDetails(std::vector<RoceMemDetails> 
     GatherRemoteMemDetails(remoteOut);
     HCCL_INFO("[AicpuTsRoceRegedMemMgr][GetAllMemDetails] summary localCnt[%zu] remoteCnt[%zu] remoteMgrCnt[%zu]",
         localOut.size(), remoteOut.size(), remoteRdmaRmaBufferMgrs_.size());
+    return HCCL_SUCCESS;
+}
+
+HcclResult AicpuTsRoceRegedMemMgr::GetPeerMemDetails(const EndpointDesc &peer,
+    std::vector<RoceMemDetails> &localOut, std::vector<RoceMemDetails> &remoteOut) const
+{
+    localOut.clear();
+    remoteOut.clear();
+    CHK_RET(GatherLocalMemDetails(localOut));
+    CHK_RET(AppendLocalNotifyMemDetails(localOut));
+    GatherRemoteMemDetails(remoteOut, &peer);
     return HCCL_SUCCESS;
 }
 

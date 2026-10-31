@@ -539,7 +539,7 @@ HcclResult AicpuTsRoceChannel::Serialize(std::shared_ptr<hccl::DeviceMem> &out)
     CHK_PTR_NULL(ep);
     auto mgr = std::dynamic_pointer_cast<AicpuTsRoceRegedMemMgr>(ep->GetRegedMemMgr());
     CHK_SMART_PTR_NULL(mgr);
-    CHK_RET(mgr->GetAllMemDetails(localMd, remoteMd));
+    CHK_RET(mgr->GetPeerMemDetails(remoteEp_, localMd, remoteMd));
     CHK_RET(transport_->GetAiQpInfo(aiQpInfos));
     qpNum = static_cast<u32>(aiQpInfos.size());
     const size_t nL = localMd.size();
