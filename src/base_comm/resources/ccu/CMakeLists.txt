@@ -11,6 +11,8 @@
 add_subdirectory(ccu_device)
 add_subdirectory(ccu_transport)
 add_subdirectory(ccu_microcode)
+add_subdirectory(ccu_microcode_opt)
 add_subdirectory(ccu_representation)
 add_subdirectory(ccu_kernel)
 add_subdirectory(ccu_instance)
+add_subdirectory(ccu_dfx)

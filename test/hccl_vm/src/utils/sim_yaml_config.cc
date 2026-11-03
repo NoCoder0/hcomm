@@ -19,9 +19,8 @@
 
 #include "sim_log.h"
 
-bool LoadYamlStringMap(const std::string& yamlPath,
-                       const std::string& nodeName,
-                       std::map<std::string, std::string>& out)
+bool LoadYamlStringMap(
+    const std::string& yamlPath, const std::string& nodeName, std::map<std::string, std::string>& out)
 {
 #if !defined(NO_YAML_CONFIG) && defined(HAVE_YAML_CPP)
     try {
@@ -39,6 +38,7 @@ bool LoadYamlStringMap(const std::string& yamlPath,
         return true;
     } catch (const std::exception& e) {
         HCCL_VM_ERROR("Failed to parse YAML file {}: {}", yamlPath, e.what());
+        out.clear();
         return false;
     }
 #else

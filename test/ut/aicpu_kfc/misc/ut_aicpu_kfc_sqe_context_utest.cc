@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -28,22 +28,13 @@ using namespace hccl;
 
 class MC2SqeContext_UT : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "MC2SqeContext_UT SetUP" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "MC2SqeContext_UT TearDown" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "MC2SqeContext_UT SetUP" << std::endl; }
+    static void TearDownTestCase() { std::cout << "MC2SqeContext_UT TearDown" << std::endl; }
     // Some expensive resource shared by all tests.
     virtual void SetUp()
     {
         s32 portNum = 7;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
         g_stubDevType = DevType::DEV_TYPE_910B;
         MOCKER(halGetDeviceInfo).stubs().with(mockcpp::any()).will(invoke(StubhalGetDeviceInfo));
         std::cout << "MC2SqeContext_UT Test SetUP" << std::endl;
@@ -56,10 +47,7 @@ protected:
     }
 };
 
-TEST_F(MC2SqeContext_UT, TestInitSqeContext)
-{
-    AicpuSqeContext::InitSqeContext();
-}
+TEST_F(MC2SqeContext_UT, TestInitSqeContext) { AicpuSqeContext::InitSqeContext(); }
 
 TEST_F(MC2SqeContext_UT, TestSyncVariable)
 {
@@ -81,8 +69,8 @@ TEST_F(MC2SqeContext_UT, TestGetNextSqeBufferAddr)
     GetSqeContext()->buffPtr[0].tailSqeTaskId = 0;
     GetSqeContext()->buffPtr[0].sqeCnt = 0;
 
-    uint8_t *sqeAddr;
-    uint8_t *sqeTypeAddr;
+    uint8_t* sqeAddr;
+    uint8_t* sqeTypeAddr;
     uint16_t taskId;
     EXPECT_EQ(AicpuSqeContext::GetNextSqeBufferAddr(0, sqeAddr, sqeTypeAddr, taskId), HCCL_SUCCESS);
     EXPECT_EQ(taskId, 0);
@@ -99,8 +87,8 @@ TEST_F(MC2SqeContext_UT, TestRecordAddInfo)
     GetSqeContext()->buffPtr[0].tailSqeTaskId = 0;
     GetSqeContext()->buffPtr[0].sqeCnt = 0;
 
-    uint8_t *sqeBuffer = nullptr;
-    uint8_t *sqeTypeAddr = nullptr;
+    uint8_t* sqeBuffer = nullptr;
+    uint8_t* sqeTypeAddr = nullptr;
     uint16_t taskId = 0U;
     EXPECT_EQ(AicpuSqeContext::GetNextSqeBufferAddr(0, sqeBuffer, sqeTypeAddr, taskId), HCCL_SUCCESS);
     EXPECT_EQ(AicpuSqeContext::RecordAddInfo(0, 100), HCCL_SUCCESS);
@@ -209,8 +197,8 @@ TEST_F(MC2SqeContext_UT, TestSqeTaskIdOverFlow)
     GetSqeContext()->buffPtr[0].tailSqeTaskId = UINT16_MAX;
     GetSqeContext()->buffPtr[0].sqeCnt = 0;
 
-    uint8_t *sqeAddr;
-    uint8_t *sqeTypeAddr;
+    uint8_t* sqeAddr;
+    uint8_t* sqeTypeAddr;
     uint16_t taskId;
     EXPECT_EQ(AicpuSqeContext::GetNextSqeBufferAddr(0, sqeAddr, sqeTypeAddr, taskId), HCCL_SUCCESS);
     EXPECT_EQ(taskId, UINT16_MAX);
@@ -226,8 +214,8 @@ TEST_F(MC2SqeContext_UT, TestSqeBuffOverFlow)
     GetSqeContext()->buffPtr[0].tailSqeTaskId = 3096;
     GetSqeContext()->buffPtr[0].sqeCnt = 10;
 
-    uint8_t *sqeAddr;
-    uint8_t *sqeTypeAddr;
+    uint8_t* sqeAddr;
+    uint8_t* sqeTypeAddr;
     uint16_t taskId;
     EXPECT_EQ(AicpuSqeContext::GetNextSqeBufferAddr(0, sqeAddr, sqeTypeAddr, taskId), HCCL_SUCCESS);
     EXPECT_EQ(taskId, 3096);

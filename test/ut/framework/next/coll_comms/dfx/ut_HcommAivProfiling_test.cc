@@ -18,15 +18,11 @@
 using namespace hccl;
 using namespace hcomm;
 
-class HcclReportAivKernelTest : public testing::Test
-{
+class HcclReportAivKernelTest : public testing::Test {
 protected:
     virtual void SetUp() override {}
 
-    virtual void TearDown() override
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() override { GlobalMockObject::verify(); }
 };
 
 TEST_F(HcclReportAivKernelTest, Ut_HcclReportAivKernel_When_CommIsNull_Expect_ReturnHCCL_E_PTR)
@@ -35,34 +31,32 @@ TEST_F(HcclReportAivKernelTest, Ut_HcclReportAivKernel_When_CommIsNull_Expect_Re
     EXPECT_EQ(ret, HCCL_E_PTR);
 }
 
-class RaBatchQueryJettyStatusTest : public testing::Test
-{
+class HccpBatchQueryJettyStatusTest : public testing::Test {
 protected:
     virtual void SetUp() override {}
 
-    virtual void TearDown() override
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() override { GlobalMockObject::verify(); }
 };
 
-TEST_F(RaBatchQueryJettyStatusTest, Ut_RaBatchQueryJettyStatus_When_SizeMismatch_Expect_ReturnHCCL_E_PARA)
+TEST_F(HccpBatchQueryJettyStatusTest, Ut_HccpBatchQueryJettyStatus_When_SizeMismatch_Expect_ReturnHCCL_E_PARA)
 {
+    CtxHandle ctxHandle = reinterpret_cast<CtxHandle>(1);
     std::vector<JettyHandle> jettyHandles;
     jettyHandles.push_back(reinterpret_cast<JettyHandle>(1));
     jettyHandles.push_back(reinterpret_cast<JettyHandle>(2));
     jettyHandles.push_back(reinterpret_cast<JettyHandle>(3));
     std::vector<JettyStatus> jettyAttrs;
     u32 num = 2;
-    HcclResult ret = RaBatchQueryJettyStatus(jettyHandles, jettyAttrs, num);
+    HcclResult ret = HccpBatchQueryJettyStatus(ctxHandle, jettyHandles, jettyAttrs, num);
     EXPECT_EQ(ret, HCCL_E_PARA);
 }
 
-TEST_F(RaBatchQueryJettyStatusTest, Ut_RaBatchQueryJettyStatus_When_NumIsZero_Expect_ReturnHCCL_SUCCESS)
+TEST_F(HccpBatchQueryJettyStatusTest, Ut_HccpBatchQueryJettyStatus_When_NumIsZero_Expect_ReturnHCCL_SUCCESS)
 {
+    CtxHandle ctxHandle = reinterpret_cast<CtxHandle>(1);
     std::vector<JettyHandle> jettyHandles;
     std::vector<JettyStatus> jettyAttrs;
     u32 num = 0;
-    HcclResult ret = RaBatchQueryJettyStatus(jettyHandles, jettyAttrs, num);
+    HcclResult ret = HccpBatchQueryJettyStatus(ctxHandle, jettyHandles, jettyAttrs, num);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }

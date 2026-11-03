@@ -38,8 +38,7 @@ using namespace hccl;
  * 该测试类用于验证CommFence接口的参数校验和基本功能。
  * 测试场景包括空指针校验等边界条件。
  */
-class UtAicpuTsCommFence : public testing::Test
-{
+class UtAicpuTsCommFence : public testing::Test {
 protected:
     virtual void SetUp() override
     {
@@ -47,10 +46,7 @@ protected:
         threadOnDevice.pImpl_ = std::make_unique<Hccl::IAicpuTsThread>();
     }
 
-    virtual void TearDown() override
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() override { GlobalMockObject::verify(); }
 
     AicpuTsThread threadOnDevice{StreamType::STREAM_TYPE_DEVICE, 0, NotifyLoadType::DEVICE_NOTIFY};
     ThreadHandle thread = reinterpret_cast<ThreadHandle>(&threadOnDevice);

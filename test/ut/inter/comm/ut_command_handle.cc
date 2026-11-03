@@ -22,19 +22,10 @@ using namespace hccl;
 
 class CommandHandleTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CommandHandleTest SetUP" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "CommandHandleTest TearDown" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CommandHandleTest SetUP" << std::endl; }
+    static void TearDownTestCase() { std::cout << "CommandHandleTest TearDown" << std::endl; }
     // Some expensive resource shared by all tests.
-    virtual void SetUp()
-    {
-        std::cout << "A Test SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test SetUP" << std::endl; }
     virtual void TearDown()
     {
         GlobalMockObject::verify();
@@ -46,7 +37,7 @@ TEST_F(CommandHandleTest, ut_command_handle_init)
 {
     struct rtProfCommandHandle handle;
     handle.type = PROF_COMMANDHANDLE_TYPE_INIT;
-    rtError_t ret = CommandHandle(RT_PROF_CTRL_SWITCH, static_cast<void *>(&handle), 0);
+    rtError_t ret = CommandHandle(RT_PROF_CTRL_SWITCH, static_cast<void*>(&handle), 0);
     EXPECT_EQ(ret, SUCCESS);
 }
 
@@ -54,7 +45,7 @@ TEST_F(CommandHandleTest, ut_command_handle_start)
 {
     struct rtProfCommandHandle handle;
     handle.type = PROF_COMMANDHANDLE_TYPE_START;
-    rtError_t ret = CommandHandle(RT_PROF_CTRL_SWITCH, static_cast<void *>(&handle), 0);
+    rtError_t ret = CommandHandle(RT_PROF_CTRL_SWITCH, static_cast<void*>(&handle), 0);
     EXPECT_EQ(ret, SUCCESS);
 }
 
@@ -62,7 +53,7 @@ TEST_F(CommandHandleTest, ut_command_handle_stop)
 {
     struct rtProfCommandHandle handle;
     handle.type = PROF_COMMANDHANDLE_TYPE_STOP;
-    rtError_t ret = CommandHandle(RT_PROF_CTRL_SWITCH, static_cast<void *>(&handle), 0);
+    rtError_t ret = CommandHandle(RT_PROF_CTRL_SWITCH, static_cast<void*>(&handle), 0);
     EXPECT_EQ(ret, SUCCESS);
 }
 
@@ -70,7 +61,7 @@ TEST_F(CommandHandleTest, ut_command_handle_finalize)
 {
     struct rtProfCommandHandle handle;
     handle.type = PROF_COMMANDHANDLE_TYPE_FINALIZE;
-    rtError_t ret = CommandHandle(RT_PROF_CTRL_SWITCH, static_cast<void *>(&handle), 0);
+    rtError_t ret = CommandHandle(RT_PROF_CTRL_SWITCH, static_cast<void*>(&handle), 0);
     EXPECT_EQ(ret, SUCCESS);
 }
 
@@ -78,26 +69,42 @@ TEST_F(CommandHandleTest, ut_command_handle_subscribe)
 {
     struct rtProfCommandHandle handle;
     handle.type = PROF_COMMANDHANDLE_TYPE_MODEL_SUBSCRIBE;
-    rtError_t ret = CommandHandle(RT_PROF_CTRL_SWITCH, static_cast<void *>(&handle), 0);
+    rtError_t ret = CommandHandle(RT_PROF_CTRL_SWITCH, static_cast<void*>(&handle), 0);
+    EXPECT_EQ(ret, SUCCESS);
+}
+TEST_F(CommandHandleTest, ut_command_handle_unexpected_type)
+{
+    struct rtProfCommandHandle handle = {};
+    handle.type = 999;
+
+    rtError_t ret = CommandHandle(RT_PROF_CTRL_SWITCH, static_cast<void*>(&handle), 0);
     EXPECT_EQ(ret, SUCCESS);
 }
 
+TEST_F(CommandHandleTest, ut_es_command_handle_unexpected_type)
+{
+    struct rtProfCommandHandle handle = {};
+    handle.type = 999;
+
+    rtError_t ret = EsCommandHandle(RT_PROF_CTRL_SWITCH, static_cast<void*>(&handle), 0);
+    EXPECT_EQ(ret, SUCCESS);
+}
 TEST_F(CommandHandleTest, ut_command_handle_unsubscribe)
 {
     struct rtProfCommandHandle handle;
     handle.type = PROF_COMMANDHANDLE_TYPE_MODEL_UNSUBSCRIBE;
-    rtError_t ret = CommandHandle(RT_PROF_CTRL_SWITCH, static_cast<void *>(&handle), 0);
+    rtError_t ret = CommandHandle(RT_PROF_CTRL_SWITCH, static_cast<void*>(&handle), 0);
     EXPECT_EQ(ret, SUCCESS);
 }
 
 TEST_F(CommandHandleTest, ut_es_command_handle_start)
 {
     struct rtProfCommandHandle handle;
-    EsCommandHandle(RT_PROF_CTRL_REPORTER, static_cast<void *>(&handle), 0);
+    EsCommandHandle(RT_PROF_CTRL_REPORTER, static_cast<void*>(&handle), 0);
 
     handle.type = PROF_COMMANDHANDLE_TYPE_START;
     handle.profSwitch = PROF_TASK_TIME_MASK;
-    rtError_t ret = EsCommandHandle(RT_PROF_CTRL_SWITCH, static_cast<void *>(&handle), PROF_TASK_TIME_MASK);
+    rtError_t ret = EsCommandHandle(RT_PROF_CTRL_SWITCH, static_cast<void*>(&handle), PROF_TASK_TIME_MASK);
     EXPECT_EQ(ret, SUCCESS);
 }
 
@@ -105,7 +112,7 @@ TEST_F(CommandHandleTest, ut_es_command_handle_stop)
 {
     struct rtProfCommandHandle handle;
     handle.type = PROF_COMMANDHANDLE_TYPE_STOP;
-    rtError_t ret = EsCommandHandle(RT_PROF_CTRL_SWITCH, static_cast<void *>(&handle), 0);
+    rtError_t ret = EsCommandHandle(RT_PROF_CTRL_SWITCH, static_cast<void*>(&handle), 0);
     EXPECT_EQ(ret, SUCCESS);
 }
 
@@ -113,7 +120,7 @@ TEST_F(CommandHandleTest, ut_es_command_handle_finalize)
 {
     struct rtProfCommandHandle handle;
     handle.type = PROF_COMMANDHANDLE_TYPE_FINALIZE;
-    rtError_t ret = EsCommandHandle(RT_PROF_CTRL_SWITCH, static_cast<void *>(&handle), 0);
+    rtError_t ret = EsCommandHandle(RT_PROF_CTRL_SWITCH, static_cast<void*>(&handle), 0);
     EXPECT_EQ(ret, SUCCESS);
 }
 
@@ -121,7 +128,7 @@ TEST_F(CommandHandleTest, ut_es_command_handle_subscribe)
 {
     struct rtProfCommandHandle handle;
     handle.type = PROF_COMMANDHANDLE_TYPE_MODEL_SUBSCRIBE;
-    rtError_t ret = EsCommandHandle(RT_PROF_CTRL_SWITCH, static_cast<void *>(&handle), 0);
+    rtError_t ret = EsCommandHandle(RT_PROF_CTRL_SWITCH, static_cast<void*>(&handle), 0);
     EXPECT_EQ(ret, SUCCESS);
 }
 
@@ -129,30 +136,29 @@ TEST_F(CommandHandleTest, ut_es_command_handle_unsubscribe)
 {
     struct rtProfCommandHandle handle;
     handle.type = PROF_COMMANDHANDLE_TYPE_MODEL_UNSUBSCRIBE;
-    rtError_t ret = EsCommandHandle(RT_PROF_CTRL_SWITCH, static_cast<void *>(&handle), 0);
+    rtError_t ret = EsCommandHandle(RT_PROF_CTRL_SWITCH, static_cast<void*>(&handle), 0);
     EXPECT_EQ(ret, SUCCESS);
 }
 
 TEST_F(CommandHandleTest, ut_hcclProfilingAdditionalinfo_test)
 {
-    auto &profilingManager = hccl::ProfilingManager::Instance();
+    auto& profilingManager = hccl::ProfilingManager::Instance();
     EsUpdatePara para;
     para.tag = 0;
 
-    profilingManager.CallMsprofReportAdditionInfoForEsUpdate(para,
-        ProfTaskType::TASK_REMOTE_UPDATE_KEY_REDUCE);
+    profilingManager.CallMsprofReportAdditionInfoForEsUpdate(para, ProfTaskType::TASK_REMOTE_UPDATE_KEY_REDUCE);
 }
 
 TEST_F(CommandHandleTest, ut_command_handle_ctrl_reporter)
 {
     struct rtProfCommandHandle handle;
-    rtError_t ret = CommandHandle(RT_PROF_CTRL_REPORTER, static_cast<void *>(&handle), 0);
+    rtError_t ret = CommandHandle(RT_PROF_CTRL_REPORTER, static_cast<void*>(&handle), 0);
     EXPECT_EQ(ret, SUCCESS);
 }
 
 TEST_F(CommandHandleTest, ut_hcclProfilingCompactInfo_test)
 {
-    auto &profilingManager = hccl::ProfilingManager::Instance();
+    auto& profilingManager = hccl::ProfilingManager::Instance();
 
     MsprofCompactInfo reporterData{};
     reporterData.level = MSPROF_REPORT_NODE_LEVEL;
@@ -173,15 +179,13 @@ TEST_F(CommandHandleTest, ut_hcclProfilingCompactInfo_test)
 
 TEST_F(CommandHandleTest, ut_NodeInfo_Test)
 {
-    MOCKER(GetWorkflowMode)
-    .stubs()
-    .will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB));
+    MOCKER(GetWorkflowMode).stubs().will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB));
     HcclResult ret = hrtSetDevice(0);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     std::string profName = "AICPUKernel";
     ret = ProfilingManagerPub::CallMsprofReportNodeInfo(0, 0, profName, 0);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    auto &profilingManager = hccl::ProfilingManager::Instance();
+    auto& profilingManager = hccl::ProfilingManager::Instance();
     profilingManager.StopSubscribe(0);
     ret = hrtResetDevice(0);
     EXPECT_EQ(ret, HCCL_SUCCESS);

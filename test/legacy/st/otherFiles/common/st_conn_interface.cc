@@ -16,10 +16,8 @@ using namespace Hccl;
 
 class ConnInterfaceTest : public ::testing::Test {
 protected:
-    void SetUp() override
-    {}
-    void TearDown() override
-    {}
+    void SetUp() override {}
+    void TearDown() override {}
 };
 
 TEST_F(ConnInterfaceTest, ConnInterface_ShouldConstruct_WhenValidParameters)

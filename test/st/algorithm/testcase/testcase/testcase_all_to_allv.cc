@@ -1,12 +1,13 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include <mockcpp/mokc.h>
 #include <mockcpp/mockcpp.hpp>
 #include <vector>
@@ -28,20 +29,15 @@ using namespace hccl;
 
 class AllToAllVTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AllToAllVTest set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AllToAllVTest set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AllToAllVTest tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AllToAllVTest tear down." << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -70,8 +66,9 @@ TEST_F(AllToAllVTest, alltoallv_test_310P3_opbase)
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_INT32;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     HcclResult ret;
@@ -100,8 +97,9 @@ TEST_F(AllToAllVTest, alltoallv_test_pairwise)
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_INT32;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     HcclResult ret;
@@ -127,8 +125,9 @@ TEST_F(AllToAllVTest, alltoallv_test_910B_opbase_single_rank)
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_INT32;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     HcclResult ret;
@@ -153,8 +152,9 @@ TEST_F(AllToAllVTest, alltoallv_test_910B_opbase)
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_INT32;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     HcclResult ret;
@@ -179,8 +179,9 @@ TEST_F(AllToAllVTest, alltoallv_test_910B_offload)
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_INT32;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     HcclResult ret;
@@ -206,8 +207,9 @@ TEST_F(AllToAllVTest, alltoallv_test_910B_opbase_RunAlltoAllVTwoLevelPipeline)
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_FP16;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     HcclResult ret;
@@ -232,8 +234,9 @@ TEST_F(AllToAllVTest, alltoallv_test_910B_offload_RunAlltoAllVTwoLevelPipeline)
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_FP16;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     HcclResult ret;
@@ -259,8 +262,9 @@ TEST_F(AllToAllVTest, alltoallv_test_910B_opbase_RunAlltoAllVFullMesh)
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_FP16;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     HcclResult ret;
@@ -286,8 +290,9 @@ TEST_F(AllToAllVTest, alltoallv_test_910B_offload_RunAlltoAllVFullMesh)
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_FP16;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     HcclResult ret;
@@ -313,8 +318,9 @@ TEST_F(AllToAllVTest, alltoallv_test_910B_opbase_RunAlltoAllVStaged)
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_FP16;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     HcclResult ret;
@@ -340,8 +346,9 @@ TEST_F(AllToAllVTest, alltoallv_test_910B_offload_RunAlltoAllVStaged)
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_FP16;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     HcclResult ret;
@@ -367,8 +374,9 @@ TEST_F(AllToAllVTest, alltoallv_test_910B_opbase_RunAlltoAllDirectFullmesh)
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_FP16;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     HcclResult ret;
@@ -394,8 +402,9 @@ TEST_F(AllToAllVTest, alltoallv_test_910B_offload_RunAlltoAllDirectFullmesh)
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_FP16;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     HcclResult ret;
@@ -421,8 +430,9 @@ TEST_F(AllToAllVTest, alltoallv_test_910_93_opbase_RunAlltoAllDirectFullmesh)
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_FP16;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     HcclResult ret;
@@ -448,8 +458,9 @@ TEST_F(AllToAllVTest, alltoallv_test_910_93_offload_RunAlltoAllDirectFullmesh)
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_FP16;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     HcclResult ret;
@@ -475,8 +486,9 @@ TEST_F(AllToAllVTest, alltoallv_test_910_93_opbase_2superpod_RunAlltoAllDirectFu
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_FP16;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     HcclResult ret;
@@ -487,9 +499,12 @@ TEST_F(AllToAllVTest, alltoallv_test_910_93_opbase_2superpod_RunAlltoAllDirectFu
 
 TEST_F(AllToAllVTest, alltoallv_test_91093_opbase_AlltoAllMeshAivFor91093Executor)
 {
-    MOCKER(ExecuteKernelLaunch, HcclResult(const AivOpArgs&, const AivTopoArgs&,
-    const AivResourceArgs&, const AivAlgArgs&, const ExtraArgsV2&,
-    AivProfilingInfo&)).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(
+        ExecuteKernelLaunch, HcclResult(
+                                 const AivOpArgs&, const AivTopoArgs&, const AivResourceArgs&, const AivAlgArgs&,
+                                 const ExtraArgsV2&, AivProfilingInfo&))
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
     MOCKER(GetExternalInputHcclAivMode).stubs().will(returnValue(true));
     RankTable_For_LLT gen;
     TopoMeta topoMeta;
@@ -506,8 +521,9 @@ TEST_F(AllToAllVTest, alltoallv_test_91093_opbase_AlltoAllMeshAivFor91093Executo
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_FP16;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     HcclResult ret;
@@ -518,9 +534,12 @@ TEST_F(AllToAllVTest, alltoallv_test_91093_opbase_AlltoAllMeshAivFor91093Executo
 
 TEST_F(AllToAllVTest, alltoallv_test_91093_opbase_AlltoAllMeshAivFor91093Executor2)
 {
-    MOCKER(ExecuteKernelLaunch, HcclResult(const AivOpArgs&, const AivTopoArgs&,
-    const AivResourceArgs&, const AivAlgArgs&, const ExtraArgsV2&,
-    AivProfilingInfo&)).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(
+        ExecuteKernelLaunch, HcclResult(
+                                 const AivOpArgs&, const AivTopoArgs&, const AivResourceArgs&, const AivAlgArgs&,
+                                 const ExtraArgsV2&, AivProfilingInfo&))
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
     MOCKER(GetExternalInputHcclAivMode).stubs().will(returnValue(true));
     MOCKER_CPP(&AlltoAllOperator::IsSatisfyAlltoAllAivCondition).stubs().will(returnValue(true));
     RankTable_For_LLT gen;
@@ -538,8 +557,9 @@ TEST_F(AllToAllVTest, alltoallv_test_91093_opbase_AlltoAllMeshAivFor91093Executo
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_FP16;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     HcclResult ret;
@@ -566,8 +586,9 @@ TEST_F(AllToAllVTest, alltoallv_test_91093_opbase_single_rank)
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_FP16;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     HcclResult ret;
@@ -596,8 +617,9 @@ TEST_F(AllToAllVTest, alltoallv_test_91093_opbase_single_rank1)
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_FP16;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     HcclResult ret;
@@ -626,8 +648,9 @@ TEST_F(AllToAllVTest, alltoallv_test_910_93_opbase_2superpod_RunAlltoAllDirectFu
 
     u64 count = 1048576;
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, count, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, count, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     HcclResult ret;
@@ -639,11 +662,13 @@ TEST_F(AllToAllVTest, alltoallv_test_910B_opbase_AclGraph_RunAlltoAllDirectFullm
 {
     rtStreamCaptureStatus captureStatus = rtStreamCaptureStatus::RT_STREAM_CAPTURE_STATUS_ACTIVE;
     int mockModel = 0;
-    void *pmockModel = &mockModel;
+    void* pmockModel = &mockModel;
     MOCKER(rtStreamGetCaptureInfo)
-    .stubs()
-    .with(mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)), outBoundP(&pmockModel, sizeof(pmockModel)))
-    .will(returnValue(0));
+        .stubs()
+        .with(
+            mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)),
+            outBoundP(&pmockModel, sizeof(pmockModel)))
+        .will(returnValue(0));
 
     RankTable_For_LLT gen;
     TopoMeta topoMeta;
@@ -660,8 +685,9 @@ TEST_F(AllToAllVTest, alltoallv_test_910B_opbase_AclGraph_RunAlltoAllDirectFullm
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_FP16;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     HcclResult ret;
@@ -688,9 +714,9 @@ TEST_F(AllToAllVTest, alltoallv_test_910B_opbase_RunAlltoAllVContinuousPipeline_
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_INT8;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 128, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts,
-        checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 128, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     HcclResult ret;
@@ -704,7 +730,7 @@ TEST_F(AllToAllVTest, alltoallv_test_910B_opbase_RunAlltoAllVContinuousPipeline_
     RankTable_For_LLT gen;
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 4, 4);
-    
+
     setenv("HCCL_BUFFSIZE", "1", 1);
 
     CheckerOpParam checkerOpParam;
@@ -718,7 +744,8 @@ TEST_F(AllToAllVTest, alltoallv_test_910B_opbase_RunAlltoAllVContinuousPipeline_
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_INT8;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 1024*1024 / 16 - 128, checkerOpParam.All2AllDataDes.sendCounts,
+    GenAllToAllVParams(
+        rankNum, 1024 * 1024 / 16 - 128, checkerOpParam.All2AllDataDes.sendCounts,
         checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts,
         checkerOpParam.All2AllDataDes.rdispls);
 
@@ -733,8 +760,8 @@ TEST_F(AllToAllVTest, alltoallv_test_910B_opbase_RunAlltoAllVContinuousPipeline_
 TEST_F(AllToAllVTest, alltoallv_test_910B_opbase_RunAlltoAllVContinuousPipeline_1srv_16nodes_ax)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}}};
-    
+    TopoMeta topoMeta{{{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}}};
+
     setenv("HCCL_BUFFSIZE", "1", 1);
 
     CheckerOpParam checkerOpParam;
@@ -748,9 +775,9 @@ TEST_F(AllToAllVTest, alltoallv_test_910B_opbase_RunAlltoAllVContinuousPipeline_
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_INT8;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 128, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts,
-        checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 128, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     HcclResult ret;
@@ -765,7 +792,7 @@ TEST_F(AllToAllVTest, alltoallv_test_910B_opbase_RunAlltoAllVContinuousPipeline_
     RankTable_For_LLT gen;
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 2, 8);
-    
+
     setenv("HCCL_BUFFSIZE", "1", 1);
 
     CheckerOpParam checkerOpParam;
@@ -779,9 +806,9 @@ TEST_F(AllToAllVTest, alltoallv_test_910B_opbase_RunAlltoAllVContinuousPipeline_
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_INT8;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 128, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts,
-        checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 128, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     HcclResult ret;
@@ -795,7 +822,7 @@ TEST_F(AllToAllVTest, alltoallv_test_910B_opbase_RunAlltoAllVContinuousPipeline_
     RankTable_For_LLT gen;
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 4, 8);
-    
+
     setenv("HCCL_BUFFSIZE", "1", 1);
 
     CheckerOpParam checkerOpParam;
@@ -809,9 +836,9 @@ TEST_F(AllToAllVTest, alltoallv_test_910B_opbase_RunAlltoAllVContinuousPipeline_
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_INT8;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 128, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts,
-        checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 128, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     HcclResult ret;
@@ -825,7 +852,7 @@ TEST_F(AllToAllVTest, alltoallv_test_910B_opbase_RunAlltoAllVContinuousPipeline_
     RankTable_For_LLT gen;
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 2, 2);
-    
+
     setenv("HCCL_BUFFSIZE", "1", 1);
 
     CheckerOpParam checkerOpParam;
@@ -839,9 +866,9 @@ TEST_F(AllToAllVTest, alltoallv_test_910B_opbase_RunAlltoAllVContinuousPipeline_
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_INT8;
 
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 256*1024, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts,
-        checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 256 * 1024, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     Checker checker;
     checker.EnableTaskPrint();
@@ -857,21 +884,21 @@ TEST_F(AllToAllVTest, RunAlltoAllVPipelineFor91093)
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 2, 1, 16);
     setenv("HCCL_BUFFSIZE", "1", 1);
- 
+
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLTOALLV;
     checkerOpParam.tag = "AllToAll";
     checkerOpParam.opMode = CheckerOpMode::OPBASE;
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_910_93;
- 
+
     checkerOpParam.All2AllDataDes.sendType = CheckerDataType::DATA_TYPE_INT8;
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_INT8;
- 
+
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
-    GenAllToAllVParams(rankNum, 10, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts,
-        checkerOpParam.All2AllDataDes.rdispls);
- 
+    GenAllToAllVParams(
+        rankNum, 10, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+
     Checker checker;
     HcclResult ret;
     ret = checker.Check(checkerOpParam, topoMeta);

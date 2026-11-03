@@ -23,30 +23,24 @@ using namespace Hccl;
 using namespace std;
 class InstructionTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "InstructionTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "InstructionTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "InstructionTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "InstructionTest TearDown" << std::endl; }
 
     virtual void SetUp()
     {
-        localRank  = 0;
+        localRank = 0;
         remoteRank = 1;
-        dataType   = DataType::FP32;
-        reduceOp   = ReduceOp::SUM;
+        dataType = DataType::FP32;
+        reduceOp = ReduceOp::SUM;
 
         postQid = 0;
         waitQid = 1;
         topicId = 0;
         waitValue = 100;
-        u64          size = 100;
-        DataBuffer    srcBuffer(0x1234560, size);
-        DataBuffer    dstBuffer(0x1321000, size);
+        u64 size = 100;
+        DataBuffer srcBuffer(0x1234560, size);
+        DataBuffer dstBuffer(0x1321000, size);
 
         NotifyType notifyType = NotifyType::NORMAL;
         u32 bitValue = 0;
@@ -58,7 +52,7 @@ protected:
 
         u64 sliceSize = 0x1000;
 
-        localSlice  = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
+        localSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
         remoteSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
 
         srcSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
@@ -74,7 +68,7 @@ protected:
 
         insWaitGroup = new InsLocalWaitGroup(topicId);
 
-        insLocalCopy   = new InsLocalCopy(*srcSlice, *dstSlice);
+        insLocalCopy = new InsLocalCopy(*srcSlice, *dstSlice);
         insLocalReduce = new InsLocalReduce(*srcSlice, *dstSlice, dataType, reduceOp);
         insAicpuReduce = new InsAicpuReduce(*srcSlice, *dstSlice, dataType, reduceOp);
         insStreamSync = new InsStreamSync();
@@ -91,23 +85,26 @@ protected:
         insPostFinAck = new InsPostFinAck(remoteRank, *linkData);
         insWaitFinAck = new InsWaitFinAck(remoteRank, *linkData);
 
-        insRead  = new InsRead(remoteRank, *linkData, *localSlice, *remoteSlice);
+        insRead = new InsRead(remoteRank, *linkData, *localSlice, *remoteSlice);
         insWrite = new InsWrite(remoteRank, *linkData, *localSlice, *remoteSlice);
         insWriteWithFin = new InsWriteWithFin(remoteRank, *linkData, *localSlice, *remoteSlice, NotifyType::NORMAL);
 
         insBatchRead = new InsBatchRead(remoteRank, *linkData);
         insBatchWrite = new InsBatchWrite(remoteRank, *linkData);
 
-        insReadReduce  = new InsReadReduce(remoteRank, *linkData, *localSlice, *remoteSlice, dataType, reduceOp);
+        insReadReduce = new InsReadReduce(remoteRank, *linkData, *localSlice, *remoteSlice, dataType, reduceOp);
         insWriteReduce = new InsWriteReduce(remoteRank, *linkData, *localSlice, *remoteSlice, dataType, reduceOp);
-        insWriteReduceWithFin = new InsWriteReduceWithFin(remoteRank, *linkData, *localSlice, *remoteSlice, dataType, reduceOp, NotifyType::NORMAL);
+        insWriteReduceWithFin = new InsWriteReduceWithFin(
+            remoteRank, *linkData, *localSlice, *remoteSlice, dataType, reduceOp, NotifyType::NORMAL);
         insReadExtend = new InsReadExtend(remoteRank, *linkData, srcBuffer, dstBuffer);
         insReadReduceExtend = new InsReadReduceExtend(remoteRank, *linkData, srcBuffer, dstBuffer, dataType, reduceOp);
         insWriteWithFinExtend = new InsWriteWithFinExtend(remoteRank, *linkData, srcBuffer, dstBuffer);
-        insWriteReduceExtend = new InsWriteReduceExtend(remoteRank, *linkData, srcBuffer, dstBuffer, dataType, reduceOp);
+        insWriteReduceExtend
+            = new InsWriteReduceExtend(remoteRank, *linkData, srcBuffer, dstBuffer, dataType, reduceOp);
         insWriteExtend = new InsWriteExtend(remoteRank, *linkData, srcBuffer, dstBuffer);
-        insWriteReduceWithFinExtend = new InsWriteReduceWithFinExtend(remoteRank, *linkData, srcBuffer, dstBuffer, dataType, reduceOp, NotifyType::NORMAL);
-        
+        insWriteReduceWithFinExtend = new InsWriteReduceWithFinExtend(
+            remoteRank, *linkData, srcBuffer, dstBuffer, dataType, reduceOp, NotifyType::NORMAL);
+
         insBatchOneSidedRead = new InsBatchOneSidedRead(remoteRank, *linkData, {*localRmaSlice}, {*remoteRmaSlice});
         insBatchOneSidedWrite = new InsBatchOneSidedWrite(remoteRank, *linkData, {*localRmaSlice}, {*remoteRmaSlice});
         std::cout << "A Test case in InstructionTest SetUP" << std::endl;
@@ -166,62 +163,62 @@ protected:
     RankId localRank;
     RankId remoteRank;
 
-    LinkData *linkData;
+    LinkData* linkData;
 
-    DataSlice *localSlice;
-    DataSlice *remoteSlice;
-    DataSlice *srcSlice;
-    DataSlice *dstSlice;
+    DataSlice* localSlice;
+    DataSlice* remoteSlice;
+    DataSlice* srcSlice;
+    DataSlice* dstSlice;
 
-    RmaBufSliceLite *localRmaSlice;
-    RmtRmaBufSliceLite *remoteRmaSlice;
+    RmaBufSliceLite* localRmaSlice;
+    RmtRmaBufSliceLite* remoteRmaSlice;
 
-    InsLocalPostTo    *insPostTo;
-    InsLocalWaitFrom  *insWaitFrom;
-    InsLocalWaitGroup *insWaitGroup;
+    InsLocalPostTo* insPostTo;
+    InsLocalWaitFrom* insWaitFrom;
+    InsLocalWaitGroup* insWaitGroup;
 
-    InsLocalCopy   *insLocalCopy;
-    InsLocalReduce *insLocalReduce;
-    InsAicpuReduce *insAicpuReduce;
-    InsStreamSync *insStreamSync;
+    InsLocalCopy* insLocalCopy;
+    InsLocalReduce* insLocalReduce;
+    InsAicpuReduce* insAicpuReduce;
+    InsStreamSync* insStreamSync;
 
-    InsPostReady *insPostReady;
-    InsWaitReady *insWaitReady;
+    InsPostReady* insPostReady;
+    InsWaitReady* insWaitReady;
 
-    InsWaitGroupFin *insWaitGroupFin;
+    InsWaitGroupFin* insWaitGroupFin;
 
-    InsPostFin *insPostFin;
-    InsWaitFin *insWaitFin;
+    InsPostFin* insPostFin;
+    InsWaitFin* insWaitFin;
 
-    InsPostFinAck *insPostFinAck;
-    InsWaitFinAck *insWaitFinAck;
+    InsPostFinAck* insPostFinAck;
+    InsWaitFinAck* insWaitFinAck;
 
-    InsRead       *insRead;
-    InsReadReduce *insReadReduce;
+    InsRead* insRead;
+    InsReadReduce* insReadReduce;
 
-    InsBatchRead  *insBatchRead;
-    InsBatchWrite *insBatchWrite;
+    InsBatchRead* insBatchRead;
+    InsBatchWrite* insBatchWrite;
 
-    InsWrite       *insWrite;
-    InsWriteReduce *insWriteReduce;
-    InsWriteWithFin       *insWriteWithFin;
-    InsWriteReduceWithFin *insWriteReduceWithFin;
-    InsReadExtend *insReadExtend;
-    InsReadReduceExtend *insReadReduceExtend;
-    InsWriteWithFinExtend *insWriteWithFinExtend;
-    InsWriteReduceExtend *insWriteReduceExtend;
-    InsWriteExtend *insWriteExtend;
-    InsWriteReduceWithFinExtend *insWriteReduceWithFinExtend;
+    InsWrite* insWrite;
+    InsWriteReduce* insWriteReduce;
+    InsWriteWithFin* insWriteWithFin;
+    InsWriteReduceWithFin* insWriteReduceWithFin;
+    InsReadExtend* insReadExtend;
+    InsReadReduceExtend* insReadReduceExtend;
+    InsWriteWithFinExtend* insWriteWithFinExtend;
+    InsWriteReduceExtend* insWriteReduceExtend;
+    InsWriteExtend* insWriteExtend;
+    InsWriteReduceWithFinExtend* insWriteReduceWithFinExtend;
 
-    InsBatchOneSidedRead *insBatchOneSidedRead;
-    InsBatchOneSidedWrite *insBatchOneSidedWrite;
+    InsBatchOneSidedRead* insBatchOneSidedRead;
+    InsBatchOneSidedWrite* insBatchOneSidedWrite;
 
     DataType dataType;
     ReduceOp reduceOp;
-    QId      postQid;
-    QId      waitQid;
-    u32      topicId;
-    u32      waitValue;
+    QId postQid;
+    QId waitQid;
+    u32 topicId;
+    u32 waitValue;
 };
 
 TEST_F(InstructionTest, test_print_all_ins)
@@ -358,7 +355,7 @@ TEST_F(InstructionTest, test_ins_wait_group_fin)
     LinkData link(BasePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB), 0, 1, 0, 1);
     insWaitGroupFin->Append(link);
     cout << insWaitGroupFin->Describe() << endl;
- 
+
     EXPECT_EQ(link, *(insWaitGroupFin->Iter()));
     EXPECT_EQ(topicId, insWaitGroupFin->GetTopicId());
     EXPECT_EQ(waitValue, insWaitGroupFin->GetValue());
@@ -400,7 +397,6 @@ TEST_F(InstructionTest, test_ins_read_reduce)
 
     EXPECT_EQ(true, insReadReduce->GetLocalSlice() == *localSlice);
     EXPECT_EQ(true, insReadReduce->GetRemoteSlice() == *remoteSlice);
-
 }
 
 TEST_F(InstructionTest, test_ins_batch_read)
@@ -413,13 +409,13 @@ TEST_F(InstructionTest, test_ins_batch_read)
     DataSlice locSlice(BufferType::SCRATCH, 0, 100);
     DataSlice rmtSlice(BufferType::SCRATCH, 10, 100);
     unique_ptr<Instruction> readIns = make_unique<InsRead>(100, linkData, locSlice, rmtSlice);
-    insBatchRead->PushReadIns(move(readIns));
+    EXPECT_EQ(insBatchRead->PushReadIns(move(readIns)), HcclResult::HCCL_SUCCESS);
 
     DataType dataType(DataType::INT8);
     ReduceOp reduceOp(ReduceOp::SUM);
-    unique_ptr<Instruction> readReduceIns = make_unique<InsReadReduce>(100, linkData, locSlice, rmtSlice, dataType,
-                                                                        reduceOp);
-    insBatchRead->PushReadIns(move(readReduceIns));
+    unique_ptr<Instruction> readReduceIns
+        = make_unique<InsReadReduce>(100, linkData, locSlice, rmtSlice, dataType, reduceOp);
+    EXPECT_EQ(insBatchRead->PushReadIns(move(readReduceIns)), HcclResult::HCCL_SUCCESS);
     EXPECT_EQ(readIns, nullptr);
     EXPECT_EQ(readReduceIns, nullptr);
     EXPECT_EQ(insBatchRead->readInsVec.size(), 2);
@@ -433,7 +429,7 @@ TEST_F(InstructionTest, test_ins_batch_read_PushReadIns_fail)
     DataSlice rmtSlice(BufferType::SCRATCH, 10, 100);
     unique_ptr<Instruction> writeIns = make_unique<InsWrite>(100, linkData, locSlice, rmtSlice);
 
-    EXPECT_THROW(insBatchRead->PushReadIns(move(writeIns)), NotSupportException);
+    EXPECT_EQ(insBatchRead->PushReadIns(move(writeIns)), HcclResult::HCCL_E_RUNTIME);
 }
 
 TEST_F(InstructionTest, test_ins_batch_write)
@@ -446,13 +442,13 @@ TEST_F(InstructionTest, test_ins_batch_write)
     DataSlice locSlice(BufferType::SCRATCH, 0, 100);
     DataSlice rmtSlice(BufferType::SCRATCH, 10, 100);
     unique_ptr<Instruction> writeIns = make_unique<InsWrite>(100, linkData, locSlice, rmtSlice);
-    insBatchWrite->PushWriteIns(move(writeIns));
+    EXPECT_EQ(insBatchWrite->PushWriteIns(move(writeIns)), HcclResult::HCCL_SUCCESS);
 
     DataType dataType(DataType::INT8);
     ReduceOp reduceOp(ReduceOp::SUM);
-    unique_ptr<Instruction> writeReduceIns = make_unique<InsWriteReduce>(100, linkData, locSlice, rmtSlice, dataType,
-                                                                        reduceOp);
-    insBatchWrite->PushWriteIns(move(writeReduceIns));
+    unique_ptr<Instruction> writeReduceIns
+        = make_unique<InsWriteReduce>(100, linkData, locSlice, rmtSlice, dataType, reduceOp);
+    EXPECT_EQ(insBatchWrite->PushWriteIns(move(writeReduceIns)), HcclResult::HCCL_SUCCESS);
     EXPECT_EQ(writeIns, nullptr);
     EXPECT_EQ(writeReduceIns, nullptr);
     EXPECT_EQ(insBatchWrite->writeInsVec.size(), 2);
@@ -469,7 +465,7 @@ TEST_F(InstructionTest, test_ins_batch_write_PushWriteIns_fail)
     DataSlice rmtSlice(BufferType::SCRATCH, 10, 100);
     unique_ptr<Instruction> readIns = make_unique<InsRead>(100, linkData, locSlice, rmtSlice);
 
-    EXPECT_THROW(insBatchWrite->PushWriteIns(move(readIns)), NotSupportException);
+    EXPECT_EQ(insBatchWrite->PushWriteIns(move(readIns)), HcclResult::HCCL_E_RUNTIME);
 }
 
 TEST_F(InstructionTest, test_ins_write)

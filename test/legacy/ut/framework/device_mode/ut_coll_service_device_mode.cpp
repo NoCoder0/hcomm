@@ -11,6 +11,7 @@
 #include "gtest/gtest.h"
 #include <mockcpp/mokc.h>
 #include <mockcpp/mockcpp.hpp>
+#include "test_mock_setup.h"
 #include <hccl/hccl_types.h>
 #define private public
 #define protected public
@@ -33,34 +34,28 @@ using namespace std;
 #define FUSION_SUB_TASK_MAX_CPU_NUM (1U)
 
 typedef struct tagRtAicpuArgs {
-    uint16_t kfcArgsFmtOffset;      // default value is 0xffff
-    uint16_t soNameAddrOffset;      // just for CCE Kernel, default value is 0xffff for FWK kernel
-    uint16_t kernelNameAddrOffset;  // just for CCE Kernel, default value is 0xffff for FWK kernel
+    uint16_t kfcArgsFmtOffset;     // default value is 0xffff
+    uint16_t soNameAddrOffset;     // just for CCE Kernel, default value is 0xffff for FWK kernel
+    uint16_t kernelNameAddrOffset; // just for CCE Kernel, default value is 0xffff for FWK kernel
     uint16_t rev;
 } rtAicpuArgs_t;
 
 typedef struct tagRtFusionArgsEx {
-    void *args;                     // args host mem addr
-    rtHostInputInfo_t *hostInputInfoPtr;     // nullptr means no host mem input
-    uint32_t argsSize;              // input + output + host mem
-    uint16_t hostInputInfoNum;      // hostInputInfo num
-    uint8_t aicpuNum;               // aicpu task num
-    uint8_t isNoNeedH2DCopy;        // is no need host to device copy: 0 means need H2D copy,
-                                    // others means doesn't need H2D copy.
+    void* args;                                           // args host mem addr
+    rtHostInputInfo_t* hostInputInfoPtr;                  // nullptr means no host mem input
+    uint32_t argsSize;                                    // input + output + host mem
+    uint16_t hostInputInfoNum;                            // hostInputInfo num
+    uint8_t aicpuNum;                                     // aicpu task num
+    uint8_t isNoNeedH2DCopy;                              // is no need host to device copy: 0 means need H2D copy,
+                                                          // others means doesn't need H2D copy.
     rtAicpuArgs_t aicpuArgs[FUSION_SUB_TASK_MAX_CPU_NUM]; // aicpuArgsInfo
 } rtFusionArgsEx_t;
 
 class CollServiceDeviceModeTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CollServiceDeviceModeTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CollServiceDeviceModeTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CollServiceDeviceModeTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CollServiceDeviceModeTest TearDown" << std::endl; }
 
     virtual void SetUp()
     {
@@ -69,24 +64,21 @@ protected:
         u32 fakeNotifyId = 1;
         u64 fakeOffset = 200;
         char fakeName[65] = "testRtsNotify";
-        MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-        MOCKER(HrtNotifyCreate).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
-        MOCKER(HrtNotifyCreateWithFlag).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
-        MOCKER(HrtGetNotifyID).stubs().will(returnValue(fakeNotifyId));
-        MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(fakeDevPhyId)));
-        MOCKER(HrtIpcSetNotifyName).stubs().with(mockcpp::any(), outBoundP(fakeName, sizeof(fakeName)), mockcpp::any());
-        MOCKER(HrtNotifyGetOffset).stubs().will(returnValue(fakeOffset));
-        MOCKER(HrtGetDeviceType).stubs().will(returnValue(DevType(DevType::DEV_TYPE_950)));
+        SETUP_COMM_NOTIFY_MOCKS();
 
         // 资源初始化
         MOCKER_CPP(&AicpuInsPreprocessor::Preprocess).stubs().with().will(ignoreReturnValue());
 
-        Buffer *buf = nullptr;
-        LocalRmaBuffer *rmaBuf = nullptr;
-        MOCKER_CPP(&DataBufManager::Get).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(buf));
-        MOCKER_CPP(&LocalRmaBufManager::Reg,
-                   LocalRmaBuffer *
-                       (LocalRmaBufManager::*)(const string &, BufferType, std::shared_ptr<Buffer>, const PortData &, LinkProtocol))
+        Buffer* buf = nullptr;
+        LocalRmaBuffer* rmaBuf = nullptr;
+        MOCKER_CPP(&DataBufManager::Get)
+            .stubs()
+            .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+            .will(returnValue(buf));
+        MOCKER_CPP(
+            &LocalRmaBufManager::Reg, LocalRmaBuffer
+                                          * (LocalRmaBufManager::*)(const string&, BufferType, std::shared_ptr<Buffer>,
+                                                                    const PortData&, LinkProtocol))
             .stubs()
             .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
             .will(returnValue(rmaBuf));
@@ -98,7 +90,7 @@ protected:
             .stubs()
             .with(mockcpp::any(), mockcpp::any())
             .will(returnValue(std::vector<char>{'1', '2'}));
-        void *ptr1 = (void*)1;
+        void* ptr1 = (void*)1;
         MOCKER(HrtStreamCreateWithFlags).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(ptr1));
         MOCKER(HrtGetStreamId).stubs().with(mockcpp::any()).will(returnValue(0));
 
@@ -144,13 +136,16 @@ protected:
         peer0->AddConnInterface(0, connInterface);
         fakeComm.rankGraph->AddPeer(peer0);
         fakeComm.localRmaBufManager = std::make_unique<LocalRmaBufManager>(fakeComm);
-        fakeComm.trace = std::make_unique<Trace>();
+        (void)fakeComm.InitTraceManager();
 
         fakeComm.InitCollService();
         fakeComm.CollAlgComponentInit();
-        MOCKER_CPP(&CollAlgComponent::ExecAlgSelect).stubs().with(mockcpp::any()).will(returnValue(HcclResult::HCCL_SUCCESS));
+        MOCKER_CPP(&CollAlgComponent::ExecAlgSelect)
+            .stubs()
+            .with(mockcpp::any())
+            .will(returnValue(HcclResult::HCCL_SUCCESS));
         fakeComm.RegisterAcceStateCallBack(CommunicatorCallback());
-        OpExecuteConfig opConfig;  // ccu 展开
+        OpExecuteConfig opConfig; // ccu 展开
         opConfig.accState = AcceleratorState::CCU_MS;
         fakeComm.opExecuteConfig = opConfig;
         fakeComm.SelectCollService();
@@ -163,16 +158,18 @@ protected:
         collAlgOpReq.resReq.levelRankPairs = levelRankPairs;
 
         CollAlgComponent collAlgComponent(nullptr, DevType::DEV_TYPE_950, 0, 1);
-        MOCKER_CPP_VIRTUAL(collAlgComponent, &CollAlgComponent::Orchestrate,
-                           HcclResult(CollAlgComponent::*)(const CollAlgOperator &op, const CollAlgParams &params,
-                                                           const string &algName, InsQuePtr queue))
+        MOCKER_CPP_VIRTUAL(
+            collAlgComponent, &CollAlgComponent::Orchestrate,
+            HcclResult(CollAlgComponent::*)(
+                const CollAlgOperator& op, const CollAlgParams& params, const string& algName, InsQuePtr queue))
             .stubs()
             .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
             .will(returnValue(HcclResult::HCCL_SUCCESS));
         MOCKER_CPP_VIRTUAL(
             collAlgComponent, &CollAlgComponent::CalcResOffload,
-            HcclResult(CollAlgComponent::*)(const OpType &opType, const u64 &dataSize, const HcclDataType &dataType, 
-                                            const OpExecuteConfig &opConfig, CollOffloadOpResReq &resReq))
+            HcclResult(CollAlgComponent::*)(
+                const OpType& opType, const u64& dataSize, const HcclDataType& dataType,
+                const OpExecuteConfig& opConfig, CollOffloadOpResReq& resReq))
             .stubs()
             .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
             .will(returnValue(HcclResult::HCCL_SUCCESS));
@@ -201,7 +198,7 @@ protected:
 
 TEST_F(CollServiceDeviceModeTest, test_init_LoadWithOpBasedMode)
 {
-    auto service = dynamic_cast<CollServiceDeviceMode *>(fakeComm.collService);
+    auto service = dynamic_cast<CollServiceDeviceMode*>(fakeComm.collService);
     auto stream = std::make_unique<Stream>();
     service->LoadWithOpBasedMode(*fakeComm.currentCollOperator, std::move(stream));
     EXPECT_NO_THROW(service->GetAicpuInsPreprocessor());
@@ -211,18 +208,18 @@ TEST_F(CollServiceDeviceModeTest, test_init_LoadWithOpBasedMode)
     MOCKER_CPP(&AicpuInsPreprocessor::IsAicpuResExisted).stubs().with().will(returnValue(true));
     EXPECT_NO_THROW(service->IsAicpuResExisted("test"));
 
-    DevBuffer *devbuf;
+    DevBuffer* devbuf;
     MOCKER_CPP(&AicpuInsPreprocessor::GetAicpuResBuffer).stubs().with().will(returnValue(devbuf));
     EXPECT_NO_THROW(service->GetAicpuResBuffer("test"));
 }
 
 TEST_F(CollServiceDeviceModeTest, test_init_LoadWithOffloadMode)
 {
-    void *ptr1 = (void*)1;
+    void* ptr1 = (void*)1;
     MOCKER(HrtStreamCreateWithFlags).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(ptr1));
     MOCKER(HrtGetStreamId).stubs().will(returnValue(0));
     MOCKER_CPP(&CollServiceDefaultImpl::AddCountTask).stubs().will(ignoreReturnValue());
-    auto service = dynamic_cast<CollServiceDeviceMode *>(fakeComm.collService);
+    auto service = dynamic_cast<CollServiceDeviceMode*>(fakeComm.collService);
     OpType opType = OpType::ALLREDUCE;
     auto stream = std::make_unique<Stream>();
     fakeComm.currentCollOperator->opMode = OpMode::OFFLOAD;
@@ -293,26 +290,25 @@ TEST_F(CollServiceDeviceModeTest, test_alloc_comm_resource_by_tiling_success)
     std::vector<CcuTaskParam> vec;
     MOCKER_CPP(&Mc2Compont::GetCcuTaskInfo).stubs().with(mockcpp::any()).will(returnValue(vec));
 
-    MOCKER_CPP(&SocketManager::BatchCreateSockets, void(SocketManager::*)(const std::vector<LinkData>&))
-        .stubs();
+    MOCKER_CPP(&SocketManager::BatchCreateSockets, void(SocketManager::*)(const std::vector<LinkData>&)).stubs();
 
     MOCKER_CPP(&ConnectionsBuilder::BatchBuild).stubs();
     std::vector<Hccl::LinkData> linkVec;
-    char *buf = new char[16 * 1024 * 1024];
-    MOCKER(HrtMallocHost).stubs().with(mockcpp::any()).will(returnValue(static_cast<void *>(buf)));
-    MOCKER(HrtMalloc).stubs().with(mockcpp::any(),mockcpp::any()).will(returnValue((void *)0x100000));
+    char* buf = new char[16 * 1024 * 1024];
+    MOCKER(HrtMallocHost).stubs().with(mockcpp::any()).will(returnValue(static_cast<void*>(buf)));
+    MOCKER(HrtMalloc).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue((void*)0x100000));
 
     rtFusionArgsEx_t fusionArgs;
     rtCcuTaskGroup_t ccuTaskGroup;
-    fusionArgs.args = malloc(sizeof(void *) * 7 + sizeof(Mc2Tiling) + sizeof(HcclCommParamDesc));
+    fusionArgs.args = malloc(sizeof(void*) * 7 + sizeof(Mc2Tiling) + sizeof(HcclCommParamDesc));
     fusionArgs.aicpuNum = 1;
-    fusionArgs.aicpuArgs[0].kfcArgsFmtOffset = (sizeof(void *) * 7 + sizeof(Mc2Tiling)) / sizeof(void *);
-    Mc2Tiling *tilingData =
-        reinterpret_cast<Mc2Tiling *>(reinterpret_cast<uint8_t *>(fusionArgs.args) + sizeof(void *) * 7);
-    *reinterpret_cast<uint64_t *>(reinterpret_cast<uint8_t *>(fusionArgs.args) + sizeof(void *) * 5) =
-        reinterpret_cast<uint64_t>(tilingData);
-    HcclCommParamDesc *commParamDesc = reinterpret_cast<HcclCommParamDesc *>(
-        reinterpret_cast<uint8_t *>(fusionArgs.args) + sizeof(void *) * 7 + sizeof(Mc2Tiling));
+    fusionArgs.aicpuArgs[0].kfcArgsFmtOffset = (sizeof(void*) * 7 + sizeof(Mc2Tiling)) / sizeof(void*);
+    Mc2Tiling* tilingData
+        = reinterpret_cast<Mc2Tiling*>(reinterpret_cast<uint8_t*>(fusionArgs.args) + sizeof(void*) * 7);
+    *reinterpret_cast<uint64_t*>(reinterpret_cast<uint8_t*>(fusionArgs.args) + sizeof(void*) * 5)
+        = reinterpret_cast<uint64_t>(tilingData);
+    HcclCommParamDesc* commParamDesc = reinterpret_cast<HcclCommParamDesc*>(
+        reinterpret_cast<uint8_t*>(fusionArgs.args) + sizeof(void*) * 7 + sizeof(Mc2Tiling));
     commParamDesc->groupNum = 1;
     commParamDesc->hasFfts = 0;
     commParamDesc->tilingDataPtrOff = 5;
@@ -320,12 +316,12 @@ TEST_F(CollServiceDeviceModeTest, test_alloc_comm_resource_by_tiling_success)
     tilingData->version = 3;
     tilingData->commConfigNum = 1;
     tilingData->serverCfg = {0};
-    tilingData->commConfig.opType = 6;  // Allgahter
+    tilingData->commConfig.opType = 6; // Allgahter
     tilingData->commConfig.reduceType = 0;
-    tilingData->commConfig.dataType = 3;  // FP16
+    tilingData->commConfig.dataType = 3; // FP16
     tilingData->commConfig.outputDataType = 3;
 
-    void *commContext = nullptr;
+    void* commContext = nullptr;
 
     CollServiceDeviceMode service(&comm);
     EXPECT_NO_THROW(service.AllocCommResource(tilingData, &commContext, Hccl::AcceleratorState::CCU_MS));
@@ -339,10 +335,11 @@ TEST_F(CollServiceDeviceModeTest, test_ccu_RecoverTransport)
 {
     MOCKER_CPP(&ConnectionsBuilder::BatchBuild).stubs().will(returnValue(0));
     MOCKER_CPP(&SocketManager::BatchCreateSockets, void(SocketManager::*)(const std::vector<LinkData>&))
-        .stubs().will(returnValue(0));
+        .stubs()
+        .will(returnValue(0));
     MOCKER_CPP(&ConnLocalCntNotifyManager::ApplyFor).stubs().will(ignoreReturnValue());
     MOCKER_CPP(&MemTransportManager::BatchRecoverOpbasedTransports).stubs().will(returnValue(0));
-    MOCKER_CPP(&CcuInsPreprocessor::RecoverCcuTransportCtx).stubs().will(returnValue(HCCL_E_PARA)); 
+    MOCKER_CPP(&CcuInsPreprocessor::RecoverCcuTransportCtx).stubs().will(returnValue(HCCL_E_PARA));
 
     CommunicatorImpl comm;
     comm.InitNotifyManager();
@@ -356,18 +353,21 @@ TEST_F(CollServiceDeviceModeTest, test_ccu_RecoverTransport)
     comm.GetCurrentCollOperator()->opMode = OpMode::OPBASE;
     CollServiceDeviceMode service(&comm);
 
-    MOCKER_CPP(&RdmaHandleManager::GetDieAndFuncId).stubs().will(returnValue(make_pair<uint32_t,uint32_t>(0,0)));
+    MOCKER_CPP(&RdmaHandleManager::GetDieAndFuncId).stubs().will(returnValue(make_pair<uint32_t, uint32_t>(0, 0)));
     vector<LinkData> links;
     vector<std::pair<LinkGroup, u32>> linkGroupPair;
-    LinkData linkData(PortDeploymentType::P2P,LinkProtocol::UB_CTP, 0, 1, IpAddress{"10.0.0.1"}, IpAddress{"10.0.0.2"});
+    LinkData linkData(
+        PortDeploymentType::P2P, LinkProtocol::UB_CTP, 0, 1, IpAddress{"10.0.0.1"}, IpAddress{"10.0.0.2"});
     links.push_back(linkData);
     LinkGroup linkGroup{};
     linkGroup.AddLink({linkData});
-    LinkData otherLinkData(PortDeploymentType::P2P,LinkProtocol::UB_CTP, 1, 1, IpAddress{"10.0.0.3"}, IpAddress{"10.0.0.4"});;
+    LinkData otherLinkData(
+        PortDeploymentType::P2P, LinkProtocol::UB_CTP, 1, 1, IpAddress{"10.0.0.3"}, IpAddress{"10.0.0.4"});
+    ;
     linkGroup.AddLink({otherLinkData});
     linkGroupPair.push_back(make_pair(linkGroup, 0));
     comm.opExecuteConfig.accState = AcceleratorState::CCU_MS;
-    EXPECT_THROW(service.RecoverTransport(links, linkGroupPair), InternalException);
+    EXPECT_EQ(service.RecoverTransport(links, linkGroupPair), HcclResult::HCCL_E_INTERNAL);
 }
 
 TEST_F(CollServiceDeviceModeTest, test_GetSnapShotDynamicBuf)
@@ -393,13 +393,16 @@ TEST_F(CollServiceDeviceModeTest, test_GetSnapShotDynamicBuf)
     levelRankPairs.push_back({1, 1});
     collAlgOpReq.resReq.levelRankPairs = levelRankPairs;
 
-    LinkInfo linkInfo{1,0,IpAddress{"10.0.0.1"},IpAddress{"10.0.0.2"}};
+    LinkInfo linkInfo{1, 0, IpAddress{"10.0.0.1"}, IpAddress{"10.0.0.2"}};
     LinkGroup utLinkGroup{vector<LinkInfo>{linkInfo}};
     vector<LinkGroup> utLinkGroups{utLinkGroup};
 
     u32 utCntCke = 3;
-    vector<CcuTransport *> utCcuTransportVec;
-    MOCKER_CPP(&CcuTransportGroupMgr::GetAllTransportGroups).stubs().with().will(returnValue(utLinkGroups));
+    vector<CcuTransport*> utCcuTransportVec;
+    MOCKER_CPP(&CcuTransportGroupMgr::GetAllTransportGroups)
+        .stubs()
+        .with(outBound(utLinkGroups))
+        .will(returnValue(HcclResult::HCCL_SUCCESS));
     CollAlgComponent collAlgComponent(nullptr, DevType::DEV_TYPE_950, 0, 1);
     MOCKER_CPP_VIRTUAL(collAlgComponent, &CollAlgComponent::GetCollAlgOpReq)
         .stubs()
@@ -456,8 +459,11 @@ TEST_F(CollServiceDeviceModeTest, test_IsAllTransportRecoveredReady)
     vector<RankGroup> utRankGroups = {utRankGroup};
 
     u32 utCntCke = 3;
-    vector<CcuTransport *> utCcuTransportVec;
-    MOCKER_CPP(&CcuTransportGroupMgr::GetAllTransportGroups).stubs().with().will(returnValue(utRankGroups));
+    vector<CcuTransport*> utCcuTransportVec;
+    MOCKER_CPP(&CcuTransportGroupMgr::GetAllTransportGroups)
+        .stubs()
+        .with(outBound(utRankGroups))
+        .will(returnValue(HcclResult::HCCL_SUCCESS));
     CollAlgComponent collAlgComponent(nullptr, DevType::DEV_TYPE_950, 0, 1);
     MOCKER_CPP_VIRTUAL(collAlgComponent, &CollAlgComponent::GetCollAlgOpReq)
         .stubs()
@@ -499,8 +505,11 @@ TEST_F(CollServiceDeviceModeTest, test_IsAllTransportRecoveredReady_false)
     vector<RankGroup> utRankGroups = {utRankGroup};
 
     u32 utCntCke = 3;
-    vector<CcuTransport *> utCcuTransportVec;
-    MOCKER_CPP(&CcuTransportGroupMgr::GetAllTransportGroups).stubs().with().will(returnValue(utRankGroups));
+    vector<CcuTransport*> utCcuTransportVec;
+    MOCKER_CPP(&CcuTransportGroupMgr::GetAllTransportGroups)
+        .stubs()
+        .with(outBound(utRankGroups))
+        .will(returnValue(HcclResult::HCCL_SUCCESS));
     CollAlgComponent collAlgComponent(nullptr, DevType::DEV_TYPE_950, 0, 1);
     MOCKER_CPP_VIRTUAL(collAlgComponent, &CollAlgComponent::GetCollAlgOpReq)
         .stubs()
@@ -549,16 +558,18 @@ TEST_F(CollServiceDeviceModeTest, test_coll_service_device_mode_resume)
     peer0->AddConnInterface(0, connInterface);
     comm.rankGraph->AddPeer(peer0);
     comm.localRmaBufManager = std::make_unique<LocalRmaBufManager>(comm);
-    comm.trace = std::make_unique<Trace>();
+    (void)comm.InitTraceManager();
     comm.opExecuteConfig.accState = AcceleratorState::CCU_MS;
 
     CollServiceDeviceMode service(&comm);
 
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
-    LinkData linkData{PortDeploymentType::P2P,LinkProtocol::UB_CTP, 0, 1, IpAddress{"10.0.0.1"}, IpAddress{"10.0.0.2"}};
+    LinkData linkData{PortDeploymentType::P2P, LinkProtocol::UB_CTP, 0, 1,
+                      IpAddress{"10.0.0.1"},   IpAddress{"10.0.0.2"}};
     std::vector<LinkData> links;
     links.push_back(linkData);
-    vector<LinkInfo> infos{{LinkData{PortDeploymentType::P2P,LinkProtocol::UB_CTP, 1, 1, IpAddress{"10.0.0.3"}, IpAddress{"10.0.0.4"}}}};
+    vector<LinkInfo> infos{
+        {LinkData{PortDeploymentType::P2P, LinkProtocol::UB_CTP, 1, 1, IpAddress{"10.0.0.3"}, IpAddress{"10.0.0.4"}}}};
     LinkGroup linkGroup{infos};
     service.ccuInsPreprocessor.ccuComm.ccuTransportMgr.ccuLink2TransportMap[linkData] = nullptr;
     service.ccuInsPreprocessor.ccuComm.ccuTransportGroupMgr.linkGrp2TransportGrpMap[linkGroup] = nullptr;
@@ -607,7 +618,7 @@ TEST_F(CollServiceDeviceModeTest, test_coll_service_device_mode_resume_when_link
     peer0->AddConnInterface(0, connInterface);
     comm.rankGraph->AddPeer(peer0);
     comm.localRmaBufManager = std::make_unique<LocalRmaBufManager>(comm);
-    comm.trace = std::make_unique<Trace>();
+    (void)comm.InitTraceManager();
     comm.opExecuteConfig.accState = AcceleratorState::CCU_MS;
 
     CollServiceDeviceMode service(&comm);
@@ -633,7 +644,7 @@ TEST_F(CollServiceDeviceModeTest, test_init_ReLoadWithOpBasedMode_Opbased)
     opParams.dataType = DataType::FP32;
     opParams.opType = OpType::ALLREDUCE;
 
-    auto service = dynamic_cast<CollServiceDeviceMode *>(fakeComm.collService);
+    auto service = dynamic_cast<CollServiceDeviceMode*>(fakeComm.collService);
     auto stream = std::make_unique<Stream>();
 
     service->ccuInsPreprocessor.resAllocSuccess = false;
@@ -650,20 +661,20 @@ TEST_F(CollServiceDeviceModeTest, test_init_ReLoadWithOpBasedMode_Offload)
     opParams.dataType = DataType::FP32;
     opParams.opType = OpType::ALLREDUCE;
 
-    auto service = dynamic_cast<CollServiceDeviceMode *>(fakeComm.collService);
+    auto service = dynamic_cast<CollServiceDeviceMode*>(fakeComm.collService);
     auto stream = std::make_unique<Stream>();
 
     service->ccuInsPreprocessor.resAllocSuccess = false;
     std::shared_ptr<Buffer> buffer = DevBuffer::Create(0x100, 10);
- 	fakeComm.currentCollOperator->scratchMem = buffer;
+    fakeComm.currentCollOperator->scratchMem = buffer;
     EXPECT_THROW(service->LoadWithOffloadMode(*fakeComm.currentCollOperator, std::move(stream)), NotSupportException);
 }
 
 TEST_F(CollServiceDeviceModeTest, Ut_GetCcuMc2ServerNum_Expect_equality)
 {
     // 前置条件
-    auto service = dynamic_cast<CollServiceDeviceMode *>(fakeComm.collService);
-    u32 ccuMc2ServerNum;
+    auto service = dynamic_cast<CollServiceDeviceMode*>(fakeComm.collService);
+    u32 ccuMc2ServerNum = 0;
 
     // 执行步骤
     auto ret = service->GetCcuMc2ServerNum();
@@ -674,10 +685,11 @@ TEST_F(CollServiceDeviceModeTest, Ut_GetCcuMc2ServerNum_Expect_equality)
 
 TEST_F(CollServiceDeviceModeTest, should_success_when_AllocCommResource_aiv)
 {
-    LocalRmaBuffer *rmaBuf = nullptr;
+    LocalRmaBuffer* rmaBuf = nullptr;
     MOCKER_CPP(
-        &LocalRmaBufManager::Reg,
-        LocalRmaBuffer * (LocalRmaBufManager::*)(const string &, BufferType, std::shared_ptr<Buffer>, const PortData &, LinkProtocol))
+        &LocalRmaBufManager::Reg, LocalRmaBuffer
+                                      * (LocalRmaBufManager::*)(const string&, BufferType, std::shared_ptr<Buffer>,
+                                                                const PortData&, LinkProtocol))
         .stubs()
         .with(mockcpp::any(), mockcpp::any())
         .will(returnValue(rmaBuf));
@@ -719,26 +731,25 @@ TEST_F(CollServiceDeviceModeTest, should_success_when_AllocCommResource_aiv)
     comm.rankGraph->AddPeer(peer0);
     comm.rankGraph->AddPeer(peer1);
 
-    MOCKER_CPP(&SocketManager::BatchCreateSockets, void(SocketManager::*)(const std::vector<LinkData>&))
-        .stubs();
+    MOCKER_CPP(&SocketManager::BatchCreateSockets, void(SocketManager::*)(const std::vector<LinkData>&)).stubs();
 
     MOCKER_CPP(&ConnectionsBuilder::BatchBuild).stubs();
     std::vector<Hccl::LinkData> linkVec;
-    char *buf = new char[16 * 1024 * 1024];
-    MOCKER(HrtMallocHost).stubs().with(mockcpp::any()).will(returnValue(static_cast<void *>(buf)));
-    MOCKER(HrtMalloc).stubs().with(mockcpp::any(),mockcpp::any()).will(returnValue((void *)0x100000));
+    char* buf = new char[16 * 1024 * 1024];
+    MOCKER(HrtMallocHost).stubs().with(mockcpp::any()).will(returnValue(static_cast<void*>(buf)));
+    MOCKER(HrtMalloc).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue((void*)0x100000));
 
     rtFusionArgsEx_t fusionArgs;
     rtCcuTaskGroup_t ccuTaskGroup;
-    fusionArgs.args = malloc(sizeof(void *) * 7 + sizeof(Mc2Tiling) + sizeof(HcclCommParamDesc));
+    fusionArgs.args = malloc(sizeof(void*) * 7 + sizeof(Mc2Tiling) + sizeof(HcclCommParamDesc));
     fusionArgs.aicpuNum = 1;
-    fusionArgs.aicpuArgs[0].kfcArgsFmtOffset = (sizeof(void *) * 7 + sizeof(Mc2Tiling)) / sizeof(void *);
-    Mc2Tiling *tilingData =
-        reinterpret_cast<Mc2Tiling *>(reinterpret_cast<uint8_t *>(fusionArgs.args) + sizeof(void *) * 7);
-    *reinterpret_cast<uint64_t *>(reinterpret_cast<uint8_t *>(fusionArgs.args) + sizeof(void *) * 5) =
-        reinterpret_cast<uint64_t>(tilingData);
-    HcclCommParamDesc *commParamDesc = reinterpret_cast<HcclCommParamDesc *>(
-        reinterpret_cast<uint8_t *>(fusionArgs.args) + sizeof(void *) * 7 + sizeof(Mc2Tiling));
+    fusionArgs.aicpuArgs[0].kfcArgsFmtOffset = (sizeof(void*) * 7 + sizeof(Mc2Tiling)) / sizeof(void*);
+    Mc2Tiling* tilingData
+        = reinterpret_cast<Mc2Tiling*>(reinterpret_cast<uint8_t*>(fusionArgs.args) + sizeof(void*) * 7);
+    *reinterpret_cast<uint64_t*>(reinterpret_cast<uint8_t*>(fusionArgs.args) + sizeof(void*) * 5)
+        = reinterpret_cast<uint64_t>(tilingData);
+    HcclCommParamDesc* commParamDesc = reinterpret_cast<HcclCommParamDesc*>(
+        reinterpret_cast<uint8_t*>(fusionArgs.args) + sizeof(void*) * 7 + sizeof(Mc2Tiling));
     commParamDesc->groupNum = 1;
     commParamDesc->hasFfts = 0;
     commParamDesc->tilingDataPtrOff = 5;
@@ -746,13 +757,13 @@ TEST_F(CollServiceDeviceModeTest, should_success_when_AllocCommResource_aiv)
     tilingData->version = 3;
     tilingData->commConfigNum = 1;
     tilingData->serverCfg = {0};
-    tilingData->commConfig.opType = 6;  // Allgahter
+    tilingData->commConfig.opType = 6; // Allgahter
     tilingData->commConfig.reduceType = 0;
-    tilingData->commConfig.dataType = 3;  // FP16
+    tilingData->commConfig.dataType = 3; // FP16
     tilingData->commConfig.outputDataType = 3;
-    tilingData->commConfig.communicationEngine = 3;  // aiv
+    tilingData->commConfig.communicationEngine = 3; // aiv
 
-    void *commContext = nullptr;
+    void* commContext = nullptr;
 
     CollServiceDeviceMode service(&comm);
     comm.collService = &service;
@@ -765,10 +776,11 @@ TEST_F(CollServiceDeviceModeTest, should_success_when_AllocCommResource_aiv)
 
 TEST_F(CollServiceDeviceModeTest, Ut_AllocCommResource_When_versionIs0_Expect_THROW)
 {
-    LocalRmaBuffer *rmaBuf = nullptr;
+    LocalRmaBuffer* rmaBuf = nullptr;
     MOCKER_CPP(
-        &LocalRmaBufManager::Reg,
-        LocalRmaBuffer * (LocalRmaBufManager::*)(const string &, BufferType, std::shared_ptr<Buffer>, const PortData &, LinkProtocol))
+        &LocalRmaBufManager::Reg, LocalRmaBuffer
+                                      * (LocalRmaBufManager::*)(const string&, BufferType, std::shared_ptr<Buffer>,
+                                                                const PortData&, LinkProtocol))
         .stubs()
         .with(mockcpp::any(), mockcpp::any())
         .will(returnValue(rmaBuf));
@@ -810,26 +822,25 @@ TEST_F(CollServiceDeviceModeTest, Ut_AllocCommResource_When_versionIs0_Expect_TH
     comm.rankGraph->AddPeer(peer0);
     comm.rankGraph->AddPeer(peer1);
 
-    MOCKER_CPP(&SocketManager::BatchCreateSockets, void(SocketManager::*)(const std::vector<LinkData>&))
-        .stubs();
+    MOCKER_CPP(&SocketManager::BatchCreateSockets, void(SocketManager::*)(const std::vector<LinkData>&)).stubs();
 
     MOCKER_CPP(&ConnectionsBuilder::BatchBuild).stubs();
     std::vector<Hccl::LinkData> linkVec;
-    char *buf = new char[16 * 1024 * 1024];
-    MOCKER(HrtMallocHost).stubs().with(mockcpp::any()).will(returnValue(static_cast<void *>(buf)));
-    MOCKER(HrtMalloc).stubs().with(mockcpp::any(),mockcpp::any()).will(returnValue((void *)0x100000));
+    char* buf = new char[16 * 1024 * 1024];
+    MOCKER(HrtMallocHost).stubs().with(mockcpp::any()).will(returnValue(static_cast<void*>(buf)));
+    MOCKER(HrtMalloc).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue((void*)0x100000));
 
     rtFusionArgsEx_t fusionArgs;
     rtCcuTaskGroup_t ccuTaskGroup;
-    fusionArgs.args = malloc(sizeof(void *) * 7 + sizeof(Mc2Tiling) + sizeof(HcclCommParamDesc));
+    fusionArgs.args = malloc(sizeof(void*) * 7 + sizeof(Mc2Tiling) + sizeof(HcclCommParamDesc));
     fusionArgs.aicpuNum = 1;
-    fusionArgs.aicpuArgs[0].kfcArgsFmtOffset = (sizeof(void *) * 7 + sizeof(Mc2Tiling)) / sizeof(void *);
-    Mc2Tiling *tilingData =
-        reinterpret_cast<Mc2Tiling *>(reinterpret_cast<uint8_t *>(fusionArgs.args) + sizeof(void *) * 7);
-    *reinterpret_cast<uint64_t *>(reinterpret_cast<uint8_t *>(fusionArgs.args) + sizeof(void *) * 5) =
-        reinterpret_cast<uint64_t>(tilingData);
-    HcclCommParamDesc *commParamDesc = reinterpret_cast<HcclCommParamDesc *>(
-        reinterpret_cast<uint8_t *>(fusionArgs.args) + sizeof(void *) * 7 + sizeof(Mc2Tiling));
+    fusionArgs.aicpuArgs[0].kfcArgsFmtOffset = (sizeof(void*) * 7 + sizeof(Mc2Tiling)) / sizeof(void*);
+    Mc2Tiling* tilingData
+        = reinterpret_cast<Mc2Tiling*>(reinterpret_cast<uint8_t*>(fusionArgs.args) + sizeof(void*) * 7);
+    *reinterpret_cast<uint64_t*>(reinterpret_cast<uint8_t*>(fusionArgs.args) + sizeof(void*) * 5)
+        = reinterpret_cast<uint64_t>(tilingData);
+    HcclCommParamDesc* commParamDesc = reinterpret_cast<HcclCommParamDesc*>(
+        reinterpret_cast<uint8_t*>(fusionArgs.args) + sizeof(void*) * 7 + sizeof(Mc2Tiling));
     commParamDesc->groupNum = 1;
     commParamDesc->hasFfts = 0;
     commParamDesc->tilingDataPtrOff = 5;
@@ -837,13 +848,13 @@ TEST_F(CollServiceDeviceModeTest, Ut_AllocCommResource_When_versionIs0_Expect_TH
     tilingData->version = 0;
     tilingData->commConfigNum = 1;
     tilingData->serverCfg = {0};
-    tilingData->commConfig.opType = 6;  // Allgahter
+    tilingData->commConfig.opType = 6; // Allgahter
     tilingData->commConfig.reduceType = 0;
-    tilingData->commConfig.dataType = 3;  // FP16
+    tilingData->commConfig.dataType = 3; // FP16
     tilingData->commConfig.outputDataType = 3;
-    tilingData->commConfig.communicationEngine = 2;  // aiv
+    tilingData->commConfig.communicationEngine = 2; // aiv
 
-    void *commContext = nullptr;
+    void* commContext = nullptr;
 
     CollServiceDeviceMode service(&comm);
     comm.collService = &service;
@@ -856,12 +867,15 @@ TEST_F(CollServiceDeviceModeTest, Ut_AllocCommResource_When_versionIs0_Expect_TH
 
 TEST_F(CollServiceDeviceModeTest, Ut_HandleAclGraphFirstOpAivBuff_When_InputValue_Expect_HCCL_SUCCESS)
 {
-    auto service = dynamic_cast<CollServiceDeviceMode *>(fakeComm.collService);
-    char *ptr = "test";
-    void *voidPtr = ptr;
-    MOCKER(&GetStreamCaptureInfo).stubs().with(mockcpp::any(), outBound(voidPtr), outBound(true)).will(returnValue(HCCL_SUCCESS));
+    auto service = dynamic_cast<CollServiceDeviceMode*>(fakeComm.collService);
+    char* ptr = "test";
+    void* voidPtr = ptr;
+    MOCKER(&GetStreamCaptureInfo)
+        .stubs()
+        .with(mockcpp::any(), outBound(voidPtr), outBound(true))
+        .will(returnValue(HCCL_SUCCESS));
     MOCKER(&GetModelId).stubs().will(returnValue(HCCL_SUCCESS));
-    
+
     rtStream_t stream;
     // 执行步骤
     auto ret = service->HandleAclGraphFirstOpAivBuff(stream);
@@ -872,10 +886,11 @@ TEST_F(CollServiceDeviceModeTest, Ut_HandleAclGraphFirstOpAivBuff_When_InputValu
 
 TEST_F(CollServiceDeviceModeTest, Ut_AllocCommResource_When_versionIs100_Expect_NOTHROW)
 {
-    LocalRmaBuffer *rmaBuf = nullptr;
+    LocalRmaBuffer* rmaBuf = nullptr;
     MOCKER_CPP(
-        &LocalRmaBufManager::Reg,
-        LocalRmaBuffer * (LocalRmaBufManager::*)(const string &, BufferType, std::shared_ptr<Buffer>, const PortData &, LinkProtocol))
+        &LocalRmaBufManager::Reg, LocalRmaBuffer
+                                      * (LocalRmaBufManager::*)(const string&, BufferType, std::shared_ptr<Buffer>,
+                                                                const PortData&, LinkProtocol))
         .stubs()
         .with(mockcpp::any(), mockcpp::any())
         .will(returnValue(rmaBuf));
@@ -917,29 +932,29 @@ TEST_F(CollServiceDeviceModeTest, Ut_AllocCommResource_When_versionIs100_Expect_
     comm.rankGraph->AddPeer(peer0);
     comm.rankGraph->AddPeer(peer1);
 
-    MOCKER_CPP(&SocketManager::BatchCreateSockets, void(SocketManager::*)(const std::vector<LinkData>&))
-        .stubs();
+    MOCKER_CPP(&SocketManager::BatchCreateSockets, void(SocketManager::*)(const std::vector<LinkData>&)).stubs();
 
     MOCKER_CPP(&ConnectionsBuilder::BatchBuild).stubs();
     std::vector<Hccl::LinkData> linkVec;
-    char *buf = new char[16 * 1024 * 1024];
-    MOCKER(HrtMallocHost).stubs().with(mockcpp::any()).will(returnValue(static_cast<void *>(buf)));
-    MOCKER(HrtMalloc).stubs().with(mockcpp::any(),mockcpp::any()).will(returnValue((void *)0x100000));
+    char* buf = new char[16 * 1024 * 1024];
+    MOCKER(HrtMallocHost).stubs().with(mockcpp::any()).will(returnValue(static_cast<void*>(buf)));
+    MOCKER(HrtMalloc).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue((void*)0x100000));
 
     void* mem = malloc(sizeof(Mc2InitTilingInner) + sizeof(Mc2CcTilingInner));
-    Mc2InitTilingInner *mc2TilingPtr = reinterpret_cast<Mc2InitTilingInner *>(mem);
+    Mc2InitTilingInner* mc2TilingPtr = reinterpret_cast<Mc2InitTilingInner*>(mem);
     mc2TilingPtr->version = 100;
     mc2TilingPtr->mc2HcommCnt = 1;
     mc2TilingPtr->offset[0] = sizeof(Mc2InitTilingInner);
-    Mc2CcTilingInner *commConfigPtr = reinterpret_cast<Mc2CcTilingInner *>(reinterpret_cast<uint8_t *>(mc2TilingPtr) + mc2TilingPtr->offset[0]);
+    Mc2CcTilingInner* commConfigPtr
+        = reinterpret_cast<Mc2CcTilingInner*>(reinterpret_cast<uint8_t*>(mc2TilingPtr) + mc2TilingPtr->offset[0]);
     commConfigPtr->opType = AicpuComType::HCCL_CMD_ALLTOALLV;
     commConfigPtr->reduceType = HcclReduceOp::HCCL_REDUCE_PROD;
     commConfigPtr->srcDataType = HcclDataType::HCCL_DATA_TYPE_FP32;
     commConfigPtr->dstDataType = HcclDataType::HCCL_DATA_TYPE_FP32;
-    commConfigPtr->communicationEngine = 3;  // aiv
-    commConfigPtr->protocol = 0; // aiv ubmemory
+    commConfigPtr->communicationEngine = 3; // aiv
+    commConfigPtr->protocol = 0;            // aiv ubmemory
 
-    void *commContext = nullptr;
+    void* commContext = nullptr;
 
     CollServiceDeviceMode service(&comm);
     comm.collService = &service;

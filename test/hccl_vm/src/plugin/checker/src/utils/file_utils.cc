@@ -38,7 +38,8 @@ std::string GetRootPath(const std::string& anchorPath, int maxDepth)
 
     for (int i = 0; i <= maxDepth; ++i) {
         const std::string checkTarget = (!anchorPath.empty() && anchorPath.front() == '/') ?
-            currentSearchPath + anchorPath : JoinPath(currentSearchPath, anchorPath);
+                                            currentSearchPath + anchorPath :
+                                            JoinPath(currentSearchPath, anchorPath);
         if (DirExists(checkTarget)) {
             return currentSearchPath;
         }
@@ -131,4 +132,4 @@ std::string JoinPath(const std::string& left, const std::string& right)
     }
     return left + "/" + right;
 }
-}  // namespace HcclSim
+} // namespace HcclSim

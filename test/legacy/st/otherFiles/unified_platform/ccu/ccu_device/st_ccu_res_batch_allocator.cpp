@@ -16,7 +16,7 @@
 #include <mockcpp/mockcpp.hpp>
 #include <chrono>
 
-#include "ccu_res_batch_allocator.h"
+#include "ccu_res_batch_allocator_legacy.h"
 
 #include "hccl_common_v2.h"
 #include "ccu_component.h"
@@ -34,7 +34,7 @@ using namespace Hccl;
 extern void MockCcuResources(const int32_t devLogicId, const CcuVersion ccuVersion);
 extern void MockCcuNetworkDevice(const int32_t devLogicId);
 
-class CcuResBatchAllocatorTest: public testing::Test {
+class CcuResBatchAllocatorTest : public testing::Test {
 protected:
     static void SetUpTestCase()
     {
@@ -42,20 +42,20 @@ protected:
         GlobalMockObject::reset();
         std::cout << "CcuResBatchAllocatorTest tests set up." << std::endl;
     }
- 
+
     static void TearDownTestCase()
     {
         GlobalMockObject::verify();
         GlobalMockObject::reset();
         std::cout << "CcuResBatchAllocatorTest tests tear down." << std::endl;
     }
- 
+
     virtual void SetUp()
     {
         GlobalMockObject::reset();
         std::cout << "A Test case in CcuResBatchAllocatorTest SetUP" << std::endl;
     }
- 
+
     virtual void TearDown()
     {
         GlobalMockObject::verify();
@@ -64,7 +64,7 @@ protected:
     }
 };
 
-void CheckRes(CcuResRepository &ccuResRepo)
+void CheckRes(CcuResRepository& ccuResRepo)
 {
     std::cout << "------------------------" << std::endl;
     for (int i = 0; i < MAX_CCU_IODIE_NUM; i++) {
@@ -147,7 +147,7 @@ TEST_F(CcuResBatchAllocatorTest, St_Init_When_CcuV1_Expect_Return_Ok)
     const CcuVersion ccuVersion = CcuVersion::CCU_V1;
     MockerCcuComponent(devLogicId, ccuVersion);
 
-    CcuResBatchAllocator &allocater = CcuResBatchAllocator::GetInstance(devLogicId);
+    CcuResBatchAllocator& allocater = CcuResBatchAllocator::GetInstance(devLogicId);
     allocater.devLogicId = devLogicId;
 
     EXPECT_NO_THROW(allocater.Init());
@@ -159,7 +159,7 @@ TEST_F(CcuResBatchAllocatorTest, St_AllocResHandle_When_CcuV1_Expect_Return_Ok)
     const CcuVersion ccuVersion = CcuVersion::CCU_V1;
     MockerCcuComponent(devLogicId, ccuVersion);
 
-    CcuResBatchAllocator &allocater = CcuResBatchAllocator::GetInstance(devLogicId);
+    CcuResBatchAllocator& allocater = CcuResBatchAllocator::GetInstance(devLogicId);
     allocater.devLogicId = devLogicId;
 
     EXPECT_NO_THROW(allocater.Init());
@@ -168,13 +168,14 @@ TEST_F(CcuResBatchAllocatorTest, St_AllocResHandle_When_CcuV1_Expect_Return_Ok)
     CcuResReq resReq;
     resReq.blockLoopEngineReq[0] = 1;
     resReq.loopEngineReq[0] = 2;
-    
+
     resReq.blockCkeReq[0] = 65;
     resReq.ckeReq[0] = 128;
-    
+
     resReq.blockMsReq[0] = 512;
 
-    resReq.gsaReq[0] = 1024;
+    resReq.blockGsaReq[0] = 512;
+    resReq.gsaReq[0] = 3 * 16 * 2; // RESERVED_DISCRETE_GSA_NUM = 3*16*2
 
     resReq.missionReq.req[0] = {3};
 
@@ -200,7 +201,7 @@ TEST_F(CcuResBatchAllocatorTest, St_AllocResHandle_When_CcuV1AndResNumIsEmpty_Ex
     const CcuVersion ccuVersion = CcuVersion::CCU_V1;
     MockerCcuComponent(devLogicId, ccuVersion);
 
-    CcuResBatchAllocator &allocater = CcuResBatchAllocator::GetInstance(devLogicId);
+    CcuResBatchAllocator& allocater = CcuResBatchAllocator::GetInstance(devLogicId);
     allocater.devLogicId = devLogicId;
 
     EXPECT_NO_THROW(allocater.Init());
@@ -219,7 +220,7 @@ TEST_F(CcuResBatchAllocatorTest, St_AllocResHandle_When_CcuV1AndResNumIsMaxNum_E
     const CcuVersion ccuVersion = CcuVersion::CCU_V1;
     MockerCcuComponent(devLogicId, ccuVersion);
 
-    CcuResBatchAllocator &allocater = CcuResBatchAllocator::GetInstance(devLogicId);
+    CcuResBatchAllocator& allocater = CcuResBatchAllocator::GetInstance(devLogicId);
     allocater.devLogicId = devLogicId;
 
     EXPECT_NO_THROW(allocater.Init());
@@ -228,13 +229,13 @@ TEST_F(CcuResBatchAllocatorTest, St_AllocResHandle_When_CcuV1AndResNumIsMaxNum_E
     CcuResReq resReq;
     resReq.blockCkeReq[1] = 0;
     resReq.blockLoopEngineReq[0] = 192;
-    resReq.loopEngineReq[0] = 8; // {8, 8};
-    resReq.blockMsReq[0] = 1536; // {1536, 1536};
-    resReq.blockCkeReq[0] = 128; // {128, 128};
-    resReq.ckeReq[0] = 832; // {832, 832};
-    resReq.gsaReq[0] = 3072; // {3072, 3072};
-    resReq.xnReq[0] = 3072; // {3072, 3072};
-    resReq.missionReq.req[0] = 16; // {16, 16};
+    resReq.loopEngineReq[0] = 8;                                 // {8, 8};
+    resReq.blockMsReq[0] = 1536;                                 // {1536, 1536};
+    resReq.blockCkeReq[0] = 128;                                 // {128, 128};
+    resReq.ckeReq[0] = 4 * 128 + 2 * 16 * 2;                     // RESERVED_DISCRETE_CKE_NUM = 4*128+2*16*2
+    resReq.gsaReq[0] = 3 * 16 * 2;                               // RESERVED_DISCRETE_GSA_NUM = 3*16*2
+    resReq.xnReq[0] = 4 * 128 + 36 * 16 + 5 * 16 + (4 * 16) * 2; // RESERVED_DISCRETE_XN_NUM = 4*128+36*16+5*16+(4*16)*2
+    resReq.missionReq.req[0] = 16;                               // {16, 16};
 
     CcuResHandle handle;
     ret = allocater.AllocResHandle(resReq, handle);
@@ -257,7 +258,7 @@ TEST_F(CcuResBatchAllocatorTest, St_AllocResHandle_When_CcuV1AndResNumExceedsLef
     const CcuVersion ccuVersion = CcuVersion::CCU_V1;
     MockerCcuComponent(devLogicId, ccuVersion);
 
-    CcuResBatchAllocator &allocater = CcuResBatchAllocator::GetInstance(devLogicId);
+    CcuResBatchAllocator& allocater = CcuResBatchAllocator::GetInstance(devLogicId);
     allocater.devLogicId = devLogicId;
 
     EXPECT_NO_THROW(allocater.Init());
@@ -265,15 +266,15 @@ TEST_F(CcuResBatchAllocatorTest, St_AllocResHandle_When_CcuV1AndResNumExceedsLef
     HcclResult ret = HcclResult::HCCL_E_RESERVED;
     CcuResReq resReq;
     resReq.blockLoopEngineReq[0] = 1; // {1, 0};
-    resReq.loopEngineReq[0] = 2; // {2, 3};
+    resReq.loopEngineReq[0] = 2;      // {2, 3};
 
     resReq.blockLoopEngineReq[0] = 1;
     resReq.loopEngineReq[0] = 2;
     resReq.missionReq.req[0] = 2;
-    
+
     resReq.blockCkeReq[0] = 65; // {65, 0};
-    resReq.ckeReq[0] = 129; // {129, 0};
-    
+    resReq.ckeReq[0] = 129;     // {129, 0};
+
     // 1. 资源申请超过了一半，故第二次申请资源会不足
     resReq.blockMsReq[0] = 64 * 13; // {64 * 13, 0};
 
@@ -291,7 +292,7 @@ TEST_F(CcuResBatchAllocatorTest, St_AllocResHandle_When_CcuV1AndResNumExceedsLef
     EXPECT_EQ(errorHandle, nullptr);
 
     // 2. 申请超过剩余资源的loop
-    resReq = {}; // 重置错误的请求
+    resReq = {};                  // 重置错误的请求
     resReq.loopEngineReq[0] = 50; // 申请超过剩余资源
     ret = allocater.AllocResHandle(resReq, errorHandle);
     EXPECT_NE(ret, HcclResult::HCCL_SUCCESS);
@@ -329,7 +330,7 @@ TEST_F(CcuResBatchAllocatorTest, St_GetResourceAndReleaseResHandle_When_resHandl
     const CcuVersion ccuVersion = CcuVersion::CCU_V1;
     MockerCcuComponent(devLogicId, ccuVersion);
 
-    CcuResBatchAllocator &allocater = CcuResBatchAllocator::GetInstance(devLogicId);
+    CcuResBatchAllocator& allocater = CcuResBatchAllocator::GetInstance(devLogicId);
     allocater.devLogicId = devLogicId;
 
     EXPECT_NO_THROW(allocater.Init());
@@ -354,11 +355,14 @@ TEST_F(CcuResBatchAllocatorTest, St_GetResourceAndReleaseResHandle_When_resHandl
 TEST_F(CcuResBatchAllocatorTest, St_AllocConsecutiveRes_When_AllocRes_fail_Expect_HCCL_E_PARA)
 {
     // 前置条件
-    MOCKER_CPP(&CcuComponent::AllocRes).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_E_PARA));
+    MOCKER_CPP(&CcuComponent::AllocRes)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_E_PARA));
     CcuResReq resReq;
-    resReq.continuousXnReq[0] = 1;
+    resReq.xnReq[0] = 1;
     auto resRepoPtr = std::make_unique<CcuResRepository>();
-    resRepoPtr->continuousXn[0].push_back(ResInfo(5, 3));
+    resRepoPtr->xn[0].push_back(ResInfo(5, 3));
     CcuResBatchAllocator ccuResBatchAllocator;
     ccuResBatchAllocator.dieEnableFlags[0] = true;
     ccuResBatchAllocator.dieEnableFlags[1] = false;
@@ -373,14 +377,23 @@ TEST_F(CcuResBatchAllocatorTest, St_AllocConsecutiveRes_When_AllocRes_fail_Expec
 TEST_F(CcuResBatchAllocatorTest, St_TryAllocResHandle_When_AllocContinuousRes_fail_Expect_HCCL_E_PARA)
 {
     // 前置条件
-    MOCKER_CPP(&CcuResBatchAllocator::AllocBlockRes).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&CcuResBatchAllocator::CcuMissionMgr::Alloc).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&CcuComponent::AllocRes).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_E_PARA));
+    MOCKER_CPP(&CcuResBatchAllocator::AllocBlockRes)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&CcuResBatchAllocator::CcuMissionMgr::Alloc)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&CcuComponent::AllocRes)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_E_PARA));
     std::unique_ptr<CcuResRepository> resRepoPtr = std::make_unique<CcuResRepository>();
-    uintptr_t handleKey  = reinterpret_cast<uintptr_t>(resRepoPtr.get());
+    uintptr_t handleKey = reinterpret_cast<uintptr_t>(resRepoPtr.get());
     CcuResReq resReq;
-    resReq.continuousXnReq[0] = 1;
-    resRepoPtr->continuousXn[0].push_back(ResInfo(5, 3));
+    resReq.xnReq[0] = 1;
+    resRepoPtr->xn[0].push_back(ResInfo(5, 3));
     CcuResBatchAllocator ccuResBatchAllocator;
     ccuResBatchAllocator.dieEnableFlags[0] = true;
     ccuResBatchAllocator.dieEnableFlags[1] = false;
@@ -395,7 +408,10 @@ TEST_F(CcuResBatchAllocatorTest, St_TryAllocResHandle_When_AllocContinuousRes_fa
 TEST_F(CcuResBatchAllocatorTest, St_AllocContinuousRes_When_AllocRes_success_Expect_HCCL_SUCCESS)
 {
     // 前置条件
-    MOCKER_CPP(&CcuComponent::AllocRes).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&CcuComponent::AllocRes)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
     CcuResReq resReq;
     auto resRepoPtr = std::make_unique<CcuResRepository>();
     CcuResBatchAllocator ccuResBatchAllocator;
@@ -412,11 +428,20 @@ TEST_F(CcuResBatchAllocatorTest, St_AllocContinuousRes_When_AllocRes_success_Exp
 TEST_F(CcuResBatchAllocatorTest, St_TryAllocResHandle_When_AllocContinuousRes_success_Expect_HCCL_SUCCESS)
 {
     // 前置条件
-    MOCKER_CPP(&CcuResBatchAllocator::AllocBlockRes).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&CcuResBatchAllocator::CcuMissionMgr::Alloc).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&CcuComponent::AllocRes).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&CcuResBatchAllocator::AllocBlockRes)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&CcuResBatchAllocator::CcuMissionMgr::Alloc)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&CcuComponent::AllocRes)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
     std::unique_ptr<CcuResRepository> resRepoPtr = std::make_unique<CcuResRepository>();
-    uintptr_t handleKey  = reinterpret_cast<uintptr_t>(resRepoPtr.get());
+    uintptr_t handleKey = reinterpret_cast<uintptr_t>(resRepoPtr.get());
     CcuResReq resReq;
     CcuResBatchAllocator ccuResBatchAllocator;
     ccuResBatchAllocator.dieEnableFlags[0] = true;
@@ -427,4 +452,166 @@ TEST_F(CcuResBatchAllocatorTest, St_TryAllocResHandle_When_AllocContinuousRes_su
 
     // 后置验证
     EXPECT_EQ(ret, HCCL_SUCCESS);
+}
+
+// ── QueryRemainRes 直接扫描 resBlocks allocated 标志 ──
+
+TEST_F(CcuResBatchAllocatorTest, St_QueryRemainRes_When_NoAllocations_Expect_MaxGapEqualsTotalCapacity)
+{
+    CcuResBatchAllocator allocator;
+    allocator.dieEnableFlags[0] = true;
+    allocator.devLogicId = 0;
+
+    allocator.resStrategies[0].loopNum = 8;
+    allocator.maxResBlockNums.loopNum = 4; // poolSize = 4 * 8 = 32
+    allocator.resBlocks[0][ResType::LOOP] = {
+        {0, 0, 8, 0, false},
+        {1, 8, 8, 0, false},
+        {2, 16, 8, 0, false},
+        {3, 24, 8, 0, false},
+    };
+
+    uint32_t remainNum = 0;
+    HcclResult ret = allocator.QueryRemainRes(0, ResType::LOOP, remainNum);
+
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+    EXPECT_EQ(remainNum, 32u) << "no allocations -> max gap = pool size 32";
+}
+
+TEST_F(CcuResBatchAllocatorTest, St_QueryRemainRes_When_WithAllocations_Expect_MaxContiguousGap)
+{
+    CcuResBatchAllocator allocator;
+    allocator.dieEnableFlags[0] = true;
+    allocator.devLogicId = 0;
+
+    allocator.maxResBlockNums.loopNum = 8; // poolSize = 8 * 8 = 64
+    allocator.resBlocks[0][ResType::LOOP] = {
+        {0, 0, 8, 0, true},   {1, 8, 8, 0, true},   {2, 16, 8, 0, false}, {3, 24, 8, 0, true},
+        {4, 32, 8, 0, false}, {5, 40, 8, 0, false}, {6, 48, 8, 0, false}, {7, 56, 8, 0, false},
+    };
+
+    uint32_t remainNum = 0;
+    HcclResult ret = allocator.QueryRemainRes(0, ResType::LOOP, remainNum);
+
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+    EXPECT_EQ(remainNum, 40u);
+}
+
+TEST_F(CcuResBatchAllocatorTest, St_QueryRemainRes_When_AllAllocated_Expect_Zero)
+{
+    CcuResBatchAllocator allocator;
+    allocator.dieEnableFlags[0] = true;
+    allocator.devLogicId = 0;
+
+    allocator.maxResBlockNums.loopNum = 4;
+    allocator.resBlocks[0][ResType::LOOP] = {
+        {0, 0, 8, 0, true},
+        {1, 8, 8, 0, true},
+        {2, 16, 8, 0, true},
+        {3, 24, 8, 0, true},
+    };
+
+    uint32_t remainNum = 0;
+    HcclResult ret = allocator.QueryRemainRes(0, ResType::LOOP, remainNum);
+
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+    EXPECT_EQ(remainNum, 0u);
+}
+
+TEST_F(CcuResBatchAllocatorTest, St_QueryRemainRes_When_HoleAtStart_Expect_InitialGap)
+{
+    CcuResBatchAllocator allocator;
+    allocator.dieEnableFlags[0] = true;
+    allocator.devLogicId = 0;
+
+    allocator.maxResBlockNums.loopNum = 6;
+    allocator.resBlocks[0][ResType::LOOP] = {
+        {0, 0, 8, 0, true},   {1, 8, 8, 0, true},   {2, 16, 8, 0, false},
+        {3, 24, 8, 0, false}, {4, 32, 8, 0, false}, {5, 40, 8, 0, false},
+    };
+
+    uint32_t remainNum = 0;
+    HcclResult ret = allocator.QueryRemainRes(0, ResType::LOOP, remainNum);
+
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+    EXPECT_EQ(remainNum, 32u);
+}
+
+TEST_F(CcuResBatchAllocatorTest, St_QueryRemainRes_When_HoleAtEnd_Expect_TailGap)
+{
+    CcuResBatchAllocator allocator;
+    allocator.dieEnableFlags[0] = true;
+    allocator.devLogicId = 0;
+
+    allocator.maxResBlockNums.loopNum = 6;
+    allocator.resBlocks[0][ResType::LOOP] = {
+        {0, 0, 8, 0, false},  {1, 8, 8, 0, false}, {2, 16, 8, 0, false},
+        {3, 24, 8, 0, false}, {4, 32, 8, 0, true}, {5, 40, 8, 0, true},
+    };
+
+    uint32_t remainNum = 0;
+    HcclResult ret = allocator.QueryRemainRes(0, ResType::LOOP, remainNum);
+
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+    EXPECT_EQ(remainNum, 32u);
+}
+
+TEST_F(CcuResBatchAllocatorTest, St_QueryRemainRes_When_PreReservedMSBlocks_Expect_MaxGapReducedByReserved)
+{
+    CcuResBatchAllocator allocator;
+    allocator.dieEnableFlags[0] = true;
+    allocator.devLogicId = 0;
+
+    allocator.resStrategies[0].msNum = 64;
+    allocator.maxResBlockNums.msNum = 4;
+
+    allocator.resBlocks[0][ResType::MS] = {
+        {0, 0, 64, 0, true},
+        {1, 64, 64, 0, false},
+        {2, 128, 64, 0, true},
+        {3, 192, 64, 0, false},
+    };
+
+    uint32_t remainNum = 0;
+    HcclResult ret = allocator.QueryRemainRes(0, ResType::MS, remainNum);
+
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+    EXPECT_EQ(remainNum, 64u);
+}
+
+TEST_F(CcuResBatchAllocatorTest, St_QueryRemainRes_When_PoolStartsAtNonZero_Expect_GapWithinPoolOnly)
+{
+    CcuResBatchAllocator allocator;
+    allocator.dieEnableFlags[0] = true;
+    allocator.devLogicId = 0;
+
+    allocator.missionMgr.blocks = {
+        {0, 100, 64, 0, true},
+        {1, 164, 64, 0, false},
+        {2, 228, 64, 0, true},
+        {3, 292, 64, 0, false},
+    };
+
+    uint32_t remainNum = 0;
+    HcclResult ret = allocator.QueryRemainRes(0, ResType::MISSION, remainNum);
+
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+    EXPECT_EQ(remainNum, 64u);
+}
+
+TEST_F(CcuResBatchAllocatorTest, Ut_GetRemainSize_When_PartialAlloc_Expect_MaxGap)
+{
+    CcuResIdAllocator allocator(100);
+    allocator.resInfos_ = {{0, 20}, {70, 20}};
+
+    EXPECT_EQ(allocator.GetRemainSize(), 50u);
+}
+
+TEST_F(CcuResBatchAllocatorTest, Ut_GetRemainSize_When_Full_Expect_Zero)
+{
+    CcuResIdAllocator allocator(50);
+    std::vector<ResInfo> resInfos;
+    allocator.Alloc(50, true, resInfos);
+
+    EXPECT_EQ(allocator.GetRemainSize(), 0u);
 }

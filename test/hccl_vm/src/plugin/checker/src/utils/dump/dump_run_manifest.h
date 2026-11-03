@@ -22,19 +22,19 @@
 namespace HcclSim {
 class DumpRunManifest {
 public:
-    static DumpRunManifest &GetInstance()
+    static DumpRunManifest& GetInstance()
     {
         static DumpRunManifest instance;
         return instance;
     }
 
-    DumpRunManifest(const DumpRunManifest &) = delete;
-    DumpRunManifest &operator=(const DumpRunManifest &) = delete;
+    DumpRunManifest(const DumpRunManifest&) = delete;
+    DumpRunManifest& operator=(const DumpRunManifest&) = delete;
 
-    void Reset(const std::string &dataId);
-    void SetOpParam(const nlohmann::json &opParam);
-    void SetGraphStageStats(const std::string &stage, const nlohmann::json &stageStats);
-    void SetMemorySnapshotStats(const nlohmann::json &memoryStats);
+    void Reset(const std::string& dataId);
+    void SetOpParam(const nlohmann::json& opParam);
+    void SetGraphStageStats(const std::string& stage, const nlohmann::json& stageStats);
+    void SetMemorySnapshotStats(const nlohmann::json& memoryStats);
     void SetErrorCount(size_t errorCount);
     void SetCheckResult(HcclResult retCode);
     HcclResult Flush() const;
@@ -50,6 +50,6 @@ private:
     nlohmann::json m_errorCount = nullptr;
     uint32_t m_retCode = static_cast<uint32_t>(HcclResult::HCCL_SUCCESS);
 };
-}  // namespace HcclSim
+} // namespace HcclSim
 
-#endif  // HCCL_VM_DUMP_RUN_MANIFEST_H
+#endif // HCCL_VM_DUMP_RUN_MANIFEST_H

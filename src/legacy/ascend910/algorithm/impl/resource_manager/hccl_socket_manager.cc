@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "adapter_hccp_common.h"
 #include "externalinput_pub.h"
@@ -16,15 +16,15 @@
 
 namespace hccl {
 HcclSocketManager::HcclSocketManager(NICDeployment nicDeployment, s32 deviceLogicId, u32 devicePhyId, u32 userRank)
-    : nicDeployment_(nicDeployment), deviceLogicId_(deviceLogicId), devicePhyId_(devicePhyId), userRank_(userRank),
-      wlistInfosMap_(), commSocketsMap_()
-{
-}
+    : nicDeployment_(nicDeployment),
+      deviceLogicId_(deviceLogicId),
+      devicePhyId_(devicePhyId),
+      userRank_(userRank),
+      wlistInfosMap_(),
+      commSocketsMap_()
+{}
 
-HcclSocketManager::~HcclSocketManager()
-{
-    DestroySockets();
-}
+HcclSocketManager::~HcclSocketManager() { DestroySockets(); }
 
 std::map<PortInfo, std::shared_ptr<HcclSocket>> HcclSocketManager::serverSocketMap_;
 std::map<PortInfo, Referenced> HcclSocketManager::serverSocketRefMap_;
@@ -41,14 +41,13 @@ HcclResult HcclSocketManager::ServerInit(const HcclNetDevCtx netDevCtx, u32 port
     std::unique_lock<std::mutex> lock(serverMapMutex_);
     auto serverSocketInMap = serverSocketMap_.find(portInfo);
     if (serverSocketInMap != serverSocketMap_.end()) {
-        auto &serverSocketRef = serverSocketRefMap_[portInfo];
+        auto& serverSocketRef = serverSocketRefMap_[portInfo];
         serverSocketRef.Ref();
         return HCCL_SUCCESS;
     }
 
     std::shared_ptr<HcclSocket> tempSocket;
-    EXCEPTION_CATCH((tempSocket = std::make_shared<HcclSocket>(
-        netDevCtx, port)), return HCCL_E_PTR);
+    EXCEPTION_CATCH((tempSocket = std::make_shared<HcclSocket>(netDevCtx, port)), return HCCL_E_PTR);
     CHK_RET(tempSocket->Init());
     CHK_RET(tempSocket->Listen());
     HCCL_INFO("[Init][Server]ip[%s] port[%u]", localIp.GetReadableAddress(), port);
@@ -81,10 +80,12 @@ HcclResult HcclSocketManager::ServerDeInit(const HcclIpAddress& localIp, u32 por
         return HCCL_SUCCESS;
     }
 
-    auto &serverSocketRef = serverSocketRefMap_[portInfo];
+    auto& serverSocketRef = serverSocketRefMap_[portInfo];
     serverSocketRef.Unref();
 
-    HCCL_INFO("[DeInit][Server]ip[%s] port[%u] serverSocketRef.Count() = %d", localIp.GetReadableAddress(), port, serverSocketRef.Count());
+    HCCL_INFO(
+        "[DeInit][Server]ip[%s] port[%u] serverSocketRef.Count() = %d", localIp.GetReadableAddress(), port,
+        serverSocketRef.Count());
     if (serverSocketRef.Count() == 0) {
         HCCL_INFO("[DeInit][Server]ip[%s] port[%u]", localIp.GetReadableAddress(), port);
         serverSocketMap_[portInfo]->DeInit();
@@ -97,9 +98,9 @@ HcclResult HcclSocketManager::ServerDeInit(const HcclIpAddress& localIp, u32 por
 
 // public
 // 填加向本端创建链接的客户端"RANK+IP"白名单
-HcclResult HcclSocketManager::AddWhiteList(const std::string &commTag,
-    bool isInterLink, NicType socketType,
-    const HcclIpAddress &localIp, const std::map<u32, HcclRankLinkInfo> &whiteListMap, uint32_t connectMode)
+HcclResult HcclSocketManager::AddWhiteList(
+    const std::string& commTag, bool isInterLink, NicType socketType, const HcclIpAddress& localIp,
+    const std::map<u32, HcclRankLinkInfo>& whiteListMap, uint32_t connectMode)
 {
     if (whiteListMap.size() == 0) {
         HCCL_ERROR("[Add][WhiteList]client infos map or local Ip is empty.");
@@ -107,15 +108,15 @@ HcclResult HcclSocketManager::AddWhiteList(const std::string &commTag,
     }
 
     HcclResult ret;
-    for (auto &res : serverSocketMap_) {
+    for (auto& res : serverSocketMap_) {
         if (res.second->GetLocalIp() == localIp) {
-            std::vector<SocketWlistInfo> wlistInfosVec {};
+            std::vector<SocketWlistInfo> wlistInfosVec{};
             for (auto iter = whiteListMap.begin(); iter != whiteListMap.end(); iter++) {
                 auto dstRankLinkInfo = iter->second;
-                ret = ConstructWhiteList(commTag, isInterLink, socketType, dstRankLinkInfo,
-                    wlistInfosVec, connectMode);
-                CHK_PRT_RET(ret != HCCL_SUCCESS,
-                    HCCL_ERROR("[Add][WhiteList]Construct white lists is failed. ret[%d]", ret), ret);
+                ret = ConstructWhiteList(commTag, isInterLink, socketType, dstRankLinkInfo, wlistInfosVec, connectMode);
+                CHK_PRT_RET(
+                    ret != HCCL_SUCCESS, HCCL_ERROR("[Add][WhiteList]Construct white lists is failed. ret[%d]", ret),
+                    ret);
             }
 
             if (wlistInfosVec.size() > 0) {
@@ -129,40 +130,40 @@ HcclResult HcclSocketManager::AddWhiteList(const std::string &commTag,
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclSocketManager::ConstructWhiteList(const std::string &commTag,
-    bool isInterLink, NicType socketType,
-    const HcclRankLinkInfo &dstRankLinkInfo, std::vector<SocketWlistInfo> &wlistInfosVec, uint32_t connectMode)
+HcclResult HcclSocketManager::ConstructWhiteList(
+    const std::string& commTag, bool isInterLink, NicType socketType, const HcclRankLinkInfo& dstRankLinkInfo,
+    std::vector<SocketWlistInfo>& wlistInfosVec, uint32_t connectMode)
 {
-        SocketWlistInfo wlistInfo;
-        u32 userRank = dstRankLinkInfo.userRank;
-        for (u32 i = 0; i < dstRankLinkInfo.socketsPerLink; i++) {
-            // 使用Client Rank作为确定标识,保证Client和Server的Tag一致
-            std::string tag;
-            if (connectMode != 0) {
-                tag = commTag;
-            } else {
-                tag = MakeUniqueConnTag(commTag, isInterLink, userRank, i);
-            }
-            wlistInfo.connLimit = GetConnLimit(socketType);
-            s32 sRet = memcpy_s(&wlistInfo.tag[0], sizeof(wlistInfo.tag), tag.c_str(), tag.size() + 1);
-            if (sRet != EOK) {
-                HCCL_ERROR("[Construct][WhiteList]memory copy failed. errorno[%d]", sRet);
-                return HCCL_E_MEMORY;
-            }
-
-            wlistInfo.remoteIp.addr = dstRankLinkInfo.ip.GetBinaryAddress().addr;
-            wlistInfo.remoteIp.addr6 = dstRankLinkInfo.ip.GetBinaryAddress().addr6;
-            HCCL_DEBUG("[Construct][WhiteList]remoteIp[%s], tag[%s]",
-                dstRankLinkInfo.ip.GetReadableAddress(), wlistInfo.tag);
-            wlistInfosVec.push_back(wlistInfo);
+    SocketWlistInfo wlistInfo;
+    u32 userRank = dstRankLinkInfo.userRank;
+    for (u32 i = 0; i < dstRankLinkInfo.socketsPerLink; i++) {
+        // 使用Client Rank作为确定标识,保证Client和Server的Tag一致
+        std::string tag;
+        if (connectMode != 0) {
+            tag = commTag;
+        } else {
+            tag = MakeUniqueConnTag(commTag, isInterLink, userRank, i);
         }
+        wlistInfo.connLimit = GetConnLimit(socketType);
+        s32 sRet = memcpy_s(&wlistInfo.tag[0], sizeof(wlistInfo.tag), tag.c_str(), tag.size() + 1);
+        if (sRet != EOK) {
+            HCCL_ERROR("[Construct][WhiteList]memory copy failed. errno[%d]", sRet);
+            return HCCL_E_MEMORY;
+        }
+
+        wlistInfo.remoteIp.addr = dstRankLinkInfo.ip.GetBinaryAddress().addr;
+        wlistInfo.remoteIp.addr6 = dstRankLinkInfo.ip.GetBinaryAddress().addr6;
+        HCCL_DEBUG(
+            "[Construct][WhiteList]remoteIp[%s], tag[%s]", dstRankLinkInfo.ip.GetReadableAddress(), wlistInfo.tag);
+        wlistInfosVec.push_back(wlistInfo);
+    }
 
     return HCCL_SUCCESS;
 }
 
 // private
 // 移除白名单
-HcclResult HcclSocketManager::DelWhiteList(const std::string &commTag)
+HcclResult HcclSocketManager::DelWhiteList(const std::string& commTag)
 {
     std::unique_lock<std::mutex> lock(wlistMapMutex_);
     auto it = wlistInfosMap_.find(commTag);
@@ -179,12 +180,10 @@ HcclResult HcclSocketManager::DelWhiteList(const std::string &commTag)
 
 // public API
 // 与远端创建连接，异步接口
-HcclResult HcclSocketManager::CreateSockets(const std::string &commTag,
-    bool isInterLink, const HcclNetDevCtx netDevCtx, NicType socketType, HcclSocketRole localRole,
-    const HcclIpAddress &localIp,
-    const std::map<u32, HcclRankLinkInfo> &remoteInfos,
-    std::map <u32, std::vector<std::shared_ptr<HcclSocket> > > &socketsMap,
-    std::map<u32, u32> &dstRankToUserRank,
+HcclResult HcclSocketManager::CreateSockets(
+    const std::string& commTag, bool isInterLink, const HcclNetDevCtx netDevCtx, NicType socketType,
+    HcclSocketRole localRole, const HcclIpAddress& localIp, const std::map<u32, HcclRankLinkInfo>& remoteInfos,
+    std::map<u32, std::vector<std::shared_ptr<HcclSocket>>>& socketsMap, std::map<u32, u32>& dstRankToUserRank,
     bool isSupportReuse, uint32_t connectMode)
 {
     if (remoteInfos.size() == 0) {
@@ -194,14 +193,15 @@ HcclResult HcclSocketManager::CreateSockets(const std::string &commTag,
 
     HcclResult ret;
     for (auto iter = remoteInfos.begin(); iter != remoteInfos.end(); iter++) {
-        std::vector<std::shared_ptr<HcclSocket> > rankSockets {};
+        std::vector<std::shared_ptr<HcclSocket>> rankSockets{};
         auto remoteIpIter = iter->second;
         u32 remoteUserRank = remoteIpIter.userRank;
-        ret = CreateSockets(commTag, isInterLink, netDevCtx, socketType, localRole,
-            localIp, remoteIpIter, rankSockets, isSupportReuse, connectMode);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[Create][Sockets]create to rank[%u] connection is failed. ret[%u]",
-                iter->first, ret), ret);
+        ret = CreateSockets(
+            commTag, isInterLink, netDevCtx, socketType, localRole, localIp, remoteIpIter, rankSockets, isSupportReuse,
+            connectMode);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR("[Create][Sockets]create to rank[%u] connection is failed. ret[%u]", iter->first, ret), ret);
 
         if (rankSockets.size() > 0) {
             socketsMap.insert(std::make_pair(iter->first, rankSockets));
@@ -213,11 +213,10 @@ HcclResult HcclSocketManager::CreateSockets(const std::string &commTag,
 
 // private
 // 与指定IP创建Socket链接
-HcclResult HcclSocketManager::CreateSockets(const std::string &commTag,
-    bool isInterLink, const HcclNetDevCtx netDevCtx, NicType socketType, HcclSocketRole localRole,
-    const HcclIpAddress &localIp, const HcclRankLinkInfo &remoteLinkInfo,
-    std::vector<std::shared_ptr<HcclSocket> > &ipSockets,
-    bool isSupportReuse, uint32_t connectMode)
+HcclResult HcclSocketManager::CreateSockets(
+    const std::string& commTag, bool isInterLink, const HcclNetDevCtx netDevCtx, NicType socketType,
+    HcclSocketRole localRole, const HcclIpAddress& localIp, const HcclRankLinkInfo& remoteLinkInfo,
+    std::vector<std::shared_ptr<HcclSocket>>& ipSockets, bool isSupportReuse, uint32_t connectMode)
 {
     HcclResult ret;
 
@@ -233,15 +232,17 @@ HcclResult HcclSocketManager::CreateSockets(const std::string &commTag,
         GetSocketsByRankIP(commTag, remoteRank, remoteIp, socketsPerLink, ipSockets, gotLinkNum);
         socketsPerLink -= gotLinkNum;
         if (socketsPerLink == 0) {
-            HCCL_INFO("[Create][Sockets]get reuse socket is success."
+            HCCL_INFO(
+                "[Create][Sockets]get reuse socket is success."
                 "commTag[%s], remoteRank[%u], remoteIp[%s], localRank[%u].",
                 commTag.c_str(), remoteRank, remoteIp.GetReadableIP(), userRank_);
             return HCCL_SUCCESS;
         }
     }
 
-    ret = ConstructSockets(commTag, isInterLink, netDevCtx, socketsPerLink, socketType, remoteRank,
-        remoteIp, remotePort, localIp, localRole, ipSockets, connectMode);
+    ret = ConstructSockets(
+        commTag, isInterLink, netDevCtx, socketsPerLink, socketType, remoteRank, remoteIp, remotePort, localIp,
+        localRole, ipSockets, connectMode);
     CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Create][Sockets]construct socket is failed. ret[%d]", ret), ret);
 
     // 若作为客户端，需要发起Connect请求
@@ -280,7 +281,7 @@ void HcclSocketManager::DestroySockets()
 }
 
 // public API
-void HcclSocketManager::DestroySockets(const std::string &commTag)
+void HcclSocketManager::DestroySockets(const std::string& commTag)
 {
     std::unique_lock<std::mutex> lock(socketsMapMutex_);
     auto it = commSocketsMap_.find(commTag);
@@ -298,7 +299,7 @@ void HcclSocketManager::DestroySockets(const std::string &commTag)
 // public API
 // Destroy指定的远端Rank的所有的 IP 连接
 // 暂无使用, 考虑删除
-void HcclSocketManager::DestroySockets(const std::string &commTag, u32 rank)
+void HcclSocketManager::DestroySockets(const std::string& commTag, u32 rank)
 {
     std::unique_lock<std::mutex> lock(socketsMapMutex_);
     auto it = commSocketsMap_.find(commTag);
@@ -314,7 +315,7 @@ void HcclSocketManager::DestroySockets(const std::string &commTag, u32 rank)
 }
 
 // private
-void HcclSocketManager::DestroySockets(std::vector<std::shared_ptr<HcclSocket> > rankSockets)
+void HcclSocketManager::DestroySockets(std::vector<std::shared_ptr<HcclSocket>> rankSockets)
 {
     for (u32 j = 0; j < rankSockets.size(); j++) {
         auto temp = rankSockets[j];
@@ -327,22 +328,21 @@ void HcclSocketManager::DestroySockets(std::vector<std::shared_ptr<HcclSocket> >
 }
 
 // public API
-// isWaitEstablished 为 true 时, 连接建立完成后返回; 为 flase时, 连接请求发起后即返回. 默认为 true.
+// isWaitEstablished 为 true 时, 连接建立完成后返回; 为 false时, 连接请求发起后即返回. 默认为 true.
 // 预留 调用时设置为 false, 通过多线程的方式提升建链性能.
-HcclResult HcclSocketManager::CreateSockets(const std::string &commTag,
-    bool isInterLink, const HcclNetDevCtx netDevCtx,
-    const std::map<u32, HcclRankLinkInfo> &dstServerMap,
-    const std::map<u32, HcclRankLinkInfo> &dstClientMap,
-    std::map <u32, std::vector<std::shared_ptr<HcclSocket> > > &serverSocketsMap,
-    std::map <u32, std::vector<std::shared_ptr<HcclSocket> > > &clientSocketsMap,
-    bool isSupportReuse, bool isWaitEstablished)
+HcclResult HcclSocketManager::CreateSockets(
+    const std::string& commTag, bool isInterLink, const HcclNetDevCtx netDevCtx,
+    const std::map<u32, HcclRankLinkInfo>& dstServerMap, const std::map<u32, HcclRankLinkInfo>& dstClientMap,
+    std::map<u32, std::vector<std::shared_ptr<HcclSocket>>>& serverSocketsMap,
+    std::map<u32, std::vector<std::shared_ptr<HcclSocket>>>& clientSocketsMap, bool isSupportReuse,
+    bool isWaitEstablished)
 {
-    HCCL_DEBUG("[Create][Sockets]client map size[%u], server map size[%u]",
-        dstClientMap.size(), dstServerMap.size());
+    HCCL_DEBUG("[Create][Sockets]client map size[%u], server map size[%u]", dstClientMap.size(), dstServerMap.size());
 
-    HCCL_DEBUG("[Create][Sockets]commTag %s, isInterLink %d, isSupportReuse %d, "\
-        "isWaitEstablished %d", commTag.c_str(), isInterLink, isSupportReuse,
-        isWaitEstablished);
+    HCCL_DEBUG(
+        "[Create][Sockets]commTag %s, isInterLink %d, isSupportReuse %d, "
+        "isWaitEstablished %d",
+        commTag.c_str(), isInterLink, isSupportReuse, isWaitEstablished);
 
     HcclResult ret;
 
@@ -355,22 +355,23 @@ HcclResult HcclSocketManager::CreateSockets(const std::string &commTag,
 
     for (auto it = dstServerMap.begin(); it != dstServerMap.end(); ++it) {
         HCCL_DEBUG("[Create][Sockets]dstServerMap rank %u", it->first);
-        auto info =  it->second;
-        HCCL_DEBUG("[Create][Sockets]dstServerMap userRank %u, devicePhyId %u, ip %s, port %u",
-            info.userRank, info.devicePhyId, info.ip.GetReadableAddress(), info.port);
+        auto info = it->second;
+        HCCL_DEBUG(
+            "[Create][Sockets]dstServerMap userRank %u, devicePhyId %u, ip %s, port %u", info.userRank,
+            info.devicePhyId, info.ip.GetReadableAddress(), info.port);
     }
     for (auto it = dstClientMap.begin(); it != dstClientMap.end(); ++it) {
         HCCL_DEBUG("[Create][Sockets]dstClientMap rank %u", it->first);
-        auto info =  it->second;
-        HCCL_DEBUG("[Create][Sockets]dstClientMap userRank %u, devicePhyId %u, ip %s, port %u",
-            info.userRank, info.devicePhyId, info.ip.GetReadableAddress(), info.port);
+        auto info = it->second;
+        HCCL_DEBUG(
+            "[Create][Sockets]dstClientMap userRank %u, devicePhyId %u, ip %s, port %u", info.userRank,
+            info.devicePhyId, info.ip.GetReadableAddress(), info.port);
     }
 
     // 作为服务端时，先填加白名单
     if (dstClientMap.size() > 0) {
         ret = AddWhiteList(commTag, isInterLink, socketType, localIp, dstClientMap);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[Create][Sockets]Add white list failed. ret[%d]", ret), ret);
+        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Create][Sockets]Add white list failed. ret[%d]", ret), ret);
     }
 
     std::map<u32, u32> serverDstRankToUserRank; // 子平面rank 映射 通信域 rank
@@ -378,23 +379,31 @@ HcclResult HcclSocketManager::CreateSockets(const std::string &commTag,
 
     if (dstServerMap.size() > 0) {
         // 作为客户端，创建 Socket，并向所有的服务端发起建链请求
-        ret = CreateSockets(commTag, isInterLink, netDevCtx, socketType, HcclSocketRole::SOCKET_ROLE_CLIENT,
-            localIp, dstServerMap, clientSocketsMap, clientDstRankToUserRank, isSupportReuse);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
+        ret = CreateSockets(
+            commTag, isInterLink, netDevCtx, socketType, HcclSocketRole::SOCKET_ROLE_CLIENT, localIp, dstServerMap,
+            clientSocketsMap, clientDstRankToUserRank, isSupportReuse);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
             HCCL_ERROR("[Create][Sockets]Create sockets failed, local role is client. ret[%d]", ret), ret);
     }
 
     if (dstClientMap.size() > 0) {
         // 作为服务端，创建 Socket，然后返回
-        ret = CreateSockets(commTag, isInterLink, netDevCtx, socketType, HcclSocketRole::SOCKET_ROLE_SERVER,
-            localIp, dstClientMap, serverSocketsMap, serverDstRankToUserRank, isSupportReuse);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[Create][Sockets]Create connection failed, local role is server."
-                " ret[%d]", ret), ret);
+        ret = CreateSockets(
+            commTag, isInterLink, netDevCtx, socketType, HcclSocketRole::SOCKET_ROLE_SERVER, localIp, dstClientMap,
+            serverSocketsMap, serverDstRankToUserRank, isSupportReuse);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[Create][Sockets]Create connection failed, local role is server."
+                " ret[%d]",
+                ret),
+            ret);
     }
 
-    HCCL_INFO("[Create][Sockets]client socket map size %u, server socket map size %u",
-        serverSocketsMap.size(), serverSocketsMap.size());
+    HCCL_INFO(
+        "[Create][Sockets]client socket map size %u, server socket map size %u", clientSocketsMap.size(),
+        serverSocketsMap.size());
 
     // 需要等待连接建立成功时，则会阻塞
     if (isWaitEstablished) {
@@ -403,9 +412,11 @@ HcclResult HcclSocketManager::CreateSockets(const std::string &commTag,
         if (ret != HCCL_SUCCESS) {
             HCCL_ERROR("[Create][Sockets]Wait links establish completed failed, local role is client. ret[%d]", ret);
             TlsStatus tlsStatus = TlsStatus::UNKNOWN;
-            CHK_PRT_CONT(HcclNetDevGetTlsStatus(netDevCtx, &tlsStatus), 
+            CHK_PRT_CONT(
+                HcclNetDevGetTlsStatus(netDevCtx, &tlsStatus),
                 HCCL_WARNING("[HcclNetDevGetTlsStatus] Can not get TlsStatus"));
-            PrintErrorConnection(HcclSocketRole::SOCKET_ROLE_CLIENT, clientSocketsMap, clientDstRankToUserRank, tlsStatus);
+            PrintErrorConnection(
+                HcclSocketRole::SOCKET_ROLE_CLIENT, clientSocketsMap, clientDstRankToUserRank, tlsStatus);
             return ret;
         }
 
@@ -414,9 +425,11 @@ HcclResult HcclSocketManager::CreateSockets(const std::string &commTag,
         if (ret != HCCL_SUCCESS) {
             HCCL_ERROR("[Create][Sockets]Wait links establish completed failed, local role is server. ret[%d]", ret);
             TlsStatus tlsStatus = TlsStatus::UNKNOWN;
-            CHK_PRT_CONT(HcclNetDevGetTlsStatus(netDevCtx, &tlsStatus), 
+            CHK_PRT_CONT(
+                HcclNetDevGetTlsStatus(netDevCtx, &tlsStatus),
                 HCCL_WARNING("[HcclNetDevGetTlsStatus] Can not get TlsStatus"));
-            PrintErrorConnection(HcclSocketRole::SOCKET_ROLE_SERVER, serverSocketsMap, serverDstRankToUserRank, tlsStatus);
+            PrintErrorConnection(
+                HcclSocketRole::SOCKET_ROLE_SERVER, serverSocketsMap, serverDstRankToUserRank, tlsStatus);
             return ret;
         }
     }
@@ -424,40 +437,39 @@ HcclResult HcclSocketManager::CreateSockets(const std::string &commTag,
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclSocketManager::AddWhiteList(const std::string &commTag,
-    const HcclNetDevCtx netDevCtx,
-    HcclRankLinkInfo remoteRankInfo)
+HcclResult HcclSocketManager::AddWhiteList(
+    const std::string& commTag, const HcclNetDevCtx netDevCtx, HcclRankLinkInfo remoteRankInfo)
 {
     NicType socketType;
     CHK_RET(HcclNetDevGetNicType(netDevCtx, &socketType));
     HcclIpAddress localIp{0};
     CHK_RET(HcclNetDevGetLocalIp(netDevCtx, localIp));
- 
+
     bool isInterLink{true};
     if (socketType == NicType::VNIC_TYPE) {
         isInterLink = false;
     }
- 
+
     HcclResult ret;
-    HcclSocketRole role =
-        userRank_ < remoteRankInfo.userRank ? HcclSocketRole::SOCKET_ROLE_SERVER : HcclSocketRole::SOCKET_ROLE_CLIENT;
- 
+    HcclSocketRole role
+        = userRank_ < remoteRankInfo.userRank ? HcclSocketRole::SOCKET_ROLE_SERVER : HcclSocketRole::SOCKET_ROLE_CLIENT;
+
     std::map<u32, HcclRankLinkInfo> remoteMap;
     remoteMap.insert(std::make_pair(remoteRankInfo.userRank, remoteRankInfo));
- 
+
     // 作为服务端时，先填加白名单
     if (role == HcclSocketRole::SOCKET_ROLE_SERVER) {
         ret = AddWhiteList(commTag, isInterLink, socketType, localIp, remoteMap);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[Create][Sockets]Add white list failed. ret[%d]", ret), ret);
+        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Create][Sockets]Add white list failed. ret[%d]", ret), ret);
     }
 
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclSocketManager::CreateSingleLinkSocket(const std::string &commTag, const HcclNetDevCtx netDevCtx,
-    HcclRankLinkInfo rmtRank, std::vector<std::shared_ptr<HcclSocket> > &connectSockets,
-    bool isWaitEstablished, bool isSupportReuse, s32 timeout, uint32_t connectMode)
+HcclResult HcclSocketManager::CreateSingleLinkSocket(
+    const std::string& commTag, const HcclNetDevCtx netDevCtx, HcclRankLinkInfo rmtRank,
+    std::vector<std::shared_ptr<HcclSocket>>& connectSockets, bool isWaitEstablished, bool isSupportReuse, s32 timeout,
+    uint32_t connectMode)
 {
     HcclResult ret;
     NicType socketType;
@@ -469,8 +481,8 @@ HcclResult HcclSocketManager::CreateSingleLinkSocket(const std::string &commTag,
     if (socketType == NicType::VNIC_TYPE) {
         isInterLink = false;
     }
-    HcclSocketRole role =
-        userRank_ < rmtRank.userRank ? HcclSocketRole::SOCKET_ROLE_SERVER : HcclSocketRole::SOCKET_ROLE_CLIENT;
+    HcclSocketRole role
+        = userRank_ < rmtRank.userRank ? HcclSocketRole::SOCKET_ROLE_SERVER : HcclSocketRole::SOCKET_ROLE_CLIENT;
 
     std::map<u32, HcclRankLinkInfo> remoteMap;
     remoteMap.insert(std::make_pair(rmtRank.userRank, rmtRank));
@@ -480,17 +492,23 @@ HcclResult HcclSocketManager::CreateSingleLinkSocket(const std::string &commTag,
     }
 
     std::map<u32, u32> remoteRankToUserRank; // 子平面rank 映射 通信域 rank
-    std::map <u32, std::vector<std::shared_ptr<HcclSocket> > > socketsMap;
-    ret = CreateSockets(commTag, isInterLink, netDevCtx, socketType, role,
-        localIp, remoteMap, socketsMap, remoteRankToUserRank, isSupportReuse, connectMode);
-    CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Create][Sockets]Create connection failed, local role is server."
-        " ret[%d]", ret), ret);
+    std::map<u32, std::vector<std::shared_ptr<HcclSocket>>> socketsMap;
+    ret = CreateSockets(
+        commTag, isInterLink, netDevCtx, socketType, role, localIp, remoteMap, socketsMap, remoteRankToUserRank,
+        isSupportReuse, connectMode);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[Create][Sockets]Create connection failed, local role is server."
+            " ret[%d]",
+            ret),
+        ret);
     if (isWaitEstablished) {
         ret = WaitLinksEstablishCompleted(role, socketsMap, timeout);
         if (ret != HCCL_SUCCESS) {
             HCCL_ERROR("[Create][Sockets]Wait links establish completed failed, local role is client. ret[%d]", ret);
             TlsStatus tlsStatus = TlsStatus::UNKNOWN;
-            CHK_PRT_CONT(HcclNetDevGetTlsStatus(netDevCtx, &tlsStatus),  HCCL_WARNING("Can not get TlsStatus"));
+            CHK_PRT_CONT(HcclNetDevGetTlsStatus(netDevCtx, &tlsStatus), HCCL_WARNING("Can not get TlsStatus"));
             PrintErrorConnection(role, socketsMap, remoteRankToUserRank, tlsStatus);
             AbortAndDeleteSocket(commTag, role, socketsMap);
             return ret;
@@ -507,10 +525,11 @@ HcclResult HcclSocketManager::CreateSingleLinkSocket(const std::string &commTag,
     return HCCL_SUCCESS;
 }
 
-void HcclSocketManager::AbortAndDeleteSocket(const std::string &commTag, HcclSocketRole role,
-    const std::map <u32, std::vector<std::shared_ptr<HcclSocket> > > &socketsMap)
+void HcclSocketManager::AbortAndDeleteSocket(
+    const std::string& commTag, HcclSocketRole role,
+    const std::map<u32, std::vector<std::shared_ptr<HcclSocket>>>& socketsMap)
 {
-    (void) role;
+    (void)role;
     for (auto iter = socketsMap.begin(); iter != socketsMap.end(); iter++) {
         auto rankSockets = iter->second;
         for (auto socket : rankSockets) {
@@ -519,14 +538,14 @@ void HcclSocketManager::AbortAndDeleteSocket(const std::string &commTag, HcclSoc
         }
     }
     DestroySockets(commTag);
-    return ;
+    return;
 }
 
 // public
 HcclResult HcclSocketManager::GetListenPortByIp(
-    const NICDeployment nicDeployment, const HcclIpAddress &ipAddr, std::set<u32> &listenedPort)
+    [[maybe_unused]] const NICDeployment nicDeployment, const HcclIpAddress& ipAddr, std::set<u32>& listenedPort)
 {
-    for (auto &res : serverSocketMap_) {
+    for (auto& res : serverSocketMap_) {
         if (res.first.ip == ipAddr) {
             listenedPort.insert(res.first.listenPort);
         }
@@ -540,7 +559,7 @@ HcclResult HcclSocketManager::GetListenPortByIp(
 }
 
 // private
-void HcclSocketManager::TransformSocketStatus(HcclSocketStatus status, std::string &stringStatus) const
+void HcclSocketManager::TransformSocketStatus(HcclSocketStatus status, std::string& stringStatus) const
 {
     switch (status) {
         case HcclSocketStatus::SOCKET_CONNECTING:
@@ -563,27 +582,28 @@ void HcclSocketManager::TransformSocketStatus(HcclSocketStatus status, std::stri
 }
 
 // private
-void HcclSocketManager::PrintSocketsInfo(const std::string &localRole,
-    u32 rank, std::vector<std::shared_ptr<HcclSocket> > ipSockets, std::string &sTlsStatus) const
+void HcclSocketManager::PrintSocketsInfo(
+    const std::string& localRole, u32 rank, std::vector<std::shared_ptr<HcclSocket>> ipSockets,
+    std::string& sTlsStatus) const
 {
     for (u32 j = 0; j < ipSockets.size(); j++) {
         std::shared_ptr<HcclSocket> tempSocket = ipSockets[j];
         if (tempSocket->GetStatus() != HcclSocketStatus::SOCKET_OK) {
             std::string connectStatus;
             TransformSocketStatus(tempSocket->GetStatus(), connectStatus);
-            HCCL_ERROR("   |  %s(%u)   |  %u  |   %s(%u)   |  %u  | %s | %s |   %s  | %s",
-                tempSocket->GetRemoteIp().GetReadableAddress(),
-                rank, tempSocket->GetRemotePort(),
-                tempSocket->GetLocalIp().GetReadableAddress(), userRank_, tempSocket->GetLocalPort(),
-                localRole.c_str(), connectStatus.c_str(), sTlsStatus.c_str(), LOG_KEYWORDS_LINK_INFO.c_str());
+            HCCL_ERROR(
+                "   |  %s(%u)   |  %u  |   %s(%u)   |  %u  | %s | %s |   %s  | %s",
+                tempSocket->GetRemoteIp().GetReadableAddress(), rank, tempSocket->GetRemotePort(),
+                tempSocket->GetLocalIp().GetReadableAddress(), userRank_, tempSocket->GetLocalPort(), localRole.c_str(),
+                connectStatus.c_str(), sTlsStatus.c_str(), LOG_KEYWORDS_LINK_INFO.c_str());
         }
     }
 }
 
 // private
-void HcclSocketManager::PrintErrorConnectionInfo(HcclSocketRole localRole,
-    std::map <u32, std::vector<std::shared_ptr<HcclSocket> > > &rankSocketsMap,
-    std::map<u32, u32> &dstRankToUserRank, TlsStatus &tlsStatus) const
+void HcclSocketManager::PrintErrorConnectionInfo(
+    HcclSocketRole localRole, std::map<u32, std::vector<std::shared_ptr<HcclSocket>>>& rankSocketsMap,
+    std::map<u32, u32>& dstRankToUserRank, TlsStatus& tlsStatus) const
 {
     std::string sRole;
     switch (localRole) {
@@ -597,11 +617,8 @@ void HcclSocketManager::PrintErrorConnectionInfo(HcclSocketRole localRole,
             sRole = "   NA   ";
             break;
     }
-    const std::map<TlsStatus, std::string> tlsStatusMap = {
-        {TlsStatus::ENABLE, "ENABLE"}, 
-        {TlsStatus::DISABLE, "DISABLE"}, 
-        {TlsStatus::UNKNOWN, "UNKNOWN"}
-    };
+    const std::map<TlsStatus, std::string> tlsStatusMap
+        = {{TlsStatus::ENABLE, "ENABLE"}, {TlsStatus::DISABLE, "DISABLE"}, {TlsStatus::UNKNOWN, "UNKNOWN"}};
     std::string sTlsStatus = tlsStatusMap.at(tlsStatus);
     for (auto iter = rankSocketsMap.begin(); iter != rankSocketsMap.end(); iter++) {
         auto rankSockets = iter->second;
@@ -610,17 +627,17 @@ void HcclSocketManager::PrintErrorConnectionInfo(HcclSocketRole localRole,
 }
 
 // private
-void HcclSocketManager::PrintErrorConnection(HcclSocketRole localRole,
-    std::map <u32, std::vector<std::shared_ptr<HcclSocket> > > &rankSocketsMap,
-    std::map<u32, u32> &dstRankToUserRank, TlsStatus &tlsStatus) const
+void HcclSocketManager::PrintErrorConnection(
+    HcclSocketRole localRole, std::map<u32, std::vector<std::shared_ptr<HcclSocket>>>& rankSocketsMap,
+    std::map<u32, u32>& dstRankToUserRank, TlsStatus& tlsStatus) const
 {
     // 原实现中，打印输出了一个num，而实际调用中，这个num都是1，所以当前删除了
     HCCL_ERROR("   _________________________LINK_ERROR_INFO___________________________");
-    HCCL_ERROR("   |  comm error, device[%d] ", deviceLogicId_);
+    HCCL_ERROR("   | comm error, device[%d] ", deviceLogicId_);
     HCCL_ERROR("   |  dest_ip(user_rank)  |   dest_port   |  src_ip(user_rank)   |   src_port   |   MyRole   "
-        "|   Status   |    TlsStatus   |");
+               "|   Status   |    TlsStatus   |");
     HCCL_ERROR("   |----------------------|---------------|----------------------|--------------|------------"
-        "|------------|----------------|");
+               "|------------|----------------|");
 
     PrintErrorConnectionInfo(localRole, rankSocketsMap, dstRankToUserRank, tlsStatus);
     return;
@@ -648,18 +665,18 @@ u32 HcclSocketManager::GetConnLimit(NicType socketType)
 }
 
 // 生成统一的 SocketTag, 用于标识Socket, 对于一对链接(Server <--> Client), SocketTag 需要相同
-std::string HcclSocketManager::MakeUniqueConnTag(const std::string &commTag, bool isInterLink,
-    u32 userRank, u32 indexForLink)
+std::string
+HcclSocketManager::MakeUniqueConnTag(const std::string& commTag, bool isInterLink, u32 userRank, u32 indexForLink) const
 {
     std::string tmpStr = isInterLink ? "_Inter_" : "_Intra_";
-    std::string socketTag = commTag + tmpStr + "MultiSocket_" + \
-        std::to_string(userRank) + "_" + std::to_string(indexForLink);
+    std::string socketTag
+        = commTag + tmpStr + "MultiSocket_" + std::to_string(userRank) + "_" + std::to_string(indexForLink);
     return socketTag;
 }
 
 // 保存白名单，后继保存到Listen的Socket对象中
-void HcclSocketManager::SaveWhiteListInfo(const std::string &commTag, std::shared_ptr<HcclSocket> &socket,
-    const std::vector<SocketWlistInfo> wlistInfos)
+void HcclSocketManager::SaveWhiteListInfo(
+    const std::string& commTag, std::shared_ptr<HcclSocket>& socket, const std::vector<SocketWlistInfo> wlistInfos)
 {
     // 将Add成功的whiteList, 保存在Socket对象中, 方便后继Del.
     // 理论上, 接口 DelSocketWhiteList, 上层应该没有调用的必要性.
@@ -668,16 +685,16 @@ void HcclSocketManager::SaveWhiteListInfo(const std::string &commTag, std::share
     std::unique_lock<std::mutex> lock(wlistMapMutex_);
     auto it = wlistInfosMap_.find(commTag);
     if (it == wlistInfosMap_.end()) {
-        std::map<std::shared_ptr<HcclSocket>, std::vector<SocketWlistInfo> > nicWlistInfosMap;
+        std::map<std::shared_ptr<HcclSocket>, std::vector<SocketWlistInfo>> nicWlistInfosMap;
         nicWlistInfosMap.insert(std::make_pair(socket, wlistInfos));
         wlistInfosMap_.insert(std::make_pair(commTag, nicWlistInfosMap));
     } else {
-        auto &nicWlistInfosMap = it->second;
+        auto& nicWlistInfosMap = it->second;
         auto iter = nicWlistInfosMap.find(socket);
         if (iter == nicWlistInfosMap.end()) {
             nicWlistInfosMap.insert(std::make_pair(socket, wlistInfos));
         } else {
-            auto &wlist = iter->second;
+            auto& wlist = iter->second;
             wlist.insert(wlist.end(), wlistInfos.begin(), wlistInfos.end());
         }
     }
@@ -685,12 +702,11 @@ void HcclSocketManager::SaveWhiteListInfo(const std::string &commTag, std::share
 
 // private
 // 根据相关参数构造 HcclSocket 对象
-HcclResult HcclSocketManager::ConstructSockets(const std::string &commTag, bool isInterLink,
-    const HcclNetDevCtx netDevCtx, u32 socketsPerLink,
-    NicType socketType, u32 remoteUserRank,
-    const HcclIpAddress &remoteIp, u32 remotePort,
-    const HcclIpAddress &localIp, HcclSocketRole localRole,
-    std::vector<std::shared_ptr<HcclSocket> > &socketList, uint32_t connectMode)
+HcclResult HcclSocketManager::ConstructSockets(
+    const std::string& commTag, bool isInterLink, const HcclNetDevCtx netDevCtx, u32 socketsPerLink,
+    [[maybe_unused]] NicType socketType, u32 remoteUserRank, const HcclIpAddress& remoteIp, u32 remotePort,
+    [[maybe_unused]] const HcclIpAddress& localIp, HcclSocketRole localRole,
+    std::vector<std::shared_ptr<HcclSocket>>& socketList, uint32_t connectMode)
 {
     // 使用Client Rank作为确定标识,保证Client和Server的Tag一致
     u32 clientRank = localRole == HcclSocketRole::SOCKET_ROLE_CLIENT ? userRank_ : remoteUserRank;
@@ -698,11 +714,13 @@ HcclResult HcclSocketManager::ConstructSockets(const std::string &commTag, bool 
         std::string socketTag = MakeUniqueConnTag(commTag, isInterLink, clientRank, i);
         std::shared_ptr<HcclSocket> tempSocket;
         if (connectMode > 0) {
-            EXCEPTION_CATCH((tempSocket = std::make_shared<HcclSocket>(commTag,
-                netDevCtx, remoteIp, remotePort, localRole)), return HCCL_E_PTR);
+            EXCEPTION_CATCH(
+                (tempSocket = std::make_shared<HcclSocket>(commTag, netDevCtx, remoteIp, remotePort, localRole)),
+                return HCCL_E_PTR);
         } else {
-            EXCEPTION_CATCH((tempSocket = std::make_shared<HcclSocket>(socketTag,
-                netDevCtx, remoteIp, remotePort, localRole)), return HCCL_E_PTR);
+            EXCEPTION_CATCH(
+                (tempSocket = std::make_shared<HcclSocket>(socketTag, netDevCtx, remoteIp, remotePort, localRole)),
+                return HCCL_E_PTR);
         }
         CHK_RET(tempSocket->Init());
         socketList.push_back(tempSocket);
@@ -712,62 +730,67 @@ HcclResult HcclSocketManager::ConstructSockets(const std::string &commTag, bool 
 
 // private
 // 保存 HcclSocket 对象
-void HcclSocketManager::SaveSockets(const std::string &commTag, u32 remoteRank, const HcclIpAddress &remoteIp,
-    std::vector<std::shared_ptr<HcclSocket> > &ipSockets)
+void HcclSocketManager::SaveSockets(
+    const std::string& commTag, u32 remoteRank, const HcclIpAddress& remoteIp,
+    std::vector<std::shared_ptr<HcclSocket>>& ipSockets)
 {
     // 将 ipSockets 累加到 commSocketsMap_ 中
-    HCCL_DEBUG("[Save][Sockets]commTag[%s], remoteRank[%u], remoteIp[%s], localRank[%u], save socket size[%u].",
+    HCCL_DEBUG(
+        "[Save][Sockets]commTag[%s], remoteRank[%u], remoteIp[%s], localRank[%u], save socket size[%u].",
         commTag.c_str(), remoteRank, remoteIp.GetReadableIP(), userRank_, ipSockets.size());
-    
+
     std::unique_lock<std::mutex> lock(socketsMapMutex_);
     auto it = commSocketsMap_.find(commTag);
     if (it == commSocketsMap_.end()) {
-        std::map<u32, std::vector<std::shared_ptr<HcclSocket> > > rankSocketmap {};
+        std::map<u32, std::vector<std::shared_ptr<HcclSocket>>> rankSocketmap{};
         rankSocketmap.insert(std::make_pair(remoteRank, ipSockets));
         commSocketsMap_.insert(std::make_pair(commTag, rankSocketmap));
     } else {
-        auto &rankSocketmap = it->second;
+        auto& rankSocketmap = it->second;
         auto iter = rankSocketmap.find(remoteRank);
         if (iter == rankSocketmap.end()) {
             rankSocketmap.insert(std::make_pair(remoteRank, ipSockets));
-            HCCL_DEBUG("[Save][Sockets]rankSocketmap size[%u], ipSockets size[%u].",
-                rankSocketmap.size(), ipSockets.size());
+            HCCL_DEBUG(
+                "[Save][Sockets]rankSocketmap size[%u], ipSockets size[%u].", rankSocketmap.size(), ipSockets.size());
         } else {
-            auto &rankSockets = iter->second;
+            auto& rankSockets = iter->second;
             // 当前直接插入，不判断本端IP，远端IP是否相同
             for (u32 i = 0; i < ipSockets.size(); i++) {
                 rankSockets.push_back(ipSockets[i]);
             }
-            HCCL_DEBUG("[Save][Sockets]rankSocketmap size[%u], rankSockets size[%u].",
-                rankSocketmap.size(), rankSockets.size());
+            HCCL_DEBUG(
+                "[Save][Sockets]rankSocketmap size[%u], rankSockets size[%u].", rankSocketmap.size(),
+                rankSockets.size());
         }
     }
     HCCL_DEBUG("[Save][Sockets]commSocketsMap_ size[%u].", commSocketsMap_.size());
 }
 
 // private
-void HcclSocketManager::GetSocketsByRankIP(const std::string &commTag, u32 remoteRank, const HcclIpAddress &remoteIp,
-    u32 socketsPerLink, std::vector<std::shared_ptr<HcclSocket> > &ipSockets, u32 &gotLinkNum)
+void HcclSocketManager::GetSocketsByRankIP(
+    const std::string& commTag, u32 remoteRank, const HcclIpAddress& remoteIp, u32 socketsPerLink,
+    std::vector<std::shared_ptr<HcclSocket>>& ipSockets, u32& gotLinkNum) const
 {
-    HCCL_DEBUG("[Get][SocketsByRankIP]commTag[%s], remoteRank[%u], remoteIp[%s], localRank[%u], SocketsMap size[%u].",
+    HCCL_DEBUG(
+        "[Get][SocketsByRankIP]commTag[%s], remoteRank[%u], remoteIp[%s], localRank[%u], SocketsMap size[%u].",
         commTag.c_str(), remoteRank, remoteIp.GetReadableIP(), userRank_, commSocketsMap_.size());
 
     gotLinkNum = 0;
     auto it = commSocketsMap_.find(commTag);
     if (it != commSocketsMap_.end()) {
-        auto &rankSocketmap = it->second;
+        auto& rankSocketmap = it->second;
         HCCL_INFO("[Get][SocketsByRankIP]rankSocketmap size[%u].", rankSocketmap.size());
         auto iter = rankSocketmap.find(remoteRank);
         if (iter != rankSocketmap.end()) {
-            auto &rankSockets = iter->second;
+            auto& rankSockets = iter->second;
             GetSocketsByRankIP(remoteIp, socketsPerLink, rankSockets, ipSockets, gotLinkNum);
         }
     }
 }
 
-void HcclSocketManager::GetSocketsByRankIP(const HcclIpAddress &remoteIp, u32 socketsPerLink,
-    std::vector<std::shared_ptr<HcclSocket>> &rankSockets, std::vector<std::shared_ptr<HcclSocket>> &ipSockets,
-    u32 &gotLinkNum)
+void HcclSocketManager::GetSocketsByRankIP(
+    const HcclIpAddress& remoteIp, u32 socketsPerLink, const std::vector<std::shared_ptr<HcclSocket>>& rankSockets,
+    std::vector<std::shared_ptr<HcclSocket>>& ipSockets, u32& gotLinkNum) const
 {
     for (u32 idx = 0; idx < rankSockets.size(); idx++) {
         if (rankSockets[idx]->GetRemoteIp() == remoteIp) {
@@ -782,7 +805,8 @@ void HcclSocketManager::GetSocketsByRankIP(const HcclIpAddress &remoteIp, u32 so
 
 // private
 // 同步接口，更新连接状态，并返回连接成功的连接数量
-HcclResult HcclSocketManager::WaitLinkEstablish(std::shared_ptr<HcclSocket> socket, std::function<bool()> needStop, s32 timeout)
+HcclResult HcclSocketManager::WaitLinkEstablish(
+    std::shared_ptr<HcclSocket> socket, std::function<bool()> needStop, s32 timeout) const
 {
     CHK_SMART_PTR_NULL(socket);
     u32 count = 0;
@@ -793,14 +817,16 @@ HcclResult HcclSocketManager::WaitLinkEstablish(std::shared_ptr<HcclSocket> sock
         CHK_PRT_RET(needStop(), HCCL_ERROR("Terminating operation due to external request"), HCCL_E_INTERNAL);
 
         if ((std::chrono::steady_clock::now() - startTime) >= timeoutSec) {
-            HCCL_ERROR("[Wait][LinkEstablish]wait socket establish timeout, role[%u] rank[%u] timeout[%lld s]",
+            HCCL_ERROR(
+                "[Wait][LinkEstablish]wait socket establish timeout, role[%u] rank[%u] timeout[%lld s]",
                 static_cast<u32>(socket->GetLocalRole()), userRank_, timeoutSec);
             socket->SetStatus(HcclSocketStatus::SOCKET_TIMEOUT);
             return HCCL_E_TIMEOUT;
         }
         HcclSocketStatus status = socket->GetStatus();
         if (status == HcclSocketStatus::SOCKET_OK) {
-            HCCL_DEBUG("[Wait][LinkEstablish]socket is establish. localIp[%s], remoteIp[%s]",
+            HCCL_DEBUG(
+                "[Wait][LinkEstablish]socket is establish. localIp[%s], remoteIp[%s]",
                 socket->GetLocalIp().GetReadableIP(), socket->GetRemoteIp().GetReadableIP());
             return HCCL_SUCCESS;
         } else if (status == HcclSocketStatus::SOCKET_CONNECTING) {
@@ -810,7 +836,7 @@ HcclResult HcclSocketManager::WaitLinkEstablish(std::shared_ptr<HcclSocket> sock
                 HCCL_DEBUG("[Wait][LinkEstablish]socket is connecting ");
             }
             count++;
-            
+
             continue;
         } else if (status == HcclSocketStatus::SOCKET_TIMEOUT) {
             return HCCL_E_TIMEOUT;
@@ -822,16 +848,19 @@ HcclResult HcclSocketManager::WaitLinkEstablish(std::shared_ptr<HcclSocket> sock
     return HCCL_E_TCP_CONNECT;
 }
 
-HcclResult HcclSocketManager::WaitLinksEstablishCompleted(HcclSocketRole localRole,
-    std::map <u32, std::vector<std::shared_ptr<HcclSocket> > > &socketsMap, std::map<u32, u32> &dstRankToUserRank,
-    const RankInfo &loaclRankInfo, const RankInfo &remoteRankInfo, const HcclNetDevCtx &netDevCtx)
+HcclResult HcclSocketManager::WaitLinksEstablishCompleted(
+    HcclSocketRole localRole, std::map<u32, std::vector<std::shared_ptr<HcclSocket>>>& socketsMap,
+    std::map<u32, u32>& dstRankToUserRank, const RankInfo& loaclRankInfo, const RankInfo& remoteRankInfo,
+    const HcclNetDevCtx& netDevCtx)
 {
-    (void) loaclRankInfo;
-    (void) remoteRankInfo;
+    (void)loaclRankInfo;
+    (void)remoteRankInfo;
     HcclResult ret = WaitLinksEstablishCompleted(localRole, socketsMap);
     if (ret != HCCL_SUCCESS) {
         TlsStatus tlsStatus = TlsStatus::UNKNOWN;
-        CHK_PRT_CONT(HcclNetDevGetTlsStatus(netDevCtx, &tlsStatus), HCCL_WARNING("[HcclNetDevGetTlsStatus] Can not get TlsStatus"));
+        CHK_PRT_CONT(
+            HcclNetDevGetTlsStatus(netDevCtx, &tlsStatus),
+            HCCL_WARNING("[HcclNetDevGetTlsStatus] Can not get TlsStatus"));
         PrintErrorConnection(localRole, socketsMap, dstRankToUserRank, tlsStatus);
         HCCL_ERROR("[Create][Sockets]Wait links establish completed failed, local role is client. ret[%d]", ret);
         return ret;
@@ -839,7 +868,8 @@ HcclResult HcclSocketManager::WaitLinksEstablishCompleted(HcclSocketRole localRo
     return HCCL_SUCCESS;
 }
 
-void HcclSocketManager::AddIpQueue(RankInfo &localRankInfo, RankInfo &remoteRankInfo, NicType nicType, s32 deviceLogicId)
+void HcclSocketManager::AddIpQueue(
+    RankInfo& localRankInfo, RankInfo& remoteRankInfo, NicType nicType, s32 deviceLogicId) const
 {
     if (g_RegisterDetectCallBack != nullptr) {
         g_RegisterDetectCallBack(localRankInfo, remoteRankInfo, nicType, deviceLogicId);
@@ -850,15 +880,21 @@ void HcclSocketManager::AddIpQueue(RankInfo &localRankInfo, RankInfo &remoteRank
 
 // private
 // 同步接口，等待连接建立完成
-HcclResult HcclSocketManager::WaitLinksEstablishCompleted(HcclSocketRole localRole,
-    std::map <u32, std::vector<std::shared_ptr<HcclSocket> > > &rankSocketsMap, s32 timeout)
+HcclResult HcclSocketManager::WaitLinksEstablishCompleted(
+    [[maybe_unused]] HcclSocketRole localRole, std::map<u32, std::vector<std::shared_ptr<HcclSocket>>>& rankSocketsMap,
+    s32 timeout)
 {
     for (auto iter = rankSocketsMap.begin(); iter != rankSocketsMap.end(); iter++) {
         auto rankSockets = iter->second;
         for (u32 i = 0; i < rankSockets.size(); i++) {
-            HcclResult ret = WaitLinkEstablish(rankSockets[i], [this]() -> bool {return this->GetStopFlag(); }, timeout);
-            CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Wait][LinksEstablishCompleted] is failed. ret[%d].",
-                ret), ret);
+            HcclResult ret = WaitLinkEstablish(
+                rankSockets[i],
+                [this]() -> bool {
+                    return this->GetStopFlag();
+                },
+                timeout);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS, HCCL_ERROR("[Wait][LinksEstablishCompleted] is failed. ret[%d].", ret), ret);
         }
     }
     return HCCL_SUCCESS;
@@ -869,7 +905,7 @@ HcclResult HcclSocketManager::SetStopFlag(bool value)
     stopFlag_.store(value);
 
     std::unique_lock<std::mutex> lock(socketsMapMutex_);
-    for (auto& socketsMap : commSocketsMap_) {  // map
+    for (auto& socketsMap : commSocketsMap_) {      // map
         for (auto& socketMap : socketsMap.second) { // map
             for (auto& socket : socketMap.second) { // vector
                 CHK_RET(socket->SetStopFlag(value));
@@ -880,20 +916,14 @@ HcclResult HcclSocketManager::SetStopFlag(bool value)
     return HCCL_SUCCESS;
 }
 
-bool HcclSocketManager::GetStopFlag()
-{
-    return stopFlag_.load();
-}
+bool HcclSocketManager::GetStopFlag() { return stopFlag_.load(); }
 
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
-void DetectCallBack(RegisterDetectCallBack p1)
-{
-    g_RegisterDetectCallBack = p1;
-}
+void DetectCallBack(RegisterDetectCallBack p1) { g_RegisterDetectCallBack = p1; }
 #ifdef __cplusplus
 }
 #endif // __cplusplus
 
-}  // namespace hccl
+} // namespace hccl

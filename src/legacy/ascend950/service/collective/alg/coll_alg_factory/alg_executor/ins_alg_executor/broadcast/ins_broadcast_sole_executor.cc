@@ -22,18 +22,15 @@
 namespace Hccl {
 template <typename AlgTopoMatch, typename InsAlgTemplate>
 InsBroadcastSoleExecutor<AlgTopoMatch, InsAlgTemplate>::InsBroadcastSoleExecutor() : InsCollAlgBase()
-{
-}
+{}
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
 InsBroadcastSoleExecutor<AlgTopoMatch, InsAlgTemplate>::~InsBroadcastSoleExecutor()
-{
-}
+{}
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsBroadcastSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcResOffload(const RankGraph *rankGraph,
-                                                                                      const u64            &dataSize,
-                                                                                      CollOffloadOpResReq  &resReq)
+HcclResult InsBroadcastSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcResOffload(
+    const RankGraph* rankGraph, const u64& dataSize, CollOffloadOpResReq& resReq)
 {
     (void)dataSize;
     resReq.requiredScratchMemSize = 0;
@@ -61,8 +58,8 @@ HcclResult InsBroadcastSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcResOffloa
 }
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsBroadcastSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcRes(const RankGraph *rankGraph,
-    CollAlgResReq        &algResReq)
+HcclResult
+InsBroadcastSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcRes(const RankGraph* rankGraph, CollAlgResReq& algResReq)
 {
     // Topo Match
     AlgTopoMatch topoMatch(myRank_, rankSize_, rankGraph, devType_);
@@ -78,7 +75,8 @@ HcclResult InsBroadcastSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcRes(const
         HCCL_DEBUG("[InsCollAlgFactory] [InsBroadcastSoleExecutor] Rank[%d], CalcRes with detouring enabled.", myRank_);
         CHK_RET(tempAlg.CalcResDetour(rankGraph, tempResReq));
     } else {
-        HCCL_DEBUG("[InsCollAlgFactory] [InsBroadcastSoleExecutor] Rank[%d], CalcRes with detouring disabled.", myRank_);
+        HCCL_DEBUG(
+            "[InsCollAlgFactory] [InsBroadcastSoleExecutor] Rank[%d], CalcRes with detouring disabled.", myRank_);
         CHK_RET(tempAlg.CalcRes(tempResReq));
     }
     CHK_RET(CalcLinkInfo(myRank_, rankGraph, tempResReq.links, algResReq.levelRankPairs));
@@ -86,7 +84,9 @@ HcclResult InsBroadcastSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcRes(const
     algResReq.queueNotifys = tempResReq.queNotifys;
     algResReq.localWaitGroupCntNotify = tempResReq.localWaitGroupCntNotify;
     algResReq.localBcastPostCntNotify = tempResReq.localBcastPostCntNotify;
-    HCCL_DEBUG("[InsCollAlgFactory] [InsBroadcastSoleExecutor] Rank[%d], requiredQueNum [%u].", myRank_, algResReq.primQueueNum);
+    HCCL_DEBUG(
+        "[InsCollAlgFactory] [InsBroadcastSoleExecutor] Rank[%d], requiredQueNum [%u].", myRank_,
+        algResReq.primQueueNum);
     CHK_RET(CalcResLinks(myRank_, rankGraph, linkPriority_, tempResReq.links, algResReq.links));
 
     return HcclResult::HCCL_SUCCESS;
@@ -94,8 +94,8 @@ HcclResult InsBroadcastSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcRes(const
 
 // dataSize_ as input
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsBroadcastSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(const RankGraph  *rankGraph,
-    const CollAlgOperator &op, const CollAlgParams   &params, InsQuePtr              insQue)
+HcclResult InsBroadcastSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(
+    const RankGraph* rankGraph, const CollAlgOperator& op, const CollAlgParams& params, InsQuePtr insQue)
 {
     HCCL_INFO("[InsCollAlgFactory] [InsBroadcastSoleExecutor] Host Orchestrate begins.");
     // init and check params
@@ -107,25 +107,31 @@ HcclResult InsBroadcastSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(c
     HCCL_DEBUG("[InsCollAlgFactory] Rank[%d], [%s].", myRank_, topoMatch.Describe().c_str());
     dataTypeSize_ = DataTypeSizeGet(dataType_);
     dataSize_ = dataCount_ * dataTypeSize_;
-    CHK_PRT_RET(dataTypeSize_ == 0,
-            HCCL_ERROR("Broadcast_[CollAlgFactory] Rank [%d], Invalid dataTypeSize_ [%u].", myRank_, dataTypeSize_),
-            HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        dataTypeSize_ == 0,
+        HCCL_ERROR("Broadcast_[CollAlgFactory] Rank [%d], Invalid dataTypeSize_ [%u].", myRank_, dataTypeSize_),
+        HcclResult::HCCL_E_INTERNAL);
 
     // 实例化算法模板类
-    HCCL_DEBUG("[InsBroadcastSoleExecutor] Rank[%d], Init insAlgTemplate with rankSize [%u] and dmaMode [%s].",
-            myRank_, rankSize_, dmaMode_.Describe().c_str());
+    HCCL_DEBUG(
+        "[InsBroadcastSoleExecutor] Rank[%d], Init insAlgTemplate with rankSize [%u] and dmaMode [%s].", myRank_,
+        rankSize_, dmaMode_.Describe().c_str());
     InsAlgTemplate tempAlg(myRank_, rankSize_, vTopo_, virtRankMap_);
     tempAlg.SetDmaMode(dmaMode_);
-    tempAlg.SetCollOp(op);  // CCU template需要传递op信息
+    tempAlg.SetCollOp(op); // CCU template需要传递op信息
     tempAlg.SetRoot(root_);
 
     // 计算算法模板所需资源
     AlgTempResReq tempResReq;
     if (enableDetour_) {
-        HCCL_DEBUG("[InsCollAlgFactory] [InsBroadcastSoleExecutor] Rank[%d], CalcRes with detouring enabled for Orchestrate.", myRank_);
+        HCCL_DEBUG(
+            "[InsCollAlgFactory] [InsBroadcastSoleExecutor] Rank[%d], CalcRes with detouring enabled for Orchestrate.",
+            myRank_);
         CHK_RET(tempAlg.CalcResDetour(rankGraph, tempResReq));
     } else {
-        HCCL_DEBUG("[InsCollAlgFactory] [InsBroadcastSoleExecutor] Rank[%d], CalcRes with detouring disabled for Orchestrate.", myRank_);
+        HCCL_DEBUG(
+            "[InsCollAlgFactory] [InsBroadcastSoleExecutor] Rank[%d], CalcRes with detouring disabled for Orchestrate.",
+            myRank_);
         CHK_RET(tempAlg.CalcRes(tempResReq));
     }
     // 申请算法模板所需资源
@@ -145,30 +151,32 @@ HcclResult InsBroadcastSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(c
 
 // 算子执行aicpu接口
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsBroadcastSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(const AlgTopoInfo     &topoInfo,
-    const CollAlgOperator &op, const CollAlgParams   &params, ConnectedLinkMgr      *linkMgr,
-    InsQuePtr              insQue)
+HcclResult InsBroadcastSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(
+    const AlgTopoInfo& topoInfo, const CollAlgOperator& op, const CollAlgParams& params, ConnectedLinkMgr* linkMgr,
+    InsQuePtr insQue)
 {
     HCCL_INFO("[InsCollAlgFactory] [InsBroadcastSoleExecutor] [InsReduceSoleExecutor] AiCpu Orchestrate begins.");
     // 参数校验和初始化
     CHK_RET(Init(op, params, insQue));
 
     // soleEsecutor 只支持单层拓扑, 所以只取第 0 级通信域的信息
-    vTopo_ = topoInfo.vTopo[0];               // 本通信域内的通信平面
-    virtRankMap_ = topoInfo.virtRankMap[0];   // 本通信域内的 rank 映射表
-    virtRanks_ = topoInfo.virtRanks[0];       // 本通信域内的 rank 集合
+    vTopo_ = topoInfo.vTopo[0];             // 本通信域内的通信平面
+    virtRankMap_ = topoInfo.virtRankMap[0]; // 本通信域内的 rank 映射表
+    virtRanks_ = topoInfo.virtRanks[0];     // 本通信域内的 rank 集合
     dataTypeSize_ = DataTypeSizeGet(dataType_);
     dataSize_ = dataCount_ * dataTypeSize_;
-    CHK_PRT_RET(dataTypeSize_ == 0,
-                HCCL_ERROR("Broadcast_[CollAlgFactory] Rank [%d], Invalid dataTypeSize_ [%u].", myRank_, dataTypeSize_),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        dataTypeSize_ == 0,
+        HCCL_ERROR("Broadcast_[CollAlgFactory] Rank [%d], Invalid dataTypeSize_ [%u].", myRank_, dataTypeSize_),
+        HcclResult::HCCL_E_INTERNAL);
 
     // 实例化算法模板类
-    HCCL_DEBUG("Broadcast_[InsReduceSoleExecutor] Rank[%d], Init insAlgTemplate with rankSize [%u] and dmaMode [%s].",
-        myRank_, rankSize_, dmaMode_.Describe().c_str());
+    HCCL_DEBUG(
+        "Broadcast_[InsReduceSoleExecutor] Rank[%d], Init insAlgTemplate with rankSize [%u] and dmaMode [%s].", myRank_,
+        rankSize_, dmaMode_.Describe().c_str());
     InsAlgTemplate tempAlg(myRank_, rankSize_, vTopo_, virtRankMap_);
     tempAlg.SetDmaMode(dmaMode_);
-    tempAlg.SetCollOp(op);  // CCU template需要传递op信息
+    tempAlg.SetCollOp(op); // CCU template需要传递op信息
     tempAlg.SetRoot(root_);
 
     // 计算算法模板所需资源
@@ -177,7 +185,8 @@ HcclResult InsBroadcastSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(c
         HCCL_DEBUG("[InsCollAlgFactory] [InsBroadcastSoleExecutor] Rank[%d], CalcRes with detouring enabled.", myRank_);
         CHK_RET(tempAlg.CalcResDetour(linkMgr, tempResReq));
     } else {
-        HCCL_DEBUG("[InsCollAlgFactory] [InsBroadcastSoleExecutor] Rank[%d], CalcRes with detouring disabled.", myRank_);
+        HCCL_DEBUG(
+            "[InsCollAlgFactory] [InsBroadcastSoleExecutor] Rank[%d], CalcRes with detouring disabled.", myRank_);
         CHK_RET(tempAlg.CalcRes(tempResReq));
     }
 
@@ -186,12 +195,12 @@ HcclResult InsBroadcastSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(c
     CHK_RET(PrepResLinks(myRank_, tempResReq.links, linkMgr, tempResLinks_));
 
     if (opMode_ == OpMode::OFFLOAD) {
-        HCCL_DEBUG("[InsReduceSoleExecutor] Rank[%d], Generating Instruction Queues in OFFLOAD Mode for AICPU.",
-                   myRank_);
+        HCCL_DEBUG(
+            "[InsReduceSoleExecutor] Rank[%d], Generating Instruction Queues in OFFLOAD Mode for AICPU.", myRank_);
         CHK_RET(OrchestrateOffload(tempAlg));
     } else { // OPBASE
-        HCCL_DEBUG("[InsReduceSoleExecutor] Rank[%d], Generating Instruction Queues in OPBASE Mode for AICPU.",
-                   myRank_);
+        HCCL_DEBUG(
+            "[InsReduceSoleExecutor] Rank[%d], Generating Instruction Queues in OPBASE Mode for AICPU.", myRank_);
         CHK_RET(OrchestrateOpbase(tempAlg));
     }
 
@@ -199,38 +208,38 @@ HcclResult InsBroadcastSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(c
 }
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsBroadcastSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateOpbase(InsAlgTemplate &tempAlg)
+HcclResult InsBroadcastSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateOpbase(InsAlgTemplate& tempAlg)
 {
     BuffInfo buffInfo;
-    buffInfo.inBuffType     = BufferType::SCRATCH;
-    buffInfo.outBuffType    = BufferType::SCRATCH;
-    buffInfo.inBuffBaseOff  = 0;
+    buffInfo.inBuffType = BufferType::SCRATCH;
+    buffInfo.outBuffType = BufferType::SCRATCH;
+    buffInfo.inBuffBaseOff = 0;
     buffInfo.outBuffBaseOff = 0;
 
     // 基本参数配置
     AllignInfo allignInfo = {enableAllign_, allignSize_, dataType_};
     TempFuncs tempFuncs;
-    tempFuncs.opMode              = opMode_;
+    tempFuncs.opMode = opMode_;
     tempFuncs.enableCounterNotify = IsEnableCounterNotify();
-    tempFuncs.isForepart          = true; // Usr Buff to CCL Buff required
-    tempFuncs.isBottom            = true; // CCL Buff to Usr Buff required
+    tempFuncs.isForepart = true; // Usr Buff to CCL Buff required
+    tempFuncs.isBottom = true;   // CCL Buff to Usr Buff required
 
     // 根据CCL Buffer 大小，计算出一轮中最多能输出多少数据
-    u64 maxLoopOutputCount =
-        std::min(static_cast<u64>(maxTmpMemSize_), static_cast<u64>(UB_MAX_DATA_SIZE)) / dataTypeSize_;
-    CHK_PRT_RET(maxLoopOutputCount == 0,
-        HCCL_ERROR("[InsReduceSoleExecutor] maxLoopOutputCount is zero."),
+    u64 maxLoopOutputCount
+        = std::min(static_cast<u64>(maxTmpMemSize_), static_cast<u64>(UB_MAX_DATA_SIZE)) / dataTypeSize_;
+    CHK_PRT_RET(
+        maxLoopOutputCount == 0, HCCL_ERROR("[InsReduceSoleExecutor] maxLoopOutputCount is zero."),
         HcclResult::HCCL_E_PARA);
     u64 dataSize = dataCount_ * dataTypeSize_;
 
     // offload模式根据UB_MAX_DATA_SIZE，计算出一轮中最多能输出多少数据
-    u64 maxLoopOutputSize = maxLoopOutputCount  * dataTypeSize_;
+    u64 maxLoopOutputSize = maxLoopOutputCount * dataTypeSize_;
 
     u64 loopTimes = dataSize / maxLoopOutputSize + static_cast<u64>(dataSize % maxLoopOutputSize != 0);
 
     for (u32 loop = 0; loop < loopTimes; loop++) {
         u64 currloopOffset = loop * maxLoopOutputSize;
-        u64 currSize = (loop == (loopTimes - 1)) ?  dataSize - currloopOffset : maxLoopOutputSize;
+        u64 currSize = (loop == (loopTimes - 1)) ? dataSize - currloopOffset : maxLoopOutputSize;
         UsrData usrData;
         usrData.usrInSlices.emplace_back(BufferType::INPUT, currloopOffset, currSize);
         usrData.scratchInSlices.emplace_back(BufferType::SCRATCH, 0, currSize);
@@ -241,34 +250,37 @@ HcclResult InsBroadcastSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateOp
         RankSliceInfo sliceInfoVec;
         CHK_RET(tempAlg.CalcSliceInfo(allignInfo, currSize, sliceInfoVec));
         CHK_RET(tempAlg.Run(tempFuncs, sliceInfoVec, buffInfo, tempResLinks_, requiredQue_));
-        HCCL_DEBUG("[InsCollAlgFactory] [InsBroadcastSoleExecutor] Rank[%d], done generating instruction queues, currSize[%llu], currOffset[%llu].",
-                   myRank_, currSize, currloopOffset);
+        HCCL_DEBUG(
+            "[InsCollAlgFactory] [InsBroadcastSoleExecutor] Rank[%d], done generating instruction queues, "
+            "currSize[%llu], currOffset[%llu].",
+            myRank_, currSize, currloopOffset);
     }
 
     return HcclResult::HCCL_SUCCESS;
 }
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsBroadcastSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateOffload(InsAlgTemplate &tempAlg)
+HcclResult InsBroadcastSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateOffload(InsAlgTemplate& tempAlg)
 {
     HCCL_DEBUG("[InsCollAlgFactory] Rank[%d], done calculating slice information.", myRank_);
 
     BuffInfo buffInfo;
-    buffInfo.inBuffType     = BufferType::INPUT;
-    buffInfo.outBuffType    = BufferType::INPUT;
-    buffInfo.inBuffBaseOff  = 0;
+    buffInfo.inBuffType = BufferType::INPUT;
+    buffInfo.outBuffType = BufferType::INPUT;
+    buffInfo.inBuffBaseOff = 0;
     buffInfo.outBuffBaseOff = 0;
-    HCCL_DEBUG("[InsCollAlgFactory] Rank[%d], input buffer type [%s], output buffer type [%s], input buffer base "
-               "offset [%u], output buffer base offset [%u].",
-               myRank_, buffInfo.inBuffType.Describe().c_str(), buffInfo.outBuffType.Describe().c_str(),
-               buffInfo.inBuffBaseOff, buffInfo.outBuffBaseOff);
+    HCCL_DEBUG(
+        "[InsCollAlgFactory] Rank[%d], input buffer type [%s], output buffer type [%s], input buffer base "
+        "offset [%u], output buffer base offset [%u].",
+        myRank_, buffInfo.inBuffType.Describe().c_str(), buffInfo.outBuffType.Describe().c_str(),
+        buffInfo.inBuffBaseOff, buffInfo.outBuffBaseOff);
 
     AllignInfo allignInfo = {enableAllign_, allignSize_, dataType_};
     TempFuncs tempFuncs;
-    tempFuncs.opMode              = opMode_;
+    tempFuncs.opMode = opMode_;
     tempFuncs.enableCounterNotify = IsEnableCounterNotify();
-    tempFuncs.isForepart          = true; // Usr Buff to CCL Buff required
-    tempFuncs.isBottom            = true; // CCL Buff to Usr Buff required
+    tempFuncs.isForepart = true; // Usr Buff to CCL Buff required
+    tempFuncs.isBottom = true;   // CCL Buff to Usr Buff required
 
     u64 dataSize = dataCount_ * dataTypeSize_;
 
@@ -279,7 +291,7 @@ HcclResult InsBroadcastSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateOf
 
     for (u32 loop = 0; loop < loopTimes; loop++) {
         u64 currloopOffset = loop * maxLoopOutputSize;
-        u64 currSize = (loop == (loopTimes - 1)) ?  dataSize - currloopOffset : maxLoopOutputSize;
+        u64 currSize = (loop == (loopTimes - 1)) ? dataSize - currloopOffset : maxLoopOutputSize;
         UsrData usrData;
         usrData.usrInSlices.emplace_back(BufferType::INPUT, currloopOffset, currSize);
         usrData.scratchInSlices.emplace_back(BufferType::SCRATCH, 0, currSize);
@@ -289,8 +301,10 @@ HcclResult InsBroadcastSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateOf
         RankSliceInfo sliceInfoVec;
         CHK_RET(tempAlg.CalcSliceInfo(allignInfo, currSize, sliceInfoVec));
         CHK_RET(tempAlg.Run(tempFuncs, sliceInfoVec, buffInfo, tempResLinks_, requiredQue_));
-        HCCL_DEBUG("[InsCollAlgFactory] [InsBroadcastSoleExecutor] Rank[%d], done generating instruction queues, currSize[%llu], currOffset[%llu].",
-                   myRank_, currSize, currloopOffset);
+        HCCL_DEBUG(
+            "[InsCollAlgFactory] [InsBroadcastSoleExecutor] Rank[%d], done generating instruction queues, "
+            "currSize[%llu], currOffset[%llu].",
+            myRank_, currSize, currloopOffset);
     }
 
     return HcclResult::HCCL_SUCCESS;

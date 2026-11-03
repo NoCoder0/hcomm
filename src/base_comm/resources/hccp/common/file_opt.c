@@ -42,7 +42,7 @@ int ReadFileToBuf(const char *path, char *content, unsigned int *contentLen)
     long tempLen;
     int ret, retVal;
     FILE *readFile = NULL;
-    char realConfPath[PATH_MAX + 1] = {0};//lint !e813
+    char realConfPath[PATH_MAX + 1] = {0}; // lint !e813
 
     ret = ReadFileToBufCheckParam(path, content, contentLen);
     if (ret) {
@@ -180,7 +180,7 @@ void RemoveFile(const char *file)
 int CheckFilePath(const char *path, mode_t mode)
 {
     int ret;
-    char realConfPath[PATH_MAX + 1] = {0};//lint !e813
+    char realConfPath[PATH_MAX + 1] = {0}; // lint !e813
 
     if (path == NULL) {
         roce_err("path is NULL");
@@ -195,7 +195,7 @@ int CheckFilePath(const char *path, mode_t mode)
     if (realpath(path, realConfPath) == NULL) {
         ret = -errno;
         if (ret == -ENOENT) {
-            roce_warn("path[%s] is not exist, real_path[%s]", path, realConfPath);
+            roce_warn("path[%s] does not exist, real_path[%s]", path, realConfPath);
             ret = mkdir(realConfPath, mode);
             if (ret) {
                 roce_err("mkdir real_conf_path[%s] failed, ret[%d]", realConfPath, ret);
@@ -343,14 +343,14 @@ out:
 
 STATIC int CfgInnerReadConf(const char *confPath, const char *confName, char *confValue, unsigned int len)
 {
-    char realConfPath[PATH_MAX + 1] = {0};//lint !e813
+    char realConfPath[PATH_MAX + 1] = {0}; // lint !e813
     int ret, retVal;
     FILE *fp = NULL;
 
     // file not exist, degrade log level
     if ((strlen(confPath) > PATH_MAX) || (realpath(confPath, realConfPath) == NULL)) {
-        roce_warn("read path_len[%u] > PATH_MAX[%d] or conf_path is invalid, errno[%d]",
-            strlen(confPath), PATH_MAX, errno);
+        roce_warn("read path_len[%u] > PATH_MAX[%d] or conf_path is invalid, errno[%d]", strlen(confPath), PATH_MAX,
+            errno);
         return FILE_OPT_INNER_PARAM_ERR;
     }
 

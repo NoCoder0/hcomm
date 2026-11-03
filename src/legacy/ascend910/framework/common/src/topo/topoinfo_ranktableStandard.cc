@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "topoinfo_ranktableStandard.h"
 
@@ -27,29 +27,25 @@
 using namespace std;
 using namespace hccl;
 
-
-TopoinfoRanktableStandard::TopoinfoRanktableStandard(const std::string &rankTableM, const std::string &identify)
+TopoinfoRanktableStandard::TopoinfoRanktableStandard(const std::string& rankTableM, const std::string& identify)
     : TopoInfoRanktableParser(rankTableM, identify)
-{
-}
+{}
 
-TopoinfoRanktableStandard::~TopoinfoRanktableStandard()
-{
-}
+TopoinfoRanktableStandard::~TopoinfoRanktableStandard() {}
 
 HcclResult TopoinfoRanktableStandard::Init()
 {
     CHK_RET(LoadRankTableString(rankTableFile_));
-    HcclResult ret  = ParserClusterInfo(params_, rankTable_);
+    HcclResult ret = ParserClusterInfo(params_, rankTable_);
     if (ret != HCCL_SUCCESS) {
         HCCL_ERROR("[TopoinfoRanktableStandard][Init] RanktableStandard init failed! Please check if the ranktable file"
-            " is configured with a 'version' field.");
+                   " is configured with a 'version' field.");
         return ret;
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoinfoRanktableStandard::GetSelfClusterInfo(HcclCommParams &params)
+HcclResult TopoinfoRanktableStandard::GetSelfClusterInfo(HcclCommParams& params)
 {
     // 获取芯片类型信息
     CHK_RET(hrtGetDeviceType(params.deviceType));
@@ -61,14 +57,13 @@ HcclResult TopoinfoRanktableStandard::GetSelfClusterInfo(HcclCommParams &params)
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoinfoRanktableStandard::GetClusterInfo(hccl::HcclCommParams &params,
-    hccl::RankTable_t &rankTable)
+HcclResult TopoinfoRanktableStandard::GetClusterInfo(hccl::HcclCommParams& params, hccl::RankTable_t& rankTable)
 {
     CHK_RET(GetClusterInfo(rankTable));
     CHK_RET(GetSelfClusterInfo(params));
     return HCCL_SUCCESS;
 }
-HcclResult TopoinfoRanktableStandard::GetClusterInfo(RankTable_t &clusterInfo)
+HcclResult TopoinfoRanktableStandard::GetClusterInfo(RankTable_t& clusterInfo)
 {
     clusterInfo.nicDeploy = rankTable_.nicDeploy;
     clusterInfo.deviceNum = rankTable_.deviceNum;
@@ -83,10 +78,10 @@ HcclResult TopoinfoRanktableStandard::GetClusterInfo(RankTable_t &clusterInfo)
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoinfoRanktableStandard::ParserClusterInfo(hccl::HcclCommParams &params, hccl::RankTable_t &rankTable)
+HcclResult TopoinfoRanktableStandard::ParserClusterInfo(hccl::HcclCommParams& params, hccl::RankTable_t& rankTable)
 {
     CHK_RET(GetDeployMode(cloudFlag_));
-    HCCL_INFO("deploy mode is %s", cloudFlag_ ? "cloud" : "Laborratory");
+    HCCL_INFO("deploy mode is %s", cloudFlag_ ? "cloud" : "Laboratory");
     if (!IsTaskNumCalMode()) {
         CHK_RET(hrtGetDeviceType(params.deviceType));
     }
@@ -98,9 +93,11 @@ HcclResult TopoinfoRanktableStandard::ParserClusterInfo(hccl::HcclCommParams &pa
         if (!IsTaskNumCalMode()) {
             CHK_RET(CheckRankId(identify_.c_str()));
             if (SalStrToULong(identify_, HCCL_BASE_DECIMAL, rankId) != HCCL_SUCCESS) {
-                RPT_INPUT_ERR(true, "EI0014", std::vector<std::string>({ "value", "variable" ,"expect" }),
-                    std::vector<std::string>({ identify_, "rank_id", "a valid integer." }));
-                HCCL_ERROR("[%s][%s]errNo[0x%016llx] identify[%s] is invalid", LOG_KEYWORDS_INIT_GROUP.c_str(),
+                RPT_INPUT_ERR(
+                    true, "EI0014", std::vector<std::string>({"value", "variable", "expect"}),
+                    std::vector<std::string>({identify_, "rank_id", "a valid integer."}));
+                HCCL_ERROR(
+                    "[%s][%s]errNo[0x%016llx] identify[%s] is invalid", LOG_KEYWORDS_INIT_GROUP.c_str(),
                     LOG_KEYWORDS_RANKTABLE_CHECK.c_str(), HCOM_ERROR_CODE(HCCL_E_PARA), identify_.c_str());
                 return HCCL_E_PARA;
             }
@@ -109,31 +106,37 @@ HcclResult TopoinfoRanktableStandard::ParserClusterInfo(hccl::HcclCommParams &pa
     }
 
     if (!IsTaskNumCalMode()) {
-        std::sort(rankTable.rankList.begin(), rankTable.rankList.end(),
-            [&](const RankInfo_t &a, const RankInfo_t &b) -> bool {return a.rankId < b.rankId;});
+        std::sort(
+            rankTable.rankList.begin(), rankTable.rankList.end(),
+            [&](const RankInfo_t& a, const RankInfo_t& b) -> bool {
+                return a.rankId < b.rankId;
+            });
 
         // 校验rank id合法性
         if (rankId >= rankTable.rankList.size()) {
-            RPT_INPUT_ERR(true,
-                "EI0014",
-                std::vector<std::string>({ "value", "variable" ,"expect" }),
+            RPT_INPUT_ERR(
+                true, "EI0014", std::vector<std::string>({"value", "variable", "expect"}),
                 std::vector<std::string>({identify_, "rank_id", "a valid integer"}));
-            HCCL_ERROR("[%s][%s]rankid[%u] is invalid", LOG_KEYWORDS_INIT_GROUP.c_str(),
-                LOG_KEYWORDS_RANKTABLE_CHECK.c_str(), rankId);
+            HCCL_ERROR(
+                "[%s][%s]rankid[%u] is invalid", LOG_KEYWORDS_INIT_GROUP.c_str(), LOG_KEYWORDS_RANKTABLE_CHECK.c_str(),
+                rankId);
             return HCCL_E_PARA;
         }
-        CHK_PRT_RET(rankId != rankTable.rankList[rankId].rankId,
-            HCCL_ERROR("[Parse][ClusterInfo]check rankList[%u] rankId[%u] failed",
-                rankId, rankTable.rankList[rankId].rankId), HCCL_E_UNAVAIL);
+        CHK_PRT_RET(
+            rankId != rankTable.rankList[rankId].rankId,
+            HCCL_ERROR(
+                "[Parse][ClusterInfo]check rankList[%u] rankId[%u] failed", rankId, rankTable.rankList[rankId].rankId),
+            HCCL_E_UNAVAIL);
         u32 devId = rankTable.rankList[rankId].deviceInfo.devicePhyId;
         CHK_RET(hrtGetDevice(&params.logicDevId));
 
         u32 devicePhyId = 0;
         CHK_RET(hrtGetDevicePhyIdByIndex(static_cast<u32>(params.logicDevId), devicePhyId));
 
-        CHK_PRT_RET(devicePhyId != static_cast<u32>(devId),
-            HCCL_ERROR("[Parse][ClusterInfo]ranktable config devId[%d],but local devId[%u]", devId,
-            devicePhyId), HCCL_E_UNAVAIL);
+        CHK_PRT_RET(
+            devicePhyId != static_cast<u32>(devId),
+            HCCL_ERROR("[Parse][ClusterInfo]ranktable config devId[%d],but local devId[%u]", devId, devicePhyId),
+            HCCL_E_UNAVAIL);
 
         params.rank = rankId;
         params.totalRanks = rankTable.rankNum;
@@ -142,7 +145,7 @@ HcclResult TopoinfoRanktableStandard::ParserClusterInfo(hccl::HcclCommParams &pa
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoinfoRanktableStandard::GetHcomInfo(hccl::HcclCommParams &params, hccl::RankTable_t &rankTable)
+HcclResult TopoinfoRanktableStandard::GetHcomInfo(hccl::HcclCommParams& params, hccl::RankTable_t& rankTable)
 {
     // para_plane_location
     std::string paraPlaneLocation;
@@ -155,15 +158,17 @@ HcclResult TopoinfoRanktableStandard::GetHcomInfo(hccl::HcclCommParams &params, 
         return HCCL_E_PARA;
     }
 
-    if ((params.deviceType == DevType::DEV_TYPE_910 || params.deviceType == DevType::DEV_TYPE_910B ||
-         params.deviceType == DevType::DEV_TYPE_910_93) && paraPlaneLocation != "device") {
-        HCCL_ERROR("[Get][HcomInfo]errNo[0x%016llx] paraPlaneLocation should be 'device'",
-            HCOM_ERROR_CODE(HCCL_E_PARA));
+    if ((params.deviceType == DevType::DEV_TYPE_910 || params.deviceType == DevType::DEV_TYPE_910B
+         || params.deviceType == DevType::DEV_TYPE_910_93)
+        && paraPlaneLocation != "device") {
+        HCCL_ERROR(
+            "[Get][HcomInfo]errNo[0x%016llx] paraPlaneLocation should be 'device'", HCOM_ERROR_CODE(HCCL_E_PARA));
         return HCCL_E_PARA;
     }
     // 当前只支持device侧的网卡
-    rankTable.nicDeploy = ((paraPlaneLocation == "device") ? NICDeployment::NIC_DEPLOYMENT_DEVICE :
-        NICDeployment::NIC_DEPLOYMENT_RESERVED);
+    rankTable.nicDeploy
+        = ((paraPlaneLocation == "device") ? NICDeployment::NIC_DEPLOYMENT_DEVICE :
+                                             NICDeployment::NIC_DEPLOYMENT_RESERVED);
     // group_count
     std::string groupCount;
     CHK_RET(GetJsonProperty(fileContent_, "group_count", groupCount, false));
@@ -181,8 +186,8 @@ HcclResult TopoinfoRanktableStandard::GetHcomInfo(hccl::HcclCommParams &params, 
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoinfoRanktableStandard::GetServerList(const nlohmann::json &obj, u32 objIndex,
-    hccl::RankTable_t &rankTable, u32 serverNum)
+HcclResult TopoinfoRanktableStandard::GetServerList(
+    const nlohmann::json& obj, u32 objIndex, hccl::RankTable_t& rankTable, u32 serverNum)
 {
     if (serverNum == 0) {
         HCCL_ERROR("[Get][ServerList]errNo[0x%016llx] server num is zero", HCOM_ERROR_CODE(HCCL_E_PARA));
@@ -195,12 +200,13 @@ HcclResult TopoinfoRanktableStandard::GetServerList(const nlohmann::json &obj, u
 
     HCCL_DEBUG("%s.json -> server_list[%u]: size:%zu", fileName_.c_str(), objIndex, serverList.size());
     if (serverList.size() == 0) {
-        HCCL_ERROR("[Get][ServerList]errNo[0x%016llx] serverList[%u] size is zero",
-            HCOM_ERROR_CODE(HCCL_E_PARA), objIndex);
+        HCCL_ERROR(
+            "[Get][ServerList]errNo[0x%016llx] serverList[%u] size is zero", HCOM_ERROR_CODE(HCCL_E_PARA), objIndex);
         return HCCL_E_PARA;
     }
     if (serverList.size() != serverNum) {
-        HCCL_ERROR("[Get][ServerList]errNo[0x%016llx] serverList[%u] size[%zu] neq server num[%u]",
+        HCCL_ERROR(
+            "[Get][ServerList]errNo[0x%016llx] serverList[%u] size[%zu] neq server num[%u]",
             HCOM_ERROR_CODE(HCCL_E_PARA), objIndex, serverList.size(), serverNum);
         return HCCL_E_PARA;
     }
@@ -212,15 +218,15 @@ HcclResult TopoinfoRanktableStandard::GetServerList(const nlohmann::json &obj, u
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoinfoRanktableStandard::GetSingleServer(const nlohmann::json &serverListObj, u32 objIndex,
-    hccl::RankTable_t &rankTable)
+HcclResult TopoinfoRanktableStandard::GetSingleServer(
+    const nlohmann::json& serverListObj, u32 objIndex, hccl::RankTable_t& rankTable)
 {
     ServerInfo_t serverInfo;
     std::string serverId;
     CHK_RET(GetJsonArrayMemberProperty(serverListObj, objIndex, "server_id", serverId, false));
-    
-    CHK_RET(CheckUniqueAndInsertPool(JsonUniqueInfoType::UNIQUE_INFO_TYPE_SERVER_ID, serverId,
-        JsonCheckOpType::CHECK_OP_TYPE_INSERT));
+
+    CHK_RET(CheckUniqueAndInsertPool(
+        JsonUniqueInfoType::UNIQUE_INFO_TYPE_SERVER_ID, serverId, JsonCheckOpType::CHECK_OP_TYPE_INSERT));
     HCCL_DEBUG("server id[%u]:[%s]", objIndex, serverId.c_str());
     serverInfo.serverId = serverId;
     // 解析内层-参数平面的网卡信息
@@ -228,43 +234,46 @@ HcclResult TopoinfoRanktableStandard::GetSingleServer(const nlohmann::json &serv
     CHK_RET(GetJsonArrayMemberProperty(serverListObj, objIndex, "para_plane_info", paraPlaneInfo, false));
     // server list中的网卡个数应该与ranktable中的网卡个数一致
     if (paraPlaneInfo.size() != rankTable.nicNum) {
-        HCCL_ERROR("[Get][SingleServer]errNo[0x%016llx] paraPlaneInfo[%u] size[%zu] neq nicNum[%u]",
+        HCCL_ERROR(
+            "[Get][SingleServer]errNo[0x%016llx] paraPlaneInfo[%u] size[%zu] neq nicNum[%u]",
             HCOM_ERROR_CODE(HCCL_E_PARA), objIndex, paraPlaneInfo.size(), rankTable.nicNum);
         return HCCL_E_PARA;
     }
     serverInfo.networkInfo.clear();
 
     for (u32 innerIndex = 0; innerIndex < rankTable.nicNames.size(); innerIndex++) {
-        NetworkInfo_t networdInfo;
-        networdInfo.ethName = rankTable.nicNames[innerIndex];
+        NetworkInfo_t networkInfo;
+        networkInfo.ethName = rankTable.nicNames[innerIndex];
 
         // 依照nicNames来搜索
         for (u32 i = 0; i < paraPlaneInfo.size(); i++) {
-            auto findEth = paraPlaneInfo.at(i).find(networdInfo.ethName);
-            if (findEth != paraPlaneInfo.at(i).end()) {  // 找到ethName
+            auto findEth = paraPlaneInfo.at(i).find(networkInfo.ethName);
+            if (findEth != paraPlaneInfo.at(i).end()) { // 找到ethName
                 std::string ethIp = findEth->get<std::string>();
-                CHK_RET(CheckUniqueAndInsertPool(JsonUniqueInfoType::UNIQUE_INFO_TYPE_ETH_IP, ethIp,
-                    JsonCheckOpType::CHECK_OP_TYPE_INSERT));
-                CHK_RET(ConvertIpAddress(ethIp, networdInfo.ipAddr));
+                CHK_RET(CheckUniqueAndInsertPool(
+                    JsonUniqueInfoType::UNIQUE_INFO_TYPE_ETH_IP, ethIp, JsonCheckOpType::CHECK_OP_TYPE_INSERT));
+                CHK_RET(ConvertIpAddress(ethIp, networkInfo.ipAddr));
                 break;
             }
         }
-        if (networdInfo.ipAddr.IsInvalid()) {
-            HCCL_ERROR("[Get][SingleServer]errNo[0x%016llx] networdInfo [%s] ipAddr is invalid",
-                HCOM_ERROR_CODE(HCCL_E_PARA), networdInfo.ethName.c_str());
+        if (networkInfo.ipAddr.IsInvalid()) {
+            HCCL_ERROR(
+                "[Get][SingleServer]errNo[0x%016llx] networkInfo [%s] ipAddr is invalid", HCOM_ERROR_CODE(HCCL_E_PARA),
+                networkInfo.ethName.c_str());
             return HCCL_E_PARA;
         }
-        HCCL_DEBUG("networdInfo[%u] [%s] ipAddr[%s]", objIndex, networdInfo.ethName.c_str(), \
-            networdInfo.ipAddr.GetReadableAddress());
-        serverInfo.networkInfo.push_back(networdInfo);
+        HCCL_DEBUG(
+            "networkInfo[%u] [%s] ipAddr[%s]", objIndex, networkInfo.ethName.c_str(),
+            networkInfo.ipAddr.GetReadableAddress());
+        serverInfo.networkInfo.push_back(networkInfo);
     }
 
     rankTable.serverList.push_back(serverInfo);
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoinfoRanktableStandard::GetCloudHcomInfo(hccl::HcclCommParams &params, hccl::RankTable_t &rankTable,
-    const std::string &identify, u32 &rank)
+HcclResult TopoinfoRanktableStandard::GetCloudHcomInfo(
+    hccl::HcclCommParams& params, hccl::RankTable_t& rankTable, const std::string& identify, u32& rank)
 {
     HCCL_DEBUG("get cloud hcom info: identify[%s]", identify.c_str());
     // group_count
@@ -292,10 +301,11 @@ HcclResult TopoinfoRanktableStandard::GetCloudHcomInfo(hccl::HcclCommParams &par
         CHK_RET(hrtGetDevicePhyIdByIndex(static_cast<u32>(deviceLogicId), devicePhyId));
 
         for (u32 index = 0; index < rankTable.rankList.size(); index++) {
-            HCCL_INFO(" rank: %u  phyId:%u identify:%s podName:%s", rank, devicePhyId, identify.c_str(),
+            HCCL_INFO(
+                " rank: %u phyId:%u identify:%s podName:%s", rank, devicePhyId, identify.c_str(),
                 rankTable.rankList[index].podName.c_str());
-            if ((rankTable.rankList[index].podName == identify) &&
-                    (rankTable.rankList[index].deviceInfo.devicePhyId == static_cast<s32>(devicePhyId))) {
+            if ((rankTable.rankList[index].podName == identify)
+                && (rankTable.rankList[index].deviceInfo.devicePhyId == static_cast<s32>(devicePhyId))) {
                 rank = rankTable.rankList[index].rankId;
                 break;
             }
@@ -308,21 +318,22 @@ HcclResult TopoinfoRanktableStandard::GetCloudHcomInfo(hccl::HcclCommParams &par
     rankTable.rankNum = rankTable.rankList.size();
 
     // alg_type
-    HCCL_INFO("%s.json -> rank %u : deviceNum is %u, serverNum is %u, nicDeploy is %u, rankNum is %u",
-        fileName_.c_str(), rank, rankTable.deviceNum, rankTable.serverNum,
-        rankTable.nicDeploy, rankTable.rankNum);
+    HCCL_INFO(
+        "%s.json -> rank %u : deviceNum is %u, serverNum is %u, nicDeploy is %u, rankNum is %u", fileName_.c_str(),
+        rank, rankTable.deviceNum, rankTable.serverNum, rankTable.nicDeploy, rankTable.rankNum);
 
     return HCCL_SUCCESS;
 }
 
-
-HcclResult TopoinfoRanktableStandard::GetSortClouldRankList(hccl::RankTable_t &rankTable)
+HcclResult TopoinfoRanktableStandard::GetSortClouldRankList(hccl::RankTable_t& rankTable)
 {
     // sort device id in each server
     for (auto iter = devMap_.begin(); iter != devMap_.end(); iter++) {
         if (!(iter->second).empty()) {
-            std::sort((iter->second).begin(), (iter->second).end(), [&](const RankInfo_t &a,
-                const RankInfo_t &b) -> bool {return a.deviceInfo.devicePhyId < b.deviceInfo.devicePhyId;});
+            std::sort(
+                (iter->second).begin(), (iter->second).end(), [&](const RankInfo_t& a, const RankInfo_t& b) -> bool {
+                    return a.deviceInfo.devicePhyId < b.deviceInfo.devicePhyId;
+                });
         }
     }
 
@@ -341,9 +352,8 @@ HcclResult TopoinfoRanktableStandard::GetSortClouldRankList(hccl::RankTable_t &r
     return HCCL_SUCCESS;
 }
 
-
-HcclResult TopoinfoRanktableStandard::GetSingleGroupDeviceCount(nlohmann::json &obj, u32 objIndex,
-    hccl::RankTable_t &rankTable, u32 &deviceNum)
+HcclResult TopoinfoRanktableStandard::GetSingleGroupDeviceCount(
+    const nlohmann::json& obj, u32 objIndex, hccl::RankTable_t& rankTable, u32& deviceNum)
 {
     // device_num
     std::string strDeviceNum;
@@ -364,8 +374,9 @@ HcclResult TopoinfoRanktableStandard::GetSingleGroupDeviceCount(nlohmann::json &
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoinfoRanktableStandard::GetLabSingleGroup(nlohmann::json &obj, u32 objIndex, hccl::HcclCommParams &params,
-    hccl::RankTable_t &rankTable, u32 instanceNum)
+HcclResult TopoinfoRanktableStandard::GetLabSingleGroup(
+    const nlohmann::json& obj, u32 objIndex, const hccl::HcclCommParams& params, hccl::RankTable_t& rankTable,
+    u32 instanceNum)
 {
     u32 uDeviceNum = 0;
     u32 uServerNum = 0;
@@ -388,7 +399,7 @@ HcclResult TopoinfoRanktableStandard::GetLabSingleGroup(nlohmann::json &obj, u32
         CHK_RET(CheckAverageDev(uDeviceNum, uServerNum));
     }
     // server_list
-    if (static_cast<u32>(rankTable.nicDeploy) == 0) {  // 网卡挂载在host侧
+    if (static_cast<u32>(rankTable.nicDeploy) == 0) { // 网卡挂载在host侧
         CHK_RET(GetServerList(obj, objIndex, rankTable, uServerNum));
     }
 
@@ -401,17 +412,20 @@ HcclResult TopoinfoRanktableStandard::GetLabSingleGroup(nlohmann::json &obj, u32
     return HCCL_SUCCESS;
 }
 
-
-HcclResult TopoinfoRanktableStandard::GetGroupList(hccl::HcclCommParams &params, hccl::RankTable_t &rankTable)
+HcclResult TopoinfoRanktableStandard::GetGroupList(hccl::HcclCommParams& params, hccl::RankTable_t& rankTable)
 {
     rankTable.rankList.clear();
     nlohmann::json groupList;
     CHK_RET(GetJsonProperty(fileContent_, "group_list", groupList, false));
 
     HCCL_DEBUG("group_list.size[%zu] groupNum[%u]", groupList.size(), rankTable.groupNum);
-    CHK_PRT_RET(groupList.size() != rankTable.groupNum, HCCL_ERROR("[Get][GroupList]errNo[0x%016llx] "\
-        "groupList size[%zu] error, groupNum[%u]", HCOM_ERROR_CODE(HCCL_E_PARA), groupList.size(),
-        rankTable.groupNum), HCCL_E_PARA);
+    CHK_PRT_RET(
+        groupList.size() != rankTable.groupNum,
+        HCCL_ERROR(
+            "[Get][GroupList]errNo[0x%016llx] "
+            "groupList size[%zu] error, groupNum[%u]",
+            HCOM_ERROR_CODE(HCCL_E_PARA), groupList.size(), rankTable.groupNum),
+        HCCL_E_PARA);
 
     rankTable.deviceNum = 0;
     rankTable.serverNum = 0;
@@ -421,8 +435,8 @@ HcclResult TopoinfoRanktableStandard::GetGroupList(hccl::HcclCommParams &params,
         std::string groupName;
         CHK_RET(GetJsonArrayMemberProperty(groupList, index, "group_name", groupName, false));
 
-        CHK_RET(CheckUniqueAndInsertPool(JsonUniqueInfoType::UNIQUE_INFO_TYPE_GROUP_NAME, groupName,
-            JsonCheckOpType::CHECK_OP_TYPE_INSERT));
+        CHK_RET(CheckUniqueAndInsertPool(
+            JsonUniqueInfoType::UNIQUE_INFO_TYPE_GROUP_NAME, groupName, JsonCheckOpType::CHECK_OP_TYPE_INSERT));
         HCCL_DEBUG("%s.json -> group_name: %s", fileName_.c_str(), groupName.c_str());
 
         // instance_count
@@ -433,8 +447,8 @@ HcclResult TopoinfoRanktableStandard::GetGroupList(hccl::HcclCommParams &params,
         u32 instanceNum = 0;
         CHK_RET(SalStrToULong(instanceCount, HCCL_BASE_DECIMAL, instanceNum));
         if (instanceNum == 0) {
-            HCCL_ERROR("[Get][GroupList]errNo[0x%016llx] instance num[%u] invalid", HCOM_ERROR_CODE(HCCL_E_PARA),
-                instanceNum);
+            HCCL_ERROR(
+                "[Get][GroupList]errNo[0x%016llx] instance num[%u] invalid", HCOM_ERROR_CODE(HCCL_E_PARA), instanceNum);
             return HCCL_E_PARA;
         }
         u32 deviceNum = 0;
@@ -454,8 +468,9 @@ HcclResult TopoinfoRanktableStandard::GetGroupList(hccl::HcclCommParams &params,
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoinfoRanktableStandard::GetInstanceList(nlohmann::json &instanceList, hccl::HcclCommParams &params,
-    hccl::RankTable_t &rankTable, u32 instanceNum, u32 deviceNum)
+HcclResult TopoinfoRanktableStandard::GetInstanceList(
+    nlohmann::json& instanceList, hccl::HcclCommParams& params, hccl::RankTable_t& rankTable, u32 instanceNum,
+    u32 deviceNum)
 {
     HCCL_DEBUG("get instanceList: instanceNum[%u], deviceNum[%u]", instanceNum, deviceNum);
     u32 checkCount = 0;
@@ -466,18 +481,20 @@ HcclResult TopoinfoRanktableStandard::GetInstanceList(nlohmann::json &instanceLi
         CHK_RET(GetJsonArrayMemberProperty(instanceList, podIndex, "server_id", serverId, false));
         HCCL_DEBUG("%s.json -> server_id: %s", fileName_.c_str(), serverId.c_str());
         if ((!cloudFlag_) && (static_cast<u32>(rankTable.nicDeploy) == 0)) {
-            CHK_RET(CheckUniqueAndInsertPool(JsonUniqueInfoType::UNIQUE_INFO_TYPE_SERVER_ID, serverId,
-                JsonCheckOpType::CHECK_OP_TYPE_FIND));
+            CHK_RET(CheckUniqueAndInsertPool(
+                JsonUniqueInfoType::UNIQUE_INFO_TYPE_SERVER_ID, serverId, JsonCheckOpType::CHECK_OP_TYPE_FIND));
         }
 
         if (serverId.empty()) {
-            HCCL_ERROR("[Get][GetInstanceList]errNo[0x%016llx] serverId[%s] is empty",
-                HCOM_ERROR_CODE(HCCL_E_PARA), serverId.c_str());
+            HCCL_ERROR(
+                "[Get][GetInstanceList]errNo[0x%016llx] serverId[%s] is empty", HCOM_ERROR_CODE(HCCL_E_PARA),
+                serverId.c_str());
             return HCCL_E_PARA;
         }
 
         if (serverId.length() > SERVERID_MAX_LENGTH) {
-            HCCL_ERROR("[Get][GetInstanceList]errNo[0x%016llx] serverId[%s] length[%u] is more than %u",
+            HCCL_ERROR(
+                "[Get][GetInstanceList]errNo[0x%016llx] serverId[%s] length[%u] is more than %u",
                 HCOM_ERROR_CODE(HCCL_E_PARA), serverId.c_str(), serverId.length(), SERVERID_MAX_LENGTH);
             return HCCL_E_PARA;
         }
@@ -499,23 +516,26 @@ HcclResult TopoinfoRanktableStandard::GetInstanceList(nlohmann::json &instanceLi
 
     HCCL_DEBUG("instance_num %u, check_count %u", instanceNum, checkCount);
     bool hcclCheck = (instanceNum != checkCount) || (deviceNum != checkDevCount);
-    CHK_PRT_RET(hcclCheck,
-        HCCL_ERROR("[Get][InstanceList]errNo[0x%016llx] check instanceNum[%u] or devNum[%u] error, checkInstance[%u], "\
-            "checkDev[%u]", HCOM_ERROR_CODE(HCCL_E_PARA), instanceNum, deviceNum, checkCount,
-            checkDevCount), HCCL_E_PARA);
-    
+    CHK_PRT_RET(
+        hcclCheck,
+        HCCL_ERROR(
+            "[Get][InstanceList]errNo[0x%016llx] check instanceNum[%u] or devNum[%u] error, checkInstance[%u], "
+            "checkDev[%u]",
+            HCOM_ERROR_CODE(HCCL_E_PARA), instanceNum, deviceNum, checkCount, checkDevCount),
+        HCCL_E_PARA);
+
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoinfoRanktableStandard::GetCloudDevList(nlohmann::json &instanceList, u32 podIndex,
-    nlohmann::json &deviceList, std::string &serverId, u32 &serverIdx)
+HcclResult TopoinfoRanktableStandard::GetCloudDevList(
+    nlohmann::json& instanceList, u32 podIndex, nlohmann::json& deviceList, std::string& serverId, u32& serverIdx)
 {
     std::string podName;
     CHK_RET(GetJsonArrayMemberProperty(instanceList, podIndex, "pod_name", podName, false));
     HCCL_DEBUG("%s.json -> pod_name: %s", fileName_.c_str(), podName.c_str());
-    
-    CHK_RET(CheckUniqueAndInsertPool(JsonUniqueInfoType::UNIQUE_INFO_TYPE_POD_NAME, podName,
-        JsonCheckOpType::CHECK_OP_TYPE_INSERT));
+
+    CHK_RET(CheckUniqueAndInsertPool(
+        JsonUniqueInfoType::UNIQUE_INFO_TYPE_POD_NAME, podName, JsonCheckOpType::CHECK_OP_TYPE_INSERT));
     for (u32 deviceIndex = 0; deviceIndex < deviceList.size(); deviceIndex++) {
         std::string strDevid;
         CHK_RET(GetJsonArrayMemberProperty(deviceList, deviceIndex, "device_id", strDevid, false));
@@ -523,7 +543,8 @@ HcclResult TopoinfoRanktableStandard::GetCloudDevList(nlohmann::json &instanceLi
         u32 devicePhyId = 0;
         CHK_RET(SalStrToULong(strDevid, HCCL_BASE_DECIMAL, devicePhyId));
         if (devicePhyId > (HCCL_AISERVER_DEVICE_NUM - 1)) { // deviceid in 0 ~ 7
-            HCCL_ERROR("[Get][CloudDevList]errNo[0x%016llx] devicePhyId[%u] more than [%u] is invalid",
+            HCCL_ERROR(
+                "[Get][CloudDevList]errNo[0x%016llx] devicePhyId[%u] more than [%u] is invalid",
                 HCOM_ERROR_CODE(HCCL_E_PARA), devicePhyId, HCCL_AISERVER_DEVICE_NUM - 1);
             return HCCL_E_PARA;
         }
@@ -537,12 +558,13 @@ HcclResult TopoinfoRanktableStandard::GetCloudDevList(nlohmann::json &instanceLi
             CHK_RET(GetJsonArrayMemberProperty(deviceList, deviceIndex, "device_ip", deviceIp, false));
             HCCL_DEBUG("%s.json -> device_ip: %s", fileName_.c_str(), deviceIp.c_str());
             if (!deviceIp.empty()) {
-                CHK_RET(CheckUniqueAndInsertPool(JsonUniqueInfoType::UNIQUE_INFO_TYPE_DEVICE_IP, deviceIp,
-                    JsonCheckOpType::CHECK_OP_TYPE_INSERT));
+                CHK_RET(CheckUniqueAndInsertPool(
+                    JsonUniqueInfoType::UNIQUE_INFO_TYPE_DEVICE_IP, deviceIp, JsonCheckOpType::CHECK_OP_TYPE_INSERT));
 
                 HcclResult ret = ConvertIpAddress(deviceIp, ipAddr);
-                CHK_PRT_RET(ret != HCCL_SUCCESS,
-                    HCCL_ERROR("[Get][CloudDevList]deviceIp[%s] is invalid", deviceIp.c_str()), ret);
+                CHK_PRT_RET(
+                    ret != HCCL_SUCCESS, HCCL_ERROR("[Get][CloudDevList]deviceIp[%s] is invalid", deviceIp.c_str()),
+                    ret);
             }
         } else {
             HCCL_INFO("single server don't need devIP");
@@ -556,21 +578,22 @@ HcclResult TopoinfoRanktableStandard::GetCloudDevList(nlohmann::json &instanceLi
         // 回填dev_map_
         auto iter = devMap_.find(serverId);
         if (iter != devMap_.end()) {
-            iter->second.push_back(rankinfo);  // 存在该服务器内相关dev的对应信息
+            iter->second.push_back(rankinfo); // 存在该服务器内相关dev的对应信息
         } else {
             std::vector<RankInfo_t> vecDev;
             vecDev.push_back(rankinfo);
-            devMap_.insert(std::make_pair(serverId, vecDev));  // 不存在则新增一条map记录
+            devMap_.insert(std::make_pair(serverId, vecDev)); // 不存在则新增一条map记录
         }
-        HCCL_DEBUG("%s.json->serverId[%s], podName[%s], devicePhyId[%d]", fileName_.c_str(),
-            rankinfo.serverId.c_str(), rankinfo.podName.c_str(), rankinfo.deviceInfo.devicePhyId);
+        HCCL_DEBUG(
+            "%s.json->serverId[%s], podName[%s], devicePhyId[%d]", fileName_.c_str(), rankinfo.serverId.c_str(),
+            rankinfo.podName.c_str(), rankinfo.deviceInfo.devicePhyId);
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoinfoRanktableStandard::GetDevList(nlohmann::json &instanceList, u32 podIndex,
-    nlohmann::json &deviceList, hccl::HcclCommParams &params, hccl::RankTable_t &rankTable,
-    std::string &serverId, u32 &serverIdx)
+HcclResult TopoinfoRanktableStandard::GetDevList(
+    const nlohmann::json& instanceList, u32 podIndex, const nlohmann::json& deviceList,
+    const hccl::HcclCommParams& params, hccl::RankTable_t& rankTable, std::string& serverId, u32& serverIdx)
 {
     std::string rankId;
     CHK_RET(GetJsonArrayMemberProperty(instanceList, podIndex, "rank_id", rankId, false));
@@ -581,31 +604,30 @@ HcclResult TopoinfoRanktableStandard::GetDevList(nlohmann::json &instanceList, u
 
         u32 devicePhyId = 0;
         CHK_RET(SalStrToULong(strDevid, HCCL_BASE_DECIMAL, devicePhyId));
-        if ((params.deviceType != DevType::DEV_TYPE_310P3 &&
-            params.deviceType != DevType::DEV_TYPE_910B &&
-            params.deviceType != DevType::DEV_TYPE_910_93) &&
-            (devicePhyId > (HCCL_AISERVER_DEVICE_NUM - 1))) {
-            HCCL_ERROR("[Get][DevList]errNo[0x%016llx] device_id[%u] more than 7 is invalid",
-                HCOM_ERROR_CODE(HCCL_E_PARA), devicePhyId);
+        if ((params.deviceType != DevType::DEV_TYPE_310P3 && params.deviceType != DevType::DEV_TYPE_910B
+             && params.deviceType != DevType::DEV_TYPE_910_93)
+            && (devicePhyId > (HCCL_AISERVER_DEVICE_NUM - 1))) {
+            HCCL_ERROR(
+                "[Get][DevList]errNo[0x%016llx] device_id[%u] more than 7 is invalid", HCOM_ERROR_CODE(HCCL_E_PARA),
+                devicePhyId);
             return HCCL_E_PARA;
         }
         HCCL_DEBUG("%s.json -> device_id: %s", fileName_.c_str(), strDevid.c_str());
 
         RankInfo_t rankinfo;
         // 1.非cloud场景下，网卡挂载在device侧2.cloud场景
-        // 推荐网络场景，单servere需要使用RDMA网卡
+        // 推荐网络场景，单server需要使用RDMA网卡
         HcclIpAddress ipAddr;
-        if (rankTable.nicDeploy == NICDeployment::NIC_DEPLOYMENT_DEVICE &&
-            (rankTable.serverNum > 0)) {
+        if (rankTable.nicDeploy == NICDeployment::NIC_DEPLOYMENT_DEVICE && (rankTable.serverNum > 0)) {
             std::string deviceIp;
             CHK_RET(GetJsonArrayMemberProperty(deviceList, deviceIndex, "device_ip", deviceIp, false));
             HCCL_DEBUG("%s.json -> device_ip: %s", fileName_.c_str(), deviceIp.c_str());
             if (deviceIp.compare("") != 0) {
-                CHK_RET(CheckUniqueAndInsertPool(JsonUniqueInfoType::UNIQUE_INFO_TYPE_DEVICE_IP, deviceIp,
-                    JsonCheckOpType::CHECK_OP_TYPE_INSERT));
+                CHK_RET(CheckUniqueAndInsertPool(
+                    JsonUniqueInfoType::UNIQUE_INFO_TYPE_DEVICE_IP, deviceIp, JsonCheckOpType::CHECK_OP_TYPE_INSERT));
                 HcclResult ret = ConvertIpAddress(deviceIp, ipAddr);
-                CHK_PRT_RET(ret != HCCL_SUCCESS,
-                    HCCL_ERROR("[Get][DevList]deviceIp[%s] is invalid", deviceIp.c_str()), ret);
+                CHK_PRT_RET(
+                    ret != HCCL_SUCCESS, HCCL_ERROR("[Get][DevList]deviceIp[%s] is invalid", deviceIp.c_str()), ret);
             }
         } else {
             HCCL_INFO("single server don't need devIP");
@@ -616,24 +638,27 @@ HcclResult TopoinfoRanktableStandard::GetDevList(nlohmann::json &instanceList, u
         rankinfo.serverIdx = serverIdx;
         rankinfo.deviceInfo.devicePhyId = devicePhyId;
         if (SalStrToULong(rankId, HCCL_BASE_DECIMAL, rankinfo.rankId) != HCCL_SUCCESS) {
-            RPT_INPUT_ERR(true, "EI0014", std::vector<std::string>({ "value", "variable" ,"expect" }),
-                std::vector<std::string>({ rankId, "rank_id", "a valid integer" }));
-            HCCL_ERROR("[%s][%s]errNo[0x%016llx] rankid[%s] is invalid", LOG_KEYWORDS_INIT_GROUP.c_str(),
+            RPT_INPUT_ERR(
+                true, "EI0014", std::vector<std::string>({"value", "variable", "expect"}),
+                std::vector<std::string>({rankId, "rank_id", "a valid integer"}));
+            HCCL_ERROR(
+                "[%s][%s]errNo[0x%016llx] rankid[%s] is invalid", LOG_KEYWORDS_INIT_GROUP.c_str(),
                 LOG_KEYWORDS_RANKTABLE_CHECK.c_str(), HCOM_ERROR_CODE(HCCL_E_PARA), rankId.c_str());
             return HCCL_E_PARA;
         }
 
-        rankinfo.podName = "";  // podname在实验室场景下置空
+        rankinfo.podName = ""; // podname在实验室场景下置空
         rankId = "";
         rankTable.rankList.push_back(rankinfo);
-        HCCL_DEBUG("%s.json->rankId[%u], serverId[%s], devicePhyId[%d]", fileName_.c_str(),
-            rankinfo.rankId, rankinfo.serverId.c_str(), rankinfo.deviceInfo.devicePhyId);
+        HCCL_DEBUG(
+            "%s.json->rankId[%u], serverId[%s], devicePhyId[%d]", fileName_.c_str(), rankinfo.rankId,
+            rankinfo.serverId.c_str(), rankinfo.deviceInfo.devicePhyId);
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoinfoRanktableStandard::GetDeployMode(bool &cloudFlag) const
+HcclResult TopoinfoRanktableStandard::GetDeployMode(bool& cloudFlag) const
 {
-    cloudFlag = fileContent_.find("deploy_mode") == fileContent_.end() ;
+    cloudFlag = fileContent_.find("deploy_mode") == fileContent_.end();
     return HCCL_SUCCESS;
 }

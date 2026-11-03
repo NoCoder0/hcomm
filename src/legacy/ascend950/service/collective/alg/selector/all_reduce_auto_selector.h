@@ -20,21 +20,20 @@ namespace Hccl {
 
 class AllReduceAutoSelector : public AutoSelectorBase {
 private:
-    SelectorStatus SelectCcuMsAlgo(const TopoInfo &topoInfo, const CollAlgOperator &op,
-                                 const std::map<OpType, std::vector<HcclAlgoType>> &configAlgMap,
-                                 std::string                                 &primQueueGenName) const override;
-    SelectorStatus SelectCcuScheduleAlgo(const TopoInfo &topoInfo,
-                                 const CollAlgOperator &op,
-                                 const std::map<OpType, std::vector<HcclAlgoType>> &configAlgMap,
-                                 std::string &primQueueGenName) const override;
-    SelectorStatus SelectAicpuAlgo(const TopoInfo &topoInfo, const CollAlgOperator &op,
-                                   const std::map<OpType, std::vector<HcclAlgoType>> &configAlgMap,
-                                   std::string                                 &primQueueGenName) const override;
-    SelectorStatus SelectAivAlgo(const TopoInfo &topoInfo, const CollAlgOperator &op, const std::map<OpType, 
-                                 std::vector<HcclAlgoType>> &configAlgMap, std::string &primQueueGenName) const override;
-    SelectorStatus SelectMeshAlgoAicpu(const TopoInfo &topoInfo,
-                                       const CollAlgOperator &op,
-                                       std::string &primQueueGenName) const;
+    SelectorStatus SelectCcuMsAlgo(
+        const TopoInfo& topoInfo, const CollAlgOperator& op,
+        const std::map<OpType, std::vector<HcclAlgoType>>& configAlgMap, std::string& primQueueGenName) const override;
+    SelectorStatus SelectCcuScheduleAlgo(
+        const TopoInfo& topoInfo, const CollAlgOperator& op,
+        const std::map<OpType, std::vector<HcclAlgoType>>& configAlgMap, std::string& primQueueGenName) const override;
+    SelectorStatus SelectAicpuAlgo(
+        const TopoInfo& topoInfo, const CollAlgOperator& op,
+        const std::map<OpType, std::vector<HcclAlgoType>>& configAlgMap, std::string& primQueueGenName) const override;
+    SelectorStatus SelectAivAlgo(
+        const TopoInfo& topoInfo, const CollAlgOperator& op,
+        const std::map<OpType, std::vector<HcclAlgoType>>& configAlgMap, std::string& primQueueGenName) const override;
+    SelectorStatus
+    SelectMeshAlgoAicpu(const TopoInfo& topoInfo, const CollAlgOperator& op, std::string& primQueueGenName) const;
 };
 
 } // namespace Hccl

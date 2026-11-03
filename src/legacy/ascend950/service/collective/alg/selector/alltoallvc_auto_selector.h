@@ -20,11 +20,12 @@ namespace Hccl {
 
 class AlltoAllVCAutoSelector : public AutoSelectorBase {
 private:
-    SelectorStatus SelectCcuScheduleAlgo(const TopoInfo &topoInfo, const CollAlgOperator &op,
-        const std::map<OpType, std::vector<HcclAlgoType>> &configAlgMap, std::string &primQueueGenName) const override;
-    SelectorStatus SelectAicpuAlgo(const TopoInfo &topoInfo, const CollAlgOperator &op,
-        const std::map<OpType, std::vector<HcclAlgoType>> &configAlgMap,
-        std::string &primQueueGenName) const override;
+    SelectorStatus SelectCcuScheduleAlgo(
+        const TopoInfo& topoInfo, const CollAlgOperator& op,
+        const std::map<OpType, std::vector<HcclAlgoType>>& configAlgMap, std::string& primQueueGenName) const override;
+    SelectorStatus SelectAicpuAlgo(
+        const TopoInfo& topoInfo, const CollAlgOperator& op,
+        const std::map<OpType, std::vector<HcclAlgoType>>& configAlgMap, std::string& primQueueGenName) const override;
 };
 
 } // namespace Hccl

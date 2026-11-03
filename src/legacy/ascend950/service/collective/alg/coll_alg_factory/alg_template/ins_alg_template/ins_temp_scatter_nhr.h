@@ -17,12 +17,11 @@
 #include "ins_temp_all_gather_nhr.h"
 namespace Hccl {
 
-
 class InsTempScatterNHR : public InsAlgTemplateBase {
 public:
-    explicit InsTempScatterNHR(const RankId virtualRank, const u32 tempRankSize,
-                                   const std::vector<std::vector<RankId>> &tempVTopo,
-                                   const std::map<RankId, u32>            &tempVirtRankMap);
+    explicit InsTempScatterNHR(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~InsTempScatterNHR() override;
 
     std::string Describe() const override
@@ -30,19 +29,28 @@ public:
         return StringFormat("Template of scatter NHR with tempRankSize [%u].", tempRankSize_);
     }
 
-    HcclResult GetStepInfo(u32 step, u32 nSteps, AicpuNHRStepInfo &stepInfo) const;
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
+    HcclResult GetStepInfo(u32 step, u32 nSteps, AicpuNHRStepInfo& stepInfo) const;
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
     uint64_t GetExpandedMode() const;
-    HcclResult GenExtIns(TempFuncs &tempFuncs, TemplateDataParams &templateDataParams,
-                         ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues);
+    HcclResult GenExtIns(
+        TempFuncs& tempFuncs, TemplateDataParams& templateDataParams, ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues);
     u32 CalcScratchMultiple(BufferType inBuffType, BufferType outBuffType) const;
+
 private:
-    HcclResult PreCopy(const TemplateDataParams &templateDataParams, std::vector<InsQuePtr> &tempInsQues);
-    HcclResult PostCopy(const TemplateDataParams &templateDataParams, std::vector<InsQuePtr> &tempInsQues);
-    HcclResult RunNHR(TemplateDataParams &templateDataParams, ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues) const;
-    HcclResult BatchSend(AicpuNHRStepInfo &stepInfo, const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues, TemplateDataParams &templateDataParams, u32 repeat) const;
-    HcclResult BatchRecv(AicpuNHRStepInfo &stepInfo, const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues, TemplateDataParams &templateDataParams, u32 repeat) const;
-    HcclResult BatchSR(AicpuNHRStepInfo &stepInfo, const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues, TemplateDataParams &templateDataParams, u32 repeat) const;
+    HcclResult PreCopy(const TemplateDataParams& templateDataParams, std::vector<InsQuePtr>& tempInsQues);
+    HcclResult PostCopy(const TemplateDataParams& templateDataParams, std::vector<InsQuePtr>& tempInsQues);
+    HcclResult
+    RunNHR(TemplateDataParams& templateDataParams, ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues) const;
+    HcclResult BatchSend(
+        AicpuNHRStepInfo& stepInfo, const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues,
+        TemplateDataParams& templateDataParams, u32 repeat) const;
+    HcclResult BatchRecv(
+        AicpuNHRStepInfo& stepInfo, const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues,
+        TemplateDataParams& templateDataParams, u32 repeat) const;
+    HcclResult BatchSR(
+        AicpuNHRStepInfo& stepInfo, const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues,
+        TemplateDataParams& templateDataParams, u32 repeat) const;
 };
 
 } // namespace Hccl

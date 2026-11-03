@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -39,17 +39,10 @@
 using namespace std;
 using namespace hccl;
 
-class NotifyAiCpu_UT : public testing::Test
-{
+class NotifyAiCpu_UT : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "\033[36m--NotifyAiCpu_UT SetUP--\033[0m" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "\033[36m--NotifyAiCpu_UT TearDown--\033[0m" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "\033[36m--NotifyAiCpu_UT SetUP--\033[0m" << std::endl; }
+    static void TearDownTestCase() { std::cout << "\033[36m--NotifyAiCpu_UT TearDown--\033[0m" << std::endl; }
     // Some expensive resource shared by all tests.
     virtual void SetUp()
     {
@@ -59,10 +52,7 @@ protected:
         notifyInfo.resId = 3;
         notifyInfo.tsId = 4;
         s32 portNum = 7;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
         std::cout << "A Test SetUP" << std::endl;
     }
     virtual void TearDown()
@@ -77,13 +67,13 @@ protected:
 TEST_F(NotifyAiCpu_UT, init_with_signal_info)
 {
     s32 ret = HCCL_SUCCESS;
-    
+
     // local notify
     LocalNotify localNotify;
     ret = localNotify.Init(notifyInfo, NotifyLoadType::DEVICE_NOTIFY);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_FALSE(localNotify.notifyOwner_);
-    
+
     // remote notify
     RemoteNotify remoteNotify;
     ret = remoteNotify.Init(notifyInfo, NotifyLoadType::DEVICE_NOTIFY);
@@ -100,7 +90,7 @@ TEST_F(NotifyAiCpu_UT, check_signal_info)
 {
     s32 ret = HCCL_SUCCESS;
     HcclSignalInfo notifyInfoGotten;
-    
+
     // local notify
     LocalNotify localNotify;
     localNotify.Init(notifyInfo, NotifyLoadType::DEVICE_NOTIFY);
@@ -109,7 +99,7 @@ TEST_F(NotifyAiCpu_UT, check_signal_info)
     EXPECT_EQ(notifyInfoGotten.devId, notifyInfo.devId);
     EXPECT_EQ(notifyInfoGotten.resId, notifyInfo.resId);
     EXPECT_EQ(notifyInfoGotten.tsId, notifyInfo.tsId);
-    
+
     // remote notify
     RemoteNotify remoteNotify;
     remoteNotify.Init(notifyInfo, NotifyLoadType::DEVICE_NOTIFY);

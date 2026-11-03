@@ -20,21 +20,18 @@
 namespace Hccl {
 template <typename AlgTopoMatch, typename InsAlgTemplate>
 InsReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::InsReduceSoleExecutor() : InsCollAlgBase()
-{
-}
+{}
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
 InsReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::~InsReduceSoleExecutor()
-{
-}
+{}
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcResOffload(const RankGraph *rankGraph,
-                                                                                      const u64            &dataSize,
-                                                                                      CollOffloadOpResReq  &resReq)
+HcclResult InsReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcResOffload(
+    const RankGraph* rankGraph, const u64& dataSize, CollOffloadOpResReq& resReq)
 {
     (void)dataSize;
-    constexpr u64 needScratchSize = 200 * 1024 * 1024;  // 需要申请200MB临时内存
+    constexpr u64 needScratchSize = 200 * 1024 * 1024; // 需要申请200MB临时内存
     resReq.requiredScratchMemSize = needScratchSize;
 
     // Topo Match
@@ -61,8 +58,8 @@ HcclResult InsReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcResOffload(c
 }
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcRes(const RankGraph *rankGraph,
-    CollAlgResReq        &algResReq)
+HcclResult
+InsReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcRes(const RankGraph* rankGraph, CollAlgResReq& algResReq)
 {
     // Topo Match
     AlgTopoMatch topoMatch(myRank_, rankSize_, rankGraph, devType_);
@@ -87,7 +84,8 @@ HcclResult InsReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcRes(const Ra
     algResReq.queueNotifys = tempResReq.queNotifys;
     algResReq.localWaitGroupCntNotify = tempResReq.localWaitGroupCntNotify;
     algResReq.localBcastPostCntNotify = tempResReq.localBcastPostCntNotify;
-    HCCL_DEBUG("[InsCollAlgFactory] [InsReduceSoleExecutor] Rank[%d], requiredQueNum [%u].", myRank_, algResReq.primQueueNum);
+    HCCL_DEBUG(
+        "[InsCollAlgFactory] [InsReduceSoleExecutor] Rank[%d], requiredQueNum [%u].", myRank_, algResReq.primQueueNum);
     CHK_RET(CalcResLinks(myRank_, rankGraph, linkPriority_, tempResReq.links, algResReq.links));
 
     return HcclResult::HCCL_SUCCESS;
@@ -95,8 +93,8 @@ HcclResult InsReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcRes(const Ra
 
 // dataSize_ as input
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(const RankGraph  *rankGraph,
-    const CollAlgOperator &op, const CollAlgParams   &params, InsQuePtr              insQue)
+HcclResult InsReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(
+    const RankGraph* rankGraph, const CollAlgOperator& op, const CollAlgParams& params, InsQuePtr insQue)
 {
     HCCL_INFO("[InsCollAlgFactory] [InsReduceSoleExecutor] Host Orchestrate begins.");
     // init and check params
@@ -108,26 +106,32 @@ HcclResult InsReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(cons
     HCCL_DEBUG("[InsCollAlgFactory] Rank[%d], [%s].", myRank_, topoMatch.Describe().c_str());
     dataTypeSize_ = DataTypeSizeGet(dataType_);
     dataSize_ = dataCount_ * dataTypeSize_;
-    CHK_PRT_RET(dataTypeSize_ == 0,
-            HCCL_ERROR("Reduce_[CollAlgFactory] Rank [%d], Invalid dataTypeSize_ [%u].", myRank_, dataTypeSize_),
-            HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        dataTypeSize_ == 0,
+        HCCL_ERROR("Reduce_[CollAlgFactory] Rank [%d], Invalid dataTypeSize_ [%u].", myRank_, dataTypeSize_),
+        HcclResult::HCCL_E_INTERNAL);
 
     // 实例化算法模板类
-    HCCL_DEBUG("Reduce_[InsReduceSoleExecutor] Rank[%d], Init insAlgTemplate with rankSize [%u] and dmaMode [%s].",
-            myRank_, rankSize_, dmaMode_.Describe().c_str());
+    HCCL_DEBUG(
+        "Reduce_[InsReduceSoleExecutor] Rank[%d], Init insAlgTemplate with rankSize [%u] and dmaMode [%s].", myRank_,
+        rankSize_, dmaMode_.Describe().c_str());
     InsAlgTemplate tempAlg(myRank_, rankSize_, vTopo_, virtRankMap_);
     tempAlg.SetDmaMode(dmaMode_);
     tempAlg.InitReduceInfo(redOp_, dataType_);
-    tempAlg.SetCollOp(op);  // CCU template需要传递op信息
+    tempAlg.SetCollOp(op); // CCU template需要传递op信息
     tempAlg.SetRoot(root_);
 
     // 计算算法模板所需资源
     AlgTempResReq tempResReq;
     if (enableDetour_) {
-        HCCL_DEBUG("[InsCollAlgFactory] [InsReduceSoleExecutor] Rank[%d], CalcRes with detouring enabled for Orchestrate.", myRank_);
+        HCCL_DEBUG(
+            "[InsCollAlgFactory] [InsReduceSoleExecutor] Rank[%d], CalcRes with detouring enabled for Orchestrate.",
+            myRank_);
         CHK_RET(tempAlg.CalcResDetour(rankGraph, tempResReq));
     } else {
-        HCCL_DEBUG("[InsCollAlgFactory] [InsReduceSoleExecutor] Rank[%d], CalcRes with detouring disabled for Orchestrate.", myRank_);
+        HCCL_DEBUG(
+            "[InsCollAlgFactory] [InsReduceSoleExecutor] Rank[%d], CalcRes with detouring disabled for Orchestrate.",
+            myRank_);
         CHK_RET(tempAlg.CalcRes(tempResReq));
     }
     // 申请算法模板所需资源
@@ -148,31 +152,33 @@ HcclResult InsReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(cons
 
 // 算子执行aicpu接口
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(const AlgTopoInfo     &topoInfo,
-    const CollAlgOperator &op, const CollAlgParams   &params, ConnectedLinkMgr      *linkMgr,
-    InsQuePtr              insQue)
+HcclResult InsReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(
+    const AlgTopoInfo& topoInfo, const CollAlgOperator& op, const CollAlgParams& params, ConnectedLinkMgr* linkMgr,
+    InsQuePtr insQue)
 {
     HCCL_INFO("[InsCollAlgFactory] [InsReduceSoleExecutor] [InsReduceSoleExecutor] AiCpu Orchestrate begins.");
     // 参数校验和初始化
     CHK_RET(Init(op, params, insQue));
 
     // soleEsecutor 只支持单层拓扑, 所以只取第 0 级通信域的信息
-    vTopo_ = topoInfo.vTopo[0];               // 本通信域内的通信平面
-    virtRankMap_ = topoInfo.virtRankMap[0];   // 本通信域内的 rank 映射表
-    virtRanks_ = topoInfo.virtRanks[0];       // 本通信域内的 rank 集合
+    vTopo_ = topoInfo.vTopo[0];             // 本通信域内的通信平面
+    virtRankMap_ = topoInfo.virtRankMap[0]; // 本通信域内的 rank 映射表
+    virtRanks_ = topoInfo.virtRanks[0];     // 本通信域内的 rank 集合
     dataTypeSize_ = DataTypeSizeGet(dataType_);
     dataSize_ = dataCount_ * dataTypeSize_;
-    CHK_PRT_RET(dataTypeSize_ == 0,
-                HCCL_ERROR("Reduce_[CollAlgFactory] Rank [%d], Invalid dataTypeSize_ [%u].", myRank_, dataTypeSize_),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        dataTypeSize_ == 0,
+        HCCL_ERROR("Reduce_[CollAlgFactory] Rank [%d], Invalid dataTypeSize_ [%u].", myRank_, dataTypeSize_),
+        HcclResult::HCCL_E_INTERNAL);
 
     // 实例化算法模板类
-    HCCL_DEBUG("Reduce_[InsReduceSoleExecutor] Rank[%d], Init insAlgTemplate with rankSize [%u] and dmaMode [%s].",
-        myRank_, rankSize_, dmaMode_.Describe().c_str());
+    HCCL_DEBUG(
+        "Reduce_[InsReduceSoleExecutor] Rank[%d], Init insAlgTemplate with rankSize [%u] and dmaMode [%s].", myRank_,
+        rankSize_, dmaMode_.Describe().c_str());
     InsAlgTemplate tempAlg(myRank_, rankSize_, vTopo_, virtRankMap_);
     tempAlg.SetDmaMode(dmaMode_);
     tempAlg.InitReduceInfo(redOp_, dataType_);
-    tempAlg.SetCollOp(op);  // CCU template需要传递op信息
+    tempAlg.SetCollOp(op); // CCU template需要传递op信息
     tempAlg.SetRoot(root_);
 
     // 计算算法模板所需资源
@@ -191,12 +197,12 @@ HcclResult InsReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(cons
 
     ParamPool paramPool = {op_, params};
     if (opMode_ == OpMode::OFFLOAD) {
-        HCCL_DEBUG("[InsReduceSoleExecutor] Rank[%d], Generating Instruction Queues in OFFLOAD Mode for AICPU.",
-                   myRank_);
+        HCCL_DEBUG(
+            "[InsReduceSoleExecutor] Rank[%d], Generating Instruction Queues in OFFLOAD Mode for AICPU.", myRank_);
         CHK_RET(OrchestrateOffload(tempAlg, paramPool));
     } else { // OPBASE
-        HCCL_DEBUG("[InsReduceSoleExecutor] Rank[%d], Generating Instruction Queues in OPBASE Mode for AICPU.",
-                   myRank_);
+        HCCL_DEBUG(
+            "[InsReduceSoleExecutor] Rank[%d], Generating Instruction Queues in OPBASE Mode for AICPU.", myRank_);
         CHK_RET(OrchestrateOpbase(tempAlg, paramPool));
     }
 
@@ -204,35 +210,38 @@ HcclResult InsReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(cons
 }
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateOffload(InsAlgTemplate &tempAlg,
-                                                                                   const ParamPool &paramPool)
+HcclResult InsReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateOffload(
+    InsAlgTemplate& tempAlg, const ParamPool& paramPool)
 {
     (void)paramPool;
     u32 dataSizePerVolume = DataTypeSizeGet(dataType_);
-    CHK_PRT_RET(dataSizePerVolume == 0,
-                HCCL_ERROR("[CollAlgFactory] Rank [%d], Invalid dataSizePerVolume [%u].", myRank_, dataSizePerVolume),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        dataSizePerVolume == 0,
+        HCCL_ERROR("[CollAlgFactory] Rank [%d], Invalid dataSizePerVolume [%u].", myRank_, dataSizePerVolume),
+        HcclResult::HCCL_E_INTERNAL);
     u64 transportBoundDataSize = UB_MAX_DATA_SIZE;
     BuffInfo buffInfo;
-    buffInfo.inBuffType     = BufferType::INPUT;
-    buffInfo.outBuffType    = BufferType::OUTPUT;
-    buffInfo.inBuffBaseOff  = 0;
+    buffInfo.inBuffType = BufferType::INPUT;
+    buffInfo.outBuffType = BufferType::OUTPUT;
+    buffInfo.inBuffBaseOff = 0;
     buffInfo.outBuffBaseOff = 0;
-    HCCL_INFO("[InsCollAlgFactory] Rank[%d], input buffer type [%s], output buffer type [%s], input buffer base "
-              "offset [%u], output buffer base offset [%u].", myRank_, buffInfo.inBuffType.Describe().c_str(),
-               buffInfo.outBuffType.Describe().c_str(), buffInfo.inBuffBaseOff, buffInfo.outBuffBaseOff);
+    HCCL_INFO(
+        "[InsCollAlgFactory] Rank[%d], input buffer type [%s], output buffer type [%s], input buffer base "
+        "offset [%u], output buffer base offset [%u].",
+        myRank_, buffInfo.inBuffType.Describe().c_str(), buffInfo.outBuffType.Describe().c_str(),
+        buffInfo.inBuffBaseOff, buffInfo.outBuffBaseOff);
     u64 sendRecvTimes = (dataSize_ / transportBoundDataSize) + ((dataSize_ % transportBoundDataSize) == 0 ? 0 : 1);
     HCCL_INFO("[CollAlgFactory] Rank [%d], sendRecvTimes [%u].", myRank_, sendRecvTimes);
     for (u64 idx = 0; idx < sendRecvTimes; idx++) {
-        u64 currDataSize = (idx == (sendRecvTimes - 1)) ? (dataSize_ - idx * transportBoundDataSize)
-                                                        : transportBoundDataSize;  // 判断是否为最后一轮
+        u64 currDataSize = (idx == (sendRecvTimes - 1)) ? (dataSize_ - idx * transportBoundDataSize) :
+                                                          transportBoundDataSize; // 判断是否为最后一轮
         RankSliceInfo sliceInfoVec;
         AllignInfo allignInfo = {enableAllign_, allignSize_, dataType_};
         TempFuncs tempFuncs;
         tempFuncs.opMode = opMode_;
         tempFuncs.enableCounterNotify = IsEnableCounterNotify();
-        tempFuncs.isForepart = true;  // Usr Buff to CCL Buff required
-        tempFuncs.isBottom = true;    // CCL Buff to Usr Buff required
+        tempFuncs.isForepart = true; // Usr Buff to CCL Buff required
+        tempFuncs.isBottom = true;   // CCL Buff to Usr Buff required
         UsrData usrData;
         // 将整块数据一次性从 UserIn 搬运到 CclIn 上
         usrData.usrInSlices.emplace_back(BufferType::INPUT, idx * transportBoundDataSize, currDataSize);
@@ -249,21 +258,21 @@ HcclResult InsReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateOfflo
 }
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateOpbase(InsAlgTemplate &tempAlg,
-                                                                                  ParamPool &paramPool)
+HcclResult
+InsReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateOpbase(InsAlgTemplate& tempAlg, ParamPool& paramPool)
 {
     BuffInfo buffInfo;
-    buffInfo.inBuffType     = BufferType::SCRATCH;
-    buffInfo.outBuffType    = BufferType::SCRATCH;
-    buffInfo.inBuffBaseOff  = 0;
+    buffInfo.inBuffType = BufferType::SCRATCH;
+    buffInfo.outBuffType = BufferType::SCRATCH;
+    buffInfo.inBuffBaseOff = 0;
     buffInfo.outBuffBaseOff = 0;
 
     // 基本参数配置
     AllignInfo allignInfo = {enableAllign_, allignSize_, dataType_};
     TempFuncs tempFuncs;
-    tempFuncs.isForepart          = true; // Usr Buff to CCL Buff required
-    tempFuncs.isBottom            = true; // CCL Buff to Usr Buff required
-    tempFuncs.opMode              = opMode_;
+    tempFuncs.isForepart = true; // Usr Buff to CCL Buff required
+    tempFuncs.isBottom = true;   // CCL Buff to Usr Buff required
+    tempFuncs.opMode = opMode_;
     tempFuncs.enableCounterNotify = IsEnableCounterNotify();
 
     u64 outputCount = dataCount_;
@@ -273,14 +282,14 @@ HcclResult InsReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateOpbas
         HCCL_ERROR("[InsReduceSoleExecutor][OrchestrateOpbase] maxLoopOutputCount is zero!");
         return HcclResult::HCCL_E_INTERNAL;
     }
-    HCCL_INFO("[InsReduceSoleExecutor][OrchestrateOpbase] Actual maxLoopOutputCount: [%lu].", maxLoopOutputCount);
+    HCCL_INFO("[InsReduceSoleExecutor][OrchestrateOpbase] Actual maxLoopOutputCount: [%llu].", maxLoopOutputCount);
 
     u64 loopTimes = outputCount / maxLoopOutputCount + static_cast<u64>(outputCount % maxLoopOutputCount != 0);
     for (u32 loop = 0; loop < loopTimes; loop++) {
         u64 loopOffsetCount = loop * maxLoopOutputCount;
         u64 loopOffsetSize = loopOffsetCount * dataTypeSize_;
         // 本轮需要处理的数据量
-        u64 currOutputCount = (loop == (loopTimes - 1)) ?  outputCount - loopOffsetCount : maxLoopOutputCount;
+        u64 currOutputCount = (loop == (loopTimes - 1)) ? outputCount - loopOffsetCount : maxLoopOutputCount;
         u64 currOutputSize = currOutputCount * dataTypeSize_;
         UsrData usrData;
         // 将整块数据一次性从 UserIn 搬运到 CclIn 上
@@ -299,7 +308,7 @@ HcclResult InsReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateOpbas
 }
 
 #ifndef CCL_KERNEL_AICPU
-INS_REGISTER_IMPL_BY_TEMP(OpType::REDUCE, CcuReduceMesh2D, InsReduceSoleExecutor, TopoMatchConcurrMesh,
-                          CcuTempReduceMesh2D);
+INS_REGISTER_IMPL_BY_TEMP(
+    OpType::REDUCE, CcuReduceMesh2D, InsReduceSoleExecutor, TopoMatchConcurrMesh, CcuTempReduceMesh2D);
 #endif
 } // namespace Hccl

@@ -23,20 +23,11 @@ using namespace Hccl;
 
 class StreamManagerTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "StreamManager tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "StreamManager tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "StreamManager tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "StreamManager tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in StreamManager SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in StreamManager SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -45,11 +36,29 @@ protected:
     }
 };
 
+#define SETUP_STREAM_MANAGER_MOCKS(streamPtr)                                                    \
+    \ do                                                                                         \
+    {                                                                                            \
+        \ MOCKER(HrtStreamCreateWithFlags).stubs().will(returnValue(streamPtr));                 \
+        \ MOCKER(HrtGetStreamId).stubs().will(returnValue(0));                                   \
+        \ MOCKER(HrtGetDevice).stubs().will(returnValue(0));                                     \
+        \ MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().will(returnValue(static_cast<DevId>(1))); \
+        \ MOCKER(HrtStreamDestroy).stubs();                                                      \
+        \                                                                                        \
+    }                                                                                            \
+    while (0)
+
+#define SETUP_STREAM_MGR_TEST()         \
+    CommunicatorImpl impl;              \
+    StreamManager streamManager(&impl); \
+    void* temp = (void*)0x1;            \
+    SETUP_STREAM_MANAGER_MOCKS(temp)
+
 TEST(StreamManagerTest, opbase_not_register_and_get)
 {
     // Given
     CommunicatorImpl impl;
-    StreamManager    streamManager(&impl);
+    StreamManager streamManager(&impl);
 
     // when
     auto res = streamManager.opbase->GetMaster();
@@ -61,15 +70,7 @@ TEST(StreamManagerTest, opbase_not_register_and_get)
 TEST(StreamManagerTest, opbase_register_master_and_get)
 {
     // Given
-    CommunicatorImpl impl;
-    StreamManager    streamManager(&impl);
-
-    void* temp = (void *)0x1;
-    MOCKER(HrtStreamCreateWithFlags).stubs().will(returnValue(temp));
-    MOCKER(HrtGetStreamId).stubs().will(returnValue(0));
-    MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(1)));
-    MOCKER(HrtStreamDestroy).stubs();
+    SETUP_STREAM_MGR_TEST();
 
     auto stream = std::make_unique<Stream>(temp);
     streamManager.opbase->RegisterMaster(std::move(stream));
@@ -84,17 +85,9 @@ TEST(StreamManagerTest, opbase_register_master_and_get)
 TEST(StreamManagerTest, opbase_register_master_two_same_stream_and_get)
 {
     // Given
-    CommunicatorImpl impl;
-    StreamManager    streamManager(&impl);
+    SETUP_STREAM_MGR_TEST();
 
-    void* temp = (void *)0x1;
-    MOCKER(HrtStreamCreateWithFlags).stubs().will(returnValue(temp));
-    MOCKER(HrtGetStreamId).stubs().will(returnValue(0));
-    MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(1)));
-    MOCKER(HrtStreamDestroy).stubs();
-
-    auto stream  = std::make_unique<Stream>(temp);
+    auto stream = std::make_unique<Stream>(temp);
     auto stream1 = std::make_unique<Stream>(temp);
 
     // when
@@ -110,18 +103,10 @@ TEST(StreamManagerTest, opbase_register_master_two_same_stream_and_get)
 TEST(StreamManagerTest, opbase_register_master_two_diff_stream_and_get)
 {
     // Given
-    CommunicatorImpl impl;
-    StreamManager    streamManager(&impl);
+    SETUP_STREAM_MGR_TEST();
 
-    void* temp = (void *)0x1;
-    MOCKER(HrtStreamCreateWithFlags).stubs().will(returnValue(temp));
-    MOCKER(HrtGetStreamId).stubs().will(returnValue(0));
-    MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(1)));
-    MOCKER(HrtStreamDestroy).stubs();
-
-    auto stream  = std::make_unique<Stream>(temp);
-    auto stream1 = std::make_unique<Stream>((void *)1234);
+    auto stream = std::make_unique<Stream>(temp);
+    auto stream1 = std::make_unique<Stream>((void*)1234);
     // when
     streamManager.opbase->RegisterMaster(std::move(stream));
     streamManager.opbase->RegisterMaster(std::move(stream1));
@@ -133,15 +118,7 @@ TEST(StreamManagerTest, opbase_register_master_two_diff_stream_and_get)
 
 TEST(StreamManagerTest, clear_slaves)
 {
-    CommunicatorImpl impl;
-    StreamManager    streamManager(&impl);
-
-    void* temp = (void *)0x1;
-    MOCKER(HrtStreamCreateWithFlags).stubs().will(returnValue(temp));
-    MOCKER(HrtGetStreamId).stubs().will(returnValue(0));
-    MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(1)));
-    MOCKER(HrtStreamDestroy).stubs();
+    SETUP_STREAM_MGR_TEST();
 
     MOCKER(HrtStreamDestroy).stubs();
 
@@ -152,15 +129,7 @@ TEST(StreamManagerTest, clear_slaves)
 TEST(StreamManagerTest, offload_register_master_and_get)
 {
     // Given
-    CommunicatorImpl impl;
-    StreamManager    streamManager(&impl);
-
-    void* temp = (void *)0x1;
-    MOCKER(HrtStreamCreateWithFlags).stubs().will(returnValue(temp));
-    MOCKER(HrtGetStreamId).stubs().will(returnValue(0));
-    MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(1)));
-    MOCKER(HrtStreamDestroy).stubs();
+    SETUP_STREAM_MGR_TEST();
 
     auto stream = std::make_unique<Stream>(nullptr);
     std::string opTag = "test";
@@ -177,17 +146,9 @@ TEST(StreamManagerTest, offload_register_master_and_get)
 }
 
 TEST(StreamManagerTest, offload_register_master_two_diff_stream_and_get)
-{   
+{
     // Given
-    CommunicatorImpl impl;
-    StreamManager    streamManager(&impl);
-
-    void* temp = (void *)0x1;
-    MOCKER(HrtStreamCreateWithFlags).stubs().will(returnValue(temp));
-    MOCKER(HrtGetStreamId).stubs().will(returnValue(0));
-    MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(1)));
-    MOCKER(HrtStreamDestroy).stubs();
+    SETUP_STREAM_MGR_TEST();
 
     auto stream = std::make_unique<Stream>(nullptr);
     auto stream1 = std::make_unique<Stream>((void*)1234);
@@ -199,25 +160,16 @@ TEST(StreamManagerTest, offload_register_master_two_diff_stream_and_get)
     EXPECT_NE(nullptr, res);
 
     // then
-    EXPECT_THROW(streamManager.offload->RegisterMaster(opTag, std::move(stream1)),
-        InvalidParamsException);
+    EXPECT_THROW(streamManager.offload->RegisterMaster(opTag, std::move(stream1)), InvalidParamsException);
 }
 
 TEST(StreamManagerTest, offload_register_two_diff_slave_stream_and_get)
-{   
+{
     // Given
-    CommunicatorImpl impl;
-    StreamManager    streamManager(&impl);
-
-    void* temp = (void *)0x1;
-    MOCKER(HrtStreamCreateWithFlags).stubs().will(returnValue(temp));
-    MOCKER(HrtGetStreamId).stubs().will(returnValue(0));
-    MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(1)));
-    MOCKER(HrtStreamDestroy).stubs();
+    SETUP_STREAM_MGR_TEST();
 
     std::string opTag = "test";
-    std::vector<void *> slaveStreams = {(void*)1234, (void*)5678}; 
+    std::vector<void*> slaveStreams = {(void*)1234, (void*)5678};
     // when
     streamManager.offload->RegisterSlaves(opTag, slaveStreams);
     streamManager->offload->currOpTag = opTag;
@@ -230,26 +182,17 @@ TEST(StreamManagerTest, offload_register_two_diff_slave_stream_and_get)
     EXPECT_NE(nullptr, res2);
 
     // then
-    EXPECT_THROW(streamManager.offload->RegisterSlaves(opTag, slaveStreams),
-        InvalidParamsException);
+    EXPECT_THROW(streamManager.offload->RegisterSlaves(opTag, slaveStreams), InvalidParamsException);
 }
 
 TEST(StreamManagerTest, St_ClearOpStream_When_Normal_Expect_Success)
-{   
+{
     // Given
-    CommunicatorImpl impl;
-    StreamManager    streamManager(&impl);
-
-    void* temp = (void *)0x1;
-    MOCKER(HrtStreamCreateWithFlags).stubs().will(returnValue(temp));
-    MOCKER(HrtGetStreamId).stubs().will(returnValue(0));
-    MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(1)));
-    MOCKER(HrtStreamDestroy).stubs();
+    SETUP_STREAM_MGR_TEST();
     MOCKER(HrtStreamActive).stubs();
 
     std::string opTag = "test";
-    std::vector<void *> slaveStreams = {(void*)1111, (void*)2222}; 
+    std::vector<void*> slaveStreams = {(void*)1111, (void*)2222};
     // when
     auto master = std::make_unique<Stream>((void*)3333);
     streamManager.offload->RegisterSlaves(opTag, slaveStreams);

@@ -98,101 +98,101 @@ enum class HcclProtocolType : uint32_t {
 #pragma pack(push, 1)
 // queue attr: can not named QueueAttr, duplicatable name with driver
 struct FlowQueueAttr {
-    int32_t queueId;  // queue id
+    int32_t queueId; // queue id
 };
 
 struct MemQueueAttr {
-    int32_t queueId;  // queue id
+    int32_t queueId;    // queue id
     uint32_t queueType; // localQ:0 or clientQ:1
     uint32_t rsv[7];
 };
 
 // communication channel attr
 struct CommChannelAttr {
-    uint64_t handle;         // hcom handle
-    uint32_t localTagId;     // local tag id
-    uint32_t peerTagId;      // peer tag id
-    uint32_t localRankId;    // local rank id
-    uint32_t peerRankId;     // peer rank id
-    uint32_t localTagDepth;  // local tag depth
-    uint32_t peerTagDepth;   // peer tag depth
+    uint64_t handle;        // hcom handle
+    uint32_t localTagId;    // local tag id
+    uint32_t peerTagId;     // peer tag id
+    uint32_t localRankId;   // local rank id
+    uint32_t peerRankId;    // peer rank id
+    uint32_t localTagDepth; // local tag depth
+    uint32_t peerTagDepth;  // peer tag depth
     uint32_t memType;       // memType: 1-dvpp
-    uint32_t rsv[7];         // reserved field
+    uint32_t rsv[7];        // reserved field
 };
 
 // group attr
 struct GroupAttr {
-    int32_t groupId;       // group id
-    GroupPolicy policy;    // only need set for destination group
-    uint32_t endpointNum;  // only used for query result
+    int32_t groupId;      // group id
+    GroupPolicy policy;   // only need set for destination group
+    uint32_t endpointNum; // only used for query result
     uint32_t rootModelId;
 };
 
 // endpoint: queue, communication channel, group
 struct Endpoint {
-    EndpointType type;                      // endpoint type
-    EndpointStatus status;                  // endpoint status
-    uint32_t peerNum;                       // total instances, used by srcGroup
-    uint32_t localId;                       // self id, started by 0, used by srcGroup
-    uint32_t globalId;                      // endpoint global id
+    EndpointType type;     // endpoint type
+    EndpointStatus status; // endpoint status
+    uint32_t peerNum;      // total instances, used by srcGroup
+    uint32_t localId;      // self id, started by 0, used by srcGroup
+    uint32_t globalId;     // endpoint global id
     uint32_t modelId;
-    uint16_t resId;                         // resId
+    uint16_t resId; // resId
     uint32_t rootModelId;
-    char_t rsv[10];                         // reserved field
+    char_t rsv[10]; // reserved field
     union {
-        FlowQueueAttr queueAttr;            // queue attr
-        MemQueueAttr memQueueAttr;          // mem queue attr
-        CommChannelAttr channelAttr;        // communication channel attr
-        GroupAttr groupAttr;                // group attr
+        FlowQueueAttr queueAttr;     // queue attr
+        MemQueueAttr memQueueAttr;   // mem queue attr
+        CommChannelAttr channelAttr; // communication channel attr
+        GroupAttr groupAttr;         // group attr
     } attr;
 };
 
 // group query
 struct GroupQuery {
-    uint32_t endpointNum;  // endpoint num, return value
-    int32_t groupId;       // group id
+    uint32_t endpointNum; // endpoint num, return value
+    int32_t groupId;      // group id
 };
 
 // route query
 struct RouteQuery {
-    uint32_t routeNum;  // route num, return value
-    Endpoint src;       // src endpoint
-    Endpoint dst;       // dst endpoint
+    uint32_t routeNum; // route num, return value
+    Endpoint src;      // src endpoint
+    Endpoint dst;      // dst endpoint
 };
 
 // route query or group query
 struct ConfigQuery {
-    QueryMode mode;           // query mode
+    QueryMode mode; // query mode
     union {
-        GroupQuery groupQry;  // group query
-        RouteQuery routeQry;  // route query
+        GroupQuery groupQry; // group query
+        RouteQuery routeQry; // route query
     } qry;
 };
 
 // group config
 struct GroupConfig {
-    int32_t groupId;       // group id, created by datagw server
-    uint32_t endpointNum;  // endpoint number
-    Endpoint *endpoints;   // multi queue or channel, memory malloc by user
+    int32_t groupId;      // group id, created by datagw server
+    uint32_t endpointNum; // endpoint number
+    Endpoint* endpoints;  // multi queue or channel, memory malloc by user
 };
 
 // route info
 struct Route {
-    RouteStatus status;  // route status
-    Endpoint src;        // src endpoint
-    Endpoint dst;        // dst endpoint
-    char_t rsv[32];      // reserved param
+    RouteStatus status; // route status
+    Endpoint src;       // src endpoint
+    Endpoint dst;       // dst endpoint
+    char_t rsv[32];     // reserved param
 };
 
 // routes config
 struct RoutesConfig {
-    uint32_t routeNum;  // route number
-    Route *routes;      // routes, memory malloc by user
+    uint32_t routeNum; // route number
+    Route* routes;     // routes, memory malloc by user
 };
 
 // profiling config
 struct ProfilingConfig {
-    ProfilingMode profMode;  // profiling mode
+    ProfilingMode profMode; // profiling mode
 };
 
 struct HcclProtocolConfig {
@@ -215,28 +215,28 @@ struct DynamicSchedConfigV2 {
 };
 
 struct ReDeployConfig {
-    uint64_t rootModelIdsAddr;   // ptr which point to rootModelIds(uint32_t)
-    uint32_t rootModelNum;  // rootModelId's number
+    uint64_t rootModelIdsAddr; // ptr which point to rootModelIds(uint32_t)
+    uint32_t rootModelNum;     // rootModelId's number
     char rsv[4];
 };
 
 // config info, group config or routes config
 struct ConfigInfo {
-    ConfigCmd cmd;               // query mode, user do not need fill this param
+    ConfigCmd cmd; // query mode, user do not need fill this param
     union {
-        GroupConfig groupCfg;     // group config
-        RoutesConfig routesCfg;   // routes config
-        ProfilingConfig profCfg;  // profiling config
+        GroupConfig groupCfg;    // group config
+        RoutesConfig routesCfg;  // routes config
+        ProfilingConfig profCfg; // profiling config
         HcclProtocolConfig hcclProtocolCfg;
-        DynamicSchedConfigV2 *dynamicSchedCfgV2;
+        DynamicSchedConfigV2* dynamicSchedCfgV2;
         ReDeployConfig reDeployCfg;
     } cfg;
 };
 
 // identify info in mbuf head
 struct IdentifyInfo {
-    uint64_t transId = 0UL;  // transaction id
-    char_t rsv[52];          // reserved param
+    uint64_t transId = 0UL; // transaction id
+    char_t rsv[52];         // reserved param
     uint32_t routeLabel;
 };
 
@@ -261,8 +261,8 @@ public:
      * @param procSign procSign
      * @return 0:success, other:failed.
      */
-    int32_t Initialize(const uint32_t dgwPid, const std::string procSign, const bool isProxy = false,
-        const int32_t timeout = -1);
+    int32_t Initialize(
+        const uint32_t dgwPid, const std::string procSign, const bool isProxy = false, const int32_t timeout = -1);
 
     /**
      * Destroy dgw client
@@ -280,8 +280,9 @@ public:
      * @param handle handle
      * @return  0:success, other:failed.
      */
-    int32_t CreateHcomHandle(const std::string &rankTable, const int32_t rankId,
-                             const void * const reserve, uint64_t &handle, const int32_t timeout = -1);
+    int32_t CreateHcomHandle(
+        const std::string& rankTable, const int32_t rankId, const void* const reserve, uint64_t& handle,
+        const int32_t timeout = -1);
 
     /**
      * Destroy hccl communication handle
@@ -314,14 +315,14 @@ public:
      * @param cfgRets config results
      * @return 0:success, other:failed.
      */
-    int32_t UpdateConfig(ConfigInfo &cfgInfo, std::vector<int32_t> &cfgRets, const int32_t timeout = -1);
+    int32_t UpdateConfig(ConfigInfo& cfgInfo, std::vector<int32_t>& cfgRets, const int32_t timeout = -1);
 
     /**
      * Query Route number or endpoint number in group
      * @param query config query info
      * @return 0:success, other:failed.
      */
-    int32_t QueryConfigNum(ConfigQuery &query, const int32_t timeout = -1);
+    int32_t QueryConfigNum(ConfigQuery& query, const int32_t timeout = -1);
 
     /**
      * Query routes or group config
@@ -329,7 +330,7 @@ public:
      * @param cfgInfo routes config or group config
      * @return 0:success, other:failed.
      */
-    int32_t QueryConfig(const ConfigQuery &query, ConfigInfo &cfgInfo, const int32_t timeout = -1);
+    int32_t QueryConfig(const ConfigQuery& query, ConfigInfo& cfgInfo, const int32_t timeout = -1);
 
     /**
      * wait config effect
@@ -349,11 +350,11 @@ public:
 private:
     // config params for reducing parameters of API, only used inner
     struct ConfigParams {
-        HcomHandleInfo *info;  // hcom handle info, only invalid for create hcom handle
-        ConfigQuery *query;    // config query, only invalid for query
-        ConfigInfo *cfgInfo;   // config info
-        size_t cfgLen;         // config length
-        size_t totalLen;       // total length for mbuf
+        HcomHandleInfo* info; // hcom handle info, only invalid for create hcom handle
+        ConfigQuery* query;   // config query, only invalid for query
+        ConfigInfo* cfgInfo;  // config info
+        size_t cfgLen;        // config length
+        size_t totalLen;      // total length for mbuf
     };
 
 private:
@@ -366,8 +367,9 @@ private:
      * @param qsProcMsgRsp return value
      * @return 0:success, other:failed.
      */
-    int32_t SendEventToQsSync(const void *const msg, const size_t msgLen, const QueueSubEventType subEventId,
-                              QsProcMsgRsp &qsProcMsgRsp, const int32_t timeout = -1) const;
+    int32_t SendEventToQsSync(
+        const void* const msg, const size_t msgLen, const QueueSubEventType subEventId, QsProcMsgRsp& qsProcMsgRsp,
+        const int32_t timeout = -1) const;
     /**
      * Check and calculate config info length
      * @param cfgInfo config info
@@ -377,10 +379,9 @@ private:
      * @param spareEndpoints spare endpoint which transform memq to q
      * @return 0:success, other:failed.
      */
-    int32_t CalcConfigInfoLen(const ConfigInfo &cfgInfo, size_t &cfgLen,
-                              std::list<std::pair<uintptr_t, size_t>> &dataList,
-                              std::unique_ptr<Route[]> &spareRoutes,
-                              std::unique_ptr<Endpoint[]> &spareEndpoints) const;
+    int32_t CalcConfigInfoLen(
+        const ConfigInfo& cfgInfo, size_t& cfgLen, std::list<std::pair<uintptr_t, size_t>>& dataList,
+        std::unique_ptr<Route[]>& spareRoutes, std::unique_ptr<Endpoint[]>& spareEndpoints) const;
 
     /**
      * Get operate configuration result
@@ -391,8 +392,9 @@ private:
      * @param cmdRet command result
      * @return 0:success, other:failed.
      */
-    int32_t GetOperateConfigRet(ConfigInfo &cfgInfo, const uintptr_t mbufData, const size_t cfgLen,
-                                std::vector<int32_t> &cfgRets, int32_t &cmdRet) const;
+    int32_t GetOperateConfigRet(
+        ConfigInfo& cfgInfo, const uintptr_t mbufData, const size_t cfgLen, std::vector<int32_t>& cfgRets,
+        int32_t& cmdRet) const;
 
     /**
      * Get operate configuration result
@@ -402,9 +404,9 @@ private:
      * @param cfgRets config results only for update config
      * @return 0:success, other:failed.
      */
-    int32_t OperateConfigToServer(const QueueSubEventType subEventId, const ConfigParams &cfgParams,
-                                  std::list<std::pair<uintptr_t, size_t>> &dataList,
-                                  std::vector<int32_t> &cfgRets, const int32_t timeout = -1);
+    int32_t OperateConfigToServer(
+        const QueueSubEventType subEventId, const ConfigParams& cfgParams,
+        std::list<std::pair<uintptr_t, size_t>>& dataList, std::vector<int32_t>& cfgRets, const int32_t timeout = -1);
 
     /**
      * Calculate result length
@@ -412,7 +414,7 @@ private:
      * @param retLen result length
      * @return 0:success, other:failed.
      */
-    int32_t CalcResultLen(const ConfigInfo &cfgInfo, size_t &retLen) const;
+    int32_t CalcResultLen(const ConfigInfo& cfgInfo, size_t& retLen) const;
 
     /**
      * Get query config num result
@@ -421,7 +423,7 @@ private:
      * @param cmdRet cmd result
      * @return 0:success, other:failed.
      */
-    int32_t GetQryConfigNumRet(ConfigQuery &query, const uintptr_t mbufData, int32_t &cmdRet) const;
+    int32_t GetQryConfigNumRet(ConfigQuery& query, const uintptr_t mbufData, int32_t& cmdRet) const;
 
     /**
      * Query and check config num
@@ -429,7 +431,7 @@ private:
      * @param cfgInfo config info
      * @return 0:success, other:failed.
      */
-    int32_t CheckConfigNum(const ConfigQuery &query, ConfigInfo &cfgInfo);
+    int32_t CheckConfigNum(const ConfigQuery& query, ConfigInfo& cfgInfo);
 
     /**
      * Get operate group result
@@ -440,8 +442,9 @@ private:
      * @param cmdRet command result
      * @return 0:success, other:failed.
      */
-    int32_t GetUpdateGroupRet(ConfigInfo &cfgInfo, const uintptr_t mbufData, const size_t cfgLen,
-                              std::vector<int32_t> &cfgRets, int32_t &cmdRet) const;
+    int32_t GetUpdateGroupRet(
+        ConfigInfo& cfgInfo, const uintptr_t mbufData, const size_t cfgLen, std::vector<int32_t>& cfgRets,
+        int32_t& cmdRet) const;
 
     /**
      * Get operate route result
@@ -452,8 +455,9 @@ private:
      * @param cmdRet command result
      * @return 0:success, other:failed.
      */
-    int32_t GetUpdateRouteRet(const ConfigInfo &cfgInfo, const uintptr_t mbufData, const size_t cfgLen,
-                              std::vector<int32_t> &cfgRets, int32_t &cmdRet) const;
+    int32_t GetUpdateRouteRet(
+        const ConfigInfo& cfgInfo, const uintptr_t mbufData, const size_t cfgLen, std::vector<int32_t>& cfgRets,
+        int32_t& cmdRet) const;
 
     /**
      * Get query route result
@@ -464,8 +468,9 @@ private:
      * @param cmdRet command result
      * @return 0:success, other:failed.
      */
-    int32_t GetQryRouteRet(const ConfigInfo &cfgInfo, const uintptr_t mbufData, const size_t cfgLen,
-                           std::vector<int32_t> &cfgRets, int32_t &cmdRet) const;
+    int32_t GetQryRouteRet(
+        const ConfigInfo& cfgInfo, const uintptr_t mbufData, const size_t cfgLen, std::vector<int32_t>& cfgRets,
+        int32_t& cmdRet) const;
 
     /**
      * Get query group result
@@ -476,8 +481,9 @@ private:
      * @param cmdRet command result
      * @return 0:success, other:failed.
      */
-    int32_t GetQryGroupRet(const ConfigInfo &cfgInfo, const uintptr_t mbufData, const size_t cfgLen,
-                           std::vector<int32_t> &cfgRets, int32_t &cmdRet) const;
+    int32_t GetQryGroupRet(
+        const ConfigInfo& cfgInfo, const uintptr_t mbufData, const size_t cfgLen, std::vector<int32_t>& cfgRets,
+        int32_t& cmdRet) const;
 
     /**
      * Get operate hcom handle result
@@ -488,21 +494,23 @@ private:
      * @param cmdRet command result
      * @return 0:success, other:failed.
      */
-    int32_t GetOperateHcomHandleRet(const QueueSubEventType subEventId, HcomHandleInfo &info,
-                                    const uintptr_t mbufData, const size_t cfgLen, int32_t &cmdRet) const;
+    int32_t GetOperateHcomHandleRet(
+        const QueueSubEventType subEventId, HcomHandleInfo& info, const uintptr_t mbufData, const size_t cfgLen,
+        int32_t& cmdRet) const;
 
-    int32_t ProcessEndpointDeviceId(Endpoint &endpoint) const;
+    int32_t ProcessEndpointDeviceId(Endpoint& endpoint) const;
 
 private:
-    int32_t OperateToServerOnSameSide(const QueueSubEventType subEventId, const ConfigParams &cfgParams,
-                                      std::list<std::pair<uintptr_t, size_t>> &dataList,
-                                      std::vector<int32_t> &cfgRets, const int32_t timeout);
-    int32_t OperateToServerOnOtherSide(const QueueSubEventType subEventId, const ConfigParams &cfgParams,
-                                       std::list<std::pair<uintptr_t, size_t>> &dataList,
-                                       std::vector<int32_t> &cfgRets, const int32_t timeout);
-    void ExtractRetCode(const QueueSubEventType subEventId, const ConfigParams &cfgParams, const uintptr_t respPtr,
-                        std::vector<int32_t> &cfgRets, int32_t &cmdRet) const;
-    int32_t InformServer(const QueueSubEventType subEventId, int32_t &cmdRet, const int32_t timeout);
+    int32_t OperateToServerOnSameSide(
+        const QueueSubEventType subEventId, const ConfigParams& cfgParams,
+        std::list<std::pair<uintptr_t, size_t>>& dataList, std::vector<int32_t>& cfgRets, const int32_t timeout);
+    int32_t OperateToServerOnOtherSide(
+        const QueueSubEventType subEventId, const ConfigParams& cfgParams,
+        std::list<std::pair<uintptr_t, size_t>>& dataList, std::vector<int32_t>& cfgRets, const int32_t timeout);
+    void ExtractRetCode(
+        const QueueSubEventType subEventId, const ConfigParams& cfgParams, const uintptr_t respPtr,
+        std::vector<int32_t>& cfgRets, int32_t& cmdRet) const;
+    int32_t InformServer(const QueueSubEventType subEventId, int32_t& cmdRet, const int32_t timeout);
 
     static int32_t GetPlatformInfo(const uint32_t deviceId);
 
@@ -510,13 +518,13 @@ private:
 
     static bool IsSupportSetVisibleDevices();
 
-    static void SplitString(const std::string &str, std::vector<std::string> &result);
+    static void SplitString(const std::string& str, std::vector<std::string>& result);
 
     static bool GetVisibleDevices();
 
-    static int32_t ChangeUserDeviceIdToLogicDeviceId(const uint32_t userDevId, uint32_t &logicDevId);
+    static int32_t ChangeUserDeviceIdToLogicDeviceId(const uint32_t userDevId, uint32_t& logicDevId);
 
-    static int32_t ChangeDynamicScheduleDeviceId(const ConfigInfo &cfgInfo);
+    static int32_t ChangeDynamicScheduleDeviceId(const ConfigInfo& cfgInfo);
 
     uint32_t deviceId_;
     // dgw server pid
@@ -528,7 +536,7 @@ private:
     // dgw client group id
     uint32_t curGroupId_;
     // dgw client and qs server pipeline queue id
-    uint32_t piplineQueueId_;
+    uint32_t pipelineQueueId_;
     // dgw initialized flag
     bool initFlag_;
     std::mutex eventMutex_;

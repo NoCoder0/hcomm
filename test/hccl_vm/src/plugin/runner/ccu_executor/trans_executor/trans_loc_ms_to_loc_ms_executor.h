@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: ccu executor -- trans locms to locms
  * Author: caiyifan
  */
@@ -18,11 +21,13 @@
 
 #include "ccu_executor_base.h"
 #include "ccu_microcode_common_v1.h"
+#include "ccu_microcode_common_v2.h"
 #include "ccu_resource_manager.h"
 
 class TransLocMSToLocMSExecutor : public CcuExecutorBase {
 public:
-    explicit TransLocMSToLocMSExecutor(int streamId, int rankId, int dieId, const hcomm::CcuRep::CcuInstr &instr, CcuSimulator *ccuSimulator)
+    explicit TransLocMSToLocMSExecutor(
+        int streamId, int rankId, int dieId, const hcomm::CcuRep::CcuInstr& instr, CcuSimulator* ccuSimulator)
         : CcuExecutorBase(streamId, rankId, dieId, instr, ccuSimulator)
     {}
     TransLocMSToLocMSExecutor() = default;
@@ -31,8 +36,10 @@ public:
     void Parser() override;
     void Run() override;
     void RunV1();
-    void Process(CcuResourceManager &ccuResMgr) override;
+    void RunV2();
+    void Process(CcuResourceManager& ccuResMgr) override;
     std::string Describe() override;
+    CcuTrace::CcuInstrTraceDetail CollectTraceDetail() override;
 
 private:
     uint8_t dstDieId_{0};
@@ -48,6 +55,11 @@ private:
     uint16_t waitCKEId_{0};
     uint16_t waitCKEMask_{0};
     uint16_t transLength_{0};
+
+    uint16_t msdId_{0};
+    uint16_t mssId_{0};
+    uint16_t xlId_{0};
+    uint16_t xoId_{0};
 };
 
 #endif // HCCL_SIM_TRANS_LOCMS_TO_LOCMS_EXECUTOR_H

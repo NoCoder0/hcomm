@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: ccu executor -- load sqe arg to xn
  * Author: caiyifan
  */
@@ -22,7 +25,8 @@
 
 class LoadSqeArgsToXnExecutor : public CcuExecutorBase {
 public:
-    explicit LoadSqeArgsToXnExecutor(int streamId, int rankId, int dieId, const hcomm::CcuRep::CcuInstr &instr, CcuSimulator *ccuSimulator)
+    explicit LoadSqeArgsToXnExecutor(
+        int streamId, int rankId, int dieId, const hcomm::CcuRep::CcuInstr& instr, CcuSimulator* ccuSimulator)
         : CcuExecutorBase(streamId, rankId, dieId, instr, ccuSimulator)
     {}
     LoadSqeArgsToXnExecutor() = default;
@@ -31,10 +35,13 @@ public:
     void Parser() override;
     void Run() override;
     std::string Describe() override;
+    CcuTrace::CcuInstrTraceDetail CollectTraceDetail() override;
 
 private:
     uint16_t xnId_{SimCcuV1::CCU_RESOURCE_XN_MAX};
     uint16_t sqeArgId_{RT_CCU_SQE_ARGS_LEN};
+    uint16_t ckeId_{0};
+    uint16_t ckeMask_{0};
 };
 
 #endif // HCCL_SIM_LOAD_SQE_ARGS_TO_XN_EXECUTOR_H

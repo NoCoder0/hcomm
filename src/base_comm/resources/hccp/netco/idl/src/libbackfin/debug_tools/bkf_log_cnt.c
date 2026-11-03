@@ -83,8 +83,8 @@ BkfLogCnt *BkfLogCntInit(BkfLogCntInitArg *arg)
     BkfLogCnt *logCnt = VOS_NULL;
     uint32_t len;
 
-    if ((arg == VOS_NULL) || (arg->name == VOS_NULL) || (arg->memMng == VOS_NULL) ||
-        (arg->disp == VOS_NULL) || (arg->modCntMax <= 0)) {
+    if ((arg == VOS_NULL) || (arg->name == VOS_NULL) || (arg->memMng == VOS_NULL) || (arg->disp == VOS_NULL) ||
+        (arg->modCntMax <= 0)) {
         goto error;
     }
 
@@ -97,10 +97,10 @@ BkfLogCnt *BkfLogCntInit(BkfLogCntInitArg *arg)
     logCnt->argInit = *arg;
     logCnt->name = BkfStrNew(arg->memMng, "%s_logCnt", arg->name);
     logCnt->argInit.name = logCnt->name;
-    VOS_AVLL_INIT_TREE(logCnt->modSet, (AVLL_COMPARE)BkfLogCntCmpMod,
-                       BKF_OFFSET(BkfLogCntMod, key), BKF_OFFSET(BkfLogCntMod, avlNode));
-    VOS_AVLL_INIT_TREE(logCnt->modSetByNameOrder, (AVLL_COMPARE)BkfLogCntCmpModNameFirst,
-                       BKF_OFFSET(BkfLogCntMod, key), BKF_OFFSET(BkfLogCntMod, avlNodeByNameOrder));
+    VOS_AVLL_INIT_TREE(logCnt->modSet, (AVLL_COMPARE)BkfLogCntCmpMod, BKF_OFFSET(BkfLogCntMod, key),
+        BKF_OFFSET(BkfLogCntMod, avlNode));
+    VOS_AVLL_INIT_TREE(logCnt->modSetByNameOrder, (AVLL_COMPARE)BkfLogCntCmpModNameFirst, BKF_OFFSET(BkfLogCntMod, key),
+        BKF_OFFSET(BkfLogCntMod, avlNodeByNameOrder));
     BkfLogCntDispInit(logCnt);
 
     return logCnt;
@@ -263,7 +263,7 @@ STATIC void BkfLogCntDelAllMod(BkfLogCnt *logCnt)
 STATIC BkfLogCntMod *BkfLogCntFindMod(BkfLogCnt *logCnt, char *modName, uint16_t line)
 {
     BkfLogCntMod *mod = VOS_NULL;
-    BkfLogCntModKey key = { modName, line };
+    BkfLogCntModKey key = {modName, line, {}};
 #ifndef BKF_CUT_AVL_CACHE
     uint32_t hashIdx = BKF_LOG_CNT_GET_MOD_HASH_IDX(line);
     mod = logCnt->modCache[hashIdx];
@@ -285,7 +285,7 @@ STATIC BkfLogCntMod *BkfLogCntFindMod(BkfLogCnt *logCnt, char *modName, uint16_t
 STATIC BkfLogCntMod *BkfLogCntFindNextModByNameOrder(BkfLogCnt *logCnt, char *modName, uint16_t line)
 {
     BkfLogCntMod *mod = VOS_NULL;
-    BkfLogCntModKey key = { modName, line };
+    BkfLogCntModKey key = {modName, line, {}};
 
     mod = VOS_AVLL_FIND_NEXT(logCnt->modSetByNameOrder, &key);
     return mod;
@@ -297,8 +297,8 @@ STATIC BkfLogCntMod *BkfLogCntGetFirstModByNameOrder(BkfLogCnt *logCnt, void **i
 
     mod = VOS_AVLL_FIRST(logCnt->modSetByNameOrder);
     if (itorOutOrNull != VOS_NULL) {
-        *itorOutOrNull = (mod != VOS_NULL) ?
-                            VOS_AVLL_NEXT(logCnt->modSetByNameOrder, mod->avlNodeByNameOrder) : VOS_NULL;
+        *itorOutOrNull = (mod != VOS_NULL) ? VOS_AVLL_NEXT(logCnt->modSetByNameOrder, mod->avlNodeByNameOrder)
+                                           : VOS_NULL;
     }
     return mod;
 }
@@ -349,10 +349,10 @@ void BkfLogCntDisp(BkfLogCnt *logCnt)
     callCntLogInMod = BkfLogCntGetCallCnt(logCnt);
 
     BKF_DISP_PRINTF(disp, "%s\n", logCnt->name);
-    BKF_DISP_PRINTF(disp, "modCnt(%d/%d)/modCntMax(%d)/seqSeed(%d)\n",
-                    modCnt, logCnt->modCnt, logCnt->argInit.modCntMax, logCnt->seqSeed);
-    BKF_DISP_PRINTF(disp, "callCntLogInMod(%"VOS_PRId64")/callCntNotLogInMod(%"VOS_PRId64")\n",
-                    callCntLogInMod, logCnt->callCntNotLogInMod);
+    BKF_DISP_PRINTF(disp, "modCnt(%d/%d)/modCntMax(%d)/seqSeed(%d)\n", modCnt, logCnt->modCnt,
+        logCnt->argInit.modCntMax, logCnt->seqSeed);
+    BKF_DISP_PRINTF(disp, "callCntLogInMod(%" VOS_PRId64 ")/callCntNotLogInMod(%" VOS_PRId64 ")\n", callCntLogInMod,
+        logCnt->callCntNotLogInMod);
 }
 
 typedef struct tagLogCntDispModTemp {
@@ -364,7 +364,7 @@ void BkfLogCntDispMod(BkfLogCnt *logCnt)
 {
     BkfDisp *disp = logCnt->argInit.disp;
     char *lastModName = VOS_NULL;
-    LogCntDispModTemp curTemp = { 0 };
+    LogCntDispModTemp curTemp = {0};
     BkfLogCntMod *mod = VOS_NULL;
 
     lastModName = BKF_DISP_GET_LAST_CTX(disp, &curTemp);
@@ -375,8 +375,8 @@ void BkfLogCntDispMod(BkfLogCnt *logCnt)
     }
 
     if (mod != VOS_NULL) {
-        BKF_DISP_PRINTF(disp, "mod[%d, %s/%u]: callCnt(%d)/lastCallSeq(%d)\n", curTemp.modCnt,
-                        mod->key.name, mod->key.line, mod->callCnt, mod->lastCallSeq);
+        BKF_DISP_PRINTF(disp, "mod[%d, %s/%u]: callCnt(%d)/lastCallSeq(%d)\n", curTemp.modCnt, mod->key.name,
+            mod->key.line, mod->callCnt, mod->lastCallSeq);
 
         curTemp.modCnt++;
         curTemp.line = mod->key.line;
@@ -428,10 +428,8 @@ STATIC void BkfLogCntDispUninit(BkfLogCnt *logCnt)
 
 #endif
 
-
 #ifdef __cplusplus
 #if __cplusplus
 }
 #endif
 #endif
-

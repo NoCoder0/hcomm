@@ -23,11 +23,18 @@ namespace Hccl {
 
 class CcuCtxArgAllGatherMeshDetour1D : public CcuCtxArg {
 public:
-    explicit CcuCtxArgAllGatherMeshDetour1D(const std::vector<uint64_t> &dSize, uint32_t rId, const CollAlgOperator &op,
-        const std::vector<std::vector<RankId>> &tempVTopo, uint64_t singleTransportSize, uint64_t detourPathNum,
-        uint64_t pathNumPerPeer) :
-        dimSize_(dSize), rankId_(rId), op_(op), tempVTopo_(tempVTopo), singleTransportSize_(singleTransportSize),
-        detourPathNum_(detourPathNum), pathNumPerPeer_(pathNumPerPeer) {}
+    explicit CcuCtxArgAllGatherMeshDetour1D(
+        const std::vector<uint64_t>& dSize, uint32_t rId, const CollAlgOperator& op,
+        const std::vector<std::vector<RankId>>& tempVTopo, uint64_t singleTransportSize, uint64_t detourPathNum,
+        uint64_t pathNumPerPeer)
+        : dimSize_(dSize),
+          rankId_(rId),
+          op_(op),
+          tempVTopo_(tempVTopo),
+          singleTransportSize_(singleTransportSize),
+          detourPathNum_(detourPathNum),
+          pathNumPerPeer_(pathNumPerPeer)
+    {}
 
     CcuCtxSignature GetCtxSignature() const override
     {
@@ -47,37 +54,44 @@ public:
 
 class CcuTaskArgAllGatherMeshDetour1D : public CcuTaskArg {
 public:
-    explicit  CcuTaskArgAllGatherMeshDetour1D(uint64_t inputAddr, uint64_t outputAddr, uint64_t token,
-        uint64_t baseOffset, uint64_t tailOffset, uint64_t tailSize, uint64_t loopIterNum,
-        const std::vector<uint64_t> &lengths) :
-        inputAddr_(inputAddr), outputAddr_(outputAddr), token_(token), baseOffset_(baseOffset), tailOffset_(tailOffset),
-        tailSize_(tailSize), loopIterNum_(loopIterNum), lengths_(lengths) {}
+    explicit CcuTaskArgAllGatherMeshDetour1D(
+        uint64_t inputAddr, uint64_t outputAddr, uint64_t token, uint64_t baseOffset, uint64_t tailOffset,
+        uint64_t tailSize, uint64_t loopIterNum, const std::vector<uint64_t>& lengths)
+        : inputAddr_(inputAddr),
+          outputAddr_(outputAddr),
+          token_(token),
+          baseOffset_(baseOffset),
+          tailOffset_(tailOffset),
+          tailSize_(tailSize),
+          loopIterNum_(loopIterNum),
+          lengths_(lengths)
+    {}
 
     uint64_t inputAddr_;
     uint64_t outputAddr_;
     uint64_t token_;
     uint64_t baseOffset_;
     uint64_t tailOffset_;
-    uint64_t tailSize_;  // 尾块数据量
+    uint64_t tailSize_; // 尾块数据量
     uint64_t loopIterNum_;
-    std::vector<uint64_t> lengths_;  // 每个loop迭代一次搬运时每个ms上的数据量
+    std::vector<uint64_t> lengths_; // 每个loop迭代一次搬运时每个ms上的数据量
 };
 
 class CcuInstructionAllGatherMeshDetour1D : public CcuInstruction {
 public:
-    CcuInstructionAllGatherMeshDetour1D() : CcuInstruction()
-    {
-    }
+    CcuInstructionAllGatherMeshDetour1D() : CcuInstruction() {}
 
-    void InitDetourInfo(uint32_t rankId, uint64_t inputAddr, uint64_t outputAddr, uint64_t token, uint64_t baseOffset,
-        uint64_t tailOffset, uint64_t tailSize, uint64_t loopIterNum, std::vector<uint64_t> &lengths,
-        uint64_t singleTransportSize, uint64_t detourPathNum, uint64_t pathNumPerPeer, CollAlgOperator &op,
-        std::vector<std::vector<RankId>> &tempVTopo)
+    HcclResult InitDetourInfo(
+        uint32_t rankId, uint64_t inputAddr, uint64_t outputAddr, uint64_t token, uint64_t baseOffset,
+        uint64_t tailOffset, uint64_t tailSize, uint64_t loopIterNum, std::vector<uint64_t>& lengths,
+        uint64_t singleTransportSize, uint64_t detourPathNum, uint64_t pathNumPerPeer, CollAlgOperator& op,
+        std::vector<std::vector<RankId>>& tempVTopo)
     {
         u32 maxDimNum = 1;
         if (tempVTopo.size() != maxDimNum) {
-            THROW<InvalidParamsException>(StringFormat(
-                "[CcuInstructionAllGatherMeshDetour1D] tempVTopo size is not 1, size is [%zu].", tempVTopo.size()));
+            HCCL_ERROR(
+                "[CcuInstructionAllGatherMeshDetour1D] tempVTopo size is not 1, size is [%zu].", tempVTopo.size());
+            return HCCL_E_PARA;
         }
         dimSize_.push_back(tempVTopo[0].size());
         rankId_ = rankId;
@@ -90,11 +104,11 @@ public:
         loopIterNum_ = loopIterNum;
         lengths_ = lengths;
         singleTransportSize_ = singleTransportSize;
-        detourPathNum_  = detourPathNum;
+        detourPathNum_ = detourPathNum;
         pathNumPerPeer_ = pathNumPerPeer;
         op_ = op;
         tempVTopo_ = tempVTopo;
-        return;
+        return HCCL_SUCCESS;
     }
 
     CcuInstType GetInstType() const override
@@ -105,8 +119,8 @@ public:
 
     std::string Describe() const override
     {
-        return StringFormat("CcuInstructionAllGatherMeshDetour1D rankId [%u], instType[%s]",
-            rankId_, instType_.Describe().c_str());
+        return StringFormat(
+            "CcuInstructionAllGatherMeshDetour1D rankId [%u], instType[%s]", rankId_, instType_.Describe().c_str());
     }
 
     std::unique_ptr<CcuCtxArg> GetCtxArg() const override
@@ -117,14 +131,12 @@ public:
 
     std::unique_ptr<CcuTaskArg> GetTaskArg() const override
     {
-        return std::make_unique<CcuTaskArgAllGatherMeshDetour1D>(inputAddr_, outputAddr_, token_, baseOffset_,
-            tailOffset_, tailSize_, loopIterNum_, lengths_);
+        return std::make_unique<CcuTaskArgAllGatherMeshDetour1D>(
+            inputAddr_, outputAddr_, token_, baseOffset_, tailOffset_, tailSize_, loopIterNum_, lengths_);
     }
 
-    void SetInstType(CcuInstType instType) 
-    { 
-        instType_ = instType; 
-    }
+    void SetInstType(CcuInstType instType) { instType_ = instType; }
+
 private:
     CcuInstType instType_ = CcuInstType::CCU_ALLGATHER_MESH_1D_DETOUR;
     std::vector<uint64_t> dimSize_;
@@ -139,11 +151,11 @@ private:
     std::vector<uint64_t> lengths_;
 
     uint64_t singleTransportSize_{0};
-    uint64_t detourPathNum_{0};  // 到每个对端有几个绕路路径
+    uint64_t detourPathNum_{0}; // 到每个对端有几个绕路路径
     uint64_t pathNumPerPeer_{0};
     CollAlgOperator op_;
     std::vector<std::vector<RankId>> tempVTopo_;
 };
 
-}
+} // namespace Hccl
 #endif // HCCLV2_CCU_INSTRUCTION_ALL_GATHER_MESH_1D_H_

@@ -1,28 +1,12 @@
- /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- * 
- * The code snippet comes from Cann project.
- * 
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef INC_EXTERNAL_ACL_ACL_TDT_QUEUE_H_
 #define INC_EXTERNAL_ACL_ACL_TDT_QUEUE_H_
@@ -41,16 +25,13 @@ extern "C" {
 #define ACL_TDT_QUEUE_ROUTE_BIND 1
 #define ACL_TDT_QUEUE_ROUTE_BIND_ABNORMAL 2
 
-typedef void *acltdtBuf;
+typedef void* acltdtBuf;
 typedef struct tagMemQueueAttr acltdtQueueAttr;
 typedef struct acltdtQueueRouteList acltdtQueueRouteList;
 typedef struct acltdtQueueRouteQueryInfo acltdtQueueRouteQueryInfo;
 typedef struct acltdtQueueRoute acltdtQueueRoute;
 
-typedef enum {
-    ACL_TDT_QUEUE_NAME_PTR = 0,
-    ACL_TDT_QUEUE_DEPTH_UINT32
-} acltdtQueueAttrType;
+typedef enum { ACL_TDT_QUEUE_NAME_PTR = 0, ACL_TDT_QUEUE_DEPTH_UINT32 } acltdtQueueAttrType;
 
 typedef enum {
     ACL_TDT_QUEUE_ROUTE_SRC_UINT32 = 0,
@@ -71,10 +52,7 @@ typedef enum {
     ACL_TDT_QUEUE_ROUTE_QUERY_DST_ID_UINT32
 } acltdtQueueRouteQueryInfoParamType;
 
-typedef enum {
-    ACL_TDT_NORMAL_MEM = 0,
-    ACL_TDT_DVPP_MEM
-} acltdtAllocBufType;
+typedef enum { ACL_TDT_NORMAL_MEM = 0, ACL_TDT_DVPP_MEM } acltdtAllocBufType;
 
 /**
  * @ingroup AscendCL
@@ -88,7 +66,7 @@ typedef enum {
  *
  * @see acltdtDestroyQueue
  */
-ACL_FUNC_VISIBILITY aclError acltdtCreateQueue(const acltdtQueueAttr *attr, uint32_t *qid);
+ACL_FUNC_VISIBILITY aclError acltdtCreateQueue(const acltdtQueueAttr* attr, uint32_t* qid);
 
 /**
  * @ingroup AscendCL
@@ -131,7 +109,7 @@ ACL_FUNC_VISIBILITY aclError acltdtEnqueue(uint32_t qid, acltdtBuf buf, int32_t 
  *
  * @see acltdtEnqueue
  */
-ACL_FUNC_VISIBILITY aclError acltdtDequeue(uint32_t qid, acltdtBuf *buf, int32_t timeout);
+ACL_FUNC_VISIBILITY aclError acltdtDequeue(uint32_t qid, acltdtBuf* buf, int32_t timeout);
 
 /**
  * @ingroup AscendCL
@@ -149,8 +127,9 @@ ACL_FUNC_VISIBILITY aclError acltdtDequeue(uint32_t qid, acltdtBuf *buf, int32_t
  *
  * @see acltdtDequeueData
  */
-ACL_FUNC_VISIBILITY aclError acltdtEnqueueData(uint32_t qid, const void *data, size_t dataSize,
-    const void *userData, size_t userDataSize, int32_t timeout, uint32_t rsv);
+ACL_FUNC_VISIBILITY aclError acltdtEnqueueData(
+    uint32_t qid, const void* data, size_t dataSize, const void* userData, size_t userDataSize, int32_t timeout,
+    uint32_t rsv);
 
 /**
  * @ingroup AscendCL
@@ -168,8 +147,9 @@ ACL_FUNC_VISIBILITY aclError acltdtEnqueueData(uint32_t qid, const void *data, s
  *
  * @see acltdtEnqueueData
  */
-ACL_FUNC_VISIBILITY aclError acltdtDequeueData(uint32_t qid, void *data, size_t dataSize, size_t *retDataSize,
-    void *userData, size_t userDataSize, int32_t timeout);
+ACL_FUNC_VISIBILITY aclError acltdtDequeueData(
+    uint32_t qid, void* data, size_t dataSize, size_t* retDataSize, void* userData, size_t userDataSize,
+    int32_t timeout);
 
 /**
  * @ingroup AscendCL
@@ -200,7 +180,7 @@ ACL_FUNC_VISIBILITY aclError acltdtGrantQueue(uint32_t qid, int32_t pid, uint32_
  *
  * @see acltdtGrantQueue
  */
-ACL_FUNC_VISIBILITY aclError acltdtAttachQueue(uint32_t qid, int32_t timeout, uint32_t *permission);
+ACL_FUNC_VISIBILITY aclError acltdtAttachQueue(uint32_t qid, int32_t timeout, uint32_t* permission);
 
 /**
  * @ingroup AscendCL
@@ -211,7 +191,7 @@ ACL_FUNC_VISIBILITY aclError acltdtAttachQueue(uint32_t qid, int32_t timeout, ui
  * @retval ACL_SUCCESS  The function is successfully executed.
  * @retval OtherValues Failure
  */
-ACL_FUNC_VISIBILITY aclError acltdtBindQueueRoutes(acltdtQueueRouteList *qRouteList);
+ACL_FUNC_VISIBILITY aclError acltdtBindQueueRoutes(acltdtQueueRouteList* qRouteList);
 
 /**
  * @ingroup AscendCL
@@ -222,7 +202,7 @@ ACL_FUNC_VISIBILITY aclError acltdtBindQueueRoutes(acltdtQueueRouteList *qRouteL
  * @retval ACL_SUCCESS  The function is successfully executed.
  * @retval OtherValues Failure
  */
-ACL_FUNC_VISIBILITY aclError acltdtUnbindQueueRoutes(acltdtQueueRouteList *qRouteList);
+ACL_FUNC_VISIBILITY aclError acltdtUnbindQueueRoutes(acltdtQueueRouteList* qRouteList);
 
 /**
  * @ingroup AscendCL
@@ -234,8 +214,8 @@ ACL_FUNC_VISIBILITY aclError acltdtUnbindQueueRoutes(acltdtQueueRouteList *qRout
  * @retval ACL_SUCCESS  The function is successfully executed.
  * @retval OtherValues Failure
  */
-ACL_FUNC_VISIBILITY aclError acltdtQueryQueueRoutes(const acltdtQueueRouteQueryInfo *queryInfo,
-                                                    acltdtQueueRouteList *qRouteList);
+ACL_FUNC_VISIBILITY aclError
+acltdtQueryQueueRoutes(const acltdtQueueRouteQueryInfo* queryInfo, acltdtQueueRouteList* qRouteList);
 
 /**
  * @ingroup AscendCL
@@ -250,7 +230,7 @@ ACL_FUNC_VISIBILITY aclError acltdtQueryQueueRoutes(const acltdtQueueRouteQueryI
  *
  * @see acltdtFreeBuf
  */
-ACL_FUNC_VISIBILITY aclError acltdtAllocBuf(size_t size, uint32_t type, acltdtBuf *buf);
+ACL_FUNC_VISIBILITY aclError acltdtAllocBuf(size_t size, uint32_t type, acltdtBuf* buf);
 
 /**
  * @ingroup AscendCL
@@ -278,7 +258,7 @@ ACL_FUNC_VISIBILITY aclError acltdtFreeBuf(acltdtBuf buf);
  *
  * @see acltdtAllocBuf
  */
-ACL_FUNC_VISIBILITY aclError acltdtGetBufData(const acltdtBuf buf, void **dataPtr, size_t *size);
+ACL_FUNC_VISIBILITY aclError acltdtGetBufData(const acltdtBuf buf, void** dataPtr, size_t* size);
 
 /**
  * @ingroup AscendCL
@@ -306,7 +286,7 @@ ACL_FUNC_VISIBILITY aclError acltdtSetBufDataLen(acltdtBuf buf, size_t len);
  *
  * @see acltdtSetBufDataLen
  */
-ACL_FUNC_VISIBILITY aclError acltdtGetBufDataLen(acltdtBuf buf, size_t *len);
+ACL_FUNC_VISIBILITY aclError acltdtGetBufDataLen(acltdtBuf buf, size_t* len);
 
 /**
  * @ingroup AscendCL
@@ -333,7 +313,7 @@ ACL_FUNC_VISIBILITY aclError acltdtAppendBufChain(acltdtBuf headBuf, acltdtBuf b
  *
  * @see acltdtAppendBufChain
  */
-ACL_FUNC_VISIBILITY aclError acltdtGetBufChainNum(acltdtBuf headBuf, uint32_t *num);
+ACL_FUNC_VISIBILITY aclError acltdtGetBufChainNum(acltdtBuf headBuf, uint32_t* num);
 
 /**
  * @ingroup AscendCL
@@ -348,7 +328,7 @@ ACL_FUNC_VISIBILITY aclError acltdtGetBufChainNum(acltdtBuf headBuf, uint32_t *n
  *
  * @see acltdtAppendBufChain acltdtGetBufChainNum
  */
-ACL_FUNC_VISIBILITY aclError acltdtGetBufFromChain(acltdtBuf headBuf, uint32_t index, acltdtBuf *buf);
+ACL_FUNC_VISIBILITY aclError acltdtGetBufFromChain(acltdtBuf headBuf, uint32_t index, acltdtBuf* buf);
 
 /**
  * @ingroup AscendCL
@@ -364,7 +344,7 @@ ACL_FUNC_VISIBILITY aclError acltdtGetBufFromChain(acltdtBuf headBuf, uint32_t i
  *
  * @see acltdtGetBufUserData
  */
-ACL_FUNC_VISIBILITY aclError acltdtGetBufUserData(const acltdtBuf buf, void *dataPtr, size_t size, size_t offset);
+ACL_FUNC_VISIBILITY aclError acltdtGetBufUserData(const acltdtBuf buf, void* dataPtr, size_t size, size_t offset);
 
 /**
  * @ingroup AscendCL
@@ -380,7 +360,7 @@ ACL_FUNC_VISIBILITY aclError acltdtGetBufUserData(const acltdtBuf buf, void *dat
  *
  * @see acltdtSetBufUserData
  */
-ACL_FUNC_VISIBILITY aclError acltdtSetBufUserData(acltdtBuf buf, const void *dataPtr, size_t size, size_t offset);
+ACL_FUNC_VISIBILITY aclError acltdtSetBufUserData(acltdtBuf buf, const void* dataPtr, size_t size, size_t offset);
 
 /**
  * @ingroup AscendCL
@@ -395,7 +375,7 @@ ACL_FUNC_VISIBILITY aclError acltdtSetBufUserData(acltdtBuf buf, const void *dat
  *
  * @see acltdtCopyBufRef
  */
-ACL_FUNC_VISIBILITY aclError acltdtCopyBufRef(const acltdtBuf buf, acltdtBuf *newBuf);
+ACL_FUNC_VISIBILITY aclError acltdtCopyBufRef(const acltdtBuf buf, acltdtBuf* newBuf);
 
 /**
  * @ingroup AscendCL
@@ -406,7 +386,7 @@ ACL_FUNC_VISIBILITY aclError acltdtCopyBufRef(const acltdtBuf buf, acltdtBuf *ne
  *
  * @see acltdtDestroyQueueAttr
  */
-ACL_FUNC_VISIBILITY acltdtQueueAttr *acltdtCreateQueueAttr();
+ACL_FUNC_VISIBILITY acltdtQueueAttr* acltdtCreateQueueAttr();
 
 /**
  * @ingroup AscendCL
@@ -419,7 +399,7 @@ ACL_FUNC_VISIBILITY acltdtQueueAttr *acltdtCreateQueueAttr();
  *
  * @see acltdtCreateQueueAttr
  */
-ACL_FUNC_VISIBILITY aclError acltdtDestroyQueueAttr(const acltdtQueueAttr *attr);
+ACL_FUNC_VISIBILITY aclError acltdtDestroyQueueAttr(const acltdtQueueAttr* attr);
 
 /**
  * @ingroup AscendCL
@@ -434,10 +414,8 @@ ACL_FUNC_VISIBILITY aclError acltdtDestroyQueueAttr(const acltdtQueueAttr *attr)
  *
  * @see acltdtCreateQueueAttr
  */
-ACL_FUNC_VISIBILITY aclError acltdtSetQueueAttr(acltdtQueueAttr *attr,
-                                                acltdtQueueAttrType type,
-                                                size_t len,
-                                                const void *param);
+ACL_FUNC_VISIBILITY aclError
+acltdtSetQueueAttr(acltdtQueueAttr* attr, acltdtQueueAttrType type, size_t len, const void* param);
 
 /**
  * @ingroup AscendCL
@@ -454,11 +432,8 @@ ACL_FUNC_VISIBILITY aclError acltdtSetQueueAttr(acltdtQueueAttr *attr,
  *
  * @see acltdtCreateQueueAttr
  */
-ACL_FUNC_VISIBILITY aclError acltdtGetQueueAttr(const acltdtQueueAttr *attr,
-                                                acltdtQueueAttrType type,
-                                                size_t len,
-                                                size_t *paramRetSize,
-                                                void *param);
+ACL_FUNC_VISIBILITY aclError acltdtGetQueueAttr(
+    const acltdtQueueAttr* attr, acltdtQueueAttrType type, size_t len, size_t* paramRetSize, void* param);
 
 /**
  * @ingroup AscendCL
@@ -485,7 +460,7 @@ ACL_FUNC_VISIBILITY acltdtQueueRoute* acltdtCreateQueueRoute(uint32_t srcId, uin
  *
  * @see acltdtCreateQueueRoute
  */
-ACL_FUNC_VISIBILITY aclError acltdtDestroyQueueRoute(const acltdtQueueRoute *route);
+ACL_FUNC_VISIBILITY aclError acltdtDestroyQueueRoute(const acltdtQueueRoute* route);
 
 /**
  * @ingroup AscendCL
@@ -502,11 +477,8 @@ ACL_FUNC_VISIBILITY aclError acltdtDestroyQueueRoute(const acltdtQueueRoute *rou
  *
  * @see acltdtCreateQueueRoute
  */
-ACL_FUNC_VISIBILITY aclError acltdtGetQueueRouteParam(const acltdtQueueRoute *route,
-                                                      acltdtQueueRouteParamType type,
-                                                      size_t len,
-                                                      size_t *paramRetSize,
-                                                      void *param);
+ACL_FUNC_VISIBILITY aclError acltdtGetQueueRouteParam(
+    const acltdtQueueRoute* route, acltdtQueueRouteParamType type, size_t len, size_t* paramRetSize, void* param);
 
 /**
  * @ingroup AscendCL
@@ -530,7 +502,7 @@ ACL_FUNC_VISIBILITY acltdtQueueRouteList* acltdtCreateQueueRouteList();
  *
  * @see acltdtCreateQueueRouteList
  */
-ACL_FUNC_VISIBILITY aclError acltdtDestroyQueueRouteList(const acltdtQueueRouteList *routeList);
+ACL_FUNC_VISIBILITY aclError acltdtDestroyQueueRouteList(const acltdtQueueRouteList* routeList);
 
 /**
  * @ingroup AscendCL
@@ -545,7 +517,7 @@ ACL_FUNC_VISIBILITY aclError acltdtDestroyQueueRouteList(const acltdtQueueRouteL
  * @see acltdtCreateQueueRouteList | acltdtCreateQueueRoute
  *
  */
-ACL_FUNC_VISIBILITY aclError acltdtAddQueueRoute(acltdtQueueRouteList *routeList, const acltdtQueueRoute *route);
+ACL_FUNC_VISIBILITY aclError acltdtAddQueueRoute(acltdtQueueRouteList* routeList, const acltdtQueueRoute* route);
 
 /**
  * @ingroup AscendCL
@@ -561,9 +533,8 @@ ACL_FUNC_VISIBILITY aclError acltdtAddQueueRoute(acltdtQueueRouteList *routeList
  * @see acltdtCreateQueueRouteList | acltdtCreateQueueRoute
  *
  */
-ACL_FUNC_VISIBILITY aclError acltdtGetQueueRoute(const acltdtQueueRouteList *routeList,
-                                                 size_t index,
-                                                 acltdtQueueRoute *route);
+ACL_FUNC_VISIBILITY aclError
+acltdtGetQueueRoute(const acltdtQueueRouteList* routeList, size_t index, acltdtQueueRoute* route);
 
 /**
  * @ingroup AscendCL
@@ -574,7 +545,7 @@ ACL_FUNC_VISIBILITY aclError acltdtGetQueueRoute(const acltdtQueueRouteList *rou
  * @retval the number of queue route
  *
  */
-ACL_FUNC_VISIBILITY size_t acltdtGetQueueRouteNum(const acltdtQueueRouteList *routeList);
+ACL_FUNC_VISIBILITY size_t acltdtGetQueueRouteNum(const acltdtQueueRouteList* routeList);
 
 /**
  * @ingroup AscendCL
@@ -585,7 +556,7 @@ ACL_FUNC_VISIBILITY size_t acltdtGetQueueRouteNum(const acltdtQueueRouteList *ro
  *
  * @see acltdtDestroyQueueRouteQueryInfo
  */
-ACL_FUNC_VISIBILITY  acltdtQueueRouteQueryInfo* acltdtCreateQueueRouteQueryInfo();
+ACL_FUNC_VISIBILITY acltdtQueueRouteQueryInfo* acltdtCreateQueueRouteQueryInfo();
 
 /**
  * @ingroup AscendCL
@@ -599,7 +570,7 @@ ACL_FUNC_VISIBILITY  acltdtQueueRouteQueryInfo* acltdtCreateQueueRouteQueryInfo(
  * @see acltdtCreateQueueRouteQueryInfo
  *
  */
-ACL_FUNC_VISIBILITY aclError acltdtDestroyQueueRouteQueryInfo(const acltdtQueueRouteQueryInfo *info);
+ACL_FUNC_VISIBILITY aclError acltdtDestroyQueueRouteQueryInfo(const acltdtQueueRouteQueryInfo* info);
 
 /**
  * @ingroup AscendCL
@@ -614,11 +585,8 @@ ACL_FUNC_VISIBILITY aclError acltdtDestroyQueueRouteQueryInfo(const acltdtQueueR
  *
  * @see acltdtCreateQueueRouteQueryInfo
  */
-ACL_FUNC_VISIBILITY aclError acltdtSetQueueRouteQueryInfo(acltdtQueueRouteQueryInfo *param,
-                                                          acltdtQueueRouteQueryInfoParamType type,
-                                                          size_t len,
-                                                          const void *value);
-
+ACL_FUNC_VISIBILITY aclError acltdtSetQueueRouteQueryInfo(
+    acltdtQueueRouteQueryInfo* param, acltdtQueueRouteQueryInfoParamType type, size_t len, const void* value);
 
 #ifdef __cplusplus
 }

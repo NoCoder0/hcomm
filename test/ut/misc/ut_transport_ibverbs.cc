@@ -27,7 +27,7 @@ protected:
     void TearDown() override { GlobalMockObject::verify(); }
 };
 
-static void FillMinimalMemDetailsQpData(TransportDeviceIbverbsData &d)
+static void FillMinimalMemDetailsQpData(TransportDeviceIbverbsData& d)
 {
     d.useMemDetailsMgr = true;
     d.qpsPerConnection = 1U;
@@ -43,14 +43,14 @@ static void FillMinimalMemDetailsQpData(TransportDeviceIbverbsData &d)
     loc.devAddr = 0xC20000ULL;
     loc.size = 4096ULL;
     loc.key = 11U;
-    d.localRoceMemDetailsList = { loc };
+    d.localRoceMemDetailsList = {loc};
 
     RoceMemDetails rem{};
     rem.addr = 0x10000ULL;
     rem.devAddr = 0xC10000ULL;
     rem.size = 4096ULL;
     rem.key = 22U;
-    d.remoteRoceMemDetailsList = { rem };
+    d.remoteRoceMemDetailsList = {rem};
 }
 
 TEST_F(TransportDeviceIbverbsTest, Ut_InitMemDetails_InvalidQpSize_Returns_INTERNAL)
@@ -58,7 +58,7 @@ TEST_F(TransportDeviceIbverbsTest, Ut_InitMemDetails_InvalidQpSize_Returns_INTER
     HcclDispatcher dispatcherPtr = nullptr;
     ASSERT_EQ(HcclDispatcherInit(DispatcherType::DISPATCHER_NORMAL, 0, &dispatcherPtr), HCCL_SUCCESS);
     ASSERT_NE(dispatcherPtr, nullptr);
-    auto *dispatcher = reinterpret_cast<DispatcherPub *>(dispatcherPtr);
+    auto* dispatcher = reinterpret_cast<DispatcherPub*>(dispatcherPtr);
 
     MachinePara machinePara{};
     machinePara.deviceLogicId = 0;
@@ -66,7 +66,7 @@ TEST_F(TransportDeviceIbverbsTest, Ut_InitMemDetails_InvalidQpSize_Returns_INTER
     d.useMemDetailsMgr = true;
     d.qpsPerConnection = 1U;
     d.qpInfo.resize(3U);
-    std::chrono::milliseconds timeout{ 1 };
+    std::chrono::milliseconds timeout{1};
 
     TransportDeviceIbverbs link(dispatcher, nullptr, machinePara, timeout, d);
     EXPECT_EQ(link.Init(), HCCL_E_INTERNAL);
@@ -81,21 +81,21 @@ TEST_F(TransportDeviceIbverbsTest, Ut_InitMemDetails_Success_Then_ResolveRdmaAdd
     HcclDispatcher dispatcherPtr = nullptr;
     ASSERT_EQ(HcclDispatcherInit(DispatcherType::DISPATCHER_NORMAL, 0, &dispatcherPtr), HCCL_SUCCESS);
     ASSERT_NE(dispatcherPtr, nullptr);
-    auto *dispatcher = reinterpret_cast<DispatcherPub *>(dispatcherPtr);
+    auto* dispatcher = reinterpret_cast<DispatcherPub*>(dispatcherPtr);
 
     MachinePara machinePara{};
     machinePara.deviceLogicId = 0;
     TransportDeviceIbverbsData d{};
     FillMinimalMemDetailsQpData(d);
-    std::chrono::milliseconds timeout{ 1 };
+    std::chrono::milliseconds timeout{1};
 
     TransportDeviceIbverbs link(dispatcher, nullptr, machinePara, timeout, d);
     ASSERT_EQ(link.Init(), HCCL_SUCCESS);
     EXPECT_TRUE(link.useMemDetailsLookup_);
 
     TransportDeviceIbverbs::RdmaAddrKeyResolveParam param{};
-    param.remoteAddr = reinterpret_cast<const void *>(static_cast<uintptr_t>(0x10000ULL));
-    param.localAddr = reinterpret_cast<const void *>(static_cast<uintptr_t>(0x20000ULL));
+    param.remoteAddr = reinterpret_cast<const void*>(static_cast<uintptr_t>(0x10000ULL));
+    param.localAddr = reinterpret_cast<const void*>(static_cast<uintptr_t>(0x20000ULL));
     param.length = 4096ULL;
     ASSERT_EQ(link.ResolveRdmaAddrsAndKeys(param), HCCL_SUCCESS);
     EXPECT_EQ(param.dstKey, 22U);
@@ -112,20 +112,20 @@ TEST_F(TransportDeviceIbverbsTest, Ut_ResolveRdmaAddrsAndKeys_MemDetails_Miss_Re
 
     HcclDispatcher dispatcherPtr = nullptr;
     ASSERT_EQ(HcclDispatcherInit(DispatcherType::DISPATCHER_NORMAL, 0, &dispatcherPtr), HCCL_SUCCESS);
-    auto *dispatcher = reinterpret_cast<DispatcherPub *>(dispatcherPtr);
+    auto* dispatcher = reinterpret_cast<DispatcherPub*>(dispatcherPtr);
 
     MachinePara machinePara{};
     machinePara.deviceLogicId = 0;
     TransportDeviceIbverbsData d{};
     FillMinimalMemDetailsQpData(d);
-    std::chrono::milliseconds timeout{ 1 };
+    std::chrono::milliseconds timeout{1};
 
     TransportDeviceIbverbs link(dispatcher, nullptr, machinePara, timeout, d);
     ASSERT_EQ(link.Init(), HCCL_SUCCESS);
 
     TransportDeviceIbverbs::RdmaAddrKeyResolveParam param{};
-    param.remoteAddr = reinterpret_cast<const void *>(static_cast<uintptr_t>(0xDEADBEEFULL));
-    param.localAddr = reinterpret_cast<const void *>(static_cast<uintptr_t>(0x20000ULL));
+    param.remoteAddr = reinterpret_cast<const void*>(static_cast<uintptr_t>(0xDEADBEEFULL));
+    param.localAddr = reinterpret_cast<const void*>(static_cast<uintptr_t>(0x20000ULL));
     param.length = 4096ULL;
     EXPECT_EQ(link.ResolveRdmaAddrsAndKeys(param), HCCL_E_INTERNAL);
 
@@ -139,13 +139,13 @@ TEST_F(TransportDeviceIbverbsTest, Ut_ResolveRdmaKeysFromIoMemRanges_InputAndOut
     HcclDispatcher dispatcherPtr = nullptr;
     ASSERT_EQ(HcclDispatcherInit(DispatcherType::DISPATCHER_NORMAL, 0, &dispatcherPtr), HCCL_SUCCESS);
     ASSERT_NE(dispatcherPtr, nullptr);
-    auto *dispatcher = reinterpret_cast<DispatcherPub *>(dispatcherPtr);
+    auto* dispatcher = reinterpret_cast<DispatcherPub*>(dispatcherPtr);
 
     MachinePara machinePara{};
     machinePara.deviceLogicId = 0;
     TransportDeviceIbverbsData d{};
     FillMinimalMemDetailsQpData(d);
-    std::chrono::milliseconds timeout{ 1 };
+    std::chrono::milliseconds timeout{1};
 
     TransportDeviceIbverbs link(dispatcher, nullptr, machinePara, timeout, d);
     ASSERT_EQ(link.Init(), HCCL_SUCCESS);
@@ -155,9 +155,11 @@ TEST_F(TransportDeviceIbverbsTest, Ut_ResolveRdmaKeysFromIoMemRanges_InputAndOut
     constexpr u64 kRemoteOut = 0x800000ULL;
     constexpr u32 kRemoteInKey = 101U;
     constexpr u32 kRemoteOutKey = 202U;
-    link.remoteMemMsg_[static_cast<u32>(MemType::USER_INPUT_MEM)].addr = reinterpret_cast<void *>(static_cast<uintptr_t>(kRemoteIn));
+    link.remoteMemMsg_[static_cast<u32>(MemType::USER_INPUT_MEM)].addr
+        = reinterpret_cast<void*>(static_cast<uintptr_t>(kRemoteIn));
     link.remoteMemMsg_[static_cast<u32>(MemType::USER_INPUT_MEM)].lkey = kRemoteInKey;
-    link.remoteMemMsg_[static_cast<u32>(MemType::USER_OUTPUT_MEM)].addr = reinterpret_cast<void *>(static_cast<uintptr_t>(kRemoteOut));
+    link.remoteMemMsg_[static_cast<u32>(MemType::USER_OUTPUT_MEM)].addr
+        = reinterpret_cast<void*>(static_cast<uintptr_t>(kRemoteOut));
     link.remoteMemMsg_[static_cast<u32>(MemType::USER_OUTPUT_MEM)].lkey = kRemoteOutKey;
 
     constexpr u64 kLocalInBase = 0x900000ULL;
@@ -174,16 +176,16 @@ TEST_F(TransportDeviceIbverbsTest, Ut_ResolveRdmaKeysFromIoMemRanges_InputAndOut
     link.localOutputMem_.key = kLocalOutKey;
 
     TransportDeviceIbverbs::RdmaAddrKeyResolveParam paramIn{};
-    paramIn.remoteAddr = reinterpret_cast<const void *>(static_cast<uintptr_t>(kRemoteIn + 0x100ULL));
-    paramIn.localAddr = reinterpret_cast<const void *>(static_cast<uintptr_t>(kLocalInBase + 0x10ULL));
+    paramIn.remoteAddr = reinterpret_cast<const void*>(static_cast<uintptr_t>(kRemoteIn + 0x100ULL));
+    paramIn.localAddr = reinterpret_cast<const void*>(static_cast<uintptr_t>(kLocalInBase + 0x10ULL));
     paramIn.length = 64ULL;
     ASSERT_EQ(link.ResolveRdmaKeysFromIoMemRanges(paramIn), HCCL_SUCCESS);
     EXPECT_EQ(paramIn.dstKey, kRemoteInKey);
     EXPECT_EQ(paramIn.srcKey, kLocalInKey);
 
     TransportDeviceIbverbs::RdmaAddrKeyResolveParam paramOut{};
-    paramOut.remoteAddr = reinterpret_cast<const void *>(static_cast<uintptr_t>(kRemoteOut + kLocalOutSize));
-    paramOut.localAddr = reinterpret_cast<const void *>(static_cast<uintptr_t>(kLocalOutBase + kLocalOutSize));
+    paramOut.remoteAddr = reinterpret_cast<const void*>(static_cast<uintptr_t>(kRemoteOut + kLocalOutSize));
+    paramOut.localAddr = reinterpret_cast<const void*>(static_cast<uintptr_t>(kLocalOutBase + kLocalOutSize));
     paramOut.length = 1ULL;
     ASSERT_EQ(link.ResolveRdmaKeysFromIoMemRanges(paramOut), HCCL_SUCCESS);
     EXPECT_EQ(paramOut.dstKey, kRemoteOutKey);
@@ -210,7 +212,7 @@ TEST_F(TransportIbverbsTest, Ut_Init_UserMemEnableTrue_WithoutInputMem_Returns_P
     MachinePara mp{};
     mp.userMemEnable = true;
     mp.notifyNum = 0;
-    std::chrono::milliseconds timeout{ 1 };
+    std::chrono::milliseconds timeout{1};
     TransportIbverbs ib(nullptr, nullptr, mp, timeout);
     EXPECT_EQ(ib.Init(), HCCL_E_PTR);
 }
@@ -221,7 +223,7 @@ TEST_F(TransportIbverbsTest, Ut_FillExchangeDataTotalSize_UserMemEnable_AddsFive
     mpOff.userMemEnable = false;
     mpOff.notifyNum = 0;
     mpOff.isIndOp = false;
-    std::chrono::milliseconds timeout{ 1 };
+    std::chrono::milliseconds timeout{1};
     TransportIbverbs ibOff(nullptr, nullptr, mpOff, timeout);
     ibOff.qpsPerConnection_ = 1U;
     ibOff.notifyNum_ = 0U;
@@ -243,7 +245,7 @@ TEST_F(TransportIbverbsTest, Ut_FillExchangeDataTotalSize_UserMemEnable_AddsFive
 
 TEST_F(TransportIbverbsTest, Ut_FillExchangeDataTotalSize_UserMemEnableTrue_AddsNotifyMemMsg)
 {
-    std::chrono::milliseconds timeout{ 1 };
+    std::chrono::milliseconds timeout{1};
     // userMemEnable=false: 不添加 notify 相关内容
     MachinePara base{};
     base.userMemEnable = false;
@@ -269,7 +271,7 @@ TEST_F(TransportIbverbsTest, Ut_FillExchangeDataTotalSize_UserMemEnableTrue_Adds
 // 当drainenbale设置为true，此时应创建dataNotify
 TEST_F(TransportIbverbsTest, Ut_FillExchangeDataTotalSize_DrainEnableTrue_AddsNotifyMemMsg)
 {
-    std::chrono::milliseconds timeout{ 1 };
+    std::chrono::milliseconds timeout{1};
     MachinePara base{};
     base.userMemEnable = false;
     // 一个dataNotify
@@ -296,7 +298,7 @@ TEST_F(TransportIbverbsTest, Ut_FillExchangeDataTotalSize_DrainEnableTrue_AddsNo
 
 TEST_F(TransportIbverbsTest, Ut_FillExchangeDataTotalSize_UserMemEnableMultiQp_AddsAllMemMsg)
 {
-    std::chrono::milliseconds timeout{ 1 };
+    std::chrono::milliseconds timeout{1};
     MachinePara mp{};
     mp.userMemEnable = false;
     mp.notifyNum = 0U;
@@ -328,13 +330,13 @@ TEST_F(TransportDeviceIbverbsTest, Ut_BatchTransferAsync_NullPtr_Returns_PTR)
 
     HcclDispatcher dispatcherPtr = nullptr;
     ASSERT_EQ(HcclDispatcherInit(DispatcherType::DISPATCHER_NORMAL, 0, &dispatcherPtr), HCCL_SUCCESS);
-    auto *dispatcher = reinterpret_cast<DispatcherPub *>(dispatcherPtr);
+    auto* dispatcher = reinterpret_cast<DispatcherPub*>(dispatcherPtr);
 
     MachinePara machinePara{};
     machinePara.deviceLogicId = 0;
     TransportDeviceIbverbsData d{};
     FillMinimalMemDetailsQpData(d);
-    std::chrono::milliseconds timeout{ 1 };
+    std::chrono::milliseconds timeout{1};
 
     TransportDeviceIbverbs link(dispatcher, nullptr, machinePara, timeout, d);
     ASSERT_EQ(link.Init(), HCCL_SUCCESS);

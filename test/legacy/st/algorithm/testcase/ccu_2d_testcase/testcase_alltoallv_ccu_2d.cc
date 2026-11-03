@@ -4,7 +4,7 @@
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -25,20 +25,15 @@ namespace checker {
 
 class All2AllCCUV2DTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "All2All2D CCU test set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "All2All2D CCU test set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "All2All2D CCU test tear down" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "All2All2D CCU test tear down" << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -51,8 +46,9 @@ protected:
     }
 };
 
-void GenAllToAllVParams(u32 rankSize, u64 count, std::vector<u64>& sendCounts, std::vector<u64>& sdispls,
-                        std::vector<u64>& recvCounts, std::vector<u64>& rdispls)
+void GenAllToAllVParams(
+    u32 rankSize, u64 count, std::vector<u64>& sendCounts, std::vector<u64>& sdispls, std::vector<u64>& recvCounts,
+    std::vector<u64>& rdispls)
 {
     u64 sendDisplacement = 0;
     u64 recvDisplacement = 0;
@@ -70,7 +66,7 @@ void GenAllToAllVParams(u32 rankSize, u64 count, std::vector<u64>& sendCounts, s
 TEST_F(All2AllCCUV2DTest, all2all2d_ccu_case_test_2_mul_2_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,8,9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -85,8 +81,9 @@ TEST_F(All2AllCCUV2DTest, all2all2d_ccu_case_test_2_mul_2_rank)
     checkerOpParam.All2AllDataDes.sendType = CheckerDataType::DATA_TYPE_INT8;
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_INT8;
 
-    GenAllToAllVParams(rankNum, 268435456, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 268435456, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_950;
     checkerOpParam.algName = "CcuAlltoAllVMesh2D";
@@ -100,7 +97,7 @@ TEST_F(All2AllCCUV2DTest, all2all2d_ccu_case_test_2_mul_2_rank)
 TEST_F(All2AllCCUV2DTest, all2all2d_ccu_case_test_2_mul_2_rank_count1)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,8,9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -115,8 +112,9 @@ TEST_F(All2AllCCUV2DTest, all2all2d_ccu_case_test_2_mul_2_rank_count1)
     checkerOpParam.All2AllDataDes.sendType = CheckerDataType::DATA_TYPE_INT8;
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_INT8;
 
-    GenAllToAllVParams(rankNum, 1, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 1, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_950;
     checkerOpParam.algName = "CcuAlltoAllVMesh2D";
@@ -131,7 +129,7 @@ TEST_F(All2AllCCUV2DTest, all2all2d_ccu_case_test_2_mul_2_rank_count1)
 TEST_F(All2AllCCUV2DTest, all2all2d_ccu_case_test_3_mul_3_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,8,9,10,16,17,18}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -146,8 +144,9 @@ TEST_F(All2AllCCUV2DTest, all2all2d_ccu_case_test_3_mul_3_rank)
     checkerOpParam.All2AllDataDes.sendType = CheckerDataType::DATA_TYPE_INT32;
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_INT32;
 
-    GenAllToAllVParams(rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_950;
     checkerOpParam.algName = "CcuAlltoAllVMesh2D";
@@ -161,7 +160,7 @@ TEST_F(All2AllCCUV2DTest, all2all2d_ccu_case_test_3_mul_3_rank)
 TEST_F(All2AllCCUV2DTest, all2all2d_ccu_case_test_2_mul_3_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,8,9,10}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -176,8 +175,9 @@ TEST_F(All2AllCCUV2DTest, all2all2d_ccu_case_test_2_mul_3_rank)
     checkerOpParam.All2AllDataDes.sendType = CheckerDataType::DATA_TYPE_INT32;
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_INT32;
 
-    GenAllToAllVParams(rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 100, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_950;
     checkerOpParam.algName = "CcuAlltoAllVMesh2D";
@@ -191,7 +191,7 @@ TEST_F(All2AllCCUV2DTest, all2all2d_ccu_case_test_2_mul_3_rank)
 TEST_F(All2AllCCUV2DTest, all2all2d_ccu_case_test_2_mul_3_rank_twoloop)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,8,9,10}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
     setenv("HCCL_BUFFSIZE", "1", 1);
@@ -207,8 +207,9 @@ TEST_F(All2AllCCUV2DTest, all2all2d_ccu_case_test_2_mul_3_rank_twoloop)
     checkerOpParam.All2AllDataDes.sendType = CheckerDataType::DATA_TYPE_INT8;
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_INT8;
 
-    GenAllToAllVParams(rankNum, 600000, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 600000, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_950;
     checkerOpParam.algName = "CcuAlltoAllVMesh2D";
@@ -222,7 +223,7 @@ TEST_F(All2AllCCUV2DTest, all2all2d_ccu_case_test_2_mul_3_rank_twoloop)
 TEST_F(All2AllCCUV2DTest, all2all2d_ccu_case_test_2_mul_3_rank_threeloop)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,8,9,10}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
     setenv("HCCL_BUFFSIZE", "1", 1);
@@ -238,8 +239,9 @@ TEST_F(All2AllCCUV2DTest, all2all2d_ccu_case_test_2_mul_3_rank_threeloop)
     checkerOpParam.All2AllDataDes.sendType = CheckerDataType::DATA_TYPE_INT8;
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_INT8;
 
-    GenAllToAllVParams(rankNum, 1200000, checkerOpParam.All2AllDataDes.sendCounts,
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+    GenAllToAllVParams(
+        rankNum, 1200000, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+        checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_950;
     checkerOpParam.algName = "CcuAlltoAllVMesh2D";
@@ -249,4 +251,4 @@ TEST_F(All2AllCCUV2DTest, all2all2d_ccu_case_test_2_mul_3_rank_threeloop)
     ret = checker.CheckA5Aicpu(checkerOpParam, topoMeta);
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 }
-}
+} // namespace checker

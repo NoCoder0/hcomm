@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include <gtest/gtest.h>
 #include "hccl/hccl_res.h"
@@ -24,136 +24,224 @@ using namespace hccl;
 // 每个超节点内包含两个AI Server，每个AI Server内四个Device的资源配置文件为例
 using json = nlohmann::json;
 static json rank_table_910C_2superPod_2server_4rank_1nic
-    = {{"status", "completed"}, {"version", "1.2"}, {"server_count", "4"},
-        {"server_list",
-            {{{"server_id", "node_0"}, {"host_ip", "172.16.0.100"},
-                 {"device", {{{"device_id", "0"}, {"super_device_id", "0"}, {"device_ip", "192.168.1.6"},
-                                 {"device_port", "16666"}, {"backup_device_ip", "192.168.1.7"},
-                                 {"backup_device_port", "16667"}, {"host_port", "16665"}, {"rank_id", "0"}},
-                                {{"device_id", "1"}, {"super_device_id", "1"}, {"device_ip", "192.168.1.7"},
-                                    {"device_port", "16666"}, {"backup_device_ip", "192.168.1.6"},
-                                    {"backup_device_port", "16667"}, {"host_port", "16666"}, {"rank_id", "1"}},
-                                {{"device_id", "2"}, {"super_device_id", "2"}, {"device_ip", "192.168.1.8"},
-                                    {"device_port", "16668"}, {"backup_device_ip", "192.168.1.9"},
-                                    {"backup_device_port", "16670"}, {"host_port", "16667"}, {"rank_id", "2"}},
-                                {{"device_id", "3"}, {"super_device_id", "3"}, {"device_ip", "192.168.1.9"},
-                                    {"device_port", "16669"}, {"backup_device_ip", "192.168.1.8"},
-                                    {"backup_device_port", "16667"}, {"host_port", "16668"}, {"rank_id", "3"}}}}},
-                {{"server_id", "node_1"}, {"host_ip", "172.16.0.101"},
-                    {"device", {{{"device_id", "0"}, {"super_device_id", "4"}, {"device_ip", "192.168.2.6"},
-                                    {"device_port", "16666"}, {"backup_device_ip", "192.168.2.7"},
-                                    {"backup_device_port", "16667"}, {"host_port", "16665"}, {"rank_id", "4"}},
-                                   {{"device_id", "1"}, {"super_device_id", "5"}, {"device_ip", "192.168.2.7"},
-                                       {"device_port", "16666"}, {"backup_device_ip", "192.168.2.6"},
-                                       {"backup_device_port", "16667"}, {"host_port", "16666"}, {"rank_id", "5"}},
-                                   {{"device_id", "2"}, {"super_device_id", "6"}, {"device_ip", "192.168.2.8"},
-                                       {"device_port", "16668"}, {"backup_device_ip", "192.168.2.9"},
-                                       {"backup_device_port", "16670"}, {"host_port", "16667"}, {"rank_id", "6"}},
-                                   {{"device_id", "3"}, {"super_device_id", "7"}, {"device_ip", "192.168.2.9"},
-                                       {"device_port", "16669"}, {"backup_device_ip", "192.168.2.8"},
-                                       {"backup_device_port", "16667"}, {"host_port", "16668"}, {"rank_id", "7"}}}}},
-                {{"server_id", "node_2"}, {"host_ip", "172.16.0.102"},
-                    {"device", {{{"device_id", "0"}, {"super_device_id", "0"}, {"device_ip", "192.168.3.6"},
-                                    {"device_port", "16666"}, {"backup_device_ip", "192.168.3.7"},
-                                    {"backup_device_port", "16667"}, {"host_port", "16665"}, {"rank_id", "8"}},
-                                   {{"device_id", "1"}, {"super_device_id", "1"}, {"device_ip", "192.168.3.7"},
-                                       {"device_port", "16666"}, {"backup_device_ip", "192.168.3.6"},
-                                       {"backup_device_port", "16667"}, {"host_port", "16666"}, {"rank_id", "9"}},
-                                   {{"device_id", "2"}, {"super_device_id", "2"}, {"device_ip", "192.168.3.8"},
-                                       {"device_port", "16668"}, {"backup_device_ip", "192.168.3.9"},
-                                       {"backup_device_port", "16670"}, {"host_port", "16667"}, {"rank_id", "10"}},
-                                   {{"device_id", "3"}, {"super_device_id", "3"}, {"device_ip", "192.168.3.9"},
-                                       {"device_port", "16669"}, {"backup_device_ip", "192.168.3.8"},
-                                       {"backup_device_port", "16667"}, {"host_port", "16668"}, {"rank_id", "11"}}}}},
-                {{"server_id", "node_3"}, {"host_ip", "172.16.0.103"},
-                    {"device", {{{"device_id", "0"}, {"super_device_id", "4"}, {"device_ip", "192.168.4.6"},
-                                    {"device_port", "16666"}, {"backup_device_ip", "192.168.4.7"},
-                                    {"backup_device_port", "16667"}, {"host_port", "16665"}, {"rank_id", "12"}},
-                                   {{"device_id", "1"}, {"super_device_id", "5"}, {"device_ip", "192.168.4.7"},
-                                       {"device_port", "16666"}, {"backup_device_ip", "192.168.4.6"},
-                                       {"backup_device_port", "16667"}, {"host_port", "16666"}, {"rank_id", "13"}},
-                                   {{"device_id", "2"}, {"super_device_id", "6"}, {"device_ip", "192.168.4.8"},
-                                       {"device_port", "16668"}, {"backup_device_ip", "192.168.4.9"},
-                                       {"backup_device_port", "16670"}, {"host_port", "16667"}, {"rank_id", "14"}},
-                                   {{"device_id", "3"}, {"super_device_id", "7"}, {"device_ip", "192.168.4.9"},
-                                       {"device_port", "16669"}, {"backup_device_ip", "192.168.4.8"},
-                                       {"backup_device_port", "16667"}, {"host_port", "16668"}, {"rank_id", "15"}}}}}}},
-        {"super_pod_list",
-            {{{"super_pod_id", "0"}, {"server_list", {{{"server_id", "node_0"}}, {{"server_id", "node_1"}}}}},
-                {{"super_pod_id", "1"}, {"server_list", {{{"server_id", "node_2"}}, {{"server_id", "node_3"}}}}}}}};
-
-static json rank_table_2server_2rank = {{"status", "completed"}, // rank table可用标识，completed为可用
-    {"version", "1.0"},                                          // rank table模板版本信息，配置为：1.0
-    {"server_count", "2"},                        // 参与训练的AI Server数目，此例中，有两个AI Server
-    {"server_list", {                             // server_list[0]：第一个AI Server
-                        {{"server_id", "node_0"}, // AI Server标识，String类型，请确保全局唯一
-                            {"device",
-                                {                 // device[0]：第一个设备
-                                    {
-                                        {"device_id", "0"},           // 处理器的物理ID
-                                        {"device_ip", "192.168.1.8"}, // 处理器真实网卡IP
-                                        {"device_port", "16667"},     // 处理器的网卡监听端口
-                                        {"rank_id", "0"} // rank的标识，从0开始配置，请确保全局唯一
-                                    },
-                                    // device[1]：第二个设备
-                                    {{"device_id", "1"}, {"device_ip", "192.168.1.9"}, {"device_port", "16667"},
-                                        {"rank_id", "1"}}}}},
-                        // server_list[1]：第二个AI Server
-                        {{"server_id", "node_1"}, {"device", {// device[0]：第一个设备
-                                                                 {{"device_id", "0"}, {"device_ip", "192.168.2.8"},
-                                                                     {"device_port", "16667"}, {"rank_id", "2"}},
-                                                                 // device[1]：第二个设备
-                                                                 {{"device_id", "1"}, {"device_ip", "192.168.2.9"},
-                                                                     {"device_port", "16667"}, {"rank_id", "3"}}}}}}}};
-
-static json rank_table_910B_1server_16rank = {{"status", "completed"}, // rank table可用标识，completed为可用
-    {"version", "1.0"},                                                // rank table模板版本信息，配置为：1.0
-    {"server_count", "1"},            // 参与训练的AI Server数目：单机部署，固定为1
-    {"server_list",
-        {                             // server_list[0]：唯一的1台AI Server
-            {{"server_id", "node_0"}, // AI Server标识，全局唯一
-                {"device",
-                    {{{"device_id", "0"}, {"device_ip", "192.168.1.10"}, {"device_port", "16667"}, {"rank_id", "0"}},
-                        {{"device_id", "1"}, {"device_ip", "192.168.1.11"}, {"device_port", "16667"}, {"rank_id", "1"}},
-                        {{"device_id", "2"}, {"device_ip", "192.168.1.12"}, {"device_port", "16667"}, {"rank_id", "2"}},
-                        {{"device_id", "3"}, {"device_ip", "192.168.1.13"}, {"device_port", "16667"}, {"rank_id", "3"}},
-                        {{"device_id", "4"}, {"device_ip", "192.168.1.14"}, {"device_port", "16667"}, {"rank_id", "4"}},
-                        {{"device_id", "5"}, {"device_ip", "192.168.1.15"}, {"device_port", "16667"}, {"rank_id", "5"}},
-                        {{"device_id", "6"}, {"device_ip", "192.168.1.16"}, {"device_port", "16667"}, {"rank_id", "6"}},
-                        {{"device_id", "7"}, {"device_ip", "192.168.1.17"}, {"device_port", "16667"}, {"rank_id", "7"}},
-                        {{"device_id", "8"}, {"device_ip", "192.168.1.18"}, {"device_port", "16667"}, {"rank_id", "8"}},
-                        {{"device_id", "9"}, {"device_ip", "192.168.1.19"}, {"device_port", "16667"}, {"rank_id", "9"}},
-                        {{"device_id", "10"}, {"device_ip", "192.168.1.20"}, {"device_port", "16667"},
-                            {"rank_id", "10"}},
-                        {{"device_id", "11"}, {"device_ip", "192.168.1.21"}, {"device_port", "16667"},
-                            {"rank_id", "11"}},
-                        {{"device_id", "12"}, {"device_ip", "192.168.1.22"}, {"device_port", "16667"},
-                            {"rank_id", "12"}},
-                        {{"device_id", "13"}, {"device_ip", "192.168.1.23"}, {"device_port", "16667"},
-                            {"rank_id", "13"}},
-                        {{"device_id", "14"}, {"device_ip", "192.168.1.24"}, {"device_port", "16667"},
-                            {"rank_id", "14"}},
-                        {{"device_id", "15"}, {"device_ip", "192.168.1.25"}, {"device_port", "16667"},
-                            {"rank_id", "15"}}}}}}}};
-
-static json rank_table_2server_4rank = {{"status", "completed"}, {"version", "1.0"}, {"server_count", "2"},
-    {"server_list",
+    = {{"status", "completed"},
+       {"version", "1.2"},
+       {"server_count", "4"},
+       {"server_list",
         {{{"server_id", "node_0"},
-             {"device",
-                 {{{"device_id", "0"}, {"device_ip", "192.168.1.8"}, {"device_port", "16667"}, {"rank_id", "0"}},
-                     {{"device_id", "1"}, {"device_ip", "192.168.1.9"}, {"device_port", "16667"}, {"rank_id", "1"}},
-                     {{"device_id", "2"}, {"device_ip", "192.168.1.10"}, {"device_port", "16667"}, {"rank_id", "2"}},
-                     {{"device_id", "3"}, {"device_ip", "192.168.1.11"}, {"device_port", "16667"}, {"rank_id", "3"}}}}},
-            {{"server_id", "node_1"},
-                {"device",
-                    {{{"device_id", "0"}, {"device_ip", "192.168.2.8"}, {"device_port", "16667"}, {"rank_id", "4"}},
-                        {{"device_id", "1"}, {"device_ip", "192.168.2.9"}, {"device_port", "16667"}, {"rank_id", "5"}},
-                        {{"device_id", "2"}, {"device_ip", "192.168.2.10"}, {"device_port", "16667"}, {"rank_id", "6"}},
-                        {{"device_id", "3"}, {"device_ip", "192.168.2.11"}, {"device_port", "16667"},
-                            {"rank_id", "7"}}}}}}}};
+          {"host_ip", "172.16.0.100"},
+          {"device",
+           {{{"device_id", "0"},
+             {"super_device_id", "0"},
+             {"device_ip", "192.168.1.6"},
+             {"device_port", "16666"},
+             {"backup_device_ip", "192.168.1.7"},
+             {"backup_device_port", "16667"},
+             {"host_port", "16665"},
+             {"rank_id", "0"}},
+            {{"device_id", "1"},
+             {"super_device_id", "1"},
+             {"device_ip", "192.168.1.7"},
+             {"device_port", "16666"},
+             {"backup_device_ip", "192.168.1.6"},
+             {"backup_device_port", "16667"},
+             {"host_port", "16666"},
+             {"rank_id", "1"}},
+            {{"device_id", "2"},
+             {"super_device_id", "2"},
+             {"device_ip", "192.168.1.8"},
+             {"device_port", "16668"},
+             {"backup_device_ip", "192.168.1.9"},
+             {"backup_device_port", "16670"},
+             {"host_port", "16667"},
+             {"rank_id", "2"}},
+            {{"device_id", "3"},
+             {"super_device_id", "3"},
+             {"device_ip", "192.168.1.9"},
+             {"device_port", "16669"},
+             {"backup_device_ip", "192.168.1.8"},
+             {"backup_device_port", "16667"},
+             {"host_port", "16668"},
+             {"rank_id", "3"}}}}},
+         {{"server_id", "node_1"},
+          {"host_ip", "172.16.0.101"},
+          {"device",
+           {{{"device_id", "0"},
+             {"super_device_id", "4"},
+             {"device_ip", "192.168.2.6"},
+             {"device_port", "16666"},
+             {"backup_device_ip", "192.168.2.7"},
+             {"backup_device_port", "16667"},
+             {"host_port", "16665"},
+             {"rank_id", "4"}},
+            {{"device_id", "1"},
+             {"super_device_id", "5"},
+             {"device_ip", "192.168.2.7"},
+             {"device_port", "16666"},
+             {"backup_device_ip", "192.168.2.6"},
+             {"backup_device_port", "16667"},
+             {"host_port", "16666"},
+             {"rank_id", "5"}},
+            {{"device_id", "2"},
+             {"super_device_id", "6"},
+             {"device_ip", "192.168.2.8"},
+             {"device_port", "16668"},
+             {"backup_device_ip", "192.168.2.9"},
+             {"backup_device_port", "16670"},
+             {"host_port", "16667"},
+             {"rank_id", "6"}},
+            {{"device_id", "3"},
+             {"super_device_id", "7"},
+             {"device_ip", "192.168.2.9"},
+             {"device_port", "16669"},
+             {"backup_device_ip", "192.168.2.8"},
+             {"backup_device_port", "16667"},
+             {"host_port", "16668"},
+             {"rank_id", "7"}}}}},
+         {{"server_id", "node_2"},
+          {"host_ip", "172.16.0.102"},
+          {"device",
+           {{{"device_id", "0"},
+             {"super_device_id", "0"},
+             {"device_ip", "192.168.3.6"},
+             {"device_port", "16666"},
+             {"backup_device_ip", "192.168.3.7"},
+             {"backup_device_port", "16667"},
+             {"host_port", "16665"},
+             {"rank_id", "8"}},
+            {{"device_id", "1"},
+             {"super_device_id", "1"},
+             {"device_ip", "192.168.3.7"},
+             {"device_port", "16666"},
+             {"backup_device_ip", "192.168.3.6"},
+             {"backup_device_port", "16667"},
+             {"host_port", "16666"},
+             {"rank_id", "9"}},
+            {{"device_id", "2"},
+             {"super_device_id", "2"},
+             {"device_ip", "192.168.3.8"},
+             {"device_port", "16668"},
+             {"backup_device_ip", "192.168.3.9"},
+             {"backup_device_port", "16670"},
+             {"host_port", "16667"},
+             {"rank_id", "10"}},
+            {{"device_id", "3"},
+             {"super_device_id", "3"},
+             {"device_ip", "192.168.3.9"},
+             {"device_port", "16669"},
+             {"backup_device_ip", "192.168.3.8"},
+             {"backup_device_port", "16667"},
+             {"host_port", "16668"},
+             {"rank_id", "11"}}}}},
+         {{"server_id", "node_3"},
+          {"host_ip", "172.16.0.103"},
+          {"device",
+           {{{"device_id", "0"},
+             {"super_device_id", "4"},
+             {"device_ip", "192.168.4.6"},
+             {"device_port", "16666"},
+             {"backup_device_ip", "192.168.4.7"},
+             {"backup_device_port", "16667"},
+             {"host_port", "16665"},
+             {"rank_id", "12"}},
+            {{"device_id", "1"},
+             {"super_device_id", "5"},
+             {"device_ip", "192.168.4.7"},
+             {"device_port", "16666"},
+             {"backup_device_ip", "192.168.4.6"},
+             {"backup_device_port", "16667"},
+             {"host_port", "16666"},
+             {"rank_id", "13"}},
+            {{"device_id", "2"},
+             {"super_device_id", "6"},
+             {"device_ip", "192.168.4.8"},
+             {"device_port", "16668"},
+             {"backup_device_ip", "192.168.4.9"},
+             {"backup_device_port", "16670"},
+             {"host_port", "16667"},
+             {"rank_id", "14"}},
+            {{"device_id", "3"},
+             {"super_device_id", "7"},
+             {"device_ip", "192.168.4.9"},
+             {"device_port", "16669"},
+             {"backup_device_ip", "192.168.4.8"},
+             {"backup_device_port", "16667"},
+             {"host_port", "16668"},
+             {"rank_id", "15"}}}}}}},
+       {"super_pod_list",
+        {{{"super_pod_id", "0"}, {"server_list", {{{"server_id", "node_0"}}, {{"server_id", "node_1"}}}}},
+         {{"super_pod_id", "1"}, {"server_list", {{{"server_id", "node_2"}}, {{"server_id", "node_3"}}}}}}}};
 
-static const char *RANKTABLE_FILE_NAME = "./ut_independent_op_test.json";
-aclError aclrtGetLogicDevIdByPhyDevId_stub(const int32_t phyDevId, int32_t *const logicDevId)
+static json rank_table_2server_2rank
+    = {{"status", "completed"}, // rank table可用标识，completed为可用
+       {"version", "1.0"},      // rank table模板版本信息，配置为：1.0
+       {"server_count", "2"},   // 参与训练的AI Server数目，此例中，有两个AI Server
+       {"server_list",
+        {                          // server_list[0]：第一个AI Server
+         {{"server_id", "node_0"}, // AI Server标识，String类型，请确保全局唯一
+          {"device",
+           {// device[0]：第一个设备
+            {
+                {"device_id", "0"},           // 处理器的物理ID
+                {"device_ip", "192.168.1.8"}, // 处理器真实网卡IP
+                {"device_port", "16667"},     // 处理器的网卡监听端口
+                {"rank_id", "0"}              // rank的标识，从0开始配置，请确保全局唯一
+            },
+            // device[1]：第二个设备
+            {{"device_id", "1"}, {"device_ip", "192.168.1.9"}, {"device_port", "16667"}, {"rank_id", "1"}}}}},
+         // server_list[1]：第二个AI Server
+         {{"server_id", "node_1"},
+          {"device",
+           {// device[0]：第一个设备
+            {{"device_id", "0"}, {"device_ip", "192.168.2.8"}, {"device_port", "16667"}, {"rank_id", "2"}},
+            // device[1]：第二个设备
+            {{"device_id", "1"}, {"device_ip", "192.168.2.9"}, {"device_port", "16667"}, {"rank_id", "3"}}}}}}}};
+
+static json rank_table_910B_1server_16rank
+    = {{"status", "completed"}, // rank table可用标识，completed为可用
+       {"version", "1.0"},      // rank table模板版本信息，配置为：1.0
+       {"server_count", "1"},   // 参与训练的AI Server数目：单机部署，固定为1
+       {"server_list",
+        {                          // server_list[0]：唯一的1台AI Server
+         {{"server_id", "node_0"}, // AI Server标识，全局唯一
+          {"device",
+           {{{"device_id", "0"}, {"device_ip", "192.168.1.10"}, {"device_port", "16667"}, {"rank_id", "0"}},
+            {{"device_id", "1"}, {"device_ip", "192.168.1.11"}, {"device_port", "16667"}, {"rank_id", "1"}},
+            {{"device_id", "2"}, {"device_ip", "192.168.1.12"}, {"device_port", "16667"}, {"rank_id", "2"}},
+            {{"device_id", "3"}, {"device_ip", "192.168.1.13"}, {"device_port", "16667"}, {"rank_id", "3"}},
+            {{"device_id", "4"}, {"device_ip", "192.168.1.14"}, {"device_port", "16667"}, {"rank_id", "4"}},
+            {{"device_id", "5"}, {"device_ip", "192.168.1.15"}, {"device_port", "16667"}, {"rank_id", "5"}},
+            {{"device_id", "6"}, {"device_ip", "192.168.1.16"}, {"device_port", "16667"}, {"rank_id", "6"}},
+            {{"device_id", "7"}, {"device_ip", "192.168.1.17"}, {"device_port", "16667"}, {"rank_id", "7"}},
+            {{"device_id", "8"}, {"device_ip", "192.168.1.18"}, {"device_port", "16667"}, {"rank_id", "8"}},
+            {{"device_id", "9"}, {"device_ip", "192.168.1.19"}, {"device_port", "16667"}, {"rank_id", "9"}},
+            {{"device_id", "10"}, {"device_ip", "192.168.1.20"}, {"device_port", "16667"}, {"rank_id", "10"}},
+            {{"device_id", "11"}, {"device_ip", "192.168.1.21"}, {"device_port", "16667"}, {"rank_id", "11"}},
+            {{"device_id", "12"}, {"device_ip", "192.168.1.22"}, {"device_port", "16667"}, {"rank_id", "12"}},
+            {{"device_id", "13"}, {"device_ip", "192.168.1.23"}, {"device_port", "16667"}, {"rank_id", "13"}},
+            {{"device_id", "14"}, {"device_ip", "192.168.1.24"}, {"device_port", "16667"}, {"rank_id", "14"}},
+            {{"device_id", "15"}, {"device_ip", "192.168.1.25"}, {"device_port", "16667"}, {"rank_id", "15"}}}}}}}};
+
+static json rank_table_2server_4rank
+    = {{"status", "completed"},
+       {"version", "1.0"},
+       {"server_count", "2"},
+       {"server_list",
+        {{{"server_id", "node_0"},
+          {"device",
+           {{{"device_id", "0"}, {"device_ip", "192.168.1.8"}, {"device_port", "16667"}, {"rank_id", "0"}},
+            {{"device_id", "1"}, {"device_ip", "192.168.1.9"}, {"device_port", "16667"}, {"rank_id", "1"}},
+            {{"device_id", "2"}, {"device_ip", "192.168.1.10"}, {"device_port", "16667"}, {"rank_id", "2"}},
+            {{"device_id", "3"}, {"device_ip", "192.168.1.11"}, {"device_port", "16667"}, {"rank_id", "3"}}}}},
+         {{"server_id", "node_1"},
+          {"device",
+           {{{"device_id", "0"}, {"device_ip", "192.168.2.8"}, {"device_port", "16667"}, {"rank_id", "4"}},
+            {{"device_id", "1"}, {"device_ip", "192.168.2.9"}, {"device_port", "16667"}, {"rank_id", "5"}},
+            {{"device_id", "2"}, {"device_ip", "192.168.2.10"}, {"device_port", "16667"}, {"rank_id", "6"}},
+            {{"device_id", "3"}, {"device_ip", "192.168.2.11"}, {"device_port", "16667"}, {"rank_id", "7"}}}}}}}};
+
+static const char* RANKTABLE_FILE_NAME = "./ut_independent_op_test.json";
+aclError aclrtGetLogicDevIdByPhyDevId_stub(const int32_t phyDevId, int32_t* const logicDevId)
 {
     *logicDevId = phyDevId;
     return RT_ERROR_NONE;
@@ -164,7 +252,10 @@ public:
     void SetUp() override
     {
         MOCKER(&HcclCommunicator::InitRaResource).stubs().will(returnValue(HCCL_SUCCESS));
-        MOCKER(aclrtGetLogicDevIdByPhyDevId).stubs().with(mockcpp::any()).will(invoke(aclrtGetLogicDevIdByPhyDevId_stub));
+        MOCKER(aclrtGetLogicDevIdByPhyDevId)
+            .stubs()
+            .with(mockcpp::any())
+            .will(invoke(aclrtGetLogicDevIdByPhyDevId_stub));
         BaseInit::SetUp();
     }
     void TearDown() override
@@ -176,14 +267,14 @@ public:
     }
 };
 
-HcclResult DevTypeToCommProtocol_stub(RankGraph *graph, DevType &type, CommProtocol &protocol)
+HcclResult DevTypeToCommProtocol_stub(RankGraph* graph, DevType& type, CommProtocol& protocol)
 {
     type = DevType::DEV_TYPE_910_93;
     protocol = COMM_PROTOCOL_ROCE;
     return HCCL_SUCCESS;
 }
 
-void Create91093Comm(HcclComm *comm)
+void Create91093Comm(HcclComm* comm)
 {
     MOCKER_CPP(&RankGraph::DevTypeToCommProtocol).stubs().with(mockcpp::any()).will(invoke(DevTypeToCommProtocol_stub));
     MOCKER(hrtGetDeviceInfo).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
@@ -213,7 +304,7 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_HcclRankGraphGetLinks_When_Param_Is_Nu
     ret = HcclRankGraphGetLinks(comm, 0, 0, 0, nullptr, nullptr);
     EXPECT_EQ(ret, HCCL_E_PTR);
     uint32_t listSize = 0;
-    CommLink *linkList = nullptr;
+    CommLink* linkList = nullptr;
     ret = HcclRankGraphGetLinks(comm, 0, 0, 0, &linkList, nullptr);
     EXPECT_EQ(ret, HCCL_E_PTR);
     ret = HcclRankGraphGetLinks(comm, 0, 0, 0, &linkList, &listSize);
@@ -239,7 +330,7 @@ netLayer = 2， 无
 */
 TEST_F(HcclIndependentOpRankGraphTest, Ut_HcclRankGraphGetLinks_When_In_Same_Server)
 {
-    CommLink *linkList = nullptr;
+    CommLink* linkList = nullptr;
     uint32_t listSize = 0;
     set_chip_type_stub(0, static_cast<s32>(DevType::DEV_TYPE_910_93));
     Create91093Comm(&comm);
@@ -306,7 +397,7 @@ netLayer = 2， RDMA连接
 */
 TEST_F(HcclIndependentOpRankGraphTest, Ut_HcclRankGraphGetLinks_When_In_diff_Servers_Same_Supod)
 {
-    CommLink *linkList = nullptr;
+    CommLink* linkList = nullptr;
     uint32_t listSize = 0;
     set_chip_type_stub(0, static_cast<s32>(DevType::DEV_TYPE_910_93));
     Create91093Comm(&comm);
@@ -338,7 +429,7 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_HcclRankGraphGetLinks_When_In_diff_Ser
 
 TEST_F(HcclIndependentOpRankGraphTest, Ut_HcclRankGraphGetLinks_When_In_diff_Servers_diff_Supod)
 {
-    CommLink *linkList = nullptr;
+    CommLink* linkList = nullptr;
     uint32_t listSize = 0;
     set_chip_type_stub(0, static_cast<s32>(DevType::DEV_TYPE_910_93));
     Create91093Comm(&comm);
@@ -363,23 +454,26 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_HcclRankGraphGetLinks_When_In_diff_Ser
     DestroyComm(comm);
 }
 
-HcclResult DevTypeToCommProtocol_stub_910B(RankGraph *graph, DevType &type, CommProtocol &protocol)
+HcclResult DevTypeToCommProtocol_stub_910B(RankGraph* graph, DevType& type, CommProtocol& protocol)
 {
     type = DevType::DEV_TYPE_910B;
     protocol = COMM_PROTOCOL_ROCE;
     return HCCL_SUCCESS;
 }
 
-HcclResult hrtGetDeviceTypeStub(DevType &devType)
+HcclResult hrtGetDeviceTypeStub(DevType& devType)
 {
     devType = DevType::DEV_TYPE_910B;
     return HCCL_SUCCESS;
 }
 
-void Create910BComm(HcclComm *comm, json jsonName)
+void Create910BComm(HcclComm* comm, json jsonName)
 {
     MOCKER(hrtGetDeviceType).stubs().with(mockcpp::any()).will(invoke(hrtGetDeviceTypeStub));
-    MOCKER_CPP(&RankGraph::DevTypeToCommProtocol).stubs().with(mockcpp::any()).will(invoke(DevTypeToCommProtocol_stub_910B));
+    MOCKER_CPP(&RankGraph::DevTypeToCommProtocol)
+        .stubs()
+        .with(mockcpp::any())
+        .will(invoke(DevTypeToCommProtocol_stub_910B));
     MOCKER(hrtGetDeviceInfo).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     MOCKER(IsSuperPodMode).stubs().with(outBound(false)).will(returnValue(HCCL_SUCCESS));
     MOCKER(IsSupportAtomicWrite).stubs().will(returnValue(HCCL_SUCCESS));
@@ -404,7 +498,7 @@ netLayer = 2， 无
 */
 TEST_F(HcclIndependentOpRankGraphTest, Ut_HcclRankGraphGetLinks_When_In_Same_Server_910B)
 {
-    CommLink *linkList = nullptr;
+    CommLink* linkList = nullptr;
     uint32_t listSize = 0;
     set_chip_type_stub(0, static_cast<s32>(DevType::DEV_TYPE_910B));
     Create910BComm(&comm, rank_table_2server_2rank);
@@ -433,7 +527,7 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_HcclRankGraphGetLinks_When_In_Same_Ser
 
 TEST_F(HcclIndependentOpRankGraphTest, Ut_HcclRankGraphGetLinks_When_In_Diff_Servers_910B)
 {
-    CommLink *linkList = nullptr;
+    CommLink* linkList = nullptr;
     uint32_t listSize = 0;
     set_chip_type_stub(0, static_cast<s32>(DevType::DEV_TYPE_910B));
     Create910BComm(&comm, rank_table_2server_2rank);
@@ -478,7 +572,7 @@ netLayer = 2， 无
 
 TEST_F(HcclIndependentOpRankGraphTest, Ut_HcclRankGraphGetLinks_When_In_Same_Mesh_AX)
 {
-    CommLink *linkList = nullptr;
+    CommLink* linkList = nullptr;
     uint32_t listSize = 0;
     set_chip_type_stub(0, static_cast<s32>(DevType::DEV_TYPE_910B));
     MOCKER(&TopoInfoExtractor::CheckPlaneInfo).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
@@ -507,7 +601,7 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_HcclRankGraphGetLinks_When_In_Same_Mes
 // 不同个MESH间对称场景走PCIE
 TEST_F(HcclIndependentOpRankGraphTest, Ut_HcclRankGraphGetLinks_When_In_diff_Mesh_AX)
 {
-    CommLink *linkList = nullptr;
+    CommLink* linkList = nullptr;
     uint32_t listSize = 0;
     set_chip_type_stub(0, static_cast<s32>(DevType::DEV_TYPE_910B));
     MOCKER(&TopoInfoExtractor::CheckPlaneInfo).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
@@ -537,7 +631,7 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_HcclRankGraphGetLinks_When_In_diff_Mes
 {
     setenv("HCCL_INTRA_ROCE_ENABLE", "1", 1);
     setenv("HCCL_INTRA_PCIE_ENABLE", "0", 1);
-    CommLink *linkList = nullptr;
+    CommLink* linkList = nullptr;
     uint32_t listSize = 0;
     set_chip_type_stub(0, static_cast<s32>(DevType::DEV_TYPE_910B));
     MOCKER(&TopoInfoExtractor::CheckPlaneInfo).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
@@ -565,7 +659,7 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_HcclRankGraphGetLinks_When_In_diff_Mes
 // 不同个MESH间非对称场景不存在链路
 TEST_F(HcclIndependentOpRankGraphTest, Ut_HcclRankGraphGetLinks_When_In_diff_Mesh_AX_Unsym)
 {
-    CommLink *linkList = nullptr;
+    CommLink* linkList = nullptr;
     uint32_t listSize = 0;
     set_chip_type_stub(0, static_cast<s32>(DevType::DEV_TYPE_910B));
     MOCKER(&TopoInfoExtractor::CheckPlaneInfo).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
@@ -592,7 +686,7 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_HcclRankGraphGetLinks_When_In_diff_Mes
 {
     setenv("HCCL_INTRA_ROCE_ENABLE", "1", 1);
     setenv("HCCL_INTRA_PCIE_ENABLE", "0", 1);
-    CommLink *linkList = nullptr;
+    CommLink* linkList = nullptr;
     uint32_t listSize = 0;
     set_chip_type_stub(0, static_cast<s32>(DevType::DEV_TYPE_910B));
     MOCKER(&TopoInfoExtractor::CheckPlaneInfo).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
@@ -619,16 +713,19 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_HcclRankGraphGetLinks_When_In_diff_Mes
 }
 
 // 310P用例
-HcclResult DevTypeToCommProtocol_stub_310P(RankGraph *graph, DevType &type, CommProtocol &protocol)
+HcclResult DevTypeToCommProtocol_stub_310P(RankGraph* graph, DevType& type, CommProtocol& protocol)
 {
     type = DevType::DEV_TYPE_310P3;
     protocol = COMM_PROTOCOL_ROCE;
     return HCCL_SUCCESS;
 }
 
-void Create310PComm(HcclComm *comm, json jsonName)
+void Create310PComm(HcclComm* comm, json jsonName)
 {
-    MOCKER_CPP(&RankGraph::DevTypeToCommProtocol).stubs().with(mockcpp::any()).will(invoke(DevTypeToCommProtocol_stub_310P));
+    MOCKER_CPP(&RankGraph::DevTypeToCommProtocol)
+        .stubs()
+        .with(mockcpp::any())
+        .will(invoke(DevTypeToCommProtocol_stub_310P));
     MOCKER(hrtGetDeviceInfo).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     MOCKER(IsSuperPodMode).stubs().with(outBound(false)).will(returnValue(HCCL_SUCCESS));
     MOCKER(IsSupportAtomicWrite).stubs().will(returnValue(HCCL_SUCCESS));
@@ -655,7 +752,7 @@ netLayer = 2， 无
 **/
 TEST_F(HcclIndependentOpRankGraphTest, Ut_HcclRankGraphGetLinks_When_In_Same_Server_310P)
 {
-    CommLink *linkList = nullptr;
+    CommLink* linkList = nullptr;
     uint32_t listSize = 0;
     set_chip_type_stub(0, static_cast<s32>(DevType::DEV_TYPE_310P3));
     Create310PComm(&comm, rank_table_2server_4rank);
@@ -688,7 +785,7 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_HcclRankGraphGetLinks_When_In_Same_Ser
 
 TEST_F(HcclIndependentOpRankGraphTest, Ut_HcclRankGraphGetLinks_When_In_Diff_Servers_310P)
 {
-    CommLink *linkList = nullptr;
+    CommLink* linkList = nullptr;
     uint32_t listSize = 0;
     set_chip_type_stub(0, static_cast<s32>(DevType::DEV_TYPE_310P3));
     Create310PComm(&comm, rank_table_2server_4rank);
@@ -718,7 +815,7 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_HcclRankGraphGetLinks_When_In_Same_Ser
 {
     setenv("HCCL_INTRA_ROCE_ENABLE", "1", 1);
     setenv("HCCL_INTRA_PCIE_ENABLE", "0", 1);
-    CommLink *linkList = nullptr;
+    CommLink* linkList = nullptr;
     uint32_t listSize = 0;
     set_chip_type_stub(0, static_cast<s32>(DevType::DEV_TYPE_310P3));
     set_board_id(0x1E); // 设置为V卡(310P标卡场景)
@@ -764,20 +861,20 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_GetTopoInstsByLayer_When_InvalidNetLay
 {
     std::shared_ptr<hccl::hcclComm> hcclCommPtr;
     std::shared_ptr<Hccl::RankGraph> rankGraphV2;
-    void *comm;
+    void* comm;
     HcclResult ret;
     SetUpCommAndGraph(hcclCommPtr, rankGraphV2, comm, ret);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     // 获取netLayer信息
     uint32_t netLayerNum = 0;
-    uint32_t *netLayers = nullptr;
+    uint32_t* netLayers = nullptr;
     ret = HcclRankGraphGetLayers(comm, &netLayers, &netLayerNum);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     // 使用一个无效的netLayer（大于等于netLayerNum）
     uint32_t invalidNetLayer = netLayerNum + 1;
-    uint32_t *topoInsts = nullptr;
+    uint32_t* topoInsts = nullptr;
     uint32_t topoInstNum = 0;
 
     // 通过HcclRankGraphGetTopoInstsByLayer接口测试
@@ -790,7 +887,7 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_GetTopoType_When_InvalidNetLayer_Expec
 {
     std::shared_ptr<hccl::hcclComm> hcclCommPtr;
     std::shared_ptr<Hccl::RankGraph> rankGraphV2;
-    void *comm;
+    void* comm;
     HcclResult ret;
     SetUpCommAndGraph(hcclCommPtr, rankGraphV2, comm, ret);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -809,7 +906,7 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_GetRanksByTopoInst_When_Not910B_Expect
 {
     std::shared_ptr<hccl::hcclComm> hcclCommPtr;
     std::shared_ptr<Hccl::RankGraph> rankGraphV2;
-    void *comm;
+    void* comm;
     HcclResult ret;
     SetUpCommAndGraph(hcclCommPtr, rankGraphV2, comm, ret);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -817,7 +914,7 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_GetRanksByTopoInst_When_Not910B_Expect
     // 910_93设备类型，非910B
     uint32_t netLayer = 0;
     uint32_t topoInstId = 0;
-    uint32_t *ranks = nullptr;
+    uint32_t* ranks = nullptr;
     uint32_t rankNum = 0;
 
     ret = HcclRankGraphGetRanksByTopoInst(comm, netLayer, topoInstId, &ranks, &rankNum);
@@ -829,7 +926,7 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_GetRanksByTopoInst_When_InvalidNetLaye
 {
     std::shared_ptr<hccl::hcclComm> hcclCommPtr;
     std::shared_ptr<Hccl::RankGraph> rankGraphV2;
-    void *comm;
+    void* comm;
     HcclResult ret;
     SetUpCommAndGraph(hcclCommPtr, rankGraphV2, comm, ret);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -840,7 +937,7 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_GetRanksByTopoInst_When_InvalidNetLaye
     // 使用无效的netLayer
     uint32_t invalidNetLayer = 100;
     uint32_t topoInstId = 0;
-    uint32_t *ranks = nullptr;
+    uint32_t* ranks = nullptr;
     uint32_t rankNum = 0;
 
     ret = HcclRankGraphGetRanksByTopoInst(comm, invalidNetLayer, topoInstId, &ranks, &rankNum);
@@ -852,7 +949,7 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_GetRanksByTopoInst_When_910BValidParam
 {
     std::shared_ptr<hccl::hcclComm> hcclCommPtr;
     std::shared_ptr<Hccl::RankGraph> rankGraphV2;
-    void *comm;
+    void* comm;
     HcclResult ret;
     SetUpCommAndGraph(hcclCommPtr, rankGraphV2, comm, ret);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -862,7 +959,7 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_GetRanksByTopoInst_When_910BValidParam
 
     uint32_t netLayer = 0;
     uint32_t topoInstId = 0;
-    uint32_t *ranks = nullptr;
+    uint32_t* ranks = nullptr;
     uint32_t rankNum = 0;
 
     ret = HcclRankGraphGetRanksByTopoInst(comm, netLayer, topoInstId, &ranks, &rankNum);
@@ -874,7 +971,7 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_GetEndpointNum_When_InvalidNetLayer_Ex
 {
     std::shared_ptr<hccl::hcclComm> hcclCommPtr;
     std::shared_ptr<Hccl::RankGraph> rankGraphV2;
-    void *comm;
+    void* comm;
     HcclResult ret;
     SetUpCommAndGraph(hcclCommPtr, rankGraphV2, comm, ret);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -892,7 +989,7 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_GetEndpointDesc_When_NullPtr_Expect_Pa
 {
     std::shared_ptr<hccl::hcclComm> hcclCommPtr;
     std::shared_ptr<Hccl::RankGraph> rankGraphV2;
-    void *comm;
+    void* comm;
     HcclResult ret;
     SetUpCommAndGraph(hcclCommPtr, rankGraphV2, comm, ret);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -915,7 +1012,7 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_GetEndpointDesc_When_InvalidNetLayer_E
 {
     std::shared_ptr<hccl::hcclComm> hcclCommPtr;
     std::shared_ptr<Hccl::RankGraph> rankGraphV2;
-    void *comm;
+    void* comm;
     HcclResult ret;
     SetUpCommAndGraph(hcclCommPtr, rankGraphV2, comm, ret);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -934,7 +1031,7 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_GetDevicePort_When_RankNotExist_Expect
 {
     std::shared_ptr<hccl::hcclComm> hcclCommPtr;
     std::shared_ptr<Hccl::RankGraph> rankGraphV2;
-    void *comm;
+    void* comm;
     HcclResult ret;
     SetUpCommAndGraph(hcclCommPtr, rankGraphV2, comm, ret);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -953,7 +1050,7 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_GetDevicePort_When_ValidRank_Expect_Su
 {
     std::shared_ptr<hccl::hcclComm> hcclCommPtr;
     std::shared_ptr<Hccl::RankGraph> rankGraphV2;
-    void *comm;
+    void* comm;
     HcclResult ret;
     SetUpCommAndGraph(hcclCommPtr, rankGraphV2, comm, ret);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -972,13 +1069,13 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_GetTopoInstsByLayer_When_ValidParams_E
 {
     std::shared_ptr<hccl::hcclComm> hcclCommPtr;
     std::shared_ptr<Hccl::RankGraph> rankGraphV2;
-    void *comm;
+    void* comm;
     HcclResult ret;
     SetUpCommAndGraph(hcclCommPtr, rankGraphV2, comm, ret);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     uint32_t netLayer = 0;
-    uint32_t *topoInsts = nullptr;
+    uint32_t* topoInsts = nullptr;
     uint32_t topoInstNum = 0;
 
     ret = HcclRankGraphGetTopoInstsByLayer(comm, netLayer, &topoInsts, &topoInstNum);
@@ -991,7 +1088,7 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_GetTopoType_When_ValidParams_Expect_Su
 {
     std::shared_ptr<hccl::hcclComm> hcclCommPtr;
     std::shared_ptr<Hccl::RankGraph> rankGraphV2;
-    void *comm;
+    void* comm;
     HcclResult ret;
     SetUpCommAndGraph(hcclCommPtr, rankGraphV2, comm, ret);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -1009,7 +1106,7 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_GetEndpointNum_When_ValidParams_Expect
 {
     std::shared_ptr<hccl::hcclComm> hcclCommPtr;
     std::shared_ptr<Hccl::RankGraph> rankGraphV2;
-    void *comm;
+    void* comm;
     HcclResult ret;
     SetUpCommAndGraph(hcclCommPtr, rankGraphV2, comm, ret);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -1027,7 +1124,7 @@ TEST_F(HcclIndependentOpRankGraphTest, Ut_GetEndpointDesc_When_ValidParams_Expec
 {
     std::shared_ptr<hccl::hcclComm> hcclCommPtr;
     std::shared_ptr<Hccl::RankGraph> rankGraphV2;
-    void *comm;
+    void* comm;
     HcclResult ret;
     SetUpCommAndGraph(hcclCommPtr, rankGraphV2, comm, ret);
     EXPECT_EQ(ret, HCCL_SUCCESS);

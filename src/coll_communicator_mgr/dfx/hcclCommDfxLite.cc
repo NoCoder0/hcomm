@@ -10,14 +10,29 @@
 
 #include "hcclCommDfxLite.h"
 #include "hccl_common.h"
+#include "dfx/device/dfx_profiling_handler_lite_pub.h"
+#include "dfx/device/dfx_res_pub.h"
+#include "comm_engine/thread/device/dfx/dfx_circular_queue_pub.h"
+#include "unified_platform/pub_inc/config_plf_log_v2.h"
+#include "coll_comm_aicpu_mgr.h"
 
 namespace hccl {
 // HcclCommDfxLite构造函数实现
-HcclCommDfxLite::HcclCommDfxLite() {
+HcclCommDfxLite::HcclCommDfxLite() {}
+
+HcclCommDfxLite::~HcclCommDfxLite()
+{
+    delete profilingImpl_;
+    profilingImpl_ = nullptr;
+    if (queueInitialized_ && opInfoQueue_ != nullptr) {
+        delete static_cast<Hccl::DfxOpInfoCircularQueue*>(opInfoQueue_);
+        opInfoQueue_ = nullptr;
+    }
 }
 
 // HcclCommDfxLite初始化流程 - 修改为返回HcclResult类型
-HcclResult HcclCommDfxLite::Init(u32 deviceId, const std::string& commTag, u32 rankSize) {
+HcclResult HcclCommDfxLite::Init(u32 deviceId, const std::string& commTag, u32 rankSize, u32 localRank)
+{
     if (initializedFlag_) {
         return HCCL_SUCCESS;
     }
@@ -25,76 +40,118 @@ HcclResult HcclCommDfxLite::Init(u32 deviceId, const std::string& commTag, u32 r
     deviceId_ = deviceId;
     commTag_ = commTag;
     rankSize_ = rankSize;
-    /*1. 如果mirrorTaskManagerLite_为空，则创建新的MirrorTaskManager
-    注意：实际实现中应该避免这种情况，CommunicatorImplLite应该传入已经存在的MirrorTaskManager*/
-    EXCEPTION_CATCH(mirrorTaskManagerLite_ = std::make_unique<Hccl::MirrorTaskManagerLite>(), return HCCL_E_PTR);
-    auto getChannelRemoteRankId = [this](u64 handle) { return this->GetChannelRemoteRankId(handle); };
-    mirrorTaskManagerLite_->RegGetRemoteRankCallBack(getChannelRemoteRankId);
+    localRank_ = localRank;
 
-    // 2. 创建Profiling管理类
-    EXCEPTION_CATCH(profilingImpl_ = std::make_unique<HcclCommProfilingLite>(deviceId_, mirrorTaskManagerLite_.get()), return HCCL_E_PTR);
+    EXCEPTION_CATCH(profilingImpl_ = new HcclCommProfilingLite(deviceId_), return HCCL_E_PTR);
     CHK_RET(profilingImpl_->Init());
+    opInfoQueue_ = new Hccl::DfxOpInfoCircularQueue();
+    queueInitialized_ = true;
 
-    // 3. 注册回调到单例
-    addTaskCallback_ = [this](u32 streamId, u32 taskId, const Hccl::TaskParam &taskParam, u64 handle) {
-        return this->mirrorTaskManagerLite_->AddTaskInfo(streamId, taskId, taskParam, handle);
-    };
-
-    Hccl::ProfilingHandlerLite::GetInstance().SetCachedGroupName(commTag_, rankSize_);
+    groupNameHash_ = Hccl::DfxProfilingHandlerLite::GetInstance().GetProfHashId(commTag_.c_str(), commTag_.length());
     initializedFlag_ = true;
-    return HCCL_SUCCESS; // 初始化成功返回成功码
+    return HCCL_SUCCESS;
 }
 
 // HcclCommDfxLite接口实现 - 修改为返回HcclResult类型
-HcclResult HcclCommDfxLite::SetCurrDfxOpInfo(std::shared_ptr<Hccl::DfxOpInfo> dfxOpInfo)
+HcclResult HcclCommDfxLite::SetCurrDfxOpInfo(const Hccl::DfxDfxOpInfo* newDfxOpInfo)
 {
-    auto it = Hccl::CMD_OP_TYPE_INFO_MAP.find(static_cast<HcclCMDType>(dfxOpInfo->op_.oldOpType));
+    compactReportOpInfo_ = nullptr;
+    CHK_PTR_NULL(newDfxOpInfo);
+    auto* queue = static_cast<Hccl::DfxOpInfoCircularQueue*>(opInfoQueue_);
+    CHK_PTR_NULL(queue);
+    auto* slot = static_cast<Hccl::DfxDfxOpInfo*>(queue->NextSlot());
+    CHK_PTR_NULL(slot);
+    *slot = *newDfxOpInfo;
+    auto it = Hccl::CMD_OP_TYPE_INFO_MAP.find(static_cast<HcclCMDType>(slot->opType));
     if (it == Hccl::CMD_OP_TYPE_INFO_MAP.end()) {
-        HCCL_WARNING("[%s] dfxOpInfo.opType[%u] not supported.", __func__, dfxOpInfo->op_.oldOpType);
+        HCCL_WARNING("[%s] opType[%u] not supported.", __func__, slot->opType);
     } else {
-        dfxOpInfo->op_.opType = it->second.first;
-        dfxOpInfo->tag_ = it->second.second;
+        slot->opType = static_cast<u8>(it->second.first);
     }
-    dfxOpInfo->op_.dataType = Hccl::HcclDataTypeToDataType(
-        static_cast<HcclDataType>(dfxOpInfo->op_.oldDataType));
-
-    // 如果是a5老流程  还是从通信域里面取
-    if ((Hccl::ProfilingHandlerLite::GetInstance().GetProfL1State()
-        || Hccl::ProfilingHandlerLite::GetInstance().GetProfL0State() ) && !dfxOpInfo->isIndop_) {
-        Hccl::ProfilingHandlerLite::GetInstance().SetCachedGroupName(dfxOpInfo->groupName_.c_str(), dfxOpInfo->rankSize_);
-    }
-    CHK_RET(mirrorTaskManagerLite_->SetCurrDfxOpInfo(std::move(dfxOpInfo)));
+    slot->dataType = static_cast<u8>(Hccl::HcclDataTypeToDataType(static_cast<HcclDataType>(slot->dataType)));
+    slot->hcclCommDfxLite = this;
+    PLF_CONFIG_INFO(Hccl::PLF_TASK, "[%s] %s", __func__, slot->Describe().c_str());
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclCommDfxLite::ReportAllTasks() {
-    profilingImpl_->ReportAllTasks();
+void HcclCommDfxLite::ReportAllTasks(const std::vector<ThreadHandle>& threads)
+{
+    profilingImpl_->ReportAllTasks(threads, GetDfxCommContext());
+}
+
+HcclResult HcclCommDfxLite::ReportStreamTask(Hccl::TaskInfoCircularQueue* taskQueue)
+{
+    profilingImpl_->ReportStreamTask(taskQueue, GetDfxCommContext());
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclCommDfxLite::UpdateProfStat() {
+HcclResult HcclCommDfxLite::UpdateProfStat()
+{
     profilingImpl_->UpdateProfStat();
     return HCCL_SUCCESS;
 }
 
-void HcclCommDfxLite::AddChannelRemoteRankId(u64 handle, u32 remoteRankId) {
-    HCCL_INFO("[%s] commTag[%s], handle[%lu], remoteRankId[%u]", __func__, commTag_.c_str(), handle, remoteRankId);
+void HcclCommDfxLite::AddChannelRemoteRankId(u64 handle, u32 remoteRankId)
+{
     channelRemoteRankIdLite_[handle] = remoteRankId;
+    PLF_CONFIG_INFO(
+        Hccl::PLF_TASK, "[%s] commTag[%s], handle[0x%llx], remoteRankId[%u]", __func__, commTag_.c_str(), handle,
+        remoteRankId);
 }
 
-u32 HcclCommDfxLite::GetChannelRemoteRankId(u64 handle) {
-    if (handle == INVALID_U64) {
+u32 HcclCommDfxLite::GetChannelRemoteRankId(u64 handle) const
+{
+    if (handle == DFX_INVALID_U64) {
         return INVALID_UINT;
     }
     auto it = channelRemoteRankIdLite_.find(handle);
     if (UNLIKELY(it == channelRemoteRankIdLite_.end())) {
-        HCCL_ERROR("[%s]handle[%lu] not found, commTag[%s]", __func__, handle, commTag_.c_str());
+        HCCL_ERROR("[%s]handle[%llu] not found, commTag[%s]", __func__, handle, commTag_.c_str());
         return INVALID_UINT;
     }
     return it->second;
 }
 
-Hccl::MirrorTaskManagerLite* HcclCommDfxLite::GetMirrorTaskManagerLite() const {
-    return mirrorTaskManagerLite_.get();
+const void* HcclCommDfxLite::GetLatestDfxOpInfo() const
+{
+    if (opInfoQueue_ == nullptr) {
+        return nullptr;
+    }
+    auto* queue = static_cast<Hccl::DfxOpInfoCircularQueue*>(opInfoQueue_);
+    if (queue->IsEmpty()) {
+        return nullptr;
+    }
+    u16 end = queue->GetEnd();
+    u16 latest = (end == 0) ? static_cast<u16>(queue->GetCapacity() - 1) : static_cast<u16>(end - 1);
+    return queue->GetSlot(latest);
 }
+
+void HcclCommDfxLite::MarkCompactReportOp(const Hccl::DfxDfxOpInfo* opInfo)
+{
+    if (opInfo != nullptr && opInfo == GetLatestDfxOpInfo()) {
+        compactReportOpInfo_ = opInfo;
+    }
 }
+
+Hccl::DfxCommContext HcclCommDfxLite::GetDfxCommContext() const
+{
+    return {&channelRemoteRankIdLite_, groupNameHash_, localRank_, rankSize_, compactReportOpInfo_};
+}
+
+void HcclCommDfxLite::SetTaskExpDevMem(void* taskExpDevMem) { taskExpDevMem_ = taskExpDevMem; }
+
+void* HcclCommDfxLite::GetTaskExpDevMem() const
+{
+    if (taskExpDevMem_ != nullptr) {
+        return taskExpDevMem_;
+    }
+    // VA 的唯一数据源是登记处（HcclDpuTaskexpShmemRestore 登记），而 InitAicpuIndOp 在其之前取过一次快照、
+    // 此后本类再无更新点；收编把登记推迟到首次 HcclTaskRegister 之后，快照必然为空。故未命中时按 commId
+    // 现查，消除两侧的顺序依赖，否则设备侧读不到 VA、HandleDpuTaskexception 静默返回、主机侧握手超时。
+    return CollCommAicpuMgr::GetInstance().GetTaskExpDevMemRegistry().Find(commTag_);
+}
+
+void HcclCommDfxLite::MarkTaskExpStopped() { taskExpStopped_ = true; }
+
+bool HcclCommDfxLite::IsTaskExpStopped() const { return taskExpStopped_; }
+} // namespace hccl

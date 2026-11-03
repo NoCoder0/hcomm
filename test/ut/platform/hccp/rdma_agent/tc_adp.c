@@ -32,9 +32,9 @@
 #undef TOKEN_RATE
 #define TOKEN_RATE
 extern struct RsCtxOps gRaRsCtxOps;
-extern int RecvHandleSendPkt(HDC_SESSION session, unsigned int *chipId);
+extern int RecvHandleSendPkt(HDC_SESSION session, unsigned int* chipId);
 static int counter = 0;
-int StubRecvHandleSendPkt0(HDC_SESSION session, unsigned int *closeSession)
+int StubRecvHandleSendPkt0(HDC_SESSION session, unsigned int* closeSession)
 {
     counter++;
     if (counter <= 1) {
@@ -46,7 +46,7 @@ int StubRecvHandleSendPkt0(HDC_SESSION session, unsigned int *closeSession)
     }
 }
 
-int StubRecvHandleSendPkt(HDC_SESSION session, unsigned int *closeSession)
+int StubRecvHandleSendPkt(HDC_SESSION session, unsigned int* closeSession)
 {
     *closeSession = 1;
     return 0;
@@ -69,8 +69,7 @@ static void WaitForHccpReady(void)
      * gCurrentMsgIndex > 0: monotonically increasing progress, cannot be missed
      * Combined guarantee: session accepted, Thread B running, message processing started */
     timeout = 500;
-    while ((gHdcInitPara.threadStatus != THREAD_RUNNING || gCurrentMsgIndex == 0)
-           && --timeout > 0) {
+    while ((gHdcInitPara.threadStatus != THREAD_RUNNING || gCurrentMsgIndex == 0) && --timeout > 0) {
         usleep(1000);
     }
 
@@ -83,7 +82,7 @@ static void WaitForHccpReady(void)
     }
 }
 
-DLLEXPORT drvError_t StubGetMsgBuffer(struct drvHdcMsg *msg, int index, char **pBuf, int *pLen)
+DLLEXPORT drvError_t StubGetMsgBuffer(struct drvHdcMsg* msg, int index, char** pBuf, int* pLen)
 {
     usleep(1000);
     *pBuf = gTestMsg[gCurrentMsgIndex++];
@@ -101,9 +100,8 @@ char* AddTestMsg(unsigned int opcode, unsigned int msgLen)
 
     tmsg->opcode = opcode;
     tmsg->msgDataLen = msgLen;
-    if (opcode != RA_RS_SEND_WRLIST_EXT && opcode != RA_RS_SEND_WRLIST &&
-        opcode != RA_RS_WLIST_DEL && opcode != RA_RS_WLIST_ADD &&
-        opcode != RA_RS_GET_VNIC_IP_INFOS_V1) {
+    if (opcode != RA_RS_SEND_WRLIST_EXT && opcode != RA_RS_SEND_WRLIST && opcode != RA_RS_WLIST_DEL
+        && opcode != RA_RS_WLIST_ADD && opcode != RA_RS_GET_VNIC_IP_INFOS_V1) {
         ret = (msgLen > MAX_HDC_DATA_SIZE) ? 1 : 0;
         if (ret != 0) {
             printf("%s: opcode:%u, msg_len:%u exceeds %u\n", __func__, opcode, msgLen, MAX_HDC_DATA_SIZE);
@@ -116,11 +114,11 @@ char* AddTestMsg(unsigned int opcode, unsigned int msgLen)
     return temp;
 }
 
-DLLEXPORT drvError_t StubAcceptSession(HDC_SERVER server, HDC_SESSION *session)
+DLLEXPORT drvError_t StubAcceptSession(HDC_SERVER server, HDC_SESSION* session)
 {
-    while(gAcceptTimes > 0) {
+    while (gAcceptTimes > 0) {
         *session = &gTestSession;
-        -- gAcceptTimes;
+        --gAcceptTimes;
         return 0;
     }
     return -1;
@@ -128,7 +126,6 @@ DLLEXPORT drvError_t StubAcceptSession(HDC_SERVER server, HDC_SESSION *session)
 
 void MsgClear()
 {
-
     int i;
     for (i = 0; i < gMsgCount; ++i) {
         free(gTestMsg[i]);
@@ -153,7 +150,7 @@ void TcCommonTest()
     unsigned int devid = 0;
     AddTestMsg(RA_RS_HDC_SESSION_CLOSE, sizeof(union OpHdcCloseData));
     int ret = HccpInit(devid, gHostTgid, HDC_SERVICE_TYPE_RDMA, WHITE_LIST_ENABLE);
-    EXPECT_INT_EQ(ret , 0);
+    EXPECT_INT_EQ(ret, 0);
 
     WaitForHccpReady();
 
@@ -211,7 +208,7 @@ void TcHccpInitFail()
     mocker_clean();
     MsgClear();
     AddTestMsg(RA_RS_HDC_SESSION_CLOSE, sizeof(union OpSocketCloseData));
-    ret = HccpInit(RA_MAX_PHY_ID_NUM , hostTgid, HDC_SERVICE_TYPE_RDMA, WHITE_LIST_ENABLE);
+    ret = HccpInit(RA_MAX_PHY_ID_NUM, hostTgid, HDC_SERVICE_TYPE_RDMA, WHITE_LIST_ENABLE);
     EXPECT_INT_EQ(gCurrentMsgIndex, 0);
     EXPECT_INT_NE(ret, 0);
 
@@ -219,7 +216,7 @@ void TcHccpInitFail()
     MsgClear();
     mocker((stub_fn_t)drvHdcServerCreate, 1, -1);
     AddTestMsg(RA_RS_HDC_SESSION_CLOSE, sizeof(union OpSocketCloseData));
-    ret = HccpInit(devid , hostTgid, HDC_SERVICE_TYPE_RDMA, WHITE_LIST_ENABLE);
+    ret = HccpInit(devid, hostTgid, HDC_SERVICE_TYPE_RDMA, WHITE_LIST_ENABLE);
     EXPECT_INT_EQ(gCurrentMsgIndex, 0);
     EXPECT_INT_NE(ret, 0);
 
@@ -497,7 +494,7 @@ void TcSendWr()
     TcCommonTest();
 }
 
-extern int memcpy_s(void *dest, size_t destMax, const void *src, size_t count);
+extern int memcpy_s(void* dest, size_t destMax, const void* src, size_t count);
 void TcSendWrlist()
 {
     TcAdpEnvInit();
@@ -645,11 +642,11 @@ void TcGetIfaddrs()
     TcAdpEnvInit();
     mocker((stub_fn_t)RsGetIfaddrs, 2, 0);
     char* databuf = AddTestMsg(RA_RS_GET_IFADDRS, sizeof(union OpIfaddrData));
-    union OpIfaddrData *ifaddrData = (union OpIfaddrData *)(databuf + sizeof(struct MsgHead));
+    union OpIfaddrData* ifaddrData = (union OpIfaddrData*)(databuf + sizeof(struct MsgHead));
     ifaddrData->txData.num = 1;
 
     databuf = AddTestMsg(RA_RS_GET_IFADDRS, sizeof(union OpIfaddrData));
-    ifaddrData = (union OpIfaddrData *)(databuf + sizeof(struct MsgHead));
+    ifaddrData = (union OpIfaddrData*)(databuf + sizeof(struct MsgHead));
     ifaddrData->txData.num = 1;
     TcCommonTest();
 }
@@ -659,7 +656,7 @@ void TcGetIfaddrsV2()
     TcAdpEnvInit();
     mocker((stub_fn_t)RsGetIfaddrsV2, 10, 0);
     char* databuf = AddTestMsg(RA_RS_GET_IFADDRS_V2, sizeof(union OpIfaddrDataV2));
-    union OpIfaddrDataV2 *ifaddrData = (union OpIfaddrDataV2 *)(databuf + sizeof(struct MsgHead));
+    union OpIfaddrDataV2* ifaddrData = (union OpIfaddrDataV2*)(databuf + sizeof(struct MsgHead));
     databuf = AddTestMsg(RA_RS_GET_IFADDRS_V2, sizeof(union OpIfaddrDataV2));
 
     ifaddrData->txData.num = 1;
@@ -672,10 +669,10 @@ void TcGetIfnum()
     TcAdpEnvInit();
     mocker((stub_fn_t)RsGetIfnum, 2, 0);
     char* databuf = AddTestMsg(RA_RS_GET_IFNUM, sizeof(union OpIfnumData));
-    union OpIfnumData *ifnumData = (union OpIfnumData *)(databuf + sizeof(struct MsgHead));
+    union OpIfnumData* ifnumData = (union OpIfnumData*)(databuf + sizeof(struct MsgHead));
 
     databuf = AddTestMsg(RA_RS_GET_IFNUM, sizeof(union OpIfnumData));
-    ifnumData = (union OpIfnumData *)(databuf + sizeof(struct MsgHead));
+    ifnumData = (union OpIfnumData*)(databuf + sizeof(struct MsgHead));
     ifnumData->txData.num = 1;
     TcCommonTest();
 }
@@ -686,7 +683,7 @@ void TcGetInterfaceVersion()
     mocker((stub_fn_t)RsGetInterfaceVersion, 1, 0);
 
     char* databuf = AddTestMsg(RA_RS_GET_INTERFACE_VERSION, sizeof(union OpGetVersionData));
-    union OpGetVersionData *versionInfo = (union OpGetVersionData *)(databuf + sizeof(struct MsgHead));
+    union OpGetVersionData* versionInfo = (union OpGetVersionData*)(databuf + sizeof(struct MsgHead));
 
     versionInfo->txData.opcode = 0;
     TcCommonTest();
@@ -694,23 +691,77 @@ void TcGetInterfaceVersion()
     TcAdpEnvInit();
     mocker((stub_fn_t)RsGetInterfaceVersion, 1, -1);
     databuf = AddTestMsg(RA_RS_GET_INTERFACE_VERSION, sizeof(union OpGetVersionData));
-    versionInfo = (union OpGetVersionData *)(databuf + sizeof(struct MsgHead));
+    versionInfo = (union OpGetVersionData*)(databuf + sizeof(struct MsgHead));
     versionInfo->txData.opcode = 0;
     TcCommonTest();
 }
 
-extern int RaRsNotifyCfgSet(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen);
-extern int RaRsNotifyCfgGet(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen);
-extern int RaRsSendWrListV2(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen);
-extern int RaRsSendWrList(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen);
-extern int RaRsSendWrListExtV2(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen);
-extern int RaRsSendWrListExt(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen);
+extern int RaRsNotifyCfgSet(char* inBuf, char* outBuf, int* outLen, int* opResult, int rcvBufLen);
+extern int RaRsNotifyCfgGet(char* inBuf, char* outBuf, int* outLen, int* opResult, int rcvBufLen);
+extern int RaRsBatchGetInterfaceVersion(char* inBuf, char* outBuf, int* outLen, int* opResult, int rcvBufLen);
+int StubRsGetInterfaceVersionOk(unsigned int opcode, unsigned int* version)
+{
+    (void)opcode;
+    *version = 2;
+    return 0;
+}
+void TcGetAllInterfaceVersion()
+{
+    unsigned int size = sizeof(union OpBatchGetVersionData) + sizeof(struct MsgHead);
+    int result = 0;
+    char* inBuf = calloc(1, size);
+    char* outBuf = calloc(1, size);
+    union OpBatchGetVersionData* req = (union OpBatchGetVersionData*)(inBuf + sizeof(struct MsgHead));
+    union OpBatchGetVersionData* rsp = NULL;
+
+    req->txData.opcodeNum = 2;
+    req->txData.opcode[0] = RA_RS_SOCKET_CONN;
+    req->txData.opcode[1] = RA_RS_QP_CREATE;
+
+    mocker_clean();
+    mocker_invoke((stub_fn_t)RsGetInterfaceVersion, (stub_fn_t)StubRsGetInterfaceVersionOk, 10);
+    RaRsBatchGetInterfaceVersion(inBuf, outBuf, NULL, &result, (int)size);
+    EXPECT_INT_EQ(result, 0);
+    rsp = (union OpBatchGetVersionData*)(outBuf + sizeof(struct MsgHead));
+    EXPECT_INT_EQ(rsp->rxData.opcodeNum, 2);
+    EXPECT_INT_EQ(rsp->rxData.version[0], 2);
+    EXPECT_INT_EQ(rsp->rxData.version[1], 2);
+
+    memset(outBuf, 0, size);
+    mocker_clean();
+    mocker((stub_fn_t)RsGetInterfaceVersion, 10, -1);
+    result = 0;
+    RaRsBatchGetInterfaceVersion(inBuf, outBuf, NULL, &result, (int)size);
+    rsp = (union OpBatchGetVersionData*)(outBuf + sizeof(struct MsgHead));
+    EXPECT_INT_EQ(rsp->rxData.opcodeNum, 2);
+    EXPECT_INT_EQ(rsp->rxData.version[0], 0);
+    EXPECT_INT_EQ(rsp->rxData.version[1], 0);
+
+    memset(outBuf, 0, size);
+    mocker_clean();
+    result = 0;
+    req->txData.opcodeNum = 0;
+    RaRsBatchGetInterfaceVersion(inBuf, outBuf, NULL, &result, (int)size);
+    rsp = (union OpBatchGetVersionData*)(outBuf + sizeof(struct MsgHead));
+    EXPECT_INT_EQ(rsp->rxData.opcodeNum, 0);
+
+    free(inBuf);
+    inBuf = NULL;
+    free(outBuf);
+    outBuf = NULL;
+    mocker_clean();
+}
+
+extern int RaRsSendWrListV2(char* inBuf, char* outBuf, int* outLen, int* opResult, int rcvBufLen);
+extern int RaRsSendWrList(char* inBuf, char* outBuf, int* outLen, int* opResult, int rcvBufLen);
+extern int RaRsSendWrListExtV2(char* inBuf, char* outBuf, int* outLen, int* opResult, int rcvBufLen);
+extern int RaRsSendWrListExt(char* inBuf, char* outBuf, int* outLen, int* opResult, int rcvBufLen);
 void TcSetNotifyCfg()
 {
     int result = 0;
     mocker_clean();
     unsigned int size = sizeof(union OpNotifyCfgSetData) + sizeof(struct MsgHead);
-    char *inBuf = calloc(1, size);
+    char* inBuf = calloc(1, size);
     union OpNotifyCfgSetData setNotifyBaData = {0};
     memcpy(inBuf + sizeof(struct MsgHead), &setNotifyBaData, sizeof(union OpNotifyCfgSetData));
     RaRsNotifyCfgSet(inBuf, NULL, NULL, &result, 1);
@@ -729,8 +780,8 @@ void TcGetNotifyCfg()
     int result = 0;
     mocker_clean();
     unsigned int size = sizeof(union OpNotifyCfgGetData) + sizeof(struct MsgHead);
-    char *inBuf = calloc(1, size);
-    char *outBuf = calloc(1, size);
+    char* inBuf = calloc(1, size);
+    char* outBuf = calloc(1, size);
     union OpNotifyCfgGetData getNotifyBaData = {0};
     memcpy(inBuf + sizeof(struct MsgHead), &getNotifyBaData, sizeof(union OpNotifyCfgGetData));
     memcpy(outBuf + sizeof(struct MsgHead), &getNotifyBaData, sizeof(union OpNotifyCfgGetData));
@@ -1106,160 +1157,61 @@ void TcRaRsRemapMr()
     mocker_clean();
 }
 
+#define TC_ADP_CTX_OPS_TEST(stubFn, opcode, dataType) \
+    do {                                              \
+        TcAdpEnvInit();                               \
+        mocker((stub_fn_t)stubFn, 1, 0);              \
+        AddTestMsg(opcode, sizeof(dataType));         \
+        TcCommonTest();                               \
+    } while (0)
+
 void TcRaRsTestCtxOps()
 {
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.getDevEidInfoNum, 1, 0);
-    AddTestMsg(RA_RS_GET_DEV_EID_INFO_NUM, sizeof(union OpGetDevEidInfoNumData));
-    TcCommonTest();
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.getDevEidInfoNum, RA_RS_GET_DEV_EID_INFO_NUM, union OpGetDevEidInfoNumData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.getDevEidInfoList, RA_RS_GET_DEV_EID_INFO_LIST, union OpGetDevEidInfoListData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.ctxInit, RA_RS_CTX_INIT, union OpCtxInitData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.ctxDeinit, RA_RS_CTX_DEINIT, union OpCtxDeinitData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.ctxLmemReg, RA_RS_LMEM_REG, union OpLmemRegInfoData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.ctxLmemUnreg, RA_RS_LMEM_UNREG, union OpLmemUnregInfoData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.ctxRmemImport, RA_RS_RMEM_IMPORT, union OpRmemImportInfoData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.ctxRmemUnimport, RA_RS_RMEM_UNIMPORT, union OpRmemUnimportInfoData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.ctxChanCreate, RA_RS_CTX_CHAN_CREATE, union OpCtxChanCreateData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.ctxChanDestroy, RA_RS_CTX_CHAN_DESTROY, union OpCtxChanDestroyData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.ctxCqCreate, RA_RS_CTX_CQ_CREATE, union OpCtxCqCreateData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.ctxCqDestroy, RA_RS_CTX_CQ_DESTROY, union OpCtxCqDestroyData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.ctxQpCreate, RA_RS_CTX_QP_CREATE, union OpCtxQpCreateData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.ctxQpDestroy, RA_RS_CTX_QP_DESTROY, union OpCtxQpDestroyData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.ctxQpImport, RA_RS_CTX_QP_IMPORT, union OpCtxQpImportData);
 
+    // ctxQpUnimport 需要两条消息
     TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.getDevEidInfoList, 1, 0);
-    AddTestMsg(RA_RS_GET_DEV_EID_INFO_LIST, sizeof(union OpGetDevEidInfoListData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.ctxInit, 1, 0);
-    AddTestMsg(RA_RS_CTX_INIT, sizeof(union OpCtxInitData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.ctxDeinit, 1, 0);
-    AddTestMsg(RA_RS_CTX_DEINIT, sizeof(union OpCtxDeinitData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.ctxLmemReg, 1, 0);
-    AddTestMsg(RA_RS_LMEM_REG, sizeof(union OpLmemRegInfoData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.ctxLmemUnreg, 1, 0);
-    AddTestMsg(RA_RS_LMEM_UNREG, sizeof(union OpLmemUnregInfoData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.ctxRmemImport, 1, 0);
-    AddTestMsg(RA_RS_RMEM_IMPORT, sizeof(union OpRmemImportInfoData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.ctxRmemUnimport, 1, 0);
-    AddTestMsg(RA_RS_RMEM_UNIMPORT, sizeof(union OpRmemUnimportInfoData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.ctxChanCreate, 1, 0);
-    AddTestMsg(RA_RS_CTX_CHAN_CREATE, sizeof(union OpCtxChanCreateData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.ctxChanDestroy, 1, 0);
-    AddTestMsg(RA_RS_CTX_CHAN_DESTROY, sizeof(union OpCtxChanDestroyData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.ctxCqCreate, 1, 0);
-    AddTestMsg(RA_RS_CTX_CQ_CREATE, sizeof(union OpCtxCqCreateData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.ctxCqDestroy, 1, 0);
-    AddTestMsg(RA_RS_CTX_CQ_DESTROY, sizeof(union OpCtxCqDestroyData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.ctxQpCreate, 1, 0);
-    AddTestMsg(RA_RS_CTX_QP_CREATE, sizeof(union OpCtxQpCreateData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.ctxQpDestroy, 1, 0);
-    AddTestMsg(RA_RS_CTX_QP_DESTROY, sizeof(union OpCtxQpDestroyData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.ctxQpImport, 1, 0);
-    AddTestMsg(RA_RS_CTX_QP_IMPORT, sizeof(union OpCtxQpImportData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.ctxQpUnimport, 1, 0);
+    mocker((stub_fn_t)gRaRsCtxOps.ctxQpUnimport, 2, 0);
+    AddTestMsg(RA_RS_CTX_QP_UNIMPORT_DEPRECATED, sizeof(union OpCtxQpUnimportData));
     AddTestMsg(RA_RS_CTX_QP_UNIMPORT, sizeof(union OpCtxQpUnimportData));
     TcCommonTest();
 
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.ctxQpBind, 1, 0);
-    AddTestMsg(RA_RS_CTX_QP_BIND, sizeof(union OpCtxQpBindData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.ctxQpUnbind, 1, 0);
-    AddTestMsg(RA_RS_CTX_QP_UNBIND, sizeof(union OpCtxQpUnbindData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.ctxBatchSendWr, 1, 0);
-    AddTestMsg(RA_RS_CTX_BATCH_SEND_WR, sizeof(union OpCtxBatchSendWrData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.ctxUpdateCi, 1, 0);
-    AddTestMsg(RA_RS_CTX_UPDATE_CI, sizeof(union OpCtxUpdateCiData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.ctxTokenIdAlloc, 1, 0);
-    AddTestMsg(RA_RS_CTX_TOKEN_ID_ALLOC, sizeof(union OpTokenIdAllocData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.ctxTokenIdFree, 1, 0);
-    AddTestMsg(RA_RS_CTX_TOKEN_ID_FREE, sizeof(union OpTokenIdFreeData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.getTpInfoList, 1, 0);
-    AddTestMsg(RA_RS_GET_TP_INFO_LIST, sizeof(union OpGetTpInfoListData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.ctxQpDestroyBatch, 1, 0);
-    AddTestMsg(RA_RS_CTX_QP_DESTROY_BATCH, sizeof(union OpCtxQpDestroyBatchData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.ctxQpQueryBatch, 1, 0);
-    AddTestMsg(RA_RS_CTX_QUERY_QP_BATCH, sizeof(union OpCtxQpQueryBatchData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.getEidByIp, 1, 0);
-    AddTestMsg(RA_RS_GET_EID_BY_IP, sizeof(union OpGetEidByIpData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.ctxGetAuxInfo, 1, 0);
-    AddTestMsg(RA_RS_CTX_GET_AUX_INFO, sizeof(union OpCtxGetAuxInfoData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.getTpAttr, 1, 0);
-    AddTestMsg(RA_RS_GET_TP_ATTR, sizeof(union OpGetTpAttrData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.setTpAttr, 1, 0);
-    AddTestMsg(RA_RS_SET_TP_ATTR, sizeof(union OpSetTpAttrData));
-    TcCommonTest();
-
-    TcAdpEnvInit();
-    mocker((stub_fn_t)gRaRsCtxOps.ctxGetCrErrInfoList, 1, 0);
-    AddTestMsg(RA_RS_CTX_GET_CR_ERR_INFO_LIST, sizeof(union OpCtxGetCrErrInfoListData));
-    TcCommonTest();
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.ctxQpBind, RA_RS_CTX_QP_BIND, union OpCtxQpBindData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.ctxQpUnbind, RA_RS_CTX_QP_UNBIND, union OpCtxQpUnbindData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.ctxBatchSendWr, RA_RS_CTX_BATCH_SEND_WR, union OpCtxBatchSendWrData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.ctxUpdateCi, RA_RS_CTX_UPDATE_CI, union OpCtxUpdateCiData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.ctxTokenIdAlloc, RA_RS_CTX_TOKEN_ID_ALLOC, union OpTokenIdAllocData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.ctxTokenIdFree, RA_RS_CTX_TOKEN_ID_FREE, union OpTokenIdFreeData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.getTpInfoList, RA_RS_GET_TP_INFO_LIST, union OpGetTpInfoListData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.ctxQpDestroyBatch, RA_RS_CTX_QP_DESTROY_BATCH, union OpCtxQpDestroyBatchData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.ctxQpQueryBatch, RA_RS_CTX_QUERY_QP_BATCH, union OpCtxQpQueryBatchData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.getEidByIp, RA_RS_GET_EID_BY_IP, union OpGetEidByIpData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.getIpByEid, RA_RS_GET_IP_BY_EID, union OpGetIpByEidData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.ctxGetAuxInfo, RA_RS_CTX_GET_AUX_INFO, union OpCtxGetAuxInfoData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.getTpAttr, RA_RS_GET_TP_ATTR, union OpGetTpAttrData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.setTpAttr, RA_RS_SET_TP_ATTR, union OpSetTpAttrData);
+    TC_ADP_CTX_OPS_TEST(
+        gRaRsCtxOps.ctxGetCrErrInfoList, RA_RS_CTX_GET_CR_ERR_INFO_LIST, union OpCtxGetCrErrInfoListData);
+    TC_ADP_CTX_OPS_TEST(gRaRsCtxOps.ctxNotifyEvent, RA_RS_CTX_NOTIFY_EVENT, union OpCtxNotifyEventData);
 
     mocker_clean();
 }
+
+#undef TC_ADP_CTX_OPS_TEST
 
 void TcRaRsGetTlsEnable0()
 {

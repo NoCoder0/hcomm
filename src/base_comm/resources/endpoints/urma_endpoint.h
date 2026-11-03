@@ -1,59 +1,82 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #ifndef URMA_ENDPOINT_H
 #define URMA_ENDPOINT_H
 
 #include <memory>
+#include <mutex>
+#include <optional>
+#include <shared_mutex>
 #include <vector>
 #include <string>
 #include "endpoint.h"
+#include "comm_queue_context/jetty_context.h"
+#include "server_socket_context/device_server_socket_context.h"
+#include "ub_reged_mem_mgr.h"
+#include "local_ub_rma_buffer.h"
 #include "ccu_channel_ctx_pool.h"
 #include "socket/socket.h"
 #include "externalinput_pub.h"
-#include <mutex>
 
 namespace hcomm {
 /**
- * @note 职责：Host CPU通信引擎+RoCE协议的通信设备Endpoint，管理通信设备上下文，以及设备上的注册内存。
+ * @note 职责：DEVICE 侧 UB 协议通信设备 Endpoint，管理通信设备上下文，以及设备上的注册内存。
  */
 class UrmaEndpoint : public Endpoint {
 public:
-    explicit UrmaEndpoint(const EndpointDesc &endpointDesc);
+    explicit UrmaEndpoint(const EndpointDesc& endpointDesc);
     ~UrmaEndpoint() noexcept override;
 
     HcclResult Init() override;
 
-    HcclResult ServerSocketListen(const uint32_t port) override;
-    HcclResult ServerSocketStopListen(const uint32_t port) override;
-    inline HcclResult ServerSocketStopListenImpl(const uint32_t port);
-    HcclResult ServerSocketGetListenPort(uint32_t *port) override;
-
-    std::shared_ptr<RegedMemMgr> GetRegedMemMgr() override {
-        return regedMemMgr_;
+    // 本端走进程级 mgr（硬件注册），实例级归属记录经 Record/Remove/GetAllLocalMemHandles 承载；远端走实例级 mgr
+    LocalRegedMemMgr* GetLocalRegMemMgr() override { return localMemMgr_.get(); }
+    RemoteRegedMemMgr* GetRemoteRegMemMgr() override { return remoteMemMgr_.get(); }
+    HcclResult RecordLocalMemHandle(void* memHandle) override;
+    HcclResult RemoveLocalMemHandle(void* memHandle) override;
+    HcclResult GetAllLocalMemHandles(void** memHandles, uint32_t* memHandleNum) override;
+    void* GetRdmaHandle() override { return ctxHandle_; }
+    bool IsCtxHandleValid() const override;
+    // 共享 Jetty 上下文访问入口：返回 CommQueueContext 基类视图，调用方按需 downcast JettyContext
+    CommQueueContext* GetCommQueueContext() override;
+    ServerSocketContext* GetServerSocketContext() override
+    {
+        return serverSocketContext_.has_value() ? &serverSocketContext_.value() : nullptr;
     }
 
-    CcuChannelCtxPool *GetCcuChannelCtxPool();
+    CcuChannelCtxPool* GetCcuChannelCtxPool();
 
-    HcclResult RegisterMemory(HcommMem mem, const char *memTag, void **memHandle) override;
-    HcclResult UnregisterMemory(void* memHandle) override;
-    HcclResult MemoryExport(void *memHandle, void **memDesc, uint32_t *memDescLen) override;
-    HcclResult MemoryImport(const void *memDesc, uint32_t descLen, HcommMem *outMem) override;
-    HcclResult MemoryUnimport(const void *memDesc, uint32_t descLen) override;
-    HcclResult GetAllMemHandles(void **memHandles, uint32_t *memHandleNum) override;
-    HcclResult GetAsyncEvents(uint32_t devPhyId, struct AsyncEvent events[], uint32_t &num) override;
+    // UB 异步事件获取为 UrmaEndpoint 自有方法（基类不再提供默认实现）
+    HcclResult GetAsyncEvents(uint32_t devPhyId, struct AsyncEvent events[], uint32_t& num);
 
 private:
-    std::mutex portMutex_;
-    u32 dynamicPort_{HCCL_INVALID_PORT};
+    HcclResult ReleaseEndpointCtx();
+    HcclResult
+    AttachCache(const MemMgrCacheKey& key, const std::function<std::shared_ptr<LocalRegedMemMgr>()>& creator);
+    HcclResult ReleaseCache();
+
+    void* ctxHandle_{nullptr};
+    std::shared_ptr<EndpointCtx> endpointCtx_{};
+    std::shared_ptr<LocalRegedMemMgr> localMemMgr_{}; // 进程级 mgr（跨 endpoint 复用，承担硬件注册）
+    mutable std::shared_mutex localMemMtx_;
+    std::vector<std::shared_ptr<Hccl::LocalUbRmaBuffer>> localMemRecords_; // 本实例注册的 memHandle 记录
+    std::shared_ptr<RemoteRegedMemMgr> remoteMemMgr_{}; // 实例级远端 mgr（EndpointRemoteRegedMemMgr，Ub 适配）
+    std::optional<DeviceServerSocketContext> serverSocketContext_{};
+    MemMgrCacheKey cacheKey_{};
+    // 非 owning 别名（空 deleter）：实例寿命由 EndpointMgr 声明序保证（R3），reset 不触发释放
+    std::shared_ptr<ProcRegedMemMgrCache> cacheAlias_{};
+    std::unique_ptr<JettyContext> jettyContext_{nullptr};
+    std::once_flag jettyContextOnce_;
     std::unique_ptr<CcuChannelCtxPool> ccuChannelCtxPool_{nullptr};
 };
-}
+} // namespace hcomm
 
 #endif // URMA_ENDPOINT_H

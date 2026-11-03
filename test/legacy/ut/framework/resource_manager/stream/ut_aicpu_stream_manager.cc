@@ -25,15 +25,9 @@ using namespace Hccl;
 
 class AicpuStreamManagerTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AicpuStreamManager tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AicpuStreamManager tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AicpuStreamManager tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AicpuStreamManager tests tear down." << std::endl; }
 
     virtual void SetUp()
     {
@@ -43,7 +37,7 @@ protected:
         MOCKER(HrtStreamGetSqId).stubs().will(returnValue(fakeSqId));
         MOCKER(HrtStreamDestroy).stubs();
         MOCKER(HrtGetDevice).stubs().will(returnValue(fakeDevLogId));
-        MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(fakeDevPhyId)));
+        MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().will(returnValue(static_cast<DevId>(fakeDevPhyId)));
 
         streamManager->AllocStreams(1);
         streamManager->AllocFreeStream();
@@ -58,20 +52,20 @@ protected:
         std::cout << "A Test case in AicpuStreamManager TearDown" << std::endl;
     }
 
-    s32              fakeId       = 1;
-    s32              fakeDevLogId = 1;
-    u32              fakeDevPhyId = 1;
-    u32              fakeSqId     = 2;
-    u32              fakeCqId     = 2;
-    u32              num          = 1;
-    u32              sizePerDto   = 12;
-    AicpuStreamManager *streamManager;
+    s32 fakeId = 1;
+    s32 fakeDevLogId = 1;
+    u32 fakeDevPhyId = 1;
+    u32 fakeSqId = 2;
+    u32 fakeCqId = 2;
+    u32 num = 1;
+    u32 sizePerDto = 12;
+    AicpuStreamManager* streamManager;
 };
 
-HcclResult GetStreamCaptureInfoStub(rtStream_t stream, rtModel_t &rtModel, bool &isCapture)
+HcclResult GetStreamCaptureInfoStub(rtStream_t stream, rtModel_t& rtModel, bool& isCapture)
 {
     isCapture = true;
-    rtModel = (void *)0x100;
+    rtModel = (void*)0x100;
     return HCCL_SUCCESS;
 }
 
@@ -82,8 +76,7 @@ TEST_F(AicpuStreamManagerTest, Ut_AclGraphCaptureFreeStream_When_GetStreamCaptur
 
     auto stream = std::make_unique<Stream>();
     // 执行测试步骤
-    EXPECT_THROW(streamManager->AclGraphCaptureFreeStream(stream.get()),
-        InternalException);
+    EXPECT_THROW(streamManager->AclGraphCaptureFreeStream(stream.get()), InternalException);
 }
 
 TEST_F(AicpuStreamManagerTest, Ut_AclGraphCaptureFreeStream_When_GetStreamCaptureInfo_is_no_capture_Expect_Success)
@@ -108,8 +101,7 @@ TEST_F(AicpuStreamManagerTest, Ut_AclGraphCaptureFreeStream_When_GetModelId_ERRO
 
     auto stream = std::make_unique<Stream>();
     // 执行测试步骤
-    EXPECT_THROW(streamManager->AclGraphCaptureFreeStream(stream.get()),
-        InternalException);
+    EXPECT_THROW(streamManager->AclGraphCaptureFreeStream(stream.get()), InternalException);
 }
 
 TEST_F(AicpuStreamManagerTest, Ut_AclGraphCaptureFreeStream_When_AddStreamToModel_ERROR_InternalException)
@@ -125,8 +117,7 @@ TEST_F(AicpuStreamManagerTest, Ut_AclGraphCaptureFreeStream_When_AddStreamToMode
 
     auto stream = std::make_unique<Stream>();
     // 执行测试步骤
-    EXPECT_THROW(streamManager->AclGraphCaptureFreeStream(stream.get()),
-        InternalException);
+    EXPECT_THROW(streamManager->AclGraphCaptureFreeStream(stream.get()), InternalException);
 }
 
 TEST_F(AicpuStreamManagerTest, Ut_AclGraphCaptureFreeStream_When_AddStreamToModel_Success)
@@ -142,8 +133,7 @@ TEST_F(AicpuStreamManagerTest, Ut_AclGraphCaptureFreeStream_When_AddStreamToMode
     auto stream = std::make_unique<Stream>();
 
     // 执行测试步骤
-    EXPECT_THROW(streamManager->AclGraphCaptureFreeStream(stream.get()),
-        InternalException);
+    EXPECT_THROW(streamManager->AclGraphCaptureFreeStream(stream.get()), InternalException);
 }
 
 TEST_F(AicpuStreamManagerTest, Ut_CaptureFreeStream_When_isCapture_true_Expect_SUCCESS)

@@ -22,19 +22,21 @@ struct CheckerSettings {
     bool enableInsightDump{false};
     bool enableMemorySnapshotDump{false};
     bool enableNewChecker{true};
-    bool enableOldChecker{true};
+    bool enableBigGraphChecker{false};
+    bool enableDagGraphvizDump{false};
+    bool enableCcuResourceStatsDump{false};
 };
 
 class SettingManager {
 public:
-    static SettingManager &GetInstance()
+    static SettingManager& GetInstance()
     {
         static SettingManager instance;
         return instance;
     }
 
-    SettingManager(const SettingManager &) = delete;
-    SettingManager &operator=(const SettingManager &) = delete;
+    SettingManager(const SettingManager&) = delete;
+    SettingManager& operator=(const SettingManager&) = delete;
 
     HcclResult Refresh();
     void Reset();
@@ -43,7 +45,9 @@ public:
     bool IsInsightDumpEnabled() const;
     bool IsMemorySnapshotEnabled() const;
     bool IsNewCheckerEnabled() const;
-    bool IsOldCheckerEnabled() const;
+    bool IsBigGraphCheckerEnabled() const;
+    bool IsDagGraphvizDumpEnabled() const;
+    bool IsCcuResourceStatsDumpEnabled() const;
 
 private:
     SettingManager() = default;
@@ -54,6 +58,6 @@ private:
     std::string m_manifestPath;
 };
 
-}  // namespace HcclSim
+} // namespace HcclSim
 
-#endif  // HCCL_VM_SETTING_MANAGER_H
+#endif // HCCL_VM_SETTING_MANAGER_H

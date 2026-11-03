@@ -21,21 +21,15 @@
 using namespace Hccl;
 class BufferTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "Buffer tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "Buffer tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "Buffer tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "Buffer tests tear down." << std::endl; }
 
     virtual void SetUp()
     {
-        MOCKER(HrtMallocHost).stubs().with(mockcpp::any()).will(returnValue((void *)fakeAddr));
+        MOCKER(HrtMallocHost).stubs().with(mockcpp::any()).will(returnValue((void*)fakeAddr));
         MOCKER(HrtFreeHost).stubs().with(mockcpp::any());
-        MOCKER(HrtMalloc).stubs().with(mockcpp::any(),mockcpp::any()).will(returnValue((void *)fakeAddr));
+        MOCKER(HrtMalloc).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue((void*)fakeAddr));
         MOCKER(HrtFree).stubs().with(mockcpp::any());
         std::cout << "A Test case in DataBufManager SetUP" << std::endl;
     }

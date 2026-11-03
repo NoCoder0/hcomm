@@ -13,24 +13,24 @@
 #include "common/type_def.h"
 namespace tsd {
 #ifdef __cplusplus
-    using TSD_StatusT = uint32_t;
+using TSD_StatusT = uint32_t;
 #else
-    typedef uint32_t TSD_StatusT;
+typedef uint32_t TSD_StatusT;
 #endif
-    // success code
-    constexpr TSD_StatusT TSD_OK = 0U;
-    // 区分TSD不对外的枚举，对外枚举ID从100开始
-    enum ErroCodeExt : TSD_StatusT {
-        TSD_SUBPROCESS_NUM_EXCEED_THE_LIMIT = 100U,
-        TSD_SUBPROCESS_BINARY_FILE_DAMAGED = 101U,
-        TSD_DEVICE_DISCONNECTED = 102U,
-        TSD_VERIFY_OPP_FAIL = 103U,
-        TSD_ADD_AICPUSD_TO_CGROUP_FAILED = 104U,
-        TSD_HDC_CLIENT_CLOSED_EXTERNAL = 105U,
-        TSD_OPEN_NOT_SUPPORT_FOR_MDC = 200U,
-        TSD_OPEN_DEFAULT_NET_SERVICE_FAILED = 201U,
-        TSD_OPEN_NOT_SUPPORT_NET_SERVICE = 202U,
-        TSD_CLOSE_NOT_SUPPORT_NET_SERVICE = 203U,
-    };
-}
-#endif  // INC_TDT_STATUS_H
+// success code
+constexpr TSD_StatusT TSD_OK = 0U;
+// 区分TSD不对外的枚举，对外枚举ID从100开始
+enum ErroCodeExt : TSD_StatusT {
+    TSD_SUBPROCESS_NUM_EXCEED_THE_LIMIT = 100U,
+    TSD_SUBPROCESS_BINARY_FILE_DAMAGED = 101U,
+    TSD_DEVICE_DISCONNECTED = 102U,
+    TSD_VERIFY_OPP_FAIL = 103U,
+    TSD_ADD_AICPUSD_TO_CGROUP_FAILED = 104U,
+    TSD_HDC_CLIENT_CLOSED_EXTERNAL = 105U,
+    TSD_OPEN_NOT_SUPPORT_FOR_MDC = 200U,
+    TSD_OPEN_DEFAULT_NET_SERVICE_FAILED = 201U,
+    TSD_OPEN_NOT_SUPPORT_NET_SERVICE = 202U,
+    TSD_CLOSE_NOT_SUPPORT_NET_SERVICE = 203U,
+};
+} // namespace tsd
+#endif // INC_TDT_STATUS_H

@@ -1,5 +1,15 @@
 # HCCL资料书架总览
 
+简体中文 | [English](./README_en.md)
+
+> [!NOTE]说明
+> 以下产品文档目录中的文档以中文版本为准。英文版本由专业团队翻译和审校后发布，受翻译与发布周期影响，可能滞后于中文版本。如中英文版本存在差异，请以中文版本为准。
+>
+> - [`./zh/api_ref`](./zh/api_ref/)
+> - [`./zh/comm_op_dev_guide`](./zh/comm_op_dev_guide/)
+> - [`./en/api_ref`（译自`./zh/api_ref`）](./en/api_ref/)
+> - [`./en/comm_op_dev_guide`（译自`./zh/comm_op_dev_guide`）](./en/comm_op_dev_guide/)
+
 ## 文档
 
 - [集合通信库用户指南](https://gitcode.com/cann/hccl/blob/master/docs/zh/user_guide/README.md)：介绍HCCL基本概念、如何使用HCCL API进行集合通信功能的开发，如何开发通信算子，以及故障处理与常见配置。

@@ -20,9 +20,9 @@ namespace Hccl {
 
 class InsTempReduceScatterAicpuReduce : public InsAlgTemplateBase {
 public:
-    explicit InsTempReduceScatterAicpuReduce(const RankId virtualRank, const u32 tempRankSize,
-                                   const std::vector<std::vector<RankId>> &tempVTopo,
-                                   const std::map<RankId, u32>            &tempVirtRankMap);
+    explicit InsTempReduceScatterAicpuReduce(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~InsTempReduceScatterAicpuReduce() override;
 
     std::string Describe() const override
@@ -30,15 +30,18 @@ public:
         return StringFormat("Template of aicpu reducescatter with tempRankSize [%u].", tempRankSize_);
     }
 
-    HcclResult GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &templateDataParams,
-                         const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues);
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
+    HcclResult GenExtIns(
+        const TempFuncs& tempFuncs, const TemplateDataParams& templateDataParams, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues);
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
 
     u32 CalcScratchMultiple(BufferType inBuffType, BufferType outBuffType) const;
+
 private:
-    HcclResult RunAlltoAllMesh(const TempFuncs &tempFuncs, const TemplateDataParams &templateDataParams,
-                        const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues);
-    HcclResult RunAicpuLocalReduce(const TemplateDataParams &templateDataParams, std::vector<InsQuePtr> &tempInsQues);
+    HcclResult RunAlltoAllMesh(
+        const TempFuncs& tempFuncs, const TemplateDataParams& templateDataParams, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues);
+    HcclResult RunAicpuLocalReduce(const TemplateDataParams& templateDataParams, std::vector<InsQuePtr>& tempInsQues);
 };
 
 } // namespace Hccl

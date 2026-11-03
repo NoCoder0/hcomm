@@ -4,7 +4,7 @@
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -29,24 +29,15 @@
 using namespace hccl;
 using namespace checker;
 
-namespace checker{
+namespace checker {
 
 class CcuRevampBilateralTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CcuRevampBilateralTest set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CcuRevampBilateralTest set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CcuRevampBilateralTest tear down" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CcuRevampBilateralTest tear down" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "CcuRevampBilateralTest set up" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "CcuRevampBilateralTest set up" << std::endl; }
 
     virtual void TearDown()
     {
@@ -69,7 +60,7 @@ public:
         auto ccuHead = CreateCcuHeadNode(rankId, queId);
         LinkNode(head, ccuHead);
 
-        TaskStubCcuGraph *curCcuTask = dynamic_cast<TaskStubCcuGraph *>(ccuHead->task);
+        TaskStubCcuGraph* curCcuTask = dynamic_cast<TaskStubCcuGraph*>(ccuHead->task);
         Init(curCcuTask, rankSize, 1);
         curCcuTask->rankId = rankId;
 
@@ -94,7 +85,7 @@ public:
         auto ccuHead = CreateCcuHeadNode(rankId, queId);
         LinkNode(head, ccuHead);
 
-        TaskStubCcuGraph *curCcuTask = dynamic_cast<TaskStubCcuGraph *>(ccuHead->task);
+        TaskStubCcuGraph* curCcuTask = dynamic_cast<TaskStubCcuGraph*>(ccuHead->task);
         Init(curCcuTask, rankSize, 1);
         curCcuTask->rankId = rankId;
 
@@ -106,7 +97,8 @@ public:
 
         CreateCcuEndNode(rankId, waitNode, curCcuTask);
 
-        return std::make_pair(waitNode, postNode);;
+        return std::make_pair(waitNode, postNode);
+        ;
     }
 
     TaskNodePtr GenGraph_tc1()
@@ -139,7 +131,7 @@ public:
         auto ccuHead = CreateCcuHeadNode(rankId, queId);
         LinkNode(head, ccuHead);
 
-        TaskStubCcuGraph *curCcuTask = dynamic_cast<TaskStubCcuGraph *>(ccuHead->task);
+        TaskStubCcuGraph* curCcuTask = dynamic_cast<TaskStubCcuGraph*>(ccuHead->task);
         Init(curCcuTask, rankSize, 1);
         curCcuTask->rankId = rankId;
 
@@ -149,7 +141,7 @@ public:
         DataSlice srcSlice1(BufferType::INPUT_CCL, 0, 100);
         DataSlice dstSlice1(BufferType::OUTPUT_CCL, 0, 100);
         auto locCopy1 = AddCcuLocalCopy(rankId, queId, srcSlice1, dstSlice1, curCcuTask);
-        
+
         uint32_t topicId2 = 2;
         auto locPost2 = AddCcuLocalPost(rankId, queId, topicId2, curCcuTask);
         auto locWait2 = AddCcuLocalWait(rankId, queId, topicId2, curCcuTask);
@@ -159,7 +151,8 @@ public:
 
         CreateCcuEndNode(rankId, waitNode, curCcuTask);
 
-        return std::make_pair(waitNode, postNode);;
+        return std::make_pair(waitNode, postNode);
+        ;
     }
 
     TaskNodePtr GenGraph_tc2()
@@ -194,7 +187,7 @@ public:
 
         std::vector<TaskNodePtr> result;
 
-        TaskStubCcuGraph *curCcuTask = dynamic_cast<TaskStubCcuGraph *>(ccuHead->task);
+        TaskStubCcuGraph* curCcuTask = dynamic_cast<TaskStubCcuGraph*>(ccuHead->task);
         Init(curCcuTask, rankSize, 1);
         curCcuTask->rankId = rankId;
 
@@ -231,7 +224,7 @@ public:
 
         std::vector<TaskNodePtr> result;
 
-        TaskStubCcuGraph *curCcuTask = dynamic_cast<TaskStubCcuGraph *>(ccuHead->task);
+        TaskStubCcuGraph* curCcuTask = dynamic_cast<TaskStubCcuGraph*>(ccuHead->task);
         Init(curCcuTask, rankSize, 1);
         curCcuTask->rankId = rankId;
 
@@ -246,7 +239,7 @@ public:
         DataSlice srcSlice1(BufferType::INPUT_CCL, 0, 200);
         DataSlice dstSlice1(BufferType::OUTPUT_CCL, 0, 200);
         auto ccuRead = AddCcuRead(rankId, rmtRankId, queId, srcSlice1, dstSlice1, curCcuTask);
-        
+
         uint32_t topicId1_0_2 = 3;
         auto postNode10_2 = AddCcuPost(rankId, rmtRankId, queId, topicId1_0_2, curCcuTask);
         result.push_back(postNode10_2);
@@ -299,7 +292,7 @@ public:
         auto ccuHead = CreateCcuHeadNode(rankId, queId);
         LinkNode(head, ccuHead);
 
-        TaskStubCcuGraph *curCcuTask = dynamic_cast<TaskStubCcuGraph *>(ccuHead->task);
+        TaskStubCcuGraph* curCcuTask = dynamic_cast<TaskStubCcuGraph*>(ccuHead->task);
         Init(curCcuTask, rankSize, 1);
         curCcuTask->rankId = rankId;
 
@@ -354,7 +347,7 @@ public:
 
         std::vector<TaskNodePtr> result;
 
-        TaskStubCcuGraph *curCcuTask = dynamic_cast<TaskStubCcuGraph *>(ccuHead->task);
+        TaskStubCcuGraph* curCcuTask = dynamic_cast<TaskStubCcuGraph*>(ccuHead->task);
         Init(curCcuTask, rankSize, 1);
         curCcuTask->rankId = rankId;
 
@@ -395,7 +388,7 @@ public:
 
         std::vector<TaskNodePtr> result;
 
-        TaskStubCcuGraph *curCcuTask = dynamic_cast<TaskStubCcuGraph *>(ccuHead->task);
+        TaskStubCcuGraph* curCcuTask = dynamic_cast<TaskStubCcuGraph*>(ccuHead->task);
         Init(curCcuTask, rankSize, 1);
         curCcuTask->rankId = rankId;
 
@@ -406,7 +399,7 @@ public:
         DataSlice srcSlice1(BufferType::INPUT_CCL, 0, 100);
         DataSlice dstSlice1(BufferType::OUTPUT_CCL, 0, 100);
         auto locCopy1 = AddCcuLocalCopy(rankId, queId, srcSlice1, dstSlice1, curCcuTask);
-        
+
         uint32_t topicId2 = 0xF;
         auto locPost2 = AddCcuLocalPost(rankId, queId, topicId2, curCcuTask);
         auto locWait2 = AddCcuLocalWait(rankId, queId, topicId2, curCcuTask);
@@ -425,7 +418,8 @@ public:
 
         CreateCcuEndNode(rankId, waitNode10_2, curCcuTask);
 
-        return result;;
+        return result;
+        ;
     }
 
     TaskNodePtr GenGraph_tc5()
@@ -461,7 +455,7 @@ TEST_F(CcuRevampBilateralTest, ccu_revamp_bilateral_single_success_tc1)
     // 生成自定义CCU子图
     GenBilateralStandardGraph genGraph;
     auto head = genGraph.GenGraph_tc1();
-    std::cout<<"ccu_revamp_bilateral_single_success_tc1: CCU Graph before parallel revamp"<<std::endl;
+    std::cout << "ccu_revamp_bilateral_single_success_tc1: CCU Graph before parallel revamp" << std::endl;
 
     // CCU子图并行化改造
     GraphRevampParallel graphRevampParallel;
@@ -473,7 +467,7 @@ TEST_F(CcuRevampBilateralTest, ccu_revamp_bilateral_single_success_tc1)
     ret = ccuBilateralRevamp.Revamp(head);
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 
-    std::cout<<"ccu_revamp_bilateral_single_success_tc1: CCU Graph after parallel revamp"<<std::endl;
+    std::cout << "ccu_revamp_bilateral_single_success_tc1: CCU Graph after parallel revamp" << std::endl;
     genGraph.PrintRankGraph(0);
     genGraph.PrintRankGraph(1);
 
@@ -489,20 +483,20 @@ TEST_F(CcuRevampBilateralTest, ccu_revamp_bilateral_single_success_tc2)
     // 生成自定义CCU子图
     GenBilateralStandardGraph genGraph;
     auto head = genGraph.GenGraph_tc2();
-    std::cout<<"ccu_revamp_bilateral_single_success_tc2: CCU Graph before parallel revamp"<<std::endl;
+    std::cout << "ccu_revamp_bilateral_single_success_tc2: CCU Graph before parallel revamp" << std::endl;
 
     // CCU子图并行化改造
     GraphRevampParallel graphRevampParallel;
     auto ret = graphRevampParallel.Revamp(head);
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
-    std::cout<<"ccu_revamp_bilateral_single_success_tc2: CCU Graph after parallel revamp"<<std::endl;
+    std::cout << "ccu_revamp_bilateral_single_success_tc2: CCU Graph after parallel revamp" << std::endl;
 
     // CCU子图单边-->双边改造
     GraphRevampBilateralCcu ccuBilateralRevamp;
     ret = ccuBilateralRevamp.Revamp(head);
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 
-    std::cout<<"ccu_revamp_bilateral_single_success_tc2: CCU Graph after bilateral revamp"<<std::endl;
+    std::cout << "ccu_revamp_bilateral_single_success_tc2: CCU Graph after bilateral revamp" << std::endl;
     genGraph.PrintRankGraph(0);
     genGraph.PrintRankGraph(1);
 
@@ -520,21 +514,21 @@ TEST_F(CcuRevampBilateralTest, ccu_revamp_bilateral_two_conflict_tc3)
     auto head = genGraph.GenGraph_tc3();
     EXPECT_NE(head, nullptr);
 
-    std::cout<<"ccu_revamp_bilateral_two_conflict_tc3: CCU Graph before parallel revamp"<<std::endl;
+    std::cout << "ccu_revamp_bilateral_two_conflict_tc3: CCU Graph before parallel revamp" << std::endl;
 
     // CCU子图并行化改造
     GraphRevampParallel graphRevampParallel;
     auto ret = graphRevampParallel.Revamp(head);
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 
-    std::cout<<"ccu_revamp_bilateral_two_conflict_tc3: CCU Graph after parallel revamp"<<std::endl;
+    std::cout << "ccu_revamp_bilateral_two_conflict_tc3: CCU Graph after parallel revamp" << std::endl;
 
     // CCU子图单边-->双边改造
     GraphRevampBilateralCcu ccuBilateralRevamp;
     ret = ccuBilateralRevamp.Revamp(head);
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 
-    std::cout<<"ccu_revamp_bilateral_two_conflict_tc3: CCU Graph after bilateral revamp"<<std::endl;
+    std::cout << "ccu_revamp_bilateral_two_conflict_tc3: CCU Graph after bilateral revamp" << std::endl;
     genGraph.PrintRankGraph(0);
     genGraph.PrintRankGraph(1);
 
@@ -552,21 +546,21 @@ TEST_F(CcuRevampBilateralTest, ccu_revamp_bilateral_two_conflict_tc4)
     auto head = genGraph.GenGraph_tc4();
     EXPECT_NE(head, nullptr);
 
-    std::cout<<"ccu_revamp_bilateral_two_conflict_tc4: CCU Graph before parallel revamp"<<std::endl;
+    std::cout << "ccu_revamp_bilateral_two_conflict_tc4: CCU Graph before parallel revamp" << std::endl;
 
     // CCU子图并行化改造
     GraphRevampParallel graphRevampParallel;
     auto ret = graphRevampParallel.Revamp(head);
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 
-    std::cout<<"ccu_revamp_bilateral_two_conflict_tc4: CCU Graph after parallel revamp"<<std::endl;
+    std::cout << "ccu_revamp_bilateral_two_conflict_tc4: CCU Graph after parallel revamp" << std::endl;
 
     // CCU子图单边-->双边改造
     GraphRevampBilateralCcu ccuBilateralRevamp;
     ret = ccuBilateralRevamp.Revamp(head);
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 
-    std::cout<<"ccu_revamp_bilateral_two_conflict_tc4: CCU Graph after bilateral revamp"<<std::endl;
+    std::cout << "ccu_revamp_bilateral_two_conflict_tc4: CCU Graph after bilateral revamp" << std::endl;
     genGraph.PrintRankGraph(0);
     genGraph.PrintRankGraph(1);
 
@@ -584,21 +578,21 @@ TEST_F(CcuRevampBilateralTest, ccu_revamp_bilateral_two_conflict_tc5)
     auto head = genGraph.GenGraph_tc5();
     EXPECT_NE(head, nullptr);
 
-    std::cout<<"ccu_revamp_bilateral_two_conflict_tc5: CCU Graph before parallel revamp"<<std::endl;
+    std::cout << "ccu_revamp_bilateral_two_conflict_tc5: CCU Graph before parallel revamp" << std::endl;
 
     // CCU子图并行化改造
     GraphRevampParallel graphRevampParallel;
     auto ret = graphRevampParallel.Revamp(head);
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 
-    std::cout<<"ccu_revamp_bilateral_two_conflict_tc5: CCU Graph after parallel revamp"<<std::endl;
+    std::cout << "ccu_revamp_bilateral_two_conflict_tc5: CCU Graph after parallel revamp" << std::endl;
 
     // CCU子图单边-->双边改造
     GraphRevampBilateralCcu ccuBilateralRevamp;
     ret = ccuBilateralRevamp.Revamp(head);
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 
-    std::cout<<"ccu_revamp_bilateral_two_conflict_tc5: CCU Graph after bilateral revamp"<<std::endl;
+    std::cout << "ccu_revamp_bilateral_two_conflict_tc5: CCU Graph after bilateral revamp" << std::endl;
     genGraph.PrintRankGraph(0);
     genGraph.PrintRankGraph(1);
 
@@ -623,7 +617,7 @@ public:
         auto ccuHead = CreateCcuHeadNode(rankId, queId);
         LinkNode(head, ccuHead);
 
-        TaskStubCcuGraph *curCcuTask = dynamic_cast<TaskStubCcuGraph *>(ccuHead->task);
+        TaskStubCcuGraph* curCcuTask = dynamic_cast<TaskStubCcuGraph*>(ccuHead->task);
         Init(curCcuTask, rankSize, 1);
         curCcuTask->rankId = rankId;
 
@@ -648,7 +642,7 @@ public:
         auto ccuHead = CreateCcuHeadNode(rankId, queId);
         LinkNode(head, ccuHead);
 
-        TaskStubCcuGraph *curCcuTask = dynamic_cast<TaskStubCcuGraph *>(ccuHead->task);
+        TaskStubCcuGraph* curCcuTask = dynamic_cast<TaskStubCcuGraph*>(ccuHead->task);
         Init(curCcuTask, rankSize, 1);
         curCcuTask->rankId = rankId;
 
@@ -660,7 +654,8 @@ public:
 
         CreateCcuEndNode(rankId, waitNode, curCcuTask);
 
-        return std::make_pair(waitNode, postNode);;
+        return std::make_pair(waitNode, postNode);
+        ;
     }
     TaskNodePtr GenGraph_tc1()
     {
@@ -687,7 +682,7 @@ TEST_F(CcuRevampBilateralTest, ccu_revamp_bilateral_single_fail_tc1)
     GenBilateralStandardGraph_1 genGraph;
     auto head = genGraph.GenGraph_tc1();
 
-    std::cout<<"ccu_revamp_bilateral_single_test: CCU Graph before parallel revamp"<<std::endl;
+    std::cout << "ccu_revamp_bilateral_single_test: CCU Graph before parallel revamp" << std::endl;
 
     // CCU子图并行化改造
     GraphRevampParallel graphRevampParallel;
@@ -699,7 +694,7 @@ TEST_F(CcuRevampBilateralTest, ccu_revamp_bilateral_single_fail_tc1)
     ret = ccuBilateralRevamp.Revamp(head);
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 
-    std::cout<<"ccu_revamp_bilateral_single_test: CCU Graph after parallel revamp"<<std::endl;
+    std::cout << "ccu_revamp_bilateral_single_test: CCU Graph after parallel revamp" << std::endl;
     genGraph.PrintRankGraph(0);
     genGraph.PrintRankGraph(1);
 
@@ -710,4 +705,4 @@ TEST_F(CcuRevampBilateralTest, ccu_revamp_bilateral_single_fail_tc1)
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 }
 
-}
+} // namespace checker

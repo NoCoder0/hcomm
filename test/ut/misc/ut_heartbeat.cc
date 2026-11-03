@@ -30,7 +30,7 @@
 using namespace std;
 using namespace hccl;
 
-HcclResult stub_GetRaResourceInfo(NetworkManager* that, RaResourceInfo &raResourceInfo)
+HcclResult stub_GetRaResourceInfo(NetworkManager* that, RaResourceInfo& raResourceInfo)
 {
     static bool initialized = false;
     static RaResourceInfo fake_raResourceInfo;
@@ -48,7 +48,7 @@ HcclResult stub_GetRaResourceInfo(NetworkManager* that, RaResourceInfo &raResour
     return HCCL_SUCCESS;
 }
 
-HcclResult stub_GetRaResourceInfo_RdmaHandle(NetworkManager* that, RaResourceInfo &raResourceInfo)
+HcclResult stub_GetRaResourceInfo_RdmaHandle(NetworkManager* that, RaResourceInfo& raResourceInfo)
 {
     static bool initialized = false;
     static RaResourceInfo fake_raResourceInfo;
@@ -66,13 +66,13 @@ HcclResult stub_GetRaResourceInfo_RdmaHandle(NetworkManager* that, RaResourceInf
     return HCCL_SUCCESS;
 }
 
-s32 stub_complete_hrtRaSocketNonBlockSendHB(const FdHandle fdHandle, const void *data, u64 size, u64 *sent_size)
+s32 stub_complete_hrtRaSocketNonBlockSendHB(const FdHandle fdHandle, const void* data, u64 size, u64* sent_size)
 {
     *sent_size = size;
     return 0;
 }
 
-s32 stub_complete_hrtRaSocketNonBlockRecvHB(const FdHandle fdHandle, void *data, u64 size, u64 *recvSize)
+s32 stub_complete_hrtRaSocketNonBlockRecvHB(const FdHandle fdHandle, void* data, u64 size, u64* recvSize)
 {
     static u32 count = 0;
     if (count++ % 5 != 0) {
@@ -93,7 +93,7 @@ HcclResult stub_complete_hrtRaBlockGetSockets(u32 role, struct SocketInfoT conn[
     return HCCL_SUCCESS;
 }
 
-HcclResult stub_complete_hrtRaNonBlockGetSockets(u32 role, struct SocketInfoT conn[], u32 num, u32 *connectedNum)
+HcclResult stub_complete_hrtRaNonBlockGetSockets(u32 role, struct SocketInfoT conn[], u32 num, u32* connectedNum)
 {
     static std::vector<int> fdHandle;
     for (int i = 0; i < num; i++) {
@@ -105,7 +105,7 @@ HcclResult stub_complete_hrtRaNonBlockGetSockets(u32 role, struct SocketInfoT co
     return HCCL_SUCCESS;
 }
 
-extern s32 stub_SocketManagerTest_hrtRaGetSockets(u32 role, struct SocketInfoT conn[], u32 num, u32 *connectedNum);
+extern s32 stub_SocketManagerTest_hrtRaGetSockets(u32 role, struct SocketInfoT conn[], u32 num, u32* connectedNum);
 
 class HeartBeatTest : public testing::Test {
 protected:
@@ -114,54 +114,24 @@ protected:
         DlRaFunction::GetInstance().DlRaFunctionInit();
         std::cout << "HeartBeatTest SetUP" << std::endl;
     }
-    static void TearDownTestCase()
-    {
-        std::cout << "HeartBeatTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "HeartBeatTest TearDown" << std::endl; }
     // Some expensive resource shared by all tests.
     virtual void SetUp()
     {
-        MOCKER(hrtRaSocketWhiteListAdd)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
-        MOCKER(hrtRaSocketWhiteListDel)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
-        MOCKER(hrtRaSocketBatchConnect)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
-        MOCKER(hrtRaBlockGetSockets)
-        .stubs()
-        .will(invoke(stub_complete_hrtRaBlockGetSockets));
-        MOCKER(hrtRaNonBlockGetSockets)
-        .stubs()
-        .will(invoke(stub_complete_hrtRaNonBlockGetSockets));
-        MOCKER(hrtRaSocketBatchClose)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
-        MOCKER(hrtRaSocketNonBlockSend)
-        .stubs()
-        .will(invoke(stub_complete_hrtRaSocketNonBlockSendHB));
-        MOCKER(hrtRaSocketNonBlockRecv)
-        .stubs()
-        .will(invoke(stub_complete_hrtRaSocketNonBlockRecvHB));
-        MOCKER_CPP(&HcclSocket::AddWhiteList)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
-        MOCKER_CPP(&HcclSocket::DelWhiteList)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
-        MOCKER_CPP(&NetworkManager::GetRaResourceInfo)
-        .stubs()
-        .will(invoke(stub_GetRaResourceInfo));
+        MOCKER(hrtRaSocketWhiteListAdd).stubs().will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtRaSocketWhiteListDel).stubs().will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtRaSocketBatchConnect).stubs().will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtRaBlockGetSockets).stubs().will(invoke(stub_complete_hrtRaBlockGetSockets));
+        MOCKER(hrtRaNonBlockGetSockets).stubs().will(invoke(stub_complete_hrtRaNonBlockGetSockets));
+        MOCKER(hrtRaSocketBatchClose).stubs().will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtRaSocketNonBlockSend).stubs().will(invoke(stub_complete_hrtRaSocketNonBlockSendHB));
+        MOCKER(hrtRaSocketNonBlockRecv).stubs().will(invoke(stub_complete_hrtRaSocketNonBlockRecvHB));
+        MOCKER_CPP(&HcclSocket::AddWhiteList).stubs().will(returnValue(HCCL_SUCCESS));
+        MOCKER_CPP(&HcclSocket::DelWhiteList).stubs().will(returnValue(HCCL_SUCCESS));
+        MOCKER_CPP(&NetworkManager::GetRaResourceInfo).stubs().will(invoke(stub_GetRaResourceInfo));
         s32 portNum = -1;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
-        MOCKER(hrtRaGetSockets)
-        .stubs()
-        .will(invoke(stub_SocketManagerTest_hrtRaGetSockets));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtRaGetSockets).stubs().will(invoke(stub_SocketManagerTest_hrtRaGetSockets));
         std::cout << "A Test SetUP" << std::endl;
     }
     virtual void TearDown()
@@ -385,20 +355,14 @@ TEST_F(HeartBeatTest, ut_HeartBeatTest4)
     }
 
     DevType type = DevType::DEV_TYPE_910B;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(type))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(type)).will(returnValue(HCCL_SUCCESS));
 
     Heartbeat::GetInstance(0).RegisterRanks(type, rankInfos1[3], rankInfos1, 0, false, "test1");
     Heartbeat::GetInstance(0).UnRegisterRanks("test1");
     GlobalMockObject::verify();
-    
+
     type = DevType::DEV_TYPE_910_93;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(type))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(type)).will(returnValue(HCCL_SUCCESS));
 
     Heartbeat::GetInstance(0).RegisterRanks(type, rankInfos1[3], rankInfos1, 0, false, "test1");
     Heartbeat::GetInstance(0).UnRegisterRanks("test1");
@@ -443,7 +407,7 @@ TEST_F(HeartBeatTest, ut_HeartBeatTest5)
     Heartbeat::GetInstance(0).RegisterRanks(type, rankInfo, rankInfos1, 0, false, "test1");
     Heartbeat::GetInstance(0).UnRegisterRanks("test1");
 
-     Heartbeat::GetInstance(0).ProcessCqeErrInfo();
+    Heartbeat::GetInstance(0).ProcessCqeErrInfo();
 
     GlobalMockObject::verify();
 }
@@ -474,13 +438,13 @@ TEST_F(HeartBeatTest, ut_HeartBeatTest5)
 //     std::string str = Heartbeat::GetInstance(0).FormatUId(uid);
 // }
 
-HcclResult stub_ISend(HcclSocket* that, void *data, u64 size, u64& compSize)
+HcclResult stub_ISend(HcclSocket* that, void* data, u64 size, u64& compSize)
 {
     compSize = size;
     return HCCL_SUCCESS;
 }
 
-HcclResult stub_ISend_nocomp(HcclSocket* that, void *data, u64 size, u64& compSize)
+HcclResult stub_ISend_nocomp(HcclSocket* that, void* data, u64 size, u64& compSize)
 {
     compSize = 0;
     return HCCL_SUCCESS;
@@ -488,9 +452,7 @@ HcclResult stub_ISend_nocomp(HcclSocket* that, void *data, u64 size, u64& compSi
 
 TEST_F(HeartBeatTest, ut_SendFrame)
 {
-    MOCKER_CPP(&HcclSocket::ISend)
-    .stubs()
-    .will(invoke(stub_ISend));
+    MOCKER_CPP(&HcclSocket::ISend).stubs().will(invoke(stub_ISend));
     HcclResult ret = HCCL_SUCCESS;
 
     RankInfo rankInfo;
@@ -517,9 +479,7 @@ TEST_F(HeartBeatTest, ut_SendFrame)
     ret = Heartbeat::GetInstance(0).SendFrame(dst, crimer, informer, HeartBeatStatus::HEARTBEAT_LOST);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     GlobalMockObject::verify();
-    MOCKER_CPP(&HcclSocket::ISend)
-    .stubs()
-    .will(invoke(stub_ISend_nocomp));
+    MOCKER_CPP(&HcclSocket::ISend).stubs().will(invoke(stub_ISend_nocomp));
     ret = Heartbeat::GetInstance(0).SendFrame(dst, crimer, informer, HeartBeatStatus::HEARTBEAT_LOST);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     Heartbeat::GetInstance(0).rankId2SocketMap_.erase(dst);
@@ -527,9 +487,7 @@ TEST_F(HeartBeatTest, ut_SendFrame)
 
 TEST_F(HeartBeatTest, ut_TestErrRankQueue)
 {
-    MOCKER_CPP(&HcclSocket::ISend)
-    .stubs()
-    .will(invoke(stub_ISend));
+    MOCKER_CPP(&HcclSocket::ISend).stubs().will(invoke(stub_ISend));
     HcclResult ret = HCCL_SUCCESS;
 
     RankInfo rankInfo;
@@ -537,8 +495,8 @@ TEST_F(HeartBeatTest, ut_TestErrRankQueue)
     UIDType dst = Heartbeat::GetInstance(0).GetUId(rankInfo);
 
     ConnInfo conninfo;
-    std::shared_ptr<HcclSocket> newSocket(new (std::nothrow)HcclSocket("my tag", nullptr,
-        HcclIpAddress(), 0, HcclSocketRole::SOCKET_ROLE_SERVER));
+    std::shared_ptr<HcclSocket> newSocket(
+        new (std::nothrow) HcclSocket("my tag", nullptr, HcclIpAddress(), 0, HcclSocketRole::SOCKET_ROLE_SERVER));
     conninfo.socket = newSocket;
     Heartbeat::GetInstance(0).rankId2SocketMap_.insert(dst, conninfo);
 
@@ -553,7 +511,7 @@ TEST_F(HeartBeatTest, ut_TestErrRankQueue)
     GlobalMockObject::verify();
 }
 
-HcclResult stub_hrtRaGetCqeErrInfo_value_status_0(unsigned int phy_id, struct CqeErrInfo *info)
+HcclResult stub_hrtRaGetCqeErrInfo_value_status_0(unsigned int phy_id, struct CqeErrInfo* info)
 {
     info->qpn = 10;
     info->status = 0;
@@ -564,7 +522,7 @@ HcclResult stub_hrtRaGetCqeErrInfo_value_status_0(unsigned int phy_id, struct Cq
     return HCCL_SUCCESS;
 }
 
-HcclResult stub_hrtRaGetCqeErrInfo_value(unsigned int phy_id, struct CqeErrInfo *info)
+HcclResult stub_hrtRaGetCqeErrInfo_value(unsigned int phy_id, struct CqeErrInfo* info)
 {
     info->qpn = 1;
     info->status = 12;
@@ -575,10 +533,10 @@ HcclResult stub_hrtRaGetCqeErrInfo_value(unsigned int phy_id, struct CqeErrInfo 
     return HCCL_SUCCESS;
 }
 
-HcclResult stub_hrtRaGetCqeErrInfoList_value(RdmaHandle handle, struct CqeErrInfo *infolist, unsigned int *num)
+HcclResult stub_hrtRaGetCqeErrInfoList_value(RdmaHandle handle, struct CqeErrInfo* infolist, unsigned int* num)
 {
     *num = 65;
-    infolist[0].qpn=1;
+    infolist[0].qpn = 1;
     infolist[0].status = 12;
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -586,14 +544,14 @@ HcclResult stub_hrtRaGetCqeErrInfoList_value(RdmaHandle handle, struct CqeErrInf
     return HCCL_SUCCESS;
 }
 
-HcclResult stub_GetIdentifierByQpn_value(std::pair<u32, u32> qpnPair, std::string &identifier)
+HcclResult stub_GetIdentifierByQpn_value(std::pair<u32, u32> qpnPair, std::string& identifier)
 {
     qpnPair.second = 1;
     identifier = "comm_id_1";
     return HCCL_SUCCESS;
 }
 
-HcclResult stub_GetRemoteRankByQpn_value(std::pair<u32, u32> qpnPair, u32 &remoteRank)
+HcclResult stub_GetRemoteRankByQpn_value(std::pair<u32, u32> qpnPair, u32& remoteRank)
 {
     qpnPair.second = 1;
     remoteRank = 24;
@@ -602,11 +560,11 @@ HcclResult stub_GetRemoteRankByQpn_value(std::pair<u32, u32> qpnPair, u32 &remot
 
 struct tm* stub_localtime_value(const time_t* time)
 {
-    tm *aa;
+    tm* aa;
     return aa;
 }
 
-HcclResult stub_GetRemoteIpAddrByQpn_value(u32 qpn, HcclIpAddress &ip)
+HcclResult stub_GetRemoteIpAddrByQpn_value(u32 qpn, HcclIpAddress& ip)
 {
     qpn = 1;
 
@@ -615,108 +573,87 @@ HcclResult stub_GetRemoteIpAddrByQpn_value(u32 qpn, HcclIpAddress &ip)
 
 TEST_F(HeartBeatTest, ut_ProcessCqeErrInfo_1)
 {
-
     TransportIbverbs::g_flag = true;
-    
-    MOCKER(hrtRaGetCqeErrInfoList)
-    .stubs()
-    .will(invoke(stub_hrtRaGetCqeErrInfo_value));
 
-    MOCKER(localtime)
-    .stubs()
-    .will(invoke(stub_localtime_value));
+    MOCKER(hrtRaGetCqeErrInfoList).stubs().will(invoke(stub_hrtRaGetCqeErrInfo_value));
 
-    MOCKER_CPP(&Heartbeat::SetStatus)
-    .stubs();
+    MOCKER(localtime).stubs().will(invoke(stub_localtime_value));
+
+    MOCKER_CPP(&Heartbeat::SetStatus).stubs();
 
     Heartbeat::GetInstance(0).ProcessCqeErrInfo();
 
     TransportIbverbs::g_flag = false;
-    }
-
+}
 
 TEST_F(HeartBeatTest, ut_ProcessCqeErrInfo_001)
 {
     TransportIbverbs::g_flag = true;
-    
-    MOCKER(hrtRaGetCqeErrInfoList)
-    .stubs()
-    .will(invoke(stub_hrtRaGetCqeErrInfo_value));
+
+    MOCKER(hrtRaGetCqeErrInfoList).stubs().will(invoke(stub_hrtRaGetCqeErrInfo_value));
 
     Heartbeat::GetInstance(0).ProcessCqeErrInfo();
 
     TransportIbverbs::g_flag = false;
-    }
+}
 
 TEST_F(HeartBeatTest, ut_ProcessCqeErrInfo_002)
 {
     TransportIbverbs::g_flag = true;
-    
-    MOCKER(hrtRaGetCqeErrInfoList)
-    .expects(atMost(0))
-    .will(returnValue(HCCL_SUCCESS));
+
+    MOCKER(hrtRaGetCqeErrInfoList).expects(atMost(0)).will(returnValue(HCCL_SUCCESS));
 
     Heartbeat::GetInstance(0).ProcessCqeErrInfo();
     TransportIbverbs::g_flag = false;
-    }
+}
 
 TEST_F(HeartBeatTest, ust_ProcessCqeErrInfo_003)
 {
     TransportIbverbs::g_flag = true;
-    
-    MOCKER(hrtRaGetCqeErrInfoList)
-    .expects(atMost(1))
-    .will(returnValue(HCCL_E_INTERNAL));
+
+    MOCKER(hrtRaGetCqeErrInfoList).expects(atMost(1)).will(returnValue(HCCL_E_INTERNAL));
 
     Heartbeat::GetInstance(0).ProcessCqeErrInfo();
     TransportIbverbs::g_flag = false;
-    }
+}
 
 TEST_F(HeartBeatTest, ut_ProcessCqeErrInfo_004)
 {
     TransportIbverbs::g_flag = true;
-    
-    MOCKER(hrtRaGetCqeErrInfoList)
-    .expects(atMost(1))
-    .will(invoke(stub_hrtRaGetCqeErrInfo_value));
+
+    MOCKER(hrtRaGetCqeErrInfoList).expects(atMost(1)).will(invoke(stub_hrtRaGetCqeErrInfo_value));
 
     Heartbeat::GetInstance(0).ProcessCqeErrInfo();
     TransportIbverbs::g_flag = false;
-    }
+}
 
 TEST_F(HeartBeatTest, ut_ProcessCqeErrInfo_005)
 {
     TransportIbverbs::g_flag = true;
-    
-    MOCKER(hrtRaGetCqeErrInfoList)
-    .stubs()
-    .will(invoke(stub_hrtRaGetCqeErrInfo_value));
+
+    MOCKER(hrtRaGetCqeErrInfoList).stubs().will(invoke(stub_hrtRaGetCqeErrInfo_value));
 
     Heartbeat::GetInstance(0).ProcessCqeErrInfo();
 
     TransportIbverbs::g_flag = false;
-    }
+}
 
 TEST_F(HeartBeatTest, ut_ProcessCqeErrInfo_006)
 {
     TransportIbverbs::g_flag = true;
-    
-    MOCKER(hrtRaGetCqeErrInfoList)
-    .stubs()
-    .will(invoke(stub_hrtRaGetCqeErrInfo_value));
+
+    MOCKER(hrtRaGetCqeErrInfoList).stubs().will(invoke(stub_hrtRaGetCqeErrInfo_value));
 
     Heartbeat::GetInstance(0).ProcessCqeErrInfo();
 
     TransportIbverbs::g_flag = false;
-    }
+}
 
 TEST_F(HeartBeatTest, ut_ProcessCqeErrInfo_007)
 {
     TransportIbverbs::g_flag = true;
-    
-    MOCKER(hrtRaGetCqeErrInfoList)
-    .stubs()
-    .will(invoke(stub_hrtRaGetCqeErrInfo_value));
+
+    MOCKER(hrtRaGetCqeErrInfoList).stubs().will(invoke(stub_hrtRaGetCqeErrInfo_value));
 
     // MOCKER(TransformIpNum2Str)
     // .stubs()
@@ -725,33 +662,29 @@ TEST_F(HeartBeatTest, ut_ProcessCqeErrInfo_007)
     Heartbeat::GetInstance(0).ProcessCqeErrInfo();
 
     TransportIbverbs::g_flag = false;
-    }
+}
 
 TEST_F(HeartBeatTest, ut_ProcessCqeErrInfo_008)
 {
     // 开启重执行分支 && 注入 status = 0，提前退出
     MOCKER_CPP(&Heartbeat::GetRetryEnable).stubs().with(mockcpp::any()).will(returnValue(true));
     TransportIbverbs::g_flag = true;
-    
-    MOCKER(hrtRaGetCqeErrInfoList)
-    .stubs()
-    .will(invoke(stub_hrtRaGetCqeErrInfo_value_status_0));
+
+    MOCKER(hrtRaGetCqeErrInfoList).stubs().will(invoke(stub_hrtRaGetCqeErrInfo_value_status_0));
     Heartbeat::GetInstance(0).ProcessCqeErrInfo();
-    
+
     GlobalMockObject::verify();
     TransportIbverbs::g_flag = false;
-    }
+}
 
 TEST_F(HeartBeatTest, ut_ProcessCqeErrInfo_009)
 {
-    // 未开启重执行分支 
+    // 未开启重执行分支
     MOCKER_CPP(&Heartbeat::GetRetryEnable).stubs().with(mockcpp::any()).will(returnValue(false));
 
-    MOCKER(hrtRaGetCqeErrInfoList)
-    .stubs()
-    .will(invoke(stub_hrtRaGetCqeErrInfo_value));
+    MOCKER(hrtRaGetCqeErrInfoList).stubs().will(invoke(stub_hrtRaGetCqeErrInfo_value));
     Heartbeat::GetInstance(0).ProcessCqeErrInfo();
-    
+
     GlobalMockObject::verify();
 }
 
@@ -760,15 +693,13 @@ TEST_F(HeartBeatTest, ut_ProcessCqeErrInfo_010)
     // 开启重执行分支 && 注入 status = 0，提前退出
     MOCKER_CPP(&Heartbeat::GetRetryEnable).stubs().with(mockcpp::any()).will(returnValue(true));
     TransportIbverbs::g_flag = true;
-    
-    MOCKER(hrtRaGetCqeErrInfoList)
-    .stubs()
-    .will(invoke(stub_hrtRaGetCqeErrInfo_value));
+
+    MOCKER(hrtRaGetCqeErrInfoList).stubs().will(invoke(stub_hrtRaGetCqeErrInfo_value));
     Heartbeat::GetInstance(0).ProcessCqeErrInfo();
-    
+
     GlobalMockObject::verify();
     TransportIbverbs::g_flag = false;
-    }
+}
 
 TEST_F(HeartBeatTest, ut_SaveQpnForOpRetry_001)
 {
@@ -801,9 +732,9 @@ TEST_F(HeartBeatTest, ut_SaveQpnForOpRetry_002)
     infoExt.cqeInfo = info1;
     infomap[dstRank] = {errqpn};
     /*rankMapForRetryAgent =  {
-    *       comm_id_1 : { 24 : <54, time,12,remoteIp>> }
-    *   }
-    */
+     *       comm_id_1 : { 24 : <54, time,12,remoteIp>> }
+     *   }
+     */
     Heartbeat::GetInstance(0).rankMapForRetryAgent.insert({"comm_id_1", {infomap}});
     // 有通信域，有remote rank
     ErrCqeInfo info2;
@@ -895,22 +826,22 @@ TEST_F(HeartBeatTest, ut_keyEvents)
     Heartbeat::GetInstance(0).SetStatus(src0, dst0, HeartBeatStatus::HEARTBEAT_CQE_ERR, false);
     Heartbeat::GetInstance(0).SetStatus(src1, dst1, HeartBeatStatus::HEARTBEAT_LOST, false);
 
-    s32 INPUT_TIMEOUT = 180; 
+    s32 INPUT_TIMEOUT = 180;
     std::string setTimeOutValue = to_string(INPUT_TIMEOUT);
     HcclResult ret = SetHccLExecTimeOut(setTimeOutValue.c_str(), HcclExecTimeoutSet::HCCL_EXEC_TIMEOUT_SET_BY_ENV);
     EXPECT_EQ(HCCL_SUCCESS, ret);
-    std::vector<std::string>  tmpEventStr = Heartbeat::GetInstance(0).GetErrStatusVec();
+    std::vector<std::string> tmpEventStr = Heartbeat::GetInstance(0).GetErrStatusVec();
 
     UIDType src = Heartbeat::GetInstance(0).GetUId(rankInfos1[2]);
     UIDType dst = Heartbeat::GetInstance(0).GetUId(rankInfos1[2]);
     Heartbeat::GetInstance(0).SetStatus(src, dst, HeartBeatStatus::HEARTBEAT_CQE_ERR, false);
-    INPUT_TIMEOUT = 1800; 
+    INPUT_TIMEOUT = 1800;
     setTimeOutValue = to_string(INPUT_TIMEOUT);
     ret = SetHccLExecTimeOut(setTimeOutValue.c_str(), HcclExecTimeoutSet::HCCL_EXEC_TIMEOUT_SET_BY_ENV);
     EXPECT_EQ(HCCL_SUCCESS, ret);
     tmpEventStr = Heartbeat::GetInstance(0).GetErrStatusVec();
 }
- 
+
 TEST_F(HeartBeatTest, ut_SutckDetection1)
 {
     auto counterStat = CounterStat();
@@ -920,9 +851,9 @@ TEST_F(HeartBeatTest, ut_SutckDetection1)
     Heartbeat::GetInstance(0).StuckDetection(cnt, counterStat);
     GlobalMockObject::verify();
 }
- 
+
 TEST_F(HeartBeatTest, ut_SutckDetection2)
- 
+
 {
     std::pair<int32_t, int32_t> counter(0, 0);
     auto counterStat = CounterStat();
@@ -936,32 +867,26 @@ TEST_F(HeartBeatTest, ut_SutckDetection2)
 
 TEST_F(HeartBeatTest, ut_transport_ibv_stop_test)
 {
-    DispatcherPub *dispatcher;
+    DispatcherPub* dispatcher;
     const std::unique_ptr<NotifyPool> notifyPool;
     MachinePara machinePara;
     std::chrono::milliseconds timeout;
     TransportIbverbs transportIbverbs(dispatcher, notifyPool, machinePara, timeout);
-    MOCKER(hrtRaQpBatchModify)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
- 
+    MOCKER(hrtRaQpBatchModify).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+
     auto ret = transportIbverbs.Stop();
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
- 
+
 TEST_F(HeartBeatTest, ut_transport_ibv_Resume_test)
 {
-    DispatcherPub *dispatcher;
+    DispatcherPub* dispatcher;
     const std::unique_ptr<NotifyPool> notifyPool;
     MachinePara machinePara;
     std::chrono::milliseconds timeout;
     TransportIbverbs transportIbverbs(dispatcher, notifyPool, machinePara, timeout);
-    MOCKER(hrtRaQpBatchModify)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
- 
+    MOCKER(hrtRaQpBatchModify).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+
     auto ret = transportIbverbs.Resume();
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
@@ -971,9 +896,7 @@ TEST_F(HeartBeatTest, ut_GetQpnErrForOpRetryAgent_Null)
     // 测试 GetQpnErr 返回 false
     MOCKER_CPP(&Heartbeat::GetRetryEnable).stubs().with(mockcpp::any()).will(returnValue(true));
     TransportIbverbs::g_flag = true;
-        MOCKER(hrtRaGetCqeErrInfoList)
-    .stubs()
-    .will(invoke(stub_hrtRaGetCqeErrInfo_value));
+    MOCKER(hrtRaGetCqeErrInfoList).stubs().will(invoke(stub_hrtRaGetCqeErrInfo_value));
 
     Heartbeat::GetInstance(0).ProcessCqeErrInfo();
 
@@ -983,7 +906,7 @@ TEST_F(HeartBeatTest, ut_GetQpnErrForOpRetryAgent_Null)
     EXPECT_EQ(isExistQPErr, false);
 
     TransportIbverbs::g_flag = false;
-        GlobalMockObject::verify();
+    GlobalMockObject::verify();
 }
 
 TEST_F(HeartBeatTest, ut_GetQpnErrForOpRetryAgent)
@@ -992,28 +915,24 @@ TEST_F(HeartBeatTest, ut_GetQpnErrForOpRetryAgent)
     // qpmapForOpRetry 中没有指定通信域的 kv pair
     MOCKER_CPP(&Heartbeat::GetRetryEnable).stubs().with(mockcpp::any()).will(returnValue(true));
     TransportIbverbs::g_flag = true;
-        Heartbeat::GetInstance(0).deviceLogicId_ = 0;
+    Heartbeat::GetInstance(0).deviceLogicId_ = 0;
     // 调用hrtRaGetCqeErrInfo 是会注入一个Rdma Err
-    MOCKER(hrtRaGetCqeErrInfoList)
-    .stubs().will(invoke(stub_hrtRaGetCqeErrInfo_value));
+    MOCKER(hrtRaGetCqeErrInfoList).stubs().will(invoke(stub_hrtRaGetCqeErrInfo_value));
     // 调用hrtRaGetCqeErrInfoList 是会注入一个Rdma Err
-    MOCKER(hrtRaGetCqeErrInfoList)
-    .stubs().will(invoke(stub_hrtRaGetCqeErrInfoList_value));
+    MOCKER(hrtRaGetCqeErrInfoList).stubs().will(invoke(stub_hrtRaGetCqeErrInfoList_value));
 
     // 使 rdmahandle 不为 nullptr
-    MOCKER_CPP(&NetworkManager::GetRaResourceInfo)
-    .stubs()
-    .will(invoke(stub_GetRaResourceInfo_RdmaHandle));
+    MOCKER_CPP(&NetworkManager::GetRaResourceInfo).stubs().will(invoke(stub_GetRaResourceInfo_RdmaHandle));
     Heartbeat::GetInstance(0).nicIp_ = HcclIpAddress(1684515008);
     Heartbeat::GetInstance(0).ProcessCqeErrInfo();
-   
+
     std::set<std::tuple<u32, u32, u32>> qpErrSet;
     Heartbeat::GetInstance(0).GetQpnErr("comm_id_1", qpErrSet);
     bool isExistQPErr = (qpErrSet.size() > 0);
     EXPECT_EQ(isExistQPErr, true);
 
     TransportIbverbs::g_flag = false;
-        GlobalMockObject::verify();
+    GlobalMockObject::verify();
 }
 
 TEST_F(HeartBeatTest, ut_BroadcastCqeErr)
@@ -1022,17 +941,15 @@ TEST_F(HeartBeatTest, ut_BroadcastCqeErr)
     // qpmapForOpRetry 中没有指定通信域的 kv pair
     MOCKER_CPP(&Heartbeat::GetRetryEnable).stubs().with(mockcpp::any()).will(returnValue(true));
     TransportIbverbs::g_flag = true;
-        // 调用hrtRaGetCqeErrInfo 是会注入一个Rdma Err
-    MOCKER(hrtRaGetCqeErrInfoList)
-    .stubs()
-    .will(invoke(stub_hrtRaGetCqeErrInfo_value));
+    // 调用hrtRaGetCqeErrInfo 是会注入一个Rdma Err
+    MOCKER(hrtRaGetCqeErrInfoList).stubs().will(invoke(stub_hrtRaGetCqeErrInfo_value));
 
     Heartbeat::GetInstance(0).ProcessCqeErrInfo();
     Heartbeat::GetInstance(0).ProcessCqeErrInfo();
     Heartbeat::GetInstance(0).BroadcastCqeErr("comm_id_1");
-   
+
     TransportIbverbs::g_flag = false;
-        GlobalMockObject::verify();
+    GlobalMockObject::verify();
 }
 
 TEST_F(HeartBeatTest, ut_ClearAllCqeErr)
@@ -1041,17 +958,15 @@ TEST_F(HeartBeatTest, ut_ClearAllCqeErr)
     // qpmapForOpRetry 中没有指定通信域的 kv pair
     MOCKER_CPP(&Heartbeat::GetRetryEnable).stubs().with(mockcpp::any()).will(returnValue(true));
     TransportIbverbs::g_flag = true;
-        // 调用hrtRaGetCqeErrInfo 是会注入一个Rdma Err
-    MOCKER(hrtRaGetCqeErrInfoList)
-    .stubs().will(invoke(stub_hrtRaGetCqeErrInfo_value));
+    // 调用hrtRaGetCqeErrInfo 是会注入一个Rdma Err
+    MOCKER(hrtRaGetCqeErrInfoList).stubs().will(invoke(stub_hrtRaGetCqeErrInfo_value));
 
-    MOCKER(hrtRaGetCqeErrInfoList)
-    .stubs().will(invoke(stub_hrtRaGetCqeErrInfoList_value));
+    MOCKER(hrtRaGetCqeErrInfoList).stubs().will(invoke(stub_hrtRaGetCqeErrInfoList_value));
     Heartbeat::GetInstance(0).ProcessCqeErrInfo();
     Heartbeat::GetInstance(0).ClearAllCqeErr("comm_id_1");
-   
+
     TransportIbverbs::g_flag = false;
-        GlobalMockObject::verify();
+    GlobalMockObject::verify();
 }
 
 TEST_F(HeartBeatTest, ut_ClearCqeErr1)
@@ -1059,16 +974,14 @@ TEST_F(HeartBeatTest, ut_ClearCqeErr1)
     // 清除不存在的通信域中的数据
     MOCKER_CPP(&Heartbeat::GetRetryEnable).stubs().with(mockcpp::any()).will(returnValue(true));
     TransportIbverbs::g_flag = true;
-        MOCKER(hrtRaGetCqeErrInfoList)
-    .stubs().will(invoke(stub_hrtRaGetCqeErrInfo_value));
+    MOCKER(hrtRaGetCqeErrInfoList).stubs().will(invoke(stub_hrtRaGetCqeErrInfo_value));
 
-    MOCKER(hrtRaGetCqeErrInfoList)
-    .stubs().will(invoke(stub_hrtRaGetCqeErrInfoList_value));
+    MOCKER(hrtRaGetCqeErrInfoList).stubs().will(invoke(stub_hrtRaGetCqeErrInfoList_value));
     Heartbeat::GetInstance(0).ProcessCqeErrInfo();
     Heartbeat::GetInstance(0).ClearCqeErr("comm_id_1", 24);
-   
+
     TransportIbverbs::g_flag = false;
-        GlobalMockObject::verify();
+    GlobalMockObject::verify();
 }
 
 TEST_F(HeartBeatTest, ut_ClearCqeErr2)
@@ -1076,33 +989,28 @@ TEST_F(HeartBeatTest, ut_ClearCqeErr2)
     // 清除不存在的通信域中的dstRank
     MOCKER_CPP(&Heartbeat::GetRetryEnable).stubs().with(mockcpp::any()).will(returnValue(true));
     TransportIbverbs::g_flag = true;
-        MOCKER(hrtRaGetCqeErrInfoList)
-    .stubs().will(invoke(stub_hrtRaGetCqeErrInfo_value));
+    MOCKER(hrtRaGetCqeErrInfoList).stubs().will(invoke(stub_hrtRaGetCqeErrInfo_value));
 
-    MOCKER(hrtRaGetCqeErrInfoList)
-    .stubs().will(invoke(stub_hrtRaGetCqeErrInfoList_value));
+    MOCKER(hrtRaGetCqeErrInfoList).stubs().will(invoke(stub_hrtRaGetCqeErrInfoList_value));
     Heartbeat::GetInstance(0).ProcessCqeErrInfo();
-    Heartbeat::GetInstance(0).ClearCqeErr("comm_id_1",23);
-   
+    Heartbeat::GetInstance(0).ClearCqeErr("comm_id_1", 23);
+
     TransportIbverbs::g_flag = false;
-        GlobalMockObject::verify();
+    GlobalMockObject::verify();
 }
 
 TEST_F(HeartBeatTest, ut_ClearCqeErr3)
 {
     MOCKER_CPP(&Heartbeat::GetRetryEnable).stubs().with(mockcpp::any()).will(returnValue(true));
     TransportIbverbs::g_flag = true;
-        MOCKER(hrtRaGetCqeErrInfoList)
-    .stubs()
-    .will(invoke(stub_hrtRaGetCqeErrInfo_value));
- 
-    MOCKER(hrtRaGetCqeErrInfoList)
-    .stubs().will(invoke(stub_hrtRaGetCqeErrInfoList_value));
+    MOCKER(hrtRaGetCqeErrInfoList).stubs().will(invoke(stub_hrtRaGetCqeErrInfo_value));
+
+    MOCKER(hrtRaGetCqeErrInfoList).stubs().will(invoke(stub_hrtRaGetCqeErrInfoList_value));
     Heartbeat::GetInstance(0).ProcessCqeErrInfo();
     Heartbeat::GetInstance(0).ClearCqeErr("comm_id_1", 24);
-   
+
     TransportIbverbs::g_flag = false;
-        GlobalMockObject::verify();
+    GlobalMockObject::verify();
 }
 
 TEST_F(HeartBeatTest, ut_ClearCqeErr5)
@@ -1152,7 +1060,7 @@ TEST_F(HeartBeatTest, ut_MakeErrMsg_OpretryNotSupport)
     UIDType crimer = Heartbeat::GetInstance(0).GetUId(rankInfo);
     UIDType informer = Heartbeat::GetInstance(0).GetUId(rankInfo);
     HeartBeatFrame bf(src, dst, crimer, informer, HeartBeatStatus::HEARTBEAT_OPRETRY_NOT_SUPPORT);
-    
+
     std::queue<HeartBeatFrame> keyEvents;
     keyEvents.push(bf);
     std::vector<std::string> errStatusVec;
@@ -1206,7 +1114,6 @@ TEST_F(HeartBeatTest, ut_cluster_heart_env_config)
     EXPECT_EQ(GetExternalInputHcclHeartBeatEnable(), false);
     unsetenv("HCCL_DFS_CONFIG");
 
-
     setenv("HCCL_DFS_CONFIG", "cluster_heartbeat:Off", 1);
 
     ret = HCCL_SUCCESS;
@@ -1230,7 +1137,6 @@ TEST_F(HeartBeatTest, ut_cluster_heart_env_config)
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(GetExternalInputHcclHeartBeatEnable(), true);
     unsetenv("HCCL_DFS_CONFIG");
-
 
     GlobalMockObject::verify();
 }
@@ -1260,10 +1166,10 @@ TEST_F(HeartBeatTest, ut_SaveOpInfo)
 {
     // SetStatus 函数覆盖
     RankInfo localRank;
-    localRank.serverId="1.1.1.0";
-    localRank.devicePhyId=0;
+    localRank.serverId = "1.1.1.0";
+    localRank.devicePhyId = 0;
     UIDType uid_ = Heartbeat::GetInstance(0).GetUId(localRank);
-    Heartbeat::GetInstance(0).SetStatus(uid_,uid_,HeartBeatStatus::HEARTBEAT_INCONSISTENT, false);
+    Heartbeat::GetInstance(0).SetStatus(uid_, uid_, HeartBeatStatus::HEARTBEAT_INCONSISTENT, false);
 
     OpInfoTagQueueFrame frame;
     frame.opInfoTagQueue[0].opInfoNum = 1;
@@ -1279,54 +1185,54 @@ TEST_F(HeartBeatTest, ut_SaveOpInfo)
     Heartbeat::GetInstance(0).SaveOpInfo(frame, uid_);
 
     // CheckIsSameOp 函数覆盖
-    //覆盖场景:Send Recv 不匹配
-    opInfo.opType =  HcclCMDType::HCCL_CMD_SEND;
+    // 覆盖场景:Send Recv 不匹配
+    opInfo.opType = HcclCMDType::HCCL_CMD_SEND;
     remoteopInfo.opType = HcclCMDType::HCCL_CMD_SEND;
     InconsistentType status = InconsistentType::NO_INCONSISTENT;
     HcclResult ret = HCCL_SUCCESS;
     ret = Heartbeat::GetInstance(0).CheckIsSameOp(opInfo, remoteopInfo, status);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    //覆盖场景:Recv Send 不匹配
-    opInfo.opType =  HcclCMDType::HCCL_CMD_RECEIVE;
+    // 覆盖场景:Recv Send 不匹配
+    opInfo.opType = HcclCMDType::HCCL_CMD_RECEIVE;
     remoteopInfo.opType = HcclCMDType::HCCL_CMD_RECEIVE;
     ret = Heartbeat::GetInstance(0).CheckIsSameOp(opInfo, remoteopInfo, status);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    //覆盖场景:其他算子 不匹配
-    opInfo.opType =  HcclCMDType::HCCL_CMD_SCATTER;
+    // 覆盖场景:其他算子 不匹配
+    opInfo.opType = HcclCMDType::HCCL_CMD_SCATTER;
     remoteopInfo.opType = HcclCMDType::HCCL_CMD_REDUCE;
     ret = Heartbeat::GetInstance(0).CheckIsSameOp(opInfo, remoteopInfo, status);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    //覆盖场景:算子下发 数据类型不匹配
-    opInfo.opType =  HcclCMDType::HCCL_CMD_SEND;
+    // 覆盖场景:算子下发 数据类型不匹配
+    opInfo.opType = HcclCMDType::HCCL_CMD_SEND;
     remoteopInfo.opType = HcclCMDType::HCCL_CMD_RECEIVE;
-    opInfo.dataType=HcclDataType::HCCL_DATA_TYPE_FP16;
-    remoteopInfo.dataType=HcclDataType::HCCL_DATA_TYPE_FP32;
+    opInfo.dataType = HcclDataType::HCCL_DATA_TYPE_FP16;
+    remoteopInfo.dataType = HcclDataType::HCCL_DATA_TYPE_FP32;
     ret = Heartbeat::GetInstance(0).CheckIsSameOp(opInfo, remoteopInfo, status);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    //覆盖场景:算子下发 数据量不匹配
-    opInfo.opType =  HcclCMDType::HCCL_CMD_SCATTER;
+    // 覆盖场景:算子下发 数据量不匹配
+    opInfo.opType = HcclCMDType::HCCL_CMD_SCATTER;
     remoteopInfo.opType = HcclCMDType::HCCL_CMD_SCATTER;
-    opInfo.dataType=HcclDataType::HCCL_DATA_TYPE_FP16;
-    remoteopInfo.dataType=HcclDataType::HCCL_DATA_TYPE_FP16;
+    opInfo.dataType = HcclDataType::HCCL_DATA_TYPE_FP16;
+    remoteopInfo.dataType = HcclDataType::HCCL_DATA_TYPE_FP16;
     opInfo.count = 1;
-    remoteopInfo.count=2;
+    remoteopInfo.count = 2;
     ret = Heartbeat::GetInstance(0).CheckIsSameOp(opInfo, remoteopInfo, status);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    //覆盖场景:算子下发 匹配场景
-    opInfo.opType =  HcclCMDType::HCCL_CMD_SCATTER;
+    // 覆盖场景:算子下发 匹配场景
+    opInfo.opType = HcclCMDType::HCCL_CMD_SCATTER;
     remoteopInfo.opType = HcclCMDType::HCCL_CMD_SCATTER;
-    opInfo.dataType=HcclDataType::HCCL_DATA_TYPE_FP16;
-    remoteopInfo.dataType=HcclDataType::HCCL_DATA_TYPE_FP16;
+    opInfo.dataType = HcclDataType::HCCL_DATA_TYPE_FP16;
+    remoteopInfo.dataType = HcclDataType::HCCL_DATA_TYPE_FP16;
     opInfo.count = 1;
-    remoteopInfo.count=1;
+    remoteopInfo.count = 1;
     ret = Heartbeat::GetInstance(0).CheckIsSameOp(opInfo, remoteopInfo, status);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    //覆盖场景:算子下发 不匹配场景
-    opInfo.opType =  HcclCMDType::HCCL_CMD_SCATTER;
+    // 覆盖场景:算子下发 不匹配场景
+    opInfo.opType = HcclCMDType::HCCL_CMD_SCATTER;
     remoteopInfo.opType = HcclCMDType::HCCL_CMD_SCATTER;
-    opInfo.dataType=HcclDataType::HCCL_DATA_TYPE_FP16;
-    remoteopInfo.dataType=HcclDataType::HCCL_DATA_TYPE_FP32;
+    opInfo.dataType = HcclDataType::HCCL_DATA_TYPE_FP16;
+    remoteopInfo.dataType = HcclDataType::HCCL_DATA_TYPE_FP32;
     opInfo.count = 1;
     remoteopInfo.count = 1;
     opInfo.isValid = true;
@@ -1342,11 +1248,37 @@ TEST_F(HeartBeatTest, ut_SaveOpInfo)
     Heartbeat::GetInstance(0).GetOneOpInfo(identifier, remoteopInfo);
     Heartbeat::GetInstance(0).CheckRecvOpInfoList();
 
-    //覆盖场景:算子下发 匹配场景
-    remoteopInfo.dataType=HcclDataType::HCCL_DATA_TYPE_FP16;
+    // 覆盖场景:算子下发 匹配场景
+    remoteopInfo.dataType = HcclDataType::HCCL_DATA_TYPE_FP16;
     frame.opInfoTagQueue[0].opInfoList[0] = remoteopInfo;
     Heartbeat::GetInstance(0).SaveOpInfo(frame, uid_);
     Heartbeat::GetInstance(0).GetOneOpInfo(identifier, remoteopInfo);
     Heartbeat::GetInstance(0).CheckRecvOpInfoList();
     EXPECT_EQ(ret, HCCL_SUCCESS);
+}
+
+// 覆盖 GetSendOpInfoList 内 memcpy_s 拷贝 identifier 及返回值校验分支
+TEST_F(HeartBeatTest, ut_GetSendOpInfoList)
+{
+    setenv("HCCL_DFS_CONFIG", "inconsistent_check:on", 1);
+    (void)InitEnvParam();
+    // inconsistent_check 开关解析已下沉平台层 externalinput，需显式调用
+    (void)ParseDFSInconsistentCheckSwitch();
+
+    OpInfoDesc opInfo;
+    opInfo.isValid = true;
+    std::string tag = "ut_test_op";
+    Heartbeat& heartbeat = Heartbeat::GetInstance(0);
+    heartbeat.opInfoQueueForSend_.clear();
+    heartbeat.opInfoQueueForSend_.push_back(std::make_pair(tag, opInfo));
+
+    OpInfoTagQueueFrame frame;
+    memset_s(&frame, sizeof(frame), 0, sizeof(frame));
+    heartbeat.GetSendOpInfoList(frame);
+
+    EXPECT_STREQ(frame.opInfoTagQueue[0].identifier, tag.c_str());
+    EXPECT_EQ(frame.opInfoTagQueue[0].opInfoNum, 1U);
+
+    unsetenv("HCCL_DFS_CONFIG");
+    GlobalMockObject::verify();
 }

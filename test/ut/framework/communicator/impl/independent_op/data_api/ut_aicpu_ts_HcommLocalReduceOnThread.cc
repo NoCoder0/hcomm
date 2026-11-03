@@ -12,25 +12,22 @@
 
 using namespace hccl;
 
-class UtAicpuTsHcommLocalReduceOnThread : public UtAicpuTsBase
-{
+class UtAicpuTsHcommLocalReduceOnThread : public UtAicpuTsBase {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "UtAicpuTsHcommLocalReduceOnThread tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "UtAicpuTsHcommLocalReduceOnThread tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "UtAicpuTsHcommLocalReduceOnThread tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "UtAicpuTsHcommLocalReduceOnThread tests tear down." << std::endl; }
 
     virtual void SetUp() override
     {
         std::cout << "A Test case in UtAicpuTsHcommLocalReduceOnThread SetUp" << std::endl;
         UtAicpuTsBase::SetUp();
 
-        MOCKER_CPP(&Hccl::IAicpuTsThread::SdmaReduce, HcclResult (Hccl::IAicpuTsThread::*)(uint64_t, uint64_t, uint64_t, uint32_t, uint32_t) const).stubs().will(returnValue(HCCL_SUCCESS));
+        MOCKER_CPP(
+            &Hccl::IAicpuTsThread::SdmaReduce,
+            HcclResult(Hccl::IAicpuTsThread::*)(uint64_t, uint64_t, uint64_t, uint32_t, uint32_t) const)
+            .stubs()
+            .will(returnValue(HCCL_SUCCESS));
     }
 
     virtual void TearDown() override
@@ -39,8 +36,8 @@ protected:
         std::cout << "A Test case in UtAicpuTsHcommLocalReduceOnThread TearDown" << std::endl;
     }
 
-    void *dst = reinterpret_cast<void *>(0x2345);
-    void *src = reinterpret_cast<void *>(0x2345);
+    void* dst = reinterpret_cast<void*>(0x2345);
+    void* src = reinterpret_cast<void*>(0x2345);
     uint64_t count = 1;
     HcommDataType dataType = HCOMM_DATA_TYPE_FP16;
     HcommReduceOp reduceOp = HCOMM_REDUCE_SUM;
@@ -74,8 +71,8 @@ TEST_F(UtAicpuTsHcommLocalReduceOnThread, Ut_HcommLocalReduceOnThread_When_Src_I
 TEST_F(UtAicpuTsHcommLocalReduceOnThread, Ut_HcommLocalReduceOnThread_When_CountEquals4GB_Expect_ReturnIsHCCL_SUCCESS)
 {
     uint64_t count4GB = 0x100000000ULL;
-    void *largeDst = reinterpret_cast<void *>(0x100000);
-    void *largeSrc = reinterpret_cast<void *>(0x200000);
+    void* largeDst = reinterpret_cast<void*>(0x100000);
+    void* largeSrc = reinterpret_cast<void*>(0x200000);
 
     res = HcommLocalReduceOnThread(thread, largeDst, largeSrc, count4GB, dataType, reduceOp);
     EXPECT_EQ(res, HCCL_SUCCESS);
@@ -84,8 +81,8 @@ TEST_F(UtAicpuTsHcommLocalReduceOnThread, Ut_HcommLocalReduceOnThread_When_Count
 TEST_F(UtAicpuTsHcommLocalReduceOnThread, Ut_HcommLocalReduceOnThread_When_CountExceeds4GB_Expect_ReturnIsHCCL_SUCCESS)
 {
     uint64_t countExceeds4GB = 0x100000001ULL;
-    void *largeDst = reinterpret_cast<void *>(0x100000);
-    void *largeSrc = reinterpret_cast<void *>(0x200000);
+    void* largeDst = reinterpret_cast<void*>(0x100000);
+    void* largeSrc = reinterpret_cast<void*>(0x200000);
 
     res = HcommLocalReduceOnThread(thread, largeDst, largeSrc, countExceeds4GB, dataType, reduceOp);
     EXPECT_EQ(res, HCCL_SUCCESS);

@@ -32,7 +32,7 @@
 #include "topoinfo_ranktableParser_pub.h"
 
 #include "plugin_manager.h"
-#include "external/ge/ge_api_types.h" // ge对内options
+#include "external/ge/ge_api_types.h"  // ge对内options
 #include "framework/common/ge_types.h" // ge对外options
 #include "hccl/hcom.h"
 #include "hccl/hcom_executor.h"
@@ -57,28 +57,21 @@
 using namespace std;
 using namespace hccl;
 
-class HvdOpsKernelInfoStoreTest : public testing::Test
-{
+class HvdOpsKernelInfoStoreTest : public testing::Test {
 protected:
     virtual void SetUp()
     {
         s32 portNum = 7;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
         std::cout << "A Test SetUP" << std::endl;
     }
-    virtual void TearDown()
-    {
-        std::cout << "A Test TearDown" << std::endl;
-    }
+    virtual void TearDown() { std::cout << "A Test TearDown" << std::endl; }
 };
 
 class NodeTest : public ge::Node {
 public:
-    NodeTest(){;};
-    ~NodeTest(){;};    
+    NodeTest() { ; };
+    ~NodeTest() { ; };
 };
 
 TEST_F(HvdOpsKernelInfoStoreTest, ut_GetSupportedOP)
@@ -108,18 +101,18 @@ TEST_F(HvdOpsKernelInfoStoreTest, ut_HCCLOpsKernel)
     task.id = 1;
     task.type = RT_MODEL_TASK_HCCL;
     task.stream = stream;
-    task.privateDef = (void *)&privateDefBuf;
+    task.privateDef = (void*)&privateDefBuf;
     task.privateDefLen = sizeof(HvdKernelInfoPrivateDef);
     task.kernelHcclInfo.resize(1);
-    task.kernelHcclInfo[0].count=100;
-    task.kernelHcclInfo[0].input_name="tensor1";
-    task.kernelHcclInfo[0].dataType=HCCL_DATA_TYPE_INT8;
-    task.kernelHcclInfo[0].hccl_type=HVD_KERNEL_OP_TYPE_ALLREDUCE;
-    task.kernelHcclInfo[0].inputDataAddr=sendbuf;
-    task.kernelHcclInfo[0].outputDataAddr=recv;
-    task.kernelHcclInfo[0].opType=HCCL_REDUCE_SUM;
-    task.kernelHcclInfo[0].rootId=0;
-    task.kernelHcclInfo[0].hcclQosCfg=INVALID_QOSCFG;
+    task.kernelHcclInfo[0].count = 100;
+    task.kernelHcclInfo[0].input_name = "tensor1";
+    task.kernelHcclInfo[0].dataType = HCCL_DATA_TYPE_INT8;
+    task.kernelHcclInfo[0].hccl_type = HVD_KERNEL_OP_TYPE_ALLREDUCE;
+    task.kernelHcclInfo[0].inputDataAddr = sendbuf;
+    task.kernelHcclInfo[0].outputDataAddr = recv;
+    task.kernelHcclInfo[0].opType = HCCL_REDUCE_SUM;
+    task.kernelHcclInfo[0].rootId = 0;
+    task.kernelHcclInfo[0].hcclQosCfg = INVALID_QOSCFG;
     task.kernelHcclInfo[0].dims.resize(1);
     HcclResult ret = InfoStore.HCCLOpsKernel(task, "aaaaaaa");
     EXPECT_EQ(ret, HCCL_E_PARA);
@@ -138,30 +131,30 @@ TEST_F(HvdOpsKernelInfoStoreTest, ut_HvdWaitOpKernel)
     sal_memset(recv, 10 * sizeof(float), 0, 10 * sizeof(float));
     rtStream_t stream;
     rtError_t rt_ret = aclrtCreateStream(&stream);
-    EXPECT_EQ(rt_ret, RT_ERROR_NONE); 
+    EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     ge::GETaskInfo task;
     HvdKernelInfoPrivateDef privateDefBuf = {0, HCCL_DATA_TYPE_INT8};
     task.id = 1;
     task.type = RT_MODEL_TASK_HCCL;
     task.stream = stream;
-    task.privateDef = (void *)&privateDefBuf;
+    task.privateDef = (void*)&privateDefBuf;
     task.privateDefLen = sizeof(HvdKernelInfoPrivateDef);
     task.kernelHcclInfo.resize(1);
-    task.kernelHcclInfo[0].count=100;
-    task.kernelHcclInfo[0].input_name="tensor1";
-    task.kernelHcclInfo[0].dataType=HCCL_DATA_TYPE_INT8;
-    task.kernelHcclInfo[0].hccl_type=HVD_KERNEL_OP_TYPE_WAIT;
-    task.kernelHcclInfo[0].inputDataAddr=sendbuf;
-    task.kernelHcclInfo[0].outputDataAddr=recv;
-    task.kernelHcclInfo[0].opType=HCCL_REDUCE_SUM;
-    task.kernelHcclInfo[0].rootId=0;
-    task.kernelHcclInfo[0].hcclQosCfg=INVALID_QOSCFG;
+    task.kernelHcclInfo[0].count = 100;
+    task.kernelHcclInfo[0].input_name = "tensor1";
+    task.kernelHcclInfo[0].dataType = HCCL_DATA_TYPE_INT8;
+    task.kernelHcclInfo[0].hccl_type = HVD_KERNEL_OP_TYPE_WAIT;
+    task.kernelHcclInfo[0].inputDataAddr = sendbuf;
+    task.kernelHcclInfo[0].outputDataAddr = recv;
+    task.kernelHcclInfo[0].opType = HCCL_REDUCE_SUM;
+    task.kernelHcclInfo[0].rootId = 0;
+    task.kernelHcclInfo[0].hcclQosCfg = INVALID_QOSCFG;
     task.kernelHcclInfo[0].dims.resize(1);
 
     MOCKER_CPP(&HCCLOpsKernelInfoStore::GetStreamMainFromTaskInfo)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = InfoStore.HvdWaitOpKernel(task, "HorovodWait");
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -180,30 +173,27 @@ TEST_F(HvdOpsKernelInfoStoreTest, ut_LoadTask)
     sal_memset(recv, 10 * sizeof(float), 0, 10 * sizeof(float));
     rtStream_t stream;
     rtError_t rt_ret = aclrtCreateStream(&stream);
-    EXPECT_EQ(rt_ret, RT_ERROR_NONE); 
+    EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     ge::GETaskInfo task;
     HvdKernelInfoPrivateDef privateDefBuf = {0, HCCL_DATA_TYPE_INT8};
     task.id = 1;
     task.type = RT_MODEL_TASK_HCCL;
     task.stream = stream;
-    task.privateDef = (void *)&privateDefBuf;
+    task.privateDef = (void*)&privateDefBuf;
     task.privateDefLen = sizeof(HvdKernelInfoPrivateDef);
     task.kernelHcclInfo.resize(1);
-    task.kernelHcclInfo[0].count=100;
-    task.kernelHcclInfo[0].input_name="tensor1";
-    task.kernelHcclInfo[0].dataType=HCCL_DATA_TYPE_INT8;
-    task.kernelHcclInfo[0].hccl_type=HVD_KERNEL_OP_TYPE_ALLREDUCE;
-    task.kernelHcclInfo[0].inputDataAddr=sendbuf;
-    task.kernelHcclInfo[0].outputDataAddr=recv;
-    task.kernelHcclInfo[0].opType=HCCL_REDUCE_SUM;
-    task.kernelHcclInfo[0].rootId=0;
-    task.kernelHcclInfo[0].hcclQosCfg=INVALID_QOSCFG;
+    task.kernelHcclInfo[0].count = 100;
+    task.kernelHcclInfo[0].input_name = "tensor1";
+    task.kernelHcclInfo[0].dataType = HCCL_DATA_TYPE_INT8;
+    task.kernelHcclInfo[0].hccl_type = HVD_KERNEL_OP_TYPE_ALLREDUCE;
+    task.kernelHcclInfo[0].inputDataAddr = sendbuf;
+    task.kernelHcclInfo[0].outputDataAddr = recv;
+    task.kernelHcclInfo[0].opType = HCCL_REDUCE_SUM;
+    task.kernelHcclInfo[0].rootId = 0;
+    task.kernelHcclInfo[0].hcclQosCfg = INVALID_QOSCFG;
     task.kernelHcclInfo[0].dims.resize(1);
 
-    MOCKER_CPP(&HvdOpsKernelInfoStore::HCCLOpsKernel)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HvdOpsKernelInfoStore::HCCLOpsKernel).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ge::Status ret = InfoStore.LoadTask(task);
     EXPECT_EQ(ret, ge::SUCCESS);
     rt_ret = aclrtDestroyStream(stream);
@@ -221,24 +211,24 @@ TEST_F(HvdOpsKernelInfoStoreTest, ut_UnloadTask)
     sal_memset(recv, 10 * sizeof(float), 0, 10 * sizeof(float));
     rtStream_t stream;
     rtError_t rt_ret = aclrtCreateStream(&stream);
-    EXPECT_EQ(rt_ret, RT_ERROR_NONE); 
+    EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     ge::GETaskInfo task;
     HvdKernelInfoPrivateDef privateDefBuf = {0, HCCL_DATA_TYPE_INT8};
     task.id = 1;
     task.type = RT_MODEL_TASK_HCCL;
     task.stream = stream;
-    task.privateDef = (void *)&privateDefBuf;
+    task.privateDef = (void*)&privateDefBuf;
     task.privateDefLen = sizeof(HvdKernelInfoPrivateDef);
     task.kernelHcclInfo.resize(1);
-    task.kernelHcclInfo[0].count=100;
-    task.kernelHcclInfo[0].input_name="tensor1";
-    task.kernelHcclInfo[0].dataType=HCCL_DATA_TYPE_INT8;
-    task.kernelHcclInfo[0].hccl_type=HVD_KERNEL_OP_TYPE_ALLREDUCE;
-    task.kernelHcclInfo[0].inputDataAddr=sendbuf;
-    task.kernelHcclInfo[0].outputDataAddr=recv;
-    task.kernelHcclInfo[0].opType=HCCL_REDUCE_SUM;
-    task.kernelHcclInfo[0].rootId=0;
-    task.kernelHcclInfo[0].hcclQosCfg=INVALID_QOSCFG;
+    task.kernelHcclInfo[0].count = 100;
+    task.kernelHcclInfo[0].input_name = "tensor1";
+    task.kernelHcclInfo[0].dataType = HCCL_DATA_TYPE_INT8;
+    task.kernelHcclInfo[0].hccl_type = HVD_KERNEL_OP_TYPE_ALLREDUCE;
+    task.kernelHcclInfo[0].inputDataAddr = sendbuf;
+    task.kernelHcclInfo[0].outputDataAddr = recv;
+    task.kernelHcclInfo[0].opType = HCCL_REDUCE_SUM;
+    task.kernelHcclInfo[0].rootId = 0;
+    task.kernelHcclInfo[0].hcclQosCfg = INVALID_QOSCFG;
     task.kernelHcclInfo[0].dims.resize(1);
 
     ge::Status ret = InfoStore.UnloadTask(task);
@@ -258,24 +248,24 @@ TEST_F(HvdOpsKernelInfoStoreTest, ut_GetEvent)
     sal_memset(recv, 10 * sizeof(float), 0, 10 * sizeof(float));
     rtStream_t stream;
     rtError_t rt_ret = aclrtCreateStream(&stream);
-    EXPECT_EQ(rt_ret, RT_ERROR_NONE); 
+    EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     ge::GETaskInfo task;
     HvdKernelInfoPrivateDef privateDefBuf = {0, HCCL_DATA_TYPE_INT8};
     task.id = 1;
     task.type = RT_MODEL_TASK_HCCL;
     task.stream = stream;
-    task.privateDef = (void *)&privateDefBuf;
+    task.privateDef = (void*)&privateDefBuf;
     task.privateDefLen = sizeof(HvdKernelInfoPrivateDef);
     task.kernelHcclInfo.resize(1);
-    task.kernelHcclInfo[0].count=100;
-    task.kernelHcclInfo[0].input_name="tensor1";
-    task.kernelHcclInfo[0].dataType=HCCL_DATA_TYPE_INT8;
-    task.kernelHcclInfo[0].hccl_type=HVD_KERNEL_OP_TYPE_ALLREDUCE;
-    task.kernelHcclInfo[0].inputDataAddr=sendbuf;
-    task.kernelHcclInfo[0].outputDataAddr=recv;
-    task.kernelHcclInfo[0].opType=HCCL_REDUCE_SUM;
-    task.kernelHcclInfo[0].rootId=0;
-    task.kernelHcclInfo[0].hcclQosCfg=INVALID_QOSCFG;
+    task.kernelHcclInfo[0].count = 100;
+    task.kernelHcclInfo[0].input_name = "tensor1";
+    task.kernelHcclInfo[0].dataType = HCCL_DATA_TYPE_INT8;
+    task.kernelHcclInfo[0].hccl_type = HVD_KERNEL_OP_TYPE_ALLREDUCE;
+    task.kernelHcclInfo[0].inputDataAddr = sendbuf;
+    task.kernelHcclInfo[0].outputDataAddr = recv;
+    task.kernelHcclInfo[0].opType = HCCL_REDUCE_SUM;
+    task.kernelHcclInfo[0].rootId = 0;
+    task.kernelHcclInfo[0].hcclQosCfg = INVALID_QOSCFG;
     task.kernelHcclInfo[0].dims.resize(1);
 
     rtEvent_t newEvent;
@@ -303,24 +293,24 @@ TEST_F(HvdOpsKernelInfoStoreTest, ut_GetDataTypeFromTaskInfo)
     sal_memset(recv, 10 * sizeof(float), 0, 10 * sizeof(float));
     rtStream_t stream;
     rtError_t rt_ret = aclrtCreateStream(&stream);
-    EXPECT_EQ(rt_ret, RT_ERROR_NONE); 
+    EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     ge::GETaskInfo task;
     HvdKernelInfoPrivateDef privateDefBuf = {0, HCCL_DATA_TYPE_INT8};
     task.id = 1;
     task.type = RT_MODEL_TASK_HCCL;
     task.stream = stream;
-    task.privateDef = (void *)&privateDefBuf;
+    task.privateDef = (void*)&privateDefBuf;
     task.privateDefLen = sizeof(HvdKernelInfoPrivateDef);
     task.kernelHcclInfo.resize(1);
-    task.kernelHcclInfo[0].count=100;
-    task.kernelHcclInfo[0].input_name="tensor1";
-    task.kernelHcclInfo[0].dataType=HCCL_DATA_TYPE_INT8;
-    task.kernelHcclInfo[0].hccl_type=HVD_KERNEL_OP_TYPE_ALLREDUCE;
-    task.kernelHcclInfo[0].inputDataAddr=sendbuf;
-    task.kernelHcclInfo[0].outputDataAddr=recv;
-    task.kernelHcclInfo[0].opType=HCCL_REDUCE_SUM;
-    task.kernelHcclInfo[0].rootId=0;
-    task.kernelHcclInfo[0].hcclQosCfg=INVALID_QOSCFG;
+    task.kernelHcclInfo[0].count = 100;
+    task.kernelHcclInfo[0].input_name = "tensor1";
+    task.kernelHcclInfo[0].dataType = HCCL_DATA_TYPE_INT8;
+    task.kernelHcclInfo[0].hccl_type = HVD_KERNEL_OP_TYPE_ALLREDUCE;
+    task.kernelHcclInfo[0].inputDataAddr = sendbuf;
+    task.kernelHcclInfo[0].outputDataAddr = recv;
+    task.kernelHcclInfo[0].opType = HCCL_REDUCE_SUM;
+    task.kernelHcclInfo[0].rootId = 0;
+    task.kernelHcclInfo[0].hcclQosCfg = INVALID_QOSCFG;
     task.kernelHcclInfo[0].dims.resize(1);
 
     HcclDataType DataType;
@@ -332,16 +322,17 @@ TEST_F(HvdOpsKernelInfoStoreTest, ut_GetDataTypeFromTaskInfo)
     sal_free(recv);
 }
 
-
-HcclResult fun3(void *data) {
-    unsigned long long *val = (unsigned long long *)data;
+HcclResult fun3(void* data)
+{
+    unsigned long long* val = (unsigned long long*)data;
     HCCL_INFO("In function fun1, val is %lld", *val);
     return HCCL_SUCCESS;
 }
 
-HcclResult fun4(void *data) {
-    unsigned long long *val = (unsigned long long *)data;
-    HCCL_INFO("In function fun2, val is %lld", *val*2);
+HcclResult fun4(void* data)
+{
+    unsigned long long* val = (unsigned long long*)data;
+    HCCL_INFO("In function fun2, val is %lld", *val * 2);
     return HCCL_SUCCESS;
 }
 
@@ -355,41 +346,35 @@ TEST_F(HvdOpsKernelInfoStoreTest, ut_HvdBroadcastOpKernel)
     sal_memset(recv, 10 * sizeof(float), 0, 10 * sizeof(float));
     rtStream_t stream;
     rtError_t rt_ret = aclrtCreateStream(&stream);
-    EXPECT_EQ(rt_ret, RT_ERROR_NONE); 
+    EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     HvdKernelInfoPrivateDef privateDefBuf = {0, HCCL_DATA_TYPE_INT8};
     task.id = 1;
     task.type = RT_MODEL_TASK_HCCL;
     task.stream = stream;
-    task.privateDef = (void *)&privateDefBuf;
+    task.privateDef = (void*)&privateDefBuf;
     task.privateDefLen = sizeof(HvdKernelInfoPrivateDef);
     task.kernelHcclInfo.resize(1);
-    task.kernelHcclInfo[0].count=100;
-    task.kernelHcclInfo[0].input_name="tensor1";
-    task.kernelHcclInfo[0].dataType=HCCL_DATA_TYPE_INT8;
-    task.kernelHcclInfo[0].hccl_type=HVD_KERNEL_OP_TYPE_BROADCAST;
-    task.kernelHcclInfo[0].inputDataAddr=sendbuf;
-    task.kernelHcclInfo[0].outputDataAddr=recv;
-    task.kernelHcclInfo[0].opType=HCCL_REDUCE_SUM;
-    task.kernelHcclInfo[0].rootId=0;
-    task.kernelHcclInfo[0].hcclQosCfg=INVALID_QOSCFG;
+    task.kernelHcclInfo[0].count = 100;
+    task.kernelHcclInfo[0].input_name = "tensor1";
+    task.kernelHcclInfo[0].dataType = HCCL_DATA_TYPE_INT8;
+    task.kernelHcclInfo[0].hccl_type = HVD_KERNEL_OP_TYPE_BROADCAST;
+    task.kernelHcclInfo[0].inputDataAddr = sendbuf;
+    task.kernelHcclInfo[0].outputDataAddr = recv;
+    task.kernelHcclInfo[0].opType = HCCL_REDUCE_SUM;
+    task.kernelHcclInfo[0].rootId = 0;
+    task.kernelHcclInfo[0].hcclQosCfg = INVALID_QOSCFG;
     task.kernelHcclInfo[0].dims.resize(1);
-    
-    MOCKER(aclrtProcessReport)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(ACL_SUCCESS));
-    MOCKER(aclrtLaunchCallback)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(ACL_SUCCESS));
+
+    MOCKER(aclrtProcessReport).stubs().with(mockcpp::any()).will(returnValue(ACL_SUCCESS));
+    MOCKER(aclrtLaunchCallback).stubs().with(mockcpp::any()).will(returnValue(ACL_SUCCESS));
     MOCKER_CPP(&HCCLOpsKernelInfoStore::GetStreamMainFromTaskInfo)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
     HcclResult ret = InfoStore.HvdBroadcastOpKernel(task, "HorovodBroadcast");
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    void *stream1;
-    void *stream2;
+    void* stream1;
+    void* stream2;
     g_hvdAdapterGlobal.HvdAdapterInit(stream1, 0);
     g_hvdAdapterGlobal.HvdAdapterInit(stream2, 1);
     HcomRegHvdCallback(fun3);
@@ -413,41 +398,35 @@ TEST_F(HvdOpsKernelInfoStoreTest, ut_HvdAllReduceOpKernel)
     sal_memset(recv, 10 * sizeof(float), 0, 10 * sizeof(float));
     rtStream_t stream;
     rtError_t rt_ret = aclrtCreateStream(&stream);
-    EXPECT_EQ(rt_ret, RT_ERROR_NONE); 
+    EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     ge::GETaskInfo task;
     HvdKernelInfoPrivateDef privateDefBuf = {0, HCCL_DATA_TYPE_INT8};
     task.id = 1;
     task.type = RT_MODEL_TASK_HCCL;
     task.stream = stream;
-    task.privateDef = (void *)&privateDefBuf;
+    task.privateDef = (void*)&privateDefBuf;
     task.privateDefLen = sizeof(HvdKernelInfoPrivateDef);
     task.kernelHcclInfo.resize(1);
-    task.kernelHcclInfo[0].count=100;
-    task.kernelHcclInfo[0].input_name="tensor1";
-    task.kernelHcclInfo[0].dataType=HCCL_DATA_TYPE_INT8;
-    task.kernelHcclInfo[0].hccl_type=HVD_KERNEL_OP_TYPE_ALLREDUCE;
-    task.kernelHcclInfo[0].inputDataAddr=sendbuf;
-    task.kernelHcclInfo[0].outputDataAddr=recv;
-    task.kernelHcclInfo[0].opType=HCCL_REDUCE_SUM;
-    task.kernelHcclInfo[0].rootId=0;
-    task.kernelHcclInfo[0].hcclQosCfg=INVALID_QOSCFG;
+    task.kernelHcclInfo[0].count = 100;
+    task.kernelHcclInfo[0].input_name = "tensor1";
+    task.kernelHcclInfo[0].dataType = HCCL_DATA_TYPE_INT8;
+    task.kernelHcclInfo[0].hccl_type = HVD_KERNEL_OP_TYPE_ALLREDUCE;
+    task.kernelHcclInfo[0].inputDataAddr = sendbuf;
+    task.kernelHcclInfo[0].outputDataAddr = recv;
+    task.kernelHcclInfo[0].opType = HCCL_REDUCE_SUM;
+    task.kernelHcclInfo[0].rootId = 0;
+    task.kernelHcclInfo[0].hcclQosCfg = INVALID_QOSCFG;
     task.kernelHcclInfo[0].dims.resize(1);
-    MOCKER(aclrtProcessReport)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(ACL_SUCCESS));
-    MOCKER(aclrtLaunchCallback)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(ACL_SUCCESS));
+    MOCKER(aclrtProcessReport).stubs().with(mockcpp::any()).will(returnValue(ACL_SUCCESS));
+    MOCKER(aclrtLaunchCallback).stubs().with(mockcpp::any()).will(returnValue(ACL_SUCCESS));
     MOCKER_CPP(&HCCLOpsKernelInfoStore::GetStreamMainFromTaskInfo)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
     HcclResult ret = InfoStore.HvdAllReduceOpKernel(task, "HorovodAllreduce");
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    void *stream1;
-    void *stream2;
+    void* stream1;
+    void* stream2;
     g_hvdAdapterGlobal.HvdAdapterInit(stream1, 0);
     g_hvdAdapterGlobal.HvdAdapterInit(stream2, 1);
     HcomRegHvdCallback(fun3);
@@ -471,42 +450,36 @@ TEST_F(HvdOpsKernelInfoStoreTest, ut_HvdAllGatherOpKernel)
     sal_memset(recv, 10 * sizeof(float), 0, 10 * sizeof(float));
     rtStream_t stream;
     rtError_t rt_ret = aclrtCreateStream(&stream);
-    EXPECT_EQ(rt_ret, RT_ERROR_NONE); 
+    EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     ge::GETaskInfo task;
     HvdKernelInfoPrivateDef privateDefBuf = {0, HCCL_DATA_TYPE_INT8};
     task.id = 1;
     task.type = RT_MODEL_TASK_HCCL;
     task.stream = stream;
-    task.privateDef = (void *)&privateDefBuf;
+    task.privateDef = (void*)&privateDefBuf;
     task.privateDefLen = sizeof(HvdKernelInfoPrivateDef);
     task.kernelHcclInfo.resize(1);
-    task.kernelHcclInfo[0].count=100;
-    task.kernelHcclInfo[0].input_name="tensor1";
-    task.kernelHcclInfo[0].dataType=HCCL_DATA_TYPE_INT8;
-    task.kernelHcclInfo[0].hccl_type=HVD_KERNEL_OP_TYPE_ALLGATHER;
-    task.kernelHcclInfo[0].inputDataAddr=sendbuf;
-    task.kernelHcclInfo[0].outputDataAddr=recv;
-    task.kernelHcclInfo[0].opType=HCCL_REDUCE_SUM;
-    task.kernelHcclInfo[0].rootId=0;
-    task.kernelHcclInfo[0].hcclQosCfg=INVALID_QOSCFG;
+    task.kernelHcclInfo[0].count = 100;
+    task.kernelHcclInfo[0].input_name = "tensor1";
+    task.kernelHcclInfo[0].dataType = HCCL_DATA_TYPE_INT8;
+    task.kernelHcclInfo[0].hccl_type = HVD_KERNEL_OP_TYPE_ALLGATHER;
+    task.kernelHcclInfo[0].inputDataAddr = sendbuf;
+    task.kernelHcclInfo[0].outputDataAddr = recv;
+    task.kernelHcclInfo[0].opType = HCCL_REDUCE_SUM;
+    task.kernelHcclInfo[0].rootId = 0;
+    task.kernelHcclInfo[0].hcclQosCfg = INVALID_QOSCFG;
     task.kernelHcclInfo[0].dims.resize(1);
-    MOCKER(aclrtProcessReport)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(ACL_SUCCESS));
-    MOCKER(aclrtLaunchCallback)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(ACL_SUCCESS));
+    MOCKER(aclrtProcessReport).stubs().with(mockcpp::any()).will(returnValue(ACL_SUCCESS));
+    MOCKER(aclrtLaunchCallback).stubs().with(mockcpp::any()).will(returnValue(ACL_SUCCESS));
     MOCKER_CPP(&HCCLOpsKernelInfoStore::GetStreamMainFromTaskInfo)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = InfoStore.HvdAllGatherOpKernel(task, "HorovodAllgather");
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    void *stream1;
-    void *stream2;
+    void* stream1;
+    void* stream2;
     g_hvdAdapterGlobal.HvdAdapterInit(stream1, 0);
     g_hvdAdapterGlobal.HvdAdapterInit(stream2, 1);
     HcomRegHvdCallback(fun3);

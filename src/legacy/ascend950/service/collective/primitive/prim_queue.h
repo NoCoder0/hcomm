@@ -26,7 +26,7 @@ public:
     void Append(unique_ptr<Primitive> prim) override;
 };
 
-void PrintPrimQueue(const PrimQueue &queue);
+void PrintPrimQueue(const PrimQueue& queue);
 } // namespace Hccl
 
 #endif

@@ -8,6 +8,7 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
+#include "config_log.h"
 #include <string.h>
 #include "securec.h"
 #include "ra_hdc.h"
@@ -28,13 +29,12 @@ HCCP_ATTRI_VISI_DEF int RaTlvInit(struct TlvInitInfo *initInfo, unsigned int *bu
     int ret = 0;
 
     CHK_PRT_RETURN(initInfo == NULL || bufferSize == NULL || tlvHandle == NULL,
-        hccp_err("[init][ra_tlv]init_info or buffer_size or tlv_handle is NULL"),
-            ConverReturnCode(HCCP_INIT, -EINVAL));
+        hccp_err("[init][ra_tlv]init_info or buffer_size or tlv_handle is NULL"), ConverReturnCode(HCCP_INIT, -EINVAL));
 
-    CHK_PRT_RETURN(initInfo->nicPosition != NETWORK_OFFLINE, hccp_err("[init][ra_tlv]mode(%u) not support",
-        initInfo->nicPosition), ConverReturnCode(HCCP_INIT, -EINVAL));
+    CHK_PRT_RETURN(initInfo->nicPosition != NETWORK_OFFLINE,
+        hccp_err("[init][ra_tlv]mode(%u) not support", initInfo->nicPosition), ConverReturnCode(HCCP_INIT, -EINVAL));
     CHK_PRT_RETURN(initInfo->phyId >= RA_MAX_PHY_ID_NUM,
-        hccp_err("[init][ra_tlv]phy_id(%u) must smaller than %u", initInfo->phyId, RA_MAX_PHY_ID_NUM),
+        hccp_err("[init][ra_tlv]phy_id(%u) must be smaller than %u", initInfo->phyId, RA_MAX_PHY_ID_NUM),
         ConverReturnCode(HCCP_INIT, -EINVAL));
 
     tlvHandleTmp = calloc(1, sizeof(struct RaTlvHandle));
@@ -61,7 +61,7 @@ HCCP_ATTRI_VISI_DEF int RaTlvInit(struct TlvInitInfo *initInfo, unsigned int *bu
 
     ret = pthread_mutex_init(&tlvHandleTmp->mutex, NULL);
     if (ret != 0) {
-        hccp_err("[init][ra_tlv]init mutext failed, ret(%d), phyId(%u)", ret, initInfo->phyId);
+        hccp_err("[init][ra_tlv]init mutex failed, ret(%d), phyId(%u)", ret, initInfo->phyId);
         goto ra_tlv_init_err;
     }
 
@@ -107,7 +107,8 @@ ra_tlv_deinit_fail:
     return ConverReturnCode(HCCP_INIT, ret);
 }
 
-HCCP_ATTRI_VISI_DEF int RaTlvRequest(void *tlvHandle, unsigned int moduleType, struct TlvMsg *sendMsg, struct TlvMsg *recvMsg)
+HCCP_ATTRI_VISI_DEF int RaTlvRequest(void *tlvHandle, unsigned int moduleType, struct TlvMsg *sendMsg,
+    struct TlvMsg *recvMsg)
 {
     struct RaTlvHandle *tlvHandleTmp = NULL;
     int ret = 0;
@@ -116,24 +117,25 @@ HCCP_ATTRI_VISI_DEF int RaTlvRequest(void *tlvHandle, unsigned int moduleType, s
         hccp_err("[request][ra_tlv]tlv_handle or send_msg or recv_msg is NULL"), ConverReturnCode(OTHERS, -EINVAL));
 
     CHK_PRT_RETURN(moduleType > TLV_MODULE_TYPE_MAX,
-        hccp_err("[request][ra_tlv]module_type(%u) invalid, must smaller than (%u)",
-        moduleType, TLV_MODULE_TYPE_MAX), -EINVAL);
+        hccp_err("[request][ra_tlv]module_type(%u) invalid, must be smaller than (%u)", moduleType,
+            TLV_MODULE_TYPE_MAX),
+        -EINVAL);
 
     tlvHandleTmp = (struct RaTlvHandle *)tlvHandle;
     CHK_PRT_RETURN(sendMsg->length > tlvHandleTmp->bufferSize,
-        hccp_err("[request][ra_tlv]send length(%u) out of range(%u)",
-        sendMsg->length, tlvHandleTmp->bufferSize), ConverReturnCode(OTHERS, -EINVAL));
-    CHK_PRT_RETURN(tlvHandleTmp->tlvOps->raTlvRequest == NULL,
-        hccp_err("[request][ra_tlv]ra_tlv_request is NULL"), ConverReturnCode(OTHERS, -EINVAL));
+        hccp_err("[request][ra_tlv]send length(%u) out of range(%u)", sendMsg->length, tlvHandleTmp->bufferSize),
+        ConverReturnCode(OTHERS, -EINVAL));
+    CHK_PRT_RETURN(tlvHandleTmp->tlvOps->raTlvRequest == NULL, hccp_err("[request][ra_tlv]ra_tlv_request is NULL"),
+        ConverReturnCode(OTHERS, -EINVAL));
 
     RA_PTHREAD_MUTEX_LOCK(&tlvHandleTmp->mutex);
     ret = tlvHandleTmp->tlvOps->raTlvRequest(tlvHandleTmp, moduleType, sendMsg, recvMsg);
     if (ret == -EUSERS || ret == -ENOTSUPP) {
-        hccp_warn("[request][ra_tlv]ra_tlv_request unsuccessful, ret(%d), phyId(%u) sendType(%u)",
-            ret, tlvHandleTmp->initInfo.phyId, sendMsg->type);
+        hccp_warn_others("[request][ra_tlv]ra_tlv_request unsuccessful, ret(%d), phyId(%u) sendType(%u)", ret,
+            tlvHandleTmp->initInfo.phyId, sendMsg->type);
     } else if (ret != 0) {
-        hccp_err("[request][ra_tlv]ra_tlv_request failed, ret(%d), phyId(%u) sendType(%u)",
-            ret, tlvHandleTmp->initInfo.phyId, sendMsg->type);
+        hccp_err("[request][ra_tlv]ra_tlv_request failed, ret(%d), phyId(%u) sendType(%u)", ret,
+            tlvHandleTmp->initInfo.phyId, sendMsg->type);
     }
     RA_PTHREAD_MUTEX_UNLOCK(&tlvHandleTmp->mutex);
 

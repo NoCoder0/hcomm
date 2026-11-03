@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #include "net_vo_ip_addr.h"
 #include "v_stringlib.h"
 
@@ -21,11 +20,10 @@ char *NetIpAddrGetStr(uint32_t ipAddr, uint8_t *buf, int32_t bufLen)
         return "__NetIpAddrGetStrArgNg";
     }
 
-    char *str = VOS_IpAddrToStrEx(ipAddr, (char*)buf, bufLen);
+    char *str = VOS_IpAddrToStrEx(ipAddr, (char *)buf, bufLen);
     return (str != VOS_NULL) ? str : "-";
 }
 
 #ifdef __cplusplus
 }
 #endif
-

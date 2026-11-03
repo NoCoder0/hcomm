@@ -36,8 +36,8 @@ BkfPuberConnMng *BkfPuberConnDataInit(BkfPuberInitArg *arg, BkfPuberTableTypeMng
     connMng->log = arg->log;
 
     connMng->tableTypeMng = tableTypeMng;
-    VOS_AVLL_INIT_TREE(connMng->connSet, (AVLL_COMPARE)BkfCmpPtrAddr,
-                       BKF_OFFSET(BkfPuberConn, connId), BKF_OFFSET(BkfPuberConn, avlNode));
+    VOS_AVLL_INIT_TREE(connMng->connSet, (AVLL_COMPARE)BkfCmpPtrAddr, BKF_OFFSET(BkfPuberConn, connId),
+        BKF_OFFSET(BkfPuberConn, avlNode));
     return connMng;
 }
 
@@ -62,8 +62,7 @@ STATIC void BkfPuberConnAddProcError(BkfPuberConnMng *connMng, BkfPuberConn *con
 }
 
 BkfPuberConn *BkfPuberConnAdd(BkfPuberConnMng *connMng, BkfChSerConnId *connId,
-                               F_BKF_PUBER_SESS_TRIG_SCHED_SELF trigSchedSess,
-                               F_BKF_PUBER_SESS_TRIG_SLOW_SCHED_SELF trigSlowSchedSess)
+    F_BKF_PUBER_SESS_TRIG_SCHED_SELF trigSchedSess, F_BKF_PUBER_SESS_TRIG_SLOW_SCHED_SELF trigSlowSchedSess)
 {
     uint32_t len = sizeof(BkfPuberConn);
     BkfPuberConn *conn = BKF_MALLOC(connMng->argInit->memMng, len);
@@ -209,4 +208,3 @@ void BkfPuberConnStopTmr(BkfPuberConn *conn)
 #ifdef __cplusplus
 }
 #endif
-

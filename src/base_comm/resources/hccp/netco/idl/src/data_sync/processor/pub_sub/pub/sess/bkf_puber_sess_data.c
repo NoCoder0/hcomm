@@ -36,8 +36,8 @@ STATIC int32_t BkfPuberSessKeyCmp(BkfPuberSessKey *key1Input, BkfPuberSessKey *k
 }
 
 BkfPuberSessMng *BkfPuberSessDataInit(BkfPuberInitArg *arg, BkfPuberTableTypeMng *tableTypeMng,
-                                       F_BKF_PUBER_SESS_TRIG_SCHED_SELF trigSchedSess,
-                                       F_BKF_PUBER_SESS_TRIG_SLOW_SCHED_SELF trigSlowSchedSess, void *cookie)
+    F_BKF_PUBER_SESS_TRIG_SCHED_SELF trigSchedSess, F_BKF_PUBER_SESS_TRIG_SLOW_SCHED_SELF trigSlowSchedSess,
+    void *cookie)
 {
     uint32_t len = sizeof(BkfPuberSessMng);
     BkfPuberSessMng *sessMng = BKF_MALLOC(arg->memMng, len);
@@ -58,8 +58,8 @@ BkfPuberSessMng *BkfPuberSessDataInit(BkfPuberInitArg *arg, BkfPuberTableTypeMng
     sessMng->trigSchedSelf = trigSchedSess;
     sessMng->trigSlowSchedSelf = trigSlowSchedSess;
     sessMng->cookieInit = cookie;
-    VOS_AVLL_INIT_TREE(sessMng->sessSet, (AVLL_COMPARE)BkfPuberSessKeyCmp,
-                       BKF_OFFSET(BkfPuberSess, key), BKF_OFFSET(BkfPuberSess, avlNode));
+    VOS_AVLL_INIT_TREE(sessMng->sessSet, (AVLL_COMPARE)BkfPuberSessKeyCmp, BKF_OFFSET(BkfPuberSess, key),
+        BKF_OFFSET(BkfPuberSess, avlNode));
 
     uint32_t i;
     for (i = 0; i < BKF_GET_ARY_COUNT(sessMng->sessSetByState); i++) {
@@ -112,7 +112,8 @@ STATIC void BkfPuberSessDelByFlag(BkfPuberSess *sess, BOOL fsmInitOk, BOOL avlIn
     BKF_FREE(sessMng->argInit->memMng, sess);
 }
 
-BkfPuberSess *BkfPuberSessAdd(BkfPuberSessMng *sessMng, uint8_t *sliceKey, uint16_t tableTypeId, BkfDcTupleItorVTbl *vTbl)
+BkfPuberSess *BkfPuberSessAdd(BkfPuberSessMng *sessMng, uint8_t *sliceKey, uint16_t tableTypeId,
+    BkfDcTupleItorVTbl *vTbl)
 {
     BkfDcSliceVTbl *sliceVTbl = BKF_DC_GET_SLICE_VTBL(sessMng->argInit->dc);
     uint32_t len = sizeof(BkfPuberSess) + sliceVTbl->keyLen;
@@ -172,18 +173,14 @@ void BkfPuberSessDelAll(BkfPuberSessMng *sessMng)
 BkfPuberSess *BkfPuberSessFind(BkfPuberSessMng *sessMng, uint8_t *sliceKey, uint16_t tableTypeId)
 {
     BkfDcSliceVTbl *sliceVTbl = BKF_DC_GET_SLICE_VTBL(sessMng->argInit->dc);
-    BkfPuberSessKey sessKey = { .tableTypeId = tableTypeId,
-                                .sliceKeyCmp = sliceVTbl->keyCmp,
-                                .sliceKey = sliceKey };
+    BkfPuberSessKey sessKey = {.tableTypeId = tableTypeId, .sliceKeyCmp = sliceVTbl->keyCmp, .sliceKey = sliceKey};
     return VOS_AVLL_FIND(sessMng->sessSet, &sessKey);
 }
 
 BkfPuberSess *BkfPuberSessFindNext(BkfPuberSessMng *sessMng, uint8_t *sliceKey, uint16_t tableTypeId)
 {
     BkfDcSliceVTbl *sliceVTbl = BKF_DC_GET_SLICE_VTBL(sessMng->argInit->dc);
-    BkfPuberSessKey sessKey = { .tableTypeId = tableTypeId,
-                                .sliceKeyCmp = sliceVTbl->keyCmp,
-                                .sliceKey = sliceKey };
+    BkfPuberSessKey sessKey = {.tableTypeId = tableTypeId, .sliceKeyCmp = sliceVTbl->keyCmp, .sliceKey = sliceKey};
     return VOS_AVLL_FIND_NEXT(sessMng->sessSet, &sessKey);
 }
 
@@ -245,4 +242,3 @@ uint32_t BkfPuberSessMoveFirst2LastByState(BkfPuberSessMng *sessMng, uint8_t ses
 #ifdef __cplusplus
 }
 #endif
-

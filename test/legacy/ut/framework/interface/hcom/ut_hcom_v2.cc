@@ -27,7 +27,7 @@
 #include "param_check_v2.h"
 #include "log.h"
 #include "hccl_common_v2.h"
-#include "task_abort_handler.h"
+#include "task_abort_handler_v2.h"
 #include "coll_service_device_mode.h"
 #include "op_params_checker.h"
 #undef private
@@ -36,70 +36,59 @@ using namespace std;
 using namespace Hccl;
 #define HCCL_COM_DATA_SIZE 1024
 #define HUAWEI_SECC_RET_TRANSFORM(ret) ((ret == EOK) ? HCCL_SUCCESS : ((ret == EINVAL) ? HCCL_E_PARA : HCCL_E_INTERNAL))
-#define HUAWEI_SECC_RET_CHECK_AND_RETURN(ret) do { \
-    switch (ret) {                        \
-        case EOK:                         \
-            return HCCL_SUCCESS;          \
-        case EINVAL:                      \
-            return HCCL_E_PARA;           \
-        default:                          \
-            return HCCL_E_INTERNAL;       \
-    }                                     \
-} while (0)
- 
-extern HcclResult HcomSetGradFusionByIndex(const char *group, u32 segmentNum, const u32 *IdxList);
-extern HcclResult HcomSetGradFusionBySize(const char *group, u32 segmentNum, const float *sizeList);
-extern HcclResult HcomDestroyBackloggedGroup(const std::string &group);
- 
- 
-class HcomTest : public testing::Test
-{
+#define HUAWEI_SECC_RET_CHECK_AND_RETURN(ret) \
+    do {                                      \
+        switch (ret) {                        \
+            case EOK:                         \
+                return HCCL_SUCCESS;          \
+            case EINVAL:                      \
+                return HCCL_E_PARA;           \
+            default:                          \
+                return HCCL_E_INTERNAL;       \
+        }                                     \
+    } while (0)
+
+extern HcclResult HcomSetGradFusionByIndex(const char* group, u32 segmentNum, const u32* IdxList);
+extern HcclResult HcomSetGradFusionBySize(const char* group, u32 segmentNum, const float* sizeList);
+extern HcclResult HcomDestroyBackloggedGroup(const std::string& group);
+
+class HcomTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "HcomTest SetUP" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "HcomTest TearDown" << std::endl;
-    }
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in HcomTest SetUp" << std::endl;
-       
-    }
- 
+    static void SetUpTestCase() { std::cout << "HcomTest SetUP" << std::endl; }
+    static void TearDownTestCase() { std::cout << "HcomTest TearDown" << std::endl; }
+    virtual void SetUp() { std::cout << "A Test case in HcomTest SetUp" << std::endl; }
+
     virtual void TearDown()
     {
         std::cout << "A Test case in HcomTest TearDown" << std::endl;
         GlobalMockObject::verify();
     }
- 
 };
- 
-void *sal_malloc(u32 size)
+
+void* sal_malloc(u32 size)
 {
     if (size == 0) {
         HCCL_ERROR("errNo[0x%016llx] sal malloc fail, size[%u], return NULL", HCCL_ERROR_CODE(HCCL_E_MEMORY), size);
         return nullptr;
     }
- 
+
     return malloc(size);
 }
- 
-HcclResult sal_memset(void *dest, size_t destMaxSize, int c, size_t count)
+
+HcclResult sal_memset(void* dest, size_t destMaxSize, int c, size_t count)
 {
     CHK_PTR_NULL(dest);
     s32 ret = memset_s(dest, destMaxSize, c, count);
     if (ret != EOK) {
-        HCCL_ERROR("errNo[0x%016llx] In sal_memset, memset_s failed. errorno[%d], params: dest[%p], "\
-            "destMaxSize[%d], c[%d], count[%d]", HCCL_ERROR_CODE(HUAWEI_SECC_RET_TRANSFORM(ret)), ret, dest, \
-            destMaxSize, c, count);
+        HCCL_ERROR(
+            "errNo[0x%016llx] In sal_memset, memset_s failed. errorno[%d], params: dest[%p], "
+            "destMaxSize[%d], c[%d], count[%d]",
+            HCCL_ERROR_CODE(HUAWEI_SECC_RET_TRANSFORM(ret)), ret, dest, destMaxSize, c, count);
     }
     HUAWEI_SECC_RET_CHECK_AND_RETURN(ret);
 }
- 
-void sal_free(void *ptr)
+
+void sal_free(void* ptr)
 {
     if (ptr) {
         free(ptr);
@@ -124,8 +113,7 @@ void SetupCommonCommInfo()
 }
 
 void SetupAndRunCollectiveOperation(
-    const std::string& opName,
-    std::function<int(const char*, s8*, s8*, s32, HcclDataType, s64, rtStream_t)> opFunc,
+    const std::string& opName, std::function<int(const char*, s8*, s8*, s32, HcclDataType, s64, rtStream_t)> opFunc,
     s8 expectedValue)
 {
     HcclGroupParamsV2 hcclGroupParamsV2;
@@ -172,89 +160,89 @@ void SetupAndRunCollectiveOperation(
     sal_free(recvbuf);
     delete hcclComm;
 }
- 
+
 TEST_F(HcomTest, HcomGetRankIdV2_func)
 {
     HcclGroupParamsV2 hcclGroupParamsV2;
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
-    
+
     MOCKER(HrtGetDevice).stubs().with(mockcpp::any()).will(returnValue(0));
- 
+
     char group[] = "hccl_world_group";
     u32 rankId = 0;
     HcclResult ret = HcomGetRankIdV2(group, &rankId);
     EXPECT_EQ(HCCL_SUCCESS, ret);
 }
- 
+
 TEST_F(HcomTest, HcomGetRankIdV2_func_3)
 {
     HcclGroupParamsV2 hcclGroupParamsV2;
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     hcclGroupMap["hccl_world_group_1"] = hcclGroupParamsV2;
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
     MOCKER(HrtGetDevice).stubs().with(mockcpp::any()).will(returnValue(0));
- 
+
     char group[64] = "hccl_world_group";
     u32 rankId = 0;
     HcclResult ret = HcomGetRankIdV2(group, &rankId);
     EXPECT_EQ(HCCL_SUCCESS, ret);
 }
- 
+
 TEST_F(HcomTest, HcomGetWorkspaceSubStreamNumV2_func)
 {
     HcclGroupParamsV2 hcclGroupParamsV2;
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
     MOCKER(HrtGetDevice).stubs().with(mockcpp::any()).will(returnValue(0));
     MOCKER_CPP(&HcclCommunicator::CalcCollOffloadOpRes).stubs().will(returnValue(HCCL_SUCCESS));
-    
-    char *group = nullptr;
+
+    char* group = nullptr;
     u64 streamNum = 1;
     u64 dataSize = 10;
     HcclCMDType optype = HcclCMDType::HCCL_CMD_ALLREDUCE;
     HcclResult ret = HcomGetWorkspaceSubStreamNumV2(group, streamNum, dataSize, HCCL_DATA_TYPE_INT8, optype);
     EXPECT_EQ(ret, HCCL_SUCCESS);
- 
+
     char group1[64] = "testgroup";
     ret = HcomGetWorkspaceSubStreamNumV2(group1, streamNum, dataSize, HCCL_DATA_TYPE_INT8, optype);
     EXPECT_EQ(ret, HCCL_E_NOT_FOUND);
- 
+
     HcclCMDType optype1 = HcclCMDType::HCCL_CMD_INVALID;
     ret = HcomGetWorkspaceSubStreamNumV2(group, streamNum, dataSize, HCCL_DATA_TYPE_INT8, optype1);
     EXPECT_EQ(ret, HCCL_E_PARA);
 }
- 
+
 TEST_F(HcomTest, HcomGetWorkspaceMemSizeV2_func)
 {
     HcclGroupParamsV2 hcclGroupParamsV2;
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
@@ -267,7 +255,7 @@ TEST_F(HcomTest, HcomGetWorkspaceMemSizeV2_func)
     u64 memSize = 0;
     HcclResult ret = HcomGetWorkspaceMemSizeV2(opType, count, dataType, group, memSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
- 
+
     opType = "null";
     ret = HcomGetWorkspaceMemSizeV2(opType, count, dataType, group, memSize);
     EXPECT_EQ(ret, HCCL_E_PARA);
@@ -279,7 +267,7 @@ TEST_F(HcomTest, HcomGetWorkspaceMemSizeV2_func_datatype_err)
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
@@ -293,21 +281,21 @@ TEST_F(HcomTest, HcomGetWorkspaceMemSizeV2_func_datatype_err)
     u64 memSize = 0;
     HcclResult ret = HcomGetWorkspaceMemSizeV2(opType, count, dataType, group, memSize);
     EXPECT_EQ(ret, HCCL_E_PARA);
- 
+
     opType = "null";
     ret = HcomGetWorkspaceMemSizeV2(opType, count, dataType, group, memSize);
     EXPECT_EQ(ret, HCCL_E_PARA);
 }
- 
+
 TEST_F(HcomTest, HcomGetWorkspaceMemSizeV2_func_err)
 {
     HcclGroupParamsV2 hcclGroupParamsV2;
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
@@ -320,22 +308,22 @@ TEST_F(HcomTest, HcomGetWorkspaceMemSizeV2_func_err)
     u64 memSize = 0;
     HcclResult ret = HcomGetWorkspaceMemSizeV2(opType, count, dataType, group, memSize);
     EXPECT_EQ(ret, HCCL_E_NOT_FOUND);
- 
+
     char worldGroup[64] = "hccl_world_group";
     opType = "null";
     ret = HcomGetWorkspaceMemSizeV2(opType, count, dataType, worldGroup, memSize);
     EXPECT_EQ(ret, HCCL_E_PARA);
 }
- 
+
 TEST_F(HcomTest, HcomSetWorkspaceResource_V2_func)
-{    
+{
     HcclGroupParamsV2 hcclGroupParamsV2;
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
@@ -346,20 +334,20 @@ TEST_F(HcomTest, HcomSetWorkspaceResource_V2_func)
     u64 stream_list_size = 0;
     vector<rtStream_t> streamList(stream_list_size);
     int a = 0;
-    void *memptr = &a;
-    char *group = nullptr;
+    void* memptr = &a;
+    char* group = nullptr;
     std::string tag = "testtag";
     HcclResult ret = HcomSetWorkspaceResourceV2(tag, group, streamList, memptr, memSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
- 
+
     char group1[64] = "testgroup";
     ret = HcomSetWorkspaceResourceV2(tag, group1, streamList, memptr, memSize);
     EXPECT_EQ(ret, HCCL_E_NOT_FOUND);
- 
+
     HcclGroupParamsV2 hcclGroupParamsV2_1;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm1 = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclGroupParamsV2_1.pComm = nullptr;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap1 = {{ "hccl_world_group", hcclGroupParamsV2_1}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap1 = {{"hccl_world_group", hcclGroupParamsV2_1}};
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = false;
     CommManager::GetInstance(1).GetCommInfoV2().hcclGroupMap = hcclGroupMap1;
     CommManager::GetInstance(1).GetCommInfoV2().commParams = commParams;
@@ -370,14 +358,14 @@ TEST_F(HcomTest, HcomSetWorkspaceResource_V2_func)
 }
 
 TEST_F(HcomTest, HcomAllGatherV2_func)
-{    
+{
     HcclGroupParamsV2 hcclGroupParamsV2;
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
@@ -391,33 +379,29 @@ TEST_F(HcomTest, HcomAllGatherV2_func)
     s32 rank = 0;
     s32 errors = 0;
     s32 count = HCCL_COM_DATA_SIZE;
- 
+
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     sendbuf = (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8) , 0, count * sizeof(s8) );
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
     recvbuf = (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8) , 0, count * sizeof(s8) );
- 
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+
     ret = HcomAllGatherV2("testallgather", sendbuf, recvbuf, count, HCCL_DATA_TYPE_INT8, NULL, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
- 
- 
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
- 
+
     sal_free(sendbuf);
     sal_free(recvbuf);
 
- 
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 }
- 
+
 TEST_F(HcomTest, ut_hcom_allreduce_v2)
 {
     TaskAbortHandler::GetInstance().commVector.clear();
@@ -425,9 +409,9 @@ TEST_F(HcomTest, ut_hcom_allreduce_v2)
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
@@ -439,36 +423,30 @@ TEST_F(HcomTest, ut_hcom_allreduce_v2)
     s8* sendbuf;
     s8* recvbuf;
     s32 rank = 0;
-    s32 errors=0;
+    s32 errors = 0;
     s32 count = HCCL_COM_DATA_SIZE;
- 
+
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
- 
-    for (int j = 0; j < count; j++)
-    {
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
     ret = HcomAllReduceV2("testallreduce", sendbuf, recvbuf, count, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_SUM, NULL, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
- 
-    
- 
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
- 
+
     sal_free(sendbuf);
     sal_free(recvbuf);
-
 }
 
 TEST_F(HcomTest, ut_hcom_HcomReduceScatterV2_v2)
@@ -477,9 +455,9 @@ TEST_F(HcomTest, ut_hcom_HcomReduceScatterV2_v2)
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
@@ -491,45 +469,43 @@ TEST_F(HcomTest, ut_hcom_HcomReduceScatterV2_v2)
     s8* sendbuf;
     s8* recvbuf;
     s32 rank = 0;
-    s32 errors=0;
+    s32 errors = 0;
     s32 count = HCCL_COM_DATA_SIZE;
- 
+
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
- 
-    for (int j = 0; j < count; j++)
-    {
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
 
-    ret = HcomReduceScatterV2("testReducescatter", sendbuf, recvbuf, count, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_SUM, NULL, stream);
+    ret = HcomReduceScatterV2(
+        "testReducescatter", sendbuf, recvbuf, count, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_SUM, NULL, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
- 
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
- 
+
     sal_free(sendbuf);
     sal_free(recvbuf);
 }
- 
+
 TEST_F(HcomTest, st_hcom_allreduce_v2_2)
 {
     HcclGroupParamsV2 hcclGroupParamsV2;
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
@@ -541,45 +517,41 @@ TEST_F(HcomTest, st_hcom_allreduce_v2_2)
     s8* sendbuf;
     s8* recvbuf;
     s32 rank = 0;
-    s32 errors=0;
+    s32 errors = 0;
     s32 count = HCCL_COM_DATA_SIZE;
- 
+
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
- 
-    for (int j = 0; j < count; j++)
-    {
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
     ret = HcomAllReduceV2("testallreduce", sendbuf, recvbuf, count, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_MAX, NULL, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
- 
- 
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
- 
+
     sal_free(sendbuf);
     sal_free(recvbuf);
 }
- 
+
 TEST_F(HcomTest, ut_hcom_allreduce_v2_3)
 {
     HcclGroupParamsV2 hcclGroupParamsV2;
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
@@ -591,35 +563,32 @@ TEST_F(HcomTest, ut_hcom_allreduce_v2_3)
     s8* sendbuf;
     s8* recvbuf;
     s32 rank = 0;
-    s32 errors=0;
+    s32 errors = 0;
     s32 count = HCCL_COM_DATA_SIZE;
- 
+
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
- 
-    for (int j = 0; j < count; j++)
-    {
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
     ret = HcomAllReduceV2("testallreduce", sendbuf, recvbuf, count, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_MIN, NULL, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
- 
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
- 
+
     sal_free(sendbuf);
     sal_free(recvbuf);
 }
- 
+
 TEST_F(HcomTest, ut_hcom_HcomBroadcastV2)
 {
     HcclGroupParamsV2 hcclGroupParamsV2;
@@ -627,9 +596,9 @@ TEST_F(HcomTest, ut_hcom_HcomBroadcastV2)
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclGroupParamsV2.pComm = hcclComm;
     hcclComm->pimpl->rankSize = 4;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
@@ -641,45 +610,42 @@ TEST_F(HcomTest, ut_hcom_HcomBroadcastV2)
     s8* sendbuf;
     s8* recvbuf;
     s32 rank = 0;
-    s32 errors=0;
+    s32 errors = 0;
     s32 count = HCCL_COM_DATA_SIZE;
- 
+
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
- 
-    for (int j = 0; j < count; j++)
-    {
+
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
 
     ret = HcomBroadcastV2("testBroadCast", sendbuf, count, HCCL_DATA_TYPE_INT8, 0, NULL, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
- 
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
- 
+
     sal_free(sendbuf);
     sal_free(recvbuf);
 }
- 
+
 TEST_F(HcomTest, ut_hcom_HcomAlltoAllV2)
 {
     HcclGroupParamsV2 hcclGroupParamsV2;
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
@@ -691,38 +657,34 @@ TEST_F(HcomTest, ut_hcom_HcomAlltoAllV2)
     s8* sendbuf;
     s8* recvbuf;
     s32 rank = 0;
-    s32 errors=0;
+    s32 errors = 0;
     s32 count = HCCL_COM_DATA_SIZE;
- 
+
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
- 
-    for (int j = 0; j < count; j++)
-    {
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
-    
-    ret = HcomAlltoAllV2(sendbuf, count, HCCL_DATA_TYPE_INT8, recvbuf, count, HCCL_DATA_TYPE_INT8, NULL, stream, "testAlltoall");
+
+    ret = HcomAlltoAllV2(
+        sendbuf, count, HCCL_DATA_TYPE_INT8, recvbuf, count, HCCL_DATA_TYPE_INT8, NULL, stream, "testAlltoall");
     EXPECT_EQ(ret, HCCL_SUCCESS);
- 
- 
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
- 
+
     sal_free(sendbuf);
     sal_free(recvbuf);
 }
- 
- 
+
 TEST_F(HcomTest, ut_hcom_HcomReduceV2)
 {
     HcclGroupParamsV2 hcclGroupParamsV2;
@@ -730,9 +692,9 @@ TEST_F(HcomTest, ut_hcom_HcomReduceV2)
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclGroupParamsV2.pComm = hcclComm;
     hcclComm->pimpl->rankSize = 4;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
@@ -744,45 +706,42 @@ TEST_F(HcomTest, ut_hcom_HcomReduceV2)
     s8* sendbuf;
     s8* recvbuf;
     s32 rank = 0;
-    s32 errors=0;
+    s32 errors = 0;
     s32 count = HCCL_COM_DATA_SIZE;
- 
+
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
- 
-    for (int j = 0; j < count; j++)
-    {
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
-    
+
     ret = HcomReduceV2("testReduce", sendbuf, recvbuf, count, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_SUM, 0, NULL, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
- 
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
- 
+
     sal_free(sendbuf);
     sal_free(recvbuf);
 }
- 
+
 TEST_F(HcomTest, ut_hcom_HcomAlltoAllVV2)
 {
     HcclGroupParamsV2 hcclGroupParamsV2;
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
@@ -794,50 +753,45 @@ TEST_F(HcomTest, ut_hcom_HcomAlltoAllVV2)
     s8* sendbuf;
     s8* recvbuf;
     s32 rank = 0;
-    s32 errors=0;
+    s32 errors = 0;
     s32 count = HCCL_COM_DATA_SIZE;
- 
+
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
- 
-    for (int j = 0; j < count; j++)
-    {
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
- 
+
     s32 rankSize = 1;
     vector<u64> sendCounts(rankSize, 0);
     vector<u64> recvCounts(rankSize, 0);
     vector<u64> sdispls(rankSize, 0);
     vector<u64> rdispls(rankSize, 0);
- 
-    
-    ret = HcomAlltoAllVV2(sendbuf, sendCounts.data(), sdispls.data(), HCCL_DATA_TYPE_INT8, recvbuf, recvCounts.data(), rdispls.data(), HCCL_DATA_TYPE_INT8, NULL, stream, "testAlltoallv");
+
+    ret = HcomAlltoAllVV2(
+        sendbuf, sendCounts.data(), sdispls.data(), HCCL_DATA_TYPE_INT8, recvbuf, recvCounts.data(), rdispls.data(),
+        HCCL_DATA_TYPE_INT8, NULL, stream, "testAlltoallv");
     EXPECT_EQ(ret, HCCL_SUCCESS);
- 
-    
- 
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
- 
+
     sal_free(sendbuf);
     sal_free(recvbuf);
-    
 }
 
 TEST_F(HcomTest, Ut_HcomAlltoAllVCV2_When_Normal_Input_Expect_Success)
 {
     void* sendBuf = nullptr;
-    void* sendCountMatrix = (void *)0x1000000;
+    void* sendCountMatrix = (void*)0x1000000;
     void* recvBuf = nullptr;
     HcclDataType sendType = HCCL_DATA_TYPE_INT8;
     HcclDataType recvType = HCCL_DATA_TYPE_INT8;
@@ -847,8 +801,12 @@ TEST_F(HcomTest, Ut_HcomAlltoAllVCV2_When_Normal_Input_Expect_Success)
     int a = 0;
     rtStream_t stream = static_cast<rtStream_t>(&a);
 
-    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    HcclResult result = HcomAlltoAllVCV2(sendBuf, sendCountMatrix, sendType, recvBuf, recvType, NULL, stream, "testAlltoallvc");
+    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    HcclResult result
+        = HcomAlltoAllVCV2(sendBuf, sendCountMatrix, sendType, recvBuf, recvType, NULL, stream, "testAlltoallvc");
     EXPECT_EQ(result, HCCL_SUCCESS);
 }
 
@@ -858,9 +816,9 @@ TEST_F(HcomTest, ut_hcom_HcomSend_v2)
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
@@ -872,49 +830,42 @@ TEST_F(HcomTest, ut_hcom_HcomSend_v2)
     s8* sendbuf;
     s8* recvbuf;
     s32 rank = 0;
-    s32 errors=0;
+    s32 errors = 0;
     s32 count = HCCL_COM_DATA_SIZE;
 
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
- 
-    for (int j = 0; j < count; j++)
-    {
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
-    
- 
+
     ret = HcomSendV2("testSend", sendbuf, count, HCCL_DATA_TYPE_INT8, 1, 1, NULL, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
- 
-    
- 
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
- 
+
     sal_free(sendbuf);
     sal_free(recvbuf);
-    
 }
- 
+
 TEST_F(HcomTest, ut_hcom_HcomRecv_v2)
 {
     HcclGroupParamsV2 hcclGroupParamsV2;
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
@@ -926,48 +877,41 @@ TEST_F(HcomTest, ut_hcom_HcomRecv_v2)
     s8* sendbuf;
     s8* recvbuf;
     s32 rank = 0;
-    s32 errors=0;
+    s32 errors = 0;
     s32 count = HCCL_COM_DATA_SIZE;
 
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
- 
-    for (int j = 0; j < count; j++)
-    {
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
-    
+
     ret = HcomReceiveV2("testRecv", sendbuf, count, HCCL_DATA_TYPE_INT8, 1, 1, NULL, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
- 
-    
- 
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
- 
+
     sal_free(sendbuf);
     sal_free(recvbuf);
-    
 }
- 
- 
-TEST_F(HcomTest, ut_hcom_CheckOpParamV2)  // 放最后
+
+TEST_F(HcomTest, ut_hcom_CheckOpParamV2) // 放最后
 {
     char tag[] = "tag";
     u64 count = 64;
     HcclDataType dataType = HCCL_DATA_TYPE_INT8;
     char group[] = "group";
     u32 x = 1;
-    void *stream = static_cast<void *>(&x);
+    void* stream = static_cast<void*>(&x);
     HcclResult ret = HcomCheckOpParamV2(tag, count, dataType, group, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
@@ -983,7 +927,8 @@ TEST_F(HcomTest, ut_HcomGetAlltoAllStagedWorkSpaceMemSizeV2)
     u64 memSize = 10;
 
     MOCKER_CPP(&HcclCommunicator::CalcCollOffloadOpRes).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    HcclResult ret = HcomGetAlltoAllStagedWorkSpaceMemSizeV2(group, &sendcounts, &sdispls, dataType, &recvCounts, &rdispls, dataType, memSize);
+    HcclResult ret = HcomGetAlltoAllStagedWorkSpaceMemSizeV2(
+        group, &sendcounts, &sdispls, dataType, &recvCounts, &rdispls, dataType, memSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
 
@@ -991,7 +936,7 @@ TEST_F(HcomTest, ut_Hcom_checkUserRankV2)
 {
     const u32 totalRanks = 4;
     const u32 userRank = 8;
-    
+
     HcclResult ret = HcomCheckUserRankV2(totalRanks, userRank);
     EXPECT_EQ(ret, HCCL_E_PARA);
 }
@@ -1000,15 +945,15 @@ TEST_F(HcomTest, ut_Hcom_checkUserRankV2_2)
 {
     const u32 totalRanks = 8;
     const u32 userRank = 4;
-    
+
     HcclResult ret = HcomCheckUserRankV2(totalRanks, userRank);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
 
 TEST_F(HcomTest, ut_Hcom_checkDataTypeV2)
 {
-    HcclDataType dataType = HCCL_DATA_TYPE_RESERVED; 
-    
+    HcclDataType dataType = HCCL_DATA_TYPE_RESERVED;
+
     HcclResult ret = HcomCheckDataTypeV2(dataType);
     EXPECT_EQ(ret, HCCL_E_NOT_SUPPORT);
 }
@@ -1024,7 +969,7 @@ TEST_F(HcomTest, ut_Hcom_GetLocalRankIdV2)
 {
     char group[256] = "hccl_world_group";
     u32 localRankId;
-    
+
     HcclResult ret = HcomGetLocalRankIdV2(group, &localRankId);
     EXPECT_EQ(ret, HCCL_E_PTR);
 }
@@ -1035,9 +980,9 @@ TEST_F(HcomTest, ut_HcomCalcTaskNumV2_When_Abnormal_Expect_ReturnlsHCCL_E_INTERN
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
@@ -1058,9 +1003,9 @@ TEST_F(HcomTest, ut_HcomCalcTaskNumV2_OpType_Not_Find_When_Abnormal_Expect_Retur
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
@@ -1079,7 +1024,7 @@ TEST_F(HcomTest, ut_hcomGraphAllGatherV2_When_Expect_ReturnlsHCCL_SUCCESS)
 {
     SetupAndRunCollectiveOperation(
         "testallgather",
-        [](const char *name, s8 *sendbuf, s8 *recvbuf, s32 count, HcclDataType type, s64 comm, rtStream_t stream) {
+        [](const char* name, s8* sendbuf, s8* recvbuf, s32 count, HcclDataType type, s64 comm, rtStream_t stream) {
             return HcclCommGraphAllGatherV2(name, sendbuf, recvbuf, count, type, comm, stream);
         },
         2);
@@ -1089,13 +1034,13 @@ TEST_F(HcomTest, ut_hcom_graph_allreduce_v2_When_Noraml_Expect_ReturnlsHCCL_SUCC
 {
     TaskAbortHandler::GetInstance().commVector.clear();
     SetupAndRunCollectiveOperation(
-         "testallreduce",
-         [](const char *name, s8 *sendbuf, s8 *recvbuf, s32 count, HcclDataType type, s64 comm, rtStream_t stream) {
+        "testallreduce",
+        [](const char* name, s8* sendbuf, s8* recvbuf, s32 count, HcclDataType type, s64 comm, rtStream_t stream) {
             return HcomGraphAllReduceV2(name, sendbuf, recvbuf, count, type, HCCL_REDUCE_SUM, comm, stream);
-         },
-         2);
+        },
+        2);
 }
- 
+
 TEST_F(HcomTest, ut_hcom_graph_HcomReduceV2_When_Normal_Expect_ReturnlsHCCL_SUCCESS)
 {
     SetupAndRunCollectiveOperation(
@@ -1105,7 +1050,7 @@ TEST_F(HcomTest, ut_hcom_graph_HcomReduceV2_When_Normal_Expect_ReturnlsHCCL_SUCC
         },
         2);
 }
- 
+
 TEST_F(HcomTest, ut_hcom_HcomGraphReduceScatterV2_When_Noraml_Expect_ReturnlsHCCL_SUCCESS)
 {
     SetupAndRunCollectiveOperation(
@@ -1115,7 +1060,7 @@ TEST_F(HcomTest, ut_hcom_HcomGraphReduceScatterV2_When_Noraml_Expect_ReturnlsHCC
         },
         2);
 }
- 
+
 TEST_F(HcomTest, ut_hcom_HcomGraphSendV2_When_Normal_Expect_ReturnlsHCCL_SUCCESS)
 {
     HcclGroupParamsV2 hcclGroupParamsV2;
@@ -1129,37 +1074,34 @@ TEST_F(HcomTest, ut_hcom_HcomGraphSendV2_When_Normal_Expect_ReturnlsHCCL_SUCCESS
     s8* sendbuf;
     s8* recvbuf;
     s32 rank = 0;
-    s32 errors=0;
+    s32 errors = 0;
     s32 count = HCCL_COM_DATA_SIZE;
 
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
- 
-    for (int j = 0; j < count; j++)
-    {
+
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
-    
+
     ret = HcomGraphSendV2("testSend", sendbuf, count, HCCL_DATA_TYPE_INT8, 1, 1, (s64)hcclComm, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
- 
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
- 
+
     sal_free(sendbuf);
     sal_free(recvbuf);
-    delete hcclComm;    
+    delete hcclComm;
 }
- 
+
 TEST_F(HcomTest, ut_hcom_HcomGraphReceiveV2_When_Normal_Expect_ReturnlsHCCL_SUCCESS)
 {
     HcclGroupParamsV2 hcclGroupParamsV2;
@@ -1173,37 +1115,34 @@ TEST_F(HcomTest, ut_hcom_HcomGraphReceiveV2_When_Normal_Expect_ReturnlsHCCL_SUCC
     s8* sendbuf;
     s8* recvbuf;
     s32 rank = 0;
-    s32 errors=0;
+    s32 errors = 0;
     s32 count = HCCL_COM_DATA_SIZE;
 
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
- 
-    for (int j = 0; j < count; j++)
-    {
+
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
-    
+
     ret = HcomGraphReceiveV2("testRecv", sendbuf, count, HCCL_DATA_TYPE_INT8, 1, 1, (s64)hcclComm, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
- 
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
- 
+
     sal_free(sendbuf);
     sal_free(recvbuf);
-    delete hcclComm;       
+    delete hcclComm;
 }
- 
+
 TEST_F(HcomTest, ut_hcom_HcomGraphBroadcastV2_When_Normal_Expect_ReturnlsHCCL_SUCCESS)
 {
     SetupAndRunCollectiveOperation(
@@ -1213,16 +1152,16 @@ TEST_F(HcomTest, ut_hcom_HcomGraphBroadcastV2_When_Normal_Expect_ReturnlsHCCL_SU
         },
         2);
 }
- 
+
 TEST_F(HcomTest, ut_hcom_create_comm_buffer_v2_When_Normal_Expect_ReturnlsHCCL_SUCCESS)
 {
     HcclGroupParamsV2 hcclGroupParamsV2;
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
@@ -1230,12 +1169,12 @@ TEST_F(HcomTest, ut_hcom_create_comm_buffer_v2_When_Normal_Expect_ReturnlsHCCL_S
     hcclComm->GetCommImpl()->InitDataBufferManager();
     int ret = HcomCreateCommCclBufV2(NULL);
     EXPECT_EQ(ret, HCCL_SUCCESS);
- 
-    void *commInputPtr = nullptr;
+
+    void* commInputPtr = nullptr;
     u64 commInputSize = 0;
     ret = HcomGetInCclBufV2(NULL, commInputPtr, commInputSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    void *commOutputPtr = nullptr;
+    void* commOutputPtr = nullptr;
     u64 commOutputSize = 0;
     ret = HcomGetOutCclBufV2(NULL, commOutputPtr, commOutputSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -1248,7 +1187,7 @@ TEST_F(HcomTest, ut_hcom_create_comm_buffer_v2_When_Normal_Expect_ReturnlsHCCL_S
     ret = HcomGetIndirectOutCclBufV2(NULL, commIndirectOutPtr, commIndirectOutBufSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
- 
+
 TEST_F(HcomTest, ut_hcom_graph_get_rank_id_and_size_v2_When_Normal_Expect_ReturnlsHCCL_SUCCESS)
 {
     HcclGroupParamsV2 hcclGroupParamsV2;
@@ -1293,8 +1232,8 @@ TEST_F(HcomTest, ut_hcom_get_topo_desc_v2_When_Normal_Expect_ReturnlsHCCL_SUCCES
     std::vector<HcclTopoDescs> topoDescs;
     char group[] = "hccl_world_group";
     const int size = 3;
-    topoDescs.resize(size); 
-    for(int i =0 ;i < size; i++){
+    topoDescs.resize(size);
+    for (int i = 0; i < size; i++) {
         topoDescs[i].algSets = 0;
         topoDescs[i].rankSize = 2;
     }
@@ -1317,7 +1256,7 @@ TEST_F(HcomTest, ut_hcom_set_global_work_space_v2_When_Normal_Expect_ReturnlsHCC
     SetupCommonCommInfo();
 
     char group[] = "hccl_world_group";
-    std::vector<void *> globalWorkSpaceAddr {};
+    std::vector<void*> globalWorkSpaceAddr{};
     HcclResult ret = HcomSetGlobalWorkSpaceV2(group, globalWorkSpaceAddr);
     EXPECT_EQ(HCCL_SUCCESS, ret);
 }
@@ -1337,7 +1276,7 @@ TEST_F(HcomTest, ut_hcom_support_deteministic_optim_v2_When_Normal_Expect_Return
 
     char group[] = "hccl_world_group";
     bool isDeterministicOptim = false;
-    HcclResult ret = HcomSupportDeterministicOptimV2(group,isDeterministicOptim);
+    HcclResult ret = HcomSupportDeterministicOptimV2(group, isDeterministicOptim);
     EXPECT_EQ(HCCL_SUCCESS, ret);
 }
 
@@ -1347,7 +1286,7 @@ TEST_F(HcomTest, ut_hcom_set_aiv_core_limit_v2_When_Normal_Expect_ReturnlsHCCL_S
 
     char group[] = "hccl_world_group";
     u32 aivCoreLimit = 1;
-    HcclResult ret = HcomSetAivCoreLimitV2(group,aivCoreLimit);
+    HcclResult ret = HcomSetAivCoreLimitV2(group, aivCoreLimit);
     EXPECT_EQ(HCCL_SUCCESS, ret);
 }
 
@@ -1368,7 +1307,7 @@ TEST_F(HcomTest, ut_hcom_unload_task_v2_When_Normal_Expect_ReturnlsHCCL_SUCCESS)
     HcclGroupParamsV2 hcclGroupParamsV2;
     hcclGroupParamsV2.pComm = hcclComm;
     std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
- 
+
     auto& commInfoV2 = CommManager::GetInstance(0).GetCommInfoV2();
     commInfoV2.hcclGroupMap = hcclGroupMap;
     commInfoV2.commParams = commParams;
@@ -1378,9 +1317,10 @@ TEST_F(HcomTest, ut_hcom_unload_task_v2_When_Normal_Expect_ReturnlsHCCL_SUCCESS)
     hcclComm->pimpl->dataBufferManager = std::make_unique<DataBufManager>();
     hcclComm->pimpl->localRmaBufManager = std::make_unique<LocalRmaBufManager>(*hcclComm->pimpl.get());
     hcclComm->pimpl->memTransportManager = std::make_unique<MemTransportManager>(*hcclComm->pimpl.get());
-    hcclComm->pimpl->collServices[AcceleratorState::AICPU_TS] = std::make_shared<CollServiceAiCpuImpl>(hcclComm->pimpl.get());
+    hcclComm->pimpl->collServices[AcceleratorState::AICPU_TS]
+        = std::make_shared<CollServiceAiCpuImpl>(hcclComm->pimpl.get());
     std::string group = "hccl_world_group";
-    const char *tag = "1";
+    const char* tag = "1";
     HcclResult ret = HcomUnloadTaskV2(group, tag);
     EXPECT_EQ(HCCL_SUCCESS, ret);
 }
@@ -1390,268 +1330,289 @@ TEST_F(HcomTest, Ut_HcomAllGatherVV2_When_Normal_Expect_Success)
     char tag[] = "tag";
     char group[256] = "hccl_world_group";
     constexpr u64 FAKE_RANK_SIZE = 2;
-    void *FAKE_PTR = (void *)0x1000000;
+    void* FAKE_PTR = (void*)0x1000000;
     constexpr HcclDataType FAKE_DATA_TYPE = HCCL_DATA_TYPE_INT32;
-    
+
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclComm->pimpl->myRank = 0;
     hcclComm->pimpl->rankSize = FAKE_RANK_SIZE;
     HcclGroupParamsV2 hcclGroupParamsV2;
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     hcclGroupMap["hccl_world_group_1"] = hcclGroupParamsV2;
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
     MOCKER(HrtGetDevice).stubs().with(mockcpp::any()).will(returnValue(0));
-    
-    void *sendBuf = FAKE_PTR;
+
+    void* sendBuf = FAKE_PTR;
     u64 sendCount = 1;
-    void *recvBuf = FAKE_PTR;
-    u64 recvCounts[FAKE_RANK_SIZE] = {1,1};
-    u64 recvDispls[FAKE_RANK_SIZE] = {1,1};
+    void* recvBuf = FAKE_PTR;
+    u64 recvCounts[FAKE_RANK_SIZE] = {1, 1};
+    u64 recvDispls[FAKE_RANK_SIZE] = {1, 1};
     HcclDataType sendType = FAKE_DATA_TYPE;
     int a = 1;
     aclrtStream stream = static_cast<aclrtStream>(&a);
- 
-    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    HcclResult result =
-        HcomAllGatherVV2(tag, sendBuf, sendCount, recvBuf, &recvCounts, &recvDispls, sendType, group, stream);
+
+    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    HcclResult result
+        = HcomAllGatherVV2(tag, sendBuf, sendCount, recvBuf, &recvCounts, &recvDispls, sendType, group, stream);
     EXPECT_EQ(result, HCCL_SUCCESS);
 }
- 
+
 TEST_F(HcomTest, Ut_HcomAllGatherVV2_When_DipHas0_Expect_Success)
 {
     char tag[] = "tag";
     char group[256] = "hccl_world_group";
     constexpr u64 FAKE_RANK_SIZE = 2;
-    void *FAKE_PTR = (void *)0x1000000;
+    void* FAKE_PTR = (void*)0x1000000;
     constexpr HcclDataType FAKE_DATA_TYPE = HCCL_DATA_TYPE_INT32;
-    
+
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclComm->pimpl->myRank = 0;
     hcclComm->pimpl->rankSize = FAKE_RANK_SIZE;
     HcclGroupParamsV2 hcclGroupParamsV2;
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     hcclGroupMap["hccl_world_group_1"] = hcclGroupParamsV2;
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
     MOCKER(HrtGetDevice).stubs().with(mockcpp::any()).will(returnValue(0));
- 
-    void *sendBuf = FAKE_PTR;
+
+    void* sendBuf = FAKE_PTR;
     u64 sendCount = 1;
-    void *recvBuf = FAKE_PTR;
-    u64 recvCounts[FAKE_RANK_SIZE] = {1,1};
-    u64 recvDispls[FAKE_RANK_SIZE] = {0,1};
+    void* recvBuf = FAKE_PTR;
+    u64 recvCounts[FAKE_RANK_SIZE] = {1, 1};
+    u64 recvDispls[FAKE_RANK_SIZE] = {0, 1};
     HcclDataType sendType = FAKE_DATA_TYPE;
     int a = 1;
     aclrtStream stream = static_cast<aclrtStream>(&a);
- 
-    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    HcclResult result =
-        HcomAllGatherVV2(tag, sendBuf, sendCount, recvBuf, &recvCounts, &recvDispls, sendType, group, stream);
+
+    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    HcclResult result
+        = HcomAllGatherVV2(tag, sendBuf, sendCount, recvBuf, &recvCounts, &recvDispls, sendType, group, stream);
     EXPECT_EQ(result, HCCL_SUCCESS);
 }
- 
+
 TEST_F(HcomTest, Ut_HcomAllGatherVV2_When_OutputEq0_Expect_Success)
 {
     char tag[] = "tag";
     char group[256] = "hccl_world_group";
     constexpr u64 FAKE_RANK_SIZE = 2;
-    void *FAKE_PTR = (void *)0x1000000;
+    void* FAKE_PTR = (void*)0x1000000;
     constexpr HcclDataType FAKE_DATA_TYPE = HCCL_DATA_TYPE_INT32;
-    
+
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclComm->pimpl->myRank = 0;
     hcclComm->pimpl->rankSize = FAKE_RANK_SIZE;
     HcclGroupParamsV2 hcclGroupParamsV2;
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     hcclGroupMap["hccl_world_group_1"] = hcclGroupParamsV2;
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
     MOCKER(HrtGetDevice).stubs().with(mockcpp::any()).will(returnValue(0));
- 
-    void *sendBuf = FAKE_PTR;
+
+    void* sendBuf = FAKE_PTR;
     u64 sendCount = 0;
-    void *recvBuf = FAKE_PTR;
-    u64 recvCounts[FAKE_RANK_SIZE] = {0,0};
-    u64 recvDispls[FAKE_RANK_SIZE] = {1,1};
+    void* recvBuf = FAKE_PTR;
+    u64 recvCounts[FAKE_RANK_SIZE] = {0, 0};
+    u64 recvDispls[FAKE_RANK_SIZE] = {1, 1};
     HcclDataType sendType = FAKE_DATA_TYPE;
     int a = 1;
     aclrtStream stream = static_cast<aclrtStream>(&a);
- 
-    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    HcclResult result =
-        HcomAllGatherVV2(tag, sendBuf, sendCount, recvBuf, &recvCounts, &recvDispls, sendType, group, stream);
+
+    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    HcclResult result
+        = HcomAllGatherVV2(tag, sendBuf, sendCount, recvBuf, &recvCounts, &recvDispls, sendType, group, stream);
     EXPECT_EQ(result, HCCL_SUCCESS);
 }
- 
+
 TEST_F(HcomTest, Ut_HcomAllGatherVV2_When_CountNotFixCounts_Expect_Error)
 {
     char tag[] = "tag";
     char group[256] = "hccl_world_group";
     constexpr u64 FAKE_RANK_SIZE = 2;
-    void *FAKE_PTR = (void *)0x1000000;
+    void* FAKE_PTR = (void*)0x1000000;
     constexpr HcclDataType FAKE_DATA_TYPE = HCCL_DATA_TYPE_INT32;
-    
+
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclComm->pimpl->myRank = 0;
     hcclComm->pimpl->rankSize = FAKE_RANK_SIZE;
     HcclGroupParamsV2 hcclGroupParamsV2;
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     hcclGroupMap["hccl_world_group_1"] = hcclGroupParamsV2;
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
     MOCKER(HrtGetDevice).stubs().with(mockcpp::any()).will(returnValue(0));
- 
-    void *sendBuf = FAKE_PTR;
+
+    void* sendBuf = FAKE_PTR;
     u64 sendCount = 1;
-    void *recvBuf = FAKE_PTR;
-    u64 recvCounts[FAKE_RANK_SIZE] = {0,1};
-    u64 recvDispls[FAKE_RANK_SIZE] = {1,1};
+    void* recvBuf = FAKE_PTR;
+    u64 recvCounts[FAKE_RANK_SIZE] = {0, 1};
+    u64 recvDispls[FAKE_RANK_SIZE] = {1, 1};
     HcclDataType sendType = FAKE_DATA_TYPE;
     int a = 1;
     aclrtStream stream = static_cast<aclrtStream>(&a);
- 
-    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    HcclResult result =
-        HcomAllGatherVV2(tag, sendBuf, sendCount, recvBuf, &recvCounts, &recvDispls, sendType, group, stream);
+
+    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    HcclResult result
+        = HcomAllGatherVV2(tag, sendBuf, sendCount, recvBuf, &recvCounts, &recvDispls, sendType, group, stream);
     EXPECT_EQ(result, HCCL_E_PARA);
 }
- 
+
 TEST_F(HcomTest, Ut_HcomAllGatherVV2_When_CountTooLarge_Expect_Error)
 {
     char tag[] = "tag";
     char group[256] = "hccl_world_group";
     constexpr u64 FAKE_RANK_SIZE = 2;
-    void *FAKE_PTR = (void *)0x1000000;
+    void* FAKE_PTR = (void*)0x1000000;
     constexpr HcclDataType FAKE_DATA_TYPE = HCCL_DATA_TYPE_INT32;
-    
+
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclComm->pimpl->myRank = 0;
     hcclComm->pimpl->rankSize = FAKE_RANK_SIZE;
     HcclGroupParamsV2 hcclGroupParamsV2;
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     hcclGroupMap["hccl_world_group_1"] = hcclGroupParamsV2;
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
     MOCKER(HrtGetDevice).stubs().with(mockcpp::any()).will(returnValue(0));
- 
-    void *sendBuf = FAKE_PTR;
+
+    void* sendBuf = FAKE_PTR;
     u64 sendCount = 0x7ffffffffff;
-    void *recvBuf = FAKE_PTR;
-    u64 recvCounts[FAKE_RANK_SIZE] = {1,1};
-    u64 recvDispls[FAKE_RANK_SIZE] = {1,1};
+    void* recvBuf = FAKE_PTR;
+    u64 recvCounts[FAKE_RANK_SIZE] = {1, 1};
+    u64 recvDispls[FAKE_RANK_SIZE] = {1, 1};
     HcclDataType sendType = FAKE_DATA_TYPE;
     int a = 1;
     aclrtStream stream = static_cast<aclrtStream>(&a);
- 
-    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    HcclResult result =
-        HcomAllGatherVV2(tag, sendBuf, sendCount, recvBuf, &recvCounts, &recvDispls, sendType, group, stream);
+
+    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    HcclResult result
+        = HcomAllGatherVV2(tag, sendBuf, sendCount, recvBuf, &recvCounts, &recvDispls, sendType, group, stream);
     EXPECT_EQ(result, HCCL_E_PARA);
 }
- 
+
 TEST_F(HcomTest, Ut_HcomAllGatherVV2_When_DatatypeNotSurport_Expect_Error)
 {
     char tag[] = "tag";
     char group[256] = "hccl_world_group";
     constexpr u64 FAKE_RANK_SIZE = 2;
-    void *FAKE_PTR = (void *)0x1000000;
+    void* FAKE_PTR = (void*)0x1000000;
     constexpr HcclDataType FAKE_DATA_TYPE = HCCL_DATA_TYPE_RESERVED;
-    
+
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclComm->pimpl->myRank = 0;
     hcclComm->pimpl->rankSize = FAKE_RANK_SIZE;
     HcclGroupParamsV2 hcclGroupParamsV2;
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     hcclGroupMap["hccl_world_group_1"] = hcclGroupParamsV2;
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
     MOCKER(HrtGetDevice).stubs().with(mockcpp::any()).will(returnValue(0));
- 
-    void *sendBuf = FAKE_PTR;
+
+    void* sendBuf = FAKE_PTR;
     u64 sendCount = 1;
-    void *recvBuf = FAKE_PTR;
-    u64 recvCounts[FAKE_RANK_SIZE] = {1,1};
-    u64 recvDispls[FAKE_RANK_SIZE] = {1,1};
+    void* recvBuf = FAKE_PTR;
+    u64 recvCounts[FAKE_RANK_SIZE] = {1, 1};
+    u64 recvDispls[FAKE_RANK_SIZE] = {1, 1};
     HcclDataType sendType = FAKE_DATA_TYPE;
     int a = 1;
     aclrtStream stream = static_cast<aclrtStream>(&a);
- 
-    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    HcclResult result =
-        HcomAllGatherVV2(tag, sendBuf, sendCount, recvBuf, &recvCounts, &recvDispls, sendType, group, stream);
+
+    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    HcclResult result
+        = HcomAllGatherVV2(tag, sendBuf, sendCount, recvBuf, &recvCounts, &recvDispls, sendType, group, stream);
     EXPECT_EQ(result, HCCL_E_NOT_SUPPORT);
 }
- 
+
 TEST_F(HcomTest, Ut_HcomAllGatherVV2_When_SingleRank)
 {
     char tag[] = "tag";
     char group[256] = "hccl_world_group";
     constexpr u64 FAKE_RANK_SIZE = 1;
-    void *FAKE_PTR = (void *)0x1000000;
+    void* FAKE_PTR = (void*)0x1000000;
     constexpr HcclDataType FAKE_DATA_TYPE = HCCL_DATA_TYPE_INT32;
-    
+
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclComm->pimpl->myRank = 0;
     hcclComm->pimpl->rankSize = FAKE_RANK_SIZE;
     HcclGroupParamsV2 hcclGroupParamsV2;
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     hcclGroupMap["hccl_world_group_1"] = hcclGroupParamsV2;
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
     MOCKER(HrtGetDevice).stubs().with(mockcpp::any()).will(returnValue(0));
-    
-    void *sendBuf{};
+
+    void* sendBuf{};
     u64 sendCount;
-    void *recvBuf{};
+    void* recvBuf{};
     u64 recvCounts[FAKE_RANK_SIZE] = {1};
     u64 recvDispls[FAKE_RANK_SIZE] = {1};
     HcclDataType sendType = FAKE_DATA_TYPE;
     int a = 1;
     aclrtStream stream = static_cast<aclrtStream>(&a);
- 
-    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+
+    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
     // 回退： 空count
     sendBuf = FAKE_PTR;
     sendCount = 0;
     recvBuf = FAKE_PTR;
-    HcclResult result =
-        HcomAllGatherVV2(tag, sendBuf, sendCount, recvBuf, &recvCounts, &recvDispls, sendType, group, stream);
+    HcclResult result
+        = HcomAllGatherVV2(tag, sendBuf, sendCount, recvBuf, &recvCounts, &recvDispls, sendType, group, stream);
     EXPECT_EQ(result, HCCL_SUCCESS);
     // 空sendcount
     sendBuf = nullptr;
@@ -1672,271 +1633,292 @@ TEST_F(HcomTest, Ut_HcomReduceScatterVV2_When_Normal_Expect_Success)
     char tag[] = "tag";
     char group[256] = "hccl_world_group";
     constexpr u64 FAKE_RANK_SIZE = 2;
-    void *FAKE_PTR = (void *)0x1000000;
+    void* FAKE_PTR = (void*)0x1000000;
     constexpr HcclDataType FAKE_DATA_TYPE = HCCL_DATA_TYPE_INT32;
- 
+
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclComm->pimpl->myRank = 0;
     hcclComm->pimpl->rankSize = FAKE_RANK_SIZE;
     HcclGroupParamsV2 hcclGroupParamsV2;
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     hcclGroupMap["hccl_world_group_1"] = hcclGroupParamsV2;
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
     MOCKER(HrtGetDevice).stubs().with(mockcpp::any()).will(returnValue(0));
-    
-    void *sendBuf = FAKE_PTR;
-    u64 sendCounts[FAKE_RANK_SIZE] = {1,1};
-    u64 sendDispls[FAKE_RANK_SIZE] = {1,1};
-    void *recvBuf = FAKE_PTR;
+
+    void* sendBuf = FAKE_PTR;
+    u64 sendCounts[FAKE_RANK_SIZE] = {1, 1};
+    u64 sendDispls[FAKE_RANK_SIZE] = {1, 1};
+    void* recvBuf = FAKE_PTR;
     u64 recvCount = 1;
     HcclDataType dataType = FAKE_DATA_TYPE;
     HcclReduceOp op = HCCL_REDUCE_SUM;
     int a = 1;
     aclrtStream stream = static_cast<aclrtStream>(&a);
- 
-    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    HcclResult result =
-        HcomReduceScatterVV2(tag, sendBuf, &sendCounts, &sendDispls, recvBuf, recvCount, dataType, op, group, stream);
+
+    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    HcclResult result
+        = HcomReduceScatterVV2(tag, sendBuf, &sendCounts, &sendDispls, recvBuf, recvCount, dataType, op, group, stream);
     EXPECT_EQ(result, HCCL_SUCCESS);
 }
- 
+
 TEST_F(HcomTest, Ut_HcomReduceScatterVV2_When_DipHas0_Expect_Success)
 {
     char tag[] = "tag";
     char group[256] = "hccl_world_group";
     constexpr u64 FAKE_RANK_SIZE = 2;
-    void *FAKE_PTR = (void *)0x1000000;
+    void* FAKE_PTR = (void*)0x1000000;
     constexpr HcclDataType FAKE_DATA_TYPE = HCCL_DATA_TYPE_INT32;
-    
+
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclComm->pimpl->myRank = 0;
     hcclComm->pimpl->rankSize = FAKE_RANK_SIZE;
     HcclGroupParamsV2 hcclGroupParamsV2;
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     hcclGroupMap["hccl_world_group_1"] = hcclGroupParamsV2;
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
     MOCKER(HrtGetDevice).stubs().with(mockcpp::any()).will(returnValue(0));
-    
-    void *sendBuf = FAKE_PTR;
-    u64 sendCounts[FAKE_RANK_SIZE] = {1,1};
-    u64 sendDispls[FAKE_RANK_SIZE] = {0,1};
-    void *recvBuf = FAKE_PTR;
+
+    void* sendBuf = FAKE_PTR;
+    u64 sendCounts[FAKE_RANK_SIZE] = {1, 1};
+    u64 sendDispls[FAKE_RANK_SIZE] = {0, 1};
+    void* recvBuf = FAKE_PTR;
     u64 recvCount = 1;
     HcclDataType dataType = FAKE_DATA_TYPE;
     HcclReduceOp op = HCCL_REDUCE_SUM;
     int a = 1;
     aclrtStream stream = static_cast<aclrtStream>(&a);
- 
-    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    HcclResult result =
-        HcomReduceScatterVV2(tag, sendBuf, &sendCounts, &sendDispls, recvBuf, recvCount, dataType, op, group, stream);
+
+    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    HcclResult result
+        = HcomReduceScatterVV2(tag, sendBuf, &sendCounts, &sendDispls, recvBuf, recvCount, dataType, op, group, stream);
     EXPECT_EQ(result, HCCL_SUCCESS);
 }
- 
+
 TEST_F(HcomTest, Ut_HcomReduceScatterVV2_When_InuputCountEq0_Expect_Success)
 {
     char tag[] = "tag";
     char group[256] = "hccl_world_group";
     constexpr u64 FAKE_RANK_SIZE = 2;
-    void *FAKE_PTR = (void *)0x1000000;
+    void* FAKE_PTR = (void*)0x1000000;
     constexpr HcclDataType FAKE_DATA_TYPE = HCCL_DATA_TYPE_INT32;
-    
+
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclComm->pimpl->myRank = 0;
     hcclComm->pimpl->rankSize = FAKE_RANK_SIZE;
     HcclGroupParamsV2 hcclGroupParamsV2;
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     hcclGroupMap["hccl_world_group_1"] = hcclGroupParamsV2;
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
     MOCKER(HrtGetDevice).stubs().with(mockcpp::any()).will(returnValue(0));
-    
-    void *sendBuf = FAKE_PTR;
-    u64 sendCounts[FAKE_RANK_SIZE] = {0,0};
-    u64 sendDispls[FAKE_RANK_SIZE] = {1,1};
-    void *recvBuf = FAKE_PTR;
+
+    void* sendBuf = FAKE_PTR;
+    u64 sendCounts[FAKE_RANK_SIZE] = {0, 0};
+    u64 sendDispls[FAKE_RANK_SIZE] = {1, 1};
+    void* recvBuf = FAKE_PTR;
     u64 recvCount = 0;
     HcclDataType dataType = FAKE_DATA_TYPE;
     HcclReduceOp op = HCCL_REDUCE_SUM;
     int a = 1;
     aclrtStream stream = static_cast<aclrtStream>(&a);
- 
-    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    HcclResult result =
-        HcomReduceScatterVV2(tag, sendBuf, &sendCounts, &sendDispls, recvBuf, recvCount, dataType, op, group, stream);
+
+    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    HcclResult result
+        = HcomReduceScatterVV2(tag, sendBuf, &sendCounts, &sendDispls, recvBuf, recvCount, dataType, op, group, stream);
     EXPECT_EQ(result, HCCL_SUCCESS);
 }
- 
+
 TEST_F(HcomTest, Ut_HcomReduceScatterVV2_When_CountNotFixCounts_Expect_Error)
 {
     char tag[] = "tag";
     char group[256] = "hccl_world_group";
     constexpr u64 FAKE_RANK_SIZE = 2;
-    void *FAKE_PTR = (void *)0x1000000;
+    void* FAKE_PTR = (void*)0x1000000;
     constexpr HcclDataType FAKE_DATA_TYPE = HCCL_DATA_TYPE_INT32;
-    
+
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclComm->pimpl->myRank = 0;
     hcclComm->pimpl->rankSize = FAKE_RANK_SIZE;
     HcclGroupParamsV2 hcclGroupParamsV2;
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     hcclGroupMap["hccl_world_group_1"] = hcclGroupParamsV2;
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
     MOCKER(HrtGetDevice).stubs().with(mockcpp::any()).will(returnValue(0));
-    
-    void *sendBuf = FAKE_PTR;
-    u64 sendCounts[FAKE_RANK_SIZE] = {1,1};
-    u64 sendDispls[FAKE_RANK_SIZE] = {1,1};
-    void *recvBuf = FAKE_PTR;
+
+    void* sendBuf = FAKE_PTR;
+    u64 sendCounts[FAKE_RANK_SIZE] = {1, 1};
+    u64 sendDispls[FAKE_RANK_SIZE] = {1, 1};
+    void* recvBuf = FAKE_PTR;
     u64 recvCount = 0;
     HcclDataType dataType = FAKE_DATA_TYPE;
     HcclReduceOp op = HCCL_REDUCE_SUM;
     int a = 1;
     aclrtStream stream = static_cast<aclrtStream>(&a);
- 
-    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    HcclResult result =
-        HcomReduceScatterVV2(tag, sendBuf, &sendCounts, &sendDispls, recvBuf, recvCount, dataType, op, group, stream);
+
+    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    HcclResult result
+        = HcomReduceScatterVV2(tag, sendBuf, &sendCounts, &sendDispls, recvBuf, recvCount, dataType, op, group, stream);
     EXPECT_EQ(result, HCCL_E_PARA);
 }
- 
+
 TEST_F(HcomTest, Ut_HcomReduceScatterVV2_When_CountTooLarge_Expect_Error)
 {
     char tag[] = "tag";
     char group[256] = "hccl_world_group";
     constexpr u64 FAKE_RANK_SIZE = 2;
-    void *FAKE_PTR = (void *)0x1000000;
+    void* FAKE_PTR = (void*)0x1000000;
     constexpr HcclDataType FAKE_DATA_TYPE = HCCL_DATA_TYPE_INT32;
-    
+
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclComm->pimpl->myRank = 0;
     hcclComm->pimpl->rankSize = FAKE_RANK_SIZE;
     HcclGroupParamsV2 hcclGroupParamsV2;
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     hcclGroupMap["hccl_world_group_1"] = hcclGroupParamsV2;
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
     MOCKER(HrtGetDevice).stubs().with(mockcpp::any()).will(returnValue(0));
-    
-    void *sendBuf = FAKE_PTR;
-    u64 sendCounts[FAKE_RANK_SIZE] = {1,1};
-    u64 sendDispls[FAKE_RANK_SIZE] = {1,1};
-    void *recvBuf = FAKE_PTR;
+
+    void* sendBuf = FAKE_PTR;
+    u64 sendCounts[FAKE_RANK_SIZE] = {1, 1};
+    u64 sendDispls[FAKE_RANK_SIZE] = {1, 1};
+    void* recvBuf = FAKE_PTR;
     u64 recvCount = 0xffffffff;
     HcclDataType dataType = FAKE_DATA_TYPE;
     HcclReduceOp op = HCCL_REDUCE_SUM;
     int a = 1;
     aclrtStream stream = static_cast<aclrtStream>(&a);
- 
-    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    HcclResult result =
-        HcomReduceScatterVV2(tag, sendBuf, &sendCounts, &sendDispls, recvBuf, recvCount, dataType, op, group, stream);
+
+    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    HcclResult result
+        = HcomReduceScatterVV2(tag, sendBuf, &sendCounts, &sendDispls, recvBuf, recvCount, dataType, op, group, stream);
     EXPECT_EQ(result, HCCL_E_PARA);
 }
- 
+
 TEST_F(HcomTest, Ut_HcomReduceScatterVV2_When_DatatypeNotSurport_Expect_Error)
 {
     char tag[] = "tag";
     char group[256] = "hccl_world_group";
     constexpr u64 FAKE_RANK_SIZE = 2;
-    void *FAKE_PTR = (void *)0x1000000;
+    void* FAKE_PTR = (void*)0x1000000;
     constexpr HcclDataType FAKE_DATA_TYPE = HCCL_DATA_TYPE_RESERVED;
-    
+
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclComm->pimpl->myRank = 0;
     hcclComm->pimpl->rankSize = FAKE_RANK_SIZE;
     HcclGroupParamsV2 hcclGroupParamsV2;
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     hcclGroupMap["hccl_world_group_1"] = hcclGroupParamsV2;
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
     MOCKER(HrtGetDevice).stubs().with(mockcpp::any()).will(returnValue(0));
-    
-    void *sendBuf = FAKE_PTR;
-    u64 sendCounts[FAKE_RANK_SIZE] = {1,1};
-    u64 sendDispls[FAKE_RANK_SIZE] = {1,1};
-    void *recvBuf = FAKE_PTR;
+
+    void* sendBuf = FAKE_PTR;
+    u64 sendCounts[FAKE_RANK_SIZE] = {1, 1};
+    u64 sendDispls[FAKE_RANK_SIZE] = {1, 1};
+    void* recvBuf = FAKE_PTR;
     u64 recvCount = 1;
     HcclDataType dataType = FAKE_DATA_TYPE;
     HcclReduceOp op = HCCL_REDUCE_SUM;
     int a = 1;
     aclrtStream stream = static_cast<aclrtStream>(&a);
- 
-    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    HcclResult result =
-        HcomReduceScatterVV2(tag, sendBuf, &sendCounts, &sendDispls, recvBuf, recvCount, dataType, op, group, stream);
+
+    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    HcclResult result
+        = HcomReduceScatterVV2(tag, sendBuf, &sendCounts, &sendDispls, recvBuf, recvCount, dataType, op, group, stream);
     EXPECT_EQ(result, HCCL_E_NOT_SUPPORT);
 }
- 
+
 TEST_F(HcomTest, Ut_HcomReduceScatterVV2_When_ReduceOpNotSurport_Expect_Error)
 {
     char tag[] = "tag";
     char group[256] = "hccl_world_group";
     constexpr u64 FAKE_RANK_SIZE = 2;
-    void *FAKE_PTR = (void *)0x1000000;
+    void* FAKE_PTR = (void*)0x1000000;
     constexpr HcclDataType FAKE_DATA_TYPE = HCCL_DATA_TYPE_INT32;
-    
+
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclComm->pimpl->myRank = 0;
     hcclComm->pimpl->rankSize = FAKE_RANK_SIZE;
     HcclGroupParamsV2 hcclGroupParamsV2;
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     hcclGroupMap["hccl_world_group_1"] = hcclGroupParamsV2;
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
     MOCKER(HrtGetDevice).stubs().with(mockcpp::any()).will(returnValue(0));
-    
-    void *sendBuf = FAKE_PTR;
-    u64 sendCounts[FAKE_RANK_SIZE] = {1,1};
-    u64 sendDispls[FAKE_RANK_SIZE] = {1,1};
-    void *recvBuf = FAKE_PTR;
+
+    void* sendBuf = FAKE_PTR;
+    u64 sendCounts[FAKE_RANK_SIZE] = {1, 1};
+    u64 sendDispls[FAKE_RANK_SIZE] = {1, 1};
+    void* recvBuf = FAKE_PTR;
     u64 recvCount = 1;
     HcclDataType dataType = FAKE_DATA_TYPE;
     HcclReduceOp op = HCCL_REDUCE_PROD;
     int a = 1;
     aclrtStream stream = static_cast<aclrtStream>(&a);
- 
-    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    HcclResult result =
-        HcomReduceScatterVV2(tag, sendBuf, &sendCounts, &sendDispls, recvBuf, recvCount, dataType, op, group, stream);
+
+    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    HcclResult result
+        = HcomReduceScatterVV2(tag, sendBuf, &sendCounts, &sendDispls, recvBuf, recvCount, dataType, op, group, stream);
     EXPECT_EQ(result, HCCL_E_NOT_SUPPORT);
 }
 
@@ -1945,53 +1927,58 @@ TEST_F(HcomTest, Ut_HcomReduceScatterVV2_When_Single_Rank)
     char tag[] = "tag";
     char group[256] = "hccl_world_group";
     constexpr u64 FAKE_RANK_SIZE = 1;
-    void *FAKE_PTR = (void *)0x1000000;
+    void* FAKE_PTR = (void*)0x1000000;
     constexpr HcclDataType FAKE_DATA_TYPE = HCCL_DATA_TYPE_INT32;
- 
+
     Hccl::CommParams commParams;
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = std::make_shared<Hccl::HcclCommunicator>(commParams);
     hcclComm->pimpl->myRank = 0;
     hcclComm->pimpl->rankSize = FAKE_RANK_SIZE;
     HcclGroupParamsV2 hcclGroupParamsV2;
     hcclGroupParamsV2.pComm = hcclComm;
-    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{ "hccl_world_group", hcclGroupParamsV2}};
+    std::map<std::string, HcclGroupParamsV2> hcclGroupMap = {{"hccl_world_group", hcclGroupParamsV2}};
     hcclGroupMap["hccl_world_group_1"] = hcclGroupParamsV2;
     CommManager::GetInstance(0).GetCommInfoV2().hcclGroupMap = hcclGroupMap;
-    
+
     CommManager::GetInstance(0).GetCommInfoV2().commParams = commParams;
     CommManager::GetInstance(0).GetCommInfoV2().isUsed = true;
     CommManager::GetInstance(0).GetCommInfoV2().pComm = hcclComm;
     MOCKER(HrtGetDevice).stubs().with(mockcpp::any()).will(returnValue(0));
-    
-    void *sendBuf = FAKE_PTR;
+
+    void* sendBuf = FAKE_PTR;
     u64 sendCounts[FAKE_RANK_SIZE] = {1};
     u64 sendDispls[FAKE_RANK_SIZE] = {1};
-    void *recvBuf = FAKE_PTR;
+    void* recvBuf = FAKE_PTR;
     u64 recvCount = 1;
     HcclDataType dataType = FAKE_DATA_TYPE;
     HcclReduceOp op = HCCL_REDUCE_SUM;
     int a = 1;
     aclrtStream stream = static_cast<aclrtStream>(&a);
- 
-    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-     // 回退： 空count
+
+    MOCKER_CPP(&HcclCommunicator::LoadOffloadCollOp)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    // 回退： 空count
     sendBuf = FAKE_PTR;
     recvCount = 0;
     recvBuf = FAKE_PTR;
-    HcclResult result =
-        HcomReduceScatterVV2(tag, sendBuf, &sendCounts, &sendDispls, recvBuf, recvCount, dataType, op, group, stream);
+    HcclResult result
+        = HcomReduceScatterVV2(tag, sendBuf, &sendCounts, &sendDispls, recvBuf, recvCount, dataType, op, group, stream);
     EXPECT_EQ(result, HCCL_SUCCESS);
     // 空sendcount
     sendBuf = nullptr;
     recvCount = 1;
     recvBuf = FAKE_PTR;
-    result = HcomReduceScatterVV2(tag, sendBuf, &sendCounts, &sendDispls, recvBuf, recvCount, dataType, op, group, stream);
+    result
+        = HcomReduceScatterVV2(tag, sendBuf, &sendCounts, &sendDispls, recvBuf, recvCount, dataType, op, group, stream);
     EXPECT_EQ(result, HCCL_E_PTR);
     // 正常回退
     sendBuf = FAKE_PTR;
     recvCount = 1;
     recvBuf = FAKE_PTR;
-    result = HcomReduceScatterVV2(tag, sendBuf, &sendCounts, &sendDispls, recvBuf, recvCount, dataType, op, group, stream);
+    result
+        = HcomReduceScatterVV2(tag, sendBuf, &sendCounts, &sendDispls, recvBuf, recvCount, dataType, op, group, stream);
 }
 
 TEST_F(HcomTest, Ut_HcomAllReduceV2_When_HcomCheckReductionOpV2_fail_Expect_HCCL_E_NOT_SUPPORT)
@@ -2002,13 +1989,14 @@ TEST_F(HcomTest, Ut_HcomAllReduceV2_When_HcomCheckReductionOpV2_fail_Expect_HCCL
     s8* recvbuf;
     s32 count = HCCL_COM_DATA_SIZE;
 
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
     // 执行条件
-    auto res = HcomAllReduceV2("testallreduce", sendbuf, recvbuf, count, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_RESERVED, NULL, stream);
+    auto res = HcomAllReduceV2(
+        "testallreduce", sendbuf, recvbuf, count, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_RESERVED, NULL, stream);
 
     // 后置验证
     EXPECT_EQ(res, HCCL_E_NOT_SUPPORT);
@@ -2017,7 +2005,6 @@ TEST_F(HcomTest, Ut_HcomAllReduceV2_When_HcomCheckReductionOpV2_fail_Expect_HCCL
     sal_free(recvbuf);
 }
 
-
 TEST_F(HcomTest, ut_HcomSetAivClearEnableV2_When_Normal_Expect_ReturnHCCL_SUCCESS)
 {
     SetupCommonCommInfo();
@@ -2025,17 +2012,17 @@ TEST_F(HcomTest, ut_HcomSetAivClearEnableV2_When_Normal_Expect_ReturnHCCL_SUCCES
     bool aivClearEnable = true;
     HcclResult ret = HcomSetAivClearEnableV2(group, aivClearEnable);
     EXPECT_EQ(HCCL_SUCCESS, ret);
- 
+
     auto& commInfoV2 = CommManager::GetInstance(0).GetCommInfoV2();
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = commInfoV2.pComm;
     EXPECT_EQ(hcclComm->pimpl->aivClearEnable, aivClearEnable);
 }
 
-TEST_F(HcomTest,Ut_HcomGetAlltoAllvcStagedWorkSpaceMemSizeV2_Expect_Success)
+TEST_F(HcomTest, Ut_HcomGetAlltoAllvcStagedWorkSpaceMemSizeV2_Expect_Success)
 {
     MOCKER_CPP(&CommunicatorImpl::CalcCollOffloadOpRes).stubs().will(returnValue(0));
     u64 menSize{};
-    EXPECT_EQ(HcomGetAlltoAllvcStagedWorkSpaceMemSizeV2("hccl_world_group",menSize), HCCL_SUCCESS);
+    EXPECT_EQ(HcomGetAlltoAllvcStagedWorkSpaceMemSizeV2("hccl_world_group", menSize), HCCL_SUCCESS);
     EXPECT_EQ(menSize, 0);
 }
 
@@ -2067,8 +2054,7 @@ const std::map<Hccl::OpType, HcclCMDType> OpTypeToCMDType = {
     {Hccl::OpType::BATCHPUT, HcclCMDType::HCCL_CMD_BATCH_PUT},
 };
 
-
-void MapToVector(DataTypeSupportMap &opData2TypeMap, std::vector<HcclCMDType> &hcomSupportOpType)
+void MapToVector(DataTypeSupportMap& opData2TypeMap, std::vector<HcclCMDType>& hcomSupportOpType)
 {
     for (auto it = opData2TypeMap.begin(); it != opData2TypeMap.end(); ++it) {
         auto tmp = OpTypeToCMDType.find(it->first);
@@ -2078,7 +2064,7 @@ void MapToVector(DataTypeSupportMap &opData2TypeMap, std::vector<HcclCMDType> &h
     }
 }
 
-void GetSupportOpType(std::vector<HcclCMDType> &hcomSupportOpType, AcceleratorState accelerator)
+void GetSupportOpType(std::vector<HcclCMDType>& hcomSupportOpType, AcceleratorState accelerator)
 {
     if (accelerator == AcceleratorState::CCU_SCHED || accelerator == AcceleratorState::CCU_MS) {
         MapToVector(OpParamsChecker::opDataTypeSupportMapCcuOffload, hcomSupportOpType);
@@ -2100,14 +2086,17 @@ void ExecuteHcomSelectV2Success(AcceleratorState accelerator = AcceleratorState:
 
     s64 comm = reinterpret_cast<s64>(hcclComm.get());
     char group[256] = "hccl_world_group";
-    u64 count = 1024; 
+    u64 count = 1024;
     HcclDataType dataType = HCCL_DATA_TYPE_INT8;
     HcclReduceOp op = HCCL_REDUCE_SUM;
     int32_t aivCoreLimit = 0;
     bool ifAiv = false;
     std::string algName = "";
 
-    MOCKER_CPP(&CommunicatorImpl::ExecAlgSelect).defaults().with(mockcpp::any()).will(returnValue(HcclResult::HCCL_SUCCESS));
+    MOCKER_CPP(&CommunicatorImpl::ExecAlgSelect)
+        .defaults()
+        .with(mockcpp::any())
+        .will(returnValue(HcclResult::HCCL_SUCCESS));
     MOCKER_CPP(&CommunicatorImpl::ReportProfInfo).defaults().with(mockcpp::any()).will(ignoreReturnValue());
 
     std::vector<HcclCMDType> hcomSupportOpType;
@@ -2152,13 +2141,13 @@ TEST_F(HcomTest, ut_HcomGraphSelectAlgV2_When_UnNormal_Expect_ReturnError)
 
     s64 comm = reinterpret_cast<s64>(hcclComm.get());
     char group[256] = "hccl_world_group";
-    u64 count = 1024; 
+    u64 count = 1024;
     HcclDataType dataType = HCCL_DATA_TYPE_INT8;
     HcclReduceOp op = HCCL_REDUCE_SUM;
     int32_t aivCoreLimit = 0;
     bool ifAiv = false;
     std::string algName = "";
-    
+
     HcclCMDType opType = HcclCMDType::HCCL_CMD_INVALID;
     HcclResult ret = HcomGraphSelectAlgV2(comm, group, opType, count, dataType, op, aivCoreLimit, ifAiv, algName);
     EXPECT_EQ(HCCL_E_NOT_SUPPORT, ret);
@@ -2175,7 +2164,10 @@ TEST_F(HcomTest, ut_HcomGraphSelectAlgV2_When_UnNormal_Expect_ReturnError)
     ret = HcomGraphSelectAlgV2(comm, group, opType, count, dataType, op, aivCoreLimit, ifAiv, algName);
     EXPECT_EQ(HCCL_E_SUSPENDING, ret);
 
-    MOCKER_CPP(&CommunicatorImpl::ExecAlgSelect).defaults().with(mockcpp::any()).will(returnValue(HcclResult::HCCL_SUCCESS));
+    MOCKER_CPP(&CommunicatorImpl::ExecAlgSelect)
+        .defaults()
+        .with(mockcpp::any())
+        .will(returnValue(HcclResult::HCCL_SUCCESS));
     hcclComm->pimpl->isSuspended = false;
     hcclComm->pimpl->commExecuteConfig.accState = AcceleratorState::AIV;
     opType = HcclCMDType::HCCL_CMD_REDUCE;
@@ -2195,7 +2187,7 @@ TEST_F(HcomTest, ut_HcomCalcNumBlocksV2_When_Normal_Expect_ReturnHCCL_SUCCESS)
 
     char group[256] = "hccl_world_group";
     HcclCMDType opType = HcclCMDType::HCCL_CMD_ALLREDUCE;
-    u64 count = 1024; 
+    u64 count = 1024;
     HcclDataType dataType = HCCL_DATA_TYPE_INT8;
     HcclReduceOp op = HCCL_REDUCE_SUM;
     int32_t aivCoreLimit = 2;
@@ -2215,7 +2207,7 @@ TEST_F(HcomTest, ut_HcclGetAlgExecParamV2_When_Normal_Expect_ReturnHCCL_SUCCESS)
 {
     SetupCommonCommInfo();
 
-    auto &commInfoV2 = CommManager::GetInstance(0).GetCommInfoV2();
+    auto& commInfoV2 = CommManager::GetInstance(0).GetCommInfoV2();
     std::shared_ptr<Hccl::HcclCommunicator> hcclComm = commInfoV2.pComm;
     hcclComm->pimpl->myRank = 0;
     hcclComm->pimpl->rankSize = 2;
@@ -2225,8 +2217,8 @@ TEST_F(HcomTest, ut_HcclGetAlgExecParamV2_When_Normal_Expect_ReturnHCCL_SUCCESS)
     char group[256] = "hccl_world_group";
     u64 count = 1024;
 
-    s8 *inputPtr = (s8 *)sal_malloc(count * sizeof(s8));
-    s8 *outputPtr = (s8 *)sal_malloc(count * sizeof(s8));
+    s8* inputPtr = (s8*)sal_malloc(count * sizeof(s8));
+    s8* outputPtr = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(inputPtr, count * sizeof(s8), 0, count * sizeof(s8));
     sal_memset(outputPtr, count * sizeof(s8), 0, count * sizeof(s8));
 
@@ -2238,17 +2230,23 @@ TEST_F(HcomTest, ut_HcclGetAlgExecParamV2_When_Normal_Expect_ReturnHCCL_SUCCESS)
     u64 len = 0;
     int32_t aivCoreLimit = 2;
 
-    MOCKER_CPP(&CommunicatorImpl::ExecAlgSelect).defaults().with(mockcpp::any()).will(returnValue(HcclResult::HCCL_SUCCESS));
+    MOCKER_CPP(&CommunicatorImpl::ExecAlgSelect)
+        .defaults()
+        .with(mockcpp::any())
+        .will(returnValue(HcclResult::HCCL_SUCCESS));
     MOCKER_CPP(&CommunicatorImpl::ReportProfInfo).defaults().with(mockcpp::any()).will(ignoreReturnValue());
-    MOCKER_CPP(&CommunicatorImpl::GetAlgExecParam).defaults().with(mockcpp::any()).will(returnValue(HcclResult::HCCL_SUCCESS));
+    MOCKER_CPP(&CommunicatorImpl::GetAlgExecParam)
+        .defaults()
+        .with(mockcpp::any())
+        .will(returnValue(HcclResult::HCCL_SUCCESS));
 
     HcclResult ret = HcclGetAlgExecParamV2(
-        tag, group, count, inputPtr, outputPtr, opType, clearEnable, dataType, op, commContext, len, aivCoreLimit);    
+        tag, group, count, inputPtr, outputPtr, opType, clearEnable, dataType, op, commContext, len, aivCoreLimit);
     EXPECT_EQ(HCCL_SUCCESS, ret);
 
     opType = HcclCMDType::HCCL_CMD_INVALID;
     ret = HcclGetAlgExecParamV2(
-        tag, group, count, inputPtr, outputPtr, opType, clearEnable, dataType, op, commContext, len, aivCoreLimit);    
+        tag, group, count, inputPtr, outputPtr, opType, clearEnable, dataType, op, commContext, len, aivCoreLimit);
     EXPECT_EQ(HCCL_E_NOT_SUPPORT, ret);
 
     sal_free(inputPtr);
@@ -2260,7 +2258,7 @@ TEST_F(HcomTest, ut_HcomGetDevIdV2_expect_ReturnHCCL_SUCCESS)
     SetupCommonCommInfo();
     auto hcclComm = CommManager::GetInstance(0).GetCommInfoV2().pComm;
     hcclComm->GetCommImpl()->devLogicId = 99;
-    
+
     s32 devId{};
     EXPECT_EQ(HcomGetDevIdV2("hccl_world_group", &devId), HCCL_SUCCESS);
     EXPECT_EQ(devId, 99);

@@ -6,18 +6,22 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: ReduceScatterV语义校验文件头
  */
 
 #ifndef HCCLV1_REDUCE_SCATTER_V_SEMANTICS_CHECKER_H
 #define HCCLV1_REDUCE_SCATTER_V_SEMANTICS_CHECKER_H
- 
+
 #include "check_utils.h"
 #include "hccl_types.h"
- 
+
 namespace HcclSim {
-HcclResult TaskCheckReduceScatterVSemantics(std::map<RankId, RankMemorySemantics> &allRankMemSemantics,
-                                            HcclReduceOp reduceType, VDataDesTagInner &vDataDes);
+HcclResult TaskCheckReduceScatterVSemantics(
+    const PhysicalMemorySemantics& memorySemantics, const DeviceBufferAddressLayouts& bufferLayouts,
+    HcclReduceOp reduceType, const VDataDesTagInner& vDataDes, const std::vector<DeviceId>& rankToDevice);
 }
- 
+
 #endif

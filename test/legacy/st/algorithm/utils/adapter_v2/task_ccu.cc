@@ -1,8 +1,13 @@
-/*
- * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
- * Description: 算法分析器CCU task定义
- * Create: 2025-04-11
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #include "task_ccu.h"
 #include <map>
 #include "ccu_microcode.h"
@@ -14,26 +19,30 @@ Hccl::Instruction* g_ccuIns = nullptr;
 std::map<const Hccl::Instruction*, std::vector<Hccl::CcuRep::CcuInstrInfo>> g_ccuIns2MicroCode;
 std::map<u32, std::map<string, std::vector<Hccl::CcuRep::CcuInstrInfo>>> g_ccuSig2MicroCode;
 
-void DumpInstruction(const Hccl::CcuRep::CcuInstrInfo &ccuMicroSeq)
+void DumpInstruction(const Hccl::CcuRep::CcuInstrInfo& ccuMicroSeq)
 {
-    HCCL_ERROR("CcuInstrInfo: startInstrId = %u, instrCount = %u, missionStartInstrId = %u, missionInstrCount = %u",
-            ccuMicroSeq.startInstrId, ccuMicroSeq.instrCount, ccuMicroSeq.missionStartInstrId, ccuMicroSeq.missionInstrCount);
+    HCCL_ERROR(
+        "CcuInstrInfo: startInstrId = %u, instrCount = %u, missionStartInstrId = %u, missionInstrCount = %u",
+        ccuMicroSeq.startInstrId, ccuMicroSeq.instrCount, ccuMicroSeq.missionStartInstrId,
+        ccuMicroSeq.missionInstrCount);
     for (uint16_t index = 0; index < ccuMicroSeq.instrVec.size(); index++) {
         HCCL_ERROR("%d: %s", ccuMicroSeq.startInstrId + index, ParseInstr(ccuMicroSeq.instrVec.data() + index).c_str());
     }
 }
 
-}
+} // namespace Hccl
 
 namespace checker {
 
-TaskStubCcuGraph::TaskStubCcuGraph(const Hccl::Instruction &ins, RankId rank)
-    : TaskStub(TaskTypeStub::CCU_GRAPH), rankId(rank), des(ins.Describe())
+TaskStubCcuGraph::TaskStubCcuGraph(const Hccl::Instruction& ins, RankId rank)
+    : TaskStub(TaskTypeStub::CCU_GRAPH),
+      rankId(rank),
+      des(ins.Describe())
 {
     Hccl::CcuInstruction* ccuIns = dynamic_cast<Hccl::CcuInstruction*>(const_cast<Hccl::Instruction*>(&ins));
     ccuIns->Translate(ccuParams);
 
-    if (!Hccl::g_ccuSig2MicroCode[rank].count(ccuIns->GetCtxSignature().GetData())){
+    if (!Hccl::g_ccuSig2MicroCode[rank].count(ccuIns->GetCtxSignature().GetData())) {
         Hccl::g_ccuSig2MicroCode[rank][ccuIns->GetCtxSignature().GetData()] = Hccl::g_ccuIns2MicroCode[ccuIns];
         instrInfo = Hccl::g_ccuSig2MicroCode[rank][ccuIns->GetCtxSignature().GetData()];
     } else {
@@ -55,9 +64,13 @@ TaskStubCcuGraph::TaskStubCcuGraph(const Hccl::Instruction &ins, RankId rank)
     toDeleteTaskNode_.push_back(ccuHeadTaskNode);
 }
 
-// [注意!!!]拷贝构造函数: 用于后面ccu子图的内存冲突改造(仅保留了内存冲突改造所需要的成员变量, 如果用作它途,可能成员变量须补充)
-TaskStubCcuGraph::TaskStubCcuGraph(const TaskStubCcuGraph *ccuTask)
-    : TaskStub(TaskTypeStub::CCU_GRAPH), rankId(ccuTask->rankId), des(ccuTask->des), queueNum_(ccuTask->queueNum_)
+// [注意!!!]拷贝构造函数: 用于后面ccu子图的内存冲突改造(仅保留了内存冲突改造所需要的成员变量,
+// 如果用作它途,可能成员变量须补充)
+TaskStubCcuGraph::TaskStubCcuGraph(const TaskStubCcuGraph* ccuTask)
+    : TaskStub(TaskTypeStub::CCU_GRAPH),
+      rankId(ccuTask->rankId),
+      des(ccuTask->des),
+      queueNum_(ccuTask->queueNum_)
 {
     ccuHeadTaskNode = new TaskNode(nullptr, -1, 0, 0);
     toDeleteTaskNode_.push_back(ccuHeadTaskNode);
@@ -89,10 +102,7 @@ void TaskStubCcuGraph::GetDieId(uint32_t queId, uint32_t& dieId)
     return;
 }
 
-RankId TaskStubCcuGraph::GetRankId()
-{
-    return rankId;
-}
+RankId TaskStubCcuGraph::GetRankId() { return rankId; }
 
 std::string TaskStubCcuGraph::Describe() const
 {
@@ -102,13 +112,12 @@ std::string TaskStubCcuGraph::Describe() const
     return StringFormat("[CCU GRAPH]: %s", des.c_str());
 }
 
-TaskStubSubGraphEnd::TaskStubSubGraphEnd(TaskNodePtr node)
-    : TaskStub(TaskTypeStub::SUB_GRAPH_END), subGraphNode(node)
-{ }
+TaskStubSubGraphEnd::TaskStubSubGraphEnd(TaskNodePtr node) : TaskStub(TaskTypeStub::SUB_GRAPH_END), subGraphNode(node)
+{}
 
 std::string TaskStubSubGraphEnd::Describe() const
 {
     return StringFormat("end node of sub graph: %s", subGraphNode->task->Describe().c_str());
 }
 
-} // namespace hccl
+} // namespace checker

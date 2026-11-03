@@ -20,37 +20,36 @@
 
 namespace Hccl {
 
-template <typename AlgTopoMatch, typename AlgTemplate> class ReduceScatterSoleExecutor : public CollAlgBase {
+template <typename AlgTopoMatch, typename AlgTemplate>
+class ReduceScatterSoleExecutor : public CollAlgBase {
 public:
     explicit ReduceScatterSoleExecutor();
     ~ReduceScatterSoleExecutor() override;
 
-    std::string Describe() const override
-    {
-        return "Reduce Scatter Sole Executor.";
-    }
+    std::string Describe() const override { return "Reduce Scatter Sole Executor."; }
 
-    HcclResult GenPrimQues(const RankGraph *rankGraph, const CollAlgOperator &op, const CollAlgParams &params,
-                           PrimQuePtr primQue) override;
-    HcclResult CalcResOffload(const RankGraph *rankGraph, const u64 &dataSize,
-                              CollOffloadOpResReq &resReq) override;
+    HcclResult GenPrimQues(
+        const RankGraph* rankGraph, const CollAlgOperator& op, const CollAlgParams& params,
+        PrimQuePtr primQue) override;
+    HcclResult CalcResOffload(const RankGraph* rankGraph, const u64& dataSize, CollOffloadOpResReq& resReq) override;
 
-    HcclResult CalcRes(const RankGraph *rankGraph, CollAlgResReq &algResReq) override;
+    HcclResult CalcRes(const RankGraph* rankGraph, CollAlgResReq& algResReq) override;
 
-    HcclResult GenPrimQuesAIC(const AlgTopoInfo &topoInfo, const CollAlgOperator &op, const CollAlgParams &params,
-                              ConnectedLinkMgr *linkMgr, PrimQuePtr primQue) override;
+    HcclResult GenPrimQuesAIC(
+        const AlgTopoInfo& topoInfo, const CollAlgOperator& op, const CollAlgParams& params, ConnectedLinkMgr* linkMgr,
+        PrimQuePtr primQue) override;
 
 private:
-    HcclResult GenPrimQues4Offload(AlgTemplateBase &tempAlg);
-    HcclResult GenPrimQues4Opbase(const u32 requiredScratchMultiplier, const u32 dataSizePerVolume,
-                                  AlgTemplateBase &tempAlg);
+    HcclResult GenPrimQues4Offload(AlgTemplateBase& tempAlg);
+    HcclResult
+    GenPrimQues4Opbase(const u32 requiredScratchMultiplier, const u32 dataSizePerVolume, AlgTemplateBase& tempAlg);
 
-    std::vector<RankId>              virtRanks_;
-    std::map<RankId, u32>            virtRankMap_; // map<virtRank, virtRankOrder>
+    std::vector<RankId> virtRanks_;
+    std::map<RankId, u32> virtRankMap_; // map<virtRank, virtRankOrder>
     std::vector<std::vector<RankId>> vTopo_;
 
     std::vector<PrimQuePtr> requiredQue_;
-    ResLinks                tempResLinks_;
+    ResLinks tempResLinks_;
 };
 
 } // namespace Hccl

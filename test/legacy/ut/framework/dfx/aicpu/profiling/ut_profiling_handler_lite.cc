@@ -28,75 +28,62 @@
 using namespace Hccl;
 using namespace aicpu;
 
-int32_t  ableNum = 0;
+int32_t ableNum = 0;
 class ProfilingHandlerLiteTest : public testing::Test {
 protected:
-    ProfilingHandlerLiteTest(): comm(0) {}
-    static void SetUpTestCase()
-    {
-        std::cout << "ProfilingHandlerLiteTest SetUP" << std::endl;
-    }
+    ProfilingHandlerLiteTest() : comm(0) {}
+    static void SetUpTestCase() { std::cout << "ProfilingHandlerLiteTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "ProfilingHandlerLiteTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "ProfilingHandlerLiteTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in ProfilingHandlerLiteTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in ProfilingHandlerLiteTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
         GlobalMockObject::verify();
         std::cout << "A Test case in ProfilingHandlerLiteTest TearDown" << std::endl;
     }
-    
+
     CommunicatorImplLite comm;
 };
 
 namespace aicpu {
-    status_t GetTaskAndStreamId(uint64_t & taskId, uint32_t & streamId)
-    {
-        return status_t::AICPU_ERROR_NONE;
+status_t GetTaskAndStreamId(uint64_t& taskId, uint32_t& streamId) { return status_t::AICPU_ERROR_NONE; }
+} // namespace aicpu
+
+extern "C" {
+int32_t AdprofReportAdditionalInfo(uint32_t agingFlag, const void* data, uint32_t length)
+{
+    if (ableNum == 0) {
+        return 0;
+    } else if (ableNum == 1) {
+        return 1;
+    } else {
+        void* mem = nullptr;
+        uintptr_t value = reinterpret_cast<uintptr_t>(mem);
+        return value;
     }
 }
 
-extern "C"
+int32_t MsprofReportAdditionalInfo(uint32_t agingFlag, const VOID_PTR data, uint32_t length)
 {
-    int32_t AdprofReportAdditionalInfo(uint32_t agingFlag, const void *data, uint32_t length)
-    {
-        if (ableNum == 0) {
-            return 0;
-        } else if(ableNum == 1) {
-            return 1;
-        } else {
-            void *mem = nullptr;
-            uintptr_t value = reinterpret_cast<uintptr_t>(mem);
-            return value;
-        }
+    if (ableNum == 0) {
+        return 0;
+    } else if (ableNum == 1) {
+        return 1;
+    } else {
+        void* mem = nullptr;
+        uintptr_t value = reinterpret_cast<uintptr_t>(mem);
+        return value;
     }
-
-    int32_t MsprofReportAdditionalInfo(uint32_t agingFlag, const VOID_PTR data, uint32_t length)
-    {
-        if (ableNum == 0) {
-            return 0;
-        } else if(ableNum == 1) {
-            return 1;
-        } else {
-            void *mem = nullptr;
-            uintptr_t value = reinterpret_cast<uintptr_t>(mem);
-            return value;
-        }
-    }
+}
 }
 
 // 全局状态为false：测试ReportHcclOpInfo接口
 TEST_F(ProfilingHandlerLiteTest, ReportHcclOpInfo_test)
 {
-    ProfilingHandlerLite &handler = Hccl::ProfilingHandlerLite::GetInstance();
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    ProfilingHandlerLite& handler = Hccl::ProfilingHandlerLite::GetInstance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
     MirrorTaskManager mirrorTaskManager(0, &globalMirrorTasks, 0);
     std::shared_ptr<DfxOpInfo> dfxOpInfo = std::make_shared<DfxOpInfo>();
     CollOperator op;
@@ -117,8 +104,8 @@ TEST_F(ProfilingHandlerLiteTest, ReportHcclOpInfo_test)
 // 全局状态为false：测试ReportHcclOpInfo接口
 TEST_F(ProfilingHandlerLiteTest, ReportHcclOpInfo1_test)
 {
-    ProfilingHandlerLite &handler = Hccl::ProfilingHandlerLite::GetInstance();
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    ProfilingHandlerLite& handler = Hccl::ProfilingHandlerLite::GetInstance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
     MirrorTaskManager mirrorTaskManager(0, &globalMirrorTasks, 0);
     std::shared_ptr<DfxOpInfo> dfxOpInfo = std::make_shared<DfxOpInfo>();
     CollOperator op;
@@ -139,8 +126,8 @@ TEST_F(ProfilingHandlerLiteTest, ReportHcclOpInfo1_test)
 
 TEST_F(ProfilingHandlerLiteTest, ReportHcclOpInfo2_test)
 {
-    ProfilingHandlerLite &handler = Hccl::ProfilingHandlerLite::GetInstance();
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    ProfilingHandlerLite& handler = Hccl::ProfilingHandlerLite::GetInstance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
     MirrorTaskManager mirrorTaskManager(0, &globalMirrorTasks, 0);
     std::shared_ptr<DfxOpInfo> dfxOpInfo = std::make_shared<DfxOpInfo>();
     CollOperator op;
@@ -161,10 +148,10 @@ TEST_F(ProfilingHandlerLiteTest, ReportHcclOpInfo2_test)
 // 测试ReportMainStreamTask接口
 TEST_F(ProfilingHandlerLiteTest, ReportMainStreamTask_test)
 {
-    ProfilingHandlerLite &handler = Hccl::ProfilingHandlerLite::GetInstance();
+    ProfilingHandlerLite& handler = Hccl::ProfilingHandlerLite::GetInstance();
     FlagTaskInfo flagTaskInfo;
     flagTaskInfo.taskId = 0;
-    flagTaskInfo.type =  MainStreamTaskType::HEAD;
+    flagTaskInfo.type = MainStreamTaskType::HEAD;
     handler.enableHcclL0_ = true;
     handler.enableHcclL1_ = true;
     handler.ReportMainStreamTask(flagTaskInfo);
@@ -174,20 +161,18 @@ TEST_F(ProfilingHandlerLiteTest, ReportMainStreamTask_test)
 TEST_F(ProfilingHandlerLiteTest, ReporttHcclTaskDetails_test)
 {
     std::vector<TaskInfo*> taskInfo;
-    u32 streamId =1;
+    u32 streamId = 1;
     u32 taskId = 1;
     u32 remoteRank = 1;
-    TaskParam taskParam = {TaskParamType::TASK_NOTIFY_RECORD,
-        std::chrono::high_resolution_clock::now().time_since_epoch().count(),
-        std::chrono::high_resolution_clock::now().time_since_epoch().count(),
-        0,
-        0};
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
-    ProfilingHandlerLite &handler = Hccl::ProfilingHandlerLite::GetInstance();
+    TaskParam taskParam
+        = {TaskParamType::TASK_NOTIFY_RECORD, std::chrono::high_resolution_clock::now().time_since_epoch().count(),
+           std::chrono::high_resolution_clock::now().time_since_epoch().count(), 0, 0};
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
+    ProfilingHandlerLite& handler = Hccl::ProfilingHandlerLite::GetInstance();
     MirrorTaskManager mirrorTaskManager(0, &globalMirrorTasks, 0);
     std::shared_ptr<DfxOpInfo> dfxOpInfo = std::make_shared<DfxOpInfo>();
-    CollOperator op; 
-    op.opTag = "testTag";   
+    CollOperator op;
+    op.opTag = "testTag";
     op.opType = OpType::ALLREDUCE;
     op.staticAddr = false;
     dfxOpInfo->op_ = op;
@@ -195,7 +180,7 @@ TEST_F(ProfilingHandlerLiteTest, ReporttHcclTaskDetails_test)
     dfxOpInfo->comm_ = comm;
     mirrorTaskManager.SetCurrDfxOpInfo(dfxOpInfo);
     TaskInfo task(streamId, taskId, remoteRank, taskParam, dfxOpInfo);
-    for(int i  =0 ; i <= 2; i++){
+    for (int i = 0; i <= 2; i++) {
         taskInfo.push_back(&task);
     }
     handler.enableHcclL1_ = true;
@@ -207,19 +192,17 @@ TEST_F(ProfilingHandlerLiteTest, ReporttHcclTaskDetails_test)
 TEST_F(ProfilingHandlerLiteTest, ReporttHcclTaskDetails1_test)
 {
     std::vector<TaskInfo*> taskInfo;
-    u32 streamId =1;
+    u32 streamId = 1;
     u32 taskId = 1;
     u32 remoteRank = 1;
-    TaskParam taskParam = {TaskParamType::TASK_SDMA,
-        std::chrono::high_resolution_clock::now().time_since_epoch().count(),
-        std::chrono::high_resolution_clock::now().time_since_epoch().count(),
-        0,
-        0};
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
-    ProfilingHandlerLite &handler = Hccl::ProfilingHandlerLite::GetInstance();
+    TaskParam taskParam
+        = {TaskParamType::TASK_SDMA, std::chrono::high_resolution_clock::now().time_since_epoch().count(),
+           std::chrono::high_resolution_clock::now().time_since_epoch().count(), 0, 0};
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
+    ProfilingHandlerLite& handler = Hccl::ProfilingHandlerLite::GetInstance();
     MirrorTaskManager mirrorTaskManager(0, &globalMirrorTasks, 0);
     std::shared_ptr<DfxOpInfo> dfxOpInfo = std::make_shared<DfxOpInfo>();
-    CollOperator op;    
+    CollOperator op;
     op.opType = OpType::ALLREDUCE;
     op.staticAddr = false;
     dfxOpInfo->op_ = op;
@@ -236,19 +219,17 @@ TEST_F(ProfilingHandlerLiteTest, ReporttHcclTaskDetails1_test)
 TEST_F(ProfilingHandlerLiteTest, ReporttHcclTaskDetails2_test)
 {
     std::vector<TaskInfo*> taskInfo;
-    u32 streamId =1;
+    u32 streamId = 1;
     u32 taskId = 1;
     u32 remoteRank = 1;
-    TaskParam taskParam = {TaskParamType::TASK_REDUCE_INLINE,
-        std::chrono::high_resolution_clock::now().time_since_epoch().count(),
-        std::chrono::high_resolution_clock::now().time_since_epoch().count(),
-        0,
-        0};
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
-    ProfilingHandlerLite &handler = Hccl::ProfilingHandlerLite::GetInstance();
+    TaskParam taskParam
+        = {TaskParamType::TASK_REDUCE_INLINE, std::chrono::high_resolution_clock::now().time_since_epoch().count(),
+           std::chrono::high_resolution_clock::now().time_since_epoch().count(), 0, 0};
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
+    ProfilingHandlerLite& handler = Hccl::ProfilingHandlerLite::GetInstance();
     MirrorTaskManager mirrorTaskManager(0, &globalMirrorTasks, 0);
     std::shared_ptr<DfxOpInfo> dfxOpInfo = std::make_shared<DfxOpInfo>();
-    CollOperator op;    
+    CollOperator op;
     op.opType = OpType::ALLREDUCE;
     op.staticAddr = false;
     dfxOpInfo->op_ = op;
@@ -265,7 +246,7 @@ TEST_F(ProfilingHandlerLiteTest, ReporttHcclTaskDetails2_test)
 // 测试aicpu开关状态接口
 TEST_F(ProfilingHandlerLiteTest, GetProfState_test)
 {
-    ProfilingHandlerLite &handler = Hccl::ProfilingHandlerLite::GetInstance();
+    ProfilingHandlerLite& handler = Hccl::ProfilingHandlerLite::GetInstance();
     uint64_t feature = 0;
     handler.enableHcclL0_ = false;
     handler.enableHcclL1_ = false;
@@ -280,7 +261,7 @@ TEST_F(ProfilingHandlerLiteTest, GetProfState_test)
 // 测试aicpu开关状态接口
 TEST_F(ProfilingHandlerLiteTest, SetProLevelOn_test)
 {
-    ProfilingHandlerLite &handler = Hccl::ProfilingHandlerLite::GetInstance();
+    ProfilingHandlerLite& handler = Hccl::ProfilingHandlerLite::GetInstance();
     uint64_t feature = 0;
     handler.enableHcclL0_ = false;
     handler.enableHcclL1_ = false;
@@ -292,7 +273,7 @@ TEST_F(ProfilingHandlerLiteTest, SetProLevelOn_test)
 
 TEST_F(ProfilingHandlerLiteTest, Ut_ReportHcclOpInfo_When_CommNullptr_Expect_NoThrow)
 {
-    ProfilingHandlerLite &handler = Hccl::ProfilingHandlerLite::GetInstance();
+    ProfilingHandlerLite& handler = Hccl::ProfilingHandlerLite::GetInstance();
     std::shared_ptr<DfxOpInfo> dfxOpInfo = std::make_shared<DfxOpInfo>();
     CollOperator op;
     op.opType = OpType::ALLREDUCE;
@@ -311,7 +292,7 @@ TEST_F(ProfilingHandlerLiteTest, Ut_ReportHcclOpInfo_When_CommNullptr_Expect_NoT
 
 TEST_F(ProfilingHandlerLiteTest, Ut_ReportHcclTaskDetails_When_DfxOpInfoNullptr_Expect_NoCrash)
 {
-    ProfilingHandlerLite &handler = Hccl::ProfilingHandlerLite::GetInstance();
+    ProfilingHandlerLite& handler = Hccl::ProfilingHandlerLite::GetInstance();
     std::vector<TaskInfo*> taskInfoVec;
     TaskParam taskParam{};
     TaskInfo taskInfo(0, 0, 0, taskParam, nullptr);

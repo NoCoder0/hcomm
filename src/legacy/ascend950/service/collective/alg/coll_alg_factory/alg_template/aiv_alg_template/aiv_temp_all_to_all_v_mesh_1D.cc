@@ -16,15 +16,13 @@
 namespace Hccl {
 constexpr u64 MAX_NUM_BLOCKS_ALL_TO_ALL_V = 48; // 算法不交付控核
 
-AivTempAlltoAllVMesh1D::AivTempAlltoAllVMesh1D(const RankId virtualRank, const u32 tempRankSize,
-    const std::vector<std::vector<RankId>> &tempVTopo, const std::map<RankId, u32> &tempVirtRankMap)
+AivTempAlltoAllVMesh1D::AivTempAlltoAllVMesh1D(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
     : AivAlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap)
-{
-}
+{}
 
-AivTempAlltoAllVMesh1D::~AivTempAlltoAllVMesh1D()
-{
-}
+AivTempAlltoAllVMesh1D::~AivTempAlltoAllVMesh1D() {}
 
 u32 AivTempAlltoAllVMesh1D::CalcScratchMultiple(BufferType inBuffType, BufferType outBuffType)
 {
@@ -34,7 +32,7 @@ u32 AivTempAlltoAllVMesh1D::CalcScratchMultiple(BufferType inBuffType, BufferTyp
     return 1;
 }
 
-HcclResult AivTempAlltoAllVMesh1D::CalcRes(AlgTempResReq &tempResReq)
+HcclResult AivTempAlltoAllVMesh1D::CalcRes(AlgTempResReq& tempResReq)
 {
     tempResReq.queNum = 1;
     tempResReq.streamNum = tempResReq.queNum;
@@ -43,19 +41,19 @@ HcclResult AivTempAlltoAllVMesh1D::CalcRes(AlgTempResReq &tempResReq)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult AivTempAlltoAllVMesh1D::GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &templateDataParams,
-    const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues)
+HcclResult AivTempAlltoAllVMesh1D::GenExtIns(
+    const TempFuncs& tempFuncs, const TemplateDataParams& templateDataParams, const ResLinks& tempLinks,
+    std::vector<InsQuePtr>& tempInsQues)
 {
     HCCL_INFO("[AivTempAlltoAllVMesh1D] Run algorithm start: rank[%d]", myRank_);
-    CHK_PRT_RET(tempInsQues.empty(),
-        HCCL_ERROR("[AivTempAlltoAllVMesh1D] empty queue"), HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(tempInsQues.empty(), HCCL_ERROR("[AivTempAlltoAllVMesh1D] empty queue"), HcclResult::HCCL_E_INTERNAL);
     CHK_PTR_NULL(tempInsQues[0]);
     std::vector<LinkData> allLinks;
     for (auto iter = tempLinks.begin(); iter != tempLinks.end(); ++iter) {
         allLinks.emplace_back(iter->second.at(0));
     }
 
-    IncSliceId();  // 自动增长sliceId，传入aivTag
+    IncSliceId(); // 自动增长sliceId，传入aivTag
 
     AivOpArgs aivAlltoAllVArgs;
     aivAlltoAllVArgs.cmdType = HcclCMDType::HCCL_CMD_ALLTOALLV;
@@ -67,7 +65,7 @@ HcclResult AivTempAlltoAllVMesh1D::GenExtIns(const TempFuncs &tempFuncs, const T
     aivAlltoAllVArgs.dataType = dataType_;
     aivAlltoAllVArgs.op = reduceOp_;
     aivAlltoAllVArgs.root = root_;
-    aivAlltoAllVArgs.aivTag = sliceId_;  // 传入aivTag，Lauch时重新组装为aivTag
+    aivAlltoAllVArgs.aivTag = sliceId_; // 传入aivTag，Launch时重新组装为aivTag
     aivAlltoAllVArgs.isOpBase = (tempFuncs.opMode == OpMode::OPBASE);
     aivAlltoAllVArgs.xRankSize = tempVTopo_[0].size();
     aivAlltoAllVArgs.yRankSize = 0;
@@ -75,28 +73,29 @@ HcclResult AivTempAlltoAllVMesh1D::GenExtIns(const TempFuncs &tempFuncs, const T
     aivAlltoAllVArgs.numBlocks = MAX_NUM_BLOCKS_ALL_TO_ALL_V;
 
     for (u64 i = 0; i < tempVTopo_[0].size(); i++) {
-        aivAlltoAllVArgs.extraArgs.sendCounts[i] = static_cast<u64 *>(op_.all2AllVDataDes.sendCounts)[i];
-        aivAlltoAllVArgs.extraArgs.sendDispls[i] = static_cast<u64 *>(op_.all2AllVDataDes.sdispls)[i];
-        aivAlltoAllVArgs.extraArgs.recvCounts[i] = static_cast<u64 *>(op_.all2AllVDataDes.recvCounts)[i];
-        aivAlltoAllVArgs.extraArgs.recvDispls[i] = static_cast<u64 *>(op_.all2AllVDataDes.rdispls)[i];
-        HCCL_INFO("[AivTempAlltoAllVMesh1D] rank is [%llu], iter is [%llu], sendCounts is [%llu], sendDispls is [%llu], "
+        aivAlltoAllVArgs.extraArgs.sendCounts[i] = static_cast<u64*>(op_.all2AllVDataDes.sendCounts)[i];
+        aivAlltoAllVArgs.extraArgs.sendDispls[i] = static_cast<u64*>(op_.all2AllVDataDes.sdispls)[i];
+        aivAlltoAllVArgs.extraArgs.recvCounts[i] = static_cast<u64*>(op_.all2AllVDataDes.recvCounts)[i];
+        aivAlltoAllVArgs.extraArgs.recvDispls[i] = static_cast<u64*>(op_.all2AllVDataDes.rdispls)[i];
+        HCCL_INFO(
+            "[AivTempAlltoAllVMesh1D] rank is [%llu], iter is [%llu], sendCounts is [%llu], sendDispls is [%llu], "
             "recvCounts is [%llu], recvDispls is [%llu]",
             u64(myRank_), i, aivAlltoAllVArgs.extraArgs.sendCounts[i], aivAlltoAllVArgs.extraArgs.sendDispls[i],
             aivAlltoAllVArgs.extraArgs.recvCounts[i], aivAlltoAllVArgs.extraArgs.recvDispls[i]);
     }
 
-    for (u32 i = 0; i < tempVTopo_[0].size(); i++){
+    for (u32 i = 0; i < tempVTopo_[0].size(); i++) {
         aivAlltoAllVArgs.topo_[i] = tempVTopo_[0][i];
     }
-    if (tempVTopo_.size() > 1){
+    if (tempVTopo_.size() > 1) {
         aivAlltoAllVArgs.yRankSize = tempVTopo_[1].size();
-        for (u32 i = 0; i < tempVTopo_[1].size(); i++){
+        for (u32 i = 0; i < tempVTopo_[1].size(); i++) {
             aivAlltoAllVArgs.topo_[TOPO_LEN_Y_OFFSET + i] = tempVTopo_[1][i];
         }
     }
-    if (tempVTopo_.size() == MAX_DIM_NUM){
+    if (tempVTopo_.size() == MAX_DIM_NUM) {
         aivAlltoAllVArgs.zRankSize = tempVTopo_[MAX_DIM_NUM - 1].size();
-        for (u32 i = 0; i < tempVTopo_[MAX_DIM_NUM - 1].size(); i++){
+        for (u32 i = 0; i < tempVTopo_[MAX_DIM_NUM - 1].size(); i++) {
             aivAlltoAllVArgs.topo_[TOPO_LEN_Z_OFFSET + i] = tempVTopo_[MAX_DIM_NUM - 1][i];
         }
     }
@@ -115,4 +114,4 @@ HcclResult AivTempAlltoAllVMesh1D::GenExtIns(const TempFuncs &tempFuncs, const T
     return HcclResult::HCCL_SUCCESS;
 }
 
-}  // namespace Hccl
+} // namespace Hccl

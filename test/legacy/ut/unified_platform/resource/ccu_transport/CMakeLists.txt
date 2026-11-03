@@ -7,6 +7,7 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
+
 target_sources(hccl_v2_utest
     PUBLIC
     ut_ccu_jetty.cc
@@ -31,11 +32,11 @@ target_sources(hccl_v2_utest
     ${HCCL_V2_CODE_ROOT}/unified_platform/trace/trace.cc
     
     ${HCCL_V2_CODE_ROOT}/framework/env_config/env_func.cc
-    ${HCCL_V2_CODE_ROOT}/framework/env_config/base_config.cc
+    ${HCCL_V2_CODE_ROOT}/framework/env_config/base_config_legacy.cc
     ${HCCL_V2_CODE_ROOT}/framework/env_config/env_config.cc
 
     ${HCCL_V2_CODE_ROOT}/framework/misc/json_parser/json_parser.cc
-    ${HCCL_V2_CODE_ROOT}/framework/misc/whitelist/whitelist.cc
+    ${HCOMM_DIR}/src/coll_communicator_mgr/rank_info_detect/whitelist.cc
     ${HCCL_V2_CODE_ROOT}/framework/misc/mask_event/mask_event.cc
 
     ${HCCL_V2_CODE_ROOT}/unified_platform/resource/stream/stream.cc

@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "profiling_manager_device.h"
 #include "aicpu_schedule/aicpu_context.h"
@@ -54,7 +54,7 @@ bool ProfilingManager::IsProfOn(uint64_t feature)
 bool ProfilingManager::IsL1fromOffToOn()
 {
     if (((!GetProfL1State()) && ProfilingManager::IsProfL1On())) {
-        HCCL_INFO("Profiling L1 switch form off to on.");
+        HCCL_INFO("Profiling L1 switch from off to on.");
         return true;
     }
     return false;
@@ -108,7 +108,7 @@ bool ProfilingManager::GetProfL1State()
     return true;
 }
 
-HcclResult ProfilingManager::CallMsprofReportAdditionInfo(uint32_t type, uint64_t timeStamp, const void *data, int len)
+HcclResult ProfilingManager::CallMsprofReportAdditionInfo(uint32_t type, uint64_t timeStamp, const void* data, int len)
 {
     MsprofAdditionalInfo reporterData{};
     reporterData.level = MSPROF_REPORT_AICPU_LEVEL;
@@ -117,30 +117,29 @@ HcclResult ProfilingManager::CallMsprofReportAdditionInfo(uint32_t type, uint64_
     reporterData.dataLen = len;
     reporterData.timeStamp = timeStamp;
     s32 sret = memcpy_s(reporterData.data, sizeof(reporterData.data), data, len);
-    CHK_PRT_RET(sret != EOK, 
-            HCCL_ERROR("memcpy failed. errorno:[%d] level:[%hu] type:[%u] threadId:[%u] sizeof_data[%zu] len:[%u] timeStamp:[%llu]",
-                sret, reporterData.level, type, reporterData.threadId, sizeof(reporterData.data), len, timeStamp), 
-            HCCL_E_MEMORY);
+    CHK_PRT_RET(
+        sret != EOK,
+        HCCL_ERROR(
+            "memcpy failed. errorno:[%d] level:[%hu] type:[%u] threadId:[%u] sizeof_data[%zu] len:[%u] "
+            "timeStamp:[%llu]",
+            sret, reporterData.level, type, reporterData.threadId, sizeof(reporterData.data), len, timeStamp),
+        HCCL_E_MEMORY);
     HCCL_DEBUG("CallMsprofReportAdditionInfo, AdditionInfoType[%u]", type);
-        if (MsprofReportBatchAdditionalInfo == nullptr) {
+    if (MsprofReportBatchAdditionalInfo == nullptr) {
         CHK_PTR_NULL(AdprofReportAdditionalInfo);
         int32_t ret = AdprofReportAdditionalInfo(aging, &reporterData, sizeof(MsprofAdditionalInfo));
-        CHK_PRT_RET(ret != 0,
-            HCCL_ERROR("AdprofReportAdditionalInfo failed. ret = [%d]", ret),
-            HCCL_E_INTERNAL);
+        CHK_PRT_RET(ret != 0, HCCL_ERROR("AdprofReportAdditionalInfo failed. ret = [%d]", ret), HCCL_E_INTERNAL);
     } else {
         CHK_PTR_NULL(MsprofReportAdditionalInfo);
         int32_t ret = MsprofReportAdditionalInfo(aging, &reporterData, sizeof(MsprofAdditionalInfo));
-        CHK_PRT_RET(ret != 0,
-            HCCL_ERROR("MsprofReportAdditionalInfo failed. ret = [%d]", ret),
-            HCCL_E_INTERNAL);
+        CHK_PRT_RET(ret != 0, HCCL_ERROR("MsprofReportAdditionalInfo failed. ret = [%d]", ret), HCCL_E_INTERNAL);
     }
 
     HCCL_DEBUG("CallMsprofReportAdditionInfo with additionInfoType[%u] successfully", type);
     return HCCL_SUCCESS;
 }
 
-HcclResult ProfilingManager::TaskInfo2Addition(const void *data, int len, MsprofAdditionalInfo& reporterData)
+HcclResult ProfilingManager::TaskInfo2Addition(const void* data, int len, MsprofAdditionalInfo& reporterData)
 {
     reporterData.level = MSPROF_REPORT_AICPU_LEVEL;
     reporterData.type = MSPROF_REPORT_AICPU_MC2_BATCH_HCCL_INFO;
@@ -161,24 +160,30 @@ HcclResult ProfilingManager::ReportTaskInfo(s32 streamId, void* ctxPtr)
     // 通信域中获取rankId, groupHashId等信息
     CHK_RET(GetProfInfoByStreamId(streamId, profInfo));
     CHK_PTR_NULL(ctxPtr);
-    hccl::HcclSqeContext *sqeContext = reinterpret_cast<hccl::HcclSqeContext*>(ctxPtr);
-    hccl::SqeRingBuffer *sqeContextBuffer = &(sqeContext->buffer);
+    hccl::HcclSqeContext* sqeContext = reinterpret_cast<hccl::HcclSqeContext*>(ctxPtr);
+    hccl::SqeRingBuffer* sqeContextBuffer = &(sqeContext->buffer);
     CHK_PTR_NULL(sqeContextBuffer);
     u32 startSqeIdx = GetStartReportSqeIdx(streamId);
-    HCCL_INFO("[ReportTaskInfo] Rank:%u, stream:%u, sqeNum:%u, startSqeIdx:%u, curSqeTailIdx: %u", profInfo.rankId, streamId,
+    HCCL_INFO(
+        "[ReportTaskInfo] Rank:%u, stream:%d, sqeNum:%u, startSqeIdx:%u, curSqeTailIdx: %u", profInfo.rankId, streamId,
         sqeContextBuffer->tailSqeIdx - startSqeIdx, startSqeIdx, sqeContextBuffer->tailSqeIdx);
     MsprofAicpuHcclTaskInfo taskInfos[HCCLINFO_REPORT_BATCH_NUM] = {};
     auto endIdx = static_cast<uint32_t>(sqeContextBuffer->tailSqeIdx);
-    bool isSupportBatchReport = (AdprofReportBatchAdditionalInfo != nullptr || MsprofReportBatchAdditionalInfo != nullptr);
-    HCCL_INFO("AdprofReportBatchAdditionalInfo != nullptr || MsprofReportBatchAdditionalInfo != nullptr: %s", isSupportBatchReport ? "true" : "false");
-    constexpr int32_t MAX_BATCH_REPORT_NUM = 512; // 最大支持批量上报的MsprofAdditionalInfo个数, 需要与接口实现侧保持一致
+    bool isSupportBatchReport
+        = (AdprofReportBatchAdditionalInfo != nullptr || MsprofReportBatchAdditionalInfo != nullptr);
+    HCCL_INFO(
+        "AdprofReportBatchAdditionalInfo != nullptr || MsprofReportBatchAdditionalInfo != nullptr: %s",
+        isSupportBatchReport ? "true" : "false");
+    constexpr int32_t MAX_BATCH_REPORT_NUM
+        = 512; // 最大支持批量上报的MsprofAdditionalInfo个数, 需要与接口实现侧保持一致
     MsprofAdditionalInfo addInfoVec[MAX_BATCH_REPORT_NUM] = {};
     uint32_t addInfoIndx = 0;
     for (uint32_t idx = startSqeIdx, batchId = 0; idx < endIdx; ++idx) {
         // 获取SqeInfo
         SqeInfo sqeInfo{};
-        SqeContextUtils::QuerySqeInfo(sqeContextBuffer->localBuff + idx * hccl::HCCL_SQE_SIZE,
-            sqeContextBuffer->sqeType[idx], sqeContextBuffer->addInfo[idx], &sqeInfo);
+        SqeContextUtils::QuerySqeInfo(
+            sqeContextBuffer->localBuff + idx * hccl::HCCL_SQE_SIZE, sqeContextBuffer->sqeType[idx],
+            sqeContextBuffer->addInfo[idx], &sqeInfo);
         sqeInfo.remoteRank = sqeContextBuffer->dfxInfo[idx].remoteRank;
         // 转换为MsprofAicpuHcclTaskInfo
         auto& taskInfo = taskInfos[batchId++];
@@ -190,24 +195,29 @@ HcclResult ProfilingManager::ReportTaskInfo(s32 streamId, void* ctxPtr)
         // 上报信息
         if (batchId == HCCLINFO_REPORT_BATCH_NUM || idx == (endIdx - 1)) {
             if (!isSupportBatchReport) {
-                CHK_PRT(dfx::ProfilingManager::CallMsprofReportAdditionInfo(MSPROF_REPORT_AICPU_MC2_BATCH_HCCL_INFO,
-                    0, taskInfos, sizeof(MsprofAicpuHcclTaskInfo) * batchId));
+                CHK_PRT(dfx::ProfilingManager::CallMsprofReportAdditionInfo(
+                    MSPROF_REPORT_AICPU_MC2_BATCH_HCCL_INFO, 0, taskInfos, sizeof(MsprofAicpuHcclTaskInfo) * batchId));
             } else {
-                CHK_PRT(TaskInfo2Addition(taskInfos, sizeof(MsprofAicpuHcclTaskInfo) * batchId, addInfoVec[addInfoIndx++]));
+                CHK_PRT(
+                    TaskInfo2Addition(taskInfos, sizeof(MsprofAicpuHcclTaskInfo) * batchId, addInfoVec[addInfoIndx++]));
                 if (addInfoIndx == MAX_BATCH_REPORT_NUM || idx == (endIdx - 1)) {
                     if (MsprofReportBatchAdditionalInfo == nullptr) {
-                        CHK_PRT_RET(AdprofReportBatchAdditionalInfo(aging, addInfoVec, addInfoIndx * sizeof(MsprofAdditionalInfo)),
-                                HCCL_ERROR("AdprofReportBatchAdditionalInfo failed"), HCCL_E_INTERNAL);
+                        CHK_PRT_RET(
+                            AdprofReportBatchAdditionalInfo(
+                                aging, addInfoVec, addInfoIndx * sizeof(MsprofAdditionalInfo)),
+                            HCCL_ERROR("AdprofReportBatchAdditionalInfo failed"), HCCL_E_INTERNAL);
                         addInfoIndx = 0; // 后面直接覆盖就行不需要清零;
                     } else {
-                        CHK_PRT_RET(MsprofReportBatchAdditionalInfo(aging, addInfoVec, addInfoIndx * sizeof(MsprofAdditionalInfo)),
-                                HCCL_ERROR("MsprofReportBatchAdditionalInfo failed"), HCCL_E_INTERNAL);
+                        CHK_PRT_RET(
+                            MsprofReportBatchAdditionalInfo(
+                                aging, addInfoVec, addInfoIndx * sizeof(MsprofAdditionalInfo)),
+                            HCCL_ERROR("MsprofReportBatchAdditionalInfo failed"), HCCL_E_INTERNAL);
                         addInfoIndx = 0; // 后面直接覆盖就行不需要清零;
                     }
                 }
             }
             batchId = 0;
-            memset_s(taskInfos, sizeof(taskInfos), 0, sizeof(taskInfos));
+            CHK_SAFETY_FUNC_RET(memset_s(taskInfos, sizeof(taskInfos), 0, sizeof(taskInfos)));
         }
     }
     CHK_RET(UpdateStartReportSqeIdx(streamId, sqeContextBuffer->tailSqeIdx));
@@ -216,23 +226,25 @@ HcclResult ProfilingManager::ReportTaskInfo(s32 streamId, void* ctxPtr)
 
 void ProfilingManager::DumpHcclInfo(const MsprofAicpuHcclTaskInfo& taskInfo, u32 batchId, u32 idx)
 {
-    HCCL_DEBUG("[ReportTaskInfo] batchId:%u, idx:%u, itemId:%llu, groupName:%llu, localRank:%u, remoteRank:%u, " \
-            "rankSize:%u, timeStamp:%llu, srcAddr:%x, dstAddr:%x, dataSize:%lld, taskId:%u, streamId:%u, planeID:%u," \
-            "opType:%u, dataType:%u, linkType:%u, transportType:%u, rdmaType:%u, role:%u",
-            batchId, idx, taskInfo.itemId, taskInfo.groupName, taskInfo.localRank, taskInfo.remoteRank,taskInfo.rankSize,
-            taskInfo.timeStamp, taskInfo.srcAddr, taskInfo.dstAddr, taskInfo.dataSize,taskInfo.taskId, taskInfo.streamId,
-            taskInfo.planeID, taskInfo.opType, taskInfo.dataType, taskInfo.linkType, taskInfo.transportType,
-            taskInfo.rdmaType, taskInfo.role);
+    HCCL_DEBUG(
+        "[ReportTaskInfo] batchId:%u, idx:%u, itemId:%llu, groupName:%llu, localRank:%u, remoteRank:%u, "
+        "rankSize:%u, timeStamp:%llu, srcAddr:0x%llx, dstAddr:0x%llx, dataSize:%llu, taskId:%u, streamId:%u, "
+        "planeID:%u,"
+        "opType:%u, dataType:%u, linkType:%u, transportType:%u, rdmaType:%u, role:%u",
+        batchId, idx, taskInfo.itemId, taskInfo.groupName, taskInfo.localRank, taskInfo.remoteRank, taskInfo.rankSize,
+        taskInfo.timeStamp, taskInfo.srcAddr, taskInfo.dstAddr, taskInfo.dataSize, taskInfo.taskId, taskInfo.streamId,
+        taskInfo.planeID, taskInfo.opType, taskInfo.dataType, taskInfo.linkType, taskInfo.transportType,
+        taskInfo.rdmaType, taskInfo.role);
 }
 
-void ProfilingManager::CommInfo2HcclInfo(const dfx::ProfCommInfo &profInfo, MsprofAicpuHcclTaskInfo &taskInfo)
+void ProfilingManager::CommInfo2HcclInfo(const dfx::ProfCommInfo& profInfo, MsprofAicpuHcclTaskInfo& taskInfo)
 {
     taskInfo.groupName = profInfo.groupNameHashId;
     taskInfo.localRank = profInfo.rankId;
     taskInfo.rankSize = profInfo.rankNum;
 }
 
-HcclResult ProfilingManager::ReportHcclOpInfo(MsprofAicpuHCCLOPInfo& hcclOpInfo, std::string &algTypeStr)
+HcclResult ProfilingManager::ReportHcclOpInfo(MsprofAicpuHCCLOPInfo& hcclOpInfo, std::string& algTypeStr)
 {
     if (!GetProfL0State()) {
         return HCCL_SUCCESS;
@@ -242,23 +254,25 @@ HcclResult ProfilingManager::ReportHcclOpInfo(MsprofAicpuHCCLOPInfo& hcclOpInfo,
     uint32_t streamId = 0;
     if (AicpuGetStreamId == nullptr || AicpuGetTaskId == nullptr) {
         CHK_PTR_NULL(aicpu::GetTaskAndStreamId);
-        CHK_PRT_RET(aicpu::GetTaskAndStreamId(taskId, streamId) != aicpu::status_t::AICPU_ERROR_NONE,
-        HCCL_ERROR("Failed to get task id and stream id."), HCCL_E_PARA);
+        CHK_PRT_RET(
+            aicpu::GetTaskAndStreamId(taskId, streamId) != aicpu::status_t::AICPU_ERROR_NONE,
+            HCCL_ERROR("Failed to get task id and stream id."), HCCL_E_PARA);
     } else {
         streamId = AicpuGetStreamId();
         taskId = AicpuGetTaskId();
     }
 
-    HCCL_INFO("[ProfilingManager] ReportHcclOpInfo streamId = %u, taskId = %u", streamId, taskId);
+    HCCL_INFO("[ProfilingManager] ReportHcclOpInfo streamId = %u, taskId = %llu", streamId, taskId);
 
     hcclOpInfo.algType = GetProfHashId(algTypeStr.c_str(), algTypeStr.length());
     hcclOpInfo.taskId = taskId;
     hcclOpInfo.streamId = streamId;
-    HCCL_INFO("[ReportHcclOpInfo] relay:%u, retry:%u, dataType:%u, algType:%u, count:%llu, groupHashId:%llu",
+    HCCL_INFO(
+        "[ReportHcclOpInfo] relay:%u, retry:%u, dataType:%u, algType:%llu, count:%llu, groupHashId:%llu",
         hcclOpInfo.relay, hcclOpInfo.retry, hcclOpInfo.dataType, hcclOpInfo.algType, hcclOpInfo.count,
         hcclOpInfo.groupName);
-    CHK_PRT(dfx::ProfilingManager::CallMsprofReportAdditionInfo(MSPROF_REPORT_AICPU_HCCL_OP_INFO,
-        ProfGetCurCpuTimestamp(), &hcclOpInfo, sizeof(MsprofAicpuHCCLOPInfo)));
+    CHK_PRT(dfx::ProfilingManager::CallMsprofReportAdditionInfo(
+        MSPROF_REPORT_AICPU_HCCL_OP_INFO, ProfGetCurCpuTimestamp(), &hcclOpInfo, sizeof(MsprofAicpuHCCLOPInfo)));
     return HCCL_SUCCESS;
 }
 
@@ -272,23 +286,28 @@ HcclResult ProfilingManager::ReportMainStreamTask(hccl::Stream& stream, uint16_t
     uint32_t aicpuKernelStreamId = 0;
     if (AicpuGetStreamId == nullptr || AicpuGetTaskId == nullptr) {
         CHK_PTR_NULL(aicpu::GetTaskAndStreamId);
-        CHK_PRT_RET(aicpu::GetTaskAndStreamId(aicpuKernelTaskId, aicpuKernelStreamId) != aicpu::status_t::AICPU_ERROR_NONE,
-        HCCL_ERROR("Failed to get task id and stream id."), HCCL_E_PARA);
+        CHK_PRT_RET(
+            aicpu::GetTaskAndStreamId(aicpuKernelTaskId, aicpuKernelStreamId) != aicpu::status_t::AICPU_ERROR_NONE,
+            HCCL_ERROR("Failed to get task id and stream id."), HCCL_E_PARA);
     } else {
         aicpuKernelTaskId = AicpuGetTaskId();
         aicpuKernelStreamId = AicpuGetStreamId();
     }
-    HCCL_INFO("[ReportMainStreamTask] aicpuKernelStreamId = %u, aicpuKernelTaskId = %u", aicpuKernelStreamId, aicpuKernelTaskId);
+    HCCL_INFO(
+        "[ReportMainStreamTask] aicpuKernelStreamId = %u, aicpuKernelTaskId = %llu", aicpuKernelStreamId,
+        aicpuKernelTaskId);
     MsprofAicpuHcclMainStreamTask flagtask{};
     flagtask.streamId = stream.id();
     flagtask.taskId = taskId;
     flagtask.type = type;
     flagtask.aicpuStreamId = aicpuKernelStreamId;
     flagtask.aicpuTaskId = aicpuKernelTaskId;
-    HCCL_INFO("[ReportMainStreamTask] streamId:%u, taskId:%u, type:%u", flagtask.streamId, flagtask.taskId, flagtask.type);
+    HCCL_INFO(
+        "[ReportMainStreamTask] streamId:%u, taskId:%u, type:%u", flagtask.streamId, flagtask.taskId, flagtask.type);
 
-    CHK_PRT(dfx::ProfilingManager::CallMsprofReportAdditionInfo(MSPROF_REPORT_AICPU_HCCL_FLAG_TASK,
-        ProfGetCurCpuTimestamp(), &flagtask, sizeof(MsprofAicpuHcclMainStreamTask)));
+    CHK_PRT(dfx::ProfilingManager::CallMsprofReportAdditionInfo(
+        MSPROF_REPORT_AICPU_HCCL_FLAG_TASK, ProfGetCurCpuTimestamp(), &flagtask,
+        sizeof(MsprofAicpuHcclMainStreamTask)));
 
     return HCCL_SUCCESS;
 }
@@ -302,15 +321,16 @@ HcclResult ProfilingManager::ReportFilpTask(s32 streamId, uint16_t taskId, uint3
     flipTaskInfo.streamId = streamId;
     flipTaskInfo.taskId = taskId;
     flipTaskInfo.flipNum = flipNum;
-    HCCL_INFO("[ReportFilpTask] streamId:%u, taskId:%u, filpNum:%u", flipTaskInfo.streamId, flipTaskInfo.taskId,
+    HCCL_INFO(
+        "[ReportFlipTask] streamId:%u, taskId:%u, flipNum:%u", flipTaskInfo.streamId, flipTaskInfo.taskId,
         flipTaskInfo.flipNum);
-    CHK_PRT(dfx::ProfilingManager::CallMsprofReportAdditionInfo(MSPROF_REPORT_AICPU_FILP_TASK,
-        ProfGetCurCpuTimestamp(), &flipTaskInfo, sizeof(MsporfAicpuFlipTask)));
+    CHK_PRT(dfx::ProfilingManager::CallMsprofReportAdditionInfo(
+        MSPROF_REPORT_AICPU_FILP_TASK, ProfGetCurCpuTimestamp(), &flipTaskInfo, sizeof(MsporfAicpuFlipTask)));
 
     return HCCL_SUCCESS;
 }
 
-uint64_t ProfilingManager::GetProfHashId(const char *name, uint32_t len)
+uint64_t ProfilingManager::GetProfHashId(const char* name, uint32_t len)
 {
     if (name == nullptr || len == 0) {
         HCCL_WARNING("HashData is empty.");
@@ -331,7 +351,7 @@ uint32_t ProfilingManager::GetStartReportSqeIdx(s32 streamId)
     u32 lastSqeTailIdx = 0;
     auto iter = streamToSqeIdxMap_.find(streamId);
     if (iter == streamToSqeIdxMap_.end()) {
-        HCCL_INFO("[GetProfInfoByStreamId]streamId:%d is not find", streamId);
+        HCCL_INFO("[GetProfInfoByStreamId]streamId:%d is not found", streamId);
         streamToSqeIdxMap_.insert({streamId, 0});
     } else {
         lastSqeTailIdx = iter->second;
@@ -344,13 +364,14 @@ HcclResult ProfilingManager::UpdateStartReportSqeIdx(s32 streamId, u32 newSqeTai
     std::unique_lock<std::mutex> lock(startReportSqeIdxMutex_);
     auto iter = streamToSqeIdxMap_.find(streamId);
     if (iter == streamToSqeIdxMap_.end()) {
-        streamToSqeIdxMap_.insert({ streamId, newSqeTailIdx });
-        HCCL_INFO("[UpdateStartReportSqeIdx]streamId:%d is not find, newSqeTailIdx:%u", streamId, newSqeTailIdx);
+        streamToSqeIdxMap_.insert({streamId, newSqeTailIdx});
+        HCCL_INFO("[UpdateStartReportSqeIdx]streamId:%d is not found, newSqeTailIdx:%u", streamId, newSqeTailIdx);
     } else {
         // 到2048时，更新成0;
         newSqeTailIdx = (newSqeTailIdx == hccl::HCCL_SQE_MAX_CNT) ? 0 : newSqeTailIdx;
-        HCCL_INFO("[UpdateStartReportSqeIdx] streamId:%d, lastSqeTailIdx:%u, newSqeTailIdx:%u", streamId,
-            iter->second, newSqeTailIdx);
+        HCCL_INFO(
+            "[UpdateStartReportSqeIdx] streamId:%d, lastSqeTailIdx:%u, newSqeTailIdx:%u", streamId, iter->second,
+            newSqeTailIdx);
         iter->second = newSqeTailIdx;
     }
     return HCCL_SUCCESS;
@@ -362,12 +383,12 @@ HcclResult ProfilingManager::GetProfInfoByStreamId(s32 streamId, ProfCommInfo& p
     std::unique_lock<std::mutex> lock(streamMutex_);
     auto iter = streamToTagMap_.find(streamId);
     if (iter == streamToTagMap_.end()) {
-        HCCL_INFO("[GetProfInfoByStreamId]streamId:%d is not find", streamId);
+        HCCL_INFO("[GetProfInfoByStreamId]streamId:%d is not found", streamId);
     } else {
         tag = iter->second;
         auto opInfoIter = tagOpInfoMap_.find(tag);
         if (opInfoIter == tagOpInfoMap_.end()) {
-            HCCL_INFO("[GetProfInfoByStreamId]streamId:%s is not find", tag.c_str());
+            HCCL_INFO("[GetProfInfoByStreamId]tag:%s is not found", tag.c_str());
         } else {
             profInfo = opInfoIter->second;
         }
@@ -375,7 +396,7 @@ HcclResult ProfilingManager::GetProfInfoByStreamId(s32 streamId, ProfCommInfo& p
     return HCCL_SUCCESS;
 }
 
-HcclResult ProfilingManager::AddProfInfoByStreamId(s32 streamId, const std::string &tag, const ProfCommInfo& profInfo)
+HcclResult ProfilingManager::AddProfInfoByStreamId(s32 streamId, const std::string& tag, const ProfCommInfo& profInfo)
 {
     std::unique_lock<std::mutex> lock(streamMutex_);
     auto tagMapIter = streamToTagMap_.find(streamId);
@@ -397,19 +418,20 @@ HcclResult ProfilingManager::AddProfInfoByStreamId(s32 streamId, const std::stri
     return HCCL_SUCCESS;
 }
 
-void TaskProfilingCallBack(void *userPtr, void *param, u32 length)
+void TaskProfilingCallBack([[maybe_unused]] void* userPtr, void* param, u32 length)
 {
     if (UNLIKELY(param == nullptr)) {
         HCCL_ERROR("[ProfilingManager][%s]param is nullptr.", __func__);
         return;
     }
-    struct hccl::TaskPara *taskPara = (struct hccl::TaskPara *)param;
+    struct hccl::TaskPara* taskPara = (struct hccl::TaskPara*)param;
 
     if (UNLIKELY(sizeof(hccl::TaskPara) < length)) {
         return;
     }
-    HCCL_INFO("[ProfilingManager][%s]Start handle task profiler, taskType[%d], profilerType[%d]", __func__,
-        taskPara->type, taskPara->profilerType);
+    HCCL_INFO(
+        "[ProfilingManager][%s]Start handle task profiler, taskType[%d], profilerType[%d]", __func__,
+        static_cast<int>(taskPara->type), static_cast<int>(taskPara->profilerType));
     switch (taskPara->type) {
         case hccl::TaskType::TASK_BATCH_REPORT:
             dfx::ProfilingManager::ReportTaskInfo(taskPara->streamTasks.streamID, taskPara->streamTasks.ctxPtr);
@@ -417,7 +439,7 @@ void TaskProfilingCallBack(void *userPtr, void *param, u32 length)
 
         case hccl::TaskType::TASK_FLIP:
             dfx::ProfilingManager::ReportFilpTask(
-                    taskPara->flipTask.streamID, taskPara->flipTask.taskID, taskPara->flipTask.flipNum);
+                taskPara->flipTask.streamID, taskPara->flipTask.taskID, taskPara->flipTask.flipNum);
             break;
 
         default:
@@ -425,4 +447,4 @@ void TaskProfilingCallBack(void *userPtr, void *param, u32 length)
     }
     return;
 }
-}  // namespace dfx
+} // namespace dfx

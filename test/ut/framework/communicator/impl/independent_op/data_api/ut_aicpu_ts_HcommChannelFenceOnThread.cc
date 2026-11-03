@@ -13,18 +13,11 @@
 
 using namespace hccl;
 
-class UtAicpuTsHcommChannelFenceOnThread : public UtAicpuTsBase
-{
+class UtAicpuTsHcommChannelFenceOnThread : public UtAicpuTsBase {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "UtAicpuTsHcommChannelFenceOnThread tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "UtAicpuTsHcommChannelFenceOnThread tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "UtAicpuTsHcommChannelFenceOnThread tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "UtAicpuTsHcommChannelFenceOnThread tests tear down." << std::endl; }
 
     virtual void SetUp() override
     {

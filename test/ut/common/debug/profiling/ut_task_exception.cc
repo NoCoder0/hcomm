@@ -34,15 +34,10 @@ extern array<map<s32, GetAicpuTaskExceptionCallBack>, MAX_MODULE_DEVICE_NUM> g_c
 extern array<bool, MAX_MODULE_DEVICE_NUM> g_commHadCallbackArray;
 extern std::mutex g_commHadCallbackArrayMutex;
 
-class TaskExceptionErrMsgFlagTest : public testing::Test
-{
+class TaskExceptionErrMsgFlagTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-    }
-    static void TearDownTestCase()
-    {
-    }
+    static void SetUpTestCase() {}
+    static void TearDownTestCase() {}
 
     virtual void SetUp()
     {
@@ -58,26 +53,32 @@ protected:
     }
 };
 
-HcclResult stub_hrtGetStreamAvailableNum(u32 &maxStrCount)
+HcclResult stub_hrtGetStreamAvailableNum(u32& maxStrCount)
 {
     maxStrCount = 16;
     return HCCL_SUCCESS;
 }
 
-void stub_RptInputErr_print(std::string error_code, std::vector<std::string> key,
-    std::vector<std::string> value)
+void stub_RptInputErr_print(std::string error_code, std::vector<std::string> key, std::vector<std::string> value)
 {
     if (error_code == "EI0012") {
-        printf("Execution_Error_SDMA(EI0012): SDMA memory copy task exception occurred. Remote rank: [%s]. Base information: [%s]. "
+        printf(
+            "Execution_Error_SDMA(EI0012): SDMA memory copy task exception occurred. Remote rank: [%s]. Base "
+            "information: [%s]. "
             "Task information: [%s]. Communicator information: [%s].\n",
             value.size() >= 1 ? value[0].c_str() : "0",
-            value.size() >= 2 ? value[1].c_str() : "streamID:[0], taskID[0], taskType:[SDMA], tag:[test_tag], AlgType(level 0-1-2):[ring-ring-ring].",
-            "src:[0x1000], dst:[0x2000], size:[1024], op:[ALLREDUCE], data type:[FLOAT32], link type:[OnChip], remote rank:[0]",
+            value.size() >= 2 ?
+                value[1].c_str() :
+                "streamID:[0], taskID[0], taskType:[SDMA], tag:[test_tag], AlgType(level 0-1-2):[ring-ring-ring].",
+            "src:[0x1000], dst:[0x2000], size:[1024], op:[ALLREDUCE], data type:[FLOAT32], link type:[OnChip], remote "
+            "rank:[0]",
             "group:[testGroup], user define information[testUdi], rankSize[8], rankId[0 0]");
         printf("        Possible cause: The DMA data transfer fails due to a hardware fault or link error.\n"
-            "        Solution: 1. Check whether the network link is abnormal during the execution.\n"
-            "2. Check whether a process in the cluster exits before an error is reported. If yes, locate the cause of the process exit.\n"
-            "3. Check whether the input/output memory size is correct and whether the memory or communicator is released prematurely.\n");
+               "        Solution: 1. Check whether the network link is abnormal during the execution.\n"
+               "2. Check whether a process in the cluster exits before an error is reported. If yes, locate the cause "
+               "of the process exit.\n"
+               "3. Check whether the input/output memory size is correct and whether the memory or communicator is "
+               "released prematurely.\n");
     }
     fflush(stdout);
 }
@@ -142,9 +143,7 @@ TEST_F(TaskExceptionErrMsgFlagTest, Ut_PrintAicpuErrorMessage_NotifyWait_Reports
 
     bool isExistAicpuError = false;
 
-    MOCKER(RptInputErr)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(RptInputErr).stubs().will(returnValue(HCCL_SUCCESS));
 
     TaskExceptionHandler::PrintAicpuErrorMessage(&exceptionInfo, isExistAicpuError);
 
@@ -179,9 +178,7 @@ TEST_F(TaskExceptionErrMsgFlagTest, Ut_PrintAicpuErrorMessage_Sdma_ReportsEI0012
 
     bool isExistAicpuError = false;
 
-    MOCKER(RptInputErr)
-        .stubs()
-        .will(invoke(stub_RptInputErr_print));
+    MOCKER(RptInputErr).stubs().will(invoke(stub_RptInputErr_print));
 
     TaskExceptionHandler::PrintAicpuErrorMessage(&exceptionInfo, isExistAicpuError);
 
@@ -218,8 +215,7 @@ TEST_F(TaskExceptionErrMsgFlagTest, Ut_PrintAicpuErrorMessage_ErrMsgFlagTrue_NoR
 
     bool isExistAicpuError = false;
 
-    MOCKER(RptInputErr)
-        .expects(never());
+    MOCKER(RptInputErr).expects(never());
 
     TaskExceptionHandler::PrintAicpuErrorMessage(&exceptionInfo, isExistAicpuError);
 
@@ -332,9 +328,7 @@ TEST_F(TaskExceptionErrMsgFlagTest, Ut_PrintAicpuErrorMessage_SecondCall_ErrMsgF
     RegisterGetAicpuTaskExceptionCallBack(streamId1, deviceId, callback1);
     RegisterGetAicpuTaskExceptionCallBack(streamId2, deviceId, callback2);
 
-    MOCKER(RptInputErr)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(RptInputErr).stubs().will(returnValue(HCCL_SUCCESS));
 
     rtExceptionInfo exceptionInfo1;
     exceptionInfo1.deviceid = deviceId;
@@ -369,9 +363,7 @@ TEST_F(TaskExceptionErrMsgFlagTest, Ut_DealExceptionTask_NotifyWait_SetsErrMsgFl
     u32 deviceLogicId = 0;
     TaskExceptionHandler taskExceptionHandler(deviceLogicId);
 
-    MOCKER(hrtGetStreamAvailableNum)
-        .stubs()
-        .will(invoke(stub_hrtGetStreamAvailableNum));
+    MOCKER(hrtGetStreamAvailableNum).stubs().will(invoke(stub_hrtGetStreamAvailableNum));
 
     HcclResult ret = taskExceptionHandler.Init();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -397,9 +389,7 @@ TEST_F(TaskExceptionErrMsgFlagTest, Ut_DealExceptionTask_NotifyWait_SetsErrMsgFl
     exceptionInfo.retcode = 0;
     memset(&exceptionInfo.expandInfo, 0, sizeof(exceptionInfo.expandInfo));
 
-    MOCKER(RptInputErr)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(RptInputErr).stubs().will(returnValue(HCCL_SUCCESS));
 
     bool result = TaskExceptionHandler::DealExceptionTask(&exceptionInfo);
     EXPECT_TRUE(result);
@@ -414,9 +404,7 @@ TEST_F(TaskExceptionErrMsgFlagTest, Ut_DealExceptionTask_Sdma_SetsErrMsgFlag)
     u32 deviceLogicId = 0;
     TaskExceptionHandler taskExceptionHandler(deviceLogicId);
 
-    MOCKER(hrtGetStreamAvailableNum)
-        .stubs()
-        .will(invoke(stub_hrtGetStreamAvailableNum));
+    MOCKER(hrtGetStreamAvailableNum).stubs().will(invoke(stub_hrtGetStreamAvailableNum));
 
     HcclResult ret = taskExceptionHandler.Init();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -442,9 +430,7 @@ TEST_F(TaskExceptionErrMsgFlagTest, Ut_DealExceptionTask_Sdma_SetsErrMsgFlag)
     exceptionInfo.retcode = 0;
     memset(&exceptionInfo.expandInfo, 0, sizeof(exceptionInfo.expandInfo));
 
-    MOCKER(RptInputErr)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(RptInputErr).stubs().will(returnValue(HCCL_SUCCESS));
 
     bool result = TaskExceptionHandler::DealExceptionTask(&exceptionInfo);
     EXPECT_TRUE(result);
@@ -461,9 +447,7 @@ TEST_F(TaskExceptionErrMsgFlagTest, Ut_DealExceptionTask_ErrMsgFlagTrue_NoReport
     u32 deviceLogicId = 0;
     TaskExceptionHandler taskExceptionHandler(deviceLogicId);
 
-    MOCKER(hrtGetStreamAvailableNum)
-        .stubs()
-        .will(invoke(stub_hrtGetStreamAvailableNum));
+    MOCKER(hrtGetStreamAvailableNum).stubs().will(invoke(stub_hrtGetStreamAvailableNum));
 
     HcclResult ret = taskExceptionHandler.Init();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -487,8 +471,7 @@ TEST_F(TaskExceptionErrMsgFlagTest, Ut_DealExceptionTask_ErrMsgFlagTrue_NoReport
     exceptionInfo.retcode = 0;
     memset(&exceptionInfo.expandInfo, 0, sizeof(exceptionInfo.expandInfo));
 
-    MOCKER(RptInputErr)
-        .expects(never());
+    MOCKER(RptInputErr).expects(never());
 
     bool result = TaskExceptionHandler::DealExceptionTask(&exceptionInfo);
     EXPECT_TRUE(result);
@@ -503,9 +486,7 @@ TEST_F(TaskExceptionErrMsgFlagTest, Ut_DealExceptionTask_ReduceInline_SetsErrMsg
     u32 deviceLogicId = 0;
     TaskExceptionHandler taskExceptionHandler(deviceLogicId);
 
-    MOCKER(hrtGetStreamAvailableNum)
-        .stubs()
-        .will(invoke(stub_hrtGetStreamAvailableNum));
+    MOCKER(hrtGetStreamAvailableNum).stubs().will(invoke(stub_hrtGetStreamAvailableNum));
 
     HcclResult ret = taskExceptionHandler.Init();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -531,9 +512,7 @@ TEST_F(TaskExceptionErrMsgFlagTest, Ut_DealExceptionTask_ReduceInline_SetsErrMsg
     exceptionInfo.retcode = 0;
     memset(&exceptionInfo.expandInfo, 0, sizeof(exceptionInfo.expandInfo));
 
-    MOCKER(RptInputErr)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(RptInputErr).stubs().will(returnValue(HCCL_SUCCESS));
 
     bool result = TaskExceptionHandler::DealExceptionTask(&exceptionInfo);
     EXPECT_TRUE(result);
@@ -548,9 +527,7 @@ TEST_F(TaskExceptionErrMsgFlagTest, Ut_DealExceptionTask_SecondCall_ErrMsgFlagBl
     u32 deviceLogicId = 0;
     TaskExceptionHandler taskExceptionHandler(deviceLogicId);
 
-    MOCKER(hrtGetStreamAvailableNum)
-        .stubs()
-        .will(invoke(stub_hrtGetStreamAvailableNum));
+    MOCKER(hrtGetStreamAvailableNum).stubs().will(invoke(stub_hrtGetStreamAvailableNum));
 
     HcclResult ret = taskExceptionHandler.Init();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -575,9 +552,7 @@ TEST_F(TaskExceptionErrMsgFlagTest, Ut_DealExceptionTask_SecondCall_ErrMsgFlagBl
     ret = taskExceptionHandler.InsertTaskMap(streamID, taskInfo2);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    MOCKER(RptInputErr)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(RptInputErr).stubs().will(returnValue(HCCL_SUCCESS));
 
     rtExceptionInfo exceptionInfo1;
     exceptionInfo1.deviceid = 0;
@@ -606,12 +581,8 @@ TEST_F(TaskExceptionErrMsgFlagTest, Ut_DealExceptionTask_SecondCall_ErrMsgFlagBl
 
 TEST_F(TaskExceptionErrMsgFlagTest, Ut_DealExceptionCtx_NotifyWait_SetsErrMsgFlag)
 {
-    MOCKER(GetExternalInputTaskExceptionSwitch)
-        .stubs()
-        .will(returnValue(1));
-    MOCKER(hrtGetStreamAvailableNum)
-        .stubs()
-        .will(invoke(stub_hrtGetStreamAvailableNum));
+    MOCKER(GetExternalInputTaskExceptionSwitch).stubs().will(returnValue(1));
+    MOCKER(hrtGetStreamAvailableNum).stubs().will(invoke(stub_hrtGetStreamAvailableNum));
 
     u32 deviceLogicId = 0;
     TaskExceptionHandler taskExceptionHandler(deviceLogicId);
@@ -647,9 +618,7 @@ TEST_F(TaskExceptionErrMsgFlagTest, Ut_DealExceptionCtx_NotifyWait_SetsErrMsgFla
     exceptionInfo.deviceid = 0;
     exceptionInfo.taskid = taskID;
 
-    MOCKER(RptInputErr)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(RptInputErr).stubs().will(returnValue(HCCL_SUCCESS));
 
     TaskExceptionHandler::DealExceptionCtx(&exceptionInfo);
     EXPECT_TRUE(TaskExceptionHandler::errMsgFlag_.load());
@@ -662,12 +631,8 @@ TEST_F(TaskExceptionErrMsgFlagTest, Ut_DealExceptionCtx_ErrMsgFlagTrue_NoReport)
 {
     TaskExceptionHandler::errMsgFlag_.store(true);
 
-    MOCKER(GetExternalInputTaskExceptionSwitch)
-        .stubs()
-        .will(returnValue(1));
-    MOCKER(hrtGetStreamAvailableNum)
-        .stubs()
-        .will(invoke(stub_hrtGetStreamAvailableNum));
+    MOCKER(GetExternalInputTaskExceptionSwitch).stubs().will(returnValue(1));
+    MOCKER(hrtGetStreamAvailableNum).stubs().will(invoke(stub_hrtGetStreamAvailableNum));
 
     u32 deviceLogicId = 0;
     TaskExceptionHandler taskExceptionHandler(deviceLogicId);
@@ -701,8 +666,7 @@ TEST_F(TaskExceptionErrMsgFlagTest, Ut_DealExceptionCtx_ErrMsgFlagTrue_NoReport)
     exceptionInfo.deviceid = 0;
     exceptionInfo.taskid = taskID;
 
-    MOCKER(RptInputErr)
-        .expects(never());
+    MOCKER(RptInputErr).expects(never());
 
     TaskExceptionHandler::DealExceptionCtx(&exceptionInfo);
 
@@ -712,9 +676,7 @@ TEST_F(TaskExceptionErrMsgFlagTest, Ut_DealExceptionCtx_ErrMsgFlagTrue_NoReport)
 
 TEST_F(TaskExceptionErrMsgFlagTest, Ut_DealExceptionOp_Timeout_SetsErrMsgFlag)
 {
-    MOCKER(hrtGetStreamAvailableNum)
-        .stubs()
-        .will(invoke(stub_hrtGetStreamAvailableNum));
+    MOCKER(hrtGetStreamAvailableNum).stubs().will(invoke(stub_hrtGetStreamAvailableNum));
 
     u32 deviceLogicId = 0;
     TaskExceptionHandler taskExceptionHandler(deviceLogicId);
@@ -741,9 +703,7 @@ TEST_F(TaskExceptionErrMsgFlagTest, Ut_DealExceptionOp_Timeout_SetsErrMsgFlag)
     exceptionInfo.retcode = ACL_ERROR_RT_FFTS_PLUS_TIMEOUT;
     memset(&exceptionInfo.expandInfo, 0, sizeof(exceptionInfo.expandInfo));
 
-    MOCKER(RptInputErr)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(RptInputErr).stubs().will(returnValue(HCCL_SUCCESS));
 
     bool result = TaskExceptionHandler::DealExceptionOp(&exceptionInfo);
     EXPECT_TRUE(result);
@@ -755,9 +715,7 @@ TEST_F(TaskExceptionErrMsgFlagTest, Ut_DealExceptionOp_Timeout_SetsErrMsgFlag)
 
 TEST_F(TaskExceptionErrMsgFlagTest, Ut_DealExceptionOp_NonTimeout_NoReportButSetsFlag)
 {
-    MOCKER(hrtGetStreamAvailableNum)
-        .stubs()
-        .will(invoke(stub_hrtGetStreamAvailableNum));
+    MOCKER(hrtGetStreamAvailableNum).stubs().will(invoke(stub_hrtGetStreamAvailableNum));
 
     u32 deviceLogicId = 0;
     TaskExceptionHandler taskExceptionHandler(deviceLogicId);
@@ -784,8 +742,7 @@ TEST_F(TaskExceptionErrMsgFlagTest, Ut_DealExceptionOp_NonTimeout_NoReportButSet
     exceptionInfo.retcode = 0;
     memset(&exceptionInfo.expandInfo, 0, sizeof(exceptionInfo.expandInfo));
 
-    MOCKER(RptInputErr)
-        .expects(never());
+    MOCKER(RptInputErr).expects(never());
 
     bool result = TaskExceptionHandler::DealExceptionOp(&exceptionInfo);
     EXPECT_TRUE(result);
@@ -799,9 +756,7 @@ TEST_F(TaskExceptionErrMsgFlagTest, Ut_DealExceptionOp_ErrMsgFlagTrue_NoReport)
 {
     TaskExceptionHandler::errMsgFlag_.store(true);
 
-    MOCKER(hrtGetStreamAvailableNum)
-        .stubs()
-        .will(invoke(stub_hrtGetStreamAvailableNum));
+    MOCKER(hrtGetStreamAvailableNum).stubs().will(invoke(stub_hrtGetStreamAvailableNum));
 
     u32 deviceLogicId = 0;
     TaskExceptionHandler taskExceptionHandler(deviceLogicId);
@@ -826,8 +781,7 @@ TEST_F(TaskExceptionErrMsgFlagTest, Ut_DealExceptionOp_ErrMsgFlagTrue_NoReport)
     exceptionInfo.retcode = ACL_ERROR_RT_FFTS_PLUS_TIMEOUT;
     memset(&exceptionInfo.expandInfo, 0, sizeof(exceptionInfo.expandInfo));
 
-    MOCKER(RptInputErr)
-        .expects(never());
+    MOCKER(RptInputErr).expects(never());
 
     bool result = TaskExceptionHandler::DealExceptionOp(&exceptionInfo);
     EXPECT_TRUE(result);

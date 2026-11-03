@@ -18,9 +18,9 @@
 
 namespace Hccl {
 
-CollAlgRegistry *CollAlgRegistry::Global()
+CollAlgRegistry* CollAlgRegistry::Global()
 {
-    static CollAlgRegistry *globalAlgImplRegistry = new (std::nothrow) CollAlgRegistry;
+    static CollAlgRegistry* globalAlgImplRegistry = new (std::nothrow) CollAlgRegistry;
     if (globalAlgImplRegistry == nullptr) {
         HCCL_ERROR("[Alg][Registry] allocate global CollAlgRegistry failed, out of memory.");
         return nullptr;
@@ -28,8 +28,8 @@ CollAlgRegistry *CollAlgRegistry::Global()
     return globalAlgImplRegistry;
 }
 
-HcclResult CollAlgRegistry::Register(const OpType type, const std::string &funcName,
-                                     const CollAlgCreator &collAlgCreator)
+HcclResult
+CollAlgRegistry::Register(const OpType type, const std::string& funcName, const CollAlgCreator& collAlgCreator)
 {
     const std::lock_guard<std::mutex> lock(mu_);
     if (impls_[type].count(funcName) != 0) {
@@ -42,11 +42,11 @@ HcclResult CollAlgRegistry::Register(const OpType type, const std::string &funcN
 
 void CollAlgRegistry::PrintAllImpls()
 {
-    for (auto &iter : impls_) {
+    for (auto& iter : impls_) {
         HCCL_DEBUG("-------------------------------------");
         HCCL_DEBUG("type name is %s", iter.first.Describe().c_str());
-        for (auto &alg : iter.second) {
-            HCCL_DEBUG("    alg name is  %s", alg.first.c_str());
+        for (auto& alg : iter.second) {
+            HCCL_DEBUG("    alg name is %s", alg.first.c_str());
             if (alg.second == nullptr) {
                 HCCL_DEBUG("    alg func is nullptr");
             }
@@ -57,12 +57,12 @@ void CollAlgRegistry::PrintAllImpls()
 std::map<OpType, std::vector<std::string>> CollAlgRegistry::GetAvailAlgs()
 {
     std::map<OpType, std::vector<std::string>> algs;
-    for (auto &iter : impls_) {
+    for (auto& iter : impls_) {
         HCCL_DEBUG("-------------------------------------");
         HCCL_DEBUG("type name is %s", iter.first.Describe().c_str());
         std::vector<std::string> tmpAvailAlgs;
-        for (auto &alg : iter.second) {
-            HCCL_DEBUG("    alg name is  %s", alg.first.c_str());
+        for (auto& alg : iter.second) {
+            HCCL_DEBUG("    alg name is %s", alg.first.c_str());
             tmpAvailAlgs.push_back(alg.first);
             if (alg.second == nullptr) {
                 HCCL_DEBUG("    alg func is nullptr");
@@ -73,7 +73,7 @@ std::map<OpType, std::vector<std::string>> CollAlgRegistry::GetAvailAlgs()
     return algs;
 }
 
-std::shared_ptr<CollAlgBase> CollAlgRegistry::GetAlgImpl(const OpType type, const std::string &funcName)
+std::shared_ptr<CollAlgBase> CollAlgRegistry::GetAlgImpl(const OpType type, const std::string& funcName)
 {
     if (impls_.count(type) == 0 || impls_[type].count(funcName) == 0) {
         HCCL_ERROR("%s:%s is not registered.", type.Describe().c_str(), funcName.c_str());

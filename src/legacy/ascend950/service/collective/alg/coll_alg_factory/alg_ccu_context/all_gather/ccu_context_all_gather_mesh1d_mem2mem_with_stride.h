@@ -22,34 +22,34 @@ namespace Hccl {
 
 class CcuContextAllGatherMesh1DMem2MemWithStride : public CcuContextAlgBase {
 public:
-    CcuContextAllGatherMesh1DMem2MemWithStride(const CcuCtxArg &arg, const std::vector<CcuTransport *> &transports,
-                                               const CcuTransportGroup &group);
+    CcuContextAllGatherMesh1DMem2MemWithStride(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
 
-    void                  Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    void Algorithm() override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
 
 private:
     void InitResource();
     void LoadArgs();
     void PreSync();
     void DoRepeatAllGather();
-    void DoAllGather(const CcuRep::Memory &src, const std::vector<CcuRep::Memory> &dst,
-                     const CcuRep::Variable &sliceSize);
+    void
+    DoAllGather(const CcuRep::Memory& src, const std::vector<CcuRep::Memory>& dst, const CcuRep::Variable& sliceSize);
     void PostSync();
 
-    CcuRep::Variable              localInput_;
+    CcuRep::Variable localInput_;
     std::vector<CcuRep::Variable> output_;
     std::vector<CcuRep::Variable> token_;
-    CcuRep::Variable              currentRankSliceInputOffset_;
-    CcuRep::Variable              currentRankSliceOutputOffset_;
-    CcuRep::Variable              inputRepeatStride_;
-    CcuRep::Variable              outputRepeatStride_;
-    CcuRep::Variable              normalSliceSize_;
-    CcuRep::Variable              lastSliceSize_;
-    CcuRep::Variable              isInputOutputEqual_;
-    CcuRep::Variable              repeatTimeflag_;
-    CcuRep::Variable              tmpRepeatNum_;
-    CcuRep::Variable              constVar1_;
+    CcuRep::Variable currentRankSliceInputOffset_;
+    CcuRep::Variable currentRankSliceOutputOffset_;
+    CcuRep::Variable inputRepeatStride_;
+    CcuRep::Variable outputRepeatStride_;
+    CcuRep::Variable normalSliceSize_;
+    CcuRep::Variable lastSliceSize_;
+    CcuRep::Variable isInputOutputEqual_;
+    CcuRep::Variable repeatTimeflag_;
+    CcuRep::Variable tmpRepeatNum_;
+    CcuRep::Variable constVar1_;
 
     uint16_t selfBit_{0};
     uint16_t allBit_{0};
@@ -57,7 +57,7 @@ private:
     CcuRep::Variable srcOffset_;
     CcuRep::Variable dstOffset_;
 
-    CcuRep::Memory              localMem_;
+    CcuRep::Memory localMem_;
     std::vector<CcuRep::Memory> reomteMem_;
 
     CcuRep::MaskSignal localSignal_;

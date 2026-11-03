@@ -13,21 +13,21 @@
 #include "data_type.h"
 #include "reduce_op.h"
 #include "dev_type.h"
-#include "env_config.h"
+#include "env_config_v2.h"
 #include <vector>
 #include "context/st_ctx.h"
 #include "hccl_st_test_case.h"
 #include "rts_stub/rts_stub.h"
 
-void PrepareCtxForAllReduceFP32(ThreadContext *ctx)
+void PrepareCtxForAllReduceFP32(ThreadContext* ctx)
 {
-    auto *sendBuf   = (float *)ctx->sendBuf;
-    auto *expectBuf = (float *)ctx->expectedResBuf;
+    auto* sendBuf = (float*)ctx->sendBuf;
+    auto* expectBuf = (float*)ctx->expectedResBuf;
 
     auto count = ctx->situation.GetCount();
 
-    float value    = 3;
-    auto  rankSize = ctx->situation.GetRankSize();
+    float value = 3;
+    auto rankSize = ctx->situation.GetRankSize();
 
     for (auto idx = 0; idx < count; idx++) {
         *sendBuf = value;
@@ -46,18 +46,17 @@ void PrepareCtxForAllReduceFP32(ThreadContext *ctx)
     }
 }
 
-void PrepareCtxForAllReduce(ThreadContext *ctx)
+void PrepareCtxForAllReduce(ThreadContext* ctx)
 {
-    void *sendBuf        = nullptr;
-    void *recvBuf        = nullptr;
-    void *expectedResBuf = nullptr;
+    void* sendBuf = nullptr;
+    void* recvBuf = nullptr;
+    void* expectedResBuf = nullptr;
 
     auto dataTypeSize = Hccl::DataTypeSizeGet(ctx->situation.GetDataType());
-    auto count        = ctx->situation.GetCount();
+    auto count = ctx->situation.GetCount();
 
     uint64_t memSize = (u64)dataTypeSize * (u64)count;
-    constexpr int policy = static_cast<int>(ACL_MEM_TYPE_HIGH_BAND_WIDTH) | static_cast<int>
-    (ACL_MEM_MALLOC_HUGE_FIRST);
+    constexpr int policy = static_cast<int>(ACL_MEM_TYPE_HIGH_BAND_WIDTH) | static_cast<int>(ACL_MEM_MALLOC_HUGE_FIRST);
     aclrtMallocAttrValue moduleIdValue;
     moduleIdValue.moduleId = HCCL;
     aclrtMallocAttribute attrs{.attr = ACL_RT_MEM_ATTR_MODULE_ID, .value = moduleIdValue};
@@ -65,8 +64,8 @@ void PrepareCtxForAllReduce(ThreadContext *ctx)
     aclrtMallocWithCfg(&sendBuf, memSize, static_cast<aclrtMemMallocPolicy>(policy), &cfg);
     aclrtMallocWithCfg(&recvBuf, memSize, static_cast<aclrtMemMallocPolicy>(policy), &cfg);
     aclrtMallocWithCfg(&expectedResBuf, memSize, static_cast<aclrtMemMallocPolicy>(policy), &cfg);
-    ctx->sendBuf        = sendBuf;
-    ctx->recvBuf        = recvBuf;
+    ctx->sendBuf = sendBuf;
+    ctx->recvBuf = recvBuf;
     ctx->expectedResBuf = expectedResBuf;
 
     switch (ctx->situation.GetDataType()) {
@@ -78,10 +77,10 @@ void PrepareCtxForAllReduce(ThreadContext *ctx)
     }
 }
 
-bool VerifyAllreduceFp32(ThreadContext *ctx)
+bool VerifyAllreduceFp32(ThreadContext* ctx)
 {
-    auto *recvBuf   = (float *)ctx->recvBuf;
-    auto *expectBuf = (float *)ctx->expectedResBuf;
+    auto* recvBuf = (float*)ctx->recvBuf;
+    auto* expectBuf = (float*)ctx->expectedResBuf;
 
     auto count = ctx->situation.GetCount();
 
@@ -97,7 +96,7 @@ bool VerifyAllreduceFp32(ThreadContext *ctx)
     return true;
 }
 
-bool VerifyAllreduce(ThreadContext *ctx)
+bool VerifyAllreduce(ThreadContext* ctx)
 {
     switch (ctx->situation.GetDataType()) {
         case DataType::FP32:
@@ -107,13 +106,13 @@ bool VerifyAllreduce(ThreadContext *ctx)
     }
 }
 
-void PrepareCtxForAllgatherInt8(ThreadContext *ctx)
+void PrepareCtxForAllgatherInt8(ThreadContext* ctx)
 {
-    auto *sendBuf   = (char *)ctx->sendBuf;
-    auto *expectBuf = (char *)ctx->expectedResBuf;
-    auto  count     = ctx->situation.GetCount();
+    auto* sendBuf = (char*)ctx->sendBuf;
+    auto* expectBuf = (char*)ctx->expectedResBuf;
+    auto count = ctx->situation.GetCount();
 
-    char value    = 3;
+    char value = 3;
     auto rankSize = ctx->situation.GetRankSize();
 
     for (auto idx = 0; idx < count; idx++) {
@@ -127,20 +126,19 @@ void PrepareCtxForAllgatherInt8(ThreadContext *ctx)
     }
 }
 
-void PrepareCtxForAllgather(ThreadContext *ctx)
+void PrepareCtxForAllgather(ThreadContext* ctx)
 {
-    void *sendBuf        = nullptr;
-    void *recvBuf        = nullptr;
-    void *expectedResBuf = nullptr;
+    void* sendBuf = nullptr;
+    void* recvBuf = nullptr;
+    void* expectedResBuf = nullptr;
 
     auto dataTypeSize = Hccl::DataTypeSizeGet(ctx->situation.GetDataType());
-    auto count        = ctx->situation.GetCount();
+    auto count = ctx->situation.GetCount();
 
     uint64_t sendMemSize = (u64)dataTypeSize * (u64)count;
     uint64_t recvMemSize = (u64)dataTypeSize * (u64)count * (u64)ctx->situation.GetRankSize();
 
-    constexpr int policy = static_cast<int>(ACL_MEM_TYPE_HIGH_BAND_WIDTH) | static_cast<int>
-    (ACL_MEM_MALLOC_HUGE_FIRST);
+    constexpr int policy = static_cast<int>(ACL_MEM_TYPE_HIGH_BAND_WIDTH) | static_cast<int>(ACL_MEM_MALLOC_HUGE_FIRST);
     aclrtMallocAttrValue moduleIdValue;
     moduleIdValue.moduleId = HCCL;
     aclrtMallocAttribute attrs{.attr = ACL_RT_MEM_ATTR_MODULE_ID, .value = moduleIdValue};
@@ -148,8 +146,8 @@ void PrepareCtxForAllgather(ThreadContext *ctx)
     aclrtMallocWithCfg(&sendBuf, sendMemSize, static_cast<aclrtMemMallocPolicy>(policy), &cfg);
     aclrtMallocWithCfg(&recvBuf, recvMemSize, static_cast<aclrtMemMallocPolicy>(policy), &cfg);
     aclrtMallocWithCfg(&expectedResBuf, recvMemSize, static_cast<aclrtMemMallocPolicy>(policy), &cfg);
-    ctx->sendBuf        = sendBuf;
-    ctx->recvBuf        = recvBuf;
+    ctx->sendBuf = sendBuf;
+    ctx->recvBuf = recvBuf;
     ctx->expectedResBuf = expectedResBuf;
 
     switch (ctx->situation.GetDataType()) {
@@ -161,18 +159,18 @@ void PrepareCtxForAllgather(ThreadContext *ctx)
     }
 }
 
-bool VerifyAllgather(ThreadContext *ctx)
+bool VerifyAllgather(ThreadContext* ctx)
 {
-    auto     dataTypeSize = Hccl::DataTypeSizeGet(ctx->situation.GetDataType());
-    auto     count        = ctx->situation.GetCount();
-    uint64_t recvMemSize  = (u64)dataTypeSize * (u64)count * (u64)ctx->situation.GetRankSize();
+    auto dataTypeSize = Hccl::DataTypeSizeGet(ctx->situation.GetDataType());
+    auto count = ctx->situation.GetCount();
+    uint64_t recvMemSize = (u64)dataTypeSize * (u64)count * (u64)ctx->situation.GetRankSize();
     if (memcmp(ctx->recvBuf, ctx->expectedResBuf, recvMemSize) == 0) {
         return true;
     }
     return false;
 }
 
-bool VerifyCtx(ThreadContext *ctx)
+bool VerifyCtx(ThreadContext* ctx)
 {
     switch (ctx->situation.GetOpType()) {
         case OpType::ALLREDUCE:
@@ -184,7 +182,7 @@ bool VerifyCtx(ThreadContext *ctx)
     }
 }
 
-void PrepareCtx(ThreadContext *ctx)
+void PrepareCtx(ThreadContext* ctx)
 {
     OpType opType = ctx->situation.GetOpType();
     switch (opType) {

@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "offload_stream_manager.h"
 
@@ -14,34 +14,39 @@ namespace hccl {
 OffloadStreamManager::OffloadStreamManager() = default;
 OffloadStreamManager::~OffloadStreamManager() = default;
 
-HcclResult OffloadStreamManager::RegisterMaster(const std::string &tag, Stream &stream)
+HcclResult OffloadStreamManager::RegisterMaster(const std::string& tag, Stream& stream)
 {
     std::unique_lock<std::mutex> lock(masterMapMutex_);
     masterMap_[tag] = stream;
-    HCCL_DEBUG("[OffloadStreamManager][RegisterMaster]register master stream[%p] success, tag[%s].",
-        stream.ptr(), tag.c_str());
+    HCCL_DEBUG(
+        "[OffloadStreamManager][RegisterMaster]register master stream[%p] success, tag[%s].", stream.ptr(),
+        tag.c_str());
     return HCCL_SUCCESS;
 }
 
-HcclResult OffloadStreamManager::RegisterSlaves(const std::string &tag, std::vector<Stream> &stream)
+HcclResult OffloadStreamManager::RegisterSlaves(const std::string& tag, std::vector<Stream>& stream)
 {
-    HCCL_DEBUG("[OffloadStreamManager][RegisterSlaves]start register slaves stream, tag[%s], size[%u].",
-        tag.c_str(), stream.size());
+    HCCL_DEBUG(
+        "[OffloadStreamManager][RegisterSlaves]start register slaves stream, tag[%s], size[%u].", tag.c_str(),
+        stream.size());
 
     std::unique_lock<std::mutex> lock(slavesMapMutex_);
     auto iter = slavesMap_.find(tag);
     if (iter != slavesMap_.end()) {
-        HCCL_ERROR("[OffloadStreamManager][RegisterSlaves]in offload stream manager, register slaves fail,"
-            "tag[%s] has existed", tag.c_str());
+        HCCL_ERROR(
+            "[OffloadStreamManager][RegisterSlaves]in offload stream manager, register slaves fail,"
+            "tag[%s] has existed",
+            tag.c_str());
         return HCCL_E_PARA;
     }
     slavesMap_.insert(std::make_pair(tag, stream));
-    HCCL_INFO("[OffloadStreamManager][RegisterSlaves]register slaves stream success, tag[%s], size[%u].",
-        tag.c_str(), stream.size());
+    HCCL_INFO(
+        "[OffloadStreamManager][RegisterSlaves]register slaves stream success, tag[%s], size[%u].", tag.c_str(),
+        stream.size());
     return HCCL_SUCCESS;
 }
 
-Stream OffloadStreamManager::GetMaster(const std::string &tag)
+Stream OffloadStreamManager::GetMaster(const std::string& tag)
 {
     std::unique_lock<std::mutex> lock(masterMapMutex_);
     auto iter = masterMap_.find(tag);
@@ -52,7 +57,7 @@ Stream OffloadStreamManager::GetMaster(const std::string &tag)
     return iter->second;
 }
 
-std::vector<Stream> OffloadStreamManager::GetSlaves(const std::string &tag, u32 num)
+std::vector<Stream> OffloadStreamManager::GetSlaves(const std::string& tag, u32 num)
 {
     HCCL_DEBUG("[OffloadStreamManager][GetSlaves]requesting for [%u] slaves, tag[%s].", num, tag.c_str());
     if (num == 0) {
@@ -68,7 +73,8 @@ std::vector<Stream> OffloadStreamManager::GetSlaves(const std::string &tag, u32 
     }
 
     if (iter->second.size() < num) {
-        HCCL_ERROR("[OffloadStreamManager][GetSlaves]" \
+        HCCL_ERROR(
+            "[OffloadStreamManager][GetSlaves]"
             "trying to get [%u] slaves fail, only [%u] slaves available, tag[%s].",
             num, iter->second.size(), tag.c_str());
         return std::vector<Stream>();
@@ -80,7 +86,7 @@ std::vector<Stream> OffloadStreamManager::GetSlaves(const std::string &tag, u32 
     return res;
 }
 
-HcclResult OffloadStreamManager::ClearSlaves(const std::string &tag)
+HcclResult OffloadStreamManager::ClearSlaves(const std::string& tag)
 {
     std::unique_lock<std::mutex> lock(slavesMapMutex_);
     auto iter = slavesMap_.find((tag));
@@ -99,4 +105,4 @@ HcclResult OffloadStreamManager::ClearSlaves()
     return HCCL_SUCCESS;
 }
 
-}  // namespace hccl
+} // namespace hccl

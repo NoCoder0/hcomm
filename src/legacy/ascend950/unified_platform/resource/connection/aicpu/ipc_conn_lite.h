@@ -16,9 +16,7 @@
 namespace Hccl {
 class IpcConnLite : public RmaConnLite {
 public:
-    IpcConnLite() : RmaConnLite()
-    {
-    }
+    IpcConnLite() : RmaConnLite() {}
 };
 } // namespace Hccl
 

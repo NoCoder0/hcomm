@@ -25,4 +25,3 @@ void BkfPuberTableTypeDispUninit(BkfPuberTableTypeMng *tableTypeMng);
 #endif
 
 #endif
-

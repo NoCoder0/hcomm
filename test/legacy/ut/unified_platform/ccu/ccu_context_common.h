@@ -33,7 +33,9 @@ public:
 class CcuTaskArgTest : public CcuTaskArg {
 public:
     explicit CcuTaskArgTest(uint64_t inputAddr, uint64_t outputAddr, uint64_t size)
-        : inputAddr(inputAddr), outputAddr(outputAddr), size(size)
+        : inputAddr(inputAddr),
+          outputAddr(outputAddr),
+          size(size)
     {}
     uint64_t inputAddr;
     uint64_t outputAddr;
@@ -42,11 +44,11 @@ public:
 
 class CcuContextAG : public CcuContext {
 public:
-    CcuContextAG(CcuCtxArg &arg, const std::vector<CcuTransport*> &transports, const CcuTransportGroup &transportGroup)
+    CcuContextAG(CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& transportGroup)
         : CcuContext(arg, transports, transportGroup)
     {
-        id = dynamic_cast<const CcuCtxArgTest *>(&arg)->rankId;
-        size = dynamic_cast<const CcuCtxArgTest *>(&arg)->rankSize;
+        id = dynamic_cast<const CcuCtxArgTest*>(&arg)->rankId;
+        size = dynamic_cast<const CcuCtxArgTest*>(&arg)->rankSize;
     }
 
 protected:
@@ -71,7 +73,7 @@ protected:
         }
 
         uint16_t selfBit = 1 << id;
-        uint16_t allBit  = ((1 << size) - 1) & (~(1 << id));
+        uint16_t allBit = ((1 << size) - 1) & (~(1 << id));
 
         Load(input[id]);
         Load(output[id]);
@@ -88,7 +90,7 @@ protected:
         GroupWait(*transportGroup, 1, allBit); // index = 1，传递output信息
         GroupWait(*transportGroup, 2, allBit); // index = 2，传递token信息
 
-        src.addr  = input[id];
+        src.addr = input[id];
         src.token = token[id];
         uint32_t dstId = 0;
         uint32_t curId = 0;
@@ -111,13 +113,14 @@ protected:
         }
         GroupWait(*transportGroup, 0, allBit);
     }
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg)
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg)
     {
-        auto taskArg = dynamic_cast<const CcuTaskArgTest *>(&arg);
+        auto taskArg = dynamic_cast<const CcuTaskArgTest*>(&arg);
         auto goSize = CalGoSize(taskArg->size);
-        
+
         return {taskArg->inputAddr, taskArg->outputAddr, 0, goSize[0], goSize[1], goSize[2], goSize[3], 0};
     }
+
 private:
     uint32_t id;
     uint32_t size;
@@ -125,11 +128,12 @@ private:
 
 class CcuContextRS : public CcuContext {
 public:
-    CcuContextRS(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports, const CcuTransportGroup &transportGroup)
+    CcuContextRS(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& transportGroup)
         : CcuContext(arg, transports, transportGroup)
     {
-        id = dynamic_cast<const CcuCtxArgTest *>(&arg)->rankId;
-        size = dynamic_cast<const CcuCtxArgTest *>(&arg)->rankSize;
+        id = dynamic_cast<const CcuCtxArgTest*>(&arg)->rankId;
+        size = dynamic_cast<const CcuCtxArgTest*>(&arg)->rankSize;
     }
 
 protected:
@@ -144,17 +148,17 @@ protected:
             token.emplace_back(CreateVariable());
         }
 
-        Variable          offset = CreateVariable();
+        Variable offset = CreateVariable();
         GroupOpSize goSize = CreateGroupOpSize();
 
         std::vector<Memory> src;
-        Memory              dst = CreateMemory();
+        Memory dst = CreateMemory();
         for (uint32_t i = 0; i < size; i++) {
             src.emplace_back(CreateMemory());
         }
 
         uint16_t selfBit = 1 << id;
-        uint16_t allBit  = ((1 << size) - 1) & (~(1 << id));
+        uint16_t allBit = ((1 << size) - 1) & (~(1 << id));
 
         Load(input[id]);
         Load(output[id]);
@@ -184,23 +188,24 @@ protected:
             src[curId].addr += offset;
             src[curId].token = token[r];
         }
-        dst.addr  = output[id];
+        dst.addr = output[id];
         dst.token = token[id];
 
         GroupReduce(transports, dst, src, goSize, DataType::FP32, DataType::FP32, ReduceOp::SUM);
 
-        for (const auto &t : transports) {
+        for (const auto& t : transports) {
             RemotePost(*t, 0, selfBit);
         }
         GroupWait(*transportGroup, 0, allBit);
     }
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg)
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg)
     {
-        auto taskArg = dynamic_cast<const CcuTaskArgTest *>(&arg);
+        auto taskArg = dynamic_cast<const CcuTaskArgTest*>(&arg);
         auto goSize = CalGoSize(taskArg->size);
-        
+
         return {taskArg->inputAddr, taskArg->outputAddr, 0, goSize[0], goSize[1], goSize[2], goSize[3], 0};
     }
+
 private:
     uint32_t id;
     uint32_t size;
@@ -208,7 +213,8 @@ private:
 
 class CcuContextTestMultiArgs : public CcuContext {
 public:
-    CcuContextTestMultiArgs(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports, const CcuTransportGroup &transportGroup)
+    CcuContextTestMultiArgs(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& transportGroup)
         : CcuContext(arg, transports, transportGroup)
     {}
 
@@ -223,7 +229,7 @@ protected:
             Load(input[i]);
         }
     }
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg)
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg)
     {
         std::vector<uint64_t> args(14);
         for (int i = 0; i < 14; i++) {
@@ -235,7 +241,8 @@ protected:
 
 class CcuContextTestVariable : public CcuContext {
 public:
-    CcuContextTestVariable(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports, const CcuTransportGroup &transportGroup)
+    CcuContextTestVariable(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& transportGroup)
         : CcuContext(arg, transports, transportGroup)
     {}
 
@@ -257,15 +264,13 @@ protected:
         aa = a + ab;
         aa = ab + a;
     }
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg)
-    {
-        return {};
-    }
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) { return {}; }
 };
 
 class CcuContextTestDataTransfer : public CcuContext {
 public:
-    CcuContextTestDataTransfer(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports, const CcuTransportGroup &transportGroup)
+    CcuContextTestDataTransfer(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& transportGroup)
         : CcuContext(arg, transports, transportGroup)
     {}
 
@@ -295,9 +300,9 @@ protected:
         Load(goSize);
         GroupCopy(dst, src, goSize);
     }
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg)
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg)
     {
-        auto taskArg = dynamic_cast<const CcuTaskArgTest *>(&arg);
+        auto taskArg = dynamic_cast<const CcuTaskArgTest*>(&arg);
         auto goSize = CalGoSize(taskArg->size);
         return {goSize[0], goSize[1], goSize[2], goSize[3]};
     }
@@ -305,7 +310,8 @@ protected:
 
 class CcuContextTestCondition : public CcuContext {
 public:
-    CcuContextTestCondition(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports, const CcuTransportGroup &transportGroup)
+    CcuContextTestCondition(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& transportGroup)
         : CcuContext(arg, transports, transportGroup)
     {}
 
@@ -315,19 +321,15 @@ protected:
         Variable iter = CreateVariable();
         Variable var = CreateVariable();
         iter = 1;
-        CCU_IF(iter == 1) {
-            var = 1;
-        }
+        CCU_IF(iter == 1) { var = 1; }
     }
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg)
-    {
-        return {};
-    }
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) { return {}; }
 };
 
 class CcuContextTestRepeat : public CcuContext {
 public:
-    CcuContextTestRepeat(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports, const CcuTransportGroup &transportGroup)
+    CcuContextTestRepeat(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& transportGroup)
         : CcuContext(arg, transports, transportGroup)
     {}
 
@@ -336,21 +338,18 @@ protected:
     {
         Variable iter = CreateVariable();
         iter = 1;
-        CCU_WHILE(iter != 10) {
-            CCU_IF(iter == 5) {
-                CCU_BREAK;
-            }
+        CCU_WHILE(iter != 10)
+        {
+            CCU_IF(iter == 5) { CCU_BREAK; }
         }
     }
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg)
-    {
-        return {};
-    }
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) { return {}; }
 };
 
 class CcuContextTestFunction : public CcuContext {
 public:
-    CcuContextTestFunction(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports, const CcuTransportGroup &transportGroup)
+    CcuContextTestFunction(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& transportGroup)
         : CcuContext(arg, transports, transportGroup)
     {}
 
@@ -377,10 +376,7 @@ protected:
         Variable funcAddr = CreateVariable();
         Func(funcAddr);
     }
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg)
-    {
-        return {};
-    }
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) { return {}; }
 };
 
 class CcuCtxArgSharedRes : public CcuCtxArg {
@@ -398,16 +394,16 @@ public:
 
 class CcuTaskArgSharedRes : public CcuTaskArg {
 public:
-    explicit CcuTaskArgSharedRes()
-    {}
+    explicit CcuTaskArgSharedRes() {}
 };
 
 class CcuContextTestSharesRes : public CcuContext {
 public:
-    CcuContextTestSharesRes(CcuCtxArg &arg, const std::vector<CcuTransport*> &transports, const CcuTransportGroup &transportGroup)
+    CcuContextTestSharesRes(
+        CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& transportGroup)
         : CcuContext(arg, transports, transportGroup)
     {
-        id = ((CcuCtxArgSharedRes &)(arg)).id;
+        id = ((CcuCtxArgSharedRes&)(arg)).id;
     }
 
 protected:
@@ -429,7 +425,7 @@ protected:
             ExportMaskSignal(sig, "sig" + std::to_string(id));
         }
     }
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg)
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg)
     {
         if (id == 0) {
             return {1024};
@@ -437,6 +433,7 @@ protected:
             return {};
         }
     }
+
 private:
     uint32_t id;
 };

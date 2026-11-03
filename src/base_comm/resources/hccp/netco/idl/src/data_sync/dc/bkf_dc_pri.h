@@ -33,7 +33,7 @@ typedef struct tagBkfDcTuple BkfDcTuple;
 #define BKF_DC_TABLE_TYPE_HASH_MOD 0x0f
 #define BKF_DC_GET_TABLE_TYPE_HASH_IDX(tableTypeId) BKF_GET_U8_FOLD4_VAL((uint8_t)(tableTypeId)) /* 强制取低8bit */
 #define BKF_DC_SLICE_HASH_MOD 0x3f
-#define BKF_DC_GET_SLICE_HASH_IDX(sliceKey) ((*(uint32_t*)(sliceKey)) & BKF_DC_SLICE_HASH_MOD)
+#define BKF_DC_GET_SLICE_HASH_IDX(sliceKey) ((*(uint32_t *)(sliceKey)) & BKF_DC_SLICE_HASH_MOD)
 struct tagBkfDc {
     BkfDcInitArg argInit;
     char *name;
@@ -75,7 +75,7 @@ struct tagBkfDcSlice {
 
 /* table */
 #define BKF_DC_TUPLE_HASH_MOD 0x3f
-#define BKF_DC_GET_TUPLE_HASH_IDX(tupleKey) ((*(uint32_t*)(tupleKey)) & BKF_DC_TUPLE_HASH_MOD)
+#define BKF_DC_GET_TUPLE_HASH_IDX(tupleKey) ((*(uint32_t *)(tupleKey)) & BKF_DC_TUPLE_HASH_MOD)
 struct tagBkfDcTable {
     BkfDcTableType *tableType;
     BkfDcSlice *slice;
@@ -109,9 +109,8 @@ struct tagBkfDcTuple {
 
 #define BKF_DC_TUPLE_SIGN 5
 
-#define BKF_DC_TUPLE_GET_VAL(tuple, tableType) \
-    (((tableType)->vTbl.tupleValLen > 0) ? \
-     (&(tuple)->keyVal[0] + (tableType)->vTbl.tupleKeyLen) : VOS_NULL)
+#define BKF_DC_TUPLE_GET_VAL(tuple, tableType)                                                                         \
+    (((tableType)->vTbl.tupleValLen > 0) ? (&(tuple)->keyVal[0] + (tableType)->vTbl.tupleKeyLen) : VOS_NULL)
 
 /* func */
 BkfDcTableType *BkfDcAddTableType(BkfDc *dc, BkfDcTableTypeVTbl *vTbl);
@@ -160,4 +159,3 @@ uint32_t BkfDcTupleLimitSysLog(BkfDc *dc, uint16_t tableTypeId);
 #endif
 
 #endif
-

@@ -33,18 +33,18 @@
 using namespace hccl;
 
 typedef HcclResult (HcclCommunicator::*GetAlgInfoWithCmdType)(
-    const std::string &, const std::string &, HcclCMDType, std::string &, std::string &);
+    const std::string&, const std::string&, HcclCMDType, std::string&, std::string&);
 
-static HcclResult MockGetAlgInfo_AivDirect(HcclCommunicator *, const std::string &,
-    const std::string &, HcclCMDType, std::string &algName, std::string &newTag)
+static HcclResult MockGetAlgInfo_AivDirect(
+    HcclCommunicator*, const std::string&, const std::string&, HcclCMDType, std::string& algName, std::string& newTag)
 {
     algName = "RunAlltoAllAivDirect";
     newTag = "test_tag_RunAlltoAllAivDirect_device";
     return HCCL_SUCCESS;
 }
 
-static HcclResult MockGetAlgInfo_OtherAlg(HcclCommunicator *, const std::string &,
-    const std::string &, HcclCMDType, std::string &algName, std::string &newTag)
+static HcclResult MockGetAlgInfo_OtherAlg(
+    HcclCommunicator*, const std::string&, const std::string&, HcclCMDType, std::string& algName, std::string& newTag)
 {
     algName = "RunAllReduceRing";
     newTag = "test_tag_RunAllReduceRing_device";
@@ -71,11 +71,9 @@ protected:
         notifyPool_ = new std::unique_ptr<NotifyPool>(nullptr);
 
         transportManager_ = new TransportManager(
-            *cclBufferManager_, *socketManager_, nullptr, *notifyPool_,
-            rankInfoList_, 0, "test_identifier", 0,
-            NICDeployment::NIC_DEPLOYMENT_DEVICE, false, false, false,
-            nicRanksPort_, vnicRanksPort_, false,
-            devIpAddr_, hostIp_, localVnicIp_, netDevCtxMap_);
+            *cclBufferManager_, *socketManager_, nullptr, *notifyPool_, rankInfoList_, 0, "test_identifier", 0,
+            NICDeployment::NIC_DEPLOYMENT_DEVICE, false, false, false, nicRanksPort_, vnicRanksPort_, false, devIpAddr_,
+            hostIp_, localVnicIp_, netDevCtxMap_);
     }
 
     void TearDown() override
@@ -91,10 +89,10 @@ protected:
         GlobalMockObject::verify();
     }
 
-    CCLBufferManager *cclBufferManager_ = nullptr;
-    std::unique_ptr<HcclSocketManager> *socketManager_ = nullptr;
-    std::unique_ptr<NotifyPool> *notifyPool_ = nullptr;
-    TransportManager *transportManager_ = nullptr;
+    CCLBufferManager* cclBufferManager_ = nullptr;
+    std::unique_ptr<HcclSocketManager>* socketManager_ = nullptr;
+    std::unique_ptr<NotifyPool>* notifyPool_ = nullptr;
+    TransportManager* transportManager_ = nullptr;
     std::vector<RankInfo> rankInfoList_;
     std::vector<u32> nicRanksPort_;
     std::vector<u32> vnicRanksPort_;
@@ -110,25 +108,14 @@ TEST_F(HcclTransportResTest, ut_SetMachinePara_When_isNpuDirectRoceTrue_Expect_q
     RankInfo localRank;
     RankInfo remoteRank;
 
-    MOCKER_CPP(&RankConsistentcyChecker::GetCheckFrame)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&RankConsistentcyChecker::GetCheckFrame).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(IsSupportAtomicWrite)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(IsSupportAtomicWrite).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = transportManager_->SetMachinePara(
-        "test_tag", MachineType::MACHINE_SERVER_TYPE,
-        rankInfoList_[0].serverId, 0,
-        true, LinkMode::LINK_RESERVED_MODE, {},
-        DeviceMem(), DeviceMem(), DeviceMem(),
-        false, false, false,
-        0, 0, 0,
-        machinePara, localRank, remoteRank,
-        HcclNetDevCtx(), TransportLinkType::RESERVED,
-        IndOpMem(), false, HcclCMDType::HCCL_CMD_INVALID,
-        true);
+        "test_tag", MachineType::MACHINE_SERVER_TYPE, rankInfoList_[0].serverId, 0, true, LinkMode::LINK_RESERVED_MODE,
+        {}, DeviceMem(), DeviceMem(), DeviceMem(), false, false, false, 0, 0, 0, machinePara, localRank, remoteRank,
+        HcclNetDevCtx(), TransportLinkType::RESERVED, IndOpMem(), false, HcclCMDType::HCCL_CMD_INVALID, true);
 
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(machinePara.qpMode, QPMode::NORMAL);
@@ -140,25 +127,14 @@ TEST_F(HcclTransportResTest, ut_SetMachinePara_When_isNpuDirectRoceFalse_Expect_
     RankInfo localRank;
     RankInfo remoteRank;
 
-    MOCKER_CPP(&RankConsistentcyChecker::GetCheckFrame)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&RankConsistentcyChecker::GetCheckFrame).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(IsSupportAtomicWrite)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(IsSupportAtomicWrite).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = transportManager_->SetMachinePara(
-        "test_tag", MachineType::MACHINE_SERVER_TYPE,
-        rankInfoList_[0].serverId, 0,
-        true, LinkMode::LINK_RESERVED_MODE, {},
-        DeviceMem(), DeviceMem(), DeviceMem(),
-        false, false, false,
-        0, 0, 0,
-        machinePara, localRank, remoteRank,
-        HcclNetDevCtx(), TransportLinkType::RESERVED,
-        IndOpMem(), false, HcclCMDType::HCCL_CMD_INVALID,
-        false);
+        "test_tag", MachineType::MACHINE_SERVER_TYPE, rankInfoList_[0].serverId, 0, true, LinkMode::LINK_RESERVED_MODE,
+        {}, DeviceMem(), DeviceMem(), DeviceMem(), false, false, false, 0, 0, 0, machinePara, localRank, remoteRank,
+        HcclNetDevCtx(), TransportLinkType::RESERVED, IndOpMem(), false, HcclCMDType::HCCL_CMD_INVALID, false);
 
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_NE(machinePara.qpMode, QPMode::NORMAL);
@@ -168,7 +144,7 @@ TEST_F(HcclTransportResTest, ut_AllocComResourceByTiling_When_AlgNameIsRunAlltoA
 {
     std::unique_ptr<HcclCommunicator> hcclComm(new (std::nothrow) HcclCommunicator());
 
-    HcclCombinOpParam *combinOparaPtr = new HcclCombinOpParam();
+    HcclCombinOpParam* combinOparaPtr = new HcclCombinOpParam();
     sal_memset(combinOparaPtr, sizeof(HcclCombinOpParam), 0, sizeof(HcclCombinOpParam));
     auto combinOparaHostMem = std::make_shared<HostMem>();
     combinOparaHostMem->ptr_ = combinOparaPtr;
@@ -182,13 +158,9 @@ TEST_F(HcclTransportResTest, ut_AllocComResourceByTiling_When_AlgNameIsRunAlltoA
     opParam.opType = HcclCMDType::HCCL_CMD_ALLTOALL;
 
     GetAlgInfoWithCmdType getAlgInfoPtr = &HcclCommunicator::GetAlgInfo;
-    MOCKER_CPP(getAlgInfoPtr)
-        .stubs()
-        .will(invoke(MockGetAlgInfo_AivDirect));
+    MOCKER_CPP(getAlgInfoPtr).stubs().will(invoke(MockGetAlgInfo_AivDirect));
 
-    MOCKER_CPP(&HcclCommunicator::CreateAndGetAiCpuNotifyWithNotifyRes)
-        .stubs()
-        .will(returnValue(HCCL_E_INTERNAL));
+    MOCKER_CPP(&HcclCommunicator::CreateAndGetAiCpuNotifyWithNotifyRes).stubs().will(returnValue(HCCL_E_INTERNAL));
 
     HcclResult ret = hcclComm->AllocComResourceByTiling("AlltoAll=level1:hierarchy", &opParam);
     EXPECT_EQ(opParam.isNpuDirectRoce, true);
@@ -196,11 +168,12 @@ TEST_F(HcclTransportResTest, ut_AllocComResourceByTiling_When_AlgNameIsRunAlltoA
     delete combinOparaPtr;
 }
 
-TEST_F(HcclTransportResTest, ut_AllocComResourceByTiling_When_AlgNameIsNotRunAlltoAllAivDirect_Expect_isNpuDirectRoceFalse)
+TEST_F(
+    HcclTransportResTest, ut_AllocComResourceByTiling_When_AlgNameIsNotRunAlltoAllAivDirect_Expect_isNpuDirectRoceFalse)
 {
     std::unique_ptr<HcclCommunicator> hcclComm(new (std::nothrow) HcclCommunicator());
 
-    HcclCombinOpParam *combinOparaPtr = new HcclCombinOpParam();
+    HcclCombinOpParam* combinOparaPtr = new HcclCombinOpParam();
     sal_memset(combinOparaPtr, sizeof(HcclCombinOpParam), 0, sizeof(HcclCombinOpParam));
     auto combinOparaHostMem = std::make_shared<HostMem>();
     combinOparaHostMem->ptr_ = combinOparaPtr;
@@ -214,13 +187,9 @@ TEST_F(HcclTransportResTest, ut_AllocComResourceByTiling_When_AlgNameIsNotRunAll
     opParam.opType = HcclCMDType::HCCL_CMD_ALLREDUCE;
 
     GetAlgInfoWithCmdType getAlgInfoPtr = &HcclCommunicator::GetAlgInfo;
-    MOCKER_CPP(getAlgInfoPtr)
-        .stubs()
-        .will(invoke(MockGetAlgInfo_OtherAlg));
+    MOCKER_CPP(getAlgInfoPtr).stubs().will(invoke(MockGetAlgInfo_OtherAlg));
 
-    MOCKER_CPP(&HcclCommunicator::CreateAndGetAiCpuNotifyWithNotifyRes)
-        .stubs()
-        .will(returnValue(HCCL_E_INTERNAL));
+    MOCKER_CPP(&HcclCommunicator::CreateAndGetAiCpuNotifyWithNotifyRes).stubs().will(returnValue(HCCL_E_INTERNAL));
 
     HcclResult ret = hcclComm->AllocComResourceByTiling("AllReduce=level0:ring", &opParam);
     EXPECT_EQ(opParam.isNpuDirectRoce, false);

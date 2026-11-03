@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #define BKF_LOG_HND ((co)->log)
 #define BKF_MOD_NAME ((co)->name)
 #include "net_co_disp_out.h"
@@ -83,13 +82,11 @@ STATIC uint32_t NetCoDispOutProcCmdParse(NetCo *co, char *cmdStr, NetCoDispOutCm
     }
     const char *delim = " ";
     char *itor;
-    for (temp = strtok_s(temp, delim, &itor); temp != VOS_NULL;
-         temp = strtok_s(VOS_NULL, delim, &itor)) {
+    for (temp = strtok_s(temp, delim, &itor); temp != VOS_NULL; temp = strtok_s(VOS_NULL, delim, &itor)) {
         if (cmd->cmdStrTokenCnt >= NET_CO_DISP_OUT_CMD_TOKEN_CNT_MAX) {
             BKF_LOG_ERROR(BKF_LOG_HND,
-                          "token0(%s), hasParseTokenCnt(%u)/tokenCntMax(%u), temp(%#x, %s), has more token & ng\n",
-                          cmd->cmdStrToken[0], cmd->cmdStrTokenCnt, NET_CO_DISP_OUT_CMD_TOKEN_CNT_MAX,
-                          BKF_MASK_ADDR(temp), temp);
+                "token0(%s), hasParseTokenCnt(%u)/tokenCntMax(%u), temp(%#x, %s), has more token & ng\n",
+                cmd->cmdStrToken[0], cmd->cmdStrTokenCnt, NET_CO_DISP_OUT_CMD_TOKEN_CNT_MAX, BKF_MASK_ADDR(temp), temp);
             return BKF_ERR;
         }
         cmd->cmdStrToken[cmd->cmdStrTokenCnt] = temp;
@@ -107,16 +104,16 @@ STATIC uint32_t NetCoDispOutProcCmdDo(NetCo *co, NetCoDispOutCmd *cmd)
     BKF_LOG_DEBUG(BKF_LOG_HND, "call ==> [%s]\n", callFuncName);
 
     char outStrBuf[NET_CO_DISP_OUT_STR_BUF_LEN_MAX];
-    BkfDispProcCtx ctx = { 0 };
-    for (; ;) {
+    BkfDispProcCtx ctx = {0};
+    for (;;) {
         outStrBuf[0] = '\0';
-        uint32_t dispRet = BkfDispProc(co->disp, cmd->cmdStrToken, cmd->cmdStrTokenCnt,
-                                      outStrBuf, sizeof(outStrBuf) - 1, &ctx);
+        uint32_t dispRet = BkfDispProc(co->disp, cmd->cmdStrToken, cmd->cmdStrTokenCnt, outStrBuf,
+            sizeof(outStrBuf) - 1, &ctx);
         outStrBuf[NET_CO_DISP_OUT_STR_BUF_LEN_MAX - 1] = '\0'; /* 保护 */
 
         if (outStrBuf[0] != '\0') {
             /* 使用log文件输出 */
-            NetCoLogOutput2File(co, (const char*)outStrBuf);
+            NetCoLogOutput2File(co, (const char *)outStrBuf);
         }
         if (dispRet != BKF_DISP_PROC_HAS_MORE_DATA) {
             return dispRet;
@@ -135,7 +132,7 @@ void NetCoDispOutCmdFunc(NetCo *co, char *cmdStr)
         return;
     }
 
-    NetCoDispOutCmd cmd = { 0 };
+    NetCoDispOutCmd cmd = {0};
     uint32_t ret = NetCoDispOutProcCmdParse(co, cmdStr, &cmd);
     if (ret != BKF_OK) {
         BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u)\n", ret);
@@ -153,7 +150,7 @@ void NetCoDispOutRegedCmd(NetCo *co)
 {
     uint32_t i;
     for (i = 0; i < BKF_GET_ARY_COUNT(g_NetCoDispOutRegCmdStr); i++) {
-        NetCoDispOutCmdFunc(co, (char*)g_NetCoDispOutRegCmdStr[i]);
+        NetCoDispOutCmdFunc(co, (char *)g_NetCoDispOutRegCmdStr[i]);
     }
 }
 #endif
@@ -161,6 +158,7 @@ void NetCoDispOutRegedCmd(NetCo *co)
 #if BKF_BLOCK("私有函数定义")
 STATIC uint32_t NetCoDispOutOnTmrTO(NetCo *co, void *notUse)
 {
+    (void)notUse;
     NetCoDispOutRegedCmd(co);
     return BKF_OK;
 }
@@ -168,7 +166,7 @@ STATIC uint32_t NetCoDispOutStartTmr(NetCo *co)
 {
     if (co->tmrIdDispOut == VOS_NULL) {
         co->tmrIdDispOut = BkfTmrStartLoop(co->tmrMng, (F_BKF_TMR_TIMEOUT_PROC)NetCoDispOutOnTmrTO,
-                                            NET_CO_DISP_OUT_INTERVAL, co);
+            NET_CO_DISP_OUT_INTERVAL, co);
         if (co->tmrIdDispOut == VOS_NULL) {
             BKF_LOG_ERROR(BKF_LOG_HND, "tmrIdDispOut(%#x), ng\n", BKF_MASK_ADDR(co->tmrIdDispOut));
             return BKF_ERR;
@@ -190,4 +188,3 @@ STATIC void NetCoDispOutStopTmr(NetCo *co)
 #ifdef __cplusplus
 }
 #endif
-

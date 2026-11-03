@@ -13,19 +13,18 @@
 
 namespace Hccl {
 
-constexpr int INPUT_XN_ID  = 0;
+constexpr int INPUT_XN_ID = 0;
 constexpr int OUTPUT_XN_ID = 1;
-constexpr int TOKEN_XN_ID  = 2;
+constexpr int TOKEN_XN_ID = 2;
 
 constexpr uint64_t TAIL_BLOCK_LOOP_NUM = 64;
-constexpr uint64_t MISSION_NUM_2       = 2;
+constexpr uint64_t MISSION_NUM_2 = 2;
 
-CcuContextReduceTailBlock::CcuContextReduceTailBlock(const CcuCtxArg                   &arg,
-                                                     const std::vector<CcuTransport *> &transports,
-                                                     const CcuTransportGroup           &group)
+CcuContextReduceTailBlock::CcuContextReduceTailBlock(
+    const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group)
     : CcuContextAlgBase(arg, transports, group)
 {
-    const CcuCtxArgReduceTailBlock *ctxArg = dynamic_cast<const CcuCtxArgReduceTailBlock *>(&arg);
+    const CcuCtxArgReduceTailBlock* ctxArg = dynamic_cast<const CcuCtxArgReduceTailBlock*>(&arg);
     if (ctxArg == nullptr) {
         THROW<NullPtrException>(StringFormat("CcuContextReduceTailBlock::ctxArg ptr is null"));
     }
@@ -37,14 +36,16 @@ CcuContextReduceTailBlock::CcuContextReduceTailBlock(const CcuCtxArg            
     outputDataType_ = ctxArg->op_.outputDataType;
     if (outputDataType_ == DataType::INVALID) {
         outputDataType_ = dataType_;
-        HCCL_INFO("[CcuContextReduceTailBlock] outputDataType is [INVALID], set outputDataType to[%s]",
+        HCCL_INFO(
+            "[CcuContextReduceTailBlock] outputDataType is [INVALID], set outputDataType to[%s]",
             outputDataType_.Describe().c_str());
     }
 
-    HCCL_INFO("[CcuContextReduceTailBlock] Init, CtxArgs are rankId[%u], rankSize[%u], notifySignal[%s], "
-               "reduceOp[%s], dataType[%s], outputDataType[%s]",
-               rankId_, rankSize_, notifySignal_.c_str(), reduceOp_.Describe().c_str(), dataType_.Describe().c_str(),
-               outputDataType_.Describe().c_str());
+    HCCL_INFO(
+        "[CcuContextReduceTailBlock] Init, CtxArgs are rankId[%u], rankSize[%llu], notifySignal[%s], "
+        "reduceOp[%s], dataType[%s], outputDataType[%s]",
+        rankId_, rankSize_, notifySignal_.c_str(), reduceOp_.Describe().c_str(), dataType_.Describe().c_str(),
+        outputDataType_.Describe().c_str());
 }
 
 void CcuContextReduceTailBlock::Algorithm()
@@ -63,7 +64,7 @@ void CcuContextReduceTailBlock::Algorithm()
 
 void CcuContextReduceTailBlock::SyncMainBlock(uint32_t ctxSignalIndex)
 {
-    HCCL_INFO("[CcuContextReduceTailBlock] SyncMainBlock start,  ctxSignalIndex[%u]", ctxSignalIndex);
+    HCCL_INFO("[CcuContextReduceTailBlock] SyncMainBlock start, ctxSignalIndex[%u]", ctxSignalIndex);
     LocalCtxPost(mainBlockCtxSignal_, 1 << (1 + ctxSignalIndex * MISSION_NUM_2));
     LocalWait(tailBlockCtxSignal_, 1 << (0 + ctxSignalIndex * MISSION_NUM_2));
     HCCL_INFO("[CcuContextReduceTailBlock] SyncMainBlock end");
@@ -84,11 +85,12 @@ void CcuContextReduceTailBlock::InitResource()
             input_.push_back(CreateVariable());
             token_.push_back(CreateVariable());
         } else {
-            HCCL_INFO("[CcuContextReduceTailBlock] MyRank[%u], PeerId[%llu], TransportId[%u]",
-                rankId_, peerId, transportIdx);
-            CHK_PRT_RET(transports[transportIdx] == nullptr,
-                HCCL_ERROR("[CcuContextReduceTailBlock] Algorithm transport ptr is null"),);
-            input_.push_back(CreateVariable((*transports[transportIdx]), INPUT_XN_ID));  // 获取transport中id=1的Var
+            HCCL_INFO(
+                "[CcuContextReduceTailBlock] MyRank[%u], PeerId[%llu], TransportId[%u]", rankId_, peerId, transportIdx);
+            CHK_PRT_RET(
+                transports[transportIdx] == nullptr,
+                HCCL_ERROR("[CcuContextReduceTailBlock] Algorithm transport ptr is null"), );
+            input_.push_back(CreateVariable((*transports[transportIdx]), INPUT_XN_ID)); // 获取transport中id=1的Var
             token_.push_back(CreateVariable((*transports[transportIdx]), TOKEN_XN_ID));
             transportIdx++;
         }
@@ -131,7 +133,7 @@ void CcuContextReduceTailBlock::DoGroupReduce()
     }
 
     // DST
-    reduceDst.addr  = output_;
+    reduceDst.addr = output_;
     reduceDst.addr += outputOffset_;
     reduceDst.token = token_[rankId_];
 
@@ -159,10 +161,10 @@ void CcuContextReduceTailBlock::ExportVariables()
     HCCL_INFO("[CcuContextReduceTailBlock] ExportVariables end");
 }
 
-std::vector<uint64_t> CcuContextReduceTailBlock::GeneArgs(const CcuTaskArg &arg)
+std::vector<uint64_t> CcuContextReduceTailBlock::GeneArgs(const CcuTaskArg& arg)
 {
-    (void) arg; // MC2 要求尾块处理不能使用 CTX_ARG，参数需要通过主任务传入
+    (void)arg; // MC2 要求尾块处理不能使用 CTX_ARG，参数需要通过主任务传入
     HCCL_INFO("[CcuContextReduceTailBlock] GeneArgs, TailBlock, no need to gene args");
     return {};
 }
-}
+} // namespace Hccl

@@ -24,11 +24,12 @@ set(RS_SOURCE_LIST
     rs_drv_rdma.c
     rs_drv_socket.c
     dl_ibverbs_function.c
-    dl_nda_function.c
+    dl_ibv_extend_function.c
     hccp_dl.c
     ctx/dl_net_function.c
     ctx/dl_ccu_function.c
     ctx/dl_urma_function.c
+    ctx/dl_aubdfx_function.c
     ctx/rs_ping_urma.c
     ctx/rs_ctx.c
     ctx/rs_esched.c
@@ -41,6 +42,7 @@ set(RS_SOURCE_LIST
     ${CMAKE_CURRENT_SOURCE_DIR}/../common/ascend_hal_dl.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../common/file_opt.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../common/network_comm.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../inc/private/network/log/config_log.c
     $<$<STREQUAL:${PRODUCT_SIDE},device>:${TLV_DIR}/dl_netco_function.c>
     $<$<STREQUAL:${PRODUCT_SIDE},device>:${TLV_DIR}/rs_tlv.c>
     $<$<STREQUAL:${PRODUCT_SIDE},device>:${TLV_DIR}/rs_adp_nslb.c>
@@ -53,7 +55,6 @@ add_library(rs SHARED ${RS_SOURCE_LIST})
 target_compile_options(rs PRIVATE
     -Werror
     -Wno-unused-parameter
-    -Wno-missing-field-initializers
     -fvisibility=hidden
     -fsigned-char
     -fno-common
@@ -74,7 +75,6 @@ target_compile_definitions(rs PRIVATE
     $<$<STREQUAL:${PRODUCT_SIDE},host>:LOG_HOST>
     $<$<STREQUAL:${PRODUCT_SIDE},device>:google=ascend_private>
     $<$<STREQUAL:${PRODUCT_SIDE},device>:CONFIG_TLV>
-    CONFIG_V121
 )
 
 # 链接库
@@ -101,6 +101,7 @@ target_include_directories(rs PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../inc
     ${CMAKE_CURRENT_SOURCE_DIR}/../inc/network
     ${CMAKE_CURRENT_SOURCE_DIR}/../inc/private/network
+    ${CMAKE_CURRENT_SOURCE_DIR}/../inc/private/network/log
     ${CMAKE_CURRENT_SOURCE_DIR}/../common/
     ${TLV_DIR}
     # 第三方库依赖路径
@@ -108,12 +109,13 @@ target_include_directories(rs PRIVATE
     # rdma头文件
     ${CMAKE_CURRENT_SOURCE_DIR}/../external_depends/host_lite
     ${CMAKE_CURRENT_SOURCE_DIR}/../external_depends/rdma-core/providers/hns
-    ${CMAKE_CURRENT_SOURCE_DIR}/../external_depends/nda
     # HCCP Legacy
     ${CMAKE_CURRENT_SOURCE_DIR}/ctx
     ${CMAKE_CURRENT_SOURCE_DIR}/../external_depends/ccu
     ${CMAKE_CURRENT_SOURCE_DIR}/../external_depends/net_adapt
     ${URMA_INCLUDE_DIR}
+    ${IBV_EXTEND_INCLUDE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../external_depends/aubdfx
 )
 
 if(NOT BUILD_OPEN_PROJECT)
@@ -124,6 +126,7 @@ if(NOT BUILD_OPEN_PROJECT)
         ${TOP_DIR}/drivers/network/tls_adp
         ${TOP_DIR}/runtime/pkg_inc/base
         ${TOP_DIR}/driver/driver/pkg_inc/
+        ${TOP_DIR}/driver/driver/src/custom/nda/ibv_extend/
     )
 endif()
 
@@ -151,6 +154,17 @@ if(PRODUCT_SIDE STREQUAL "device")
         OUTPUT_NAME rs
         LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/device"
     )
+    # 符号隐藏: 仅导出白名单符号; 非 release 模式依赖动态符号, 不挂载
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        target_link_options(rs_device PRIVATE "-Wl,--version-script=${CMAKE_CURRENT_LIST_DIR}/rs_device.map")
+        set_property(TARGET rs_device APPEND PROPERTY LINK_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/rs_device.map")
+    endif()
+endif()
+
+# 符号隐藏: 仅导出白名单符号; 非 release 模式依赖动态符号, 不挂载
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_link_options(rs PRIVATE "-Wl,--version-script=${CMAKE_CURRENT_LIST_DIR}/rs.map")
+    set_property(TARGET rs APPEND PROPERTY LINK_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/rs.map")
 endif()
 
 # 安装

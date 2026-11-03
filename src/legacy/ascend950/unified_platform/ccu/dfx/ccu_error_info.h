@@ -1,18 +1,19 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef CCU_ERROR_INFO_H
 #define CCU_ERROR_INFO_H
 
 #include <cstdint>
 #include "ccu_rep_type.h"
+#include "enum_factory.h"
 namespace Hccl {
 
 constexpr uint32_t MISSION_STATUS_MSG_LEN = 64;
@@ -89,8 +90,8 @@ struct CcuErrorInfo {
             uint16_t startInstrId;
             uint16_t endInstrId;
             uint16_t loopEngineId;
-            uint16_t loopCnt;           // 该Loop需要循环执行的次数
-            uint16_t loopCurrentCnt;    // 该Loop已经循环次数
+            uint16_t loopCnt;        // 该Loop需要循环执行的次数
+            uint16_t loopCurrentCnt; // 该Loop已经循环次数
             uint32_t addrStride;
         } loop;
 
@@ -111,5 +112,5 @@ struct CcuErrorInfo {
     }
 };
 
-}
+} // namespace Hccl
 #endif // CCU_ERROR_INFO_H

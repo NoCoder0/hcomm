@@ -15,80 +15,85 @@
 
 class HcclTaskCollectionTest : public testing::Test {
 protected:
-    void SetUp() override {
-    }
-    
-    void TearDown() override {
-    }
+    void SetUp() override {}
+
+    void TearDown() override {}
 };
 
-TEST_F(HcclTaskCollectionTest, InsertTask_WithNullptr_ShouldReturnEarly) {
+TEST_F(HcclTaskCollectionTest, InsertTask_WithNullptr_ShouldReturnEarly)
+{
     EXPECT_NO_THROW(InsertTaskToCollectionDev(nullptr));
 }
 
-TEST_F(HcclTaskCollectionTest, InsertTask_WithValidPointer_ShouldNotThrow) {
+TEST_F(HcclTaskCollectionTest, InsertTask_WithValidPointer_ShouldNotThrow)
+{
     HcclTaskMetaData task;
     memset(&task, 0, sizeof(task));
     EXPECT_NO_THROW(InsertTaskToCollectionDev(&task));
 }
 
-TEST_F(HcclTaskCollectionTest, InsertTask_MemCpyTask) {
+TEST_F(HcclTaskCollectionTest, InsertTask_MemCpyTask)
+{
     HcclTaskMetaData task;
     memset(&task, 0, sizeof(task));
     task.taskType = HccLTaskMetaType::MEM_CPY;
     task.rankId = 0;
     task.streamId = 0;
-    task.taskData.transMem.srcRankId = 0;
-    task.taskData.transMem.dstRankId = 1;
+    task.taskData.transMem.srcDeviceId = 0;
+    task.taskData.transMem.dstDeviceId = 1;
     task.taskData.transMem.srcOffset = 0x1000;
     task.taskData.transMem.dstOffset = 0x2000;
     task.taskData.transMem.len = 1024;
-    
+
     EXPECT_NO_THROW(InsertTaskToCollectionDev(&task));
 }
 
-TEST_F(HcclTaskCollectionTest, InsertTask_ReduceTask) {
+TEST_F(HcclTaskCollectionTest, InsertTask_ReduceTask)
+{
     HcclTaskMetaData task;
     memset(&task, 0, sizeof(task));
     task.taskType = HccLTaskMetaType::REDUCE;
     task.rankId = 0;
     task.streamId = 0;
-    task.taskData.reduce.srcRankId = 0;
-    task.taskData.reduce.dstRankId = 1;
+    task.taskData.reduce.srcDeviceId = 0;
+    task.taskData.reduce.dstDeviceId = 1;
     task.taskData.reduce.srcOffset = 0x1000;
     task.taskData.reduce.dstOffset = 0x2000;
     task.taskData.reduce.dataCount = 256;
     task.taskData.reduce.dataType = 0;
     task.taskData.reduce.reduceOp = 1;
-    
+
     EXPECT_NO_THROW(InsertTaskToCollectionDev(&task));
 }
 
-TEST_F(HcclTaskCollectionTest, InsertTask_NotifyWaitTask) {
+TEST_F(HcclTaskCollectionTest, InsertTask_NotifyWaitTask)
+{
     HcclTaskMetaData task;
     memset(&task, 0, sizeof(task));
     task.taskType = HccLTaskMetaType::NOTIFY_WAIT;
     task.rankId = 0;
     task.streamId = 0;
-    task.taskData.notify.srcRankId = 1;
+    task.taskData.notify.srcDeviceId = 1;
     task.taskData.notify.notifyId = 100;
-    
+
     EXPECT_NO_THROW(InsertTaskToCollectionDev(&task));
 }
 
-TEST_F(HcclTaskCollectionTest, InsertTask_NotifyRecordTask) {
+TEST_F(HcclTaskCollectionTest, InsertTask_NotifyRecordTask)
+{
     HcclTaskMetaData task;
     memset(&task, 0, sizeof(task));
     task.taskType = HccLTaskMetaType::NOTIFY_RECORD;
     task.rankId = 0;
     task.streamId = 0;
-    task.taskData.notify.dstRankId = 1;
+    task.taskData.notify.dstDeviceId = 1;
     task.taskData.notify.notifyId = 100;
-    
+
     EXPECT_NO_THROW(InsertTaskToCollectionDev(&task));
 }
 
-TEST_F(HcclTaskCollectionTest, InsertTask_MultipleTasks) {
+TEST_F(HcclTaskCollectionTest, InsertTask_MultipleTasks)
+{
     for (int i = 0; i < 10; i++) {
         HcclTaskMetaData task;
         memset(&task, 0, sizeof(task));
@@ -99,7 +104,8 @@ TEST_F(HcclTaskCollectionTest, InsertTask_MultipleTasks) {
     }
 }
 
-TEST_F(HcclTaskCollectionTest, InsertTask_MaxValues) {
+TEST_F(HcclTaskCollectionTest, InsertTask_MaxValues)
+{
     HcclTaskMetaData task;
     memset(&task, 0, sizeof(task));
     task.taskType = HccLTaskMetaType::MEM_CPY;
@@ -108,18 +114,17 @@ TEST_F(HcclTaskCollectionTest, InsertTask_MaxValues) {
     task.taskData.transMem.srcOffset = UINT64_MAX;
     task.taskData.transMem.dstOffset = UINT64_MAX;
     task.taskData.transMem.len = UINT64_MAX;
-    
+
     EXPECT_NO_THROW(InsertTaskToCollectionDev(&task));
 }
 
-TEST_F(HcclTaskCollectionTest, InsertTask_ZeroValues) {
+TEST_F(HcclTaskCollectionTest, InsertTask_ZeroValues)
+{
     HcclTaskMetaData task;
     memset(&task, 0, sizeof(task));
     task.taskType = HccLTaskMetaType::MEM_CPY;
-    
+
     EXPECT_NO_THROW(InsertTaskToCollectionDev(&task));
 }
 
-TEST_F(HcclTaskCollectionTest, HcclTaskMetaData_StructSize) {
-    EXPECT_GT(sizeof(HcclTaskMetaData), 0);
-}
+TEST_F(HcclTaskCollectionTest, HcclTaskMetaData_StructSize) { EXPECT_GT(sizeof(HcclTaskMetaData), 0); }

@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -61,14 +61,15 @@
 using namespace std;
 using namespace hccl;
 
-class CommInitTest : public testing::Test
-{
+class CommInitTest : public testing::Test {
 protected:
     static void SetUpTestCase()
     {
         s32 ret = HcclDispatcherInit(DispatcherType::DISPATCHER_NORMAL, 0, &dispatcherPtr);
-        if (ret != HCCL_SUCCESS) return;
-        if (dispatcherPtr == nullptr) return;
+        if (ret != HCCL_SUCCESS)
+            return;
+        if (dispatcherPtr == nullptr)
+            return;
         dispatcher = reinterpret_cast<DispatcherPub*>(dispatcherPtr);
         std::cout << "\033[36m--CommInitTest SetUP--\033[0m" << std::endl;
     }
@@ -83,20 +84,14 @@ protected:
         std::cout << "\033[36m--CommInitTest TearDown--\033[0m" << std::endl;
     }
 
-    virtual void SetUp()
-    {
-        std::cout << "CommInitTest Test SetUP" << std::endl;
-    }
-    virtual void TearDown()
-    {
-        std::cout << "CommInitTest Test TearDown" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "CommInitTest Test SetUP" << std::endl; }
+    virtual void TearDown() { std::cout << "CommInitTest Test TearDown" << std::endl; }
     static HcclDispatcher dispatcherPtr;
-    static DispatcherPub *dispatcher;
+    static DispatcherPub* dispatcher;
 };
 
 HcclDispatcher CommInitTest::dispatcherPtr = nullptr;
-DispatcherPub *CommInitTest::dispatcher = nullptr;
+DispatcherPub* CommInitTest::dispatcher = nullptr;
 
 TEST_F(CommInitTest, ut_HcclCommInitRootInfoConfig_not_set_config_01)
 {
@@ -104,11 +99,7 @@ TEST_F(CommInitTest, ut_HcclCommInitRootInfoConfig_not_set_config_01)
     setenv("HCCL_RDMA_SL", "2", 1);
     HcclRootInfo id;
     DevType deviceType = DevType::DEV_TYPE_910B;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
-
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = HcclGetRootInfo(&id);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -119,9 +110,7 @@ TEST_F(CommInitTest, ut_HcclCommInitRootInfoConfig_not_set_config_01)
     config.hcclRdmaServiceLevel = 0xffffffff;
     strcpy_s(config.hcclCommName, 128, HCCL_WORLD_GROUP);
 
-    MOCKER(hrtProfRegisterCtrlCallback)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtProfRegisterCtrlCallback).stubs().will(returnValue(HCCL_SUCCESS));
     HcclComm newcomm;
     ret = HcclCommInitRootInfoConfig(1, &id, 0, &config, &newcomm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -138,10 +127,7 @@ TEST_F(CommInitTest, ut_HcclCommInitRootInfoConfig_not_set_config_02)
 {
     HcclRootInfo id;
     DevType deviceType = DevType::DEV_TYPE_910B;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = HcclGetRootInfo(&id);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -153,9 +139,7 @@ TEST_F(CommInitTest, ut_HcclCommInitRootInfoConfig_not_set_config_02)
     config.hcclRdmaServiceLevel = 0xffffffff;
 
     strcpy_s(config.hcclCommName, 128, HCCL_WORLD_GROUP);
-    MOCKER(hrtProfRegisterCtrlCallback)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtProfRegisterCtrlCallback).stubs().will(returnValue(HCCL_SUCCESS));
     HcclComm newcomm;
     ret = HcclCommInitRootInfoConfig(1, &id, 0, &config, &newcomm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -173,10 +157,7 @@ TEST_F(CommInitTest, ut_HcclCommInitRootInfoConfig_by_config_file)
     HcclRootInfo id;
     SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
     DevType deviceType = DevType::DEV_TYPE_910B;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = HcclGetRootInfo(&id);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -187,9 +168,7 @@ TEST_F(CommInitTest, ut_HcclCommInitRootInfoConfig_by_config_file)
     config.hcclRdmaTrafficClass = 132;
     config.hcclRdmaServiceLevel = 4;
     strcpy_s(config.hcclCommName, 128, HCCL_WORLD_GROUP);
-    MOCKER(hrtProfRegisterCtrlCallback)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtProfRegisterCtrlCallback).stubs().will(returnValue(HCCL_SUCCESS));
     HcclComm newcomm;
     ret = HcclCommInitRootInfoConfig(1, &id, 0, &config, &newcomm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -209,10 +188,7 @@ TEST_F(CommInitTest, ut_HcclCommInitRootInfoConfig_by_config_file_sl)
     HcclRootInfo id;
     SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
     DevType deviceType = DevType::DEV_TYPE_910B;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = HcclGetRootInfo(&id);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -223,9 +199,7 @@ TEST_F(CommInitTest, ut_HcclCommInitRootInfoConfig_by_config_file_sl)
     config.hcclRdmaTrafficClass = 0xffffffff;
     config.hcclRdmaServiceLevel = 4;
     strcpy_s(config.hcclCommName, 128, HCCL_WORLD_GROUP);
-    MOCKER(hrtProfRegisterCtrlCallback)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtProfRegisterCtrlCallback).stubs().will(returnValue(HCCL_SUCCESS));
     HcclComm newcomm;
     ret = HcclCommInitRootInfoConfig(1, &id, 0, &config, &newcomm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -245,10 +219,7 @@ TEST_F(CommInitTest, ut_HcclCommInitRootInfoConfig_by_config_file_tc)
     HcclRootInfo id;
     SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
     DevType deviceType = DevType::DEV_TYPE_910B;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = HcclGetRootInfo(&id);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -259,9 +230,7 @@ TEST_F(CommInitTest, ut_HcclCommInitRootInfoConfig_by_config_file_tc)
     config.hcclRdmaTrafficClass = 132;
     config.hcclRdmaServiceLevel = 0xffffffff;
     strcpy_s(config.hcclCommName, 128, HCCL_WORLD_GROUP);
-    MOCKER(hrtProfRegisterCtrlCallback)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtProfRegisterCtrlCallback).stubs().will(returnValue(HCCL_SUCCESS));
     HcclComm newcomm;
     ret = HcclCommInitRootInfoConfig(1, &id, 0, &config, &newcomm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -282,10 +251,7 @@ TEST_F(CommInitTest, ut_HcclCommInitRootInfoConfig_in_valiad_para)
     // 设置op base 模式
     SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
     DevType deviceType = DevType::DEV_TYPE_910B;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = HcclGetRootInfo(&id);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -296,9 +262,7 @@ TEST_F(CommInitTest, ut_HcclCommInitRootInfoConfig_in_valiad_para)
     config.hcclRdmaTrafficClass = 256;
     config.hcclRdmaServiceLevel = 256;
     strcpy_s(config.hcclCommName, 128, HCCL_WORLD_GROUP);
-    MOCKER(hrtProfRegisterCtrlCallback)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtProfRegisterCtrlCallback).stubs().will(returnValue(HCCL_SUCCESS));
     HcclComm newcomm;
     ret = HcclCommInitRootInfoConfig(1, &id, 0, &config, &newcomm);
     EXPECT_EQ(ret, HCCL_E_PARA);
@@ -316,10 +280,7 @@ TEST_F(CommInitTest, ut_HcclCommInitRootInfoConfig_in_boundary_value)
     // 设置op base 模式
     SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
     DevType deviceType = DevType::DEV_TYPE_910B;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = HcclGetRootInfo(&id);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -330,9 +291,7 @@ TEST_F(CommInitTest, ut_HcclCommInitRootInfoConfig_in_boundary_value)
     config.hcclRdmaTrafficClass = 0;
     config.hcclRdmaServiceLevel = 0;
     strcpy_s(config.hcclCommName, 128, HCCL_WORLD_GROUP);
-    MOCKER(hrtProfRegisterCtrlCallback)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtProfRegisterCtrlCallback).stubs().will(returnValue(HCCL_SUCCESS));
     HcclComm newcomm;
     ret = HcclCommInitRootInfoConfig(1, &id, 0, &config, &newcomm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -356,8 +315,8 @@ TEST_F(CommInitTest, ut_transport_ibverbs_createoneqp_not_set_config)
 
     HcclIpAddress remoteIp{};
     std::chrono::milliseconds timeout;
-    std::shared_ptr<HcclSocket> newSocket(new (std::nothrow)HcclSocket("test",
-        nullptr, remoteIp, 0, HcclSocketRole::SOCKET_ROLE_SERVER));
+    std::shared_ptr<HcclSocket> newSocket(
+        new (std::nothrow) HcclSocket("test", nullptr, remoteIp, 0, HcclSocketRole::SOCKET_ROLE_SERVER));
     machinePara.sockets.push_back(newSocket);
 
     std::unique_ptr<NotifyPool> notifyPool = nullptr;
@@ -405,8 +364,8 @@ TEST_F(CommInitTest, ut_transport_ibverbs_createoneqp_by_config_file)
 
     HcclIpAddress remoteIp{};
     std::chrono::milliseconds timeout;
-    std::shared_ptr<HcclSocket> newSocket(new (std::nothrow)HcclSocket("test",
-        nullptr, remoteIp, 0, HcclSocketRole::SOCKET_ROLE_SERVER));
+    std::shared_ptr<HcclSocket> newSocket(
+        new (std::nothrow) HcclSocket("test", nullptr, remoteIp, 0, HcclSocketRole::SOCKET_ROLE_SERVER));
     machinePara.sockets.push_back(newSocket);
 
     std::unique_ptr<NotifyPool> notifyPool = nullptr;
@@ -458,7 +417,7 @@ TEST_F(CommInitTest, ut_InitEnvConfig)
 
 TEST_F(CommInitTest, ut_device_CheckDeviceType_Error)
 {
-s32 ret = HCCL_SUCCESS;
-ret = CheckDeviceType(DevType::DEV_TYPE_COUNT);
-EXPECT_EQ(ret, HCCL_E_PARA);
+    s32 ret = HCCL_SUCCESS;
+    ret = CheckDeviceType(DevType::DEV_TYPE_COUNT);
+    EXPECT_EQ(ret, HCCL_E_PARA);
 }

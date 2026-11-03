@@ -1,35 +1,34 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "scatter_nb.h"
 #include "alg_template_register.h"
 
 namespace hccl {
-ScatterNB::ScatterNB(const HcclDispatcher dispatcher)
-    : NBBase(dispatcher), interRank_(0), interRankSize_(0)
-{
-}
+ScatterNB::ScatterNB(const HcclDispatcher dispatcher) : NBBase(dispatcher), interRank_(0), interRankSize_(0) {}
 
-ScatterNB::~ScatterNB()
-{
-}
+ScatterNB::~ScatterNB() {}
 
-HcclResult ScatterNB::RunScatterNB(const std::vector<std::shared_ptr<Transport> > &links)
+HcclResult ScatterNB::RunScatterNB(const std::vector<std::shared_ptr<Transport>>& links)
 {
     HcclResult ret = HCCL_SUCCESS;
     // 需要判断input不等于outputmem，scatter 输入只有一个input时不用拷贝
     if (inputMem_ != outputMem_) {
         ret = HcclD2DMemcpyAsync(dispatcher_, outputMem_, inputMem_, stream_);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[Run][ScatterOnRootRank]root rank[%u] memcpy async from input[%p] "\
-            "failed to output[%p]", interRank_, inputMem_.ptr(), outputMem_.ptr()), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[Run][ScatterOnRootRank]root rank[%u] memcpy async from input[%p] "
+                "failed to output[%p]",
+                interRank_, inputMem_.ptr(), outputMem_.ptr()),
+            ret);
     }
 
     // 计算通信步数：ceiling(log2(rankSize))
@@ -38,18 +37,18 @@ HcclResult ScatterNB::RunScatterNB(const std::vector<std::shared_ptr<Transport> 
     // 逐步编排任务
     u32 deltaRoot = (interRank_ + interRankSize_ - root_) % interRankSize_;
     for (u32 step = 0; step < nSteps; step++) {
-        if (deltaRoot < u32(1<<step)) {
-            if (step != nSteps - 1 || deltaRoot < (interRankSize_ - (1<<step))) {
+        if (deltaRoot < u32(1 << step)) {
+            if (step != nSteps - 1 || deltaRoot < (interRankSize_ - (1 << step))) {
                 RunScatterTx(step, links);
             }
-        } else if (deltaRoot < u32(1<<(step + 1)) && interRank_ != root_) {
+        } else if (deltaRoot < u32(1 << (step + 1)) && interRank_ != root_) {
             RunScatterRx(step, links);
         }
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult ScatterNB::RunScatterTx(const u32 step, const std::vector<std::shared_ptr<Transport> > &links)
+HcclResult ScatterNB::RunScatterTx(const u32 step, const std::vector<std::shared_ptr<Transport>>& links)
 {
     HcclResult ret = HCCL_SUCCESS;
 
@@ -59,7 +58,7 @@ HcclResult ScatterNB::RunScatterTx(const u32 step, const std::vector<std::shared
     // 数据份数和数据编号增量
     u32 nSlices = (interRankSize_ - 1 + (1 << step)) / (1 << (step + 1));
     u32 deltaSliceIndex = 1 << (step + 1);
-    u32 sliceIdx = (interRank_ + (1<<step)) % interRankSize_;
+    u32 sliceIdx = (interRank_ + (1 << step)) % interRankSize_;
     LINK linkRight = links[sendTo];
     CHK_SMART_PTR_NULL(linkRight);
 
@@ -74,8 +73,10 @@ HcclResult ScatterNB::RunScatterTx(const u32 step, const std::vector<std::shared
 
     CHK_RET(linkRight->RxAck(stream_));
     ret = Tx(linkRight, txSlices);
-    CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][Scatter]rank[%u] step[%u] RightLink tx slices count [%u] Failed",
-        interRank_, step, nSlices), ret);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR("[Run][Scatter]rank[%u] step[%u] RightLink tx slices count [%u] Failed", interRank_, step, nSlices),
+        ret);
     ret = linkRight->TxWaitDone(stream_);
     CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][Scatter]TxWaitDone failed"), ret);
 
@@ -84,7 +85,7 @@ HcclResult ScatterNB::RunScatterTx(const u32 step, const std::vector<std::shared
     return HCCL_SUCCESS;
 }
 
-HcclResult ScatterNB::RunScatterRx(const u32 step, const std::vector<std::shared_ptr<Transport> > &links)
+HcclResult ScatterNB::RunScatterRx(const u32 step, const std::vector<std::shared_ptr<Transport>>& links)
 {
     HcclResult ret = HCCL_SUCCESS;
 
@@ -107,9 +108,13 @@ HcclResult ScatterNB::RunScatterRx(const u32 step, const std::vector<std::shared
 
     CHK_RET(linkLeft->TxAck(stream_));
     ret = Rx(linkLeft, rxSlices);
-    CHK_PRT_RET(ret != HCCL_SUCCESS,
-        HCCL_ERROR("[Run][Scatter]rank[%u] step[%u] Right Link rx slices count [%u] "\
-            "Failed", interRank_, step, nSlices), ret);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[Run][Scatter]rank[%u] step[%u] Right Link rx slices count [%u] "
+            "Failed",
+            interRank_, step, nSlices),
+        ret);
 
     ret = linkLeft->RxWaitDone(stream_);
     CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][Scatter]RxWaitDone failed"), ret);
@@ -131,8 +136,7 @@ void ScatterNB::PrepareSlicesData(const u32 unitSize, const u64 totalCount, cons
 }
 
 // scatter的入口函数
-HcclResult ScatterNB::RunAsync(const u32 rank, const u32 rankSize,
-    const std::vector<std::shared_ptr<Transport> > &links)
+HcclResult ScatterNB::RunAsync(const u32 rank, const u32 rankSize, const std::vector<std::shared_ptr<Transport>>& links)
 {
     CHK_SMART_PTR_NULL(dispatcher_);
     CHK_PTR_NULL(stream_.ptr());
@@ -158,15 +162,16 @@ HcclResult ScatterNB::RunAsync(const u32 rank, const u32 rankSize,
     }
 
     u32 unitSize = DataUnitSize(dataType_);
-    CHK_PRT_RET(unitSize == 0, HCCL_ERROR("[ScatterNB][RunAsync]rank[%u] unit data size is zero", rank),
-        HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        unitSize == 0, HCCL_ERROR("[ScatterNB][RunAsync]rank[%u] unit data size is zero", rank), HCCL_E_INTERNAL);
 
-    // 带入vecotr为空，计算每个rank的结果偏移和大小
+    // 带入vector为空，计算每个rank的结果偏移和大小
     if (slices_.size() == 0) {
         PrepareSlicesData(unitSize, count_, interRankSize_);
     }
 
-    CHK_PRT_RET(links.size() < rankSize,
+    CHK_PRT_RET(
+        links.size() < rankSize,
         HCCL_ERROR("[ScatterNB][RunAsync]rank[%u] link size[%llu] is less than rank size", rank, links.size()),
         HCCL_E_INTERNAL);
 
@@ -174,42 +179,42 @@ HcclResult ScatterNB::RunAsync(const u32 rank, const u32 rankSize,
 
     if (barrierSwitchOn_) {
         // 执行barrier，保证数据收发完成
-        CHK_RET(ExecuteBarrier(links[(interRank_ + interRankSize_ - 1) % interRankSize_],
-            links[(interRank_ + 1) % interRankSize_]));
+        CHK_RET(ExecuteBarrier(
+            links[(interRank_ + interRankSize_ - 1) % interRankSize_], links[(interRank_ + 1) % interRankSize_]));
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult ScatterNB::Tx(const LINK &link, const std::vector<Slice> &txSlices)
+HcclResult ScatterNB::Tx(const LINK& link, const std::vector<Slice>& txSlices)
 {
     std::vector<TxMemoryInfo> txMems;
     for (const Slice& txSlice : txSlices) {
         DeviceMem srcMem = outputMem_.range(txSlice.offset, txSlice.size);
         HCCL_DEBUG("tx srcMem[%p] range[%llu] size[%llu] ", srcMem.ptr(), txSlice.offset, txSlice.size);
         txMems.emplace_back(
-            TxMemoryInfo { UserMemType::OUTPUT_MEM, txSlice.offset + baseOffset_, srcMem.ptr(), txSlice.size });
+            TxMemoryInfo{UserMemType::OUTPUT_MEM, txSlice.offset + baseOffset_, srcMem.ptr(), txSlice.size});
     }
 
     CHK_RET(link->TxAsync(txMems, stream_));
     return HCCL_SUCCESS;
 }
 
-HcclResult ScatterNB::Rx(const LINK &link, const std::vector<Slice> &rxSlices)
+HcclResult ScatterNB::Rx(const LINK& link, const std::vector<Slice>& rxSlices)
 {
     std::vector<RxMemoryInfo> rxMems;
     for (const Slice& rxSlice : rxSlices) {
         DeviceMem dstMem = outputMem_.range(rxSlice.offset, rxSlice.size);
-        HCCL_DEBUG("rx dstMem[%p] range[%llu], size[%llu] ",  dstMem.ptr(), rxSlice.offset, rxSlice.size);
+        HCCL_DEBUG("rx dstMem[%p] range[%llu], size[%llu] ", dstMem.ptr(), rxSlice.offset, rxSlice.size);
         rxMems.emplace_back(
-            RxMemoryInfo { UserMemType::OUTPUT_MEM, rxSlice.offset + baseOffset_, dstMem.ptr(), rxSlice.size });
+            RxMemoryInfo{UserMemType::OUTPUT_MEM, rxSlice.offset + baseOffset_, dstMem.ptr(), rxSlice.size});
     }
 
     CHK_RET(link->RxAsync(rxMems, stream_));
     return HCCL_SUCCESS;
 }
 
-HcclResult ScatterNB::GetNslbAdjInfo(const u32 rank, const u32 rankSize,
-                                     const std::vector<LINK> &links, AdjInfo& nslbAdjInfo)
+HcclResult
+ScatterNB::GetNslbAdjInfo(const u32 rank, const u32 rankSize, const std::vector<LINK>& links, AdjInfo& nslbAdjInfo)
 {
     if (rankSize == 1) {
         return HCCL_SUCCESS;
@@ -218,8 +223,9 @@ HcclResult ScatterNB::GetNslbAdjInfo(const u32 rank, const u32 rankSize,
         return HCCL_SUCCESS;
     }
     HCCL_DEBUG("[ScatterNB]GetNslbAdjInfo start");
-    u32 nSteps  = 0;
-    for(u32 temp = rankSize - 1; temp != 0; temp >>= 1, ++nSteps){}
+    u32 nSteps = 0;
+    for (u32 temp = rankSize - 1; temp != 0; temp >>= 1, ++nSteps) {
+    }
 
     u32 deltaRoot = (rank + rankSize - root_) % rankSize;
     for (u32 step = 0; step < nSteps; step++) {
@@ -229,12 +235,12 @@ HcclResult ScatterNB::GetNslbAdjInfo(const u32 rank, const u32 rankSize,
         HCCL_DEBUG("[ScatterNB]now step is %u start", step);
         if (step != nSteps - 1 || deltaRoot < (rankSize - (1 << step))) {
             u32 deltaRank = 1 << step;
-            u32 sendTo =(rank + deltaRank) % rankSize;
+            u32 sendTo = (rank + deltaRank) % rankSize;
             HCCL_DEBUG("[ScatterNB]sendTo is %u", sendTo);
             LINK linkRight = links[sendTo];
             CHK_SMART_PTR_NULL(linkRight);
 
-            NslbDpAdjInfo adjInfoStep = {0};
+            NslbDpAdjInfo adjInfoStep = {};
             adjInfoStep.dstLocalRankId = linkRight->GetRemoteRank();
             adjInfoStep.phaseId = step + 1;
             adjInfoStep.rev = 0;
@@ -245,4 +251,4 @@ HcclResult ScatterNB::GetNslbAdjInfo(const u32 rank, const u32 rankSize,
     return HCCL_SUCCESS;
 }
 REGISTER_TEMPLATE(TemplateType::TEMPLATE_SCATTER_NB, ScatterNB);
-}  // namespace hccl
+} // namespace hccl

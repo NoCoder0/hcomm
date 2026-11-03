@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: AllGatherV语义校验实现类
  */
 
@@ -19,87 +22,111 @@
 #include "utils/error_codes.h"
 
 namespace HcclSim {
-HcclResult TaskCheckAllGatherVSemantics(std::map<RankId, RankMemorySemantics> &allRankMemSemantics, VDataDesTagInner &vDataDes)
+HcclResult TaskCheckAllGatherVSemantics(
+    const PhysicalMemorySemantics& memorySemantics, const DeviceBufferAddressLayouts& bufferLayouts,
+    const VDataDesTagInner& vDataDes, const std::vector<DeviceId>& rankToDevice)
 {
-    u32 rankSize = allRankMemSemantics.size();
+    const uint32_t rankSize = memorySemantics.size();
 
-    u64 outputSize = 0;
+    uint64_t outputSize = 0;
     // AllGatherV 输入不等长
-    for (u32 i = 0; i < rankSize; i++) {
-        u64 curCounts = vDataDes.counts[i];
-        u64 curLength = curCounts * CHECK_SIZE_TABLE[vDataDes.dataType];
+    for (uint32_t i = 0; i < rankSize; i++) {
+        uint64_t curCounts = vDataDes.counts[i];
+        uint64_t curLength = curCounts * CHECK_SIZE_TABLE[vDataDes.dataType];
         outputSize += curLength;
     }
 
-    for (RankId rankId = 0; rankId < rankSize; rankId++) {
-        // 对应的rank不存在需要报错
-        if (allRankMemSemantics.count(rankId) == 0) {
-            HCCL_VM_ERROR("{} AllGatherV produced no result data for rank {}, but this rank is "
-                "expected to receive data from all {} participating ranks with an expected total "
-                "result size of 0x{:x} bytes.",
-                MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_MISSING),
-                rankId, rankSize, outputSize);
-            return HcclResult::HCCL_E_PARA;
-        }
-
-        u64    totalSize   = 0;
-        RankId curRankId   = 0;
-        u64    curDataSize = 0;
-        for (auto &ele : allRankMemSemantics[rankId][BufferType::OUTPUT]) {
-            u64 inputSize = vDataDes.counts[curRankId] * CHECK_SIZE_TABLE[vDataDes.dataType];
-            while (!inputSize) {
-                curRankId++;
-                inputSize = vDataDes.counts[curRankId] * CHECK_SIZE_TABLE[vDataDes.dataType];
+    for (const auto& [deviceId, mem] : memorySemantics) {
+        uint64_t outputBase = 0;
+        uint64_t outputBufferSize = 0;
+        GetSemanticBufferExtent(bufferLayouts, deviceId, BufferType::OUTPUT, outputBase, outputBufferSize);
+        uint64_t totalSize = 0;
+        uint32_t curRankIdx = 0;
+        uint64_t curDataSize = 0;
+        for (const auto& [eleAddr, original] : mem) {
+            BufferSemantic ele = original;
+            if (!ClipSemanticToBuffer(ele, outputBase, outputBufferSize)) {
+                continue;
             }
-            const u64 rangeEnd = ele.startAddr + ele.size;
+            if (ele.startAddr >= outputBase + outputSize) {
+                // 已裁剪到注册缓冲区；超出期望结果大小的非空语义段仍应报错。
+                // 注册大小未知时保留原有兼容行为。
+                if (outputBufferSize != 0 && ele.size != 0) {
+                    HCCL_VM_ERROR(
+                        "{} AllGatherV output for device {} contains unexpected extra data: range "
+                        "[0x{:x},0x{:x}) starts beyond the expected result size 0x{:x} but inside the "
+                        "output buffer (size 0x{:x}).\nCurrent result range detail:\n{}",
+                        MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_SIZE_ERROR), deviceId, ele.startAddr,
+                        ele.startAddr + ele.size, outputSize, outputBufferSize, ele.Describe());
+                    return HcclResult::HCCL_E_PARA;
+                }
+                break;
+            }
+            while (curRankIdx < rankSize && vDataDes.counts[curRankIdx] == 0) {
+                ++curRankIdx;
+            }
+            if (curRankIdx >= rankSize) {
+                HCCL_VM_ERROR(
+                    "{} AllGatherV output for device {} contains unexpected data after all "
+                    "expected source ranks have been consumed."
+                    "\nCurrent result range detail:\n{}",
+                    MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_SIZE_ERROR), deviceId, ele.Describe());
+                return HcclResult::HCCL_E_PARA;
+            }
+            const uint64_t inputSize = vDataDes.counts[curRankIdx] * CHECK_SIZE_TABLE[vDataDes.dataType];
+            const uint64_t rangeEnd = ele.startAddr + ele.size;
 
-            if (ele.startAddr != totalSize) {
-                HCCL_VM_ERROR("{} AllGatherV output for rank {} should continue at 0x{:x}, "
+            if (ele.startAddr != outputBase + totalSize) {
+                HCCL_VM_ERROR(
+                    "{} AllGatherV output for device {} should continue at 0x{:x}, "
                     "but the next actual range starts at 0x{:x} (actual range: [0x{:x},0x{:x}))."
                     "\nCurrent result range detail:\n{}",
-                    MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_MISSING),
-                    rankId, totalSize, ele.startAddr,
-                    ele.startAddr, rangeEnd, ele.Describe());
+                    MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_MISSING), deviceId, outputBase + totalSize,
+                    ele.startAddr, ele.startAddr, rangeEnd, ele.Describe());
                 return HcclResult::HCCL_E_PARA;
             }
 
             if (ele.srcBufs.size() != 1) {
-                HCCL_VM_ERROR("{} AllGatherV output range [0x{:x},0x{:x}) for rank {} should come "
+                HCCL_VM_ERROR(
+                    "{} AllGatherV output range [0x{:x},0x{:x}) for device {} should come "
                     "from exactly one source, but it actually comes from {} sources."
                     "\nCurrent result range detail:\n{}",
-                    MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_REDUCE_ERROR),
-                    ele.startAddr, rangeEnd, rankId, ele.srcBufs.size(), ele.Describe());
+                    MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_REDUCE_ERROR), ele.startAddr, rangeEnd, deviceId,
+                    ele.srcBufs.size(), ele.Describe());
                 return HcclResult::HCCL_E_PARA;
             }
 
-            const auto &srcBuf = *ele.srcBufs.begin();
+            const auto& srcBuf = *ele.srcBufs.begin();
 
-            if (srcBuf.rankId != curRankId) {
-                HCCL_VM_ERROR("{} AllGatherV output range [0x{:x},0x{:x}) for rank {} should come from "
-                    "rank {}, but it actually comes from rank {}."
+            if (srcBuf.deviceId != rankToDevice[curRankIdx]) {
+                HCCL_VM_ERROR(
+                    "{} AllGatherV output range [0x{:x},0x{:x}) for device {} should come from "
+                    "source index {}, but it actually comes from device {}."
                     "\nCurrent result range detail:\n{}",
-                    MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_SRC_ERROR),
-                    ele.startAddr, rangeEnd, rankId, curRankId, srcBuf.rankId, ele.Describe());
+                    MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_SRC_ERROR), ele.startAddr, rangeEnd, deviceId,
+                    curRankIdx, srcBuf.deviceId, ele.Describe());
                 return HcclResult::HCCL_E_PARA;
             }
 
             if (srcBuf.bufType != BufferType::INPUT) {
-                HCCL_VM_ERROR("{} AllGatherV output range [0x{:x},0x{:x}) for rank {} should come from "
-                    "INPUT, but it actually comes from rank {} with buffer type {}."
+                HCCL_VM_ERROR(
+                    "{} AllGatherV output range [0x{:x},0x{:x}) for device {} should come from "
+                    "INPUT, but it actually comes from device {} with buffer type {}."
                     "\nCurrent result range detail:\n{}",
-                    MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_SRC_ERROR),
-                    ele.startAddr, rangeEnd, rankId, srcBuf.rankId,
-                    BufferTypeToString(srcBuf.bufType), ele.Describe());
+                    MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_SRC_ERROR), ele.startAddr, rangeEnd, deviceId,
+                    srcBuf.deviceId, BufferTypeToString(srcBuf.bufType), ele.Describe());
                 return HcclResult::HCCL_E_PARA;
             }
 
-            if (srcBuf.srcAddr != curDataSize) {
-                HCCL_VM_ERROR("{} AllGatherV output range [0x{:x},0x{:x}) for rank {} should come from "
-                    "rank {} at source address 0x{:x}, but the actual source address is 0x{:x}."
+            const uint64_t expectedSrcAddr
+                = GetSemanticBufferBase(bufferLayouts, srcBuf.deviceId, BufferType::INPUT) + curDataSize;
+            if (srcBuf.srcAddr != expectedSrcAddr) {
+                HCCL_VM_ERROR(
+                    "{} AllGatherV output range [0x{:x},0x{:x}) for device {} should come from "
+                    "source index {} at source address 0x{:x}, but the actual source address is 0x{:x}."
                     "\nCurrent result range detail:\n{}",
-                    MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_SRC_ERROR),
-                    ele.startAddr, rangeEnd, rankId, srcBuf.rankId, curDataSize, srcBuf.srcAddr,
-                    ele.Describe());
+                    MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_SRC_ERROR), ele.startAddr, rangeEnd, deviceId,
+                    srcBuf.deviceId, expectedSrcAddr, srcBuf.srcAddr, ele.Describe());
                 return HcclResult::HCCL_E_PARA;
             }
 
@@ -107,24 +134,24 @@ HcclResult TaskCheckAllGatherVSemantics(std::map<RankId, RankMemorySemantics> &a
 
             if (curDataSize == inputSize) {
                 curDataSize = 0;
-                curRankId++;
+                curRankIdx++;
             } else if (curDataSize > inputSize) {
-                HCCL_VM_ERROR("{} AllGatherV data collected from rank {} for rank {} becomes larger "
+                HCCL_VM_ERROR(
+                    "{} AllGatherV data collected from source index {} for device {} becomes larger "
                     "than expected after outputRange [0x{:x},0x{:x}). The accumulated size is 0x{:x}, "
-                    "but the expected size from this source rank is 0x{:x}."
+                    "but the expected size from this source is 0x{:x}."
                     "\nCurrent result range detail:\n{}",
-                    MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_SIZE_ERROR),
-                    curRankId, rankId, ele.startAddr, rangeEnd, curDataSize,
-                    inputSize, ele.Describe());
+                    MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_SIZE_ERROR), curRankIdx, deviceId, ele.startAddr,
+                    rangeEnd, curDataSize, inputSize, ele.Describe());
                 return HcclResult::HCCL_E_PARA;
             }
             totalSize += ele.size;
         }
         if (totalSize != outputSize) {
-            HCCL_VM_ERROR("{} AllGatherV output for rank {} ends too early: the checker validated "
+            HCCL_VM_ERROR(
+                "{} AllGatherV output for device {} ends too early: the checker validated "
                 "0x{:x} bytes in total, but the expected total result size is 0x{:x} bytes.",
-                MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_MISSING),
-                rankId, totalSize, outputSize);
+                MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_MISSING), deviceId, totalSize, outputSize);
             return HcclResult::HCCL_E_PARA;
         }
     }

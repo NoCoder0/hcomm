@@ -18,8 +18,8 @@ extern "C" {
 #include <stdint.h>
 
 // Export Interfaces
-int uio_open_device(const char *uio_device_name);
-int uio_close_device(const char *uio_device_name);
+int uio_open_device(const char* uio_device_name);
+int uio_close_device(const char* uio_device_name);
 
 #ifdef __cplusplus
 }

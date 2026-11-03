@@ -40,12 +40,12 @@ namespace Hccl {
 
 class CcuContextHalfAllToAllVMesh1D : public CcuContextAlgBase {
 public:
-    CcuContextHalfAllToAllVMesh1D(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                              const CcuTransportGroup &group);
+    CcuContextHalfAllToAllVMesh1D(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
     ~CcuContextHalfAllToAllVMesh1D() override {}
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
 
 private:
     void ExchangeCtxResource();
@@ -54,37 +54,38 @@ private:
     void MissionSync(uint32_t signalIndex);
     void PostSync();
     void CreateLocalCopyLoop();
-    void LocalCopyByLoopGroup(CcuRep::Memory dst, CcuRep::Memory src, GroupOpSize &goPara);
+    void LocalCopyByLoopGroup(CcuRep::Memory dst, CcuRep::Memory src, GroupOpSize& goPara);
 
     std::string ctxName_;
-    uint32_t missionId_{0};  // 分别对应两个context，指示搬运前一半或后一半数据，两个mission可以放在同一个或不同的die上执行
-    uint32_t signalNum_{0};  // 需要使用的signal数量
+    uint32_t missionId_{
+        0}; // 分别对应两个context，指示搬运前一半或后一半数据，两个mission可以放在同一个或不同的die上执行
+    uint32_t signalNum_{0}; // 需要使用的signal数量
     uint64_t myCclBufferAddr_{0};
 
     std::vector<CcuRep::Variable> token_;
 
     // mc2的传入参数
-    CcuRep::Variable userInAddr_;  // mc2传入的输入地址
-    CcuRep::Variable sendSizeAddr_;  // 切分后的分片大小，默认前rankSize个是sizeA，后rankSize个是sizeB
-    CcuRep::Variable sendOffsetAddr_;  // 切分后的分片相对userInAddr的偏移
-    CcuRep::Variable recvOffset_;  // 本端给任意对端写时相对对端cclBuffer首地址的偏移，status*winSize/2+rankId*GRID_SIZE
-    GroupOpSize goSize_;  // mc2传入的给自己的分片大小
+    CcuRep::Variable userInAddr_;   // mc2传入的输入地址
+    CcuRep::Variable sendSizeAddr_; // 切分后的分片大小，默认前rankSize个是sizeA，后rankSize个是sizeB
+    CcuRep::Variable sendOffsetAddr_; // 切分后的分片相对userInAddr的偏移
+    CcuRep::Variable recvOffset_; // 本端给任意对端写时相对对端cclBuffer首地址的偏移，status*winSize/2+rankId*GRID_SIZE
+    GroupOpSize goSize_; // mc2传入的给自己的分片大小
 
     // 本地资源
     CcuRep::Memory curSrc_;
     std::vector<CcuRep::Memory> curDst_;
-    std::vector<CcuRep::Variable> sendSizeA_;  // 最多64个连续的，对应数据片的前半部分
-    std::vector<CcuRep::Variable> sendSizeB_;  // 最多64个连续的，对应数据片的后半部分
-    std::vector<CcuRep::Variable> sendOffsetA_;  // 最多64个连续的，对应数据片的前半部分
-    std::vector<CcuRep::Variable> sendOffsetB_;  // 最多64个连续的，对应数据片的后半部分
+    std::vector<CcuRep::Variable> sendSizeA_;   // 最多64个连续的，对应数据片的前半部分
+    std::vector<CcuRep::Variable> sendSizeB_;   // 最多64个连续的，对应数据片的后半部分
+    std::vector<CcuRep::Variable> sendOffsetA_; // 最多64个连续的，对应数据片的前半部分
+    std::vector<CcuRep::Variable> sendOffsetB_; // 最多64个连续的，对应数据片的后半部分
     CcuRep::MaskSignal ccuStartSignal_;
     CcuRep::MaskSignal ccuEndSignal_;
-    std::vector<CcuRep::MaskSignal> writeDoneSignal_;  // 写完成信号
+    std::vector<CcuRep::MaskSignal> writeDoneSignal_; // 写完成信号
 
     // 跨mission同步信号
-    CcuRep::MaskSignal locMiSignal0_;  // 本die的
+    CcuRep::MaskSignal locMiSignal0_; // 本die的
     CcuRep::MaskSignal locMiSignal1_;
-    CcuRep::MaskSignal anoMiSignal0_;  // 映射另一个die的
+    CcuRep::MaskSignal anoMiSignal0_; // 映射另一个die的
     CcuRep::MaskSignal anoMiSignal1_;
     CcuRep::Variable anoUserInAddr_;
     CcuRep::Variable anoSendSizeAddr_;

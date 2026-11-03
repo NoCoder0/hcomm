@@ -1,41 +1,39 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "alg_template_register.h"
 #include "reduce_nhr_oneshot.h"
 
 namespace hccl {
 
-ReduceNHROneshot::ReduceNHROneshot(const HcclDispatcher dispatcher) : NHRBase(dispatcher)
-{
-}
+ReduceNHROneshot::ReduceNHROneshot(const HcclDispatcher dispatcher) : NHRBase(dispatcher) {}
 
-ReduceNHROneshot::~ReduceNHROneshot()
-{
-}
+ReduceNHROneshot::~ReduceNHROneshot() {}
 
-HcclResult ReduceNHROneshot::Prepare(u64 reduceAttrBitMap, HcomCollOpInfo *opInfo)
+HcclResult ReduceNHROneshot::Prepare(u64 reduceAttrBitMap, [[maybe_unused]] HcomCollOpInfo* opInfo)
 {
     reduceAttr_ = reduceAttrBitMap;
     return HCCL_SUCCESS;
 }
 
-HcclResult ReduceNHROneshot::RunAsync(const u32 rank, const u32 rankSize, const std::vector<LINK> &links)
+HcclResult ReduceNHROneshot::RunAsync(const u32 rank, const u32 rankSize, const std::vector<LINK>& links)
 {
     // 基本的检查
     CHK_RET(SimpleCheck(rank, rankSize, links));
-    HCCL_INFO("[ReduceNHROneshot][RunAsync] run: rank[%u] ranksize[%u] inputMem[%p] outputMem[%p] count[%llu]",
-        rank, rankSize, inputMem_.ptr(), outputMem_.ptr(), count_);
+    HCCL_INFO(
+        "[ReduceNHROneshot][RunAsync] run: rank[%u] ranksize[%u] inputMem[%p] outputMem[%p] count[%llu]", rank,
+        rankSize, inputMem_.ptr(), outputMem_.ptr(), count_);
 
     u32 unitSize = DataUnitSize(dataType_);
-    CHK_PRT_RET(unitSize == 0, HCCL_ERROR("[ReduceNHROneshot][RunAsync] rank[%u] unit data size is zero", rank),
+    CHK_PRT_RET(
+        unitSize == 0, HCCL_ERROR("[ReduceNHROneshot][RunAsync] rank[%u] unit data size is zero", rank),
         HCCL_E_INTERNAL);
 
     // 如果ranksize为1, 从input->output
@@ -61,24 +59,31 @@ HcclResult ReduceNHROneshot::RunAsync(const u32 rank, const u32 rankSize, const 
     return HCCL_SUCCESS;
 }
 
-HcclResult ReduceNHROneshot::SimpleCheck(const u32 rank, const u32 rankSize, const std::vector<LINK> &links)
+HcclResult ReduceNHROneshot::SimpleCheck(const u32 rank, const u32 rankSize, const std::vector<LINK>& links)
 {
     // 判断stream, dispatcher是否为空
     CHK_SMART_PTR_NULL(dispatcher_);
     CHK_PTR_NULL(stream_.ptr());
 
     // 检查memory
-    CHK_PRT_RET(!outputMem_ || !inputMem_,
+    CHK_PRT_RET(
+        !outputMem_ || !inputMem_,
         HCCL_ERROR("[ReduceNHROneshot][SimpleCheck] rank[%u] inputmem or outputmem is null", rank), HCCL_E_PTR);
 
     // 判断links数量是否正确
-    CHK_PRT_RET(links.size() < rankSize, HCCL_ERROR("[ReduceNHROneshot][SimpleCheck] rank[%u] link size[%llu] is "
-        "less than rank size[%u]", rank, links.size(), rankSize), HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        links.size() < rankSize,
+        HCCL_ERROR(
+            "[ReduceNHROneshot][SimpleCheck] rank[%u] link size[%llu] is "
+            "less than rank size[%u]",
+            rank, links.size(), rankSize),
+        HCCL_E_INTERNAL);
     return HCCL_SUCCESS;
 }
 
-HcclResult ReduceNHROneshot::SdmaRx(LINK &linkLeft, LINK &linkRight, InterServerAlgoStep &stepInfo, 
-    const std::vector<LINK> &links)
+HcclResult ReduceNHROneshot::SdmaRx(
+    LINK& linkLeft, LINK& linkRight, [[maybe_unused]] InterServerAlgoStep& stepInfo,
+    [[maybe_unused]] const std::vector<LINK>& links)
 {
     HcclResult ret = HCCL_SUCCESS;
     u64 totalSize = count_ * SIZE_TABLE[dataType_];
@@ -91,18 +96,22 @@ HcclResult ReduceNHROneshot::SdmaRx(LINK &linkLeft, LINK &linkRight, InterServer
 
     if (linkLeft != nullptr) {
         CHK_RET(linkLeft->RxAck(stream_));
-        void *remoteMem = nullptr;
+        void* remoteMem = nullptr;
         CHK_RET(linkLeft->GetRemoteMem(UserMemType::INPUT_MEM, &remoteMem));
         if ((INLINE_REDUCE_BITMASK & reduceAttr_) == 1) { // inlineReduce
-            CHK_RET(HcclReduceAsync(dispatcher_, static_cast<s8 *>(remoteMem) + baseOffset_,
-                tempMem.size() / SIZE_TABLE[dataType_], dataType_, reductionOp_, stream_, srcMem.ptr(), linkLeft->GetRemoteRank(),
-                linkLeft->GetLinkType(), INLINE_REDUCE_BIT));
+            CHK_RET(HcclReduceAsync(
+                dispatcher_, static_cast<s8*>(remoteMem) + baseOffset_, tempMem.size() / SIZE_TABLE[dataType_],
+                dataType_, reductionOp_, stream_, srcMem.ptr(), linkLeft->GetRemoteRank(), linkLeft->GetLinkType(),
+                INLINE_REDUCE_BIT));
         } else { // tbeReduce
-            DeviceMem srcMemLeft(static_cast<s8 *>(remoteMem) + baseOffset_, totalSize);
-            CHK_RET(HcclD2DMemcpyAsync(dispatcher_, tempMem, srcMemLeft, stream_, linkLeft->GetRemoteRank(), // left的inputMem拷到本端的scratchMem
-                    linkLeft->GetLinkType()));
+            DeviceMem srcMemLeft(static_cast<s8*>(remoteMem) + baseOffset_, totalSize);
+            CHK_RET(HcclD2DMemcpyAsync(
+                dispatcher_, tempMem, srcMemLeft, stream_,
+                linkLeft->GetRemoteRank(), // left的inputMem拷到本端的scratchMem
+                linkLeft->GetLinkType()));
             u64 dataCount = srcMem.size() / SIZE_TABLE[dataType_];
-            ret = HcclReduceAsync(dispatcher_, tempMem.ptr(), dataCount, dataType_, reductionOp_, stream_, srcMem.ptr(),
+            ret = HcclReduceAsync(
+                dispatcher_, tempMem.ptr(), dataCount, dataType_, reductionOp_, stream_, srcMem.ptr(),
                 INVALID_VALUE_RANKID, LinkType::LINK_ONCHIP, reduceAttr_);
         }
         CHK_RET(linkLeft->TxDataSignal(stream_));
@@ -113,8 +122,9 @@ HcclResult ReduceNHROneshot::SdmaRx(LINK &linkLeft, LINK &linkRight, InterServer
     return ret;
 }
 
-HcclResult ReduceNHROneshot::RdmaTxRx(LINK &linkLeft, LINK &linkRight, InterServerAlgoStep &stepInfo, 
-    const std::vector<LINK> &links)
+HcclResult ReduceNHROneshot::RdmaTxRx(
+    LINK& linkLeft, LINK& linkRight, [[maybe_unused]] InterServerAlgoStep& stepInfo,
+    [[maybe_unused]] const std::vector<LINK>& links)
 {
     HcclResult ret = HCCL_SUCCESS;
     u64 totalSize = count_ * SIZE_TABLE[dataType_];
@@ -144,7 +154,7 @@ HcclResult ReduceNHROneshot::RdmaTxRx(LINK &linkLeft, LINK &linkRight, InterServ
     return HCCL_SUCCESS;
 }
 
-HcclResult ReduceNHROneshot::RunReduceNHROneshot(const u32 rank, const u32 rankSize, const std::vector<LINK> &links)
+HcclResult ReduceNHROneshot::RunReduceNHROneshot(const u32 rank, const u32 rankSize, const std::vector<LINK>& links)
 {
     // 计算通信步数
     u32 nSteps = GetStepNumInterServer(rankSize);
@@ -172,8 +182,8 @@ HcclResult ReduceNHROneshot::RunReduceNHROneshot(const u32 rank, const u32 rankS
             CHK_SMART_PTR_NULL(linkLeft);
         }
 
-        if ((linkRight != nullptr && linkRight->IsSpInlineReduce()) ||
-            (linkLeft != nullptr && linkLeft->IsSpInlineReduce())) {
+        if ((linkRight != nullptr && linkRight->IsSpInlineReduce())
+            || (linkLeft != nullptr && linkLeft->IsSpInlineReduce())) {
             CHK_RET(SdmaRx(linkLeft, linkRight, stepInfo, links));
         } else {
             CHK_RET(RdmaTxRx(linkLeft, linkRight, stepInfo, links));
@@ -183,7 +193,7 @@ HcclResult ReduceNHROneshot::RunReduceNHROneshot(const u32 rank, const u32 rankS
 }
 
 // NHR每步的算法描述原理函数
-HcclResult ReduceNHROneshot::GetStepInfo(u32 step, u32 nSteps, u32 rank, u32 rankSize, InterServerAlgoStep &stepInfo)
+HcclResult ReduceNHROneshot::GetStepInfo(u32 step, u32 nSteps, u32 rank, u32 rankSize, InterServerAlgoStep& stepInfo)
 {
     (void)nSteps;
     stepInfo.txSliceIdxs.clear();
@@ -216,8 +226,8 @@ HcclResult ReduceNHROneshot::GetStepInfo(u32 step, u32 nSteps, u32 rank, u32 ran
     return HCCL_SUCCESS;
 }
 
-HcclResult ReduceNHROneshot::ExecuteBarrier(const std::shared_ptr<Transport> &preLink,
-    const std::shared_ptr<Transport> &aftLink)
+HcclResult
+ReduceNHROneshot::ExecuteBarrier(const std::shared_ptr<Transport>& preLink, const std::shared_ptr<Transport>& aftLink)
 {
     if (preLink != nullptr) {
         CHK_RET(preLink->TxAck(stream_));
@@ -238,4 +248,4 @@ HcclResult ReduceNHROneshot::ExecuteBarrier(const std::shared_ptr<Transport> &pr
 }
 
 REGISTER_TEMPLATE(TemplateType::TEMPLATE_REDUCE_NHR_ONE_SHOT, ReduceNHROneshot);
-}   // ~~ namespace hccl
+} // namespace hccl

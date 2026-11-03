@@ -19,12 +19,11 @@
 
 namespace Hccl {
 
-
 class InsTempBroadcastNHR : public InsAlgTemplateBase {
 public:
-    explicit InsTempBroadcastNHR(const RankId virtualRank, const u32 tempRankSize,
-                                   const std::vector<std::vector<RankId>> &tempVTopo,
-                                   const std::map<RankId, u32>            &tempVirtRankMap);
+    explicit InsTempBroadcastNHR(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~InsTempBroadcastNHR() override;
 
     std::string Describe() const override
@@ -32,31 +31,35 @@ public:
         return StringFormat("Template of broadcast NHR with tempRankSize [%u].", tempRankSize_);
     }
 
-    HcclResult GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &templateDataParams,
-                         const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues);
+    HcclResult GenExtIns(
+        const TempFuncs& tempFuncs, const TemplateDataParams& templateDataParams, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues);
 
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
     u32 CalcScratchMultiple(BufferType inBuffType, BufferType outBuffType);
 
 private:
-    HcclResult PostCopy(const TemplateDataParams &tempAlgParams, std::vector<InsQuePtr> &tempInsQues) const;
-    HcclResult PreCopy(const TemplateDataParams &tempAlgParams, std::vector<InsQuePtr> &tempInsQues) const;
-    HcclResult RunScatter(const RankSliceInfo &sliceInfoVec, const ResLinks &tempLinks,
-        std::vector<InsQuePtr> &tempInsQues);
-    HcclResult RunAllGather(const RankSliceInfo &sliceInfoVec, const ResLinks &tempLinks,
-        std::vector<InsQuePtr> &tempInsQues);
-    HcclResult GetScatterStepInfo(u32 step, u32 nSteps, AicpuNHRStepInfo &stepInfo) const;
-    HcclResult GetAllGatherStepInfo(u32 step, u32 nSteps, AicpuNHRStepInfo &stepInfo);
-    HcclResult BatchTxRx(AicpuNHRStepInfo &stepInfo, const ResLinks &tempLinks, InsQuePtr &queue,
-        const RankSliceInfo &sliceInfoVec);
-    HcclResult BatchSend(AicpuNHRStepInfo &stepInfo, const ResLinks &tempLinks, InsQuePtr &queue,
-        const RankSliceInfo &sliceInfoVec, BufferType memType, u64 memOffset) const;
-    HcclResult BatchRecv(AicpuNHRStepInfo &stepInfo, const ResLinks &tempLinks, InsQuePtr &queue,
-        const RankSliceInfo &sliceInfoVec, BufferType memType, u64 memOffset) const;
-    HcclResult BatchSR(AicpuNHRStepInfo &stepInfo, const ResLinks &tempLinks, InsQuePtr &queue,
-        const RankSliceInfo &sliceInfoVec, BufferType memType, u64 memOffset) const;
+    HcclResult PostCopy(const TemplateDataParams& tempAlgParams, std::vector<InsQuePtr>& tempInsQues) const;
+    HcclResult PreCopy(const TemplateDataParams& tempAlgParams, std::vector<InsQuePtr>& tempInsQues) const;
+    HcclResult
+    RunScatter(const RankSliceInfo& sliceInfoVec, const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues);
+    HcclResult
+    RunAllGather(const RankSliceInfo& sliceInfoVec, const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues);
+    HcclResult GetScatterStepInfo(u32 step, u32 nSteps, AicpuNHRStepInfo& stepInfo) const;
+    HcclResult GetAllGatherStepInfo(u32 step, u32 nSteps, AicpuNHRStepInfo& stepInfo);
+    HcclResult BatchTxRx(
+        AicpuNHRStepInfo& stepInfo, const ResLinks& tempLinks, InsQuePtr& queue, const RankSliceInfo& sliceInfoVec);
+    HcclResult BatchSend(
+        AicpuNHRStepInfo& stepInfo, const ResLinks& tempLinks, InsQuePtr& queue, const RankSliceInfo& sliceInfoVec,
+        BufferType memType, u64 memOffset) const;
+    HcclResult BatchRecv(
+        AicpuNHRStepInfo& stepInfo, const ResLinks& tempLinks, InsQuePtr& queue, const RankSliceInfo& sliceInfoVec,
+        BufferType memType, u64 memOffset) const;
+    HcclResult BatchSR(
+        AicpuNHRStepInfo& stepInfo, const ResLinks& tempLinks, InsQuePtr& queue, const RankSliceInfo& sliceInfoVec,
+        BufferType memType, u64 memOffset) const;
     RankId GetRankFromMap(const u32 rankIdx) const;
-    HcclResult CalcDataSliceInfo(const u64 dataSize, RankSliceInfo &sliceInfoVec);
+    HcclResult CalcDataSliceInfo(const u64 dataSize, RankSliceInfo& sliceInfoVec);
 };
 
 } // namespace Hccl

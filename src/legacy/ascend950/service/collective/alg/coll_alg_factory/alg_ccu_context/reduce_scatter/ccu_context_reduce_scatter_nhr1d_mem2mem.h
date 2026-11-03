@@ -21,12 +21,13 @@ namespace Hccl {
 
 class CcuContextReduceScatterNHR1DMem2Mem : public CcuContextAlgBase {
 public:
-    CcuContextReduceScatterNHR1DMem2Mem(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                                                   const CcuTransportGroup &group);
+    CcuContextReduceScatterNHR1DMem2Mem(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
     ~CcuContextReduceScatterNHR1DMem2Mem() override {}
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
+
 private:
     void LoadArgs();
     void InitResources();
@@ -34,21 +35,21 @@ private:
     void PostSync();
     void AxisSync(uint32_t signalIndex);
     void DoRepeatReduceScatterNHR();
-    void DoRepeatReduceScatterNHRSingleStep(const NHRStepInfo &nhrStepInfo,
-        const std::vector<CcuRep::Variable> &inputSliceOffset);
-    void DoRepeatSendRecvSlices(const u32 &toRank, CcuRep::Memory &src, CcuRep::Memory &dst);
+    void DoRepeatReduceScatterNHRSingleStep(
+        const NHRStepInfo& nhrStepInfo, const std::vector<CcuRep::Variable>& inputSliceOffset);
+    void DoRepeatSendRecvSlices(const u32& toRank, CcuRep::Memory& src, CcuRep::Memory& dst);
 
     // 构造函数中
     uint64_t dimSize_{0};
     uint32_t axisId_{0};
-    uint32_t localSize_{0};  // 本rank所在行或列的总rank数
+    uint32_t localSize_{0}; // 本rank所在行或列的总rank数
     uint32_t myRankIdx_{0};
-    uint32_t signalNum_{0};  // 需要使用的signal数量
+    uint32_t signalNum_{0}; // 需要使用的signal数量
     DataType dataType_;
     DataType outputDataType_;
-    std::vector<NHRStepInfo> stepInfoVector_;   // nhr算法执行过程中的参数
+    std::vector<NHRStepInfo> stepInfoVector_; // nhr算法执行过程中的参数
     std::map<u32, u32> indexMap_;
-    uint32_t       linkNum_{0};
+    uint32_t linkNum_{0};
 
     // load进来参数
     std::vector<CcuRep::Variable> input_;
@@ -67,8 +68,8 @@ private:
     CcuRep::Variable sliceSize_;
 
     // 跨轴同步信号
-    std::string        localAxisSignalName_;
-    std::string        anotherAxisSignalName_;
+    std::string localAxisSignalName_;
+    std::string anotherAxisSignalName_;
     CcuRep::MaskSignal localAxisSignal_;
     CcuRep::MaskSignal anotherAxisSignal_;
     CcuRep::MaskSignal localSignal_;

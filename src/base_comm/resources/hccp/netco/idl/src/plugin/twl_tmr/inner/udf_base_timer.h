@@ -26,47 +26,47 @@ extern "C" {
 typedef VOS_LIST_HEAD_S VOS_LIST_NODE_S;
 
 /* 基础定时器模块通用返回值 */
-#define BASE_TIMER_ERRNO_OK            0
-#define BASE_TIMER_ERRNO_ERR         ((uint32_t)(-1))
+#define BASE_TIMER_ERRNO_OK 0
+#define BASE_TIMER_ERRNO_ERR ((uint32_t)(-1))
 #define BASE_TIMER_ERR_BASE (0x100)
 
 /* 0x03016901 属性句柄非法 */
-#define BASE_TIMER_ERRNO_ATTR_INVALID        (BASE_TIMER_ERR_BASE + 0x1)
+#define BASE_TIMER_ERRNO_ATTR_INVALID (BASE_TIMER_ERR_BASE + 0x1)
 
 /* 0x03016902 定时器句柄非法 */
-#define BASE_TIMER_ERRNO_HANDLE_INVALID      (BASE_TIMER_ERR_BASE + 0x2)
+#define BASE_TIMER_ERRNO_HANDLE_INVALID (BASE_TIMER_ERR_BASE + 0x2)
 
 /* 0x03016903 入参非法 */
-#define BASE_TIMER_ERRNO_PARAM_INVALID       (BASE_TIMER_ERR_BASE + 0x3)
+#define BASE_TIMER_ERRNO_PARAM_INVALID (BASE_TIMER_ERR_BASE + 0x3)
 
 /* 0x03016904 用法不支持 */
-#define BASE_TIMER_ERRNO_NOT_SUPPORT         (BASE_TIMER_ERR_BASE + 0x4)
+#define BASE_TIMER_ERRNO_NOT_SUPPORT (BASE_TIMER_ERR_BASE + 0x4)
 
 /* 0x03016905 魔术字被破坏 */
-#define BASE_TIMER_ERRNO_MAGIC_DAMAGED       (BASE_TIMER_ERR_BASE + 0x5)
+#define BASE_TIMER_ERRNO_MAGIC_DAMAGED (BASE_TIMER_ERR_BASE + 0x5)
 
 /* 0x03016906 用户回调执行失败 */
-#define BASE_TIMER_ERRNO_USR_FAILED          (BASE_TIMER_ERR_BASE + 0x6)
+#define BASE_TIMER_ERRNO_USR_FAILED (BASE_TIMER_ERR_BASE + 0x6)
 
 /* 0x03016907 系统定时器创建失败 */
 #define BASE_TIMER_ERRNO_TIMER_CREATE_FAILED (BASE_TIMER_ERR_BASE + 0x7)
 
 /* 0x03016908 系统定时器获取时间失败 */
-#define BASE_TIMER_ERRNO_TIMER_GET_FAILED    (BASE_TIMER_ERR_BASE + 0x8)
+#define BASE_TIMER_ERRNO_TIMER_GET_FAILED (BASE_TIMER_ERR_BASE + 0x8)
 
 /* 0x03016909 系统定时器设置时间失败 */
-#define BASE_TIMER_ERRNO_TIMER_SET_FAILED    (BASE_TIMER_ERR_BASE + 0x9)
+#define BASE_TIMER_ERRNO_TIMER_SET_FAILED (BASE_TIMER_ERR_BASE + 0x9)
 
 /* 0x0301690a 系统定时器读取时间失败 */
-#define BASE_TIMER_ERRNO_TIMER_READ_FAILED   (BASE_TIMER_ERR_BASE + 0xa)
-#define BASE_TIMER_ERRNO_INVAL               (BASE_TIMER_ERR_BASE + 0xb)
-#define BASE_TIMER_ERRNO_NOMEM               (BASE_TIMER_ERR_BASE + 0xc)
+#define BASE_TIMER_ERRNO_TIMER_READ_FAILED (BASE_TIMER_ERR_BASE + 0xa)
+#define BASE_TIMER_ERRNO_INVAL (BASE_TIMER_ERR_BASE + 0xb)
+#define BASE_TIMER_ERRNO_NOMEM (BASE_TIMER_ERR_BASE + 0xc)
 
 #define BASE_TIMER_NAME_LEN_MAX 16
 #define BASE_TIMER_LAST_PROC_TIME_LEN 32
 
 #define BASE_TIMER_DEL_TAG_FALSE 0
-#define BASE_TIMER_DEL_TAG_TRUE  1
+#define BASE_TIMER_DEL_TAG_TRUE 1
 
 typedef void *BaseTimerAttr;
 
@@ -83,11 +83,7 @@ typedef struct {
 } BaseTimerUsrCb;
 
 /* 定时器模式 */
-typedef enum {
-    BASE_TIMER_MODE_PERIOD,
-    BASE_TIMER_MODE_ONE_SHOT,
-    BASE_TIMER_MODE_BUTT
-} BaseTimerMode;
+typedef enum { BASE_TIMER_MODE_PERIOD, BASE_TIMER_MODE_ONE_SHOT, BASE_TIMER_MODE_BUTT } BaseTimerMode;
 
 /* 基础定时器可选属性 */
 typedef enum {
@@ -98,8 +94,8 @@ typedef enum {
 } BaseTimerAttrType;
 
 typedef enum {
-    BASE_TIMER_STATUS_STOPED,  /* 停止中 */
-    BASE_TIMER_STATUS_ACTIVE,  /* 运行中 */
+    BASE_TIMER_STATUS_STOPED, /* 停止中 */
+    BASE_TIMER_STATUS_ACTIVE, /* 运行中 */
     BASE_TIMER_STATUS_BUTT
 } BaseTimerStatus;
 
@@ -113,7 +109,7 @@ typedef struct {
     uint64_t timeOutCount;
     BaseTimerStatus status;
     uint32_t maxProcTime;
-    char     lastTime[BASE_TIMER_LAST_PROC_TIME_LEN];
+    char lastTime[BASE_TIMER_LAST_PROC_TIME_LEN];
 } BaseTimerMntInfo;
 
 typedef struct {
@@ -138,9 +134,9 @@ typedef struct {
 
 #define TIMER_FNAME (__FUNCTION__)
 #define TIMER_FLINE (__LINE__)
-#define Timer_MemAlloc(d_appInfo, d_size) \
+#define Timer_MemAlloc(d_appInfo, d_size)                                                                              \
     (d_appInfo)->mallocCB((d_appInfo)->appHandle, (d_size), TIMER_FNAME, TIMER_FLINE)
-#define Timer_MemFree(d_appInfo, d_pointer) \
+#define Timer_MemFree(d_appInfo, d_pointer)                                                                            \
     (d_appInfo)->freeCB((d_appInfo)->appHandle, (d_pointer), TIMER_FNAME, TIMER_FLINE)
 void BASE_TimerCopyAppInfo(TimerAppInfo *dest, TimerAppInfo *source);
 
@@ -151,8 +147,7 @@ void BASE_TimerDestroyAttr(TimerAppInfo *appInfo, BaseTimerAttr attr);
 uint32_t BASE_TimerSetAttr(BaseTimerAttr attr, BaseTimerAttrType type, void *value, size_t len);
 
 /* 定时器创建：创建成功或者失败都会尝试销毁attr，即此接口调用后无需用户手动销毁attr */
-BaseTimerHandle BASE_TimerCreate(TimerAppInfo *appInfo,
-    BaseTimerUsrCb *usrCb, uint32_t timeoutMs, BaseTimerAttr attr);
+BaseTimerHandle BASE_TimerCreate(TimerAppInfo *appInfo, BaseTimerUsrCb *usrCb, uint32_t timeoutMs, BaseTimerAttr attr);
 
 void BASE_TimerDestroy(BaseTimerHandle handle);
 
@@ -172,4 +167,3 @@ void BaseTimerDestroy(BaseTimerInfo *tmrInfo);
 #endif
 
 #endif
-

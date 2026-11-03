@@ -70,8 +70,8 @@ uint32_t WfwMuxBaseInit(WfwMuxBase *muxBase, WfwMuxBaseInitArg *arg)
 
     (void)memset_s(muxBase, sizeof(WfwMuxBase), 0, sizeof(WfwMuxBase));
     muxBase->argInit = *arg;
-    VOS_AVLL_INIT_TREE(muxBase->fdSet, (AVLL_COMPARE)WfwMuxBaseCmpFd,
-                       BKF_OFFSET(WfwMuxBaseFd, keyFd), BKF_OFFSET(WfwMuxBaseFd, setNode));
+    VOS_AVLL_INIT_TREE(muxBase->fdSet, (AVLL_COMPARE)WfwMuxBaseCmpFd, BKF_OFFSET(WfwMuxBaseFd, keyFd),
+        BKF_OFFSET(WfwMuxBaseFd, setNode));
     BKF_SIGN_SET(muxBase->sign, WFW_MUX_BASE_SIGN);
     return BKF_OK;
 }
@@ -93,7 +93,7 @@ void WfwMuxBaseUninit(WfwMuxBase *muxBase)
 }
 
 uint32_t WfwMuxBaseInitFd(WfwMuxBase *muxBase, WfwMuxBaseFd *baseFd, int fd, uint32_t interestedEvents,
-                         F_WFW_MUX_FD_PROC proc, void *cookie, BOOL notLogEvt)
+    F_WFW_MUX_FD_PROC proc, void *cookie, BOOL notLogEvt)
 {
     BOOL paramIsInvalid = WfwMuxBaseIsInvalid(muxBase) || (baseFd == VOS_NULL) || (proc == VOS_NULL);
     if (paramIsInvalid) {
@@ -142,8 +142,8 @@ STATIC void WfwMuxBaseDelEvInDispatchCtx(WfwMuxBase *muxBase, int fdNeedDelEv)
             continue;
         }
 
-        BKF_LOG_DEBUG(BKF_LOG_HND, "muxBase(%#x), fdNeedDelEv(%d)/chkIdx(%d)\n",
-                      BKF_MASK_ADDR(muxBase), fdNeedDelEv, chkIdx);
+        BKF_LOG_DEBUG(BKF_LOG_HND, "muxBase(%#x), fdNeedDelEv(%d)/chkIdx(%d)\n", BKF_MASK_ADDR(muxBase), fdNeedDelEv,
+            chkIdx);
         /*
         删除数组当前位置数据，数组数据整体往前替换一格
         [chkIdx, idxMax] <== [chkIdx + 1, idxMax]
@@ -239,8 +239,8 @@ STATIC void WfwMuxBaseProcOneEv(WfwMuxBase *muxBase, WfwMuxBaseEv *ev)
         return;
     }
     if (!baseFd->notLogEvt) {
-        BKF_LOG_DEBUG(BKF_LOG_HND, "muxBase(%#x), baseFd(%#x)/fd(%d)/curEvents(%#x)\n",
-                      BKF_MASK_ADDR(muxBase), BKF_MASK_ADDR(baseFd), baseFd->keyFd, curEvents);
+        BKF_LOG_DEBUG(BKF_LOG_HND, "muxBase(%#x), baseFd(%#x)/fd(%d)/curEvents(%#x)\n", BKF_MASK_ADDR(muxBase),
+            BKF_MASK_ADDR(baseFd), baseFd->keyFd, curEvents);
     }
 
     /* 过滤事件 */
@@ -258,10 +258,10 @@ void WfwMuxBaseDispatch(WfwMuxBase *muxBase, WfwMuxBaseEv *evs, int evCnt)
     /* 对log稍作过滤 */
     BOOL notLog = (evCnt == 1) && evs->baseFd->notLogEvt;
     if (!notLog) {
-        BKF_LOG_DEBUG(BKF_LOG_HND, "muxBase(%#x), evs(%#x)/evCnt(%d)\n",
-                      BKF_MASK_ADDR(muxBase), BKF_MASK_ADDR(evs), evCnt);
+        BKF_LOG_DEBUG(BKF_LOG_HND, "muxBase(%#x), evs(%#x)/evCnt(%d)\n", BKF_MASK_ADDR(muxBase), BKF_MASK_ADDR(evs),
+            evCnt);
     }
-    WfwMuxBaseDispatchCtx ctx = { .evs = evs, .idxMin = 0, .idxMax = (evCnt - 1) };
+    WfwMuxBaseDispatchCtx ctx = {.evs = evs, .idxMin = 0, .idxMax = (evCnt - 1)};
     muxBase->dispatchCtx = &ctx;
     WFW_MUX_DISPATCH_DOBEFORE(muxBase);
     while (ctx.idxMin <= ctx.idxMax) {
@@ -331,4 +331,3 @@ void WfwMuxBaseProcTrigFdEvent(int fd)
 #ifdef __cplusplus
 }
 #endif
-

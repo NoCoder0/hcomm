@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include <iostream>
 #include <vector>
@@ -42,12 +42,12 @@ struct ThreadContext {
     uint32_t devCount;
 };
 
-int Sample(void *arg)
+int Sample(void* arg)
 {
-    ThreadContext *ctx = (ThreadContext *)arg;
-    void *hostBuf = nullptr;
-    void *sendBuf = nullptr;
-    void *recvBuf = nullptr;
+    ThreadContext* ctx = (ThreadContext*)arg;
+    void* hostBuf = nullptr;
+    void* sendBuf = nullptr;
+    void* recvBuf = nullptr;
     uint32_t device = ctx->device;
     uint64_t count = ctx->devCount;
     size_t mallocSize = count * sizeof(float);
@@ -58,7 +58,7 @@ int Sample(void *arg)
 
     // 申请 Host 内存用于存放输入数据，并将内容初始化为：0~7
     ACLCHECK(aclrtMallocHost(&hostBuf, mallocSize));
-    float *tmpHostBuff = static_cast<float *>(hostBuf);
+    float* tmpHostBuff = static_cast<float*>(hostBuf);
     for (uint64_t i = 0; i < count; ++i) {
         tmpHostBuff[i] = static_cast<float>(i);
     }
@@ -76,10 +76,10 @@ int Sample(void *arg)
 
     // 将 Device 侧集合通信任务结果拷贝到 Host，并打印结果
     std::this_thread::sleep_for(std::chrono::seconds(device));
-    void *resultBuff;
+    void* resultBuff;
     ACLCHECK(aclrtMallocHost(&resultBuff, mallocSize));
     ACLCHECK(aclrtMemcpy(resultBuff, mallocSize, recvBuf, mallocSize, ACL_MEMCPY_DEVICE_TO_HOST));
-    float *tmpResBuff = static_cast<float *>(resultBuff);
+    float* tmpResBuff = static_cast<float*>(resultBuff);
     std::cout << "rankId: " << device << ", output: [";
     for (uint64_t i = 0; i < count; ++i) {
         std::cout << " " << tmpResBuff[i];
@@ -88,10 +88,10 @@ int Sample(void *arg)
     ACLCHECK(aclrtFreeHost(resultBuff));
 
     // 释放资源
-    ACLCHECK(aclrtFree(sendBuf));          // 释放 Device 侧内存
-    ACLCHECK(aclrtFree(recvBuf));          // 释放 Device 侧内存
-    ACLCHECK(aclrtFreeHost(hostBuf));      // 释放 Host 侧内存
-    ACLCHECK(aclrtDestroyStream(stream));  // 销毁任务流
+    ACLCHECK(aclrtFree(sendBuf));         // 释放 Device 侧内存
+    ACLCHECK(aclrtFree(recvBuf));         // 释放 Device 侧内存
+    ACLCHECK(aclrtFreeHost(hostBuf));     // 释放 Host 侧内存
+    ACLCHECK(aclrtDestroyStream(stream)); // 销毁任务流
     return 0;
 }
 
@@ -101,8 +101,8 @@ int main()
     MPI_Init(NULL, NULL);
     int procSize = 0;
     int procRank = 0;
-    MPI_Comm_size(MPI_COMM_WORLD, &procSize);  // 进程总数
-    MPI_Comm_rank(MPI_COMM_WORLD, &procRank);  // 当前进程在所属进程组的编号
+    MPI_Comm_size(MPI_COMM_WORLD, &procSize); // 进程总数
+    MPI_Comm_rank(MPI_COMM_WORLD, &procRank); // 当前进程在所属进程组的编号
     uint32_t devId = static_cast<uint32_t>(procRank);
     uint32_t devCount = static_cast<uint32_t>(procSize);
     // 设备资源初始化
@@ -111,20 +111,19 @@ int main()
     ACLCHECK(aclrtSetDevice(static_cast<int32_t>(devId)));
 
     // 指定 rank_table.json 文件路径
-    const char *socNamePtr = aclrtGetSocName();
+    const char* socNamePtr = aclrtGetSocName();
     if (socNamePtr == nullptr) {
         return HCCL_E_RUNTIME;
     }
     std::string socName(socNamePtr);
-    const char *rankTableFile = (socName.find("Ascend950") == std::string::npos)
-                                    ? "./rank_table.json"
-                                    : "./rank_table_v2.json";
+    const char* rankTableFile
+        = (socName.find("Ascend950") == std::string::npos) ? "./rank_table.json" : "./rank_table_v2.json";
 
     // 创建并初始化通信域配置项
     HcclCommConfig config;
     HcclCommConfigInit(&config);
     // 按需修改通信域配置
-    config.hcclBufferSize = 50;  // 共享数据的缓存区大小，单位为：MB，取值需 >= 1，默认值为：200
+    config.hcclBufferSize = 50; // 共享数据的缓存区大小，单位为：MB，取值需 >= 1，默认值为：200
     std::strcpy(config.hcclCommName, "comm_1");
     // 初始化通信域
     HcclComm hcclComm;
@@ -135,12 +134,12 @@ int main()
     args.comm = hcclComm;
     args.device = devId;
     args.devCount = devCount;
-    Sample((void *)&args);
+    Sample((void*)&args);
 
     // 释放资源
-    HCCLCHECK(HcclCommDestroy(hcclComm));                       // 销毁通信域
-    ACLCHECK(aclrtResetDevice(static_cast<int32_t>(devId)));    // 重置设备，释放设备资源
-    ACLCHECK(aclFinalize());                                    // 设备去初始化
-    MPI_Finalize();                                             // 释放 MPI 资源
+    HCCLCHECK(HcclCommDestroy(hcclComm));                    // 销毁通信域
+    ACLCHECK(aclrtResetDevice(static_cast<int32_t>(devId))); // 重置设备，释放设备资源
+    ACLCHECK(aclFinalize());                                 // 设备去初始化
+    MPI_Finalize();                                          // 释放 MPI 资源
     return 0;
 }

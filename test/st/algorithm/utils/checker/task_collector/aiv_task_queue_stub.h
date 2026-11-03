@@ -16,7 +16,7 @@
 namespace checker {
 
 struct AivSingleBlockTaskQues {
-    //taskQueues[0]:scalar; taskQueues[1]:MTE2; taskQueues[2]:MTE3
+    // taskQueues[0]:scalar; taskQueues[1]:MTE2; taskQueues[2]:MTE3
     std::vector<std::vector<std::shared_ptr<TaskStub>>> taskQueues{3};
 
     void AppendAivTask(pipe_t pipeId, std::shared_ptr<TaskStub> task);
@@ -36,7 +36,7 @@ struct AllAivTaskQueues {
     std::vector<std::shared_ptr<TaskStub>> headAndTailResource;
     void Clear();
     void AppendAivTask(RankId rankId, BlockId blockId, pipe_t pipeId, std::shared_ptr<TaskStub> task);
-    AivSingleBlockTaskQues *GetTaskQueueOfAiv(RankId rankId, BlockId blockId, u32 aivTaskIdx) const;
+    AivSingleBlockTaskQues* GetTaskQueueOfAiv(RankId rankId, BlockId blockId, u32 aivTaskIdx) const;
     std::map<BlockId, std::vector<AivSingleBlockTaskQues*>> GetAllAivTaskOfRank(RankId rankId) const;
 };
 
@@ -46,16 +46,17 @@ public:
     void Reset();
 
     static void AppendAivTask(RankId rankId, BlockId blockId, pipe_t pipeId, std::shared_ptr<TaskStub> task);
-    AivSingleBlockTaskQues *GetTaskQueueOfAiv(RankId rankId, BlockId blockId) const;
+    AivSingleBlockTaskQues* GetTaskQueueOfAiv(RankId rankId, BlockId blockId) const;
     AllAivTaskQueues& GetAllAivTasks();
     static void PrintAivTask();
     static void SetRank2AivStart(RankId rankId, TaskNode* aivStart);
-    static void SetAllCopyAivStart(RankId rankId, TaskNode *aivStart);
+    static void SetAllCopyAivStart(RankId rankId, TaskNode* aivStart);
     static void AppendAivTaskStubInMainStream(RankId rankId);
     static bool HasAivTask(RankId rankId);
+
 private:
     AllAivTaskQueues allAivTaskQueues;
 };
 
-}
+} // namespace checker
 #endif

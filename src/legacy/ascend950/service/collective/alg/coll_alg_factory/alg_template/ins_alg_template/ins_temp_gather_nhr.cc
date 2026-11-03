@@ -14,47 +14,45 @@
 #include "dev_mode.h"
 #include "log.h"
 
-
 namespace Hccl {
-InsTempGatherNHR::InsTempGatherNHR(const RankId virtualRank, const u32 tempRankSize,
-                                             const std::vector<std::vector<RankId>> &tempVTopo,
-                                             const std::map<RankId, u32>            &tempVirtRankMap)
+InsTempGatherNHR::InsTempGatherNHR(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
     : InsAlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap)
-{
-}
+{}
 
-InsTempGatherNHR::~InsTempGatherNHR()
-{
-}
+InsTempGatherNHR::~InsTempGatherNHR() {}
 
 //  NHR 算法需要的资源计算
-HcclResult InsTempGatherNHR::CalcRes(AlgTempResReq &tempResReq)
+HcclResult InsTempGatherNHR::CalcRes(AlgTempResReq& tempResReq)
 {
     // NHR 需要的 que Num 为 1
     tempResReq.queNum = 1;
     tempResReq.streamNum = tempResReq.queNum;
     tempResReq.queNotifys = CreateMasterSlaveQueNotifiesRequest(tempResReq.queNum);
-    CHK_PRT_RET(CalcResLinksNHR(myRank_, tempRankSize_, tempVTopo_, tempResReq) != HcclResult::HCCL_SUCCESS,
-                HCCL_ERROR("[CollAlgFactory] [InsTempGatherNHR] Rank [%d], resLinks calculation error!", myRank_),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        CalcResLinksNHR(myRank_, tempRankSize_, tempVTopo_, tempResReq) != HcclResult::HCCL_SUCCESS,
+        HCCL_ERROR("[CollAlgFactory] [InsTempGatherNHR] Rank [%d], resLinks calculation error!", myRank_),
+        HcclResult::HCCL_E_INTERNAL);
 
     return HcclResult::HCCL_SUCCESS;
 }
 
-uint64_t InsTempGatherNHR::GetExpandedMode() const
-{
-    return DeviceMode::AICPU;
-}
+uint64_t InsTempGatherNHR::GetExpandedMode() const { return DeviceMode::AICPU; }
 
 /*
 按照mesh的方式计算SliceInfo，例如N张卡，就是N份slice
 */
-HcclResult InsTempGatherNHR::CalcSliceInfo(const AllignInfo &allignInfo, const u64 dataSize, RankSliceInfo &sliceInfoVec)
+HcclResult
+InsTempGatherNHR::CalcSliceInfo(const AllignInfo& allignInfo, const u64 dataSize, RankSliceInfo& sliceInfoVec)
 {
     // 一般情况下，nhr的temp是单级的, Gather nhr的dataSize为output大小
-    CHK_PRT_RET(tempVTopo_.size() != 1,
-                HCCL_ERROR("[CollAlgFactory] [InsTempGatherNHR], tempVtopo size is [%zu] one stage NHR only support one template.", tempVTopo_.size()),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        tempVTopo_.size() != 1,
+        HCCL_ERROR(
+            "[CollAlgFactory] [InsTempGatherNHR], tempVtopo size is [%zu] one stage NHR only support one template.",
+            tempVTopo_.size()),
+        HcclResult::HCCL_E_INTERNAL);
 
     std::vector<SliceInfo> tmp(tempVTopo_.size());
     sliceInfoVec.resize(tempRankSize_, tmp);
@@ -64,25 +62,25 @@ HcclResult InsTempGatherNHR::CalcSliceInfo(const AllignInfo &allignInfo, const u
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempGatherNHR::PreCopy(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec,
-    std::vector<InsQuePtr> &tempInsQues)
+HcclResult InsTempGatherNHR::PreCopy(
+    const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, std::vector<InsQuePtr>& tempInsQues)
 {
     // 前拷贝数据量
     u64 preCopyDataSize = sliceInfoVec[tempVirtRankMap_[myRank_]][0].size;
     // 前拷贝数据在 main buffer 上的偏移
     u64 preCopyOffset = sliceInfoVec[tempVirtRankMap_[myRank_]][0].offset + mainBufferBaseOffset_;
 
-    HCCL_INFO("[InsTempGatherNHR][PreCopy] mainBufferType[%d], preCopyOffset[%llu], preCopyDataSize[%llu]",
-        mainBufferType_, preCopyOffset, preCopyDataSize);
+    HCCL_INFO(
+        "[InsTempGatherNHR][PreCopy] mainBufferType[%d], preCopyOffset[%llu], preCopyDataSize[%llu]", mainBufferType_,
+        preCopyOffset, preCopyDataSize);
     if (preCopyDataSize == 0) {
         HCCL_INFO("[InsTempGatherNHR][PreCopy] preCopyDataSize is 0, no need copy");
-         return HcclResult::HCCL_SUCCESS;
+        return HcclResult::HCCL_SUCCESS;
     }
     if (tempFuncs.isForepart && opMode_ == OpMode::OPBASE) {
         // 单算子模式下，第一个算子，直接使用 user data 拷贝
         HCCL_INFO("[InsTempGatherNHR][PreCopy] Opbase Forepart, copy base on user data");
-        CHK_RET(LocalCopySlices(tempInsQues[0], tempFuncs.usrData.usrInSlices,
-            tempFuncs.usrData.scratchInSlices));
+        CHK_RET(LocalCopySlices(tempInsQues[0], tempFuncs.usrData.usrInSlices, tempFuncs.usrData.scratchInSlices));
     } else if (tempFuncs.isForepart && opMode_ == OpMode::OFFLOAD) {
         // 图模式下，第一个算子，从 inBuff 拷贝到 scratchBuff
         if (buffInfo_.inBuffType == mainBufferType_ && buffInfo_.inBuffBaseOff == preCopyOffset) {
@@ -90,8 +88,8 @@ HcclResult InsTempGatherNHR::PreCopy(const TempFuncs &tempFuncs, const RankSlice
             HCCL_INFO("[InsTempGatherNHR][PreCopy] isForepart inBuff is same as scratchBuff, no need pre copy");
         } else {
             HCCL_INFO("[InsTempGatherNHR][PreCopy] isForepart, copy from inBuff to scratchBuff");
-            DataSlice srcSlice  = DataSlice(buffInfo_.inBuffType, buffInfo_.inBuffBaseOff, preCopyDataSize);
-            DataSlice dstSlice  = DataSlice(mainBufferType_, preCopyOffset, preCopyDataSize);
+            DataSlice srcSlice = DataSlice(buffInfo_.inBuffType, buffInfo_.inBuffBaseOff, preCopyDataSize);
+            DataSlice dstSlice = DataSlice(mainBufferType_, preCopyOffset, preCopyDataSize);
             CHK_RET(LocalCopy(tempInsQues[0], srcSlice, dstSlice));
         }
     } else if (tempFuncs.forAlgSeqComb) {
@@ -101,16 +99,16 @@ HcclResult InsTempGatherNHR::PreCopy(const TempFuncs &tempFuncs, const RankSlice
             HCCL_INFO("[InsTempGatherNHR][PreCopy] forAlgSeqComb inBuff is same as scratchBuff, no need pre copy");
         } else {
             HCCL_INFO("[InsTempGatherNHR][PreCopy] forAlgSeqComb, copy from inBuff to scratchBuff");
-            DataSlice srcSlice  = DataSlice(buffInfo_.inBuffType, buffInfo_.inBuffBaseOff, preCopyDataSize);
-            DataSlice dstSlice  = DataSlice(mainBufferType_, preCopyOffset, preCopyDataSize);
+            DataSlice srcSlice = DataSlice(buffInfo_.inBuffType, buffInfo_.inBuffBaseOff, preCopyDataSize);
+            DataSlice dstSlice = DataSlice(mainBufferType_, preCopyOffset, preCopyDataSize);
             CHK_RET(LocalCopy(tempInsQues[0], srcSlice, dstSlice));
         }
     }
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempGatherNHR::PostCopy(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec,
-    std::vector<InsQuePtr> &tempInsQues)
+HcclResult InsTempGatherNHR::PostCopy(
+    const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, std::vector<InsQuePtr>& tempInsQues)
 {
     if (u32(myRank_) != root_) { // 非root节点不需要后拷贝
         return HcclResult::HCCL_SUCCESS;
@@ -120,7 +118,8 @@ HcclResult InsTempGatherNHR::PostCopy(const TempFuncs &tempFuncs, const RankSlic
     u64 postCopyDataSize = sliceInfoVec.back().back().size + sliceInfoVec.back().back().offset;
     // 后拷贝数据在 main buffer 上的偏移
     u64 postCopyOffset = mainBufferBaseOffset_;
-    HCCL_INFO("[InsTempGatherNHR][PostCopy] mainBufferType[%d], postCopyOffset[%llu], postCopyDataSize[%llu]",
+    HCCL_INFO(
+        "[InsTempGatherNHR][PostCopy] mainBufferType[%d], postCopyOffset[%llu], postCopyDataSize[%llu]",
         mainBufferType_, postCopyOffset, postCopyDataSize);
 
     // 通信后数据全部在 scratch 上，如果是单算子模式, 并且是最后一步算子，需要将数据从 scratch 拷贝到 userOut
@@ -133,39 +132,42 @@ HcclResult InsTempGatherNHR::PostCopy(const TempFuncs &tempFuncs, const RankSlic
             HCCL_INFO("[InsTempGatherNHR][PostCopy] outBuff is same as scratchBuff, no need post copy");
         } else {
             HCCL_INFO("[InsTempGatherNHR][PostCopy] , copy from scratchBuff to outBuff");
-            DataSlice srcSlice  = DataSlice(mainBufferType_, postCopyOffset, postCopyDataSize);
-            DataSlice dstSlice  = DataSlice(buffInfo_.outBuffType, buffInfo_.outBuffBaseOff, postCopyDataSize);
+            DataSlice srcSlice = DataSlice(mainBufferType_, postCopyOffset, postCopyDataSize);
+            DataSlice dstSlice = DataSlice(buffInfo_.outBuffType, buffInfo_.outBuffBaseOff, postCopyDataSize);
             CHK_RET(LocalCopy(tempInsQues[0], srcSlice, dstSlice));
         }
 
         // 图模式或者单算子模式下非第一个算子，需要将数据从 scratch 拷贝到 outBuff
         HCCL_INFO("[InsTempGatherNHR][PreCopy] not first op, not seq comb, copy from inBuff to outBuff");
-        DataSlice srcSlice  = DataSlice(mainBufferType_, postCopyOffset, postCopyDataSize);
-        DataSlice dstSlice  = DataSlice(buffInfo_.outBuffType, buffInfo_.outBuffBaseOff, postCopyDataSize);
+        DataSlice srcSlice = DataSlice(mainBufferType_, postCopyOffset, postCopyDataSize);
+        DataSlice dstSlice = DataSlice(buffInfo_.outBuffType, buffInfo_.outBuffBaseOff, postCopyDataSize);
         CHK_RET(LocalCopy(tempInsQues[0], srcSlice, dstSlice));
     }
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempGatherNHR::Run(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec,
-                                          const BuffInfo &buffInfo, const ResLinks &tempLinks,
-                                          std::vector<InsQuePtr> &tempInsQues)
+HcclResult InsTempGatherNHR::Run(
+    const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, const BuffInfo& buffInfo, const ResLinks& tempLinks,
+    std::vector<InsQuePtr>& tempInsQues)
 {
     HCCL_INFO("[InsTempGatherNHR] Run start");
     // 初始化参数
-    opMode_              = tempFuncs.opMode;
+    opMode_ = tempFuncs.opMode;
     enableCounterNotify_ = tempFuncs.enableCounterNotify;
-    buffInfo_            = buffInfo;
+    buffInfo_ = buffInfo;
     queNum_ = tempVTopo_.size();
-    CHK_PRT_RET(queNum_ != tempInsQues.size(),
-                HCCL_ERROR("[CollAlgFactory] [InsTempGatherNHR] Rank [%d], requiredQue Error.", myRank_),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        queNum_ != tempInsQues.size(),
+        HCCL_ERROR("[CollAlgFactory] [InsTempGatherNHR] Rank [%d], requiredQue Error.", myRank_),
+        HcclResult::HCCL_E_INTERNAL);
 
     // Gather NHR 算子在通信过程中需要使用 scratch, 主要的通信过程也是在scratch上进行的
     mainBufferType_ = buffInfo_.scratBuffType;
     mainBufferBaseOffset_ = buffInfo_.scratchBuffBaseOff;
 
-    HCCL_INFO("[InsTempGatherNHR Run]RankID:[%d], root:[%u], isForepart:[%d], isBottom:[%d]", myRank_, root_, tempFuncs.isForepart, tempFuncs.isBottom);
+    HCCL_INFO(
+        "[InsTempGatherNHR Run]RankID:[%d], root:[%u], isForepart:[%d], isBottom:[%d]", myRank_, root_,
+        tempFuncs.isForepart, tempFuncs.isBottom);
 
     // 前拷贝
     PreCopy(tempFuncs, sliceInfoVec, tempInsQues);
@@ -173,10 +175,10 @@ HcclResult InsTempGatherNHR::Run(const TempFuncs &tempFuncs, const RankSliceInfo
     std::vector<AicpuNHRStepInfo> nhrSteps;
     GetGatherStepInfo(nhrSteps);
 
-    for (auto &nhrstep : nhrSteps) {
-        CHK_PRT_RET(BatchTxRx(nhrstep, tempLinks, tempInsQues[0], sliceInfoVec),
-                HCCL_ERROR("[InsTempGatherNHR] BatchTxRx failed"),
-                HcclResult::HCCL_E_INTERNAL);
+    for (auto& nhrstep : nhrSteps) {
+        CHK_PRT_RET(
+            BatchTxRx(nhrstep, tempLinks, tempInsQues[0], sliceInfoVec),
+            HCCL_ERROR("[InsTempGatherNHR] BatchTxRx failed"), HcclResult::HCCL_E_INTERNAL);
     }
 
     // 后拷贝
@@ -185,8 +187,8 @@ HcclResult InsTempGatherNHR::Run(const TempFuncs &tempFuncs, const RankSliceInfo
 }
 
 // Send multiple DataSlices
-HcclResult InsTempGatherNHR::BatchTxRx(AicpuNHRStepInfo &stepInfo, const ResLinks &tempLinks, InsQuePtr &queue,
-    const RankSliceInfo &sliceInfoVec)
+HcclResult InsTempGatherNHR::BatchTxRx(
+    AicpuNHRStepInfo& stepInfo, const ResLinks& tempLinks, InsQuePtr& queue, const RankSliceInfo& sliceInfoVec)
 {
     // 只有Tx,使用send指令
     if (stepInfo.txSliceIdxs.size() > 0 && stepInfo.rxSliceIdxs.size() == 0) {
@@ -203,84 +205,95 @@ HcclResult InsTempGatherNHR::BatchTxRx(AicpuNHRStepInfo &stepInfo, const ResLink
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempGatherNHR::BatchSend(AicpuNHRStepInfo &stepInfo, const ResLinks &tempLinks, InsQuePtr &queue,
-    const RankSliceInfo &sliceInfoVec, BufferType memType, u32 memOffset) const
+HcclResult InsTempGatherNHR::BatchSend(
+    AicpuNHRStepInfo& stepInfo, const ResLinks& tempLinks, InsQuePtr& queue, const RankSliceInfo& sliceInfoVec,
+    BufferType memType, u32 memOffset) const
 {
-    CHK_PRT_RET(tempLinks.count(stepInfo.toRank) == 0 ,
+    CHK_PRT_RET(
+        tempLinks.count(stepInfo.toRank) == 0,
         HCCL_ERROR("[InsTempGatherNHR][BatchSend] rank [%u] not found in links map", stepInfo.toRank),
         HcclResult::HCCL_E_INTERNAL);
 
-    const LinkData &linkSend = tempLinks.at(stepInfo.toRank)[0];
+    const LinkData& linkSend = tempLinks.at(stepInfo.toRank)[0];
     std::vector<DataSlice> txSlices;
     for (u32 i = 0; i < stepInfo.txSliceIdxs.size(); i++) {
         u32 txId = stepInfo.txSliceIdxs[i];
-        DataSlice txSrcDstSlice = DataSlice( memType, memOffset + sliceInfoVec[txId][0].offset, sliceInfoVec[txId][0].size );
+        DataSlice txSrcDstSlice
+            = DataSlice(memType, memOffset + sliceInfoVec[txId][0].offset, sliceInfoVec[txId][0].size);
         txSlices.push_back(txSrcDstSlice);
     }
     SlicesList txSlicesList(txSlices, txSlices);
     DataInfo sendData(linkSend, txSlicesList);
-    CHK_PRT_RET(Send(sendData, queue), HCCL_ERROR("[InsTempGatherNHR] BatchSend failed"),
-        HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(Send(sendData, queue), HCCL_ERROR("[InsTempGatherNHR] BatchSend failed"), HcclResult::HCCL_E_INTERNAL);
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempGatherNHR::BatchRecv(AicpuNHRStepInfo &stepInfo, const ResLinks &tempLinks, InsQuePtr &queue,
-    const RankSliceInfo &sliceInfoVec, BufferType memType, u32 memOffset) const
+HcclResult InsTempGatherNHR::BatchRecv(
+    AicpuNHRStepInfo& stepInfo, const ResLinks& tempLinks, InsQuePtr& queue, const RankSliceInfo& sliceInfoVec,
+    BufferType memType, u32 memOffset) const
 {
-    CHK_PRT_RET(tempLinks.count(stepInfo.fromRank) == 0 ,
+    CHK_PRT_RET(
+        tempLinks.count(stepInfo.fromRank) == 0,
         HCCL_ERROR("[InsTempGatherNHR][BatchRecv] rank [%u] not found in links map", stepInfo.fromRank),
         HcclResult::HCCL_E_INTERNAL);
 
-    const LinkData &linkRecv = tempLinks.at(stepInfo.fromRank)[0];
+    const LinkData& linkRecv = tempLinks.at(stepInfo.fromRank)[0];
     std::vector<DataSlice> rxSlices;
     for (u32 i = 0; i < stepInfo.rxSliceIdxs.size(); i++) {
         u32 rxId = stepInfo.rxSliceIdxs[i];
-        DataSlice rxSrcDstSlice = DataSlice( memType, memOffset + sliceInfoVec[rxId][0].offset, sliceInfoVec[rxId][0].size );
+        DataSlice rxSrcDstSlice
+            = DataSlice(memType, memOffset + sliceInfoVec[rxId][0].offset, sliceInfoVec[rxId][0].size);
         rxSlices.push_back(rxSrcDstSlice);
     }
     SlicesList rxSlicesList(rxSlices, rxSlices);
     DataInfo recvData(linkRecv, rxSlicesList);
-    CHK_PRT_RET(Recv(recvData, queue), HCCL_ERROR("[InsTempGatherNHR] BatchTxRx Recv failed"),
-        HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        Recv(recvData, queue), HCCL_ERROR("[InsTempGatherNHR] BatchTxRx Recv failed"), HcclResult::HCCL_E_INTERNAL);
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempGatherNHR::BatchSR(AicpuNHRStepInfo &stepInfo, const ResLinks &tempLinks, InsQuePtr &queue,
-    const RankSliceInfo &sliceInfoVec, BufferType memType, u32 memOffset)const
+HcclResult InsTempGatherNHR::BatchSR(
+    AicpuNHRStepInfo& stepInfo, const ResLinks& tempLinks, InsQuePtr& queue, const RankSliceInfo& sliceInfoVec,
+    BufferType memType, u32 memOffset) const
 {
-    CHK_PRT_RET(tempLinks.count(stepInfo.toRank) == 0 ,
+    CHK_PRT_RET(
+        tempLinks.count(stepInfo.toRank) == 0,
         HCCL_ERROR("[InsTempGatherNHR][BatchSR] rank [%u] not found in links map", stepInfo.toRank),
         HcclResult::HCCL_E_INTERNAL);
-    const LinkData &linkSend = tempLinks.at(stepInfo.toRank)[0];
-    CHK_PRT_RET(tempLinks.count(stepInfo.fromRank) == 0 ,
+    const LinkData& linkSend = tempLinks.at(stepInfo.toRank)[0];
+    CHK_PRT_RET(
+        tempLinks.count(stepInfo.fromRank) == 0,
         HCCL_ERROR("[InsTempGatherNHR][BatchSR] rank [%u] not found in links map", stepInfo.fromRank),
         HcclResult::HCCL_E_INTERNAL);
-    const LinkData &linkRecv = tempLinks.at(stepInfo.fromRank)[0];
+    const LinkData& linkRecv = tempLinks.at(stepInfo.fromRank)[0];
     TxRxLinks linkSendRecv = {linkSend, linkRecv};
 
     std::vector<DataSlice> txSlices;
     for (u32 i = 0; i < stepInfo.txSliceIdxs.size(); i++) {
         u32 txId = stepInfo.txSliceIdxs[i];
-        DataSlice txSrcDstSlice = DataSlice( memType, memOffset + sliceInfoVec[txId][0].offset, sliceInfoVec[txId][0].size );
+        DataSlice txSrcDstSlice
+            = DataSlice(memType, memOffset + sliceInfoVec[txId][0].offset, sliceInfoVec[txId][0].size);
         txSlices.push_back(txSrcDstSlice);
     }
     SlicesList txSlicesList(txSlices, txSlices);
     std::vector<DataSlice> rxSlices;
     for (u32 i = 0; i < stepInfo.rxSliceIdxs.size(); i++) {
         u32 rxId = stepInfo.rxSliceIdxs[i];
-        DataSlice rxSrcDstSlice = DataSlice( memType, memOffset + sliceInfoVec[rxId][0].offset, sliceInfoVec[rxId][0].size );
+        DataSlice rxSrcDstSlice
+            = DataSlice(memType, memOffset + sliceInfoVec[rxId][0].offset, sliceInfoVec[rxId][0].size);
         rxSlices.push_back(rxSrcDstSlice);
     }
     SlicesList rxSlicesList(rxSlices, rxSlices);
     TxRxSlicesList txRxSlicesList(txSlicesList, rxSlicesList);
     SendRecvInfo sendRecvInfo(linkSendRecv, txRxSlicesList);
-    CHK_PRT_RET(SendRecv(sendRecvInfo, queue, 0, true, dmaMode_), HCCL_ERROR("[InsTempGatherNHR] BatchTxRx SendRecv failed"),
+    CHK_PRT_RET(
+        SendRecv(sendRecvInfo, queue, 0, true, dmaMode_), HCCL_ERROR("[InsTempGatherNHR] BatchTxRx SendRecv failed"),
         HcclResult::HCCL_E_INTERNAL);
     return HcclResult::HCCL_SUCCESS;
 }
 
 // NHR每步的算法描述原理函数
-HcclResult InsTempGatherNHR::GetScatterStepInfo(u32 step, u32 nSteps, AicpuNHRStepInfo &stepInfo) const
+HcclResult InsTempGatherNHR::GetScatterStepInfo(u32 step, u32 nSteps, AicpuNHRStepInfo& stepInfo) const
 {
     u32 rankSize = tempRankSize_;
     stepInfo.txSliceIdxs.clear();
@@ -333,7 +346,7 @@ HcclResult InsTempGatherNHR::GetScatterStepInfo(u32 step, u32 nSteps, AicpuNHRSt
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempGatherNHR::GetGatherStepInfo(std::vector<AicpuNHRStepInfo> &nhrSteps) const
+HcclResult InsTempGatherNHR::GetGatherStepInfo(std::vector<AicpuNHRStepInfo>& nhrSteps) const
 {
     nhrSteps.clear();
     u32 nSteps = GetNHRStepNum(tempRankSize_);
@@ -350,6 +363,5 @@ HcclResult InsTempGatherNHR::GetGatherStepInfo(std::vector<AicpuNHRStepInfo> &nh
     }
     return HcclResult::HCCL_SUCCESS;
 }
-
 
 } // namespace Hccl

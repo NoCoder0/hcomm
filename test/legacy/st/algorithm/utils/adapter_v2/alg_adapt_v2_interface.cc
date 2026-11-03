@@ -1,5 +1,14 @@
+/**
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  * Description: 2.0适配器对外提供的编排接口
  * Author: yinding
  * Create: 2025-06-14
@@ -28,7 +37,7 @@
 #include "llt_common.h"
 #include "transport_utils.h"
 #include "ccu_all_rank_param_recorder.h"
-#include "env_config.h"
+#include "env_config_v2.h"
 
 using namespace checker;
 namespace Hccl {
@@ -64,7 +73,7 @@ TaskQuesGeneratorV2::~TaskQuesGeneratorV2()
     AllRankParamRecorder::Global()->Reset();
 }
 
-void GenCollOpParams(u32 myRank, CheckerOpParam &checkerOpParam, CollOpParams &opParams)
+void GenCollOpParams(u32 myRank, CheckerOpParam& checkerOpParam, CollOpParams& opParams)
 {
     opParams.opType = g_CheckerOpType2OpType_aicpu[checkerOpParam.opType];
     opParams.reduceOp = g_CheckerReduceOp2ReduceOp_aicpu[checkerOpParam.reduceType];
@@ -92,17 +101,18 @@ void GenCollOpParams(u32 myRank, CheckerOpParam &checkerOpParam, CollOpParams &o
     } else if (opParams.opType == OpType::ALLTOALLV) {
         opParams.all2AllVDataDes.sendType = g_CheckerDataType2DataType_aicpu[checkerOpParam.All2AllDataDes.sendType];
         opParams.all2AllVDataDes.recvType = g_CheckerDataType2DataType_aicpu[checkerOpParam.All2AllDataDes.recvType];
-        opParams.all2AllVDataDes.sendCounts = static_cast<void *>(checkerOpParam.All2AllDataDes.sendCounts.data());
-        opParams.all2AllVDataDes.recvCounts = static_cast<void *>(checkerOpParam.All2AllDataDes.recvCounts.data());
-        opParams.all2AllVDataDes.sdispls = static_cast<void *>(checkerOpParam.All2AllDataDes.sdispls.data());
-        opParams.all2AllVDataDes.rdispls = static_cast<void *>(checkerOpParam.All2AllDataDes.rdispls.data());
+        opParams.all2AllVDataDes.sendCounts = static_cast<void*>(checkerOpParam.All2AllDataDes.sendCounts.data());
+        opParams.all2AllVDataDes.recvCounts = static_cast<void*>(checkerOpParam.All2AllDataDes.recvCounts.data());
+        opParams.all2AllVDataDes.sdispls = static_cast<void*>(checkerOpParam.All2AllDataDes.sdispls.data());
+        opParams.all2AllVDataDes.rdispls = static_cast<void*>(checkerOpParam.All2AllDataDes.rdispls.data());
     } else if (opParams.opType == OpType::ALLTOALLVC) {
         opParams.all2AllVCDataDes.sendType = g_CheckerDataType2DataType_aicpu[checkerOpParam.All2AllDataDes.sendType];
         opParams.all2AllVCDataDes.recvType = g_CheckerDataType2DataType_aicpu[checkerOpParam.All2AllDataDes.recvType];
-        opParams.all2AllVCDataDes.sendCountMatrix = static_cast<void *>(checkerOpParam.All2AllDataDes.sendCountMatrix.data());
+        opParams.all2AllVCDataDes.sendCountMatrix
+            = static_cast<void*>(checkerOpParam.All2AllDataDes.sendCountMatrix.data());
     } else if (opParams.opType == OpType::REDUCESCATTERV || opParams.opType == OpType::ALLGATHERV) {
-        opParams.vDataDes.counts = static_cast<void *>(checkerOpParam.VDataDes.counts.data());
-        opParams.vDataDes.displs = static_cast<void *>(checkerOpParam.VDataDes.displs.data());
+        opParams.vDataDes.counts = static_cast<void*>(checkerOpParam.VDataDes.counts.data());
+        opParams.vDataDes.displs = static_cast<void*>(checkerOpParam.VDataDes.displs.data());
         opParams.vDataDes.dataType = g_CheckerDataType2DataType_aicpu[checkerOpParam.VDataDes.dataType];
         opParams.dataType = g_CheckerDataType2DataType_aicpu[checkerOpParam.VDataDes.dataType];
     } else {
@@ -116,7 +126,7 @@ void GenCollOpParams(u32 myRank, CheckerOpParam &checkerOpParam, CollOpParams &o
     return;
 }
 
-void SetBufferSize(RankId rankId, CheckerOpParam &checkerOpParam, u64 scratchSize)
+void SetBufferSize(RankId rankId, CheckerOpParam& checkerOpParam, u64 scratchSize)
 {
     u32 rankSize = RankInfoRecorder::Global()->GetRankSize();
     u64 inputSize = 0;
@@ -130,7 +140,7 @@ void SetBufferSize(RankId rankId, CheckerOpParam &checkerOpParam, u64 scratchSiz
     return;
 }
 
-enum TopoNetworkType {TOPO_TYPE_1D, TOPO_TYPE_2D, TOPO_TYPE_DETOUR, TOPO_TYPE_NUM, TOPO_TYPE_INVALID};
+enum TopoNetworkType { TOPO_TYPE_1D, TOPO_TYPE_2D, TOPO_TYPE_DETOUR, TOPO_TYPE_NUM, TOPO_TYPE_INVALID };
 
 TopoNetworkType GetTopoNetworkType()
 {
@@ -138,7 +148,7 @@ TopoNetworkType GetTopoNetworkType()
     const char* dieNum = std::getenv("HCCL_IODIE_NUM");
     if (dieNum != nullptr) {
         std::string value(dieNum);
-        if (value == "2" ) {
+        if (value == "2") {
             return TopoNetworkType::TOPO_TYPE_2D;
         }
     }
@@ -147,7 +157,7 @@ TopoNetworkType GetTopoNetworkType()
     return TopoNetworkType::TOPO_TYPE_1D;
 }
 
-HcclResult TaskQuesGeneratorV2::Run(CheckerOpParam &checkerOpParam, TopoMeta &topoMeta, DavidAlgConfig &config)
+HcclResult TaskQuesGeneratorV2::Run(CheckerOpParam& checkerOpParam, TopoMeta& topoMeta, DavidAlgConfig& config)
 {
     Hccl::EnvConfig::GetInstance().Parse();
 
@@ -217,7 +227,8 @@ HcclResult TaskQuesGeneratorV2::Run(CheckerOpParam &checkerOpParam, TopoMeta &to
                     }
                 }
                 if (!found) {
-                    HCCL_ERROR("fail to found corresponding transport, localTransport is from rank:%u,Ip:%s to rank:%u,Ip:%s",
+                    HCCL_ERROR(
+                        "fail to found corresponding transport, localTransport is from rank:%u,Ip:%s to rank:%u,Ip:%s",
                         localRank, remoteRank, localAddr.Describe().c_str(), rmtAddr.Describe().c_str());
                 }
             }
@@ -246,7 +257,7 @@ HcclResult TaskQuesGeneratorV2::Run(CheckerOpParam &checkerOpParam, TopoMeta &to
             for (auto& localTransport : g_allRankTransports[localRank][remoteRank]) {
                 CcuTransport* remoteTransport = g_transportsPair[localTransport];
                 u32 remoteDieId = remoteTransport->GetDieId();
-                RemoteDieInfo dieInfo {remoteRank, remoteDieId};
+                RemoteDieInfo dieInfo{remoteRank, remoteDieId};
                 u32 localDieId = localTransport->GetDieId();
                 u32 localChannelId = localTransport->GetChannelId();
                 g_allRankChannelInfo[localRank][localDieId][localChannelId] = dieInfo;
@@ -270,8 +281,9 @@ HcclResult TaskQuesGeneratorV2::Run(CheckerOpParam &checkerOpParam, TopoMeta &to
         for (auto& rankChannels : g_allRankChannelInfo[srcRank]) {
             u32 dieId = rankChannels.first;
             for (auto& iter : rankChannels.second)
-            HCCL_INFO("src rank is %d, local dieId is %u, channel is %u, dst rank is %u, dst dieId is %u",
-                srcRank, dieId, iter.first, iter.second.dstRank, iter.second.remoteDieId);
+                HCCL_INFO(
+                    "src rank is %d, local dieId is %u, channel is %u, dst rank is %u, dst dieId is %u", srcRank, dieId,
+                    iter.first, iter.second.dstRank, iter.second.remoteDieId);
         }
     }
 
@@ -283,17 +295,17 @@ HcclResult TaskQuesGeneratorV2::Run(CheckerOpParam &checkerOpParam, TopoMeta &to
     return HcclResult::HCCL_SUCCESS;
 }
 
-TaskNode* UpdateNodeForCcuGraph(TaskNode *node,  std::set<TaskNode *>& simulatedNodes)
+TaskNode* UpdateNodeForCcuGraph(TaskNode* node, std::set<TaskNode*>& simulatedNodes)
 {
     TaskNode* retNode = node;
     if (node->task != nullptr && node->task->GetType() == TaskTypeStub::CCU_GRAPH) {
         // 首次进入子图
-        TaskStubCcuGraph *curCcuTask = dynamic_cast<TaskStubCcuGraph *>(node->task);
+        TaskStubCcuGraph* curCcuTask = dynamic_cast<TaskStubCcuGraph*>(node->task);
         retNode = curCcuTask->ccuHeadTaskNode;
         simulatedNodes.insert(retNode);
     } else if (node->task != nullptr && node->task->GetType() == TaskTypeStub::SUB_GRAPH_END) {
         // 走到子图的最后一个子节点了，就回到整图
-        TaskStubSubGraphEnd *subGraphEnd = dynamic_cast<TaskStubSubGraphEnd *>(node->task);
+        TaskStubSubGraphEnd* subGraphEnd = dynamic_cast<TaskStubSubGraphEnd*>(node->task);
         retNode = subGraphEnd->subGraphNode;
     }
     return retNode;
@@ -304,17 +316,18 @@ TaskNodePtr GetCcuTaskHead(TaskNodePtr node)
     TaskNode* retNode = node;
     if (node->task != nullptr && node->task->GetType() == TaskTypeStub::CCU_GRAPH) {
         // 首次进入子图
-        TaskStubCcuGraph *curCcuTask = dynamic_cast<TaskStubCcuGraph *>(node->task);
+        TaskStubCcuGraph* curCcuTask = dynamic_cast<TaskStubCcuGraph*>(node->task);
         retNode = curCcuTask->ccuHeadTaskNode;
     } else if (node->task != nullptr && node->task->GetType() == TaskTypeStub::SUB_GRAPH_END) {
         // 走到子图的最后一个子节点了，就回到整图
-        TaskStubSubGraphEnd *subGraphEnd = dynamic_cast<TaskStubSubGraphEnd *>(node->task);
+        TaskStubSubGraphEnd* subGraphEnd = dynamic_cast<TaskStubSubGraphEnd*>(node->task);
         retNode = subGraphEnd->subGraphNode;
     }
     return retNode;
 }
 
-HcclResult GetNewNode(const Ori2NewNodeMap &originNode2copyNode, TaskNodePtr oldNode, TaskNodePtr &newNode, bool retErr = true)
+HcclResult
+GetNewNode(const Ori2NewNodeMap& originNode2copyNode, TaskNodePtr oldNode, TaskNodePtr& newNode, bool retErr = true)
 {
     if (oldNode == nullptr && !retErr) {
         return HcclResult::HCCL_SUCCESS;
@@ -333,17 +346,18 @@ HcclResult GetNewNode(const Ori2NewNodeMap &originNode2copyNode, TaskNodePtr old
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CopyCcuSubGraphNode(TaskStub *originCcu, TaskStub **newCcu,
-    std::vector<std::pair<TaskStubPtr, TaskStubPtr>> &ccuGraphs, std::vector<CcuOri2NewNodeMap> &AllOri2NewNodeMap)
+HcclResult CopyCcuSubGraphNode(
+    TaskStub* originCcu, TaskStub** newCcu, std::vector<std::pair<TaskStubPtr, TaskStubPtr>>& ccuGraphs,
+    std::vector<CcuOri2NewNodeMap>& AllOri2NewNodeMap)
 {
     if (originCcu->GetType() != TaskTypeStub::CCU_GRAPH) {
         HCCL_ERROR("origin node is not ccu graph");
         return HcclResult::HCCL_E_INTERNAL;
     }
 
-    TaskStubCcuGraph *oriCcuTask = dynamic_cast<TaskStubCcuGraph *>(originCcu);
+    TaskStubCcuGraph* oriCcuTask = dynamic_cast<TaskStubCcuGraph*>(originCcu);
     *newCcu = new TaskStubCcuGraph(oriCcuTask);
-    TaskStubCcuGraph *newCcuTask = dynamic_cast<TaskStubCcuGraph *>(*newCcu);
+    TaskStubCcuGraph* newCcuTask = dynamic_cast<TaskStubCcuGraph*>(*newCcu);
     ccuGraphs.emplace_back(std::make_pair(originCcu, *newCcu));
 
     auto rankId = oriCcuTask->rankId;
@@ -351,7 +365,7 @@ HcclResult CopyCcuSubGraphNode(TaskStub *originCcu, TaskStub **newCcu,
     Ori2NewNodeMap originNode2copyNode; // 用来收录原节点到新节点的映射
     originNode2copyNode[oriCcuTask->ccuHeadTaskNode] = newCcuTask->ccuHeadTaskNode;
     // 拷贝节点
-    for (auto &oriNode : oriCcuTask->toDeleteTaskNode_) {
+    for (auto& oriNode : oriCcuTask->toDeleteTaskNode_) {
         if (oriNode == oriCcuTask->ccuHeadTaskNode) {
             continue;
         }
@@ -359,14 +373,14 @@ HcclResult CopyCcuSubGraphNode(TaskStub *originCcu, TaskStub **newCcu,
         originNode2copyNode[oriNode] = newNode;
         newCcuTask->toDeleteTaskNode_.push_back(newNode);
     }
-    
+
     AllOri2NewNodeMap[rankId][originCcu] = originNode2copyNode;
 
     // 恢复内存冲突改造所需的成员变量
     // 拷贝loop节点 —— loop并行化改造
-    for (const auto &loopGroupInfo : oriCcuTask->loopGroupInfo_) {
+    for (const auto& loopGroupInfo : oriCcuTask->loopGroupInfo_) {
         std::vector<LoopInfo> loopGroup;
-        for (const auto &loop : loopGroupInfo) {
+        for (const auto& loop : loopGroupInfo) {
             loopGroup.push_back(LoopInfo(originNode2copyNode.at(loop.loopStart), originNode2copyNode.at(loop.loopEnd)));
         }
         newCcuTask->loopGroupInfo_.push_back(loopGroup);
@@ -377,7 +391,7 @@ HcclResult CopyCcuSubGraphNode(TaskStub *originCcu, TaskStub **newCcu,
     }
     // 拷贝双边语义节点 —— 单边转双边改造
     newCcuTask->bilateralNodes_.resize(newCcuTask->queueNum_);
-    for (const auto &part1 : oriCcuTask->bilateralPart1_) {
+    for (const auto& part1 : oriCcuTask->bilateralPart1_) {
         std::map<TaskNodePtr, TaskNodePtr> mapTmp;
         for (auto iter = part1.begin(); iter != part1.end(); ++iter) {
             TaskNodePtr newPost = nullptr;
@@ -388,7 +402,7 @@ HcclResult CopyCcuSubGraphNode(TaskStub *originCcu, TaskStub **newCcu,
         }
         newCcuTask->bilateralPart1_.push_back(mapTmp);
     }
-    for (const auto &part2 : oriCcuTask->bilateralPart2_) {
+    for (const auto& part2 : oriCcuTask->bilateralPart2_) {
         std::map<TaskNodePtr, TaskNodePtr> mapTmp;
         for (auto iter = part2.begin(); iter != part2.end(); ++iter) {
             TaskNodePtr newPost = nullptr;
@@ -401,14 +415,15 @@ HcclResult CopyCcuSubGraphNode(TaskStub *originCcu, TaskStub **newCcu,
     }
 
     // 拷贝异步节点 —— 并行化改造
-    for (const auto &parNode : oriCcuTask->parallelNodes_) {
+    for (const auto& parNode : oriCcuTask->parallelNodes_) {
         newCcuTask->parallelNodes_.push_back(originNode2copyNode.at(parNode));
     }
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult QueryCcuGraphNode(const Ori2NewNodeMap &ccuNodeMap,
-    const std::vector<CcuOri2NewNodeMap> &AllOri2NewNodeMap, TaskNodePtr oriNode, TaskNodePtr &newNode)
+HcclResult QueryCcuGraphNode(
+    const Ori2NewNodeMap& ccuNodeMap, const std::vector<CcuOri2NewNodeMap>& AllOri2NewNodeMap, TaskNodePtr oriNode,
+    TaskNodePtr& newNode)
 {
     auto locRes = ccuNodeMap.find(oriNode);
     if (locRes == ccuNodeMap.end()) {
@@ -419,21 +434,21 @@ HcclResult QueryCcuGraphNode(const Ori2NewNodeMap &ccuNodeMap,
         uint32_t rmtRankId = 0;
         TaskStubPtr rmtCcuTaskPtr = nullptr;
         if (oriNode->task->GetType() == TaskTypeStub::POST) {
-            TaskStubPost *candPost = dynamic_cast<TaskStubPost *>(oriNode->task);
+            TaskStubPost* candPost = dynamic_cast<TaskStubPost*>(oriNode->task);
             if (candPost->ccuTaskPtr_ == 0) {
                 HCCL_ERROR("[QueryCcuGraphNode] cannot find ccu subgraph head node by post node");
                 return HCCL_E_INTERNAL;
             }
-            TaskStubCcuGraph *rmtCcuTask = reinterpret_cast<TaskStubCcuGraph *>(candPost->ccuTaskPtr_);
+            TaskStubCcuGraph* rmtCcuTask = reinterpret_cast<TaskStubCcuGraph*>(candPost->ccuTaskPtr_);
             rmtRankId = oriNode->rankIdx;
             rmtCcuTaskPtr = reinterpret_cast<TaskStubPtr>(candPost->ccuTaskPtr_);
         } else if (oriNode->task->GetType() == TaskTypeStub::WAIT) {
-            TaskStubWait *candWait = dynamic_cast<TaskStubWait *>(oriNode->task);
+            TaskStubWait* candWait = dynamic_cast<TaskStubWait*>(oriNode->task);
             if (candWait->ccuTaskPtr_ == 0) {
                 HCCL_ERROR("[QueryCcuGraphNode] cannot find ccu subgraph head node by wait node");
                 return HCCL_E_INTERNAL;
             }
-            TaskStubCcuGraph *rmtCcuTask = reinterpret_cast<TaskStubCcuGraph *>(candWait->ccuTaskPtr_);
+            TaskStubCcuGraph* rmtCcuTask = reinterpret_cast<TaskStubCcuGraph*>(candWait->ccuTaskPtr_);
             rmtRankId = oriNode->rankIdx;
             rmtCcuTaskPtr = reinterpret_cast<TaskStubPtr>(candWait->ccuTaskPtr_);
         }
@@ -455,12 +470,13 @@ HcclResult QueryCcuGraphNode(const Ori2NewNodeMap &ccuNodeMap,
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CopyCcuSubGraphConnection(std::vector<std::pair<TaskStubPtr, TaskStubPtr>> &ccuGraphs,
-    const std::vector<CcuOri2NewNodeMap> &AllOri2NewNodeMap)
+HcclResult CopyCcuSubGraphConnection(
+    std::vector<std::pair<TaskStubPtr, TaskStubPtr>>& ccuGraphs,
+    const std::vector<CcuOri2NewNodeMap>& AllOri2NewNodeMap)
 {
-    for (auto &ccuPair : ccuGraphs) {
-        TaskStubCcuGraph *oriCcuTask = dynamic_cast<TaskStubCcuGraph *>(ccuPair.first);
-        TaskStubCcuGraph *newCcuTask = dynamic_cast<TaskStubCcuGraph *>(ccuPair.second);
+    for (auto& ccuPair : ccuGraphs) {
+        TaskStubCcuGraph* oriCcuTask = dynamic_cast<TaskStubCcuGraph*>(ccuPair.first);
+        TaskStubCcuGraph* newCcuTask = dynamic_cast<TaskStubCcuGraph*>(ccuPair.second);
 
         auto rankId = oriCcuTask->rankId;
         auto ccuNodeMapIter = AllOri2NewNodeMap[rankId].find(ccuPair.first);
@@ -471,20 +487,20 @@ HcclResult CopyCcuSubGraphConnection(std::vector<std::pair<TaskStubPtr, TaskStub
         auto ccuNodeMap = ccuNodeMapIter->second;
 
         // 按原节点，拷贝副本连接关系
-        for (auto &oriNode : oriCcuTask->toDeleteTaskNode_) {
-            for (auto &parent : oriNode->parents) {
+        for (auto& oriNode : oriCcuTask->toDeleteTaskNode_) {
+            for (auto& parent : oriNode->parents) {
                 TaskNodePtr newParent = nullptr;
                 CHK_RET(QueryCcuGraphNode(ccuNodeMap, AllOri2NewNodeMap, parent, newParent));
                 ccuNodeMap[oriNode]->parents.push_back(newParent);
             }
-            for (auto &child : oriNode->children) {
+            for (auto& child : oriNode->children) {
                 TaskNodePtr newChild = nullptr;
                 CHK_RET(QueryCcuGraphNode(ccuNodeMap, AllOri2NewNodeMap, child, newChild));
                 ccuNodeMap[oriNode]->children.push_back(newChild);
             }
         }
     }
-    
+
     return HcclResult::HCCL_SUCCESS;
 }
-}
+} // namespace Hccl

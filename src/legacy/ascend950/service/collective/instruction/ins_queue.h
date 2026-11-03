@@ -27,8 +27,8 @@ public:
         for (auto iter = Iter(); iter.HasNext(); ++iter) {
             auto linkPtr = iter->GetLink();
             if (linkPtr == nullptr) {
-                    continue;
-                }
+                continue;
+            }
             uniqueLinks.insert(*linkPtr);
         }
         for (auto slaveIter = IterSlaves(); slaveIter.HasNext(); ++slaveIter) {
@@ -47,16 +47,16 @@ public:
     {
         auto insPtr = ins.get();
         if (insPtr->GetType() == InstructionType::LOCAL_POST_TO) {
-            InsLocalPostTo &postTo = static_cast<InsLocalPostTo &>(*insPtr);
+            InsLocalPostTo& postTo = static_cast<InsLocalPostTo&>(*insPtr);
             postTo.SetPostQid(GetId());
         } else if (insPtr->GetType() == InstructionType::LOCAL_WAIT_FROM) {
-            InsLocalWaitFrom &waitFrom = static_cast<InsLocalWaitFrom &>(*insPtr);
+            InsLocalWaitFrom& waitFrom = static_cast<InsLocalWaitFrom&>(*insPtr);
             waitFrom.SetWaitQid(GetId());
         } else if (insPtr->GetType() == InstructionType::LOCAL_WAIT_GROUP) {
-            InsLocalWaitGroup &waitGroup = static_cast<InsLocalWaitGroup &>(*insPtr);
+            InsLocalWaitGroup& waitGroup = static_cast<InsLocalWaitGroup&>(*insPtr);
             waitGroup.SetWaitQid(GetId());
         } else if (insPtr->GetType() == InstructionType::LOCAL_BCAST_POST) {
-            InsLocalBcastPost &bcastPost = static_cast<InsLocalBcastPost &>(*insPtr);
+            InsLocalBcastPost& bcastPost = static_cast<InsLocalBcastPost&>(*insPtr);
             bcastPost.SetPostQid(GetId());
         }
         HierarchicalQueue::Append(std::move(ins));

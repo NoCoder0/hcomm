@@ -7,6 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #ifndef AICPU_TS_P2P_CHANNEL_H
 #define AICPU_TS_P2P_CHANNEL_H
 
@@ -16,10 +17,9 @@
 #include <vector>
 
 #include "../channel.h"
-#include "../../sockets/socket_mgr.h"
+#include "aicpu_ts_channel_entity.h"
 
 #include "../../../../../../legacy/ascend950/unified_platform/resource/socket/socket.h"
-#include "../../../../../../src/legacy/ascend950/unified_platform/resource/buffer/local_ipc_rma_buffer.h"
 #include "p2p_transport.h"
 #include "p2p_connection.h"
 #include "ipc_local_notify.h"
@@ -29,56 +29,37 @@ namespace hcomm {
 
 class AicpuTsP2pChannel : public Channel {
 public:
-    AicpuTsP2pChannel(EndpointHandle endpointHandle, const HcommChannelDesc &channelDesc);
+    AicpuTsP2pChannel(
+        EndpointHandle endpointHandle, const HcommChannelDesc& channelDesc, CommEngine engine = COMM_ENGINE_RESERVED);
     ~AicpuTsP2pChannel() override;
 
-    HcclResult Init() override;
-    HcclResult GetNotifyNum(uint32_t *notifyNum) const override;
-    HcclResult GetRemoteMems(uint32_t *memNum, CommMem **remoteMem, char ***memInfos) override;
+    HcclResult GetNotifyNum(uint32_t* notifyNum) const override;
+    HcclResult GetRemoteMems(uint32_t* memNum, CommMem** remoteMem, char*** memInfos) override;
     ChannelStatus GetStatus() override;
-    HcclResult UpdateMemInfo(HcommMemHandle *memHandles, uint32_t memHandleNum) override;
+    HcclResult UpdateMemInfo(HcommMemHandle* memHandles, uint32_t memHandleNum) override;
+
+    HcclResult Clean() override;
+    HcclResult Resume() override;
 
     HcclResult H2DResPack(std::vector<char>& buffer);
 
-    virtual HcclResult Clean() override;
-    virtual HcclResult Resume() override;
-
-    // 数据面接口
-    HcclResult NotifyRecord(const uint32_t remoteNotifyIdx) override;
-    HcclResult NotifyWait(const uint32_t localNotifyIdx, const uint32_t timeout) override;
-    HcclResult WriteWithNotify(void *dst, const void *src, const uint64_t len, uint32_t remoteNotifyIdx) override;
-    HcclResult Write(void *dst, const void *src, uint64_t len) override;
-    HcclResult Read(void *dst, const void *src, uint64_t len) override;
-    HcclResult ChannelFence() override;
+    IChannelEntity* GetChannelEntity() override { return &aicpuTsHelper_; }
 
 private:
-    HcclResult SetModuleDataName(Hccl::ModuleData &module, const std::string &name);
-    HcclResult ParseInputParam();
+    HcclResult ParseInputParam() override;
+    HcclResult StartListen() override;
+    HcclResult BuildSocket() override;
+    HcclResult BuildConnection() override;
+    HcclResult BuildNotify() override;
+    HcclResult BuildBuffer() override;
+
     HcclResult BuildAttr();
-    HcclResult BuildConnection();
-    HcclResult BuildNotify();
-    HcclResult BuildP2pMemTransport();
-    HcclResult BuildSocket();
+    HcclResult PackOpData(std::vector<char>& data);
+    HcclResult SetModuleDataName(Hccl::ModuleData& module, const std::string& name) const;
 
-    HcclResult PackOpData(std::vector<char> &data);
-
-private:
-    EndpointHandle                                              endpointHandle_;
-    HcommChannelDesc                                            channelDesc_;
-
-    EndpointDesc                                                localEp_{};
-    EndpointDesc                                                remoteEp_{};
-    uint32_t                                                    notifyNum_{0};
-
-    Hccl::Socket*                                               socket_{nullptr};
-    std::unique_ptr<Hccl::P2PTransport>                         memTransport_{nullptr};
-    Hccl::BaseMemTransport::Attribution                         attr_{};
-    Hccl::BaseMemTransport::CommonLocRes                        commonRes_{};
-    std::vector<std::unique_ptr<Hccl::P2PConnection>>           connections_{};
-    std::vector<std::unique_ptr<Hccl::IpcLocalNotify>>          localNotifies_{};
-    std::unique_ptr<Hccl::Socket>                               serverSocket_;
-    const Hccl::SocketConfig*                                   socketConfig_{nullptr};
-    uint32_t                                                    devicePhyId_{};
+    AicpuTsChannelEntity aicpuTsHelper_;
+    std::unique_ptr<Hccl::P2PTransport> memTransport_{nullptr};
+    std::vector<std::unique_ptr<Hccl::P2PConnection>> connections_{};
 };
 
 } // namespace hcomm

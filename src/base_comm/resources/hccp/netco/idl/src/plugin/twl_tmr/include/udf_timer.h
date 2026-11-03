@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef UDF_TIMER_H
 #define UDF_TIMER_H
 
@@ -56,8 +55,8 @@ typedef struct {
  * @brief 定时器状态
  */
 typedef enum {
-    UDF_TIMER_STATUS_STOPED,  /* 停止中 */
-    UDF_TIMER_STATUS_ACTIVE,  /* 运行中 */
+    UDF_TIMER_STATUS_STOPED, /* 停止中 */
+    UDF_TIMER_STATUS_ACTIVE, /* 运行中 */
     UDF_TIMER_STATUS_BUTT
 } UdfTimerStatus;
 
@@ -76,14 +75,14 @@ typedef enum {
  */
 typedef struct {
     UdfTimerHandle handle;
-    char           timerName[UDF_TIMER_NAME_LEN_MAX];
-    char           lastTime[UDF_TIMER_LAST_PROC_TIME_LEN_MAX];
-    char           usrFunc[UDF_TIMER_USR_FUNC_NAME_MAX];
-    uint32_t       interval;
-    UdfTimerMode   mode;
-    uint32_t       maxProcTime;
+    char timerName[UDF_TIMER_NAME_LEN_MAX];
+    char lastTime[UDF_TIMER_LAST_PROC_TIME_LEN_MAX];
+    char usrFunc[UDF_TIMER_USR_FUNC_NAME_MAX];
+    uint32_t interval;
+    UdfTimerMode mode;
+    uint32_t maxProcTime;
     UdfTimerStatus status;
-    uint64_t       timeoutCnt;
+    uint64_t timeoutCnt;
 } UdfTimerMntInfo;
 
 /**

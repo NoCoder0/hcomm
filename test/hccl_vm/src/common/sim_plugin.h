@@ -17,17 +17,11 @@
 
 #include "sim_common_defs.h"
 
-enum class PLUGIN_MESSAGE_TYPE {
-    BROADCAST = 0,
-    COMMAND,
-    MESSAGE
-};
+enum class PLUGIN_MESSAGE_TYPE { BROADCAST = 0, COMMAND, MESSAGE };
 // 插件基础接口
 class HcclPlugin {
-
 public:
-
-    static const int MAX_SCAN_DEPTH;    // 最大扫描深度
+    static const int MAX_SCAN_DEPTH; // 最大扫描深度
     static const std::string PLUGIN_PATH;
     static const std::string MANIFEST_FILE;
 
@@ -56,15 +50,14 @@ public:
     HcclSim::HcclVmResult Start();
     HcclSim::HcclVmResult Stop();
     // 发送命令
-    HcclSim::HcclVmResult SendMessage(PLUGIN_MESSAGE_TYPE type, 
-                                        const std::string& action, 
-                                        const nlohmann::json& payload = nlohmann::json::object());
+    HcclSim::HcclVmResult SendMessage(
+        PLUGIN_MESSAGE_TYPE type, const std::string& action, const nlohmann::json& payload = nlohmann::json::object());
 
     int32_t GetPid() const { return m_pid; }
     int32_t GetStdinFd() const { return m_stdinFd; }
     bool IsRunning() const;
     std::string GetTag() const;
-    
+
 private:
     std::vector<char*> PrepareArgs(const std::string& command);
     std::string m_pluginPath;

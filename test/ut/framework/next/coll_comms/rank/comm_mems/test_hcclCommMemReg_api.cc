@@ -14,44 +14,41 @@
 
 class TestHcclCommMemReg : public BaseInit {
 public:
-    void SetUp() override {
+    void SetUp() override
+    {
         BaseInit::SetUp();
-        const char *fakeA5SocName = "Ascend950PR_958b";
+        const char* fakeA5SocName = "Ascend950PR_958b";
         MOCKER(aclrtGetSocName).stubs().will(returnValue(fakeA5SocName));
     }
-    void TearDown() override {
+    void TearDown() override
+    {
         BaseInit::TearDown();
         GlobalMockObject::verify();
     }
 };
 
 // 公共：构造一个已经 InitCollComm 成功的 hcclComm，供成功/失败用例复用
-static void BuildV2HcclComm(std::shared_ptr<hccl::hcclComm> &hcclCommPtr)
+static void BuildV2HcclComm(std::shared_ptr<hccl::hcclComm>& hcclCommPtr)
 {
-    MOCKER(hrtGetDeviceType)
-        .stubs()
-        .with(outBound(DevType::DEV_TYPE_950))
-        .will(returnValue(HCCL_SUCCESS));
-    MOCKER(IsSupportHCCLV2)
-        .stubs()
-        .will(returnValue(true));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(DevType::DEV_TYPE_950)).will(returnValue(HCCL_SUCCESS));
+    MOCKER(IsSupportHCCLV2).stubs().will(returnValue(true));
     setenv("HCCL_INDEPENDENT_OP", "1", 1);
 
-    void *commV2 = (void *)0x2000;
+    void* commV2 = (void*)0x2000;
     RankGraphStub rankGraphStub;
     std::shared_ptr<Hccl::RankGraph> rankGraphV2 = rankGraphStub.Create2PGraph();
     u32 rank = 1;
     HcclMem cclBuffer;
     cclBuffer.size = 1024;
     cclBuffer.type = HcclMemType::HCCL_MEM_TYPE_HOST;
-    cclBuffer.addr = (void *)0x1000;
+    cclBuffer.addr = (void*)0x1000;
     char commName[ROOTINFO_INDENTIFIER_MAX_LENGTH] = {};
     hcclCommPtr = make_shared<hccl::hcclComm>(1, 1, commName);
     HcclCommConfig config;
     UtInitHcclCommConfig(config);
-    config.hcclOpExpansionMode = 1;             // 非CCU模式，避免拉起CCU平台层
-    config.hcclRdmaTrafficClass = 0xFFFFFFFF;   // 不配置RDMA Traffic Class
-    config.hcclRdmaServiceLevel = 0xFFFFFFFF;   // 不配置RDMA Service Level
+    config.hcclOpExpansionMode = 1;           // 非CCU模式，避免拉起CCU平台层
+    config.hcclRdmaTrafficClass = 0xFFFFFFFF; // 不配置RDMA Traffic Class
+    config.hcclRdmaServiceLevel = 0xFFFFFFFF; // 不配置RDMA Service Level
     unsetenv("HCCL_DFS_CONFIG");
     HcclResult ret = hcclCommPtr->InitCollComm(commV2, rankGraphV2.get(), rank, cclBuffer, commName, &config);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -61,12 +58,12 @@ TEST_F(TestHcclCommMemReg, Ut_HcclCommMemReg_When_Normal_Return_HCCL_Success)
 {
     std::shared_ptr<hccl::hcclComm> hcclCommPtr;
     BuildV2HcclComm(hcclCommPtr);
-    void *comm = static_cast<HcclComm>(hcclCommPtr.get());
+    void* comm = static_cast<HcclComm>(hcclCommPtr.get());
 
-    const char *memTag = "userTagA";
+    const char* memTag = "userTagA";
     CommMem mem;
     mem.type = COMM_MEM_TYPE_HOST;
-    mem.addr = (void *)0x3000;
+    mem.addr = (void*)0x3000;
     mem.size = 1024;
     HcclMemHandle memHandle = nullptr;
 
@@ -76,11 +73,11 @@ TEST_F(TestHcclCommMemReg, Ut_HcclCommMemReg_When_Normal_Return_HCCL_Success)
 
 TEST_F(TestHcclCommMemReg, Ut_HcclCommMemReg_When_Comm_Nullptr_Return_HCCL_E_PTR)
 {
-    void *comm = nullptr;
-    const char *memTag = "userTagA";
+    void* comm = nullptr;
+    const char* memTag = "userTagA";
     CommMem mem;
     mem.type = COMM_MEM_TYPE_HOST;
-    mem.addr = (void *)0x3000;
+    mem.addr = (void*)0x3000;
     mem.size = 1024;
     HcclMemHandle memHandle = nullptr;
 
@@ -92,12 +89,12 @@ TEST_F(TestHcclCommMemReg, Ut_HcclCommMemReg_When_MemTag_Nullptr_Return_HCCL_E_P
 {
     std::shared_ptr<hccl::hcclComm> hcclCommPtr;
     BuildV2HcclComm(hcclCommPtr);
-    void *comm = static_cast<HcclComm>(hcclCommPtr.get());
+    void* comm = static_cast<HcclComm>(hcclCommPtr.get());
 
-    const char *memTag = nullptr;
+    const char* memTag = nullptr;
     CommMem mem;
     mem.type = COMM_MEM_TYPE_HOST;
-    mem.addr = (void *)0x3000;
+    mem.addr = (void*)0x3000;
     mem.size = 1024;
     HcclMemHandle memHandle = nullptr;
 
@@ -109,12 +106,12 @@ TEST_F(TestHcclCommMemReg, Ut_HcclCommMemReg_When_MemTag_Empty_Return_HCCL_E_PAR
 {
     std::shared_ptr<hccl::hcclComm> hcclCommPtr;
     BuildV2HcclComm(hcclCommPtr);
-    void *comm = static_cast<HcclComm>(hcclCommPtr.get());
+    void* comm = static_cast<HcclComm>(hcclCommPtr.get());
 
-    const char *memTag = "";
+    const char* memTag = "";
     CommMem mem;
     mem.type = COMM_MEM_TYPE_HOST;
-    mem.addr = (void *)0x3000;
+    mem.addr = (void*)0x3000;
     mem.size = 1024;
     HcclMemHandle memHandle = nullptr;
 
@@ -126,13 +123,13 @@ TEST_F(TestHcclCommMemReg, Ut_HcclCommMemReg_When_MemTag_TooLong_Return_HCCL_E_P
 {
     std::shared_ptr<hccl::hcclComm> hcclCommPtr;
     BuildV2HcclComm(hcclCommPtr);
-    void *comm = static_cast<HcclComm>(hcclCommPtr.get());
+    void* comm = static_cast<HcclComm>(hcclCommPtr.get());
 
     // HCCL_RES_TAG_MAX_LEN = 255，超过该长度应返回 HCCL_E_PARA
     std::string longTag(HCCL_RES_TAG_MAX_LEN + 1, 'a');
     CommMem mem;
     mem.type = COMM_MEM_TYPE_HOST;
-    mem.addr = (void *)0x3000;
+    mem.addr = (void*)0x3000;
     mem.size = 1024;
     HcclMemHandle memHandle = nullptr;
 
@@ -140,47 +137,47 @@ TEST_F(TestHcclCommMemReg, Ut_HcclCommMemReg_When_MemTag_TooLong_Return_HCCL_E_P
     EXPECT_EQ(ret, HCCL_E_PARA);
 }
 
-TEST_F(TestHcclCommMemReg, Ut_HcclCommMemReg_When_Mem_Nullptr_Return_HCCL_E_PARA)
+TEST_F(TestHcclCommMemReg, Ut_HcclCommMemReg_When_Mem_Nullptr_Return_HCCL_E_PTR)
 {
     std::shared_ptr<hccl::hcclComm> hcclCommPtr;
     BuildV2HcclComm(hcclCommPtr);
-    void *comm = static_cast<HcclComm>(hcclCommPtr.get());
+    void* comm = static_cast<HcclComm>(hcclCommPtr.get());
 
-    const char *memTag = "userTagA";
-    CommMem *mem = nullptr;
+    const char* memTag = "userTagA";
+    CommMem* mem = nullptr;
     HcclMemHandle memHandle = nullptr;
 
     HcclResult ret = HcclCommMemReg(comm, memTag, mem, &memHandle);
-    EXPECT_EQ(ret, HCCL_E_PARA);
+    EXPECT_EQ(ret, HCCL_E_PTR);
 }
 
-TEST_F(TestHcclCommMemReg, Ut_HcclCommMemReg_When_MemHandle_Nullptr_Return_HCCL_E_PARA)
+TEST_F(TestHcclCommMemReg, Ut_HcclCommMemReg_When_MemHandle_Nullptr_Return_HCCL_E_PTR)
 {
     std::shared_ptr<hccl::hcclComm> hcclCommPtr;
     BuildV2HcclComm(hcclCommPtr);
-    void *comm = static_cast<HcclComm>(hcclCommPtr.get());
+    void* comm = static_cast<HcclComm>(hcclCommPtr.get());
 
-    const char *memTag = "userTagA";
+    const char* memTag = "userTagA";
     CommMem mem;
     mem.type = COMM_MEM_TYPE_HOST;
-    mem.addr = (void *)0x3000;
+    mem.addr = (void*)0x3000;
     mem.size = 1024;
-    HcclMemHandle *memHandle = nullptr;
+    HcclMemHandle* memHandle = nullptr;
 
     HcclResult ret = HcclCommMemReg(comm, memTag, &mem, memHandle);
-    EXPECT_EQ(ret, HCCL_E_PARA);
+    EXPECT_EQ(ret, HCCL_E_PTR);
 }
 
 TEST_F(TestHcclCommMemReg, Ut_HcclCommMemReg_When_MemType_Invalid_Return_HCCL_E_PARA)
 {
     std::shared_ptr<hccl::hcclComm> hcclCommPtr;
     BuildV2HcclComm(hcclCommPtr);
-    void *comm = static_cast<HcclComm>(hcclCommPtr.get());
+    void* comm = static_cast<HcclComm>(hcclCommPtr.get());
 
-    const char *memTag = "userTagA";
+    const char* memTag = "userTagA";
     CommMem mem;
     mem.type = COMM_MEM_TYPE_INVALID;
-    mem.addr = (void *)0x3000;
+    mem.addr = (void*)0x3000;
     mem.size = 1024;
     HcclMemHandle memHandle = nullptr;
 
@@ -192,9 +189,9 @@ TEST_F(TestHcclCommMemReg, Ut_HcclCommMemReg_When_Addr_Nullptr_Return_HCCL_E_PTR
 {
     std::shared_ptr<hccl::hcclComm> hcclCommPtr;
     BuildV2HcclComm(hcclCommPtr);
-    void *comm = static_cast<HcclComm>(hcclCommPtr.get());
+    void* comm = static_cast<HcclComm>(hcclCommPtr.get());
 
-    const char *memTag = "userTagA";
+    const char* memTag = "userTagA";
     CommMem mem;
     mem.type = COMM_MEM_TYPE_HOST;
     mem.addr = nullptr;
@@ -209,12 +206,12 @@ TEST_F(TestHcclCommMemReg, Ut_HcclCommMemReg_When_Size_Zero_Return_HCCL_E_PARA)
 {
     std::shared_ptr<hccl::hcclComm> hcclCommPtr;
     BuildV2HcclComm(hcclCommPtr);
-    void *comm = static_cast<HcclComm>(hcclCommPtr.get());
+    void* comm = static_cast<HcclComm>(hcclCommPtr.get());
 
-    const char *memTag = "userTagA";
+    const char* memTag = "userTagA";
     CommMem mem;
     mem.type = COMM_MEM_TYPE_HOST;
-    mem.addr = (void *)0x3000;
+    mem.addr = (void*)0x3000;
     mem.size = 0;
     HcclMemHandle memHandle = nullptr;
 
@@ -226,12 +223,12 @@ TEST_F(TestHcclCommMemReg, Ut_HcclCommMemReg_When_MemType_Device_Return_HCCL_Suc
 {
     std::shared_ptr<hccl::hcclComm> hcclCommPtr;
     BuildV2HcclComm(hcclCommPtr);
-    void *comm = static_cast<HcclComm>(hcclCommPtr.get());
+    void* comm = static_cast<HcclComm>(hcclCommPtr.get());
 
-    const char *memTag = "userTagDevice";
+    const char* memTag = "userTagDevice";
     CommMem mem;
     mem.type = COMM_MEM_TYPE_DEVICE;
-    mem.addr = (void *)0x4000;
+    mem.addr = (void*)0x4000;
     mem.size = 2048;
     HcclMemHandle memHandle = nullptr;
 

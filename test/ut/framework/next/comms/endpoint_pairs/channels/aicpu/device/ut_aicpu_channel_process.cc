@@ -9,25 +9,36 @@
  */
 
 #include <cstdint>
+#include <memory>
+#include <mutex>
+#include <unordered_map>
+#include <vector>
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
 
 #include "adapter_hal.h"
+// transportMap_ 为 private 静态成员，观测「初始为空」需放开访问限制
+#define private public
 #include "aicpu/device/aicpu_channel_process.h"
+#undef private
 #include "aicpu/device/dev_aicpu_ts_channel_mgr.h"
 #include "channel_param.h"
 #include "dlhns_function.h"
 #include "externalinput_pub.h"
 #include "hccl_dispatcher_ctx.h"
 #include "workflow_pub.h"
+#include "binary_stream.h"
+#include "roce_host_loc_transport_lite_impl.h"
+#include "ub_transport_lite_impl.h"
+#include "aicpu_pack_data_helper.h"
 
 using namespace hccl;
 
 namespace {
 constexpr uint32_t kKindTsRoce = 2U;
 
-HcclResult StubHrtDrvGetLocalDevIDByHostDevID(u32 /*hostUdevid*/, u32 *localDevid)
+HcclResult StubHrtDrvGetLocalDevIDByHostDevID(u32 /*hostUdevid*/, u32* localDevid)
 {
     if (localDevid != nullptr) {
         *localDevid = 0U;
@@ -35,12 +46,26 @@ HcclResult StubHrtDrvGetLocalDevIDByHostDevID(u32 /*hostUdevid*/, u32 *localDevi
     return HCCL_SUCCESS;
 }
 
-HcclResult StubHrtDrvGetPlatformInfo(uint32_t *info)
+HcclResult StubHrtDrvGetPlatformInfo(uint32_t* info)
 {
     if (info != nullptr) {
         *info = 1U;
     }
     return HCCL_SUCCESS;
+}
+} // namespace
+
+namespace {
+// 分发 + 断言 handle 非空 + 销毁单个 channel：单 channel 成功用例的公共尾部。
+static void ParsePackDataAndDestroy(std::vector<char>& data)
+{
+    ChannelHandle handle = 0ULL;
+    EXPECT_EQ(AicpuChannelProcess::ParsePackData(data, handle), HCCL_SUCCESS);
+    EXPECT_NE(handle, 0ULL);
+    HcclChannelUrmaRes destroyRes{};
+    destroyRes.channelList = static_cast<void*>(&handle);
+    destroyRes.listNum = 1U;
+    EXPECT_EQ(AicpuChannelProcess::AicpuChannelDestroy(&destroyRes), HCCL_SUCCESS);
 }
 } // namespace
 
@@ -54,14 +79,20 @@ TEST_F(AicpuChannelProcessTest, Ut_InitHcommChannelRes_WhenCommParamNull_Returns
     EXPECT_EQ(AicpuChannelProcess::InitHcommChannelRes(nullptr), HCCL_E_PTR);
 }
 
+// transportMap_ 为全局静态表，本断言依赖同二进制内无前置用例泄漏条目
+TEST_F(AicpuChannelProcessTest, Ut_TransportMap_InitialEmpty)
+{
+    EXPECT_EQ(AicpuChannelProcess::transportMap_.size(), 0u);
+}
+
 TEST_F(AicpuChannelProcessTest, Ut_InitHcommChannelRes_WhenChannelListNull_Returns_PTR)
 {
     HcommChannelRes res{};
     res.listNum = 1U;
     res.channelList = nullptr;
-    res.channelDataListAddr = reinterpret_cast<void *>(0x1U);
-    res.channelDataSizeListAddr = reinterpret_cast<void *>(0x1U);
-    res.channelTypeListAddr = reinterpret_cast<void *>(0x1U);
+    res.channelDataListAddr = reinterpret_cast<void*>(0x1U);
+    res.channelDataSizeListAddr = reinterpret_cast<void*>(0x1U);
+    res.channelTypeListAddr = reinterpret_cast<void*>(0x1U);
     EXPECT_EQ(AicpuChannelProcess::InitHcommChannelRes(&res), HCCL_E_PTR);
 }
 
@@ -71,17 +102,17 @@ TEST_F(AicpuChannelProcessTest, Ut_InitHcommChannelRes_WhenUnsupportedKind_Retur
     blob.qpsPerConnection = 1U;
     blob.QpInfo[0].qpPtr = 0x7000ULL;
 
-    void *dataPtr = static_cast<void *>(&blob);
+    void* dataPtr = static_cast<void*>(&blob);
     u64 sizeVal = sizeof(blob);
     u32 typeVal = 999U;
     ChannelHandle outHandle = 0ULL;
 
     HcommChannelRes res{};
     res.listNum = 1U;
-    res.channelList = static_cast<void *>(&outHandle);
-    res.channelDataListAddr = static_cast<void *>(&dataPtr);
-    res.channelDataSizeListAddr = static_cast<void *>(&sizeVal);
-    res.channelTypeListAddr = static_cast<void *>(&typeVal);
+    res.channelList = static_cast<void*>(&outHandle);
+    res.channelDataListAddr = static_cast<void*>(&dataPtr);
+    res.channelDataSizeListAddr = static_cast<void*>(&sizeVal);
+    res.channelTypeListAddr = static_cast<void*>(&typeVal);
     res.deviceInfo.deviceLogicId = 0;
     res.deviceInfo.devicePhyId = 0U;
 
@@ -113,19 +144,19 @@ TEST_F(AicpuChannelProcessTest, Ut_InitHcommChannelRes_WhenValidTsRoceBlob_Retur
     blob.QpInfo[0].qpPtr = 0x7000ULL;
     blob.QpInfo[0].sqIndex = 1U;
     blob.QpInfo[0].dbIndex = 2U;
-    blob.localDataNotifyAddr=reinterpret_cast<void*>(static_cast<uintptr_t>(0x8000ULL));
-    blob.remoteNotifyAddr=reinterpret_cast<void*>(static_cast<uintptr_t>(0x9000ULL));
-    void *dataPtr = static_cast<void *>(&blob);
+    blob.localDataNotifyAddr = reinterpret_cast<void*>(static_cast<uintptr_t>(0x8000ULL));
+    blob.remoteNotifyAddr = reinterpret_cast<void*>(static_cast<uintptr_t>(0x9000ULL));
+    void* dataPtr = static_cast<void*>(&blob);
     u64 sizeVal = sizeof(blob);
     u32 typeVal = kKindTsRoce;
     ChannelHandle outHandle = 0ULL;
 
     HcommChannelRes res{};
     res.listNum = 1U;
-    res.channelList = static_cast<void *>(&outHandle);
-    res.channelDataListAddr = static_cast<void *>(&dataPtr);
-    res.channelDataSizeListAddr = static_cast<void *>(&sizeVal);
-    res.channelTypeListAddr = static_cast<void *>(&typeVal);
+    res.channelList = static_cast<void*>(&outHandle);
+    res.channelDataListAddr = static_cast<void*>(&dataPtr);
+    res.channelDataSizeListAddr = static_cast<void*>(&sizeVal);
+    res.channelTypeListAddr = static_cast<void*>(&typeVal);
     res.deviceInfo.deviceLogicId = 0;
     res.deviceInfo.devicePhyId = 0U;
     res.deviceInfo.deviceType = static_cast<u32>(DevType::DEV_TYPE_910_93);
@@ -133,4 +164,100 @@ TEST_F(AicpuChannelProcessTest, Ut_InitHcommChannelRes_WhenValidTsRoceBlob_Retur
     ASSERT_EQ(AicpuChannelProcess::InitHcommChannelRes(&res), HCCL_SUCCESS);
     ASSERT_NE(outHandle, 0ULL);
     EXPECT_TRUE(DevAicpuTsChannelMgr::Instance().DestroyChannel(outHandle));
+}
+
+// ROCE_V2 建链收编走 V2 后，device 侧构造 RoceHostLocTransportLiteImpl 的路径由 ParsePackData ROCE 分支承担。
+// 等价于被删 ut_dev_aicpu_ts_roce_channel_v2.cc 的 Ut_When_Construct_Expect_Success。
+// 此处只测「分发」：最小 uniqueId（type=ROCE + 各段计数为 0 + notifyValue 段），完整字段解析由
+// legacy ut_roce_host_loc_transport_lite_impl.cc 覆盖。
+TEST_F(AicpuChannelProcessTest, Ut_ParsePackData_WhenRoceBlob_Returns_SUCCESS_AndHandle)
+{
+    std::vector<char> data = BuildRocePackData();
+    ParsePackDataAndDestroy(data);
+}
+
+TEST_F(AicpuChannelProcessTest, Ut_ParsePackData_WhenInvalidTransportType_Returns_PARA)
+{
+    Hccl::BinaryStream inner;
+    u32 invalidType = 0xFFFFFFFFU;
+    inner << invalidType;
+    std::vector<char> transpUniqueId;
+    inner.Dump(transpUniqueId);
+
+    std::vector<char> data = BuildOuterPackData(transpUniqueId);
+
+    ChannelHandle handle = 0ULL;
+    EXPECT_EQ(AicpuChannelProcess::ParsePackData(data, handle), HCCL_E_PARA);
+}
+
+// P2P 收编走 V2 后，device 侧构造 P2PTransportLiteImpl 的路径由 ParsePackData P2P 分支承担。
+// P2P 的 Init 无 connNum/notifyValue 段，最小分发 blob 仅 type=P2P + notifyNum=0 + bufferNum=0 + 4 个空 vector。
+TEST_F(AicpuChannelProcessTest, Ut_ParsePackData_WhenP2pBlob_Returns_SUCCESS_AndHandle)
+{
+    std::vector<char> data = BuildP2pPackData();
+    ParsePackDataAndDestroy(data);
+}
+
+// device ParsePackData 的 UB 分支注册 needCacheTask / addWqeArray 两个回调
+// 两个 setter 是 inline 且无 getter，利用 -fno-access-control 直接断言私有成员由空置为非空。
+TEST_F(AicpuChannelProcessTest, Ut_ParsePackData_WhenUbBlob_RegistersCacheCallbacks)
+{
+    Hccl::BinaryStream inner;
+    inner << static_cast<u32>(Hccl::TransportType::UB);
+    inner << static_cast<u32>(0); // notifyNum
+    inner << static_cast<u32>(0); // bufferNum
+    inner << static_cast<u32>(0); // rmtbufferNum
+    inner << static_cast<u32>(0); // connNum
+    inner << std::vector<char>(); // locNotify
+    inner << std::vector<char>(); // rmtNotify
+    inner << std::vector<char>(); // locBuffer
+    inner << std::vector<char>(); // rmtBuffer
+    inner << std::vector<char>(); // drain
+    inner << std::vector<char>(); // conn
+    std::vector<char> transpUniqueId;
+    inner.Dump(transpUniqueId);
+
+    std::vector<char> data = BuildOuterPackData(transpUniqueId);
+
+    ChannelHandle handle = 0ULL;
+    EXPECT_EQ(AicpuChannelProcess::ParsePackData(data, handle), HCCL_SUCCESS);
+    ASSERT_NE(handle, 0ULL);
+
+    auto* ub = reinterpret_cast<Hccl::UbTransportLiteImpl*>(handle);
+    EXPECT_NE(ub->needCacheTaskCallback_, nullptr);
+    EXPECT_NE(ub->addWqeArrayCallback_, nullptr);
+
+    HcclChannelUrmaRes destroyRes{};
+    destroyRes.channelList = static_cast<void*>(&handle);
+    destroyRes.listNum = 1U;
+    EXPECT_EQ(AicpuChannelProcess::AicpuChannelDestroy(&destroyRes), HCCL_SUCCESS);
+}
+
+// 行 26 等价迁移：V3 单 unique_ptr transport_ 覆写 bug 已随 DevAicpuTsRoceChannelV2 删除而消除，
+// V2 用 type-erased transportMap_（handle→unique_ptr）存储，多 channel 各占一条、handle 互异、独立销毁互不影响。
+TEST_F(AicpuChannelProcessTest, Ut_ParsePackData_WhenTwoRoceBlobs_IndependentHandles_NoDangling)
+{
+    std::vector<char> data = BuildRocePackData();
+
+    ChannelHandle handle1 = 0ULL;
+    ChannelHandle handle2 = 0ULL;
+    ASSERT_EQ(AicpuChannelProcess::ParsePackData(data, handle1), HCCL_SUCCESS);
+    ASSERT_EQ(AicpuChannelProcess::ParsePackData(data, handle2), HCCL_SUCCESS);
+    EXPECT_NE(handle1, 0ULL);
+    EXPECT_NE(handle2, 0ULL);
+    EXPECT_NE(handle1, handle2);
+    EXPECT_EQ(AicpuChannelProcess::transportMap_.size(), static_cast<size_t>(2));
+
+    // 独立销毁：删 handle1 后剩 1 条，handle2 仍存活
+    HcclChannelUrmaRes destroyRes1{};
+    destroyRes1.channelList = static_cast<void*>(&handle1);
+    destroyRes1.listNum = 1U;
+    EXPECT_EQ(AicpuChannelProcess::AicpuChannelDestroy(&destroyRes1), HCCL_SUCCESS);
+    EXPECT_EQ(AicpuChannelProcess::transportMap_.size(), static_cast<size_t>(1));
+
+    HcclChannelUrmaRes destroyRes2{};
+    destroyRes2.channelList = static_cast<void*>(&handle2);
+    destroyRes2.listNum = 1U;
+    EXPECT_EQ(AicpuChannelProcess::AicpuChannelDestroy(&destroyRes2), HCCL_SUCCESS);
+    EXPECT_EQ(AicpuChannelProcess::transportMap_.size(), static_cast<size_t>(0));
 }

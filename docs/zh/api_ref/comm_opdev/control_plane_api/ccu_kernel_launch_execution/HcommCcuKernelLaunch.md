@@ -3,14 +3,20 @@
 ## 产品支持情况
 
 <!-- npu="950" id1 -->
-- Ascend 950PR/Ascend 950DT：支持
+- Ascend 950PR&950DT系列产品：支持
 <!-- end id1 -->
 <!-- npu="A3" id2 -->
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：不支持
+- Atlas A3系列产品：不支持
 <!-- end id2 -->
 <!-- npu="910b" id3 -->
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：不支持
+- Atlas A2系列产品：不支持
 <!-- end id3 -->
+<!-- npu="910" id4 -->
+- Atlas训练系列产品：不支持
+<!-- end id4 -->
+<!-- npu="310p" id5 -->
+- Atlas推理系列产品：不支持
+<!-- end id5 -->
 
 ## 功能说明
 
@@ -18,11 +24,8 @@
 
 ## 函数原型
 
-//ccu_launch.h
-
 ```c
-CcuResult HcommCcuKernelLaunch(ThreadHandle threadHandle,
-    CcuKernelHandle kernelHandle, const void *taskArgs, uint32_t argNum);
+CcuResult HcommCcuKernelLaunch(ThreadHandle threadHandle, CcuKernelHandle kernelHandle, const void *taskArgs, uint32_t argNum)
 ```
 
 ## 参数说明
@@ -50,7 +53,7 @@ CcuResult HcommCcuKernelLaunch(ThreadHandle threadHandle,
 - 必须在[HcommCcuKernelRegisterEnd](HcommCcuKernelRegisterEnd.md)之后调用。
 - `argNum`的单位是`uint64_t`元素个数，不是字节数。传入字节数会导致`CCU_E_INTERNAL`错误。
 - 当`taskArgs`参数较多时，框架会自动分批下发，无需用户干预。
-- 本接口只能在主机侧调用，不能在Kernel函数体内调用。
+- 本接口只能在Host侧调用，不能在Kernel函数体内调用。
 
 ## 调用示例
 

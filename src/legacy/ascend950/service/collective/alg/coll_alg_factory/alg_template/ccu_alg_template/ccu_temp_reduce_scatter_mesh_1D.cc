@@ -21,27 +21,25 @@
 
 namespace Hccl {
 
-static CcuInstRegister<CcuContextReduceScatterMesh1D> g_registrarReduceScatter(
-    CcuInstType::CCU_REDUCE_SCATTER_MESH_1D_DIRECT);
+static CcuInstRegister<CcuContextReduceScatterMesh1D>
+    g_registrarReduceScatter(CcuInstType::CCU_REDUCE_SCATTER_MESH_1D_DIRECT);
 
-CcuTempReduceScatterMesh1D::CcuTempReduceScatterMesh1D(const RankId virtualRank, const u32 tempRankSize,
-                                   const std::vector<std::vector<RankId>> &tempVTopo,
-                                   const std::map<RankId, u32>            &tempVirtRankMap)
+CcuTempReduceScatterMesh1D::CcuTempReduceScatterMesh1D(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
     : CcuAlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap)
-{
-}
+{}
 
-CcuTempReduceScatterMesh1D::~CcuTempReduceScatterMesh1D()
-{
-}
+CcuTempReduceScatterMesh1D::~CcuTempReduceScatterMesh1D() {}
 
-void CcuTempReduceScatterMesh1D::InitReduceInfo(const ReduceOp &reduceOp, const DataType &dataType) {
+void CcuTempReduceScatterMesh1D::InitReduceInfo(const ReduceOp& reduceOp, const DataType& dataType)
+{
     reduceOp_ = reduceOp;
     dataType_ = dataType;
 }
 
-HcclResult CcuTempReduceScatterMesh1D::CalcSliceInfo(const AllignInfo &allignInfo, const u64 dataSize,
-                                            RankSliceInfo &sliceInfoVec)
+HcclResult
+CcuTempReduceScatterMesh1D::CalcSliceInfo(const AllignInfo& allignInfo, const u64 dataSize, RankSliceInfo& sliceInfoVec)
 {
     std::vector<SliceInfo> tmp(tempVTopo_.size());
     sliceInfoVec.resize(tempRankSize_, tmp);
@@ -49,7 +47,7 @@ HcclResult CcuTempReduceScatterMesh1D::CalcSliceInfo(const AllignInfo &allignInf
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CcuTempReduceScatterMesh1D::CalcRes(AlgTempResReq &tempResReq)
+HcclResult CcuTempReduceScatterMesh1D::CalcRes(AlgTempResReq& tempResReq)
 {
     tempResReq.queNum = 1;
     tempResReq.streamNum = tempResReq.queNum;
@@ -58,10 +56,7 @@ HcclResult CcuTempReduceScatterMesh1D::CalcRes(AlgTempResReq &tempResReq)
     return HcclResult::HCCL_SUCCESS;
 }
 
-uint64_t CcuTempReduceScatterMesh1D::GetMaxSliceSize() const
-{
-    return UB_MAX_DATA_SIZE;
-}
+uint64_t CcuTempReduceScatterMesh1D::GetMaxSliceSize() const { return UB_MAX_DATA_SIZE; }
 
 /* CCU数据类型校验规则
  * Reduce算子：
@@ -69,7 +64,7 @@ uint64_t CcuTempReduceScatterMesh1D::GetMaxSliceSize() const
  *      低精度模式，当dataType!=outputDataType时，dataType可选范围HIF8、E4M3、E5M2、INT8;outputDataType可选范围FP32、FP16、BF16;
  * 非Reduce算子：任意数据类型，dataType==outputDataType即可。
  */
-void CcuTempReduceScatterMesh1D::CheckCcuDataType() const
+HcclResult CcuTempReduceScatterMesh1D::CheckCcuDataType() const
 {
     if (op_.opType == OpType::REDUCESCATTER && op_.reduceOp == ReduceOp::SUM) {
         if (op_.dataType == op_.outputDataType) {
@@ -79,41 +74,48 @@ void CcuTempReduceScatterMesh1D::CheckCcuDataType() const
                 = {DataType::FP32,  DataType::FP16,  DataType::BFP16, DataType::UINT8,
                    DataType::UINT8, DataType::INT16, DataType::INT32};
             if (highPrecisionSupportedInputDataType.count(op_.dataType) == 0) {
-                THROW<CcuApiException>(StringFormat("Unsupported DataType [%s] For OpType [%s].",
-                    op_.dataType.Describe().c_str(), op_.opType.Describe().c_str()));
+                HCCL_ERROR(
+                    "Unsupported DataType [%s] For OpType [%s].", op_.dataType.Describe().c_str(),
+                    op_.opType.Describe().c_str());
+                return HcclResult::HCCL_E_INTERNAL;
             }
         } else {
             // reduce算子的低精度模式
             HCCL_INFO("LOW PRECISION");
             set<DataType> lowPrecisionSupportedInputDataType
-                = {DataType::HIF8,  DataType::FP8E4M3,  DataType::FP8E5M2, DataType::INT8};
-            set<DataType> lowPrecisionSupportedOutputDataType
-                = {DataType::FP32,  DataType::FP16,  DataType::BFP16};
+                = {DataType::HIF8, DataType::FP8E4M3, DataType::FP8E5M2, DataType::INT8};
+            set<DataType> lowPrecisionSupportedOutputDataType = {DataType::FP32, DataType::FP16, DataType::BFP16};
             if (lowPrecisionSupportedInputDataType.count(op_.dataType) == 0) {
-                THROW<CcuApiException>(StringFormat("Unsupported Input DataType [%s] For OpType [%s].",
-                    op_.dataType.Describe().c_str(), op_.opType.Describe().c_str()));
+                HCCL_ERROR(
+                    "Unsupported Input DataType [%s] For OpType [%s].", op_.dataType.Describe().c_str(),
+                    op_.opType.Describe().c_str());
+                return HcclResult::HCCL_E_INTERNAL;
             }
             if (lowPrecisionSupportedOutputDataType.count(op_.outputDataType) == 0) {
-                THROW<CcuApiException>(StringFormat("Unsupported Output DataType [%s] For OpType [%s].",
-                    op_.outputDataType.Describe().c_str(), op_.opType.Describe().c_str()));
+                HCCL_ERROR(
+                    "Unsupported Output DataType [%s] For OpType [%s].", op_.outputDataType.Describe().c_str(),
+                    op_.opType.Describe().c_str());
+                return HcclResult::HCCL_E_INTERNAL;
             }
         }
     } else {
         if (op_.dataType != op_.outputDataType) {
-            THROW<CcuApiException>(StringFormat("Inconsistent DataType[%s]--OutputDataType[%s] for OpType[%s].",
-                op_.dataType.Describe().c_str(), op_.outputDataType.Describe().c_str(), op_.opType.Describe().c_str()));
+            HCCL_ERROR(
+                "Inconsistent DataType[%s]--OutputDataType[%s] for OpType[%s].", op_.dataType.Describe().c_str(),
+                op_.outputDataType.Describe().c_str(), op_.opType.Describe().c_str());
+            return HcclResult::HCCL_E_INTERNAL;
         }
     }
     HCCL_INFO("CheckCcuDataType Success!");
+    return HcclResult::HCCL_SUCCESS;
 }
 
-
-HcclResult CcuTempReduceScatterMesh1D::Run(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec,
-                                          const BuffInfo &buffInfo, const ResLinks &tempLinks,
-                                          std::vector<InsQuePtr> &tempInsQues)
+HcclResult CcuTempReduceScatterMesh1D::Run(
+    const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, const BuffInfo& buffInfo, const ResLinks& tempLinks,
+    std::vector<InsQuePtr>& tempInsQues)
 {
-    CHK_PRT_RET(tempInsQues.empty(),
-        HCCL_ERROR("[CcuTempReduceScatterMesh1D] empty queue"), HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        tempInsQues.empty(), HCCL_ERROR("[CcuTempReduceScatterMesh1D] empty queue"), HcclResult::HCCL_E_INTERNAL);
     CHK_PTR_NULL(tempInsQues[0]);
     opMode_ = tempFuncs.opMode;
     buffInfo_ = buffInfo;
@@ -128,10 +130,12 @@ HcclResult CcuTempReduceScatterMesh1D::Run(const TempFuncs &tempFuncs, const Ran
         op_.outputDataType = op_.dataType;
     }
 
-    uint64_t expandingtimes = DataTypeSizeGet(op_.outputDataType) / DataTypeSizeGet(op_.dataType); // 膨胀的倍数是输出类型/输入类型
-    HCCL_INFO("[CcuTempReduceScatterMesh1D] dataType outputDatatype %s %s", op_.dataType.Describe().c_str(),
-               op_.outputDataType.Describe().c_str());
-    CheckCcuDataType();
+    uint64_t expandingtimes
+        = DataTypeSizeGet(op_.outputDataType) / DataTypeSizeGet(op_.dataType); // 膨胀的倍数是输出类型/输入类型
+    HCCL_INFO(
+        "[CcuTempReduceScatterMesh1D] dataType outputDatatype %s %s", op_.dataType.Describe().c_str(),
+        op_.outputDataType.Describe().c_str());
+    CHK_RET(CheckCcuDataType());
     if (opMode_ == OpMode::OPBASE) {
         if (tempFuncs.isForepart) {
             inputAddr = BufferTypeToAddr(tempFuncs.usrData.usrInSlices[myRank_].GetType());
@@ -144,27 +148,30 @@ HcclResult CcuTempReduceScatterMesh1D::Run(const TempFuncs &tempFuncs, const Ran
         }
         if (tempFuncs.isBottom) {
             outputAddr = BufferTypeToAddr(tempFuncs.usrData.usrOutSlices[0].GetType())
-                + (tempFuncs.usrData.usrOutSlices[0].GetOffset()) * expandingtimes;
+                         + (tempFuncs.usrData.usrOutSlices[0].GetOffset()) * expandingtimes;
         } else {
             outputAddr = BufferTypeToAddr(buffInfo_.outBuffType) + buffInfo_.outBuffBaseOff * expandingtimes;
         }
     } else {
         // 图模式没有tempFuncs.usrData，直接通过buffInfo_来获取输入输出地址
-        inputAddr  = BufferTypeToAddr(buffInfo_.inBuffType) + buffInfo_.inBuffBaseOff;
-        outputAddr = BufferTypeToAddr(buffInfo_.outBuffType) + buffInfo_.outBuffBaseOff + (tempFuncs.usrData.usrOutSlices[0].GetOffset());
-        offset     = tempFuncs.usrData.usrInSlices[myRank_].GetOffset();
+        inputAddr = BufferTypeToAddr(buffInfo_.inBuffType) + buffInfo_.inBuffBaseOff;
+        outputAddr = BufferTypeToAddr(buffInfo_.outBuffType) + buffInfo_.outBuffBaseOff
+                     + (tempFuncs.usrData.usrOutSlices[0].GetOffset());
+        offset = tempFuncs.usrData.usrInSlices[myRank_].GetOffset();
     }
-    uint64_t sliceSize = sliceInfoVec[myRank_][0].size;  // 获取本rank需要处理的数据量
+    uint64_t sliceSize = sliceInfoVec[myRank_][0].size; // 获取本rank需要处理的数据量
     uint64_t token;
     CHK_RET(GetToken(op_, token));
-    ccuInsReduceScatterMesh1D.Init(static_cast<uint32_t>(myRank_), inputAddr, outputAddr, sliceSize, offset, token, op_, tempVTopo_);
-    HCCL_INFO("[CcuTempReduceScatterMesh1D] Run Init: myRank_[%d], dimSize[%llu], inputAddr[%llu],"\
+    ccuInsReduceScatterMesh1D.Init(
+        static_cast<uint32_t>(myRank_), inputAddr, outputAddr, sliceSize, offset, token, op_, tempVTopo_);
+    HCCL_INFO(
+        "[CcuTempReduceScatterMesh1D] Run Init: myRank_[%d], dimSize[%llu], inputAddr[%llu],"
         "outputAddr[%llu], sliceSize[%llu], offset[%llu]",
         myRank_, dimSize[0], inputAddr, outputAddr, sliceSize, offset);
 
     std::vector<LinkData> links;
 
-    for (auto &pair : tempLinks) {
+    for (auto& pair : tempLinks) {
         if (pair.second.empty()) {
             continue;
         }
@@ -174,7 +181,7 @@ HcclResult CcuTempReduceScatterMesh1D::Run(const TempFuncs &tempFuncs, const Ran
     ccuInsReduceScatterMesh1D.SetLinks(links);
     RankGroup rankGroup;
 
-    for (auto &peer : tempVTopo_[0]) {
+    for (auto& peer : tempVTopo_[0]) {
         rankGroup.AddRank(peer);
     }
     u32 cntCkeNum = 3;
@@ -186,8 +193,8 @@ HcclResult CcuTempReduceScatterMesh1D::Run(const TempFuncs &tempFuncs, const Ran
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CcuTempReduceScatterMesh1D::GenExtIns(const RankGraph *rankGraph, const TemplateInfo &tmpInfo,
-        const std::vector<InsQuePtr> &tempInsQues) const
+HcclResult CcuTempReduceScatterMesh1D::GenExtIns(
+    const RankGraph* rankGraph, const TemplateInfo& tmpInfo, const std::vector<InsQuePtr>& tempInsQues) const
 {
     (void)rankGraph;
     (void)tmpInfo;

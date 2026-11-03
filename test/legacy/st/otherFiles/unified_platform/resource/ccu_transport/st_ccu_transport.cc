@@ -35,10 +35,7 @@ using namespace Hccl;
 
 class CcuTransportTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CcuTransportTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CcuTransportTest tests set up." << std::endl; }
 
     static void TearDownTestCase()
     {
@@ -59,8 +56,8 @@ protected:
     }
 };
 
-HcclResult AllocCcuResStub(
-    const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo> &resInfos)
+HcclResult
+AllocCcuResStub(const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo>& resInfos)
 {
     ResInfo resInfo(0, num);
     resInfos.emplace_back(resInfo);
@@ -68,7 +65,7 @@ HcclResult AllocCcuResStub(
 }
 
 HcclResult AllocCcuResStubUnavail(
-    const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo> &resInfos)
+    const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo>& resInfos)
 {
     ResInfo resInfo(0, num);
     resInfos.emplace_back(resInfo);
@@ -80,8 +77,8 @@ constexpr uint32_t DEFAULT_CCU_RESOURCE_NUM = 16; // 根据业务代码调整
 using TransportTuple = tuple<unique_ptr<CcuTransport>, unique_ptr<Socket>, vector<unique_ptr<CcuJetty>>>;
 TransportTuple MockMakeCcuTransport(bool allocCkeUnavailFlag, bool allocXnUnavailFlag)
 {
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().with(mockcpp::any()).will(returnValue(MAX_MODULE_DEVICE_NUM - 1));
-    
+    MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().with(mockcpp::any()).will(returnValue(MAX_MODULE_DEVICE_NUM - 1));
+
     HcclResult OkResult = HcclResult::HCCL_SUCCESS;
     HcclResult AgainResult = HcclResult::HCCL_E_AGAIN;
     if (allocCkeUnavailFlag) {
@@ -96,7 +93,7 @@ TransportTuple MockMakeCcuTransport(bool allocCkeUnavailFlag, bool allocXnUnavai
     }
     MOCKER(CcuDeviceManager::ReleaseCke).stubs().will(returnValue(OkResult));
     MOCKER(CcuDeviceManager::ReleaseXn).stubs().will(returnValue(OkResult));
-    
+
     MOCKER(CcuDeviceManager::GetCcuResourceSpaceBufInfo).stubs().will(returnValue(OkResult));
     MOCKER(CcuDeviceManager::GetCcuResourceSpaceTokenInfo).stubs().will(returnValue(OkResult));
     MOCKER(CcuDeviceManager::ConfigChannel).stubs().will(returnValue(OkResult));
@@ -106,7 +103,9 @@ TransportTuple MockMakeCcuTransport(bool allocCkeUnavailFlag, bool allocXnUnavai
     MOCKER_CPP(&RdmaHandleManager::GetDieAndFuncId).stubs().will(returnValue(fakeDieFuncPair));
     pair<TokenIdHandle, uint32_t> fakeTokenInfo = make_pair(0x12345678, 1);
     MOCKER_CPP(&RdmaHandleManager::GetTokenIdInfo).stubs().will(returnValue(fakeTokenInfo));
-    MOCKER_CPP(&TpManager::GetTpInfo).stubs().will(returnValue(HcclResult::HCCL_E_AGAIN))
+    MOCKER_CPP(&TpManager::GetTpInfo)
+        .stubs()
+        .will(returnValue(HcclResult::HCCL_E_AGAIN))
         .then(returnValue(HcclResult::HCCL_SUCCESS));
 
     constexpr uint64_t fakeMemAddr = 0x12345678;
@@ -121,9 +120,9 @@ TransportTuple MockMakeCcuTransport(bool allocCkeUnavailFlag, bool allocXnUnavai
     CcuChannelInfo channelInfo;
     channelInfo.channelId = 1;
     channelInfo.dieId = 1;
-    
+
     vector<unique_ptr<CcuJetty>> ccuJettys;
-    vector<CcuJetty *> ccuJettyPtrs;
+    vector<CcuJetty*> ccuJettyPtrs;
     for (uint32_t i = 0; i < 2; i++) {
         CcuJettyInfo jettyInfo;
         jettyInfo.jettyCtxId = 1 + i;
@@ -138,22 +137,19 @@ TransportTuple MockMakeCcuTransport(bool allocCkeUnavailFlag, bool allocXnUnavai
         ccuJettys.emplace_back(std::move(ccuJetty));
     }
 
-    unique_ptr<Socket> socket = make_unique<Socket>(nullptr, locAddr, 65001, rmtAddr,
-        string(), SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    unique_ptr<Socket> socket
+        = make_unique<Socket>(nullptr, locAddr, 65001, rmtAddr, string(), SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
     // 模拟CTP即可
-    unique_ptr<CcuConnection> connection = make_unique<CcuCtpConnection>(
-        locAddr, rmtAddr, channelInfo, ccuJettyPtrs);
+    unique_ptr<CcuConnection> connection = make_unique<CcuCtpConnection>(locAddr, rmtAddr, channelInfo, ccuJettyPtrs);
     EXPECT_EQ(connection->Init(), HcclResult::HCCL_SUCCESS);
     EXPECT_EQ(connection->status, CcuConnStatus::INIT);
     CcuTransport::CclBufferInfo cclBuffer;
     cclBuffer.addr = fakeMemAddr;
     cclBuffer.size = fakeSqBufSize;
 
-    unique_ptr<CcuTransport> transport = make_unique<CcuTransport>(
-        socket.get(), std::move(connection), cclBuffer);
+    unique_ptr<CcuTransport> transport = make_unique<CcuTransport>(socket.get(), std::move(connection), cclBuffer);
     return TransportTuple{std::move(transport), std::move(socket), std::move(ccuJettys)};
 }
-
 
 TEST_F(CcuTransportTest, St_GetStatus_When_InterfaceOk_Expect_Return_Ok)
 {
@@ -163,7 +159,7 @@ TEST_F(CcuTransportTest, St_GetStatus_When_InterfaceOk_Expect_Return_Ok)
     EXPECT_EQ(transport->transStatus, CcuTransport::TransStatus::INIT);
     EXPECT_EQ(transport->locRes.ckes.size(), DEFAULT_CCU_RESOURCE_NUM);
     EXPECT_EQ(transport->locRes.xns.size(), DEFAULT_CCU_RESOURCE_NUM);
-    
+
     const vector<uint32_t> cntCkes(DEFAULT_CCU_RESOURCE_NUM);
     transport->SetCntCke(cntCkes);
 
@@ -270,7 +266,7 @@ TEST_F(CcuTransportTest, St_GetStatusError_When_HandshakeMsgInvalid_Expect_Retur
     EXPECT_EQ(transport->transStatus, CcuTransport::TransStatus::INIT);
     EXPECT_EQ(transport->locRes.ckes.size(), DEFAULT_CCU_RESOURCE_NUM);
     EXPECT_EQ(transport->locRes.xns.size(), DEFAULT_CCU_RESOURCE_NUM);
-    
+
     const vector<uint32_t> cntCkes(DEFAULT_CCU_RESOURCE_NUM);
     transport->SetCntCke(cntCkes);
 

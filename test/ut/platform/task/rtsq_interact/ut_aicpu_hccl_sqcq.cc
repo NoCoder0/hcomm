@@ -2,7 +2,7 @@
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for the details. You may not use this file except in compliance with the License.
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
@@ -24,17 +24,17 @@ drvError_t g_halSqCqConfigResult = DRV_ERROR_NONE;
 drvError_t g_halCqReportRecvResult = DRV_ERROR_NONE;
 drvError_t g_halTsdrvCtlResult = DRV_ERROR_NONE;
 uint32_t g_queryAbortStatus = 0;
-}
+} // namespace
 
 extern "C" {
-drvError_t halCqReportRecv(uint32_t devId, struct halReportRecvInfo *info);
-drvError_t halSqCqQuery(uint32_t devId, struct halSqCqQueryInfo *info);
-drvError_t halSqCqConfig(uint32_t devId, struct halSqCqConfigInfo *info);
-drvError_t halTsdrvCtl(uint32_t devId, int cmd, void *param, size_t paramSize, void *out, size_t *outSize);
-drvError_t halEschedSubmitEvent(uint32_t devId, struct event_summary *event);
+drvError_t halCqReportRecv(uint32_t devId, struct halReportRecvInfo* info);
+drvError_t halSqCqQuery(uint32_t devId, struct halSqCqQueryInfo* info);
+drvError_t halSqCqConfig(uint32_t devId, struct halSqCqConfigInfo* info);
+drvError_t halTsdrvCtl(uint32_t devId, int cmd, void* param, size_t paramSize, void* out, size_t* outSize);
+drvError_t halEschedSubmitEvent(uint32_t devId, struct event_summary* event);
 }
 
-drvError_t halSqCqQuery(uint32_t devId, struct halSqCqQueryInfo *info)
+drvError_t halSqCqQuery(uint32_t devId, struct halSqCqQueryInfo* info)
 {
     (void)devId;
     if (info->prop == DRV_SQCQ_PROP_SQ_BASE) {
@@ -48,21 +48,21 @@ drvError_t halSqCqQuery(uint32_t devId, struct halSqCqQueryInfo *info)
     return g_halSqCqQueryResult;
 }
 
-drvError_t halSqCqConfig(uint32_t devId, struct halSqCqConfigInfo *info)
+drvError_t halSqCqConfig(uint32_t devId, struct halSqCqConfigInfo* info)
 {
     (void)devId;
     (void)info;
     return g_halSqCqConfigResult;
 }
 
-drvError_t halCqReportRecv(uint32_t devId, struct halReportRecvInfo *info)
+drvError_t halCqReportRecv(uint32_t devId, struct halReportRecvInfo* info)
 {
     (void)devId;
     (void)info;
     return g_halCqReportRecvResult;
 }
 
-drvError_t halTsdrvCtl(uint32_t devId, int cmd, void *param, size_t paramSize, void *out, size_t *outSize)
+drvError_t halTsdrvCtl(uint32_t devId, int cmd, void* param, size_t paramSize, void* out, size_t* outSize)
 {
     (void)devId;
     (void)param;
@@ -74,7 +74,7 @@ drvError_t halTsdrvCtl(uint32_t devId, int cmd, void *param, size_t paramSize, v
     return g_halTsdrvCtlResult;
 }
 
-drvError_t halEschedSubmitEvent(uint32_t devId, struct event_summary *event)
+drvError_t halEschedSubmitEvent(uint32_t devId, struct event_summary* event)
 {
     (void)devId;
     (void)event;
@@ -83,14 +83,8 @@ drvError_t halEschedSubmitEvent(uint32_t devId, struct event_summary *event)
 
 class RtsqInteract_Sqcq_UT : public testing::Test {
 protected:
-static void SetUpTestCase()
-    {
-        std::cout << "RtsqInteract_Sqcq_UT SetUP" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "RtsqInteract_Sqcq_UT TearDown" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "RtsqInteract_Sqcq_UT SetUP" << std::endl; }
+    static void TearDownTestCase() { std::cout << "RtsqInteract_Sqcq_UT TearDown" << std::endl; }
     virtual void SetUp()
     {
         g_halSqCqQueryResult = DRV_ERROR_NONE;

@@ -118,7 +118,6 @@ const std::string RankTable2pClos = R"(
 }
 )";
 
-
 const std::string RANK_TABLE_4P_REPLACE_RANK1 = R"(
 {
     "version": "2.0",

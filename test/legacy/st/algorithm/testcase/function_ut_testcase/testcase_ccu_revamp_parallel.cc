@@ -4,7 +4,7 @@
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -29,24 +29,15 @@
 using namespace hccl;
 using namespace checker;
 
-namespace checker{
+namespace checker {
 
 class CcuRevampParallelTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CcuRevampParallelTest set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CcuRevampParallelTest set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CcuRevampParallelTest tear down" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CcuRevampParallelTest tear down" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "CcuRevampParallelTest set up" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "CcuRevampParallelTest set up" << std::endl; }
 
     virtual void TearDown()
     {
@@ -57,7 +48,6 @@ protected:
 
 class GenAsyncStandardGraph : public GenCcuTaskNodeGraphBase {
 public:
-    
     // ccuHead  --->  locCopy1  --->  locPost1 --->  locWait1  ---> ccuEnd
     TaskNodePtr GenGraph1()
     {
@@ -67,13 +57,13 @@ public:
         auto ccuHead = CreateCcuHeadNode(rankId, queueId);
         LinkNode(head, ccuHead);
 
-        TaskStubCcuGraph *curCcuTask = dynamic_cast<TaskStubCcuGraph *>(ccuHead->task);
+        TaskStubCcuGraph* curCcuTask = dynamic_cast<TaskStubCcuGraph*>(ccuHead->task);
         Init(curCcuTask, 1, 1);
 
         DataSlice srcSlice1(BufferType::INPUT_CCL, 0, 100);
         DataSlice dstSlice1(BufferType::OUTPUT_CCL, 0, 100);
         AddCcuLocalCopy(rankId, queueId, srcSlice1, dstSlice1, curCcuTask);
-        
+
         uint32_t topicId2 = 1;
         auto locPost2 = AddCcuLocalPost(rankId, queueId, topicId2, curCcuTask);
         auto locWait2 = AddCcuLocalWait(rankId, queueId, topicId2, curCcuTask);
@@ -98,13 +88,13 @@ public:
         auto ccuHead = CreateCcuHeadNode(rankId, queueId);
         LinkNode(head, ccuHead);
 
-        TaskStubCcuGraph *curCcuTask = dynamic_cast<TaskStubCcuGraph *>(ccuHead->task);
+        TaskStubCcuGraph* curCcuTask = dynamic_cast<TaskStubCcuGraph*>(ccuHead->task);
         Init(curCcuTask, 1, 1);
 
         DataSlice srcSlice1(BufferType::INPUT_CCL, 0, 100);
         DataSlice dstSlice1(BufferType::OUTPUT_CCL, 0, 100);
         AddCcuLocalCopy(rankId, queueId, srcSlice1, dstSlice1, curCcuTask);
-        
+
         uint32_t topicId2 = 1;
         auto locPost2 = AddCcuLocalPost(rankId, queueId, topicId2, curCcuTask);
 
@@ -139,13 +129,13 @@ public:
         auto ccuHead = CreateCcuHeadNode(rankId, queueId);
         LinkNode(head, ccuHead);
 
-        TaskStubCcuGraph *curCcuTask = dynamic_cast<TaskStubCcuGraph *>(ccuHead->task);
+        TaskStubCcuGraph* curCcuTask = dynamic_cast<TaskStubCcuGraph*>(ccuHead->task);
         Init(curCcuTask, 1, 1);
 
         DataSlice srcSlice1(BufferType::INPUT_CCL, 0, 100);
         DataSlice dstSlice1(BufferType::OUTPUT_CCL, 0, 100);
         AddCcuLocalCopy(rankId, queueId, srcSlice1, dstSlice1, curCcuTask);
-        
+
         uint32_t topicId2 = 1;
         auto locPost2 = AddCcuLocalPost(rankId, queueId, topicId2, curCcuTask);
         auto locWait2 = AddCcuLocalWait(rankId, queueId, topicId2, curCcuTask);
@@ -176,7 +166,7 @@ public:
         auto ccuHead = CreateCcuHeadNode(rankId, queueId);
         LinkNode(head, ccuHead);
 
-        TaskStubCcuGraph *curCcuTask = dynamic_cast<TaskStubCcuGraph *>(ccuHead->task);
+        TaskStubCcuGraph* curCcuTask = dynamic_cast<TaskStubCcuGraph*>(ccuHead->task);
         Init(curCcuTask, 1, 1);
 
         DataSlice srcSlice1(BufferType::INPUT_CCL, 0, 100);
@@ -207,14 +197,14 @@ TEST_F(CcuRevampParallelTest, ccu_mem_conflict_for_single_async_node)
     GenAsyncStandardGraph genGraph;
     auto head = genGraph.GenGraph1();
 
-    std::cout<<"ccu_mem_conflict_for_single_async_node: CCU Graph before parallel revamp"<<std::endl;
+    std::cout << "ccu_mem_conflict_for_single_async_node: CCU Graph before parallel revamp" << std::endl;
 
     // CCU子图并行化改造
     GraphRevampParallel graphRevampParallel;
     auto ret = graphRevampParallel.Revamp(head);
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 
-    std::cout<<"ccu_mem_conflict_for_single_async_node: CCU Graph after parallel revamp"<<std::endl;
+    std::cout << "ccu_mem_conflict_for_single_async_node: CCU Graph after parallel revamp" << std::endl;
     genGraph.PrintRankGraph(0);
 
     // 内存冲突校验
@@ -231,14 +221,14 @@ TEST_F(CcuRevampParallelTest, ccu_mem_conflict_for_two_continuous_async_node)
     auto head = genGraph.GenGraph2();
     genGraph.PrintRankGraph(0);
 
-    std::cout<<"ccu_mem_conflict_for_two_continuous_async_node: CCU Graph before parallel revamp"<<std::endl;
+    std::cout << "ccu_mem_conflict_for_two_continuous_async_node: CCU Graph before parallel revamp" << std::endl;
 
     // CCU子图并行化改造
     GraphRevampParallel graphRevampParallel;
     auto ret = graphRevampParallel.Revamp(head);
     // EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 
-    std::cout<<"ccu_mem_conflict_for_two_continuous_async_node: CCU Graph after parallel revamp"<<std::endl;
+    std::cout << "ccu_mem_conflict_for_two_continuous_async_node: CCU Graph after parallel revamp" << std::endl;
     genGraph.PrintRankGraph(0);
 
     // 内存冲突校验
@@ -254,14 +244,16 @@ TEST_F(CcuRevampParallelTest, ccu_mem_conflict_for_two_discontinuous_async_node_
     GenAsyncStandardGraph genGraph;
     auto head = genGraph.GenGraph3();
 
-    std::cout<<"ccu_mem_conflict_for_two_discontinuous_async_node_success: CCU Graph before parallel revamp"<<std::endl;
+    std::cout << "ccu_mem_conflict_for_two_discontinuous_async_node_success: CCU Graph before parallel revamp"
+              << std::endl;
 
     // CCU子图并行化改造
     GraphRevampParallel graphRevampParallel;
     auto ret = graphRevampParallel.Revamp(head);
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 
-    std::cout<<"ccu_mem_conflict_for_two_discontinuous_async_node_success: CCU Graph after parallel revamp"<<std::endl;
+    std::cout << "ccu_mem_conflict_for_two_discontinuous_async_node_success: CCU Graph after parallel revamp"
+              << std::endl;
     genGraph.PrintRankGraph(0);
 
     // 内存冲突校验
@@ -277,14 +269,16 @@ TEST_F(CcuRevampParallelTest, ccu_mem_conflict_for_two_discontinuous_async_node_
     GenAsyncStandardGraph genGraph;
     auto head = genGraph.GenGraph4();
 
-    std::cout<<"ccu_mem_conflict_for_two_discontinuous_async_node_conflict: CCU Graph before parallel revamp"<<std::endl;
+    std::cout << "ccu_mem_conflict_for_two_discontinuous_async_node_conflict: CCU Graph before parallel revamp"
+              << std::endl;
 
     // CCU子图并行化改造
     GraphRevampParallel graphRevampParallel;
     auto ret = graphRevampParallel.Revamp(head);
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 
-    std::cout<<"ccu_mem_conflict_for_two_discontinuous_async_node_conflict: CCU Graph after parallel revamp"<<std::endl;
+    std::cout << "ccu_mem_conflict_for_two_discontinuous_async_node_conflict: CCU Graph after parallel revamp"
+              << std::endl;
 
     // 内存冲突校验
     head->hasCcuTask = true;
@@ -295,7 +289,8 @@ TEST_F(CcuRevampParallelTest, ccu_mem_conflict_for_two_discontinuous_async_node_
 
 class GenLoopStandardGraph : public GenCcuTaskNodeGraphBase {
 public:
-    std::pair<TaskNodePtr, TaskNodePtr> GenLoopBlock(uint32_t queId, uint32_t loopIdx, uint32_t loopGroupIdx, TaskStubCcuGraph *curCcuTask)
+    std::pair<TaskNodePtr, TaskNodePtr>
+    GenLoopBlock(uint32_t queId, uint32_t loopIdx, uint32_t loopGroupIdx, TaskStubCcuGraph* curCcuTask)
     {
         auto rankId = curCcuTask->GetRankId();
         auto loopStart = Hccl::AddLoopStartTask(queId, loopIdx, loopGroupIdx, curCcuTask);
@@ -327,13 +322,13 @@ public:
         auto ccuHead = CreateCcuHeadNode(rankId, queId);
         LinkNode(head, ccuHead);
 
-        TaskStubCcuGraph *curCcuTask = dynamic_cast<TaskStubCcuGraph *>(ccuHead->task);
+        TaskStubCcuGraph* curCcuTask = dynamic_cast<TaskStubCcuGraph*>(ccuHead->task);
         Init(curCcuTask, 1, 1);
         curCcuTask->rankId = rankId;
 
         // ccu子图设置：1个loopGroup，且其对应展开后有2个loop指令块
         curCcuTask->loopGroupIdx = 1; // 设置loopGroup个数
-        curCcuTask->loopIdx[0] = 1;// 设置每个loopGroup展开后的loop个数
+        curCcuTask->loopIdx[0] = 1;   // 设置每个loopGroup展开后的loop个数
 
         auto loopBlock1 = GenLoopBlock(queId, 0, 0, curCcuTask);
 
@@ -359,14 +354,14 @@ TEST_F(CcuRevampParallelTest, ccu_mem_conflict_for_1_loop_node)
     GenOneLoopStandardGraph genGraph;
     auto head = genGraph.GenGraph();
 
-    std::cout<<"ccu_mem_conflict_for_loop_node: CCU Graph before parallel revamp"<<std::endl;
+    std::cout << "ccu_mem_conflict_for_loop_node: CCU Graph before parallel revamp" << std::endl;
 
     // CCU子图并行化改造
     GraphRevampParallel graphRevampParallel;
     auto ret = graphRevampParallel.Revamp(head);
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 
-    std::cout<<"ccu_mem_conflict_for_loop_node: CCU Graph after parallel revamp"<<std::endl;
+    std::cout << "ccu_mem_conflict_for_loop_node: CCU Graph after parallel revamp" << std::endl;
 
     // 内存冲突校验
     head->hasCcuTask = true;
@@ -389,13 +384,13 @@ public:
         auto ccuHead = CreateCcuHeadNode(rankId, queId);
         LinkNode(head, ccuHead);
 
-        TaskStubCcuGraph *curCcuTask = dynamic_cast<TaskStubCcuGraph *>(ccuHead->task);
+        TaskStubCcuGraph* curCcuTask = dynamic_cast<TaskStubCcuGraph*>(ccuHead->task);
         Init(curCcuTask, 1, 1);
         curCcuTask->rankId = rankId;
 
         // ccu子图设置：1个loopGroup，且其对应展开后有2个loop指令块
         curCcuTask->loopGroupIdx = 1; // 设置loopGroup个数
-        curCcuTask->loopIdx[0] = 2;// 设置每个loopGroup展开后的loop个数
+        curCcuTask->loopIdx[0] = 2;   // 设置每个loopGroup展开后的loop个数
 
         auto loopBlock1 = GenLoopBlock(queId, 0, 0, curCcuTask);
         auto loopBlock2 = GenLoopBlock(queId, 1, 0, curCcuTask);
@@ -422,14 +417,14 @@ TEST_F(CcuRevampParallelTest, ccu_mem_conflict_for_2_loop_node)
     GenTwoLoopStandardGraph genGraph;
     auto head = genGraph.GenGraph();
 
-    std::cout<<"ccu_mem_conflict_for_loop_node: CCU Graph before parallel revamp"<<std::endl;
+    std::cout << "ccu_mem_conflict_for_loop_node: CCU Graph before parallel revamp" << std::endl;
 
     // CCU子图并行化改造
     GraphRevampParallel graphRevampParallel;
     auto ret = graphRevampParallel.Revamp(head);
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 
-    std::cout<<"ccu_mem_conflict_for_loop_node: CCU Graph after parallel revamp"<<std::endl;
+    std::cout << "ccu_mem_conflict_for_loop_node: CCU Graph after parallel revamp" << std::endl;
     genGraph.PrintRankGraph(0);
 
     // 内存冲突校验
@@ -439,4 +434,4 @@ TEST_F(CcuRevampParallelTest, ccu_mem_conflict_for_2_loop_node)
     EXPECT_EQ(ret, HcclResult::HCCL_E_MEMORY);
 }
 
-}
+} // namespace checker

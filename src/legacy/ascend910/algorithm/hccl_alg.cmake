@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
@@ -14,12 +14,15 @@ add_library(hccl_alg SHARED)
 # 编译选项
 target_compile_options(hccl_alg PRIVATE
     -Werror
-    -Wno-unused-parameter
-    -Wno-missing-field-initializers
     -fno-common
     -fno-strict-aliasing
     $<$<CONFIG:Debug>:-Og -g>
     $<$<CONFIG:Release>:-O3>
+)
+
+# 链接选项
+target_link_options(hccl_alg PRIVATE
+    $<$<BOOL:${BUILD_OPEN_PROJECT}>:-Wl,--no-undefined>
 )
 
 # 头文件搜索路径
@@ -95,8 +98,10 @@ target_include_directories(hccl_alg PRIVATE
     ${HCOMM_DIR}/src/legacy/ascend910/platform/common/
 
     # hccp (base_comm/resources)
+    ${HCOMM_DIR}/src/base_comm/inc
     ${HCOMM_DIR}/src/base_comm/resources/hccp/inc/network/
     ${HCOMM_DIR}/src/base_comm/resources/hccp/inc/
+    ${HCOMM_DIR}/src/base_comm/common
 
     # common
     ${HCOMM_DIR}/src/legacy/ascend910/common/launch_aicpu
@@ -116,12 +121,17 @@ if(BUILD_OPEN_PROJECT)
         $<BUILD_INTERFACE:mmpa_headers>
         $<BUILD_INTERFACE:runtime_headers>
         $<BUILD_INTERFACE:rdma_core_headers>
+        $<BUILD_INTERFACE:json>
         -Wl,--no-as-needed
         c_sec
         unified_dlog
         mmpa
+        runtime
+        acl_rt
+        profapi
         -Wl,--no-as-needed
         hccl_plf
+        -ldl
     )
 else()
     target_include_directories(hccl_alg PRIVATE
@@ -150,6 +160,12 @@ else()
         PACKAGE hccl
         TARGETS hccl_alg
     )
+endif()
+
+# 符号隐藏: 仅导出白名单符号; 非 release 模式依赖动态符号, 不挂载
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_link_options(hccl_alg PRIVATE "-Wl,--version-script=${CMAKE_CURRENT_LIST_DIR}/hccl_alg.map")
+    set_property(TARGET hccl_alg APPEND PROPERTY LINK_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/hccl_alg.map")
 endif()
 
 install(TARGETS hccl_alg

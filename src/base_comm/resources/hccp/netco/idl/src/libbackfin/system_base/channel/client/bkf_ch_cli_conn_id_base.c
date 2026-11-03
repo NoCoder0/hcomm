@@ -43,7 +43,7 @@ void BkfChCliConnIdBaseUninit(BkfChCliConnIdBase *base)
 
 BkfChCliConnIdBase *BkfChCliConnIdGetBase(BkfChCliConnId *connId)
 {
-    BkfChCliConnIdBase *base = (BkfChCliConnIdBase*)connId;
+    BkfChCliConnIdBase *base = (BkfChCliConnIdBase *)connId;
 
     if ((base == VOS_NULL) || !BKF_SIGN_IS_VALID(base->sign, BKF_CH_CLI_CONN_ID_SIGN) ||
         !BKF_URL_TYPE_IS_VALID(base->urlType)) {
@@ -58,4 +58,3 @@ BkfChCliConnIdBase *BkfChCliConnIdGetBase(BkfChCliConnId *connId)
 }
 #endif
 #endif
-

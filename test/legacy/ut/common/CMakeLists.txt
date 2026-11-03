@@ -7,6 +7,7 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
+
 add_subdirectory(utils)
 add_subdirectory(exception)
 
@@ -15,11 +16,13 @@ target_sources(hccl_v2_utest
     slog_stub_ut.cc
     driver_stub.cc
     ut_log.cc
+    ut_rma_buffer_mgr_log.cc
     driver_stub.cc
     ut_binary_stream.cc
     ut_checkcrc.cc
     ut_stream_utils.cc
     ut_ip_address.cc
+    ut_buffer_key.cc
     ${HCCL_V2_CODE_ROOT}/common/log.cc
     ${HCCL_V2_CODE_ROOT}/common/sal.cc
     ${HCCL_V2_CODE_ROOT}/common/checkcrc.cc

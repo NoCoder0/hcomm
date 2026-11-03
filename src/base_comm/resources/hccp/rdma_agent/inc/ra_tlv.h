@@ -23,7 +23,7 @@ struct RaTlvHandle {
 struct RaTlvOps {
     int (*raTlvInit)(struct RaTlvHandle *tlvHandle);
     int (*raTlvDeinit)(struct RaTlvHandle *tlvHandle);
-    int (*raTlvRequest)(struct RaTlvHandle *tlvHandle, unsigned int moduleType,
-        struct TlvMsg *sendMsg, struct TlvMsg *recvMsg);
+    int (*raTlvRequest)(struct RaTlvHandle *tlvHandle, unsigned int moduleType, struct TlvMsg *sendMsg,
+        struct TlvMsg *recvMsg);
 };
 #endif // RA_TLV_H

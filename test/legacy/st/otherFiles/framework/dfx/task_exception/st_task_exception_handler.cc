@@ -29,9 +29,9 @@
 #include "ccu_transport_manager.h"
 #include "mc2_global_mirror_tasks.h"
 #include "mc2_compont.h"
+#include "task_exception_test_common.h"
 #undef private
 #undef protected
-
 
 using namespace std;
 using namespace Hccl;
@@ -39,20 +39,11 @@ using namespace CcuRep;
 
 class TaskExceptionHandlerTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "TaskExceptionHandlerTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "TaskExceptionHandlerTest tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "TaskExceptionHandlerTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "TaskExceptionHandlerTest tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in TaskExceptionHandlerTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in TaskExceptionHandlerTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -83,14 +74,14 @@ TEST_F(TaskExceptionHandlerTest, TestGetInstanceWithValidDevId)
 
 TEST_F(TaskExceptionHandlerTest, TestConstructorAndDestructor)
 {
-    TaskExceptionHandler *instance = new TaskExceptionHandler(0);
+    TaskExceptionHandler* instance = new TaskExceptionHandler(0);
     EXPECT_NO_THROW(instance->~TaskExceptionHandler());
     delete instance;
 }
 
 TEST_F(TaskExceptionHandlerTest, TestRegisterAndUnRegister)
 {
-    TaskExceptionHandler *instance = TaskExceptionHandlerManager::GetHandler(0);
+    TaskExceptionHandler* instance = TaskExceptionHandlerManager::GetHandler(0);
     instance->Register();
     instance->UnRegister();
 }
@@ -116,7 +107,7 @@ TEST_F(TaskExceptionHandlerTest, test_ccu_error_msg_when_type_is_mission)
     ccuErrorInfo.dieId = 0;
     ccuErrorInfo.missionId = 1;
     ccuErrorInfo.instrId = 10;
-    const string  statusMsg = "Transaction ACK Timeout";
+    const string statusMsg = "Transaction ACK Timeout";
     strncpy_s(ccuErrorInfo.msg.mission.missionError, MISSION_STATUS_MSG_LEN, statusMsg.c_str(), statusMsg.length());
 
     TaskExceptionHandler::GetCcuErrorMsgByType(ccuErrorInfo, *taskInfo);
@@ -186,7 +177,10 @@ TEST_F(TaskExceptionHandlerTest, test_ccu_error_msg_when_type_is_loc_wait_sem)
 TEST_F(TaskExceptionHandlerTest, test_ccu_error_msg_when_type_is_rem_post_sem)
 {
     auto taskInfo = InitTaskInfo();
-    MOCKER(TaskExceptionHandler::GetRankIdByChannelId).stubs().with(eq(static_cast<uint16_t>(1)), any()).will(returnValue(100));
+    MOCKER(TaskExceptionHandler::GetRankIdByChannelId)
+        .stubs()
+        .with(eq(static_cast<uint16_t>(1)), any())
+        .will(returnValue(100));
 
     CcuErrorInfo ccuErrorInfo{};
     ccuErrorInfo.type = CcuErrorType::WAIT_SIGNAL;
@@ -202,7 +196,10 @@ TEST_F(TaskExceptionHandlerTest, test_ccu_error_msg_when_type_is_rem_post_sem)
 TEST_F(TaskExceptionHandlerTest, test_ccu_error_msg_when_type_is_rem_wait_sem)
 {
     auto taskInfo = InitTaskInfo();
-    MOCKER(TaskExceptionHandler::GetRankIdByChannelId).stubs().with(eq(static_cast<uint16_t>(1)), any()).will(returnValue(100));
+    MOCKER(TaskExceptionHandler::GetRankIdByChannelId)
+        .stubs()
+        .with(eq(static_cast<uint16_t>(1)), any())
+        .will(returnValue(100));
 
     CcuErrorInfo ccuErrorInfo{};
     ccuErrorInfo.type = CcuErrorType::WAIT_SIGNAL;
@@ -218,7 +215,10 @@ TEST_F(TaskExceptionHandlerTest, test_ccu_error_msg_when_type_is_rem_wait_sem)
 TEST_F(TaskExceptionHandlerTest, test_ccu_error_msg_when_type_is_rem_post_var)
 {
     auto taskInfo = InitTaskInfo();
-    MOCKER(TaskExceptionHandler::GetRankIdByChannelId).stubs().with(eq(static_cast<uint16_t>(1)), any()).will(returnValue(100));
+    MOCKER(TaskExceptionHandler::GetRankIdByChannelId)
+        .stubs()
+        .with(eq(static_cast<uint16_t>(1)), any())
+        .will(returnValue(100));
 
     CcuErrorInfo ccuErrorInfo{};
     ccuErrorInfo.type = CcuErrorType::WAIT_SIGNAL;
@@ -236,8 +236,13 @@ TEST_F(TaskExceptionHandlerTest, test_ccu_error_msg_when_type_is_rem_post_var)
 TEST_F(TaskExceptionHandlerTest, test_ccu_error_msg_when_type_is_rem_wait_group)
 {
     auto taskInfo = InitTaskInfo();
-    MOCKER(TaskExceptionHandler::GetRankIdByChannelId).stubs().with(any(), any())
-        .will(returnValue(100)).then(returnValue(200)).then(returnValue(300)).then(returnValue(400));
+    MOCKER(TaskExceptionHandler::GetRankIdByChannelId)
+        .stubs()
+        .with(any(), any())
+        .will(returnValue(100))
+        .then(returnValue(200))
+        .then(returnValue(300))
+        .then(returnValue(400));
 
     CcuErrorInfo ccuErrorInfo{};
     ccuErrorInfo.type = CcuErrorType::WAIT_SIGNAL;
@@ -291,7 +296,10 @@ TEST_F(TaskExceptionHandlerTest, test_ccu_error_msg_when_type_is_post_shared_sem
 TEST_F(TaskExceptionHandlerTest, test_ccu_error_msg_when_type_is_read)
 {
     auto taskInfo = InitTaskInfo();
-    MOCKER(TaskExceptionHandler::GetRankIdByChannelId).stubs().with(eq(static_cast<uint16_t>(1)), any()).will(returnValue(100));
+    MOCKER(TaskExceptionHandler::GetRankIdByChannelId)
+        .stubs()
+        .with(eq(static_cast<uint16_t>(1)), any())
+        .will(returnValue(100));
 
     CcuErrorInfo ccuErrorInfo{};
     ccuErrorInfo.type = CcuErrorType::TRANS_MEM;
@@ -311,7 +319,10 @@ TEST_F(TaskExceptionHandlerTest, test_ccu_error_msg_when_type_is_read)
 TEST_F(TaskExceptionHandlerTest, test_ccu_error_msg_when_type_is_write)
 {
     auto taskInfo = InitTaskInfo();
-    MOCKER(TaskExceptionHandler::GetRankIdByChannelId).stubs().with(eq(static_cast<uint16_t>(1)), any()).will(returnValue(100));
+    MOCKER(TaskExceptionHandler::GetRankIdByChannelId)
+        .stubs()
+        .with(eq(static_cast<uint16_t>(1)), any())
+        .will(returnValue(100));
 
     CcuErrorInfo ccuErrorInfo{};
     ccuErrorInfo.type = CcuErrorType::TRANS_MEM;
@@ -369,7 +380,10 @@ TEST_F(TaskExceptionHandlerTest, test_ccu_error_msg_when_type_is_local_reduce)
 TEST_F(TaskExceptionHandlerTest, test_ccu_error_msg_when_type_is_buf_read)
 {
     auto taskInfo = InitTaskInfo();
-    MOCKER(TaskExceptionHandler::GetRankIdByChannelId).stubs().with(eq(static_cast<uint16_t>(1)), any()).will(returnValue(100));
+    MOCKER(TaskExceptionHandler::GetRankIdByChannelId)
+        .stubs()
+        .with(eq(static_cast<uint16_t>(1)), any())
+        .will(returnValue(100));
 
     CcuErrorInfo ccuErrorInfo{};
     ccuErrorInfo.type = CcuErrorType::BUF_TRANS_MEM;
@@ -388,7 +402,10 @@ TEST_F(TaskExceptionHandlerTest, test_ccu_error_msg_when_type_is_buf_read)
 TEST_F(TaskExceptionHandlerTest, test_ccu_error_msg_when_type_is_buf_write)
 {
     auto taskInfo = InitTaskInfo();
-    MOCKER(TaskExceptionHandler::GetRankIdByChannelId).stubs().with(eq(static_cast<uint16_t>(1)), any()).will(returnValue(100));
+    MOCKER(TaskExceptionHandler::GetRankIdByChannelId)
+        .stubs()
+        .with(eq(static_cast<uint16_t>(1)), any())
+        .will(returnValue(100));
 
     CcuErrorInfo ccuErrorInfo{};
     ccuErrorInfo.type = CcuErrorType::BUF_TRANS_MEM;
@@ -468,26 +485,29 @@ TEST_F(TaskExceptionHandlerTest, test_get_rank_id_by_channel_id)
     auto taskInfo = InitTaskInfo();
 
     taskInfo->taskParam_.taskType = TaskParamType::TASK_NOTIFY_WAIT;
-    EXPECT_EQ(TaskExceptionHandler::GetRankIdByChannelId(1, *taskInfo), INVALID_RANKID);    // task type error
+    EXPECT_EQ(TaskExceptionHandler::GetRankIdByChannelId(1, *taskInfo), INVALID_RANKID); // task type error
 
     taskInfo->taskParam_.taskType = TaskParamType::TASK_CCU;
     taskInfo->dfxOpInfo_ = shared_ptr<DfxOpInfo>(nullptr);
-    EXPECT_EQ(TaskExceptionHandler::GetRankIdByChannelId(1, *taskInfo), INVALID_RANKID);    // communicator is nullptr
+    EXPECT_EQ(TaskExceptionHandler::GetRankIdByChannelId(1, *taskInfo), INVALID_RANKID); // communicator is nullptr
 
     taskInfo->dfxOpInfo_ = make_shared<DfxOpInfo>();
     // Mock CommunicatorImpl
     CommunicatorImpl communicator{};
     taskInfo->dfxOpInfo_->comm_ = &communicator;
     communicator.collServices[AcceleratorState::CCU_SCHED] = nullptr;
-    EXPECT_EQ(TaskExceptionHandler::GetRankIdByChannelId(1, *taskInfo), INVALID_RANKID);    // Failed to get collService
+    EXPECT_EQ(TaskExceptionHandler::GetRankIdByChannelId(1, *taskInfo), INVALID_RANKID); // Failed to get collService
 
     // Mock collService
     auto dieChannelId = make_pair(taskInfo->taskParam_.taskPara.Ccu.dieId, 1);
     communicator.collService = new CollServiceDeviceMode(&communicator);
     communicator.collServices[AcceleratorState::CCU_SCHED] = std::make_shared<CollServiceDeviceMode>(&communicator);
     MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    (static_cast<CollServiceDeviceMode*>(communicator.GetCcuCollService()))->
-        GetCcuInsPreprocessor()->GetCcuComm()->GetCcuJettyMgr()->channelRemoteRankIdMap_.emplace(dieChannelId, 100);
+    (static_cast<CollServiceDeviceMode*>(communicator.GetCcuCollService()))
+        ->GetCcuInsPreprocessor()
+        ->GetCcuComm()
+        ->GetCcuJettyMgr()
+        ->channelRemoteRankIdMap_.emplace(dieChannelId, 100);
     EXPECT_EQ(TaskExceptionHandler::GetRankIdByChannelId(1, *taskInfo), 100);
     delete communicator.collService;
 }
@@ -496,7 +516,7 @@ TEST_F(TaskExceptionHandlerTest, test_get_group_rank_info)
 {
     auto taskInfo = InitTaskInfo();
 
-    EXPECT_EQ(TaskExceptionHandler::GetGroupRankInfo(*taskInfo), "");    // communicator is nullptr
+    EXPECT_EQ(TaskExceptionHandler::GetGroupRankInfo(*taskInfo), ""); // communicator is nullptr
 
     // Mock CommunicatorImpl
     CommunicatorImpl communicator{};
@@ -510,8 +530,8 @@ TEST_F(TaskExceptionHandlerTest, test_get_group_rank_info)
 TEST_F(TaskExceptionHandlerTest, test_process_when_task_more_than_50)
 {
     // 打桩 GlobalMirrorTasks
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
-    MirrorTaskManager mirrorTaskManager(0, &globalMirrorTasks, 1);  // diveceId 0
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
+    MirrorTaskManager mirrorTaskManager(0, &globalMirrorTasks, 1); // diveceId 0
     shared_ptr<DfxOpInfo> dfxOpInfo = make_shared<DfxOpInfo>();
     dfxOpInfo->commIndex_ = 3;
     dfxOpInfo->op_.dataCount = 0xff;
@@ -520,7 +540,7 @@ TEST_F(TaskExceptionHandlerTest, test_process_when_task_more_than_50)
     dfxOpInfo->algType_ = AlgType::RING;
     dfxOpInfo->op_.inputMem = make_shared<Buffer>(0x111122223333, 0);
     dfxOpInfo->op_.outputMem = make_shared<Buffer>(0xaaaabbbbcccc, 0);
-    CommunicatorImpl communicator{};    // Mock CommunicatorImpl
+    CommunicatorImpl communicator{}; // Mock CommunicatorImpl
     communicator.id = "GroupName";
     communicator.rankSize = 4;
     communicator.myRank = 1;
@@ -549,20 +569,16 @@ TEST_F(TaskExceptionHandlerTest, test_process_when_task_more_than_50)
     }
 
     // 调用 TaskExceptionHandler::Process() 打印异常DFX信息
-    rtExceptionInfo_t exceptionInfo{};
-    exceptionInfo.deviceid = 0;
-    exceptionInfo.streamid = 0;
-    exceptionInfo.taskid = 60;  // 当前异常TaskId 60
-    TaskExceptionHandler::Process(&exceptionInfo);
+    SetupAndProcessCcuException();
 
-    globalMirrorTasks.DestroyQueue(0, 0);   // diveceId 0, streamId 0
+    globalMirrorTasks.DestroyQueue(0, 0); // diveceId 0, streamId 0
 }
 
 TEST_F(TaskExceptionHandlerTest, test_process_when_task_less_than_50)
 {
     // 打桩 GlobalMirrorTasks
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
-    MirrorTaskManager mirrorTaskManager(0, &globalMirrorTasks, 1);  // diveceId 0
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
+    MirrorTaskManager mirrorTaskManager(0, &globalMirrorTasks, 1); // diveceId 0
     shared_ptr<DfxOpInfo> dfxOpInfo = make_shared<DfxOpInfo>();
     dfxOpInfo->commIndex_ = 3;
     dfxOpInfo->op_.dataCount = 0xff;
@@ -571,7 +587,7 @@ TEST_F(TaskExceptionHandlerTest, test_process_when_task_less_than_50)
     dfxOpInfo->algType_ = AlgType::RING;
     dfxOpInfo->op_.inputMem = make_shared<Buffer>(0x111122223333, 0);
     dfxOpInfo->op_.outputMem = make_shared<Buffer>(0xaaaabbbbcccc, 0);
-    CommunicatorImpl communicator{};    // Mock CommunicatorImpl
+    CommunicatorImpl communicator{}; // Mock CommunicatorImpl
     communicator.id = "GroupName";
     communicator.rankSize = 4;
     communicator.myRank = 1;
@@ -620,13 +636,15 @@ TEST_F(TaskExceptionHandlerTest, test_process_when_task_less_than_50)
     rtExceptionInfo_t exceptionInfo{};
     exceptionInfo.deviceid = 0;
     exceptionInfo.streamid = 0;
-    exceptionInfo.taskid = 7;  // 当前异常TaskId 7
+    exceptionInfo.taskid = 7; // 当前异常TaskId 7
     TaskExceptionHandler::Process(&exceptionInfo);
 
-    globalMirrorTasks.DestroyQueue(0, 0);   // diveceId 0, streamId 0
+    globalMirrorTasks.DestroyQueue(0, 0); // diveceId 0, streamId 0
 }
 
-HcclResult MockGetCcuErrorMsg(s32 deviceId, uint16_t missionStatus, uint16_t currIns, const ParaCcu &ccuTaskParam, std::vector<CcuErrorInfo> &errorInfo)
+HcclResult MockGetCcuErrorMsg(
+    s32 deviceId, uint16_t missionStatus, uint16_t currIns, const ParaCcu& ccuTaskParam,
+    const std::string& groupRankContent, std::vector<CcuErrorInfo>& errorInfo)
 {
     CcuErrorInfo loopGroupErrorInfo{};
     loopGroupErrorInfo.type = CcuErrorType::LOOP_GROUP;
@@ -664,8 +682,8 @@ HcclResult MockGetCcuErrorMsg(s32 deviceId, uint16_t missionStatus, uint16_t cur
 TEST_F(TaskExceptionHandlerTest, test_process_ccu)
 {
     // 打桩 GlobalMirrorTasks
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
-    MirrorTaskManager mirrorTaskManager(0, &globalMirrorTasks, 1);  // diveceId 0
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
+    MirrorTaskManager mirrorTaskManager(0, &globalMirrorTasks, 1); // diveceId 0
     shared_ptr<DfxOpInfo> dfxOpInfo = make_shared<DfxOpInfo>();
     dfxOpInfo->commIndex_ = 3;
     dfxOpInfo->op_.dataCount = 0xff;
@@ -674,7 +692,7 @@ TEST_F(TaskExceptionHandlerTest, test_process_ccu)
     dfxOpInfo->algType_ = AlgType::RING;
     dfxOpInfo->op_.inputMem = make_shared<Buffer>(0x111122223333, 0);
     dfxOpInfo->op_.outputMem = make_shared<Buffer>(0xaaaabbbbcccc, 0);
-    CommunicatorImpl communicator{};    // Mock CommunicatorImpl
+    CommunicatorImpl communicator{}; // Mock CommunicatorImpl
     communicator.id = "GroupName";
     communicator.rankSize = 4;
     communicator.myRank = 1;
@@ -691,17 +709,17 @@ TEST_F(TaskExceptionHandlerTest, test_process_ccu)
     // 打桩清除TaskKill状态, 清除表项, 清除CKE操作
     MOCKER(CcuCleanDieCkes).stubs().will(returnValue(HcclResult::HCCL_SUCCESS));
     MOCKER_CPP(&CcuComponent::Init).stubs();
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(0));
+    MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().will(returnValue(0));
     MOCKER(HrtRaTlvRequestForCustomChannel).stubs();
 
     // 调用 TaskExceptionHandler::Process() 打印异常DFX信息
     rtExceptionInfo_t exceptionInfo{};
     exceptionInfo.deviceid = 0;
     exceptionInfo.streamid = 0;
-    exceptionInfo.taskid = 0;  // 当前异常TaskId 0
+    exceptionInfo.taskid = 0; // 当前异常TaskId 0
     TaskExceptionHandler::Process(&exceptionInfo);
 
-    globalMirrorTasks.DestroyQueue(0, 0);   // diveceId 0, streamId 0
+    globalMirrorTasks.DestroyQueue(0, 0); // diveceId 0, streamId 0
 }
 
 TEST_F(TaskExceptionHandlerTest, test_GetMC2AlgTaskParam)
@@ -709,17 +727,17 @@ TEST_F(TaskExceptionHandlerTest, test_GetMC2AlgTaskParam)
     auto taskInfo = InitTaskInfo();
 
     taskInfo->taskParam_.taskType = TaskParamType::TASK_NOTIFY_WAIT;
-    EXPECT_EQ(TaskExceptionHandler::GetMC2AlgTaskParam(*taskInfo).size(), 0);    // failed
+    EXPECT_EQ(TaskExceptionHandler::GetMC2AlgTaskParam(*taskInfo).size(), 0); // failed
 
     taskInfo->taskParam_.taskType = TaskParamType::TASK_CCU;
     taskInfo->dfxOpInfo_->comm_ = nullptr;
-    EXPECT_EQ(TaskExceptionHandler::GetMC2AlgTaskParam(*taskInfo).size(), 0);    // failed
+    EXPECT_EQ(TaskExceptionHandler::GetMC2AlgTaskParam(*taskInfo).size(), 0); // failed
 
     // Mock CommunicatorImpl
     CommunicatorImpl communicator{};
     communicator.collServices[AcceleratorState::CCU_SCHED] = std::make_shared<CollServiceDeviceMode>(&communicator);
     taskInfo->dfxOpInfo_->comm_ = &communicator;
-    EXPECT_EQ(TaskExceptionHandler::GetMC2AlgTaskParam(*taskInfo).size(), 0);    // failed
+    EXPECT_EQ(TaskExceptionHandler::GetMC2AlgTaskParam(*taskInfo).size(), 0); // failed
 
     // Mock collService
     communicator.collService = new CollServiceDeviceMode(&communicator);
@@ -731,19 +749,19 @@ TEST_F(TaskExceptionHandlerTest, test_GetMC2AlgTaskParam)
     ccuTaskParams.push_back({ccuTaskParam});
     collServiceCcu->mc2Compont.algoTemplateMap[1] = ccuTaskParams;
     taskInfo->taskParam_.taskPara.Ccu.executeId = 10;
-    EXPECT_EQ(TaskExceptionHandler::GetMC2AlgTaskParam(*taskInfo).size(), 2);   // success
+    EXPECT_EQ(TaskExceptionHandler::GetMC2AlgTaskParam(*taskInfo).size(), 2); // success
     delete communicator.collService;
 }
 
 TEST_F(TaskExceptionHandlerTest, test_process_mc2)
 {
-    auto taskInfo1 = InitTaskInfo();    // for MC2 Server
+    auto taskInfo1 = InitTaskInfo(); // for MC2 Server
     taskInfo1->taskParam_.taskType = TaskParamType::TASK_CCU;
     taskInfo1->taskParam_.taskPara.Ccu.dieId = 0;
     taskInfo1->taskParam_.taskPara.Ccu.missionId = 1;
     taskInfo1->taskParam_.taskPara.Ccu.instrId = 2;
     MC2GlobalMirrorTasks::GetInstance().AddTaskInfo(10, taskInfo1);
-    auto taskInfo2 = InitTaskInfo();    // for Algo
+    auto taskInfo2 = InitTaskInfo(); // for Algo
     taskInfo2->taskParam_.taskType = TaskParamType::TASK_CCU;
     taskInfo2->taskParam_.taskPara.Ccu.dieId = 0;
     taskInfo2->taskParam_.taskPara.Ccu.missionId = 2;
@@ -770,7 +788,7 @@ TEST_F(TaskExceptionHandlerTest, test_process_mc2)
     // 打桩清除TaskKill状态, 清除表项, 清除CKE操作
     MOCKER(CcuCleanDieCkes).stubs().will(returnValue(HcclResult::HCCL_SUCCESS));
     MOCKER_CPP(&CcuComponent::Init).stubs();
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(0));
+    MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().will(returnValue(0));
     MOCKER(HrtRaTlvRequestForCustomChannel).stubs();
 
     TaskExceptionHandler::Process(&exceptionInfo);

@@ -15,21 +15,21 @@
 #include "coll_operator.h"
 namespace Hccl {
 
-void ReportOpCheckFailed(const std::string &paraName, const std::string &localPara, const std::string &remotePara);
+void ReportOpCheckFailed(const std::string& paraName, const std::string& localPara, const std::string& remotePara);
 
-void ReportOpCheckFailed(const std::string &paraName, uint32_t localPara, uint32_t remotePara);
+void ReportOpCheckFailed(const std::string& paraName, uint32_t localPara, uint32_t remotePara);
 
-void CompareDataDesOp(const CollOperator &localOpData, const CollOperator &remoteOpData);
+void CompareDataDesOp(const CollOperator& localOpData, const CollOperator& remoteOpData);
 
-void CompareVDataDesOp(const CollOperator &localOpData, const CollOperator &remoteOpData);
+void CompareVDataDesOp(const CollOperator& localOpData, const CollOperator& remoteOpData);
 
-void CompareAlltoAllOp(const CollOperator &localOpData, const CollOperator &remoteOpData);
+void CompareAlltoAllOp(const CollOperator& localOpData, const CollOperator& remoteOpData);
 
-void CompareAlltoAllVOp(const CollOperator &localOpData, const CollOperator &remoteOpData);
+void CompareAlltoAllVOp(const CollOperator& localOpData, const CollOperator& remoteOpData);
 
-void CompareAlltoAllVCOp(const CollOperator &localOpData, const CollOperator &remoteOpData);
+void CompareAlltoAllVCOp(const CollOperator& localOpData, const CollOperator& remoteOpData);
 
-void CheckCollOperator(const CollOperator &localOpData, const CollOperator &remoteOpData);
+void CheckCollOperator(const CollOperator& localOpData, const CollOperator& remoteOpData);
 
 } // namespace Hccl
 #endif

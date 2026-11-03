@@ -9,4 +9,4 @@
 
 ## 代码路径
 
-`src/framework/`
+`src/coll_communicator_mgr/`

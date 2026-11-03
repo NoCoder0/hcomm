@@ -23,19 +23,14 @@ using namespace Hccl;
 
 class HostDeviceSyncNotifyLiteMgrTest : public testing::Test {
 protected:
-    static void SetUpTestCase() {
-        std::cout << "HostDeviceSyncNotifyLiteMgrTest SetUP" << std::endl;
-    }
- 
-    static void TearDownTestCase() {
-        std::cout << "HostDeviceSyncNotifyLiteMgrTest TearDown" << std::endl;
-    }
- 
-    virtual void SetUp() {
-        std::cout << "A Test case in HostDeviceSyncNotifyLiteMgrTest SetUP" << std::endl;
-    }
- 
-    virtual void TearDown () {
+    static void SetUpTestCase() { std::cout << "HostDeviceSyncNotifyLiteMgrTest SetUP" << std::endl; }
+
+    static void TearDownTestCase() { std::cout << "HostDeviceSyncNotifyLiteMgrTest TearDown" << std::endl; }
+
+    virtual void SetUp() { std::cout << "A Test case in HostDeviceSyncNotifyLiteMgrTest SetUP" << std::endl; }
+
+    virtual void TearDown()
+    {
         GlobalMockObject::verify();
         std::cout << "A Test case in HostDeviceSyncNotifyLiteMgrTest TearDown" << std::endl;
     }

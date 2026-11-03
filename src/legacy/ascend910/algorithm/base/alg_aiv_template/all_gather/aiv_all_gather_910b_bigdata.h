@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "aiv_communication_base.h"
 
@@ -16,37 +16,38 @@ class AivAllGatherBig910B : public AivCommBase {
 public:
     __aicore__ inline AivAllGatherBig910B() {}
 
-    template<typename T>
-    __aicore__ inline void MemcpyWithFlagWrap(__gm__ T *cclGmSelf, __gm__ T *cclGmOther,
-    uint64_t count, int32_t dstRank, int32_t tag);
+    template <typename T>
+    __aicore__ inline void
+    MemcpyWithFlagWrap(__gm__ T* cclGmSelf, __gm__ T* cclGmOther, uint64_t count, int32_t dstRank, int32_t tag);
 
-    template<typename T>
+    template <typename T>
     __aicore__ inline void Process(GM_ADDR input, GM_ADDR output, uint64_t len, int32_t tag, uint64_t totalLen);
 
-    template<typename T>
+    template <typename T>
     __aicore__ inline void ProcessProxy(GM_ADDR input, GM_ADDR output, uint64_t len, int32_t tag, uint64_t totalLen);
 
-    template<typename T>
-    __aicore__ inline void ProcessSingleRanksizeCore(GM_ADDR input, GM_ADDR output, uint64_t len, int32_t tag, uint64_t totalLen);
+    template <typename T>
+    __aicore__ inline void
+    ProcessSingleRanksizeCore(GM_ADDR input, GM_ADDR output, uint64_t len, int32_t tag, uint64_t totalLen);
 
-    template<typename T>
+    template <typename T>
     __aicore__ inline void ClearFlag(uint32_t flagOffsetBase);
 };
 
-template<typename T>
+template <typename T>
 __aicore__ inline void AivAllGatherBig910B::ClearFlag(uint32_t flagOffsetBase)
 {
     // 用10个flag
     uint32_t flagOffsetCount = flagOffsetBase;
-    __gm__ int32_t *ctrlFlagsGM = (__gm__ int32_t *)(GM_OUT[rank_] + flagOffsetBase + rank_ * FLAG_SIZE);
+    __gm__ int32_t* ctrlFlagsGM = (__gm__ int32_t*)(GM_OUT[rank_] + flagOffsetBase + rank_ * FLAG_SIZE);
     if (blockIdx_ < rankSize_ && blockIdx_ == rank_) {
         SetSignalValue(ctrlFlagsGM, localSetTensor, 0);
     }
 }
 
-template<typename T>
-__aicore__ inline void AivAllGatherBig910B::MemcpyWithFlagWrap(__gm__ T *cclGmSelf, __gm__ T *cclGmOther,
-    uint64_t count, int32_t dstRank, int32_t tag)
+template <typename T>
+__aicore__ inline void AivAllGatherBig910B::MemcpyWithFlagWrap(
+    __gm__ T* cclGmSelf, __gm__ T* cclGmOther, uint64_t count, int32_t dstRank, int32_t tag)
 {
     uint64_t processedBatchCount = 0;
     uint64_t avgSizePerSlice = count * sizeof(T);
@@ -59,8 +60,9 @@ __aicore__ inline void AivAllGatherBig910B::MemcpyWithFlagWrap(__gm__ T *cclGmSe
         uint64_t localFlagValueX = CountWait(dstRank, dstRank);
 #else
         LocalTensor<int32_t> localFlagX = flagInQue.AllocTensor<int32_t>();
-        uint64_t localFlagValueX = GetSignalValueWithExpected((int32_t *)(GM_OUT[dstRank] + countOffset + dstRank * FLAG_SIZE),
-            localFlagX, CeilDiv(avgSizePerSlice, UB_DB_DATA_BATCH_SIZE) + tag);
+        uint64_t localFlagValueX = GetSignalValueWithExpected(
+            (int32_t*)(GM_OUT[dstRank] + countOffset + dstRank * FLAG_SIZE), localFlagX,
+            CeilDiv(avgSizePerSlice, UB_DB_DATA_BATCH_SIZE) + tag);
         flagInQue.FreeTensor(localFlagX);
 #endif
 
@@ -88,9 +90,9 @@ __aicore__ inline void AivAllGatherBig910B::MemcpyWithFlagWrap(__gm__ T *cclGmSe
     }
 }
 
-template<typename T>
-__aicore__ inline void AivAllGatherBig910B::Process(GM_ADDR input, GM_ADDR output, uint64_t len, int32_t tag,
-    uint64_t totalLen)
+template <typename T>
+__aicore__ inline void
+AivAllGatherBig910B::Process(GM_ADDR input, GM_ADDR output, uint64_t len, int32_t tag, uint64_t totalLen)
 {
     uint32_t avgLengthPerSlice = len;
     uint32_t avgSizePerSlice = avgLengthPerSlice * sizeof(T);
@@ -99,10 +101,10 @@ __aicore__ inline void AivAllGatherBig910B::Process(GM_ADDR input, GM_ADDR outpu
     uint32_t targetRank = blockIdx_ >= rankSize_ ? blockIdx_ - rankSize_ : blockIdx_;
 
     // 用10个flag
-    __gm__ T *inputGm = (__gm__ T *)input;
-    __gm__ T *outputGm = (__gm__ T *)output;
-    __gm__ T *cclGmSelf = (__gm__ T *)(GM_IN[rank_]);
-    __gm__ T *cclGmOther = (__gm__ T *)(GM_IN[targetRank]);
+    __gm__ T* inputGm = (__gm__ T*)input;
+    __gm__ T* outputGm = (__gm__ T*)output;
+    __gm__ T* cclGmSelf = (__gm__ T*)(GM_IN[rank_]);
+    __gm__ T* cclGmOther = (__gm__ T*)(GM_IN[targetRank]);
 
     if (blockIdx_ < blockNumPerGroup) {
         int32_t outputOffset = targetRank * totalLen;
@@ -118,7 +120,7 @@ __aicore__ inline void AivAllGatherBig910B::Process(GM_ADDR input, GM_ADDR outpu
             PipeBarrier<PIPE_ALL>();
             Wait(tag, targetRank, AivNotifyType::DataSignal);
             PipeBarrier<PIPE_ALL>();
-            //是否要加清零的参数
+            // 是否要加清零的参数
             RecordNv1(tag, rank_);
             PipeBarrier<PIPE_ALL>();
         }
@@ -128,19 +130,19 @@ __aicore__ inline void AivAllGatherBig910B::Process(GM_ADDR input, GM_ADDR outpu
     return;
 }
 
-template<typename T>
-__aicore__ inline void AivAllGatherBig910B::ProcessSingleRanksizeCore(GM_ADDR input, GM_ADDR output, uint64_t len, int32_t tag,
-    uint64_t totalLen)
+template <typename T>
+__aicore__ inline void AivAllGatherBig910B::ProcessSingleRanksizeCore(
+    GM_ADDR input, GM_ADDR output, uint64_t len, int32_t tag, uint64_t totalLen)
 {
     uint32_t avgLengthPerSlice = len;
     uint32_t avgSizePerSlice = avgLengthPerSlice * sizeof(T);
     uint32_t targetRank = blockIdx_;
 
     // 用10个flag
-    __gm__ T *inputGm = (__gm__ T *)input;
-    __gm__ T *outputGm = (__gm__ T *)output;
-    __gm__ T *cclGmSelf = (__gm__ T *)(GM_IN[rank_]);
-    __gm__ T *cclGmOther = (__gm__ T *)(GM_IN[targetRank]);
+    __gm__ T* inputGm = (__gm__ T*)input;
+    __gm__ T* outputGm = (__gm__ T*)output;
+    __gm__ T* cclGmSelf = (__gm__ T*)(GM_IN[rank_]);
+    __gm__ T* cclGmOther = (__gm__ T*)(GM_IN[targetRank]);
 
     int32_t outputOffset = targetRank * totalLen;
     if (blockIdx_ == rank_) {
@@ -157,25 +159,25 @@ __aicore__ inline void AivAllGatherBig910B::ProcessSingleRanksizeCore(GM_ADDR in
         PipeBarrier<PIPE_ALL>();
         Wait(tag, targetRank, AivNotifyType::DataSignal);
         PipeBarrier<PIPE_ALL>();
-        //是否要加清零的参数
+        // 是否要加清零的参数
         RecordNv1(tag, rank_);
         PipeBarrier<PIPE_ALL>();
     }
     return;
 }
 
-template<typename T>
-__aicore__ inline void AivAllGatherBig910B::ProcessProxy(GM_ADDR input, GM_ADDR output, uint64_t len, int32_t tag,
-    uint64_t totalLen)
+template <typename T>
+__aicore__ inline void
+AivAllGatherBig910B::ProcessProxy(GM_ADDR input, GM_ADDR output, uint64_t len, int32_t tag, uint64_t totalLen)
 {
-    if (numBlocks_ == rankSize_){
+    if (numBlocks_ == rankSize_) {
         ProcessSingleRanksizeCore<T>(input, output, len, tag, totalLen);
-    }else{
+    } else {
         Process<T>(input, output, len, tag, totalLen);
     }
 }
 
-template<typename T>
+template <typename T>
 __aicore__ inline void aiv_all_gather_910b_bigdata(KERNEL_ARGS_DEF)
 {
     AivAllGatherBig910B op;

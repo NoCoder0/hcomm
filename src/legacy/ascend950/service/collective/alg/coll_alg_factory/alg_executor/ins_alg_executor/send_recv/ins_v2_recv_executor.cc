@@ -21,16 +21,11 @@
 using namespace std;
 
 namespace Hccl {
-InsV2RecvExecutor::InsV2RecvExecutor() : InsCollAlgBase()
-{
-}
+InsV2RecvExecutor::InsV2RecvExecutor() : InsCollAlgBase() {}
 
-InsV2RecvExecutor::~InsV2RecvExecutor()
-{
-}
+InsV2RecvExecutor::~InsV2RecvExecutor() {}
 
-HcclResult InsV2RecvExecutor::CalNumBlocks(
-    u32& numBlocks, u64 dataSize, u32 numBlocksLimit)
+HcclResult InsV2RecvExecutor::CalNumBlocks(u32& numBlocks, u64 dataSize, u32 numBlocksLimit)
 {
     (void)dataSize;
 
@@ -45,19 +40,17 @@ HcclResult InsV2RecvExecutor::CalNumBlocks(
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsV2RecvExecutor::CalcResOffload(const RankGraph *rankGraph,
-                                           const u64 &dataSize,
-                                           CollOffloadOpResReq &resReq)
+HcclResult
+InsV2RecvExecutor::CalcResOffload(const RankGraph* rankGraph, const u64& dataSize, CollOffloadOpResReq& resReq)
 {
     (void)rankGraph;
     (void)dataSize;
     (void)resReq;
-    HCCL_ERROR("[InsCollAlgFactory][InsV2RecvExecutor][CalcResOffload] offload is not support");
+    HCCL_ERROR("[InsCollAlgFactory][InsV2RecvExecutor][CalcResOffload] offload is not supported");
     return HcclResult::HCCL_E_NOT_SUPPORT;
 }
 
-HcclResult InsV2RecvExecutor::CalcRes(const RankGraph *rankGraph,
-                                    CollAlgResReq     &algResReq)
+HcclResult InsV2RecvExecutor::CalcRes(const RankGraph* rankGraph, CollAlgResReq& algResReq)
 {
     u32 linkNumBtwPeers = 1;
     algResReq.primQueueNum = 1;
@@ -65,13 +58,17 @@ HcclResult InsV2RecvExecutor::CalcRes(const RankGraph *rankGraph,
     tempResReq.queNum = 1;
     tempResReq.streamNum = tempResReq.queNum;
     if (static_cast<u32>(sendRecvRemoteRank_) > rankSize_ - 1) {
-        HCCL_ERROR("[InsCollAlgFactory][InsV2RecvExecutor][CalcRes] Rank[%d] get dest[%d] is invalid", myRank_, sendRecvRemoteRank_);
+        HCCL_ERROR(
+            "[InsCollAlgFactory][InsV2RecvExecutor][CalcRes] Rank[%d] get dest[%d] is invalid", myRank_,
+            sendRecvRemoteRank_);
         return HcclResult::HCCL_E_PARA;
     }
     tempResReq.links[sendRecvRemoteRank_] = linkNumBtwPeers;
     uint32_t linkNum = GetPathsFromRankGraph(rankGraph, myRank_, sendRecvRemoteRank_).size();
     if (linkNum == 0) {
-        HCCL_ERROR("[InsCollAlgFactory][InsV2RecvExecutor][CalcRes] Rank[%d] get path num to dest[%d] is zero", myRank_, sendRecvRemoteRank_);
+        HCCL_ERROR(
+            "[InsCollAlgFactory][InsV2RecvExecutor][CalcRes] Rank[%d] get path num to dest[%d] is zero", myRank_,
+            sendRecvRemoteRank_);
     }
     CHK_RET(CalcResLinks(myRank_, rankGraph, linkPriority_, tempResReq.links, algResReq.links));
     CHK_RET(CalcLinkInfo(myRank_, rankGraph, tempResReq.links, algResReq.levelRankPairs));
@@ -79,10 +76,8 @@ HcclResult InsV2RecvExecutor::CalcRes(const RankGraph *rankGraph,
 }
 
 // host
-HcclResult InsV2RecvExecutor::Orchestrate(const RankGraph  *rankGraph,
-                                       const CollAlgOperator &op,
-                                       const CollAlgParams   &params,
-                                       InsQuePtr              insQue)
+HcclResult InsV2RecvExecutor::Orchestrate(
+    const RankGraph* rankGraph, const CollAlgOperator& op, const CollAlgParams& params, InsQuePtr insQue)
 {
     HCCL_DEBUG("[InsCollAlgFactory][InsV2RecvExecutor][Orchestrate] Begin to Generate Instruction Queue for RECV.");
     CHK_RET(Init(op, params, insQue));
@@ -100,17 +95,21 @@ HcclResult InsV2RecvExecutor::Orchestrate(const RankGraph  *rankGraph,
 
     // 从virtualTopo里面拿到 link，转成LinkData格式
     const std::vector<NetInstance::Path> recvPath = GetPathsFromRankGraph(rankGraph, myRank_, remoteRank);
-    CHK_PRT_RET(recvPath.size() == 0,
-                HCCL_ERROR("[InsCollAlgFactory] Unable to obtain valid link, srcRank [%d], dstRank [%d].", myRank_,
-                remoteRank), HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        recvPath.size() == 0,
+        HCCL_ERROR("[InsCollAlgFactory] Unable to obtain valid link, srcRank [%d], dstRank [%d].", myRank_, remoteRank),
+        HcclResult::HCCL_E_INTERNAL);
     LinkData recvLinkData(recvPath[0]);
-    HCCL_DEBUG("[InsCollAlgFactory][InsV2RecvExecutor][Orchestrate] Total transfer data size [%llu], Max scratch buffer size [%u].", totalDataSize, params.maxTmpMemSize);
+    HCCL_DEBUG(
+        "[InsCollAlgFactory][InsV2RecvExecutor][Orchestrate] Total transfer data size [%llu], Max scratch buffer size "
+        "[%u].",
+        totalDataSize, params.maxTmpMemSize);
 
     // 模式判断
     if (opMode_ == OpMode::OFFLOAD) {
-        HCCL_ERROR("[InsCollAlgFactory][InsV2RecvExecutor][Orchestrate] offload is not support");
+        HCCL_ERROR("[InsCollAlgFactory][InsV2RecvExecutor][Orchestrate] offload is not supported");
         return HcclResult::HCCL_E_NOT_SUPPORT;
-    }else {
+    } else {
         HCCL_DEBUG("[InsCollAlgFactory] Rank[%d], Generating Instruction Queues in OPBASE Mode for HOST.", myRank_);
 
         CHK_RET(ExecAiv(op, params, recvLinkData, insQue));
@@ -120,14 +119,13 @@ HcclResult InsV2RecvExecutor::Orchestrate(const RankGraph  *rankGraph,
 }
 
 // aicpu
-HcclResult InsV2RecvExecutor::Orchestrate(const AlgTopoInfo     &topoInfo,
-                                          const CollAlgOperator &op,
-                                          const CollAlgParams   &params,
-                                          ConnectedLinkMgr      *linkMgr,
-                                          InsQuePtr              insQue)
+HcclResult InsV2RecvExecutor::Orchestrate(
+    const AlgTopoInfo& topoInfo, const CollAlgOperator& op, const CollAlgParams& params, ConnectedLinkMgr* linkMgr,
+    InsQuePtr insQue)
 {
     (void)topoInfo;
-    HCCL_DEBUG("[InsCollAlgFactory][InsV2RecvExecutor][Orchestrate] Begin to Generate Instruction Queue for RECV AICPU mode.");
+    HCCL_DEBUG(
+        "[InsCollAlgFactory][InsV2RecvExecutor][Orchestrate] Begin to Generate Instruction Queue for RECV AICPU mode.");
     CHK_RET(Init(op, params, insQue));
     // 从集合通信算子op中获得remote rank和data type/count相关信息
     RankId remoteRank = op.sendRecvRemoteRank;
@@ -140,21 +138,31 @@ HcclResult InsV2RecvExecutor::Orchestrate(const AlgTopoInfo     &topoInfo,
         return HcclResult::HCCL_SUCCESS;
     }
     HCCL_DEBUG("[InsCollAlgFactory][InsV2RecvExecutor][Orchestrate] Other send, Self recv.");
- 
+
     // 从linkMgr里面拿到 linkData
     const vector<LinkData> recvPath = linkMgr->GetLinks(remoteRank);
-    CHK_PRT_RET(recvPath.size() == 0,
-            HCCL_ERROR("[InsCollAlgFactory] Unable to obtain valid link, srcRank [%d], dstRank [%d].", myRank_,
-            remoteRank), HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        recvPath.size() == 0,
+        HCCL_ERROR(
+            "[InsCollAlgFactory][InsV2RecvExecutor] Unable to obtain valid link, srcRank [%d], dstRank [%d].", myRank_,
+            remoteRank),
+        HcclResult::HCCL_E_INTERNAL);
     LinkData recvLinkData(recvPath[0]);
-    HCCL_DEBUG("[InsCollAlgFactory][InsV2RecvExecutor][Orchestrate] Total transfer data size [%llu], Max scratch buffer size [%u].", totalDataSize, params.maxTmpMemSize);
- 
+    HCCL_DEBUG(
+        "[InsCollAlgFactory][InsV2RecvExecutor][OrchestrateAicpu] Total transfer data size [%llu], Max scratch buffer "
+        "size "
+        "[%u].",
+        totalDataSize, params.maxTmpMemSize);
+
     // 模式判断
     if (opMode_ == OpMode::OFFLOAD) {
-        HCCL_ERROR("[InsCollAlgFactory][InsV2RecvExecutor][Orchestrate] offload is not support");
+        HCCL_ERROR("[InsCollAlgFactory][InsV2RecvExecutor][OrchestrateAicpu] offload is not supported");
         return HcclResult::HCCL_E_NOT_SUPPORT;
     } else {
-        HCCL_DEBUG("[InsCollAlgFactory] Rank[%d], Generating Instruction Queues in OPBASE Mode for HOST.", myRank_);
+        HCCL_DEBUG(
+            "[InsCollAlgFactory][InsV2RecvExecutor][OrchestrateAicpu] Rank[%d], Generating Instruction Queues in "
+            "OPBASE Mode for HOST.",
+            myRank_);
 
         CHK_RET(ExecAiv(op, params, recvLinkData, insQue));
         return HcclResult::HCCL_SUCCESS;
@@ -162,20 +170,19 @@ HcclResult InsV2RecvExecutor::Orchestrate(const AlgTopoInfo     &topoInfo,
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsV2RecvExecutor::ExecAiv(const CollAlgOperator &op,
-                                          const CollAlgParams   &params,
-                                          LinkData      &recvLinkData,
-                                          InsQuePtr              insQue)
+HcclResult InsV2RecvExecutor::ExecAiv(
+    const CollAlgOperator& op, const CollAlgParams& params, LinkData& recvLinkData, InsQuePtr insQue)
 {
-    HCCL_INFO("[InsV2RecvExecutor][ExecAiv] start: rank is %d, count is %u, dataType is %u, srcRank is %d",
-        myRank_, op.dataCount, static_cast<u32>(op.dataType), op.sendRecvRemoteRank);
+    HCCL_INFO(
+        "[InsV2RecvExecutor][ExecAiv] start: rank is %d, count is %u, dataType is %u, srcRank is %d", myRank_,
+        op.dataCount, static_cast<u32>(op.dataType), op.sendRecvRemoteRank);
 
     u64 transportBoundDataSize = UB_MAX_DATA_SIZE;
     u64 maxScratchDataSize = std::min(transportBoundDataSize, params.maxTmpMemSize);
     u32 dataElemSize = DATA_TYPE_SIZE_MAP.at(op.dataType);
     u64 maxScratchDataCount = maxScratchDataSize / dataElemSize;
-    CHK_PRT_RET(maxScratchDataCount == 0,
-        HCCL_ERROR("[InsV2RecvExecutor][Orchestrate] maxScratchDataCount is 0"),
+    CHK_PRT_RET(
+        maxScratchDataCount == 0, HCCL_ERROR("[InsV2RecvExecutor][Orchestrate] maxScratchDataCount is 0"),
         HCCL_E_INTERNAL);
 
     std::vector<LinkData> allLinks;
@@ -186,7 +193,9 @@ HcclResult InsV2RecvExecutor::ExecAiv(const CollAlgOperator &op,
     for (u64 loop = 0; loop < loopTimes; loop++) {
         sliceId_++; // 自动增长sliceId，传入aivTag
         u64 currDataCount = (loop == loopTimes - 1) ? op.dataCount - processedDataCount : maxScratchDataCount;
-        HCCL_INFO("[InsV2RecvExecutor][ExecAiv] myRank[%d], loop[%llu] sliceId_[%llu] currDataCount[%llu], processedDataCount[%llu]",
+        HCCL_INFO(
+            "[InsV2RecvExecutor][ExecAiv] myRank[%d], loop[%llu] sliceId_[%llu] currDataCount[%llu], "
+            "processedDataCount[%llu]",
             myRank_, loop, sliceId_, currDataCount, processedDataCount);
 
         AivOpArgs aivRecvArgs;
@@ -198,7 +207,7 @@ HcclResult InsV2RecvExecutor::ExecAiv(const CollAlgOperator &op,
         aivRecvArgs.rankSize = rankSize_;
         aivRecvArgs.count = currDataCount; // 需要传输的数据量
         aivRecvArgs.dataType = op.dataType;
-        aivRecvArgs.aivTag = sliceId_;  // 传入aivTag，Lauch时重新组装为aivTag
+        aivRecvArgs.aivTag = sliceId_; // 传入aivTag，Launch时重新组装为aivTag
         aivRecvArgs.isOpBase = (opMode_ == OpMode::OPBASE);
         aivRecvArgs.xRankSize = rankSize_;
         aivRecvArgs.yRankSize = 0;

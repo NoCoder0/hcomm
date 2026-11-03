@@ -60,7 +60,7 @@ typedef struct tagBkfSuberEnv {
     uint32_t jobTypeId2;
     uint32_t jobPrioH;
     uint32_t jobPrioL;
-    uint64_t seeds;             /* 全局事务号 */
+    uint64_t seeds; /* 全局事务号 */
     uint32_t msgLenMax;
     BkfSysLogMng *sysLogMng;
     BkfTmrMng *tmrMng;
@@ -83,6 +83,5 @@ char *BkfSuberGetSliceKeyStr(BkfSuberEnv *env, void *sliceKey, uint8_t *buf, int
 }
 #endif
 #endif
-
 
 #endif

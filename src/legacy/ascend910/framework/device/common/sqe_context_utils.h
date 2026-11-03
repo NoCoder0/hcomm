@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef __SQE_AICPU_CONTEXT_UTILS_H__
 #define __SQE_AICPU_CONTEXT_UTILS_H__
@@ -34,7 +34,7 @@ struct SqeInfo {
     uint8_t type = 0;
     uint8_t subType = 0;
     uint8_t valid = 0; // 是否有效标记位
-    union TaskRelatedType{
+    union TaskRelatedType {
         uint8_t rdmaType; // rdma类型 是payload还是notify
         uint8_t linkType; // 链路类型 SIO
     } taskRelated;
@@ -44,7 +44,7 @@ struct SqeInfo {
 class SqeContextUtils {
 public:
     static std::string RtsqTaskTypeToStr(uint8_t type);
-    static HcclResult QuerySqeInfo(const uint8_t *sqeLocal, uint8_t sqeType, uint32_t addInfo, SqeInfo *info);
+    static HcclResult QuerySqeInfo(const uint8_t* sqeLocal, uint8_t sqeType, uint32_t addInfo, SqeInfo* info);
 };
 
 #endif // __SQE_AICPU_CONTEXT_UTILS_H__

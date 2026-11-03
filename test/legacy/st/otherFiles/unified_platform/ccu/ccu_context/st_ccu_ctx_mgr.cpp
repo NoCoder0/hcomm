@@ -38,18 +38,11 @@
 using namespace Hccl;
 using namespace CcuRep;
 
-
 class CcuContextManagerTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CcuContextManagerTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CcuContextManagerTest tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CcuContextManagerTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CcuContextManagerTest tests tear down." << std::endl; }
 
     virtual void SetUp()
     {
@@ -82,7 +75,9 @@ public:
 class CcuTaskArgTest : public CcuTaskArg {
 public:
     explicit CcuTaskArgTest(uint64_t inputAddr, uint64_t outputAddr, uint64_t size)
-        : inputAddr(inputAddr), outputAddr(outputAddr), size(size)
+        : inputAddr(inputAddr),
+          outputAddr(outputAddr),
+          size(size)
     {}
     uint64_t inputAddr;
     uint64_t outputAddr;
@@ -91,11 +86,11 @@ public:
 
 class CcuContextAG : public CcuContext {
 public:
-    CcuContextAG(CcuCtxArg &arg, const std::vector<CcuTransport*> &transports, const CcuTransportGroup &transportGroup)
+    CcuContextAG(CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& transportGroup)
         : CcuContext(arg, transports, transportGroup)
     {
-        id = dynamic_cast<const CcuCtxArgTest *>(&arg)->rankId;
-        size = dynamic_cast<const CcuCtxArgTest *>(&arg)->rankSize;
+        id = dynamic_cast<const CcuCtxArgTest*>(&arg)->rankId;
+        size = dynamic_cast<const CcuCtxArgTest*>(&arg)->rankSize;
     }
 
 protected:
@@ -105,14 +100,14 @@ protected:
         std::vector<Variable> output(size);
         std::vector<Variable> token(size);
 
-        Variable          offset;
+        Variable offset;
         GroupOpSize goSize;
 
-        Memory              src;
+        Memory src;
         std::vector<Memory> dst(size);
 
         uint16_t selfBit = 1 << id;
-        uint16_t allBit  = ((1 << size) - 1) & (~(1 << id));
+        uint16_t allBit = ((1 << size) - 1) & (~(1 << id));
 
         Load(input[id]);
         Load(output[id]);
@@ -129,7 +124,7 @@ protected:
         GroupWait(*transportGroup, 1, allBit); // index = 1，传递output信息
         GroupWait(*transportGroup, 2, allBit); // index = 2，传递token信息
 
-        src.addr  = input[id];
+        src.addr = input[id];
         src.token = token[id];
         uint32_t dstId = 0;
         uint32_t curId = 0;
@@ -152,13 +147,14 @@ protected:
         }
         GroupWait(*transportGroup, 0, allBit);
     }
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg)
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg)
     {
-        auto taskArg = dynamic_cast<const CcuTaskArgTest *>(&arg);
+        auto taskArg = dynamic_cast<const CcuTaskArgTest*>(&arg);
         auto goSize = CalGoSize(taskArg->size);
-        
+
         return {taskArg->inputAddr, taskArg->outputAddr, 0, goSize[0], goSize[1], goSize[2], goSize[3], 0};
     }
+
 private:
     uint32_t id;
     uint32_t size;
@@ -166,11 +162,12 @@ private:
 
 class CcuContextRS : public CcuContext {
 public:
-    CcuContextRS(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports, const CcuTransportGroup &transportGroup)
+    CcuContextRS(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& transportGroup)
         : CcuContext(arg, transports, transportGroup)
     {
-        id = dynamic_cast<const CcuCtxArgTest *>(&arg)->rankId;
-        size = dynamic_cast<const CcuCtxArgTest *>(&arg)->rankSize;
+        id = dynamic_cast<const CcuCtxArgTest*>(&arg)->rankId;
+        size = dynamic_cast<const CcuCtxArgTest*>(&arg)->rankSize;
     }
 
 protected:
@@ -180,14 +177,14 @@ protected:
         std::vector<Variable> output(size);
         std::vector<Variable> token(size);
 
-        Variable          offset;
+        Variable offset;
         GroupOpSize goSize;
 
         std::vector<Memory> src(size);
-        Memory              dst;
+        Memory dst;
 
         uint16_t selfBit = 1 << id;
-        uint16_t allBit  = ((1 << size) - 1) & (~(1 << id));
+        uint16_t allBit = ((1 << size) - 1) & (~(1 << id));
 
         Load(input[id]);
         Load(output[id]);
@@ -217,23 +214,24 @@ protected:
             src[curId].addr += offset;
             src[curId].token = token[r];
         }
-        dst.addr  = output[id];
+        dst.addr = output[id];
         dst.token = token[id];
 
         GroupReduce(transports, dst, src, goSize, DataType::FP32, DataType::FP32, ReduceOp::SUM);
 
-        for (const auto &t : transports) {
+        for (const auto& t : transports) {
             RemotePost(*t, 0, selfBit);
         }
         GroupWait(*transportGroup, 0, allBit);
     }
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg)
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg)
     {
-        auto taskArg = dynamic_cast<const CcuTaskArgTest *>(&arg);
+        auto taskArg = dynamic_cast<const CcuTaskArgTest*>(&arg);
         auto goSize = CalGoSize(taskArg->size);
-        
+
         return {taskArg->inputAddr, taskArg->outputAddr, 0, goSize[0], goSize[1], goSize[2], goSize[3], 0};
     }
+
 private:
     uint32_t id;
     uint32_t size;
@@ -241,7 +239,8 @@ private:
 
 class CcuContextTestMultiArgs : public CcuContext {
 public:
-    CcuContextTestMultiArgs(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports, const CcuTransportGroup &transportGroup)
+    CcuContextTestMultiArgs(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& transportGroup)
         : CcuContext(arg, transports, transportGroup)
     {}
 
@@ -253,7 +252,7 @@ protected:
             Load(input[i]);
         }
     }
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg)
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg)
     {
         std::vector<uint64_t> args(14);
         for (int i = 0; i < 14; i++) {
@@ -265,7 +264,8 @@ protected:
 
 class CcuContextTestVariable : public CcuContext {
 public:
-    CcuContextTestVariable(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports, const CcuTransportGroup &transportGroup)
+    CcuContextTestVariable(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& transportGroup)
         : CcuContext(arg, transports, transportGroup)
     {}
 
@@ -287,15 +287,13 @@ protected:
         aa = a + ab;
         aa = ab + a;
     }
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg)
-    {
-        return {};
-    }
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) { return {}; }
 };
 
 class CcuContextTestDataTransfer : public CcuContext {
 public:
-    CcuContextTestDataTransfer(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports, const CcuTransportGroup &transportGroup)
+    CcuContextTestDataTransfer(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& transportGroup)
         : CcuContext(arg, transports, transportGroup)
     {}
 
@@ -322,15 +320,13 @@ protected:
         LocalCopy(dst, src, len, sig, 1);
         LocalReduce(dst, src, len, DataType::FP32, ReduceOp::SUM, sig, 1);
     }
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg)
-    {
-        return {};
-    }
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) { return {}; }
 };
 
 class CcuContextTestRepeat : public CcuContext {
 public:
-    CcuContextTestRepeat(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports, const CcuTransportGroup &transportGroup)
+    CcuContextTestRepeat(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& transportGroup)
         : CcuContext(arg, transports, transportGroup)
     {}
 
@@ -344,15 +340,13 @@ protected:
             rp.Break();
         }
     }
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg)
-    {
-        return {};
-    }
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) { return {}; }
 };
 
 class CcuContextTestFunction : public CcuContext {
 public:
-    CcuContextTestFunction(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports, const CcuTransportGroup &transportGroup)
+    CcuContextTestFunction(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& transportGroup)
         : CcuContext(arg, transports, transportGroup)
     {}
 
@@ -379,22 +373,19 @@ protected:
         Variable funcAddr;
         Func(funcAddr);
     }
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg)
-    {
-        return {};
-    }
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) { return {}; }
 };
 
-HcclResult CtxMgrAllocCkeStub(
-    const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo> &ckeInfos)
+HcclResult
+CtxMgrAllocCkeStub(const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo>& ckeInfos)
 {
     ckeInfos.clear();
     ResInfo ckeInfo(0, num);
     ckeInfos.push_back(ckeInfo);
     return HcclResult::HCCL_SUCCESS;
 }
-HcclResult CtxMgrAllocXnStub(
-    const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo> &xnInfos)
+HcclResult
+CtxMgrAllocXnStub(const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo>& xnInfos)
 {
     xnInfos.clear();
     ResInfo xnInfo(0, num);
@@ -402,15 +393,13 @@ HcclResult CtxMgrAllocXnStub(
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CtxMgrAllocResHandleStub(
-    const int32_t deviceLogicId, const CcuResReq resReq, CcuResHandle &handle)
+HcclResult CtxMgrAllocResHandleStub(const int32_t deviceLogicId, const CcuResReq resReq, CcuResHandle& handle)
 {
     handle = reinterpret_cast<CcuResHandle>(0x100);
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CtxMgrGetResourceStub(
-    const int32_t deviceLogicId, const CcuResHandle handle, CcuResRepository &ccuResRepo)
+HcclResult CtxMgrGetResourceStub(const int32_t deviceLogicId, const CcuResHandle handle, CcuResRepository& ccuResRepo)
 {
     ccuResRepo.blockMs[0].resize(1);
     ccuResRepo.blockMs[0][0].startId = 0;
@@ -443,34 +432,29 @@ HcclResult CtxMgrGetResourceStub(
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CtxMgrReleaseResHandleStub(
-    const int32_t deviceLogicId, const CcuResHandle handle)
+HcclResult CtxMgrReleaseResHandleStub(const int32_t deviceLogicId, const CcuResHandle handle)
 {
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CtxMgrAllocInsStub(
-    const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, ResInfo &insInfo)
+HcclResult CtxMgrAllocInsStub(const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, ResInfo& insInfo)
 {
     insInfo = ResInfo(0, num);
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CtxMgrReleaseInsStub(
-    const int32_t deviceLogicId, const uint8_t dieId, ResInfo &insInfo)
+HcclResult CtxMgrReleaseInsStub(const int32_t deviceLogicId, const uint8_t dieId, ResInfo& insInfo)
 {
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CtxMgrGetMissionKeyStub(
-    const int32_t deviceLogicId, const uint8_t dieId, uint32_t &missionKey)
+HcclResult CtxMgrGetMissionKeyStub(const int32_t deviceLogicId, const uint8_t dieId, uint32_t& missionKey)
 {
     missionKey = 0xFF;
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CtxMgrGetInstructionNumStub(
-    const int32_t deviceLogicId, const uint8_t dieId, uint32_t &instrNum)
+HcclResult CtxMgrGetInstructionNumStub(const int32_t deviceLogicId, const uint8_t dieId, uint32_t& instrNum)
 {
     instrNum = 0xFF;
     return HcclResult::HCCL_SUCCESS;
@@ -484,11 +468,16 @@ TEST_F(CcuContextManagerTest, AGTest)
     MOCKER_CPP(&CcuTransportGroup::CheckTransportCntCke).stubs().will(returnValue(HcclResult::HCCL_SUCCESS));
     MOCKER_CPP(&CcuTransportGroup::Destroy).stubs();
     MOCKER_CPP(&CcuTransport::ReleaseTransRes).stubs();
-    MOCKER_CPP(&CcuConnection::ReleaseConnRes).stubs().will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));;
+    MOCKER_CPP(&CcuConnection::ReleaseConnRes).stubs().will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
+    ;
     MOCKER(CcuDeviceManager::AllocCke).stubs().will(invoke(CtxMgrAllocCkeStub));
     MOCKER(CcuDeviceManager::AllocXn).stubs().will(invoke(CtxMgrAllocXnStub));
-    MOCKER_CPP(&CcuDeviceManager::GetCcuResourceSpaceTokenInfoForLocal).stubs().will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
-    MOCKER_CPP(&CcuDeviceManager::GetCcuResourceSpaceTokenInfo).stubs().will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
+    MOCKER_CPP(&CcuDeviceManager::GetCcuResourceSpaceTokenInfoForLocal)
+        .stubs()
+        .will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
+    MOCKER_CPP(&CcuDeviceManager::GetCcuResourceSpaceTokenInfo)
+        .stubs()
+        .will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
     MOCKER(CcuDeviceManager::AllocResHandle).stubs().will(invoke(CtxMgrAllocResHandleStub));
     MOCKER(CcuDeviceManager::GetResource).stubs().will(invoke(CtxMgrGetResourceStub));
     MOCKER(CcuDeviceManager::ReleaseResHandle).stubs().will(invoke(CtxMgrReleaseResHandleStub));
@@ -503,9 +492,9 @@ TEST_F(CcuContextManagerTest, AGTest)
         .will(returnValue(HcclResult::HCCL_SUCCESS));
 
     MOCKER(&CcuDeviceManager::GetXnBaseAddr)
-            .stubs()
-            .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
-            .will(returnValue(HcclResult::HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(returnValue(HcclResult::HCCL_SUCCESS));
 
     MOCKER(&CcuDeviceManager::GetCcuResourceSpaceTokenInfo)
         .stubs()
@@ -518,7 +507,7 @@ TEST_F(CcuContextManagerTest, AGTest)
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     LinkData linkData(portType, 0, 1, 0, 1);
     CcuChannelInfo channelInfo;
-    vector<CcuJetty *> ccuJettys;
+    vector<CcuJetty*> ccuJettys;
     std::vector<uint32_t> cntCke = {0, 1, 2};
 
     uint32_t rankId = 0;
@@ -528,10 +517,11 @@ TEST_F(CcuContextManagerTest, AGTest)
     std::vector<CcuTransport*> transports;
     for (int i = 0; i < rankSize; i++) {
         if (i != rankId) {
-            auto c = std::make_unique<CcuConnection>(linkData.GetLocalAddr(), linkData.GetRemoteAddr(), channelInfo, ccuJettys);
+            auto c = std::make_unique<CcuConnection>(
+                linkData.GetLocalAddr(), linkData.GetRemoteAddr(), channelInfo, ccuJettys);
             CcuTransport::CclBufferInfo locCclBufInfo;
             std::shared_ptr<CcuTransport> t = std::make_shared<CcuTransport>(nullptr, std::move(c), locCclBufInfo);
-            t->AppendRes(3,3);
+            t->AppendRes(3, 3);
             t->SetCntCke(cntCke);
             t->rmtRes.cntCkes = {128, 129, 130};
             t->rmtRes.xns = {1024 + rankId, 1024 + rankSize + rankId, 1024 + rankSize * 2 + rankId};
@@ -589,16 +579,16 @@ public:
 
 class CcuTaskArgSharedRes : public CcuTaskArg {
 public:
-    explicit CcuTaskArgSharedRes()
-    {}
+    explicit CcuTaskArgSharedRes() {}
 };
 
 class CcuContextTestSharesRes : public CcuContext {
 public:
-    CcuContextTestSharesRes(CcuCtxArg &arg, const std::vector<CcuTransport*> &transports, const CcuTransportGroup &transportGroup)
+    CcuContextTestSharesRes(
+        CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& transportGroup)
         : CcuContext(arg, transports, transportGroup)
     {
-        id = ((CcuCtxArgSharedRes &)(arg)).id;
+        id = ((CcuCtxArgSharedRes&)(arg)).id;
     }
 
 protected:
@@ -620,7 +610,7 @@ protected:
             ExportMaskSignal(sig, "sig" + std::to_string(id));
         }
     }
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg)
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg)
     {
         if (id == 0) {
             return {1024};
@@ -628,12 +618,13 @@ protected:
             return {};
         }
     }
+
 private:
     uint32_t id;
 };
 
-HcclResult CtxMgrGetResourceSharedResStub(
-    const int32_t deviceLogicId, const CcuResHandle handle, CcuResRepository &ccuResRepo)
+HcclResult
+CtxMgrGetResourceSharedResStub(const int32_t deviceLogicId, const CcuResHandle handle, CcuResRepository& ccuResRepo)
 {
     ccuResRepo.cke[0].resize(1);
     ccuResRepo.cke[0][0].startId = 0;
@@ -662,9 +653,14 @@ TEST_F(CcuContextManagerTest, TestSharedRes)
     MOCKER_CPP(&CcuTransportGroup::CheckTransportCntCke).stubs().will(returnValue(HcclResult::HCCL_SUCCESS));
     MOCKER_CPP(&CcuTransportGroup::Destroy).stubs();
     MOCKER_CPP(&CcuTransport::ReleaseTransRes).stubs();
-    MOCKER_CPP(&CcuConnection::ReleaseConnRes).stubs().will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));;
-    MOCKER_CPP(&CcuDeviceManager::GetCcuResourceSpaceTokenInfoForLocal).stubs().will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
-    MOCKER_CPP(&CcuDeviceManager::GetCcuResourceSpaceTokenInfo).stubs().will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
+    MOCKER_CPP(&CcuConnection::ReleaseConnRes).stubs().will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
+    ;
+    MOCKER_CPP(&CcuDeviceManager::GetCcuResourceSpaceTokenInfoForLocal)
+        .stubs()
+        .will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
+    MOCKER_CPP(&CcuDeviceManager::GetCcuResourceSpaceTokenInfo)
+        .stubs()
+        .will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
     MOCKER(CcuDeviceManager::AllocCke).stubs().will(invoke(CtxMgrAllocCkeStub));
     MOCKER(CcuDeviceManager::AllocXn).stubs().will(invoke(CtxMgrAllocXnStub));
 
@@ -687,17 +683,19 @@ TEST_F(CcuContextManagerTest, TestSharedRes)
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     LinkData linkData(portType, 0, 1, 0, 1);
     CcuChannelInfo channelInfo;
-    vector<CcuJetty *> ccuJettys;
+    vector<CcuJetty*> ccuJettys;
     std::vector<uint32_t> cntCke = {0, 1, 2};
 
     CcuTransport::CclBufferInfo locCclBufInfo;
     std::vector<CcuTransport*> transports0;
-    auto c0 = std::make_unique<CcuConnection>(linkData.GetLocalAddr(), linkData.GetRemoteAddr(), channelInfo, ccuJettys);
+    auto c0
+        = std::make_unique<CcuConnection>(linkData.GetLocalAddr(), linkData.GetRemoteAddr(), channelInfo, ccuJettys);
     std::shared_ptr<CcuTransport> t0 = std::make_shared<CcuTransport>(nullptr, std::move(c0), locCclBufInfo);
     transports0.push_back(t0.get());
 
     std::vector<CcuTransport*> transports1;
-    auto c1 = std::make_unique<CcuConnection>(linkData.GetLocalAddr(), linkData.GetRemoteAddr(), channelInfo, ccuJettys);
+    auto c1
+        = std::make_unique<CcuConnection>(linkData.GetLocalAddr(), linkData.GetRemoteAddr(), channelInfo, ccuJettys);
     std::shared_ptr<CcuTransport> t1 = std::make_shared<CcuTransport>(nullptr, std::move(c1), locCclBufInfo);
     transports1.push_back(t1.get());
 

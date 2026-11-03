@@ -78,21 +78,19 @@ typedef struct tagBkfMsgDecoder {
 
 /* func */
 uint32_t BkfMsgCodeInit(BkfMsgCoder *coder, const char *name, uint8_t *sendBuf, int32_t sendBufLen,
-                       uint16_t sliceKeyLen, F_BKF_DO sliceKeyCodec, F_BKF_GET_STR sliceKeyGetStrOrNull,
-                       BkfLog *logOrNull);
+    uint16_t sliceKeyLen, F_BKF_DO sliceKeyCodec, F_BKF_GET_STR sliceKeyGetStrOrNull, BkfLog *logOrNull);
 void BkfMsgCodeResetSliceKeyPara(BkfMsgCoder *coder, uint16_t sliceKeyLen, F_BKF_DO sliceKeyCodec,
     F_BKF_GET_STR sliceKeyGetStrOrNull);
 uint32_t BkfMsgCodeMsgHead(BkfMsgCoder *coder, uint16_t msgId, uint8_t flag);
 uint32_t BkfMsgCodeTLV(BkfMsgCoder *coder, uint16_t typeId, uint8_t flag, void *val, BOOL updMsgBodyLen);
-uint32_t BkfMsgCodeRawTLV(BkfMsgCoder *coder, uint16_t typeId, uint8_t flag,
-                         void *val, int32_t valRealLen, BOOL updMsgBodyLen);
+uint32_t BkfMsgCodeRawTLV(BkfMsgCoder *coder, uint16_t typeId, uint8_t flag, void *val, int32_t valRealLen,
+    BOOL updMsgBodyLen);
 uint32_t BkfMsgCodeAppendValLen(BkfMsgCoder *coder, uint8_t flag, int32_t valRealLen, BOOL updMsgBodyLen);
 uint8_t *BkfMsgCodeGetLeft(BkfMsgCoder *coder, int32_t *leftLen);
 int32_t BkfMsgCodeGetValidMsgLen(BkfMsgCoder *coder);
 
 uint32_t BkfMsgDecodeInit(BkfMsgDecoder *decoder, const char *name, uint8_t *rcvData, int32_t dataLen,
-                         uint16_t sliceKeyLen, F_BKF_DO sliceKeyCodec, F_BKF_GET_STR sliceKeyGetStrOrNull,
-                         BkfLog *logOrNull);
+    uint16_t sliceKeyLen, F_BKF_DO sliceKeyCodec, F_BKF_GET_STR sliceKeyGetStrOrNull, BkfLog *logOrNull);
 void BkfMsgDeCodeResetSliceKeyPara(BkfMsgDecoder *decoder, uint16_t sliceKeyLen, F_BKF_DO sliceKeyCodec,
     F_BKF_GET_STR sliceKeyGetStrOrNull);
 BkfMsgHead *BkfMsgDecodeMsgHead(BkfMsgDecoder *decoder, uint32_t *errCode);
@@ -107,4 +105,3 @@ BkfTL *BkfMsgDecodeTLV(BkfMsgDecoder *decoder, uint32_t *errCode);
 #endif
 
 #endif
-

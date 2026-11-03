@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef HCCLV2_CCU_CONTEXT_ALL_GATHER_MESH_1D_2DIE_H_
 #define HCCLV2_CCU_CONTEXT_ALL_GATHER_MESH_1D_2DIE_H_
 
@@ -23,15 +22,15 @@ namespace Hccl {
 
 class CcuContextAllGatherMesh1D2Die : public CcuContextAlgBase {
 public:
-    CcuContextAllGatherMesh1D2Die(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                              const CcuTransportGroup &group);
+    CcuContextAllGatherMesh1D2Die(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
     ~CcuContextAllGatherMesh1D2Die() override {}
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
 
 private:
-    bool withMyRank_ = true;  // 发数据是否包含本rank
+    bool withMyRank_ = true; // 发数据是否包含本rank
     std::vector<CcuRep::Variable> input_;
     std::vector<CcuRep::Variable> output_;
     CcuRep::Variable offset_;

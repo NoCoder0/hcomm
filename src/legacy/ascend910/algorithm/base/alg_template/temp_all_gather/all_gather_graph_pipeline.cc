@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "all_gather_graph_pipeline.h"
 #include "alg_template_register.h"
@@ -14,16 +14,14 @@
 constexpr u32 STEP_OFFSET_TWO = 2;
 
 namespace hccl {
-AllGatherGraphPipeline::AllGatherGraphPipeline(const HcclDispatcher dispatcher) : AlgTemplateBase(dispatcher)
-{}
+AllGatherGraphPipeline::AllGatherGraphPipeline(const HcclDispatcher dispatcher) : AlgTemplateBase(dispatcher) {}
 
-AllGatherGraphPipeline::~AllGatherGraphPipeline()
-{}
+AllGatherGraphPipeline::~AllGatherGraphPipeline() {}
 
-HcclResult AllGatherGraphPipeline::Prepare(HcomCollOpInfo *opInfo, u32 userRank, u64 &count, DeviceMem &inputMem,
-    DeviceMem &outputMem, SubCommInfo &level0CommInfo, SubCommInfo &level1CommInfo, Stream &mainStream,
-    std::vector<Stream> &subStream, std::vector<std::shared_ptr<LocalNotify>> &notifyMain,
-    std::vector<std::shared_ptr<LocalNotify>> &notifySub)
+HcclResult AllGatherGraphPipeline::Prepare(
+    HcomCollOpInfo* opInfo, u32 userRank, u64& count, DeviceMem& inputMem, DeviceMem& outputMem,
+    SubCommInfo& level0CommInfo, SubCommInfo& level1CommInfo, Stream& mainStream, std::vector<Stream>& subStream,
+    std::vector<std::shared_ptr<LocalNotify>>& notifyMain, std::vector<std::shared_ptr<LocalNotify>>& notifySub)
 {
     opInfo_ = opInfo;
     memSliceCount_ = count;
@@ -59,20 +57,18 @@ HcclResult AllGatherGraphPipeline::Prepare(HcomCollOpInfo *opInfo, u32 userRank,
     // streamNotify, size: n
     streamNotifyMain_ = notifyMain;
     if (streamNotifyMain_.size() < intraRankSize_) {
-        HCCL_ERROR("[AllGatherGraphPipeline][Prepare]rank[%u] streamNotifyMain_ size[%u] error, is smaller than,"
-                   "intraRankSize_[%u]",
-            userRank_,
-            streamNotifyMain_.size(),
-            intraRankSize_);
+        HCCL_ERROR(
+            "[AllGatherGraphPipeline][Prepare]rank[%u] streamNotifyMain_ size[%u] is smaller than "
+            "intraRankSize_[%u]",
+            userRank_, streamNotifyMain_.size(), intraRankSize_);
         return HCCL_E_INTERNAL;
     }
     streamNotifySub_ = notifySub;
     if (streamNotifySub_.size() < intraRankSize_) {
-        HCCL_ERROR("[AllGatherGraphPipeline][Prepare]rank[%u] streamNotifySub_ size[%u] error, is smaller than,"
-                   "intraRankSize_[%u]",
-            userRank_,
-            streamNotifySub_.size(),
-            intraRankSize_);
+        HCCL_ERROR(
+            "[AllGatherGraphPipeline][Prepare]rank[%u] streamNotifySub_ size[%u] is smaller than "
+            "intraRankSize_[%u]",
+            userRank_, streamNotifySub_.size(), intraRankSize_);
         return HCCL_E_INTERNAL;
     }
 
@@ -82,12 +78,11 @@ HcclResult AllGatherGraphPipeline::Prepare(HcomCollOpInfo *opInfo, u32 userRank,
     dmaMem_.push_back(dmaMem0);
     dmaMem_.push_back(dmaMem1);
 
-    HCCL_INFO("[AllGatherGraphPipeline][Prepare]streamNum[%zu], streamNotifyMainNum[%zu], streamNotifySubNum[%zu]",
-        subStream_.size(),
-        streamNotifyMain_.size(),
-        streamNotifySub_.size());
-    HCCL_INFO("[AllGatherGraphPipeline][Prepare]interLinksNum[%zu], intraLinksNum[%zu]",
-        interLinks_.size(),
+    HCCL_INFO(
+        "[AllGatherGraphPipeline][Prepare]streamNum[%zu], streamNotifyMainNum[%zu], streamNotifySubNum[%zu]",
+        subStream_.size(), streamNotifyMain_.size(), streamNotifySub_.size());
+    HCCL_INFO(
+        "[AllGatherGraphPipeline][Prepare]interLinksNum[%zu], intraLinksNum[%zu]", interLinks_.size(),
         intraLinks_.size());
     return HCCL_SUCCESS;
 }
@@ -150,7 +145,7 @@ HcclResult AllGatherGraphPipeline::RunAsync()
     // step 0 前置操作：所有卡本地数据从userIn-->userOut
     DeviceMem locSrc = DeviceMem::create(usrInMemAddr_, memSliceSize);
     u64 localOffsetByte = memSliceCount_ * userRank_ * unitSize;
-    DeviceMem locDst = DeviceMem::create(static_cast<u8 *>(dmaMem_[1].ptr()) + localOffsetByte, memSliceSize);
+    DeviceMem locDst = DeviceMem::create(static_cast<u8*>(dmaMem_[1].ptr()) + localOffsetByte, memSliceSize);
     CHK_RET(HcclD2DMemcpyAsync(dispatcher_, locDst, locSrc, stream_));
 
     for (u32 step = 0; step < interRankSize_; step++) {
@@ -160,40 +155,31 @@ HcclResult AllGatherGraphPipeline::RunAsync()
 
         u64 serverRankOffset = intraRankId_ + (interRankId_ + interRankSize_ - step) % interRankSize_ * intraRankSize_;
         u64 serverOffsetByte = memSliceCount_ * serverRankOffset * unitSize;
-        u64 readRemoteOffset = intraRankId_ + (prevInterRankId + interRankSize_ - step) % interRankSize_ *
-                                                  intraRankSize_;  // server间前通信rank偏移
+        u64 readRemoteOffset
+            = intraRankId_
+              + (prevInterRankId + interRankSize_ - step) % interRankSize_ * intraRankSize_; // server间前通信rank偏移
         u64 readRemoteOffsetByte = memSliceCount_ * readRemoteOffset * unitSize;
 
         if (step < interRankSize_ - 1) {
-            CHK_RET(prevInterLink->TxAck(subStream_[0]));  // AckRecord
-            CHK_RET(nextInterLink->RxAck(subStream_[0]));  // AckWait
+            CHK_RET(prevInterLink->TxAck(subStream_[0])); // AckRecord
+            CHK_RET(nextInterLink->RxAck(subStream_[0])); // AckWait
 
-            CHK_RET(nextInterLink->TxAsync(UserMemType::OUTPUT_MEM,
-                serverOffsetByte,
-                static_cast<u8 *>(dmaMem_[1].ptr()) + serverOffsetByte,
-                memSliceSize,
-                subStream_[0]));
-            HCCL_DEBUG("[AllGatherGraphPipeline][RunAsync] local rank[%u] localOffset[%llu]tx with remoteRank[%u], "
-                       "remoteOffset[%llu] with slice[%llu]",
-                userRank_,
-                serverOffsetByte,
-                nextInterRankId,
-                serverOffsetByte,
-                memSliceSize);
-
-            CHK_RET(prevInterLink->RxAsync(UserMemType::OUTPUT_MEM,
-                readRemoteOffsetByte,
-                static_cast<u8 *>(dmaMem_[1].ptr()) + readRemoteOffsetByte,
-                memSliceSize,
-                subStream_[0]));  // wait
+            CHK_RET(nextInterLink->TxAsync(
+                UserMemType::OUTPUT_MEM, serverOffsetByte, static_cast<u8*>(dmaMem_[1].ptr()) + serverOffsetByte,
+                memSliceSize, subStream_[0]));
             HCCL_DEBUG(
-                "[AllGatherGraphPipeline][RunAsync] read local rank[%u] localOffset[%llu]tx with remoteRank[%u], "
+                "[AllGatherGraphPipeline][RunAsync] local rank[%u] localOffset[%llu] tx with remoteRank[%u], "
                 "remoteOffset[%llu] with slice[%llu]",
-                userRank_,
-                readRemoteOffsetByte,
-                prevInterRankId,
-                readRemoteOffsetByte,
-                memSliceSize);
+                userRank_, serverOffsetByte, nextInterRankId, serverOffsetByte, memSliceSize);
+
+            CHK_RET(prevInterLink->RxAsync(
+                UserMemType::OUTPUT_MEM, readRemoteOffsetByte,
+                static_cast<u8*>(dmaMem_[1].ptr()) + readRemoteOffsetByte, memSliceSize,
+                subStream_[0])); // wait
+            HCCL_DEBUG(
+                "[AllGatherGraphPipeline][RunAsync] read local rank[%u] localOffset[%llu] tx with remoteRank[%u], "
+                "remoteOffset[%llu] with slice[%llu]",
+                userRank_, readRemoteOffsetByte, prevInterRankId, readRemoteOffsetByte, memSliceSize);
 
             CHK_RET(prevInterLink->PostFinAck(subStream_[0]));
             CHK_RET(nextInterLink->WaitFinAck(subStream_[0]));
@@ -207,22 +193,22 @@ HcclResult AllGatherGraphPipeline::RunAsync()
         HCCL_DEBUG("[AllGatherGraphPipeline][RunAsync]now step is %u, intraRankSize is %u", step, intraRankSize_);
         for (u32 i = 1; i < intraRankSize_; i++) {
             u32 remIntraRankId = (intraRankId_ + i) % intraRankSize_;
-            CHK_RET(intraLinks_[remIntraRankId]->TxAck(subStream_[i]));  // ackrecord
-            CHK_RET(intraLinks_[remIntraRankId]->RxAck(subStream_[i]));  // ackwait
+            CHK_RET(intraLinks_[remIntraRankId]->TxAck(subStream_[i])); // ack record
+            CHK_RET(intraLinks_[remIntraRankId]->RxAck(subStream_[i])); // ack wait
 
-            void *remDMAMemPtr = nullptr;
+            void* remDMAMemPtr = nullptr;
             CHK_RET(intraLinks_[remIntraRankId]->GetRemoteMem(UserMemType::OUTPUT_MEM, &remDMAMemPtr));
-            u64 remoteOffset =
-                (interRankId_ - step + interRankSize_) % interRankSize_ * intraRankSize_ + remIntraRankId;
+            u64 remoteOffset
+                = (interRankId_ - step + interRankSize_) % interRankSize_ * intraRankSize_ + remIntraRankId;
             u64 remoteOffsetByte = memSliceCount_ * remoteOffset * unitSize;
-            void *dstAddr = static_cast<u8 *>(usrOutMemAddr_) + remoteOffsetByte;
+            void* dstAddr = static_cast<u8*>(usrOutMemAddr_) + remoteOffsetByte;
 
-            DeviceMem src = DeviceMem::create(static_cast<u8 *>(remDMAMemPtr) + remoteOffsetByte, memSliceSize);
+            DeviceMem src = DeviceMem::create(static_cast<u8*>(remDMAMemPtr) + remoteOffsetByte, memSliceSize);
             DeviceMem dst = DeviceMem::create(dstAddr, memSliceSize);
             CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dst, src, subStream_[i]));
 
-            CHK_RET(intraLinks_[remIntraRankId]->TxDataSignal(subStream_[i]));  // data record
-            CHK_RET(intraLinks_[remIntraRankId]->RxDataSignal(subStream_[i]));  // data wait
+            CHK_RET(intraLinks_[remIntraRankId]->TxDataSignal(subStream_[i])); // data record
+            CHK_RET(intraLinks_[remIntraRankId]->RxDataSignal(subStream_[i])); // data wait
         }
 
         CHK_RET(SubRecordMain());
@@ -234,4 +220,4 @@ HcclResult AllGatherGraphPipeline::RunAsync()
 }
 
 REGISTER_TEMPLATE(TemplateType::TEMPLATE_ALL_GATHER_GRAPH_PIPELINE, AllGatherGraphPipeline);
-}  // namespace hccl
+} // namespace hccl

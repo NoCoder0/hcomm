@@ -84,7 +84,7 @@ BkfDcTableType *BkfDcFindTableType(BkfDc *dc, uint16_t tableTypeId)
 
     tableType = dc->tableTypeCache[hashIdx];
     hit = (tableType != VOS_NULL) && (tableType->vTbl.tableTypeId == tableTypeId);
-    if (hit)  {
+    if (hit) {
         return tableType;
     }
 
@@ -128,4 +128,3 @@ BkfDcTableType *BkfDcGetNextTableType(BkfDc *dc, void **itorInOut)
 }
 #endif
 #endif
-

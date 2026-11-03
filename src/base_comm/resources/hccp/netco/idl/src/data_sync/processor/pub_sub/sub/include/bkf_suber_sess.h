@@ -28,7 +28,7 @@ extern "C" {
 #define BKF_SUBER_SESS_FATAL_ERR (301)
 #define BKF_SUBER_SESS_NEED_DELETE (302)
 
-typedef void(*F_BKF_SUBER_SESS_TRIG_SCHED_SELF)(void *cookieInit);
+typedef void (*F_BKF_SUBER_SESS_TRIG_SCHED_SELF)(void *cookieInit);
 typedef struct tagBkfSuberSessMngInitArg {
     BkfSuberEnv *env;
     void *cookie;
@@ -53,10 +53,10 @@ uint32_t BkfSuberSessProcDisconn(BkfSuberSessMng *sessMng);
 uint32_t BkfSuberSessProcSched(BkfSuberSessMng *sessMng, BkfMsgCoder *coder);
 uint32_t BkfSuberSessProcRcvData(BkfSuberSessMng *sessMng, BkfMsgDecoder *decoder, BkfMsgHead *msgHead);
 
-uint32_t BkfSuberSessDispOneSessSummary(BkfSuberSessMng *sessMng, BkfDisp *disp,
-    BkfDispTempCtx *lastTempCtxOrNull, BkfDispTempCtx *curTempCtx);
-uint32_t BkfSuberSessDispOneSessFsm(BkfSuberSessMng *sessMng, BkfDisp *disp,
-    BkfDispTempCtx *lastTempCtxOrNull, BkfDispTempCtx *curTempCtx);
+uint32_t BkfSuberSessDispOneSessSummary(BkfSuberSessMng *sessMng, BkfDisp *disp, BkfDispTempCtx *lastTempCtxOrNull,
+    BkfDispTempCtx *curTempCtx);
+uint32_t BkfSuberSessDispOneSessFsm(BkfSuberSessMng *sessMng, BkfDisp *disp, BkfDispTempCtx *lastTempCtxOrNull,
+    BkfDispTempCtx *curTempCtx);
 
 uint32_t BkfSuberSessDispBatchTimeoutTest(BkfSuberSessMng *sessMng, BkfDisp *disp);
 uint32_t BkfSuberSessDispCloseBatchTimeout(BkfSuberSessMng *sessMng, BkfDisp *disp);

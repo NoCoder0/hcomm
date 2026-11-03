@@ -33,9 +33,9 @@ static Hccl::LinkProtoType ConvertHcclProtoToLinkProto(HcclProtoType hcclProto)
         case HCCL_PROTO_TYPE_ROCE:
             // RoCE（基于RDMA的以太网协议）-> RDMA
             return Hccl::LinkProtoType::RDMA;
-        case HCCL_PROTO_TYPE_UBC_CTP:
+        case HCCL_PROTO_TYPE_UB_CTP:
         case HCCL_PROTO_TYPE_UBC_TP:
-        case HCCL_PROTO_TYPE_UBG_TP:
+        case HCCL_PROTO_TYPE_UB_RTP:
             // 华为统一总线系列协议 -> UB
             return Hccl::LinkProtoType::UB;
         case HCCL_PROTO_TYPE_RESERVED:
@@ -45,22 +45,23 @@ static Hccl::LinkProtoType ConvertHcclProtoToLinkProto(HcclProtoType hcclProto)
     }
 }
 
-static Hccl::PortDeploymentType ConvertDeploymentType(HcclNetDevDeployment type) {
-    if(type == HCCL_NETDEV_DEPLOYMENT_DEVICE) {
+static Hccl::PortDeploymentType ConvertDeploymentType(HcclNetDevDeployment type)
+{
+    if (type == HCCL_NETDEV_DEPLOYMENT_DEVICE) {
         return Hccl::PortDeploymentType::DEV_NET;
-    } else if(type == HCCL_NETDEV_DEPLOYMENT_HOST) {
+    } else if (type == HCCL_NETDEV_DEPLOYMENT_HOST) {
         return Hccl::PortDeploymentType::HOST_NET;
     } else {
-        return Hccl::PortDeploymentType::P2P;        
+        return Hccl::PortDeploymentType::P2P;
     }
 }
 
-static HcclResult ConvertToNetDevInfo(const HcclNetDevInfos &src, Hccl::NetDevInfo &dst)
+static HcclResult ConvertToNetDevInfo(const HcclNetDevInfos& src, Hccl::NetDevInfo& dst)
 {
     dst.devId = src.devicePhyId;
     dst.protoType = ConvertHcclProtoToLinkProto(src.addr.protoType);
     dst.type = ConvertDeploymentType(src.netdevDeployment);
-    if(dst.type == Hccl::PortDeploymentType::P2P) {
+    if (dst.type == Hccl::PortDeploymentType::P2P) {
         HCCL_ERROR("Invalid deployment type (devPhyId: %d)", src.devicePhyId);
         return HCCL_E_PARA;
     }
@@ -70,8 +71,8 @@ static HcclResult ConvertToNetDevInfo(const HcclNetDevInfos &src, Hccl::NetDevIn
             dst.addr = Hccl::IpAddress(src.addr.addr.s_addr);
         } else if (src.addr.type == HCCL_ADDR_TYPE_IP_V6) {
             // IPv6地址转换：先将in6_addr转换为字符串，再构造IpAddress
-            char        ipv6Str[INET6_ADDRSTRLEN];
-            const char *result = inet_ntop(AF_INET6, &src.addr.addr6, ipv6Str, INET6_ADDRSTRLEN);
+            char ipv6Str[INET6_ADDRSTRLEN];
+            const char* result = inet_ntop(AF_INET6, &src.addr.addr6, ipv6Str, INET6_ADDRSTRLEN);
             if (result == nullptr) {
                 HCCL_ERROR("Invalid result (devPhyId: %d)", src.devicePhyId);
                 return HCCL_E_PARA;
@@ -81,7 +82,7 @@ static HcclResult ConvertToNetDevInfo(const HcclNetDevInfos &src, Hccl::NetDevIn
             HCCL_ERROR("Invalid address type(devPhyId: %d)", src.devicePhyId);
             return HCCL_E_PARA;
         }
-    } catch (const std::exception &e) {
+    } catch (const std::exception& e) {
         // 捕获IpAddress构造中的异常（如无效地址、不支持的协议族）
         HCCL_ERROR("Failed to convert (devPhyId: %d)", src.devicePhyId);
         return HCCL_E_INTERNAL;
@@ -90,9 +91,9 @@ static HcclResult ConvertToNetDevInfo(const HcclNetDevInfos &src, Hccl::NetDevIn
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclNetDevOpenV2(const HcclNetDevInfos *info, HcclNetDev *netDev)
+HcclResult HcclNetDevOpenV2(const HcclNetDevInfos* info, HcclNetDev* netDev)
 {
-    CHK_PTR_NULL(info);  
+    CHK_PTR_NULL(info);
     CHK_PTR_NULL(netDev);
 
     Hccl::NetDevInfo pltInfo;
@@ -102,16 +103,16 @@ HcclResult HcclNetDevOpenV2(const HcclNetDevInfos *info, HcclNetDev *netDev)
         return ret;
     }
 
-    Hccl::InnerNetDevManager *netDevMgr = &Hccl::InnerNetDevManager::GetInstance();
+    Hccl::InnerNetDevManager* netDevMgr = &Hccl::InnerNetDevManager::GetInstance();
     if (netDevMgr == nullptr) {
         HCCL_ERROR("InnerNetDevManager::GetInstance() fail, devPhyId[%d]", info->devicePhyId);
         return HCCL_E_PTR;
     }
 
-    HcclNetDevice *hcclNetDev = nullptr;
-    ret                          = netDevMgr->AddDevice(pltInfo, hcclNetDev);
+    HcclNetDevice* hcclNetDev = nullptr;
+    ret = netDevMgr->AddDevice(pltInfo, hcclNetDev);
     if (ret != HCCL_SUCCESS) {
-        HCCL_ERROR("AddDevice fail, devPhyId[%d]",  info->devicePhyId);
+        HCCL_ERROR("AddDevice fail, devPhyId[%d]", info->devicePhyId);
         return ret;
     }
     *netDev = static_cast<HcclNetDev>(hcclNetDev);
@@ -123,39 +124,39 @@ HcclResult HcclNetDevCloseV2(HcclNetDev netDev)
 {
     HCCL_INFO("[HcclNetDevCloseV2] netDev[%p].", netDev);
     CHK_PTR_NULL(netDev);
-    Hccl::InnerNetDevManager *netDevMgr = &Hccl::InnerNetDevManager::GetInstance();
+    Hccl::InnerNetDevManager* netDevMgr = &Hccl::InnerNetDevManager::GetInstance();
     CHK_PTR_NULL(netDevMgr);
     return netDevMgr->DeleteDevice(static_cast<HcclNetDevice*>(netDev));
 }
 
-HcclResult HcclNetDevGetAddrV2(const HcclNetDev netDev, HcclAddress *addr)
+HcclResult HcclNetDevGetAddrV2(const HcclNetDev netDev, HcclAddress* addr)
 {
     CHK_PTR_NULL(netDev);
     CHK_PTR_NULL(addr);
 
-    auto ipAddr = static_cast<HcclNetDevice*>(netDev)->GetNetDevInfo().addr;    
+    auto ipAddr = static_cast<HcclNetDevice*>(netDev)->GetNetDevInfo().addr;
     CHK_PTR_NULL(&ipAddr);
     if (ipAddr.GetFamily() == AF_INET) {
         addr->type = HCCL_ADDR_TYPE_IP_V4;
         addr->addr = ipAddr.GetBinaryAddress().addr;
-        unsigned char *ipv4Addr = reinterpret_cast<unsigned char*>(&addr->addr);
+        unsigned char* ipv4Addr = reinterpret_cast<unsigned char*>(&addr->addr);
         HCCL_DEBUG("IPv4 Address: %u.%u.%u.%u", ipv4Addr[0], ipv4Addr[1], ipv4Addr[2], ipv4Addr[3]);
     } else if (ipAddr.GetFamily() == AF_INET6) {
-        addr->type  = HCCL_ADDR_TYPE_IP_V6;
+        addr->type = HCCL_ADDR_TYPE_IP_V6;
         addr->addr6 = ipAddr.GetBinaryAddress().addr6;
-        unsigned short *ipv6Addr = reinterpret_cast<unsigned short*>(&addr->addr6);
-        HCCL_DEBUG("IPv6 Address: %04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x",
-                    ipv6Addr[0], ipv6Addr[1], ipv6Addr[2], ipv6Addr[3],
-                    ipv6Addr[4], ipv6Addr[5], ipv6Addr[6], ipv6Addr[7]);
-    } else {        
-        HCCL_ERROR("HcclNetDevGetAddrV2 fail, devPhyId[%u]",
-                           static_cast<HcclNetDevice *>(netDev)->GetNetDevInfo().devId);
+        unsigned short* ipv6Addr = reinterpret_cast<unsigned short*>(&addr->addr6);
+        HCCL_DEBUG(
+            "IPv6 Address: %04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x", ipv6Addr[0], ipv6Addr[1], ipv6Addr[2], ipv6Addr[3],
+            ipv6Addr[4], ipv6Addr[5], ipv6Addr[6], ipv6Addr[7]);
+    } else {
+        HCCL_ERROR(
+            "HcclNetDevGetAddrV2 fail, devPhyId[%u]", static_cast<HcclNetDevice*>(netDev)->GetNetDevInfo().devId);
         return HCCL_E_PARA;
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclNetDevGetBusAddrV2(HcclDeviceId dstDevId, HcclAddress *busAddr)
+HcclResult HcclNetDevGetBusAddrV2(HcclDeviceId dstDevId, HcclAddress* busAddr)
 {
     (void)dstDevId;
     (void)busAddr;
@@ -163,12 +164,13 @@ HcclResult HcclNetDevGetBusAddrV2(HcclDeviceId dstDevId, HcclAddress *busAddr)
     return HCCL_E_NOT_SUPPORT;
 }
 
-HcclResult HcclNetDevGetNicAddrV2(int32_t devicePhyId, HcclAddress **addr, uint32_t *addrNum)
+HcclResult HcclNetDevGetNicAddrV2(int32_t devicePhyId, HcclAddress** addr, uint32_t* addrNum)
 {
     (void)devicePhyId;
     (void)addr;
     (void)addrNum;
-    HCCL_ERROR("HcclNetDevGetNicAddrV2: failed to get NIC address for devicePhyId[%d], addr[%p], addrNum[%p].",
-                devicePhyId, addr, addrNum);
+    HCCL_ERROR(
+        "HcclNetDevGetNicAddrV2: failed to get NIC address for devicePhyId[%d], addr[%p], addrNum[%p].", devicePhyId,
+        addr, addrNum);
     return HCCL_E_NOT_SUPPORT;
 }

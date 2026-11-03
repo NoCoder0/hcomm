@@ -16,10 +16,7 @@
  * @param [in]  attr:          object attribute
  * @return      atrace handle
  */
-TraHandle AtraceCreateWithAttr(TracerType tracerType, const char *objName, const TraceAttr *attr)
-{
-    return 0;
-}
+TraHandle AtraceCreateWithAttr(TracerType tracerType, const char* objName, const TraceAttr* attr) { return 0; }
 
 /**
  * @brief       Submite trace info
@@ -28,10 +25,10 @@ TraHandle AtraceCreateWithAttr(TracerType tracerType, const char *objName, const
  * @param [in]  bufSize:   size of buffer
  * @return      TraStatus
  */
-TraStatus AtraceSubmit(TraHandle handle, const void *buffer, uint32_t bufSize)
+TraStatus AtraceSubmit(TraHandle handle, const void* buffer, uint32_t bufSize)
 {
     if (handle == 0) {
-    return 0;
+        return 0;
     } else if (handle == 1) {
         return -1;
     }
@@ -43,7 +40,4 @@ TraStatus AtraceSubmit(TraHandle handle, const void *buffer, uint32_t bufSize)
  * @param [in]  handle:    trace handle
  * @return      NA
  */
-void AtraceDestroy(TraHandle handle)
-{
-    return;
-}
+void AtraceDestroy(TraHandle handle) { return; }

@@ -36,20 +36,11 @@ using namespace std;
 
 class CcuCommunicatorTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CommunicatorImplTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CommunicatorImplTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CommunicatorImplTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CommunicatorImplTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in CommunicatorImplTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in CommunicatorImplTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -62,7 +53,7 @@ TEST(CcuCommunicatorTest, should_return_success_when_calling_register)
 {
     // when
     MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    CommunicatorImpl *comm;
+    CommunicatorImpl* comm;
     std::unique_ptr<CcuCommunicator> communicator = std::make_unique<CcuCommunicator>(comm);
     EXPECT_NE(nullptr, communicator);
     EXPECT_NE(nullptr, communicator->GetCcuResPackMgr());
@@ -74,6 +65,6 @@ TEST(CcuCommunicatorTest, should_return_success_when_calling_register)
 
 TEST(CcuCommunicatorTest, should_return_success_when_calling_castbin2uInt)
 {
-    EXPECT_EQ(CastBin2UInt("1"), 1); 
-    EXPECT_THROW(CastBin2UInt("3"), InvalidParamsException); 
+    EXPECT_EQ(CastBin2UInt("1"), 1);
+    EXPECT_THROW(CastBin2UInt("3"), InvalidParamsException);
 }

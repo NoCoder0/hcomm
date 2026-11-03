@@ -11,16 +11,17 @@
 #include "gtest/gtest.h"
 #include <mockcpp/mokc.h>
 #include <mockcpp/mockcpp.hpp>
+#include "test_mock_setup.h"
 #include "stub_communicator_impl_trans_mgr.h"
- 
+
 #define private public
 #define protected public
- 
+
 #include "ub_mem_transport.h"
 #include "ub_local_notify.h"
 #include "local_ub_rma_buffer.h"
 #include "socket_exception.h"
-#include "hccl_one_sided_service.h"
+#include "hccl_one_sided_service_v2.h"
 
 #include "stub_communicator_impl_trans_mgr.h"
 #include "detour_service.h"
@@ -32,7 +33,7 @@
 #include "rma_buffer.h"
 #undef protected
 #undef private
- 
+
 #define HCCL_HDC_TYPE_D2H 0
 #define HCCL_HDC_TYPE_H2D 1
 #include <memory>
@@ -40,34 +41,21 @@
 #include <chrono>
 #include <vector>
 #include <stdexcept>
- 
+
 using namespace Hccl;
- 
+
 class HcclOneSidedServiceTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "HcclOneSidedServiceTest SetUP" << std::endl;
-    }
- 
-    static void TearDownTestCase()
-    {
-        std::cout << "HcclOneSidedServiceTest TearDown" << std::endl;
-    }
- 
+    static void SetUpTestCase() { std::cout << "HcclOneSidedServiceTest SetUP" << std::endl; }
+
+    static void TearDownTestCase() { std::cout << "HcclOneSidedServiceTest TearDown" << std::endl; }
+
     virtual void SetUp()
     {
         std::cout << "A Test case in HcclOneSidedServiceTest SetUp" << std::endl;
-        MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-        MOCKER(HrtNotifyCreate).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
-        MOCKER(HrtNotifyCreateWithFlag).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
-        MOCKER(HrtGetNotifyID).stubs().will(returnValue(fakeNotifyId));
-        MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(fakeDevPhyId)));
-        MOCKER(HrtIpcSetNotifyName).stubs().with(mockcpp::any(), outBoundP(fakeName, sizeof(fakeName)), mockcpp::any());
-        MOCKER(HrtNotifyGetOffset).stubs().will(returnValue(fakeOffset));
-        MOCKER(HrtGetDeviceType).stubs().will(returnValue(DevType(DevType::DEV_TYPE_950)));
+        SETUP_COMM_NOTIFY_MOCKS();
     }
- 
+
     virtual void TearDown()
     {
         std::cout << "A Test case in HcclOneSidedServiceTest TearDown" << std::endl;
@@ -92,7 +80,7 @@ TEST_F(HcclOneSidedServiceTest, test_RegMemAndDeregMem)
 
     oneSidedService.linkDataMap_.emplace(remoteRankId, linkData);
 
-    int *a = new int();
+    int* a = new int();
     oneSidedService.RegMem(a, sizeof(int), HcclMemType::HCCL_MEM_TYPE_DEVICE, remoteRankId, localMemDesc);
     oneSidedService.DeregMem(localMemDesc);
     delete a;
@@ -104,7 +92,7 @@ TEST_F(HcclOneSidedServiceTest, test_RegMem_Fail_1)
     HcclOneSidedService oneSidedService(fakeComm);
     HcclMemDesc localMemDesc;
     RankId remoteRankId = 0;
-    int *a = new int();
+    int* a = new int();
     oneSidedService.RegMem(a, sizeof(int), HcclMemType::HCCL_MEM_TYPE_HOST, remoteRankId, localMemDesc);
     delete a;
 }
@@ -126,25 +114,25 @@ TEST_F(HcclOneSidedServiceTest, test_ExchangeMemDesc)
     HcclOneSidedService oneSidedServiceA(fakeCommA);
     HcclMemDesc MemDescA;
     HcclMemDesc MemDescB;
-    int *a = new int;
+    int* a = new int;
     // 打桩--------------------------------------------------------------------------------------------------
 
-    BaseMemTransport::CommonLocRes    locRes;
-    BaseMemTransport::Attribution     attr;
+    BaseMemTransport::CommonLocRes locRes;
+    BaseMemTransport::Attribution attr;
     BaseMemTransport::LocCntNotifyRes locCntRes;
-    LinkData                          link(BasePortType(PortDeploymentType::DEV_NET), 0, 1, 0, 1);
-    void                             *rdmaHandle = (void *)0x100;
-    IpAddress                         ipAddress("1.0.0.0");
-    Socket                            fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER,
-    NicType::DEVICE_NIC_TYPE); 
+    LinkData link(BasePortType(PortDeploymentType::DEV_NET), 0, 1, 0, 1);
+    void* rdmaHandle = (void*)0x100;
+    IpAddress ipAddress("1.0.0.0");
+    Socket fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
     bool isRecvFirst = false;
-    std::unique_ptr<UbMemTransport> transport = make_unique<UbMemTransport>(locRes, attr, link,
-        fakeSocket, rdmaHandle, locCntRes, isRecvFirst);
+    std::unique_ptr<UbMemTransport> transport
+        = make_unique<UbMemTransport>(locRes, attr, link, fakeSocket, rdmaHandle, locCntRes, isRecvFirst);
 
     oneSidedServiceA.linkDataMap_.emplace(RankIdB, linkData1);
     MOCKER_CPP(&ConnectionsBuilder::BatchBuild).stubs().will(returnValue(0));
     MOCKER_CPP(&SocketManager::BatchCreateSockets, void(SocketManager::*)(const std::vector<LinkData>&))
-        .stubs().will(returnValue(0));
+        .stubs()
+        .will(returnValue(0));
     MOCKER_CPP(&ConnLocalNotifyManager::ApplyFor).stubs().will(returnValue(0));
     MOCKER_CPP(&MemTransportManager::BatchBuildOneSidedTransports).stubs().will(returnValue(0));
     fakeCommA.memTransportManager = std::move(std::make_unique<MemTransportManager>(fakeCommA));
@@ -152,8 +140,8 @@ TEST_F(HcclOneSidedServiceTest, test_ExchangeMemDesc)
     MOCKER_CPP(&MemTransportManager::IsAllOneSidedTransportReady).stubs().will(returnValue(true));
 
     // // 打桩 SocketManager::GetConnectedSocket
-    shared_ptr<Socket> fakeSocketPtr =
-        make_shared<Socket>(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    shared_ptr<Socket> fakeSocketPtr
+        = make_shared<Socket>(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
     SocketConfig socketConfig(linkData1.GetRemoteRankId(), linkData1, fakeCommA.GetEstablishLinkSocketTag());
     fakeCommA.GetSocketManager().connectedSocketMap[socketConfig] = std::move(fakeSocketPtr);
 
@@ -164,7 +152,7 @@ TEST_F(HcclOneSidedServiceTest, test_ExchangeMemDesc)
     //-----------------------------------------------------------------------------------------------------
     oneSidedServiceA.RegMem(a, sizeof(int), HcclMemType::HCCL_MEM_TYPE_HOST, RankIdB, MemDescA);
     HcclMemDescs localMemDescs;
-    localMemDescs.array =  &MemDescA;
+    localMemDescs.array = &MemDescA;
     localMemDescs.arrayLength = 1;
 
     HcclMemDescs remoteMemDescs;
@@ -174,7 +162,8 @@ TEST_F(HcclOneSidedServiceTest, test_ExchangeMemDesc)
     delete a;
 }
 
-TEST_F(HcclOneSidedServiceTest, EnableMemAccess_ConnectionNotFound) {
+TEST_F(HcclOneSidedServiceTest, EnableMemAccess_ConnectionNotFound)
+{
     CommunicatorImpl com;
     HcclOneSidedService service(com);
     // 创建一个HcclMemDesc对象，其中localRankId不存在于oneSidedConns_
@@ -188,7 +177,8 @@ TEST_F(HcclOneSidedServiceTest, EnableMemAccess_ConnectionNotFound) {
     EXPECT_EQ(service.EnableMemAccess(desc, mem), HCCL_E_NOT_FOUND);
 }
 
-TEST_F(HcclOneSidedServiceTest, DisableMemAccess_ConnectionNotFound) {
+TEST_F(HcclOneSidedServiceTest, DisableMemAccess_ConnectionNotFound)
+{
     CommunicatorImpl com;
     HcclOneSidedService service(com);
 
@@ -214,31 +204,32 @@ TEST_F(HcclOneSidedServiceTest, test_BatchGet_BatchPut)
     HcclOneSidedService oneSidedServiceA(fakeCommA);
     HcclMemDesc MemDescA;
     HcclMemDesc MemDescB;
-    int *a = new int;
+    int* a = new int;
 
     BaseMemTransport::CommonLocRes locRes;
     BaseMemTransport::Attribution attr;
     BaseMemTransport::LocCntNotifyRes locCntRes;
     LinkData link(BasePortType(PortDeploymentType::DEV_NET), 0, 1, 0, 1);
-    void *rdmaHandle = (void *)0x100;
+    void* rdmaHandle = (void*)0x100;
     IpAddress ipAddress("1.0.0.0");
     Socket fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
     bool isRecvFirst = false;
-    std::unique_ptr<UbMemTransport> transport =
-        make_unique<UbMemTransport>(locRes, attr, link, fakeSocket, rdmaHandle, locCntRes, isRecvFirst);
+    std::unique_ptr<UbMemTransport> transport
+        = make_unique<UbMemTransport>(locRes, attr, link, fakeSocket, rdmaHandle, locCntRes, isRecvFirst);
     transport->baseStatus = TransportStatus::READY;
 
     oneSidedServiceA.linkDataMap_.emplace(RankIdB, linkData1);
     MOCKER_CPP(&ConnectionsBuilder::BatchBuild).stubs().will(returnValue(0));
     MOCKER_CPP(&SocketManager::BatchCreateSockets, void(SocketManager::*)(const std::vector<LinkData>&))
-        .stubs().will(returnValue(0));
+        .stubs()
+        .will(returnValue(0));
     MOCKER_CPP(&ConnLocalNotifyManager::ApplyFor).stubs().will(returnValue(0));
     MOCKER_CPP(&MemTransportManager::BatchBuildOneSidedTransports).stubs().will(returnValue(0));
     fakeCommA.memTransportManager = std::move(std::make_unique<MemTransportManager>(fakeCommA));
     fakeCommA.GetMemTransportManager()->oneSidedMap[linkData1] = std::move(transport);
     MOCKER_CPP(&MemTransportManager::IsAllOneSidedTransportReady).stubs().will(returnValue(true));
-    shared_ptr<Socket> fakeSocketPtr =
-        make_shared<Socket>(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    shared_ptr<Socket> fakeSocketPtr
+        = make_shared<Socket>(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
     SocketConfig socketConfig(linkData1.GetRemoteRankId(), linkData1, fakeCommA.GetEstablishLinkSocketTag());
     fakeCommA.GetSocketManager().connectedSocketMap[socketConfig] = std::move(fakeSocketPtr);
 
@@ -256,7 +247,7 @@ TEST_F(HcclOneSidedServiceTest, test_BatchGet_BatchPut)
 
     oneSidedServiceA.ExchangeMemDesc(RankIdB, localMemDescs, remoteMemDescs, actualNumOfB);
 
-    RmaMemDesc *RmaMemDescA = static_cast<RmaMemDesc *>(static_cast<void *>(MemDescA.desc));
+    RmaMemDesc* RmaMemDescA = static_cast<RmaMemDesc*>(static_cast<void*>(MemDescA.desc));
     RmaMemDescA->localRankId = RankIdB;
     HcclMem mem;
     oneSidedServiceA.EnableMemAccess(MemDescA, mem);
@@ -339,9 +330,7 @@ TEST_F(HcclOneSidedServiceTest, Ut_ExchangeMemDesc_When_CreateConnectionFail_Exp
     LinkData goodLink(BasePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB), 0, 1, 0, 1);
     service.linkDataMap_.emplace(1, goodLink);
 
-    MOCKER_CPP(&HcclOneSidedService::CreateConnection)
-        .stubs()
-        .will(returnValue(HCCL_E_INTERNAL));
+    MOCKER_CPP(&HcclOneSidedService::CreateConnection).stubs().will(returnValue(HCCL_E_INTERNAL));
 
     HcclMemDesc localDesc{};
     HcclMemDescs localMemDescs{&localDesc, 1};
@@ -361,9 +350,7 @@ TEST_F(HcclOneSidedServiceTest, Ut_ExchangeMemDesc_When_ConnExists_Expect_Reuse)
     service.linkDataMap_.emplace(1, link);
     service.oneSidedConns_.emplace(1, std::make_shared<HcclOneSidedConn>(&fakeComm, link));
 
-    MOCKER_CPP(&HcclOneSidedConn::ExchangeMemDesc)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclOneSidedConn::ExchangeMemDesc).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclMemDesc localDesc{};
     HcclMemDescs localMemDescs{&localDesc, 1};
@@ -374,22 +361,22 @@ TEST_F(HcclOneSidedServiceTest, Ut_ExchangeMemDesc_When_ConnExists_Expect_Reuse)
     EXPECT_EQ(service.oneSidedConns_.size(), 1u);
 }
 
-TEST_F(HcclOneSidedServiceTest, Ut_BatchPut_When_ConnNotFound_Expect_ThrowOutOfRange)
+TEST_F(HcclOneSidedServiceTest, Ut_BatchPut_When_ConnNotFound_Expect_E_NOT_FOUND)
 {
     CommunicatorImpl com;
     HcclOneSidedService service(com);
     HcclOneSideOpDesc opDesc{};
     rtStream_t stream = nullptr;
-    EXPECT_THROW(service.BatchPut(999, &opDesc, 1, stream), std::out_of_range);
+    EXPECT_EQ(service.BatchPut(999, &opDesc, 1, stream), HCCL_E_NOT_FOUND);
 }
 
-TEST_F(HcclOneSidedServiceTest, Ut_BatchGet_When_ConnNotFound_Expect_ThrowOutOfRange)
+TEST_F(HcclOneSidedServiceTest, Ut_BatchGet_When_ConnNotFound_Expect_E_NOT_FOUND)
 {
     CommunicatorImpl com;
     HcclOneSidedService service(com);
     HcclOneSideOpDesc opDesc{};
     rtStream_t stream = nullptr;
-    EXPECT_THROW(service.BatchGet(999, &opDesc, 1, stream), std::out_of_range);
+    EXPECT_EQ(service.BatchGet(999, &opDesc, 1, stream), HCCL_E_NOT_FOUND);
 }
 
 TEST_F(HcclOneSidedServiceTest, Ut_ConcurrentReads_When_MultiReadNotFound_Expect_NoDeadlock)
@@ -405,11 +392,12 @@ TEST_F(HcclOneSidedServiceTest, Ut_ConcurrentReads_When_MultiReadNotFound_Expect
             for (int i = 0; i < 50; ++i) {
                 try {
                     service->BatchPut(999, &opDesc, 1, stream);
-                } catch (const std::out_of_range &) {}
+                } catch (const std::out_of_range&) {
+                }
             }
         }));
     }
-    for (auto &f : readers) {
+    for (auto& f : readers) {
         EXPECT_EQ(f.wait_for(std::chrono::seconds(10)), std::future_status::ready);
     }
 }
@@ -439,13 +427,14 @@ TEST_F(HcclOneSidedServiceTest, Ut_ConcurrentReadWhileExchangeMemDesc_When_Mixed
             for (int i = 0; i < 50; ++i) {
                 try {
                     service->BatchPut(999, &opDesc, 1, stream);
-                } catch (const std::out_of_range &) {}
+                } catch (const std::out_of_range&) {
+                }
             }
         }));
     }
 
     EXPECT_EQ(writer.wait_for(std::chrono::seconds(10)), std::future_status::ready);
-    for (auto &f : readers) {
+    for (auto& f : readers) {
         EXPECT_EQ(f.wait_for(std::chrono::seconds(10)), std::future_status::ready);
     }
 }

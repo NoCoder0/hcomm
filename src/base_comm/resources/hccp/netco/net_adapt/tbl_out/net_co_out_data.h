@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef NET_CO_OUT_DATA_H
 #define NET_CO_OUT_DATA_H
 
@@ -125,4 +124,3 @@ NetCoOutTblType *NetCoOutGetNextTblByCtx(NetCo *co, NetCoOutGetTblCtx *ctx);
 #endif
 
 #endif
-

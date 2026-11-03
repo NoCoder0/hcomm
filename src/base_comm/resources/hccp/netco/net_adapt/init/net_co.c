@@ -20,9 +20,9 @@
 #include "net_slog.h"
 #include "net_co.h"
 
-__attribute__ ((visibility ("default"))) void *NetCoInitFactory(int epollfd, NetCoIpPortArg ipPortArg)
+__attribute__((visibility("default"))) void *NetCoInitFactory(int epollfd, NetCoIpPortArg ipPortArg)
 {
-    NetCoInitArg arg = { 0 };
+    NetCoInitArg arg = {0};
     int ret;
     NetCoOpenSlogSo();
     NetCoSlogApiInit();
@@ -32,30 +32,28 @@ __attribute__ ((visibility ("default"))) void *NetCoInitFactory(int epollfd, Net
     ret = (int)BkfUrlLeTcpSet(&arg.inConnNetUrl, ipPortArg.gatewayIp, ipPortArg.gatewayPort);
     ret = (int)BkfUrlLeTcpSet(&arg.outConnLsnUrl, ipPortArg.localIp, ipPortArg.listenPort);
     nslb_dbg("NetCoInitFactory NetCo init. ret %d", ret);
-    nslb_dbg("NetCoInitFactory local ip info: (0x%x) port(%d).", arg.inConnSelfUrl.ip.addrH,
-        arg.inConnSelfUrl.ip.port);
-    nslb_dbg("NetCoInitFactory remote ip info: (0x%x) port(%d).", arg.inConnNetUrl.ip.addrH,
-        arg.inConnNetUrl.ip.port);
+    nslb_dbg("NetCoInitFactory local ip info: (0x%x) port(%d).", arg.inConnSelfUrl.ip.addrH, arg.inConnSelfUrl.ip.port);
+    nslb_dbg("NetCoInitFactory remote ip info: (0x%x) port(%d).", arg.inConnNetUrl.ip.addrH, arg.inConnNetUrl.ip.port);
     nslb_dbg("NetCoInitFactory listen ip info: (0x%x) port(%d).", arg.outConnLsnUrl.ip.addrH,
         arg.outConnLsnUrl.ip.port);
-    NetCo* netco_handle = NetCoInit(&arg);
+    NetCo *netco_handle = NetCoInit(&arg);
     nslb_dbg("NetCoInitFactory NetCo init handle:%p epFd:%x", netco_handle, arg.epFd);
     return netco_handle;
 }
 
-__attribute__ ((visibility ("default"))) void NetCoDestruct(void *co)
+__attribute__((visibility("default"))) void NetCoDestruct(void *co)
 {
     NetCoCloseSlogSo();
     NetCoUninit(co);
 }
 
-__attribute__ ((visibility ("default"))) unsigned int NetCoFdEventDispatch(void *co, int fd, unsigned int curEvents)
+__attribute__((visibility("default"))) unsigned int NetCoFdEventDispatch(void *co, int fd, unsigned int curEvents)
 {
     return (int)NetCoFdEvtDispatch(co, fd, (uint32_t)curEvents);
 }
 
-__attribute__ ((visibility ("default"))) int NetCoTblAddUpd(void *netcoHandle, unsigned int type,
-    char *data, unsigned int data_len)
+__attribute__((visibility("default"))) int NetCoTblAddUpd(void *netcoHandle, unsigned int type, char *data,
+    unsigned int data_len)
 {
     int ret = 0;
 
@@ -89,7 +87,8 @@ __attribute__ ((visibility ("default"))) int NetCoTblAddUpd(void *netcoHandle, u
         case TYPE_TBL_ROOT_RANK:
             ret = (int)NetCoTblRootRankAddUpd(netcoHandle, (NetTblRootRank *)data, (uint32_t)data_len);
             break;
-        default: break;
+        default:
+            break;
     };
 
     if (ret != 0) {

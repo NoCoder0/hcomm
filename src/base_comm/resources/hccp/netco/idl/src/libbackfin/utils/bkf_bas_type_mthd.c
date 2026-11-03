@@ -34,7 +34,7 @@ char *BkfCharGetStr(const char *input, uint8_t *buf, int32_t bufLen)
     if (writeLen <= 0) {
         return "__BkfCharGetStrSnprintfNg";
     }
-    return (char*)buf;
+    return (char *)buf;
 }
 
 int32_t BkfUCharCmp(const uint8_t *key1Input, const uint8_t *key2InDs)
@@ -53,7 +53,7 @@ char *BkfUCharGetStr(const uint8_t *input, uint8_t *buf, int32_t bufLen)
     if (writeLen <= 0) {
         return "__BkfUCharGetStrSnprintfNg";
     }
-    return (char*)buf;
+    return (char *)buf;
 }
 
 int32_t BkfShortCmp(const int16_t *key1Input, const int16_t *key2InDs)
@@ -72,7 +72,7 @@ char *BkfShortGetStr(const int16_t *input, uint8_t *buf, int32_t bufLen)
     if (writeLen <= 0) {
         return "__BkfShortGetStrSnprintfNg";
     }
-    return (char*)buf;
+    return (char *)buf;
 }
 
 int32_t Bkfuint16_tCmp(const uint16_t *key1Input, const uint16_t *key2InDs)
@@ -91,7 +91,7 @@ char *Bkfuint16_tGetStr(const uint16_t *input, uint8_t *buf, int32_t bufLen)
     if (writeLen <= 0) {
         return "__Bkfuint16_tGetStrSnprintfNg";
     }
-    return (char*)buf;
+    return (char *)buf;
 }
 
 uint32_t BkfXShortCodec(uint16_t *inOut)
@@ -123,7 +123,7 @@ char *BkfInt32GetStr(const int32_t *input, uint8_t *buf, int32_t bufLen)
     if (writeLen <= 0) {
         return "__BkfInt32GetStrSnprintfNg";
     }
-    return (char*)buf;
+    return (char *)buf;
 }
 
 int32_t Bkfuint32_tCmp(const uint32_t *key1Input, const uint32_t *key2InDs)
@@ -142,7 +142,7 @@ char *Bkfuint32_tGetStr(const uint32_t *input, uint8_t *buf, int32_t bufLen)
     if (writeLen <= 0) {
         return "__Bkfuint32_tGetStrSnprintfNg";
     }
-    return (char*)buf;
+    return (char *)buf;
 }
 
 uint32_t BkfXInt32Codec(uint32_t *inOut)
@@ -170,11 +170,11 @@ char *BkfInt64GetStr(const int64_t *input, uint8_t *buf, int32_t bufLen)
     if ((input == VOS_NULL) || (buf == VOS_NULL) || (bufLen <= 0)) {
         return "__BkfInt64GetStrArgNg";
     }
-    writeLen = snprintf_truncated_s((char *)buf, (uint32_t)bufLen, "%"VOS_PRId64"", *input);
+    writeLen = snprintf_truncated_s((char *)buf, (uint32_t)bufLen, "%" VOS_PRId64 "", *input);
     if (writeLen <= 0) {
         return "__BkfInt64GetStrSnprintfNg";
     }
-    return (char*)buf;
+    return (char *)buf;
 }
 
 int32_t BkfUInt64Cmp(const uint64_t *key1Input, const uint64_t *key2InDs)
@@ -189,11 +189,12 @@ char *BkfUInt64GetStr(const uint64_t *input, uint8_t *buf, int32_t bufLen)
     if ((input == VOS_NULL) || (buf == VOS_NULL) || (bufLen <= 0)) {
         return "__BkfUInt64GetStrArgNg";
     }
-    writeLen = snprintf_truncated_s((char *)buf, (uint32_t)bufLen, "%"VOS_PRIu64" = 0x%"VOS_PRIx64"", *input, *input);
+    writeLen = snprintf_truncated_s((char *)buf, (uint32_t)bufLen, "%" VOS_PRIu64 " = 0x%" VOS_PRIx64 "", *input,
+        *input);
     if (writeLen <= 0) {
         return "__BkfUInt64GetStrSnprintfNg";
     }
-    return (char*)buf;
+    return (char *)buf;
 }
 
 uint32_t BkfXInt64Codec(uint64_t *inOut)
@@ -221,11 +222,11 @@ char *BkfIntptrGetStr(const intptr_t *input, uint8_t *buf, int32_t bufLen)
     if ((input == VOS_NULL) || (buf == VOS_NULL) || (bufLen <= 0)) {
         return "__BkfIntptrGetStrArgNg";
     }
-    writeLen = snprintf_truncated_s((char *)buf, (uint32_t)bufLen, "%"VOS_PRId64"", (int64_t)(*input));
+    writeLen = snprintf_truncated_s((char *)buf, (uint32_t)bufLen, "%" VOS_PRId64 "", (int64_t)(*input));
     if (writeLen <= 0) {
         return "__BkfIntptrGetStrSnprintfNg";
     }
-    return (char*)buf;
+    return (char *)buf;
 }
 
 int32_t BkfUIntptrCmp(const uintptr_t *key1Input, const uintptr_t *key2InDs)
@@ -240,12 +241,12 @@ char *BkfUIntptrGetStr(const uintptr_t *input, uint8_t *buf, int32_t bufLen)
     if ((input == VOS_NULL) || (buf == VOS_NULL) || (bufLen <= 0)) {
         return "__BkfUIntptrGetStrArgNg";
     }
-    writeLen = snprintf_truncated_s((char *)buf, (uint32_t)bufLen, "%"VOS_PRIu64" = 0x%"VOS_PRIx64"",
-                                    (uint64_t)(*input), (uint64_t)(*input));
+    writeLen = snprintf_truncated_s((char *)buf, (uint32_t)bufLen, "%" VOS_PRIu64 " = 0x%" VOS_PRIx64 "",
+        (uint64_t)(*input), (uint64_t)(*input));
     if (writeLen <= 0) {
         return "__BkfBkfUIntptrGetStrSnprintfNg";
     }
-    return (char*)buf;
+    return (char *)buf;
 }
 
 int32_t BkfCmpPtrAddr(const void **key1Input, const void **key2InDs)
@@ -266,12 +267,12 @@ char *BkfIpAddrGetStr(const uint32_t *ipAddrH, uint8_t *buf, int32_t bufLen)
         return "__BkfIpAddrGetStrArgNg";
     }
 
-    addrStr = VOS_IpAddrToStrEx(*ipAddrH, (char*)buf, bufLen);
+    addrStr = VOS_IpAddrToStrEx(*ipAddrH, (char *)buf, bufLen);
     if (addrStr == VOS_NULL) {
         return "__VOS_IpAddrToStrEx_ng__";
     }
 
-    return (char*)addrStr;
+    return (char *)addrStr;
 }
 
 uint32_t BkfIpAddrCodec(uint32_t *ipAddrInOut)

@@ -18,7 +18,7 @@ static const std::string INPUT_GRAPH_STAGE = "input_graph";
 static const std::string ORIGIN_GRAPH_STAGE = "origin_graph";
 static const std::string REVAMP_GRAPH_STAGE = "revamp_graph";
 
-void DumpRunManifest::Reset(const std::string &dataId)
+void DumpRunManifest::Reset(const std::string& dataId)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     m_dataId = dataId;
@@ -33,13 +33,13 @@ void DumpRunManifest::Reset(const std::string &dataId)
     m_retCode = static_cast<uint32_t>(HcclResult::HCCL_SUCCESS);
 }
 
-void DumpRunManifest::SetOpParam(const nlohmann::json &opParam)
+void DumpRunManifest::SetOpParam(const nlohmann::json& opParam)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     m_opParam = opParam;
 }
 
-void DumpRunManifest::SetGraphStageStats(const std::string &stage, const nlohmann::json &stageStats)
+void DumpRunManifest::SetGraphStageStats(const std::string& stage, const nlohmann::json& stageStats)
 {
     if (stage.empty()) {
         return;
@@ -48,7 +48,7 @@ void DumpRunManifest::SetGraphStageStats(const std::string &stage, const nlohman
     m_graphStages[stage] = stageStats;
 }
 
-void DumpRunManifest::SetMemorySnapshotStats(const nlohmann::json &memoryStats)
+void DumpRunManifest::SetMemorySnapshotStats(const nlohmann::json& memoryStats)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     m_memoryStats = memoryStats;
@@ -68,7 +68,7 @@ void DumpRunManifest::SetCheckResult(HcclResult retCode)
 
 HcclResult DumpRunManifest::Flush() const
 {
-    DumpManager &dumpManager = DumpManager::GetInstance();
+    DumpManager& dumpManager = DumpManager::GetInstance();
     if (!dumpManager.IsEnabled()) {
         return HcclResult::HCCL_SUCCESS;
     }
@@ -87,4 +87,4 @@ HcclResult DumpRunManifest::Flush() const
 
     return dumpManager.WriteJson(RUN_MANIFEST_PATH, doc);
 }
-}  // namespace HcclSim
+} // namespace HcclSim

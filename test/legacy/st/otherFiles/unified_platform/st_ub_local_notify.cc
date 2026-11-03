@@ -13,7 +13,7 @@
 #include <mockcpp/mockcpp.hpp>
 #define private public
 #include "rdma_handle_manager.h"
-#include "local_notify.h"
+#include "local_notify_v2.h"
 #include "ub_local_notify.h"
 #include "rdma_local_notify.h"
 #include "ipc_local_notify.h"
@@ -25,21 +25,12 @@ using namespace Hccl;
 
 class UbLocalNotifyTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "UbLocalNotifyTest SetUP" << std::endl;
-    }
- 
-    static void TearDownTestCase()
-    {
-        std::cout << "UbLocalNotifyTest TearDown" << std::endl;
-    }
- 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in UbLocalNotifyTest SetUP" << std::endl;
-    }
- 
+    static void SetUpTestCase() { std::cout << "UbLocalNotifyTest SetUP" << std::endl; }
+
+    static void TearDownTestCase() { std::cout << "UbLocalNotifyTest TearDown" << std::endl; }
+
+    virtual void SetUp() { std::cout << "A Test case in UbLocalNotifyTest SetUP" << std::endl; }
+
     virtual void TearDown()
     {
         GlobalMockObject::verify();
@@ -47,8 +38,8 @@ protected:
     }
 };
 
-TEST(UbLocalNotifyTest, ub_local_notify_initialize) {
-
+TEST(UbLocalNotifyTest, ub_local_notify_initialize)
+{
     HrtRaUbLocalMemRegOutParam localMemRegInfo;
     u32 fakeMemAddr = 0x200;
     u32 fakeMemSize = 256;
@@ -56,13 +47,13 @@ TEST(UbLocalNotifyTest, ub_local_notify_initialize) {
     u8 fakeKey[HRT_UB_MEM_KEY_MAX_LEN]{0};
     u32 fakeTokenId = 1;
     u64 fakeMemHandle = 0x200;
-    u64  fakeNotifyHandleAddr           = 100;
-    u32  fakeNotifyId                   = 1;
-    u64  fakeOffset                     = 200;
-    u64  fakeAddress                    = 300;
-    u32  fakePid                        = 100;
-    u64  fakeVa                         = 100;
-    u64  fakeSize                       = 1024;
+    u64 fakeNotifyHandleAddr = 100;
+    u32 fakeNotifyId = 1;
+    u64 fakeOffset = 200;
+    u64 fakeAddress = 300;
+    u32 fakePid = 100;
+    u64 fakeVa = 100;
+    u64 fakeSize = 1024;
     char fakeName[RTS_IPC_MEM_NAME_LEN] = "testRtsNotify";
     RtNotify_t notifyInfo;
 
@@ -71,22 +62,20 @@ TEST(UbLocalNotifyTest, ub_local_notify_initialize) {
     localMemRegInfo.tokenId = fakeTokenId;
     localMemRegInfo.targetSegVa = fakeSegVa;
     HrtDevResAddrInfo resAddrInfo;
-    MOCKER(HrtGetDevResAddress)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(resAddrInfo));
+    MOCKER(HrtGetDevResAddress).stubs().with(mockcpp::any()).will(returnValue(resAddrInfo));
 
     RequestHandle fakeReqHandle = 1;
 
     vector<char_t> out;
     out.resize(sizeof(struct MrRegInfoT));
-    struct MrRegInfoT* info = reinterpret_cast<struct MrRegInfoT *>(out.data());
+    struct MrRegInfoT* info = reinterpret_cast<struct MrRegInfoT*>(out.data());
     memcpy_s(info->out.key.value, HRT_UB_MEM_KEY_MAX_LEN, fakeKey, HRT_UB_MEM_KEY_MAX_LEN);
     info->out.key.size = HRT_UB_MEM_KEY_MAX_LEN;
     info->out.ub.tokenId = fakeTokenId;
     info->out.ub.targetSegHandle = fakeSegVa;
- 
-    MOCKER(RaUbLocalMemRegAsync).stubs()
+
+    MOCKER(RaUbLocalMemRegAsync)
+        .stubs()
         .with(mockcpp::any(), mockcpp::any(), outBound(out), outBound(reinterpret_cast<void*>(fakeMemHandle)))
         .will(returnValue(fakeReqHandle));
     MOCKER(RaUbLocalMemUnregAsync).stubs().will(returnValue(fakeReqHandle));
@@ -95,7 +84,7 @@ TEST(UbLocalNotifyTest, ub_local_notify_initialize) {
 
     MOCKER(HrtGetDeviceType).stubs().will(returnValue((DevType)DevType::DEV_TYPE_950));
     MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtNotifyCreate).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
+    MOCKER(HrtNotifyCreate).stubs().will(returnValue((void*)(fakeNotifyHandleAddr)));
     MOCKER(HrtIpcSetNotifyName).stubs().with(mockcpp::any(), outBoundP(fakeName, sizeof(fakeName)), mockcpp::any());
     MOCKER(HrtGetNotifyID).stubs().will(returnValue(fakeNotifyId));
     MOCKER(HrtNotifyGetAddr).stubs().with(mockcpp::any()).will(returnValue(fakeAddress));

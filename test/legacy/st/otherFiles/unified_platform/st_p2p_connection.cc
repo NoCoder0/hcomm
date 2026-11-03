@@ -15,7 +15,7 @@
 #include <mockcpp/mockcpp.hpp>
 #include "rma_connection.h"
 #include "p2p_connection.h"
-#include "local_ipc_rma_buffer.h"
+#include "local_ipc_rma_buffer_v2.h"
 #include "remote_rma_buffer.h"
 #include "types.h"
 #include "data_type.h"
@@ -27,20 +27,11 @@ using namespace Hccl;
 
 class P2PConnectionTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "P2PConnection tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "P2PConnection tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "P2PConnection tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "P2PConnection tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in P2PConnection SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in P2PConnection SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -55,19 +46,19 @@ TEST(P2PConnectionTest, should_return_true_when_calling_rma_connection_bind_and_
     BufferType type = BufferType::INPUT;
     std::shared_ptr<DevBuffer> devBuf = DevBuffer::Create(0x100, 0x100);
 
-    u32          id = 0; // port
+    u32 id = 0; // port
     BasePortType basePortType(PortDeploymentType::P2P);
-    PortData     portData(0, basePortType, id, IpAddress());
+    PortData portData(0, basePortType, id, IpAddress());
 
     LocalIpcRmaBuffer localIpcRmaBuffer(devBuf);
 
     std::unique_ptr<RemoteIpcRmaBuffer> remoteIpcRmaBuffer1 = make_unique<RemoteIpcRmaBuffer>();
     remoteIpcRmaBuffer1->Describe();
 
-    Socket *socket = nullptr;
+    Socket* socket = nullptr;
 
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::UB);
-    LinkData     linkData(portType, 0, 1, 0, 1);
+    LinkData linkData(portType, 0, 1, 0, 1);
     std::string tag = "Bind_Unbind";
 
     P2PConnection p2pConnection(socket, tag);
@@ -83,28 +74,28 @@ TEST(P2PConnectionTest, should_return_true_when_calling_rma_connection_bind_and_
 
 TEST(P2PConnectionTest, should_return_task_ptr_when_calling_rma_p2p_connection_prepare_read_tasks)
 {
-    Socket *socket = nullptr;
+    Socket* socket = nullptr;
 
     BasePortType basePortType(PortDeploymentType::P2P);
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::UB);
-    LinkData     linkData(portType, 0, 1, 0, 1);
-    std::string  tag = "Get";
+    LinkData linkData(portType, 0, 1, 0, 1);
+    std::string tag = "Get";
 
     P2PConnection rmaP2PConnection(socket, tag);
-    std::string   rmaP2PConnectionDescribeStr = rmaP2PConnection.Describe();
+    std::string rmaP2PConnectionDescribeStr = rmaP2PConnection.Describe();
     std::cout << "rmaConnectionDescribeStr: " << rmaP2PConnectionDescribeStr << std::endl;
 
     // only one task
-    u64          size1       = 0x1000; // 默认 SDMA最大是4GB
-    u64          remoteAddr1 = 8;
-    u64          localAddr1  = 0;
+    u64 size1 = 0x1000; // 默认 SDMA最大是4GB
+    u64 remoteAddr1 = 8;
+    u64 localAddr1 = 0;
     MemoryBuffer remoteMemBuf1(remoteAddr1, size1, 0);
     MemoryBuffer localMemBuf1(localAddr1, size1, 0);
     SqeConfig config{};
 
-    auto          res1           = rmaP2PConnection.PrepareRead(remoteMemBuf1, localMemBuf1, config);
-    TaskP2pMemcpy taskP2pMemcpy1 = static_cast<const TaskP2pMemcpy &>(*res1.get());
-;
+    auto res1 = rmaP2PConnection.PrepareRead(remoteMemBuf1, localMemBuf1, config);
+    TaskP2pMemcpy taskP2pMemcpy1 = static_cast<const TaskP2pMemcpy&>(*res1.get());
+    ;
     EXPECT_NE(nullptr, res1);
     EXPECT_EQ(remoteAddr1, taskP2pMemcpy1.GetSrcAddr());
     EXPECT_EQ(localAddr1, taskP2pMemcpy1.GetDstAddr());
@@ -112,46 +103,46 @@ TEST(P2PConnectionTest, should_return_task_ptr_when_calling_rma_p2p_connection_p
     EXPECT_EQ(MemcpyKind::D2D, taskP2pMemcpy1.GetKind());
 
     // zero task
-    u64          size2       = 0;
-    u64          remoteAddr2 = 8;
-    u64          localAddr2  = 0;
+    u64 size2 = 0;
+    u64 remoteAddr2 = 8;
+    u64 localAddr2 = 0;
     MemoryBuffer remoteMemBuf2(remoteAddr2, size2, 0);
     MemoryBuffer localMemBuf2(localAddr2, size2, 0);
 
     auto res2 = rmaP2PConnection.PrepareRead(remoteMemBuf2, localMemBuf2, config);
     EXPECT_EQ(nullptr, res2);
     // only one task
-    u64          size3       = 0x100000000; // 默认 SDMA最大是4GB
-    u64          remoteAddr3 = 8;
-    u64          localAddr3  = 0;
+    u64 size3 = 0x100000000; // 默认 SDMA最大是4GB
+    u64 remoteAddr3 = 8;
+    u64 localAddr3 = 0;
     MemoryBuffer remoteMemBuf3(remoteAddr3, size3, 0);
     MemoryBuffer localMemBuf3(localAddr3, size3, 0);
 
     auto res3 = rmaP2PConnection.PrepareRead(remoteMemBuf3, localMemBuf3, config);
     EXPECT_NE(nullptr, res3);
-    TaskP2pMemcpy taskP2pMemcpy3 = static_cast<const TaskP2pMemcpy &>(*res3.get());
+    TaskP2pMemcpy taskP2pMemcpy3 = static_cast<const TaskP2pMemcpy&>(*res3.get());
     EXPECT_EQ(remoteAddr3, taskP2pMemcpy3.GetSrcAddr());
     EXPECT_EQ(localAddr3, taskP2pMemcpy3.GetDstAddr());
     EXPECT_EQ(localMemBuf3.size, taskP2pMemcpy3.GetSize());
     EXPECT_EQ(MemcpyKind::D2D, taskP2pMemcpy3.GetKind());
 
     // two task
-    u64          size4       = 0x100000010; // 默认 SDMA最大是4GB
-    u64          remoteAddr4 = 8;
-    u64          localAddr4  = 0;
+    u64 size4 = 0x100000010; // 默认 SDMA最大是4GB
+    u64 remoteAddr4 = 8;
+    u64 localAddr4 = 0;
     MemoryBuffer remoteMemBuf4(remoteAddr4, size4, 0);
     MemoryBuffer localMemBuf4(localAddr4, size4, 0);
 
     auto res4 = rmaP2PConnection.PrepareRead(remoteMemBuf4, localMemBuf4, config);
 
     EXPECT_NE(nullptr, res4);
-    TaskP2pMemcpy taskP2pMemcpy40 = static_cast<const TaskP2pMemcpy &>(*res4.get());
+    TaskP2pMemcpy taskP2pMemcpy40 = static_cast<const TaskP2pMemcpy&>(*res4.get());
     EXPECT_EQ(remoteAddr3, taskP2pMemcpy40.GetSrcAddr());
     EXPECT_EQ(localAddr3, taskP2pMemcpy40.GetDstAddr());
     EXPECT_EQ(0x100000010, taskP2pMemcpy40.GetSize());
     EXPECT_EQ(MemcpyKind::D2D, taskP2pMemcpy40.GetKind());
 
-    TaskP2pMemcpy taskP2pMemcpy41 = static_cast<const TaskP2pMemcpy &>(*res4.get());
+    TaskP2pMemcpy taskP2pMemcpy41 = static_cast<const TaskP2pMemcpy&>(*res4.get());
     EXPECT_EQ(remoteAddr4, taskP2pMemcpy41.GetSrcAddr());
     EXPECT_EQ(localAddr4, taskP2pMemcpy41.GetDstAddr());
     EXPECT_EQ(0x100000010, taskP2pMemcpy41.GetSize());
@@ -166,29 +157,29 @@ TEST(P2PConnectionTest, should_return_task_ptr_when_calling_rma_p2p_connection_p
 
 TEST(P2PConnectionTest, should_return_task_ptr_when_calling_rma_p2p_connection_prepare_read_reduce_tasks)
 {
-    Socket *socket = nullptr;
+    Socket* socket = nullptr;
 
     BasePortType basePortType(PortDeploymentType::P2P);
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::UB);
-    LinkData     linkData(portType, 0, 1, 0, 1);
-    std::string  tag = "Get";
+    LinkData linkData(portType, 0, 1, 0, 1);
+    std::string tag = "Get";
 
     P2PConnection rmaP2PConnection(socket, tag);
-    std::string   rmaP2PConnectionDescribeStr = rmaP2PConnection.Describe();
+    std::string rmaP2PConnectionDescribeStr = rmaP2PConnection.Describe();
     std::cout << "rmaConnectionDescribeStr: " << rmaP2PConnectionDescribeStr << std::endl;
     DataType dataType = DataType::FP16;
     ReduceOp reduceOp = ReduceOp::SUM;
 
     // only one task
-    u64          size1       = 0x1000; // 默认 SDMA最大是4GB
-    u64          remoteAddr1 = 8;
-    u64          localAddr1  = 0;
+    u64 size1 = 0x1000; // 默认 SDMA最大是4GB
+    u64 remoteAddr1 = 8;
+    u64 localAddr1 = 0;
     MemoryBuffer remoteMemBuf1(remoteAddr1, size1, 0);
     MemoryBuffer localMemBuf1(localAddr1, size1, 0);
     SqeConfig config{};
 
-    auto           res1 = rmaP2PConnection.PrepareReadReduce(remoteMemBuf1, localMemBuf1, dataType, reduceOp, config);
-    TaskSdmaReduce taskSdmaReduce1 = static_cast<const TaskSdmaReduce &>(*res1.get());
+    auto res1 = rmaP2PConnection.PrepareReadReduce(remoteMemBuf1, localMemBuf1, dataType, reduceOp, config);
+    TaskSdmaReduce taskSdmaReduce1 = static_cast<const TaskSdmaReduce&>(*res1.get());
     EXPECT_NE(nullptr, res1);
     EXPECT_EQ(remoteAddr1, taskSdmaReduce1.GetSrcAddr());
     EXPECT_EQ(localAddr1, taskSdmaReduce1.GetDstAddr());
@@ -197,9 +188,9 @@ TEST(P2PConnectionTest, should_return_task_ptr_when_calling_rma_p2p_connection_p
     EXPECT_EQ(reduceOp, taskSdmaReduce1.GetReduceOp());
 
     // zero task
-    u64          size2       = 0;
-    u64          remoteAddr2 = 8;
-    u64          localAddr2  = 8;
+    u64 size2 = 0;
+    u64 remoteAddr2 = 8;
+    u64 localAddr2 = 8;
     MemoryBuffer remoteMemBuf2(remoteAddr2, size2, 0);
     MemoryBuffer localMemBuf2(localAddr2, size2, 0);
 
@@ -207,14 +198,14 @@ TEST(P2PConnectionTest, should_return_task_ptr_when_calling_rma_p2p_connection_p
     EXPECT_EQ(nullptr, res2);
 
     // only one task
-    u64          size3       = 0x100000000; // 默认 SDMA最大是4GB
-    u64          remoteAddr3 = 8;
-    u64          localAddr3  = 8;
+    u64 size3 = 0x100000000; // 默认 SDMA最大是4GB
+    u64 remoteAddr3 = 8;
+    u64 localAddr3 = 8;
     MemoryBuffer remoteMemBuf3(remoteAddr3, size3, 0);
     MemoryBuffer localMemBuf3(localAddr3, size3, 0);
 
-    auto           res3 = rmaP2PConnection.PrepareReadReduce(remoteMemBuf3, localMemBuf3, dataType, reduceOp, config);
-    TaskSdmaReduce taskSdmaReduce3 = static_cast<const TaskSdmaReduce &>(*res3.get());
+    auto res3 = rmaP2PConnection.PrepareReadReduce(remoteMemBuf3, localMemBuf3, dataType, reduceOp, config);
+    TaskSdmaReduce taskSdmaReduce3 = static_cast<const TaskSdmaReduce&>(*res3.get());
 
     EXPECT_NE(nullptr, res3);
     EXPECT_EQ(remoteAddr3, taskSdmaReduce3.GetSrcAddr());
@@ -224,14 +215,14 @@ TEST(P2PConnectionTest, should_return_task_ptr_when_calling_rma_p2p_connection_p
     EXPECT_EQ(reduceOp, taskSdmaReduce3.GetReduceOp());
 
     // two task
-    u64          size4       = 0x100000010; // 默认 SDMA最大是4GB
-    u64          remoteAddr4 = 8;
-    u64          localAddr4  = 8;
+    u64 size4 = 0x100000010; // 默认 SDMA最大是4GB
+    u64 remoteAddr4 = 8;
+    u64 localAddr4 = 8;
     MemoryBuffer remoteMemBuf4(remoteAddr4, size4, 0);
     MemoryBuffer localMemBuf4(localAddr4, size4, 0);
 
-    auto           res4 = rmaP2PConnection.PrepareReadReduce(remoteMemBuf4, localMemBuf4, dataType, reduceOp, config);
-    TaskSdmaReduce taskSdmaReduce40 = static_cast<const TaskSdmaReduce &>(*res4.get());
+    auto res4 = rmaP2PConnection.PrepareReadReduce(remoteMemBuf4, localMemBuf4, dataType, reduceOp, config);
+    TaskSdmaReduce taskSdmaReduce40 = static_cast<const TaskSdmaReduce&>(*res4.get());
 
     EXPECT_NE(nullptr, res4);
     EXPECT_EQ(remoteAddr4, taskSdmaReduce40.GetSrcAddr());
@@ -240,7 +231,7 @@ TEST(P2PConnectionTest, should_return_task_ptr_when_calling_rma_p2p_connection_p
     EXPECT_EQ(dataType, taskSdmaReduce40.GetDataType());
     EXPECT_EQ(reduceOp, taskSdmaReduce40.GetReduceOp());
 
-    TaskSdmaReduce taskSdmaReduce41 = static_cast<const TaskSdmaReduce &>(*res4.get());
+    TaskSdmaReduce taskSdmaReduce41 = static_cast<const TaskSdmaReduce&>(*res4.get());
 
     EXPECT_EQ(remoteAddr4, taskSdmaReduce41.GetSrcAddr());
     EXPECT_EQ(localAddr4, taskSdmaReduce41.GetDstAddr());
@@ -252,18 +243,19 @@ TEST(P2PConnectionTest, should_return_task_ptr_when_calling_rma_p2p_connection_p
     MemoryBuffer remoteMemBufDiff(0, 1000, 0);
     MemoryBuffer localMemBufDiff(2000, 1, 0);
 
-    EXPECT_THROW(rmaP2PConnection.PrepareReadReduce(remoteMemBufDiff, localMemBufDiff, dataType, reduceOp, config),
-                 InvalidParamsException);
+    EXPECT_THROW(
+        rmaP2PConnection.PrepareReadReduce(remoteMemBufDiff, localMemBufDiff, dataType, reduceOp, config),
+        InvalidParamsException);
 }
 
 TEST(P2PConnectionTest, should_return_task_ptr_when_calling_rma_p2p_connection_prepare_write)
 {
-    Socket *socket = nullptr;
+    Socket* socket = nullptr;
 
     BasePortType basePortType(PortDeploymentType::P2P);
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::UB);
-    LinkData     linkData(portType, 0, 1, 0, 1);
-    std::string  tag = "Write";
+    LinkData linkData(portType, 0, 1, 0, 1);
+    std::string tag = "Write";
 
     P2PConnection rmaP2PConnection(socket, tag);
 
@@ -272,17 +264,17 @@ TEST(P2PConnectionTest, should_return_task_ptr_when_calling_rma_p2p_connection_p
     SqeConfig config{};
 
     auto res1 = rmaP2PConnection.PrepareWrite(remoteMemBuffer, localMemBuffer, config);
-    EXPECT_NE(nullptr,res1);
+    EXPECT_NE(nullptr, res1);
 }
 
 TEST(P2PConnectionTest, should_return_task_ptr_when_calling_rma_p2p_connection_prepare_write_reduce)
 {
-    Socket *socket = nullptr;
+    Socket* socket = nullptr;
 
     BasePortType basePortType(PortDeploymentType::P2P);
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::UB);
-    LinkData     linkData(portType, 0, 1, 0, 1);
-    std::string  tag = "WriteReduce";
+    LinkData linkData(portType, 0, 1, 0, 1);
+    std::string tag = "WriteReduce";
 
     P2PConnection rmaP2PConnection(socket, tag);
 
@@ -294,5 +286,5 @@ TEST(P2PConnectionTest, should_return_task_ptr_when_calling_rma_p2p_connection_p
     SqeConfig config{};
 
     auto res1 = rmaP2PConnection.PrepareWriteReduce(remoteMemBuffer, localMemBuffer, dataType, reduceOp, config);
-    EXPECT_NE(nullptr,res1);
+    EXPECT_NE(nullptr, res1);
 }

@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: ccu executor -- loadXX
  * Author: caiyifan
  */
@@ -35,17 +38,26 @@ void LoadXnXnExecutor::Parser()
 
 void LoadXnXnExecutor::Run()
 {
-    auto &ccuResMgr = CcuResourceManager::GetInstance();
+    auto& ccuResMgr = CcuResourceManager::GetInstance();
     uint64_t xn1 = ccuResMgr.GetXnValue(rankId_, dieId_, xmId_);
     uint64_t xn2 = ccuResMgr.GetXnValue(rankId_, dieId_, xnId_);
     uint64_t val = xn1 + xn2;
     ccuResMgr.UpdateXnValue(rankId_, dieId_, xdId_, val);
 
-    HCCL_VM_DEBUG("Load Xn[{}] + Xn[{}] to Xn[{}]",
-        xmId_, xnId_, xdId_);
+    HCCL_VM_DEBUG("Load Xn[{}] + Xn[{}] to Xn[{}]", xmId_, xnId_, xdId_);
 }
 
 std::string LoadXnXnExecutor::Describe()
 {
     return HcclSim::StringFormat("[Simulation Execute] Load Xn[%u] + Xn[%u] to Xn[%u]\n", xmId_, xnId_, xdId_);
+}
+
+CcuTrace::CcuInstrTraceDetail LoadXnXnExecutor::CollectTraceDetail()
+{
+    CcuTrace::CcuInstrTraceDetail detail;
+    detail.typeName = "LoadXnXn";
+    auto& ccuResMgr = CcuResourceManager::GetInstance();
+    detail.args["xn1"] = std::to_string(ccuResMgr.GetXnValue(rankId_, dieId_, xmId_));
+    detail.args["xn2"] = std::to_string(ccuResMgr.GetXnValue(rankId_, dieId_, xnId_));
+    return detail;
 }

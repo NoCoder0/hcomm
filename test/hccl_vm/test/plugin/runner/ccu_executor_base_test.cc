@@ -29,17 +29,18 @@ using namespace hcomm::CcuRep;
 
 class MockCcuExecutor : public CcuExecutorBase {
 public:
-    MockCcuExecutor(int streamId, int rankId, int dieId, const CcuInstr &instr, CcuSimulator *ccuSimulator)
+    MockCcuExecutor(int streamId, int rankId, int dieId, const CcuInstr& instr, CcuSimulator* ccuSimulator)
         : CcuExecutorBase(streamId, rankId, dieId, instr, ccuSimulator)
     {}
 
     bool processCalled{false};
-    CcuResourceManager *processResMgr{nullptr};
+    CcuResourceManager* processResMgr{nullptr};
 
     void Parser() override {}
     void Run() override {}
     std::string Describe() override { return "MockExecutor"; }
-    void Process(CcuResourceManager &ccuResMgr) override {
+    void Process(CcuResourceManager& ccuResMgr) override
+    {
         processCalled = true;
         processResMgr = &ccuResMgr;
     }
@@ -47,8 +48,9 @@ public:
 
 class CcuExecutorBaseTest : public testing::Test {
 protected:
-    void SetUp() override {
-        auto &mgr = CcuResourceManager::GetInstance();
+    void SetUp() override
+    {
+        auto& mgr = CcuResourceManager::GetInstance();
         mgr.Init(0, 4, RunnerCcuVersion::CCU_V1, {});
 
         CcuInstr instr;
@@ -66,24 +68,27 @@ protected:
     std::unique_ptr<MockCcuExecutor> executor_;
 };
 
-TEST_F(CcuExecutorBaseTest, SetCkeSignal) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(CcuExecutorBaseTest, SetCkeSignal)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     mgr.UpdateCkeValue(0, 0, 0, 0x0000);
     executor_->SetCkeSignal(mgr, 0, 0x00FF);
     uint16_t val = mgr.GetCkeValue(0, 0, 0);
     EXPECT_EQ(val, 0x00FF);
 }
 
-TEST_F(CcuExecutorBaseTest, SetCkeSignal_WithExistingValue) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(CcuExecutorBaseTest, SetCkeSignal_WithExistingValue)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     mgr.UpdateCkeValue(0, 0, 0, 0x00F0);
     executor_->SetCkeSignal(mgr, 0, 0x000F);
     uint16_t val = mgr.GetCkeValue(0, 0, 0);
     EXPECT_EQ(val, 0x00FF);
 }
 
-TEST_F(CcuExecutorBaseTest, SetRmtCKESignal) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(CcuExecutorBaseTest, SetRmtCKESignal)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     mgr.Init(1, 4, RunnerCcuVersion::CCU_V1, {});
     mgr.UpdateCkeValue(1, 0, 0, 0x0000);
     executor_->SetRmtCKESignal(mgr, 1, 0, 0, 0x00FF);
@@ -91,16 +96,18 @@ TEST_F(CcuExecutorBaseTest, SetRmtCKESignal) {
     EXPECT_EQ(val, 0x00FF);
 }
 
-TEST_F(CcuExecutorBaseTest, ClearCkeSignal_NormalState) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(CcuExecutorBaseTest, ClearCkeSignal_NormalState)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     mgr.UpdateCkeValue(0, 0, 0, 0xFFFF);
     executor_->ClearCkeSignal(mgr, 0, 0x00FF);
     uint16_t val = mgr.GetCkeValue(0, 0, 0);
     EXPECT_EQ(val, 0xFF00);
 }
 
-TEST_F(CcuExecutorBaseTest, ClearCkeSignal_LoopState) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(CcuExecutorBaseTest, ClearCkeSignal_LoopState)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     simulator_->SetExecState(CcuExecState::EXEC_LOOP_INSTR);
     LoopGroupInfo loopGroupInfo;
     loopGroupInfo.ckeOffset_ = 5;
@@ -113,7 +120,8 @@ TEST_F(CcuExecutorBaseTest, ClearCkeSignal_LoopState) {
     EXPECT_EQ(val, 0xFF00);
 }
 
-TEST_F(CcuExecutorBaseTest, ParseMSList) {
+TEST_F(CcuExecutorBaseTest, ParseMSList)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(CcuInstr));
     instr.v1.add.count = 1;
@@ -128,7 +136,8 @@ TEST_F(CcuExecutorBaseTest, ParseMSList) {
     EXPECT_NE(result.find("MS["), std::string::npos);
 }
 
-TEST_F(CcuExecutorBaseTest, ParseMSList_ZeroCount) {
+TEST_F(CcuExecutorBaseTest, ParseMSList_ZeroCount)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(CcuInstr));
     instr.v1.add.count = 0;
@@ -141,31 +150,35 @@ TEST_F(CcuExecutorBaseTest, ParseMSList_ZeroCount) {
     EXPECT_FALSE(result.empty());
 }
 
-TEST_F(CcuExecutorBaseTest, WaitCkeProcess_MaskMatched) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(CcuExecutorBaseTest, WaitCkeProcess_MaskMatched)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     mgr.UpdateCkeValue(0, 0, 0, 0xFFFF);
     executor_->WaitCkeProcess(0, 0xFFFF, 0, "test_instr");
     EXPECT_TRUE(executor_->processCalled);
     EXPECT_FALSE(simulator_->waitCKE_);
 }
 
-TEST_F(CcuExecutorBaseTest, WaitCkeProcess_MaskNotMatched) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(CcuExecutorBaseTest, WaitCkeProcess_MaskNotMatched)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     mgr.UpdateCkeValue(0, 0, 0, 0x0000);
     executor_->WaitCkeProcess(0, 0xFFFF, 0, "test_instr");
     EXPECT_FALSE(executor_->processCalled);
     EXPECT_TRUE(simulator_->waitCKE_);
 }
 
-TEST_F(CcuExecutorBaseTest, WaitCkeProcess_ZeroMask) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(CcuExecutorBaseTest, WaitCkeProcess_ZeroMask)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     executor_->WaitCkeProcess(0, 0, 0, "test_instr");
     EXPECT_TRUE(executor_->processCalled);
     EXPECT_FALSE(simulator_->waitCKE_);
 }
 
-TEST_F(CcuExecutorBaseTest, WaitCkeProcess_WithClearType) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(CcuExecutorBaseTest, WaitCkeProcess_WithClearType)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     mgr.UpdateCkeValue(0, 0, 0, 0xFFFF);
     executor_->WaitCkeProcess(0, 0xFFFF, 1, "test_instr");
     EXPECT_TRUE(executor_->processCalled);
@@ -173,8 +186,9 @@ TEST_F(CcuExecutorBaseTest, WaitCkeProcess_WithClearType) {
     EXPECT_EQ(val, 0x0000);
 }
 
-TEST_F(CcuExecutorBaseTest, WaitCkeProcess_LoopState) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(CcuExecutorBaseTest, WaitCkeProcess_LoopState)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     simulator_->SetExecState(CcuExecState::EXEC_LOOP_INSTR);
     LoopGroupInfo loopGroupInfo;
     loopGroupInfo.ckeOffset_ = 3;
@@ -186,7 +200,8 @@ TEST_F(CcuExecutorBaseTest, WaitCkeProcess_LoopState) {
     EXPECT_TRUE(executor_->processCalled);
 }
 
-TEST_F(CcuExecutorBaseTest, Constructor) {
+TEST_F(CcuExecutorBaseTest, Constructor)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(CcuInstr));
     auto sim = std::make_unique<CcuSimulator>(0, 0, 0, 10, 10, RunnerCcuVersion::CCU_V1);
@@ -197,22 +212,25 @@ TEST_F(CcuExecutorBaseTest, Constructor) {
     EXPECT_EQ(exec->ccuSimulator_, sim.get());
 }
 
-TEST_F(CcuExecutorBaseTest, Describe) {
+TEST_F(CcuExecutorBaseTest, Describe)
+{
     std::string desc = executor_->Describe();
     EXPECT_EQ(desc, "MockExecutor");
 }
 
-TEST_F(CcuExecutorBaseTest, Process_Default) {
+TEST_F(CcuExecutorBaseTest, Process_Default)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(CcuInstr));
     auto sim = std::make_unique<CcuSimulator>(0, 0, 0, 10, 10, RunnerCcuVersion::CCU_V1);
     auto exec = std::make_unique<MockCcuExecutor>(0, 0, 0, instr, sim.get());
-    auto &mgr = CcuResourceManager::GetInstance();
+    auto& mgr = CcuResourceManager::GetInstance();
     EXPECT_NO_THROW(exec->Process(mgr));
 }
 
-TEST_F(CcuExecutorBaseTest, WaitCkeProcess_MaskNotMatched_DebugLog) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(CcuExecutorBaseTest, WaitCkeProcess_MaskNotMatched_DebugLog)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     mgr.UpdateCkeValue(0, 0, 0, 0x0000);
     executor_->WaitCkeProcess(0, 0xFFFF, 0, "test_instr");
     EXPECT_TRUE(simulator_->waitCKE_);
@@ -226,7 +244,8 @@ TEST_F(CcuExecutorBaseTest, WaitCkeProcess_MaskNotMatched_DebugLog) {
     EXPECT_TRUE(sim2->waitCKE_);
 }
 
-TEST_F(CcuExecutorBaseTest, StaticBlockingCountMap) {
+TEST_F(CcuExecutorBaseTest, StaticBlockingCountMap)
+{
     CcuExecutorBase::s_blockingCountMap_["instr_a"] = 100;
     CcuExecutorBase::s_blockingCountMap_["instr_b"] = 200;
     EXPECT_EQ(CcuExecutorBase::s_blockingCountMap_["instr_a"], 100);
@@ -236,56 +255,63 @@ TEST_F(CcuExecutorBaseTest, StaticBlockingCountMap) {
     EXPECT_TRUE(CcuExecutorBase::s_blockingCountMap_.empty());
 }
 
-TEST_F(CcuExecutorBaseTest, SetCkeSignal_ZeroMask) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(CcuExecutorBaseTest, SetCkeSignal_ZeroMask)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     mgr.UpdateCkeValue(0, 0, 0, 0xABCD);
     executor_->SetCkeSignal(mgr, 0, 0x0000);
     uint16_t val = mgr.GetCkeValue(0, 0, 0);
     EXPECT_EQ(val, 0xABCD);
 }
 
-TEST_F(CcuExecutorBaseTest, SetCkeSignal_FullMask) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(CcuExecutorBaseTest, SetCkeSignal_FullMask)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     mgr.UpdateCkeValue(0, 0, 0, 0x0000);
     executor_->SetCkeSignal(mgr, 0, 0xFFFF);
     uint16_t val = mgr.GetCkeValue(0, 0, 0);
     EXPECT_EQ(val, 0xFFFF);
 }
 
-TEST_F(CcuExecutorBaseTest, ClearCkeSignal_ZeroMask_NoChange) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(CcuExecutorBaseTest, ClearCkeSignal_ZeroMask_NoChange)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     mgr.UpdateCkeValue(0, 0, 0, 0xABCD);
     executor_->ClearCkeSignal(mgr, 0, 0x0000);
     uint16_t val = mgr.GetCkeValue(0, 0, 0);
     EXPECT_EQ(val, 0xABCD);
 }
 
-TEST_F(CcuExecutorBaseTest, ClearCkeSignal_FullClear) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(CcuExecutorBaseTest, ClearCkeSignal_FullClear)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     mgr.UpdateCkeValue(0, 0, 0, 0xFFFF);
     executor_->ClearCkeSignal(mgr, 0, 0xFFFF);
     uint16_t val = mgr.GetCkeValue(0, 0, 0);
     EXPECT_EQ(val, 0x0000);
 }
 
-TEST_F(CcuExecutorBaseTest, ClearCkeSignal_DifferentCkeId) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(CcuExecutorBaseTest, ClearCkeSignal_DifferentCkeId)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     mgr.UpdateCkeValue(0, 0, 3, 0xFFFF);
     executor_->ClearCkeSignal(mgr, 3, 0x00FF);
     uint16_t val = mgr.GetCkeValue(0, 0, 3);
     EXPECT_EQ(val, 0xFF00);
 }
 
-TEST_F(CcuExecutorBaseTest, SetRmtCKESignal_DifferentDie) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(CcuExecutorBaseTest, SetRmtCKESignal_DifferentDie)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     mgr.UpdateCkeValue(0, 1, 0, 0x0000);
     executor_->SetRmtCKESignal(mgr, 0, 1, 0, 0x00FF);
     uint16_t val = mgr.GetCkeValue(0, 1, 0);
     EXPECT_EQ(val, 0x00FF);
 }
 
-TEST_F(CcuExecutorBaseTest, WaitCkeProcess_LoopState_WithClearType) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(CcuExecutorBaseTest, WaitCkeProcess_LoopState_WithClearType)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     simulator_->SetExecState(CcuExecState::EXEC_LOOP_INSTR);
     LoopGroupInfo loopGroupInfo;
     loopGroupInfo.ckeOffset_ = 2;
@@ -293,15 +319,15 @@ TEST_F(CcuExecutorBaseTest, WaitCkeProcess_LoopState_WithClearType) {
     simulator_->InitLoopGroupInfo(loopGroupInfo);
 
     mgr.UpdateCkeValue(0, 0, 2, 0xFFFF);
-    mgr.UpdateCkeValue(0, 0, 4, 0xFFFF);
     executor_->WaitCkeProcess(0, 0xFFFF, 1, "test_instr_loop_clear");
     EXPECT_TRUE(executor_->processCalled);
-    uint16_t val = mgr.GetCkeValue(0, 0, 4);
+    uint16_t val = mgr.GetCkeValue(0, 0, 2);
     EXPECT_EQ(val, 0x0000);
 }
 
-TEST_F(CcuExecutorBaseTest, WaitCkeProcess_MaskMatched_NoClear) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(CcuExecutorBaseTest, WaitCkeProcess_MaskMatched_NoClear)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     mgr.UpdateCkeValue(0, 0, 0, 0xFFFF);
     executor_->WaitCkeProcess(0, 0xFFFF, 0, "test_instr_no_clear");
     EXPECT_TRUE(executor_->processCalled);
@@ -310,7 +336,8 @@ TEST_F(CcuExecutorBaseTest, WaitCkeProcess_MaskMatched_NoClear) {
     EXPECT_EQ(val, 0xFFFF);
 }
 
-TEST_F(CcuExecutorBaseTest, ParseMSList_ExactFormat) {
+TEST_F(CcuExecutorBaseTest, ParseMSList_ExactFormat)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(CcuInstr));
     instr.v1.add.count = 0;
@@ -323,7 +350,8 @@ TEST_F(CcuExecutorBaseTest, ParseMSList_ExactFormat) {
     EXPECT_EQ(result, "MS[1:1, 0:2]");
 }
 
-TEST_F(CcuExecutorBaseTest, ParseMSList_WithLargerCount) {
+TEST_F(CcuExecutorBaseTest, ParseMSList_WithLargerCount)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(CcuInstr));
     instr.v1.add.count = 2;

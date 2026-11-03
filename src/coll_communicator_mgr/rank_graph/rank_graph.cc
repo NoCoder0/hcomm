@@ -13,10 +13,11 @@
 #include "externalinput_pub.h"
 #include "comm_base_pub.h"
 
-namespace hccl {  
+namespace hccl {
 
 // 根据 rankId 获取 rank 信息
-const RankInfo_t* RankGraphV1::FindRank(uint32_t rankId) const {
+const RankInfo_t* RankGraphV1::FindRank(uint32_t rankId) const
+{
     auto it = rankIndex_.find(rankId);
     if (it == rankIndex_.end()) {
         return nullptr;
@@ -24,7 +25,7 @@ const RankInfo_t* RankGraphV1::FindRank(uint32_t rankId) const {
     return &(it->second.rankInfo);
 }
 
-HcclResult RankGraphV1::DevTypeToCommProtocol(DevType &type, CommProtocol &protocol) const
+HcclResult RankGraphV1::DevTypeToCommProtocol(DevType& type, CommProtocol& protocol) const
 {
     CHK_RET(hrtGetDeviceType(type));
     switch (type) {
@@ -41,6 +42,7 @@ HcclResult RankGraphV1::DevTypeToCommProtocol(DevType &type, CommProtocol &proto
             protocol = CommProtocol::COMM_PROTOCOL_PCIE;
             break;
         case DevType::DEV_TYPE_950:
+        case DevType::DEV_TYPE_960:
             // 待扩展UB的协议，当前先不支持
             protocol = CommProtocol::COMM_PROTOCOL_RESERVED;
             break;
@@ -51,15 +53,17 @@ HcclResult RankGraphV1::DevTypeToCommProtocol(DevType &type, CommProtocol &proto
     return HCCL_SUCCESS;
 }
 
-HcclResult RankGraphV1::BuildRankGraphInfo(const RankInfo_t &rankItem,
-    const CommProtocol &protocol, RankGraphInfo &outInfo) const
+HcclResult
+RankGraphV1::BuildRankGraphInfo(const RankInfo_t& rankItem, const CommProtocol& protocol, RankGraphInfo& outInfo) const
 {
-    HCCL_INFO("[RankGraphV1][%s] rankId[%u] serverId[%s] serverIdx[%u] superDeviceId[%u] superPodId[%s] "
-        "devicePhyId[%u]", __func__, rankItem.rankId, rankItem.serverId.c_str(), rankItem.serverIdx,
-        rankItem.superDeviceId, rankItem.superPodId.c_str(), rankItem.deviceInfo.devicePhyId);
+    HCCL_INFO(
+        "[RankGraphV1][%s] rankId[%u] serverId[%s] serverIdx[%u] superDeviceId[%u] superPodId[%s] "
+        "devicePhyId[%d]",
+        __func__, rankItem.rankId, rankItem.serverId.c_str(), rankItem.serverIdx, rankItem.superDeviceId,
+        rankItem.superPodId.c_str(), rankItem.deviceInfo.devicePhyId);
     outInfo.rankInfo = rankItem;
     std::vector<HcclIpAddress> addrs = rankItem.deviceInfo.deviceIp;
-    for (const auto &addr : addrs) {
+    for (const auto& addr : addrs) {
         EndpointDesc point;
         CHK_RET(static_cast<HcclResult>(EndpointDescInit(&point, 1)));
 
@@ -86,8 +90,8 @@ HcclResult RankGraphV1::BuildRankGraphInfo(const RankInfo_t &rankItem,
 
         // HCCS 协议
         point.loc.locType = ENDPOINT_LOC_TYPE_DEVICE;
-        if (devType_ == DevType::DEV_TYPE_910B || devType_ == DevType::DEV_TYPE_910_93 ||
-            devType_ == DevType::DEV_TYPE_310P1 || devType_ == DevType::DEV_TYPE_310P3) {
+        if (devType_ == DevType::DEV_TYPE_910B || devType_ == DevType::DEV_TYPE_910_93
+            || devType_ == DevType::DEV_TYPE_310P1 || devType_ == DevType::DEV_TYPE_310P3) {
             EndpointDesc hccsPoint = point;
             hccsPoint.protocol = COMM_PROTOCOL_HCCS;
             hccsPoint.commAddr.type = COMM_ADDR_TYPE_ID;
@@ -95,8 +99,8 @@ HcclResult RankGraphV1::BuildRankGraphInfo(const RankInfo_t &rankItem,
         }
 
         // PCIE 协议
-        if (devType_ == DevType::DEV_TYPE_910B || devType_ == DevType::DEV_TYPE_310P1 ||
-            devType_ == DevType::DEV_TYPE_310P3) {
+        if (devType_ == DevType::DEV_TYPE_910B || devType_ == DevType::DEV_TYPE_310P1
+            || devType_ == DevType::DEV_TYPE_310P3) {
             EndpointDesc pciePoint = point;
             pciePoint.protocol = COMM_PROTOCOL_PCIE;
             pciePoint.commAddr.type = COMM_ADDR_TYPE_ID;
@@ -106,7 +110,7 @@ HcclResult RankGraphV1::BuildRankGraphInfo(const RankInfo_t &rankItem,
     return HCCL_SUCCESS;
 }
 
-HcclResult RankGraphV1::Init(const RankTable_t &rankTable, const HcclTopoAttr &topoAttr)
+HcclResult RankGraphV1::Init(const RankTable_t& rankTable, const HcclTopoAttr& topoAttr)
 {
     rankTable_ = rankTable;
     topoAttr_ = topoAttr;
@@ -129,7 +133,7 @@ HcclResult RankGraphV1::Init(const RankTable_t &rankTable, const HcclTopoAttr &t
     return HCCL_SUCCESS;
 }
 
-HcclResult RankGraphV1::Init(const HcclTopoAttr &topoAttr)
+HcclResult RankGraphV1::Init(const HcclTopoAttr& topoAttr)
 {
     topoAttr_ = topoAttr;
     rankIndex_.clear();
@@ -141,15 +145,17 @@ HcclResult RankGraphV1::Init(const HcclTopoAttr &topoAttr)
     return HCCL_SUCCESS;
 }
 
-bool RankGraphV1::IsRoceInSameServer(uint32_t netLayer, const RankInfo_t &srcInfo, const RankInfo_t &dstInfo)
+bool RankGraphV1::IsRoceInSameServer(uint32_t netLayer, const RankInfo_t& srcInfo, const RankInfo_t& dstInfo)
 {
     // 910B单机两种使能RoCE场景：1.A+X 两卡分别在两个MESH  2.标卡
     uint32_t srcPhyId = srcInfo.deviceInfo.devicePhyId;
     uint32_t dstPhyId = dstInfo.deviceInfo.devicePhyId;
     uint32_t intraRoceSwitch = GetExternalInputIntraRoceSwitch();
-    HCCL_INFO("[%s] netLayer[%u], devType[%u], srcPhyId[%u], dstPhyId[%u], isStandardCard[%d], isDiffDeviceModule[%d] "
-        "IntraRoceSwitch[%u] \n", __func__, netLayer, devType_, srcPhyId, dstPhyId, topoAttr_.isStandardCard,
-        topoAttr_.isDiffDeviceModule, intraRoceSwitch);
+    HCCL_INFO(
+        "[%s] netLayer[%u], devType[%d], srcPhyId[%u], dstPhyId[%u], isStandardCard[%d], isDiffDeviceModule[%d] "
+        "IntraRoceSwitch[%u]",
+        __func__, netLayer, devType_, srcPhyId, dstPhyId, topoAttr_.isStandardCard, topoAttr_.isDiffDeviceModule,
+        intraRoceSwitch);
     const uint32_t deviceMeshDivider = DEVICE_PER_MODULE;
     if (netLayer == HCCL_NETLAYER_1 && devType_ == DevType::DEV_TYPE_910B) {
         bool isSrcInLowerMesh = srcPhyId < deviceMeshDivider;
@@ -168,13 +174,13 @@ bool RankGraphV1::IsRoceInSameServer(uint32_t netLayer, const RankInfo_t &srcInf
     return topoAttr_.isStandardCard && intraRoceSwitch == 1 && netLayer == HCCL_NETLAYER_1;
 }
 
-CommProtocol RankGraphV1::GetCommProtocolInSameServer(const RankInfo_t &srcInfo, const RankInfo_t &dstInfo)
+CommProtocol RankGraphV1::GetCommProtocolInSameServer(const RankInfo_t& srcInfo, const RankInfo_t& dstInfo)
 {
     // 310P间链路为PCIE或HCCS
     LinkTypeInServer linkType = LinkTypeInServer::RESERVED_LINK_TYPE;
     hrtGetPairDeviceLinkType(srcInfo.deviceInfo.devicePhyId, dstInfo.deviceInfo.devicePhyId, linkType);
-    HCCL_INFO("[RankGraphV1][%s] ranks[%u,%u] intra-server linkType[%d]", __func__,
-        srcInfo.rankId, dstInfo.rankId, linkType);
+    HCCL_INFO(
+        "[RankGraphV1][%s] ranks[%u,%u] intra-server linkType[%d]", __func__, srcInfo.rankId, dstInfo.rankId, linkType);
     if (linkType == LinkTypeInServer::HCCS_TYPE || linkType == LinkTypeInServer::HCCS_SW_TYPE) {
         return CommProtocol::COMM_PROTOCOL_HCCS;
     } else if (linkType == LinkTypeInServer::SIO_TYPE) {
@@ -188,7 +194,7 @@ CommProtocol RankGraphV1::GetCommProtocolInSameServer(const RankInfo_t &srcInfo,
     return CommProtocol::COMM_PROTOCOL_RESERVED;
 }
 
-CommProtocol RankGraphV1::GetCommProtocolBetweenServers(const RankInfo_t &srcInfo, const RankInfo_t &dstInfo) const
+CommProtocol RankGraphV1::GetCommProtocolBetweenServers(const RankInfo_t& srcInfo, const RankInfo_t& dstInfo) const
 {
     // srcInfo与dstInfo一定是相同数据类型
     if (devType_ == DevType::DEV_TYPE_310P3 || devType_ == DevType::DEV_TYPE_310P1) {
@@ -197,7 +203,9 @@ CommProtocol RankGraphV1::GetCommProtocolBetweenServers(const RankInfo_t &srcInf
     if (devType_ == DevType::DEV_TYPE_910B) {
         return CommProtocol::COMM_PROTOCOL_ROCE;
     }
-    HCCL_DEBUG("[%s] srcInfo.superPodId %s dstInfo.superPodId %s", __func__, srcInfo.superPodId.c_str(), dstInfo.superPodId.c_str());
+    HCCL_DEBUG(
+        "[%s] srcInfo.superPodId %s dstInfo.superPodId %s", __func__, srcInfo.superPodId.c_str(),
+        dstInfo.superPodId.c_str());
     if (devType_ == DevType::DEV_TYPE_910_93) {
         // 超节点内链路为HCCS
         if (!srcInfo.superPodId.empty() && srcInfo.superPodId == dstInfo.superPodId) {
@@ -207,22 +215,24 @@ CommProtocol RankGraphV1::GetCommProtocolBetweenServers(const RankInfo_t &srcInf
     return CommProtocol::COMM_PROTOCOL_RESERVED;
 }
 
-CommProtocol RankGraphV1::GetCommProtocolFromRankInfo(const RankInfo_t &srcInfo, const RankInfo_t &dstInfo,
-    uint32_t netLayer)
+CommProtocol
+RankGraphV1::GetCommProtocolFromRankInfo(const RankInfo_t& srcInfo, const RankInfo_t& dstInfo, uint32_t netLayer)
 {
     if (srcInfo.deviceInfo.deviceType != dstInfo.deviceInfo.deviceType) {
-        HCCL_ERROR("[RankGraphV1][%s] srcType[%d] != dstType[%d]", __func__,
-            srcInfo.deviceInfo.deviceType, dstInfo.deviceInfo.deviceType);
+        HCCL_ERROR(
+            "[RankGraphV1][%s] srcType[%d] != dstType[%d]", __func__, srcInfo.deviceInfo.deviceType,
+            dstInfo.deviceInfo.deviceType);
         return CommProtocol::COMM_PROTOCOL_RESERVED;
     }
     // 首先判断是否在同一机内
     if (srcInfo.serverIdx == dstInfo.serverIdx) {
         if (netLayer == HCCL_NETLAYER_0) {
             return GetCommProtocolInSameServer(srcInfo, dstInfo);
-        // 超节点有HCCL_NETLAYER_1及以上的情况，为HCCS链路，或者同卡不同DIE
-        } else if (netLayer == HCCL_NETLAYER_1 && devType_ == DevType::DEV_TYPE_910_93 &&
-            (srcInfo.superPodId == dstInfo.superPodId ||
-            GetCommProtocolInSameServer(srcInfo, dstInfo) == CommProtocol::COMM_PROTOCOL_SIO)) {
+            // 超节点有HCCL_NETLAYER_1及以上的情况，为HCCS链路，或者同卡不同DIE
+        } else if (
+            netLayer == HCCL_NETLAYER_1 && devType_ == DevType::DEV_TYPE_910_93
+            && (srcInfo.superPodId == dstInfo.superPodId
+                || GetCommProtocolInSameServer(srcInfo, dstInfo) == CommProtocol::COMM_PROTOCOL_SIO)) {
             return CommProtocol::COMM_PROTOCOL_HCCS;
         } else if (IsRoceInSameServer(netLayer, srcInfo, dstInfo)) {
             return CommProtocol::COMM_PROTOCOL_ROCE;
@@ -237,21 +247,23 @@ CommProtocol RankGraphV1::GetCommProtocolFromRankInfo(const RankInfo_t &srcInfo,
             return CommProtocol::COMM_PROTOCOL_RESERVED;
         }
         if (netLayer == HCCL_NETLAYER_1) {
-            HCCL_INFO("[RankGraphV1][%s] ranks[%u,%u] inter-server but same superPod[%s]", __func__,
-                srcInfo.rankId, dstInfo.rankId, srcInfo.superPodId.c_str());
+            HCCL_INFO(
+                "[RankGraphV1][%s] ranks[%u,%u] inter-server but same superPod[%s]", __func__, srcInfo.rankId,
+                dstInfo.rankId, srcInfo.superPodId.c_str());
             return GetCommProtocolBetweenServers(srcInfo, dstInfo);
-        // 跨超走ROCE
-        } else if (!srcInfo.superPodId.empty() && srcInfo.superPodId != dstInfo.superPodId &&
-            netLayer == HCCL_NETLAYER_2) {
-            HCCL_INFO("[RankGraphV1][%s] ranks[%u,%u] inter-superPod use ROCE", __func__,
-                srcInfo.rankId, dstInfo.rankId);
+            // 跨超走ROCE
+        } else if (
+            !srcInfo.superPodId.empty() && srcInfo.superPodId != dstInfo.superPodId && netLayer == HCCL_NETLAYER_2) {
+            HCCL_INFO(
+                "[RankGraphV1][%s] ranks[%u,%u] inter-superPod use ROCE", __func__, srcInfo.rankId, dstInfo.rankId);
             return CommProtocol::COMM_PROTOCOL_ROCE;
         }
     }
     return CommProtocol::COMM_PROTOCOL_RESERVED;
 }
 
-bool RankGraphV1::NeedIgnoreEndPoints(CommProtocol srcProtocol, CommProtocol dstProtocol, CommProtocol linkProtocol) const
+bool RankGraphV1::NeedIgnoreEndPoints(
+    CommProtocol srcProtocol, CommProtocol dstProtocol, CommProtocol linkProtocol) const
 {
     if (srcProtocol != dstProtocol) {
         return true;
@@ -268,58 +280,54 @@ bool RankGraphV1::NeedIgnoreEndPoints(CommProtocol srcProtocol, CommProtocol dst
     return false;
 }
 
-void RankGraphV1::PrintLinksInfo(CommLink &link) const
+void RankGraphV1::PrintLinksInfo(CommLink& link) const
 {
     // 打印CommLink 头部基础信息
-    HCCL_INFO("[RankGraphV1][%s] link.header.version[%u] magicWord[0x%08x] size[%u] reserved[%u]", __func__,
+    HCCL_INFO(
+        "[RankGraphV1][%s] link.header.version[%u] magicWord[0x%08x] size[%u] reserved[%u]", __func__,
         link.header.version, link.header.magicWord, link.header.size, link.header.reserved);
 
     // 打印【源端】srcEndpointDesc 完整信息
-    HCCL_INFO("[RankGraphV1][%s] srcProtocol[%d] srcCommAddrType[%d] srcLocType[%d] srcDevPhyId[%u] "
-        "srcSuperDevId[%u] srcServerIdx[%u] srcSuperPodIdx[%u]", __func__,
-        link.srcEndpointDesc.protocol,
-        link.srcEndpointDesc.commAddr.type,
-        link.srcEndpointDesc.loc.locType,
-        link.srcEndpointDesc.loc.device.devPhyId,
-        link.srcEndpointDesc.loc.device.superDevId,
-        link.srcEndpointDesc.loc.device.serverIdx,
-        link.srcEndpointDesc.loc.device.superPodIdx);
+    HCCL_INFO(
+        "[RankGraphV1][%s] srcProtocol[%d] srcCommAddrType[%d] srcLocType[%d] srcDevPhyId[%u] "
+        "srcSuperDevId[%u] srcServerIdx[%u] srcSuperPodIdx[%u]",
+        __func__, link.srcEndpointDesc.protocol, link.srcEndpointDesc.commAddr.type, link.srcEndpointDesc.loc.locType,
+        link.srcEndpointDesc.loc.device.devPhyId, link.srcEndpointDesc.loc.device.superDevId,
+        link.srcEndpointDesc.loc.device.serverIdx, link.srcEndpointDesc.loc.device.superPodIdx);
 
     // 打印【目的端】dstEndpointDesc 完整信息
-    HCCL_INFO("[RankGraphV1][%s] dstProtocol[%d] dstCommAddrType[%d] dstLocType[%d] dstDevPhyId[%u] "
-        "dstSuperDevId[%u] dstServerIdx[%u] dstSuperPodIdx[%u]", __func__,
-        link.dstEndpointDesc.protocol,
-        link.dstEndpointDesc.commAddr.type,
-        link.dstEndpointDesc.loc.locType,
-        link.dstEndpointDesc.loc.device.devPhyId,
-        link.dstEndpointDesc.loc.device.superDevId,
-        link.dstEndpointDesc.loc.device.serverIdx,
-        link.dstEndpointDesc.loc.device.superPodIdx);
+    HCCL_INFO(
+        "[RankGraphV1][%s] dstProtocol[%d] dstCommAddrType[%d] dstLocType[%d] dstDevPhyId[%u] "
+        "dstSuperDevId[%u] dstServerIdx[%u] dstSuperPodIdx[%u]",
+        __func__, link.dstEndpointDesc.protocol, link.dstEndpointDesc.commAddr.type, link.dstEndpointDesc.loc.locType,
+        link.dstEndpointDesc.loc.device.devPhyId, link.dstEndpointDesc.loc.device.superDevId,
+        link.dstEndpointDesc.loc.device.serverIdx, link.dstEndpointDesc.loc.device.superPodIdx);
 
     // 打印【链路属性】linkAttr 信息
     HCCL_INFO("[RankGraphV1][%s] linkProtocol[%d] hop[%u]", __func__, link.linkAttr.linkProtocol, link.linkAttr.hop);
 }
 
-HcclResult RankGraphV1::GetLinks(uint32_t netLayer, uint32_t srcRank, uint32_t dstRank,
-    CommLink **linkList, uint32_t *listSize)
+HcclResult
+RankGraphV1::GetLinks(uint32_t netLayer, uint32_t srcRank, uint32_t dstRank, CommLink** linkList, uint32_t* listSize)
 {
-    if (rankIndex_.find(srcRank) == rankIndex_.end() || rankIndex_.find(dstRank) == rankIndex_.end() ||
-        FindRank(srcRank) == nullptr || FindRank(dstRank) == nullptr) {
-        HCCL_ERROR("[RankGraphV1][%s] srcRank[%u] or dstRank[%u] is not existed in rankTable",
-            __func__, srcRank, dstRank);
+    if (rankIndex_.find(srcRank) == rankIndex_.end() || rankIndex_.find(dstRank) == rankIndex_.end()
+        || FindRank(srcRank) == nullptr || FindRank(dstRank) == nullptr) {
+        HCCL_ERROR(
+            "[RankGraphV1][%s] srcRank[%u] or dstRank[%u] is not existed in rankTable", __func__, srcRank, dstRank);
         return HCCL_E_PARA;
     }
 
     if (netLayer > HCCL_NETLAYER_2) {
-        HCCL_ERROR("[RankGraphV1][%s] srcRank[%u] and dstRank[%u] are do not have netLayer[%u]",
-            __func__, srcRank, dstRank, netLayer);
+        HCCL_ERROR(
+            "[RankGraphV1][%s] srcRank[%u] and dstRank[%u] do not have netLayer[%u]", __func__, srcRank, dstRank,
+            netLayer);
         return HCCL_E_PARA;
     }
-    auto &srcEndpointDescs = rankIndex_[srcRank].endPoints;
-    auto &dstEndpointDescs = rankIndex_[dstRank].endPoints;
+    auto& srcEndpointDescs = rankIndex_[srcRank].endPoints;
+    auto& dstEndpointDescs = rankIndex_[dstRank].endPoints;
 
-    const RankInfo_t &srcInfo = rankIndex_[srcRank].rankInfo;
-    const RankInfo_t &dstInfo = rankIndex_[dstRank].rankInfo;
+    const RankInfo_t& srcInfo = rankIndex_[srcRank].rankInfo;
+    const RankInfo_t& dstInfo = rankIndex_[dstRank].rankInfo;
     CommProtocol protocol = COMM_PROTOCOL_RESERVED;
     protocol = GetCommProtocolFromRankInfo(srcInfo, dstInfo, netLayer);
     if (protocol == COMM_PROTOCOL_RESERVED) {
@@ -355,23 +363,27 @@ HcclResult RankGraphV1::GetLinks(uint32_t netLayer, uint32_t srcRank, uint32_t d
         }
         it = rankPairInfo_.emplace(std::make_tuple(netLayer, srcRank, dstRank), std::move(links)).first;
     }
-    HCCL_INFO("[RankGraphV1][%s] links, netLayer[%u] srcRank[%u] dstRank[%u] protocol[%u]", __func__,
-        netLayer, srcRank, dstRank, protocol);
+    HCCL_INFO(
+        "[RankGraphV1][%s] links, netLayer[%u] srcRank[%u] dstRank[%u] protocol[%d]", __func__, netLayer, srcRank,
+        dstRank, protocol);
 
-    auto &links = it->second;
+    auto& links = it->second;
     *listSize = static_cast<uint32_t>(links.size());
     if (links.empty()) {
         *linkList = nullptr;
         HCCL_ERROR("[RankGraphV1][%s] links empty for srcRank[%u] dstRank[%u]", __func__, srcRank, dstRank);
     } else {
         *linkList = links.data(); // 连续数组首地址
-        HCCL_INFO("[RankGraphV1][%s] srcRank[%u] dstRank[%u] linkList[%p] linkNum[%u]", __func__, srcRank, dstRank, *linkList, *listSize);
+        HCCL_INFO(
+            "[RankGraphV1][%s] srcRank[%u] dstRank[%u] linkList[%p] linkNum[%u]", __func__, srcRank, dstRank, *linkList,
+            *listSize);
     }
 
     return HCCL_SUCCESS;
 }
 
-HcclResult RankGraphV1::InitHeterogMode() {
+HcclResult RankGraphV1::InitHeterogMode()
+{
     if (topoAttr_.rankInfoList.empty()) {
         HCCL_ERROR("[RankGraphV1][%s] invalid para. rankInfoList is empty", __func__);
         return HCCL_E_INTERNAL;
@@ -390,29 +402,32 @@ HcclResult RankGraphV1::InitHeterogMode() {
 
     // 包含两种芯片的异构混合组网
     constexpr uint32_t MIX_CHIPS = 2;
-    if (devTypes.size() == MIX_CHIPS && devTypes.find(DevType::DEV_TYPE_910B) != devTypes.end() && devTypes.find(DevType::DEV_TYPE_910_93) != devTypes.end()) {
+    if (devTypes.size() == MIX_CHIPS && devTypes.find(DevType::DEV_TYPE_910B) != devTypes.end()
+        && devTypes.find(DevType::DEV_TYPE_910_93) != devTypes.end()) {
         heterogMode_ = HcclHeterogMode::HCCL_HETEROG_MODE_MIX_A2_A3;
         return HCCL_SUCCESS;
     }
 
     std::string devStr;
-    for (auto itSet = devTypes.begin(); itSet !=devTypes.end(); itSet++) {
+    for (auto itSet = devTypes.begin(); itSet != devTypes.end(); itSet++) {
         if (itSet != devTypes.begin()) {
-            devStr +=", ";
+            devStr += ", ";
         }
         devStr += std::to_string(static_cast<int>(*itSet));
     }
-    HCCL_ERROR("[RankGraphV1][%s] Unknown mode[%d], devtypes[%s]", __func__, HcclHeterogMode::HCCL_HETEROG_MODE_INVALID, devStr.c_str());
+    HCCL_ERROR(
+        "[RankGraphV1][%s] Unknown mode[%d], devtypes[%s]", __func__, HcclHeterogMode::HCCL_HETEROG_MODE_INVALID,
+        devStr.c_str());
     return HCCL_E_INTERNAL;
 }
 
-HcclResult RankGraphV1::GetHeterogMode(HcclHeterogMode *mode) const
+HcclResult RankGraphV1::GetHeterogMode(HcclHeterogMode* mode) const
 {
     *mode = heterogMode_;
     return HCCL_SUCCESS;
 }
 
-HcclResult RankGraphV1::GetNetLayers(uint32_t **netLayers, uint32_t *netLayerNum)
+HcclResult RankGraphV1::GetNetLayers(uint32_t** netLayers, uint32_t* netLayerNum)
 {
     if (netLayer_.empty()) {
         HCCL_ERROR("[RankGraphV1][%s] invalid para. netLayer is empty", __func__);
@@ -423,7 +438,7 @@ HcclResult RankGraphV1::GetNetLayers(uint32_t **netLayers, uint32_t *netLayerNum
     return HCCL_SUCCESS;
 }
 
-HcclResult RankGraphV1::GetInstTopoTypeByNetLayer(uint32_t netLayer, CommTopo *topoType)
+HcclResult RankGraphV1::GetInstTopoTypeByNetLayer(uint32_t netLayer, CommTopo* topoType)
 {
     if (netLayer >= netLayer_.size()) {
         HCCL_ERROR("[RankGraphV1][%s] invalid para. netlayer[%u]", __func__, netLayer);
@@ -433,8 +448,8 @@ HcclResult RankGraphV1::GetInstTopoTypeByNetLayer(uint32_t netLayer, CommTopo *t
     if (deviceType == DevType::DEV_TYPE_910_93) {
         if (netLayer == static_cast<uint32_t>(HcclNetLayerlevel::HCCL_NetLayer_L0)) {
             *topoType = CommTopo::COMM_TOPO_910_93;
-        } else if ((netLayer == static_cast<uint32_t>(HcclNetLayerlevel::HCCL_NetLayer_L1) ||
-                    (netLayer == static_cast<uint32_t>(HcclNetLayerlevel::HCCL_NetLayer_L2)))) {
+        } else if ((netLayer == static_cast<uint32_t>(HcclNetLayerlevel::HCCL_NetLayer_L1)
+                    || (netLayer == static_cast<uint32_t>(HcclNetLayerlevel::HCCL_NetLayer_L2)))) {
             *topoType = CommTopo::COMM_TOPO_CLOS;
         }
     } else if (deviceType == DevType::DEV_TYPE_910B || deviceType == DevType::DEV_TYPE_910) {
@@ -451,57 +466,57 @@ HcclResult RankGraphV1::GetInstTopoTypeByNetLayer(uint32_t netLayer, CommTopo *t
     return HCCL_SUCCESS;
 }
 
-HcclResult RankGraphV1::GetInstSizeByNetLayer(uint32_t netLayer, uint32_t *rankNum)
+HcclResult RankGraphV1::GetInstSizeByNetLayer(uint32_t netLayer, uint32_t* rankNum)
 {
     if (netLayer >= netLayer_.size()) {
         HCCL_ERROR("[RankGraphV1][%s] invalid para. netlayer[%u]", __func__, netLayer);
         return HCCL_E_PARA;
     }
- 
+
     if (rankList_.find(netLayer) == rankList_.end()) {
-        HCCL_ERROR("[RankGraphV1][%s]failed to find rankList map. netlayer[%u]", __func__, netLayer);
+        HCCL_ERROR("[RankGraphV1][%s] failed to find rankList map. netlayer[%u]", __func__, netLayer);
         return HCCL_E_INTERNAL;
     }
     *rankNum = rankList_[netLayer].size();
- 
+
     return HCCL_SUCCESS;
 }
 
-HcclResult RankGraphV1::GetInstRanksByNetLayer(uint32_t netLayer, uint32_t **rankList, uint32_t *rankNum)
+HcclResult RankGraphV1::GetInstRanksByNetLayer(uint32_t netLayer, uint32_t** rankList, uint32_t* rankNum)
 {
     if (netLayer >= netLayer_.size()) {
         HCCL_ERROR("[RankGraphV1][%s] invalid para. netlayer[%u]", __func__, netLayer);
         return HCCL_E_PARA;
     }
- 
+
     if (rankList_.find(netLayer) == rankList_.end()) {
-        HCCL_ERROR("[RankGraphV1][%s]failed to find rankList map. netlayer[%u]", __func__, netLayer);
+        HCCL_ERROR("[RankGraphV1][%s] failed to find rankList map. netlayer[%u]", __func__, netLayer);
         return HCCL_E_INTERNAL;
     }
     *rankNum = rankList_[netLayer].size();
     *rankList = rankList_[netLayer].data();
- 
+
     return HCCL_SUCCESS;
 }
 
-HcclResult RankGraphV1::GetInstSizeListByNetLayer(uint32_t netLayer, uint32_t **instSizeList, uint32_t *listSize)
+HcclResult RankGraphV1::GetInstSizeListByNetLayer(uint32_t netLayer, uint32_t** instSizeList, uint32_t* listSize)
 {
     if (netLayer >= netLayer_.size()) {
         HCCL_ERROR("[RankGraphV1][%s] invalid para. netlayer[%u]", __func__, netLayer);
         return HCCL_E_PARA;
     }
- 
+
     if (rankSizeList_.find(netLayer) == rankSizeList_.end()) {
-        HCCL_ERROR("[RankGraphV1][%s]failed to find rankSizeList map. netlayer[%u]", __func__, netLayer);
+        HCCL_ERROR("[RankGraphV1][%s] failed to find rankSizeList map. netlayer[%u]", __func__, netLayer);
         return HCCL_E_INTERNAL;
     }
     *instSizeList = rankSizeList_[netLayer].data();
     *listSize = rankSizeList_[netLayer].size();
- 
+
     return HCCL_SUCCESS;
 }
 
-HcclResult RankGraphV1::GetTopoInstsByLayer(uint32_t netLayer, uint32_t **topoInsts, uint32_t *topoInstNum)
+HcclResult RankGraphV1::GetTopoInstsByLayer(uint32_t netLayer, uint32_t** topoInsts, uint32_t* topoInstNum)
 {
     if (netLayer >= netLayer_.size()) {
         return HCCL_E_PARA;
@@ -513,19 +528,18 @@ HcclResult RankGraphV1::GetTopoInstsByLayer(uint32_t netLayer, uint32_t **topoIn
     uint32_t instNum = rankSizeList_[netLayer].size();
     *topoInstNum = instNum;
 
-    static std::vector<uint32_t> sTopoInstList;
-    sTopoInstList.clear();
-    sTopoInstList.resize(instNum);
+    topoInstsVec_.clear();
+    topoInstsVec_.resize(instNum);
     for (uint32_t i = 0; i < instNum; ++i) {
-        sTopoInstList[i] = i;
+        topoInstsVec_[i] = i;
     }
 
-    *topoInsts = sTopoInstList.data();
+    *topoInsts = topoInstsVec_.data();
 
     return HCCL_SUCCESS;
 }
 
-HcclResult RankGraphV1::GetTopoType(uint32_t netLayer, CommTopo *topoType)
+HcclResult RankGraphV1::GetTopoType(uint32_t netLayer, CommTopo* topoType)
 {
     if (netLayer >= netLayer_.size()) {
         return HCCL_E_PARA;
@@ -533,7 +547,7 @@ HcclResult RankGraphV1::GetTopoType(uint32_t netLayer, CommTopo *topoType)
     return GetInstTopoTypeByNetLayer(netLayer, topoType);
 }
 
-HcclResult RankGraphV1::GetRanksByTopoInst(uint32_t netLayer, uint32_t topoInstId, uint32_t **ranks, uint32_t *rankNum)
+HcclResult RankGraphV1::GetRanksByTopoInst(uint32_t netLayer, uint32_t topoInstId, uint32_t** ranks, uint32_t* rankNum)
 {
     if (netLayer >= netLayer_.size()) {
         return HCCL_E_PARA;
@@ -559,9 +573,9 @@ HcclResult RankGraphV1::GetRanksByTopoInst(uint32_t netLayer, uint32_t topoInstI
     return HCCL_SUCCESS;
 }
 
-std::vector<const RankInfo_t *> RankGraphV1::GetRanksInTopoInst(uint32_t netLayer, uint32_t topoInstId)
+std::vector<const RankInfo_t*> RankGraphV1::GetRanksInTopoInst(uint32_t netLayer, uint32_t topoInstId)
 {
-    std::vector<const RankInfo_t *> ranks;
+    std::vector<const RankInfo_t*> ranks;
 
     if (netLayer >= netLayer_.size()) {
         return ranks;
@@ -571,8 +585,8 @@ std::vector<const RankInfo_t *> RankGraphV1::GetRanksInTopoInst(uint32_t netLaye
         if (it == serverToRank_.end()) {
             return ranks;
         }
-        for (const auto &rankInfo : it->second) {
-            for (const auto &graphInfo : rankGraph_) {
+        for (const auto& rankInfo : it->second) {
+            for (const auto& graphInfo : rankGraph_) {
                 if (graphInfo.rankId == rankInfo.userRank) {
                     ranks.push_back(&graphInfo);
                 }
@@ -588,7 +602,7 @@ std::vector<const RankInfo_t *> RankGraphV1::GetRanksInTopoInst(uint32_t netLaye
         }
 
         for (uint32_t userRank : listIt->second) {
-            for (const auto &rankInfo : rankGraph_) {
+            for (const auto& rankInfo : rankGraph_) {
                 if (rankInfo.rankId == userRank) {
                     ranks.push_back(&rankInfo);
                     break;
@@ -599,13 +613,13 @@ std::vector<const RankInfo_t *> RankGraphV1::GetRanksInTopoInst(uint32_t netLaye
     return ranks;
 }
 
-std::set<CommProtocol> RankGraphV1::GetProtocolsByConnections(uint32_t netLayer,
-    const std::vector<const RankInfo_t *> &topoInstRanks)
+std::set<CommProtocol>
+RankGraphV1::GetProtocolsByConnections(uint32_t netLayer, const std::vector<const RankInfo_t*>& topoInstRanks)
 {
     std::set<CommProtocol> protocols;
 
-    const RankInfo_t *srcRankInfo = nullptr;
-    for (const auto &rankInfo : rankGraph_) {
+    const RankInfo_t* srcRankInfo = nullptr;
+    for (const auto& rankInfo : rankGraph_) {
         if (rankInfo.rankId == rankData_.userRank) {
             srcRankInfo = &rankInfo;
             break;
@@ -615,7 +629,7 @@ std::set<CommProtocol> RankGraphV1::GetProtocolsByConnections(uint32_t netLayer,
         return protocols;
     }
 
-    for (const RankInfo_t *dstRankInfo : topoInstRanks) {
+    for (const RankInfo_t* dstRankInfo : topoInstRanks) {
         if (dstRankInfo->rankId == rankData_.userRank) {
             continue;
         }
@@ -629,17 +643,17 @@ std::set<CommProtocol> RankGraphV1::GetProtocolsByConnections(uint32_t netLayer,
     return protocols;
 }
 
-HcclResult RankGraphV1::GetEndpointNum(uint32_t netLayer, uint32_t topoInstId, uint32_t *num)
+HcclResult RankGraphV1::GetEndpointNum(uint32_t netLayer, uint32_t topoInstId, uint32_t* num)
 {
     if (netLayer >= netLayer_.size()) {
-        HCCL_ERROR("[RankGraphV1][%s]invalid para. netlayer[%u]", __func__, netLayer);
+        HCCL_ERROR("[RankGraphV1][%s] invalid para. netlayer[%u]", __func__, netLayer);
         return HCCL_E_PARA;
     }
     if (rankIndex_.empty()) {
-        HCCL_ERROR("[RankGraphV1][%s]rankIndex is empty", __func__);
+        HCCL_ERROR("[RankGraphV1][%s] rankIndex is empty", __func__);
         return HCCL_E_INTERNAL;
     }
-    std::vector<const RankInfo_t *> topoInstRanks = GetRanksInTopoInst(netLayer, topoInstId);
+    std::vector<const RankInfo_t*> topoInstRanks = GetRanksInTopoInst(netLayer, topoInstId);
     if (topoInstRanks.empty()) {
         *num = 0;
         return HCCL_SUCCESS;
@@ -647,11 +661,12 @@ HcclResult RankGraphV1::GetEndpointNum(uint32_t netLayer, uint32_t topoInstId, u
 
     std::set<CommProtocol> protocols = GetProtocolsByConnections(netLayer, topoInstRanks);
     if (protocols.empty()) {
-        HCCL_INFO("[RankGraphV1][%s] no protocols found for netlayer [%u] topoInstId", __func__, netLayer, topoInstId);
+        HCCL_INFO(
+            "[RankGraphV1][%s] no protocols found for netlayer [%u] topoInstId[%u]", __func__, netLayer, topoInstId);
     }
 
-    const RankGraphInfo *currentRankInfo = nullptr;
-    for (auto &pair : rankIndex_) {
+    const RankGraphInfo* currentRankInfo = nullptr;
+    for (auto& pair : rankIndex_) {
         if (pair.second.rankInfo.rankId == rankData_.userRank) {
             currentRankInfo = &pair.second;
             break;
@@ -662,7 +677,7 @@ HcclResult RankGraphV1::GetEndpointNum(uint32_t netLayer, uint32_t topoInstId, u
     }
 
     uint32_t count = 0;
-    for (const auto &endpoint : currentRankInfo->endPoints) {
+    for (const auto& endpoint : currentRankInfo->endPoints) {
         if (protocols.find(endpoint.protocol) != protocols.end()) {
             count++;
         }
@@ -672,21 +687,22 @@ HcclResult RankGraphV1::GetEndpointNum(uint32_t netLayer, uint32_t topoInstId, u
     return HCCL_SUCCESS;
 }
 
-HcclResult RankGraphV1::GetEndpointDesc(uint32_t netLayer, uint32_t topoInstId, uint32_t *descNum, EndpointDesc *endpointDesc)
+HcclResult
+RankGraphV1::GetEndpointDesc(uint32_t netLayer, uint32_t topoInstId, uint32_t* descNum, EndpointDesc* endpointDesc)
 {
     if (netLayer >= netLayer_.size()) {
-        HCCL_ERROR("[RankGraphV1][%s]invalid para. netlayer[%u]", __func__, netLayer);
+        HCCL_ERROR("[RankGraphV1][%s] invalid para. netlayer[%u]", __func__, netLayer);
         return HCCL_E_PARA;
     }
     if (descNum == nullptr || endpointDesc == nullptr) {
-        HCCL_ERROR("[RankGraphV1][%s]invalid para. null ptr", __func__);
+        HCCL_ERROR("[RankGraphV1][%s] invalid para. null ptr", __func__);
         return HCCL_E_PARA;
     }
     if (rankIndex_.empty()) {
-        HCCL_ERROR("[RankGraphV1][%s]rankIndex is empty", __func__);
+        HCCL_ERROR("[RankGraphV1][%s] rankIndex is empty", __func__);
         return HCCL_E_INTERNAL;
     }
-    std::vector<const RankInfo_t *> topoInstRanks = GetRanksInTopoInst(netLayer, topoInstId);
+    std::vector<const RankInfo_t*> topoInstRanks = GetRanksInTopoInst(netLayer, topoInstId);
     if (topoInstRanks.empty()) {
         *descNum = 0;
         return HCCL_SUCCESS;
@@ -694,11 +710,12 @@ HcclResult RankGraphV1::GetEndpointDesc(uint32_t netLayer, uint32_t topoInstId, 
 
     std::set<CommProtocol> protocols = GetProtocolsByConnections(netLayer, topoInstRanks);
     if (protocols.empty()) {
-        HCCL_INFO("[RankGraphV1][GetEndpointDesc]no protocols found, netlayer [%u] topoInstId", netLayer, topoInstId);
+        HCCL_INFO(
+            "[RankGraphV1][GetEndpointDesc] no protocols found, netlayer [%u] topoInstId[%u]", netLayer, topoInstId);
     }
 
-    const RankGraphInfo *currRankInfo = nullptr;
-    for (auto &pair : rankIndex_) {
+    const RankGraphInfo* currRankInfo = nullptr;
+    for (auto& pair : rankIndex_) {
         if (pair.second.rankInfo.rankId == rankData_.userRank) {
             currRankInfo = &pair.second;
             break;
@@ -709,7 +726,7 @@ HcclResult RankGraphV1::GetEndpointDesc(uint32_t netLayer, uint32_t topoInstId, 
     }
 
     uint32_t count = 0;
-    for (const auto &endpoint : currRankInfo->endPoints) {
+    for (const auto& endpoint : currRankInfo->endPoints) {
         if (protocols.find(endpoint.protocol) != protocols.end()) {
             if (count >= *descNum) {
                 return HCCL_E_PARA;
@@ -723,23 +740,24 @@ HcclResult RankGraphV1::GetEndpointDesc(uint32_t netLayer, uint32_t topoInstId, 
     return HCCL_SUCCESS;
 }
 
-const EndpointDesc* RankGraphV1::MatchEndpointByAddr(
-    const RankGraphInfo &rankGraphInfo, const EndpointDesc *endPointDesc) const
+const EndpointDesc*
+RankGraphV1::MatchEndpointByAddr(const RankGraphInfo& rankGraphInfo, const EndpointDesc* endPointDesc) const
 {
-    for (const auto &endpoint : rankGraphInfo.endPoints) {
-        if (endpoint.commAddr.type != endPointDesc->commAddr.type ||
-            endpoint.protocol != endPointDesc->protocol) {
+    for (const auto& endpoint : rankGraphInfo.endPoints) {
+        if (endpoint.commAddr.type != endPointDesc->commAddr.type || endpoint.protocol != endPointDesc->protocol) {
             continue;
         }
         bool matched = false;
         switch (endpoint.commAddr.type) {
             case COMM_ADDR_TYPE_IP_V4:
-                matched = (memcmp(&endpoint.commAddr.addr, &endPointDesc->commAddr.addr,
-                    sizeof(endpoint.commAddr.addr)) == 0);
+                matched
+                    = (memcmp(&endpoint.commAddr.addr, &endPointDesc->commAddr.addr, sizeof(endpoint.commAddr.addr))
+                       == 0);
                 break;
             case COMM_ADDR_TYPE_IP_V6:
-                matched = (memcmp(&endpoint.commAddr.addr6, &endPointDesc->commAddr.addr6,
-                    sizeof(endpoint.commAddr.addr6)) == 0);
+                matched
+                    = (memcmp(&endpoint.commAddr.addr6, &endPointDesc->commAddr.addr6, sizeof(endpoint.commAddr.addr6))
+                       == 0);
                 break;
             case COMM_ADDR_TYPE_ID:
                 matched = true;
@@ -754,27 +772,37 @@ const EndpointDesc* RankGraphV1::MatchEndpointByAddr(
     return nullptr;
 }
 
-HcclResult RankGraphV1::FillAttr(EndpointAttr endpointAttr, const EndpointDesc *foundEndpoint, uint32_t infoLen, void *info) const
+HcclResult
+RankGraphV1::FillAttr(EndpointAttr endpointAttr, const EndpointDesc* foundEndpoint, uint32_t infoLen, void* info) const
 {
     switch (endpointAttr) {
         case ENDPOINT_ATTR_BW_COEFF: {
-            CHK_PRT_RET(infoLen != sizeof(EndpointAttrBwCoeff),
-                HCCL_ERROR("[RankGraphV1::GetEndpointInfo] Size mismatch for ENDPOINT_ATTR_BW_COEFF: expected %zu, actual %u",
-                    sizeof(EndpointAttrBwCoeff), infoLen), HCCL_E_PARA);
+            CHK_PRT_RET(
+                infoLen != sizeof(EndpointAttrBwCoeff),
+                HCCL_ERROR(
+                    "[RankGraphV1::GetEndpointInfo] Size mismatch for ENDPOINT_ATTR_BW_COEFF: expected %zu, actual %u",
+                    sizeof(EndpointAttrBwCoeff), infoLen),
+                HCCL_E_PARA);
             *(static_cast<EndpointAttrBwCoeff*>(info)) = 1;
             break;
         }
         case ENDPOINT_ATTR_DIE_ID: {
-            CHK_PRT_RET(infoLen != sizeof(EndpointAttrDieId),
-                HCCL_ERROR("[RankGraphV1::GetEndpointInfo] Size mismatch for ENDPOINT_ATTR_DIE_ID: expected %zu, actual %u",
-                    sizeof(EndpointAttrDieId), infoLen), HCCL_E_PARA);
+            CHK_PRT_RET(
+                infoLen != sizeof(EndpointAttrDieId),
+                HCCL_ERROR(
+                    "[RankGraphV1::GetEndpointInfo] Size mismatch for ENDPOINT_ATTR_DIE_ID: expected %zu, actual %u",
+                    sizeof(EndpointAttrDieId), infoLen),
+                HCCL_E_PARA);
             *(static_cast<EndpointAttrDieId*>(info)) = foundEndpoint->loc.device.superDevId;
             break;
         }
         case ENDPOINT_ATTR_LOCATION: {
-            CHK_PRT_RET(infoLen != sizeof(EndpointAttrLocation),
-                HCCL_ERROR("[RankGraphV1::GetEndpointInfo] Size mismatch for ENDPOINT_ATTR_LOCATION: expected %zu, actual %u",
-                    sizeof(EndpointAttrLocation), infoLen), HCCL_E_PARA);
+            CHK_PRT_RET(
+                infoLen != sizeof(EndpointAttrLocation),
+                HCCL_ERROR(
+                    "[RankGraphV1::GetEndpointInfo] Size mismatch for ENDPOINT_ATTR_LOCATION: expected %zu, actual %u",
+                    sizeof(EndpointAttrLocation), infoLen),
+                HCCL_E_PARA);
             *(static_cast<EndpointAttrLocation*>(info)) = foundEndpoint->loc.locType;
             break;
         }
@@ -786,8 +814,8 @@ HcclResult RankGraphV1::FillAttr(EndpointAttr endpointAttr, const EndpointDesc *
     return HCCL_SUCCESS;
 }
 
-HcclResult RankGraphV1::GetEndpointInfo(uint32_t rankId, const EndpointDesc *endPointDesc, EndpointAttr endpointAttr,
-                                          uint32_t infoLen, void *info)
+HcclResult RankGraphV1::GetEndpointInfo(
+    uint32_t rankId, const EndpointDesc* endPointDesc, EndpointAttr endpointAttr, uint32_t infoLen, void* info)
 {
     if (endPointDesc == nullptr || info == nullptr) {
         HCCL_ERROR("[RankGraphV1::GetEndpointInfo] Invalid parameter, null pointer");
@@ -805,8 +833,8 @@ HcclResult RankGraphV1::GetEndpointInfo(uint32_t rankId, const EndpointDesc *end
         return HCCL_E_NOT_FOUND;
     }
 
-    const RankGraphInfo &rankGraphInfo = rankIt->second;
-    const EndpointDesc *foundEndpoint = MatchEndpointByAddr(rankGraphInfo, endPointDesc);
+    const RankGraphInfo& rankGraphInfo = rankIt->second;
+    const EndpointDesc* foundEndpoint = MatchEndpointByAddr(rankGraphInfo, endPointDesc);
     if (foundEndpoint == nullptr) {
         HCCL_ERROR("[RankGraphV1::GetEndpointInfo] No matching endpoint found for rankId[%u]", rankId);
         return HCCL_E_NOT_FOUND;
@@ -815,26 +843,26 @@ HcclResult RankGraphV1::GetEndpointInfo(uint32_t rankId, const EndpointDesc *end
     return FillAttr(endpointAttr, foundEndpoint, infoLen, info);
 }
 
-HcclResult RankGraphV1::GetRankSize(uint32_t *rankSize)
+HcclResult RankGraphV1::GetRankSize(uint32_t* rankSize)
 {
     CHK_PTR_NULL(rankSize);
     *rankSize = rankGraph_.size();
     return HCCL_SUCCESS;
 }
 
-HcclResult RankGraphV1::GetDevicePort(const uint32_t rank, uint32_t *devPort)
+HcclResult RankGraphV1::GetDevicePort(const uint32_t rank, uint32_t* devPort)
 {
     CHK_PTR_NULL(devPort);
-    const RankInfo_t *rankInfo = FindRank(rank);
+    const RankInfo_t* rankInfo = FindRank(rank);
     if (rankInfo == nullptr) {
-        HCCL_ERROR("[RankGraphV1][%s]rank[%u] not found", __func__, rank);
+        HCCL_ERROR("[RankGraphV1][%s] rank[%u] not found", __func__, rank);
         return HCCL_E_PARA;
     }
     *devPort = rankInfo->deviceInfo.port;
     return HCCL_SUCCESS;
 }
 
-bool RankGraphSort(const RankInfo &first, const RankInfo &second)
+bool RankGraphSort(const RankInfo& first, const RankInfo& second)
 {
     if (first.serverIdx != second.serverIdx) {
         return first.serverIdx < second.serverIdx;
@@ -864,14 +892,14 @@ HcclResult RankGraphV1::InitGraphRankInfo()
         graphRankInfo.deviceInfo.backupPort = rankGraph_[index].deviceInfo.backupPort;
         graphRankInfo.bindDeviceId = rankGraph_[index].bindDeviceId;
         graphRankInfo.originalSuperPodId = rankGraph_[index].originalSuperPodId;
-        
+
         graphRankInfo_.push_back(graphRankInfo);
     }
 
     return HCCL_SUCCESS;
 }
 
-HcclResult RankGraphV1::GetRankGraphInfo(GraphType type, void **graph, uint32_t *len)
+HcclResult RankGraphV1::GetRankGraphInfo(GraphType type, void** graph, uint32_t* len)
 {
     switch (type) {
         case RANK_GRAPH_910_93: {
@@ -887,7 +915,7 @@ HcclResult RankGraphV1::GetRankGraphInfo(GraphType type, void **graph, uint32_t 
     return HCCL_SUCCESS;
 }
 
-HcclResult RankGraphV1::GetDeviceId(uint32_t rankId, uint32_t *deviceId)
+HcclResult RankGraphV1::GetDeviceId([[maybe_unused]] uint32_t rankId, [[maybe_unused]] uint32_t* deviceId)
 {
     return HCCL_SUCCESS;
 }
@@ -914,7 +942,7 @@ HcclResult RankGraphV1::InitServerRankInfo()
     for (u32 index = 0; index < rankInfoList.size(); index++) {
         serverIdx = rankInfoList[index].serverIdx;
         auto itServer = serverToRank_.find(serverIdx);
-        if (itServer != serverToRank_.end()) {  
+        if (itServer != serverToRank_.end()) {
             itServer->second.push_back(rankInfoList[index]);
         } else {
             std::vector<RankInfo> rankVecTmp;
@@ -935,8 +963,9 @@ HcclResult RankGraphV1::InitServerRankInfo()
         for (auto iter : serverToRank_[serverIdx]) {
             rankIdListServer += std::to_string(iter.userRank) + " ";
         }
-        HCCL_INFO("[RankGraphV1][%s] devtype[%d], curRank[%u], serverToRanklist[%s]", __func__,
-            topoAttr_.deviceType, rankData_.userRank, rankIdListServer.c_str());
+        HCCL_INFO(
+            "[RankGraphV1][%s] devtype[%d], curRank[%u], serverToRanklist[%s]", __func__, topoAttr_.deviceType,
+            rankData_.userRank, rankIdListServer.c_str());
     }
     return HCCL_SUCCESS;
 }
@@ -946,8 +975,9 @@ HcclResult RankGraphV1::InitSuperPodRankInfo()
     auto& rankInfoList = topoAttr_.rankInfoList;
     for (u32 index = 0; index < rankInfoList.size(); index++) {
         // 填充superPodRankMap_, 记录superPodId -> rankInfo
-        HCCL_DEBUG("[RankGraphV1][%s] superPodIdx[%d],superPodId[%s]", __func__, 
-            rankInfoList[index].superPodIdx, rankInfoList[index].superPodId.c_str());
+        HCCL_DEBUG(
+            "[RankGraphV1][%s] superPodIdx[%u],superPodId[%s]", __func__, rankInfoList[index].superPodIdx,
+            rankInfoList[index].superPodId.c_str());
         auto itSuperPod = superPodToRank_.find(rankInfoList[index].superPodIdx);
         if (itSuperPod != superPodToRank_.end()) {
             itSuperPod->second.push_back(rankInfoList[index]);
@@ -957,21 +987,22 @@ HcclResult RankGraphV1::InitSuperPodRankInfo()
             superPodToRank_.insert(std::make_pair(rankInfoList[index].superPodIdx, rankVecTmp));
         }
     }
- 
+
     // 调整每个superPod内的user_rank排序, 按照serverIdx从小到大、userRank从小到大排序
     for (auto iterMap = superPodToRank_.begin(); iterMap != superPodToRank_.end(); iterMap++) {
         if (!(iterMap->second).empty()) {
             std::sort(iterMap->second.begin(), iterMap->second.end(), RankGraphSort);
         }
     }
-    
+
     if (superPodToRank_.find(rankData_.superPodIdx) != superPodToRank_.end()) {
         std::string rankIdListPod;
         for (auto iter : superPodToRank_[rankData_.superPodIdx]) {
             rankIdListPod += std::to_string(iter.userRank) + " ";
         }
-        HCCL_INFO("[RankGraphV1][%s] curRank[%d], curSuperPod[%s] superPodToRanklist[%s]",
-            __func__, rankData_.userRank, rankData_.superPodId.c_str(), rankIdListPod.c_str());
+        HCCL_INFO(
+            "[RankGraphV1][%s] curRank[%u], curSuperPod[%s] superPodToRanklist[%s]", __func__, rankData_.userRank,
+            rankData_.superPodId.c_str(), rankIdListPod.c_str());
     }
     return HCCL_SUCCESS;
 }
@@ -980,11 +1011,11 @@ HcclResult RankGraphV1::InitNetLayer()
 {
     netLayer_.clear();
     netLayer_.push_back(static_cast<uint32_t>(HcclNetLayerlevel::HCCL_NetLayer_L0));
- 
+
     u32 serverIdx = rankData_.serverIdx;
     auto rankVec = serverToRank_.find(serverIdx);
     if (rankVec == serverToRank_.end()) {
-        HCCL_ERROR("[RankGraphV1][%s]find serverToRank failed, serverIdx[%u]", __func__, serverIdx);
+        HCCL_ERROR("[RankGraphV1][%s] find serverToRank failed, serverIdx[%u]", __func__, serverIdx);
         return HCCL_E_INTERNAL;
     }
     std::vector<u32> rankListTmp;
@@ -992,13 +1023,13 @@ HcclResult RankGraphV1::InitNetLayer()
         rankListTmp.push_back(iter.userRank);
     }
     rankList_.insert({static_cast<uint32_t>(HcclNetLayerlevel::HCCL_NetLayer_L0), rankListTmp});
- 
+
     std::vector<u32> rankSizeListTmp;
     for (auto iter : serverToRank_) {
         rankSizeListTmp.push_back(iter.second.size());
     }
     rankSizeList_.insert({static_cast<uint32_t>(HcclNetLayerlevel::HCCL_NetLayer_L0), rankSizeListTmp});
- 
+
     DevType deviceType = topoAttr_.deviceType;
     if (serverToRank_.size() > 1) {
         netLayer_.push_back(static_cast<uint32_t>(HcclNetLayerlevel::HCCL_NetLayer_L1));
@@ -1010,11 +1041,13 @@ HcclResult RankGraphV1::InitNetLayer()
                 }
             }
             rankList_.insert({static_cast<uint32_t>(HcclNetLayerlevel::HCCL_NetLayer_L1), rankListTmp1});
-            rankSizeList_.insert({static_cast<uint32_t>(HcclNetLayerlevel::HCCL_NetLayer_L1), {topoAttr_.userRankSize}});
+            rankSizeList_.insert(
+                {static_cast<uint32_t>(HcclNetLayerlevel::HCCL_NetLayer_L1), {topoAttr_.userRankSize}});
         } else if (deviceType == DevType::DEV_TYPE_910_93) {
             auto it = superPodToRank_.find(rankData_.superPodIdx);
             if (it == superPodToRank_.end()) {
-                HCCL_ERROR("[RankGraphV1][%s]find superPodToRank_ failed, superPodIdx[%u]", __func__, rankData_.superPodIdx);
+                HCCL_ERROR(
+                    "[RankGraphV1][%s] find superPodToRank_ failed, superPodIdx[%u]", __func__, rankData_.superPodIdx);
                 return HCCL_E_INTERNAL;
             }
             std::vector<u32> rankListTmp1;
@@ -1029,18 +1062,18 @@ HcclResult RankGraphV1::InitNetLayer()
             rankSizeList_.insert({static_cast<uint32_t>(HcclNetLayerlevel::HCCL_NetLayer_L1), rankSizeListTmp1});
         }
     }
- 
+
     if (deviceType == DevType::DEV_TYPE_910_93 && superPodToRank_.size() > 1) {
         netLayer_.push_back(static_cast<uint32_t>(HcclNetLayerlevel::HCCL_NetLayer_L2));
         std::vector<u32> rankListTmp2;
         for (const auto& pair : superPodToRank_) {
-           for (auto iter : pair.second) {
-               rankListTmp2.push_back(iter.userRank);
-           }
+            for (auto iter : pair.second) {
+                rankListTmp2.push_back(iter.userRank);
+            }
         }
         rankList_.insert({static_cast<uint32_t>(HcclNetLayerlevel::HCCL_NetLayer_L2), rankListTmp2});
         rankSizeList_.insert({static_cast<uint32_t>(HcclNetLayerlevel::HCCL_NetLayer_L2), {topoAttr_.userRankSize}});
     }
     return HCCL_SUCCESS;
 }
-};
+}; // namespace hccl

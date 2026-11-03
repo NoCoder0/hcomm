@@ -1,8 +1,20 @@
+# -----------------------------------------------------------------------------------------------------------
+# Copyright (c) 2026 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
+
 set(CCU_EXECUTOR_COMMON_LIBS
-    runnerdb
+    -Wl,--start-group
+    runtime_state
+    operation_data
     store
+    -Wl,--end-group
     log
-    sqlite3
 )
 
 add_subdirectory(ccu_executor)
@@ -70,19 +82,18 @@ target_sources(test_hccl_task_thread PRIVATE
     ${CMAKE_SOURCE_DIR}/src/plugin/runner/runner_utils/hccl_task_reduce_process.cc
     ${CMAKE_SOURCE_DIR}/src/plugin/runner/runner_utils/device_resource.cc
     ${CMAKE_SOURCE_DIR}/src/plugin/runner/runner_utils/device_resource_manager.cc
-    ${CMAKE_SOURCE_DIR}/src/plugin/runner/aiv_executor/aiv_resource_manager.cc
+    ${CMAKE_SOURCE_DIR}/src/plugin/runner/runner_utils/storage_manager.cc
     ${CMAKE_SOURCE_DIR}/src/plugin/runner/aiv_executor/aiv_graph_executor.cc
-    ${CMAKE_SOURCE_DIR}/src/plugin/runner/aiv_executor/aiv_graph_executor_mgr.cc
     ${CMAKE_SOURCE_DIR}/src/plugin/runner/aiv_executor/aiv_task_snapshot_loader.cc
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/aiv_mode_stub/ai_core_stub.cc
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/aiv_mode_stub/aiv_task.cc
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/aiv_mode_stub/aiv_task_json.cc
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/ascendc_stub/ascendc_base_stub.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/aiv_kernel/aiv_mode_stub/ai_core_stub.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/aiv_kernel/aiv_mode_stub/aiv_task.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/aiv_kernel/aiv_mode_stub/aiv_task_json.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/aiv_kernel/ascendc_stub/ascendc_base_stub.cc
     ${CMAKE_SOURCE_DIR}/src/store/store_sim_store_pub.cc
     ${CMAKE_SOURCE_DIR}/src/store/store_binary_data_operator.cc
-    ${CMAKE_SOURCE_DIR}/src/runnerdb/tracedb/db_sim_sqlite_db.cc
 )
-target_link_libraries(test_hccl_task_thread ccu_executor_common_objs ${CCU_EXECUTOR_COMMON_LIBS})
+target_link_libraries(test_hccl_task_thread ccu_executor_common_objs ${CCU_EXECUTOR_COMMON_LIBS}
+    ${ASCEND_CANN_PACKAGE_PATH}/${CANN_ARCH_DIR}/lib64/libhcomm.so)
 set_target_properties(test_hccl_task_thread PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output/bin"
 )
@@ -90,17 +101,14 @@ set_target_properties(test_hccl_task_thread PROPERTIES
 add_executable(test_storage_manager storage_manager_test.cc ../main.cc)
 target_sources(test_storage_manager PRIVATE
     ${CMAKE_SOURCE_DIR}/src/plugin/runner/runner_utils/storage_manager.cc
-    ${CMAKE_SOURCE_DIR}/src/plugin/runner/aiv_executor/aiv_resource_manager.cc
     ${CMAKE_SOURCE_DIR}/src/plugin/runner/aiv_executor/aiv_graph_executor.cc
-    ${CMAKE_SOURCE_DIR}/src/plugin/runner/aiv_executor/aiv_graph_executor_mgr.cc
     ${CMAKE_SOURCE_DIR}/src/plugin/runner/aiv_executor/aiv_task_snapshot_loader.cc
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/aiv_mode_stub/ai_core_stub.cc
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/aiv_mode_stub/aiv_task.cc
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/aiv_mode_stub/aiv_task_json.cc
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/ascendc_stub/ascendc_base_stub.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/aiv_kernel/aiv_mode_stub/ai_core_stub.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/aiv_kernel/aiv_mode_stub/aiv_task.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/aiv_kernel/aiv_mode_stub/aiv_task_json.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/aiv_kernel/ascendc_stub/ascendc_base_stub.cc
     ${CMAKE_SOURCE_DIR}/src/store/store_sim_store_pub.cc
     ${CMAKE_SOURCE_DIR}/src/store/store_binary_data_operator.cc
-    ${CMAKE_SOURCE_DIR}/src/runnerdb/tracedb/db_sim_sqlite_db.cc
 )
 target_link_libraries(test_storage_manager ccu_executor_common_objs ${CCU_EXECUTOR_COMMON_LIBS})
 set_target_properties(test_storage_manager PROPERTIES
@@ -123,10 +131,10 @@ set_target_properties(test_ccu_simulator_base PROPERTIES
 
 add_executable(test_aiv_task_json aiv_task_json_test.cc ../main.cc)
 target_sources(test_aiv_task_json PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/aiv_mode_stub/aiv_task_json.cc
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/aiv_mode_stub/aiv_task.cc
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/aiv_mode_stub/ai_core_stub.cc
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/ascendc_stub/ascendc_base_stub.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/aiv_kernel/aiv_mode_stub/aiv_task_json.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/aiv_kernel/aiv_mode_stub/aiv_task.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/aiv_kernel/aiv_mode_stub/ai_core_stub.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/aiv_kernel/ascendc_stub/ascendc_base_stub.cc
 )
 set_target_properties(test_aiv_task_json PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output/bin"
@@ -140,9 +148,9 @@ target_link_libraries(test_aiv_task_json log pthread)
 add_executable(test_aiv_task_snapshot_loader aiv_task_snapshot_loader_test.cc ../main.cc)
 target_sources(test_aiv_task_snapshot_loader PRIVATE
     ${CMAKE_SOURCE_DIR}/src/plugin/runner/aiv_executor/aiv_task_snapshot_loader.cc
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/aiv_mode_stub/aiv_task.cc
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/aiv_mode_stub/ai_core_stub.cc
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/ascendc_stub/ascendc_base_stub.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/aiv_kernel/aiv_mode_stub/aiv_task.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/aiv_kernel/aiv_mode_stub/ai_core_stub.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/aiv_kernel/ascendc_stub/ascendc_base_stub.cc
 )
 set_target_properties(test_aiv_task_snapshot_loader PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output/bin"
@@ -154,39 +162,13 @@ target_include_directories(test_aiv_task_snapshot_loader PRIVATE
 )
 target_link_libraries(test_aiv_task_snapshot_loader log pthread)
 
-add_executable(test_aiv_resource_manager aiv_resource_manager_test.cc ../main.cc)
-target_sources(test_aiv_resource_manager PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/plugin/runner/aiv_executor/aiv_resource_manager.cc
-)
-target_link_libraries(test_aiv_resource_manager ccu_executor_common_objs ${CCU_EXECUTOR_COMMON_LIBS})
-set_target_properties(test_aiv_resource_manager PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output/bin"
-)
-
-add_executable(test_aiv_graph_executor_mgr aiv_graph_executor_mgr_test.cc aiv_block_stub.cc ../main.cc)
-target_sources(test_aiv_graph_executor_mgr PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/plugin/runner/aiv_executor/aiv_graph_executor_mgr.cc
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/aiv_mode_stub/aiv_task.cc
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/aiv_mode_stub/ai_core_stub.cc
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/ascendc_stub/ascendc_base_stub.cc
-)
-set_target_properties(test_aiv_graph_executor_mgr PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output/bin"
-)
-target_link_libraries(test_aiv_graph_executor_mgr log pthread)
-
 add_executable(test_aiv_graph_executor aiv_graph_executor_test.cc ../main.cc)
 target_sources(test_aiv_graph_executor PRIVATE
     ${CMAKE_SOURCE_DIR}/src/plugin/runner/aiv_executor/aiv_graph_executor.cc
-    ${CMAKE_SOURCE_DIR}/src/plugin/runner/aiv_executor/aiv_resource_manager.cc
     ${CMAKE_SOURCE_DIR}/src/plugin/runner/aiv_executor/aiv_task_snapshot_loader.cc
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/aiv_mode_stub/aiv_task.cc
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/aiv_mode_stub/aiv_task_json.cc
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/aiv_mode_stub/ai_core_stub.cc
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/ascendc_stub/ascendc_base_stub.cc
-    ${CMAKE_SOURCE_DIR}/src/store/store_sim_store_pub.cc
-    ${CMAKE_SOURCE_DIR}/src/store/store_binary_data_operator.cc
-    ${CMAKE_SOURCE_DIR}/src/runnerdb/tracedb/db_sim_sqlite_db.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/aiv_kernel/aiv_mode_stub/aiv_task.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/aiv_kernel/aiv_mode_stub/ai_core_stub.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/aiv_kernel/ascendc_stub/ascendc_base_stub.cc
 )
 target_link_libraries(test_aiv_graph_executor ccu_executor_common_objs ${CCU_EXECUTOR_COMMON_LIBS})
 set_target_properties(test_aiv_graph_executor PROPERTIES

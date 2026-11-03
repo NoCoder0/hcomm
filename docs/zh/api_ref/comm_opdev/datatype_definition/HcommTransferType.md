@@ -10,11 +10,11 @@
 typedef enum {
     HCOMM_TRANSFER_TYPE_INVALID = -1,                       /* 无效传输类型 */
     HCOMM_TRANSFER_TYPE_WRITE = 0,                          /* 单边写，对应transferInfo.write */
-    HCOMM_TRANSFER_TYPE_WRITE_REDUCE = 1,                   /* 单边写规约，对应transferInfo.reduce */
+    HCOMM_TRANSFER_TYPE_WRITE_REDUCE = 1,                   /* 单边写归约，对应transferInfo.reduce */
     HCOMM_TRANSFER_TYPE_WRITE_WITH_NOTIFY = 2,              /* 带通知的单边写，对应transferInfo.writeWithNotify */
-    HCOMM_TRANSFER_TYPE_WRITE_REDUCE_WITH_NOTIFY = 3,       /* 带通知的单边写规约，对应transferInfo.writeReduceWithNotify */
+    HCOMM_TRANSFER_TYPE_WRITE_REDUCE_WITH_NOTIFY = 3,       /* 带通知的单边写归约，对应transferInfo.writeReduceWithNotify */
     HCOMM_TRANSFER_TYPE_READ = 4,                           /* 单边读，对应transferInfo.read */
-    HCOMM_TRANSFER_TYPE_READ_REDUCE = 5,                    /* 单边读规约，对应transferInfo.reduce */
+    HCOMM_TRANSFER_TYPE_READ_REDUCE = 5,                    /* 单边读归约，对应transferInfo.reduce */
     HCOMM_TRANSFER_TYPE_NOTIFY_RECORD = 6                   /* 记录通知事件，对应transferInfo.notifyRecord */
 } HcommTransferType;
 ```

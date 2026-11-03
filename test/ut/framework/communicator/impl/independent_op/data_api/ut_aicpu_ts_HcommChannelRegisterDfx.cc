@@ -22,6 +22,7 @@
 
 #define private public
 #include "aicpu_ts_thread.h"
+#include "hcclCommOp.h"
 #include "aicpu_ts_thread_interface.h"
 #undef private
 
@@ -35,13 +36,9 @@ using namespace hccl;
  * - 测试正常情况下注册DFX回调函数
  * - 测试Channel句柄为空的错误处理
  */
-class UtAicpuTsHcommChannelRegisterDfx : public testing::Test
-{
+class UtAicpuTsHcommChannelRegisterDfx : public testing::Test {
 protected:
-    virtual void TearDown() override
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() override { GlobalMockObject::verify(); }
 
     std::vector<char> uniqueId;
     Hccl::UbTransportLiteImpl transportOnDevice{uniqueId};
@@ -58,10 +55,10 @@ protected:
  */
 TEST_F(UtAicpuTsHcommChannelRegisterDfx, Ut_HcommChannelRegisterDfx_When_Normal_Expect_ReturnHCCL_SUCCESS)
 {
-    std::function<HcclResult(u32, u32, const Hccl::TaskParam&, u64)> callback =
-        [](u32 streamId, u32 taskId, const Hccl::TaskParam& taskParam, u64 handle) {
-            return HCCL_SUCCESS;
-        };
+    std::function<HcclResult(u32, u32, const Hccl::TaskParam&, u64)> callback
+        = [](u32 streamId, u32 taskId, const Hccl::TaskParam& taskParam, u64 handle) {
+              return HCCL_SUCCESS;
+          };
     res = HcommChannelRegisterDfx(channel, callback);
     EXPECT_EQ(res, HCCL_SUCCESS);
 }
@@ -75,10 +72,10 @@ TEST_F(UtAicpuTsHcommChannelRegisterDfx, Ut_HcommChannelRegisterDfx_When_Normal_
  */
 TEST_F(UtAicpuTsHcommChannelRegisterDfx, Ut_HcommChannelRegisterDfx_When_Channel_IsNull_Expect_ReturnHCCL_E_PTR)
 {
-    std::function<HcclResult(u32, u32, const Hccl::TaskParam&, u64)> callback =
-        [](u32 streamId, u32 taskId, const Hccl::TaskParam& taskParam, u64 handle) {
-            return HCCL_SUCCESS;
-        };
+    std::function<HcclResult(u32, u32, const Hccl::TaskParam&, u64)> callback
+        = [](u32 streamId, u32 taskId, const Hccl::TaskParam& taskParam, u64 handle) {
+              return HCCL_SUCCESS;
+          };
     res = HcommChannelRegisterDfx(0, callback);
     EXPECT_EQ(res, HCCL_E_PTR);
 }

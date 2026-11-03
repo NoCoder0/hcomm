@@ -11,14 +11,13 @@
 #ifndef RA_RS_ERR_H
 #define RA_RS_ERR_H
 
-#define ESAFEFUNC    256
-#define EFILEOPER    257
-#define ESYSFUNC     258
-#define EOPENSRC     259
-#define EDEFAULT     260
-#define ESOCKCLOSED  261
-#define EINVALIDIP   262
-#define ENOTSUPP     524
+#define ESAFEFUNC 256
+#define EFILEOPER 257
+#define ESYSFUNC 258
+#define EOPENSRC 259
+#define EDEFAULT 260
+#define ESOCKCLOSED 261
+#define EINVALIDIP 262
+#define ENOTSUPP 524
 
 #endif
-

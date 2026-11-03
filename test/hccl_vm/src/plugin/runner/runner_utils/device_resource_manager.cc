@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: ccu executor resource manager
  * Author: xx
  */
@@ -27,7 +30,8 @@ void DeviceResourceManager::Init(uint32_t rankSize)
     deviceResData_.v1Res->Reset(rankSize);
 }
 
-void DeviceResourceManager::InitRankRes(uint32_t rankId, uint32_t streamSize) {
+void DeviceResourceManager::InitRankRes(uint32_t rankId, uint32_t streamSize)
+{
     deviceResData_.v1Res->streamSize_ = streamSize;
     deviceResData_.v1Res->notifyResources_[rankId].resize(streamSize);
 
@@ -43,12 +47,15 @@ void DeviceResourceManager::NotifyRecord(uint32_t rankId, uint32_t streamId, uin
 
 bool DeviceResourceManager::NotifyWait(uint32_t rankId, uint32_t streamId, uint32_t notifyId, uint32_t notifyCnt)
 {
-    deviceResData_.v1Res->notifyResources_[rankId][streamId].notifyCnts_[notifyId] -= notifyCnt;
-    return deviceResData_.v1Res->notifyResources_[rankId][streamId].notifyCnts_[notifyId] >= 0;
+    auto& cnt = deviceResData_.v1Res->notifyResources_[rankId][streamId].notifyCnts_[notifyId];
+    if (cnt < notifyCnt) {
+        return false;
+    }
+    cnt -= notifyCnt;
+    return true;
 }
 
 bool DeviceResourceManager::CheckNotifyWait(uint32_t rankId, uint32_t streamId, uint32_t notifyId, uint32_t notifyCnt)
 {
-    auto notifyRemain = deviceResData_.v1Res->notifyResources_[rankId][streamId].notifyCnts_[notifyId] - notifyCnt;
-    return deviceResData_.v1Res->notifyResources_[rankId][streamId].notifyCnts_[notifyId] >= notifyRemain >= 0;
+    return deviceResData_.v1Res->notifyResources_[rankId][streamId].notifyCnts_[notifyId] >= notifyCnt;
 }

@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "topoinfo_ranktableStandard.h"
 
@@ -28,109 +28,113 @@
 using namespace std;
 using namespace hccl;
 
-
-TopoinfoRanktableStandard::TopoinfoRanktableStandard(const std::string &rankTableM, const std::string &identify)
+TopoinfoRanktableStandard::TopoinfoRanktableStandard(const std::string& rankTableM, const std::string& identify)
     : TopoInfoRanktableParser(rankTableM, identify)
-{
-}
+{}
 
-TopoinfoRanktableStandard::~TopoinfoRanktableStandard()
-{
-}
+TopoinfoRanktableStandard::~TopoinfoRanktableStandard() {}
 
-HcclResult TopoinfoRanktableStandard::Init()
-{
-    return HCCL_E_NOT_SUPPORT;
-}
+HcclResult TopoinfoRanktableStandard::Init() { return HCCL_E_NOT_SUPPORT; }
 
-HcclResult TopoinfoRanktableStandard::GetSelfClusterInfo(HcclCommParams &params)
+HcclResult TopoinfoRanktableStandard::GetSelfClusterInfo([[maybe_unused]] HcclCommParams& params)
 {
     return HCCL_E_NOT_SUPPORT;
 }
 
-HcclResult TopoinfoRanktableStandard::GetClusterInfo(hccl::HcclCommParams &params,
-    hccl::RankTable_t &rankTable)
+HcclResult TopoinfoRanktableStandard::GetClusterInfo(
+    [[maybe_unused]] hccl::HcclCommParams& params, [[maybe_unused]] hccl::RankTable_t& rankTable)
 {
     return HCCL_E_NOT_SUPPORT;
 }
-HcclResult TopoinfoRanktableStandard::GetClusterInfo(RankTable_t &clusterInfo)
-{
-    return HCCL_E_NOT_SUPPORT;
-}
-
-HcclResult TopoinfoRanktableStandard::ParserClusterInfo(hccl::HcclCommParams &params, hccl::RankTable_t &rankTable)
+HcclResult TopoinfoRanktableStandard::GetClusterInfo([[maybe_unused]] RankTable_t& clusterInfo)
 {
     return HCCL_E_NOT_SUPPORT;
 }
 
-HcclResult TopoinfoRanktableStandard::GetHcomInfo(hccl::HcclCommParams &params, hccl::RankTable_t &rankTable)
+HcclResult TopoinfoRanktableStandard::ParserClusterInfo(
+    [[maybe_unused]] hccl::HcclCommParams& params, [[maybe_unused]] hccl::RankTable_t& rankTable)
 {
     return HCCL_E_NOT_SUPPORT;
 }
 
-HcclResult TopoinfoRanktableStandard::GetServerList(const nlohmann::json &obj, u32 objIndex,
-    hccl::RankTable_t &rankTable, u32 serverNum)
+HcclResult TopoinfoRanktableStandard::GetHcomInfo(
+    [[maybe_unused]] hccl::HcclCommParams& params, [[maybe_unused]] hccl::RankTable_t& rankTable)
 {
     return HCCL_E_NOT_SUPPORT;
 }
 
-HcclResult TopoinfoRanktableStandard::GetSingleServer(const nlohmann::json &serverListObj, u32 objIndex,
-    hccl::RankTable_t &rankTable)
+HcclResult TopoinfoRanktableStandard::GetServerList(
+    [[maybe_unused]] const nlohmann::json& obj, [[maybe_unused]] u32 objIndex,
+    [[maybe_unused]] hccl::RankTable_t& rankTable, [[maybe_unused]] u32 serverNum)
 {
     return HCCL_E_NOT_SUPPORT;
 }
 
-HcclResult TopoinfoRanktableStandard::GetCloudHcomInfo(hccl::HcclCommParams &params, hccl::RankTable_t &rankTable,
-    const std::string &identify, u32 &rank)
+HcclResult TopoinfoRanktableStandard::GetSingleServer(
+    [[maybe_unused]] const nlohmann::json& serverListObj, [[maybe_unused]] u32 objIndex,
+    [[maybe_unused]] hccl::RankTable_t& rankTable)
 {
     return HCCL_E_NOT_SUPPORT;
 }
 
-
-HcclResult TopoinfoRanktableStandard::GetSortClouldRankList(hccl::RankTable_t &rankTable)
+HcclResult TopoinfoRanktableStandard::GetCloudHcomInfo(
+    [[maybe_unused]] hccl::HcclCommParams& params, [[maybe_unused]] hccl::RankTable_t& rankTable,
+    [[maybe_unused]] const std::string& identify, [[maybe_unused]] u32& rank)
 {
     return HCCL_E_NOT_SUPPORT;
 }
 
-
-HcclResult TopoinfoRanktableStandard::GetSingleGroupDeviceCount(nlohmann::json &obj, u32 objIndex,
-    hccl::RankTable_t &rankTable, u32 &deviceNum)
+HcclResult TopoinfoRanktableStandard::GetSortClouldRankList([[maybe_unused]] hccl::RankTable_t& rankTable)
 {
     return HCCL_E_NOT_SUPPORT;
 }
 
-HcclResult TopoinfoRanktableStandard::GetLabSingleGroup(nlohmann::json &obj, u32 objIndex, hccl::HcclCommParams &params,
-    hccl::RankTable_t &rankTable, u32 instanceNum)
+HcclResult TopoinfoRanktableStandard::GetSingleGroupDeviceCount(
+    [[maybe_unused]] const nlohmann::json& obj, [[maybe_unused]] u32 objIndex,
+    [[maybe_unused]] hccl::RankTable_t& rankTable, [[maybe_unused]] u32& deviceNum)
 {
     return HCCL_E_NOT_SUPPORT;
 }
 
-
-HcclResult TopoinfoRanktableStandard::GetGroupList(hccl::HcclCommParams &params, hccl::RankTable_t &rankTable)
+HcclResult TopoinfoRanktableStandard::GetLabSingleGroup(
+    [[maybe_unused]] const nlohmann::json& obj, [[maybe_unused]] u32 objIndex,
+    [[maybe_unused]] const hccl::HcclCommParams& params, [[maybe_unused]] hccl::RankTable_t& rankTable,
+    [[maybe_unused]] u32 instanceNum)
 {
     return HCCL_E_NOT_SUPPORT;
 }
 
-HcclResult TopoinfoRanktableStandard::GetInstanceList(nlohmann::json &instanceList, hccl::HcclCommParams &params,
-    hccl::RankTable_t &rankTable, u32 instanceNum, u32 deviceNum)
+HcclResult TopoinfoRanktableStandard::GetGroupList(
+    [[maybe_unused]] hccl::HcclCommParams& params, [[maybe_unused]] hccl::RankTable_t& rankTable)
 {
     return HCCL_E_NOT_SUPPORT;
 }
 
-HcclResult TopoinfoRanktableStandard::GetCloudDevList(nlohmann::json &instanceList, u32 podIndex,
-    nlohmann::json &deviceList, std::string &serverId, u32 &serverIdx)
+HcclResult TopoinfoRanktableStandard::GetInstanceList(
+    [[maybe_unused]] nlohmann::json& instanceList, [[maybe_unused]] hccl::HcclCommParams& params,
+    [[maybe_unused]] hccl::RankTable_t& rankTable, [[maybe_unused]] u32 instanceNum, [[maybe_unused]] u32 deviceNum)
 {
     return HCCL_E_NOT_SUPPORT;
 }
 
-HcclResult TopoinfoRanktableStandard::GetDevList(nlohmann::json &instanceList, u32 podIndex,
-    nlohmann::json &deviceList, hccl::HcclCommParams &params, hccl::RankTable_t &rankTable,
-    std::string &serverId, u32 &serverIdx)
+HcclResult TopoinfoRanktableStandard::GetCloudDevList(
+    [[maybe_unused]] nlohmann::json& instanceList, [[maybe_unused]] u32 podIndex,
+    [[maybe_unused]] nlohmann::json& deviceList, [[maybe_unused]] std::string& serverId,
+    [[maybe_unused]] u32& serverIdx)
 {
     return HCCL_E_NOT_SUPPORT;
 }
 
-HcclResult TopoinfoRanktableStandard::GetDeployMode(bool &cloudFlag) const
+HcclResult TopoinfoRanktableStandard::GetDevList(
+    [[maybe_unused]] const nlohmann::json& instanceList, [[maybe_unused]] u32 podIndex,
+    [[maybe_unused]] const nlohmann::json& deviceList, [[maybe_unused]] const hccl::HcclCommParams& params,
+    [[maybe_unused]] hccl::RankTable_t& rankTable, [[maybe_unused]] std::string& serverId,
+    [[maybe_unused]] u32& serverIdx)
+{
+    return HCCL_E_NOT_SUPPORT;
+}
+
+HcclResult TopoinfoRanktableStandard::GetDeployMode([[maybe_unused]] bool& cloudFlag) const
 {
     return HCCL_E_NOT_SUPPORT;
 }

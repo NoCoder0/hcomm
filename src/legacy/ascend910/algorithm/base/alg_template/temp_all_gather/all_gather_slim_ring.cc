@@ -1,64 +1,59 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "all_gather_slim_ring.h"
 #include "alg_template_register.h"
 
 namespace hccl {
-AllGatherSlimRing::AllGatherSlimRing(const HcclDispatcher dispatcher) : AlgTemplateBase(dispatcher)
-{
-}
+AllGatherSlimRing::AllGatherSlimRing(const HcclDispatcher dispatcher) : AlgTemplateBase(dispatcher) {}
 
-AllGatherSlimRing::~AllGatherSlimRing()
-{
-}
+AllGatherSlimRing::~AllGatherSlimRing() {}
 
-HcclResult AllGatherSlimRing::TxVector(const LINK &link, const std::vector<Slice> &txSlices)
+HcclResult AllGatherSlimRing::TxVector(const LINK& link, const std::vector<Slice>& txSlices)
 {
     std::vector<TxMemoryInfo> txMems;
-    for (const Slice &txSlice : txSlices) {
+    for (const Slice& txSlice : txSlices) {
         DeviceMem srcMem = outputMem_.range(txSlice.offset, txSlice.size);
         HCCL_DEBUG("tx srcMem[%p] range[%llu] size[%llu] ", srcMem.ptr(), txSlice.offset, txSlice.size);
-        txMems.emplace_back(TxMemoryInfo{UserMemType::OUTPUT_MEM, txSlice.offset + baseOffset_,
-            srcMem.ptr(), txSlice.size});
+        txMems.emplace_back(
+            TxMemoryInfo{UserMemType::OUTPUT_MEM, txSlice.offset + baseOffset_, srcMem.ptr(), txSlice.size});
     }
     CHK_RET(link->Post(notifyIdx_, stream_));
     return HCCL_SUCCESS;
 }
 
-HcclResult AllGatherSlimRing::RxVector(const LINK &link, const std::vector<Slice> &rxSlices)
+HcclResult AllGatherSlimRing::RxVector(const LINK& link, const std::vector<Slice>& rxSlices)
 {
     std::vector<RxMemoryInfo> rxMems;
-    for (const Slice &rxSlice : rxSlices) {
+    for (const Slice& rxSlice : rxSlices) {
         DeviceMem dstMem = outputMem_.range(rxSlice.offset, rxSlice.size);
-        HCCL_DEBUG("rx dstMem[%p] range[%llu], size[%llu] ",  dstMem.ptr(),
-            rxSlice.offset, rxSlice.size);
-        rxMems.emplace_back(RxMemoryInfo{UserMemType::OUTPUT_MEM, rxSlice.offset + baseOffset_,
-            dstMem.ptr(), rxSlice.size});
+        HCCL_DEBUG("rx dstMem[%p] range[%llu], size[%llu] ", dstMem.ptr(), rxSlice.offset, rxSlice.size);
+        rxMems.emplace_back(
+            RxMemoryInfo{UserMemType::OUTPUT_MEM, rxSlice.offset + baseOffset_, dstMem.ptr(), rxSlice.size});
     }
     CHK_RET(link->Wait(notifyIdx_, stream_));
     for (auto& mem : rxMems) {
         CHK_PTR_NULL(mem.dst);
-        void *srcMemPtr = nullptr;
+        void* srcMemPtr = nullptr;
         CHK_RET(link->GetRemoteMem(mem.srcMemType, &srcMemPtr));
 
-        DeviceMem srcDevMem(static_cast<s8 *>(srcMemPtr) + mem.srcOffset, mem.len);
-        DeviceMem dstDevMem(static_cast<s8 *>(mem.dst), mem.len);
-        CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dstDevMem, srcDevMem, stream_, link->GetRemoteRank(),
-            link->GetLinkType()));
+        DeviceMem srcDevMem(static_cast<s8*>(srcMemPtr) + mem.srcOffset, mem.len);
+        DeviceMem dstDevMem(static_cast<s8*>(mem.dst), mem.len);
+        CHK_RET(
+            HcclD2DMemcpyAsync(dispatcher_, dstDevMem, srcDevMem, stream_, link->GetRemoteRank(), link->GetLinkType()));
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult AllGatherSlimRing::InitSlice(std::vector<Slice>& inputSlices, u32 rank, 
-    u32 rankSize, u32 unitSize){
+HcclResult AllGatherSlimRing::InitSlice(std::vector<Slice>& inputSlices, u32 rank, u32 rankSize, u32 unitSize)
+{
     if (slices_.size() == 0) {
         slices_.resize(rankSize);
         inputSlices.resize(rankSize);
@@ -68,20 +63,22 @@ HcclResult AllGatherSlimRing::InitSlice(std::vector<Slice>& inputSlices, u32 ran
             slices_[i].offset = sliceSize * i;
             inputSlices[i].size = sliceSize;
             inputSlices[i].offset = (inputMem_.size() < outputMem_.size()) ? 0 : (sliceSize * i);
-            HCCL_DEBUG("rank[%u], slices[%u].offset=%llu, slices[%u].size=%llu", \
-                       rank, i, slices_[i].offset, i, slices_[i].size);
+            HCCL_DEBUG(
+                "rank[%u], slices[%u].offset=%llu, slices[%u].size=%llu", rank, i, slices_[i].offset, i,
+                slices_[i].size);
         }
     }
     return HCCL_SUCCESS;
 }
 
 // 服务器间allgather的入口函数
-HcclResult AllGatherSlimRing::RunAsync(const u32 rank, const u32 rankSize, const std::vector<LINK> &links)
+HcclResult AllGatherSlimRing::RunAsync(const u32 rank, const u32 rankSize, const std::vector<LINK>& links)
 {
     CHK_SMART_PTR_NULL(dispatcher_);
     CHK_PTR_NULL(stream_.ptr());
-    HCCL_INFO("AllGatherSlimRing run_async rank[%u] ranksize[%u] inputMem[%p] outputMem[%p] count[%llu]", \
-              rank, rankSize, inputMem_.ptr(), outputMem_.ptr(), count_);
+    HCCL_INFO(
+        "AllGatherSlimRing run_async rank[%u] ranksize[%u] inputMem[%p] outputMem[%p] count[%llu]", rank, rankSize,
+        inputMem_.ptr(), outputMem_.ptr(), count_);
 
     if (rankSize == 1) {
         if (inputMem_ != outputMem_) {
@@ -128,7 +125,7 @@ HcclResult AllGatherSlimRing::RunAsync(const u32 rank, const u32 rankSize, const
     if (rankSize != HCCL_NIC_MAX_NUM || nicRankList_.size() == HCCL_NIC_MAX_NUM) {
         // 非网口裁剪场景:
         CHK_RET(RunAllGather(rank, rankSize, slices_));
-    } 
+    }
 
     if (barrierSwitchOn_) {
         // 执行barrier，保证数据收发完成
@@ -140,7 +137,7 @@ HcclResult AllGatherSlimRing::RunAsync(const u32 rank, const u32 rankSize, const
     return HCCL_SUCCESS;
 }
 
-HcclResult AllGatherSlimRing::RunAllGather(u32 rank, u32 rankSize, const std::vector<Slice> &outputSlices)
+HcclResult AllGatherSlimRing::RunAllGather(u32 rank, u32 rankSize, const std::vector<Slice>& outputSlices)
 {
     if (outputSlices.size() < rankSize) {
         HCCL_ERROR("[Run][AllGather]rank[%u] OutputSlice Size is less than rank size.", rank);
@@ -161,15 +158,23 @@ HcclResult AllGatherSlimRing::RunAllGather(u32 rank, u32 rankSize, const std::ve
             rxSegsSlice.push_back(outputSlices[rxSliceIndex * sliceSize + j]);
         }
         ret = TxVector(linkRight_, txSegsSlice);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[Run][AllGather]rank[%u] round[%u] Right Link tx outputSlices[%u] "\
-                "Failed", rank, i, txSliceIndex), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[Run][AllGather]rank[%u] round[%u] Right Link tx outputSlices[%u] "
+                "Failed",
+                rank, i, txSliceIndex),
+            ret);
 
         // reduce源操作
         ret = RxVector(linkLeft_, rxSegsSlice);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[Run][AllGather]rank[%u] round[%u]  Left Link rx outputSlices[%u] "\
-                "Failed", rank, i, rxSliceIndex), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[Run][AllGather]rank[%u] round[%u] Left Link rx outputSlices[%u] "
+                "Failed",
+                rank, i, rxSliceIndex),
+            ret);
 
         // 末尾传输, 只接收一次, 不用再次发送
         txSliceIndex = ForwordRank(txSliceIndex, rankSize, 1);
@@ -186,11 +191,11 @@ HcclResult AllGatherSlimRing::SetNotifyIdx(u32 notifyIdx)
     return HCCL_SUCCESS;
 }
 
-HcclResult AllGatherSlimRing::GetNotifyIdx(u32 &notifyIdx)
+HcclResult AllGatherSlimRing::GetNotifyIdx(u32& notifyIdx)
 {
     notifyIdx = notifyIdx_;
     return HCCL_SUCCESS;
 }
 
 REGISTER_TEMPLATE(TemplateType::TEMPLATE_ALL_GATHER_SLIM_RING, AllGatherSlimRing);
-}  // namespace hccl
+} // namespace hccl

@@ -21,9 +21,9 @@
 #include "const_val.h"
 
 namespace Hccl {
-constexpr int RANK_SIZE_TWO   = 2;
+constexpr int RANK_SIZE_TWO = 2;
 constexpr int RANK_SIZE_THREE = 3;
-constexpr int RANK_SIZE_FOUR  = 4;
+constexpr int RANK_SIZE_FOUR = 4;
 constexpr int RANK_SIZE_EIGHT = 8;
 
 constexpr int COMM_LEVEL_SIZE_0 = 0;
@@ -52,18 +52,17 @@ const std::vector<u32> SERVER_910A_4P_SEQUENCE = {0, 1, 3, 2};
 
 class TopoMatchBase {
 public:
-    explicit TopoMatchBase(const RankId vRank, const u32 rankSize, const RankGraph *rankGraph,
-                           const DevType devType);
+    explicit TopoMatchBase(const RankId vRank, const u32 rankSize, const RankGraph* rankGraph, const DevType devType);
     virtual ~TopoMatchBase();
 
     virtual std::string Describe() const = 0;
 
-    virtual HcclResult MatchTopo(std::vector<std::vector<RankId>> &vTopo, std::vector<RankId> &virtRanks,
-                                 std::map<RankId, u32> &virtRankMap);
+    virtual HcclResult MatchTopo(
+        std::vector<std::vector<RankId>>& vTopo, std::vector<RankId>& virtRanks, std::map<RankId, u32>& virtRankMap);
 
-    virtual HcclResult MatchTopo(std::vector<std::vector<std::vector<RankId>>> &vTopo,
-                                 std::vector<std::vector<RankId>>              &virtRanks,
-                                 std::vector<std::map<RankId, u32>>            &virtRankMap);
+    virtual HcclResult MatchTopo(
+        std::vector<std::vector<std::vector<RankId>>>& vTopo, std::vector<std::vector<RankId>>& virtRanks,
+        std::vector<std::map<RankId, u32>>& virtRankMap);
 
     virtual HcclResult SetTargetRanks(std::set<u32>& targetRanks);
 
@@ -72,52 +71,53 @@ public:
 protected:
     bool IsAllRanksFullMeshConnected(std::set<RankId> rankSet) const;
     u32 GetPathNum(RankId srcRankId, RankId dstRankId) const;
-    HcclResult GenVirtRankMapping(std::vector<RankId> &virtRanks, std::map<RankId, u32> &virtRankMap) const;
-    HcclResult GenVirtRankMappingMultiLevel(std::vector<std::vector<RankId>>   &virtRanks,
-                                            std::vector<std::map<RankId, u32>> &virtRankMap) const;
+    HcclResult GenVirtRankMapping(std::vector<RankId>& virtRanks, std::map<RankId, u32>& virtRankMap) const;
+    HcclResult GenVirtRankMappingMultiLevel(
+        std::vector<std::vector<RankId>>& virtRanks, std::vector<std::map<RankId, u32>>& virtRankMap) const;
 
-    HcclResult CalcRankOnSamePlaneOfR0(std::vector<std::vector<RankId>> &rankOnSameBoardVector,
-        std::vector<std::vector<RankId>> &rankOnSameSlotVector, std::vector<u32> &numRanksPerBoard) const;
+    HcclResult CalcRankOnSamePlaneOfR0(
+        std::vector<std::vector<RankId>>& rankOnSameBoardVector, std::vector<std::vector<RankId>>& rankOnSameSlotVector,
+        std::vector<u32>& numRanksPerBoard) const;
 
     u32 GcdTwo(u32 a, u32 b) const;
-    u32 GcdMultiple(const std::vector<u32>& numbers) const;
+    HcclResult GcdMultiple(const std::vector<u32>& numbers, u32& result) const;
 
-    HcclResult GenerateLevel1(const std::set<RankId> &rankSetLevel1, u32 gcdInstSize, RankId rankId,
-                              std::vector<std::vector<std::vector<RankId>>> &vTopo,
-                              std::vector<std::vector<RankId>> &virtRanks) const;
+    HcclResult GenerateLevel1(
+        const std::set<RankId>& rankSetLevel1, u32 gcdInstSize, RankId rankId,
+        std::vector<std::vector<std::vector<RankId>>>& vTopo, std::vector<std::vector<RankId>>& virtRanks) const;
 
-    template<typename T>
+    template <typename T>
     using Matrix = std::vector<std::vector<T>>;
-    template<typename T>
+    template <typename T>
     using Tensor = std::vector<std::vector<std::vector<T>>>;
 
-    template<typename T>
-    std::string PrintSet(const std::set<T> &values) const
+    template <typename T>
+    std::string PrintSet(const std::set<T>& values) const
     {
         std::ostringstream oss;
-        for (const auto &value : values) {
+        for (const auto& value : values) {
             oss << value << " ";
         }
         return oss.str();
     }
 
-    template<typename T>
-    std::string PrintVector(const std::vector<T> &values) const
+    template <typename T>
+    std::string PrintVector(const std::vector<T>& values) const
     {
         std::ostringstream oss;
-        for (const auto &value : values) {
+        for (const auto& value : values) {
             oss << value << " ";
         }
         return oss.str();
     }
 
-    template<typename T>
-    std::string PrintMatrix(const Matrix<T> &matrix) const
+    template <typename T>
+    std::string PrintMatrix(const Matrix<T>& matrix) const
     {
         std::ostringstream oss;
-        for (const auto &row : matrix) {
+        for (const auto& row : matrix) {
             oss << "{ ";
-            for (const auto &val : row) {
+            for (const auto& val : row) {
                 oss << val << " ";
             }
             oss << "}";
@@ -125,20 +125,20 @@ protected:
         return oss.str();
     }
 
-    template<typename T>
-    std::string PrintTensor(const Tensor<T> &tensor) const
+    template <typename T>
+    std::string PrintTensor(const Tensor<T>& tensor) const
     {
         std::ostringstream oss;
-        for (const auto &matrix : tensor) {
+        for (const auto& matrix : tensor) {
             oss << "[ " << PrintMatrix(matrix) << " ]";
         }
         return oss.str();
     }
 
-    RankId             myRank_    = INVALID_RANKID;
-    u32                rankSize_  = 0;
-    const   RankGraph *rankGraph_ = nullptr;
-    DevType            devType_   = DevType::DEV_TYPE_NOSOC;
+    RankId myRank_ = INVALID_RANKID;
+    u32 rankSize_ = 0;
+    const RankGraph* rankGraph_ = nullptr;
+    DevType devType_ = DevType::DEV_TYPE_NOSOC;
 };
 
 } // namespace Hccl

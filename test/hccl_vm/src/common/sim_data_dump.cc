@@ -25,14 +25,14 @@
 #include "store_dump_shm_data.h"
 #include "hccl/hccl_types.h"
 #include "sim_log.h"
-#include "sim_models.h"
-#include "db_sim_runner_db.h"
+#include "runtime_state/sim_models.h"
+#include "runtime_state/db_sim_runner_ops.h"
 
 static const std::string TASK_COLLECTION_FILE = "/%s_task.jsonl.gz";
 static const std::string MEM_LAYOUT_FILE = "/%s_mem_layout.jsonl.gz";
 static const std::string MODEL_FILE = "/%s_model.jsonl.gz";
 
-HcclVmResult DumpData(nlohmann::json &j)
+HcclVmResult DumpData(nlohmann::json& j)
 {
     j["status"] = "finish";
     j["data_id"] = "1234";

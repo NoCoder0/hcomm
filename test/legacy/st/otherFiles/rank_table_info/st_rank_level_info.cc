@@ -21,25 +21,21 @@ using namespace Hccl;
 
 class RankLevelInfoParserTest : public testing::Test {
 protected:
-    static void SetUpTestCase() {
-        std::cout << "RankLevelInfoParserTest SetUP" << std::endl;
-    }
- 
-    static void TearDownTestCase() {
-        std::cout << "RankLevelInfoParserTest TearDown" << std::endl;
-    }
- 
-    virtual void SetUp() {
-        std::cout << "A Test case in RankLevelInfoParserTest SetUP" << std::endl;
-    }
- 
-    virtual void TearDown() {
+    static void SetUpTestCase() { std::cout << "RankLevelInfoParserTest SetUP" << std::endl; }
+
+    static void TearDownTestCase() { std::cout << "RankLevelInfoParserTest TearDown" << std::endl; }
+
+    virtual void SetUp() { std::cout << "A Test case in RankLevelInfoParserTest SetUP" << std::endl; }
+
+    virtual void TearDown()
+    {
         GlobalMockObject::verify();
         std::cout << "A Test case in RankLevelInfoParserTest TearDown" << std::endl;
     }
 };
 
-TEST_F(RankLevelInfoParserTest, St_Deserialize_When_Normal_Expect_Success) {
+TEST_F(RankLevelInfoParserTest, St_Deserialize_When_Normal_Expect_Success)
+{
     DevType devType = DevType::DEV_TYPE_910A;
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(devType));
 
@@ -67,50 +63,47 @@ TEST_F(RankLevelInfoParserTest, St_Deserialize_When_Normal_Expect_Success) {
     )";
     JsonParser rankLevelParser;
     RankLevelInfo rankLevelInfo;
-    rankLevelParser.ParseString(rankLevelString, rankLevelInfo);
-    
+    EXPECT_EQ(rankLevelParser.ParseString(rankLevelString, rankLevelInfo), HCCL_SUCCESS);
     RankLevelInfo rankLevelInfo0;
     rankLevelInfo0.netLayer = 0;
     rankLevelInfo0.netInstId = "superPod0-rack3";
     rankLevelInfo0.netType = NetType::TOPO_FILE_DESC;
 
-    
-    AddressInfo  addressInfo0;
-    addressInfo0.addrType=AddrType::IPV4;
+    AddressInfo addressInfo0;
+    addressInfo0.addrType = AddrType::IPV4;
     IpAddress ipAddress0("192.168.100.100", AF_INET);
-    addressInfo0.addr=ipAddress0;
+    addressInfo0.addr = ipAddress0;
     addressInfo0.ports.emplace("0/1");
     addressInfo0.ports.emplace("0/2");
-    addressInfo0.planeId="planeA";
+    addressInfo0.planeId = "planeA";
 
-    AddressInfo  addressInfo1;
-    addressInfo1.addrType=AddrType::IPV4;
+    AddressInfo addressInfo1;
+    addressInfo1.addrType = AddrType::IPV4;
     IpAddress ipAddress1("192.168.100.100", AF_INET);
-    addressInfo1.addr=ipAddress1;
+    addressInfo1.addr = ipAddress1;
     addressInfo1.ports.emplace("1/1");
     addressInfo1.ports.emplace("1/2");
-    addressInfo1.planeId="planeB";
+    addressInfo1.planeId = "planeB";
 
     rankLevelInfo0.rankAddrs.push_back(addressInfo0);
     rankLevelInfo0.rankAddrs.push_back(addressInfo1);
     rankLevelInfo.Describe();
-
 
     EXPECT_EQ(rankLevelInfo0.netLayer, rankLevelInfo.netLayer);
     EXPECT_EQ(rankLevelInfo0.netInstId, rankLevelInfo.netInstId);
     EXPECT_EQ(rankLevelInfo0.netType, rankLevelInfo.netType);
 
     ASSERT_EQ(rankLevelInfo0.rankAddrs.size(), rankLevelInfo.rankAddrs.size());
-    for(auto k = 0 ; k < rankLevelInfo.rankAddrs.size(); k++) {
+    for (auto k = 0; k < rankLevelInfo.rankAddrs.size(); k++) {
         EXPECT_EQ(rankLevelInfo0.rankAddrs[k].addrType, rankLevelInfo.rankAddrs[k].addrType);
         EXPECT_EQ(rankLevelInfo0.rankAddrs[k].addr, rankLevelInfo.rankAddrs[k].addr);
         EXPECT_EQ(rankLevelInfo0.rankAddrs[k].ports, rankLevelInfo.rankAddrs[k].ports);
         EXPECT_EQ(rankLevelInfo0.rankAddrs[k].planeId, rankLevelInfo.rankAddrs[k].planeId);
     }
-        
 }
 
-TEST_F(RankLevelInfoParserTest, St_Deserialize_When_OptionalFieldsMissing_Expect_Success) {
+TEST_F(RankLevelInfoParserTest, St_Deserialize_When_OptionalFieldsMissing_Expect_Success)
+{
     DevType devType = DevType::DEV_TYPE_910A;
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(devType));
 
@@ -135,25 +128,23 @@ TEST_F(RankLevelInfoParserTest, St_Deserialize_When_OptionalFieldsMissing_Expect
     )";
     JsonParser rankLevelParser;
     RankLevelInfo rankLevelInfo;
-    rankLevelParser.ParseString(rankLevelString, rankLevelInfo);
-    
+    EXPECT_EQ(rankLevelParser.ParseString(rankLevelString, rankLevelInfo), HCCL_SUCCESS);
     RankLevelInfo rankLevelInfo0;
     rankLevelInfo0.netLayer = 0;
     rankLevelInfo0.netInstId = "superPod0-rack3";
     rankLevelInfo0.netType = NetType::TOPO_FILE_DESC;
 
-    
-    AddressInfo  addressInfo0;
-    addressInfo0.addrType=AddrType::IPV4;
+    AddressInfo addressInfo0;
+    addressInfo0.addrType = AddrType::IPV4;
     IpAddress ipAddress0("192.168.100.100", AF_INET);
-    addressInfo0.addr=ipAddress0;
+    addressInfo0.addr = ipAddress0;
     addressInfo0.ports.emplace("0/1");
     addressInfo0.ports.emplace("0/2");
 
-    AddressInfo  addressInfo1;
-    addressInfo1.addrType=AddrType::IPV4;
+    AddressInfo addressInfo1;
+    addressInfo1.addrType = AddrType::IPV4;
     IpAddress ipAddress1("192.168.100.100", AF_INET);
-    addressInfo1.addr=ipAddress1;
+    addressInfo1.addr = ipAddress1;
     addressInfo1.ports.emplace("1/1");
     addressInfo1.ports.emplace("1/2");
 
@@ -165,24 +156,23 @@ TEST_F(RankLevelInfoParserTest, St_Deserialize_When_OptionalFieldsMissing_Expect
     EXPECT_EQ(rankLevelInfo0.netType, rankLevelInfo.netType);
 
     ASSERT_EQ(rankLevelInfo0.rankAddrs.size(), rankLevelInfo.rankAddrs.size());
-    for(auto k = 0 ; k < rankLevelInfo.rankAddrs.size(); k++) {
+    for (auto k = 0; k < rankLevelInfo.rankAddrs.size(); k++) {
         EXPECT_EQ(rankLevelInfo0.rankAddrs[k].addrType, rankLevelInfo.rankAddrs[k].addrType);
         EXPECT_EQ(rankLevelInfo0.rankAddrs[k].addr, rankLevelInfo.rankAddrs[k].addr);
         EXPECT_EQ(rankLevelInfo0.rankAddrs[k].ports, rankLevelInfo.rankAddrs[k].ports);
     }
 
     BinaryStream binStream;
-    rankLevelInfo.GetBinStream(binStream);
+    EXPECT_EQ(rankLevelInfo.GetBinStream(binStream), HcclResult::HCCL_SUCCESS);
     RankLevelInfo rankLevelInfo1(binStream);
     EXPECT_EQ(rankLevelInfo1.netLayer, rankLevelInfo.netLayer);
     EXPECT_EQ(rankLevelInfo1.netInstId, rankLevelInfo.netInstId);
     EXPECT_EQ(rankLevelInfo1.netType, rankLevelInfo.netType);
     EXPECT_EQ(rankLevelInfo1.portAddrMap, rankLevelInfo.portAddrMap);
-
-        
 }
 
-TEST_F(RankLevelInfoParserTest, St_Deserialize_When_InvalidNetLayer_Expect_Exception) {
+TEST_F(RankLevelInfoParserTest, St_Deserialize_When_InvalidNetLayer_Expect_Exception)
+{
     DevType devType = DevType::DEV_TYPE_910A;
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(devType));
 
@@ -209,10 +199,11 @@ TEST_F(RankLevelInfoParserTest, St_Deserialize_When_InvalidNetLayer_Expect_Excep
     JsonParser rankLevelParser;
     RankLevelInfo rankLevelInfo;
 
-    EXPECT_THROW(rankLevelParser.ParseString(rankLevelString, rankLevelInfo), InvalidParamsException);
+    EXPECT_EQ(rankLevelParser.ParseString(rankLevelString, rankLevelInfo), HCCL_E_PARA);
 }
 
-TEST_F(RankLevelInfoParserTest, St_Deserialize_When_InvalidId_Expect_Exception) {
+TEST_F(RankLevelInfoParserTest, St_Deserialize_When_InvalidId_Expect_Exception)
+{
     DevType devType = DevType::DEV_TYPE_910A;
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(devType));
 
@@ -238,11 +229,12 @@ TEST_F(RankLevelInfoParserTest, St_Deserialize_When_InvalidId_Expect_Exception) 
     )";
     JsonParser rankLevelParser;
     RankLevelInfo rankLevelInfo;
-    
-    EXPECT_THROW(rankLevelParser.ParseString(rankLevelString, rankLevelInfo), InvalidParamsException);
+
+    EXPECT_EQ(rankLevelParser.ParseString(rankLevelString, rankLevelInfo), HCCL_E_PARA);
 }
 
-TEST_F(RankLevelInfoParserTest, St_Deserialize_When_InvalidNetType_Expect_Exception) {
+TEST_F(RankLevelInfoParserTest, St_Deserialize_When_InvalidNetType_Expect_Exception)
+{
     DevType devType = DevType::DEV_TYPE_910A;
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(devType));
 
@@ -268,11 +260,12 @@ TEST_F(RankLevelInfoParserTest, St_Deserialize_When_InvalidNetType_Expect_Except
     )";
     JsonParser rankLevelParser;
     RankLevelInfo rankLevelInfo;
-    
-    EXPECT_THROW(rankLevelParser.ParseString(rankLevelString, rankLevelInfo), InvalidParamsException);
+
+    EXPECT_EQ(rankLevelParser.ParseString(rankLevelString, rankLevelInfo), HCCL_E_PARA);
 }
 
-TEST_F(RankLevelInfoParserTest, St_Deserialize_When_InvalidPortstoAddr_Expect_Exception) {
+TEST_F(RankLevelInfoParserTest, St_Deserialize_When_InvalidPortstoAddr_Expect_Success)
+{
     DevType devType = DevType::DEV_TYPE_910A;
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(devType));
 
@@ -298,11 +291,12 @@ TEST_F(RankLevelInfoParserTest, St_Deserialize_When_InvalidPortstoAddr_Expect_Ex
     )";
     JsonParser rankLevelParser;
     RankLevelInfo rankLevelInfo;
-    
-    rankLevelParser.ParseString(rankLevelString, rankLevelInfo);
+
+    EXPECT_EQ(rankLevelParser.ParseString(rankLevelString, rankLevelInfo), HCCL_SUCCESS);
 }
 
-TEST_F(RankLevelInfoParserTest, St_Deserialize_When_InvalidList_Expect_Exception) {
+TEST_F(RankLevelInfoParserTest, St_Deserialize_When_InvalidList_Expect_Exception)
+{
     DevType devType = DevType::DEV_TYPE_910A;
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(devType));
 
@@ -343,6 +337,6 @@ TEST_F(RankLevelInfoParserTest, St_Deserialize_When_InvalidList_Expect_Exception
 )";
     JsonParser rankLevelParser;
     RankLevelInfo rankLevelInfo;
-    
-    EXPECT_THROW(rankLevelParser.ParseString(rankLevelString, rankLevelInfo), InvalidParamsException);
+
+    EXPECT_EQ(rankLevelParser.ParseString(rankLevelString, rankLevelInfo), HCCL_E_PARA);
 }

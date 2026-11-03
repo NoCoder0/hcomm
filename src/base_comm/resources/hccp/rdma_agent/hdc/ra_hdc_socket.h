@@ -49,7 +49,7 @@ union OpSocketDeinitData {
 
 union OpSocketConnectData {
     struct {
-        unsigned int num;  // resv bit 31 for use_port on HDC, for compatibility issue
+        unsigned int num; // resv bit 31 for use_port on HDC, for compatibility issue
         struct SocketConnectInfo conn[MAX_SOCKET_NUM];
     } txData;
 
@@ -60,7 +60,7 @@ union OpSocketConnectData {
 
 union OpSocketCloseData {
     struct {
-        unsigned int num;  // resv bit 31 for disuse_linger on HDC, for compatibility issue
+        unsigned int num; // resv bit 31 for disuse_linger on HDC, for compatibility issue
         struct CloseFdData conn[MAX_SOCKET_NUM];
     } txData;
 
@@ -72,13 +72,37 @@ union OpSocketCloseData {
 union OpSocketListenData {
     struct {
         unsigned int phyId;
-        unsigned int num;  // resv bit 31 for use_port on HDC, for compatibility issue
+        unsigned int num; // resv bit 31 for use_port on HDC, for compatibility issue
         struct SocketListenInfo conn[MAX_SOCKET_NUM];
     } txData;
 
     struct {
         unsigned int rsvd;
         struct SocketListenInfo conn[MAX_SOCKET_NUM];
+    } rxData;
+};
+
+union OpSocketConnectDataV2 {
+    struct {
+        unsigned int num;
+        struct SocketConnectInfoV2 conn[MAX_SOCKET_NUM];
+    } txData;
+
+    struct {
+        unsigned int rsvd[RA_RSVD_NUM_801];
+    } rxData;
+};
+
+union OpSocketListenDataV2 {
+    struct {
+        unsigned int phyId;
+        unsigned int num;
+        struct SocketListenInfoV2 conn[MAX_SOCKET_NUM];
+    } txData;
+
+    struct {
+        unsigned int rsvd;
+        struct SocketListenInfoV2 conn[MAX_SOCKET_NUM];
     } rxData;
 };
 

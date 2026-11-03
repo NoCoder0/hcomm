@@ -1,13 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
-
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -62,10 +61,7 @@ protected:
         std::cout << "MultiThreadNpuGpu TearDown" << std::endl;
     }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test SetUP" << std::endl; }
     virtual void TearDown()
     {
         GlobalMockObject::verify();
@@ -73,15 +69,14 @@ protected:
     }
 };
 
-
-HcclResult stub_HrtRaGetNotifyBaseAddr_3(RdmaHandle handle, u64 *va, u64 *size)
+HcclResult stub_HrtRaGetNotifyBaseAddr_3(RdmaHandle handle, u64* va, u64* size)
 {
     *va = 0x20000000;
     *size = 4;
     return HCCL_SUCCESS;
 }
 
-HcclResult stub_HrtRaGetHccnCfg(s32 networkMode, u32 devicePhyId, enum HccnCfgKeyT key, std::string &value)
+HcclResult stub_HrtRaGetHccnCfg(s32 networkMode, u32 devicePhyId, enum HccnCfgKeyT key, std::string& value)
 {
     value = "0_1_128_4";
     return HCCL_SUCCESS;
@@ -94,34 +89,34 @@ struct StubQpInfo {
 thread_local static u32 gQpn = 1;
 #define DEV_NUM 1
 
-HcclResult stub_hrtRaTypicalQpCreate(RdmaHandle rdmaHandle, int flag,
-    int qpMode, struct TypicalQp* qpInfo, QpHandle &qpHandle)
+HcclResult
+stub_hrtRaTypicalQpCreate(RdmaHandle rdmaHandle, int flag, int qpMode, struct TypicalQp* qpInfo, QpHandle& qpHandle)
 {
-    StubQpInfo *info = new StubQpInfo();
+    StubQpInfo* info = new StubQpInfo();
     info->qpn = gQpn++;
     HCCL_ERROR("QPN:%u", gQpn);
-    qpHandle = (void *)info;
+    qpHandle = (void*)info;
     qpInfo->qpn = info->qpn;
     return HCCL_SUCCESS;
 }
 
-HcclResult stub_hrtRaQpCreateWithAttrs(RdmaHandle rdmaHandle, struct QpExtAttrs *attrs, QpHandle &qpHandle)
+HcclResult stub_hrtRaQpCreateWithAttrs(RdmaHandle rdmaHandle, struct QpExtAttrs* attrs, QpHandle& qpHandle)
 {
-    StubQpInfo *info = new StubQpInfo();
+    StubQpInfo* info = new StubQpInfo();
     info->qpn = gQpn++;
     HCCL_ERROR("QPN:%u", gQpn);
-    qpHandle = (void *)info;
+    qpHandle = (void*)info;
     return HCCL_SUCCESS;
 }
 
-HcclResult stub_hrtRaGetQpAttr(QpHandle qpHandle, struct QpAttr *attr)
+HcclResult stub_hrtRaGetQpAttr(QpHandle qpHandle, struct QpAttr* attr)
 {
     attr->qpn = gQpn++;
     return HCCL_SUCCESS;
 }
 
-
-HcclResult stub_hrtRaGetInterfaceVersion_support(unsigned int phyId, unsigned int interfaceOpcode, unsigned int* interfaceVersion)
+HcclResult
+stub_hrtRaGetInterfaceVersion_support(unsigned int phyId, unsigned int interfaceOpcode, unsigned int* interfaceVersion)
 {
     *interfaceVersion = 2;
     return HCCL_SUCCESS;
@@ -129,11 +124,10 @@ HcclResult stub_hrtRaGetInterfaceVersion_support(unsigned int phyId, unsigned in
 
 HcclResult stub_hrtRaQpDestroy_1(QpHandle handle)
 {
-    delete (StubQpInfo *)handle;
+    delete (StubQpInfo*)handle;
     handle = nullptr;
     return HCCL_SUCCESS;
 }
-
 
 TEST_F(MultiThreadNpuGpu, EndtoEndOneProcess)
 {
@@ -378,12 +372,10 @@ TEST_F(MultiThreadNpuGpu, EndtoEndMutiThread)
     sal_thread_t tid[DEV_NUM];
     for (int devId = 0; devId < DEV_NUM; devId++) {
         tid[devId] = sal_thread_create("thread", ThreadHandleTypIcalQP, (void*)&devId);
-        EXPECT_NE(tid[devId], (sal_thread_t )nullptr);
+        EXPECT_NE(tid[devId], (sal_thread_t) nullptr);
     }
-    for (s32 devId = 0; devId < DEV_NUM; ++devId)
-    {
-        while (sal_thread_is_running(tid[devId]))
-        {
+    for (s32 devId = 0; devId < DEV_NUM; ++devId) {
+        while (sal_thread_is_running(tid[devId])) {
             SaluSleep(SAL_MILLISECOND_USEC * 10);
         }
     }
@@ -410,17 +402,14 @@ TEST_F(MultiThreadNpuGpu, EndtoEndMutiThreadSwitchDevice)
     MOCKER(hrtNotifyWaitWithTimeOut).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     MOCKER(hrtRDMADBSend).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-
     for (int devId = 0; devId < 8; devId++) {
         ThreadHandleTypIcalQP((void*)&devId);
     }
     GlobalMockObject::verify();
 }
 
-
 TEST_F(MultiThreadNpuGpu, EndtoEndOneProcessWithAttr)
 {
-
     MOCKER(hrtRaGetQpAttr).stubs().will(invoke(stub_hrtRaGetQpAttr));
     MOCKER(hrtRaGetInterfaceVersion).stubs().will(invoke(stub_hrtRaGetInterfaceVersion_support));
     MOCKER(hrtRaQpCreateWithAttrs).stubs().will(invoke(stub_hrtRaQpCreateWithAttrs));
@@ -443,10 +432,8 @@ TEST_F(MultiThreadNpuGpu, EndtoEndOneProcessWithAttr)
     GlobalMockObject::verify();
 }
 
-
 TEST_F(MultiThreadNpuGpu, EndtoEndOneProcessWithAttrMultiThread)
 {
-
     MOCKER(hrtRaGetQpAttr).stubs().will(invoke(stub_hrtRaGetQpAttr));
     MOCKER(hrtRaGetInterfaceVersion).stubs().will(invoke(stub_hrtRaGetInterfaceVersion_support));
     MOCKER(hrtRaQpCreateWithAttrs).stubs().will(invoke(stub_hrtRaQpCreateWithAttrs));
@@ -466,12 +453,10 @@ TEST_F(MultiThreadNpuGpu, EndtoEndOneProcessWithAttrMultiThread)
     sal_thread_t tid[DEV_NUM];
     for (int devId = 0; devId < DEV_NUM; devId++) {
         tid[devId] = sal_thread_create("thread", ThreadHandleQPWithAttr, (void*)&devId);
-        EXPECT_NE(tid[devId], (sal_thread_t )nullptr);
+        EXPECT_NE(tid[devId], (sal_thread_t) nullptr);
     }
-    for (s32 devId = 0; devId < DEV_NUM; ++devId)
-    {
-        while (sal_thread_is_running(tid[devId]))
-        {
+    for (s32 devId = 0; devId < DEV_NUM; ++devId) {
+        while (sal_thread_is_running(tid[devId])) {
             SaluSleep(SAL_MILLISECOND_USEC * 10);
         }
     }
@@ -481,7 +466,6 @@ TEST_F(MultiThreadNpuGpu, EndtoEndOneProcessWithAttrMultiThread)
     }
     GlobalMockObject::verify();
 }
-
 
 TEST_F(MultiThreadNpuGpu, CreateQPWithAttrNotSupport)
 {
@@ -559,7 +543,6 @@ TEST_F(MultiThreadNpuGpu, CreateQPWithAttrConfigError)
     EXPECT_EQ(hrtResetDevice(0), HCCL_SUCCESS);
     GlobalMockObject::verify();
 }
-
 
 TEST_F(MultiThreadNpuGpu, OneSideEndtoEndOneProcess)
 {
@@ -693,7 +676,6 @@ TEST_F(MultiThreadNpuGpu, OneSideEndtoEndOneProcessVerifyFailed)
     EXPECT_EQ(hcclAllocWindowMem((void**)(&localMr.addr), localMr.size), HCCL_SUCCESS);
     EXPECT_EQ(hcclRegisterMem(&localMr), HCCL_SUCCESS);
 
-
     AscendMrInfo remoteNotifyValue;
     remoteNotifyValue.addr = 0x5;
     remoteNotifyValue.size = 9;
@@ -703,7 +685,6 @@ TEST_F(MultiThreadNpuGpu, OneSideEndtoEndOneProcessVerifyFailed)
     linkInfo.localSyncMemAck = &localSyncMemAck;
     linkInfo.localQPinfo = &localQPInfo;
     linkInfo.remoteNotifyValueMem = &remoteNotifyValue;
-
 
     linkInfo.wqePerDoorbell = 2;
     aclrtStream stream = (aclrtStream)0x87654321;
@@ -721,7 +702,6 @@ TEST_F(MultiThreadNpuGpu, OneSideEndtoEndOneProcessVerifyFailed)
     EXPECT_EQ(hcclAscendRdmaDeInit(), HCCL_SUCCESS);
     GlobalMockObject::verify();
 }
-
 
 void* OneSideThreadHandleTypIcalQP(void* args)
 {
@@ -805,7 +785,6 @@ TEST_F(MultiThreadNpuGpu, OneSideEndtoEndMutiThreadSwitchDevice)
     MOCKER(hrtNotifyWaitWithTimeOut).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     MOCKER(hrtRDMADBSend).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-
     for (int devId = 0; devId < 8; devId++) {
         OneSideThreadHandleTypIcalQP((void*)&devId);
     }
@@ -831,12 +810,10 @@ TEST_F(MultiThreadNpuGpu, OneSideEndtoEndMutiThread)
     sal_thread_t tid[DEV_NUM];
     for (int devId = 0; devId < DEV_NUM; devId++) {
         tid[devId] = sal_thread_create("thread", OneSideThreadHandleTypIcalQP, (void*)&devId);
-        EXPECT_NE(tid[devId], (sal_thread_t )nullptr);
+        EXPECT_NE(tid[devId], (sal_thread_t) nullptr);
     }
-    for (s32 devId = 0; devId < DEV_NUM; ++devId)
-    {
-        while (sal_thread_is_running(tid[devId]))
-        {
+    for (s32 devId = 0; devId < DEV_NUM; ++devId) {
+        while (sal_thread_is_running(tid[devId])) {
             SaluSleep(SAL_MILLISECOND_USEC * 10);
         }
     }

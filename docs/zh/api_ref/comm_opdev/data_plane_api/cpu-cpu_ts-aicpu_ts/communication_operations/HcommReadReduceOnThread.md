@@ -2,9 +2,21 @@
 
 ## 产品支持情况
 
-- Ascend 950PR/Ascend 950DT：支持
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：支持
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：支持
+<!-- npu="950" id1 -->
+- Ascend 950PR&950DT系列产品：支持
+<!-- end id1 -->
+<!-- npu="A3" id2 -->
+- Atlas A3系列产品：支持
+<!-- end id2 -->
+<!-- npu="910b" id3 -->
+- Atlas A2系列产品：支持
+<!-- end id3 -->
+<!-- npu="910" id4 -->
+- Atlas训练系列产品：不支持
+<!-- end id4 -->
+<!-- npu="310p" id5 -->
+- Atlas推理系列产品：不支持
+<!-- end id5 -->
 
 ## 功能说明
 
@@ -25,8 +37,20 @@ int32_t HcommReadReduceOnThread(ThreadHandle thread, ChannelHandle channel, void
 | dst | 输出 | 目的内存地址，使用[HcclGetHcclBuffer](../../../control_plane_api/comms_domain_resource_mgmt/HcclGetHcclBuffer.md)、[HcclChannelGetHcclBuffer](../../../control_plane_api/comms_domain_resource_mgmt/HcclChannelGetHcclBuffer.md)获取到的内存。 |
 | src | 输入 | 源内存地址，使用[HcclGetHcclBuffer](../../../control_plane_api/comms_domain_resource_mgmt/HcclGetHcclBuffer.md)、[HcclChannelGetHcclBuffer](../../../control_plane_api/comms_domain_resource_mgmt/HcclChannelGetHcclBuffer.md)获取到的内存。 |
 | count | 输入 | 元素个数。 |
-| dataType | 输入 | 数据类型。<br>HcommDataType类型的定义请参见[HcommDataType](../../../datatype_definition/HcommDataType.md)。<br>针对Ascend 950PR/Ascend 950DT，支持的数据类型：int8、int16、int32、uint8、uint16、uint32、fp16、fp32、bfp16。<br>针对Atlas A3 训练系列产品/Atlas A3 推理系列产品，支持数据类型：int8、int16、int32、float16、float32、bfp16。<br>针对Atlas A2 训练系列产品/Atlas A2 推理系列产品，支持数据类型：int8、int16、int32、float16、float32、bfp16。 |
+| dataType | 输入 | 数据类型。<br>HcommDataType类型的定义请参见[HcommDataType](../../../datatype_definition/HcommDataType.md)。<br>不同产品型号下支持的数据类型不同，详细请参见[dataType说明](#datatype说明)。|
 | reduceOp | 输入 | 归约操作类型，支持：sum、max、min。<br>HcommReduceOp类型的定义请参见[HcommReduceOp](../../../datatype_definition/HcommReduceOp.md)。 |
+
+### dataType说明
+
+<!-- npu="950" id6 -->
+- 针对Ascend 950PR&950DT系列产品，支持的数据类型：int8、int16、int32、uint8、uint16、uint32、fp16、fp32、bfp16。
+<!-- end id6 -->
+<!-- npu="A3" id7 -->
+- 针对Atlas A3系列产品，支持数据类型：int8、int16、int32、float16、float32、bfp16。
+<!-- end id7 -->
+<!-- npu="910b" id8 -->
+- 针对Atlas A2系列产品，支持数据类型：int8、int16、int32、float16、float32、bfp16。
+<!-- end id8 -->
 
 ## 返回值
 
@@ -34,14 +58,15 @@ int32_t：接口成功返回0，其他失败。
 
 ## 约束说明
 
-无
+- 同一个`ThreadHandle`不支持多线程并发访问。
+- 同一个`ChannelHandle`不支持多线程并发访问。
 
 ## 调用示例
 
 ```c
 // 申请通信线程资源
-CommEngine engine = CommEngine::COMM_ENGINE_CPU_TS; // Atlas A3 训练系列产品/Atlas A3 推理系列产品使用
-CommEngine engine = CommEngine::COMM_ENGINE_AICPU_TS; // Ascend 950PR/Ascend 950DT使用
+CommEngine engine = CommEngine::COMM_ENGINE_CPU_TS; // Atlas A3系列产品使用
+// CommEngine engine = CommEngine::COMM_ENGINE_AICPU_TS; // Ascend 950PR&950DT系列产品使用
 uint32_t threadNum = 1;
 uint32_t notifyNumPerThread = 1;
 ThreadHandle thread;

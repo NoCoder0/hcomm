@@ -4,7 +4,7 @@
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -26,20 +26,15 @@ namespace checker {
 
 class BroadCast2DCCUTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "BroadCast2D CCU test set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "BroadCast2D CCU test set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "BroadCast2D CCU test tear down" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "BroadCast2D CCU test tear down" << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -61,7 +56,7 @@ public:
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_4_mul_4_rank_2)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,8,9,10,11,16,17,18,19,24,25,26,27}}};
+    TopoMeta topoMeta{{{0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19, 24, 25, 26, 27}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
     setenv("HCCL_BUFFSIZE", "1024", 1);
@@ -70,7 +65,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_4_mul_4_rank_2)
     checkerOpParam.opType = CheckerOpType::BROADCAST;
     checkerOpParam.tag = "broadcast";
     checkerOpParam.opMode = CheckerOpMode::OPBASE;
-    checkerOpParam.DataDes.count = 256 * 1024 * 1024 / sizeof(DATA_TYPE_INT8) + 1024;  // ub(256M)
+    checkerOpParam.DataDes.count = 256 * 1024 * 1024 / sizeof(DATA_TYPE_INT8) + 1024; // ub(256M)
     checkerOpParam.DataDes.dataType = CheckerDataType::DATA_TYPE_INT8;
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_950;
     checkerOpParam.algName = "CcuBroadcastMeshMem2Mem2D";
@@ -84,7 +79,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_4_mul_4_rank_2)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_2_mul_2_uint8)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,8,9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -107,7 +102,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_2_mul_2_uint8)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_2_mul_2_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,8,9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -130,7 +125,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_2_mul_2_rank)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_2_mul_3_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,8,9,16,17}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9, 16, 17}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -153,7 +148,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_2_mul_3_rank)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_2_mul_3rank_offload)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,8,9,16,17}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9, 16, 17}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -176,7 +171,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_2_mul_3rank_offload)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_3_mul_3rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,8,9,10,16,17,18}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -199,7 +194,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_3_mul_3rank)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_3_mul_3_rank_512k_count)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,8,9,10,16,17,18}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -222,7 +217,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_3_mul_3_rank_512k_count)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_3_mul_3_rank_offload_512k_count)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,8,9,10,16,17,18}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -245,7 +240,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_3_mul_3_rank_offload_512k_c
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_3_mul_4_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,8,9,10,16,17,18,24,25,26}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18, 24, 25, 26}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -268,7 +263,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_3_mul_4_rank)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_3_mul_5_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,8,9,10,16,17,18,24,25,26,32,33,34}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18, 24, 25, 26, 32, 33, 34}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -291,7 +286,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_3_mul_5_rank)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_3_mul_7_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,8,9,10,16,17,18,24,25,26,32,33,34,40,41,42,48,49,50}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18, 24, 25, 26, 32, 33, 34, 40, 41, 42, 48, 49, 50}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -314,7 +309,8 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_3_mul_7_rank)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_4_mul_7_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,8,9,10,11,16,17,18,19,24,25,26,27,32,33,34,35,40,41,42,43,48,49,50,51}}};
+    TopoMeta topoMeta{
+        {{0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19, 24, 25, 26, 27, 32, 33, 34, 35, 40, 41, 42, 43, 48, 49, 50, 51}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -337,7 +333,8 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_4_mul_7_rank)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_5_mul_7_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,4,8,9,10,11,12,16,17,18,19,20,24,25,26,27,28,32,33,34,35,36,40,41,42,43,44,48,49,50,51,52}}};
+    TopoMeta topoMeta{{{0,  1,  2,  3,  4,  8,  9,  10, 11, 12, 16, 17, 18, 19, 20, 24, 25, 26,
+                        27, 28, 32, 33, 34, 35, 36, 40, 41, 42, 43, 44, 48, 49, 50, 51, 52}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -360,7 +357,8 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_5_mul_7_rank)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_6_mul_7_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,4,5,8,9,10,11,12,13,16,17,18,19,20,21,24,25,26,27,28,29,32,33,34,35,36,37,40,41,42,43,44,45,48,49,50,51,52,53}}};
+    TopoMeta topoMeta{{{0,  1,  2,  3,  4,  5,  8,  9,  10, 11, 12, 13, 16, 17, 18, 19, 20, 21, 24, 25, 26,
+                        27, 28, 29, 32, 33, 34, 35, 36, 37, 40, 41, 42, 43, 44, 45, 48, 49, 50, 51, 52, 53}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -383,7 +381,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_6_mul_7_rank)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_4_mul_4_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,8,9,10,11,16,17,18,19,24,25,26,27}}};
+    TopoMeta topoMeta{{{0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19, 24, 25, 26, 27}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -406,7 +404,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_4_mul_4_rank)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_5_mul_5_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,4,8,9,10,11,12,16,17,18,19,20,24,25,26,27,28,32,33,34,35,36}}};
+    TopoMeta topoMeta{{{0, 1, 2, 3, 4, 8, 9, 10, 11, 12, 16, 17, 18, 19, 20, 24, 25, 26, 27, 28, 32, 33, 34, 35, 36}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -429,7 +427,8 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_5_mul_5_rank)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_6_mul_6_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,4,5,8,9,10,11,12,13,16,17,18,19,20,21,24,25,26,27,28,29,32,33,34,35,36,37,40,41,42,43,44,45}}};
+    TopoMeta topoMeta{{{0,  1,  2,  3,  4,  5,  8,  9,  10, 11, 12, 13, 16, 17, 18, 19, 20, 21,
+                        24, 25, 26, 27, 28, 29, 32, 33, 34, 35, 36, 37, 40, 41, 42, 43, 44, 45}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -452,21 +451,21 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_6_mul_6_rank)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_2_mul_2_rank_1)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta{{{0,1,8,9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
-    setenv("HCCL_BUFFSIZE", "1024", 1);  // buffsize --> 1M
+    setenv("HCCL_BUFFSIZE", "1024", 1); // buffsize --> 1M
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::BROADCAST;
     checkerOpParam.tag = "broadcast";
     checkerOpParam.opMode = CheckerOpMode::OPBASE;
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_950;
-    checkerOpParam.DataDes.count = 1024 * 1024 * 1024 / sizeof(s32) - 1;  // 1G - 1
+    checkerOpParam.DataDes.count = 1024 * 1024 * 1024 / sizeof(s32) - 1; // 1G - 1
     checkerOpParam.DataDes.dataType = CheckerDataType::DATA_TYPE_INT32;
     checkerOpParam.algName = "CcuBroadcastMeshMem2Mem2D";
     checkerOpParam.root = 2;
- 
+
     Checker checker;
     HcclResult ret;
     ret = checker.CheckA5Aicpu(checkerOpParam, topoMeta);
@@ -476,7 +475,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_2_mul_2_rank_1)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_2_mul_2_rank_2)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta{{{0,1,8,9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
     setenv("HCCL_BUFFSIZE", "1", 1);
@@ -485,7 +484,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_2_mul_2_rank_2)
     checkerOpParam.tag = "broadcast";
     checkerOpParam.opMode = CheckerOpMode::OFFLOAD;
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_950;
-    checkerOpParam.DataDes.count = 2 * 1024 * 1024 / sizeof(s64);  // 2M
+    checkerOpParam.DataDes.count = 2 * 1024 * 1024 / sizeof(s64); // 2M
     checkerOpParam.DataDes.dataType = CheckerDataType::DATA_TYPE_INT64;
     checkerOpParam.algName = "CcuBroadcastMeshMem2Mem2D";
     checkerOpParam.root = 3;
@@ -499,7 +498,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_2_mul_2_rank_2)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_2_mul_2_rank_3)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta{{{0,1,8,9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
     CheckerOpParam checkerOpParam;
@@ -521,7 +520,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_2_mul_2_rank_3)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_2_mul_8_rank_1)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}}};
+    TopoMeta topoMeta{{{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
     setenv("HCCL_BUFFSIZE", "1", 1);
@@ -531,7 +530,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_2_mul_8_rank_1)
     checkerOpParam.opMode = CheckerOpMode::OFFLOAD;
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_950;
     checkerOpParam.DataDes.dataType = CheckerDataType::DATA_TYPE_UINT16;
-    checkerOpParam.DataDes.count = 1024 * 1024 / sizeof(u16) - 1;  // 1M - 1
+    checkerOpParam.DataDes.count = 1024 * 1024 / sizeof(u16) - 1; // 1M - 1
     checkerOpParam.algName = "CcuBroadcastMeshMem2Mem2D";
     checkerOpParam.root = 0;
     Checker checker;
@@ -543,7 +542,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_2_mul_8_rank_1)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_2_mul_8_rank_2)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}}};
+    TopoMeta topoMeta{{{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
     setenv("HCCL_BUFFSIZE", "1", 1);
@@ -553,7 +552,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_2_mul_8_rank_2)
     checkerOpParam.opMode = CheckerOpMode::OPBASE;
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_950;
     checkerOpParam.DataDes.dataType = CheckerDataType::DATA_TYPE_UINT32;
-    checkerOpParam.DataDes.count = 2 * 1024 * 1024 / sizeof(u32);  // 2M
+    checkerOpParam.DataDes.count = 2 * 1024 * 1024 / sizeof(u32); // 2M
     checkerOpParam.algName = "CcuBroadcastMeshMem2Mem2D";
     checkerOpParam.root = 0;
     Checker checker;
@@ -565,7 +564,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_2_mul_8_rank_2)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_2_mul_8_rank_3)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}}};
+    TopoMeta topoMeta{{{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
     setenv("HCCL_BUFFSIZE", "1", 1);
@@ -587,14 +586,9 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_2_mul_8_rank_3)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_8_mul_8_rank_1)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,4,5,6,7,
-        8,9,10,11,12,13,14,15,
-        16,17,18,19,20,21,22,23,
-        24,25,26,27,28,29,30,31,
-        32,33,34,35,36,37,38,39,
-        40,41,42,43,44,45,46,47,
-        48,49,50,51,52,53,54,55,
-        56,57,58,59,60,61,62,63}}};
+    TopoMeta topoMeta{{{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+                        22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43,
+                        44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
     setenv("HCCL_BUFFSIZE", "1", 1);
@@ -604,7 +598,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_8_mul_8_rank_1)
     checkerOpParam.opMode = CheckerOpMode::OPBASE;
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_950;
     checkerOpParam.DataDes.dataType = CheckerDataType::DATA_TYPE_UINT16;
-    checkerOpParam.DataDes.count = 1024 * 1024 / sizeof(u16) - 1;  // 1M - 1
+    checkerOpParam.DataDes.count = 1024 * 1024 / sizeof(u16) - 1; // 1M - 1
     checkerOpParam.algName = "CcuBroadcastMeshMem2Mem2D";
     checkerOpParam.root = 0;
     Checker checker;
@@ -616,14 +610,9 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_8_mul_8_rank_1)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_8_mul_8_rank_2)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,4,5,6,7,
-        8,9,10,11,12,13,14,15,
-        16,17,18,19,20,21,22,23,
-        24,25,26,27,28,29,30,31,
-        32,33,34,35,36,37,38,39,
-        40,41,42,43,44,45,46,47,
-        48,49,50,51,52,53,54,55,
-        56,57,58,59,60,61,62,63}}};
+    TopoMeta topoMeta{{{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+                        22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43,
+                        44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
     setenv("HCCL_BUFFSIZE", "1", 1);
@@ -632,7 +621,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_8_mul_8_rank_2)
     checkerOpParam.tag = "broadcast";
     checkerOpParam.opMode = CheckerOpMode::OFFLOAD;
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_950;
-    checkerOpParam.DataDes.count = 2 * 1024 * 1024 / sizeof(u32);  // 2M
+    checkerOpParam.DataDes.count = 2 * 1024 * 1024 / sizeof(u32); // 2M
     checkerOpParam.DataDes.dataType = CheckerDataType::DATA_TYPE_UINT32;
     checkerOpParam.algName = "CcuBroadcastMeshMem2Mem2D";
     checkerOpParam.root = 63;
@@ -646,14 +635,9 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_8_mul_8_rank_2)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_8_mul_8_rank_3)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0, 1, 2, 3, 4, 5, 6, 7,
-        8, 9, 10, 11, 12, 13, 14, 15,
-        16,17,18,19,20,21,22,23,
-        24,25,26,27,28,29,30,31,
-        32,33,34,35,36,37,38,39,
-        40,41,42,43,44,45,46,47,
-        48,49,50,51,52,53,54,55,
-        56,57,58,59,60,61,62,63}}};
+    TopoMeta topoMeta{{{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+                        22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43,
+                        44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
     setenv("HCCL_BUFFSIZE", "1", 1);
@@ -676,14 +660,9 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_8_mul_8_rank_3)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_mem2mem_8_mul_8_rank_4)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,4,5,6,7,
-        8,9,10,11,12,13,14,15,
-        16,17,18,19,20,21,22,23,
-        24,25,26,27,28,29,30,31,
-        32,33,34,35,36,37,38,39,
-        40,41,42,43,44,45,46,47,
-        48,49,50,51,52,53,54,55,
-        56,57,58,59,60,61,62,63}}};
+    TopoMeta topoMeta{{{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+                        22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43,
+                        44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
     setenv("HCCL_BUFFSIZE", "1024", 1);
@@ -708,7 +687,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_mem2mem_8_mul_8_rank_4)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_3_mul_4_rank_1)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,8,9,10,11,16,17,18,19}}};
+    TopoMeta topoMeta{{{0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
     setenv("HCCL_BUFFSIZE", "1", 1);
@@ -717,7 +696,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_3_mul_4_rank_1)
     checkerOpParam.tag = "broadcast";
     checkerOpParam.opMode = CheckerOpMode::OPBASE;
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_950;
-    checkerOpParam.DataDes.count = 1024 * 1024 / sizeof(u16) - 1;  // 1M - 1
+    checkerOpParam.DataDes.count = 1024 * 1024 / sizeof(u16) - 1; // 1M - 1
     checkerOpParam.DataDes.dataType = CheckerDataType::DATA_TYPE_FP16;
     checkerOpParam.algName = "CcuBroadcastMeshMem2Mem2D";
     checkerOpParam.root = 3;
@@ -731,7 +710,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_3_mul_4_rank_1)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_3_mul_4_rank_2)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,8,9,10,11,16,17,18,19}}};
+    TopoMeta topoMeta{{{0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
     setenv("HCCL_BUFFSIZE", "1", 1);
@@ -740,7 +719,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_3_mul_4_rank_2)
     checkerOpParam.tag = "broadcast";
     checkerOpParam.opMode = CheckerOpMode::OFFLOAD;
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_950;
-    checkerOpParam.DataDes.count = 2 * 1024 * 1024 / sizeof(u32);  // 2M
+    checkerOpParam.DataDes.count = 2 * 1024 * 1024 / sizeof(u32); // 2M
     checkerOpParam.DataDes.dataType = CheckerDataType::DATA_TYPE_FP32;
     checkerOpParam.algName = "CcuBroadcastMeshMem2Mem2D";
     checkerOpParam.root = 6;
@@ -754,7 +733,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_3_mul_4_rank_2)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_3_mul_3_rank_1)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,8,9,10,16,17,18}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
     constexpr u64 MB2B = 1024 * 1024;
@@ -779,7 +758,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_3_mul_3_rank_1)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_4_mul_4_rank_1)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,8,9,10,11,16,17,18,19,24,25,26,27}}};
+    TopoMeta topoMeta{{{0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19, 24, 25, 26, 27}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -804,7 +783,8 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_4_mul_4_rank_1)
 TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_5_mul_7_rank_1)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,4,5,6,8,9,10,11,12,13,14,16,17,18,19,20,21,22,24,25,26,27,28,29,30,32,33,34,35,36,37,38}}};
+    TopoMeta topoMeta{{{0,  1,  2,  3,  4,  5,  6,  8,  9,  10, 11, 12, 13, 14, 16, 17, 18, 19,
+                        20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 32, 33, 34, 35, 36, 37, 38}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -813,7 +793,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_5_mul_7_rank_1)
     checkerOpParam.tag = "broadcast";
     checkerOpParam.opMode = CheckerOpMode::OFFLOAD;
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_950;
-    checkerOpParam.DataDes.count = 200 * 1024 * 1024 + 1;  // 200M
+    checkerOpParam.DataDes.count = 200 * 1024 * 1024 + 1; // 200M
     checkerOpParam.DataDes.dataType = CheckerDataType::DATA_TYPE_INT16;
     checkerOpParam.algName = "CcuBroadcastMeshMem2Mem2D";
     checkerOpParam.root = 17;
@@ -828,7 +808,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_ccu_case_test_5_mul_7_rank_1)
 TEST_F(BroadCast2DCCUTest, broadcast2d_multimission_ccu_case_test_2_2_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,8,9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -851,7 +831,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_multimission_ccu_case_test_2_2_rank)
 TEST_F(BroadCast2DCCUTest, broadcast2d_multimission_ccu_case_test_2_mul_3_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,8,9,16,17}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9, 16, 17}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -874,7 +854,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_multimission_ccu_case_test_2_mul_3_rank)
 TEST_F(BroadCast2DCCUTest, broadcast2d_multimission_ccu_case_test_2_mul_3rank_offload)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,8,9,16,17}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9, 16, 17}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -897,7 +877,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_multimission_ccu_case_test_2_mul_3rank_of
 TEST_F(BroadCast2DCCUTest, broadcast2d_multimission_ccu_case_test_3_mul_3rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,8,9,10,16,17,18}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -920,7 +900,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_multimission_ccu_case_test_3_mul_3rank)
 TEST_F(BroadCast2DCCUTest, broadcast2d_multimission_ccu_case_test_3_mul_4_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,8,9,10,16,17,18,24,25,26}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18, 24, 25, 26}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -943,7 +923,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_multimission_ccu_case_test_3_mul_4_rank)
 TEST_F(BroadCast2DCCUTest, broadcast2d_multimission_ccu_case_test_3_mul_5_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,8,9,10,16,17,18,24,25,26,32,33,34}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18, 24, 25, 26, 32, 33, 34}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -966,7 +946,8 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_multimission_ccu_case_test_3_mul_5_rank)
 TEST_F(BroadCast2DCCUTest, broadcast2d_multimission_ccu_case_test_4_mul_7_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,8,9,10,11,16,17,18,19,24,25,26,27,32,33,34,35,40,41,42,43,48,49,50,51}}};
+    TopoMeta topoMeta{
+        {{0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19, 24, 25, 26, 27, 32, 33, 34, 35, 40, 41, 42, 43, 48, 49, 50, 51}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -989,7 +970,8 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_multimission_ccu_case_test_4_mul_7_rank)
 TEST_F(BroadCast2DCCUTest, broadcast2d_multimission_ccu_case_test_5_mul_7_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,4,8,9,10,11,12,16,17,18,19,20,24,25,26,27,28,32,33,34,35,36,40,41,42,43,44,48,49,50,51,52}}};
+    TopoMeta topoMeta{{{0,  1,  2,  3,  4,  8,  9,  10, 11, 12, 16, 17, 18, 19, 20, 24, 25, 26,
+                        27, 28, 32, 33, 34, 35, 36, 40, 41, 42, 43, 44, 48, 49, 50, 51, 52}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -1012,7 +994,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_multimission_ccu_case_test_5_mul_7_rank)
 TEST_F(BroadCast2DCCUTest, broadcast2d_multimission_ccu_case_test_4_mul_4_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,8,9,10,11,16,17,18,19,24,25,26,27}}};
+    TopoMeta topoMeta{{{0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19, 24, 25, 26, 27}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -1035,7 +1017,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_multimission_ccu_case_test_4_mul_4_rank)
 TEST_F(BroadCast2DCCUTest, broadcast2d_multimission_ccu_case_test_5_mul_5_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,4,8,9,10,11,12,16,17,18,19,20,24,25,26,27,28,32,33,34,35,36}}};
+    TopoMeta topoMeta{{{0, 1, 2, 3, 4, 8, 9, 10, 11, 12, 16, 17, 18, 19, 20, 24, 25, 26, 27, 28, 32, 33, 34, 35, 36}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -1058,7 +1040,7 @@ TEST_F(BroadCast2DCCUTest, broadcast2d_multimission_ccu_case_test_5_mul_5_rank)
 TEST_F(BroadCast2DCCUTest, broadcast_ccu_mem2mem_int16_small_opbase_parallel)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1}, {2,3}}};
+    TopoMeta topoMeta{{{0, 1}, {2, 3}}};
     setenv("HCCL_IODIE_NUM", "2", 1);
 
     CheckerOpParam checkerOpParam;
@@ -1080,7 +1062,7 @@ TEST_F(BroadCast2DCCUTest, broadcast_ccu_mem2mem_int16_small_opbase_parallel)
 TEST_F(BroadCast2DCCUTest, broadcast_ccu_mem2mem_int8_big_opbase_parallel)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1}, {2,3}}};
+    TopoMeta topoMeta{{{0, 1}, {2, 3}}};
     setenv("HCCL_IODIE_NUM", "2", 1);
 
     CheckerOpParam checkerOpParam;
@@ -1102,7 +1084,7 @@ TEST_F(BroadCast2DCCUTest, broadcast_ccu_mem2mem_int8_big_opbase_parallel)
 TEST_F(BroadCast2DCCUTest, broadcast_ccu_mem2mem_fp32_small_opbase_parallel)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1}, {2,3}}};
+    TopoMeta topoMeta{{{0, 1}, {2, 3}}};
     setenv("HCCL_IODIE_NUM", "2", 1);
 
     CheckerOpParam checkerOpParam;
@@ -1124,7 +1106,7 @@ TEST_F(BroadCast2DCCUTest, broadcast_ccu_mem2mem_fp32_small_opbase_parallel)
 TEST_F(BroadCast2DCCUTest, broadcast_ccu_mem2mem_int32_big_offload_parallel)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1}, {2,3}}};
+    TopoMeta topoMeta{{{0, 1}, {2, 3}}};
     setenv("HCCL_IODIE_NUM", "2", 1);
 
     CheckerOpParam checkerOpParam;
@@ -1146,7 +1128,7 @@ TEST_F(BroadCast2DCCUTest, broadcast_ccu_mem2mem_int32_big_offload_parallel)
 TEST_F(BroadCast2DCCUTest, broadcast_ccu_mem2mem_int64_small_offload_parallel)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1}, {2,3}}};
+    TopoMeta topoMeta{{{0, 1}, {2, 3}}};
     setenv("HCCL_IODIE_NUM", "2", 1);
 
     CheckerOpParam checkerOpParam;
@@ -1168,7 +1150,7 @@ TEST_F(BroadCast2DCCUTest, broadcast_ccu_mem2mem_int64_small_offload_parallel)
 TEST_F(BroadCast2DCCUTest, broadcast_ccu_mem2mem_fp32_zero_offload_parallel)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1}, {2,3}}};
+    TopoMeta topoMeta{{{0, 1}, {2, 3}}};
     setenv("HCCL_IODIE_NUM", "2", 1);
 
     CheckerOpParam checkerOpParam;
@@ -1187,4 +1169,4 @@ TEST_F(BroadCast2DCCUTest, broadcast_ccu_mem2mem_fp32_zero_offload_parallel)
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 }
 
-}
+} // namespace checker

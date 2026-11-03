@@ -16,13 +16,17 @@
 #include "subcmd_reset.h"
 
 namespace HcclSim {
-void ResetCommand::Setup(CLI::App& app) {
+void ResetCommand::Setup(CLI::App& app)
+{
     auto sub_reset = app.add_subcommand("reset", "reset: 清除数据库表数据，重置仿真环境");
-    
-    sub_reset->callback([this]() { Execute(); });
+
+    sub_reset->callback([this]() {
+        Execute();
+    });
 }
 
-void ResetCommand::Execute() {
+void ResetCommand::Execute()
+{
     HCCL_VM_INFO("Resetting: Clearing database tables...");
     auto ret = ClearDbTables();
     if (ret != HcclVmResult::HCCL_SIM_HOST_SUCCESS_CMD) {
@@ -33,4 +37,4 @@ void ResetCommand::Execute() {
 }
 
 static inline CommandAutoRegister<ResetCommand> g_reset_cmd_reg{};
-}
+} // namespace HcclSim

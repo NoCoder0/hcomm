@@ -18,10 +18,7 @@ protected:
     void TearDown() override {}
 };
 
-TEST_F(HcclCombinOpParam950StructTest, TestHcclCombinOpParamSize)
-{
-    EXPECT_EQ(sizeof(HcclCombinOpParam), 9320u);
-}
+TEST_F(HcclCombinOpParam950StructTest, TestHcclCombinOpParamSize) { EXPECT_EQ(sizeof(HcclCombinOpParam), 9320u); }
 
 TEST_F(HcclCombinOpParam950StructTest, TestHcclCombinOpParamFieldOffsets)
 {

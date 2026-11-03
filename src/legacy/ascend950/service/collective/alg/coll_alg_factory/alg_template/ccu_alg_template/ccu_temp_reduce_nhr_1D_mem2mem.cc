@@ -23,18 +23,15 @@ namespace Hccl {
 
 static CcuInstRegister<CcuContextReduceNHR1DMem2mem> g_registrarReduce(CcuInstType::CCU_REDUCE_NHR_1D_MEM2MEM);
 
-CcuTempReduceNHRMem2Mem1D::CcuTempReduceNHRMem2Mem1D(const RankId virtualRank, const u32 tempRankSize,
-                                   const std::vector<std::vector<RankId>> &tempVTopo,
-                                   const std::map<RankId, u32>            &tempVirtRankMap)
+CcuTempReduceNHRMem2Mem1D::CcuTempReduceNHRMem2Mem1D(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
     : CcuAlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap)
-{
-}
+{}
 
-CcuTempReduceNHRMem2Mem1D::~CcuTempReduceNHRMem2Mem1D()
-{
-}
+CcuTempReduceNHRMem2Mem1D::~CcuTempReduceNHRMem2Mem1D() {}
 
-HcclResult CcuTempReduceNHRMem2Mem1D::CalcRes(AlgTempResReq &tempResReq)
+HcclResult CcuTempReduceNHRMem2Mem1D::CalcRes(AlgTempResReq& tempResReq)
 {
     tempResReq.queNum = 1;
     tempResReq.streamNum = tempResReq.queNum;
@@ -45,7 +42,7 @@ HcclResult CcuTempReduceNHRMem2Mem1D::CalcRes(AlgTempResReq &tempResReq)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CcuTempReduceNHRMem2Mem1D::CalcSlice(const u64 dataSize, RankSliceInfo &sliceInfoVec)
+HcclResult CcuTempReduceNHRMem2Mem1D::CalcSlice(const u64 dataSize, RankSliceInfo& sliceInfoVec)
 {
     AllignInfo allignInfo;
     allignInfo.enableAllign = false;
@@ -54,32 +51,30 @@ HcclResult CcuTempReduceNHRMem2Mem1D::CalcSlice(const u64 dataSize, RankSliceInf
     return HcclResult::HCCL_SUCCESS;
 }
 
-void CcuTempReduceNHRMem2Mem1D::InitReduceInfo(const ReduceOp &reduceOp, const DataType &dataType) {
+void CcuTempReduceNHRMem2Mem1D::InitReduceInfo(const ReduceOp& reduceOp, const DataType& dataType)
+{
     reduceOp_ = reduceOp;
     dataType_ = dataType;
 }
 
-uint64_t CcuTempReduceNHRMem2Mem1D::GetMaxSliceSize() const
-{
-    return UB_MAX_DATA_SIZE;
-}
+uint64_t CcuTempReduceNHRMem2Mem1D::GetMaxSliceSize() const { return UB_MAX_DATA_SIZE; }
 
 uint32_t CcuTempReduceNHRMem2Mem1D::virtRankId2RankId(const uint32_t virtRankId)
 {
-    for(auto iter = tempVirtRankMap_.begin(); iter != tempVirtRankMap_.end(); iter++) {
-        if(iter->second == virtRankId) {
+    for (auto iter = tempVirtRankMap_.begin(); iter != tempVirtRankMap_.end(); iter++) {
+        if (iter->second == virtRankId) {
             return iter->first;
         }
     }
     return 0;
 }
 
-HcclResult CcuTempReduceNHRMem2Mem1D::GenExtIns(const TempFuncs &tempFuncs, TemplateDataParams &tempAlgParams,
-                                                const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues)
+HcclResult CcuTempReduceNHRMem2Mem1D::GenExtIns(
+    const TempFuncs& tempFuncs, TemplateDataParams& tempAlgParams, const ResLinks& tempLinks,
+    std::vector<InsQuePtr>& tempInsQues)
 {
     HCCL_INFO("[CcuTempReduceNHR][GenExtIns] ReduceNHR begin: rank[%d] start", myRank_);
-    CHK_PRT_RET(tempInsQues.empty(),
-        HCCL_ERROR("[CcuTempReduceNHR] empty queue"), HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(tempInsQues.empty(), HCCL_ERROR("[CcuTempReduceNHR] empty queue"), HcclResult::HCCL_E_INTERNAL);
     CHK_PTR_NULL(tempInsQues[0]);
     opMode_ = tempFuncs.opMode;
     rootId_ = op_.root;
@@ -111,12 +106,13 @@ HcclResult CcuTempReduceNHRMem2Mem1D::GenExtIns(const TempFuncs &tempFuncs, Temp
     RankSliceInfo die1SliceInfoVec;
     CHK_RET(CalcSlice(die1Size, die1SliceInfoVec));
 
-    HCCL_INFO("[CcuTempReduceNHRMem2Mem1D] dimSize[%llu], die0Size[%llu], die1Size[%llu], inputAddr[%llu],"\
-        "outputAddr[%llu], repeatNum[%llu], die0Slicesize[%llu], die1Slicesize[%llu], die0LastSlicesize[%llu],"\
+    HCCL_INFO(
+        "[CcuTempReduceNHRMem2Mem1D] dimSize[%llu], die0Size[%llu], die1Size[%llu], inputAddr[%llu],"
+        "outputAddr[%llu], repeatNum[%llu], die0Slicesize[%llu], die1Slicesize[%llu], die0LastSlicesize[%llu],"
         "die1LastSlicesize[%llu]",
-        dimSize[0], die0Size, die1Size, inputAddr, outputAddr, repeatNum,
-        die0SliceInfoVec[0][0].size, die1SliceInfoVec[0][0].size,
-        die0SliceInfoVec[tempRankSize_-1][0].size, die1SliceInfoVec[tempRankSize_-1][0].size);
+        dimSize[0], die0Size, die1Size, inputAddr, outputAddr, repeatNum, die0SliceInfoVec[0][0].size,
+        die1SliceInfoVec[0][0].size, die0SliceInfoVec[tempRankSize_ - 1][0].size,
+        die1SliceInfoVec[tempRankSize_ - 1][0].size);
 
     std::vector<LinkData> linksDie0;
     std::vector<LinkData> linksDie1;
@@ -124,7 +120,7 @@ HcclResult CcuTempReduceNHRMem2Mem1D::GenExtIns(const TempFuncs &tempFuncs, Temp
     std::map<u32, u32> indexMap;
     std::vector<NHRStepInfo> stepInfoVector;
     u32 nSteps = GetNHRStepNum(tempRankSize_) * 2; // 分为RS和AG两次NHR
-    
+
     for (u32 step = 0; step < nSteps; step++) {
         NHRStepInfo stepInfo;
         CHK_RET(GetStepInfo(step, nSteps, stepInfo));
@@ -151,24 +147,25 @@ HcclResult CcuTempReduceNHRMem2Mem1D::GenExtIns(const TempFuncs &tempFuncs, Temp
     reduceRankGroup.AddRank(myRank_);
 
     std::unique_ptr<CcuInsGroup> insGroupPtr = std::make_unique<CcuInsGroup>();
-    for (uint32_t axisId = 0; axisId < axisSize; axisId++) {  // 2个die上各一个mission
+    for (uint32_t axisId = 0; axisId < axisSize; axisId++) { // 2个die上各一个mission
         CcuInstructionReduceNHR1D ccuInstruction;
-        uint64_t isInputOutputEqual = (inputAddr == outputAddr)? 1: 0;
-        ccuInstruction.Init(myVirtRankId, rootId_, inputAddr, outputAddr, axisId, axisSize, die0Size, die1Size,
-            die0SliceInfoVec[0][0].size, die1SliceInfoVec[0][0].size,
-            die0SliceInfoVec[tempRankSize_-1][0].size, die1SliceInfoVec[tempRankSize_-1][0].size,
-            stepInfoVector, indexMap, token, isInputOutputEqual, op_, tempVTopo_);
+        uint64_t isInputOutputEqual = (inputAddr == outputAddr) ? 1 : 0;
+        ccuInstruction.Init(
+            myVirtRankId, rootId_, inputAddr, outputAddr, axisId, axisSize, die0Size, die1Size,
+            die0SliceInfoVec[0][0].size, die1SliceInfoVec[0][0].size, die0SliceInfoVec[tempRankSize_ - 1][0].size,
+            die1SliceInfoVec[tempRankSize_ - 1][0].size, stepInfoVector, indexMap, token, isInputOutputEqual, op_,
+            tempVTopo_);
         ccuInstruction.SetLinks(axisId == 0 ? linksDie0 : linksDie1);
         ccuInstruction.SetRankGroup(reduceRankGroup);
-        ccuInstruction.SetCntCkeNum(5);  // 每个transport用5个CKE
+        ccuInstruction.SetCntCkeNum(5); // 每个transport用5个CKE
         insGroupPtr->Append(std::move(std::make_unique<CcuInstructionReduceNHR1D>(ccuInstruction)));
     }
-    tempInsQues[0]->Append(std::move(insGroupPtr));  // 只有一条流
+    tempInsQues[0]->Append(std::move(insGroupPtr)); // 只有一条流
     HCCL_INFO("[CcuTempReduceNHRMem2Mem1D] Template Run for all steps Ends.");
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CcuTempReduceNHRMem2Mem1D::GetStepInfo(u32 step, u32 nSteps, NHRStepInfo &stepInfo)
+HcclResult CcuTempReduceNHRMem2Mem1D::GetStepInfo(u32 step, u32 nSteps, NHRStepInfo& stepInfo)
 {
     u32 nStepsNHR = nSteps / 2;
     u32 realStep = step;
@@ -181,7 +178,7 @@ HcclResult CcuTempReduceNHRMem2Mem1D::GetStepInfo(u32 step, u32 nSteps, NHRStepI
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CcuTempReduceNHRMem2Mem1D::GetReduceScatterStepInfo(u32 step, NHRStepInfo &stepInfo)
+HcclResult CcuTempReduceNHRMem2Mem1D::GetReduceScatterStepInfo(u32 step, NHRStepInfo& stepInfo)
 {
     u32 virtRankIdx = tempVirtRankMap_[myRank_];
     stepInfo.txSliceIdxs.clear();
@@ -208,7 +205,8 @@ HcclResult CcuTempReduceNHRMem2Mem1D::GetReduceScatterStepInfo(u32 step, NHRStep
         stepInfo.txSliceIdxs.push_back(txSliceIdx);
         stepInfo.rxSliceIdxs.push_back(rxSliceIdx);
 
-        HCCL_DEBUG("[ReduceNHR][GetReduceScatterStepInfo] i[%u] txSliceIdx[%u] rxSliceIdx[%u]", i, txSliceIdx, rxSliceIdx);
+        HCCL_DEBUG(
+            "[ReduceNHR][GetReduceScatterStepInfo] i[%u] txSliceIdx[%u] rxSliceIdx[%u]", i, txSliceIdx, rxSliceIdx);
 
         txSliceIdx = (txSliceIdx + tempRankSize_ - deltaSliceIndex) % tempRankSize_;
         rxSliceIdx = (rxSliceIdx + tempRankSize_ - deltaSliceIndex) % tempRankSize_;
@@ -216,7 +214,7 @@ HcclResult CcuTempReduceNHRMem2Mem1D::GetReduceScatterStepInfo(u32 step, NHRStep
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CcuTempReduceNHRMem2Mem1D::GetAllGatherStepInfo(u32 step, u32 nSteps, NHRStepInfo &stepInfo)
+HcclResult CcuTempReduceNHRMem2Mem1D::GetAllGatherStepInfo(u32 step, u32 nSteps, NHRStepInfo& stepInfo)
 {
     u32 virtRankIdx = tempVirtRankMap_[myRank_];
     stepInfo.txSliceIdxs.clear();

@@ -14,21 +14,19 @@
 #include "ins_temp_scatter_mesh_1d.h"
 
 namespace Hccl {
-InsTempScatterMesh1D::InsTempScatterMesh1D(const RankId virtualRank, const u32 tempRankSize,
-    const std::vector<std::vector<RankId>> &tempVTopo, const std::map<RankId, u32> &tempVirtRankMap)
+InsTempScatterMesh1D::InsTempScatterMesh1D(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
     : InsAlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap)
-{
-}
+{}
 
-InsTempScatterMesh1D::~InsTempScatterMesh1D()
-{
-}
+InsTempScatterMesh1D::~InsTempScatterMesh1D() {}
 
-HcclResult InsTempScatterMesh1D::CalcRes(AlgTempResReq &tempResReq)
+HcclResult InsTempScatterMesh1D::CalcRes(AlgTempResReq& tempResReq)
 {
     HCCL_DEBUG("Enter InsTempScatterMesh1D::CalcRes");
     CHK_RET(CalcResLinksMesh(myRank_, tempRankSize_, tempVTopo_, linkNumBtwPeers_, tempResReq));
-    auto &linkReq = tempResReq.links;
+    auto& linkReq = tempResReq.links;
     u32 pathNum = 0;
     for (auto resReqIter = linkReq.begin(); resReqIter != linkReq.end(); resReqIter++) {
         auto remoteRank = resReqIter->first;
@@ -39,9 +37,10 @@ HcclResult InsTempScatterMesh1D::CalcRes(AlgTempResReq &tempResReq)
         if (pathNum == 0) {
             pathNum = rank2PathNumMap_[remoteRank];
         } else if (rank2PathNumMap_[remoteRank] != pathNum) {
-            HCCL_ERROR("[InsTempScatterMesh1D] Inconsistency pathNum to remoteRanks, Previous consistent pathNum=[%u], "
-                       "mismatched "
-                       "remoteRank=[%d], pathNum=[%u]",
+            HCCL_ERROR(
+                "[InsTempScatterMesh1D] Inconsistency pathNum to remoteRanks, Previous consistent pathNum=[%u], "
+                "mismatched "
+                "remoteRank=[%d], pathNum=[%u]",
                 pathNum, remoteRank, rank2PathNumMap_[remoteRank]);
             return HcclResult::HCCL_E_INTERNAL;
         }
@@ -72,8 +71,9 @@ u32 InsTempScatterMesh1D::CalcScratchMultiple(BufferType inBuffType, BufferType 
 }
 
 // 需要支持 input->output, input->scratch, scratch->output
-HcclResult InsTempScatterMesh1D::GenExtIns(TempFuncs &tempFuncs, TemplateDataParams &tempAlgParams,
-    ResLinks &tempResLinks, std::vector<InsQuePtr> &tempInsQues)
+HcclResult InsTempScatterMesh1D::GenExtIns(
+    TempFuncs& tempFuncs, TemplateDataParams& tempAlgParams, ResLinks& tempResLinks,
+    std::vector<InsQuePtr>& tempInsQues)
 {
     HCCL_INFO("[InsTempScatterMesh1D][Run] start: Rank [%d]", myRank_);
 
@@ -85,7 +85,8 @@ HcclResult InsTempScatterMesh1D::GenExtIns(TempFuncs &tempFuncs, TemplateDataPar
 
     uint32_t linkNum = tempResLinks.begin()->second.size();
     // 流的数量不能少于linkNum
-    CHK_PRT_RET(linkNum > tempInsQues.size(),
+    CHK_PRT_RET(
+        linkNum > tempInsQues.size(),
         HCCL_ERROR("[CollAlgFactory] [InsTempScatterMesh1D] Rank [%d], requiredQue Error.", myRank_),
         HcclResult::HCCL_E_INTERNAL);
     std::vector<float> dataSplitRate(linkNum);
@@ -95,9 +96,11 @@ HcclResult InsTempScatterMesh1D::GenExtIns(TempFuncs &tempFuncs, TemplateDataPar
     localInsQues.push_back(tempInsQues[0]);
     localInsQues.push_back(tempInsQues[tempInsQues.size() - 1]);
     // queNumPerNeighbor_初始化是1
-    CHK_PRT_RET(majorQueNum_ * queNumPerNeighbor_ > tempInsQues.size(),
-        HCCL_ERROR("[InsCollAlgFactory] [InsTempScatterMesh1D] Rank [%d], requiredQueNum [%u] not equals to "
-                   "templateQueNum [%u].",
+    CHK_PRT_RET(
+        majorQueNum_ * queNumPerNeighbor_ > tempInsQues.size(),
+        HCCL_ERROR(
+            "[InsCollAlgFactory] [InsTempScatterMesh1D] Rank [%d], requiredQueNum [%u] not equals to "
+            "templateQueNum [%u].",
             myRank_, majorQueNum_ * queNumPerNeighbor_, tempInsQues.size()),
         HcclResult::HCCL_E_INTERNAL);
 
@@ -118,13 +121,11 @@ HcclResult InsTempScatterMesh1D::GenExtIns(TempFuncs &tempFuncs, TemplateDataPar
     return HcclResult::HCCL_SUCCESS;
 }
 
-uint64_t InsTempScatterMesh1D::GetExpandedMode() const
-{
-    return 1;
-}
+uint64_t InsTempScatterMesh1D::GetExpandedMode() const { return 1; }
 
-HcclResult InsTempScatterMesh1D::RunMeshTx(u32 myAlgRank, u32 repeatTimes, const TemplateDataParams &tempAlgParams,
-    ResLinks &tempResLinks, std::vector<InsQuePtr> &tempInsQues)
+HcclResult InsTempScatterMesh1D::RunMeshTx(
+    u32 myAlgRank, u32 repeatTimes, const TemplateDataParams& tempAlgParams, ResLinks& tempResLinks,
+    std::vector<InsQuePtr>& tempInsQues)
 {
     // root卡需要将发送的数据刷新为尾部数据长度,保护一下tailSize=0认为没有
     u64 sliceSize = tempAlgParams.tailSize == 0 ? tempAlgParams.sliceSize : tempAlgParams.tailSize;
@@ -134,13 +135,14 @@ HcclResult InsTempScatterMesh1D::RunMeshTx(u32 myAlgRank, u32 repeatTimes, const
             continue;
         }
         if (tempInsQues.size() < tempVTopo_[0].size()) {
-            HCCL_ERROR("tempInsQues size [%zu] is smaller than tempVTopo_[0].size() [%zu]", tempInsQues.size(),
+            HCCL_ERROR(
+                "tempInsQues size [%zu] is smaller than tempVTopo_[0].size() [%zu]", tempInsQues.size(),
                 tempVTopo_[0].size());
             return HcclResult::HCCL_E_INTERNAL;
         }
 
         u32 peerRank = tempVTopo_[0][algRank];
-        std::vector<LinkData> &neighborLinkDatas = tempResLinks.at(peerRank);
+        std::vector<LinkData>& neighborLinkDatas = tempResLinks.at(peerRank);
         u32 linkNum = rank2PathNumMap_.at(peerRank);
         if (linkNum != neighborLinkDatas.size()) {
             HCCL_ERROR("InsTempScatterMesh1D::RunMeshTx linkNum != neighborLinkDatas.size()");
@@ -149,44 +151,47 @@ HcclResult InsTempScatterMesh1D::RunMeshTx(u32 myAlgRank, u32 repeatTimes, const
         std::vector<float> dataSplitRate(linkNum);
         CHK_RET(CalcDataSplitRateForLinks(neighborLinkDatas, dataSplitRate));
 
-        u64 srcOffset = buffInfo_.inBuffType == BufferType::SCRATCH
-                            ? buffInfo_.scratchBuffBaseOff + repeatTimes * tempAlgParams.inputRepeatStride
-                                  + algRank * tempAlgParams.inputSliceStride
-                            : repeatTimes * tempAlgParams.inputRepeatStride + algRank * tempAlgParams.inputSliceStride
-                                  + buffInfo_.inBuffBaseOff;
-        u64 dstOffset = isZeroCopy_ ? buffInfo_.outBuffBaseOff + repeatTimes * tempAlgParams.outputRepeatStride
-                                    : buffInfo_.scratchBuffBaseOff + repeatTimes * tempAlgParams.outputRepeatStride;
+        u64 srcOffset = buffInfo_.inBuffType == BufferType::SCRATCH ?
+                            buffInfo_.scratchBuffBaseOff + repeatTimes * tempAlgParams.inputRepeatStride
+                                + algRank * tempAlgParams.inputSliceStride :
+                            repeatTimes * tempAlgParams.inputRepeatStride + algRank * tempAlgParams.inputSliceStride
+                                + buffInfo_.inBuffBaseOff;
+        u64 dstOffset = isZeroCopy_ ? buffInfo_.outBuffBaseOff + repeatTimes * tempAlgParams.outputRepeatStride :
+                                      buffInfo_.scratchBuffBaseOff + repeatTimes * tempAlgParams.outputRepeatStride;
         BufferType dstBuffType = isZeroCopy_ ? BufferType::OUTPUT : BufferType::SCRATCH;
         DataSlice srcSlice(buffInfo_.inBuffType, srcOffset, sliceSize);
         DataSlice dstSlice(dstBuffType, dstOffset, sliceSize);
         for (u32 j = 0; j < linkNum; j++) {
-            CHK_PRT_RET(count >= tempInsQues.size(),
-                HCCL_ERROR("[InsTempScatterMesh1D] count=%u, tempInsQues.size=%u", count, tempInsQues.size()),
+            CHK_PRT_RET(
+                count >= tempInsQues.size(),
+                HCCL_ERROR("[InsTempScatterMesh1D] count=%u, tempInsQues.size=%zu", count, tempInsQues.size()),
                 HcclResult::HCCL_E_INTERNAL);
-            LinkData &neighborLinkData = neighborLinkDatas[j];
+            LinkData& neighborLinkData = neighborLinkDatas[j];
 
             vector<DataSlice> txSrcSlices{CalcDataSliceForLinks(srcSlice, dataSplitRate, j, dataType_)};
             vector<DataSlice> txDstSlices{CalcDataSliceForLinks(dstSlice, dataSplitRate, j, dataType_)};
 
             SlicesList txSlicesList({txSrcSlices}, {txDstSlices});
             DataInfo sendData(neighborLinkData, txSlicesList);
-            CHK_PRT_RET(Send(sendData, tempInsQues[++count], 0, true, DmaMode::PUT),
+            CHK_PRT_RET(
+                Send(sendData, tempInsQues[++count], 0, true, DmaMode::PUT),
                 HCCL_ERROR("[InsTempScatterMesh1D] BatchSend failed"), HcclResult::HCCL_E_INTERNAL);
         }
     }
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempScatterMesh1D::RunMeshRx(u32 myAlgRank, u32 repeatTimes, const TemplateDataParams &tempAlgParams,
-    ResLinks &tempResLinks, std::vector<InsQuePtr> &tempInsQues)
+HcclResult InsTempScatterMesh1D::RunMeshRx(
+    u32 myAlgRank, u32 repeatTimes, const TemplateDataParams& tempAlgParams, ResLinks& tempResLinks,
+    std::vector<InsQuePtr>& tempInsQues)
 {
-    u64 srcOffset = buffInfo_.inBuffType == BufferType::SCRATCH
-                        ? buffInfo_.scratchBuffBaseOff + repeatTimes * tempAlgParams.inputRepeatStride
-                              + myAlgRank * tempAlgParams.inputSliceStride
-                        : repeatTimes * tempAlgParams.inputRepeatStride + myAlgRank * tempAlgParams.inputSliceStride
-                              + buffInfo_.inBuffBaseOff;
-    u64 dstOffset = isZeroCopy_ ? buffInfo_.outBuffBaseOff + repeatTimes * tempAlgParams.outputRepeatStride
-                                : buffInfo_.scratchBuffBaseOff + repeatTimes * tempAlgParams.outputRepeatStride;
+    u64 srcOffset = buffInfo_.inBuffType == BufferType::SCRATCH ?
+                        buffInfo_.scratchBuffBaseOff + repeatTimes * tempAlgParams.inputRepeatStride
+                            + myAlgRank * tempAlgParams.inputSliceStride :
+                        repeatTimes * tempAlgParams.inputRepeatStride + myAlgRank * tempAlgParams.inputSliceStride
+                            + buffInfo_.inBuffBaseOff;
+    u64 dstOffset = isZeroCopy_ ? buffInfo_.outBuffBaseOff + repeatTimes * tempAlgParams.outputRepeatStride :
+                                  buffInfo_.scratchBuffBaseOff + repeatTimes * tempAlgParams.outputRepeatStride;
     BufferType dstBuffType = isZeroCopy_ ? BufferType::OUTPUT : BufferType::SCRATCH;
 
     // root卡需要将发送的数据刷新为尾部数据长度,保护一下tailSize=0认为没有
@@ -203,7 +208,7 @@ HcclResult InsTempScatterMesh1D::RunMeshRx(u32 myAlgRank, u32 repeatTimes, const
             break;
         }
     }
-    std::vector<LinkData> &neighborLinkDatas = tempResLinks.at(root_);
+    std::vector<LinkData>& neighborLinkDatas = tempResLinks.at(root_);
     u32 linkNum = rank2PathNumMap_.at(root_);
     if (linkNum != neighborLinkDatas.size()) {
         HCCL_ERROR("InsTempScatterMesh1D::RunMeshTx linkNum != neighborLinkDatas.size()");
@@ -212,35 +217,38 @@ HcclResult InsTempScatterMesh1D::RunMeshRx(u32 myAlgRank, u32 repeatTimes, const
     std::vector<float> dataSplitRate(linkNum);
     CHK_RET(CalcDataSplitRateForLinks(neighborLinkDatas, dataSplitRate));
     for (u32 j = 0; j < linkNum; j++) {
-        const LinkData &linkRecv = tempResLinks.at(root_)[j];
+        const LinkData& linkRecv = tempResLinks.at(root_)[j];
         vector<DataSlice> rxSrcSlices{CalcDataSliceForLinks(srcSlice, dataSplitRate, j, dataType_)};
         vector<DataSlice> rxDstSlices{CalcDataSliceForLinks(dstSlice, dataSplitRate, j, dataType_)};
         SlicesList rxSlicesList({rxSrcSlices}, {rxDstSlices});
         DataInfo recvData(linkRecv, rxSlicesList);
-        CHK_PRT_RET(Recv(recvData, tempInsQues[currQueIdx++], 0, true, DmaMode::PUT),
+        CHK_PRT_RET(
+            Recv(recvData, tempInsQues[currQueIdx++], 0, true, DmaMode::PUT),
             HCCL_ERROR("[InsTempScatterMesh1D] RunMeshRx failed"), HcclResult::HCCL_E_INTERNAL);
     }
     return HcclResult::HCCL_SUCCESS;
 }
 
 HcclResult InsTempScatterMesh1D::RunMesh(
-    TemplateDataParams &tempAlgParams, ResLinks &tempResLinks, std::vector<InsQuePtr> &tempInsQues)
+    TemplateDataParams& tempAlgParams, ResLinks& tempResLinks, std::vector<InsQuePtr>& tempInsQues)
 {
     u32 myAlgRank;
     GetAlgRank(myRank_, tempVTopo_[0], myAlgRank);
     for (u32 r = 0; r < tempAlgParams.repeatNum; r++) {
         if (root_ == u32(myRank_)) {
-            CHK_PRT_RET(RunMeshTx(myAlgRank, r, tempAlgParams, tempResLinks, tempInsQues),
+            CHK_PRT_RET(
+                RunMeshTx(myAlgRank, r, tempAlgParams, tempResLinks, tempInsQues),
                 HCCL_ERROR("[InsTempScatterMesh1D] RunMeshTx failed"), HcclResult::HCCL_E_INTERNAL);
         } else {
-            CHK_PRT_RET(RunMeshRx(myAlgRank, r, tempAlgParams, tempResLinks, tempInsQues),
+            CHK_PRT_RET(
+                RunMeshRx(myAlgRank, r, tempAlgParams, tempResLinks, tempInsQues),
                 HCCL_ERROR("[InsTempScatterMesh1D] BatchRecv failed"), HcclResult::HCCL_E_INTERNAL);
         }
     }
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempScatterMesh1D::PreCopy(TemplateDataParams &tempAlgParams, std::vector<InsQuePtr> &tempInsQues)
+HcclResult InsTempScatterMesh1D::PreCopy(TemplateDataParams& tempAlgParams, std::vector<InsQuePtr>& tempInsQues)
 {
     if (u32(myRank_) != root_) {
         return HCCL_SUCCESS;
@@ -259,9 +267,9 @@ HcclResult InsTempScatterMesh1D::PreCopy(TemplateDataParams &tempAlgParams, std:
         srcOffset += r * tempAlgParams.inputRepeatStride + tempAlgParams.inputSliceStride * myAlgRank;
         BufferType dstBufferType
             = buffInfo_.outBuffType == BufferType::INPUT ? buffInfo_.scratBuffType : buffInfo_.outBuffType;
-        u64 dstOffset = buffInfo_.outBuffType == BufferType::SCRATCH || buffInfo_.outBuffType == BufferType::INPUT
-                            ? r * tempAlgParams.outputRepeatStride + buffInfo_.scratchBuffBaseOff
-                            : r * tempAlgParams.outputRepeatStride + buffInfo_.outBuffBaseOff;
+        u64 dstOffset = buffInfo_.outBuffType == BufferType::SCRATCH || buffInfo_.outBuffType == BufferType::INPUT ?
+                            r * tempAlgParams.outputRepeatStride + buffInfo_.scratchBuffBaseOff :
+                            r * tempAlgParams.outputRepeatStride + buffInfo_.outBuffBaseOff;
         DataSlice srcSlice(buffInfo_.inBuffType, srcOffset, sliceSize);
         DataSlice dstSlice(dstBufferType, dstOffset, sliceSize);
         LocalCopy(tempInsQues[0], srcSlice, dstSlice);
@@ -270,7 +278,7 @@ HcclResult InsTempScatterMesh1D::PreCopy(TemplateDataParams &tempAlgParams, std:
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempScatterMesh1D::PostCopy(const TemplateDataParams &tempAlgParams, std::vector<InsQuePtr> &tempInsQues)
+HcclResult InsTempScatterMesh1D::PostCopy(const TemplateDataParams& tempAlgParams, std::vector<InsQuePtr>& tempInsQues)
 {
     // 零拷贝或者输出地址是SCRATCH场景在PreCopy阶段就已经拷贝完了
     if (isZeroCopy_ || buffInfo_.outBuffType == BufferType::SCRATCH) {

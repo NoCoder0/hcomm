@@ -15,30 +15,27 @@
 #include "temp_reduce_scatter_mesh.h"
 
 namespace Hccl {
-TempReduceScatterMesh::TempReduceScatterMesh(const RankId virtualRank, const u32 tempRankSize,
-                                             const std::vector<std::vector<RankId>> &tempVTopo,
-                                             const std::map<RankId, u32>            &tempVirtRankMap)
+TempReduceScatterMesh::TempReduceScatterMesh(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
     : AlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap)
-{
-}
+{}
 
-TempReduceScatterMesh::~TempReduceScatterMesh()
-{
-}
+TempReduceScatterMesh::~TempReduceScatterMesh() {}
 
-HcclResult TempReduceScatterMesh::CalcRes(const bool forAllReduce, AlgTempResReq &tempResReq,
-                                          u32 &requiredScratchMultiplier)
+HcclResult
+TempReduceScatterMesh::CalcRes(const bool forAllReduce, AlgTempResReq& tempResReq, u32& requiredScratchMultiplier)
 {
     (void)forAllReduce;
-    tempResReq.queNum         = tempVTopo_[0].size() - 1;
+    tempResReq.queNum = tempVTopo_[0].size() - 1;
     requiredScratchMultiplier = tempRankSize_;
 
     CHK_RET(CalcResLinks(tempResReq));
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TempReduceScatterMesh::CalcResDetour(const bool forAllReduce, const RankGraph *rankGraph,
-                                                AlgTempResReq &tempResReq, u32 &requiredScratchMultiplier)
+HcclResult TempReduceScatterMesh::CalcResDetour(
+    const bool forAllReduce, const RankGraph* rankGraph, AlgTempResReq& tempResReq, u32& requiredScratchMultiplier)
 {
     (void)forAllReduce;
 
@@ -57,7 +54,7 @@ HcclResult TempReduceScatterMesh::CalcResDetour(const bool forAllReduce, const R
     }
 
     queNumPerNeighbor_ = (linkNumBtwPeers_ + 1) >> 1;
-    tempResReq.queNum  = (tempVTopo_[0].size() - 1) * queNumPerNeighbor_;
+    tempResReq.queNum = (tempVTopo_[0].size() - 1) * queNumPerNeighbor_;
 
     requiredScratchMultiplier = tempRankSize_;
 
@@ -65,8 +62,8 @@ HcclResult TempReduceScatterMesh::CalcResDetour(const bool forAllReduce, const R
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TempReduceScatterMesh::CalcResDetour(const bool forAllReduce, ConnectedLinkMgr *linkMgr,
-                                                AlgTempResReq &tempResReq, u32 &requiredScratchMultiplier)
+HcclResult TempReduceScatterMesh::CalcResDetour(
+    const bool forAllReduce, ConnectedLinkMgr* linkMgr, AlgTempResReq& tempResReq, u32& requiredScratchMultiplier)
 {
     (void)forAllReduce;
 
@@ -78,7 +75,7 @@ HcclResult TempReduceScatterMesh::CalcResDetour(const bool forAllReduce, Connect
     enableDetour_ = (linkNumBtwPeers_ == 1) ? false : true;
 
     queNumPerNeighbor_ = (linkNumBtwPeers_ + 1) >> 1;
-    tempResReq.queNum  = (tempVTopo_[0].size() - 1) * queNumPerNeighbor_;
+    tempResReq.queNum = (tempVTopo_[0].size() - 1) * queNumPerNeighbor_;
 
     requiredScratchMultiplier = tempRankSize_;
 
@@ -86,7 +83,7 @@ HcclResult TempReduceScatterMesh::CalcResDetour(const bool forAllReduce, Connect
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TempReduceScatterMesh::CalcResLinks(AlgTempResReq &tempResReq)
+HcclResult TempReduceScatterMesh::CalcResLinks(AlgTempResReq& tempResReq)
 {
     u32 myAlgRank;
     CHK_RET(GetAlgRank(myRank_, tempVTopo_[0], myAlgRank));
@@ -108,8 +105,8 @@ dataSize / (rankSize * queNum) --> sliceSize
 
 SliceInfoVecforRing: [1st chunk: [1st Slice, 2nd Slice, ...], 2nd chunk: [1st Slice, 2nd Slice, ...], ...]
 */
-HcclResult TempReduceScatterMesh::CalcSliceInfo(const AllignInfo &allignInfo, const bool forAllReduce,
-                                                const u64 dataSize, RankSliceInfo &sliceInfoVec)
+HcclResult TempReduceScatterMesh::CalcSliceInfo(
+    const AllignInfo& allignInfo, const bool forAllReduce, const u64 dataSize, RankSliceInfo& sliceInfoVec)
 {
     std::vector<SliceInfo> tmp(1);
     sliceInfoVec.resize(tempRankSize_, tmp);
@@ -124,52 +121,57 @@ HcclResult TempReduceScatterMesh::CalcSliceInfo(const AllignInfo &allignInfo, co
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TempReduceScatterMesh::CalcSliceInfoAllReduce(const AllignInfo &allignInfo, const u64 dataSize,
-                                                         RankSliceInfo &sliceInfoVec) const
+HcclResult TempReduceScatterMesh::CalcSliceInfoAllReduce(
+    const AllignInfo& allignInfo, const u64 dataSize, RankSliceInfo& sliceInfoVec) const
 {
-    u64 unitAllignSize;
-    CHK_RET(GetUnitAllignSize(allignInfo, unitAllignSize));
+    u64 unitAlignSize;
+    CHK_RET(GetUnitAllignSize(allignInfo, unitAlignSize));
 
-    u64 chunkSize = RoundUp(dataSize, (tempRankSize_ * unitAllignSize)) * unitAllignSize;
+    u64 chunkSize = RoundUp(dataSize, (tempRankSize_ * unitAlignSize)) * unitAlignSize;
 
     u64 accumOff = 0;
     for (u32 rankIdx = 0; rankIdx < tempRankSize_; rankIdx++) {
-        u64       currChunkSize  = ((dataSize - accumOff) > chunkSize) ? chunkSize : (dataSize - accumOff);
-        SliceInfo slice          = {accumOff, currChunkSize};
+        u64 currChunkSize = ((dataSize - accumOff) > chunkSize) ? chunkSize : (dataSize - accumOff);
+        SliceInfo slice = {accumOff, currChunkSize};
         sliceInfoVec[rankIdx][0] = slice;
         accumOff += currChunkSize;
     }
 
-    CHK_PRT_RET((sliceInfoVec[tempRankSize_ - 1][0].offset + sliceInfoVec[tempRankSize_ - 1][0].size != dataSize),
-                HCCL_ERROR("[CollAlgFactory] [TempReduceScatterMesh] Rank [%d], SliceInfo calculation error!", myRank_),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        (sliceInfoVec[tempRankSize_ - 1][0].offset + sliceInfoVec[tempRankSize_ - 1][0].size != dataSize),
+        HCCL_ERROR("[CollAlgFactory] [TempReduceScatterMesh] Rank [%d], SliceInfo calculation error!", myRank_),
+        HcclResult::HCCL_E_INTERNAL);
 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TempReduceScatterMesh::GenPrimQue(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec,
-                                             const BuffInfo &buffInfo, const ResLinks &tempLinks,
-                                             std::vector<PrimQuePtr> &tempPrimQues)
+HcclResult TempReduceScatterMesh::GenPrimQue(
+    const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, const BuffInfo& buffInfo, const ResLinks& tempLinks,
+    std::vector<PrimQuePtr>& tempPrimQues)
 {
-    opMode_              = tempFuncs.opMode;
+    opMode_ = tempFuncs.opMode;
     enableCounterNotify_ = tempFuncs.enableCounterNotify;
-    buffInfo_            = buffInfo;
+    buffInfo_ = buffInfo;
 
-    auto linkIter    = tempLinks.begin();
+    auto linkIter = tempLinks.begin();
     linkNumBtwPeers_ = linkIter->second.size();
-    HCCL_INFO("[CollAlgFactory] [TempReduceScatterMesh] Rank [%d], linkNumBtwPeers equals to [%u].", myRank_,
-               linkNumBtwPeers_);
+    HCCL_INFO(
+        "[CollAlgFactory] [TempReduceScatterMesh] Rank [%d], linkNumBtwPeers equals to [%u].", myRank_,
+        linkNumBtwPeers_);
     queNumPerNeighbor_ = (linkNumBtwPeers_ + 1) >> 1;
-    HCCL_INFO("[CollAlgFactory] [TempReduceScatterMesh] Rank [%d], queNumPerNeighbor equals to [%u].", myRank_,
-               queNumPerNeighbor_);
+    HCCL_INFO(
+        "[CollAlgFactory] [TempReduceScatterMesh] Rank [%d], queNumPerNeighbor equals to [%u].", myRank_,
+        queNumPerNeighbor_);
     enableDetour_ = (linkNumBtwPeers_ == 1) ? false : true;
 
     majorQueNum_ = tempVTopo_[0].size() - 1;
-    CHK_PRT_RET(majorQueNum_ * queNumPerNeighbor_ != tempPrimQues.size(),
-                HCCL_ERROR("[CollAlgFactory] [TempReduceScatterMesh] Rank [%d], requiredQueNum [%u] not equals to "
-                           "templateQueNum [%u].",
-                           myRank_, majorQueNum_ * queNumPerNeighbor_, tempPrimQues.size()),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        majorQueNum_ * queNumPerNeighbor_ != tempPrimQues.size(),
+        HCCL_ERROR(
+            "[CollAlgFactory] [TempReduceScatterMesh] Rank [%d], requiredQueNum [%u] not equals to "
+            "templateQueNum [%u].",
+            myRank_, majorQueNum_ * queNumPerNeighbor_, tempPrimQues.size()),
+        HcclResult::HCCL_E_INTERNAL);
 
     // queue arrangement
     std::vector<PrimQuePtr> mainPrimQues;
@@ -215,9 +217,9 @@ HcclResult TempReduceScatterMesh::GenPrimQue(const TempFuncs &tempFuncs, const R
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TempReduceScatterMesh::RunMesh(const u32 myAlgRank, const std::vector<RankId> &vTopo,
-                                          const RankSliceInfo &sliceInfoVec, const ResLinks &tempLinks,
-                                          std::vector<PrimQuePtr> &tempPrimQues)
+HcclResult TempReduceScatterMesh::RunMesh(
+    const u32 myAlgRank, const std::vector<RankId>& vTopo, const RankSliceInfo& sliceInfoVec, const ResLinks& tempLinks,
+    std::vector<PrimQuePtr>& tempPrimQues)
 {
     for (u32 queIdx = 0; queIdx < vTopo.size() - 1; queIdx++) {
         // find neighbors -> virtualRank
@@ -233,47 +235,47 @@ HcclResult TempReduceScatterMesh::RunMesh(const u32 myAlgRank, const std::vector
                 detourPrimQues.push_back(tempPrimQues[queIdx * queNumPerNeighbor_ + detourIdx]);
             }
             HCCL_INFO("[CollAlgFactory] [TempReduceScatterMesh] Rank [%d], Run Mesh with Detour.", myRank_);
-            CHK_RET(RunIndividualPeerDetour(neighborRank, sliceInfoVec[sendChunkIdx][0], sliceInfoVec[recvChunkIdx][0],
-                                            tempLinks, detourPrimQues));
+            CHK_RET(RunIndividualPeerDetour(
+                neighborRank, sliceInfoVec[sendChunkIdx][0], sliceInfoVec[recvChunkIdx][0], tempLinks, detourPrimQues));
         } else {
-            PrimQuePtr currQue          = tempPrimQues[queIdx];
-            LinkData   neighborLinkData = tempLinks.at(neighborRank)[0];
+            PrimQuePtr currQue = tempPrimQues[queIdx];
+            LinkData neighborLinkData = tempLinks.at(neighborRank)[0];
             HCCL_INFO("[CollAlgFactory] [TempReduceScatterMesh] Rank [%d], Run Mesh without Detour.", myRank_);
-            CHK_RET(RunIndividualPeer(neighborRank, neighborLinkData, sliceInfoVec[sendChunkIdx][0],
-                                      sliceInfoVec[recvChunkIdx][0], currQue));
+            CHK_RET(RunIndividualPeer(
+                neighborRank, neighborLinkData, sliceInfoVec[sendChunkIdx][0], sliceInfoVec[recvChunkIdx][0], currQue));
         }
     }
 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TempReduceScatterMesh::RunIndividualPeerDetour(const RankId neighborRank, const SliceInfo &sendReduceSlice,
-                                                          const SliceInfo &recvReduceSlice, const ResLinks &tempLinks,
-                                                          std::vector<PrimQuePtr> &detourPrimQues)
+HcclResult TempReduceScatterMesh::RunIndividualPeerDetour(
+    const RankId neighborRank, const SliceInfo& sendReduceSlice, const SliceInfo& recvReduceSlice,
+    const ResLinks& tempLinks, std::vector<PrimQuePtr>& detourPrimQues)
 {
     CHK_RET(PreSyncInterQueues(detourPrimQues));
 
-    u32 dataSizePerVolume  = DataTypeSizeGet(dataType_);
+    u32 dataSizePerVolume = DataTypeSizeGet(dataType_);
     u64 unitRecvReduceSize = RoundUp(recvReduceSlice.size, queNumPerNeighbor_ * dataSizePerVolume) * dataSizePerVolume;
-    u64 resRecvReduceSize  = recvReduceSlice.size;
-    u64 currRecvReduceOff  = recvReduceSlice.offset;
+    u64 resRecvReduceSize = recvReduceSlice.size;
+    u64 currRecvReduceOff = recvReduceSlice.offset;
 
     u64 unitSendReduceSize = RoundUp(sendReduceSlice.size, queNumPerNeighbor_ * dataSizePerVolume) * dataSizePerVolume;
-    u64 resSendReduceSize  = sendReduceSlice.size;
-    u64 currSendReduceOff  = sendReduceSlice.offset;
+    u64 resSendReduceSize = sendReduceSlice.size;
+    u64 currSendReduceOff = sendReduceSlice.offset;
 
     std::vector<std::vector<LinkDataIterator>> sendRecvRedLinks;
     CHK_RET(GetSendRecvRedLinks(neighborRank, tempLinks, sendRecvRedLinks));
 
     for (u32 detourIdx = 0; detourIdx < queNumPerNeighbor_; detourIdx++) {
-        u64       currSendReduceSize  = resSendReduceSize > unitSendReduceSize ? unitSendReduceSize : resSendReduceSize;
-        u64       currRecvReduceSize  = resRecvReduceSize > unitRecvReduceSize ? unitRecvReduceSize : resRecvReduceSize;
+        u64 currSendReduceSize = resSendReduceSize > unitSendReduceSize ? unitSendReduceSize : resSendReduceSize;
+        u64 currRecvReduceSize = resRecvReduceSize > unitRecvReduceSize ? unitRecvReduceSize : resRecvReduceSize;
         SliceInfo currSendReduceSlice = {currSendReduceOff, currSendReduceSize};
         SliceInfo currRecvReduceSlice = {currRecvReduceOff, currRecvReduceSize};
 
-        std::unique_ptr<PrimGroup> primGroup
-            = RunSendRecvReduce(neighborRank, (*sendRecvRedLinks[detourIdx][0]), (*sendRecvRedLinks[detourIdx][1]),
-                                currSendReduceSlice, currRecvReduceSlice);
+        std::unique_ptr<PrimGroup> primGroup = RunSendRecvReduce(
+            neighborRank, (*sendRecvRedLinks[detourIdx][0]), (*sendRecvRedLinks[detourIdx][1]), currSendReduceSlice,
+            currRecvReduceSlice);
         detourPrimQues[detourIdx]->Append(std::move(primGroup));
 
         resRecvReduceSize -= currRecvReduceSize;
@@ -286,8 +288,9 @@ HcclResult TempReduceScatterMesh::RunIndividualPeerDetour(const RankId neighborR
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TempReduceScatterMesh::GetSendRecvRedLinks(const RankId neighborRank, const ResLinks &tempLinks,
-                                                      std::vector<std::vector<LinkDataIterator>> &sendRecvLinks) const
+HcclResult TempReduceScatterMesh::GetSendRecvRedLinks(
+    const RankId neighborRank, const ResLinks& tempLinks,
+    std::vector<std::vector<LinkDataIterator>>& sendRecvLinks) const
 {
     CHK_PRT_RET(
         ((queNumPerNeighbor_ != NUM_TWO) || (tempRankSize_ != NUM_TWO)),
@@ -301,16 +304,17 @@ HcclResult TempReduceScatterMesh::GetSendRecvRedLinks(const RankId neighborRank,
 
     CHK_PRT_RET(
         GetDetourSendRecvLinksIn4P(myRank_, neighborRank, tempLinks, sendRecvLinks),
-        HCCL_ERROR("[InsCollAlgFactory] [TempReduceScatterMesh] Rank [%d], get send recv links in 2P Mesh in 4P topo.",
-                   myRank_),
+        HCCL_ERROR(
+            "[InsCollAlgFactory] [TempReduceScatterMesh] Rank [%d], get send recv links in 2P Mesh in 4P topo.",
+            myRank_),
         HcclResult::HCCL_E_INTERNAL);
 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TempReduceScatterMesh::RunIndividualPeer(const RankId neighborRank, const LinkData &neighborLinkData,
-                                                    const SliceInfo &sendReduceSlice, const SliceInfo &recvReduceSlice,
-                                                    PrimQuePtr currQue) const
+HcclResult TempReduceScatterMesh::RunIndividualPeer(
+    const RankId neighborRank, const LinkData& neighborLinkData, const SliceInfo& sendReduceSlice,
+    const SliceInfo& recvReduceSlice, PrimQuePtr currQue) const
 {
     std::unique_ptr<PrimGroup> primGroup
         = RunSendRecvReduce(neighborRank, neighborLinkData, neighborLinkData, sendReduceSlice, recvReduceSlice);
@@ -318,19 +322,17 @@ HcclResult TempReduceScatterMesh::RunIndividualPeer(const RankId neighborRank, c
     return HcclResult::HCCL_SUCCESS;
 }
 
-std::unique_ptr<PrimGroup> TempReduceScatterMesh::RunSendRecvReduce(const RankId     neighborRank,
-                                                                    const LinkData  &sendLinkData,
-                                                                    const LinkData  &recvLinkData,
-                                                                    const SliceInfo &currSendReduceSlice,
-                                                                    const SliceInfo &currRecvReduceSlice) const
+std::unique_ptr<PrimGroup> TempReduceScatterMesh::RunSendRecvReduce(
+    const RankId neighborRank, const LinkData& sendLinkData, const LinkData& recvLinkData,
+    const SliceInfo& currSendReduceSlice, const SliceInfo& currRecvReduceSlice) const
 {
     // PrimGroup
     std::unique_ptr<PrimGroup> primGroup = std::make_unique<PrimGroup>();
 
     // RecvReduce
-    u64       recvOffset      = currRecvReduceSlice.offset;
-    u64       recvSize        = currRecvReduceSlice.size;
-    DataSlice recvRemSlice    = DataSlice(buffInfo_.inBuffType, recvOffset + buffInfo_.inBuffBaseOff, recvSize);
+    u64 recvOffset = currRecvReduceSlice.offset;
+    u64 recvSize = currRecvReduceSlice.size;
+    DataSlice recvRemSlice = DataSlice(buffInfo_.inBuffType, recvOffset + buffInfo_.inBuffBaseOff, recvSize);
     DataSlice recvLocSrcSlice = DataSlice(buffInfo_.scratBuffType, recvOffset + buffInfo_.scratchBuffBaseOff, recvSize);
     DataSlice recvLocDstSlice = DataSlice(buffInfo_.inBuffType, recvOffset + buffInfo_.inBuffBaseOff, recvSize);
     std::unique_ptr<Primitive> primRecvReduce = std::make_unique<PrimRecvReduce>(
@@ -339,9 +341,9 @@ std::unique_ptr<PrimGroup> TempReduceScatterMesh::RunSendRecvReduce(const RankId
     primGroup->Append(std::move(primRecvReduce));
 
     // SendReduce
-    u64       sendOffset      = currSendReduceSlice.offset;
-    u64       sendSize        = currSendReduceSlice.size;
-    DataSlice sendLocSlice    = DataSlice(buffInfo_.inBuffType, sendOffset + buffInfo_.inBuffBaseOff, sendSize);
+    u64 sendOffset = currSendReduceSlice.offset;
+    u64 sendSize = currSendReduceSlice.size;
+    DataSlice sendLocSlice = DataSlice(buffInfo_.inBuffType, sendOffset + buffInfo_.inBuffBaseOff, sendSize);
     DataSlice sendRemSrcSlice = DataSlice(buffInfo_.scratBuffType, sendOffset + buffInfo_.scratchBuffBaseOff, sendSize);
     DataSlice sendRemDstSlice = DataSlice(buffInfo_.inBuffType, sendOffset + buffInfo_.inBuffBaseOff, sendSize);
     std::unique_ptr<Primitive> primSendReduce = std::make_unique<PrimSendReduce>(
@@ -352,11 +354,11 @@ std::unique_ptr<PrimGroup> TempReduceScatterMesh::RunSendRecvReduce(const RankId
     return primGroup;
 }
 
-HcclResult TempReduceScatterMesh::PostCopyOffload(const RankSliceInfo     &sliceInfoVec,
-                                                  std::vector<PrimQuePtr> &tempPrimQues)
+HcclResult
+TempReduceScatterMesh::PostCopyOffload(const RankSliceInfo& sliceInfoVec, std::vector<PrimQuePtr>& tempPrimQues)
 {
     u64 srcOffset = sliceInfoVec[tempVirtRankMap_[myRank_]][0].offset;
-    u64 srcSize   = sliceInfoVec[tempVirtRankMap_[myRank_]][0].size;
+    u64 srcSize = sliceInfoVec[tempVirtRankMap_[myRank_]][0].size;
     u64 dstOffset = 0;
 
     DataSlice srcSlice = DataSlice(buffInfo_.inBuffType, srcOffset + buffInfo_.inBuffBaseOff, srcSize);

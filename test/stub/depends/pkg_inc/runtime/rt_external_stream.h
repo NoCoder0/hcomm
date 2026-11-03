@@ -27,7 +27,7 @@ extern "C" {
  * @return RT_ERROR_NONE for ok
  * @return RT_ERROR_INVALID_VALUE for error input
  */
-RTS_API rtError_t rtStreamGetSqid(const rtStream_t stm, uint32_t *sqId);
+RTS_API rtError_t rtStreamGetSqid(const rtStream_t stm, uint32_t* sqId);
 
 /**
  * @ingroup dvrt_stream
@@ -38,7 +38,7 @@ RTS_API rtError_t rtStreamGetSqid(const rtStream_t stm, uint32_t *sqId);
  * @return RT_ERROR_NONE for ok
  * @return RT_ERROR_INVALID_VALUE for error input
  */
-RTS_API rtError_t rtStreamGetCqid(const rtStream_t stm, uint32_t *cqId, uint32_t *logicCqId);
+RTS_API rtError_t rtStreamGetCqid(const rtStream_t stm, uint32_t* cqId, uint32_t* logicCqId);
 
 /*
  * @ingroup dvrt_stream
@@ -49,12 +49,11 @@ RTS_API rtError_t rtStreamGetCqid(const rtStream_t stm, uint32_t *cqId, uint32_t
  * @return RT_ERROR_NONE for ok
  * @return RT_ERROR_INVALID_VALUE for error input
  */
-RTS_API rtError_t rtDebugRegisterForStream(rtStream_t stm, uint32_t flag, const void *addr,
-                                           uint32_t *streamId, uint32_t *taskId);
+RTS_API rtError_t
+rtDebugRegisterForStream(rtStream_t stm, uint32_t flag, const void* addr, uint32_t* streamId, uint32_t* taskId);
 
 #if defined(__cplusplus)
 }
 #endif
 
-#endif  // CCE_RUNTIME_RT_EXTERNAL_STREAM_H
-
+#endif // CCE_RUNTIME_RT_EXTERNAL_STREAM_H

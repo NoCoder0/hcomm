@@ -19,13 +19,13 @@
 
 using namespace hcomm;
 
-static void FillIpv4(CommAddr &ca, const char *dotted)
+static void FillIpv4(CommAddr& ca, const char* dotted)
 {
     ca.type = COMM_ADDR_TYPE_IP_V4;
     ASSERT_EQ(inet_pton(AF_INET, dotted, &ca.addr), 1);
 }
 
-static void FillIpv6(CommAddr &ca, const char *dotted)
+static void FillIpv6(CommAddr& ca, const char* dotted)
 {
     ca.type = COMM_ADDR_TYPE_IP_V6;
     ASSERT_EQ(inet_pton(AF_INET6, dotted, &ca.addr6), 1);
@@ -82,19 +82,23 @@ TEST(UtOrionAdptUtils, CommProtocolToLinkProtocol_AllSupported_And_Invalid)
         CommProtocol p;
         Hccl::LinkProtocol expect;
     } cases[] = {
-        { COMM_PROTOCOL_UBC_CTP, Hccl::LinkProtocol::UB_CTP },
-        { COMM_PROTOCOL_UBC_TP, Hccl::LinkProtocol::UB_TP },
-        { COMM_PROTOCOL_ROCE, Hccl::LinkProtocol::ROCE },
-        { COMM_PROTOCOL_HCCS, Hccl::LinkProtocol::HCCS },
-        { COMM_PROTOCOL_UB_MEM, Hccl::LinkProtocol::UB_MEM },
+        {COMM_PROTOCOL_UB_CTP, Hccl::LinkProtocol::UB_CTP}, {COMM_PROTOCOL_UBC_TP, Hccl::LinkProtocol::UB_TP},
+        {COMM_PROTOCOL_ROCE, Hccl::LinkProtocol::ROCE},     {COMM_PROTOCOL_HCCS, Hccl::LinkProtocol::HCCS},
+        {COMM_PROTOCOL_UB_MEM, Hccl::LinkProtocol::UB_MEM}, {COMM_PROTOCOL_UB_RTP, Hccl::LinkProtocol::UB_RTP},
     };
-    for (const auto &c : cases) {
+    for (const auto& c : cases) {
         Hccl::LinkProtocol lp = Hccl::LinkProtocol::INVALID;
         ASSERT_EQ(CommProtocolToLinkProtocol(c.p, lp), HCCL_SUCCESS);
         EXPECT_TRUE(lp == c.expect) << static_cast<int>(c.p);
     }
     Hccl::LinkProtocol bad = Hccl::LinkProtocol::ROCE;
     EXPECT_EQ(CommProtocolToLinkProtocol(static_cast<CommProtocol>(99999), bad), HCCL_E_PARA);
+}
+
+TEST(UtOrionAdptUtils, CommProtocolLegacyNamesKeepCompatibleValues)
+{
+    EXPECT_EQ(COMM_PROTOCOL_UBC_CTP, COMM_PROTOCOL_UB_CTP);
+    EXPECT_EQ(COMM_PROTOCOL_UBG, COMM_PROTOCOL_UB_RTP);
 }
 
 TEST(UtOrionAdptUtils, BuildDefaultLinkData_Returns_RoceHostNet)
@@ -104,7 +108,7 @@ TEST(UtOrionAdptUtils, BuildDefaultLinkData_Returns_RoceHostNet)
     EXPECT_TRUE(ld.GetType() == Hccl::PortDeploymentType::HOST_NET);
 }
 
-static EndpointDesc MakeEpDev(CommProtocol proto, const CommAddr &addr)
+static EndpointDesc MakeEpDev(CommProtocol proto, const CommAddr& addr)
 {
     EndpointDesc ep{};
     ep.protocol = proto;
@@ -114,7 +118,7 @@ static EndpointDesc MakeEpDev(CommProtocol proto, const CommAddr &addr)
     return ep;
 }
 
-static EndpointDesc MakeEpHost(CommProtocol proto, const CommAddr &addr)
+static EndpointDesc MakeEpHost(CommProtocol proto, const CommAddr& addr)
 {
     EndpointDesc ep{};
     ep.protocol = proto;
@@ -160,4 +164,17 @@ TEST(UtOrionAdptUtils, EndpointDescPairToLinkDataWithRankIds_Ipv6_Success)
     Hccl::LinkData ld = BuildDefaultLinkData();
     ASSERT_EQ(EndpointDescPairToLinkDataWithRankIds(7U, 8U, loc, rmt, ld, 3U, 4U), HCCL_SUCCESS);
     EXPECT_TRUE(ld.GetLinkProtocol() == Hccl::LinkProtocol::ROCE);
+}
+
+TEST(UtOrionAdptUtils, CheckUbSqDepth_LowerBound)
+{
+    DevBaseAttr devBaseAttr{};
+    devBaseAttr.sqMaxDepth = 1024U;
+    UbConnBuildContext ctx{};
+
+    ctx.sqDepth = 15U;
+    EXPECT_EQ(CheckUbSqDepth(ctx, devBaseAttr), HCCL_E_PARA);
+
+    ctx.sqDepth = 16U;
+    EXPECT_EQ(CheckUbSqDepth(ctx, devBaseAttr), HCCL_SUCCESS);
 }

@@ -14,52 +14,57 @@
 #include "hccl/hcom.h"
 
 namespace error_message {
-    int32_t RegisterFormatErrorMessage(const char *error_msg, size_t error_msg_len);
+int32_t RegisterFormatErrorMessage(const char* error_msg, size_t error_msg_len);
 }
 
 class HcclInnerStubLevel2Test : public testing::Test {
 protected:
-    void SetUp() override {
-    }
-    void TearDown() override {
-    }
+    void SetUp() override {}
+    void TearDown() override {}
 };
 
-TEST_F(HcclInnerStubLevel2Test, GetWorkflowMode_ReturnsOpBase) {
+TEST_F(HcclInnerStubLevel2Test, GetWorkflowMode_ReturnsOpBase)
+{
     HcclWorkflowMode mode = GetWorkflowMode();
     EXPECT_EQ(mode, HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
 }
 
-TEST_F(HcclInnerStubLevel2Test, GetWorkflowMode_ConsistentResults) {
+TEST_F(HcclInnerStubLevel2Test, GetWorkflowMode_ConsistentResults)
+{
     HcclWorkflowMode mode1 = GetWorkflowMode();
     HcclWorkflowMode mode2 = GetWorkflowMode();
     EXPECT_EQ(mode1, mode2);
 }
 
-TEST_F(HcclInnerStubLevel2Test, RegisterFormatErrorMessage_ValidInput) {
+TEST_F(HcclInnerStubLevel2Test, RegisterFormatErrorMessage_ValidInput)
+{
     const char* errorMsg = "Test error message";
     size_t len = strlen(errorMsg);
     int32_t result = error_message::RegisterFormatErrorMessage(errorMsg, len);
     EXPECT_EQ(result, 0);
 }
 
-TEST_F(HcclInnerStubLevel2Test, RegisterFormatErrorMessage_NullPointer) {
+TEST_F(HcclInnerStubLevel2Test, RegisterFormatErrorMessage_NullPointer)
+{
     int32_t result = error_message::RegisterFormatErrorMessage(nullptr, 0);
     EXPECT_EQ(result, 0);
 }
 
-TEST_F(HcclInnerStubLevel2Test, RegisterFormatErrorMessage_EmptyString) {
+TEST_F(HcclInnerStubLevel2Test, RegisterFormatErrorMessage_EmptyString)
+{
     int32_t result = error_message::RegisterFormatErrorMessage("", 0);
     EXPECT_EQ(result, 0);
 }
 
-TEST_F(HcclInnerStubLevel2Test, RegisterFormatErrorMessage_LongString) {
+TEST_F(HcclInnerStubLevel2Test, RegisterFormatErrorMessage_LongString)
+{
     std::string longMsg(2000, 'x');
     int32_t result = error_message::RegisterFormatErrorMessage(longMsg.c_str(), longMsg.size());
     EXPECT_EQ(result, 0);
 }
 
-TEST_F(HcclInnerStubLevel2Test, RegisterFormatErrorMessage_MultipleCalls) {
+TEST_F(HcclInnerStubLevel2Test, RegisterFormatErrorMessage_MultipleCalls)
+{
     for (int i = 0; i < 100; i++) {
         int32_t result = error_message::RegisterFormatErrorMessage("test", 4);
         EXPECT_EQ(result, 0);

@@ -26,32 +26,18 @@
 using namespace std;
 using namespace hccl;
 
-
-class RankConSistentTest : public testing::Test
-{
+class RankConSistentTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "\033[36m--RankConsistentcyChecker SetUP--\033[0m" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "\033[36m--RankConsistentcyChecker TearDown--\033[0m" << std::endl;
-    }
-    virtual void SetUp()
-    {
-        std::cout << "A Test SetUP" << std::endl;
-    }
-    virtual void TearDown()
-    {
-        std::cout << "A Test TearDown" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "\033[36m--RankConsistentcyChecker SetUP--\033[0m" << std::endl; }
+    static void TearDownTestCase() { std::cout << "\033[36m--RankConsistentcyChecker TearDown--\033[0m" << std::endl; }
+    virtual void SetUp() { std::cout << "A Test SetUP" << std::endl; }
+    virtual void TearDown() { std::cout << "A Test TearDown" << std::endl; }
 };
 
-#if 1 //这个用例其实没什么意义
+#if 1 // 这个用例其实没什么意义
 TEST_F(RankConSistentTest, ut_Compare_Cann_Version)
 {
-    RankConsistentcyChecker *implObj = new RankConsistentcyChecker();
+    RankConsistentcyChecker* implObj = new RankConsistentcyChecker();
     implObj->SetCheckCannVersionSwitch(true);
 
     bool ret;
@@ -79,6 +65,55 @@ TEST_F(RankConSistentTest, ut_Compare_Cann_Version)
 
     delete implObj;
 }
+
+TEST_F(RankConSistentTest, ut_Compare_Toolkit_And_Ops_Version)
+{
+    RankConsistentcyChecker* implObj = new RankConsistentcyChecker();
+    implObj->SetCheckCannVersionSwitch(true);
+
+    bool ret;
+    HcclCheckInfo checkInfo;
+    HcclCheckInfo checkInfoRecv;
+    std::string oldVersion = "9.0.0";
+    std::string newVersion = "9.1.0";
+    std::string delimiter = "_";
+
+    // 一端版本为"9.1.0_9.1.0", 另一端为"9.0.0_9.1.0"
+    std::string localVersion = newVersion + delimiter + newVersion;
+    std::string remoteVersion = oldVersion + delimiter + newVersion;
+    strncpy_s(checkInfo.version, MAX_CANN_VERSION_LEN, localVersion.c_str(), localVersion.size());
+    strncpy_s(checkInfoRecv.version, MAX_CANN_VERSION_LEN, remoteVersion.c_str(), remoteVersion.size());
+    ret = implObj->CompareFrame(checkInfo, checkInfoRecv);
+    EXPECT_EQ(ret, true);
+
+    // 一端版本为"9.1.0_9.1.0", 另一端为"9.1.0_9.0.0"
+    remoteVersion = oldVersion + delimiter + newVersion;
+    strncpy_s(checkInfoRecv.version, MAX_CANN_VERSION_LEN, remoteVersion.c_str(), remoteVersion.size());
+    ret = implObj->CompareFrame(checkInfo, checkInfoRecv);
+    EXPECT_EQ(ret, true);
+
+    // 一端版本为"9.1.0_9.1.0", 另一端为"9.0.0_9.0.0"
+    remoteVersion = oldVersion + delimiter + oldVersion;
+    strncpy_s(checkInfoRecv.version, MAX_CANN_VERSION_LEN, remoteVersion.c_str(), remoteVersion.size());
+    ret = implObj->CompareFrame(checkInfo, checkInfoRecv);
+    EXPECT_EQ(ret, true);
+
+    // 两端均为"9.1.0_9.1.0"
+    remoteVersion = newVersion + delimiter + newVersion;
+    strncpy_s(checkInfoRecv.version, MAX_CANN_VERSION_LEN, remoteVersion.c_str(), remoteVersion.size());
+    ret = implObj->CompareFrame(checkInfo, checkInfoRecv);
+    EXPECT_EQ(ret, false);
+
+    // 一端版本为"9.1.0_9.1.0", 另一端为"9.1.0_9.1.0_9.1.0"
+    remoteVersion = newVersion + delimiter + newVersion + delimiter + newVersion;
+    strncpy_s(checkInfoRecv.version, MAX_CANN_VERSION_LEN, remoteVersion.c_str(), remoteVersion.size());
+    ret = implObj->CompareFrame(checkInfo, checkInfoRecv);
+    EXPECT_EQ(ret, true);
+
+    implObj->SetCheckCannVersionSwitch(false);
+
+    delete implObj;
+}
 #endif
 
 TEST_F(RankConSistentTest, ut_Compare_check_error)
@@ -99,7 +134,6 @@ TEST_F(RankConSistentTest, ut_Compare_check_error)
     checkInfo.crcInfoOp = crcInfo;
     checkInfo.cmdInfo = cmdInfo;
     checkInfo.protocolType = ProtocolType::RDMA;
-
 
     crcInfo.configFileExist_ = true;
     crcInfo.crcNum = 1;
@@ -123,8 +157,7 @@ TEST_F(RankConSistentTest, ut_crc)
     RankConsistentcyChecker consistentDst;
     char str[10000];
     for (u32 i = 0; i < 10000; i++) {
-
-        str[i] = i%100;
+        str[i] = i % 100;
     }
 
     u32 srcCrc1;

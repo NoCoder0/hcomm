@@ -22,9 +22,10 @@ extern "C" {
 #endif
 #pragma pack(4)
 
-#define BKF_CH_CLI_LETCP_APP_DATA_2CH_MSG_HEAD(appData)      \
-    (((uintptr_t)(appData) >= sizeof(BkfChCliLetcpMsgHead)) ?  \
-        (BkfChCliLetcpMsgHead*)((uint8_t*)(appData) - sizeof(BkfChCliLetcpMsgHead)) : VOS_NULL)
+#define BKF_CH_CLI_LETCP_APP_DATA_2CH_MSG_HEAD(appData)                                                                \
+    (((uintptr_t)(appData) >= sizeof(BkfChCliLetcpMsgHead))                                                            \
+            ? (BkfChCliLetcpMsgHead *)((uint8_t *)(appData) - sizeof(BkfChCliLetcpMsgHead))                            \
+            : VOS_NULL)
 
 #define BKF_CH_CLI_LETCP_SIGN (0xb189)
 struct tagBkfChCli {
@@ -71,7 +72,7 @@ BkfChCli *BkfChCliLetcpDataInit(BkfChCliInitArg *arg);
 void BkfChCliLetcpDataUninit(BkfChCli *ch);
 
 BkfChCliLetcpMsgHead *BkfChCliLetcpMsgMalloc(BkfChCli *ch, int32_t dataBufLen);
-void BkfChCliLetcpMsgFree(BkfChCli *ch,  BkfChCliLetcpMsgHead *chMsgHead);
+void BkfChCliLetcpMsgFree(BkfChCli *ch, BkfChCliLetcpMsgHead *chMsgHead);
 
 BkfChCliConnId *BkfChCliLetcpNewConnId(BkfChCli *ch, BkfUrl *urlServer, BkfUrl *urlSelf);
 BkfChCliConnId *BkfChCliLetcpFindConnId(BkfChCli *ch, BkfUrl *urlServer, BkfUrl *urlself);
@@ -80,7 +81,8 @@ void BkfChCliLetcpFreeConnId(BkfChCliConnId *connId);
 BkfChCliConnId *BkfChCliLetcpGetFirstConnId(BkfChCli *ch, void **itorOutOrNull);
 BkfChCliConnId *BkfChCliLetcpGetNextConnId(BkfChCli *ch, void **itorInOut);
 
-uint32_t BkfChCliLetcpStartConnOnceTmrWriteErr(BkfChCliConnId *connId, F_BKF_TMR_TIMEOUT_PROC proc, uint32_t intervalMs);
+uint32_t BkfChCliLetcpStartConnOnceTmrWriteErr(BkfChCliConnId *connId, F_BKF_TMR_TIMEOUT_PROC proc,
+    uint32_t intervalMs);
 void BkfChCliLetcpStopConnTmrWriteErr(BkfChCliConnId *connId);
 
 #pragma pack()

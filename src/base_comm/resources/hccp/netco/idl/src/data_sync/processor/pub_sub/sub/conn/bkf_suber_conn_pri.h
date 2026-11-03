@@ -40,8 +40,7 @@ void BkfSuberConnUnBlock(BkfSuberConnMng *connMng, BkfChCliConnId *connId);
 void BkfSuberConnDisConn(BkfSuberConnMng *connMng, BkfChCliConnId *connId);
 void BkfSuberConnDisConnEx(BkfSuberConnMng *connMng, BkfChCliConnId *connId, BOOL isPeerFin);
 void BkfSuberConnRcvDataEvent(BkfSuberConnMng *connMng, BkfChCliConnId *connId);
-void BkfSuberConnRcvData(BkfSuberConnMng *connMng, BkfChCliConnId *connId, uint8_t *data,
-                          int32_t dataLen);
+void BkfSuberConnRcvData(BkfSuberConnMng *connMng, BkfChCliConnId *connId, uint8_t *data, int32_t dataLen);
 void BkfSuberConnOnConn(BkfSuberConnMng *connMng, BkfChCliConnId *connId, uint16_t srcPort);
 #ifdef __cplusplus
 }

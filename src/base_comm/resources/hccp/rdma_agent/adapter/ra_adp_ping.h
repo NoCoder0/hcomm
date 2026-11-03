@@ -18,11 +18,10 @@ struct RsPingOps {
     int (*pingInit)(struct PingInitAttr *attr, struct PingInitInfo *info, unsigned int *devIndex);
     int (*pingTargetAdd)(struct RaRsDevInfo *rdev, struct PingTargetInfo *target);
     int (*pingTaskStart)(struct RaRsDevInfo *rdev, struct PingTaskAttr *attr);
-    int (*pingGetResults)(struct RaRsDevInfo *rdev, struct PingTargetCommInfo target[],
-        unsigned int *num, struct PingResultInfo result[]);
+    int (*pingGetResults)(struct RaRsDevInfo *rdev, struct PingTargetCommInfo target[], unsigned int *num,
+        struct PingResultInfo result[]);
     int (*pingTaskStop)(struct RaRsDevInfo *rdev);
-    int (*pingTargetDel)(struct RaRsDevInfo *rdev, struct PingTargetCommInfo target[],
-        unsigned int *num);
+    int (*pingTargetDel)(struct RaRsDevInfo *rdev, struct PingTargetCommInfo target[], unsigned int *num);
     int (*pingDeinit)(struct RaRsDevInfo *rdev);
 };
 

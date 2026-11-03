@@ -18,9 +18,9 @@
 #include "exe_graph/runtime/extended_kernel_context.h"
 namespace gert {
 enum class ExecuteMode {
-  kStaticOffloadExecute, // static sink
-  kDynamicExecute,
-  kEnd
+    kStaticOffloadExecute, // static sink
+    kDynamicExecute,
+    kEnd
 };
 
 /*
@@ -34,19 +34,15 @@ enum class ExecuteMode {
  *  stream_id: alloc stream id
  * */
 struct StreamInfo {
-  ge::AscendString name;
-  ge::AscendString reuse_key;
-  std::vector<int64_t> depend_value_input_indices;
-  bool required{true};
-  bool is_valid{false};
-  int64_t stream_id{-1};
+    ge::AscendString name;
+    ge::AscendString reuse_key;
+    std::vector<int64_t> depend_value_input_indices;
+    bool required{true};
+    bool is_valid{false};
+    int64_t stream_id{-1};
 };
 
-enum class SyncResType {
-  SYNC_RES_EVENT,
-  SYNC_RES_NOTIFY,
-  END
-};
+enum class SyncResType { SYNC_RES_EVENT, SYNC_RES_NOTIFY, END };
 
 /*
  * input:
@@ -59,67 +55,68 @@ enum class SyncResType {
  *  sync_res_id: alloc sync id
  * */
 struct SyncResInfo {
-  SyncResType type;
-  ge::AscendString name;
-  ge::AscendString reuse_key;
-  bool required{true};
-  bool is_valid{false};
-  int32_t sync_res_id{-1};
+    SyncResType type;
+    ge::AscendString name;
+    ge::AscendString reuse_key;
+    bool required{true};
+    bool is_valid{false};
+    int32_t sync_res_id{-1};
 };
 
 class ExeResGenerationContext : public ExtendedKernelContext {
- public:
-  ExecuteMode GetExecuteMode() const;
+public:
+    ExecuteMode GetExecuteMode() const;
 
-  // get input with index is const data
-  bool IsConstInput(const ge::AscendString &name) const;
+    // get input with index is const data
+    bool IsConstInput(const ge::AscendString& name) const;
 
-  // get input/output shape by index in graph
-  const gert::StorageShape* GetInputShape(int64_t index) const;
-  const gert::StorageShape* GetOutputShape(int64_t index) const;
+    // get input/output shape by index in graph
+    const gert::StorageShape* GetInputShape(int64_t index) const;
+    const gert::StorageShape* GetOutputShape(int64_t index) const;
 
-  // set/get stream resource
-  ge::graphStatus SetAttachedStreamInfos(std::vector<StreamInfo> &stream_info_vec) const;
-  std::vector<StreamInfo> GetAttachedStreamInfos() const;
-  int64_t GetStreamId() const;
+    // set/get stream resource
+    ge::graphStatus SetAttachedStreamInfos(std::vector<StreamInfo>& stream_info_vec) const;
+    std::vector<StreamInfo> GetAttachedStreamInfos() const;
+    int64_t GetStreamId() const;
 
-  // set/get sync resource
-  ge::graphStatus SetSyncResInfos(std::vector<SyncResInfo> &sync_info_vec) const;
-  std::vector<SyncResInfo> GetSyncResInfos() const;
+    // set/get sync resource
+    ge::graphStatus SetSyncResInfos(std::vector<SyncResInfo>& sync_info_vec) const;
+    std::vector<SyncResInfo> GetSyncResInfos() const;
 
-  // workspace size adjust
-  std::vector<int64_t> GetWorkspaceBytes() const;
-  void SetWorkspaceBytes(const std::vector<int64_t> &workspace_bytes) const;
+    // workspace size adjust
+    std::vector<int64_t> GetWorkspaceBytes() const;
+    void SetWorkspaceBytes(const std::vector<int64_t>& workspace_bytes) const;
 
-  int64_t GetOpId() const;
+    int64_t GetOpId() const;
 
-  ge::graphStatus SetListStr(const std::string &attr_name, const std::vector<std::string> &list) const;
+    ge::graphStatus SetListStr(const std::string& attr_name, const std::vector<std::string>& list) const;
 
-  bool GetStrAttrVal(const char *attr_name, ge::AscendString &val) const;
+    bool GetStrAttrVal(const char* attr_name, ge::AscendString& val) const;
 
-  bool SetStrAttrVal(const char *attr_name, const char *val) const;
+    bool SetStrAttrVal(const char* attr_name, const char* val) const;
 
-  bool GetIntAttrVal(const char *attr_name, int64_t &val) const;
+    bool GetIntAttrVal(const char* attr_name, int64_t& val) const;
 
-  bool SetIntAttrVal(const char *attr_name, const int64_t val) const;
+    bool SetIntAttrVal(const char* attr_name, const int64_t val) const;
 
- private:
-  friend class ExeResGenerationCtxBuilder;
-  // need check valid after construct
-  bool CheckContextValid() const;
+private:
+    friend class ExeResGenerationCtxBuilder;
+    // need check valid after construct
+    bool CheckContextValid() const;
 };
-static_assert(std::is_standard_layout<ExeResGenerationContext>::value && std::is_trivial<ExeResGenerationContext>::value,
-              "The class ExeResGenerationContext must be a POD");
-
+static_assert(
+    std::is_standard_layout<ExeResGenerationContext>::value && std::is_trivial<ExeResGenerationContext>::value,
+    "The class ExeResGenerationContext must be a POD");
 
 class OpCheckContext : public ExtendedKernelContext {
- public:
-  const StorageShape* GetInputShape(int64_t index) const;
-  const StorageShape* GetOutputShape(int64_t index) const;
- private:
-  friend class ExeResGenerationCtxBuilder;
-  // need check valid after construct
-  bool CheckContextValid() const;
+public:
+    const StorageShape* GetInputShape(int64_t index) const;
+    const StorageShape* GetOutputShape(int64_t index) const;
+
+private:
+    friend class ExeResGenerationCtxBuilder;
+    // need check valid after construct
+    bool CheckContextValid() const;
 };
 } // namespace gert
 

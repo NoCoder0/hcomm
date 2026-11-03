@@ -34,10 +34,10 @@ using namespace HcclSim;
 namespace VirtualRunTime {
 using workerFunc = std::function<HcclSim::HcclVmResult(const HcclTaskMetaData&)>;
 
-class SqeuentialExecutor {
+class SequentialExecutor {
 public:
-    SqeuentialExecutor(AllRankTaskQueues &allRankTaskQueues);
-    ~SqeuentialExecutor() = default;
+    SequentialExecutor(AllRankTaskQueues& allRankTaskQueues, const std::string& rootPath);
+    ~SequentialExecutor() = default;
 
     HcclVmResult Execute();
 
@@ -49,6 +49,7 @@ private:
     const static std::map<HccLTaskMetaType, const std::string> taskNames_;
 
     HcclSim::AllRankTaskQueues allRankTaskQueues_;
+    std::string rootPath_;
 };
-}
+} // namespace VirtualRunTime
 #endif

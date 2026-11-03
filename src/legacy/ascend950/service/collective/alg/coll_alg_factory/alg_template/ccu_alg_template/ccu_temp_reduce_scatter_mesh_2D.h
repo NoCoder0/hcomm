@@ -12,18 +12,17 @@
 #define HCCLV2_CCU_TEMP_REDUCE_SCATTER_MESH_2D_H_
 
 #include "string_util.h"
-#include "env_config.h"
+#include "env_config_v2.h"
 #include "ccu_alg_template_base.h"
 #include "ccu_instruction_reduce_scatter_mesh2d.h"
 
 namespace Hccl {
 
-
 class CcuTempReduceScatterMesh2D : public CcuAlgTemplateBase {
 public:
-    explicit CcuTempReduceScatterMesh2D(const RankId virtualRank, const u32 tempRankSize,
-                                   const std::vector<std::vector<RankId>> &tempVTopo,
-                                   const std::map<RankId, u32>            &tempVirtRankMap);
+    explicit CcuTempReduceScatterMesh2D(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~CcuTempReduceScatterMesh2D() override;
 
     std::string Describe() const override
@@ -31,12 +30,13 @@ public:
         return StringFormat("Template of Reduce Scatter ccu mesh 2D with tempRankSize [%u].", tempRankSize_);
     }
 
-    HcclResult Run(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec, const BuffInfo &buffInfo,
-                         const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues) override;
-    HcclResult CalcSliceInfo(const AllignInfo &allignInfo, const u64 dataSize, RankSliceInfo &sliceInfoVec) override;
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
+    HcclResult
+    Run(const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, const BuffInfo& buffInfo,
+        const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues) override;
+    HcclResult CalcSliceInfo(const AllignInfo& allignInfo, const u64 dataSize, RankSliceInfo& sliceInfoVec) override;
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
     // init reduceInfo
-    void InitReduceInfo(const ReduceOp &reduceOp, const DataType &dataType);
+    void InitReduceInfo(const ReduceOp& reduceOp, const DataType& dataType);
 
 private:
     std::vector<uint64_t> dimSize_;

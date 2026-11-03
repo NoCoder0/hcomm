@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "alltoallv_continuous_pipeline.h"
 
@@ -15,17 +15,16 @@
 #include "alg_template_register.h"
 
 namespace hccl {
-AlltoallvContinuousPipeline::AlltoallvContinuousPipeline(const HcclDispatcher dispatcher)
-    : AlgTemplateBase(dispatcher)
+AlltoallvContinuousPipeline::AlltoallvContinuousPipeline(const HcclDispatcher dispatcher) : AlgTemplateBase(dispatcher)
 {}
 
 AlltoallvContinuousPipeline::~AlltoallvContinuousPipeline() {}
 
-HcclResult AlltoallvContinuousPipeline::PrepareSendRecvInfo( std::vector<SendRecvInfo> &sendRecvInfoList)
+HcclResult AlltoallvContinuousPipeline::PrepareSendRecvInfo(std::vector<SendRecvInfo>& sendRecvInfoList)
 {
     if (sendRecvInfoList.size() == 1) {
         // 真实业务场景
-        SendRecvInfo &localSendRecvInfo = sendRecvInfoList[0];
+        SendRecvInfo& localSendRecvInfo = sendRecvInfoList[0];
         localSendCounts_ = std::move(localSendRecvInfo.sendCounts);
         localSendDispls_ = std::move(localSendRecvInfo.sendDispls);
         localRecvCounts_ = std::move(localSendRecvInfo.recvCounts);
@@ -34,24 +33,24 @@ HcclResult AlltoallvContinuousPipeline::PrepareSendRecvInfo( std::vector<SendRec
         std::copy(localRecvCounts_.begin(), localRecvCounts_.end(), intraRecvCounts_[intraRankId_].begin());
     } else {
         // 适配算法分析器，实际业务不会走这个分支
-        SendRecvInfo &localSendRecvInfo = sendRecvInfoList[userRank_];
+        SendRecvInfo& localSendRecvInfo = sendRecvInfoList[userRank_];
 
-        std::copy(localSendRecvInfo.sendCounts.begin(),
-            localSendRecvInfo.sendCounts.end(),
+        std::copy(
+            localSendRecvInfo.sendCounts.begin(), localSendRecvInfo.sendCounts.end(),
             std::back_inserter(localSendCounts_));
-        std::copy(localSendRecvInfo.sendDispls.begin(),
-            localSendRecvInfo.sendDispls.end(),
+        std::copy(
+            localSendRecvInfo.sendDispls.begin(), localSendRecvInfo.sendDispls.end(),
             std::back_inserter(localSendDispls_));
-        std::copy(localSendRecvInfo.recvCounts.begin(),
-            localSendRecvInfo.recvCounts.end(),
+        std::copy(
+            localSendRecvInfo.recvCounts.begin(), localSendRecvInfo.recvCounts.end(),
             std::back_inserter(localRecvCounts_));
-        std::copy(localSendRecvInfo.recvDispls.begin(),
-            localSendRecvInfo.recvDispls.end(),
+        std::copy(
+            localSendRecvInfo.recvDispls.begin(), localSendRecvInfo.recvDispls.end(),
             std::back_inserter(localRecvDispls_));
 
         for (u32 intraRankIdx = 0; intraRankIdx < intraRankSize_; ++intraRankIdx) {
             const u32 remoteRank = interRankId_ * intraRankSize_ + intraRankIdx;
-            SendRecvInfo &sendRecvInfo = sendRecvInfoList[remoteRank];
+            SendRecvInfo& sendRecvInfo = sendRecvInfoList[remoteRank];
             std::copy(
                 sendRecvInfo.recvCounts.begin(), sendRecvInfo.recvCounts.end(), intraRecvCounts_[intraRankIdx].begin());
         }
@@ -62,19 +61,23 @@ HcclResult AlltoallvContinuousPipeline::PrepareSendRecvInfo( std::vector<SendRec
     return HCCL_SUCCESS;
 }
 
-HcclResult AlltoallvContinuousPipeline::PrepareTopoInfo(const u32 userRank, const SubCommInfo &level0CommInfo,
-    const SubCommInfo &level1CommInfo)
+HcclResult AlltoallvContinuousPipeline::PrepareTopoInfo(
+    const u32 userRank, const SubCommInfo& level0CommInfo, const SubCommInfo& level1CommInfo)
 {
     constexpr u32 MIN_RANKSIZE = 2;
     interRankSize_ = level1CommInfo.localRankSize;
-    CHK_PRT_RET(interRankSize_ < MIN_RANKSIZE,
-        HCCL_ERROR("[AlltoallvContinuousPipeline][PrepareTopoInfo] Unexpected inter rank size[%u], which should >= 2.",
+    CHK_PRT_RET(
+        interRankSize_ < MIN_RANKSIZE,
+        HCCL_ERROR(
+            "[AlltoallvContinuousPipeline][PrepareTopoInfo] Unexpected inter rank size[%u], which should >= 2.",
             interRankSize_),
         HCCL_E_PARA);
 
     intraRankSize_ = level0CommInfo.localRankSize;
-    CHK_PRT_RET(intraRankSize_ < MIN_RANKSIZE,
-        HCCL_ERROR("[AlltoallvContinuousPipeline][PrepareTopoInfo] Unexpected intra rank size[%u], which should >= 2.",
+    CHK_PRT_RET(
+        intraRankSize_ < MIN_RANKSIZE,
+        HCCL_ERROR(
+            "[AlltoallvContinuousPipeline][PrepareTopoInfo] Unexpected intra rank size[%u], which should >= 2.",
             intraRankSize_),
         HCCL_E_PARA);
 
@@ -82,8 +85,10 @@ HcclResult AlltoallvContinuousPipeline::PrepareTopoInfo(const u32 userRank, cons
     userRank_ = userRank;
     interRankId_ = level1CommInfo.localRank;
     intraRankId_ = level0CommInfo.localRank;
-    HCCL_INFO("[AlltoallvContinuousPipeline][PrepareTopoInfo] userRank[%u], intraRankId[%u], intraRankSize[%u], "
-        "interRankId[%u], interRankSize[%u]", userRank_, intraRankId_, intraRankSize_, interRankId_, interRankSize_);
+    HCCL_INFO(
+        "[AlltoallvContinuousPipeline][PrepareTopoInfo] userRank[%u], intraRankId[%u], intraRankSize[%u], "
+        "interRankId[%u], interRankSize[%u]",
+        userRank_, intraRankId_, intraRankSize_, interRankId_, interRankSize_);
 
     // 按照module将rank分组
     ranksPerModule_.resize(interRankSize_);
@@ -96,18 +101,18 @@ HcclResult AlltoallvContinuousPipeline::PrepareTopoInfo(const u32 userRank, cons
     return HCCL_SUCCESS;
 }
 
-HcclResult AlltoallvContinuousPipeline::Prepare(const u32 userRank, const A2aPipelineMemory &a2aPipelineMemory,
-    const SubCommInfo &level0CommInfo, const SubCommInfo &level1CommInfo,
-    const Stream &mainStream, std::vector<Stream> &subStream,
-    std::vector<std::shared_ptr<LocalNotify>> &notifyMain, std::vector<std::shared_ptr<LocalNotify>> &notifySub,
-    std::vector<SendRecvInfo> &sendRecvInfoList, const HcclDataType dataType,
-    const HcclWorkflowMode workMode)
+HcclResult AlltoallvContinuousPipeline::Prepare(
+    const u32 userRank, const A2aPipelineMemory& a2aPipelineMemory, const SubCommInfo& level0CommInfo,
+    const SubCommInfo& level1CommInfo, const Stream& mainStream, std::vector<Stream>& subStream,
+    std::vector<std::shared_ptr<LocalNotify>>& notifyMain, std::vector<std::shared_ptr<LocalNotify>>& notifySub,
+    std::vector<SendRecvInfo>& sendRecvInfoList, const HcclDataType dataType, const HcclWorkflowMode workMode,
+    u32 timeOut)
 {
     // 运行模式：当前只支持单算子
     workMode_ = workMode;
-    CHK_PRT_RET(workMode_ != HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE,
-        HCCL_ERROR("[AlltoallvContinuousPipeline] This template support opbase mode only."),
-        HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        workMode_ != HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE,
+        HCCL_ERROR("[AlltoallvContinuousPipeline] This template supports opbase mode only."), HCCL_E_INTERNAL);
 
     // 拓扑信息
     CHK_RET(PrepareTopoInfo(userRank, level0CommInfo, level1CommInfo));
@@ -129,7 +134,7 @@ HcclResult AlltoallvContinuousPipeline::Prepare(const u32 userRank, const A2aPip
 
     // server内其他卡的recv counts
     intraRecvCounts_.resize(intraRankSize_);
-    for (auto &countVec : intraRecvCounts_) {
+    for (auto& countVec : intraRecvCounts_) {
         countVec.resize(userRankSize_);
     }
 
@@ -140,8 +145,9 @@ HcclResult AlltoallvContinuousPipeline::Prepare(const u32 userRank, const A2aPip
     // 链路
     intraLinks_ = level0CommInfo.links;
     interLinks_ = level1CommInfo.links;
-    HCCL_INFO("[AlltoallvContinuousPipeline][Prepare] Link info: interLinksNum[%u], intraLinksNum[%u]",
-        interLinks_.size(), intraLinks_.size());
+    HCCL_INFO(
+        "[AlltoallvContinuousPipeline][Prepare] Link info: interLinksNum[%u], intraLinksNum[%u]", interLinks_.size(),
+        intraLinks_.size());
 
     // pingpong模式: module间只有1步：双module
     enablePingPong_ = rdmaConcurrentNum_ >= interRankSize_ - 1;
@@ -150,7 +156,10 @@ HcclResult AlltoallvContinuousPipeline::Prepare(const u32 userRank, const A2aPip
 
     // 收发信息
     CHK_RET(PrepareSendRecvInfo(sendRecvInfoList));
-    
+
+    // 设置flag超时时间，多加60s
+    constexpr u16 waitFlagTimeout = 60;
+    waitFlagTimeoutSec_ = timeOut + waitFlagTimeout;
 
     return HCCL_SUCCESS;
 }
@@ -171,8 +180,9 @@ HcclResult AlltoallvContinuousPipeline::SplitBuffer(const bool enablePingPong)
         HCCL_INFO("[AlltoallvContinuousPipeline][SplitBuffer] Use ping-pong mode.");
     }
 
-    CHK_PRT_RET(blockNum == 0,
-        HCCL_ERROR("[AlltoallvContinuousPipeline][SplitBuffer]Unexpected blockNum[%u].", blockNum), HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        blockNum == 0, HCCL_ERROR("[AlltoallvContinuousPipeline][SplitBuffer]Unexpected blockNum[%u].", blockNum),
+        HCCL_E_INTERNAL);
 
     // 初始化用于记录buffer中每个分块当作存放了多少数据的vector
     // 如果是pingpong模式，需要两倍的大小
@@ -180,16 +190,20 @@ HcclResult AlltoallvContinuousPipeline::SplitBuffer(const bool enablePingPong)
 
     u64 alignSize = HCCL_MIN_SLICE_ALIGN;
     const u64 minBufferSize = globalCountsInfoSize + alignSize * blockNum;
-    CHK_PRT_RET(bufferSize < minBufferSize,
-        HCCL_ERROR("[AlltoallvContinuousPipeline][SplitBuffer]Insufficient buffer size [%llu Byte]; it needs to be "
-                   "greater than [%llu Byte].", bufferSize, minBufferSize), HCCL_E_MEMORY);
+    CHK_PRT_RET(
+        bufferSize < minBufferSize,
+        HCCL_ERROR(
+            "[AlltoallvContinuousPipeline][SplitBuffer]Insufficient buffer size [%llu Byte]; it needs to be "
+            "greater than [%llu Byte].",
+            bufferSize, minBufferSize),
+        HCCL_E_MEMORY);
 
     if (bufferSize > globalCountsInfoSize + HCCL_MIN_SLICE_ALIGN_910_93 * blockNum) {
         alignSize = HCCL_MIN_SLICE_ALIGN_910_93;
-    } 
+    }
 
-    countsPerBlock_ = (((bufferSize - globalCountsInfoSize) / blockNum) /
-        alignSize * alignSize) / unitSize_; // 前面已经可以保证countsPerBlock_大于0，不再检查
+    countsPerBlock_ = (((bufferSize - globalCountsInfoSize) / blockNum) / alignSize * alignSize)
+                      / unitSize_; // 前面已经可以保证countsPerBlock_大于0，不再检查
     sizePerBlock_ = countsPerBlock_ * unitSize_;
 
     for (u32 rank = 0; rank < userRankSize_; ++rank) {
@@ -200,26 +214,27 @@ HcclResult AlltoallvContinuousPipeline::SplitBuffer(const bool enablePingPong)
         dataBlockOffsets_.emplace_back(sizePerBlock_ * blockIdx);
     }
 
-    HCCL_INFO("[AlltoallvContinuousPipeline][SplitBuffer] Split buffer done, alignSize[%llu], sizePerBlock[%llu], "
-        "countsPerBlock[%llu], blockNum[%u]", alignSize, sizePerBlock_, countsPerBlock_, blockNum);
+    HCCL_INFO(
+        "[AlltoallvContinuousPipeline][SplitBuffer] Split buffer done, alignSize[%llu], sizePerBlock[%llu], "
+        "countsPerBlock[%llu], blockNum[%u]",
+        alignSize, sizePerBlock_, countsPerBlock_, blockNum);
     return HCCL_SUCCESS;
 }
 
-HcclResult AlltoallvContinuousPipeline::PartitionSubStreamsAndNotifies(const std::vector<Stream> &subStreams,
-    const std::vector<std::shared_ptr<LocalNotify>> &signalMainToSub,
-    const std::vector<std::shared_ptr<LocalNotify>> &signalSubToMain)
+HcclResult AlltoallvContinuousPipeline::PartitionSubStreamsAndNotifies(
+    const std::vector<Stream>& subStreams, const std::vector<std::shared_ptr<LocalNotify>>& signalMainToSub,
+    const std::vector<std::shared_ptr<LocalNotify>>& signalSubToMain)
 {
     constexpr u32 DEVICE_EIGHT = 8;
     const u32 sdmaConcurrentNum = std::min(intraRankSize_ - 1, DEVICE_EIGHT);
     const u32 totalSubstreamSize = rdmaConcurrentNum_ + sdmaConcurrentNum;
-    CHK_PRT_RET(subStreams.size() < totalSubstreamSize || signalMainToSub.size() < totalSubstreamSize ||
-        signalSubToMain.size() < totalSubstreamSize,
-        HCCL_ERROR("[AlltoallvContinuousPipeline] subStreams size [%u] or signalMainToSub size [%u] or signalSubToMain "
-        "size [%u] is small than totalSubstreamSize [%u].",
-        subStreams.size(),
-        signalMainToSub.size(),
-        signalSubToMain.size(),
-        totalSubstreamSize),
+    CHK_PRT_RET(
+        subStreams.size() < totalSubstreamSize || signalMainToSub.size() < totalSubstreamSize
+            || signalSubToMain.size() < totalSubstreamSize,
+        HCCL_ERROR(
+            "[AlltoallvContinuousPipeline] subStreams size [%u] or signalMainToSub size [%u] or signalSubToMain "
+            "size [%u] is smaller than totalSubstreamSize [%u].",
+            subStreams.size(), signalMainToSub.size(), signalSubToMain.size(), totalSubstreamSize),
         HCCL_E_PARA);
 
     u32 index = 0;
@@ -242,15 +257,12 @@ HcclResult AlltoallvContinuousPipeline::PartitionSubStreamsAndNotifies(const std
         index++;
     }
 
-    HCCL_INFO("[AlltoallvContinuousPipeline][PartitionSubStreamsAndNotifies] Done, sdma: #streams[%zu], "
-              "#notifyMainSub[%zu], #notifySubToMain[%zu]; rdma: #streams[%zu], #notifyMainSub[%zu], "
-              "#notifySubToMain[%zu].",
-        sdmaSubStreams_.size(),
-        streamNotifyMainToSdmaSub_.size(),
-        streamNotifySdmaSubToMain_.size(),
-        rdmaSubStreams_.size(),
-        streamNotifyMainToRdmaSub_.size(),
-        streamNotifyRdmaSubToMain_.size());
+    HCCL_INFO(
+        "[AlltoallvContinuousPipeline][PartitionSubStreamsAndNotifies] Done, sdma: #streams[%zu], "
+        "#notifyMainSub[%zu], #notifySubToMain[%zu]; rdma: #streams[%zu], #notifyMainSub[%zu], "
+        "#notifySubToMain[%zu].",
+        sdmaSubStreams_.size(), streamNotifyMainToSdmaSub_.size(), streamNotifySdmaSubToMain_.size(),
+        rdmaSubStreams_.size(), streamNotifyMainToRdmaSub_.size(), streamNotifyRdmaSubToMain_.size());
 
     return HCCL_SUCCESS;
 }
@@ -302,57 +314,45 @@ u32 AlltoallvContinuousPipeline::GetLocalLoopNum() const
 
     // 向上取整
     const u32 localLoopNum = static_cast<u32>((maxCount + countsPerBlock_ - 1) / countsPerBlock_);
-    HCCL_INFO("[AlltoallvContinuousPipeline][GetLocalLoopNum] maxCount[%llu], localLoopNum[%u]",
-        maxCount, localLoopNum);
+    HCCL_INFO(
+        "[AlltoallvContinuousPipeline][GetLocalLoopNum] maxCount[%llu], localLoopNum[%u]", maxCount, localLoopNum);
     return localLoopNum;
 }
 
 HcclResult AlltoallvContinuousPipeline::UpdateLocalSendInfo(const u32 targetRank, const u64 count)
 {
-    HCCL_DEBUG("[AlltoallvContinuousPipeline][UpdateLocalSendInfo]userRank[%u], count[%llu], before "
-               "update, send info of rank[%u] is [count:%llu, displ:%llu].",
-        userRank_,
-        count,
-        targetRank,
-        localSendCounts_[targetRank],
-        localSendDispls_[targetRank]);
+    HCCL_DEBUG(
+        "[AlltoallvContinuousPipeline][UpdateLocalSendInfo]userRank[%u], count[%llu], before "
+        "update, send info of rank[%u] is [count:%llu, displ:%llu].",
+        userRank_, count, targetRank, localSendCounts_[targetRank], localSendDispls_[targetRank]);
 
     const u64 maxCount = std::min(localSendCounts_[targetRank], count);
     localSendCounts_[targetRank] -= maxCount;
     localSendDispls_[targetRank] += maxCount;
 
-    HCCL_DEBUG("[AlltoallvContinuousPipeline][UpdateLocalSendInfo]userRank[%u], count[%llu], after "
-               "update, send info of rank[%u] is [count:%llu, displ:%llu].",
-        userRank_,
-        count,
-        targetRank,
-        localSendCounts_[targetRank],
-        localSendDispls_[targetRank]);
+    HCCL_DEBUG(
+        "[AlltoallvContinuousPipeline][UpdateLocalSendInfo]userRank[%u], count[%llu], after "
+        "update, send info of rank[%u] is [count:%llu, displ:%llu].",
+        userRank_, count, targetRank, localSendCounts_[targetRank], localSendDispls_[targetRank]);
 
     return HCCL_SUCCESS;
 }
 
 HcclResult AlltoallvContinuousPipeline::UpdateLocalRecvInfo(const u32 sourceRank, const u64 count)
 {
-    HCCL_DEBUG("[AlltoallvContinuousPipeline][UpdateLocalRecvInfo]userRank[%u], count[%llu], before "
-               "update, receive info of rank[%u] is [count:%llu, displ:%llu].",
-        userRank_,
-        count,
-        sourceRank,
-        localRecvCounts_[sourceRank],
-        localRecvDispls_[sourceRank]);
+    HCCL_DEBUG(
+        "[AlltoallvContinuousPipeline][UpdateLocalRecvInfo]userRank[%u], count[%llu], before "
+        "update, receive info of rank[%u] is [count:%llu, displ:%llu].",
+        userRank_, count, sourceRank, localRecvCounts_[sourceRank], localRecvDispls_[sourceRank]);
 
     const u64 maxCount = std::min(localRecvCounts_[sourceRank], count);
     localRecvCounts_[sourceRank] -= maxCount;
     localRecvDispls_[sourceRank] += maxCount;
 
-    HCCL_DEBUG("[AlltoallvContinuousPipeline][UpdateLocalRecvInfo]userRank[%u], count[%llu], after "
-               "update, receive info of rank[%u] is [count:%llu, displ:%llu].",
-        userRank_,
-        count,
-        sourceRank,
-        localRecvCounts_[sourceRank],
-        localRecvDispls_[sourceRank]);
+    HCCL_DEBUG(
+        "[AlltoallvContinuousPipeline][UpdateLocalRecvInfo]userRank[%u], count[%llu], after "
+        "update, receive info of rank[%u] is [count:%llu, displ:%llu].",
+        userRank_, count, sourceRank, localRecvCounts_[sourceRank], localRecvDispls_[sourceRank]);
 
     return HCCL_SUCCESS;
 }
@@ -360,8 +360,8 @@ HcclResult AlltoallvContinuousPipeline::UpdateLocalRecvInfo(const u32 sourceRank
 HcclResult AlltoallvContinuousPipeline::NotifySdmaSubStreamStart()
 {
     for (u32 streamIndex = 0; streamIndex < sdmaSubStreams_.size(); ++streamIndex) {
-        CHK_RET(LocalNotify::Post(mainStream_, dispatcher_, streamNotifySdmaSubToMain_[streamIndex],
-            INVALID_VALUE_STAGE));
+        CHK_RET(
+            LocalNotify::Post(mainStream_, dispatcher_, streamNotifySdmaSubToMain_[streamIndex], INVALID_VALUE_STAGE));
         CHK_RET(LocalNotify::Wait(
             sdmaSubStreams_[streamIndex], dispatcher_, streamNotifySdmaSubToMain_[streamIndex], INVALID_VALUE_STAGE));
     }
@@ -371,10 +371,10 @@ HcclResult AlltoallvContinuousPipeline::NotifySdmaSubStreamStart()
 HcclResult AlltoallvContinuousPipeline::WaitSdmaSubStreamFinish()
 {
     for (u32 streamIndex = 0; streamIndex < sdmaSubStreams_.size(); ++streamIndex) {
-        CHK_RET(LocalNotify::Post(sdmaSubStreams_[streamIndex], dispatcher_, streamNotifyMainToSdmaSub_[streamIndex],
-            INVALID_VALUE_STAGE));
-        CHK_RET(LocalNotify::Wait(mainStream_, dispatcher_, streamNotifyMainToSdmaSub_[streamIndex],
-            INVALID_VALUE_STAGE));
+        CHK_RET(LocalNotify::Post(
+            sdmaSubStreams_[streamIndex], dispatcher_, streamNotifyMainToSdmaSub_[streamIndex], INVALID_VALUE_STAGE));
+        CHK_RET(
+            LocalNotify::Wait(mainStream_, dispatcher_, streamNotifyMainToSdmaSub_[streamIndex], INVALID_VALUE_STAGE));
     }
     return HCCL_SUCCESS;
 }
@@ -382,8 +382,8 @@ HcclResult AlltoallvContinuousPipeline::WaitSdmaSubStreamFinish()
 HcclResult AlltoallvContinuousPipeline::NotifyRdmaSubStreamStart()
 {
     for (u32 streamIndex = 0; streamIndex < rdmaSubStreams_.size(); ++streamIndex) {
-        CHK_RET(LocalNotify::Post(mainStream_, dispatcher_, streamNotifyRdmaSubToMain_[streamIndex],
-            INVALID_VALUE_STAGE));
+        CHK_RET(
+            LocalNotify::Post(mainStream_, dispatcher_, streamNotifyRdmaSubToMain_[streamIndex], INVALID_VALUE_STAGE));
         CHK_RET(LocalNotify::Wait(
             rdmaSubStreams_[streamIndex], dispatcher_, streamNotifyRdmaSubToMain_[streamIndex], INVALID_VALUE_STAGE));
     }
@@ -393,20 +393,21 @@ HcclResult AlltoallvContinuousPipeline::NotifyRdmaSubStreamStart()
 HcclResult AlltoallvContinuousPipeline::WaitRdmaSubStreamFinish()
 {
     for (u32 streamIndex = 0; streamIndex < rdmaSubStreams_.size(); ++streamIndex) {
-        CHK_RET(LocalNotify::Post(rdmaSubStreams_[streamIndex], dispatcher_, streamNotifyMainToRdmaSub_[streamIndex],
-            INVALID_VALUE_STAGE));
-        CHK_RET(LocalNotify::Wait(mainStream_, dispatcher_, streamNotifyMainToRdmaSub_[streamIndex],
-            INVALID_VALUE_STAGE));
+        CHK_RET(LocalNotify::Post(
+            rdmaSubStreams_[streamIndex], dispatcher_, streamNotifyMainToRdmaSub_[streamIndex], INVALID_VALUE_STAGE));
+        CHK_RET(
+            LocalNotify::Wait(mainStream_, dispatcher_, streamNotifyMainToRdmaSub_[streamIndex], INVALID_VALUE_STAGE));
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult AlltoallvContinuousPipeline::InterSdmaRx(const LINK& linkLeft, const LINK& linkRight,
-    std::vector<TxMemoryInfo>& sendMems, std::vector<RxMemoryInfo>& recvMems, Stream& stream)
+HcclResult AlltoallvContinuousPipeline::InterSdmaRx(
+    const LINK& linkLeft, const LINK& linkRight, std::vector<TxMemoryInfo>& sendMems,
+    std::vector<RxMemoryInfo>& recvMems, Stream& stream) const
 {
     const bool needRecvFromLinkLeft = !recvMems.empty();
     const bool needSendToLinkRight = !sendMems.empty();
-        
+
     // 前同步，通知right我已准备好，可以从我这里读；等待left通知它已准备好，可以从它那里读
     if (needSendToLinkRight) {
         CHK_RET(linkRight->TxAck(stream));
@@ -417,12 +418,12 @@ HcclResult AlltoallvContinuousPipeline::InterSdmaRx(const LINK& linkLeft, const 
 
     // 从left读
     for (const auto& memInfo : recvMems) {
-        void *srcMemPtr = nullptr;
+        void* srcMemPtr = nullptr;
         CHK_RET(linkLeft->GetRemoteMem(memInfo.srcMemType, &srcMemPtr));
         DeviceMem dstMem = DeviceMem::create(memInfo.dst, memInfo.len);
-        DeviceMem srcMem(static_cast<s8 *>(srcMemPtr) + memInfo.srcOffset, memInfo.len);
-        CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dstMem, srcMem, stream, linkLeft->GetRemoteRank(),
-            linkLeft->GetLinkType()));
+        DeviceMem srcMem(static_cast<s8*>(srcMemPtr) + memInfo.srcOffset, memInfo.len);
+        CHK_RET(HcclD2DMemcpyAsync(
+            dispatcher_, dstMem, srcMem, stream, linkLeft->GetRemoteRank(), linkLeft->GetLinkType()));
     }
 
     // 尾同步，通知left我已读完，等待right通知它已读完
@@ -433,14 +434,17 @@ HcclResult AlltoallvContinuousPipeline::InterSdmaRx(const LINK& linkLeft, const 
         CHK_RET(linkRight->RxDataSignal(stream));
     }
 
-    HCCL_DEBUG("[AlltoallvContinuousPipeline][InterSdmaRx] Done. linkLeft.rank[%u], linkRight.rank[%u], "
-        "recvMems.size[%zu]", linkLeft->GetRemoteRank(), linkRight->GetRemoteRank(), recvMems.size());
+    HCCL_DEBUG(
+        "[AlltoallvContinuousPipeline][InterSdmaRx] Done. linkLeft.rank[%u], linkRight.rank[%u], "
+        "recvMems.size[%zu]",
+        linkLeft->GetRemoteRank(), linkRight->GetRemoteRank(), recvMems.size());
     return HCCL_SUCCESS;
 }
-    
+
 // 跨module通信，通过RDMA从link left读或向link right写
-HcclResult AlltoallvContinuousPipeline::InterRdmaTxRx(const LINK& linkLeft, const LINK& linkRight,
-    std::vector<TxMemoryInfo>& sendMems, std::vector<RxMemoryInfo>& recvMems, Stream& stream)
+HcclResult AlltoallvContinuousPipeline::InterRdmaTxRx(
+    const LINK& linkLeft, const LINK& linkRight, std::vector<TxMemoryInfo>& sendMems,
+    std::vector<RxMemoryInfo>& recvMems, Stream& stream) const
 {
     const bool needRecvFromLinkLeft = !recvMems.empty();
     const bool needSendToLinkRight = !sendMems.empty();
@@ -460,14 +464,15 @@ HcclResult AlltoallvContinuousPipeline::InterRdmaTxRx(const LINK& linkLeft, cons
         CHK_RET(linkRight->WaitFinAck(stream));
     }
 
-    HCCL_DEBUG("[AlltoallvContinuousPipeline][InterRdmaTxRx] Done. linkLeft.rank[%u], linkRight.rank[%u], "
-        "sendMems.size[%zu], recvMems.size[%zu]", linkLeft->GetRemoteRank(), linkRight->GetRemoteRank(),
-        sendMems.size(), recvMems.size());
+    HCCL_DEBUG(
+        "[AlltoallvContinuousPipeline][InterRdmaTxRx] Done. linkLeft.rank[%u], linkRight.rank[%u], "
+        "sendMems.size[%zu], recvMems.size[%zu]",
+        linkLeft->GetRemoteRank(), linkRight->GetRemoteRank(), sendMems.size(), recvMems.size());
     return HCCL_SUCCESS;
 }
 
-HcclResult AlltoallvContinuousPipeline::LocalCopyFromInputToInBuffer(const u32 targetRank, Stream& stream,
-    const u32 loopIdx)
+HcclResult
+AlltoallvContinuousPipeline::LocalCopyFromInputToInBuffer(const u32 targetRank, Stream& stream, const u32 loopIdx)
 {
     // 根据send displs来计算input的位置，取min(countsPerBlock_, count)个数
     const u64 copyCount = std::min(GetLocalSendCountOfRank(targetRank), countsPerBlock_);
@@ -488,23 +493,24 @@ HcclResult AlltoallvContinuousPipeline::LocalCopyFromInputToInBuffer(const u32 t
     // 刷新send info
     CHK_RET(UpdateLocalSendInfo(targetRank, copyCount));
 
-    // 记录in bufer中该分块存放了多少数据
+    // 记录in buffer中该分块存放了多少数据
     inBufferDataSize_[targetRank] = copySize;
 
-    HCCL_DEBUG("[AlltoallvContinuousPipeline][LocalCopy][FromInputToInBuffer] done, userRank[%u], targetRank[%u], "
-        "srcOffset[%llu], dstOffset[%llu], copyCount[%llu], copySize[%llu], loopIdx[%u]", userRank_, targetRank,
-        srcOffset, dstOffset, copyCount, copySize, loopIdx);
+    HCCL_DEBUG(
+        "[AlltoallvContinuousPipeline][LocalCopy][FromInputToInBuffer] done, userRank[%u], targetRank[%u], "
+        "srcOffset[%llu], dstOffset[%llu], copyCount[%llu], copySize[%llu], loopIdx[%u]",
+        userRank_, targetRank, srcOffset, dstOffset, copyCount, copySize, loopIdx);
     return HCCL_SUCCESS;
 }
 
-HcclResult AlltoallvContinuousPipeline::LocalCopyFromOutBufferToOutput(const u32 sourceRank, Stream& stream,
-    const u32 loopIdx)
+HcclResult
+AlltoallvContinuousPipeline::LocalCopyFromOutBufferToOutput(const u32 sourceRank, Stream& stream, const u32 loopIdx)
 {
     const u64 copyCount = std::min(GetLocalRecvCountOfRank(sourceRank), countsPerBlock_);
     if (copyCount == 0) {
         return HCCL_SUCCESS;
     }
-    
+
     // 从out buffer对应分块拷贝到output
     const u64 copySize = copyCount * unitSize_;
     const u64 srcOffset = GetDataBlockOffset(sourceRank, loopIdx);
@@ -517,9 +523,10 @@ HcclResult AlltoallvContinuousPipeline::LocalCopyFromOutBufferToOutput(const u32
     // 刷新receive info
     CHK_RET(UpdateLocalRecvInfo(sourceRank, copyCount));
 
-    HCCL_DEBUG("[AlltoallvContinuousPipeline][LocalCopy][FromOutBufferToOutput] done, userRank[%u], sourceRank[%u], "
-        "srcOffset[%llu], dstOffset[%llu], copyCount[%llu], copySize[%llu], loopIdx[%u]", userRank_, sourceRank,
-        srcOffset, dstOffset, copyCount, copySize, loopIdx);
+    HCCL_DEBUG(
+        "[AlltoallvContinuousPipeline][LocalCopy][FromOutBufferToOutput] done, userRank[%u], sourceRank[%u], "
+        "srcOffset[%llu], dstOffset[%llu], copyCount[%llu], copySize[%llu], loopIdx[%u]",
+        userRank_, sourceRank, srcOffset, dstOffset, copyCount, copySize, loopIdx);
     return HCCL_SUCCESS;
 }
 
@@ -529,7 +536,7 @@ HcclResult AlltoallvContinuousPipeline::LocalCopySelfDataFromInputToOutput(Strea
     if (copyCount == 0) {
         return HCCL_SUCCESS;
     }
-    
+
     // 从input拷贝到output
     const u64 copySize = copyCount * unitSize_;
     const u64 srcOffset = GetLocalSendDisplOfRank(userRank_) * unitSize_;
@@ -539,14 +546,15 @@ HcclResult AlltoallvContinuousPipeline::LocalCopySelfDataFromInputToOutput(Strea
 
     CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dst, src, stream));
 
-    HCCL_DEBUG("[AlltoallvContinuousPipeline][LocalCopy][SelfDataFromInputToOutput] done, userRank[%u], "
+    HCCL_DEBUG(
+        "[AlltoallvContinuousPipeline][LocalCopy][SelfDataFromInputToOutput] done, userRank[%u], "
         "srcOffset[%llu], dstOffset[%llu], copyCount[%llu], copySize[%llu]",
         userRank_, srcOffset, dstOffset, copyCount, copySize);
     return HCCL_SUCCESS;
 }
 
-HcclResult AlltoallvContinuousPipeline::SdmaSendFromInputToRemoteOutBuffer(const u32 targetRank, Stream& stream,
-    const u32 loopIdx)
+HcclResult
+AlltoallvContinuousPipeline::SdmaSendFromInputToRemoteOutBuffer(const u32 targetRank, Stream& stream, const u32 loopIdx)
 {
     const u64 sendCount = std::min(GetLocalSendCountOfRank(targetRank), countsPerBlock_);
     if (sendCount == 0) {
@@ -558,11 +566,11 @@ HcclResult AlltoallvContinuousPipeline::SdmaSendFromInputToRemoteOutBuffer(const
     const u64 srcOffset = GetLocalSendDisplOfRank(targetRank) * unitSize_;
     const u64 dstOffset = GetDataBlockOffset(userRank_, loopIdx);
     DeviceMem src = inputMem_.range(srcOffset, sendSize);
-    
+
     const LINK& link = intraLinks_[targetRank % intraRankSize_];
-    void *remMemPtr = nullptr;
+    void* remMemPtr = nullptr;
     CHK_RET(link->GetRemoteMem(UserMemType::OUTPUT_MEM, &remMemPtr));
-    DeviceMem dst = DeviceMem::create(static_cast<u8 *>(remMemPtr) + dstOffset, sendSize);
+    DeviceMem dst = DeviceMem::create(static_cast<u8*>(remMemPtr) + dstOffset, sendSize);
 
     // 前后同步在外层处理
     CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dst, src, stream, targetRank, link->GetLinkType()));
@@ -570,17 +578,19 @@ HcclResult AlltoallvContinuousPipeline::SdmaSendFromInputToRemoteOutBuffer(const
     // 刷新send info
     CHK_RET(UpdateLocalSendInfo(targetRank, sendCount));
 
-    HCCL_DEBUG("[AlltoallvContinuousPipeline][Sdma][SendFromInputToRemoteOutBuffer] done, userRank[%u], "
+    HCCL_DEBUG(
+        "[AlltoallvContinuousPipeline][Sdma][SendFromInputToRemoteOutBuffer] done, userRank[%u], "
         "targetRank[%u], srcOffset[%llu], dstOffset[%llu], sendCount[%llu], sendSize[%llu], loopIdx[%u]",
         userRank_, targetRank, srcOffset, dstOffset, sendCount, sendSize, loopIdx);
     return HCCL_SUCCESS;
 }
 
-HcclResult AlltoallvContinuousPipeline::SdmaReadFromRemoteOutBufferToOutput(const u32 sourceRank, Stream& stream,
-    const u32 loopIdx)
+HcclResult AlltoallvContinuousPipeline::SdmaReadFromRemoteOutBufferToOutput(
+    const u32 sourceRank, Stream& stream, const u32 loopIdx)
 {
     // 需要recv counts信息
-    CHK_PRT_RET(needCollectInfo_,
+    CHK_PRT_RET(
+        needCollectInfo_,
         HCCL_ERROR("[AlltoallvContinuousPipeline][SdmaReadFromRemoteOutBufferToOutput] No receive info."),
         HCCL_E_INTERNAL);
 
@@ -594,11 +604,11 @@ HcclResult AlltoallvContinuousPipeline::SdmaReadFromRemoteOutBufferToOutput(cons
     const u64 srcBlockIdx = sourceRank / intraRankSize_ * intraRankSize_ + intraRankId_;
     const u64 srcOffset = GetDataBlockOffset(srcBlockIdx, loopIdx);
     const u64 dstOffset = GetLocalRecvDisplOfRank(sourceRank) * unitSize_;
-    
+
     const LINK& link = intraLinks_[sourceRank % intraRankSize_];
-    void *remMemPtr = nullptr;
+    void* remMemPtr = nullptr;
     CHK_RET(link->GetRemoteMem(UserMemType::OUTPUT_MEM, &remMemPtr));
-    DeviceMem src = DeviceMem::create(static_cast<u8 *>(remMemPtr) + srcOffset, readSize);
+    DeviceMem src = DeviceMem::create(static_cast<u8*>(remMemPtr) + srcOffset, readSize);
 
     DeviceMem dst = outputMem_.range(dstOffset, readSize);
 
@@ -608,14 +618,15 @@ HcclResult AlltoallvContinuousPipeline::SdmaReadFromRemoteOutBufferToOutput(cons
     // 刷新receive info
     CHK_RET(UpdateLocalRecvInfo(sourceRank, readCount));
 
-    HCCL_DEBUG("[AlltoallvContinuousPipeline][Sdma][ReadFromRemoteOutBufferToOutput] done, userRank[%u], "
+    HCCL_DEBUG(
+        "[AlltoallvContinuousPipeline][Sdma][ReadFromRemoteOutBufferToOutput] done, userRank[%u], "
         "sourceRank[%u], srcOffset[%llu], dstOffset[%llu], readCount[%llu], readSize[%llu], loopIdx[%u]",
         userRank_, sourceRank, srcOffset, dstOffset, readCount, readSize, loopIdx);
     return HCCL_SUCCESS;
 }
 
-HcclResult AlltoallvContinuousPipeline::InterSendAndReceive(const u32 sendRank, const u32 recvRank, Stream& stream,
-    const u32 loopIdx)
+HcclResult AlltoallvContinuousPipeline::InterSendAndReceive(
+    const u32 sendRank, const u32 recvRank, Stream& stream, const u32 loopIdx)
 {
     // 计算出对端rank所在module的首rank，因为要向对端rank发送[首rank, 首rank+intraRankSize]rank的数据
     const u32 sendModuleFirstRank = sendRank / intraRankSize_ * intraRankSize_;
@@ -637,10 +648,11 @@ HcclResult AlltoallvContinuousPipeline::InterSendAndReceive(const u32 sendRank, 
         const u64 sendSize = inBufferDataSize_[targetRank];
         inBufferDataSize_[targetRank] = 0;
         if (sendSize > 0) {
-            sendMems.emplace_back(TxMemoryInfo{UserMemType::OUTPUT_MEM, sendDstOffset,
-                static_cast<s8*>(inBuffer_.ptr()) + sendSrcOffset, sendSize});
+            sendMems.emplace_back(TxMemoryInfo{
+                UserMemType::OUTPUT_MEM, sendDstOffset, static_cast<s8*>(inBuffer_.ptr()) + sendSrcOffset, sendSize});
         }
-        HCCL_DEBUG("[AlltoallvContinuousPipeline][InterSendAndReceive]inter send userRank[%u], sendRank[%u], "
+        HCCL_DEBUG(
+            "[AlltoallvContinuousPipeline][InterSendAndReceive]inter send userRank[%u], sendRank[%u], "
             "targetRank[%u], srcOffset[%llu], dstOffset[%llu], sendSize[%llu], loopIdx[%u]",
             userRank_, sendRank, targetRank, sendSrcOffset, sendDstOffset, sendSize, loopIdx);
 
@@ -651,11 +663,12 @@ HcclResult AlltoallvContinuousPipeline::InterSendAndReceive(const u32 sendRank, 
         const u64 recvCount = std::min(countsPerBlock_, intraRecvCounts_[rankOffset][sourceRank]);
         const u64 recvSize = recvCount * unitSize_;
         if (recvCount > 0) {
-            recvMems.emplace_back(RxMemoryInfo{UserMemType::INPUT_MEM, recvSrcOffset,
-                static_cast<s8*>(outBuffer_.ptr()) + recvDstOffset, recvSize});
+            recvMems.emplace_back(RxMemoryInfo{
+                UserMemType::INPUT_MEM, recvSrcOffset, static_cast<s8*>(outBuffer_.ptr()) + recvDstOffset, recvSize});
             intraRecvCounts_[rankOffset][sourceRank] -= recvCount;
         }
-        HCCL_DEBUG("[AlltoallvContinuousPipeline][InterSendAndReceive]inter recv userRank[%u], recvRank[%u], "
+        HCCL_DEBUG(
+            "[AlltoallvContinuousPipeline][InterSendAndReceive]inter recv userRank[%u], recvRank[%u], "
             "sourceRank[%u], targetRank[%u], srcOffset[%llu], dstOffset[%llu], readSize[%llu], loopIdx[%u]",
             userRank_, recvRank, sourceRank, actualTargetRank, recvSrcOffset, recvDstOffset, recvSize, loopIdx);
     }
@@ -666,7 +679,7 @@ HcclResult AlltoallvContinuousPipeline::InterSendAndReceive(const u32 sendRank, 
         // RDMA
         CHK_RET(InterRdmaTxRx(recvLink, sendLink, sendMems, recvMems, stream));
     }
-    
+
     return HCCL_SUCCESS;
 }
 
@@ -695,8 +708,10 @@ HcclResult AlltoallvContinuousPipeline::DoSdmaSync(const SdmaSyncType syncType)
 
 HcclResult AlltoallvContinuousPipeline::DoLocalCopy(const u32 beginStepNum, const u32 endStepNum, const u32 loopIdx)
 {
-    CHK_PRT_RET(beginStepNum == endStepNum,
-        HCCL_DEBUG("[AlltoallvContinuousPipeline][DoLocalCopy]beginStepNum[%u] == endStepNum[%u], return success.",
+    CHK_PRT_RET(
+        beginStepNum == endStepNum,
+        HCCL_DEBUG(
+            "[AlltoallvContinuousPipeline][DoLocalCopy]beginStepNum[%u] == endStepNum[%u], return success.",
             beginStepNum, endStepNum),
         HCCL_SUCCESS);
 
@@ -706,17 +721,21 @@ HcclResult AlltoallvContinuousPipeline::DoLocalCopy(const u32 beginStepNum, cons
             CHK_RET(LocalCopyFromInputToInBuffer(remoteRank, mainStream_, loopIdx));
         }
     }
-    HCCL_DEBUG("[AlltoallvContinuousPipeline][DoLocalCopy] done. beginStepNum[%u], endStepNum[%u], loopIdx[%u]",
-        beginStepNum, endStepNum, loopIdx);
+    HCCL_DEBUG(
+        "[AlltoallvContinuousPipeline][DoLocalCopy] done. beginStepNum[%u], endStepNum[%u], loopIdx[%u]", beginStepNum,
+        endStepNum, loopIdx);
     return HCCL_SUCCESS;
 }
 
-HcclResult AlltoallvContinuousPipeline::DoIntraDistribution(const u32 beginStepNum, const u32 endStepNum,
-    const u32 loopIdx)
+HcclResult
+AlltoallvContinuousPipeline::DoIntraDistribution(const u32 beginStepNum, const u32 endStepNum, const u32 loopIdx)
 {
-    CHK_PRT_RET(beginStepNum == endStepNum,
-        HCCL_DEBUG("[AlltoallvContinuousPipeline][DoIntraDistribution]beginStepNum[%u] == endStepNum[%u], return "
-            "success.", beginStepNum, endStepNum),
+    CHK_PRT_RET(
+        beginStepNum == endStepNum,
+        HCCL_DEBUG(
+            "[AlltoallvContinuousPipeline][DoIntraDistribution]beginStepNum[%u] == endStepNum[%u], return "
+            "success.",
+            beginStepNum, endStepNum),
         HCCL_SUCCESS);
 
     for (u32 step = beginStepNum + 1; step < endStepNum + 1; ++step) {
@@ -740,17 +759,21 @@ HcclResult AlltoallvContinuousPipeline::DoIntraDistribution(const u32 beginStepN
         }
     }
 
-    HCCL_DEBUG("[AlltoallvContinuousPipeline][DoIntraDistribution] done. beginStepNum[%u], endStepNum[%u], loopIdx[%u]",
+    HCCL_DEBUG(
+        "[AlltoallvContinuousPipeline][DoIntraDistribution] done. beginStepNum[%u], endStepNum[%u], loopIdx[%u]",
         beginStepNum, endStepNum, loopIdx);
     return HCCL_SUCCESS;
 }
 
-HcclResult AlltoallvContinuousPipeline::DoInterSendReceive(const u32 beginStepNum, const u32 endStepNum,
-    const u32 loopIdx)
+HcclResult
+AlltoallvContinuousPipeline::DoInterSendReceive(const u32 beginStepNum, const u32 endStepNum, const u32 loopIdx)
 {
-    CHK_PRT_RET(beginStepNum == endStepNum,
-        HCCL_DEBUG("[AlltoallvContinuousPipeline][DoInterSendReceive]beginStepNum[%u] == endStepNum[%u], return "
-            "success.", beginStepNum, endStepNum),
+    CHK_PRT_RET(
+        beginStepNum == endStepNum,
+        HCCL_DEBUG(
+            "[AlltoallvContinuousPipeline][DoInterSendReceive]beginStepNum[%u] == endStepNum[%u], return "
+            "success.",
+            beginStepNum, endStepNum),
         HCCL_SUCCESS);
 
     u32 streamIdx = 0;
@@ -759,7 +782,8 @@ HcclResult AlltoallvContinuousPipeline::DoInterSendReceive(const u32 beginStepNu
         const u32 recvRank = (userRank_ + userRankSize_ - step * intraRankSize_) % userRankSize_;
         CHK_RET(InterSendAndReceive(sendRank, recvRank, rdmaSubStreams_[streamIdx++], loopIdx));
     }
-    HCCL_DEBUG("[AlltoallvContinuousPipeline][DoInterSendReceive] done. beginStepNum[%u], endStepNum[%u], loopIdx[%u]",
+    HCCL_DEBUG(
+        "[AlltoallvContinuousPipeline][DoInterSendReceive] done. beginStepNum[%u], endStepNum[%u], loopIdx[%u]",
         beginStepNum, endStepNum, loopIdx);
     return HCCL_SUCCESS;
 }
@@ -801,29 +825,30 @@ HcclResult AlltoallvContinuousPipeline::DoIntraInfoBroadcast()
         const u32 remoteIntraRank = remoteRank % intraRankSize_;
         const u32 streamIndex = GetSdmaSubStreamIdx(remoteIntraRank);
         Stream& subStream = sdmaSubStreams_[streamIndex];
-        
+
         const LINK& link = intraLinks_[remoteRank % intraRankSize_];
-        void *remInPtr = nullptr;
-        void *remOutPtr = nullptr;
+        void* remInPtr = nullptr;
+        void* remOutPtr = nullptr;
         CHK_RET(link->GetRemoteMem(UserMemType::INPUT_MEM, &remInPtr));
         CHK_RET(link->GetRemoteMem(UserMemType::OUTPUT_MEM, &remOutPtr));
-        
+
         // 前后同步在外层处理，直接发送
         // 发送counts信息，从output发送到remote out buffer，目的位置是第[本userRank_]个info分块
         const u64 infoSize = userRankSize_ * sizeof(u64);
         const u64 infoOffset = infoOffsets_[userRank_];
         DeviceMem infoSrc = outBuffer_.range(infoOffset, infoSize);
-        DeviceMem infoDst = DeviceMem::create(static_cast<u8 *>(remOutPtr) + infoOffset, infoSize);
+        DeviceMem infoDst = DeviceMem::create(static_cast<u8*>(remOutPtr) + infoOffset, infoSize);
         CHK_RET(HcclD2DMemcpyAsync(dispatcher_, infoDst, infoSrc, subStream, remoteRank, link->GetLinkType()));
 
         // 发送flag，flag值为[LocalLoopNum + 1]，从input发送到remote in buffer，目的位置是第[本userRank_]个u32
         const u64 flagSize = sizeof(u32);
         const u64 flagOffset = infoOffsets_[0] + userRank_ * flagSize;
         DeviceMem flagSrc = inBuffer_.range(flagOffset, flagSize);
-        DeviceMem flagDst = DeviceMem::create(static_cast<u8 *>(remInPtr) + flagOffset, flagSize);
+        DeviceMem flagDst = DeviceMem::create(static_cast<u8*>(remInPtr) + flagOffset, flagSize);
         CHK_RET(HcclD2DMemcpyAsync(dispatcher_, flagDst, flagSrc, subStream, remoteRank, link->GetLinkType()));
 
-        HCCL_DEBUG("[AlltoallvContinuousPipeline][DoIntraInfoBroadcast] userRank[%u], send info to remoteRank[%u], "
+        HCCL_DEBUG(
+            "[AlltoallvContinuousPipeline][DoIntraInfoBroadcast] userRank[%u], send info to remoteRank[%u], "
             "infoOffset[%llu], infoSize[%llu], flagOffset[%llu], flagSize[%llu]",
             userRank_, remoteRank, infoOffset, infoSize, flagOffset, flagSize);
     }
@@ -861,21 +886,23 @@ HcclResult AlltoallvContinuousPipeline::DoLocalWriteInfoAndFlagAndInterSync()
     CHK_RET(HcclD2DMemcpyAsync(dispatcher_, refreshFlagDst, refreshFlagSrc, mainStream_));
 
     CHK_RET(LaunchTask(dispatcher_, mainStream_));
-    
-    HCCL_INFO("[AlltoallvContinuousPipeline][DoLocalWriteInfoAndFlagAndInterSync] write counts and flag. userRank[%u], "
+
+    HCCL_INFO(
+        "[AlltoallvContinuousPipeline][DoLocalWriteInfoAndFlagAndInterSync] write counts and flag. userRank[%u], "
         "infoPtr[%p], infoSize[%llu], infoOffset[%llu]",
         userRank_, infoPtr, infoSize, infoOffset);
     return HCCL_SUCCESS;
 }
 
-HcclResult AlltoallvContinuousPipeline::WaitValueOfRank(const u32 rank, const HcclUs &startTimeUs, u32 &value)
+HcclResult AlltoallvContinuousPipeline::WaitValueOfRank(const u32 rank, const HcclUs& startTimeUs, u32& value)
 {
-    const auto* valuePtr = reinterpret_cast<u32 *>(static_cast<u8 *>(inBuffer_.ptr()) + infoOffsets_[0]) + rank;
+    const auto* valuePtr = reinterpret_cast<u32*>(static_cast<u8*>(inBuffer_.ptr()) + infoOffsets_[0]) + rank;
     HcclUs lastUt = startTimeUs;
-    constexpr s64 timeout = 1800 * 1000 * 1000; // 超时时间暂定为1800s
+    s64 timeout = static_cast<s64>(waitFlagTimeoutSec_) * 1000 * 1000;
     constexpr s64 printStateInterval = 30 * 1000 * 1000; // 每隔30s打印一次状态
-    HCCL_DEBUG("[AlltoallvContinuousPipeline][WaitValueOfRank] start waiting value of rank[%u], valuePtr[%p].",
-        rank, valuePtr);
+    HCCL_DEBUG(
+        "[AlltoallvContinuousPipeline][WaitValueOfRank] start waiting value of rank[%u], valuePtr[%p], timeout[%llu]s.",
+        rank, valuePtr, waitFlagTimeoutSec_);
 
     while (flagAreaRefreshFlag_ == 0 || *valuePtr == 0) {
         const HcclUs currentUt = TIME_NOW();
@@ -883,16 +910,19 @@ HcclResult AlltoallvContinuousPipeline::WaitValueOfRank(const u32 rank, const Hc
         if (DURATION_US(currentUt - lastUt).count() > printStateInterval) {
             lastUt = currentUt;
             if (flagAreaRefreshFlag_ == 0) {
-                HCCL_RUN_INFO("[AlltoallvContinuousPipeline][WaitValueOfRank] The Previous task has not been completed."
-                    " userRank[%u]", userRank_);
+                HCCL_RUN_INFO(
+                    "[AlltoallvContinuousPipeline][WaitValueOfRank] The Previous task has not been completed."
+                    " userRank[%u]",
+                    userRank_);
             } else {
                 HCCL_RUN_INFO("[AlltoallvContinuousPipeline][WaitValueOfRank] waiting value of rank[%u]", rank);
             }
         }
 
-        CHK_PRT_RET(DURATION_US(currentUt - startTimeUs).count() > timeout,
-            HCCL_ERROR("[AlltoallvContinuousPipeline][WaitValueOfRank] Waiting for the value of rank[%u] timed out.",
-                rank),
+        CHK_PRT_RET(
+            DURATION_US(currentUt - startTimeUs).count() > timeout,
+            HCCL_ERROR(
+                "[AlltoallvContinuousPipeline][WaitValueOfRank] Waiting for the value of rank[%u] timed out.", rank),
             HCCL_E_TIMEOUT);
     }
     value = *valuePtr;
@@ -917,22 +947,25 @@ HcclResult AlltoallvContinuousPipeline::WaitAndCalReceiveInfo()
         u32 remoteValue = 0;
         CHK_RET(WaitValueOfRank(remoteRank, startUt, remoteValue));
 
-        const auto *countsPtr =
-            reinterpret_cast<u64 *>(static_cast<u8 *>(outBuffer_.ptr()) + infoOffsets_[remoteRank]);
-        HCCL_DEBUG("[AlltoallvContinuousPipeline][WaitAndCalReceiveInfo] remoteRank[%u], infoOffset[%llu], "
-            "countsPtr[%p]", remoteRank, infoOffsets_[remoteRank], countsPtr);
+        const auto* countsPtr = reinterpret_cast<u64*>(static_cast<u8*>(outBuffer_.ptr()) + infoOffsets_[remoteRank]);
+        HCCL_DEBUG(
+            "[AlltoallvContinuousPipeline][WaitAndCalReceiveInfo] remoteRank[%u], infoOffset[%llu], "
+            "countsPtr[%p]",
+            remoteRank, infoOffsets_[remoteRank], countsPtr);
 
         for (u32 i = 0; i < userRankSize_; ++i) {
             HCCL_DEBUG("[AlltoallvContinuousPipeline][WaitAndCalReceiveInfo] countsPtr[%u]=[%llu]", i, countsPtr[i]);
             intraRecvCounts_[intraRankIdx][i] = countsPtr[i];
         }
 
-        const u32 remoteLoopNum = remoteValue - 1;  // remoteValue一定大于0
+        const u32 remoteLoopNum = remoteValue - 1; // remoteValue一定大于0
         intraLoopNum_ = std::max(intraLoopNum_, remoteLoopNum);
-        HCCL_DEBUG("[AlltoallvContinuousPipeline][WaitAndCalReceiveInfo] remoteRank[%u], remoteLoopNum[%u], "
-            "intraLoopNum_[%u]", remoteRank, remoteLoopNum, intraLoopNum_);
+        HCCL_DEBUG(
+            "[AlltoallvContinuousPipeline][WaitAndCalReceiveInfo] remoteRank[%u], remoteLoopNum[%u], "
+            "intraLoopNum_[%u]",
+            remoteRank, remoteLoopNum, intraLoopNum_);
     }
-    
+
     HCCL_DEBUG("[AlltoallvContinuousPipeline][WaitAndCalReceiveInfo] done. loopNum[%u]", intraLoopNum_);
     return HCCL_SUCCESS;
 }
@@ -958,8 +991,8 @@ HcclResult AlltoallvContinuousPipeline::RunAsync()
     // 第一步，需要把counts信息广播给机内其他rank
     bool needDoIntraInfoBroadcast = needCollectInfo_;
 
-    while (localCopyState.stepNum < stepsPerLoop || interState.stepNum < stepsPerLoop ||
-           intraState.stepNum < stepsPerLoop) {
+    while (localCopyState.stepNum < stepsPerLoop || interState.stepNum < stepsPerLoop
+           || intraState.stepNum < stepsPerLoop) {
         // 每一轮首次做跨module收发的同时，做level0的SDMA写，每张卡从input写到对端的out buffer
         const bool needDoLevel0SdmaWrite = (interState.stepNumNext != 0 && interState.stepNum == 0);
         // 每一轮首次做机内分发的同时，每张卡从out buffer将level0其他卡发来的数据拷至output
@@ -973,14 +1006,16 @@ HcclResult AlltoallvContinuousPipeline::RunAsync()
         const bool hasSdmaTask = needDoIntraTasks || needDoLevel0SdmaWrite || needDoIntraInfoBroadcast;
         const bool hasRdmaTask = needDoInterTasks;
 
-        HCCL_DEBUG("[AlltoallvContinuousPipeline][RunAsyncLoop][start] localCopy[step:%u, next:%u, loop:%u], "
+        HCCL_DEBUG(
+            "[AlltoallvContinuousPipeline][RunAsyncLoop][start] localCopy[step:%u, next:%u, loop:%u], "
             "inter[step:%u, next:%u, loop:%u], intra[step:%u, next:%u, loop:%u]",
-            localCopyState.stepNum, localCopyState.stepNumNext, localCopyState.loopNum,
-            interState.stepNum, interState.stepNumNext, interState.loopNum,
-            intraState.stepNum, intraState.stepNumNext, intraState.loopNum);
+            localCopyState.stepNum, localCopyState.stepNumNext, localCopyState.loopNum, interState.stepNum,
+            interState.stepNumNext, interState.loopNum, intraState.stepNum, intraState.stepNumNext, intraState.loopNum);
 
-        HCCL_DEBUG("[AlltoallvContinuousPipeline][RunAsyncLoop] needDoLevel0SdmaWrite[%d], needDoLevel0LocalCopy[%d], "
-            "hasSdmaTask[%d], hasRdmaTask[%d]", needDoLevel0SdmaWrite, needDoLevel0LocalCopy, hasSdmaTask, hasRdmaTask);
+        HCCL_DEBUG(
+            "[AlltoallvContinuousPipeline][RunAsyncLoop] needDoLevel0SdmaWrite[%d], needDoLevel0LocalCopy[%d], "
+            "hasSdmaTask[%d], hasRdmaTask[%d]",
+            needDoLevel0SdmaWrite, needDoLevel0LocalCopy, hasSdmaTask, hasRdmaTask);
 
         if (hasSdmaTask) {
             // 本轮有SDMA任务。主流通知SDMA从流，SDMA从流等待主流，前同步
@@ -1021,7 +1056,7 @@ HcclResult AlltoallvContinuousPipeline::RunAsync()
                 localCopyState.stepNum = 0;
                 localCopyState.stepNumNext = std::min(rdmaConcurrentNum_, stepsPerLoop);
             }
-        }   
+        }
 
         // intraStepNum小于interStepNum，表示需要做机内分发
         CHK_RET(DoIntraDistribution(intraState.stepNum, intraState.stepNumNext, intraState.loopNum));
@@ -1080,11 +1115,11 @@ HcclResult AlltoallvContinuousPipeline::RunAsync()
             localCopyState.stepNumNext = std::min(rdmaConcurrentNum_, stepsPerLoop);
         }
 
-        HCCL_DEBUG("[AlltoallvContinuousPipeline][RunAsyncLoop][end] localCopy[step:%u, next:%u, loop:%u], "
+        HCCL_DEBUG(
+            "[AlltoallvContinuousPipeline][RunAsyncLoop][end] localCopy[step:%u, next:%u, loop:%u], "
             "inter[step:%u, next:%u, loop:%u], intra[step:%u, next:%u, loop:%u]",
-            localCopyState.stepNum, localCopyState.stepNumNext, localCopyState.loopNum,
-            interState.stepNum, interState.stepNumNext, interState.loopNum,
-            intraState.stepNum, intraState.stepNumNext, intraState.loopNum);
+            localCopyState.stepNum, localCopyState.stepNumNext, localCopyState.loopNum, interState.stepNum,
+            interState.stepNumNext, interState.loopNum, intraState.stepNum, intraState.stepNumNext, intraState.loopNum);
     }
     return HCCL_SUCCESS;
 }

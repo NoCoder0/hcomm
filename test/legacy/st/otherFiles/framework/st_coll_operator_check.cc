@@ -22,20 +22,11 @@ using namespace std;
 
 class CollOperatorCheckTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CollOperatorCheckTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CollOperatorCheckTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CollOperatorCheckTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CollOperatorCheckTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in CollOperatorCheckTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in CollOperatorCheckTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -711,7 +702,7 @@ TEST_F(CollOperatorCheckTest, test_CheckCollOperator_alltoallv_recvType_not_ok)
     EXPECT_THROW(CheckCollOperator(localOpData, remoteOpData), InvalidParamsException);
 }
 
-void All2AllVCSetSendTypeAndRecvType(CollOperator &opData, DataType sType, DataType rType)
+void All2AllVCSetSendTypeAndRecvType(CollOperator& opData, DataType sType, DataType rType)
 {
     opData.opType = OpType::ALLTOALLVC;
     opData.all2AllVCDataDes.sendType = sType;

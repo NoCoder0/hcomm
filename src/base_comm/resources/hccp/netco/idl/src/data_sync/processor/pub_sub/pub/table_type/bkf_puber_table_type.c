@@ -34,14 +34,14 @@ void BkfPuberTableTypeUninit(BkfPuberTableTypeMng *tableTypeMng)
 {
     if (tableTypeMng != VOS_NULL) {
         BKF_LOG_INFO(BKF_LOG_HND, "tableTypeMng(%#x, %s), uninit\n", BKF_MASK_ADDR(tableTypeMng),
-                     tableTypeMng->argInit->name);
+            tableTypeMng->argInit->name);
         BkfPuberTableTypeDispUninit(tableTypeMng);
         BkfPuberTableTypeDataUninit(tableTypeMng);
     }
 }
 
-uint32_t BkfPuberTableTypeAttachEx(BkfPuberTableTypeMng *tableTypeMng, BkfPuberTableTypeVTbl *vTbl,
-                                  void *userData, uint16_t userDataLen)
+uint32_t BkfPuberTableTypeAttachEx(BkfPuberTableTypeMng *tableTypeMng, BkfPuberTableTypeVTbl *vTbl, void *userData,
+    uint16_t userDataLen)
 {
     BkfPuberTableType *tableType = BkfPuberTableTypeAdd(tableTypeMng, vTbl, userData, userDataLen);
     return (tableType != VOS_NULL) ? BKF_OK : BKF_ERR;
@@ -50,7 +50,7 @@ uint32_t BkfPuberTableTypeAttachEx(BkfPuberTableTypeMng *tableTypeMng, BkfPuberT
 BkfPuberTableTypeVTbl *BkfPuberTableTypeGetVTbl(BkfPuberTableTypeMng *tableTypeMng, uint16_t tableTypeId)
 {
     BkfPuberTableType *tableType = BkfPuberTableTypeFind(tableTypeMng, tableTypeId);
-    return (tableType != VOS_NULL) ?  &tableType->vTbl : VOS_NULL;
+    return (tableType != VOS_NULL) ? &tableType->vTbl : VOS_NULL;
 }
 
 void *BkfPuberTableTypeGetUserData(BkfPuberTableTypeMng *tableTypeMng, uint16_t tableTypeId)
@@ -70,4 +70,3 @@ void BkfPuberTableTypeDeattach(BkfPuberTableTypeMng *tableTypeMng, uint16_t tabT
 #ifdef __cplusplus
 }
 #endif
-

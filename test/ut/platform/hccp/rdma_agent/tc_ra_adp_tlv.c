@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include "securec.h"
 
-#define TC_TLV_HDC_MSG_SIZE    (32 * 1024)
+#define TC_TLV_HDC_MSG_SIZE (32 * 1024)
 
 void TcRaRsTlvInit()
 {
@@ -32,8 +32,7 @@ void TcRaRsTlvInit()
 
     dataIn.txData.phyId = 0;
     mocker((stub_fn_t)RsTlvInit, 1, 0);
-    memcpy_s(inBuf + sizeof(struct MsgHead), sizeof(union OpTlvInitData),
-        &dataIn, sizeof(union OpTlvInitData));
+    memcpy_s(inBuf + sizeof(struct MsgHead), sizeof(union OpTlvInitData), &dataIn, sizeof(union OpTlvInitData));
     ret = RaRsTlvInit(inBuf, outBuf, &outLen, &opResult, rcvBufLen);
     EXPECT_INT_EQ(ret, 0);
     mocker_clean();
@@ -68,8 +67,7 @@ void TcRaRsTlvDeinit()
 
     dataIn.txData.phyId = 0;
     mocker((stub_fn_t)RsTlvDeinit, 1, 0);
-    memcpy_s(inBuf + sizeof(struct MsgHead), sizeof(union OpTlvDeinitData),
-        &dataIn, sizeof(union OpTlvDeinitData));
+    memcpy_s(inBuf + sizeof(struct MsgHead), sizeof(union OpTlvDeinitData), &dataIn, sizeof(union OpTlvDeinitData));
     ret = RaRsTlvDeinit(inBuf, outBuf, &outLen, &opResult, rcvBufLen);
     EXPECT_INT_EQ(ret, 0);
     mocker_clean();
@@ -100,8 +98,7 @@ void TcRaRsTlvRequest()
     dataIn.txData.head.moduleType = TLV_MODULE_TYPE_NSLB;
     dataIn.txData.head.phyId = 0;
     mocker((stub_fn_t)RsTlvRequest, 1, 0);
-    memcpy_s(inBuf + sizeof(struct MsgHead), sizeof(union OpTlvRequestData),
-        &dataIn, sizeof(union OpTlvRequestData));
+    memcpy_s(inBuf + sizeof(struct MsgHead), sizeof(union OpTlvRequestData), &dataIn, sizeof(union OpTlvRequestData));
     ret = RaRsTlvRequest(inBuf, outBuf, &outLen, &opResult, rcvBufLen);
     EXPECT_INT_EQ(ret, 0);
     mocker_clean();
@@ -132,8 +129,8 @@ void TcRaRsTlvRequestV2()
     dataIn.txData.head.moduleType = TLV_MODULE_TYPE_CCU;
     dataIn.txData.head.phyId = 0;
     mocker((stub_fn_t)RsTlvRequest, 1, 0);
-    memcpy_s(inBuf + sizeof(struct MsgHead), sizeof(union OpTlvRequestDataV2),
-        &dataIn, sizeof(union OpTlvRequestDataV2));
+    memcpy_s(
+        inBuf + sizeof(struct MsgHead), sizeof(union OpTlvRequestDataV2), &dataIn, sizeof(union OpTlvRequestDataV2));
     ret = RaRsTlvRequest(inBuf, outBuf, &outLen, &opResult, rcvBufLen);
     EXPECT_INT_EQ(ret, 0);
     mocker_clean();

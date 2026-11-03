@@ -22,20 +22,15 @@ using namespace Hccl;
 
 class UbCiUpdaterTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AdapterRts tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AdapterRts tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AdapterRts tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AdapterRts tests tear down." << std::endl; }
 
     virtual void SetUp()
     {
         std::cout << "A Test case in AdapterRts SetUP" << std::endl;
-        fakeSocket = new Socket(nullptr, localIp, listenPort, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+        fakeSocket
+            = new Socket(nullptr, localIp, listenPort, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
     }
 
     virtual void TearDown()
@@ -44,7 +39,7 @@ protected:
         delete fakeSocket;
         std::cout << "A Test case in AdapterRts TearDown" << std::endl;
     }
-    Socket *fakeSocket;
+    Socket* fakeSocket;
     IpAddress localIp;
     IpAddress remoteIp;
     u32 listenPort = 100;
@@ -55,18 +50,18 @@ TEST(UbCiUpdaterTest, ConstructUbCiUpdater_ok)
 {
     // Given
     // Given: socket time out
-    Socket *fakeSocket;
+    Socket* fakeSocket;
     IpAddress localIp;
     IpAddress remoteIp;
     u32 listenPort = 100;
     MOCKER_CPP(&Socket::GetStatus).stubs().will(returnValue((SocketStatus)SocketStatus::TIMEOUT));
-    RdmaHandle rdmaHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
     string tag = "SENDRECV";
-    QpHandle fakeQpHandle = (void *)0x1000000;
+    QpHandle fakeQpHandle = (void*)0x1000000;
 
     BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
-    LinkData     linkData(portType, 0, 1, 0, 1);
+    LinkData linkData(portType, 0, 1, 0, 1);
 
     // When
     DevUbConnection devUbConnection(rdmaHandle, linkData.GetLocalAddr(), linkData.GetRemoteAddr(), OpMode::OPBASE);
@@ -78,18 +73,18 @@ TEST(UbCiUpdaterTest, ConstructUbCiUpdater_ok)
 TEST(UbCiUpdaterTest, UbCiUpdaterUpdateCi_ok)
 {
     // Given
-    Socket *fakeSocket;
+    Socket* fakeSocket;
     IpAddress localIp;
     IpAddress remoteIp;
     u32 listenPort = 100;
     MOCKER_CPP(&Socket::GetStatus).stubs().will(returnValue((SocketStatus)SocketStatus::TIMEOUT));
-    RdmaHandle rdmaHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
     string tag = "SENDRECV";
-    QpHandle fakeQpHandle = (void *)0x1000000;
+    QpHandle fakeQpHandle = (void*)0x1000000;
 
     BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
-    LinkData     linkData(portType, 0, 1, 0, 1);
+    LinkData linkData(portType, 0, 1, 0, 1);
 
     MOCKER(RaUbUpdateCi).stubs();
 
@@ -106,18 +101,18 @@ TEST(UbCiUpdaterTest, UbCiUpdaterUpdateCi_ok)
 TEST(UbCiUpdaterTest, UbCiUpdaterSaveCi_ok)
 {
     // Given
-    Socket *fakeSocket;
+    Socket* fakeSocket;
     IpAddress localIp;
     IpAddress remoteIp;
     u32 listenPort = 100;
     MOCKER_CPP(&Socket::GetStatus).stubs().will(returnValue((SocketStatus)SocketStatus::TIMEOUT));
-    RdmaHandle rdmaHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
     string tag = "SENDRECV";
-    QpHandle fakeQpHandle = (void *)0x1000000;
+    QpHandle fakeQpHandle = (void*)0x1000000;
 
     BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
-    LinkData     linkData(portType, 0, 1, 0, 1);
+    LinkData linkData(portType, 0, 1, 0, 1);
 
     // when
     DevUbConnection devUbConnection(rdmaHandle, linkData.GetLocalAddr(), linkData.GetRemoteAddr(), OpMode::OPBASE);

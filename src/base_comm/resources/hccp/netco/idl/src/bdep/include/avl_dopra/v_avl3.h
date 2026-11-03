@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 /**
  * @defgroup v_avl3 AVL3
  * @ingroup util
@@ -189,8 +188,8 @@ extern void *VosAvl3Find(AVL3_TREE *pstTree, const void *pstKey, AVL3_TREE_INFO 
  * @li VOS_AVL3_FIND
  * @li VOS_AVL3_FIND_NEXT
  */
-extern void *VosAvl3FindOrFindNext(AVL3_TREE *pstTree, const void *pKey,
-                                    unsigned int bFlag, AVL3_TREE_INFO *pstTreeInfo);
+extern void *VosAvl3FindOrFindNext(AVL3_TREE *pstTree, const void *pKey, unsigned int bFlag,
+    AVL3_TREE_INFO *pstTreeInfo);
 
 /**
  * @ingroup v_avl3
@@ -198,7 +197,7 @@ extern void *VosAvl3FindOrFindNext(AVL3_TREE *pstTree, const void *pKey,
  *
  * @par 描述
  * 本接口返回树中第一个节点的指针。
- * @attentionAVL模块对用户传入的参数并未做空指针校验，需要由用户保证参数的有效性。
+ * @attention AVL模块对用户传入的参数并未做空指针校验，需要由用户保证参数的有效性。
  *
  * @param *pstTree [IN]  表示待查找的树。
  * @param *pstTreeInfo [IN]  包含树的描述信息。
@@ -287,27 +286,25 @@ extern void *VosAvl3Next(AVL3_NODE *pstNode, AVL3_TREE_INFO *pstTreeInfo);
 extern void *VosAvl3Prev(AVL3_NODE *pstNode, AVL3_TREE_INFO *pstTreeInfo);
 
 /* AVL3 EXPOSED MACROS */
-#define VOS_AVL3_INIT_TREE(TREE, TREE_INFO) \
-    do { \
-        (TREE).pstFirst = (AVL3_NODE *)AVL_NULL_PTR; \
-        (TREE).pstLast  = (AVL3_NODE *)AVL_NULL_PTR; \
-        (TREE).pstRoot  = (AVL3_NODE *)AVL_NULL_PTR; \
+#define VOS_AVL3_INIT_TREE(TREE, TREE_INFO)                                                                            \
+    do {                                                                                                               \
+        (TREE).pstFirst = (AVL3_NODE *)AVL_NULL_PTR;                                                                   \
+        (TREE).pstLast = (AVL3_NODE *)AVL_NULL_PTR;                                                                    \
+        (TREE).pstRoot = (AVL3_NODE *)AVL_NULL_PTR;                                                                    \
     } while (0)
 
-#define VOS_AVL3_INIT_NODE(NODE) \
-    do { \
-        (NODE).pstParent = (AVL3_NODE *)AVL_NULL_PTR; \
-        (NODE).pstLeft   = (AVL3_NODE *)AVL_NULL_PTR; \
-        (NODE).pstRight  = (AVL3_NODE *)AVL_NULL_PTR; \
-        (NODE).sLHeight  = -1; \
-        (NODE).sRHeight  = -1; \
+#define VOS_AVL3_INIT_NODE(NODE)                                                                                       \
+    do {                                                                                                               \
+        (NODE).pstParent = (AVL3_NODE *)AVL_NULL_PTR;                                                                  \
+        (NODE).pstLeft = (AVL3_NODE *)AVL_NULL_PTR;                                                                    \
+        (NODE).pstRight = (AVL3_NODE *)AVL_NULL_PTR;                                                                   \
+        (NODE).sLHeight = -1;                                                                                          \
+        (NODE).sRHeight = -1;                                                                                          \
     } while (0)
 
-#define VOS_AVL3_INSERT(TREE, NODE, TREE_INFO) \
-    (AVL_NULL_PTR == VosAvl3InsertOrFind(&(TREE), &(NODE), &(TREE_INFO)))
+#define VOS_AVL3_INSERT(TREE, NODE, TREE_INFO) (AVL_NULL_PTR == VosAvl3InsertOrFind(&(TREE), &(NODE), &(TREE_INFO)))
 
-#define VOS_AVL3_INSERT_OR_FIND(TREE, NODE, TREE_INFO) \
-    VosAvl3InsertOrFind(&(TREE), &(NODE), &(TREE_INFO))
+#define VOS_AVL3_INSERT_OR_FIND(TREE, NODE, TREE_INFO) VosAvl3InsertOrFind(&(TREE), &(NODE), &(TREE_INFO))
 
 #define VOS_AVL3_DELETE(TREE, NODE) VosAvl3Delete(&(TREE), &(NODE))
 
@@ -321,14 +318,11 @@ extern void *VosAvl3Prev(AVL3_NODE *pstNode, AVL3_TREE_INFO *pstTreeInfo);
 
 #define VOS_AVL3_LAST(TREE, TREE_INFO) VosAvl3Last(&(TREE), &(TREE_INFO))
 
-#define VOS_AVL3_IN_TREE(NODE) \
-    (((NODE).sLHeight != -1) && ((NODE).sRHeight != -1))
+#define VOS_AVL3_IN_TREE(NODE) (((NODE).sLHeight != -1) && ((NODE).sRHeight != -1))
 
-#define VOS_AVL3_FIND_NEXT(TREE, KEY, TREE_INFO) \
-    VosAvl3FindOrFindNext(&(TREE), (KEY), AVL_TRUE, &(TREE_INFO))
+#define VOS_AVL3_FIND_NEXT(TREE, KEY, TREE_INFO) VosAvl3FindOrFindNext(&(TREE), (KEY), AVL_TRUE, &(TREE_INFO))
 
-#define VOS_AVL3_FIND_OR_FIND_NEXT(TREE, KEY, TREE_INFO) \
-    VosAvl3FindOrFindNext(&(TREE), (KEY), AVL_FALSE, &(TREE_INFO))
+#define VOS_AVL3_FIND_OR_FIND_NEXT(TREE, KEY, TREE_INFO) VosAvl3FindOrFindNext(&(TREE), (KEY), AVL_FALSE, &(TREE_INFO))
 
 /* Macro to determine the largest value of two variables (internal use) */
 #define VOS_AVL3_MAX(X, Y) (((X) > (Y)) ? (X) : (Y))

@@ -27,15 +27,14 @@ struct tagBkfJobMng {
 
 #pragma pack()
 
-
 /* func */
 BkfJobMng *BkfJobInit(BkfIJob *IJob)
 {
     BkfJobMng *jobMng = VOS_NULL;
     uint32_t len;
 
-    if ((IJob == VOS_NULL) || (IJob->name == VOS_NULL) || (IJob->memMng == VOS_NULL) ||
-        (IJob->regType == VOS_NULL) || (IJob->createJobId == VOS_NULL) || (IJob->deleteJobId == VOS_NULL)) {
+    if ((IJob == VOS_NULL) || (IJob->name == VOS_NULL) || (IJob->memMng == VOS_NULL) || (IJob->regType == VOS_NULL) ||
+        (IJob->createJobId == VOS_NULL) || (IJob->deleteJobId == VOS_NULL)) {
         BKF_ASSERT(0);
         goto error;
     }
@@ -113,4 +112,3 @@ uint32_t BkfJobGetRunCostMax(BkfJobMng *jobMng)
 }
 #endif
 #endif
-

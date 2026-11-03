@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: ccu executor -- jmp
  * Author: caiyifan
  */
@@ -22,7 +25,8 @@
 
 class JumpExecutor : public CcuExecutorBase {
 public:
-    explicit JumpExecutor(int streamId, int rankId, int dieId, const hcomm::CcuRep::CcuInstr &instr, CcuSimulator *ccuSimulator)
+    explicit JumpExecutor(
+        int streamId, int rankId, int dieId, const hcomm::CcuRep::CcuInstr& instr, CcuSimulator* ccuSimulator)
         : CcuExecutorBase(streamId, rankId, dieId, instr, ccuSimulator)
     {}
     JumpExecutor() = default;
@@ -30,13 +34,19 @@ public:
 
     void Parser() override;
     void Run() override;
-    void RunV1(); 
+    void RunV1();
+    void RunV2();
     std::string Describe() override;
+    CcuTrace::CcuInstrTraceDetail CollectTraceDetail() override;
 
 private:
     uint16_t dstInstrXnId_{0};
     uint16_t conditionXnId_{0};
     uint64_t expectData_{0};
+    uint16_t relTarInstrXnId_{0};
+    uint16_t expectedXnId_{0};
+    uint8_t conditionType_{0};
+    uint8_t jumpMode_{0};
 };
 
 #endif // HCCL_SIM_JUMP_EXECUTOR_H

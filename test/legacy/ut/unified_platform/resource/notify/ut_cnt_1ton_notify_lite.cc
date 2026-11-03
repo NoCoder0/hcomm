@@ -20,20 +20,11 @@ using namespace Hccl;
 
 class Cnt1toNNotifyLiteTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "Cnt1toNNotifyLiteTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "Cnt1toNNotifyLiteTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "Cnt1toNNotifyLiteTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "Cnt1toNNotifyLiteTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in Cnt1toNNotifyLiteTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in Cnt1toNNotifyLiteTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {

@@ -18,15 +18,16 @@
 #define RS_MAX_SOCKET_NUM 16
 #define RS_MAX_WLIST_NUM 16
 #define RS_SOCK_LISTEN_PARALLEL_NUM 16384
-#define RS_WLIST_VALID_FLAG_SIZE   6
-#define RS_CLOSE_TIMEOUT    5
+#define RS_WLIST_VALID_FLAG_SIZE 6
+#define RS_CLOSE_TIMEOUT 5
 
-#define RS_SOCKET_PARA_CHECK(num, conn) do { \
-    if (((num) <= 0) || ((num) > RS_MAX_SOCKET_NUM) || ((conn) == NULL)) { \
-        hccp_err("rs socket param error ! number:%d", num); \
-        return (-EINVAL); \
-    } \
-} while (0)
+#define RS_SOCKET_PARA_CHECK(num, conn)                                                                                \
+    do {                                                                                                               \
+        if (((num) <= 0) || ((num) > RS_MAX_SOCKET_NUM) || ((conn) == NULL)) {                                         \
+            hccp_err("rs socket param error ! number:%d", num);                                                        \
+            return (-EINVAL);                                                                                          \
+        }                                                                                                              \
+    } while (0)
 
 struct RsVnicInfo {
     uint32_t vnicFlag;

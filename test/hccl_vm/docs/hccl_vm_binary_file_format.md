@@ -4,10 +4,18 @@
 
 | 项目     | 内容                           |
 |----------|--------------------------------|
-| 版本     | v1.0                           |
-| 更新日期 | 2025-01-16                     |
+| 版本     | v2.0                           |
+| 更新日期 | 2026-09-17                     |
 | 适用场景 | HCCL VM 仿真数据导出与读取     |
 | 作者     | HCCL VM Team                   |
+
+> **v2.0 变更说明**：综合数据文件（`*_hcclvm_syn_data.bin`）**version 保持 1，文件头不做版本变更**
+> （本特性不做新旧文件兼容性区分）。`ChannelData` 二进制布局与历史版本**一致（未新增字段，176 字节）**，
+> 但 AICPU 模式 dump **语义**变更以支持多 channel（`HCCL_UB_MULTI_CHANNEL_NUM`）特性：
+> jetty 精确归属到（本端 eid, 对端 eid）链路 + **每 eid 对一条聚合记录**
+> （`jettyNum` 为该 eid 对的 jetty 个数，`jettyId[0..jettyNum)` 携带全部本端 jetty，
+> 读取方需在数组内查找 `task.jettyId`，不能再假定 `jettyNum` 恒为 1 或直接取 `jettyId[0]`）。
+> 任务/微码/flag 文件格式不变。
 
 ---
 
@@ -34,7 +42,7 @@
 | 偏移量 | 字节数 | 类型    | 字段名      | 说明                       |
 |:------:|:------:|---------|-------------|----------------------------|
 |   0    |   4    | uint32  | magic       | 魔数，标识文件类型         |
-|   4    |   2    | uint16  | version     | 版本号（当前为 1）         |
+|   4    |   2    | uint16  | version     | 版本号（当前为 1）            |
 |   6    |   2    | uint16  | header_size | 文件头大小（20 字节）      |
 |   8    |   4    | uint32  | flags       | 标志位（保留）             |
 |   12   |   4    | uint32  | count       | 数据条目数量               |
@@ -65,7 +73,7 @@ struct FileHeader {
 |:----:|----------------------------------|----------|----------------------------------------------|
 |  1   | FileHeader                       | 20 Bytes | 文件头                                       |
 |  2   | ModelInfo                        | 变长     | 模型信息（含 ModelInfoCommInner、VDataDesTag、All2AllDataDesTag） |
-|  3   | ChannelInfo 或 JettyInfo         | 变长     | 二选一，由 `op_expansion_mode` 决定          |
+|  3   | ChannelInfo（CCU/AICPU 共用）    | 变长     | AIV 模式无此数据块                           |
 |  4   | MemLayoutInfo                    | 变长     | 内存布局信息                                 |
 
 **op_expansion_mode 取值说明：**
@@ -73,7 +81,7 @@ struct FileHeader {
 | 值 | 模式    | 使用的数据结构 |
 |:--:|---------|----------------|
 |  0 | CCU     | ChannelInfo    |
-|  1 | AICPU   | JettyInfo      |
+|  1 | AICPU   | ChannelInfo（多 channel 语义见 3.3.3） |
 
 ### 3.2 ModelInfo 结构
 
@@ -126,7 +134,7 @@ struct FileHeader {
 
 ### 3.3 ChannelInfo 结构
 
-**适用条件**：`op_expansion_mode = 0`（CCU 模式）
+**适用条件**：`op_expansion_mode = 0`（CCU 模式）或 `1`（AICPU 模式）——两种模式均使用 ChannelData 定长结构；AIV 模式不写。
 
 #### 3.3.1 ChannelInfo 头部
 
@@ -137,24 +145,40 @@ struct FileHeader {
 
 #### 3.3.2 ChannelData
 
-**大小**：152 字节。
+**大小**：176 字节（布局与历史版本一致）。
 
-| 偏移量 | 字节数 | 类型       | 字段名    | 说明          |
+| 偏移量 | 字节数 | 类型       | 字段名       | 说明          |
 |:------:|:------:|------------|-----------|---------------|
-|   0    |   2    | uint16     | channelId | 通道 ID       |
+|   0    |   2    | uint16     | channelId | CCU 模式: 通道 ID；AICPU 模式: EndPointPair 主键（eid 对标识） |
 |   2    |   1    | uint8      | srcDieId  | 源 Die ID     |
 |   3    |   1    | uint8      | dstDieId  | 目标 Die ID   |
 |   4    |   4    | uint32     | srcRank   | 源 Rank ID    |
 |   8    |   4    | uint32     | dstRank   | 目标 Rank ID  |
-|   12   |  16    | uint8[16]  | leid      | 本端 EID      |
-|   28   |  16    | uint8[16]  | reid      | 远端 EID      |
+|   12   |   16   | uint8[16]  | leid      | 本端 EID      |
+|   28   |   16   | uint8[16]  | reid      | 远端 EID      |
 |   44   |   2    | uint16     | protocol  | 协议类型      |
 |   46   |   2    | uint16     | jettyNum  | Jetty 数量    |
-|   48   |  128   | uint32[32] | jettyId   | Jetty ID 数组 |
+|   48   |   128  | uint32[32] | jettyId   | Jetty ID 数组 |
 
-### 3.4 JettyInfo 结构
+#### 3.3.3 多 channel 语义（AICPU 模式）
 
-**适用条件**：`op_expansion_mode = 1`（AICPU 模式）
+`HCCL_UB_MULTI_CHANNEL_NUM=N` 特性下，同一对 rank（同一对 eid）之间存在 N 条并行 channel，
+AICPU 模式 dump 规则：
+
+1. **每 eid 对一条聚合 ChannelData 记录**：同一 `channelId`（eid 对）的 N 条 channel 输出 **1 条**记录，
+   `jettyNum=N`，`jettyId[0..jettyNum)` 为该 eid 对上**全部本端（发送侧）jetty**，
+   按**本端 jetty 创建序**排列（数组下标即 pair 内 channel 序号）；
+2. 读取方将任务元数据中的 `task.jettyId` 在 `jettyId[0..jettyNum)` **数组内查找**，
+   即得任务经由哪个 jetty 从本端哪个 eid（`leid`）发往对端哪个 eid（`reid`）；
+3. `jettyId[0..jettyNum)` **精确归属**到该 eid 对（由 RA 层 `RaCtxQpImport` 回填归属信息），
+   不含该本端 eid 上通往其它对端的 jetty。
+
+CCU 模式维持"每 channel 一条记录、`jettyId[]` 携带该 channel 的 jetty 列表"的既有语义。
+
+### 3.4 JettyInfo 结构（未使用，保留历史说明）
+
+`JettyData` 为早期设计中 AICPU 模式的独立结构，**当前实现未使用**：AICPU 模式实际同样写
+ChannelData（见 3.3）。本节保留仅作历史格式参考，读取方不应按 JettyData 解析 AICPU 数据。
 
 #### 3.4.1 JettyInfo 头部
 
@@ -244,18 +268,48 @@ struct FileHeader {
 
 ### 5.2 HcclTaskMetaData 结构
 
-**大小**：约 136 字节（含联合体）
+**大小**：188 字节（pack(1)，含联合体；偏移 1~3 为 `HcclTaskProfInfo` 子结构，checker/runner 作为不透明整体透传）
 
-| 偏移量 | 字节数 | 类型            | 字段名   | 说明                   |
-|:------:|:------:|-----------------|----------|------------------------|
-|   0    |   1    | int8            | taskType | 任务类型（见枚举）     |
-|   1    |   2    | uint16          | commId   | 通信域 ID              |
-|   3    |   4    | uint32          | rankId   | Rank ID                |
-|   7    |   8    | uint64          | streamId | Stream ID              |
-|   15   |   4    | uint32          | jettyId  | Jetty ID               |
-|   19   |  变长  | union           | taskData | 任务数据（根据类型解析）|
+| 偏移量 | 字节数 | 类型            | 字段名   | 说明                                       |
+|:------:|:------:|:----------------|----------|--------------------------------------------|
+|   0    |   1    | int8            | taskType | 任务类型（见枚举）                         |
+|   1    |   3    | HcclTaskProfInfo| profInfo | profiling 对账信息子结构，见下表          |
+|   4    |   8    | uint64          | commId   | 通信域 ID                                  |
+|   12   |   4    | uint32          | rankId   | 任务所属 Rank ID                           |
+|   16   |   8    | uint64          | deviceId | 任务所属 Device ID                         |
+|   24   |   8    | uint64          | streamId | Stream ID                                  |
+|   32   |   4    | uint32          | jettyId  | Jetty ID                                   |
+|   36   |   16   | uint8[16]       | rmEid    | 对端 EID（WQE 原始字节序）                 |
+|   52   |   16   | uint8[16]       | lcEid    | 本端 EID（WQE 字节序，见下方说明）         |
+|   68   |   120  | union           | taskData | 任务数据（根据类型解析）                   |
+
+`HcclTaskProfInfo` 子结构（偏移 1~3，定义于 `include/sim_profiling_defs.h`，单源管理）：
+
+| 偏移量 | 字节数 | 类型               | 字段名        | 说明                        |
+|:------:|:------:|:-------------------|---------------|-----------------------------|
+|   1    |   1    | uint8              | profTaskType  | 对齐 hcomm TaskParamType    |
+|   2    |   1    | uint8              | linkType      | 对齐 hcomm DfxLinkType      |
+|   3    |   1    | uint8              | transportType | 对齐 hcomm DfxTransportType |
+
+**EID 字段说明**：
+
+- `rmEid` 与 `lcEid` 统一采用 **ranktable.json 十六进制串字节序**（与 EndPoint.eid /
+  RankEidMap 的入库序一致），可与 DB 表 / ranktable 的 EID 串直接比对，二者亦可直接互比。
+- `rmEid` 来源：WQE 中的 `rmtEid` 为 `uint32[4]` 小端字存储（内存 16 字节与 ranktable
+  串整体相反），拷入任务时做整 16 字节翻转。
+- `lcEid` 来源：由 `jettyId → RaJetty → RaContext → EndPoint.eid` 查询本端 EID 直拷，
+  天然为该序。
+- `lcEid` 仅设备侧 SQE 解析（`device_sqe_parse_stub.cc`）生成的带 jettyId 的任务填充；
+  其余任务保持全 0。
+- **rank 约定（estimate 采集）**：taskData 的 `srcDeviceId`/`dstDeviceId` 字段承载
+  通信域 rank（原 `srcRankId`/`dstRankId` 字段已回退删除，值合并入 deviceId 字段）；
+  为 `UINT32_MAX`（0xFFFFFFFF）时表示未解析到对应 rank（如非 ranktable/EID 模式），
+  0 为合法 rank 值。normal 模式（checker 链路）下 deviceId 字段仍为真实 Device ID，
+  两种语义按运行模式隔离（estimate 模式禁用 checker）。
 
 ### 5.3 taskData 联合体
+
+联合体大小 120 字节（取最大成员 CcuTask）。
 
 #### 5.3.1 TransMemTask
 
@@ -263,31 +317,32 @@ struct FileHeader {
 
 **大小**：33 字节。
 
-| 偏移量 | 字节数 | 类型   | 字段名    | 说明         |
-|:------:|:------:|--------|-----------|--------------|
-|   0    |   4    | uint32 | srcRankId | 源 Rank ID   |
-|   4    |   8    | uint64 | srcOffset | 源偏移地址   |
-|   12   |   4    | uint32 | dstRankId | 目标 Rank ID |
-|   16   |   8    | uint64 | dstOffset | 目标偏移地址 |
-|   24   |   8    | uint64 | len       | 数据长度     |
-|   32   |   1    | uint8  | protocol  | 协议类型     |
+| 偏移量 | 字节数 | 类型   | 字段名      | 说明                                  |
+|:------:|:------:|--------|-------------|---------------------------------------|
+|   0    |   4    | uint32 | srcDeviceId | 源端点（estimate: rank / normal: Device ID） |
+|   4    |   8    | uint64 | srcOffset   | 源偏移地址                            |
+|   12   |   4    | uint32 | dstDeviceId | 目标端点（estimate: rank / normal: Device ID） |
+|   16   |   8    | uint64 | dstOffset   | 目标偏移地址                          |
+|   24   |   8    | uint64 | len         | 数据长度                              |
+|   32   |   1    | uint8  | protocol    | 协议类型                              |
 
 #### 5.3.2 ReduceTask
 
 **适用任务类型**：`REDUCE (2)`。
 
-**大小**：35 字节。
+**大小**：36 字节。
 
-| 偏移量 | 字节数 | 类型   | 字段名    | 说明         |
-|:------:|:------:|--------|-----------|--------------|
-|   0    |   4    | uint32 | srcRankId | 源 Rank ID   |
-|   4    |   8    | uint64 | srcOffset | 源偏移地址   |
-|   12   |   4    | uint32 | dstRankId | 目标 Rank ID |
-|   16   |   8    | uint64 | dstOffset | 目标偏移地址 |
-|   24   |   8    | uint64 | dataCount | 数据元素个数 |
-|   32   |   1    | uint8  | dataType  | 数据类型     |
-|   33   |   1    | uint8  | reduceOp  | 归约操作类型 |
-|   34   |   1    | uint8  | protocol  | 协议类型     |
+| 偏移量 | 字节数 | 类型   | 字段名      | 说明                                  |
+|:------:|:------:|--------|-------------|---------------------------------------|
+|   0    |   4    | uint32 | srcDeviceId | 源端点（estimate: rank / normal: Device ID） |
+|   4    |   8    | uint64 | srcOffset   | 源偏移地址                            |
+|   12   |   4    | uint32 | dstDeviceId | 目标端点（estimate: rank / normal: Device ID） |
+|   16   |   8    | uint64 | dstOffset   | 目标偏移地址                          |
+|   24   |   8    | uint64 | dataCount   | 数据元素个数                          |
+|   32   |   1    | uint8  | dataType    | 数据类型                              |
+|   33   |   1    | uint8  | reduceOp    | 归约操作类型                          |
+|   34   |   1    | uint8  | protocol    | 协议类型                              |
+|   35   |   1    | uint8  | resv        | 保留                                  |
 
 #### 5.3.3 NotifyTask
 
@@ -295,13 +350,13 @@ struct FileHeader {
 
 **大小**：18 字节。
 
-| 偏移量 | 字节数 | 类型   | 字段名      | 说明       |
-|:------:|:------:|--------|-------------|------------|
-|   0    |   4    | uint32 | srcRankId   | 源 Rank ID |
-|   4    |   8    | uint64 | notifyId    | 通知 ID    |
-|   12   |   4    | uint32 | dstRankId   | 目标 Rank ID |
-|   16   |   1    | uint8  | notifyCount | 通知计数   |
-|   17   |   1    | uint8  | protocol    | 协议类型   |
+| 偏移量 | 字节数 | 类型   | 字段名      | 说明                                        |
+|:------:|:------:|--------|-------------|---------------------------------------------|
+|   0    |   4    | uint32 | srcDeviceId | 记录方端点（estimate: rank / normal: Device ID） |
+|   4    |   8    | uint64 | notifyId    | 通知 ID                                     |
+|   12   |   4    | uint32 | dstDeviceId | 等待方端点（estimate: rank / normal: Device ID） |
+|   16   |   1    | uint8  | notifyCount | 通知计数                                    |
+|   17   |   1    | uint8  | protocol    | 协议类型                                    |
 
 ---
 
@@ -346,7 +401,7 @@ struct FileHeader {
 | 值 | 名称                            | 说明                      |
 |:--:|---------------------------------|---------------------------|
 |  0 | SIM_OP_EXPANSION_MODE_CCU       | CCU 模式，使用 ChannelInfo |
-|  1 | SIM_OP_EXPANSION_MODE_AICPU     | AICPU 模式，使用 JettyInfo |
+|  1 | SIM_OP_EXPANSION_MODE_AICPU     | AICPU 模式，使用 ChannelInfo |
 
 ---
 
@@ -392,10 +447,10 @@ struct ModelInfoCommInner {
 };
 
 // ============================================================================
-// 通道数据 (CCU 模式)
+// 通道数据 (CCU / AICPU 模式共用)
 // ============================================================================
 struct ChannelData {
-    uint16_t channelId;
+    uint16_t channelId;      // CCU: 通道ID; AICPU: EndPointPair主键(eid对标识)
     uint8_t  srcDieId;
     uint8_t  dstDieId;
     uint32_t srcRank;
@@ -403,12 +458,12 @@ struct ChannelData {
     uint8_t  leid[16];
     uint8_t  reid[16];
     uint16_t protocol;
-    uint16_t jettyNum;
-    uint32_t jettyId[32];
+    uint16_t jettyNum;       // AICPU: 该eid对的本端jetty个数(多channel时可大于1); CCU: 该channel的jetty个数
+    uint32_t jettyId[32];    // AICPU: 该eid对全部本端(发送)jetty, 按创建序排列, task.jettyId在数组内查找
 };
 
 // ============================================================================
-// Jetty 数据 (AICPU 模式)
+// Jetty 数据（未使用的历史结构；AICPU 实际使用 ChannelData，见上方）
 // ============================================================================
 struct JettyData {
     uint32_t jettyId;
@@ -437,60 +492,173 @@ struct MemLayoutData {
 // 任务类型枚举
 // ============================================================================
 enum class HccLTaskMetaType : int8_t {
-    NOTIFY_WAIT   = 0,
-    NOTIFY_RECORD = 1,
-    REDUCE        = 2,
-    MEM_CPY       = 3,
-    CCU_GRAPH     = 4,
-    AIV_GRAPH     = 5,
-    EVENT_WAIT    = 6,
-    EVENT_RECORD  = 7
+    NOTIFY_WAIT        = 0,
+    NOTIFY_RECORD      = 1,
+    REDUCE             = 2,
+    MEM_CPY            = 3,
+    CCU_GRAPH          = 4,
+    AIV_GRAPH          = 5,
+    SYNC_STREAM        = 6,
+    WRITE_WITH_NOTIFY  = 7,
+    INVALID            = 8
 };
 
 // ============================================================================
-// 任务数据联合体
+// profiling 任务类型枚举值域与 hcomm TaskParamType 一一对齐
+// ============================================================================
+enum class ProfTaskParamType : uint8_t {
+    TASK_SDMA                    = 0,   // Memcpy
+    TASK_RDMA                    = 1,   // RDMASend
+    TASK_REDUCE_INLINE           = 2,   // Reduce_Inline
+    TASK_REDUCE_TBE              = 3,   // Reduce_TBE
+    TASK_NOTIFY_RECORD           = 4,   // Notify_Record
+    TASK_NOTIFY_WAIT             = 5,   // Notify_Wait
+    TASK_SEND_NOTIFY             = 6,   // Send_Notify
+    TASK_SEND_PAYLOAD            = 7,   // Send_Payload
+    TASK_WRITE_WITH_NOTIFY       = 8,   // Write_With_Notify
+    TASK_WRITE_REDUCE_WITH_NOTIFY = 9,  // Reduce_With_Notify
+    TASK_CCU                     = 10,  // Ccu
+    TASK_AICPU_KERNEL            = 11,  // AicpuKernel
+    TASK_AICPU_REDUCE            = 12,  // Aicpu_Reduce
+    TASK_AIV                     = 13,  // AivKernel
+    TASK_UB_INLINE_WRITE         = 14,  // Ub_Inline_Write
+    TASK_UB_REDUCE_INLINE        = 15,  // Ub_Reduce_Inline
+    TASK_UB                      = 16,  // Ub_Write_Or_Read
+    TASK_DPU_KERNEL              = 17,  // DpuKernel
+    TASK_DPU_THREAD_FENCE        = 18,  // Dpu_ThreadFence
+    TASK_DPU_CHANNEL_FENCE       = 19,  // Dpu_ChannelFence
+    TASK_DPU_INLINE_WRITE        = 20,  // Dpu_Notify_Record
+    TASK_DPU_NOTIFY_WAIT         = 21,  // Dpu_Notify_Wait
+    TASK_DPU_WRITE_WITH_NOTIFY   = 22,  // Dpu_Write_With_Notify
+    UNKNOWN                      = 0xFF
+};
+
+// ============================================================================
+// profiling 链路类型枚举值域与 hcomm DfxLinkType 一一对齐
+// ============================================================================
+enum class ProfLinkType : uint8_t {
+    LINK_ONCHIP        = 0,   // 片上/本地
+    LINK_HCCS          = 1,   // HCCS
+    LINK_PCIE          = 2,   // PCIe(跨片 SDMA 通道)
+    LINK_ROCE          = 3,   // RoCE
+    LINK_SIO           = 4,   // SIO
+    LINK_HCCS_SW       = 5,   // HCCS_SW
+    LINK_STANDARD_ROCE = 6,   // 标准RoCE
+    LINK_UB            = 7,   // UB
+    LINK_UBoE          = 8,   // UB over Ethernet
+    LINK_RESERVED      = 9,   // 预留
+    UNKNOWN            = 0xFF
+};
+
+// ============================================================================
+// profiling 传输类型枚举值域与 hcomm DfxTransportType/SimpleTaskType 一一对齐
+// ============================================================================
+enum class ProfTransportType : uint8_t {
+    TRANSPORT_SDMA   = 0,   // 跨片 SDMA 通道搬运
+    TRANSPORT_RDMA   = 1,   // RDMA
+    TRANSPORT_LOCAL  = 2,   // 本地搬运/本地算子
+    TRANSPORT_UB     = 3,   // UB 传输
+    TRANSPORT_ROCE   = 4,   // RoCE 传输
+    UNKNOWN          = 0xFF
+};
+
+// ============================================================================
+// 任务数据联合体 (联合体大小 120 字节, 取最大成员 CcuTask)
 // ============================================================================
 struct TransMemTask {
-    uint32_t srcRankId;
+    uint32_t srcDeviceId;
     uint64_t srcOffset;
-    uint32_t dstRankId;
+    uint32_t dstDeviceId;
     uint64_t dstOffset;
     uint64_t len;
     uint8_t  protocol;
 };
 
 struct ReduceTask {
-    uint32_t srcRankId;
+    uint32_t srcDeviceId;
     uint64_t srcOffset;
-    uint32_t dstRankId;
+    uint32_t dstDeviceId;
     uint64_t dstOffset;
     uint64_t dataCount;
     uint8_t  dataType;
     uint8_t  reduceOp;
     uint8_t  protocol;
+    uint8_t  resv;
 };
 
 struct NotifyTask {
-    uint32_t srcRankId;
+    uint32_t srcDeviceId;
     uint64_t notifyId;
-    uint32_t dstRankId;
+    uint32_t dstDeviceId;
     uint8_t  notifyCount;
     uint8_t  protocol;
 };
 
+struct CcuTask {
+    uint8_t  dieId;
+    uint8_t  missionId;
+    uint16_t timeout;
+    uint16_t instStartId;
+    uint16_t instCnt;
+    uint32_t key;
+    uint32_t argSize;
+    uint64_t args[13];
+};
+
+struct AivTask {
+    uint64_t launchIdx;
+};
+
+struct SyncStreamTask {
+    uint64_t syncIdx;
+};
+
+struct WriteWithNotifyTask {
+    uint32_t srcDeviceId;
+    uint64_t srcOffset;
+    uint32_t dstDeviceId;
+    uint64_t dstOffset;
+    uint64_t len;                // MEM_CPY: 传输长度; REDUCE: dataCount
+    uint64_t notifyId;
+    uint8_t  isReduce;           // 0: 写部分为MEM_CPY; 1: 写部分为REDUCE
+    uint8_t  dataType;
+    uint8_t  reduceOp;
+    uint8_t  protocol;
+    uint8_t  notifyCount;
+};
+
 // ============================================================================
-// 任务元数据
+// 任务 profiling 对账信息子结构 (3 字节, checker/runner 作为不透明整体透传)
+// 值域对齐 hcomm TaskParamType/DfxLinkType/DfxTransportType
+// ============================================================================
+struct HcclTaskProfInfo {
+    ProfTaskParamType  profTaskType;   // 对应 msprof timeline op 名
+    ProfLinkType       linkType;       // 物理链路类型
+    ProfTransportType  transportType;  // 数据面传输方式
+};
+
+// ============================================================================
+// 任务元数据 (taskType 后含 HcclTaskProfInfo 子结构, sizeof 189 字节)
 // ============================================================================
 struct HcclTaskMetaData {
     HccLTaskMetaType taskType;
-    uint16_t commId;
+    HcclTaskProfInfo profInfo;         // profiling 对账信息(整体 3 字节)
+    uint64_t commId;
     uint32_t rankId;
+    uint64_t deviceId;
     uint64_t streamId;
     uint32_t jettyId;
+    uint8_t  sqeGroupId;               // UDMA SQE批分组标记, 环形递增1~255
+    uint8_t  rmEid[16];
+    uint8_t  lcEid[16];
     union {
-        TransMemTask transMem;
-        ReduceTask   reduce;
-        NotifyTask   notify;
+        TransMemTask  transMem;
+        ReduceTask    reduce;
+        NotifyTask    notify;
+        CcuTask       ccu;
+        AivTask       aiv;
+        SyncStreamTask syncStreamTask;
+        WriteWithNotifyTask writeWithNotify;
     } taskData;
 };
 
@@ -572,9 +740,8 @@ bool ReadSynthesisData(const char* filename) {
         std::cout << "\n[All2All] Matrix Count: " << matrixCount << std::endl;
     }
 
-    // ===== Step 5: 根据 op_expansion_mode 读取通道或 Jetty 信息 =====
-    if (modelComm.op_expansion_mode == 0) {
-        // CCU 模式 - 读取 ChannelInfo
+    // ===== Step 5: 读取 ChannelInfo（CCU 与 AICPU 模式均为 ChannelData 定长结构；AIV 模式无此段） =====
+    if (modelComm.op_expansion_mode != 2) {
         uint32_t channelCount;
         fread(&channelCount, sizeof(uint32_t), 1, fp);
         
@@ -585,21 +752,12 @@ bool ReadSynthesisData(const char* filename) {
         for (size_t i = 0; i < channels.size() && i < 3; ++i) {
             std::cout << "  Channel[" << i << "]: ID=" << channels[i].channelId
                       << ", srcRank=" << channels[i].srcRank
-                      << ", dstRank=" << channels[i].dstRank << std::endl;
-        }
-    } else {
-        // AICPU 模式 - 读取 JettyInfo
-        uint32_t jettyCount;
-        fread(&jettyCount, sizeof(uint32_t), 1, fp);
-        
-        std::vector<JettyData> jetties(jettyCount);
-        fread(jetties.data(), sizeof(JettyData), jettyCount, fp);
-        
-        std::cout << "\n[JettyInfo] Count: " << jettyCount << std::endl;
-        for (size_t i = 0; i < jetties.size() && i < 3; ++i) {
-            std::cout << "  Jetty[" << i << "]: ID=" << jetties[i].jettyId
-                      << ", srcRank=" << jetties[i].srcRank
-                      << ", dstRank=" << jetties[i].dstRank << std::endl;
+                      << ", dstRank=" << channels[i].dstRank
+                      << ", jettyNum=" << channels[i].jettyNum;
+            for (uint16_t j = 0; j < channels[i].jettyNum; ++j) {
+                std::cout << ", jetty[" << j << "]=" << channels[i].jettyId[j];
+            }
+            std::cout << std::endl;
         }
     }
 
@@ -660,15 +818,15 @@ bool ReadTaskMetaData(const char* filename) {
         switch (task.taskType) {
             case HccLTaskMetaType::MEM_CPY:
                 std::cout << "MEM_CPY: "
-                          << "src=" << task.taskData.transMem.srcRankId
-                          << ", dst=" << task.taskData.transMem.dstRankId
+                          << "src=" << task.taskData.transMem.srcDeviceId
+                          << ", dst=" << task.taskData.transMem.dstDeviceId
                           << ", len=" << task.taskData.transMem.len;
                 break;
                 
             case HccLTaskMetaType::REDUCE:
                 std::cout << "REDUCE: "
-                          << "src=" << task.taskData.reduce.srcRankId
-                          << ", dst=" << task.taskData.reduce.dstRankId
+                          << "src=" << task.taskData.reduce.srcDeviceId
+                          << ", dst=" << task.taskData.reduce.dstDeviceId
                           << ", count=" << task.taskData.reduce.dataCount;
                 break;
                 
@@ -704,7 +862,7 @@ bool ReadTaskMetaData(const char* filename) {
 |  1   | 字节序            | 所有多字节字段均采用**小端序**（Little-Endian）                 |
 |  2   | 内存对齐          | 结构体使用 `#pragma pack(1)` 进行 **1 字节对齐**                |
 |  3   | 变长字段读取      | 先读取 `count` 字段，再根据 count 值读取相应数量的数据          |
-|  4   | 模式判断          | 根据 `op_expansion_mode` 判断读取 ChannelInfo 还是 JettyInfo    |
+|  4   | 模式判断          | CCU 与 AICPU 模式均读取 ChannelInfo（ChannelData 定长结构）；AIV 模式无此段；JettyData 为未使用的历史结构 |
 |  5   | 联合体解析        | 任务元数据中的 `taskData` 需根据 `taskType` 选择正确的结构体    |
 |  6   | 魔数验证          | 读取文件时务必先验证魔数，确保文件类型正确                      |
 

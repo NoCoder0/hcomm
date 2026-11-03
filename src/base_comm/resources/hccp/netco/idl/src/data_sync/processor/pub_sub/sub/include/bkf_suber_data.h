@@ -29,9 +29,9 @@ typedef struct tagBkfSuberInst BkfSuberInst;
 typedef struct tagBkfSuberSlice BkfSuberSlice;
 typedef struct tagBkfSuberAppSub BkfSuberAppSub;
 
-typedef void(*F_BKF_SUBER_DATA_NTF_PUBER_URL_OPER)(void *cookieInit, BkfSuberInst *inst);
-typedef void(*F_BKF_SUBER_DATA_NTF_SLICE_INST_OPER)(void *cookieInit, BkfSuberSlice *slice, uint64_t instId);
-typedef void(*F_BKF_SUBER_DATA_NTF_SLICE_APP_SUB_OPER)(void *cookieInit, BkfSuberAppSub *appSub);
+typedef void (*F_BKF_SUBER_DATA_NTF_PUBER_URL_OPER)(void *cookieInit, BkfSuberInst *inst);
+typedef void (*F_BKF_SUBER_DATA_NTF_SLICE_INST_OPER)(void *cookieInit, BkfSuberSlice *slice, uint64_t instId);
+typedef void (*F_BKF_SUBER_DATA_NTF_SLICE_APP_SUB_OPER)(void *cookieInit, BkfSuberAppSub *appSub);
 
 typedef struct tagBkfSuberSubDataMngInitArg {
     BkfSuberEnv *env;
@@ -75,7 +75,7 @@ struct tagBkfSuberSlice {
 typedef struct tagBkfSuberSliceInst {
     AVLL_NODE avlNode; /* 插入  */
     BkfDlNode nodeObByInst;
-    uint64_t instId;  /* key */
+    uint64_t instId; /* key */
     BkfSuberSlice *slice;
     BkfSuberInst *inst;
 } BkfSuberSliceInst;
@@ -135,8 +135,7 @@ void BkfSuberDataDelAppSub(BkfSuberAppSub *appSub);
 void BkfSuberDataDelAllAppSub(BkfSuberDataMng *dataMng);
 BkfSuberAppSub *BkfSuberDataGetFirstAppSub(BkfSuberDataMng *dataMng, void **itorOutOrNull);
 BkfSuberAppSub *BkfSuberDataGetNextAppSub(BkfSuberDataMng *dataMng, void **itorInOut);
-BkfSuberAppSub *BkfSuberDataFindAppSub(BkfSuberDataMng *dataMng, void *sliceKey, uint16_t tableTypeId,
-    uint64_t instId);
+BkfSuberAppSub *BkfSuberDataFindAppSub(BkfSuberDataMng *dataMng, void *sliceKey, uint16_t tableTypeId, uint64_t instId);
 BkfSuberAppSub *BkfSuberDataFindNextAppSub(BkfSuberDataMng *dataMng, void *sliceKey, uint16_t tableTypeId,
     uint64_t instId);
 
@@ -145,7 +144,7 @@ uint32_t BkfSuberDataTableTypeAdd(BkfSuberDataMng *dataMng, uint8_t mode, void *
 uint32_t BkfSuberDataTableTypeDel(BkfSuberDataMng *dataMng, uint16_t tabType);
 BkfSuberTableTypeVTbl *BkfSuberDataTableTypeGetVtbl(BkfSuberDataMng *dataMng, uint16_t tablTypeId);
 void *BkfSuberDataTableTypeGetUserData(BkfSuberDataMng *dataMng, uint16_t tablTypeId);
-typedef void(*F_BKF_SUBER_DATA_SCAN_APPSUB_BY_SLICE_PROC)(BkfSuberAppSub *appSub, void *usrData, BOOL *needContinue);
+typedef void (*F_BKF_SUBER_DATA_SCAN_APPSUB_BY_SLICE_PROC)(BkfSuberAppSub *appSub, void *usrData, BOOL *needContinue);
 void BkfSuberDataScanAppSubBySlice(BkfSuberSlice *slice, uint64_t instId,
     F_BKF_SUBER_DATA_SCAN_APPSUB_BY_SLICE_PROC proc, void *usrData);
 uint8_t BkfSuberDataTableTypeGetMode(BkfSuberTableTypeVTbl *vTbl);

@@ -11,12 +11,10 @@
 #ifndef __AICPU_INDOP_ENV_H__
 #define __AICPU_INDOP_ENV_H__
 
-#include "log.h"
-
 namespace hcomm {
 
 void SetTaskExceptionEnable(bool taskExceptionEnable);
 
 const bool& GetTaskExceptionEnable();
-}
+} // namespace hcomm
 #endif

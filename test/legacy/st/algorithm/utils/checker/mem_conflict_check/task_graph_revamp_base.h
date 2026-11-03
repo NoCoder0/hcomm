@@ -1,8 +1,13 @@
-/*
- * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
- * Description: graph revamp base header file
- * Create: 2025-10-17
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #ifndef HCCLV1_GRAPH_REVAMP_BASE_H
 #define HCCLV1_GRAPH_REVAMP_BASE_H
 
@@ -21,15 +26,15 @@ public:
 
     HcclResult RevampGraph(TaskNodePtr dummyStart);
 
-    HcclResult GetPeerRankByTaskNode(TaskNodePtr currNode, RankId &peerRank);
-    HcclResult GetLinkProtoStubByTaskNode(TaskNodePtr currNode, LinkProtoStub &link);
+    HcclResult GetPeerRankByTaskNode(TaskNodePtr currNode, RankId& peerRank);
+    HcclResult GetLinkProtoStubByTaskNode(TaskNodePtr currNode, LinkProtoStub& link);
     TaskStub* GenTaskStubBeingReadOrWrittern(TaskNodePtr currNode);
-    void RemoveNodeRelation(TaskNodePtr parent, TaskNodePtr child);    
+    void RemoveNodeRelation(TaskNodePtr parent, TaskNodePtr child);
     void AddNodeRelation(TaskNodePtr parent, TaskNodePtr child);
     void SearchGraphByRank(
-        TaskNodePtr currNode, std::queue<TaskNodePtr> &graphNodeQue, std::set<TaskNodePtr> &isVisited, RankId rankId);
+        TaskNodePtr currNode, std::queue<TaskNodePtr>& graphNodeQue, std::set<TaskNodePtr>& isVisited, RankId rankId);
     void SearchGraphByQueueId(
-        TaskNodePtr currNode, std::queue<TaskNodePtr> &graphNodeQue, std::set<TaskNodePtr> &isVisited, uint32_t queIdx);
+        TaskNodePtr currNode, std::queue<TaskNodePtr>& graphNodeQue, std::set<TaskNodePtr>& isVisited, uint32_t queIdx);
 
 public:
     uint32_t rankSize_{0};

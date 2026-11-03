@@ -20,7 +20,7 @@ void GenRankTableFile1Ser8Dev()
         nlohmann::json rankTableJson = nlohmann::json::parse(RankTable1Ser8Dev);
         std::ofstream out(ranktablePath, std::ofstream::out);
         out << rankTableJson;
-    } catch(...) {
+    } catch (...) {
         std::cout << ranktablePath << " generate failed!" << std::endl;
         return;
     }
@@ -43,7 +43,7 @@ void GenRankTableFile4p()
         nlohmann::json rankTableJson = nlohmann::json::parse(RankTable4p);
         std::ofstream out(ranktable4pPath, std::ofstream::out);
         out << rankTableJson;
-    } catch(...) {
+    } catch (...) {
         std::cout << ranktable4pPath << " generate failed!" << std::endl;
         return;
     }
@@ -66,7 +66,7 @@ void GenTopoFile()
         nlohmann::json topoJson = nlohmann::json::parse(Topo1Ser8Dev);
         std::ofstream out(topoPath, std::ofstream::out);
         out << topoJson;
-    } catch(...) {
+    } catch (...) {
         std::cout << topoPath << " generate failed!" << std::endl;
         return;
     }

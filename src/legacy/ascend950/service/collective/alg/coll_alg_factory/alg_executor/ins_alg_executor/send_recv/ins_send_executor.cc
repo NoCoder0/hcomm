@@ -17,18 +17,12 @@
 using namespace std;
 
 namespace Hccl {
-InsSendExecutor::InsSendExecutor() : InsCollAlgBase()
-{
-}
+InsSendExecutor::InsSendExecutor() : InsCollAlgBase() {}
 
-InsSendExecutor::~InsSendExecutor()
-{
-}
+InsSendExecutor::~InsSendExecutor() {}
 
-HcclResult InsSendExecutor::Orchestrate(const RankGraph  *rankGraph,
-                                       const CollAlgOperator &op,
-                                       const CollAlgParams   &params,
-                                       InsQuePtr              insQue)
+HcclResult InsSendExecutor::Orchestrate(
+    const RankGraph* rankGraph, const CollAlgOperator& op, const CollAlgParams& params, InsQuePtr insQue)
 {
     dmaMode_ = DmaMode::DEFAULT;
     HCCL_DEBUG("[InsCollAlgFactory][InsSendExecutor][Orchestrate] Begin to Generate Instruction Queue for SEND.");
@@ -50,15 +44,18 @@ HcclResult InsSendExecutor::Orchestrate(const RankGraph  *rankGraph,
 
     // 从rankGraph里面拿到 link，转成LinkData格式
     const std::vector<NetInstance::Path> sendPath = GetPathsFromRankGraph(rankGraph, myRank_, remoteRank);
-    CHK_PRT_RET(sendPath.size() == 0,
-                HCCL_ERROR("[InsCollAlgFactory] Unable to obtain valid link, srcRank [%d], dstRank [%d].", myRank_,
-                remoteRank), HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        sendPath.size() == 0,
+        HCCL_ERROR("[InsCollAlgFactory] Unable to obtain valid link, srcRank [%d], dstRank [%d].", myRank_, remoteRank),
+        HcclResult::HCCL_E_INTERNAL);
     LinkData sendLinkData(sendPath[0]);
-    if (sendLinkData.GetType() == PortDeploymentType::P2P
-        && sendLinkData.GetLinkProtocol() == LinkProtocol::PCIE) {
+    if (sendLinkData.GetType() == PortDeploymentType::P2P && sendLinkData.GetLinkProtocol() == LinkProtocol::PCIE) {
         dmaMode_ = DmaMode::GET;
     }
-    HCCL_DEBUG("[InsCollAlgFactory][InsSendExecutor][Orchestrate] Total transfer data size [%llu], Max scratch buffer size [%u].", totalDataSize, params.maxTmpMemSize);
+    HCCL_DEBUG(
+        "[InsCollAlgFactory][InsSendExecutor][Orchestrate] Total transfer data size [%llu], Max scratch buffer size "
+        "[%u].",
+        totalDataSize, params.maxTmpMemSize);
 
     // 初始化循环参数
     u64 resDataSize = totalDataSize;
@@ -75,14 +72,16 @@ HcclResult InsSendExecutor::Orchestrate(const RankGraph  *rankGraph,
         SlicesList sendSlicesList({inputBuffer}, {remoteOutputBuffer});
         DataInfo sendInfo(sendLinkData, sendSlicesList);
         CHK_RET(Send(sendInfo, insQue, 0, true, dmaMode_));
-    }else{
+    } else {
         HCCL_DEBUG("[InsCollAlgFactory] Rank[%d], Generating Instruction Queues in OPBASE Mode for HOST.", myRank_);
         // 当需要多轮搬运时，需保证一次数据的搬运量需为单个数据size的整数倍
         u64 maxRoundTransferSize = params.maxTmpMemSize - params.maxTmpMemSize % dataElemSize;
-        while(resDataSize > 0) {
+        while (resDataSize > 0) {
             // 判断本轮需搬运的数据量
             u64 transferSize = resDataSize > params.maxTmpMemSize ? maxRoundTransferSize : resDataSize;
-            HCCL_DEBUG("[InsCollAlgFactory][InsSendExecutor][Orchestrate] Send round [%u], transfer data size [%llu].", roundIdx, transferSize);
+            HCCL_DEBUG(
+                "[InsCollAlgFactory][InsSendExecutor][Orchestrate] Send round [%u], transfer data size [%llu].",
+                roundIdx, transferSize);
             // 根据本轮数据搬运量声明相关DataSlice
             DataSlice inputBuffer(BufferType::INPUT, currentOffset, transferSize);
             DataSlice scratchBuffer(BufferType::SCRATCH, 0, transferSize);
@@ -101,20 +100,17 @@ HcclResult InsSendExecutor::Orchestrate(const RankGraph  *rankGraph,
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsSendExecutor::CalcResOffload(const RankGraph *rankGraph,
-                                           const u64 &dataSize,
-                                           CollOffloadOpResReq &resReq)
+HcclResult InsSendExecutor::CalcResOffload(const RankGraph* rankGraph, const u64& dataSize, CollOffloadOpResReq& resReq)
 {
     (void)rankGraph;
     (void)dataSize;
-    resReq.requiredScratchMemSize = 0; //图模式不用scratchmemory
+    resReq.requiredScratchMemSize = 0; // 图模式不用scratch memory
     resReq.requiredSubQueNum = 0;
 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsSendExecutor::CalcRes(const RankGraph *rankGraph,
-                                    CollAlgResReq     &algResReq)
+HcclResult InsSendExecutor::CalcRes(const RankGraph* rankGraph, CollAlgResReq& algResReq)
 {
     u32 linkNumBtwPeers = 1;
     algResReq.primQueueNum = 1;
@@ -122,28 +118,31 @@ HcclResult InsSendExecutor::CalcRes(const RankGraph *rankGraph,
     tempResReq.queNum = 1;
     tempResReq.streamNum = tempResReq.streamNum;
     if (static_cast<u32>(sendRecvRemoteRank_) > rankSize_ - 1) {
-        HCCL_ERROR("[InsCollAlgFactory][InsSendExecutor][CalcRes] Rank[%d] get dest[%d] is invalid", myRank_, sendRecvRemoteRank_);
+        HCCL_ERROR(
+            "[InsCollAlgFactory][InsSendExecutor][CalcRes] Rank[%d] get dest[%d] is invalid", myRank_,
+            sendRecvRemoteRank_);
         return HcclResult::HCCL_E_PARA;
     }
     tempResReq.links[sendRecvRemoteRank_] = linkNumBtwPeers;
     uint32_t linkNum = GetPathsFromRankGraph(rankGraph, myRank_, sendRecvRemoteRank_).size();
     if (linkNum == 0) {
-        HCCL_ERROR("[InsCollAlgFactory][InsSendExecutor][CalcRes] Rank[%d] get path num to dest[%d] is zero", myRank_, sendRecvRemoteRank_);
+        HCCL_ERROR(
+            "[InsCollAlgFactory][InsSendExecutor][CalcRes] Rank[%d] get path num to dest[%d] is zero", myRank_,
+            sendRecvRemoteRank_);
     }
     CHK_RET(CalcResLinks(myRank_, rankGraph, linkPriority_, tempResReq.links, algResReq.links));
     CHK_RET(CalcLinkInfo(myRank_, rankGraph, tempResReq.links, algResReq.levelRankPairs));
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsSendExecutor::Orchestrate(const AlgTopoInfo     &topoInfo, // aicpu
-                                          const CollAlgOperator &op,
-                                          const CollAlgParams   &params,
-                                          ConnectedLinkMgr      *linkMgr,
-                                          InsQuePtr              insQue)
+HcclResult InsSendExecutor::Orchestrate(
+    const AlgTopoInfo& topoInfo, // aicpu
+    const CollAlgOperator& op, const CollAlgParams& params, ConnectedLinkMgr* linkMgr, InsQuePtr insQue)
 {
     dmaMode_ = DmaMode::DEFAULT;
     (void)topoInfo;
-    HCCL_DEBUG("[InsCollAlgFactory][InsSendExecutor][Orchestrate] Begin to Generate Instruction Queue for SEND AICPU mode.");
+    HCCL_DEBUG(
+        "[InsCollAlgFactory][InsSendExecutor][Orchestrate] Begin to Generate Instruction Queue for SEND AICPU mode.");
     CHK_RET(Init(op, params, insQue));
     // 从集合通信算子op中获得remote rank和data type/count相关信息
     RankId remoteRank = op.sendRecvRemoteRank;
@@ -159,26 +158,32 @@ HcclResult InsSendExecutor::Orchestrate(const AlgTopoInfo     &topoInfo, // aicp
         return HcclResult::HCCL_SUCCESS;
     }
     HCCL_DEBUG("[InsCollAlgFactory][InsSendExecutor][Orchestrate] Self send, Other recv.");
- 
+
     // 从linkMgr里面拿到 linkData
     const vector<LinkData> sendPath = linkMgr->GetLinks(remoteRank);
-    CHK_PRT_RET(sendPath.size() == 0,
-                HCCL_ERROR("[InsCollAlgFactory] Unable to obtain valid link, srcRank [%d], dstRank [%d].", myRank_,
-                remoteRank), HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        sendPath.size() == 0,
+        HCCL_ERROR(
+            "[InsCollAlgFactory][InsSendExecutor] Unable to obtain valid link, srcRank [%d], dstRank [%d].", myRank_,
+            remoteRank),
+        HcclResult::HCCL_E_INTERNAL);
     LinkData sendLinkData(sendPath[0]);
-    if (sendLinkData.GetType() == PortDeploymentType::P2P
-        && sendLinkData.GetLinkProtocol() == LinkProtocol::PCIE) {
+    if (sendLinkData.GetType() == PortDeploymentType::P2P && sendLinkData.GetLinkProtocol() == LinkProtocol::PCIE) {
         dmaMode_ = DmaMode::GET;
     }
-    HCCL_DEBUG("[InsCollAlgFactory][InsSendExecutor][Orchestrate] Total transfer data size [%llu], Max scratch buffer size [%u].", totalDataSize, params.maxTmpMemSize);
- 
+    HCCL_DEBUG(
+        "[InsCollAlgFactory][InsSendExecutor][OrchestrateAicpu] Total transfer data size [%llu], Max scratch buffer "
+        "size "
+        "[%u].",
+        totalDataSize, params.maxTmpMemSize);
+
     // 初始化循环参数
     u64 resDataSize = totalDataSize;
     u64 currentOffset = 0;
     u32 roundIdx = 0;
     // 模式判断
     if (opMode_ == OpMode::OFFLOAD) {
-        u64 maxLoopOutputSize = 256 * 1024 * 1024;  // 256m为一轮
+        u64 maxLoopOutputSize = 256 * 1024 * 1024; // 256m为一轮
         HCCL_DEBUG("[InsCollAlgFactory] Rank[%d], Generating Instruction Queues in OFFLOAD Mode for HOST.", myRank_);
         while (resDataSize > 0) {
             u64 transferSize = resDataSize > maxLoopOutputSize ? maxLoopOutputSize : resDataSize;
@@ -195,10 +200,12 @@ HcclResult InsSendExecutor::Orchestrate(const AlgTopoInfo     &topoInfo, // aicp
         HCCL_DEBUG("[InsCollAlgFactory] Rank[%d], Generating Instruction Queues in OPBASE Mode for HOST.", myRank_);
         // 当需要多轮搬运时，需保证一次数据的搬运量需为单个数据size的整数倍
         u64 maxRoundTransferSize = params.maxTmpMemSize - params.maxTmpMemSize % dataElemSize;
-        while(resDataSize > 0) {
+        while (resDataSize > 0) {
             // 判断本轮需搬运的数据量
             u64 transferSize = resDataSize > params.maxTmpMemSize ? maxRoundTransferSize : resDataSize;
-            HCCL_DEBUG("[InsCollAlgFactory][InsSendExecutor][Orchestrate] Send round [%u], transfer data size [%llu]", roundIdx, transferSize);
+            HCCL_DEBUG(
+                "[InsCollAlgFactory][InsSendExecutor][Orchestrate] Send round [%u], transfer data size [%llu]",
+                roundIdx, transferSize);
             // 根据本轮数据搬运量声明相关DataSlice
             DataSlice inputBuffer(BufferType::INPUT, currentOffset, transferSize);
             DataSlice scratchBuffer(BufferType::SCRATCH, 0, transferSize);
@@ -208,7 +215,7 @@ HcclResult InsSendExecutor::Orchestrate(const AlgTopoInfo     &topoInfo, // aicp
             SlicesList sendSlicesList({scratchBuffer}, {remoteScratchBuffer});
             DataInfo sendInfo(sendLinkData, sendSlicesList);
             CHK_RET(Send(sendInfo, insQue, 0, true, dmaMode_));
- 
+
             currentOffset = currentOffset + transferSize;
             resDataSize = resDataSize - transferSize;
             roundIdx = roundIdx + 1;

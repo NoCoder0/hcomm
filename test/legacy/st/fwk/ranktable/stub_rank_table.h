@@ -55,7 +55,7 @@ const std::string RankTable1Ser2Dev = R"(
     }
     )";
 
-void GenRankTableFile(const std::string &rankTable);
+void GenRankTableFile(const std::string& rankTable);
 
 void DelRankTableFile();
 

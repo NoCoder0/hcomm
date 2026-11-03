@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef VRP_TYPEDEF_H
 #define VRP_TYPEDEF_H
 
@@ -20,14 +19,10 @@ extern "C" {
 
 typedef VOS_BOOL BOOL;
 
-enum BOOL_DEFINE {
-    FALSE = 0,
-    TRUE = 1
-};
+enum BOOL_DEFINE { FALSE = 0, TRUE = 1 };
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
-

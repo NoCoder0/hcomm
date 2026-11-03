@@ -16,18 +16,17 @@
 #include "exe_graph/runtime/tiling_context.h"
 #include "exe_graph/runtime/tiling_parse_context.h"
 namespace fe {
-class PlatformInfoManager{
+class PlatformInfoManager {
 public:
-    static PlatformInfoManager &Instance();
-    uint32_t GetPlatformInfoWithOutSocVersion(PlatformInfo &platform_info, OptionalInfo &opti_compilation_info);
+    static PlatformInfoManager& Instance();
+    uint32_t GetPlatformInfoWithOutSocVersion(PlatformInfo& platform_info, OptionalInfo& opti_compilation_info);
     uint32_t InitializePlatformInfo();
-    uint32_t GetPlatformInfos(const std::string SoCVersion,
-                            PlatFormInfos &platform_info,
-                            OptionalInfos &opti_compilation_info);
+    uint32_t
+    GetPlatformInfos(const std::string SoCVersion, PlatFormInfos& platform_info, OptionalInfos& opti_compilation_info);
 }
-}
+} // namespace fe
 
 namespace TbeReduce {
 ge::graphStatus AutoTiling(gert::TilingContext* context);
-ge::graphStatus AutoTilingParser(gert::TilingParseContext *context);
-}
+ge::graphStatus AutoTilingParser(gert::TilingParseContext* context);
+} // namespace TbeReduce

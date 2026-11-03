@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #define BKF_LOG_HND ((co)->log)
 #define BKF_MOD_NAME ((co)->name)
 #include "net_co_out_disp.h"
@@ -28,7 +27,7 @@ void NetCoOutDispSummary(NetCo *co)
     BKF_DISP_PRINTF(disp, "simpoBuilder(%#x)\n", BKF_MASK_ADDR(out->simpoBuilder));
     BKF_DISP_PRINTF(disp, "puber(%#x)\n", BKF_MASK_ADDR(out->puber));
 
-    NetCoOutTblStatCnt cnt = { 0 };
+    NetCoOutTblStatCnt cnt = {0};
     NetCoOutGetTblStatCnt(co, &cnt);
     uint8_t buf[BKF_1K];
     BKF_DISP_PRINTF(disp, "statCnt = %s \n", NetCoOutGetTblStatCntStr(&cnt, buf, sizeof(buf)));
@@ -39,11 +38,11 @@ void NetCoOutDispAllTbl(NetCo *co)
     BkfDisp *disp = co->disp;
     uint8_t buf[BKF_1K];
     uint8_t buf2[BKF_1K];
-    NetCoOutGetTblCtx cur = { 0 };
+    NetCoOutGetTblCtx cur = {0};
     NetCoOutTblType *tblType;
     NetCoOutGetTblCtx *last = BKF_DISP_GET_LAST_CTX(disp, VOS_NULL);
     if (last == VOS_NULL) {
-        NetCoOutTblStatCnt cnt = { 0 };
+        NetCoOutTblStatCnt cnt = {0};
         NetCoOutGetTblStatCnt(co, &cnt);
         BKF_DISP_PRINTF(disp, "statCnt = %s\n", NetCoOutGetTblStatCntStr(&cnt, buf, sizeof(buf)));
 
@@ -55,23 +54,21 @@ void NetCoOutDispAllTbl(NetCo *co)
 
     if (tblType != VOS_NULL) {
         if (cur.tblTypeIsNew) {
-            NetCoOutTblStatCnt cnt = { 0 };
+            NetCoOutTblStatCnt cnt = {0};
             NetCoOutGetTblStatCntOfTblType(co, tblType, &cnt);
             BKF_DISP_PRINTF(disp, "======================================\n");
-            BKF_DISP_PRINTF(disp, "tblType[%d] = [%s], statCnt = %s\n",
-                            cur.tblCntTotal - 1, NetCoOutGetTblTypeStr(tblType, buf, sizeof(buf)),
-                            NetCoOutGetTblStatCntStr(&cnt, buf2, sizeof(buf2)));
+            BKF_DISP_PRINTF(disp, "tblType[%d] = [%s], statCnt = %s\n", cur.tblCntTotal - 1,
+                NetCoOutGetTblTypeStr(tblType, buf, sizeof(buf)), NetCoOutGetTblStatCntStr(&cnt, buf2, sizeof(buf2)));
         }
 
         if (cur.tbl != VOS_NULL) {
-            BKF_DISP_PRINTF(disp, "++++tbl[%d] = %s\n",
-                            cur.tblCntCurTblType - 1, NetCoOutGetTblStr(cur.tbl, buf, sizeof(buf)));
+            BKF_DISP_PRINTF(disp, "++++tbl[%d] = %s\n", cur.tblCntCurTblType - 1,
+                NetCoOutGetTblStr(cur.tbl, buf, sizeof(buf)));
         }
 
         BKF_DISP_SAVE_CTX(disp, &cur, sizeof(cur), VOS_NULL, 0);
     } else {
-        BKF_DISP_PRINTF(disp, " ***total %d tblType(s), %d tbl(s) ***\n",
-                        cur.tblTypeCnt, cur.tblCntTotal);
+        BKF_DISP_PRINTF(disp, " ***total %d tblType(s), %d tbl(s) ***\n", cur.tblTypeCnt, cur.tblCntTotal);
     }
 }
 
@@ -95,4 +92,3 @@ void NetCoOutDispUninit(NetCo *co)
 #ifdef __cplusplus
 }
 #endif
-

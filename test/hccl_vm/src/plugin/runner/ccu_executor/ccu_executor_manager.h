@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: ccu executor create func mgr
  * Author: caiyifan
  */
@@ -25,7 +28,8 @@ struct CcuExecutorKey {
     RunnerCcuVersion version;
     uint16_t header;
 
-    bool operator<(const CcuExecutorKey &other) const {
+    bool operator<(const CcuExecutorKey& other) const
+    {
         if (version != other.version) {
             return version < other.version;
         }
@@ -34,7 +38,7 @@ struct CcuExecutorKey {
 };
 
 using CcuExecutorCreateFunc = std::function<std::unique_ptr<CcuExecutorBase>(
-    int streamId, int rankId, int dieId, const hcomm::CcuRep::CcuInstr &instr, CcuSimulator *ccuSimulator)>;
+    int streamId, int rankId, int dieId, const hcomm::CcuRep::CcuInstr& instr, CcuSimulator* ccuSimulator)>;
 
 // ccu executor实例创建接口的管理类
 class CcuExecutorCreateFuncMgr {
@@ -43,12 +47,14 @@ public:
     CcuExecutorCreateFuncMgr(const CcuExecutorCreateFuncMgr&) = delete;
     CcuExecutorCreateFuncMgr& operator=(const CcuExecutorCreateFuncMgr&) = delete;
 
-    void RegFunc(RunnerCcuVersion version, uint16_t instrType, const CcuExecutorCreateFunc& func) {
+    void RegFunc(RunnerCcuVersion version, uint16_t instrType, const CcuExecutorCreateFunc& func)
+    {
         CcuExecutorKey key{version, instrType};
         container[key] = func;
     }
 
-    const CcuExecutorCreateFunc GetFunc(RunnerCcuVersion version, uint16_t instrType) {
+    const CcuExecutorCreateFunc GetFunc(RunnerCcuVersion version, uint16_t instrType)
+    {
         CcuExecutorKey key{version, instrType};
         auto res = container.find(key);
         if (res == container.end()) {
@@ -68,9 +74,11 @@ private:
 // 根据指令类型注册创建ccuExecutor实例的函数
 class CcuExecutorCreateFuncRegister {
 public:
-    CcuExecutorCreateFuncRegister(RunnerCcuVersion version, uint16_t type, uint16_t code, const CcuExecutorCreateFunc& func) {
+    CcuExecutorCreateFuncRegister(
+        RunnerCcuVersion version, uint16_t type, uint16_t code, const CcuExecutorCreateFunc& func)
+    {
         hcomm::CcuRep::CcuInstrHeader ccuInstr = hcomm::CcuRep::InstrHeader(type, code);
-        CcuExecutorCreateFuncMgr::Instance().RegFunc(version,ccuInstr.header, func);
+        CcuExecutorCreateFuncMgr::Instance().RegFunc(version, ccuInstr.header, func);
     }
     ~CcuExecutorCreateFuncRegister() = default;
 };
@@ -79,7 +87,8 @@ public:
 class CcuExecutorFactory {
 public:
     static std::unique_ptr<CcuExecutorBase> MakeCcuExecutorInstance(
-        RunnerCcuVersion version, uint16_t instrType, int streamId, int rankId, int dieId, const hcomm::CcuRep::CcuInstr &instr, CcuSimulator *ccuSimulator)
+        RunnerCcuVersion version, uint16_t instrType, int streamId, int rankId, int dieId,
+        const hcomm::CcuRep::CcuInstr& instr, CcuSimulator* ccuSimulator)
     {
         auto createFunc = CcuExecutorCreateFuncMgr::Instance().GetFunc(version, instrType);
         if (createFunc == nullptr) {
@@ -90,15 +99,23 @@ public:
     ~CcuExecutorFactory() = default;
 };
 
-#define REG_CCU_EXECUTOR_CREATE_FUNC_V1(type, code, className)                              \
-    static CcuExecutorCreateFuncRegister g_reg##className##_v1(                             \
-        RunnerCcuVersion::CCU_V1, type, code,                                               \
-        [](int streamId, int rankId, int dieId, const hcomm::CcuRep::CcuInstr &instr,       \
-           CcuSimulator *ccuSimulator) {                                                     \
-            auto executor = std::make_unique<className>(streamId, rankId, dieId, instr,      \
-                                                        ccuSimulator);                       \
-            executor->SetVersion(RunnerCcuVersion::CCU_V1);                                 \
-            return executor;                                                                 \
+#define REG_CCU_EXECUTOR_CREATE_FUNC_V1(type, code, className)                                                      \
+    static CcuExecutorCreateFuncRegister g_reg##className##_v1(                                                     \
+        RunnerCcuVersion::CCU_V1, type, code,                                                                       \
+        [](int streamId, int rankId, int dieId, const hcomm::CcuRep::CcuInstr& instr, CcuSimulator* ccuSimulator) { \
+            auto executor = std::make_unique<className>(streamId, rankId, dieId, instr, ccuSimulator);              \
+            executor->SetVersion(RunnerCcuVersion::CCU_V1);                                                         \
+            return executor;                                                                                        \
+        })
+
+// V2指令注册宏
+#define REG_CCU_EXECUTOR_CREATE_FUNC_V2(type, code, className)                                                      \
+    static CcuExecutorCreateFuncRegister g_reg##className##_v2(                                                     \
+        RunnerCcuVersion::CCU_V2, type, code,                                                                       \
+        [](int streamId, int rankId, int dieId, const hcomm::CcuRep::CcuInstr& instr, CcuSimulator* ccuSimulator) { \
+            auto executor = std::make_unique<className>(streamId, rankId, dieId, instr, ccuSimulator);              \
+            executor->SetVersion(RunnerCcuVersion::CCU_V2);                                                         \
+            return executor;                                                                                        \
         })
 
 // 兼容旧宏（默认V1）

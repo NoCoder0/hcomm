@@ -24,7 +24,7 @@ extern "C" {
 
 #pragma pack(4)
 enum {
-    /* 下面的顺序，和调度的先后顺序有关, 并需要参考shced和slow shced的宏定义 */
+    /* 下面的顺序，和调度的先后顺序有关, 并需要参考sched和slow sched的宏定义 */
     BKF_PUBER_SESS_STATE_WAIT_SUB,
     BKF_PUBER_SESS_STATE_WAIT_SEND_SUB_ACK,
     BKF_PUBER_SESS_STATE_WAIT_MAY_SEND_BATCH_BEGIN,
@@ -94,10 +94,11 @@ typedef struct {
 #pragma pack()
 
 BkfPuberSessMng *BkfPuberSessDataInit(BkfPuberInitArg *arg, BkfPuberTableTypeMng *tableTypeMng,
-                                       F_BKF_PUBER_SESS_TRIG_SCHED_SELF trigSchedSess,
-                                       F_BKF_PUBER_SESS_TRIG_SLOW_SCHED_SELF trigSlowSchedSess, void *cookie);
+    F_BKF_PUBER_SESS_TRIG_SCHED_SELF trigSchedSess, F_BKF_PUBER_SESS_TRIG_SLOW_SCHED_SELF trigSlowSchedSess,
+    void *cookie);
 void BkfPuberSessDataUninit(BkfPuberSessMng *sessMng);
-BkfPuberSess *BkfPuberSessAdd(BkfPuberSessMng *sessMng, uint8_t *sliceKey, uint16_t tableTypeId, BkfDcTupleItorVTbl *vTbl);
+BkfPuberSess *BkfPuberSessAdd(BkfPuberSessMng *sessMng, uint8_t *sliceKey, uint16_t tableTypeId,
+    BkfDcTupleItorVTbl *vTbl);
 void BkfPuberSessDel(BkfPuberSess *sess);
 void BkfPuberSessDelAll(BkfPuberSessMng *sessMng);
 BkfPuberSess *BkfPuberSessFind(BkfPuberSessMng *sessMng, uint8_t *sliceKey, uint16_t tableTypeId);
@@ -117,4 +118,3 @@ static inline BOOL BkfPuberSessStateIsValid(uint8_t state)
 #endif
 
 #endif
-

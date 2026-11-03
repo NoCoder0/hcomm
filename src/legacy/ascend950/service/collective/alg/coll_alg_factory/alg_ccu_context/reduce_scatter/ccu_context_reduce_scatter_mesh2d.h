@@ -21,14 +21,14 @@ namespace Hccl {
 
 class CcuContextReduceScatterMesh2D : public CcuContextAlgBase {
 public:
-    CcuContextReduceScatterMesh2D(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                              const CcuTransportGroup &group);
+    CcuContextReduceScatterMesh2D(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
     ~CcuContextReduceScatterMesh2D() override {}
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
-private:
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
 
+private:
     void InitResources();
     void PreSync();
     void PostSync(uint32_t signalIndex);
@@ -42,10 +42,10 @@ private:
     DataType outputDataType_;
     std::vector<uint64_t> dimSize_;
     uint32_t axisId_{0};
-    std::vector<uint32_t> dimId_;  // 本rank所在行或列的编号
-    uint32_t localId_{0};  // 本chip所在行或列的编号
-    uint32_t localSize_{0};  // 本rank所在行或列的总rank数
-    uint32_t oppsiteSize_{0}; // 本rank所在轴相反的行或列的总rank数
+    std::vector<uint32_t> dimId_; // 本rank所在行或列的编号
+    uint32_t localId_{0};         // 本chip所在行或列的编号
+    uint32_t localSize_{0};       // 本rank所在行或列的总rank数
+    uint32_t oppsiteSize_{0};     // 本rank所在轴相反的行或列的总rank数
     // load进来参数
     std::vector<CcuRep::Variable> input_;
     std::vector<CcuRep::Variable> output_;

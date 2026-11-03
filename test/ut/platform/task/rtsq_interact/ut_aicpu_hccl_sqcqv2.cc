@@ -21,18 +21,9 @@ using namespace hccl;
 
 class RtsqInteract_Sqcqv2_UT : public testing::Test {
 protected:
-static void SetUpTestCase()
-    {
-        std::cout << "RtsqInteract_Sqcqv2_UT SetUP" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "RtsqInteract_Sqcqv2_UT TearDown" << std::endl;
-    }
-    virtual void SetUp()
-    {
-        std::cout << "RtsqInteract_Sqcqv2_UT Test SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "RtsqInteract_Sqcqv2_UT SetUP" << std::endl; }
+    static void TearDownTestCase() { std::cout << "RtsqInteract_Sqcqv2_UT TearDown" << std::endl; }
+    virtual void SetUp() { std::cout << "RtsqInteract_Sqcqv2_UT Test SetUP" << std::endl; }
     virtual void TearDown()
     {
         GlobalMockObject::verify();
@@ -119,8 +110,9 @@ TEST_F(RtsqInteract_Sqcqv2_UT, Ut_AddOneMemcpySqeV2_WithReduce)
     uint8_t linkType = 0;
     uint32_t hcclQos = 3;
 
-    AddOneMemcpySqeV2(streamId, taskId, src, length, runtimeDataType, rtReduceOp, dst, partId, ssid,
-        devId, overflowAddr, linkType, sqe, &sqeType, hcclQos);
+    AddOneMemcpySqeV2(
+        streamId, taskId, src, length, runtimeDataType, rtReduceOp, dst, partId, ssid, devId, overflowAddr, linkType,
+        sqe, &sqeType, hcclQos);
 
     EXPECT_EQ(sqeType, MEMCPY_ASYNC_SQE_V2);
     rtStarsMemcpyAsyncSqeV2_t* sqeStruct = reinterpret_cast<rtStarsMemcpyAsyncSqeV2_t*>(sqe);
@@ -150,8 +142,9 @@ TEST_F(RtsqInteract_Sqcqv2_UT, Ut_AddOneMemcpySqeV2_WithoutReduce)
     uint8_t linkType = 0;
     uint32_t hcclQos = 3;
 
-    AddOneMemcpySqeV2(streamId, taskId, src, length, runtimeDataType, rtReduceOp, dst, partId, ssid,
-        devId, overflowAddr, linkType, sqe, &sqeType, hcclQos);
+    AddOneMemcpySqeV2(
+        streamId, taskId, src, length, runtimeDataType, rtReduceOp, dst, partId, ssid, devId, overflowAddr, linkType,
+        sqe, &sqeType, hcclQos);
 
     EXPECT_EQ(sqeType, MEMCPY_ASYNC_SQE_V2);
     rtStarsMemcpyAsyncSqeV2_t* sqeStruct = reinterpret_cast<rtStarsMemcpyAsyncSqeV2_t*>(sqe);
@@ -177,8 +170,9 @@ TEST_F(RtsqInteract_Sqcqv2_UT, Ut_AddOneMemcpySqeV2_WithLinkSio)
     uint8_t linkType = static_cast<uint8_t>(hccl::LinkType::LINK_SIO);
     uint32_t hcclQos = 10;
 
-    AddOneMemcpySqeV2(streamId, taskId, src, length, runtimeDataType, rtReduceOp, dst, partId, ssid,
-        devId, overflowAddr, linkType, sqe, &sqeType, hcclQos);
+    AddOneMemcpySqeV2(
+        streamId, taskId, src, length, runtimeDataType, rtReduceOp, dst, partId, ssid, devId, overflowAddr, linkType,
+        sqe, &sqeType, hcclQos);
 
     EXPECT_EQ(sqeType, MEMCPY_ASYNC_SQE_V2);
     rtStarsMemcpyAsyncSqeV2_t* sqeStruct = reinterpret_cast<rtStarsMemcpyAsyncSqeV2_t*>(sqe);

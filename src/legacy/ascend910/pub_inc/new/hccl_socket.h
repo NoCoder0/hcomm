@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef HCCL_SOCKET_H
 #define HCCL_SOCKET_H
@@ -20,7 +20,7 @@ extern "C" {
 #endif // __cplusplus
 
 /* Socket通信句柄（不透明指针） */
-typedef void *HcclSocket;
+typedef void* HcclSocket;
 
 const uint32_t HCCL_SOCK_CONN_TAG_MAX_SIZE = 192; ///< 握手标识最大长度（含终止符）
 
@@ -34,8 +34,9 @@ const uint32_t HCCL_SOCK_CONN_TAG_MAX_SIZE = 192; ///< 握手标识最大长度�
  * @param[out] socket 输出的socket句柄
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclSocketCreate(HcclNetDevDeployment nicDeployment, int32_t devicePhyId, int domain,
-    const struct sockaddr *addr, socklen_t addrlen, HcclSocket *socket);
+extern HcclResult HcclSocketCreate(
+    HcclNetDevDeployment nicDeployment, int32_t devicePhyId, int domain, const struct sockaddr* addr, socklen_t addrlen,
+    HcclSocket* socket);
 
 /**
  * @brief 关闭Socket句柄并释放资源
@@ -60,7 +61,7 @@ extern HcclResult HcclSocketListen(HcclSocket socket, int32_t backlog);
  * @param[out] socket 输出的新连接句柄
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclSocketAccept(void *serverSocket, char *handShakeTag, uint32_t tagLen, HcclSocket *socket);
+extern HcclResult HcclSocketAccept(void* serverSocket, char* handShakeTag, uint32_t tagLen, HcclSocket* socket);
 
 /**
  * @brief 客户端发起连接请求（非阻塞操作）
@@ -72,7 +73,7 @@ extern HcclResult HcclSocketAccept(void *serverSocket, char *handShakeTag, uint3
  * @return 执行状态码 HcclResult
  */
 extern HcclResult HcclSocketConnect(
-    HcclSocket socket, const struct sockaddr *addr, socklen_t addrlen, char *handShakeTag, uint32_t tagLen);
+    HcclSocket socket, const struct sockaddr* addr, socklen_t addrlen, char* handShakeTag, uint32_t tagLen);
 
 /**
  * @brief 获取Socket连接状态
@@ -80,7 +81,7 @@ extern HcclResult HcclSocketConnect(
  * @param[out] status 状态码输出（0表示正常）
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclSocketGetStatus(HcclSocket socket, int32_t *status);
+extern HcclResult HcclSocketGetStatus(HcclSocket socket, int32_t* status);
 
 /**
  * @brief 发送数据（非阻塞）
@@ -90,7 +91,7 @@ extern HcclResult HcclSocketGetStatus(HcclSocket socket, int32_t *status);
  * @param[out] sendLen 实际发送数据长度（可能部分发送）
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclSocketISend(HcclSocket socket, void *data, uint64_t len, uint64_t *sendLen);
+extern HcclResult HcclSocketISend(HcclSocket socket, void* data, uint64_t len, uint64_t* sendLen);
 
 /**
  * @brief 接收数据（非阻塞）
@@ -100,7 +101,7 @@ extern HcclResult HcclSocketISend(HcclSocket socket, void *data, uint64_t len, u
  * @param[out] recvLen 实际接收数据长度
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclSocketIRecv(HcclSocket socket, void *recvBuf, uint64_t len, uint64_t *recvLen);
+extern HcclResult HcclSocketIRecv(HcclSocket socket, void* recvBuf, uint64_t len, uint64_t* recvLen);
 
 /**
  * @struct SocketWlistInfo
@@ -136,7 +137,7 @@ extern HcclResult HcclSocketDisableWhiteList(HcclSocket socket);
  * @param[in] num 规则数量（数组长度）
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclSocketAddWhiteList(HcclSocket socket, SocketWlistInfo *whitelists, uint32_t num);
+extern HcclResult HcclSocketAddWhiteList(HcclSocket socket, SocketWlistInfo* whitelists, uint32_t num);
 
 /**
  * @brief 删除白名单规则
@@ -145,7 +146,7 @@ extern HcclResult HcclSocketAddWhiteList(HcclSocket socket, SocketWlistInfo *whi
  * @param[in] num 规则数量（数组长度）
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclSocketDelWhiteList(HcclSocket socket, SocketWlistInfo *whitelists, uint32_t num);
+extern HcclResult HcclSocketDelWhiteList(HcclSocket socket, SocketWlistInfo* whitelists, uint32_t num);
 
 #ifdef __cplusplus
 }

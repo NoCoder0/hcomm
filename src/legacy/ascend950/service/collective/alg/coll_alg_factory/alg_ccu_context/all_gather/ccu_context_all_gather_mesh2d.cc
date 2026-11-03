@@ -14,32 +14,32 @@
 namespace Hccl {
 
 constexpr int OUTPUT_XN_ID = 1;
-constexpr int TOKEN_XN_ID  = 2;
-constexpr int CKE_IDX_0    = 0;
-constexpr int CKE_IDX_1    = 1;
-constexpr int CKE_IDX_2    = 2;
-constexpr int CKE_IDX_3    = 3;
-constexpr int CKE_IDX_4    = 4;
-constexpr int FST_AXIS_ID  = 0;
-constexpr int SEC_AXIS_ID  = 1;
+constexpr int TOKEN_XN_ID = 2;
+constexpr int CKE_IDX_0 = 0;
+constexpr int CKE_IDX_1 = 1;
+constexpr int CKE_IDX_2 = 2;
+constexpr int CKE_IDX_3 = 3;
+constexpr int CKE_IDX_4 = 4;
+constexpr int FST_AXIS_ID = 0;
+constexpr int SEC_AXIS_ID = 1;
 
-CcuContextAllGatherMesh2D::CcuContextAllGatherMesh2D(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                                                   const CcuTransportGroup &group)
+CcuContextAllGatherMesh2D::CcuContextAllGatherMesh2D(
+    const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group)
     : CcuContextAlgBase(arg, transports, group)
 {
-    xAxisSize_             = CreateVariable();
-    yAxisSize_             = CreateVariable();
-    offset_                = CreateVariable();
-    sliceSize_             = CreateVariable();
-    firstInOffset_         = CreateVariable();
-    firstOutOffset_        = CreateVariable();
-    goASize_               = CreateGroupOpSize();
-    goBSize_               = CreateGroupOpSize();
+    xAxisSize_ = CreateVariable();
+    yAxisSize_ = CreateVariable();
+    offset_ = CreateVariable();
+    sliceSize_ = CreateVariable();
+    firstInOffset_ = CreateVariable();
+    firstOutOffset_ = CreateVariable();
+    goASize_ = CreateGroupOpSize();
+    goBSize_ = CreateGroupOpSize();
     secondInOutBaseOffset_ = CreateVariable();
     secondInOutStepOffset_ = CreateVariable();
-    localAxisSignal_       = CreateMaskSignal();
+    localAxisSignal_ = CreateMaskSignal();
 
-    const CcuCtxArgAllGatherMesh2D *ctxArg = dynamic_cast<const CcuCtxArgAllGatherMesh2D *>(&arg);
+    const CcuCtxArgAllGatherMesh2D* ctxArg = dynamic_cast<const CcuCtxArgAllGatherMesh2D*>(&arg);
     if (ctxArg == nullptr) {
         THROW<NullPtrException>(StringFormat("CcuContextAllGatherMesh2D::ctxArg ptr is null"));
     }
@@ -48,21 +48,22 @@ CcuContextAllGatherMesh2D::CcuContextAllGatherMesh2D(const CcuCtxArg &arg, const
     axisId_ = ctxArg->axisId_;
     uint32_t max_dimSize = 2;
     if (dimSize_.size() != max_dimSize or axisId_ > 1) {
-        THROW<NullPtrException>(StringFormat("CcuContextAllGatherMesh2D::dimSize[%u] or axisId[%u] is invalid",
-            dimSize_.size(), axisId_));
+        THROW<NullPtrException>(
+            StringFormat("CcuContextAllGatherMesh2D::dimSize[%u] or axisId[%u] is invalid", dimSize_.size(), axisId_));
     }
-    CHK_PRT_THROW(dimSize_[0] == 0 || dimSize_[1] == 0,
-                  HCCL_ERROR("[CcuContextAllGatherMesh2D] dimSize0[%llu] or dimSize1[%llu] is zero",
-                   dimSize_[0], dimSize_[1]),
-                  InvalidParamsException, "dimSize[0] or dimSize[1] is invalid");
+    CHK_PRT_THROW(
+        dimSize_[0] == 0 || dimSize_[1] == 0,
+        HCCL_ERROR("[CcuContextAllGatherMesh2D] dimSize0[%llu] or dimSize1[%llu] is zero", dimSize_[0], dimSize_[1]),
+        InvalidParamsException, "dimSize[0] or dimSize[1] is invalid");
     dimId_.emplace_back(rankId_ % dimSize_[0]);
     dimId_.emplace_back(rankId_ / dimSize_[0]);
     localId_ = dimId_[axisId_];
     localSize_ = dimSize_[axisId_];
     localAxisSignalName_ = "CcuContextAllGatherMesh2DAxisSync_" + std::to_string(axisId_);
     anotherAxisSignalName_ = "CcuContextAllGatherMesh2DAxisSync_" + std::to_string(1 - axisId_);
-    HCCL_INFO("[CcuContextAllGatherMesh2D] RankId[%u], DimSize: D0[%u]--D1[%u], localId[%u], lcoalSize[%u]",
-        rankId_, dimSize_[0], dimSize_[1], localId_, localSize_);
+    HCCL_INFO(
+        "[CcuContextAllGatherMesh2D] RankId[%u], DimSize: D0[%u]--D1[%u], localId[%u], localSize[%u]", rankId_,
+        dimSize_[0], dimSize_[1], localId_, localSize_);
 }
 
 void CcuContextAllGatherMesh2D::InitResources()
@@ -75,10 +76,11 @@ void CcuContextAllGatherMesh2D::InitResources()
             output_.push_back(CreateVariable());
             token_.push_back(CreateVariable());
         } else {
-            HCCL_INFO("[CcuContextAllGatherMesh2D] MyRank[%u], peerId[%u], transportIdx[%u]",
-                rankId_, peerId, transportIdx);
-            CHK_PRT_RET(transports[transportIdx] == nullptr,
-                HCCL_ERROR("[CcuContextAllGatherMesh2D] Algorithm transport ptr is null"),);
+            HCCL_INFO(
+                "[CcuContextAllGatherMesh2D] MyRank[%u], peerId[%u], transportIdx[%u]", rankId_, peerId, transportIdx);
+            CHK_PRT_RET(
+                transports[transportIdx] == nullptr,
+                HCCL_ERROR("[CcuContextAllGatherMesh2D] Algorithm transport ptr is null"), );
             output_.push_back(CreateVariable((*transports[transportIdx]), OUTPUT_XN_ID));
             token_.push_back(CreateVariable((*transports[transportIdx]), TOKEN_XN_ID));
             transportIdx++;
@@ -113,14 +115,14 @@ void CcuContextAllGatherMesh2D::ExchangeInfoAndSync()
 {
     HCCL_INFO("[CcuContextAllGatherMesh2D] ExchangeInfoAndSync run begins");
     uint16_t selfBit = 1 << localId_;
-    uint16_t allBit  = ((1 << localSize_) - 1) & (~(1 << localId_));
+    uint16_t allBit = ((1 << localSize_) - 1) & (~(1 << localId_));
 
     for (auto t : transports) {
         if (t == nullptr) {
             THROW<NullPtrException>(StringFormat("CcuContextAllGatherMesh2D::Algorithm transport ptr is null"));
         }
         WriteVariableWithSignal(*t, output_[localId_], OUTPUT_XN_ID, CKE_IDX_1, selfBit); // index = 1，传递output信息
-        WriteVariableWithSignal(*t, token_[localId_], TOKEN_XN_ID, CKE_IDX_2, selfBit);  // index = 2，传递token信息
+        WriteVariableWithSignal(*t, token_[localId_], TOKEN_XN_ID, CKE_IDX_2, selfBit); // index = 2，传递token信息
         HCCL_INFO("[CcuContextAllGatherMesh2D] change addr success");
     }
     GroupWait(*transportGroup, CKE_IDX_1, allBit);
@@ -133,7 +135,7 @@ void CcuContextAllGatherMesh2D::RankSync(uint32_t signalIndex)
 {
     HCCL_INFO("[CcuContextAllGatherMesh2D] RankSync run begins");
     uint16_t selfBit = 1 << localId_;
-    uint16_t allBit  = ((1 << localSize_) - 1) & (~(1 << localId_));
+    uint16_t allBit = ((1 << localSize_) - 1) & (~(1 << localId_));
 
     for (auto t : transports) {
         if (t == nullptr) {
@@ -194,7 +196,7 @@ void CcuContextAllGatherMesh2D::FirstStep()
 
 void CcuContextAllGatherMesh2D::SecondStep()
 {
-    HCCL_INFO("[CcuContextAllGatherMesh2D] secodeStep run begins");
+    HCCL_INFO("[CcuContextAllGatherMesh2D] secondStep run begins");
     uint64_t anotherSize = dimSize_[1 - axisId_];
 
     CcuRep::Memory src = CreateMemory();
@@ -282,21 +284,21 @@ void CcuContextAllGatherMesh2D::Algorithm()
     return;
 }
 
-std::vector<uint64_t> CcuContextAllGatherMesh2D::GeneArgs(const CcuTaskArg &arg)
+std::vector<uint64_t> CcuContextAllGatherMesh2D::GeneArgs(const CcuTaskArg& arg)
 {
-    const CcuTaskArgAllGatherMesh2D *taskArg = dynamic_cast<const CcuTaskArgAllGatherMesh2D *>(&arg);
+    const CcuTaskArgAllGatherMesh2D* taskArg = dynamic_cast<const CcuTaskArgAllGatherMesh2D*>(&arg);
     if (taskArg == nullptr) {
         THROW<NullPtrException>(StringFormat("CcuContextAllGatherMesh2D::taskArg ptr is null"));
     }
 
     // input&output&buffer地址
-    uint64_t inputAddr  = taskArg->inputAddr_;
+    uint64_t inputAddr = taskArg->inputAddr_;
     uint64_t outputAddr = taskArg->outputAddr_;
     uint64_t offset = taskArg->offset_;
     uint64_t xAxisSize = taskArg->xAxisSize_;
     uint64_t yAxisSize = taskArg->yAxisSize_;
     uint64_t sliceSize = xAxisSize + yAxisSize;
-    uint64_t tokenValue  = taskArg->token_;
+    uint64_t tokenValue = taskArg->token_;
 
     auto goSizeAxis = CalGoSize(xAxisSize);
     auto goSizeBxis = CalGoSize(yAxisSize);
@@ -330,15 +332,33 @@ std::vector<uint64_t> CcuContextAllGatherMesh2D::GeneArgs(const CcuTaskArg &arg)
         secondInOutStepOffset = offset;
     }
 
-    HCCL_INFO("[CcuContextAllGatherMesh2D][GeneArgs] RankId[%u]--AxisId[%u], inputAddr[%llu], outputAddr[%llu], \
-            aSize[%llu], bSize[%llu], offset[%llu], sliceSize[%llu], firstInOffset[%llu], firstOutOffset[%llu], \
-            secondInOutBaseOffset[%llu], secondInOutStepOffset[%llu]",
-            rankId_, axisId_, inputAddr, outputAddr, xAxisSize, yAxisSize, offset, sliceSize, firstInOffset,
-            firstOutOffset, secondInOutBaseOffset, secondInOutStepOffset);
+    HCCL_INFO(
+        "[CcuContextAllGatherMesh2D][GeneArgs] RankId[%u]--AxisId[%u], inputAddr[%llu], outputAddr[%llu], "
+        "aSize[%llu], bSize[%llu], offset[%llu], sliceSize[%llu], firstInOffset[%llu], firstOutOffset[%llu], "
+        "secondInOutBaseOffset[%llu], secondInOutStepOffset[%llu]",
+        rankId_, axisId_, inputAddr, outputAddr, xAxisSize, yAxisSize, offset, sliceSize, firstInOffset, firstOutOffset,
+        secondInOutBaseOffset, secondInOutStepOffset);
 
-    return {inputAddr, outputAddr, tokenValue, xAxisSize, yAxisSize, offset, sliceSize, firstInOffset, firstOutOffset,
-        secondInOutBaseOffset, secondInOutStepOffset, goSizeAxis[0], goSizeAxis[1], goSizeAxis[2], goSizeAxis[3],
-        goSizeBxis[0], goSizeBxis[1], goSizeBxis[2], goSizeBxis[3]};
+    return {
+        inputAddr,
+        outputAddr,
+        tokenValue,
+        xAxisSize,
+        yAxisSize,
+        offset,
+        sliceSize,
+        firstInOffset,
+        firstOutOffset,
+        secondInOutBaseOffset,
+        secondInOutStepOffset,
+        goSizeAxis[0],
+        goSizeAxis[1],
+        goSizeAxis[2],
+        goSizeAxis[3],
+        goSizeBxis[0],
+        goSizeBxis[1],
+        goSizeBxis[2],
+        goSizeBxis[3]};
 }
 
-}
+} // namespace Hccl

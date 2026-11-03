@@ -29,7 +29,7 @@ extern "C" {
  * @param[in] memMng 内存句柄
  * @param[in] fmt 格式化字串
  * @param[in] ... 格式化字串相关的可变参数。
-* @return 字串
+ * @return 字串
  *   @retval 非空 成功创建的字串
  *   @retval 空 失败
  */
@@ -72,4 +72,3 @@ int32_t BkfStrGetMemUsedLen(char *str);
 #endif
 
 #endif
-

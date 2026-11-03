@@ -2,9 +2,21 @@
 
 ## 产品支持情况
 
-- Ascend 950PR/Ascend 950DT：支持
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：支持
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：支持
+<!-- npu="950" id1 -->
+- Ascend 950PR&950DT系列产品：支持
+<!-- end id1 -->
+<!-- npu="A3" id2 -->
+- Atlas A3系列产品：支持
+<!-- end id2 -->
+<!-- npu="910b" id3 -->
+- Atlas A2系列产品：支持
+<!-- end id3 -->
+<!-- npu="910" id4 -->
+- Atlas训练系列产品：不支持
+<!-- end id4 -->
+<!-- npu="310p" id5 -->
+- Atlas推理系列产品：不支持
+<!-- end id5 -->
 
 ## 功能说明
 
@@ -32,14 +44,19 @@ int32_t：接口成功返回0，其他失败。
 
 ## 约束说明
 
-针对Ascend 950PR/Ascend 950DT，仅支持通信协议UBC_TP、UBC_CTP、UBoE。
+<!-- npu="950" id6 -->
+- 针对Ascend 950PR&950DT系列产品，仅支持通信协议UB_CTP、UBoE。
+<!-- end id6 -->
+
+- 同一个`ThreadHandle`不支持多线程并发访问。
+- 同一个`ChannelHandle`不支持多线程并发访问。
 
 ## 调用示例
 
 ```c
 // 申请通信线程资源
-CommEngine engine = CommEngine::COMM_ENGINE_CPU_TS; // Atlas A3 训练系列产品/Atlas A3 推理系列产品使用
-CommEngine engine = CommEngine::COMM_ENGINE_AICPU_TS; // Ascend 950PR/Ascend 950DT使用
+CommEngine engine = CommEngine::COMM_ENGINE_CPU_TS; // Atlas A3系列产品使用
+// CommEngine engine = CommEngine::COMM_ENGINE_AICPU_TS; // Ascend 950PR&950DT系列产品使用
 uint32_t threadNum = 1;
 uint32_t notifyNumPerThread = 1;
 ThreadHandle thread;
@@ -47,9 +64,9 @@ HcclComm comm;
 HcclThreadAcquire(comm, engine, threadNum, notifyNumPerThread, &thread);
 
 // 申请通信通道资源
+uint32_t channelNum = 1;
 HcclChannelDesc channelDesc;
 HcclChannelDescInit(&channelDesc, channelNum);
-uint32_t channelNum = 1;
 ChannelHandle channel;
 HcclChannelAcquire(comm, engine, &channelDesc, channelNum, &channel);
 

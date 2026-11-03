@@ -31,8 +31,8 @@ uint32_t NetCoOutDataNew(NetCo *co)
     }
     (void)memset_s(out, len, 0, len);
     VOS_AVLL_INIT_TREE(out->tblTypeSet, (AVLL_COMPARE)Bkfuint16_tCmp,
-                       BKF_OFFSET(NetCoOutTblType, vTbl) + BKF_OFFSET(NetCoOutTblTypeVTbl, typeId),
-                       BKF_OFFSET(NetCoOutTblType, avlNode));
+        BKF_OFFSET(NetCoOutTblType, vTbl) + BKF_OFFSET(NetCoOutTblTypeVTbl, typeId),
+        BKF_OFFSET(NetCoOutTblType, avlNode));
 
     co->out = out;
     return BKF_OK;
@@ -48,12 +48,13 @@ void NetCoOutDataDelete(NetCo *co)
     co->out = VOS_NULL;
 }
 
-#define NET_CO_OUT_LOG_TBL_TYPE(co, tblType) do {                                                      \
-    if ((co)->dbgOn) {                                                                                 \
-        uint8_t buf1_[BKF_1K / 2];                                                                       \
-        BKF_LOG_DEBUG(BKF_LOG_HND, "[%s]\n", NetCoOutGetTblTypeStr((tblType), buf1_, sizeof(buf1_))); \
-    }                                                                                                  \
-} while (0)
+#define NET_CO_OUT_LOG_TBL_TYPE(co, tblType)                                                                           \
+    do {                                                                                                               \
+        if ((co)->dbgOn) {                                                                                             \
+            uint8_t buf1_[BKF_1K / 2];                                                                                 \
+            BKF_LOG_DEBUG(BKF_LOG_HND, "[%s]\n", NetCoOutGetTblTypeStr((tblType), buf1_, sizeof(buf1_)));              \
+        }                                                                                                              \
+    } while (0)
 NetCoOutTblType *NetCoOutAddTblType(NetCo *co, NetCoOutTblTypeVTbl *vTbl)
 {
     if (!NET_TBL_TYPE_IS_VALID(vTbl->typeId)) {
@@ -79,8 +80,8 @@ NetCoOutTblType *NetCoOutAddTblType(NetCo *co, NetCoOutTblTypeVTbl *vTbl)
         BKF_FREE(memMng, tblType);
         return VOS_NULL;
     }
-    VOS_AVLL_INIT_TREE(tblType->tblSet, (AVLL_COMPARE)tblType->vTbl.keyCmp,
-                       BKF_OFFSET(NetCoOutTbl, key), BKF_OFFSET(NetCoOutTbl, avlNode));
+    VOS_AVLL_INIT_TREE(tblType->tblSet, (AVLL_COMPARE)tblType->vTbl.keyCmp, BKF_OFFSET(NetCoOutTbl, key),
+        BKF_OFFSET(NetCoOutTbl, avlNode));
     VOS_AVLL_INIT_NODE(tblType->avlNode);
     if (!VOS_AVLL_INSERT(co->out->tblTypeSet, tblType->avlNode)) {
         BkfStrDel(tblType->vTbl.name);
@@ -145,12 +146,13 @@ NetCoOutTblType *NetCoOutGetNextTblType(NetCo *co, void **itorInOut)
     return tblType;
 }
 
-#define NET_CO_OUT_LOG_TBL(co, tbl) do {                                                       \
-    if ((co)->dbgOn) {                                                                         \
-        uint8_t buf1_[BKF_1K / 2];                                                               \
-        BKF_LOG_DEBUG(BKF_LOG_HND, "[%s]\n", NetCoOutGetTblStr((tbl), buf1_, sizeof(buf1_))); \
-    }                                                                                          \
-} while (0)
+#define NET_CO_OUT_LOG_TBL(co, tbl)                                                                                    \
+    do {                                                                                                               \
+        if ((co)->dbgOn) {                                                                                             \
+            uint8_t buf1_[BKF_1K / 2];                                                                                 \
+            BKF_LOG_DEBUG(BKF_LOG_HND, "[%s]\n", NetCoOutGetTblStr((tbl), buf1_, sizeof(buf1_)));                      \
+        }                                                                                                              \
+    } while (0)
 NetCoOutTbl *NetCoOutAddTbl(NetCo *co, NetCoOutTblType *tblType, void *tblKey, void *tblValOrNull, uint16_t valLen)
 {
     BkfMemMng *memMng = co->memMng;
@@ -230,7 +232,6 @@ uint32_t NetCoOutUpdTbl(NetCo *co, NetCoOutTbl *tbl, void *tblValOrNullNew, uint
     return BKF_OK;
 }
 
-
 void NetCoOutDelOneTbl(NetCo *co, NetCoOutTbl *tbl)
 {
     if (!BKF_SIGN_IS_VALID(tbl->sign, NET_CO_OUT_TBL_SIGN)) {
@@ -249,29 +250,30 @@ void NetCoOutDelOneTbl(NetCo *co, NetCoOutTbl *tbl)
     BKF_FREE(memMng, tbl);
 }
 
-
 void NetCoOutDelAllTbl(NetCo *co, NetCoOutTblType *tblType)
 {
     NetCoOutTbl *tbl;
     void *itor;
-    for (tbl = NetCoOutGetFirstTbl(co, tblType, &itor); tbl != VOS_NULL;
-         tbl = NetCoOutGetNextTbl(co, tblType, &itor)) {
+    for (tbl = NetCoOutGetFirstTbl(co, tblType, &itor); tbl != VOS_NULL; tbl = NetCoOutGetNextTbl(co, tblType, &itor)) {
         NetCoOutDelOneTbl(co, tbl);
     }
 }
 
 NetCoOutTbl *NetCoOutFindTbl(NetCo *co, NetCoOutTblType *tblType, void *tblKey)
 {
+    (void)co;
     return VOS_AVLL_FIND(tblType->tblSet, tblKey);
 }
 
 NetCoOutTbl *NetCoOutFindNextTbl(NetCo *co, NetCoOutTblType *tblType, void *tblKey)
 {
+    (void)co;
     return VOS_AVLL_FIND_NEXT(tblType->tblSet, tblKey);
 }
 
 NetCoOutTbl *NetCoOutGetFirstTbl(NetCo *co, NetCoOutTblType *tblType, void **itorOutOrNull)
 {
+    (void)co;
     NetCoOutTbl *tbl = VOS_AVLL_FIRST(tblType->tblSet);
     if (itorOutOrNull != VOS_NULL) {
         *itorOutOrNull = (tbl != VOS_NULL) ? VOS_AVLL_NEXT(tblType->tblSet, tbl->avlNode) : VOS_NULL;
@@ -281,6 +283,7 @@ NetCoOutTbl *NetCoOutGetFirstTbl(NetCo *co, NetCoOutTblType *tblType, void **ito
 
 NetCoOutTbl *NetCoOutGetNextTbl(NetCo *co, NetCoOutTblType *tblType, void **itorInOut)
 {
+    (void)co;
     NetCoOutTbl *tbl = (*itorInOut);
     *itorInOut = (tbl != VOS_NULL) ? VOS_AVLL_NEXT(tblType->tblSet, tbl->avlNode) : VOS_NULL;
     return tbl;
@@ -294,15 +297,16 @@ char *NetCoOutGetTblTypeStr(NetCoOutTblType *tblType, uint8_t *buf, int32_t bufL
     }
 
     NetCoOutTblTypeVTbl *vTbl = &tblType->vTbl;
-    int32_t ret = snprintf_truncated_s((char*)buf, bufLen, "sign(%#x), typeId(%u)/name(%s), "
-                                     "keyLen(%u)/keyCmp(%#x)/keyGetStr(%#x)/valGetStr(%#x), dataCnt(%d)",
-                                     tblType->sign, vTbl->typeId, vTbl->name, vTbl->keyLen, BKF_MASK_ADDR(vTbl->keyCmp),
-                                     BKF_MASK_ADDR(vTbl->keyGetStr), BKF_MASK_ADDR(vTbl->valGetStr), tblType->tblCnt);
+    int32_t ret = snprintf_truncated_s((char *)buf, bufLen,
+        "sign(%#x), typeId(%u)/name(%s), "
+        "keyLen(%u)/keyCmp(%#x)/keyGetStr(%#x)/valGetStr(%#x), dataCnt(%d)",
+        tblType->sign, vTbl->typeId, vTbl->name, vTbl->keyLen, BKF_MASK_ADDR(vTbl->keyCmp),
+        BKF_MASK_ADDR(vTbl->keyGetStr), BKF_MASK_ADDR(vTbl->valGetStr), tblType->tblCnt);
     if (ret <= 0) {
         return "__NetCoOutGetTblTypeStrSnprintfNg";
     }
 
-    return (char*)buf;
+    return (char *)buf;
 }
 
 char *NetCoOutGetTblStr(NetCoOutTbl *tbl, uint8_t *buf, int32_t bufLen)
@@ -316,13 +320,13 @@ char *NetCoOutGetTblStr(NetCoOutTbl *tbl, uint8_t *buf, int32_t bufLen)
     char *keyStr = vTbl->keyGetStr(&tbl->key[0], buf1, sizeof(buf1));
     uint8_t buf2[BKF_1K];
     char *valStr = vTbl->valGetStr(tbl->val, buf2, sizeof(buf2));
-    int32_t ret = snprintf_truncated_s((char*)buf, bufLen, "sign(%#x), typeId(%u)/key(%s)/valLen(%u)/val(%s)",
-                                     tbl->sign, vTbl->typeId, keyStr, tbl->valLen, valStr);
+    int32_t ret = snprintf_truncated_s((char *)buf, bufLen, "sign(%#x), typeId(%u)/key(%s)/valLen(%u)/val(%s)",
+        tbl->sign, vTbl->typeId, keyStr, tbl->valLen, valStr);
     if (ret <= 0) {
         return "__NetCoOutGetTblStrSnprintfNg";
     }
 
-    return (char*)buf;
+    return (char *)buf;
 }
 
 void NetCoOutGetTblStatCnt(NetCo *co, NetCoOutTblStatCnt *cnt)
@@ -340,8 +344,7 @@ void NetCoOutGetTblStatCntOfTblType(NetCo *co, NetCoOutTblType *tblType, NetCoOu
 {
     NetCoOutTbl *tbl;
     void *itor;
-    for (tbl = NetCoOutGetFirstTbl(co, tblType, &itor); tbl != VOS_NULL;
-         tbl = NetCoOutGetNextTbl(co, tblType, &itor)) {
+    for (tbl = NetCoOutGetFirstTbl(co, tblType, &itor); tbl != VOS_NULL; tbl = NetCoOutGetNextTbl(co, tblType, &itor)) {
         cnt->tblCnt++;
     }
 }
@@ -352,22 +355,24 @@ char *NetCoOutGetTblStatCntStr(NetCoOutTblStatCnt *cnt, uint8_t *buf, int32_t bu
         return "__NetCoOutGetTblStatCntStrArgNg";
     }
 
-    int32_t ret = snprintf_truncated_s((char*)buf, bufLen, "tblTypeCnt(%d)/tblCnt(%d)", cnt->tblTypeCnt, cnt->tblCnt);
+    int32_t ret = snprintf_truncated_s((char *)buf, bufLen, "tblTypeCnt(%d)/tblCnt(%d)", cnt->tblTypeCnt, cnt->tblCnt);
     if (ret <= 0) {
         return "__NetCoOutGetTblStatCntStrSnprintfNg";
     }
 
-    return (char*)buf;
+    return (char *)buf;
 }
 
 STATIC void NetCoOutInitGetTblCxt(NetCo *co, NetCoOutGetTblCtx *ctx)
 {
+    (void)co;
     (void)memset_s(ctx, sizeof(NetCoOutGetTblCtx), 0, sizeof(NetCoOutGetTblCtx));
     BKF_SIGN_SET(ctx->sign, NET_CO_OUT_GET_TBL_CTX_SIGN);
 }
 STATIC NetCoOutTblType *NetCoOutUpdGetTblCtx(NetCo *co, NetCoOutGetTblCtx *ctx, NetCoOutTblType *tblTypeOrNull,
-                                               BOOL tblTypeIsNew, NetCoOutTbl *tblOrNull)
+    BOOL tblTypeIsNew, NetCoOutTbl *tblOrNull)
 {
+    (void)co;
     /* 设置一些默认值，用于中途返回 */
     ctx->hasTblType = VOS_FALSE;
     ctx->tblTypeIsNew = VOS_FALSE;
@@ -441,4 +446,3 @@ NetCoOutTblType *NetCoOutGetNextTblByCtx(NetCo *co, NetCoOutGetTblCtx *ctx)
 #ifdef __cplusplus
 }
 #endif
-

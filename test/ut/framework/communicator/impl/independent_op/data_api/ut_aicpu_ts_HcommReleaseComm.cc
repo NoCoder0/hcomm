@@ -35,13 +35,9 @@ using namespace hccl;
  * 该测试类用于验证HcommReleaseComm接口的功能，包括：
  * - 测试通信ID为空时的错误处理
  */
-class UtAicpuTsHcommReleaseComm : public testing::Test
-{
+class UtAicpuTsHcommReleaseComm : public testing::Test {
 protected:
-    virtual void TearDown() override
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() override { GlobalMockObject::verify(); }
 
     int32_t res{HCCL_E_RESERVED};
 };

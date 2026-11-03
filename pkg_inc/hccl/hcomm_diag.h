@@ -14,10 +14,9 @@
 #include <cstddef>
 #include <hccl/hccl_types.h>
 
-
 #ifdef __cplusplus
 extern "C" {
-#endif  // __cplusplus
+#endif // __cplusplus
 /**
  * @brief 注册算子信息到通信域
  * @param[in] commId 通信域id
@@ -37,7 +36,7 @@ extern HcclResult HcommRegOpInfo(const char* commId, void* opInfo, size_t size);
  * @return HcclResult 执行结果状态码
  * @note 当前仅支持AICPU模式
  */
-typedef void (*HcommGetOpInfoCallback)(const void *opInfo, char *outPut, size_t size);
+typedef void (*HcommGetOpInfoCallback)(const void* opInfo, char* outPut, size_t size);
 extern HcclResult HcommRegOpTaskException(const char* commId, HcommGetOpInfoCallback callback);
 
 /**
@@ -62,9 +61,8 @@ extern HcclResult HcommProfilingReportKernelStartTask(uint64_t thread, const cha
  */
 extern HcclResult HcommProfilingReportKernelEndTask(uint64_t thread, const char* groupname);
 
-
 #ifdef __cplusplus
 }
-#endif  // __cplusplus
+#endif // __cplusplus
 
 #endif

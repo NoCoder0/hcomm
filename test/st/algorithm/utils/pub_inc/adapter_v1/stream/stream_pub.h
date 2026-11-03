@@ -36,46 +36,30 @@ enum class StreamType {
  */
 class Stream {
 public:
-
     Stream();
-    Stream(const Stream &that);
-    Stream(Stream &&that);
+    Stream(const Stream& that);
+    Stream(Stream&& that);
     explicit Stream(const StreamType streamType, bool isMainStream = false);
     explicit Stream(const rtStream_t rtStream, bool isMainStream = true);
 
     ~Stream();
 
     bool isMainStream_ = false;
-    inline bool IsMainStream()
-    {
-        return isMainStream_;
-    }
+    inline bool IsMainStream() { return isMainStream_; }
 
-    Stream &operator=(const Stream &that);
-    Stream operator=(Stream &&that);
+    Stream& operator=(const Stream& that);
+    Stream operator=(Stream&& that);
 
-    void *ptr() const
-    {
-        return stream_;
-    }
-    operator bool() const
-    {
-        return stream_ != nullptr;
-    }
-    s32 id() const
-    {
-        return streamId_;
-    }
-    u32 sqId() const
-    {
-        return sqId_;
-    }
+    void* ptr() const { return stream_; }
+    operator bool() const { return stream_ != nullptr; }
+    s32 id() const { return streamId_; }
+    u32 sqId() const { return sqId_; }
 
-    void *stream_ = nullptr;
+    void* stream_ = nullptr;
     s32 streamId_ = -1;
     u32 sqId_;
 
-    HcclResult PopTaskLogicInfo(TaskLogicInfo &taskLogicInfo);
+    HcclResult PopTaskLogicInfo(TaskLogicInfo& taskLogicInfo);
 };
 
 class StreamAddrRecorder {
@@ -84,6 +68,6 @@ public:
     u64 streamAddr = 0x1;
 };
 
-}  // namespace hccl
+} // namespace hccl
 
 #endif /* STREAM_PUB_H */

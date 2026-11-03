@@ -1,12 +1,13 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "gtest/gtest.h"
 #include <mockcpp/mokc.h>
 #include <mockcpp/mockcpp.hpp>
@@ -29,20 +30,15 @@ using namespace hccl;
 
 class AllToAllTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AllToAllTest set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AllToAllTest set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AllToAllTest tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AllToAllTest tear down." << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -457,10 +453,14 @@ TEST_F(AllToAllTest, alltoall_test_910_93_opbase_2superpod_RunAlltoAllDirectFull
 TEST_F(AllToAllTest, alltoall_test_910_93_opbase_RunAlltoAllDirectFullmesh_1)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}, {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15},
-        {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}, {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}},
-        {{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}, {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15},
-        {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}}};
+    TopoMeta topoMeta{
+        {{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+         {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+         {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+         {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}},
+        {{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+         {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+         {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}}};
 
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLTOALL;
@@ -548,9 +548,9 @@ TEST_F(AllToAllTest, alltoall_AlltoAllVDirectFullmesh)
 TEST_F(AllToAllTest, alltoall_superpod_asym_gcd)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0, 1, 2}, {0, 1, 2}}, {{0, 1, 2}, {0, 1, 2}}, {{0, 1, 2}, {0, 1, 2}, {0, 1, 2}, {0, 1, 2}}};
+    TopoMeta topoMeta{{{0, 1, 2}, {0, 1, 2}}, {{0, 1, 2}, {0, 1, 2}}, {{0, 1, 2}, {0, 1, 2}, {0, 1, 2}, {0, 1, 2}}};
 
-    CheckerOpParam  checkerOpParam;
+    CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLTOALL;
     checkerOpParam.tag = "AllToAll";
     checkerOpParam.opMode = CheckerOpMode::OPBASE;
@@ -745,23 +745,23 @@ TEST_F(AllToAllTest, RunAlltoAllVPipelineFor91093)
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 2, 1, 8);
     setenv("HCCL_BUFFSIZE", "1", 1);
- 
+
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLTOALL;
     checkerOpParam.tag = "AllToAll";
     checkerOpParam.opMode = CheckerOpMode::OPBASE;
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_910_93;
- 
+
     checkerOpParam.All2AllDataDes.sendType = CheckerDataType::DATA_TYPE_INT8;
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_INT8;
- 
+
     // 生成sendCountMatrix矩阵，alltoall的底层实现走alltoallvc
     u32 rankNum = GetRankNumFormTopoMeta(topoMeta);
     checkerOpParam.All2AllDataDes.sendCountMatrix = GenerateSendCountMatrix(100, rankNum);
     checkerOpParam.All2AllDataDes.sendType = CheckerDataType::DATA_TYPE_INT8;
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_INT8;
     checkerOpParam.All2AllDataDes.sendCount = 100;
- 
+
     Checker checker;
     HcclResult ret;
     ret = checker.Check(checkerOpParam, topoMeta);

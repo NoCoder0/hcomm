@@ -25,7 +25,7 @@ u32 GetAddrHigh(u64 addr);
 class HcclSqe {
 public:
     virtual u64 GetSqe() = 0;
-    virtual ~HcclSqe()   = default;
+    virtual ~HcclSqe() = default;
 };
 
 class HcclNotifyWaitSqe : public HcclSqe {
@@ -44,7 +44,7 @@ class HcclNotifyRecordSqe : public HcclSqe {
 public:
     HcclNotifyRecordSqe();
     void Config(u16 streamId, u16 taskId, u64 notifyId);
-    u64  GetSqe() override;
+    u64 GetSqe() override;
 
 private:
     std::unique_ptr<RtStarsNotifySqe> sqe;
@@ -66,8 +66,9 @@ class HcclSdmaSqe : public HcclSqe {
 public:
     HcclSdmaSqe();
 
-    void Config(u16 streamId, u16 taskId, const u64 src, u32 length, RtDataType rtDataType, RtReduceKind rtReduceOp,
-                const u64 dst, u32 partId);
+    void Config(
+        u16 streamId, u16 taskId, const u64 src, u32 length, RtDataType rtDataType, RtReduceKind rtReduceOp,
+        const u64 dst, u32 partId);
 
     u64 GetSqe() override;
 

@@ -12,8 +12,7 @@
 
 using namespace AscendC;
 
-template<typename T>
-// todo 简化参数
+template <typename T>
 class AivAlltoAllMesh1D : public AivCommBase {
 public:
     __aicore__ inline AivAlltoAllMesh1D() {}
@@ -56,19 +55,19 @@ public:
         // PutRemote阶段
         srcOffset_ = input_ + dstRankSpk * inputSliceStride_;
         dstOffset_ = reinterpret_cast<uint64_t>(GM_IN[dstRankSpk]) + rank_ * dataSize_;
-        CpGM2GM((__gm__ T *)dstOffset_, (__gm__ T *)srcOffset_, len_);
+        CpGM2GM((__gm__ T*)dstOffset_, (__gm__ T*)srcOffset_, len_);
         pipe_barrier(PIPE_ALL);
 
         uint64_t setFlagIdxSpk = rank_;
-        Record(dstRankSpk, setFlagIdxSpk, opTag_);  // 按照数据源rank编排flag的偏移量
+        Record(dstRankSpk, setFlagIdxSpk, opTag_); // 按照数据源rank编排flag的偏移量
 
         // PostCopy阶段
         uint64_t waitFlagIdxSpk = dstRankSpk;
         WaitFlag(rank_, waitFlagIdxSpk, opTag_);
-        
+
         srcOffset_ = reinterpret_cast<uint64_t>(GM_IN[rank_]) + dstRankSpk * dataSize_;
         dstOffset_ = output_ + dstRankSpk * outputSliceStride_;
-        CpGM2GM((__gm__ T *)dstOffset_, (__gm__ T *)srcOffset_, len_);
+        CpGM2GM((__gm__ T*)dstOffset_, (__gm__ T*)srcOffset_, len_);
         pipe_barrier(PIPE_ALL);
     }
 
@@ -90,7 +89,7 @@ private:
         // PutRemote阶段
         srcOffset_ = input_ + dstRank * inputSliceStride_ + sliceOffsetSize;
         dstOffset_ = reinterpret_cast<uint64_t>(GM_IN[rank_]) + dstRank * dataSize_ + sliceOffsetSize;
-        CpGM2GM((__gm__ T *)dstOffset_, (__gm__ T *)srcOffset_, sliceCount);
+        CpGM2GM((__gm__ T*)dstOffset_, (__gm__ T*)srcOffset_, sliceCount);
         pipe_barrier(PIPE_ALL);
 
         uint64_t setFlagIdx = coreIdx_;
@@ -102,14 +101,14 @@ private:
 
         srcOffset_ = reinterpret_cast<uint64_t>(GM_IN[dstRank]) + rank_ * dataSize_ + sliceOffsetSize;
         dstOffset_ = output_ + dstRank * outputSliceStride_ + sliceOffsetSize;
-        CpGM2GM((__gm__ T *)dstOffset_, (__gm__ T *)srcOffset_, sliceCount);
+        CpGM2GM((__gm__ T*)dstOffset_, (__gm__ T*)srcOffset_, sliceCount);
         pipe_barrier(PIPE_ALL);
     }
 
     __aicore__ inline void ProcessMultiRank()
     {
         // 下发核数由上层框架保证符合控核公式，算子内不校验
-        uint32_t rankNumPerCore = (rankSize_ + coreNum_ - 1) / coreNum_;  // 向上取整
+        uint32_t rankNumPerCore = (rankSize_ + coreNum_ - 1) / coreNum_; // 向上取整
 
         for (uint32_t idx = 0; idx < rankNumPerCore; ++idx) {
             uint32_t dstRank = coreIdx_ * rankNumPerCore + idx;
@@ -120,11 +119,11 @@ private:
             // PutRemote阶段
             srcOffset_ = input_ + dstRank * inputSliceStride_;
             dstOffset_ = reinterpret_cast<uint64_t>(GM_IN[rank_]) + dstRank * dataSize_;
-            CpGM2GM((__gm__ T *)dstOffset_, (__gm__ T *)srcOffset_, len_);
+            CpGM2GM((__gm__ T*)dstOffset_, (__gm__ T*)srcOffset_, len_);
             pipe_barrier(PIPE_ALL);
 
             uint64_t setFlagIdx = dstRank;
-            Record(rank_, setFlagIdx, opTag_);  // 按照数据源rank编排flag的偏移量
+            Record(rank_, setFlagIdx, opTag_); // 按照数据源rank编排flag的偏移量
         }
 
         for (uint32_t idx = 0; idx < rankNumPerCore; ++idx) {
@@ -139,13 +138,13 @@ private:
 
             srcOffset_ = reinterpret_cast<uint64_t>(GM_IN[dstRank]) + rank_ * dataSize_;
             dstOffset_ = output_ + dstRank * outputSliceStride_;
-            CpGM2GM((__gm__ T *)dstOffset_, (__gm__ T *)srcOffset_, len_);
+            CpGM2GM((__gm__ T*)dstOffset_, (__gm__ T*)srcOffset_, len_);
             pipe_barrier(PIPE_ALL);
         }
     }
 
-    __aicore__ inline void SplitData(uint64_t dataCount, uint64_t splitNum, uint64_t idx,
-        uint64_t& sliceOffset, uint64_t& sliceCount)
+    __aicore__ inline void
+    SplitData(uint64_t dataCount, uint64_t splitNum, uint64_t idx, uint64_t& sliceOffset, uint64_t& sliceCount)
     {
         // 防止idx越界
         if (idx >= splitNum) {
@@ -155,7 +154,7 @@ private:
         }
 
         uint64_t baseSliceCount = dataCount / splitNum;
-        uint64_t remainSize = dataCount % splitNum;  // remainSize必然小于splitNum
+        uint64_t remainSize = dataCount % splitNum; // remainSize必然小于splitNum
         // 将remainSize均分给前remainSize个核，每个核多1
         if (idx < remainSize) {
             sliceCount = baseSliceCount + 1;
@@ -171,13 +170,13 @@ private:
     uint32_t coreNum_;
     uint32_t coreIdx_;
 
-    uint64_t dataSize_;  // 要给每个rank搬运的数据大小
+    uint64_t dataSize_; // 要给每个rank搬运的数据大小
 
     uint64_t srcOffset_;
     uint64_t dstOffset_;
 };
 
-template<typename T>
+template <typename T>
 __aicore__ inline void AivAlltoAllV2Mesh1D(EXTERN_KERNEL_ARGS_DEF_V2)
 {
     AivAlltoAllMesh1D<T> op;
@@ -192,7 +191,7 @@ __aicore__ inline void AivAlltoAllV2Mesh1D(EXTERN_KERNEL_ARGS_DEF_V2)
     op.BarrierAll();
 }
 
-template<typename T>
+template <typename T>
 __aicore__ inline void AivAlltoAllV2Mesh1DSuperKernel(SUPERKERNEL_ARGS_DEF)
 {
     AivAlltoAllMesh1D<T> op;
@@ -221,28 +220,28 @@ __aicore__ inline void AivAlltoAllV2Mesh1DSuperKernel(SUPERKERNEL_ARGS_DEF)
 
 __aicore__ inline void sk_a2a_mesh_1d(SUPERKERNEL_ARGS_DEF)
 {
-    #ifdef HCCL_DTYPE_INT8
-        AivAlltoAllV2Mesh1DSuperKernel<int8_t> (SUPERKERNEL_ARGS_CALL);
-    #elif defined HCCL_DTYPE_UINT8
-        AivAlltoAllV2Mesh1DSuperKernel<uint8_t> (SUPERKERNEL_ARGS_CALL);
-    #elif defined HCCL_DTYPE_INT16
-        AivAlltoAllV2Mesh1DSuperKernel<int16_t> (SUPERKERNEL_ARGS_CALL);
-    #elif defined HCCL_DTYPE_UINT16
-        AivAlltoAllV2Mesh1DSuperKernel<uint16_t> (SUPERKERNEL_ARGS_CALL);
-    #elif defined HCCL_DTYPE_INT32
-        AivAlltoAllV2Mesh1DSuperKernel<int32_t> (SUPERKERNEL_ARGS_CALL);
-    #elif defined HCCL_DTYPE_UINT32
-        AivAlltoAllV2Mesh1DSuperKernel<uint32_t> (SUPERKERNEL_ARGS_CALL);
-    #elif defined HCCL_DTYPE_FP16
-        AivAlltoAllV2Mesh1DSuperKernel<half> (SUPERKERNEL_ARGS_CALL);
-    #elif defined HCCL_DTYPE_FP32
-        AivAlltoAllV2Mesh1DSuperKernel<float> (SUPERKERNEL_ARGS_CALL);
-    #elif defined HCCL_DTYPE_BFP16
-        AivAlltoAllV2Mesh1DSuperKernel<bfloat16_t> (SUPERKERNEL_ARGS_CALL);
-    #elif defined HCCL_DTYPE_INT64
-        AivAlltoAllV2Mesh1DSuperKernel<int64_t> (SUPERKERNEL_ARGS_CALL);
-    #elif defined HCCL_DTYPE_UINT64
-        AivAlltoAllV2Mesh1DSuperKernel<uint64_t> (SUPERKERNEL_ARGS_CALL);
-    #else
-    #endif
+#ifdef HCCL_DTYPE_INT8
+    AivAlltoAllV2Mesh1DSuperKernel<int8_t>(SUPERKERNEL_ARGS_CALL);
+#elif defined HCCL_DTYPE_UINT8
+    AivAlltoAllV2Mesh1DSuperKernel<uint8_t>(SUPERKERNEL_ARGS_CALL);
+#elif defined HCCL_DTYPE_INT16
+    AivAlltoAllV2Mesh1DSuperKernel<int16_t>(SUPERKERNEL_ARGS_CALL);
+#elif defined HCCL_DTYPE_UINT16
+    AivAlltoAllV2Mesh1DSuperKernel<uint16_t>(SUPERKERNEL_ARGS_CALL);
+#elif defined HCCL_DTYPE_INT32
+    AivAlltoAllV2Mesh1DSuperKernel<int32_t>(SUPERKERNEL_ARGS_CALL);
+#elif defined HCCL_DTYPE_UINT32
+    AivAlltoAllV2Mesh1DSuperKernel<uint32_t>(SUPERKERNEL_ARGS_CALL);
+#elif defined HCCL_DTYPE_FP16
+    AivAlltoAllV2Mesh1DSuperKernel<half>(SUPERKERNEL_ARGS_CALL);
+#elif defined HCCL_DTYPE_FP32
+    AivAlltoAllV2Mesh1DSuperKernel<float>(SUPERKERNEL_ARGS_CALL);
+#elif defined HCCL_DTYPE_BFP16
+    AivAlltoAllV2Mesh1DSuperKernel<bfloat16_t>(SUPERKERNEL_ARGS_CALL);
+#elif defined HCCL_DTYPE_INT64
+    AivAlltoAllV2Mesh1DSuperKernel<int64_t>(SUPERKERNEL_ARGS_CALL);
+#elif defined HCCL_DTYPE_UINT64
+    AivAlltoAllV2Mesh1DSuperKernel<uint64_t>(SUPERKERNEL_ARGS_CALL);
+#else
+#endif
 }

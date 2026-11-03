@@ -61,15 +61,15 @@ typedef struct tagWfwArgForMux WfwArgForMux;
    如果不相等，需要权衡好，新cookie指向对象是否能处理缓冲中已经存在的旧事件
 4. 某些场景，app在线程处理函数中调用get接口获取回调，调用即可。
 */
-typedef int (*F_WFW_IMUX_ATTACH_FD)(void *cookieInit, int fd, uint32_t interestedEvents,
-                                    F_WFW_MUX_FD_PROC fdProc, void *fdCookie, WfwArgForMux *argForMuxOrNull);
-typedef int (*F_WFW_IMUX_REATTACH_FD)(void *cookieInit, int fd, uint32_t interestedEvents,
-                                      F_WFW_MUX_FD_PROC fdProc, void *fdCookie, WfwArgForMux *argForMuxOrNull);
+typedef int (*F_WFW_IMUX_ATTACH_FD)(void *cookieInit, int fd, uint32_t interestedEvents, F_WFW_MUX_FD_PROC fdProc,
+    void *fdCookie, WfwArgForMux *argForMuxOrNull);
+typedef int (*F_WFW_IMUX_REATTACH_FD)(void *cookieInit, int fd, uint32_t interestedEvents, F_WFW_MUX_FD_PROC fdProc,
+    void *fdCookie, WfwArgForMux *argForMuxOrNull);
 typedef int (*F_WFW_IMUX_DETACH_FD)(void *cookieInit, int fd);
 typedef void *(*F_WFW_IMUX_LOOP_RUN)(void *cookieInit);
 typedef void (*F_WFW_IMUX_STOP_LOOP_RUN)(void *cookieInit);
 typedef F_WFW_MUX_FD_PROC (*F_WFW_IMUX_GET_FD_PROC)(void *cookieInit, int fd, void **fdCookieOut,
-                                                    uint32_t *interestedEventsOut);
+    uint32_t *interestedEventsOut);
 typedef struct tagWfwMuxInitArg {
     char *name;
     BkfMemMng *memMng;
@@ -86,8 +86,8 @@ typedef struct tagWfwMuxInitArg {
 /* attach/reattach */
 struct tagWfwArgForMux {
     uint32_t selfCid; /* 代表一个不可重入的调度对象，即组件实例 */
-    BOOL isMeshFd; /* 指明fd的类型。因为mesh实现原因而输入 */
-    BOOL notLogEvt; /* 不记录event */
+    BOOL isMeshFd;    /* 指明fd的类型。因为mesh实现原因而输入 */
+    BOOL notLogEvt;   /* 不记录event */
     uint8_t rsv1[0x10];
 };
 
@@ -97,10 +97,10 @@ typedef void (*F_WFW_MUX_FD_DOAFTER)(void *cookie);
 WfwMux *WfwMuxInit(WfwMuxInitArg *arg);
 void WfwMuxUninit(WfwMux *mux);
 
-int WfwMuxAttachFd(WfwMux *mux, int fd, uint32_t interestedEvents,
-                    F_WFW_MUX_FD_PROC fdProc, void *fdCookie, WfwArgForMux *argForMuxOrNull);
-int WfwMuxReattachFd(WfwMux *mux, int fd, uint32_t interestedEvents,
-                      F_WFW_MUX_FD_PROC fdProc, void *fdCookie, WfwArgForMux *argForMuxOrNull);
+int WfwMuxAttachFd(WfwMux *mux, int fd, uint32_t interestedEvents, F_WFW_MUX_FD_PROC fdProc, void *fdCookie,
+    WfwArgForMux *argForMuxOrNull);
+int WfwMuxReattachFd(WfwMux *mux, int fd, uint32_t interestedEvents, F_WFW_MUX_FD_PROC fdProc, void *fdCookie,
+    WfwArgForMux *argForMuxOrNull);
 int WfwMuxDetachFd(WfwMux *mux, int fd);
 void *WfwMuxLoopRun(WfwMux *mux);
 void WfwMuxStopLoopRun(WfwMux *mux);
@@ -115,4 +115,3 @@ F_WFW_MUX_FD_PROC WfwMuxGetFdProc(WfwMux *mux, int fd, void **fdCookieOut, uint3
 #endif
 
 #endif
-

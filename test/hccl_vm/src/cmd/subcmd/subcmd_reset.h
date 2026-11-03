@@ -21,10 +21,10 @@ class ResetCommand : public CommandBase {
 public:
     static std::string StaticName() { return "reset"; }
     void Setup(CLI::App& app) override;
-    
+
 private:
     void Execute();
 };
-}
+} // namespace HcclSim
 
 #endif

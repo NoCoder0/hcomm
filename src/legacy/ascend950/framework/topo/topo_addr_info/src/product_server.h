@@ -7,6 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #ifndef __PRODUCT_SERVER_H__
 #define __PRODUCT_SERVER_H__
 
@@ -16,13 +17,22 @@
 extern "C" {
 #endif
 
-int ServerGetRootinfoLen(size_t *len);
+#define MAX_UE_ID (99) // 定义一个MAX_UE_ID， mesh必须使用最大的UE
 
-int ServerGetRootinfo(int npu_id, unsigned int mainboard_id, void *buf, size_t* len);
+enum UbEntityType {
+    UE_TYPE_MESH = 0,
+    UE_TYPE_CLOS = 1,
+    UE_TYPE_UBOE = 2,
+    UE_TYPE_UB_RTP = 3,
+    UE_TYPE_CLOS_PORTS = 4,
+};
+
+int ServerGetRootinfoLen(size_t* len);
+
+int ServerGetRootinfo(int npu_id, unsigned int mainboard_id, void* buf, size_t* len);
 
 #ifdef __cplusplus
 }
 #endif
 
-
-#endif  // __PRODUCT_SERVER_H__
+#endif // __PRODUCT_SERVER_H__

@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: ccu executor resource manager
  * Author: xx
  */
@@ -32,7 +35,8 @@ public:
     DeviceResourceManager(const DeviceResourceManager&) = delete;
     DeviceResourceManager& operator=(const DeviceResourceManager&) = delete;
 
-    static DeviceResourceManager& GetInstance() {
+    static DeviceResourceManager& GetInstance()
+    {
         static DeviceResourceManager instance;
         return instance;
     }

@@ -14,36 +14,39 @@
 
 namespace Hccl {
 
-SelectorStatus SendRecvAutoSelector::SelectAicpuAlgo(const TopoInfo &topoInfo,
-                                                      const CollAlgOperator &op,
-                                                      const std::map<OpType, std::vector<HcclAlgoType>> &configAlgMap,
-                                                      std::string &primQueueGenName) const
+SelectorStatus SendRecvAutoSelector::SelectAicpuAlgo(
+    const TopoInfo& topoInfo, const CollAlgOperator& op,
+    const std::map<OpType, std::vector<HcclAlgoType>>& configAlgMap, std::string& primQueueGenName) const
 {
-    (void) topoInfo;
-    std::vector<HcclAlgoType> algos = std::vector<HcclAlgoType>(HCCL_ALGO_LEVEL_NUM, HcclAlgoType::HCCL_ALGO_TYPE_DEFAULT);
+    (void)topoInfo;
+    std::vector<HcclAlgoType> algos
+        = std::vector<HcclAlgoType>(HCCL_ALGO_LEVEL_NUM, HcclAlgoType::HCCL_ALGO_TYPE_DEFAULT);
     auto it = configAlgMap.find(op.opType);
     if (it != configAlgMap.end()) {
         algos = it->second;
     }
 
-    HCCL_INFO("hccl algo op config: config opType:%s, level0:%u, level1:%u, level2:%u, level3:%u",
+    HCCL_INFO(
+        "hccl algo op config: config opType:%s, level0:%u, level1:%u, level2:%u, level3:%u",
         op.opType.Describe().c_str(), algos[0], algos[1], algos[2], algos[3]);
 
-    if(op.opType == OpType::SEND) {
+    if (op.opType == OpType::SEND) {
         primQueueGenName = "InsSend";
         return SelectorStatus::MATCH;
-    } else if (op.opType == OpType::RECV){
+    } else if (op.opType == OpType::RECV) {
         primQueueGenName = "InsRecv";
         return SelectorStatus::MATCH;
     }
     return SelectorStatus::NOT_MATCH;
 }
 
-SelectorStatus SendRecvAutoSelector::SelectAivAlgo(const TopoInfo &topoInfo, const CollAlgOperator &op,
-    const std::map<OpType, std::vector<HcclAlgoType>> &configAlgMap, std::string &primQueueGenName) const
+SelectorStatus SendRecvAutoSelector::SelectAivAlgo(
+    const TopoInfo& topoInfo, const CollAlgOperator& op,
+    const std::map<OpType, std::vector<HcclAlgoType>>& configAlgMap, std::string& primQueueGenName) const
 {
-    (void) topoInfo;
-    std::vector<HcclAlgoType> algos = std::vector<HcclAlgoType>(HCCL_ALGO_LEVEL_NUM, HcclAlgoType::HCCL_ALGO_TYPE_DEFAULT);
+    (void)topoInfo;
+    std::vector<HcclAlgoType> algos
+        = std::vector<HcclAlgoType>(HCCL_ALGO_LEVEL_NUM, HcclAlgoType::HCCL_ALGO_TYPE_DEFAULT);
     auto it = configAlgMap.find(op.opType);
     if (it != configAlgMap.end()) {
         algos = it->second;
@@ -51,10 +54,10 @@ SelectorStatus SendRecvAutoSelector::SelectAivAlgo(const TopoInfo &topoInfo, con
 
     HCCL_INFO("[SendRecvAutoSelector] select AIV algo for Send/Recv");
 
-    if(op.opType == OpType::SEND) {
+    if (op.opType == OpType::SEND) {
         primQueueGenName = "AivSend";
         return SelectorStatus::MATCH;
-    } else if (op.opType == OpType::RECV){
+    } else if (op.opType == OpType::RECV) {
         primQueueGenName = "AivRecv";
         return SelectorStatus::MATCH;
     }

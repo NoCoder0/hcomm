@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: unit test for TransLocMSToLocMemExecutor
  * Author: xx
  */
@@ -29,12 +32,11 @@ protected:
 };
 
 // Test: TransLocMSToLocMemExecutor struct size check
-TEST_F(TransLocMSToLocMemExecutorTest, StructSize) {
-    EXPECT_GT(sizeof(TransLocMSToLocMemExecutor), 0);
-}
+TEST_F(TransLocMSToLocMemExecutorTest, StructSize) { EXPECT_GT(sizeof(TransLocMSToLocMemExecutor), 0); }
 
 // Test: TransLocMSToLocMemExecutor default constructor
-TEST_F(TransLocMSToLocMemExecutorTest, DefaultConstructor) {
+TEST_F(TransLocMSToLocMemExecutorTest, DefaultConstructor)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
     TransLocMSToLocMemExecutor executor(0, 0, 0, instr, nullptr);
@@ -42,46 +44,50 @@ TEST_F(TransLocMSToLocMemExecutorTest, DefaultConstructor) {
 }
 
 // Test: TransLocMSToLocMemExecutor parameterized constructor
-TEST_F(TransLocMSToLocMemExecutorTest, ParameterizedConstructor) {
+TEST_F(TransLocMSToLocMemExecutorTest, ParameterizedConstructor)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     TransLocMSToLocMemExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Describe());
 }
 
 // Test: TransLocMSToLocMemExecutor Parser with zero values
-TEST_F(TransLocMSToLocMemExecutorTest, ParserZeroValues) {
+TEST_F(TransLocMSToLocMemExecutorTest, ParserZeroValues)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     TransLocMSToLocMemExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Parser());
     EXPECT_NO_THROW(executor.Describe());
 }
 
 // Test: TransLocMSToLocMemExecutor Parser with max values
-TEST_F(TransLocMSToLocMemExecutorTest, ParserMaxValues) {
+TEST_F(TransLocMSToLocMemExecutorTest, ParserMaxValues)
+{
     CcuInstr instr;
     memset(&instr, 0xFF, sizeof(instr));
-    
+
     TransLocMSToLocMemExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Parser());
     EXPECT_NO_THROW(executor.Describe());
 }
 
 // Test: TransLocMSToLocMemExecutor Parser with specific parameters
-TEST_F(TransLocMSToLocMemExecutorTest, ParserSpecificParameters) {
+TEST_F(TransLocMSToLocMemExecutorTest, ParserSpecificParameters)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     instr.v1.transLocMSToLocMem.locGSAId = 100;
     instr.v1.transLocMSToLocMem.locXnId = 50;
     instr.v1.transLocMSToLocMem.locMSId = 0x8000 | 10;
     instr.v1.transLocMSToLocMem.lengthXnId = 5;
     instr.v1.transLocMSToLocMem.channelId = 0;
     instr.v1.transLocMSToLocMem.lengthEn = 1;
-    
+
     TransLocMSToLocMemExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Parser());
     std::string desc = executor.Describe();
@@ -89,10 +95,11 @@ TEST_F(TransLocMSToLocMemExecutorTest, ParserSpecificParameters) {
 }
 
 // Test: TransLocMSToLocMemExecutor with different lengthEn values
-TEST_F(TransLocMSToLocMemExecutorTest, DifferentLengthEnValues) {
+TEST_F(TransLocMSToLocMemExecutorTest, DifferentLengthEnValues)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     for (uint16_t lenEn = 0; lenEn <= 1; lenEn++) {
         instr.v1.transLocMSToLocMem.lengthEn = lenEn;
         TransLocMSToLocMemExecutor executor(0, 0, 0, instr, nullptr);
@@ -102,12 +109,13 @@ TEST_F(TransLocMSToLocMemExecutorTest, DifferentLengthEnValues) {
 }
 
 // Test: TransLocMSToLocMemExecutor with different MS IDs
-TEST_F(TransLocMSToLocMemExecutorTest, DifferentMsIds) {
+TEST_F(TransLocMSToLocMemExecutorTest, DifferentMsIds)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     uint16_t msIds[] = {0, 1, 100, SimCcuV1::CCU_RESOURCE_MS_NUM - 1, 0x7FFF, 0xFFFF};
-    
+
     for (auto msId : msIds) {
         instr.v1.transLocMSToLocMem.locMSId = msId;
         TransLocMSToLocMemExecutor executor(0, 0, 0, instr, nullptr);
@@ -117,12 +125,13 @@ TEST_F(TransLocMSToLocMemExecutorTest, DifferentMsIds) {
 }
 
 // Test: TransLocMSToLocMemExecutor Describe contains expected keywords
-TEST_F(TransLocMSToLocMemExecutorTest, DescribeContent) {
+TEST_F(TransLocMSToLocMemExecutorTest, DescribeContent)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
     instr.v1.transLocMSToLocMem.locGSAId = 10;
     instr.v1.transLocMSToLocMem.locMSId = 100;
-    
+
     TransLocMSToLocMemExecutor executor(0, 0, 0, instr, nullptr);
     executor.Parser();
     std::string desc = executor.Describe();
@@ -131,17 +140,19 @@ TEST_F(TransLocMSToLocMemExecutorTest, DescribeContent) {
 }
 
 // Test: TransLocMSToLocMemExecutor inheritance check
-TEST_F(TransLocMSToLocMemExecutorTest, InheritanceCheck) {
+TEST_F(TransLocMSToLocMemExecutorTest, InheritanceCheck)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     TransLocMSToLocMemExecutor executor(0, 0, 0, instr, nullptr);
     CcuExecutorBase* base = &executor;
     EXPECT_NE(base, nullptr);
 }
 
-TEST_F(TransLocMSToLocMemExecutorTest, ProcessWithZeroValues) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(TransLocMSToLocMemExecutorTest, ProcessWithZeroValues)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     mgr.Init(0, 2, RunnerCcuVersion::CCU_V1, {});
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
@@ -156,7 +167,8 @@ TEST_F(TransLocMSToLocMemExecutorTest, ProcessWithZeroValues) {
     EXPECT_NO_THROW(executor.Process(mgr));
 }
 
-TEST_F(TransLocMSToLocMemExecutorTest, RunWithCkeNotSatisfied) {
+TEST_F(TransLocMSToLocMemExecutorTest, RunWithCkeNotSatisfied)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
     instr.v1.transLocMSToLocMem.waitCKEId = 0;
@@ -168,8 +180,9 @@ TEST_F(TransLocMSToLocMemExecutorTest, RunWithCkeNotSatisfied) {
     executor.Run();
 }
 
-TEST_F(TransLocMSToLocMemExecutorTest, ProcessWithNullAddressFails) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(TransLocMSToLocMemExecutorTest, ProcessWithNullAddressFails)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     mgr.Init(0, 2, RunnerCcuVersion::CCU_V1, {});
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
@@ -180,8 +193,9 @@ TEST_F(TransLocMSToLocMemExecutorTest, ProcessWithNullAddressFails) {
     EXPECT_NO_THROW(executor.Process(mgr));
 }
 
-TEST_F(TransLocMSToLocMemExecutorTest, ProcessWithLengthEnEnabled) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(TransLocMSToLocMemExecutorTest, ProcessWithLengthEnEnabled)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     mgr.Init(0, 2, RunnerCcuVersion::CCU_V1, {});
     mgr.UpdateXnValue(0, 0, 0, 4096);
     CcuInstr instr;

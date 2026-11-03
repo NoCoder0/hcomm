@@ -15,7 +15,7 @@
 
 #define private public
 #define protected public
-#include "base_config.h"
+#include "base_config_legacy.h"
 #include "env_func.h"
 #undef private
 #undef protected
@@ -25,19 +25,14 @@ using namespace std;
 
 class RdmaTimeoutTest : public testing::Test {
 protected:
-    static void SetUpTestCase() {
-        cout << "RdmaTimeoutTest SetUp" << endl;
-    }
+    static void SetUpTestCase() { cout << "RdmaTimeoutTest SetUp" << endl; }
 
-    static void TearDownTestCase() {
-        cout << "RdmaTimeoutTest TearDown" << endl;
-    }
+    static void TearDownTestCase() { cout << "RdmaTimeoutTest TearDown" << endl; }
 
-    virtual void SetUp() {
-        cout << "A Test case in RdmaTimeoutTest SetUp" << endl;
-    }
+    virtual void SetUp() { cout << "A Test case in RdmaTimeoutTest SetUp" << endl; }
 
-    virtual void TearDown() {
+    virtual void TearDown()
+    {
         GlobalMockObject::verify();
         cout << "A Test case in RdmaTimeoutTest TearDown" << endl;
     }

@@ -72,4 +72,3 @@ int32_t BkfChCliWrite(BkfChCliMng *chMng, BkfChCliConnId *connId, void *dataBuf,
 #endif
 
 #endif
-

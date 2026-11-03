@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: ccu executor -- load sqe arg to gsa
  * Author: caiyifan
  */
@@ -25,22 +28,33 @@ using namespace hcomm::CcuRep;
 // 注册LoadSqeArgsToGsaExecutor create Func
 REG_CCU_EXECUTOR_CREATE_FUNC(SimCcuV1::LOAD_TYPE, SimCcuV1::LOADSQEARGSTOGSA_CODE, LoadSqeArgsToGsaExecutor);
 
-void LoadSqeArgsToGsaExecutor::Parser() {
+void LoadSqeArgsToGsaExecutor::Parser()
+{
     ValidateVersionExclusive(RunnerCcuVersion::CCU_V1, "LoadSqeArgsToGsa");
-    gsaId_    = instr_.v1.loadSqeArgsToXn.xnId;
+    gsaId_ = instr_.v1.loadSqeArgsToXn.xnId;
     sqeArgId_ = instr_.v1.loadSqeArgsToXn.sqeArgsId;
 }
 
-void LoadSqeArgsToGsaExecutor::Run() {
+void LoadSqeArgsToGsaExecutor::Run()
+{
     // 加载sqe参数至xn寄存器，只需更新对应dev的ccu资源映射表即可
-    auto &ccuResMgr = CcuResourceManager::GetInstance();
+    auto& ccuResMgr = CcuResourceManager::GetInstance();
     uint64_t sqeArgValue = ccuResMgr.GetSqeArgValue(rankId_, dieId_, sqeArgId_);
 
     ccuResMgr.UpdateXnValue(rankId_, dieId_, gsaId_, sqeArgValue);
-    HCCL_VM_DEBUG("Load SqeArg: locCcu[{}:{}], GSAId=[{}], sqeArgValue=[{}]",
-        rankId_, dieId_, gsaId_, sqeArgValue);
+    HCCL_VM_DEBUG("Load SqeArg: locCcu[{}:{}], GSAId=[{}], sqeArgValue=[{}]", rankId_, dieId_, gsaId_, sqeArgValue);
 }
 
-std::string LoadSqeArgsToGsaExecutor::Describe() {
+std::string LoadSqeArgsToGsaExecutor::Describe()
+{
     return HcclSim::StringFormat("[Simulation Execute] Load SqeArg[%u] to GSA[%u]\n", sqeArgId_, gsaId_);
+}
+
+CcuTrace::CcuInstrTraceDetail LoadSqeArgsToGsaExecutor::CollectTraceDetail()
+{
+    CcuTrace::CcuInstrTraceDetail detail;
+    detail.typeName = "LoadSqeArgsToGsa";
+    auto& ccuResMgr = CcuResourceManager::GetInstance();
+    detail.args["sqeArgValue"] = std::to_string(ccuResMgr.GetSqeArgValue(rankId_, dieId_, sqeArgId_));
+    return detail;
 }

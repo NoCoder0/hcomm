@@ -39,18 +39,14 @@ using namespace hccl;
  * 该测试类用于验证CommTaskLaunch接口的参数校验和基本功能。
  * 测试场景包括空指针校验和参数有效性校验。
  */
-class UtAicpuTsCommTaskLaunch : public testing::Test
-{
+class UtAicpuTsCommTaskLaunch : public testing::Test {
 protected:
     virtual void SetUp() override
     {
         MOCKER_CPP(&Hccl::IAicpuTsThread::SdmaCopy).stubs().will(returnValue(HCCL_SUCCESS));
     }
 
-    virtual void TearDown() override
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() override { GlobalMockObject::verify(); }
 
     AicpuTsThread threadOnDevice{StreamType::STREAM_TYPE_DEVICE, 0, NotifyLoadType::DEVICE_NOTIFY};
     ThreadHandle thread = reinterpret_cast<ThreadHandle>(&threadOnDevice);

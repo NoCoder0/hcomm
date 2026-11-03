@@ -1,12 +1,13 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "gtest/gtest.h"
 
 #include <vector>
@@ -23,22 +24,17 @@
 #include "checker.h"
 using namespace checker;
 
-class ReduceScatterGeneralizationTest: public ::testing::TestWithParam<std::tuple<int, CheckerDataType, vector<int>>> {
+class ReduceScatterGeneralizationTest : public ::testing::TestWithParam<std::tuple<int, CheckerDataType, vector<int>>> {
 public:
-    static void SetUpTestCase()
-    {
-        std::cout << "ReduceScatterGeneralizationTest set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "ReduceScatterGeneralizationTest set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "ReduceScatterGeneralizationTest tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "ReduceScatterGeneralizationTest tear down." << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -82,11 +78,10 @@ TEST_P(ReduceScatterGeneralizationTest, reduce_scatter_test)
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 }
 
-INSTANTIATE_TEST_SUITE_P(ReduceScatterCaseTestGeneralization, ReduceScatterGeneralizationTest,
-    testing::Combine
-    (
+INSTANTIATE_TEST_SUITE_P(
+    ReduceScatterCaseTestGeneralization, ReduceScatterGeneralizationTest,
+    testing::Combine(
         testing::Values(800, 1000000008, 5000000008),
-        testing::Values(CheckerDataType::DATA_TYPE_INT32, CheckerDataType::DATA_TYPE_INT8, CheckerDataType::DATA_TYPE_BFP16),
-        testing::ValuesIn(std::vector<std::vector<int>>{{1,1,16}, {1,4,16}, {1,2,8}, {1,2,7}})
-    )
-);
+        testing::Values(
+            CheckerDataType::DATA_TYPE_INT32, CheckerDataType::DATA_TYPE_INT8, CheckerDataType::DATA_TYPE_BFP16),
+        testing::ValuesIn(std::vector<std::vector<int>>{{1, 1, 16}, {1, 4, 16}, {1, 2, 8}, {1, 2, 7}})));

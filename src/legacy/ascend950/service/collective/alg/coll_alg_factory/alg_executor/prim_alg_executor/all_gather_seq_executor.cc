@@ -18,19 +18,16 @@
 namespace Hccl {
 template <typename AlgTopoMatch, typename AlgTemp0, typename AlgTemp1>
 AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::AllGatherSeqExecutor() : CollAlgBase()
-{
-}
+{}
 
 template <typename AlgTopoMatch, typename AlgTemp0, typename AlgTemp1>
 AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::~AllGatherSeqExecutor()
-{
-}
+{}
 
 // dataSize_ as input
 template <typename AlgTopoMatch, typename AlgTemp0, typename AlgTemp1>
-HcclResult AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::CalcResOffload(const RankGraph *rankGraph,
-                                                                                  const u64         &dataSize,
-                                                                                  CollOffloadOpResReq     &resReq)
+HcclResult AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::CalcResOffload(
+    const RankGraph* rankGraph, const u64& dataSize, CollOffloadOpResReq& resReq)
 {
     (void)dataSize;
     resReq.requiredScratchMemSize = 0;
@@ -42,7 +39,7 @@ HcclResult AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::CalcResOffloa
 
     // instantiate templates
     auto virtRankMapIter = virtRankMap_.begin();
-    auto vTopoIter       = vTopo_.begin();
+    auto vTopoIter = vTopo_.begin();
     tempRankSizes_.push_back((*virtRankMapIter).size());
 
     AlgTemp0 tempAlg0(myRank_, tempRankSizes_[0], (*vTopoIter), (*virtRankMapIter));
@@ -65,10 +62,8 @@ HcclResult AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::CalcResOffloa
 
 // dataSize_ as input
 template <typename AlgTopoMatch, typename AlgTemp0, typename AlgTemp1>
-HcclResult AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::GenPrimQues(const RankGraph  *rankGraph,
-                                                                               const CollAlgOperator &op,
-                                                                               const CollAlgParams   &params,
-                                                                               PrimQuePtr             primQue)
+HcclResult AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::GenPrimQues(
+    const RankGraph* rankGraph, const CollAlgOperator& op, const CollAlgParams& params, PrimQuePtr primQue)
 {
     // init and check params
     CHK_RET(Init(op, params, primQue));
@@ -94,8 +89,9 @@ HcclResult AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::GenPrimQues(c
 
     std::vector<PrimQuePtr> requiredQue0;
     CHK_RET(InitQueue(tempResReq0.queNum, requiredQue0));
-    HCCL_INFO("[CollAlgFactory] Rank[%d], allGather template 0 [%s]: requiredQue Num [%u].", myRank_,
-               tempAlg0.Describe().c_str(), tempResReq0.queNum);
+    HCCL_INFO(
+        "[CollAlgFactory] Rank[%d], allGather template 0 [%s]: requiredQue Num [%u].", myRank_,
+        tempAlg0.Describe().c_str(), tempResReq0.queNum);
     tempRequiredQues_.push_back(requiredQue0);
 
     ResLinks tempLinks0;
@@ -107,8 +103,9 @@ HcclResult AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::GenPrimQues(c
 
     std::vector<PrimQuePtr> requiredQue1;
     CHK_RET(InitQueue(tempResReq1.queNum, requiredQue1));
-    HCCL_INFO("[CollAlgFactory] Rank[%d], allGather template 1 [%s]: requiredQue Num [%u].", myRank_,
-               tempAlg1.Describe().c_str(), tempResReq1.queNum);
+    HCCL_INFO(
+        "[CollAlgFactory] Rank[%d], allGather template 1 [%s]: requiredQue Num [%u].", myRank_,
+        tempAlg1.Describe().c_str(), tempResReq1.queNum);
     tempRequiredQues_.push_back(requiredQue1);
 
     ResLinks tempLinks1;
@@ -116,7 +113,7 @@ HcclResult AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::GenPrimQues(c
     tempResLinks_.push_back(tempLinks1);
 
     u32 dataSizePerVolume = DataTypeSizeGet(dataType_);
-    dataSize_             = dataCount_ * dataSizePerVolume;
+    dataSize_ = dataCount_ * dataSizePerVolume;
 
     if (opMode_ == OpMode::OFFLOAD) {
         HCCL_INFO("[CollAlgFactory] Rank[%d], Generating Primitive Queues in OFFLOAD Mode for Host.", myRank_);
@@ -130,8 +127,8 @@ HcclResult AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::GenPrimQues(c
 }
 
 template <typename AlgTopoMatch, typename AlgTemp0, typename AlgTemp1>
-HcclResult AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::CalcRes(const RankGraph *rankGraph,
-                                                                           CollAlgResReq     &algResReq)
+HcclResult
+AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::CalcRes(const RankGraph* rankGraph, CollAlgResReq& algResReq)
 {
     // Topo Match
     AlgTopoMatch topoMatch(myRank_, rankSize_, rankGraph, devType_);
@@ -159,18 +156,16 @@ HcclResult AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::CalcRes(const
 }
 
 template <typename AlgTopoMatch, typename AlgTemp0, typename AlgTemp1>
-HcclResult AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::GenPrimQuesAIC(const AlgTopoInfo     &topoInfo,
-                                                                                  const CollAlgOperator &op,
-                                                                                  const CollAlgParams   &params,
-                                                                                  ConnectedLinkMgr      *linkMgr,
-                                                                                  PrimQuePtr             primQue)
+HcclResult AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::GenPrimQuesAIC(
+    const AlgTopoInfo& topoInfo, const CollAlgOperator& op, const CollAlgParams& params, ConnectedLinkMgr* linkMgr,
+    PrimQuePtr primQue)
 {
     // init and check params
     CHK_RET(Init(op, params, primQue));
 
     // Topo Match
-    vTopo_       = topoInfo.vTopo;
-    virtRanks_   = topoInfo.virtRanks;
+    vTopo_ = topoInfo.vTopo;
+    virtRanks_ = topoInfo.virtRanks;
     virtRankMap_ = topoInfo.virtRankMap;
 
     tempRankSizes_.push_back((virtRankMap_[0]).size());
@@ -191,14 +186,16 @@ HcclResult AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::GenPrimQuesAI
 
     std::vector<PrimQuePtr> requiredQue0;
     CHK_RET(InitQueue(tempResReq0.queNum, requiredQue0));
-    HCCL_INFO("[CollAlgFactory] Rank[%d], allGather template 0 [%s]: requiredQue Num [%u].", myRank_,
-               tempAlg0.Describe().c_str(), tempResReq0.queNum);
+    HCCL_INFO(
+        "[CollAlgFactory] Rank[%d], allGather template 0 [%s]: requiredQue Num [%u].", myRank_,
+        tempAlg0.Describe().c_str(), tempResReq0.queNum);
     tempRequiredQues_.push_back(requiredQue0);
 
     std::vector<PrimQuePtr> requiredQue1;
     CHK_RET(InitQueue(tempResReq1.queNum, requiredQue1));
-    HCCL_INFO("[CollAlgFactory] Rank[%d], allGather template 1 [%s]: requiredQue Num [%u].", myRank_,
-               tempAlg1.Describe().c_str(), tempResReq1.queNum);
+    HCCL_INFO(
+        "[CollAlgFactory] Rank[%d], allGather template 1 [%s]: requiredQue Num [%u].", myRank_,
+        tempAlg1.Describe().c_str(), tempResReq1.queNum);
     tempRequiredQues_.push_back(requiredQue1);
 
     ResLinks tempLinks0;
@@ -210,7 +207,7 @@ HcclResult AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::GenPrimQuesAI
     tempResLinks_.push_back(tempLinks1);
 
     u32 dataSizePerVolume = DataTypeSizeGet(dataType_);
-    dataSize_             = dataCount_ * dataSizePerVolume;
+    dataSize_ = dataCount_ * dataSizePerVolume;
 
     if (opMode_ == OpMode::OFFLOAD) {
         HCCL_INFO("[CollAlgFactory] Rank[%d], Generating Primitive Queues in OFFLOAD Mode for AICPU.", myRank_);
@@ -224,26 +221,26 @@ HcclResult AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::GenPrimQuesAI
 }
 
 template <typename AlgTopoMatch, typename AlgTemp0, typename AlgTemp1>
-HcclResult AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::GenPrimQues4Offload(AlgTemplateBase &tempAlg0,
-                                                                                       AlgTemplateBase &tempAlg1)
+HcclResult AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::GenPrimQues4Offload(
+    AlgTemplateBase& tempAlg0, AlgTemplateBase& tempAlg1)
 {
     RankSliceInfo sliceInfoVec0;
-    AllignInfo    allignInfo = {enableAllign_, allignSize_, dataType_};
+    AllignInfo allignInfo = {enableAllign_, allignSize_, dataType_};
     CHK_RET(tempAlg0.CalcSliceInfo(allignInfo, dataSize_, sliceInfoVec0));
 
     u64 outcomeSize = dataSize_ * tempRankSizes_[0];
-    u32 outDataIdx  = virtRankMap_[1][myRank_];
+    u32 outDataIdx = virtRankMap_[1][myRank_];
 
     BuffInfo buffInfo;
-    buffInfo.inBuffType     = BufferType::INPUT;
-    buffInfo.outBuffType    = BufferType::OUTPUT;
-    buffInfo.inBuffBaseOff  = 0;
+    buffInfo.inBuffType = BufferType::INPUT;
+    buffInfo.outBuffType = BufferType::OUTPUT;
+    buffInfo.inBuffBaseOff = 0;
     buffInfo.outBuffBaseOff = outDataIdx * outcomeSize;
 
     TempFuncs tempFuncs;
-    tempFuncs.opMode              = opMode_;
+    tempFuncs.opMode = opMode_;
     tempFuncs.enableCounterNotify = IsEnableCounterNotify();
-    tempFuncs.forAlgSeqComb       = false;
+    tempFuncs.forAlgSeqComb = false;
 
     CHK_RET(tempAlg0.GenPrimQue(tempFuncs, sliceInfoVec0, buffInfo, tempResLinks_[0], tempRequiredQues_[0]));
 
@@ -261,22 +258,24 @@ HcclResult AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::GenPrimQues4O
 }
 
 template <typename AlgTopoMatch, typename AlgTemp0, typename AlgTemp1>
-HcclResult AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::GenPrimQues4Opbase(const u32 dataSizePerVolume,
-                                                                                      AlgTemplateBase &tempAlg0,
-                                                                                      AlgTemplateBase &tempAlg1)
+HcclResult AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::GenPrimQues4Opbase(
+    const u32 dataSizePerVolume, AlgTemplateBase& tempAlg0, AlgTemplateBase& tempAlg1)
 {
-    CHK_PRT_RET(dataSizePerVolume == 0,
-                HCCL_ERROR("[CollAlgFactory] Rank [%d], Invalid dataSizePerVolume [%u].", myRank_, dataSizePerVolume),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        dataSizePerVolume == 0,
+        HCCL_ERROR("[CollAlgFactory] Rank [%d], Invalid dataSizePerVolume [%u].", myRank_, dataSizePerVolume),
+        HcclResult::HCCL_E_INTERNAL);
 
-    u32 scratchInputSize
-        = static_cast<int>((rankSize_ % dataSizePerVolume == 0)
-                               ? floor(maxTmpMemSize_ / rankSize_)
-                               : floor(maxTmpMemSize_ / (rankSize_ * dataSizePerVolume)) * dataSizePerVolume);
+    CHK_PRT_RET(rankSize_ == 0, HCCL_ERROR("[CollAlgFactory] RankSize is zero!"), HcclResult::HCCL_E_INTERNAL);
+    u32 scratchInputSize = static_cast<int>(
+        (rankSize_ % dataSizePerVolume == 0) ?
+            floor(maxTmpMemSize_ / rankSize_) :
+            floor(maxTmpMemSize_ / (rankSize_ * dataSizePerVolume)) * dataSizePerVolume);
 
-    CHK_PRT_RET(scratchInputSize == 0,
-                HCCL_ERROR("[CollAlgFactory] Rank [%d], Invalid input maxTmpMemSize [%u].", myRank_, maxTmpMemSize_),
-                HcclResult::HCCL_E_PARA);
+    CHK_PRT_RET(
+        scratchInputSize == 0,
+        HCCL_ERROR("[CollAlgFactory] Rank [%d], Invalid input maxTmpMemSize [%u].", myRank_, maxTmpMemSize_),
+        HcclResult::HCCL_E_PARA);
 
     BuffInfo buffInfo;
     buffInfo.outBuffType = BufferType::SCRATCH;
@@ -290,23 +289,23 @@ HcclResult AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::GenPrimQues4O
 
         // expected outcome of level 0 allgather
         u64 outcomeSize = currDataSize * tempRankSizes_[0];
-        u32 outDataIdx  = virtRankMap_[1][myRank_];
+        u32 outDataIdx = virtRankMap_[1][myRank_];
 
         // level 0
         RankSliceInfo sliceInfoVec0;
-        AllignInfo    allignInfo = {enableAllign_, allignSize_, dataType_};
+        AllignInfo allignInfo = {enableAllign_, allignSize_, dataType_};
         CHK_RET(tempAlg0.CalcSliceInfo(allignInfo, currDataSize, sliceInfoVec0));
 
         buffInfo.outBuffBaseOff = outDataIdx * outcomeSize;
 
         TempFuncs tempFuncs;
-        tempFuncs.opMode              = opMode_;
+        tempFuncs.opMode = opMode_;
         tempFuncs.enableCounterNotify = IsEnableCounterNotify();
-        tempFuncs.isForepart          = true;  // Usr Buff to CCL Buff required
-        tempFuncs.isBottom            = false; // CCL Buff to Usr Buff required
+        tempFuncs.isForepart = true; // Usr Buff to CCL Buff required
+        tempFuncs.isBottom = false;  // CCL Buff to Usr Buff required
 
-        UsrData   usrData;
-        DataSlice usrInSlice     = DataSlice(BufferType::INPUT, idx * scratchInputSize, currDataSize);
+        UsrData usrData;
+        DataSlice usrInSlice = DataSlice(BufferType::INPUT, idx * scratchInputSize, currDataSize);
         DataSlice scratchInSlice = DataSlice(
             BufferType::SCRATCH, virtRankMap_[0][myRank_] * currDataSize + outDataIdx * outcomeSize, currDataSize);
         usrData.usrInSlices.push_back(usrInSlice);
@@ -323,7 +322,7 @@ HcclResult AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::GenPrimQues4O
         buffInfo.outBuffBaseOff = 0;
 
         tempFuncs.isForepart = false; // Usr Buff to CCL Buff required
-        tempFuncs.isBottom   = true;  // CCL Buff to Usr Buff required
+        tempFuncs.isBottom = true;    // CCL Buff to Usr Buff required
 
         for (u32 rankIdx = 0; rankIdx < rankSize_; rankIdx++) {
             DataSlice scratchOutSlice = DataSlice(BufferType::SCRATCH, rankIdx * currDataSize, currDataSize);
@@ -339,6 +338,7 @@ HcclResult AllGatherSeqExecutor<AlgTopoMatch, AlgTemp0, AlgTemp1>::GenPrimQues4O
     return HcclResult::HCCL_SUCCESS;
 }
 
-REGISTER_IMPL_BY_TWO_TEMPS(OpType::ALLGATHER, AllGatherSeqMeshRing, AllGatherSeqExecutor, TopoMatchMeshRing,
-                           TempAllGatherMesh, TempAllGatherRing);
+REGISTER_IMPL_BY_TWO_TEMPS(
+    OpType::ALLGATHER, AllGatherSeqMeshRing, AllGatherSeqExecutor, TopoMatchMeshRing, TempAllGatherMesh,
+    TempAllGatherRing);
 } // namespace Hccl

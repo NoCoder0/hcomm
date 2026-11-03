@@ -123,7 +123,7 @@ void *BkfMemGetAdpeeMemHnd(BkfMemMng *memMng);
  *   @retval 非空 诊断信息字串。如果内部判断错误，返回一个常量串。所以不会返回空。
  * @note 由于@BkfMemGetFirstStatStr和@BkfMemGetNextStatStr可能不在一个消息中被调用，期间内存占用可能会变化，\n
  *       所以，两函数内存占用和，未必等于此函数。
-*/
+ */
 char *BkfMemGetSummaryStr(BkfMemMng *memMng, uint8_t *buf, int32_t bufLen);
 
 /**
@@ -186,4 +186,3 @@ void BkfMemBaseStubUninit(void *cookie);
 #endif
 
 #endif
-

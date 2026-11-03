@@ -22,22 +22,22 @@ namespace Hccl {
 class DlHalFunctionV2 {
 public:
     virtual ~DlHalFunctionV2();
-    static DlHalFunctionV2 &GetInstance();
+    static DlHalFunctionV2& GetInstance();
     HcclResult DlHalFunctionInit();
-    std::function<drvError_t(unsigned int, struct event_summary *)> dlHalEschedSubmitEvent;
-    std::function<drvError_t(int, unsigned int *, unsigned int *,
-        unsigned int *, unsigned int *)> dlHalDrvQueryProcessHostPid;
-    std::function<drvError_t(uint32_t, int32_t, int32_t, int64_t *)> dlHalGetDeviceInfo;
+    std::function<drvError_t(unsigned int, struct event_summary*)> dlHalEschedSubmitEvent;
+    std::function<drvError_t(int, unsigned int*, unsigned int*, unsigned int*, unsigned int*)>
+        dlHalDrvQueryProcessHostPid;
+    std::function<drvError_t(uint32_t, int32_t, int32_t, int64_t*)> dlHalGetDeviceInfo;
 
 protected:
 private:
-    void *handle_;
+    void* handle_;
     std::mutex handleMutex_;
     DlHalFunctionV2(const DlHalFunctionV2&);
-    DlHalFunctionV2 &operator=(const DlHalFunctionV2&);
+    DlHalFunctionV2& operator=(const DlHalFunctionV2&);
     DlHalFunctionV2();
     HcclResult DlHalFunctionEschedInit();
 };
-}  // namespace hccl
+} // namespace Hccl
 
-#endif  // HCCL_SRC_DLHALFUNCTION_H
+#endif // HCCL_SRC_DLHALFUNCTION_H

@@ -20,30 +20,30 @@
 #include "control_plane.h"
 #include "orion_adapter_hccp.h"
 namespace Hccl {
-constexpr unsigned int MAX_VALUE_DEVICEID = 64;
+constexpr unsigned int MAX_VALUE_DEVICEID = 512;
 constexpr unsigned int DEFAULT_VALUE_TCPPORT = 16666;
 constexpr unsigned int MAX_VALUE_TCPPORT = 65535;
 constexpr unsigned int MIN_VALUE_TCPPORT = 1;
-constexpr unsigned int MAX_LEVEL_lIST  = 8; 
-const IpAddress DEVICE_PORT_KEY_IPADDRESS = IpAddress();  // 用于socketmanager的端口占用，vnic情况下使用
-class NewRankInfo{
+constexpr unsigned int MAX_LEVEL_lIST = 8;
+const IpAddress DEVICE_PORT_KEY_IPADDRESS = IpAddress(); // 用于socketmanager的端口占用，vnic情况下使用
+class NewRankInfo {
 public:
     NewRankInfo() {};
     ~NewRankInfo() {};
-    
-    u32                        rankId{0};
-    u32                        deviceId{0};
-    u32                        localId{0};
-    u32                        replacedLocalId{0};
-    u32                        devicePort{DEFAULT_VALUE_TCPPORT};
-    u32                        hostPort{DEFAULT_VALUE_TCPPORT};
+
+    u32 rankId{0};
+    u32 deviceId{0};
+    u32 localId{0};
+    u32 replacedLocalId{0};
+    u32 devicePort{DEFAULT_VALUE_TCPPORT};
+    u32 hostPort{DEFAULT_VALUE_TCPPORT};
     std::vector<RankLevelInfo> rankLevelInfos{};
-    ControlPlane               controlPlane{};
-    TlsStatus                  tlsStatus{TlsStatus::UNKNOWN};
-    std::string                Describe() const;
-    void                       Deserialize(const nlohmann::json &newRankInfoJson);
-    explicit                   NewRankInfo(BinaryStream &binStream);
-    void GetBinStream(bool isContainLoaId, BinaryStream &binStream) const;
+    ControlPlane controlPlane{};
+    TlsStatus tlsStatus{TlsStatus::UNKNOWN};
+    std::string Describe() const;
+    void Deserialize(const nlohmann::json& newRankInfoJson);
+    explicit NewRankInfo(BinaryStream& binStream);
+    void GetBinStream(bool isContainLoaId, BinaryStream& binStream) const;
 };
 
 } // namespace Hccl

@@ -52,9 +52,9 @@ build.sh      # 一键编译脚本
 | 层次 | 头文件 | 面向 |
 |------|------|------|
 | L2-comm | `include/hccl/hccl_comm.h` | AI 框架层（通信域创建） |
-| L2-res-rank_graph | `include/hccl/hccl_res.h`、`include/hccl/hccl_rank_graph.h` | 算子开发者（拓扑查询、资源获取） |
+| L2-res-rank_graph | `include/hccl/hccl_res.h`、`include/hccl/hccl_channel.h`、`include/hccl/hccl_rank_graph.h` | 算子开发者（拓扑查询、资源获取） |
 | L3-prim | `include/hcomm_primitives.h` | 算子/通信库开发者（数据搬运 + 同步） |
-| L3-res | `include/hcomm_res.h`、`include/hcomm_res_defs.h` | 通信库开发者（设备/通道/内存资源） |
+| L3-res | `include/hcomm_res.h`、`include/hcomm_res_defs.h`、`include/hcomm_channel.h` | 通信库开发者（设备/通道/内存资源） |
 | CCU | `include/ccu/`（`ccu_primitives.hpp`、`ccu_res.h`、`ccu_launch.h`） | CCU 算子开发者 |
 
 `include/` 变更需向后兼容；`pkg_inc/` 仅供 HCOMM↔HCCL、GE 等包间使用，不对外稳定。完整 API 分层关系见 [架构简介 3.3 节](./docs/zh/architecture/architecture-brief.md)。
@@ -75,9 +75,9 @@ bash build.sh -j64             # 并行编译
 ## 5. 编码规范
 
 - 命名：类/函数 PascalCase；成员变量 `camelCase_`（小驼峰+后缀下划线）；常量与宏 `UPPER_SNAKE_CASE`。
-- 风格：遵循根目录 `.clang-format`（120 列、4 空格、指针右对齐、K&R 大括号）；C++14。
+- 风格：遵循根目录 `.clang-format`（120 列、4 空格、指针左对齐、K&R 大括号）；C++17。
 - 静态告警：代码须通过 CANN 静态检查要求（CI codecheck 阶段校验），编译无告警。
-- pre-commit：clang-format v16 + OAT 合规检查；新增源文件须带 CANN-2.0 许可头。
+- pre-commit：clang-format v18.1.8 + OAT 合规检查；新增源文件须带 CANN-2.0 许可头。
 
 参考：[CANN 编码规范](https://gitcode.com/cann/community/tree/master/contributor/coding-standards)、[CANN CI 指南](https://gitcode.com/cann/community/blob/master/contributor/repository/ci-guide.md)、[pre-commit 指导](./docs/zh/build/pre-commit-guide.md)、`.clang-format`、`OAT.xml`。
 
@@ -86,6 +86,7 @@ bash build.sh -j64             # 并行编译
 - 简单问题：Issue → 认领 → PR → Committer 检视 → `/lgtm` + `/approve` 合入。
 - 新功能：Requirement Issue → SIG 决策 → `docs/zh/rfcs/` RFC 评审 → 实现（含 UT+ST）→ 检视合入。
 - 所有 PR 必须关联 Issue，描述按 `.gitcode/PULL_REQUEST_TEMPLATE.zh-CN.md` 填写。
+- 从代码获取到 PR 合入的贡献链路操作（代码同步、Issue 查重创建、PR 提交触发 CI、CI 轮询与失败修复、检视意见处置）：使用仓内贡献流程 skill（[`.agents/skills/hcomm-contribute/`](./.agents/skills/hcomm-contribute/)）；本地构建与测试命令以本文件第 4 节与 [`docs/zh/build/build.md`](./docs/zh/build/build.md) 为准。
 
 详见 [`CONTRIBUTING.md`](./CONTRIBUTING.md)。
 
@@ -103,5 +104,7 @@ bash build.sh -j64             # 并行编译
 - 默认用中文解释；输出保持简洁、具体、可复制。
 
 ---
+
+开发提交前自检与检视他人 PR：使用仓内检视 skill（[`.agents/skills/hcomm-review/`](./.agents/skills/hcomm-review/)），编码时遵循其 `references/` 下的检视规范（编码安全、对外 API、架构合规、PR 完备性）。
 
 *架构约束以 [`docs/zh/architecture/architecture-brief.md`](./docs/zh/architecture/architecture-brief.md) 为权威来源；贡献流程以 [`CONTRIBUTING.md`](./CONTRIBUTING.md) 为准。个人临时偏好放 `AGENTS.local.md`（已 gitignore）。*

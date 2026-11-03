@@ -1,127 +1,408 @@
-/*
- * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
- * Description: ccu representation implementation file
- * Author: sunzhepeng
- * Create: 2024-06-17
+/**
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
  */
 
 #include "ccu_rep_v1.h"
-
-#include "string_util.h"
+#include "exception_util.h"
+#include "ccu_log.h"
+#include "ccu_api_exception.h"
+#include "ccu_ins_generator_base.h"
+#include "ccu_ins_generator_v1.h"
 
 namespace hcomm {
 namespace CcuRep {
 
-CcuRepJumpBase::CcuRepJumpBase(const std::string &label, const Variable &targetInstrId) : label(label), targetInstrId(targetInstrId)
-{
-}
+    using namespace Hccl;
 
-void CcuRepJumpBase::Reference(std::shared_ptr<CcuRepJumpLabel> refRep)
-{
-    jumpLabel = refRep;
-}
+    // jump基类
+    CcuRepJumpBase::CcuRepJumpBase(
+        CcuInsGeneratorBase* insGenPtr, const std::string& label, const Variable& targetInstrId)
+        : insGeneratorPtr_(insGenPtr),
+          label(label),
+          targetInstrId(targetInstrId)
+    {}
 
-CcuRepJump::CcuRepJump(const std::string &label, const Variable &targetInstrId) : CcuRepJumpBase(label, targetInstrId)
-{
-    type       = CcuRepType::JUMP;
-    instrCount = 2; // jump翻译需要2条指令
-}
+    CcuRepJumpBase::CcuRepJumpBase(
+        CcuInsGeneratorBase* insGenPtr, const std::string& label, const Variable& targetInstrId,
+        const Variable& expectedVar, const Variable& condition)
+        : insGeneratorPtr_(insGenPtr),
+          label(label),
+          targetInstrId(targetInstrId),
+          expectedVar(expectedVar),
+          condition(condition)
+    {}
 
-bool CcuRepJump::Translate(CcuInstr *&instr, uint16_t &instrId, const TransDep &dep)
-{
-    if (this->instr == nullptr) {
-        this->instrId = instrId;
-        this->instr   = instr;
-        instr += instrCount;
-        instrId += instrCount;
+    void CcuRepJumpBase::Reference(std::shared_ptr<CcuRepJumpLabel> refRep) { jumpLabel = refRep; }
+
+    CcuResult CcuRepJumpBase::ValidateInsGeneratorForJump()
+    {
+        CcuInsGeneratorV1* tmpPtrV1 = dynamic_cast<CcuInsGeneratorV1*>(insGeneratorPtr_);
+        if (tmpPtrV1 && !supportCcuV1) {
+            // 当右值只传入var没有立即数时，无法在A5上翻译
+            HCCL_ERROR(
+                "[%s] Cannot translate %s for A5 when supportCcuV1 is false!", __func__, this->Describe().c_str());
+            return CCU_E_INTERNAL;
+        }
+        return CCU_SUCCESS;
     }
 
-    if (jumpLabel->Translated()) {
-        LoadImdToXnInstr(this->instr + 0, targetInstrId.Id(), jumpLabel->StartInstrId());
-        JumpInstr(this->instr + 1, targetInstrId.Id(), dep.reserveXnId, 1);
-
-        translated = true;
+    CcuResult CcuRepJumpBase::InitInstr(CcuInstr*& instr, uint16_t& curInstrId)
+    {
+        CCU_CHK_PTR_NULL(instr);
+        if (this->instr == nullptr) {
+            this->instrId = curInstrId;
+            this->instr = instr;
+            instr += instrCount;
+            curInstrId += instrCount;
+        }
+        return CCU_SUCCESS;
     }
 
-    return translated;
-}
-
-std::string CcuRepJump::Describe()
-{
-    return Hccl::StringFormat("Jump To Label[%s]", label.c_str());
-}
-
-CcuRepJumpNE::CcuRepJumpNE(const std::string &label, const Variable &targetInstrId, const Variable &condition, uint64_t expected)
-    : CcuRepJumpBase(label, targetInstrId), condition(condition), expected(expected)
-{
-    type       = CcuRepType::JUMP_NE;
-    instrCount = 2; // jumpNE翻译需要2条指令
-}
-
-bool CcuRepJumpNE::Translate(CcuInstr *&instr, uint16_t &instrId, const TransDep &dep)
-{
-    if (this->instr == nullptr) {
-        this->instrId = instrId;
-        this->instr   = instr;
-        instr += instrCount;
-        instrId += instrCount;
+    // direct jump
+    CcuRepJump::CcuRepJump(CcuInsGeneratorBase* insGenPtr, const std::string& label, const Variable& targetInstrId)
+        : CcuRepJumpBase(insGenPtr, label, targetInstrId)
+    {
+        type = CcuRepType::JUMP;
+        instrCount = insGeneratorPtr_->GetInstrCount(type);
     }
 
-    if (jumpLabel->Translated()) {
-        LoadImdToXnInstr(this->instr + 0, targetInstrId.Id(), jumpLabel->StartInstrId());
-        JumpInstr(this->instr + 1, targetInstrId.Id(), condition.Id(), expected);
+    bool CcuRepJump::Translate(CcuKernel* ccuKernel, CcuInstr*& instr, uint16_t& curInstrId, const TransDep& dep)
+    {
+        if (InitInstr(instr, curInstrId) != CCU_SUCCESS) {
+            Hccl::THROW<Hccl::CcuApiException>("instr is empty!");
+        }
 
-        translated = true;
+        if (jumpLabel->Translated()) {
+            CHK_PRT_THROW(
+                insGeneratorPtr_->CcuRepJumpTranslate(ccuKernel, instr, curInstrId, this, dep)
+                    != HcclResult::HCCL_SUCCESS,
+                HCCL_ERROR("[CcuRepJump][Translate] failed to translate for instrId[%u]", curInstrId),
+                Hccl::CcuApiException, "CcuRepJump translate failed");
+            translated = true;
+        }
+
+        return translated;
     }
 
-    return translated;
-}
+    std::string CcuRepJump::Describe() { return Hccl::StringFormat("Jump To Label[%s]", label.c_str()); }
 
-std::string CcuRepJumpNE::Describe()
-{
-    return Hccl::StringFormat("Jump To Label[%s], When Condition[%u] Not equal to Expected[%lu]", label.c_str(), condition.Id(),
-                        expected);
-}
-
-CcuRepJumpEQ::CcuRepJumpEQ(const std::string &label, const Variable &targetInstrId, const Variable &condition, uint64_t expected)
-    : CcuRepJumpBase(label, targetInstrId), condition(condition), expected(expected)
-{
-    type       = CcuRepType::JUMP_EQ;
-    instrCount = 5; // jumpEQ翻译需要5条指令
-}
-
-bool CcuRepJumpEQ::Translate(CcuInstr *&instr, uint16_t &instrId, const TransDep &dep)
-{
-    if (instr == nullptr) {
-        return false;
-    }
-    if (this->instr == nullptr) {
-        this->instrId = instrId;
-        this->instr   = instr;
-        instr += instrCount;
-        instrId += instrCount;
+    // jumpNE
+    CcuRepJumpNE::CcuRepJumpNE(
+        CcuInsGeneratorBase* insGenPtr, const std::string& label, const Variable& targetInstrId,
+        const Variable& expectedVar, const Variable& condition, uint64_t expected)
+        : CcuRepJumpBase(insGenPtr, label, targetInstrId, expectedVar, condition)
+    {
+        this->expected = expected;
+        type = CcuRepType::JUMP_NE;
+        instrCount = insGeneratorPtr_->GetInstrCount(type);
+        comp2Immed = true; // A6翻译时插入一条加载立即数指令，A5无关
+        supportCcuV1 = true;
     }
 
-    if (jumpLabel->Translated()) {
-        uint32_t localInstrIndex = 0;
-        LoadImdToXnInstr(this->instr + localInstrIndex++, targetInstrId.Id(),
-                         this->instrId + 4); // 需要指向NOP位置，为输入指令Id + 4
-        JumpInstr(this->instr + localInstrIndex++, targetInstrId.Id(), condition.Id(), expected);
-        LoadImdToXnInstr(this->instr + localInstrIndex++, targetInstrId.Id(), jumpLabel->StartInstrId());
-        JumpInstr(this->instr + localInstrIndex++, targetInstrId.Id(), dep.reserveXnId, 1);
-        LoadImdToXnInstr(this->instr + localInstrIndex++, dep.reserveXnId, 0);
-
-        translated = true;
+    CcuRepJumpNE::CcuRepJumpNE(
+        CcuInsGeneratorBase* insGenPtr, const std::string& label, const Variable& targetInstrId,
+        const Variable& condition, const Variable& expectedVar)
+        : CcuRepJumpBase(insGenPtr, label, targetInstrId, expectedVar, condition)
+    {
+        // 仅用于A6翻译
+        type = CcuRepType::JUMP_NE;
+        instrCount = 2; // 2条指令，暂直接填充指令数，insGenerator中未记录这种使用方式对应的指令数
+        comp2Immed = false;
+        supportCcuV1 = false;
     }
 
-    return translated;
-}
+    bool CcuRepJumpNE::Translate(CcuKernel* ccuKernel, CcuInstr*& instr, uint16_t& curInstrId, const TransDep& dep)
+    {
+        CCU_CHK_RET_THROW(
+            Hccl::CcuApiException, "[CcuRepJumpNE::Translate] ValidateInsGeneratorForJump failed",
+            ValidateInsGeneratorForJump());
 
-std::string CcuRepJumpEQ::Describe()
-{
-    return Hccl::StringFormat("Jump To Label[%s], When Condition[%u] Be equal to Expected[%lu]", label.c_str(), condition.Id(),
-                        expected);
-}
+        if (InitInstr(instr, curInstrId) != CCU_SUCCESS) {
+            Hccl::THROW<Hccl::CcuApiException>("instr is empty!");
+        }
 
+        if (jumpLabel->Translated()) {
+            CHK_PRT_THROW(
+                insGeneratorPtr_->CcuRepJumpNETranslate(ccuKernel, instr, curInstrId, this, dep)
+                    != HcclResult::HCCL_SUCCESS,
+                HCCL_ERROR("[CcuRepJumpNE][Translate] failed to translate for instrId[%u]", curInstrId),
+                Hccl::CcuApiException, "CcuRepJumpNE translate failed");
+            translated = true;
+        }
+
+        return translated;
+    }
+
+    std::string CcuRepJumpNE::Describe()
+    {
+        return Hccl::StringFormat(
+            "Jump To Label[%s], When Condition[%u] Not equal to Expected[%lu]", label.c_str(), condition.Id(),
+            expected);
+    }
+
+    // jumpEQ
+    CcuRepJumpEQ::CcuRepJumpEQ(
+        CcuInsGeneratorBase* insGenPtr, const std::string& label, const Variable& targetInstrId,
+        const Variable& expectedVar, const Variable& condition, uint64_t expected)
+        : CcuRepJumpBase(insGenPtr, label, targetInstrId, expectedVar, condition)
+    {
+        this->expected = expected;
+        type = CcuRepType::JUMP_EQ;
+        instrCount = insGeneratorPtr_->GetInstrCount(type);
+        comp2Immed = true; // A6翻译时插入一条加载立即数指令，A5无关
+        supportCcuV1 = true;
+    }
+
+    CcuRepJumpEQ::CcuRepJumpEQ(
+        CcuInsGeneratorBase* insGenPtr, const std::string& label, const Variable& targetInstrId,
+        const Variable& condition, const Variable& expectedVar)
+        : CcuRepJumpBase(insGenPtr, label, targetInstrId, expectedVar, condition)
+    {
+        type = CcuRepType::JUMP_EQ;
+        instrCount = 2; // 2条指令，暂直接填充指令数，insGenerator中未记录这种使用方式对应的指令数
+        comp2Immed = false;
+        supportCcuV1 = false;
+    }
+
+    bool CcuRepJumpEQ::Translate(CcuKernel* ccuKernel, CcuInstr*& instr, uint16_t& curInstrId, const TransDep& dep)
+    {
+        CCU_CHK_RET_THROW(
+            Hccl::CcuApiException, "[CcuRepJumpEQ::Translate] ValidateInsGeneratorForJump failed",
+            ValidateInsGeneratorForJump());
+        if (InitInstr(instr, curInstrId) != CCU_SUCCESS) {
+            Hccl::THROW<Hccl::CcuApiException>("instr is empty!");
+        }
+
+        if (jumpLabel->Translated()) {
+            CHK_PRT_THROW(
+                insGeneratorPtr_->CcuRepJumpEQTranslate(ccuKernel, instr, curInstrId, this, dep)
+                    != HcclResult::HCCL_SUCCESS,
+                HCCL_ERROR("[CcuRepJumpEQ][Translate] failed to translate for instrId[%u]", curInstrId),
+                Hccl::CcuApiException, "CcuRepJumpEQ translate failed");
+            translated = true;
+        }
+
+        return translated;
+    }
+
+    std::string CcuRepJumpEQ::Describe()
+    {
+        return Hccl::StringFormat(
+            "Jump To Label[%s], When Condition[%u] Be equal to Expected[%lu]", label.c_str(), condition.Id(), expected);
+    }
+
+    // jumpLE
+    CcuRepJumpLE::CcuRepJumpLE(
+        CcuInsGeneratorBase* insGenPtr, const std::string& label, const Variable& targetInstrId,
+        const Variable& condition, const Variable& expectedVar)
+        : CcuRepJumpBase(insGenPtr, label, targetInstrId, expectedVar, condition)
+    {
+        type = CcuRepType::JUMP_LE;
+        instrCount = 2; // 2条指令
+        comp2Immed = false;
+        supportCcuV1 = false;
+    }
+
+    CcuRepJumpLE::CcuRepJumpLE(
+        CcuInsGeneratorBase* insGenPtr, const std::string& label, const Variable& targetInstrId,
+        const Variable& expectedVar, const Variable& condition, uint64_t expected)
+        : CcuRepJumpBase(insGenPtr, label, targetInstrId, expectedVar, condition)
+    {
+        this->expected = expected;
+        type = CcuRepType::JUMP_LE;
+        instrCount = 3; // 3条指令
+        comp2Immed = true;
+        supportCcuV1 = false;
+    }
+
+    bool CcuRepJumpLE::Translate(CcuKernel* ccuKernel, CcuInstr*& curInstr, uint16_t& curInstrId, const TransDep& dep)
+    {
+        CCU_CHK_RET_THROW(
+            Hccl::CcuApiException, "[CcuRepJumpLE::Translate] ValidateInsGeneratorForJump failed",
+            ValidateInsGeneratorForJump());
+
+        if (InitInstr(curInstr, curInstrId) != CCU_SUCCESS) {
+            Hccl::THROW<Hccl::CcuApiException>("instr is empty!");
+        }
+
+        if (jumpLabel->Translated()) {
+            CHK_PRT_THROW(
+                insGeneratorPtr_->CcuRepJumpLETranslate(ccuKernel, curInstr, curInstrId, this, dep)
+                    != HcclResult::HCCL_SUCCESS,
+                HCCL_ERROR("[CcuRepJumpLE][Translate] failed to translate for instrId[%u]", curInstrId),
+                Hccl::CcuApiException, "CcuRepJumpLE translate failed");
+            translated = true;
+        }
+
+        return translated;
+    }
+
+    std::string CcuRepJumpLE::Describe()
+    {
+        return Hccl::StringFormat(
+            "Jump To Label[%s], When Condition[%u] <= Expected[%lu]", label.c_str(), condition.Id(), expected);
+    }
+
+    // jumpGE
+    CcuRepJumpGE::CcuRepJumpGE(
+        CcuInsGeneratorBase* insGenPtr, const std::string& label, const Variable& targetInstrId,
+        const Variable& condition, const Variable& expectedVar)
+        : CcuRepJumpBase(insGenPtr, label, targetInstrId, expectedVar, condition)
+    {
+        type = CcuRepType::JUMP_GE;
+        instrCount = 2; // 2条指令
+        comp2Immed = false;
+        supportCcuV1 = false;
+    }
+
+    CcuRepJumpGE::CcuRepJumpGE(
+        CcuInsGeneratorBase* insGenPtr, const std::string& label, const Variable& targetInstrId,
+        const Variable& expectedVar, const Variable& condition, uint64_t expected)
+        : CcuRepJumpBase(insGenPtr, label, targetInstrId, expectedVar, condition)
+    {
+        this->expected = expected;
+        type = CcuRepType::JUMP_GE;
+        instrCount = 3; // 3条指令
+        comp2Immed = true;
+        supportCcuV1 = false;
+    }
+
+    bool CcuRepJumpGE::Translate(CcuKernel* ccuKernel, CcuInstr*& curInstr, uint16_t& curInstrId, const TransDep& dep)
+    {
+        CCU_CHK_RET_THROW(
+            Hccl::CcuApiException, "[CcuRepJumpGE::Translate] ValidateInsGeneratorForJump failed",
+            ValidateInsGeneratorForJump());
+
+        if (InitInstr(curInstr, curInstrId) != CCU_SUCCESS) {
+            Hccl::THROW<Hccl::CcuApiException>("instr is empty!");
+        }
+
+        if (jumpLabel->Translated()) {
+            CHK_PRT_THROW(
+                insGeneratorPtr_->CcuRepJumpGETranslate(ccuKernel, curInstr, curInstrId, this, dep)
+                    != HcclResult::HCCL_SUCCESS,
+                HCCL_ERROR("[CcuRepJumpGE][Translate] failed to translate for instrId[%u]", curInstrId),
+                Hccl::CcuApiException, "CcuRepJumpGE translate failed");
+
+            translated = true;
+        }
+
+        return translated;
+    }
+
+    std::string CcuRepJumpGE::Describe()
+    {
+        return Hccl::StringFormat(
+            "Jump To Label[%s], When Condition[%u] >= Expected[%lu]", label.c_str(), condition.Id(), expected);
+    }
+
+    // jumpGT
+    CcuRepJumpGT::CcuRepJumpGT(
+        CcuInsGeneratorBase* insGenPtr, const std::string& label, const Variable& targetInstrId,
+        const Variable& condition, const Variable& expectedVar)
+        : CcuRepJumpBase(insGenPtr, label, targetInstrId, expectedVar, condition)
+    {
+        type = CcuRepType::JUMP_GT;
+        instrCount = 2; // 2条指令
+        comp2Immed = false;
+        supportCcuV1 = false;
+    }
+
+    CcuRepJumpGT::CcuRepJumpGT(
+        CcuInsGeneratorBase* insGenPtr, const std::string& label, const Variable& targetInstrId,
+        const Variable& expectedVar, const Variable& condition, uint64_t expected)
+        : CcuRepJumpBase(insGenPtr, label, targetInstrId, expectedVar, condition)
+    {
+        this->expected = expected;
+        type = CcuRepType::JUMP_GT;
+        instrCount = 3; // 3条指令
+        comp2Immed = true;
+        supportCcuV1 = false;
+    }
+
+    bool CcuRepJumpGT::Translate(CcuKernel* ccuKernel, CcuInstr*& curInstr, uint16_t& curInstrId, const TransDep& dep)
+    {
+        CCU_CHK_RET_THROW(
+            Hccl::CcuApiException, "[CcuRepJumpGT::Translate] ValidateInsGeneratorForJump failed",
+            ValidateInsGeneratorForJump());
+        if (InitInstr(curInstr, curInstrId) != CCU_SUCCESS) {
+            Hccl::THROW<Hccl::CcuApiException>("instr is empty!");
+        }
+        if (jumpLabel->Translated()) {
+            CHK_PRT_THROW(
+                insGeneratorPtr_->CcuRepJumpGTTranslate(ccuKernel, curInstr, curInstrId, this, dep)
+                    != HcclResult::HCCL_SUCCESS,
+                HCCL_ERROR("[CcuRepJumpGT][Translate] failed to translate for instrId[%u]", curInstrId),
+                Hccl::CcuApiException, "CcuRepJumpGT translate failed");
+
+            translated = true;
+        }
+
+        return translated;
+    }
+
+    std::string CcuRepJumpGT::Describe()
+    {
+        return Hccl::StringFormat(
+            "Jump To Label[%s], When Condition[%u] > Expected[%lu]", label.c_str(), condition.Id(), expected);
+    }
+
+    // jumpLT
+    CcuRepJumpLT::CcuRepJumpLT(
+        CcuInsGeneratorBase* insGenPtr, const std::string& label, const Variable& targetInstrId,
+        const Variable& condition, const Variable& expectedVar)
+        : CcuRepJumpBase(insGenPtr, label, targetInstrId, expectedVar, condition)
+    {
+        type = CcuRepType::JUMP_LT;
+        instrCount = 2; // 2条指令
+        comp2Immed = false;
+        supportCcuV1 = false;
+    }
+
+    CcuRepJumpLT::CcuRepJumpLT(
+        CcuInsGeneratorBase* insGenPtr, const std::string& label, const Variable& targetInstrId,
+        const Variable& expectedVar, const Variable& condition, uint64_t expected)
+        : CcuRepJumpBase(insGenPtr, label, targetInstrId, expectedVar, condition)
+    {
+        this->expected = expected;
+        type = CcuRepType::JUMP_LT;
+        instrCount = 3; // 3条指令
+        comp2Immed = true;
+        supportCcuV1 = false;
+    }
+
+    bool CcuRepJumpLT::Translate(CcuKernel* ccuKernel, CcuInstr*& curInstr, uint16_t& curInstrId, const TransDep& dep)
+    {
+        CCU_CHK_RET_THROW(
+            Hccl::CcuApiException, "[CcuRepJumpLT::Translate] ValidateInsGeneratorForJump failed",
+            ValidateInsGeneratorForJump());
+        if (InitInstr(curInstr, curInstrId) != CCU_SUCCESS) {
+            Hccl::THROW<Hccl::CcuApiException>("instr is empty!");
+        }
+
+        if (jumpLabel->Translated()) {
+            CHK_PRT_THROW(
+                insGeneratorPtr_->CcuRepJumpLTTranslate(ccuKernel, curInstr, curInstrId, this, dep)
+                    != HcclResult::HCCL_SUCCESS,
+                HCCL_ERROR("[CcuRepJumpLT][Translate] failed to translate for instrId[%u]", curInstrId),
+                Hccl::CcuApiException, "CcuRepJumpLT translate failed");
+
+            translated = true;
+        }
+
+        return translated;
+    }
+
+    std::string CcuRepJumpLT::Describe()
+    {
+        return Hccl::StringFormat(
+            "Jump To Label[%s], When Condition[%u] < Expected[%lu]", label.c_str(), condition.Id(), expected);
+    }
 }; // namespace CcuRep
 }; // namespace hcomm

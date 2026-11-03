@@ -12,7 +12,7 @@
 #define HCCLV2_CCU_TEMP_ALL_GATHER_MESH_2D_MEM2MEM_H_
 
 #include "string_util.h"
-#include "env_config.h"
+#include "env_config_v2.h"
 #include "ccu_alg_template_base.h"
 #include "executor_utils.h"
 
@@ -20,9 +20,9 @@ namespace Hccl {
 
 class CcuTempAllGatherMeshMem2Mem2D : public CcuAlgTemplateBase {
 public:
-    explicit CcuTempAllGatherMeshMem2Mem2D(const RankId virtualRank, const u32 tempRankSize,
-                                   const std::vector<std::vector<RankId>> &tempVTopo,
-                                   const std::map<RankId, u32>            &tempVirtRankMap);
+    explicit CcuTempAllGatherMeshMem2Mem2D(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~CcuTempAllGatherMeshMem2Mem2D() override;
 
     std::string Describe() const override
@@ -30,13 +30,14 @@ public:
         return StringFormat("Template of all gather ccu mesh 2D mem2mem with tempRankSize [%u].", tempRankSize_);
     }
 
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
 
-    HcclResult GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &templateDataParams,
-        const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues);
+    HcclResult GenExtIns(
+        const TempFuncs& tempFuncs, const TemplateDataParams& templateDataParams, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues);
 
 private:
-    uint64_t DataSliceToAddr(const DataSlice &dataSlice);
+    uint64_t DataSliceToAddr(const DataSlice& dataSlice);
 
     static constexpr uint32_t DIM_SIZE = 2;
     std::vector<uint32_t> dimSize_;

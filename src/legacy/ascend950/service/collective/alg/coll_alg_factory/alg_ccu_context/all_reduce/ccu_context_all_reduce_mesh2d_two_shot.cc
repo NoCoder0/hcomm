@@ -12,103 +12,109 @@
 #include "ccu_instruction_all_reduce_mesh2d_two_shot.h"
 
 namespace Hccl {
-constexpr uint32_t AXIS_NUM     = 2;
-constexpr int      CKE_IDX_0    = 0;
-constexpr int      CKE_IDX_1    = 1;
-constexpr int      CKE_IDX_2    = 2;
-constexpr int      CKE_IDX_3    = 3;
-constexpr int      CKE_IDX_4    = 4;
-constexpr int      CKE_IDX_5    = 5;
-constexpr int      CKE_IDX_6    = 6;
-constexpr int      INPUT_XN_ID  = 0;
-constexpr int      OUTPUT_XN_ID = 1;
-constexpr int      TOKEN_XN_ID  = 2;
+constexpr uint32_t AXIS_NUM = 2;
+constexpr int CKE_IDX_0 = 0;
+constexpr int CKE_IDX_1 = 1;
+constexpr int CKE_IDX_2 = 2;
+constexpr int CKE_IDX_3 = 3;
+constexpr int CKE_IDX_4 = 4;
+constexpr int CKE_IDX_5 = 5;
+constexpr int CKE_IDX_6 = 6;
+constexpr int INPUT_XN_ID = 0;
+constexpr int OUTPUT_XN_ID = 1;
+constexpr int TOKEN_XN_ID = 2;
 
-CcuContextAllReduceMesh2DTwoShot::CcuContextAllReduceMesh2DTwoShot(const CcuCtxArg                   &arg,
-                                                                   const std::vector<CcuTransport *> &transports,
-                                                                   const CcuTransportGroup           &group)
+CcuContextAllReduceMesh2DTwoShot::CcuContextAllReduceMesh2DTwoShot(
+    const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group)
     : CcuContextAlgBase(arg, transports, group)
 {
-    const CcuCtxArgAllReduceMesh2DTwoShot *ctxArg = dynamic_cast<const CcuCtxArgAllReduceMesh2DTwoShot *>(&arg);
+    const CcuCtxArgAllReduceMesh2DTwoShot* ctxArg = dynamic_cast<const CcuCtxArgAllReduceMesh2DTwoShot*>(&arg);
     if (ctxArg == nullptr) {
         THROW<NullPtrException>(StringFormat("CcuContextAllReduceMesh2DTwoShot::ctxArg ptr is null"));
     }
-    dimSize_        = ctxArg->dimSize_;
-    axisId_         = ctxArg->axisId_;
-    rankId_         = ctxArg->rankId_;
-    dataType_       = ctxArg->op_.dataType;
+    dimSize_ = ctxArg->dimSize_;
+    axisId_ = ctxArg->axisId_;
+    rankId_ = ctxArg->rankId_;
+    dataType_ = ctxArg->op_.dataType;
     outputDataType_ = ctxArg->op_.outputDataType;
-    reduceOp_       = ctxArg->op_.reduceOp;
+    reduceOp_ = ctxArg->op_.reduceOp;
     if (outputDataType_ == DataType::INVALID) {
         outputDataType_ = dataType_;
-        HCCL_INFO("[CcuContextAllReduceMesh2DTwoShot] outputDataType is [INVALID], set outputDataType to[%s]",
+        HCCL_INFO(
+            "[CcuContextAllReduceMesh2DTwoShot] outputDataType is [INVALID], set outputDataType to[%s]",
             outputDataType_.Describe().c_str());
     }
 
     uint32_t max_dimSize = 2;
     if (dimSize_.size() != max_dimSize or axisId_ > 1) {
-        THROW<NullPtrException>(StringFormat("[CcuContextAllReduceMesh2DTwoShot] dimSize[%u] or axisId[%u] is invalid",
-            dimSize_.size(), axisId_));
+        THROW<NullPtrException>(StringFormat(
+            "[CcuContextAllReduceMesh2DTwoShot] dimSize[%u] or axisId[%u] is invalid", dimSize_.size(), axisId_));
     }
-    CHK_PRT_THROW(dimSize_[0] == 0 || dimSize_[1] == 0,
-                    HCCL_ERROR("[CcuContextAllReduceMesh2DTwoShot] dimSize0[%llu] or dimSize1[%llu] is zero",
-                    dimSize_[0], dimSize_[1]),
-                    InvalidParamsException, "dimSize[0] or dimSize[1] is invalid");
+    CHK_PRT_THROW(
+        dimSize_[0] == 0 || dimSize_[1] == 0,
+        HCCL_ERROR(
+            "[CcuContextAllReduceMesh2DTwoShot] dimSize0[%llu] or dimSize1[%llu] is zero", dimSize_[0], dimSize_[1]),
+        InvalidParamsException, "dimSize[0] or dimSize[1] is invalid");
 
-    rankSize_       = dimSize_[0] * dimSize_[1];
-    HCCL_INFO("[CcuContextAllReduceMesh2DTwoShot] Init, CtxArgs are rankSize[%llu], dimSize0[%llu], dimSize1[%llu], axisId[%u], "
-            "rankId[%llu], dataType[%s], outputDataType[%s], reduceOp[%s]",
-            rankSize_, dimSize_[0], dimSize_[1], axisId_, rankId_, dataType_.Describe().c_str(),
-            outputDataType_.Describe().c_str(), reduceOp_.Describe().c_str());
+    rankSize_ = dimSize_[0] * dimSize_[1];
+    HCCL_INFO(
+        "[CcuContextAllReduceMesh2DTwoShot] Init, CtxArgs are rankSize[%llu], dimSize0[%llu], dimSize1[%llu], "
+        "axisId[%u], "
+        "rankId[%llu], dataType[%s], outputDataType[%s], reduceOp[%s]",
+        rankSize_, dimSize_[0], dimSize_[1], axisId_, rankId_, dataType_.Describe().c_str(),
+        outputDataType_.Describe().c_str(), reduceOp_.Describe().c_str());
 
-    CHK_PRT_THROW(dimSize_[0] == 0 || dimSize_[1] == 0,
-                  HCCL_ERROR("[CcuContextAllReduceMesh2DTwoShot] dimSize0[%llu] or dimSize1[%llu] is zero",
-                   dimSize_[0], dimSize_[1]),
-                  InvalidParamsException, "dimSize[0] or dimSize[1] is invalid");
+    CHK_PRT_THROW(
+        dimSize_[0] == 0 || dimSize_[1] == 0,
+        HCCL_ERROR(
+            "[CcuContextAllReduceMesh2DTwoShot] dimSize0[%llu] or dimSize1[%llu] is zero", dimSize_[0], dimSize_[1]),
+        InvalidParamsException, "dimSize[0] or dimSize[1] is invalid");
 
     myRankIdxInAxis_.push_back(rankId_ % dimSize_[0]); // 本 rank 在第 0 维上的 index
     myRankIdxInAxis_.push_back(rankId_ / dimSize_[0]); // 本 rank 在第 1 维上的 index
 
     myRankIdxInCurrentAxis_ = myRankIdxInAxis_[axisId_];
-    currentAxisRankSize_    = dimSize_[axisId_];
+    currentAxisRankSize_ = dimSize_[axisId_];
 
-    otherAxisId_          = 1 - axisId_;
+    otherAxisId_ = 1 - axisId_;
     myRankIdxInOtherAxis_ = myRankIdxInAxis_[otherAxisId_];
-    otherAxisRankSize_    = dimSize_[otherAxisId_];
+    otherAxisRankSize_ = dimSize_[otherAxisId_];
 
     // 同步信号初始化
-    currAxisSignalName_  = "CcuContextAllReduceMesh2DTwoShotAxisSync_" + std::to_string(axisId_);
+    currAxisSignalName_ = "CcuContextAllReduceMesh2DTwoShotAxisSync_" + std::to_string(axisId_);
     otherAxisSignalName_ = "CcuContextAllReduceMesh2DTwoShotAxisSync_" + std::to_string(otherAxisId_);
-    currAxisSignal_      = CreateMaskSignal();
+    currAxisSignal_ = CreateMaskSignal();
     ExportMaskSignal(currAxisSignal_, currAxisSignalName_);
     otherAxisSignal_ = ImportMaskSignal(otherAxisSignalName_);
 
-    HCCL_INFO("[CcuContextAllReduceMesh2DTwoShot] Init, myRankIdx0[%llu], myRankIdx1[%llu], "
-               "myRankIdxInCurrentAxis[%llu], currentAxisRankSize[%llu]",
-               myRankIdxInAxis_[0], myRankIdxInAxis_[1], myRankIdxInCurrentAxis_, currentAxisRankSize_);
+    HCCL_INFO(
+        "[CcuContextAllReduceMesh2DTwoShot] Init, myRankIdx0[%llu], myRankIdx1[%llu], "
+        "myRankIdxInCurrentAxis[%llu], currentAxisRankSize[%llu]",
+        myRankIdxInAxis_[0], myRankIdxInAxis_[1], myRankIdxInCurrentAxis_, currentAxisRankSize_);
 }
 
 void CcuContextAllReduceMesh2DTwoShot::Algorithm()
 {
     HCCL_INFO("[CcuContextAllReduceMesh2DTwoShot] AllReduceMesh2DTwoShot run.");
     selfBit_ = 1 << myRankIdxInCurrentAxis_;
-    allBit_  = ((1 << currentAxisRankSize_) - 1) & (~(1 << myRankIdxInCurrentAxis_));
+    allBit_ = ((1 << currentAxisRankSize_) - 1) & (~(1 << myRankIdxInCurrentAxis_));
 
     InitVariables();
     LoadArgs();
     PreSync();
 
     CcuRep::Variable currOffset = CreateVariable();
-    GroupOpSize      currGoSize = CreateGroupOpSize();
+    GroupOpSize currGoSize = CreateGroupOpSize();
 
     // ==== TwoShot Step1 Reduce Scatter (GroupReduce) ====
     // 第1步reduce的第一个数据片：本轴 MyRank * 对轴 RankSize
     uint64_t currStepStartingSliceRankIdx = myRankIdxInCurrentAxis_ * otherAxisRankSize_;
-    uint64_t currStepSliceNumber          = otherAxisRankSize_; // 总片数为：对轴 RankSize
-    uint64_t currStepSliceType            = axisId_;            // 数据片为：本轴数据片
-    HCCL_INFO("[Algorithm] Step1: currStepStartingSliceRankIdx[%llu], currStepSliceNumber[%llu], "
-               "currStepSliceType[%llu]",
-               currStepStartingSliceRankIdx, currStepSliceNumber, currStepSliceType);
+    uint64_t currStepSliceNumber = otherAxisRankSize_; // 总片数为：对轴 RankSize
+    uint64_t currStepSliceType = axisId_;              // 数据片为：本轴数据片
+    HCCL_INFO(
+        "[Algorithm] Step1: currStepStartingSliceRankIdx[%llu], currStepSliceNumber[%llu], "
+        "currStepSliceType[%llu]",
+        currStepStartingSliceRankIdx, currStepSliceNumber, currStepSliceType);
 
     for (uint64_t currentSliceRankIdx = currStepStartingSliceRankIdx;
          currentSliceRankIdx < currStepStartingSliceRankIdx + currStepSliceNumber; currentSliceRankIdx++) {
@@ -120,11 +126,12 @@ void CcuContextAllReduceMesh2DTwoShot::Algorithm()
     // ==== TwoShot Step2 Reduce Scatter (GroupReduce) ====
     // reduce数据片：对轴 MyRank * 本轴 RankSize + 对轴 MyRank
     currStepStartingSliceRankIdx = myRankIdxInOtherAxis_ * currentAxisRankSize_ + myRankIdxInCurrentAxis_;
-    currStepSliceNumber          = 1;            // 总片数为：1
-    currStepSliceType            = otherAxisId_; // 数据片为：对轴数据片
-    HCCL_INFO("[Algorithm] Step2: currStepStartingSliceRankIdx[%llu], currStepSliceNumber[%llu], "
-               "currStepSliceType[%llu]",
-               currStepStartingSliceRankIdx, currStepSliceNumber, currStepSliceType);
+    currStepSliceNumber = 1;          // 总片数为：1
+    currStepSliceType = otherAxisId_; // 数据片为：对轴数据片
+    HCCL_INFO(
+        "[Algorithm] Step2: currStepStartingSliceRankIdx[%llu], currStepSliceNumber[%llu], "
+        "currStepSliceType[%llu]",
+        currStepStartingSliceRankIdx, currStepSliceNumber, currStepSliceType);
 
     for (uint64_t currentSliceRankIdx = currStepStartingSliceRankIdx;
          currentSliceRankIdx < currStepStartingSliceRankIdx + currStepSliceNumber; currentSliceRankIdx++) {
@@ -136,11 +143,12 @@ void CcuContextAllReduceMesh2DTwoShot::Algorithm()
     // ==== TwoShot Step3 All Gather (GroupBroadcast) ====
     // Broadcast 的第一个数据片：对轴 MyRank * 本轴 RankSize + 对轴 MyRank
     currStepStartingSliceRankIdx = myRankIdxInOtherAxis_ * currentAxisRankSize_ + myRankIdxInCurrentAxis_;
-    currStepSliceNumber          = 1;            // 总片数为：1
-    currStepSliceType            = otherAxisId_; // 数据片为：对轴数据片
-    HCCL_INFO("[Algorithm] Step3: currStepStartingSliceRankIdx[%llu], currStepSliceNumber[%llu], "
-               "currStepSliceType[%llu]",
-               currStepStartingSliceRankIdx, currStepSliceNumber, currStepSliceType);
+    currStepSliceNumber = 1;          // 总片数为：1
+    currStepSliceType = otherAxisId_; // 数据片为：对轴数据片
+    HCCL_INFO(
+        "[Algorithm] Step3: currStepStartingSliceRankIdx[%llu], currStepSliceNumber[%llu], "
+        "currStepSliceType[%llu]",
+        currStepStartingSliceRankIdx, currStepSliceNumber, currStepSliceType);
 
     for (uint64_t currentSliceRankIdx = currStepStartingSliceRankIdx;
          currentSliceRankIdx < currStepStartingSliceRankIdx + currStepSliceNumber; currentSliceRankIdx++) {
@@ -152,11 +160,12 @@ void CcuContextAllReduceMesh2DTwoShot::Algorithm()
     // ==== TwoShot Step4 All Gather (GroupBroadcast) ====
     // Broadcast 的第一个数据片：本轴 MyRank * 对轴 RankSize
     currStepStartingSliceRankIdx = myRankIdxInCurrentAxis_ * otherAxisRankSize_;
-    currStepSliceNumber          = otherAxisRankSize_; // 总片数为：对轴 RankSize
-    currStepSliceType            = axisId_;            // 数据片为：本轴数据片
-    HCCL_INFO("[Algorithm] Step4: currStepStartingSliceRankIdx[%llu], currStepSliceNumber[%llu], "
-               "currStepSliceType[%llu]",
-               currStepStartingSliceRankIdx, currStepSliceNumber, currStepSliceType);
+    currStepSliceNumber = otherAxisRankSize_; // 总片数为：对轴 RankSize
+    currStepSliceType = axisId_;              // 数据片为：本轴数据片
+    HCCL_INFO(
+        "[Algorithm] Step4: currStepStartingSliceRankIdx[%llu], currStepSliceNumber[%llu], "
+        "currStepSliceType[%llu]",
+        currStepStartingSliceRankIdx, currStepSliceNumber, currStepSliceType);
 
     for (uint64_t currentSliceRankIdx = currStepStartingSliceRankIdx;
          currentSliceRankIdx < currStepStartingSliceRankIdx + currStepSliceNumber; currentSliceRankIdx++) {
@@ -169,25 +178,26 @@ void CcuContextAllReduceMesh2DTwoShot::Algorithm()
     return;
 }
 
-void CcuContextAllReduceMesh2DTwoShot::GetSliceOffsetAndGoSize(uint64_t currentSliceRankIdx, uint64_t currStepSliceType,
-                                                               CcuRep::Variable &currOffset, GroupOpSize &currGoSize)
+void CcuContextAllReduceMesh2DTwoShot::GetSliceOffsetAndGoSize(
+    uint64_t currentSliceRankIdx, uint64_t currStepSliceType, CcuRep::Variable& currOffset, GroupOpSize& currGoSize)
 {
-    HCCL_INFO("[CcuContextAllReduceMesh2DTwoShot] GetSliceOffsetAndGoSize Starts, currentSliceRankIdx[%llu], "
-               "currStepSliceType[%llu]",
-               currentSliceRankIdx, currStepSliceType);
+    HCCL_INFO(
+        "[CcuContextAllReduceMesh2DTwoShot] GetSliceOffsetAndGoSize Starts, currentSliceRankIdx[%llu], "
+        "currStepSliceType[%llu]",
+        currentSliceRankIdx, currStepSliceType);
     currOffset = 0;
 
     CcuRep::Variable normalSliceSize = CreateVariable();
-    normalSliceSize                  = normalRankXSliceSize_;
+    normalSliceSize = normalRankXSliceSize_;
     normalSliceSize += normalRankYSliceSize_;
     // currentSliceRankIdx * normalSliceSize 是每个 rank 的 slice 的起始位置
     for (uint64_t i = 0; i < currentSliceRankIdx; i++) {
         currOffset += normalSliceSize;
     }
 
-    if(currentSliceRankIdx == rankSize_ - 1) {
+    if (currentSliceRankIdx == rankSize_ - 1) {
         // 最后一个rank的数据量可能会大过 normalSliceSize，因为要额外处理尾块
-        if(currStepSliceType == 0) {
+        if (currStepSliceType == 0) {
             HCCL_INFO("[GetSliceOffsetAndGoSize] Last Rank X Slice");
             currGoSize = lastRankXGoSize_;
         } else {
@@ -197,7 +207,7 @@ void CcuContextAllReduceMesh2DTwoShot::GetSliceOffsetAndGoSize(uint64_t currentS
             currGoSize = lastRankYGoSize_;
         }
     } else {
-        if(currStepSliceType == 0) {
+        if (currStepSliceType == 0) {
             HCCL_INFO("[GetSliceOffsetAndGoSize] Normal Rank X Slice");
             currGoSize = normalRankXGoSize_;
         } else {
@@ -227,10 +237,13 @@ void CcuContextAllReduceMesh2DTwoShot::InitVariables()
             outputAddr_.push_back(CreateVariable());
             token_.push_back(CreateVariable());
         } else {
-            HCCL_INFO("[CcuContextAllReduceMesh2DTwoShot] MyRank[%u], PeerId[%llu], TransportId[%u]",
-                       myRankIdxInCurrentAxis_, peerId, transportIdx);
-            CHK_PRT_RET(transports[transportIdx] == nullptr || transportIdx >= transports.size(),
-                        HCCL_ERROR("[CcuContextAllReduceMesh2DTwoShot] Algorithm transport ptr is null or transportIdx is out of bounds"), );
+            HCCL_INFO(
+                "[CcuContextAllReduceMesh2DTwoShot] MyRank[%u], PeerId[%llu], TransportId[%u]", myRankIdxInCurrentAxis_,
+                peerId, transportIdx);
+            CHK_PRT_RET(
+                transports[transportIdx] == nullptr || transportIdx >= transports.size(),
+                HCCL_ERROR("[CcuContextAllReduceMesh2DTwoShot] Algorithm transport ptr is null or transportIdx is out "
+                           "of bounds"), );
             inputAddr_.push_back(CreateVariable((*transports[transportIdx]), INPUT_XN_ID));
             outputAddr_.push_back(CreateVariable((*transports[transportIdx]), OUTPUT_XN_ID));
             token_.push_back(CreateVariable((*transports[transportIdx]), TOKEN_XN_ID));
@@ -238,15 +251,15 @@ void CcuContextAllReduceMesh2DTwoShot::InitVariables()
         }
     }
 
-    lastRankXSliceSize_   = CreateVariable();
-    lastRankYSliceSize_   = CreateVariable();
+    lastRankXSliceSize_ = CreateVariable();
+    lastRankYSliceSize_ = CreateVariable();
     normalRankXSliceSize_ = CreateVariable();
     normalRankYSliceSize_ = CreateVariable();
 
     normalRankXGoSize_ = CreateGroupOpSize();
     normalRankYGoSize_ = CreateGroupOpSize();
-    lastRankXGoSize_   = CreateGroupOpSize();
-    lastRankYGoSize_   = CreateGroupOpSize();
+    lastRankXGoSize_ = CreateGroupOpSize();
+    lastRankYGoSize_ = CreateGroupOpSize();
 
     for (uint64_t rankIdx = 0; rankIdx < currentAxisRankSize_; rankIdx++) {
         tmpAddrList_.push_back(CreateMemory());
@@ -303,8 +316,8 @@ void CcuContextAllReduceMesh2DTwoShot::DoAxisSync(uint32_t signalIdx)
     HCCL_INFO("[CcuContextAllReduceMesh2DTwoShot] DoAxisSync Starts, signalIdx[%u]", signalIdx);
     uint32_t sendBit = 1 << axisId_;
     uint32_t waitBit = 1 << (1 - axisId_);
-    sendBit          = sendBit << (AXIS_NUM * signalIdx);
-    waitBit          = waitBit << (AXIS_NUM * signalIdx);
+    sendBit = sendBit << (AXIS_NUM * signalIdx);
+    waitBit = waitBit << (AXIS_NUM * signalIdx);
     LocalCtxPost(otherAxisSignal_, sendBit);
     LocalWait(currAxisSignal_, waitBit);
     HCCL_INFO("[CcuContextAllReduceMesh2DTwoShot] DoAxisSync Ends");
@@ -313,8 +326,9 @@ void CcuContextAllReduceMesh2DTwoShot::DoAxisSync(uint32_t signalIdx)
 
 void CcuContextAllReduceMesh2DTwoShot::DoGroupSync(int ckeIdx, uint16_t selfBit, uint16_t allBit)
 {
-    HCCL_INFO("[CcuContextAllReduceMesh2DTwoShot] DoGroupSync Starts, ckeIdx[%d], selfBit[%u], allBit[%u]", ckeIdx,
-               selfBit, allBit);
+    HCCL_INFO(
+        "[CcuContextAllReduceMesh2DTwoShot] DoGroupSync Starts, ckeIdx[%d], selfBit[%u], allBit[%u]", ckeIdx, selfBit,
+        allBit);
     for (auto t : transports) {
         RemotePost(*t, ckeIdx, selfBit);
     }
@@ -323,14 +337,14 @@ void CcuContextAllReduceMesh2DTwoShot::DoGroupSync(int ckeIdx, uint16_t selfBit,
     return;
 }
 
-void CcuContextAllReduceMesh2DTwoShot::DoGroupReduce(std::vector<CcuRep::Variable> &srcBase, CcuRep::Variable &dstBase,
-                                                     CcuRep::Variable &offset, GroupOpSize &goSize)
+void CcuContextAllReduceMesh2DTwoShot::DoGroupReduce(
+    std::vector<CcuRep::Variable>& srcBase, CcuRep::Variable& dstBase, CcuRep::Variable& offset, GroupOpSize& goSize)
 {
     HCCL_INFO("[CcuContextAllReduceMesh2DTwoShot] DoGroupReduce Starts");
     // 从轴上所有的对端读取数据
-    std::vector<CcuRep::Memory> &srcAddrs = tmpAddrList_;
-    uint32_t                     curId    = 0;
-    uint32_t                     rmtId    = 0;
+    std::vector<CcuRep::Memory>& srcAddrs = tmpAddrList_;
+    uint32_t curId = 0;
+    uint32_t rmtId = 0;
     for (uint64_t rankIdx = 0; rankIdx < currentAxisRankSize_; rankIdx++) {
         if (rankIdx != myRankIdxInCurrentAxis_) {
             curId = rmtId;
@@ -343,8 +357,8 @@ void CcuContextAllReduceMesh2DTwoShot::DoGroupReduce(std::vector<CcuRep::Variabl
         srcAddrs[curId].addr += offset;
     }
     // Reduce 到本端
-    CcuRep::Memory &dstAddr = tmpAddr_;
-    dstAddr.addr            = dstBase;
+    CcuRep::Memory& dstAddr = tmpAddr_;
+    dstAddr.addr = dstBase;
     dstAddr.addr += offset;
     dstAddr.token = token_[myRankIdxInCurrentAxis_];
     GroupReduce(transports, dstAddr, srcAddrs, goSize, dataType_, outputDataType_, reduceOp_);
@@ -352,15 +366,14 @@ void CcuContextAllReduceMesh2DTwoShot::DoGroupReduce(std::vector<CcuRep::Variabl
     return;
 }
 
-void CcuContextAllReduceMesh2DTwoShot::DoGroupBroadcast(CcuRep::Variable              &srcBase,
-                                                        std::vector<CcuRep::Variable> &dstBase,
-                                                        CcuRep::Variable &offset, GroupOpSize &goSize)
+void CcuContextAllReduceMesh2DTwoShot::DoGroupBroadcast(
+    CcuRep::Variable& srcBase, std::vector<CcuRep::Variable>& dstBase, CcuRep::Variable& offset, GroupOpSize& goSize)
 {
     HCCL_INFO("[CcuContextAllReduceMesh2DTwoShot] DoGroupBroadcast Starts");
     // 从轴上所有的对端读取数据
-    std::vector<CcuRep::Memory> &dstAddrs = tmpAddrList_;
-    uint32_t                     rmtId    = 0;
-    uint32_t                     curId    = 0;
+    std::vector<CcuRep::Memory>& dstAddrs = tmpAddrList_;
+    uint32_t rmtId = 0;
+    uint32_t curId = 0;
     for (uint64_t rankIdx = 0; rankIdx < currentAxisRankSize_; rankIdx++) {
         if (rankIdx != myRankIdxInCurrentAxis_) {
             curId = rmtId;
@@ -373,8 +386,8 @@ void CcuContextAllReduceMesh2DTwoShot::DoGroupBroadcast(CcuRep::Variable        
         dstAddrs[curId].token = token_[rankIdx];
     }
     // Reduce 到本端
-    CcuRep::Memory &srcAddr = tmpAddr_;
-    srcAddr.addr            = srcBase;
+    CcuRep::Memory& srcAddr = tmpAddr_;
+    srcAddr.addr = srcBase;
     srcAddr.addr += offset;
     srcAddr.token = token_[myRankIdxInCurrentAxis_];
     GroupBroadcast(transports, dstAddrs, srcAddr, goSize);
@@ -383,35 +396,35 @@ void CcuContextAllReduceMesh2DTwoShot::DoGroupBroadcast(CcuRep::Variable        
     return;
 }
 
-std::vector<uint64_t> CcuContextAllReduceMesh2DTwoShot::GeneArgs(const CcuTaskArg &arg)
+std::vector<uint64_t> CcuContextAllReduceMesh2DTwoShot::GeneArgs(const CcuTaskArg& arg)
 {
-    HCCL_INFO("[CcuContextReduceScatterMesh2D] GeneArgs Starts");
-    const CcuTaskArgAllReduceMesh2DTwoShot *taskArg = dynamic_cast<const CcuTaskArgAllReduceMesh2DTwoShot *>(&arg);
+    HCCL_INFO("[CcuContextAllReduceMesh2DTwoShot] GeneArgs Starts");
+    const CcuTaskArgAllReduceMesh2DTwoShot* taskArg = dynamic_cast<const CcuTaskArgAllReduceMesh2DTwoShot*>(&arg);
     if (taskArg == nullptr) {
         THROW<NullPtrException>(StringFormat("CcuContextAllReduceMesh2DTwoShot::taskArg ptr is null"));
     }
     uint64_t tokenInfo = taskArg->token_;
-    uint64_t inputAddr  = taskArg->inputAddr_;
+    uint64_t inputAddr = taskArg->inputAddr_;
     uint64_t outputAddr = taskArg->outputAddr_;
 
     uint64_t normalRankXSliceSize = taskArg->normalRankXSliceSize_;
     uint64_t normalRankYSliceSize = taskArg->normalRankYSliceSize_;
-    uint64_t lastRankXSliceSize   = taskArg->lastRankXSliceSize_;
-    uint64_t lastRankYSliceSize   = taskArg->lastRankYSliceSize_;
+    uint64_t lastRankXSliceSize = taskArg->lastRankXSliceSize_;
+    uint64_t lastRankYSliceSize = taskArg->lastRankYSliceSize_;
 
     auto normalRankXGoSize = CalGoSize(normalRankXSliceSize);
     auto normalRankYGoSize = CalGoSize(normalRankYSliceSize);
-    auto lastRankXGoSize   = CalGoSize(lastRankXSliceSize);
-    auto lastRankYGoSize   = CalGoSize(lastRankYSliceSize);
+    auto lastRankXGoSize = CalGoSize(lastRankXSliceSize);
+    auto lastRankYGoSize = CalGoSize(lastRankYSliceSize);
 
-    HCCL_INFO("[CcuContextAllReduceMesh2DTwoShot] GeneArgs, TaskArgs are inputAddr[%llu], "
-              "outputAddr[%llu], normalRankXSliceSize[%llu], normalRankYSliceSize[%llu], lastRankXSliceSize[%llu], "
-              "lastRankYSliceSize[%llu]",
-              inputAddr, outputAddr, normalRankXSliceSize, normalRankYSliceSize, lastRankXSliceSize,
-              lastRankYSliceSize);
+    HCCL_INFO(
+        "[CcuContextAllReduceMesh2DTwoShot] GeneArgs, TaskArgs are inputAddr[%llu], "
+        "outputAddr[%llu], normalRankXSliceSize[%llu], normalRankYSliceSize[%llu], lastRankXSliceSize[%llu], "
+        "lastRankYSliceSize[%llu]",
+        inputAddr, outputAddr, normalRankXSliceSize, normalRankYSliceSize, lastRankXSliceSize, lastRankYSliceSize);
 
     std::vector<uint64_t> taskArgList{
-        inputAddr, outputAddr, tokenInfo, normalRankXSliceSize, normalRankYSliceSize,
+        inputAddr,          outputAddr,        tokenInfo, normalRankXSliceSize, normalRankYSliceSize,
         lastRankXSliceSize, lastRankYSliceSize};
 
     // push goSize

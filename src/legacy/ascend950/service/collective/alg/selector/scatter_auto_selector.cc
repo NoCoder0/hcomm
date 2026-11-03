@@ -13,8 +13,9 @@
 #include "coll_operator.h"
 
 namespace Hccl {
-SelectorStatus ScatterAutoSelector::SelectCcuMsAlgo(const TopoInfo &topoInfo, const CollAlgOperator &op,
-    const std::map<OpType, std::vector<HcclAlgoType>> &configAlgMap, std::string &primQueueGenName) const
+SelectorStatus ScatterAutoSelector::SelectCcuMsAlgo(
+    const TopoInfo& topoInfo, const CollAlgOperator& op,
+    const std::map<OpType, std::vector<HcclAlgoType>>& configAlgMap, std::string& primQueueGenName) const
 {
     (void)topoInfo;
     (void)op;
@@ -24,8 +25,9 @@ SelectorStatus ScatterAutoSelector::SelectCcuMsAlgo(const TopoInfo &topoInfo, co
     return SelectorStatus::NOT_MATCH;
 }
 
-SelectorStatus ScatterAutoSelector::SelectCcuScheduleAlgo(const TopoInfo &topoInfo, const CollAlgOperator &op,
-    const std::map<OpType, std::vector<HcclAlgoType>> &configAlgMap, std::string &primQueueGenName) const
+SelectorStatus ScatterAutoSelector::SelectCcuScheduleAlgo(
+    const TopoInfo& topoInfo, const CollAlgOperator& op,
+    const std::map<OpType, std::vector<HcclAlgoType>>& configAlgMap, std::string& primQueueGenName) const
 {
     (void)op;
     (void)configAlgMap;
@@ -43,7 +45,8 @@ SelectorStatus ScatterAutoSelector::SelectCcuScheduleAlgo(const TopoInfo &topoIn
                 primQueueGenName = "CcuScatterParallelMesh1DNHR";
             }
         } else {
-            HCCL_WARNING("[Algo][ScatterAutoSelector] level0Shape[%d] is not supported yet for ccu schedule mode.",
+            HCCL_WARNING(
+                "[Algo][ScatterAutoSelector] level0Shape[%d] is not supported yet for ccu schedule mode.",
                 topoInfo.level0Shape);
             return SelectorStatus::NOT_MATCH;
         }
@@ -68,11 +71,13 @@ SelectorStatus ScatterAutoSelector::SelectCcuScheduleAlgo(const TopoInfo &topoIn
                 primQueueGenName = "CcuAllGatherParallelMesh1DNHR";
             }
         } else if (topoInfo.level0Shape == Level0Shape::CLOS) {
-            HCCL_WARNING("[Algo][ScatterAutoSelector] level0Shape[%d] is not supported yet for ccu schedule mode.",
+            HCCL_WARNING(
+                "[Algo][ScatterAutoSelector] level0Shape[%d] is not supported yet for ccu schedule mode.",
                 topoInfo.level0Shape);
             return SelectorStatus::NOT_MATCH;
         } else {
-            HCCL_WARNING("[Algo][ScatterAutoSelector] level0Shape[%d] is not supported yet for ccu schedule mode.",
+            HCCL_WARNING(
+                "[Algo][ScatterAutoSelector] level0Shape[%d] is not supported yet for ccu schedule mode.",
                 topoInfo.level0Shape);
             return SelectorStatus::NOT_MATCH;
         }
@@ -81,8 +86,9 @@ SelectorStatus ScatterAutoSelector::SelectCcuScheduleAlgo(const TopoInfo &topoIn
     return SelectorStatus::MATCH;
 }
 
-SelectorStatus ScatterAutoSelector::SelectAicpuAlgo(const TopoInfo &topoInfo, const CollAlgOperator &op,
-    const std::map<OpType, std::vector<HcclAlgoType>> &configAlgMap, std::string &primQueueGenName) const
+SelectorStatus ScatterAutoSelector::SelectAicpuAlgo(
+    const TopoInfo& topoInfo, const CollAlgOperator& op,
+    const std::map<OpType, std::vector<HcclAlgoType>>& configAlgMap, std::string& primQueueGenName) const
 {
     (void)op;
     (void)configAlgMap;
@@ -96,11 +102,13 @@ SelectorStatus ScatterAutoSelector::SelectAicpuAlgo(const TopoInfo &topoInfo, co
                 primQueueGenName = "InsScatterParallelMesh1DNHR";
             }
         } else if (topoInfo.level0Shape == Level0Shape::MESH_2D) {
-            HCCL_WARNING("[Algo][ScatterAutoSelector] level0Shape[%d] is not supported yet for aicpu levelNum > 1.",
+            HCCL_WARNING(
+                "[Algo][ScatterAutoSelector] level0Shape[%d] is not supported yet for aicpu levelNum > 1.",
                 topoInfo.level0Shape);
             return SelectorStatus::NOT_MATCH;
         } else if (topoInfo.level0Shape == Level0Shape::CLOS) {
-            HCCL_WARNING("[Algo][ScatterAutoSelector] level0Shape[%d] is not supported yet for aicpu levelNum > 1.",
+            HCCL_WARNING(
+                "[Algo][ScatterAutoSelector] level0Shape[%d] is not supported yet for aicpu levelNum > 1.",
                 topoInfo.level0Shape);
             return SelectorStatus::NOT_MATCH;
         } else {
@@ -137,8 +145,9 @@ SelectorStatus ScatterAutoSelector::SelectAicpuAlgo(const TopoInfo &topoInfo, co
     return SelectorStatus::MATCH;
 }
 
-SelectorStatus ScatterAutoSelector::SelectAivAlgo(const TopoInfo &topoInfo, const CollAlgOperator &op,
-    const std::map<OpType, std::vector<HcclAlgoType>> &configAlgMap, std::string &primQueueGenName) const
+SelectorStatus ScatterAutoSelector::SelectAivAlgo(
+    const TopoInfo& topoInfo, const CollAlgOperator& op,
+    const std::map<OpType, std::vector<HcclAlgoType>>& configAlgMap, std::string& primQueueGenName) const
 {
     (void)op;
     (void)configAlgMap;
@@ -152,4 +161,4 @@ SelectorStatus ScatterAutoSelector::SelectAivAlgo(const TopoInfo &topoInfo, cons
 }
 
 REGISTER_SELECTOR_BY_OPTYPE(OpType::SCATTER, 18, ScatterAutoSelector);
-}  // namespace Hccl
+} // namespace Hccl

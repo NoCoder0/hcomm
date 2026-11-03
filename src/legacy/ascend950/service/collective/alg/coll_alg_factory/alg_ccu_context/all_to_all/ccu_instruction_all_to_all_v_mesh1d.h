@@ -24,9 +24,15 @@ namespace Hccl {
 // 为AllToAllVMesh1D实现的CCUIns、CCUCtxArg与CCUTaskArg
 class CcuCtxArgAllToAllVMesh1D : public CcuCtxArg {
 public:
-    explicit CcuCtxArgAllToAllVMesh1D(const std::vector<uint64_t> &dSize, uint32_t rId, const CollAlgOperator &op,
-        const std::vector<std::vector<RankId>> &tempVTopo, bool loadFromMem = false) :
-            dimSize(dSize), rankId(rId), op(op), tempVTopo(tempVTopo), loadFromMem(loadFromMem) {}
+    explicit CcuCtxArgAllToAllVMesh1D(
+        const std::vector<uint64_t>& dSize, uint32_t rId, const CollAlgOperator& op,
+        const std::vector<std::vector<RankId>>& tempVTopo, bool loadFromMem = false)
+        : dimSize(dSize),
+          rankId(rId),
+          op(op),
+          tempVTopo(tempVTopo),
+          loadFromMem(loadFromMem)
+    {}
     CcuCtxSignature GetCtxSignature() const override
     {
         CcuCtxSignature signature;
@@ -43,11 +49,17 @@ public:
 
 class CcuTaskArgAllToAllVMesh1D : public CcuTaskArg {
 public:
-    explicit CcuTaskArgAllToAllVMesh1D(uint64_t inputAddr, uint64_t outputAddr, std::vector<uint64_t> sliceSize,
-        uint64_t token, uint64_t srcOffset, uint64_t dstOffset, const A2ASendRecvInfo& localSendRecvInfo) :
-        inputAddr_(inputAddr), outputAddr_(outputAddr), sliceSize_(sliceSize), token_(token), srcOffset_(srcOffset),
-        dstOffset_(dstOffset),
-        localSendRecvInfo_(localSendRecvInfo) {}
+    explicit CcuTaskArgAllToAllVMesh1D(
+        uint64_t inputAddr, uint64_t outputAddr, std::vector<uint64_t> sliceSize, uint64_t token, uint64_t srcOffset,
+        uint64_t dstOffset, const A2ASendRecvInfo& localSendRecvInfo)
+        : inputAddr_(inputAddr),
+          outputAddr_(outputAddr),
+          sliceSize_(sliceSize),
+          token_(token),
+          srcOffset_(srcOffset),
+          dstOffset_(dstOffset),
+          localSendRecvInfo_(localSendRecvInfo)
+    {}
 
     uint64_t inputAddr_;
     uint64_t outputAddr_;
@@ -60,13 +72,11 @@ public:
 
 class CcuInstructionAllToAllVMesh1D : public CcuInstruction {
 public:
-    CcuInstructionAllToAllVMesh1D() : CcuInstruction()
-    {
-    }
+    CcuInstructionAllToAllVMesh1D() : CcuInstruction() {}
 
-    void Init(uint32_t rankId, uint64_t inputAddr, uint64_t outputAddr, std::vector<uint64_t> sliceSize,
-        uint64_t token, uint64_t srcOffset, uint64_t dstOffset,
-        CollAlgOperator &op, std::vector<std::vector<RankId>> &tempVTopo,
+    void Init(
+        uint32_t rankId, uint64_t inputAddr, uint64_t outputAddr, std::vector<uint64_t> sliceSize, uint64_t token,
+        uint64_t srcOffset, uint64_t dstOffset, CollAlgOperator& op, std::vector<std::vector<RankId>>& tempVTopo,
         const A2ASendRecvInfo& localSendRecvInfo, bool loadFromMem = false)
     {
         u32 maxDimNum = 1;
@@ -97,7 +107,8 @@ public:
 
     std::string Describe() const override
     {
-        return StringFormat("CcuInstructionAllToAllVMesh1D rankId [%u], instType[%s]", rankId_, instType_.Describe().c_str());
+        return StringFormat(
+            "CcuInstructionAllToAllVMesh1D rankId [%u], instType[%s]", rankId_, instType_.Describe().c_str());
     }
 
     std::unique_ptr<CcuCtxArg> GetCtxArg() const override
@@ -105,15 +116,12 @@ public:
         return std::make_unique<CcuCtxArgAllToAllVMesh1D>(dimSize_, rankId_, op_, tempVTopo_, loadFromMem_);
     }
 
-    void SetInstType(CcuInstType instType) 
-    { 
-        instType_ = instType; 
-    }
+    void SetInstType(CcuInstType instType) { instType_ = instType; }
 
     std::unique_ptr<CcuTaskArg> GetTaskArg() const override
     {
-        return std::make_unique<CcuTaskArgAllToAllVMesh1D>(inputAddr_, outputAddr_, sliceSize_,
-            token_, srcOffset_, dstOffset_, localSendRecvInfo_);
+        return std::make_unique<CcuTaskArgAllToAllVMesh1D>(
+            inputAddr_, outputAddr_, sliceSize_, token_, srcOffset_, dstOffset_, localSendRecvInfo_);
     }
 
 private:
@@ -132,5 +140,5 @@ private:
     bool loadFromMem_{false};
 };
 
-}
+} // namespace Hccl
 #endif // HCCLV2_CCU_INSTRUCTION_ALL_TO_ALL_V_MESH_1D_H_

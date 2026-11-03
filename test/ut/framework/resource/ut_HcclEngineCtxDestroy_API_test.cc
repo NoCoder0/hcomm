@@ -40,9 +40,9 @@ public:
 // 测试空comm指针传入
 TEST_F(HcclEngineCtxDestroyTest, Ut_HcclEngineCtxDestroy_When_InputParamNull_Expect_Return_ERROR)
 {
-    const char *ctxTag = "1";
+    const char* ctxTag = "1";
     CommEngine engine = COMM_ENGINE_CPU;
-    
+
     HcclResult result = HcclEngineCtxDestroy(nullptr, ctxTag, engine);
     EXPECT_EQ(result, HCCL_E_PTR);
 }
@@ -51,12 +51,12 @@ TEST_F(HcclEngineCtxDestroyTest, Ut_HcclEngineCtxDestroy_When_InputParamNull_Exp
 TEST_F(HcclEngineCtxDestroyTest, Ut_HcclEngineCtxDestroy_When_CtxTagNull_Expect_Success)
 {
     CommEngine engine = COMM_ENGINE_CPU;
-    void * ctx;
+    void* ctx;
     uint64_t size = 256;
 
     HcclResult createResult = HcclEngineCtxCreate(comm, nullptr, engine, size, &ctx);
     EXPECT_EQ(createResult, HCCL_SUCCESS);
-    
+
     HcclResult result = HcclEngineCtxDestroy(comm, nullptr, engine);
     EXPECT_EQ(result, HCCL_SUCCESS);
 }
@@ -64,9 +64,9 @@ TEST_F(HcclEngineCtxDestroyTest, Ut_HcclEngineCtxDestroy_When_CtxTagNull_Expect_
 // 测试销毁不存在的Context
 TEST_F(HcclEngineCtxDestroyTest, Ut_HcclEngineCtxDestroy_When_TagNotExist_Expect_Return_EPARA)
 {
-    const char *ctxTag = "non_existent_tag";
+    const char* ctxTag = "non_existent_tag";
     CommEngine engine = COMM_ENGINE_CPU;
-    
+
     HcclResult result = HcclEngineCtxDestroy(comm, ctxTag, engine);
     EXPECT_EQ(result, HCCL_E_PARA);
 }
@@ -74,18 +74,18 @@ TEST_F(HcclEngineCtxDestroyTest, Ut_HcclEngineCtxDestroy_When_TagNotExist_Expect
 // 测试Tag存在但engine不存在
 TEST_F(HcclEngineCtxDestroyTest, Ut_HcclEngineCtxDestroy_When_EngineNotExistInTag_Expect_Return_EPARA)
 {
-    const char *ctxTag = "tag1";
-    void * ctx;
+    const char* ctxTag = "tag1";
+    void* ctx;
     uint64_t size = 256;
-    
+
     // 先创建tag1的CPU类型Context
     HcclResult createResult = HcclEngineCtxCreate(comm, ctxTag, COMM_ENGINE_CPU, size, &ctx);
     EXPECT_EQ(createResult, HCCL_SUCCESS);
-    
+
     // 尝试销毁未创建的AICPU类型engine
     HcclResult destroyResult = HcclEngineCtxDestroy(comm, ctxTag, COMM_ENGINE_AICPU);
     EXPECT_EQ(destroyResult, HCCL_E_PARA);
-    
+
     // 清理已创建的CPU Context
     HcclResult cleanResult = HcclEngineCtxDestroy(comm, ctxTag, COMM_ENGINE_CPU);
     EXPECT_EQ(cleanResult, HCCL_SUCCESS);
@@ -94,14 +94,14 @@ TEST_F(HcclEngineCtxDestroyTest, Ut_HcclEngineCtxDestroy_When_EngineNotExistInTa
 // 测试销毁Host类型内存
 TEST_F(HcclEngineCtxDestroyTest, Ut_HcclEngineCtxDestroy_When_SuccessDestroyHostMem_Expect_Success)
 {
-    const char *ctxTag = "host_tag";
-    void * ctx;
+    const char* ctxTag = "host_tag";
+    void* ctx;
     uint64_t size = 256;
-    
+
     // 创建COMM_ENGINE_CPU类型的Context
     HcclResult createResult = HcclEngineCtxCreate(comm, ctxTag, COMM_ENGINE_CPU, size, &ctx);
     EXPECT_EQ(createResult, HCCL_SUCCESS);
-    
+
     // 销毁Host类型内存
     HcclResult destroyResult = HcclEngineCtxDestroy(comm, ctxTag, COMM_ENGINE_CPU);
     EXPECT_EQ(destroyResult, HCCL_SUCCESS);
@@ -110,14 +110,14 @@ TEST_F(HcclEngineCtxDestroyTest, Ut_HcclEngineCtxDestroy_When_SuccessDestroyHost
 // 测试销毁Device类型内存
 TEST_F(HcclEngineCtxDestroyTest, Ut_HcclEngineCtxDestroy_When_SuccessDestroyDeviceMem_Expect_Success)
 {
-    const char *ctxTag = "device_tag";
-    void * ctx;
+    const char* ctxTag = "device_tag";
+    void* ctx;
     uint64_t size = 256;
-    
+
     // 创建COMM_ENGINE_AICPU类型的Context
     HcclResult createResult = HcclEngineCtxCreate(comm, ctxTag, COMM_ENGINE_AICPU, size, &ctx);
     EXPECT_EQ(createResult, HCCL_SUCCESS);
-    
+
     // 销毁Device类型内存
     HcclResult destroyResult = HcclEngineCtxDestroy(comm, ctxTag, COMM_ENGINE_AICPU);
     EXPECT_EQ(destroyResult, HCCL_SUCCESS);
@@ -126,22 +126,22 @@ TEST_F(HcclEngineCtxDestroyTest, Ut_HcclEngineCtxDestroy_When_SuccessDestroyDevi
 // 测试同tag下多engine销毁
 TEST_F(HcclEngineCtxDestroyTest, Ut_HcclEngineCtxDestroy_When_MultipleEnginesUnderSameTag_Expect_OnlySpecifiedDeleted)
 {
-    const char *ctxTag = "multi_engine_tag";
-    void * cpuCtx;
-    void * aicpuCtx;
+    const char* ctxTag = "multi_engine_tag";
+    void* cpuCtx;
+    void* aicpuCtx;
     uint64_t size = 256;
-    
+
     // 创建tag1的CPU和AICPU两种Context
     HcclResult createCpuResult = HcclEngineCtxCreate(comm, ctxTag, COMM_ENGINE_CPU, size, &cpuCtx);
     EXPECT_EQ(createCpuResult, HCCL_SUCCESS);
-    
+
     HcclResult createAicpuResult = HcclEngineCtxCreate(comm, ctxTag, COMM_ENGINE_AICPU, size, &aicpuCtx);
     EXPECT_EQ(createAicpuResult, HCCL_SUCCESS);
-    
+
     // 只销毁CPU类型的engine
     HcclResult destroyCpuResult = HcclEngineCtxDestroy(comm, ctxTag, COMM_ENGINE_CPU);
     EXPECT_EQ(destroyCpuResult, HCCL_SUCCESS);
-    
+
     // 验证AICPU内存仍存在（尝试销毁AICPU应该成功）
     HcclResult destroyAicpuResult = HcclEngineCtxDestroy(comm, ctxTag, COMM_ENGINE_AICPU);
     EXPECT_EQ(destroyAicpuResult, HCCL_SUCCESS);

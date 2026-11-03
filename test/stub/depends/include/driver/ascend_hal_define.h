@@ -13,7 +13,6 @@
 
 #include "ascend_hal_error.h"
 
-
 /*========================== typedef ===========================*/
 typedef signed char int8_t;
 typedef signed int int32_t;
@@ -26,37 +25,37 @@ typedef unsigned short UINT16;
 typedef unsigned char UINT8;
 
 enum devdrv_process_type {
-    DEVDRV_PROCESS_CP1 = 0,   /* aicpu_scheduler */
-    DEVDRV_PROCESS_CP2,       /* custom_process */
-    DEVDRV_PROCESS_DEV_ONLY,  /* TDT */
-    DEVDRV_PROCESS_QS,        /* queue_scheduler */
-    DEVDRV_PROCESS_HCCP,      /* hccp server */
-    DEVDRV_PROCESS_USER,      /* user proc, can bind many on host or device. not support quert from host pid */
+    DEVDRV_PROCESS_CP1 = 0,  /* aicpu_scheduler */
+    DEVDRV_PROCESS_CP2,      /* custom_process */
+    DEVDRV_PROCESS_DEV_ONLY, /* TDT */
+    DEVDRV_PROCESS_QS,       /* queue_scheduler */
+    DEVDRV_PROCESS_HCCP,     /* hccp server */
+    DEVDRV_PROCESS_USER,     /* user proc, can bind many on host or device. not support quert from host pid */
     DEVDRV_PROCESS_CPTYPE_MAX,
 };
 
 /*========================== Queue Manage ===========================*/
-#define DRV_ERROR_QUEUE_INNER_ERROR  DRV_ERROR_INNER_ERR             /**< queue error code */
-#define DRV_ERROR_QUEUE_PARA_ERROR  DRV_ERROR_PARA_ERROR
-#define DRV_ERROR_QUEUE_OUT_OF_MEM  DRV_ERROR_OUT_OF_MEMORY
-#define DRV_ERROR_QUEUE_NOT_INIT  DRV_ERROR_UNINIT
-#define DRV_ERROR_QUEUE_OUT_OF_SIZE  DRV_ERROR_OVER_LIMIT
-#define DRV_ERROR_QUEUE_REPEEATED_INIT  DRV_ERROR_REPEATED_INIT
-#define DRV_ERROR_QUEUE_IOCTL_FAIL  DRV_ERROR_IOCRL_FAIL
-#define DRV_ERROR_QUEUE_NOT_CREATED  DRV_ERROR_NOT_EXIST
-#define DRV_ERROR_QUEUE_RE_SUBSCRIBED  DRV_ERROR_REPEATED_SUBSCRIBED
-#define DRV_ERROR_QUEUE_MULIPLE_ENTRY  DRV_ERROR_BUSY
-#define DRV_ERROR_QUEUE_NULL_POINTER  DRV_ERROR_INVALID_HANDLE
+#define DRV_ERROR_QUEUE_INNER_ERROR DRV_ERROR_INNER_ERR /**< queue error code */
+#define DRV_ERROR_QUEUE_PARA_ERROR DRV_ERROR_PARA_ERROR
+#define DRV_ERROR_QUEUE_OUT_OF_MEM DRV_ERROR_OUT_OF_MEMORY
+#define DRV_ERROR_QUEUE_NOT_INIT DRV_ERROR_UNINIT
+#define DRV_ERROR_QUEUE_OUT_OF_SIZE DRV_ERROR_OVER_LIMIT
+#define DRV_ERROR_QUEUE_REPEEATED_INIT DRV_ERROR_REPEATED_INIT
+#define DRV_ERROR_QUEUE_IOCTL_FAIL DRV_ERROR_IOCRL_FAIL
+#define DRV_ERROR_QUEUE_NOT_CREATED DRV_ERROR_NOT_EXIST
+#define DRV_ERROR_QUEUE_RE_SUBSCRIBED DRV_ERROR_REPEATED_SUBSCRIBED
+#define DRV_ERROR_QUEUE_MULIPLE_ENTRY DRV_ERROR_BUSY
+#define DRV_ERROR_QUEUE_NULL_POINTER DRV_ERROR_INVALID_HANDLE
 
 /*=========================== Event Sched ===========================*/
-#define EVENT_MAX_MSG_LEN        128  /* Maximum message length, only 40 allowed by hardware event scheduler */
-#define EVENT_MAX_GRP_NAME_LEN   16
+#define EVENT_MAX_MSG_LEN 128 /* Maximum message length, only 40 allowed by hardware event scheduler */
+#define EVENT_MAX_GRP_NAME_LEN 16
 /* The grp name used for sending and receiving queue events between host and device */
 #define PROXY_HOST_QUEUE_GRP_NAME "proxy_host_grp"
-#define DRV_ERROR_SCHED_INNER_ERR  DRV_ERROR_INNER_ERR                   /**< event sched add error*/
+#define DRV_ERROR_SCHED_INNER_ERR DRV_ERROR_INNER_ERR /**< event sched add error*/
 #define DRV_ERROR_SCHED_PARA_ERR DRV_ERROR_PARA_ERROR
-#define DRV_ERROR_SCHED_OUT_OF_MEM  DRV_ERROR_OUT_OF_MEMORY
-#define DRV_ERROR_SCHED_UNINIT  DRV_ERROR_UNINIT
+#define DRV_ERROR_SCHED_OUT_OF_MEM DRV_ERROR_OUT_OF_MEMORY
+#define DRV_ERROR_SCHED_UNINIT DRV_ERROR_UNINIT
 #define DRV_ERROR_SCHED_NO_PROCESS DRV_ERROR_NO_PROCESS
 #define DRV_ERROR_SCHED_PROCESS_EXIT DRV_ERROR_PROCESS_EXIT
 #define DRV_ERROR_SCHED_NO_SUBSCRIBE_THREAD DRV_ERROR_NO_SUBSCRIBE_THREAD
@@ -67,8 +66,8 @@ enum devdrv_process_type {
 #define DRV_ERROR_SCHED_GRP_EXIT DRV_ERROR_GROUP_EXIST
 #define DRV_ERROR_SCHED_THREAD_EXCEEDS_SPEC DRV_ERROR_THREAD_EXCEEDS_SPEC
 #define DRV_ERROR_SCHED_RUN_IN_ILLEGAL_CPU DRV_ERROR_RUN_IN_ILLEGAL_CPU
-#define DRV_ERROR_SCHED_WAIT_TIMEOUT  DRV_ERROR_WAIT_TIMEOUT
-#define DRV_ERROR_SCHED_WAIT_FAILED   DRV_ERROR_INNER_ERR
+#define DRV_ERROR_SCHED_WAIT_TIMEOUT DRV_ERROR_WAIT_TIMEOUT
+#define DRV_ERROR_SCHED_WAIT_FAILED DRV_ERROR_INNER_ERR
 #define DRV_ERROR_SCHED_WAIT_INTERRUPT DRV_ERROR_WAIT_INTERRUPT
 #define DRV_ERROR_SCHED_THREAD_NOT_RUNNIG DRV_ERROR_THREAD_NOT_RUNNIG
 #define DRV_ERROR_SCHED_PROCESS_NOT_MATCH DRV_ERROR_PROCESS_NOT_MATCH
@@ -84,13 +83,13 @@ typedef enum group_type {
     GRP_TYPE_UNINIT = 0,
     /* Bound to a AICPU, multiple threads can be woken up simultaneously within a group */
     GRP_TYPE_BIND_DP_CPU,
-    GRP_TYPE_BIND_CP_CPU,             /* Bind to the control CPU */
-    GRP_TYPE_BIND_DP_CPU_EXCLUSIVE    /* Bound to a AICPU, intra-group threads are mutex awakened */
+    GRP_TYPE_BIND_CP_CPU,          /* Bind to the control CPU */
+    GRP_TYPE_BIND_DP_CPU_EXCLUSIVE /* Bound to a AICPU, intra-group threads are mutex awakened */
 } GROUP_TYPE;
 
 typedef enum submit_flag {
-    SHARED_EVENT_ENTRY,    /* event num with same struct event_summary */
-    SINGLE_EVENT_ENTRY,    /* event num with diff struct event_summary */
+    SHARED_EVENT_ENTRY, /* event num with same struct event_summary */
+    SINGLE_EVENT_ENTRY, /* event num with diff struct event_summary */
 } SUBMIT_FLAG;
 
 /* Events can be released between different systems. This parameter specifies the destination type of events
@@ -114,26 +113,22 @@ typedef enum schedule_dst_engine {
 /* When the destination engine is AICPU, select a policy.
    ONLY: The command is executed only on the local AICPU.
    FIRST: The local AICPU is preferentially executed. If the local AICPU is busy, the remote AICPU can be used. */
-typedef enum schedule_policy {
-    ONLY = 0,
-    FIRST = 1,
-    POLICY_MAX
-} SCHEDULE_POLICY;
+typedef enum schedule_policy { ONLY = 0, FIRST = 1, POLICY_MAX } SCHEDULE_POLICY;
 
 typedef enum event_id {
-    EVENT_RANDOM_KERNEL,      /* Random operator event */
-    EVENT_DVPP_MSG,           /* operator events committed by DVPP */
-    EVENT_FR_MSG,             /* operator events committed by Feature retrieves */
-    EVENT_TS_HWTS_KERNEL,     /* operator events committed by ts/hwts */
-    EVENT_AICPU_MSG,          /* aicpu activates its own stream events */
-    EVENT_TS_CTRL_MSG,        /* controls message events of TS */
-    EVENT_QUEUE_ENQUEUE,      /* entry event of Queue(consumer) */
+    EVENT_RANDOM_KERNEL,            /* Random operator event */
+    EVENT_DVPP_MSG,                 /* operator events committed by DVPP */
+    EVENT_FR_MSG,                   /* operator events committed by Feature retrieves */
+    EVENT_TS_HWTS_KERNEL,           /* operator events committed by ts/hwts */
+    EVENT_AICPU_MSG,                /* aicpu activates its own stream events */
+    EVENT_TS_CTRL_MSG,              /* controls message events of TS */
+    EVENT_QUEUE_ENQUEUE,            /* entry event of Queue(consumer) */
     EVENT_QUEUE_FULL_TO_NOT_FULL,   /* full to non-full events of Queue(producers) */
-    EVENT_QUEUE_EMPTY_TO_NOT_EMPTY,   /* empty to non-empty event of Queue(consumer) */
-    EVENT_TDT_ENQUEUE,        /* data entry event of TDT */
-    EVENT_TIMER,              /* ros timer */
-    EVENT_HCFI_SCHED_MSG,     /* scheduling events of HCFI */
-    EVENT_HCFI_EXEC_MSG,      /* performs the event of HCFI */
+    EVENT_QUEUE_EMPTY_TO_NOT_EMPTY, /* empty to non-empty event of Queue(consumer) */
+    EVENT_TDT_ENQUEUE,              /* data entry event of TDT */
+    EVENT_TIMER,                    /* ros timer */
+    EVENT_HCFI_SCHED_MSG,           /* scheduling events of HCFI */
+    EVENT_HCFI_EXEC_MSG,            /* performs the event of HCFI */
     EVENT_ROS_MSG_LEVEL0,
     EVENT_ROS_MSG_LEVEL1,
     EVENT_ROS_MSG_LEVEL2,
@@ -143,15 +138,15 @@ typedef enum event_id {
     EVENT_CCPU_CTRL_MSG,
     EVENT_SPLIT_KERNEL,
     EVENT_DVPP_MPI_MSG,
-    EVENT_CDQ_MSG,            /* message events committed by CDQM(hardware) */
-    EVENT_FFTS_PLUS_MSG,      /* operator events committed by FFTS(hardware) */
-    EVENT_DRV_MSG,            /* 24-events of driver */
-    EVENT_QS_MSG,             /* events of queue scheduler */
+    EVENT_CDQ_MSG,       /* message events committed by CDQM(hardware) */
+    EVENT_FFTS_PLUS_MSG, /* operator events committed by FFTS(hardware) */
+    EVENT_DRV_MSG,       /* 24-events of driver */
+    EVENT_QS_MSG,        /* events of queue scheduler */
     EVENT_TS_CALLBACK_MSG,
-    EVENT_DRV_MSG_EX,            /* 27-events of driver for ccpu */
+    EVENT_DRV_MSG_EX, /* 27-events of driver for ccpu */
     /* Add a new event here */
-    EVENT_TEST,               /* Reserve for test */
-    EVENT_HCCP_MSG = 47,   /* ccu kill msg of ts and hccp */
+    EVENT_TEST,          /* Reserve for test */
+    EVENT_HCCP_MSG = 47, /* ccu kill msg of ts and hccp */
     EVENT_USR_START = 48,
     EVENT_USR_END = 63,
     EVENT_MAX_NUM
@@ -161,7 +156,7 @@ typedef enum drv_subevent_id {
     DRV_SUBEVENT_QUEUE_INIT_MSG,
     DRV_SUBEVENT_HDC_INIT_MSG,
     DRV_SUBEVENT_CREATE_MSG,
-    DRV_SUBEVENT_GRANT_MSG, /* aicpu sd will process this event */
+    DRV_SUBEVENT_GRANT_MSG,  /* aicpu sd will process this event */
     DRV_SUBEVENT_ATTACH_MSG, /* aicpu sd will process this event */
     DRV_SUBEVENT_DESTROY_MSG,
     DRV_SUBEVENT_SUBE2NE_MSG,
@@ -261,19 +256,19 @@ struct event_proc_result {
 };
 
 struct event_reply {
-    char *buf;
+    char* buf;
     unsigned int buf_len;
     unsigned int reply_len;
 };
 
 struct iovec_info {
-    void *iovec_base;
+    void* iovec_base;
     unsigned long long len;
 };
 
 #define QUEUE_MAX_IOVEC_NUM ((~0U) - 1)
 struct buff_iovec {
-    void *context_base;
+    void* context_base;
     unsigned long long context_len;
     unsigned int count;
     struct iovec_info ptr[];
@@ -295,24 +290,20 @@ struct callback_event_info {
     unsigned int res3;
 };
 
-typedef enum esched_query_type {
-    QUERY_TYPE_LOCAL_GRP_ID,
-    QUERY_TYPE_REMOTE_GRP_ID,
-    QUERY_TYPE_MAX
-} ESCHED_QUERY_TYPE;
+typedef enum esched_query_type { QUERY_TYPE_LOCAL_GRP_ID, QUERY_TYPE_REMOTE_GRP_ID, QUERY_TYPE_MAX } ESCHED_QUERY_TYPE;
 
 struct esched_input_info {
-    void *inBuff;
+    void* inBuff;
     unsigned int inLen;
 };
 
 struct esched_output_info {
-    void *outBuff;
+    void* outBuff;
     unsigned int outLen;
 };
 
 struct esched_query_gid_input {
-    int pid;  /* In remote query gid scenario, use drvDeviceGetBareTgid() to get remote pid */
+    int pid; /* In remote query gid scenario, use drvDeviceGetBareTgid() to get remote pid */
     char grp_name[EVENT_MAX_GRP_NAME_LEN];
 };
 
@@ -323,7 +314,7 @@ struct esched_query_gid_output {
 enum esched_table_op_type {
     ESCHED_TABLE_OP_SEND_EVENT, /* send a event */
     ESCHED_TABLE_OP_NEXT_TABLE, /* continue query next table */
-    ESCHED_TABLE_OP_DROP, /* drop */
+    ESCHED_TABLE_OP_DROP,       /* drop */
     ESCHED_TABLE_OP_MAX
 };
 
@@ -364,7 +355,7 @@ struct esched_table_entry {
 /* Keys are aligned by bytes. Key_len is less than or equal to cqe_size.
   If the key is less than one byte, zeros are added to the high bits. */
 struct esched_table_key {
-    unsigned char *key;
+    unsigned char* key;
     unsigned int key_len;
 };
 
@@ -376,8 +367,8 @@ struct esched_table_key_entry_stat {
 /*=========================== Queue Manage ===========================*/
 
 typedef enum QueEventCmd {
-    QUE_PAUSE_EVENT = 1,    /* pause enqueue event publish in group */
-    QUE_RESUME_EVENT        /* resume enqueue event publish */
+    QUE_PAUSE_EVENT = 1, /* pause enqueue event publish in group */
+    QUE_RESUME_EVENT     /* resume enqueue event publish */
 } QUE_EVENT_CMD;
 
 typedef enum queue_entity_type {
@@ -385,7 +376,7 @@ typedef enum queue_entity_type {
     QMNGR_ENTITY_TYPE,
     GQM_ENTITY_TYPE,
     QUEUE_ENTITY_TYPE_MAX
-}QUEUE_ENTITY_TYPE;
+} QUEUE_ENTITY_TYPE;
 
 typedef struct {
     unsigned int qid;
@@ -394,12 +385,12 @@ typedef struct {
     unsigned long long dequeOpAddr;
     unsigned long long prodqOwAddr;
     unsigned long long prodqStatAddr;
-}DqsQueueInfo;
+} DqsQueueInfo;
 
 /*=========================== Buffer Manage ===========================*/
 
-#define UNI_ALIGN_MAX       4096
-#define UNI_ALIGN_MIN       32
+#define UNI_ALIGN_MAX 4096
+#define UNI_ALIGN_MIN 32
 #define BUFF_POOL_NAME_LEN 128
 #define BUFF_GRP_NAME_LEN 32
 #define BUFF_RESERVE_LEN 8
@@ -420,39 +411,36 @@ typedef struct {
 #define XSMEM_BLK_NOT_AUTO_RECYCLE (1UL << 63)
 #define XSMEM_BLK_ALLOC_FROM_OS (1UL << 62)
 
-typedef enum group_id_type {
-    GROUP_ID_CREATE,
-    GROUP_ID_ADD
-} GROUP_ID_TYPE;
+typedef enum group_id_type { GROUP_ID_CREATE, GROUP_ID_ADD } GROUP_ID_TYPE;
 
 typedef struct {
-    unsigned long long maxMemSize;   /* max buf size in grp, in KB, if = 0 means no limit */
-    unsigned int cacheAllocFlag;     /* alloc cache memory strategy enable flag */
-    unsigned int privMbufFlag;       /* private mbuf enable flag */
-    unsigned int addGrpTimeout;      /* addGrpTimeout < 3, timeout is 3s; addGrpTimeout > 100, timeout is 100s */
-    int rsv[BUFF_GRP_NAME_LEN - 3];  /* reserve, caller must clear the value */
+    unsigned long long maxMemSize;  /* max buf size in grp, in KB, if = 0 means no limit */
+    unsigned int cacheAllocFlag;    /* alloc cache memory strategy enable flag */
+    unsigned int privMbufFlag;      /* private mbuf enable flag */
+    unsigned int addGrpTimeout;     /* addGrpTimeout < 3, timeout is 3s; addGrpTimeout > 100, timeout is 100s */
+    int rsv[BUFF_GRP_NAME_LEN - 3]; /* reserve, caller must clear the value */
 } GroupCfg;
 
 typedef struct {
-    unsigned long long memSize;     /* cache size, in KB */
-    unsigned int memFlag;           /* cache memory flag */
-    unsigned int allocMaxSize;      /* maxsize allowed to alloc, in KB. if allocMaxsize = 0 means no limit */
-    int rsv[BUFF_RESERVE_LEN - 1];  /* reserve, caller must clear the value */
+    unsigned long long memSize;    /* cache size, in KB */
+    unsigned int memFlag;          /* cache memory flag */
+    unsigned int allocMaxSize;     /* maxsize allowed to alloc, in KB. if allocMaxsize = 0 means no limit */
+    int rsv[BUFF_RESERVE_LEN - 1]; /* reserve, caller must clear the value */
 } GrpCacheAllocPara;
 
 typedef struct {
-    unsigned int admin : 1;     /* admin permission, can add other proc to grp */
-    unsigned int read : 1;     /* rsv, not support */
-    unsigned int write : 1;    /* read and write permission */
-    unsigned int alloc : 1;    /* alloc permission (have read and write permission) */
+    unsigned int admin : 1; /* admin permission, can add other proc to grp */
+    unsigned int read : 1;  /* rsv, not support */
+    unsigned int write : 1; /* read and write permission */
+    unsigned int alloc : 1; /* alloc permission (have read and write permission) */
     unsigned int rsv : 28;
-}GroupShareAttr;
+} GroupShareAttr;
 
 typedef enum {
-    GRP_QUERY_GROUP,                  /* query grp info include proc and permission */
-    GRP_QUERY_GROUPS_OF_PROCESS,      /* query process all grp */
-    GRP_QUERY_GROUP_ID,               /* query grp ID by grp name */
-    GRP_QUERY_GROUP_ADDR_INFO,        /* query group addr info */
+    GRP_QUERY_GROUP,             /* query grp info include proc and permission */
+    GRP_QUERY_GROUPS_OF_PROCESS, /* query process all grp */
+    GRP_QUERY_GROUP_ID,          /* query grp ID by grp name */
+    GRP_QUERY_GROUP_ADDR_INFO,   /* query group addr info */
     GRP_QUERY_CMD_MAX
 } GroupQueryCmdType;
 
@@ -474,35 +462,35 @@ typedef struct {
 } GrpQueryGroupAddrPara; /* cmd: GRP_QUERY_GROUP_ADDR_INFO */
 
 typedef union {
-    GrpQueryGroup grpQueryGroup; /* cmd: GRP_QUERY_GROUP */
-    GrpQueryGroupsOfProc grpQueryGroupsOfProc; /* cmd: GRP_QUERY_GROUPS_OF_PROCESS */
-    GrpQueryGroupId grpQueryGroupId; /* cmd: GRP_QUERY_GROUP_ID */
+    GrpQueryGroup grpQueryGroup;                 /* cmd: GRP_QUERY_GROUP */
+    GrpQueryGroupsOfProc grpQueryGroupsOfProc;   /* cmd: GRP_QUERY_GROUPS_OF_PROCESS */
+    GrpQueryGroupId grpQueryGroupId;             /* cmd: GRP_QUERY_GROUP_ID */
     GrpQueryGroupAddrPara grpQueryGroupAddrPara; /* cmd: GRP_QUERY_GROUP_ADDR_INFO */
 } GroupQueryInput;
 
 typedef struct {
-    int pid; /* pid in grp */
+    int pid;             /* pid in grp */
     GroupShareAttr attr; /* process in grp attribute */
-} GrpQueryGroupInfo;  /* cmd: GRP_QUERY_GROUP */
+} GrpQueryGroupInfo;     /* cmd: GRP_QUERY_GROUP */
 
 typedef struct {
-    char groupName[BUFF_GRP_NAME_LEN];  /* grp name */
-    GroupShareAttr attr; /* process in grp attribute */
-} GrpQueryGroupsOfProcInfo; /* cmd: GRP_QUERY_GROUPS_OF_PROCESS */
+    char groupName[BUFF_GRP_NAME_LEN]; /* grp name */
+    GroupShareAttr attr;               /* process in grp attribute */
+} GrpQueryGroupsOfProcInfo;            /* cmd: GRP_QUERY_GROUPS_OF_PROCESS */
 
 typedef struct {
-    int groupId; /* grp Id */
+    int groupId;       /* grp Id */
 } GrpQueryGroupIdInfo; /* cmd: GRP_QUERY_GROUP_ID */
 
 typedef struct {
     unsigned long long addr; /* cache memory addr */
     unsigned long long size; /* cache memory size */
-} GrpQueryGroupAddrInfo; /* cmd: GRP_QUERY_GROUP_ADDR_INFO */
+} GrpQueryGroupAddrInfo;     /* cmd: GRP_QUERY_GROUP_ADDR_INFO */
 
 typedef union {
-    GrpQueryGroupInfo grpQueryGroupInfo[BUFF_PROC_IN_GRP_MAX_NUM];  /* cmd: GRP_QUERY_GROUP */
-    GrpQueryGroupsOfProcInfo grpQueryGroupsOfProcInfo[BUFF_GRP_MAX_NUM]; /* cmd: GRP_QUERY_GROUPS_OF_PROCESS */
-    GrpQueryGroupIdInfo grpQueryGroupIdInfo; /* cmd: GRP_QUERY_GROUP_ID */
+    GrpQueryGroupInfo grpQueryGroupInfo[BUFF_PROC_IN_GRP_MAX_NUM];        /* cmd: GRP_QUERY_GROUP */
+    GrpQueryGroupsOfProcInfo grpQueryGroupsOfProcInfo[BUFF_GRP_MAX_NUM];  /* cmd: GRP_QUERY_GROUPS_OF_PROCESS */
+    GrpQueryGroupIdInfo grpQueryGroupIdInfo;                              /* cmd: GRP_QUERY_GROUP_ID */
     GrpQueryGroupAddrInfo grpQueryGroupAddrInfo[BUFF_GROUP_ADDR_MAX_NUM]; /* cmd: GRP_QUERY_GROUP_ADDR_INFO */
 } GroupQueryOutput;
 
@@ -513,18 +501,18 @@ typedef union {
 struct shareQueInfo {
     unsigned int peerDevId;
     char shareQueName[SHARE_QUEUE_NAME_LEN];
-    unsigned int rsv[MAX_RSV_LEN];  /* FYI: peerSvrIdx */
+    unsigned int rsv[MAX_RSV_LEN]; /* FYI: peerSvrIdx */
 };
 
 #define BUFF_MAX_CFG_NUM 64
 
 typedef struct {
-    unsigned int cfg_id;    /* cfg id, start from 0 */
-    unsigned long long total_size;  /* one zone total size */
-    unsigned int blk_size;  /* blk size, 2^n (0, 2M] */
+    unsigned int cfg_id;             /* cfg id, start from 0 */
+    unsigned long long total_size;   /* one zone total size */
+    unsigned int blk_size;           /* blk size, 2^n (0, 2M] */
     unsigned long long max_buf_size; /* max size can alloc from zone */
-    unsigned int page_type;  /* page type, small page/huge page, normal/dvpp */
-    int elasticEnable; /* elastic enable, only support in private group which only includes one process */
+    unsigned int page_type;          /* page type, small page/huge page, normal/dvpp */
+    int elasticEnable;               /* elastic enable, only support in private group which only includes one process */
     int elasticRate;
     int elasticRateMax;
     int elasticHighLevel;
@@ -534,15 +522,15 @@ typedef struct {
 
 typedef struct {
     memZoneCfg cfg[BUFF_MAX_CFG_NUM];
-}BuffCfg;
+} BuffCfg;
 
 typedef struct {
     struct {
-        unsigned int blkSize;     /* blk size */
-        unsigned int blkNum;    /* blk num, blkSize * blkNum must < 4G Byte */
-        unsigned int align;      /* addr align, must be an integer multiple of 2, 2< algn <4k */
-        unsigned int hugePageFlag; /* huge page flag */
-        int reserve[2]; /* reserved */
+        unsigned int blkSize;                /* blk size */
+        unsigned int blkNum;                 /* blk num, blkSize * blkNum must < 4G Byte */
+        unsigned int align;                  /* addr align, must be an integer multiple of 2, 2< algn <4k */
+        unsigned int hugePageFlag;           /* huge page flag */
+        int reserve[2];                      /* reserved */
     } pubPoolCfg[BUFF_PUB_POOL_CFG_MAX_NUM]; /* max allow 128 cfg */
 } PubPoolAttr;
 /*lint +e116 +e17*/
@@ -568,14 +556,14 @@ enum BuffGetCmdType {
 };
 
 struct MbufTimeoutCheckPara {
-    unsigned int enableFlag;     /* enable: 1; disable: 0 */
-    unsigned int maxRecordNum;   /* maximum number timeout mbuf info recorded */
-    unsigned int timeout;        /* mbuf timeout value,  unit:ms, minimum 10ms, default 1000 ms */
-    unsigned int checkPeriod;    /* mbuf check thread work period, uinit:ms, minimum 1000ms, default:1s */
+    unsigned int enableFlag;   /* enable: 1; disable: 0 */
+    unsigned int maxRecordNum; /* maximum number timeout mbuf info recorded */
+    unsigned int timeout;      /* mbuf timeout value,  unit:ms, minimum 10ms, default 1000 ms */
+    unsigned int checkPeriod;  /* mbuf check thread work period, uinit:ms, minimum 1000ms, default:1s */
 };
 
 struct MbufDataInfo {
-    void *mp;
+    void* mp;
     int owner;
     unsigned int ref;
     unsigned int blkSize;
@@ -586,7 +574,7 @@ struct MbufDataInfo {
 
 struct MbufDebugInfo {
     unsigned long long timeStamp;
-    void *mbuf;
+    void* mbuf;
     int usePid;
     int allocPid;
     unsigned int useTime;
@@ -597,8 +585,8 @@ struct MbufDebugInfo {
 };
 
 struct MbufUseInfo {
-    int allocPid;                /* mbuf alloc pid */
-    int usePid;                  /* mbuf use pid */
+    int allocPid;                  /* mbuf alloc pid */
+    int usePid;                    /* mbuf use pid */
     unsigned int ref;              /* mbuf reference num */
     unsigned int status;           /* mbuf status, 1 means in use, not support other status currently */
     unsigned long long timestamp;  /* mbuf alloc timestamp, cpu tick */
@@ -606,28 +594,24 @@ struct MbufUseInfo {
 };
 
 enum MbufType {
-    MBUF_CREATE_BY_ALLOC = 3,   /* malloc by mbuf_alloc */
-    MBUF_CREATE_BY_POOL,        /* malloc by mbuf_alloc_by_pool */
-    MBUF_CREATE_BY_BUILD,       /* malloc by mbuf_alloc_by_build */
-    MBUF_CREATE_BY_BARE_BUFF,   /* malloc by mbufBuildBareBuff */
+    MBUF_CREATE_BY_ALLOC = 3, /* malloc by mbuf_alloc */
+    MBUF_CREATE_BY_POOL,      /* malloc by mbuf_alloc_by_pool */
+    MBUF_CREATE_BY_BUILD,     /* malloc by mbuf_alloc_by_build */
+    MBUF_CREATE_BY_BARE_BUFF, /* malloc by mbufBuildBareBuff */
 };
 
 struct MbufTypeInfo {
-    unsigned int type;         /* mbuf type */
+    unsigned int type; /* mbuf type */
 };
 
-enum BuffType {
-    BUFF_TYPE_NORMAL = 0,
-    BUFF_TYPE_MBUF_DATA,
-    BUFF_TYPE_MAX
-};
+enum BuffType { BUFF_TYPE_NORMAL = 0, BUFF_TYPE_MBUF_DATA, BUFF_TYPE_MAX };
 
 struct BuffTypeInfo {
     enum BuffType type;
 };
 
 struct MemPoolInfo {
-    void *blk_start;
+    void* blk_start;
     unsigned long long blk_total_len;
 };
 
@@ -636,7 +620,7 @@ struct MpBlkAvailable {
 };
 
 struct buf_scale_event {
-    int type; /* 0: del, 1: add */
+    int type;  /* 0: del, 1: add */
     int grpId; /* share buff group id */
     unsigned long long addr;
     unsigned long long size; /* size is invalid in del */
@@ -650,23 +634,23 @@ enum halCtlCmdType {
 };
 
 struct log_out_handle {
-    void (*DlogInner)(int moduleId, int level, const char *fmt, ...);
+    void (*DlogInner)(int moduleId, int level, const char* fmt, ...);
     unsigned int logLevel;
 };
 
 struct PoolInfo {
     unsigned long dataPoolSize;
-    void *dataPoolStart;
+    void* dataPoolStart;
     unsigned long mbufPoolSize;
-    void *mbufPoolStart;
+    void* mbufPoolStart;
 };
 
 typedef struct {
     unsigned long long totalLen;
     unsigned long long dataLen;
     unsigned int privUserDataLen;
-    void *dataBlock;
-    void *privUserData;
+    void* dataBlock;
+    void* privUserData;
 } MbufInfoConverge;
 
 #define BUFF_MAX_MP_NUM_PROCESS 64
@@ -675,7 +659,7 @@ struct MemPoolBasicStatus {
     unsigned int blkNum;
     unsigned int blkAvailable;
     unsigned int peakStat;
-    void *mpHandle;
+    void* mpHandle;
 };
 struct MemPoolUsageByProcess {
     int pid;
@@ -703,7 +687,7 @@ typedef struct {
     unsigned int dataPoolBlkSize;
     unsigned int dataPoolBlkObjSize;
     unsigned int dataPoolBlkOffset;
-    unsigned long long  headPoolBaseAddr;
+    unsigned long long headPoolBaseAddr;
     unsigned int headPoolBlkSize;
     unsigned int headPoolBlkObjSize;
     unsigned int headPoolBlkOffset;
@@ -726,110 +710,110 @@ typedef struct {
  *    bit56~63: model id
  */
 /* devid */
-#define MEM_DEVID_WIDTH        10
-#define MEM_DEVID_MASK         ((1UL << MEM_DEVID_WIDTH) - 1)
+#define MEM_DEVID_WIDTH 10
+#define MEM_DEVID_MASK ((1UL << MEM_DEVID_WIDTH) - 1)
 /* virt mem type */
-#define MEM_VIRT_BIT           10
-#define MEM_VIRT_WIDTH         4
+#define MEM_VIRT_BIT 10
+#define MEM_VIRT_WIDTH 4
 
-#define MEM_SVM_VAL            0X0
-#define MEM_DEV_VAL            0X1
-#define MEM_HOST_VAL           0X2
-#define MEM_DVPP_VAL           0X3
-#define MEM_HOST_AGENT_VAL     0X4
-#define MEM_RESERVE_VAL        0X5
-#define MEM_MAX_VAL            0X6
-#define MEM_SVM                (MEM_SVM_VAL << MEM_VIRT_BIT)
-#define MEM_DEV                (MEM_DEV_VAL << MEM_VIRT_BIT)
-#define MEM_HOST               (MEM_HOST_VAL << MEM_VIRT_BIT)
-#define MEM_DVPP               (MEM_DVPP_VAL << MEM_VIRT_BIT)
-#define MEM_HOST_AGENT         (MEM_HOST_AGENT_VAL << MEM_VIRT_BIT)
-#define MEM_RESERVE            (MEM_RESERVE_VAL << MEM_VIRT_BIT)
+#define MEM_SVM_VAL 0X0
+#define MEM_DEV_VAL 0X1
+#define MEM_HOST_VAL 0X2
+#define MEM_DVPP_VAL 0X3
+#define MEM_HOST_AGENT_VAL 0X4
+#define MEM_RESERVE_VAL 0X5
+#define MEM_MAX_VAL 0X6
+#define MEM_SVM (MEM_SVM_VAL << MEM_VIRT_BIT)
+#define MEM_DEV (MEM_DEV_VAL << MEM_VIRT_BIT)
+#define MEM_HOST (MEM_HOST_VAL << MEM_VIRT_BIT)
+#define MEM_DVPP (MEM_DVPP_VAL << MEM_VIRT_BIT)
+#define MEM_HOST_AGENT (MEM_HOST_AGENT_VAL << MEM_VIRT_BIT)
+#define MEM_RESERVE (MEM_RESERVE_VAL << MEM_VIRT_BIT)
 /* phy mem type */
-#define MEM_PHY_BIT            14
-#define MEM_TYPE_DDR           (0X0UL << MEM_PHY_BIT)
-#define MEM_TYPE_HBM           (0X1UL << MEM_PHY_BIT)
+#define MEM_PHY_BIT 14
+#define MEM_TYPE_DDR (0X0UL << MEM_PHY_BIT)
+#define MEM_TYPE_HBM (0X1UL << MEM_PHY_BIT)
 /* phy page size */
-#define MEM_PAGE_BIT           17
-#define MEM_PAGE_NORMAL        (0X0UL << MEM_PAGE_BIT)
-#define MEM_PAGE_HUGE          (0X1UL << MEM_PAGE_BIT)
+#define MEM_PAGE_BIT 17
+#define MEM_PAGE_NORMAL (0X0UL << MEM_PAGE_BIT)
+#define MEM_PAGE_HUGE (0X1UL << MEM_PAGE_BIT)
 /* phy continuity */
-#define MEM_CONTINUTY_BIT      19
-#define MEM_DISCONTIGUOUS_PHY  (0X0UL << MEM_CONTINUTY_BIT)
-#define MEM_CONTIGUOUS_PHY     (0X1UL << MEM_CONTINUTY_BIT)
+#define MEM_CONTINUTY_BIT 19
+#define MEM_DISCONTIGUOUS_PHY (0X0UL << MEM_CONTINUTY_BIT)
+#define MEM_CONTIGUOUS_PHY (0X1UL << MEM_CONTINUTY_BIT)
 /* advise */
-#define MEM_ADVISE_P2P_BIT     25
-#define MEM_ADVISE_4G_BIT      26
-#define MEM_ADVISE_P2P         (0X1UL << MEM_ADVISE_P2P_BIT)
-#define MEM_ADVISE_4G          (0X1UL << MEM_ADVISE_4G_BIT)
+#define MEM_ADVISE_P2P_BIT 25
+#define MEM_ADVISE_4G_BIT 26
+#define MEM_ADVISE_P2P (0X1UL << MEM_ADVISE_P2P_BIT)
+#define MEM_ADVISE_4G (0X1UL << MEM_ADVISE_4G_BIT)
 /* alloc ts use mem */
-#define MEM_ADVISE_TS_BIT      27
-#define MEM_ADVISE_TS          (0X1UL << MEM_ADVISE_TS_BIT)
+#define MEM_ADVISE_TS_BIT 27
+#define MEM_ADVISE_TS (0X1UL << MEM_ADVISE_TS_BIT)
 /* alloc pcie bar mem */
-#define MEM_ADVISE_BAR_BIT     28
-#define MEM_ADVISE_BAR         (0X1UL << MEM_ADVISE_BAR_BIT)
+#define MEM_ADVISE_BAR_BIT 28
+#define MEM_ADVISE_BAR (0X1UL << MEM_ADVISE_BAR_BIT)
 /* alloc readonly mem, host and dev cannot write the virtual addr of this attribute */
-#define MEM_READONLY_BIT       29
-#define MEM_READONLY           (0X1UL << MEM_READONLY_BIT)
+#define MEM_READONLY_BIT 29
+#define MEM_READONLY (0X1UL << MEM_READONLY_BIT)
 /* alloc dev readonly mem, host can write the virtual addr of this attribute, but dev cannot */
 #define MEM_HOST_RW_DEV_RO_BIT 30
-#define MEM_HOST_RW_DEV_RO     (0X1UL << MEM_HOST_RW_DEV_RO_BIT)
+#define MEM_HOST_RW_DEV_RO (0X1UL << MEM_HOST_RW_DEV_RO_BIT)
 /*
  * alloc dev giant page mem, page size is 1G.
  * must query giant mem feature supported first before alloc giant mem.
  */
-#define MEM_PAGE_GIANT_BIT     31
-#define MEM_PAGE_GIANT         (0X1UL << MEM_PAGE_GIANT_BIT)
+#define MEM_PAGE_GIANT_BIT 31
+#define MEM_PAGE_GIANT (0X1UL << MEM_PAGE_GIANT_BIT)
 /* device cp only, not support share(prefetch/register/ipc) and op(host ldst/memcpy/memset) */
-#define MEM_DEV_CP_ONLY_BIT    32
-#define MEM_DEV_CP_ONLY        (0X1UL << MEM_DEV_CP_ONLY_BIT)
+#define MEM_DEV_CP_ONLY_BIT 32
+#define MEM_DEV_CP_ONLY (0X1UL << MEM_DEV_CP_ONLY_BIT)
 /* align size 5 bits width 20-24bit */
-#define MEM_ALIGN_BIT          20
-#define MEM_ALIGN_SIZE(x)      (1U << (((x) >> MEM_ALIGN_BIT) & 0x1FU))
-#define MEM_SET_ALIGN_SIZE(x)  ((((x) & 0x1FU) << MEM_ALIGN_BIT))
+#define MEM_ALIGN_BIT 20
+#define MEM_ALIGN_SIZE(x) (1U << (((x) >> MEM_ALIGN_BIT) & 0x1FU))
+#define MEM_SET_ALIGN_SIZE(x) ((((x) & 0x1FU) << MEM_ALIGN_BIT))
 
 /* svm flag for rts and tdt */
-#define MEM_SVM_HUGE           (MEM_SVM | MEM_PAGE_HUGE)
-#define MEM_SVM_NORMAL         (MEM_SVM | MEM_PAGE_NORMAL)
+#define MEM_SVM_HUGE (MEM_SVM | MEM_PAGE_HUGE)
+#define MEM_SVM_NORMAL (MEM_SVM | MEM_PAGE_NORMAL)
 
 /* model id */
-#define MEM_MODULE_ID_BIT           56
-#define MEM_MODULE_ID_WIDTH         8
-#define MEM_MODULE_ID_MASK          ((1UL << MEM_MODULE_ID_WIDTH) - 1)
+#define MEM_MODULE_ID_BIT 56
+#define MEM_MODULE_ID_WIDTH 8
+#define MEM_MODULE_ID_MASK ((1UL << MEM_MODULE_ID_WIDTH) - 1)
 
-#define MEM_SVM_TYPE           (1u << MEM_SVM_VAL)
-#define MEM_DEV_TYPE           (1u << MEM_DEV_VAL)
-#define MEM_HOST_TYPE          (1u << MEM_HOST_VAL)
-#define MEM_DVPP_TYPE          (1u << MEM_DVPP_VAL)
-#define MEM_HOST_AGENT_TYPE    (1u << MEM_HOST_AGENT_VAL)
-#define MEM_RESERVE_TYPE       (1u << MEM_RESERVE_VAL)
+#define MEM_SVM_TYPE (1u << MEM_SVM_VAL)
+#define MEM_DEV_TYPE (1u << MEM_DEV_VAL)
+#define MEM_HOST_TYPE (1u << MEM_HOST_VAL)
+#define MEM_DVPP_TYPE (1u << MEM_DVPP_VAL)
+#define MEM_HOST_AGENT_TYPE (1u << MEM_HOST_AGENT_VAL)
+#define MEM_RESERVE_TYPE (1u << MEM_RESERVE_VAL)
 
 #define DV_MEM_SVM 0x0001
 #define DV_MEM_SVM_HOST 0x0002
 #define DV_MEM_SVM_DEVICE 0x0004
 
-#define  DEVMM_MAX_MEM_TYPE_VALUE       4       /**< max memory type */
+#define DEVMM_MAX_MEM_TYPE_VALUE 4 /**< max memory type */
 
-#define  MEM_INFO_TYPE_DDR_SIZE         1       /**< DDR memory type */
-#define  MEM_INFO_TYPE_HBM_SIZE         2       /**< HBM memory type */
-#define  MEM_INFO_TYPE_DDR_P2P_SIZE     3       /**< DDR P2P memory type */
-#define  MEM_INFO_TYPE_HBM_P2P_SIZE     4       /**< HBM P2P memory type */
-#define  MEM_INFO_TYPE_ADDR_CHECK       5       /**< check addr */
-#define  MEM_INFO_TYPE_CTRL_NUMA_INFO   6       /**< query device ctrl numa id config */
-#define  MEM_INFO_TYPE_AI_NUMA_INFO     7       /**< query device ai numa id config */
-#define  MEM_INFO_TYPE_BAR_NUMA_INFO    8       /**< query device bar numa id config */
-#define  MEM_INFO_TYPE_SVM_GRP_INFO     9
-#define  MEM_INFO_TYPE_UB_TOKEN_INFO    10
-#define  MEM_INFO_TYPE_SYS_NUMA_INFO    11      /**< query device sys numa id config */
-#define  MEM_INFO_TYPE_MAX              12      /**< max type */
+#define MEM_INFO_TYPE_DDR_SIZE 1       /**< DDR memory type */
+#define MEM_INFO_TYPE_HBM_SIZE 2       /**< HBM memory type */
+#define MEM_INFO_TYPE_DDR_P2P_SIZE 3   /**< DDR P2P memory type */
+#define MEM_INFO_TYPE_HBM_P2P_SIZE 4   /**< HBM P2P memory type */
+#define MEM_INFO_TYPE_ADDR_CHECK 5     /**< check addr */
+#define MEM_INFO_TYPE_CTRL_NUMA_INFO 6 /**< query device ctrl numa id config */
+#define MEM_INFO_TYPE_AI_NUMA_INFO 7   /**< query device ai numa id config */
+#define MEM_INFO_TYPE_BAR_NUMA_INFO 8  /**< query device bar numa id config */
+#define MEM_INFO_TYPE_SVM_GRP_INFO 9
+#define MEM_INFO_TYPE_UB_TOKEN_INFO 10
+#define MEM_INFO_TYPE_SYS_NUMA_INFO 11 /**< query device sys numa id config */
+#define MEM_INFO_TYPE_MAX 12           /**< max type */
 
-#define  SVM_ADDR_CHECK_MAX_NUM         1024u
+#define SVM_ADDR_CHECK_MAX_NUM 1024u
 
 /* flag of halMemAddressReserve: bit0-1 used for enum drv_mem_pg_type */
-#define MEM_RSV_TYPE_DEVICE_SHARE_BIT   8 /* mmap va in all opened devices, exclude host to avoid va conflict */
-#define MEM_RSV_TYPE_DEVICE_SHARE       (0x1u << MEM_RSV_TYPE_DEVICE_SHARE_BIT)
-#define MEM_RSV_TYPE_REMOTE_MAP_BIT     9 /* this va only map remote addr, not create double page table */
-#define MEM_RSV_TYPE_REMOTE_MAP         (0x1u << MEM_RSV_TYPE_REMOTE_MAP_BIT)
+#define MEM_RSV_TYPE_DEVICE_SHARE_BIT 8 /* mmap va in all opened devices, exclude host to avoid va conflict */
+#define MEM_RSV_TYPE_DEVICE_SHARE (0x1u << MEM_RSV_TYPE_DEVICE_SHARE_BIT)
+#define MEM_RSV_TYPE_REMOTE_MAP_BIT 9 /* this va only map remote addr, not create double page table */
+#define MEM_RSV_TYPE_REMOTE_MAP (0x1u << MEM_RSV_TYPE_REMOTE_MAP_BIT)
 
 #define DEVMM_MEMCPY_BATCH_MAX_COUNT 4096
 
@@ -840,30 +824,22 @@ enum DEVMM_MEMCPY2D_TYPE {
     DEVMM_MEMCPY2D_TYPE_MAX
 };
 
-enum ADVISE_MEM_TYPE {
-    ADVISE_PERSISTENT = 0,
-    ADVISE_DEV_MEM = 1,
-    ADVISE_TYPE_MAX
-};
+enum ADVISE_MEM_TYPE { ADVISE_PERSISTENT = 0, ADVISE_DEV_MEM = 1, ADVISE_TYPE_MAX };
 
-enum MEMCPY_SUMBIT_TYPE {
-    MEMCPY_SUMBIT_SYNC = 0,
-    MEMCPY_SUMBIT_ASYNC = 1,
-    MEMCPY_SUMBIT_MAX_TYPE
-};
+enum MEMCPY_SUMBIT_TYPE { MEMCPY_SUMBIT_SYNC = 0, MEMCPY_SUMBIT_ASYNC = 1, MEMCPY_SUMBIT_MAX_TYPE };
 
 struct DMA_OFFSET_ADDR {
     unsigned long long offset;
-    unsigned int devid;     /* Input param */
+    unsigned int devid; /* Input param */
 };
 
 struct DMA_PHY_ADDR {
-    void *src;           /**< src addr(physical addr) */
-    void *dst;           /**< dst addr(physical addr) */
-    unsigned int len;    /**< length */
-    unsigned char flag;  /**< Flag=0 Non-chain, SRC and DST are physical addresses, can be directly DMA copy operations*/
-                         /**< Flag=1 chain, SRC is the address of the dma list and can be used for direct dma copy operations*/
-    void *priv;
+    void* src;          /**< src addr(physical addr) */
+    void* dst;          /**< dst addr(physical addr) */
+    unsigned int len;   /**< length */
+    unsigned char flag; /**< Flag=0 Non-chain, SRC and DST are physical addresses, can be directly DMA copy operations*/
+    /**< Flag=1 chain, SRC is the address of the dma list and can be used for direct dma copy operations*/
+    void* priv;
 };
 
 struct DMA_ADDR {
@@ -876,28 +852,28 @@ struct DMA_ADDR {
 };
 
 struct drvMem2D {
-    unsigned long long *dst;        /**< destination memory address */
-    unsigned long long dpitch;      /**< pitch of destination memory */
-    unsigned long long *src;        /**< source memory address */
-    unsigned long long spitch;      /**< pitch of source memory */
-    unsigned long long width;       /**< width of matrix transfer */
-    unsigned long long height;      /**< height of matrix transfer */
-    unsigned long long fixed_size;  /**< Input: already converted size. if fixed_size < width*height,
-                                         need to call halMemcpy2D multi times */
-    unsigned int direction;         /**< copy direction */
+    unsigned long long* dst;       /**< destination memory address */
+    unsigned long long dpitch;     /**< pitch of destination memory */
+    unsigned long long* src;       /**< source memory address */
+    unsigned long long spitch;     /**< pitch of source memory */
+    unsigned long long width;      /**< width of matrix transfer */
+    unsigned long long height;     /**< height of matrix transfer */
+    unsigned long long fixed_size; /**< Input: already converted size. if fixed_size < width*height,
+                                        need to call halMemcpy2D multi times */
+    unsigned int direction;        /**< copy direction */
     unsigned int resv1;
     unsigned long long resv2;
 };
 
 struct drvMem2DAsync {
     struct drvMem2D copy2dInfo;
-    struct DMA_ADDR *dmaAddr;
+    struct DMA_ADDR* dmaAddr;
 };
 
 struct MEMCPY2D {
-    unsigned int type;      /**< DEVMM_MEMCPY2D_SYNC: memcpy2d sync */
-                            /**< DEVMM_MEMCPY2D_ASYNC_CONVERT: memcpy2d async convert */
-                            /**< DEVMM_MEMCPY2D_ASYNC_DESTROY: memcpy2d async destroy */
+    unsigned int type; /**< DEVMM_MEMCPY2D_SYNC: memcpy2d sync */
+                       /**< DEVMM_MEMCPY2D_ASYNC_CONVERT: memcpy2d async convert */
+                       /**< DEVMM_MEMCPY2D_ASYNC_DESTROY: memcpy2d async destroy */
     unsigned int resv;
     union {
         struct drvMem2D copy2d;
@@ -907,12 +883,12 @@ struct MEMCPY2D {
 
 /* enables different options to be specified that affect the host register */
 enum drvRegisterTpye {
-    HOST_MEM_MAP_DEV = 0,       /* HOST_MEM map to device */
-    HOST_SVM_MAP_DEV,           /* HOST_SVM_MEM map to device */
-    DEV_SVM_MAP_HOST,           /* DEV_SVM_MEM map to host */
-    HOST_MEM_MAP_DEV_PCIE_TH,   /* HOST_MEM map to device, accessed by pcie_through */
-    DEV_MEM_MAP_HOST,           /* DEV_MEM map to host */
-    HOST_MEM_MAP_DMA,           /* Host va preprocess into dma addr to improve memcpy performance */
+    HOST_MEM_MAP_DEV = 0,     /* HOST_MEM map to device */
+    HOST_SVM_MAP_DEV,         /* HOST_SVM_MEM map to device */
+    DEV_SVM_MAP_HOST,         /* DEV_SVM_MEM map to host */
+    HOST_MEM_MAP_DEV_PCIE_TH, /* HOST_MEM map to device, accessed by pcie_through */
+    DEV_MEM_MAP_HOST,         /* DEV_MEM map to host */
+    HOST_MEM_MAP_DMA,         /* Host va preprocess into dma addr to improve memcpy performance */
     HOST_REGISTER_MAX_TPYE
 };
 
@@ -920,7 +896,7 @@ enum ctrlType {
     CTRL_TYPE_ADDR_MAP = 0,
     CTRL_TYPE_ADDR_UNMAP = 1,
     CTRL_TYPE_SUPPORT_FEATURE = 2,
-    CTRL_TYPE_GET_DOUBLE_PGTABLE_OFFSET = 3,    /* Inpara is devid, Outpara is nocache offset */
+    CTRL_TYPE_GET_DOUBLE_PGTABLE_OFFSET = 3, /* Inpara is devid, Outpara is nocache offset */
     /* Inpara is MemRepairInPara,
      * 1.Request upper layer to stop the business, without any page table translation and page table access operations.
      * 2.If halMemCtl returns DRV_ERROR_OPER_NOT_PERMITTED, it means that the faulty address cannot be repaired.
@@ -1018,32 +994,25 @@ struct ProcessCpMunmap {
     unsigned long long size; // reserved, must be 0 currently
 };
 
-#define MEM_MAP_ATTR_BIT    0
-#define MEM_MAP_INBUS 		(0x0 << MEM_MAP_ATTR_BIT)
-#define MEM_MAP_EXBUS 		(0x1 << MEM_MAP_ATTR_BIT)
+#define MEM_MAP_ATTR_BIT 0
+#define MEM_MAP_INBUS (0x0 << MEM_MAP_ATTR_BIT)
+#define MEM_MAP_EXBUS (0x1 << MEM_MAP_ATTR_BIT)
 
-enum ShmemAttrType {
-    SHMEM_ATTR_TYPE_MEM_MAP = 0,
-    SHMEM_ATTR_TYPE_NO_WLIST_IN_SERVER,
-    SHMEM_ATTR_TYPE_MAX
-};
-#define SHMEM_WLIST_ENABLE     0x0
-#define SHMEM_NO_WLIST_ENABLE  0x1
+enum ShmemAttrType { SHMEM_ATTR_TYPE_MEM_MAP = 0, SHMEM_ATTR_TYPE_NO_WLIST_IN_SERVER, SHMEM_ATTR_TYPE_MAX };
+#define SHMEM_WLIST_ENABLE 0x0
+#define SHMEM_NO_WLIST_ENABLE 0x1
 
 struct ShmemGetInfo {
     unsigned int phyDevid;
     unsigned int reserve[8];
 };
 
-enum ShareHandleAttrType {
-    SHR_HANDLE_ATTR_NO_WLIST_IN_SERVER = 0,
-    SHR_HANDLE_ATTR_TYPE_MAX
-};
+enum ShareHandleAttrType { SHR_HANDLE_ATTR_NO_WLIST_IN_SERVER = 0, SHR_HANDLE_ATTR_TYPE_MAX };
 
-#define SHR_HANDLE_WLIST_ENABLE     0x0
-#define SHR_HANDLE_NO_WLIST_ENABLE  0x1
+#define SHR_HANDLE_WLIST_ENABLE 0x0
+#define SHR_HANDLE_NO_WLIST_ENABLE 0x1
 struct ShareHandleAttr {
-    unsigned int enableFlag;     /* wlist enable: 0 no wlist enable: 1 */
+    unsigned int enableFlag; /* wlist enable: 0 no wlist enable: 1 */
     unsigned int rsv[8];
 };
 
@@ -1060,20 +1029,16 @@ typedef enum tagProcStatus {
 } processStatus_t;
 
 typedef enum tagProcType {
-    PROCESS_CP1 = 0,   /* aicpu_scheduler */
-    PROCESS_CP2,       /* custom_process */
-    PROCESS_DEV_ONLY,  /* TDT */
-    PROCESS_QS,        /* queue_scheduler */
-    PROCESS_HCCP,        /* hccp server */
-    PROCESS_USER,        /* user proc, can bind many on host or device. not support quert from host pid */
+    PROCESS_CP1 = 0,  /* aicpu_scheduler */
+    PROCESS_CP2,      /* custom_process */
+    PROCESS_DEV_ONLY, /* TDT */
+    PROCESS_QS,       /* queue_scheduler */
+    PROCESS_HCCP,     /* hccp server */
+    PROCESS_USER,     /* user proc, can bind many on host or device. not support quert from host pid */
     PROCESS_CPTYPE_MAX
 } processType_t;
 
-enum drv_mem_side {
-    MEM_HOST_SIDE = 0,
-    MEM_DEV_SIDE,
-    MEM_MAX_SIDE
-};
+enum drv_mem_side { MEM_HOST_SIDE = 0, MEM_DEV_SIDE, MEM_MAX_SIDE };
 
 typedef enum {
     MEM_ACCESS_TYPE_NONE = 0x0,
@@ -1098,62 +1063,50 @@ struct MemShareHandle {
     uint8_t share_info[MEM_SHARE_HANDLE_LEN];
 };
 
-enum drv_mem_pg_type {
-    MEM_NORMAL_PAGE_TYPE = 0,
-    MEM_HUGE_PAGE_TYPE,
-    MEM_GIANT_PAGE_TYPE,
-    MEM_MAX_PAGE_TYPE
-};
+enum drv_mem_pg_type { MEM_NORMAL_PAGE_TYPE = 0, MEM_HUGE_PAGE_TYPE, MEM_GIANT_PAGE_TYPE, MEM_MAX_PAGE_TYPE };
 
-enum drv_mem_type {
-    MEM_HBM_TYPE = 0,
-    MEM_DDR_TYPE,
-    MEM_P2P_HBM_TYPE,
-    MEM_P2P_DDR_TYPE,
-    MEM_TS_DDR_TYPE,
-    MEM_MAX_TYPE
-};
+enum drv_mem_type { MEM_HBM_TYPE = 0, MEM_DDR_TYPE, MEM_P2P_HBM_TYPE, MEM_P2P_DDR_TYPE, MEM_TS_DDR_TYPE, MEM_MAX_TYPE };
 
 /* If need to add module_id, Prioritize adding module_id reserved in the middle.
     The assigned module_id value cannot be changed to prevent compatibility issues */
 enum {
-    UNKNOWN_MODULE_ID = 0,       /* When module_id input invalid, Mem will be counted to this id */
-    IDEDD_MODULE_ID = 1,         /* IDE daemon device */
-    IDEDH_MODULE_ID = 2,         /* IDE daemon host */
-    HCCL_HAL_MODULE_ID = 3,      /* HCCL */
-    FMK_MODULE_ID = 4,           /* Adapter */
-    HIAIENGINE_MODULE_ID = 5,    /* Matrix */
-    DVPP_MODULE_ID = 6,          /* DVPP */
-    RUNTIME_MODULE_ID = 7,       /* Runtime */
-    CCE_MODULE_ID = 8,           /* CCE */
-    HLT_MODULE_ID = 9,           /* Used for hlt test */
-    DEVMM_MODULE_ID = 22,        /* Dlog memory managent */
-    LIBMEDIA_MODULE_ID = 24,     /* Libmedia */
-    CCECPU_MODULE_ID = 25,       /* aicpu schedule */
-    ASCENDDK_MODULE_ID = 26,     /* AscendDK */
-    HCCP_SCHE_MODULE_ID = 27,    /* Memory statistics of device hccp process */
+    UNKNOWN_MODULE_ID = 0,    /* When module_id input invalid, Mem will be counted to this id */
+    IDEDD_MODULE_ID = 1,      /* IDE daemon device */
+    IDEDH_MODULE_ID = 2,      /* IDE daemon host */
+    HCCL_HAL_MODULE_ID = 3,   /* HCCL */
+    FMK_MODULE_ID = 4,        /* Adapter */
+    HIAIENGINE_MODULE_ID = 5, /* Matrix */
+    DVPP_MODULE_ID = 6,       /* DVPP */
+    RUNTIME_MODULE_ID = 7,    /* Runtime */
+    CCE_MODULE_ID = 8,        /* CCE */
+    HLT_MODULE_ID = 9,        /* Used for hlt test */
+    DEVMM_MODULE_ID = 22,     /* Dlog memory managent */
+    LIBMEDIA_MODULE_ID = 24,  /* Libmedia */
+    CCECPU_MODULE_ID = 25,    /* aicpu schedule */
+    ASCENDDK_MODULE_ID = 26,  /* AscendDK */
+    HCCP_SCHE_MODULE_ID = 27, /* Memory statistics of device hccp process */
     HCCP_HAL_MODULE_ID = 28,
     ROCE_MODULE_ID = 29,
     TEFUSION_MODULE_ID = 30,
-    PROFILING_MODULE_ID = 31,    /* Profiling */
-    DP_MODULE_ID = 32,           /* Data Preprocess */
-    APP_MODULE_ID = 33,          /* User Application */
-    TSDUMP_MODULE_ID = 35,       /* TSDUMP module */
-    AICPU_MODULE_ID = 36,        /* AICPU module */
-    AICPU_SCHE_MODULE_ID = 37,   /* Memory statistics of device aicpu process */
-    TDT_MODULE_ID = 38,          /* tsdaemon or aicpu schedule */
+    PROFILING_MODULE_ID = 31,  /* Profiling */
+    DP_MODULE_ID = 32,         /* Data Preprocess */
+    APP_MODULE_ID = 33,        /* User Application */
+    TSDUMP_MODULE_ID = 35,     /* TSDUMP module */
+    AICPU_MODULE_ID = 36,      /* AICPU module */
+    AICPU_SCHE_MODULE_ID = 37, /* Memory statistics of device aicpu process */
+    TDT_MODULE_ID = 38,        /* tsdaemon or aicpu schedule */
     FE_MODULE_ID = 39,
     MD_MODULE_ID = 40,
     MB_MODULE_ID = 41,
     ME_MODULE_ID = 42,
-    GE_MODULE_ID = 45,           /* Fmk */
+    GE_MODULE_ID = 45, /* Fmk */
     ASCENDCL_MODULE_ID = 48,
-    PROCMGR_MODULE_ID = 54,      /* Process Manager, Base Platform */
+    PROCMGR_MODULE_ID = 54, /* Process Manager, Base Platform */
     AIVECTOR_MODULE_ID = 56,
     TBE_MODULE_ID = 57,
     FV_MODULE_ID = 58,
     TUNE_MODULE_ID = 60,
-    HSS_MODULE_ID = 61,          /* helper */
+    HSS_MODULE_ID = 61, /* helper */
     FFTS_MODULE_ID = 62,
     OP_MODULE_ID = 63,
     UDF_MODULE_ID = 64,
@@ -1167,14 +1120,13 @@ enum {
     RTC_MODULE_ID = 72,
     SYSMONITOR_MODULE_ID = 73,
     AML_MODULE_ID = 74,
-    MBUFF_MODULE_ID = 75,        /* Mbuff is a sharepool type memory statistic alloced by the device process,
-                                 including aicpu_schedule and hccp_schedule, not a module that alloc memory. */
-    CUSTOM_SCHE_MODULE_ID = 76,  /* Memory statistics of device custom process */
-    MAX_MODULE_ID = 77           /* Add new module_id before MAX_MODULE_ID */
+    MBUFF_MODULE_ID = 75,       /* Mbuff is a sharepool type memory statistic alloced by the device process,
+                                including aicpu_schedule and hccp_schedule, not a module that alloc memory. */
+    CUSTOM_SCHE_MODULE_ID = 76, /* Memory statistics of device custom process */
+    MAX_MODULE_ID = 77          /* Add new module_id before MAX_MODULE_ID */
 };
 
-
-#define SVM_INVALID_MODULE_ID       0xffff
+#define SVM_INVALID_MODULE_ID 0xffff
 /*=========================== Memory Manage End =======================*/
 
 /*============================= APM START ===============================*/
@@ -1193,24 +1145,21 @@ enum res_addr_type {
 
 #define RES_ADDR_INFO_RSV_LEN 2
 struct res_addr_info {
-    unsigned int id;                 /* the meaning of 'id' depends on res_type, default is 0 */
+    unsigned int id; /* the meaning of 'id' depends on res_type, default is 0 */
     processType_t target_proc_type;
     enum res_addr_type res_type;
-    unsigned int res_id;             /* corresponding resource id if res_type is NOTIFY or CNT_NOTIFY */
-    unsigned int flag;               /* default is 0, ascend910B and ascend910C with NOTIFY is TSDRV_FLAG_SHR_ID_SHADOW. */
-    unsigned int rudevid;            /* remote unify devid, rudevid is valid when the flag is TSDRV_FLAG_SHR_ID_SHADOW */
-    unsigned int rsv[RES_ADDR_INFO_RSV_LEN];  /* default is 0 */
+    unsigned int res_id;  /* corresponding resource id if res_type is NOTIFY or CNT_NOTIFY */
+    unsigned int flag;    /* default is 0, ascend910B and ascend910C with NOTIFY is TSDRV_FLAG_SHR_ID_SHADOW. */
+    unsigned int rudevid; /* remote unify devid, rudevid is valid when the flag is TSDRV_FLAG_SHR_ID_SHADOW */
+    unsigned int rsv[RES_ADDR_INFO_RSV_LEN]; /* default is 0 */
 };
 /*============================= APM End ===============================*/
 
 /*============================= RMO START ===============================*/
-typedef enum tagAccessMember {
-    TS_ACCESSOR = 0x0U,
-    ACCESSOR_MAX
-} accessMember_t;
+typedef enum tagAccessMember { TS_ACCESSOR = 0x0U, ACCESSOR_MAX } accessMember_t;
 
 struct drvMemSharingPara {
-    void *ptr;
+    void* ptr;
     unsigned long long size;
     uint32_t id; /* device id or host id */
     enum drv_mem_side side;
@@ -1222,21 +1171,15 @@ struct drvMemSharingPara {
 /*============================= RMO End ===============================*/
 
 /*============================= RES_MAP START ===============================*/
-enum res_map_type {
-	RES_AICORE = 0,
-	RES_HSCB_AICORE,
-	RES_L2BUFF,
-	RES_C2C,
-	RES_MAP_TYPE_MAX
-};
+enum res_map_type { RES_AICORE = 0, RES_HSCB_AICORE, RES_L2BUFF, RES_C2C, RES_MAP_TYPE_MAX };
 
 #define RES_MAP_INFO_RSV_LEN 1
 struct res_map_info {
     processType_t target_proc_type;
     enum res_map_type res_type;
-    unsigned int res_id;                     /* corresponding resource id if res_type is NOTIFY or CNT_NOTIFY */
-    unsigned int flag;                       /* default is 0 */
-    unsigned int rsv[RES_MAP_INFO_RSV_LEN];  /* default is 0 */
+    unsigned int res_id;                    /* corresponding resource id if res_type is NOTIFY or CNT_NOTIFY */
+    unsigned int flag;                      /* default is 0 */
+    unsigned int rsv[RES_MAP_INFO_RSV_LEN]; /* default is 0 */
 };
 /*============================= RES_MAP End ===============================*/
 
@@ -1244,26 +1187,26 @@ struct res_map_info {
 #define TSDRV_FLAG_REUSE_CQ (0x1 << 0)
 #define TSDRV_FLAG_REUSE_SQ (0x1 << 1)
 #define TSDRV_FLAG_THREAD_BIND_IRQ (0x1 << 2)
-#define TSRRV_FLAG_SQ_RDONLY    (0x1 << 3)
+#define TSRRV_FLAG_SQ_RDONLY (0x1 << 3)
 #define TSDRV_FLAG_ONLY_SQCQ_ID (0x1 << 4)
 #define TSDRV_FLAG_REMOTE_ID (0x1 << 5)
-#define TSDRV_FLAG_SHR_ID_SHADOW    (0x1 << 6)
+#define TSDRV_FLAG_SHR_ID_SHADOW (0x1 << 6)
 #define TSDRV_FLAG_SPECIFIED_SQ_ID (0x1 << 7)
 #define TSDRV_FLAG_SPECIFIED_CQ_ID (0x1 << 8)
 #define TSDRV_FLAG_NO_CQ_MEM (0x1 << 9)
 #define TSDRV_FLAG_RSV_SQ_ID (0x1 << 10)
 #define TSDRV_FLAG_RSV_CQ_ID (0x1 << 11)
-#define TSDRV_FLAG_AGENT_ID  (0x1 << 12)
-#define TSDRV_FLAG_RANGE_ID  (0x1 << 13) /* specified range flag for alloc sqcq */
+#define TSDRV_FLAG_AGENT_ID (0x1 << 12)
+#define TSDRV_FLAG_RANGE_ID (0x1 << 13)      /* specified range flag for alloc sqcq */
 #define TSDRV_FLAG_TASK_SINK_SQ (0x1U << 14) /* only support async cpy task sink */
 #define TSDRV_FLAG_RTS_RSV_SQCQ_ID (0x1 << 15)
 
 #define TSDRV_FLAG_SPECIFIED_SQ_MEM (0x1U << 31) /* used for internal */
 
-#define TSDRV_RES_RESERVED_ID       (0x1 << 0)  /* res free active */
-#define TSDRV_RES_SPECIFIED_ID      (0x1 << 1)  /* res allc active */
-#define TSDRV_RES_REMOTE_ID         TSDRV_FLAG_REMOTE_ID  /* (0x1 << 5) */
-#define TSDRV_RES_RANGE_ID          TSDRV_FLAG_RANGE_ID  /* (0x1 << 13), specified range flag for alloc id */
+#define TSDRV_RES_RESERVED_ID (0x1 << 0)         /* res free active */
+#define TSDRV_RES_SPECIFIED_ID (0x1 << 1)        /* res allc active */
+#define TSDRV_RES_REMOTE_ID TSDRV_FLAG_REMOTE_ID /* (0x1 << 5) */
+#define TSDRV_RES_RANGE_ID TSDRV_FLAG_RANGE_ID   /* (0x1 << 13), specified range flag for alloc id */
 
 #define SQCQ_RTS_INFO_LENGTH 5
 #define SQCQ_RESV_LENGTH 8
@@ -1277,7 +1220,7 @@ typedef enum tagDrvSqCqType {
     DRV_CTRL_TYPE,
     DRV_GDB_TYPE,
     DRV_INVALID_TYPE
-}  drvSqCqType_t;
+} drvSqCqType_t;
 
 struct trs_ext_info_header {
     uint32_t type;
@@ -1290,30 +1233,30 @@ struct trs_ext_info_header {
 };
 
 struct halSqCqInputInfo {
-    drvSqCqType_t type;  // normal : 0, callback : 1
+    drvSqCqType_t type; // normal : 0, callback : 1
     uint32_t tsId;
     /* The size and depth of each cqsq can be configured in normal mode, but this function is not yet supported */
-    uint32_t sqeSize;    // normal : 64Byte
-    uint32_t cqeSize;    // normal : 12Byte
-    uint32_t sqeDepth;   // normal : 1024
-    uint32_t cqeDepth;   // normal : 1024
+    uint32_t sqeSize;  // normal : 64Byte
+    uint32_t cqeSize;  // normal : 12Byte
+    uint32_t sqeDepth; // normal : 1024
+    uint32_t cqeDepth; // normal : 1024
 
-    uint32_t grpId;   // runtime thread identifier,normal : 0
-    uint32_t flag;    // ref to TSDRV_FLAG_*
-    uint32_t cqId;    // if flag bit 0 is 0, don't care about it
-    uint32_t sqId;    // if flag bit 1 is 0, don't care about it
+    uint32_t grpId; // runtime thread identifier,normal : 0
+    uint32_t flag;  // ref to TSDRV_FLAG_*
+    uint32_t cqId;  // if flag bit 0 is 0, don't care about it
+    uint32_t sqId;  // if flag bit 1 is 0, don't care about it
 
-    uint32_t info[SQCQ_RTS_INFO_LENGTH];  // inform to ts through the mailbox, consider single operator performance
+    uint32_t info[SQCQ_RTS_INFO_LENGTH]; // inform to ts through the mailbox, consider single operator performance
     uint32_t ext_info_len;
-    void *ext_info;    // the header of ext_info is struct trs_ext_info_header
+    void* ext_info; // the header of ext_info is struct trs_ext_info_header
     uint32_t res[SQCQ_RESV_LENGTH - 3];
 };
 
 struct halSqCqOutputInfo {
-    uint32_t sqId;  // return to UMAX when there is no sq
-    uint32_t cqId;  // return to UMAX when there is cq
+    uint32_t sqId;                 // return to UMAX when there is no sq
+    uint32_t cqId;                 // return to UMAX when there is cq
     unsigned long long queueVAddr; /* return shm sq addr */
-    uint32_t flag;    // ref to TSDRV_FLAG_*
+    uint32_t flag;                 // ref to TSDRV_FLAG_*
     uint32_t res[SQCQ_RESV_LENGTH - 3];
 };
 
@@ -1321,8 +1264,8 @@ struct halSqCqFreeInfo {
     drvSqCqType_t type; // normal : 0, callback : 1
     uint32_t tsId;
     uint32_t sqId;
-    uint32_t cqId;  // cqId to be freed, if flag bit 0 is 0, don't care about it
-    uint32_t flag;  // bit 0 : whether cq is to be freed  0 : free, 1 : no free
+    uint32_t cqId; // cqId to be freed, if flag bit 0 is 0, don't care about it
+    uint32_t flag; // bit 0 : whether cq is to be freed  0 : free, 1 : no free
     uint32_t res[SQCQ_RESV_LENGTH];
 };
 
@@ -1331,7 +1274,7 @@ struct halSqCqFreeInfo {
 #define SQCQ_QUERY_INFO_LENGTH 8
 #define RESOURCE_CONFIG_INFO_LENGTH 7
 
-#define DRV_SQ_MEM_ATTR_LOCAL_MASK  (1U << 0)
+#define DRV_SQ_MEM_ATTR_LOCAL_MASK (1U << 0)
 
 typedef enum tagDrvSqCqPropType {
     DRV_SQCQ_PROP_SQ_STATUS = 0x0,
@@ -1400,15 +1343,15 @@ enum shrIdAttrType {
     SHR_ID_ATTR_TYPE_MAX,
 };
 
-#define SHRID_WLIST_ENABLE     0x0
-#define SHRID_NO_WLIST_ENABLE  0x1
+#define SHRID_WLIST_ENABLE 0x0
+#define SHRID_NO_WLIST_ENABLE 0x1
 struct shrIdAttr {
-    unsigned int enableFlag;     /* wlist enable: 0  no wlist enable: 1 */
+    unsigned int enableFlag; /* wlist enable: 0  no wlist enable: 1 */
     unsigned int rsv[8];
 };
 
 struct shrIdGetInfo {
-    uint32_t phyDevid;  /* physical device id */
+    uint32_t phyDevid; /* physical device id */
     uint32_t rsv[8];
 };
 
@@ -1419,19 +1362,15 @@ struct halResourceDetailInfo {
     uint32_t reserve[2];
 };
 
-enum shr_id_type {
-    SHR_ID_NOTIFY_TYPE = 0,
-    SHR_ID_EVENT_TYPE = 1,
-    SHR_ID_TYPE_MAX
-};
+enum shr_id_type { SHR_ID_NOTIFY_TYPE = 0, SHR_ID_EVENT_TYPE = 1, SHR_ID_TYPE_MAX };
 
 /* when flag is TSDRV_FLAG_SHR_ID_SHADOW, devid is sdid */
 struct drvShrIdInfo {
-    uint32_t devid;    /* input:logic devid; output:phy devid, in spod is sdid */
-    uint32_t tsid;     /* input and output */
-    uint32_t id_type;  /* enum shr_id_type */
-    uint32_t shrid;    /* shared resource id */
-    uint32_t flag;     /* for remote id or shadow node */
+    uint32_t devid;   /* input:logic devid; output:phy devid, in spod is sdid */
+    uint32_t tsid;    /* input and output */
+    uint32_t id_type; /* enum shr_id_type */
+    uint32_t shrid;   /* shared resource id */
+    uint32_t flag;    /* for remote id or shadow node */
     uint32_t rsv[2];
 };
 
@@ -1447,14 +1386,14 @@ struct halSqTaskArgsInfo {
 
 struct halAsyncDmaInputPara {
     drvSqCqType_t type;
-    uint32_t tsId;          /* default is 0 */
+    uint32_t tsId; /* default is 0 */
     uint32_t sqId;
-    uint32_t dir;           /* copy direction */
-    uint32_t len;           /* copy length */
-    uint8_t *src;           /* source address */
+    uint32_t dir; /* copy direction */
+    uint32_t len; /* copy length */
+    uint8_t* src; /* source address */
     union {
-        uint8_t *dst;       /* destination address */
-        uint32_t sqe_pos;   /* sqe position, valid in PCIE connection */
+        uint8_t* dst;     /* destination address */
+        uint32_t sqe_pos; /* sqe position, valid in PCIE connection */
     };
 };
 
@@ -1464,23 +1403,23 @@ struct halAsyncDmaOutputPara {
             uint32_t dieId;
             uint32_t functionId;
             uint32_t jettyId;
-            uint32_t size;  /* wqe size */
-            uint8_t *wqe;
+            uint32_t size; /* wqe size */
+            uint8_t* wqe;
         };
         struct DMA_ADDR dma_addr;
     };
 };
 
- struct halAsyncDmaDestoryPara {
+struct halAsyncDmaDestoryPara {
     drvSqCqType_t type;
     uint32_t tsId;
     uint32_t sqId;
     union {
         struct {
-            uint32_t size;  /* copy size */
-            uint8_t *wqe;
+            uint32_t size; /* copy size */
+            uint8_t* wqe;
         };
-        struct DMA_ADDR *dma_addr;
+        struct DMA_ADDR* dma_addr;
     };
 };
 
@@ -1488,30 +1427,30 @@ struct halTaskSendInfo {
     drvSqCqType_t type;
     uint32_t tsId;
     uint32_t sqId;
-    int32_t timeout;                 /* send wait time */
-    uint8_t *sqe_addr;
+    int32_t timeout; /* send wait time */
+    uint8_t* sqe_addr;
     uint32_t sqe_num;
-    uint32_t pos;                    /* output: first sqe pos */
-    uint32_t res[SQCQ_RESV_LENGTH];  /* must zero out */
+    uint32_t pos;                   /* output: first sqe pos */
+    uint32_t res[SQCQ_RESV_LENGTH]; /* must zero out */
 };
 
 struct halReportRecvInfo {
     drvSqCqType_t type;
     uint32_t tsId;
     uint32_t cqId;
-    int32_t timeout;         /* recv wait time */
-    uint8_t *cqe_addr;
+    int32_t timeout; /* recv wait time */
+    uint8_t* cqe_addr;
     uint32_t cqe_num;
     uint32_t report_cqe_num; /* output */
     uint32_t stream_id;
-    uint32_t task_id;        /* if this parameter is set to all 1, strict matching is not performed for taskid. */
+    uint32_t task_id; /* if this parameter is set to all 1, strict matching is not performed for taskid. */
     uint32_t res[SQCQ_RESV_LENGTH];
 };
 
 struct tsdrv_ctrl_msg {
     unsigned int tsid;
-    unsigned int msg_len;   /* TRS_CTRL_MSG_MAX_LEN */
-    void *msg;
+    unsigned int msg_len; /* TRS_CTRL_MSG_MAX_LEN */
+    void* msg;
 };
 
 typedef enum tagTsDrvCtlCmdType {
@@ -1523,9 +1462,9 @@ typedef enum tagTsDrvCtlCmdType {
     TSDRV_CTL_CMD_MAX
 } tsDrvCtlCmdType_t;
 
-struct stream_backup_info{
+struct stream_backup_info {
     uint32_t id_num;
-    uint32_t *id_list;
+    uint32_t* id_list;
     char rsv[8];
 };
 /*=============================== TSDRV END ===============================*/
@@ -1540,12 +1479,7 @@ enum drvHdcSessionStatus {
 /*=============================== HDC END ===============================*/
 
 /*=============================== DP_PROC START =============================*/
-typedef enum {
-    BIND_AICPU_CGROUP = 0,
-    BIND_DATACPU_CGROUP,
-    BIND_COMCPU_CGROUP,
-    BIND_CGROUP_MAX_TYPE
-} BIND_CGROUP_TYPE;
+typedef enum { BIND_AICPU_CGROUP = 0, BIND_DATACPU_CGROUP, BIND_COMCPU_CGROUP, BIND_CGROUP_MAX_TYPE } BIND_CGROUP_TYPE;
 /*=============================== DP_PROC END ===============================*/
 
 /*=============================== query feature START ===============================*/
@@ -1559,7 +1493,7 @@ typedef enum tagDrvFeature {
 /*=============================== query feature END ===============================*/
 
 /*=============================== UFS feature START ===============================*/
-#define UFS_CDB_SIZE	16
+#define UFS_CDB_SIZE 16
 
 struct utp_upiu_header {
     UINT32 dword_0;
@@ -1567,24 +1501,23 @@ struct utp_upiu_header {
     UINT32 dword_2;
 };
 
-struct ufs_io_record
-{
+struct ufs_io_record {
     /* normal record fields, both normal records and abnormal records will record them */
-    UINT32 index; /* the index number of IO since startup */
-    UINT8 opcode; /* IO type */
-    UINT8 rsvd[3]; /* reserve 3 bytes */
-    UINT32 count; /* the count of this type of IOs since startup */
+    UINT32 index;         /* the index number of IO since startup */
+    UINT8 opcode;         /* IO type */
+    UINT8 rsvd[3];        /* reserve 3 bytes */
+    UINT32 count;         /* the count of this type of IOs since startup */
     UINT32 timeout_count; /* the count of this type of timeout IOs since startup */
     /* the unit of latency and time is us */
-    UINT32 max_latency; /* the max latency of this type of IOs within the cycle */
-    UINT32 min_latency; /* the min latency of this type of IOs within the cycle */
+    UINT32 max_latency;     /* the max latency of this type of IOs within the cycle */
+    UINT32 min_latency;     /* the min latency of this type of IOs within the cycle */
     UINT32 average_latency; /* the average latency of this type of IOs within the cycle */
     UINT32 actual_cycle; /* for the triggering time is when IO is completed, the record cycle is not completely fixed */
     UINT32 latency_threshold; /* the timeout threshold of abnormal IOs */
 
     /* the following is additional record fields.only timeout IOs will record them.In normal record, they are 0 */
     UINT32 latency;
-    UINT32 data_len; /* the data volume of IO */
+    UINT32 data_len;             /* the data volume of IO */
     struct utp_upiu_header head; /* UPIU header */
     UINT8 cdb[UFS_CDB_SIZE];
 };
@@ -1637,8 +1570,8 @@ typedef enum tagDrvL2buffInvalidType {
 } drvL2buffInvalidType;
 
 typedef enum {
-	PSM_STATUS_WORK = 0,
-	PSM_STATUS_NO_WORK = 1,
+    PSM_STATUS_WORK = 0,
+    PSM_STATUS_NO_WORK = 1,
     PSM_STATUS_MAX,
 } PSM_STATUS;
 #endif

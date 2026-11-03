@@ -34,20 +34,11 @@ using namespace std;
 
 class CcuInsGroupTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CommunicatorImplTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CommunicatorImplTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CommunicatorImplTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CommunicatorImplTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in CommunicatorImplTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in CommunicatorImplTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -72,7 +63,7 @@ TEST(CcuInsGroupTest, should_return_success_when_calling_append)
     CcuInsGroup insGroup;
     std::unique_ptr<CcuInstruction> ins = std::make_unique<CcuInstructionAllGatherMesh1D>();
     insGroup.Append(std::move(ins));
-    EXPECT_EQ(insGroup.GetCcuInstructions().size() , 1);
+    EXPECT_EQ(insGroup.GetCcuInstructions().size(), 1);
 }
 
 TEST(CcuInsGroupTest, should_return_success_when_calling_describe)
@@ -85,7 +76,7 @@ TEST(CcuInsGroupTest, should_return_success_when_calling_describe)
     // check2
     std::unique_ptr<CcuInstruction> ins = std::make_unique<CcuInstructionAllGatherMesh1D>();
     insGroup.Append(std::move(ins));
-    EXPECT_EQ(insGroup.ccuInstructions.size() , 1);
+    EXPECT_EQ(insGroup.ccuInstructions.size(), 1);
     cout << insGroup.Describe() << endl;
 }
 
@@ -112,7 +103,7 @@ TEST(CcuInsGroupTest, should_return_success_when_calling_other)
     CcuInsGroup insGroup;
     EXPECT_THROW(insGroup.GetTaskArg(), InternalException);
     EXPECT_THROW(insGroup.GetCtxArg(), NotSupportException);
-    
+
     std::unique_ptr<CcuInstructionAllGatherMesh1D> ins = std::make_unique<CcuInstructionAllGatherMesh1D>();
     std::vector<LinkData> links;
     LinkData link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);

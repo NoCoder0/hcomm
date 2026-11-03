@@ -8,6 +8,12 @@
 
 ![](./figures/allgather.png)
 
+## 产品支持情况
+
+本样例支持以下昇腾产品，组网要求为支持UB协议的Mesh互联，N卡（N>=2）：
+
+- Ascend 950PR&950DT系列产品
+
 ## 样例介绍
 
 开发者可以点击[CCU样例](https://gitcode.com/cann/hccl/tree/master/examples/05_custom_ops_allgather/ccu)获取完整样例代码，该样例使用HCCL通信算子开发接口实现了基于CCU通信引擎的AllGather算子，主要实现流程如下所示：
@@ -106,7 +112,7 @@ rankId: 1, output: [ 0 1 ]
     
     HcclChannelDesc desc;
     CHK_RET(HcclChannelDescInit(&desc, 1));
-    CommProtocol protocol = CommProtocol::COMM_PROTOCOL_UBC_CTP;
+    CommProtocol protocol = CommProtocol::COMM_PROTOCOL_UB_CTP;
     bool protocolExists = false;
     for (uint32_t idx = 0; idx < listSize; idx++) {
         CommLink link = linkList[idx];
@@ -149,10 +155,10 @@ rankId: 1, output: [ 0 1 ]
     CcuResult regEndRet = HcommCcuKernelRegisterEnd(insHandle);
     ```
 
-5. 获取远端的通信内存地址。
+5. 获取本端的 HCCL Buffer 内存地址。
 
     ```c
-    CHK_RET(HcclGetHcclBuffer(comm, &cclBufferAddr, &cclBufferSize)); // 从通信域获取CCL buffer
+    CHK_RET(HcclGetHcclBuffer(comm, &cclBufferAddr, &cclBufferSize));
     ```
 
 6. 准备输入数据。

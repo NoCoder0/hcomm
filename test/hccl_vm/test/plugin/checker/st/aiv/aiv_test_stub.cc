@@ -13,11 +13,11 @@
 namespace HcclSim {
 namespace TaskGraphGeneratorV3 {
 
-HcclResult ExpandCcuGraphsV3(const CcuGraphsGenerateInputV3 &, CcuGraphGenerateOutputV3 &output)
-{
-    output = CcuGraphGenerateOutputV3 {};
-    return HCCL_SUCCESS;
-}
+    HcclResult ExpandCcuGraphsV3(const CcuGraphsGenerateInputV3&, CcuGraphGenerateOutputV3& output)
+    {
+        output = CcuGraphGenerateOutputV3{};
+        return HCCL_SUCCESS;
+    }
 
 } // namespace TaskGraphGeneratorV3
 } // namespace HcclSim

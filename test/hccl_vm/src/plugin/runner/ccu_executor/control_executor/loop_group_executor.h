@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: ccu executor -- loop group
  * Author: caiyifan
  */
@@ -22,7 +25,8 @@
 
 class LoopGroupExecutor : public CcuExecutorBase {
 public:
-    explicit LoopGroupExecutor(int streamId, int rankId, int dieId, const hcomm::CcuRep::CcuInstr &instr, CcuSimulator *ccuSimulator)
+    explicit LoopGroupExecutor(
+        int streamId, int rankId, int dieId, const hcomm::CcuRep::CcuInstr& instr, CcuSimulator* ccuSimulator)
         : CcuExecutorBase(streamId, rankId, dieId, instr, ccuSimulator)
     {}
     LoopGroupExecutor() = default;
@@ -31,12 +35,15 @@ public:
     void Parser() override;
     void Run() override;
     void RunV1();
+    void RunV2();
     std::string Describe() override;
+    CcuTrace::CcuInstrTraceDetail CollectTraceDetail() override;
 
 private:
     uint16_t startLoopInstrId_;
     uint16_t xnId_;
     uint16_t xmId_;
+    uint16_t xpId_{0};
     uint16_t highPerfModeEn_;
 };
 

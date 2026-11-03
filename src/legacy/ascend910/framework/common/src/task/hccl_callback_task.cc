@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "externalinput_pub.h"
 #include "callback_thread_manager.h"
@@ -15,16 +15,18 @@
 #include "hccl_callback_task.h"
 
 namespace hccl {
-constexpr u32 HOST_NIC_THREAD_WAIT = 10000;    // 等待hostnic监控线程时间1s(10000 * 100us);
+constexpr u32 HOST_NIC_THREAD_WAIT = 10000; // 等待hostnic监控线程时间1s(10000 * 100us);
 
-HcclCallbackTask::HcclCallbackTask(u32 devicePhyId, u32 deviceLogicId,
-    HcclDispatcher dispatcher, NICDeployment nicDeployment)
-    : devicePhyId_(devicePhyId), deviceLogicId_(deviceLogicId),
-    dispatcher_(dispatcher), nicDeployment_(nicDeployment),
-    callbackThread_(nullptr), callbackThreadId_(INVALID_U64),
-    callbackThreadShutDown_(false)
-{
-}
+HcclCallbackTask::HcclCallbackTask(
+    u32 devicePhyId, u32 deviceLogicId, HcclDispatcher dispatcher, NICDeployment nicDeployment)
+    : devicePhyId_(devicePhyId),
+      deviceLogicId_(deviceLogicId),
+      dispatcher_(dispatcher),
+      nicDeployment_(nicDeployment),
+      callbackThread_(nullptr),
+      callbackThreadId_(INVALID_U64),
+      callbackThreadShutDown_(false)
+{}
 
 HcclCallbackTask::~HcclCallbackTask()
 {
@@ -34,7 +36,7 @@ HcclCallbackTask::~HcclCallbackTask()
 
 void HcclCallbackTask::CallbackThread()
 {
-    //给当前线程添加名字
+    // 给当前线程添加名字
     SetThreadName("Hccl_Callback");
 
     CHK_PRT(hrtSetDevice(deviceLogicId_));
@@ -53,15 +55,18 @@ HcclResult HcclCallbackTask::CallbackRegStream(rtStream_t stream)
 {
     // callback线程绑定stream场景：
     // 1、910A host RDMA、host tcp
-    // 2、310P 2pg device侧下沉 tcp、标准roce（当前device SOC下沉场景都需要callback task，若之后有改动，判断条件需要更新）
-    if ((static_cast<s32>(devicePhyId_) == HOST_DEVICE_ID) || (stream == nullptr) ||
-        ((nicDeployment_ == NICDeployment::NIC_DEPLOYMENT_DEVICE && !GetExternalInputHcclIsTcpMode() &&
-        !Is310PDevice()))) {
+    // 2、310P 2pg device侧下沉 tcp、标准roce（当前device SOC下沉场景都需要callback
+    // task，若之后有改动，判断条件需要更新）
+    if ((static_cast<s32>(devicePhyId_) == HOST_DEVICE_ID) || (stream == nullptr)
+        || ((
+            nicDeployment_ == NICDeployment::NIC_DEPLOYMENT_DEVICE && !GetExternalInputHcclIsTcpMode()
+            && !Is310PDevice()))) {
         return HCCL_SUCCESS;
     }
 
     if (HcclGetCallbackResult(dispatcher_) != HCCL_SUCCESS) {
-        HCCL_ERROR("[HcclCallbackTask][CallbackRegStream]errNo[0x%016llx] callback func err",
+        HCCL_ERROR(
+            "[HcclCallbackTask][CallbackRegStream]errNo[0x%016llx] callback func err",
             HCCL_ERROR_CODE(HcclGetCallbackResult(dispatcher_)));
         return HcclGetCallbackResult(dispatcher_);
     }
@@ -75,15 +80,19 @@ HcclResult HcclCallbackTask::CallbackRegStream(rtStream_t stream)
     while (callbackThreadId_ == INVALID_U64) {
         SaluSleep(ONE_MILLISECOND_OF_USLEEP);
         countTime++;
-        CHK_PRT_RET(countTime >= HOST_NIC_THREAD_WAIT,
-            HCCL_ERROR("[HcclCallbackTask][CallbackRegStream]errNo[0x%016llx] waiting Callback Thread time out",
-                HCCL_ERROR_CODE(HCCL_E_INTERNAL)), HCCL_E_INTERNAL);
+        CHK_PRT_RET(
+            countTime >= HOST_NIC_THREAD_WAIT,
+            HCCL_ERROR(
+                "[HcclCallbackTask][CallbackRegStream]errNo[0x%016llx] waiting Callback Thread time out",
+                HCCL_ERROR_CODE(HCCL_E_INTERNAL)),
+            HCCL_E_INTERNAL);
     }
 
     // 如果当前stream已经被注册，则直接返回成功
     if (ThreadStreamManager::Instance().StreamHasBeenReged(stream)) {
-        HCCL_INFO("[HcclCallbackTask][CallbackRegStream]Cur stream Already registered, stream[%p] tid:[%llu] ",
-            stream, callbackThreadId_);
+        HCCL_INFO(
+            "[HcclCallbackTask][CallbackRegStream]Cur stream Already registered, stream[%p] tid:[%llu] ", stream,
+            callbackThreadId_);
         return HCCL_SUCCESS;
     } else {
         CHK_RET(hrtSubscribeReport(callbackThreadId_, stream));
@@ -96,8 +105,7 @@ HcclResult HcclCallbackTask::CallbackRegStream(rtStream_t stream)
 
 HcclResult HcclCallbackTask::CloseCallbackThread()
 {
-    if (nicDeployment_ == NICDeployment::NIC_DEPLOYMENT_DEVICE && !GetExternalInputHcclIsTcpMode() &&
-        !Is310PDevice()) {
+    if (nicDeployment_ == NICDeployment::NIC_DEPLOYMENT_DEVICE && !GetExternalInputHcclIsTcpMode() && !Is310PDevice()) {
         return HCCL_SUCCESS;
     }
 

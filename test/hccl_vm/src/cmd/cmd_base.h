@@ -28,27 +28,25 @@ public:
 class CommandRegistry {
 public:
     using CommandCreator = std::function<std::unique_ptr<CommandBase>()>;
-    
+
     static void RegisteCommand(const std::string& name, CommandCreator creator);
     static std::vector<std::unique_ptr<CommandBase>> CreateAll();
-    
+
 private:
     static auto& GetCreators();
 };
 
 // 命令自动注册
-template<typename CommandType>
+template <typename CommandType>
 class CommandAutoRegister {
 public:
-    CommandAutoRegister() {
-        CommandRegistry::RegisteCommand(
-            CommandType::StaticName(),
-            []() -> std::unique_ptr<CommandBase> {
-                return std::make_unique<CommandType>();
-            }
-        );
+    CommandAutoRegister()
+    {
+        CommandRegistry::RegisteCommand(CommandType::StaticName(), []() -> std::unique_ptr<CommandBase> {
+            return std::make_unique<CommandType>();
+        });
     }
 };
-}
+} // namespace HcclSim
 
 #endif

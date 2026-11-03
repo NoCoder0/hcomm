@@ -20,28 +20,27 @@
 #include "ccu_instruction_all_to_all_v_mesh2d.h"
 
 namespace Hccl {
-    // a2a 对每个对端的发送接收信息
+// a2a 对每个对端的发送接收信息
 struct A2AVsingleSendRecvInfo {
     CcuRep::Variable sendOffset;
     CcuRep::Variable recvOffset;
-    CcuRep::Variable sendTailSizeA;     // 本rank给其他rank要发的尾块
-    CcuRep::Variable sendTailSizeB;     // 本rank给其他rank要发的尾块
+    CcuRep::Variable sendTailSizeA; // 本rank给其他rank要发的尾块
+    CcuRep::Variable sendTailSizeB; // 本rank给其他rank要发的尾块
     CcuRep::Variable sendTailSize;
-    CcuRep::Variable recvTailSizeA;     // 本rank从其他所有rank要收的数据
-    CcuRep::Variable recvTailSizeB;     // 本rank从其他所有rank要收的数据
-    CcuRep::Variable sendLoopNum;      // 本rank给其他所有rank要发的轮数
-    CcuRep::Variable recvLoopNum;      // 本rank从其他所有rank要收的数据
+    CcuRep::Variable recvTailSizeA; // 本rank从其他所有rank要收的数据
+    CcuRep::Variable recvTailSizeB; // 本rank从其他所有rank要收的数据
+    CcuRep::Variable sendLoopNum;   // 本rank给其他所有rank要发的轮数
+    CcuRep::Variable recvLoopNum;   // 本rank从其他所有rank要收的数据
 };
-
 
 class CcuContextAllToAllVMesh2D : public CcuContextAlgBase {
 public:
-    CcuContextAllToAllVMesh2D(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                              const CcuTransportGroup &group);
+    CcuContextAllToAllVMesh2D(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
     ~CcuContextAllToAllVMesh2D() override {}
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
 
 protected:
     // a2a 对每个对端的发送接收信息
@@ -50,18 +49,19 @@ protected:
         CcuRep::Variable recvOffset;
         CcuRep::Variable sendTailSizeA; // 本rank给其他所有rank要发的数据
         CcuRep::Variable sendTailSizeB; // 本rank给其他所有rank要发的数据
-        GroupOpSize      sendTailGoSizeA;
-        GroupOpSize      sendTailGoSizeB;
+        GroupOpSize sendTailGoSizeA;
+        GroupOpSize sendTailGoSizeB;
         CcuRep::Variable sendTailSize;
         CcuRep::Variable recvTailSizeA; // 本rank从其他所有rank要收的数据
         CcuRep::Variable recvTailSizeB; // 本rank从其他所有rank要收的数据
         CcuRep::Variable sendLoopNum;   // 本rank给其他所有rank要发的轮数
         CcuRep::Variable recvLoopNum;   // 本rank从其他所有rank要收的数据
     };
-    void GenAddrVariables(std::vector<CcuRep::Variable> &input,
-        std::vector<CcuRep::Variable> &output, std::vector<CcuRep::Variable> &token);
+    void GenAddrVariables(
+        std::vector<CcuRep::Variable>& input, std::vector<CcuRep::Variable>& output,
+        std::vector<CcuRep::Variable>& token);
 
-    void CalcGroupSrcDst(std::vector<CcuRep::Memory> &src, std::vector<CcuRep::Memory> &dst);
+    void CalcGroupSrcDst(std::vector<CcuRep::Memory>& src, std::vector<CcuRep::Memory>& dst);
     void LoadAll2allSendRecvInfo(A2AVsingleSendRecvInfo sendRecvInfo);
 
 private:
@@ -109,10 +109,10 @@ private:
     uint32_t axisId_{0};
     std::vector<uint32_t> dimSize_; // 每个维度的大小
     std::vector<uint32_t> dimId_;   // 本rank所在行或列的编号
-    uint32_t localId_{0};      // 本rank所在行或列的编号
-    uint32_t localSize_{0};    // 本rank所在行或列的总rank数
-    uint32_t anotherId_{0};    // 本rank在另一个轴上的Id
-    uint32_t anotherSize_{0};  // 本rank所在另一个轴上的总rank数
+    uint32_t localId_{0};           // 本rank所在行或列的编号
+    uint32_t localSize_{0};         // 本rank所在行或列的总rank数
+    uint32_t anotherId_{0};         // 本rank在另一个轴上的Id
+    uint32_t anotherSize_{0};       // 本rank所在另一个轴上的总rank数
 
     // 中间步骤用的地址寄存器
     std::vector<CcuRep::Memory> inputAddrs_;
@@ -131,8 +131,8 @@ private:
     CcuRep::Variable secondScratchSliceStep_;
 
     // 计算参数用
-    uint64_t scratchSliceBias{0};   // scratchmem一半的大小
-    uint64_t scratchSliceSize{0};   // scratchmem上每一格的大小
+    uint64_t scratchSliceBias{0}; // scratchmem一半的大小
+    uint64_t scratchSliceSize{0}; // scratchmem上每一格的大小
     uint64_t firstScratchBaseOffset{0};
     uint64_t secondScratchBaseOffset{0};
     uint64_t firstScratchSliceOffset{0};

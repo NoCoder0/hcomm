@@ -1,25 +1,21 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gather_ring.h"
 #include "alg_template_register.h"
 
 namespace hccl {
-GatherRing::GatherRing(const HcclDispatcher dispatcher)
-    : AlgTemplateBase(dispatcher), interRank_(0), interRankSize_(0)
-{
-}
+GatherRing::GatherRing(const HcclDispatcher dispatcher) : AlgTemplateBase(dispatcher), interRank_(0), interRankSize_(0)
+{}
 
-GatherRing::~GatherRing()
-{
-}
+GatherRing::~GatherRing() {}
 // 不带入slice时候，计算gather 输出buffer的偏移
 void GatherRing::PrepareSlicesData(const u32 unitSize, const u64 totalCount, const u32 rankSize)
 {
@@ -47,17 +43,23 @@ HcclResult GatherRing::RunGatherOnRootRank()
 
         // 给前一节点发送同步，以便前一rank进行下一轮的操作
         ret = linkLeft_->TxAck(stream_);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[Run][GatherOnRootRank]rootrank[%u] tx ack failed", interRank_), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS, HCCL_ERROR("[Run][GatherOnRootRank]rootrank[%u] tx ack failed", interRank_), ret);
         dst = outputMem_.range(rcvOffset, rcvSize);
 
         ret = linkLeft_->RxAsync(UserMemType::OUTPUT_MEM, rcvOffset + baseOffset_, dst.ptr(), rcvSize, stream_);
-		
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][GatherOnRootRank]root rank[%u] rx sync with dstmem[%p] "\
-            "failed", interRank_, dst.ptr()), ret);
 
-        HCCL_INFO("GatherRing rootrank[%u] round[%u] rx data ouputoffset[%llu] size[%llu]", \
-            interRank_, i, rcvOffset, rcvSize);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[Run][GatherOnRootRank]root rank[%u] rx sync with dstmem[%p] "
+                "failed",
+                interRank_, dst.ptr()),
+            ret);
+
+        HCCL_INFO(
+            "GatherRing rootrank[%u] round[%u] rx data outputoffset[%llu] size[%llu]", interRank_, i, rcvOffset,
+            rcvSize);
     }
     return HCCL_SUCCESS;
 }
@@ -73,10 +75,14 @@ HcclResult GatherRing::RunGatherOnRootNextRank()
 
     DeviceMem sendMem = outputMem_.range(sendOffset, sendSize);
     ret = linkRight_->TxAsync(UserMemType::OUTPUT_MEM, sendOffset + baseOffset_, sendMem.ptr(), sendSize, stream_);
-    CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][GatherOnRootNextRank]rank[%u] TxAsync offset[%llu] size[%llu] "\
-        "failed", interRank_, sendOffset, sendSize), ret);
-    HCCL_DEBUG("GatherRing root next rank[%u] tx async offset[%llu] size[%llu]",
-        interRank_, sendOffset, sendSize);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[Run][GatherOnRootNextRank]rank[%u] TxAsync offset[%llu] size[%llu] "
+            "failed",
+            interRank_, sendOffset, sendSize),
+        ret);
+    HCCL_DEBUG("GatherRing root next rank[%u] tx async offset[%llu] size[%llu]", interRank_, sendOffset, sendSize);
     ret = linkRight_->TxWaitDone(stream_);
     CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][GatherOnRootNextRank]TxWaitDone failed"), ret);
 
@@ -93,14 +99,18 @@ HcclResult GatherRing::RunGatherOnOtherRank()
 
     // 把自己数据发送至下一rank
     ret = linkLeft_->TxAck(stream_);
-    CHK_PRT_RET(ret != HCCL_SUCCESS,
-        HCCL_ERROR("[Run][GatherOnOtherRank]rank[%u] tx ack failed", interRank_), ret);
+    CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][GatherOnOtherRank]rank[%u] tx ack failed", interRank_), ret);
     ret = linkRight_->RxAck(stream_);
     CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][GatherOnOtherRank]rank[%u] rx ack failed", interRank_), ret);
     DeviceMem sendMem = outputMem_.range(sendOffset, sendSize);
     ret = linkRight_->TxAsync(UserMemType::OUTPUT_MEM, sendOffset + baseOffset_, sendMem.ptr(), sendSize, stream_);
-    CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][GatherOnOtherRank]rank[%u] TxAsync offset[%llu] size[%llu] "\
-        "failed", interRank_, sendOffset, sendSize), ret);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[Run][GatherOnOtherRank]rank[%u] TxAsync offset[%llu] size[%llu] "
+            "failed",
+            interRank_, sendOffset, sendSize),
+        ret);
 
     u32 round = (interRank_ + interRankSize_ - root_ - 1) % interRankSize_;
     // 需要接收的和发送的轮数，包含接收自己的数据
@@ -112,8 +122,8 @@ HcclResult GatherRing::RunGatherOnOtherRank()
         dst = outputMem_.range(rcvOffset, rcvSize);
         // 从前一个节点收数据
         ret = linkLeft_->RxAsync(UserMemType::OUTPUT_MEM, rcvOffset + baseOffset_, dst.ptr(), rcvSize, stream_);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[Run][GatherOnOtherRank]rank[%u] rx async failed", interRank_), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS, HCCL_ERROR("[Run][GatherOnOtherRank]rank[%u] rx async failed", interRank_), ret);
 
         ret = linkLeft_->RxWaitDone(stream_);
         CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][GatherOnOtherRank]RxWaitDone failed"), ret);
@@ -121,21 +131,24 @@ HcclResult GatherRing::RunGatherOnOtherRank()
         CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][GatherOnOtherRank]TxWaitDone failed"), ret);
 
         ret = linkLeft_->TxAck(stream_);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][GatherOnOtherRank]rank[%u] round[%u] tx ack  failed",
-            interRank_, i), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS, HCCL_ERROR("[Run][GatherOnOtherRank]rank[%u] round[%u] tx ack failed", interRank_, i),
+            ret);
 
         // 从后一rank接收同步信号
         ret = linkRight_->RxAck(stream_);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][GatherOnOtherRank]rank[%u] round[%u] rx ack failed",
-            interRank_, i), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS, HCCL_ERROR("[Run][GatherOnOtherRank]rank[%u] round[%u] rx ack failed", interRank_, i),
+            ret);
         // 向后一rank发送数据
         ret = linkRight_->TxAsync(UserMemType::OUTPUT_MEM, rcvOffset + baseOffset_, dst.ptr(), rcvSize, stream_);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][GatherOnOtherRank]rank[%u] round[%u] tx async failed",
-            interRank_, i), ret);
-        HCCL_DEBUG("GatherRing rank[%u] round[%u] tx async offset[%llu] size[%llu]",
-            interRank_, i, rcvOffset, rcvSize);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR("[Run][GatherOnOtherRank]rank[%u] round[%u] tx async failed", interRank_, i), ret);
+        HCCL_DEBUG("GatherRing rank[%u] round[%u] tx async offset[%llu] size[%llu]", interRank_, i, rcvOffset, rcvSize);
     }
-    // 最后一次接收后，再发送，与for循环内动作相比 缺少leftlink->txack,最后一轮收的一定是root next的数据,root的next next节点不走for循环
+    // 最后一次接收后，再发送，与for循环内动作相比 缺少leftlink->txack,最后一轮收的一定是root next的数据,root的next
+    // next节点不走for循环
     u32 rcvSlice = (root_ + 1) % interRankSize_;
     u64 rcvOffset = slices_[rcvSlice].offset;
     u64 rcvSize = slices_[rcvSlice].size;
@@ -150,8 +163,7 @@ HcclResult GatherRing::RunGatherOnOtherRank()
     CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][GatherOnOtherRank]TxWaitDone failed"), ret);
     // 从后一rank接收同步信号
     ret = linkRight_->RxAck(stream_);
-    CHK_PRT_RET(ret != HCCL_SUCCESS,
-        HCCL_ERROR("[Run][GatherOnOtherRank]rank[%u] rx ack failed", interRank_), ret);
+    CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][GatherOnOtherRank]rank[%u] rx ack failed", interRank_), ret);
     // 向后一rank发送数据
     ret = linkRight_->TxAsync(UserMemType::OUTPUT_MEM, rcvOffset + baseOffset_, dst.ptr(), rcvSize, stream_);
     CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][GatherOnOtherRank]rank[%u] tx async failed", interRank_), ret);
@@ -160,8 +172,8 @@ HcclResult GatherRing::RunGatherOnOtherRank()
     return HCCL_SUCCESS;
 }
 // gather的入口函数
-HcclResult GatherRing::RunAsync(const u32 rank, const u32 rankSize,
-    const std::vector<std::shared_ptr<Transport> > &links)
+HcclResult
+GatherRing::RunAsync(const u32 rank, const u32 rankSize, const std::vector<std::shared_ptr<Transport>>& links)
 {
     CHK_SMART_PTR_NULL(dispatcher_);
     CHK_PTR_NULL(stream_.ptr());
@@ -173,8 +185,9 @@ HcclResult GatherRing::RunAsync(const u32 rank, const u32 rankSize,
     interRank_ = rank;
     interRankSize_ = rankSize;
 
-    HCCL_INFO("GatherRing run: rank[%u] totalrank[%u] count[%llu] input[%p] output[%p]",
-              interRank_, interRankSize_,  count_, inputMem_.ptr(), outputMem_.ptr());
+    HCCL_INFO(
+        "GatherRing run: rank[%u] totalrank[%u] count[%llu] input[%p] output[%p]", interRank_, interRankSize_, count_,
+        inputMem_.ptr(), outputMem_.ptr());
 
     // ranksize为1时，只有当input!=output 时候进行拷贝
     if (interRankSize_ == 1) {
@@ -185,10 +198,10 @@ HcclResult GatherRing::RunAsync(const u32 rank, const u32 rankSize,
     }
 
     u32 unitSize = DataUnitSize(dataType_);
-    CHK_PRT_RET(unitSize == 0, HCCL_ERROR("[GatherRing][RunAsync]rank[%u] unit data size is zero", rank),
-        HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        unitSize == 0, HCCL_ERROR("[GatherRing][RunAsync]rank[%u] unit data size is zero", rank), HCCL_E_INTERNAL);
 
-    // 带入vecotr为空，计算每个rank的结果偏移和大小
+    // 带入vector为空，计算每个rank的结果偏移和大小
     if (slices_.size() == 0) {
         PrepareSlicesData(unitSize, count_, interRankSize_);
     }
@@ -225,4 +238,4 @@ HcclResult GatherRing::RunAsync(const u32 rank, const u32 rankSize,
     return HCCL_SUCCESS;
 }
 REGISTER_TEMPLATE(TemplateType::TEMPLATE_GATHER_RING, GatherRing);
-}  // namespace hccl
+} // namespace hccl

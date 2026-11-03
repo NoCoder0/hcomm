@@ -13,27 +13,23 @@
 #include <mockcpp/mockcpp.hpp>
 #include "hccp.h"
 #include "dev_buffer.h"
-#include "local_rdma_rma_buffer.h"
+#include "local_rdma_rma_buffer_v2.h"
 #include "remote_rma_buffer.h"
 
 using namespace Hccl;
 
 class LocalRdmaRmaBufferTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "LocalRdmaRmaBuffer tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "LocalRdmaRmaBuffer tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "LocalRdmaRmaBuffer tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "LocalRdmaRmaBuffer tests tear down." << std::endl; }
 
     virtual void SetUp()
     {
         MOCKER(HrtIpcSetMemoryName).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any());
-        MOCKER(HrtDevMemAlignWithPage).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any());
+        MOCKER(HrtDevMemAlignWithPage)
+            .stubs()
+            .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any());
         MOCKER(HrtIpcDestroyMemoryName).stubs().with(mockcpp::any());
 
         std::cout << "A Test case in LocalRdmaRmaBuffer SetUP." << std::endl;
@@ -48,17 +44,20 @@ protected:
     std::shared_ptr<DevBuffer> devBuf = DevBuffer::Create(0x100, 0x100);
 };
 
-TEST_F(LocalRdmaRmaBufferTest, Ut_When_LocalRdmaRmaBuffer_Construct_Error_Expect_Exception) {
+TEST_F(LocalRdmaRmaBufferTest, Ut_When_LocalRdmaRmaBuffer_Construct_Error_Expect_Exception)
+{
     EXPECT_THROW(LocalRdmaRmaBuffer localRdmaRmaBuffer(devBuf, nullptr), NullPtrException);
 };
 
-TEST_F(LocalRdmaRmaBufferTest, Ut_When_LocalRdmaRmaBuffer_Construct_With_Invalid_Param_Expect_Exception) {
+TEST_F(LocalRdmaRmaBufferTest, Ut_When_LocalRdmaRmaBuffer_Construct_With_Invalid_Param_Expect_Exception)
+{
     RdmaHandle rdmaHandle = (void*)0x10000000;
     std::shared_ptr<DevBuffer> fakeBuf = std::make_shared<DevBuffer>(0x100, 0);
     EXPECT_THROW(LocalRdmaRmaBuffer localRdmaRmaBuffer(fakeBuf, rdmaHandle), InvalidParamsException);
 };
 
-TEST_F(LocalRdmaRmaBufferTest, Ut_When_Serialize_Expect_Success) {
+TEST_F(LocalRdmaRmaBufferTest, Ut_When_Serialize_Expect_Success)
+{
     RdmaHandle rdmaHandle = (RdmaHandle)0x1000000;
     LocalRdmaRmaBuffer localRdmaRmaBuffer(devBuf, rdmaHandle);
     std::string msg = localRdmaRmaBuffer.Describe();

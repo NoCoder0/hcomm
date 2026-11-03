@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #include "net_co_xmap.h"
 #include "net_co_main_data.h"
 #include "securec.h"
@@ -42,4 +41,3 @@ void NetCoXMapUninit(NetCo *co)
 #ifdef __cplusplus
 }
 #endif
-

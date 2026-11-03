@@ -19,16 +19,16 @@
 #endif
 
 #define HCCP_DEFAULT_REQUIRED_ARGC_NUM 3
-#define DEVID_PREFIX                   "deviceId" /* logic id */
-#define PID_PREFIX                     "pid"
-#define PID_SIGN_PREFIX                "pidSign"
-#define LOG_LEVEL_PREFIX               "logLevelInPid"
-#define HDC_TYPE_PREFIX                "hdcType"
-#define WHITE_LIST_STATUS_PREFIX       "whiteListStatus"
-#define BACKUP_PHYID_PREFIX            "backupPhyId"
+#define DEVID_PREFIX "deviceId" /* logic id */
+#define PID_PREFIX "pid"
+#define PID_SIGN_PREFIX "pidSign"
+#define LOG_LEVEL_PREFIX "logLevelInPid"
+#define HDC_TYPE_PREFIX "hdcType"
+#define WHITE_LIST_STATUS_PREFIX "whiteListStatus"
+#define BACKUP_PHYID_PREFIX "backupPhyId"
 
-#define HCCP_CMD_MAX_LEN  128
-#define HCCP_KEY_EXPIRED  127
+#define HCCP_CMD_MAX_LEN 128
+#define HCCP_KEY_EXPIRED 127
 
 enum {
     HCCP_ARGC_DEV = 0,

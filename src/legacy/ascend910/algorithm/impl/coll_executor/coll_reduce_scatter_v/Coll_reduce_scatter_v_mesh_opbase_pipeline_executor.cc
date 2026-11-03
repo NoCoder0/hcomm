@@ -1,20 +1,19 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "Coll_reduce_scatter_v_mesh_opbase_pipeline_executor.h"
 
 namespace hccl {
 
 CollReduceScatterVMeshOpbasePipelineExecutor::CollReduceScatterVMeshOpbasePipelineExecutor(
-    const HcclDispatcher dispatcher,
-    std::unique_ptr<TopoMatcher> &topoMatcher)
+    const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher>& topoMatcher)
     : CollReduceScatterVExecutor(dispatcher, topoMatcher)
 {
     DMAReduceFlag_ = true;
@@ -31,8 +30,8 @@ HcclResult CollReduceScatterVMeshOpbasePipelineExecutor::CalcStreamNum(u32& stre
 {
     u32 totalStreamNum = topoAttr_.deviceNumPerAggregation + 1U;
     streamNum = totalStreamNum - 1U;
-    HCCL_INFO("[CollReduceScatterVMeshOpbasePipelineExecutor][CalcStreamNum] tag[%s] streamNum[%u]",
-        tag_.c_str(), streamNum);
+    HCCL_INFO(
+        "[CollReduceScatterVMeshOpbasePipelineExecutor][CalcStreamNum] tag[%s] streamNum[%u]", tag_.c_str(), streamNum);
     return HCCL_SUCCESS;
 }
 
@@ -46,9 +45,8 @@ HcclResult CollReduceScatterVMeshOpbasePipelineExecutor::CalcCommInfo(std::vecto
     return HCCL_SUCCESS;
 }
 
-HcclResult CollReduceScatterVMeshOpbasePipelineExecutor::CalcLevel0CommInfo(TransportMemType inputType,
-    TransportMemType outputType,
-    std::vector<LevelNSubCommTransport>& opTransport)
+HcclResult CollReduceScatterVMeshOpbasePipelineExecutor::CalcLevel0CommInfo(
+    TransportMemType inputType, TransportMemType outputType, std::vector<LevelNSubCommTransport>& opTransport)
 {
     CommParaInfo commParaInfo(COMM_LEVEL0, CommType::COMM_TAG_MESH);
     commParaInfo.meshSinglePlane = true;
@@ -57,26 +55,27 @@ HcclResult CollReduceScatterVMeshOpbasePipelineExecutor::CalcLevel0CommInfo(Tran
 }
 
 // PipeLine模式下使用Ring算法
-HcclResult CollReduceScatterVMeshOpbasePipelineExecutor::CalcLevel1CommInfo(TransportMemType inputType,
-    TransportMemType outputType,
-    std::vector<LevelNSubCommTransport>& opTransport)
+HcclResult CollReduceScatterVMeshOpbasePipelineExecutor::CalcLevel1CommInfo(
+    TransportMemType inputType, TransportMemType outputType, std::vector<LevelNSubCommTransport>& opTransport)
 {
     CommParaInfo commParaInfo(COMM_LEVEL1, CommType::COMM_TAG_RING_INNER);
     CHK_RET(CalcCommPlaneInfo(tag_, commParaInfo, opTransport[COMM_LEVEL1], inputType, outputType));
     return HCCL_SUCCESS;
 }
 
-HcclResult CollReduceScatterVMeshOpbasePipelineExecutor::CalcTransportMemType(TransportMemType &inputType,
-    TransportMemType &outputType)
+HcclResult CollReduceScatterVMeshOpbasePipelineExecutor::CalcTransportMemType(
+    TransportMemType& inputType, TransportMemType& outputType) const
 {
     inputType = TransportMemType::CCL_INPUT;
     outputType = TransportMemType::CCL_OUTPUT;
-    HCCL_INFO("[CollReduceScatterVMeshOpbasePipelineExecutor][CalcTransportMemType] tag[%s] inputType[%d],"
-        " outputType[%d]", tag_.c_str(), inputType, outputType);
+    HCCL_INFO(
+        "[CollReduceScatterVMeshOpbasePipelineExecutor][CalcTransportMemType] tag[%s] inputType[%d],"
+        " outputType[%d]",
+        tag_.c_str(), inputType, outputType);
     return HCCL_SUCCESS;
 }
 
-bool CollReduceScatterVMeshOpbasePipelineExecutor::IsHugeData(const u64 curSize, const OpParam &param)
+bool CollReduceScatterVMeshOpbasePipelineExecutor::IsHugeData(const u64 curSize, [[maybe_unused]] const OpParam& param)
 {
     bool hugeData = curSize > RDMA_SEND_MAX_SIZE || curSize > SDMA_SEND_MAX_SIZE;
     return hugeData;
@@ -94,7 +93,8 @@ HcclResult CollReduceScatterVMeshOpbasePipelineExecutor::Getlevel1CommRank(SubCo
     return HCCL_SUCCESS;
 }
 
-HcclResult CollReduceScatterVMeshOpbasePipelineExecutor::SelectTempAlg(std::unique_ptr<AlgTemplateBase> &level1TempAlg, u32 level1RankSize)
+HcclResult CollReduceScatterVMeshOpbasePipelineExecutor::SelectTempAlg(
+    std::unique_ptr<AlgTemplateBase>& level1TempAlg, u32 level1RankSize)
 {
     if (level1RankSize > 1) {
         level1TempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(
@@ -107,30 +107,32 @@ HcclResult CollReduceScatterVMeshOpbasePipelineExecutor::SelectTempAlg(std::uniq
 u64 CollReduceScatterVMeshOpbasePipelineExecutor::CalcLoopMaxCount(const u32 unitSize)
 {
     // 中转内存单次最多能够接受的output count，放开ranksize限制
-    u64 maxCountPerLoop = ((inCCLbufferSize_ / (HCCL_MIN_SLICE_ALIGN_910B * PIPELINE_DEPTH)) \
-            * HCCL_MIN_SLICE_ALIGN_910B - HCCL_MIN_SLICE_ALIGN_910B) / unitSize;
-    HCCL_INFO("[CollReduceScatterVMeshOpbasePipelineExecutor][CalcLoopMaxCount] maxCountPerLoop[%llu]", maxCountPerLoop);
+    u64 maxCountPerLoop = ((inCCLbufferSize_ / (HCCL_MIN_SLICE_ALIGN_910B * PIPELINE_DEPTH)) * HCCL_MIN_SLICE_ALIGN_910B
+                           - HCCL_MIN_SLICE_ALIGN_910B)
+                          / unitSize;
+    HCCL_INFO(
+        "[CollReduceScatterVMeshOpbasePipelineExecutor][CalcLoopMaxCount] maxCountPerLoop[%llu]", maxCountPerLoop);
     return maxCountPerLoop;
 }
 
-HcclResult CollReduceScatterVMeshOpbasePipelineExecutor::CalcCurCountsAndCurDispls(const u64 maxTotalCount,
-    std::vector<u64> &countsLeft, std::vector<u64> &displs, std::vector<u64> &curCounts, std::vector<u64> &curDispls,
-    bool &finished)
+HcclResult CollReduceScatterVMeshOpbasePipelineExecutor::CalcCurCountsAndCurDispls(
+    const u64 maxTotalCount, std::vector<u64>& countsLeft, std::vector<u64>& displs, std::vector<u64>& curCounts,
+    std::vector<u64>& curDispls, bool& finished)
 {
     finished = true;
     curCounts.resize(countsLeft.size(), 0);
     curDispls.resize(displs.size(), 0);
 
     // 先设置本轮的displacements，等于入参displs
-    std::copy(displs.begin(), displs.end(), curDispls.begin());    
+    std::copy(displs.begin(), displs.end(), curDispls.begin());
     // 分配好每个rank的counts
     for (auto i = 0U; i < countsLeft.size(); ++i) {
         const auto curCount = countsLeft[i] < maxTotalCount ? countsLeft[i] : maxTotalCount;
         curCounts[i] = curCount;
         countsLeft[i] -= curCount;
         displs[i] += curCount;
-        
-        if(countsLeft[i] != 0) {
+
+        if (countsLeft[i] != 0) {
             finished = false;
         }
     }
@@ -138,7 +140,7 @@ HcclResult CollReduceScatterVMeshOpbasePipelineExecutor::CalcCurCountsAndCurDisp
     return HCCL_SUCCESS;
 }
 
-HcclResult CollReduceScatterVMeshOpbasePipelineExecutor::KernelRun(const OpParam &param, ExecMem &execMem)
+HcclResult CollReduceScatterVMeshOpbasePipelineExecutor::KernelRun(const OpParam& param, ExecMem& execMem)
 {
     HCCL_CONFIG_INFO(HCCL_ALG, "[CollReduceScatterVMeshOpbasePipelineExecutor] reducescatterv pipeline run");
     HcclDataType dataType = param.VDataDes.dataType;
@@ -164,23 +166,23 @@ HcclResult CollReduceScatterVMeshOpbasePipelineExecutor::KernelRun(const OpParam
 
     u64 reduceAttr = GetReduceAttr(execMem.inputMem, execMem.inputMem, dataType, param.reduceType);
 
-    std::unique_ptr<AlgTemplateBase> tempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(
-            TemplateType::TEMPLATE_REDUCESCATTER_V_PIPELINE, dispatcher_);
-        CHK_SMART_PTR_NULL(tempAlg);
+    std::unique_ptr<AlgTemplateBase> tempAlg
+        = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_REDUCESCATTER_V_PIPELINE, dispatcher_);
+    CHK_SMART_PTR_NULL(tempAlg);
 
-    HcomCollOpInfo opInfo = {"", execMem.inputPtr, execMem.outputPtr, 0, dataType,
-        param.root, param.reduceType};
+    HcomCollOpInfo opInfo = {"", execMem.inputPtr, execMem.outputPtr, 0, dataType, param.root, param.reduceType, 0};
 
     Stream stream = param.stream;
-    CHK_RET(tempAlg->Prepare(&opInfo, execMem.inputMem, execMem.inputMem.size(), inputSlices, level0CommInfo,
-        level1CommInfo, stream, algResResp_->slaveStreams, algResResp_->notifiesMain,
-        algResResp_->notifiesAux, reduceAttr));
+    CHK_RET(tempAlg->Prepare(
+        &opInfo, execMem.inputMem, execMem.inputMem.size(), inputSlices, level0CommInfo, level1CommInfo, stream,
+        algResResp_->slaveStreams, algResResp_->notifiesMain, algResResp_->notifiesAux, reduceAttr));
     CHK_RET(tempAlg->RunAsync());
 
     return HCCL_SUCCESS;
 }
 
-REGISTER_EXEC("ReduceScatterVMeshOpbasePipelineExecutor", ReduceScatterVMeshOpbasePipeline,
+REGISTER_EXEC(
+    "ReduceScatterVMeshOpbasePipelineExecutor", ReduceScatterVMeshOpbasePipeline,
     CollReduceScatterVMeshOpbasePipelineExecutor);
 
-}
+} // namespace hccl

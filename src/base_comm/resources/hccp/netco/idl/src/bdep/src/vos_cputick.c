@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #include <sys/time.h>
 #include "vos_base.h"
 #include "vos_errno.h"
@@ -17,17 +16,17 @@
 extern "C" {
 #endif
 
-#define  CPUTICK_PER_SEC 1000000
-#define  CPUTICK_BITNUM32 (32)
+#define CPUTICK_PER_SEC 1000000
+#define CPUTICK_BITNUM32 (32)
 uint32_t VOS_CpuTick2MsEx(VOS_CPUTICK_S *cputick, uint32_t *milliSecsHigh, uint32_t *milliSecsLow)
 {
     if (cputick == NULL || milliSecsHigh == NULL || milliSecsLow == NULL) {
         return VOS_ERROR;
     }
-    uint64_t  ullTick = cputick->uiHigh;
+    uint64_t ullTick = cputick->uiHigh;
     ullTick = ullTick << CPUTICK_BITNUM32;
     ullTick += cputick->uiLow;
-    uint64_t  ullMs = ullTick / CPUTICK_PER_SEC;
+    uint64_t ullMs = ullTick / CPUTICK_PER_SEC;
     *milliSecsHigh = (uint32_t)(ullMs >> CPUTICK_BITNUM32);
     *milliSecsLow = (uint32_t)(ullMs & 0xffffffff);
     return VOS_OK;
@@ -46,10 +45,9 @@ void VOS_GetCpuTick(uint32_t *puiLow, uint32_t *puiHigh)
     nowtick += ((unsigned long long)tv.tv_usec);
     *puiHigh = nowtick >> CPUTICK_BITNUM32;
     *puiLow = nowtick & 0xffffffff;
-     return;
+    return;
 }
 
 #ifdef __cplusplus
 }
 #endif
-

@@ -15,17 +15,15 @@
 
 namespace Hccl {
 
-AivTempScatterMesh1D::AivTempScatterMesh1D(const RankId virtualRank, const u32 tempRankSize,
-    const std::vector<std::vector<RankId>> &tempVTopo, const std::map<RankId, u32> &tempVirtRankMap)
+AivTempScatterMesh1D::AivTempScatterMesh1D(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
     : AivAlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap)
-{
-}
+{}
 
-AivTempScatterMesh1D::~AivTempScatterMesh1D()
-{
-}
+AivTempScatterMesh1D::~AivTempScatterMesh1D() {}
 
-HcclResult AivTempScatterMesh1D::CalcRes(AlgTempResReq &tempResReq)
+HcclResult AivTempScatterMesh1D::CalcRes(AlgTempResReq& tempResReq)
 {
     tempResReq.queNum = 1;
     tempResReq.streamNum = tempResReq.queNum;
@@ -34,19 +32,19 @@ HcclResult AivTempScatterMesh1D::CalcRes(AlgTempResReq &tempResReq)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult AivTempScatterMesh1D::GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &templateDataParams, 
-    const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues)
+HcclResult AivTempScatterMesh1D::GenExtIns(
+    const TempFuncs& tempFuncs, const TemplateDataParams& templateDataParams, const ResLinks& tempLinks,
+    std::vector<InsQuePtr>& tempInsQues)
 {
     HCCL_INFO("[AivTempScatterMesh1D] GenExtIns start");
-    CHK_PRT_RET(tempInsQues.empty(),
-        HCCL_ERROR("[AivTempScatterMesh1D] empty queue"), HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(tempInsQues.empty(), HCCL_ERROR("[AivTempScatterMesh1D] empty queue"), HcclResult::HCCL_E_INTERNAL);
     CHK_PTR_NULL(tempInsQues[0]);
     std::vector<LinkData> allLinks;
     for (auto iter = tempLinks.begin(); iter != tempLinks.end(); ++iter) {
         allLinks.emplace_back(iter->second.at(0));
     }
 
-    IncSliceId();  // 自动增长sliceId，传入aivTag
+    IncSliceId(); // 自动增长sliceId，传入aivTag
 
     AivOpArgs aivScatterArgs;
     aivScatterArgs.cmdType = HcclCMDType::HCCL_CMD_SCATTER;
@@ -58,23 +56,23 @@ HcclResult AivTempScatterMesh1D::GenExtIns(const TempFuncs &tempFuncs, const Tem
     aivScatterArgs.dataType = dataType_;
     aivScatterArgs.op = reduceOp_;
     aivScatterArgs.root = root_;
-    aivScatterArgs.aivTag = sliceId_;  // 传入aivTag，Lauch时重新组装为aivTag
+    aivScatterArgs.aivTag = sliceId_; // 传入aivTag，Launch时重新组装为aivTag
     aivScatterArgs.isOpBase = (tempFuncs.opMode == OpMode::OPBASE);
     aivScatterArgs.xRankSize = tempVTopo_[0].size();
     aivScatterArgs.yRankSize = 0;
     aivScatterArgs.zRankSize = 0;
-    for (u32 i = 0; i < tempVTopo_[0].size(); i++){
+    for (u32 i = 0; i < tempVTopo_[0].size(); i++) {
         aivScatterArgs.topo_[i] = tempVTopo_[0][i];
     }
-    if (tempVTopo_.size() > 1){
+    if (tempVTopo_.size() > 1) {
         aivScatterArgs.yRankSize = tempVTopo_[1].size();
-        for (u32 i = 0; i < tempVTopo_[1].size(); i++){
+        for (u32 i = 0; i < tempVTopo_[1].size(); i++) {
             aivScatterArgs.topo_[TOPO_LEN_Y_OFFSET + i] = tempVTopo_[1][i];
         }
     }
-    if (tempVTopo_.size() == MAX_DIM_NUM){
+    if (tempVTopo_.size() == MAX_DIM_NUM) {
         aivScatterArgs.zRankSize = tempVTopo_[MAX_DIM_NUM - 1].size();
-        for (u32 i = 0; i < tempVTopo_[MAX_DIM_NUM - 1].size(); i++){
+        for (u32 i = 0; i < tempVTopo_[MAX_DIM_NUM - 1].size(); i++) {
             aivScatterArgs.topo_[TOPO_LEN_Z_OFFSET + i] = tempVTopo_[MAX_DIM_NUM - 1][i];
         }
     }
@@ -93,4 +91,4 @@ HcclResult AivTempScatterMesh1D::GenExtIns(const TempFuncs &tempFuncs, const Tem
     return HcclResult::HCCL_SUCCESS;
 }
 
-}  // namespace Hccl
+} // namespace Hccl

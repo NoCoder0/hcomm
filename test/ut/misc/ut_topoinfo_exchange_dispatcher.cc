@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -29,25 +29,15 @@ using namespace hccl;
 
 class TopoExchangeDispatcherTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "TopoExchangeDispatcherTest SetUP" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "TopoExchangeDispatcherTest TearDown" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "TopoExchangeDispatcherTest SetUP" << std::endl; }
+    static void TearDownTestCase() { std::cout << "TopoExchangeDispatcherTest TearDown" << std::endl; }
     // Some expensive resource shared by all tests.
-    virtual void SetUp()
-    {
-        std::cout << "A Test SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test SetUP" << std::endl; }
     virtual void TearDown()
     {
         GlobalMockObject::verify();
         std::cout << "A Test TearDown" << std::endl;
     }
-    
 };
 
 #if 0
@@ -61,11 +51,11 @@ TEST_F(TopoExchangeDispatcherTest, ut_processOneSendEvent_sendDataFail)
     auto socketPtr = std::make_shared<HcclSocket>(netDevCtx, 5);
     std::string identifier;
     TopoInfoExchangeServer topoServer(hostIP, hostPort, whitelist, netDevCtx, socketPtr, identifier);
-    TopoInfoExchangeDispather workers(&topoServer);
+    TopoInfoExchangeDispatcher workers(&topoServer);
 
     // create epoll_event
-    TopoInfoExchangeDispather::SendState txS;
-    TopoInfoExchangeDispather::FdContext fdCtx;
+    TopoInfoExchangeDispatcher::SendState txS;
+    TopoInfoExchangeDispatcher::FdContext fdCtx;
     auto socket = std::make_shared<HcclSocket>(netDevCtx, 5);
     FdHandle fdHandle;
     socket->fdHandle_ = fdHandle;
@@ -73,7 +63,7 @@ TEST_F(TopoExchangeDispatcherTest, ut_processOneSendEvent_sendDataFail)
     fdCtx.socket = socket;
     workers.fdHandleToFdContextMap_.emplace(socket->fdHandle_, fdCtx);
 
-    MOCKER_CPP(&TopoInfoExchangeDispather::SendState::Send)
+    MOCKER_CPP(&TopoInfoExchangeDispatcher::SendState::Send)
     .stubs()
     .with(mockcpp::any())
     .will(returnValue(1));
@@ -94,11 +84,11 @@ TEST_F(TopoExchangeDispatcherTest, ut_processOneSendEvent_sendDataSuccess)
     auto socketPtr = std::make_shared<HcclSocket>(netDevCtx, 5);
     std::string identifier;
     TopoInfoExchangeServer topoServer(hostIP, hostPort, whitelist, netDevCtx, socketPtr, identifier);
-    TopoInfoExchangeDispather workers(&topoServer);
+    TopoInfoExchangeDispatcher workers(&topoServer);
 
     // create epoll_event
-    TopoInfoExchangeDispather::SendState txS;
-    TopoInfoExchangeDispather::FdContext fdCtx;
+    TopoInfoExchangeDispatcher::SendState txS;
+    TopoInfoExchangeDispatcher::FdContext fdCtx;
     auto socket = std::make_shared<HcclSocket>(netDevCtx, 5);
     FdHandle fdHandle;
     socket->fdHandle_ = fdHandle;
@@ -106,12 +96,12 @@ TEST_F(TopoExchangeDispatcherTest, ut_processOneSendEvent_sendDataSuccess)
     fdCtx.socket = socket;
     workers.fdHandleToFdContextMap_.emplace(socket->fdHandle_, fdCtx);
 
-    MOCKER_CPP(&TopoInfoExchangeDispather::SendState::Send)
+    MOCKER_CPP(&TopoInfoExchangeDispatcher::SendState::Send)
     .stubs()
     .with(mockcpp::any())
     .will(returnValue(0));
 
-    MOCKER_CPP(&TopoInfoExchangeDispather::SendState::IsOk)
+    MOCKER_CPP(&TopoInfoExchangeDispatcher::SendState::IsOk)
     .stubs()
     .with(mockcpp::any())
     .will(returnValue(true));
@@ -137,11 +127,11 @@ TEST_F(TopoExchangeDispatcherTest, ut_processOneSendEvent_sendAgain)
     auto socketPtr = std::make_shared<HcclSocket>(netDevCtx, 5);
     std::string identifier;
     TopoInfoExchangeServer topoServer(hostIP, hostPort, whitelist, netDevCtx, socketPtr, identifier);
-    TopoInfoExchangeDispather workers(&topoServer);
+    TopoInfoExchangeDispatcher workers(&topoServer);
 
     // create epoll_event
-    TopoInfoExchangeDispather::SendState txS;
-    TopoInfoExchangeDispather::FdContext fdCtx;
+    TopoInfoExchangeDispatcher::SendState txS;
+    TopoInfoExchangeDispatcher::FdContext fdCtx;
     auto socket = std::make_shared<HcclSocket>(netDevCtx, 5);
     FdHandle fdHandle;
     socket->fdHandle_ = fdHandle;
@@ -149,12 +139,12 @@ TEST_F(TopoExchangeDispatcherTest, ut_processOneSendEvent_sendAgain)
     fdCtx.socket = socket;
     workers.fdHandleToFdContextMap_.emplace(socket->fdHandle_, fdCtx);
 
-    MOCKER_CPP(&TopoInfoExchangeDispather::SendState::Send)
+    MOCKER_CPP(&TopoInfoExchangeDispatcher::SendState::Send)
     .stubs()
     .with(mockcpp::any())
     .will(returnValue(0));
 
-    MOCKER_CPP(&TopoInfoExchangeDispather::SendState::IsOk)
+    MOCKER_CPP(&TopoInfoExchangeDispatcher::SendState::IsOk)
     .stubs()
     .with(mockcpp::any())
     .will(returnValue(false));
@@ -181,18 +171,15 @@ TEST_F(TopoExchangeDispatcherTest, ut_sendHelper_ISendSuccess)
     auto socket = std::make_shared<HcclSocket>(netDevCtx, 5);
     std::string identifier;
     TopoInfoExchangeServer topoServer(hostIP, hostPort, whitelist, netDevCtx, socket, identifier);
-    TopoInfoExchangeDispather workers(&topoServer);
+    TopoInfoExchangeDispatcher workers(&topoServer);
     // set params
     auto socketPtr = std::make_shared<HcclSocket>(netDevCtx, 5);
-    char *buf = reinterpret_cast<char *>(0x1234);
+    char* buf = reinterpret_cast<char*>(0x1234);
     size_t dataLen = 100;
     size_t sendedLen = 80;
-    TopoInfoExchangeDispather::SendState txS;
+    TopoInfoExchangeDispatcher::SendState txS;
 
-    MOCKER_CPP(&HcclSocket::ISend)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(0));
+    MOCKER_CPP(&HcclSocket::ISend).stubs().with(mockcpp::any()).will(returnValue(0));
 
     HcclResult ret = HCCL_SUCCESS;
     ret = txS.SendHelper(socketPtr, buf, dataLen, sendedLen);
@@ -210,18 +197,15 @@ TEST_F(TopoExchangeDispatcherTest, ut_sendHelper_networkError)
     auto socket = std::make_shared<HcclSocket>(netDevCtx, 5);
     std::string identifier;
     TopoInfoExchangeServer topoServer(hostIP, hostPort, whitelist, netDevCtx, socket, identifier);
-    TopoInfoExchangeDispather workers(&topoServer);
+    TopoInfoExchangeDispatcher workers(&topoServer);
     // set params
     auto socketPtr = std::make_shared<HcclSocket>(netDevCtx, 5);
-    char *buf = reinterpret_cast<char *>(0x1234);
+    char* buf = reinterpret_cast<char*>(0x1234);
     size_t dataLen = 100;
     size_t sendedLen = 80;
-    TopoInfoExchangeDispather::SendState txS;
+    TopoInfoExchangeDispatcher::SendState txS;
 
-    MOCKER_CPP(&HcclSocket::ISend)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_E_NETWORK));
+    MOCKER_CPP(&HcclSocket::ISend).stubs().with(mockcpp::any()).will(returnValue(HCCL_E_NETWORK));
 
     HcclResult ret = HCCL_SUCCESS;
     ret = txS.SendHelper(socketPtr, buf, dataLen, sendedLen);
@@ -239,18 +223,15 @@ TEST_F(TopoExchangeDispatcherTest, ut_sendHelper_internalError)
     auto socket = std::make_shared<HcclSocket>(netDevCtx, 5);
     std::string identifier;
     TopoInfoExchangeServer topoServer(hostIP, hostPort, whitelist, netDevCtx, socket, identifier);
-    TopoInfoExchangeDispather workers(&topoServer);
+    TopoInfoExchangeDispatcher workers(&topoServer);
     // set params
     auto socketPtr = std::make_shared<HcclSocket>(netDevCtx, 5);
-    char *buf = reinterpret_cast<char *>(0x1234);
+    char* buf = reinterpret_cast<char*>(0x1234);
     size_t dataLen = 100;
     size_t sendedLen = 80;
-    TopoInfoExchangeDispather::SendState txS;
+    TopoInfoExchangeDispatcher::SendState txS;
 
-    MOCKER_CPP(&HcclSocket::ISend)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_E_INTERNAL));
+    MOCKER_CPP(&HcclSocket::ISend).stubs().with(mockcpp::any()).will(returnValue(HCCL_E_INTERNAL));
 
     HcclResult ret = HCCL_SUCCESS;
     ret = txS.SendHelper(socketPtr, buf, dataLen, sendedLen);
@@ -268,8 +249,7 @@ TEST_F(TopoExchangeDispatcherTest, ut_Teardown)
     auto socket = std::make_shared<HcclSocket>(netDevCtx, 5);
     std::string identifier;
     TopoInfoExchangeServer topoServer(hostIP, hostPort, whitelist, netDevCtx, socket, identifier);
- 
- 
+
     HcclResult ret = HCCL_SUCCESS;
     ret = topoServer.Teardown();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -294,11 +274,11 @@ TEST_F(TopoExchangeDispatcherTest, ut_processOneSendEvent_sendDataOnceFail)
     auto socketPtr = std::make_shared<HcclSocket>(netDevCtx, 5);
     std::string identifier;
     TopoInfoExchangeServer topoServer(hostIP, hostPort, whitelist, netDevCtx, socketPtr, identifier);
-    TopoInfoExchangeDispather workers(&topoServer);
+    TopoInfoExchangeDispatcher workers(&topoServer);
 
     // create epoll_event
-    TopoInfoExchangeDispather::SendState txS;
-    TopoInfoExchangeDispather::FdContext fdCtx;
+    TopoInfoExchangeDispatcher::SendState txS;
+    TopoInfoExchangeDispatcher::FdContext fdCtx;
     auto socket = std::make_shared<HcclSocket>(netDevCtx, 5);
     FdHandle fdHandle;
     socket->fdHandle_ = fdHandle;
@@ -307,7 +287,7 @@ TEST_F(TopoExchangeDispatcherTest, ut_processOneSendEvent_sendDataOnceFail)
     fdCtx.socket = socket;
     workers.fdHandleToFdContextMap_.emplace(socket->fdHandle_, fdCtx);
 
-    MOCKER_CPP(&TopoInfoExchangeDispather::SendState::Send)
+    MOCKER_CPP(&TopoInfoExchangeDispatcher::SendState::Send)
     .stubs()
     .with(mockcpp::any())
     .will(returnValue(1));
@@ -320,12 +300,12 @@ TEST_F(TopoExchangeDispatcherTest, ut_processOneSendEvent_sendDataOnceFail)
 
 TEST_F(TopoExchangeDispatcherTest, ut_broadcastgroupleaderinfo)
 {
-    MOCKER_CPP(&TopoInfoExchangeDispather::SendState::Send)
+    MOCKER_CPP(&TopoInfoExchangeDispatcher::SendState::Send)
     .stubs()
     .with(mockcpp::any())
     .will(returnValue(0));
  
-    MOCKER_CPP(&TopoInfoExchangeDispather::SendState::IsOk)
+    MOCKER_CPP(&TopoInfoExchangeDispatcher::SendState::IsOk)
     .stubs()
     .with(mockcpp::any())
     .will(returnValue(true));
@@ -355,7 +335,7 @@ TEST_F(TopoExchangeDispatcherTest, ut_broadcastgroupleaderinfo)
  
     std::string identifier;
     TopoInfoExchangeServer topoServer(hostIP, hostPort, whitelist, netDevCtx, socketPtr, identifier);
-    TopoInfoExchangeDispather workers(&topoServer);
+    TopoInfoExchangeDispatcher workers(&topoServer);
  
     auto socket = std::make_shared<HcclSocket>(netDevCtx, 5);
     std::map<std::string, std::shared_ptr<HcclSocket>> connectSockets;
@@ -376,12 +356,12 @@ TEST_F(TopoExchangeDispatcherTest, ut_broadcastgroupleaderinfo)
 
 TEST_F(TopoExchangeDispatcherTest, ut_broadcastgroupleaderPortinfo)
 {
-    MOCKER_CPP(&TopoInfoExchangeDispather::SendState::Send)
+    MOCKER_CPP(&TopoInfoExchangeDispatcher::SendState::Send)
     .stubs()
     .with(mockcpp::any())
     .will(returnValue(0));
  
-    MOCKER_CPP(&TopoInfoExchangeDispather::SendState::IsOk)
+    MOCKER_CPP(&TopoInfoExchangeDispatcher::SendState::IsOk)
     .stubs()
     .with(mockcpp::any())
     .will(returnValue(true));
@@ -411,7 +391,7 @@ TEST_F(TopoExchangeDispatcherTest, ut_broadcastgroupleaderPortinfo)
  
     std::string identifier;
     TopoInfoExchangeServer topoServer(hostIP, hostPort, whitelist, netDevCtx, socketPtr, identifier);
-    TopoInfoExchangeDispather workers(&topoServer);
+    TopoInfoExchangeDispatcher workers(&topoServer);
  
     auto socket = std::make_shared<HcclSocket>(netDevCtx, 5);
     std::map<std::string, std::shared_ptr<HcclSocket>> connectSockets;

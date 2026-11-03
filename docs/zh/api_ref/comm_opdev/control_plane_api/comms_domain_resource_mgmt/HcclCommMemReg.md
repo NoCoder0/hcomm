@@ -2,9 +2,21 @@
 
 ## 产品支持情况
 
-- Ascend 950PR/Ascend 950DT：支持
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：不支持
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：不支持
+<!-- npu="950" id1 -->
+- Ascend 950PR&950DT系列产品：支持
+<!-- end id1 -->
+<!-- npu="A3" id2 -->
+- Atlas A3系列产品：不支持
+<!-- end id2 -->
+<!-- npu="910b" id3 -->
+- Atlas A2系列产品：不支持
+<!-- end id3 -->
+<!-- npu="910" id4 -->
+- Atlas训练系列产品：不支持
+<!-- end id4 -->
+<!-- npu="310p" id5 -->
+- Atlas推理系列产品：不支持
+<!-- end id5 -->
 
 ## 功能说明
 
@@ -34,14 +46,17 @@ HcclResult HcclCommMemReg(HcclComm comm, const char *memTag, const CommMem *mem,
 - 一个通信域内，同一个memTag，只允许注册一块内存。
 - 一个通信域内，相同memTag重复注册会返回HCCL_E_PARA报错，不会复用已有的注册内存句柄。
 - 一个通信域内，不同memTag可映射到重叠或相同的内存区域。
+- 当`mem->type`为`COMM_MEM_TYPE_CCU`时，表示注册CCU资源空间内存，仅Ascend 950PR&950DT系列产品支持。CCU类型内存的注册流程与DEVICE一致。详见[CommMemType](../../datatype_definition/CommMemType.md)。
+- comm必须为有效的通信域句柄（由通信域创建接口获得，调用期间保持有效）。禁止传入空指针、野指针或已销毁的句柄。
 
 ## 调用示例
 
 ```c
 HcclComm comm; // 通信域句柄，省略获取
-char* memTag = "memTag"; // 内存标签
+const char* memTag = "memTag"; // 内存标签
+void *deviceBuffer = nullptr; // 已申请的设备内存地址（需通过aclrtMalloc等接口申请）
 CommMem memInfo; // 内存信息
-memInfo.addr = 0x00; // 配置已申请的内存地址     
+memInfo.addr = deviceBuffer; // 配置已申请的内存地址
 memInfo.size = 1024; // 配置已申请的内存大小
 memInfo.type = COMM_MEM_TYPE_DEVICE; // 配置已申请的内存类型
 HcclMemHandle memHandle; // 内存句柄

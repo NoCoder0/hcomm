@@ -20,9 +20,9 @@ namespace Hccl {
 
 class InsTempReduceAicpuReduceMesh2D : public InsAlgTemplateBase {
 public:
-    explicit InsTempReduceAicpuReduceMesh2D(const RankId virtualRank, const u32 tempRankSize,
-                                   const std::vector<std::vector<RankId>> &tempVTopo,
-                                   const std::map<RankId, u32>            &tempVirtRankMap);
+    explicit InsTempReduceAicpuReduceMesh2D(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~InsTempReduceAicpuReduceMesh2D() override;
 
     std::string Describe() const override
@@ -30,25 +30,30 @@ public:
         return StringFormat("Template of aicpu reduce reduce 2D Mesh with tempRankSize [%u].", tempRankSize_);
     }
 
-    HcclResult GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &templateDataParams,
-                         const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues);
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
+    HcclResult GenExtIns(
+        const TempFuncs& tempFuncs, const TemplateDataParams& templateDataParams, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues);
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
 
     u32 CalcScratchMultiple(BufferType inBuffType, BufferType outBuffType) const;
+
 private:
-    HcclResult RunAicpuLocalReduce(const TemplateDataParams &templateDataParams, std::vector<InsQuePtr> &tempInsQues);
-    HcclResult RunGatherToRootXY(const TemplateDataParams &templateDataParams, const ResLinks &tempLinks,
-                        std::vector<InsQuePtr> &tempInsQues);
-    HcclResult RunGatherToRootX(const TemplateDataParams &templateDataParams, const ResLinks &tempLinks,
-                        std::vector<InsQuePtr> &tempInsQues);
-    HcclResult RunGatherToRootY(const TemplateDataParams &templateDataParams, const ResLinks &tempLinks,
-                        std::vector<InsQuePtr> &tempInsQues);
-    HcclResult RunXYGatherToRoot(const TemplateDataParams &templateDataParams, const ResLinks &tempLinks,
-                        std::vector<InsQuePtr> &tempInsQues) const;
-    HcclResult RunXGatherToRoot(const TemplateDataParams &templateDataParams, const ResLinks &tempLinks,
-                        std::vector<InsQuePtr> &tempInsQues) const;
-    HcclResult RunYGatherToRoot(const TemplateDataParams &templateDataParams, const ResLinks &tempLinks,
-                        std::vector<InsQuePtr> &tempInsQues) const;
+    HcclResult RunAicpuLocalReduce(const TemplateDataParams& templateDataParams, std::vector<InsQuePtr>& tempInsQues);
+    HcclResult RunGatherToRootXY(
+        const TemplateDataParams& templateDataParams, const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues);
+    HcclResult RunGatherToRootX(
+        const TemplateDataParams& templateDataParams, const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues);
+    HcclResult RunGatherToRootY(
+        const TemplateDataParams& templateDataParams, const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues);
+    HcclResult RunXYGatherToRoot(
+        const TemplateDataParams& templateDataParams, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues) const;
+    HcclResult RunXGatherToRoot(
+        const TemplateDataParams& templateDataParams, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues) const;
+    HcclResult RunYGatherToRoot(
+        const TemplateDataParams& templateDataParams, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues) const;
     u32 sizeX_{0};
     u32 sizeY_{0};
     u32 rootX_{0};

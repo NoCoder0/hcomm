@@ -25,15 +25,9 @@ using namespace Hccl;
 
 class RmtDataBufferMgrTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "RmtDataBufferMgr tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "RmtDataBufferMgr tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "RmtDataBufferMgr tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "RmtDataBufferMgr tests tear down." << std::endl; }
 
     virtual void SetUp()
     {
@@ -52,9 +46,9 @@ protected:
         std::cout << "A Test case in RmtDataBufferMgr TearDown" << std::endl;
     }
 
-    MemTransportLiteMgr *memTransportLiteMgr;
-    MirrorTaskManagerLite *mirrorTaskMgrLite;
-    CollAlgInfo *algInfo;
+    MemTransportLiteMgr* memTransportLiteMgr;
+    MirrorTaskManagerLite* mirrorTaskMgrLite;
+    CollAlgInfo* algInfo;
     std::string tag = "tag";
     OpMode mode{OpMode::OPBASE};
 };
@@ -65,7 +59,7 @@ TEST_F(RmtDataBufferMgrTest, get_GetBuffer_opbase_success)
     LinkData linkData(BasePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB), 0, 1, 0, 1);
 
     // Mocker掉MemTransportLiteMgr::GetOpbase，使其返回一个非空的MemTransportLite指针
-    MemTransportLite *fakeTransportPtr = reinterpret_cast<MemTransportLite *>(0x1000);
+    MemTransportLite* fakeTransportPtr = reinterpret_cast<MemTransportLite*>(0x1000);
     MOCKER_CPP(&MemTransportLiteMgr::GetOpbase).stubs().with(mockcpp::any()).will(returnValue(fakeTransportPtr));
 
     // Mocker掉MemTransportLite::GetRmtBuffer，使其返回一个预设的Buffer对象

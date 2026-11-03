@@ -4,9 +4,10 @@
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #include "gtest/gtest.h"
 #include <mockcpp/mokc.h>
 #include <mockcpp/mockcpp.hpp>
@@ -24,20 +25,15 @@ namespace checker {
 
 class ReduceScatterCCUTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "ReduceScatter CCU test set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "ReduceScatter CCU test set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "ReduceScatter CCU test tear down" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "ReduceScatter CCU test tear down" << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -140,7 +136,7 @@ TEST_F(ReduceScatterCCUTest, reducescatter_ccu_case_test_8rank)
 
 TEST_F(ReduceScatterCCUTest, reducescatter_ccu_case_test_8rank_Mesh1DMultiMission)
 {
-    //此算法出现死锁问题
+    // 此算法出现死锁问题
     RankTable_For_LLT gen;
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 8);
@@ -249,4 +245,4 @@ TEST_F(ReduceScatterCCUTest, reducescatter_ccu_case_test_8rank_MeshMem2Mem1D)
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 }
 
-}
+} // namespace checker

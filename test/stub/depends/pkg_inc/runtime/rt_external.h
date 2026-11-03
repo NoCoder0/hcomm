@@ -21,4 +21,4 @@
 #include "rt_external_model.h"
 #include "rt_external_stream.h"
 
-#endif  // CCE_RUNTIME_RT_EXTERNAL_H
+#endif // CCE_RUNTIME_RT_EXTERNAL_H

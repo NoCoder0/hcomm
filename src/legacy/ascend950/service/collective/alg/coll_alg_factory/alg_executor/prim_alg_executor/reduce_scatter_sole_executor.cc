@@ -18,18 +18,15 @@
 namespace Hccl {
 template <typename AlgTopoMatch, typename AlgTemplate>
 ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::ReduceScatterSoleExecutor() : CollAlgBase()
-{
-}
+{}
 
 template <typename AlgTopoMatch, typename AlgTemplate>
 ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::~ReduceScatterSoleExecutor()
-{
-}
+{}
 
 template <typename AlgTopoMatch, typename AlgTemplate>
-HcclResult ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::CalcResOffload(const RankGraph *rankGraph,
-                                                                                const u64         &dataSize,
-                                                                                CollOffloadOpResReq     &resReq)
+HcclResult ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::CalcResOffload(
+    const RankGraph* rankGraph, const u64& dataSize, CollOffloadOpResReq& resReq)
 {
     // Topo Match
     AlgTopoMatch topoMatch(myRank_, rankSize_, rankGraph, devType_);
@@ -40,7 +37,7 @@ HcclResult ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::CalcResOffload(
 
     // calculate required primQues and prepare queue
     AlgTempResReq tempResReq;
-    u32           requiredScratchMultiplier = 0;
+    u32 requiredScratchMultiplier = 0;
     if (enableDetour_) {
         CHK_RET(tempAlg.CalcResDetour(false, rankGraph, tempResReq, requiredScratchMultiplier));
     } else {
@@ -54,10 +51,8 @@ HcclResult ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::CalcResOffload(
 }
 
 template <typename AlgTopoMatch, typename AlgTemplate>
-HcclResult ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQues(const RankGraph     *rankGraph,
-                                                                             const CollAlgOperator &op,
-                                                                             const CollAlgParams   &params,
-                                                                             PrimQuePtr             primQue)
+HcclResult ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQues(
+    const RankGraph* rankGraph, const CollAlgOperator& op, const CollAlgParams& params, PrimQuePtr primQue)
 {
     // init and check params
     CHK_RET(Init(op, params, primQue));
@@ -74,7 +69,7 @@ HcclResult ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQues(con
 
     // calculate required primQues and prepare queue
     AlgTempResReq tempResReq;
-    u32           requiredScratchMultiplier = 0;
+    u32 requiredScratchMultiplier = 0;
     if (enableDetour_) {
         CHK_RET(tempAlg.CalcResDetour(false, rankGraph, tempResReq, requiredScratchMultiplier));
     } else {
@@ -82,13 +77,14 @@ HcclResult ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQues(con
     }
 
     CHK_RET(InitQueue(tempResReq.queNum, requiredQue_));
-    HCCL_INFO("[CollAlgFactory] Rank[%d], template [%s]: requiredQue Num [%u].", myRank_, tempAlg.Describe().c_str(),
-               tempResReq.queNum);
+    HCCL_INFO(
+        "[CollAlgFactory] Rank[%d], template [%s]: requiredQue Num [%u].", myRank_, tempAlg.Describe().c_str(),
+        tempResReq.queNum);
 
     CHK_RET(PrepResLinks(myRank_, rankGraph, linkPriority_, tempResReq.links, tempResLinks_));
 
     u32 dataSizePerVolume = DataTypeSizeGet(dataType_);
-    dataSize_             = dataCount_ * dataSizePerVolume;
+    dataSize_ = dataCount_ * dataSizePerVolume;
 
     if (opMode_ == OpMode::OFFLOAD) {
         HCCL_INFO("[CollAlgFactory] Rank[%d], Generating Primitive Queues in OFFLOAD Mode for HOST.", myRank_);
@@ -102,8 +98,8 @@ HcclResult ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQues(con
 }
 
 template <typename AlgTopoMatch, typename AlgTemplate>
-HcclResult ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::CalcRes(const RankGraph *rankGraph,
-                                                                         CollAlgResReq     &algResReq)
+HcclResult
+ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::CalcRes(const RankGraph* rankGraph, CollAlgResReq& algResReq)
 {
     // Topo Match
     AlgTopoMatch topoMatch(myRank_, rankSize_, rankGraph, devType_);
@@ -116,7 +112,7 @@ HcclResult ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::CalcRes(const R
 
     // calculate required primQues and prepare queue
     AlgTempResReq tempResReq;
-    u32           requiredScratchMultiplier = 0;
+    u32 requiredScratchMultiplier = 0;
     if (enableDetour_) {
         CHK_RET(tempAlg.CalcResDetour(false, rankGraph, tempResReq, requiredScratchMultiplier));
     } else {
@@ -130,11 +126,9 @@ HcclResult ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::CalcRes(const R
 }
 
 template <typename AlgTopoMatch, typename AlgTemplate>
-HcclResult ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQuesAIC(const AlgTopoInfo     &topoInfo,
-                                                                                const CollAlgOperator &op,
-                                                                                const CollAlgParams   &params,
-                                                                                ConnectedLinkMgr      *linkMgr,
-                                                                                PrimQuePtr             primQue)
+HcclResult ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQuesAIC(
+    const AlgTopoInfo& topoInfo, const CollAlgOperator& op, const CollAlgParams& params, ConnectedLinkMgr* linkMgr,
+    PrimQuePtr primQue)
 {
     // init and check params
     CHK_RET(Init(op, params, primQue));
@@ -147,7 +141,7 @@ HcclResult ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQuesAIC(
 
     // calculate required primQues and prepare queue
     AlgTempResReq tempResReq;
-    u32           requiredScratchMultiplier = 0;
+    u32 requiredScratchMultiplier = 0;
     if (enableDetour_) {
         CHK_RET(tempAlg.CalcResDetour(false, linkMgr, tempResReq, requiredScratchMultiplier));
     } else {
@@ -155,13 +149,14 @@ HcclResult ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQuesAIC(
     }
 
     CHK_RET(InitQueue(tempResReq.queNum, requiredQue_));
-    HCCL_INFO("[CollAlgFactory] Rank[%d], template [%s]: requiredQue Num [%u].", myRank_, tempAlg.Describe().c_str(),
-               tempResReq.queNum);
+    HCCL_INFO(
+        "[CollAlgFactory] Rank[%d], template [%s]: requiredQue Num [%u].", myRank_, tempAlg.Describe().c_str(),
+        tempResReq.queNum);
 
     CHK_RET(PrepResLinks(myRank_, tempResReq.links, linkMgr, tempResLinks_));
 
     u32 dataSizePerVolume = DataTypeSizeGet(dataType_);
-    dataSize_             = dataCount_ * dataSizePerVolume;
+    dataSize_ = dataCount_ * dataSizePerVolume;
 
     if (opMode_ == OpMode::OFFLOAD) {
         HCCL_INFO("[CollAlgFactory] Rank[%d], Generating Primitive Queues in OFFLOAD Mode for AICPU.", myRank_);
@@ -175,22 +170,22 @@ HcclResult ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQuesAIC(
 }
 
 template <typename AlgTopoMatch, typename AlgTemplate>
-HcclResult ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQues4Offload(AlgTemplateBase &tempAlg)
+HcclResult ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQues4Offload(AlgTemplateBase& tempAlg)
 {
     RankSliceInfo sliceInfoVec;
-    AllignInfo    allignInfo = {enableAllign_, allignSize_, dataType_};
+    AllignInfo allignInfo = {enableAllign_, allignSize_, dataType_};
     CHK_RET(tempAlg.CalcSliceInfo(allignInfo, false, dataSize_, sliceInfoVec));
 
     BuffInfo buffInfo;
-    buffInfo.inBuffType         = BufferType::INPUT;
-    buffInfo.outBuffType        = BufferType::OUTPUT;
-    buffInfo.scratBuffType      = BufferType::SCRATCH;
-    buffInfo.inBuffBaseOff      = 0;
-    buffInfo.outBuffBaseOff     = 0;
+    buffInfo.inBuffType = BufferType::INPUT;
+    buffInfo.outBuffType = BufferType::OUTPUT;
+    buffInfo.scratBuffType = BufferType::SCRATCH;
+    buffInfo.inBuffBaseOff = 0;
+    buffInfo.outBuffBaseOff = 0;
     buffInfo.scratchBuffBaseOff = 0;
 
     TempFuncs tempFuncs;
-    tempFuncs.opMode              = opMode_;
+    tempFuncs.opMode = opMode_;
     tempFuncs.enableCounterNotify = IsEnableCounterNotify();
 
     CHK_RET(tempAlg.GenPrimQue(tempFuncs, sliceInfoVec, buffInfo, tempResLinks_, requiredQue_));
@@ -199,27 +194,28 @@ HcclResult ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQues4Off
 }
 
 template <typename AlgTopoMatch, typename AlgTemplate>
-HcclResult ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQues4Opbase(const u32 requiredScratchMultiplier,
-                                                                                    const u32 dataSizePerVolume,
-                                                                                    AlgTemplateBase &tempAlg)
+HcclResult ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQues4Opbase(
+    const u32 requiredScratchMultiplier, const u32 dataSizePerVolume, AlgTemplateBase& tempAlg)
 {
-    CHK_PRT_RET(dataSizePerVolume == 0,
-                HCCL_ERROR("[CollAlgFactory] Rank [%d], Invalid dataSizePerVolume [%u].", myRank_, dataSizePerVolume),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        dataSizePerVolume == 0,
+        HCCL_ERROR("[CollAlgFactory] Rank [%d], Invalid dataSizePerVolume [%u].", myRank_, dataSizePerVolume),
+        HcclResult::HCCL_E_INTERNAL);
 
     u32 scratchCCLMultiplier = (requiredScratchMultiplier == 0) ? 1 : requiredScratchMultiplier;
-    u64 scratchInputMemSize  = static_cast<int>(
-        ((rankSize_ + scratchCCLMultiplier) % dataSizePerVolume == 0)
-             ? floor(maxTmpMemSize_ / (rankSize_ + scratchCCLMultiplier))
-             : floor(maxTmpMemSize_ / ((rankSize_ + scratchCCLMultiplier) * dataSizePerVolume)) * dataSizePerVolume);
+    u64 scratchInputMemSize = static_cast<int>(
+        ((rankSize_ + scratchCCLMultiplier) % dataSizePerVolume == 0) ?
+            floor(maxTmpMemSize_ / (rankSize_ + scratchCCLMultiplier)) :
+            floor(maxTmpMemSize_ / ((rankSize_ + scratchCCLMultiplier) * dataSizePerVolume)) * dataSizePerVolume);
 
-    CHK_PRT_RET(scratchInputMemSize == 0,
-                HCCL_ERROR("[CollAlgFactory] Rank [%d], Invalid input maxTmpMemSize [%u].", myRank_, maxTmpMemSize_),
-                HcclResult::HCCL_E_PARA);
+    CHK_PRT_RET(
+        scratchInputMemSize == 0,
+        HCCL_ERROR("[CollAlgFactory] Rank [%d], Invalid input maxTmpMemSize [%u].", myRank_, maxTmpMemSize_),
+        HcclResult::HCCL_E_PARA);
 
     BuffInfo buffInfo;
-    buffInfo.inBuffType    = BufferType::SCRATCH;
-    buffInfo.outBuffType   = BufferType::SCRATCH;
+    buffInfo.inBuffType = BufferType::SCRATCH;
+    buffInfo.outBuffType = BufferType::SCRATCH;
     buffInfo.scratBuffType = BufferType::SCRATCH;
     buffInfo.inBuffBaseOff = 0;
 
@@ -231,17 +227,17 @@ HcclResult ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQues4Opb
         u64 currDataSize = resDataSize > scratchInputMemSize ? scratchInputMemSize : resDataSize;
 
         buffInfo.scratchBuffBaseOff = currDataSize * rankSize_;
-        buffInfo.outBuffBaseOff     = currDataSize * rankSize_;
+        buffInfo.outBuffBaseOff = currDataSize * rankSize_;
 
         RankSliceInfo sliceInfoVec;
-        AllignInfo    allignInfo = {enableAllign_, allignSize_, dataType_};
+        AllignInfo allignInfo = {enableAllign_, allignSize_, dataType_};
         CHK_RET(tempAlg.CalcSliceInfo(allignInfo, false, currDataSize, sliceInfoVec));
 
         TempFuncs tempFuncs;
-        tempFuncs.opMode              = opMode_;
+        tempFuncs.opMode = opMode_;
         tempFuncs.enableCounterNotify = IsEnableCounterNotify();
-        tempFuncs.isForepart          = true; // Usr Buff to CCL Buff required
-        tempFuncs.isBottom            = true; // CCL Buff to Usr Buff required
+        tempFuncs.isForepart = true; // Usr Buff to CCL Buff required
+        tempFuncs.isBottom = true;   // CCL Buff to Usr Buff required
 
         UsrData usrData;
         for (u32 rankIdx = 0; rankIdx < rankSize_; rankIdx++) {
@@ -253,7 +249,7 @@ HcclResult ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQues4Opb
         }
 
         DataSlice scratchOutSlice = DataSlice(BufferType::SCRATCH, virtRankMap_[myRank_] * currDataSize, currDataSize);
-        DataSlice usrOutSlice     = DataSlice(BufferType::OUTPUT, idx * scratchInputMemSize, currDataSize);
+        DataSlice usrOutSlice = DataSlice(BufferType::OUTPUT, idx * scratchInputMemSize, currDataSize);
         usrData.scratchOutSlices.push_back(scratchOutSlice);
         usrData.usrOutSlices.push_back(usrOutSlice);
 
@@ -265,8 +261,9 @@ HcclResult ReduceScatterSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQues4Opb
     return HcclResult::HCCL_SUCCESS;
 }
 
-REGISTER_IMPL_BY_TEMP(OpType::REDUCESCATTER, ReduceScatterConcurrMesh, ReduceScatterSoleExecutor, TopoMatchConcurrMesh,
-                      TempReduceScatterConcurrMesh);
-REGISTER_IMPL_BY_TEMP(OpType::REDUCESCATTER, ReduceScatterMesh, ReduceScatterSoleExecutor, TopoMatchMesh,
-                      TempReduceScatterMesh);
+REGISTER_IMPL_BY_TEMP(
+    OpType::REDUCESCATTER, ReduceScatterConcurrMesh, ReduceScatterSoleExecutor, TopoMatchConcurrMesh,
+    TempReduceScatterConcurrMesh);
+REGISTER_IMPL_BY_TEMP(
+    OpType::REDUCESCATTER, ReduceScatterMesh, ReduceScatterSoleExecutor, TopoMatchMesh, TempReduceScatterMesh);
 } // namespace Hccl

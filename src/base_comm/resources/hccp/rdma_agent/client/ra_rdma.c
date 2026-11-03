@@ -20,7 +20,7 @@
 HCCP_ATTRI_VISI_DEF int RaSendNormalWrlist(void *qpHandle, struct WrInfo wr[], struct SendWrRsp opRsp[],
     unsigned int sendNum, unsigned int *completeNum)
 {
-    struct WrlistSendCompleteNum wrlistNum = { 0 };
+    struct WrlistSendCompleteNum wrlistNum = {0};
     struct RaQpHandle *raQpHandle = NULL;
     unsigned int i;
     int ret;
@@ -104,13 +104,12 @@ HCCP_ATTRI_VISI_DEF int RaDeregisterMr(const void *rdmaHandle, void *mrHandle)
     struct RaRdmaHandle *rdmaHandleTmp = NULL;
     int ret;
 
-    CHK_PRT_RETURN(rdmaHandle == NULL || mrHandle == NULL,
-        hccp_err("[deinit][ra_mr]rdma_handle or mr_handle is NULL"), ConverReturnCode(RDMA_OP, -EINVAL));
+    CHK_PRT_RETURN(rdmaHandle == NULL || mrHandle == NULL, hccp_err("[deinit][ra_mr]rdma_handle or mr_handle is NULL"),
+        ConverReturnCode(RDMA_OP, -EINVAL));
 
     rdmaHandleTmp = (struct RaRdmaHandle *)rdmaHandle;
     CHK_PRT_RETURN(rdmaHandleTmp->rdmaOps == NULL || rdmaHandleTmp->rdmaOps->raDeregisterMr == NULL,
-        hccp_err("[deinit][ra_mr]rdma_ops or rdma_ops->ra_deregister_mr is NULL"),
-        ConverReturnCode(RDMA_OP, -EINVAL));
+        hccp_err("[deinit][ra_mr]rdma_ops or rdma_ops->ra_deregister_mr is NULL"), ConverReturnCode(RDMA_OP, -EINVAL));
 
     ret = rdmaHandleTmp->rdmaOps->raDeregisterMr(rdmaHandleTmp, mrHandle);
     return ConverReturnCode(RDMA_OP, ret);
@@ -121,8 +120,8 @@ HCCP_ATTRI_VISI_DEF int RaGetLbMax(void *rdevHandle, int *lbMax)
     struct RaRdmaHandle *rdevHandleTmp = (struct RaRdmaHandle *)rdevHandle;
     int ret = 0;
 
-    CHK_PRT_RETURN(rdevHandle == NULL || lbMax == NULL,
-        hccp_err("[get][lbMax]rdevHandle or lbMax is NULL, invalid"), ConverReturnCode(RDMA_OP, -EINVAL));
+    CHK_PRT_RETURN(rdevHandle == NULL || lbMax == NULL, hccp_err("[get][lbMax]rdevHandle or lbMax is NULL, invalid"),
+        ConverReturnCode(RDMA_OP, -EINVAL));
 
     CHK_PRT_RETURN(rdevHandleTmp->rdmaOps == NULL || rdevHandleTmp->rdmaOps->raGetLbMax == NULL,
         hccp_err("[get][lbMax]rdmaOps is NULL or rdmaOps->raGetLbMax is NULL, invalid"),
@@ -132,13 +131,28 @@ HCCP_ATTRI_VISI_DEF int RaGetLbMax(void *rdevHandle, int *lbMax)
     return ConverReturnCode(RDMA_OP, ret);
 }
 
+HCCP_ATTRI_VISI_DEF int RaRdevGetAttr(void *rdevHandle, struct RdevAttr *attr)
+{
+    struct RaRdmaHandle *rdevHandleTmp = (struct RaRdmaHandle *)rdevHandle;
+    int ret = 0;
+
+    CHK_PRT_RETURN(rdevHandle == NULL || attr == NULL, hccp_err("[get][rdev_attr]rdevHandle or attr is NULL, invalid"),
+        ConverReturnCode(RDMA_OP, -EINVAL));
+
+    CHK_PRT_RETURN(rdevHandleTmp->rdmaOps == NULL || rdevHandleTmp->rdmaOps->raRdevGetAttr == NULL,
+        hccp_err("[get][rdev_attr]rdmaOps is NULL or rdmaOps->raRdevGetAttr is NULL, invalid"),
+        ConverReturnCode(RDMA_OP, -EINVAL));
+
+    ret = rdevHandleTmp->rdmaOps->raRdevGetAttr(rdevHandleTmp, attr);
+    return ConverReturnCode(RDMA_OP, ret);
+}
+
 HCCP_ATTRI_VISI_DEF int RaSetQpLbValue(void *qpHandle, int lbValue)
 {
     struct RaQpHandle *raQpHandle = (struct RaQpHandle *)qpHandle;
     int ret = 0;
 
-    CHK_PRT_RETURN(qpHandle == NULL, hccp_err("[set][lbValue]qpHandle is NULL"),
-        ConverReturnCode(RDMA_OP, -EINVAL));
+    CHK_PRT_RETURN(qpHandle == NULL, hccp_err("[set][lbValue]qpHandle is NULL"), ConverReturnCode(RDMA_OP, -EINVAL));
 
     CHK_PRT_RETURN(raQpHandle->rdmaOps == NULL || raQpHandle->rdmaOps->raSetQpLbValue == NULL,
         hccp_err("[set][lbValue]rdmaOps is NULL or rdmaOps->raSetQpLbValue is NULL"),
@@ -153,8 +167,8 @@ HCCP_ATTRI_VISI_DEF int RaGetQpLbValue(void *qpHandle, int *lbValue)
     struct RaQpHandle *raQpHandle = (struct RaQpHandle *)qpHandle;
     int ret = 0;
 
-    CHK_PRT_RETURN(qpHandle == NULL || lbValue == NULL,
-        hccp_err("[get][lbValue]qpHandle or lbValue is NULL"), ConverReturnCode(RDMA_OP, -EINVAL));
+    CHK_PRT_RETURN(qpHandle == NULL || lbValue == NULL, hccp_err("[get][lbValue]qpHandle or lbValue is NULL"),
+        ConverReturnCode(RDMA_OP, -EINVAL));
 
     CHK_PRT_RETURN(raQpHandle->rdmaOps == NULL || raQpHandle->rdmaOps->raGetQpLbValue == NULL,
         hccp_err("[get][lbValue]rdmaOps is NULL or rdmaOps->raGetQpLbValue is NULL"),

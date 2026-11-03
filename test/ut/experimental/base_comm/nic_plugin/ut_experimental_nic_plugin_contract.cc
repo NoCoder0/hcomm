@@ -18,7 +18,7 @@
 
 namespace {
 
-std::string ReadRepoFile(const std::string &relativePath)
+std::string ReadRepoFile(const std::string& relativePath)
 {
     const std::string fullPath = std::string(HCOMM_CODE_ROOT) + "/" + relativePath;
     std::ifstream file(fullPath);
@@ -26,33 +26,33 @@ std::string ReadRepoFile(const std::string &relativePath)
     return std::string(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
 }
 
-void ExpectContains(const std::string &content, const std::string &expected)
+void ExpectContains(const std::string& content, const std::string& expected)
 {
     EXPECT_NE(content.find(expected), std::string::npos) << expected;
 }
 
-void ExpectNotContains(const std::string &content, const std::string &unexpected)
+void ExpectNotContains(const std::string& content, const std::string& unexpected)
 {
     EXPECT_EQ(content.find(unexpected), std::string::npos) << unexpected;
 }
 
-std::string RetiredHostName(const std::string &suffix)
-{
-    return std::string("hcomm_") + "host_" + suffix;
-}
+std::string RetiredHostName(const std::string& suffix) { return std::string("hcomm_") + "host_" + suffix; }
 
-std::string RetiredHostSharedObject(const std::string &suffix)
+std::string RetiredHostSharedObject(const std::string& suffix)
 {
     return std::string("lib") + RetiredHostName(suffix) + "_plugin.so";
 }
 
 TEST(ExperimentalNicPluginContract, ExportedAbiSignaturesRemainStable)
 {
-    static_assert(std::is_same<decltype(&HcommNicPluginGetInfo), HcommNicPluginGetInfoFunc>::value,
+    static_assert(
+        std::is_same<decltype(&HcommNicPluginGetInfo), HcommNicPluginGetInfoFunc>::value,
         "HcommNicPluginGetInfo signature must match the public ABI typedef");
-    static_assert(std::is_same<decltype(&HcommNicPluginCreateEndpoint), HcommNicPluginCreateEndpointFunc>::value,
+    static_assert(
+        std::is_same<decltype(&HcommNicPluginCreateEndpoint), HcommNicPluginCreateEndpointFunc>::value,
         "HcommNicPluginCreateEndpoint signature must match the public ABI typedef");
-    static_assert(std::is_same<decltype(&HcommNicPluginCreateChannel), HcommNicPluginCreateChannelFunc>::value,
+    static_assert(
+        std::is_same<decltype(&HcommNicPluginCreateChannel), HcommNicPluginCreateChannelFunc>::value,
         "HcommNicPluginCreateChannel signature must match the public ABI typedef");
 }
 
@@ -95,8 +95,7 @@ TEST(ExperimentalNicPluginContract, PluginInfoUsesCpuNamesAndExpectedProtocols)
     ExpectContains(rocePlugin, "HCOMM_NIC_PLUGIN_INFO_MAGIC_WORD");
     ExpectContains(rocePlugin, "\"hcomm_cpu_roce\"");
     ExpectContains(rocePlugin, "1U");
-    ExpectContains(rocePlugin,
-        "{COMM_PROTOCOL_ROCE, COMM_PROTOCOL_HCCS, COMM_PROTOCOL_HCCS, COMM_PROTOCOL_HCCS}");
+    ExpectContains(rocePlugin, "{COMM_PROTOCOL_ROCE, COMM_PROTOCOL_HCCS, COMM_PROTOCOL_HCCS, COMM_PROTOCOL_HCCS}");
     ExpectNotContains(rocePlugin, std::string("\"") + RetiredHostName("roce") + "\"");
 
     const std::string ubPlugin = ReadRepoFile("experimental/base_comm/nic_plugin/host_ub_plugin.cc");
@@ -104,17 +103,17 @@ TEST(ExperimentalNicPluginContract, PluginInfoUsesCpuNamesAndExpectedProtocols)
     ExpectContains(ubPlugin, "HCOMM_NIC_PLUGIN_INFO_MAGIC_WORD");
     ExpectContains(ubPlugin, "\"hcomm_cpu_ub\"");
     ExpectContains(ubPlugin, "2U");
-    ExpectContains(ubPlugin,
-        "{COMM_PROTOCOL_UBC_TP, COMM_PROTOCOL_UBC_CTP, COMM_PROTOCOL_RESERVED, COMM_PROTOCOL_RESERVED}");
+    ExpectContains(
+        ubPlugin, "{COMM_PROTOCOL_UBC_TP, COMM_PROTOCOL_UB_CTP, COMM_PROTOCOL_RESERVED, COMM_PROTOCOL_RESERVED}");
     ExpectNotContains(ubPlugin, std::string("\"") + RetiredHostName("ub") + "\"");
 }
 
 TEST(ExperimentalNicPluginContract, ExportMacroKeepsExpectedSymbolNames)
 {
     const std::string ops = ReadRepoFile("experimental/base_comm/nic_plugin/nic_plugin_ops.h");
-    ExpectContains(ops, "extern \"C\" const HcommNicPluginInfo *HcommNicPluginGetInfo(void)");
-    ExpectContains(ops, "extern \"C\" int32_t HcommNicPluginCreateEndpoint(const EndpointDesc *endpointDesc,");
-    ExpectContains(ops, "extern \"C\" int32_t HcommNicPluginCreateChannel(void *epCtx,");
+    ExpectContains(ops, "extern \"C\" const HcommNicPluginInfo* HcommNicPluginGetInfo");
+    ExpectContains(ops, "extern \"C\" int32_t HcommNicPluginCreateEndpoint");
+    ExpectContains(ops, "extern \"C\" int32_t HcommNicPluginCreateChannel");
 }
 
 } // namespace

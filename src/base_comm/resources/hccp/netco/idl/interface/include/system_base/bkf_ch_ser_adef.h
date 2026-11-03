@@ -49,13 +49,13 @@ typedef struct tagBkfChSerMngInitArg {
     BkfJobMng *jobMng;
 
     /* 下面一些参数最好能放在子类中。因为现有代码已经调用，并且后续扩展也不频繁，容忍 */
-    uint32_t jobTypeId; /* 用于dms */
-    uint32_t jobPrio; /* 用于dms。优先级低于puber，尽量使得ACK等信息和数据一并发送 */
-    int32_t dmsCliQueId; /* 用于dms */
-    uint8_t dmsMsgIntf; /* 用于dms */
+    uint32_t jobTypeId;    /* 用于dms */
+    uint32_t jobPrio;      /* 用于dms。优先级低于puber，尽量使得ACK等信息和数据一并发送 */
+    int32_t dmsCliQueId;   /* 用于dms */
+    uint8_t dmsMsgIntf;    /* 用于dms */
     uint8_t dmsMsgSubIntf; /* 用于dms */
     uint8_t pad1[2];
-    WfwMux *mux; /* 用于mesh/tcp */
+    WfwMux *mux;  /* 用于mesh/tcp */
     void *sslHnd; /* sslLib全局句柄 */
     uint8_t rsv1[0x10];
 } BkfChSerMngInitArg;
@@ -67,18 +67,18 @@ typedef struct tagBkfChSerEnableArg BkfChSerEnableArg;
 #define BKF_CH_SER_MALLOC_DATA_BUF_LEN_MAX (0xffff - 0x40)
 
 typedef BkfChSer *(*F_BKF_CH_SER_INIT)(BkfChSerInitArg *arg);
-typedef void(*F_BKF_CH_SER_UNINIT)(BkfChSer *ch);
-typedef uint32_t(*F_BKF_CH_SER_ENABLE)(BkfChSer *ch, BkfChSerEnableArg *arg);
-typedef uint32_t(*F_BKF_CH_SER_SET_SELF_CID)(BkfChSer *ch, uint32_t selfCid);
-typedef uint32_t(*F_BKF_CH_SER_LISTEN)(BkfChSer *ch, BkfUrl *urlSelf);
-typedef void(*F_BKF_CH_SER_UNLISTEN)(BkfChSer *ch, BkfUrl *urlSelf);
-typedef void* (*F_BKF_CH_SER_MALLOC_DATA_BUF)(BkfChSerConnId *connId, int32_t dataBufLen);
+typedef void (*F_BKF_CH_SER_UNINIT)(BkfChSer *ch);
+typedef uint32_t (*F_BKF_CH_SER_ENABLE)(BkfChSer *ch, BkfChSerEnableArg *arg);
+typedef uint32_t (*F_BKF_CH_SER_SET_SELF_CID)(BkfChSer *ch, uint32_t selfCid);
+typedef uint32_t (*F_BKF_CH_SER_LISTEN)(BkfChSer *ch, BkfUrl *urlSelf);
+typedef void (*F_BKF_CH_SER_UNLISTEN)(BkfChSer *ch, BkfUrl *urlSelf);
+typedef void *(*F_BKF_CH_SER_MALLOC_DATA_BUF)(BkfChSerConnId *connId, int32_t dataBufLen);
 typedef void (*F_BKF_CH_SER_FREE_DATA_BUF)(BkfChSerConnId *connId, void *dataBuf);
 typedef int32_t (*F_BKF_CH_SER_READ)(BkfChSerConnId *connId, void *dataBuf, int32_t bufLen);
 typedef int32_t (*F_BKF_CH_SER_WRITE)(BkfChSerConnId *connId, void *dataBuf, int32_t dataLen);
 typedef void (*F_BKF_CH_SER_CLOSE)(BkfChSerConnId *connId);
-typedef uint32_t(*F_BKF_CH_SER_SET_CERA)(BkfChSer *ch, BkfCera *cera);
-typedef uint32_t(*F_BKF_CH_SER_UNSET_CERA)(BkfChSer *ch);
+typedef uint32_t (*F_BKF_CH_SER_SET_CERA)(BkfChSer *ch, BkfCera *cera);
+typedef uint32_t (*F_BKF_CH_SER_UNSET_CERA)(BkfChSer *ch);
 
 typedef struct tagBkfChSerTypeVTbl {
     char *name;
@@ -108,19 +108,19 @@ struct tagBkfChSerInitArg {
 };
 
 /* enable */
-typedef BOOL(*F_BKF_CH_SER_ON_MAY_ACCEPT)(void *cookieEnable, BkfUrl *urlCli);
-typedef void(*F_BKF_CH_SER_ON_CONN)(void *cookieEnable, BkfChSerConnId *connId, BkfUrl *urlCli);
-typedef void(*F_BKF_CH_SER_ON_RCV_DATA)(void *cookieEnable, BkfChSerConnId *connId, void *data, int32_t dataLen);
-typedef void(*F_BKF_CH_SER_ON_RCV_DATA_EVENT)(void *cookieEnable, BkfChSerConnId *connId);
-typedef void(*F_BKF_CH_SER_ON_UNBLOCK)(void *cookieEnable, BkfChSerConnId *connId);
-typedef void(*F_BKF_CH_SER_ON_DISCONN)(void *cookieEnable, BkfChSerConnId *connId);
-typedef void(*F_BKF_CH_SER_ON_CONNEX)(void *cookieEnable, BkfChSerConnId *connId, BkfUrl *urlCli, BkfUrl *localUrl);
+typedef BOOL (*F_BKF_CH_SER_ON_MAY_ACCEPT)(void *cookieEnable, BkfUrl *urlCli);
+typedef void (*F_BKF_CH_SER_ON_CONN)(void *cookieEnable, BkfChSerConnId *connId, BkfUrl *urlCli);
+typedef void (*F_BKF_CH_SER_ON_RCV_DATA)(void *cookieEnable, BkfChSerConnId *connId, void *data, int32_t dataLen);
+typedef void (*F_BKF_CH_SER_ON_RCV_DATA_EVENT)(void *cookieEnable, BkfChSerConnId *connId);
+typedef void (*F_BKF_CH_SER_ON_UNBLOCK)(void *cookieEnable, BkfChSerConnId *connId);
+typedef void (*F_BKF_CH_SER_ON_DISCONN)(void *cookieEnable, BkfChSerConnId *connId);
+typedef void (*F_BKF_CH_SER_ON_CONNEX)(void *cookieEnable, BkfChSerConnId *connId, BkfUrl *urlCli, BkfUrl *localUrl);
 
 struct tagBkfChSerEnableArg {
     void *cookie;
     F_BKF_CH_SER_ON_MAY_ACCEPT onMayAccept;
     F_BKF_CH_SER_ON_CONN onConn;
-    F_BKF_CH_SER_ON_RCV_DATA onRcvData; /* 推数据模式 */
+    F_BKF_CH_SER_ON_RCV_DATA onRcvData;            /* 推数据模式 */
     F_BKF_CH_SER_ON_RCV_DATA_EVENT onRcvDataEvent; /* 拉/读数据模式 */
     F_BKF_CH_SER_ON_UNBLOCK onUnblock;
     F_BKF_CH_SER_ON_DISCONN onDisconn;
@@ -137,4 +137,3 @@ struct tagBkfChSerEnableArg {
 #endif
 
 #endif
-

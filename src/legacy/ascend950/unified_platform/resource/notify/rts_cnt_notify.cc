@@ -15,28 +15,31 @@
 
 namespace Hccl {
 
-RtsCntNotify::RtsCntNotify() : deviceId(HrtGetDevice()), devPhyId(HrtGetDevicePhyIdByIndex(HrtGetDevice())),
-                                handle(HrtCntNotifyCreate(deviceId)), id(HrtGetCntNotifyId(handle))
+RtsCntNotify::RtsCntNotify()
+    : deviceId(HrtGetDevice()),
+      devPhyId(HrtGetDevicePhyIdByUserDevId(HrtGetDevice())),
+      handle(HrtCntNotifyCreate(deviceId)),
+      id(HrtGetCntNotifyId(handle))
 {
     HrtDevResInfo devResInfo;
-    devResInfo.dieId    = 0;
+    devResInfo.dieId = 0;
     devResInfo.procType = HrtDevResProcType::PROCESS_HCCP;
-    devResInfo.resType  = HrtDevResType::RES_TYPE_STARS_CNT_NOTIFY_BIT_WR;
-    devResInfo.resId    = id;
-    devResInfo.flag     = 0;
-    auto resAddrInfo    = HrtGetDevResAddress(devResInfo);
-    addr                = resAddrInfo.address;
-    size                = DevCapability::GetInstance().GetNotifySize();
+    devResInfo.resType = HrtDevResType::RES_TYPE_STARS_CNT_NOTIFY_BIT_WR;
+    devResInfo.resId = id;
+    devResInfo.flag = 0;
+    auto resAddrInfo = HrtGetDevResAddress(devResInfo);
+    addr = resAddrInfo.address;
+    size = DevCapability::GetInstance().GetNotifySize();
 }
 
 RtsCntNotify::~RtsCntNotify()
 {
     HrtDevResInfo devResInfo;
-    devResInfo.dieId    = 0;
+    devResInfo.dieId = 0;
     devResInfo.procType = HrtDevResProcType::PROCESS_HCCP;
-    devResInfo.resType  = HrtDevResType::RES_TYPE_STARS_CNT_NOTIFY_BIT_WR;
-    devResInfo.resId    = id;
-    devResInfo.flag     = 0;
+    devResInfo.resType = HrtDevResType::RES_TYPE_STARS_CNT_NOTIFY_BIT_WR;
+    devResInfo.resId = id;
+    devResInfo.flag = 0;
     DECTOR_TRY_CATCH("RtsCntNotify", HrtReleaseDevResAddress(devResInfo));
     DECTOR_TRY_CATCH("RtsCntNotify", HrtCntNotifyDestroy(handle));
 }
@@ -46,22 +49,19 @@ std::unique_ptr<BaseTask> RtsCntNotify::PostBits(u32 bitValue)
     return std::make_unique<TaskPostBits>(this, bitValue);
 }
 
-std::unique_ptr<BaseTask> RtsCntNotify::WaitValue(u32 value)
-{
-    return std::make_unique<TaskWaitValue>(this, value);
-}
+std::unique_ptr<BaseTask> RtsCntNotify::WaitValue(u32 value) { return std::make_unique<TaskWaitValue>(this, value); }
 
-void RtsCntNotify::PostBits(u32 bitValue, const Stream &stream) const
+void RtsCntNotify::PostBits(u32 bitValue, const Stream& stream) const
 {
     HrtCntNotifyRecord(handle, stream.GetPtr(), HrtCntNotifyRecordMode::WRITE_BIT, bitValue);
 }
 
-void RtsCntNotify::WaitValue(u32 value, u32 timeout, const aclrtStream &rtStream) const
+void RtsCntNotify::WaitValue(u32 value, u32 timeout, const aclrtStream& rtStream) const
 {
     HrtCntNotifyWaitWithTimeOut(handle, rtStream, HrtCntNotifyWaitMode::EQUAL, value, timeout);
 }
 
-void RtsCntNotify::WaitValue(u32 value, u32 timeout, const Stream &stream) const
+void RtsCntNotify::WaitValue(u32 value, u32 timeout, const Stream& stream) const
 {
     WaitValue(value, timeout, stream.GetPtr());
 }

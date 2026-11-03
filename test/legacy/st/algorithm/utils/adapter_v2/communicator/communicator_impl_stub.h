@@ -1,9 +1,13 @@
-/*
- * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
- * Description: 集合通信域头文件
- * Author:
- * Create:
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #ifndef ADAPTER_V2_COMMUNICATOR_IMPL_H
 #define ADAPTER_V2_COMMUNICATOR_IMPL_H
 
@@ -30,27 +34,22 @@ namespace Hccl {
 using HcclUs = std::chrono::steady_clock::time_point;
 class CommunicatorImpl {
 public:
-    HcclResult Init(const CommParams &commParams, const std::string &ranktableM,
-        std::string& topoPath, const HcclCommConfig &config);
-    HcclResult LoadOpbasedCollOp(CollOpParams &opParams, std::string& algName);
-    HcclResult LoadOffloadCollOp(std::string &opTag, CollOpParams &opParams);
+    HcclResult Init(
+        const CommParams& commParams, const std::string& ranktableM, std::string& topoPath,
+        const HcclCommConfig& config);
+    HcclResult LoadOpbasedCollOp(CollOpParams& opParams, std::string& algName);
+    HcclResult LoadOffloadCollOp(std::string& opTag, CollOpParams& opParams);
 
     RankId GetMyRank() const;
     u32 GetRankSize() const;
     u64 GetBufferSize() const;
     bool GetCcuFeatureFlag() const;
-    void CovertToCurrentCollOperator(std::string &opTag, CollOpParams &opParams, OpMode opMode);
+    void CovertToCurrentCollOperator(std::string& opTag, CollOpParams& opParams, OpMode opMode);
     CollOperator* GetCurrentCollOperator() const;
 
-    DevId GetDevPhyId()
-    {
-        return devPhyId;
-    }
+    DevId GetDevPhyId() { return devPhyId; }
 
-    const shared_ptr<DevBuffer> GetCclBuffer() const
-    {
-        return cclBuffer;
-    }
+    const shared_ptr<DevBuffer> GetCclBuffer() const { return cclBuffer; }
     ~CommunicatorImpl();
 
     RankGraph* GetRankGraph() const
@@ -59,22 +58,13 @@ public:
         return newVirtualTopo.get();
     }
 
-    const DevType& GetDevType() const
-    {
-        return devType;
-    }
+    const DevType& GetDevType() const { return devType; }
 
     CollServiceStub* GetCollService() const;
 
-    CcuInsPreprocessor* GetCcuInsPreprocessor()
-    {
-        return collService->GetCcuInsPreprocessor();
-    }
+    CcuInsPreprocessor* GetCcuInsPreprocessor() { return collService->GetCcuInsPreprocessor(); }
 
-    void TransformTask()
-    {
-        return collService->TransformTask();
-    }
+    void TransformTask() { return collService->TransformTask(); }
     bool IsOpUsingCcuMs() const;
     bool IsOpUsingCcuSched() const;
     bool IsCommUsingCcuMs() const;
@@ -82,43 +72,44 @@ public:
     HcclResult ReLoadCollOp();
     void AcceleratorFallback();
     bool IfAccStateConfigExplicitly() const;
+
 private:
-    std::string                                id;
-    RankId                                     myRank;
-    u32                                        rankSize;
-    RankId                                     rankInParentComm;
-    DevType                                    devType;
-    DevId                                      devPhyId;
-    DevId                                      devLogicId;
-    HcclCommConfig                             config;
-    std::unique_ptr<RankGraph>            newVirtualTopo;
-    unique_ptr<CollServiceStub>                collService;
-    unique_ptr<CollOperator>                   currentCollOperator;
+    std::string id;
+    RankId myRank;
+    u32 rankSize;
+    RankId rankInParentComm;
+    DevType devType;
+    DevId devPhyId;
+    DevId devLogicId;
+    HcclCommConfig config;
+    std::unique_ptr<RankGraph> newVirtualTopo;
+    unique_ptr<CollServiceStub> collService;
+    unique_ptr<CollOperator> currentCollOperator;
 
     bool initFlag = false;
-    u32  ccuFeatureFlag{0};
+    u32 ccuFeatureFlag{0};
     bool devModeFlag = false;
     bool isWorldGroup = false;
 
     std::shared_ptr<DevBuffer> cclBuffer;
-    u64                        cclBufferSize = 0;
+    u64 cclBufferSize = 0;
 
-    CommStatus status{CommStatus::COMM_IDLE};                  // 通信域状态
-    std::unique_ptr<RankTableInfo>             ranktableInfo;  // 主通信域使用：序列化解析
-    std::shared_ptr<TopoInfo>                  topoInfo;       // 主通信域使用：序列化解析
+    CommStatus status{CommStatus::COMM_IDLE};     // 通信域状态
+    std::unique_ptr<RankTableInfo> ranktableInfo; // 主通信域使用：序列化解析
+    std::shared_ptr<TopoInfo> topoInfo;           // 主通信域使用：序列化解析
 
     void InitCcuInstance();
     void InitFeatureFlag();
-    void InitCommonData(const CommParams &commParams);
-    void InitCommonData(const CommParams &commParams, const HcclCommConfig &commConfig);
-    void InitRankGraph(const std::string &ranktableM, std::string& topoPath);
+    void InitCommonData(const CommParams& commParams);
+    void InitCommonData(const CommParams& commParams, const HcclCommConfig& commConfig);
+    void InitRankGraph(const std::string& ranktableM, std::string& topoPath);
     void AppendLocalDieIdForLinks();
     void CheckVirtualTopo() const;
     void InitDataBufferManager();
     void InitCollService();
-    void ConvertCollOperatorA2A(CollOpParams &opParams);
-    void ConvertCollOperatorMem(CollOpParams &opParams, u64 size);
-    void CalcA2ASendRecvMem(CollOpParams &opParams, u64 &sendSize, u64 &recvSize) const;
+    void ConvertCollOperatorA2A(CollOpParams& opParams);
+    void ConvertCollOperatorMem(CollOpParams& opParams, u64 size);
+    void CalcA2ASendRecvMem(CollOpParams& opParams, u64& sendSize, u64& recvSize) const;
 };
 } // namespace Hccl
 

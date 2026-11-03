@@ -6,19 +6,19 @@
 ## 产品支持情况
 
 <!-- npu="950" id1 -->
-- Ascend 950PR/Ascend 950DT：不支持
+- Ascend 950PR&950DT系列产品：不支持
 <!-- end id1 -->
 <!-- npu="A3" id2 -->
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：支持
+- Atlas A3系列产品：支持
 <!-- end id2 -->
 <!-- npu="910b" id3 -->
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：不支持
+- Atlas A2系列产品：不支持
 <!-- end id3 -->
 <!-- npu="310p" id4 -->
-- Atlas 推理系列产品：不支持
+- Atlas推理系列产品：不支持
 <!-- end id4 -->
 <!-- npu="910" id5 -->
-- Atlas 训练系列产品：不支持
+- Atlas训练系列产品：不支持
 <!-- end id5 -->
 
 ## 功能说明
@@ -51,3 +51,33 @@ HcclResult HcclCommSetMemoryRange(HcclComm comm, void *baseVirPtr, size_t size, 
 - 该接口仅支持在范围是单Server的通信域内调用，否则会报错。
 - 多次调用该接口时，输入的内存地址不能重复或存在区间交叠。
 - 其他约束请参见[通用约束](./zero_copy_readme.md)。
+- comm必须为有效的通信域句柄（由通信域创建接口获得，调用期间保持有效）。禁止传入空指针、野指针或已销毁的句柄。
+
+## 调用示例
+
+```c
+// 设备资源初始化
+aclInit(NULL);
+aclrtSetDevice(devId);
+
+// 创建通信域
+HcclComm hcclComm;
+HcclRootInfo rootInfo;
+HcclGetRootInfo(&rootInfo);
+HcclCommInitRootInfo(8, &rootInfo, 0, &hcclComm);
+
+// 通过aclrtReserveMemAddress申请虚拟内存
+void *baseVirPtr = NULL;
+size_t size = 1024 * 1024 * 1024; // 1GB
+aclrtReserveMemAddress(&baseVirPtr, size, 0, NULL, 0);
+
+// 通知HCCL预留的虚拟内存地址
+HcclCommSetMemoryRange(hcclComm, baseVirPtr, size, 0, 0);
+
+// 后续可调用HcclCommActivateCommMemory激活内存并使用零拷贝功能
+// ...
+
+// 销毁通信域
+HcclCommDestroy(hcclComm);
+aclFinalize();
+```

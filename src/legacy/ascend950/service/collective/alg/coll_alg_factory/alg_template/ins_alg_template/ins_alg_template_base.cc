@@ -13,19 +13,18 @@
 
 namespace Hccl {
 
+InsAlgTemplateBase::InsAlgTemplateBase(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
+    : myRank_(virtualRank),
+      tempRankSize_(tempRankSize),
+      tempVTopo_(tempVTopo),
+      tempVirtRankMap_(tempVirtRankMap)
+{}
 
-InsAlgTemplateBase::InsAlgTemplateBase(const RankId virtualRank, const u32 tempRankSize,
-                                       const std::vector<std::vector<RankId>> &tempVTopo,
-                                       const std::map<RankId, u32>            &tempVirtRankMap)
-    : myRank_(virtualRank), tempRankSize_(tempRankSize), tempVTopo_(tempVTopo), tempVirtRankMap_(tempVirtRankMap)
-{
-}
+InsAlgTemplateBase::~InsAlgTemplateBase() {}
 
-InsAlgTemplateBase::~InsAlgTemplateBase()
-{
-}
-
-void InsAlgTemplateBase::SetCollOp(const CollAlgOperator &op)
+void InsAlgTemplateBase::SetCollOp(const CollAlgOperator& op)
 {
     op_ = op;
     return;
@@ -43,11 +42,12 @@ void InsAlgTemplateBase::SetRoot(const u32 root)
     return;
 }
 
-u64 InsAlgTemplateBase::CalcLoopMaxCount(ParamPool &paramPool)
+u64 InsAlgTemplateBase::CalcLoopMaxCount(ParamPool& paramPool)
 {
     u64 loopMaxCount = 0;
     if (paramPool.params.opMode == OpMode::OPBASE) {
-        u64 maxLoopSize = std::min(static_cast<u64>(paramPool.params.maxTmpMemSize), static_cast<u64>(UB_MAX_DATA_SIZE));
+        u64 maxLoopSize
+            = std::min(static_cast<u64>(paramPool.params.maxTmpMemSize), static_cast<u64>(UB_MAX_DATA_SIZE));
         loopMaxCount = maxLoopSize / (DataTypeSizeGet(paramPool.op.dataType) * tempRankSize_) * tempRankSize_;
     } else {
         loopMaxCount = paramPool.op.dataCount;
@@ -55,7 +55,7 @@ u64 InsAlgTemplateBase::CalcLoopMaxCount(ParamPool &paramPool)
     return loopMaxCount;
 }
 
-HcclResult InsAlgTemplateBase::PostCopyOpbase(const UsrData &usrData, std::vector<InsQuePtr> &tempInsQues) const
+HcclResult InsAlgTemplateBase::PostCopyOpbase(const UsrData& usrData, std::vector<InsQuePtr>& tempInsQues) const
 {
     for (size_t i = 0; i < usrData.scratchOutSlices.size(); i++) {
         std::unique_ptr<Instruction> insLocalCopy
@@ -66,7 +66,7 @@ HcclResult InsAlgTemplateBase::PostCopyOpbase(const UsrData &usrData, std::vecto
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsAlgTemplateBase::PreCopyOpbase(const UsrData &usrData, std::vector<InsQuePtr> &tempInsQues) const
+HcclResult InsAlgTemplateBase::PreCopyOpbase(const UsrData& usrData, std::vector<InsQuePtr>& tempInsQues) const
 {
     for (size_t i = 0; i < usrData.usrInSlices.size(); i++) {
         std::unique_ptr<Instruction> insLocalCopy
@@ -77,8 +77,8 @@ HcclResult InsAlgTemplateBase::PreCopyOpbase(const UsrData &usrData, std::vector
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsAlgTemplateBase::CalcSliceInfo(const AllignInfo &allignInfo, const u64 dataSize,
-                                             RankSliceInfo &sliceInfoVec)
+HcclResult
+InsAlgTemplateBase::CalcSliceInfo(const AllignInfo& allignInfo, const u64 dataSize, RankSliceInfo& sliceInfoVec)
 {
     (void)allignInfo;
     (void)dataSize;
@@ -87,44 +87,44 @@ HcclResult InsAlgTemplateBase::CalcSliceInfo(const AllignInfo &allignInfo, const
     return HcclResult::HCCL_E_INTERNAL;
 }
 
-HcclResult InsAlgTemplateBase::CalcRes(AlgTempResReq &tempResReq)
+HcclResult InsAlgTemplateBase::CalcRes(AlgTempResReq& tempResReq)
 {
     (void)tempResReq;
     HCCL_ERROR("[InsCollAlgFactory] Unsupported interface of resource calculation!");
     return HcclResult::HCCL_E_INTERNAL;
 }
 
-HcclResult InsAlgTemplateBase::CalcResDetour(const RankGraph *rankGraph, AlgTempResReq &tempResReq)
+HcclResult InsAlgTemplateBase::CalcResDetour(const RankGraph* rankGraph, AlgTempResReq& tempResReq)
 {
     (void)rankGraph;
     (void)tempResReq;
-    HCCL_ERROR("[InsCollAlgFactory] Current alg do not support detour mode!");
+    HCCL_ERROR("[InsCollAlgFactory] Current algorithm does not support detour mode!");
     return HcclResult::HCCL_E_INTERNAL;
 }
 
-HcclResult InsAlgTemplateBase::CalcResDetour(ConnectedLinkMgr *linkMgr, AlgTempResReq &tempResReq)
+HcclResult InsAlgTemplateBase::CalcResDetour(ConnectedLinkMgr* linkMgr, AlgTempResReq& tempResReq)
 {
     (void)linkMgr;
     (void)tempResReq;
-    HCCL_ERROR("[InsCollAlgFactory] Current alg do not support detour mode!");
+    HCCL_ERROR("[InsCollAlgFactory] Current algorithm does not support detour mode!");
     return HcclResult::HCCL_E_INTERNAL;
 }
 
 uint64_t InsAlgTemplateBase::GetMaxSliceSize()
 {
-    return UB_MAX_DATA_SIZE;  //  return max value
+    return UB_MAX_DATA_SIZE; //  return max value
 }
 
-void InsAlgTemplateBase::InitReduceInfo(const ReduceOp &redOp, const DataType &dataType)
+void InsAlgTemplateBase::InitReduceInfo(const ReduceOp& redOp, const DataType& dataType)
 {
-    redOp_    = redOp;
+    redOp_ = redOp;
     dataType_ = dataType;
     return;
 }
 
-HcclResult InsAlgTemplateBase::Run(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec,
-                                   const BuffInfo &buffInfo, const ResLinks &tempLinks,
-                                   std::vector<InsQuePtr> &tempInsQues)
+HcclResult InsAlgTemplateBase::Run(
+    const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, const BuffInfo& buffInfo, const ResLinks& tempLinks,
+    std::vector<InsQuePtr>& tempInsQues)
 {
     (void)tempFuncs;
     (void)sliceInfoVec;
@@ -135,19 +135,19 @@ HcclResult InsAlgTemplateBase::Run(const TempFuncs &tempFuncs, const RankSliceIn
     return HcclResult::HCCL_E_INTERNAL;
 }
 
-void InsAlgTemplateBase::SetDataType(const DataType &dataType)
+void InsAlgTemplateBase::SetDataType(const DataType& dataType)
 {
     dataType_ = dataType;
     return;
 }
 
-void InsAlgTemplateBase::SetReduceOp(const ReduceOp &redOp)
+void InsAlgTemplateBase::SetReduceOp(const ReduceOp& redOp)
 {
     redOp_ = redOp;
     return;
 }
 
-HcclResult InsAlgTemplateBase::PreSync(const u32 queIdx, std::vector<InsQuePtr> &syncInsQues) const
+HcclResult InsAlgTemplateBase::PreSync(const u32 queIdx, std::vector<InsQuePtr>& syncInsQues) const
 {
     InsQuePtr currInsQue = syncInsQues[queIdx];
     if (queIdx == 0) {
@@ -184,7 +184,7 @@ HcclResult InsAlgTemplateBase::PreSync(const u32 queIdx, std::vector<InsQuePtr> 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsAlgTemplateBase::PostSync(const u32 queIdx, std::vector<InsQuePtr> &syncInsQues) const
+HcclResult InsAlgTemplateBase::PostSync(const u32 queIdx, std::vector<InsQuePtr>& syncInsQues) const
 {
     InsQuePtr currInsQue = syncInsQues[queIdx];
     if (queIdx == 0) {
@@ -221,25 +221,29 @@ HcclResult InsAlgTemplateBase::PostSync(const u32 queIdx, std::vector<InsQuePtr>
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsAlgTemplateBase::PreSyncInterQueues(std::vector<InsQuePtr> &syncInsQues) const
+HcclResult InsAlgTemplateBase::PreSyncInterQueues(std::vector<InsQuePtr>& syncInsQues) const
 {
     for (size_t queIdx = 0; queIdx < syncInsQues.size(); queIdx++) {
-        CHK_PRT_RET(PreSync(queIdx, syncInsQues) != HcclResult::HCCL_SUCCESS,
-                    HCCL_ERROR("[InsCollAlgFactory] Rank [%d], Que [%u], Semaphore Synchronization Failed.", myRank_,
-                               syncInsQues[queIdx]->GetId()),
-                    HcclResult::HCCL_E_INTERNAL);
+        CHK_PRT_RET(
+            PreSync(queIdx, syncInsQues) != HcclResult::HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[InsCollAlgFactory] Rank [%d], Que [%u], Semaphore Synchronization Failed.", myRank_,
+                syncInsQues[queIdx]->GetId()),
+            HcclResult::HCCL_E_INTERNAL);
     }
 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsAlgTemplateBase::PostSyncInterQueues(std::vector<InsQuePtr> &syncInsQues) const
+HcclResult InsAlgTemplateBase::PostSyncInterQueues(std::vector<InsQuePtr>& syncInsQues) const
 {
     for (size_t queIdx = 0; queIdx < syncInsQues.size(); queIdx++) {
-        CHK_PRT_RET(PostSync(queIdx, syncInsQues) != HcclResult::HCCL_SUCCESS,
-                    HCCL_ERROR("[InsCollAlgFactory] Rank [%d], Que [%u], Semaphore Synchronization Failed.", myRank_,
-                               syncInsQues[queIdx]->GetId()),
-                    HcclResult::HCCL_E_INTERNAL);
+        CHK_PRT_RET(
+            PostSync(queIdx, syncInsQues) != HcclResult::HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[InsCollAlgFactory] Rank [%d], Que [%u], Semaphore Synchronization Failed.", myRank_,
+                syncInsQues[queIdx]->GetId()),
+            HcclResult::HCCL_E_INTERNAL);
     }
 
     return HcclResult::HCCL_SUCCESS;
@@ -260,20 +264,20 @@ HcclResult InsAlgTemplateBase::PrepBitMask(const u32 queNumPerNeighbor)
     return HcclResult::HCCL_SUCCESS;
 }
 
-std::vector<std::tuple<QId, QId, u32>> InsAlgTemplateBase::CreateMasterSlaveQueNotifiesRequest(u32 queueNum, u32 pairNum,
-    QId masterId) const
+std::vector<std::tuple<QId, QId, u32>>
+InsAlgTemplateBase::CreateMasterSlaveQueNotifiesRequest(u32 queueNum, u32 pairNum, QId masterId) const
 {
     std::vector<std::tuple<QId, QId, u32>> notifyRequests;
-    HCCL_DEBUG("[Create][MasterSlaveQueNotifiesRequest] queueNum[%u], pairNum[%u], masterId[%u]",
-        queueNum, pairNum, masterId);
+    HCCL_DEBUG(
+        "[Create][MasterSlaveQueNotifiesRequest] queueNum[%u], pairNum[%u], masterId[%u]", queueNum, pairNum, masterId);
     if (queueNum == 0 || pairNum == 0) {
         HCCL_INFO("[Create][MasterSlaveQueNotifiesRequest] queueNum or pairNum is zero, "
-            "return empty notifyRequests");
+                  "return empty notifyRequests");
         return notifyRequests;
     };
 
     u32 slaveNum = queueNum - 1;
-    HCCL_INFO("[Create][MasterSlaveQueNotifiesRequest] slavNum[%u]", slaveNum);
+    HCCL_INFO("[Create][MasterSlaveQueNotifiesRequest] slaveNum[%u]", slaveNum);
     if (slaveNum < 1 || pairNum < 1) {
         return notifyRequests;
     }
@@ -290,8 +294,8 @@ std::vector<std::tuple<QId, QId, u32>> InsAlgTemplateBase::CreateMasterSlaveQueN
     return notifyRequests;
 }
 
-std::vector<std::tuple<QId, QId, u32>> InsAlgTemplateBase::CreateNotifiesRequestByMap(
-    std::map<std::tuple<QId, QId>, u32> &notifyRequestMap) const
+std::vector<std::tuple<QId, QId, u32>>
+InsAlgTemplateBase::CreateNotifiesRequestByMap(std::map<std::tuple<QId, QId>, u32>& notifyRequestMap) const
 {
     std::vector<std::tuple<QId, QId, u32>> notifuRequests;
 
@@ -305,12 +309,12 @@ std::vector<std::tuple<QId, QId, u32>> InsAlgTemplateBase::CreateNotifiesRequest
 }
 
 std::vector<std::tuple<QId, QId, u32>> InsAlgTemplateBase::MergeNotifiesRequest(
-    const std::vector<std::vector<std::tuple<QId, QId, u32>>> &notifiesRequests) const
+    const std::vector<std::vector<std::tuple<QId, QId, u32>>>& notifiesRequests) const
 {
     std::vector<std::tuple<QId, QId, u32>> ret;
     std::map<std::tuple<QId, QId>, u32> requestMap;
-    for (auto &notifiesRequest : notifiesRequests) {
-        for (auto &request : notifiesRequest) {
+    for (auto& notifiesRequest : notifiesRequests) {
+        for (auto& request : notifiesRequest) {
             QId fromQ = std::get<0>(request);
             QId toQ = std::get<1>(request);
             requestMap[std::make_tuple(fromQ, toQ)]++;
@@ -319,20 +323,20 @@ std::vector<std::tuple<QId, QId, u32>> InsAlgTemplateBase::MergeNotifiesRequest(
     return CreateNotifiesRequestByMap(requestMap);
 }
 
-void InsAlgTemplateBase::SetLoadInfo(const CollAlgParams &params) const
+void InsAlgTemplateBase::SetLoadInfo(const CollAlgParams& params) const
 {
     (void)params;
     return;
 }
 
-HcclResult InsAlgTemplateBase::GetMaxTransPortDataSize(u64 &maxTransPortDataSize) const
+HcclResult InsAlgTemplateBase::GetMaxTransPortDataSize(u64& maxTransPortDataSize) const
 {
     maxTransPortDataSize = UB_MAX_DATA_SIZE; // 256M
     return HCCL_SUCCESS;
 }
 
 HcclResult InsAlgTemplateBase::CalNumBlocks(u32& numBlocks, u64 dataSize, u32 numBlocksLimit)
-{   
+{
     (void)numBlocks;
     (void)dataSize;
     (void)numBlocksLimit;
@@ -340,14 +344,13 @@ HcclResult InsAlgTemplateBase::CalNumBlocks(u32& numBlocks, u64 dataSize, u32 nu
     return HCCL_SUCCESS;
 }
 
-bool InsAlgTemplateBase::IsPcieLink(const ResLinks &tempLinks) const
+bool InsAlgTemplateBase::IsPcieLink(const ResLinks& tempLinks) const
 {
     for (auto it = tempLinks.begin(); it != tempLinks.end(); it++) {
         const std::vector<LinkData>& linkVector = it->second;
 
         for (auto vecIt = linkVector.begin(); vecIt != linkVector.end(); vecIt++) {
-            if (vecIt->GetType() == PortDeploymentType::P2P
-                && vecIt->GetLinkProtocol() == LinkProtocol::PCIE) {
+            if (vecIt->GetType() == PortDeploymentType::P2P && vecIt->GetLinkProtocol() == LinkProtocol::PCIE) {
                 HCCL_INFO("IsPcieLink[true]");
                 return true;
             }
@@ -356,10 +359,10 @@ bool InsAlgTemplateBase::IsPcieLink(const ResLinks &tempLinks) const
     HCCL_INFO("IsPcieLink[false]");
     return false;
 }
-HcclResult InsAlgTemplateBase::setPathNumMap(const std::map<u32, u32> &rank2PathNumMap)
+HcclResult InsAlgTemplateBase::setPathNumMap(const std::map<u32, u32>& rank2PathNumMap)
 {
     rank2PathNumMap_ = rank2PathNumMap;
     return HCCL_SUCCESS;
 }
- 
+
 } // namespace Hccl

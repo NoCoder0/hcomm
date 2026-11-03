@@ -18,20 +18,11 @@ using namespace Hccl;
 
 class HcclSqeTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "HcclSqeTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "HcclSqeTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "HcclSqeTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "HcclSqeTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in HcclSqeTest SetUp" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in HcclSqeTest SetUp" << std::endl; }
 
     virtual void TearDown()
     {
@@ -46,7 +37,7 @@ TEST_F(HcclSqeTest, hccl_notify_wait_sqe_create_instance)
     HcclNotifyWaitSqe notifyWaitSqe;
 
     // when
-    RtStarsNotifySqe *sqe = reinterpret_cast<RtStarsNotifySqe *>(notifyWaitSqe.GetSqe());
+    RtStarsNotifySqe* sqe = reinterpret_cast<RtStarsNotifySqe*>(notifyWaitSqe.GetSqe());
 
     // then
     EXPECT_EQ(sqe->header.type, static_cast<u8>(RtStarsSqeType::RT_STARS_SQE_TYPE_NOTIFY_WAIT));
@@ -57,13 +48,13 @@ TEST_F(HcclSqeTest, hccl_notify_wait_sqe_config)
 {
     // Given
     HcclNotifyWaitSqe notifyWaitSqe;
-    u16               streamId = 1;
-    u16               taskId   = 0;
-    u64               notifyId = 1;
+    u16 streamId = 1;
+    u16 taskId = 0;
+    u64 notifyId = 1;
 
     // when
     notifyWaitSqe.Config(streamId, taskId, notifyId);
-    RtStarsNotifySqe *sqe = reinterpret_cast<RtStarsNotifySqe *>(notifyWaitSqe.GetSqe());
+    RtStarsNotifySqe* sqe = reinterpret_cast<RtStarsNotifySqe*>(notifyWaitSqe.GetSqe());
 
     // then
     EXPECT_EQ(sqe->header.rtStreamId, streamId);
@@ -77,27 +68,29 @@ TEST_F(HcclSqeTest, hccl_write_value_sqe_create_instance)
     HcclWriteValueSqe writeValueSqe;
 
     // when
-    RtStarsWriteValueSqe *sqe = reinterpret_cast<RtStarsWriteValueSqe *>(writeValueSqe.GetSqe());
+    RtStarsWriteValueSqe* sqe = reinterpret_cast<RtStarsWriteValueSqe*>(writeValueSqe.GetSqe());
 
     // then
     EXPECT_EQ(sqe->header.type, static_cast<u8>(RtStarsSqeType::RT_STARS_SQE_TYPE_WRITE_VALUE));
     EXPECT_EQ(sqe->kernelCredit, RT_STARS_DEFAULT_KERNEL_CREDIT);
     EXPECT_EQ(sqe->awsize, static_cast<u8>(RtStarsWriteValueSizeType::RT_STARS_WRITE_VALUE_SIZE_TYPE_32BIT));
     EXPECT_EQ(sqe->writeValuePart0, 1U);
-    EXPECT_EQ(sqe->subType, static_cast<u8>(RtStarsWriteValueSubType::RT_STARS_WRITE_VALUE_SUB_TYPE_NOTIFY_RECORD_IPC_NO_PCIE));
+    EXPECT_EQ(
+        sqe->subType,
+        static_cast<u8>(RtStarsWriteValueSubType::RT_STARS_WRITE_VALUE_SUB_TYPE_NOTIFY_RECORD_IPC_NO_PCIE));
 }
 
 TEST_F(HcclSqeTest, hccl_write_value_sqe_config)
 {
     // given
     HcclWriteValueSqe writeValueSqe;
-    u16               streamId     = 1;
-    u16               taskId       = 0;
-    u64               notifyWRAddr = 0x0000000f00000001;
+    u16 streamId = 1;
+    u16 taskId = 0;
+    u64 notifyWRAddr = 0x0000000f00000001;
 
     // when
     writeValueSqe.Config(streamId, taskId, notifyWRAddr);
-    RtStarsWriteValueSqe *sqe = reinterpret_cast<RtStarsWriteValueSqe *>(writeValueSqe.GetSqe());
+    RtStarsWriteValueSqe* sqe = reinterpret_cast<RtStarsWriteValueSqe*>(writeValueSqe.GetSqe());
 
     // then
     EXPECT_EQ(sqe->header.rtStreamId, streamId);
@@ -112,7 +105,7 @@ TEST_F(HcclSqeTest, hccl_sdma_sqe_create_instance)
     HcclSdmaSqe sdmaSqe;
 
     // when
-    RtStarsMemcpyAsyncSqe *sqe = reinterpret_cast<RtStarsMemcpyAsyncSqe *>(sdmaSqe.GetSqe());
+    RtStarsMemcpyAsyncSqe* sqe = reinterpret_cast<RtStarsMemcpyAsyncSqe*>(sdmaSqe.GetSqe());
 
     // then
     EXPECT_EQ(sqe->header.type, static_cast<u8>(RtStarsSqeType::RT_STARS_SQE_TYPE_SDMA));
@@ -127,19 +120,19 @@ TEST_F(HcclSqeTest, hccl_sdma_sqe_create_instance)
 TEST_F(HcclSqeTest, hccl_sdma_sqe_config)
 {
     // given
-    HcclSdmaSqe    sdmaSqe;
-    u16            streamId = 1;
-    u16            taskId   = 0;
-    u64            src      = 0x01;
-    u64            dst      = 0x0f;
-    u32            length   = 10;
-    RtDataType   dataType = RtDataType::RT_DATA_TYPE_FP32;
+    HcclSdmaSqe sdmaSqe;
+    u16 streamId = 1;
+    u16 taskId = 0;
+    u64 src = 0x01;
+    u64 dst = 0x0f;
+    u32 length = 10;
+    RtDataType dataType = RtDataType::RT_DATA_TYPE_FP32;
     RtReduceKind reduceOp = RtReduceKind::RT_MEMCPY_SDMA_AUTOMATIC_ADD;
-    u32            partId   = 0;
+    u32 partId = 0;
 
     // when
     sdmaSqe.Config(streamId, taskId, src, length, dataType, reduceOp, dst, partId);
-    RtStarsMemcpyAsyncSqe *sqe = reinterpret_cast<RtStarsMemcpyAsyncSqe *>(sdmaSqe.GetSqe());
+    RtStarsMemcpyAsyncSqe* sqe = reinterpret_cast<RtStarsMemcpyAsyncSqe*>(sdmaSqe.GetSqe());
 
     // then
     EXPECT_EQ(sqe->header.rtStreamId, streamId);
@@ -183,7 +176,7 @@ TEST_F(HcclSqeTest, should_return_valid_notify_sqe_when_creating_instance)
     HcclNotifyRecordSqe notifyRecordSqe;
 
     // when
-    RtStarsNotifySqe *sqe = reinterpret_cast<RtStarsNotifySqe *>(notifyRecordSqe.GetSqe());
+    RtStarsNotifySqe* sqe = reinterpret_cast<RtStarsNotifySqe*>(notifyRecordSqe.GetSqe());
 
     // then
     EXPECT_EQ(sqe->header.type, static_cast<u8>(RtStarsSqeType::RT_STARS_SQE_TYPE_NOTIFY_RECORD));
@@ -194,13 +187,13 @@ TEST_F(HcclSqeTest, should_return_valid_notify_sqe_when_Config)
 {
     // Given
     HcclNotifyRecordSqe notifyRecordSqe;
-    u16                 streamId = 1;
-    u16                 taskId   = 0;
-    u64                 notifyId = 1;
+    u16 streamId = 1;
+    u16 taskId = 0;
+    u64 notifyId = 1;
 
     // when
     notifyRecordSqe.Config(streamId, taskId, notifyId);
-    RtStarsNotifySqe *sqe = reinterpret_cast<RtStarsNotifySqe *>(notifyRecordSqe.GetSqe());
+    RtStarsNotifySqe* sqe = reinterpret_cast<RtStarsNotifySqe*>(notifyRecordSqe.GetSqe());
 
     // then
     EXPECT_EQ(sqe->header.rtStreamId, streamId);

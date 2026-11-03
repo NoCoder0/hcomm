@@ -13,19 +13,16 @@
 #include "temp_reduce_scatter_concurr_mesh.h"
 
 namespace Hccl {
-TempReduceScatterConcurrMesh::TempReduceScatterConcurrMesh(const RankId virtualRank, const u32 tempRankSize,
-                                                           const std::vector<std::vector<RankId>> &tempVTopo,
-                                                           const std::map<RankId, u32>            &tempVirtRankMap)
+TempReduceScatterConcurrMesh::TempReduceScatterConcurrMesh(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
     : AlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap)
-{
-}
+{}
 
-TempReduceScatterConcurrMesh::~TempReduceScatterConcurrMesh()
-{
-}
+TempReduceScatterConcurrMesh::~TempReduceScatterConcurrMesh() {}
 
-HcclResult TempReduceScatterConcurrMesh::CalcRes(const bool forAllReduce, AlgTempResReq &tempResReq,
-                                                 u32 &requiredScratchMultiplier)
+HcclResult TempReduceScatterConcurrMesh::CalcRes(
+    const bool forAllReduce, AlgTempResReq& tempResReq, u32& requiredScratchMultiplier)
 {
     (void)forAllReduce;
     for (u32 dim = 0; dim < tempVTopo_.size(); dim++) {
@@ -38,10 +35,11 @@ HcclResult TempReduceScatterConcurrMesh::CalcRes(const bool forAllReduce, AlgTem
         CHK_RET(GetAlgRank(myRank_, tempVTopo_[dim], myAlgRank));
         for (u32 queIdx = 0; queIdx < tempVTopo_[dim].size() - 1; queIdx++) {
             // find neighbors -> virtualRank
-            u32    neighborAlgRank = (myAlgRank + 1 + queIdx) % (tempVTopo_[dim].size());
-            RankId neighborRank    = tempVTopo_[dim][neighborAlgRank];
-            HCCL_INFO("[CollAlgFactory] [TempReduceScatterConcurrMesh] Rank [%d], Dim [%u], NeighborRank [%d].",
-                       myRank_, dim, neighborRank);
+            u32 neighborAlgRank = (myAlgRank + 1 + queIdx) % (tempVTopo_[dim].size());
+            RankId neighborRank = tempVTopo_[dim][neighborAlgRank];
+            HCCL_INFO(
+                "[CollAlgFactory] [TempReduceScatterConcurrMesh] Rank [%d], Dim [%u], NeighborRank [%d].", myRank_, dim,
+                neighborRank);
 
             // LinkNum
             tempResReq.links[neighborRank] = 1;
@@ -57,8 +55,8 @@ dataSize / (rankSize * dimNum) --> sliceSize
 
 SliceInfoVecforConcurrMesh: [1st chunk: [1st Slice, 2nd Slice], 2nd chunk: [1st Slice, 2nd Slice], ...]
 */
-HcclResult TempReduceScatterConcurrMesh::CalcSliceInfo(const AllignInfo &allignInfo, const bool forAllReduce,
-                                                       const u64 dataSize, RankSliceInfo &sliceInfoVec)
+HcclResult TempReduceScatterConcurrMesh::CalcSliceInfo(
+    const AllignInfo& allignInfo, const bool forAllReduce, const u64 dataSize, RankSliceInfo& sliceInfoVec)
 {
     u32 dimSize = 0;
     for (u32 dimIdx = 0; dimIdx < tempVTopo_.size(); dimIdx++) {
@@ -86,29 +84,30 @@ HcclResult TempReduceScatterConcurrMesh::CalcSliceInfo(const AllignInfo &allignI
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TempReduceScatterConcurrMesh::CalcSliceInfoAllReduce(const AllignInfo &allignInfo, const u64 dataSize,
-                                                                RankSliceInfo &sliceInfoVec)
+HcclResult TempReduceScatterConcurrMesh::CalcSliceInfoAllReduce(
+    const AllignInfo& allignInfo, const u64 dataSize, RankSliceInfo& sliceInfoVec)
 {
-    u64 unitAllignSize;
-    CHK_RET(GetUnitAllignSize(allignInfo, unitAllignSize));
+    u64 unitAlignSize;
+    CHK_RET(GetUnitAllignSize(allignInfo, unitAlignSize));
 
-    u64 rankDataSize = RoundUp(dataSize, (tempRankSize_ * unitAllignSize)) * unitAllignSize;
+    u64 rankDataSize = RoundUp(dataSize, (tempRankSize_ * unitAlignSize)) * unitAlignSize;
 
     if (sliceInfoVec[0].size() == 1) {
         // one dimensional mesh
         u64 resDataSize = dataSize;
         for (u32 rankIdx = 0; rankIdx < tempRankSize_; rankIdx++) {
-            u64       currChunkSize  = (resDataSize > rankDataSize) ? rankDataSize : resDataSize;
-            SliceInfo slice          = {dataSize - resDataSize, currChunkSize};
+            u64 currChunkSize = (resDataSize > rankDataSize) ? rankDataSize : resDataSize;
+            SliceInfo slice = {dataSize - resDataSize, currChunkSize};
             sliceInfoVec[rankIdx][0] = slice;
             resDataSize -= currChunkSize;
         }
 
         CHK_PRT_RET(
             (sliceInfoVec[tempRankSize_ - 1][0].offset + sliceInfoVec[tempRankSize_ - 1][0].size != dataSize),
-            HCCL_ERROR("[CollAlgFactory] [TempReduceScatterConcurrMesh] Rank [%d], SliceInfo calculation error for "
-                       "AllReduce ConcurrMesh!",
-                       myRank_),
+            HCCL_ERROR(
+                "[CollAlgFactory] [TempReduceScatterConcurrMesh] Rank [%d], SliceInfo calculation error for "
+                "AllReduce ConcurrMesh!",
+                myRank_),
             HcclResult::HCCL_E_INTERNAL);
     } else {
         u32 dimSize0 = tempVTopo_[0].size();
@@ -116,46 +115,51 @@ HcclResult TempReduceScatterConcurrMesh::CalcSliceInfoAllReduce(const AllignInfo
 
         u64 resDataSize = dataSize;
         for (u32 rankIdx = 0; rankIdx < tempRankSize_; rankIdx++) {
-            u64       currChunkSize  = (resDataSize > rankDataSize) ? rankDataSize : resDataSize;
-            u64       sliceSize0     = min(currChunkSize, RoundUp(currChunkSize, (dimSize0 + dimSize1) * unitAllignSize)
-                                                              * dimSize0 * unitAllignSize);
-            SliceInfo slice0         = {dataSize - resDataSize, sliceSize0};
+            u64 currChunkSize = (resDataSize > rankDataSize) ? rankDataSize : resDataSize;
+            u64 sliceSize0 = min(
+                currChunkSize,
+                RoundUp(currChunkSize, (dimSize0 + dimSize1) * unitAlignSize) * dimSize0 * unitAlignSize);
+            SliceInfo slice0 = {dataSize - resDataSize, sliceSize0};
             sliceInfoVec[rankIdx][0] = slice0;
             resDataSize -= sliceSize0;
 
-            u64       sliceSize1     = currChunkSize - sliceSize0;
-            SliceInfo slice1         = {dataSize - resDataSize, sliceSize1};
+            u64 sliceSize1 = currChunkSize - sliceSize0;
+            SliceInfo slice1 = {dataSize - resDataSize, sliceSize1};
             sliceInfoVec[rankIdx][1] = slice1;
             resDataSize -= sliceSize1;
         }
 
-        CHK_PRT_RET((sliceInfoVec[tempRankSize_ - 1][1].offset + sliceInfoVec[tempRankSize_ - 1][1].size != dataSize),
-                    HCCL_ERROR("[CollAlgFactory] [TempReduceScatterConcurrMesh] Rank [%d], SliceInfo calculation error "
-                               "for AllReduce ConcurrMesh!",
-                               myRank_),
-                    HcclResult::HCCL_E_INTERNAL);
+        CHK_PRT_RET(
+            (sliceInfoVec[tempRankSize_ - 1][1].offset + sliceInfoVec[tempRankSize_ - 1][1].size != dataSize),
+            HCCL_ERROR(
+                "[CollAlgFactory] [TempReduceScatterConcurrMesh] Rank [%d], SliceInfo calculation error "
+                "for AllReduce ConcurrMesh!",
+                myRank_),
+            HcclResult::HCCL_E_INTERNAL);
     }
 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TempReduceScatterConcurrMesh::GenPrimQue(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec,
-                                                    const BuffInfo &buffInfo, const ResLinks &tempLinks,
-                                                    std::vector<PrimQuePtr> &tempPrimQues)
+HcclResult TempReduceScatterConcurrMesh::GenPrimQue(
+    const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, const BuffInfo& buffInfo, const ResLinks& tempLinks,
+    std::vector<PrimQuePtr>& tempPrimQues)
 {
-    opMode_              = tempFuncs.opMode;
+    opMode_ = tempFuncs.opMode;
     enableCounterNotify_ = tempFuncs.enableCounterNotify;
-    buffInfo_            = buffInfo;
-    HCCL_INFO("[CollAlgFactory] [TempReduceScatterConcurrMesh] Rank [%d], EnableCounterNotify [%d].", myRank_,
-               enableCounterNotify_);
+    buffInfo_ = buffInfo;
+    HCCL_INFO(
+        "[CollAlgFactory] [TempReduceScatterConcurrMesh] Rank [%d], EnableCounterNotify [%d].", myRank_,
+        enableCounterNotify_);
 
     queNum_ = 0;
     for (u32 dim = 0; dim < tempVTopo_.size(); dim++) {
         queNum_ += tempVTopo_[dim].size() - 1;
     }
-    CHK_PRT_RET(queNum_ != tempPrimQues.size(),
-                HCCL_ERROR("[CollAlgFactory] [TempReduceScatterConcurrMesh] Rank [%d], requiredQue Error.", myRank_),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        queNum_ != tempPrimQues.size(),
+        HCCL_ERROR("[CollAlgFactory] [TempReduceScatterConcurrMesh] Rank [%d], requiredQue Error.", myRank_),
+        HcclResult::HCCL_E_INTERNAL);
 
     // LocalCopy: from input to scratch In Buffer for OPBASE
     if ((opMode_ == OpMode::OPBASE) && tempFuncs.isForepart) {
@@ -181,8 +185,8 @@ HcclResult TempReduceScatterConcurrMesh::GenPrimQue(const TempFuncs &tempFuncs, 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TempReduceScatterConcurrMesh::RunOneDimMesh(const RankSliceInfo &sliceInfoVec, const ResLinks &tempLinks,
-                                                       std::vector<PrimQuePtr> &tempPrimQues)
+HcclResult TempReduceScatterConcurrMesh::RunOneDimMesh(
+    const RankSliceInfo& sliceInfoVec, const ResLinks& tempLinks, std::vector<PrimQuePtr>& tempPrimQues)
 {
     // semaphore sync
     if (queNum_ > 1) {
@@ -198,8 +202,8 @@ HcclResult TempReduceScatterConcurrMesh::RunOneDimMesh(const RankSliceInfo &slic
     // runMesh
     CHK_PRT_RET(
         RunMesh(myAlgRank, tempVTopo_[validDim], sliceInfoVec, tempLinks, tempPrimQues) != HcclResult::HCCL_SUCCESS,
-        HCCL_ERROR("[CollAlgFactory] [TempReduceScatterConcurrMesh] Rank [%d], unable to run the mesh algorithm.",
-                   myRank_),
+        HCCL_ERROR(
+            "[CollAlgFactory] [TempReduceScatterConcurrMesh] Rank [%d], unable to run the mesh algorithm.", myRank_),
         HcclResult::HCCL_E_INTERNAL);
 
     // semaphore sync
@@ -210,9 +214,9 @@ HcclResult TempReduceScatterConcurrMesh::RunOneDimMesh(const RankSliceInfo &slic
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TempReduceScatterConcurrMesh::RunMesh(const u32 myAlgRank, const std::vector<RankId> &vTopo,
-                                                 const RankSliceInfo &sliceInfoVec, const ResLinks &tempLinks,
-                                                 std::vector<PrimQuePtr> &tempPrimQues)
+HcclResult TempReduceScatterConcurrMesh::RunMesh(
+    const u32 myAlgRank, const std::vector<RankId>& vTopo, const RankSliceInfo& sliceInfoVec, const ResLinks& tempLinks,
+    std::vector<PrimQuePtr>& tempPrimQues)
 {
     for (u32 queIdx = 0; queIdx < tempPrimQues.size(); queIdx++) {
         // find neighbors -> virtualRank
@@ -221,11 +225,11 @@ HcclResult TempReduceScatterConcurrMesh::RunMesh(const u32 myAlgRank, const std:
         LinkData neighborLinkData = tempLinks.at(neighborRank)[0];
 
         u32 sendChunkIdx = tempVirtRankMap_[neighborRank];
-        u64 sendOffset   = sliceInfoVec[sendChunkIdx][0].offset;
-        u64 sendSize     = sliceInfoVec[sendChunkIdx][0].size;
+        u64 sendOffset = sliceInfoVec[sendChunkIdx][0].offset;
+        u64 sendSize = sliceInfoVec[sendChunkIdx][0].size;
         u32 recvChunkIdx = tempVirtRankMap_[myRank_];
-        u64 recvOffset   = sliceInfoVec[recvChunkIdx][0].offset;
-        u64 recvSize     = sliceInfoVec[recvChunkIdx][0].size;
+        u64 recvOffset = sliceInfoVec[recvChunkIdx][0].offset;
+        u64 recvSize = sliceInfoVec[recvChunkIdx][0].size;
 
         // PrimGroup
         std::unique_ptr<PrimGroup> primGroup = std::make_unique<PrimGroup>();
@@ -235,9 +239,9 @@ HcclResult TempReduceScatterConcurrMesh::RunMesh(const u32 myAlgRank, const std:
         DataSlice sendRemSrcSlice
             = DataSlice(buffInfo_.scratBuffType, sendOffset + buffInfo_.scratchBuffBaseOff, sendSize);
         DataSlice sendRemDstSlice = DataSlice(buffInfo_.inBuffType, sendOffset + buffInfo_.inBuffBaseOff, sendSize);
-        std::unique_ptr<Primitive> primSendReduce
-            = std::make_unique<PrimSendReduce>(neighborRank, neighborLinkData, sendLocSlice, sendRemSrcSlice,
-                                               sendRemDstSlice, dataType_, redOp_, dmaMode_);
+        std::unique_ptr<Primitive> primSendReduce = std::make_unique<PrimSendReduce>(
+            neighborRank, neighborLinkData, sendLocSlice, sendRemSrcSlice, sendRemDstSlice, dataType_, redOp_,
+            dmaMode_);
 
         primGroup->Append(std::move(primSendReduce));
 
@@ -246,9 +250,9 @@ HcclResult TempReduceScatterConcurrMesh::RunMesh(const u32 myAlgRank, const std:
         DataSlice recvLocSrcSlice
             = DataSlice(buffInfo_.scratBuffType, recvOffset + buffInfo_.scratchBuffBaseOff, recvSize);
         DataSlice recvLocDstSlice = DataSlice(buffInfo_.inBuffType, recvOffset + buffInfo_.inBuffBaseOff, recvSize);
-        std::unique_ptr<Primitive> primRecvReduce
-            = std::make_unique<PrimRecvReduce>(neighborRank, neighborLinkData, recvRemSlice, recvLocSrcSlice,
-                                               recvLocDstSlice, dataType_, redOp_, dmaMode_);
+        std::unique_ptr<Primitive> primRecvReduce = std::make_unique<PrimRecvReduce>(
+            neighborRank, neighborLinkData, recvRemSlice, recvLocSrcSlice, recvLocDstSlice, dataType_, redOp_,
+            dmaMode_);
 
         primGroup->Append(std::move(primRecvReduce));
 
@@ -257,8 +261,8 @@ HcclResult TempReduceScatterConcurrMesh::RunMesh(const u32 myAlgRank, const std:
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TempReduceScatterConcurrMesh::RunConcurrMesh(const RankSliceInfo &sliceInfoVec, const ResLinks &tempLinks,
-                                                        std::vector<PrimQuePtr> &tempPrimQues)
+HcclResult TempReduceScatterConcurrMesh::RunConcurrMesh(
+    const RankSliceInfo& sliceInfoVec, const ResLinks& tempLinks, std::vector<PrimQuePtr>& tempPrimQues)
 {
     std::vector<std::vector<PrimQuePtr>> dimQues;
     for (u32 dim = 0; dim < tempVTopo_.size(); dim++) {
@@ -303,10 +307,9 @@ HcclResult TempReduceScatterConcurrMesh::RunConcurrMesh(const RankSliceInfo &sli
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TempReduceScatterConcurrMesh::RunSingleDimension(const u32 &step, const u32 &dim,
-                                                            const RankSliceInfo     &sliceInfoVec,
-                                                            const ResLinks          &tempLinks,
-                                                            std::vector<PrimQuePtr> &dimPrimQues)
+HcclResult TempReduceScatterConcurrMesh::RunSingleDimension(
+    const u32& step, const u32& dim, const RankSliceInfo& sliceInfoVec, const ResLinks& tempLinks,
+    std::vector<PrimQuePtr>& dimPrimQues)
 {
     CHK_PRT_RET(
         dim > 1,
@@ -320,16 +323,18 @@ HcclResult TempReduceScatterConcurrMesh::RunSingleDimension(const u32 &step, con
     for (u32 queIdx = 0; queIdx < dimPrimQues.size(); queIdx++) {
         // semaphore sync
         if (dimPrimQues.size() > 1) {
-            CHK_PRT_RET(PreSync(queIdx, dimPrimQues) != HcclResult::HCCL_SUCCESS,
-                        HCCL_ERROR("[CollAlgFactory] [TempReduceScatterConcurrMesh] Rank [%d], Que [%u], Semaphore "
-                                   "Synchronization Failed.",
-                                   myRank_, dimPrimQues[queIdx]->GetId()),
-                        HcclResult::HCCL_E_INTERNAL);
+            CHK_PRT_RET(
+                PreSync(queIdx, dimPrimQues) != HcclResult::HCCL_SUCCESS,
+                HCCL_ERROR(
+                    "[CollAlgFactory] [TempReduceScatterConcurrMesh] Rank [%d], Que [%u], Semaphore "
+                    "Synchronization Failed.",
+                    myRank_, dimPrimQues[queIdx]->GetId()),
+                HcclResult::HCCL_E_INTERNAL);
         }
 
         // find neighbors -> virtualRank
-        u32    neighborAlgRank = (myAlgRank + 1 + queIdx) % (tempVTopo_[dim].size());
-        RankId neighborRank    = tempVTopo_[dim][neighborAlgRank];
+        u32 neighborAlgRank = (myAlgRank + 1 + queIdx) % (tempVTopo_[dim].size());
+        RankId neighborRank = tempVTopo_[dim][neighborAlgRank];
 
         // link
         LinkData neighborLinkData = tempLinks.at(neighborRank)[0];
@@ -345,11 +350,11 @@ HcclResult TempReduceScatterConcurrMesh::RunSingleDimension(const u32 &step, con
 
         if (step == 0) {
             for (u32 chunkIdx = 0; chunkIdx < tempVTopo_[1 - dim].size(); chunkIdx++) {
-                u32 sendChunkIdx = (dim == 0) ? (neighborAlgRank + chunkIdx * tempVTopo_[0].size())
-                                              : (neighborAlgRank * tempVTopo_[0].size() + chunkIdx);
+                u32 sendChunkIdx = (dim == 0) ? (neighborAlgRank + chunkIdx * tempVTopo_[0].size()) :
+                                                (neighborAlgRank * tempVTopo_[0].size() + chunkIdx);
                 sendChunkIdxs.push_back(sendChunkIdx);
-                u32 recvChunkIdx = (dim == 0) ? (myAlgRank + chunkIdx * tempVTopo_[0].size())
-                                              : (myAlgRank * tempVTopo_[0].size() + chunkIdx);
+                u32 recvChunkIdx = (dim == 0) ? (myAlgRank + chunkIdx * tempVTopo_[0].size()) :
+                                                (myAlgRank * tempVTopo_[0].size() + chunkIdx);
                 recvChunkIdxs.push_back(recvChunkIdx);
             }
         } else {
@@ -358,7 +363,7 @@ HcclResult TempReduceScatterConcurrMesh::RunSingleDimension(const u32 &step, con
         }
 
         // SendReduce
-        u32                             sliceIdx = (step == 0) ? dim : (1 - dim);
+        u32 sliceIdx = (step == 0) ? dim : (1 - dim);
         std::unique_ptr<PrimSendReduce> primSendReduce
             = RunSendReduce(sliceInfoVec, sendChunkIdxs, sliceIdx, neighborRank, neighborLinkData);
         primGroup->Append(std::move(primSendReduce));
@@ -372,30 +377,30 @@ HcclResult TempReduceScatterConcurrMesh::RunSingleDimension(const u32 &step, con
 
         // semaphore sync
         if (dimPrimQues.size() > 1) {
-            CHK_PRT_RET(PostSync(queIdx, dimPrimQues) != HcclResult::HCCL_SUCCESS,
-                        HCCL_ERROR("[CollAlgFactory] [TempReduceScatterConcurrMesh] Rank [%d], Que [%u], Semaphore "
-                                   "Synchronization Failed.",
-                                   myRank_, dimPrimQues[queIdx]->GetId()),
-                        HcclResult::HCCL_E_INTERNAL);
+            CHK_PRT_RET(
+                PostSync(queIdx, dimPrimQues) != HcclResult::HCCL_SUCCESS,
+                HCCL_ERROR(
+                    "[CollAlgFactory] [TempReduceScatterConcurrMesh] Rank [%d], Que [%u], Semaphore "
+                    "Synchronization Failed.",
+                    myRank_, dimPrimQues[queIdx]->GetId()),
+                HcclResult::HCCL_E_INTERNAL);
         }
     }
 
     return HcclResult::HCCL_SUCCESS;
 }
 
-std::unique_ptr<PrimSendReduce> TempReduceScatterConcurrMesh::RunSendReduce(const RankSliceInfo    &sliceInfoVec,
-                                                                            const std::vector<u32> &sendChunkIdxs,
-                                                                            const u32              &sliceIdx,
-                                                                            const RankId           &neighborRank,
-                                                                            const LinkData         &priorLinkData)
+std::unique_ptr<PrimSendReduce> TempReduceScatterConcurrMesh::RunSendReduce(
+    const RankSliceInfo& sliceInfoVec, const std::vector<u32>& sendChunkIdxs, const u32& sliceIdx,
+    const RankId& neighborRank, const LinkData& priorLinkData)
 {
     std::unique_ptr<PrimSendReduce> primSendReduce;
-    u64                             tmpSendOff;
-    u64                             tmpSendSize;
+    u64 tmpSendOff;
+    u64 tmpSendSize;
     for (u32 chunkIdx = 0; chunkIdx < sendChunkIdxs.size(); chunkIdx++) {
         if (chunkIdx == 0) {
             // first slice
-            tmpSendOff  = sliceInfoVec[sendChunkIdxs[chunkIdx]][sliceIdx].offset;
+            tmpSendOff = sliceInfoVec[sendChunkIdxs[chunkIdx]][sliceIdx].offset;
             tmpSendSize = sliceInfoVec[sendChunkIdxs[chunkIdx]][sliceIdx].size;
         } else if (tmpSendOff + tmpSendSize == sliceInfoVec[sendChunkIdxs[chunkIdx]][sliceIdx].offset) {
             // consequent slice
@@ -407,12 +412,13 @@ std::unique_ptr<PrimSendReduce> TempReduceScatterConcurrMesh::RunSendReduce(cons
             DataSlice sendRemDstSlice
                 = DataSlice(buffInfo_.inBuffType, tmpSendOff + buffInfo_.inBuffBaseOff, tmpSendSize);
             if (!primSendReduce) {
-                primSendReduce.reset(new PrimSendReduce(neighborRank, priorLinkData, sendLocSlice, sendRemSrcSlice,
-                                                        sendRemDstSlice, dataType_, redOp_, dmaMode_));
+                primSendReduce.reset(new PrimSendReduce(
+                    neighborRank, priorLinkData, sendLocSlice, sendRemSrcSlice, sendRemDstSlice, dataType_, redOp_,
+                    dmaMode_));
             } else {
                 primSendReduce->Append(sendLocSlice, sendRemSrcSlice, sendRemDstSlice);
             }
-            tmpSendOff  = sliceInfoVec[sendChunkIdxs[chunkIdx]][sliceIdx].offset;
+            tmpSendOff = sliceInfoVec[sendChunkIdxs[chunkIdx]][sliceIdx].offset;
             tmpSendSize = sliceInfoVec[sendChunkIdxs[chunkIdx]][sliceIdx].size;
         }
 
@@ -427,11 +433,12 @@ std::unique_ptr<PrimSendReduce> TempReduceScatterConcurrMesh::RunSendReduce(cons
                 HCCL_INFO(
                     "[CollAlgFactory] [TempReduceScatterConcurrMesh] Rank [%d], last chunk is a non-consecutive chunk.",
                     myRank_);
-                primSendReduce.reset(new PrimSendReduce(neighborRank, priorLinkData, sendLocSlice, sendRemSrcSlice,
-                                                        sendRemDstSlice, dataType_, redOp_, dmaMode_));
+                primSendReduce.reset(new PrimSendReduce(
+                    neighborRank, priorLinkData, sendLocSlice, sendRemSrcSlice, sendRemDstSlice, dataType_, redOp_,
+                    dmaMode_));
             } else {
-                HCCL_INFO("[CollAlgFactory] [TempReduceScatterConcurrMesh] Rank [%d], last chunk is consecutive.",
-                           myRank_);
+                HCCL_INFO(
+                    "[CollAlgFactory] [TempReduceScatterConcurrMesh] Rank [%d], last chunk is consecutive.", myRank_);
                 primSendReduce->Append(sendLocSlice, sendRemSrcSlice, sendRemDstSlice);
             }
         }
@@ -440,19 +447,17 @@ std::unique_ptr<PrimSendReduce> TempReduceScatterConcurrMesh::RunSendReduce(cons
     return primSendReduce;
 }
 
-std::unique_ptr<PrimRecvReduce> TempReduceScatterConcurrMesh::RunRecvReduce(const RankSliceInfo    &sliceInfoVec,
-                                                                            const std::vector<u32> &recvChunkIdxs,
-                                                                            const u32              &sliceIdx,
-                                                                            const RankId           &neighborRank,
-                                                                            const LinkData         &priorLinkData)
+std::unique_ptr<PrimRecvReduce> TempReduceScatterConcurrMesh::RunRecvReduce(
+    const RankSliceInfo& sliceInfoVec, const std::vector<u32>& recvChunkIdxs, const u32& sliceIdx,
+    const RankId& neighborRank, const LinkData& priorLinkData)
 {
     std::unique_ptr<PrimRecvReduce> primRecvReduce;
-    u64                             tmpRecvOff;
-    u64                             tmpRecvSize;
+    u64 tmpRecvOff;
+    u64 tmpRecvSize;
     for (u32 chunkIdx = 0; chunkIdx < recvChunkIdxs.size(); chunkIdx++) {
         if (chunkIdx == 0) {
             // first slice
-            tmpRecvOff  = sliceInfoVec[recvChunkIdxs[chunkIdx]][sliceIdx].offset;
+            tmpRecvOff = sliceInfoVec[recvChunkIdxs[chunkIdx]][sliceIdx].offset;
             tmpRecvSize = sliceInfoVec[recvChunkIdxs[chunkIdx]][sliceIdx].size;
         } else if (tmpRecvOff + tmpRecvSize == sliceInfoVec[recvChunkIdxs[chunkIdx]][sliceIdx].offset) {
             // consequent slice
@@ -468,14 +473,15 @@ std::unique_ptr<PrimRecvReduce> TempReduceScatterConcurrMesh::RunRecvReduce(cons
                 HCCL_INFO(
                     "[CollAlgFactory] [TempReduceScatterConcurrMesh] Rank [%d], last chunk is a non-consecutive chunk.",
                     myRank_);
-                primRecvReduce.reset(new PrimRecvReduce(neighborRank, priorLinkData, recvRemSlice, recvLocSrcSlice,
-                                                        recvLocDstSlice, dataType_, redOp_, dmaMode_));
+                primRecvReduce.reset(new PrimRecvReduce(
+                    neighborRank, priorLinkData, recvRemSlice, recvLocSrcSlice, recvLocDstSlice, dataType_, redOp_,
+                    dmaMode_));
             } else {
-                HCCL_INFO("[CollAlgFactory] [TempReduceScatterConcurrMesh] Rank [%d], last chunk is consecutive.",
-                           myRank_);
+                HCCL_INFO(
+                    "[CollAlgFactory] [TempReduceScatterConcurrMesh] Rank [%d], last chunk is consecutive.", myRank_);
                 primRecvReduce->Append(recvRemSlice, recvLocSrcSlice, recvLocDstSlice);
             }
-            tmpRecvOff  = sliceInfoVec[recvChunkIdxs[chunkIdx]][sliceIdx].offset;
+            tmpRecvOff = sliceInfoVec[recvChunkIdxs[chunkIdx]][sliceIdx].offset;
             tmpRecvSize = sliceInfoVec[recvChunkIdxs[chunkIdx]][sliceIdx].size;
         }
 
@@ -487,8 +493,9 @@ std::unique_ptr<PrimRecvReduce> TempReduceScatterConcurrMesh::RunRecvReduce(cons
                 = DataSlice(buffInfo_.inBuffType, tmpRecvOff + buffInfo_.inBuffBaseOff, tmpRecvSize);
 
             if (!primRecvReduce) {
-                primRecvReduce.reset(new PrimRecvReduce(neighborRank, priorLinkData, recvRemSlice, recvLocSrcSlice,
-                                                        recvLocDstSlice, dataType_, redOp_, dmaMode_));
+                primRecvReduce.reset(new PrimRecvReduce(
+                    neighborRank, priorLinkData, recvRemSlice, recvLocSrcSlice, recvLocDstSlice, dataType_, redOp_,
+                    dmaMode_));
             } else {
                 primRecvReduce->Append(recvRemSlice, recvLocSrcSlice, recvLocDstSlice);
             }
@@ -497,17 +504,17 @@ std::unique_ptr<PrimRecvReduce> TempReduceScatterConcurrMesh::RunRecvReduce(cons
     return primRecvReduce;
 }
 
-HcclResult TempReduceScatterConcurrMesh::PostCopyOffload(const RankSliceInfo     &sliceInfoVec,
-                                                         std::vector<PrimQuePtr> &tempPrimQues)
+HcclResult
+TempReduceScatterConcurrMesh::PostCopyOffload(const RankSliceInfo& sliceInfoVec, std::vector<PrimQuePtr>& tempPrimQues)
 {
     u64 srcOffset = sliceInfoVec[tempVirtRankMap_[myRank_]][0].offset;
-    u64 srcSize   = 0;
+    u64 srcSize = 0;
     for (u32 dimIdx = 0; dimIdx < sliceInfoVec[0].size(); dimIdx++) {
         srcSize += sliceInfoVec[tempVirtRankMap_[myRank_]][dimIdx].size;
     }
-    u64       dstOffset = 0;
-    DataSlice srcSlice  = DataSlice(buffInfo_.inBuffType, srcOffset + buffInfo_.inBuffBaseOff, srcSize);
-    DataSlice dstSlice  = DataSlice(buffInfo_.outBuffType, dstOffset + buffInfo_.outBuffBaseOff, srcSize);
+    u64 dstOffset = 0;
+    DataSlice srcSlice = DataSlice(buffInfo_.inBuffType, srcOffset + buffInfo_.inBuffBaseOff, srcSize);
+    DataSlice dstSlice = DataSlice(buffInfo_.outBuffType, dstOffset + buffInfo_.outBuffBaseOff, srcSize);
     std::unique_ptr<Primitive> primLocalCopy = std::make_unique<PrimLocalCopy>(srcSlice, dstSlice);
     tempPrimQues[0]->Append(std::move(primLocalCopy));
 

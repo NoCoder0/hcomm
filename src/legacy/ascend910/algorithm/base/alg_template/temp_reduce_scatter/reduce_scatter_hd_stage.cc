@@ -1,33 +1,28 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include <cmath>
 #include "reduce_scatter_hd_stage_pub.h"
 #include "alg_template_register.h"
 
 namespace hccl {
-ReduceScatterHDStage::ReduceScatterHDStage(const HcclDispatcher dispatcher)
-    : AlgTemplateBase(dispatcher)
-{}
+ReduceScatterHDStage::ReduceScatterHDStage(const HcclDispatcher dispatcher) : AlgTemplateBase(dispatcher) {}
 
-ReduceScatterHDStage::~ReduceScatterHDStage()
-{}
+ReduceScatterHDStage::~ReduceScatterHDStage() {}
 
-HcclResult ReduceScatterHDStage::Prepare(DeviceMem &inputMem, DeviceMem &outputMem, DeviceMem &scratchMem,
-                                         const u64 count, const HcclDataType dataType, const Stream &stream,
-                                         const HcclReduceOp reductionOp, const u32 root,
-                                         const std::vector<Slice> &slices, const u64 baseOffset,
-                                         const u64 reduceAttrBitMap, std::vector<Stream> &meshStreams,
-                                         std::vector<std::shared_ptr<LocalNotify>> &meshSignal,
-                                         std::vector<std::shared_ptr<LocalNotify>> &meshSignalAux,
-                                         u32 userRank, const HcomCollOpInfo *opInfo)
+HcclResult ReduceScatterHDStage::Prepare(
+    DeviceMem& inputMem, DeviceMem& outputMem, DeviceMem& scratchMem, const u64 count, const HcclDataType dataType,
+    const Stream& stream, const HcclReduceOp reductionOp, const u32 root, const std::vector<Slice>& slices,
+    const u64 baseOffset, const u64 reduceAttrBitMap, std::vector<Stream>& meshStreams,
+    std::vector<std::shared_ptr<LocalNotify>>& meshSignal, std::vector<std::shared_ptr<LocalNotify>>& meshSignalAux,
+    u32 userRank, const HcomCollOpInfo* opInfo)
 {
     reduceAttr_ = reduceAttrBitMap;
     userRank_ = userRank;
@@ -35,8 +30,8 @@ HcclResult ReduceScatterHDStage::Prepare(DeviceMem &inputMem, DeviceMem &outputM
     meshSignalPtr_ = &meshSignal;
     meshSignalAuxPtr_ = &meshSignalAux;
     opInfo_ = opInfo;
-    return AlgTemplateBase::Prepare(inputMem, outputMem, scratchMem, count, dataType, stream, reductionOp,
-        root, slices, baseOffset);
+    return AlgTemplateBase::Prepare(
+        inputMem, outputMem, scratchMem, count, dataType, stream, reductionOp, root, slices, baseOffset);
 }
 
 HcclResult ReduceScatterHDStage::MainRecordSub(u32 streamNum)
@@ -67,47 +62,45 @@ HcclResult ReduceScatterHDStage::MainWaitSub(u32 streamNum)
 HcclResult ReduceScatterHDStage::SubRecordMain(u32 streamNum)
 {
     for (u32 streamIndex = 0; streamIndex < streamNum; streamIndex++) {
-        CHK_RET(
-            LocalNotify::Post(meshStreams_[streamIndex], dispatcher_, (*meshSignalPtr_)[streamIndex], profilerInput_.stage));
+        CHK_RET(LocalNotify::Post(
+            meshStreams_[streamIndex], dispatcher_, (*meshSignalPtr_)[streamIndex], profilerInput_.stage));
     }
     return HCCL_SUCCESS;
 }
 
-// ringallreduce算法的函数入口
-HcclResult ReduceScatterHDStage::RunAsync(const u32 rank, const u32 rankSize, const std::vector<LINK> &links)
+// ring allreduce算法的函数入口
+HcclResult ReduceScatterHDStage::RunAsync(const u32 rank, const u32 rankSize, const std::vector<LINK>& links)
 {
     HcclResult ret = HCCL_SUCCESS;
     CHK_SMART_PTR_NULL(dispatcher_);
     CHK_PTR_NULL(stream_.ptr());
-    HCCL_INFO("ReduceScatterHDStage run: rank[%u] ranksize[%u] inputMem[%p] outputMem[%p] count[%llu]",
-        rank,
-        rankSize,
-        inputMem_.ptr(),
-        outputMem_.ptr(),
-        count_);
+    HCCL_INFO(
+        "ReduceScatterHDStage run: rank[%u] ranksize[%u] inputMem[%p] outputMem[%p] count[%llu]", rank, rankSize,
+        inputMem_.ptr(), outputMem_.ptr(), count_);
 
     if (links.size() < rankSize) {
-        HCCL_ERROR("[ReduceScatterHDStage][RunAsync]rank[%u] linksize[%llu] is less than rankSize[%u]",
-            rank,
-            links.size(),
+        HCCL_ERROR(
+            "[ReduceScatterHDStage][RunAsync]rank[%u] linksize[%llu] is less than rankSize[%u]", rank, links.size(),
             rankSize);
         return HCCL_E_INTERNAL;
     }
 
     ret = PrepareSliceData(rankSize);
-    CHK_PRT_RET(ret != HCCL_SUCCESS,
-        HCCL_ERROR("[ReduceScatterHDStage][RunAsync]rank[%u] count[%llu] failed in PrepareSliceData "
-                   "step",
-            rank,
-            count_),
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[ReduceScatterHDStage][RunAsync]rank[%u] count[%llu] failed in PrepareSliceData "
+            "step",
+            rank, count_),
         ret);
 
     ret = RunReduceScatterStage(rank, rankSize, links);
-    CHK_PRT_RET(ret != HCCL_SUCCESS,
-        HCCL_ERROR("[ReduceScatterHDStage][RunAsync]rank[%u] count[%llu] failed"
-                   "step",
-            rank,
-            count_),
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[ReduceScatterHDStage][RunAsync]rank[%u] count[%llu] failed"
+            "step",
+            rank, count_),
         ret);
 
     HCCL_INFO("ReduceScatterHDStage finished: rank[%u] ranksize[%u]", rank, rankSize);
@@ -146,10 +139,11 @@ HcclResult ReduceScatterHDStage::PrepareSliceData(u32 rankSize)
     return HCCL_SUCCESS;
 }
 
-HcclResult ReduceScatterHDStage::RunReduceScatterStage(u32 rank, u32 rankSize, const std::vector<LINK> &links)
+HcclResult ReduceScatterHDStage::RunReduceScatterStage(u32 rank, u32 rankSize, const std::vector<LINK>& links)
 {
-    HCCL_INFO("RunReduceScatterStage run: rank[%u] totalrank[%u] outputMem[%p] count[%llu]",
-        rank, rankSize, outputMem_.ptr(), count_);
+    HCCL_INFO(
+        "RunReduceScatterStage run: rank[%u] totalrank[%u] outputMem[%p] count[%llu]", rank, rankSize, outputMem_.ptr(),
+        count_);
     nSteps_ = static_cast<u32>(log2(rankSize));
     CHK_RET(RunReduceScatterStage1st(rank, rankSize, links));
     CHK_RET(RunReduceScatterRead(rank, rankSize, links));
@@ -157,7 +151,7 @@ HcclResult ReduceScatterHDStage::RunReduceScatterStage(u32 rank, u32 rankSize, c
     return HCCL_SUCCESS;
 }
 
-HcclResult ReduceScatterHDStage::RunReduceScatterStage1st(u32 rank, u32 rankSize, const std::vector<LINK> &links)
+HcclResult ReduceScatterHDStage::RunReduceScatterStage1st(u32 rank, u32 rankSize, const std::vector<LINK>& links)
 {
     u32 unitSize = SIZE_TABLE[dataType_];
     u32 totalSize = unitSize * count_;
@@ -176,22 +170,23 @@ HcclResult ReduceScatterHDStage::RunReduceScatterStage1st(u32 rank, u32 rankSize
     CHK_RET(links[dstRank]->TxAck(stream_));
     CHK_RET(links[dstRank]->RxAck(stream_));
 
-    void *remMemPtr = nullptr;
+    void* remMemPtr = nullptr;
     CHK_RET(links[dstRank]->GetRemoteMem(UserMemType::OUTPUT_MEM, &remMemPtr));
     src = UserMemIn.range(sliceMap_[0][dstRank].offset, sliceMap_[0][dstRank].size);
-    dst = DeviceMem::create(static_cast<u8 *>(remMemPtr), sliceMap_[0][dstRank].size);
-    CHK_RET(HcclReduceAsync(dispatcher_, static_cast<void *>(src.ptr()), sliceMap_[0][dstRank].size / unitSize,
-        dataType_, reductionOp_, stream_, static_cast<void *>(dst.ptr()),
-        links[dstRank]->GetRemoteRank(), links[dstRank]->GetLinkType(), INLINE_REDUCE_BIT));
+    dst = DeviceMem::create(static_cast<u8*>(remMemPtr), sliceMap_[0][dstRank].size);
+    CHK_RET(HcclReduceAsync(
+        dispatcher_, static_cast<void*>(src.ptr()), sliceMap_[0][dstRank].size / unitSize, dataType_, reductionOp_,
+        stream_, static_cast<void*>(dst.ptr()), links[dstRank]->GetRemoteRank(), links[dstRank]->GetLinkType(),
+        INLINE_REDUCE_BIT));
 
     CHK_RET(links[dstRank]->TxDataSignal(stream_));
     CHK_RET(links[dstRank]->RxDataSignal(stream_));
     return HCCL_SUCCESS;
 }
 
-HcclResult ReduceScatterHDStage::RunBetweenStep(u32 rank, u32 neighCur, u32 neighNext, const std::vector<LINK> &links)
+HcclResult ReduceScatterHDStage::RunBetweenStep(u32 rank, u32 neighCur, u32 neighNext, const std::vector<LINK>& links)
 {
-    (void) rank;
+    (void)rank;
     CHK_RET(MainRecordSub(1));
     CHK_RET(SubWaitMain(1));
 
@@ -207,15 +202,15 @@ HcclResult ReduceScatterHDStage::RunBetweenStep(u32 rank, u32 neighCur, u32 neig
     return HCCL_SUCCESS;
 }
 
-HcclResult ReduceScatterHDStage::RunReduceScatterRead(u32 rank, u32 rankSize, const std::vector<LINK> &links)
+HcclResult ReduceScatterHDStage::RunReduceScatterRead(u32 rank, u32 rankSize, const std::vector<LINK>& links)
 {
-    (void) rankSize;
+    (void)rankSize;
     u32 unitSize = SIZE_TABLE[dataType_];
     u32 totalSize = unitSize * count_;
 
     DeviceMem userMemOut = DeviceMem::create(opInfo_->outputAddr, totalSize);
 
-    void *remMemPtr = nullptr;
+    void* remMemPtr = nullptr;
     DeviceMem dst;
     DeviceMem src;
     u32 dstRank;
@@ -225,11 +220,11 @@ HcclResult ReduceScatterHDStage::RunReduceScatterRead(u32 rank, u32 rankSize, co
         dstRank = rank ^ (1 << (nSteps_ - 1 - step));
         CHK_RET(links[dstRank]->GetRemoteMem(UserMemType::OUTPUT_MEM, &remMemPtr));
         dst = outputMem_.range(sliceMap_[step][rank].offset, sliceMap_[step][rank].size);
-        src = DeviceMem::create(static_cast<u8 *>(remMemPtr) + sliceMap_[step][rank].offset,
-            sliceMap_[step][rank].size);
-        CHK_RET(HcclReduceAsync(dispatcher_, static_cast<void *>(src.ptr()), sliceMap_[step][rank].size / unitSize,
-            dataType_, reductionOp_, stream_, static_cast<void *>(dst.ptr()),
-            links[dstRank]->GetRemoteRank(), links[dstRank]->GetLinkType(), INLINE_REDUCE_BIT));
+        src = DeviceMem::create(static_cast<u8*>(remMemPtr) + sliceMap_[step][rank].offset, sliceMap_[step][rank].size);
+        CHK_RET(HcclReduceAsync(
+            dispatcher_, static_cast<void*>(src.ptr()), sliceMap_[step][rank].size / unitSize, dataType_, reductionOp_,
+            stream_, static_cast<void*>(dst.ptr()), links[dstRank]->GetRemoteRank(), links[dstRank]->GetLinkType(),
+            INLINE_REDUCE_BIT));
         if (step != (nSteps_ - 1)) {
             CHK_RET(RunBetweenStep(rank, dstRank, rank ^ (1 << (nSteps_ - 1 - step - 1)), links));
         }
@@ -254,4 +249,4 @@ HcclResult ReduceScatterHDStage::RunReduceScatterRead(u32 rank, u32 rankSize, co
     return HCCL_SUCCESS;
 }
 REGISTER_TEMPLATE(TemplateType::TEMPLATE_REDUCESCATTER_HDSTAGE, ReduceScatterHDStage);
-}  // namespace hccl
+} // namespace hccl

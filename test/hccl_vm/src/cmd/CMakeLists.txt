@@ -1,3 +1,4 @@
+# -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2026 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
@@ -5,29 +6,25 @@
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
 
 file(GLOB HCCL_CMD_SOURCES CONFIGURE_DEPENDS
         "*.cc"
         "subcmd/*.cc"
 )
 
-add_library(cmd OBJECT ${HCCL_CMD_SOURCES})
+add_library(cmd STATIC ${HCCL_CMD_SOURCES})
 
 target_include_directories(cmd PRIVATE
-        ${ASCEND_CANN_PACKAGE_PATH}/x86_64-linux/pkg_inc/hcomm/ccu
-        ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc/asc/hccl/internal/hcomm/pkg_inc/hcomm/ccu
         ${CMAKE_CURRENT_SOURCE_DIR}/..
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/subcmd
         ${CMAKE_CURRENT_SOURCE_DIR}/../common
         ${CMAKE_CURRENT_SOURCE_DIR}/../plugin
         ${CMAKE_CURRENT_SOURCE_DIR}/../store
-        ${CMAKE_CURRENT_SOURCE_DIR}/../store
         ${CMAKE_CURRENT_SOURCE_DIR}/../../include
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../include/runnerdb
         ${CMAKE_CURRENT_SOURCE_DIR}/../../include/topo
         ${CMAKE_CURRENT_SOURCE_DIR}/../../include/store
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../include
         ${CMAKE_CURRENT_SOURCE_DIR}/../../third_party/nlohmann_json
 
         ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc
@@ -36,22 +33,21 @@ target_include_directories(cmd PRIVATE
         ${ASCEND_CANN_PACKAGE_PATH}/include
         ${ASCEND_CANN_PACKAGE_PATH}/include/hccl
 )
+if(NOT BUILD_LEVEL1_ONLY)
+    target_include_directories(cmd PRIVATE
+        ${HCOMM_CODE_ROOT}/src/base_comm/resources/ccu/ccu_microcode
+    )
+endif()
 
-target_compile_options(cmd PRIVATE
-        -Werror
-        -fno-common
-        -fno-strict-aliasing
-        -pipe
-        -O0
-        -g
-        -D_GLIBCXX_USE_CXX11_ABI=0
-)
+hcclvm_apply_common_flags(cmd)
 
 target_link_libraries(cmd PRIVATE
         dl
         rt
+        common
         log
-        runnerdb
+        runtime_state
+        operation_data
         store
         topo
         CLI11::CLI11

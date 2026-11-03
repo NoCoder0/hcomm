@@ -1,5 +1,7 @@
 # HCOMM
 
+English | [简体中文](./README.md)
+
 ## 🔥 Latest News
 
 - [2025/11/30] The HCOMM project is now open source.
@@ -37,8 +39,9 @@ The key directories of this project are as follows:
 │   │   ├── api_c_adpt                   # C interface adaptation
 │   │   ├── common                       # Common basic functionality for the collective communication layer
 │   │   ├── communicator                 # Communication domain
+│   │   ├── config_mgr                   # Configuration management
 │   │   ├── dfx                          # Diagnostics and tracing
-│   │   ├── rank_graphs                  # Topology management
+│   │   ├── rank_graph                   # Topology management
 │   │   └── resource_mgr                 # Resource management
 │   └── legacy                           # Historical version compatibility directory
 │       ├── ascend910                    # A2 and A3 compatibility code
@@ -59,6 +62,7 @@ The key directories of this project are as follows:
 ├── python                               # Python package
 ├── include                              # External header files
 ├── pkg_inc                              # Inter-package interface header files
+├── experimental                         # Community-contributed experimental code directory
 ├── test                                 # Test code directory
 │   ├── ut                               # Unit test code directory
 │   └── st                               # System test code directory

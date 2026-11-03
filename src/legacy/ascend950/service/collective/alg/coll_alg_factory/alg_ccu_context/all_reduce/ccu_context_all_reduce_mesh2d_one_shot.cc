@@ -13,21 +13,21 @@
 
 namespace Hccl {
 
-constexpr int      INPUT_XN_ID   = 0;
-constexpr int      SCRATCH_XN_ID = 1;
-constexpr int      TOKEN_XN_ID   = 2;
-constexpr int      CKE_IDX_0     = 0;
-constexpr int      CKE_IDX_1     = 1;
-constexpr int      CKE_IDX_2     = 2;
-constexpr int      CKE_IDX_3     = 3;
-constexpr int      CKE_IDX_4     = 4;
-constexpr uint32_t AXIS_NUM      = 2;
+constexpr int INPUT_XN_ID = 0;
+constexpr int SCRATCH_XN_ID = 1;
+constexpr int TOKEN_XN_ID = 2;
+constexpr int CKE_IDX_0 = 0;
+constexpr int CKE_IDX_1 = 1;
+constexpr int CKE_IDX_2 = 2;
+constexpr int CKE_IDX_3 = 3;
+constexpr int CKE_IDX_4 = 4;
+constexpr uint32_t AXIS_NUM = 2;
 
-CcuContextAllReduceMesh2DOneShot::CcuContextAllReduceMesh2DOneShot(const CcuCtxArg &arg,
-    const std::vector<CcuTransport*> &transports, const CcuTransportGroup &group)
+CcuContextAllReduceMesh2DOneShot::CcuContextAllReduceMesh2DOneShot(
+    const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group)
     : CcuContextAlgBase(arg, transports, group)
 {
-    const CcuCtxArgAllReduceMesh2DOneShot *ctxArg = dynamic_cast<const CcuCtxArgAllReduceMesh2DOneShot *>(&arg);
+    const CcuCtxArgAllReduceMesh2DOneShot* ctxArg = dynamic_cast<const CcuCtxArgAllReduceMesh2DOneShot*>(&arg);
     if (ctxArg == nullptr) {
         THROW<NullPtrException>(StringFormat("CcuContextAllReduceMesh2DOneShot::ctxArg ptr is null"));
     }
@@ -39,23 +39,26 @@ CcuContextAllReduceMesh2DOneShot::CcuContextAllReduceMesh2DOneShot(const CcuCtxA
     reduceOp_ = ctxArg->op_.reduceOp;
     if (outputDataType_ == DataType::INVALID) {
         outputDataType_ = dataType_;
-        HCCL_INFO("[CcuContextAllReduceMesh2DOneShot] outputDataType is [INVALID], set outputDataType to[%s]",
+        HCCL_INFO(
+            "[CcuContextAllReduceMesh2DOneShot] outputDataType is [INVALID], set outputDataType to[%s]",
             outputDataType_.Describe().c_str());
     }
 
-    HCCL_INFO("[CcuContextAllReduceMesh2DOneShot] Init, CtxArgs are dimSize0[%llu], dimSize1[%llu], axisId[%u], "
+    HCCL_INFO(
+        "[CcuContextAllReduceMesh2DOneShot] Init, CtxArgs are dimSize0[%llu], dimSize1[%llu], axisId[%u], "
         "rankId[%llu], dataType[%s], outputDataType[%s], reduceOp[%s]",
-        dimSize_[0], dimSize_[1], axisId_, rankId_, dataType_.Describe().c_str(),
-        outputDataType_.Describe().c_str(), reduceOp_.Describe().c_str());
+        dimSize_[0], dimSize_[1], axisId_, rankId_, dataType_.Describe().c_str(), outputDataType_.Describe().c_str(),
+        reduceOp_.Describe().c_str());
     uint32_t max_dimSize = 2;
     if (dimSize_.size() != max_dimSize or axisId_ > 1) {
-        THROW<NullPtrException>(StringFormat("[CcuContextAllReduceMesh2DOneShot] dimSize[%u] or axisId[%u] is invalid",
-            dimSize_.size(), axisId_));
+        THROW<NullPtrException>(StringFormat(
+            "[CcuContextAllReduceMesh2DOneShot] dimSize[%u] or axisId[%u] is invalid", dimSize_.size(), axisId_));
     }
-    CHK_PRT_THROW(dimSize_[0] == 0 || dimSize_[1] == 0,
-                  HCCL_ERROR("[CcuContextAllReduceMesh2DOneShot] dimSize0[%llu] or dimSize1[%llu] is zero",
-                   dimSize_[0], dimSize_[1]),
-                  InvalidParamsException, "dimSize[0] or dimSize[1] is invalid");
+    CHK_PRT_THROW(
+        dimSize_[0] == 0 || dimSize_[1] == 0,
+        HCCL_ERROR(
+            "[CcuContextAllReduceMesh2DOneShot] dimSize0[%llu] or dimSize1[%llu] is zero", dimSize_[0], dimSize_[1]),
+        InvalidParamsException, "dimSize[0] or dimSize[1] is invalid");
 
     myRankIdxInAxis_.push_back(rankId_ % dimSize_[0]); // 本 rank 在第 0 维上的 index
     myRankIdxInAxis_.push_back(rankId_ / dimSize_[0]); // 本 rank 在第 1 维上的 index
@@ -70,7 +73,8 @@ CcuContextAllReduceMesh2DOneShot::CcuContextAllReduceMesh2DOneShot(const CcuCtxA
     ExportMaskSignal(currAxisSignal_, currAxisSignalName_);
     otherAxisSignal_ = ImportMaskSignal(otherAxisSignalName_);
 
-    HCCL_INFO("[CcuContextAllReduceMesh2DOneShot] Init, myRankIdx0[%llu], myRankIdx1[%llu], "
+    HCCL_INFO(
+        "[CcuContextAllReduceMesh2DOneShot] Init, myRankIdx0[%llu], myRankIdx1[%llu], "
         "myRankIdxInCurrentAxis[%llu], currentAxisRankSize[%llu]",
         myRankIdxInAxis_[0], myRankIdxInAxis_[1], myRankIdxInCurrentAxis_, currentAxisRankSize_);
 }
@@ -79,7 +83,7 @@ void CcuContextAllReduceMesh2DOneShot::Algorithm()
 {
     HCCL_INFO("[CcuContextAllReduceMesh2DOneShot] AllReduceMesh2DOneShot run");
     uint16_t selfBit = 1 << myRankIdxInCurrentAxis_;
-    uint16_t allBit  = ((1 << currentAxisRankSize_) - 1) & (~(1 << myRankIdxInCurrentAxis_));
+    uint16_t allBit = ((1 << currentAxisRankSize_) - 1) & (~(1 << myRankIdxInCurrentAxis_));
 
     InitVariables();
 
@@ -107,8 +111,8 @@ void CcuContextAllReduceMesh2DOneShot::Algorithm()
     DoAxisSync(1);
 
     // OneShot Step2
-    CcuRep::Variable& Step2Offset  = (axisId_ == 0) ? ySliceOffset_ : xSliceOffset_ ;
-    GroupOpSize& Step2GoSize  = (axisId_ == 0) ? yGoSize_ : xGoSize_;
+    CcuRep::Variable& Step2Offset = (axisId_ == 0) ? ySliceOffset_ : xSliceOffset_;
+    GroupOpSize& Step2GoSize = (axisId_ == 0) ? yGoSize_ : xGoSize_;
 
     DoGroupReduce(scratchAddr_, outputAddr_[myRankIdxInCurrentAxis_], Step2Offset, Step2GoSize);
 
@@ -121,8 +125,9 @@ void CcuContextAllReduceMesh2DOneShot::Algorithm()
 
 void CcuContextAllReduceMesh2DOneShot::DoGroupSync(int ckeIdx, uint16_t selfBit, uint16_t allBit)
 {
-    HCCL_INFO("[CcuContextAllReduceMesh2DOneShot] DoGroupSync Starts, ckeIdx[%d], selfBit[%u], allBit[%u]",
-        ckeIdx, selfBit, allBit);
+    HCCL_INFO(
+        "[CcuContextAllReduceMesh2DOneShot] DoGroupSync Starts, ckeIdx[%d], selfBit[%u], allBit[%u]", ckeIdx, selfBit,
+        allBit);
     for (auto t : transports) {
         RemotePost(*t, ckeIdx, selfBit);
     }
@@ -131,8 +136,8 @@ void CcuContextAllReduceMesh2DOneShot::DoGroupSync(int ckeIdx, uint16_t selfBit,
     return;
 }
 
-void CcuContextAllReduceMesh2DOneShot::DoGroupReduce(std::vector<CcuRep::Variable> &srcBase,
-    CcuRep::Variable &dstBase, CcuRep::Variable &offset, GroupOpSize &goSize)
+void CcuContextAllReduceMesh2DOneShot::DoGroupReduce(
+    std::vector<CcuRep::Variable>& srcBase, CcuRep::Variable& dstBase, CcuRep::Variable& offset, GroupOpSize& goSize)
 {
     HCCL_INFO("[CcuContextAllReduceMesh2DOneShot] DoGroupReduce Starts");
     // 从轴上所有的对端的对应位置读取数据
@@ -191,10 +196,13 @@ void CcuContextAllReduceMesh2DOneShot::InitVariables()
             scratchAddr_.push_back(CreateVariable());
             token_.push_back(CreateVariable());
         } else {
-            HCCL_INFO("[CcuContextAllReduceMesh2DOneShot] MyRank[%u], PeerId[%llu], TransportId[%u]",
-                myRankIdxInCurrentAxis_, peerId, transportIdx);
-            CHK_PRT_RET(transports[transportIdx] == nullptr || transportIdx >= transports.size(),
-                    HCCL_ERROR("[CcuContextAllReduceMesh2DOneShot] Algorithm transport ptr is null or transportIdx is out of bounds"),);
+            HCCL_INFO(
+                "[CcuContextAllReduceMesh2DOneShot] MyRank[%u], PeerId[%llu], TransportId[%u]", myRankIdxInCurrentAxis_,
+                peerId, transportIdx);
+            CHK_PRT_RET(
+                transports[transportIdx] == nullptr || transportIdx >= transports.size(),
+                HCCL_ERROR("[CcuContextAllReduceMesh2DOneShot] Algorithm transport ptr is null or transportIdx is out "
+                           "of bounds"), );
             inputAddr_.push_back(CreateVariable((*transports[transportIdx]), INPUT_XN_ID));
             scratchAddr_.push_back(CreateVariable((*transports[transportIdx]), SCRATCH_XN_ID));
             token_.push_back(CreateVariable((*transports[transportIdx]), TOKEN_XN_ID));
@@ -222,21 +230,21 @@ void CcuContextAllReduceMesh2DOneShot::LoadArgs()
     Load(ySliceOffset_);
     Load(xGoSize_);
     Load(yGoSize_);
-    HCCL_INFO("[CcuContextAllReduceMesh2DOneShot] LoadArgs Eends");
+    HCCL_INFO("[CcuContextAllReduceMesh2DOneShot] LoadArgs Ends");
     return;
 }
 
-std::vector<uint64_t> CcuContextAllReduceMesh2DOneShot::GeneArgs(const CcuTaskArg &arg)
+std::vector<uint64_t> CcuContextAllReduceMesh2DOneShot::GeneArgs(const CcuTaskArg& arg)
 {
     HCCL_INFO("[CcuContextAllReduceMesh2DOneShot] GeneArgs Starts");
-    const CcuTaskArgAllReduceMesh2DOneShot *taskArg = dynamic_cast<const CcuTaskArgAllReduceMesh2DOneShot *>(&arg);
+    const CcuTaskArgAllReduceMesh2DOneShot* taskArg = dynamic_cast<const CcuTaskArgAllReduceMesh2DOneShot*>(&arg);
     if (taskArg == nullptr) {
         THROW<NullPtrException>(StringFormat("CcuContextAllReduceMesh2DOneShot::taskArg ptr is null"));
     }
     uint64_t tokenInfo = taskArg->token_;
 
-    uint64_t inputAddr   = taskArg->inputAddr_;
-    uint64_t outputAddr  = taskArg->outputAddr_;
+    uint64_t inputAddr = taskArg->inputAddr_;
+    uint64_t outputAddr = taskArg->outputAddr_;
     uint64_t scratchAddr = taskArg->scratchAddr_;
 
     uint64_t xSliceOffset = taskArg->xSliceOffset_;
@@ -245,13 +253,13 @@ std::vector<uint64_t> CcuContextAllReduceMesh2DOneShot::GeneArgs(const CcuTaskAr
     auto xGoSize = CalGoSize(taskArg->xSliceSize_);
     auto yGoSize = CalGoSize(taskArg->ySliceSize_);
 
-    HCCL_INFO("[CcuContextAllReduceMesh2DOneShot] GeneArgs, TaskArgs are inputAddr[%llu], "
-              "outputAddr[%llu], scratchAddr[%llu], xSliceSize[%llu], ySliceSize[%llu], xSliceOffset[%llu], "
-              "ySliceOffset[%llu]",
-              inputAddr, outputAddr, scratchAddr, taskArg->xSliceSize_, taskArg->ySliceSize_, xSliceOffset,
-              ySliceOffset);
+    HCCL_INFO(
+        "[CcuContextAllReduceMesh2DOneShot] GeneArgs, TaskArgs are inputAddr[%llu], "
+        "outputAddr[%llu], scratchAddr[%llu], xSliceSize[%llu], ySliceSize[%llu], xSliceOffset[%llu], "
+        "ySliceOffset[%llu]",
+        inputAddr, outputAddr, scratchAddr, taskArg->xSliceSize_, taskArg->ySliceSize_, xSliceOffset, ySliceOffset);
 
-    std::vector<uint64_t> taskArgList = {inputAddr,  outputAddr, tokenInfo, scratchAddr, xSliceOffset, ySliceOffset};
+    std::vector<uint64_t> taskArgList = {inputAddr, outputAddr, tokenInfo, scratchAddr, xSliceOffset, ySliceOffset};
     // push goSize
     for (auto goSize : {xGoSize, yGoSize}) {
         for (auto val : goSize) {
@@ -260,4 +268,4 @@ std::vector<uint64_t> CcuContextAllReduceMesh2DOneShot::GeneArgs(const CcuTaskAr
     }
     return taskArgList;
 }
-}
+} // namespace Hccl

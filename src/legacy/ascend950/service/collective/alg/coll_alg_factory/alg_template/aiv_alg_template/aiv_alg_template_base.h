@@ -30,28 +30,30 @@ constexpr uint64_t MAX_DIM_NUM = 3;
 
 class AivAlgTemplateBase {
 public:
-    explicit AivAlgTemplateBase(const RankId virtualRank, const u32 tempRankSize,
-        const std::vector<std::vector<RankId>> &tempVTopo, const std::map<RankId, u32> &tempVirtRankMap);
+    explicit AivAlgTemplateBase(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     virtual ~AivAlgTemplateBase();
 
-    void SetCollOp(const CollAlgOperator &op);
+    void SetCollOp(const CollAlgOperator& op);
     void SetDmaMode(const DmaMode dmaMode);
-    void SetDataType(const DataType &dataType);
+    void SetDataType(const DataType& dataType);
     void SetRoot(const u32 root);
-    void InitReduceInfo(const ReduceOp &redOp, const DataType &dataType);
+    void InitReduceInfo(const ReduceOp& redOp, const DataType& dataType);
 
     virtual std::string Describe() const = 0;
 
-    virtual HcclResult CalcRes(AlgTempResReq &tempResReq);
-    virtual HcclResult CalcResDetour(const RankGraph *rankGraph, AlgTempResReq &tempResReq);
-    virtual HcclResult CalcResDetour(ConnectedLinkMgr *linkMgr, AlgTempResReq &tempResReq);
+    virtual HcclResult CalcRes(AlgTempResReq& tempResReq);
+    virtual HcclResult CalcResDetour(const RankGraph* rankGraph, AlgTempResReq& tempResReq);
+    virtual HcclResult CalcResDetour(ConnectedLinkMgr* linkMgr, AlgTempResReq& tempResReq);
     virtual u32 CalcScratchMultiple(BufferType inBuffType, BufferType outBuffType);
     virtual HcclResult CalNumBlocks(u32& numBlocks, u64 dataSize, u32 numBlocksLimit);
 
-    virtual HcclResult GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &templateDataParams, 
-        const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues);
-    HcclResult setPathNumMap(const std::map<u32, u32> &rank2PathNumMap) const;
-    
+    virtual HcclResult GenExtIns(
+        const TempFuncs& tempFuncs, const TemplateDataParams& templateDataParams, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues);
+    HcclResult setPathNumMap(const std::map<u32, u32>& rank2PathNumMap) const;
+
 protected:
     void IncSliceId();
 
@@ -66,9 +68,9 @@ protected:
     u32 tempRankSize_{0};
     std::vector<std::vector<RankId>> tempVTopo_;
     std::map<RankId, u32> tempVirtRankMap_;
-    u32  linkNumBtwPeers_ = 1;
+    u32 linkNumBtwPeers_ = 1;
 
-    u32 sliceId_{0};  // 用于组装aivTag
+    u32 sliceId_{0}; // 用于组装aivTag
 };
 
 } // namespace Hccl

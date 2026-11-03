@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: ccu executor -- reduce add
  * Author: caiyifan
  */
@@ -21,7 +24,8 @@
 
 class ReduceAddExecutor : public CcuExecutorBase {
 public:
-    explicit ReduceAddExecutor(int streamId, int rankId, int dieId, const hcomm::CcuRep::CcuInstr &instr, CcuSimulator *ccuSimulator)
+    explicit ReduceAddExecutor(
+        int streamId, int rankId, int dieId, const hcomm::CcuRep::CcuInstr& instr, CcuSimulator* ccuSimulator)
         : CcuExecutorBase(streamId, rankId, dieId, instr, ccuSimulator)
     {
         (void)memset(msId_, 0, sizeof(uint16_t) * hcomm::CcuRep::CCU_REDUCE_MAX_MS);
@@ -32,8 +36,10 @@ public:
     void Parser() override;
     void Run() override;
     void RunV1();
-    void Process(CcuResourceManager &ccuResMgr) override;
+    void RunV2();
+    void Process(CcuResourceManager& ccuResMgr) override;
     std::string Describe() override;
+    CcuTrace::CcuInstrTraceDetail CollectTraceDetail() override;
 
 private:
     uint16_t count_{0};

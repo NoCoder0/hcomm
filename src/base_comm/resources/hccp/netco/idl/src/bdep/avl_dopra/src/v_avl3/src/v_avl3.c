@@ -15,7 +15,7 @@
 void *VosAvl3FindOrFindNext(AVL3_TREE *pstTree, const void *pKey, unsigned int bFlag, AVL3_TREE_INFO *pstTreeInfo)
 {
     AVL3_NODE *pstNode;
-    void  *pFoundNode = AVL_NULL_PTR;
+    void *pFoundNode = AVL_NULL_PTR;
     int iResult;
     int iKeyOffset;
 
@@ -31,8 +31,7 @@ void *VosAvl3FindOrFindNext(AVL3_TREE *pstTree, const void *pKey, unsigned int b
     /* The Tree not empty. So start traversing through the tree.          */
     for (;;) {
         /* compare pKey of current pstNode with supplied pKey             */
-        iResult = pstTreeInfo->pfCompare(pKey,
-            (void *)((unsigned char *)pstNode + iKeyOffset));
+        iResult = pstTreeInfo->pfCompare(pKey, (void *)((unsigned char *)pstNode + iKeyOffset));
         if (iResult > 0) {
             /* specified pKey is greater than pKey of this pstNode,       */
             /* so look in right subtree                                   */
@@ -55,7 +54,7 @@ void *VosAvl3FindOrFindNext(AVL3_TREE *pstTree, const void *pKey, unsigned int b
 
             pstNode = pstNode->pstLeft;
         } else {
-            /* found the requested pstNode for suplied pKey               */
+            /* found the requested pstNode for supplied pKey               */
             if (bFlag) {
                 /* need to find the successor pstNode to this pstNode     */
                 pFoundNode = VosAvl3Next(pstNode, pstTreeInfo);
@@ -96,8 +95,7 @@ void *VosAvl3InsertOrFind(AVL3_TREE *pstTree, AVL3_NODE *pstNode, AVL3_TREE_INFO
     iKeyOffset = GET_KEYOFFSET(pstTreeInfo);
     while (pstParentNode != AVL_NULL_PTR) {
         /* go left or right, depending on comparison                          */
-        iResult = pstTreeInfo->pfCompare(
-            (void *)((unsigned char *)pstNode + iKeyOffset),
+        iResult = pstTreeInfo->pfCompare((void *)((unsigned char *)pstNode + iKeyOffset),
             (void *)((unsigned char *)pstParentNode + iKeyOffset));
         if (iResult > 0) {
             /* new key is greater than this pstNode's key, so move down       */
@@ -180,8 +178,7 @@ void *VosAvl3Find(AVL3_TREE *pstTree, const void *pstKey, AVL3_TREE_INFO *pstTre
     iKeyOffset = GET_KEYOFFSET(pstTreeInfo);
 
     while (pstNode != AVL_NULL_PTR) {
-        iResult = pstTreeInfo->pfCompare(pstKey,
-            (void *)((unsigned char *)pstNode + iKeyOffset));
+        iResult = pstTreeInfo->pfCompare(pstKey, (void *)((unsigned char *)pstNode + iKeyOffset));
         if (iResult > 0) {
             /* specified pstKey is greater than pstKey of this pstNode, so    */
             /* look in right subtree                                          */

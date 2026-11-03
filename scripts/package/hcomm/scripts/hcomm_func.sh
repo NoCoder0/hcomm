@@ -1,6 +1,13 @@
 #!/bin/bash
-# Perform common functions for hcomm package
-# Copyright (c) Huawei Technologies Co., Ltd. 2024. All rights reserved.
+# -----------------------------------------------------------------------------------------------------------
+# Copyright (c) 2025 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
 
 create_compiler_atc_fwkacllib_softlink() {
     local install_path="$1"
@@ -76,9 +83,6 @@ remove_compiler_atc_fwkacllib_softlink() {
         if [ -e "${install_path}/${pkg}/include" ]; then
             chmod u+w "${install_path}/${pkg}/include"
             remove_dir "${install_path}/${pkg}/include/hcomm"
-            if [ "$pkg" = "compiler" ]; then
-                chmod u-w "${install_path}/${pkg}/include"
-            fi
         fi
 
         if [ -e "${install_path}/${pkg}/lib64" ]; then
@@ -94,18 +98,8 @@ remove_compiler_atc_fwkacllib_softlink() {
             chmod u+w "${install_path}/${pkg}"
         fi
         remove_dir_if_empty "${install_path}/${pkg}/lib64"
-        if [ -e "${install_path}/${pkg}/lib64" ]; then
-            if [ "$pkg" = "compiler" ]; then
-                chmod u-w "${install_path}/${pkg}/lib64"
-            fi
-        fi
         remove_dir_if_empty "${install_path}/${pkg}/include"
         remove_dir_if_empty "${install_path}/${pkg}"
-        if [ -e "${install_path}/${pkg}" ]; then
-            if [ "$pkg" = "compiler" ]; then
-                chmod u-w "${install_path}/${pkg}"
-            fi
-        fi
     done
 }
 

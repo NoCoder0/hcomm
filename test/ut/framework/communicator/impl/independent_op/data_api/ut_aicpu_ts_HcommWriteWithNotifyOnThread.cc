@@ -13,13 +13,9 @@
 
 using namespace hccl;
 
-class UtAicpuTsHcommWriteWithNotifyOnThread : public UtAicpuTsBase
-{
+class UtAicpuTsHcommWriteWithNotifyOnThread : public UtAicpuTsBase {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "UtAicpuTsHcommWriteWithNotifyOnThread tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "UtAicpuTsHcommWriteWithNotifyOnThread tests set up." << std::endl; }
 
     static void TearDownTestCase()
     {
@@ -43,8 +39,8 @@ protected:
     ChannelHandle channel = reinterpret_cast<ChannelHandle>(&transportOnDevice);
     uint64_t tempDst[6] = {0};
     uint64_t tempSrc[6] = {1, 1, 4, 5, 1, 4};
-    void *dst = reinterpret_cast<void *>(tempDst);
-    void *src = reinterpret_cast<void *>(tempSrc);
+    void* dst = reinterpret_cast<void*>(tempDst);
+    void* src = reinterpret_cast<void*>(tempSrc);
     uint64_t len = sizeof(tempDst);
     uint32_t notifyIdx = 0;
     int32_t res{HCCL_E_RESERVED};
@@ -56,13 +52,16 @@ TEST_F(UtAicpuTsHcommWriteWithNotifyOnThread, Ut_HcommWriteWithNotifyOnThread_Wh
     EXPECT_EQ(res, HCCL_SUCCESS);
 }
 
-TEST_F(UtAicpuTsHcommWriteWithNotifyOnThread, Ut_HcommWriteWithNotifyOnThread_When_Thread_IsNull_Expect_ReturnIsHCCL_E_PTR)
+TEST_F(
+    UtAicpuTsHcommWriteWithNotifyOnThread, Ut_HcommWriteWithNotifyOnThread_When_Thread_IsNull_Expect_ReturnIsHCCL_E_PTR)
 {
     res = HcommWriteWithNotifyOnThread(0, channel, dst, src, len, notifyIdx);
     EXPECT_EQ(res, HCCL_E_PTR);
 }
 
-TEST_F(UtAicpuTsHcommWriteWithNotifyOnThread, Ut_HcommWriteWithNotifyOnThread_When_Channel_IsNull_Expect_ReturnIsHCCL_E_PTR)
+TEST_F(
+    UtAicpuTsHcommWriteWithNotifyOnThread,
+    Ut_HcommWriteWithNotifyOnThread_When_Channel_IsNull_Expect_ReturnIsHCCL_E_PTR)
 {
     res = HcommWriteWithNotifyOnThread(thread, 0, dst, src, len, notifyIdx);
     EXPECT_EQ(res, HCCL_E_PTR);
@@ -80,11 +79,13 @@ TEST_F(UtAicpuTsHcommWriteWithNotifyOnThread, Ut_HcommWriteWithNotifyOnThread_Wh
     EXPECT_EQ(res, HCCL_E_PTR);
 }
 
-TEST_F(UtAicpuTsHcommWriteWithNotifyOnThread, Ut_HcommWriteWithNotifyOnThread_When_BuildLocRmaBufferLite_Fail_Expect_ReturnIsHCCL_E_INTERNAL)
+TEST_F(
+    UtAicpuTsHcommWriteWithNotifyOnThread,
+    Ut_HcommWriteWithNotifyOnThread_When_BuildLocRmaBufferLite_Fail_Expect_ReturnIsHCCL_E_INTERNAL)
 {
-    GlobalMockObject::verify();
-    auto *const transportLitePtr = reinterpret_cast<Hccl::UbTransportLiteImpl *>(channel);
- 	MOCKER_CPP_VIRTUAL(transportLitePtr, &Hccl::UbTransportLiteImpl::BuildLocRmaBufferLite)
+    VerifyMocksAndRestubDevType();
+    auto* const transportLitePtr = reinterpret_cast<Hccl::UbTransportLiteImpl*>(channel);
+    MOCKER_CPP_VIRTUAL(transportLitePtr, &Hccl::UbTransportLiteImpl::BuildLocRmaBufferLite)
         .stubs()
         .will(returnValue(HCCL_E_INTERNAL));
 

@@ -7,6 +7,7 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
+
 target_include_directories(hccl_st_fwk PUBLIC
         ${TOP_DIR}/runtime/include/external
         ${TOP_DIR}/runtime/pkg_inc/runtime

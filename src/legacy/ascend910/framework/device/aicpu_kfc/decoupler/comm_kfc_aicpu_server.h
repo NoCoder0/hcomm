@@ -20,15 +20,15 @@
 
 class CommKfcAicpuServer {
 public:
-    CommKfcAicpuServer(u32 groupIdx): groupIdx_(groupIdx) {}
+    CommKfcAicpuServer(u32 groupIdx) : groupIdx_(groupIdx) {}
     ~CommKfcAicpuServer() = default;
-    HcclApi::HcclMsgArea *GetMsgAreaAddr() const { return msgArea_; }
+    HcclApi::HcclMsgArea* GetMsgAreaAddr() const { return msgArea_; }
     u32 GetRankNum() const { return rankNum_; }
-    HcclResult AddOpContext(const HcclApi::CommKfcContext *ctx);
-    HcclResult Orchestrate(const HcclApi::HcclMsg &msg, HcclApi::HcclMsgExt &extMsg, u32 msgPos);
+    HcclResult AddOpContext(const HcclApi::CommKfcContext* ctx);
+    HcclResult Orchestrate(const HcclApi::HcclMsg& msg, HcclApi::HcclMsgExt& extMsg, u32 msgPos);
     HcclResult Finalize(u32 msgPos);
-    HcclResult IsAllTaskFinished(u32 msgPos, bool &isFinish);
-    HcclResult InterGroupSync(const CommKfcAicpuServer &otherServer, HcclHandle handle);
+    HcclResult IsAllTaskFinished(u32 msgPos, bool& isFinish);
+    HcclResult InterGroupSync(const CommKfcAicpuServer& otherServer, HcclHandle handle);
     HcclResult CheckTimeOut(u32 msgPos);
     HcclResult ErrorDfxProcess(HcclResult errorCode);
 
@@ -38,17 +38,17 @@ private:
 #else
     static constexpr u64 KFC_NSEC_PER_SEC = 1000000000UL;
 #endif
-    HcclResult GetServerInfoForSync(HcclHandle handle, u32 &msgPos, u32 &repeat) const;
+    HcclResult GetServerInfoForSync(HcclHandle handle, u32& msgPos, u32& repeat) const;
     void KeepAlive() { lastMsgTimestamp_ = GetCurCpuTimestamp(); }
     bool IsTimeout() const { return GetCurCpuTimestamp() - lastMsgTimestamp_ >= timeout_ * KFC_NSEC_PER_SEC; }
     void SetMsgPosByHandle(HcclHandle handle, u32 msgPos) { handleIdToMsgPos_[handle] = msgPos; }
     void SetRepeatByHandle(HcclHandle handle, u32 repeat) { handleIdToRepeat_[handle] = repeat; }
 
 private:
-    std::unordered_map<uintptr_t, void *> ctxToOpHandle_{};
+    std::unordered_map<uintptr_t, void*> ctxToOpHandle_{};
     std::unordered_map<HcclHandle, u32> handleIdToMsgPos_{};
     std::unordered_map<HcclHandle, u32> handleIdToRepeat_{};
-    HcclApi::HcclMsgArea *msgArea_{nullptr};
+    HcclApi::HcclMsgArea* msgArea_{nullptr};
     u64 lastMsgTimestamp_{0UL};
     u64 timeout_{30UL};
     u64 turnNumsAddr_{0UL};
@@ -56,4 +56,4 @@ private:
     u32 rankNum_{0U};
 };
 
-#endif //HCCL_COMM_KFC_AICPU_SERVER_H
+#endif // HCCL_COMM_KFC_AICPU_SERVER_H

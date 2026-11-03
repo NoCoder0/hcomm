@@ -26,33 +26,20 @@
 #undef private
 #undef protected
 
-
 using namespace std;
 using namespace Hccl;
 
-
-class CheckCrcTest : public testing::Test
-{
+class CheckCrcTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "\033[36m--CheckCrcTest SetUP--\033[0m" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "\033[36m--CheckCrcTest TearDown--\033[0m" << std::endl;
-    }
-    virtual void SetUp()
-    {
-        std::cout << "A Test SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "\033[36m--CheckCrcTest SetUP--\033[0m" << std::endl; }
+    static void TearDownTestCase() { std::cout << "\033[36m--CheckCrcTest TearDown--\033[0m" << std::endl; }
+    virtual void SetUp() { std::cout << "A Test SetUP" << std::endl; }
     virtual void TearDown()
     {
         GlobalMockObject::verify();
         std::cout << "A Test TearDown" << std::endl;
     }
 };
-
 
 TEST_F(CheckCrcTest, utCheckCrc1)
 {
@@ -61,8 +48,7 @@ TEST_F(CheckCrcTest, utCheckCrc1)
     CheckCrc dst;
     char str[10000];
     for (u32 i = 0; i < 10000; i++) {
-
-        str[i] = i%100;
+        str[i] = i % 100;
     }
     u32 zeroNum = 0;
     ret = src.GetCrcNum(&zeroNum);
@@ -72,7 +58,7 @@ TEST_F(CheckCrcTest, utCheckCrc1)
     u32 srcCrc2;
     u32 srcCrc3;
     u32 srcNum;
-    char *str1 = "123456789";
+    char* str1 = "123456789";
     ret = src.CalcStringCrc(str1, &srcCrc1);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ret = src.Calc32Crc(str, 100, &srcCrc1);
@@ -91,7 +77,6 @@ TEST_F(CheckCrcTest, utCheckCrc1)
 
     ret = src.GetCrcNum(&srcNum);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-
 
     u32 dstCrc1;
     u32 dstCrc2;
@@ -118,15 +103,14 @@ TEST_F(CheckCrcTest, utCheckCrc1)
     u32 srcCrcValue[3];
     u32 srcErrorCrcValue[3] = {100, 200, 300};
 
-
     ret = src.GetCrc(3, srcCrcValue);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    char *recvBuf = new char[256];
-    MOCKER(HrtMallocHost).stubs().with(mockcpp::any()).will(returnValue(static_cast<void *>(recvBuf)));
+    char* recvBuf = new char[256];
+    MOCKER(HrtMallocHost).stubs().with(mockcpp::any()).will(returnValue(static_cast<void*>(recvBuf)));
     MOCKER(HrtFreeHost).stubs().with(mockcpp::any()).will(ignoreReturnValue());
     std::string srcStr = src.GetString();
-    delete [] recvBuf;
+    delete[] recvBuf;
 
     ret = src.AddCrc(100);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -142,7 +126,6 @@ TEST_F(CheckCrcTest, utCheckCrc1)
     ret = src.GetCrcNum(&clearNum);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(clearNum, 0);
-
 }
 
 const std::string RankTable4p = R"(
@@ -206,13 +189,14 @@ const std::string RankTable4p = R"(
     }
     )";
 
-TEST_F(CheckCrcTest, GetCrc_NormalCase) {
+TEST_F(CheckCrcTest, GetCrc_NormalCase)
+{
     CheckCrc crcChecker;
     crcChecker.crcTable_.emplace_back(0x11111111);
     crcChecker.crcTable_.emplace_back(0x22222222);
     crcChecker.crcTable_.emplace_back(0x33333333);
     u32 num = crcChecker.crcTable_.size();
-    u32 *crcAddr = new u32[num];
+    u32* crcAddr = new u32[num];
     memset(crcAddr, 0, num * sizeof(u32));
 
     HcclResult result = crcChecker.GetCrc(num, crcAddr);
@@ -224,10 +208,11 @@ TEST_F(CheckCrcTest, GetCrc_NormalCase) {
     delete[] crcAddr;
 }
 
-TEST_F(CheckCrcTest, GetCrc_NumZero) {
+TEST_F(CheckCrcTest, GetCrc_NumZero)
+{
     CheckCrc crcChecker;
     u32 num = 0;
-    u32 *crcAddr = new u32[1]; // 分配任意大小的内存，因为num为0
+    u32* crcAddr = new u32[1]; // 分配任意大小的内存，因为num为0
 
     HcclResult result = crcChecker.GetCrc(num, crcAddr);
     EXPECT_EQ(result, HCCL_E_PARA);
@@ -235,11 +220,12 @@ TEST_F(CheckCrcTest, GetCrc_NumZero) {
     delete[] crcAddr;
 }
 
-TEST_F(CheckCrcTest, GetCrc_NumMismatch) {
+TEST_F(CheckCrcTest, GetCrc_NumMismatch)
+{
     CheckCrc crcChecker;
     crcChecker.crcTable_ = {0x12345678, 0x87654321, 0xABCDEF12};
     u32 num = 4;
-    u32 *crcAddr = new u32[num];
+    u32* crcAddr = new u32[num];
 
     HcclResult result = crcChecker.GetCrc(num, crcAddr);
     EXPECT_EQ(result, HCCL_E_INTERNAL);
@@ -247,7 +233,8 @@ TEST_F(CheckCrcTest, GetCrc_NumMismatch) {
     delete[] crcAddr;
 }
 
-TEST_F(CheckCrcTest, AddCrc_MultipleAdds) {
+TEST_F(CheckCrcTest, AddCrc_MultipleAdds)
+{
     CheckCrc crcChecker;
     u32 crcValues[] = {0x12345678, 0x87654321, 0xABCDEF12};
     for (u32 value : crcValues) {
@@ -259,7 +246,8 @@ TEST_F(CheckCrcTest, AddCrc_MultipleAdds) {
     }
 }
 
-TEST_F(CheckCrcTest, GetCrcNum_NormalCase) {
+TEST_F(CheckCrcTest, GetCrcNum_NormalCase)
+{
     CheckCrc crcChecker;
     u32 crcValues[] = {0x12345678, 0x87654321, 0xABCDEF12};
     for (u32 value : crcValues) {
@@ -270,13 +258,15 @@ TEST_F(CheckCrcTest, GetCrcNum_NormalCase) {
     EXPECT_EQ(num, 3);
 }
 
-TEST_F(CheckCrcTest, GetString_EmptyTable) {
+TEST_F(CheckCrcTest, GetString_EmptyTable)
+{
     CheckCrc crcChecker;
     std::string result = crcChecker.GetString();
     EXPECT_EQ(result, "0 ");
 }
 
-TEST_F(CheckCrcTest, GetString_OneElement) {
+TEST_F(CheckCrcTest, GetString_OneElement)
+{
     CheckCrc crcChecker;
     u32 crcValue = 0x12345678;
     crcChecker.AddCrc(crcValue);
@@ -284,7 +274,8 @@ TEST_F(CheckCrcTest, GetString_OneElement) {
     EXPECT_EQ(result, "1 305419896 ");
 }
 
-TEST_F(CheckCrcTest, GetString_MultipleElements) {
+TEST_F(CheckCrcTest, GetString_MultipleElements)
+{
     CheckCrc crcChecker;
     u32 crcValues[] = {305419896, 2236969153, 2882400562};
     for (u32 value : crcValues) {

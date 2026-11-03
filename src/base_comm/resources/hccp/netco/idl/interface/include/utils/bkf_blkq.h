@@ -54,4 +54,3 @@ BOOL BkfBlkqIsEmpty(BkfBlkq *blkq);
 #endif
 
 #endif
-

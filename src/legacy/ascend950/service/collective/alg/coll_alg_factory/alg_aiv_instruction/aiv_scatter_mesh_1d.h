@@ -12,37 +12,34 @@
 
 using namespace AscendC;
 
-template<typename T>
-// todo 简化参数
+template <typename T>
 class AivScatterMesh1D : public AivCommBase {
-    constexpr static uint64_t CORE_NUMS_PER_STAGE = 16;  // 每个阶段提供的最大核数
-    constexpr static uint64_t STAGE_NUM = 2;  // 生产者 消费者
+    constexpr static uint64_t CORE_NUMS_PER_STAGE = 16; // 每个阶段提供的最大核数
+    constexpr static uint64_t STAGE_NUM = 2;            // 生产者 消费者
     constexpr static uint64_t TAG_FLAG_SIZE = 8;
     constexpr static uint64_t coreNumPerRank = 1;
 
 public:
-
-    __aicore__ inline AivScatterMesh1D() {
-    }
+    __aicore__ inline AivScatterMesh1D() {}
 
     __aicore__ inline void InitCoreInfo(uint64_t len, uint64_t stride)
     {
         coreNumPerStage = coreNumPerRank * rankSize_;
-        if(rank_ == root_){
-            if(block_idx < coreNumPerStage){
+        if (rank_ == root_) {
+            if (block_idx < coreNumPerStage) {
                 targetRank = block_idx / coreNumPerRank;
-                uint64_t outerOffset = targetRank  * stride;
-                uint64_t innerOffset = 0; 
+                uint64_t outerOffset = targetRank * stride;
+                uint64_t innerOffset = 0;
                 inputOffset = input_ + innerOffset + outerOffset;
                 outputOffset = reinterpret_cast<uint64_t>(GM_IN[targetRank]) + innerOffset;
-            } else if(block_idx < coreNumPerStage + coreNumPerRank){
-                uint64_t innerOffset = 0; 
-                uint64_t outerOffset = 0; 
+            } else if (block_idx < coreNumPerStage + coreNumPerRank) {
+                uint64_t innerOffset = 0;
+                uint64_t outerOffset = 0;
                 inputOffset = reinterpret_cast<uint64_t>(GM_IN[rank_]) + outerOffset + innerOffset;
                 outputOffset = output_ + innerOffset;
             }
         } else {
-            if (block_idx < coreNumPerRank){
+            if (block_idx < coreNumPerRank) {
                 uint64_t innerOffset = 0;
                 outputOffset = output_ + innerOffset;
             }
@@ -51,27 +48,27 @@ public:
 
     __aicore__ inline void Producer()
     {
-        CpGM2GM((__gm__ T *)outputOffset, (__gm__ T *)inputOffset, len_);
+        CpGM2GM((__gm__ T*)outputOffset, (__gm__ T*)inputOffset, len_);
         pipe_barrier(PIPE_ALL);
-        uint64_t flag_offset =  0; 
+        uint64_t flag_offset = 0;
         Record(targetRank, flag_offset, curTag);
     }
 
     __aicore__ inline void Consumer()
     {
         uint64_t flag_offset;
-        if(rank_ == root_){
-            flag_offset = 0; 
-        }else{
-            flag_offset = 0; 
+        if (rank_ == root_) {
+            flag_offset = 0;
+        } else {
+            flag_offset = 0;
         }
         WaitFlag(rank_, flag_offset, curTag);
-        CpGM2GM((__gm__ T *)output_, (__gm__ T *)GM_IN[rank_], len_);
+        CpGM2GM((__gm__ T*)output_, (__gm__ T*)GM_IN[rank_], len_);
     }
 
     __aicore__ inline void FlagClear()
     {
-        uint64_t flag_offset = 0; 
+        uint64_t flag_offset = 0;
         Record(rank_, flag_offset, 0);
     }
 
@@ -79,17 +76,17 @@ public:
     {
         this->curTag = static_cast<int32_t>(curTag);
         this->curCount = curCount / coreNumPerRank;
-        if(rank_ == root_){
-            inputGT.SetGlobalBuffer(reinterpret_cast<__gm__ T *>(inputOffset));
-            outputGT.SetGlobalBuffer(reinterpret_cast<__gm__ T *>(outputOffset));
-            if(block_idx < coreNumPerStage){
+        if (rank_ == root_) {
+            inputGT.SetGlobalBuffer(reinterpret_cast<__gm__ T*>(inputOffset));
+            outputGT.SetGlobalBuffer(reinterpret_cast<__gm__ T*>(outputOffset));
+            if (block_idx < coreNumPerStage) {
                 Producer();
-            } else if(block_idx < coreNumPerStage + coreNumPerRank){
+            } else if (block_idx < coreNumPerStage + coreNumPerRank) {
                 Consumer();
             }
         } else {
-            outputGT.SetGlobalBuffer(reinterpret_cast<__gm__ T *>(outputOffset));
-            if (block_idx < coreNumPerRank){
+            outputGT.SetGlobalBuffer(reinterpret_cast<__gm__ T*>(outputOffset));
+            if (block_idx < coreNumPerRank) {
                 Consumer();
             }
         }
@@ -107,13 +104,13 @@ public:
     GlobalTensor<T> outputGT;
 };
 
-template<typename T>
+template <typename T>
 __aicore__ inline void AivScatterV2Mesh1D(EXTERN_KERNEL_ARGS_DEF_V2)
 {
     AivScatterMesh1D<T> op;
     op.Init(KERNEL_CLASS_INIT, true);
     op.InitCoreInfo(len, inputSliceStride);
-	SyncAll<true>();
+    SyncAll<true>();
     if (block_idx == 0 && tag >> AIV_TAG_MOVE_RIGHT_BITS == 1 && (tag & LOW_16_BITS) == 1) {
         op.BarrierForFirstOP();
     }

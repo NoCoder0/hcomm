@@ -27,20 +27,11 @@
 using namespace Hccl;
 class RemoteRmaBufManagerTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "RemoteRmaBufManagerTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "RemoteRmaBufManagerTest tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "RemoteRmaBufManagerTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "RemoteRmaBufManagerTest tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in RemoteRmaBufManagerTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in RemoteRmaBufManagerTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -54,10 +45,10 @@ TEST(RemoteRmaBufManagerTest, get_remote_rma_buffer_success)
     CommunicatorImpl communicator;
     RemoteRmaBufManager remoteRmaBufManager(communicator);
 
-    void *rdmaHandle = (void *)0x300;
+    void* rdmaHandle = (void*)0x300;
     RdmaHandleManager::GetInstance().tokenInfoMap[rdmaHandle] = make_unique<TokenInfoManager>(0, rdmaHandle);
     auto remoteUbRmaBuffer = std::make_unique<RemoteUbRmaBuffer>(rdmaHandle);
-    RemoteRmaBuffer *bufRawPtr = remoteUbRmaBuffer.get();
+    RemoteRmaBuffer* bufRawPtr = remoteUbRmaBuffer.get();
     BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     LinkData linkData(basePortType, 0, 1, 0, 0);
     string tag = "test";

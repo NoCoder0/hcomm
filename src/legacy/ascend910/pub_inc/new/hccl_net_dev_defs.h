@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef HCCL_NET_DEV_DEFS_H
 #define HCCL_NET_DEV_DEFS_H
@@ -15,7 +15,7 @@
 #include <arpa/inet.h>
 
 /* 网络设备句柄 */
-typedef void *HcclNetDev;
+typedef void* HcclNetDev;
 constexpr uint32_t SUPER_DEVICE_ID_INVALID = 0xFFFFFFFF;
 /**
  * @enum HcclNetDevDeployment
@@ -32,13 +32,15 @@ typedef enum {
  * @brief 网络传输协议类型枚举
  */
 typedef enum {
-    HCCL_PROTO_TYPE_RESERVED = -1, ///< 保留协议类型
-    HCCL_PROTO_TYPE_BUS = 0,       ///< 设备间总线直连协议
-    HCCL_PROTO_TYPE_TCP = 1,       ///< 标准TCP协议
-    HCCL_PROTO_TYPE_ROCE = 2,      ///< RDMA over Converged Ethernet
-    HCCL_PROTO_TYPE_UBC_CTP = 3,   ///< 华为统一总线UBC_CTP
-    HCCL_PROTO_TYPE_UBC_TP = 4,    ///< 华为统一总线UBC_TP
-    HCCL_PROTO_TYPE_UBG_TP = 5     ///< 华为统一总线UBG_TP
+    HCCL_PROTO_TYPE_RESERVED = -1,                    ///< 保留协议类型
+    HCCL_PROTO_TYPE_BUS = 0,                          ///< 设备间总线直连协议
+    HCCL_PROTO_TYPE_TCP = 1,                          ///< 标准TCP协议
+    HCCL_PROTO_TYPE_ROCE = 2,                         ///< RDMA over Converged Ethernet
+    HCCL_PROTO_TYPE_UB_CTP = 3,                       ///< 华为统一总线UB_CTP
+    HCCL_PROTO_TYPE_UBC_CTP = HCCL_PROTO_TYPE_UB_CTP, ///< 兼容旧协议名UBC_CTP
+    HCCL_PROTO_TYPE_UBC_TP = 4,                       ///< 华为统一总线UBC_TP
+    HCCL_PROTO_TYPE_UB_RTP = 5,                       ///< 华为统一总线UB_RTP
+    HCCL_PROTO_TYPE_UBG_TP = HCCL_PROTO_TYPE_UB_RTP   ///< 兼容旧协议名UBG_TP
 } HcclProtoType;
 
 /**

@@ -37,10 +37,7 @@ using namespace Hccl;
 
 class CcuTransportTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CcuTransportTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CcuTransportTest tests set up." << std::endl; }
 
     static void TearDownTestCase()
     {
@@ -61,8 +58,8 @@ protected:
     }
 };
 
-HcclResult AllocCcuResStub(
-    const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo> &resInfos)
+HcclResult
+AllocCcuResStub(const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo>& resInfos)
 {
     ResInfo resInfo(0, num);
     resInfos.emplace_back(resInfo);
@@ -70,7 +67,7 @@ HcclResult AllocCcuResStub(
 }
 
 HcclResult AllocCcuResStubUnavail(
-    const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo> &resInfos)
+    const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo>& resInfos)
 {
     ResInfo resInfo(0, num);
     resInfos.emplace_back(resInfo);
@@ -82,8 +79,11 @@ constexpr uint32_t DEFAULT_CCU_RESOURCE_NUM = 16; // 根据业务代码调整
 using TransportTuple = tuple<unique_ptr<CcuTransport>, unique_ptr<Socket>, vector<unique_ptr<CcuJetty>>>;
 TransportTuple MockMakeCcuTransport(bool allocCkeUnavailFlag, bool allocXnUnavailFlag)
 {
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().with(mockcpp::any()).will(returnValue(static_cast<s32>(MAX_MODULE_DEVICE_NUM - 1)));
-    
+    MOCKER(HrtGetDevicePhyIdByUserDevId)
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(static_cast<s32>(MAX_MODULE_DEVICE_NUM - 1)));
+
     HcclResult OkResult = HcclResult::HCCL_SUCCESS;
     HcclResult AgainResult = HcclResult::HCCL_E_AGAIN;
     if (allocCkeUnavailFlag) {
@@ -107,7 +107,9 @@ TransportTuple MockMakeCcuTransport(bool allocCkeUnavailFlag, bool allocXnUnavai
     MOCKER_CPP(&RdmaHandleManager::GetDieAndFuncId).stubs().will(returnValue(fakeDieFuncPair));
     pair<TokenIdHandle, uint32_t> fakeTokenInfo = make_pair(0x12345678, 1);
     MOCKER_CPP(&RdmaHandleManager::GetTokenIdInfo).stubs().will(returnValue(fakeTokenInfo));
-    MOCKER_CPP(&TpManager::GetTpInfo).stubs().will(returnValue(HcclResult::HCCL_E_AGAIN))
+    MOCKER_CPP(&TpManager::GetTpInfo)
+        .stubs()
+        .will(returnValue(HcclResult::HCCL_E_AGAIN))
         .then(returnValue(HcclResult::HCCL_SUCCESS));
 
     constexpr uint64_t fakeMemAddr = 0x12345678;
@@ -122,9 +124,9 @@ TransportTuple MockMakeCcuTransport(bool allocCkeUnavailFlag, bool allocXnUnavai
     CcuChannelInfo channelInfo;
     channelInfo.channelId = 1;
     channelInfo.dieId = 1;
-    
+
     vector<unique_ptr<CcuJetty>> ccuJettys;
-    vector<CcuJetty *> ccuJettyPtrs;
+    vector<CcuJetty*> ccuJettyPtrs;
     for (uint32_t i = 0; i < 2; i++) {
         CcuJettyInfo jettyInfo;
         jettyInfo.jettyCtxId = 1 + i;
@@ -139,23 +141,20 @@ TransportTuple MockMakeCcuTransport(bool allocCkeUnavailFlag, bool allocXnUnavai
         ccuJettys.emplace_back(std::move(ccuJetty));
     }
     SocketHandle socketHandle = reinterpret_cast<SocketHandle>(0x123);
-    unique_ptr<Socket> socket = make_unique<Socket>(socketHandle, locAddr, 65001, rmtAddr,
-        string(), SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    unique_ptr<Socket> socket = make_unique<Socket>(
+        socketHandle, locAddr, 65001, rmtAddr, string(), SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
     socket->fdHandle = socketHandle;
     // 模拟CTP即可
-    unique_ptr<CcuConnection> connection = make_unique<CcuCtpConnection>(
-        locAddr, rmtAddr, channelInfo, ccuJettyPtrs);
+    unique_ptr<CcuConnection> connection = make_unique<CcuCtpConnection>(locAddr, rmtAddr, channelInfo, ccuJettyPtrs);
     EXPECT_EQ(connection->Init(), HcclResult::HCCL_SUCCESS);
     EXPECT_EQ(connection->status, CcuConnStatus::INIT);
     CcuTransport::CclBufferInfo cclBuffer;
     cclBuffer.addr = fakeMemAddr;
     cclBuffer.size = fakeSqBufSize;
 
-    unique_ptr<CcuTransport> transport = make_unique<CcuTransport>(
-        socket.get(), std::move(connection), cclBuffer);
+    unique_ptr<CcuTransport> transport = make_unique<CcuTransport>(socket.get(), std::move(connection), cclBuffer);
     return TransportTuple{std::move(transport), std::move(socket), std::move(ccuJettys)};
 }
-
 
 TEST_F(CcuTransportTest, Ut_GetStatus_When_InterfaceOk_Expect_Return_Ok)
 {
@@ -165,7 +164,7 @@ TEST_F(CcuTransportTest, Ut_GetStatus_When_InterfaceOk_Expect_Return_Ok)
     EXPECT_EQ(transport->transStatus, CcuTransport::TransStatus::INIT);
     EXPECT_EQ(transport->locRes.ckes.size(), DEFAULT_CCU_RESOURCE_NUM);
     EXPECT_EQ(transport->locRes.xns.size(), DEFAULT_CCU_RESOURCE_NUM);
-    
+
     const vector<uint32_t> cntCkes(DEFAULT_CCU_RESOURCE_NUM);
     transport->SetCntCke(cntCkes);
 
@@ -229,9 +228,9 @@ TEST_F(CcuTransportTest, Ut_GetStatusFailed_When_ConnectionError_Expect_Return_E
         EXPECT_EQ(transport->Init(), HcclResult::HCCL_SUCCESS);
         EXPECT_EQ(transport->transStatus, CcuTransport::TransStatus::INIT);
         status = transport->GetStatus();
-    } catch (InternalException &e) {
+    } catch (InternalException& e) {
         EXPECT_EQ(CcuTransport::TransStatus::CONNECT_FAILED, status);
-    } catch (exception &e) {
+    } catch (exception& e) {
         HCCL_ERROR(e.what());
     } catch (...) {
         HCCL_ERROR("Unknown error occurs!");
@@ -250,9 +249,9 @@ TEST_F(CcuTransportTest, Ut_GetStatusFailed_When_SocketError_Expect_Return_Error
         EXPECT_EQ(transport->Init(), HcclResult::HCCL_SUCCESS);
         EXPECT_EQ(transport->transStatus, CcuTransport::TransStatus::INIT);
         status = transport->GetStatus();
-    } catch (InternalException &e) {
+    } catch (InternalException& e) {
         EXPECT_EQ(CcuTransport::TransStatus::CONNECT_FAILED, status);
-    } catch (exception &e) {
+    } catch (exception& e) {
         HCCL_ERROR(e.what());
     } catch (...) {
         HCCL_ERROR("Unknown error occurs!");
@@ -282,9 +281,9 @@ TEST_F(CcuTransportTest, Ut_GetStatusError_When_SocketSendError_Expect_Return_Er
         for (uint32_t i = 0; i < 2; i++) { // Connection切换2步
             status = transport->GetStatus();
         }
-    } catch (SocketException &e) {
+    } catch (SocketException& e) {
         EXPECT_EQ(CcuTransport::TransStatus::CONNECT_FAILED, status);
-    } catch (exception &e) {
+    } catch (exception& e) {
         HCCL_ERROR(e.what());
     } catch (...) {
         HCCL_ERROR("Unknown error occurs!");
@@ -302,7 +301,7 @@ TEST_F(CcuTransportTest, Ut_GetStatusError_When_HandshakeMsgInvalid_Expect_Retur
         EXPECT_EQ(transport->transStatus, CcuTransport::TransStatus::INIT);
         EXPECT_EQ(transport->locRes.ckes.size(), DEFAULT_CCU_RESOURCE_NUM);
         EXPECT_EQ(transport->locRes.xns.size(), DEFAULT_CCU_RESOURCE_NUM);
-        
+
         const vector<uint32_t> cntCkes(DEFAULT_CCU_RESOURCE_NUM);
         transport->SetCntCke(cntCkes);
 
@@ -320,9 +319,9 @@ TEST_F(CcuTransportTest, Ut_GetStatusError_When_HandshakeMsgInvalid_Expect_Retur
 
         transport->attr.handshakeMsg.push_back('a');
         status = transport->GetStatus();
-    } catch (InvalidParamsException &e) {
+    } catch (InvalidParamsException& e) {
         EXPECT_EQ(CcuTransport::TransStatus::CONNECT_FAILED, status);
-    } catch (exception &e) {
+    } catch (exception& e) {
         HCCL_ERROR(e.what());
     } catch (...) {
         HCCL_ERROR("Unknown error occurs!");

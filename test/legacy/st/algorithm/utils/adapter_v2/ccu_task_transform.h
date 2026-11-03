@@ -1,3 +1,13 @@
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #ifndef HCCLV2_CCU_TRANSFORM_TASK_H
 #define HCCLV2_CCU_TRANSFORM_TASK_H
 
@@ -24,9 +34,11 @@ namespace Hccl {
 
 HcclResult GenCcuGraph(TaskNode* dummyStart);
 
-HcclResult TransformInstr(const CcuRep::CcuInstr *instr, uint32_t rankId, uint32_t queId, TaskNode* &preNode, bool& isContinue);
+HcclResult
+TransformInstr(const CcuRep::CcuInstr* instr, uint32_t rankId, uint32_t queId, TaskNode*& preNode, bool& isContinue);
 
-HcclResult TransformInstr(const CcuRep::CcuInstrInfo& instrInfo, uint32_t rankId, uint32_t queId, TaskNode* &preNode, bool isFinished);
+HcclResult TransformInstr(
+    const CcuRep::CcuInstrInfo& instrInfo, uint32_t rankId, uint32_t queId, TaskNode*& preNode, bool isFinished);
 
 HcclResult GetHcclDataTypeFromCCUDataType(uint16_t ccuDataType, uint16_t ccuReduceType, DataType& dataType);
 
@@ -34,11 +46,11 @@ struct LoopGroupParam {
     std::vector<LoopXm> loopXms;
     LoopGroupXn loopGroupXn;
     LoopGroupXm loopGroupXm;
-    u32 curLoopIdx = 0;                   // 表示当前处理第几个loop
-    u32 curExpandCnt = 0;                 // 该loop被第几次展开
-    u32 curLoopCnt = 0;                   // 表示当前Loop第几次循环
+    u32 curLoopIdx = 0;   // 表示当前处理第几个loop
+    u32 curExpandCnt = 0; // 该loop被第几次展开
+    u32 curLoopCnt = 0;   // 表示当前Loop第几次循环
 };
 
-}
+} // namespace Hccl
 
 #endif

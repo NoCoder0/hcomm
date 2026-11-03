@@ -40,8 +40,8 @@ uint32_t BkfDcItorInit(BkfDc *dc)
         return BKF_ERR;
     }
 
-    ret = BkfJobRegType(dc->argInit.jobMng, dc->argInit.jobTypeId,
-                         (F_BKF_JOB_PROC)BkfDcOnTableJobDelTuple, dc->argInit.jobPrio);
+    ret = BkfJobRegType(dc->argInit.jobMng, dc->argInit.jobTypeId, (F_BKF_JOB_PROC)BkfDcOnTableJobDelTuple,
+        dc->argInit.jobPrio);
     BKF_LOG_DEBUG(BKF_LOG_HND, "ret(%u)\n", ret);
     return ret;
 }
@@ -51,7 +51,7 @@ void BkfDcItorUninit(BkfDc *dc)
     if (dc == VOS_NULL) {
         return;
     }
-    BKF_LOG_DEBUG(BKF_LOG_HND, "2unit\n");
+    BKF_LOG_DEBUG(BKF_LOG_HND, "dc itor uninit done\n");
 
     return;
 }
@@ -68,8 +68,8 @@ BkfDcTupleKeyItor *BkfDcNewTupleKeyItor(BkfDc *dc, void *sliceKey, uint16_t tabl
         goto error;
     }
     BKF_LOG_DEBUG(BKF_LOG_HND, "sliceKey(%s)/table(%u, %s)\n",
-                  BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)),
-                  tableTypeId, BkfDcGetTableTypeIdStr(dc, tableTypeId));
+        BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)), tableTypeId,
+        BkfDcGetTableTypeIdStr(dc, tableTypeId));
 
     slice = BkfDcFindSlice(dc, sliceKey);
     if (slice == VOS_NULL) {
@@ -102,26 +102,27 @@ void BkfDcDeleteTupleKeyItor(BkfDc *dc, BkfDcTupleKeyItor *keyItor)
     }
     tableTypeId = keyItor->tableType->vTbl.tableTypeId;
     BKF_LOG_DEBUG(BKF_LOG_HND, "sliceKey(%s)/table(%u, %s), keyItor(%#x)\n",
-                  BkfDcGetSliceKeyStr(dc, keyItor->sliceKey, sliceBuf, sizeof(sliceBuf)),
-                  tableTypeId, BkfDcGetTableTypeIdStr(dc, tableTypeId), BKF_MASK_ADDR(keyItor));
+        BkfDcGetSliceKeyStr(dc, keyItor->sliceKey, sliceBuf, sizeof(sliceBuf)), tableTypeId,
+        BkfDcGetTableTypeIdStr(dc, tableTypeId), BKF_MASK_ADDR(keyItor));
 
     BkfDcDelTupleKeyItor(dc, keyItor);
     return;
 }
 
 static inline void BkfDcLogTupleInfo(BkfDc *dc, const char *outStr, void *sliceKey, uint16_t tableTypeId,
-                                       void *itorAddr, BkfDcTupleInfo *info)
+    void *itorAddr, BkfDcTupleInfo *info)
 {
     uint8_t sliceBuf[BKF_1K / 8];
     uint8_t keyBuf[BKF_1K / 8];
     uint8_t valBuf[BKF_1K / 8];
 
-    BKF_LOG_DEBUG(BKF_LOG_HND, "%s, sliceKey(%s)/table(%u, %s)/itor(%#x), getTupleKey(%s)/val(%s)/isAddUpd(%u)/"
-                  "seq(%"VOS_PRIu64")\n", outStr, BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)),
-                  tableTypeId, BkfDcGetTableTypeIdStr(dc, tableTypeId), BKF_MASK_ADDR(itorAddr),
-                  BkfDcGetTupleKeyStr(dc, tableTypeId, info->key, keyBuf, sizeof(keyBuf)),
-                  BkfDcGetTupleValStr(dc, tableTypeId, info->valOrNull, valBuf, sizeof(valBuf)),
-                  info->isAddUpd, info->seq);
+    BKF_LOG_DEBUG(BKF_LOG_HND,
+        "%s, sliceKey(%s)/table(%u, %s)/itor(%#x), getTupleKey(%s)/val(%s)/isAddUpd(%u)/"
+        "seq(%" VOS_PRIu64 ")\n",
+        outStr, BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)), tableTypeId,
+        BkfDcGetTableTypeIdStr(dc, tableTypeId), BKF_MASK_ADDR(itorAddr),
+        BkfDcGetTupleKeyStr(dc, tableTypeId, info->key, keyBuf, sizeof(keyBuf)),
+        BkfDcGetTupleValStr(dc, tableTypeId, info->valOrNull, valBuf, sizeof(valBuf)), info->isAddUpd, info->seq);
     return;
 }
 
@@ -155,8 +156,8 @@ BOOL BkfDcGetTupleByKeyItor(BkfDc *dc, BkfDcTupleKeyItor *keyItor, BkfDcTupleInf
     if (table == VOS_NULL) {
         return VOS_FALSE;
     }
-    tuple = (keyItor->getFirstTuple) ? BkfDcGetFirstTuple(dc, table, VOS_NULL) :
-                                       BkfDcFindNextTuple(dc, table, &keyItor->lastGetTupleKey[0]);
+    tuple = (keyItor->getFirstTuple) ? BkfDcGetFirstTuple(dc, table, VOS_NULL)
+                                     : BkfDcFindNextTuple(dc, table, &keyItor->lastGetTupleKey[0]);
     if (tuple != VOS_NULL) {
         info->key = &tuple->keyVal[0];
         info->isAddUpd = tuple->isAddUpd;
@@ -215,8 +216,8 @@ BOOL BkfDcGetTupleByKeyItorFromDcOrApp(BkfDc *dc, BkfDcTupleKeyItor *keyItor, Bk
     if (tableType->vTbl.noDcTuple) {
         return BkfDcGetTupleByKeyItorFromApp(dc, keyItor, tableType, info);
     }
-    BkfDcTuple *tuple = (keyItor->getFirstTuple) ? BkfDcGetFirstTuple(dc, table, VOS_NULL) :
-                                       BkfDcFindNextTuple(dc, table, &keyItor->lastGetTupleKey[0]);
+    BkfDcTuple *tuple = (keyItor->getFirstTuple) ? BkfDcGetFirstTuple(dc, table, VOS_NULL)
+                                                 : BkfDcFindNextTuple(dc, table, &keyItor->lastGetTupleKey[0]);
     if (tuple != VOS_NULL) {
         info->key = &tuple->keyVal[0];
         info->isAddUpd = tuple->isAddUpd;
@@ -228,7 +229,6 @@ BOOL BkfDcGetTupleByKeyItorFromDcOrApp(BkfDc *dc, BkfDcTupleKeyItor *keyItor, Bk
         info);
     return (tuple != VOS_NULL) ? VOS_TRUE : VOS_FALSE;
 }
-
 
 STATIC uint32_t BkfDcForwordTupleKeyItorChkParam(BkfDc *dc, BkfDcTupleKeyItor *keyItor)
 {
@@ -247,10 +247,9 @@ STATIC uint32_t BkfDcForwordTupleKeyItorChkParam(BkfDc *dc, BkfDcTupleKeyItor *k
     uint16_t tableTypeId = keyItor->tableType->vTbl.tableTypeId;
     /* 此时itor指向节点不一定在tuple中，所以只输出itor内缓冲的数据 */
     BKF_LOG_DEBUG(BKF_LOG_HND, "sliceKey(%s)/table(%u, %s), keyItor(%#x), getFirstTuple(%u)/lastGetTupleKey(%s)\n",
-                  BkfDcGetSliceKeyStr(dc, keyItor->sliceKey, sliceBuf, sizeof(sliceBuf)),
-                  tableTypeId, BkfDcGetTableTypeIdStr(dc, tableTypeId), BKF_MASK_ADDR(keyItor),
-                  keyItor->getFirstTuple,
-                  BkfDcGetTupleKeyStr(dc, tableTypeId, keyItor->lastGetTupleKey, keyBuf, sizeof(keyBuf)));
+        BkfDcGetSliceKeyStr(dc, keyItor->sliceKey, sliceBuf, sizeof(sliceBuf)), tableTypeId,
+        BkfDcGetTableTypeIdStr(dc, tableTypeId), BKF_MASK_ADDR(keyItor), keyItor->getFirstTuple,
+        BkfDcGetTupleKeyStr(dc, tableTypeId, keyItor->lastGetTupleKey, keyBuf, sizeof(keyBuf)));
 
     return BKF_OK;
 }
@@ -342,8 +341,8 @@ BkfDcTupleSeqItor *BkfDcNewTupleSeqItor(BkfDc *dc, void *sliceKey, uint16_t tabl
         goto error;
     }
     BKF_LOG_DEBUG(BKF_LOG_HND, "sliceKey(%s)/table(%u, %s), vTbl(%#x)\n",
-                  BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)),
-                  tableTypeId, BkfDcGetTableTypeIdStr(dc, tableTypeId), BKF_MASK_ADDR(vTbl));
+        BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)), tableTypeId,
+        BkfDcGetTableTypeIdStr(dc, tableTypeId), BKF_MASK_ADDR(vTbl));
 
     slice = BkfDcFindSlice(dc, sliceKey);
     if (slice == VOS_NULL) {
@@ -412,12 +411,12 @@ void BkfDcDeleteTupleSeqItor(BkfDc *dc, BkfDcTupleSeqItor *seqItor)
 error:
 
     resultStr = ((table->jobIdDelTuple != VOS_NULL) && (table->keyItorDelTuple != VOS_NULL)) ? "ok" : "ng";
-    BKF_LOG_DEBUG(BKF_LOG_HND, "sliceKey(%s)/table(%u, %s), del seqItor(%#x)/nextProcTuple(%#x)/"
-                  "nextProcTupleSeq(%"VOS_PRIx64"), table keyItorDelTuple(%#x)/jobIdDelTuple(%#x), %s\n",
-                  BkfDcGetSliceKeyStr(dc, &slice->key[0], sliceBuf, sizeof(sliceBuf)),
-                  tableTypeId, BkfDcGetTableTypeIdStr(dc, tableTypeId),
-                  BKF_MASK_ADDR(tmpSeqItor), BKF_MASK_ADDR(tmpDcTuple), tmpSeq,
-                  BKF_MASK_ADDR(table->keyItorDelTuple), BKF_MASK_ADDR(table->jobIdDelTuple), resultStr);
+    BKF_LOG_DEBUG(BKF_LOG_HND,
+        "sliceKey(%s)/table(%u, %s), del seqItor(%#x)/nextProcTuple(%#x)/"
+        "nextProcTupleSeq(%" VOS_PRIx64 "), table keyItorDelTuple(%#x)/jobIdDelTuple(%#x), %s\n",
+        BkfDcGetSliceKeyStr(dc, &slice->key[0], sliceBuf, sizeof(sliceBuf)), tableTypeId,
+        BkfDcGetTableTypeIdStr(dc, tableTypeId), BKF_MASK_ADDR(tmpSeqItor), BKF_MASK_ADDR(tmpDcTuple), tmpSeq,
+        BKF_MASK_ADDR(table->keyItorDelTuple), BKF_MASK_ADDR(table->jobIdDelTuple), resultStr);
     return;
 }
 
@@ -653,6 +652,7 @@ BOOL BkfDcDelTupleSeqItor(BkfDc *dc, BkfDcTupleSeqItor *seqItor)
 
 BkfDcTupleSeqItor *BkfDcGetFirstTupleSeqItor(BkfDc *dc, BkfDcTable *table, void **itorOutOrNull)
 {
+    (void)dc;
     BkfDlNode *tempNode = VOS_NULL;
     BkfDcTupleSeqItor *seqItor = VOS_NULL;
 
@@ -673,6 +673,7 @@ BkfDcTupleSeqItor *BkfDcGetFirstTupleSeqItor(BkfDc *dc, BkfDcTable *table, void 
 
 BkfDcTupleSeqItor *BkfDcGetNextTupleSeqItor(BkfDc *dc, BkfDcTable *table, void **itorInOut)
 {
+    (void)dc;
     BkfDlNode *tempNode = VOS_NULL;
     BkfDcTupleSeqItor *seqItor = VOS_NULL;
 
@@ -689,6 +690,7 @@ BkfDcTupleSeqItor *BkfDcGetNextTupleSeqItor(BkfDc *dc, BkfDcTable *table, void *
 
 BkfDcTupleSeqItor *BkfDcGetNextTupleSeqItorBySeqItor(BkfDc *dc, BkfDcTable *table, BkfDcTupleSeqItor *seqItor)
 {
+    (void)dc;
     BkfDlNode *tempNode = VOS_NULL;
     BkfDcTupleSeqItor *nextSeqItor = VOS_NULL;
 
@@ -797,4 +799,3 @@ STATIC uint32_t BkfDcOnTableJobDelTuple(BkfDcTable *table, uint32_t *runCost)
 }
 #endif
 #endif
-

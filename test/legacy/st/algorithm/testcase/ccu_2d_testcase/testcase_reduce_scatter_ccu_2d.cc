@@ -4,7 +4,7 @@
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -25,20 +25,15 @@ namespace checker {
 
 class ReduceScatter2DCCUTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "ReduceScatter2D CCU test set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "ReduceScatter2D CCU test set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "ReduceScatter2D CCU test tear down" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "ReduceScatter2D CCU test tear down" << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -54,7 +49,7 @@ protected:
 TEST_F(ReduceScatter2DCCUTest, reducescatter2d_ccu_case_test_2_mul_2_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,8,9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -77,7 +72,7 @@ TEST_F(ReduceScatter2DCCUTest, reducescatter2d_ccu_case_test_2_mul_2_rank)
 TEST_F(ReduceScatter2DCCUTest, reducescatter2d_ccu_case_test_3_mul_3_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,8,9,10,16,17,18}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -100,7 +95,7 @@ TEST_F(ReduceScatter2DCCUTest, reducescatter2d_ccu_case_test_3_mul_3_rank)
 TEST_F(ReduceScatter2DCCUTest, reducescatter2d_ccu_case_test_3_mul_4_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,8,9,10,16,17,18,24,25,26}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18, 24, 25, 26}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -123,7 +118,7 @@ TEST_F(ReduceScatter2DCCUTest, reducescatter2d_ccu_case_test_3_mul_4_rank)
 TEST_F(ReduceScatter2DCCUTest, reducescatter2d_ccu_case_test_4_mul_4_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,8,9,10,11,16,17,18,19,24,25,26,27}}};
+    TopoMeta topoMeta{{{0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19, 24, 25, 26, 27}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -146,7 +141,7 @@ TEST_F(ReduceScatter2DCCUTest, reducescatter2d_ccu_case_test_4_mul_4_rank)
 TEST_F(ReduceScatter2DCCUTest, reducescatter2d_ccu_case_test_4_mul_3_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,8,9,10,11,16,17,18,19}}};
+    TopoMeta topoMeta{{{0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -169,7 +164,7 @@ TEST_F(ReduceScatter2DCCUTest, reducescatter2d_ccu_case_test_4_mul_3_rank)
 TEST_F(ReduceScatter2DCCUTest, reducescatter2d_ccu_case_test_4_mul_2_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,8,9,10,11}}};
+    TopoMeta topoMeta{{{0, 1, 2, 3, 8, 9, 10, 11}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -192,7 +187,8 @@ TEST_F(ReduceScatter2DCCUTest, reducescatter2d_ccu_case_test_4_mul_2_rank)
 TEST_F(ReduceScatter2DCCUTest, reducescatter2d_ccu_case_test_5_mul_7_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,4,8,9,10,11,12,16,17,18,19,20,24,25,26,27,28,32,33,34,35,36,40,41,42,43,44,48,49,50,51,52}}};
+    TopoMeta topoMeta{{{0,  1,  2,  3,  4,  8,  9,  10, 11, 12, 16, 17, 18, 19, 20, 24, 25, 26,
+                        27, 28, 32, 33, 34, 35, 36, 40, 41, 42, 43, 44, 48, 49, 50, 51, 52}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -215,7 +211,7 @@ TEST_F(ReduceScatter2DCCUTest, reducescatter2d_ccu_case_test_5_mul_7_rank)
 TEST_F(ReduceScatter2DCCUTest, reducescatter2d_ccu_mem2mem_case_test_2_mul_2_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,8,9}}};  // 2x2 topo
+    TopoMeta topoMeta{{{0, 1, 8, 9}}}; // 2x2 topo
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -238,7 +234,7 @@ TEST_F(ReduceScatter2DCCUTest, reducescatter2d_ccu_mem2mem_case_test_2_mul_2_ran
 TEST_F(ReduceScatter2DCCUTest, reducescatter2d_ccu_mem2mem_case_test_2_mul_4_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3, 8,9,10,11}}};  // 2x4 topo
+    TopoMeta topoMeta{{{0, 1, 2, 3, 8, 9, 10, 11}}}; // 2x4 topo
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -261,7 +257,7 @@ TEST_F(ReduceScatter2DCCUTest, reducescatter2d_ccu_mem2mem_case_test_2_mul_4_ran
 TEST_F(ReduceScatter2DCCUTest, reducescatter2d_ccu_mem2mem_case_test_4_mul_4_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,8,9,10,11,16,17,18,19,24,25,26,27}}};  // 4x4 topo
+    TopoMeta topoMeta{{{0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19, 24, 25, 26, 27}}}; // 4x4 topo
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -284,7 +280,8 @@ TEST_F(ReduceScatter2DCCUTest, reducescatter2d_ccu_mem2mem_case_test_4_mul_4_ran
 TEST_F(ReduceScatter2DCCUTest, reducescatter2d_ccu_mem2mem_case_test_5_mul_7_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,4,8,9,10,11,12,16,17,18,19,20,24,25,26,27,28,32,33,34,35,36,40,41,42,43,44,48,49,50,51,52}}};
+    TopoMeta topoMeta{{{0,  1,  2,  3,  4,  8,  9,  10, 11, 12, 16, 17, 18, 19, 20, 24, 25, 26,
+                        27, 28, 32, 33, 34, 35, 36, 40, 41, 42, 43, 44, 48, 49, 50, 51, 52}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -308,7 +305,7 @@ TEST_F(ReduceScatter2DCCUTest, reducescatter2d_ccu_mem2mem_case_test_5_mul_7_ran
 TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_success_2_2_bf16_sum_big_data)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0, 1, 8, 9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -331,7 +328,7 @@ TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_success
 TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_success_2_2_fp32_sum_big_data)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0, 1, 8, 9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -354,7 +351,7 @@ TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_success
 TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_success_2_2_fp16_sum_big_data)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0, 1, 8, 9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -377,7 +374,7 @@ TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_success
 TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_success_2_2_int16_sum_big_data)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0, 1, 8, 9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -400,7 +397,7 @@ TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_success
 TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_success_2_2_fp32_max_big_data_offload)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0, 1, 8, 9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -423,7 +420,7 @@ TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_success
 TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_success_3_2_bf16_sum_big_data_graph_mode)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0, 1, 2, 8, 9, 10}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -446,7 +443,7 @@ TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_success
 TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_success_2_2_fp32_sum_small_data_01)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0, 1, 8, 9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -469,7 +466,7 @@ TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_success
 TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_success_2_2_fp32_sum_small_data_02)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0, 1, 8, 9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -492,7 +489,7 @@ TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_success
 TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_success_2_2_fp32_sum_small_data_03)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0, 1, 8, 9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -515,7 +512,7 @@ TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_success
 TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_success_2_2_fp32_sum_small_data_04)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0, 1, 8, 9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -538,7 +535,7 @@ TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_success
 TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_success_2_2_fp32_sum_small_data_05)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0, 1, 8, 9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -561,7 +558,7 @@ TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_success
 TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_success_2_2_fp32_sum_small_data_06)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0, 1, 8, 9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -584,7 +581,7 @@ TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_success
 TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_success_2_2_fp32_sum_small_data_07)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0, 1, 8, 9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -607,7 +604,10 @@ TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_success
 TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_failed_topo_not_2d)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0, 1,}}};
+    TopoMeta topoMeta{{{
+        0,
+        1,
+    }}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -630,9 +630,9 @@ TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_mesh_2d_multi_mission_failed_
 TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_parallel_opbase_2x2_int16_sum_small)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0, 1}, {0, 1}}};
+    TopoMeta topoMeta{{{0, 1}, {0, 1}}};
     setenv("HCCL_IODIE_NUM", "2", 1);
- 
+
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::REDUCE_SCATTER;
     checkerOpParam.tag = "ReduceScatter";
@@ -642,7 +642,7 @@ TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_parallel_opbase_2x2_int16_sum
     checkerOpParam.reduceType = CheckerReduceOp::REDUCE_SUM;
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_950;
     checkerOpParam.algName = "CcuReduceScatterParallelMesh1DNHR";
- 
+
     Checker checker;
     HcclResult ret;
     ret = checker.CheckA5Aicpu(checkerOpParam, topoMeta);
@@ -652,9 +652,9 @@ TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_parallel_opbase_2x2_int16_sum
 TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_parallel_opbase_2x2_fp32_min_small)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0, 1}, {0, 1}}};
+    TopoMeta topoMeta{{{0, 1}, {0, 1}}};
     setenv("HCCL_IODIE_NUM", "2", 1);
- 
+
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::REDUCE_SCATTER;
     checkerOpParam.tag = "ReduceScatter";
@@ -664,7 +664,7 @@ TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_parallel_opbase_2x2_fp32_min_
     checkerOpParam.reduceType = CheckerReduceOp::REDUCE_MIN;
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_950;
     checkerOpParam.algName = "CcuReduceScatterParallelMesh1DNHR";
- 
+
     Checker checker;
     HcclResult ret;
     ret = checker.CheckA5Aicpu(checkerOpParam, topoMeta);
@@ -674,9 +674,9 @@ TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_parallel_opbase_2x2_fp32_min_
 TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_parallel_offload_2x2_int16_sum_small)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0, 1}, {0, 1}}};
+    TopoMeta topoMeta{{{0, 1}, {0, 1}}};
     setenv("HCCL_IODIE_NUM", "2", 1);
- 
+
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::REDUCE_SCATTER;
     checkerOpParam.tag = "ReduceScatter";
@@ -686,7 +686,7 @@ TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_parallel_offload_2x2_int16_su
     checkerOpParam.reduceType = CheckerReduceOp::REDUCE_SUM;
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_950;
     checkerOpParam.algName = "CcuReduceScatterParallelMesh1DNHR";
- 
+
     Checker checker;
     HcclResult ret;
     ret = checker.CheckA5Aicpu(checkerOpParam, topoMeta);
@@ -696,9 +696,9 @@ TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_parallel_offload_2x2_int16_su
 TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_parallel_offload_2x2_fp32_min_small)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0, 1}, {0, 1}}};
+    TopoMeta topoMeta{{{0, 1}, {0, 1}}};
     setenv("HCCL_IODIE_NUM", "2", 1);
- 
+
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::REDUCE_SCATTER;
     checkerOpParam.tag = "ReduceScatter";
@@ -708,11 +708,11 @@ TEST_F(ReduceScatter2DCCUTest, test_reduce_scatter_parallel_offload_2x2_fp32_min
     checkerOpParam.reduceType = CheckerReduceOp::REDUCE_MIN;
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_950;
     checkerOpParam.algName = "CcuReduceScatterParallelMesh1DNHR";
- 
+
     Checker checker;
     HcclResult ret;
     ret = checker.CheckA5Aicpu(checkerOpParam, topoMeta);
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 }
 
-}
+} // namespace checker

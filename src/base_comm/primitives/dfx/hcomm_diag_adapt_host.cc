@@ -10,12 +10,14 @@
 
 #include "hcomm_diag.h"
 
-HcclResult HcommRegisterOpInfo(const char* commId, void* opInfo, size_t size)
+HcclResult
+HcommRegisterOpInfo([[maybe_unused]] const char* commId, [[maybe_unused]] void* opInfo, [[maybe_unused]] size_t size)
 {
     return HCCL_SUCCESS;
 }
 
-HcclResult HcommRegOpTaskException(const char* commId, HcommGetOpInfoCallback callback)
+HcclResult
+HcommRegOpTaskException([[maybe_unused]] const char* commId, [[maybe_unused]] HcommGetOpInfoCallback callback)
 {
     return HCCL_SUCCESS;
 }

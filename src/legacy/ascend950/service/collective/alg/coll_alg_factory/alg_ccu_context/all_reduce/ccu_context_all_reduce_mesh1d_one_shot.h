@@ -21,12 +21,12 @@ namespace Hccl {
 
 class CcuContextAllReduceMesh1DOneShot : public CcuContextAlgBase {
 public:
-    CcuContextAllReduceMesh1DOneShot(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                              const CcuTransportGroup &group);
-    ~CcuContextAllReduceMesh1DOneShot() override{}
+    CcuContextAllReduceMesh1DOneShot(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
+    ~CcuContextAllReduceMesh1DOneShot() override {}
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
 
 private:
     void InitResource();
@@ -36,8 +36,8 @@ private:
     void Postsync();
     void SyncTailBlock(uint32_t ctxSignalIndex);
     void DoGroupReduce();
-    void CalcMissionOffset(uint64_t sliceSize, uint64_t missionId, uint64_t &missionSize,
-                           uint64_t &missionOffset) const;
+    void
+    CalcMissionOffset(uint64_t sliceSize, uint64_t missionId, uint64_t& missionSize, uint64_t& missionOffset) const;
 
     DataType dataType_;
     DataType outputDataType_;

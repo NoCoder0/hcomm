@@ -21,20 +21,11 @@ using namespace Hccl;
 
 class GlobalMirrorTasksTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "GlobalMirrorTasks tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "GlobalMirrorTasks tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "GlobalMirrorTasks tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "GlobalMirrorTasks tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in GlobalMirrorTasks SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in GlobalMirrorTasks SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -45,28 +36,28 @@ protected:
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_GetQueue_1)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     EXPECT_THROW(globalMirrorTasks.GetQueue(60, 60), InternalException);
 }
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_GetQueue_2)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     EXPECT_THROW(globalMirrorTasks.GetQueue(30, 60), InternalException);
 }
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_CreateQueue_1)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     EXPECT_THROW(globalMirrorTasks.CreateQueue(60, 60, QueueType::Circular_Queue), InternalException);
 }
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_CreateQueue_2)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     globalMirrorTasks.CreateQueue(30, 0, QueueType::Circular_Queue);
 
@@ -79,21 +70,21 @@ TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_CreateQueue_2)
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_DestroyQueue_1)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     EXPECT_THROW(globalMirrorTasks.DestroyQueue(60, 0), InternalException);
 }
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_DestroyQueue_2)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     globalMirrorTasks.DestroyQueue(30, 0);
 }
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_Begin)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     globalMirrorTasks.Begin(30);
 
@@ -102,7 +93,7 @@ TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_Begin)
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_End)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     globalMirrorTasks.End(30);
 
@@ -111,7 +102,7 @@ TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_End)
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_GetTaskInfo)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     globalMirrorTasks.CreateQueue(30, 0, QueueType::Circular_Queue);
 
@@ -120,15 +111,15 @@ TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_GetTaskInfo)
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_DevSize)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     globalMirrorTasks.DevSize();
 }
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_GetAllTaskInfo)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
-    for (auto &taskMap : globalMirrorTasks.taskMaps_) {
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
+    for (auto& taskMap : globalMirrorTasks.taskMaps_) {
         taskMap.clear();
     }
     // 枚举所有devId
@@ -137,7 +128,7 @@ TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_GetAllTaskInfo)
         for (auto iter = globalMirrorTasks.Begin(devId); iter != globalMirrorTasks.End(devId); iter++) {
             // 获取对应streamId和任务队列的unique_ptr指针
             auto streamId = iter->first;
-            auto &taskInfoQueue = iter->second;
+            auto& taskInfoQueue = iter->second;
             // 枚举所有任务信息
             for (auto taskInfoIter = taskInfoQueue->Begin(); *taskInfoIter != *taskInfoQueue->End();
                  (*taskInfoIter)++) {

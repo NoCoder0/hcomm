@@ -24,11 +24,17 @@ namespace Hccl {
 // 为BroadcastMesh1D实现的CCUIns、CCUCtxArg与CCUTaskArg
 class CcuCtxArgBroadcastMesh1D : public CcuCtxArg {
 public:
-    explicit CcuCtxArgBroadcastMesh1D(const std::vector<uint64_t> &dSize, uint32_t missionId, uint32_t rId,
-        uint32_t rootId, const CollAlgOperator &op, const std::vector<std::vector<RankId>> &tempVTopo,
-        const CcuInstType insType) :
-            dimSize_(dSize), missionId_(missionId), rankId_(rId), rootId_(rootId), op_(op), tempVTopo_(tempVTopo),
-            ccuInsType_(insType) {}
+    explicit CcuCtxArgBroadcastMesh1D(
+        const std::vector<uint64_t>& dSize, uint32_t missionId, uint32_t rId, uint32_t rootId,
+        const CollAlgOperator& op, const std::vector<std::vector<RankId>>& tempVTopo, const CcuInstType insType)
+        : dimSize_(dSize),
+          missionId_(missionId),
+          rankId_(rId),
+          rootId_(rootId),
+          op_(op),
+          tempVTopo_(tempVTopo),
+          ccuInsType_(insType)
+    {}
     CcuCtxSignature GetCtxSignature() const override
     {
         CcuCtxSignature signature;
@@ -47,9 +53,14 @@ public:
 
 class CcuTaskArgBroadcastMesh1D : public CcuTaskArg {
 public:
-    explicit CcuTaskArgBroadcastMesh1D(uint64_t inputAddr, uint64_t outputAddr, uint64_t sliceSize, uint64_t offset,
-        uint64_t token) :
-        inputAddr_(inputAddr), outputAddr_(outputAddr), sliceSize_(sliceSize), offset_(offset), token_(token) {}
+    explicit CcuTaskArgBroadcastMesh1D(
+        uint64_t inputAddr, uint64_t outputAddr, uint64_t sliceSize, uint64_t offset, uint64_t token)
+        : inputAddr_(inputAddr),
+          outputAddr_(outputAddr),
+          sliceSize_(sliceSize),
+          offset_(offset),
+          token_(token)
+    {}
 
     uint64_t inputAddr_;
     uint64_t outputAddr_;
@@ -60,13 +71,11 @@ public:
 
 class CcuInstructionBroadcastMesh1D : public CcuInstruction {
 public:
-    CcuInstructionBroadcastMesh1D() : CcuInstruction()
-    {
-    }
+    CcuInstructionBroadcastMesh1D() : CcuInstruction() {}
 
-    void Init(uint32_t rankId, uint32_t rootId, uint64_t inputAddr, uint64_t outputAddr,
-        uint64_t sliceSize, uint64_t offset, uint64_t token, CollAlgOperator &op,
-        std::vector<std::vector<RankId>> &tempVTopo, uint32_t missionId = 0)
+    void Init(
+        uint32_t rankId, uint32_t rootId, uint64_t inputAddr, uint64_t outputAddr, uint64_t sliceSize, uint64_t offset,
+        uint64_t token, CollAlgOperator& op, std::vector<std::vector<RankId>>& tempVTopo, uint32_t missionId = 0)
     {
         u32 maxDimNum = 1;
         if (tempVTopo.size() != maxDimNum) {
@@ -74,16 +83,16 @@ public:
                 "[CcuInstructionBroadcastMesh1D] tempVTopo size is not 1, size is [%zu].", tempVTopo.size()));
         }
         dimSize_.push_back(tempVTopo[0].size());
-        missionId_  = missionId;
-        rankId_     = rankId;
-        rootId_     = rootId; // add
-        inputAddr_  = inputAddr;
+        missionId_ = missionId;
+        rankId_ = rankId;
+        rootId_ = rootId; // add
+        inputAddr_ = inputAddr;
         outputAddr_ = outputAddr;
-        sliceSize_  = sliceSize;
-        token_      = token;
-        offset_     = offset;
-        op_         = op;
-        tempVTopo_  = tempVTopo;
+        sliceSize_ = sliceSize;
+        token_ = token;
+        offset_ = offset;
+        op_ = op;
+        tempVTopo_ = tempVTopo;
         return;
     }
 
@@ -98,16 +107,13 @@ public:
         return StringFormat("CcuInstructionBroadcastMesh1D rankId [%u], instType[%d]", rankId_, instType_);
     }
 
-    void SetInstType(CcuInstType instType) 
-    { 
-        instType_ = instType; 
-    }
+    void SetInstType(CcuInstType instType) { instType_ = instType; }
 
     std::unique_ptr<CcuCtxArg> GetCtxArg() const override
     {
         HCCL_INFO("[BroadcastAlgo]GetCtxArg begin");
-        return std::make_unique<CcuCtxArgBroadcastMesh1D>(dimSize_, missionId_, rankId_, rootId_, op_,
-            tempVTopo_, instType_);
+        return std::make_unique<CcuCtxArgBroadcastMesh1D>(
+            dimSize_, missionId_, rankId_, rootId_, op_, tempVTopo_, instType_);
     }
 
     std::unique_ptr<CcuTaskArg> GetTaskArg() const override
@@ -132,5 +138,5 @@ private:
     std::vector<std::vector<RankId>> tempVTopo_;
 };
 
-}
+} // namespace Hccl
 #endif // HCCLV2_CCU_INSTRUCTION_BROADCAST_MESH_1D_H_

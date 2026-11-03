@@ -25,21 +25,21 @@ extern "C" {
 #pragma pack(4)
 /* common */
 /**
-* @brief 性能测量库句柄,用于对某个流程进行耗时打点
-*/
+ * @brief 性能测量库句柄,用于对某个流程进行耗时打点
+ */
 typedef struct tagBkfPfm BkfPfm;
 
 /* init */
 /**
-* @brief 性能测量库初始化参数
-*/
+ * @brief 性能测量库初始化参数
+ */
 typedef struct tagBkfPfmInitArg {
-    char *name; /**< 初始化库名称 */
+    char *name;        /**< 初始化库名称 */
     BkfMemMng *memMng; /**< 内存库句柄,见bkf_mem.h,同一app内可复用 */
-    BkfDisp *disp; /**< 诊断显示库句柄,见bkf_disp.h,同一app内可复用 */
+    BkfDisp *disp;     /**< 诊断显示库句柄,见bkf_disp.h,同一app内可复用 */
     BkfLogCnt *logCnt; /**< log cnt库句柄,见bkf_log_cnt.h,日志记录次数，同一app内可复用 */
-    BkfLog *log; /**< log库句柄,见bkf_log.h,同一app内可复用 */
-    BOOL enable; /**< 测量开关，初始化后，在运行期也可以通过测试命令开启关闭 */
+    BkfLog *log;       /**< log库句柄,见bkf_log.h,同一app内可复用 */
+    BOOL enable;       /**< 测量开关，初始化后，在运行期也可以通过测试命令开启关闭 */
     uint8_t rsv[0x10];
 } BkfPfmInitArg;
 
@@ -136,9 +136,10 @@ void BkfPfmTestAddMea(BkfPfm *pfm);
  * @param[in] mstr 性能测量实例字符串
  * @return none
  */
-#define BKF_PFM_BEGIN(pfm, mstr) do {          \
-    (void)BkfPfmBegin((pfm), (char*)(mstr)); \
-} while (0)
+#define BKF_PFM_BEGIN(pfm, mstr)                                                                                       \
+    do {                                                                                                               \
+        (void)BkfPfmBegin((pfm), (char *)(mstr));                                                                      \
+    } while (0)
 
 /**
  * @brief 性能测量实例结束易用宏封装,需定义BKF_PFM_ON后生效
@@ -147,9 +148,10 @@ void BkfPfmTestAddMea(BkfPfm *pfm);
  * @param[in] mstr 性能测量实例字符串
  * @return none
  */
-#define BKF_PFM_END(pfm, mstr) do {          \
-    (void)BkfPfmEnd((pfm), (char*)(mstr)); \
-} while (0)
+#define BKF_PFM_END(pfm, mstr)                                                                                         \
+    do {                                                                                                               \
+        (void)BkfPfmEnd((pfm), (char *)(mstr));                                                                        \
+    } while (0)
 
 #else
 /**
@@ -159,8 +161,9 @@ void BkfPfmTestAddMea(BkfPfm *pfm);
  * @param[in] mstr 性能测量实例字符串
  * @return none
  */
-#define BKF_PFM_BEGIN(pfm, mstr) do { \
-} while (0)
+#define BKF_PFM_BEGIN(pfm, mstr)                                                                                       \
+    do {                                                                                                               \
+    } while (0)
 
 /**
  * @brief 性能测量实例结束易用宏封装
@@ -169,8 +172,9 @@ void BkfPfmTestAddMea(BkfPfm *pfm);
  * @param[in] mstr 性能测量实例字符串
  * @return none
  */
-#define BKF_PFM_END(pfm, mstr) do { \
-} while (0)
+#define BKF_PFM_END(pfm, mstr)                                                                                         \
+    do {                                                                                                               \
+    } while (0)
 
 #endif
 #pragma pack()
@@ -182,4 +186,3 @@ void BkfPfmTestAddMea(BkfPfm *pfm);
 #endif
 
 #endif
-

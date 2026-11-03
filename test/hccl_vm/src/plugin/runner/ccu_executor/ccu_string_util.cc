@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: string utility functions implementation
  * Author: caiyifan
  */
@@ -17,7 +20,8 @@
 #include <vector>
 
 namespace HcclSim {
-std::string StringFormat(const char* format, ...) {
+std::string StringFormat(const char* format, ...)
+{
     va_list args;
     va_start(args, format);
 
@@ -38,4 +42,4 @@ std::string StringFormat(const char* format, ...) {
 
     return std::string(buffer.data(), size);
 }
-}
+} // namespace HcclSim

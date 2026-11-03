@@ -7,6 +7,7 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
+
 set(src_to_test_list
     main.cc
     ../communicator/hccl_api_base_test.cc
@@ -38,11 +39,12 @@ target_compile_options(hcomm_utest_sync_data_aicpu_ts PRIVATE
 
 target_link_libraries(hcomm_utest_sync_data_aicpu_ts PRIVATE
     $<BUILD_INTERFACE:intf_llt_pub>
+    $<BUILD_INTERFACE:rdma_core_headers>
     $<$<STREQUAL:${ENABLE_ASAN},true>:-fsanitize=address>
     -pthread
     hccl_llt
     -Wl,--whole-archive
-    -Wl,--no-whole-archi
+    -Wl,--no-whole-archive
     -lgcov
     -lrt
     -ldl

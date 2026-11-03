@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <cstring>
 #include "hccp_common.h"
+#include "hccl_common.h"
 
 namespace hcomm {
 
@@ -42,9 +43,9 @@ enum class SyncMode : uint8_t {
 // ========== 能力协商结构 ==========
 // 注意：使用 packed 属性确保跨模块二进制兼容
 struct RoCECapability {
-    uint32_t magic;          // 魔数：0x48434C52 ("HCLR")
-    uint16_t version;        // 版本号
-    uint16_t totalLength;    // 总长度（包括头部和变长数据）
+    uint32_t magic;       // 魔数：0x48434C52 ("HCLR")
+    uint16_t version;     // 版本号
+    uint16_t totalLength; // 总长度（包括头部和变长数据）
 
     uint8_t nodeType;        // 节点类型（参考 HcclDeviceType）
     CommStackType commStack; // 通信协议栈类型
@@ -53,17 +54,17 @@ struct RoCECapability {
 
     NICDeployment nicDeploy; // NIC 部署位置
 
-    uint8_t reserved[4];     // 预留字段，用于未来扩展
+    uint8_t reserved[4]; // 预留字段，用于未来扩展
 
     // 序列化（直接内存拷贝）
-    void Serialize(uint8_t *buffer, size_t &len) const
+    void Serialize(uint8_t* buffer, size_t& len) const
     {
         len = sizeof(RoCECapability);
         (void)memcpy_s(buffer, len, this, len);
     }
 
     // 反序列化（直接内存拷贝）
-    bool Deserialize(const uint8_t *buffer, size_t len)
+    bool Deserialize(const uint8_t* buffer, size_t len)
     {
         if (len < sizeof(RoCECapability)) {
             return false;
@@ -75,7 +76,7 @@ struct RoCECapability {
     }
 
     // 快速检查魔数
-    static bool CheckMagic(const uint8_t *buffer, size_t len)
+    static bool CheckMagic(const uint8_t* buffer, size_t len)
     {
         if (len < sizeof(uint32_t)) {
             return false;

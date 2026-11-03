@@ -83,7 +83,7 @@ char *BkfGetMemStr(uint8_t *mem, uint32_t memLen, uint32_t newLenPerByte, uint8_
     uint32_t i = 0;
     int32_t ret;
     int32_t usedLen = 0;
-	
+
     if (newLenPerByte == 0) {
         return "lenPerByteIsZero";
     }
@@ -95,9 +95,9 @@ char *BkfGetMemStr(uint8_t *mem, uint32_t memLen, uint32_t newLenPerByte, uint8_
     buf[0] = '\0';
     while (i < memLen) {
         if (i % newLenPerByte == 0) {
-            ret = snprintf_truncated_s((char*)buf + usedLen, (uint32_t)(bufLen - usedLen), "%.2x", mem[i]);
+            ret = snprintf_truncated_s((char *)buf + usedLen, (uint32_t)(bufLen - usedLen), "%.2x", mem[i]);
         } else {
-            ret = snprintf_truncated_s((char*)buf + usedLen, (uint32_t)(bufLen - usedLen), " %.2x", mem[i]);
+            ret = snprintf_truncated_s((char *)buf + usedLen, (uint32_t)(bufLen - usedLen), " %.2x", mem[i]);
         }
         if (ret <= 0) {
             break;
@@ -114,7 +114,7 @@ char *BkfGetMemStr(uint8_t *mem, uint32_t memLen, uint32_t newLenPerByte, uint8_
         }
     }
 
-    return (char*)buf;
+    return (char *)buf;
 }
 
 char *BkfTrimStrPath(char *str)
@@ -134,4 +134,3 @@ char *BkfTrimStrPath(char *str)
 }
 #endif
 #endif
-

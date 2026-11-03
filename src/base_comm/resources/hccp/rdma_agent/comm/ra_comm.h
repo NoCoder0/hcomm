@@ -15,17 +15,26 @@
 #include "hccp_common.h"
 #include "ra_rs_comm.h"
 
-#define RA_HDC_RECV_SEND_TIMEOUT    120000
-#define RA_HDC_RETRY_SEND_TIMEOUT    10000
+#define RA_HDC_RECV_SEND_TIMEOUT 120000
+#define RA_HDC_RETRY_SEND_TIMEOUT 10000
 #define SOCKET_USE_PORT_BIT 31U
 #define SOCKET_DISUSE_LINGER_BIT 31U
 
-int RaGetSocketListenInfo(const struct SocketListenInfoT conn[], unsigned int num,
-    struct SocketListenInfo rsConn[], unsigned int rsNum);
+int RaGetSocketListenInfo(const struct SocketListenInfoT conn[], unsigned int num, struct SocketListenInfo rsConn[],
+    unsigned int rsNum);
 
-int RaGetSocketListenResult(const struct SocketListenInfo rsConn[], unsigned int rsNum,
+int RaGetSocketListenResult(const struct SocketListenInfo rsConn[], unsigned int rsNum, struct SocketListenInfoT conn[],
+    unsigned int num);
+
+int RaGetSocketListenResultV2(const struct SocketListenInfoV2 rsConn[], unsigned int rsNum,
     struct SocketListenInfoT conn[], unsigned int num);
 
-int RaGetSocketConnectInfo(const struct SocketConnectInfoT conn[], unsigned int num,
-    struct SocketConnectInfo rsConn[], unsigned int rsNum);
+int RaGetSocketConnectInfo(const struct SocketConnectInfoT conn[], unsigned int num, struct SocketConnectInfo rsConn[],
+    unsigned int rsNum);
+
+int RaGetSocketListenInfoV2(const struct SocketListenInfoT conn[], unsigned int num, struct SocketListenInfoV2 rsConn[],
+    unsigned int rsNum);
+
+int RaGetSocketConnectInfoV2(const struct SocketConnectInfoT conn[], unsigned int num,
+    struct SocketConnectInfoV2 rsConn[], unsigned int rsNum);
 #endif // RA_COMM_H

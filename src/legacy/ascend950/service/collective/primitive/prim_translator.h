@@ -20,14 +20,14 @@ using namespace std;
 
 class PrimTranslator {
 public:
-    using TranslateRule = std::function<vector<unique_ptr<Instruction>>(const Primitive &)>;
+    using TranslateRule = std::function<vector<unique_ptr<Instruction>>(const Primitive&)>;
 
     explicit PrimTranslator();
-    shared_ptr<InsQueue> Translate(const PrimQueue &primQueue);
+    shared_ptr<InsQueue> Translate(const PrimQueue& primQueue);
 
 private:
     std::map<PrimType, TranslateRule> primTranslateRuleMap;
-    void                              TranslateOnePrimQue(const PrimQueue &primQueue, shared_ptr<InsQueue> insQueue);
+    void TranslateOnePrimQue(const PrimQueue& primQueue, shared_ptr<InsQueue> insQueue);
 };
 } // namespace Hccl
 #endif

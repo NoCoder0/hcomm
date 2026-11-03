@@ -9,6 +9,13 @@
 - Send：将本端rank的数据发送到对端rank。
 - Receive：接收对端rank发送过来的数据，需要与Send算子配对使用。
 
+## 产品支持情况
+
+本样例支持以下产品，组网为单机N卡（N>=2，且为偶数）：
+
+- Ascend 950PR&950DT系列产品
+- Atlas A3系列产品
+
 ## 样例介绍
 
 开发者可以点击[样例链接](https://gitcode.com/cann/hccl/tree/master/examples/04_custom_ops_p2p)获取完整样例代码，该样例使用HCCL通信算子开发接口实现了基于AI CPU通信引擎的Send和Receive算子，主要实现流程如下所示：

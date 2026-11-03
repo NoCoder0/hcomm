@@ -34,8 +34,8 @@ BkfPuberTableTypeMng *BkfPuberTableTypeDataInit(BkfPuberInitArg *arg)
     tableTypeMng->log = arg->log;
 
     VOS_AVLL_INIT_TREE(tableTypeMng->tableTypeSet, (AVLL_COMPARE)Bkfuint16_tCmp,
-                       BKF_OFFSET(BkfPuberTableType, vTbl) + BKF_OFFSET(BkfPuberTableTypeVTbl, tableTypeId),
-                       BKF_OFFSET(BkfPuberTableType, avlNode));
+        BKF_OFFSET(BkfPuberTableType, vTbl) + BKF_OFFSET(BkfPuberTableTypeVTbl, tableTypeId),
+        BKF_OFFSET(BkfPuberTableType, avlNode));
 
     return tableTypeMng;
 }
@@ -47,8 +47,8 @@ void BkfPuberTableTypeDataUninit(BkfPuberTableTypeMng *tableTypeMng)
     BKF_FREE(tableTypeMng->argInit->memMng, tableTypeMng);
 }
 
-BkfPuberTableType *BkfPuberTableTypeAdd(BkfPuberTableTypeMng *tableTypeMng, BkfPuberTableTypeVTbl *vTbl,
-                                         void *userData, uint16_t dataLen)
+BkfPuberTableType *BkfPuberTableTypeAdd(BkfPuberTableTypeMng *tableTypeMng, BkfPuberTableTypeVTbl *vTbl, void *userData,
+    uint16_t dataLen)
 {
     uint32_t len = sizeof(BkfPuberTableType) + dataLen;
     BkfPuberTableType *tableType = BKF_MALLOC(tableTypeMng->argInit->memMng, len);
@@ -99,7 +99,7 @@ BkfPuberTableType *BkfPuberTableTypeFind(BkfPuberTableTypeMng *tableTypeMng, uin
     uint8_t hashIdx = BkfPuberTableTypeGetHashIdx(tableTypeId);
     BkfPuberTableType *tableType = tableTypeMng->tableTypeCache[hashIdx];
     BOOL hit = (tableType != VOS_NULL) && (tableType->vTbl.tableTypeId == tableTypeId);
-    if (hit)  {
+    if (hit) {
         return tableType;
     }
 
@@ -119,8 +119,8 @@ BkfPuberTableType *BkfPuberTableTypeGetFirst(BkfPuberTableTypeMng *tableTypeMng,
 {
     BkfPuberTableType *tableType = VOS_AVLL_FIRST(tableTypeMng->tableTypeSet);
     if (itorOutOrNull != VOS_NULL) {
-        *itorOutOrNull = (tableType != VOS_NULL) ?
-                            VOS_AVLL_NEXT(tableTypeMng->tableTypeSet, tableType->avlNode) : VOS_NULL;
+        *itorOutOrNull = (tableType != VOS_NULL) ? VOS_AVLL_NEXT(tableTypeMng->tableTypeSet, tableType->avlNode)
+                                                 : VOS_NULL;
     }
     return tableType;
 }
@@ -135,4 +135,3 @@ BkfPuberTableType *BkfPuberTableTypeGetNext(BkfPuberTableTypeMng *tableTypeMng, 
 #ifdef __cplusplus
 }
 #endif
-

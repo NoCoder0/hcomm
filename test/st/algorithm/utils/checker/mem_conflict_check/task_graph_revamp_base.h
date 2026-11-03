@@ -26,15 +26,15 @@ public:
 
     HcclResult RevampGraph(TaskNodePtr dummyStart);
 
-    HcclResult GetPeerRankByTaskNode(TaskNodePtr currNode, RankId &peerRank);
-    HcclResult GetLinkProtoStubByTaskNode(TaskNodePtr currNode, LinkProtoStub &link);
+    HcclResult GetPeerRankByTaskNode(TaskNodePtr currNode, RankId& peerRank);
+    HcclResult GetLinkProtoStubByTaskNode(TaskNodePtr currNode, LinkProtoStub& link);
     TaskStub* GenTaskStubBeingReadOrWrittern(TaskNodePtr currNode);
-    void RemoveNodeRelation(TaskNodePtr parent, TaskNodePtr child);    
+    void RemoveNodeRelation(TaskNodePtr parent, TaskNodePtr child);
     void AddNodeRelation(TaskNodePtr parent, TaskNodePtr child);
     void SearchGraphByRank(
-        TaskNodePtr currNode, std::queue<TaskNodePtr> &graphNodeQue, std::set<TaskNodePtr> &isVisited, RankId rankId);
+        TaskNodePtr currNode, std::queue<TaskNodePtr>& graphNodeQue, std::set<TaskNodePtr>& isVisited, RankId rankId);
     void SearchGraphByQueueId(
-        TaskNodePtr currNode, std::queue<TaskNodePtr> &graphNodeQue, std::set<TaskNodePtr> &isVisited, uint32_t queIdx);
+        TaskNodePtr currNode, std::queue<TaskNodePtr>& graphNodeQue, std::set<TaskNodePtr>& isVisited, uint32_t queIdx);
 
 public:
     uint32_t rankSize_{0};

@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "aiv_communication_base.h"
 
@@ -16,17 +16,17 @@ class AivAllReduce91093 : public AivCommBase {
 public:
     __aicore__ inline AivAllReduce91093() {}
 
-    template<typename T>
+    template <typename T>
     __aicore__ inline void Process(GM_ADDR input, GM_ADDR output, uint64_t len, int32_t tag);
 
-    template<typename T>
+    template <typename T>
     __aicore__ inline void ProcessSmall(GM_ADDR input, GM_ADDR output, uint64_t len, int32_t tag);
 
-    template<typename T>
+    template <typename T>
     __aicore__ inline void ProcessBig(GM_ADDR input, GM_ADDR output, uint64_t len, int32_t tag);
 };
 
-template<typename T>
+template <typename T>
 __aicore__ inline void AivAllReduce91093::Process(GM_ADDR input, GM_ADDR output, uint64_t len, int32_t tag)
 {
     if (len * sizeof(T) <= AIV_A3_ALL_REDUCE_GRAPH_GUIYI_SIZE) {
@@ -36,7 +36,7 @@ __aicore__ inline void AivAllReduce91093::Process(GM_ADDR input, GM_ADDR output,
     }
 }
 
-template<typename T>
+template <typename T>
 __aicore__ inline void AivAllReduce91093::ProcessSmall(GM_ADDR input, GM_ADDR output, uint64_t len, int32_t tag)
 {
     uint32_t blockNumPerGroup = numBlocks_ / rankSize_; // numBlocks_需要能被rankSize_整除
@@ -56,9 +56,9 @@ __aicore__ inline void AivAllReduce91093::ProcessSmall(GM_ADDR input, GM_ADDR ou
 
     // 用4个flag
     if (dstRank == rank_) {
-        __gm__ T *inputGM = (__gm__ T *)input;
-        __gm__ T *cclGMSelf = (__gm__ T *)(GM_IN[rank_] + dataOffset);
-        __gm__ T *outputGM = (__gm__ T *)output;
+        __gm__ T* inputGM = (__gm__ T*)input;
+        __gm__ T* cclGMSelf = (__gm__ T*)(GM_IN[rank_] + dataOffset);
+        __gm__ T* outputGM = (__gm__ T*)output;
 
         GlobalTensor<T> inputGT;
         inputGT.SetGlobalBuffer(inputGM + blockOffset, count);
@@ -82,12 +82,12 @@ __aicore__ inline void AivAllReduce91093::ProcessSmall(GM_ADDR input, GM_ADDR ou
         inOutQue.FreeTensor(localOut);
 
         PipeBarrier<PIPE_MTE3>();
-        
+
         // 卡内同步
         Record1vN(tag, CommPattern::intraRank, AivNotifyType::DataSignal, blockIdxInGroup, ifPingpong);
     } else {
-        __gm__ T *cclGMOther = (__gm__ T *)(GM_IN[dstRank] + dataOffset);
-        __gm__ T *outputGM = (__gm__ T *)output;
+        __gm__ T* cclGMOther = (__gm__ T*)(GM_IN[dstRank] + dataOffset);
+        __gm__ T* outputGM = (__gm__ T*)output;
 
         GlobalTensor<T> cclGTOther;
         cclGTOther.SetGlobalBuffer(cclGMOther + blockOffset, count);
@@ -115,10 +115,10 @@ __aicore__ inline void AivAllReduce91093::ProcessSmall(GM_ADDR input, GM_ADDR ou
     }
 }
 
-template<typename T>
+template <typename T>
 __aicore__ inline void AivAllReduce91093::ProcessBig(GM_ADDR input, GM_ADDR output, uint64_t len, int32_t tag)
 {
-    uint32_t blockNumPerGroup = numBlocks_ / rankSize_; 
+    uint32_t blockNumPerGroup = numBlocks_ / rankSize_;
     uint32_t blockIdxInGroup = blockIdx_ % blockNumPerGroup;
     uint32_t dstRank = blockIdx_ / blockNumPerGroup;
     uint32_t padCount = UB_ALIGN_SIZE / sizeof(T);
@@ -130,9 +130,9 @@ __aicore__ inline void AivAllReduce91093::ProcessBig(GM_ADDR input, GM_ADDR outp
 
     uint64_t count = 0;
     // 使用19个flag
-    __gm__ T *outputGm = (__gm__ T *)output;
-    __gm__ T *cclGmSelf = (__gm__ T *)(GM_IN[rank_]);
-    __gm__ T *cclGmOther = (__gm__ T *)(GM_IN[dstRank]);
+    __gm__ T* outputGm = (__gm__ T*)output;
+    __gm__ T* cclGmSelf = (__gm__ T*)(GM_IN[rank_]);
+    __gm__ T* cclGmOther = (__gm__ T*)(GM_IN[dstRank]);
 
     // 本卡已进入算子，通知其他卡可以搬运，使用第1个flag
     Record(tag, dstRank, AivNotifyType::ACK, blockIdxInGroup);
@@ -160,14 +160,14 @@ __aicore__ inline void AivAllReduce91093::ProcessBig(GM_ADDR input, GM_ADDR outp
     PipeBarrier<PIPE_ALL>();
     if (dstRank == rank_) {
         // check 本端aiv 所有reduce结果是否完成
-        Wait1vN((rankSize_-1) * tag, CommPattern::intraRank, true, AivNotifyType::ACK, blockIdxInGroup);
+        Wait1vN((rankSize_ - 1) * tag, CommPattern::intraRank, true, AivNotifyType::ACK, blockIdxInGroup);
         SyncFunc<HardEvent::MTE3_S>();
 
         // 告诉别人自己已经加完所有卡了，使用第3个flag
         Record1vN(tag, CommPattern::interRank, AivNotifyType::ACK, blockIdxInGroup);
         SyncFunc<HardEvent::MTE3_MTE2>();
     } else {
-    // 每个aiv读相应对端的flag
+        // 每个aiv读相应对端的flag
         WaitNv1(tag, dstRank, AivNotifyType::ACK, blockIdxInGroup);
     }
     PipeBarrier<PIPE_ALL>();
@@ -185,7 +185,7 @@ __aicore__ inline void AivAllReduce91093::ProcessBig(GM_ADDR input, GM_ADDR outp
     return;
 }
 
-template<typename T>
+template <typename T>
 __aicore__ inline void aiv_all_reduce_91093(KERNEL_ARGS_DEF)
 {
     AivAllReduce91093 op;
@@ -199,19 +199,18 @@ __aicore__ inline void sk_all_reduce_91093(SUPERKERNEL_ARGS_DEF)
 {
     AivAllReduce91093 op;
     op.Init(SUPERKERNEL_CLASS_INIT, AIV_A3_ALL_REDUCE_GRAPH_GUIYI_SIZE);
-    #ifdef HCCL_DTYPE_INT8
-        op.Process<int8_t>(input, output, op.len_, op.tag_);
-    #elif defined HCCL_DTYPE_INT16
-        op.Process<int16_t>(input, output, op.len_, op.tag_);
-    #elif defined HCCL_DTYPE_INT32
-        op.Process<int32_t>(input, output, op.len_, op.tag_);
-    #elif defined HCCL_DTYPE_FP16
-        op.Process<half>(input, output, op.len_, op.tag_);
-    #elif defined HCCL_DTYPE_FP32
-        op.Process<float>(input, output, op.len_, op.tag_);
-    #elif defined HCCL_DTYPE_BFP16
-        op.Process<bfloat16_t>(input, output, op.len_, op.tag_);
-    #else
-    #endif
+#ifdef HCCL_DTYPE_INT8
+    op.Process<int8_t>(input, output, op.len_, op.tag_);
+#elif defined HCCL_DTYPE_INT16
+    op.Process<int16_t>(input, output, op.len_, op.tag_);
+#elif defined HCCL_DTYPE_INT32
+    op.Process<int32_t>(input, output, op.len_, op.tag_);
+#elif defined HCCL_DTYPE_FP16
+    op.Process<half>(input, output, op.len_, op.tag_);
+#elif defined HCCL_DTYPE_FP32
+    op.Process<float>(input, output, op.len_, op.tag_);
+#elif defined HCCL_DTYPE_BFP16
+    op.Process<bfloat16_t>(input, output, op.len_, op.tag_);
+#else
+#endif
 }
-

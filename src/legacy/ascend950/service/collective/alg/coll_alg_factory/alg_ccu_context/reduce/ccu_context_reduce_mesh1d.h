@@ -21,11 +21,11 @@ namespace Hccl {
 
 class CcuContextReduceMesh1D : public CcuContextAlgBase {
 public:
-    CcuContextReduceMesh1D(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                              const CcuTransportGroup &group);
+    CcuContextReduceMesh1D(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
 
 private:
     void InitResource();
@@ -33,7 +33,7 @@ private:
     void PreSync();
     void DoRepeatReduce();
     void PostSync();
-    
+
     uint32_t rootId_{0}; // 当rankid == rootid时，为root节点 则跳过write操作
     DataType dataType_;
     DataType outputDataType_;
@@ -42,21 +42,21 @@ private:
     std::vector<CcuRep::Variable> token_;
     uint16_t selfBit_{0};
     uint16_t allBit_{0};
-    CcuRep::Variable              currentRankSliceInputOffset_;
-    CcuRep::Variable              currentRankSliceOutputOffset_;
-    CcuRep::Variable              repeatNum_;
-    CcuRep::Variable              inputRepeatStride_;
-    CcuRep::Variable              outputRepeatStride_;
-    CcuRep::Variable              normalSliceSize_;
-    CcuRep::Variable              lastSliceSize_;
-    CcuRep::Variable              repeatNumVar_;
-    CcuRep::Variable              flag_;
+    CcuRep::Variable currentRankSliceInputOffset_;
+    CcuRep::Variable currentRankSliceOutputOffset_;
+    CcuRep::Variable repeatNum_;
+    CcuRep::Variable inputRepeatStride_;
+    CcuRep::Variable outputRepeatStride_;
+    CcuRep::Variable normalSliceSize_;
+    CcuRep::Variable lastSliceSize_;
+    CcuRep::Variable repeatNumVar_;
+    CcuRep::Variable flag_;
 
     GroupOpSize groupOpSize_;
     CcuRep::Variable srcOffset_;
     CcuRep::Variable dstOffset_;
 
-    CcuRep::Memory              localMem_;
+    CcuRep::Memory localMem_;
     std::vector<CcuRep::Memory> reomteMem_;
 
     CcuRep::MaskSignal localSignal_;

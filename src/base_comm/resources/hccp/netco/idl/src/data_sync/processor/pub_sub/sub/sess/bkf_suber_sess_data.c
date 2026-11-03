@@ -52,8 +52,8 @@ BkfSuberSessMng *BkfSuberSessMngDataInit(BkfSuberSessMngInitArg *initArg)
     sessMng->cookie = initArg->cookie;
     sessMng->pubUrl = initArg->pubUrl;
     sessMng->locUrl = initArg->locUrl;
-    VOS_AVLL_INIT_TREE(sessMng->sessSet, (AVLL_COMPARE)BkfSuberSessAndSubKeyCmp,
-        BKF_OFFSET(BkfSuberSess, key), BKF_OFFSET(BkfSuberSess, avlNode));
+    VOS_AVLL_INIT_TREE(sessMng->sessSet, (AVLL_COMPARE)BkfSuberSessAndSubKeyCmp, BKF_OFFSET(BkfSuberSess, key),
+        BKF_OFFSET(BkfSuberSess, avlNode));
     sessMng->dataMng = initArg->dataMng;
     BKF_DL_INIT(&sessMng->subSess);
     BKF_DL_INIT(&sessMng->unSubSess);
@@ -131,15 +131,15 @@ void BkfSuberSessDataDelByKey(BkfSuberSessMng *sessMng, void *sliceKey, uint16_t
 
 BkfSuberSess *BkfSuberSessDataFind(BkfSuberSessMng *sessMng, void *sliceKey, uint16_t tableTypeId)
 {
-    BkfSuberSessKey key = {.tableTypeId = tableTypeId, .sliceKey = sliceKey,
-                           .sliceKeyCmp = sessMng->env->sliceVTbl.keyCmp };
+    BkfSuberSessKey key = {
+        .tableTypeId = tableTypeId, .sliceKey = sliceKey, .sliceKeyCmp = sessMng->env->sliceVTbl.keyCmp};
     return VOS_AVLL_FIND(sessMng->sessSet, &key);
 }
 
 BkfSuberSess *BkfSuberSessDataFindNext(BkfSuberSessMng *sessMng, void *sliceKey, uint16_t tableTypeId)
 {
-    BkfSuberSessKey key = {.tableTypeId = tableTypeId, .sliceKey = sliceKey,
-                           .sliceKeyCmp = sessMng->env->sliceVTbl.keyCmp };
+    BkfSuberSessKey key = {
+        .tableTypeId = tableTypeId, .sliceKey = sliceKey, .sliceKeyCmp = sessMng->env->sliceVTbl.keyCmp};
     return VOS_AVLL_FIND_NEXT(sessMng->sessSet, &key);
 }
 
@@ -157,7 +157,7 @@ BkfSuberSess *BkfSuberSessDataGetFirst(BkfSuberSessMng *sessMng, void **itorOutO
 
 BkfSuberSess *BkfSuberSessDataGetNext(BkfSuberSessMng *sessMng, void **itorInOut)
 {
-    BkfSuberSess *sess = *(BkfSuberSess**)itorInOut;
+    BkfSuberSess *sess = *(BkfSuberSess **)itorInOut;
     if (sess == VOS_NULL) {
         *itorInOut = VOS_NULL;
     } else {
@@ -172,11 +172,10 @@ void BkfSuberSessDataDelAll(BkfSuberSessMng *sessMng)
     void *itor = VOS_NULL;
 
     for (sess = BkfSuberSessDataGetFirst(sessMng, &itor); sess != VOS_NULL;
-        sess = BkfSuberSessDataGetNext(sessMng, &itor)) {
+         sess = BkfSuberSessDataGetNext(sessMng, &itor)) {
         BkfSuberSessDataDel(sess);
     }
 }
-
 
 uint32_t BkfSuberSessCreateReSubTmr(BkfSuberSessMng *sessMng)
 {
@@ -204,6 +203,7 @@ void BkfSuberSessDeleteReSubTmr(BkfSuberSessMng *sessMng)
 
 uint32_t BkfSubSessReSubTmrSvcProc(void *paramTmrStart, void *noUse)
 {
+    (void)noUse;
     BkfSuberSessMng *sessMng = (BkfSuberSessMng *)paramTmrStart;
     BkfSuberSessResetUnBlockFlag(sessMng);
     if (BKF_DL_IS_EMPTY(&sessMng->subSess)) {

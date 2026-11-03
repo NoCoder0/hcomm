@@ -1,28 +1,12 @@
- /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- * 
- * The code snippet comes from Cann project.
- * 
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef INC_EXTERNAL_ACL_ACL_TDT_H_
 #define INC_EXTERNAL_ACL_ACL_TDT_H_
@@ -55,7 +39,7 @@ typedef struct acltdtChannelHandle acltdtChannelHandle;
  * @retval Tensor type.
  * @retval ACL_DT_UNDEFINED if dataItem is null
  */
-ACL_FUNC_VISIBILITY acltdtTensorType acltdtGetTensorTypeFromItem(const acltdtDataItem *dataItem);
+ACL_FUNC_VISIBILITY acltdtTensorType acltdtGetTensorTypeFromItem(const acltdtDataItem* dataItem);
 
 /**
  * @ingroup AscendCL
@@ -66,7 +50,7 @@ ACL_FUNC_VISIBILITY acltdtTensorType acltdtGetTensorTypeFromItem(const acltdtDat
  * @retval Data type.
  * @retval ACL_DT_UNDEFINED if dataItem is null
  */
-ACL_FUNC_VISIBILITY aclDataType acltdtGetDataTypeFromItem(const acltdtDataItem *dataItem);
+ACL_FUNC_VISIBILITY aclDataType acltdtGetDataTypeFromItem(const acltdtDataItem* dataItem);
 
 /**
  * @ingroup AscendCL
@@ -76,8 +60,8 @@ ACL_FUNC_VISIBILITY aclDataType acltdtGetDataTypeFromItem(const acltdtDataItem *
  *
  * @retval null for failed
  * @retval OtherValues success
-*/
-ACL_FUNC_VISIBILITY void *acltdtGetDataAddrFromItem(const acltdtDataItem *dataItem);
+ */
+ACL_FUNC_VISIBILITY void* acltdtGetDataAddrFromItem(const acltdtDataItem* dataItem);
 
 /**
  * @ingroup AscendCL
@@ -87,8 +71,8 @@ ACL_FUNC_VISIBILITY void *acltdtGetDataAddrFromItem(const acltdtDataItem *dataIt
  *
  * @retval 0 for failed
  * @retval OtherValues success
-*/
-ACL_FUNC_VISIBILITY size_t acltdtGetDataSizeFromItem(const acltdtDataItem *dataItem);
+ */
+ACL_FUNC_VISIBILITY size_t acltdtGetDataSizeFromItem(const acltdtDataItem* dataItem);
 
 /**
  * @ingroup AscendCL
@@ -98,8 +82,8 @@ ACL_FUNC_VISIBILITY size_t acltdtGetDataSizeFromItem(const acltdtDataItem *dataI
  *
  * @retval 0 for failed
  * @retval OtherValues success
-*/
-ACL_FUNC_VISIBILITY size_t acltdtGetDimNumFromItem(const acltdtDataItem *dataItem);
+ */
+ACL_FUNC_VISIBILITY size_t acltdtGetDimNumFromItem(const acltdtDataItem* dataItem);
 
 /**
  * @ingroup AscendCL
@@ -111,9 +95,9 @@ ACL_FUNC_VISIBILITY size_t acltdtGetDimNumFromItem(const acltdtDataItem *dataIte
  *
  * @retval ACL_SUCCESS  The function is successfully executed.
  * @retval OtherValues Failure
-*/
-ACL_FUNC_VISIBILITY aclError acltdtGetSliceInfoFromItem(const acltdtDataItem *dataItem, size_t *sliceNum,
-    size_t* sliceId);
+ */
+ACL_FUNC_VISIBILITY aclError
+acltdtGetSliceInfoFromItem(const acltdtDataItem* dataItem, size_t* sliceNum, size_t* sliceId);
 
 /**
  * @ingroup AscendCL
@@ -126,7 +110,7 @@ ACL_FUNC_VISIBILITY aclError acltdtGetSliceInfoFromItem(const acltdtDataItem *da
  * @retval ACL_SUCCESS  The function is successfully executed.
  * @retval OtherValues Failure
  */
-ACL_FUNC_VISIBILITY aclError acltdtGetDimsFromItem(const acltdtDataItem *dataItem, int64_t *dims, size_t dimNum);
+ACL_FUNC_VISIBILITY aclError acltdtGetDimsFromItem(const acltdtDataItem* dataItem, int64_t* dims, size_t dimNum);
 
 /**
  * @ingroup AscendCL
@@ -144,12 +128,8 @@ ACL_FUNC_VISIBILITY aclError acltdtGetDimsFromItem(const acltdtDataItem *dataIte
  *
  * @see acltdtDestroyDataItem
  */
-ACL_FUNC_VISIBILITY acltdtDataItem *acltdtCreateDataItem(acltdtTensorType tdtType,
-                                                         const int64_t *dims,
-                                                         size_t dimNum,
-                                                         aclDataType dataType,
-                                                         void *data,
-                                                         size_t size);
+ACL_FUNC_VISIBILITY acltdtDataItem* acltdtCreateDataItem(
+    acltdtTensorType tdtType, const int64_t* dims, size_t dimNum, aclDataType dataType, void* data, size_t size);
 
 /**
  * @ingroup AscendCL
@@ -162,7 +142,7 @@ ACL_FUNC_VISIBILITY acltdtDataItem *acltdtCreateDataItem(acltdtTensorType tdtTyp
  *
  * @see acltdtCreateDataItem
  */
-ACL_FUNC_VISIBILITY aclError acltdtDestroyDataItem(acltdtDataItem *dataItem);
+ACL_FUNC_VISIBILITY aclError acltdtDestroyDataItem(acltdtDataItem* dataItem);
 
 /**
  * @ingroup AscendCL
@@ -173,7 +153,7 @@ ACL_FUNC_VISIBILITY aclError acltdtDestroyDataItem(acltdtDataItem *dataItem);
  *
  * @see acltdtDestroyDataset
  */
-ACL_FUNC_VISIBILITY acltdtDataset *acltdtCreateDataset();
+ACL_FUNC_VISIBILITY acltdtDataset* acltdtCreateDataset();
 
 /**
  * @ingroup AscendCL
@@ -186,7 +166,7 @@ ACL_FUNC_VISIBILITY acltdtDataset *acltdtCreateDataset();
  *
  * @see acltdtCreateDataset
  */
-ACL_FUNC_VISIBILITY aclError acltdtDestroyDataset(acltdtDataset *dataset);
+ACL_FUNC_VISIBILITY aclError acltdtDestroyDataset(acltdtDataset* dataset);
 
 /**
  * @ingroup AscendCL
@@ -200,7 +180,7 @@ ACL_FUNC_VISIBILITY aclError acltdtDestroyDataset(acltdtDataset *dataset);
  *
  * @see acltdtAddDataItem
  */
-ACL_FUNC_VISIBILITY acltdtDataItem *acltdtGetDataItem(const acltdtDataset *dataset, size_t index);
+ACL_FUNC_VISIBILITY acltdtDataItem* acltdtGetDataItem(const acltdtDataset* dataset, size_t index);
 
 /**
  * @ingroup AscendCL
@@ -214,7 +194,7 @@ ACL_FUNC_VISIBILITY acltdtDataItem *acltdtGetDataItem(const acltdtDataset *datas
  *
  * @see acltdtGetDataItem
  */
-ACL_FUNC_VISIBILITY aclError acltdtAddDataItem(acltdtDataset *dataset, acltdtDataItem *dataItem);
+ACL_FUNC_VISIBILITY aclError acltdtAddDataItem(acltdtDataset* dataset, acltdtDataItem* dataItem);
 
 /**
  * @ingroup AscendCL
@@ -225,7 +205,7 @@ ACL_FUNC_VISIBILITY aclError acltdtAddDataItem(acltdtDataset *dataset, acltdtDat
  * @retval 0 for failed
  * @retval OtherValues success
  */
-ACL_FUNC_VISIBILITY size_t acltdtGetDatasetSize(const acltdtDataset *dataset);
+ACL_FUNC_VISIBILITY size_t acltdtGetDatasetSize(const acltdtDataset* dataset);
 
 /**
  * @ingroup AscendCL
@@ -236,7 +216,7 @@ ACL_FUNC_VISIBILITY size_t acltdtGetDatasetSize(const acltdtDataset *dataset);
  * @retval null for failed
  * @retval OtherValues success
  */
-ACL_FUNC_VISIBILITY const char *acltdtGetDatasetName(const acltdtDataset *dataset);
+ACL_FUNC_VISIBILITY const char* acltdtGetDatasetName(const acltdtDataset* dataset);
 
 /**
  * @ingroup AscendCL
@@ -249,7 +229,7 @@ ACL_FUNC_VISIBILITY const char *acltdtGetDatasetName(const acltdtDataset *datase
  *
  * @see acltdtCreateChannel | acltdtDestroyChannel
  */
-ACL_FUNC_VISIBILITY aclError acltdtStopChannel(acltdtChannelHandle *handle);
+ACL_FUNC_VISIBILITY aclError acltdtStopChannel(acltdtChannelHandle* handle);
 
 /**
  * @ingroup AscendCL
@@ -263,7 +243,7 @@ ACL_FUNC_VISIBILITY aclError acltdtStopChannel(acltdtChannelHandle *handle);
  *
  * @see acltdtStopChannel | acltdtDestroyChannel
  */
-ACL_FUNC_VISIBILITY acltdtChannelHandle *acltdtCreateChannel(uint32_t deviceId, const char *name);
+ACL_FUNC_VISIBILITY acltdtChannelHandle* acltdtCreateChannel(uint32_t deviceId, const char* name);
 
 /**
  * @ingroup AscendCL
@@ -278,9 +258,8 @@ ACL_FUNC_VISIBILITY acltdtChannelHandle *acltdtCreateChannel(uint32_t deviceId, 
  *
  * @see acltdtDestroyChannel
  */
-ACL_FUNC_VISIBILITY acltdtChannelHandle *acltdtCreateChannelWithCapacity(uint32_t deviceId,
-                                                                         const char *name,
-                                                                         size_t capacity);
+ACL_FUNC_VISIBILITY acltdtChannelHandle*
+acltdtCreateChannelWithCapacity(uint32_t deviceId, const char* name, size_t capacity);
 
 /**
  * @ingroup AscendCL
@@ -293,7 +272,7 @@ ACL_FUNC_VISIBILITY acltdtChannelHandle *acltdtCreateChannelWithCapacity(uint32_
  *
  * @see acltdtCreateChannel | acltdtStopChannel
  */
-ACL_FUNC_VISIBILITY aclError acltdtDestroyChannel(acltdtChannelHandle *handle);
+ACL_FUNC_VISIBILITY aclError acltdtDestroyChannel(acltdtChannelHandle* handle);
 
 /**
  * @ingroup AscendCL
@@ -305,7 +284,7 @@ ACL_FUNC_VISIBILITY aclError acltdtDestroyChannel(acltdtChannelHandle *handle);
  * @retval OtherValues Failure
  *
  */
-ACL_FUNC_VISIBILITY aclError acltdtCleanChannel(acltdtChannelHandle *handle);
+ACL_FUNC_VISIBILITY aclError acltdtCleanChannel(acltdtChannelHandle* handle);
 
 /**
  * @ingroup AscendCL
@@ -320,9 +299,8 @@ ACL_FUNC_VISIBILITY aclError acltdtCleanChannel(acltdtChannelHandle *handle);
  *
  * @see acltdtReceiveTensor
  */
-ACL_FUNC_VISIBILITY aclError acltdtSendTensor(const acltdtChannelHandle *handle,
-                                              const acltdtDataset *dataset,
-                                              int32_t timeout);
+ACL_FUNC_VISIBILITY aclError
+acltdtSendTensor(const acltdtChannelHandle* handle, const acltdtDataset* dataset, int32_t timeout);
 
 /**
  * @ingroup AscendCL
@@ -337,9 +315,8 @@ ACL_FUNC_VISIBILITY aclError acltdtSendTensor(const acltdtChannelHandle *handle,
  *
  * @see acltdtSendTensor
  */
-ACL_FUNC_VISIBILITY aclError acltdtReceiveTensor(const acltdtChannelHandle *handle,
-                                                 acltdtDataset *dataset,
-                                                 int32_t timeout);
+ACL_FUNC_VISIBILITY aclError
+acltdtReceiveTensor(const acltdtChannelHandle* handle, acltdtDataset* dataset, int32_t timeout);
 
 /**
  * @ingroup AscendCL
@@ -352,7 +329,7 @@ ACL_FUNC_VISIBILITY aclError acltdtReceiveTensor(const acltdtChannelHandle *hand
  * @retval OtherValues Failure
  *
  */
-ACL_FUNC_VISIBILITY aclError acltdtQueryChannelSize(const acltdtChannelHandle *handle, size_t *size);
+ACL_FUNC_VISIBILITY aclError acltdtQueryChannelSize(const acltdtChannelHandle* handle, size_t* size);
 
 #ifdef __cplusplus
 }

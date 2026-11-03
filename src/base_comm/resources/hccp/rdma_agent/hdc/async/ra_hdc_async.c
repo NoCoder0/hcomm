@@ -12,6 +12,7 @@
 #include <sys/prctl.h>
 #include "securec.h"
 #include "user_log.h"
+#include "config_log.h"
 #include "dl_hal_function.h"
 #include "ra.h"
 #include "ra_async.h"
@@ -24,10 +25,11 @@
 #include "ra_hdc_async_ctx.h"
 #include "ra_hdc_async.h"
 
-struct HdcAsyncInfo gRaHdcAsync[RA_MAX_PHY_ID_NUM] = { 0 };
+struct HdcAsyncInfo gRaHdcAsync[RA_MAX_PHY_ID_NUM] = {0};
 
 struct RaAsyncOpHandle gRaAsyncOpHandle[] = {
     {RA_RS_GET_EID_BY_IP, RDMA_OP, RaHdcAsyncHandleGetEidByIp, sizeof(union OpGetEidByIpData)},
+    {RA_RS_GET_IP_BY_EID, RDMA_OP, RaHdcAsyncHandleGetIpByEid, sizeof(union OpGetIpByEidData)},
     {RA_RS_LMEM_REG, RDMA_OP, RaHdcAsyncHandleLmemRegister, sizeof(union OpLmemRegInfoData)},
     {RA_RS_LMEM_UNREG, RDMA_OP, NULL, sizeof(union OpLmemUnregInfoData)},
     {RA_RS_CTX_QP_CREATE, RDMA_OP, RaHdcAsyncHandleQpCreate, sizeof(union OpCtxQpCreateData)},
@@ -37,14 +39,14 @@ struct RaAsyncOpHandle gRaAsyncOpHandle[] = {
     {RA_RS_GET_TP_INFO_LIST, RDMA_OP, RaHdcAsyncHandleTpInfoList, sizeof(union OpGetTpInfoListData)},
     {RA_RS_GET_TP_ATTR, RDMA_OP, RaHdcAsyncHandleGetTpAttr, sizeof(union OpGetTpAttrData)},
     {RA_RS_SET_TP_ATTR, RDMA_OP, NULL, sizeof(union OpSetTpAttrData)},
-    {RA_RS_CTX_QP_DESTROY_BATCH, RDMA_OP, RaHdcAsyncHandleQpDestroyBatch,
-        sizeof(union OpCtxQpDestroyBatchData)},
+    {RA_RS_CTX_QP_DESTROY_BATCH, RDMA_OP, RaHdcAsyncHandleQpDestroyBatch, sizeof(union OpCtxQpDestroyBatchData)},
     {RA_RS_SOCKET_SEND, SOCKET_OP, RaHdcAsyncHandleSocketSend, sizeof(union OpSocketSendData)},
     {RA_RS_SOCKET_RECV, SOCKET_OP, RaHdcAsyncHandleSocketRecv, sizeof(union OpSocketRecvData)},
-    {RA_RS_SOCKET_LISTEN_START, SOCKET_OP, RaHdcAsyncHandleSocketListenStart,
-        sizeof(union OpSocketListenData)},
+    {RA_RS_SOCKET_LISTEN_START, SOCKET_OP, RaHdcAsyncHandleSocketListenStart, sizeof(union OpSocketListenData)},
     {RA_RS_SOCKET_LISTEN_STOP, SOCKET_OP, NULL, sizeof(union OpSocketListenData)},
     {RA_RS_SOCKET_CONN, SOCKET_OP, NULL, sizeof(union OpSocketConnectData)},
+    {RA_RS_SOCKET_CONN_V2, SOCKET_OP, NULL, sizeof(union OpSocketConnectDataV2)},
+    {RA_RS_SOCKET_LISTEN_START_V2, SOCKET_OP, RaHdcAsyncHandleSocketListenStartV2, sizeof(union OpSocketListenDataV2)},
     {RA_RS_SOCKET_CLOSE, SOCKET_OP, RaHdcAsyncHandleSocketBatchClose, sizeof(union OpSocketCloseData)},
     {RA_RS_HDC_SESSION_CLOSE, OTHERS, NULL, sizeof(union OpHdcCloseData)},
 };
@@ -71,8 +73,8 @@ STATIC void HdcAsyncHandlePrivData(struct RaRequestHandle *reqHandle)
     reqHandle->opHandle->privDataHandle(reqHandle);
 }
 
-STATIC void HdcAsyncSetRequest(struct RaRequestHandle *reqHandle, unsigned int reqId,
-    struct RaAsyncOpHandle *opHandle, unsigned int phyId, unsigned int dataSize)
+STATIC void HdcAsyncSetRequest(struct RaRequestHandle *reqHandle, unsigned int reqId, struct RaAsyncOpHandle *opHandle,
+    unsigned int phyId, unsigned int dataSize)
 {
     reqHandle->reqId = reqId;
     reqHandle->opHandle = opHandle;
@@ -80,8 +82,7 @@ STATIC void HdcAsyncSetRequest(struct RaRequestHandle *reqHandle, unsigned int r
     reqHandle->dataSize = dataSize;
 }
 
-STATIC int HdcAsyncGetRequest(struct HdcAsyncInfo *asyncInfo, unsigned int reqId,
-    struct RaRequestHandle **reqHandle)
+STATIC int HdcAsyncGetRequest(struct HdcAsyncInfo *asyncInfo, unsigned int reqId, struct RaRequestHandle **reqHandle)
 {
     struct RaRequestHandle *reqTmp2 = NULL;
     struct RaRequestHandle *reqTmp = NULL;
@@ -89,7 +90,7 @@ STATIC int HdcAsyncGetRequest(struct HdcAsyncInfo *asyncInfo, unsigned int reqId
     // no need to use lock: req_id always exist in current req_list(the data is always sent before it is received)
     RA_LIST_GET_HEAD_ENTRY(reqTmp, reqTmp2, &asyncInfo->reqList, list, struct RaRequestHandle);
     for (; (&reqTmp->list) != &asyncInfo->reqList;
-        reqTmp = reqTmp2, reqTmp2 = list_entry(reqTmp2->list.next, struct RaRequestHandle, list)) {
+         reqTmp = reqTmp2, reqTmp2 = list_entry(reqTmp2->list.next, struct RaRequestHandle, list)) {
         if (reqTmp->reqId == reqId) {
             *reqHandle = reqTmp;
             return 0;
@@ -123,8 +124,10 @@ STATIC bool HdcAsyncIsMsgValid(unsigned int phyId, struct MsgHead *recvMsgHead, 
     CHK_PRT_RETURN(recvLen < sizeof(struct MsgHead),
         hccp_run_warn("[async][ra_hdc_recv]recv_len[%u] < [%lu] is invalid", recvLen, sizeof(struct MsgHead)), false);
     ret = HdcAsyncGetRequest(&gRaHdcAsync[phyId], recvMsgHead->asyncReqId, &reqHandleTmp);
-    CHK_PRT_RETURN(reqHandleTmp == NULL, hccp_run_warn("[async][ra_hdc_recv]req_id[%u] invalid, ret[%d], opcode[%u]",
-        recvMsgHead->asyncReqId, ret, recvMsgHead->opcode), false);
+    CHK_PRT_RETURN(reqHandleTmp == NULL,
+        hccp_run_warn("[async][ra_hdc_recv]req_id[%u] invalid, ret[%d], opcode[%u]", recvMsgHead->asyncReqId, ret,
+            recvMsgHead->opcode),
+        false);
 
     // del req_handle from req_list
     RaListDel(&reqHandleTmp->list);
@@ -221,15 +224,15 @@ int RaHdcSendMsgAsync(unsigned int opcode, unsigned int phyId, char *data, unsig
     }
 
     CHK_PRT_RETURN(RaHdcIsBroken(gRaHdcAsync[phyId].lastRecvStatus),
-        hccp_err("[async][ra_hdc_send]HDC broken, phyId(%u)", phyId), -gRaHdcAsync[phyId].lastRecvStatus);
+        hccp_err("[async][ra_hdc_send]HDC broken, phyId(%u)", phyId), gRaHdcAsync[phyId].lastRecvStatus);
     opHandleTmp = RaHdcIsAsyncOp(opcode);
     CHK_PRT_RETURN(opHandleTmp == NULL, hccp_err("[async][ra_hdc_send]opcode[%u] invalid", opcode), -EINVAL);
 
     hostTgid = gRaHdcAsync[phyId].hostTgid;
     sendLen = (unsigned int)sizeof(struct MsgHead) + dataSize;
     sendBuf = (void *)calloc(sendLen, sizeof(char));
-    CHK_PRT_RETURN(sendBuf == NULL, hccp_err("[async][ra_hdc_send]calloc send_buf failed. phyId(%u) opcode(%u)",
-        phyId, opcode), -ENOMEM);
+    CHK_PRT_RETURN(sendBuf == NULL,
+        hccp_err("[async][ra_hdc_send]calloc send_buf failed. phyId(%u) opcode(%u)", phyId, opcode), -ENOMEM);
 
     RA_PTHREAD_MUTEX_LOCK(&gRaHdcAsync[phyId].reqMutex);
     asyncReqId = gRaHdcAsync[phyId].reqId;
@@ -283,8 +286,8 @@ STATIC int RaHdcAsyncSessionConnect(struct RaInitConfig *cfg)
     asyncData.txData.threadNum = RA_POOL_THREAD_NUM;
     ret = RaHdcProcessMsg(RA_RS_ASYNC_HDC_SESSION_CONNECT, cfg->phyId, (char *)&asyncData,
         sizeof(union OpAsyncHdcConnectData));
-    CHK_PRT_RETURN(ret != 0, hccp_err("[init][ra_hdc_async]ra hdc message process failed ret[%d] phyId[%u]",
-        ret, cfg->phyId), ret);
+    CHK_PRT_RETURN(ret != 0,
+        hccp_err("[init][ra_hdc_async]ra hdc message process failed ret[%d] phyId[%u]", ret, cfg->phyId), ret);
     return ret;
 }
 
@@ -303,10 +306,9 @@ STATIC int RaHdcAsyncSessionClose(unsigned int phyId)
     // close async session
     opData.txData.phyId = phyId;
     reqHandle = (struct RaRequestHandle *)calloc(1, sizeof(struct RaRequestHandle));
-    CHK_PRT_RETURN(reqHandle == NULL,
-        hccp_err("[deinit][ra_hdc_async]calloc req_handle failed, phyId[%u]", phyId), -ENOMEM);
-    ret = RaHdcSendMsgAsync(RA_RS_HDC_SESSION_CLOSE, phyId, (char *)&opData, sizeof(union OpHdcCloseData),
-        reqHandle);
+    CHK_PRT_RETURN(reqHandle == NULL, hccp_err("[deinit][ra_hdc_async]calloc req_handle failed, phyId[%u]", phyId),
+        -ENOMEM);
+    ret = RaHdcSendMsgAsync(RA_RS_HDC_SESSION_CLOSE, phyId, (char *)&opData, sizeof(union OpHdcCloseData), reqHandle);
     if (ret != 0) {
         hccp_err("[deinit][ra_hdc_async]hdc async send message failed ret[%d] phyId[%u]", ret, phyId);
         free(reqHandle);
@@ -320,17 +322,16 @@ STATIC int RaHdcAsyncSessionClose(unsigned int phyId)
         timeout--;
     }
     if (timeout <= 0) {
-        hccp_warn("[deinit][ra_hdc_async]hdc async session close timeout:%d phyId[%u]", timeout, phyId);
+        hccp_warn_init("[deinit][ra_hdc_async]hdc async session close timeout:%d phyId[%u]", timeout, phyId);
     }
-    RA_PTHREAD_MUTEX_LOCK(&gRaHdcAsync[phyId].reqMutex);	
-    HdcAsyncDelResponse(reqHandle);	
+    RA_PTHREAD_MUTEX_LOCK(&gRaHdcAsync[phyId].reqMutex);
+    HdcAsyncDelResponse(reqHandle);
     RA_PTHREAD_MUTEX_UNLOCK(&gRaHdcAsync[phyId].reqMutex);
 
     // destroy async recv thread and work thread pool
-    ret = RaHdcProcessMsg(RA_RS_ASYNC_HDC_SESSION_CLOSE, phyId, (char *)&asyncData,
-        sizeof(union OpAsyncHdcCloseData));
-    CHK_PRT_RETURN(ret != 0, hccp_err("[deinit][ra_hdc_async]ra hdc message process failed ret[%d] phyId[%u]",
-        ret, phyId), ret);
+    ret = RaHdcProcessMsg(RA_RS_ASYNC_HDC_SESSION_CLOSE, phyId, (char *)&asyncData, sizeof(union OpAsyncHdcCloseData));
+    CHK_PRT_RETURN(ret != 0,
+        hccp_err("[deinit][ra_hdc_async]ra hdc message process failed ret[%d] phyId[%u]", ret, phyId), ret);
     return ret;
 }
 
@@ -351,7 +352,7 @@ STATIC void RaHwAsyncHdcServerInit(void *arg)
         return;
     }
 
-    (void)prctl(PR_SET_NAME, (unsigned long)"hccp_async_server");
+    (void)prctl(PR_SET_NAME, (uintptr_t) "hccp_async_server", 0, 0, 0);
 
     // trigger server to connect session
     ret = RaHdcAsyncSessionConnect(&cfg);
@@ -381,7 +382,7 @@ STATIC void RaHwAsyncHdcClientInit(void *arg)
         return;
     }
 
-    (void)prctl(PR_SET_NAME, (unsigned long)"hccp_async_client");
+    (void)prctl(PR_SET_NAME, (uintptr_t) "hccp_async_client", 0, 0, 0);
 
     phyId = cfg.phyId;
     ret = DlDrvDeviceGetIndexByPhyId(phyId, &logicId);
@@ -421,7 +422,7 @@ STATIC void RaHwAsyncDelList(struct RaListHead *head, pthread_mutex_t *mutex)
 
     RA_LIST_GET_HEAD_ENTRY(reqCur, reqNext, head, list, struct RaRequestHandle);
     for (; (&reqCur->list) != head;
-        reqCur = reqNext, reqNext = list_entry(reqNext->list.next, struct RaRequestHandle, list)) {
+         reqCur = reqNext, reqNext = list_entry(reqNext->list.next, struct RaRequestHandle, list)) {
         HdcAsyncDelReqHandle(reqCur, mutex);
     }
 }
@@ -437,7 +438,7 @@ STATIC void RaHwAsyncHdcClientDeinit(unsigned int phyId)
         tryAgain--;
     }
     if (tryAgain <= 0) {
-        hccp_warn("hdc async message thread quit timeout");
+        hccp_warn_others("hdc async message thread quit timeout");
     }
 
     // close session
@@ -508,8 +509,8 @@ STATIC int RaHdcAsyncInitSession(struct RaInitConfig *cfg)
     pthread_t clientTidp;
     int ret = 0;
 
-    CHK_PRT_RETURN(gRaHdcAsync[phyId].session != NULL, hccp_warn("hdc async session for phyId[%u] already existed",
-        phyId), -EEXIST);
+    CHK_PRT_RETURN(gRaHdcAsync[phyId].session != NULL,
+        hccp_warn_init("hdc async session for phyId[%u] already existed", phyId), -EEXIST);
 
     // server will be blocked, use a thread to trigger server to accept
     ret = pthread_create(&serverTidp, NULL, (void *)RaHwAsyncHdcServerInit, cfg);
@@ -552,9 +553,9 @@ STATIC void HdcAsyncHandleRecvBroken(struct HdcAsyncInfo *asyncInfo)
     RA_PTHREAD_MUTEX_LOCK(&asyncInfo->reqMutex);
     RA_LIST_GET_HEAD_ENTRY(reqCurr, reqNext, &asyncInfo->reqList, list, struct RaRequestHandle);
     for (; (&reqCurr->list) != &asyncInfo->reqList;
-        reqCurr = reqNext, reqNext = list_entry(reqNext->list.next, struct RaRequestHandle, list)) {
+         reqCurr = reqNext, reqNext = list_entry(reqNext->list.next, struct RaRequestHandle, list)) {
         RaListDel(&reqCurr->list);
-        HdcAsyncSetReqDone(reqCurr, reqCurr->phyId, -asyncInfo->lastRecvStatus);
+        HdcAsyncSetReqDone(reqCurr, reqCurr->phyId, asyncInfo->lastRecvStatus);
     }
     RA_PTHREAD_MUTEX_UNLOCK(&asyncInfo->reqMutex);
 }
@@ -573,7 +574,7 @@ STATIC void *RaHdcRecvMsgAsync(void *arg)
     ret = pthread_detach(pthread_self());
     CHK_PRT_RETURN(ret, hccp_err("pthread detach failed ret %d, phyId %u", ret, phyId), NULL);
 
-    (void)prctl(PR_SET_NAME, (unsigned long)"hccp_ra_async");
+    (void)prctl(PR_SET_NAME, (uintptr_t) "hccp_ra_async", 0, 0, 0);
 
     hccp_info("[async][ra_hdc_recv]thread[%d] phyId[%u] enter", getpid(), phyId);
     RaHwAsyncSetThreadStatus(phyId, THREAD_RUNNING);
@@ -647,17 +648,18 @@ int RaHdcInitAsync(struct RaInitConfig *cfg)
     unsigned int interfaceVersion = 0;
     int ret = 0;
 
-    CHK_PRT_RETURN(!cfg->enableHdcAsync, hccp_info("[init][ra_hdc_async]no need to init async hdc session"), 0);
+    CHK_PRT_RETURN(!cfg->enableHdcAsync, hccp_info_init("[init][ra_hdc_async]no need to init async hdc session"), 0);
 
     ret = RaHdcGetInterfaceVersion(cfg->phyId, RA_RS_ASYNC_HDC_SESSION_CONNECT, &interfaceVersion);
     // normal case: driver not support to or no need to init async hdc session
     CHK_PRT_RETURN(ret != 0 || interfaceVersion < RA_RS_OPCODE_BASE_VERSION,
-        hccp_run_warn("[init][ra_hdc_async]not support to init async hdc session, ret(%d), interfaceVersion(%u)",
-        ret, interfaceVersion), 0);
+        hccp_run_warn("[init][ra_hdc_async]not support to init async hdc session, ret(%d), interfaceVersion(%u)", ret,
+            interfaceVersion),
+        0);
 
     ret = RaHdcAsyncInitSession(cfg);
-    CHK_PRT_RETURN(ret != 0, hccp_err("[init][ra_hdc_async]ra_hdc_async_init_session failed, ret(%d) phyId(%u)",
-        ret, cfg->phyId), ret);
+    CHK_PRT_RETURN(ret != 0,
+        hccp_err("[init][ra_hdc_async]ra_hdc_async_init_session failed, ret(%d) phyId(%u)", ret, cfg->phyId), ret);
 
     ret = RaHdcAsyncInitRecvThread(cfg->phyId);
     if (ret != 0) {
@@ -679,12 +681,12 @@ int RaHdcDeinitAsync(unsigned int phyId)
     hccp_run_info("hdc deinit async start! phyId[%u] restore_flag[%u]", phyId, gRaHdcAsync[phyId].restoreFlag);
 
     CHK_PRT_RETURN(gRaHdcAsync[phyId].session == NULL && gRaHdcAsync[phyId].restoreFlag == 0,
-        hccp_warn("hdc async session for phyId[%u] is NULL", phyId), -ENODEV);
+        hccp_warn_socket("hdc async session for phyId[%u] is NULL", phyId), -ENODEV);
 
     // close server session
     ret = RaHdcAsyncSessionClose(phyId);
-    CHK_PRT_RETURN(ret != 0, hccp_err("[deinit][ra_hdc_async]ra_hdc_async_session_close failed ret[%d] phyId[%u]",
-        ret, phyId), ret);
+    CHK_PRT_RETURN(ret != 0,
+        hccp_err("[deinit][ra_hdc_async]ra_hdc_async_session_close failed ret[%d] phyId[%u]", ret, phyId), ret);
 
     // close client session & deinit client resources
     RaHwAsyncHdcClientDeinit(phyId);

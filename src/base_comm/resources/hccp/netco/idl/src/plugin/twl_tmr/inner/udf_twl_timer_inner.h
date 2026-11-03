@@ -26,12 +26,11 @@ uint32_t UdfTimerInstStart(UdfTmrInstHandle tmrInst);
 
 uint32_t UdfTimerInstStop(UdfTmrInstHandle tmrInst);
 
-uint32_t UdfTimerInstCreateNotStart(UdfTwlTimerHandle handle, TimerDestructProc func,
-    UdfTmrInstParam *timerParam, UdfTmrInstHandle *tmrInstHandle);
+uint32_t UdfTimerInstCreateNotStart(UdfTwlTimerHandle handle, TimerDestructProc func, UdfTmrInstParam *timerParam,
+    UdfTmrInstHandle *tmrInstHandle);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
-

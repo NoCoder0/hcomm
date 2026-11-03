@@ -18,20 +18,11 @@ using namespace testing;
 // Test suite class
 class InnerNetDevTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "InnerNetDevTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "InnerNetDevTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "InnerNetDevTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "InnerNetDevTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in InnerNetDevTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in InnerNetDevTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -40,13 +31,15 @@ protected:
     }
 };
 /**
-* @tc.name  : InnerNetDev_ShouldInitializeMembers_WhenConstructedWithNetDevInfo
-* @tc.number: InnerNetDev_Test_001
-* @tc.desc  : Test if the InnerNetDev constructor initializes members correctly when constructed with NetDevInfo
-*/
-TEST_F(InnerNetDevTest, InnerNetDev_ShouldInitializeMembers_WhenConstructedWithNetDevInfo) {    
+ * @tc.name  : InnerNetDev_ShouldInitializeMembers_WhenConstructedWithNetDevInfo
+ * @tc.number: InnerNetDev_Test_001
+ * @tc.desc  : Test if the InnerNetDev constructor initializes members correctly when constructed with NetDevInfo
+ */
+TEST_F(InnerNetDevTest, InnerNetDev_ShouldInitializeMembers_WhenConstructedWithNetDevInfo)
+{
     MOCKER(Hccl::HrtRaRdmaInit).stubs().will(returnValue(Hccl::RdmaHandle()));
-    Hccl::NetDevInfo info = {0, Hccl::PortDeploymentType::DEV_NET, Hccl::LinkProtoType::RDMA, 0, Hccl::IpAddress("1.0.0.0")};
+    Hccl::NetDevInfo info
+        = {0, Hccl::PortDeploymentType::DEV_NET, Hccl::LinkProtoType::RDMA, 0, Hccl::IpAddress("1.0.0.0")};
     Hccl::InnerNetDev netDev(info);
 
     EXPECT_EQ(netDev.getRdmaHandle(), Hccl::RdmaHandle());
@@ -58,13 +51,15 @@ TEST_F(InnerNetDevTest, InnerNetDev_ShouldInitializeMembers_WhenConstructedWithN
 }
 
 /**
-* @tc.name  : InnerNetDev_ShouldSetAndReturnRdmaHandle_WhenSetRdmaHandleCalled
-* @tc.number: InnerNetDev_Test_002
-* @tc.desc  : Test if the InnerNetDev set and return RdmaHandle correctly
-*/
-TEST_F(InnerNetDevTest, InnerNetDev_ShouldSetAndReturnRdmaHandle_WhenSetRdmaHandleCalled) {
+ * @tc.name  : InnerNetDev_ShouldSetAndReturnRdmaHandle_WhenSetRdmaHandleCalled
+ * @tc.number: InnerNetDev_Test_002
+ * @tc.desc  : Test if the InnerNetDev set and return RdmaHandle correctly
+ */
+TEST_F(InnerNetDevTest, InnerNetDev_ShouldSetAndReturnRdmaHandle_WhenSetRdmaHandleCalled)
+{
     MOCKER(Hccl::HrtRaRdmaInit).stubs().will(returnValue(Hccl::RdmaHandle()));
-    Hccl::NetDevInfo info = {0, Hccl::PortDeploymentType::DEV_NET, Hccl::LinkProtoType::RDMA, 0, Hccl::IpAddress("1.0.0.0")};
+    Hccl::NetDevInfo info
+        = {0, Hccl::PortDeploymentType::DEV_NET, Hccl::LinkProtoType::RDMA, 0, Hccl::IpAddress("1.0.0.0")};
     Hccl::InnerNetDev netDev(info);
 
     Hccl::RdmaHandle handle;
@@ -73,13 +68,15 @@ TEST_F(InnerNetDevTest, InnerNetDev_ShouldSetAndReturnRdmaHandle_WhenSetRdmaHand
 }
 
 /**
-* @tc.name  : InnerNetDev_ShouldSetAndReturnUbMode_WhenSetUbModeCalled
-* @tc.number: InnerNetDev_Test_003
-* @tc.desc  : Test if the InnerNetDev set and return UbMode correctly
-*/
-TEST_F(InnerNetDevTest, InnerNetDev_ShouldSetAndReturnUbMode_WhenSetUbModeCalled) {
+ * @tc.name  : InnerNetDev_ShouldSetAndReturnUbMode_WhenSetUbModeCalled
+ * @tc.number: InnerNetDev_Test_003
+ * @tc.desc  : Test if the InnerNetDev set and return UbMode correctly
+ */
+TEST_F(InnerNetDevTest, InnerNetDev_ShouldSetAndReturnUbMode_WhenSetUbModeCalled)
+{
     MOCKER(Hccl::HrtRaRdmaInit).stubs().will(returnValue(Hccl::RdmaHandle()));
-    Hccl::NetDevInfo info = {0, Hccl::PortDeploymentType::DEV_NET, Hccl::LinkProtoType::RDMA, 0, Hccl::IpAddress("1.0.0.0")};
+    Hccl::NetDevInfo info
+        = {0, Hccl::PortDeploymentType::DEV_NET, Hccl::LinkProtoType::RDMA, 0, Hccl::IpAddress("1.0.0.0")};
     Hccl::InnerNetDev netDev(info);
 
     Hccl::HrtUbJfcMode mode;
@@ -88,13 +85,15 @@ TEST_F(InnerNetDevTest, InnerNetDev_ShouldSetAndReturnUbMode_WhenSetUbModeCalled
 }
 
 /**
-* @tc.name  : InnerNetDev_ShouldSetAndReturnDieId_WhenSetDieIdCalled
-* @tc.number: InnerNetDev_Test_004
-* @tc.desc  : Test if the InnerNetDev set and return DieId correctly
-*/
-TEST_F(InnerNetDevTest, InnerNetDev_ShouldSetAndReturnDieId_WhenSetDieIdCalled) {
+ * @tc.name  : InnerNetDev_ShouldSetAndReturnDieId_WhenSetDieIdCalled
+ * @tc.number: InnerNetDev_Test_004
+ * @tc.desc  : Test if the InnerNetDev set and return DieId correctly
+ */
+TEST_F(InnerNetDevTest, InnerNetDev_ShouldSetAndReturnDieId_WhenSetDieIdCalled)
+{
     MOCKER(Hccl::HrtRaRdmaInit).stubs().will(returnValue(Hccl::RdmaHandle()));
-    Hccl::NetDevInfo info = {0, Hccl::PortDeploymentType::DEV_NET, Hccl::LinkProtoType::RDMA, 0, Hccl::IpAddress("1.0.0.0")};
+    Hccl::NetDevInfo info
+        = {0, Hccl::PortDeploymentType::DEV_NET, Hccl::LinkProtoType::RDMA, 0, Hccl::IpAddress("1.0.0.0")};
     Hccl::InnerNetDev netDev(info);
 
     uint32_t dieId = 123;
@@ -103,13 +102,15 @@ TEST_F(InnerNetDevTest, InnerNetDev_ShouldSetAndReturnDieId_WhenSetDieIdCalled) 
 }
 
 /**
-* @tc.name  : InnerNetDev_ShouldSetAndReturnFuncId_WhenSetFuncIdCalled
-* @tc.number: InnerNetDev_Test_005
-* @tc.desc  : Test if the InnerNetDev set and return FuncId correctly
-*/
-TEST_F(InnerNetDevTest, InnerNetDev_ShouldSetAndReturnFuncId_WhenSetFuncIdCalled) {
+ * @tc.name  : InnerNetDev_ShouldSetAndReturnFuncId_WhenSetFuncIdCalled
+ * @tc.number: InnerNetDev_Test_005
+ * @tc.desc  : Test if the InnerNetDev set and return FuncId correctly
+ */
+TEST_F(InnerNetDevTest, InnerNetDev_ShouldSetAndReturnFuncId_WhenSetFuncIdCalled)
+{
     MOCKER(Hccl::HrtRaRdmaInit).stubs().will(returnValue(Hccl::RdmaHandle()));
-    Hccl::NetDevInfo info = {0, Hccl::PortDeploymentType::DEV_NET, Hccl::LinkProtoType::RDMA, 0, Hccl::IpAddress("1.0.0.0")};
+    Hccl::NetDevInfo info
+        = {0, Hccl::PortDeploymentType::DEV_NET, Hccl::LinkProtoType::RDMA, 0, Hccl::IpAddress("1.0.0.0")};
     Hccl::InnerNetDev netDev(info);
 
     uint32_t funcId = 456;
@@ -118,13 +119,15 @@ TEST_F(InnerNetDevTest, InnerNetDev_ShouldSetAndReturnFuncId_WhenSetFuncIdCalled
 }
 
 /**
-* @tc.name  : InnerNetDev_ShouldSetAndReturnTokenHandle_WhenSetTokenHandleCalled
-* @tc.number: InnerNetDev_Test_006
-* @tc.desc  : Test if the InnerNetDev set and return TokenHandle correctly
-*/
-TEST_F(InnerNetDevTest, InnerNetDev_ShouldSetAndReturnTokenHandle_WhenSetTokenHandleCalled) {
+ * @tc.name  : InnerNetDev_ShouldSetAndReturnTokenHandle_WhenSetTokenHandleCalled
+ * @tc.number: InnerNetDev_Test_006
+ * @tc.desc  : Test if the InnerNetDev set and return TokenHandle correctly
+ */
+TEST_F(InnerNetDevTest, InnerNetDev_ShouldSetAndReturnTokenHandle_WhenSetTokenHandleCalled)
+{
     MOCKER(Hccl::HrtRaRdmaInit).stubs().will(returnValue(Hccl::RdmaHandle()));
-    Hccl::NetDevInfo info = {0, Hccl::PortDeploymentType::DEV_NET, Hccl::LinkProtoType::RDMA, 0, Hccl::IpAddress("1.0.0.0")};
+    Hccl::NetDevInfo info
+        = {0, Hccl::PortDeploymentType::DEV_NET, Hccl::LinkProtoType::RDMA, 0, Hccl::IpAddress("1.0.0.0")};
     Hccl::InnerNetDev netDev(info);
 
     Hccl::TokenIdHandle tokenHandle;
@@ -133,13 +136,15 @@ TEST_F(InnerNetDevTest, InnerNetDev_ShouldSetAndReturnTokenHandle_WhenSetTokenHa
 }
 
 /**
-* @tc.name  : InnerNetDev_ShouldSetAndReturnTokenId_WhenSetTokenIdCalled
-* @tc.number: InnerNetDev_Test_007
-* @tc.desc  : Test if the InnerNetDev set and return TokenId correctly
-*/
-TEST_F(InnerNetDevTest, InnerNetDev_ShouldSetAndReturnTokenId_WhenSetTokenIdCalled) {
+ * @tc.name  : InnerNetDev_ShouldSetAndReturnTokenId_WhenSetTokenIdCalled
+ * @tc.number: InnerNetDev_Test_007
+ * @tc.desc  : Test if the InnerNetDev set and return TokenId correctly
+ */
+TEST_F(InnerNetDevTest, InnerNetDev_ShouldSetAndReturnTokenId_WhenSetTokenIdCalled)
+{
     MOCKER(Hccl::HrtRaRdmaInit).stubs().will(returnValue(Hccl::RdmaHandle()));
-    Hccl::NetDevInfo info = {0, Hccl::PortDeploymentType::DEV_NET, Hccl::LinkProtoType::RDMA, 0, Hccl::IpAddress("1.0.0.0")};
+    Hccl::NetDevInfo info
+        = {0, Hccl::PortDeploymentType::DEV_NET, Hccl::LinkProtoType::RDMA, 0, Hccl::IpAddress("1.0.0.0")};
     Hccl::InnerNetDev netDev(info);
 
     uint32_t tokenId = 789;
@@ -148,15 +153,17 @@ TEST_F(InnerNetDevTest, InnerNetDev_ShouldSetAndReturnTokenId_WhenSetTokenIdCall
 }
 
 /**
-* @tc.name  : InnerNetDev_ShouldReturnJfcHandle_WhenGetJfcHandleCalled
-* @tc.number: InnerNetDev_Test_008
-* @tc.desc  : Test if the InnerNetDev set and return JfcHandle correctly
-*/
-TEST_F(InnerNetDevTest, InnerNetDev_ShouldReturnJfcHandle_WhenGetJfcHandleCalled) {
+ * @tc.name  : InnerNetDev_ShouldReturnJfcHandle_WhenGetJfcHandleCalled
+ * @tc.number: InnerNetDev_Test_008
+ * @tc.desc  : Test if the InnerNetDev set and return JfcHandle correctly
+ */
+TEST_F(InnerNetDevTest, InnerNetDev_ShouldReturnJfcHandle_WhenGetJfcHandleCalled)
+{
     MOCKER(Hccl::HrtRaRdmaInit).stubs().will(returnValue(Hccl::RdmaHandle()));
     Hccl::JfcHandle jfcHandle = 1;
     MOCKER(Hccl::HrtRaUbCreateJfc).stubs().will(returnValue(jfcHandle));
-    Hccl::NetDevInfo info = {0, Hccl::PortDeploymentType::DEV_NET, Hccl::LinkProtoType::RDMA, 0, Hccl::IpAddress("1.0.0.0")};
+    Hccl::NetDevInfo info
+        = {0, Hccl::PortDeploymentType::DEV_NET, Hccl::LinkProtoType::RDMA, 0, Hccl::IpAddress("1.0.0.0")};
     Hccl::InnerNetDev netDev(info);
 
     netDev.setRdmaHandle(&netDev);

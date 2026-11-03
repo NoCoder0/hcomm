@@ -1,23 +1,27 @@
 /**
- * Copyright (c) 2026 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "topo_addr_info.h"
+#include <errno.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <syslog.h>
 #include <sys/stat.h>
 #include "hal.h"
 #include "topo.h"
+#include "topo_addr_info_perf.h"
 #include "product_card.h"
 #include "product_server.h"
 #include "product_pod.h"
+#include "topo_addr_info_log.h"
 
 #define MAX_DUMP_FILE_LEN (256)
 #define DEFAULT_RANKINFO_FILE_PATH "/etc/hccl_rootinfo.json"
@@ -25,7 +29,7 @@
 
 typedef int (*GetSizeFuncType)(size_t* size);
 
-typedef int (*GetRootinfoFuncType)(int npu_id, unsigned int mainboard_id, void *buf, size_t* len);
+typedef int (*GetRootinfoFuncType)(int npu_id, unsigned int mainboard_id, void* buf, size_t* len);
 
 typedef struct {
     uint32_t mainboard_id;
@@ -33,8 +37,8 @@ typedef struct {
 } GetSizeFuncTable;
 
 typedef struct {
-   uint32_t mainboard_id;
-   GetRootinfoFuncType get_rootinfo_func;
+    uint32_t mainboard_id;
+    GetRootinfoFuncType get_rootinfo_func;
 } GetRootinfoFuncTable;
 
 static GetSizeFuncTable g_get_size_func_table[] = {
@@ -43,12 +47,16 @@ static GetSizeFuncTable g_get_size_func_table[] = {
     {MAIN_BOARD_ID_CARD_4PMESH, GetCardRankInfoLen},
     {MAIN_BOARD_ID_SERVER_8PMESH, ServerGetRootinfoLen},
     {MAIN_BOARD_ID_SERVER_TYPE1, ServerGetRootinfoLen},
+    {MAIN_BOARD_ID_SERVER_550EL_100, ServerGetRootinfoLen},
+    {MAIN_BOARD_ID_SERVER_550EL_200, ServerGetRootinfoLen},
     {MAIN_BOARD_ID_SERVER_8PMESH_UBOE, ServerGetRootinfoLen},
     {MAIN_BOARD_ID_SERVER_8PMESH_NOSP, ServerGetRootinfoLen},
     {MAIN_BOARD_ID_SERVER_8PMESH_NOSP_UBOE, ServerGetRootinfoLen},
-    {MAIN_BOARD_ID_SERVER_UBX, ServerGetRootinfoLen},
+    {MAIN_BOARD_ID_SERVER_350L, ServerGetRootinfoLen},
     {MAIN_BOARD_ID_POD, PodGetRootinfoLen},
     {MAIN_BOARD_ID_POD_2D, PodGetRootinfoLen},
+    {MAIN_BOARD_ID_POD_FLEX, ServerGetRootinfoLen},
+    {MAIN_BOARD_ID_POD_FLEX_RTP, ServerGetRootinfoLen},
 };
 
 static GetRootinfoFuncTable g_get_rootinfo_func_table[] = {
@@ -57,18 +65,23 @@ static GetRootinfoFuncTable g_get_rootinfo_func_table[] = {
     {MAIN_BOARD_ID_CARD_4PMESH, GetCardRankInfo},
     {MAIN_BOARD_ID_SERVER_8PMESH, ServerGetRootinfo},
     {MAIN_BOARD_ID_SERVER_TYPE1, ServerGetRootinfo},
+    {MAIN_BOARD_ID_SERVER_550EL_100, ServerGetRootinfo},
+    {MAIN_BOARD_ID_SERVER_550EL_200, ServerGetRootinfo},
     {MAIN_BOARD_ID_SERVER_8PMESH_UBOE, ServerGetRootinfo},
     {MAIN_BOARD_ID_SERVER_8PMESH_NOSP, ServerGetRootinfo},
     {MAIN_BOARD_ID_SERVER_8PMESH_NOSP_UBOE, ServerGetRootinfo},
-    {MAIN_BOARD_ID_SERVER_UBX, ServerGetRootinfo},
+    {MAIN_BOARD_ID_SERVER_350L, ServerGetRootinfo},
     {MAIN_BOARD_ID_POD, PodGetRootinfo},
     {MAIN_BOARD_ID_POD_2D, PodGetRootinfo},
+    {MAIN_BOARD_ID_POD_FLEX, ServerGetRootinfo},
+    {MAIN_BOARD_ID_POD_FLEX_RTP, ServerGetRootinfo},
 };
-
 
 int TopoAddrInfoGetSize(int phyId, size_t* size)
 {
+    TopoLogInit(); /* 懒初始化日志，全部下游共用 */
     if (size == NULL) {
+        TOPO_ERR("TopoAddrInfoGetSize: size is NULL");
         return -1;
     }
 
@@ -81,6 +94,7 @@ int TopoAddrInfoGetSize(int phyId, size_t* size)
     uint32_t mainboard_id = 0;
     int ret = hal_get_mainboard_id(phyId, &mainboard_id);
     if (ret != 0) {
+        TOPO_ERR("hal_get_mainboard_id failed, NPU phyId %d", phyId);
         return ret;
     }
 
@@ -90,13 +104,14 @@ int TopoAddrInfoGetSize(int phyId, size_t* size)
             return g_get_size_func_table[i].get_size_func(size);
         }
     }
+    TOPO_ERR("TopoAddrInfoGetSize:MainBoardId %d not found in g_get_size_func_table, use default", mainboard_id);
     (*size) = DEFAULT_RANKINFO_SIZE;
     return 0;
 }
 
 static int PassThroughTopoFilePath(char* filePath, size_t bufSize)
 {
-    return GetTopoFilePathFromFile("/etc/hccl_rootinfo.json", filePath, bufSize);
+    return GetTopoFilePathFromFile(DEFAULT_RANKINFO_FILE_PATH, filePath, bufSize);
 }
 
 /**
@@ -104,7 +119,9 @@ static int PassThroughTopoFilePath(char* filePath, size_t bufSize)
  */
 int TopoAddrInfoGetTopoFilePath(int phyId, char* filePath, size_t bufSize)
 {
+    TopoLogInit(); /* 懒初始化日志，全部下游共用 */
     if (filePath == NULL) {
+        TOPO_ERR("TopoAddrInfoGetTopoFilePath: filePath is NULL");
         return -1;
     }
     // 优先从/etc/hccl_rootinfo.json中读取
@@ -115,6 +132,7 @@ int TopoAddrInfoGetTopoFilePath(int phyId, char* filePath, size_t bufSize)
     uint32_t mainboard_id = 0;
     ret = hal_get_mainboard_id(phyId, &mainboard_id);
     if (ret != 0) {
+        TOPO_ERR("hal_get_mainboard_id failed, NPU phyId %d", phyId);
         return ret;
     }
     struct dcmi_spod_info spod_info;
@@ -125,49 +143,81 @@ int TopoAddrInfoGetTopoFilePath(int phyId, char* filePath, size_t bufSize)
     return TopoGetFilePath(mainboard_id, spod_info.super_pod_type, filePath, bufSize);
 }
 
-static int PassThrough(char *rankInfo, size_t *bufSize)
+static int PassThrough(char* rankInfo, size_t* bufSize)
 {
-    FILE *fp = fopen(DEFAULT_RANKINFO_FILE_PATH, "r");
+    FILE* fp = fopen(DEFAULT_RANKINFO_FILE_PATH, "r");
     if (fp == NULL) {
+        TOPO_INFO("PassThrough: failed to open %s", DEFAULT_RANKINFO_FILE_PATH);
         return -1;
     }
     struct stat stat;
-    fstat(fileno(fp), &stat);
-    if ((size_t)stat.st_size > (*bufSize)) {
+    if (fstat(fileno(fp), &stat) != 0) {
+        TOPO_ERR("PassThrough: failed to fstat %s, errno = %d", DEFAULT_RANKINFO_FILE_PATH, errno);
         fclose(fp);
         return -1;
     }
-    int ret = fread(rankInfo, 1, stat.st_size, fp);
-    if (ret < 0) {
+    if ((size_t)stat.st_size > (*bufSize)) {
+        TOPO_ERR(
+            "PassThrough: file %s size %lld exceeds buffer size %zu", DEFAULT_RANKINFO_FILE_PATH,
+            (long long)stat.st_size, *bufSize);
+        fclose(fp);
+        return -1;
+    }
+    size_t readBytes = fread(rankInfo, 1, (size_t)stat.st_size, fp);
+    if (readBytes != (size_t)stat.st_size) {
+        TOPO_ERR(
+            "PassThrough: short read %s, expected=%lld actual=%zu", DEFAULT_RANKINFO_FILE_PATH, (long long)stat.st_size,
+            readBytes);
         fclose(fp);
         return -1;
     }
     *bufSize = (size_t)stat.st_size;
+    fclose(fp);
     return 0;
 }
 
-int TopoAddrInfoGet(int phyId, char* rankInfo, size_t *bufSize)
+int TopoAddrInfoGet(int phyId, char* rankInfo, size_t* bufSize)
 {
+    TopoLogInit(); /* 懒初始化日志，全部下游共用 */
+    TOPO_PERF_BEGIN(TopoAddrInfoGet);
     if (rankInfo == NULL || bufSize == NULL) {
+        TOPO_ERR("TopoAddrInfoGet: rankInfo or bufSize is NULL");
+        TOPO_PERF_END(TopoAddrInfoGet);
         return -1;
     }
     // 优先读取/etc/hccl_rootinfo.json中内容
     if (PassThrough(rankInfo, bufSize) == 0) {
+        TOPO_PERF_END(TopoAddrInfoGet);
         return 0;
     }
     // 若/etc/hccl_rootinfo.json中无内容，根据mainboard_id生成rootinfo
     uint32_t mainboard_id = 0;
     int ret = hal_get_mainboard_id(phyId, &mainboard_id);
     if (ret != 0) {
+        TOPO_ERR("hal_get_mainboard_id failed, NPU phyId %d", phyId);
+        TOPO_PERF_END(TopoAddrInfoGet);
         return ret;
     }
 
-    ret = -1;
-    for (size_t i = 0; i < sizeof(g_get_rootinfo_func_table)/sizeof(GetRootinfoFuncTable); ++i) {
-        if (g_get_rootinfo_func_table[i].mainboard_id == mainboard_id) {
-            ret = g_get_rootinfo_func_table[i].get_rootinfo_func(phyId, mainboard_id, rankInfo, bufSize);
-            break;
+    bool found = false;
+    for (size_t i = 0; i < sizeof(g_get_rootinfo_func_table) / sizeof(GetRootinfoFuncTable); ++i) {
+        if (g_get_rootinfo_func_table[i].mainboard_id != mainboard_id) {
+            continue;
         }
+        found = true;
+        int funcRet = g_get_rootinfo_func_table[i].get_rootinfo_func(phyId, mainboard_id, rankInfo, bufSize);
+        if (funcRet != 0) {
+            TOPO_ERR("TopoAddrInfoGet: get_rootinfo func failed for mainboard_id %u, ret=%d", mainboard_id, funcRet);
+            TOPO_PERF_END(TopoAddrInfoGet);
+            return funcRet;
+        }
+        break;
     }
-    return ret;
+    if (!found) {
+        TOPO_ERR("TopoAddrInfoGet: no get_rootinfo func for mainboard_id %u", mainboard_id);
+        TOPO_PERF_END(TopoAddrInfoGet);
+        return -1;
+    }
+    TOPO_PERF_END(TopoAddrInfoGet);
+    return 0;
 }

@@ -14,7 +14,7 @@
 #include <string>
 #include "dev_type.h"
 #include "connected_link_mgr.h"
-#include "base_config.h"
+#include "base_config_legacy.h"
 #include "coll_alg_params.h"
 #include "coll_operator.h"
 #include "prim_queue.h"
@@ -27,11 +27,16 @@ using PrimQuePtr = std::shared_ptr<PrimQueue>;
 
 class CollAlgComponentLite {
 public:
-    CollAlgComponentLite(RankId myRank, u32 rankSize, DevType devType, u64 scratchBufferSize, ConnectedLinkMgr *linkMgr,
-        RmtDataBufferMgr *rmaDataBufferMgr) : myRank_(myRank), rankSize_(rankSize), devType_(devType),
-        scratchBufferSize_(scratchBufferSize), linkMgr_(linkMgr), rmaDataBufferMgr_(rmaDataBufferMgr)
-    {
-    }
+    CollAlgComponentLite(
+        RankId myRank, u32 rankSize, DevType devType, u64 scratchBufferSize, ConnectedLinkMgr* linkMgr,
+        RmtDataBufferMgr* rmaDataBufferMgr)
+        : myRank_(myRank),
+          rankSize_(rankSize),
+          devType_(devType),
+          scratchBufferSize_(scratchBufferSize),
+          linkMgr_(linkMgr),
+          rmaDataBufferMgr_(rmaDataBufferMgr)
+    {}
     virtual ~CollAlgComponentLite() = default;
 
     void EnableDetour(bool enableDetour);
@@ -42,22 +47,22 @@ public:
 
     HcclResult ParsePackedData(std::vector<char> packedData);
 
-    virtual HcclResult Orchestrate(const CollAlgOperator &op, const std::string &algName,
-                                   const AlgTopoInfo &algTopoInfo, PrimQuePtr queue);
-    virtual HcclResult Orchestrate(const CollAlgOperator &op, const std::string &algName,
-                                   const AlgTopoInfo &algTopoInfo, InsQuePtr queue);
+    virtual HcclResult Orchestrate(
+        const CollAlgOperator& op, const std::string& algName, const AlgTopoInfo& algTopoInfo, PrimQuePtr queue);
+    virtual HcclResult
+    Orchestrate(const CollAlgOperator& op, const std::string& algName, const AlgTopoInfo& algTopoInfo, InsQuePtr queue);
 
 protected:
-    u32               myRank_            = INVALID_RANKID;
-    u32               rankSize_          = 0;
-    DevType           devType_           = DevType::DEV_TYPE_NOSOC;
-    u64               scratchBufferSize_ = 0;
-    ConnectedLinkMgr *linkMgr_           = nullptr;
-    RmtDataBufferMgr *rmaDataBufferMgr_{ nullptr };
+    u32 myRank_ = INVALID_RANKID;
+    u32 rankSize_ = 0;
+    DevType devType_ = DevType::DEV_TYPE_NOSOC;
+    u64 scratchBufferSize_ = 0;
+    ConnectedLinkMgr* linkMgr_ = nullptr;
+    RmtDataBufferMgr* rmaDataBufferMgr_{nullptr};
 
     bool enableDetour_ = false;
     bool enableAllign_ = false;
-    u64  allignSize_   = 0;
+    u64 allignSize_ = 0;
 
     DmaMode dmaMode_ = DmaMode::DEFAULT;
 };

@@ -15,40 +15,21 @@
 #include <cstring>
 #include <iostream>
 
+#include "ai_core_stub.h"
 #include "aiv_task_snapshot_loader.h"
-#include "aiv_resource_manager.h"
 #include "hccl_types.h"
 #include "sim_log.h"
+#include "sim_common_defs.h"
+#include "store_sim_store_pub.h"
 
 using HcclSim::HcclVmResult;
 
-static constexpr uint64_t HCCL_AIV_FLAG_SLOT_BYTES = 128ULL;
-
-static AivSim::flag_t* GetFlagSlotPtr(const AivBufferResource& flagBuffer, uint64_t flagSlotOffset, uint32_t taskId)
-{
-    if (flagBuffer.realAddr == nullptr || flagBuffer.size < sizeof(AivSim::flag_t)) {
-        HCCL_VM_ERROR("Flag buffer invalid, taskId={:d}, flagBufferSize={:d}", taskId, flagBuffer.size);
-        return nullptr;
-    }
-
-    const uint64_t maxSlotOffset = (flagBuffer.size - sizeof(AivSim::flag_t)) / HCCL_AIV_FLAG_SLOT_BYTES;
-    if (flagSlotOffset > maxSlotOffset) {
-        HCCL_VM_ERROR("Flag offset out-of-bounds, taskId={:d}, flagSlotOffset={:d}, flagBufferSize={:d}",
-            taskId, flagSlotOffset, flagBuffer.size);
-        return nullptr;
-    }
-
-    const uint64_t flagByteOffset = flagSlotOffset * HCCL_AIV_FLAG_SLOT_BYTES;
-    auto* flagBufferBytes = static_cast<uint8_t*>(flagBuffer.realAddr);
-    return reinterpret_cast<AivSim::flag_t*>(flagBufferBytes + flagByteOffset);
-}
-
 static void AppendPipeTasksToQueue(
-    const std::vector<std::shared_ptr<AivSim::AivTask>> &pipeTasks,
-    std::queue<std::shared_ptr<AivSim::AivTask>> &taskQueue,
-    uint32_t& maxTaskId, uint32_t& maxEventId, uint32_t& maxSyncRound)
+    const std::vector<std::shared_ptr<AivSim::AivTask>>& pipeTasks,
+    std::queue<std::shared_ptr<AivSim::AivTask>>& taskQueue, uint32_t& maxTaskId, uint32_t& maxEventId,
+    uint32_t& maxSyncRound)
 {
-    for (const auto &task : pipeTasks) {
+    for (const auto& task : pipeTasks) {
         maxTaskId = std::max(maxTaskId, task->GetTaskId());
         if (task->GetTaskType() == AivSim::AivTaskType::SET_FLAG) {
             auto setFlagTask = std::dynamic_pointer_cast<AivSim::AivTaskSetFlag>(task);
@@ -66,28 +47,25 @@ static void AppendPipeTasksToQueue(
     }
 }
 
-AivBlock::AivBlock(uint32_t blockIdx, size_t maxEventId, size_t ubSize) : blockIdx_(blockIdx), ubSize_(ubSize) {
+AivBlock::AivBlock(uint32_t blockIdx, size_t maxEventId) : blockIdx_(blockIdx)
+{
     for (size_t i = 0; i <= maxEventId; ++i) {
         events_.push_back(false);
     }
-    ub_ = malloc(ubSize_);
 }
 
-AivBlock::~AivBlock() {
-    free(ub_);
-}
-
-bool AivGraphExecutor::Init(uint32_t rankId, uint32_t launchIdx) {
-    HCCL_VM_DEBUG("begin, launchIdx={}, rankId={}", launchIdx_, rankId_);
-    rankId_ = rankId;
-    launchIdx_ = launchIdx;
+bool AivGraphExecutor::Init()
+{
+    if (isInitialized_) {
+        return true;
+    }
 
     AivRuntimeTaskSnapshot taskSnapshot;
     std::string errorMessage;
-    if (!AivTaskSnapshotLoader::LoadRuntimeTaskSnapshotByLaunchDirect(
-            rankId_, static_cast<uint32_t>(launchIdx_), taskSnapshot, &errorMessage)) {
-        HCCL_VM_ERROR("failed to load runtime snapshot, launchIdx={}, rankId={}, reason={}",
-                  launchIdx_, rankId_, errorMessage);
+    if (!AivTaskSnapshotLoader::LoadRuntimeTasks(deviceId_, launchIdx_, taskSnapshot, &errorMessage)) {
+        HCCL_VM_ERROR(
+            "failed to load aiv task snapshot, deviceId={}, launchIdx={}, reason={}", deviceId_, launchIdx_,
+            errorMessage);
         return false;
     }
 
@@ -97,14 +75,9 @@ bool AivGraphExecutor::Init(uint32_t rankId, uint32_t launchIdx) {
     aivTaskQueues_.clear();
     isInitialized_ = false;
 
-    rankId_ = taskSnapshot.rankId;
-    rankSize_ = taskSnapshot.rankSize;
-    HCCL_VM_DEBUG("snapshot loaded, launchIdx={}, rankId={}, rankSize={}, file={}, aivBlockNum={}",
-              launchIdx_, rankId_, rankSize_, taskSnapshot.filePath, taskSnapshot.blocks.size());
-
     uint32_t maxTaskId = 0;
     uint32_t maxSyncRound = 0;
-    for (const auto &block : taskSnapshot.blocks) {
+    for (const auto& block : taskSnapshot.blocks) {
         uint32_t maxEventId = 0;
 
         aivTaskQueues_.emplace_back();
@@ -116,9 +89,10 @@ bool AivGraphExecutor::Init(uint32_t rankId, uint32_t launchIdx) {
         aivTaskQueues_.emplace_back();
         AppendPipeTasksToQueue(block.mte3Tasks, aivTaskQueues_.back(), maxTaskId, maxEventId, maxSyncRound);
 
-        HCCL_VM_TRACE("blockIdx={}, scalarTaskCount={}, mte2TaskCount={}, mte3TaskCount={}, maxEventId={}",
-                  block.blockIdx, block.scalarTasks.size(), block.mte2Tasks.size(), block.mte3Tasks.size(), maxEventId);
-        aivBlocks_.emplace_back(std::make_unique<AivBlock>(block.blockIdx, maxEventId, AivSim::AIV_UB_SIZE));
+        HCCL_VM_TRACE(
+            "blockIdx={}, scalarTaskCount={}, mte2TaskCount={}, mte3TaskCount={}, maxEventId={}", block.blockIdx,
+            block.scalarTasks.size(), block.mte2Tasks.size(), block.mte3Tasks.size(), maxEventId);
+        aivBlocks_.emplace_back(std::make_unique<AivBlock>(block.blockIdx, maxEventId));
     }
 
     for (uint32_t i = 0; i <= maxTaskId; ++i) {
@@ -129,15 +103,18 @@ bool AivGraphExecutor::Init(uint32_t rankId, uint32_t launchIdx) {
         syncAllRegisters_.emplace_back(pipeSize, false);
     }
 
-    HCCL_VM_DEBUG("queueCount={}, maxTaskId={}, pipeBarrierRegisterCount={}, syncAllRegisterCount={}, aivBlockNum={}",
-              aivTaskQueues_.size(), maxTaskId, pipeBarrierRegisters_.size(), syncAllRegisters_.size(), aivBlocks_.size());
+    HCCL_VM_DEBUG(
+        "AivGraphExecutor init success: deviceId={}, launchIdx={}, blockNum={}, taskQueNum={}, pipeBarrierRegNum={}, "
+        "syncAllRegNum={}",
+        deviceId_, launchIdx_, aivBlocks_.size(), aivTaskQueues_.size(), pipeBarrierRegisters_.size(),
+        syncAllRegisters_.size());
 
     isInitialized_ = true;
-    HCCL_VM_INFO("success, launchIdx={}, rankId={}", launchIdx_, rankId_);
     return true;
 }
 
-bool AivGraphExecutor::HasTask() const {
+bool AivGraphExecutor::HasTask() const
+{
     for (const auto& queue : aivTaskQueues_) {
         if (!queue.empty()) {
             return true;
@@ -146,39 +123,49 @@ bool AivGraphExecutor::HasTask() const {
     return false;
 }
 
-HcclVmResult AivGraphExecutor::Execute() {
-    HCCL_VM_DEBUG("[AivGraph Execute] rankId={} launchIdx={}", rankId_, launchIdx_);
-
-    const size_t queueNum = aivTaskQueues_.size();
+HcclVmResult AivGraphExecutor::Execute()
+{
     while (HasTask()) {
-        auto& queue = aivTaskQueues_[curQueueIdx_];
-        if (!queue.empty()) {
+        // 每轮从头到尾遍历全部TaskQueue
+        bool progressed = false; // 记录本轮是否有任务执行完毕
+        for (auto& queue : aivTaskQueues_) {
+            if (queue.empty()) {
+                continue;
+            }
+
             std::shared_ptr<AivSim::AivTask> task = queue.front();
             auto ret = ExecuteTask(task);
+
             if (ret == HcclVmResult::HCCL_SIM_SUCCESS) {
-                // task done
+                // Task执行完毕，从Queue中移除
                 queue.pop();
+                progressed = true;
             } else if (ret == HcclVmResult::HCCL_SIM_VRT_CONTINUE_CMD) {
-                // task not finish
-                HCCL_VM_TRACE("Task not finish, taskId={}", task->GetTaskId());
+                // Task暂时无法完成，需要先执行此AivGraph中的其他AivTask
+                HCCL_VM_TRACE("AivTask not finish, taskId={}", task->GetTaskId());
             } else if (ret == HcclVmResult::HCCL_SIM_VRT_HOLD_CMD) {
-                // aiv graph hold
-                HCCL_VM_DEBUG("AivGraph Hold, taskId={} rankId={} launchIdx={}", task->GetTaskId(), rankId_, launchIdx_);
-                curQueueIdx_ = (curQueueIdx_ + 1) % queueNum;
-                return ret;
+                // Task暂时无法完成，可能需要其他AivGraph配合，但此AivGraph中的其他AivTask可能还可以完成，先执行其他AivTask
+                HCCL_VM_TRACE("AivTask hold, taskId={}", task->GetTaskId());
             } else {
-                // task failed
-                HCCL_VM_ERROR("Task execute failed, taskId={} ret={}", task->GetTaskId(), static_cast<uint32_t>(ret));
+                // Task执行错误，返回错误码
+                HCCL_VM_ERROR(
+                    "AivTask execute failed, taskId={} ret={}", task->GetTaskId(), static_cast<uint32_t>(ret));
                 return ret;
             }
         }
-        curQueueIdx_ = (curQueueIdx_ + 1) % queueNum;
-    }
 
+        if (!progressed) {
+            // 此AivGraph每个TaskQueue都无法往下执行，需要让出Executor，让其他AivGraph先执行
+            HCCL_VM_DEBUG("AivGraph Hold, deviceId={} launchIdx={}", deviceId_, launchIdx_);
+            return HcclVmResult::HCCL_SIM_VRT_HOLD_CMD;
+        }
+    }
+    // AivGraph的所有Task执行完毕
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult AivGraphExecutor::ExecuteTask(std::shared_ptr<AivSim::AivTask> task) {
+HcclVmResult AivGraphExecutor::ExecuteTask(std::shared_ptr<AivSim::AivTask> task)
+{
     HCCL_VM_TRACE("Executing Task, taskId={}", task->GetTaskId());
     switch (task->GetTaskType()) {
         case AivSim::AivTaskType::MEM_COPY:
@@ -203,7 +190,8 @@ HcclVmResult AivGraphExecutor::ExecuteTask(std::shared_ptr<AivSim::AivTask> task
     }
 }
 
-HcclVmResult AivGraphExecutor::ExecuteTask(std::shared_ptr<AivSim::AivTaskMemCopy> task) {
+HcclVmResult AivGraphExecutor::ExecuteTask(std::shared_ptr<AivSim::AivTaskMemCopy> task)
+{
     HCCL_VM_DEBUG("{}", task->Describe());
 
     if (task->GetSrc().GetSize() != task->GetDst().GetSize()) {
@@ -212,64 +200,28 @@ HcclVmResult AivGraphExecutor::ExecuteTask(std::shared_ptr<AivSim::AivTaskMemCop
     }
     const size_t len = task->GetSrc().GetSize();
 
-    void* src = GetMemPtr(task, true);
-    if (src == nullptr) {
-        HCCL_VM_ERROR("Get src memory failed, taskId={:d}", task->GetTaskId());
-        return HcclVmResult::HCCL_SIM_VRT_ERROR_CMD;
+    VmUniquePtr src;
+    if (GetAddrByOffset(task->GetSrc().GetVirtualAddr(), src) != HcclVmResult::HCCL_SIM_SUCCESS) {
+        HCCL_VM_ERROR(
+            "Transfer virtual-addr to addr failed, AivTaskId={} VirtualAddr={:#x}", task->GetTaskId(),
+            task->GetSrc().GetVirtualAddr());
+        return HcclVmResult::HCCL_SIM_E_INTERNAL;
     }
 
-    void* dst = GetMemPtr(task, false);
-    if (dst == nullptr) {
-        HCCL_VM_ERROR("Get dst memory failed, taskId={:d}", task->GetTaskId());
-        return HcclVmResult::HCCL_SIM_VRT_ERROR_CMD;
+    VmUniquePtr dst;
+    if (GetAddrByOffset(task->GetDst().GetVirtualAddr(), dst) != HcclVmResult::HCCL_SIM_SUCCESS) {
+        HCCL_VM_ERROR(
+            "Transfer virtual-addr to addr failed, AivTaskId={} VirtualAddr={:#x}", task->GetTaskId(),
+            task->GetDst().GetVirtualAddr());
+        return HcclVmResult::HCCL_SIM_E_INTERNAL;
     }
 
-    std::memcpy(dst, src, len);
+    std::memcpy(dst.get(), src.get(), len);
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-template <typename T, typename>
-void* AivGraphExecutor::GetMemPtr(std::shared_ptr<T> task, bool isSrc) {
-    const auto& slice = isSrc ? task->GetSrc() : task->GetDst();
-    const uint64_t accessLen = slice.GetOffset() + slice.GetSize();
-
-    if (slice.GetType() == AivSim::AivBufferType::UB) {
-        if (accessLen > aivBlocks_[task->GetBlockId()]->GetUBSize()) {
-            HCCL_VM_ERROR("UB out-of-bounds, taskId={:d}", task->GetTaskId());
-            return nullptr;
-        }
-        uint64_t addr = reinterpret_cast<uint64_t>(aivBlocks_[task->GetBlockId()]->GetUB()) + slice.GetOffset();
-        return reinterpret_cast<void*>(addr);
-    } else {
-        const uint32_t rankId = isSrc ? task->GetSrcRank() : task->GetDstRank();
-        auto* rankResource = AivResourceManager::GetInstance().GetRankResource(rankId);
-        if (rankResource == nullptr) {
-            HCCL_VM_ERROR("GetRankResource failed, taskId={:d} targetRank={:d}", task->GetTaskId(), rankId);
-            return nullptr;
-        }
-        const AivBufferResource* rankMem = nullptr;
-        if (slice.GetType() == AivSim::AivBufferType::INPUT) {
-            rankMem = &rankResource->inputBuffer;
-        } else if (slice.GetType() == AivSim::AivBufferType::OUTPUT) {
-            rankMem = &rankResource->outputBuffer;
-        } else if (slice.GetType() == AivSim::AivBufferType::CCL) {
-            rankMem = &rankResource->cclBuffer;
-        } else if (slice.GetType() == AivSim::AivBufferType::FLAG) {
-            rankMem = &rankResource->flagBuffer;
-        } else {
-            HCCL_VM_ERROR("Mem type invalid, taskId={:d} sliceType={:d}", task->GetTaskId(), static_cast<uint32_t>(slice.GetType()));
-            return nullptr;
-        }
-        if (accessLen > rankMem->size) {
-            HCCL_VM_ERROR("Rank memory out-of-bounds, taskId={:d} sliceType={:d}", task->GetTaskId(), static_cast<uint32_t>(slice.GetType()));
-            return nullptr;
-        }
-        uint64_t addr = reinterpret_cast<uint64_t>(rankMem->realAddr) + slice.GetOffset();
-        return reinterpret_cast<void*>(addr);
-    }
-}
-
-HcclVmResult AivGraphExecutor::ExecuteTask(std::shared_ptr<AivSim::AivTaskReduce> task) {
+HcclVmResult AivGraphExecutor::ExecuteTask(std::shared_ptr<AivSim::AivTaskReduce> task)
+{
     HCCL_VM_DEBUG("{}", task->Describe());
 
     if (task->GetSrc().GetSize() != task->GetDst().GetSize()) {
@@ -278,49 +230,55 @@ HcclVmResult AivGraphExecutor::ExecuteTask(std::shared_ptr<AivSim::AivTaskReduce
     }
     const size_t len = task->GetSrc().GetSize();
 
-    void* src = GetMemPtr(task, true);
-    if (src == nullptr) {
-        HCCL_VM_ERROR("Get src memory failed, taskId={:d}", task->GetTaskId());
-        return HcclVmResult::HCCL_SIM_VRT_ERROR_CMD;
+    VmUniquePtr src;
+    if (GetAddrByOffset(task->GetSrc().GetVirtualAddr(), src) != HcclVmResult::HCCL_SIM_SUCCESS) {
+        HCCL_VM_ERROR(
+            "Transfer virtual-addr to addr failed, AivTaskId={} VirtualAddr={:#x}", task->GetTaskId(),
+            task->GetSrc().GetVirtualAddr());
+        return HcclVmResult::HCCL_SIM_E_INTERNAL;
     }
 
-    void* dst = GetMemPtr(task, false);
-    if (dst == nullptr) {
-        HCCL_VM_ERROR("Get dst memory failed, taskId={:d}", task->GetTaskId());
-        return HcclVmResult::HCCL_SIM_VRT_ERROR_CMD;
+    VmUniquePtr dst;
+    if (GetAddrByOffset(task->GetDst().GetVirtualAddr(), dst) != HcclVmResult::HCCL_SIM_SUCCESS) {
+        HCCL_VM_ERROR(
+            "Transfer virtual-addr to addr failed, AivTaskId={} VirtualAddr={:#x}", task->GetTaskId(),
+            task->GetDst().GetVirtualAddr());
+        return HcclVmResult::HCCL_SIM_E_INTERNAL;
     }
 
     switch (static_cast<HcclDataType>(task->GetDataType())) {
         case HcclDataType::HCCL_DATA_TYPE_HIF8:
-            return Reduce<AscendC::half>(src, dst, len, task->GetReduceOp());
+            return Reduce<AscendC::half>(src.get(), dst.get(), len, task->GetReduceOp());
         case HcclDataType::HCCL_DATA_TYPE_INT16:
-            return Reduce<int16_t>(src, dst, len, task->GetReduceOp());
+            return Reduce<int16_t>(src.get(), dst.get(), len, task->GetReduceOp());
         case HcclDataType::HCCL_DATA_TYPE_UINT16:
-            return Reduce<uint16_t>(src, dst, len, task->GetReduceOp());
+            return Reduce<uint16_t>(src.get(), dst.get(), len, task->GetReduceOp());
         case HcclDataType::HCCL_DATA_TYPE_FP32:
-            return Reduce<float>(src, dst, len, task->GetReduceOp());
+            return Reduce<float>(src.get(), dst.get(), len, task->GetReduceOp());
         case HcclDataType::HCCL_DATA_TYPE_INT32:
-            return Reduce<int32_t>(src, dst, len, task->GetReduceOp());
+            return Reduce<int32_t>(src.get(), dst.get(), len, task->GetReduceOp());
         case HcclDataType::HCCL_DATA_TYPE_UINT32:
-            return Reduce<uint32_t>(src, dst, len, task->GetReduceOp());
+            return Reduce<uint32_t>(src.get(), dst.get(), len, task->GetReduceOp());
         case HcclDataType::HCCL_DATA_TYPE_INT8:
-            return Reduce<int8_t>(src, dst, len, task->GetReduceOp());
+            return Reduce<int8_t>(src.get(), dst.get(), len, task->GetReduceOp());
         case HcclDataType::HCCL_DATA_TYPE_UINT8:
-            return Reduce<uint8_t>(src, dst, len, task->GetReduceOp());
+            return Reduce<uint8_t>(src.get(), dst.get(), len, task->GetReduceOp());
         case HcclDataType::HCCL_DATA_TYPE_BFP16:
-            return Reduce<AscendC::bfloat16_t>(src, dst, len, task->GetReduceOp());
+            return Reduce<AscendC::bfloat16_t>(src.get(), dst.get(), len, task->GetReduceOp());
         case HcclDataType::HCCL_DATA_TYPE_INT64:
-            return Reduce<int64_t>(src, dst, len, task->GetReduceOp());
+            return Reduce<int64_t>(src.get(), dst.get(), len, task->GetReduceOp());
         case HcclDataType::HCCL_DATA_TYPE_UINT64:
-            return Reduce<uint64_t>(src, dst, len, task->GetReduceOp());
+            return Reduce<uint64_t>(src.get(), dst.get(), len, task->GetReduceOp());
         default:
-            HCCL_VM_ERROR("Reduce DataType not supported, taskId={:d} dataType={:d}", task->GetTaskId(), task->GetDataType());
+            HCCL_VM_ERROR(
+                "Reduce DataType not supported, taskId={:d} dataType={:d}", task->GetTaskId(), task->GetDataType());
             return HcclVmResult::HCCL_SIM_VRT_ERROR_CMD;
     }
 }
 
 template <typename T>
-HcclVmResult AivGraphExecutor::Reduce(void* src, void* dst, size_t len, uint32_t reduceOp) {
+HcclVmResult AivGraphExecutor::Reduce(void* src, void* dst, size_t len, uint32_t reduceOp)
+{
     if (len % sizeof(T) != 0) {
         HCCL_VM_ERROR("reduce length invalid, len={:d}", len);
         return HcclVmResult::HCCL_SIM_VRT_ERROR_CMD;
@@ -355,13 +313,27 @@ HcclVmResult AivGraphExecutor::Reduce(void* src, void* dst, size_t len, uint32_t
     return HcclVmResult::HCCL_SIM_VRT_ERROR_CMD;
 }
 
-HcclVmResult AivGraphExecutor::ExecuteTask(std::shared_ptr<AivSim::AivTaskSetFlag> task) {
+HcclVmResult AivGraphExecutor::ExecuteTask(std::shared_ptr<AivSim::AivTaskSetFlag> task)
+{
+    if (task->GetBlockId() >= aivBlocks_.size()) {
+        HCCL_VM_ERROR(
+            "SetFlag task blockIdx out of range, taskId={}, blockIdx={}, aivBlocksSize={}", task->GetTaskId(),
+            task->GetBlockId(), aivBlocks_.size());
+        return HcclVmResult::HCCL_SIM_E_INTERNAL;
+    }
     auto& events = aivBlocks_[task->GetBlockId()]->GetEvents();
     events[task->GetEventId()] = true;
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult AivGraphExecutor::ExecuteTask(std::shared_ptr<AivSim::AivTaskWaitFlag> task) {
+HcclVmResult AivGraphExecutor::ExecuteTask(std::shared_ptr<AivSim::AivTaskWaitFlag> task)
+{
+    if (task->GetBlockId() >= aivBlocks_.size()) {
+        HCCL_VM_ERROR(
+            "WaitFlag task blockIdx out of range, taskId={}, blockIdx={}, aivBlocksSize={}", task->GetTaskId(),
+            task->GetBlockId(), aivBlocks_.size());
+        return HcclVmResult::HCCL_SIM_E_INTERNAL;
+    }
     auto& events = aivBlocks_[task->GetBlockId()]->GetEvents();
     if (events[task->GetEventId()]) {
         events[task->GetEventId()] = false;
@@ -370,7 +342,8 @@ HcclVmResult AivGraphExecutor::ExecuteTask(std::shared_ptr<AivSim::AivTaskWaitFl
     return HcclVmResult::HCCL_SIM_VRT_CONTINUE_CMD;
 }
 
-HcclVmResult AivGraphExecutor::ExecuteTask(std::shared_ptr<AivSim::AivTaskPipeBarrier> task) {
+HcclVmResult AivGraphExecutor::ExecuteTask(std::shared_ptr<AivSim::AivTaskPipeBarrier> task)
+{
     pipeBarrierRegisters_[task->GetTaskId()] = true;
     bool pass = true;
     for (const auto& groupTask : task->GetBarrierGroup()) {
@@ -382,11 +355,19 @@ HcclVmResult AivGraphExecutor::ExecuteTask(std::shared_ptr<AivSim::AivTaskPipeBa
     return pass ? HcclVmResult::HCCL_SIM_SUCCESS : HcclVmResult::HCCL_SIM_VRT_CONTINUE_CMD;
 }
 
-HcclVmResult AivGraphExecutor::ExecuteTask(std::shared_ptr<AivSim::AivTaskSyncAll> task) {
+HcclVmResult AivGraphExecutor::ExecuteTask(std::shared_ptr<AivSim::AivTaskSyncAll> task)
+{
+    if (task->GetBlockId() >= aivBlocks_.size()) {
+        HCCL_VM_ERROR(
+            "SyncAll task blockIdx out of range, taskId={}, blockIdx={}, aivBlocksSize={}", task->GetTaskId(),
+            task->GetBlockId(), aivBlocks_.size());
+        return HcclVmResult::HCCL_SIM_E_INTERNAL;
+    }
     size_t curRound = task->GetSyncRound();
     size_t registerIdx = task->GetBlockId() * AivSim::AivCore::GetPipeNum() + static_cast<size_t>(task->GetCurPipe());
     syncAllRegisters_[curRound][registerIdx] = true;
-    HCCL_VM_TRACE("Executing SyncAll, taskId={}, syncRound={}, registerIdx={}", task->GetTaskId(), curRound, registerIdx);
+    HCCL_VM_TRACE(
+        "Executing SyncAll, taskId={}, syncRound={}, registerIdx={}", task->GetTaskId(), curRound, registerIdx);
 
     bool pass = true;
     for (bool val : syncAllRegisters_[curRound]) {
@@ -398,50 +379,49 @@ HcclVmResult AivGraphExecutor::ExecuteTask(std::shared_ptr<AivSim::AivTaskSyncAl
     return pass ? HcclVmResult::HCCL_SIM_SUCCESS : HcclVmResult::HCCL_SIM_VRT_CONTINUE_CMD;
 }
 
-HcclVmResult AivGraphExecutor::ExecuteTask(std::shared_ptr<AivSim::AivTaskSendFlag> task) {
+HcclVmResult AivGraphExecutor::ExecuteTask(std::shared_ptr<AivSim::AivTaskSendFlag> task)
+{
     HCCL_VM_DEBUG("{}", task->Describe());
 
-    auto* rankResource = AivResourceManager::GetInstance().GetRankResource(task->GetRank());
-    if (rankResource == nullptr) {
-        HCCL_VM_ERROR("GetRankResource failed, taskId={:d}, targetRank={:d}", task->GetTaskId(), task->GetRank());
-        return HcclVmResult::HCCL_SIM_VRT_ERROR_CMD;
+    VmUniquePtr flagBuffer;
+    if (GetAddrByOffset(task->GetFlagBuffer().GetVirtualAddr(), flagBuffer) != HcclVmResult::HCCL_SIM_SUCCESS) {
+        HCCL_VM_ERROR(
+            "Transfer virtual-addr to addr failed, AivTaskId={} VirtualAddr={:#x}", task->GetTaskId(),
+            task->GetFlagBuffer().GetVirtualAddr());
+        return HcclVmResult::HCCL_SIM_E_INTERNAL;
     }
 
-    auto* flagPtr = GetFlagSlotPtr(rankResource->flagBuffer, task->GetFlagOffset(), task->GetTaskId());
-    if (flagPtr == nullptr) {
-        return HcclVmResult::HCCL_SIM_VRT_ERROR_CMD;
-    }
-
+    AivSim::flag_t* flagPtr = reinterpret_cast<AivSim::flag_t*>(flagBuffer.get());
     *flagPtr = task->GetFlagValue();
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult AivGraphExecutor::ExecuteTask(std::shared_ptr<AivSim::AivTaskRecvFlag> task) {
+HcclVmResult AivGraphExecutor::ExecuteTask(std::shared_ptr<AivSim::AivTaskRecvFlag> task)
+{
     HCCL_VM_DEBUG("{}", task->Describe());
 
-    auto* rankResource = AivResourceManager::GetInstance().GetRankResource(task->GetRank());
-    if (rankResource == nullptr) {
-        HCCL_VM_ERROR("GetRankResource failed, taskId={:d}, targetRank={:d}", task->GetTaskId(), task->GetRank());
-        return HcclVmResult::HCCL_SIM_VRT_ERROR_CMD;
+    VmUniquePtr flagBuffer;
+    if (GetAddrByOffset(task->GetFlagBuffer().GetVirtualAddr(), flagBuffer) != HcclVmResult::HCCL_SIM_SUCCESS) {
+        HCCL_VM_ERROR(
+            "Transfer virtual-addr to addr failed, AivTaskId={} VirtualAddr={:#x}", task->GetTaskId(),
+            task->GetFlagBuffer().GetVirtualAddr());
+        return HcclVmResult::HCCL_SIM_E_INTERNAL;
     }
 
-    auto* flagPtr = GetFlagSlotPtr(rankResource->flagBuffer, task->GetFlagOffset(), task->GetTaskId());
-    if (flagPtr == nullptr) {
-        return HcclVmResult::HCCL_SIM_VRT_ERROR_CMD;
-    }
-
+    AivSim::flag_t* flagPtr = reinterpret_cast<AivSim::flag_t*>(flagBuffer.get());
     AivSim::flag_t curFlagValue = *flagPtr;
 
-    if (curFlagValue == task->GetTargetValue()) {
+    if (curFlagValue == task->GetFlagValue()) {
         return HcclVmResult::HCCL_SIM_SUCCESS;
     } else {
         return HcclVmResult::HCCL_SIM_VRT_HOLD_CMD;
     }
 }
 
-void AivGraphExecutor::ShowCurrentTaskStatus() {
+void AivGraphExecutor::ShowCurrentTaskStatus()
+{
     std::stringstream ss;
-    ss << "curRank=" << rankId_;
+    ss << "curDevice=" << deviceId_;
     ss << ", TaskStatus(queueIdx, taskId)={";
     for (size_t i = 0; i < aivTaskQueues_.size(); ++i) {
         if (i != 0) {

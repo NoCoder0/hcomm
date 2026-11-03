@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 /**
  * @defgroup v_avll AVLL
  * @ingroup util
@@ -45,7 +44,7 @@ typedef AVL3_NODE AVLL_NODE;
  * 息以及关键元素信息。本数据结构由AVL3_TREE和AVL3_TREE_INFO组成。
  */
 typedef struct avll_tree {
-    AVL3_TREE stTree; /**< AVL3 tree structure. */
+    AVL3_TREE stTree;          /**< AVL3 tree structure. */
     AVL3_TREE_INFO stTreeInfo; /**< AVL3 tree information structure. */
 } AVLL_TREE;
 
@@ -70,12 +69,12 @@ typedef struct avll_tree {
  * @li VOS_AVLL_IN_TREE
  * @li VOS_AVLL_INIT_NODE
  */
-#define VOS_AVLL_INIT_TREE(TREE, COMPARE, KEY_OFF, NODE_OFF) \
-    do { \
-        (TREE).stTreeInfo.pfCompare = (COMPARE); \
-        (TREE).stTreeInfo.usKeyOffset = (KEY_OFF); \
-        (TREE).stTreeInfo.usNodeOffset = (NODE_OFF); \
-        VOS_AVL3_INIT_TREE((TREE).stTree, (TREE).stTreeInfo); \
+#define VOS_AVLL_INIT_TREE(TREE, COMPARE, KEY_OFF, NODE_OFF)                                                           \
+    do {                                                                                                               \
+        (TREE).stTreeInfo.pfCompare = (COMPARE);                                                                       \
+        (TREE).stTreeInfo.usKeyOffset = (KEY_OFF);                                                                     \
+        (TREE).stTreeInfo.usNodeOffset = (NODE_OFF);                                                                   \
+        VOS_AVL3_INIT_TREE((TREE).stTree, (TREE).stTreeInfo);                                                          \
     } while (0)
 
 /**
@@ -119,9 +118,7 @@ typedef struct avll_tree {
  * @li VOS_AVLL_INIT_NODE
  * @li VOS_AVLL_INIT_TREE
  */
-#define VOS_AVLL_INSERT(TREE, NODE) VOS_AVL3_INSERT((TREE).stTree, \
-    (NODE), \
-    (TREE).stTreeInfo)
+#define VOS_AVLL_INSERT(TREE, NODE) VOS_AVL3_INSERT((TREE).stTree, (NODE), (TREE).stTreeInfo)
 
 /**
  * @ingroup v_avll
@@ -144,10 +141,7 @@ typedef struct avll_tree {
  * @since V200R002C00
  * @see VOS_AVLL_INSERT
  */
-#define VOS_AVLL_INSERT_OR_FIND(TREE, NODE) \
-    VOS_AVL3_INSERT_OR_FIND((TREE).stTree, \
-        (NODE), \
-        (TREE).stTreeInfo)
+#define VOS_AVLL_INSERT_OR_FIND(TREE, NODE) VOS_AVL3_INSERT_OR_FIND((TREE).stTree, (NODE), (TREE).stTreeInfo)
 
 /**
  * @ingroup v_avll
@@ -195,9 +189,7 @@ typedef struct avll_tree {
  * @li VOS_AVLL_FIND_NEXT
  * @li VOS_AVLL_FIND_OR_FIND_NEXT
  */
-#define VOS_AVLL_FIND(TREE, KEY) VOS_AVL3_FIND((TREE).stTree, \
-    (KEY), \
-    (TREE).stTreeInfo)
+#define VOS_AVLL_FIND(TREE, KEY) VOS_AVL3_FIND((TREE).stTree, (KEY), (TREE).stTreeInfo)
 
 /**
  * @ingroup v_avll
@@ -349,16 +341,15 @@ typedef struct avll_tree {
  * @li VOS_AVLL_LAST
  * @li VOS_AVLL_PREV
  */
-#define VOS_AVLL_FIND_NEXT(TREE, KEY) VOS_AVL3_FIND_NEXT((TREE).stTree, \
-    (KEY), \
-    (TREE).stTreeInfo)
+#define VOS_AVLL_FIND_NEXT(TREE, KEY) VOS_AVL3_FIND_NEXT((TREE).stTree, (KEY), (TREE).stTreeInfo)
 
 /**
  * @ingroup v_avll
  * @brief 根据输入的KEY值在树中查找，如果匹配成功则返回树中节点的指针。
  *
  * @par 描述
- * 本接口是 #VOS_AVLL_FIND 和 #VOS_AVLL_FIND_NEXT功能的组合。根据输入的KEY值在树中查找，如果匹配成功则返回树中节点的指针。如果树中没有指定KEY值的节点，
+ * 本接口是 #VOS_AVLL_FIND 和
+ * #VOS_AVLL_FIND_NEXT功能的组合。根据输入的KEY值在树中查找，如果匹配成功则返回树中节点的指针。如果树中没有指定KEY值的节点，
  * 则返回比KEY值大的下一个节点。该大小顺序是由比较函数定义好的。
  * @attention
  * 在一个按字母排序的树中，假设树中包含元素的KEY值分别为A，B，C，D，E，F。
@@ -378,10 +369,7 @@ typedef struct avll_tree {
  * @li VOS_AVLL_FIND
  * @li VOS_AVLL_FIND_NEXT
  */
-#define VOS_AVLL_FIND_OR_FIND_NEXT(TREE, KEY) \
-    VOS_AVL3_FIND_OR_FIND_NEXT((TREE).stTree, \
-        (KEY), \
-        (TREE).stTreeInfo)
+#define VOS_AVLL_FIND_OR_FIND_NEXT(TREE, KEY) VOS_AVL3_FIND_OR_FIND_NEXT((TREE).stTree, (KEY), (TREE).stTreeInfo)
 
 #ifdef __cplusplus
 }

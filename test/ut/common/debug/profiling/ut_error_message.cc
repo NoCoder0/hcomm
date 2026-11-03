@@ -25,15 +25,15 @@
 using namespace std;
 using namespace hccl;
 
-HcclResult hrtMallocHost(void **hostPtr, u64 size);
+HcclResult hrtMallocHost(void** hostPtr, u64 size);
 
 namespace {
 constexpr u64 kMallocSize = 1024;
 constexpr s32 kDeviceId = 0;
-}
+} // namespace
 
-static DetectInfo MakeDetectInfo(const string &localServer, s32 localDevice,
-    const string &remoteServer, s32 remoteDevice)
+static DetectInfo
+MakeDetectInfo(const string& localServer, s32 localDevice, const string& remoteServer, s32 remoteDevice)
 {
     DetectInfo info;
     info.localDeviceId = localDevice;
@@ -43,26 +43,26 @@ static DetectInfo MakeDetectInfo(const string &localServer, s32 localDevice,
     return info;
 }
 
-static aclError stub_aclrtMallocWithCfg_error(void **devPtr, size_t size,
-    aclrtMemMallocPolicy policy, aclrtMallocConfig *cfg)
+static aclError
+stub_aclrtMallocWithCfg_error(void** devPtr, size_t size, aclrtMemMallocPolicy policy, aclrtMallocConfig* cfg)
 {
-    *devPtr = reinterpret_cast<void *>(0xDEADBEEF);
+    *devPtr = reinterpret_cast<void*>(0xDEADBEEF);
     return ACL_ERROR_RT_FEATURE_NOT_SUPPORT;
 }
 
-static aclError stub_aclrtMallocHostWithCfg_error(void **ptr, uint64_t size, aclrtMallocConfig *cfg)
+static aclError stub_aclrtMallocHostWithCfg_error(void** ptr, uint64_t size, aclrtMallocConfig* cfg)
 {
-    *ptr = reinterpret_cast<void *>(0xCAFEBABE);
+    *ptr = reinterpret_cast<void*>(0xCAFEBABE);
     return ACL_ERROR_RT_FEATURE_NOT_SUPPORT;
 }
 
-static HcclResult stub_hrtGetDeviceType_success(DevType &devType)
+static HcclResult stub_hrtGetDeviceType_success(DevType& devType)
 {
     devType = DevType::DEV_TYPE_910_93;
     return HCCL_SUCCESS;
 }
 
-static HcclResult stub_hrtGetDevice_success(s32 *deviceId)
+static HcclResult stub_hrtGetDevice_success(s32* deviceId)
 {
     *deviceId = 0;
     return HCCL_SUCCESS;
@@ -73,21 +73,13 @@ protected:
     virtual void SetUp()
     {
         s32 portNum = 7;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
-        MOCKER(RptInputErr)
-            .stubs()
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
+        MOCKER(RptInputErr).stubs().will(returnValue(HCCL_SUCCESS));
     }
-    virtual void TearDown()
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() { GlobalMockObject::verify(); }
 };
 
-static void ConstructRankTable(RankTable_t &rankTable, u32 rankSize)
+static void ConstructRankTable(RankTable_t& rankTable, u32 rankSize)
 {
     rankTable.collectiveId = "192.168.0.101-8000-8001";
     vector<RankInfo_t> rankVec(rankSize);
@@ -143,38 +135,28 @@ TEST_F(ErrorMessageTest, Ut_VerifyClusterTlsConsistency_PartialSupportTls_Unknow
 
 TEST_F(ErrorMessageTest, Ut_hrtMalloc_Error_ReportsBytes)
 {
-    MOCKER(hrtGetDeviceType)
-        .stubs()
-        .will(invoke(stub_hrtGetDeviceType_success));
-    MOCKER(hrtGetDevice)
-        .stubs()
-        .will(invoke(stub_hrtGetDevice_success));
-    MOCKER(Is310PDevice)
-        .stubs()
-        .will(returnValue(false));
-    MOCKER(aclrtMallocWithCfg)
-        .stubs()
-        .will(invoke(stub_aclrtMallocWithCfg_error));
+    MOCKER(hrtGetDeviceType).stubs().will(invoke(stub_hrtGetDeviceType_success));
+    MOCKER(hrtGetDevice).stubs().will(invoke(stub_hrtGetDevice_success));
+    MOCKER(Is310PDevice).stubs().will(returnValue(false));
+    MOCKER(aclrtMallocWithCfg).stubs().will(invoke(stub_aclrtMallocWithCfg_error));
 
-    void *devPtr = nullptr;
+    void* devPtr = nullptr;
     HcclResult ret = hrtMalloc(&devPtr, kMallocSize, false);
     EXPECT_EQ(ret, HCCL_E_RUNTIME);
 }
 
 TEST_F(ErrorMessageTest, Ut_hrtMallocHost_Error_ReportsBytes)
 {
-    MOCKER(aclrtMallocHostWithCfg)
-        .stubs()
-        .will(invoke(stub_aclrtMallocHostWithCfg_error));
+    MOCKER(aclrtMallocHostWithCfg).stubs().will(invoke(stub_aclrtMallocHostWithCfg_error));
 
-    void *hostPtr = nullptr;
+    void* hostPtr = nullptr;
     HcclResult ret = hrtMallocHost(&hostPtr, kMallocSize);
     EXPECT_EQ(ret, HCCL_E_RUNTIME);
 }
 
 TEST_F(ErrorMessageTest, Ut_BuildGroupedDetectMessage_EmptyMap_ReturnsEmpty)
 {
-    auto &dca = DetectConnectionAnomalies::GetInstance(kDeviceId);
+    auto& dca = DetectConnectionAnomalies::GetInstance(kDeviceId);
     dca.recvErrorInfoMap_.clear();
     string result = dca.BuildGroupedDetectMessage();
     EXPECT_TRUE(result.empty());
@@ -182,7 +164,7 @@ TEST_F(ErrorMessageTest, Ut_BuildGroupedDetectMessage_EmptyMap_ReturnsEmpty)
 
 TEST_F(ErrorMessageTest, Ut_BuildGroupedDetectMessage_SingleEntry_FormatsCorrectly)
 {
-    auto &dca = DetectConnectionAnomalies::GetInstance(kDeviceId);
+    auto& dca = DetectConnectionAnomalies::GetInstance(kDeviceId);
     dca.recvErrorInfoMap_.clear();
     dca.recvErrorInfoMap_["key1"] = MakeDetectInfo("serverA", 0, "serverB", 1);
 
@@ -190,14 +172,14 @@ TEST_F(ErrorMessageTest, Ut_BuildGroupedDetectMessage_SingleEntry_FormatsCorrect
     EXPECT_NE(result.find("serverA"), string::npos);
     EXPECT_NE(result.find("device ID 0"), string::npos);
     EXPECT_NE(result.find("serverB"), string::npos);
-    EXPECT_NE(result.find("[1]"), string::npos);
+    EXPECT_NE(result.find("device ID 1"), string::npos);
     // 单条记录无换行分隔符
     EXPECT_EQ(result.find("\n"), string::npos);
 }
 
 TEST_F(ErrorMessageTest, Ut_BuildGroupedDetectMessage_DupDevices_SortedAndDeduped)
 {
-    auto &dca = DetectConnectionAnomalies::GetInstance(kDeviceId);
+    auto& dca = DetectConnectionAnomalies::GetInstance(kDeviceId);
     dca.recvErrorInfoMap_.clear();
     // 同一 src+dst，但 remoteDeviceId 有重复和乱序
     dca.recvErrorInfoMap_["k1"] = MakeDetectInfo("serverA", 0, "serverB", 5);
@@ -205,13 +187,13 @@ TEST_F(ErrorMessageTest, Ut_BuildGroupedDetectMessage_DupDevices_SortedAndDedupe
     dca.recvErrorInfoMap_["k3"] = MakeDetectInfo("serverA", 0, "serverB", 2); // 重复
 
     string result = dca.BuildGroupedDetectMessage();
-    // 排序+去重后应为 [2,5]
-    EXPECT_NE(result.find("[2,5]"), string::npos);
+    // 排序+去重后应为 device ID 2,5
+    EXPECT_NE(result.find("device ID 2,5"), string::npos);
 }
 
 TEST_F(ErrorMessageTest, Ut_BuildGroupedDetectMessage_MultiGroups_SeparatedByNewline)
 {
-    auto &dca = DetectConnectionAnomalies::GetInstance(kDeviceId);
+    auto& dca = DetectConnectionAnomalies::GetInstance(kDeviceId);
     dca.recvErrorInfoMap_.clear();
     dca.recvErrorInfoMap_["k1"] = MakeDetectInfo("serverA", 0, "serverB", 1);
     dca.recvErrorInfoMap_["k2"] = MakeDetectInfo("serverC", 3, "serverD", 4);

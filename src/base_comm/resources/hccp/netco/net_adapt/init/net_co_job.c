@@ -27,8 +27,7 @@ uint32_t NetCoJobInit(NetCo *co)
     if (err <= 0) {
         return BKF_ERR;
     }
-    WfwJobxInitArg arg = {
-        .name = name,
+    WfwJobxInitArg arg = {.name = name,
         .dbgOn = co->dbgOn,
         .memMng = co->memMng,
         .disp = co->disp,
@@ -37,15 +36,14 @@ uint32_t NetCoJobInit(NetCo *co)
         .pfm = co->pfm,
         .mux = co->mux,
         .selfCid = co->selfCid,
-        .runCostMax = BKF_JOB_RUN_COST_INVALID
-    };
+        .runCostMax = BKF_JOB_RUN_COST_INVALID};
     co->jobMngAdpee = WfwJobxInit(&arg);
     if (co->jobMngAdpee == VOS_NULL) {
         BKF_LOG_ERROR(BKF_LOG_HND, "jobMngAdpee(%#x), ng\n", BKF_MASK_ADDR(co->jobMngAdpee));
         return BKF_ERR;
     }
     BkfIJob temp;
-    co->jobMng = BkfJobInit(WfwJobxBuildIJob((WfwJobxMng*)co->jobMngAdpee, &temp));
+    co->jobMng = BkfJobInit(WfwJobxBuildIJob((WfwJobxMng *)co->jobMngAdpee, &temp));
     if (co->jobMng == VOS_NULL) {
         BKF_LOG_ERROR(BKF_LOG_HND, "jobMng(%#x), ng\n", BKF_MASK_ADDR(co->jobMng));
         return BKF_ERR;
@@ -56,15 +54,15 @@ uint32_t NetCoJobInit(NetCo *co)
 
 void NetCoJobUninit(NetCo *co)
 {
-    NET_CO_LOG_MOD_DO(BKF_LOG_HND, "jobMng(%#x)/jobMngAdpee(%#x)\n",
-                      BKF_MASK_ADDR(co->jobMng), BKF_MASK_ADDR(co->jobMngAdpee));
+    NET_CO_LOG_MOD_DO(BKF_LOG_HND, "jobMng(%#x)/jobMngAdpee(%#x)\n", BKF_MASK_ADDR(co->jobMng),
+        BKF_MASK_ADDR(co->jobMngAdpee));
 
     if (co->jobMng) {
         BkfJobUninit(co->jobMng);
         co->jobMng = VOS_NULL;
     }
     if (co->jobMngAdpee) {
-        WfwJobxUninit((WfwJobxMng*)co->jobMngAdpee);
+        WfwJobxUninit((WfwJobxMng *)co->jobMngAdpee);
         co->jobMngAdpee = VOS_NULL;
     }
 }
@@ -72,4 +70,3 @@ void NetCoJobUninit(NetCo *co)
 #ifdef __cplusplus
 }
 #endif
-

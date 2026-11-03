@@ -17,20 +17,11 @@
 using namespace Hccl;
 class AicpuDaemonServiceTest : public testing::Test {
 public:
-    static void SetUpTestCase()
-    {
-        std::cout << "AicpuDaemonServiceTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AicpuDaemonServiceTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AicpuDaemonServiceTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AicpuDaemonServiceTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in AicpuDaemonServiceTest SetUp" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in AicpuDaemonServiceTest SetUp" << std::endl; }
 
     virtual void TearDown()
     {
@@ -41,16 +32,13 @@ public:
 
 class DaemonFuncTest : public DaemonFunc {
 public:
-    static DaemonFuncTest &GetInstance()
+    static DaemonFuncTest& GetInstance()
     {
         static DaemonFuncTest daemonFunc;
         return daemonFunc;
     }
 
-    void Call() override
-    {
-        std::cout << "DaemonFuncTest" << std::endl;
-    }
+    void Call() override { std::cout << "DaemonFuncTest" << std::endl; }
 };
 
 TEST_F(AicpuDaemonServiceTest, should_success_when_calling_Register)
@@ -61,10 +49,10 @@ TEST_F(AicpuDaemonServiceTest, should_success_when_calling_Register)
 TEST_F(AicpuDaemonServiceTest, should_success_when_calling_ServiceRun)
 {
     CommandToBackGroud info = CommandToBackGroud::Default;
-    auto daemonServiceRun = [](void *info) {
+    auto daemonServiceRun = [](void* info) {
         AicpuDaemonService::GetInstance().ServiceRun(info);
     };
-    auto daemonServiceStop = [](void *info) {
+    auto daemonServiceStop = [](void* info) {
         AicpuDaemonService::GetInstance().ServiceStop(info);
     };
     auto threadRun = std::thread(daemonServiceRun, &info);

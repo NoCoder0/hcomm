@@ -1,28 +1,12 @@
- /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- * 
- * The code snippet comes from Ascend project.
- * 
- * Copyright 2022 Huawei Technologies Co., Ltd
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef METADEF_CXX_INC_EXE_GRAPH_RUNTIME_EXPAND_DIMS_TYPE_H_
 #define METADEF_CXX_INC_EXE_GRAPH_RUNTIME_EXPAND_DIMS_TYPE_H_
@@ -48,150 +32,147 @@ namespace gert {
  *
  */
 class ExpandDimsType {
- public:
-  using AxisIndex = uint64_t;
-  static constexpr size_t kMaxExpandSize = 56;
+public:
+    using AxisIndex = uint64_t;
+    static constexpr size_t kMaxExpandSize = 56;
 
-  ExpandDimsType() : size_(0U), mask_(0U) {
-    (void)memset(reserved_, 0, sizeof(reserved_)); // memse函数misra告警屏蔽
-  }
-
-  /**
-   * 通过字符串创建一个补维规则
-   * @param expand_dims_type 字符串描述的补维规则
-   */
-  explicit ExpandDimsType(const ge::char_t *const expand_dims_type) : ExpandDimsType() {
-    if (expand_dims_type == nullptr) {
-      return;
-    }
-    const auto size = strlen(expand_dims_type);
-    if (size > kMaxExpandSize) {
-      // log error
-      return;
+    ExpandDimsType() : size_(0U), mask_(0U)
+    {
+        (void)memset(reserved_, 0, sizeof(reserved_)); // memse函数misra告警屏蔽
     }
 
-    size_ = size;
-    for (AxisIndex i = 0; i < size; ++i) {
-      if (expand_dims_type[i] == '1') {
-        SetExpandIndex(i);
-      }
-    }
-  }
-
-  /**
-   * 通过int创建一个补维规则，int中的位域定义为
-   * | 字段     | 类型    | 含义                   |
-   * | -------- | ------- | ---------------------- |
-   * | 高8比特  | uint8_t | 补维规则长度           |
-   * | 低56比特 | 位域    | 使用0、1描述的补维规则 |
-   *
-   * 为了实现简单，补维规则部分与字符串的顺序相反，例如字符串描述的补维规则为"1100"，那么对应的补维规则为"0011"转换为数字为3
-   * @param expand_dims_type 补维规则
-   */
-  explicit ExpandDimsType(const int64_t reshape_type_mask) : ExpandDimsType() {
-    if (reshape_type_mask == 0) {
-      return;
-    }
-    size_ = static_cast<uint64_t>(static_cast<uint64_t>(reshape_type_mask) >> kMaxExpandSize);
-    if (size_ > kMaxExpandSize) {
-      return;
-    }
-    mask_ = static_cast<uint64_t>(static_cast<uint64_t>(reshape_type_mask) & 0xffULL);
-  }
-  /**
-   * 判断补维规则是否一致
-   * @param other 另一个实例
-   * @return true/false
-   */
-  bool operator==(const ExpandDimsType &other) const {
-    return (size_ == other.size_) && (mask_ == other.mask_);
-  }
-  /**
-   * 获取补维后的dim数
-   * @return
-   */
-  AxisIndex GetFullSize() const {
-    return size_;
-  }
-  /**
-   * 设置补维轴
-   * @param index 第index根轴为补维轴
-   */
-  void SetExpandIndex(const AxisIndex index) {
-    mask_ |= (1UL << index);
-  }
-  /**
-   * 基于补维后的shape，判断index根轴是否为补维轴
-   * @param index 第index根轴
-   * @return true含义为补维轴，false含义为原shape的轴
-   */
-  bool IsExpandIndex(const AxisIndex index) const {
-    return static_cast<bool>((1UL << index) & mask_);
-  }
-  /**
-   * 对shape做补维，并将结果写入到out_shape
-   * @param shape 输入shape，补维前shape
-   * @param out_shape 输出shape，补维后shape
-   * @return 补维成功返回ge::GRAPH_SUCCESS
-   */
-  ge::graphStatus Expand(const Shape &shape, Shape &out_shape) const {
-    if (shape.GetDimNum() == size_) {
-      out_shape = shape;
-      return ge::GRAPH_SUCCESS;
-    }
-    size_t shape_pos = 0;
-    out_shape.SetDimNum(0);
-    for (size_t out_shape_pos = 0; out_shape_pos < size_; ++out_shape_pos) {
-      if (!IsExpandIndex(out_shape_pos)) {
-        if (shape_pos >= shape.GetDimNum()) {
-          return ge::GRAPH_FAILED;
+    /**
+     * 通过字符串创建一个补维规则
+     * @param expand_dims_type 字符串描述的补维规则
+     */
+    explicit ExpandDimsType(const ge::char_t* const expand_dims_type) : ExpandDimsType()
+    {
+        if (expand_dims_type == nullptr) {
+            return;
         }
-        (void) out_shape.AppendDim(shape.GetDim(shape_pos++));
-      } else {
-        (void) out_shape.AppendDim(1);
-      }
-    }
-
-    for (; shape_pos < shape.GetDimNum(); ++shape_pos) {
-      (void) out_shape.AppendDim(shape.GetDim(shape_pos));
-    }
-    return ge::GRAPH_SUCCESS;
-  }
-  /**
-   * 原地补维
-   * @param shape 直接在本shape做补维
-   * @return 补维成功返回ge::GRAPH_SUCCESS
-   */
-  ge::graphStatus Expand(Shape &shape) const {
-    // full_size:4, shape:[A,B], reshape_type:1010
-    // shape:[A,B] + full_size:4 -> [A,B,1,1]
-    if (shape.GetDimNum() == size_) {
-      return ge::GRAPH_SUCCESS;
-    }
-    size_t dim_size = shape.GetDimNum();
-    size_t cur_dim_size = dim_size;
-    while (cur_dim_size++ < size_) {
-      (void) shape.AppendDim(1);
-    }
-
-    // shape:[A,B,1,1] + 1010 -> [A,1,B,1]
-    for (int32_t i = static_cast<int32_t>(size_ - 1UL); i >= 0; --i) {
-      if (!IsExpandIndex(static_cast<AxisIndex>(i))) {
-        if ((dim_size > 0) && (dim_size - 1UL < static_cast<size_t>(i))) {
-          shape.SetDim(static_cast<size_t>(i), shape.GetDim(dim_size - 1));
-          shape.SetDim(dim_size - 1UL, 1);
-          dim_size--;
+        const auto size = strlen(expand_dims_type);
+        if (size > kMaxExpandSize) {
+            // log error
+            return;
         }
-      }
-    }
-    return ge::GRAPH_SUCCESS;
-  }
 
- private:
-  uint64_t size_ : 8;
-  uint64_t mask_ : kMaxExpandSize;
-  uint8_t reserved_[40];  // Reserved field, 32+8, do not directly use when only 8-byte left
+        size_ = size;
+        for (AxisIndex i = 0; i < size; ++i) {
+            if (expand_dims_type[i] == '1') {
+                SetExpandIndex(i);
+            }
+        }
+    }
+
+    /**
+     * 通过int创建一个补维规则，int中的位域定义为
+     * | 字段     | 类型    | 含义                   |
+     * | -------- | ------- | ---------------------- |
+     * | 高8比特  | uint8_t | 补维规则长度           |
+     * | 低56比特 | 位域    | 使用0、1描述的补维规则 |
+     *
+     * 为了实现简单，补维规则部分与字符串的顺序相反，例如字符串描述的补维规则为"1100"，那么对应的补维规则为"0011"转换为数字为3
+     * @param expand_dims_type 补维规则
+     */
+    explicit ExpandDimsType(const int64_t reshape_type_mask) : ExpandDimsType()
+    {
+        if (reshape_type_mask == 0) {
+            return;
+        }
+        size_ = static_cast<uint64_t>(static_cast<uint64_t>(reshape_type_mask) >> kMaxExpandSize);
+        if (size_ > kMaxExpandSize) {
+            return;
+        }
+        mask_ = static_cast<uint64_t>(static_cast<uint64_t>(reshape_type_mask) & 0xffULL);
+    }
+    /**
+     * 判断补维规则是否一致
+     * @param other 另一个实例
+     * @return true/false
+     */
+    bool operator==(const ExpandDimsType& other) const { return (size_ == other.size_) && (mask_ == other.mask_); }
+    /**
+     * 获取补维后的dim数
+     * @return
+     */
+    AxisIndex GetFullSize() const { return size_; }
+    /**
+     * 设置补维轴
+     * @param index 第index根轴为补维轴
+     */
+    void SetExpandIndex(const AxisIndex index) { mask_ |= (1UL << index); }
+    /**
+     * 基于补维后的shape，判断index根轴是否为补维轴
+     * @param index 第index根轴
+     * @return true含义为补维轴，false含义为原shape的轴
+     */
+    bool IsExpandIndex(const AxisIndex index) const { return static_cast<bool>((1UL << index) & mask_); }
+    /**
+     * 对shape做补维，并将结果写入到out_shape
+     * @param shape 输入shape，补维前shape
+     * @param out_shape 输出shape，补维后shape
+     * @return 补维成功返回ge::GRAPH_SUCCESS
+     */
+    ge::graphStatus Expand(const Shape& shape, Shape& out_shape) const
+    {
+        if (shape.GetDimNum() == size_) {
+            out_shape = shape;
+            return ge::GRAPH_SUCCESS;
+        }
+        size_t shape_pos = 0;
+        out_shape.SetDimNum(0);
+        for (size_t out_shape_pos = 0; out_shape_pos < size_; ++out_shape_pos) {
+            if (!IsExpandIndex(out_shape_pos)) {
+                if (shape_pos >= shape.GetDimNum()) {
+                    return ge::GRAPH_FAILED;
+                }
+                (void)out_shape.AppendDim(shape.GetDim(shape_pos++));
+            } else {
+                (void)out_shape.AppendDim(1);
+            }
+        }
+
+        for (; shape_pos < shape.GetDimNum(); ++shape_pos) {
+            (void)out_shape.AppendDim(shape.GetDim(shape_pos));
+        }
+        return ge::GRAPH_SUCCESS;
+    }
+    /**
+     * 原地补维
+     * @param shape 直接在本shape做补维
+     * @return 补维成功返回ge::GRAPH_SUCCESS
+     */
+    ge::graphStatus Expand(Shape& shape) const
+    {
+        // full_size:4, shape:[A,B], reshape_type:1010
+        // shape:[A,B] + full_size:4 -> [A,B,1,1]
+        if (shape.GetDimNum() == size_) {
+            return ge::GRAPH_SUCCESS;
+        }
+        size_t dim_size = shape.GetDimNum();
+        size_t cur_dim_size = dim_size;
+        while (cur_dim_size++ < size_) {
+            (void)shape.AppendDim(1);
+        }
+
+        // shape:[A,B,1,1] + 1010 -> [A,1,B,1]
+        for (int32_t i = static_cast<int32_t>(size_ - 1UL); i >= 0; --i) {
+            if (!IsExpandIndex(static_cast<AxisIndex>(i))) {
+                if ((dim_size > 0) && (dim_size - 1UL < static_cast<size_t>(i))) {
+                    shape.SetDim(static_cast<size_t>(i), shape.GetDim(dim_size - 1));
+                    shape.SetDim(dim_size - 1UL, 1);
+                    dim_size--;
+                }
+            }
+        }
+        return ge::GRAPH_SUCCESS;
+    }
+
+private:
+    uint64_t size_ : 8;
+    uint64_t mask_ : kMaxExpandSize;
+    uint8_t reserved_[40]; // Reserved field, 32+8, do not directly use when only 8-byte left
 };
-}  // namespace gert
+} // namespace gert
 
-#endif  // METADEF_CXX_INC_EXE_GRAPH_RUNTIME_EXPAND_DIMS_TYPE_H_
+#endif // METADEF_CXX_INC_EXE_GRAPH_RUNTIME_EXPAND_DIMS_TYPE_H_

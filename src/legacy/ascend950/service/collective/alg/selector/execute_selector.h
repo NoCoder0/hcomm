@@ -23,26 +23,26 @@
 namespace Hccl {
 class ExecuteSelector {
 public:
-    ExecuteSelector &SetVirtualTopo(RankGraph *rankGraph);
-    ExecuteSelector &SetDevType(DevType devType);
-    ExecuteSelector &SetMyRank(RankId myRank);
-    ExecuteSelector &SetRankSize(u32 rankSize);
-    ExecuteSelector &SetSeverId(std::string severId);
-    ExecuteSelector &SetDeviceNumPerSever(u32 deviceNumPerSever);
-    ExecuteSelector &SetServerNum(u32 serverNum);
-    ExecuteSelector &SetOpConfig(OpExecuteConfig opConfig);
-    HcclResult       Run(const CollAlgOperator &op, CollAlgParams &params, std::string &primQueueGenName);
+    ExecuteSelector& SetVirtualTopo(RankGraph* rankGraph);
+    ExecuteSelector& SetDevType(DevType devType);
+    ExecuteSelector& SetMyRank(RankId myRank);
+    ExecuteSelector& SetRankSize(u32 rankSize);
+    ExecuteSelector& SetSeverId(std::string severId);
+    ExecuteSelector& SetDeviceNumPerSever(u32 deviceNumPerSever);
+    ExecuteSelector& SetServerNum(u32 serverNum);
+    ExecuteSelector& SetOpConfig(OpExecuteConfig opConfig);
+    HcclResult Run(const CollAlgOperator& op, CollAlgParams& params, std::string& primQueueGenName);
     AlgorithmType GetAlgorithmTypeForMC2CCU(const std::string& name) const;
 
 protected:
-    RankGraph *rankGraph_ = nullptr;
+    RankGraph* rankGraph_ = nullptr;
     OpExecuteConfig opConfig_;
-    DevType      devType_;
-    u32          myRank_;
-    u32          rankSize_;
-    std::string  severId_;
-    u32          deviceNumPerSever_;
-    u32          serverNum_;
+    DevType devType_;
+    u32 myRank_;
+    u32 rankSize_;
+    std::string severId_;
+    u32 deviceNumPerSever_;
+    u32 serverNum_;
 };
 } // namespace Hccl
 #endif

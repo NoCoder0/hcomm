@@ -15,22 +15,22 @@
 #include "rdma_lite.h"
 #include "hccp_common.h"
 
-#define DL_ATTRI_VISI_DEF __attribute__ ((visibility ("default")))
+#define DL_ATTRI_VISI_DEF __attribute__((visibility("default")))
 
-#define DL_API_RET_IS_NULL_CHECK(p, str, release_lock)           \
-    do {                                           \
-        if ((p) == NULL) {                         \
-            pthread_mutex_unlock(&release_lock);   \
-            hccp_err("ptr is NULL!, [%s]", (str)); \
-            return (-EINVAL);                      \
-        }                                          \
+#define DL_API_RET_IS_NULL_CHECK(p, str, release_lock)                                                                 \
+    do {                                                                                                               \
+        if ((p) == NULL) {                                                                                             \
+            pthread_mutex_unlock(&release_lock);                                                                       \
+            hccp_err("ptr is NULL!, [%s]", (str));                                                                     \
+            return (-EINVAL);                                                                                          \
+        }                                                                                                              \
     } while (0)
 
-#define DL_API_PTR_IS_NULL_CHECK(p, str)           \
-    do {                                           \
-        if ((p) == NULL) {                         \
-            hccp_warn("%s is NULL!", (str));       \
-        }                                          \
+#define DL_API_PTR_IS_NULL_CHECK(p, str)                                                                               \
+    do {                                                                                                               \
+        if ((p) == NULL) {                                                                                             \
+            hccp_warn("%s is NULL!", (str));                                                                           \
+        }                                                                                                              \
     } while (0)
 
 struct RaRdmaLiteOps {
@@ -38,17 +38,14 @@ struct RaRdmaLiteOps {
     void (*raRdmaLiteFreeCtx)(struct rdma_lite_context *liteCtx);
     int (*raRdmaLiteInitMemPool)(struct rdma_lite_context *liteCtx, struct rdma_lite_mem_attr *liteMemAttr);
     int (*raRdmaLiteDeinitMemPool)(struct rdma_lite_context *liteCtx, u32 memIdx);
-    struct rdma_lite_cq *(*raRdmaLiteCreateCq)(
-        struct rdma_lite_context *liteCtx, struct rdma_lite_cq_attr *liteCqAttr);
+    struct rdma_lite_cq *(*raRdmaLiteCreateCq)(struct rdma_lite_context *liteCtx, struct rdma_lite_cq_attr *liteCqAttr);
     int (*raRdmaLiteDestroyCq)(struct rdma_lite_cq *liteCq);
     int (*raRdmaLitePollCq)(struct rdma_lite_cq *liteCq, int numEntries, struct rdma_lite_wc *liteWc);
     int (*raRdmaLitePollCqV2)(struct rdma_lite_cq *liteCq, int numEntries, struct rdma_lite_wc_v2 *liteWc);
-    struct rdma_lite_qp *(*raRdmaLiteCreateQp)(
-        struct rdma_lite_context *liteCtx, struct rdma_lite_qp_attr *liteQpAttr);
+    struct rdma_lite_qp *(*raRdmaLiteCreateQp)(struct rdma_lite_context *liteCtx, struct rdma_lite_qp_attr *liteQpAttr);
     int (*raRdmaLiteDestroyQp)(struct rdma_lite_qp *liteQp);
     int (*raRdmaLitePostSend)(struct rdma_lite_qp *liteQp, struct rdma_lite_send_wr *wr,
-        struct rdma_lite_send_wr **badWr, struct rdma_lite_post_send_attr *attr,
-        struct rdma_lite_post_send_resp *resp);
+        struct rdma_lite_send_wr **badWr, struct rdma_lite_post_send_attr *attr, struct rdma_lite_post_send_resp *resp);
     int (*raRdmaLitePostRecv)(struct rdma_lite_qp *liteQp, struct rdma_lite_recv_wr *wr,
         struct rdma_lite_recv_wr **badWr);
     int (*raRdmaLiteSetQpSl)(struct rdma_lite_qp *liteQp, int sl);
@@ -74,11 +71,10 @@ struct rdma_lite_qp *RaRdmaLiteCreateQp(struct rdma_lite_context *liteCtx, struc
 
 int RaRdmaLiteDestroyQp(struct rdma_lite_qp *liteQp);
 
-int RaRdmaLitePostSend(struct rdma_lite_qp *liteQp, struct rdma_lite_send_wr *wr,
-    struct rdma_lite_send_wr **badWr, struct rdma_lite_post_send_attr *attr, struct rdma_lite_post_send_resp *resp);
+int RaRdmaLitePostSend(struct rdma_lite_qp *liteQp, struct rdma_lite_send_wr *wr, struct rdma_lite_send_wr **badWr,
+    struct rdma_lite_post_send_attr *attr, struct rdma_lite_post_send_resp *resp);
 
-int RaRdmaLitePostRecv(struct rdma_lite_qp *liteQp, struct rdma_lite_recv_wr *wr,
-    struct rdma_lite_recv_wr **badWr);
+int RaRdmaLitePostRecv(struct rdma_lite_qp *liteQp, struct rdma_lite_recv_wr *wr, struct rdma_lite_recv_wr **badWr);
 
 int RaRdmaLiteSetQpSl(struct rdma_lite_qp *liteQp, unsigned char sl);
 int RaRdmaLiteCleanQp(struct rdma_lite_qp *liteQp);

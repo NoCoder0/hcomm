@@ -16,13 +16,22 @@ add_library(tsd_eventclient SHARED ${stub_tsd_list})
 
 target_compile_options(tsd_eventclient PRIVATE
     -Werror
-    -Wno-unused-parameter
-    -Wno-missing-field-initializers
     -fno-common
     -fno-strict-aliasing
     $<$<CONFIG:Debug>:-Og -g>
     $<$<CONFIG:Release>:-O3>
 )
+
+# 链接选项
+target_link_options(tsd_eventclient PRIVATE
+    $<$<BOOL:${BUILD_OPEN_PROJECT}>:-Wl,--no-undefined>
+)
+
+# 符号隐藏: 仅导出白名单符号; 非 release 模式依赖动态符号, 不挂载
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_link_options(tsd_eventclient PRIVATE "-Wl,--version-script=${CMAKE_CURRENT_LIST_DIR}/tsd_eventclient.map")
+    set_property(TARGET tsd_eventclient APPEND PROPERTY LINK_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/tsd_eventclient.map")
+endif()
 
 target_link_libraries(tsd_eventclient PRIVATE
     $<BUILD_INTERFACE:intf_pub>

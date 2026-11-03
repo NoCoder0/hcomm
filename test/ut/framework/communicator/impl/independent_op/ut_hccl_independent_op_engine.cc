@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include <gtest/gtest.h>
 #include "hccl/hccl_res.h"
@@ -18,7 +18,9 @@
 #include "hcomm_primitives.h"
 #include "launch_aicpu.h"
 #include "hccl_rank_graph.h"
-#include "aicpu_launch_manager.h"
+#include "comm_engine/aicpu_launch_manager_pub.h"
+#include "aicpu_thread_launch_mgr.h"
+#include "thread.h"
 #include "llt_hccl_stub_rank_graph.h"
 
 using namespace hccl;
@@ -26,23 +28,20 @@ static const char* RANKTABLE_FILE_NAME = nullptr;
 
 class HcclIndependentOpEngineTest : public BaseInit {
 public:
-    void SetUp() override {
-        MOCKER(HcclTbeTaskInit)
-            .stubs()
-            .will(returnValue(HCCL_SUCCESS));
+    void SetUp() override
+    {
+        MOCKER(HcclTbeTaskInit).stubs().will(returnValue(HCCL_SUCCESS));
         BaseInit::SetUp();
         bool isDeviceSide = false;
-        MOCKER(GetRunSideIsDevice)
-            .stubs()
-            .with(outBound(isDeviceSide))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(GetRunSideIsDevice).stubs().with(outBound(isDeviceSide)).will(returnValue(HCCL_SUCCESS));
         UT_USE_1SERVER_1RANK_AS_DEFAULT;
         UT_COMM_CREATE_DEFAULT(comm);
         RANKTABLE_FILE_NAME = rankTableFileName;
         EXPECT_EQ(RANKTABLE_FILE_NAME != nullptr, true);
         EXPECT_EQ(comm != nullptr, true);
     }
-    void TearDown() override {
+    void TearDown() override
+    {
         BaseInit::TearDown();
         GlobalMockObject::verify();
         Ut_Comm_Destroy(comm);
@@ -52,111 +51,26 @@ public:
 TEST_F(HcclIndependentOpEngineTest, Ut_HcclThreadAcquire_When_Param_Is_Invalid_Expect_Para_Error)
 {
     ThreadHandle threads[2] = {0};
-    HcclResult ret = HcclThreadAcquire(nullptr, CommEngine::COMM_ENGINE_CPU_TS , 2, 1, threads);
+    HcclResult ret = HcclThreadAcquire(nullptr, CommEngine::COMM_ENGINE_CPU_TS, 2, 1, threads);
     EXPECT_EQ(ret, HCCL_E_PTR);
 
-    ret = HcclThreadAcquire(comm, CommEngine::COMM_ENGINE_CPU_TS , 2, 1, nullptr);
+    ret = HcclThreadAcquire(comm, CommEngine::COMM_ENGINE_CPU_TS, 2, 1, nullptr);
     EXPECT_EQ(ret, HCCL_E_PTR);
     ret = HcclThreadAcquire(comm, CommEngine::COMM_ENGINE_RESERVED, 2, 1, threads);
     EXPECT_EQ(ret, HCCL_E_PARA);
-    ret = HcclThreadAcquire(comm, CommEngine::COMM_ENGINE_CPU_TS , 2, 1, threads);
+    ret = HcclThreadAcquire(comm, CommEngine::COMM_ENGINE_CPU_TS, 2, 1, threads);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     MOCKER_CPP(&CommEngineResMgr::HcclThreadAcquire).stubs().will(returnValue(HCCL_E_UNAVAIL));
-    ret = HcclThreadAcquire(comm, CommEngine::COMM_ENGINE_CPU_TS , 199, 1, threads);
+    ret = HcclThreadAcquire(comm, CommEngine::COMM_ENGINE_CPU_TS, 199, 1, threads);
     EXPECT_EQ(ret, HCCL_E_UNAVAIL);
-    ret = HcclThreadAcquire(comm, CommEngine::COMM_ENGINE_CPU_TS , 1, 65537, threads);
+    ret = HcclThreadAcquire(comm, CommEngine::COMM_ENGINE_CPU_TS, 1, 65537, threads);
     EXPECT_EQ(ret, HCCL_E_PARA);
 }
 
 // -----HcclThreadAcquire接口host侧用例-------
-HcclResult hrtDrvGetPlatformInfoStub(uint32_t *info)
-{
-    *info = 1;
-    return HCCL_SUCCESS;
-}
-
-void LocalCopyFfts(ThreadHandle thread) {
-    MOCKER(hrtDrvGetPlatformInfo)
-    .stubs()
-    .will(invoke(hrtDrvGetPlatformInfoStub));
-
-    MOCKER(GetExternalInputHcclEnableFfts)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(true));
-
-    DevType deviceType = DevType::DEV_TYPE_910B;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
-
-    MOCKER(GetExternalInputHcclAicpuUnfold)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(false));
-
-    MOCKER(GetWorkflowMode)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE));
-
-    DispatcherCtxPtr ctx;
-    HcclResult ret = CreateDispatcherCtx(&ctx, 0);
-    EXPECT_EQ(ret, HCCL_SUCCESS);
-
-    DispatcherCtx *ctxPtr = static_cast<DispatcherCtx *>(ctx);
-    EXPECT_NE(ctxPtr->GetDispatcher(), nullptr);
-    EXPECT_NE(GetDispatcherCtx(), nullptr);
-
-    HostMem userIn = HostMem::alloc(1, true);
-    HostMem cclIn = HostMem::alloc(1, true);
-    HcclMem userInputMem{HcclMemType::HCCL_MEM_TYPE_HOST, userIn.ptr(), 1};
-    HcclMem cclInputMem{HcclMemType::HCCL_MEM_TYPE_HOST, cclIn.ptr(), 1};
-
-    int32_t retCopy = HcommLocalCopyOnThread(thread, &userInputMem, &cclInputMem, 1);
-    EXPECT_EQ(retCopy, 0);
-    retCopy = DestroyDispatcherCtx(ctx);
-    EXPECT_EQ(retCopy, 0);
-}
-
 const CommEngine g_hostEngine = CommEngine::COMM_ENGINE_CPU;
-TEST_F(HcclIndependentOpEngineTest, Ut_HcclThreadAcquire_When_Alloced_Threads_Morethan_Quota_Expect_Unavailable)
-{
-    bool isDeviceSide = false;
-    MOCKER(GetRunSideIsDevice)
-    .stubs()
-    .with(outBound(isDeviceSide))
-    .will(returnValue(HCCL_SUCCESS));
 
-    u32 info = 1;
-    MOCKER(hrtDrvGetPlatformInfo)
-    .stubs()
-    .with(outBoundP(&info, sizeof(info)))
-    .will(returnValue(HCCL_SUCCESS));
-
-    ThreadHandle thread1[2] = {0};
-    HcclResult ret = HcclThreadAcquire(comm, g_hostEngine, 2, 2, thread1);
-    EXPECT_EQ(ret, HCCL_SUCCESS);
-    for (int i = 0; i < 2; i++) {
-        EXPECT_NE(thread1[i], 0);
-    }
-
-    LocalCopyFfts(thread1[0]);
-
-    ThreadHandle thread2[1] = {0};
-    ret = HcclThreadAcquire(comm, g_hostEngine, 1, 2, thread2);
-    EXPECT_EQ(ret, HCCL_SUCCESS);
-    for (int i = 0; i < 1; i++) {
-        EXPECT_NE(thread2[i], 0);
-    }
-
-    ThreadHandle thread3[2] = {0};
-    ret = HcclThreadAcquire(comm, g_hostEngine, 1, 65535, thread3);
-    EXPECT_EQ(ret, HCCL_E_UNAVAIL);
-}
-
-// 默认数量
+// 默认数量：未配置池规格时无软件总量上限，仅 ThreadConfig uint16 边界（65535）在入口拦截
 TEST_F(HcclIndependentOpEngineTest, Ut_HcclThreadAcquire_When_Alloced_Notify_Morethan_Quota_Expect_Unavailable)
 {
     ThreadHandle thread1[2] = {0};
@@ -168,10 +82,7 @@ TEST_F(HcclIndependentOpEngineTest, Ut_HcclThreadAcquire_When_Alloced_Notify_Mor
 TEST_F(HcclIndependentOpEngineTest, Ut_CommGetNotifyNumInThread_When_Alloced_And_Get_Notify_Success)
 {
     bool isDeviceSide = false;
-    MOCKER(GetRunSideIsDevice)
-    .stubs()
-    .with(outBound(isDeviceSide))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(GetRunSideIsDevice).stubs().with(outBound(isDeviceSide)).will(returnValue(HCCL_SUCCESS));
     ThreadHandle thread1[1] = {0};
     uint32_t notifyNum = 2;
     HcclResult ret = HcclThreadAcquire(comm, g_hostEngine, 1, notifyNum, thread1);
@@ -239,13 +150,13 @@ TEST_F(HcclIndependentOpEngineTest, Ut_HcclThreadExportToCommEngine_When_Engine_
 
     // 未知threadHandle
     HcclResult ret = HcclThreadExportToCommEngine(comm, 1, threads, CommEngine::COMM_ENGINE_CPU, exportedThreads);
-    EXPECT_EQ(ret, HCCL_E_PARA);
+    EXPECT_EQ(ret, HCCL_E_NOT_FOUND);
 
-    // 添加thread 
-    hccl::hcclComm *hcclComm = static_cast<hccl::hcclComm *>(comm);
-    auto &threadMgr = hcclComm->GetIndependentOp().GetCommEngineResMgr().threadMgr_;
-    threadMgr->threadHandleOthersToCpu_[threads[0]] = exportedThreads[0];
-    ret = HcclThreadExportToCommEngine(comm, 1, threads, CommEngine::COMM_ENGINE_CPU, exportedThreads);
+    // 添加thread
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
+    auto& threadMgr = hcclComm->GetIndependentOp().GetCommEngineResMgr().threadMgr_;
+    FillThreadD2HMap(threads, exportedThreads, 1);
+    ret = threadMgr->HcclThreadExportToCommEngine(1, threads, CommEngine::COMM_ENGINE_CPU, exportedThreads);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
 
@@ -254,15 +165,15 @@ TEST_F(HcclIndependentOpEngineTest, Ut_HcclThreadExportToCommEngine_When_Engine_
     ThreadHandle threads[1] = {1};
     ThreadHandle exportedThreads[1] = {2};
 
-    // 未知threadHandle
-    HcclResult ret = HcclThreadExportToCommEngine(comm, 1, threads, CommEngine::COMM_ENGINE_AICPU_TS, exportedThreads);
-    EXPECT_EQ(ret, HCCL_E_PARA);
-
-    // 添加thread 
+    // commInit依赖AicpuAclKernelLaunch，先mock避免真实binHandle缺失导致HCCL_E_PTR
     MOCKER(AicpuAclKernelLaunch).stubs().will(returnValue(HCCL_SUCCESS));
 
-    hccl::hcclComm *hcclComm = static_cast<hccl::hcclComm *>(comm);
-    auto &threadMgr = hcclComm->GetIndependentOp().GetCommEngineResMgr().threadMgr_;
+    // 未知threadHandle
+    HcclResult ret = HcclThreadExportToCommEngine(comm, 1, threads, CommEngine::COMM_ENGINE_AICPU_TS, exportedThreads);
+    EXPECT_EQ(ret, HCCL_E_NOT_FOUND);
+
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
+    auto& threadMgr = hcclComm->GetIndependentOp().GetCommEngineResMgr().threadMgr_;
     threadMgr->HcclThreadAcquireWithStream(CommEngine::COMM_ENGINE_CPU, nullptr, 1, threads);
     ret = HcclThreadExportToCommEngine(comm, 1, threads, CommEngine::COMM_ENGINE_AICPU_TS, exportedThreads);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -272,18 +183,18 @@ TEST_F(HcclIndependentOpEngineTest, Ut_HcclThreadExportToCommEngine_When_Engine_
     bool isDeviceSide{false};
     MOCKER(GetRunSideIsDevice).stubs().with(outBound(isDeviceSide)).will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&hcclComm::GetAicpuCommState).stubs().will(returnValue(true));
-    MOCKER_CPP(&AicpuLaunchMgr::ThreadKernelLaunchForComm).stubs().will(returnValue(0));
+    MOCKER_CPP(&AicpuThreadLaunchMgr::ThreadKernelLaunchForComm).stubs().will(returnValue(0));
     MOCKER_CPP(&HcclCommProfiling::ReportKernel).stubs().will(returnValue(0));
     MOCKER_CPP(&CommEngineResMgr::HcclThreadExportToCommEngine).stubs().will(returnValue(HCCL_SUCCESS));
 
-    void *commV2 = (void *)0x2000;
+    void* commV2 = (void*)0x2000;
     RankGraphStub rankGraphStub;
     std::shared_ptr<Hccl::RankGraph> rankGraphV2 = rankGraphStub.Create2PGraph();
     u32 rank = 1;
     HcclMem cclBuffer;
     cclBuffer.size = 1;
     cclBuffer.type = HcclMemType::HCCL_MEM_TYPE_HOST;
-    cclBuffer.addr = (void *)0x1000;
+    cclBuffer.addr = (void*)0x1000;
 
     char commName[ROOTINFO_INDENTIFIER_MAX_LENGTH] = {};
     HcclCommConfig config;

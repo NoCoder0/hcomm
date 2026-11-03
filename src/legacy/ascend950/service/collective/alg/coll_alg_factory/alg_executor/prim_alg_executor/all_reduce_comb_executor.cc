@@ -18,18 +18,15 @@
 namespace Hccl {
 template <typename AlgTopoMatch, typename AlgTempRS, typename AlgTempAG>
 AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::AllReduceCombExecutor() : CollAlgBase()
-{
-}
+{}
 
 template <typename AlgTopoMatch, typename AlgTempRS, typename AlgTempAG>
 AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::~AllReduceCombExecutor()
-{
-}
+{}
 
 template <typename AlgTopoMatch, typename AlgTempRS, typename AlgTempAG>
-HcclResult AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::CalcResOffload(const RankGraph *rankGraph,
-                                                                                     const u64         &dataSize,
-                                                                                     CollOffloadOpResReq     &resReq)
+HcclResult AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::CalcResOffload(
+    const RankGraph* rankGraph, const u64& dataSize, CollOffloadOpResReq& resReq)
 {
     (void)dataSize;
     resReq.requiredScratchMemSize = 0;
@@ -45,7 +42,7 @@ HcclResult AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::CalcResOff
 
     // calculate required primQues and prepare queue
     AlgTempResReq tempResReqRS;
-    u32           requiredScratchMultiplier = 0;
+    u32 requiredScratchMultiplier = 0;
     if (enableDetour_) {
         CHK_RET(tempRSAlg.CalcResDetour(true, rankGraph, tempResReqRS, requiredScratchMultiplier));
     } else {
@@ -72,10 +69,8 @@ HcclResult AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::CalcResOff
 }
 
 template <typename AlgTopoMatch, typename AlgTempRS, typename AlgTempAG>
-HcclResult AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::GenPrimQues(const RankGraph     *rankGraph,
-                                                                                  const CollAlgOperator &op,
-                                                                                  const CollAlgParams   &params,
-                                                                                  PrimQuePtr             primQue)
+HcclResult AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::GenPrimQues(
+    const RankGraph* rankGraph, const CollAlgOperator& op, const CollAlgParams& params, PrimQuePtr primQue)
 {
     // init and check params
     CHK_RET(Init(op, params, primQue));
@@ -93,7 +88,7 @@ HcclResult AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::GenPrimQue
 
     // calculate required primQues and prepare queue
     AlgTempResReq tempResReqRS;
-    u32           requiredScratchMultiplier = 0;
+    u32 requiredScratchMultiplier = 0;
     if (enableDetour_) {
         tempRSAlg.SetDataType(dataType_);
         CHK_RET(tempRSAlg.CalcResDetour(true, rankGraph, tempResReqRS, requiredScratchMultiplier));
@@ -125,7 +120,7 @@ HcclResult AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::GenPrimQue
         myRank_, tempRSAlg.Describe().c_str(), tempAGAlg.Describe().c_str(), tempResReqRS.queNum);
 
     u32 dataSizePerVolume = DataTypeSizeGet(dataType_);
-    dataSize_             = dataCount_ * dataSizePerVolume; // for allreduce, dataSize is the size of whole data
+    dataSize_ = dataCount_ * dataSizePerVolume; // for allreduce, dataSize is the size of whole data
 
     if (opMode_ == OpMode::OFFLOAD) {
         HCCL_INFO("[CollAlgFactory] Rank[%d], Generating Primitive Queues in OFFLOAD Mode for Host.", myRank_);
@@ -138,8 +133,8 @@ HcclResult AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::GenPrimQue
 }
 
 template <typename AlgTopoMatch, typename AlgTempRS, typename AlgTempAG>
-HcclResult AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::CalcRes(const RankGraph *rankGraph,
-                                                                              CollAlgResReq     &algResReq)
+HcclResult
+AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::CalcRes(const RankGraph* rankGraph, CollAlgResReq& algResReq)
 {
     // Topo Match
     AlgTopoMatch topoMatch(myRank_, rankSize_, rankGraph, devType_);
@@ -152,7 +147,7 @@ HcclResult AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::CalcRes(co
 
     // calculate required primQues and prepare queue
     AlgTempResReq tempResReqRS;
-    u32           requiredScratchMultiplier = 0;
+    u32 requiredScratchMultiplier = 0;
     if (enableDetour_) {
         tempRSAlg.SetDataType(dataType_);
         CHK_RET(tempRSAlg.CalcResDetour(true, rankGraph, tempResReqRS, requiredScratchMultiplier));
@@ -167,11 +162,9 @@ HcclResult AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::CalcRes(co
 }
 
 template <typename AlgTopoMatch, typename AlgTempRS, typename AlgTempAG>
-HcclResult AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::GenPrimQuesAIC(const AlgTopoInfo     &topoInfo,
-                                                                                     const CollAlgOperator &op,
-                                                                                     const CollAlgParams   &params,
-                                                                                     ConnectedLinkMgr      *linkMgr,
-                                                                                     PrimQuePtr             primQue)
+HcclResult AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::GenPrimQuesAIC(
+    const AlgTopoInfo& topoInfo, const CollAlgOperator& op, const CollAlgParams& params, ConnectedLinkMgr* linkMgr,
+    PrimQuePtr primQue)
 {
     // init and check params
     CHK_RET(Init(op, params, primQue));
@@ -185,7 +178,7 @@ HcclResult AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::GenPrimQue
 
     // calculate required primQues and prepare queue
     AlgTempResReq tempResReqRS;
-    u32           requiredScratchMultiplier = 0;
+    u32 requiredScratchMultiplier = 0;
     if (enableDetour_) {
         tempRSAlg.SetDataType(dataType_);
         CHK_RET(tempRSAlg.CalcResDetour(true, linkMgr, tempResReqRS, requiredScratchMultiplier));
@@ -211,7 +204,7 @@ HcclResult AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::GenPrimQue
         myRank_, tempRSAlg.Describe().c_str(), tempAGAlg.Describe().c_str(), tempResReqRS.queNum);
 
     u32 dataSizePerVolume = DataTypeSizeGet(dataType_);
-    dataSize_             = dataCount_ * dataSizePerVolume; // for allreduce, dataSize is the size of whole data
+    dataSize_ = dataCount_ * dataSizePerVolume; // for allreduce, dataSize is the size of whole data
 
     if (opMode_ == OpMode::OFFLOAD) {
         HCCL_INFO("[CollAlgFactory] Rank[%d], Generating Primitive Queues in OFFLOAD Mode for AICPU.", myRank_);
@@ -224,25 +217,25 @@ HcclResult AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::GenPrimQue
 }
 
 template <typename AlgTopoMatch, typename AlgTempRS, typename AlgTempAG>
-HcclResult AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::GenPrimQues4Offload(AlgTemplateBase &tempRSAlg,
-                                                                                          AlgTemplateBase &tempAGAlg)
+HcclResult AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::GenPrimQues4Offload(
+    AlgTemplateBase& tempRSAlg, AlgTemplateBase& tempAGAlg)
 {
     RankSliceInfo sliceInfoVec;
-    AllignInfo    allignInfo = {enableAllign_, allignSize_, dataType_};
+    AllignInfo allignInfo = {enableAllign_, allignSize_, dataType_};
     CHK_RET(tempRSAlg.CalcSliceInfo(allignInfo, true, dataSize_, sliceInfoVec));
 
     BuffInfo buffInfo;
-    buffInfo.inBuffType         = BufferType::INPUT;
-    buffInfo.outBuffType        = BufferType::OUTPUT;
-    buffInfo.scratBuffType      = BufferType::OUTPUT;
-    buffInfo.inBuffBaseOff      = 0;
-    buffInfo.outBuffBaseOff     = 0;
+    buffInfo.inBuffType = BufferType::INPUT;
+    buffInfo.outBuffType = BufferType::OUTPUT;
+    buffInfo.scratBuffType = BufferType::OUTPUT;
+    buffInfo.inBuffBaseOff = 0;
+    buffInfo.outBuffBaseOff = 0;
     buffInfo.scratchBuffBaseOff = 0;
 
     TempFuncs tempFuncs;
-    tempFuncs.opMode              = opMode_;
+    tempFuncs.opMode = opMode_;
     tempFuncs.enableCounterNotify = IsEnableCounterNotify();
-    tempFuncs.forAllReduce        = true;
+    tempFuncs.forAllReduce = true;
 
     CHK_RET(tempRSAlg.GenPrimQue(tempFuncs, sliceInfoVec, buffInfo, tempResLinks_, requiredQue_));
     CHK_RET(tempAGAlg.GenPrimQue(tempFuncs, sliceInfoVec, buffInfo, tempResLinks_, requiredQue_));
@@ -252,22 +245,24 @@ HcclResult AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::GenPrimQue
 
 template <typename AlgTopoMatch, typename AlgTempRS, typename AlgTempAG>
 HcclResult AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::GenPrimQues4Opbase(
-    const u32 requiredScratchMultiplier, const u32 dataSizePerVolume, AlgTemplateBase &tempRSAlg,
-    AlgTemplateBase &tempAGAlg)
+    const u32 requiredScratchMultiplier, const u32 dataSizePerVolume, AlgTemplateBase& tempRSAlg,
+    AlgTemplateBase& tempAGAlg)
 {
     u64 scratchInputMemSize
-        = (rankSize_ % dataSizePerVolume == 0)
-              ? static_cast<int>(floor(maxTmpMemSize_ / (rankSize_ + requiredScratchMultiplier)) * rankSize_)
-              : static_cast<int>(floor(maxTmpMemSize_ / ((rankSize_ + requiredScratchMultiplier) * dataSizePerVolume))
-                                 * rankSize_ * dataSizePerVolume);
+        = (rankSize_ % dataSizePerVolume == 0) ?
+              static_cast<int>(floor(maxTmpMemSize_ / (rankSize_ + requiredScratchMultiplier)) * rankSize_) :
+              static_cast<int>(
+                  floor(maxTmpMemSize_ / ((rankSize_ + requiredScratchMultiplier) * dataSizePerVolume)) * rankSize_
+                  * dataSizePerVolume);
 
-    CHK_PRT_RET(scratchInputMemSize == 0,
-                HCCL_ERROR("[CollAlgFactory] Rank [%d], Invalid input maxTmpMemSize [%u].", myRank_, maxTmpMemSize_),
-                HcclResult::HCCL_E_PARA);
+    CHK_PRT_RET(
+        scratchInputMemSize == 0,
+        HCCL_ERROR("[CollAlgFactory] Rank [%d], Invalid input maxTmpMemSize [%u].", myRank_, maxTmpMemSize_),
+        HcclResult::HCCL_E_PARA);
 
     BuffInfo buffInfo;
-    buffInfo.inBuffType    = BufferType::SCRATCH;
-    buffInfo.outBuffType   = BufferType::SCRATCH;
+    buffInfo.inBuffType = BufferType::SCRATCH;
+    buffInfo.outBuffType = BufferType::SCRATCH;
     buffInfo.scratBuffType = BufferType::SCRATCH;
 
     u32 sendRecvTimes = (dataSize_ / scratchInputMemSize) + ((dataSize_ % scratchInputMemSize) == 0 ? 0 : 1);
@@ -276,21 +271,21 @@ HcclResult AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::GenPrimQue
     for (u32 idx = 0; idx < sendRecvTimes; idx++) {
         u64 currDataSize = (idx == sendRecvTimes - 1) ? (dataSize_ - idx * scratchInputMemSize) : scratchInputMemSize;
 
-        buffInfo.inBuffBaseOff      = 0;
-        buffInfo.outBuffBaseOff     = currDataSize;
+        buffInfo.inBuffBaseOff = 0;
+        buffInfo.outBuffBaseOff = currDataSize;
         buffInfo.scratchBuffBaseOff = currDataSize;
 
         RankSliceInfo sliceInfoVec;
-        AllignInfo    allignInfo = {enableAllign_, allignSize_, dataType_};
+        AllignInfo allignInfo = {enableAllign_, allignSize_, dataType_};
         CHK_RET(tempRSAlg.CalcSliceInfo(allignInfo, true, currDataSize, sliceInfoVec));
         TempFuncs tempFuncs;
-        tempFuncs.opMode              = opMode_;
+        tempFuncs.opMode = opMode_;
         tempFuncs.enableCounterNotify = IsEnableCounterNotify();
-        tempFuncs.forAllReduce        = true;
-        tempFuncs.isForepart          = true; // Usr Buff to CCL Buff required
+        tempFuncs.forAllReduce = true;
+        tempFuncs.isForepart = true; // Usr Buff to CCL Buff required
 
-        UsrData   usrData;
-        DataSlice usrInSlice     = DataSlice(BufferType::INPUT, idx * scratchInputMemSize, currDataSize);
+        UsrData usrData;
+        DataSlice usrInSlice = DataSlice(BufferType::INPUT, idx * scratchInputMemSize, currDataSize);
         DataSlice scratchInSlice = DataSlice(BufferType::SCRATCH, 0, currDataSize);
         usrData.usrInSlices.push_back(usrInSlice);
         usrData.scratchInSlices.push_back(scratchInSlice);
@@ -298,14 +293,14 @@ HcclResult AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::GenPrimQue
         tempFuncs.usrData = usrData;
         CHK_RET(tempRSAlg.GenPrimQue(tempFuncs, sliceInfoVec, buffInfo, tempResLinks_, requiredQue_));
 
-        buffInfo.outBuffBaseOff     = 0;
-        buffInfo.inBuffBaseOff      = currDataSize; // will not be used in allgather
+        buffInfo.outBuffBaseOff = 0;
+        buffInfo.inBuffBaseOff = currDataSize; // will not be used in allgather
         buffInfo.scratchBuffBaseOff = currDataSize;
-        tempFuncs.isForepart        = false; // Usr Buff to CCL Buff required
-        tempFuncs.isBottom          = true;  // CCL Buff to Usr Buff required
+        tempFuncs.isForepart = false; // Usr Buff to CCL Buff required
+        tempFuncs.isBottom = true;    // CCL Buff to Usr Buff required
 
         DataSlice scratchOutSlice = DataSlice(BufferType::SCRATCH, 0, currDataSize);
-        DataSlice usrOutSlice     = DataSlice(BufferType::OUTPUT, idx * scratchInputMemSize, currDataSize);
+        DataSlice usrOutSlice = DataSlice(BufferType::OUTPUT, idx * scratchInputMemSize, currDataSize);
         tempFuncs.usrData.scratchOutSlices.push_back(scratchOutSlice);
         tempFuncs.usrData.usrOutSlices.push_back(usrOutSlice);
         CHK_RET(tempAGAlg.GenPrimQue(tempFuncs, sliceInfoVec, buffInfo, tempResLinks_, requiredQue_));
@@ -314,8 +309,9 @@ HcclResult AllReduceCombExecutor<AlgTopoMatch, AlgTempRS, AlgTempAG>::GenPrimQue
     return HcclResult::HCCL_SUCCESS;
 }
 
-REGISTER_IMPL_BY_TWO_TEMPS(OpType::ALLREDUCE, AllReduceConcurrMesh, AllReduceCombExecutor, TopoMatchConcurrMesh,
-                           TempReduceScatterConcurrMesh, TempAllGatherConcurrMesh);
-REGISTER_IMPL_BY_TWO_TEMPS(OpType::ALLREDUCE, AllReduceMesh, AllReduceCombExecutor, TopoMatchMesh,
-                           TempReduceScatterMesh, TempAllGatherMesh);
+REGISTER_IMPL_BY_TWO_TEMPS(
+    OpType::ALLREDUCE, AllReduceConcurrMesh, AllReduceCombExecutor, TopoMatchConcurrMesh, TempReduceScatterConcurrMesh,
+    TempAllGatherConcurrMesh);
+REGISTER_IMPL_BY_TWO_TEMPS(
+    OpType::ALLREDUCE, AllReduceMesh, AllReduceCombExecutor, TopoMatchMesh, TempReduceScatterMesh, TempAllGatherMesh);
 } // namespace Hccl

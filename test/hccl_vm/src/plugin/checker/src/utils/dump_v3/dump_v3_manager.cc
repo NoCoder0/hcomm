@@ -20,14 +20,15 @@
 namespace {
 const std::string kDataDirName = "data";
 const std::string kInsightDirName = "insight";
-}
+} // namespace
 
 namespace HcclSim {
-HcclResult DumpV3Manager::Initialize(const std::string &dataId)
+HcclResult DumpV3Manager::Initialize(const std::string& dataId)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     if (dataId.empty()) {
-        HCCL_VM_ERROR("{} dataId is empty, the dump output path cannot be built, outputRoot=null",
+        HCCL_VM_ERROR(
+            "{} dataId is empty, the dump output path cannot be built, outputRoot=null",
             MakeErrorCodeText(ErrorCode::DUMP_FAILED));
         return HcclResult::HCCL_E_PARA;
     }
@@ -35,7 +36,8 @@ HcclResult DumpV3Manager::Initialize(const std::string &dataId)
     m_dataId = dataId;
     m_pluginRootDir = HcclSim::GetCurrentPath();
     if (m_pluginRootDir.empty()) {
-        HCCL_VM_ERROR("{} Failed to get the current working directory for dump output, dataId={}",
+        HCCL_VM_ERROR(
+            "{} Failed to get the current working directory for dump output, dataId={}",
             MakeErrorCodeText(ErrorCode::DUMP_FAILED), m_dataId);
         return HcclResult::HCCL_E_INTERNAL;
     }
@@ -59,10 +61,7 @@ void DumpV3Manager::Reset()
     m_rootDir.clear();
 }
 
-bool DumpV3Manager::IsEnabled() const
-{
-    return SettingManager::GetInstance().IsInsightDumpEnabled();
-}
+bool DumpV3Manager::IsEnabled() const { return SettingManager::GetInstance().IsInsightDumpEnabled(); }
 
 std::string DumpV3Manager::GetRootDir() const
 {
@@ -70,13 +69,13 @@ std::string DumpV3Manager::GetRootDir() const
     return m_rootDir;
 }
 
-std::string DumpV3Manager::GetOutputPath(const std::string &relativePath) const
+std::string DumpV3Manager::GetOutputPath(const std::string& relativePath) const
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     return HcclSim::JoinPath(m_rootDir, relativePath);
 }
 
-HcclResult DumpV3Manager::WriteMsgpack(const std::string &relativePath, const nlohmann::json &document) const
+HcclResult DumpV3Manager::WriteMsgpack(const std::string& relativePath, const nlohmann::json& document) const
 {
     if (!IsEnabled()) {
         return HcclResult::HCCL_SUCCESS;
@@ -89,29 +88,32 @@ HcclResult DumpV3Manager::WriteMsgpack(const std::string &relativePath, const nl
 
     std::ofstream out(fullPath, std::ios::out | std::ios::trunc | std::ios::binary);
     if (!out.is_open()) {
-        HCCL_VM_ERROR("{} Failed to open dump file, file={}, format=msgpack, dataId={}",
+        HCCL_VM_ERROR(
+            "{} Failed to open dump file, file={}, format=msgpack, dataId={}",
             MakeErrorCodeText(ErrorCode::DUMP_FAILED), fullPath, m_dataId);
         return HcclResult::HCCL_E_INTERNAL;
     }
 
     try {
         nlohmann::json::to_msgpack(document, nlohmann::detail::output_adapter<char>(out));
-    } catch (const std::exception &ex) {
-        HCCL_VM_ERROR("{} Failed to serialize dump content into msgpack, file={}, dataId={}, reason={}",
+    } catch (const std::exception& ex) {
+        HCCL_VM_ERROR(
+            "{} Failed to serialize dump content into msgpack, file={}, dataId={}, reason={}",
             MakeErrorCodeText(ErrorCode::DUMP_FAILED), fullPath, m_dataId, ex.what());
         return HcclResult::HCCL_E_INTERNAL;
     }
 
     out.flush();
     if (!out.good()) {
-        HCCL_VM_ERROR("{} Failed to flush dump file to disk, file={}, format=msgpack, dataId={}",
+        HCCL_VM_ERROR(
+            "{} Failed to flush dump file to disk, file={}, format=msgpack, dataId={}",
             MakeErrorCodeText(ErrorCode::DUMP_FAILED), fullPath, m_dataId);
         return HcclResult::HCCL_E_INTERNAL;
     }
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult DumpV3Manager::WriteJson(const std::string &relativePath, const nlohmann::json &document) const
+HcclResult DumpV3Manager::WriteJson(const std::string& relativePath, const nlohmann::json& document) const
 {
     if (!IsEnabled()) {
         return HcclResult::HCCL_SUCCESS;
@@ -124,21 +126,24 @@ HcclResult DumpV3Manager::WriteJson(const std::string &relativePath, const nlohm
 
     std::ofstream out(fullPath, std::ios::out | std::ios::trunc);
     if (!out.is_open()) {
-        HCCL_VM_ERROR("{} Failed to open dump file, file={}, format=json, dataId={}",
-            MakeErrorCodeText(ErrorCode::DUMP_FAILED), fullPath, m_dataId);
+        HCCL_VM_ERROR(
+            "{} Failed to open dump file, file={}, format=json, dataId={}", MakeErrorCodeText(ErrorCode::DUMP_FAILED),
+            fullPath, m_dataId);
         return HcclResult::HCCL_E_INTERNAL;
     }
 
     try {
         out << document.dump(2) << std::endl;
-    } catch (const std::exception &ex) {
-        HCCL_VM_ERROR("{} Failed to serialize dump content into JSON, file={}, dataId={}, reason={}",
+    } catch (const std::exception& ex) {
+        HCCL_VM_ERROR(
+            "{} Failed to serialize dump content into JSON, file={}, dataId={}, reason={}",
             MakeErrorCodeText(ErrorCode::DUMP_FAILED), fullPath, m_dataId, ex.what());
         return HcclResult::HCCL_E_INTERNAL;
     }
 
     if (!out.good()) {
-        HCCL_VM_ERROR("{} Failed to write dump file content, file={}, format=json, dataId={}",
+        HCCL_VM_ERROR(
+            "{} Failed to write dump file content, file={}, format=json, dataId={}",
             MakeErrorCodeText(ErrorCode::DUMP_FAILED), fullPath, m_dataId);
         return HcclResult::HCCL_E_INTERNAL;
     }
@@ -157,4 +162,4 @@ HcclResult DumpV3Manager::PrepareDirs() const
     }
     return HcclSim::EnsureDirectory(m_rootDir);
 }
-}  // namespace HcclSim
+} // namespace HcclSim

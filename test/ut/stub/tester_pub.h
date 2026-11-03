@@ -11,55 +11,50 @@
 #ifndef __HCCL_TESTER_H__
 #define __HCCL_TESTER_H__
 
-typedef enum tag_hccl_excute_type           /* 动作类型枚举 */
-{
-    EXCUTE_TYPE_BROADCAST       = 0,
-    EXCUTE_TYPE_REDUCE          = 1,
-    EXCUTE_TYPE_ALL_GATHER      = 2,
-    EXCUTE_TYPE_REDUCE_SCATTER  = 3,
-    EXCUTE_TYPE_ALL_REDUCE      = 4,
-    EXCUTE_TYPE_SEND_RECEIVE    = 5,
-    EXCUTE_TYPE_RESERVED           ,
+typedef enum tag_hccl_excute_type /* 动作类型枚举 */
+{ EXCUTE_TYPE_BROADCAST = 0,
+  EXCUTE_TYPE_REDUCE = 1,
+  EXCUTE_TYPE_ALL_GATHER = 2,
+  EXCUTE_TYPE_REDUCE_SCATTER = 3,
+  EXCUTE_TYPE_ALL_REDUCE = 4,
+  EXCUTE_TYPE_SEND_RECEIVE = 5,
+  EXCUTE_TYPE_RESERVED,
 } hccl_excute_t;
 
-typedef enum tag_hccl_sendbuf_init_type
-{
-    HCCL_SENDBUF_INIT_TYPE_INC      = 0,    /* 初始值全局递增 */
-    HCCL_SENDBUF_INIT_TYPE_ALL0     = 1,    /* 初始值全0 */
-    HCCL_SENDBUF_INIT_TYPE_ALL1     = 2,    /* 初始值全1 */
-    HCCL_SENDBUF_INIT_TYPE_INC_S8   = 3,    /* 在s8数据类型表示的范围内递增 */
-    HCCL_SENDBUF_INIT_TYPE_DEVID    = 4,    /* 初始值为rankid */
-    HCCL_SENDBUF_INIT_TYPE_OFFSET   = 5,    /* 初始值为数据在buffer内的偏移 */
-    HCCL_SENDBUF_INIT_TYPE_RESERVED    ,
+typedef enum tag_hccl_sendbuf_init_type {
+    HCCL_SENDBUF_INIT_TYPE_INC = 0,    /* 初始值全局递增 */
+    HCCL_SENDBUF_INIT_TYPE_ALL0 = 1,   /* 初始值全0 */
+    HCCL_SENDBUF_INIT_TYPE_ALL1 = 2,   /* 初始值全1 */
+    HCCL_SENDBUF_INIT_TYPE_INC_S8 = 3, /* 在s8数据类型表示的范围内递增 */
+    HCCL_SENDBUF_INIT_TYPE_DEVID = 4,  /* 初始值为rankid */
+    HCCL_SENDBUF_INIT_TYPE_OFFSET = 5, /* 初始值为数据在buffer内的偏移 */
+    HCCL_SENDBUF_INIT_TYPE_RESERVED,
 
 } hccl_sendbuf_init_type_t;
 
-
-typedef enum tag_comms_init_type
-{
-    COMMS_INIT_TYPE_ALL          = 0,       /* 调用hcclCommInitAll，只能进程内 */
-    COMMS_INIT_TYPE_BY_RANK      = 1,       /* 调用hcclCommInitRank，可以跨进程 */
-    COMMS_INIT_TYPE_RESERVED        ,
+typedef enum tag_comms_init_type {
+    COMMS_INIT_TYPE_ALL = 0,     /* 调用hcclCommInitAll，只能进程内 */
+    COMMS_INIT_TYPE_BY_RANK = 1, /* 调用hcclCommInitRank，可以跨进程 */
+    COMMS_INIT_TYPE_RESERVED,
 } comms_init_type_t;
 
-typedef enum tag_task_run_type
-{
-    TASK_RUN_SERIAL              = 0,   /* 以rank为序下发，可以针对保序下发 */
-    TASK_RUN_PARALLEL            = 1,   /* 以操作为序下发 */
+typedef enum tag_task_run_type {
+    TASK_RUN_SERIAL = 0,   /* 以rank为序下发，可以针对保序下发 */
+    TASK_RUN_PARALLEL = 1, /* 以操作为序下发 */
     TASK_RUN_RESERVED
 } task_run_type_t;
 
-//控制打印信息的掩码
-#define PRINT_MASK_SEND 0x1                 /* 打印发送sendbuf */
-#define PRINT_MASK_RECV 0x10                /* 打印接收recvbuf */
-#define PRINT_MASK_RSLT 0x100               /* 打印预期结果resultbuf */
+// 控制打印信息的掩码
+#define PRINT_MASK_SEND 0x1   /* 打印发送sendbuf */
+#define PRINT_MASK_RECV 0x10  /* 打印接收recvbuf */
+#define PRINT_MASK_RSLT 0x100 /* 打印预期结果resultbuf */
 
-#define INVALID_RANK -1                     /* 无效的rank_id */
+#define INVALID_RANK -1 /* 无效的rank_id */
 
 #define SEND_RECV_VALID 0xff
-#define FLOAT_MAX_DIFF_RANGE 0.01f          /* 浮点数最大误差范围 */
+#define FLOAT_MAX_DIFF_RANGE 0.01f /* 浮点数最大误差范围 */
 
-typedef struct send_receive_struct          /* send receive rank信息结构体 */
+typedef struct send_receive_struct /* send receive rank信息结构体 */
 {
     s32 src_valid;
     s32 dest_valid;
@@ -68,8 +63,7 @@ typedef struct send_receive_struct          /* send receive rank信息结构体 
     s32 tag;
 } send_receive_t;
 
-typedef struct excute_para_struct
-{
+typedef struct excute_para_struct {
     void* sendbuff;
     void* recvbuff;
     s32 count;
@@ -85,8 +79,7 @@ typedef struct excute_para_struct
     s32 task_num;
 } excute_para_t;
 
-
-typedef struct test_task            /* 测试任务结构体，每个对象是一个测试任务 */
+typedef struct test_task /* 测试任务结构体，每个对象是一个测试任务 */
 {
     hccl_excute_t excute_type;
     std::vector<void*> dev_sendbuf;
@@ -110,43 +103,37 @@ typedef struct test_task            /* 测试任务结构体，每个对象是�
 } test_task_t;
 
 /* bcast */
-typedef struct bcast_excute_para
-{
+typedef struct bcast_excute_para {
     s32 root;
 } bcast_excute_para_t;
 
 /* reduce */
-typedef struct reduce_excute_para
-{
+typedef struct reduce_excute_para {
     s32 root;
     HcclReduceOp reduce_op;
 } reduce_excute_para_t;
 
 /* reduce_scatter */
-typedef struct reduce_scatter_excute_para
-{
+typedef struct reduce_scatter_excute_para {
     HcclReduceOp reduce_op;
 } reduce_scatter_excute_para_t;
 
 /* all_reduce */
-typedef struct allreduce_excute_para
-{
+typedef struct allreduce_excute_para {
     HcclReduceOp reduce_op;
 } allreduce_excute_para_t;
 
 /* send recv操作 */
-typedef struct send_recv_excute_para
-{
+typedef struct send_recv_excute_para {
     s32 send_rank;
     s32 recv_rank;
 } send_recv_excute_para_t;
 
-typedef struct test_para                /* 测试参数结构体 */
+typedef struct test_para /* 测试参数结构体 */
 {
     HcclDataType data_type;
     s32 count;
-    union
-    {
+    union {
         /* all_gather没有root和reduce操作 */
         bcast_excute_para bcast_para;
         reduce_excute_para reduce_para;
@@ -159,7 +146,7 @@ typedef struct test_para                /* 测试参数结构体 */
     s32 buf_print_enable;
 } test_para_t;
 
-typedef struct tester_rank_info                /* rank相关信息结构体 */
+typedef struct tester_rank_info /* rank相关信息结构体 */
 {
     s32 rank;
     s32 devid;
@@ -171,19 +158,16 @@ typedef struct tester_rank_info                /* rank相关信息结构体 */
 } rank_info_t;
 
 /* 初始化comminicator需要的参数信息 */
-typedef struct comm_init_para_t
-{
-    comms_init_type_t init_type;        /* 初始化communicator的方式 */
-        
-    union
-    {
-        struct all_rank
-        {
-            s32* device_list;        /* init all使用的device_id列表，对应COMMS_INIT_TYPE_ALL */
+typedef struct comm_init_para_t {
+    comms_init_type_t init_type; /* 初始化communicator的方式 */
+
+    union {
+        struct all_rank {
+            s32* device_list; /* init all使用的device_id列表，对应COMMS_INIT_TYPE_ALL */
             s32 ndev;
         } all;
-        
-        struct unique_rank          /* init rank只需要单个rank的信息，对应COMMS_INIT_TYPE_BY_RANK */
+
+        struct unique_rank /* init rank只需要单个rank的信息，对应COMMS_INIT_TYPE_BY_RANK */
         {
             s32 my_rank;
             s32 dev_id;
@@ -191,23 +175,21 @@ typedef struct comm_init_para_t
             HcclRootInfo* commId;
         } unique;
     } rank;
-    
+
 } comm_init_para;
 
-typedef struct dev_info
-{
+typedef struct dev_info {
     s32 rank_id;
     s32 dev_id;
 } dev_info_t;
 
-class tester
-{
+class tester {
 private:
-    std::vector<tester_rank_info> rank_list;    // rank信息的列表
-    std::vector<test_task> task_vec;     // 测试任务列表
-    s32 device_count;               // device计数
-    comms_init_type_t comm_init_type;// comm的初始化方式，是否跨进程
-    task_run_type_t run_type;       // 运行类型，线程或者进程
+    std::vector<tester_rank_info> rank_list; // rank信息的列表
+    std::vector<test_task> task_vec;         // 测试任务列表
+    s32 device_count;                        // device计数
+    comms_init_type_t comm_init_type;        // comm的初始化方式，是否跨进程
+    task_run_type_t run_type;                // 运行类型，线程或者进程
 
 public:
     tester();
@@ -216,18 +198,17 @@ public:
     HcclResult init_comm(comm_init_para_t& init_para);
 
     /* 添加测试任务，可以多次调用，任务会添加到队列，一起执行 */
-    HcclResult add_test_task(hccl_excute_t excute_type, test_para* para);//改成list
+    HcclResult add_test_task(hccl_excute_t excute_type, test_para* para); // 改成list
 
     /* 执行测试任务，支持每次任务创建新线程或者所有任务用相同线程执行 */
     HcclResult run(task_run_type_t run_type);
 
     /* 等待运行结束后，检查结果 */
-    HcclResult check_result(); //检查完清空
+    HcclResult check_result(); // 检查完清空
 
     ~tester();
 
 protected:
-
     /* 初始化所有comm，用于节点内集合通信 */
     HcclResult init_comm_all();
 
@@ -244,8 +225,7 @@ protected:
     HcclResult check_task_para(hccl_excute_t excute_type, test_para* para);
 
     /* 根据excute类型计算所需的buf个数 */
-    HcclResult get_buff_count(hccl_excute_t type, s32 count,
-                                s32* sendbuf_num, s32* recvbuf_num, s32* rsltbuf_num);
+    HcclResult get_buff_count(hccl_excute_t type, s32 count, s32* sendbuf_num, s32* recvbuf_num, s32* rsltbuf_num);
 
     /* 通过datatype获取该类型的长度 */
     HcclResult get_len_by_datatype(HcclDataType datatype, s32* len);
@@ -284,8 +264,7 @@ protected:
 
     /* 申请二维内存 */
     template <typename T>
-    HcclResult malloc_two_dimension_memory(T**& out_mem, s32 first_dimen,
-            s32 second_dimen, T unit);
+    HcclResult malloc_two_dimension_memory(T**& out_mem, s32 first_dimen, s32 second_dimen, T unit);
 
     /* 释放二维内存 */
     template <typename T>
@@ -295,7 +274,6 @@ protected:
     HcclResult dev_to_host_mem_synchronize();
 
     HcclResult destroy_comms();
-
 };
 
 #endif // __HCCL_TESTER_H__

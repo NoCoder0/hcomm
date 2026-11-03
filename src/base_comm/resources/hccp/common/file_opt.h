@@ -16,24 +16,26 @@
 #include <sys/fcntl.h>
 #include <sys/file.h>
 
-#define CONF_NAME_MAX_LEN   64
-#define CONF_VALUE_MAX_LEN  2048
-#define CONLINE_LEN         (CONF_NAME_MAX_LEN + CONF_VALUE_MAX_LEN + 1)
+#define CONF_NAME_MAX_LEN 64
+#define CONF_VALUE_MAX_LEN 2048
+#define CONLINE_LEN (CONF_NAME_MAX_LEN + CONF_VALUE_MAX_LEN + 1)
 
 #define FILE_EXIST 0
 
-#define FILE_CHECK_RET_WITHOUT_RETURN(ret, fmt, val...) do {    \
-    if (ret) { \
-        roce_warn(fmt, ##val); \
-    } \
-} while (0)
+#define FILE_CHECK_RET_WITHOUT_RETURN(ret, fmt, val...)                                                                \
+    do {                                                                                                               \
+        if (ret) {                                                                                                     \
+            roce_warn(fmt, ##val);                                                                                     \
+        }                                                                                                              \
+    } while (0)
 
-#define FILE_CHECK_PTR_VALID_RETURN_VAL(p, ret) do { \
-    if ((p) == NULL) { \
-        roce_err("ptr is NULL!"); \
-        return ret; \
-    } \
-} while (0)
+#define FILE_CHECK_PTR_VALID_RETURN_VAL(p, ret)                                                                        \
+    do {                                                                                                               \
+        if ((p) == NULL) {                                                                                             \
+            roce_err("ptr is NULL!");                                                                                  \
+            return ret;                                                                                                \
+        }                                                                                                              \
+    } while (0)
 
 enum {
     FILE_OPT_ERR = 0x3000,

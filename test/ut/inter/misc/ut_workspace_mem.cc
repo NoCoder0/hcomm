@@ -20,30 +20,16 @@
 #include "mem_device_pub.h"
 #include "sal.h"
 
-
 using namespace std;
 using namespace hccl;
 
-class WorkSpaceMemTest : public testing::Test
-{
+class WorkSpaceMemTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "\033[36m--WorkSpaceMemTest SetUP--\033[0m" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "\033[36m--WorkSpaceMemTest TearDown--\033[0m" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "\033[36m--WorkSpaceMemTest SetUP--\033[0m" << std::endl; }
+    static void TearDownTestCase() { std::cout << "\033[36m--WorkSpaceMemTest TearDown--\033[0m" << std::endl; }
     // Some expensive resource shared by all tests.
-    virtual void SetUp()
-    {
-        std::cout << "A Test SetUP" << std::endl;
-    }
-    virtual void TearDown()
-    {
-        std::cout << "A Test TearDown" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test SetUP" << std::endl; }
+    virtual void TearDown() { std::cout << "A Test TearDown" << std::endl; }
 };
 
 TEST_F(WorkSpaceMemTest, ut_set_one_mem_resource)
@@ -58,13 +44,13 @@ TEST_F(WorkSpaceMemTest, ut_set_one_mem_resource)
     ret = WorkSpaceMem.SetMemResource("tag", deviceMem.ptr(), size);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    void *ptr1 = WorkSpaceMem.AllocMem("tag", allocSize);
+    void* ptr1 = WorkSpaceMem.AllocMem("tag", allocSize);
     (ptr1 == deviceMem.ptr()) ? ret = HCCL_SUCCESS : ret = HCCL_E_MEMORY;
-    EXPECT_EQ(ret, HCCL_SUCCESS); 
+    EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    void *ptr2 = WorkSpaceMem.AllocMem("tag", allocSize);
+    void* ptr2 = WorkSpaceMem.AllocMem("tag", allocSize);
     (ptr2 == ((char*)deviceMem.ptr() + allocSize)) ? ret = HCCL_SUCCESS : ret = HCCL_E_MEMORY;
-    EXPECT_EQ(ret, HCCL_SUCCESS); 
+    EXPECT_EQ(ret, HCCL_SUCCESS);
 
     /*  释放资源 */
     ret = WorkSpaceMem.DestroyMemResource("tag");
@@ -92,17 +78,17 @@ TEST_F(WorkSpaceMemTest, ut_set_muti_mem_resource)
     ret = WorkSpaceMem.SetMemResource("tag2", deviceMem.ptr(), size);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    void *ptr0 = WorkSpaceMem.AllocMem("tag", allocSize);
+    void* ptr0 = WorkSpaceMem.AllocMem("tag", allocSize);
     (ptr0 == deviceMem.ptr()) ? ret = HCCL_SUCCESS : ret = HCCL_E_MEMORY;
-    EXPECT_EQ(ret, HCCL_SUCCESS); 
+    EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    void *ptr1 = WorkSpaceMem.AllocMem("tag1", allocSize);
+    void* ptr1 = WorkSpaceMem.AllocMem("tag1", allocSize);
     (ptr1 == deviceMem.ptr()) ? ret = HCCL_SUCCESS : ret = HCCL_E_MEMORY;
-    EXPECT_EQ(ret, HCCL_SUCCESS); 
+    EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    void *ptr2 = WorkSpaceMem.AllocMem("tag2", allocSize);
+    void* ptr2 = WorkSpaceMem.AllocMem("tag2", allocSize);
     (ptr2 == deviceMem.ptr()) ? ret = HCCL_SUCCESS : ret = HCCL_E_MEMORY;
-    EXPECT_EQ(ret, HCCL_SUCCESS); 
+    EXPECT_EQ(ret, HCCL_SUCCESS);
 
     /* 销毁公共资源 */
     WorkSpaceMem.DestroyMemResource();
@@ -120,24 +106,24 @@ TEST_F(WorkSpaceMemTest, ut_workspace_mem_resource_fail)
     ret = WorkSpaceMem.SetMemResource("tag", deviceMem.ptr(), size);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-   /* 设置空指针错误 */
+    /* 设置空指针错误 */
     ret = WorkSpaceMem.SetMemResource("tag", NULL, size);
     EXPECT_EQ(ret, HCCL_E_PTR);
-    
+
     /* 分配错误tag  异常*/
-    void *ptr0 = WorkSpaceMem.AllocMem("tag1", allocSize);
+    void* ptr0 = WorkSpaceMem.AllocMem("tag1", allocSize);
     (ptr0 == NULL) ? ret = HCCL_SUCCESS : ret = HCCL_E_MEMORY;
-    EXPECT_EQ(ret, HCCL_SUCCESS); 
+    EXPECT_EQ(ret, HCCL_SUCCESS);
 
     /* 分配正确的指针*/
-    void *ptr1 = WorkSpaceMem.AllocMem("tag", allocSize);
+    void* ptr1 = WorkSpaceMem.AllocMem("tag", allocSize);
     (ptr1 == deviceMem.ptr()) ? ret = HCCL_SUCCESS : ret = HCCL_E_MEMORY;
-    EXPECT_EQ(ret, HCCL_SUCCESS); 
+    EXPECT_EQ(ret, HCCL_SUCCESS);
 
     /* 分配过大的内存*/
-    void *ptr2 = WorkSpaceMem.AllocMem("tag", size);
+    void* ptr2 = WorkSpaceMem.AllocMem("tag", size);
     (ptr2 == NULL) ? ret = HCCL_SUCCESS : ret = HCCL_E_MEMORY;
-    EXPECT_EQ(ret, HCCL_SUCCESS); 
+    EXPECT_EQ(ret, HCCL_SUCCESS);
 
     /* 销毁错误的tag资源 */
     ret = WorkSpaceMem.DestroyMemResource("tag1");
@@ -150,7 +136,6 @@ TEST_F(WorkSpaceMemTest, ut_workspace_mem_resource_fail)
     /*销毁全部管理资源 */
     WorkSpaceMem.DestroyMemResource();
 }
-
 
 TEST_F(WorkSpaceMemTest, ut_work_mem_resource_fun)
 {
@@ -170,20 +155,18 @@ TEST_F(WorkSpaceMemTest, ut_work_mem_resource_fun)
     ret = WorkSpaceMem.SetMemResource("tag2", deviceMem.ptr(), size);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    void *ptr0 = WorkSpaceMem.AllocMem("tag", allocSize);
+    void* ptr0 = WorkSpaceMem.AllocMem("tag", allocSize);
     (ptr0 == deviceMem.ptr()) ? ret = HCCL_SUCCESS : ret = HCCL_E_MEMORY;
-    EXPECT_EQ(ret, HCCL_SUCCESS); 
+    EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    void *ptr1 = WorkSpaceMem.AllocMem("tag1", allocSize);
+    void* ptr1 = WorkSpaceMem.AllocMem("tag1", allocSize);
     (ptr1 == deviceMem.ptr()) ? ret = HCCL_SUCCESS : ret = HCCL_E_MEMORY;
-    EXPECT_EQ(ret, HCCL_SUCCESS); 
+    EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    void *ptr2 = WorkSpaceMem.AllocMem("tag2", allocSize);
+    void* ptr2 = WorkSpaceMem.AllocMem("tag2", allocSize);
     (ptr2 == deviceMem.ptr()) ? ret = HCCL_SUCCESS : ret = HCCL_E_MEMORY;
-    EXPECT_EQ(ret, HCCL_SUCCESS); 
+    EXPECT_EQ(ret, HCCL_SUCCESS);
 
     /* 销毁公共资源 */
     WorkSpaceMem.DestroyMemResource();
 }
-
-

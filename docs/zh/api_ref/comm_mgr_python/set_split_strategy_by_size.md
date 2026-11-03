@@ -3,19 +3,19 @@
 ## 产品支持情况
 
 <!-- npu="950" id1 -->
-- Ascend 950PR/Ascend 950DT：支持
+- Ascend 950PR&950DT系列产品：支持
 <!-- end id1 -->
 <!-- npu="A3" id2 -->
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：支持
+- Atlas A3系列产品：支持
 <!-- end id2 -->
 <!-- npu="910b" id3 -->
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：支持
+- Atlas A2系列产品：支持
 <!-- end id3 -->
 <!-- npu="310p" id4 -->
-- Atlas 推理系列产品：支持
+- Atlas推理系列产品：支持
 <!-- end id4 -->
 <!-- npu="910" id5 -->
-- Atlas 训练系列产品：支持
+- Atlas训练系列产品：支持
 <!-- end id5 -->
 
 ## 功能说明
@@ -32,7 +32,7 @@ def set_split_strategy_by_size(dataSizeList, group="hccl_world_group")
 
 | 参数名 | 输入/输出 | 描述 |
 | --- | --- | --- |
-| dataSizeList | 输入 | list类型。<br>梯度参数数据量百分比列表。<br>  - 梯度数据量百分比列表需为非负，且梯度数据量序列总百分比之和必须为100。<br>  - 梯度的切分最多支持8段。<br>  - 比如模型总共有150M梯度数据量，需要切分90M，30M，30M三段，则可以设置dataSizeList =[60,20,20]。 |
+| dataSizeList | 输入 | list类型。<br>梯度参数数据量百分比列表。<br>  - 梯度数据量百分比列表需为非负，且梯度数据量序列总百分比之和必须为100。<br>  - 梯度的切分最多支持8段。<br>  - 比如模型总共有150MB梯度数据量，需要切分90MB，30MB，30MB三段，则可以设置dataSizeList =[60,20,20]。 |
 | group | 输入 | String类型，最大长度为128字节，含结束符。<br>group名称，可以为"hccl_world_group"或自定义group，默认为"hccl_world_group"。 |
 
 ## 返回值

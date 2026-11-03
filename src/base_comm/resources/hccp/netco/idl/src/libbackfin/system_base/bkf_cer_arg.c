@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #include "bkf_cer_arg.h"
 #include "bkf_bas_type_mthd.h"
 #include "bkf_assert.h"
@@ -21,23 +20,24 @@ extern "C" {
 #define BKF_CERA_SIGN0 (0xab)
 #define BKF_CERA_SIGN1 (0xaf)
 
-#define BKF_CERA_SIGN_CLR(cera) do {  \
-    BKF_SIGN_CLR((cera)->sign[0]);   \
-    BKF_SIGN_CLR((cera)->sign[1]);   \
-} while (0)
+#define BKF_CERA_SIGN_CLR(cera)                                                                                        \
+    do {                                                                                                               \
+        BKF_SIGN_CLR((cera)->sign[0]);                                                                                 \
+        BKF_SIGN_CLR((cera)->sign[1]);                                                                                 \
+    } while (0)
 
-#define BKF_CERA_SIGN_SET(cera) do {               \
-    BKF_SIGN_SET((cera)->sign[0], BKF_CERA_SIGN0); \
-    BKF_SIGN_SET((cera)->sign[1], BKF_CERA_SIGN1); \
-} while (0)
+#define BKF_CERA_SIGN_SET(cera)                                                                                        \
+    do {                                                                                                               \
+        BKF_SIGN_SET((cera)->sign[0], BKF_CERA_SIGN0);                                                                 \
+        BKF_SIGN_SET((cera)->sign[1], BKF_CERA_SIGN1);                                                                 \
+    } while (0)
 
-#define BKF_CERA_IS_VALID(cera) \
-    (((cera) != VOS_NULL) && BKF_SIGN_IS_VALID((cera)->sign[0], BKF_CERA_SIGN0) && \
-     BKF_SIGN_IS_VALID((cera)->sign[1], BKF_CERA_SIGN1) && BKF_CERA_TYPE_IS_VALID((cera)->type))
+#define BKF_CERA_IS_VALID(cera)                                                                                        \
+    (((cera) != VOS_NULL) && BKF_SIGN_IS_VALID((cera)->sign[0], BKF_CERA_SIGN0) &&                                     \
+        BKF_SIGN_IS_VALID((cera)->sign[1], BKF_CERA_SIGN1) && BKF_CERA_TYPE_IS_VALID((cera)->type))
 
 #define BKF_CERA_STR_INVALID "-"
 #define BKF_CERA_V8TLS_STR_BUF_LEN_MIN (56)
-
 
 uint32_t BkfCeraInit(BkfCera *cera)
 {
@@ -105,14 +105,13 @@ char *BkfCeraV8TlsVal2Str(BkfCera *cera, uint8_t *buf, int32_t bufLen)
         return BKF_CERA_STR_INVALID;
     }
 
-    int32_t ret = snprintf_truncated_s((char*)buf, bufLen, "V8Tls://policy %u vr %u role %d verifyMod %d",
+    int32_t ret = snprintf_truncated_s((char *)buf, bufLen, "V8Tls://policy %u vr %u role %d verifyMod %d",
         cera->v8.key.policyId, cera->v8.val.vrId, cera->v8.val.role, cera->v8.val.verifyMod);
     if (ret <= 0) {
         return BKF_CERA_STR_INVALID;
     }
-    return (char*)buf;
+    return (char *)buf;
 }
-
 
 char *BkfCeraGetStr(BkfCera *cera, uint8_t *buf, int32_t bufLen)
 {
@@ -129,15 +128,18 @@ char *BkfCeraGetStr(BkfCera *cera, uint8_t *buf, int32_t bufLen)
 
 uint32_t BkfCeraH2N(BkfCera *ceraH, BkfCera *ceraN)
 {
+    (void)ceraH;
+    (void)ceraN;
     return 0;
 }
 
 uint32_t BkfCeraN2H(BkfCera *ceraN, BkfCera *ceraH)
 {
+    (void)ceraN;
+    (void)ceraH;
     return 0;
 }
 
 #ifdef __cplusplus
 }
 #endif
-

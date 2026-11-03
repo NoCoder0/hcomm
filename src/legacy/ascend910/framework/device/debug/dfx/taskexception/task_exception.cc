@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "task_exception.h"
 #include "log.h"
@@ -18,25 +18,27 @@ TaskException::TaskException() {}
 
 TaskException::~TaskException() {}
 
-HcclResult TaskException::Init(u32 devId, u32 localUserRank, const std::string &identifier)
+HcclResult TaskException::Init(u32 devId, u32 localUserRank, const std::string& identifier)
 {
     devId_ = devId;
     localUserRank_ = localUserRank;
     identifier_ = identifier;
-    HCCL_INFO("%s success, devId[%u], localUserRank[%u], identifier[%s]",
-        __func__, devId_, localUserRank_, identifier_.c_str());
+    HCCL_INFO(
+        "%s success, devId[%u], localUserRank[%u], identifier[%s]", __func__, devId_, localUserRank_,
+        identifier_.c_str());
     return HCCL_SUCCESS;
 }
 
 HcclResult TaskException::RegisterOpInfo(void* opInfo, u32 size)
 {
     CHK_PTR_NULL(opInfo);
-    CHK_PRT_RET(size == 0 || size > OP_INFO_MAX_SIZE,
+    CHK_PRT_RET(
+        size == 0 || size > OP_INFO_MAX_SIZE,
         HCCL_ERROR("%s fail, size[%u], expect [1, %u]", __func__, size, OP_INFO_MAX_SIZE), HCCL_E_PARA);
 
     opRingBufferIdx_ = (opRingBufferIdx_ + 1) % OPINFO_RING_BUFFER_MAX;
     indOpInfos_[opRingBufferIdx_].opIndex = opRingBufferIdx_;
-    CHK_SAFETY_FUNC_RET(memcpy_s(indOpInfos_[opRingBufferIdx_].opInfo, size, reinterpret_cast<uint8_t *>(opInfo), size));
+    CHK_SAFETY_FUNC_RET(memcpy_s(indOpInfos_[opRingBufferIdx_].opInfo, size, reinterpret_cast<uint8_t*>(opInfo), size));
     HCCL_DEBUG("%s success, opRingBufferIdx_[%u], opInfo[%p], size[%u]", __func__, opRingBufferIdx_, opInfo, size);
     return HCCL_SUCCESS;
 }
@@ -63,42 +65,46 @@ HcclResult TaskException::PrintTaskException(hccl::Stream& stream)
     u32 sqHead = 0U;
     u32 sqTail = 0U;
     CHK_RET(QuerySqStatus(devId_, stream.sqId(), sqHead, sqTail));
-    HcclSqeContext *sqeContext = stream.GetSqeContextPtr();
-    SqeRingBuffer *sqeContextBuffer = &(sqeContext->buffer);
+    HcclSqeContext* sqeContext = stream.GetSqeContextPtr();
+    SqeRingBuffer* sqeContextBuffer = &(sqeContext->buffer);
     CHK_PTR_NULL(sqeContextBuffer);
     if (sqHead == sqTail) { // 流上task已经执行完，不打印
-        HCCL_RUN_INFO("%s skip, group:%s, streamId:%d, sqHead is equal to sqTail:%u",
-            __func__, identifier_.c_str(), stream.id(), sqTail);
+        HCCL_RUN_INFO(
+            "%s skip, group:%s, streamId:%d, sqHead is equal to sqTail:%u", __func__, identifier_.c_str(), stream.id(),
+            sqTail);
         // 打印最后执行的200个task
         PrintTaskExceptionTaskQue(sqTail, sqeContextBuffer);
         return HCCL_SUCCESS;
     }
     u32 opIndex = indOpInfos_[sqeContextBuffer->rtsDfxInfo[sqHead].opRingBufferIdx].opIndex;
     if (IsRepeatPrint(stream.id(), opIndex, sqHead)) { // 避免重复打印
-        HCCL_RUN_INFO("%s skip, group:%s, streamId:%d, opIndex:%u, sqHead:%u, has already been printed",
-            __func__, identifier_.c_str(), stream.id(), opIndex, sqHead);
+        HCCL_RUN_INFO(
+            "%s skip, group:%s, streamId:%d, opIndex:%u, sqHead:%u, has already been printed", __func__,
+            identifier_.c_str(), stream.id(), opIndex, sqHead);
         return HCCL_SUCCESS;
     }
 
     threadPrintState_[stream.id()] = {opIndex, sqHead}; // 打印当前流的信息，记录流的位置
-    HCCL_RUN_INFO("%s start, group:%s, streamId:%d, opIndex:%u, sqHead:%u, sqTail:%u",
-        __func__, identifier_.c_str(), stream.id(), opIndex, sqHead, sqTail);
+    HCCL_RUN_INFO(
+        "%s start, group:%s, streamId:%d, opIndex:%u, sqHead:%u, sqTail:%u", __func__, identifier_.c_str(), stream.id(),
+        opIndex, sqHead, sqTail);
 
-    HCCL_ERROR("%s base information is streamId:%d, sqid:%d, head:%u, tail:%u, %s",
-        __func__, stream.id(), stream.sqId(), sqHead, sqTail, GetTaskExceptionTaskInfo(sqHead, sqeContextBuffer).c_str());
+    HCCL_ERROR(
+        "%s base information is streamId:%d, sqid:%u, head:%u, tail:%u, %s", __func__, stream.id(), stream.sqId(),
+        sqHead, sqTail, GetTaskExceptionTaskInfo(sqHead, sqeContextBuffer).c_str());
     PrintTaskExceptionTaskQue(sqHead, sqeContextBuffer);
     return HCCL_SUCCESS;
 }
 
-HcclResult TaskException::PrintTaskExceptionByTaskId(u8 sqeType, u16 taskId, hccl::Stream &stream, u32 tail)
+HcclResult TaskException::PrintTaskExceptionByTaskId(u8 sqeType, u16 taskId, hccl::Stream& stream, u32 tail)
 {
-    HcclSqeContext *sqeContext = stream.GetSqeContextPtr();
+    HcclSqeContext* sqeContext = stream.GetSqeContextPtr();
     CHK_PTR_NULL(sqeContext);
     HCCL_ERROR("%s streamId:%d tail:%u cqeType:%u", __func__, stream.id(), tail, sqeType);
-    SqeRingBuffer *sqeContextBuffer = &(sqeContext->buffer);
+    SqeRingBuffer* sqeContextBuffer = &(sqeContext->buffer);
     CHK_PTR_NULL(sqeContextBuffer);
-    uint8_t *sqeMirrorBufferAddr = sqeContextBuffer->rtsMirrorBuffer + (tail - 1) * HCCL_SQE_SIZE;
-    rtStarsSqeHeader_t * const sqeHeader = reinterpret_cast<rtStarsSqeHeader_t * const>(sqeMirrorBufferAddr);
+    uint8_t* sqeMirrorBufferAddr = sqeContextBuffer->rtsMirrorBuffer + (tail - 1) * HCCL_SQE_SIZE;
+    rtStarsSqeHeader_t* const sqeHeader = reinterpret_cast<rtStarsSqeHeader_t*>(sqeMirrorBufferAddr);
     CHK_PTR_NULL(sqeHeader);
 
     s32 taskNum = sqeHeader->taskId - taskId;
@@ -106,17 +112,19 @@ HcclResult TaskException::PrintTaskExceptionByTaskId(u8 sqeType, u16 taskId, hcc
     s32 sqeIdx = tail - taskNum - 1;
     u32 sqHead = (sqeIdx + HCCL_SQE_MAX_CNT) % HCCL_SQE_MAX_CNT;
 
-    HCCL_ERROR("[TaskException]base information is streamId:%d, sqid:%d, head:%u, tail:%u, %s",
-        stream.id(), stream.sqId(), sqHead, tail, GetTaskExceptionTaskInfo(sqHead, sqeContextBuffer).c_str());
+    HCCL_ERROR(
+        "[TaskException]base information is streamId:%d, sqid:%u, head:%u, tail:%u, %s", stream.id(), stream.sqId(),
+        sqHead, tail, GetTaskExceptionTaskInfo(sqHead, sqeContextBuffer).c_str());
     PrintTaskExceptionTaskQue(sqHead, sqeContextBuffer);
     return HCCL_SUCCESS;
 }
 
-std::string TaskException::GetTaskExceptionTaskInfo(u32 sqHead, SqeRingBuffer *sqeContextBuffer)
+std::string TaskException::GetTaskExceptionTaskInfo(u32 sqHead, SqeRingBuffer* sqeContextBuffer)
 {
     SqeInfo sqeInfo;
-    SqeContextUtils::QuerySqeInfo(sqeContextBuffer->rtsMirrorBuffer + sqHead * HCCL_SQE_SIZE,
-        sqeContextBuffer->rtsqSqeType[sqHead], sqeContextBuffer->addInfo[sqHead], &sqeInfo);
+    SqeContextUtils::QuerySqeInfo(
+        sqeContextBuffer->rtsMirrorBuffer + sqHead * HCCL_SQE_SIZE, sqeContextBuffer->rtsqSqeType[sqHead],
+        sqeContextBuffer->addInfo[sqHead], &sqeInfo);
 
     std::stringstream ss;
     ss << "type:" << SqeContextUtils::RtsqTaskTypeToStr(sqeInfo.type) << ", ";
@@ -132,9 +140,9 @@ std::string TaskException::GetTaskExceptionTaskInfo(u32 sqHead, SqeRingBuffer *s
     return ss.str();
 }
 
-void TaskException::PrintTaskExceptionTaskQue(u32 sqIdx, SqeRingBuffer *sqeContextBuffer)
+void TaskException::PrintTaskExceptionTaskQue(u32 sqIdx, SqeRingBuffer* sqeContextBuffer)
 {
-    const u32 sqeNum = 200; //打印当前位置的前200个task
+    const u32 sqeNum = 200; // 打印当前位置的前200个task
     // 记录上一次打印的算子信息
     IndOpInfo& lastOpInfo = indOpInfos_[sqeContextBuffer->rtsDfxInfo[sqIdx].opRingBufferIdx];
     u32 opIndex = lastOpInfo.opIndex; // 算子序号
@@ -176,25 +184,27 @@ void TaskException::PrintTaskExceptionTaskQue(u32 sqIdx, SqeRingBuffer *sqeConte
 void TaskException::PrintTaskExceptionOpInfo(IndOpInfo& indOp)
 {
     if (indOp.callback == nullptr) {
-        HCCL_ERROR("[TaskException]%s fail, indOp callback is nullptr, group:%s, opIndex:%u",
-            identifier_.c_str(), indOp.opIndex);
+        HCCL_ERROR(
+            "[TaskException][%s] fail, indOp callback is nullptr, group:%s, opIndex:%u", __func__, identifier_.c_str(),
+            indOp.opIndex);
         return;
     }
     char opInfoTmp[OPINFO_RING_BUFFER_MAX];
-    indOp.callback(reinterpret_cast<void *>(indOp.opInfo), opInfoTmp, OPINFO_RING_BUFFER_MAX);
-    HCCL_ERROR("[TaskException]opData information is group:%s, opIndex:%u, %s",
-        identifier_.c_str(), indOp.opIndex, opInfoTmp);
+    indOp.callback(reinterpret_cast<void*>(indOp.opInfo), opInfoTmp, OPINFO_RING_BUFFER_MAX);
+    HCCL_ERROR(
+        "[TaskException]opData information is group:%s, opIndex:%u, %s", identifier_.c_str(), indOp.opIndex, opInfoTmp);
 }
 
-std::string TaskException::GetTaskBriefsInfo(u32 idx, SqeRingBuffer *sqeContextBuffer)
+std::string TaskException::GetTaskBriefsInfo(u32 idx, SqeRingBuffer* sqeContextBuffer)
 {
-    uint8_t *sqeMirrorBufferAddr = sqeContextBuffer->rtsMirrorBuffer + idx * HCCL_SQE_SIZE;
-    rtStarsSqeHeader_t * const sqeHeader = reinterpret_cast<rtStarsSqeHeader_t * const>(sqeMirrorBufferAddr);
+    uint8_t* sqeMirrorBufferAddr = sqeContextBuffer->rtsMirrorBuffer + idx * HCCL_SQE_SIZE;
+    rtStarsSqeHeader_t* const sqeHeader = reinterpret_cast<rtStarsSqeHeader_t*>(sqeMirrorBufferAddr);
     uint8_t sqeType = sqeHeader->type;
 
     SqeInfo sqeInfo;
-    SqeContextUtils::QuerySqeInfo(sqeContextBuffer->rtsMirrorBuffer + idx * HCCL_SQE_SIZE,
-        sqeContextBuffer->rtsqSqeType[idx], sqeContextBuffer->addInfo[idx], &sqeInfo);
+    SqeContextUtils::QuerySqeInfo(
+        sqeContextBuffer->rtsMirrorBuffer + idx * HCCL_SQE_SIZE, sqeContextBuffer->rtsqSqeType[idx],
+        sqeContextBuffer->addInfo[idx], &sqeInfo);
     uint8_t subType = sqeInfo.subType;
 
     std::stringstream ss;
@@ -243,4 +253,4 @@ std::string TaskException::GetTaskBriefsInfo(u32 idx, SqeRingBuffer *sqeContextB
     ss << ")";
     return ss.str();
 }
-}  // namespace dfx
+} // namespace hccl

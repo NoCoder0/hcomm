@@ -26,15 +26,9 @@ using namespace Hccl;
 
 class PrimRulesTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "PrimRulesTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "PrimRulesTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "PrimRulesTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "PrimRulesTest TearDown" << std::endl; }
 
     virtual void SetUp()
     {
@@ -50,8 +44,8 @@ protected:
         std::cout << "A Test case in PrimRulesTest TearDown" << std::endl;
     }
 
-    void Check_PostReady_WaitFin_PostFinAck(vector<unique_ptr<Instruction>> &result, RankId remote,
-                                            const LinkData &link)
+    void
+    Check_PostReady_WaitFin_PostFinAck(vector<unique_ptr<Instruction>>& result, RankId remote, const LinkData& link)
     {
         EXPECT_EQ(3, result.size());
         EXPECT_EQ(InstructionType::POST_READY, result[0]->GetType());
@@ -59,8 +53,7 @@ protected:
         EXPECT_EQ(InstructionType::POST_FIN_ACK, result[2]->GetType());
     }
 
-    void Check_PostReady_WaitFin(vector<unique_ptr<Instruction>> &result, RankId remote,
-                                            const LinkData &link)
+    void Check_PostReady_WaitFin(vector<unique_ptr<Instruction>>& result, RankId remote, const LinkData& link)
     {
         EXPECT_EQ(2, result.size());
         EXPECT_EQ(InstructionType::POST_READY, result[0]->GetType());
@@ -69,14 +62,15 @@ protected:
 
     // case: sendGet, recvPut, sendReduceGetWithInlineReduce, recvReducePutWithInlineReduce,
     // sendReduceGetWithoutInlineReduce
-    void WithoutData_Check_SendGet_Or_RecvPut(vector<unique_ptr<Instruction>> &result, RankId remote,
-                                              const LinkData &link)
+    void
+    WithoutData_Check_SendGet_Or_RecvPut(vector<unique_ptr<Instruction>>& result, RankId remote, const LinkData& link)
     {
         Check_PostReady_WaitFin_PostFinAck(result, remote, link);
     }
 
-    void Check_WaitReady_DMAData_PostFin_WaitFinAck(vector<unique_ptr<Instruction>> &result, RankId remote,
-                                                    const LinkData &link, InstructionType insType, u32 insTypeNum)
+    void Check_WaitReady_DMAData_PostFin_WaitFinAck(
+        vector<unique_ptr<Instruction>>& result, RankId remote, const LinkData& link, InstructionType insType,
+        u32 insTypeNum)
     {
         EXPECT_EQ(3 + insTypeNum, result.size());
         EXPECT_EQ(InstructionType::WAIT_READY, result[0]->GetType());
@@ -88,8 +82,9 @@ protected:
         EXPECT_EQ(InstructionType::WAIT_FIN_ACK, result[insTypeNum + 2]->GetType());
     }
 
-    void Check_WaitReady_DMAData_PostFin(vector<unique_ptr<Instruction>> &result, RankId remote,
-                                                    const LinkData &link, InstructionType insType, u32 insTypeNum)
+    void Check_WaitReady_DMAData_PostFin(
+        vector<unique_ptr<Instruction>>& result, RankId remote, const LinkData& link, InstructionType insType,
+        u32 insTypeNum)
     {
         EXPECT_EQ(2 + insTypeNum, result.size());
         EXPECT_EQ(InstructionType::WAIT_READY, result[0]->GetType());
@@ -100,8 +95,9 @@ protected:
         EXPECT_EQ(InstructionType::POST_FIN, result[insTypeNum + 1]->GetType());
     }
 
-    void Check_WaitReady_DMAData_WaitFinAck(vector<unique_ptr<Instruction>> &result, RankId remote,
-                                                    const LinkData &link, InstructionType insType, u32 insTypeNum)
+    void Check_WaitReady_DMAData_WaitFinAck(
+        vector<unique_ptr<Instruction>>& result, RankId remote, const LinkData& link, InstructionType insType,
+        u32 insTypeNum)
     {
         EXPECT_EQ(2 + insTypeNum, result.size());
         EXPECT_EQ(InstructionType::WAIT_READY, result[0]->GetType());
@@ -112,8 +108,9 @@ protected:
         EXPECT_EQ(InstructionType::WAIT_FIN_ACK, result[insTypeNum + 1]->GetType());
     }
 
-    void Check_WaitReady_DMAData(vector<unique_ptr<Instruction>> &result, RankId remote,
-                                                    const LinkData &link, InstructionType insType, u32 insTypeNum)
+    void Check_WaitReady_DMAData(
+        vector<unique_ptr<Instruction>>& result, RankId remote, const LinkData& link, InstructionType insType,
+        u32 insTypeNum)
     {
         EXPECT_EQ(1 + insTypeNum, result.size());
         EXPECT_EQ(InstructionType::WAIT_READY, result[0]->GetType());
@@ -122,37 +119,37 @@ protected:
         }
     }
 
-    void Check_SendPut(vector<unique_ptr<Instruction>> &result, PrimSend &primSend)
+    void Check_SendPut(vector<unique_ptr<Instruction>>& result, PrimSend& primSend)
     {
-        Check_WaitReady_DMAData_WaitFinAck(result, primSend.GetRemoteRank(), primSend.GetLink(),
-                                                   InstructionType::WRITE, primSend.Size());
+        Check_WaitReady_DMAData_WaitFinAck(
+            result, primSend.GetRemoteRank(), primSend.GetLink(), InstructionType::WRITE, primSend.Size());
     }
 
-    void Check_RecvGet(vector<unique_ptr<Instruction>> &result, PrimRecv &primRecv)
+    void Check_RecvGet(vector<unique_ptr<Instruction>>& result, PrimRecv& primRecv)
     {
-        Check_WaitReady_DMAData_PostFin_WaitFinAck(result, primRecv.GetRemoteRank(), primRecv.GetLink(),
-                                                   InstructionType::READ, primRecv.Size());
+        Check_WaitReady_DMAData_PostFin_WaitFinAck(
+            result, primRecv.GetRemoteRank(), primRecv.GetLink(), InstructionType::READ, primRecv.Size());
     }
 
-    void Check_WithInlineReduce_SendReducePut(vector<unique_ptr<Instruction>> &result, PrimSendReduce &sendReduce)
+    void Check_WithInlineReduce_SendReducePut(vector<unique_ptr<Instruction>>& result, PrimSendReduce& sendReduce)
     {
-        Check_WaitReady_DMAData_PostFin_WaitFinAck(result, sendReduce.GetRemoteRank(), sendReduce.GetLink(),
-                                                   InstructionType::WRITE_REDUCE, sendReduce.Size());                                                 
+        Check_WaitReady_DMAData_PostFin_WaitFinAck(
+            result, sendReduce.GetRemoteRank(), sendReduce.GetLink(), InstructionType::WRITE_REDUCE, sendReduce.Size());
     }
-    void Check_WithoutInlineReduce_SendReducePut(vector<unique_ptr<Instruction>> &result, PrimSendReduce &sendReduce)
+    void Check_WithoutInlineReduce_SendReducePut(vector<unique_ptr<Instruction>>& result, PrimSendReduce& sendReduce)
     {
-        Check_WaitReady_DMAData_PostFin_WaitFinAck(result, sendReduce.GetRemoteRank(), sendReduce.GetLink(),
-                                                   InstructionType::WRITE, sendReduce.Size());
+        Check_WaitReady_DMAData_PostFin_WaitFinAck(
+            result, sendReduce.GetRemoteRank(), sendReduce.GetLink(), InstructionType::WRITE, sendReduce.Size());
     }
-    void Check_WithInlineReduce_RecvReducGet(vector<unique_ptr<Instruction>> &result, PrimRecvReduce &recvReduce)
+    void Check_WithInlineReduce_RecvReducGet(vector<unique_ptr<Instruction>>& result, PrimRecvReduce& recvReduce)
     {
-        Check_WaitReady_DMAData_PostFin_WaitFinAck(result, recvReduce.GetRemoteRank(), recvReduce.GetLink(),
-                                                   InstructionType::READ_REDUCE, recvReduce.Size());
+        Check_WaitReady_DMAData_PostFin_WaitFinAck(
+            result, recvReduce.GetRemoteRank(), recvReduce.GetLink(), InstructionType::READ_REDUCE, recvReduce.Size());
     }
 
-    void Check_WithoutInlineReduce_RecvReduceGet(vector<unique_ptr<Instruction>> &result, PrimRecvReduce &recvReduce)
+    void Check_WithoutInlineReduce_RecvReduceGet(vector<unique_ptr<Instruction>>& result, PrimRecvReduce& recvReduce)
     {
-        u32 num   = recvReduce.Size();
+        u32 num = recvReduce.Size();
         u32 total = 2 + num * 2;
         EXPECT_EQ(total, result.size());
         EXPECT_EQ(InstructionType::WAIT_READY, result[0]->GetType());
@@ -168,9 +165,9 @@ protected:
         }
     }
 
-    void Check_WithoutInlineReduce_RecvReducePut(vector<unique_ptr<Instruction>> &result, PrimRecvReduce &recvReduce)
+    void Check_WithoutInlineReduce_RecvReducePut(vector<unique_ptr<Instruction>>& result, PrimRecvReduce& recvReduce)
     {
-        u32 num   = recvReduce.Size();
+        u32 num = recvReduce.Size();
         u32 total = 3 + num;
         EXPECT_EQ(total, result.size());
         EXPECT_EQ(InstructionType::POST_READY, result[0]->GetType());
@@ -181,9 +178,10 @@ protected:
         }
     }
 
-    void Check_WithoutInlineReduce_WithoutPostFinAck_RecvReducePut(vector<unique_ptr<Instruction>> &result, PrimRecvReduce &recvReduce)
+    void Check_WithoutInlineReduce_WithoutPostFinAck_RecvReducePut(
+        vector<unique_ptr<Instruction>>& result, PrimRecvReduce& recvReduce)
     {
-        u32 num   = recvReduce.Size();
+        u32 num = recvReduce.Size();
         u32 total = 2 + num;
         EXPECT_EQ(total, result.size());
         EXPECT_EQ(InstructionType::POST_READY, result[0]->GetType());
@@ -193,8 +191,9 @@ protected:
         }
     }
 
-    void CheckGroupSendRecv(vector<unique_ptr<Instruction>> &result, RankId remote, const LinkData &link,
-                            InstructionType insType, u32 insTypeNum)
+    void CheckGroupSendRecv(
+        vector<unique_ptr<Instruction>>& result, RankId remote, const LinkData& link, InstructionType insType,
+        u32 insTypeNum)
     {
         EXPECT_EQ(4 + insTypeNum, result.size());
 
@@ -211,8 +210,9 @@ protected:
         EXPECT_EQ(InstructionType::WAIT_FIN_ACK, result[5 + insTypeNum]->GetType());
     }
 
-    void CheckGroupSendRecvRdma(vector<unique_ptr<Instruction>> &result, RankId remote, const LinkData &link,
-                            InstructionType insType, u32 insTypeNum)
+    void CheckGroupSendRecvRdma(
+        vector<unique_ptr<Instruction>>& result, RankId remote, const LinkData& link, InstructionType insType,
+        u32 insTypeNum)
     {
         EXPECT_EQ(3 + insTypeNum, result.size());
 
@@ -232,7 +232,7 @@ TEST_F(PrimRulesTest, translate_postto_test)
 {
     // Given slave post to master
     shared_ptr<PrimQueue> master = make_shared<PrimQueue>();
-    shared_ptr<PrimQueue> slave  = master->Fork();
+    shared_ptr<PrimQueue> slave = master->Fork();
 
     PrimPostTo primPostTo(master);
     primPostTo.SetParent(slave);
@@ -244,7 +244,7 @@ TEST_F(PrimRulesTest, translate_postto_test)
     EXPECT_EQ(1, result.size());
     EXPECT_EQ(InstructionType::LOCAL_POST_TO, result[0]->GetType());
 
-    const InsLocalPostTo &insLocalPostTo = static_cast<const InsLocalPostTo &>(*result[0].get());
+    const InsLocalPostTo& insLocalPostTo = static_cast<const InsLocalPostTo&>(*result[0].get());
 
     EXPECT_EQ(master->GetId(), insLocalPostTo.GetWaitQid());
 }
@@ -253,7 +253,7 @@ TEST_F(PrimRulesTest, translate_waitfrom_test)
 {
     // Given slave wait from master
     shared_ptr<PrimQueue> master = make_shared<PrimQueue>();
-    shared_ptr<PrimQueue> slave  = master->Fork();
+    shared_ptr<PrimQueue> slave = master->Fork();
 
     PrimWaitFrom primWaitFrom(master);
     primWaitFrom.SetParent(slave);
@@ -265,14 +265,14 @@ TEST_F(PrimRulesTest, translate_waitfrom_test)
     EXPECT_EQ(1, result.size());
     EXPECT_EQ(InstructionType::LOCAL_WAIT_FROM, result[0]->GetType());
 
-    const InsLocalWaitFrom &insLocalWaitFrom = static_cast<const InsLocalWaitFrom &>(*result[0].get());
+    const InsLocalWaitFrom& insLocalWaitFrom = static_cast<const InsLocalWaitFrom&>(*result[0].get());
     EXPECT_EQ(master->GetId(), insLocalWaitFrom.GetPostQid());
 }
 
 TEST_F(PrimRulesTest, translate_waitgroup_test)
 {
     shared_ptr<PrimQueue> master = make_shared<PrimQueue>();
-    shared_ptr<PrimQueue> slave  = master->Fork();
+    shared_ptr<PrimQueue> slave = master->Fork();
 
     PrimWaitGroup primWaitGroup;
     primWaitGroup.Append(master);
@@ -285,19 +285,19 @@ TEST_F(PrimRulesTest, translate_waitgroup_test)
     EXPECT_EQ(1, result.size());
     EXPECT_EQ(InstructionType::LOCAL_WAIT_GROUP, result[0]->GetType());
 
-    const InsLocalWaitGroup &insLocalWaitGroup = static_cast<const InsLocalWaitGroup &>(*result[0].get());
+    const InsLocalWaitGroup& insLocalWaitGroup = static_cast<const InsLocalWaitGroup&>(*result[0].get());
     EXPECT_EQ(master->GetId(), *(insLocalWaitGroup.Iter()));
 }
 
 TEST_F(PrimRulesTest, translate_localcopy_test)
 {
     // Given
-    RankId              localRankID = 0;
-    RankId              remoteRank  = 1;
-    BasePortType        portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData            link(portType, localRankID, remoteRank, 0, 1);
-    DataSlice           localSlice(BufferType::INPUT, 0, dataSliceSize);
-    DataSlice           remoteSlice(BufferType::SCRATCH, 0, dataSliceSize);
+    RankId localRankID = 0;
+    RankId remoteRank = 1;
+    BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
+    LinkData link(portType, localRankID, remoteRank, 0, 1);
+    DataSlice localSlice(BufferType::INPUT, 0, dataSliceSize);
+    DataSlice remoteSlice(BufferType::SCRATCH, 0, dataSliceSize);
     const PrimLocalCopy primLocalCopy(localSlice, remoteSlice);
 
     // When
@@ -312,12 +312,12 @@ TEST_F(PrimRulesTest, translate_localcopy_test)
 TEST_F(PrimRulesTest, translate_send_link_p2p_dma_default_test)
 {
     // Given
-    RankId       localRankID = 0;
-    RankId       remoteRank  = 1;
+    RankId localRankID = 0;
+    RankId remoteRank = 1;
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData     link(portType, localRankID, remoteRank, 0, 1);
-    DataSlice    localSlice(BufferType::INPUT, 0, dataSliceSize);
-    DataSlice    remoteSlice(BufferType::SCRATCH, 0, dataSliceSize);
+    LinkData link(portType, localRankID, remoteRank, 0, 1);
+    DataSlice localSlice(BufferType::INPUT, 0, dataSliceSize);
+    DataSlice remoteSlice(BufferType::SCRATCH, 0, dataSliceSize);
 
     PrimSend primSendDmaDefault(remoteRank, link, localSlice, remoteSlice);
 
@@ -334,12 +334,12 @@ TEST_F(PrimRulesTest, translate_send_link_p2p_dma_default_test)
 TEST_F(PrimRulesTest, translate_send_link_is_invalid)
 {
     // Given
-    RankId       localRankID = 0;
-    RankId       remoteRank  = 1;
+    RankId localRankID = 0;
+    RankId remoteRank = 1;
     BasePortType portType(PortDeploymentType::HOST_NET, ConnectProtoType::TCP);
-    LinkData     link(portType, localRankID, remoteRank, 0, 1);
-    DataSlice    localSlice(BufferType::INPUT, 0, dataSliceSize);
-    DataSlice    remoteSlice(BufferType::SCRATCH, 0, dataSliceSize);
+    LinkData link(portType, localRankID, remoteRank, 0, 1);
+    DataSlice localSlice(BufferType::INPUT, 0, dataSliceSize);
+    DataSlice remoteSlice(BufferType::SCRATCH, 0, dataSliceSize);
 
     const PrimSend primSendDmaDefault(remoteRank, link, localSlice, remoteSlice);
 
@@ -349,12 +349,12 @@ TEST_F(PrimRulesTest, translate_send_link_is_invalid)
 TEST_F(PrimRulesTest, translate_send_link_p2p_dma_get_test)
 {
     // Given
-    RankId       localRankID = 0;
-    RankId       remoteRank  = 1;
+    RankId localRankID = 0;
+    RankId remoteRank = 1;
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData     link(portType, localRankID, remoteRank, 0, 1);
-    DataSlice    localSlice(BufferType::INPUT, 0, dataSliceSize);
-    DataSlice    remoteSlice(BufferType::SCRATCH, 0, dataSliceSize);
+    LinkData link(portType, localRankID, remoteRank, 0, 1);
+    DataSlice localSlice(BufferType::INPUT, 0, dataSliceSize);
+    DataSlice remoteSlice(BufferType::SCRATCH, 0, dataSliceSize);
 
     const PrimSend primSendDmaGet(remoteRank, link, localSlice, remoteSlice, DmaMode::GET);
     // When
@@ -366,12 +366,12 @@ TEST_F(PrimRulesTest, translate_send_link_p2p_dma_get_test)
 TEST_F(PrimRulesTest, translate_send_link_p2p_dma_put_test)
 {
     // Given
-    RankId       localRankID = 0;
-    RankId       remoteRank  = 1;
+    RankId localRankID = 0;
+    RankId remoteRank = 1;
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData     link(portType, localRankID, remoteRank, 0, 1);
-    DataSlice    localSlice(BufferType::INPUT, 0, dataSliceSize);
-    DataSlice    remoteSlice(BufferType::SCRATCH, 0, dataSliceSize);
+    LinkData link(portType, localRankID, remoteRank, 0, 1);
+    DataSlice localSlice(BufferType::INPUT, 0, dataSliceSize);
+    DataSlice remoteSlice(BufferType::SCRATCH, 0, dataSliceSize);
 
     PrimSend primSendDmaPut(remoteRank, link, localSlice, remoteSlice, DmaMode::PUT);
 
@@ -382,54 +382,57 @@ TEST_F(PrimRulesTest, translate_send_link_p2p_dma_put_test)
     // When
     vector<unique_ptr<Instruction>> result = Translate(primSendDmaPut);
     // then
-    Check_WaitReady_DMAData_PostFin(result, primSendDmaPut.GetRemoteRank(), primSendDmaPut.GetLink(),
-                                                   InstructionType::WRITE, primSendDmaPut.Size());
+    Check_WaitReady_DMAData_PostFin(
+        result, primSendDmaPut.GetRemoteRank(), primSendDmaPut.GetLink(), InstructionType::WRITE,
+        primSendDmaPut.Size());
 }
 
 TEST_F(PrimRulesTest, translate_send_link_dev_net_ub_dma_default)
 {
     // Given
-    RankId       localRankID = 0;
-    RankId       remoteRank  = 1;
+    RankId localRankID = 0;
+    RankId remoteRank = 1;
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
-    LinkData     link(portType, localRankID, remoteRank, 0, 1);
-    DataSlice    localSlice(BufferType::INPUT, 0, dataSliceSize);
-    DataSlice    remoteSlice(BufferType::SCRATCH, 0, dataSliceSize);
+    LinkData link(portType, localRankID, remoteRank, 0, 1);
+    DataSlice localSlice(BufferType::INPUT, 0, dataSliceSize);
+    DataSlice remoteSlice(BufferType::SCRATCH, 0, dataSliceSize);
 
     PrimSend primSendDmaDefault(remoteRank, link, localSlice, remoteSlice);
     // When
     vector<unique_ptr<Instruction>> result = Translate(primSendDmaDefault);
     // then
-    Check_WaitReady_DMAData_PostFin_WaitFinAck(result, primSendDmaDefault.GetRemoteRank(), primSendDmaDefault.GetLink(),
-                                                   InstructionType::WRITE, primSendDmaDefault.Size());
+    Check_WaitReady_DMAData_PostFin_WaitFinAck(
+        result, primSendDmaDefault.GetRemoteRank(), primSendDmaDefault.GetLink(), InstructionType::WRITE,
+        primSendDmaDefault.Size());
 }
 
 TEST_F(PrimRulesTest, translate_send_link_dev_net_ub_dma_put)
 {
     // Given
-    RankId       localRankID = 0;
-    RankId       remoteRank  = 1;
+    RankId localRankID = 0;
+    RankId remoteRank = 1;
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
-    LinkData     link(portType, localRankID, remoteRank, 0, 1);
-    DataSlice    localSlice(BufferType::INPUT, 0, dataSliceSize);
-    DataSlice    remoteSlice(BufferType::SCRATCH, 0, dataSliceSize);
+    LinkData link(portType, localRankID, remoteRank, 0, 1);
+    DataSlice localSlice(BufferType::INPUT, 0, dataSliceSize);
+    DataSlice remoteSlice(BufferType::SCRATCH, 0, dataSliceSize);
 
     PrimSend primSendDmaPut(remoteRank, link, localSlice, remoteSlice, DmaMode::PUT);
     // When
     vector<unique_ptr<Instruction>> result = Translate(primSendDmaPut);
     // then
-    Check_WaitReady_DMAData_PostFin_WaitFinAck(result, primSendDmaPut.GetRemoteRank(), primSendDmaPut.GetLink(),
-                                                   InstructionType::WRITE, primSendDmaPut.Size());
+    Check_WaitReady_DMAData_PostFin_WaitFinAck(
+        result, primSendDmaPut.GetRemoteRank(), primSendDmaPut.GetLink(), InstructionType::WRITE,
+        primSendDmaPut.Size());
 }
 
 TEST_F(PrimRulesTest, translate_recv_link_p2p_dma_default)
 {
-    RankId       localRankID = 0;
-    RankId       remoteRank  = 1;
+    RankId localRankID = 0;
+    RankId remoteRank = 1;
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData     link(portType, localRankID, remoteRank, 0, 1);
-    DataSlice    localSlice(BufferType::INPUT, 0, dataSliceSize);
-    DataSlice    remoteSlice(BufferType::SCRATCH, 0, dataSliceSize);
+    LinkData link(portType, localRankID, remoteRank, 0, 1);
+    DataSlice localSlice(BufferType::INPUT, 0, dataSliceSize);
+    DataSlice remoteSlice(BufferType::SCRATCH, 0, dataSliceSize);
 
     // Given
     PrimRecv primRecv(remoteRank, link, localSlice, remoteSlice);
@@ -441,18 +444,18 @@ TEST_F(PrimRulesTest, translate_recv_link_p2p_dma_default)
     // When
     vector<unique_ptr<Instruction>> result = Translate(primRecv);
     // then
-    Check_WaitReady_DMAData_PostFin(result, primRecv.GetRemoteRank(), primRecv.GetLink(),
-                                                   InstructionType::READ, primRecv.Size());
+    Check_WaitReady_DMAData_PostFin(
+        result, primRecv.GetRemoteRank(), primRecv.GetLink(), InstructionType::READ, primRecv.Size());
 }
 
 TEST_F(PrimRulesTest, translate_recv_link_p2p_dma_get)
 {
-    RankId       localRankID = 0;
-    RankId       remoteRank  = 1;
+    RankId localRankID = 0;
+    RankId remoteRank = 1;
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData     link(portType, localRankID, remoteRank, 0, 1);
-    DataSlice    localSlice(BufferType::INPUT, 0, dataSliceSize);
-    DataSlice    remoteSlice(BufferType::SCRATCH, 0, dataSliceSize);
+    LinkData link(portType, localRankID, remoteRank, 0, 1);
+    DataSlice localSlice(BufferType::INPUT, 0, dataSliceSize);
+    DataSlice remoteSlice(BufferType::SCRATCH, 0, dataSliceSize);
 
     // Given
     PrimRecv primRecvDmaGet(remoteRank, link, localSlice, remoteSlice, DmaMode::GET);
@@ -460,18 +463,18 @@ TEST_F(PrimRulesTest, translate_recv_link_p2p_dma_get)
     vector<unique_ptr<Instruction>> result = Translate(primRecvDmaGet);
 
     // then
-    Check_WaitReady_DMAData_PostFin(result, primRecvDmaGet.GetRemoteRank(), primRecvDmaGet.GetLink(),
-                                                   InstructionType::READ, primRecvDmaGet.Size());
+    Check_WaitReady_DMAData_PostFin(
+        result, primRecvDmaGet.GetRemoteRank(), primRecvDmaGet.GetLink(), InstructionType::READ, primRecvDmaGet.Size());
 }
 
 TEST_F(PrimRulesTest, translate_recv_link_p2p_dma_put)
 {
-    RankId       localRankID = 0;
-    RankId       remoteRank  = 1;
+    RankId localRankID = 0;
+    RankId remoteRank = 1;
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData     link(portType, localRankID, remoteRank, 0, 1);
-    DataSlice    localSlice(BufferType::INPUT, 0, dataSliceSize);
-    DataSlice    remoteSlice(BufferType::SCRATCH, 0, dataSliceSize);
+    LinkData link(portType, localRankID, remoteRank, 0, 1);
+    DataSlice localSlice(BufferType::INPUT, 0, dataSliceSize);
+    DataSlice remoteSlice(BufferType::SCRATCH, 0, dataSliceSize);
 
     // Given
     PrimRecv primRecvDmaPut(remoteRank, link, localSlice, remoteSlice, DmaMode::PUT);
@@ -488,12 +491,12 @@ TEST_F(PrimRulesTest, translate_recv_link_p2p_dma_put)
 
 TEST_F(PrimRulesTest, translate_recv_link_dev_net_rdma_dma_default)
 {
-    RankId       localRankID = 0;
-    RankId       remoteRank  = 1;
+    RankId localRankID = 0;
+    RankId remoteRank = 1;
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::RDMA);
-    LinkData     link(portType, localRankID, remoteRank, 0, 1);
-    DataSlice    localSlice(BufferType::INPUT, 0, dataSliceSize);
-    DataSlice    remoteSlice(BufferType::SCRATCH, 0, dataSliceSize);
+    LinkData link(portType, localRankID, remoteRank, 0, 1);
+    DataSlice localSlice(BufferType::INPUT, 0, dataSliceSize);
+    DataSlice remoteSlice(BufferType::SCRATCH, 0, dataSliceSize);
 
     // Given
     const PrimRecv primRecvDmaDefault(remoteRank, link, localSlice, remoteSlice);
@@ -505,12 +508,12 @@ TEST_F(PrimRulesTest, translate_recv_link_dev_net_rdma_dma_default)
 
 TEST_F(PrimRulesTest, translate_recv_link_dev_net_rdma_dma_put)
 {
-    RankId       localRankID = 0;
-    RankId       remoteRank  = 1;
+    RankId localRankID = 0;
+    RankId remoteRank = 1;
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::RDMA);
-    LinkData     link(portType, localRankID, remoteRank, 0, 1);
-    DataSlice    localSlice(BufferType::INPUT, 0, dataSliceSize);
-    DataSlice    remoteSlice(BufferType::SCRATCH, 0, dataSliceSize);
+    LinkData link(portType, localRankID, remoteRank, 0, 1);
+    DataSlice localSlice(BufferType::INPUT, 0, dataSliceSize);
+    DataSlice remoteSlice(BufferType::SCRATCH, 0, dataSliceSize);
 
     // Given
     const PrimRecv primRecvDmaPut(remoteRank, link, localSlice, remoteSlice, DmaMode::PUT);
@@ -522,25 +525,25 @@ TEST_F(PrimRulesTest, translate_recv_link_dev_net_rdma_dma_put)
 
 TEST_F(PrimRulesTest, translate_send_reduce_link_p2p_fp32_sum_support_inline_reduce_dma_default_and_dma_get)
 {
-    RankId       localRankID = 0;
-    RankId       remoteRank  = 1;
+    RankId localRankID = 0;
+    RankId remoteRank = 1;
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData     link(portType, localRankID, remoteRank, 0, 1);
-    DataSlice    localSlice(BufferType::INPUT, 0, dataSliceSize);
-    DataSlice    remoteSrcSlice(BufferType::SCRATCH, 0, dataSliceSize);
-    DataSlice    remoteDstSlice(BufferType::SCRATCH, 100, dataSliceSize);
+    LinkData link(portType, localRankID, remoteRank, 0, 1);
+    DataSlice localSlice(BufferType::INPUT, 0, dataSliceSize);
+    DataSlice remoteSrcSlice(BufferType::SCRATCH, 0, dataSliceSize);
+    DataSlice remoteDstSlice(BufferType::SCRATCH, 100, dataSliceSize);
 
     // 910A2 support FP32+ReduceOp::SUM inline reduce
-    PrimSendReduce primSendReduce(remoteRank, link, localSlice, remoteSrcSlice, remoteDstSlice, DataType::FP32,
-                                  ReduceOp::SUM);
+    PrimSendReduce primSendReduce(
+        remoteRank, link, localSlice, remoteSrcSlice, remoteDstSlice, DataType::FP32, ReduceOp::SUM);
 
     DataSlice localSlice1(BufferType::INPUT, 0, dataSliceSize);
     DataSlice remoteSrcSlice1(BufferType::SCRATCH, 0, dataSliceSize);
     DataSlice remoteDstSlice1(BufferType::SCRATCH, 100, dataSliceSize);
     primSendReduce.Append(localSlice1, remoteSrcSlice1, remoteDstSlice1);
 
-    const PrimSendReduce primSendReduceDmaGet(remoteRank, link, localSlice, remoteSrcSlice, remoteDstSlice,
-                                              DataType::FP32, ReduceOp::SUM, DmaMode::GET);
+    const PrimSendReduce primSendReduceDmaGet(
+        remoteRank, link, localSlice, remoteSrcSlice, remoteDstSlice, DataType::FP32, ReduceOp::SUM, DmaMode::GET);
     // When
     vector<unique_ptr<Instruction>> result1 = Translate(primSendReduce);
     vector<unique_ptr<Instruction>> result2 = Translate(primSendReduceDmaGet);
@@ -551,19 +554,19 @@ TEST_F(PrimRulesTest, translate_send_reduce_link_p2p_fp32_sum_support_inline_red
 
 TEST_F(PrimRulesTest, translate_send_reduce_link_p2p_uint64_prod_not_support_inline_reduce_dma_default_and_dma_get)
 {
-    RankId       localRankID = 0;
-    RankId       remoteRank  = 1;
+    RankId localRankID = 0;
+    RankId remoteRank = 1;
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData     link(portType, localRankID, remoteRank, 0, 1);
-    DataSlice    localSlice(BufferType::INPUT, 0, dataSliceSize);
-    DataSlice    remoteSrcSlice(BufferType::SCRATCH, 0, dataSliceSize);
-    DataSlice    remoteDstSlice(BufferType::SCRATCH, 100, dataSliceSize);
+    LinkData link(portType, localRankID, remoteRank, 0, 1);
+    DataSlice localSlice(BufferType::INPUT, 0, dataSliceSize);
+    DataSlice remoteSrcSlice(BufferType::SCRATCH, 0, dataSliceSize);
+    DataSlice remoteDstSlice(BufferType::SCRATCH, 100, dataSliceSize);
 
     // 910A2 does not support UINT64+PROD::SUM inline reduce
-    PrimSendReduce primSendReduce(remoteRank, link, localSlice, remoteSrcSlice, remoteDstSlice, DataType::UINT64,
-                                  ReduceOp::PROD);
-    PrimSendReduce primSendReduceDmaGet(remoteRank, link, localSlice, remoteSrcSlice, remoteDstSlice, DataType::UINT64,
-                                        ReduceOp::PROD, DmaMode::GET);
+    PrimSendReduce primSendReduce(
+        remoteRank, link, localSlice, remoteSrcSlice, remoteDstSlice, DataType::UINT64, ReduceOp::PROD);
+    PrimSendReduce primSendReduceDmaGet(
+        remoteRank, link, localSlice, remoteSrcSlice, remoteDstSlice, DataType::UINT64, ReduceOp::PROD, DmaMode::GET);
     // When
     vector<unique_ptr<Instruction>> result1 = Translate(primSendReduce);
     vector<unique_ptr<Instruction>> result2 = Translate(primSendReduceDmaGet);
@@ -574,17 +577,17 @@ TEST_F(PrimRulesTest, translate_send_reduce_link_p2p_uint64_prod_not_support_inl
 
 TEST_F(PrimRulesTest, translate_send_reduce_link_dev_net_rdma_uint64_prod_not_support_inline_reduce_dma_default)
 {
-    RankId       localRankID = 0;
-    RankId       remoteRank  = 1;
+    RankId localRankID = 0;
+    RankId remoteRank = 1;
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::RDMA);
-    LinkData     link(portType, localRankID, remoteRank, 0, 1);
-    DataSlice    localSlice(BufferType::INPUT, 0, dataSliceSize);
-    DataSlice    remoteSrcSlice(BufferType::SCRATCH, 0, dataSliceSize);
-    DataSlice    remoteDstSlice(BufferType::SCRATCH, 100, dataSliceSize);
+    LinkData link(portType, localRankID, remoteRank, 0, 1);
+    DataSlice localSlice(BufferType::INPUT, 0, dataSliceSize);
+    DataSlice remoteSrcSlice(BufferType::SCRATCH, 0, dataSliceSize);
+    DataSlice remoteDstSlice(BufferType::SCRATCH, 100, dataSliceSize);
 
     // 910A2 does not support UINT64+ReduceOp::SUM inline reduce
-    PrimSendReduce primSendReduce(remoteRank, link, localSlice, remoteSrcSlice, remoteDstSlice, DataType::UINT64,
-                                  ReduceOp::PROD);
+    PrimSendReduce primSendReduce(
+        remoteRank, link, localSlice, remoteSrcSlice, remoteDstSlice, DataType::UINT64, ReduceOp::PROD);
     // When
     vector<unique_ptr<Instruction>> result1 = Translate(primSendReduce);
 
@@ -594,21 +597,21 @@ TEST_F(PrimRulesTest, translate_send_reduce_link_dev_net_rdma_uint64_prod_not_su
 
 TEST_F(PrimRulesTest, translate_send_reduce_link_dev_net_ub_fp32_sum_support_inline_reduce_dma_default)
 {
-    RankId       localRankID = 0;
-    RankId       remoteRank  = 1;
+    RankId localRankID = 0;
+    RankId remoteRank = 1;
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
-    LinkData     link(portType, localRankID, remoteRank, 0, 1);
-    DataSlice    localSlice(BufferType::INPUT, 0, dataSliceSize);
-    DataSlice    remoteSrcSlice(BufferType::SCRATCH, 0, dataSliceSize);
-    DataSlice    remoteDstSlice(BufferType::SCRATCH, 100, dataSliceSize);
+    LinkData link(portType, localRankID, remoteRank, 0, 1);
+    DataSlice localSlice(BufferType::INPUT, 0, dataSliceSize);
+    DataSlice remoteSrcSlice(BufferType::SCRATCH, 0, dataSliceSize);
+    DataSlice remoteDstSlice(BufferType::SCRATCH, 100, dataSliceSize);
 
     // 910A2 does not support FP32+ReduceOp::SUM inline reduce
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(Hccl::DevType::DEV_TYPE_910A2));
-    PrimSendReduce primSendReduce(remoteRank, link, localSlice, remoteSrcSlice, remoteDstSlice, DataType::FP32,
-                                  ReduceOp::SUM);
-    DataSlice      localSlice1(BufferType::INPUT, 0, dataSliceSize);
-    DataSlice      remoteSrcSlice1(BufferType::SCRATCH, 0, dataSliceSize);
-    DataSlice      remoteDstSlice1(BufferType::SCRATCH, 100, dataSliceSize);
+    PrimSendReduce primSendReduce(
+        remoteRank, link, localSlice, remoteSrcSlice, remoteDstSlice, DataType::FP32, ReduceOp::SUM);
+    DataSlice localSlice1(BufferType::INPUT, 0, dataSliceSize);
+    DataSlice remoteSrcSlice1(BufferType::SCRATCH, 0, dataSliceSize);
+    DataSlice remoteDstSlice1(BufferType::SCRATCH, 100, dataSliceSize);
     primSendReduce.Append(localSlice1, remoteSrcSlice1, remoteDstSlice1);
 
     // When
@@ -620,48 +623,50 @@ TEST_F(PrimRulesTest, translate_send_reduce_link_dev_net_ub_fp32_sum_support_inl
 
 TEST_F(PrimRulesTest, translate_recv_reduce_link_p2p_fp32_sum_support_inline_reduce_dma_default_and_dma_get)
 {
-    RankId       localRankID = 0;
-    RankId       remoteRank  = 1;
+    RankId localRankID = 0;
+    RankId remoteRank = 1;
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData     link(portType, localRankID, remoteRank, 0, 1);
-    DataSlice    localSlice(BufferType::INPUT, 0, dataSliceSize);
-    DataSlice    remoteSrcSlice(BufferType::SCRATCH, 0, dataSliceSize);
-    DataSlice    remoteDstSlice(BufferType::SCRATCH, 100, dataSliceSize);
+    LinkData link(portType, localRankID, remoteRank, 0, 1);
+    DataSlice localSlice(BufferType::INPUT, 0, dataSliceSize);
+    DataSlice remoteSrcSlice(BufferType::SCRATCH, 0, dataSliceSize);
+    DataSlice remoteDstSlice(BufferType::SCRATCH, 100, dataSliceSize);
 
     // 910A support FP32+ReduceOp::SUM inline reduce
-    PrimRecvReduce primRecvReduce(remoteRank, link, localSlice, remoteSrcSlice, remoteDstSlice, DataType::FP32,
-                                  ReduceOp::SUM);
+    PrimRecvReduce primRecvReduce(
+        remoteRank, link, localSlice, remoteSrcSlice, remoteDstSlice, DataType::FP32, ReduceOp::SUM);
 
     DataSlice localSlice1(BufferType::INPUT, 0, dataSliceSize);
     DataSlice remoteSrcSlice1(BufferType::SCRATCH, 0, dataSliceSize);
     DataSlice remoteDstSlice1(BufferType::SCRATCH, 100, dataSliceSize);
     primRecvReduce.Append(localSlice1, remoteSrcSlice1, remoteDstSlice1);
 
-    PrimRecvReduce primRecvReduceDmaGet(remoteRank, link, localSlice, remoteSrcSlice, remoteDstSlice, DataType::FP16,
-                                        ReduceOp::SUM, DmaMode::GET);
+    PrimRecvReduce primRecvReduceDmaGet(
+        remoteRank, link, localSlice, remoteSrcSlice, remoteDstSlice, DataType::FP16, ReduceOp::SUM, DmaMode::GET);
     // When
     vector<unique_ptr<Instruction>> result1 = Translate(primRecvReduce);
     vector<unique_ptr<Instruction>> result2 = Translate(primRecvReduceDmaGet);
     // then
     Check_WithoutInlineReduce_RecvReduceGet(result2, primRecvReduceDmaGet);
-    Check_WaitReady_DMAData_PostFin(result1, primRecvReduce.GetRemoteRank(), primRecvReduce.GetLink(),
-                                    InstructionType::READ_REDUCE, primRecvReduce.Size());
+    Check_WaitReady_DMAData_PostFin(
+        result1, primRecvReduce.GetRemoteRank(), primRecvReduce.GetLink(), InstructionType::READ_REDUCE,
+        primRecvReduce.Size());
 }
 
-TEST_F(PrimRulesTest,
-       translate_recv_reduce_link_p2p_uint64_prod_not_support_inline_reduce_dma_default_and_dma_get_one_slice)
+TEST_F(
+    PrimRulesTest,
+    translate_recv_reduce_link_p2p_uint64_prod_not_support_inline_reduce_dma_default_and_dma_get_one_slice)
 {
-    RankId       localRankID = 0;
-    RankId       remoteRank  = 1;
+    RankId localRankID = 0;
+    RankId remoteRank = 1;
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData     link(portType, localRankID, remoteRank, 0, 1);
-    DataSlice    localSlice(BufferType::INPUT, 0, dataSliceSize);
-    DataSlice    remoteSrcSlice(BufferType::SCRATCH, 0, dataSliceSize);
-    DataSlice    remoteDstSlice(BufferType::SCRATCH, 100, dataSliceSize);
+    LinkData link(portType, localRankID, remoteRank, 0, 1);
+    DataSlice localSlice(BufferType::INPUT, 0, dataSliceSize);
+    DataSlice remoteSrcSlice(BufferType::SCRATCH, 0, dataSliceSize);
+    DataSlice remoteDstSlice(BufferType::SCRATCH, 100, dataSliceSize);
 
     // 910A2 does support UINT64+ReduceOp::PROD inline reduce
-    PrimRecvReduce primRecvReduce(remoteRank, link, localSlice, remoteSrcSlice, remoteDstSlice, DataType::UINT64,
-                                  ReduceOp::PROD);
+    PrimRecvReduce primRecvReduce(
+        remoteRank, link, localSlice, remoteSrcSlice, remoteDstSlice, DataType::UINT64, ReduceOp::PROD);
     // When
     vector<unique_ptr<Instruction>> result1 = Translate(primRecvReduce);
 
@@ -669,20 +674,21 @@ TEST_F(PrimRulesTest,
     Check_WithoutInlineReduce_RecvReduceGet(result1, primRecvReduce);
 }
 
-TEST_F(PrimRulesTest,
-       translate_recv_reduce_link_p2p_uint64_prod_not_support_inline_reduce_dma_default_and_dma_get_two_slice)
+TEST_F(
+    PrimRulesTest,
+    translate_recv_reduce_link_p2p_uint64_prod_not_support_inline_reduce_dma_default_and_dma_get_two_slice)
 {
-    RankId       localRankID = 0;
-    RankId       remoteRank  = 1;
+    RankId localRankID = 0;
+    RankId remoteRank = 1;
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData     link(portType, localRankID, remoteRank, 0, 1);
-    DataSlice    localSlice(BufferType::INPUT, 0, dataSliceSize);
-    DataSlice    remoteSrcSlice(BufferType::SCRATCH, 0, dataSliceSize);
-    DataSlice    remoteDstSlice(BufferType::SCRATCH, 100, dataSliceSize);
+    LinkData link(portType, localRankID, remoteRank, 0, 1);
+    DataSlice localSlice(BufferType::INPUT, 0, dataSliceSize);
+    DataSlice remoteSrcSlice(BufferType::SCRATCH, 0, dataSliceSize);
+    DataSlice remoteDstSlice(BufferType::SCRATCH, 100, dataSliceSize);
 
     // 910A2 does support UINT64+ReduceOp::PROD inline reduce
-    PrimRecvReduce primRecvReduce(remoteRank, link, localSlice, remoteSrcSlice, remoteDstSlice, DataType::UINT64,
-                                  ReduceOp::PROD);
+    PrimRecvReduce primRecvReduce(
+        remoteRank, link, localSlice, remoteSrcSlice, remoteDstSlice, DataType::UINT64, ReduceOp::PROD);
 
     DataSlice localSlice1(BufferType::INPUT, 0, dataSliceSize);
     DataSlice remoteSrcSlice1(BufferType::SCRATCH, 0, dataSliceSize);
@@ -696,20 +702,20 @@ TEST_F(PrimRulesTest,
 
 TEST_F(PrimRulesTest, translate_recv_reduce_link_dev_net_rdma_fp32_sum_support_inline_reduce_dma_default)
 {
-    RankId       localRankID = 0;
-    RankId       remoteRank  = 1;
+    RankId localRankID = 0;
+    RankId remoteRank = 1;
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::RDMA);
-    LinkData     link(portType, localRankID, remoteRank, 0, 1);
-    DataSlice    localSlice(BufferType::INPUT, 0, dataSliceSize);
-    DataSlice    remoteSrcSlice(BufferType::SCRATCH, 0, dataSliceSize);
-    DataSlice    remoteDstSlice(BufferType::SCRATCH, 100, dataSliceSize);
+    LinkData link(portType, localRankID, remoteRank, 0, 1);
+    DataSlice localSlice(BufferType::INPUT, 0, dataSliceSize);
+    DataSlice remoteSrcSlice(BufferType::SCRATCH, 0, dataSliceSize);
+    DataSlice remoteDstSlice(BufferType::SCRATCH, 100, dataSliceSize);
 
     // 910A2 support FP32+ReduceOp::SUM inline reduce
-    PrimRecvReduce primRecvReduce(remoteRank, link, localSlice, remoteSrcSlice, remoteDstSlice, DataType::FP32,
-                                  ReduceOp::SUM);
-    DataSlice      localSlice1(BufferType::INPUT, 0, dataSliceSize);
-    DataSlice      remoteSrcSlice1(BufferType::SCRATCH, 0, dataSliceSize);
-    DataSlice      remoteDstSlice1(BufferType::SCRATCH, 100, dataSliceSize);
+    PrimRecvReduce primRecvReduce(
+        remoteRank, link, localSlice, remoteSrcSlice, remoteDstSlice, DataType::FP32, ReduceOp::SUM);
+    DataSlice localSlice1(BufferType::INPUT, 0, dataSliceSize);
+    DataSlice remoteSrcSlice1(BufferType::SCRATCH, 0, dataSliceSize);
+    DataSlice remoteDstSlice1(BufferType::SCRATCH, 100, dataSliceSize);
     primRecvReduce.Append(localSlice1, remoteSrcSlice1, remoteDstSlice1);
     // When
     vector<unique_ptr<Instruction>> result1 = Translate(primRecvReduce);
@@ -720,20 +726,20 @@ TEST_F(PrimRulesTest, translate_recv_reduce_link_dev_net_rdma_fp32_sum_support_i
 
 TEST_F(PrimRulesTest, translate_recv_reduce_link_dev_net_rdma_uint64_prod_support_inline_reduce_dma_default)
 {
-    RankId       localRankID = 0;
-    RankId       remoteRank  = 1;
+    RankId localRankID = 0;
+    RankId remoteRank = 1;
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::RDMA);
-    LinkData     link(portType, localRankID, remoteRank, 0, 1);
-    DataSlice    localSlice(BufferType::INPUT, 0, dataSliceSize);
-    DataSlice    remoteSrcSlice(BufferType::SCRATCH, 0, dataSliceSize);
-    DataSlice    remoteDstSlice(BufferType::SCRATCH, 100, dataSliceSize);
+    LinkData link(portType, localRankID, remoteRank, 0, 1);
+    DataSlice localSlice(BufferType::INPUT, 0, dataSliceSize);
+    DataSlice remoteSrcSlice(BufferType::SCRATCH, 0, dataSliceSize);
+    DataSlice remoteDstSlice(BufferType::SCRATCH, 100, dataSliceSize);
 
     // 910A2 does support UINT64+ReduceOp::PROD inline reduce
-    PrimRecvReduce primRecvReduce(remoteRank, link, localSlice, remoteSrcSlice, remoteDstSlice, DataType::UINT64,
-                                  ReduceOp::PROD);
-    DataSlice      localSlice1(BufferType::INPUT, 0, dataSliceSize);
-    DataSlice      remoteSrcSlice1(BufferType::SCRATCH, 0, dataSliceSize);
-    DataSlice      remoteDstSlice1(BufferType::SCRATCH, 100, dataSliceSize);
+    PrimRecvReduce primRecvReduce(
+        remoteRank, link, localSlice, remoteSrcSlice, remoteDstSlice, DataType::UINT64, ReduceOp::PROD);
+    DataSlice localSlice1(BufferType::INPUT, 0, dataSliceSize);
+    DataSlice remoteSrcSlice1(BufferType::SCRATCH, 0, dataSliceSize);
+    DataSlice remoteDstSlice1(BufferType::SCRATCH, 100, dataSliceSize);
     primRecvReduce.Append(localSlice1, remoteSrcSlice1, remoteDstSlice1);
     // When
     vector<unique_ptr<Instruction>> result1 = Translate(primRecvReduce);

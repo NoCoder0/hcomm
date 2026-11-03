@@ -1,12 +1,13 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "gtest/gtest.h"
 
 #include <vector>
@@ -22,23 +23,19 @@
 #include "checker.h"
 using namespace checker;
 
-class BroadCastRingFor91093GeneralizationTest: public ::testing::TestWithParam<std::tuple<u64, CheckerDataType, CheckerOpMode, vector<int>, int,
-    std::vector<std::vector<std::vector<unsigned int>>> > > {
+class BroadCastRingFor91093GeneralizationTest :
+    public ::testing::TestWithParam<std::tuple<
+        u64, CheckerDataType, CheckerOpMode, vector<int>, int, std::vector<std::vector<std::vector<unsigned int>>>>> {
 public:
-    static void SetUpTestCase()
-    {
-        std::cout << "BroadCastRingFor91093GeneralizationTest set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "BroadCastRingFor91093GeneralizationTest set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "BroadCastRingFor91093GeneralizationTest tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "BroadCastRingFor91093GeneralizationTest tear down." << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -49,26 +46,27 @@ public:
         // 这边每个case执行完成需要清理所有的环境变量，如果有新增的环境变量，需要在这个函数中进行清理
         ClearHcclEnv();
     }
+
 protected:
-    int GetRootValue(int rankSize, int rootParam){
-        switch (rootParam)
-        {
-        case 0:
-            return 0;
-            break;
-        case 1:
-            return rankSize - 1;
-            break;
-        case 2:
-            return rankSize / 2;
-            break;
-        case 3:
-            return std::min(rankSize / 2 + 1, rankSize -1);
-            break;
-        default:
-            std::cout << "The root node is invalid values." << std::endl;
-            return -1;
-            break;
+    int GetRootValue(int rankSize, int rootParam)
+    {
+        switch (rootParam) {
+            case 0:
+                return 0;
+                break;
+            case 1:
+                return rankSize - 1;
+                break;
+            case 2:
+                return rankSize / 2;
+                break;
+            case 3:
+                return std::min(rankSize / 2 + 1, rankSize - 1);
+                break;
+            default:
+                std::cout << "The root node is invalid values." << std::endl;
+                return -1;
+                break;
         }
     }
 };
@@ -80,8 +78,9 @@ TEST_P(BroadCastRingFor91093GeneralizationTest, SymmetricTopo)
     // std::cout << "checkerOpParam.DataDes.count : " << std::get<0>(mytuple) << std::endl;
     // std::cout << "checkerOpParam.DataDes.dataType : " << std::get<1>(mytuple) << std::endl;
     // std::cout << "checkerOpParam.opMode : " << std::get<2>(mytuple) << std::endl;
-    // std::cout << "checkerOpParam.TopoMeta : " << std::get<3>(mytuple)[0]  << " , " << std::get<3>(mytuple)[1] << " , " << std::get<2>(mytuple)[3] << std::endl;
-    // std::cout << "checkerOpParam.root : " << std::get<4>(mytuple) << std::endl;
+    // std::cout << "checkerOpParam.TopoMeta : " << std::get<3>(mytuple)[0]  << " , " << std::get<3>(mytuple)[1] << " ,
+    // " << std::get<2>(mytuple)[3] << std::endl; std::cout << "checkerOpParam.root : " << std::get<4>(mytuple) <<
+    // std::endl;
 
     RankTable_For_LLT gen;
     TopoMeta topoMeta;
@@ -149,14 +148,15 @@ TEST_P(BroadCastRingFor91093GeneralizationTest, AsymmetricTopo)
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 }
 
-INSTANTIATE_TEST_SUITE_P(BroadCastTest, BroadCastRingFor91093GeneralizationTest,
+INSTANTIATE_TEST_SUITE_P(
+    BroadCastTest, BroadCastRingFor91093GeneralizationTest,
     testing::Combine(
-        testing::Values(800/*, 1000000008, 5000000008*/),
-        testing::Values(CheckerDataType::DATA_TYPE_INT32, CheckerDataType::DATA_TYPE_INT8/*, CheckerDataType::DATA_TYPE_BFP16, CheckerDataType::DATA_TYPE_INT64*/),
+        testing::Values(800 /*, 1000000008, 5000000008*/),
+        testing::Values(
+            CheckerDataType::DATA_TYPE_INT32,
+            CheckerDataType::DATA_TYPE_INT8 /*, CheckerDataType::DATA_TYPE_BFP16, CheckerDataType::DATA_TYPE_INT64*/),
         testing::Values(CheckerOpMode::OPBASE, CheckerOpMode::OFFLOAD),
         testing::ValuesIn(std::vector<std::vector<int>>{{1, 1, 8}, {1, 1, 16}, {1, 4, 8}, {1, 4, 16}}),
         testing::Values(0, 1, 2, 3),
-        testing::ValuesIn(std::vector<std::vector<std::vector<std::vector<unsigned int>>>>
-        {{{{0,1,2,3,4,6,8}, {0,1,2,3,4,6,8}}}})
-    )
-);
+        testing::ValuesIn(std::vector<std::vector<std::vector<std::vector<unsigned int>>>>{
+            {{{0, 1, 2, 3, 4, 6, 8}, {0, 1, 2, 3, 4, 6, 8}}}})));

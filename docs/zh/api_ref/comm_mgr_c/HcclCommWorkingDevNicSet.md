@@ -3,19 +3,19 @@
 ## 产品支持情况
 
 <!-- npu="950" id1 -->
-- Ascend 950PR/Ascend 950DT：不支持
+- Ascend 950PR&950DT系列产品：不支持
 <!-- end id1 -->
 <!-- npu="A3" id2 -->
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：支持
+- Atlas A3系列产品：支持
 <!-- end id2 -->
 <!-- npu="910b" id3 -->
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：不支持
+- Atlas A2系列产品：不支持
 <!-- end id3 -->
 <!-- npu="310p" id4 -->
-- Atlas 推理系列产品：不支持
+- Atlas推理系列产品：不支持
 <!-- end id4 -->
 <!-- npu="910" id5 -->
-- Atlas 训练系列产品：不支持
+- Atlas训练系列产品：不支持
 <!-- end id5 -->
 
 ## 功能说明
@@ -62,6 +62,7 @@ HcclResult HcclCommWorkingDevNicSet(HcclComm comm, uint32_t *ranks, bool *useBac
 - 针对同一个rank，HcclCommWorkingDevNicSet接口需要one by one保序调用，不支持并发下发。
 - 针对整个通信域，调用HcclCommWorkingDevNicSet接口时，在不同rank间要保证同一下发顺序。
 - comm句柄指向的通信域必须已下发过算子才能执行网卡配置，后续新下发同类型同参数的算子会继续使用同样的网卡配置，其他新下发的算子会使用默认网卡通信。不满足以上要求，会出现网卡配置失败。
+- comm必须为有效的通信域句柄（由通信域创建接口获得，调用期间保持有效）。禁止传入空指针、野指针或已销毁的句柄。
 
 ## 调用示例
 

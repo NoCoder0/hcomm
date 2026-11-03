@@ -11,29 +11,27 @@
 #include "topo_match_mesh_ring.h"
 
 namespace Hccl {
-TopoMatchMeshRing::TopoMatchMeshRing(const RankId vRank, const u32 rankSize, const RankGraph *rankGraph,
-                                     const DevType devType)
+TopoMatchMeshRing::TopoMatchMeshRing(
+    const RankId vRank, const u32 rankSize, const RankGraph* rankGraph, const DevType devType)
     : TopoMatchBase(vRank, rankSize, rankGraph, devType)
-{
-}
+{}
 
-TopoMatchMeshRing::~TopoMatchMeshRing()
-{
-}
+TopoMatchMeshRing::~TopoMatchMeshRing() {}
 
-HcclResult TopoMatchMeshRing::MatchTopo(std::vector<std::vector<std::vector<RankId>>> &vTopo,
-                                        std::vector<std::vector<RankId>>              &virtRanks,
-                                        std::vector<std::map<RankId, u32>>            &virtRankMap)
+HcclResult TopoMatchMeshRing::MatchTopo(
+    std::vector<std::vector<std::vector<RankId>>>& vTopo, std::vector<std::vector<RankId>>& virtRanks,
+    std::vector<std::map<RankId, u32>>& virtRankMap)
 {
     // 获取并校验当前通信层数
     std::set<u32> levelSet = rankGraph_->GetLevels(myRank_);
-    CHK_PRT_RET((levelSet.size() == COMM_LEVEL_SIZE_0),   //获取当前rank通信层数
-                HCCL_ERROR("[CollAlgFactory] [TopoMatchMeshRing] Rank [%d], Invalid virtual topo.", myRank_),
-                HcclResult::HCCL_E_PARA);
+    CHK_PRT_RET(
+        (levelSet.size() == COMM_LEVEL_SIZE_0), // 获取当前rank通信层数
+        HCCL_ERROR("[CollAlgFactory] [TopoMatchMeshRing] Rank [%d], Invalid virtual topo.", myRank_),
+        HcclResult::HCCL_E_PARA);
 
     // 获取 level0 Topo 信息
     const NetInstance* netInstance = rankGraph_->GetNetInstanceByRankId(0, myRank_);
-    if(netInstance == nullptr) {
+    if (netInstance == nullptr) {
         HCCL_ERROR("TopoMatchMeshRing::MatchTopo netInstance is nullptr");
         return HcclResult::HCCL_E_PTR;
     }
@@ -42,19 +40,24 @@ HcclResult TopoMatchMeshRing::MatchTopo(std::vector<std::vector<std::vector<Rank
 
     if (levelSet.size() == COMM_LEVEL_SIZE_1) {
         // 判断level0上的拓扑是否符合 m x n 要求
-        const auto minmxPair =
-            std::minmax_element(numRanksPerBoard_.begin(), numRanksPerBoard_.end());
+        const auto minmxPair = std::minmax_element(numRanksPerBoard_.begin(), numRanksPerBoard_.end());
         u32 minNumRankPerBoard = *minmxPair.first;
         u32 maxNumRankPerBoard = *minmxPair.second;
-        CHK_PRT_RET((minNumRankPerBoard != maxNumRankPerBoard),
-                    HCCL_ERROR("[CollAlgFactory] [TopoMatchMeshRing] Rank [%d], Invalid virtual topo for "
-                        "mesh_ring, min numRanksPerBoard_[%u], max numRanksPerBoard_[%u].",
-                        myRank_, minNumRankPerBoard, maxNumRankPerBoard), HcclResult::HCCL_E_PARA);
+        CHK_PRT_RET(
+            (minNumRankPerBoard != maxNumRankPerBoard),
+            HCCL_ERROR(
+                "[CollAlgFactory] [TopoMatchMeshRing] Rank [%d], Invalid virtual topo for "
+                "mesh_ring, min numRanksPerBoard_[%u], max numRanksPerBoard_[%u].",
+                myRank_, minNumRankPerBoard, maxNumRankPerBoard),
+            HcclResult::HCCL_E_PARA);
 
-        CHK_PRT_RET(((rankSize_ == 1) || (numRanksPerBoard_[0] * numRanksPerBoard_.size() != rankSize_)),
-                    HCCL_ERROR("[CollAlgFactory] [TopoMatchMeshRing] Rank [%d], Invalid virtual topo for "
-                        "mesh_ring algorithm with rankSize [%u], ranksPerBoard [%u], ranksPerSlot [%lu].",
-                        myRank_, rankSize_, numRanksPerBoard_[0], numRanksPerBoard_.size()), HcclResult::HCCL_E_PARA);
+        CHK_PRT_RET(
+            ((rankSize_ == 1) || (numRanksPerBoard_[0] * numRanksPerBoard_.size() != rankSize_)),
+            HCCL_ERROR(
+                "[CollAlgFactory] [TopoMatchMeshRing] Rank [%d], Invalid virtual topo for "
+                "mesh_ring algorithm with rankSize [%u], ranksPerBoard [%u], ranksPerSlot [%lu].",
+                myRank_, rankSize_, numRanksPerBoard_[0], numRanksPerBoard_.size()),
+            HcclResult::HCCL_E_PARA);
 
         // 计算R0的AlgTopoInfo
         u32 myLocalId = rankGraph_->GetReplacedLocalId(myRank_);
@@ -74,15 +77,17 @@ HcclResult TopoMatchMeshRing::MatchTopo(std::vector<std::vector<std::vector<Rank
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TopoMatchMeshRing::MeshRingTopoForAllLevel(std::set<RankId> rankSetR0,
-                                                      std::vector<std::vector<std::vector<RankId>>> &vTopo,
-                                                      std::vector<std::vector<RankId>> &virtRanks)
+HcclResult TopoMatchMeshRing::MeshRingTopoForAllLevel(
+    std::set<RankId> rankSetR0, std::vector<std::vector<std::vector<RankId>>>& vTopo,
+    std::vector<std::vector<RankId>>& virtRanks)
 {
     // 计算R0的virtRanks
     if (numRanksPerBoard_.size() != 1 && numRanksPerBoard_[0] != 1) {
         if (!IsAllRanksFullMeshConnected(rankSetR0)) {
-            HCCL_ERROR("[CollAlgFactory] [TopoMatchMeshRing] Rank [%d], Invalid virtual topo for "
-                        "mesh_ring in level0.", myRank_);
+            HCCL_ERROR(
+                "[CollAlgFactory] [TopoMatchMeshRing] Rank [%d], Invalid virtual topo for "
+                "mesh_ring in level0.",
+                myRank_);
             return HcclResult::HCCL_E_PARA;
         }
         std::vector<RankId> ranksPerRack(rankSetR0.size());
@@ -93,7 +98,7 @@ HcclResult TopoMatchMeshRing::MeshRingTopoForAllLevel(std::set<RankId> rankSetR0
     }
     // 计算R1的virtRanks
     const NetInstance* fabGroupLevel1 = rankGraph_->GetNetInstanceByRankId(1, myRank_);
-    if(fabGroupLevel1  == nullptr) {
+    if (fabGroupLevel1 == nullptr) {
         HCCL_ERROR("[CollAlgFactory] [TopoMatchMeshRing] Rank [%d],fabGroupLevel1 is nullptr", myRank_);
         return HcclResult::HCCL_E_PTR;
     }

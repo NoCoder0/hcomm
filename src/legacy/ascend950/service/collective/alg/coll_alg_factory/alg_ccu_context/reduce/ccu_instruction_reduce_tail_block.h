@@ -22,12 +22,15 @@
 namespace Hccl {
 class CcuCtxArgReduceTailBlock : public CcuCtxArg {
 public:
-    explicit CcuCtxArgReduceTailBlock(const std::vector<uint64_t> &dSize, uint32_t rId,
-                                      const std::string &notifySignal, const CollAlgOperator &op,
-                                      const std::vector<std::vector<RankId>> &tempVTopo)
-        : dimSize_(dSize), rankId_(rId), notifySignal_(notifySignal), op_(op), tempVTopo_(tempVTopo)
-    {
-    }
+    explicit CcuCtxArgReduceTailBlock(
+        const std::vector<uint64_t>& dSize, uint32_t rId, const std::string& notifySignal, const CollAlgOperator& op,
+        const std::vector<std::vector<RankId>>& tempVTopo)
+        : dimSize_(dSize),
+          rankId_(rId),
+          notifySignal_(notifySignal),
+          op_(op),
+          tempVTopo_(tempVTopo)
+    {}
     CcuCtxSignature GetCtxSignature() const override
     {
         CcuCtxSignature signature;
@@ -35,28 +38,25 @@ public:
         return signature;
     }
 
-    std::vector<uint64_t>            dimSize_;
-    uint32_t                         rankId_;
-    std::string                      notifySignal_;
-    CollAlgOperator                  op_;
+    std::vector<uint64_t> dimSize_;
+    uint32_t rankId_;
+    std::string notifySignal_;
+    CollAlgOperator op_;
     std::vector<std::vector<RankId>> tempVTopo_;
 };
 
 class CcuTaskArgReduceTailBlock : public CcuTaskArg {
 public:
-    explicit CcuTaskArgReduceTailBlock()
-    {
-    }
+    explicit CcuTaskArgReduceTailBlock() {}
 };
 
 class CcuInstructionReduceTailBlock : public CcuInstruction {
 public:
-    CcuInstructionReduceTailBlock() : CcuInstruction()
-    {
-    }
+    CcuInstructionReduceTailBlock() : CcuInstruction() {}
 
-    void Init(uint32_t rankId, const std::string &notifySignal, CollAlgOperator &op,
-              std::vector<std::vector<RankId>> &tempVTopo)
+    void Init(
+        uint32_t rankId, const std::string& notifySignal, CollAlgOperator& op,
+        std::vector<std::vector<RankId>>& tempVTopo)
     {
         u32 maxDimNum = 1;
         if (tempVTopo.size() != maxDimNum) {
@@ -64,9 +64,9 @@ public:
                 "[CcuInstructionReduceTailBlock] tempVTopo size is not 1, size is [%zu].", tempVTopo.size()));
         }
         dimSize_.push_back(tempVTopo[0].size());
-        rankId_                   = rankId;
-        op_                       = op;
-        tempVTopo_                = tempVTopo;
+        rankId_ = rankId;
+        op_ = op;
+        tempVTopo_ = tempVTopo;
         notifySignal_ = notifySignal;
         return;
     }
@@ -77,32 +77,23 @@ public:
         return instType_;
     }
 
-    std::string Describe() const override
-    {
-        return StringFormat("CcuInstructionReduceTailBlock");
-    }
+    std::string Describe() const override { return StringFormat("CcuInstructionReduceTailBlock"); }
 
-    void SetInstType(CcuInstType instType) 
-    { 
-        instType_ = instType; 
-    }
+    void SetInstType(CcuInstType instType) { instType_ = instType; }
 
     std::unique_ptr<CcuCtxArg> GetCtxArg() const override
     {
         return std::make_unique<CcuCtxArgReduceTailBlock>(dimSize_, rankId_, notifySignal_, op_, tempVTopo_);
     }
 
-    std::unique_ptr<CcuTaskArg> GetTaskArg() const override
-    {
-        return std::make_unique<CcuTaskArgReduceTailBlock>();
-    }
+    std::unique_ptr<CcuTaskArg> GetTaskArg() const override { return std::make_unique<CcuTaskArgReduceTailBlock>(); }
 
 private:
-    CcuInstType                      instType_     = CcuInstType::CCU_REDUCE_TAILBLOCK_DIRECT;
-    std::string                      notifySignal_ = "Reduce_defalut";
-    std::vector<uint64_t>            dimSize_;
-    uint32_t                         rankId_{0};
-    CollAlgOperator                  op_;
+    CcuInstType instType_ = CcuInstType::CCU_REDUCE_TAILBLOCK_DIRECT;
+    std::string notifySignal_ = "Reduce_defalut";
+    std::vector<uint64_t> dimSize_;
+    uint32_t rankId_{0};
+    CollAlgOperator op_;
     std::vector<std::vector<RankId>> tempVTopo_;
 };
 

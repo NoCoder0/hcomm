@@ -1,12 +1,13 @@
 # -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
+
 set(DEFAULT_BUILD_TYPE "Release")
 
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -33,10 +34,6 @@ set(HI_PYTHON                     "python3"                       CACHE   STRING
 
 message(STATUS "config.cmake BUILD_OPEN_PROJECT=${BUILD_OPEN_PROJECT}")
 message(STATUS "config.cmake PRODUCT=${PRODUCT} PRODUCT_SIDE=${PRODUCT_SIDE}")
-
-# Device 构建、安装目录
-set(HCOMM_DEVICE_BUILD_PATH   ${CMAKE_BINARY_DIR}/device_build)
-set(HCOMM_DEVICE_INSTALL_PATH ${CMAKE_BINARY_DIR}/device_install)
 
 set(INSTALL_LIBRARY_DIR        ${CMAKE_SYSTEM_PROCESSOR}-linux/lib64)
 set(INSTALL_INCLUDE_DIR        ${CMAKE_SYSTEM_PROCESSOR}-linux/include)

@@ -16,59 +16,56 @@
 #include "hcomm_task_struct.h"
 #include "type_def.h"
 
-using mc2Funcs = void(*)(void*);
+using mc2Funcs = void (*)(void*);
 extern "C" {
-drvError_t __attribute__((weak)) halCqReportRecv(uint32_t devId, struct halReportRecvInfo *info);
-drvError_t __attribute__((weak)) halResourceIdCheck(struct drvResIdKey *info);
-drvError_t __attribute__((weak)) halResourceIdInfoGet(struct drvResIdKey *key, drvResIdProcType type, uint64_t *value);
-drvError_t __attribute__((weak)) halSqCqQuery(uint32_t devId, struct halSqCqQueryInfo *info);
-drvError_t __attribute__((weak)) halSqCqConfig(uint32_t devId, struct halSqCqConfigInfo *info);
-drvError_t __attribute__((weak)) halTsdrvCtl(uint32_t devId, int cmd, void *param, size_t paramSize, void *out, size_t *outSize);
-drvError_t __attribute__((weak)) halResAddrMap(unsigned int devId, struct res_addr_info *res_info, unsigned long *va, unsigned int *len);
-drvError_t __attribute__((weak)) drvGetLocalDevIDByHostDevID(uint32_t host_udevid, uint32_t *localDevid);
-drvError_t __attribute__((weak)) drvMemSmmuQuery(uint32_t localDevid, uint32_t *SSID);
-int32_t __attribute__((weak)) StartMC2MaintenanceThread(mc2Funcs f1, void *p1, mc2Funcs f2, void *p2);
-int32_t __attribute__((weak)) AicpuCreateCtrlThread(uint32_t type, mc2Funcs f1, void *p1, mc2Funcs f2, void *p2);
+drvError_t __attribute__((weak)) halCqReportRecv(uint32_t devId, struct halReportRecvInfo* info);
+drvError_t __attribute__((weak)) halResourceIdCheck(struct drvResIdKey* info);
+drvError_t __attribute__((weak)) halResourceIdInfoGet(struct drvResIdKey* key, drvResIdProcType type, uint64_t* value);
+drvError_t __attribute__((weak)) halSqCqQuery(uint32_t devId, struct halSqCqQueryInfo* info);
+drvError_t __attribute__((weak)) halSqCqConfig(uint32_t devId, struct halSqCqConfigInfo* info);
+drvError_t __attribute__((weak))
+halTsdrvCtl(uint32_t devId, int cmd, void* param, size_t paramSize, void* out, size_t* outSize);
+drvError_t __attribute__((weak))
+halResAddrMap(unsigned int devId, struct res_addr_info* res_info, unsigned long* va, unsigned int* len);
+drvError_t __attribute__((weak)) drvGetLocalDevIDByHostDevID(uint32_t host_udevid, uint32_t* localDevid);
+drvError_t __attribute__((weak)) drvMemSmmuQuery(uint32_t localDevid, uint32_t* SSID);
+int32_t __attribute__((weak)) StartMC2MaintenanceThread(mc2Funcs f1, void* p1, mc2Funcs f2, void* p2);
+int32_t __attribute__((weak)) AicpuCreateCtrlThread(uint32_t type, mc2Funcs f1, void* p1, mc2Funcs f2, void* p2);
 };
 
 DevType g_stubDevType = DevType::DEV_TYPE_COUNT;
 namespace {
 uint8_t sqBuffer[64 * 32 * 64];
 }
-drvError_t halCqReportRecv(uint32_t devId, struct halReportRecvInfo *info)
+drvError_t halCqReportRecv(uint32_t devId, struct halReportRecvInfo* info)
 {
     info->report_cqe_num = 0U;
     return drvError_t(0);
 }
 
-drvError_t halResourceIdCheck(struct drvResIdKey *info)
+drvError_t halResourceIdCheck(struct drvResIdKey* info) { return drvError_t(0); }
+
+drvError_t halResourceIdRestore(struct drvResIdKey* key) { return drvError_t(0); }
+
+drvError_t halResourceIdInfoGet(struct drvResIdKey* key, drvResIdProcType type, uint64_t* value)
 {
     return drvError_t(0);
 }
 
-drvError_t halResourceIdRestore(struct drvResIdKey *key)
+drvError_t halResAddrMap(unsigned int devId, struct res_addr_info* res_info, unsigned long* va, unsigned int* len)
 {
     return drvError_t(0);
 }
 
-drvError_t halResourceIdInfoGet(struct drvResIdKey *key, drvResIdProcType type, uint64_t *value)
+drvError_t halTsdrvCtl(uint32_t devId, int type, void* param, size_t paramSize, void* out, size_t* outSize)
 {
-    return drvError_t(0);
-}
-
-drvError_t halResAddrMap(unsigned int devId, struct res_addr_info *res_info, unsigned long *va, unsigned int *len)
-{
-    return drvError_t(0);
-}
-
-drvError_t halTsdrvCtl(uint32_t devId, int type, void *param, size_t paramSize, void *out, size_t *outSize)
-{
-    ts_ctrl_msg_body_t *out_msg = (ts_ctrl_msg_body_t *)out;
+    ts_ctrl_msg_body_t* out_msg = (ts_ctrl_msg_body_t*)out;
     out_msg->u.query_task_ack_info.status = APP_ABORT_STATUS_INVALID;
     return DRV_ERROR_NONE;
 }
 
-drvError_t halSqCqQuery(uint32_t devId, struct halSqCqQueryInfo *info) {
+drvError_t halSqCqQuery(uint32_t devId, struct halSqCqQueryInfo* info)
+{
     if (info == nullptr) {
         return DRV_ERROR_INNER_ERR;
     }
@@ -88,48 +85,45 @@ drvError_t halSqCqQuery(uint32_t devId, struct halSqCqQueryInfo *info) {
             return DRV_ERROR_NONE;
         };
         case DRV_SQCQ_PROP_SQ_BASE: {
-            uint8_t *buffer = sqBuffer;
+            uint8_t* buffer = sqBuffer;
             info->value[0] = reinterpret_cast<uintptr_t>(buffer) & 0xFFFFFFFF;
             info->value[1] = reinterpret_cast<uintptr_t>(buffer) >> 32;
         }
-        default:return DRV_ERROR_NONE;
+        default:
+            return DRV_ERROR_NONE;
     }
 }
 
-drvError_t halSqCqConfig(uint32_t devId, struct halSqCqConfigInfo *info)
-{
-    return drvError_t(0);
-}
+drvError_t halSqCqConfig(uint32_t devId, struct halSqCqConfigInfo* info) { return drvError_t(0); }
 
-drvError_t drvGetLocalDevIDByHostDevID(uint32_t host_dev_id, uint32_t *local_dev_id)
+drvError_t drvGetLocalDevIDByHostDevID(uint32_t host_dev_id, uint32_t* local_dev_id)
 {
     local_dev_id = &host_dev_id;
     return drvError_t(0);
 }
 
-drvError_t drvMemSmmuQuery(uint32_t local_devid, uint32_t *SSID)
+drvError_t drvMemSmmuQuery(uint32_t local_devid, uint32_t* SSID) { return drvError_t(0); }
+
+drvError_t drvQueryProcessHostPid(
+    int pid, unsigned int* chip_id, unsigned int* vfid, unsigned int* host_pid, unsigned int* cp_type)
 {
     return drvError_t(0);
 }
 
-drvError_t drvQueryProcessHostPid(int pid, unsigned int *chip_id, unsigned int *vfid,
-    unsigned int *host_pid, unsigned int *cp_type)
-{
-    return drvError_t(0);
-}
+drvError_t drvGetDevIDByLocalDevID(unsigned int pid, unsigned int* chip_id) { return drvError_t(0); }
 
 #define PLAT_COMBINE(arch, chip, ver) (((arch) << 16U) | ((chip) << 8U) | (ver))
-#define PLAT_GET_ARCH(type)           (((type) >> 16U) & 0xffffU)
-#define PLAT_GET_CHIP(type)           (((type) >> 8U) & 0xffU)
+#define PLAT_GET_ARCH(type) (((type) >> 16U) & 0xffffU)
+#define PLAT_GET_CHIP(type) (((type) >> 8U) & 0xffU)
 
 enum rtPGVersion_t {
-    RT_VER_NA = 0, /* Ascend910B4 */
-    RT_VER_BIN1,   /* Ascend910B1 */
-    RT_VER_BIN2,   /* Ascend910B2 */
-    RT_VER_BIN3,   /* Ascend910B3 */
-    RT_VER_BIN4,   /* reserved is same as driver */
+    RT_VER_NA = 0,     /* Ascend910B4 */
+    RT_VER_BIN1,       /* Ascend910B1 */
+    RT_VER_BIN2,       /* Ascend910B2 */
+    RT_VER_BIN3,       /* Ascend910B3 */
+    RT_VER_BIN4,       /* reserved is same as driver */
     RT_VER_BIN8 = 8,   /* Ascend910B2C */
-    RT_VER_BIN10 = 10,  /* Ascend910B4_1 */
+    RT_VER_BIN10 = 10, /* Ascend910B4_1 */
     RT_VER_END
 };
 
@@ -149,13 +143,13 @@ typedef enum tagRtArchType {
     ARCH_V100 = ARCH_BEGIN,
     ARCH_V200 = 1,
     ARCH_V300 = 2,
-    ARCH_C100 = 3, /* Ascend910 */
-    ARCH_C220 = 4, /* Ascend910B & Ascend910_93 */
-    ARCH_M100 = 5, /* Ascend310 */
-    ARCH_M200 = 6, /* Ascend310P */
-    ARCH_M201 = 7, /* BS9SX1A */
-    ARCH_T300 = 8, /* Tiny */
-    ARCH_N350 = 9, /* Nano */
+    ARCH_C100 = 3,  /* Ascend910 */
+    ARCH_C220 = 4,  /* Ascend910B & Ascend910_93 */
+    ARCH_M100 = 5,  /* Ascend310 */
+    ARCH_M200 = 6,  /* Ascend310P */
+    ARCH_M201 = 7,  /* BS9SX1A */
+    ARCH_T300 = 8,  /* Tiny */
+    ARCH_N350 = 9,  /* Nano */
     ARCH_M300 = 10, /* Ascend310B */
     ARCH_M310 = 11, /* */
     ARCH_S200 = 12, /* Hi3796CV300ES & TsnsE */
@@ -183,7 +177,7 @@ typedef enum tagRtChipType {
     CHIP_BS9SX1A = 14,  /* BS9SX1A */
     CHIP_DAVID = 15,
     CHIP_SOLOMON = 16,
-    CHIP_MC62CM12A = 17,  /* MC62CM12A */
+    CHIP_MC62CM12A = 17, /* MC62CM12A */
     CHIP_END
 } rtChipType_t;
 
@@ -200,11 +194,11 @@ enum devdrvHardwareVersion {
     DEVDRV_PLATFORM_END
 };
 
-drvError_t StubhalGetDeviceInfo(uint32_t devId, int32_t moduleType, int32_t infoType, int64_t *value)
+drvError_t StubhalGetDeviceInfo(uint32_t devId, int32_t moduleType, int32_t infoType, int64_t* value)
 {
     if (g_stubDevType == DevType::DEV_TYPE_910B) { // 910B
         *value = DEVDRV_PLATFORM_CLOUD_V2_B1;
-    } else if (g_stubDevType == DevType::DEV_TYPE_310P1 || g_stubDevType == DevType::DEV_TYPE_310P3) { 
+    } else if (g_stubDevType == DevType::DEV_TYPE_310P1 || g_stubDevType == DevType::DEV_TYPE_310P3) {
         *value = DEVDRV_PLATFORM_ASCEND310P;
     } else if (g_stubDevType == DevType::DEV_TYPE_910_93) {
         *value = DEVDRV_PLATFORM_CLOUD_V3;
@@ -216,9 +210,9 @@ drvError_t StubhalGetDeviceInfo(uint32_t devId, int32_t moduleType, int32_t info
     return drvError_t(0);
 }
 
-int32_t StartMC2MaintenanceThread(mc2Funcs f1, void *p1, mc2Funcs f2, void *p2)
+int32_t StartMC2MaintenanceThread(mc2Funcs f1, void* p1, mc2Funcs f2, void* p2)
 {
-    std::thread thread_tmp = std::thread(f1, static_cast<void *>(p1));
+    std::thread thread_tmp = std::thread(f1, static_cast<void*>(p1));
     sleep(1);
     f2(p2);
     if (thread_tmp.joinable()) {
@@ -227,9 +221,9 @@ int32_t StartMC2MaintenanceThread(mc2Funcs f1, void *p1, mc2Funcs f2, void *p2)
     return 0U;
 }
 
-int32_t AicpuCreateCtrlThread(uint32_t type, mc2Funcs f1, void *p1, mc2Funcs f2, void *p2)
+int32_t AicpuCreateCtrlThread(uint32_t type, mc2Funcs f1, void* p1, mc2Funcs f2, void* p2)
 {
-    std::thread thread_tmp = std::thread(f1, static_cast<void *>(p1));
+    std::thread thread_tmp = std::thread(f1, static_cast<void*>(p1));
     sleep(1);
     f2(p2);
     if (thread_tmp.joinable()) {
@@ -238,42 +232,29 @@ int32_t AicpuCreateCtrlThread(uint32_t type, mc2Funcs f1, void *p1, mc2Funcs f2,
     return 0U;
 }
 
-int32_t AdprofCheckFeatureIsOn(uint64_t feature) 
-{
-    return 0;
-}
+int32_t AdprofCheckFeatureIsOn(uint64_t feature) { return 0; }
 
-int32_t AdprofReportAdditionalInfo(uint32_t agingFlag, const void *data, uint32_t length)
-{
-    return 0;
-}
+int32_t AdprofReportAdditionalInfo(uint32_t agingFlag, const void* data, uint32_t length) { return 0; }
 
-uint64_t AdprofGetHashId(const char *hashInfo, size_t length)
+int32_t AdprofReportBatchAdditionalInfo(uint32_t nonPersistantFlag, const void* data, uint32_t length) { return 0; }
+
+uint64_t AdprofGetHashId(const char* hashInfo, size_t length)
 {
     return std::hash<std::string>{}(std::string(hashInfo));
 }
 
-uint64_t MsprofStr2Id(const char *hashInfo, size_t length)
-{
-    return std::hash<std::string>{}(std::string(hashInfo));
-}
+uint64_t MsprofStr2Id(const char* hashInfo, size_t length) { return std::hash<std::string>{}(std::string(hashInfo)); }
 
-uint32_t AicpuGetStreamId()
-{
-    return 0;
-}
- 
-uint64_t AicpuGetTaskId()
-{
-    return 0;
-}
+uint32_t AicpuGetStreamId() { return 0; }
+
+uint64_t AicpuGetTaskId() { return 0; }
 
 namespace aicpu {
-status_t GetTaskAndStreamId(uint64_t &taskId, uint32_t &streamId)
+status_t GetTaskAndStreamId(uint64_t& taskId, uint32_t& streamId)
 {
     taskId = 0;
     streamId = 0;
     return AICPU_ERROR_NONE;
 }
 
-}  // namespace aicpu
+} // namespace aicpu

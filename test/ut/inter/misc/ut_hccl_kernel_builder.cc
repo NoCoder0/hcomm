@@ -33,7 +33,7 @@
 #include "topoinfo_ranktableParser_pub.h"
 
 #include "plugin_manager.h"
-#include "external/ge/ge_api_types.h" // ge对内options
+#include "external/ge/ge_api_types.h"  // ge对内options
 #include "framework/common/ge_types.h" // ge对外options
 #include "hcom_pub.h"
 #include "hccl/hcom.h"
@@ -48,132 +48,76 @@
 #include "llt_hccl_stub_ge.h"
 #include "offline_build_config_parse.h"
 #include "param_check_pub.h"
+#include "ut_rank_table.h"
 
 using namespace std;
 using namespace hccl;
 
-static nlohmann::json allreduce_topo_switch_connect =
-{
-    {"topology type", "switch connection"},
-    {
-        "topology desc", {
-            {
-                {"node type", "TOR"},
-                {"node name", "tor0"},
-                {
-                    "link info", {
-                        {
-                            {"link id", "0"},
-                            {"local port name", "port0"},
-                            {"local ip address", "100.100.83.1"},
-                            {"opposite type", "SERVER"},
-                            {"opposite name", "server0"},
-                            {"opposite port name", "eth8"},
-                            {"opposite ip address", "100.100.83.178"}
-                        }
-                    }
-                }
-            }
-        }
-    }
-};
+static nlohmann::json allreduce_topo_switch_connect
+    = {{"topology type", "switch connection"},
+       {"topology desc",
+        {{{"node type", "TOR"},
+          {"node name", "tor0"},
+          {"link info",
+           {{{"link id", "0"},
+             {"local port name", "port0"},
+             {"local ip address", "100.100.83.1"},
+             {"opposite type", "SERVER"},
+             {"opposite name", "server0"},
+             {"opposite port name", "eth8"},
+             {"opposite ip address", "100.100.83.178"}}}}}}}};
 
-class HcomKernelBuilderTest : public testing::Test
-{
+class HcomKernelBuilderTest : public testing::Test {
 protected:
     static void SetUpTestCase()
     {
-        nlohmann::json rank_table =
-        {
-            {"status", "completed"},
-            {"deploy_mode", "lab"},
-            {"device_num", "4"},
-            {"server_num", "2"},
-            {"boardType", "0"},
-            {"para_plane_location", "device"},
-            {"para_plane_nic_num", "2"},
-            {"para_plane_nic_name", {"eth0", "eth1"}},
-            {"instance_count", "4"},
-            {"device_count", "4"},
-            {
-                "instance_list",
+        nlohmann::json rank_table
+            = {{"status", "completed"},
+               {"deploy_mode", "lab"},
+               {"device_num", "4"},
+               {"server_num", "2"},
+               {"boardType", "0"},
+               {"para_plane_location", "device"},
+               {"para_plane_nic_num", "2"},
+               {"para_plane_nic_name", {"eth0", "eth1"}},
+               {"instance_count", "4"},
+               {"device_count", "4"},
+               {"instance_list",
+                {{{"pod_name", ""},
+                  {"rank_id", "0"},
+                  {"server_id", "10.0.0.10"},
+                  {"devices", {{{"device_id", "1"}, {"device_ip", "192.168.0.12"}, {"ref_ip", "192.168.10.13"}}}}},
+                 {{"pod_name", ""},
+                  {"rank_id", "1"},
+                  {"server_id", "10.0.0.10"},
+                  {"devices", {{{"device_id", "0"}, {"device_ip", "192.168.1.12"}, {"ref_ip", "192.168.11.13"}}}}},
+                 {{"pod_name", ""},
+                  {"rank_id", "2"},
+                  {"server_id", "10.0.0.11"},
+                  {"devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.14"}, {"ref_ip", "192.168.10.15"}}}}},
+                 {{"pod_name", ""},
+                  {"rank_id", "3"},
+                  {"server_id", "10.0.0.11"},
+                  {"devices", {{{"device_id", "1"}, {"device_ip", "192.168.1.14"}, {"ref_ip", "192.168.11.15"}}}}}}},
+               {"server_list",
                 {
-                    {   {"pod_name", ""}, {"rank_id", "0"}, {"server_id", "10.0.0.10"},
-                        {
-                            "devices", {{{"device_id", "1"}, {"device_ip", "192.168.0.12"}, {"ref_ip", "192.168.10.13"}}}
-                        }
-                    },
-                    {   {"pod_name", ""}, {"rank_id", "1"}, {"server_id", "10.0.0.10"},
-                        {
-                            "devices", {{{"device_id", "0"}, {"device_ip", "192.168.1.12"}, {"ref_ip", "192.168.11.13"}}}
-                        }
-                    },
-                    {   {"pod_name", ""}, {"rank_id", "2"}, {"server_id", "10.0.0.11"},
-                        {
-                            "devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.14"}, {"ref_ip", "192.168.10.15"}}}
-                        }
-                    },
-                    {   {"pod_name", ""}, {"rank_id", "3"}, {"server_id", "10.0.0.11"},
-                        {
-                            "devices", {{{"device_id", "1"}, {"device_ip", "192.168.1.14"}, {"ref_ip", "192.168.11.15"}}}
-                        }
-                    }
-                }
-            },
-            {
-                "server_list",
-                {
-                    {
-                        {"server_id", "192.168.10.2"},
-                        {
-                            "para_plane_info",
-                            {{
-                                    {"eth1", "192.168.210.2"},
-                                    {"ref_ip", "192.168.210.1"}
-                                },
-                                {
-                                    {"eth0", "192.168.200.2"},
-                                    {"ref_ip", "192.168.200.1"}
-                                }
-                            }
-                        }
+                    {{"server_id", "192.168.10.2"},
+                     {"para_plane_info",
+                      {{{"eth1", "192.168.210.2"}, {"ref_ip", "192.168.210.1"}},
+                       {{"eth0", "192.168.200.2"}, {"ref_ip", "192.168.200.1"}}}}
 
                     },
-                    {
-                        {"server_id", "192.168.10.3"},
-                        {
-                            "para_plane_info",
-                            {{
-                                    {"eth0", "192.168.200.3"},
-                                    {"ref_ip", "192.168.200.1"}
-                                },
-                                {
-                                    {"eth1", "192.168.210.3"},
-                                    {"ref_ip", "192.168.210.1"}
-                                }
-                            }
-                        }
+                    {{"server_id", "192.168.10.3"},
+                     {"para_plane_info",
+                      {{{"eth0", "192.168.200.3"}, {"ref_ip", "192.168.200.1"}},
+                       {{"eth1", "192.168.210.3"}, {"ref_ip", "192.168.210.1"}}}}
 
                     },
 
-                }
-            }
-        };
+                }}};
         char file_name[] = "./ut_HcomKernelBuilderTest.json";
 
-        std::ofstream outfile(file_name, std::ios::out | std::ios::trunc | std::ios::binary);
-
-        if (outfile.is_open())
-        {
-            HCCL_INFO("open %s success", file_name);
-        }
-        else
-        {
-            HCCL_INFO("open %s failed", file_name);
-        }
-
-        outfile << std::setw(4) << rank_table << std::endl;
-        outfile.close();
+        WriteRankTableFile(file_name, rank_table);
 
         std::cout << "\033[36m--HcomKernelInfoTest SetUP--\033[0m" << std::endl;
     }
@@ -187,38 +131,25 @@ protected:
     virtual void SetUp()
     {
         s32 portNum = 7;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
 
         std::cout << "A Test SetUP" << std::endl;
     }
-    virtual void TearDown()
-    {
-        std::cout << "A Test TearDown" << std::endl;
-    }
+    virtual void TearDown() { std::cout << "A Test TearDown" << std::endl; }
 };
 
 class NodeTest : public ge::Node {
 public:
-    NodeTest(){;};
-    ~NodeTest(){;};
+    NodeTest() { ; };
+    ~NodeTest() { ; };
 };
 
-ge::graphStatus OfflineRankMappingOption(ge::GEThreadLocalContext *that, const std::string &optionExec, std::string &dumpDebugValue)
+ge::graphStatus
+OfflineRankMappingOption(ge::GEThreadLocalContext* that, const std::string& optionExec, std::string& dumpDebugValue)
 {
-    nlohmann::json group_list =
-    {
-        {
-            {"group_name", "aa"},
-            {"group_rank_list", {0, 1}}
-        },
-        {
-            {"group_name", "off_group_rank_list"},
-            {"group_rank_list", {0, 1, 2, 3, 4, 5, 6, 7}}
-        }
-    };
+    nlohmann::json group_list
+        = {{{"group_name", "aa"}, {"group_rank_list", {0, 1}}},
+           {{"group_name", "off_group_rank_list"}, {"group_rank_list", {0, 1, 2, 3, 4, 5, 6, 7}}}};
     if (optionExec == ge::OPTION_EXEC_HCOM_GROUPLIST) {
         dumpDebugValue = group_list.dump();
     } else if (optionExec == ge::OPTION_EXEC_RANK_TABLE) {
@@ -246,49 +177,34 @@ TEST_F(HcomKernelBuilderTest, ut_CalcOpRunningParam_common)
     std::vector<u32> segment_index;
     HcclResult ret;
 
-    nlohmann::json rank_table =
-    {
-        {"status", "completed"},
-        {"deploy_mode", "lab"},
-        {"group_count", "1"},
-        {"chip_info", "910"},
-        {"board_id", "0x0000"},
-        {"para_plane_nic_location", "device"},
-        {"para_plane_nic_num", "1"},
-        {"para_plane_nic_name", {"eth0"}},
-        {
-            "group_list",
-            {
-                {
-                    {"group_name", ""},
-                    {"device_num", "1"},
-                    {"server_num", "1"},
-                    {"instance_count", "1"},
-                        {
-                            "instance_list",
-                            {
-                                {   {"rank_id", "0"}, {"server_id", "172.17.1.120"},
-                                    {
-                                        "devices", {{{"device_id", "0"}, {"device_ip", "192.168.1.120"}}}
-                                    }
-                                }
-                            }
-                        },
-                }
-            }
-        }
-    };
+    nlohmann::json rank_table
+        = {{"status", "completed"},
+           {"deploy_mode", "lab"},
+           {"group_count", "1"},
+           {"chip_info", "910"},
+           {"board_id", "0x0000"},
+           {"para_plane_nic_location", "device"},
+           {"para_plane_nic_num", "1"},
+           {"para_plane_nic_name", {"eth0"}},
+           {"group_list",
+            {{
+                {"group_name", ""},
+                {"device_num", "1"},
+                {"server_num", "1"},
+                {"instance_count", "1"},
+                {"instance_list",
+                 {{{"rank_id", "0"},
+                   {"server_id", "172.17.1.120"},
+                   {"devices", {{{"device_id", "0"}, {"device_ip", "192.168.1.120"}}}}}}},
+            }}}};
 
     char file_name_t[] = "./ut_CalcOpRunningParam_common.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -296,7 +212,7 @@ TEST_F(HcomKernelBuilderTest, ut_CalcOpRunningParam_common)
 
     ge::OpDesc op;
     ge ::Status ge_ret = ge::INTERNAL_ERROR;
-    //HcomOpsKernelInfoStore hcomKernelInfo;
+    // HcomOpsKernelInfoStore hcomKernelInfo;
     HcomOpsKernelBuilder hcomKernelInfo;
 
     ret = hrtSetDevice(0);
@@ -310,13 +226,9 @@ TEST_F(HcomKernelBuilderTest, ut_CalcOpRunningParam_common)
     EXPECT_EQ(ret, HCCL_SUCCESS);
     HCCL_INFO("HcomInitByFile OK.");
 
-    MOCKER_CPP(&HcomOpsKernelBuilder::GetAndSetTaskNum)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomOpsKernelBuilder::GetAndSetTaskNum).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcomOpsKernelBuilder::GetOriginalGraphShapeTypeFromDesc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomOpsKernelBuilder::GetOriginalGraphShapeTypeFromDesc).stubs().will(returnValue(HCCL_SUCCESS));
 
     ge::NodePtr nodeptr(new NodeTest);
     nodeptr->GetOpDesc()->SetType("");
@@ -350,7 +262,7 @@ TEST_F(HcomKernelBuilderTest, ut_CalcOpRunningParam_common)
     ge_ret = hcomKernelInfo.CalcOpRunningParam(*nodeptr);
     EXPECT_EQ(ge_ret, ge::SUCCESS);
     workSpaceBytes.clear();
-    workSpaceBytes = nodeptr->GetOpDesc()->GetWorkspaceBytes();    
+    workSpaceBytes = nodeptr->GetOpDesc()->GetWorkspaceBytes();
 
     type = HCCL_KERNEL_OP_TYPE_ALLREDUCE;
     nodeptr->GetOpDesc()->SetType(type);
@@ -374,9 +286,7 @@ TEST_F(HcomKernelBuilderTest, ut_CalcOpRunningParam_common)
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_TRUE_SHAPE");
     ge_ret = hcomKernelInfo.CalcOpRunningParam(*nodeptr);
     EXPECT_EQ(ge_ret, ge::SUCCESS);
-    MOCKER_CPP(&ge::GEThreadLocalContext::GetOption)
-    .stubs()
-    .will(invoke(OfflineRankMappingOption));
+    MOCKER_CPP(&ge::GEThreadLocalContext::GetOption).stubs().will(invoke(OfflineRankMappingOption));
     ge_ret = hcomKernelInfo.CalcOpRunningParam(*nodeptr);
     EXPECT_EQ(ge_ret, ge::SUCCESS);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_DTYPE");
@@ -395,49 +305,34 @@ TEST_F(HcomKernelBuilderTest, ut_CalcOpRunningParam_common_51)
     std::vector<u32> segment_index;
     HcclResult ret;
 
-    nlohmann::json rank_table =
-    {
-        {"status", "completed"},
-        {"deploy_mode", "lab"},
-        {"group_count", "1"},
-        {"chip_info", "910"},
-        {"board_id", "0x0000"},
-        {"para_plane_nic_location", "device"},
-        {"para_plane_nic_num", "1"},
-        {"para_plane_nic_name", {"eth0"}},
-        {
-            "group_list",
-            {
-                {
-                    {"group_name", ""},
-                    {"device_num", "1"},
-                    {"server_num", "1"},
-                    {"instance_count", "1"},
-                        {
-                            "instance_list",
-                            {
-                                {   {"rank_id", "0"}, {"server_id", "172.17.1.120"},
-                                    {
-                                        "devices", {{{"device_id", "0"}, {"device_ip", "192.168.1.120"}}}
-                                    }
-                                }
-                            }
-                        },
-                }
-            }
-        }
-    };
+    nlohmann::json rank_table
+        = {{"status", "completed"},
+           {"deploy_mode", "lab"},
+           {"group_count", "1"},
+           {"chip_info", "910"},
+           {"board_id", "0x0000"},
+           {"para_plane_nic_location", "device"},
+           {"para_plane_nic_num", "1"},
+           {"para_plane_nic_name", {"eth0"}},
+           {"group_list",
+            {{
+                {"group_name", ""},
+                {"device_num", "1"},
+                {"server_num", "1"},
+                {"instance_count", "1"},
+                {"instance_list",
+                 {{{"rank_id", "0"},
+                   {"server_id", "172.17.1.120"},
+                   {"devices", {{{"device_id", "0"}, {"device_ip", "192.168.1.120"}}}}}}},
+            }}}};
 
     char file_name_t[] = "./ut_CalcOpRunningParam_common_51.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -445,7 +340,7 @@ TEST_F(HcomKernelBuilderTest, ut_CalcOpRunningParam_common_51)
 
     ge::OpDesc op;
     ge ::Status ge_ret = ge::INTERNAL_ERROR;
-    //HcomOpsKernelInfoStore hcomKernelInfo;
+    // HcomOpsKernelInfoStore hcomKernelInfo;
     HcomOpsKernelBuilder hcomKernelInfo;
 
     ret = hrtSetDevice(0);
@@ -459,19 +354,12 @@ TEST_F(HcomKernelBuilderTest, ut_CalcOpRunningParam_common_51)
     EXPECT_EQ(ret, HCCL_SUCCESS);
     HCCL_INFO("HcomInitByFile OK.");
 
-    MOCKER_CPP(&HcomOpsKernelBuilder::GetAndSetTaskNum)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomOpsKernelBuilder::GetAndSetTaskNum).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcomOpsKernelBuilder::GetOriginalGraphShapeTypeFromDesc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomOpsKernelBuilder::GetOriginalGraphShapeTypeFromDesc).stubs().will(returnValue(HCCL_SUCCESS));
 
     DevType type610 = DevType::DEV_TYPE_310P1;
-    MOCKER(GetOffDeviceTypeWithoutDev)
-    .stubs()
-    .with(outBound(type610))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(GetOffDeviceTypeWithoutDev).stubs().with(outBound(type610)).will(returnValue(HCCL_SUCCESS));
 
     u32 numHccsLink = 0;
     MOCKER(HcomGetHccsLinkNum).stubs().with(mockcpp::any(), outBound(numHccsLink)).will(returnValue(HCCL_SUCCESS));
@@ -509,15 +397,13 @@ TEST_F(HcomKernelBuilderTest, ut_CalcOpRunningParam_common_51)
     ge_ret = hcomKernelInfo.CalcOpRunningParam(*nodeptr);
     EXPECT_EQ(ge_ret, ge::SUCCESS);
     workSpaceBytes.clear();
-    workSpaceBytes = nodeptr->GetOpDesc()->GetWorkspaceBytes();    
+    workSpaceBytes = nodeptr->GetOpDesc()->GetWorkspaceBytes();
 
     type = HCCL_KERNEL_OP_TYPE_ALLREDUCE;
     nodeptr->GetOpDesc()->SetType(type);
     ge_ret = hcomKernelInfo.CalcOpRunningParam(*nodeptr);
     EXPECT_EQ(ge_ret, ge::SUCCESS);
-    MOCKER_CPP(&ge::GEThreadLocalContext::GetOption)
-    .stubs()
-    .will(invoke(OfflineRankMappingOption));
+    MOCKER_CPP(&ge::GEThreadLocalContext::GetOption).stubs().will(invoke(OfflineRankMappingOption));
     std::string curGroup = "off_group_rank_list";
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_TRUE_GROUP");
     ge::AttrUtils::SetStr(nodeptr->GetOpDesc(), "group", curGroup);
@@ -530,9 +416,7 @@ TEST_F(HcomKernelBuilderTest, ut_CalcOpRunningParam_common_51)
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_TRUE_SHAPE");
     ge_ret = hcomKernelInfo.CalcOpRunningParam(*nodeptr);
     EXPECT_EQ(ge_ret, ge::SUCCESS);
-    MOCKER_CPP(&ge::GEThreadLocalContext::GetOption)
-    .stubs()
-    .will(invoke(OfflineRankMappingOption));
+    MOCKER_CPP(&ge::GEThreadLocalContext::GetOption).stubs().will(invoke(OfflineRankMappingOption));
     ge_ret = hcomKernelInfo.CalcOpRunningParam(*nodeptr);
     EXPECT_EQ(ge_ret, ge::SUCCESS);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_DTYPE");
@@ -544,13 +428,12 @@ TEST_F(HcomKernelBuilderTest, ut_CalcOpRunningParam_common_51)
     GlobalMockObject::verify();
 }
 
-
 TEST_F(HcomKernelBuilderTest, ut_generateTask)
 {
     ge::NodePtr nodeptr(new NodeTest);
     ge::Buffer tempBuffer;
     ge::RunContext runContext_dummy;
-    //hccl::HcomOpsKernelInfoStore hcomKernelInfo;
+    // hccl::HcomOpsKernelInfoStore hcomKernelInfo;
     HcomOpsKernelBuilder hcomKernelInfo;
 
     std::vector<domi::TaskDef> taskDefList;
@@ -560,8 +443,8 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask)
     s64 streamId = 10000;
     nodeptr->GetOpDesc()->SetStreamId((s64)streamId);
 
-	std::string name = "HcomTag";
-	nodeptr->GetOpDesc()->SetName(name);
+    std::string name = "HcomTag";
+    nodeptr->GetOpDesc()->SetName(name);
 
     // -------------------HcomBroadcast test----------------
     std::string type = HCCL_KERNEL_OP_TYPE_BROADCAST;
@@ -589,8 +472,7 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask)
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_TRUE_NEEDMAPRANK");
     ge::AttrUtils::SetBool(nodeptr->GetOpDesc(), "_need_map_rank_id", true);
 
-
-    s32 ret = hcomKernelInfo.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    s32 ret = hcomKernelInfo.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::SUCCESS);
 
     u32 result_type = taskDefList[0].type();
@@ -598,8 +480,8 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask)
     std::string result_hccl_hccl_type = taskDefList[0].mutable_kernel_hccl()->hccl_type();
     std::string result_private_def = taskDefList[0].private_def();
     char private_def_buf[sizeof(HCCL_KERNEL_INFO_PRIVATE_DEF)];
-    sal_memcpy(&private_def_buf[0],sizeof(private_def_buf),result_private_def.c_str(),sizeof(private_def_buf));
-    HCCL_KERNEL_INFO_PRIVATE_DEF *privateDefBuf = (HCCL_KERNEL_INFO_PRIVATE_DEF *)&private_def_buf[0];
+    sal_memcpy(&private_def_buf[0], sizeof(private_def_buf), result_private_def.c_str(), sizeof(private_def_buf));
+    HCCL_KERNEL_INFO_PRIVATE_DEF* privateDefBuf = (HCCL_KERNEL_INFO_PRIVATE_DEF*)&private_def_buf[0];
     std::string result_group = reinterpret_cast<const char*>(privateDefBuf->group);
     // std::string result_tag = reinterpret_cast<const char*>(privateDefBuf->tag);
     u32 result_srcRank = (privateDefBuf->srcRank);
@@ -614,22 +496,19 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask)
     EXPECT_EQ(result_destRank, 0);
     EXPECT_EQ(result_srTag, 0);
 
-
     // -------------------HcomSend test----------------
-    MOCKER(HcomGetRankId)
-    .expects(atMost(8))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomGetRankId).expects(atMost(8)).will(returnValue(HCCL_SUCCESS));
     type = HCCL_KERNEL_OP_TYPE_SEND;
     nodeptr->GetOpDesc()->SetType(type);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_TAG");
-    ret = hcomKernelInfo.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelInfo.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::SUCCESS);
     result_type = taskDefList[1].type();
     result_stream_id = taskDefList[1].stream_id();
     result_hccl_hccl_type = taskDefList[1].mutable_kernel_hccl()->hccl_type();
     result_private_def = taskDefList[1].private_def();
-    sal_memcpy(&private_def_buf[0],sizeof(private_def_buf),result_private_def.c_str(),sizeof(private_def_buf));
-    privateDefBuf = (HCCL_KERNEL_INFO_PRIVATE_DEF *)&private_def_buf[0];
+    sal_memcpy(&private_def_buf[0], sizeof(private_def_buf), result_private_def.c_str(), sizeof(private_def_buf));
+    privateDefBuf = (HCCL_KERNEL_INFO_PRIVATE_DEF*)&private_def_buf[0];
     result_group = reinterpret_cast<const char*>(privateDefBuf->group);
     // result_tag = reinterpret_cast<const char*>(privateDefBuf->tag);
     result_srcRank = (privateDefBuf->srcRank);
@@ -639,7 +518,7 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask)
     EXPECT_EQ(result_stream_id, streamId);
     EXPECT_EQ(result_hccl_hccl_type, type);
     EXPECT_EQ(result_group, tempStr);
-    std::string tmpTag = result_group+"5"+"0"+"5";
+    std::string tmpTag = result_group + "5" + "0" + "5";
     // EXPECT_EQ(result_tag, tmpTag);
     EXPECT_EQ(result_srcRank, 0);
     EXPECT_EQ(result_destRank, tempInt);
@@ -647,13 +526,13 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask)
 
     // Send: 未设定 destRank 时，报错
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_DESTRANK");
-    ret = hcomKernelInfo.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelInfo.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::INTERNAL_ERROR);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_TRUE_DESTRANK");
 
     // Send: 未设定 srTag 时，报错
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_SRTAG");
-    ret = hcomKernelInfo.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelInfo.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::INTERNAL_ERROR);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_TRUE_SRTAG");
 
@@ -662,14 +541,14 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask)
     nodeptr->GetOpDesc()->SetType(type);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_TAG");
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_GROUP");
-    ret = hcomKernelInfo.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelInfo.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::SUCCESS);
     result_type = taskDefList[2].type();
     result_stream_id = taskDefList[2].stream_id();
     result_hccl_hccl_type = taskDefList[2].mutable_kernel_hccl()->hccl_type();
     result_private_def = taskDefList[2].private_def();
-    sal_memcpy(&private_def_buf[0],sizeof(private_def_buf),result_private_def.c_str(),sizeof(private_def_buf));
-    privateDefBuf = (HCCL_KERNEL_INFO_PRIVATE_DEF *)&private_def_buf[0];
+    sal_memcpy(&private_def_buf[0], sizeof(private_def_buf), result_private_def.c_str(), sizeof(private_def_buf));
+    privateDefBuf = (HCCL_KERNEL_INFO_PRIVATE_DEF*)&private_def_buf[0];
     result_group = reinterpret_cast<const char*>(privateDefBuf->group);
     // result_tag = reinterpret_cast<const char*>(privateDefBuf->tag);
     result_srcRank = (privateDefBuf->srcRank);
@@ -679,7 +558,7 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask)
     EXPECT_EQ(result_stream_id, streamId);
     EXPECT_EQ(result_hccl_hccl_type, type);
     EXPECT_EQ(result_group, tempStr);
-    tmpTag = result_group+"5"+"5"+"0";
+    tmpTag = result_group + "5" + "5" + "0";
     // EXPECT_EQ(result_tag, tmpTag);
     EXPECT_EQ(result_srcRank, tempInt);
     EXPECT_EQ(result_destRank, 0);
@@ -688,13 +567,13 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask)
 
     // Receive: srcRank未设定时，报错
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_SRCRANK");
-    ret = hcomKernelInfo.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelInfo.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::INTERNAL_ERROR);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_TRUE_SRCRANK");
 
     // Receive: srTag未设定时，报错
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_SRTAG");
-    ret = hcomKernelInfo.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelInfo.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::INTERNAL_ERROR);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_TRUE_SRTAG");
 
@@ -702,7 +581,7 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask)
     type = HCCL_KERNEL_OP_TYPE_ALLREDUCE;
     nodeptr->GetOpDesc()->SetType(type);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_TAG");
-    ret = hcomKernelInfo.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelInfo.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::SUCCESS);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_TAG");
 
@@ -710,13 +589,10 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask)
     type = HCCL_KERNEL_OP_TYPE_REMOTE_READ;
     nodeptr->GetOpDesc()->SetType(type);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_TAG");
-    ret = hcomKernelInfo.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelInfo.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::SUCCESS);
-    MOCKER(IsOfflineCompilation)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(true));
-    ret = hcomKernelInfo.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    MOCKER(IsOfflineCompilation).stubs().with(mockcpp::any()).will(returnValue(true));
+    ret = hcomKernelInfo.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::SUCCESS);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_TAG");
 
@@ -724,20 +600,16 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask)
     type = " ";
     nodeptr->GetOpDesc()->SetType(type);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_TAG");
-    ret = hcomKernelInfo.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelInfo.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::INTERNAL_ERROR);
 
-    MOCKER_CPP(&HcomOpsKernelBuilder::GetOpIntAttr)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
-
+    MOCKER_CPP(&HcomOpsKernelBuilder::GetOpIntAttr).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 }
 
 TEST_F(HcomKernelBuilderTest, ut_GenerateTask_unknown)
 {
     ge::Status ret;
-    //HcomOpsKernelInfoStore  hcomOpsKernelInfoStore_;
+    // HcomOpsKernelInfoStore  hcomOpsKernelInfoStore_;
     map<string, string> options;
     HcomOpsKernelBuilder hcomOpsKernelInfoStore_;
     ret = hcomOpsKernelInfoStore_.Initialize(options);
@@ -748,9 +620,9 @@ TEST_F(HcomKernelBuilderTest, ut_GenerateTask_unknown)
     std::vector<domi::TaskDef> taskDefList;
 
     MOCKER(&ge::NodeUtils::GetNodeUnknownShapeStatus)
-    .stubs()
-    .with(mockcpp::any(), outBound(is_unknown))
-    .will(returnValue(ge::GRAPH_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(is_unknown))
+        .will(returnValue(ge::GRAPH_SUCCESS));
     ret = hcomOpsKernelInfoStore_.GenerateTask(*nodeptr, runContext, taskDefList);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     GlobalMockObject::verify();
@@ -758,7 +630,7 @@ TEST_F(HcomKernelBuilderTest, ut_GenerateTask_unknown)
     EXPECT_EQ(ret, ge::SUCCESS);
 }
 
-HcclResult MockGetOffDeviceTypeWithoutDev(DevType &devType)
+HcclResult MockGetOffDeviceTypeWithoutDev(DevType& devType)
 {
     devType = DevType::DEV_TYPE_310P3;
     HCCL_DEBUG("[offline] Get devtype[%u]....", devType);
@@ -768,7 +640,7 @@ HcclResult MockGetOffDeviceTypeWithoutDev(DevType &devType)
 TEST_F(HcomKernelBuilderTest, ut_CalcOpRunningParam_unknown)
 {
     ge::Status ret;
-    //HcomOpsKernelInfoStore  hcomOpsKernelInfoStore_;
+    // HcomOpsKernelInfoStore  hcomOpsKernelInfoStore_;
     HcomOpsKernelBuilder hcomOpsKernelInfoStore_;
     bool is_unknown = true;
     ge::NodePtr nodeptr(new NodeTest);
@@ -776,22 +648,16 @@ TEST_F(HcomKernelBuilderTest, ut_CalcOpRunningParam_unknown)
     std::vector<domi::TaskDef> taskDefList;
 
     MOCKER(&ge::NodeUtils::GetNodeUnknownShapeStatus)
-    .stubs()
-    .with(mockcpp::any(), outBound(is_unknown))
-    .will(returnValue(ge::GRAPH_SUCCESS));
-    MOCKER_CPP(&HcomOpsKernelBuilder::GetAndSetTaskNum)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(is_unknown))
+        .will(returnValue(ge::GRAPH_SUCCESS));
+    MOCKER_CPP(&HcomOpsKernelBuilder::GetAndSetTaskNum).stubs().will(returnValue(HCCL_SUCCESS));
     ret = hcomOpsKernelInfoStore_.CalcOpRunningParam(*nodeptr);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    MOCKER(IsOfflineCompilation)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER(IsOfflineCompilation).stubs().will(returnValue(true));
 
-    MOCKER(GetOffDeviceTypeWithoutDev)
-    .stubs()
-    .will(invoke(MockGetOffDeviceTypeWithoutDev));
+    MOCKER(GetOffDeviceTypeWithoutDev).stubs().will(invoke(MockGetOffDeviceTypeWithoutDev));
     hcomOpsKernelInfoStore_.CalcOpRunningParam(*nodeptr);
     GlobalMockObject::verify();
 }
@@ -803,49 +669,34 @@ TEST_F(HcomKernelBuilderTest, ut_CalcOpRunningParam_V51)
     std::vector<u32> segment_index;
     HcclResult ret;
 
-    nlohmann::json rank_table =
-    {
-        {"status", "completed"},
-        {"deploy_mode", "lab"},
-        {"group_count", "1"},
-        {"chip_info", "310P3"},
-        {"board_id", "0x2000"},
-        {"para_plane_nic_location", "device"},
-        {"para_plane_nic_num", "1"},
-        {"para_plane_nic_name", {"eth0"}},
-        {
-            "group_list",
-            {
-                {
-                    {"group_name", ""},
-                    {"device_num", "1"},
-                    {"server_num", "1"},
-                    {"instance_count", "1"},
-                        {
-                            "instance_list",
-                            {
-                                {   {"rank_id", "0"}, {"server_id", "172.17.1.120"},
-                                    {
-                                        "devices", {{{"device_id", "0"}, {"device_ip", "192.168.1.120"}}}
-                                    }
-                                }
-                            }
-                        },
-                }
-            }
-        }
-    };
+    nlohmann::json rank_table
+        = {{"status", "completed"},
+           {"deploy_mode", "lab"},
+           {"group_count", "1"},
+           {"chip_info", "310P3"},
+           {"board_id", "0x2000"},
+           {"para_plane_nic_location", "device"},
+           {"para_plane_nic_num", "1"},
+           {"para_plane_nic_name", {"eth0"}},
+           {"group_list",
+            {{
+                {"group_name", ""},
+                {"device_num", "1"},
+                {"server_num", "1"},
+                {"instance_count", "1"},
+                {"instance_list",
+                 {{{"rank_id", "0"},
+                   {"server_id", "172.17.1.120"},
+                   {"devices", {{{"device_id", "0"}, {"device_ip", "192.168.1.120"}}}}}}},
+            }}}};
 
     char file_name_t[] = "./ut_CalcOpRunningParam_V51.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -867,9 +718,7 @@ TEST_F(HcomKernelBuilderTest, ut_CalcOpRunningParam_V51)
     EXPECT_EQ(ret, HCCL_SUCCESS);
     HCCL_INFO("HcomInitByFile OK.");
 
-    MOCKER_CPP(&HcomOpsKernelBuilder::GetAndSetTaskNum)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomOpsKernelBuilder::GetAndSetTaskNum).stubs().will(returnValue(HCCL_SUCCESS));
     ge::NodePtr nodeptr(new NodeTest);
     ge_ret = hcomKernelInfo.CalcOpRunningParam(*nodeptr);
     EXPECT_EQ(ge_ret, ge::INTERNAL_ERROR);
@@ -899,12 +748,9 @@ TEST_F(HcomKernelBuilderTest, ut_CalcOpRunningParam_V51)
     ge_ret = hcomKernelInfo.CalcOpRunningParam(*nodeptr);
     EXPECT_EQ(ge_ret, ge::SUCCESS);
     workSpaceBytes.clear();
-    workSpaceBytes = nodeptr->GetOpDesc()->GetWorkspaceBytes();    
+    workSpaceBytes = nodeptr->GetOpDesc()->GetWorkspaceBytes();
 
-    MOCKER(HcomOpUtils::GetAllReduceScratchMemSize)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomOpUtils::GetAllReduceScratchMemSize).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     type = HCCL_KERNEL_OP_TYPE_ALLREDUCE;
     nodeptr->GetOpDesc()->SetType(type);
@@ -990,8 +836,8 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask_by_comm_pytorch)
     s64 streamId = 10000;
     nodeptr->GetOpDesc()->SetStreamId((s64)streamId);
 
-	std::string name = "HcomTag";
-	nodeptr->GetOpDesc()->SetName(name);
+    std::string name = "HcomTag";
+    nodeptr->GetOpDesc()->SetName(name);
 
     // -------------------HcomBroadcast test----------------
     std::string type = HCCL_KERNEL_OP_TYPE_BROADCAST;
@@ -1017,7 +863,7 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask_by_comm_pytorch)
     ge::AttrUtils::SetInt(nodeptr->GetOpDesc(), "global_workspace_type", 0);
     HCCL_INFO("node[%p] run context[%p]", nodeptr.get(), &runContext_dummy);
     HCCL_INFO("----------%s", nodeptr->GetOpDesc()->GetType().c_str());
-    s32 ret = hcomKernelBuilder.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    s32 ret = hcomKernelBuilder.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::SUCCESS);
 
     u32 result_type = taskDefList[0].type();
@@ -1025,8 +871,8 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask_by_comm_pytorch)
     std::string result_hccl_hccl_type = taskDefList[0].mutable_kernel_hccl()->hccl_type();
     std::string result_private_def = taskDefList[0].private_def();
     char private_def_buf[sizeof(HCCL_KERNEL_INFO_PRIVATE_DEF)];
-    sal_memcpy(&private_def_buf[0],sizeof(private_def_buf),result_private_def.c_str(),sizeof(private_def_buf));
-    HCCL_KERNEL_INFO_PRIVATE_DEF *privateDefBuf = (HCCL_KERNEL_INFO_PRIVATE_DEF *)&private_def_buf[0];
+    sal_memcpy(&private_def_buf[0], sizeof(private_def_buf), result_private_def.c_str(), sizeof(private_def_buf));
+    HCCL_KERNEL_INFO_PRIVATE_DEF* privateDefBuf = (HCCL_KERNEL_INFO_PRIVATE_DEF*)&private_def_buf[0];
     int64_t result_comm = (privateDefBuf->comm);
     u32 result_srcRank = (privateDefBuf->srcRank);
     u32 result_destRank = (privateDefBuf->destRank);
@@ -1040,20 +886,18 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask_by_comm_pytorch)
     EXPECT_EQ(result_srTag, 0);
 
     // -------------------HcomSend test----------------
-    MOCKER(HcclCommGraphGetRankId)
-    .expects(atMost(8))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcclCommGraphGetRankId).expects(atMost(8)).will(returnValue(HCCL_SUCCESS));
     type = HCCL_KERNEL_OP_TYPE_SEND;
     nodeptr->GetOpDesc()->SetType(type);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_TAG");
-    ret = hcomKernelBuilder.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelBuilder.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::SUCCESS);
     result_type = taskDefList[1].type();
     result_stream_id = taskDefList[1].stream_id();
     result_hccl_hccl_type = taskDefList[1].mutable_kernel_hccl()->hccl_type();
     result_private_def = taskDefList[1].private_def();
-    sal_memcpy(&private_def_buf[0],sizeof(private_def_buf),result_private_def.c_str(),sizeof(private_def_buf));
-    privateDefBuf = (HCCL_KERNEL_INFO_PRIVATE_DEF *)&private_def_buf[0];
+    sal_memcpy(&private_def_buf[0], sizeof(private_def_buf), result_private_def.c_str(), sizeof(private_def_buf));
+    privateDefBuf = (HCCL_KERNEL_INFO_PRIVATE_DEF*)&private_def_buf[0];
     result_comm = (privateDefBuf->comm);
     result_srcRank = (privateDefBuf->srcRank);
     result_destRank = (privateDefBuf->destRank);
@@ -1068,13 +912,13 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask_by_comm_pytorch)
 
     // Send: 未设定 destRank 时，报错
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_DESTRANK");
-    ret = hcomKernelBuilder.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelBuilder.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::INTERNAL_ERROR);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_TRUE_DESTRANK");
 
     // Send: 未设定 srTag 时，报错
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_SRTAG");
-    ret = hcomKernelBuilder.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelBuilder.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::INTERNAL_ERROR);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_TRUE_SRTAG");
 
@@ -1083,14 +927,14 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask_by_comm_pytorch)
     nodeptr->GetOpDesc()->SetType(type);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_TAG");
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_GROUP");
-    ret = hcomKernelBuilder.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelBuilder.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::SUCCESS);
     result_type = taskDefList[2].type();
     result_stream_id = taskDefList[2].stream_id();
     result_hccl_hccl_type = taskDefList[2].mutable_kernel_hccl()->hccl_type();
     result_private_def = taskDefList[2].private_def();
-    sal_memcpy(&private_def_buf[0],sizeof(private_def_buf),result_private_def.c_str(),sizeof(private_def_buf));
-    privateDefBuf = (HCCL_KERNEL_INFO_PRIVATE_DEF *)&private_def_buf[0];
+    sal_memcpy(&private_def_buf[0], sizeof(private_def_buf), result_private_def.c_str(), sizeof(private_def_buf));
+    privateDefBuf = (HCCL_KERNEL_INFO_PRIVATE_DEF*)&private_def_buf[0];
     result_comm = (privateDefBuf->comm);
     result_srcRank = (privateDefBuf->srcRank);
     result_destRank = (privateDefBuf->destRank);
@@ -1106,13 +950,13 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask_by_comm_pytorch)
 
     // Receive: srcRank未设定时，报错
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_SRCRANK");
-    ret = hcomKernelBuilder.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelBuilder.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::INTERNAL_ERROR);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_TRUE_SRCRANK");
 
     // Receive: srTag未设定时，报错
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_SRTAG");
-    ret = hcomKernelBuilder.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelBuilder.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::INTERNAL_ERROR);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_TRUE_SRTAG");
 
@@ -1120,7 +964,7 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask_by_comm_pytorch)
     type = HCCL_KERNEL_OP_TYPE_ALLREDUCE;
     nodeptr->GetOpDesc()->SetType(type);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_TAG");
-    ret = hcomKernelBuilder.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelBuilder.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::SUCCESS);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_TAG");
 
@@ -1128,7 +972,7 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask_by_comm_pytorch)
     type = HCCL_KERNEL_OP_TYPE_REMOTE_READ;
     nodeptr->GetOpDesc()->SetType(type);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_TAG");
-    ret = hcomKernelBuilder.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelBuilder.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::SUCCESS);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_TAG");
 
@@ -1136,7 +980,7 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask_by_comm_pytorch)
     type = " ";
     nodeptr->GetOpDesc()->SetType(type);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_TAG");
-    ret = hcomKernelBuilder.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelBuilder.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::INTERNAL_ERROR);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_COMM");
 }
@@ -1155,8 +999,8 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask_by_comm_pytorch2)
     s64 streamId = 10000;
     nodeptr->GetOpDesc()->SetStreamId((s64)streamId);
 
-	std::string name = "HcomTag";
-	nodeptr->GetOpDesc()->SetName(name);
+    std::string name = "HcomTag";
+    nodeptr->GetOpDesc()->SetName(name);
 
     // -------------------HcomBroadcast test----------------
     std::string type = HCCL_KERNEL_OP_TYPE_BROADCAST;
@@ -1182,7 +1026,7 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask_by_comm_pytorch2)
     ge::AttrUtils::SetInt(nodeptr->GetOpDesc(), "global_workspace_type", 0);
     HCCL_INFO("node[%p] run context[%p]", nodeptr.get(), &runContext_dummy);
     HCCL_INFO("----------%s", nodeptr->GetOpDesc()->GetType().c_str());
-    s32 ret = hcomKernelBuilder.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    s32 ret = hcomKernelBuilder.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::SUCCESS);
 
     u32 result_type = taskDefList[0].type();
@@ -1190,8 +1034,8 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask_by_comm_pytorch2)
     std::string result_hccl_hccl_type = taskDefList[0].mutable_kernel_hccl()->hccl_type();
     std::string result_private_def = taskDefList[0].private_def();
     char private_def_buf[sizeof(HCCL_KERNEL_INFO_PRIVATE_DEF)];
-    sal_memcpy(&private_def_buf[0],sizeof(private_def_buf),result_private_def.c_str(),sizeof(private_def_buf));
-    HCCL_KERNEL_INFO_PRIVATE_DEF *privateDefBuf = (HCCL_KERNEL_INFO_PRIVATE_DEF *)&private_def_buf[0];
+    sal_memcpy(&private_def_buf[0], sizeof(private_def_buf), result_private_def.c_str(), sizeof(private_def_buf));
+    HCCL_KERNEL_INFO_PRIVATE_DEF* privateDefBuf = (HCCL_KERNEL_INFO_PRIVATE_DEF*)&private_def_buf[0];
     int64_t result_comm = (privateDefBuf->comm);
     u32 result_srcRank = (privateDefBuf->srcRank);
     u32 result_destRank = (privateDefBuf->destRank);
@@ -1205,20 +1049,18 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask_by_comm_pytorch2)
     EXPECT_EQ(result_srTag, 0);
 
     // -------------------HcomSend test----------------
-    MOCKER(HcclCommGraphGetRankId)
-    .expects(atMost(8))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcclCommGraphGetRankId).expects(atMost(8)).will(returnValue(HCCL_SUCCESS));
     type = HCCL_KERNEL_OP_TYPE_SEND;
     nodeptr->GetOpDesc()->SetType(type);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_TAG");
-    ret = hcomKernelBuilder.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelBuilder.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::SUCCESS);
     result_type = taskDefList[1].type();
     result_stream_id = taskDefList[1].stream_id();
     result_hccl_hccl_type = taskDefList[1].mutable_kernel_hccl()->hccl_type();
     result_private_def = taskDefList[1].private_def();
-    sal_memcpy(&private_def_buf[0],sizeof(private_def_buf),result_private_def.c_str(),sizeof(private_def_buf));
-    privateDefBuf = (HCCL_KERNEL_INFO_PRIVATE_DEF *)&private_def_buf[0];
+    sal_memcpy(&private_def_buf[0], sizeof(private_def_buf), result_private_def.c_str(), sizeof(private_def_buf));
+    privateDefBuf = (HCCL_KERNEL_INFO_PRIVATE_DEF*)&private_def_buf[0];
     result_comm = (privateDefBuf->comm);
     result_srcRank = (privateDefBuf->srcRank);
     result_destRank = (privateDefBuf->destRank);
@@ -1233,13 +1075,13 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask_by_comm_pytorch2)
 
     // Send: 未设定 destRank 时，报错
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_DESTRANK");
-    ret = hcomKernelBuilder.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelBuilder.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::INTERNAL_ERROR);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_TRUE_DESTRANK");
 
     // Send: 未设定 srTag 时，报错
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_SRTAG");
-    ret = hcomKernelBuilder.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelBuilder.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::INTERNAL_ERROR);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_TRUE_SRTAG");
 
@@ -1248,14 +1090,14 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask_by_comm_pytorch2)
     nodeptr->GetOpDesc()->SetType(type);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_TAG");
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_GROUP");
-    ret = hcomKernelBuilder.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelBuilder.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::SUCCESS);
     result_type = taskDefList[2].type();
     result_stream_id = taskDefList[2].stream_id();
     result_hccl_hccl_type = taskDefList[2].mutable_kernel_hccl()->hccl_type();
     result_private_def = taskDefList[2].private_def();
-    sal_memcpy(&private_def_buf[0],sizeof(private_def_buf),result_private_def.c_str(),sizeof(private_def_buf));
-    privateDefBuf = (HCCL_KERNEL_INFO_PRIVATE_DEF *)&private_def_buf[0];
+    sal_memcpy(&private_def_buf[0], sizeof(private_def_buf), result_private_def.c_str(), sizeof(private_def_buf));
+    privateDefBuf = (HCCL_KERNEL_INFO_PRIVATE_DEF*)&private_def_buf[0];
     result_comm = (privateDefBuf->comm);
     result_srcRank = (privateDefBuf->srcRank);
     result_destRank = (privateDefBuf->destRank);
@@ -1271,13 +1113,13 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask_by_comm_pytorch2)
 
     // Receive: srcRank未设定时，报错
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_SRCRANK");
-    ret = hcomKernelBuilder.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelBuilder.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::INTERNAL_ERROR);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_TRUE_SRCRANK");
 
     // Receive: srTag未设定时，报错
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_SRTAG");
-    ret = hcomKernelBuilder.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelBuilder.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::INTERNAL_ERROR);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_TRUE_SRTAG");
 
@@ -1285,7 +1127,7 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask_by_comm_pytorch2)
     type = HCCL_KERNEL_OP_TYPE_ALLREDUCE;
     nodeptr->GetOpDesc()->SetType(type);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_TAG");
-    ret = hcomKernelBuilder.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelBuilder.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::SUCCESS);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_TAG");
 
@@ -1293,7 +1135,7 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask_by_comm_pytorch2)
     type = HCCL_KERNEL_OP_TYPE_REMOTE_READ;
     nodeptr->GetOpDesc()->SetType(type);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_TAG");
-    ret = hcomKernelBuilder.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelBuilder.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::SUCCESS);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_TAG");
 
@@ -1301,12 +1143,12 @@ TEST_F(HcomKernelBuilderTest, ut_generateTask_by_comm_pytorch2)
     type = " ";
     nodeptr->GetOpDesc()->SetType(type);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_TAG");
-    ret = hcomKernelBuilder.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelBuilder.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::INTERNAL_ERROR);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_FALSE_COMM");
 }
 
-HcclResult FakeGetOffDeviceTypeWithoutDev(DevType &devType)
+HcclResult FakeGetOffDeviceTypeWithoutDev(DevType& devType)
 {
     devType = DevType::DEV_TYPE_910B;
     return HCCL_SUCCESS;
@@ -1319,13 +1161,10 @@ TEST_F(HcomKernelBuilderTest, ut_GetDevAndSerNumFromRankTable)
     char file_name_t[] = "./ut_task_num_one_server_hcom_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -1338,9 +1177,7 @@ TEST_F(HcomKernelBuilderTest, ut_GetDevAndSerNumFromRankTable)
     ret = hrtSetDevice(0);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    MOCKER(GetOffDeviceTypeWithoutDev)
-    .stubs()
-    .will(invoke(FakeGetOffDeviceTypeWithoutDev));
+    MOCKER(GetOffDeviceTypeWithoutDev).stubs().will(invoke(FakeGetOffDeviceTypeWithoutDev));
 
     char* rank_table_file = "./ut_task_num_one_server_hcom_test.json";
     char* rank_ID = "0";
@@ -1375,28 +1212,28 @@ TEST_F(HcomKernelBuilderTest, ut_GetCombineComTaskNum)
     u32 intraTaskNum = 0;
     u32 interTaskNum = 0;
 
-    HcclResult ret = HcomOpUtils::GetCombineComTaskNum(HCCL_KERNEL_OP_TYPE_ALLREDUCE, serverNum,
-        deviceNumPerServer, intraTaskNum, interTaskNum);
+    HcclResult ret = HcomOpUtils::GetCombineComTaskNum(
+        HCCL_KERNEL_OP_TYPE_ALLREDUCE, serverNum, deviceNumPerServer, intraTaskNum, interTaskNum);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(intraTaskNum, 0);
     EXPECT_EQ(interTaskNum, 551);
-    ret = HcomOpUtils::GetCombineComTaskNum(HCCL_KERNEL_OP_TYPE_ALLGATHER, serverNum,
-        deviceNumPerServer, intraTaskNum, interTaskNum);
+    ret = HcomOpUtils::GetCombineComTaskNum(
+        HCCL_KERNEL_OP_TYPE_ALLGATHER, serverNum, deviceNumPerServer, intraTaskNum, interTaskNum);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(intraTaskNum, 0);
     EXPECT_EQ(interTaskNum, 261);
-    ret = HcomOpUtils::GetCombineComTaskNum(HCCL_KERNEL_OP_TYPE_REDUCESCATTER, serverNum,
-        deviceNumPerServer, intraTaskNum, interTaskNum);
+    ret = HcomOpUtils::GetCombineComTaskNum(
+        HCCL_KERNEL_OP_TYPE_REDUCESCATTER, serverNum, deviceNumPerServer, intraTaskNum, interTaskNum);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(intraTaskNum, 0);
     EXPECT_EQ(interTaskNum, 319);
-    ret = HcomOpUtils::GetCombineComTaskNum(HCCL_KERNEL_OP_TYPE_ALLTOALL, serverNum,
-        deviceNumPerServer, intraTaskNum, interTaskNum);
+    ret = HcomOpUtils::GetCombineComTaskNum(
+        HCCL_KERNEL_OP_TYPE_ALLTOALL, serverNum, deviceNumPerServer, intraTaskNum, interTaskNum);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(intraTaskNum, 0);
     EXPECT_EQ(interTaskNum, 406);
-    ret = HcomOpUtils::GetCombineComTaskNum(HCCL_KERNEL_OP_TYPE_REMOTE_READ, serverNum,
-        deviceNumPerServer, intraTaskNum, interTaskNum);
+    ret = HcomOpUtils::GetCombineComTaskNum(
+        HCCL_KERNEL_OP_TYPE_REMOTE_READ, serverNum, deviceNumPerServer, intraTaskNum, interTaskNum);
     EXPECT_EQ(ret, HCCL_E_NOT_SUPPORT);
     GlobalMockObject::verify();
 }
@@ -1406,17 +1243,16 @@ TEST_F(HcomKernelBuilderTest, ut_getAlltoAllvStagedScratchMemSize)
     ge::NodePtr nodeptr(new NodeTest);
     HcomOpsKernelBuilder hcomKernelInfo;
 
-    MOCKER_CPP(&HcomOpsKernelBuilder::GetAlltoAllCountsDispl,
-        HcclResult(HcomOpsKernelBuilder::*)(ge::Node& node, std::vector<int64_t> &sendCounts,
-        std::vector<int64_t> &sendDispls, std::vector<int64_t>& recvCounts, std::vector<int64_t>& recvDispls))
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(
+        &HcomOpsKernelBuilder::GetAlltoAllCountsDispl,
+        HcclResult(HcomOpsKernelBuilder::*)(
+            ge::Node & node, std::vector<int64_t> & sendCounts, std::vector<int64_t> & sendDispls,
+            std::vector<int64_t> & recvCounts, std::vector<int64_t> & recvDispls))
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(HcomGetAlltoAllStagedWorkSpaceMemSize)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomGetAlltoAllStagedWorkSpaceMemSize).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     const string sGroup = "test_group";
     u64 getMemSize = 0;
@@ -1428,17 +1264,16 @@ TEST_F(HcomKernelBuilderTest, ut_getAlltoAllvStagedScratchMemSize)
     std::vector<int64_t> sendCounts;
     ge::AttrUtils::SetListInt(nodeptr->GetOpDesc(), "send_counts", sendCounts);
 
-    MOCKER_CPP(&HcomOpsKernelBuilder::GetAlltoAllCountsDispl,
-        HcclResult(HcomOpsKernelBuilder::*)(const ge::OpDescPtr &op, std::vector<int64_t> &sendCounts,
-        std::vector<int64_t> &sendDispls, std::vector<int64_t>& recvCounts, std::vector<int64_t>& recvDispls))
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(
+        &HcomOpsKernelBuilder::GetAlltoAllCountsDispl,
+        HcclResult(HcomOpsKernelBuilder::*)(
+            const ge::OpDescPtr& op, std::vector<int64_t>& sendCounts, std::vector<int64_t>& sendDispls,
+            std::vector<int64_t>& recvCounts, std::vector<int64_t>& recvDispls))
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(HcomGetAlltoAllStagedWorkSpaceMemSize)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomGetAlltoAllStagedWorkSpaceMemSize).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = hcomKernelInfo.GetAlltoAllvStagedScratchMemSize(*(nodeptr.get()), hcomComm, sGroup, 4, getMemSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -1449,18 +1284,18 @@ TEST_F(HcomKernelBuilderTest, ut_getReduceScatterVCountsDispl)
 {
     ge::NodePtr nodeptr(new NodeTest);
     HcomOpsKernelBuilder hcomKernelInfo;
- 
+
     std::vector<int64_t> sendCounts;
     std::vector<int64_t> sendDispls;
     std::vector<int64_t> recvCount;
- 
+
     HcclResult ret = hcomKernelInfo.GetReduceScatterVCountsDispl(*(nodeptr.get()), sendCounts, sendDispls, recvCount);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
 
 HcclResult stub_GetVectorFromTensor(const ge::GeTensor* tensor, std::vector<int64_t>& vector)
 {
-    vector.resize(4*4);
+    vector.resize(4 * 4);
     return HCCL_SUCCESS;
 }
 
@@ -1470,28 +1305,21 @@ TEST_F(HcomKernelBuilderTest, ut_getAlltoAllvcStagedScratchMemSize)
     HcomOpUtils hcomKernelInfo;
     u32 rankSize = 4;
 
-    MOCKER(&HcomOpUtils::GetVectorFromTensor)
-    .stubs()
-    .will(invoke(stub_GetVectorFromTensor));
+    MOCKER(&HcomOpUtils::GetVectorFromTensor).stubs().will(invoke(stub_GetVectorFromTensor));
 
     std::vector<int64_t> sendCountMatrix(16, 1);
     ge::AttrUtils::SetListInt(nodeptr->GetOpDesc(), "send_count_matrix", sendCountMatrix);
     u32 rankId = 0;
 
-    MOCKER(HcomGetRankId)
-    .stubs()
-    .with(mockcpp::any(), outBound(&rankId))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomGetRankId).stubs().with(mockcpp::any(), outBound(&rankId)).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(HcomGetAlltoAllvcStagedWorkSpaceMemSize)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomGetAlltoAllvcStagedWorkSpaceMemSize).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     const string sGroup = "test_group";
     u64 getMemSize = 0;
     const int64_t hcomComm = 0;
-    HcclResult ret = hcomKernelInfo.GetAlltoAllvcStagedScratchMemSize(*(nodeptr.get()), hcomComm, sGroup, 4, getMemSize);
+    HcclResult ret
+        = hcomKernelInfo.GetAlltoAllvcStagedScratchMemSize(*(nodeptr.get()), hcomComm, sGroup, 4, getMemSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     GlobalMockObject::verify();
 }
@@ -1504,10 +1332,7 @@ TEST_F(HcomKernelBuilderTest, ut_CheckAlltoAllvcRank)
     const string sGroup = "test_group";
     const int64_t hcomComm = 0;
 
-    MOCKER(&HcomOpUtils::GetRankId)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(&HcomOpUtils::GetRankId).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ge::AttrUtils::SetInt((*(nodeptr.get())).GetOpDesc(), "rank", alltoallvcRank);
     HcclResult ret = hcomKernelInfo.CheckAlltoAllvcRank(*(nodeptr.get()), hcomComm, sGroup);
@@ -1527,7 +1352,8 @@ TEST_F(HcomKernelBuilderTest, ut_getAlltoAllCountsDispl)
     std::vector<int64_t> recvCounts;
     std::vector<int64_t> recvDispls;
 
-    HcclResult ret = hcomKernelInfo.GetAlltoAllCountsDispl(*(nodeptr.get()), sendCounts, sendDispls, recvCounts, recvDispls);
+    HcclResult ret
+        = hcomKernelInfo.GetAlltoAllCountsDispl(*(nodeptr.get()), sendCounts, sendDispls, recvCounts, recvDispls);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
 #endif
@@ -1551,16 +1377,17 @@ TEST_F(HcomKernelBuilderTest, ut_getAlltoAllCountsDispl_across_graph)
     ge::NodePtr nodeptr(new NodeTest);
     HcomOpsKernelBuilder hcomKernelInfo;
     MOCKER(&ge::OpDescUtils::GetInputConstData)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue((ge::ConstGeTensorBarePtr)nullptr));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue((ge::ConstGeTensorBarePtr) nullptr));
 
     std::vector<int64_t> sendCounts;
     std::vector<int64_t> sendDispls;
     std::vector<int64_t> recvCounts;
     std::vector<int64_t> recvDispls;
 
-    HcclResult ret = hcomKernelInfo.GetAlltoAllCountsDispl(*(nodeptr.get()), sendCounts, sendDispls, recvCounts, recvDispls);
+    HcclResult ret
+        = hcomKernelInfo.GetAlltoAllCountsDispl(*(nodeptr.get()), sendCounts, sendDispls, recvCounts, recvDispls);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
 
@@ -1574,9 +1401,10 @@ const std::vector<HcclAlgoType> GetExternalInputHcclAlgoConfig_stub1()
     return hcclAlgoConfig;
 }
 
-HcclResult GetDeviceTypeA2Stub(const char *group, DevType &deviceType) {
+HcclResult GetDeviceTypeA2Stub(const char* group, DevType& deviceType)
+{
     deviceType = DevType::DEV_TYPE_910B;
-    return HCCL_SUCCESS;      
+    return HCCL_SUCCESS;
 }
 
 TEST_F(HcomKernelBuilderTest, ut_getOpWorkspaceMemSize)
@@ -1585,72 +1413,47 @@ TEST_F(HcomKernelBuilderTest, ut_getOpWorkspaceMemSize)
     HcomOpsKernelBuilder hcomKernelInfo;
 
     MOCKER(GetExternalInputHcclAlgoConfig)
-    .stubs()
-    .with(mockcpp::any())
-    .will(invoke(GetExternalInputHcclAlgoConfig_stub1));
+        .stubs()
+        .with(mockcpp::any())
+        .will(invoke(GetExternalInputHcclAlgoConfig_stub1));
 
     u64 opMemSize = 0;
     u32 rankSize = 3;
     MOCKER(HcomGetRankSize)
-    .stubs()
-    .with(mockcpp::any(), outBoundP(&rankSize, sizeof(rankSize)))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBoundP(&rankSize, sizeof(rankSize)))
+        .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(HcomGetDevId)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomGetDevId).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(hrtGetDeviceIndexByPhyId)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceIndexByPhyId).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(hrtSetDevice)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtSetDevice).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(hrtResetDevice)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtResetDevice).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(hrtCtxSetCurrent)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(hrtCtxGetCurrent)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtCtxSetCurrent).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtCtxGetCurrent).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     MOCKER_CPP(&HcomOpsKernelBuilder::GetAlltoAllvStagedScratchMemSize)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = hcomKernelInfo.GetOpWorkspaceMemSize(*nodeptr, HCCL_KERNEL_OP_TYPE_ALLTOALLV, opMemSize);
 
-    MOCKER(GetDeviceType, HcclResult (const char *, DevType &)).stubs().will(invoke(GetDeviceTypeA2Stub));
+    MOCKER(GetDeviceType, HcclResult(const char*, DevType&)).stubs().will(invoke(GetDeviceTypeA2Stub));
     ret = hcomKernelInfo.GetOpWorkspaceMemSize(*nodeptr, HCCL_KERNEL_OP_TYPE_REDUCESCATTERV, opMemSize);
     EXPECT_EQ(HCCL_SUCCESS, ret);
     GlobalMockObject::verify();
 }
 
-ge::graphStatus FakeGetOption2(ge::GEThreadLocalContext *that, const std::string &optionExec, std::string &dumpDebugValue)
+ge::graphStatus
+FakeGetOption2(ge::GEThreadLocalContext* that, const std::string& optionExec, std::string& dumpDebugValue)
 {
-    nlohmann::json group_list =
-    {
-        {
-            {"group_name", "aa"},
-            {"group_rank_list", {0, 1}}
-        },
-        {
-            {"group_name", "off_group_rank_list"},
-            {"group_rank_list", {0, 1, 2, 3, 4, 5, 6, 7}}
-        }
-    };
+    nlohmann::json group_list
+        = {{{"group_name", "aa"}, {"group_rank_list", {0, 1}}},
+           {{"group_name", "off_group_rank_list"}, {"group_rank_list", {0, 1, 2, 3, 4, 5, 6, 7}}}};
     if (optionExec == ge::OPTION_EXEC_HCOM_GROUPLIST) {
         dumpDebugValue = group_list.dump();
     } else if (optionExec == ge::OPTION_EXEC_HCOM_RANK_MAPPING) {
@@ -1679,24 +1482,19 @@ TEST_F(HcomKernelBuilderTest, ut_offlinebuild_calcSubStreamNum)
     std::string type = HCCL_KERNEL_OP_TYPE_ALLTOALLV;
     nodeptr->GetOpDesc()->SetType(type);
 
-
     std::string curGroup = "aa";
     ge::AttrUtils::SetStr(nodeptr->GetOpDesc(), "group", curGroup);
 
-    MOCKER_CPP(&ge::GEThreadLocalContext::GetOption)
-    .stubs()
-    .will(invoke(FakeGetOption2));
+    MOCKER_CPP(&ge::GEThreadLocalContext::GetOption).stubs().will(invoke(FakeGetOption2));
 
-    MOCKER(&ge::AttrUtils::SetInt)
-    .stubs()
-    .will(returnValue(false));
+    MOCKER(&ge::AttrUtils::SetInt).stubs().will(returnValue(false));
 
     ret = hcomOpsKernelInfoStore_.HcomCalcOpRunningParam(*nodeptr);
 
     MOCKER_CPP(&HcomOpsKernelBuilder::CalAndSetOpWorkerSpaceForKnowShape)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
     type = HCCL_KERNEL_OP_TYPE_BROADCAST;
     std::string nodeName = "ALL_GATHER_NO_CALCULATION";
@@ -1719,34 +1517,18 @@ TEST_F(HcomKernelBuilderTest, ut_offlinebuild_calcSubStreamNumAllToAllVC)
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_TRUE_GROUP");
     ge::AttrUtils::SetStr(nodeptr->GetOpDesc(), "group", curGroup);
 
-    MOCKER_CPP(&ge::GEThreadLocalContext::GetOption)
-    .stubs()
-    .will(invoke(FakeGetOption2));
+    MOCKER_CPP(&ge::GEThreadLocalContext::GetOption).stubs().will(invoke(FakeGetOption2));
 
     u32 rankId = 0;
-    MOCKER(HcomGetRankId)
-    .stubs()
-    .with(mockcpp::any(), outBound(&rankId))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomGetRankId).stubs().with(mockcpp::any(), outBound(&rankId)).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(HcomGetRankSize)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomGetRankSize).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(&HcomOpUtils::CheckAlltoAllvcRank)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(&HcomOpUtils::CheckAlltoAllvcRank).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcomGraphOptimizer::GetOriginalGraphShapeTypeFromDesc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomGraphOptimizer::GetOriginalGraphShapeTypeFromDesc).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(HcomGetAlltoAllvcStagedWorkSpaceMemSize)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomGetAlltoAllvcStagedWorkSpaceMemSize).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_SEND_COUNT_MATRIX");
     ge::AttrUtils::SetInt(nodeptr->GetOpDesc(), "rank", 7);
@@ -1776,19 +1558,12 @@ TEST_F(HcomKernelBuilderTest, ut_GenerateTaskDef)
 }
 #endif
 
-ge::graphStatus TaskNumGetOption(ge::GEThreadLocalContext *that, const std::string &optionExec, std::string &dumpDebugValue)
+ge::graphStatus
+TaskNumGetOption(ge::GEThreadLocalContext* that, const std::string& optionExec, std::string& dumpDebugValue)
 {
-    nlohmann::json group_list =
-    {
-        {
-            {"group_name", "aa"},
-            {"group_rank_list", {0, 1}}
-        },
-        {
-            {"group_name", "off_group_rank_list"},
-            {"group_rank_list", {0, 1, 2, 3, 4, 5, 6, 7}}
-        }
-    };
+    nlohmann::json group_list
+        = {{{"group_name", "aa"}, {"group_rank_list", {0, 1}}},
+           {{"group_name", "off_group_rank_list"}, {"group_rank_list", {0, 1, 2, 3, 4, 5, 6, 7}}}};
     if (optionExec == ge::OPTION_EXEC_HCOM_GROUPLIST) {
         dumpDebugValue = group_list.dump();
     } else if (optionExec == ge::OPTION_EXEC_HCOM_RANK_MAPPING) {
@@ -1822,13 +1597,10 @@ TEST_F(HcomKernelBuilderTest, ut_CalcOpTaskNum)
     char file_name_t[] = "./ut_task_num_one_server_hcom_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -1836,17 +1608,14 @@ TEST_F(HcomKernelBuilderTest, ut_CalcOpTaskNum)
 
     ge::OpDesc op;
     ge ::Status ge_ret = ge::INTERNAL_ERROR;
-    //HcomOpsKernelInfoStore hcomKernelInfo;
+    // HcomOpsKernelInfoStore hcomKernelInfo;
     HcomOpsKernelBuilder hcomKernelInfo;
 
     ret = hrtSetDevice(0);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     DevType deviceType = DevType::DEV_TYPE_910;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
 
     char* rank_table_file = "./ut_task_num_one_server_hcom_test.json";
     char* rank_ID = "0";
@@ -1880,9 +1649,7 @@ TEST_F(HcomKernelBuilderTest, ut_CalcOpTaskNum)
     ge_ret = hcomKernelInfo.CalcOpRunningParam(*nodeptr);
     EXPECT_EQ(ge_ret, ge::SUCCESS);
 
-    MOCKER_CPP(&ge::GEThreadLocalContext::GetOption)
-    .stubs()
-    .will(invoke(TaskNumGetOption));
+    MOCKER_CPP(&ge::GEThreadLocalContext::GetOption).stubs().will(invoke(TaskNumGetOption));
 
     type = HCCL_KERNEL_OP_TYPE_ALLREDUCE;
     nodeptr->GetOpDesc()->SetType(type);
@@ -1906,35 +1673,30 @@ TEST_F(HcomKernelBuilderTest, ut_CalcOpTaskNum)
     GlobalMockObject::verify();
 }
 
-ge::graphStatus OfflineRankMappingOption1(ge::GEThreadLocalContext *that, const std::string &optionExec, std::string &dumpDebugValue)
+ge::graphStatus
+OfflineRankMappingOption1(ge::GEThreadLocalContext* that, const std::string& optionExec, std::string& dumpDebugValue)
 {
-    nlohmann::json group_list =
-    {
-        {
-            {"group_name", "aa"},
-            {"group_rank_list", {0, 1}}
-        },
-        {
-            {"group_name", "off_group_rank_list"},
-            {"group_rank_list", {0, 1, 2, 3, 4, 5, 6, 7}}
-        }
-    };
+    nlohmann::json group_list
+        = {{{"group_name", "aa"}, {"group_rank_list", {0, 1}}},
+           {{"group_name", "off_group_rank_list"}, {"group_rank_list", {0, 1, 2, 3, 4, 5, 6, 7}}}};
     if (optionExec == ge::OPTION_EXEC_HCOM_GROUPLIST) {
         dumpDebugValue = group_list.dump();
         return ge::GRAPH_SUCCESS;
-    } else if (optionExec == "ge.exec.rankTable" || optionExec == "ge.offline_hccl_compile" ||
-        optionExec == "ge.exec.hcomRankMapping") {
+    } else if (
+        optionExec == "ge.exec.rankTable" || optionExec == "ge.offline_hccl_compile"
+        || optionExec == "ge.exec.hcomRankMapping") {
         return ge::GRAPH_FAILED;
     } else if (optionExec == "ge.exec.rankMap") {
-        dumpDebugValue = R"({"rank_map":[{"logic_rank_id":1,"model_rank_id":0},{"logic_rank_id":2,"model_rank_id":1}]})";
+        dumpDebugValue
+            = R"({"rank_map":[{"logic_rank_id":1,"model_rank_id":0},{"logic_rank_id":2,"model_rank_id":1}]})";
         return ge::GRAPH_SUCCESS;
     } else if (optionExec == "ge.socVersion") {
-	    dumpDebugValue = "Ascend910";
-	    return ge::GRAPH_SUCCESS;
-	} else if (optionExec == "ge.exec.rankTableFile") {
-	    dumpDebugValue = "./ut_task_num_one_server_stream_test.json";
-	    return ge::GRAPH_SUCCESS;
-	}
+        dumpDebugValue = "Ascend910";
+        return ge::GRAPH_SUCCESS;
+    } else if (optionExec == "ge.exec.rankTableFile") {
+        dumpDebugValue = "./ut_task_num_one_server_stream_test.json";
+        return ge::GRAPH_SUCCESS;
+    }
     dumpDebugValue.push_back('1');
     return ge::GRAPH_SUCCESS;
 }
@@ -1946,13 +1708,10 @@ TEST_F(HcomKernelBuilderTest, ut_CalcOpTaskNum_1server_stream)
     char file_name_t[] = "./ut_task_num_one_server_stream_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -1968,15 +1727,9 @@ TEST_F(HcomKernelBuilderTest, ut_CalcOpTaskNum_1server_stream)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     DevType deviceType = DevType::DEV_TYPE_910;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(HcomGetCommByGroup)
-    .stubs()
-    .with(mockcpp::any(), outBound(comm))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomGetCommByGroup).stubs().with(mockcpp::any(), outBound(comm)).will(returnValue(HCCL_SUCCESS));
 
     comm->deviceType_ = deviceType;
     ret = comm->GetDevType(deviceType);
@@ -2007,9 +1760,7 @@ TEST_F(HcomKernelBuilderTest, ut_CalcOpTaskNum_1server_stream)
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "DUMMY_SET_TRUE_GROUP");
     ge::AttrUtils::SetStr(nodeptr->GetOpDesc(), "group", tempStr);
 
-    MOCKER_CPP(&ge::GEThreadLocalContext::GetOption)
-    .stubs()
-    .will(invoke(OfflineRankMappingOption1));
+    MOCKER_CPP(&ge::GEThreadLocalContext::GetOption).stubs().will(invoke(OfflineRankMappingOption1));
     std::string type;
     type = HCCL_KERNEL_OP_TYPE_ALLREDUCE;
     nodeptr->GetOpDesc()->SetType(type);
@@ -2022,10 +1773,10 @@ TEST_F(HcomKernelBuilderTest, ut_CalcOpTaskNum_1server_stream)
     s32 serverNum = 9;
 
     MOCKER(HcomOpUtils::GetDeviceAndServerNum)
-    .stubs()
-    //.with(mockcpp::any())
-    .with(mockcpp::any(), outBound(deviceNumPerServer), outBound(serverNum), mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        //.with(mockcpp::any())
+        .with(mockcpp::any(), outBound(deviceNumPerServer), outBound(serverNum), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
     ge_ret = hcomKernelInfo.CalcOpRunningParam(*nodeptr);
     EXPECT_EQ(ge_ret, ge::SUCCESS);
@@ -2043,13 +1794,10 @@ TEST_F(HcomKernelBuilderTest, ut_CalcOpTaskNum_1server)
     char file_name_t[] = "./ut_task_num_one_server_hcom_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -2063,10 +1811,7 @@ TEST_F(HcomKernelBuilderTest, ut_CalcOpTaskNum_1server)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     DevType deviceType = DevType::DEV_TYPE_910;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
 
     char* rank_table_file = "./ut_task_num_one_server_hcom_test.json";
     char* rank_ID = "0";
@@ -2100,9 +1845,7 @@ TEST_F(HcomKernelBuilderTest, ut_CalcOpTaskNum_1server)
     ge_ret = hcomKernelInfo.CalcOpRunningParam(*nodeptr);
     EXPECT_EQ(ge_ret, ge::SUCCESS);
 
-    MOCKER_CPP(&ge::GEThreadLocalContext::GetOption)
-    .stubs()
-    .will(invoke(TaskNumGetOption));
+    MOCKER_CPP(&ge::GEThreadLocalContext::GetOption).stubs().will(invoke(TaskNumGetOption));
 
     type = HCCL_KERNEL_OP_TYPE_ALLREDUCE;
     nodeptr->GetOpDesc()->SetType(type);
@@ -2132,9 +1875,7 @@ TEST_F(HcomKernelBuilderTest, ut_GetAlgoLevel1)
     AlgTypeLevel1 algType1;
     std::string opType = "allreduce";
 
-    MOCKER(LoadCannVersionInfoFile)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(LoadCannVersionInfoFile).stubs().will(returnValue(HCCL_SUCCESS));
 
     setenv("HCCL_ALGO", "level0:NA;level1:ring", 1);
     ret = HcomOpUtils::GetAlgoLevel1(8, opType, algType1);
@@ -2165,7 +1906,7 @@ TEST_F(HcomKernelBuilderTest, ut_Hcom_SplitHcclOpType)
     std::string opType = "allreduce";
 
     std::string config1 = "allreduce=level0:NA;level1:ring/allgather=level0:NA;level1:NHR/"
-        "broadcast=level0:NA;level1:NHR/reducescatter=level0:NA;level1:NHR";
+                          "broadcast=level0:NA;level1:NHR/reducescatter=level0:NA;level1:NHR";
     std::string config2 = "allreduce=level0:NA;level1:ring";
     std::string config3 = "/allreduce=level0:NA;level1:ring";
     std::string config4 = "allreduce=level0:NA;level1:ring/";
@@ -2191,14 +1932,14 @@ TEST_F(HcomKernelBuilderTest, ut_CalAndSetOpWorkerSpaceForKnowShape)
 {
     u32 shapeType = ORIGINAL_GRAPH_KNOWNSHAPE_TYPE;
     MOCKER_CPP(&HcomOpsKernelBuilder::GetOriginalGraphShapeTypeFromDesc)
-    .stubs()
-    .with(mockcpp::any(), outBound(shapeType))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(shapeType))
+        .will(returnValue(HCCL_SUCCESS));
 
     MOCKER_CPP(&HcomOpsKernelBuilder::GetOpWorkspaceMemSize)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
     ge::NodePtr nodeptr(new NodeTest);
     HcomOpUtils hcomKernelInfo;
@@ -2236,8 +1977,8 @@ TEST_F(HcomKernelBuilderTest, ut_GenerateTaskAivCoreLimit)
     s64 streamId = 10000;
     nodeptr->GetOpDesc()->SetStreamId((s64)streamId);
 
-	std::string name = "HcomTag";
-	nodeptr->GetOpDesc()->SetName(name);
+    std::string name = "HcomTag";
+    nodeptr->GetOpDesc()->SetName(name);
 
     std::string type = HCCL_KERNEL_OP_TYPE_ALLGATHER;
     nodeptr->GetOpDesc()->SetType(type);
@@ -2265,19 +2006,25 @@ TEST_F(HcomKernelBuilderTest, ut_GenerateTaskAivCoreLimit)
     // -------------------aiv core limit----------------
     // AivCoreLimit use default value 48
     HCCL_KERNEL_INFO_PRIVATE_DEF privateDef;
-    MOCKER_CPP(&HcomOpsKernelBuilder::GenerateTaskPrivateDef).stubs().with(mockcpp::any(), spy(privateDef), mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomOpsKernelBuilder::GenerateTaskPrivateDef)
+        .stubs()
+        .with(mockcpp::any(), spy(privateDef), mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
     log_level_set_stub(DLOG_DEBUG);
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "ATTR_OP_VECTORCORE_NUM_CLEAR");
-    s32 ret = hcomKernelInfo.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    s32 ret = hcomKernelInfo.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::SUCCESS);
     EXPECT_EQ(privateDef.aivCoreLimit, 48U);
 
     // AivCoreLimit from ge.hardwareInfo
     std::string hardwareInfo = "ge.hardwareInfo";
     std::string hardwareInfoStr = "vector_core_cnt:5";
-    MOCKER_CPP(&ge::GEContext::GetOption).stubs().with(eq(hardwareInfo),outBound(hardwareInfoStr)).will(returnValue(ge::GRAPH_SUCCESS));
-    ret = hcomKernelInfo.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    MOCKER_CPP(&ge::GEContext::GetOption)
+        .stubs()
+        .with(eq(hardwareInfo), outBound(hardwareInfoStr))
+        .will(returnValue(ge::GRAPH_SUCCESS));
+    ret = hcomKernelInfo.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::SUCCESS);
     EXPECT_EQ(privateDef.aivCoreLimit, 5U);
 
@@ -2285,7 +2032,7 @@ TEST_F(HcomKernelBuilderTest, ut_GenerateTaskAivCoreLimit)
     ge::AttrUtils::HasAttr(nodeptr->GetOpDesc(), "ATTR_OP_VECTORCORE_NUM");
     std::string aviCoreNum("4");
     ge::AttrUtils::SetStr(nodeptr->GetOpDesc(), "_op_vectorcore_num", aviCoreNum);
-    ret = hcomKernelInfo.GenerateTask(*nodeptr,runContext_dummy,taskDefList);
+    ret = hcomKernelInfo.GenerateTask(*nodeptr, runContext_dummy, taskDefList);
     EXPECT_EQ(ret, ge::SUCCESS);
     EXPECT_EQ(privateDef.aivCoreLimit, 4U);
 

@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mokc.h>
@@ -44,8 +44,8 @@ constexpr u64 G = 1024 * M;
 
 std::vector<u64> GenerateDataCount()
 {
-    std::set<u64> dataCountSet = {
-        1, 2, 4, 8, 16, 128, 1 * K, 2 * K, 256 * K, 512 * K, 1 * M, 200 * M, /* 256 * M, 500 * M */};
+    std::set<u64> dataCountSet = {1, 2, 4, 8, 16, 128, 1 * K, 2 * K, 256 * K, 512 * K, 1 * M, 200 * M,
+                                  /* 256 * M, 500 * M */};
     for (u64 i = 1; i <= 230 * M; i = (i * 1.3) + 1) {
         dataCountSet.insert(i);
     }
@@ -54,20 +54,15 @@ std::vector<u64> GenerateDataCount()
 
 class AllReduceAICPUMesh1DTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AllReduce AICPU 1D test set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AllReduce AICPU 1D test set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AllReduce AICPU 1D test tear down" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AllReduce AICPU 1D test tear down" << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -215,20 +210,17 @@ TEST_F(AllReduceAICPUMesh1DTest, allreduce_aicpu_case_test_2_rank_count67108864_
 }
 
 TEST_F(AllReduceAICPUMesh1DTest, allreduce_aicpu_reduce_1d_test)
-{   
+{
     Hccl::ResLinks resLinks;
     vector<InsQuePtr> queues;
     for (u32 rank = 0; rank < 4; rank++) {
-       LinkData link(BasePortType(PortDeploymentType::P2P), 0, rank, 0, 1); 
-       resLinks[rank] = {link};
+        LinkData link(BasePortType(PortDeploymentType::P2P), 0, rank, 0, 1);
+        resLinks[rank] = {link};
     }
     u32 tempRanksize = 4;
     std::shared_ptr<InsTempAllReduceAicpuReduce> temp = std::make_shared<InsTempAllReduceAicpuReduce>(
-    0, 
-    tempRanksize, 
-    std::vector<std::vector<RankId>>{{0, 1, 2, 3}}, 
-    std::map<RankId, u32>{{0, 0}, {1, 1}, {2, 2}, {3, 3}}
-    );
+        0, tempRanksize, std::vector<std::vector<RankId>>{{0, 1, 2, 3}},
+        std::map<RankId, u32>{{0, 0}, {1, 1}, {2, 2}, {3, 3}});
 
     InsQuePtr que = std::make_shared<InsQueue>();
     for (u32 i = 0; i < tempRanksize - 1; i++) {
@@ -240,4 +232,4 @@ TEST_F(AllReduceAICPUMesh1DTest, allreduce_aicpu_reduce_1d_test)
     temp->GenExtIns(tempFuncs, templateData, resLinks, queues);
 }
 
-}
+} // namespace checker

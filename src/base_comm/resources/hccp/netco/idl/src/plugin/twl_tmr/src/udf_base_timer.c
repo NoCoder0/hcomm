@@ -61,8 +61,8 @@ void BaseTimerDestroyInfo(BaseTimerInfo *tmrInfo)
     return;
 }
 
-BaseTimerInfo *BaseTimerCreateInfo(TimerAppInfo *appInfo,
-    BaseTimerUsrCb *usrCb, uint32_t timeoutMs, BaseTimerParamAttr *attr)
+BaseTimerInfo *BaseTimerCreateInfo(TimerAppInfo *appInfo, BaseTimerUsrCb *usrCb, uint32_t timeoutMs,
+    BaseTimerParamAttr *attr)
 {
     BaseTimerParam *optParam = NULL;
     BaseTimerParam *param = (attr == NULL ? NULL : &(attr->param));
@@ -118,8 +118,9 @@ void BaseTimerEventProc(BaseTimerInfo *tmrInfo, uint64_t readValue)
     if (endTime - startTime >= BASE_TIMER_WARNING_PROC_THRESHOLD) {
         char funcName[UDF_TASK_PROC_NAME_MAX_LEN] = {0};
         DbgGetFuncName(proc, funcName, UDF_TASK_PROC_NAME_MAX_LEN);
-        LOG_INNER_WARN("Timer proc threshold warning. (timerfd = %d, startTime = %"PRIu64","
-            "procTime =%"PRIu64", func = %s)", tmrInfo->tmrFd, startTime, endTime - startTime, funcName);
+        LOG_INNER_WARN("Timer proc threshold warning. (timerfd = %d, startTime = %" PRIu64 ","
+                       "procTime =%" PRIu64 ", func = %s)",
+            tmrInfo->tmrFd, startTime, endTime - startTime, funcName);
     }
 
     BaseTimerUpdateMntInfo(tmrInfo, endTime - startTime, timeOutTime);
@@ -147,7 +148,7 @@ void BaseTimerTriggerProc(struct epoll_event *event, void *schParam)
     }
 
     if (event->data.fd != tmrInfo->tmrFd) {
-        LOG_INNER_ERR("Timer fd event fd mismatch: input %d, expect %d.",  event->data.fd, tmrInfo->tmrFd);
+        LOG_INNER_ERR("Timer fd event fd mismatch: input %d, expect %d.", event->data.fd, tmrInfo->tmrFd);
         return;
     }
 
@@ -254,7 +255,7 @@ uint32_t BaseTimerUpdateTime(BaseTimerInfo *timerInfo, uint32_t timeoutMs)
     int ret;
     struct itimerspec newValue = {{0}, {0}};
 
-    newValue.it_value.tv_sec = (time_t)(timeoutMs / 1000ULL); /* Ms(毫秒) / 1000 取得 s(秒) */
+    newValue.it_value.tv_sec = (time_t)(timeoutMs / 1000ULL);                /* Ms(毫秒) / 1000 取得 s(秒) */
     newValue.it_value.tv_nsec = (int64_t)(timeoutMs % 1000ULL) * 1000000ULL; /* Ms(毫秒) % 1000 后乘 1000000 得到纳秒 */
 
     if ((timerInfo->optParam == NULL) || (timerInfo->optParam->mode == BASE_TIMER_MODE_PERIOD)) {
@@ -275,8 +276,8 @@ uint32_t BaseTimerUpdateTime(BaseTimerInfo *timerInfo, uint32_t timeoutMs)
 
 bool BaseTimerHandleValid(const BaseTimerInfo *tmrInfo)
 {
-    if ((tmrInfo == NULL) || (tmrInfo->magic != BASE_TIMER_HANDLE_MAGIC)
-        || (tmrInfo->delTag == BASE_TIMER_DEL_TAG_TRUE)) {
+    if ((tmrInfo == NULL) || (tmrInfo->magic != BASE_TIMER_HANDLE_MAGIC) ||
+        (tmrInfo->delTag == BASE_TIMER_DEL_TAG_TRUE)) {
         return false;
     }
 
@@ -364,10 +365,7 @@ uint32_t BASE_TimerSetAttr(BaseTimerAttr attr, BaseTimerAttrType type, void *val
 {
     BaseTimerParamAttr *attrParam = (BaseTimerParamAttr *)attr;
     uint32_t (*attrSetFunc[])(BaseTimerParam *param, void *value, size_t len) = {
-        BaseTimerSetMode,
-        BaseTimerSetName,
-        BaseTimerSetParamDestructor
-    };
+        BaseTimerSetMode, BaseTimerSetName, BaseTimerSetParamDestructor};
 
     if ((attr == NULL) || (attrParam->magic != BASE_TIMER_ATTR_MAGIC)) {
         return BASE_TIMER_ERRNO_ATTR_INVALID;
@@ -380,8 +378,7 @@ uint32_t BASE_TimerSetAttr(BaseTimerAttr attr, BaseTimerAttrType type, void *val
     return attrSetFunc[type](&attrParam->param, value, len);
 }
 
-BaseTimerHandle BASE_TimerCreate(TimerAppInfo *appInfo,
-    BaseTimerUsrCb *usrCb, uint32_t timeoutMs, BaseTimerAttr attr)
+BaseTimerHandle BASE_TimerCreate(TimerAppInfo *appInfo, BaseTimerUsrCb *usrCb, uint32_t timeoutMs, BaseTimerAttr attr)
 {
     uint32_t ret;
     BaseTimerInfo *tmrInfo = NULL;

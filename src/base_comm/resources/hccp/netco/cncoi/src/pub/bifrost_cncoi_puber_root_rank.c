@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #include "bifrost_cncoi_puber_root_rank.h"
 #include "bifrost_cncoi_svc.h"
 #include "bifrost_cncoi_table.h"
@@ -19,7 +18,8 @@
 extern "C" {
 #endif
 
-STATIC int32_t BifrostCncoiPuberRootRankOnUpdateCode(BifrostCncoiPuber *bifrostCncoiPuber, BifrostCncoiSliceKeyT *sliceKey, BifrostCncoiRootRankKeyT *tupleKey, void *tupleVal, void *codeBuf, int32_t bufLen)
+STATIC int32_t BifrostCncoiPuberRootRankOnUpdateCode(BifrostCncoiPuber *bifrostCncoiPuber,
+    BifrostCncoiSliceKeyT *sliceKey, BifrostCncoiRootRankKeyT *tupleKey, void *tupleVal, void *codeBuf, int32_t bufLen)
 {
     BifrostCncoiPuberRootRankVTbl *appVTbl = VOS_NULL;
     int32_t ret = -1;
@@ -56,8 +56,10 @@ error:
     return ret;
 }
 
-STATIC int32_t BifrostCncoiPuberRootRankOnDeleteCode(BifrostCncoiPuber *bifrostCncoiPuber, BifrostCncoiSliceKeyT *sliceKey, BifrostCncoiRootRankKeyT *tupleKey, void *codeBuf, int32_t bufLen)
+STATIC int32_t BifrostCncoiPuberRootRankOnDeleteCode(BifrostCncoiPuber *bifrostCncoiPuber,
+    BifrostCncoiSliceKeyT *sliceKey, BifrostCncoiRootRankKeyT *tupleKey, void *codeBuf, int32_t bufLen)
 {
+    (void)sliceKey;
     SimpoBuilderT *builder;
     int32_t ret = -1;
 
@@ -87,9 +89,11 @@ error:
     return ret;
 }
 
-STATIC void BifrostCncoiPuberRootRankOnSub(BifrostCncoiPuber *bifrostCncoiPuber,
-    BifrostCncoiSliceKeyT *sliceKey, void *data, int32_t len)
+STATIC void BifrostCncoiPuberRootRankOnSub(BifrostCncoiPuber *bifrostCncoiPuber, BifrostCncoiSliceKeyT *sliceKey,
+    void *data, int32_t len)
 {
+    (void)data;
+    (void)len;
     BifrostCncoiPuberRootRankVTbl *appVTbl = VOS_NULL;
 
     appVTbl = BkfPuberGetTableTypeUserData(bifrostCncoiPuber->puber, BIFROST_CNCOI_TABLE_TYPE_ROOT_RANK);
@@ -107,8 +111,7 @@ error:
     return;
 }
 
-STATIC void BifrostCncoiPuberRootRankOnUnsub(BifrostCncoiPuber *bifrostCncoiPuber,
-    BifrostCncoiSliceKeyT *sliceKey)
+STATIC void BifrostCncoiPuberRootRankOnUnsub(BifrostCncoiPuber *bifrostCncoiPuber, BifrostCncoiSliceKeyT *sliceKey)
 {
     BifrostCncoiPuberRootRankVTbl *appVTbl = VOS_NULL;
 
@@ -129,15 +132,15 @@ error:
 
 uint32_t BifrostCncoiPuberRootRankReg(BifrostCncoiPuber *bifrostCncoiPuber, BifrostCncoiPuberRootRankVTbl *appVTbl)
 {
-    BkfDcTableTypeVTbl dcVTbl = { 0 };
-    BkfPuberTableTypeVTbl puberVTbl = { 0 };
+    BkfDcTableTypeVTbl dcVTbl = {0};
+    BkfPuberTableTypeVTbl puberVTbl = {0};
     uint32_t ret;
 
     if (bifrostCncoiPuber == VOS_NULL || appVTbl == VOS_NULL) {
         return BKF_ERR;
     }
 
-    dcVTbl.name = BIFROST_CNCOI_SVC_NAME"_root_rank";
+    dcVTbl.name = BIFROST_CNCOI_SVC_NAME "_root_rank";
     dcVTbl.tableTypeId = BIFROST_CNCOI_TABLE_TYPE_ROOT_RANK;
     dcVTbl.cookie = bifrostCncoiPuber;
     dcVTbl.tupleCntMax = appVTbl->tupleCntMax;
@@ -145,7 +148,7 @@ uint32_t BifrostCncoiPuberRootRankReg(BifrostCncoiPuber *bifrostCncoiPuber, Bifr
     dcVTbl.tupleValLen = appVTbl->tupleValLen;
     dcVTbl.tupleKeyCmp = (F_BKF_CMP)BifrostCncoiRootRankKeyCmp;
     dcVTbl.tupleKeyGetStrOrNull = (F_BKF_GET_STR)BifrostCncoiRootRankKeyGetStr;
-    dcVTbl.tupleValGetStrOrNull = (F_BKF_GET_STR)appVTbl->onGetTupleValStr;
+    dcVTbl.tupleValGetStrOrNull = appVTbl->onGetTupleValStr;
     ret = BkfDcRegTableType(bifrostCncoiPuber->argInit.dc, &dcVTbl);
     if (ret != BKF_OK) {
         return ret;
@@ -157,7 +160,8 @@ uint32_t BifrostCncoiPuberRootRankReg(BifrostCncoiPuber *bifrostCncoiPuber, Bifr
     puberVTbl.tupleDeleteCode = (F_BKF_PUBER_TUPLE_DELETE_CODE)BifrostCncoiPuberRootRankOnDeleteCode;
     puberVTbl.tableOnSub = (F_BKF_PUBER_TABLE_ONSUB)BifrostCncoiPuberRootRankOnSub;
     puberVTbl.tableOnUnsub = (F_BKF_PUBER_TABLE_ONUNSUB)BifrostCncoiPuberRootRankOnUnsub;
-    ret = BkfPuberAttachTableTypeEx(bifrostCncoiPuber->puber, &puberVTbl, appVTbl, sizeof(BifrostCncoiPuberRootRankVTbl));
+    ret = BkfPuberAttachTableTypeEx(bifrostCncoiPuber->puber, &puberVTbl, appVTbl,
+        sizeof(BifrostCncoiPuberRootRankVTbl));
     if (ret != BKF_OK) {
         return ret;
     }
@@ -201,16 +205,19 @@ void BifrostCncoiPuberRootRankReleaseTable(BifrostCncoiPuber *bifrostCncoiPuber,
     BkfDcReleaseTable(bifrostCncoiPuber->argInit.dc, sliceKey, BIFROST_CNCOI_TABLE_TYPE_ROOT_RANK);
 }
 
-uint32_t BifrostCncoiPuberRootRankUpdate(BifrostCncoiPuber *bifrostCncoiPuber, BifrostCncoiSliceKeyT *sliceKey, BifrostCncoiRootRankKeyT *tupleKey, void *val)
+uint32_t BifrostCncoiPuberRootRankUpdate(BifrostCncoiPuber *bifrostCncoiPuber, BifrostCncoiSliceKeyT *sliceKey,
+    BifrostCncoiRootRankKeyT *tupleKey, void *val)
 {
     if (bifrostCncoiPuber == VOS_NULL) {
         return BKF_ERR;
     }
 
-    return BkfDcUpdateTuple(bifrostCncoiPuber->argInit.dc, sliceKey, BIFROST_CNCOI_TABLE_TYPE_ROOT_RANK, tupleKey, val, VOS_NULL);
+    return BkfDcUpdateTuple(bifrostCncoiPuber->argInit.dc, sliceKey, BIFROST_CNCOI_TABLE_TYPE_ROOT_RANK, tupleKey, val,
+        VOS_NULL);
 }
 
-void BifrostCncoiPuberRootRankDelete(BifrostCncoiPuber *bifrostCncoiPuber, BifrostCncoiSliceKeyT *sliceKey, BifrostCncoiRootRankKeyT *tupleKey)
+void BifrostCncoiPuberRootRankDelete(BifrostCncoiPuber *bifrostCncoiPuber, BifrostCncoiSliceKeyT *sliceKey,
+    BifrostCncoiRootRankKeyT *tupleKey)
 {
     if (bifrostCncoiPuber == VOS_NULL) {
         return;
@@ -222,7 +229,6 @@ void BifrostCncoiPuberRootRankDelete(BifrostCncoiPuber *bifrostCncoiPuber, Bifro
 #if __cplusplus
 }
 #endif
-
 
 // auto-generated information:MS4wOzEwOzIyNTsyMDI0MTAxNDtiaWZyb3N0X2NuY29pX3B1YmVyX3Jvb3RfcmFuay5j
 // auto-generated check_sum:94296802b5e576596c761b55d6c9d3188e46e6c11fff28939192568ab38c757e

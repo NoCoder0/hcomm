@@ -25,20 +25,15 @@ namespace checker {
 
 class All2AllCCUHFTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "All2All CCU test set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "All2All CCU test set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "All2All CCU test tear down" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "All2All CCU test tear down" << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -68,8 +63,7 @@ TEST_F(All2AllCCUHFTest, all2all_ccu_case_test_2Die)
     checkerOpParam.All2AllDataDes.sendCountMatrix = GenerateSendCountMatrix(600, rankNum);
     checkerOpParam.All2AllDataDes.sendType = CheckerDataType::DATA_TYPE_INT32;
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_INT32;
-     checkerOpParam.All2AllDataDes.sendCount = 600;
-
+    checkerOpParam.All2AllDataDes.sendCount = 600;
 
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_HF;
     checkerOpParam.algName = "CcuAllToAllMesh1D2Die";
@@ -87,7 +81,7 @@ TEST_F(All2AllCCUHFTest, all2all_ccu_case_test_2_2Die)
     RankTable_For_LLT gen;
 
     setenv("HCCL_IODIE_NUM", "2", 1);
-    TopoMeta topoMeta {{{0,1,8,9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLTOALL;
@@ -110,14 +104,13 @@ TEST_F(All2AllCCUHFTest, all2all_ccu_case_test_2_2Die)
     ret = checker.CheckA5Aicpu(checkerOpParam, topoMeta);
     // 待调试
     // EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
-
 }
 
 TEST_F(All2AllCCUHFTest, all2all_ccu_case_test_3_2Die)
 {
     RankTable_For_LLT gen;
     setenv("HCCL_IODIE_NUM", "2", 1);
-    TopoMeta topoMeta {{{0,1,2,8,9,10}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10}}};
 
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLTOALL;
@@ -129,8 +122,7 @@ TEST_F(All2AllCCUHFTest, all2all_ccu_case_test_3_2Die)
     checkerOpParam.All2AllDataDes.sendCountMatrix = GenerateSendCountMatrix(30, rankNum);
     checkerOpParam.All2AllDataDes.sendType = CheckerDataType::DATA_TYPE_INT32;
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_INT32;
-     checkerOpParam.All2AllDataDes.sendCount = 30;
-
+    checkerOpParam.All2AllDataDes.sendCount = 30;
 
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_HF;
     checkerOpParam.algName = "CcuAllToAllMesh1D2Die";
@@ -146,7 +138,7 @@ TEST_F(All2AllCCUHFTest, all2all_ccu_case_test_4_2Die)
 {
     RankTable_For_LLT gen;
     setenv("HCCL_IODIE_NUM", "2", 1);
-    TopoMeta topoMeta {{{1,2,3,4,9,10,11,12}}};
+    TopoMeta topoMeta{{{1, 2, 3, 4, 9, 10, 11, 12}}};
 
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLTOALL;
@@ -158,8 +150,7 @@ TEST_F(All2AllCCUHFTest, all2all_ccu_case_test_4_2Die)
     checkerOpParam.All2AllDataDes.sendCountMatrix = GenerateSendCountMatrix(0, rankNum);
     checkerOpParam.All2AllDataDes.sendType = CheckerDataType::DATA_TYPE_INT32;
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_INT32;
-     checkerOpParam.All2AllDataDes.sendCount = 0;
-
+    checkerOpParam.All2AllDataDes.sendCount = 0;
 
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_HF;
     checkerOpParam.algName = "CcuAllToAllMesh1D2Die";
@@ -171,4 +162,4 @@ TEST_F(All2AllCCUHFTest, all2all_ccu_case_test_4_2Die)
     // EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 }
 
-}
+} // namespace checker

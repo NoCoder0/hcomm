@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include <memory>
 #include "hccl_impl.h"
@@ -21,10 +21,11 @@
 namespace hccl {
 constexpr u32 TINY_MEMORY_SIZE = 32; // sendBuff或recvBuff为空时, 使用的DeviceMem大小
 
-HcclAlg::HcclAlg(CCLBufferManager &cclBufferManager, const HcclDispatcher dispatcher, const HcclDispatcher vDispatcher):
-    cclBufferManager_(cclBufferManager), dispatcher_(dispatcher), vDispatcher_(vDispatcher)
-{
-}
+HcclAlg::HcclAlg(CCLBufferManager& cclBufferManager, const HcclDispatcher dispatcher, const HcclDispatcher vDispatcher)
+    : cclBufferManager_(cclBufferManager),
+      dispatcher_(dispatcher),
+      vDispatcher_(vDispatcher)
+{}
 
 HcclAlg::~HcclAlg()
 {
@@ -33,25 +34,25 @@ HcclAlg::~HcclAlg()
 #endif
 }
 
-HcclResult HcclAlg::Init(std::unique_ptr<WorkspaceResource> &workSpaceRes,
-    const std::unique_ptr<NotifyPool> &notifyPool, std::map<HcclIpAddress, HcclNetDevCtx> &netDevCtxMap,
-    const std::unique_ptr<QueueNotifyManager> &queueNotifyManager,
-    HcclAlgoAttr &algoAttr, HcclTopoAttr &topoAttr, bool isHeterogComm)
+HcclResult HcclAlg::Init(
+    std::unique_ptr<WorkspaceResource>& workSpaceRes, const std::unique_ptr<NotifyPool>& notifyPool,
+    std::map<HcclIpAddress, HcclNetDevCtx>& netDevCtxMap, const std::unique_ptr<QueueNotifyManager>& queueNotifyManager,
+    HcclAlgoAttr& algoAttr, HcclTopoAttr& topoAttr, bool isHeterogComm)
 {
     CHK_RET(Init(algoAttr, topoAttr, isHeterogComm));
 
 #ifndef OPEN_HCCL_TEST
     // 老流程使用，新流程的LLT不编译相关的代码
-    pimpl_.reset((new (std::nothrow) hcclImpl(dispatcher_, notifyPool, netDevCtxMap, queueNotifyManager,
-        workSpaceRes, cclBufferManager_, algoAttr_, topoAttr_,
-        algConfigurator_, topoInfoEx_)));
+    pimpl_.reset((new (std::nothrow) hcclImpl(
+        dispatcher_, notifyPool, netDevCtxMap, queueNotifyManager, workSpaceRes, cclBufferManager_, algoAttr_,
+        topoAttr_, algConfigurator_, topoInfoEx_)));
     CHK_SMART_PTR_NULL(pimpl_);
     CHK_RET(pimpl_->Init(isHeterogComm));
 #endif
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclAlg::Init(HcclAlgoAttr &algoAttr, HcclTopoAttr &topoAttr, bool isHeterogComm)
+HcclResult HcclAlg::Init(HcclAlgoAttr& algoAttr, HcclTopoAttr& topoAttr, bool isHeterogComm)
 {
     algoAttr_ = algoAttr;
     topoAttr_ = topoAttr;
@@ -83,12 +84,12 @@ HcclResult HcclAlg::Init(HcclAlgoAttr &algoAttr, HcclTopoAttr &topoAttr, bool is
     HcclExternalEnable externalEnable;
     CHK_RET(InitExternalEnable(externalEnable));
 
-    topoMatcher_.reset((new (std::nothrow) TopoMatcher(CommPlaneRanks, isBridgeVector, topoInfo, algoInfo,
-        externalEnable, serverAndsuperPodToRank)));
+    topoMatcher_.reset((new (std::nothrow) TopoMatcher(
+        CommPlaneRanks, isBridgeVector, topoInfo, algoInfo, externalEnable, serverAndsuperPodToRank)));
     CHK_SMART_PTR_NULL(topoMatcher_);
 
-    parallelTaskLoader_.reset(static_cast<ParallelTaskLoader *>(new (std::nothrow) ParallelTaskLoader(
-        topoAttr_.deviceLogicId, dispatcher_)));
+    parallelTaskLoader_.reset(
+        static_cast<ParallelTaskLoader*>(new (std::nothrow) ParallelTaskLoader(topoAttr_.deviceLogicId, dispatcher_)));
     CHK_SMART_PTR_NULL(parallelTaskLoader_);
 
 #ifndef OPEN_HCCL_TEST
@@ -99,20 +100,21 @@ HcclResult HcclAlg::Init(HcclAlgoAttr &algoAttr, HcclTopoAttr &topoAttr, bool is
     return HCCL_SUCCESS;
 }
 
-std::unique_ptr<CollAlgOperator> HcclAlg::GetAlgOperator(const HcclCMDType &opType, HcclWorkflowMode workflowMode)
+std::unique_ptr<CollAlgOperator> HcclAlg::GetAlgOperator(const HcclCMDType& opType, HcclWorkflowMode workflowMode)
 {
-    (void) workflowMode;
+    (void)workflowMode;
     if (!topoMatcher_) {
         HCCL_ERROR("[HcclAlg][GetAlgOperator] topoMatcher ptr is null, get algorithm operator failed.");
         return nullptr;
     }
     std::unique_ptr<CollAlgOperator> operation = CollAlgOpRegistry::Instance().GetAlgOp(
         opType, algConfigurator_.get(), cclBufferManager_, dispatcher_, topoMatcher_);
-    CHK_PRT_RET(operation == nullptr,
-        HCCL_ERROR("[HcclAlg][GetAlgOperator] GetAlgOp return nullptr, opType[%d]", opType), nullptr);
-    if (opType == HcclCMDType::HCCL_CMD_ALLTOALL || opType == HcclCMDType::HCCL_CMD_ALLTOALLV ||
-        opType == HcclCMDType::HCCL_CMD_ALLTOALLVC) {
-        AlltoAllOperator* alltoAllOperator = dynamic_cast<AlltoAllOperator *>(operation.get());
+    CHK_PRT_RET(
+        operation == nullptr, HCCL_ERROR("[HcclAlg][GetAlgOperator] GetAlgOp return nullptr, opType[%d]", opType),
+        nullptr);
+    if (opType == HcclCMDType::HCCL_CMD_ALLTOALL || opType == HcclCMDType::HCCL_CMD_ALLTOALLV
+        || opType == HcclCMDType::HCCL_CMD_ALLTOALLVC) {
+        AlltoAllOperator* alltoAllOperator = dynamic_cast<AlltoAllOperator*>(operation.get());
         alltoAllOperator->SetVirtualDispatcher(vDispatcher_);
         alltoAllOperator->SetParallelTaskLoader(parallelTaskLoader_.get());
     }
@@ -120,8 +122,8 @@ std::unique_ptr<CollAlgOperator> HcclAlg::GetAlgOperator(const HcclCMDType &opTy
     return operation;
 }
 
-HcclResult HcclAlg::GetAlltoAllStagedWorkSpaceMemSize(
-    std::vector<SendRecvInfo> &allMeshAggregationSendRecvInfo, u64 &memSize)
+HcclResult
+HcclAlg::GetAlltoAllStagedWorkSpaceMemSize(std::vector<SendRecvInfo>& allMeshAggregationSendRecvInfo, u64& memSize)
 {
     AlltoAllOperator operation(algConfigurator_.get(), cclBufferManager_, dispatcher_, topoMatcher_);
     operation.SetVirtualDispatcher(vDispatcher_);
@@ -129,13 +131,13 @@ HcclResult HcclAlg::GetAlltoAllStagedWorkSpaceMemSize(
     return operation.GetAlltoAllStagedWorkSpaceMemSize(allMeshAggregationSendRecvInfo, memSize);
 }
 
-HcclResult HcclAlg::GetAllReduceScratchSize(const u64 count, const HcclDataType dataType, u64 &scratchSize)
+HcclResult HcclAlg::GetAllReduceScratchSize(const u64 count, const HcclDataType dataType, u64& scratchSize)
 {
     AllReduceOperator operation(algConfigurator_.get(), cclBufferManager_, dispatcher_, topoMatcher_);
     return operation.GetAllReduceScratchSize(count, dataType, scratchSize);
 }
 
-HcclResult HcclAlg::GetTopoType(TopoType &topoType)
+HcclResult HcclAlg::GetTopoType(TopoType& topoType)
 {
     algConfigurator_->GetTopoType(topoType);
     return HCCL_SUCCESS;
@@ -146,21 +148,18 @@ HcclResult HcclAlg::SetAlgType(AlgType algType, HcclCMDType opType)
     return algConfigurator_->SetAlgType(algType, opType);
 }
 
-HcclResult HcclAlg::GetAlgType(AlgType &algType, HcclCMDType opType)
+HcclResult HcclAlg::GetAlgType(AlgType& algType, HcclCMDType opType)
 {
     return algConfigurator_->GetAlgType(algType, opType);
 }
 
-HcclResult HcclAlg::SupportDeterministicOptim(bool &isDeterministicOptim)
+HcclResult HcclAlg::SupportDeterministicOptim(bool& isDeterministicOptim)
 {
     isDeterministicOptim = algConfigurator_->SupportDeterministicOptim();
     return HCCL_SUCCESS;
 }
 
-u8 HcclAlg::GetDeterministicConfig() const
-{
-    return topoMatcher_->GetDeterministicConfig();
-}
+u8 HcclAlg::GetDeterministicConfig() const { return topoMatcher_->GetDeterministicConfig(); }
 
 HcclResult HcclAlg::SetDeterministicConfig(const u8 deterministic)
 {
@@ -174,15 +173,9 @@ HcclResult HcclAlg::SetAivModeConfig(const bool aivMode)
     return HCCL_SUCCESS;
 }
 
-bool HcclAlg::GetAicpuUnfoldConfig() const
-{
-    return topoMatcher_->GetAicpuUnfoldConfig();
-}
+bool HcclAlg::GetAicpuUnfoldConfig() const { return topoMatcher_->GetAicpuUnfoldConfig(); }
 
-bool HcclAlg::GetAivModeConfig() const
-{
-    return topoMatcher_->GetAivModeConfig();
-}
+bool HcclAlg::GetAivModeConfig() const { return topoMatcher_->GetAivModeConfig(); }
 
 HcclResult HcclAlg::SetAicpuUnfoldConfig(const bool aicpuUnfold)
 {
@@ -202,24 +195,24 @@ HcclResult HcclAlg::SetAlgoConfig(const std::map<HcclCMDType, std::vector<HcclAl
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclAlg::GetRankVecInfo(std::vector<std::vector<std::vector<u32>>> &serverAndsuperPodToRank)
+HcclResult HcclAlg::GetRankVecInfo(std::vector<std::vector<std::vector<u32>>>& serverAndsuperPodToRank)
 {
     CHK_RET(topoInfoEx_->GetRankVecInfo(serverAndsuperPodToRank));
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclAlg::GetIsBridgeVector(std::vector<bool> &isBridgeVector)
+HcclResult HcclAlg::GetIsBridgeVector(std::vector<bool>& isBridgeVector)
 {
     topoInfoEx_->GetIsBridgeVector(isBridgeVector);
     return HCCL_SUCCESS;
 }
-HcclResult HcclAlg::GetCommPlaneRanks(std::vector<std::vector<std::vector<u32>>> &commPlaneRanks)
+HcclResult HcclAlg::GetCommPlaneRanks(std::vector<std::vector<std::vector<u32>>>& commPlaneRanks)
 {
     CHK_RET(topoInfoEx_->GetCommPlaneRanks(commPlaneRanks));
     return HCCL_SUCCESS;
 }
 
-void HcclAlg::GetCommPlaneVector(std::vector<std::vector<std::vector<RankInfo>>> &commPlaneVector)
+void HcclAlg::GetCommPlaneVector(std::vector<std::vector<std::vector<RankInfo>>>& commPlaneVector)
 {
     topoInfoEx_->GetCommPlaneVector(commPlaneVector);
 }
@@ -230,25 +223,26 @@ HcclResult HcclAlg::SetOnlyAivModeConfig(const bool isOnlyAiv)
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclAlg::GetCommPlaneSubGroupVector(std::vector<std::vector<std::vector<std::vector<u32>>>> &commPlaneSubGroupVector)
+HcclResult
+HcclAlg::GetCommPlaneSubGroupVector(std::vector<std::vector<std::vector<std::vector<u32>>>>& commPlaneSubGroupVector)
 {
     topoMatcher_->GetCommPlaneSubGroupVector(commPlaneSubGroupVector);
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclAlg::GetAHCAlgOption(std::map<AHCConcOpType, TemplateType> &ahcAlgOption)
+HcclResult HcclAlg::GetAHCAlgOption(std::map<AHCConcOpType, TemplateType>& ahcAlgOption)
 {
     topoMatcher_->GetAHCAlgOption(ahcAlgOption);
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclAlg::GetIsUsedRdmaMap(std::unordered_map<u32, bool> &isUsedRdmaMap)
+HcclResult HcclAlg::GetIsUsedRdmaMap(std::unordered_map<u32, bool>& isUsedRdmaMap)
 {
     CHK_RET(topoInfoEx_->GetIsUsedRdmaMap(isUsedRdmaMap));
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclAlg::GetTinyMem(DeviceMem &tinySendRecvMem)
+HcclResult HcclAlg::GetTinyMem(DeviceMem& tinySendRecvMem)
 {
     tinySendRecvMem = tinySendRecvMem_;
     return HCCL_SUCCESS;
@@ -266,7 +260,7 @@ HcclResult HcclAlg::InitExternalEnable(HcclExternalEnable& externalEnable)
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclAlg::InitTopoInfo(HcclTopoInfo& topoInfo, HcclTopoAttr &topoAttr)
+HcclResult HcclAlg::InitTopoInfo(HcclTopoInfo& topoInfo, HcclTopoAttr& topoAttr)
 {
     topoInfo.userRank = topoAttr.userRank;
     topoInfo.userRankSize = topoAttr.userRankSize;
@@ -302,7 +296,7 @@ HcclResult HcclAlg::InitTopoInfo(HcclTopoInfo& topoInfo, HcclTopoAttr &topoAttr)
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclAlg::InitAlgoInfo(HcclAlgoInfo& algoInfo, HcclAlgoAttr &algoAttr)
+HcclResult HcclAlg::InitAlgoInfo(HcclAlgoInfo& algoInfo, HcclAlgoAttr& algoAttr)
 {
     algoInfo.identifier = algoAttr.identifier;
     algoInfo.inlineReduceSwitchOn = algoAttr.inlineReduceSwitchOn;
@@ -313,45 +307,37 @@ HcclResult HcclAlg::InitAlgoInfo(HcclAlgoInfo& algoInfo, HcclAlgoAttr &algoAttr)
 
 #ifndef OPEN_HCCL_TEST
 // 上层保证，以下方法在初始化成功后才会调用，所以未对pimpl_进行保护判断
-HcclResult HcclAlg::ReleaseCommInfos()
-{
-    return pimpl_->ReleaseCommInfos();
-}
+HcclResult HcclAlg::ReleaseCommInfos() { return pimpl_->ReleaseCommInfos(); }
 
-HcclResult HcclAlg::ClearOpResource(const std::string &tag)
-{
-    return pimpl_->ClearOpResource(tag);
-}
+HcclResult HcclAlg::ClearOpResource(const std::string& tag) { return pimpl_->ClearOpResource(tag); }
 
-HcclResult HcclAlg::CreateMutiStreamRes(const std::string &tag, Stream &stream, level1StreamInfo_t &streamInfo,
-    AlgType algType, bool isAicpuModeEn)
+HcclResult HcclAlg::CreateMutiStreamRes(
+    const std::string& tag, Stream& stream, level1StreamInfo_t& streamInfo, AlgType algType, bool isAicpuModeEn)
 {
     return pimpl_->CreateMutiStreamRes(tag, stream, streamInfo, algType, isAicpuModeEn);
 }
 
-HcclResult HcclAlg::CreateComm(const std::string &tag, DeviceMem &inputMem, DeviceMem &outputMem, AlgType algType,
-    std::unique_ptr<CommInfo> &commInfo, u32 root, bool isP2p, bool isAicpuModeEn)
+HcclResult HcclAlg::CreateComm(
+    const std::string& tag, DeviceMem& inputMem, DeviceMem& outputMem, AlgType algType,
+    std::unique_ptr<CommInfo>& commInfo, u32 root, bool isP2p, bool isAicpuModeEn)
 {
     return pimpl_->CreateComm(tag, inputMem, outputMem, algType, commInfo, root, isP2p, isAicpuModeEn);
 }
 
 HcclResult HcclAlg::CreateComm(
-    const std::string &tag, DeviceMem &inputMem, DeviceMem &outputMem, AlgType algType, u32 root, bool isP2p)
+    const std::string& tag, DeviceMem& inputMem, DeviceMem& outputMem, AlgType algType, u32 root, bool isP2p)
 {
     return pimpl_->CreateComm(tag, inputMem, outputMem, algType, root, isP2p);
 }
 
-void HcclAlg::Break()
-{
-    pimpl_->Break();
-}
+void HcclAlg::Break() { pimpl_->Break(); }
 
 HcclResult HcclAlg::SetHDCModeInfo(
-    std::unordered_map<std::string, std::map<u32, HcclIpAddress>> &rankDevicePhyIdNicInfoMap,
-    std::vector<u32> &ranksPort, std::vector<u32> &vnicRanksPort, bool isSetHDCModeInfo, bool isUseRankPort)
+    std::unordered_map<std::string, std::map<u32, HcclIpAddress>>& rankDevicePhyIdNicInfoMap,
+    std::vector<u32>& ranksPort, std::vector<u32>& vnicRanksPort, bool isSetHDCModeInfo, bool isUseRankPort)
 {
     pimpl_->SetHDCModeInfo(rankDevicePhyIdNicInfoMap, ranksPort, vnicRanksPort, isSetHDCModeInfo, isUseRankPort);
     return HCCL_SUCCESS;
 }
 #endif
-}
+} // namespace hccl

@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #include <string.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -22,14 +21,14 @@
 extern "C" {
 #endif
 
-#define VOS_TYPE_NUM10  (10)
+#define VOS_TYPE_NUM10 (10)
 #define VOS_TYPE_NUM100 (100)
 #define VOS_TYPE_BITNUM24 (24)
 #define VOS_TYPE_BITNUM16 (16)
 #define VOS_TYPE_BITNUM8 (8)
 #define VOS_TYPE_BITNUM32 (32)
 
-char* VOS_StrStr(const char *pscStr1, const char *pscStr2)
+char *VOS_StrStr(const char *pscStr1, const char *pscStr2)
 {
     if ((pscStr1 == VOS_NULL_PTR) || (pscStr2 == VOS_NULL_PTR)) {
         return VOS_NULL_PTR;
@@ -43,19 +42,19 @@ char *vosUint8ToStr(uint8_t ucVal, char *pscStr)
     char *pscStrTmp = pscStr;
     if (ucVal < VOS_TYPE_NUM10) { /* 10以内个位数处理 */
         *pscStrTmp++ = (char)(ucVal + '0');
-    } else if (ucVal < VOS_TYPE_NUM100) { /* 100以内十位数处理 */
+    } else if (ucVal < VOS_TYPE_NUM100) {                    /* 100以内十位数处理 */
         *pscStrTmp++ = (char)(ucVal / VOS_TYPE_NUM10 + '0'); /* 10位数转换 */
         *pscStrTmp++ = (char)(ucVal % VOS_TYPE_NUM10 + '0'); /* 10位数转换 */
     } else {
-        *pscStrTmp++ = (char)(ucVal / VOS_TYPE_NUM100 + '0'); /* 100位数转换 */
+        *pscStrTmp++ = (char)(ucVal / VOS_TYPE_NUM100 + '0');                   /* 100位数转换 */
         *pscStrTmp++ = (char)((ucVal / VOS_TYPE_NUM10) % VOS_TYPE_NUM10 + '0'); /* 10位数转换 */
-        *pscStrTmp++ = (char)(ucVal % VOS_TYPE_NUM10 + '0'); /* 10位数转换 */
+        *pscStrTmp++ = (char)(ucVal % VOS_TYPE_NUM10 + '0');                    /* 10位数转换 */
     }
 
     return pscStrTmp;
 }
 
-#define VOS_NS_IPV4ADDRSZ   16
+#define VOS_NS_IPV4ADDRSZ 16
 char *VOS_IpAddrToStrEx(uint32_t uiAddr, char *pscStr, int32_t iBufSize)
 {
     char *pscBuf = VOS_NULL_PTR;
@@ -124,7 +123,7 @@ char *VOS_StrChr(const char *pscStr, const char scChar)
 
 BOOL VOS_StrToIpAddrCheckValid(const char *pscStr, uint32_t *pulIpAddr)
 {
-    if (pscStr == VOS_NULL_PTR  || (strlen(pscStr) == 0)) {
+    if (pscStr == VOS_NULL_PTR || (strlen(pscStr) == 0)) {
         return FALSE;
     }
 
@@ -212,7 +211,7 @@ char *VOS_StrTrim(char *pscStr)
     for (; *pscTemp != '\0'; pscTemp++, uiCount++) {
     }
 
-    /* delete the space behide the pRetStr */
+    /* delete the space behind the pRetStr */
     while (uiCount > 0 && ' ' == *--pscTemp) {
         uiCount--;
     }

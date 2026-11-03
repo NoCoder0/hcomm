@@ -22,14 +22,12 @@ namespace Hccl {
 
 class CcuContextReduceMeshTwoShotMem2Mem1D : public CcuContext {
 public:
-    CcuContextReduceMeshTwoShotMem2Mem1D(const CcuCtxArg &arg, const std::vector<CcuTransport *> &transports,
-                                               const CcuTransportGroup &group);
-    ~CcuContextReduceMeshTwoShotMem2Mem1D() override
-    {
-    }
+    CcuContextReduceMeshTwoShotMem2Mem1D(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
+    ~CcuContextReduceMeshTwoShotMem2Mem1D() override {}
 
-    void                  Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    void Algorithm() override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
 
 protected:
     void InitResource();
@@ -37,33 +35,33 @@ protected:
     void PreSync();
     void PostSync();
     void DoRepeatReduceTwoShot();
-    void ReduceRmtToLoc(const std::vector<CcuRep::Variable> &srcAddr, const CcuRep::Variable &dstAddr);
-    void BcastLocToRmt(const CcuRep::Variable &srcAddr, const std::vector<CcuRep::Variable> &dstAddr);
+    void ReduceRmtToLoc(const std::vector<CcuRep::Variable>& srcAddr, const CcuRep::Variable& dstAddr);
+    void BcastLocToRmt(const CcuRep::Variable& srcAddr, const std::vector<CcuRep::Variable>& dstAddr);
 
 private:
-    uint64_t                      rankSize_{0};
-    uint32_t                      rankId_{0};
-    uint32_t                      rootId_{0};
-    DataType                      dataType_;
-    DataType                      outputDataType_;
-    ReduceOp                      reduceOp_;
+    uint64_t rankSize_{0};
+    uint32_t rankId_{0};
+    uint32_t rootId_{0};
+    DataType dataType_;
+    DataType outputDataType_;
+    ReduceOp reduceOp_;
 
     std::vector<CcuRep::Variable> input_;
     std::vector<CcuRep::Variable> output_;
     std::vector<CcuRep::Variable> token_;
     std::vector<CcuRep::Variable> scratch_;
 
-    CcuRep::Variable              normalSliceSize_;
-    CcuRep::Variable              lastSliceSize_;
-    CcuRep::Variable              mySliceSize_;
+    CcuRep::Variable normalSliceSize_;
+    CcuRep::Variable lastSliceSize_;
+    CcuRep::Variable mySliceSize_;
     std::vector<CcuRep::Variable> sliceOffset_;
     std::vector<CcuRep::Variable> len_;
-    CcuRep::Variable              isInputOutputEqual_;
-    CcuRep::Variable              sliceSize_;
-    CcuRep::MaskSignal            locMask_;
+    CcuRep::Variable isInputOutputEqual_;
+    CcuRep::Variable sliceSize_;
+    CcuRep::MaskSignal locMask_;
 
-    CcuRep::Memory              srcMem_;
-    CcuRep::Memory              dstMem_;
+    CcuRep::Memory srcMem_;
+    CcuRep::Memory dstMem_;
     std::vector<CcuRep::Memory> reduceScatterSrc_;
     std::vector<CcuRep::Memory> reduceScatterDst_;
     std::vector<CcuRep::Memory> gatherSrc_;
@@ -74,11 +72,10 @@ private:
     GroupOpSize localGoSize_;
 
     std::string GetLoopBlockTag(std::string loopType, int32_t index);
-    void CreateReduceLoop(uint32_t size, DataType dataType, DataType outputDataType,
-        ReduceOp opType);
-    void ReduceLoopGroup(CcuRep::Memory outDstOrg, CcuRep::Memory srcOrg,
-        std::vector<CcuRep::Memory> &scratchOrg, GroupOpSize goSize, DataType dataType, DataType outputDataType,
-        ReduceOp opType);
+    void CreateReduceLoop(uint32_t size, DataType dataType, DataType outputDataType, ReduceOp opType);
+    void ReduceLoopGroup(
+        CcuRep::Memory outDstOrg, CcuRep::Memory srcOrg, std::vector<CcuRep::Memory>& scratchOrg, GroupOpSize goSize,
+        DataType dataType, DataType outputDataType, ReduceOp opType);
     const std::string LOOP_BLOCK_TAG{"_local_copy_reduce_loop_"};
 };
 } // namespace Hccl

@@ -23,27 +23,18 @@ using namespace Hccl;
 
 class UbCiUpdaterTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AdapterRts tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AdapterRts tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AdapterRts tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AdapterRts tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in AdapterRts SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in AdapterRts SetUP" << std::endl; }
 
     virtual void TearDown()
     {
         GlobalMockObject::verify();
         std::cout << "A Test case in AdapterRts TearDown" << std::endl;
     }
-    
+
     IpAddress localIp;
     IpAddress remoteIp;
     u32 listenPort = 100;
@@ -57,13 +48,13 @@ TEST_F(UbCiUpdaterTest, ConstructUbCiUpdater_ok)
     MOCKER_CPP(&Socket::GetStatus).stubs().will(returnValue((SocketStatus)SocketStatus::TIMEOUT));
     std::pair<TokenIdHandle, uint32_t> fakeTokenInfo = std::make_pair(0x12345678, 1);
     MOCKER_CPP(&RdmaHandleManager::GetTokenIdInfo).stubs().will(returnValue(fakeTokenInfo));
-    RdmaHandle rdmaHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
     string tag = "SENDRECV";
-    QpHandle fakeQpHandle = (void *)0x1000000;
+    QpHandle fakeQpHandle = (void*)0x1000000;
 
     BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
-    LinkData     linkData(portType, 0, 1, 0, 1);
+    LinkData linkData(portType, 0, 1, 0, 1);
 
     // When
     DevUbConnection devUbConnection(rdmaHandle, linkData.GetLocalAddr(), linkData.GetRemoteAddr(), OpMode::OPBASE);
@@ -78,13 +69,13 @@ TEST_F(UbCiUpdaterTest, UbCiUpdaterUpdateCi_ok)
     MOCKER_CPP(&Socket::GetStatus).stubs().will(returnValue((SocketStatus)SocketStatus::TIMEOUT));
     std::pair<TokenIdHandle, uint32_t> fakeTokenInfo = std::make_pair(0x12345678, 1);
     MOCKER_CPP(&RdmaHandleManager::GetTokenIdInfo).stubs().will(returnValue(fakeTokenInfo));
-    RdmaHandle rdmaHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
     string tag = "SENDRECV";
-    QpHandle fakeQpHandle = (void *)0x1000000;
+    QpHandle fakeQpHandle = (void*)0x1000000;
 
     BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
-    LinkData     linkData(portType, 0, 1, 0, 1);
+    LinkData linkData(portType, 0, 1, 0, 1);
 
     MOCKER(RaUbUpdateCi).stubs();
 
@@ -104,13 +95,13 @@ TEST_F(UbCiUpdaterTest, UbCiUpdaterSaveCi_ok)
     MOCKER_CPP(&Socket::GetStatus).stubs().will(returnValue((SocketStatus)SocketStatus::TIMEOUT));
     std::pair<TokenIdHandle, uint32_t> fakeTokenInfo = std::make_pair(0x12345678, 1);
     MOCKER_CPP(&RdmaHandleManager::GetTokenIdInfo).stubs().will(returnValue(fakeTokenInfo));
-    RdmaHandle rdmaHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
     string tag = "SENDRECV";
-    QpHandle fakeQpHandle = (void *)0x1000000;
+    QpHandle fakeQpHandle = (void*)0x1000000;
 
     BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
-    LinkData     linkData(portType, 0, 1, 0, 1);
+    LinkData linkData(portType, 0, 1, 0, 1);
 
     // when
     DevUbConnection devUbConnection(rdmaHandle, linkData.GetLocalAddr(), linkData.GetRemoteAddr(), OpMode::OPBASE);

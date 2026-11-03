@@ -16,10 +16,7 @@
 using namespace Hccl;
 std::string fakeSocVersion;
 
-const char *fakePubStubGetSocVersion()
-{
-    return fakeSocVersion.c_str();
-}
+const char* fakePubStubGetSocVersion() { return fakeSocVersion.c_str(); }
 
 void SetFakeSocVersion(DevType type)
 {
@@ -40,40 +37,40 @@ Situation::Situation() : opType(OpType::ALLREDUCE), dataType(DataType::FP32), re
     SetClusterType(DevType::DEV_TYPE_910A, FakeClusterType::CLUSTER_1_SERVER_8_DEV);
 }
 
-Situation &Situation::SetDataType(DataType dataType1)
+Situation& Situation::SetDataType(DataType dataType1)
 {
     this->dataType = dataType1;
     return *this;
 }
 
-Situation &Situation::SetReduceOp(ReduceOp reduceOp1)
+Situation& Situation::SetReduceOp(ReduceOp reduceOp1)
 {
     this->reduceOp = reduceOp1;
     return *this;
 }
 
-Situation &Situation::SetOpType(OpType opType1)
+Situation& Situation::SetOpType(OpType opType1)
 {
     this->opType = opType1;
     return *this;
 }
 
-Situation &Situation::SetCount(int dataCount)
+Situation& Situation::SetCount(int dataCount)
 {
     this->count = dataCount;
     return *this;
 }
 
-Situation &Situation::SetEnv(const std::string &name, const std::string &value)
+Situation& Situation::SetEnv(const std::string& name, const std::string& value)
 {
     this->envConfigs[name] = value;
     return *this;
 }
 
-Situation &Situation::SetClusterType(DevType type, FakeClusterType cluster)
+Situation& Situation::SetClusterType(DevType type, FakeClusterType cluster)
 {
     clusterType = cluster;
-    devType     = type;
+    devType = type;
 
     SetFakeSocVersion(devType);
     if (cluster == FakeClusterType::CLUSTER_1_SERVER_8_DEV) { // 单机8卡

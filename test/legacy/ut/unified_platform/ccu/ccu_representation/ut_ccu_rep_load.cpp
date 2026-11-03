@@ -23,32 +23,20 @@ using namespace CcuRep;
 
 class CcuRepLoadTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CcuRepLoadTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CcuRepLoadTest tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CcuRepLoadTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CcuRepLoadTest tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in CcuRepLoadTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in CcuRepLoadTest SetUP" << std::endl; }
 
-    virtual void TearDown()
-    {
-        std::cout << "A Test case in CcuRepLoadTest TearDown" << std::endl;
-    }
+    virtual void TearDown() { std::cout << "A Test case in CcuRepLoadTest TearDown" << std::endl; }
 };
 
 constexpr uint16_t INSTR_NUM = 7;
 constexpr uint16_t XN_NUM = 4;
 constexpr uint16_t GSA_NUM = 3;
 
-void InitTransDep(TransDep &transDep)
+void InitTransDep(TransDep& transDep)
 {
     for (int i = 0; i < XN_NUM - 1; i++) {
         transDep.commXn[i] = i;

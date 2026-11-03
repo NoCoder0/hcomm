@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -26,39 +26,21 @@
 using namespace std;
 using namespace hccl;
 
-
-class LoadBackupIpTest : public testing::Test
-{
+class LoadBackupIpTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        cout << "\033[36m--LoadBackupIpTest SetUP--\033[0m" << endl;
-    }
-    static void TearDownTestCase()
-    {
-        cout << "\033[36m--LoadBackupIpTest TearDown--\033[0m" << endl;
-    }
+    static void SetUpTestCase() { cout << "\033[36m--LoadBackupIpTest SetUP--\033[0m" << endl; }
+    static void TearDownTestCase() { cout << "\033[36m--LoadBackupIpTest TearDown--\033[0m" << endl; }
     virtual void SetUp()
     {
         s32 portNum = 7;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
         setenv("HCCL_OP_RETRY_ENABLE", "L0:1,L1:1,L2:1", 1);
         DevType deviceType = DevType::DEV_TYPE_910_93;
-        MOCKER(hrtGetDeviceType)
-        .stubs()
-        .with(outBound(deviceType))
-        .will(returnValue(HCCL_SUCCESS));
-        
-        MOCKER(GetExternalInputInterSuperPodRetryEnable)
-        .stubs()
-        .will(returnValue(true));
+        MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
 
-        MOCKER(GetExternalInputHcclAicpuUnfold)
-        .stubs()
-        .will(returnValue(true));
+        MOCKER(GetExternalInputInterSuperPodRetryEnable).stubs().will(returnValue(true));
+
+        MOCKER(GetExternalInputHcclAicpuUnfold).stubs().will(returnValue(true));
         cout << "A Test SetUP" << endl;
     }
     virtual void TearDown()
@@ -75,34 +57,25 @@ TEST_F(LoadBackupIpTest, ut_hrtRaGetDeviceAllNicIP)
     HcclResult ret = HCCL_SUCCESS;
 
     DevType deviceType = DevType::DEV_TYPE_910_93;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
 
     s32 deviceLogicID = 0;
-    MOCKER(hrtGetDevice)
-    .stubs()
-    .with(outBoundP(&deviceLogicID))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDevice).stubs().with(outBoundP(&deviceLogicID)).will(returnValue(HCCL_SUCCESS));
 
     u32 devicePhyId = 0;
     MOCKER(hrtGetDevicePhyIdByIndex)
-    .stubs()
-    .with(mockcpp::any(), outBound(devicePhyId))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(devicePhyId))
+        .will(returnValue(HCCL_SUCCESS));
 
     u32 ifAddrNum = 1;
-    MOCKER(hrtGetIfNum)
-    .stubs()
-    .with(mockcpp::any(), outBound(ifAddrNum))
-    .will(returnValue(0));
+    MOCKER(hrtGetIfNum).stubs().with(mockcpp::any(), outBound(ifAddrNum)).will(returnValue(0));
 
     u32 ifnumVersion = 3;
     MOCKER(hrtRaGetInterfaceVersion)
-    .stubs()
-    .with(mockcpp::any(), mockcpp::any(), outBoundP(&ifnumVersion))
-    .will(returnValue(0));
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), outBoundP(&ifnumVersion))
+        .will(returnValue(0));
 
     struct InterfaceInfo ifAddrInfos[1];
     ifAddrInfos[0].ifaddr.ip.addr.s_addr = 0x100007f;
@@ -139,26 +112,16 @@ TEST_F(LoadBackupIpTest, ut_topo_detect_backup_ip)
     HcclIpAddress localIp(addr6);
     vector<HcclIpAddress> ipAddr;
     ipAddr.emplace_back(localIp);
-    MOCKER(hrtRaGetDeviceIP)
-    .stubs()
-    .with(mockcpp::any(), outBound(ipAddr))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtRaGetDeviceIP).stubs().with(mockcpp::any(), outBound(ipAddr)).will(returnValue(HCCL_SUCCESS));
 
     vector<vector<HcclIpAddress>> chipIpAddr;
     chipIpAddr.emplace_back(ipAddr);
     chipIpAddr.emplace_back(ipAddr);
-    MOCKER(hrtRaGetDeviceAllNicIP)
-    .stubs()
-    .with(outBound(chipIpAddr))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtRaGetDeviceAllNicIP).stubs().with(outBound(chipIpAddr)).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(GetExternalInputInterSuperPodRetryEnable)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER(GetExternalInputInterSuperPodRetryEnable).stubs().will(returnValue(true));
 
-    MOCKER(HcclNetDevGetTlsStatus)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcclNetDevGetTlsStatus).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclBasicRankInfo localRankInfo_;
     HcclResult ret = topoDetectServer->GenerateLocalRankInfo(2, INVALID_VALUE_RANKID, localRankInfo_);
@@ -181,29 +144,17 @@ TEST_F(LoadBackupIpTest, ut_topo_detect_backup_ip_fail)
     HcclIpAddress localIp(addr6);
     vector<HcclIpAddress> ipAddr;
     ipAddr.emplace_back(localIp);
-    MOCKER(hrtRaGetDeviceIP)
-    .stubs()
-    .with(mockcpp::any(), outBound(ipAddr))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtRaGetDeviceIP).stubs().with(mockcpp::any(), outBound(ipAddr)).will(returnValue(HCCL_SUCCESS));
 
     vector<vector<HcclIpAddress>> chipIpAddr;
     chipIpAddr.emplace_back(ipAddr);
-    MOCKER(hrtRaGetDeviceAllNicIP)
-    .stubs()
-    .with(outBound(chipIpAddr))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtRaGetDeviceAllNicIP).stubs().with(outBound(chipIpAddr)).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(GetExternalInputInterSuperPodRetryEnable)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER(GetExternalInputInterSuperPodRetryEnable).stubs().will(returnValue(true));
 
-    MOCKER(GetExternalInputHcclAicpuUnfold)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER(GetExternalInputHcclAicpuUnfold).stubs().will(returnValue(true));
 
-    MOCKER(HcclNetDevGetTlsStatus)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcclNetDevGetTlsStatus).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclBasicRankInfo localRankInfo_;
     HcclResult ret = topoDetectServer->GenerateLocalRankInfo(2, INVALID_VALUE_RANKID, localRankInfo_);
@@ -217,19 +168,14 @@ TEST_F(LoadBackupIpTest, ut_topo_exchange_verify_backup_ip)
 {
     LinkTypeInServer linkType = LinkTypeInServer::SIO_TYPE;
     MOCKER(hrtGetPairDeviceLinkType)
-    .stubs()
-    .with(mockcpp::any(), mockcpp::any(), outBound(linkType))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), outBound(linkType))
+        .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(GetExternalInputInterSuperPodRetryEnable)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER(GetExternalInputInterSuperPodRetryEnable).stubs().will(returnValue(true));
 
     bool useSuperPodMode = true;
-    MOCKER(IsSuperPodMode)
-    .stubs()
-    .with(outBound(useSuperPodMode))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(IsSuperPodMode).stubs().with(outBound(useSuperPodMode)).will(returnValue(HCCL_SUCCESS));
 
     HcclIpAddress localIp(1694542016);
     HcclNetDevCtx netDevCtx;
@@ -276,59 +222,47 @@ TEST_F(LoadBackupIpTest, ut_topo_exchange_verify_backup_ip)
 #if 1
 TEST_F(LoadBackupIpTest, ut_cluster_info_backup_ip)
 {
-    nlohmann::json rank_table =
-    {
-        {"status", "completed"},
-        {"version", "1.2"},
-        {"server_count", "2"},
-        {
-            "server_list",
-            {
-                {
-                    {"server_id", "101.0.168.192"},
-                    {
-                        "device",
-                        {
-                            {
-                                {"rank_id", "0"},
-                                {"device_id", "0"},
-                                {"device_ip", "101.0.168.192"},
-                                {"backup_device_ip", "101.0.168.193"},
-                            },
-                            {
-                                {"rank_id", "1"},
-                                {"device_id", "1"},
-                                {"device_ip", "101.0.168.193"},
-                                {"backup_device_ip", "101.0.168.194"},
-                            }
-                        }
-                    },
-                }
-            }
-        }
-    };
+    nlohmann::json rank_table
+        = {{"status", "completed"},
+           {"version", "1.2"},
+           {"server_count", "2"},
+           {"server_list",
+            {{
+                {"server_id", "101.0.168.192"},
+                {"device",
+                 {{
+                      {"rank_id", "0"},
+                      {"device_id", "0"},
+                      {"device_ip", "101.0.168.192"},
+                      {"backup_device_ip", "101.0.168.193"},
+                  },
+                  {
+                      {"rank_id", "1"},
+                      {"device_id", "1"},
+                      {"device_ip", "101.0.168.193"},
+                      {"backup_device_ip", "101.0.168.194"},
+                  }}},
+            }}}};
 
-    nlohmann::json deviceList =
-    {
-        {
-            {"rank_id", "0"},
-            {"device_id", "0"},
-            {"device_ip", "101.0.168.192"},
-            {"backup_device_ip", "101.0.168.193"},
-        },
-        {
-            {"rank_id", "1"},
-            {"device_id", "1"},
-            {"device_ip", "101.0.168.193"},
-            {"backup_device_ip", "101.0.168.194"},
-        }
-    };
+    nlohmann::json deviceList
+        = {{
+               {"rank_id", "0"},
+               {"device_id", "0"},
+               {"device_ip", "101.0.168.192"},
+               {"backup_device_ip", "101.0.168.193"},
+           },
+           {
+               {"rank_id", "1"},
+               {"device_id", "1"},
+               {"device_ip", "101.0.168.193"},
+               {"backup_device_ip", "101.0.168.194"},
+           }};
 
     LinkTypeInServer linkType = LinkTypeInServer::SIO_TYPE;
     MOCKER(hrtGetPairDeviceLinkType)
-    .stubs()
-    .with(mockcpp::any(), mockcpp::any(), outBound(linkType))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), outBound(linkType))
+        .will(returnValue(HCCL_SUCCESS));
 
     string rankTableM = rank_table.dump();
     string identify = "test";
@@ -336,9 +270,7 @@ TEST_F(LoadBackupIpTest, ut_cluster_info_backup_ip)
 
     topoRanktable.params_.deviceType = DevType::DEV_TYPE_910_93;
 
-    MOCKER(GetExternalInputInterSuperPodRetryEnable)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER(GetExternalInputInterSuperPodRetryEnable).stubs().will(returnValue(true));
 
     std::vector<RankInfo_t> rankinfo0(1);
     topoRanktable.GetSingleBackupDeviceIp(deviceList, 0, rankinfo0[0]);
@@ -357,59 +289,47 @@ TEST_F(LoadBackupIpTest, ut_cluster_info_backup_ip)
 #if 1
 TEST_F(LoadBackupIpTest, ut_cluster_info_backup_ip_fail_e_para)
 {
-    nlohmann::json rank_table =
-    {
-        {"status", "completed"},
-        {"version", "1.2"},
-        {"server_count", "2"},
-        {
-            "server_list",
-            {
-                {
-                    {"server_id", "101.0.168.192"},
-                    {
-                        "device",
-                        {
-                            {
-                                {"rank_id", "0"},
-                                {"device_id", "0"},
-                                {"device_ip", "101.0.168.192"},
-                                {"backup_device_ip", "101.0.168.193"},
-                            },
-                            {
-                                {"rank_id", "1"},
-                                {"device_id", "1"},
-                                {"device_ip", "101.0.168.193"},
-                                {"backup_device_ip", "101.0.168.194"},
-                            }
-                        }
-                    },
-                }
-            }
-        }
-    };
+    nlohmann::json rank_table
+        = {{"status", "completed"},
+           {"version", "1.2"},
+           {"server_count", "2"},
+           {"server_list",
+            {{
+                {"server_id", "101.0.168.192"},
+                {"device",
+                 {{
+                      {"rank_id", "0"},
+                      {"device_id", "0"},
+                      {"device_ip", "101.0.168.192"},
+                      {"backup_device_ip", "101.0.168.193"},
+                  },
+                  {
+                      {"rank_id", "1"},
+                      {"device_id", "1"},
+                      {"device_ip", "101.0.168.193"},
+                      {"backup_device_ip", "101.0.168.194"},
+                  }}},
+            }}}};
 
-    nlohmann::json deviceList =
-    {
-        {
-            {"rank_id", "0"},
-            {"device_id", "0"},
-            {"device_ip", "101.0.168.192"},
-            {"backup_device_ip", "101.0.168.193"},
-        },
-        {
-            {"rank_id", "1"},
-            {"device_id", "1"},
-            {"device_ip", "101.0.168.193"},
-            {"backup_device_ip", "101.0.168.194"},
-        }
-    };
+    nlohmann::json deviceList
+        = {{
+               {"rank_id", "0"},
+               {"device_id", "0"},
+               {"device_ip", "101.0.168.192"},
+               {"backup_device_ip", "101.0.168.193"},
+           },
+           {
+               {"rank_id", "1"},
+               {"device_id", "1"},
+               {"device_ip", "101.0.168.193"},
+               {"backup_device_ip", "101.0.168.194"},
+           }};
 
     LinkTypeInServer linkType = LinkTypeInServer::SIO_TYPE;
     MOCKER(hrtGetPairDeviceLinkType)
-    .stubs()
-    .with(mockcpp::any(), mockcpp::any(), outBound(linkType))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), outBound(linkType))
+        .will(returnValue(HCCL_SUCCESS));
 
     string rankTableM = rank_table.dump();
     string identify = "test";
@@ -417,9 +337,7 @@ TEST_F(LoadBackupIpTest, ut_cluster_info_backup_ip_fail_e_para)
 
     topoRanktable.params_.deviceType = DevType::DEV_TYPE_910_93;
 
-    MOCKER(GetExternalInputInterSuperPodRetryEnable)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER(GetExternalInputInterSuperPodRetryEnable).stubs().will(returnValue(true));
 
     RankInfo_t rankinfo0;
     auto ret = topoRanktable.GetSingleBackupDeviceIp(deviceList, deviceList.size(), rankinfo0);
@@ -430,7 +348,7 @@ TEST_F(LoadBackupIpTest, ut_cluster_info_backup_ip_fail_e_para)
 }
 #endif
 
-static void TestConstructParam_SurperPod(HcclCommParams &params, RankTable_t &rankTable)
+static void TestConstructParam_SurperPod(HcclCommParams& params, RankTable_t& rankTable)
 {
     string commId = "comm ";
     memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
@@ -465,55 +383,43 @@ static void TestConstructParam_SurperPod(HcclCommParams &params, RankTable_t &ra
 #if 1
 TEST_F(LoadBackupIpTest, ut_GetSingleDevicePort)
 {
-    nlohmann::json rank_table =
-    {
-        {"status", "completed"},
-        {"version", "1.2"},
-        {"server_count", "2"},
-        {
-            "server_list",
-            {
-                {
-                    {"server_id", "101.0.168.192"},
-                    {
-                        "device",
-                        {
-                            {
-                                {"rank_id", "0"},
-                                {"device_id", "0"},
-                                {"device_ip", "101.0.168.192"},
-                                {"backup_device_ip", "101.0.168.193"},
-                            },
-                            {
-                                {"rank_id", "1"},
-                                {"device_id", "1"},
-                                {"device_ip", "101.0.168.193"},
-                                {"backup_device_ip", "101.0.168.194"},
-                            }
-                        }
-                    },
-                }
-            }
-        }
-    };
+    nlohmann::json rank_table
+        = {{"status", "completed"},
+           {"version", "1.2"},
+           {"server_count", "2"},
+           {"server_list",
+            {{
+                {"server_id", "101.0.168.192"},
+                {"device",
+                 {{
+                      {"rank_id", "0"},
+                      {"device_id", "0"},
+                      {"device_ip", "101.0.168.192"},
+                      {"backup_device_ip", "101.0.168.193"},
+                  },
+                  {
+                      {"rank_id", "1"},
+                      {"device_id", "1"},
+                      {"device_ip", "101.0.168.193"},
+                      {"backup_device_ip", "101.0.168.194"},
+                  }}},
+            }}}};
 
-    nlohmann::json deviceList =
-    {
-        {
-            {"rank_id", "0"},
-            {"device_id", "0"},
-            {"device_ip", "101.0.168.192"},
-            {"backup_device_ip", "101.0.168.193"},
-            {"device_port", "16666"},
-        },
-        {
-            {"rank_id", "1"},
-            {"device_id", "1"},
-            {"device_ip", "101.0.168.193"},
-            {"backup_device_ip", "101.0.168.194"},
-            {"device_port", "16666"},
-        }
-    };
+    nlohmann::json deviceList
+        = {{
+               {"rank_id", "0"},
+               {"device_id", "0"},
+               {"device_ip", "101.0.168.192"},
+               {"backup_device_ip", "101.0.168.193"},
+               {"device_port", "16666"},
+           },
+           {
+               {"rank_id", "1"},
+               {"device_id", "1"},
+               {"device_ip", "101.0.168.193"},
+               {"backup_device_ip", "101.0.168.194"},
+               {"device_port", "16666"},
+           }};
     string rankTableM = rank_table.dump();
     TopoinfoRanktableConcise topoRanktable(rankTableM, "test");
     RankInfo_t rankinfo0;
@@ -526,57 +432,45 @@ TEST_F(LoadBackupIpTest, ut_GetSingleDevicePort)
 #if 1
 TEST_F(LoadBackupIpTest, ut_GetSingleDevicePort_Vnic)
 {
-    nlohmann::json rank_table =
-    {
-        {"status", "completed"},
-        {"version", "1.2"},
-        {"server_count", "2"},
-        {
-            "server_list",
-            {
-                {
-                    {"server_id", "101.0.168.192"},
-                    {
-                        "device",
-                        {
-                            {
-                                {"rank_id", "0"},
-                                {"device_id", "0"},
-                                {"device_ip", "101.0.168.192"},
-                                {"backup_device_ip", "101.0.168.193"},
-                            },
-                            {
-                                {"rank_id", "1"},
-                                {"device_id", "1"},
-                                {"device_ip", "101.0.168.193"},
-                                {"backup_device_ip", "101.0.168.194"},
-                            }
-                        }
-                    },
-                }
-            }
-        }
-    };
+    nlohmann::json rank_table
+        = {{"status", "completed"},
+           {"version", "1.2"},
+           {"server_count", "2"},
+           {"server_list",
+            {{
+                {"server_id", "101.0.168.192"},
+                {"device",
+                 {{
+                      {"rank_id", "0"},
+                      {"device_id", "0"},
+                      {"device_ip", "101.0.168.192"},
+                      {"backup_device_ip", "101.0.168.193"},
+                  },
+                  {
+                      {"rank_id", "1"},
+                      {"device_id", "1"},
+                      {"device_ip", "101.0.168.193"},
+                      {"backup_device_ip", "101.0.168.194"},
+                  }}},
+            }}}};
 
-    nlohmann::json deviceList =
-    {
-        {
-            {"rank_id", "0"},
-            {"device_id", "0"},
-            {"device_ip", "101.0.168.192"},
-            {"backup_device_ip", "101.0.168.193"},
-            {"device_port", "16666"},
-            {"device_vnic_port", "16667"},
-        },
-        {
-            {"rank_id", "1"},
-            {"device_id", "1"},
-            {"device_ip", "101.0.168.193"},
-            {"backup_device_ip", "101.0.168.194"},
-            {"device_port", "16666"},
-            {"device_vnic_port", "16667"},
-        }
-    };
+    nlohmann::json deviceList
+        = {{
+               {"rank_id", "0"},
+               {"device_id", "0"},
+               {"device_ip", "101.0.168.192"},
+               {"backup_device_ip", "101.0.168.193"},
+               {"device_port", "16666"},
+               {"device_vnic_port", "16667"},
+           },
+           {
+               {"rank_id", "1"},
+               {"device_id", "1"},
+               {"device_ip", "101.0.168.193"},
+               {"backup_device_ip", "101.0.168.194"},
+               {"device_port", "16666"},
+               {"device_vnic_port", "16667"},
+           }};
     string rankTableM = rank_table.dump();
     TopoinfoRanktableConcise topoRanktable(rankTableM, "test");
     RankInfo_t rankinfo0;
@@ -640,10 +534,10 @@ TEST_F(LoadBackupIpTest, ut_topo_exchange_verify_superPodId)
 TEST_F(LoadBackupIpTest, ut_GetSingleServer_failed)
 {
     nlohmann::json rank_table;
-    nlohmann::json serverListObj = nlohmann::json::array({
-        { {"instance_id", 0}, {"device_name", "device0"}, {"server_id",
-            "12345678910123456789101234567891012345678910123456789101234567891"}}
-    });
+    nlohmann::json serverListObj = nlohmann::json::array(
+        {{{"instance_id", 0},
+          {"device_name", "device0"},
+          {"server_id", "12345678910123456789101234567891012345678910123456789101234567891"}}});
     string rankTableM = rank_table.dump();
     TopoinfoRanktableConcise topoRanktable(rankTableM, "test");
     RankTable_t rankinfo0;

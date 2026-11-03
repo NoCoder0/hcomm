@@ -7,10 +7,9 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #ifndef HCCLV2_RTSQ_BASE_H
 #define HCCLV2_RTSQ_BASE_H
-#include <vector>
-#include <functional>
 #include "types.h"
 #include "buffer.h"
 #include "notify_lite.h"
@@ -19,13 +18,17 @@
 #include "reduce_in.h"
 #include "not_support_exception.h"
 #include "ub_jetty_lite.h"
+#include <functional>
 
 #include "ascend_hal.h"
 namespace aicpu {
-void __attribute__((weak)) __attribute__((visibility("default"))) GetSqeId(const uint32_t num, uint32_t &start, uint32_t &end);
+void __attribute__((weak)) __attribute__((visibility("default")))
+GetSqeId(const uint32_t num, uint32_t& start, uint32_t& end);
 }
 
 namespace Hccl {
+
+class UbTransportLiteImpl;
 
 constexpr u32 RTSQ_FULL_TIMEOUT_DEFAULT = 1836 + 20;
 constexpr u32 RTSQ_SQE_SIZE = 64;
@@ -37,47 +40,31 @@ public:
 
     virtual ~RtsqBase() = default;
 
-    virtual void Reset();
+    virtual void Reset(bool reset);
 
-    inline u32 GetSqDepth() const
-    {
-        return sqDepth_;
-    }
+    inline u32 GetStreamId() const { return streamId_; }
 
-    inline u32 GetHead() const
-    {
-        return sqHead_;
-    }
+    inline u32 GetSqDepth() const { return sqDepth_; }
 
-    inline u32 GetTail() const
-    {
-        return sqTail_;
-    }
+    inline u64 GetSqBaseAddr() const { return sqBaseAddr_; }
 
-    inline u32 GetTaskId() const
-    {
-        return taskId_;
-    }
+    inline u32 GetHead() const { return sqHead_; }
 
-    void SetOpExecStatusCallback(std::function<void()> callback)
-    {
-        checkOpExecStatusCallback_ = callback;
-    }
+    inline u32 GetTail() const { return sqTail_; }
 
-    void SetCheckExecStatusCallback(std::function<HcclResult(bool)> callback) // 自定义算子流程注册检查执行状态的回调函数
+    inline u32 GetTaskId() const { return taskId_; }
+
+    void SetOpExecStatusCallback(std::function<void()> callback) { checkOpExecStatusCallback_ = callback; }
+
+    void
+    SetCheckExecStatusCallback(std::function<HcclResult(bool)> callback) // 自定义算子流程注册检查执行状态的回调函数
     {
         checkExecStatusCallback_ = callback;
     }
 
-    virtual void LaunchTask()
-    {
-        MACRO_THROW(NotSupportException, StringFormat("not supported."));
-    }
+    virtual void LaunchTask() { MACRO_THROW(NotSupportException, StringFormat("not supported.")); }
 
-    virtual void TryLaunchTask()
-    {
-        MACRO_THROW(NotSupportException, StringFormat("not supported."));
-    }
+    virtual void TryLaunchTask() { MACRO_THROW(NotSupportException, StringFormat("not supported.")); }
 
     virtual void NotifyWait(u32 notifyId)
     {
@@ -142,7 +129,7 @@ public:
         MACRO_THROW(NotSupportException, StringFormat("not supported."));
     }
 
-    virtual void SdmaReduce(u64 srcAddr, u64 dstAddr, u32 size, u32 partId, const ReduceIn &reduceIn)
+    virtual void SdmaReduce(u64 srcAddr, u64 dstAddr, u32 size, u32 partId, const ReduceIn& reduceIn)
     {
         (void)srcAddr;
         (void)dstAddr;
@@ -159,21 +146,23 @@ public:
         MACRO_THROW(NotSupportException, StringFormat("not supported."));
     }
 
-    virtual void UbDbSend(const UbJettyLiteId &jettyLiteId, u16 piValue)
+    virtual void UbDbSend(const UbJettyLiteId& jettyLiteId, u16 piValue, u16 seqIdx, UbTransportLiteImpl* transport)
     {
         (void)jettyLiteId;
         (void)piValue;
+        (void)seqIdx;
+        (void)transport;
         MACRO_THROW(NotSupportException, StringFormat("not supported."));
     }
 
-    virtual void RdmaDbSend(const uint64_t &dbAddr, const uint64_t &dbValue)
+    virtual void RdmaDbSend(const uint64_t& dbAddr, const uint64_t& dbValue)
     {
         (void)dbAddr;
         (void)dbValue;
         MACRO_THROW(NotSupportException, StringFormat("not supported."));
     }
 
-    virtual void UbDirectSend(const UbJettyLiteId &jettyLiteId, u32 dwqeSize, const u8 *wqe)
+    virtual void UbDirectSend(const UbJettyLiteId& jettyLiteId, u32 dwqeSize, const u8* wqe)
     {
         (void)jettyLiteId;
         (void)dwqeSize;
@@ -188,47 +177,65 @@ public:
         MACRO_THROW(NotSupportException, StringFormat("not supported."));
     }
 
-    virtual void CCoreNotifyWait(u64 waitAddr, u64 curTurnCntAddr, bool last)
+    virtual HcclResult CCoreNotifyWait(u64 waitAddr, u64 curTurnCntAddr, bool last)
     {
         (void)waitAddr;
         (void)curTurnCntAddr;
         (void)last;
-        MACRO_THROW(NotSupportException, StringFormat("not supported."));
+        HCCL_ERROR("[%s] not supported.", __func__);
+        return HcclResult::HCCL_E_NOT_SUPPORT;
     }
 
-    virtual void CCoreNotifyRecord(u64 recordAddr, u64 curTurnCntAddr)
+    virtual HcclResult CCoreNotifyRecord(u64 recordAddr, u64 curTurnCntAddr)
     {
         (void)recordAddr;
         (void)curTurnCntAddr;
-        MACRO_THROW(NotSupportException, StringFormat("not supported."));
+        HCCL_ERROR("[%s] not supported.", __func__);
+        return HcclResult::HCCL_E_NOT_SUPPORT;
     }
+
+    virtual u64 GetSqeAddr() const { return 0; }
+
+    virtual uint32_t GetPendingSqeCnt() const { return 0; }
 
     u32 QuerySqHead() const;
     u32 QuerySqTail() const;
 
-    virtual bool IsRtsqQueueSpaceSufficient()
-    {
-        return true;
-    }
+    virtual bool IsRtsqQueueSpaceSufficient() { return true; }
 
     virtual HcclResult SetPreStreamSyncReady()
     {
-        MACRO_THROW(NotSupportException, StringFormat("not supported."));
-        return HCCL_SUCCESS;
+        HCCL_ERROR("[%s] not supported.", __func__);
+        return HcclResult::HCCL_E_NOT_SUPPORT;
     }
 
     virtual HcclResult SetPreStreamSyncFin()
     {
-        MACRO_THROW(NotSupportException, StringFormat("not supported."));
-        return HCCL_SUCCESS;
+        HCCL_ERROR("[%s] not supported.", __func__);
+        return HcclResult::HCCL_E_NOT_SUPPORT;
     }
 
-    virtual bool GetPreStreamSyncStatus()
+    virtual bool GetPreStreamSyncStatus() { return false; }
+
+    // 按 sqIdx 一次读取 SQE header 的 streamId/taskId/sqeType；
+    // notifyId 仅当 sqeType 为 notify 类型时有效，调用方须先判断 sqeType 再使用
+    HcclResult
+    GetSqeHeaderFieldsBySqIdx(u32 sqIdx, uint16_t& streamId, uint16_t& taskId, u8& sqeType, u32& notifyId) const;
+
+    virtual HcclResult GetLastStreamIdAndTaskId(uint16_t& streamId, uint16_t& taskId) const
     {
-        return false;
+        (void)streamId;
+        (void)taskId;
+        return HCCL_E_NOT_SUPPORT;
     }
+    virtual void PollCompletion() {}
 
-    HcclResult GetStreamIdAndTaskIdBySqIdx(u32 sqIdx, uint16_t& streamId, uint16_t& taskId) const;
+    virtual void SetCurrentTransportContext(u64 channelHandle, u8 linkType, u8 transportType)
+    {
+        (void)channelHandle;
+        (void)linkType;
+        (void)transportType;
+    }
 
 protected:
     u32 devPhyId_{0};
@@ -241,7 +248,7 @@ protected:
     u32 sqDepth_{0};
     u64 sqBaseAddr_{0};
 
-    u32 taskId_{0}; // 填写到SQE中的taskId，现改为由AICPU组件提供的sqeId维护
+    u32 taskId_{0};    // 填写到SQE中的taskId，现改为由AICPU组件提供的sqeId维护
     u32 taskIdEnd_{0}; // 当前流已经申请到的最大taskId
 
     std::function<void()> checkOpExecStatusCallback_{nullptr};
@@ -251,14 +258,14 @@ protected:
 
     std::string GetHwSqDescribe() const;
 
-    void ConfigSqTail(u32 value);
-    void ConfigDisableToEnable(u32 value);
+    void ConfigSqTail(u32 value) const;
+    void ConfigDisableToEnable(u32 value) const;
 
     inline void SetTaskIdBySqeId()
     {
         taskId_++; // taskId_的范围是aicpu::GetSqeId返回的[start, end), taskId累加到end时重新向aicpu申请, 不会翻转
-        if (UNLIKELY(taskId_ >= taskIdEnd_)) { // taskEnd_视为未申请的taskId，不可使用
-            constexpr u32 PER_GET_SQE_ID_NUM = 1024; // 一次性申请sqeId数量
+        if (UNLIKELY(taskId_ >= taskIdEnd_)) {                        // taskEnd_视为未申请的taskId，不可使用
+            constexpr u32 PER_GET_SQE_ID_NUM = 1024;                  // 一次性申请sqeId数量
             aicpu::GetSqeId(PER_GET_SQE_ID_NUM, taskId_, taskIdEnd_); // aicpu框架保证 taskId_ < taskIdEnd_
         }
         return;

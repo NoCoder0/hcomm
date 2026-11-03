@@ -15,69 +15,67 @@
 #include <cstdint>
 #include <cstring>
 
-#define MAKE_ENUM(enumClass, ...) \
-    enum class enumClass { __VA_ARGS__ }
+#define MAKE_ENUM(enumClass, ...) enum class enumClass { __VA_ARGS__ }
 
 namespace Hccl {
 MAKE_ENUM(HrtNetworkMode, PEER, HDC);
 
 struct HRaInfo {
     HrtNetworkMode mode;
-    uint32_t       phyId;
+    uint32_t phyId;
     HRaInfo(HrtNetworkMode m, uint32_t p) : mode(m), phyId(p) {}
 };
 
-void HrtRaCustomChannel(const HRaInfo &raInfo, void *customIn, void *customOut);
+void HrtRaCustomChannel(const HRaInfo& raInfo, void* customIn, void* customOut);
 } // namespace Hccl
 
 namespace hcomm {
 namespace CcuRep {
-enum class CcuOpcodeType {
-    CCU_U_OP_GET_VERSION    = 0,
-    CCU_U_OP_GET_MISSION_CTX = 208,
-    CCU_U_OP_GET_LOOP_CTX   = 209,
-    CCU_U_OP_GET_GSA        = 202,
-    CCU_U_OP_GET_XN         = 203,
-    CCU_U_OP_GET_CKE        = 204,
-};
+    enum class CcuOpcodeType {
+        CCU_U_OP_GET_VERSION = 0,
+        CCU_U_OP_GET_MISSION_CTX = 208,
+        CCU_U_OP_GET_LOOP_CTX = 209,
+        CCU_U_OP_GET_GSA = 202,
+        CCU_U_OP_GET_XN = 203,
+        CCU_U_OP_GET_CKE = 204,
+    };
 
-union CcuDataTypeUnion {
-    uint64_t u64;
-    uint32_t u32;
-    uint8_t  u8;
-};
+    union CcuDataTypeUnion {
+        uint64_t u64;
+        uint32_t u32;
+        uint8_t u8;
+    };
 
-struct CcuData {
-    uint32_t udieIdx;
-    uint32_t dataArraySize;
-    uint32_t dataLen;
-    CcuDataTypeUnion dataArray[8];
-};
+    struct CcuData {
+        uint32_t udieIdx;
+        uint32_t dataArraySize;
+        uint32_t dataLen;
+        CcuDataTypeUnion dataArray[8];
+    };
 
-union CcuDataUnion {
-    char           raw[2048];
-    struct CcuData dataInfo;
-};
+    union CcuDataUnion {
+        char raw[2048];
+        struct CcuData dataInfo;
+    };
 
-struct CustomChannelInfoIn {
-    CcuDataUnion data;
-    uint32_t offsetStartIdx;
-    CcuOpcodeType op;
+    struct CustomChannelInfoIn {
+        CcuDataUnion data;
+        uint32_t offsetStartIdx;
+        CcuOpcodeType op;
 
-    CustomChannelInfoIn() : offsetStartIdx(0), op(CcuOpcodeType::CCU_U_OP_GET_VERSION) {
-        memset(&data, 0, sizeof(data));
-    }
-};
+        CustomChannelInfoIn() : offsetStartIdx(0), op(CcuOpcodeType::CCU_U_OP_GET_VERSION)
+        {
+            memset(&data, 0, sizeof(data));
+        }
+    };
 
-struct CustomChannelInfoOut {
-    CcuDataUnion data;
-    uint32_t offsetNextIdx;
-    int opRet;
+    struct CustomChannelInfoOut {
+        CcuDataUnion data;
+        uint32_t offsetNextIdx;
+        int opRet;
 
-    CustomChannelInfoOut() : offsetNextIdx(0), opRet(0) {
-        memset(&data, 0, sizeof(data));
-    }
-};
+        CustomChannelInfoOut() : offsetNextIdx(0), opRet(0) { memset(&data, 0, sizeof(data)); }
+    };
 } // namespace CcuRep
 } // namespace hcomm
 

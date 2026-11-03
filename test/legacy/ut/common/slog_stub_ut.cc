@@ -23,7 +23,7 @@ static int GetLogLevelFromEnv()
             return val;
         }
     }
-    
+
     return DLOG_ERROR;
 }
 static int g_UT_LOG_LEVEL = GetLogLevelFromEnv();
@@ -42,17 +42,11 @@ int HcclCheckLogLevel(int moduleId, int logLevel)
     return 1;
 }
 
-bool IsErrorToWarn()
-{
-    return false;
-}
+bool IsErrorToWarn() { return false; }
 
-void SetErrWarnSwitch(bool flag)
-{
-    (void)flag;
-}
+void SetErrWarnSwitch(bool flag) { (void)flag; }
 
-void DlogRecord(int moduleId, int level, const char *fmt, ...)
+void DlogRecord(int moduleId, int level, const char* fmt, ...)
 {
     (void)moduleId;
     (void)fmt;
@@ -64,7 +58,7 @@ void DlogRecord(int moduleId, int level, const char *fmt, ...)
     }
 }
 
-void DlogInner(int moduleId, int level, const char *fmt, ...)
+void DlogInner(int moduleId, int level, const char* fmt, ...)
 {
     (void)moduleId;
     (void)fmt;

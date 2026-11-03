@@ -31,14 +31,15 @@
 using namespace std;
 using namespace hccl;
 
-
 class AllreduceMeshOpbaseTest : public testing::Test {
 protected:
     static void SetUpTestCase()
     {
         s32 ret = HcclDispatcherInit(DispatcherType::DISPATCHER_NORMAL, 0, &dispatcherPtr);
-        if (ret != HCCL_SUCCESS) return;
-        if (dispatcherPtr == nullptr) return;
+        if (ret != HCCL_SUCCESS)
+            return;
+        if (dispatcherPtr == nullptr)
+            return;
         dispatcher = reinterpret_cast<DispatcherPub*>(dispatcherPtr);
         DlRaFunction::GetInstance().DlRaFunctionInit();
         std::cout << "AllreduceMeshOpbaseTest SetUP" << std::endl;
@@ -56,15 +57,10 @@ protected:
     // Some expensive resource shared by all tests.
     virtual void SetUp()
     {
-        (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
+        (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
         s32 portNum = 7;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
-        MOCKER(hrtProfRegisterCtrlCallback)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtProfRegisterCtrlCallback).stubs().will(returnValue(HCCL_SUCCESS));
         std::cout << "A Test SetUP" << std::endl;
     }
     virtual void TearDown()
@@ -73,12 +69,12 @@ protected:
         std::cout << "A Test TearDown" << std::endl;
     }
     static HcclDispatcher dispatcherPtr;
-    static DispatcherPub *dispatcher;
+    static DispatcherPub* dispatcher;
 };
 HcclDispatcher AllreduceMeshOpbaseTest::dispatcherPtr = nullptr;
-DispatcherPub *AllreduceMeshOpbaseTest::dispatcher = nullptr;
+DispatcherPub* AllreduceMeshOpbaseTest::dispatcher = nullptr;
 
-static void TestConstructParam(HcclCommParams &params, RankTable_t &rankTable)
+static void TestConstructParam(HcclCommParams& params, RankTable_t& rankTable)
 {
     string commId = "comm ";
     memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
@@ -117,17 +113,14 @@ TEST_F(AllreduceMeshOpbaseTest, ut_impl_alg)
     params.deviceType = DevType::DEV_TYPE_910;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
-    implBase->InitCCLbuffer(200*1024*1024, 200*1024*1024);
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
+    implBase->InitCCLbuffer(200 * 1024 * 1024, 200 * 1024 * 1024);
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     CollAllReduceMeshOpbaseExecutor* executor = new CollAllReduceMeshOpbaseExecutor(impl->dispatcher_, topoMatcher);
 
     DeviceMem inputPtrMem = DeviceMem::alloc(4096);
@@ -146,18 +139,15 @@ TEST_F(AllreduceMeshOpbaseTest, ut_impl_alg)
     opParam.reduceType = HCCL_REDUCE_SUM;
     opParam.stream = Stream(StreamType::STREAM_TYPE_ONLINE);
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
     AlgResourceRequest resourceRequest;
     AlgResourceResponse resourceResponse;
     ret = executor->CalcResRequest(opParam, resourceRequest);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    implBase->AllocAlgResource(opParam.tag, HcclCMDType::HCCL_CMD_ALLREDUCE, opParam, resourceRequest, resourceResponse);
+    implBase->AllocAlgResource(
+        opParam.tag, HcclCMDType::HCCL_CMD_ALLREDUCE, opParam, resourceRequest, resourceResponse);
     resourceResponse.cclInputMem = inputMem;
     resourceResponse.cclOutputMem = outputMem;
     resourceResponse.scratchMem = scratchMem;
@@ -177,17 +167,14 @@ TEST_F(AllreduceMeshOpbaseTest, ut_impl_alg2)
     params.deviceType = DevType::DEV_TYPE_910;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
-    implBase->InitCCLbuffer(200*1024*1024, 200*1024*1024);
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
+    implBase->InitCCLbuffer(200 * 1024 * 1024, 200 * 1024 * 1024);
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     CollAllReduceMeshOneshotExecutor* executor = new CollAllReduceMeshOneshotExecutor(impl->dispatcher_, topoMatcher);
 
     DeviceMem inputPtrMem = DeviceMem::alloc(4096);
@@ -206,18 +193,15 @@ TEST_F(AllreduceMeshOpbaseTest, ut_impl_alg2)
     opParam.reduceType = HCCL_REDUCE_SUM;
     opParam.stream = Stream(StreamType::STREAM_TYPE_ONLINE);
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
     AlgResourceRequest resourceRequest;
     AlgResourceResponse resourceResponse;
     ret = executor->CalcResRequest(opParam, resourceRequest);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    implBase->AllocAlgResource(opParam.tag, HcclCMDType::HCCL_CMD_ALLREDUCE, opParam, resourceRequest, resourceResponse);
+    implBase->AllocAlgResource(
+        opParam.tag, HcclCMDType::HCCL_CMD_ALLREDUCE, opParam, resourceRequest, resourceResponse);
     resourceResponse.cclInputMem = inputMem;
     resourceResponse.cclOutputMem = outputMem;
     resourceResponse.scratchMem = scratchMem;
@@ -237,17 +221,14 @@ TEST_F(AllreduceMeshOpbaseTest, ut_impl_alg3)
     params.deviceType = DevType::DEV_TYPE_910;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
-    implBase->InitCCLbuffer(200*1024*1024, 200*1024*1024);
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
+    implBase->InitCCLbuffer(200 * 1024 * 1024, 200 * 1024 * 1024);
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     CollAllReduceMeshOneshotExecutor* executor = new CollAllReduceMeshOneshotExecutor(impl->dispatcher_, topoMatcher);
 
     DeviceMem inputPtrMem = DeviceMem::alloc(4096);
@@ -266,18 +247,15 @@ TEST_F(AllreduceMeshOpbaseTest, ut_impl_alg3)
     opParam.reduceType = HCCL_REDUCE_PROD;
     opParam.stream = Stream(StreamType::STREAM_TYPE_ONLINE);
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
     AlgResourceRequest resourceRequest;
     AlgResourceResponse resourceResponse;
     ret = executor->CalcResRequest(opParam, resourceRequest);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    implBase->AllocAlgResource(opParam.tag, HcclCMDType::HCCL_CMD_ALLREDUCE, opParam, resourceRequest, resourceResponse);
+    implBase->AllocAlgResource(
+        opParam.tag, HcclCMDType::HCCL_CMD_ALLREDUCE, opParam, resourceRequest, resourceResponse);
     resourceResponse.cclInputMem = inputMem;
     resourceResponse.cclOutputMem = outputMem;
     resourceResponse.scratchMem = scratchMem;
@@ -297,17 +275,14 @@ TEST_F(AllreduceMeshOpbaseTest, ut_impl_alg4)
     params.deviceType = DevType::DEV_TYPE_910;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
-    implBase->InitCCLbuffer(200*1024*1024, 200*1024*1024);
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
+    implBase->InitCCLbuffer(200 * 1024 * 1024, 200 * 1024 * 1024);
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     CollAllReduceMeshMidCountExecutor* executor = new CollAllReduceMeshMidCountExecutor(impl->dispatcher_, topoMatcher);
 
     DeviceMem inputPtrMem = DeviceMem::alloc(4096);
@@ -326,18 +301,15 @@ TEST_F(AllreduceMeshOpbaseTest, ut_impl_alg4)
     opParam.reduceType = HCCL_REDUCE_PROD;
     opParam.stream = Stream(StreamType::STREAM_TYPE_ONLINE);
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
     AlgResourceRequest resourceRequest;
     AlgResourceResponse resourceResponse;
     ret = executor->CalcResRequest(opParam, resourceRequest);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    implBase->AllocAlgResource(opParam.tag, HcclCMDType::HCCL_CMD_ALLREDUCE, opParam, resourceRequest, resourceResponse);
+    implBase->AllocAlgResource(
+        opParam.tag, HcclCMDType::HCCL_CMD_ALLREDUCE, opParam, resourceRequest, resourceResponse);
     resourceResponse.cclInputMem = inputMem;
     resourceResponse.cclOutputMem = outputMem;
     resourceResponse.scratchMem = scratchMem;
@@ -357,17 +329,14 @@ TEST_F(AllreduceMeshOpbaseTest, ut_impl_alg5)
     params.deviceType = DevType::DEV_TYPE_910;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
-    implBase->InitCCLbuffer(200*1024*1024, 200*1024*1024);
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
+    implBase->InitCCLbuffer(200 * 1024 * 1024, 200 * 1024 * 1024);
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     CollAllReduceMeshOpbaseExecutor* executor = new CollAllReduceMeshOpbaseExecutor(impl->dispatcher_, topoMatcher);
 
     DeviceMem inputPtrMem = DeviceMem::alloc(4096);
@@ -386,18 +355,15 @@ TEST_F(AllreduceMeshOpbaseTest, ut_impl_alg5)
     opParam.reduceType = HCCL_REDUCE_PROD;
     opParam.stream = Stream(StreamType::STREAM_TYPE_ONLINE);
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
     AlgResourceRequest resourceRequest;
     AlgResourceResponse resourceResponse;
     ret = executor->CalcResRequest(opParam, resourceRequest);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    implBase->AllocAlgResource(opParam.tag, HcclCMDType::HCCL_CMD_ALLREDUCE, opParam, resourceRequest, resourceResponse);
+    implBase->AllocAlgResource(
+        opParam.tag, HcclCMDType::HCCL_CMD_ALLREDUCE, opParam, resourceRequest, resourceResponse);
     resourceResponse.cclInputMem = inputMem;
     resourceResponse.cclOutputMem = outputMem;
     ret = executor->Orchestrate(opParam, resourceResponse);
@@ -420,17 +386,17 @@ TEST_F(AllreduceMeshOpbaseTest, ut_slice)
 
     std::vector<Slice> dataSlice;
     executor->PrepareSlice(1024, 4, 8, dataSlice);
-    for (const auto& slice: dataSlice) {
+    for (const auto& slice : dataSlice) {
         HCCL_ERROR("offset: %llu, size: %llu", slice.offset, slice.size);
     }
 
     executor->PrepareSlice(1023, 4, 8, dataSlice);
-    for (const auto& slice: dataSlice) {
+    for (const auto& slice : dataSlice) {
         HCCL_ERROR("offset: %llu, size: %llu", slice.offset, slice.size);
     }
 
     executor->PrepareSlice(16, 4, 8, dataSlice);
-    for (const auto& slice: dataSlice) {
+    for (const auto& slice : dataSlice) {
         HCCL_ERROR("offset: %llu, size: %llu", slice.offset, slice.size);
     }
 }

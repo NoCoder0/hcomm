@@ -9,6 +9,7 @@
  */
 
 #define _GNU_SOURCE
+#include "config_log.h"
 #include <unistd.h>
 #include <stdlib.h>
 #include <netinet/in.h>
@@ -42,7 +43,7 @@
 #define TID_LENGTH 20
 #define HOST ((uint32_t)1)
 
-struct RsPthreadInfo gEpollThreadInfo = {0};  //lint !e17
+struct RsPthreadInfo gEpollThreadInfo = {0}; // lint !e17
 struct RsPthreadInfo gConnectThreadInfo = {0};
 
 /*
@@ -60,8 +61,7 @@ int RsEpollCtl(int epollfd, int op, int fd, unsigned int state)
     ev.data.fd = fd;
     ret = epoll_ctl(epollfd, op, fd, &ev);
     if (ret) {
-        hccp_warn("epoll_ctl for fd %d unsuccessful! ret:%d errno:%d op:%d state:%u",
-            fd, ret, errno, op, state);
+        hccp_warn_socket("epoll_ctl for fd %d unsuccessful! ret:%d errno:%d op:%d state:%u", fd, ret, errno, op, state);
     }
     return ret;
 }
@@ -75,24 +75,25 @@ int RsEpollCtlFdHandle(int epollfd, int op, int fd, unsigned int state, void *fd
     ev.data.ptr = fdHandle;
     ret = epoll_ctl(epollfd, op, fd, &ev);
     if (ret) {
-        hccp_warn("epoll_ctl for fd %d unsuccessful! ret:%d errno:%d op:%d state:%u",
-            fd, ret, errno, op, state);
+        hccp_warn_socket("epoll_ctl for fd %d unsuccessful! ret:%d errno:%d op:%d state:%u", fd, ret, errno, op, state);
     }
     return ret;
 }
 
-int RsWlistCheckConnAdd(struct rs_cb *rsCb, struct RsConnInfo* connTmp)
+int RsWlistCheckConnAdd(struct rs_cb *rsCb, struct RsConnInfo *connTmp)
 {
     int ret;
     int retClose;
     struct RsConnInfo *conn = NULL;
 
-    if (rsCb->connCb.wlistEnable == 1) {
+    if (!connTmp->tagChkDis) {
         ret = RsWhiteListCheckValid(rsCb->chipId, &rsCb->connCb, connTmp);
         if (ret) {
-            hccp_info("invalid client node found: chip_id %u, fd %d accept, server ip:%s, client ip:%s, port:%u, "
-                "state:%d, tag:%s", rsCb->chipId, connTmp->connfd, connTmp->serverIp.readAddr,
-                connTmp->clientIp.readAddr, connTmp->port, connTmp->state, connTmp->tag);
+            hccp_info_socket(
+                "invalid client node found: chip_id %u, fd %d accept, server ip:%s, client ip:%s, port:%u, "
+                "state:%d, tag:%s",
+                rsCb->chipId, connTmp->connfd, connTmp->serverIp.readAddr, connTmp->clientIp.readAddr, connTmp->port,
+                connTmp->state, connTmp->tag);
             return ret;
         }
     }
@@ -100,21 +101,21 @@ int RsWlistCheckConnAdd(struct rs_cb *rsCb, struct RsConnInfo* connTmp)
     /* add conn node to server list */
     ret = RsAllocConnNode(&conn, connTmp->port);
     if (ret) {
-        hccp_err("server IP:0x%s add conn info to list failed, fd:%d, ret:%d",
-            connTmp->serverIp.readAddr, connTmp->connfd, ret);
+        hccp_err("server IP:0x%s add conn info to list failed, fd:%d, ret:%d, tag:%s", connTmp->serverIp.readAddr,
+            connTmp->connfd, ret, connTmp->tag);
         goto alloc_err;
     }
 
     ret = RsSocketCopyConnInfo(connTmp, conn);
     if (ret) {
-        hccp_err("rs_socket_copy_conn_info failed, ret[%d]", ret);
+        hccp_err("rs_socket_copy_conn_info failed, ret:%d, tag:%s", ret, connTmp->tag);
         goto out;
     }
 
     if (rsCb->sslEnable == RS_SSL_ENABLE) {
         ret = RsEpollCtl(rsCb->connCb.epollfd, EPOLL_CTL_DEL, connTmp->connfd, EPOLLIN);
         if (ret) {
-            hccp_err("rs epoll ctl failed, ret %d", ret);
+            hccp_err("rs epoll ctl failed, ret:%d, tag:%s", ret, connTmp->tag);
             goto out;
         }
     }
@@ -123,9 +124,8 @@ int RsWlistCheckConnAdd(struct rs_cb *rsCb, struct RsConnInfo* connTmp)
     RsListAddTail(&conn->list, &rsCb->connCb.serverConnList);
     RS_PTHREAD_MUTEX_ULOCK(&rsCb->connCb.connMutex);
 
-    hccp_info("[Server]chip_id %u, fd %d accept, server ip:%s, client ip:%s, state:%d, tag:%s",
-        rsCb->chipId, connTmp->connfd, connTmp->serverIp.readAddr, connTmp->clientIp.readAddr,
-        connTmp->state, connTmp->tag);
+    hccp_info_socket("[Server]chip_id %u, fd %d accept, server ip:%s, client ip:%s, state:%d, tag:%s", rsCb->chipId,
+        connTmp->connfd, connTmp->serverIp.readAddr, connTmp->clientIp.readAddr, connTmp->state, connTmp->tag);
     ShowConnNode(&(rsCb->connCb.serverConnList));
     return 0;
 
@@ -143,24 +143,34 @@ STATIC int RsSslRecvTagInHandle(struct RsAcceptInfo *acceptInfo, struct RsConnIn
     char *recvBuff = connTmp->tag;
     struct timeval startTime, now;
     float timeCost = 0.0;
-    int size = expSize;
+    int size = 0;
+    int ret = 0;
 
     RsGetCurTime(&startTime);
-    while (expSize > 0 && size != 0) {
+    while (expSize > 0) {
         connTmp->tagSyncTimes++;
         size = ssl_adp_read(acceptInfo->ssl, recvBuff, expSize);
-        if ((size < 0) && (errno == EINTR)) {
-            connTmp->tagEintrTimes++;
-            continue;
+        if (size > 0) {
+            expSize -= size;
+            recvBuff += size;
+        } else {
+            ret = RsSslReadInnerCheck(acceptInfo->ssl, acceptInfo->connFd, size, (uint64_t)expSize);
+            if (ret == -EAGAIN) {
+                connTmp->tagEintrTimes++;
+            } else {
+                hccp_run_warn("ssl_adp_read unsuccessful, fd:%d ret:%d tagSyncTime:%u tagEintrTime:%u",
+                    acceptInfo->connFd, ret, connTmp->tagSyncTimes, connTmp->tagEintrTimes);
+                return -ESOCKCLOSED;
+            }
         }
-        expSize -= size;
-        recvBuff += size;
+
         RsGetCurTime(&now);
         HccpTimeInterval(&now, &startTime, &timeCost);
         if (timeCost >= RS_RECV_MAX_TIME) {
-            hccp_run_info("recv tag time out, server:{%s:%u} client:%s tagSyncTime:%u tagEintrTime:%u",
-                acceptInfo->serverIpAddr.readAddr, acceptInfo->sockPort, acceptInfo->clientIpAddr.readAddr,
-                connTmp->tagSyncTimes, connTmp->tagEintrTimes);
+            hccp_run_info(
+                "recv tag time out, connfd:%d, server:{%s:%u} tagChkDis:%d client:%s tagSyncTime:%u tagEintrTime:%u",
+                acceptInfo->connFd, acceptInfo->serverIpAddr.readAddr, acceptInfo->sockPort, acceptInfo->tagChkDis,
+                acceptInfo->clientIpAddr.readAddr, connTmp->tagSyncTimes, connTmp->tagEintrTimes);
             return -ETIME;
         }
 
@@ -175,10 +185,13 @@ STATIC int RsSslRecvTagInHandle(struct RsAcceptInfo *acceptInfo, struct RsConnIn
     connTmp->state = RS_CONN_STATE_TAG_SYNC;
     connTmp->port = acceptInfo->sockPort;
     connTmp->ssl = acceptInfo->ssl;
+    connTmp->tagChkDis = acceptInfo->tagChkDis;
 
-    hccp_info("recv tag success, server:{%s:%u} client:%s timeCost:%fms tagSyncTime:%u tagEintrTime:%u",
-        acceptInfo->serverIpAddr.readAddr, acceptInfo->sockPort, acceptInfo->clientIpAddr.readAddr, timeCost,
-        connTmp->tagSyncTimes, connTmp->tagEintrTimes);
+    hccp_info_socket("recv tag success, connfd:%d, server:{%s:%u}, client:%s, timeCost:%fms, tagSyncTime:%u, "
+                     "tagEintrTime:%u, tagChkDis:%d, tag:%s",
+        acceptInfo->connFd, acceptInfo->serverIpAddr.readAddr, acceptInfo->sockPort, acceptInfo->clientIpAddr.readAddr,
+        timeCost, connTmp->tagSyncTimes, connTmp->tagEintrTimes, connTmp->tagChkDis, connTmp->tag);
+
     return 0;
 }
 
@@ -197,7 +210,8 @@ STATIC void RsEpollEventSslRecvTagInHandle(struct rs_cb *rsCb, struct RsAcceptIn
     ret = RsWlistCheckConnAdd(rsCb, &connTmp);
 out:
     if (ret != 0) {
-        hccp_warn("recv tag or add conn unsuccessful ret:%d", ret);
+        hccp_warn_socket("recv tag or add conn unsuccessful, server:%s port:%u fd:%d ret:%d tag:%s",
+            acceptInfo->serverIpAddr.readAddr, acceptInfo->sockPort, acceptInfo->connFd, ret, connTmp.tag);
         ssl_adp_shutdown(acceptInfo->ssl);
         ssl_adp_free(acceptInfo->ssl);
         acceptInfo->ssl = NULL;
@@ -222,25 +236,28 @@ STATIC void RsDoSslHandshake(struct RsAcceptInfo *acceptInfo, struct rs_cb *rscb
     if (ret == 1) {
         ret = rs_tls_peer_cert_verify(acceptInfo->ssl, rscb);
         if (ret) {
-            hccp_err("tls verify peer cert failed");
-            return ;
+            hccp_err("tls verify peer cert failed, server:%s port:%u fd:%d", acceptInfo->serverIpAddr.readAddr,
+                acceptInfo->sockPort, acceptInfo->connFd);
+            return;
         }
         acceptInfo->state = RS_CONN_STATE_SSL_CONNECTED;
     } else {
         err = ssl_adp_get_error(acceptInfo->ssl, ret);
         if (err == SSL_ERROR_WANT_WRITE) {
-            hccp_info("return want write");
-            return ;
+            hccp_info_socket("ssl handshake want write, server:%s port:%u fd:%d", acceptInfo->serverIpAddr.readAddr,
+                acceptInfo->sockPort, acceptInfo->connFd);
+            return;
         } else if (err == SSL_ERROR_WANT_READ) {
-            hccp_info("return want read");
-            return ;
+            hccp_info_socket("ssl handshake want read, server:%s port:%u fd:%d", acceptInfo->serverIpAddr.readAddr,
+                acceptInfo->sockPort, acceptInfo->connFd);
+            return;
         } else {
             rs_ssl_err_string(acceptInfo->connFd, err);
-            return ;
+            return;
         }
     }
 
-    return ;
+    return;
 }
 
 STATIC int RsEpollEventSslAcceptInHandle(struct rs_cb *rsCb, int fd)
@@ -253,16 +270,16 @@ STATIC int RsEpollEventSslAcceptInHandle(struct rs_cb *rsCb, int fd)
     /* Server event: ssl accept */
     RS_LIST_GET_HEAD_ENTRY(acceptInfo, acceptInfo2, &rsCb->connCb.serverAcceptList, list, struct RsAcceptInfo);
     for (; (&acceptInfo->list) != &rsCb->connCb.serverAcceptList;
-        acceptInfo = acceptInfo2, acceptInfo2 = list_entry(acceptInfo2->list.next, struct RsAcceptInfo, list)) {
+         acceptInfo = acceptInfo2, acceptInfo2 = list_entry(acceptInfo2->list.next, struct RsAcceptInfo, list)) {
         /* connection request for Server */
         if (fd == acceptInfo->connFd) {
             if (acceptInfo->ssl == NULL) {
                 acceptInfo->ssl = ssl_adp_new(rsCb->serverSslCtx);
-                CHK_PRT_RETURN(acceptInfo->ssl == NULL, hccp_err("server ssl ctx alloc failed"), -ENOMEM);
+                CHK_PRT_RETURN(acceptInfo->ssl == NULL, hccp_err("server ssl ctx alloc failed, fd:%d", fd), -ENOMEM);
 
                 ret = ssl_adp_set_fd(acceptInfo->ssl, acceptInfo->connFd);
                 if (ret != 1) {
-                    hccp_err("bind connfd and ssl failed, ret %d", ret);
+                    hccp_err("bind connfd and ssl failed, fd:%d, ret:%d", fd, ret);
                     ssl_adp_shutdown(acceptInfo->ssl);
                     ssl_adp_free(acceptInfo->ssl);
                     acceptInfo->ssl = NULL;
@@ -307,7 +324,7 @@ STATIC int RsEpollEventHeterogTcpRecvInHandle(struct rs_cb *rsCb, int fd)
 
     RS_LIST_GET_HEAD_ENTRY(fdNode, fdNode1, &rsCb->heterogTcpFdList, list, struct RsHeterogTcpFdInfo);
     for (; (&fdNode->list) != &rsCb->heterogTcpFdList;
-        fdNode = fdNode1, fdNode1 = list_entry(fdNode1->list.next, struct RsHeterogTcpFdInfo, list)) {
+         fdNode = fdNode1, fdNode1 = list_entry(fdNode1->list.next, struct RsHeterogTcpFdInfo, list)) {
         if (fdNode->fd == fd) {
             // 处理tcp recv
             ret = RsEpollTcpRecv(rsCb, fd);
@@ -324,46 +341,46 @@ STATIC void RsEpollEventInHandle(struct rs_cb *rsCb, struct epoll_event *events)
 
     ret = RsEpollEventPingHandle(rsCb, fd);
     if (ret != -ENODEV) {
-        hccp_info("the fd:%d is for ping, no need to go on, ret:%d", fd, ret);
+        hccp_info_socket("the fd:%d is for ping, no need to go on, ret:%d", fd, ret);
         return;
     }
 
     ret = RsEpollEventListenInHandle(rsCb, fd);
     if (ret != -ENODEV) {
-        hccp_info("the fd:%d is tcp listened, no need to go on, ret:%d", fd, ret);
+        hccp_info_socket("the fd:%d is tcp listened, no need to go on, ret:%d", fd, ret);
         return;
     }
 
     if (rsCb->sslEnable == RS_SSL_ENABLE) {
         ret = RsEpollEventSslAcceptInHandle(rsCb, fd);
         if (ret != -ENODEV) {
-            hccp_info("the fd:%d is ssl accept, no need to go on, ret:%d", fd, ret);
+            hccp_info_socket("the fd:%d is ssl accept, no need to go on, ret:%d", fd, ret);
             return;
         }
     }
 
     ret = RsEpollEventQpMrInHandle(rsCb, fd);
     if (ret != -ENODEV) {
-        hccp_info("the fd:%d is for qp mr, no need to go on, ret:%d", fd, ret);
+        hccp_info_socket("the fd:%d is for qp mr, no need to go on, ret:%d", fd, ret);
         return;
     }
 
     ret = RsEpollEventHeterogTcpRecvInHandle(rsCb, fd);
     if (ret != -ENODEV) {
-        hccp_info("the fd:%d is for tcp recv, no need to go on, ret:%d", fd, ret);
+        hccp_info_socket("the fd:%d is for tcp recv, no need to go on, ret:%d", fd, ret);
         return;
     }
 
     if (RsIsUdmaSupported()) {
         ret = RsEpollEventJfcInHandle(rsCb, fd);
         if (ret != -ENODEV) {
-            hccp_info("the fd:%d is for poll jfc, no need to go on, ret:%d", fd, ret);
+            hccp_info_socket("the fd:%d is for poll jfc, no need to go on, ret:%d", fd, ret);
             return;
         }
 
         ret = RsEpollEventUrmaAsyncEventInHandle(rsCb, fd);
         if (ret != -ENODEV) {
-            hccp_info("the fd:%d is for urma async event, no need to go on, ret:%d", fd, ret);
+            hccp_info_socket("the fd:%d is for urma async event, no need to go on, ret:%d", fd, ret);
             return;
         }
     }
@@ -376,14 +393,14 @@ STATIC void RsEpollEventHandleOne(struct rs_cb *rsCb, struct epoll_event *events
     int ret = 0;
 
     (void)ret;
-    RS_CHECK_POINTER_NULL_RETURN_VOID(events);	 
+    RS_CHECK_POINTER_NULL_RETURN_VOID(events);
     RS_CHECK_POINTER_NULL_RETURN_VOID(rsCb);
 
 #ifdef CONFIG_TLV
     if (RsIsTlvSupported()) {
         ret = RsEpollNslbEventHandle(&rsCb->tlvCb.nslbCb, events->data.fd, events->events);
         if (ret != -ENODEV) {
-            hccp_info("the fd:%d is nslb event, no need to go on, ret:%d", events->data.fd, ret);
+            hccp_info_socket("the fd:%d is nslb event, no need to go on, ret:%d", events->data.fd, ret);
             return;
         }
     }
@@ -396,7 +413,7 @@ STATIC void RsEpollEventHandleOne(struct rs_cb *rsCb, struct epoll_event *events
         }
         RsEpollEventInHandle(rsCb, events);
     } else {
-        hccp_warn("unknown event(0x%x)!", events->events);
+        hccp_warn_socket("unknown event(0x%x)!", events->events);
     }
 
     return;
@@ -421,9 +438,9 @@ STATIC int SetAffinity(unsigned int chipId, unsigned int cpuId)
     CHK_PRT_RETURN(ret, hccp_err("could not get CPU affinity"), ret);
 
     if (CPU_ISSET(cpuId, &get)) { // 检查cpuid是否在这个集合中
-        hccp_info("dev is %d thread %llu is running in processor %d.", chipId, pthread_self(), cpuId);
+        hccp_info_others("dev is %d thread %llu is running in processor %d.", chipId, pthread_self(), cpuId);
     } else {
-        hccp_warn("dev is %d thread %llu is not running in processor %d.", chipId, pthread_self(), cpuId);
+        hccp_warn_others("dev is %d thread %llu is not running in processor %d.", chipId, pthread_self(), cpuId);
     }
 
     return ret;
@@ -444,7 +461,7 @@ STATIC int BindDataCpu(unsigned int chipId)
     ret = DlDrvGetPlatformInfo(&info);
     CHK_PRT_RETURN(ret, hccp_err("get PlatformInfo failed, ret[%d]", ret), ret);
     if (info == HOST) {
-        hccp_info("host not need bind cpu, info[%u]", info);
+        hccp_info_others("host not need bind cpu, info[%u]", info);
         return 0;
     }
 
@@ -452,7 +469,7 @@ STATIC int BindDataCpu(unsigned int chipId)
     ret = DlDrvGetDevNum(&devNum);
     CHK_PRT_RETURN(ret, hccp_err("get device_num failed, ret[%d]", ret), ret);
     if (devNum == 0) {
-        hccp_info("no device need bind cpu, device num %u", devNum);
+        hccp_info_others("no device need bind cpu, device num %u", devNum);
         return 0;
     }
 
@@ -462,7 +479,7 @@ STATIC int BindDataCpu(unsigned int chipId)
 
     // 如果dcpu_num < 1，无需绑核直接返回
     if (dcpuNum < BIND_MIN_DCPU_NUM) {
-        hccp_info("data cpu num %d, device not need bind cpu", dcpuNum);
+        hccp_info_others("data cpu num %d, device not need bind cpu", dcpuNum);
         return 0;
     }
 
@@ -476,21 +493,20 @@ STATIC int BindDataCpu(unsigned int chipId)
 
     // 计算单个device上的核数
     cpuNum = ccpuNum + dcpuNum + acpuNum;
-    hccp_info("halGetDeviceInf chip = %u dev_num = %u, ccpu = %lld dcpu = %lld acpu = %lld cpuNum = %lld",
+    hccp_info_others("halGetDeviceInf chip = %u dev_num = %u, ccpu = %lld dcpu = %lld acpu = %lld cpuNum = %lld",
         chipId, devNum, ccpuNum, dcpuNum, acpuNum, cpuNum);
 
     cpuId = (unsigned int)((int64_t)(chipId % devNum) * cpuNum + ccpuNum);
 
     // 进行绑核
     ret = DlHalBindCgroup(BIND_DATACPU_CGROUP);
-    CHK_PRT_RETURN(ret, hccp_err("bind cgroup failed, ret[%d], strerror[%s]",
-        ret, strerror(errno)), ret);
-    hccp_info("bind cgroup success!");
+    CHK_PRT_RETURN(ret, hccp_err("bind cgroup failed, ret[%d], strerror[%s]", ret, strerror(errno)), ret);
+    hccp_info_others("bind cgroup success!");
 
     ret = SetAffinity(chipId, cpuId);
     CHK_PRT_RETURN(ret, hccp_err("set affinity with cpu[%u] failed", cpuId), ret);
 
-    hccp_info("chip_id[%u] bind data cpu[%u] success", chipId, cpuId);
+    hccp_info_others("chip_id[%u] bind data cpu[%u] success", chipId, cpuId);
 
     return ret;
 }
@@ -515,15 +531,14 @@ STATIC void *RsEpollHandle(void *arg)
 
     RS_CHECK_POINTER_NULL_RETURN_NULL(arg);
 
-    hccp_info("<EPOLL> thread begin! thread_id:%lu, pid:%d, ppid:%d",
-        pthread_self(), getpid(), getppid());
+    hccp_info_others("<EPOLL> thread begin! thread_id:%lu, pid:%d, ppid:%d", pthread_self(), getpid(), getppid());
 
     struct epoll_event events[RS_EPOLL_EVENT];
 
-    CHK_PRT_RETURN(pthread_detach(pthread_self()), hccp_err("pthread_detach failed! thread_id:%lu, errno:%d",
-        pthread_self(), errno), NULL);
+    CHK_PRT_RETURN(pthread_detach(pthread_self()),
+        hccp_err("pthread_detach failed! thread_id:%lu, errno:%d", pthread_self(), errno), NULL);
 
-    (void)prctl(PR_SET_NAME, (unsigned long)"hccp_epoll");
+    (void)prctl(PR_SET_NAME, (uintptr_t) "hccp_epoll", 0, 0, 0);
 
     rsCb = (struct rs_cb *)arg;
     gRsCb = rsCb;
@@ -531,13 +546,13 @@ STATIC void *RsEpollHandle(void *arg)
 
     ret = BindDataCpu(rsCb->chipId);
     if (ret) {
-        hccp_warn("bind data cpu unsuccessful! thread_id:%lu, errno:%d", pthread_self(), errno);
+        hccp_warn_others("bind data cpu unsuccessful! thread_id:%lu, errno:%d", pthread_self(), errno);
     }
 
     rsCb->state &= ~RS_STATE_HALT;
     RsGetCurTime(&gEpollThreadInfo.lastCheckTime);
-    ret = strncpy_s((char *)gEpollThreadInfo.pthreadName, sizeof(gEpollThreadInfo.pthreadName),
-        "epoll_pthread", strlen("epoll_pthread"));
+    ret = strncpy_s((char *)gEpollThreadInfo.pthreadName, sizeof(gEpollThreadInfo.pthreadName), "epoll_pthread",
+        strlen("epoll_pthread"));
     CHK_PRT_RETURN(ret, hccp_err("strncpy_s pthread name failed, ret[%d]", ret), NULL);
 
     hccp_run_info("pthread[%s] is alive!", gEpollThreadInfo.pthreadName);
@@ -552,7 +567,7 @@ STATIC void *RsEpollHandle(void *arg)
 
         /* eventfd is for wake up epoll wait, value is ignored */
         if (events[0].data.fd == connCb->eventfd) {
-            hccp_warn("<EPOLL> SHUT DOWN event eventfd:%d", connCb->eventfd);
+            hccp_warn_others("<EPOLL> SHUT DOWN event eventfd:%d", connCb->eventfd);
             do {
                 num = read(connCb->eventfd, &val, sizeof(eventfd_t));
             } while ((num < 0) && (errno == EINTR));
@@ -573,7 +588,7 @@ STATIC void *RsEpollHandle(void *arg)
         RS_PTHREAD_MUTEX_ULOCK(&rsCb->mutex);
     }
     RsDrvDeinitCqeErrInfo();
-    hccp_info("<EPOLL> QUIT thread_id:%lu, pid:%d, read num:%d", pthread_self(), getpid(), num);
+    hccp_info_others("<EPOLL> QUIT thread_id:%lu, pid:%d, read num:%d", pthread_self(), getpid(), num);
 
     return NULL;
 }
@@ -592,7 +607,7 @@ STATIC int RsCreateEpoll(struct rs_cb *rsCb)
     if (connCb->eventfd == RS_FD_INVALID) {
         RS_CLOSE_RETRY_FOR_EINTR(retFd, connCb->epollfd);
         connCb->epollfd = RS_FD_INVALID;
-        hccp_err("create eventfd for rs cb failed !");
+        hccp_err("create eventfd for rs cb failed, errno[%d]", errno);
         return -EINVAL;
     }
 
@@ -618,7 +633,7 @@ void RsDestroyEpoll(struct rs_cb *rsCb)
 
     ret = RsEpollCtl(connCb->epollfd, EPOLL_CTL_DEL, connCb->eventfd, EPOLLIN);
     if (ret) {
-        hccp_warn("re epoll ctl unsuccessful, epollfd[%d], eventfd[%d]", connCb->epollfd, connCb->eventfd);
+        hccp_warn_socket("re epoll ctl unsuccessful, epollfd[%d], eventfd[%d]", connCb->epollfd, connCb->eventfd);
     }
 
     RS_CLOSE_RETRY_FOR_EINTR(ret, connCb->eventfd);
@@ -630,7 +645,7 @@ void RsDestroyEpoll(struct rs_cb *rsCb)
     return;
 }
 
-STATIC void RsUsleepWaitConn(sem_t* sem, uint32_t timeoutUs)
+STATIC void RsUsleepWaitConn(sem_t *sem, uint32_t timeoutUs)
 {
     uint32_t sleepUs = 1000; // 每 1000us 查看sem是否为零
     uint32_t elapsedUs = 0;
@@ -651,16 +666,15 @@ STATIC void *RsConnectHandle(void *arg)
     bool promoteConnect = false;
     int ret;
 
-    hccp_info("<SOCKET> thread begin! thread_id:%lu, pid:%d, ppid:%d",
-        pthread_self(), getpid(), getppid());
-    CHK_PRT_RETURN(pthread_detach(pthread_self()), hccp_err("pthread_detach failed! thread_id:%lu, errno:%d",
-        pthread_self(), errno), NULL);
+    hccp_info_others("<SOCKET> thread begin! thread_id:%lu, pid:%d, ppid:%d", pthread_self(), getpid(), getppid());
+    CHK_PRT_RETURN(pthread_detach(pthread_self()),
+        hccp_err("pthread_detach failed! thread_id:%lu, errno:%d", pthread_self(), errno), NULL);
 
-    (void)prctl(PR_SET_NAME, (unsigned long)"hccp_connect");
+    (void)prctl(PR_SET_NAME, (uintptr_t) "hccp_connect", 0, 0, 0);
 
     RsGetCurTime(&gConnectThreadInfo.lastCheckTime);
-    ret = strncpy_s((char *)gConnectThreadInfo.pthreadName, sizeof(gConnectThreadInfo.pthreadName),
-        "connect_pthread", strlen("connect_pthread"));
+    ret = strncpy_s((char *)gConnectThreadInfo.pthreadName, sizeof(gConnectThreadInfo.pthreadName), "connect_pthread",
+        strlen("connect_pthread"));
     CHK_PRT_RETURN(ret, hccp_err("strncpy_s pthread name failed, ret[%d]", ret), NULL);
     struct rs_cb *rsCb = (struct rs_cb *)arg;
     if (rsCb == NULL) {
@@ -685,13 +699,15 @@ STATIC void *RsConnectHandle(void *arg)
         RS_PTHREAD_MUTEX_LOCK(&rsCb->mutex);
         RS_LIST_GET_HEAD_ENTRY(connTmp, connTmp2, &rsCb->connCb.clientConnList, list, struct RsConnInfo);
         for (; (&connTmp->list) != &rsCb->connCb.clientConnList;
-            connTmp = connTmp2, connTmp2 = list_entry(connTmp2->list.next, struct RsConnInfo, list)) {
+             connTmp = connTmp2, connTmp2 = list_entry(connTmp2->list.next, struct RsConnInfo, list)) {
             ret = RsSocketConnectAsync(connTmp, rsCb);
             if (ret != 0 && connTmp->state == RS_CONN_STATE_RESET) {
                 connTmp->state = RS_CONN_STATE_ERR;
-                hccp_err("[client]rs_socket_connect_async failed at RS_CONN_STATE_RESET state, ret:%d, clientIp:%s "
-                    "serverIp:%s server_port:%u tag:%s", ret, connTmp->clientIp.readAddr,
-                    connTmp->serverIp.readAddr, connTmp->port, connTmp->tag);
+                hccp_err(
+                    "[client]rs_socket_connect_async failed at RS_CONN_STATE_RESET state, fd:%d, ret:%d, clientIp:%s "
+                    "serverIp:%s server_port:%u tag:%s",
+                    connTmp->connfd, ret, connTmp->clientIp.readAddr, connTmp->serverIp.readAddr, connTmp->port,
+                    connTmp->tag);
                 continue;
             }
             if ((promoteConnect == false) && (RsGetSocketConnectState(connTmp) == 0)) {
@@ -708,7 +724,7 @@ STATIC void *RsConnectHandle(void *arg)
     }
     sem_destroy(&rsCb->connectTrigSem);
     rsCb->connFlag = RS_CONN_EXIT_FLAG;
-    hccp_info("<SOCKET> QUIT thread_id:%lu, pid:%d", pthread_self(), getpid());
+    hccp_info_others("<SOCKET> QUIT thread_id:%lu, pid:%d", pthread_self(), getpid());
 
     return NULL;
 }
@@ -721,7 +737,7 @@ int RsEpollConnectHandleInit(struct rs_cb *rscb)
     ret = RsCreateEpoll(rscb);
     CHK_PRT_RETURN(ret, hccp_err("rs_create_epoll failed ! ret:%d", ret), ret);
 
-    hccp_info("rs_create_epoll ok");
+    hccp_info_socket("rs_create_epoll ok");
     gRsCb = rscb;
 
     ret = pthread_create(&ntid, NULL, RsEpollHandle, (void *)rscb);
@@ -742,7 +758,7 @@ int RsEpollConnectHandleInit(struct rs_cb *rscb)
         return -ESYSFUNC;
     }
 
-    hccp_info("RS INIT OK!");
+    hccp_info_init("RS INIT OK!");
 
     return ret;
 }
@@ -797,8 +813,7 @@ RS_ATTRI_VISI_DEF int RsCreateEventHandle(int *eventHandle)
     return 0;
 }
 
-RS_ATTRI_VISI_DEF int RsCtlEventHandle(int eventHandle, const void *fdHandle, int opcode,
-    enum RaEpollEvent event)
+RS_ATTRI_VISI_DEF int RsCtlEventHandle(int eventHandle, const void *fdHandle, int opcode, enum RaEpollEvent event)
 {
     int fd = RS_FD_INVALID;
     unsigned int tmpEvent;
@@ -813,8 +828,8 @@ RS_ATTRI_VISI_DEF int RsCtlEventHandle(int eventHandle, const void *fdHandle, in
         return -EINVAL;
     }
     if (opcode != EPOLL_CTL_ADD && opcode != EPOLL_CTL_DEL && opcode != EPOLL_CTL_MOD) {
-        hccp_err("opcode[%d] invalid, valid opcode includes {%d, %d, %d}",
-            opcode, EPOLL_CTL_ADD, EPOLL_CTL_DEL, EPOLL_CTL_MOD);
+        hccp_err("opcode[%d] invalid, valid opcode includes {%d, %d, %d}", opcode, EPOLL_CTL_ADD, EPOLL_CTL_DEL,
+            EPOLL_CTL_MOD);
         return -EINVAL;
     }
 
@@ -834,13 +849,13 @@ RS_ATTRI_VISI_DEF int RsCtlEventHandle(int eventHandle, const void *fdHandle, in
     tmpEvent = tmpEvent | EPOLLRDHUP;
     fd = ((const struct SocketPeerInfo *)fdHandle)->fd;
 
-    ret = RsEpollCtlFdHandle(eventHandle, opcode, fd, tmpEvent, (void*)fdHandle);
+    ret = RsEpollCtlFdHandle(eventHandle, opcode, fd, tmpEvent, (void *)fdHandle);
     CHK_PRT_RETURN(ret, hccp_err("rs_epoll_ctl_fd_handle failed ret(%d), fd:%d", ret, fd), ret);
     return 0;
 }
 
-RS_ATTRI_VISI_DEF int RsWaitEventHandle(int eventHandle, struct SocketEventInfoT *eventInfos,
-    int timeout, unsigned int maxevents, unsigned int *eventsNum)
+RS_ATTRI_VISI_DEF int RsWaitEventHandle(int eventHandle, struct SocketEventInfoT *eventInfos, int timeout,
+    unsigned int maxevents, unsigned int *eventsNum)
 {
     int ret;
 
@@ -855,7 +870,7 @@ RS_ATTRI_VISI_DEF int RsWaitEventHandle(int eventHandle, struct SocketEventInfoT
     }
 
     if (timeout < -1) {
-        hccp_err("timeout[%d] is invalid", timeout);
+        hccp_err("timeout[%d ms] is invalid", timeout);
         return -EINVAL;
     }
 
@@ -869,8 +884,7 @@ RS_ATTRI_VISI_DEF int RsWaitEventHandle(int eventHandle, struct SocketEventInfoT
         return -EINVAL;
     }
 
-    ret = RsEpollWaitHandle(eventHandle, (struct epoll_event *)eventInfos,
-        timeout, maxevents, eventsNum);
+    ret = RsEpollWaitHandle(eventHandle, (struct epoll_event *)eventInfos, timeout, maxevents, eventsNum);
     CHK_PRT_RETURN(ret, hccp_err("rs_epoll_wait_handle failed ret(%d)", ret), ret);
 
     return 0;

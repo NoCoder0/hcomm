@@ -17,6 +17,8 @@
 extern "C" {
 #endif
 void TcRsNdaGetDirectFlag();
+void TcRsNdaGetDirectFlagExt();
+void TcRsInitNdaCb();
 void TcRsNdaQpCreateFailed();
 void TcRsNdaQpCreate();
 void TcRsNdaQpCreateEx();
@@ -25,6 +27,7 @@ void TcRsNdaDbMmapHostVa();
 void TcRsNdaDbMmapUbRes();
 void TcRsNdaCqCreateFailed();
 void TcRsNdaCqCreate();
+void TcRsNdaAlignDownWithMixedTypeAlign();
 #ifdef __cplusplus
 }
 #endif

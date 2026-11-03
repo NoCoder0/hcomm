@@ -24,4 +24,3 @@ void *AscendHalDlopen(const char *libName, int mode)
 {
     return dlopen(libName, mode);
 }
-

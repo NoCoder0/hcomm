@@ -7,12 +7,12 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
+
 target_sources(hccl_v2_utest
         PUBLIC
         ut_stream.cc
         ut_stream_lite.cc
         ut_hccl_sqe.cc
         ut_sqe_mgr.cc
-        ut_hccl_sqe_v82.cc
         ut_rtsq_a5.cc
 )

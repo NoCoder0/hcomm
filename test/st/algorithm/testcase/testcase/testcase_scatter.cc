@@ -1,12 +1,13 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "gtest/gtest.h"
 
 #include <vector>
@@ -24,20 +25,15 @@ using namespace checker;
 
 class ScatterTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "ScatterTest set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "ScatterTest set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "ScatterTest tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "ScatterTest tear down." << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -96,7 +92,7 @@ TEST_F(ScatterTest, scatter_opbase_single_rank_test)
 TEST_F(ScatterTest, scatter_opbase_ScatterCommExecutor_test)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{2, 5}, {0, 1, 2}}};
+    TopoMeta topoMeta{{{2, 5}, {0, 1, 2}}};
 
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::SCATTER;
@@ -117,7 +113,7 @@ TEST_F(ScatterTest, scatter_opbase_ScatterCommExecutor_test)
 TEST_F(ScatterTest, scatter_offload_ScatterCommExecutor_test)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{2, 5}, {0, 1, 2}}};
+    TopoMeta topoMeta{{{2, 5}, {0, 1, 2}}};
 
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::SCATTER;
@@ -385,9 +381,9 @@ TEST_F(ScatterTest, scatter_ScatterRingFor91093Executor_NB_NSLB)
 TEST_F(ScatterTest, scatter_superpod_asym_gcd)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0, 1, 2}, {0, 1, 2}}, {{0, 1, 2}, {0, 1, 2}}, {{0, 1, 2}, {0, 1, 2}, {0, 1, 2}, {0, 1, 2}}};
+    TopoMeta topoMeta{{{0, 1, 2}, {0, 1, 2}}, {{0, 1, 2}, {0, 1, 2}}, {{0, 1, 2}, {0, 1, 2}, {0, 1, 2}, {0, 1, 2}}};
 
-    CheckerOpParam  checkerOpParam;
+    CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::SCATTER;
     checkerOpParam.tag = "scatter";
     checkerOpParam.opMode = CheckerOpMode::OFFLOAD;

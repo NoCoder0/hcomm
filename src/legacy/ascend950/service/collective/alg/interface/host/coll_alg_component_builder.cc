@@ -13,73 +13,73 @@
 #include "host/coll_alg_component.h"
 
 namespace Hccl {
-CollAlgComponentBuilder &CollAlgComponentBuilder::SetRankGraph(RankGraph *rankGraph)
+CollAlgComponentBuilder& CollAlgComponentBuilder::SetRankGraph(RankGraph* rankGraph)
 {
     rankGraph_ = rankGraph;
     return *this;
 }
 
-CollAlgComponentBuilder &CollAlgComponentBuilder::SetDevType(DevType devType)
+CollAlgComponentBuilder& CollAlgComponentBuilder::SetDevType(DevType devType)
 {
     devType_ = devType;
     return *this;
 }
 
-CollAlgComponentBuilder &CollAlgComponentBuilder::SetMyRank(u32 myRank)
+CollAlgComponentBuilder& CollAlgComponentBuilder::SetMyRank(u32 myRank)
 {
     myRank_ = myRank;
     return *this;
 }
 
-CollAlgComponentBuilder &CollAlgComponentBuilder::SetRankSize(u32 rankSize)
+CollAlgComponentBuilder& CollAlgComponentBuilder::SetRankSize(u32 rankSize)
 {
     rankSize_ = rankSize;
     return *this;
 }
 
-CollAlgComponentBuilder &CollAlgComponentBuilder::EnableDetour(bool enableDetour)
+CollAlgComponentBuilder& CollAlgComponentBuilder::EnableDetour(bool enableDetour)
 {
     enableDetour_ = enableDetour;
     return *this;
 }
 
-CollAlgComponentBuilder &CollAlgComponentBuilder::SetDmaMode(const DmaMode& dmaMode)
+CollAlgComponentBuilder& CollAlgComponentBuilder::SetDmaMode(const DmaMode& dmaMode)
 {
     dmaMode_ = dmaMode;
     return *this;
 }
 
-CollAlgComponentBuilder &CollAlgComponentBuilder::EnableDataAllign(bool enableAllign)
+CollAlgComponentBuilder& CollAlgComponentBuilder::EnableDataAllign(bool enableAllign)
 {
     enableAllign_ = enableAllign;
     return *this;
 }
 
-CollAlgComponentBuilder &CollAlgComponentBuilder::SetAllignSize(u64 allignSize)
+CollAlgComponentBuilder& CollAlgComponentBuilder::SetAllignSize(u64 allignSize)
 {
     allignSize_ = allignSize;
     return *this;
 }
 
-CollAlgComponentBuilder &CollAlgComponentBuilder::SetMaxQueue(u32 maxQueue)
+CollAlgComponentBuilder& CollAlgComponentBuilder::SetMaxQueue(u32 maxQueue)
 {
     maxQueue_ = maxQueue;
     return *this;
 }
 
-CollAlgComponentBuilder &CollAlgComponentBuilder::SetMaxLink(u32 maxLink)
+CollAlgComponentBuilder& CollAlgComponentBuilder::SetMaxLink(u32 maxLink)
 {
     maxLink_ = maxLink;
     return *this;
 }
 
-CollAlgComponentBuilder &CollAlgComponentBuilder::SetMaxDepQueuePairs(u32 maxDepQueuePairs)
+CollAlgComponentBuilder& CollAlgComponentBuilder::SetMaxDepQueuePairs(u32 maxDepQueuePairs)
 {
     maxDepQueuePairs_ = maxDepQueuePairs;
     return *this;
 }
 
-CollAlgComponentBuilder &CollAlgComponentBuilder::SetMainboardId(u64 mainBoardId)
+CollAlgComponentBuilder& CollAlgComponentBuilder::SetMainboardId(u64 mainBoardId)
 {
     (void)mainBoardId;
     return *this;

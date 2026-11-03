@@ -30,9 +30,9 @@ extern "C" {
  * @see ra_ctx_lmem_unregister_async
  * @retval #zero Success
  * @retval #non-zero Failure
-*/
-HCCP_ATTRI_VISI_DEF int RaCtxLmemRegisterAsync(void *ctxHandle, struct MrRegInfoT *lmemInfo,
-    void **lmemHandle, void **reqHandle);
+ */
+HCCP_ATTRI_VISI_DEF int RaCtxLmemRegisterAsync(void *ctxHandle, struct MrRegInfoT *lmemInfo, void **lmemHandle,
+    void **reqHandle);
 
 /**
  * @ingroup librdma
@@ -45,7 +45,7 @@ HCCP_ATTRI_VISI_DEF int RaCtxLmemRegisterAsync(void *ctxHandle, struct MrRegInfo
  * @see ra_ctx_lmem_register_async
  * @retval #zero Success
  * @retval #non-zero Failure
-*/
+ */
 HCCP_ATTRI_VISI_DEF int RaCtxLmemUnregisterAsync(void *ctxHandle, void *lmemHandle, void **reqHandle);
 
 /**
@@ -61,9 +61,9 @@ HCCP_ATTRI_VISI_DEF int RaCtxLmemUnregisterAsync(void *ctxHandle, void *lmemHand
  * @see ra_ctx_qp_destroy_async
  * @retval #zero Success
  * @retval #non-zero Failure
-*/
-HCCP_ATTRI_VISI_DEF int RaCtxQpCreateAsync(void *ctxHandle, struct QpCreateAttr *attr,
-    struct QpCreateInfo *info, void **qpHandle, void **reqHandle);
+ */
+HCCP_ATTRI_VISI_DEF int RaCtxQpCreateAsync(void *ctxHandle, struct QpCreateAttr *attr, struct QpCreateInfo *info,
+    void **qpHandle, void **reqHandle);
 
 /**
  * @ingroup librdma
@@ -75,7 +75,7 @@ HCCP_ATTRI_VISI_DEF int RaCtxQpCreateAsync(void *ctxHandle, struct QpCreateAttr 
  * @see ra_ctx_qp_create_async
  * @retval #zero Success
  * @retval #non-zero Failure
-*/
+ */
 HCCP_ATTRI_VISI_DEF int RaCtxQpDestroyAsync(void *qpHandle, void **reqHandle);
 
 /**
@@ -89,9 +89,9 @@ HCCP_ATTRI_VISI_DEF int RaCtxQpDestroyAsync(void *qpHandle, void **reqHandle);
  * @see ra_get_async_req_result
  * @retval #zero Success
  * @retval #non-zero Failure
-*/
-HCCP_ATTRI_VISI_DEF int RaCtxQpDestroyBatchAsync(void *ctxHandle, void *qpHandle[],
-    unsigned int *num, void **reqHandle);
+ */
+HCCP_ATTRI_VISI_DEF int RaCtxQpDestroyBatchAsync(void *ctxHandle, void *qpHandle[], unsigned int *num,
+    void **reqHandle);
 
 /**
  * @ingroup librdma
@@ -105,7 +105,7 @@ HCCP_ATTRI_VISI_DEF int RaCtxQpDestroyBatchAsync(void *ctxHandle, void *qpHandle
  * @see ra_ctx_qp_unimport_async
  * @retval #zero Success
  * @retval #non-zero Failure
-*/
+ */
 HCCP_ATTRI_VISI_DEF int RaCtxQpImportAsync(void *ctxHandle, struct QpImportInfoT *info, void **remQpHandle,
     void **reqHandle);
 
@@ -119,8 +119,40 @@ HCCP_ATTRI_VISI_DEF int RaCtxQpImportAsync(void *ctxHandle, struct QpImportInfoT
  * @see ra_ctx_qp_import_async
  * @retval #zero Success
  * @retval #non-zero Failure
-*/
+ */
 HCCP_ATTRI_VISI_DEF int RaCtxQpUnimportAsync(void *remQpHandle, void **reqHandle);
+
+/**
+ * @ingroup libudma
+ * @brief get corresponding eid by ip async
+ * @param ctx_handle [IN] ctx handle
+ * @param ip [IN] ip array, see struct IpInfo
+ * @param eid [IN/OUT] eid array, see union HccpEid
+ * @param num [IN/OUT] num of ip and eid array, max num is HCCP_EID_IP_QUERY_MAX_NUM
+ * @param req_handle [OUT] async request handle
+ * @see ra_get_async_req_result
+ * @see ra_ctx_init
+ * @retval #zero Success
+ * @retval #non-zero Failure
+ */
+HCCP_ATTRI_VISI_DEF int RaGetEidByIpAsync(void *ctxHandle, struct IpInfo ip[], union HccpEid eid[], unsigned int *num,
+    void **reqHandle);
+
+/**
+ * @ingroup libudm
+ * @brief get corresponding ip by eid async
+ * @param ctx_handle [IN] ctx handle
+ * @param eid [IN] eid array, see union HccpEid
+ * @param ip [IN/OUT] ip array, see struct IpInfo
+ * @param num [IN/OUT] num of ip and eid array, max num is HCCP_EID_IP_QUERY_MAX_NUM
+ * @param req_handle [OUT] async request handle
+ * @see ra_get_async_req_result
+ * @see ra_ctx_init
+ * @retval #zero Success
+ * @retval #non-zero Failure
+ */
+HCCP_ATTRI_VISI_DEF int RaGetIpByEidAsync(void *ctxHandle, union HccpEid eid[], struct IpInfo ip[], unsigned int *num,
+    void **reqHandle);
 
 /**
  * @ingroup libudma
@@ -134,24 +166,8 @@ HCCP_ATTRI_VISI_DEF int RaCtxQpUnimportAsync(void *remQpHandle, void **reqHandle
  * @see ra_get_async_req_result
  * @retval #zero Success
  * @retval #non-zero Failure
-*/
+ */
 HCCP_ATTRI_VISI_DEF int RaGetTpInfoListAsync(void *ctxHandle, struct GetTpCfg *cfg, struct HccpTpInfo infoList[],
-    unsigned int *num, void **reqHandle);
-
-/**
- * @ingroup libudma
- * @brief get corresponding eid by ip async
- * @param ctx_handle [IN] ctx handle
- * @param ip [IN] ip array, see struct IpInfo
- * @param eid [IN/OUT] eid array, see union HccpEid
- * @param num [IN/OUT] num of ip and eid array, max num is GET_EID_BY_IP_MAX_NUM
- * @param req_handle [OUT] async request handle
- * @see ra_get_async_req_result
- * @see ra_ctx_init
- * @retval #zero Success
- * @retval #non-zero Failure
-*/
-HCCP_ATTRI_VISI_DEF int RaGetEidByIpAsync(void *ctxHandle, struct IpInfo ip[], union HccpEid eid[],
     unsigned int *num, void **reqHandle);
 
 /**
@@ -166,9 +182,9 @@ HCCP_ATTRI_VISI_DEF int RaGetEidByIpAsync(void *ctxHandle, struct IpInfo ip[], u
  * @see ra_get_async_req_result
  * @retval #zero Success
  * @retval #non-zero Failure
-*/
-HCCP_ATTRI_VISI_DEF int RaGetTpAttrAsync(void *ctxHandle, uint64_t tpHandle, uint32_t *attrBitmap,
-    struct TpAttr *attr, void **reqHandle);
+ */
+HCCP_ATTRI_VISI_DEF int RaGetTpAttrAsync(void *ctxHandle, uint64_t tpHandle, uint32_t *attrBitmap, struct TpAttr *attr,
+    void **reqHandle);
 
 /**
  * @ingroup libudma
@@ -182,9 +198,9 @@ HCCP_ATTRI_VISI_DEF int RaGetTpAttrAsync(void *ctxHandle, uint64_t tpHandle, uin
  * @see ra_get_async_req_result
  * @retval #zero Success
  * @retval #non-zero Failure
-*/
-HCCP_ATTRI_VISI_DEF int RaSetTpAttrAsync(void *ctxHandle, uint64_t tpHandle, uint32_t attrBitmap,
-    struct TpAttr *attr, void **reqHandle);
+ */
+HCCP_ATTRI_VISI_DEF int RaSetTpAttrAsync(void *ctxHandle, uint64_t tpHandle, uint32_t attrBitmap, struct TpAttr *attr,
+    void **reqHandle);
 
 #ifdef __cplusplus
 }

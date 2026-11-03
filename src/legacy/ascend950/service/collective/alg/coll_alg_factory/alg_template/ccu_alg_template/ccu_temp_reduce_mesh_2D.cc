@@ -21,57 +21,58 @@
 #include "ccu_ins_group.h"
 
 namespace Hccl {
+constexpr u32 MESH_2D_DIMENSION_NUM = 2;
 
-static CcuInstRegister<CcuContextReduceMesh2D> registrarReduce2D(
-    CcuInstType::CCU_REDUCE_MESH_2D_DIRECT);
+static CcuInstRegister<CcuContextReduceMesh2D> registrarReduce2D(CcuInstType::CCU_REDUCE_MESH_2D_DIRECT);
 
-CcuTempReduceMesh2D::CcuTempReduceMesh2D(const RankId virtualRank, const u32 tempRankSize,
-                                   const std::vector<std::vector<RankId>> &tempVTopo,
-                                   const std::map<RankId, u32>            &tempVirtRankMap)
+CcuTempReduceMesh2D::CcuTempReduceMesh2D(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
     : CcuAlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap)
 {
-    if (tempVTopo_.size() != 2 || tempVTopo_[0].size() <= 1 || tempVTopo_[1].size() <= 1) { // concurrmesh的topoMatch返回的vTopo大小应当为2，对应X轴和Y轴的大小
-        THROW<InvalidParamsException>(StringFormat("[CcuTempReduceMesh2D] Rank[%d], Invalid tempVTopo "
-                                                   "Size[%u] or Invalid tempVTopo[0] size [%u] or tempVTopo[1] size [%u].",
-                                                   myRank_, tempVTopo_.size(), tempVTopo_[0].size(),
-                                                   tempVTopo_[1].size()));
+    if (tempVTopo_.size() != MESH_2D_DIMENSION_NUM || tempVTopo_[0].size() <= 1
+        || tempVTopo_[1].size() <= 1) { // concurrmesh的topoMatch返回的vTopo大小应当为2，对应X轴和Y轴的大小
+        THROW<InvalidParamsException>(StringFormat(
+            "[CcuTempReduceMesh2D] Rank[%d], Invalid tempVTopo "
+            "Size[%u] or Invalid tempVTopo[0] size [%u] or tempVTopo[1] size [%u].",
+            myRank_, tempVTopo_.size(), tempVTopo_[0].size(), tempVTopo_[1].size()));
     }
     dimSize_.emplace_back(tempVTopo[0].size());
     dimSize_.emplace_back(tempVTopo[1].size());
 }
 
-CcuTempReduceMesh2D::~CcuTempReduceMesh2D()
-{
-}
+CcuTempReduceMesh2D::~CcuTempReduceMesh2D() {}
 
-void CcuTempReduceMesh2D::InitReduceInfo(const ReduceOp &reduceOp, const DataType &dataType)
+void CcuTempReduceMesh2D::InitReduceInfo(const ReduceOp& reduceOp, const DataType& dataType)
 {
     reduceOp_ = reduceOp;
     dataType_ = dataType;
 }
 
-HcclResult CcuTempReduceMesh2D::CalcRes(AlgTempResReq &tempResReq)
+HcclResult CcuTempReduceMesh2D::CalcRes(AlgTempResReq& tempResReq)
 {
     tempResReq.queNum = 1; // 只申请一个insQue，填充一个insGroup，由框架将其中的ins放在多个stream上
-    tempResReq.streamNum = tempResReq.queNum + 1;  // 多申请一个 stream 给 ccuInsGroup
+    tempResReq.streamNum = tempResReq.queNum + 1; // 多申请一个 stream 给 ccuInsGroup
     HCCL_INFO("[CalcRes] tempResReq.queNum[%u]", tempResReq.queNum);
     uint32_t dieNum = tempVTopo_.size();
-    if (dieNum != 2) {  // concurrmesh的topoMatch返回的vTopo大小应当为2，对应X轴和Y轴的大小
+    if (dieNum != 2) { // concurrmesh的topoMatch返回的vTopo大小应当为2，对应X轴和Y轴的大小
         HCCL_ERROR("[CcuTempReduceMesh2D] Rank[%d], Invalid IODieNum[%zu].", myRank_, tempVTopo_.size());
         return HcclResult::HCCL_E_PARA;
     }
-    HCCL_INFO("[CcuTempReduceMesh2D] Rank[%d] requiredQueNum[%u] VtopoSize[%u], VtopoSize0[%u] VtopoSize1[%u].",
-    myRank_, tempResReq.queNum, tempVTopo_.size(), tempVTopo_[0].size(), tempVTopo_[1].size());
+    HCCL_INFO(
+        "[CcuTempReduceMesh2D] Rank[%d] requiredQueNum[%u] VtopoSize[%u], VtopoSize0[%u] VtopoSize1[%u].", myRank_,
+        tempResReq.queNum, tempVTopo_.size(), tempVTopo_[0].size(), tempVTopo_[1].size());
 
     uint32_t myAlgRank;
     for (u32 dim = 0; dim < tempVTopo_.size(); dim++) {
         CHK_RET(GetAlgRank(myRank_, tempVTopo_[dim], myAlgRank));
         for (u32 queIdx = 0; queIdx < tempVTopo_[dim].size() - 1; queIdx++) {
             // find neighbors -> virtualRank
-            u32    neighborAlgRank = (myAlgRank + 1 + queIdx) % (tempVTopo_[dim].size());
-            RankId neighborRank    = tempVTopo_[dim][neighborAlgRank];
-            HCCL_INFO("[CollAlgFactory] [CcuTempReduceMesh2D] Rank[%d], Dim[%u], NeighborRank[%d].", myRank_,
-                       dim, neighborRank);
+            u32 neighborAlgRank = (myAlgRank + 1 + queIdx) % (tempVTopo_[dim].size());
+            RankId neighborRank = tempVTopo_[dim][neighborAlgRank];
+            HCCL_INFO(
+                "[CollAlgFactory] [CcuTempReduceMesh2D] Rank[%d], Dim[%u], NeighborRank[%d].", myRank_, dim,
+                neighborRank);
             // LinkNum
             tempResReq.links[neighborRank] = 1;
         }
@@ -79,8 +80,8 @@ HcclResult CcuTempReduceMesh2D::CalcRes(AlgTempResReq &tempResReq)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CcuTempReduceMesh2D::CalcSliceInfo(const AllignInfo &allignInfo, const u64 dataSize,
-    RankSliceInfo &sliceInfoVec)
+HcclResult
+CcuTempReduceMesh2D::CalcSliceInfo(const AllignInfo& allignInfo, const u64 dataSize, RankSliceInfo& sliceInfoVec)
 {
     (void)allignInfo;
     SliceInfo basicSlice;
@@ -93,18 +94,20 @@ HcclResult CcuTempReduceMesh2D::CalcSliceInfo(const AllignInfo &allignInfo, cons
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CcuTempReduceMesh2D::Run(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec,
-                                          const BuffInfo &buffInfo, const ResLinks &tempLinks,
-                                          std::vector<InsQuePtr> &tempInsQues)
+HcclResult CcuTempReduceMesh2D::Run(
+    const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, const BuffInfo& buffInfo, const ResLinks& tempLinks,
+    std::vector<InsQuePtr>& tempInsQues)
 {
     opMode_ = tempFuncs.opMode;
     buffInfo_ = buffInfo;
     rootId_ = op_.root;
     // 分别记录两个Die上的link，构造rankGroup
     for (auto pair : tempLinks) {
-        if (pair.second.size() == 0 || pair.second[0].GetHop() != 1) {  // ESL环境上暂只有直连链路
-            THROW<InvalidParamsException>(StringFormat("[CcuTempReduceMesh2D] Rank[%d]--Peer[%d], InvalidHop[%u].",
-                myRank_, pair.first, pair.second[0].GetHop()));
+        if (pair.second.size() == 0 || pair.second[0].GetHop() != 1) { // ESL环境上暂只有直连链路
+            HCCL_ERROR(
+                "[CcuTempReduceMesh2D] Rank[%d]--Peer[%d], InvalidHop[%u].", myRank_, pair.first,
+                pair.second[0].GetHop());
+            return HcclResult::HCCL_E_PARA;
         }
         if ((pair.first / dimSize_[0] == myRank_ / dimSize_[0]) && pair.second[0].GetHop() == 1) {
             HCCL_INFO("[CcuTempReduceMesh2D][Run] Rank[%d] insert link to Rank[%d] in linksX", myRank_, pair.first);
@@ -113,14 +116,14 @@ HcclResult CcuTempReduceMesh2D::Run(const TempFuncs &tempFuncs, const RankSliceI
             HCCL_INFO("[CcuTempReduceMesh2D][Run] Rank[%d] insert link to Rank[%d] in linksY", myRank_, pair.first);
             linksY_.emplace_back(pair.second[0]);
         } else {
-            THROW<InvalidParamsException>(StringFormat(
-                "[CcuTempReduceMesh2D] Rank[%d], Unexpected peerRank[%d] in tempLinks.", myRank_, pair.first));
+            HCCL_ERROR("[CcuTempReduceMesh2D] Rank[%d], Unexpected peerRank[%d] in tempLinks.", myRank_, pair.first);
+            return HcclResult::HCCL_E_PARA;
         }
     }
 
     RankGroup rankGroupX;
     RankGroup rankGroupY;
-    AddRanksToGroup(tempVTopo_,rankGroupX,rankGroupY);
+    AddRanksToGroup(tempVTopo_, rankGroupX, rankGroupY);
 
     std::vector<uint64_t> dimSize;
     dimSize.push_back(tempRankSize_); // tempRankSize_ 就是rank数量
@@ -132,13 +135,13 @@ HcclResult CcuTempReduceMesh2D::Run(const TempFuncs &tempFuncs, const RankSliceI
     if (opMode_ == OpMode::OPBASE) {
         if (tempFuncs.isForepart) {
             inputAddr = BufferTypeToAddr(tempFuncs.usrData.usrInSlices[0].GetType())
-                + tempFuncs.usrData.usrInSlices[0].GetOffset();
+                        + tempFuncs.usrData.usrInSlices[0].GetOffset();
         } else {
             inputAddr = BufferTypeToAddr(buffInfo_.inBuffType) + buffInfo_.inBuffBaseOff;
         }
         if (tempFuncs.isBottom) {
             outputAddr = BufferTypeToAddr(tempFuncs.usrData.usrOutSlices[0].GetType())
-                + tempFuncs.usrData.usrOutSlices[0].GetOffset();
+                         + tempFuncs.usrData.usrOutSlices[0].GetOffset();
         } else {
             outputAddr = BufferTypeToAddr(buffInfo_.outBuffType) + buffInfo_.outBuffBaseOff;
         }
@@ -156,27 +159,29 @@ HcclResult CcuTempReduceMesh2D::Run(const TempFuncs &tempFuncs, const RankSliceI
     dimId.emplace_back(myRank_ / dimSize_[0]); // dimId里面放本rank在拓扑图上的位置
     std::unique_ptr<CcuInsGroup> insGroupPtr = std::make_unique<CcuInsGroup>();
 
-    for (uint32_t axisId = 0; axisId < 2; axisId++) {  // 2D算法，需要执行两次
-            // 计算每次编译的偏移量和数据量
-            uint64_t xAxisSize = sliceSize;
-            uint64_t yAxisSize = sliceSize;
-            CcuInstructionReduceMesh2D ccuInsReduceMesh2D;
-            ccuInsReduceMesh2D.Init(dimSize_, static_cast<uint32_t>(myRank_), rootId_, axisId, inputAddr, outputAddr, sliceSize,
-                xAxisSize, yAxisSize, offset, token, op_, tempVTopo_);
+    for (uint32_t axisId = 0; axisId < 2; axisId++) { // 2D算法，需要执行两次
+        // 计算每次编译的偏移量和数据量
+        uint64_t xAxisSize = sliceSize;
+        uint64_t yAxisSize = sliceSize;
+        CcuInstructionReduceMesh2D ccuInsReduceMesh2D;
+        ccuInsReduceMesh2D.Init(
+            dimSize_, static_cast<uint32_t>(myRank_), rootId_, axisId, inputAddr, outputAddr, sliceSize, xAxisSize,
+            yAxisSize, offset, token, op_, tempVTopo_);
 
-            HCCL_INFO("[CcuTempReduceMesh2D] Run Init: myRank_[%d], dimSize[%llu], inputAddr[%llu],"\
-               "outputAddr[%llu], sliceSize[%llu], xAxisSize[%llu], yAxisSize[%llu], offset[%llu], axisId_[%u]",
+        HCCL_INFO(
+            "[CcuTempReduceMesh2D] Run Init: myRank_[%d], dimSize[%llu], inputAddr[%llu],"
+            "outputAddr[%llu], sliceSize[%llu], xAxisSize[%llu], yAxisSize[%llu], offset[%llu], axisId_[%u]",
             myRank_, dimSize[0], inputAddr, outputAddr, sliceSize, xAxisSize, yAxisSize, offset, axisId);
 
-            ccuInsReduceMesh2D.SetLinks(axisId == 0 ? linksX_ : linksY_);
-            ccuInsReduceMesh2D.SetRankGroup(axisId == 0 ? rankGroupX : rankGroupY);
-            u32 ckeNum = 5;
-            ccuInsReduceMesh2D.SetCntCkeNum(ckeNum);  // 每个transport用5个CKE
-            ccuInsReduceMesh2D.Describe();
-            insGroupPtr->Append(std::move(std::make_unique<CcuInstructionReduceMesh2D>(ccuInsReduceMesh2D)));
-        }
+        ccuInsReduceMesh2D.SetLinks(axisId == 0 ? linksX_ : linksY_);
+        ccuInsReduceMesh2D.SetRankGroup(axisId == 0 ? rankGroupX : rankGroupY);
+        u32 ckeNum = 5;
+        ccuInsReduceMesh2D.SetCntCkeNum(ckeNum); // 每个transport用5个CKE
+        ccuInsReduceMesh2D.Describe();
+        insGroupPtr->Append(std::move(std::make_unique<CcuInstructionReduceMesh2D>(ccuInsReduceMesh2D)));
+    }
 
-    tempInsQues[0]->Append(std::move(insGroupPtr));  // 只有一条流
+    tempInsQues[0]->Append(std::move(insGroupPtr)); // 只有一条流
 
     return HcclResult::HCCL_SUCCESS;
 }

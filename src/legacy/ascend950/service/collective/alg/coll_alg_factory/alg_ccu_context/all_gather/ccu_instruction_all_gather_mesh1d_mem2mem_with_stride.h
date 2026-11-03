@@ -24,38 +24,45 @@ namespace Hccl {
 // 为AllGatherMesh1D实现的CCUIns、CCUCtxArg与CCUTaskArg
 class CcuCtxArgAllGatherMesh1DMem2MemWithStride : public CcuCtxArg {
 public:
-    explicit CcuCtxArgAllGatherMesh1DMem2MemWithStride(const std::vector<uint64_t> &dimSize, uint32_t rankId,
-                                                       const CollAlgOperator                  &op,
-                                                       const std::vector<std::vector<RankId>> &tempVTopo)
-        : dimSize_(dimSize), rankId_(rankId), op_(op), tempVTopo_(tempVTopo)
-    {
-    }
+    explicit CcuCtxArgAllGatherMesh1DMem2MemWithStride(
+        const std::vector<uint64_t>& dimSize, uint32_t rankId, const CollAlgOperator& op,
+        const std::vector<std::vector<RankId>>& tempVTopo)
+        : dimSize_(dimSize),
+          rankId_(rankId),
+          op_(op),
+          tempVTopo_(tempVTopo)
+    {}
     CcuCtxSignature GetCtxSignature() const override
     {
         CcuCtxSignature signature;
-        GenerateCcuCtxSignature(signature, CcuInstType::CCU_ALLGATHER_MESH_1D_MEM2MEM_WITH_STRIDE_DIRECT, op_,
-                                tempVTopo_);
+        GenerateCcuCtxSignature(
+            signature, CcuInstType::CCU_ALLGATHER_MESH_1D_MEM2MEM_WITH_STRIDE_DIRECT, op_, tempVTopo_);
         return signature;
     }
-    std::vector<uint64_t>            dimSize_;
-    uint32_t                         rankId_;
-    CollAlgOperator                  op_;
+    std::vector<uint64_t> dimSize_;
+    uint32_t rankId_;
+    CollAlgOperator op_;
     std::vector<std::vector<RankId>> tempVTopo_;
 };
 
 class CcuTaskArgAllGatherMesh1DMem2MemWithStride : public CcuTaskArg {
 public:
-    explicit CcuTaskArgAllGatherMesh1DMem2MemWithStride(uint64_t inputAddr, uint64_t outputAddr, uint64_t token,
-                                                        uint64_t inputSliceStride, uint64_t outputSliceStride,
-                                                        uint64_t repeatNum, uint64_t inputRepeatStride,
-                                                        uint64_t outputRepeatStride, uint64_t normalSliceSize,
-                                                        uint64_t lastSliceSize, uint64_t isInputOutputEqual)
-        : inputAddr_(inputAddr), outputAddr_(outputAddr), token_(token), inputSliceStride_(inputSliceStride),
-          outputSliceStride_(outputSliceStride), repeatNum_(repeatNum), inputRepeatStride_(inputRepeatStride),
-          outputRepeatStride_(outputRepeatStride), normalSliceSize_(normalSliceSize), lastSliceSize_(lastSliceSize),
+    explicit CcuTaskArgAllGatherMesh1DMem2MemWithStride(
+        uint64_t inputAddr, uint64_t outputAddr, uint64_t token, uint64_t inputSliceStride, uint64_t outputSliceStride,
+        uint64_t repeatNum, uint64_t inputRepeatStride, uint64_t outputRepeatStride, uint64_t normalSliceSize,
+        uint64_t lastSliceSize, uint64_t isInputOutputEqual)
+        : inputAddr_(inputAddr),
+          outputAddr_(outputAddr),
+          token_(token),
+          inputSliceStride_(inputSliceStride),
+          outputSliceStride_(outputSliceStride),
+          repeatNum_(repeatNum),
+          inputRepeatStride_(inputRepeatStride),
+          outputRepeatStride_(outputRepeatStride),
+          normalSliceSize_(normalSliceSize),
+          lastSliceSize_(lastSliceSize),
           isInputOutputEqual_(isInputOutputEqual)
-    {
-    }
+    {}
 
     uint64_t inputAddr_;
     uint64_t outputAddr_;
@@ -74,15 +81,13 @@ public:
 
 class CcuInstructionAllGatherMesh1DMem2MemWithStride : public CcuInstruction {
 public:
-    CcuInstructionAllGatherMesh1DMem2MemWithStride() : CcuInstruction()
-    {
-    }
+    CcuInstructionAllGatherMesh1DMem2MemWithStride() : CcuInstruction() {}
 
-    void Init(uint32_t rankId, uint32_t repeatNum, const CollAlgOperator &op,
-              const std::vector<std::vector<RankId>> &tempVTopo, uint64_t inputAddr, uint64_t outputAddr,
-              uint64_t token, uint64_t inputSliceStride, uint64_t outputSliceStride, uint64_t inputRepeatStride,
-              uint64_t outputRepeatStride, uint64_t normalSliceSize, uint64_t lastSliceSize,
-              uint64_t isInputOutputEqual)
+    void Init(
+        uint32_t rankId, uint32_t repeatNum, const CollAlgOperator& op,
+        const std::vector<std::vector<RankId>>& tempVTopo, uint64_t inputAddr, uint64_t outputAddr, uint64_t token,
+        uint64_t inputSliceStride, uint64_t outputSliceStride, uint64_t inputRepeatStride, uint64_t outputRepeatStride,
+        uint64_t normalSliceSize, uint64_t lastSliceSize, uint64_t isInputOutputEqual)
     {
         u32 maxDimNum = 1;
         if (tempVTopo.size() != maxDimNum) {
@@ -90,19 +95,19 @@ public:
                 "[CcuInstructionAllGatherMesh1D] tempVTopo size is not 1, size is [%zu].", tempVTopo.size()));
         }
         dimSize_.push_back(tempVTopo[0].size());
-        rankId_             = rankId;
-        repeatNum_          = repeatNum;
-        op_                 = op;
-        tempVTopo_          = tempVTopo;
-        inputAddr_          = inputAddr;
-        outputAddr_         = outputAddr;
-        token_              = token;
-        inputSliceStride_   = inputSliceStride;
-        outputSliceStride_  = outputSliceStride;
-        inputRepeatStride_  = inputRepeatStride;
+        rankId_ = rankId;
+        repeatNum_ = repeatNum;
+        op_ = op;
+        tempVTopo_ = tempVTopo;
+        inputAddr_ = inputAddr;
+        outputAddr_ = outputAddr;
+        token_ = token;
+        inputSliceStride_ = inputSliceStride;
+        outputSliceStride_ = outputSliceStride;
+        inputRepeatStride_ = inputRepeatStride;
         outputRepeatStride_ = outputRepeatStride;
-        normalSliceSize_    = normalSliceSize;
-        lastSliceSize_      = lastSliceSize;
+        normalSliceSize_ = normalSliceSize;
+        lastSliceSize_ = lastSliceSize;
         isInputOutputEqual_ = isInputOutputEqual;
         return;
     }
@@ -115,8 +120,8 @@ public:
 
     std::string Describe() const override
     {
-        return StringFormat("CcuInstructionAllGatherMesh1D rankId [%u], instType[%s]", rankId_,
-                            instType_.Describe().c_str());
+        return StringFormat(
+            "CcuInstructionAllGatherMesh1D rankId [%u], instType[%s]", rankId_, instType_.Describe().c_str());
     }
 
     std::unique_ptr<CcuCtxArg> GetCtxArg() const override
@@ -131,27 +136,25 @@ public:
             outputRepeatStride_, normalSliceSize_, lastSliceSize_, isInputOutputEqual_);
     }
 
-    void SetInstType(CcuInstType instType) 
-    { 
-        instType_ = instType; 
-    }
+    void SetInstType(CcuInstType instType) { instType_ = instType; }
+
 private:
-    CcuInstType                      instType_ = CcuInstType::CCU_ALLGATHER_MESH_1D_MEM2MEM_WITH_STRIDE_DIRECT;
-    std::vector<uint64_t>            dimSize_;
-    uint32_t                         rankId_{0};
-    uint32_t                         repeatNum_{0};
-    CollAlgOperator                  op_;
+    CcuInstType instType_ = CcuInstType::CCU_ALLGATHER_MESH_1D_MEM2MEM_WITH_STRIDE_DIRECT;
+    std::vector<uint64_t> dimSize_;
+    uint32_t rankId_{0};
+    uint32_t repeatNum_{0};
+    CollAlgOperator op_;
     std::vector<std::vector<RankId>> tempVTopo_;
-    uint64_t                         inputAddr_{0};
-    uint64_t                         outputAddr_{0};
-    uint64_t                         token_{0};
-    uint64_t                         inputSliceStride_{0};
-    uint64_t                         outputSliceStride_{0};
-    uint64_t                         inputRepeatStride_{0};
-    uint64_t                         outputRepeatStride_{0};
-    uint64_t                         normalSliceSize_{0};
-    uint64_t                         lastSliceSize_{0};
-    uint64_t                         isInputOutputEqual_{0};
+    uint64_t inputAddr_{0};
+    uint64_t outputAddr_{0};
+    uint64_t token_{0};
+    uint64_t inputSliceStride_{0};
+    uint64_t outputSliceStride_{0};
+    uint64_t inputRepeatStride_{0};
+    uint64_t outputRepeatStride_{0};
+    uint64_t normalSliceSize_{0};
+    uint64_t lastSliceSize_{0};
+    uint64_t isInputOutputEqual_{0};
 };
 
 } // namespace Hccl

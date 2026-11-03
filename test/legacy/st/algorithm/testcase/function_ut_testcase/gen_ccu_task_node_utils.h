@@ -4,7 +4,7 @@
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -33,23 +33,30 @@ public:
     std::shared_ptr<SingleRankTaskQueues> taskQeueus;
     TaskNodePtr GetCcuTaskHead(TaskNodePtr node);
     void PrintRankGraph(RankId rankId);
-    void Init(TaskStubCcuGraph *curCcuTask, uint32_t rankSize, uint32_t queNum);
+    void Init(TaskStubCcuGraph* curCcuTask, uint32_t rankSize, uint32_t queNum);
 
 protected:
     TaskNodePtr head = nullptr;
 
     TaskNodePtr CreateHeadNode();
     TaskNodePtr CreateCcuHeadNode(RankId rankId, uint32_t queueId);
-    TaskNodePtr AddCcuLocalCopy(RankId rankId, uint32_t queueId, DataSlice srcSlice, DataSlice dstSlice, TaskStubCcuGraph *curCcuTask);
-    TaskNodePtr AddCcuWrite(RankId rankId, RankId rmtRankId, uint32_t queueId, DataSlice srcSlice, DataSlice dstSlice, TaskStubCcuGraph *curCcuTask);
-    TaskNodePtr AddCcuRead(RankId rankId, RankId rmtRankId, uint32_t queueId, DataSlice srcSlice, DataSlice dstSlice, TaskStubCcuGraph *curCcuTask);
-    TaskNodePtr AddCcuLocalWait(RankId rankId, uint32_t queueId, uint32_t topicId, TaskStubCcuGraph *curCcuTask);
-    TaskNodePtr AddCcuLocalPost(RankId rankId, uint32_t queueId, uint32_t topicId, TaskStubCcuGraph *curCcuTask);
-    TaskNodePtr AddCcuWait(RankId rankId, RankId rmtRankId, uint32_t queueId, uint32_t topicId, TaskStubCcuGraph *curCcuTask);
-    TaskNodePtr AddCcuPost(RankId rankId, RankId rmtRankId, uint32_t queueId, uint32_t topicId, TaskStubCcuGraph *curCcuTask);
+    TaskNodePtr AddCcuLocalCopy(
+        RankId rankId, uint32_t queueId, DataSlice srcSlice, DataSlice dstSlice, TaskStubCcuGraph* curCcuTask);
+    TaskNodePtr AddCcuWrite(
+        RankId rankId, RankId rmtRankId, uint32_t queueId, DataSlice srcSlice, DataSlice dstSlice,
+        TaskStubCcuGraph* curCcuTask);
+    TaskNodePtr AddCcuRead(
+        RankId rankId, RankId rmtRankId, uint32_t queueId, DataSlice srcSlice, DataSlice dstSlice,
+        TaskStubCcuGraph* curCcuTask);
+    TaskNodePtr AddCcuLocalWait(RankId rankId, uint32_t queueId, uint32_t topicId, TaskStubCcuGraph* curCcuTask);
+    TaskNodePtr AddCcuLocalPost(RankId rankId, uint32_t queueId, uint32_t topicId, TaskStubCcuGraph* curCcuTask);
+    TaskNodePtr
+    AddCcuWait(RankId rankId, RankId rmtRankId, uint32_t queueId, uint32_t topicId, TaskStubCcuGraph* curCcuTask);
+    TaskNodePtr
+    AddCcuPost(RankId rankId, RankId rmtRankId, uint32_t queueId, uint32_t topicId, TaskStubCcuGraph* curCcuTask);
 
     void LinkNode(TaskNodePtr parent, TaskNodePtr node);
-    void CreateCcuEndNode(RankId rankId, TaskNodePtr &node, TaskStubCcuGraph *curCcuTask);
+    void CreateCcuEndNode(RankId rankId, TaskNodePtr& node, TaskStubCcuGraph* curCcuTask);
 
 private:
     std::vector<TaskNodePtr> toDeleteTaskNodeResource_;
@@ -57,6 +64,6 @@ private:
 
 void PrintGraphRevamp(TaskNodePtr head);
 
-}
+} // namespace hccl
 
 #endif

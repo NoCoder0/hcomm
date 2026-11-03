@@ -25,43 +25,43 @@ void SignalHandler(int sig)
 {
     printf("received signal %d !!!\n", sig);
     constexpr int BACKTRACE_DEPTH = 15;
-    void         *array[BACKTRACE_DEPTH];
-    char        **callBackStrings;
-    int           size = backtrace(array, BACKTRACE_DEPTH);
-    callBackStrings    = backtrace_symbols(array, size);
+    void* array[BACKTRACE_DEPTH];
+    char** callBackStrings;
+    int size = backtrace(array, BACKTRACE_DEPTH);
+    callBackStrings = backtrace_symbols(array, size);
     for (auto i = 0; i < size; ++i) {
         cout << callBackStrings << endl;
     }
     free(callBackStrings);
 }
 
-CommParams CreateCommParams(ThreadContext *ctx)
+CommParams CreateCommParams(ThreadContext* ctx)
 {
     Hccl::CommParams commParams;
-    commParams.commId   = ctx->commId;
-    commParams.myRank   = ctx->myRank;
+    commParams.commId = ctx->commId;
+    commParams.myRank = ctx->myRank;
     commParams.rankSize = ctx->situation.GetRankSize();
-    commParams.devType  = ctx->situation.GetDevType();
+    commParams.devType = ctx->situation.GetDevType();
     return commParams;
 }
 
-CollOpParams CreateCollOpParams(ThreadContext *ctx)
+CollOpParams CreateCollOpParams(ThreadContext* ctx)
 {
     Hccl::CollOpParams collOpParams;
-    collOpParams.opType      = ctx->situation.GetOpType();
-    collOpParams.dataType    = ctx->situation.GetDataType();
-    collOpParams.reduceOp    = ctx->situation.GetReduceOp();
-    collOpParams.dstRank     = ctx->situation.GetDstRank();
-    collOpParams.count       = ctx->situation.GetCount();
-    collOpParams.root        = ctx->situation.GetRoot();
-    collOpParams.staticAddr  = ctx->situation.GetStaticAddr();
+    collOpParams.opType = ctx->situation.GetOpType();
+    collOpParams.dataType = ctx->situation.GetDataType();
+    collOpParams.reduceOp = ctx->situation.GetReduceOp();
+    collOpParams.dstRank = ctx->situation.GetDstRank();
+    collOpParams.count = ctx->situation.GetCount();
+    collOpParams.root = ctx->situation.GetRoot();
+    collOpParams.staticAddr = ctx->situation.GetStaticAddr();
     collOpParams.staticShape = ctx->situation.GetStaticShape();
-    collOpParams.sendBuf     = ctx->sendBuf;
-    collOpParams.recvBuf     = ctx->recvBuf;
+    collOpParams.sendBuf = ctx->sendBuf;
+    collOpParams.recvBuf = ctx->recvBuf;
     return collOpParams;
 }
 
-void HcclStTestCase::InternalProcess(ThreadContext *ctx)
+void HcclStTestCase::InternalProcess(ThreadContext* ctx)
 {
     try {
         SetCurrentThreadContext(ctx);
@@ -73,9 +73,9 @@ void HcclStTestCase::InternalProcess(ThreadContext *ctx)
         aclrtSetDevice(ctx->myRank);
 
         // 2. 创建通讯域并初始化
-        auto  commParams   = CreateCommParams(ctx);
-        auto *communicator = new Hccl::HcclCommunicator(commParams);
-        auto  initRes      = communicator->Init("ranktable.json");
+        auto commParams = CreateCommParams(ctx);
+        auto* communicator = new Hccl::HcclCommunicator(commParams);
+        auto initRes = communicator->Init("ranktable.json");
         if (initRes != HcclResult::HCCL_SUCCESS) {
             cout << "communicator init failed!" << endl;
             return;
@@ -83,7 +83,7 @@ void HcclStTestCase::InternalProcess(ThreadContext *ctx)
 
         // 3. 准备集合通信用到的入参
         Hccl::CollOpParams collOpParams = CreateCollOpParams(ctx);
-        aclrtStream         stream       = nullptr;
+        aclrtStream stream = nullptr;
         aclrtCreateStreamWithConfig(&stream, 0U, 0U);
 
         // 4. 执行集合通信
@@ -104,14 +104,14 @@ void HcclStTestCase::InternalProcess(ThreadContext *ctx)
 
 void HcclStTestCase::SetEnv()
 {
-    for (const auto &cfg : situation.GetEnv()) {
+    for (const auto& cfg : situation.GetEnv()) {
         setenv(cfg.first.c_str(), cfg.second.c_str(), 1);
     }
 }
 
 void HcclStTestCase::UnsetEnv()
 {
-    for (const auto &cfg : situation.GetEnv()) {
+    for (const auto& cfg : situation.GetEnv()) {
         unsetenv(cfg.first.c_str());
     }
 }
@@ -128,10 +128,7 @@ void RankTableFileCreate(FakeClusterType cluster)
     }
 }
 
-void RankTableFileDestroy()
-{
-    DelRankTableFile();
-}
+void RankTableFileDestroy() { DelRankTableFile(); }
 
 void HcclStTestCase::Start()
 {
@@ -148,12 +145,12 @@ void HcclStTestCase::Start()
     for (int serverIndex = 0; serverIndex < situation.GetServerNum(); ++serverIndex) {
         threads.emplace_back();
         for (int deviceIndex = 0; deviceIndex < situation.GetDeviceNum(); ++deviceIndex) {
-            auto *ctx      = new ThreadContext();
-            ctx->commId    = "st-fwk";
+            auto* ctx = new ThreadContext();
+            ctx->commId = "st-fwk";
             ctx->situation = situation;
-            ctx->serverId  = serverIndex;
-            ctx->deviceId  = deviceIndex;
-            ctx->myRank    = myRank++;
+            ctx->serverId = serverIndex;
+            ctx->deviceId = deviceIndex;
+            ctx->myRank = myRank++;
             contexts.push_back(ctx);
             std::thread container(&HcclStTestCase::InternalProcess, this, ctx);
             threads[serverIndex].push_back(std::move(container));
@@ -213,9 +210,10 @@ void HcclStTestCase::InitSituationEnv()
     situation.SetEnv("HCCL_DIAGNOSE_ENABLE", "1");
     situation.SetEnv("HCCL_ENTRY_LOG_ENABLE", "1");
     situation.SetEnv("PROFILING_MODE", "true");
-    situation.SetEnv("PROFILING_OPTIONS", "{\"output\":\"/tmp/"
-                                          "profiling\",\"training_trace\":\"on\",\"task_trace\":\"on\",\"fp_point\":"
-                                          "\"\",\"bp_point\":\"\",\"aic_metrics\":\"PipeUtilization\"}");
+    situation.SetEnv(
+        "PROFILING_OPTIONS", "{\"output\":\"/tmp/"
+                             "profiling\",\"training_trace\":\"on\",\"task_trace\":\"on\",\"fp_point\":"
+                             "\"\",\"bp_point\":\"\",\"aic_metrics\":\"PipeUtilization\"}");
     situation.SetEnv("LD_LIBRARY_PATH", "/temp:/runtime");
     situation.SetEnv("HCCL_DETOUR", "detour:0");
 }

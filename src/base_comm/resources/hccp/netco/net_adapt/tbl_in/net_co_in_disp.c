@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #define BKF_LOG_HND ((co)->log)
 #define BKF_MOD_NAME ((co)->name)
 #include "net_co_in_disp.h"
@@ -47,4 +46,3 @@ void NetCoInDispUninit(NetCo *co)
 #ifdef __cplusplus
 }
 #endif
-

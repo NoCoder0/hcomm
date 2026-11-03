@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef NET_CO_IN_H
 #define NET_CO_IN_H
 
@@ -25,4 +24,3 @@ void NetCoInUninit(NetCo *co);
 #endif
 
 #endif
-

@@ -29,32 +29,28 @@
 #include "rank_table.h"
 #include "timeout_exception.h"
 #include "ccu_context_mgr_imp.h"
-#include "ccu_res_batch_allocator.h"
+#include "ccu_res_batch_allocator_legacy.h"
 #include "ccu_component.h"
 #undef protected
 #undef private
-
 
 using namespace Hccl;
 
 class RdmaHandleManagerTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "RdmaHandleManagerTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "RdmaHandleManagerTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "RdmaHandleManagerTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "RdmaHandleManagerTest TearDown" << std::endl; }
 
     virtual void SetUp()
     {
         std::cout << "A Test case in RdmaHandleManagerTest SetUP" << std::endl;
 
         rdmaHandle = new int(0);
-        MOCKER(HrtRaRdmaInit).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(rdmaHandle));
+        MOCKER(HrtRaRdmaInit, RdmaHandle(HrtNetworkMode, RaInterface&))
+            .stubs()
+            .with(mockcpp::any(), mockcpp::any())
+            .will(returnValue(rdmaHandle));
 
         BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::RDMA);
     }
@@ -72,15 +68,15 @@ protected:
         return ipAddress;
     }
 
-    void            *rdmaHandle;
+    void* rdmaHandle;
 };
 
 TEST_F(RdmaHandleManagerTest, rdma_handle_manager_get_and_create)
 {
     // Given
-    u32      devicePhyId = 0;
-    BasePortType       basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::RDMA);
-    PortData           localPortData(0, basePortType, 0, IpAddress());
+    u32 devicePhyId = 0;
+    BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::RDMA);
+    PortData localPortData(0, basePortType, 0, IpAddress());
 
     // when
     auto res = RdmaHandleManager::GetInstance().Get(devicePhyId, localPortData, LinkProtocol::UB_CTP);
@@ -92,9 +88,9 @@ TEST_F(RdmaHandleManagerTest, rdma_handle_manager_get_and_create)
 TEST_F(RdmaHandleManagerTest, rdma_handle_manager_get_twice)
 {
     // Given
-    u32      devicePhyId = 0;
-    BasePortType       basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::RDMA);
-    PortData           localPortData(0, basePortType, 0, IpAddress());
+    u32 devicePhyId = 0;
+    BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::RDMA);
+    PortData localPortData(0, basePortType, 0, IpAddress());
 
     // when
     auto res1 = RdmaHandleManager::GetInstance().Get(devicePhyId, localPortData, LinkProtocol::UB_CTP);
@@ -113,7 +109,6 @@ TEST_F(RdmaHandleManagerTest, rdma_handle_manager_get_jfc)
     rdmaHandle = new RdmaHandle();
     EXPECT_THROW(RdmaHandleManager::GetInstance().GetJfcHandle(rdmaHandle, cqInfo, mode), InvalidParamsException);
 
-
     RdmaHandle rdmaHandle2 = nullptr;
     EXPECT_THROW(RdmaHandleManager::GetInstance().GetDieAndFuncId(rdmaHandle2), InvalidParamsException);
     delete rdmaHandle;
@@ -123,20 +118,26 @@ TEST_F(RdmaHandleManagerTest, rdma_handle_manager_get_token_id_handle)
 {
     RdmaHandle rdmaHandle = nullptr;
     TokenIdHandle tokenIdHandle;
-    EXPECT_THROW(RdmaHandleManager::GetInstance().GetTokenIdInfo(rdmaHandle), InvalidParamsException);
+    EXPECT_THROW(
+        RdmaHandleManager::GetInstance().GetTokenIdInfo(rdmaHandle, BufferKey<uintptr_t, u64>{0, 0}),
+        InvalidParamsException);
 
-    RdmaHandle rdmaHandle1 = (void *)0x12;
+    RdmaHandle rdmaHandle1 = (void*)0x12;
     RdmaHandleManager::GetInstance().tokenInfoMap[rdmaHandle1] = make_unique<TokenInfoManager>(0, rdmaHandle1);
-    RdmaHandle rdmaHandle2 = (void *)0x1365;
-    EXPECT_THROW(RdmaHandleManager::GetInstance().GetTokenIdInfo(rdmaHandle2), InvalidParamsException);
+    RdmaHandle rdmaHandle2 = (void*)0x1365;
+    EXPECT_THROW(
+        RdmaHandleManager::GetInstance().GetTokenIdInfo(rdmaHandle2, BufferKey<uintptr_t, u64>{0, 0}),
+        InvalidParamsException);
 
     std::pair<TokenIdHandle, uint32_t> expectResult(0, 0);
-    EXPECT_EQ(RdmaHandleManager::GetInstance().GetTokenIdInfo(rdmaHandle1), expectResult);
+    EXPECT_EQ(
+        RdmaHandleManager::GetInstance().GetTokenIdInfo(rdmaHandle1, BufferKey<uintptr_t, u64>{0, 0}), expectResult);
 }
 
-// ===================== FindCachedJfcHandle / GetJfcHandle / GetJfcHandleAndCqInfo / cqInfoMap cleanup =====================
+// ===================== FindCachedJfcHandle / GetJfcHandle / GetJfcHandleAndCqInfo / cqInfoMap cleanup
+// =====================
 
-static void ClearJfcCqCache(RdmaHandleManager &mgr)
+static void ClearJfcCqCache(RdmaHandleManager& mgr)
 {
     mgr.jfcHandleMap.clear();
     mgr.cqInfoMap.clear();
@@ -144,10 +145,10 @@ static void ClearJfcCqCache(RdmaHandleManager &mgr)
 
 TEST_F(RdmaHandleManagerTest, find_cached_jfc_handle_return_false_when_rdma_handle_not_exist)
 {
-    auto &mgr = RdmaHandleManager::GetInstance();
+    auto& mgr = RdmaHandleManager::GetInstance();
     ClearJfcCqCache(mgr);
 
-    RdmaHandle handle = (void *)0x9999;
+    RdmaHandle handle = (void*)0x9999;
     JfcHandle outHandle = 0;
     Hccl::CqCreateInfo outCqInfo{};
     EXPECT_FALSE(mgr.FindCachedJfcHandle(handle, HrtUbJfcMode::NORMAL, outHandle, outCqInfo));
@@ -157,10 +158,10 @@ TEST_F(RdmaHandleManagerTest, find_cached_jfc_handle_return_false_when_rdma_hand
 
 TEST_F(RdmaHandleManagerTest, find_cached_jfc_handle_return_false_when_jfc_mode_not_exist)
 {
-    auto &mgr = RdmaHandleManager::GetInstance();
+    auto& mgr = RdmaHandleManager::GetInstance();
     ClearJfcCqCache(mgr);
 
-    RdmaHandle handle = (void *)0x9999;
+    RdmaHandle handle = (void*)0x9999;
     mgr.jfcHandleMap[handle][HrtUbJfcMode::STARS_POLL] = 100;
 
     JfcHandle outHandle = 0;
@@ -172,10 +173,10 @@ TEST_F(RdmaHandleManagerTest, find_cached_jfc_handle_return_false_when_jfc_mode_
 
 TEST_F(RdmaHandleManagerTest, find_cached_jfc_handle_return_true_and_fill_outputs_when_hit)
 {
-    auto &mgr = RdmaHandleManager::GetInstance();
+    auto& mgr = RdmaHandleManager::GetInstance();
     ClearJfcCqCache(mgr);
 
-    RdmaHandle handle = (void *)0x9999;
+    RdmaHandle handle = (void*)0x9999;
     JfcHandle cachedJfc = 0x1234;
     Hccl::CqCreateInfo cachedCqInfo{1, 2, 3, 4, 5, 6};
 
@@ -198,10 +199,10 @@ TEST_F(RdmaHandleManagerTest, find_cached_jfc_handle_return_true_and_fill_output
 
 TEST_F(RdmaHandleManagerTest, get_jfc_handle_return_cached_and_fill_cq_info_on_hit)
 {
-    auto &mgr = RdmaHandleManager::GetInstance();
+    auto& mgr = RdmaHandleManager::GetInstance();
     ClearJfcCqCache(mgr);
 
-    RdmaHandle handle = (void *)0x9999;
+    RdmaHandle handle = (void*)0x9999;
     JfcHandle cachedJfc = 0x4321;
     Hccl::CqCreateInfo cachedCqInfo{10, 20, 30, 40, 50, 60};
 
@@ -221,10 +222,10 @@ TEST_F(RdmaHandleManagerTest, get_jfc_handle_return_cached_and_fill_cq_info_on_h
 
 TEST_F(RdmaHandleManagerTest, get_jfc_handle_create_and_cache_on_miss)
 {
-    auto &mgr = RdmaHandleManager::GetInstance();
+    auto& mgr = RdmaHandleManager::GetInstance();
     ClearJfcCqCache(mgr);
 
-    RdmaHandle handle = (void *)0x9999;
+    RdmaHandle handle = (void*)0x9999;
     JfcHandle newJfc = 0x5555;
     MOCKER(HrtRaUbCreateJfc).stubs().will(returnValue(newJfc));
 

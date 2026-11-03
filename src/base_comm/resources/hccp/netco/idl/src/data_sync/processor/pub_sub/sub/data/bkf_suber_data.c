@@ -64,12 +64,12 @@ BkfSuberDataMng *BkfSuberDataMngInit(BkfSuberSubDataMngInitArg *initArg)
     dataMng->ntfSliceInstDel = initArg->ntfSliceInstDel;
     dataMng->ntfAppSubAdd = initArg->ntfAppSubAdd;
     dataMng->ntfAppSubDel = initArg->ntfAppSubDel;
-    VOS_AVLL_INIT_TREE(dataMng->instSet, (AVLL_COMPARE)BkfUInt64Cmp,
-        BKF_OFFSET(BkfSuberInst, instId), BKF_OFFSET(BkfSuberInst, avlNode));
+    VOS_AVLL_INIT_TREE(dataMng->instSet, (AVLL_COMPARE)BkfUInt64Cmp, BKF_OFFSET(BkfSuberInst, instId),
+        BKF_OFFSET(BkfSuberInst, avlNode));
     VOS_AVLL_INIT_TREE(dataMng->sliceSet, (AVLL_COMPARE)(initArg->env->sliceVTbl.keyCmp),
         BKF_OFFSET(BkfSuberSlice, sliceKey), BKF_OFFSET(BkfSuberSlice, avlNode));
-    VOS_AVLL_INIT_TREE(dataMng->appSubSet, (AVLL_COMPARE)BkfSuberDataSubKeyCmp,
-        BKF_OFFSET(BkfSuberAppSub, key), BKF_OFFSET(BkfSuberAppSub, avlNode));
+    VOS_AVLL_INIT_TREE(dataMng->appSubSet, (AVLL_COMPARE)BkfSuberDataSubKeyCmp, BKF_OFFSET(BkfSuberAppSub, key),
+        BKF_OFFSET(BkfSuberAppSub, avlNode));
     BkfSuberTableTypeMngInitArg tableTypeArg = {.env = initArg->env};
     dataMng->tableTypeMng = BkfSuberTableTypeMngInit(&tableTypeArg);
     if (dataMng->tableTypeMng == VOS_NULL) {
@@ -171,7 +171,7 @@ void BkfSuberDataDelAllInst(BkfSuberDataMng *dataMng)
     void *itor;
 
     for (inst = BkfSuberDataGetFirstInst(dataMng, &itor); inst != VOS_NULL;
-        inst = BkfSuberDataGetNextInst(dataMng, &itor)) {
+         inst = BkfSuberDataGetNextInst(dataMng, &itor)) {
         BkfSuberDataDelInst(inst);
     }
 }
@@ -200,7 +200,7 @@ BkfSuberInst *BkfSuberDataGetFirstInst(BkfSuberDataMng *dataMng, void **itorOutO
 
 BkfSuberInst *BkfSuberDataGetNextInst(BkfSuberDataMng *dataMng, void **itorInOut)
 {
-    BkfSuberInst *inst = *(BkfSuberInst**)itorInOut;
+    BkfSuberInst *inst = *(BkfSuberInst **)itorInOut;
     if (inst == VOS_NULL) {
         *itorInOut = VOS_NULL;
     } else {
@@ -309,8 +309,8 @@ BkfSuberSlice *BkfSuberDataAddSlice(BkfSuberDataMng *dataMng, void *sliceKey)
     VOS_AVLL_INIT_NODE(slice->avlNode);
     BKF_DL_INIT(&slice->obAppSub);
 
-    VOS_AVLL_INIT_TREE(slice->sliceInstSet, (AVLL_COMPARE)BkfUInt64Cmp,
-        BKF_OFFSET(BkfSuberSliceInst, instId), BKF_OFFSET(BkfSuberSliceInst, avlNode));
+    VOS_AVLL_INIT_TREE(slice->sliceInstSet, (AVLL_COMPARE)BkfUInt64Cmp, BKF_OFFSET(BkfSuberSliceInst, instId),
+        BKF_OFFSET(BkfSuberSliceInst, avlNode));
 
     slice->instId = BKF_SUBER_INVALID_INST_ID;
     BOOL isInsOk = VOS_AVLL_INSERT(dataMng->sliceSet, slice->avlNode);
@@ -345,7 +345,7 @@ void BkfSuberDataDelSlice(BkfSuberSlice *slice)
     void *itor = VOS_NULL;
 
     for (sliceInst = BkfSuberDataGetFirstSliceInst(slice, &itor); sliceInst != VOS_NULL;
-        sliceInst = BkfSuberDataGetNextSliceInst(slice, &itor)) {
+         sliceInst = BkfSuberDataGetNextSliceInst(slice, &itor)) {
         BkfSuberDataDelSliceInst(slice, sliceInst);
     }
 
@@ -412,7 +412,7 @@ void BkfSuberDataDelAllSlice(BkfSuberDataMng *dataMng)
     void *itor;
 
     for (slice = BkfSuberDataGetFirstSlice(dataMng, &itor); slice != VOS_NULL;
-        slice = BkfSuberDataGetNextSlice(dataMng, &itor)) {
+         slice = BkfSuberDataGetNextSlice(dataMng, &itor)) {
         BkfSuberDataDelSlice(slice);
     }
 }
@@ -441,7 +441,7 @@ BkfSuberSlice *BkfSuberDataGetFirstSlice(BkfSuberDataMng *dataMng, void **itorOu
 
 BkfSuberSlice *BkfSuberDataGetNextSlice(BkfSuberDataMng *dataMng, void **itorInOut)
 {
-    BkfSuberSlice *slice = *(BkfSuberSlice**)itorInOut;
+    BkfSuberSlice *slice = *(BkfSuberSlice **)itorInOut;
     if (slice == VOS_NULL) {
         *itorInOut = VOS_NULL;
     } else {
@@ -484,7 +484,7 @@ uint32_t BkfSuberDataSliceAddInst(BkfSuberSlice *slice, uint64_t instId)
         return BKF_ERR;
     }
 
-    BkfSuberInst *inst  = BkfSuberDataFindInst(slice->dataMng, instId);
+    BkfSuberInst *inst = BkfSuberDataFindInst(slice->dataMng, instId);
     if (inst == VOS_NULL) {
         inst = BkfSuberDataAddTmpInst(slice->dataMng, instId);
         if (inst == VOS_NULL) {
@@ -576,8 +576,10 @@ void BkfSuberDataDelAppSubByKey(BkfSuberDataMng *dataMng, void *sliceKey, uint16
     if (instId == 0 || instId == BKF_SUBER_INVALID_INST_ID) {
         subInstId = slice->instId;
     }
-    BkfSuberAppSubKey subKey = {.tableTypeId = tableTypeId, .instId = subInstId,
-        .sliceKey = sliceKey, .sliceKeyCmp = dataMng->env->sliceVTbl.keyCmp};
+    BkfSuberAppSubKey subKey = {.tableTypeId = tableTypeId,
+        .instId = subInstId,
+        .sliceKey = sliceKey,
+        .sliceKeyCmp = dataMng->env->sliceVTbl.keyCmp};
     BkfSuberAppSub *appSub = VOS_AVLL_FIND(dataMng->appSubSet, &subKey);
     if (appSub == VOS_NULL) {
         return;
@@ -625,15 +627,16 @@ void BkfSuberDataDelAllAppSub(BkfSuberDataMng *dataMng)
     BkfSuberAppSub *appSub;
     void *itor;
     for (appSub = BkfSuberDataGetFirstAppSub(dataMng, &itor); appSub != VOS_NULL;
-        appSub = BkfSuberDataGetNextAppSub(dataMng, &itor)) {
+         appSub = BkfSuberDataGetNextAppSub(dataMng, &itor)) {
         BkfSuberDataDelAppSub(appSub);
     }
 }
 
-BkfSuberAppSub *BkfSuberDataFindAppSub(BkfSuberDataMng *dataMng, void *sliceKey, uint16_t tableTypeId,
-    uint64_t instId)
+BkfSuberAppSub *BkfSuberDataFindAppSub(BkfSuberDataMng *dataMng, void *sliceKey, uint16_t tableTypeId, uint64_t instId)
 {
-    BkfSuberAppSubKey subKey = {.tableTypeId = tableTypeId, .instId = instId, .sliceKey = sliceKey,
+    BkfSuberAppSubKey subKey = {.tableTypeId = tableTypeId,
+        .instId = instId,
+        .sliceKey = sliceKey,
         .sliceKeyCmp = dataMng->env->sliceVTbl.keyCmp};
     return VOS_AVLL_FIND(dataMng->appSubSet, &subKey);
 }
@@ -641,7 +644,9 @@ BkfSuberAppSub *BkfSuberDataFindAppSub(BkfSuberDataMng *dataMng, void *sliceKey,
 BkfSuberAppSub *BkfSuberDataFindNextAppSub(BkfSuberDataMng *dataMng, void *sliceKey, uint16_t tableTypeId,
     uint64_t instId)
 {
-    BkfSuberAppSubKey subKey = {.tableTypeId = tableTypeId, .instId = instId, .sliceKey = sliceKey,
+    BkfSuberAppSubKey subKey = {.tableTypeId = tableTypeId,
+        .instId = instId,
+        .sliceKey = sliceKey,
         .sliceKeyCmp = dataMng->env->sliceVTbl.keyCmp};
     return VOS_AVLL_FIND_NEXT(dataMng->appSubSet, &subKey);
 }
@@ -660,7 +665,7 @@ BkfSuberAppSub *BkfSuberDataGetFirstAppSub(BkfSuberDataMng *dataMng, void **itor
 
 BkfSuberAppSub *BkfSuberDataGetNextAppSub(BkfSuberDataMng *dataMng, void **itorInOut)
 {
-    BkfSuberAppSub *appSub = *(BkfSuberAppSub**)itorInOut;
+    BkfSuberAppSub *appSub = *(BkfSuberAppSub **)itorInOut;
     if (appSub == VOS_NULL) {
         *itorInOut = VOS_NULL;
     } else {
@@ -852,7 +857,7 @@ BkfSuberSliceInst *BkfSuberDataGetFirstSliceInst(BkfSuberSlice *slice, void **it
 
 BkfSuberSliceInst *BkfSuberDataGetNextSliceInst(BkfSuberSlice *slice, void **itorInOut)
 {
-    BkfSuberSliceInst *sliceInst = *(BkfSuberSliceInst**)itorInOut;
+    BkfSuberSliceInst *sliceInst = *(BkfSuberSliceInst **)itorInOut;
     if (sliceInst == VOS_NULL) {
         *itorInOut = VOS_NULL;
     } else {

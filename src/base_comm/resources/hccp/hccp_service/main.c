@@ -86,7 +86,7 @@ STATIC int HccpChangeNumOfFile(void)
 
 STATIC int HccpSetLogInfo(struct HccpInitParam *param)
 {
-#define HUNDREDS_DIGIT                 100
+#define HUNDREDS_DIGIT 100
     int ret;
     int enableEvent = param->logLevel / HUNDREDS_DIGIT;
     int level = param->logLevel % HUNDREDS_DIGIT;
@@ -97,12 +97,14 @@ STATIC int HccpSetLogInfo(struct HccpInitParam *param)
     logattr.pid = param->pid;
     logattr.deviceId = param->backupFlag ? param->backupChipId : param->chipId;
     ret = dlog_setlevel(-1, level, enableEvent);
-    CHK_PRT_RETURN(ret, hccp_err("hccp set log level failed, ret:%d, log level:%d, enableEvent:%d",
-        ret, level, enableEvent), ret);
+    CHK_PRT_RETURN(ret,
+        hccp_err("hccp set log level failed, ret:%d, log level:%d, enableEvent:%d", ret, level, enableEvent), ret);
 
     ret = DlogSetAttr(logattr);
-    CHK_PRT_RETURN(ret, hccp_err("hccp set attr chip_id:%u, backupFlag:%d, backupChipId:%u failed, ret:%d",
-        param->chipId, param->backupFlag, param->backupChipId, ret), ret);
+    CHK_PRT_RETURN(ret,
+        hccp_err("hccp set attr chip_id:%u, backupFlag:%d, backupChipId:%u failed, ret:%d", param->chipId,
+            param->backupFlag, param->backupChipId, ret),
+        ret);
 #endif
     return 0;
 }

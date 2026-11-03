@@ -17,8 +17,8 @@
 #include "hccl_types.h"
 
 namespace HcclSim {
-HcclResult DumpV3Dag(const TaskGraphGeneratorV3::TaskGraphGeneratorV3 &graph,
-    const std::string &stage = "v3_final_graph");
-}  // namespace HcclSim
+HcclResult
+DumpV3Dag(const TaskGraphGeneratorV3::TaskGraphGeneratorV3& graph, const std::string& stage = "v3_final_graph");
+} // namespace HcclSim
 
-#endif  // HCCL_VM_DUMP_V3_DAG_H
+#endif // HCCL_VM_DUMP_V3_DAG_H

@@ -33,8 +33,14 @@ urma_status_t urma_init(urma_init_attr_t *conf);
  */
 urma_status_t urma_uninit(void);
 
+/**
+ * Get urma ABI version.
+ * Return: urma ABI version
+ */
+uint64_t urma_get_abi_version(void);
+
 /* Device Manage API */
- /**
+/**
  *  Get device list.
  * @param[out] num_devices: number of urma device;
  * Return: pointer array of urma_device; NULL means no device returned;
@@ -51,19 +57,19 @@ urma_device_t **urma_get_device_list(int *num_devices);
 void urma_free_device_list(urma_device_t **device_list);
 
 /**
-*  Get eid list.
-* @param[in] [Required] dev: device pointer
-* @param[out] cnt: Return the number of valid eids;
-* Return: If it succeeds, it will return the eid_info array pointer, and the number of elements
-* is cnt; if it fails, it will return NULL; it will be released by the user calling
-*/
+ *  Get eid list.
+ * @param[in] [Required] dev: device pointer
+ * @param[out] cnt: Return the number of valid eids;
+ * Return: If it succeeds, it will return the eid_info array pointer, and the number of elements
+ * is cnt; if it fails, it will return NULL; it will be released by the user calling
+ */
 urma_eid_info_t *urma_get_eid_list(urma_device_t *dev, uint32_t *cnt);
 
 /**
-*  free eid list.
-* @param[in] [Required] eid_list: The eid array pointer to be released
-* Return: void;
-*/
+ *  free eid list.
+ * @param[in] [Required] eid_list: The eid array pointer to be released
+ * Return: void;
+ */
 void urma_free_eid_list(urma_eid_info_t *eid_list);
 
 /**
@@ -73,7 +79,7 @@ void urma_free_eid_list(urma_eid_info_t *eid_list);
  */
 urma_device_t *urma_get_device_by_name(char *dev_name);
 
- /**
+/**
  *  Get device by device eid.
  * @param[in] [Required] eid: device's eid;
  * @param[in] [Required] type: device's transport type;
@@ -164,7 +170,7 @@ urma_status_t urma_active_jfc(urma_jfc_t *jfc);
 urma_status_t urma_get_jfc_opt(urma_jfc_t *jfc, uint64_t opt, void *buf, uint32_t len);
 
 /**
- * Deactive the created jfc.
+ * Deactivate the created jfc.
  * @param[in] [Required] jfc: the jfc activated before;
  * Return: 0 on success, other value on error
  */
@@ -236,7 +242,7 @@ urma_status_t urma_delete_jfs_batch(urma_jfs_t **jfs_arr, int jfs_num, urma_jfs_
 
 /**
  * Poll the CRs for all the WRs that posted to JFS, but are not completed.
- * Call the API after modify JFS to error, or polled a suspened done CR.
+ * Call the API after modify JFS to error, or polled a suspended done CR.
  * CRs with status of URMA_CR_WR_FLUSH_ERR will be returned on success.
  * @param[in] [Required] jfs: the jfs created before;
  * @param[in] [Required] cr_cnt: Number of CR expected to be received.;
@@ -282,7 +288,7 @@ urma_status_t urma_active_jfs(urma_jfs_t *jfs);
 urma_status_t urma_get_jfs_opt(urma_jfs_t *jfs, uint64_t opt, void *buf, uint32_t len);
 
 /**
- * Deactive the created jfs.
+ * Deactivate the created jfs.
  * @param[in] [Required] jfs: the jfs activated before;
  * Return: 0 on success, other value on error
  */
@@ -296,7 +302,7 @@ urma_status_t urma_deactive_jfs(urma_jfs_t *jfs);
  */
 urma_status_t urma_free_jfs(urma_jfs_t *jfs);
 
- /**
+/**
  * Create a jetty for receive (jfr).
  * @param[in] [Required] ctx: the urma context created before;
  * @param[in] [Required] jfr_cfg: address to put the jfr config;
@@ -383,15 +389,15 @@ urma_status_t urma_advise_jfr(urma_jfs_t *jfs, urma_target_jetty_t *tjfr);
  *  Async API for urma_advise_jfr
  *  Advise jfr: construct the transport channel for jfs and remote jfr.
  * @param[in] [Required] jfs: jfs to use to construct the transport channel;
- * @param[in] [Required] tjfr: target jfr information including full qulified jfr id;
+ * @param[in] [Required] tjfr: target jfr information including full qualified jfr id;
  * @param[in] [Required] cb_func: user defined callback function.
  * @param[in] [Required] cb_arg: user defined arguments for the callback function.
  * Return: 0 on success, URMA_EEXIST if the jfr has been advised, other value on error.
  * Note: User must define callback function to handle result,
- *  as the async respone will call the cb_func and pass the result to it.
+ *  as the async response will call the cb_func and pass the result to it.
  */
-urma_status_t urma_advise_jfr_async(urma_jfs_t *jfs, urma_target_jetty_t *tjfr,
-    urma_advise_async_cb_func cb_fun, void *cb_arg);
+urma_status_t urma_advise_jfr_async(urma_jfs_t *jfs, urma_target_jetty_t *tjfr, urma_advise_async_cb_func cb_fun,
+    void *cb_arg);
 
 /**
  *  Unadvise jfr: disconnect the transport channel for jfs and remote jfr. Optional API for optimization
@@ -438,7 +444,7 @@ urma_status_t urma_active_jfr(urma_jfr_t *jfr);
 urma_status_t urma_get_jfr_opt(urma_jfr_t *jfr, uint64_t opt, void *buf, uint32_t len);
 
 /**
- * Deactive the activated jfr.
+ * Deactivate the activated jfr.
  * @param[in] [Required] jfr: handle of the allocated jfr;
  * Return: 0 on success, other value on error
  */
@@ -475,7 +481,7 @@ urma_status_t urma_modify_jetty(urma_jetty_t *jetty, urma_jetty_attr_t *attr);
 /**
  * Query jetty attributes.
  * @param[in] [Required] jetty: specify jetty;
- * @param[out] [Required] cfg: cconfig to query;
+ * @param[out] [Required] cfg: config to query;
  * @param[out] [Required] attr: attributes to query;
  * Return: 0 on success, other value on error
  */
@@ -508,8 +514,7 @@ urma_status_t urma_delete_jetty_batch(urma_jetty_t **jetty_arr, int jetty_num, u
  * @param[in] [Required] token_value: token to put into output jetty protection table;
  * Return: the address of target jetty, not NULL on success, NULL on error
  */
-urma_target_jetty_t *urma_import_jetty(urma_context_t *ctx, urma_rjetty_t *rjetty,
-    urma_token_t *token_value);
+urma_target_jetty_t *urma_import_jetty(urma_context_t *ctx, urma_rjetty_t *rjetty, urma_token_t *token_value);
 
 /**
  * Import a remote jetty by control plane.
@@ -522,8 +527,8 @@ urma_target_jetty_t *urma_import_jetty(urma_context_t *ctx, urma_rjetty_t *rjett
  * @param[in] [Required] cfg: tp active configuration to exchange with target;
  * Return: the address of target jetty, not NULL on success, NULL on error
  */
-urma_target_jetty_t *urma_import_jetty_ex(urma_context_t *ctx, urma_rjetty_t *rjetty,
-    urma_token_t *token_value, urma_import_jetty_ex_cfg_t *cfg);
+urma_target_jetty_t *urma_import_jetty_ex(urma_context_t *ctx, urma_rjetty_t *rjetty, urma_token_t *token_value,
+    urma_import_jetty_ex_cfg_t *cfg);
 
 /**
  * Unimport the imported remote jetty.
@@ -537,9 +542,8 @@ urma_status_t urma_unimport_jetty(urma_target_jetty_t *tjetty);
  * @param[in] [Required] jetty: local jetty to construct the transport channel;
  * @param[in] [Required] tjetty: target jetty imported before;
  * Return: 0 on success, URMA_EEXIST if the jetty has been advised, other value on error
- * Note: A local jetty can be advised with several remote jetties. A connectionless jetty is free to call the adivse API
+ * Note: A local jetty can be advised with several remote jetties. A connectionless jetty is free to call the advise API
  */
-/* todo: available after implementing URMA_TM_RM(IB_RC) */
 urma_status_t urma_advise_jetty(urma_jetty_t *jetty, urma_target_jetty_t *tjetty);
 
 /**
@@ -548,7 +552,6 @@ urma_status_t urma_advise_jetty(urma_jetty_t *jetty, urma_target_jetty_t *tjetty
  * @param[in] [Required] tjetty: target jetty imported before;
  * Return: 0 on success, other value on error
  */
-/* todo: available after implementing URMA_TM_RM(IB_RC) */
 urma_status_t urma_unadvise_jetty(urma_jetty_t *jetty, urma_target_jetty_t *tjetty);
 
 /**
@@ -570,8 +573,7 @@ urma_status_t urma_bind_jetty(urma_jetty_t *jetty, urma_target_jetty_t *tjetty);
  * @param[in] [Required] cfg: tp active configuration to exchange with target;
  * Note: A local jetty can be binded with only one remote jetty. Only supported by jetty under URMA_TM_RC.
  */
-urma_status_t urma_bind_jetty_ex(urma_jetty_t *jetty, urma_target_jetty_t *tjetty,
-    urma_bind_jetty_ex_cfg_t *cfg);
+urma_status_t urma_bind_jetty_ex(urma_jetty_t *jetty, urma_target_jetty_t *tjetty, urma_bind_jetty_ex_cfg_t *cfg);
 
 /**
  *  Unbind jetty: deconstruct the transport channel between local jetty and remote jetty.
@@ -582,7 +584,7 @@ urma_status_t urma_unbind_jetty(urma_jetty_t *jetty);
 
 /**
  * Poll the CRs for all the WRs that posted to Jetty, but are not completed.
- * Call the API after modify Jetty to error, or polled a suspened done CR.
+ * Call the API after modify Jetty to error, or polled a suspended done CR.
  * CRs with status of URMA_CR_WR_FLUSH_ERR will be returned on success.
  * @param[in] [Required] jetty: the jetty created before;
  * @param[in] [Required] cr_cnt: Number of CR expected to be received.;
@@ -621,8 +623,8 @@ urma_status_t urma_unimport_jetty_async(urma_target_jetty_t *tjetty);
  * Return: 0 on success, URMA_EEXIST if the jetty has been binded, other value on error
  * Note: A local jetty can be binded with only one remote jetty. Only supported by jetty under URMA_TM_RC.
  */
-urma_status_t urma_bind_jetty_async(urma_notifier_t *notifier, urma_jetty_t *jetty,
-    urma_target_jetty_t *tjetty, uint64_t user_ctx, int timeout);
+urma_status_t urma_bind_jetty_async(urma_notifier_t *notifier, urma_jetty_t *jetty, urma_target_jetty_t *tjetty,
+    uint64_t user_ctx, int timeout);
 
 /**
  *  Unbind jetty: deconstruct the transport channel between local jetty and remote jetty asynchronously.
@@ -682,7 +684,7 @@ urma_status_t urma_active_jetty(urma_jetty_t *jetty);
 urma_status_t urma_get_jetty_opt(urma_jetty_t *jetty, uint64_t opt, void *buf, uint32_t len);
 
 /**
- * Deactive the activated jetty.
+ * Deactivate the activated jetty.
  * @param[in] [Required] jetty: handle of the allocated jetty;
  * Return: 0 on success, other value on error
  */
@@ -791,8 +793,8 @@ urma_status_t urma_free_token_id(urma_token_id_t *token_id);
  * @param[in] [Required] ctx: the created urma context pointer;
  * @param[in] [Required] seg_cfg: Specify cfg of seg to be registered, including address, len, token, and so on;
  * Return: pointer to target segment on success, NULL on error
- * Note: in current IB provider, all segments to be registerred must use a common jfc,
- * And the immedidate data wrote from clients is polled from this common jfc.
+ * Note: in current IB provider, all segments to be registered must use a common jfc,
+ * And the immediate data wrote from clients is polled from this common jfc.
  */
 urma_target_seg_t *urma_register_seg(urma_context_t *ctx, urma_seg_cfg_t *seg_cfg);
 
@@ -812,8 +814,8 @@ urma_status_t urma_unregister_seg(urma_target_seg_t *target_seg);
  * @param[in] [Required] flag: flag to indicate the import attribute of memory segment;
  * Return: pointer to target segment on success, NULL on error
  */
-urma_target_seg_t *urma_import_seg(urma_context_t *ctx, urma_seg_t *seg,
-    urma_token_t *token_value, uint64_t addr, urma_import_seg_flag_t flag);
+urma_target_seg_t *urma_import_seg(urma_context_t *ctx, urma_seg_t *seg, urma_token_t *token_value, uint64_t addr,
+    urma_import_seg_flag_t flag);
 
 /**
  *  Unimport a memory segment on specified ubva address.
@@ -867,13 +869,12 @@ urma_status_t urma_post_jetty_recv_wr(urma_jetty_t *jetty, urma_jfr_wr_t *wr, ur
  * @param[in] dst: destination address(mapping va on user node or rva in ubva on home node) to be written into
  * @param[in] src: source address(local process address space) to fetch data
  * @param[in] len: the data len to be written
- * @param[in] flag: flag to control jfs work request attritube
+ * @param[in] flag: flag to control jfs work request attribute
  * @param[in] user_ctx: the user context, such as request id(rid) etc.
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_write(urma_jfs_t *jfs, urma_target_jetty_t *target_jfr,
-    urma_target_seg_t *dst_tseg, urma_target_seg_t *src_tseg,
-    uint64_t dst, uint64_t src, uint32_t len, urma_jfs_wr_flag_t flag, uint64_t user_ctx);
+urma_status_t urma_write(urma_jfs_t *jfs, urma_target_jetty_t *target_jfr, urma_target_seg_t *dst_tseg,
+    urma_target_seg_t *src_tseg, uint64_t dst, uint64_t src, uint32_t len, urma_jfs_wr_flag_t flag, uint64_t user_ctx);
 
 /**
  * Read data from remote node.
@@ -884,27 +885,26 @@ urma_status_t urma_write(urma_jfs_t *jfs, urma_target_jetty_t *target_jfr,
  * @param[in] dst: destination address(local process address space) to be written into
  * @param[in] src: source address(mapping va or rva in ubva) to fetch data
  * @param[in] len: the data len to be written
- * @param[in] flag: the flag to control jfs work request attritube
+ * @param[in] flag: the flag to control jfs work request attribute
  * @param[in] user_ctx: the user context, such as request id(rid) etc.
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_read(urma_jfs_t *jfs, urma_target_jetty_t *target_jfr,
-    urma_target_seg_t *dst_tseg, urma_target_seg_t *src_tseg,
-    uint64_t dst, uint64_t src, uint32_t len, urma_jfs_wr_flag_t flag, uint64_t user_ctx);
+urma_status_t urma_read(urma_jfs_t *jfs, urma_target_jetty_t *target_jfr, urma_target_seg_t *dst_tseg,
+    urma_target_seg_t *src_tseg, uint64_t dst, uint64_t src, uint32_t len, urma_jfs_wr_flag_t flag, uint64_t user_ctx);
 
 /**
  * Send data to remote node.
  * @param[in] jfs: the jfs created before, which is used to put command;
- * @param[in] target_jfr: destination jetty receiver(with full qualifed jfr id);
+ * @param[in] target_jfr: destination jetty receiver(with full qualified jfr id);
  * @param[in] src_tseg: the seg registered before, can be NULL only when flag.bs.inline_flag == URMA_INLINE_ENABLE
  * @param[in] src: source address for sending;
  * @param[in] len: data length;
- * @param[in] flag: flag to control jfs work request attritube
+ * @param[in] flag: flag to control jfs work request attribute
  * @param[in] user_ctx: the user context, such as request id(rid) etc;
  * Return: 0 on success, other value on error.
  */
-urma_status_t urma_send(urma_jfs_t *jfs, urma_target_jetty_t *target_jfr,
-    urma_target_seg_t *src_tseg, uint64_t src, uint32_t len, urma_jfs_wr_flag_t flag, uint64_t user_ctx);
+urma_status_t urma_send(urma_jfs_t *jfs, urma_target_jetty_t *target_jfr, urma_target_seg_t *src_tseg, uint64_t src,
+    uint32_t len, urma_jfs_wr_flag_t flag, uint64_t user_ctx);
 
 /**
  *  Assign local buffer to receive data from remote node.
@@ -915,8 +915,7 @@ urma_status_t urma_send(urma_jfs_t *jfs, urma_target_jetty_t *target_jfr,
  * @param[in] user_ctx: the user context, such as request id(rid) etc;
  * Return: 0 on success, other value on error.
  */
-urma_status_t urma_recv(urma_jfr_t *jfr, urma_target_seg_t *recv_tseg,
-    uint64_t buf, uint32_t len, uint64_t user_ctx);
+urma_status_t urma_recv(urma_jfr_t *jfr, urma_target_seg_t *recv_tseg, uint64_t buf, uint32_t len, uint64_t user_ctx);
 
 /**
  *  Poll jfc to get completion record.
@@ -948,8 +947,7 @@ urma_status_t urma_rearm_jfc(urma_jfc_t *jfc, bool solicited_only);
  * Note: Repeatedly calling this API without calling [urma_poll_jfc] may lead to
  *       number of jfc which is larger than expected in IP provider. This error is controllable.
  */
-int urma_wait_jfc(urma_jfce_t *jfce, uint32_t jfc_cnt, int time_out,
-    urma_jfc_t *jfc[]);
+int urma_wait_jfc(urma_jfce_t *jfce, uint32_t jfc_cnt, int time_out, urma_jfc_t *jfc[]);
 
 /**
  *  Confirm that a JFC generated event has been processed.
@@ -1025,7 +1023,7 @@ int urma_get_tpn(urma_jetty_t *jetty);
 /**
  * Get net address info list, user tp only.
  * @param[in] ctx: the created urma context pointer;
- * @param[out] cnt: numer of net address info;
+ * @param[out] cnt: number of net address info;
  * Return: pointer of net address list; NULL on error
  */
 urma_net_addr_info_t *urma_get_net_addr_list(urma_context_t *ctx, uint32_t *cnt);
@@ -1057,8 +1055,7 @@ int urma_modify_tp(urma_context_t *ctx, uint32_t tpn, urma_tp_cfg_t *cfg, urma_t
  * @param[out] [Required] tp_list: tp list to get, the buffer is allocated by user;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_get_tp_list(urma_context_t *ctx, urma_get_tp_cfg_t *cfg, uint32_t *tp_cnt,
-    urma_tp_info_t *tp_list);
+urma_status_t urma_get_tp_list(urma_context_t *ctx, urma_get_tp_cfg_t *cfg, uint32_t *tp_cnt, urma_tp_info_t *tp_list);
 
 /**
  * set tp attribution values in control plane.
@@ -1073,8 +1070,8 @@ urma_status_t urma_get_tp_list(urma_context_t *ctx, urma_get_tp_cfg_t *cfg, uint
  * @param[in] [Required] tp_attr: tp attribution values to set;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_set_tp_attr(const urma_context_t *ctx, const uint64_t tp_handle,
-    const uint8_t tp_attr_cnt, const uint32_t tp_attr_bitmap, const urma_tp_attr_value_t *tp_attr);
+urma_status_t urma_set_tp_attr(const urma_context_t *ctx, const uint64_t tp_handle, const uint8_t tp_attr_cnt,
+    const uint32_t tp_attr_bitmap, const urma_tp_attr_value_t *tp_attr);
 
 /**
  * get tp attribution values in control plane.
@@ -1089,8 +1086,8 @@ urma_status_t urma_set_tp_attr(const urma_context_t *ctx, const uint64_t tp_hand
  * @param[out] [Required] tp_attr: tp attribution values to get;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_get_tp_attr(const urma_context_t *ctx, const uint64_t tp_handle,
-    uint8_t *tp_attr_cnt, uint32_t *tp_attr_bitmap, urma_tp_attr_value_t *tp_attr);
+urma_status_t urma_get_tp_attr(const urma_context_t *ctx, const uint64_t tp_handle, uint8_t *tp_attr_cnt,
+    uint32_t *tp_attr_bitmap, urma_tp_attr_value_t *tp_attr);
 
 /**
  * get eid by ip info

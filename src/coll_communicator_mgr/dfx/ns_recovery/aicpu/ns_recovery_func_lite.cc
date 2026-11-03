@@ -1,20 +1,21 @@
 /**
- * Copyright (c) 2026 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "ns_recovery_func_lite.h"
 #include "kfc.h"
 #include "sal_pub.h"
 #include "ns_recovery_lite.h"
-#include "aicpu_indop_process.h"
+#include "coll_comm_aicpu_mgr.h"
 
 namespace hccl {
-NsRecoveryFuncLite &NsRecoveryFuncLite::GetInstance()
+NsRecoveryFuncLite& NsRecoveryFuncLite::GetInstance()
 {
     static NsRecoveryFuncLite func;
     return func;
@@ -22,47 +23,43 @@ NsRecoveryFuncLite &NsRecoveryFuncLite::GetInstance()
 
 void NsRecoveryFuncLite::Call()
 {
-    ReadWriteLockBase &commAicpuMapMutex = AicpuIndopProcess::AicpuGetCommMutex();
-    ReadWriteLock rwlock(commAicpuMapMutex);
-    rwlock.readLock();
+    std::shared_lock<std::shared_mutex> rwlock(CollCommAicpuMgr::GetInstance().GetMutex());
 
-    std::vector<std::pair<std::string, CollCommAicpuMgr *>> aicpuCommInfo;
-    auto ret = AicpuIndopProcess::AicpuGetCommAll(aicpuCommInfo);
+    std::vector<std::pair<std::string, CollCommAicpu*>> aicpuCommInfo;
+    auto ret = CollCommAicpuMgr::GetInstance().GetAllComms(aicpuCommInfo);
     if (ret != HCCL_SUCCESS) {
         HCCL_ERROR("[NsRecovery][BackGround] AicpuGetCommAll failed, errNo[0x%016llx]", ret);
-        rwlock.readUnlock();
         return;
     }
-    for (auto &commInfo : aicpuCommInfo) {
-        CollCommAicpu* deviceComm = commInfo.second->GetCollCommAicpu();
+    for (auto& commInfo : aicpuCommInfo) {
+        CollCommAicpu* deviceComm = commInfo.second;
         if (deviceComm->GetCommmStatus() == HcclCommStatus::HCCL_COMM_STATUS_INVALID) {
             continue;
         }
         HandleStopLaunch(deviceComm);
         HandleClean(deviceComm);
     }
-
-    rwlock.readUnlock();
 }
 
-void NsRecoveryFuncLite::HandleStopLaunch(CollCommAicpu *deviceComm) const
+void NsRecoveryFuncLite::HandleStopLaunch(CollCommAicpu* deviceComm) const
 {
-    if (deviceComm->GetCommmStatus() == HcclCommStatus::HCCL_COMM_STATUS_SUSPENDING) {
-        return;
-    }
-
     Hccl::KfcCommand cmd = deviceComm->GetNsRecoveryLitePtr()->BackGroundGetCmd();
     if (cmd != Hccl::KfcCommand::NS_STOP_LAUNCH) {
         return;
     }
-    HCCL_INFO("[NsRecovery][BackGround] received KfcCommand[NS_STOP_LAUNCH]");
+    HCCL_INFO(
+        "[NsRecovery][BackGround] received KfcCommand[NS_STOP_LAUNCH], commStatus[%d]",
+        static_cast<int>(deviceComm->GetCommmStatus()));
+    // D2H状态由AICPU侧写入。先清空上一轮Clean遗留状态，避免host在等待STOP_LAUNCH_DONE时读到旧值。
+    deviceComm->GetNsRecoveryLitePtr()->BackGroundSetStatus(Hccl::KfcStatus::NONE);
     deviceComm->GetNsRecoveryLitePtr()->SetNeedClean(true);
     deviceComm->SetCommmStatus(HcclCommStatus::HCCL_COMM_STATUS_SUSPENDING);
     deviceComm->GetNsRecoveryLitePtr()->BackGroundSetStatus(Hccl::KfcStatus::STOP_LAUNCH_DONE);
-    HCCL_INFO("[NsRecovery][BackGround] commId[%s] send KfcStatus[STOP_LAUNCH_DONE]", deviceComm->GetIdentifier().c_str());
+    HCCL_INFO(
+        "[NsRecovery][BackGround] commId[%s] send KfcStatus[STOP_LAUNCH_DONE]", deviceComm->GetIdentifier().c_str());
 }
 
-void NsRecoveryFuncLite::HandleClean(CollCommAicpu *deviceComm)
+void NsRecoveryFuncLite::HandleClean(CollCommAicpu* deviceComm)
 {
     if (!deviceComm->GetNsRecoveryLitePtr()->IsNeedClean()) {
         return;
@@ -79,13 +76,14 @@ void NsRecoveryFuncLite::HandleClean(CollCommAicpu *deviceComm)
     HCCL_INFO("[NsRecovery][BackGround] commId[%s] send KfcStatus[CLEAN_DONE]", deviceComm->GetIdentifier().c_str());
 }
 
-void NsRecoveryFuncLite::StreamClean(CollCommAicpu *deviceComm)
+void NsRecoveryFuncLite::StreamClean(CollCommAicpu* deviceComm)
 {
     // 查询停流是否完成
     u32 localDevId{0};
     auto ret = drvGetLocalDevIDByHostDevID(deviceComm->GetTopoInfo().devicePhyId, &localDevId);
     if (ret != DRV_ERROR_NONE) {
-        HCCL_ERROR("NsRecoveryFuncLite::%s call drvGetLocalDevIDByHostDevID failed, devPhyId %u, ret %d", __func__, 
+        HCCL_ERROR(
+            "NsRecoveryFuncLite::%s call drvGetLocalDevIDByHostDevID failed, devPhyId %u, ret %d", __func__,
             deviceComm->GetTopoInfo().devicePhyId, ret);
         return;
     }
@@ -94,20 +92,15 @@ void NsRecoveryFuncLite::StreamClean(CollCommAicpu *deviceComm)
         HCCL_ERROR("[NsRecovery][BackGround] Stream Stop failed");
         return;
     }
-
-    // 通过thread获得streamlite信息，清理资源
-    std::vector<std::shared_ptr<hccl::Thread>> threads = deviceComm->GetAllThread();
-    for (auto &thread : threads) {
-        Hccl::StreamLite *streamLitePtr = reinterpret_cast<Hccl::StreamLite *>(thread->GetStreamLitePtr());
-        streamLitePtr->GetRtsq()->Reset();
-    }
     HCCL_INFO("[NsRecovery][BackGround] commId[%s] streamClean success.", deviceComm->GetIdentifier().c_str());
 }
 
 constexpr u64 NSEC_PER_SEC = 1000000000U;
 inline u64 GetCurCpuTimestamp()
 {
-    struct timespec timestamp{0, 0};
+    struct timespec timestamp {
+        0, 0
+    };
     (void)clock_gettime(CLOCK_MONOTONIC_RAW, &timestamp);
     return static_cast<u64>((timestamp.tv_sec * NSEC_PER_SEC) + (timestamp.tv_nsec));
 }
@@ -130,8 +123,9 @@ HcclResult NsRecoveryFuncLite::DeviceQuery(const uint32_t devId, const uint32_t 
         para.tsid = 0;
         para.msg_len = sizeof(ts_ctrl_msg_body_t);
         para.msg = static_cast<void*>(&queryIn);
-        const drvError_t ret = halTsdrvCtl(devId, TSDRV_CTL_CMD_CTRL_MSG,
-            static_cast<void*>(&para), sizeof(tsdrv_ctrl_msg), static_cast<void*>(&queryAck), &ackCount);
+        const drvError_t ret = halTsdrvCtl(
+            devId, TSDRV_CTL_CMD_CTRL_MSG, static_cast<void*>(&para), sizeof(tsdrv_ctrl_msg),
+            static_cast<void*>(&queryAck), &ackCount);
         if ((ret != DRV_ERROR_NONE) || (ackCount != sizeof(ts_ctrl_msg_body_t))) {
             HCCL_ERROR("halTsdrvCtl failed. ret = %d", ret);
             return HcclResult::HCCL_E_DRV;
@@ -152,4 +146,4 @@ HcclResult NsRecoveryFuncLite::DeviceQuery(const uint32_t devId, const uint32_t 
     return HcclResult::HCCL_SUCCESS;
 }
 
-}
+} // namespace hccl

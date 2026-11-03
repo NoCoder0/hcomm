@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #pragma once
 
@@ -38,32 +38,20 @@ public:
 
     GlobalMemRecord& operator=(const GlobalMemRecord& other) = delete;
     GlobalMemRecord& operator=(GlobalMemRecord&& other) = delete;
-    inline HcclMemType GetMemType() const
-    {
-        return type_;
-    }
+    inline HcclMemType GetMemType() const { return type_; }
 
-    inline const void* GetAddr() const
-    {
-        return addr_;
-    }
+    inline const void* GetAddr() const { return addr_; }
 
-    inline u64 GetSize() const
-    {
-        return size_;
-    }
+    inline u64 GetSize() const { return size_; }
 
-    inline bool IsBeingBound() const
-    {
-        return !boundComm_.empty();
-    }
+    inline bool IsBeingBound() const { return !boundComm_.empty(); }
 
     inline std::vector<std::string> GetBoundComm() const
     {
         return std::vector<std::string>(boundComm_.cbegin(), boundComm_.cend());
     }
 
-    bool operator < (const GlobalMemRecord& other) const
+    bool operator<(const GlobalMemRecord& other) const
     {
         // 先比较type
         if (type_ != other.type_) {
@@ -77,15 +65,15 @@ public:
         return size_ < other.size_;
     }
 
-    bool operator == (const GlobalMemRecord& other) const
+    bool operator==(const GlobalMemRecord& other) const
     {
         return (type_ == other.type_) && (addr_ == other.addr_) && (size_ == other.size_);
     }
 
-    bool HasOverlap(const GlobalMemRecord& other) const;  // 判断传入的内存是否有重叠
-    HcclResult BindToComm(const std::string &commIdentifier);       // 绑定一个通信域
-    HcclResult UnbindFromComm(const std::string &commIdentifier);   // 与一个通信域解绑
-    std::string PrintInfo() const; // 获取内存信息字符串
+    bool HasOverlap(const GlobalMemRecord& other) const;          // 判断传入的内存是否有重叠
+    HcclResult BindToComm(const std::string& commIdentifier);     // 绑定一个通信域
+    HcclResult UnbindFromComm(const std::string& commIdentifier); // 与一个通信域解绑
+    std::string PrintInfo() const;                                // 获取内存信息字符串
     inline void SaveRegBufInfo(HcclNetDevCtx& ctx, HcclBuf& buf)
     {
         HCCL_INFO("[GlobalMemRecord][SaveRegBufInfo] ctx[%p], addr[%p], len[%llu].", ctx, buf.addr, buf.len);
@@ -93,19 +81,23 @@ public:
         regBufInfo_.insert(std::make_pair(ctx, buf));
     }
 
-    inline std::unordered_map<HcclNetDevCtx, HcclBuf> GetAllRegBufInfo() const
-    {
-        return regBufInfo_;
-    }
+    inline std::unordered_map<HcclNetDevCtx, HcclBuf> GetAllRegBufInfo() const { return regBufInfo_; }
+
+    inline u32 GetRefCount() const { return refCount_; }
+
+    inline void AddRef() const { ++refCount_; }
+
+    inline void DecRef() const { --refCount_; }
 
 private:
-    const HcclMemType type_; // 内存块类型, host或device
-    const void* addr_; // 内存块地址
-    const u64 size_; // 内存块大小字节数
-    std::unique_ptr<std::mutex> pLock_; //锁保证多线程访问安全
+    const HcclMemType type_;                      // 内存块类型, host或device
+    const void* addr_;                            // 内存块地址
+    const u64 size_;                              // 内存块大小字节数
+    std::unique_ptr<std::mutex> pLock_;           // 锁保证多线程访问安全
     std::unordered_set<std::string> boundComm_{}; // 绑定了的通信域
     std::mutex regBufInfoMtx_;
     std::unordered_map<HcclNetDevCtx, HcclBuf> regBufInfo_{};
+    mutable u32 refCount_{1}; // 引用计数，重复注册累加，解注册递减
 };
 
 } // namespace hccl

@@ -24,9 +24,14 @@ namespace Hccl {
 // 为ReduceScatterVMeshMem2Mem1D实现的CCUIns、CCUCtxArg与CCUTaskArg
 class CcuCtxArgReduceScatterVMeshMem2Mem1D : public CcuCtxArg {
 public:
-    explicit CcuCtxArgReduceScatterVMeshMem2Mem1D(const std::vector<uint64_t> &dSize, uint32_t rId,
-        const CollAlgOperator &op, const std::vector<std::vector<RankId>> &tempVTopo) :
-            dimSize_(dSize), rankId_(rId), op_(op), tempVTopo_(tempVTopo) {}
+    explicit CcuCtxArgReduceScatterVMeshMem2Mem1D(
+        const std::vector<uint64_t>& dSize, uint32_t rId, const CollAlgOperator& op,
+        const std::vector<std::vector<RankId>>& tempVTopo)
+        : dimSize_(dSize),
+          rankId_(rId),
+          op_(op),
+          tempVTopo_(tempVTopo)
+    {}
     CcuCtxSignature GetCtxSignature() const override
     {
         CcuCtxSignature signature;
@@ -41,9 +46,17 @@ public:
 
 class CcuTaskArgReduceScatterVMeshMem2Mem1D : public CcuTaskArg {
 public:
-    explicit CcuTaskArgReduceScatterVMeshMem2Mem1D(uint64_t inputAddr, uint64_t outputAddr, uint64_t scratchAddr, uint64_t scratchInterval, uint64_t sliceSize, uint64_t offset,
-        uint64_t token) :
-        inputAddr_(inputAddr), outputAddr_(outputAddr), scratchAddr_(scratchAddr), scratchInterval_(scratchInterval), sliceSize_(sliceSize), offset_(offset), token_(token) {}
+    explicit CcuTaskArgReduceScatterVMeshMem2Mem1D(
+        uint64_t inputAddr, uint64_t outputAddr, uint64_t scratchAddr, uint64_t scratchInterval, uint64_t sliceSize,
+        uint64_t offset, uint64_t token)
+        : inputAddr_(inputAddr),
+          outputAddr_(outputAddr),
+          scratchAddr_(scratchAddr),
+          scratchInterval_(scratchInterval),
+          sliceSize_(sliceSize),
+          offset_(offset),
+          token_(token)
+    {}
 
     uint64_t inputAddr_;
     uint64_t outputAddr_;
@@ -56,17 +69,18 @@ public:
 
 class CcuInstructionReduceScatterVMeshMem2Mem1D : public CcuInstruction {
 public:
-    CcuInstructionReduceScatterVMeshMem2Mem1D() : CcuInstruction()
-    {
-    }
+    CcuInstructionReduceScatterVMeshMem2Mem1D() : CcuInstruction() {}
 
-    void Init(uint32_t rankId, uint64_t inputAddr, uint64_t outputAddr, uint64_t scratchAddr, uint64_t scratchInterval, uint64_t sliceSize,
-        uint64_t offset, uint64_t token, CollAlgOperator &op, std::vector<std::vector<RankId>> &tempVTopo)
+    void Init(
+        uint32_t rankId, uint64_t inputAddr, uint64_t outputAddr, uint64_t scratchAddr, uint64_t scratchInterval,
+        uint64_t sliceSize, uint64_t offset, uint64_t token, CollAlgOperator& op,
+        std::vector<std::vector<RankId>>& tempVTopo)
     {
         u32 maxDimNum = 1;
         if (tempVTopo.size() != maxDimNum) {
             THROW<InvalidParamsException>(StringFormat(
-                "[CcuInstructionReduceScatterVMeshMem2Mem1D] tempVTopo size is not 1, size is [%zu].", tempVTopo.size()));
+                "[CcuInstructionReduceScatterVMeshMem2Mem1D] tempVTopo size is not 1, size is [%zu].",
+                tempVTopo.size()));
         }
         dimSize_.push_back(tempVTopo[0].size());
         rankId_ = rankId;
@@ -90,13 +104,12 @@ public:
 
     std::string Describe() const override
     {
-        return StringFormat("CcuInstructionReduceScatterVMeshMem2Mem1D rankId [%u], instType[%s]", rankId_, instType_.Describe().c_str());
+        return StringFormat(
+            "CcuInstructionReduceScatterVMeshMem2Mem1D rankId [%u], instType[%s]", rankId_,
+            instType_.Describe().c_str());
     }
 
-    void SetInstType(CcuInstType instType) 
-    { 
-        instType_ = instType; 
-    }
+    void SetInstType(CcuInstType instType) { instType_ = instType; }
 
     std::unique_ptr<CcuCtxArg> GetCtxArg() const override
     {
@@ -105,7 +118,8 @@ public:
 
     std::unique_ptr<CcuTaskArg> GetTaskArg() const override
     {
-        return std::make_unique<CcuTaskArgReduceScatterVMeshMem2Mem1D>(inputAddr_, outputAddr_, scratchAddr_, scratchInterval_, sliceSize_, offset_, token_);
+        return std::make_unique<CcuTaskArgReduceScatterVMeshMem2Mem1D>(
+            inputAddr_, outputAddr_, scratchAddr_, scratchInterval_, sliceSize_, offset_, token_);
     }
 
 private:
@@ -123,5 +137,5 @@ private:
     std::vector<std::vector<RankId>> tempVTopo_;
 };
 
-}
+} // namespace Hccl
 #endif // HCCLV2_CCU_INSTRUCTION_REDUCE_SCATTER_V_MESH_1D_MEM2MEM_H_

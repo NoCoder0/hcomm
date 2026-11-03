@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "data_dumper.h"
 
@@ -133,8 +133,9 @@ std::map<MemoryStatus, gui::MemOp> MEM_STATUS_2_MEM_OP = {
     {MemoryStatus::WRITE, gui::MemOp::MEM_WRITE},
 };
 
-void DataDumper::GenNodeMessage(std::map<u32, TaskNodePtr> &nodeId2nodePtr, std::map<TaskNodePtr, u32> &nodePtr2nodeId,
-                                std::map<u32, std::set<u32>> &rank2nodes, gui::WholeGraph* wholeGraph)
+void DataDumper::GenNodeMessage(
+    std::map<u32, TaskNodePtr>& nodeId2nodePtr, std::map<TaskNodePtr, u32>& nodePtr2nodeId,
+    std::map<u32, std::set<u32>>& rank2nodes, gui::WholeGraph* wholeGraph)
 {
     for (RankId rank = 0; rank < rank2nodes.size(); rank++) {
         gui::RankGraph* rankGraph = wholeGraph->add_rankgraphs();
@@ -202,7 +203,8 @@ void DataDumper::DumpGraph(TaskNodePtr dummyStart, GraphType graphType)
     return;
 }
 
-void DataDumper::DumpMemConflictInfo(TaskNodePtr nodeA, TaskNodePtr nodeB, SliceMemoryStatus& statusA, SliceMemoryStatus& statusB)
+void DataDumper::DumpMemConflictInfo(
+    TaskNodePtr nodeA, TaskNodePtr nodeB, SliceMemoryStatus& statusA, SliceMemoryStatus& statusB)
 {
     if (!enabled_) {
         return;
@@ -265,15 +267,13 @@ std::map<CheckerReduceOp, gui::ReduceType> REDUCE_TYPE_TABLE = {
 };
 
 std::map<BufferType, gui::BufferType> BUFFER_TYPE_TABLE = {
-    {BufferType::INPUT, gui::BufferType::INPUT},
-    {BufferType::OUTPUT, gui::BufferType::OUTPUT},
-    {BufferType::INPUT_CCL, gui::BufferType::INPUT_CCL},
-    {BufferType::OUTPUT_CCL, gui::BufferType::OUTPUT_CCL},
-    {BufferType::SCRATCH, gui::BufferType::SCRATCH},
-    {BufferType::RESERVED, gui::BufferType::BUFFER_RESERVED},
+    {BufferType::INPUT, gui::BufferType::INPUT},         {BufferType::OUTPUT, gui::BufferType::OUTPUT},
+    {BufferType::INPUT_CCL, gui::BufferType::INPUT_CCL}, {BufferType::OUTPUT_CCL, gui::BufferType::OUTPUT_CCL},
+    {BufferType::SCRATCH, gui::BufferType::SCRATCH},     {BufferType::RESERVED, gui::BufferType::BUFFER_RESERVED},
 };
 
-void DataDumper::FillInGuiBufferSemantic(gui::BufferSemantic* guiBufferSemantic, const BufferSemantic& singleBufferSemantic)
+void DataDumper::FillInGuiBufferSemantic(
+    gui::BufferSemantic* guiBufferSemantic, const BufferSemantic& singleBufferSemantic)
 {
     guiBufferSemantic->set_startaddr(singleBufferSemantic.startAddr);
     guiBufferSemantic->set_size(singleBufferSemantic.size);
@@ -337,8 +337,8 @@ void DataDumper::DumpBufferSemantic(gui::MemBufferSemantic* curState, RankMemory
     return;
 }
 
-void DataDumper::DumpSemanticState(RankId rankId, u32 localStep, u32 globalStep, bool change,
-                                   RankMemorySemantics& memSemantics)
+void DataDumper::DumpSemanticState(
+    RankId rankId, u32 localStep, u32 globalStep, bool change, RankMemorySemantics& memSemantics)
 {
     // 如果未使能，跳过处理
     if (!enabled_) {
@@ -451,15 +451,9 @@ void DataDumper::ClearData()
     return;
 }
 
-void DataDumper::Enable()
-{
-    enabled_ = true;
-}
+void DataDumper::Enable() { enabled_ = true; }
 
-void DataDumper::Close()
-{
-    enabled_ = false;
-}
+void DataDumper::Close() { enabled_ = false; }
 
 void DataDumper::AddMissingSemantic(RankId rankId, BufferType type, u64 startAddr)
 {
@@ -475,4 +469,4 @@ void DataDumper::AddMissingSemantic(RankId rankId, BufferType type, u64 startAdd
     return;
 }
 
-}
+} // namespace checker

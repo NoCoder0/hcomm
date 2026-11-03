@@ -48,7 +48,7 @@ BkfBufq *BkfBufqInit(BkfMemMng *memMng, int32_t bufLen)
     bufq->memMng = memMng;
     bufq->bufLen = bufLen;
     bufq->usedLen = 0;
-    bufq->guard = (uint8_t*)(bufq + 1) + bufLen;
+    bufq->guard = (uint8_t *)(bufq + 1) + bufLen;
     BKF_SIGN_SET(*bufq->guard, BKF_BUFQ_GUARD);
     return bufq;
 }
@@ -242,4 +242,3 @@ BOOL BkfBufqIsEmpty(BkfBufq *bufq)
 }
 #endif
 #endif
-

@@ -28,11 +28,7 @@ enum class CommStackType : uint8_t {
     COMM_STACK_UNKNOWN = 255
 };
 
-enum class SyncMode : uint8_t {
-    SYNC_MODE_WRITE_IMM = 0,
-    SYNC_MODE_WRITE_NOTIFY = 1,
-    SYNC_MODE_UNKNOWN = 255
-};
+enum class SyncMode : uint8_t { SYNC_MODE_WRITE_IMM = 0, SYNC_MODE_WRITE_NOTIFY = 1, SYNC_MODE_UNKNOWN = 255 };
 
 struct RoCECapability {
     uint32_t magic;
@@ -48,13 +44,13 @@ struct RoCECapability {
 
     uint8_t reserved[4];
 
-    void Serialize(uint8_t *buffer, size_t &len) const
+    void Serialize(uint8_t* buffer, size_t& len) const
     {
         len = sizeof(RoCECapability);
         (void)memcpy_s(buffer, len, this, len);
     }
 
-    bool Deserialize(const uint8_t *buffer, size_t len)
+    bool Deserialize(const uint8_t* buffer, size_t len)
     {
         if (len < sizeof(RoCECapability)) {
             return false;
@@ -65,7 +61,7 @@ struct RoCECapability {
         return true;
     }
 
-    static bool CheckMagic(const uint8_t *buffer, size_t len)
+    static bool CheckMagic(const uint8_t* buffer, size_t len)
     {
         if (len < sizeof(uint32_t)) {
             return false;

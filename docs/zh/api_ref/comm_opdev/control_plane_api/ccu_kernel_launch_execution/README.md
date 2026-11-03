@@ -1,41 +1,47 @@
 # 简介
 
-本节包含CCU Kernel主机侧生命周期管理接口及内存Token查询接口。
+本节包含CCU Kernel Host侧生命周期管理接口及内存Token查询接口。
 
-通过这些接口，用户可以完成CCU实例的创建与销毁、Kernel的注册与翻译、Kernel的启动执行，以及进程虚拟地址到CCU访问Token的转换。
+通过这些接口，用户可以完成Kernel的注册、翻译与启动执行，以及将进程虚拟地址转换为CCU访问Token。
 
 ## 前置条件
 
-本节接口需要传入 `CcuInsHandle`（CCU 实例句柄），获取步骤如下：
+Kernel注册和启动接口需要传入`CcuInsHandle`（CCU实例句柄）。当前仅支持集合通信场景，调用前须完成HCCL通信域初始化、CCU建链和CCU实例绑定。
 
 1. **创建 HcclComm 通信域**：参见 [HcclCommInitClusterInfo](../../../comm_mgr_c/HcclCommInitClusterInfo.md)
    或 [HcclCommInitRootInfo](../../../comm_mgr_c/HcclCommInitRootInfo.md)。
 
-2. **从通信域查询 CCU 实例句柄**：调用 `HcclCommQueryCcuIns`（声明于 `include/hccl/hccl_ccu_res.h`）：
+2. **规划资源并创建CCU实例**：
 
-    ```c
-    extern HcclResult HcclCommQueryCcuIns(HcclComm comm,
-        CcuInsHandle *insHandles, uint32_t *insNum);
-    ```
+   - 调用[HcommCcuInsResDescCreate](../ccu_resource_mgmt/HcommCcuInsResDescCreate.md)为目标IO Die创建资源描述符。
+   - 调用[HcommCcuKernelQueryResReq](../ccu_resource_mgmt/HcommCcuKernelQueryResReq.md)统计Kernel资源诉求。
+   - 调用[HcommCcuInsCreate](../ccu_resource_mgmt/HcommCcuInsCreate.md)创建CCU实例。
 
-   典型用法：
+3. **绑定CCU实例**：
+
+   - 调用[HcclCommAssignCcuIns](../comms_domain_resource_mgmt/HcclCommAssignCcuIns.md)将实例绑定到通信域。绑定成功后，实例所有权和销毁责任转移给通信域。
+   - 创建实例的调用方可继续使用`HcommCcuInsCreate`返回的句柄注册和启动Kernel，但不得再自行销毁实例。仅持有通信域句柄时，可调用[HcclCommQueryAssignedCcuIns](../comms_domain_resource_mgmt/HcclCommQueryAssignedCcuIns.md)获取已绑定的实例句柄。
+
+   通过通信域查询已绑定实例句柄的典型用法：
 
     ```c
     CcuInsHandle insHandle = 0;
     uint32_t insNum = 0;
-    HcclResult ret = HcclCommQueryCcuIns(comm, &insHandle, &insNum);
-    // 当前实现固定返回 1 个 CCU 实例，insNum != 1 视为失败
+    HcclResult ret = HcclCommQueryAssignedCcuIns(comm, &insHandle, &insNum);
+    // 当前一个通信域最多绑定1个CCU实例，查询成功时insNum为1。
     if (ret != HCCL_SUCCESS || insNum != 1) {
         // 错误处理
     }
     ```
 
-> 该接口属于 hccl 层（不在 `Hcomm*` / `Ccu*` 系列内），暂未提供独立 API 参考页面，
-> 完整签名以头文件 `include/hccl/hccl_ccu_res.h` 为准。
+> 该接口属于HCCL层（不在`Hcomm*`/`Ccu*`系列内），暂未提供独立API参考页面。
+> 完整签名以头文件`include/hccl/hccl_ccu_res.h`为准。
+> 如果通信域未绑定CCU实例，`HcclCommQueryAssignedCcuIns`返回`HCCL_E_UNAVAIL`。
+> 此外，[HcclCommQueryCcuIns](../comms_domain_resource_mgmt/HcclCommQueryCcuIns.md)用于查询通信域自有的CCU实例（未创建时创建CCU实例），与本接口查询的绑定实例相互独立。
 
 ## 接口调用顺序
 
-接口调用的标准顺序如下：
+Kernel注册与启动接口的标准顺序如下：
 
 1. [HcommCcuKernelRegisterStart](HcommCcuKernelRegisterStart.md)：开始一轮Kernel注册。
 2. [HcommCcuKernelRegister](HcommCcuKernelRegister.md)：注册Kernel函数，记录其操作序列。

@@ -34,13 +34,9 @@ using namespace hccl;
  * 该测试类用于验证HcommChannelNotifyWait接口的功能，包括：
  * - 测试正常情况下调用该接口的返回值
  */
-class UtAicpuTsHcommChannelNotifyWait : public testing::Test
-{
+class UtAicpuTsHcommChannelNotifyWait : public testing::Test {
 protected:
-    virtual void TearDown() override
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() override { GlobalMockObject::verify(); }
 
     std::vector<char> uniqueId;
     Hccl::UbTransportLiteImpl transportOnDevice{uniqueId};

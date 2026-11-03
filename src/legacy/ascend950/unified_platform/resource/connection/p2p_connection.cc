@@ -7,6 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #include "p2p_connection.h"
 #include "socket.h"
 #include "log.h"
@@ -15,8 +16,7 @@
 
 namespace Hccl {
 
-P2PConnection::P2PConnection(Socket *socket, const std::string &tag)
-    : RmaConnection(socket, RmaConnType::P2P)
+P2PConnection::P2PConnection(Socket* socket, const std::string& tag) : RmaConnection(socket, RmaConnType::P2P)
 {
     HCCL_INFO("P2PConnection::P2PConnection tag = [%s]", tag.c_str());
 }
@@ -55,8 +55,8 @@ void P2PConnection::EnableP2p() const
     // SDMA P2pEnable
 }
 
-unique_ptr<BaseTask> P2PConnection::PrepareRead(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                                const SqeConfig &config)
+unique_ptr<BaseTask> P2PConnection::PrepareRead(
+    const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, [[maybe_unused]] const SqeConfig& config)
 {
     VerifySizeIsEqual(remoteMemBuf, localMemBuf, "P2PConnection PrepareRead");
     if (localMemBuf.size == 0) {
@@ -65,8 +65,9 @@ unique_ptr<BaseTask> P2PConnection::PrepareRead(const MemoryBuffer &remoteMemBuf
     return make_unique<TaskP2pMemcpy>(localMemBuf.addr, remoteMemBuf.addr, localMemBuf.size, MemcpyKind::D2D);
 }
 
-unique_ptr<BaseTask> P2PConnection::PrepareReadReduce(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                                      DataType datatype, ReduceOp reduceOp, const SqeConfig &config)
+unique_ptr<BaseTask> P2PConnection::PrepareReadReduce(
+    const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, DataType datatype, ReduceOp reduceOp,
+    [[maybe_unused]] const SqeConfig& config)
 {
     VerifySizeIsEqual(remoteMemBuf, localMemBuf, "P2PConnection PrepareReadReduce");
     if (localMemBuf.size == 0) {
@@ -75,8 +76,8 @@ unique_ptr<BaseTask> P2PConnection::PrepareReadReduce(const MemoryBuffer &remote
     return make_unique<TaskSdmaReduce>(localMemBuf.addr, remoteMemBuf.addr, localMemBuf.size, datatype, reduceOp);
 }
 
-unique_ptr<BaseTask> P2PConnection::PrepareWrite(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                                 const SqeConfig &config)
+unique_ptr<BaseTask> P2PConnection::PrepareWrite(
+    const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, [[maybe_unused]] const SqeConfig& config)
 {
     VerifySizeIsEqual(remoteMemBuf, localMemBuf, "P2PConnection PrepareWrite");
     if (localMemBuf.size == 0) {
@@ -85,9 +86,9 @@ unique_ptr<BaseTask> P2PConnection::PrepareWrite(const MemoryBuffer &remoteMemBu
     return make_unique<TaskP2pMemcpy>(remoteMemBuf.addr, localMemBuf.addr, localMemBuf.size, MemcpyKind::D2D);
 }
 
-unique_ptr<BaseTask> P2PConnection::PrepareWriteReduce(const MemoryBuffer &remoteMemBuf,
-                                                       const MemoryBuffer &localMemBuf, DataType datatype,
-                                                       ReduceOp reduceOp, const SqeConfig &config)
+unique_ptr<BaseTask> P2PConnection::PrepareWriteReduce(
+    const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, DataType datatype, ReduceOp reduceOp,
+    [[maybe_unused]] const SqeConfig& config)
 {
     VerifySizeIsEqual(remoteMemBuf, localMemBuf, "P2PConnection PrepareWriteReduce");
     if (localMemBuf.size == 0) {
@@ -96,9 +97,6 @@ unique_ptr<BaseTask> P2PConnection::PrepareWriteReduce(const MemoryBuffer &remot
     return make_unique<TaskSdmaReduce>(remoteMemBuf.addr, localMemBuf.addr, localMemBuf.size, datatype, reduceOp);
 }
 
-string P2PConnection::Describe() const
-{
-    return StringFormat("P2PConnection[status=%s]", status.Describe().c_str());
-}
+string P2PConnection::Describe() const { return StringFormat("P2PConnection[status=%s]", status.Describe().c_str()); }
 
 } // namespace Hccl

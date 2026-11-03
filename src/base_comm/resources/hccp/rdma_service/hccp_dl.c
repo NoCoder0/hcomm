@@ -24,4 +24,3 @@ void *HccpDlopen(const char *libName, int mode)
 {
     return dlopen(libName, mode);
 }
-

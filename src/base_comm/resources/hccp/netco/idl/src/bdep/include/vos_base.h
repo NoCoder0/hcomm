@@ -8,10 +8,8 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef _VOS_BASE_H
 #define _VOS_BASE_H
-
 
 #include <inttypes.h>
 #include <netinet/in.h>
@@ -33,16 +31,13 @@ extern "C" {
 #define VOS_PRIi64 PRIi64
 #define VOS_PRIo64 PRIo64
 
-
 #define VOS_NTOHL(x) ntohl(x)
 #define VOS_HTONL(x) htonl(x)
 #define VOS_NTOHS(x) ntohs(x)
 #define VOS_HTONS(x) htons(x)
-#define VOS_NTOHLL(x) ((((uint64_t)(VOS_NTOHL((uint32_t)(x)))) << 32) | \
-                       (VOS_NTOHL((uint32_t)(((uint64_t)(x)) >> 32))))
+#define VOS_NTOHLL(x) ((((uint64_t)(VOS_NTOHL((uint32_t)(x)))) << 32) | (VOS_NTOHL((uint32_t)(((uint64_t)(x)) >> 32))))
 
-#define VOS_HTONLL(x) ((((uint64_t)(VOS_NTOHL((uint32_t)(x)))) << 32) | \
-                       (VOS_NTOHL((uint32_t)(((uint64_t)(x)) >> 32))))
+#define VOS_HTONLL(x) ((((uint64_t)(VOS_NTOHL((uint32_t)(x)))) << 32) | (VOS_NTOHL((uint32_t)(((uint64_t)(x)) >> 32))))
 
 /**
  * @ingroup vos_base
@@ -77,9 +72,9 @@ typedef struct tagCpuTick {
 } CPU_TICK;
 
 /**
-  * @ingroup vos_base
-  * CpuTick类型定义。
-  */
+ * @ingroup vos_base
+ * CpuTick类型定义。
+ */
 typedef struct tagVosCpuTick {
     uint32_t uiLow;  /**< 低32位 */
     uint32_t uiHigh; /**< 高32位 */
@@ -90,4 +85,3 @@ typedef struct tagVosCpuTick {
 #endif
 
 #endif /* _VOS_BASE_H */
-

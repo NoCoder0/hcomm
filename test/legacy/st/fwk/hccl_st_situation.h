@@ -26,100 +26,58 @@ class Situation {
 public:
     Situation();
 
-    Situation &SetDataType(DataType dataType);
+    Situation& SetDataType(DataType dataType);
 
-    Situation &SetReduceOp(ReduceOp reduceOp);
+    Situation& SetReduceOp(ReduceOp reduceOp);
 
-    Situation &SetOpType(OpType opType);
+    Situation& SetOpType(OpType opType);
 
-    Situation &SetCount(int count);
+    Situation& SetCount(int count);
 
-    Situation &SetEnv(const std::string &name, const std::string &value);
+    Situation& SetEnv(const std::string& name, const std::string& value);
 
-    Situation &SetClusterType(DevType type, FakeClusterType cluster);
+    Situation& SetClusterType(DevType type, FakeClusterType cluster);
 
-    FakeClusterType GetClusterType() const
-    {
-        return clusterType;
-    }
+    FakeClusterType GetClusterType() const { return clusterType; }
 
-    inline int GetServerNum()
-    {
-        return serverNum;
-    }
+    inline int GetServerNum() { return serverNum; }
 
-    inline OpType GetOpType()
-    {
-        return opType;
-    }
+    inline OpType GetOpType() { return opType; }
 
-    inline int GetDeviceNum()
-    {
-        return deviceNum;
-    }
+    inline int GetDeviceNum() { return deviceNum; }
 
-    inline DataType GetDataType()
-    {
-        return dataType;
-    }
+    inline DataType GetDataType() { return dataType; }
 
-    inline ReduceOp GetReduceOp()
-    {
-        return reduceOp;
-    }
+    inline ReduceOp GetReduceOp() { return reduceOp; }
 
-    inline int GetDstRank()
-    {
-        return dstRank;
-    }
+    inline int GetDstRank() { return dstRank; }
 
-    inline int GetCount()
-    {
-        return count;
-    }
+    inline int GetCount() { return count; }
 
-    inline int GetRoot()
-    {
-        return root;
-    }
+    inline int GetRoot() { return root; }
 
-    inline bool GetStaticAddr()
-    {
-        return staticAddr;
-    }
+    inline bool GetStaticAddr() { return staticAddr; }
 
-    inline bool GetStaticShape()
-    {
-        return staticShape;
-    }
+    inline bool GetStaticShape() { return staticShape; }
 
-    inline DevType GetDevType()
-    {
-        return devType;
-    }
+    inline DevType GetDevType() { return devType; }
 
-    inline int GetRankSize()
-    {
-        return serverNum * deviceNum;
-    }
+    inline int GetRankSize() { return serverNum * deviceNum; }
 
-    inline const std::map<std::string, std::string> &GetEnv()
-    {
-        return envConfigs;
-    }
+    inline const std::map<std::string, std::string>& GetEnv() { return envConfigs; }
 
 private:
-    OpType   opType;
+    OpType opType;
     DataType dataType;
     ReduceOp reduceOp;
-    DevType  devType{};
-    int      count;
-    int      dstRank{};
-    int      root{};
-    int      serverNum{};
-    int      deviceNum{};
-    bool     staticAddr{};
-    bool     staticShape{};
+    DevType devType{};
+    int count;
+    int dstRank{};
+    int root{};
+    int serverNum{};
+    int deviceNum{};
+    bool staticAddr{};
+    bool staticShape{};
 
     std::map<std::string, std::string> envConfigs;
 

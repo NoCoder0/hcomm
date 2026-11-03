@@ -1,3 +1,13 @@
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #ifndef _CHECKER_CMD_H_
 #define _CHECKER_CMD_H_
 #include <stdio.h>
@@ -30,7 +40,6 @@
 using google::protobuf::io::FileInputStream;
 using google::protobuf::io::FileOutputStream;
 
-
 struct DataSize {
     u64 minBytes;
     u64 maxBytes;
@@ -38,75 +47,55 @@ struct DataSize {
     double dataStepFactor;
 };
 
-enum OpMode {
-    OPBASE = 0,
-    OFFLOAD = 1
-};
+enum OpMode { OPBASE = 0, OFFLOAD = 1 };
 
 namespace checker {
 
-const std::map<std::string, CheckerDataType> testDtypeMap = {
-    {"int8", CheckerDataType::DATA_TYPE_INT8},
-    {"int16", CheckerDataType::DATA_TYPE_INT16},
-    {"int32", CheckerDataType::DATA_TYPE_INT32},
-    {"fp16", CheckerDataType::DATA_TYPE_FP16},
-    {"fp32", CheckerDataType::DATA_TYPE_FP32},
-    {"int64", CheckerDataType::DATA_TYPE_INT64},
-    {"uint64", CheckerDataType::DATA_TYPE_UINT64},
-    {"uint8", CheckerDataType::DATA_TYPE_UINT8},
-    {"uint16" , CheckerDataType::DATA_TYPE_UINT16},
-    {"uint32" , CheckerDataType::DATA_TYPE_UINT32},
-    {"fp64" , CheckerDataType::DATA_TYPE_FP64},
-    {"bfp16" , CheckerDataType::DATA_TYPE_BFP16},
-    {"int128", CheckerDataType::DATA_TYPE_INT128},
-    {"hif8", CheckerDataType::DATA_TYPE_HIF8},
-    {"fp8e4m3", CheckerDataType::DATA_TYPE_FP8E4M3},
-    {"fp8e5m2", CheckerDataType::DATA_TYPE_FP8E5M2},
-    {"reserve" , CheckerDataType::DATA_TYPE_RESERVED}
-};
+const std::map<std::string, CheckerDataType> testDtypeMap
+    = {{"int8", CheckerDataType::DATA_TYPE_INT8},       {"int16", CheckerDataType::DATA_TYPE_INT16},
+       {"int32", CheckerDataType::DATA_TYPE_INT32},     {"fp16", CheckerDataType::DATA_TYPE_FP16},
+       {"fp32", CheckerDataType::DATA_TYPE_FP32},       {"int64", CheckerDataType::DATA_TYPE_INT64},
+       {"uint64", CheckerDataType::DATA_TYPE_UINT64},   {"uint8", CheckerDataType::DATA_TYPE_UINT8},
+       {"uint16", CheckerDataType::DATA_TYPE_UINT16},   {"uint32", CheckerDataType::DATA_TYPE_UINT32},
+       {"fp64", CheckerDataType::DATA_TYPE_FP64},       {"bfp16", CheckerDataType::DATA_TYPE_BFP16},
+       {"int128", CheckerDataType::DATA_TYPE_INT128},   {"hif8", CheckerDataType::DATA_TYPE_HIF8},
+       {"fp8e4m3", CheckerDataType::DATA_TYPE_FP8E4M3}, {"fp8e5m2", CheckerDataType::DATA_TYPE_FP8E5M2},
+       {"reserve", CheckerDataType::DATA_TYPE_RESERVED}};
 
-const std::map<std::string, CheckerDevType> testDevTypeMap = {
-    {"910", CheckerDevType::DEV_TYPE_910},
-    {"310p3", CheckerDevType::DEV_TYPE_310P3},
-    {"910b", CheckerDevType::DEV_TYPE_910B},
-    {"310p1", CheckerDevType::DEV_TYPE_310P1},
-    {"910_93", CheckerDevType::DEV_TYPE_910_93},
-    {"950", CheckerDevType::DEV_TYPE_950}
-};
+const std::map<std::string, CheckerDevType> testDevTypeMap
+    = {{"910", CheckerDevType::DEV_TYPE_910},       {"310p3", CheckerDevType::DEV_TYPE_310P3},
+       {"910b", CheckerDevType::DEV_TYPE_910B},     {"310p1", CheckerDevType::DEV_TYPE_310P1},
+       {"910_93", CheckerDevType::DEV_TYPE_910_93}, {"950", CheckerDevType::DEV_TYPE_950}};
 
-const std::map<std::string, CheckerOpType> testCmdTypeMap = {
-    {"invalid", CheckerOpType::INVALID},
-    {"broadcast" , CheckerOpType::BROADCAST},
-    {"allreduce", CheckerOpType::ALLREDUCE},
-    {"reduce", CheckerOpType::REDUCE},
-    {"send", CheckerOpType::SEND},
-    {"receive", CheckerOpType::RECEIVE},
-    {"allgather", CheckerOpType::ALLGATHER},
-    {"reducescatter", CheckerOpType::REDUCE_SCATTER},
-    {"alltoallv", CheckerOpType::ALLTOALLV},
-    {"alltoallvc", CheckerOpType::ALLTOALLVC},
-    {"alltoall", CheckerOpType::ALLTOALL},
-    {"scatter", CheckerOpType::SCATTER},
-    {"batchsendrecv", CheckerOpType::BATCH_SEND_RECV},
-    {"reducescatterv", CheckerOpType::REDUCE_SCATTER_V},
-    {"allgatherv", CheckerOpType::ALLGATHER_V}
-};
+const std::map<std::string, CheckerOpType> testCmdTypeMap
+    = {{"invalid", CheckerOpType::INVALID},
+       {"broadcast", CheckerOpType::BROADCAST},
+       {"allreduce", CheckerOpType::ALLREDUCE},
+       {"reduce", CheckerOpType::REDUCE},
+       {"send", CheckerOpType::SEND},
+       {"receive", CheckerOpType::RECEIVE},
+       {"allgather", CheckerOpType::ALLGATHER},
+       {"reducescatter", CheckerOpType::REDUCE_SCATTER},
+       {"alltoallv", CheckerOpType::ALLTOALLV},
+       {"alltoallvc", CheckerOpType::ALLTOALLVC},
+       {"alltoall", CheckerOpType::ALLTOALL},
+       {"scatter", CheckerOpType::SCATTER},
+       {"batchsendrecv", CheckerOpType::BATCH_SEND_RECV},
+       {"reducescatterv", CheckerOpType::REDUCE_SCATTER_V},
+       {"allgatherv", CheckerOpType::ALLGATHER_V}};
 
-const std::map<std::string, CheckerOpMode> testOpModeMap = {
-    {"opbase", CheckerOpMode::OPBASE},
-    {"offload", CheckerOpMode::OFFLOAD}
-};
+const std::map<std::string, CheckerOpMode> testOpModeMap
+    = {{"opbase", CheckerOpMode::OPBASE}, {"offload", CheckerOpMode::OFFLOAD}};
 
-long StrTolAlDigit(const char *optarg);
-CheckerDevType GetDevType(char *str);
-u64 ParseSize(const char *value);
-CheckerDataType GetHcclDtype(char *str);
-CheckerOpMode GetOpMode(char *str);
+long StrTolAlDigit(const char* optarg);
+CheckerDevType GetDevType(char* str);
+u64 ParseSize(const char* value);
+CheckerDataType GetHcclDtype(char* str);
+CheckerOpMode GetOpMode(char* str);
 int PrintHelp();
-int AsyParamTopo(TopoMeta &topoMeta);
+int AsyParamTopo(TopoMeta& topoMeta);
 
-class CheckerCmd
-{
+class CheckerCmd {
 public:
     CheckerCmd();
     virtual ~CheckerCmd();
@@ -114,15 +103,15 @@ public:
     static struct option longOpts[];
 
     int CheckCmdLine();
-    int ParseCmdLine(int argc, char *argv[]);
+    int ParseCmdLine(int argc, char* argv[]);
     int CheckDataCount();
     int ParseOpt(int opt);
-    CheckerReduceOp GetReduceOp(char *str);
-    CheckerOpType GetCmdType(char *str);
+    CheckerReduceOp GetReduceOp(char* str);
+    CheckerOpType GetCmdType(char* str);
     void PrintArgs(u64 count);
 
 public:
-    DataSize *data;
+    DataSize* data;
     struct SimpleParam uiParam;
     int superPodNum = 1;
     int serverNum = 1;
@@ -140,5 +129,5 @@ public:
     bool zeroCopyFlag = false;
 };
 
-}
+} // namespace checker
 #endif // _CHECKER_CMD_H_

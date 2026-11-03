@@ -11,6 +11,7 @@
 #ifndef HCCLV2_CCU_LOOP_MERGE_V3_H
 #define HCCLV2_CCU_LOOP_MERGE_V3_H
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <set>
@@ -22,143 +23,153 @@
 namespace HcclSim {
 namespace TaskGraphGeneratorV3 {
 
-struct CcuLoopCkeOpV3 {
-    uint16_t ckeId{INVALID_CCU_CKE};
-    uint16_t mask{0};
-};
+    struct CcuLoopCkeOpV3 {
+        uint16_t ckeId{INVALID_CCU_CKE};
+        uint16_t mask{0};
+    };
 
-class CcuLoopInstrV3 {
-public:
-    CcuLoopInstrV3() = default;
-    CcuLoopInstrV3(const CcuLoopInstrV3 &) = default;
-    CcuLoopInstrV3 &operator=(const CcuLoopInstrV3 &) = delete;
-    virtual ~CcuLoopInstrV3() = default;
+    // A6要求一个Loop内waitCKE不能重复使用同一个CKE ID。
+    // 有新特性 A6通过添加空泡以支持CKE复用，但是Checker暂时严格校验 zhangxin
+    class CcuLoopWaitCkeChecker {
+    public:
+        HcclResult Check(size_t instrIndex, CcuLoopCkeOpV3 waitOp);
 
-    virtual bool MemMerge(bool allowOverlap);
-    virtual std::shared_ptr<CcuLoopInstrV3> InstrMerge(
-        const std::vector<std::shared_ptr<CcuLoopInstrV3>> &instrs) const;
-    virtual std::set<uint16_t> GetUsedMS() const;
-    virtual std::set<uint16_t> GetUsedCKE() const;
-    virtual std::string Describe() const;
+    private:
+        std::set<uint16_t> usedWaitCkeIds_{};
+    };
 
-    void AddWait(uint16_t ckeId, uint16_t mask);
-    void AddSet(uint16_t ckeId, uint16_t mask);
+    class CcuLoopInstrV3 {
+    public:
+        CcuLoopInstrV3() = default;
+        CcuLoopInstrV3(const CcuLoopInstrV3&) = default;
+        CcuLoopInstrV3& operator=(const CcuLoopInstrV3&) = delete;
+        virtual ~CcuLoopInstrV3() = default;
 
-protected:
-    bool MergeMemSlices(std::vector<MemSlice> &slices, bool allowOverlap) const;
-    void CopyBaseTo(CcuLoopInstrV3 &dst) const;
-    static std::set<uint16_t> GetUsedCKEFromOps(const std::vector<CcuLoopCkeOpV3> &ops);
+        virtual bool MemMerge(bool allowOverlap);
+        virtual std::shared_ptr<CcuLoopInstrV3>
+        InstrMerge(const std::vector<std::shared_ptr<CcuLoopInstrV3>>& instrs) const;
+        virtual std::set<uint16_t> GetUsedMS() const;
+        virtual std::set<uint16_t> GetUsedCKE() const;
+        virtual std::string Describe() const;
 
-public:
-    RankId rankId{INVALID_RANK_ID};
-    uint32_t dieId{INVALID_DIE_ID};
-    uint16_t instrId{UINT16_MAX};
-    std::vector<CcuLoopCkeOpV3> waitOps{};
-    std::vector<CcuLoopCkeOpV3> setOps{};
-};
+        void AddWait(uint16_t ckeId, uint16_t mask);
+        void AddSet(uint16_t ckeId, uint16_t mask);
 
-class CcuLoopTransMemV3 : public CcuLoopInstrV3 {
-public:
-    CcuLoopTransMemV3() = default;
-    CcuLoopTransMemV3(const CcuLoopTransMemV3 &) = default;
-    CcuLoopTransMemV3 &operator=(const CcuLoopTransMemV3 &) = delete;
-    ~CcuLoopTransMemV3() override = default;
+    protected:
+        bool MergeMemSlices(std::vector<MemSlice>& slices, bool allowOverlap) const;
+        void CopyBaseTo(CcuLoopInstrV3& dst) const;
+        static std::set<uint16_t> GetUsedCKEFromOps(const std::vector<CcuLoopCkeOpV3>& ops);
 
-    bool MemMerge(bool allowOverlap) override;
-    std::shared_ptr<CcuLoopInstrV3> InstrMerge(
-        const std::vector<std::shared_ptr<CcuLoopInstrV3>> &instrs) const override;
-    std::set<uint16_t> GetUsedMS() const override;
-    std::set<uint16_t> GetUsedCKE() const override;
-    std::string Describe() const override;
+    public:
+        DeviceId deviceId{INVALID_DEVICE_ID};
+        uint32_t dieId{INVALID_DIE_ID};
+        uint16_t instrId{UINT16_MAX};
+        std::vector<CcuLoopCkeOpV3> waitOps{};
+        std::vector<CcuLoopCkeOpV3> setOps{};
+    };
 
-    std::vector<MemSlice> srcs{};
-    std::vector<MemSlice> dsts{};
-    std::vector<MemSlice> mergedSrcs{};
-    std::vector<MemSlice> mergedDsts{};
-    std::set<uint16_t> msIds{};
-};
+    class CcuLoopTransMemV3 : public CcuLoopInstrV3 {
+    public:
+        CcuLoopTransMemV3() = default;
+        CcuLoopTransMemV3(const CcuLoopTransMemV3&) = default;
+        CcuLoopTransMemV3& operator=(const CcuLoopTransMemV3&) = delete;
+        ~CcuLoopTransMemV3() override = default;
 
-class CcuLoopReduceV3 : public CcuLoopInstrV3 {
-public:
-    CcuLoopReduceV3() = default;
-    CcuLoopReduceV3(const CcuLoopReduceV3 &) = default;
-    CcuLoopReduceV3 &operator=(const CcuLoopReduceV3 &) = delete;
-    ~CcuLoopReduceV3() override = default;
+        bool MemMerge(bool allowOverlap) override;
+        std::shared_ptr<CcuLoopInstrV3>
+        InstrMerge(const std::vector<std::shared_ptr<CcuLoopInstrV3>>& instrs) const override;
+        std::set<uint16_t> GetUsedMS() const override;
+        std::set<uint16_t> GetUsedCKE() const override;
+        std::string Describe() const override;
 
-    bool MemMerge(bool allowOverlap) override;
-    std::shared_ptr<CcuLoopInstrV3> InstrMerge(
-        const std::vector<std::shared_ptr<CcuLoopInstrV3>> &instrs) const override;
-    std::set<uint16_t> GetUsedMS() const override;
-    std::set<uint16_t> GetUsedCKE() const override;
-    std::string Describe() const override;
+        std::vector<MemSlice> srcs{};
+        std::vector<MemSlice> dsts{};
+        std::vector<MemSlice> mergedSrcs{};
+        std::vector<MemSlice> mergedDsts{};
+        std::set<uint16_t> msIds{};
+    };
 
-    std::vector<std::vector<MemSlice>> srcs{};
-    std::vector<MemSlice> dsts{};
-    std::vector<std::vector<MemSlice>> mergedSrcs{};
-    std::vector<MemSlice> mergedDsts{};
-    std::set<uint16_t> msIds{};
-    HcclDataType dataType{HCCL_DATA_TYPE_RESERVED};
-    HcclReduceOp reduceOp{HCCL_REDUCE_RESERVED};
-};
+    class CcuLoopReduceV3 : public CcuLoopInstrV3 {
+    public:
+        CcuLoopReduceV3() = default;
+        CcuLoopReduceV3(const CcuLoopReduceV3&) = default;
+        CcuLoopReduceV3& operator=(const CcuLoopReduceV3&) = delete;
+        ~CcuLoopReduceV3() override = default;
 
-class CcuLoopClearCkeV3 : public CcuLoopInstrV3 {
-public:
-    CcuLoopClearCkeV3() = default;
-    CcuLoopClearCkeV3(const CcuLoopClearCkeV3 &) = default;
-    CcuLoopClearCkeV3 &operator=(const CcuLoopClearCkeV3 &) = delete;
-    ~CcuLoopClearCkeV3() override = default;
+        bool MemMerge(bool allowOverlap) override;
+        std::shared_ptr<CcuLoopInstrV3>
+        InstrMerge(const std::vector<std::shared_ptr<CcuLoopInstrV3>>& instrs) const override;
+        std::set<uint16_t> GetUsedMS() const override;
+        std::set<uint16_t> GetUsedCKE() const override;
+        std::string Describe() const override;
 
-    std::shared_ptr<CcuLoopInstrV3> InstrMerge(
-        const std::vector<std::shared_ptr<CcuLoopInstrV3>> &instrs) const override;
-    std::set<uint16_t> GetUsedCKE() const override;
-    std::string Describe() const override;
+        std::vector<std::vector<MemSlice>> srcs{};
+        std::vector<MemSlice> dsts{};
+        std::vector<std::vector<MemSlice>> mergedSrcs{};
+        std::vector<MemSlice> mergedDsts{};
+        std::set<uint16_t> msIds{};
+        HcclDataType dataType{HCCL_DATA_TYPE_RESERVED};
+        HcclReduceOp reduceOp{HCCL_REDUCE_RESERVED};
+    };
 
-    uint16_t clearCKEId{INVALID_CCU_CKE};
-    uint16_t clearMask{0};
-    uint16_t clearType{0};
-};
+    class CcuLoopClearCkeV3 : public CcuLoopInstrV3 {
+    public:
+        CcuLoopClearCkeV3() = default;
+        CcuLoopClearCkeV3(const CcuLoopClearCkeV3&) = default;
+        CcuLoopClearCkeV3& operator=(const CcuLoopClearCkeV3&) = delete;
+        ~CcuLoopClearCkeV3() override = default;
 
-struct CcuLoopInstrsV3 {
-    std::vector<std::shared_ptr<CcuLoopInstrV3>> instrs{};
-    uint16_t startInstrId{UINT16_MAX};
-    uint16_t endInstrId{UINT16_MAX};
-    uint64_t loopCnt{UINT64_MAX};
+        std::shared_ptr<CcuLoopInstrV3>
+        InstrMerge(const std::vector<std::shared_ptr<CcuLoopInstrV3>>& instrs) const override;
+        std::set<uint16_t> GetUsedCKE() const override;
+        std::string Describe() const override;
 
-    bool MemMerge(bool allowOverlap);
-    std::set<uint16_t> GetUsedMS() const;
-    std::set<uint16_t> GetUsedCKE() const;
-};
+        uint16_t clearCKEId{INVALID_CCU_CKE};
+        uint16_t clearMask{0};
+        uint16_t clearType{0};
+    };
 
-struct CcuLoopV3 {
-    std::vector<CcuLoopInstrsV3> loopExpands{};
-    uint64_t expandCnt{UINT64_MAX};
-    uint16_t instrId{UINT16_MAX};
+    struct CcuLoopInstrsV3 {
+        std::vector<std::shared_ptr<CcuLoopInstrV3>> instrs{};
+        uint16_t startInstrId{UINT16_MAX};
+        uint16_t endInstrId{UINT16_MAX};
+        uint64_t loopCnt{UINT64_MAX};
 
-    bool LoopIterationMerge();
-    bool LoopExpandMerge();
-    bool CheckResourceConflict() const;
-};
+        bool MemMerge(bool allowOverlap);
+        std::set<uint16_t> GetUsedMS() const;
+        std::set<uint16_t> GetUsedCKE() const;
+    };
 
-template <typename T>
-std::shared_ptr<T> EnsureCcuLoopInstr(std::shared_ptr<CcuLoopInstrV3> &instrInLoop, RankId rankId,
-    uint32_t dieId, uint16_t instrId)
-{
-    if (instrInLoop == nullptr) {
-        auto newInstr = std::make_shared<T>();
-        if (newInstr == nullptr) {
-            return nullptr;
+    struct CcuLoopV3 {
+        std::vector<CcuLoopInstrsV3> loopExpands{};
+        uint64_t expandCnt{UINT64_MAX};
+        uint16_t instrId{UINT16_MAX};
+
+        bool LoopIterationMerge();
+        bool LoopExpandMerge();
+        bool CheckResourceConflict() const;
+    };
+
+    template <typename T>
+    std::shared_ptr<T> EnsureCcuLoopInstr(
+        std::shared_ptr<CcuLoopInstrV3>& instrInLoop, DeviceId deviceId, uint32_t dieId, uint16_t instrId)
+    {
+        if (instrInLoop == nullptr) {
+            auto newInstr = std::make_shared<T>();
+            if (newInstr == nullptr) {
+                return nullptr;
+            }
+            newInstr->deviceId = deviceId;
+            newInstr->dieId = dieId;
+            newInstr->instrId = instrId;
+            instrInLoop = newInstr;
+            return newInstr;
         }
-        newInstr->rankId = rankId;
-        newInstr->dieId = dieId;
-        newInstr->instrId = instrId;
-        instrInLoop = newInstr;
-        return newInstr;
+        return std::dynamic_pointer_cast<T>(instrInLoop);
     }
-    return std::dynamic_pointer_cast<T>(instrInLoop);
-}
 
-HcclResult EmitMergedLoopInstrsV3(CcuGraphStateV3 *curCcuTask, uint32_t queId,
-    const CcuLoopInstrsV3 &mergedInstrs, bool &isContinue);
+    HcclResult EmitMergedLoopInstrsV3(
+        CcuGraphStateV3* curCcuTask, uint32_t queId, const CcuLoopInstrsV3& mergedInstrs, bool& isContinue);
 
 } // namespace TaskGraphGeneratorV3
 } // namespace HcclSim

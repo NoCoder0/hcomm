@@ -32,20 +32,17 @@ using namespace Hccl;
 
 class LiteResTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "LiteResTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "LiteResTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "LiteResTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "LiteResTest TearDown" << std::endl; }
 
     virtual void SetUp()
     {
         MOCKER(HrtGetDeviceType).stubs().will(returnValue((DevType)DevType::DEV_TYPE_910A2));
-        MOCKER_CPP(&RtsqBase::QuerySqBaseAddr).stubs().with(mockcpp::any()).will(returnValue(reinterpret_cast<u64>(&mockSq)));
+        MOCKER_CPP(&RtsqBase::QuerySqBaseAddr)
+            .stubs()
+            .with(mockcpp::any())
+            .will(returnValue(reinterpret_cast<u64>(&mockSq)));
         MOCKER_CPP(&RtsqBase::QuerySqStatusByType).stubs().with(mockcpp::any()).will(returnValue(static_cast<u32>(0)));
         MOCKER_CPP(&RtsqBase::ConfigSqStatusByType).stubs();
         std::cout << "A Test case in LiteResTest SetUp" << std::endl;
@@ -57,13 +54,13 @@ protected:
         std::cout << "A Test case in LiteResTest TearDown" << std::endl;
     }
     u32 fakeStreamId = 0;
-    u32 fakeSqId     = 0;
+    u32 fakeSqId = 0;
     u32 fakedevPhyId = 0;
 
     u32 fakeNotifyId = 1;
     u32 fakeNotifyDevPhyId = 1;
 
-    u8  mockSq[AC_SQE_SIZE * AC_SQE_MAX_CNT]{0};
+    u8 mockSq[AC_SQE_SIZE * AC_SQE_MAX_CNT]{0};
 };
 
 TEST_F(LiteResTest, test_stream_lite)
@@ -76,12 +73,14 @@ TEST_F(LiteResTest, test_stream_lite)
     liteBinaryStream.Dump(uniqueId);
 
     StreamLite stream(uniqueId);
-    RtsqA5     rtsq(fakedevPhyId, fakeStreamId, fakeSqId);
-    stream.rtsq = std::make_unique<RtsqA5>(rtsq);
-    MOCKER_CPP_VIRTUAL(rtsq, &RtsqA5::SdmaCopy).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any());
+    stream.rtsq = std::make_unique<RtsqA5>(fakedevPhyId, fakeStreamId, fakeSqId);
+    RtsqA5& rtsq = *static_cast<RtsqA5*>(stream.rtsq.get());
+    MOCKER_CPP_VIRTUAL(rtsq, &RtsqA5::SdmaCopy)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any());
 
     EXPECT_EQ(fakeStreamId, stream.GetId());
-    EXPECT_EQ(fakeSqId,     stream.GetSqId());
+    EXPECT_EQ(fakeSqId, stream.GetSqId());
     EXPECT_EQ(fakedevPhyId, stream.GetDevPhyId());
     stream.Describe();
 }
@@ -151,7 +150,6 @@ TEST_F(LiteResTest, test_RmaBufSliceLite)
     lite.Describe();
 }
 
-
 TEST_F(LiteResTest, test_RmtRmaBufSliceLite)
 {
     RmtRmaBufSliceLite lite(1, 1, 1, 1, 1, UINT32_MAX);
@@ -167,9 +165,9 @@ TEST_F(LiteResTest, test_RmaConnLite)
     RmaConnLite rdma(1);
     EXPECT_EQ(1, rdma.GetQpVa());
 
-    UbJettyLiteId   id(1, 1, 1);
+    UbJettyLiteId id(1, 1, 1);
     UbJettyLiteAttr attr(1, 1, 1, 1, false);
-    Eid           rmtEid;
+    Eid rmtEid;
     rmtEid.raw[0] = 1;
 
     RmaConnLite ub(id, attr, rmtEid);
@@ -185,25 +183,25 @@ TEST_F(LiteResTest, test_UBConnLite_Read)
     u8 sqVa[1024];
     u64 sqVAaddr = reinterpret_cast<u64>(sqVa);
     UbJettyLiteAttr attr(1, sqVAaddr, 4096, 1, false);
-    Eid           rmtEid;
+    Eid rmtEid;
     rmtEid.raw[0] = 1;
- 
+
     UbConnLite ubConn(id, attr, rmtEid);
- 
+
     EXPECT_EQ(1, ubConn.GetUbJettyLiteId().GetDieId());
     EXPECT_EQ(1, ubConn.GetUbJettyLiteAttr().dbAddr_);
     EXPECT_EQ(1, ubConn.GetRmtEid().raw[0]);
     MOCKER_CPP(&RtsqBase::QuerySqHead).stubs().with(mockcpp::any()).will(returnValue(1));
     MOCKER_CPP(&RtsqBase::QuerySqTail).stubs().with(mockcpp::any()).will(returnValue(1));
- 
+
     RmaBufSliceLite loc(0x1111, 64, 1, 1);
     RmtRmaBufSliceLite rmt(0x2222, 64, 1, 1, 1, UINT32_MAX);
     SqeConfigLite cfg;
     ConnLiteOperationOut out;
-    u8 data[512]; 
+    u8 data[512];
     out.pi = 0;
     out.data = data;
-    UdmaSqeWrite *sqe  = (UdmaSqeWrite *)out.data;
+    UdmaSqeWrite* sqe = (UdmaSqeWrite*)out.data;
     out.dataSize = 64;
     rmt.GetTokenValue();
     std::vector<char> uniqueId{};
@@ -213,11 +211,11 @@ TEST_F(LiteResTest, test_UBConnLite_Read)
 
 TEST_F(LiteResTest, test_UBConnLite_ReadReduce)
 {
-    UbJettyLiteId   id(1, 1, 1);
-    u8              sqVa[1024];
-    u64             sqVAaddr = reinterpret_cast<u64>(sqVa);
+    UbJettyLiteId id(1, 1, 1);
+    u8 sqVa[1024];
+    u64 sqVAaddr = reinterpret_cast<u64>(sqVa);
     UbJettyLiteAttr attr(1, sqVAaddr, 4096, 1, false);
-    Eid           rmtEid;
+    Eid rmtEid;
     rmtEid.raw[0] = 1;
 
     UbConnLite ubConn(id, attr, rmtEid);
@@ -228,19 +226,19 @@ TEST_F(LiteResTest, test_UBConnLite_ReadReduce)
     MOCKER_CPP(&RtsqBase::QuerySqHead).stubs().with(mockcpp::any()).will(returnValue(1));
     MOCKER_CPP(&RtsqBase::QuerySqTail).stubs().with(mockcpp::any()).will(returnValue(1));
 
-    RmaBufSliceLite      loc(0x1111, 64, 1, 1);
-    RmtRmaBufSliceLite   rmt(0x2222, 64, 1, 1, 1, UINT32_MAX);
-    RmtRmaBufSliceLite   notify(0x2222, 64, 1, 1, 1, UINT32_MAX);
-    u64                  notifyData(1);
-    SqeConfigLite        cfg;
+    RmaBufSliceLite loc(0x1111, 64, 1, 1);
+    RmtRmaBufSliceLite rmt(0x2222, 64, 1, 1, 1, UINT32_MAX);
+    RmtRmaBufSliceLite notify(0x2222, 64, 1, 1, 1, UINT32_MAX);
+    u64 notifyData(1);
+    SqeConfigLite cfg;
     ConnLiteOperationOut out;
-    u8                   data[512];
-    out.pi            = 0;
-    out.data          = data;
-    UdmaSqeWrite *sqe = (UdmaSqeWrite *)out.data;
-    out.dataSize      = 64;
+    u8 data[512];
+    out.pi = 0;
+    out.data = data;
+    UdmaSqeWrite* sqe = (UdmaSqeWrite*)out.data;
+    out.dataSize = 64;
     rmt.GetTokenValue();
-    ReduceIn            reduceIn(DataType::INT8, ReduceOp::SUM);
+    ReduceIn reduceIn(DataType::INT8, ReduceOp::SUM);
     std::vector<char> uniqueId{};
     StreamLite stream(uniqueId);
     EXPECT_NO_THROW(ubConn.ReadReduce(reduceIn, loc, rmt, stream, cfg, out));
@@ -252,25 +250,25 @@ TEST_F(LiteResTest, test_UBConnLite)
     u8 sqVa[1024];
     u64 sqVAaddr = reinterpret_cast<u64>(sqVa);
     UbJettyLiteAttr attr(1, sqVAaddr, 4096, 1, false);
-    Eid           rmtEid;
+    Eid rmtEid;
     rmtEid.raw[0] = 1;
- 
+
     UbConnLite ubConn(id, attr, rmtEid);
- 
+
     EXPECT_EQ(1, ubConn.GetUbJettyLiteId().GetDieId());
     EXPECT_EQ(1, ubConn.GetUbJettyLiteAttr().dbAddr_);
     EXPECT_EQ(1, ubConn.GetRmtEid().raw[0]);
     MOCKER_CPP(&RtsqBase::QuerySqHead).stubs().with(mockcpp::any()).will(returnValue(1));
     MOCKER_CPP(&RtsqBase::QuerySqTail).stubs().with(mockcpp::any()).will(returnValue(1));
- 
+
     RmaBufSliceLite loc(0x1111, 64, 1, 1);
     RmtRmaBufSliceLite rmt(0x2222, 64, 1, 1, 1, UINT32_MAX);
     SqeConfigLite cfg;
     ConnLiteOperationOut out;
-    u8 data[512]; 
+    u8 data[512];
     out.pi = 0;
     out.data = data;
-    UdmaSqeWrite *sqe  = (UdmaSqeWrite *)out.data;
+    UdmaSqeWrite* sqe = (UdmaSqeWrite*)out.data;
     out.dataSize = 64;
     rmt.GetTokenValue();
     std::vector<char> uniqueId{};
@@ -284,7 +282,7 @@ TEST_F(LiteResTest, test_UBConnLite_WriteReduceWithNotify)
     u8 sqVa[1024];
     u64 sqVAaddr = reinterpret_cast<u64>(sqVa);
     UbJettyLiteAttr attr(1, sqVAaddr, 4096, 1, false);
-    Eid           rmtEid;
+    Eid rmtEid;
     rmtEid.raw[0] = 1;
 
     UbConnLite ubConn(id, attr, rmtEid);
@@ -302,21 +300,28 @@ TEST_F(LiteResTest, test_UBConnLite_WriteReduceWithNotify)
     u64 notifyData(1);
     SqeConfigLite cfg;
     ConnLiteOperationOut out;
-    u8 data[512]; 
+    u8 data[512];
     out.pi = 0;
     out.data = data;
-    UdmaSqeWrite *sqe  = (UdmaSqeWrite *)out.data;
+    UdmaSqeWrite* sqe = (UdmaSqeWrite*)out.data;
     out.dataSize = 64;
     rmt.GetTokenValue();
     std::vector<char> uniqueId{};
     StreamLite stream(uniqueId);
-    EXPECT_NO_THROW(ubConn.WriteReduceWithNotify(DataType::INT8, ReduceOp::SUM, loc, rmt, cfg, stream, out, notify, notifyData));
-    EXPECT_NO_THROW(ubConn.WriteReduceWithNotify(DataType::INT16, ReduceOp::MAX, loc, rmt, cfg, stream, out, notify, notifyData));
-    EXPECT_NO_THROW(ubConn.WriteReduceWithNotify(DataType::INT32, ReduceOp::MIN, loc, rmt, cfg, stream, out, notify, notifyData));
-    EXPECT_NO_THROW(ubConn.WriteReduceWithNotify(DataType::FP16, ReduceOp::SUM, loc, rmt, cfg, stream, out, notify, notifyData));
-    EXPECT_NO_THROW(ubConn.WriteReduceWithNotify(DataType::FP32, ReduceOp::MAX, loc, rmt, cfg, stream, out, notify, notifyData));
-    EXPECT_NO_THROW(ubConn.WriteReduceWithNotify(DataType::UINT8, ReduceOp::MAX, loc, rmt, cfg, stream, out, notify, notifyData));
-    EXPECT_NO_THROW(ubConn.WriteReduceWithNotify(DataType::UINT32, ReduceOp::MAX, loc, rmt, cfg, stream, out, notify, notifyData));
+    EXPECT_NO_THROW(
+        ubConn.WriteReduceWithNotify(DataType::INT8, ReduceOp::SUM, loc, rmt, cfg, stream, out, notify, notifyData));
+    EXPECT_NO_THROW(
+        ubConn.WriteReduceWithNotify(DataType::INT16, ReduceOp::MAX, loc, rmt, cfg, stream, out, notify, notifyData));
+    EXPECT_NO_THROW(
+        ubConn.WriteReduceWithNotify(DataType::INT32, ReduceOp::MIN, loc, rmt, cfg, stream, out, notify, notifyData));
+    EXPECT_NO_THROW(
+        ubConn.WriteReduceWithNotify(DataType::FP16, ReduceOp::SUM, loc, rmt, cfg, stream, out, notify, notifyData));
+    EXPECT_NO_THROW(
+        ubConn.WriteReduceWithNotify(DataType::FP32, ReduceOp::MAX, loc, rmt, cfg, stream, out, notify, notifyData));
+    EXPECT_NO_THROW(
+        ubConn.WriteReduceWithNotify(DataType::UINT8, ReduceOp::MAX, loc, rmt, cfg, stream, out, notify, notifyData));
+    EXPECT_NO_THROW(
+        ubConn.WriteReduceWithNotify(DataType::UINT32, ReduceOp::MAX, loc, rmt, cfg, stream, out, notify, notifyData));
 }
 
 TEST_F(LiteResTest, test_UBConnLite_WriteWithNotify)
@@ -325,7 +330,7 @@ TEST_F(LiteResTest, test_UBConnLite_WriteWithNotify)
     u8 sqVa[1024];
     u64 sqVAaddr = reinterpret_cast<u64>(sqVa);
     UbJettyLiteAttr attr(1, sqVAaddr, 4096, 1, false);
-    Eid           rmtEid;
+    Eid rmtEid;
     rmtEid.raw[0] = 1;
 
     UbConnLite ubConn(id, attr, rmtEid);
@@ -343,10 +348,10 @@ TEST_F(LiteResTest, test_UBConnLite_WriteWithNotify)
     u64 notifyData(1);
     SqeConfigLite cfg;
     ConnLiteOperationOut out;
-    u8 data[512]; 
+    u8 data[512];
     out.pi = 0;
     out.data = data;
-    UdmaSqeWrite *sqe  = (UdmaSqeWrite *)out.data;
+    UdmaSqeWrite* sqe = (UdmaSqeWrite*)out.data;
     out.dataSize = 64;
     rmt.GetTokenValue();
     std::vector<char> uniqueId{};
@@ -354,14 +359,13 @@ TEST_F(LiteResTest, test_UBConnLite_WriteWithNotify)
     EXPECT_NO_THROW(ubConn.WriteWithNotify(loc, rmt, cfg, out, notify, stream, notifyData));
 }
 
-
 TEST_F(LiteResTest, test_UBConnLite_InlineWrite)
 {
     UbJettyLiteId id(1, 1, 1);
     u8 sqVa[1024];
     u64 sqVAaddr = reinterpret_cast<u64>(sqVa);
     UbJettyLiteAttr attr(1, sqVAaddr, 4096, 1, false);
-    Eid           rmtEid;
+    Eid rmtEid;
     rmtEid.raw[0] = 1;
 
     UbConnLite ubConn(id, attr, rmtEid);
@@ -378,13 +382,13 @@ TEST_F(LiteResTest, test_UBConnLite_InlineWrite)
     u64 notifyData(1);
     SqeConfigLite cfg;
     ConnLiteOperationOut out;
-    u8 data[512]; 
+    u8 data[512];
     out.pi = 0;
     out.data = data;
-    UdmaSqeWrite *sqe  = (UdmaSqeWrite *)out.data;
+    UdmaSqeWrite* sqe = (UdmaSqeWrite*)out.data;
     out.dataSize = 64;
     rmt.GetTokenValue();
-    u8 write_data(1); 
+    u8 write_data(1);
     u16 write_dsize(1);
     std::vector<char> uniqueId{};
     StreamLite stream(uniqueId);
@@ -399,19 +403,19 @@ TEST_F(LiteResTest, test_RmaBufSliceLite_Describe)
 
 TEST_F(LiteResTest, test_UBConnLite_BatchOneSidedRead)
 {
-    UbJettyLiteId   id(1, 1, 1);
-    u8              sqVa[1024];
-    u64             sqVAaddr = reinterpret_cast<u64>(sqVa);
+    UbJettyLiteId id(1, 1, 1);
+    u8 sqVa[1024];
+    u64 sqVAaddr = reinterpret_cast<u64>(sqVa);
     UbJettyLiteAttr attr(1, sqVAaddr, 4, 1, false);
-    Eid           rmtEid;
+    Eid rmtEid;
     rmtEid.raw[0] = 1;
 
     UbConnLite ubConn(id, attr, rmtEid);
 
-    u32 dataSize = 400*1024*1024;
-    RmaBufSliceLite      loc(0x1111, dataSize, 1, 1);
-    RmtRmaBufSliceLite   rmt(0x2222, dataSize, 1, 1, 1);
-    SqeConfigLite        cfg;
+    u32 dataSize = 400 * 1024 * 1024;
+    RmaBufSliceLite loc(0x1111, dataSize, 1, 1);
+    RmtRmaBufSliceLite rmt(0x2222, dataSize, 1, 1, 1);
+    SqeConfigLite cfg;
     ConnLiteOperationOut out;
     std::vector<char> uniqueId{};
     StreamLite stream(uniqueId);
@@ -422,19 +426,19 @@ TEST_F(LiteResTest, test_UBConnLite_BatchOneSidedRead)
 
 TEST_F(LiteResTest, test_UBConnLite_BatchOneSidedWrite)
 {
-    UbJettyLiteId   id(1, 1, 1);
-    u8              sqVa[1024];
-    u64             sqVAaddr = reinterpret_cast<u64>(sqVa);
+    UbJettyLiteId id(1, 1, 1);
+    u8 sqVa[1024];
+    u64 sqVAaddr = reinterpret_cast<u64>(sqVa);
     UbJettyLiteAttr attr(1, sqVAaddr, 4, 1, false);
-    Eid           rmtEid;
+    Eid rmtEid;
     rmtEid.raw[0] = 1;
 
     UbConnLite ubConn(id, attr, rmtEid);
 
-    u32 dataSize = 400*1024*1024;
-    RmaBufSliceLite      loc(0x1111, dataSize, 1, 1);
-    RmtRmaBufSliceLite   rmt(0x2222, dataSize, 1, 1, 1);
-    SqeConfigLite        cfg;
+    u32 dataSize = 400 * 1024 * 1024;
+    RmaBufSliceLite loc(0x1111, dataSize, 1, 1);
+    RmtRmaBufSliceLite rmt(0x2222, dataSize, 1, 1, 1);
+    SqeConfigLite cfg;
     ConnLiteOperationOut out;
     std::vector<char> uniqueId{};
     StreamLite stream(uniqueId);

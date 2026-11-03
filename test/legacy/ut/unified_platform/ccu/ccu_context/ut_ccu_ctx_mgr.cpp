@@ -37,22 +37,14 @@
 
 #include "log.h"
 
-
 using namespace Hccl;
 using namespace CcuRep;
 
-
 class CcuContextManagerTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CcuContextManagerTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CcuContextManagerTest tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CcuContextManagerTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CcuContextManagerTest tests tear down." << std::endl; }
 
     virtual void SetUp()
     {
@@ -68,16 +60,16 @@ protected:
     }
 };
 
-HcclResult CtxMgrAllocCkeStub(
-    const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo> &ckeInfos)
+HcclResult
+CtxMgrAllocCkeStub(const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo>& ckeInfos)
 {
     ckeInfos.clear();
     ResInfo ckeInfo(0, num);
     ckeInfos.push_back(ckeInfo);
     return HcclResult::HCCL_SUCCESS;
 }
-HcclResult CtxMgrAllocXnStub(
-    const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo> &xnInfos)
+HcclResult
+CtxMgrAllocXnStub(const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo>& xnInfos)
 {
     xnInfos.clear();
     ResInfo xnInfo(0, num);
@@ -85,15 +77,13 @@ HcclResult CtxMgrAllocXnStub(
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CtxMgrAllocResHandleStub(
-    const int32_t deviceLogicId, const CcuResReq resReq, CcuResHandle &handle)
+HcclResult CtxMgrAllocResHandleStub(const int32_t deviceLogicId, const CcuResReq resReq, CcuResHandle& handle)
 {
     handle = reinterpret_cast<CcuResHandle>(0x100);
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CtxMgrGetResourceStub(
-    const int32_t deviceLogicId, const CcuResHandle handle, CcuResRepository &ccuResRepo)
+HcclResult CtxMgrGetResourceStub(const int32_t deviceLogicId, const CcuResHandle handle, CcuResRepository& ccuResRepo)
 {
     ccuResRepo.blockMs[0].resize(1);
     ccuResRepo.blockMs[0][0].startId = 0;
@@ -107,6 +97,10 @@ HcclResult CtxMgrGetResourceStub(
     ccuResRepo.blockCke[0][0].startId = 0;
     ccuResRepo.blockCke[0][0].num = 128;
 
+    ccuResRepo.legacyBlockCke[0].resize(1);
+    ccuResRepo.legacyBlockCke[0][0].startId = 0;
+    ccuResRepo.legacyBlockCke[0][0].num = 128;
+
     ccuResRepo.blockLoopEngine[0].resize(1);
     ccuResRepo.blockLoopEngine[0][0].startId = 0;
     ccuResRepo.blockLoopEngine[0][0].num = 128;
@@ -115,9 +109,21 @@ HcclResult CtxMgrGetResourceStub(
     ccuResRepo.gsa[0][0].startId = 0;
     ccuResRepo.gsa[0][0].num = 48;
 
+    ccuResRepo.blockGsa[0].resize(1);
+    ccuResRepo.blockGsa[0][0].startId = 0;
+    ccuResRepo.blockGsa[0][0].num = 48;
+
     ccuResRepo.xn[0].resize(1);
     ccuResRepo.xn[0][0].startId = 0;
     ccuResRepo.xn[0][0].num = 1248;
+
+    ccuResRepo.blockXn[0].resize(1);
+    ccuResRepo.blockXn[0][0].startId = 0;
+    ccuResRepo.blockXn[0][0].num = 1248;
+
+    ccuResRepo.legacyBlockXn[0].resize(1);
+    ccuResRepo.legacyBlockXn[0][0].startId = 0;
+    ccuResRepo.legacyBlockXn[0][0].num = 1248;
 
     ccuResRepo.mission.mission[0].resize(1);
     ccuResRepo.mission.mission[0][0].startId = 0;
@@ -126,34 +132,29 @@ HcclResult CtxMgrGetResourceStub(
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CtxMgrReleaseResHandleStub(
-    const int32_t deviceLogicId, const CcuResHandle handle)
+HcclResult CtxMgrReleaseResHandleStub(const int32_t deviceLogicId, const CcuResHandle handle)
 {
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CtxMgrAllocInsStub(
-    const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, ResInfo &insInfo)
+HcclResult CtxMgrAllocInsStub(const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, ResInfo& insInfo)
 {
     insInfo = ResInfo(0, num);
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CtxMgrReleaseInsStub(
-    const int32_t deviceLogicId, const uint8_t dieId, ResInfo &insInfo)
+HcclResult CtxMgrReleaseInsStub(const int32_t deviceLogicId, const uint8_t dieId, ResInfo& insInfo)
 {
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CtxMgrGetMissionKeyStub(
-    const int32_t deviceLogicId, const uint8_t dieId, uint32_t &missionKey)
+HcclResult CtxMgrGetMissionKeyStub(const int32_t deviceLogicId, const uint8_t dieId, uint32_t& missionKey)
 {
     missionKey = 0xFF;
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CtxMgrGetInstructionNumStub(
-    const int32_t deviceLogicId, const uint8_t dieId, uint32_t &instrNum)
+HcclResult CtxMgrGetInstructionNumStub(const int32_t deviceLogicId, const uint8_t dieId, uint32_t& instrNum)
 {
     instrNum = 0xFF;
     return HcclResult::HCCL_SUCCESS;
@@ -170,8 +171,12 @@ TEST_F(CcuContextManagerTest, AGTest)
     MOCKER_CPP(&CcuConnection::ReleaseConnRes).stubs().will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
     MOCKER(CcuDeviceManager::AllocCke).stubs().will(invoke(CtxMgrAllocCkeStub));
     MOCKER(CcuDeviceManager::AllocXn).stubs().will(invoke(CtxMgrAllocXnStub));
-    MOCKER_CPP(&CcuDeviceManager::GetCcuResourceSpaceTokenInfoForLocal).stubs().will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
-    MOCKER_CPP(&CcuDeviceManager::GetCcuResourceSpaceTokenInfo).stubs().will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
+    MOCKER_CPP(&CcuDeviceManager::GetCcuResourceSpaceTokenInfoForLocal)
+        .stubs()
+        .will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
+    MOCKER_CPP(&CcuDeviceManager::GetCcuResourceSpaceTokenInfo)
+        .stubs()
+        .will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
     MOCKER(CcuDeviceManager::AllocResHandle).stubs().will(invoke(CtxMgrAllocResHandleStub));
     MOCKER(CcuDeviceManager::GetResource).stubs().will(invoke(CtxMgrGetResourceStub));
     MOCKER(CcuDeviceManager::ReleaseResHandle).stubs().will(invoke(CtxMgrReleaseResHandleStub));
@@ -184,11 +189,11 @@ TEST_F(CcuContextManagerTest, AGTest)
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
         .will(returnValue(HcclResult::HCCL_SUCCESS));
-    
+
     MOCKER(&CcuDeviceManager::GetXnBaseAddr)
-            .stubs()
-            .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
-            .will(returnValue(HcclResult::HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(returnValue(HcclResult::HCCL_SUCCESS));
 
     MOCKER(&CcuDeviceManager::GetCcuResourceSpaceTokenInfo)
         .stubs()
@@ -201,7 +206,7 @@ TEST_F(CcuContextManagerTest, AGTest)
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     LinkData linkData(portType, 0, 1, 0, 1);
     CcuChannelInfo channelInfo;
-    vector<CcuJetty *> ccuJettys;
+    vector<CcuJetty*> ccuJettys;
     std::vector<uint32_t> cntCke = {0, 1, 2};
     uint32_t rankId = 0;
     uint32_t rankSize = 8;
@@ -210,10 +215,11 @@ TEST_F(CcuContextManagerTest, AGTest)
     std::vector<CcuTransport*> transports;
     for (int i = 0; i < rankSize; i++) {
         if (i != rankId) {
-            auto c = std::make_unique<CcuConnection>(linkData.GetLocalAddr(), linkData.GetRemoteAddr(), channelInfo, ccuJettys);
+            auto c = std::make_unique<CcuConnection>(
+                linkData.GetLocalAddr(), linkData.GetRemoteAddr(), channelInfo, ccuJettys);
             CcuTransport::CclBufferInfo locCclBufInfo;
             std::shared_ptr<CcuTransport> t = std::make_shared<CcuTransport>(nullptr, std::move(c), locCclBufInfo);
-            t->AppendRes(3,3);
+            t->AppendRes(3, 3);
             t->SetCntCke(cntCke);
             t->rmtRes.cntCkes = {128, 129, 130};
             t->rmtRes.xns = {1024 + rankId, 1024 + rankSize + rankId, 1024 + rankSize * 2 + rankId};
@@ -272,20 +278,36 @@ TEST_F(CcuContextManagerTest, GetCtx_ThreadSafety)
     ctxMgr.ctxGroupMap_.clear();
 }
 
-HcclResult CtxMgrGetResourceSharedResStub(
-    const int32_t deviceLogicId, const CcuResHandle handle, CcuResRepository &ccuResRepo)
+HcclResult
+CtxMgrGetResourceSharedResStub(const int32_t deviceLogicId, const CcuResHandle handle, CcuResRepository& ccuResRepo)
 {
     ccuResRepo.cke[0].resize(1);
     ccuResRepo.cke[0][0].startId = 0;
     ccuResRepo.cke[0][0].num = 3;
 
+    ccuResRepo.legacyBlockCke[0].resize(1);
+    ccuResRepo.legacyBlockCke[0][0].startId = 0;
+    ccuResRepo.legacyBlockCke[0][0].num = 3;
+
     ccuResRepo.xn[0].resize(1);
     ccuResRepo.xn[0][0].startId = 0;
     ccuResRepo.xn[0][0].num = 45;
 
+    ccuResRepo.blockXn[0].resize(1);
+    ccuResRepo.blockXn[0][0].startId = 0;
+    ccuResRepo.blockXn[0][0].num = 45;
+
+    ccuResRepo.legacyBlockXn[0].resize(1);
+    ccuResRepo.legacyBlockXn[0][0].startId = 0;
+    ccuResRepo.legacyBlockXn[0][0].num = 45;
+
     ccuResRepo.gsa[0].resize(1);
     ccuResRepo.gsa[0][0].startId = 0;
     ccuResRepo.gsa[0][0].num = 1;
+
+    ccuResRepo.blockGsa[0].resize(1);
+    ccuResRepo.blockGsa[0][0].startId = 0;
+    ccuResRepo.blockGsa[0][0].num = 3;
 
     ccuResRepo.mission.mission[0].resize(1);
     ccuResRepo.mission.mission[0][0].startId = 0;
@@ -303,8 +325,12 @@ TEST_F(CcuContextManagerTest, TestSharedRes)
     MOCKER_CPP(&CcuTransportGroup::Destroy).stubs();
     MOCKER_CPP(&CcuTransport::ReleaseTransRes).stubs();
     MOCKER_CPP(&CcuConnection::ReleaseConnRes).stubs().will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
-    MOCKER_CPP(&CcuDeviceManager::GetCcuResourceSpaceTokenInfoForLocal).stubs().will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
-    MOCKER_CPP(&CcuDeviceManager::GetCcuResourceSpaceTokenInfo).stubs().will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
+    MOCKER_CPP(&CcuDeviceManager::GetCcuResourceSpaceTokenInfoForLocal)
+        .stubs()
+        .will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
+    MOCKER_CPP(&CcuDeviceManager::GetCcuResourceSpaceTokenInfo)
+        .stubs()
+        .will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
     MOCKER(CcuDeviceManager::AllocCke).stubs().will(invoke(CtxMgrAllocCkeStub));
     MOCKER(CcuDeviceManager::AllocXn).stubs().will(invoke(CtxMgrAllocXnStub));
 
@@ -327,14 +353,15 @@ TEST_F(CcuContextManagerTest, TestSharedRes)
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     LinkData linkData(portType, 0, 1, 0, 1);
     CcuChannelInfo channelInfo;
-    vector<CcuJetty *> ccuJettys;
+    vector<CcuJetty*> ccuJettys;
     auto c = std::make_unique<CcuConnection>(linkData.GetLocalAddr(), linkData.GetRemoteAddr(), channelInfo, ccuJettys);
     CcuTransport::CclBufferInfo locCclBufInfo;
     std::vector<CcuTransport*> transports0;
     std::shared_ptr<CcuTransport> t0 = std::make_shared<CcuTransport>(nullptr, std::move(c), locCclBufInfo);
     transports0.push_back(t0.get());
 
-    auto c1 = std::make_unique<CcuConnection>(linkData.GetLocalAddr(), linkData.GetRemoteAddr(), channelInfo, ccuJettys);
+    auto c1
+        = std::make_unique<CcuConnection>(linkData.GetLocalAddr(), linkData.GetRemoteAddr(), channelInfo, ccuJettys);
     std::vector<CcuTransport*> transports1;
     std::shared_ptr<CcuTransport> t1 = std::make_shared<CcuTransport>(nullptr, std::move(c1), locCclBufInfo);
     transports1.push_back(t1.get());

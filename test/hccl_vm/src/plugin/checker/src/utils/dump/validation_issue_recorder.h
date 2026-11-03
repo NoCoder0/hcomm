@@ -17,34 +17,32 @@
 #include <vector>
 
 #include "hccl_types.h"
-#include "task_def.h"
+#include "sim_common.h"
 
 namespace HcclSim {
-nlohmann::json DumpIssueTaskNodeToJson(TaskNode *node, const std::string &nodeId = "");
-
 class ValidationIssueRecorder {
 public:
-    static ValidationIssueRecorder &GetInstance()
+    static ValidationIssueRecorder& GetInstance()
     {
         static ValidationIssueRecorder instance;
         return instance;
     }
 
-    ValidationIssueRecorder(const ValidationIssueRecorder &) = delete;
-    ValidationIssueRecorder &operator=(const ValidationIssueRecorder &) = delete;
+    ValidationIssueRecorder(const ValidationIssueRecorder&) = delete;
+    ValidationIssueRecorder& operator=(const ValidationIssueRecorder&) = delete;
 
     void Reset();
-    void RecordIssue(const std::string &severity, const std::string &stage, const std::string &code,
-        const nlohmann::json &detail);
+    void RecordIssue(
+        const std::string& severity, const std::string& stage, const std::string& code, const nlohmann::json& detail);
     HcclResult Flush() const;
 
 private:
     ValidationIssueRecorder() = default;
 
     mutable std::mutex mutex_;
-    u32 nextIssueId_ = 1;
+    uint32_t nextIssueId_ = 1;
     std::vector<nlohmann::json> issues_;
 };
-}  // namespace HcclSim
+} // namespace HcclSim
 
-#endif  // HCCL_VM_VALIDATION_ISSUE_RECORDER_H
+#endif // HCCL_VM_VALIDATION_ISSUE_RECORDER_H

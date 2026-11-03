@@ -25,47 +25,29 @@ namespace Hccl {
 
 class LocalRmaBuffer {
 public:
-    LocalRmaBuffer(std::shared_ptr<Buffer> buf, RmaType type) : buf(buf), rmaType(type)
-    {
-    }
+    LocalRmaBuffer(std::shared_ptr<Buffer> buf, RmaType type) : buf(buf), rmaType(type) {}
 
     LocalRmaBuffer(std::shared_ptr<Buffer> buf, RmaType type, bool isAlias) : buf(buf), rmaType(type), isAlias_(isAlias)
-    {
-    }
+    {}
 
     virtual ~LocalRmaBuffer() = default;
 
     virtual std::string Describe() const = 0;
 
-    Buffer *GetBuf() const
-    {
-        return buf.get();
-    }
+    Buffer* GetBuf() const { return buf.get(); }
 
     RmaType GetRmaType() const // used for grant check
     {
         return rmaType;
     }
 
-    bool IsAlias() const
-    {
-        return isAlias_;
-    }
+    bool IsAlias() const { return isAlias_; }
 
-    u64 GetMemHandle() const
-    {
-        return memHandle;
-    }
+    u64 GetMemHandle() const { return memHandle; }
 
-    size_t GetSize() const
-    {
-        return buf->GetSize();
-    }
- 
-    uintptr_t GetAddr() const
-    {
-        return buf->GetAddr();
-    }
+    size_t GetSize() const { return buf->GetSize(); }
+
+    uintptr_t GetAddr() const { return buf->GetAddr(); }
 
     virtual std::unique_ptr<Serializable> GetExchangeDto()
     {
@@ -75,9 +57,9 @@ public:
 
 protected:
     std::shared_ptr<Buffer> buf;
-    RmaType                 rmaType;
-    u64                     memHandle{0};
-    bool                    isAlias_{false};  // 区分该RmaBuffer对象是否为某一注册Buffer的子集
+    RmaType rmaType;
+    u64 memHandle{0};
+    bool isAlias_{false}; // 区分该RmaBuffer对象是否为某一注册Buffer的子集
 };
 
 } // namespace Hccl

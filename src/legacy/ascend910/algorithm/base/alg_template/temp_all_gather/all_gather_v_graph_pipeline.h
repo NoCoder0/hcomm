@@ -12,7 +12,6 @@
 #define ALL_GATHER_V_GRAPH_PIPELINE_H
 
 #include "all_gather_v_graph_pipeline_pub.h"
-namespace hccl {
-}  // namespace hccl
+namespace hccl {} // namespace hccl
 
 #endif /* * ALL_GATHER_V_GRAPH_PIPELINE_H */

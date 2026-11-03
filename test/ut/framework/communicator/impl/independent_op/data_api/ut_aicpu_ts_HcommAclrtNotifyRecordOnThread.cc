@@ -38,8 +38,7 @@ using namespace hccl;
  * 该测试类用于验证HcommAclrtNotifyRecordOnThread接口的参数校验和基本功能。
  * 测试场景包括正常调用和空线程句柄校验。
  */
-class UtAicpuTsHcommAclrtNotifyRecordOnThread : public testing::Test
-{
+class UtAicpuTsHcommAclrtNotifyRecordOnThread : public testing::Test {
 protected:
     virtual void SetUp() override
     {
@@ -47,10 +46,7 @@ protected:
         threadOnDevice.pImpl_ = std::make_unique<Hccl::IAicpuTsThread>();
     }
 
-    virtual void TearDown() override
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() override { GlobalMockObject::verify(); }
 
     AicpuTsThread threadOnDevice{StreamType::STREAM_TYPE_DEVICE, 0, NotifyLoadType::DEVICE_NOTIFY};
     ThreadHandle thread = reinterpret_cast<ThreadHandle>(&threadOnDevice);
@@ -65,7 +61,8 @@ protected:
  * 测试场景：传入有效的线程句柄和通知ID
  * 预期结果：返回HCCL_SUCCESS，表示通知记录成功
  */
-TEST_F(UtAicpuTsHcommAclrtNotifyRecordOnThread, Ut_HcommAclrtNotifyRecordOnThread_When_Normal_Expect_ReturnIsHCCL_SUCCESS)
+TEST_F(
+    UtAicpuTsHcommAclrtNotifyRecordOnThread, Ut_HcommAclrtNotifyRecordOnThread_When_Normal_Expect_ReturnIsHCCL_SUCCESS)
 {
     res = HcommAclrtNotifyRecordOnThread(thread, notifyId);
     EXPECT_EQ(res, HCCL_SUCCESS);
@@ -78,7 +75,9 @@ TEST_F(UtAicpuTsHcommAclrtNotifyRecordOnThread, Ut_HcommAclrtNotifyRecordOnThrea
  * 测试场景：传入空线程句柄（0）
  * 预期结果：返回HCCL_E_PTR错误码，表示空指针错误
  */
-TEST_F(UtAicpuTsHcommAclrtNotifyRecordOnThread, Ut_HcommAclrtNotifyRecordOnThread_When_Thread_IsNull_Expect_ReturnIsHCCL_E_PTR)
+TEST_F(
+    UtAicpuTsHcommAclrtNotifyRecordOnThread,
+    Ut_HcommAclrtNotifyRecordOnThread_When_Thread_IsNull_Expect_ReturnIsHCCL_E_PTR)
 {
     res = HcommAclrtNotifyRecordOnThread(0, notifyId);
     EXPECT_EQ(res, HCCL_E_PTR);

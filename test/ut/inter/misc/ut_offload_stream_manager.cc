@@ -20,25 +20,15 @@
 using namespace std;
 using namespace hccl;
 
-class OffloadStreamManagerTest : public testing::Test
-{
+class OffloadStreamManagerTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "\033[36m--OffloadStreamManagerTest SetUP--\033[0m" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "\033[36m--OffloadStreamManagerTest TearDown--\033[0m" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "\033[36m--OffloadStreamManagerTest SetUP--\033[0m" << std::endl; }
+    static void TearDownTestCase() { std::cout << "\033[36m--OffloadStreamManagerTest TearDown--\033[0m" << std::endl; }
     // Some expensive resource shared by all tests.
     virtual void SetUp()
     {
         s32 portNum = 7;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
         std::cout << "A Test SetUP" << std::endl;
     }
     virtual void TearDown()
@@ -141,7 +131,7 @@ TEST_F(OffloadStreamManagerTest, ut_register_slave_fail)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     /* 重复设置资源失败 */
-    ret = manager.RegisterSlaves("tag", slaves);    
+    ret = manager.RegisterSlaves("tag", slaves);
     EXPECT_EQ(ret, HCCL_E_PARA);
 
     ret = manager.ClearSlaves("tag");

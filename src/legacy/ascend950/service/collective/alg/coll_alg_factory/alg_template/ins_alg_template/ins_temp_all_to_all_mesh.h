@@ -18,13 +18,13 @@
 
 namespace Hccl {
 
-const uint32_t ALLTOALLV_DIRECT_FULLMESH_CONCURRENT_SIZE =  16; // fullmesh最大的并发数量
+const uint32_t ALLTOALLV_DIRECT_FULLMESH_CONCURRENT_SIZE = 16; // fullmesh最大的并发数量
 
 class InsTempAlltoAllMesh : public InsAlgTemplateBase {
 public:
-    explicit InsTempAlltoAllMesh(const RankId virtualRank, const u32 tempRankSize,
-                                  const std::vector<std::vector<RankId>> &tempVTopo,
-                                  const std::map<RankId, u32>            &tempVirtRankMap);
+    explicit InsTempAlltoAllMesh(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~InsTempAlltoAllMesh() override;
 
     std::string Describe() const override
@@ -32,48 +32,49 @@ public:
         return StringFormat("Instruction based Template of alltoall mesh with tempRankSize [%u].", tempRankSize_);
     }
 
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
-    HcclResult Run(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec, const BuffInfo &buffInfo,
-                   const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues) override;
-    void SetA2ASendRecvInfo(const A2ASendRecvInfo &sendRecvInfo);
-    HcclResult GetScratchBufferInfo(const u64 &scratchBufferSize, DataType dataType);
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
+    HcclResult
+    Run(const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, const BuffInfo& buffInfo,
+        const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues) override;
+    void SetA2ASendRecvInfo(const A2ASendRecvInfo& sendRecvInfo);
+    HcclResult GetScratchBufferInfo(const u64& scratchBufferSize, DataType dataType);
 
-private :
-    u32        CalcStepNum(); // 计算step数
+private:
+    u32 CalcStepNum(); // 计算step数
     HcclResult CalcSendRecvAllSliceInfo(
-        std::unordered_map<u32, UsrData> &sendSliceInfoMap,
-        std::unordered_map<u32, UsrData> &recvSliceInfoMap); // 计算每个rank当前step的send/recv slice
+        std::unordered_map<u32, UsrData>& sendSliceInfoMap,
+        std::unordered_map<u32, UsrData>& recvSliceInfoMap); // 计算每个rank当前step的send/recv slice
 
-    HcclResult CalcSendSliceInfo(u32 remoteRank, UsrData &sendSliceInfo);
+    HcclResult CalcSendSliceInfo(u32 remoteRank, UsrData& sendSliceInfo);
 
-    HcclResult CalcRecvSliceInfo(u32 remoteRank, UsrData &readSliceInfo);
+    HcclResult CalcRecvSliceInfo(u32 remoteRank, UsrData& readSliceInfo);
 
-    HcclResult RunSendRecvForAllRanks(u32 step, std::unordered_map<u32, UsrData> &sendSliceInfoMap,
-                                      std::unordered_map<u32, UsrData> &recvSliceInfoMap, const ResLinks &tempLinks,
-                                      std::vector<InsQuePtr> &queues); // 所有对端send/Recv循环一次
+    HcclResult RunSendRecvForAllRanks(
+        u32 step, std::unordered_map<u32, UsrData>& sendSliceInfoMap,
+        std::unordered_map<u32, UsrData>& recvSliceInfoMap, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& queues); // 所有对端send/Recv循环一次
 
-    HcclResult RunSendRecvBufferLoop(u32 step, const std::vector<u32> &commRanks,
-                                     std::unordered_map<u32, UsrData> &sendSliceInfoMap,
-                                     std::unordered_map<u32, UsrData> &recvSliceInfoMap,
-                                     const ResLinks                         &tempLinks,
-                                     std::vector<InsQuePtr>                 &queues) const; // 循环一次buffer
+    HcclResult RunSendRecvBufferLoop(
+        u32 step, const std::vector<u32>& commRanks, std::unordered_map<u32, UsrData>& sendSliceInfoMap,
+        std::unordered_map<u32, UsrData>& recvSliceInfoMap, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& queues) const; // 循环一次buffer
 
-    HcclResult CalcCommRankSetforOneLoop(u32 roundIdx, const u32 groupRankSize,
-                                         std::vector<u32> &commRanks) const; // 计算当前循环的send/recv rank set
+    HcclResult CalcCommRankSetforOneLoop(
+        u32 roundIdx, const u32 groupRankSize,
+        std::vector<u32>& commRanks) const; // 计算当前循环的send/recv rank set
 
-    HcclResult CopySendDataToScratch(u32 step, const std::vector<u32> &commRanks,
-                                     std::unordered_map<u32, UsrData> &sendSliceInfo,
-                                     const ResLinks &tempLinks,
-                                     std::vector<InsQuePtr>                 &queues) const;
-    
-    HcclResult SendRecvData(u32 step, const std::vector<u32> &commRanks,
-                            std::unordered_map<u32, UsrData> &sendSliceInfo, std::unordered_map<u32, UsrData> &readSliceInfo,
-                            const ResLinks &tempLinks, std::vector<InsQuePtr> &queues) const;
+    HcclResult CopySendDataToScratch(
+        u32 step, const std::vector<u32>& commRanks, std::unordered_map<u32, UsrData>& sendSliceInfo,
+        const ResLinks& tempLinks, std::vector<InsQuePtr>& queues) const;
 
-    HcclResult CopyRecvDataFromScratch(u32 step, const std::vector<u32> &commRanks,
-                                       std::unordered_map<u32, UsrData> &readSliceInfo,
-                                       const ResLinks &tempLinks,
-                                       std::vector<InsQuePtr>                 &queues) const;
+    HcclResult SendRecvData(
+        u32 step, const std::vector<u32>& commRanks, std::unordered_map<u32, UsrData>& sendSliceInfo,
+        std::unordered_map<u32, UsrData>& readSliceInfo, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& queues) const;
+
+    HcclResult CopyRecvDataFromScratch(
+        u32 step, const std::vector<u32>& commRanks, std::unordered_map<u32, UsrData>& readSliceInfo,
+        const ResLinks& tempLinks, std::vector<InsQuePtr>& queues) const;
 
     HcclResult LocalDataCopy(InsQuePtr tempInsQue);
 
@@ -81,7 +82,7 @@ private :
 
     HcclResult SetConcurrentSendRecvNum(const u32 concurrentSendRecvNum);
 
-    u32             concurrentSendRecvNum_ = 8;
+    u32 concurrentSendRecvNum_ = 8;
     u64 buffBlockSize_ = 0;
     A2ASendRecvInfo localSendRecvInfo_;
     BuffInfo buffInfo_;

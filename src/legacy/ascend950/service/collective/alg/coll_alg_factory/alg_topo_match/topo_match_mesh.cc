@@ -11,31 +11,29 @@
 #include "topo_match_mesh.h"
 
 namespace Hccl {
-TopoMatchMesh::TopoMatchMesh(const RankId vRank, const u32 rankSize, const RankGraph *rankGraph,
-                             const DevType devType)
+TopoMatchMesh::TopoMatchMesh(const RankId vRank, const u32 rankSize, const RankGraph* rankGraph, const DevType devType)
     : TopoMatchBase(vRank, rankSize, rankGraph, devType)
-{
-}
+{}
 
-TopoMatchMesh::~TopoMatchMesh()
-{
-}
+TopoMatchMesh::~TopoMatchMesh() {}
 
-HcclResult TopoMatchMesh::MatchTopo(std::vector<std::vector<RankId>> &vTopo, std::vector<RankId> &virtRanks,
-                                    std::map<RankId, u32> &virtRankMap)
+HcclResult TopoMatchMesh::MatchTopo(
+    std::vector<std::vector<RankId>>& vTopo, std::vector<RankId>& virtRanks, std::map<RankId, u32>& virtRankMap)
 {
     // 获取并校验通信层数
     std::set<u32> levelSet = rankGraph_->GetLevels(myRank_);
-    CHK_PRT_RET((levelSet.size() == COMM_LEVEL_SIZE_0),
-                HCCL_ERROR("[CollAlgFactory] [TopoMatchMesh] Rank [%d], Invalid virtual topo.", myRank_),
-                HcclResult::HCCL_E_PARA);
+    CHK_PRT_RET(
+        (levelSet.size() == COMM_LEVEL_SIZE_0),
+        HCCL_ERROR("[CollAlgFactory] [TopoMatchMesh] Rank [%d], Invalid virtual topo.", myRank_),
+        HcclResult::HCCL_E_PARA);
     CHK_RET(MeshTopoForAllLevel());
     virtRanks = rankIds_;
     vTopo.push_back(rankIds_);
 
-    CHK_PRT_RET(GenVirtRankMapping(virtRanks, virtRankMap) != HcclResult::HCCL_SUCCESS,
-                HCCL_ERROR("[CollAlgFactory] [TopoMatchMesh] Rank [%d], Fail to generate virtRankMapping.", myRank_),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        GenVirtRankMapping(virtRanks, virtRankMap) != HcclResult::HCCL_SUCCESS,
+        HCCL_ERROR("[CollAlgFactory] [TopoMatchMesh] Rank [%d], Fail to generate virtRankMapping.", myRank_),
+        HcclResult::HCCL_E_INTERNAL);
     return HcclResult::HCCL_SUCCESS;
 }
 
@@ -53,8 +51,8 @@ HcclResult TopoMatchMesh::MeshTopoForAllLevel()
         if (rankInRankSet != rankSet.end()) {
             u32 srcLocalId = rankGraph_->GetReplacedLocalId(myRank_);
             u32 dstLocalId = rankGraph_->GetReplacedLocalId(rankId);
-            if ((srcLocalId / RANK_SIZE_EIGHT == dstLocalId / RANK_SIZE_EIGHT) ||
-                (srcLocalId % RANK_SIZE_EIGHT == dstLocalId % RANK_SIZE_EIGHT)) {
+            if ((srcLocalId / RANK_SIZE_EIGHT == dstLocalId / RANK_SIZE_EIGHT)
+                || (srcLocalId % RANK_SIZE_EIGHT == dstLocalId % RANK_SIZE_EIGHT)) {
                 rankIds_.push_back(rankId);
                 continue;
             }

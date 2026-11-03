@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: ccu executor -- jmp
  * Author: caiyifan
  */
@@ -14,9 +17,53 @@
 #define HCCL_SIM_CCU_SIMULATOR_BASE_H
 #include <cstdint>
 
-enum CcuExecState {EXEC_NORMAL_INSTR, EXEC_LOOPGROUP_INSTR, EXEC_LOOP_INSTR, EXEC_JUMP_INSTR, EXEC_SUCCESS, EXEC_FAIL};
-enum ReduceAddDataType {ADD_FP32, ADD_FP16, ADD_BF16, ADD_HIF8, ADD_FP8_E4M3, ADD_FP8_E5M2, ADD_INT8, ADD_UINT8, ADD_INT16, ADD_INT32, ADD_RESERVED};
-enum TransMemReduceDataTypeV1 {INT8_V1, INT16_V1, INT32_V1, UINT8_V1, UINT16_V1, UINT32_V1, FP16_NORMAL_V1, FP32_V1, BF16_V1, FP16_SAT_V1, INVALID_V1};
+enum CcuExecState {
+    EXEC_NORMAL_INSTR,
+    EXEC_LOOPGROUP_INSTR,
+    EXEC_LOOP_INSTR,
+    EXEC_JUMP_INSTR,
+    EXEC_SUCCESS,
+    EXEC_FAIL
+};
+enum ReduceAddDataType {
+    ADD_FP32,
+    ADD_FP16,
+    ADD_BF16,
+    ADD_HIF8,
+    ADD_FP8_E4M3,
+    ADD_FP8_E5M2,
+    ADD_INT8,
+    ADD_UINT8,
+    ADD_INT16,
+    ADD_INT32,
+    ADD_RESERVED
+};
+enum TransMemReduceDataTypeV1 {
+    INT8_V1,
+    INT16_V1,
+    INT32_V1,
+    UINT8_V1,
+    UINT16_V1,
+    UINT32_V1,
+    FP16_NORMAL_V1,
+    FP32_V1,
+    BF16_V1,
+    FP16_SAT_V1,
+    INVALID_V1
+};
+enum TransMemReduceDataTypeV2 {
+    INT8_V2,
+    INT16_V2,
+    INT32_V2,
+    INVALID_1,
+    INVALID_2,
+    UINT32_V2,
+    FP16_NORMAL_V2,
+    FP32_V2,
+    BF16_V2,
+    FP16_SAT_V2,
+    INVALID_V2
+};
 enum ReduceMaxMinDataType {
     MAX_MIN_FP32,
     MAX_MIN_FP16,
@@ -36,10 +83,10 @@ struct LoopStatusInfo {
     uint16_t loopStartInstrId{0};
     uint16_t loopEndInstrId{0};
     uint16_t loopExecCount{0};
-    uint16_t curLoopRound{0};   // 用于记录当前loop循环的执行轮次
+    uint16_t curLoopRound{0};    // 用于记录当前loop循环的执行轮次
     uint32_t loopGsaIterStep{0}; // loop迭代时，gsa地址的偏移步长
     uint16_t loopExtendIndex{0}; // loop的扩展index
-    uint16_t loopCtxId{0};  // loop Context ID
+    uint16_t loopCtxId{0};       // loop Context ID
 };
 
 struct LoopGroupInfo {
@@ -50,7 +97,7 @@ struct LoopGroupInfo {
     uint32_t gsaOffset_{0};     // loop指令执行过程中，gsa地址的偏移量
     uint16_t msOffset_{0};      // loop指令执行过程中，ms的偏移量
     uint16_t ckeOffset_{0};     // loop指令执行过程中，cke的偏移量
-    uint16_t xnIdOffset{0}; // loop指令执行过程中，cke的偏移量
+    uint16_t xnIdOffset{0};     // loop指令执行过程中，cke的偏移量
     LoopStatusInfo loopStatus_; // loop指令执行状态信息
 };
 
@@ -62,7 +109,7 @@ struct ExecuteStatusInfo {
     uint16_t jumpInstrId{0};
     uint16_t instrType{0}; // 当前指令的类型(主要用于记录当前执行是否为Loop)
     LoopGroupInfo loopGroupState;
-    bool waitCKE{false}; // 是否需要等待CKE
+    bool waitCKE{false};     // 是否需要等待CKE
     bool initialized{false}; // 是否已经初始化
 };
 

@@ -15,8 +15,8 @@
 #include "op_ct_impl_kernel_registry.h"
 
 struct TypesToCtImpl {
-  const char *op_type;
-  gert::OpCtImplKernelRegistry::OpCtImplFunctions funcs;
+    const char* op_type;
+    gert::OpCtImplKernelRegistry::OpCtImplFunctions funcs;
 };
 
 #ifdef __cplusplus
@@ -30,10 +30,10 @@ extern "C" {
 #endif
 
 METADEF_FUNC_VISIBILITY size_t GetRegisteredOpCtNum(void);
-METADEF_FUNC_VISIBILITY int32_t GetOpCtImplFunctions(TypesToCtImpl *impl, size_t impl_num);
+METADEF_FUNC_VISIBILITY int32_t GetOpCtImplFunctions(TypesToCtImpl* impl, size_t impl_num);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // INC_EXTERNAL_REGISTER_OP_CT_IMPL_REGISTRY_API_H_
+#endif // INC_EXTERNAL_REGISTER_OP_CT_IMPL_REGISTRY_API_H_

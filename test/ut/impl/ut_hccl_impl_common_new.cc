@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -61,46 +61,30 @@
 using namespace std;
 using namespace hccl;
 
-class HcclImplCommonNewTest : public testing::Test
-{
+class HcclImplCommonNewTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "HcclImplCommonNewTest SetUP" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "HcclImplCommonNewTest TearDown" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "HcclImplCommonNewTest SetUP" << std::endl; }
+    static void TearDownTestCase() { std::cout << "HcclImplCommonNewTest TearDown" << std::endl; }
     // Some expensive resource shared by all tests.
     virtual void SetUp()
     {
         s32 portNum = -1;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
-		std::cout << "A Test SetUP" << std::endl;
-	}
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
+        std::cout << "A Test SetUP" << std::endl;
+    }
     virtual void TearDown()
     {
-		GlobalMockObject::verify();
-		std::cout << "A Test TearDown" << std::endl;
-	}
+        GlobalMockObject::verify();
+        std::cout << "A Test TearDown" << std::endl;
+    }
 };
 
 TEST_F(HcclImplCommonNewTest, ut_HcclCommunicator_postSync)
 {
     u64 one = 1;
-    MOCKER_CPP(&HcclCommunicator::CalcOpTilingDynamicDataSize)
-        .stubs()
-        .will(returnValue(one));
-    MOCKER_CPP(&HcclCommunicator::AicpuInitOpTilingDataBuf)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&HcclCommunicator::AicpuKfcTilingDataLaunchIn)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::CalcOpTilingDynamicDataSize).stubs().will(returnValue(one));
+    MOCKER_CPP(&HcclCommunicator::AicpuInitOpTilingDataBuf).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::AicpuKfcTilingDataLaunchIn).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclCommParams params;
     string commId = "AllReduce";
@@ -146,22 +130,15 @@ TEST_F(HcclImplCommonNewTest, ut_HcclCommunicator_postSync)
     DeviceMem deviceContext;
     std::string kernelName = "";
     AicpuOpTiling opTilingInfo;
-    ret = communicator.AicpuKfcTilingDataLaunchExt(
-        opParam, opType, deviceContext, kernelName, opTilingInfo);
+    ret = communicator.AicpuKfcTilingDataLaunchExt(opParam, opType, deviceContext, kernelName, opTilingInfo);
 }
 
 TEST_F(HcclImplCommonNewTest, ut_HcclCommunicator_AicpuKfcTilingDataLaunchExt_Reduce_PostSync)
 {
     u64 one = 1;
-    MOCKER_CPP(&HcclCommunicator::CalcOpTilingDynamicDataSize)
-        .stubs()
-        .will(returnValue(one));
-    MOCKER_CPP(&HcclCommunicator::AicpuInitOpTilingDataBuf)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&HcclCommunicator::AicpuKfcTilingDataLaunchIn)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::CalcOpTilingDynamicDataSize).stubs().will(returnValue(one));
+    MOCKER_CPP(&HcclCommunicator::AicpuInitOpTilingDataBuf).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::AicpuKfcTilingDataLaunchIn).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclCommParams params;
     string commId = "Reduce";
@@ -207,22 +184,15 @@ TEST_F(HcclImplCommonNewTest, ut_HcclCommunicator_AicpuKfcTilingDataLaunchExt_Re
     DeviceMem deviceContext;
     std::string kernelName = "";
     AicpuOpTiling opTilingInfo;
-    ret = communicator.AicpuKfcTilingDataLaunchExt(
-        opParam, opType, deviceContext, kernelName, opTilingInfo);
+    ret = communicator.AicpuKfcTilingDataLaunchExt(opParam, opType, deviceContext, kernelName, opTilingInfo);
 }
 
 TEST_F(HcclImplCommonNewTest, ut_HcclCommunicator_AicpuKfcTilingDataLaunchExt_ReduceScatter_PostSync)
 {
     u64 one = 1;
-    MOCKER_CPP(&HcclCommunicator::CalcOpTilingDynamicDataSize)
-        .stubs()
-        .will(returnValue(one));
-    MOCKER_CPP(&HcclCommunicator::AicpuInitOpTilingDataBuf)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&HcclCommunicator::AicpuKfcTilingDataLaunchIn)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::CalcOpTilingDynamicDataSize).stubs().will(returnValue(one));
+    MOCKER_CPP(&HcclCommunicator::AicpuInitOpTilingDataBuf).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::AicpuKfcTilingDataLaunchIn).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclCommParams params;
     string commId = "ReduceScatter";
@@ -267,26 +237,19 @@ TEST_F(HcclImplCommonNewTest, ut_HcclCommunicator_AicpuKfcTilingDataLaunchExt_Re
     communicator.retryEnable_ = true;
     communicator.inPlaceSupportRetryStatus_ = InplaceSupportRetryStatus::USER_LARGER_THAN_CCL;
 
-    HcclCMDType opType = HcclCMDType::HCCL_CMD_REDUCE_SCATTER ;
+    HcclCMDType opType = HcclCMDType::HCCL_CMD_REDUCE_SCATTER;
     DeviceMem deviceContext;
     std::string kernelName = "";
     AicpuOpTiling opTilingInfo;
-    ret = communicator.AicpuKfcTilingDataLaunchExt(
-        opParam, opType, deviceContext, kernelName, opTilingInfo);
+    ret = communicator.AicpuKfcTilingDataLaunchExt(opParam, opType, deviceContext, kernelName, opTilingInfo);
 }
 
 TEST_F(HcclImplCommonNewTest, ut_HcclCommunicator_AicpuKfcTilingDataLaunchExt_Allreduce_PreSync)
 {
     u64 one = 1;
-    MOCKER_CPP(&HcclCommunicator::CalcOpTilingDynamicDataSize)
-        .stubs()
-        .will(returnValue(one));
-    MOCKER_CPP(&HcclCommunicator::AicpuInitOpTilingDataBuf)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&HcclCommunicator::AicpuKfcTilingDataLaunchIn)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::CalcOpTilingDynamicDataSize).stubs().will(returnValue(one));
+    MOCKER_CPP(&HcclCommunicator::AicpuInitOpTilingDataBuf).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::AicpuKfcTilingDataLaunchIn).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclCommParams params;
     string commId = "Allreduce";
@@ -335,18 +298,14 @@ TEST_F(HcclImplCommonNewTest, ut_HcclCommunicator_AicpuKfcTilingDataLaunchExt_Al
     DeviceMem deviceContext;
     std::string kernelName = "";
     AicpuOpTiling opTilingInfo;
-    ret = communicator.AicpuKfcTilingDataLaunchExt(
-        opParam, opType, deviceContext, kernelName, opTilingInfo);
+    ret = communicator.AicpuKfcTilingDataLaunchExt(opParam, opType, deviceContext, kernelName, opTilingInfo);
 }
 
 TEST_F(HcclImplCommonNewTest, ut_HcclCommunicator_AicpuKDataLaunch)
 {
     GlobalMockObject::verify();
 
-    MOCKER(LocalNotify::Post)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(LocalNotify::Post).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclCommParams params;
     string commId = "Allreduce";
@@ -385,9 +344,9 @@ TEST_F(HcclImplCommonNewTest, ut_HcclCommunicator_AicpuKDataLaunch)
     communicator.superPodNum_ = 2;
 
     MOCKER_CPP_VIRTUAL(communicator, &HcclCommunicator::AicpuUnfoldKernelLaunchV2)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
     bool bret = communicator.GetCommResource(" ", nullptr);
     EXPECT_EQ(bret, false);
@@ -410,27 +369,20 @@ TEST_F(HcclImplCommonNewTest, ut_HcclCommunicator_AicpuKDataLaunch_Capture)
 {
     GlobalMockObject::verify();
 
-    MOCKER(LocalNotify::Post)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(hrtGetStreamId)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(LocalNotify::Post).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetStreamId).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     aclmdlRICaptureStatus captureStatus = aclmdlRICaptureStatus::ACL_MODEL_RI_CAPTURE_STATUS_ACTIVE;
     int mockModel = 0;
-    void *pmockModel = &mockModel;    
+    void* pmockModel = &mockModel;
     MOCKER(aclmdlRICaptureGetInfo)
-    .stubs()
-    .with(mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)), outBoundP(&pmockModel, sizeof(pmockModel)))
-    .will(returnValue(0));
+        .stubs()
+        .with(
+            mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)),
+            outBoundP(&pmockModel, sizeof(pmockModel)))
+        .will(returnValue(0));
 
-    MOCKER(rtStreamAddToModel)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(0));
+    MOCKER(rtStreamAddToModel).stubs().with(mockcpp::any()).will(returnValue(0));
 
     HcclCommParams params;
     string commId = "Allreduce";
@@ -467,9 +419,9 @@ TEST_F(HcclImplCommonNewTest, ut_HcclCommunicator_AicpuKDataLaunch_Capture)
     communicator.superPodNum_ = 2;
 
     MOCKER_CPP_VIRTUAL(communicator, &HcclCommunicator::AicpuUnfoldKernelLaunchV2)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
     bool bret = communicator.GetCommResource(" ", nullptr);
     EXPECT_EQ(bret, false);
@@ -503,9 +455,9 @@ TEST_F(HcclImplCommonNewTest, ut_HcclCommunicator_GetStreamCaptureInfo)
     GlobalMockObject::verify();
     // 非单算子场景
     MOCKER(GetWorkflowMode)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB));
 
     bool isCapture = false;
     aclmdlRI rtModel = nullptr;
@@ -515,37 +467,43 @@ TEST_F(HcclImplCommonNewTest, ut_HcclCommunicator_GetStreamCaptureInfo)
     GlobalMockObject::verify();
     // unsupport场景
     MOCKER(GetWorkflowMode)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE));
     aclmdlRICaptureStatus captureStatus = aclmdlRICaptureStatus::ACL_MODEL_RI_CAPTURE_STATUS_ACTIVE;
     int mockModel = 0;
-    void *pmockModel = &mockModel;    
+    void* pmockModel = &mockModel;
     MOCKER(aclmdlRICaptureGetInfo)
-    .stubs()
-    .with(mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)), outBoundP(&pmockModel, sizeof(pmockModel)))
-    .will(returnValue(ACL_ERROR_RT_FEATURE_NOT_SUPPORT));
+        .stubs()
+        .with(
+            mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)),
+            outBoundP(&pmockModel, sizeof(pmockModel)))
+        .will(returnValue(ACL_ERROR_RT_FEATURE_NOT_SUPPORT));
     ret = GetStreamCaptureInfo(stream, rtModel, isCapture);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     GlobalMockObject::verify();
     // capture异常场景
     MOCKER(GetWorkflowMode)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE));
     captureStatus = aclmdlRICaptureStatus::ACL_MODEL_RI_CAPTURE_STATUS_NONE;
     MOCKER(aclmdlRICaptureGetInfo)
-    .stubs()
-    .with(mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)), outBoundP(&pmockModel, sizeof(pmockModel)))
-    .will(returnValue(0));
+        .stubs()
+        .with(
+            mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)),
+            outBoundP(&pmockModel, sizeof(pmockModel)))
+        .will(returnValue(0));
     ret = GetStreamCaptureInfo(stream, rtModel, isCapture);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     captureStatus = aclmdlRICaptureStatus::ACL_MODEL_RI_CAPTURE_STATUS_INVALIDATED;
     MOCKER(aclmdlRICaptureGetInfo)
-    .stubs()
-    .with(mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)), outBoundP(&pmockModel, sizeof(pmockModel)))
-    .will(returnValue(0));
+        .stubs()
+        .with(
+            mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)),
+            outBoundP(&pmockModel, sizeof(pmockModel)))
+        .will(returnValue(0));
     ret = GetStreamCaptureInfo(stream, rtModel, isCapture);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     GlobalMockObject::verify();
@@ -553,10 +511,7 @@ TEST_F(HcclImplCommonNewTest, ut_HcclCommunicator_GetStreamCaptureInfo)
 
 TEST_F(HcclImplCommonNewTest, ut_HcclCommunicator_AddStreamToModel)
 {
-    MOCKER(rtStreamAddToModel)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(1));
+    MOCKER(rtStreamAddToModel).stubs().with(mockcpp::any()).will(returnValue(1));
     rtModel_t rtModel = nullptr;
     rtStream_t stream;
     HcclResult ret = AddStreamToModel(rtModel, stream);
@@ -573,7 +528,8 @@ TEST_F(HcclImplCommonNewTest, ut_AicpuInitOpTilingDataAicpuCache_When_AclgraphCa
     struct OpTilingData opTilingData;
     memset_s(&opTilingData, sizeof(OpTilingData), 0, sizeof(OpTilingData));
 
-    HcclResult ret = communicator.AicpuInitOpTilingDataAicpuCache(opParam, HcclCMDType::HCCL_CMD_ALLREDUCE, &opTilingData);
+    HcclResult ret
+        = communicator.AicpuInitOpTilingDataAicpuCache(opParam, HcclCMDType::HCCL_CMD_ALLREDUCE, &opTilingData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(opTilingData.aicpuCacheEnable, 0);
 }
@@ -589,7 +545,8 @@ TEST_F(HcclImplCommonNewTest, ut_AicpuInitOpTilingDataAicpuCache_When_AclgraphCa
     struct OpTilingData opTilingData;
     memset_s(&opTilingData, sizeof(OpTilingData), 0, sizeof(OpTilingData));
 
-    HcclResult ret = communicator.AicpuInitOpTilingDataAicpuCache(opParam, HcclCMDType::HCCL_CMD_ALLREDUCE, &opTilingData);
+    HcclResult ret
+        = communicator.AicpuInitOpTilingDataAicpuCache(opParam, HcclCMDType::HCCL_CMD_ALLREDUCE, &opTilingData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(opTilingData.aicpuCacheEnable, 1);
 }
@@ -605,7 +562,8 @@ TEST_F(HcclImplCommonNewTest, ut_AicpuInitOpTilingDataAicpuCache_When_AclgraphZe
     struct OpTilingData opTilingData;
     memset_s(&opTilingData, sizeof(OpTilingData), 0, sizeof(OpTilingData));
 
-    HcclResult ret = communicator.AicpuInitOpTilingDataAicpuCache(opParam, HcclCMDType::HCCL_CMD_ALLREDUCE, &opTilingData);
+    HcclResult ret
+        = communicator.AicpuInitOpTilingDataAicpuCache(opParam, HcclCMDType::HCCL_CMD_ALLREDUCE, &opTilingData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(opTilingData.aicpuCacheEnable, 11);
 }

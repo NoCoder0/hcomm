@@ -1,7 +1,11 @@
-/*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
- * Description: ccu representation base header file
- * Create: 2025-02-18
+/**
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
  */
 
 #ifndef CCU_REPRESENTATION_FUNC_CALL_H
@@ -14,40 +18,50 @@
 namespace hcomm {
 namespace CcuRep {
 
-class CcuRepFuncCall : public CcuRepBase {
-public:
-    explicit CcuRepFuncCall(const std::string &label);
-    explicit CcuRepFuncCall(const Variable &funcAddrVar);
-    bool               Translate(CcuInstr *&instr, uint16_t &instrId, const TransDep &dep) override;
-    std::string        Describe() override;
-    uint16_t InstrCount() override;
-    const std::string &GetLabel() const;
+    class CcuRepFuncCall : public CcuRepBase {
+    public:
+        explicit CcuRepFuncCall(CcuInsGeneratorBase* insGenPtr, const std::string& label);
+        explicit CcuRepFuncCall(CcuInsGeneratorBase* insGenPtr, const Variable& funcAddrVar);
+        bool Translate(CcuKernel* ccuKernel, CcuInstr*& instr, uint16_t& instrId, const TransDep& dep) override;
+        std::string Describe() override;
+        uint16_t InstrCount() override;
+        const std::string& GetLabel() const;
 
-    void Reference(std::shared_ptr<CcuRepFuncBlock> refRep);
-    void SetFuncManager(CcuRepReferenceManager *funcManager);
+        void Reference(std::shared_ptr<CcuRepFuncBlock> refRep);
+        void SetFuncManager(CcuRepReferenceManager* funcManager);
 
-    void SetInArg(const Variable &var);
-    void SetOutArg(const Variable &var);
-    void SetInArg(const std::vector<Variable> &varList);
-    void SetOutArg(const std::vector<Variable> &varList);
+        void SetInArg(const Variable& var);
+        CcuResult SetOutArg(const Variable& var);
+        void SetInArg(const std::vector<Variable>& varList);
+        CcuResult SetOutArg(const std::vector<Variable>& varList);
 
-    int32_t GetCallLayer();
+        int32_t GetCallLayer();
 
-private:
-    CcuRepReferenceManager *funcManager{nullptr};
+        CcuRepReferenceManager* GetFuncManager() { return funcManager; }
+        std::shared_ptr<CcuRepFuncBlock>& GetFuncBlock() { return funcBlock; }
+        Variable GetFuncAddrVar() { return funcAddrVar; }
+        std::vector<CcuRepArg>& GetInArgs() { return inArgs; }
+        std::vector<CcuRepArg>& GetOutArgs() { return outArgs; }
+        uint32_t GetInArgCount() const { return inArgCount; }
+        uint32_t GetOutArgCount() const { return outArgCount; }
+        CcuInstr* GetInstr() { return instr; }
 
-    std::string                      label;
-    std::shared_ptr<CcuRepFuncBlock> funcBlock{nullptr};
-    Variable                         funcAddrVar;
+    private:
+        CcuInsGeneratorBase* insGeneratorPtr_;
+        CcuRepReferenceManager* funcManager{nullptr};
 
-    std::vector<CcuRepArg> inArgs;
-    std::vector<CcuRepArg> outArgs;
-    uint32_t               inArgCount{0};
-    uint32_t               outArgCount{0};
+        std::string label;
+        std::shared_ptr<CcuRepFuncBlock> funcBlock{nullptr};
+        Variable funcAddrVar;
 
-    CcuInstr *instr{nullptr};
-};
+        std::vector<CcuRepArg> inArgs;
+        std::vector<CcuRepArg> outArgs;
+        uint32_t inArgCount{0};
+        uint32_t outArgCount{0};
 
-};     // namespace CcuRep
-};     // namespace hcomm
+        CcuInstr* instr{nullptr};
+    };
+
+}; // namespace CcuRep
+}; // namespace hcomm
 #endif // _CCU_REPRESENTATION_FUNC_CALL_H

@@ -19,52 +19,59 @@ class ShmMemoryCommonTest : public testing::Test {
 protected:
 };
 
-TEST_F(ShmMemoryCommonTest, AcquireDevPtrInNoHostProcess_NullPtr_ReturnsNull) {
-    sim::PhyMemBlock phyMem;
+TEST_F(ShmMemoryCommonTest, AcquireDevPtrInNoHostProcess_NullPtr_ReturnsNull)
+{
+    sim::runtime::PhyMemBlock phyMem;
     memset(&phyMem, 0, sizeof(phyMem));
     void* result = sim::AcquireDevPtrInNoHostProcess(nullptr, phyMem);
     EXPECT_EQ(result, nullptr);
 }
 
-TEST_F(ShmMemoryCommonTest, AcquireDevPtrInNoHostProcess_InvalidPtr_ReturnsNull) {
-    sim::PhyMemBlock phyMem;
+TEST_F(ShmMemoryCommonTest, AcquireDevPtrInNoHostProcess_InvalidPtr_ReturnsNull)
+{
+    sim::runtime::PhyMemBlock phyMem;
     memset(&phyMem, 0, sizeof(phyMem));
     void* badPtr = reinterpret_cast<void*>(static_cast<uintptr_t>(0xDEADBEEF));
     void* result = sim::AcquireDevPtrInNoHostProcess(badPtr, phyMem);
     EXPECT_EQ(result, nullptr);
 }
 
-TEST_F(ShmMemoryCommonTest, AcquireDevPtrInNoHostProcess_MaxAddr_ReturnsNull) {
-    sim::PhyMemBlock phyMem;
+TEST_F(ShmMemoryCommonTest, AcquireDevPtrInNoHostProcess_MaxAddr_ReturnsNull)
+{
+    sim::runtime::PhyMemBlock phyMem;
     memset(&phyMem, 0, sizeof(phyMem));
     void* maxPtr = reinterpret_cast<void*>(static_cast<uintptr_t>(UINTPTR_MAX));
     void* result = sim::AcquireDevPtrInNoHostProcess(maxPtr, phyMem);
     EXPECT_EQ(result, nullptr);
 }
 
-TEST_F(ShmMemoryCommonTest, AcquireDevPtrInNoHostProcess_ZeroAddr_ReturnsNull) {
-    sim::PhyMemBlock phyMem;
+TEST_F(ShmMemoryCommonTest, AcquireDevPtrInNoHostProcess_ZeroAddr_ReturnsNull)
+{
+    sim::runtime::PhyMemBlock phyMem;
     memset(&phyMem, 0, sizeof(phyMem));
     void* zeroPtr = reinterpret_cast<void*>(static_cast<uintptr_t>(0));
     void* result = sim::AcquireDevPtrInNoHostProcess(zeroPtr, phyMem);
     EXPECT_EQ(result, nullptr);
 }
 
-TEST_F(ShmMemoryCommonTest, ReleaseInNoHostProcess_Normal_NoThrow) {
-    sim::PhyMemBlock phyMem;
+TEST_F(ShmMemoryCommonTest, ReleaseInNoHostProcess_Normal_NoThrow)
+{
+    sim::runtime::PhyMemBlock phyMem;
     memset(phyMem.name, 0, sizeof(phyMem.name));
     EXPECT_NO_THROW(sim::ReleaseInNoHostProcess(phyMem));
 }
 
-TEST_F(ShmMemoryCommonTest, ReleaseInNoHostProcess_NamedMem_NoThrow) {
-    sim::PhyMemBlock phyMem;
+TEST_F(ShmMemoryCommonTest, ReleaseInNoHostProcess_NamedMem_NoThrow)
+{
+    sim::runtime::PhyMemBlock phyMem;
     memset(&phyMem, 0, sizeof(phyMem));
     strncpy(phyMem.name, "test_mem_block", sizeof(phyMem.name));
     EXPECT_NO_THROW(sim::ReleaseInNoHostProcess(phyMem));
 }
 
-TEST_F(ShmMemoryCommonTest, ReleaseInNoHostProcess_EmptyName_NoThrow) {
-    sim::PhyMemBlock phyMem;
+TEST_F(ShmMemoryCommonTest, ReleaseInNoHostProcess_EmptyName_NoThrow)
+{
+    sim::runtime::PhyMemBlock phyMem;
     memset(&phyMem, 0, sizeof(phyMem));
     EXPECT_NO_THROW(sim::ReleaseInNoHostProcess(phyMem));
 }

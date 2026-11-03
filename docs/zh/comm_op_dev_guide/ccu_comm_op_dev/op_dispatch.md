@@ -10,7 +10,7 @@
 
 ```c
 uint64_t currentRankSliceInputOffset = 0; // 卡间输入地址偏移量
-uint64_t currentRankSliceOutputOffset = sliceSize* myRank; // 卡间目标地址偏移量
+uint64_t currentRankSliceOutputOffset = sliceSize * myRank; // 卡间目标地址偏移量
 std::vector<uint64_t> taskArgs = {
     inputAddr,
     outputAddr,

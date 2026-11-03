@@ -12,36 +12,36 @@
 
 namespace Hccl {
 
-constexpr uint16_t OUTPUT_XN_ID    = 1;
-constexpr uint16_t TOKEN_XN_ID     = 2;
-constexpr uint16_t FST_AXIS_ID     = 0;
-constexpr uint16_t SEC_AXIS_ID     = 1;
-constexpr uint16_t CKE_IDX_0       = 0;
-constexpr uint16_t CKE_IDX_1       = 1;
-constexpr uint16_t CKE_IDX_2       = 2;
-constexpr uint16_t CKE_IDX_3       = 3;
-constexpr uint16_t CKE_IDX_4       = 4;
+constexpr uint16_t OUTPUT_XN_ID = 1;
+constexpr uint16_t TOKEN_XN_ID = 2;
+constexpr uint16_t FST_AXIS_ID = 0;
+constexpr uint16_t SEC_AXIS_ID = 1;
+constexpr uint16_t CKE_IDX_0 = 0;
+constexpr uint16_t CKE_IDX_1 = 1;
+constexpr uint16_t CKE_IDX_2 = 2;
+constexpr uint16_t CKE_IDX_3 = 3;
+constexpr uint16_t CKE_IDX_4 = 4;
 constexpr uint16_t BIT_NUM_PER_CKE = 16; // 本rank给远端置位时应当写的CKE，16个对端一个CKE
 
-CcuContextAllGatherNHR1D::CcuContextAllGatherNHR1D(const CcuCtxArg &arg, const std::vector<CcuTransport *> &transports,
-                                                   const CcuTransportGroup &group)
+CcuContextAllGatherNHR1D::CcuContextAllGatherNHR1D(
+    const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group)
     : CcuContextAlgBase(arg, transports, group)
 {
-    const CcuCtxArgAllGatherNHR1D *ctxArg = dynamic_cast<const CcuCtxArgAllGatherNHR1D *>(&arg);
+    const CcuCtxArgAllGatherNHR1D* ctxArg = dynamic_cast<const CcuCtxArgAllGatherNHR1D*>(&arg);
     if (ctxArg == nullptr) {
         THROW<NullPtrException>(StringFormat("CcuContextAllGatherNHR1D::ctxArg ptr is null"));
     }
-    rankId_                               = ctxArg->rankId_;
-    axisId_                               = ctxArg->axisId_;
-    axisSize_                             = ctxArg->axisSize_;
-    dimSize_                              = ctxArg->dimSize_[0];
-    localAxisSignalName_                  = "CcuContextAllGatherNHR1DDieSync_" + std::to_string(axisId_);
-    anotherAxisSignalName_                = "CcuContextAllGatherNHR1DDieSync_" + std::to_string(1 - axisId_);
-    stepInfoVector_                       = ctxArg->stepInfoVector_;
-    indexMap_                             = ctxArg->indexMap_;
-    localSize_                            = indexMap_.size();
-    myRankIdx_                            = indexMap_.size();
-    signalNum_                            = (dimSize_ + BIT_NUM_PER_CKE - 1) / BIT_NUM_PER_CKE; // 每个CKE有16个bit
+    rankId_ = ctxArg->rankId_;
+    axisId_ = ctxArg->axisId_;
+    axisSize_ = ctxArg->axisSize_;
+    dimSize_ = ctxArg->dimSize_[0];
+    localAxisSignalName_ = "CcuContextAllGatherNHR1DDieSync_" + std::to_string(axisId_);
+    anotherAxisSignalName_ = "CcuContextAllGatherNHR1DDieSync_" + std::to_string(1 - axisId_);
+    stepInfoVector_ = ctxArg->stepInfoVector_;
+    indexMap_ = ctxArg->indexMap_;
+    localSize_ = indexMap_.size();
+    myRankIdx_ = indexMap_.size();
+    signalNum_ = (dimSize_ + BIT_NUM_PER_CKE - 1) / BIT_NUM_PER_CKE; // 每个CKE有16个bit
     HCCL_INFO(
         "[CcuContextAllGatherNHR1D] CtxArg: rankId_[%u], axisId_[%u], axisSize_[%u], dimSize_[%u], localSize_[%u], "
         "signalNum_[%u]",
@@ -67,25 +67,25 @@ void CcuContextAllGatherNHR1D::LoadArgs()
 
 void CcuContextAllGatherNHR1D::InitResources()
 {
-    die0Size_               = CreateVariable();
-    die1Size_               = CreateVariable();
-    inputSliceStride_       = CreateVariable();
-    outputSliceStride_      = CreateVariable();
-    inputRepeatStride_      = CreateVariable();
-    outputRepeatStride_     = CreateVariable();
-    repeatNum_              = CreateVariable();
-    tmpCopyRepeatNum_       = CreateVariable();
-    repeatTimeflag_         = CreateVariable();
-    isInputOutputEqual_     = CreateVariable();
+    die0Size_ = CreateVariable();
+    die1Size_ = CreateVariable();
+    inputSliceStride_ = CreateVariable();
+    outputSliceStride_ = CreateVariable();
+    inputRepeatStride_ = CreateVariable();
+    outputRepeatStride_ = CreateVariable();
+    repeatNum_ = CreateVariable();
+    tmpCopyRepeatNum_ = CreateVariable();
+    repeatTimeflag_ = CreateVariable();
+    isInputOutputEqual_ = CreateVariable();
     myrankInputSliceOffset_ = CreateVariable();
-    tmpSliceOffset_         = CreateVariable();
+    tmpSliceOffset_ = CreateVariable();
     for (u64 i = 0; i < dimSize_; i++) {
         outputSliceOffset_.push_back(CreateVariable());
     }
     constVar1_ = CreateVariable();
     constVar1_ = 1;
 
-    localSignal_     = CreateMaskSignal();
+    localSignal_ = CreateMaskSignal();
     localAxisSignal_ = CreateMaskSignal();
 
     if (axisSize_ > 1) {
@@ -96,8 +96,9 @@ void CcuContextAllGatherNHR1D::InitResources()
     input_ = CreateVariable();
     for (uint32_t transportIdx = 0; transportIdx < localSize_; transportIdx++) {
         HCCL_DEBUG("[CcuContextAllGatherNHR1D] MyRank[%u], TransportId[%u]", rankId_, transportIdx);
-        CHK_PRT_RET(transports[transportIdx] == nullptr,
-                    HCCL_ERROR("[CcuContextAllGatherNHR1D] Algorithm transport ptr is null"), );
+        CHK_PRT_RET(
+            transports[transportIdx] == nullptr,
+            HCCL_ERROR("[CcuContextAllGatherNHR1D] Algorithm transport ptr is null"), );
         output_.push_back(
             CreateVariable((*transports[transportIdx]), OUTPUT_XN_ID)); // 获取transport中id=1的Var来传递output
         token_.push_back(CreateVariable((*transports[transportIdx]), TOKEN_XN_ID));
@@ -114,15 +115,15 @@ void CcuContextAllGatherNHR1D::PreSync()
 {
     HCCL_DEBUG("[CcuContextAllGatherNHR1D] PreSync start");
     uint16_t selfSignalId = rankId_ / BIT_NUM_PER_CKE;
-    uint16_t selfBit      = 1 << (rankId_ % BIT_NUM_PER_CKE);
+    uint16_t selfBit = 1 << (rankId_ % BIT_NUM_PER_CKE);
     for (auto t : transports) {
         WriteVariableWithSignal(*t, output_[localSize_], OUTPUT_XN_ID, selfSignalId + signalNum_ * CKE_IDX_1, selfBit);
         WriteVariableWithSignal(*t, token_[localSize_], TOKEN_XN_ID, selfSignalId + signalNum_ * CKE_IDX_2, selfBit);
     }
     std::vector<uint16_t> waitBitVector(signalNum_, 0);
-    for (auto &pair : indexMap_) {
-        uint16_t pairSignalId       = pair.first / BIT_NUM_PER_CKE;
-        uint16_t pairBit            = 1 << (pair.first % BIT_NUM_PER_CKE);
+    for (auto& pair : indexMap_) {
+        uint16_t pairSignalId = pair.first / BIT_NUM_PER_CKE;
+        uint16_t pairBit = 1 << (pair.first % BIT_NUM_PER_CKE);
         waitBitVector[pairSignalId] = waitBitVector[pairSignalId] | pairBit;
     }
     for (uint16_t sId = 0; sId < waitBitVector.size(); sId++) {
@@ -135,14 +136,14 @@ void CcuContextAllGatherNHR1D::PreSync()
 void CcuContextAllGatherNHR1D::PostSync()
 {
     uint16_t selfSignalId = rankId_ / BIT_NUM_PER_CKE;
-    uint16_t selfBit      = 1 << (rankId_ % BIT_NUM_PER_CKE);
-    for (auto &t : transports) {
+    uint16_t selfBit = 1 << (rankId_ % BIT_NUM_PER_CKE);
+    for (auto& t : transports) {
         RemotePost(*t, selfSignalId + signalNum_ * CKE_IDX_0, selfBit);
     }
     std::vector<uint16_t> waitBitVector(signalNum_, 0);
-    for (auto &pair : indexMap_) {
-        uint16_t pairSignalId       = pair.first / BIT_NUM_PER_CKE;
-        uint16_t pairBit            = 1 << (pair.first % BIT_NUM_PER_CKE);
+    for (auto& pair : indexMap_) {
+        uint16_t pairSignalId = pair.first / BIT_NUM_PER_CKE;
+        uint16_t pairBit = 1 << (pair.first % BIT_NUM_PER_CKE);
         waitBitVector[pairSignalId] = waitBitVector[pairSignalId] | pairBit;
     }
     for (uint32_t sId = 0; sId < signalNum_; sId++) {
@@ -156,7 +157,7 @@ void CcuContextAllGatherNHR1D::AxisSync(uint32_t signalIndex)
     const uint32_t DIE_NUM = 2;
     if (signalIndex > 1) {
         THROW<InvalidParamsException>(
-            StringFormat("[CcuContextAllGatherNHR1D] Unexpected SignalInex[%u]", signalIndex));
+            StringFormat("[CcuContextAllGatherNHR1D] Unexpected SignalIndex[%u]", signalIndex));
     }
     LocalCtxPost(anotherAxisSignal_, 1 << (axisId_ + signalIndex * DIE_NUM));
     LocalWait(localAxisSignal_, 1 << (1 - axisId_ + signalIndex * DIE_NUM));
@@ -166,7 +167,7 @@ void CcuContextAllGatherNHR1D::AxisSync(uint32_t signalIndex)
 
 void CcuContextAllGatherNHR1D::DoRepeatAllGatherNHR()
 {
-    tmpSliceOffset_         = 0;
+    tmpSliceOffset_ = 0;
     myrankInputSliceOffset_ = 0;
     for (u64 i = 0; i < rankId_; i++) {
         myrankInputSliceOffset_ += inputSliceStride_;
@@ -179,10 +180,10 @@ void CcuContextAllGatherNHR1D::DoRepeatAllGatherNHR()
     srcMem_.addr += myrankInputSliceOffset_;
     dstMem_.addr = output_[myRankIdx_];
     dstMem_.addr += outputSliceOffset_[rankId_];
-    srcMem_.token     = token_[myRankIdx_];
-    dstMem_.token     = token_[myRankIdx_];
+    srcMem_.token = token_[myRankIdx_];
+    dstMem_.token = token_[myRankIdx_];
     tmpCopyRepeatNum_ = repeatNum_;
-    repeatTimeflag_   = 0;
+    repeatTimeflag_ = 0;
     CCU_WHILE(tmpCopyRepeatNum_ != UINT64_MAX)
     {
         tmpCopyRepeatNum_ += constVar1_;
@@ -202,29 +203,26 @@ void CcuContextAllGatherNHR1D::DoRepeatAllGatherNHR()
         {
             LocalCopy(dstMem_, srcMem_, axisId_ == 0 ? die0Size_ : die1Size_, localSignal_, 1 << rankId_);
         }
-        CCU_IF(isInputOutputEqual_ != 0)
-        {
-            LocalPost(localSignal_, 1 << rankId_);
-        }
+        CCU_IF(isInputOutputEqual_ != 0) { LocalPost(localSignal_, 1 << rankId_); }
         LocalWait(localSignal_, 1 << rankId_);
         repeatTimeflag_ = 1;
     }
 
-    for (auto &nhrStepInfo : stepInfoVector_) {
+    for (auto& nhrStepInfo : stepInfoVector_) {
         DoRepeatAllGatherNHRSingleStep(nhrStepInfo);
     }
 }
 
-void CcuContextAllGatherNHR1D::DoRepeatAllGatherNHRSingleStep(const NHRStepInfo                   &nhrStepInfo)
+void CcuContextAllGatherNHR1D::DoRepeatAllGatherNHRSingleStep(const NHRStepInfo& nhrStepInfo)
 {
-    u32                    &toRankIdx        = indexMap_[nhrStepInfo.toRank];
-    u32                    &fromRankIdx      = indexMap_[nhrStepInfo.fromRank];
-    u32                     sendSliceIdx     = 0;
-    CcuTransport           *sendTransport    = transports[toRankIdx];
-    CcuTransport           *recvTransport    = transports[fromRankIdx];
-    const std::vector<u32> &sendSliceIdxList = nhrStepInfo.txSliceIdxs;
-    srcMem_.token                            = token_[myRankIdx_];
-    dstMem_.token                            = token_[toRankIdx];
+    u32& toRankIdx = indexMap_[nhrStepInfo.toRank];
+    u32& fromRankIdx = indexMap_[nhrStepInfo.fromRank];
+    u32 sendSliceIdx = 0;
+    CcuTransport* sendTransport = transports[toRankIdx];
+    CcuTransport* recvTransport = transports[fromRankIdx];
+    const std::vector<u32>& sendSliceIdxList = nhrStepInfo.txSliceIdxs;
+    srcMem_.token = token_[myRankIdx_];
+    dstMem_.token = token_[toRankIdx];
     for (u32 i = 0; i < sendSliceIdxList.size(); i++) { ////这里写的可能有问题
         sendSliceIdx = sendSliceIdxList[i];
         if (i != 0) {
@@ -244,22 +242,22 @@ void CcuContextAllGatherNHR1D::DoRepeatAllGatherNHRSingleStep(const NHRStepInfo 
         DoRepeatSendRecvSlices(nhrStepInfo.toRank, srcMem_, dstMem_, i % BIT_NUM_PER_CKE);
     }
 
-if (nhrStepInfo.step + 1 != stepInfoVector_.size()){
-    uint16_t selfSignalId = rankId_ / BIT_NUM_PER_CKE;
-    uint16_t selfBit      = 1 << (rankId_ % BIT_NUM_PER_CKE);
-    RemotePost(*sendTransport, selfSignalId + signalNum_ * CKE_IDX_3, selfBit, true);
-    uint16_t recvSignalId = nhrStepInfo.fromRank / BIT_NUM_PER_CKE;
-    uint16_t recvBit      = 1 << (nhrStepInfo.fromRank % BIT_NUM_PER_CKE);
-    RemoteWait(*recvTransport, recvSignalId + signalNum_ * CKE_IDX_3, recvBit);
-}
+    if (nhrStepInfo.step + 1 != stepInfoVector_.size()) {
+        uint16_t selfSignalId = rankId_ / BIT_NUM_PER_CKE;
+        uint16_t selfBit = 1 << (rankId_ % BIT_NUM_PER_CKE);
+        RemotePost(*sendTransport, selfSignalId + signalNum_ * CKE_IDX_3, selfBit, true);
+        uint16_t recvSignalId = nhrStepInfo.fromRank / BIT_NUM_PER_CKE;
+        uint16_t recvBit = 1 << (nhrStepInfo.fromRank % BIT_NUM_PER_CKE);
+        RemoteWait(*recvTransport, recvSignalId + signalNum_ * CKE_IDX_3, recvBit);
+    }
 }
 
-void CcuContextAllGatherNHR1D::DoRepeatSendRecvSlices(const u32 &toRank, CcuRep::Memory &src, CcuRep::Memory &dst,
-                                                      u32 signalIndex)
+void CcuContextAllGatherNHR1D::DoRepeatSendRecvSlices(
+    const u32& toRank, CcuRep::Memory& src, CcuRep::Memory& dst, u32 signalIndex)
 {
-    CcuTransport           *sendTransport = transports[indexMap_[toRank]];
-    const CcuRep::Variable &sliceSize     = axisId_ == 0 ? die0Size_ : die1Size_;
-    repeatTimeflag_                       = 0;
+    CcuTransport* sendTransport = transports[indexMap_[toRank]];
+    const CcuRep::Variable& sliceSize = axisId_ == 0 ? die0Size_ : die1Size_;
+    repeatTimeflag_ = 0;
     tmpCopyRepeatNum_ = repeatNum_;
     CCU_WHILE(tmpCopyRepeatNum_ != UINT64_MAX)
     {
@@ -300,30 +298,31 @@ void CcuContextAllGatherNHR1D::Algorithm()
     return;
 }
 
-std::vector<uint64_t> CcuContextAllGatherNHR1D::GeneArgs(const CcuTaskArg &arg)
+std::vector<uint64_t> CcuContextAllGatherNHR1D::GeneArgs(const CcuTaskArg& arg)
 {
-    const CcuTaskArgAllGatherNHR1D *taskArg = dynamic_cast<const CcuTaskArgAllGatherNHR1D *>(&arg);
+    const CcuTaskArgAllGatherNHR1D* taskArg = dynamic_cast<const CcuTaskArgAllGatherNHR1D*>(&arg);
     if (taskArg == nullptr) {
         THROW<NullPtrException>(StringFormat("CcuContextAllGatherNHR1D::taskArg ptr is null"));
     }
     // input&output&buffer地址
-    uint64_t inputAddr          = taskArg->inputAddr_;
-    uint64_t outputAddr         = taskArg->outputAddr_;
-    uint64_t token              = taskArg->token_;
-    uint64_t die0Size           = taskArg->die0Size_;
-    uint64_t die1Size           = taskArg->die1Size_;
-    uint64_t repeatNum          = UINT64_MAX - taskArg->repeatNum_;
-    uint64_t inputSliceStride   = taskArg->inputSliceStride_;
-    uint64_t outputSliceStride  = taskArg->outputSliceStride_;
-    uint64_t inputRepeatStride  = taskArg->inputRepeatStride_;
+    uint64_t inputAddr = taskArg->inputAddr_;
+    uint64_t outputAddr = taskArg->outputAddr_;
+    uint64_t token = taskArg->token_;
+    uint64_t die0Size = taskArg->die0Size_;
+    uint64_t die1Size = taskArg->die1Size_;
+    uint64_t repeatNum = UINT64_MAX - taskArg->repeatNum_;
+    uint64_t inputSliceStride = taskArg->inputSliceStride_;
+    uint64_t outputSliceStride = taskArg->outputSliceStride_;
+    uint64_t inputRepeatStride = taskArg->inputRepeatStride_;
     uint64_t outputRepeatStride = taskArg->outputRepeatStride_;
     uint64_t isInputOutputEqual = taskArg->isInputOutputEqual_;
 
-    HCCL_INFO("[CcuContextAllGatherNHR1D] TaskArgs: inputAddr[%llu], outputAddr[%llu], "
-              "die0Size[%llu], die1Size[%llu], repeatNum[%llu]"
-              "inputSliceStride[%llu], outputSliceStride[%llu], inputRepeatStride[%llu], outputRepeatStride[%llu]",
-              inputAddr, outputAddr, die0Size, die1Size, repeatNum, inputSliceStride, outputSliceStride,
-              inputRepeatStride, outputRepeatStride);
+    HCCL_INFO(
+        "[CcuContextAllGatherNHR1D] TaskArgs: inputAddr[%llu], outputAddr[%llu], "
+        "die0Size[%llu], die1Size[%llu], repeatNum[%llu] "
+        "inputSliceStride[%llu], outputSliceStride[%llu], inputRepeatStride[%llu], outputRepeatStride[%llu]",
+        inputAddr, outputAddr, die0Size, die1Size, repeatNum, inputSliceStride, outputSliceStride, inputRepeatStride,
+        outputRepeatStride);
 
     return {inputAddr,          outputAddr,        token,
             die0Size,           die1Size,          repeatNum,

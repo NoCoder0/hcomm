@@ -17,9 +17,9 @@
 #include "coll_service_default_impl.h"
 #include "communicator_impl.h"
 #include "stream_manager.h"
-#include "base_config.h"
+#include "base_config_legacy.h"
 #include "cfg_field.h"
-#include "env_config.h"
+#include "env_config_v2.h"
 #include "rank_table.h"
 #include "virtual_topo.h"
 #include "json_parser.h"
@@ -27,10 +27,10 @@
 #include "dev_ub_connection.h"
 #include "virtual_topo_stub.h"
 #include "coll_alg_component_builder.h"
-#include "local_ipc_rma_buffer.h"
+#include "local_ipc_rma_buffer_v2.h"
 #include "not_support_exception.h"
 #include "ccu_context_mgr_imp.h"
-#include "ccu_res_batch_allocator.h"
+#include "ccu_res_batch_allocator_legacy.h"
 #include "ccu_component.h"
 #include "rank_gph.h"
 #include "rdma_handle_manager.h"
@@ -47,15 +47,9 @@ using namespace std;
 
 class CollServiceDefaultImplTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CollServiceDefaultImpl SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CollServiceDefaultImpl SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CollServiceDefaultImpl TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CollServiceDefaultImpl TearDown" << std::endl; }
 
     virtual void SetUp()
     {
@@ -77,13 +71,13 @@ protected:
 
 class FakeCollAlgComponent : public CollAlgComponent {
 public:
-    FakeCollAlgComponent() : CollAlgComponent(nullptr, DevType::DEV_TYPE_950, 0, 1){};
-    HcclResult Orchestrate(const CollAlgOperator &op, const CollAlgParams &params, InsQuePtr queue, string &algName)
+    FakeCollAlgComponent() : CollAlgComponent(nullptr, DevType::DEV_TYPE_950, 0, 1) {};
+    HcclResult Orchestrate(const CollAlgOperator& op, const CollAlgParams& params, InsQuePtr queue, string& algName)
     {
         return HCCL_SUCCESS;
     }
 
-    HcclResult Orchestrate(const CollAlgOperator &op, const CollAlgParams &params, PrimQuePtr queue, string &algName)
+    HcclResult Orchestrate(const CollAlgOperator& op, const CollAlgParams& params, PrimQuePtr queue, string& algName)
     {
         return HCCL_SUCCESS;
     }
@@ -92,11 +86,25 @@ public:
 class FakeCollAlgComponentWithError : public CollAlgComponent {
 public:
     FakeCollAlgComponentWithError() : CollAlgComponent(nullptr, DevType::DEV_TYPE_950, 0, 1) {}
-    HcclResult Orchestrate(const CollAlgOperator &op, const CollAlgParams &params, InsQuePtr queue, string &algName)
+    HcclResult Orchestrate(const CollAlgOperator& op, const CollAlgParams& params, InsQuePtr queue, string& algName)
     {
         return HCCL_E_INTERNAL;
     }
 };
+
+#define SETUP_COLL_SERVICE_DEFAULT_MOCKS()                                                     \
+    do {                                                                                       \
+        MOCKER(HrtGetDevice).stubs().will(returnValue(0));                                     \
+        MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().will(returnValue(static_cast<DevId>(1))); \
+        DevType devType = DevType::DEV_TYPE_950;                                               \
+        MOCKER(HrtGetDeviceType).stubs().will(returnValue(devType));                           \
+        MOCKER(HrtIpcSetMemoryName).stubs();                                                   \
+        MOCKER(HrtDevMemAlignWithPage).stubs();                                                \
+        MOCKER(HrtIpcDestroyMemoryName).stubs();                                               \
+        std::unique_ptr<RdmaHandle> handle = std::make_unique<RdmaHandle>();                   \
+        RdmaHandle handlePtr = handle.get();                                                   \
+        MOCKER(HrtRaUbCtxInit).stubs().with(mockcpp::any()).will(returnValue(handlePtr));      \
+    } while (0)
 
 TEST_F(CollServiceDefaultImplTest, test_base_register_op_base_buf)
 {
@@ -125,9 +133,10 @@ TEST_F(CollServiceDefaultImplTest, test_orchestrate_with_ins)
     op.root = 0;
     std::shared_ptr<FakeCollAlgComponent> collAlgComponent = std::make_shared<FakeCollAlgComponent>();
     comm.collAlgComponent = collAlgComponent;
-    MOCKER_CPP_VIRTUAL(*collAlgComponent, &CollAlgComponent::Orchestrate,
-                       HcclResult(CollAlgComponent::*)(const CollAlgOperator &op, const CollAlgParams &params,
-                                                       const string &algName, InsQuePtr queue))
+    MOCKER_CPP_VIRTUAL(
+        *collAlgComponent, &CollAlgComponent::Orchestrate,
+        HcclResult(CollAlgComponent::*)(
+            const CollAlgOperator& op, const CollAlgParams& params, const string& algName, InsQuePtr queue))
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
         .will(returnValue(HcclResult::HCCL_SUCCESS));
@@ -149,9 +158,10 @@ TEST_F(CollServiceDefaultImplTest, test_orchestrate_with_prim)
     op.scratchMem = DevBuffer::Create(0x100, 1);
     std::shared_ptr<FakeCollAlgComponent> collAlgComponent = std::make_shared<FakeCollAlgComponent>();
     comm.collAlgComponent = collAlgComponent;
-    MOCKER_CPP_VIRTUAL(*collAlgComponent, &CollAlgComponent::Orchestrate,
-                       HcclResult(CollAlgComponent::*)(const CollAlgOperator &op, const CollAlgParams &params,
-                                                       const string &algName, PrimQuePtr queue))
+    MOCKER_CPP_VIRTUAL(
+        *collAlgComponent, &CollAlgComponent::Orchestrate,
+        HcclResult(CollAlgComponent::*)(
+            const CollAlgOperator& op, const CollAlgParams& params, const string& algName, PrimQuePtr queue))
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
         .will(returnValue(HcclResult::HCCL_SUCCESS));
@@ -234,7 +244,7 @@ TEST_F(CollServiceDefaultImplTest, col_service_default_impl_load_with_op_based_m
     CommunicatorImpl comm;
     CollOpParams collOpParams;
     collOpParams.opType = OpType::SEND;
-    collOpParams.dataType = DataType::INT8;  // sizeof(int8) = 1
+    collOpParams.dataType = DataType::INT8; // sizeof(int8) = 1
     collOpParams.reduceOp = ReduceOp::SUM;
     collOpParams.dstRank = remoteRank;
     collOpParams.sendBuf = nullptr;
@@ -244,7 +254,7 @@ TEST_F(CollServiceDefaultImplTest, col_service_default_impl_load_with_op_based_m
     collOpParams.staticAddr = true;
     collOpParams.staticShape = true;
     collOpParams.outputDataType = DataType::INT8;
-    
+
     collOpParams.dstRank = 0;
     std::string name = "test";
     comm.cclBuffer = DevBuffer::Create(0x1, 200);
@@ -258,13 +268,13 @@ TEST_F(CollServiceDefaultImplTest, col_service_default_impl_load_with_op_based_m
     comm.socketManager = std::make_unique<SocketManager>(comm, 1, 1, 1);
     comm.memTransportManager = make_unique<MemTransportManager>(comm);
 
-
     CollServiceDefaultImpl service(&comm);
     std::shared_ptr<FakeCollAlgComponent> collAlgComponent = std::make_shared<FakeCollAlgComponent>();
     comm.collAlgComponent = collAlgComponent;
-    MOCKER_CPP_VIRTUAL(*collAlgComponent, &CollAlgComponent::Orchestrate,
-                       HcclResult(CollAlgComponent::*)(const CollAlgOperator &op, const CollAlgParams &params,
-                                                       const string &algName, InsQuePtr queue))
+    MOCKER_CPP_VIRTUAL(
+        *collAlgComponent, &CollAlgComponent::Orchestrate,
+        HcclResult(CollAlgComponent::*)(
+            const CollAlgOperator& op, const CollAlgParams& params, const string& algName, InsQuePtr queue))
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
         .will(returnValue(HcclResult::HCCL_SUCCESS));
@@ -274,7 +284,7 @@ TEST_F(CollServiceDefaultImplTest, col_service_default_impl_load_with_op_based_m
 
     MOCKER_CPP(&CollServiceDefaultImpl::RegisterOpBufToBufMgr).stubs();
     MOCKER_CPP(&CollServiceDefaultImpl::RegisterOpbasedStream).stubs();
-    
+
     MOCKER_CPP(&Trace::Save).stubs();
 
     vector<LinkData> links;
@@ -284,8 +294,7 @@ TEST_F(CollServiceDefaultImplTest, col_service_default_impl_load_with_op_based_m
     shared_ptr<InsQueue> insQueue = make_shared<InsQueue>();
     MOCKER_CPP(&PrimTranslator::Translate).stubs().will(returnValue(insQueue));
 
-    MOCKER_CPP(&SocketManager::BatchCreateSockets, void(SocketManager::*)(const std::vector<LinkData>&))
-        .stubs();
+    MOCKER_CPP(&SocketManager::BatchCreateSockets, void(SocketManager::*)(const std::vector<LinkData>&)).stubs();
 
     MOCKER_CPP(&ConnectionsBuilder::BatchBuild).stubs();
 
@@ -319,14 +328,14 @@ TEST_F(CollServiceDefaultImplTest, coll_service_default_impl_orchestrate_with_in
     comm.streamManager = make_unique<StreamManager>(&comm);
     comm.streamManager->opbase = make_unique<OpbaseStreamManager>(&comm);
     comm.socketManager = std::make_unique<SocketManager>(comm, 1, 1, 1);
-    comm.trace = std::make_unique<Trace>();
+    (void)comm.InitTraceManager();
     comm.memTransportManager = make_unique<MemTransportManager>(comm);
     comm.cclBuffer = DevBuffer::Create(0x100, 200);
 
     u32 remoteRank = 1;
     CollOpParams collOpParams;
     collOpParams.opType = OpType::SEND;
-    collOpParams.dataType = DataType::INT8;  // sizeof(int8) = 1
+    collOpParams.dataType = DataType::INT8; // sizeof(int8) = 1
     collOpParams.reduceOp = ReduceOp::SUM;
     collOpParams.dstRank = remoteRank;
     collOpParams.sendBuf = nullptr;
@@ -336,19 +345,20 @@ TEST_F(CollServiceDefaultImplTest, coll_service_default_impl_orchestrate_with_in
     collOpParams.staticAddr = true;
     collOpParams.staticShape = true;
     collOpParams.outputDataType = DataType::INT8;
-    
+
     collOpParams.dstRank = 0;
     std::string name = "test";
     comm.CovertToCurrentCollOperator(name, collOpParams, OpMode::OPBASE);
 
     CollServiceDefaultImpl service(&comm);
-    std::vector<Stream *> slaveVec;
+    std::vector<Stream*> slaveVec;
     MOCKER_CPP(&Interpreter::Submit).stubs();
     std::shared_ptr<FakeCollAlgComponent> collAlgComponent = std::make_shared<FakeCollAlgComponent>();
     comm.collAlgComponent = collAlgComponent;
-    MOCKER_CPP_VIRTUAL(*collAlgComponent, &CollAlgComponent::Orchestrate,
-                       HcclResult(CollAlgComponent::*)(const CollAlgOperator &op, const CollAlgParams &params,
-                                                       const string &algName, InsQuePtr queue))
+    MOCKER_CPP_VIRTUAL(
+        *collAlgComponent, &CollAlgComponent::Orchestrate,
+        HcclResult(CollAlgComponent::*)(
+            const CollAlgOperator& op, const CollAlgParams& params, const string& algName, InsQuePtr queue))
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
         .will(returnValue(HcclResult::HCCL_SUCCESS));
@@ -358,8 +368,7 @@ TEST_F(CollServiceDefaultImplTest, coll_service_default_impl_orchestrate_with_in
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(devType));
     MOCKER_CPP(&CollServiceDefaultImpl::RegisterOpBufToBufMgr).stubs();
     MOCKER_CPP(&CollServiceDefaultImpl::RegisterOpbasedStream).stubs();
-    MOCKER_CPP(&SocketManager::BatchCreateSockets, void(SocketManager::*)(const std::vector<LinkData>&))
-        .stubs();
+    MOCKER_CPP(&SocketManager::BatchCreateSockets, void(SocketManager::*)(const std::vector<LinkData>&)).stubs();
     MOCKER_CPP(&CollServiceBase::SaveMirrorDfxOpInfo).stubs();
 
     vector<LinkData> links;
@@ -382,9 +391,11 @@ TEST_F(CollServiceDefaultImplTest, coll_service_default_impl_orchestrate_with_in
     comm.rankGraph->peers_[comm.GetMyRank()] = std::make_shared<NetInstance::Peer>(comm.GetMyRank(), 0, 0, 0);
 
     EnvAlgoConfig fakeAlgoCfg;
-    EnvAlgoConfig &algoCfg = fakeAlgoCfg;
-    algoCfg.bufferSize = CfgField<u64>("HCCL_BUFFSIZE", 200 * 1024 * 1024, Str2T<u64>,
-                                       CHK_RANGE_CLOSED<u64>(1, ULLONG_MAX), [](u64 &i) { i *= 1024 * 1024; });
+    EnvAlgoConfig& algoCfg = fakeAlgoCfg;
+    algoCfg.bufferSize = CfgField<u64>(
+        "HCCL_BUFFSIZE", 200 * 1024 * 1024, Str2T<u64>, CHK_RANGE_CLOSED<u64>(1, ULLONG_MAX), [](u64& i) {
+            i *= 1024 * 1024;
+        });
     algoCfg.bufferSize.isParsed = true;
     MOCKER_CPP(&EnvConfig::GetAlgoConfig).stubs().will(returnValue(algoCfg));
     MOCKER_CPP(&CollServiceBase::SaveMirrorDfxOpInfo).stubs().with(mockcpp::any()).will(ignoreReturnValue());
@@ -398,14 +409,14 @@ TEST_F(CollServiceDefaultImplTest, test_base_register_offload_buf)
     MOCKER(memset_s).stubs().with(mockcpp::any()).will(returnValue(0));
 
     MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(1)));
+    MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().will(returnValue(static_cast<DevId>(1)));
     DevType devType = DevType::DEV_TYPE_950;
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(devType));
     MOCKER(HrtIpcSetMemoryName).stubs();
     MOCKER(HrtDevMemAlignWithPage).stubs();
     MOCKER(HrtIpcDestroyMemoryName).stubs();
-    void *devPtr = nullptr;
-    MOCKER(HrtMalloc).stubs().with(mockcpp::any(),mockcpp::any()).will(returnValue(devPtr));
+    void* devPtr = nullptr;
+    MOCKER(HrtMalloc).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(devPtr));
 
     GenRankTableFile4p();
     GenTopoFile();
@@ -414,10 +425,11 @@ TEST_F(CollServiceDefaultImplTest, test_base_register_offload_buf)
 
     LocalIpcRmaBuffer localRmaBuf(devBuf);
     MOCKER_CPP(
-        &LocalRmaBufManager::Reg,
-        LocalRmaBuffer * (LocalRmaBufManager::*)(const string &, BufferType, std::shared_ptr<Buffer>, const PortData &, LinkProtocol))
+        &LocalRmaBufManager::Reg, LocalRmaBuffer
+                                      * (LocalRmaBufManager::*)(const string&, BufferType, std::shared_ptr<Buffer>,
+                                                                const PortData&, LinkProtocol))
         .stubs()
-        .will(returnValue(dynamic_cast<LocalRmaBuffer *>(&localRmaBuf)));
+        .will(returnValue(dynamic_cast<LocalRmaBuffer*>(&localRmaBuf)));
 
     CommunicatorImpl comm;
     comm.devLogicId = 1;
@@ -500,13 +512,10 @@ TEST_F(CollServiceDefaultImplTest, test_init)
 
     std::unique_ptr<RdmaHandle> handle = std::make_unique<RdmaHandle>();
     RdmaHandle handlePtr = handle.get();
-    MOCKER(HrtRaUbCtxInit)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(handlePtr));
+    MOCKER(HrtRaUbCtxInit).stubs().with(mockcpp::any()).will(returnValue(handlePtr));
 
     MOCKER(HrtGetDevice).stubs().will(returnValue(1));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(1)));
+    MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().will(returnValue(static_cast<DevId>(1)));
     DevType devType = DevType::DEV_TYPE_950;
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(devType));
     MOCKER(HrtIpcSetMemoryName).stubs();
@@ -540,20 +549,7 @@ TEST_F(CollServiceDefaultImplTest, test_init)
 
 TEST_F(CollServiceDefaultImplTest, test_load_with_op_based_mode)
 {
-    MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(1)));
-    DevType devType = DevType::DEV_TYPE_950;
-    MOCKER(HrtGetDeviceType).stubs().will(returnValue(devType));
-    MOCKER(HrtIpcSetMemoryName).stubs();
-    MOCKER(HrtDevMemAlignWithPage).stubs();
-    MOCKER(HrtIpcDestroyMemoryName).stubs();
-
-    std::unique_ptr<RdmaHandle> handle = std::make_unique<RdmaHandle>();
-    RdmaHandle handlePtr = handle.get();
-    MOCKER(HrtRaUbCtxInit)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(handlePtr));
+    SETUP_COLL_SERVICE_DEFAULT_MOCKS();
 
     GenRankTableFile4p();
     GenTopoFile();
@@ -562,10 +558,11 @@ TEST_F(CollServiceDefaultImplTest, test_load_with_op_based_mode)
 
     LocalIpcRmaBuffer localRmaBuf(devBuf);
     MOCKER_CPP(
-        &LocalRmaBufManager::Reg,
-        LocalRmaBuffer * (LocalRmaBufManager::*)(const string &, BufferType, std::shared_ptr<Buffer>, const PortData &, LinkProtocol))
+        &LocalRmaBufManager::Reg, LocalRmaBuffer
+                                      * (LocalRmaBufManager::*)(const string&, BufferType, std::shared_ptr<Buffer>,
+                                                                const PortData&, LinkProtocol))
         .stubs()
-        .will(returnValue(dynamic_cast<LocalRmaBuffer *>(&localRmaBuf)));
+        .will(returnValue(dynamic_cast<LocalRmaBuffer*>(&localRmaBuf)));
     MOCKER_CPP(&CommunicatorImpl::SetCommExecuteConfig).stubs().will(ignoreReturnValue());
     MOCKER_CPP(&CommunicatorImpl::SelectCollService).stubs().will(ignoreReturnValue());
     MOCKER_CPP(&CollAlgComponent::ExecAlgSelect).stubs().will(returnValue(HCCL_SUCCESS));
@@ -576,9 +573,10 @@ TEST_F(CollServiceDefaultImplTest, test_load_with_op_based_mode)
     comm.devLogicId = 1;
     std::shared_ptr<FakeCollAlgComponent> collAlgComponent = std::make_shared<FakeCollAlgComponent>();
     comm.collAlgComponent = collAlgComponent;
-    MOCKER_CPP_VIRTUAL(*collAlgComponent, &CollAlgComponent::Orchestrate,
-                       HcclResult(CollAlgComponent::*)(const CollAlgOperator &op, const CollAlgParams &params,
-                                                       const string &algName, InsQuePtr queue))
+    MOCKER_CPP_VIRTUAL(
+        *collAlgComponent, &CollAlgComponent::Orchestrate,
+        HcclResult(CollAlgComponent::*)(
+            const CollAlgOperator& op, const CollAlgParams& params, const string& algName, InsQuePtr queue))
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
         .will(returnValue(HcclResult::HCCL_SUCCESS));
@@ -595,7 +593,7 @@ TEST_F(CollServiceDefaultImplTest, test_load_with_op_based_mode)
     u32 remoteRank = 1;
     CollOpParams collOpParams;
     collOpParams.opType = OpType::SEND;
-    collOpParams.dataType = DataType::INT8;  // sizeof(int8) = 1
+    collOpParams.dataType = DataType::INT8; // sizeof(int8) = 1
     collOpParams.reduceOp = ReduceOp::SUM;
     collOpParams.dstRank = remoteRank;
     collOpParams.sendBuf = nullptr;
@@ -605,7 +603,7 @@ TEST_F(CollServiceDefaultImplTest, test_load_with_op_based_mode)
     collOpParams.staticAddr = true;
     collOpParams.staticShape = true;
     collOpParams.outputDataType = DataType::INT8;
-    
+
     collOpParams.dstRank = 0;
     std::string name = "test";
     comm.cclBuffer = DevBuffer::Create(0x100, 10);
@@ -626,32 +624,18 @@ TEST_F(CollServiceDefaultImplTest, test_load_with_op_based_mode)
 
     StreamManager streamManager(&comm);
 
-    service.LoadWithOpBasedMode(op, std::move(make_unique<Stream>((void*)1)));
-    CollOpParams opAdaptor;
-    opAdaptor.opType = OpType::ALLREDUCE;
-    comm.ExecAlgSelect(opAdaptor, OpMode::OPBASE);
-    service.LoadWithOpBasedMode(op, std::move(make_unique<Stream>((void*)1)));
-    opAdaptor.opType = OpType::SEND;
-    comm.ExecAlgSelect(opAdaptor, OpMode::OPBASE);
+    for (auto opType : {OpType::ALLREDUCE, OpType::SEND}) {
+        service.LoadWithOpBasedMode(op, std::move(make_unique<Stream>((void*)1)));
+        CollOpParams opAdaptor;
+        opAdaptor.opType = opType;
+        comm.ExecAlgSelect(opAdaptor, OpMode::OPBASE);
+    }
     service.LoadWithOpBasedMode(op, std::move(make_unique<Stream>((void*)1)));
 }
 
 TEST_F(CollServiceDefaultImplTest, test_load_with_offload_mode)
 {
-    MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(1)));
-    DevType devType = DevType::DEV_TYPE_950;
-    MOCKER(HrtGetDeviceType).stubs().will(returnValue(devType));
-    MOCKER(HrtIpcSetMemoryName).stubs();
-    MOCKER(HrtDevMemAlignWithPage).stubs();
-    MOCKER(HrtIpcDestroyMemoryName).stubs();
-
-    std::unique_ptr<RdmaHandle> handle = std::make_unique<RdmaHandle>();
-    RdmaHandle handlePtr = handle.get();
-    MOCKER(HrtRaUbCtxInit)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(handlePtr));
+    SETUP_COLL_SERVICE_DEFAULT_MOCKS();
 
     GenRankTableFile4p();
     GenTopoFile();
@@ -663,10 +647,11 @@ TEST_F(CollServiceDefaultImplTest, test_load_with_offload_mode)
 
     LocalIpcRmaBuffer localRmaBuf(devBuf);
     MOCKER_CPP(
-        &LocalRmaBufManager::Reg,
-        LocalRmaBuffer * (LocalRmaBufManager::*)(const string &, BufferType, std::shared_ptr<Buffer>, const PortData &, LinkProtocol))
+        &LocalRmaBufManager::Reg, LocalRmaBuffer
+                                      * (LocalRmaBufManager::*)(const string&, BufferType, std::shared_ptr<Buffer>,
+                                                                const PortData&, LinkProtocol))
         .stubs()
-        .will(returnValue(dynamic_cast<LocalRmaBuffer *>(&localRmaBuf)));
+        .will(returnValue(dynamic_cast<LocalRmaBuffer*>(&localRmaBuf)));
     MOCKER_CPP(&CommunicatorImpl::SetCommExecuteConfig).stubs().will(ignoreReturnValue());
     MOCKER_CPP(&CommunicatorImpl::SelectCollService).stubs().will(ignoreReturnValue());
     MOCKER_CPP(&CollAlgComponent::ExecAlgSelect).stubs().will(returnValue(HCCL_SUCCESS));
@@ -677,9 +662,10 @@ TEST_F(CollServiceDefaultImplTest, test_load_with_offload_mode)
     comm.devLogicId = 1;
     std::shared_ptr<FakeCollAlgComponent> collAlgComponent = std::make_shared<FakeCollAlgComponent>();
     comm.collAlgComponent = collAlgComponent;
-    MOCKER_CPP_VIRTUAL(*collAlgComponent, &CollAlgComponent::Orchestrate,
-                       HcclResult(CollAlgComponent::*)(const CollAlgOperator &op, const CollAlgParams &params,
-                                                       const string &algName, InsQuePtr queue))
+    MOCKER_CPP_VIRTUAL(
+        *collAlgComponent, &CollAlgComponent::Orchestrate,
+        HcclResult(CollAlgComponent::*)(
+            const CollAlgOperator& op, const CollAlgParams& params, const string& algName, InsQuePtr queue))
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
         .will(returnValue(HcclResult::HCCL_SUCCESS));
@@ -695,7 +681,7 @@ TEST_F(CollServiceDefaultImplTest, test_load_with_offload_mode)
     u32 remoteRank = 1;
     CollOpParams collOpParams;
     collOpParams.opType = OpType::SEND;
-    collOpParams.dataType = DataType::INT8;  // sizeof(int8) = 1
+    collOpParams.dataType = DataType::INT8; // sizeof(int8) = 1
     collOpParams.reduceOp = ReduceOp::SUM;
     collOpParams.dstRank = remoteRank;
     collOpParams.sendBuf = nullptr;
@@ -705,7 +691,7 @@ TEST_F(CollServiceDefaultImplTest, test_load_with_offload_mode)
     collOpParams.staticAddr = true;
     collOpParams.staticShape = true;
     collOpParams.outputDataType = DataType::INT8;
-    
+
     collOpParams.dstRank = 0;
     std::string name = "test";
     comm.cclBuffer = DevBuffer::Create(0x100, 10);
@@ -750,9 +736,9 @@ TEST_F(CollServiceDefaultImplTest, test_add_nop)
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     LinkData linkData(portType, 0, 1, 0, 1);
 
-    RdmaHandle rdmaHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
     DevUbConnection devUbConnection(rdmaHandle, linkData.GetLocalAddr(), linkData.GetRemoteAddr(), OpMode::OFFLOAD);
-    MOCKER_CPP(&RmaConnManager::Get).stubs().will(returnValue(dynamic_cast<RmaConnection *>(&devUbConnection)));
+    MOCKER_CPP(&RmaConnManager::Get).stubs().will(returnValue(dynamic_cast<RmaConnection*>(&devUbConnection)));
 
     std::vector<LinkData> links = {linkData};
 
@@ -768,7 +754,7 @@ TEST_F(CollServiceDefaultImplTest, col_service_default_impl_update_ub_ci_if_need
     CommunicatorImpl comm;
     CollOpParams collOpParams;
     collOpParams.opType = OpType::SEND;
-    collOpParams.dataType = DataType::INT8;  // sizeof(int8) = 1
+    collOpParams.dataType = DataType::INT8; // sizeof(int8) = 1
     collOpParams.reduceOp = ReduceOp::SUM;
     collOpParams.dstRank = remoteRank;
     collOpParams.sendBuf = nullptr;
@@ -778,7 +764,7 @@ TEST_F(CollServiceDefaultImplTest, col_service_default_impl_update_ub_ci_if_need
     collOpParams.staticAddr = true;
     collOpParams.staticShape = true;
     collOpParams.outputDataType = DataType::INT8;
-    
+
     collOpParams.dstRank = 0;
     std::string name = "test";
     comm.cclBuffer = DevBuffer::Create(0x100, 200);
@@ -819,8 +805,8 @@ TEST_F(CollServiceDefaultImplTest, AddCountTask)
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(devType));
     MOCKER(HrtReduceAsync).stubs().with(mockcpp::any());
     MOCKER(HrtMemcpy).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any());
-    void *devPtr = nullptr;
-    MOCKER(HrtMalloc).stubs().with(mockcpp::any(),mockcpp::any()).will(returnValue(devPtr));
+    void* devPtr = nullptr;
+    MOCKER(HrtMalloc).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(devPtr));
 
     CommunicatorImpl comm;
     comm.streamManager = make_unique<StreamManager>(&comm);
@@ -835,7 +821,7 @@ TEST_F(CollServiceDefaultImplTest, AddCountTask)
 TEST_F(CollServiceDefaultImplTest, test_load_with_offload_mode_with_task)
 {
     MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(1)));
+    MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().will(returnValue(static_cast<DevId>(1)));
     DevType devType = DevType::DEV_TYPE_950;
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(devType));
     MOCKER(HrtIpcSetMemoryName).stubs();
@@ -846,10 +832,7 @@ TEST_F(CollServiceDefaultImplTest, test_load_with_offload_mode_with_task)
 
     std::unique_ptr<RdmaHandle> handle = std::make_unique<RdmaHandle>();
     RdmaHandle handlePtr = handle.get();
-    MOCKER(HrtRaUbCtxInit)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(handlePtr));
+    MOCKER(HrtRaUbCtxInit).stubs().with(mockcpp::any()).will(returnValue(handlePtr));
 
     GenRankTableFile4p();
     GenTopoFile();
@@ -859,10 +842,11 @@ TEST_F(CollServiceDefaultImplTest, test_load_with_offload_mode_with_task)
 
     LocalIpcRmaBuffer localRmaBuf(devBuf);
     MOCKER_CPP(
-        &LocalRmaBufManager::Reg,
-        LocalRmaBuffer * (LocalRmaBufManager::*)(const string &, BufferType, std::shared_ptr<Buffer>, const PortData &, LinkProtocol))
+        &LocalRmaBufManager::Reg, LocalRmaBuffer
+                                      * (LocalRmaBufManager::*)(const string&, BufferType, std::shared_ptr<Buffer>,
+                                                                const PortData&, LinkProtocol))
         .stubs()
-        .will(returnValue(dynamic_cast<LocalRmaBuffer *>(&localRmaBuf)));
+        .will(returnValue(dynamic_cast<LocalRmaBuffer*>(&localRmaBuf)));
     MOCKER_CPP(&CommunicatorImpl::SetCommExecuteConfig).stubs().will(ignoreReturnValue());
     MOCKER_CPP(&CommunicatorImpl::SelectCollService).stubs().will(ignoreReturnValue());
     MOCKER_CPP(&CollAlgComponent::ExecAlgSelect).stubs().will(returnValue(HCCL_SUCCESS));
@@ -871,9 +855,10 @@ TEST_F(CollServiceDefaultImplTest, test_load_with_offload_mode_with_task)
     comm.devLogicId = 1;
     std::shared_ptr<FakeCollAlgComponent> collAlgComponent = std::make_shared<FakeCollAlgComponent>();
     comm.collAlgComponent = collAlgComponent;
-    MOCKER_CPP_VIRTUAL(*collAlgComponent, &CollAlgComponent::Orchestrate,
-                       HcclResult(CollAlgComponent::*)(const CollAlgOperator &op, const CollAlgParams &params,
-                                                       const string &algName, InsQuePtr queue))
+    MOCKER_CPP_VIRTUAL(
+        *collAlgComponent, &CollAlgComponent::Orchestrate,
+        HcclResult(CollAlgComponent::*)(
+            const CollAlgOperator& op, const CollAlgParams& params, const string& algName, InsQuePtr queue))
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
         .will(returnValue(HcclResult::HCCL_SUCCESS));
@@ -889,7 +874,7 @@ TEST_F(CollServiceDefaultImplTest, test_load_with_offload_mode_with_task)
     u32 remoteRank = 1;
     CollOpParams collOpParams;
     collOpParams.opType = OpType::SEND;
-    collOpParams.dataType = DataType::INT8;  // sizeof(int8) = 1
+    collOpParams.dataType = DataType::INT8; // sizeof(int8) = 1
     collOpParams.reduceOp = ReduceOp::SUM;
     collOpParams.dstRank = remoteRank;
     collOpParams.sendBuf = nullptr;
@@ -899,7 +884,7 @@ TEST_F(CollServiceDefaultImplTest, test_load_with_offload_mode_with_task)
     collOpParams.staticAddr = true;
     collOpParams.staticShape = true;
     collOpParams.outputDataType = DataType::INT8;
-    
+
     collOpParams.dstRank = 0;
     std::string name = "test";
     comm.cclBuffer = DevBuffer::Create(0x100, 10);
@@ -929,19 +914,22 @@ TEST_F(CollServiceDefaultImplTest, Test_RecoverTransport)
     std::unique_ptr<CommunicatorImpl> comm = std::make_unique<CommunicatorImpl>();
     CollServiceDefaultImpl collServiceDefaultImpl(comm.get());
 
-    MOCKER_CPP(&RdmaHandleManager::GetDieAndFuncId).stubs().will(returnValue(make_pair<uint32_t,uint32_t>(0,0)));
+    MOCKER_CPP(&RdmaHandleManager::GetDieAndFuncId).stubs().will(returnValue(make_pair<uint32_t, uint32_t>(0, 0)));
     DevType devType = DevType::DEV_TYPE_950;
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(devType));
-    
+
     vector<LinkData> links;
     vector<std::pair<LinkGroup, u32>> linkGroupPair;
-    LinkData linkData(PortDeploymentType::P2P,LinkProtocol::UB_CTP, 0, 1, IpAddress{"10.0.0.1"}, IpAddress{"10.0.0.2"});
+    LinkData linkData(
+        PortDeploymentType::P2P, LinkProtocol::UB_CTP, 0, 1, IpAddress{"10.0.0.1"}, IpAddress{"10.0.0.2"});
     links.push_back(linkData);
     LinkGroup linkGroup{};
     linkGroup.AddLink({linkData});
-    LinkData otherLinkData(PortDeploymentType::P2P,LinkProtocol::UB_CTP, 1, 1, IpAddress{"10.0.0.3"}, IpAddress{"10.0.0.4"});;
+    LinkData otherLinkData(
+        PortDeploymentType::P2P, LinkProtocol::UB_CTP, 1, 1, IpAddress{"10.0.0.3"}, IpAddress{"10.0.0.4"});
+    ;
     linkGroup.AddLink({otherLinkData});
     linkGroupPair.push_back(make_pair(linkGroup, 0));
 
-    EXPECT_THROW(collServiceDefaultImpl.RecoverTransport(links, linkGroupPair), NotSupportException);
+    EXPECT_EQ(collServiceDefaultImpl.RecoverTransport(links, linkGroupPair), HcclResult::HCCL_E_NOT_SUPPORT);
 }

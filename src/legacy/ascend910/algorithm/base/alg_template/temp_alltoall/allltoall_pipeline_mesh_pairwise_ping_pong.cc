@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "allltoall_pipeline_mesh_pairwise_ping_pong.h"
 #include <numeric>
@@ -16,29 +16,28 @@ namespace hccl {
 
 // 需要将 ccl 切成两份，ping-pong 时也根据收发次数取模2决定使用 ping mem 还是 pong mem
 static const u32 PING_PONG_CONST_NUM = 2;
-static const u32 INTRA_STREAM_INFO_SENDLEN_INDEX = 0;              // intraStreamInfo 中 sendLen 的下标
-static const u32 INTRA_STREAM_INFO_RECVLEN_INDEX = 1;              // intraStreamInfo 中 recvLen 的下标
-static const u32 INTRA_STREAM_INFO_RECV_LOCAL_OFFSET_INDEX = 2;    // intraStreamInfo 中 recvRemoteOffset 的下标
+static const u32 INTRA_STREAM_INFO_SENDLEN_INDEX = 0;           // intraStreamInfo 中 sendLen 的下标
+static const u32 INTRA_STREAM_INFO_RECVLEN_INDEX = 1;           // intraStreamInfo 中 recvLen 的下标
+static const u32 INTRA_STREAM_INFO_RECV_LOCAL_OFFSET_INDEX = 2; // intraStreamInfo 中 recvRemoteOffset 的下标
 
-AlltoallPipelineMeshPairwisePingPong::AlltoallPipelineMeshPairwisePingPong(
-    const HcclDispatcher dispatcher): AlltoallPipelineBase(dispatcher) {}
+AlltoallPipelineMeshPairwisePingPong::AlltoallPipelineMeshPairwisePingPong(const HcclDispatcher dispatcher)
+    : AlltoallPipelineBase(dispatcher)
+{}
 
 AlltoallPipelineMeshPairwisePingPong::~AlltoallPipelineMeshPairwisePingPong() {}
 
-u32 AlltoallPipelineMeshPairwisePingPong::CalcInterNumSteps()
-{
-    return interRankSize_ - 1;
-}
+u32 AlltoallPipelineMeshPairwisePingPong::CalcInterNumSteps() { return interRankSize_ - 1; }
 
 // 适配新CollExecutor接口
-HcclResult AlltoallPipelineMeshPairwisePingPong::Prepare(u32 userRank, A2aPipelineMemory A2aPipelineMemory,
-    const SubCommInfo &level0CommInfo, const SubCommInfo &level1CommInfo,
-    Stream &mainStream, std::vector<Stream> &subStream,
-    std::vector<std::shared_ptr<LocalNotify>> &notifyMain, std::vector<std::shared_ptr<LocalNotify>> &notifySub,
-    std::vector<SendRecvInfo> &allMeshAggregationSendRecvInfo, HcclWorkflowMode workMode)
+HcclResult AlltoallPipelineMeshPairwisePingPong::Prepare(
+    u32 userRank, A2aPipelineMemory A2aPipelineMemory, const SubCommInfo& level0CommInfo,
+    const SubCommInfo& level1CommInfo, Stream& mainStream, std::vector<Stream>& subStream,
+    std::vector<std::shared_ptr<LocalNotify>>& notifyMain, std::vector<std::shared_ptr<LocalNotify>>& notifySub,
+    std::vector<SendRecvInfo>& allMeshAggregationSendRecvInfo, HcclWorkflowMode workMode)
 {
-    AlltoallPipelineBase::Prepare(userRank, A2aPipelineMemory, level0CommInfo, level1CommInfo, mainStream, subStream,
-        notifyMain, notifySub, allMeshAggregationSendRecvInfo, workMode);
+    AlltoallPipelineBase::Prepare(
+        userRank, A2aPipelineMemory, level0CommInfo, level1CommInfo, mainStream, subStream, notifyMain, notifySub,
+        allMeshAggregationSendRecvInfo, workMode);
     if (workMode_ == HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE) {
         pingPongMemSize_ = (cclIn_.size() / PING_PONG_CONST_NUM);
     } else {
@@ -77,7 +76,8 @@ HcclResult AlltoallPipelineMeshPairwisePingPong::DeviceMemMapping()
         LINK& intraNeighboorTransport = intraLinks_[intraRank];
         void* remDMAMemPtr = nullptr;
         CHK_RET(intraNeighboorTransport->GetRemoteMem(UserMemType::INPUT_MEM, &remDMAMemPtr));
-        DeviceMem remoteIntraSend = DeviceMem::create(static_cast<u8 *>(remDMAMemPtr),
+        DeviceMem remoteIntraSend = DeviceMem::create(
+            static_cast<u8*>(remDMAMemPtr),
             workMode_ == HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE ? cclIn_.size() : scratchMem_.size());
         DeviceMem remoteIntraSendPing = remoteIntraSend.range(0, pingPongMemSize_);
         DeviceMem remoteIntraSendPong = remoteIntraSend.range(pingPongMemSize_, pingPongMemSize_);
@@ -87,16 +87,16 @@ HcclResult AlltoallPipelineMeshPairwisePingPong::DeviceMemMapping()
 }
 
 // 将需要发送给其他 mesh 的数据准备好，并计算好 TxMemoryInfo
-HcclResult AlltoallPipelineMeshPairwisePingPong::PrepareInterSendData(
-    u32 mainStep,
-    u32 subStep)
+HcclResult AlltoallPipelineMeshPairwisePingPong::PrepareInterSendData(u32 mainStep, u32 subStep)
 {
     nextInterSendData_.clear();
     u32 interSendRankStart = ((interRankId_ + 1 + mainStep) % interRankSize_) * intraRankSize_;
     DeviceMem interSendMem = (interSendUsePingMem_ ? interSendPing_ : interSendPong_);
-    HCCL_DEBUG("[AlltoallPipelineMeshPairwisePingPong][PrepareInterSendData] userRank %u, interRank %u, "
-        "intraRank %u in main step %llu, sub step %llu send to remote %s", userRank_, interRankId_,
-        intraRankId_, mainStep, subStep, sendToInterDstMemPing_ ? "interRecvPingMem" : "interRecvPongMem");
+    HCCL_DEBUG(
+        "[AlltoallPipelineMeshPairwisePingPong][PrepareInterSendData] userRank %u, interRank %u, "
+        "intraRank %u in main step %llu, sub step %llu send to remote %s",
+        userRank_, interRankId_, intraRankId_, mainStep, subStep,
+        sendToInterDstMemPing_ ? "interRecvPingMem" : "interRecvPongMem");
     u64 preStepMaxSend = intraDataBlockSize_ * subStep;
     for (u32 i = 0; i < intraRankSize_; i++) {
         u32 dataIndex = i + interSendRankStart;
@@ -105,11 +105,12 @@ HcclResult AlltoallPipelineMeshPairwisePingPong::PrepareInterSendData(
         if (sendLen == 0) {
             continue;
         }
-        HCCL_DEBUG("[AlltoallPipelineMeshPairwisePingPong][PrepareInterSendData] userRank %u, interRank %u, "
-            "intraRank %u data index %llu move from userInput offset %llu length %llu to %s, total size %llu"
-            "send to remote %s", userRank_, interRankId_, intraRankId_, dataIndex,
-            localSendRecvInfo_.sendOffset[dataIndex] + preStepMaxSend, sendLen, interSendUsePingMem_ ?
-            "localInterSendPingMem" : "localInterSendPongMem", totalSendLen,
+        HCCL_DEBUG(
+            "[AlltoallPipelineMeshPairwisePingPong][PrepareInterSendData] userRank %u, interRank %u, "
+            "intraRank %u data index %llu move from userInput offset %llu length %llu to %s, total size %llu, "
+            "send to remote %s",
+            userRank_, interRankId_, intraRankId_, dataIndex, localSendRecvInfo_.sendOffset[dataIndex] + preStepMaxSend,
+            sendLen, interSendUsePingMem_ ? "localInterSendPingMem" : "localInterSendPongMem", totalSendLen,
             sendToInterDstMemPing_ ? "interRecvPingMem" : "interRecvPongMem");
         DeviceMem src = inputMem_.range(localSendRecvInfo_.sendOffset[dataIndex] + preStepMaxSend, sendLen);
         DeviceMem dst = interSendMem.range(i * intraDataBlockSize_, sendLen);
@@ -117,17 +118,15 @@ HcclResult AlltoallPipelineMeshPairwisePingPong::PrepareInterSendData(
         if (workMode_ == HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE) {
             CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dst, src, mainStream_));
         }
-        nextInterSendData_.emplace_back(TxMemoryInfo{UserMemType::OUTPUT_MEM, (sendToInterDstMemPing_ ? 0 :
-            pingPongMemSize_) + i * intraDataBlockSize_, workMode_ ==
-            HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE ? dst.ptr() : src.ptr(), sendLen});
+        nextInterSendData_.emplace_back(TxMemoryInfo{
+            UserMemType::OUTPUT_MEM, (sendToInterDstMemPing_ ? 0 : pingPongMemSize_) + i * intraDataBlockSize_,
+            workMode_ == HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE ? dst.ptr() : src.ptr(), sendLen});
     }
     return HCCL_SUCCESS;
 }
 
 // 将需要发送给其他 mesh 的数据准备好，并准备好 TxMemoryInfo
-HcclResult AlltoallPipelineMeshPairwisePingPong::PrepareInterRecvData(
-    u32 mainStep,
-    u32 subStep)
+HcclResult AlltoallPipelineMeshPairwisePingPong::PrepareInterRecvData(u32 mainStep, u32 subStep)
 {
     nextInterRecvData_.clear();
     if (workMode_ == HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE) {
@@ -148,22 +147,22 @@ HcclResult AlltoallPipelineMeshPairwisePingPong::PrepareInterRecvData(
                 continue;
             }
             u64 recvRemoteOffset = remoteSendOffset[meshRankStart_ + i] + dataStartOffset;
-            nextInterRecvData_.emplace_back(RxMemoryInfo{UserMemType::INPUT_MEM, recvRemoteOffset,
+            nextInterRecvData_.emplace_back(RxMemoryInfo{
+                UserMemType::INPUT_MEM, recvRemoteOffset,
                 (interRecvUsePingMem_ ? interRecvPing_ : interRecvPong_).range(i * intraDataBlockSize_, recvLen).ptr(),
                 recvLen});
-            HCCL_DEBUG("[AlltoallPipelineMeshPairwisePingPong][PrepareInterRecvData] userRank %u, interRank %u, "
-                "intraRank %u recv from remote userInput offset %llu length %llu to %s offset %llu", userRank_,
-                interRankId_, intraRankId_, recvRemoteOffset, recvLen, interRecvUsePingMem_ ?
-                "localInterRecvPingMem" : "localInterRecvPongMem", i * intraDataBlockSize_);
+            HCCL_DEBUG(
+                "[AlltoallPipelineMeshPairwisePingPong][PrepareInterRecvData] userRank %u, interRank %u, "
+                "intraRank %u recv from remote userInput offset %llu length %llu to %s offset %llu",
+                userRank_, interRankId_, intraRankId_, recvRemoteOffset, recvLen,
+                interRecvUsePingMem_ ? "localInterRecvPingMem" : "localInterRecvPongMem", i * intraDataBlockSize_);
         }
     }
     return HCCL_SUCCESS;
 }
 
 // 准备下一次mesh间需要收发的数据，单算子模式需要从 userInput 搬到 CCLBuffer，图模式则仅需要准备好 TxMemoryInfo
-HcclResult AlltoallPipelineMeshPairwisePingPong::PrepareInterData(
-    u32 mainStep,
-    u32 subStep)
+HcclResult AlltoallPipelineMeshPairwisePingPong::PrepareInterData(u32 mainStep, u32 subStep)
 {
     CHK_RET(PrepareInterSendData(mainStep, subStep));
     CHK_RET(PrepareInterRecvData(mainStep, subStep));
@@ -182,13 +181,15 @@ HcclResult AlltoallPipelineMeshPairwisePingPong::PrepareIntraData(u32 subStep)
             continue;
         }
         DeviceMem src = inputMem_.range(localSendRecvInfo_.sendOffset[dataIndex] + dataStartOffset, sendLen);
-        DeviceMem dst = (intraSendUsePingMem_ ? intraSendPing_ : intraSendPong_).range(i * intraDataBlockSize_,
-            sendLen);
+        DeviceMem dst
+            = (intraSendUsePingMem_ ? intraSendPing_ : intraSendPong_).range(i * intraDataBlockSize_, sendLen);
         CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dst, src, mainStream_));
-        HCCL_DEBUG("[AlltoallPipelineMeshPairwisePingPong][PrepareIntraData] userRank %u, interRank %u, intraRank %u"
-            "data index %u move from userInput offset %llu length %llu to %s, total size %llu ", userRank_,
-            interRankId_, intraRankId_, dataIndex, localSendRecvInfo_.sendOffset[dataIndex] + dataStartOffset,
-            sendLen, intraSendUsePingMem_ ? "IntraPingMem" : "IntraPongMem", totalSendDataLen);
+        HCCL_DEBUG(
+            "[AlltoallPipelineMeshPairwisePingPong][PrepareIntraData] userRank %u, interRank %u, intraRank %u"
+            "data index %u move from userInput offset %llu length %llu to %s, total size %llu ",
+            userRank_, interRankId_, intraRankId_, dataIndex,
+            localSendRecvInfo_.sendOffset[dataIndex] + dataStartOffset, sendLen,
+            intraSendUsePingMem_ ? "IntraPingMem" : "IntraPongMem", totalSendDataLen);
     }
     return HCCL_SUCCESS;
 }
@@ -197,14 +198,19 @@ HcclResult AlltoallPipelineMeshPairwisePingPong::PrepareIntraData(u32 subStep)
 void AlltoallPipelineMeshPairwisePingPong::UpdateRemoteMemStatusIntra(u32 step)
 {
     for (u32 intraRank = 0; intraRank < intraRankSize_; intraRank++) {
-        if (intraRank == intraRankId_) continue;
+        if (intraRank == intraRankId_)
+            continue;
         u32 intraRankHaveRecv = 0;
         for (u32 i = 1; i <= step; i++) {
-            const std::vector<u64>& intraRankRecvFrom = (*allMeshAggregationSendRecvInfo_)[(meshRankStart_ +
-                groupRankSize_ + intraRank - i * intraRankSize_) % groupRankSize_].sendLength;
-            u64 maxRecvLen = std::accumulate(intraRankRecvFrom.begin() + meshRankStart_,
-                intraRankRecvFrom.begin() + meshRankStart_ + intraRankSize_, 0ULL,
-                [](u64 a, u64 b) {return a > b ? a : b;});
+            const std::vector<u64>& intraRankRecvFrom
+                = (*allMeshAggregationSendRecvInfo_)
+                      [(meshRankStart_ + groupRankSize_ + intraRank - i * intraRankSize_) % groupRankSize_]
+                          .sendLength;
+            u64 maxRecvLen = std::accumulate(
+                intraRankRecvFrom.begin() + meshRankStart_, intraRankRecvFrom.begin() + meshRankStart_ + intraRankSize_,
+                0ULL, [](u64 a, u64 b) {
+                    return a > b ? a : b;
+                });
             intraRankHaveRecv += ((maxRecvLen + intraDataBlockSize_ - 1) / intraDataBlockSize_);
         }
         memStatusInMesh_[intraRank] = ((intraRankHaveRecv % PING_PONG_CONST_NUM) == 0);
@@ -222,15 +228,19 @@ void AlltoallPipelineMeshPairwisePingPong::UpdateRemoteMemStatusInter(u32 step)
     const std::vector<u64>& recvRankSendLen = (*allMeshAggregationSendRecvInfo_)[recvGlobalRank].sendLength;
     for (u32 i = 1; i <= step; i++) {
         u32 firstBlockIndex = (((recvInterRank + i) % interRankSize_) * intraRankSize_);
-        u64 maxSendLen = std::accumulate(recvRankSendLen.begin() + firstBlockIndex,
-            recvRankSendLen.begin() + firstBlockIndex + intraRankSize_, 0ULL,
-            [](u64 a, u64 b) {return a > b ? a : b;});
+        u64 maxSendLen = std::accumulate(
+            recvRankSendLen.begin() + firstBlockIndex, recvRankSendLen.begin() + firstBlockIndex + intraRankSize_, 0ULL,
+            [](u64 a, u64 b) {
+                return a > b ? a : b;
+            });
         numRecvRankHaveSend += ((maxSendLen + intraDataBlockSize_ - 1) / intraDataBlockSize_);
-        const std::vector<u64>& sendRankRecvFrom =
-            (*allMeshAggregationSendRecvInfo_)[(userRank_ + i * intraRankSize_) % groupRankSize_].sendLength;
-        u64 maxRecvLen = std::accumulate(sendRankRecvFrom.begin() + meshRankStart_,
-            sendRankRecvFrom.begin() + meshRankStart_ + intraRankSize_, 0ULL,
-            [](u64 a, u64 b) {return a > b ? a : b;});
+        const std::vector<u64>& sendRankRecvFrom
+            = (*allMeshAggregationSendRecvInfo_)[(userRank_ + i * intraRankSize_) % groupRankSize_].sendLength;
+        u64 maxRecvLen = std::accumulate(
+            sendRankRecvFrom.begin() + meshRankStart_, sendRankRecvFrom.begin() + meshRankStart_ + intraRankSize_, 0ULL,
+            [](u64 a, u64 b) {
+                return a > b ? a : b;
+            });
         numSendRankHaveRecv += ((maxRecvLen + intraDataBlockSize_ - 1ULL) / intraDataBlockSize_);
     }
     // 首次默认都从对端pingMem读，本卡接收数据来源的那张卡每发一次数据切换一次
@@ -240,18 +250,17 @@ void AlltoallPipelineMeshPairwisePingPong::UpdateRemoteMemStatusInter(u32 step)
 }
 
 // 收集本次 SDMA 子步骤每条流需要收发的长度，偏移地址，内存状态信息避免重复计算影响性能
-void AlltoallPipelineMeshPairwisePingPong::UpdateIntraStreamInfo(
-    u32 interRankDistance,
-    u32 subStep)
+void AlltoallPipelineMeshPairwisePingPong::UpdateIntraStreamInfo(u32 interRankDistance, u32 subStep)
 {
     intraStreamInfo_.clear();
-    u32 firstDataBlockIndex =
-        (meshRankStart_ + groupRankSize_ - interRankDistance * intraRankSize_) % groupRankSize_;
-    const std::vector<u64>& sendInfo = (*allMeshAggregationSendRecvInfo_)[firstDataBlockIndex + intraRankId_].sendLength;
+    u32 firstDataBlockIndex = (meshRankStart_ + groupRankSize_ - interRankDistance * intraRankSize_) % groupRankSize_;
+    const std::vector<u64>& sendInfo
+        = (*allMeshAggregationSendRecvInfo_)[firstDataBlockIndex + intraRankId_].sendLength;
     u64 dataStartOffset = subStep * intraDataBlockSize_;
-    HCCL_DEBUG("[AlltoallPipelineMeshPairwisePingPong][UpdateSDMAStreamInfo] userRank %u, "
-        "interRank %u, intraRank %u, interRankDistance %llu, sub step %llu", userRank_,
-        interRankId_, intraRankId_, interRankDistance, subStep);
+    HCCL_DEBUG(
+        "[AlltoallPipelineMeshPairwisePingPong][UpdateSDMAStreamInfo] userRank %u, "
+        "interRank %u, intraRank %u, interRankDistance %llu, sub step %llu",
+        userRank_, interRankId_, intraRankId_, interRankDistance, subStep);
     for (u32 i = 0; i < intraRankSize_; i++) {
         u64 totalSendDataLen = sendInfo[meshRankStart_ + i];
         u64 totalRecvDataLen = localSendRecvInfo_.recvLength[i + firstDataBlockIndex];
@@ -260,7 +269,8 @@ void AlltoallPipelineMeshPairwisePingPong::UpdateIntraStreamInfo(
         u64 localOffset = localSendRecvInfo_.recvOffset[i + firstDataBlockIndex] + subStep * intraDataBlockSize_;
         if (i != intraRankId_) {
             intraStreamInfo_[i] = {sendLen, recvLen, localOffset};
-            HCCL_DEBUG("[AlltoallPipelineMeshPairwisePingPong][UpdateSDMAStreamInfo] userRank %u, interRank %u, "
+            HCCL_DEBUG(
+                "[AlltoallPipelineMeshPairwisePingPong][UpdateSDMAStreamInfo] userRank %u, interRank %u, "
                 "intraRank %u, sdma stream %llu need send %llu and read length %llu to local offset %llu",
                 userRank_, interRankId_, intraRankId_, i, sendLen, recvLen, localOffset);
         }
@@ -269,9 +279,10 @@ void AlltoallPipelineMeshPairwisePingPong::UpdateIntraStreamInfo(
 
 HcclResult AlltoallPipelineMeshPairwisePingPong::SendRecvDataIntraMesh()
 {
-    HCCL_DEBUG("[AlltoallPipelineMeshPairwisePingPong][ReadDataInMesh] userRank %u, "
-        "interRank %u, intraRank %u, sdma stream %s wait main stream", userRank_, interRankId_,
-        intraRankId_, GetStreamIndexString().c_str());
+    HCCL_DEBUG(
+        "[AlltoallPipelineMeshPairwisePingPong][ReadDataInMesh] userRank %u, "
+        "interRank %u, intraRank %u, sdma stream %s wait main stream",
+        userRank_, interRankId_, intraRankId_, GetStreamIndexString().c_str());
     bool anySend = false;
     for (auto& sdmaInfo : intraStreamInfo_) {
         u32 streamIndex = sdmaInfo.first;
@@ -285,30 +296,29 @@ HcclResult AlltoallPipelineMeshPairwisePingPong::SendRecvDataIntraMesh()
             DeviceMem src = intraNeighBoorMemory_[streamIndex][(memStatusInMesh_[streamIndex] ? 0 : 1)].range(
                 intraRankId_ * intraDataBlockSize_, recvLen);
             DeviceMem dst = outputMem_.range(recvOffset, recvLen);
-            CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dst, src, currStream, readTransport->GetRemoteRank(),
-                readTransport->GetLinkType()));
+            CHK_RET(HcclD2DMemcpyAsync(
+                dispatcher_, dst, src, currStream, readTransport->GetRemoteRank(), readTransport->GetLinkType()));
         }
         CHK_RET(readTransport->TxDataSignal(currStream));
-        HCCL_DEBUG("[AlltoallPipelineMeshPairwisePingPong][ReadDataInMesh] userRank %u, interRank %u, "
+        HCCL_DEBUG(
+            "[AlltoallPipelineMeshPairwisePingPong][ReadDataInMesh] userRank %u, interRank %u, "
             "intraRank %u, sdma stream %llu read data from remote %s offset %llu len %llu to local %llu",
-            userRank_, interRankId_, intraRankId_, streamIndex, memStatusInMesh_[streamIndex] ?
-            "IntraSendPingMem" : "IntraSendPongMem", intraRankId_ * intraDataBlockSize_,
+            userRank_, interRankId_, intraRankId_, streamIndex,
+            memStatusInMesh_[streamIndex] ? "IntraSendPingMem" : "IntraSendPongMem", intraRankId_ * intraDataBlockSize_,
             recvLen, recvOffset);
         memStatusInMesh_[streamIndex] = (!memStatusInMesh_[streamIndex]);
         CHK_RET(readTransport->RxDataSignal(currStream));
         anySend = true;
     }
-    HCCL_DEBUG("[AlltoallPipelineMeshPairwisePingPong][ReadDataInMesh] userRank %u, "
-        "interRank %u, intraRank %u, sdma stream %s notify main stream", userRank_, interRankId_,
-        intraRankId_, GetStreamIndexString().c_str());
+    HCCL_DEBUG(
+        "[AlltoallPipelineMeshPairwisePingPong][ReadDataInMesh] userRank %u, "
+        "interRank %u, intraRank %u, sdma stream %s notify main stream",
+        userRank_, interRankId_, intraRankId_, GetStreamIndexString().c_str());
     intraSendUsePingMem_ ^= anySend;
     return HCCL_SUCCESS;
 }
 
-HcclResult AlltoallPipelineMeshPairwisePingPong::SendRecvDataInterMesh(
-    u32 step,
-    bool doSend,
-    bool doRecv)
+HcclResult AlltoallPipelineMeshPairwisePingPong::SendRecvDataInterMesh(u32 step, bool doSend, bool doRecv)
 {
     Stream& interStream = subStream_[intraRankId_];
     LINK& interRecvTransport = interLinks_[(interRankId_ + interRankSize_ - 1 - step) % interRankSize_];
@@ -318,16 +328,16 @@ HcclResult AlltoallPipelineMeshPairwisePingPong::SendRecvDataInterMesh(
     }
     if (doSend) {
         CHK_RET(interSendTransport->RxAck(interStream));
-        CHK_RET(interSendTransport->TxAsync(UserMemType::OUTPUT_MEM, (sendToInterDstMemPing_ ? 0u :
-            pingPongMemSize_), (interSendUsePingMem_ ? interSendPing_ : interSendPong_).ptr(), pingPongMemSize_,
-            interStream));
+        CHK_RET(interSendTransport->TxAsync(
+            UserMemType::OUTPUT_MEM, (sendToInterDstMemPing_ ? 0u : pingPongMemSize_),
+            (interSendUsePingMem_ ? interSendPing_ : interSendPong_).ptr(), pingPongMemSize_, interStream));
         interSendUsePingMem_ ^= true;
         sendToInterDstMemPing_ ^= true;
     }
     if (doRecv) {
-        CHK_RET(interRecvTransport->RxAsync(UserMemType::INPUT_MEM, (recvFromInterSrcMemPing_ ? 0u :
-            pingPongMemSize_), (interRecvUsePingMem_ ? interRecvPing_ : interRecvPong_).ptr(), pingPongMemSize_,
-            interStream));
+        CHK_RET(interRecvTransport->RxAsync(
+            UserMemType::INPUT_MEM, (recvFromInterSrcMemPing_ ? 0u : pingPongMemSize_),
+            (interRecvUsePingMem_ ? interRecvPing_ : interRecvPong_).ptr(), pingPongMemSize_, interStream));
         CHK_RET(interRecvTransport->PostFinAck(interStream));
         interRecvUsePingMem_ ^= true;
         recvFromInterSrcMemPing_ ^= true;
@@ -339,17 +349,15 @@ HcclResult AlltoallPipelineMeshPairwisePingPong::SendRecvDataInterMesh(
     return HCCL_SUCCESS;
 }
 
-HcclResult AlltoallPipelineMeshPairwisePingPong::LocalCopyDataRecvFromInter(
-    u32 mainStep,
-    u32 subStep)
+HcclResult AlltoallPipelineMeshPairwisePingPong::LocalCopyDataRecvFromInter(u32 mainStep, u32 subStep)
 {
-    u64 localRecvLen = localSendRecvInfo_.recvLength[
-        (userRank_ + groupRankSize_ - (mainStep + 1) * intraRankSize_) % groupRankSize_];
-    u64 localRecvOff = localSendRecvInfo_.recvOffset[
-        (userRank_ + groupRankSize_ - (mainStep + 1) * intraRankSize_) % groupRankSize_];
+    u64 localRecvLen = localSendRecvInfo_
+                           .recvLength[(userRank_ + groupRankSize_ - (mainStep + 1) * intraRankSize_) % groupRankSize_];
+    u64 localRecvOff = localSendRecvInfo_
+                           .recvOffset[(userRank_ + groupRankSize_ - (mainStep + 1) * intraRankSize_) % groupRankSize_];
     u64 currStepRecvLen = std::min(localRecvLen - subStep * intraDataBlockSize_, intraDataBlockSize_);
-    DeviceMem src = (interRecvUsePingMem_ ? interRecvPong_ : interRecvPing_).range(
-        intraRankId_ * intraDataBlockSize_, currStepRecvLen);
+    DeviceMem src = (interRecvUsePingMem_ ? interRecvPong_ : interRecvPing_)
+                        .range(intraRankId_ * intraDataBlockSize_, currStepRecvLen);
     DeviceMem dst = outputMem_.range(localRecvOff + subStep * intraDataBlockSize_, currStepRecvLen);
     CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dst, src, mainStream_));
     return HCCL_SUCCESS;
@@ -357,9 +365,10 @@ HcclResult AlltoallPipelineMeshPairwisePingPong::LocalCopyDataRecvFromInter(
 
 HcclResult AlltoallPipelineMeshPairwisePingPong::PreProcess()
 {
-    HCCL_DEBUG("[AlltoallPipelineMeshPairwisePingPong][PreProcess] userRank %u, interRank %u, intraRank %u, "
-        "main stream notify RDMA stream %llu start send", userRank_, interRankId_,
-        intraRankId_, intraRankId_);
+    HCCL_DEBUG(
+        "[AlltoallPipelineMeshPairwisePingPong][PreProcess] userRank %u, interRank %u, intraRank %u, "
+        "main stream notify RDMA stream %llu start send",
+        userRank_, interRankId_, intraRankId_, intraRankId_);
     // 搬下次要做 Server 间收发的数据到 ccl buffer
     CHK_RET(PrepareInterData(0u, 0u));
     // 主流notify RDMA流
@@ -374,34 +383,36 @@ HcclResult AlltoallPipelineMeshPairwisePingPong::PreProcess()
     CHK_RET(SendRecvDataIntraMesh());
     ExecEmptyTask(inputMem_, outputMem_, mainStream_, dispatcher_);
     // 主流搬本地那块数据
-    DeviceMem src = inputMem_.range(localSendRecvInfo_.sendOffset[userRank_],
-        localSendRecvInfo_.sendLength[userRank_]);
-    DeviceMem dst = outputMem_.range(localSendRecvInfo_.recvOffset[userRank_],
-        localSendRecvInfo_.recvLength[userRank_]);
+    DeviceMem src = inputMem_.range(localSendRecvInfo_.sendOffset[userRank_], localSendRecvInfo_.sendLength[userRank_]);
+    DeviceMem dst
+        = outputMem_.range(localSendRecvInfo_.recvOffset[userRank_], localSendRecvInfo_.recvLength[userRank_]);
     CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dst, src, mainStream_));
     return HCCL_SUCCESS;
 }
 
 // 分别计算当前大步骤需要做几次mesh间收和发，和mesh内收和发（mesh间收的次数和mesh内发的次数相同）
 void AlltoallPipelineMeshPairwisePingPong::GetNumSubStep(
-    u32 step,
-    u32& interSendSubStep,
-    u32& interRecvSubStep,
-    u32& intraSubStep)
+    u32 step, u32& interSendSubStep, u32& interRecvSubStep, u32& intraSubStep)
 {
     u32 sendRankStart = ((interRankId_ + 1 + step) % interRankSize_) * intraRankSize_;
     u32 recvRankStart = ((interRankId_ + interRankSize_ - 1 - step) % interRankSize_) * intraRankSize_;
-    const std::vector<u64>& sendInfo = (*allMeshAggregationSendRecvInfo_)[
-        (userRank_ + groupRankSize_ - intraRankSize_ * (step + 1)) % intraRankSize_].sendLength;
-    u64 maxInterSendLen = std::accumulate(localSendRecvInfo_.sendLength.begin() + sendRankStart,
-        localSendRecvInfo_.sendLength.begin() + sendRankStart + intraRankSize_, 0ULL,
-        [](u64 a, u64 b) {return a > b ? a : b;});
-    u64 maxInterRecvLen = std::accumulate(sendInfo.begin() + meshRankStart_,
-        sendInfo.begin() + meshRankStart_ + intraRankSize_, 0ULL,
-        [](u64 a, u64 b) {return a > b ? a : b;});
-    u64 maxIntraRecvLen = std::accumulate(localSendRecvInfo_.recvLength.begin() + recvRankStart,
-        localSendRecvInfo_.recvLength.begin() + recvRankStart + intraRankSize_, 0ULL,
-        [](u64 a, u64 b) {return a > b ? a : b;});
+    const std::vector<u64>& sendInfo = (*allMeshAggregationSendRecvInfo_)
+                                           [(userRank_ + groupRankSize_ - intraRankSize_ * (step + 1)) % intraRankSize_]
+                                               .sendLength;
+    u64 maxInterSendLen = std::accumulate(
+        localSendRecvInfo_.sendLength.begin() + sendRankStart,
+        localSendRecvInfo_.sendLength.begin() + sendRankStart + intraRankSize_, 0ULL, [](u64 a, u64 b) {
+            return a > b ? a : b;
+        });
+    u64 maxInterRecvLen = std::accumulate(
+        sendInfo.begin() + meshRankStart_, sendInfo.begin() + meshRankStart_ + intraRankSize_, 0ULL, [](u64 a, u64 b) {
+            return a > b ? a : b;
+        });
+    u64 maxIntraRecvLen = std::accumulate(
+        localSendRecvInfo_.recvLength.begin() + recvRankStart,
+        localSendRecvInfo_.recvLength.begin() + recvRankStart + intraRankSize_, 0ULL, [](u64 a, u64 b) {
+            return a > b ? a : b;
+        });
     interSendSubStep = (maxInterSendLen + intraDataBlockSize_ - 1) / intraDataBlockSize_;
     interRecvSubStep = (maxInterRecvLen + intraDataBlockSize_ - 1) / intraDataBlockSize_;
     // mesh 的收发步数取决于本卡从其它mesh收到的需要转发到mesh内其他卡的数据以及本卡需要做mesh内读的其他卡数据
@@ -419,8 +430,8 @@ HcclResult AlltoallPipelineMeshPairwisePingPong::PipelineSend(u32 step, bool isL
     }
     u32 totalSubStep = (maxDataBlock + intraDataBlockSize_ - 1) / intraDataBlockSize_;
     // 计算需要从源端哪块内存收数据和发到哪块目的内存
-    u64 localRecvLen = localSendRecvInfo_.recvLength[
-        (userRank_ + groupRankSize_ - (step + 1) * intraRankSize_) % groupRankSize_];
+    u64 localRecvLen
+        = localSendRecvInfo_.recvLength[(userRank_ + groupRankSize_ - (step + 1) * intraRankSize_) % groupRankSize_];
     for (u32 subStep = 0; subStep < totalSubStep; subStep++) {
         // RDMA 收发数据
         SendRecvDataInterMesh(step, true, true);
@@ -459,7 +470,7 @@ HcclResult AlltoallPipelineMeshPairwisePingPong::PostProcess()
         }
     }
     u64 stepLast = (maxDataBlock + intraDataBlockSize_ - 1) / intraDataBlockSize_;
-    for (u64 i = 1 ; i < stepLast; i++) {
+    for (u64 i = 1; i < stepLast; i++) {
         UpdateIntraStreamInfo(0, i);
         CHK_RET(PrepareIntraData(i));
         ExecEmptyTask(inputMem_, outputMem_, mainStream_, dispatcher_);
@@ -471,6 +482,6 @@ HcclResult AlltoallPipelineMeshPairwisePingPong::PostProcess()
     }
     return HCCL_SUCCESS;
 }
-REGISTER_TEMPLATE(TemplateType::TEMPLATE_ALL_2_ALL_PIPELINE_MESH_PAIRWISE_PING_PONG,
-                  AlltoallPipelineMeshPairwisePingPong);
+REGISTER_TEMPLATE(
+    TemplateType::TEMPLATE_ALL_2_ALL_PIPELINE_MESH_PAIRWISE_PING_PONG, AlltoallPipelineMeshPairwisePingPong);
 } // namespace hccl

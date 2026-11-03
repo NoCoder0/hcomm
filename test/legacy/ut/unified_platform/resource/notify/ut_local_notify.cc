@@ -24,21 +24,15 @@ using namespace Hccl;
 
 class IpcLocalNotifyTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "IpcLocalNotifyTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "IpcLocalNotifyTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "IpcLocalNotifyTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "IpcLocalNotifyTest TearDown" << std::endl; }
 
     virtual void SetUp()
     {
         MOCKER(HrtGetDeviceType).stubs().will(returnValue(DevType(DevType::DEV_TYPE_910A2)));
         MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-        MOCKER(HrtNotifyCreate).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
+        MOCKER(HrtNotifyCreate).stubs().will(returnValue((void*)(fakeNotifyHandleAddr)));
         MOCKER(HrtIpcSetNotifyName).stubs().with(mockcpp::any(), outBoundP(fakeName, sizeof(fakeName)), mockcpp::any());
         MOCKER(HrtGetNotifyID).stubs().will(returnValue(fakeNotifyId));
         MOCKER(HrtNotifyGetAddr).stubs().with(mockcpp::any()).will(returnValue(fakeAddress));
@@ -53,18 +47,17 @@ protected:
         GlobalMockObject::verify();
         std::cout << "A Test case in IpcLocalNotifyTest TearDown" << std::endl;
     }
-    u64  fakeNotifyHandleAddr           = 100;
-    u32  fakeNotifyId                   = 1;
-    u64  fakeOffset                     = 200;
-    u64  fakeAddress                    = 300;
-    s32  fakePid                        = 100;
+    u64 fakeNotifyHandleAddr = 100;
+    u32 fakeNotifyId = 1;
+    u64 fakeOffset = 200;
+    u64 fakeAddress = 300;
+    s32 fakePid = 100;
     char fakeName[RTS_IPC_MEM_NAME_LEN] = "testRtsNotify";
 };
 
-
 TEST_F(IpcLocalNotifyTest, ipc_local_rtsNotify_post_wait_grant_describe)
 {
-    Stream         stream;
+    Stream stream;
     IpcLocalNotify ipcLocalNotify;
     ipcLocalNotify.Grant(100);
     ipcLocalNotify.Describe();
@@ -77,21 +70,15 @@ TEST_F(IpcLocalNotifyTest, ipc_local_rtsNotify_post_wait_grant_describe)
 
 class RdmaLocalNotifyTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "RdmaLocalNotifyTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "RdmaLocalNotifyTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "RdmaLocalNotifyTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "RdmaLocalNotifyTest TearDown" << std::endl; }
 
     virtual void SetUp()
     {
         MOCKER(HrtGetDeviceType).stubs().will(returnValue(DevType(DevType::DEV_TYPE_910A2)));
         MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-        MOCKER(HrtNotifyCreate).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
+        MOCKER(HrtNotifyCreate).stubs().will(returnValue((void*)(fakeNotifyHandleAddr)));
         MOCKER(HrtIpcSetNotifyName).stubs().with(mockcpp::any(), outBoundP(fakeName, sizeof(fakeName)), mockcpp::any());
         MOCKER(HrtGetNotifyID).stubs().will(returnValue(fakeNotifyId));
         MOCKER(HrtNotifyGetAddr).stubs().with(mockcpp::any()).will(returnValue(fakeAddress));
@@ -112,21 +99,21 @@ protected:
         GlobalMockObject::verify();
         std::cout << "A Test case in RdmaLocalNotifyTest TearDown" << std::endl;
     }
-    u64  fakeNotifyHandleAddr           = 100;
-    u32  fakeNotifyId                   = 1;
-    u32  fakeOffset                     = 200;
-    u64  fakeAddress                    = 300;
-    s32  fakePid                        = 100;
-    u64  fakeVa                         = 100;
-    u64  fakeSize                       = 1024;
+    u64 fakeNotifyHandleAddr = 100;
+    u32 fakeNotifyId = 1;
+    u32 fakeOffset = 200;
+    u64 fakeAddress = 300;
+    s32 fakePid = 100;
+    u64 fakeVa = 100;
+    u64 fakeSize = 1024;
     char fakeName[RTS_IPC_MEM_NAME_LEN] = "testRtsNotify";
     RtNotify_t notifyInfo;
 };
 
 TEST_F(RdmaLocalNotifyTest, rdma_local_notify_describe_wait_post)
 {
-    Stream          stream;
-    RdmaHandle      rdmaHandle = (void *)0x100;
+    Stream stream;
+    RdmaHandle rdmaHandle = (void*)0x100;
     RdmaLocalNotify rdmaLocalNotify(rdmaHandle);
 
     cout << rdmaLocalNotify.Describe() << endl;
@@ -138,49 +125,40 @@ TEST_F(RdmaLocalNotifyTest, rdma_local_notify_describe_wait_post)
 
 class UbLocalNotifyTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "UbLocalNotifyTest SetUP" << std::endl;
-    }
- 
-    static void TearDownTestCase()
-    {
-        std::cout << "UbLocalNotifyTest TearDown" << std::endl;
-    }
- 
+    static void SetUpTestCase() { std::cout << "UbLocalNotifyTest SetUP" << std::endl; }
+
+    static void TearDownTestCase() { std::cout << "UbLocalNotifyTest TearDown" << std::endl; }
+
     virtual void SetUp()
     {
- 
         localMemRegInfo.handle = fakeMemHandle;
         memcpy_s(localMemRegInfo.key, HRT_UB_MEM_KEY_MAX_LEN, fakeKey, HRT_UB_MEM_KEY_MAX_LEN);
         localMemRegInfo.tokenId = fakeTokenId;
         localMemRegInfo.targetSegVa = fakeSegVa;
         HrtDevResAddrInfo resAddrInfo;
-        MOCKER(HrtGetDevResAddress)
-            .stubs()
-            .with(mockcpp::any())
-            .will(returnValue(resAddrInfo));
+        MOCKER(HrtGetDevResAddress).stubs().with(mockcpp::any()).will(returnValue(resAddrInfo));
 
         RequestHandle fakeReqHandle = 1;
 
         vector<char_t> out;
         out.resize(sizeof(struct MrRegInfoT));
-        struct MrRegInfoT* info = reinterpret_cast<struct MrRegInfoT *>(out.data());
+        struct MrRegInfoT* info = reinterpret_cast<struct MrRegInfoT*>(out.data());
         memcpy_s(info->out.key.value, HRT_UB_MEM_KEY_MAX_LEN, fakeKey, HRT_UB_MEM_KEY_MAX_LEN);
         info->out.key.size = HRT_UB_MEM_KEY_MAX_LEN;
         info->out.ub.tokenId = fakeTokenId;
         info->out.ub.targetSegHandle = fakeSegVa;
 
-        MOCKER(RaUbLocalMemRegAsync).stubs()
+        MOCKER(RaUbLocalMemRegAsync)
+            .stubs()
             .with(mockcpp::any(), mockcpp::any(), outBound(out), outBound(reinterpret_cast<void*>(fakeMemHandle)))
             .will(returnValue(fakeReqHandle));
         MOCKER(RaUbLocalMemUnregAsync).stubs().will(returnValue(fakeReqHandle));
-        
+
         MOCKER(HrtReleaseDevResAddress).stubs().with(mockcpp::any());
 
         MOCKER(HrtGetDeviceType).stubs().will(returnValue(DevType(DevType::DEV_TYPE_950)));
         MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-        MOCKER(HrtNotifyCreate).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
+        MOCKER(HrtNotifyCreate).stubs().will(returnValue((void*)(fakeNotifyHandleAddr)));
         MOCKER(HrtIpcSetNotifyName).stubs().with(mockcpp::any(), outBoundP(fakeName, sizeof(fakeName)), mockcpp::any());
         MOCKER(HrtGetNotifyID).stubs().will(returnValue(fakeNotifyId));
         MOCKER(HrtNotifyGetAddr).stubs().with(mockcpp::any()).will(returnValue(fakeAddress));
@@ -190,41 +168,57 @@ protected:
             .stubs()
             .with(mockcpp::any(), outBoundP(&fakeVa, sizeof(fakeVa)), outBoundP(&fakeSize, sizeof(fakeSize)))
             .will(returnValue(1));
-        
- 
+
         std::cout << "A Test case in UbLocalNotifyTest SetUP" << std::endl;
     }
- 
+
     virtual void TearDown()
     {
         GlobalMockObject::verify();
         std::cout << "A Test case in UbLocalNotifyTest TearDown" << std::endl;
     }
- 
+
     HrtRaUbLocalMemRegOutParam localMemRegInfo;
-    u32  fakeMemAddr = 0;
-    u32  fakeMemSize = 0;
-    u64  fakeSegVa = 0x200;
-    u8   fakeKey[HRT_UB_MEM_KEY_MAX_LEN]{0};
-    u32  fakeTokenId = 1;
-    u64  fakeMemHandle = 0x200;
-    u64  fakeNotifyHandleAddr           = 100;
-    u32  fakeNotifyId                   = 1;
-    u64  fakeOffset                     = 200;
-    u64  fakeAddress                    = 300;
-    s32  fakePid                        = 100;
-    u64  fakeVa                         = 100;
-    u64  fakeSize                       = 1024;
+    u32 fakeMemAddr = 0;
+    u32 fakeMemSize = 0;
+    u64 fakeSegVa = 0x200;
+    u8 fakeKey[HRT_UB_MEM_KEY_MAX_LEN]{0};
+    u32 fakeTokenId = 1;
+    u64 fakeMemHandle = 0x200;
+    u64 fakeNotifyHandleAddr = 100;
+    u32 fakeNotifyId = 1;
+    u64 fakeOffset = 200;
+    u64 fakeAddress = 300;
+    s32 fakePid = 100;
+    u64 fakeVa = 100;
+    u64 fakeSize = 1024;
     char fakeName[RTS_IPC_MEM_NAME_LEN] = "testRtsNotify";
- 
+
+    void SetupConstructMocks(RdmaHandle rdmaHandle)
+    {
+        RdmaHandleManager::GetInstance().tokenInfoMap[rdmaHandle] = make_unique<TokenInfoManager>(0, rdmaHandle);
+        pair<u64, u32> notifyInfoPair(1, 1);
+        MOCKER_CPP(&RdmaHandleManager::GetTokenIdInfo).stubs().will(returnValue(notifyInfoPair));
+        HrtRaUbLocalMemRegOutParam hrtRaUbLocalMemRegOutParam;
+        hrtRaUbLocalMemRegOutParam.handle = fakeMemHandle;
+        MOCKER(HrtRaUbLocalMemReg).stubs().will(returnValue(hrtRaUbLocalMemRegOutParam));
+    }
+
+    void ResetRdmaHandleManagerState()
+    {
+        auto& mgr = RdmaHandleManager::GetInstance();
+        mgr.destroyed.store(false);
+        mgr.activeHandles_.clear();
+    }
 };
 
-TEST_F(UbLocalNotifyTest, ub_local_notify_initialize) {
+TEST_F(UbLocalNotifyTest, ub_local_notify_initialize)
+{
     // given
-    RdmaHandle rdmaHandle = (void *)0x100;
+    RdmaHandle rdmaHandle = (void*)0x100;
     RdmaHandleManager::GetInstance().tokenInfoMap[rdmaHandle] = make_unique<TokenInfoManager>(0, rdmaHandle);
-    Stream     stream;
- 
+    Stream stream;
+
     pair<u64, u32> notifyInfoPair(fakeMemHandle, 0);
     MOCKER_CPP(&RdmaHandleManager::GetTokenIdInfo).stubs().will(returnValue(notifyInfoPair));
     HrtRaUbLocalMemRegOutParam hrtRaUbLocalMemRegOutParam;
@@ -235,7 +229,7 @@ TEST_F(UbLocalNotifyTest, ub_local_notify_initialize) {
     UbLocalNotify ubLocalNotify(rdmaHandle);
 
     ubLocalNotify.Wait(stream, 100);
- 
+
     // then
     EXPECT_EQ(ubLocalNotify.addr, 0);
     EXPECT_EQ(ubLocalNotify.size, ubLocalNotify.size);
@@ -243,14 +237,14 @@ TEST_F(UbLocalNotifyTest, ub_local_notify_initialize) {
     EXPECT_EQ(ubLocalNotify.memHandle, localMemRegInfo.handle);
     EXPECT_EQ(memcmp(ubLocalNotify.key, localMemRegInfo.key, HRT_UB_MEM_KEY_MAX_LEN), 0);
 }
- 
- 
-TEST_F(UbLocalNotifyTest, ub_local_notify_does_not_support_post) {
+
+TEST_F(UbLocalNotifyTest, ub_local_notify_does_not_support_post)
+{
     // given
     RdmaHandle rdmaHandle = (void*)0x100;
     UbLocalNotify ubLocalNotify(rdmaHandle);
     Stream stream;
- 
+
     // then
     EXPECT_THROW(ubLocalNotify.Post(stream), NotSupportException);
 }
@@ -259,7 +253,70 @@ TEST_F(UbLocalNotifyTest, getExchangeDto_test)
 {
     RdmaHandle rdmaHandle = (void*)0x100;
     UbLocalNotify ubLocalNotify(rdmaHandle);
-    
+
     ubLocalNotify.GetExchangeDto();
 };
 
+TEST_F(UbLocalNotifyTest, Ut_When_RdmaHandleInvalid_ThenReleaseResource_Expect_SkipUnregAndPutTokenIdInfo)
+{
+    // given: RdmaHandleManager 已 DestroyAll，handle 视为无效
+    RdmaHandle rdmaHandle = (void*)0x201;
+    auto& mgr = RdmaHandleManager::GetInstance();
+    mgr.destroyed.store(true);
+    SetupConstructMocks(rdmaHandle);
+    MOCKER(HrtRaUbLocalMemUnreg).expects(atMost(0));
+    MOCKER_CPP(&RdmaHandleManager::PutTokenIdInfo).expects(atMost(0));
+    MOCKER(HrtReleaseDevResAddress).stubs().with(mockcpp::any());
+
+    // when
+    UbLocalNotify ubLocalNotify(rdmaHandle);
+    EXPECT_NE(ubLocalNotify.memHandle, 0u);
+    ubLocalNotify.ReleaseResource();
+
+    // then: skip Unreg/PutTokenIdInfo，memHandle 清零，HrtReleaseDevResAddress 仍执行
+    EXPECT_EQ(ubLocalNotify.memHandle, 0u);
+    ResetRdmaHandleManagerState();
+}
+
+TEST_F(UbLocalNotifyTest, Ut_When_RdmaHandleValid_ThenReleaseResource_Expect_UnregAndPutTokenIdInfo)
+{
+    // given: handle 仍在 activeHandles_ 中
+    RdmaHandle rdmaHandle = (void*)0x202;
+    auto& mgr = RdmaHandleManager::GetInstance();
+    mgr.activeHandles_.insert(rdmaHandle);
+    SetupConstructMocks(rdmaHandle);
+    MOCKER(HrtRaUbLocalMemUnreg).expects(atMost(1)).with(mockcpp::any(), mockcpp::any());
+    MOCKER_CPP(&RdmaHandleManager::PutTokenIdInfo).stubs();
+    MOCKER(HrtReleaseDevResAddress).stubs().with(mockcpp::any());
+
+    // when
+    UbLocalNotify ubLocalNotify(rdmaHandle);
+    EXPECT_NE(ubLocalNotify.memHandle, 0u);
+    ubLocalNotify.ReleaseResource();
+
+    // then
+    EXPECT_EQ(ubLocalNotify.memHandle, 0u);
+    mgr.activeHandles_.erase(rdmaHandle);
+}
+
+TEST_F(UbLocalNotifyTest, Ut_When_DestroyAllDone_ThenDestructUbLocalNotify_Expect_SkipUnregNoCrash)
+{
+    // given: 模拟 DestroyAll 后业务对象析构
+    RdmaHandle rdmaHandle = (void*)0x203;
+    auto& mgr = RdmaHandleManager::GetInstance();
+    mgr.activeHandles_.insert(rdmaHandle);
+    SetupConstructMocks(rdmaHandle);
+    MOCKER(HrtRaUbLocalMemUnreg).expects(atMost(0));
+    MOCKER_CPP(&RdmaHandleManager::PutTokenIdInfo).expects(atMost(0));
+    MOCKER(HrtReleaseDevResAddress).stubs().with(mockcpp::any());
+
+    // when: DestroyAll 置 destroyed 并清空 activeHandles_，再触发析构
+    {
+        UbLocalNotify ubLocalNotify(rdmaHandle);
+        mgr.destroyed.store(true);
+        mgr.activeHandles_.clear();
+    }
+
+    // then: 析构不 crash，mock 校验在 TearDown verify
+    ResetRdmaHandleManagerState();
+}

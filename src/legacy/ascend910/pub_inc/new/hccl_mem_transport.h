@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef HCCL_MEM_TRANSPORT_H
 #define HCCL_MEM_TRANSPORT_H
@@ -25,7 +25,7 @@ extern "C" {
 #endif // __cplusplus
 
 /* 通信队列句柄 */
-typedef void *HcclQueue;
+typedef void* HcclQueue;
 
 /**
  * @enum HcclQueueMode
@@ -62,7 +62,7 @@ typedef struct {
  * @param[out] queue 返回创建的队列句柄指针
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclQueueCreate(HcclNetDev netDev, const HcclQueueAttr *attr, HcclQueue *queue);
+extern HcclResult HcclQueueCreate(HcclNetDev netDev, const HcclQueueAttr* attr, HcclQueue* queue);
 
 /**
  * @brief 销毁单个通信队列
@@ -77,7 +77,7 @@ extern HcclResult HcclQueueDestroy(HcclQueue queue);
  * @param[in] queueNum 队列数量
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclQueueBatchDestroy(HcclQueue *queue, uint32_t queueNum);
+extern HcclResult HcclQueueBatchDestroy(HcclQueue* queue, uint32_t queueNum);
 
 /**
  * @brief 创建内存传输通道
@@ -95,9 +95,10 @@ extern HcclResult HcclQueueBatchDestroy(HcclQueue *queue, uint32_t queueNum);
  * @param[out] memTransport 返回的传输上下文句柄
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclMemTransportCreate(HcclNetDev netDev, HcclNetDevInfos *remoteDevInfo, HcclQueue *queue,
-    uint32_t queueNum, HcclBuf *buf, uint32_t bufNum, aclrtNotify *binaryNotify, uint32_t binaryNotifyNum,
-    HcclSocket socket, char *userExchangeInfo, uint32_t exchangeLen, HcclMemTransport *memTransport);
+extern HcclResult HcclMemTransportCreate(
+    HcclNetDev netDev, HcclNetDevInfos* remoteDevInfo, HcclQueue* queue, uint32_t queueNum, HcclBuf* buf,
+    uint32_t bufNum, aclrtNotify* binaryNotify, uint32_t binaryNotifyNum, HcclSocket socket, char* userExchangeInfo,
+    uint32_t exchangeLen, HcclMemTransport* memTransport);
 
 /**
  * @brief 销毁内存传输通道
@@ -112,7 +113,7 @@ extern HcclResult HcclMemTransportDestroy(HcclMemTransport memTransport);
  * @param[in] memTransportNum 传输上下文数量
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclMemTransportBatchDelQueue(HcclMemTransport *memTransport, uint32_t memTransportNum);
+extern HcclResult HcclMemTransportBatchDelQueue(HcclMemTransport* memTransport, uint32_t memTransportNum);
 
 /**
  * @brief 为传输通道添加通信队列
@@ -121,7 +122,7 @@ extern HcclResult HcclMemTransportBatchDelQueue(HcclMemTransport *memTransport, 
  * @param[in] queueNum 队列数量
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclMemTransportAddQueue(HcclMemTransport memTransport, HcclQueue *queue, uint32_t queueNum);
+extern HcclResult HcclMemTransportAddQueue(HcclMemTransport memTransport, HcclQueue* queue, uint32_t queueNum);
 
 /**
  * @brief 获取传输通道状态
@@ -129,7 +130,7 @@ extern HcclResult HcclMemTransportAddQueue(HcclMemTransport memTransport, HcclQu
  * @param[out] status 返回状态码指针
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclMemTransportGetStatus(HcclMemTransport memTransport, int32_t *status);
+extern HcclResult HcclMemTransportGetStatus(HcclMemTransport memTransport, int32_t* status);
 
 /**
  * @brief 获取远端缓冲区地址信息
@@ -138,7 +139,7 @@ extern HcclResult HcclMemTransportGetStatus(HcclMemTransport memTransport, int32
  * @param[out] bufNum 返回缓冲区数量
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclMemTransportGetRemoteAddr(HcclMemTransport memTransport, HcclBuf **remoteBuf, uint64_t *bufNum);
+extern HcclResult HcclMemTransportGetRemoteAddr(HcclMemTransport memTransport, HcclBuf** remoteBuf, uint64_t* bufNum);
 
 /**
  * @brief 获取远端交换信息
@@ -147,8 +148,8 @@ extern HcclResult HcclMemTransportGetRemoteAddr(HcclMemTransport memTransport, H
  * @param[out] infoLen 返回的信息长度
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclMemTransportGetRemoteExchangeInfo(
-    HcclMemTransport memTransport, char **userRemoteExchangeInfo, uint32_t *infoLen);
+extern HcclResult
+HcclMemTransportGetRemoteExchangeInfo(HcclMemTransport memTransport, char** userRemoteExchangeInfo, uint32_t* infoLen);
 
 /**
  * @brief 获取传输描述信息
@@ -157,7 +158,7 @@ extern HcclResult HcclMemTransportGetRemoteExchangeInfo(
  * @param[out] outDescLen 返回的描述信息长度
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclMemTransportExport(HcclMemTransport memTransport, char **outDesc, uint64_t *outDescLen);
+extern HcclResult HcclMemTransportExport(HcclMemTransport memTransport, char** outDesc, uint64_t* outDescLen);
 
 /**
  * @brief 通过描述信息重建传输通道
@@ -166,7 +167,7 @@ extern HcclResult HcclMemTransportExport(HcclMemTransport memTransport, char **o
  * @param[out] memTransport 返回的传输上下文句柄
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclMemTransportImport(char *description, uint32_t descLen, HcclMemTransport *memTransport);
+extern HcclResult HcclMemTransportImport(char* description, uint32_t descLen, HcclMemTransport* memTransport);
 
 /**
  * @brief 绑定Dfx回调函数
@@ -175,7 +176,7 @@ extern HcclResult HcclMemTransportImport(char *description, uint32_t descLen, Hc
  * @param[in] args 回调参数指针
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclMemTransportBindDfxCallback(HcclMemTransport memTransport, HcclDfxCallback callback, void *args);
+extern HcclResult HcclMemTransportBindDfxCallback(HcclMemTransport memTransport, HcclDfxCallback callback, void* args);
 
 #ifdef __cplusplus
 }

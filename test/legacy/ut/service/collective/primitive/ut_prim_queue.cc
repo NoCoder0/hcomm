@@ -18,21 +18,19 @@ using namespace Hccl;
 using namespace std;
 class PrimQueueTest : public testing::Test {
 protected:
-    static void SetUpTestCase() {
-        std::cout << "PrimitiveTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "PrimitiveTest SetUP" << std::endl; }
 
-    static void TearDownTestCase() {
-        std::cout << "PrimitiveTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "PrimitiveTest TearDown" << std::endl; }
 
-    virtual void SetUp() {
+    virtual void SetUp()
+    {
         master = make_shared<PrimQueue>();
         slave = master->Fork();
         std::cout << "A Test case in PrimQueueTest SetUP" << std::endl;
     }
 
-    virtual void TearDown () {
+    virtual void TearDown()
+    {
         GlobalMockObject::verify();
         std::cout << "A Test case in PrimQueueTest TearDown" << std::endl;
     }
@@ -48,13 +46,13 @@ TEST_F(PrimQueueTest, test_append_post_to)
     EXPECT_EQ(INVALID_PRIM_QID, ptr->GetParentQid());
 
     master->Append(std::move(ptr));
-    
+
     EXPECT_EQ(1, master->Size());
 
     auto iter = master->Iter();
     cout << iter->Describe() << endl;
 
-    const PrimPostTo& postTo = static_cast<const PrimPostTo &>(*iter);
+    const PrimPostTo& postTo = static_cast<const PrimPostTo&>(*iter);
 
     EXPECT_EQ(master->GetId(), postTo.GetParentQid());
 }
@@ -66,13 +64,13 @@ TEST_F(PrimQueueTest, test_append_wait_from)
     EXPECT_EQ(INVALID_PRIM_QID, ptr->GetParentQid());
 
     master->Append(std::move(ptr));
-    
+
     EXPECT_EQ(1, master->Size());
 
     auto iter = master->Iter();
     cout << iter->Describe() << endl;
 
-    const PrimWaitFrom& waitFrom = static_cast<const PrimWaitFrom &>(*iter);
+    const PrimWaitFrom& waitFrom = static_cast<const PrimWaitFrom&>(*iter);
 
     EXPECT_EQ(master->GetId(), waitFrom.GetParentQid());
 }
@@ -84,14 +82,13 @@ TEST_F(PrimQueueTest, test_append_wait_group)
     EXPECT_EQ(INVALID_PRIM_QID, ptr->GetParentQid());
 
     master->Append(std::move(ptr));
-    
+
     EXPECT_EQ(1, master->Size());
 
     auto iter = master->Iter();
     cout << iter->Describe() << endl;
 
-    const PrimWaitGroup& waitGroup = static_cast<const PrimWaitGroup &>(*iter);
+    const PrimWaitGroup& waitGroup = static_cast<const PrimWaitGroup&>(*iter);
 
     EXPECT_EQ(master->GetId(), waitGroup.GetParentQid());
 }
-

@@ -29,9 +29,9 @@ typedef struct {
 typedef void (*BKF_SUBER_CONN_DISP_PROC_FIST_CONN)(BkfSuberConnMng *connMng, BkfSuberConn *conn);
 typedef void (*BKF_SUBER_CONN_DISP_PROC_END)(BkfSuberConnMng *connMng, BkfSuberConnDispConnCtx *curCtx);
 typedef void (*BKF_SUBER_CONN_DISP_PROC_ONE_CONN)(BkfSuberConnMng *connMng, BkfSuberConn *conn,
-                                                  BkfSuberConnDispConnCtx *curCtx);
+    BkfSuberConnDispConnCtx *curCtx);
 typedef uint32_t (*BKF_SUBER_CONN_DISP_PROC_SESS)(BkfSuberSessMng *sessMng, BkfDisp *disp,
-                                                BkfDispTempCtx *lastTempCtxOrNull, BkfDispTempCtx *curTempCtx);
+    BkfDispTempCtx *lastTempCtxOrNull, BkfDispTempCtx *curTempCtx);
 #pragma pack()
 #endif
 
@@ -42,7 +42,7 @@ BkfSuberConn *BkfSuberGetNextConnByStartUrlType(BkfSuberConnMng *connMng, uint8_
     BkfSuberConn *conn = VOS_NULL;
     uint32_t i;
     for (i = startUrlType; i < BKF_GET_ARY_COUNT(connMng->urlTypeSet); i++) {
-        urlTypeMng =  connMng->urlTypeSet[i];
+        urlTypeMng = connMng->urlTypeSet[i];
         if (urlTypeMng != VOS_NULL) {
             conn = BkfSuberConnDataGetFirstByUrlType(connMng, urlTypeMng->urlType, VOS_NULL);
             if (conn != VOS_NULL) {
@@ -62,7 +62,7 @@ void BkfSuberConnDispSummary(BkfSuberConnMng *connMng)
     uint32_t i;
     uint8_t urlBuf[BKF_1K / 4] = {0};
     for (i = BKF_URL_TYPE_INVALID + 1; i < BKF_GET_ARY_COUNT(connMng->urlTypeSet); i++) {
-        urlTypeMng =  connMng->urlTypeSet[i];
+        urlTypeMng = connMng->urlTypeSet[i];
         if (urlTypeMng != VOS_NULL) {
             BKF_DISP_PRINTF(disp, "====================\n");
             BKF_DISP_PRINTF(disp, "urlType: %u\n", urlTypeMng->urlType);
@@ -83,22 +83,19 @@ void BkfSuberConnDispAllConnEndPrintf(BkfSuberConnMng *connMng, BkfSuberConnDisp
     return;
 }
 
-void BkfSuberConnDispOneConnFsm(BkfSuberConnMng *connMng, BkfSuberConn *conn,
-    BkfSuberConnDispConnCtx *curCtx)
+void BkfSuberConnDispOneConnFsm(BkfSuberConnMng *connMng, BkfSuberConn *conn, BkfSuberConnDispConnCtx *curCtx)
 {
     BkfDisp *disp = connMng->env->disp;
     uint8_t buf[BKF_1K / 4] = {0};
     uint8_t fsmStrBuf[BKF_1K / 2] = {0};
     BKF_DISP_PRINTF(disp, "============================================\n");
     BKF_DISP_PRINTF(disp, "+conn[%d], puberUrl(%s), fsm:\n%s\n", curCtx->connCnt,
-                    BkfUrlGetStr(&conn->puberUrl, buf, sizeof(buf)),
-                    BkfFsmGetStr(&conn->fsm, fsmStrBuf, sizeof(fsmStrBuf)));
+        BkfUrlGetStr(&conn->puberUrl, buf, sizeof(buf)), BkfFsmGetStr(&conn->fsm, fsmStrBuf, sizeof(fsmStrBuf)));
     return;
 }
 
 void BkfSuberConnDispAllConnSched(BkfSuberConnMng *connMng, BKF_SUBER_CONN_DISP_PROC_FIST_CONN firstConnPrintf,
-                                    BKF_SUBER_CONN_DISP_PROC_ONE_CONN oneConnPrintf,
-                                    BKF_SUBER_CONN_DISP_PROC_END endPrintf)
+    BKF_SUBER_CONN_DISP_PROC_ONE_CONN oneConnPrintf, BKF_SUBER_CONN_DISP_PROC_END endPrintf)
 {
     BkfDisp *disp = connMng->env->disp;
     BkfSuberConnDispConnCtx *lastCtx = VOS_NULL;
@@ -141,8 +138,8 @@ void BkfSuberConnDispAllConnFsm(BkfSuberConnMng *connMng)
     return;
 }
 
-BkfSuberConn *BkfSuberConnDispGetConnByCtx(BkfSuberConnMng *connMng, BkfSuberConnDispConnCtx *curCtx,
-                                             BOOL *isNewConn, BKF_SUBER_CONN_DISP_PROC_FIST_CONN firstConnPrintf)
+BkfSuberConn *BkfSuberConnDispGetConnByCtx(BkfSuberConnMng *connMng, BkfSuberConnDispConnCtx *curCtx, BOOL *isNewConn,
+    BKF_SUBER_CONN_DISP_PROC_FIST_CONN firstConnPrintf)
 {
     BkfDisp *disp = connMng->env->disp;
     BkfSuberConnDispConnCtx *lastCtx = VOS_NULL;
@@ -174,7 +171,7 @@ BkfSuberConn *BkfSuberConnDispGetConnByCtx(BkfSuberConnMng *connMng, BkfSuberCon
 }
 
 BkfDispTempCtx *BkfSuberConnDispGetSessCtx(BkfDisp *disp, BkfDispTempCtx *lastSessTempCtx,
-                                             BkfDispTempCtx *curSessTempCtx, BkfSuberConnDispConnCtx *curConnCtx)
+    BkfDispTempCtx *curSessTempCtx, BkfSuberConnDispConnCtx *curConnCtx)
 {
     BKF_DISP_TEMP_CTX_INIT(lastSessTempCtx);
     BKF_DISP_TEMP_CTX_INIT(curSessTempCtx);
@@ -190,11 +187,9 @@ BkfDispTempCtx *BkfSuberConnDispGetSessCtx(BkfDisp *disp, BkfDispTempCtx *lastSe
     return lastSessCtx;
 }
 
-void BkfSuberConnDispAllConnAndSessSched(BkfSuberConnMng *connMng,
-                                           BKF_SUBER_CONN_DISP_PROC_FIST_CONN firstConnPrintf,
-                                           BKF_SUBER_CONN_DISP_PROC_ONE_CONN printfOneConn,
-                                           BKF_SUBER_CONN_DISP_PROC_END endPrintf,
-                                           BKF_SUBER_CONN_DISP_PROC_SESS sessPrintf)
+void BkfSuberConnDispAllConnAndSessSched(BkfSuberConnMng *connMng, BKF_SUBER_CONN_DISP_PROC_FIST_CONN firstConnPrintf,
+    BKF_SUBER_CONN_DISP_PROC_ONE_CONN printfOneConn, BKF_SUBER_CONN_DISP_PROC_END endPrintf,
+    BKF_SUBER_CONN_DISP_PROC_SESS sessPrintf)
 {
     BkfDisp *disp = connMng->env->disp;
     BkfSuberConnDispConnCtx curCtx = {0};
@@ -228,28 +223,26 @@ void BkfSuberConnDispAllConnAndSessSched(BkfSuberConnMng *connMng,
     return;
 }
 
-void BkfSuberConnDispOneConnSummary(BkfSuberConnMng *connMng, BkfSuberConn *conn,
-                                      BkfSuberConnDispConnCtx *curCtx)
+void BkfSuberConnDispOneConnSummary(BkfSuberConnMng *connMng, BkfSuberConn *conn, BkfSuberConnDispConnCtx *curCtx)
 {
     BkfDisp *disp = connMng->env->disp;
     uint8_t buf[BKF_1K / 4] = {0};
     BKF_DISP_PRINTF(disp, "============================================\n");
-    BKF_DISP_PRINTF(disp, "+conn[%d], puberUrl(%s), connId(%#x)/state(%u, %s), rcv_sendBuf(%#x, %d/%#x, %d), "
-                    "jobId(%#x), instCnt(%u), lockdel(%u), trigConn(%u), sessMng(%#x)\n",
-                    curCtx->connCnt, BkfUrlGetStr(&conn->puberUrl, buf, sizeof(buf)),
-                    BKF_MASK_ADDR(conn->connId), BKF_FSM_GET_STATE(&conn->fsm), BkfFsmGetStateStr(&conn->fsm),
-                    BKF_MASK_ADDR(conn->rcvDataBuf), BkfBufqGetUsedLen(conn->rcvDataBuf),
-                    BKF_MASK_ADDR(conn->lastSendLeftDataBuf), BkfBufqGetUsedLen(conn->lastSendLeftDataBuf),
-                    BKF_MASK_ADDR(conn->jobId), conn->obInstCnt, conn->lockDel, conn->isTrigConn,
-                    BKF_MASK_ADDR(conn->sessMng));
+    BKF_DISP_PRINTF(disp,
+        "+conn[%d], puberUrl(%s), connId(%#x)/state(%u, %s), rcv_sendBuf(%#x, %d/%#x, %d), "
+        "jobId(%#x), instCnt(%u), lockdel(%u), trigConn(%u), sessMng(%#x)\n",
+        curCtx->connCnt, BkfUrlGetStr(&conn->puberUrl, buf, sizeof(buf)), BKF_MASK_ADDR(conn->connId),
+        BKF_FSM_GET_STATE(&conn->fsm), BkfFsmGetStateStr(&conn->fsm), BKF_MASK_ADDR(conn->rcvDataBuf),
+        BkfBufqGetUsedLen(conn->rcvDataBuf), BKF_MASK_ADDR(conn->lastSendLeftDataBuf),
+        BkfBufqGetUsedLen(conn->lastSendLeftDataBuf), BKF_MASK_ADDR(conn->jobId), conn->obInstCnt, conn->lockDel,
+        conn->isTrigConn, BKF_MASK_ADDR(conn->sessMng));
     return;
 }
 
 void BkfSuberConnDispAllConnAndSessSummary(BkfSuberConnMng *connMng)
 {
     BkfSuberConnDispAllConnAndSessSched(connMng, VOS_NULL, BkfSuberConnDispOneConnSummary,
-                                          BkfSuberConnDispAllConnEndPrintf,
-                                          BkfSuberSessDispOneSessSummary);
+        BkfSuberConnDispAllConnEndPrintf, BkfSuberSessDispOneSessSummary);
     return;
 }
 
@@ -258,15 +251,15 @@ void BkfSuberConnDispOneConnUrl(BkfSuberConnMng *connMng, BkfSuberConn *conn, Bk
     BkfDisp *disp = connMng->env->disp;
     uint8_t buf[BKF_DISP_PRINTF_BUF_LEN_MAX] = {0};
     BKF_DISP_PRINTF(disp, "============================================\n");
-    BKF_DISP_PRINTF(disp, "+conn[%d], puberUrl(%s)\n",
-                    curCtx->connCnt, BkfUrlGetStr(&conn->puberUrl, buf, sizeof(buf)));
+    BKF_DISP_PRINTF(disp, "+conn[%d], puberUrl(%s)\n", curCtx->connCnt,
+        BkfUrlGetStr(&conn->puberUrl, buf, sizeof(buf)));
     return;
 }
 
 void BkfSuberConnDispAllSessFsm(BkfSuberConnMng *connMng)
 {
-    BkfSuberConnDispAllConnAndSessSched(connMng, VOS_NULL, BkfSuberConnDispOneConnUrl,
-                                          BkfSuberConnDispAllConnEndPrintf, BkfSuberSessDispOneSessFsm);
+    BkfSuberConnDispAllConnAndSessSched(connMng, VOS_NULL, BkfSuberConnDispOneConnUrl, BkfSuberConnDispAllConnEndPrintf,
+        BkfSuberSessDispOneSessFsm);
     return;
 }
 
@@ -278,7 +271,7 @@ void BkfSuberConnDispCloseBatchTimeout(BkfSuberConnMng *connMng)
     uint32_t i;
     uint32_t closeCnt = 0;
     for (i = BKF_URL_TYPE_INVALID + 1; i < BKF_GET_ARY_COUNT(connMng->urlTypeSet); i++) {
-        urlTypeMng =  connMng->urlTypeSet[i];
+        urlTypeMng = connMng->urlTypeSet[i];
         if (urlTypeMng != VOS_NULL) {
             conn = BkfSuberConnDataGetFirstByUrlType(connMng, urlTypeMng->urlType, VOS_NULL);
             if (conn != VOS_NULL) {
@@ -298,7 +291,7 @@ void BkfSuberConnDispBatchTimeoutTest(BkfSuberConnMng *connMng)
     uint32_t i;
     uint32_t testCnt = 0;
     for (i = BKF_URL_TYPE_INVALID + 1; i < BKF_GET_ARY_COUNT(connMng->urlTypeSet); i++) {
-        urlTypeMng =  connMng->urlTypeSet[i];
+        urlTypeMng = connMng->urlTypeSet[i];
         if (urlTypeMng != VOS_NULL) {
             conn = BkfSuberConnDataGetFirstByUrlType(connMng, urlTypeMng->urlType, VOS_NULL);
             if (conn != VOS_NULL) {
@@ -326,8 +319,8 @@ void BkfSuberConnDispInit(BkfSuberConnMng *connMng)
     }
 
     (void)BKF_DISP_REG_FUNC(disp, BkfSuberConnDispSummary, "disp suber conn summary", objName, 0);
-    (void)BKF_DISP_REG_FUNC(disp, BkfSuberConnDispAllConnAndSessSummary, "disp suber conn and sess summary",
-                            objName, 0);
+    (void)BKF_DISP_REG_FUNC(disp, BkfSuberConnDispAllConnAndSessSummary, "disp suber conn and sess summary", objName,
+        0);
     (void)BKF_DISP_REG_FUNC(disp, BkfSuberConnDispAllConnFsm, "disp suber conn and sess summary", objName, 0);
     (void)BKF_DISP_REG_FUNC(disp, BkfSuberConnDispAllSessFsm, "disp suber conn and sess summary", objName, 0);
 

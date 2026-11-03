@@ -19,55 +19,34 @@
 
 namespace checker {
 // 待补充
-MAKE_ENUM(CheckerOpType,
-    BROADCAST,
-    ALLREDUCE,
-    REDUCE,
-    SEND,
-    RECEIVE,
-    ALLGATHER,
-    REDUCE_SCATTER,
-    ALLTOALLV,
-    ALLTOALLVC,
-    ALLTOALL,
-    GATHER,
-    SCATTER,
-    BATCH_SEND_RECV,
-    BATCH_PUT,
-    BATCH_GET,
-    ALLGATHER_V,
-    REDUCE_SCATTER_V,
-    BATCH_WRITE,
-    ALL,
-    MAX
-);
+MAKE_ENUM(
+    CheckerOpType, BROADCAST, ALLREDUCE, REDUCE, SEND, RECEIVE, ALLGATHER, REDUCE_SCATTER, ALLTOALLV, ALLTOALLVC,
+    ALLTOALL, GATHER, SCATTER, BATCH_SEND_RECV, BATCH_PUT, BATCH_GET, ALLGATHER_V, REDUCE_SCATTER_V, BATCH_WRITE, ALL,
+    MAX);
 
-enum CheckerOpMode {
-    OPBASE = 0,
-    OFFLOAD = 1
-};
+enum CheckerOpMode { OPBASE = 0, OFFLOAD = 1 };
 
 MAKE_ENUM(CheckerReduceOp, REDUCE_SUM, REDUCE_PROD, REDUCE_MAX, REDUCE_MIN, REDUCE_RESERVED);
 
 // 待补充
 enum CheckerDataType {
-    DATA_TYPE_INT8 = 0,    /**< int8 */
-    DATA_TYPE_INT16 = 1,   /**< int16 */
-    DATA_TYPE_INT32 = 2,   /**< int32 */
-    DATA_TYPE_FP16 = 3,    /**< fp16 */
-    DATA_TYPE_FP32 = 4,    /**< fp32 */
+    DATA_TYPE_INT8 = 0,     /**< int8 */
+    DATA_TYPE_INT16 = 1,    /**< int16 */
+    DATA_TYPE_INT32 = 2,    /**< int32 */
+    DATA_TYPE_FP16 = 3,     /**< fp16 */
+    DATA_TYPE_FP32 = 4,     /**< fp32 */
     DATA_TYPE_INT64 = 5,    /**< int64 */
-    DATA_TYPE_UINT64 = 6,    /**< uint64 */
+    DATA_TYPE_UINT64 = 6,   /**< uint64 */
     DATA_TYPE_UINT8 = 7,    /**< uint8 */
     DATA_TYPE_UINT16 = 8,   /**< uint16 */
     DATA_TYPE_UINT32 = 9,   /**< uint32 */
     DATA_TYPE_FP64 = 10,    /**< fp64 */
-    DATA_TYPE_BFP16 = 11,    /**< bfp16 */
-    DATA_TYPE_INT128 = 12,   /**< int128 */
-    DATA_TYPE_HIF8 = 13,     /**< hif8 */
-    DATA_TYPE_FP8E4M3 = 14,  /**< fp8e4m3 */
-    DATA_TYPE_FP8E5M2 = 15,  /**< fp8e5m2 */
-    DATA_TYPE_RESERVED       /**< reserved */
+    DATA_TYPE_BFP16 = 11,   /**< bfp16 */
+    DATA_TYPE_INT128 = 12,  /**< int128 */
+    DATA_TYPE_HIF8 = 13,    /**< hif8 */
+    DATA_TYPE_FP8E4M3 = 14, /**< fp8e4m3 */
+    DATA_TYPE_FP8E5M2 = 15, /**< fp8e5m2 */
+    DATA_TYPE_RESERVED      /**< reserved */
 };
 
 // 待补充
@@ -82,22 +61,33 @@ enum CheckerDevType {
     DEV_TYPE_COUNT = 7
 };
 
-typedef enum {
-    CHECK_SEND = 0,
-    CHECK_RECV = 1,
-    CHECK_SEND_RECV_RESERVED
-} CheckerSendRecvType;
+typedef enum { CHECK_SEND = 0, CHECK_RECV = 1, CHECK_SEND_RECV_RESERVED } CheckerSendRecvType;
 
 typedef struct CheckerSendRecvItemDef {
     CheckerSendRecvType sendRecvType;
-    void *buf;
+    void* buf;
     uint64_t count;
     CheckerDataType dataType;
     uint32_t remoteRank;
 } CheckerSendRecvItem;
 
-constexpr u32 CHECK_SIZE_TABLE[DATA_TYPE_RESERVED] = {sizeof(s8), sizeof(s16), sizeof(s32),
-    2, sizeof(float), sizeof(s64), sizeof(u64), sizeof(u8), sizeof(u16), sizeof(u32), 8, 2, 16, 1, 1, 1};
+constexpr u32 CHECK_SIZE_TABLE[DATA_TYPE_RESERVED]
+    = {sizeof(s8),
+       sizeof(s16),
+       sizeof(s32),
+       2,
+       sizeof(float),
+       sizeof(s64),
+       sizeof(u64),
+       sizeof(u8),
+       sizeof(u16),
+       sizeof(u32),
+       8,
+       2,
+       16,
+       1,
+       1,
+       1};
 
 struct CheckerOpParam {
     CheckerOpType opType;
@@ -106,14 +96,14 @@ struct CheckerOpParam {
     CheckerOpMode opMode;
     CheckerReduceOp reduceType = CheckerReduceOp::REDUCE_SUM;
     CheckerDevType devtype = CheckerDevType::DEV_TYPE_910B;
-    bool is310P3V = false;  // 仅当310PV卡的时候，设置为1
+    bool is310P3V = false; // 仅当310PV卡的时候，设置为1
     RankId root = -1;
     RankId dstRank = -1;
     RankId srcRank = -1;
     hccl::AlgOpContext algOpContext;
     bool aicpuUnfoldMode = false;
-    std::vector<std::vector<CheckerSendRecvItem>> allRanksSendRecvInfoVec; //batchsendrecv
-    std::vector<CheckerDevType> devTypes; // 混合组网场景
+    std::vector<std::vector<CheckerSendRecvItem>> allRanksSendRecvInfoVec; // batchsendrecv
+    std::vector<CheckerDevType> devTypes;                                  // 混合组网场景
     bool supportZeroCopy = false;
     bool supportRoceDirect = false; // AIV场景支持Roce直驱
     bool isZeroCopy = false;
@@ -151,6 +141,6 @@ struct CheckerOpParam {
     } BatchWriteDataDes;
 };
 
-} // namespace hccl
+} // namespace checker
 
 #endif

@@ -14,57 +14,61 @@
 
 namespace Hccl {
 
-constexpr uint32_t FINISH_MSG_SIZE             = 128;
-constexpr char_t   FINISH_MSG[FINISH_MSG_SIZE] = "Transport exchange data ready!";
+constexpr uint32_t FINISH_MSG_SIZE = 128;
+constexpr char_t FINISH_MSG[FINISH_MSG_SIZE] = "Transport exchange data ready!";
 
-HcclResult CcuCreateTransport(Socket *socket, const CcuTransport::CcuConnectionInfo &ccuConnectionInfo,
-    const CcuTransport::CclBufferInfo &cclBufferInfo, std::unique_ptr<CcuTransport> &ccuTransport)
+HcclResult CcuCreateTransport(
+    Socket* socket, const CcuTransport::CcuConnectionInfo& ccuConnectionInfo,
+    const CcuTransport::CclBufferInfo& cclBufferInfo, std::unique_ptr<CcuTransport>& ccuTransport)
 {
     CHK_PTR_NULL(socket);
-    HCCL_INFO("[%s]ccuConnectionInfo type[%d], locAddr[%s], rmtAddr[%s], channelInfo[channelId %u:dieId %u], "
-        "cclBufferInfo addr[%llu], size[%u]", __func__, ccuConnectionInfo.type, ccuConnectionInfo.locAddr.GetIpStr().c_str(),
-        ccuConnectionInfo.rmtAddr.GetIpStr().c_str(), ccuConnectionInfo.channelInfo.channelId, ccuConnectionInfo.channelInfo.dieId,
-        cclBufferInfo.addr, cclBufferInfo.size);
+    HCCL_INFO(
+        "[%s]ccuConnectionInfo type[%d], locAddr[%s], rmtAddr[%s], channelInfo[channelId %u:dieId %u], "
+        "cclBufferInfo addr[%llu], size[%u]",
+        __func__, ccuConnectionInfo.type, ccuConnectionInfo.locAddr.GetIpStr().c_str(),
+        ccuConnectionInfo.rmtAddr.GetIpStr().c_str(), ccuConnectionInfo.channelInfo.channelId,
+        ccuConnectionInfo.channelInfo.dieId, cclBufferInfo.addr, cclBufferInfo.size);
     TRY_CATCH_RETURN(
         std::unique_ptr<CcuConnection> ccuConnection;
-        if (ccuConnectionInfo.type == CcuTransport::CcuConnectionType::UBC_CTP) {
-            ccuConnection = std::make_unique<CcuCtpConnection>(ccuConnectionInfo.locAddr,
-                ccuConnectionInfo.rmtAddr, ccuConnectionInfo.channelInfo,
+        if (ccuConnectionInfo.type == CcuTransport::CcuConnectionType::UB_CTP) {
+            ccuConnection = std::make_unique<CcuCtpConnection>(
+                ccuConnectionInfo.locAddr, ccuConnectionInfo.rmtAddr, ccuConnectionInfo.channelInfo,
                 ccuConnectionInfo.ccuJettys);
         } else {
-            ccuConnection = std::make_unique<CcuTpConnection>(ccuConnectionInfo.locAddr,
-                ccuConnectionInfo.rmtAddr, ccuConnectionInfo.channelInfo,
+            ccuConnection = std::make_unique<CcuTpConnection>(
+                ccuConnectionInfo.locAddr, ccuConnectionInfo.rmtAddr, ccuConnectionInfo.channelInfo,
                 ccuConnectionInfo.ccuJettys);
         }
 
-        auto ret = ccuConnection->Init();
+        auto ret
+        = ccuConnection->Init();
         if (ret != HcclResult::HCCL_SUCCESS) {
             ccuConnection = nullptr;
             return ret;
         }
 
-        ccuTransport = std::make_unique<CcuTransport>(socket, std::move(ccuConnection), cclBufferInfo);
-        ret = ccuTransport->Init();
-        if (ret != HcclResult::HCCL_SUCCESS) {
+        ccuTransport
+        = std::make_unique<CcuTransport>(socket, std::move(ccuConnection), cclBufferInfo);
+        ret = ccuTransport->Init(); if (ret != HcclResult::HCCL_SUCCESS) {
             ccuTransport = nullptr;
             return ret;
-        }
-    );
+        });
 
     return HcclResult::HCCL_SUCCESS;
 }
 
-CcuTransport::CcuTransport(Socket *socket, std::unique_ptr<CcuConnection> &&connection,
-    const CclBufferInfo &locCclBufInfo)
-    : socket(socket), ccuConnection(std::move(connection)), locCclBufInfo(locCclBufInfo)
-{
-}
+CcuTransport::CcuTransport(
+    Socket* socket, std::unique_ptr<CcuConnection>&& connection, const CclBufferInfo& locCclBufInfo)
+    : socket(socket),
+      ccuConnection(std::move(connection)),
+      locCclBufInfo(locCclBufInfo)
+{}
 
 HcclResult CcuTransport::Init()
 {
-    dieId      = ccuConnection->GetDieId();
+    dieId = ccuConnection->GetDieId();
     devLogicId = ccuConnection->GetDevLogicId();
-    auto ret   = AppendCkes(INIT_CKE_NUM);
+    auto ret = AppendCkes(INIT_CKE_NUM);
     if (ret == HcclResult::HCCL_E_UNAVAIL) {
         HCCL_WARNING("[AppendCkes] UNAVAIL.");
         return ret;
@@ -97,7 +101,7 @@ HcclResult CcuTransport::AppendRes(uint32_t ckesNum, uint32_t xnsNum)
             HCCL_WARNING("[AppendCkes] UNAVAIL.");
             return ret;
         }
-        
+
         if (ret != HCCL_SUCCESS) {
             HCCL_ERROR("errNo[0x%016llx]:AppendCkes failed.", ret);
             return ret;
@@ -113,14 +117,14 @@ HcclResult CcuTransport::AppendRes(uint32_t ckesNum, uint32_t xnsNum)
             return ret;
         }
         transStatus = CcuTransport::TransStatus::SEND_TRANS_RES;
-    } catch (HcclException &e) {
+    } catch (HcclException& e) {
         HCCL_ERROR(e.what());
         return HCCL_E_INTERNAL;
-    } catch (exception &e) {
+    } catch (exception& e) {
         HCCL_ERROR(e.what());
         return HCCL_E_INTERNAL;
     } catch (...) {
-        HCCL_ERROR("Unknown error occured during unimport jetty or destroy jetty!");
+        HCCL_ERROR("Unknown error occurred during unimport jetty or destroy jetty!");
         return HCCL_E_INTERNAL;
     }
     return HCCL_SUCCESS;
@@ -129,19 +133,19 @@ HcclResult CcuTransport::AppendRes(uint32_t ckesNum, uint32_t xnsNum)
 HcclResult CcuTransport::AppendCkes(uint32_t ckesNum)
 {
     vector<ResInfo> resInfo;
-    auto            ret = CcuDeviceManager::AllocCke(devLogicId, dieId, ckesNum, resInfo);
+    auto ret = CcuDeviceManager::AllocCke(devLogicId, dieId, ckesNum, resInfo);
     if (ret == HcclResult::HCCL_E_UNAVAIL) {
         HCCL_WARNING("[AppendCkes] UNAVAIL.");
         return ret;
     }
-    
+
     if (ret != HcclResult::HCCL_SUCCESS) {
         HCCL_ERROR("errNo[0x%016llx]:AppendCkes failed.", ret);
         return ret;
     }
 
     for (uint32_t i = 0; i < resInfo.size(); i++) {
-        uint32_t ckeNum     = resInfo[i].num;
+        uint32_t ckeNum = resInfo[i].num;
         uint32_t ckesSartId = resInfo[i].startId;
         for (uint32_t j = 0; j < ckeNum; j++) {
             locRes.ckes.push_back(ckesSartId + j);
@@ -154,18 +158,18 @@ HcclResult CcuTransport::AppendCkes(uint32_t ckesNum)
 HcclResult CcuTransport::AppendXns(uint32_t xnsNum)
 {
     vector<ResInfo> resInfo;
-    auto            ret = CcuDeviceManager::AllocXn(devLogicId, dieId, xnsNum, resInfo);
+    auto ret = CcuDeviceManager::AllocXn(devLogicId, dieId, xnsNum, resInfo);
     if (ret == HcclResult::HCCL_E_UNAVAIL) {
         HCCL_WARNING("[AppendXns] UNAVAIL.");
         return ret;
     }
-    
+
     if (ret != HcclResult::HCCL_SUCCESS) {
         HCCL_ERROR("errNo[0x%016llx]:AppendXns failed.", ret);
         return ret;
     }
     for (uint32_t i = 0; i < resInfo.size(); i++) {
-        uint32_t xnNum     = resInfo[i].num;
+        uint32_t xnNum = resInfo[i].num;
         uint32_t xnsSartId = resInfo[i].startId;
         for (uint32_t j = 0; j < xnNum; j++) {
             locRes.xns.push_back(xnsSartId + j);
@@ -175,7 +179,7 @@ HcclResult CcuTransport::AppendXns(uint32_t xnsNum)
     return HCCL_SUCCESS;
 }
 
-void CcuTransport::SetCntCke(const vector<uint32_t> &cntCke)
+void CcuTransport::SetCntCke(const vector<uint32_t>& cntCke)
 {
     HCCL_INFO("[%s]cntCke size[%llu]", __func__, cntCke.size());
     locRes.cntCkes = cntCke;
@@ -190,11 +194,11 @@ CcuTransport::TransStatus CcuTransport::StateMachine()
     if (socketStatus == SocketStatus::INIT) {
         THROW<InternalException>("[CcuTransport][GetStatus]socket timeout or no link, please check");
     }
-    
+
     if (socketStatus == SocketStatus::TIMEOUT) {
         return TransStatus::SOCKET_TIMEOUT;
     }
-    
+
     if (socketStatus != SocketStatus::OK) {
         return transStatus;
     }
@@ -203,12 +207,13 @@ CcuTransport::TransStatus CcuTransport::StateMachine()
         case CcuTransport::TransStatus::INIT: {
             auto connStatus = ccuConnection->GetStatus();
             if (connStatus == CcuConnStatus::CONN_INVALID) {
-                THROW<InternalException>("[CcuTransport][GetStatus] connection status[%s] failed."
-                    " please check", connStatus.Describe().c_str());
+                THROW<InternalException>(
+                    "[CcuTransport][GetStatus] connection status[%s] failed."
+                    " please check",
+                    connStatus.Describe().c_str());
             }
- 
-            if (connStatus == CcuConnStatus::EXCHANGEABLE
-                || connStatus == CcuConnStatus::CONNECTED) {
+
+            if (connStatus == CcuConnStatus::EXCHANGEABLE || connStatus == CcuConnStatus::CONNECTED) {
                 transStatus = CcuTransport::TransStatus::SEND_ALL_INFO;
                 SendConnAndTransInfo();
             }
@@ -227,8 +232,10 @@ CcuTransport::TransStatus CcuTransport::StateMachine()
         case CcuTransport::TransStatus::SEND_FIN: {
             auto connStatus = ccuConnection->GetStatus();
             if (connStatus == CcuConnStatus::CONN_INVALID) {
-                THROW<InternalException>("[CcuTransport][GetStatus] connection status[%s] failed."
-                    " please check", connStatus.Describe().c_str());
+                THROW<InternalException>(
+                    "[CcuTransport][GetStatus] connection status[%s] failed."
+                    " please check",
+                    connStatus.Describe().c_str());
             }
 
             if (connStatus == CcuConnStatus::CONNECTED) {
@@ -271,13 +278,9 @@ CcuTransport::TransStatus CcuTransport::GetStatus()
         std::unique_lock<std::shared_timed_mutex> lock(transMutex);
         status = StateMachine();
     };
-    TRY_CATCH_PROCESS_THROW (
-        InternalException,
-        lockAndStatuMachine(),
-        "CcuTransport GetStatus() Error when creating transport connection",
-        {
-            transStatus = CcuTransport::TransStatus::CONNECT_FAILED;
-        });
+    TRY_CATCH_PROCESS_THROW(
+        InternalException, lockAndStatuMachine(), "CcuTransport GetStatus() Error when creating transport connection",
+        { transStatus = CcuTransport::TransStatus::CONNECT_FAILED; });
     return status;
 }
 
@@ -289,16 +292,16 @@ void CcuTransport::SendConnAndTransInfo()
     TransResPack(binaryStream);
     CclBufferInfoPack(binaryStream);
     binaryStream.Dump(sendData);
-    socket->SendAsync(reinterpret_cast<u8 *>(sendData.data()), sendData.size());
+    socket->SendAsync(sendData.data(), sendData.size());
     exchangeDataSize = sendData.size();
 }
 
 void CcuTransport::RecvConnAndTransInfo()
 {
     recvData.resize(exchangeDataSize);
-    socket->RecvAsync(reinterpret_cast<u8 *>(recvData.data()), recvData.size());
+    socket->RecvAsync(recvData.data(), recvData.size());
 }
- 
+
 void CcuTransport::RecvDataProcess()
 {
     BinaryStream binaryStream(recvData);
@@ -313,30 +316,31 @@ void CcuTransport::SendTransInfo()
     BinaryStream binaryStream;
     TransResPack(binaryStream);
     binaryStream.Dump(sendTrans);
-    socket->SendAsync(reinterpret_cast<u8 *>(sendTrans.data()), sendTrans.size());
+    socket->SendAsync(sendTrans.data(), sendTrans.size());
     exchangeDataSize = sendTrans.size();
 }
- 
+
 void CcuTransport::RecvTransInfo()
 {
     recvTrans.resize(exchangeDataSize);
-    socket->RecvAsync(reinterpret_cast<u8 *>(recvTrans.data()), recvTrans.size());
+    socket->RecvAsync(recvTrans.data(), recvTrans.size());
 }
- 
+
 void CcuTransport::RecvTransInfoProcess()
 {
     BinaryStream binaryStream(recvTrans);
     TransResUnpackProc(binaryStream);
 }
 
-void CcuTransport::HandshakeMsgPack(BinaryStream &binaryStream)
+void CcuTransport::HandshakeMsgPack(BinaryStream& binaryStream)
 {
     binaryStream << static_cast<u32>(attr.opAcceState);
     binaryStream << attr.handshakeMsg;
-    HCCL_INFO("[CcuTransport][%s] start pack handshakeMsg, attr.handshakeMsg.size[%zu]", __func__, attr.handshakeMsg.size());
+    HCCL_INFO(
+        "[CcuTransport][%s] start pack handshakeMsg, attr.handshakeMsg.size[%zu]", __func__, attr.handshakeMsg.size());
 }
 
-void CcuTransport::ConnInfoPack(BinaryStream &binaryStream) const
+void CcuTransport::ConnInfoPack(BinaryStream& binaryStream) const
 {
     std::vector<char> dtoData{};
     ccuConnection->Serialize(dtoData);
@@ -344,7 +348,7 @@ void CcuTransport::ConnInfoPack(BinaryStream &binaryStream) const
     HCCL_INFO("[CcuTransport][%s] start pack connInfo, dtoData.size[%u]", __func__, dtoData.size());
 }
 
-void CcuTransport::TransResPack(BinaryStream &binaryStream)
+void CcuTransport::TransResPack(BinaryStream& binaryStream)
 {
     uint32_t locCkesSize = locRes.ckes.size();
     binaryStream << locCkesSize;
@@ -366,12 +370,9 @@ void CcuTransport::TransResPack(BinaryStream &binaryStream)
     HCCL_INFO("Send ckesSize[%u], cntCkesSize[%u], xnsSize[%u]", locCkesSize, locCntCkesSize, locXnsSize);
 }
 
-void CcuTransport::CclBufferInfoPack(BinaryStream &binaryStream) const
-{
-    locCclBufInfo.Pack(binaryStream);
-}
+void CcuTransport::CclBufferInfoPack(BinaryStream& binaryStream) const { locCclBufInfo.Pack(binaryStream); }
 
-void CcuTransport::HandshakeMsgUnpack(BinaryStream &binaryStream)
+void CcuTransport::HandshakeMsgUnpack(BinaryStream& binaryStream)
 {
     u32 rmtAccelerator{0};
     binaryStream >> rmtAccelerator;
@@ -379,28 +380,30 @@ void CcuTransport::HandshakeMsgUnpack(BinaryStream &binaryStream)
     rmtOpAcceState = static_cast<AcceleratorState::Value>(rmtAccelerator);
 
     if (rmtOpAcceState != attr.opAcceState) {
-        THROW<InvalidParamsException>(
-            StringFormat("[CcuTransport::HandshakeMsgUnpack] Accelerator information check fail. "
-                         "locOpAccelerator[%s], rmtOpAccelerator[%s]",
-                         attr.opAcceState.Describe().c_str(), rmtOpAcceState.Describe().c_str()));
+        THROW<InvalidParamsException>(StringFormat(
+            "[CcuTransport::HandshakeMsgUnpack] Accelerator information check fail. "
+            "locOpAccelerator[%s], rmtOpAccelerator[%s]",
+            attr.opAcceState.Describe().c_str(), rmtOpAcceState.Describe().c_str()));
     }
 
     rmtHandshakeMsg.clear();
     binaryStream >> rmtHandshakeMsg;
 
     if (attr.handshakeMsg.size() != rmtHandshakeMsg.size()) {
-        MACRO_THROW(InvalidParamsException, StringFormat("handshakeMsg size=%u is not equal to rmt=%u",
-                                                         attr.handshakeMsg.size(), rmtHandshakeMsg.size()));
+        MACRO_THROW(
+            InvalidParamsException,
+            StringFormat(
+                "handshakeMsg size=%u is not equal to rmt=%u", attr.handshakeMsg.size(), rmtHandshakeMsg.size()));
     }
 
-    auto localCollOperator  = CollOperator::GetPackedData(attr.handshakeMsg);
+    auto localCollOperator = CollOperator::GetPackedData(attr.handshakeMsg);
     auto remoteCollOperator = CollOperator::GetPackedData(rmtHandshakeMsg);
     CheckCollOperator(localCollOperator, remoteCollOperator); // 两端算子参数一致性校验
 
     HCCL_INFO("[CcuTransport][%s] start unpack handshakeMsg", __func__);
 }
 
-void CcuTransport::ConnInfoUnpackProc(BinaryStream &binaryStream) const
+void CcuTransport::ConnInfoUnpackProc(BinaryStream& binaryStream) const
 {
     std::vector<char> dtoData{};
     binaryStream >> dtoData;
@@ -408,7 +411,7 @@ void CcuTransport::ConnInfoUnpackProc(BinaryStream &binaryStream) const
     HCCL_INFO("[CcuTransport][%s] start unpack connInfo, dtoData.size[%zu]", __func__, dtoData.size());
 }
 
-void CcuTransport::TransResUnpackProc(BinaryStream &binaryStream)
+void CcuTransport::TransResUnpackProc(BinaryStream& binaryStream)
 {
     uint32_t resSzie;
     binaryStream >> resSzie;
@@ -438,30 +441,28 @@ void CcuTransport::TransResUnpackProc(BinaryStream &binaryStream)
     HCCL_INFO("Recv xnsSize[%u]", resSzie);
 }
 
-void CcuTransport::CclBufferInfoUnpack(BinaryStream &binaryStream)
-{
-    rmtCclBufInfo.Unpack(binaryStream);
-}
+void CcuTransport::CclBufferInfoUnpack(BinaryStream& binaryStream) { rmtCclBufInfo.Unpack(binaryStream); }
 
 void CcuTransport::SendFinish()
 {
     sendFinishMsg = std::vector<char>(FINISH_MSG, FINISH_MSG + FINISH_MSG_SIZE);
-    socket->SendAsync(reinterpret_cast<u8 *>(sendFinishMsg.data()), FINISH_MSG_SIZE);
+    socket->SendAsync(sendFinishMsg.data(), FINISH_MSG_SIZE);
 }
 
 void CcuTransport::RecvFinish()
 {
     recvFinishMsg.resize(FINISH_MSG_SIZE);
-    socket->RecvAsync(reinterpret_cast<u8 *>(recvFinishMsg.data()), FINISH_MSG_SIZE);
+    socket->RecvAsync(recvFinishMsg.data(), FINISH_MSG_SIZE);
 }
- 
+
 void CcuTransport::CheckFinish()
 {
     std::string sendFinishMsgStr(sendFinishMsg.begin(), sendFinishMsg.end());
     std::string recvFinishMsgStr(recvFinishMsg.begin(), recvFinishMsg.end());
     if (sendFinishMsgStr != recvFinishMsgStr) {
-        THROW<InternalException>("[CcuTransport][RecvFinish]msgRecv[%s] and msgSend[%s] are not equal", 
-                                 recvFinishMsgStr.c_str(), sendFinishMsgStr.c_str());
+        THROW<InternalException>(
+            "[CcuTransport][RecvFinish]msgRecv[%s] and msgSend[%s] are not equal", recvFinishMsgStr.c_str(),
+            sendFinishMsgStr.c_str());
     }
 }
 
@@ -482,23 +483,16 @@ void CcuTransport::ReleaseTransRes()
     }
 }
 
-uint32_t CcuTransport::GetDieId() const
-{
-    return dieId;
-}
+uint32_t CcuTransport::GetDieId() const { return dieId; }
 
-uint32_t CcuTransport::GetChannelId() const
-{
-    return ccuConnection->GetChannelId();
-}
+uint32_t CcuTransport::GetChannelId() const { return ccuConnection->GetChannelId(); }
 
 uint32_t CcuTransport::GetLocCkeByIndex(uint32_t index) const
 {
     std::shared_lock<std::shared_timed_mutex> lock(transMutex);
     if (index >= locRes.ckes.size()) {
         THROW<InternalException>(
-            "[GetLocCkeByIndex]:index[%u] is bigger than ckes size[%u]",
-            index, locRes.ckes.size());
+            "[GetLocCkeByIndex]:index[%u] is bigger than ckes size[%u]", index, locRes.ckes.size());
     }
     return locRes.ckes[index];
 }
@@ -508,8 +502,7 @@ uint32_t CcuTransport::GetLocCntCkeByIndex(uint32_t index) const
     std::shared_lock<std::shared_timed_mutex> lock(transMutex);
     if (index >= locRes.cntCkes.size()) {
         THROW<InternalException>(
-            "[GetLocCntCkeByIndex]:index[%u] is bigger than cntCkes size[%u]",
-            index, locRes.cntCkes.size());
+            "[GetLocCntCkeByIndex]:index[%u] is bigger than cntCkes size[%u]", index, locRes.cntCkes.size());
     }
     return locRes.cntCkes[index];
 }
@@ -538,8 +531,8 @@ uint32_t CcuTransport::GetRmtCntCkeByIndex(uint32_t index) const
 {
     std::shared_lock<std::shared_timed_mutex> lock(transMutex);
     if (index >= rmtRes.cntCkes.size()) {
-        THROW<InternalException>(StringFormat("[GetRmtCntCkeByIndex]:index[%u] is bigger than cntCkes size[%u]", index,
-                                              rmtRes.cntCkes.size()));
+        THROW<InternalException>(StringFormat(
+            "[GetRmtCntCkeByIndex]:index[%u] is bigger than cntCkes size[%u]", index, rmtRes.cntCkes.size()));
     }
     return rmtRes.cntCkes[index];
 }
@@ -554,24 +547,21 @@ uint32_t CcuTransport::GetRmtXnByIndex(uint32_t index) const
     return rmtRes.xns[index];
 }
 
-HcclResult CcuTransport::GetLocBuffer(CclBufferInfo &bufferInfo, const uint32_t &bufNum) const
+HcclResult CcuTransport::GetLocBuffer(CclBufferInfo& bufferInfo, const uint32_t& bufNum) const
 {
     (void)bufNum;
     bufferInfo = locCclBufInfo;
     return HCCL_SUCCESS;
 }
 
-HcclResult CcuTransport::GetRmtBuffer(CclBufferInfo &bufferInfo, const uint32_t &bufNum) const
+HcclResult CcuTransport::GetRmtBuffer(CclBufferInfo& bufferInfo, const uint32_t& bufNum) const
 {
     (void)bufNum;
     bufferInfo = rmtCclBufInfo;
     return HCCL_SUCCESS;
 }
 
-CcuTransport::~CcuTransport()
-{
-    DECTOR_TRY_CATCH("CcuTransport", ReleaseTransRes());
-}
+CcuTransport::~CcuTransport() { DECTOR_TRY_CATCH("CcuTransport", ReleaseTransRes()); }
 
 std::string CcuTransport::Describe() const
 {
@@ -579,24 +569,19 @@ std::string CcuTransport::Describe() const
 
     description = StringFormat("DieId: %u, ", dieId);
     description += transStatus.Describe();
-    description += StringFormat(", LocRes: {%u Ckes, %u CntCkes, %u Xns}, ", locRes.ckes.size(), locRes.cntCkes.size(),
-                                locRes.xns.size());
-    description += StringFormat("RmtRes: {%u Ckes, %u CntCkes, %u Xns}, ", rmtRes.ckes.size(), rmtRes.cntCkes.size(),
-                                rmtRes.xns.size());
+    description += StringFormat(
+        ", LocRes: {%u Ckes, %u CntCkes, %u Xns}, ", locRes.ckes.size(), locRes.cntCkes.size(), locRes.xns.size());
+    description += StringFormat(
+        "RmtRes: {%u Ckes, %u CntCkes, %u Xns}, ", rmtRes.ckes.size(), rmtRes.cntCkes.size(), rmtRes.xns.size());
     description += StringFormat("CkesRes size: %u, ", ckesRes.size());
     description += StringFormat("XnsRes size: %u, ", xnsRes.size());
-    description += StringFormat("%s", socket->Describe().c_str());
+    description += StringFormat("%s, ", socket->Describe().c_str());
+    description += StringFormat("%s", ccuConnection->Describe().c_str());
     return description;
 }
 
-std::vector<ConnJettyInfo> CcuTransport::GetDeleteJettyInfo()
-{
-    return ccuConnection->GetDeleteJettyInfo();
-}
-std::vector<ConnJettyInfo> CcuTransport::GetUnimportJettyInfo()
-{
-    return ccuConnection->GetUnimportJettyInfo();
-}
+std::vector<ConnJettyInfo> CcuTransport::GetDeleteJettyInfo() { return ccuConnection->GetDeleteJettyInfo(); }
+std::vector<ConnJettyInfo> CcuTransport::GetUnimportJettyInfo() { return ccuConnection->GetUnimportJettyInfo(); }
 
 HcclResult CcuTransport::Clean()
 {

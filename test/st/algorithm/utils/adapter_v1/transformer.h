@@ -32,6 +32,6 @@ extern std::map<HcclDataType, CheckerDataType> g_HcclDataType2CheckerDataType;
 extern std::map<CheckerDevType, DevType> g_CheckerDevType2HcclDevType;
 extern std::map<DevType, CheckerDevType> g_HcclDevType2CheckerDevType;
 
-} // namespace checker
+} // namespace hccl
 
 #endif

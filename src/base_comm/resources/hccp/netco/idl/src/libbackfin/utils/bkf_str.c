@@ -30,25 +30,25 @@ typedef struct tagBkfStrHead {
     char strVal[0];
 } BkfStrHead;
 
-#define BKF_STR_SIGN_SET(head) do {             \
-    BKF_SIGN_SET((head)->signL, BKF_STR_SIGNL); \
-    BKF_SIGN_SET((head)->signH, BKF_STR_SIGNH); \
-} while (0)
-#define BKF_STR_SIGN_CLR(head) do { \
-    BKF_SIGN_CLR((head)->signL);    \
-    BKF_SIGN_CLR((head)->signH);    \
-} while (0)
-#define BKF_STR_SIGN_IS_VALID(head) \
+#define BKF_STR_SIGN_SET(head)                                                                                         \
+    do {                                                                                                               \
+        BKF_SIGN_SET((head)->signL, BKF_STR_SIGNL);                                                                    \
+        BKF_SIGN_SET((head)->signH, BKF_STR_SIGNH);                                                                    \
+    } while (0)
+#define BKF_STR_SIGN_CLR(head)                                                                                         \
+    do {                                                                                                               \
+        BKF_SIGN_CLR((head)->signL);                                                                                   \
+        BKF_SIGN_CLR((head)->signH);                                                                                   \
+    } while (0)
+#define BKF_STR_SIGN_IS_VALID(head)                                                                                    \
     (BKF_SIGN_IS_VALID((head)->signH, BKF_STR_SIGNH) && BKF_SIGN_IS_VALID((head)->signL, BKF_STR_SIGNL))
 
 #define BKF_STR_LEN_IS_VALID(strLen) (((strLen) >= 0) && ((strLen) <= BKF_STR_LEN_MAX))
 
 #define BKF_STR_GET_NEED_LEN(strLen) (sizeof(BkfStrHead) + (strLen) + 1 + sizeof(g_BkfStrGuard))
-#define BKF_STR_2GUARD(head) ((uint8_t*)(head) + sizeof(BkfStrHead) + (head)->strLen + 1)
+#define BKF_STR_2GUARD(head) ((uint8_t *)(head) + sizeof(BkfStrHead) + (head)->strLen + 1)
 
-#define BKF_STR_GUARD_IS_VALID(head) \
-    (VOS_MemCmp(BKF_STR_2GUARD(head), &g_BkfStrGuard, sizeof(g_BkfStrGuard)) == 0)
-
+#define BKF_STR_GUARD_IS_VALID(head) (VOS_MemCmp(BKF_STR_2GUARD(head), &g_BkfStrGuard, sizeof(g_BkfStrGuard)) == 0)
 
 char *BkfStrNew(BkfMemMng *memMng, const char *fmt, ...)
 {
@@ -60,7 +60,7 @@ char *BkfStrNew(BkfMemMng *memMng, const char *fmt, ...)
     char buf[BKF_STR_LEN_MAX + 0x10];
 
     paramIsInvalid = (memMng == VOS_NULL) || (fmt == VOS_NULL);
-    if (paramIsInvalid)  {
+    if (paramIsInvalid) {
         goto error;
     }
 
@@ -116,7 +116,7 @@ void BkfStrDel(char *str)
         BKF_ASSERT(0);
     }
 
-	(void)memset_s(BKF_STR_2GUARD(head), sizeof(g_BkfStrGuard), 0, sizeof(g_BkfStrGuard));
+    (void)memset_s(BKF_STR_2GUARD(head), sizeof(g_BkfStrGuard), 0, sizeof(g_BkfStrGuard));
     BKF_STR_SIGN_CLR(head);
     BKF_FREE(head->memMng, head);
     return;
@@ -161,4 +161,3 @@ int32_t BkfStrGetMemUsedLen(char *str)
 }
 #endif
 #endif
-

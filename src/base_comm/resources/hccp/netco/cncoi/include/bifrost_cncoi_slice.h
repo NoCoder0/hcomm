@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef BIFROST_CNCOI_SLICE_H
 
 #define BIFROST_CNCOI_SLICE_H
@@ -22,7 +21,7 @@ extern "C" {
 #pragma pack(4)
 
 int32_t BifrostCncoiSliceKeyCmp(const BifrostCncoiSliceKeyT *key1Input, const BifrostCncoiSliceKeyT *key2InDs);
-char* BifrostCncoiSliceKeyGetStr(const BifrostCncoiSliceKeyT *key, uint8_t *buf, int32_t bufLen);
+char *BifrostCncoiSliceKeyGetStr(const BifrostCncoiSliceKeyT *key, uint8_t *buf, int32_t bufLen);
 uint32_t BifrostCncoiSliceKeyCodec(BifrostCncoiSliceKeyT *key);
 
 #pragma pack()
@@ -32,4 +31,3 @@ uint32_t BifrostCncoiSliceKeyCodec(BifrostCncoiSliceKeyT *key);
 #endif
 
 #endif
-

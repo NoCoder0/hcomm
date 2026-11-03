@@ -1,22 +1,20 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "coll_reduce_executor.h"
 
 namespace hccl {
 
-CollReduceExecutor::CollReduceExecutor(const HcclDispatcher dispatcher,
-    std::unique_ptr<TopoMatcher> &topoMatcher)
+CollReduceExecutor::CollReduceExecutor(const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher>& topoMatcher)
     : CollCommExecutor(dispatcher, topoMatcher)
-{
-}
+{}
 
 HcclResult CollReduceExecutor::Orchestrate(OpParam& param, AlgResourceResponse& algRes)
 {
@@ -25,7 +23,8 @@ HcclResult CollReduceExecutor::Orchestrate(OpParam& param, AlgResourceResponse& 
     tag_ = param.tag;
     if (algType_.algoLevel1 == AlgTypeLevel1::ALG_LEVEL1_HD || algType_.algoLevel2 == AlgTypeLevel2::ALG_LEVEL2_HD) {
         std::string appendTag = "";
-        u32 serverNumPerSuperPod = topoAttr_.superPodNum == 0 ? topoAttr_.moduleNum : topoAttr_.moduleNum / topoAttr_.superPodNum;
+        u32 serverNumPerSuperPod
+            = topoAttr_.superPodNum == 0 ? topoAttr_.moduleNum : topoAttr_.moduleNum / topoAttr_.superPodNum;
         if (algType_.algoLevel1 == AlgTypeLevel1::ALG_LEVEL1_HD) {
             u32 part1Size = FACTOR_TWO * (serverNumPerSuperPod - (1 << static_cast<u32>(log2(serverNumPerSuperPod))));
             u32 rootId = param.root / topoAttr_.deviceNumPerAggregation % serverNumPerSuperPod;
@@ -34,7 +33,8 @@ HcclResult CollReduceExecutor::Orchestrate(OpParam& param, AlgResourceResponse& 
         if (algType_.algoLevel2 == AlgTypeLevel2::ALG_LEVEL2_HD) {
             u32 part1Size = FACTOR_TWO * (topoAttr_.superPodNum - (1 << static_cast<u32>(log2(topoAttr_.superPodNum))));
             u32 rootId = param.root / topoAttr_.deviceNumPerAggregation / serverNumPerSuperPod;
-            appendTag += (appendTag.empty() ? "L2_" : "_L2_") + std::to_string((rootId >= part1Size) || ((rootId % FACTOR_TWO) == 0));
+            appendTag += (appendTag.empty() ? "L2_" : "_L2_")
+                         + std::to_string((rootId >= part1Size) || ((rootId % FACTOR_TWO) == 0));
         }
         tag_ = param.tag + '_' + appendTag;
         if (param.opBaseAtraceInfo != nullptr) {
@@ -70,9 +70,11 @@ HcclResult CollReduceExecutor::Orchestrate(OpParam& param, AlgResourceResponse& 
         ret = RunLoop(param, algRes);
         needLaunchAtTheEnd = false;
     }
-    CHK_PRT_RET(ret != HCCL_SUCCESS,
-        HCCL_ERROR("[CollReduceExecutor][Orchestrate]errNo[0x%016llx]reduce executor kernel run failed",
-            HCCL_ERROR_CODE(ret)), ret);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[CollReduceExecutor][Orchestrate]errNo[0x%016llx]reduce executor kernel run failed", HCCL_ERROR_CODE(ret)),
+        ret);
 
     // Enforce task launch at the end of Orchestrate
     // 注意: 不要删除这里的强制launch, 否则会导致aicpu cache功能问题
@@ -81,31 +83,34 @@ HcclResult CollReduceExecutor::Orchestrate(OpParam& param, AlgResourceResponse& 
         CHK_RET(LaunchTaskExtend(dispatcher_, param.stream, algResResp_->slaveStreams));
     }
 
-    HCCL_INFO("tag[%s], Reduce executor orchestrate success, take time [%lld]us.", tag_.c_str(),
+    HCCL_INFO(
+        "tag[%s], Reduce executor orchestrate success, take time [%lld]us.", tag_.c_str(),
         DURATION_US(TIME_NOW() - startut));
     return HCCL_SUCCESS;
 }
 
-HcclResult CollReduceExecutor::RunLoop(OpParam &param, AlgResourceResponse &algRes)
+HcclResult CollReduceExecutor::RunLoop(OpParam& param, AlgResourceResponse& algRes)
 {
     u32 unitSize = SIZE_TABLE[param.DataDes.dataType];
-    ReduceType reduceType = ((param.reduceType != HCCL_REDUCE_PROD) &&
-        (param.DataDes.dataType != HCCL_DATA_TYPE_INT64)) ?
-        ReduceType::INLINE_REDUCE : ReduceType::TBE_REDUCE;
+    ReduceType reduceType
+        = ((param.reduceType != HCCL_REDUCE_PROD) && (param.DataDes.dataType != HCCL_DATA_TYPE_INT64)) ?
+              ReduceType::INLINE_REDUCE :
+              ReduceType::TBE_REDUCE;
 
-    u8 *curInputPtr = static_cast<u8 *>(param.inputPtr);
-    u8 *curOutputPtr = static_cast<u8 *>(param.outputPtr);
+    u8* curInputPtr = static_cast<u8*>(param.inputPtr);
+    u8* curOutputPtr = static_cast<u8*>(param.outputPtr);
     CHK_PTR_NULL(curInputPtr);
     CHK_PTR_NULL(curOutputPtr);
 
-    u64 maxCountPerLoop = CalcLoopMaxCount(unitSize, algRes);   // override
+    u64 maxCountPerLoop = CalcLoopMaxCount(unitSize, algRes); // override
 
-    HCCL_DEBUG("[CollReduceExecutor][RunLoop]tag[%s], userRankSize is [%u], maxCountPerLoop is [%llu].",
-        tag_.c_str(), topoAttr_.userRankSize, maxCountPerLoop);
+    HCCL_DEBUG(
+        "[CollReduceExecutor][RunLoop]tag[%s], userRankSize is [%u], maxCountPerLoop is [%llu].", tag_.c_str(),
+        topoAttr_.userRankSize, maxCountPerLoop);
 
     u64 inputOffset = 0;
     u64 outputOffset = 0;
-    u64 countLeft =  param.DataDes.count;
+    u64 countLeft = param.DataDes.count;
     while (countLeft > 0) {
         curInputPtr += inputOffset;
         curOutputPtr += outputOffset;
@@ -113,7 +118,8 @@ HcclResult CollReduceExecutor::RunLoop(OpParam &param, AlgResourceResponse &algR
         u64 curCount = (countLeft > maxCountPerLoop) ? maxCountPerLoop : countLeft;
         u64 curSize = curCount * unitSize; // 单位：字节
 
-        HCCL_DEBUG("[CollReduceExecutor][RunLoop]tag[%s], inputOffset[%llu], outputOffset[%llu], " \
+        HCCL_DEBUG(
+            "[CollReduceExecutor][RunLoop]tag[%s], inputOffset[%llu], outputOffset[%llu], "
             "sendBuf[%p], recvBuf[%p], sendCount[%llu], dataType[%d].",
             tag_.c_str(), inputOffset, outputOffset, curInputPtr, curOutputPtr, curCount, param.DataDes.dataType);
 
@@ -146,29 +152,31 @@ HcclResult CollReduceExecutor::RunLoop(OpParam &param, AlgResourceResponse &algR
     return HCCL_SUCCESS;
 }
 
-HcclResult CollReduceExecutor::RunLoopInner(OpParam &param, const ReduceType &reduceType, ExecMem &execMem)
+HcclResult CollReduceExecutor::RunLoopInner(OpParam& param, const ReduceType& reduceType, ExecMem& execMem)
 {
     u32 unitSize = SIZE_TABLE[param.DataDes.dataType];
     u64 curSize = execMem.count * unitSize; // 单位：字节
-    HCCL_DEBUG("[CollReduceExecutor][RunLoopInner]inputMem[%p][%llu], outputMem[%p][%llu], " \
-        "intputPtr[%p], outputPtr[%p], curCount[%llu], curSize[%llu]",
+    HCCL_DEBUG(
+        "[CollReduceExecutor][RunLoopInner]inputMem[%p][%llu], outputMem[%p][%llu], "
+        "inputPtr[%p], outputPtr[%p], curCount[%llu], curSize[%llu]",
         execMem.inputMem.ptr(), execMem.inputMem.size(), execMem.outputMem.ptr(), execMem.outputMem.size(),
         execMem.inputPtr, execMem.outputPtr, execMem.count, curSize);
-    CHK_PRT_RET((execMem.count == 0),
-        HCCL_ERROR("[CollReduceExecutor][RunLoopInner]In OP_BASE curCount is zero."), HCCL_E_PARA);
+    CHK_PRT_RET(
+        (execMem.count == 0), HCCL_ERROR("[CollReduceExecutor][RunLoopInner]In OP_BASE curCount is zero."),
+        HCCL_E_PARA);
 
     /* 设置子图复用标志 */
     bool isRootRank = param.root == topoAttr_.realUserRank ? true : false;
     auto autoSelectedAlgTypeLevel1 = static_cast<u32>(algType_.algoLevel1);
-    bool hugeData = IsHugeData(curSize);    // override
+    bool hugeData = IsHugeData(curSize); // override
     /* TBE reduce 当总count数超过INT32_MAX时，不使能子图复用 */
     if (reduceType == ReduceType::TBE_REDUCE) {
         hugeData = hugeData || param.DataDes.count > INT32_MAX;
     }
     HCCL_DEBUG("[CollReduceExecutor][RunLoopInner]IsHugeData:[%u]", hugeData);
     u8 deterministic = topoMatcher_->GetExternalInputHcclDeterministic();
-    auto opMeta = HcclOpMetaInfo::GetOneForReduce(isRootRank, param.root, autoSelectedAlgTypeLevel1, 
-        param.DataDes.dataType, reduceType, hugeData, deterministic);
+    auto opMeta = HcclOpMetaInfo::GetOneForReduce(
+        isRootRank, param.root, autoSelectedAlgTypeLevel1, param.DataDes.dataType, reduceType, hugeData, deterministic);
     CHK_RET(InitTask(dispatcher_, param.stream, opMeta.isEnableCache, opMeta.GetCacheKey()));
 
     execMem.inputMem = DeviceMem::create(execMem.inputMem.ptr(), curSize);
@@ -182,11 +190,13 @@ HcclResult CollReduceExecutor::RunLoopInner(OpParam &param, const ReduceType &re
     HCCL_DEBUG("[CollReduceExecutor][RunLoopInner]copy from user in to ccl in.");
 
     HcclResult ret = KernelRun(param, execMem);
-    CHK_PRT_RET(ret != HCCL_SUCCESS,
-        HCCL_ERROR("[CollReduceExecutor][RunLoopInner]errNo[0x%016llx]kernel run error, tag[%s], " \
-        "inputMem ptr[%p], outputMem ptr[%p], count[%llu], dataType[%d], reduce op type[%d]",
-        HCCL_ERROR_CODE(ret), tag_.c_str(), execMem.inputMem.ptr(), execMem.outputMem.ptr(),
-        execMem.count, param.DataDes.dataType, param.reduceType),
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[CollReduceExecutor][RunLoopInner]errNo[0x%016llx]kernel run error, tag[%s], "
+            "inputMem ptr[%p], outputMem ptr[%p], count[%llu], dataType[%d], reduce op type[%d]",
+            HCCL_ERROR_CODE(ret), tag_.c_str(), execMem.inputMem.ptr(), execMem.outputMem.ptr(), execMem.count,
+            param.DataDes.dataType, param.reduceType),
         ret);
 
     if (topoAttr_.realUserRank == param.root) { // 只root rank需要把数据从中转内存拷贝出去
@@ -203,20 +213,21 @@ u64 CollReduceExecutor::CalcLoopMaxCount(const u32 unitSize, const AlgResourceRe
 {
     // 中转内存单次最多能够接受的output count
     u64 maxCountPerLoop = algRes.cclInputMem.size() / unitSize;
-    HCCL_WARNING("[CollReduceExecutor][CalcLoopMaxCount]" \
-        "using default maxCountPerLoop[%llu] as CCLBuffSize / unitSize.", maxCountPerLoop);
+    HCCL_WARNING(
+        "[CollReduceExecutor][CalcLoopMaxCount]"
+        "using default maxCountPerLoop[%llu] as CCLBuffSize / unitSize.",
+        maxCountPerLoop);
     return maxCountPerLoop;
 }
 
 bool CollReduceExecutor::IsHugeData(const u64 curSize)
 {
     HCCL_WARNING("[CollReduceExecutor][IsHugeData]opMeta is using the default option.");
-    bool hugeData = (curSize / HCCL_INTERNODE_MAX_DATA_RATE > RDMA_SEND_MAX_SIZE) ||
-                    (curSize > SDMA_SEND_MAX_SIZE);
+    bool hugeData = (curSize / HCCL_INTERNODE_MAX_DATA_RATE > RDMA_SEND_MAX_SIZE) || (curSize > SDMA_SEND_MAX_SIZE);
     return hugeData;
 }
 
-HcclResult CollReduceExecutor::RetryPostSync(OpParam& param, ExecMem &execMem)
+HcclResult CollReduceExecutor::RetryPostSync(OpParam& param, ExecMem& execMem)
 {
     if ((algResResp_->slaveStreams).size() == 0) {
         CHK_RET(PostSyncWithoutSubstream(param, execMem));
@@ -230,4 +241,4 @@ HcclResult CollReduceExecutor::RetryPostSync(OpParam& param, ExecMem &execMem)
     }
     return HCCL_SUCCESS;
 }
-}
+} // namespace hccl

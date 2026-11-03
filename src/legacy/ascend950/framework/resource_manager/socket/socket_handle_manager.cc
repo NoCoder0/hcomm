@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "socket_handle_manager.h"
 #include "internal_exception.h"
@@ -21,18 +21,15 @@ SocketHandleManager::SocketHandleManager()
     }
 }
 
-SocketHandleManager::~SocketHandleManager()
-{
-    DECTOR_TRY_CATCH("SocketHandleManager", DestroyAll());
-}
+SocketHandleManager::~SocketHandleManager() { DECTOR_TRY_CATCH("SocketHandleManager", DestroyAll()); }
 
-SocketHandleManager &SocketHandleManager::GetInstance()
+SocketHandleManager& SocketHandleManager::GetInstance()
 {
     static SocketHandleManager socketHandleManager;
     return socketHandleManager;
 }
 
-SocketHandle SocketHandleManager::Create(DevId devicePhyId, const PortData &localPort)
+SocketHandle SocketHandleManager::Create(DevId devicePhyId, const PortData& localPort)
 {
     RaInterface intf{};
     intf.phyId = devicePhyId;
@@ -48,7 +45,8 @@ SocketHandle SocketHandleManager::Create(DevId devicePhyId, const PortData &loca
     std::lock_guard<std::mutex> lock(socketHandleLock);
     if (devicePhyId > hccpSocketHandleMap.size() - 1
         || static_cast<u32>(localPort.GetProto()) > hccpSocketHandleMap[devicePhyId].size() - 1) {
-        string msg = StringFormat("devicePhyId %u or prototype %u out of range", devicePhyId, static_cast<u32>(localPort.GetProto()));
+        string msg = StringFormat(
+            "devicePhyId %u or prototype %u out of range", devicePhyId, static_cast<u32>(localPort.GetProto()));
         THROW<InternalException>(msg);
     }
     if (hccpSocketHandleMap[devicePhyId][static_cast<u32>(localPort.GetProto())].find(localPort.GetAddr())
@@ -66,7 +64,7 @@ SocketHandle SocketHandleManager::Create(DevId devicePhyId, const PortData &loca
     return socketHandle;
 }
 
-SocketHandle SocketHandleManager::Get(u32 devicePhyId, const PortData &localPort)
+SocketHandle SocketHandleManager::Get(u32 devicePhyId, const PortData& localPort)
 {
     std::lock_guard<std::mutex> lock(socketHandleLock);
     if (devicePhyId > hccpSocketHandleMap.size() - 1
@@ -75,7 +73,7 @@ SocketHandle SocketHandleManager::Get(u32 devicePhyId, const PortData &localPort
     }
     if (hccpSocketHandleMap[devicePhyId][static_cast<u32>(localPort.GetProto())].find(localPort.GetAddr())
         == hccpSocketHandleMap[devicePhyId][static_cast<u32>(localPort.GetProto())].end()) {
-            return nullptr;
+        return nullptr;
     }
     return hccpSocketHandleMap[devicePhyId][static_cast<u32>(localPort.GetProto())][localPort.GetAddr()];
 }
@@ -90,7 +88,7 @@ void SocketHandleManager::DestroyAll()
     std::lock_guard<std::mutex> lock(socketHandleLock);
     for (u32 i = 0; i < hccpSocketHandleMap.size(); ++i) {
         for (u32 j = 0; j < hccpSocketHandleMap[i].size(); ++j) {
-            for (auto &iterHandle : hccpSocketHandleMap[i][j]) {
+            for (auto& iterHandle : hccpSocketHandleMap[i][j]) {
                 if (iterHandle.second != nullptr) {
                     DECTOR_TRY_CATCH("RaSocketDeinit", HrtRaSocketDeInit(iterHandle.second));
                     iterHandle.second = nullptr;
@@ -112,7 +110,7 @@ void SocketHandleManager::DeInit(u32 devPhyId)
         return;
     }
     for (u32 j = 0; j < hccpSocketHandleMap[devPhyId].size(); ++j) {
-        for (auto &iterHandle : hccpSocketHandleMap[devPhyId][j]) {
+        for (auto& iterHandle : hccpSocketHandleMap[devPhyId][j]) {
             if (iterHandle.second != nullptr) {
                 DECTOR_TRY_CATCH("RaSocketDeinit", HrtRaSocketDeInit(iterHandle.second));
                 iterHandle.second = nullptr;

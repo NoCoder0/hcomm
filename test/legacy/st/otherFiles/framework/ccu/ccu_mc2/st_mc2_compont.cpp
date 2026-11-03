@@ -32,20 +32,11 @@ using namespace std;
 
 class Mc2CompontTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "Mc2CompontTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "Mc2CompontTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "Mc2CompontTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "Mc2CompontTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in Mc2CompontTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in Mc2CompontTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -57,15 +48,16 @@ protected:
 
 class FakeCollAlgComponent : public CollAlgComponent {
 public:
-    FakeCollAlgComponent() : CollAlgComponent(nullptr, DevType::DEV_TYPE_950, 0, 1){};
-    HcclResult Orchestrate(const CollAlgOperator &op, const CollAlgParams &params,
-                                   const string &algName, InsQuePtr queue)
+    FakeCollAlgComponent() : CollAlgComponent(nullptr, DevType::DEV_TYPE_950, 0, 1) {};
+    HcclResult
+    Orchestrate(const CollAlgOperator& op, const CollAlgParams& params, const string& algName, InsQuePtr queue)
     {
         queue->Append(std::move(std::make_unique<CcuInstructionAllGatherMesh1D>()));
         return HCCL_SUCCESS;
     }
 
-    HcclResult Orchestrate(const CollAlgOperator &op, const CollAlgParams &params, const string &algName, PrimQuePtr queue)
+    HcclResult
+    Orchestrate(const CollAlgOperator& op, const CollAlgParams& params, const string& algName, PrimQuePtr queue)
     {
         return HCCL_SUCCESS;
     }
@@ -78,7 +70,7 @@ TEST(Mc2CompontTest, should_return_fail_when_calling_AllocCommResource_comm_rank
     std::unique_ptr<CommunicatorImpl> comm = std::make_unique<CommunicatorImpl>();
     Mc2Compont mc2Compont(comm.get());
     comm->rankSize = 1;
-    EXPECT_NO_THROW(mc2Compont.AllocCommResource((void *)&mc2Tiling, nullptr));
+    EXPECT_NO_THROW(mc2Compont.AllocCommResource((void*)&mc2Tiling, nullptr));
 }
 
 TEST(Mc2CompontTest, should_return_success_when_calling_Alloc)
@@ -92,7 +84,7 @@ TEST(Mc2CompontTest, should_return_success_when_calling_Alloc)
     Mc2Compont mc2Compont(comm.get());
     comm->cclBuffer = DevBuffer::Create(0x100, 0x100);
 
-    void *commContext;
+    void* commContext;
     // check
     EXPECT_NO_THROW(mc2Compont.Alloc(&commContext));
     EXPECT_NE(nullptr, mc2Compont.combinOpParamBuffer);
@@ -100,12 +92,18 @@ TEST(Mc2CompontTest, should_return_success_when_calling_Alloc)
 
 TEST(Mc2CompontTest, should_return_success_when_calling_generateCcuServer)
 {
-    MOCKER(CcuCtxMgr::AllocRes).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(HcclResult::HCCL_SUCCESS));
+    MOCKER(CcuCtxMgr::AllocRes)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(returnValue(HcclResult::HCCL_SUCCESS));
     MOCKER(InsExeQue::RegisterExtendInstruction)
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
         .will(returnValue(HcclResult::HCCL_SUCCESS));
-    MOCKER(InsExeQue::DeregisterExtendInstruction).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(HcclResult::HCCL_SUCCESS));
+    MOCKER(InsExeQue::DeregisterExtendInstruction)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(returnValue(HcclResult::HCCL_SUCCESS));
     // then
     std::unique_ptr<CommunicatorImpl> comm = std::make_unique<CommunicatorImpl>();
     Mc2Compont mc2Compont(comm.get());
@@ -115,8 +113,8 @@ TEST(Mc2CompontTest, should_return_success_when_calling_generateCcuServer)
     taskParams[0].push_back(param);
     uint64_t templateSignature = 0xf000f06;
     mc2Compont.algoTemplateMap[templateSignature] = taskParams;
-    mc2Compont.comParamBuffer = std::make_shared<DevBuffer>(128*8);
-    mc2Compont.comSyncBuffer = std::make_shared<DevBuffer>(16*8);
+    mc2Compont.comParamBuffer = std::make_shared<DevBuffer>(128 * 8);
+    mc2Compont.comSyncBuffer = std::make_shared<DevBuffer>(16 * 8);
     std::unordered_set<uint64_t> algoTemplateRequire = {templateSignature};
     // check
     EXPECT_NO_THROW(mc2Compont.GenerateCcuServer(algoTemplateRequire));
@@ -125,12 +123,18 @@ TEST(Mc2CompontTest, should_return_success_when_calling_generateCcuServer)
 
 TEST(Mc2CompontTest, should_return_success_when_calling_generateCcuServer_and_server_exist)
 {
-    MOCKER(CcuCtxMgr::AllocRes).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(HcclResult::HCCL_SUCCESS));
+    MOCKER(CcuCtxMgr::AllocRes)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(returnValue(HcclResult::HCCL_SUCCESS));
     MOCKER(InsExeQue::RegisterExtendInstruction)
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
         .will(returnValue(HcclResult::HCCL_SUCCESS));
-    MOCKER(InsExeQue::DeregisterExtendInstruction).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(HcclResult::HCCL_SUCCESS));
+    MOCKER(InsExeQue::DeregisterExtendInstruction)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(returnValue(HcclResult::HCCL_SUCCESS));
     // then
     std::unique_ptr<CommunicatorImpl> comm = std::make_unique<CommunicatorImpl>();
     Mc2Compont mc2Compont(comm.get());
@@ -142,8 +146,8 @@ TEST(Mc2CompontTest, should_return_success_when_calling_generateCcuServer_and_se
     mc2Compont.algoTemplateMap[templateSignature] = taskParams;
     std::unordered_set<uint64_t> algoTemplateRequire = {templateSignature};
     mc2Compont.ccuServerMap[1] = algoTemplateRequire;
-    mc2Compont.comParamBuffer = std::make_shared<DevBuffer>(128*8);
-    mc2Compont.comSyncBuffer = std::make_shared<DevBuffer>(16*8);
+    mc2Compont.comParamBuffer = std::make_shared<DevBuffer>(128 * 8);
+    mc2Compont.comSyncBuffer = std::make_shared<DevBuffer>(16 * 8);
     // check
     EXPECT_NO_THROW(mc2Compont.GenerateCcuServer(algoTemplateRequire));
     EXPECT_EQ(1, mc2Compont.curExecId);
@@ -156,7 +160,7 @@ TEST(Mc2CompontTest, should_return_false_when_calling_CompareMissionMap)
     Mc2Compont mc2Compont(comm.get());
     std::map<uint8_t, std::map<uint32_t, uint32_t>> mapA;
     std::map<uint8_t, std::map<uint32_t, uint32_t>> mapB;
-    
+
     mapA[0] = std::map<uint32_t, uint32_t>();
     EXPECT_EQ(false, mc2Compont.CompareMissionMap(mapA, mapB));
 
@@ -171,7 +175,10 @@ TEST(Mc2CompontTest, should_return_false_when_calling_CompareMissionMap)
 
 TEST(Mc2CompontTest, should_return_success_when_calling_generateCcuServer_and_server_exist_multiOp)
 {
-    MOCKER(CcuCtxMgr::AllocRes).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(HcclResult::HCCL_SUCCESS));
+    MOCKER(CcuCtxMgr::AllocRes)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(returnValue(HcclResult::HCCL_SUCCESS));
     MOCKER(InsExeQue::RegisterExtendInstruction)
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
@@ -193,15 +200,15 @@ TEST(Mc2CompontTest, should_return_success_when_calling_generateCcuServer_and_se
     taskParams[2].push_back(param);
     param.missionId = 1;
     taskParams[3].push_back(param);
-    
+
     uint64_t templateSignature0 = 0xf000f06;
     mc2Compont.algoTemplateMap[templateSignature0] = taskParams;
     uint64_t templateSignature1 = 0x3000302;
     mc2Compont.algoTemplateMap[templateSignature1] = taskParams;
 
     std::unordered_set<uint64_t> algoTemplateRequire = {templateSignature0, templateSignature1};
-    mc2Compont.comParamBuffer = std::make_shared<DevBuffer>(128*8);
-    mc2Compont.comSyncBuffer = std::make_shared<DevBuffer>(16*8);
+    mc2Compont.comParamBuffer = std::make_shared<DevBuffer>(128 * 8);
+    mc2Compont.comSyncBuffer = std::make_shared<DevBuffer>(16 * 8);
     // check
     EXPECT_NO_THROW(mc2Compont.GenerateCcuServer(algoTemplateRequire));
 }
@@ -226,19 +233,19 @@ TEST(Mc2CompontTest, should_return_success_when_calling_getCcuTaskInfo)
     mc2Compont.ccuServerMap[0] = algoTemplateRequire;
 
     uint32_t kfcArgsFmtOffset = 397;
-    auto args = new uint8_t[kfcArgsFmtOffset * sizeof(void *) + sizeof(HcclCommParamDesc)];
-    *reinterpret_cast<uint64_t *>(args + sizeof(void *)) = 0xff;
-    auto desc = reinterpret_cast<HcclCommParamDesc *>(args + kfcArgsFmtOffset * sizeof(void *));
+    auto args = new uint8_t[kfcArgsFmtOffset * sizeof(void*) + sizeof(HcclCommParamDesc)];
+    *reinterpret_cast<uint64_t*>(args + sizeof(void*)) = 0xff;
+    auto desc = reinterpret_cast<HcclCommParamDesc*>(args + kfcArgsFmtOffset * sizeof(void*));
     desc->version = 1;
     desc->groupNum = 1;
     desc->hasFfts = 1;
     desc->tilingDataPtrOff = 7;
     desc->isDyn = 0;
 
-    auto tilingData = reinterpret_cast<KFCTilingData *>(args + (desc->tilingDataPtrOff + 2) * sizeof(void *));
+    auto tilingData = reinterpret_cast<KFCTilingData*>(args + (desc->tilingDataPtrOff + 2) * sizeof(void*));
     tilingData->preparePosition = 3;
-    *reinterpret_cast<uint64_t *>(args + (desc->tilingDataPtrOff) * sizeof(void *)) =
-        reinterpret_cast<uint64_t>(tilingData);
+    *reinterpret_cast<uint64_t*>(args + (desc->tilingDataPtrOff) * sizeof(void*))
+        = reinterpret_cast<uint64_t>(tilingData);
     std::vector<CcuTaskParam> taskParam = mc2Compont.GetCcuTaskInfo(tilingData);
     delete[] args;
     // check
@@ -302,13 +309,13 @@ TEST(Mc2CompontTest, test_MC2AllocCommRes)
 
     std::shared_ptr<FakeCollAlgComponent> collAlgComponent = std::make_shared<FakeCollAlgComponent>();
     comm.collAlgComponent = collAlgComponent;
-    MOCKER_CPP_VIRTUAL(*collAlgComponent,
-    &CollAlgComponent::Orchestrate,
-    HcclResult(CollAlgComponent::*)(
-        const CollAlgOperator &op, const CollAlgParams &params, const string &algName, InsQuePtr queue))
-    .stubs()
-    .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
-    .will(returnValue(HcclResult::HCCL_SUCCESS));
+    MOCKER_CPP_VIRTUAL(
+        *collAlgComponent, &CollAlgComponent::Orchestrate,
+        HcclResult(CollAlgComponent::*)(
+            const CollAlgOperator& op, const CollAlgParams& params, const string& algName, InsQuePtr queue))
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(returnValue(HcclResult::HCCL_SUCCESS));
 
     comm.currentCollOperator = std::make_unique<CollOperator>();
     comm.currentCollOperator->opType = OpType::ALLREDUCE;
@@ -329,7 +336,7 @@ TEST(Mc2CompontTest, should_success_when_calling_AllocCommResource_V2)
     MOCKER_CPP(&Mc2Compont::AllocV2).stubs();
     MOCKER_CPP(&Mc2Compont::GenerateAlgoTemplatesV2).stubs();
     MOCKER_CPP(&Mc2Compont::GenerateCcuServer).stubs();
-    EXPECT_NO_THROW(mc2Compont.AllocCommResource((void *)&mc2Tiling, nullptr));
+    EXPECT_NO_THROW(mc2Compont.AllocCommResource((void*)&mc2Tiling, nullptr));
 }
 
 TEST(Mc2CompontTest, should_return_success_when_calling_AllocV2)
@@ -337,8 +344,8 @@ TEST(Mc2CompontTest, should_return_success_when_calling_AllocV2)
     // when
     MOCKER(CcuRep::GetTokenInfo).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(1000));
     HcclCombinOpParam opParam;
-    MOCKER(HrtMallocHost).stubs().with(mockcpp::any()).will(returnValue(static_cast<void *>(&opParam)));
-    MOCKER(HrtMalloc).stubs().with(mockcpp::any(),mockcpp::any()).will(returnValue((void *)0x10000));
+    MOCKER(HrtMallocHost).stubs().with(mockcpp::any()).will(returnValue(static_cast<void*>(&opParam)));
+    MOCKER(HrtMalloc).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue((void*)0x10000));
 
     // then
     std::unique_ptr<CommunicatorImpl> comm = std::make_unique<CommunicatorImpl>();
@@ -346,14 +353,15 @@ TEST(Mc2CompontTest, should_return_success_when_calling_AllocV2)
     Mc2Compont mc2Compont(comm.get());
     comm->cclBuffer = DevBuffer::Create(0x100, 0x100);
 
-    void *commContext;
+    void* commContext;
     // check
     void* mem = malloc(sizeof(Mc2InitTilingInner) + sizeof(Mc2CcTilingInner));
-    Mc2InitTilingInner *mc2TilingPtr = reinterpret_cast<Mc2InitTilingInner *>(mem);
+    Mc2InitTilingInner* mc2TilingPtr = reinterpret_cast<Mc2InitTilingInner*>(mem);
     mc2TilingPtr->version = 100;
     mc2TilingPtr->mc2HcommCnt = 1;
     mc2TilingPtr->offset[0] = sizeof(Mc2InitTilingInner);
-    Mc2CcTilingInner *commConfigPtr = reinterpret_cast<Mc2CcTilingInner *>(reinterpret_cast<uint8_t *>(mc2TilingPtr) + mc2TilingPtr->offset[0]);
+    Mc2CcTilingInner* commConfigPtr
+        = reinterpret_cast<Mc2CcTilingInner*>(reinterpret_cast<uint8_t*>(mc2TilingPtr) + mc2TilingPtr->offset[0]);
     commConfigPtr->opType = AicpuComType::HCCL_CMD_ALLTOALLV;
     commConfigPtr->reduceType = HcclReduceOp::HCCL_REDUCE_PROD;
     commConfigPtr->srcDataType = HcclDataType::HCCL_DATA_TYPE_FP32;
@@ -368,23 +376,24 @@ TEST(Mc2CompontTest, should_skip_GenerateAlgoTemplatesV2_when_has_cache)
 {
     std::unique_ptr<CommunicatorImpl> comm = std::make_unique<CommunicatorImpl>();
     Mc2Compont mc2Compont(comm.get());
- 
+
     std::unordered_set<uint64_t> algoTemplateRequire{};
     void* mem = malloc(sizeof(Mc2InitTilingInner) + sizeof(Mc2CcTilingInner));
-    Mc2InitTilingInner *mc2TilingPtr = reinterpret_cast<Mc2InitTilingInner *>(mem);
+    Mc2InitTilingInner* mc2TilingPtr = reinterpret_cast<Mc2InitTilingInner*>(mem);
     mc2TilingPtr->version = 100;
     mc2TilingPtr->mc2HcommCnt = 1;
     mc2TilingPtr->offset[0] = sizeof(Mc2InitTilingInner);
-    Mc2CcTilingInner *commConfigPtr = reinterpret_cast<Mc2CcTilingInner *>(reinterpret_cast<uint8_t *>(mc2TilingPtr) + mc2TilingPtr->offset[0]);
+    Mc2CcTilingInner* commConfigPtr
+        = reinterpret_cast<Mc2CcTilingInner*>(reinterpret_cast<uint8_t*>(mc2TilingPtr) + mc2TilingPtr->offset[0]);
     commConfigPtr->opType = AicpuComType::HCCL_CMD_ALLTOALLV;
     commConfigPtr->reduceType = HcclReduceOp::HCCL_REDUCE_PROD;
     commConfigPtr->srcDataType = HcclDataType::HCCL_DATA_TYPE_FP32;
     commConfigPtr->dstDataType = HcclDataType::HCCL_DATA_TYPE_FP32;
- 
-    mc2Compont.algoTemplateMap[0x0000000004010408] = {};    // mock algo template sign cache
- 
+
+    mc2Compont.algoTemplateMap[0x0000000004010408] = {}; // mock algo template sign cache
+
     EXPECT_NO_THROW(mc2Compont.GenerateAlgoTemplatesV2(mc2TilingPtr, algoTemplateRequire));
- 
+
     free(mc2TilingPtr);
 }
 
@@ -396,13 +405,15 @@ TEST(Mc2CompontTest, func_FillCollOperatorV2_test)
     comm->rankSize = 1;
     Mc2Compont mc2Compont(comm.get());
     mc2Compont.inputMem = DevBuffer::Create(0x100, 0x100);
- 
+
     Mc2CcTilingInner config;
     config.opType = AicpuComType::HCCL_CMD_ALLTOALLV;
     config.reduceType = HcclReduceOp::HCCL_REDUCE_SUM;
     config.srcDataType = HcclDataType::HCCL_DATA_TYPE_FP32;
     config.dstDataType = HcclDataType::HCCL_DATA_TYPE_FP32;
-    MOCKER_CPP(&CommunicatorImpl::CovertToCurrentCollOperator).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any());
+    MOCKER_CPP(&CommunicatorImpl::CovertToCurrentCollOperator)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any());
     mc2Compont.FillCollOperatorV2(config);
 }
 
@@ -410,31 +421,31 @@ TEST(Mc2CompontTest, func_GetTemplateSignatureV2_test)
 {
     std::unique_ptr<CommunicatorImpl> comm = std::make_unique<CommunicatorImpl>();
     Mc2Compont mc2Compont(comm.get());
- 
+
     Mc2CcTilingInner config;
-    config.opType = AicpuComType::HCCL_CMD_ALLTOALLV;           // 8
-    config.reduceType = HcclReduceOp::HCCL_REDUCE_PROD;         // 1
-    config.srcDataType = HcclDataType::HCCL_DATA_TYPE_FP32;     // 4
-    config.dstDataType = HcclDataType::HCCL_DATA_TYPE_FP32;     // 4
- 
+    config.opType = AicpuComType::HCCL_CMD_ALLTOALLV;       // 8
+    config.reduceType = HcclReduceOp::HCCL_REDUCE_PROD;     // 1
+    config.srcDataType = HcclDataType::HCCL_DATA_TYPE_FP32; // 4
+    config.dstDataType = HcclDataType::HCCL_DATA_TYPE_FP32; // 4
+
     EXPECT_EQ(mc2Compont.GetTemplateSignatureV2(config), 0x0000000004010408);
 }
 
 TEST(Mc2CompontTest, should_suc_when_check_datatype_mc2_highP_V2)
 {
     Mc2CcTilingInner config;
- 
-    std::vector<uint32_t> optypeWithReduce = {static_cast<uint32_t>(AicpuComType::HCCL_CMD_REDUCE_SCATTER),
-                                              static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLREDUCE)};
-    std::vector<uint32_t> optypeWithoutReduce = {static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLGATHER),
-                                                 static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLTOALL),
-                                                 static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLTOALLV),
-                                                 static_cast<uint32_t>(AicpuComType::HCCL_CMD_HALF_ALLTOALLV)};
-    std::vector<uint32_t> dataTypeHighP = {static_cast<uint32_t>(DataType::INT16),
-                                           static_cast<uint32_t>(DataType::INT32),
-                                           static_cast<uint32_t>(DataType::FP16),
-                                           static_cast<uint32_t>(DataType::FP32),
-                                           static_cast<uint32_t>(DataType::BFP16)};
+
+    std::vector<uint32_t> optypeWithReduce
+        = {static_cast<uint32_t>(AicpuComType::HCCL_CMD_REDUCE_SCATTER),
+           static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLREDUCE)};
+    std::vector<uint32_t> optypeWithoutReduce = {
+        static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLGATHER), static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLTOALL),
+        static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLTOALLV),
+        static_cast<uint32_t>(AicpuComType::HCCL_CMD_HALF_ALLTOALLV)};
+    std::vector<uint32_t> dataTypeHighP
+        = {static_cast<uint32_t>(DataType::INT16), static_cast<uint32_t>(DataType::INT32),
+           static_cast<uint32_t>(DataType::FP16), static_cast<uint32_t>(DataType::FP32),
+           static_cast<uint32_t>(DataType::BFP16)};
 
     for (auto optype : optypeWithReduce) {
         config.opType = optype;
@@ -458,15 +469,15 @@ TEST(Mc2CompontTest, should_suc_when_check_datatype_mc2_lowP_V2)
 {
     Mc2CcTilingInner config;
 
-    std::vector<uint32_t> optypeWithReduce = {static_cast<uint32_t>(AicpuComType::HCCL_CMD_REDUCE_SCATTER),
-                                              static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLREDUCE)};
-    std::vector<uint32_t> inputDataType = {static_cast<uint32_t>(DataType::INT8),
-                                           static_cast<uint32_t>(DataType::FP8E5M2),
-                                           static_cast<uint32_t>(DataType::FP8E4M3),
-                                           static_cast<uint32_t>(DataType::HIF8)};
-    std::vector<uint32_t> outputDataType = {static_cast<uint32_t>(DataType::FP16),
-                                            static_cast<uint32_t>(DataType::FP32),
-                                            static_cast<uint32_t>(DataType::BFP16)};
+    std::vector<uint32_t> optypeWithReduce
+        = {static_cast<uint32_t>(AicpuComType::HCCL_CMD_REDUCE_SCATTER),
+           static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLREDUCE)};
+    std::vector<uint32_t> inputDataType
+        = {static_cast<uint32_t>(DataType::INT8), static_cast<uint32_t>(DataType::FP8E5M2),
+           static_cast<uint32_t>(DataType::FP8E4M3), static_cast<uint32_t>(DataType::HIF8)};
+    std::vector<uint32_t> outputDataType
+        = {static_cast<uint32_t>(DataType::FP16), static_cast<uint32_t>(DataType::FP32),
+           static_cast<uint32_t>(DataType::BFP16)};
 
     for (auto optype : optypeWithReduce) {
         config.opType = optype;

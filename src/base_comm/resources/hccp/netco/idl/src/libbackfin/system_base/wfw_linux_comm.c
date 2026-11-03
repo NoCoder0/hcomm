@@ -29,11 +29,13 @@ int WfwSetFdNonBlock(int fd)
     return fcntl(fd, F_SETFL, (unsigned int)flag | O_NONBLOCK);
 }
 
-#define WFW_GET_BACK_TRACE_DEPTH_MAX        128
-#define WFW_GET_BACK_TRACE_DEPTH_OUT_MAX    7
+#define WFW_GET_BACK_TRACE_DEPTH_MAX 128
+#define WFW_GET_BACK_TRACE_DEPTH_OUT_MAX 7
 
 char *WfwGetBackTraceStr(uint8_t *buf, int32_t bufLen)
 {
+    (void)buf;
+    (void)bufLen;
 #ifdef BKF_DEBUG
     BOOL paramIsInvalid = (buf == VOS_NULL) || (bufLen <= 0);
     if (paramIsInvalid) {
@@ -52,8 +54,8 @@ char *WfwGetBackTraceStr(uint8_t *buf, int32_t bufLen)
 
     int depthOut = BKF_GET_MIN(depthTotal - 1, WFW_GET_BACK_TRACE_DEPTH_OUT_MAX);
     int wTotalLen = 0;
-    int wLen = snprintf_truncated_s((char*)buf + wTotalLen, bufLen - wTotalLen,
-                                    "\n=====callStack, depthTotal(%d)/out(%d)=====", depthTotal, depthOut);
+    int wLen = snprintf_truncated_s((char *)buf + wTotalLen, bufLen - wTotalLen,
+        "\n=====callStack, depthTotal(%d)/out(%d)=====", depthTotal, depthOut);
     if (wLen < 0) {
         goto error;
     }
@@ -61,21 +63,21 @@ char *WfwGetBackTraceStr(uint8_t *buf, int32_t bufLen)
     int i;
     for (i = 1; i <= depthOut; i++) {
         char *tempStr = BkfTrimStrPath(strs[i]);
-        wLen = snprintf_truncated_s((char*)buf + wTotalLen, bufLen - wTotalLen, "\n[%d]: %s", i, tempStr);
+        wLen = snprintf_truncated_s((char *)buf + wTotalLen, bufLen - wTotalLen, "\n[%d]: %s", i, tempStr);
         if (wLen < 0) {
             goto error;
         }
 
         wTotalLen += wLen;
     }
-    wLen = snprintf_truncated_s((char*)buf + wTotalLen, bufLen - wTotalLen, "\n===end=======");
+    wLen = snprintf_truncated_s((char *)buf + wTotalLen, bufLen - wTotalLen, "\n===end=======");
     if (wLen < 0) {
         goto error;
     }
     wTotalLen += wLen;
 
     free(strs);
-    return (char*)buf;
+    return (char *)buf;
 
 error:
     free(strs);
@@ -95,4 +97,3 @@ int WfwGetFuncCallStackDepth(void)
 }
 #endif
 #endif
-

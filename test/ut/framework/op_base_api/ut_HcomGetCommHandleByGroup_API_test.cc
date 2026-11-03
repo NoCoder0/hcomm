@@ -12,11 +12,10 @@
 
 class HcomGetCommHandleByGroupTest : public BaseInit {
 public:
-    void SetUp() override {
-        BaseInit::SetUp();
-    }
-    
-    void TearDown() override {
+    void SetUp() override { BaseInit::SetUp(); }
+
+    void TearDown() override
+    {
         BaseInit::TearDown();
         GlobalMockObject::verify();
     }

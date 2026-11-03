@@ -21,28 +21,31 @@
 namespace AscendC {
 namespace ccu {
 
-template <typename U> class Array;
+    template <typename U>
+    class Array;
 
-class Event final {
-public:
-    Event() {
-        CCU_THROW_IF_FAILED(CcuEventAlloc(&this->handle),"CcuEventAlloc: failed");   
-    }
+    class Event final {
+    public:
+        Event() { CCU_THROW_IF_FAILED(CcuEventAlloc(&this->handle), "CcuEventAlloc: failed"); }
 
-    Event(const Event& other) : handle(other.handle) {}
+        explicit Event(CcuEventHandle acqHandle, uint32_t index = 0)
+        {
+            CCU_THROW_IF_FAILED(CcuEventGetByIndex(acqHandle, index, &this->handle), "CcuEventGetByIndex: failed");
+        }
 
-    Event(Event&& other) noexcept : handle(other.handle) {}
+        Event(const Event& other) : handle(other.handle) {}
 
-    void operator=(Event&& other) {
-        this->handle = other.handle;
-    }
+        Event(Event&& other) noexcept : handle(other.handle) {}
 
-    CcuEventHandle handle{0};
+        void operator=(Event&& other) { this->handle = other.handle; }
 
-private:
-    explicit Event(detail::NoAllocTag) {}
-    template <typename U> friend class Array;
-};
+        CcuEventHandle handle{0};
+
+    private:
+        explicit Event(detail::NoAllocTag) {}
+        template <typename U>
+        friend class Array;
+    };
 
 } // namespace ccu
 } // namespace AscendC

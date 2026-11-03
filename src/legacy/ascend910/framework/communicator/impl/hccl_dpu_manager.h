@@ -7,6 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #ifndef HCCL_DPU_MANAGER_H
 #define HCCL_DPU_MANAGER_H
 
@@ -20,49 +21,18 @@
 
 namespace hccl {
 
-constexpr u32 SHARE_HBM_MEMORY_SIZE = 100 * 1024 * 1024; // 100MB
-constexpr char DPUTAG[] = "DPUTAG";
-
+// 本类仅保留「非 DPUTAG」的通用 workspace 管理：GetDevMemWorkSpace 走 tagWorkspaceMap_ 这张 DevBuffer 表，
+// 供 MC2 侧 HcclDevMemAcquire 使用。
 class DpuManager {
 public:
     DpuManager();
     ~DpuManager();
 
-    HcclResult Init(const std::string &commId, u32 deviceLogicId);
-    HcclResult InitDpuKernel();
-    HcclResult DeInitDpuKernel();
-
-    bool IsDpuKernelLaunched() const
-    {
-        return isDpuKernelLaunched_;
-    }
-
-    HcclResult CreateWorkspaceBuf(const char *memTag, uint64_t *size, bool *newCreated);
-    std::shared_ptr<Hccl::DevBuffer> GetKFCWorkSpace(const char *memTag);
-    HcclResult GetDevMemWorkSpace(const std::string &memTag, uint64_t *size, void **addr, bool *newCreated);
-    HcclResult GetKFCWorkSpaceVA(const std::string &memTag, uint64_t *size, void **addr, bool *newCreated);
-    HcclResult AllocAndRegKFCWorkSpace(uint64_t size);
-    HcclResult DestroyKFCWorkSpaceVA();
-    HcclResult DestroyDpuKernelResource();
+    HcclResult CreateWorkspaceBuf(const char* memTag, uint64_t* size, bool* newCreated);
+    std::shared_ptr<Hccl::DevBuffer> GetKFCWorkSpace(const char* memTag);
+    HcclResult GetDevMemWorkSpace(const std::string& memTag, uint64_t* size, void** addr, bool* newCreated);
 
 private:
-    HcclResult InitAndLaunchDpuKernel();
-    HcclResult PrepareDpuKernelResource(aclrtFuncHandle &funcHandle);
-    HcclResult LaunchDpuKernel(aclrtFuncHandle &funcHandle);
-    HcclResult WaitDpuKernelThreadTerminate();
-
-    std::string commId_;
-    u32 devLogicId_{0};
-    void *hostShareBuf_{nullptr};
-    void* va_{nullptr};
-    void* accessVA_{nullptr};
-    std::unordered_map<std::string, std::shared_ptr<Hccl::DevBuffer>> tagWorkspaceVAMap_;
-    aclrtStream dpuStream_{nullptr};
-    aclrtContext dpuContext_{nullptr};
-    aclrtContext npuContext_{nullptr};
-    bool isDpuKernelLaunched_{false};
-    u32 waitTransportReadyTimeoutMs_{200 * 1000}; // 默认200秒
-
     std::unordered_map<std::string, std::shared_ptr<Hccl::DevBuffer>> tagWorkspaceMap_;
 };
 } // namespace hccl

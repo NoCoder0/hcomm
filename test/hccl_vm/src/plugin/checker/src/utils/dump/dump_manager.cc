@@ -7,7 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
- 
+
 #include "dump/dump_manager.h"
 #include <chrono>
 #include <cstdint>
@@ -54,15 +54,9 @@ void DumpManager::Reset()
     m_dumpRootDir.clear();
 }
 
-bool DumpManager::IsEnabled() const
-{
-    return SettingManager::GetInstance().IsInsightDumpEnabled();
-}
+bool DumpManager::IsEnabled() const { return SettingManager::GetInstance().IsInsightDumpEnabled(); }
 
-bool DumpManager::IsMemorySnapshotEnabled() const
-{
-    return SettingManager::GetInstance().IsMemorySnapshotEnabled();
-}
+bool DumpManager::IsMemorySnapshotEnabled() const { return SettingManager::GetInstance().IsMemorySnapshotEnabled(); }
 
 std::string DumpManager::GetDumpRootDir() const
 {
@@ -96,8 +90,8 @@ HcclResult DumpManager::WriteJson(const std::string& relativePath, const nlohman
     return WriteJsonFile(dumpRootDir, relativePath, document);
 }
 
-HcclResult DumpManager::WriteMsgpackStream(const std::string& relativePath,
-    const std::function<HcclResult(std::ostream&)> &writer) const
+HcclResult DumpManager::WriteMsgpackStream(
+    const std::string& relativePath, const std::function<HcclResult(std::ostream&)>& writer) const
 {
     std::string dumpRootDir;
     {
@@ -123,12 +117,13 @@ HcclResult DumpManager::PrepareDumpDirs() const
     return HcclSim::EnsureDirectory(m_dumpRootDir);
 }
 
-HcclResult DumpManager::WriteMsgpackFile(const std::string& dumpRootDir, const std::string& relativePath,
-    const nlohmann::json& document) const
+HcclResult DumpManager::WriteMsgpackFile(
+    const std::string& dumpRootDir, const std::string& relativePath, const nlohmann::json& document) const
 {
     auto NowMs = []() -> uint64_t {
-        return static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now().time_since_epoch()).count());
+        return static_cast<uint64_t>(
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
+                .count());
     };
 
     const std::string fullPath = HcclSim::JoinPath(dumpRootDir, relativePath);
@@ -148,9 +143,8 @@ HcclResult DumpManager::WriteMsgpackFile(const std::string& dumpRootDir, const s
     const uint64_t serializeBeginMs = NowMs();
     try {
         nlohmann::json::to_msgpack(document, nlohmann::detail::output_adapter<char>(out));
-    } catch (const std::exception &ex) {
-        HCCL_VM_ERROR("stream msgpack serialize failed: {}, file: {}", ex.what(),
-            fullPath);
+    } catch (const std::exception& ex) {
+        HCCL_VM_ERROR("stream msgpack serialize failed: {}, file: {}", ex.what(), fullPath);
         return HcclResult::HCCL_E_INTERNAL;
     }
     const uint64_t serializeCostMs = NowMs() - serializeBeginMs;
@@ -163,19 +157,19 @@ HcclResult DumpManager::WriteMsgpackFile(const std::string& dumpRootDir, const s
     }
     const uint64_t writeCostMs = NowMs() - writeBeginMs;
     const std::streampos finalPos = out.tellp();
-    const uint64_t msgpackBytes = (finalPos >= static_cast<std::streampos>(0)) ?
-        static_cast<uint64_t>(finalPos) : 0;
+    const uint64_t msgpackBytes = (finalPos >= static_cast<std::streampos>(0)) ? static_cast<uint64_t>(finalPos) : 0;
 
     if (relativePath.compare(0, std::string("memory/").size(), "memory/") == 0) {
-        HCCL_VM_INFO("path={}, ensure_dir_ms={}, serialize_ms={}, "
-            "write_file_ms={}, msgpack_bytes={}", relativePath, ensureDirCostMs, serializeCostMs, writeCostMs,
-            msgpackBytes);
+        HCCL_VM_INFO(
+            "path={}, ensure_dir_ms={}, serialize_ms={}, "
+            "write_file_ms={}, msgpack_bytes={}",
+            relativePath, ensureDirCostMs, serializeCostMs, writeCostMs, msgpackBytes);
     }
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult DumpManager::WriteJsonFile(const std::string& dumpRootDir, const std::string& relativePath,
-    const nlohmann::json& document) const
+HcclResult DumpManager::WriteJsonFile(
+    const std::string& dumpRootDir, const std::string& relativePath, const nlohmann::json& document) const
 {
     const std::string fullPath = HcclSim::JoinPath(dumpRootDir, relativePath);
     auto ret = HcclSim::EnsureDirectory(HcclSim::GetParentPath(fullPath));
@@ -191,7 +185,7 @@ HcclResult DumpManager::WriteJsonFile(const std::string& dumpRootDir, const std:
 
     try {
         out << document.dump(2) << std::endl;
-    } catch (const std::exception &ex) {
+    } catch (const std::exception& ex) {
         HCCL_VM_ERROR("json serialize failed: {}, file: {}", ex.what(), fullPath);
         return HcclResult::HCCL_E_INTERNAL;
     }
@@ -203,12 +197,14 @@ HcclResult DumpManager::WriteJsonFile(const std::string& dumpRootDir, const std:
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult DumpManager::WriteMsgpackStreamFile(const std::string& dumpRootDir, const std::string& relativePath,
-    const std::function<HcclResult(std::ostream&)> &writer) const
+HcclResult DumpManager::WriteMsgpackStreamFile(
+    const std::string& dumpRootDir, const std::string& relativePath,
+    const std::function<HcclResult(std::ostream&)>& writer) const
 {
     auto NowMs = []() -> uint64_t {
-        return static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now().time_since_epoch()).count());
+        return static_cast<uint64_t>(
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
+                .count());
     };
 
     const std::string fullPath = HcclSim::JoinPath(dumpRootDir, relativePath);
@@ -241,14 +237,14 @@ HcclResult DumpManager::WriteMsgpackStreamFile(const std::string& dumpRootDir, c
     }
     const uint64_t writeCostMs = NowMs() - writeBeginMs;
     const std::streampos finalPos = out.tellp();
-    const uint64_t msgpackBytes = (finalPos >= static_cast<std::streampos>(0)) ?
-        static_cast<uint64_t>(finalPos) : 0;
+    const uint64_t msgpackBytes = (finalPos >= static_cast<std::streampos>(0)) ? static_cast<uint64_t>(finalPos) : 0;
 
     if (relativePath.compare(0, std::string("memory/").size(), "memory/") == 0) {
-        HCCL_VM_INFO("path={}, ensure_dir_ms={}, serialize_ms={}, "
-            "write_file_ms={}, msgpack_bytes={}", relativePath, ensureDirCostMs, serializeCostMs, writeCostMs,
-            msgpackBytes);
+        HCCL_VM_INFO(
+            "path={}, ensure_dir_ms={}, serialize_ms={}, "
+            "write_file_ms={}, msgpack_bytes={}",
+            relativePath, ensureDirCostMs, serializeCostMs, writeCostMs, msgpackBytes);
     }
     return HcclResult::HCCL_SUCCESS;
 }
-}  // namespace HcclSim
+} // namespace HcclSim

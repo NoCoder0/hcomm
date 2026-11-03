@@ -3,14 +3,20 @@
 ## 产品支持情况
 
 <!-- npu="950" id1 -->
-- Ascend 950PR/Ascend 950DT：支持
+- Ascend 950PR&950DT系列产品：支持
 <!-- end id1 -->
 <!-- npu="A3" id2 -->
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：不支持
+- Atlas A3系列产品：不支持
 <!-- end id2 -->
 <!-- npu="910b" id3 -->
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：不支持
+- Atlas A2系列产品：不支持
 <!-- end id3 -->
+<!-- npu="910" id4 -->
+- Atlas训练系列产品：不支持
+<!-- end id4 -->
+<!-- npu="310p" id5 -->
+- Atlas推理系列产品：不支持
+<!-- end id5 -->
 
 ## 功能说明
 
@@ -60,6 +66,7 @@ CcuResult LoadArg(Variable v, uint32_t argId);
 - 同一kernel 内不同 `LoadArg` 调用的 `argId` 不可重复——本接口处不会拦截重复，但重复会使有效 `argId` 总数小于 `argNum`，在 `HcommCcuKernelLaunch` 阶段报 `CCU_E_INTERNAL`。两个Variable 绑同一 `argId` 是危险错误，请自行避免。
 - `argNum` 的单位是 `uint64_t` 元素个数，而非字节数。例如有3 个 `LoadArg` 调用（argId 为0、1、2），则 `HcommCcuKernelLaunch` 的 `argNum` 须传 `3`，`taskArgs` 须有至少3 个元素。
 - `LoadArg` 不在调用处生效：翻译时所有 `LoadArg` 会被提到kernel 最前面执行，只负责给 `v` 设"进入body 时的初值"。因此若body 里又对同一个 `v` 用立即数（`v = 1024;`）或 `Load` 赋值，这些赋值都排在 `LoadArg` 之后，会覆盖掉注入的初值。混用同一个 `v` 时须先把注入值读走、再重新赋值，否则注入值还没用上就被覆盖，`LoadArg` 等于没生效（作用在不同Variable 上，如 `LoadArg(addrVar, 0); Load(addrVar, v);`，不受此影响）。
+- `LoadArg` 的 `argId` 必须小于13，即0，1, ..., 12，因为CCU下发算子时最大只能携带13个参数。
 
 ## 调用示例
 
@@ -78,7 +85,7 @@ CcuResult MyKernel(CcuKernelArg arg) {
     return CCU_SUCCESS;
 }
 
-// host侧对应的Launch调用（示意）：
+// Host侧对应的Launch调用（示意）：
 // uint64_t taskArgs[] = {100, 4096};   // n=100轮，offset=4096字节
 // HcommCcuKernelLaunch(..., taskArgs, /*argNum=*/2);
 ```

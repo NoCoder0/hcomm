@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "mc2_global_mirror_tasks.h"
 #include "internal_exception.h"
@@ -16,7 +16,7 @@ namespace Hccl {
 
 using namespace std;
 
-MC2GlobalMirrorTasks &MC2GlobalMirrorTasks::GetInstance()
+MC2GlobalMirrorTasks& MC2GlobalMirrorTasks::GetInstance()
 {
     static MC2GlobalMirrorTasks instance;
     return instance;
@@ -46,8 +46,10 @@ void MC2GlobalMirrorTasks::AddTaskInfo(u32 devLogicId, shared_ptr<TaskInfo> task
 
     taskQueues_[devLogicId].push_back(taskInfo);
 
-    HCCL_INFO("[MC2GlobalMirrorTasks][%s] deviceId[%u], dieId[%u], missionId[%u], instrId[%u], executeId[%llu]", __func__,
-        devLogicId, static_cast<u32>(ccuPara.dieId), static_cast<u32>(ccuPara.missionId), ccuPara.instrId, ccuPara.executeId);
+    HCCL_INFO(
+        "[MC2GlobalMirrorTasks][%s] deviceId[%u], dieId[%u], missionId[%u], instrId[%u], executeId[%llu]", __func__,
+        devLogicId, static_cast<u32>(ccuPara.dieId), static_cast<u32>(ccuPara.missionId), ccuPara.instrId,
+        ccuPara.executeId);
 }
 
 shared_ptr<TaskInfo> MC2GlobalMirrorTasks::GetTaskInfo(u32 devLogicId, u8 dieId, u8 missionId, u32 instrId) const

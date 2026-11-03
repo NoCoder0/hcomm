@@ -24,7 +24,7 @@ namespace Hccl {
 class TopoMatchMeshNHRPcie : public TopoMatchBase {
 public:
     explicit TopoMatchMeshNHRPcie(
-        const RankId vRank, const u32 rankSize, const RankGraph *rankGraph, const DevType devType);
+        const RankId vRank, const u32 rankSize, const RankGraph* rankGraph, const DevType devType);
     ~TopoMatchMeshNHRPcie() override;
 
     std::string Describe() const override
@@ -32,13 +32,14 @@ public:
         return "Topo Match for combined Algorithm: level 0 Mesh, level 1 NHR, for PCIE only.";
     }
     using TopoMatchBase::MatchTopo;
-    HcclResult MatchTopo(std::vector<std::vector<std::vector<RankId>>> &vTopo,
-        std::vector<std::vector<RankId>> &virtRanks, std::vector<std::map<RankId, u32>> &virtRankMap) override;
+    HcclResult MatchTopo(
+        std::vector<std::vector<std::vector<RankId>>>& vTopo, std::vector<std::vector<RankId>>& virtRanks,
+        std::vector<std::map<RankId, u32>>& virtRankMap) override;
 
 private:
-    HcclResult LoadTopoInstRanks(u32 topoInstId, std::vector<RankId> &ranksOfSameLinkType) const;
-    HcclResult DeduplicateLevelRanks(std::vector<RankId> &level0Ranks, std::vector<RankId> &level1Ranks) const;
+    HcclResult LoadTopoInstRanks(u32 topoInstId, std::vector<RankId>& ranksOfSameLinkType) const;
+    HcclResult DeduplicateLevelRanks(std::vector<RankId>& level0Ranks, std::vector<RankId>& level1Ranks) const;
 };
-}  // namespace Hccl
+} // namespace Hccl
 
-#endif  // !HCCLV2_TOPO_MATCH_MESH_NHR
+#endif // !HCCLV2_TOPO_MATCH_MESH_NHR

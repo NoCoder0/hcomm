@@ -18,27 +18,20 @@
 namespace Hccl {
 class ExchangeRdmaConnDto : public Serializable {
 public:
-    ExchangeRdmaConnDto(){};
+    ExchangeRdmaConnDto() {};
 
-    ExchangeRdmaConnDto(uint32_t qpn, uint32_t psn, uint32_t gid_idx) : qpn_(qpn), psn_(psn), gid_idx_(gid_idx){};
+    ExchangeRdmaConnDto(uint32_t qpn, uint32_t psn, uint32_t gid_idx) : qpn_(qpn), psn_(psn), gid_idx_(gid_idx) {};
 
-    void Serialize(Hccl::BinaryStream &stream) override
-    {
-        stream << qpn_ << psn_ << gid_idx_ << gid_;
-    }
+    void Serialize(Hccl::BinaryStream& stream) override { stream << qpn_ << psn_ << gid_idx_ << gid_; }
 
-    void Deserialize(Hccl::BinaryStream &stream) override
-    {
-        stream >> qpn_ >> psn_ >> gid_idx_ >> gid_;
-    }
+    void Deserialize(Hccl::BinaryStream& stream) override { stream >> qpn_ >> psn_ >> gid_idx_ >> gid_; }
 
     std::string Describe() const override
     {
-        return StringFormat("ExchangeRdmaConnDto=[qpn=%u, psn=%u, gid_idx=%u]",
-                            qpn_, psn_, gid_idx_);
+        return StringFormat("ExchangeRdmaConnDto=[qpn=%u, psn=%u, gid_idx=%u]", qpn_, psn_, gid_idx_);
     }
 
-// RaTypicalQpModify
+    // RaTypicalQpModify
     uint32_t qpn_;
     uint32_t psn_;
     uint32_t gid_idx_;

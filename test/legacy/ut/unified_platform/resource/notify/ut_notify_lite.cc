@@ -16,25 +16,15 @@
 #include "string_util.h"
 #include "log.h"
 
-
 using namespace Hccl;
 
 class NotifyLiteTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "NotifyLiteTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "NotifyLiteTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "NotifyLiteTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "NotifyLiteTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in NotifyLiteTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in NotifyLiteTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -58,5 +48,3 @@ TEST_F(NotifyLiteTest, notify_lite_give_uniqueId)
     EXPECT_EQ(fakeDevPhyId, lite.GetDevPhyId());
     lite.Describe();
 }
-
-

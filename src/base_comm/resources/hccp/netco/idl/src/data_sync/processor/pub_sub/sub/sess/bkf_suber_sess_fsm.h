@@ -14,14 +14,12 @@
 #include "bkf_suber_sess.h"
 #include "bkf_suber_sess_data.h"
 
-
 #ifdef __cplusplus
 #if __cplusplus
 extern "C" {
 #endif
 #endif
 #pragma pack(4)
-
 
 enum {
     BACKFIN_SUB_SESS_STATE_DOWN,
@@ -31,8 +29,8 @@ enum {
     BACKFIN_SUB_SESS_STATE_BATCH,
     BACKFIN_SUB_SESS_STATE_BATOK,
     BACKFIN_SUB_SESS_STATE_VERIFYWAITACK, /* wait for peer verify hello */
-    BACKFIN_SUB_SESS_STATE_VERIFYRDY, /* ready for verify */
-    BACKFIN_SUB_SESS_STATE_VERIFY,   /* verify doing */
+    BACKFIN_SUB_SESS_STATE_VERIFYRDY,     /* ready for verify */
+    BACKFIN_SUB_SESS_STATE_VERIFY,        /* verify doing */
     BACKFIN_SUB_SESS_STATE_MAX
 };
 

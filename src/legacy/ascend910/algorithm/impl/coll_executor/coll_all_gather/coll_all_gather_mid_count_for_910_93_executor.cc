@@ -11,8 +11,8 @@
 #include "coll_all_gather_mid_count_for_910_93_executor.h"
 
 namespace hccl {
-CollAllGatherMidCountFor91093Executor::CollAllGatherMidCountFor91093Executor(const HcclDispatcher dispatcher,
-                                                                   std::unique_ptr<TopoMatcher> &topoMatcher)
+CollAllGatherMidCountFor91093Executor::CollAllGatherMidCountFor91093Executor(
+    const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher>& topoMatcher)
     : CollAllGatherExecutor(dispatcher, topoMatcher)
 {
     DMAReduceFlag_ = true;
@@ -34,8 +34,8 @@ HcclResult CollAllGatherMidCountFor91093Executor::CalcCommInfo(std::vector<Level
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherMidCountFor91093Executor::CalcTransportMemType(TransportMemType &inputType,
-    TransportMemType &outputType) const
+HcclResult CollAllGatherMidCountFor91093Executor::CalcTransportMemType(
+    TransportMemType& inputType, TransportMemType& outputType) const
 {
     if (workflowMode_ == HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE) {
         inputType = TransportMemType::CCL_INPUT;
@@ -44,22 +44,22 @@ HcclResult CollAllGatherMidCountFor91093Executor::CalcTransportMemType(Transport
         HCCL_ERROR("AllGatherMidCountFor91093Executor do not support offload mode");
         return HCCL_E_UNAVAIL;
     }
-    HCCL_INFO("[CollAllGatherMidCountFor91093Executor][CalcTransportMemType] tag[%s] inputType[%d], outputType[%d]",
+    HCCL_INFO(
+        "[CollAllGatherMidCountFor91093Executor][CalcTransportMemType] tag[%s] inputType[%d], outputType[%d]",
         tag_.c_str(), inputType, outputType);
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherMidCountFor91093Executor::CalcLevel1CommInfo(TransportMemType inputType,
-    TransportMemType outputType,
-    std::vector<LevelNSubCommTransport>& opTransport)
+HcclResult CollAllGatherMidCountFor91093Executor::CalcLevel1CommInfo(
+    TransportMemType inputType, TransportMemType outputType, std::vector<LevelNSubCommTransport>& opTransport)
 {
     CommParaInfo commParaCombineL1(COMM_COMBINE_L1, CommType::COMM_TAG_WHOLE_NHR);
     CHK_RET(CalcCommPlaneInfo(tag_, commParaCombineL1, opTransport[COMM_COMBINE_L1], inputType, outputType));
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherMidCountFor91093Executor::CalcLevel2CommInfo(TransportMemType inputType, TransportMemType outputType,
-    std::vector<LevelNSubCommTransport>& opTransport)
+HcclResult CollAllGatherMidCountFor91093Executor::CalcLevel2CommInfo(
+    TransportMemType inputType, TransportMemType outputType, std::vector<LevelNSubCommTransport>& opTransport)
 {
     CommParaInfo commParaLevel2(COMM_LEVEL2, CommType::COMM_TAG_NONUNIFORM_HIERARCHICAL_RING);
     CHK_RET(CalcCommPlaneInfo(tag_, commParaLevel2, opTransport[COMM_LEVEL2], inputType, outputType));
@@ -68,11 +68,14 @@ HcclResult CollAllGatherMidCountFor91093Executor::CalcLevel2CommInfo(TransportMe
 
 u64 CollAllGatherMidCountFor91093Executor::CalcLoopMaxCount(const u64 cclBuffSize, const u32 unitSize)
 {
-    u64 maxCountPerLoop = cclBuffSize / topoAttr_.userRankSize / HCCL_MIN_SLICE_ALIGN_910_93 / unitSize * HCCL_MIN_SLICE_ALIGN_910_93;
+    u64 maxCountPerLoop
+        = cclBuffSize / topoAttr_.userRankSize / HCCL_MIN_SLICE_ALIGN_910_93 / unitSize * HCCL_MIN_SLICE_ALIGN_910_93;
     if (cclBuffSize != 0 && maxCountPerLoop == 0) {
         maxCountPerLoop = cclBuffSize / topoAttr_.userRankSize / unitSize;
-        HCCL_INFO("[CollAllGatherMidCountFor91093Executor][CalcLoopMaxCount]" \
-            "using default maxCountPerLoop[%llu] as CCLBuffSize / unitSize", maxCountPerLoop);
+        HCCL_INFO(
+            "[CollAllGatherMidCountFor91093Executor][CalcLoopMaxCount]"
+            "using default maxCountPerLoop[%llu] as CCLBuffSize / unitSize",
+            maxCountPerLoop);
     }
     if (maxCountPerLoop == 0) {
         HCCL_ERROR("[CollAllGatherMidCountFor91093Executor][CalcLoopMaxCount] cclbuffer size is too small");
@@ -80,20 +83,20 @@ u64 CollAllGatherMidCountFor91093Executor::CalcLoopMaxCount(const u64 cclBuffSiz
     return maxCountPerLoop;
 }
 
-u64 CollAllGatherMidCountFor91093Executor::CalcDstMemOffset(const OpParam &param, u64 inputMemSize) const
+u64 CollAllGatherMidCountFor91093Executor::CalcDstMemOffset(const OpParam& param, u64 inputMemSize) const
 {
-    (void) param;
+    (void)param;
     return topoAttr_.userRank * inputMemSize;
 }
 
-HcclResult CollAllGatherMidCountFor91093Executor::PrepareL2DataSlices(const OpParam &param,
-    const SubCommInfo &level1CommInfo, const SubCommInfo &level2CommInfo, u64 inputMemSize,
-    std::vector<Slice> &dataSlices) const
+HcclResult CollAllGatherMidCountFor91093Executor::PrepareL2DataSlices(
+    const OpParam& param, const SubCommInfo& level1CommInfo, const SubCommInfo& level2CommInfo, u64 inputMemSize,
+    std::vector<Slice>& dataSlices) const
 {
-    (void) param;
-    const u32 level1RankSize  = level1CommInfo.localRankSize;
+    (void)param;
+    const u32 level1RankSize = level1CommInfo.localRankSize;
     const u32 level1RankIndex = level1CommInfo.localRank;
-    const u32 level2RankSize  = level2CommInfo.localRankSize;
+    const u32 level2RankSize = level2CommInfo.localRankSize;
 
     std::vector<Slice> level2DataSlices;
     for (u32 i = 0; i < level2RankSize; i++) {
@@ -107,8 +110,8 @@ HcclResult CollAllGatherMidCountFor91093Executor::PrepareL2DataSlices(const OpPa
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherMidCountFor91093Executor::RunLevel2ByNHR(const OpParam &param, ExecMem &execMem, 
-    SubCommInfo &level1CommInfo, SubCommInfo &level2CommInfo) const
+HcclResult CollAllGatherMidCountFor91093Executor::RunLevel2ByNHR(
+    const OpParam& param, ExecMem& execMem, SubCommInfo& level1CommInfo, SubCommInfo& level2CommInfo) const
 {
     const u32 level2RankSize = level2CommInfo.localRankSize;
     const u32 multiSuperPodMode = 1;
@@ -118,18 +121,19 @@ HcclResult CollAllGatherMidCountFor91093Executor::RunLevel2ByNHR(const OpParam &
         CHK_RET(SalGetDataTypeSize(dataType, unitSize));
         u64 inputMemSize = execMem.count * unitSize;
 
-        std::unique_ptr<AlgTemplateBase> level2AGExecutor = AlgTemplateRegistry::Instance().GetAlgTemplate(
-            TemplateType::TEMPLATE_ALL_GATHER_NHR, dispatcher_);
+        std::unique_ptr<AlgTemplateBase> level2AGExecutor
+            = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_ALL_GATHER_NHR, dispatcher_);
         CHK_SMART_PTR_NULL(level2AGExecutor);
 
         std::vector<Slice> dataSlices;
         CHK_RET(PrepareL2DataSlices(param, level1CommInfo, level2CommInfo, inputMemSize, dataSlices));
-        CHK_RET(level2AGExecutor->Prepare(execMem.outputMem, execMem.outputMem, execMem.inputMem, execMem.count,
-            param.GetDataType(), param.stream, HCCL_REDUCE_RESERVED, INVALID_VALUE_RANKID, dataSlices, 0));
+        CHK_RET(level2AGExecutor->Prepare(
+            execMem.outputMem, execMem.outputMem, execMem.inputMem, execMem.count, param.GetDataType(), param.stream,
+            HCCL_REDUCE_RESERVED, INVALID_VALUE_RANKID, dataSlices, 0));
 
-        CHK_RET(level2AGExecutor->RegisterProfiler((
-            level2RankSize << PROF_RANKSIZE_OFFSET_OF_PLANEID) + level2CommInfo.localRank,
-            PROF_STAGE_0, HCCL_EXEC_STEP_NOT_SET, param.stream));
+        CHK_RET(level2AGExecutor->RegisterProfiler(
+            (level2RankSize << PROF_RANKSIZE_OFFSET_OF_PLANEID) + level2CommInfo.localRank, PROF_STAGE_0,
+            HCCL_EXEC_STEP_NOT_SET, param.stream));
 
         CHK_RET(RunTemplate(level2AGExecutor, level2CommInfo));
     }
@@ -137,27 +141,27 @@ HcclResult CollAllGatherMidCountFor91093Executor::RunLevel2ByNHR(const OpParam &
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherMidCountFor91093Executor::PrepareL1DataSlices(const OpParam &param, 
-    const SubCommInfo &level1CommInfo, const SubCommInfo &level2CommInfo,
-    u64 inputMemSize, u32 moduleId, std::vector<Slice> &dataSlices) const
+HcclResult CollAllGatherMidCountFor91093Executor::PrepareL1DataSlices(
+    const OpParam& param, const SubCommInfo& level1CommInfo, const SubCommInfo& level2CommInfo, u64 inputMemSize,
+    u32 moduleId, std::vector<Slice>& dataSlices) const
 {
-    (void) level2CommInfo;
+    (void)level2CommInfo;
     u32 unitSize = 0;
     CHK_RET(SalGetDataTypeSize(param.GetDataType(), unitSize));
-    const u32 level1RankSize  = level1CommInfo.localRankSize;
+    const u32 level1RankSize = level1CommInfo.localRankSize;
     std::vector<Slice> level1DataSlices;
     for (u32 i = 0; i < level1RankSize; i++) {
         Slice sliceTemp;
         sliceTemp.size = inputMemSize;
-        sliceTemp.offset = inputMemSize * (level1RankSize * moduleId + i) ;
+        sliceTemp.offset = inputMemSize * (level1RankSize * moduleId + i);
         level1DataSlices.push_back(sliceTemp);
     }
     dataSlices = std::move(level1DataSlices);
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherMidCountFor91093Executor::RunLevel1ByNHR(const OpParam &param, ExecMem &execMem,
-    SubCommInfo  &level1CommInfo, SubCommInfo &level2CommInfo)
+HcclResult CollAllGatherMidCountFor91093Executor::RunLevel1ByNHR(
+    const OpParam& param, ExecMem& execMem, SubCommInfo& level1CommInfo, SubCommInfo& level2CommInfo) const
 {
     const u32 level1RankSize = level1CommInfo.localRankSize;
     const u32 level2RankSize = level2CommInfo.localRankSize;
@@ -171,29 +175,30 @@ HcclResult CollAllGatherMidCountFor91093Executor::RunLevel1ByNHR(const OpParam &
     CHK_RET(SalGetDataTypeSize(dataType, unitSize));
     u64 inputMemSize = execMem.count * unitSize;
 
-    for (u32 moduleId = 0; moduleId < level2RankSize; moduleId++){
+    for (u32 moduleId = 0; moduleId < level2RankSize; moduleId++) {
         std::vector<Slice> dataSlices;
         CHK_RET(PrepareL1DataSlices(param, level1CommInfo, level2CommInfo, inputMemSize, moduleId, dataSlices));
 
         // 计算slice, 不同超节点相同slice
-        std::unique_ptr<AlgTemplateBase> level1AGExecutor = AlgTemplateRegistry::Instance().GetAlgTemplate(
-            TemplateType::TEMPLATE_ALL_GATHER_NHR, dispatcher_);
+        std::unique_ptr<AlgTemplateBase> level1AGExecutor
+            = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_ALL_GATHER_NHR, dispatcher_);
         CHK_SMART_PTR_NULL(level1AGExecutor);
 
-        CHK_RET(level1AGExecutor->Prepare(execMem.outputMem, execMem.outputMem, execMem.inputMem, execMem.count,
-            param.DataDes.dataType, param.stream, HCCL_REDUCE_RESERVED, INVALID_VALUE_RANKID, dataSlices, 0));
+        CHK_RET(level1AGExecutor->Prepare(
+            execMem.outputMem, execMem.outputMem, execMem.inputMem, execMem.count, param.DataDes.dataType, param.stream,
+            HCCL_REDUCE_RESERVED, INVALID_VALUE_RANKID, dataSlices, 0));
 
-        CHK_RET(level1AGExecutor->RegisterProfiler((
-            level1RankSize << PROF_RANKSIZE_OFFSET_OF_PLANEID) + level2CommInfo.localRank,
-            PROF_STAGE_1, HCCL_EXEC_STEP_NOT_SET, param.stream));
+        CHK_RET(level1AGExecutor->RegisterProfiler(
+            (level1RankSize << PROF_RANKSIZE_OFFSET_OF_PLANEID) + level2CommInfo.localRank, PROF_STAGE_1,
+            HCCL_EXEC_STEP_NOT_SET, param.stream));
 
-        CHK_RET(RunTemplate(level1AGExecutor, level1CommInfo));     
+        CHK_RET(RunTemplate(level1AGExecutor, level1CommInfo));
     }
     HCCL_INFO("MidCountAllGather run success in level1");
-    return HCCL_SUCCESS;  
+    return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherMidCountFor91093Executor::KernelRun(const OpParam &param, ExecMem &execMem)
+HcclResult CollAllGatherMidCountFor91093Executor::KernelRun(const OpParam& param, ExecMem& execMem)
 {
     HCCL_CONFIG_INFO(HCCL_ALG, "[%s] The MidCountFor91093Executor starts", __func__);
 
@@ -207,21 +212,21 @@ HcclResult CollAllGatherMidCountFor91093Executor::KernelRun(const OpParam &param
     u32 unitSize = 0;
     const HcclDataType dataType = param.GetDataType();
     CHK_RET(SalGetDataTypeSize(dataType, unitSize));
-    
+
     u64 inputMemSize = execMem.count * unitSize;
     const u32 SINGLE_RANK_FLAG = 1;
 
     if (topoAttr_.userRankSize == SINGLE_RANK_FLAG) {
-        DeviceMem srcMem = DeviceMem::create(static_cast<u8 *>(execMem.inputPtr), inputMemSize);
-        DeviceMem dstMem = DeviceMem::create(static_cast<u8 *>(execMem.outputPtr), inputMemSize);
+        DeviceMem srcMem = DeviceMem::create(static_cast<u8*>(execMem.inputPtr), inputMemSize);
+        DeviceMem dstMem = DeviceMem::create(static_cast<u8*>(execMem.outputPtr), inputMemSize);
         CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dstMem, srcMem, const_cast<Stream&>(param.stream)));
         return HCCL_SUCCESS;
     }
 
-    //先做server间算法，带有消减拷贝场景数据需要从user input取，拷贝到ccl output上
+    // 先做server间算法，带有消减拷贝场景数据需要从user input取，拷贝到ccl output上
     if (DMAReduceFlag_) {
         u64 dstMemOffset = CalcDstMemOffset(param, inputMemSize);
-        DeviceMem srcMem = DeviceMem::create(static_cast<u8 *>(execMem.inputPtr), inputMemSize);
+        DeviceMem srcMem = DeviceMem::create(static_cast<u8*>(execMem.inputPtr), inputMemSize);
         DeviceMem dstMem = execMem.outputMem.range(dstMemOffset, inputMemSize);
         CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dstMem, srcMem, const_cast<Stream&>(param.stream)));
     }
@@ -231,8 +236,10 @@ HcclResult CollAllGatherMidCountFor91093Executor::KernelRun(const OpParam &param
 
     if (DMAReduceFlag_) {
         for (u32 i = 0; i < topoAttr_.userRankSize; i++) {
-            DeviceMem srcMem = DeviceMem::create(static_cast<u8 *>(execMem.outputMem.ptr())+ inputMemSize * i, inputMemSize);
-            DeviceMem dstMem = DeviceMem::create(static_cast<u8 *>(execMem.outputPtr) + param.DataDes.count * unitSize * i, inputMemSize);
+            DeviceMem srcMem
+                = DeviceMem::create(static_cast<u8*>(execMem.outputMem.ptr()) + inputMemSize * i, inputMemSize);
+            DeviceMem dstMem = DeviceMem::create(
+                static_cast<u8*>(execMem.outputPtr) + param.DataDes.count * unitSize * i, inputMemSize);
             CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dstMem, srcMem, const_cast<Stream&>(param.stream)));
         }
     }

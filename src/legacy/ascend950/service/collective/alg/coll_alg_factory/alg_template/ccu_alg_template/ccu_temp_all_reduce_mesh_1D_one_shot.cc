@@ -22,30 +22,27 @@
 #include "ccu_context_reduce_tail_block.h"
 
 namespace Hccl {
-static CcuInstRegister<CcuContextAllReduceMesh1DOneShot> g_registrarAllReduce(
-    CcuInstType::CCU_ALL_REDUCE_MESH_1D_ONE_SHOT_DIRECT);
+static CcuInstRegister<CcuContextAllReduceMesh1DOneShot>
+    g_registrarAllReduce(CcuInstType::CCU_ALL_REDUCE_MESH_1D_ONE_SHOT_DIRECT);
 
-static CcuInstRegister<CcuContextReduceTailBlock> g_registrarReduceTailBlock(
-    CcuInstType::CCU_REDUCE_TAILBLOCK_DIRECT);
+static CcuInstRegister<CcuContextReduceTailBlock> g_registrarReduceTailBlock(CcuInstType::CCU_REDUCE_TAILBLOCK_DIRECT);
 
-CcuTempAllReduceMesh1DOneShot::CcuTempAllReduceMesh1DOneShot(const RankId virtualRank, const u32 tempRankSize,
-                                   const std::vector<std::vector<RankId>> &tempVTopo,
-                                   const std::map<RankId, u32>            &tempVirtRankMap)
+CcuTempAllReduceMesh1DOneShot::CcuTempAllReduceMesh1DOneShot(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
     : CcuAlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap)
-{
-}
+{}
 
-CcuTempAllReduceMesh1DOneShot::~CcuTempAllReduceMesh1DOneShot()
-{
-}
+CcuTempAllReduceMesh1DOneShot::~CcuTempAllReduceMesh1DOneShot() {}
 
-void CcuTempAllReduceMesh1DOneShot::InitReduceInfo(const ReduceOp &reduceOp, const DataType &dataType) {
+void CcuTempAllReduceMesh1DOneShot::InitReduceInfo(const ReduceOp& reduceOp, const DataType& dataType)
+{
     reduceOp_ = reduceOp;
     dataType_ = dataType;
 }
 
-HcclResult CcuTempAllReduceMesh1DOneShot::CalcSliceInfo(const AllignInfo &allignInfo, const u64 dataSize,
-                                            RankSliceInfo &sliceInfoVec)
+HcclResult CcuTempAllReduceMesh1DOneShot::CalcSliceInfo(
+    const AllignInfo& allignInfo, const u64 dataSize, RankSliceInfo& sliceInfoVec)
 {
     (void)allignInfo;
     SliceInfo basicSlice;
@@ -57,27 +54,27 @@ HcclResult CcuTempAllReduceMesh1DOneShot::CalcSliceInfo(const AllignInfo &allign
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CcuTempAllReduceMesh1DOneShot::CalcRes(AlgTempResReq &tempResReq)
+HcclResult CcuTempAllReduceMesh1DOneShot::CalcRes(AlgTempResReq& tempResReq)
 {
     tempResReq.queNum = 1;
-    tempResReq.streamNum = tempResReq.queNum + 1;  // 多申请一个 stream 给 ccuInsGroup
+    tempResReq.streamNum = tempResReq.queNum + 1; // 多申请一个 stream 给 ccuInsGroup
     HCCL_INFO("[CcuTempAllReduceMesh1DOneShot][CalcRes] tempResReq.queNum[%u]", tempResReq.queNum);
     CHK_RET(CalcResLinksMesh(myRank_, tempRankSize_, tempVTopo_, linkNumBtwPeers_, tempResReq));
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CcuTempAllReduceMesh1DOneShot::Run(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec,
-                                          const BuffInfo &buffInfo, const ResLinks &tempLinks,
-                                          std::vector<InsQuePtr> &tempInsQues)
+HcclResult CcuTempAllReduceMesh1DOneShot::Run(
+    const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, const BuffInfo& buffInfo, const ResLinks& tempLinks,
+    std::vector<InsQuePtr>& tempInsQues)
 {
     HCCL_INFO("[CcuTempAllReduceMesh1DOneShot][Run] start");
-    CHK_PRT_RET(tempInsQues.empty(),
-        HCCL_ERROR("[CcuTempAllReduceMesh1DOneShot] empty queue"), HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        tempInsQues.empty(), HCCL_ERROR("[CcuTempAllReduceMesh1DOneShot] empty queue"), HcclResult::HCCL_E_INTERNAL);
     CHK_PTR_NULL(tempInsQues[0]);
     opMode_ = tempFuncs.opMode;
     buffInfo_ = buffInfo;
-    CHK_PRT_RET(myRank_ == INVALID_RANKID,
-        HCCL_ERROR("[CcuTempAllReduceMesh1DOneShot][Run]myRank[%d] is invalid", myRank_),
+    CHK_PRT_RET(
+        myRank_ == INVALID_RANKID, HCCL_ERROR("[CcuTempAllReduceMesh1DOneShot][Run]myRank[%d] is invalid", myRank_),
         HcclResult::HCCL_E_INTERNAL);
 
     uint32_t rankId = static_cast<uint32_t>(myRank_);
@@ -92,7 +89,7 @@ HcclResult CcuTempAllReduceMesh1DOneShot::Run(const TempFuncs &tempFuncs, const 
     uint64_t token;
     CHK_RET(GetToken(op_, token));
 
-    uint64_t totalSliceSize = sliceInfoVec[myRank_][0].size;  // 本rank需要处理的数据量
+    uint64_t totalSliceSize = sliceInfoVec[myRank_][0].size; // 本rank需要处理的数据量
 
     u32 cntCkeNum = 4;
 
@@ -104,44 +101,49 @@ HcclResult CcuTempAllReduceMesh1DOneShot::Run(const TempFuncs &tempFuncs, const 
     std::string notifySignal = "AllReduceMesh1DOneShot_TailBlock";
     // 添加主拓展指令
     CcuInstructionAllReduceMesh1DOneShot ccuInstructionAllReduceMesh1DOneShot;
-    ccuInstructionAllReduceMesh1DOneShot.Init(rankId, inputAddr, outputAddr, totalSliceSize, token, notifySignal, op_,
-        tempVTopo_);
+    ccuInstructionAllReduceMesh1DOneShot.Init(
+        rankId, inputAddr, outputAddr, totalSliceSize, token, notifySignal, op_, tempVTopo_);
     ccuInstructionAllReduceMesh1DOneShot.SetLinks(links);
     ccuInstructionAllReduceMesh1DOneShot.SetCntCkeNum(cntCkeNum);
     ccuInstructionAllReduceMesh1DOneShot.SetRankGroup(rankGroup);
-    tempInsQues[0]->Append(std::move(std::make_unique<CcuInstructionAllReduceMesh1DOneShot>(ccuInstructionAllReduceMesh1DOneShot)));
+    tempInsQues[0]->Append(
+        std::move(std::make_unique<CcuInstructionAllReduceMesh1DOneShot>(ccuInstructionAllReduceMesh1DOneShot)));
     HCCL_INFO("[CcuTempAllReduceMesh1DOneShot][Run] end");
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CcuTempAllReduceMesh1DOneShot::CalcInputOutputAddr(const TempFuncs &tempFuncs, 
-     uint64_t &inputAddr, uint64_t &outputAddr) 
-{ 
-    HCCL_INFO("[CcuTempAllReduceMesh1DOneShot][CalcInputOutputAddr] start"); 
+HcclResult CcuTempAllReduceMesh1DOneShot::CalcInputOutputAddr(
+    const TempFuncs& tempFuncs, uint64_t& inputAddr, uint64_t& outputAddr)
+{
+    HCCL_INFO("[CcuTempAllReduceMesh1DOneShot][CalcInputOutputAddr] start");
     if (opMode_ == OpMode::OPBASE) {
         if (tempFuncs.isBottom) {
-            outputAddr = BufferTypeToAddr(tempFuncs.usrData.usrOutSlices[0].GetType()) + tempFuncs.usrData.usrOutSlices[0].GetOffset();
+            outputAddr = BufferTypeToAddr(tempFuncs.usrData.usrOutSlices[0].GetType())
+                         + tempFuncs.usrData.usrOutSlices[0].GetOffset();
         } else {
             outputAddr = BufferTypeToAddr(buffInfo_.outBuffType) + buffInfo_.outBuffBaseOff;
         }
         if (tempFuncs.isForepart) {
-            inputAddr = BufferTypeToAddr(tempFuncs.usrData.usrInSlices[0].GetType()) + tempFuncs.usrData.usrInSlices[0].GetOffset();
+            inputAddr = BufferTypeToAddr(tempFuncs.usrData.usrInSlices[0].GetType())
+                        + tempFuncs.usrData.usrInSlices[0].GetOffset();
         } else {
             inputAddr = BufferTypeToAddr(buffInfo_.inBuffType) + buffInfo_.inBuffBaseOff;
         }
     } else {
         // 图模式
         inputAddr = BufferTypeToAddr(buffInfo_.inBuffType) + buffInfo_.inBuffBaseOff;
-        outputAddr = BufferTypeToAddr(buffInfo_.outBuffType) + buffInfo_.outBuffBaseOff + tempFuncs.usrData.usrOutSlices[0].GetOffset();
+        outputAddr = BufferTypeToAddr(buffInfo_.outBuffType) + buffInfo_.outBuffBaseOff
+                     + tempFuncs.usrData.usrOutSlices[0].GetOffset();
     }
-    HCCL_INFO("[CcuTempAllReduceMesh1DOneShot][CalcInputOutputAddr] end, inputAddr[%llu], outputAddr[%llu]", 
-        inputAddr, outputAddr);
+    HCCL_INFO(
+        "[CcuTempAllReduceMesh1DOneShot][CalcInputOutputAddr] end, inputAddr[%llu], outputAddr[%llu]", inputAddr,
+        outputAddr);
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CcuTempAllReduceMesh1DOneShot::PrepareLinks(const ResLinks &tempLinks, std::vector<LinkData> &links) const
+HcclResult CcuTempAllReduceMesh1DOneShot::PrepareLinks(const ResLinks& tempLinks, std::vector<LinkData>& links) const
 {
-    for (auto &pair : tempLinks) {
+    for (auto& pair : tempLinks) {
         if (pair.second.empty()) {
             continue;
         }
@@ -151,9 +153,9 @@ HcclResult CcuTempAllReduceMesh1DOneShot::PrepareLinks(const ResLinks &tempLinks
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CcuTempAllReduceMesh1DOneShot::PrepareRankGroup(RankGroup &rankGroup)
+HcclResult CcuTempAllReduceMesh1DOneShot::PrepareRankGroup(RankGroup& rankGroup)
 {
-    for (auto &peer : tempVTopo_[0]) {
+    for (auto& peer : tempVTopo_[0]) {
         rankGroup.AddRank(peer);
     }
     return HcclResult::HCCL_SUCCESS;

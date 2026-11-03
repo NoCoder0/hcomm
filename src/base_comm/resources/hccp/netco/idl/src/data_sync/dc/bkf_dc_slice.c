@@ -30,8 +30,8 @@ BkfDcSlice *BkfDcAddSlice(BkfDc *dc, void *sliceKey)
     }
     (void)memset_s(slice, len, 0, len);
     slice->dc = dc;
-    VOS_AVLL_INIT_TREE(slice->tableSet, (AVLL_COMPARE)Bkfuint16_tCmp,
-                       BKF_OFFSET(BkfDcTable, tableTypeId), BKF_OFFSET(BkfDcTable, avlNode));
+    VOS_AVLL_INIT_TREE(slice->tableSet, (AVLL_COMPARE)Bkfuint16_tCmp, BKF_OFFSET(BkfDcTable, tableTypeId),
+        BKF_OFFSET(BkfDcTable, avlNode));
     (void)memcpy_s(slice->key, dc->argInit.sliceVTbl.keyLen, sliceKey, dc->argInit.sliceVTbl.keyLen);
     VOS_AVLL_INIT_NODE(slice->avlNode);
     insOk = VOS_AVLL_INSERT(dc->sliceSet, slice->avlNode);
@@ -68,8 +68,7 @@ void BkfDcDelAllSlice(BkfDc *dc)
     BkfDcSlice *slice = VOS_NULL;
     void *itor = VOS_NULL;
 
-    for (slice = BkfDcGetFirstSlice(dc, &itor); slice != VOS_NULL;
-         slice = BkfDcGetNextSlice(dc, &itor)) {
+    for (slice = BkfDcGetFirstSlice(dc, &itor); slice != VOS_NULL; slice = BkfDcGetNextSlice(dc, &itor)) {
         BkfDcDelSlice(dc, slice);
     }
     return;
@@ -127,4 +126,3 @@ BkfDcSlice *BkfDcGetNextSlice(BkfDc *dc, void **itorInOut)
 }
 #endif
 #endif
-

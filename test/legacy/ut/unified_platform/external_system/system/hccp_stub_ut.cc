@@ -18,6 +18,15 @@
 #include "hccp_nda.h"
 
 /**
+ * @brief Set hccp network debug config mask
+ * @param info [IN] see struct RaInfo
+ * @param debugConfig [IN] debug config mask
+ * @retval #zero Success
+ * @retval #non-zero Failure
+ */
+int RaSetDebugConfig(struct RaInfo* info, uint64_t debugConfig) { return 0; }
+
+/**
  * @ingroup libsocket
  * @brief Client sockets batch connect to server sockets(async)
  * @param conn [IN] client sockets array
@@ -25,10 +34,7 @@
  * @retval #zero Success
  * @retval #non-zero Failure
  */
-int RaSocketBatchConnect(struct SocketConnectInfoT conn[], unsigned int num)
-{
-    return 0;
-}
+int RaSocketBatchConnect(struct SocketConnectInfoT conn[], unsigned int num) { return 0; }
 
 /**
  * @ingroup libsocket
@@ -38,10 +44,7 @@ int RaSocketBatchConnect(struct SocketConnectInfoT conn[], unsigned int num)
  * @retval #zero Success
  * @retval #non-zero Failure
  */
-int RaSocketBatchClose(struct SocketCloseInfoT conn[], unsigned int num)
-{
-    return 0;
-}
+int RaSocketBatchClose(struct SocketCloseInfoT conn[], unsigned int num) { return 0; }
 
 /**
  * @ingroup libsocket
@@ -55,10 +58,7 @@ int RaSocketBatchClose(struct SocketCloseInfoT conn[], unsigned int num)
  * @retval #zero Success
  * @retval #non-zero Failure
  */
-int RaSocketListenStart(struct SocketListenInfoT conn[], unsigned int num)
-{
-    return 0;
-}
+int RaSocketListenStart(struct SocketListenInfoT conn[], unsigned int num) { return 0; }
 
 /**
  * @ingroup libsocket
@@ -69,10 +69,7 @@ int RaSocketListenStart(struct SocketListenInfoT conn[], unsigned int num)
  * @retval #zero Success
  * @retval #non-zero Failure
  */
-int RaSocketListenStop(struct SocketListenInfoT conn[], unsigned int num)
-{
-    return 0;
-}
+int RaSocketListenStop(struct SocketListenInfoT conn[], unsigned int num) { return 0; }
 
 /**
  * @ingroup libsocket
@@ -85,10 +82,10 @@ int RaSocketListenStop(struct SocketListenInfoT conn[], unsigned int num)
  * @retval #zero Success
  * @retval #non-zero Failure
 */
-int RaGetSockets(unsigned int role, struct SocketInfoT conn[], unsigned int num, unsigned int *connected_num)
+int RaGetSockets(unsigned int role, struct SocketInfoT conn[], unsigned int num, unsigned int* connected_num)
 {
-    conn[0].status = 1; //打桩已连接
-    *connected_num = 1; //打桩连接数量
+    conn[0].status = 1; // 打桩已连接
+    *connected_num = 1; // 打桩连接数量
     return 0;
 }
 
@@ -101,10 +98,7 @@ int RaGetSockets(unsigned int role, struct SocketInfoT conn[], unsigned int num,
  * @retval #zero Success
  * @retval #non-zero Failure
  */
-int ra_get_socket_num(unsigned int role, void *socket_handle, unsigned int *socket_num)
-{
-    return 0;
-}
+int ra_get_socket_num(unsigned int role, void* socket_handle, unsigned int* socket_num) { return 0; }
 
 /**
  * @ingroup libsocket
@@ -116,7 +110,7 @@ int ra_get_socket_num(unsigned int role, void *socket_handle, unsigned int *sock
  * @retval #zero Success
  * @retval #non-zero Failure
  */
-int ra_get_all_sockets(unsigned int role, struct SocketInfoT *conn, unsigned int num, unsigned int *socket_num)
+int ra_get_all_sockets(unsigned int role, struct SocketInfoT* conn, unsigned int num, unsigned int* socket_num)
 {
     return 0;
 }
@@ -136,7 +130,7 @@ int ra_get_all_sockets(unsigned int role, struct SocketInfoT *conn, unsigned int
  * @retval #zero Success
  * @retval #non-zero Failure
  */
-int RaSocketSend(const void *fd_handle, const void *data, unsigned long long size, unsigned long long *sent_size)
+int RaSocketSend(const void* fd_handle, const void* data, unsigned long long size, unsigned long long* sent_size)
 {
     return 0;
 }
@@ -155,7 +149,7 @@ int RaSocketSend(const void *fd_handle, const void *data, unsigned long long siz
  * @retval #SOCK_EAGAIN Success(no data received by socket)
  * @retval #non-zero Failure(exclude SOCK_EAGAIN)
  */
-int RaSocketRecv(const void *fd_handle, void *data, unsigned long long size, unsigned long long *received_size)
+int RaSocketRecv(const void* fd_handle, void* data, unsigned long long size, unsigned long long* received_size)
 {
     return 0;
 }
@@ -169,10 +163,7 @@ int RaSocketRecv(const void *fd_handle, void *data, unsigned long long size, uns
  * @retval #zero Success
  * @retval #non-zero Failure
  */
-int RaGetNotifyBaseAddr(void *rdev_handle, unsigned long long *va, unsigned long long *size)
-{
-    return 0;
-}
+int RaGetNotifyBaseAddr(void* rdev_handle, unsigned long long* va, unsigned long long* size) { return 0; }
 
 /**
  * @ingroup libinit
@@ -182,23 +173,22 @@ int RaGetNotifyBaseAddr(void *rdev_handle, unsigned long long *va, unsigned long
  * @retval #zero Success
  * @retval #non-zero Failure
  */
-int RaInit(struct RaInitConfig *config)
+int RaInit(struct RaInitConfig* config) { return 0; }
+
+int RaTlvInit(struct TlvInitInfo* init_info, unsigned int* buffer_size, void** tlv_handle)
 {
+    static char fakeTlvHandle;
+    if (tlv_handle != nullptr) {
+        *tlv_handle = &fakeTlvHandle;
+    }
     return 0;
 }
 
-int RaTlvInit(struct TlvInitInfo *init_info, unsigned int *buffer_size, void **tlv_handle)
+int RaTlvRequest(void* tlv_handle, unsigned int module_type, struct TlvMsg* send_msg, struct TlvMsg* recv_msg)
 {
     return 0;
 }
-int RaTlvRequest(void *tlv_handle, unsigned int module_type, struct TlvMsg *send_msg, struct TlvMsg *recv_msg)
-{
-    return 0;
-}
-int RaTlvDeinit(void *tlv_handle)
-{
-    return 0;
-}
+int RaTlvDeinit(void* tlv_handle) { return 0; }
 
 /**
  * @ingroup libinit
@@ -208,10 +198,7 @@ int RaTlvDeinit(void *tlv_handle)
  * @retval #zero Success
  * @retval #non-zero Failure
  */
-int RaDeinit(struct RaInitConfig *config)
-{
-    return 0;
-}
+int RaDeinit(struct RaInitConfig* config) { return 0; }
 
 /**
  * @ingroup libinit
@@ -223,10 +210,7 @@ int RaDeinit(struct RaInitConfig *config)
  * @retval #zero Success
  * @retval #non-zero Failure
  */
-int RaSocketInit(int mode, struct rdev rdev_info, void **socket_handle)
-{
-    return 0;
-}
+int RaSocketInit(int mode, struct rdev rdev_info, void** socket_handle) { return 0; }
 
 /**
  * @ingroup libinit
@@ -238,10 +222,7 @@ int RaSocketInit(int mode, struct rdev rdev_info, void **socket_handle)
  * @retval #zero Success
  * @retval #non-zero Failure
  */
-int RaSocketInitV1(int mode, struct SocketInitInfoT socket_init, void **socket_handle)
-{
-    return 0;
-}
+int RaSocketInitV1(int mode, struct SocketInitInfoT socket_init, void** socket_handle) { return 0; }
 
 /**
  * @ingroup libinit
@@ -251,10 +232,7 @@ int RaSocketInitV1(int mode, struct SocketInitInfoT socket_init, void **socket_h
  * @retval #zero Success
  * @retval #non-zero Failure
  */
-int RaSocketDeinit(void *socket_handle)
-{
-    return 0;
-}
+int RaSocketDeinit(void* socket_handle) { return 0; }
 
 /**
  * @ingroup libinit
@@ -267,10 +245,7 @@ int RaSocketDeinit(void *socket_handle)
  * @retval #zero Success
  * @retval #non-zero Failure
  */
-int RaRdevInit(int mode, unsigned int NotifyTypeT, struct rdev rdev_info, void **rdma_handle)
-{
-    return 0;
-}
+int RaRdevInit(int mode, unsigned int NotifyTypeT, struct rdev rdev_info, void** rdma_handle) { return 0; }
 
 /**
  * @ingroup libinit
@@ -281,10 +256,7 @@ int RaRdevInit(int mode, unsigned int NotifyTypeT, struct rdev rdev_info, void *
  * @retval #zero Success
  * @retval #non-zero Failure
  */
-int RaRdevDeinit(void *rdma_handle, unsigned int NotifyTypeT)
-{
-    return 0;
-}
+int RaRdevDeinit(void* rdma_handle, unsigned int NotifyTypeT) { return 0; }
 
 /**
  * @ingroup libsocket
@@ -293,10 +265,7 @@ int RaRdevDeinit(void *rdma_handle, unsigned int NotifyTypeT)
  * @retval #zero Success
  * @retval #non-zero Failure
  */
-int RaSocketSetWhiteListStatus(unsigned int enable)
-{
-    return 0;
-}
+int RaSocketSetWhiteListStatus(unsigned int enable) { return 0; }
 
 /**
  * @ingroup libsocket
@@ -305,10 +274,7 @@ int RaSocketSetWhiteListStatus(unsigned int enable)
  * @retval #zero Success
  * @retval #non-zero Failure
  */
-int RaSocketGetWhiteListStatus(unsigned int *enable)
-{
-    return 0;
-}
+int RaSocketGetWhiteListStatus(unsigned int* enable) { return 0; }
 
 /**
  * @ingroup libsocket
@@ -320,10 +286,7 @@ int RaSocketGetWhiteListStatus(unsigned int *enable)
  * @retval #zero Success
  * @retval #non-zero Failure
  */
-int RaSocketWhiteListAdd(void *socket_handle, struct SocketWlistInfoT white_list[], unsigned int num)
-{
-    return 0;
-}
+int RaSocketWhiteListAdd(void* socket_handle, struct SocketWlistInfoT white_list[], unsigned int num) { return 0; }
 
 /**
  * @ingroup libsocket
@@ -335,10 +298,7 @@ int RaSocketWhiteListAdd(void *socket_handle, struct SocketWlistInfoT white_list
  * @retval #zero Success
  * @retval #non-zero Failure
  */
-int RaSocketWhiteListDel(void *socket_handle, struct SocketWlistInfoT white_list[], unsigned int num)
-{
-    return 0;
-}
+int RaSocketWhiteListDel(void* socket_handle, struct SocketWlistInfoT white_list[], unsigned int num) { return 0; }
 
 /**
  * @ingroup libinit
@@ -349,10 +309,7 @@ int RaSocketWhiteListDel(void *socket_handle, struct SocketWlistInfoT white_list
  * @retval #zero Success
  * @retval #non-zero Failure
  */
-int RaGetIfnum(struct RaGetIfattr *config, unsigned int *num)
-{
-    return 0;
-}
+int RaGetIfnum(struct RaGetIfattr* config, unsigned int* num) { return 0; }
 
 /**
  * @ingroup libinit
@@ -364,10 +321,7 @@ int RaGetIfnum(struct RaGetIfattr *config, unsigned int *num)
  * @retval #zero Success
  * @retval #non-zero Failure
  */
-int RaGetIfaddrs(struct RaGetIfattr *config, struct InterfaceInfo interface_infos[], unsigned int *num)
-{
-    return 0;
-}
+int RaGetIfaddrs(struct RaGetIfattr* config, struct InterfaceInfo interface_infos[], unsigned int* num) { return 0; }
 
 /**
  * @ingroup libcommon
@@ -378,12 +332,12 @@ int RaGetIfaddrs(struct RaGetIfattr *config, struct InterfaceInfo interface_info
  * @retval #zero Success
  * @retval #non-zero Failure
  */
-int RaGetInterfaceVersion(unsigned int phy_id, unsigned int interface_opcode, unsigned int *interface_version)
+int RaGetInterfaceVersion(unsigned int phy_id, unsigned int interface_opcode, unsigned int* interface_version)
 {
     return 0;
 }
 
-int RaGetTlsEnable(struct RaInfo *info, bool *tlsEnable)
+int RaGetTlsEnable(struct RaInfo* info, bool* tlsEnable)
 {
     if (tlsEnable != nullptr) {
         *tlsEnable = false;
@@ -391,347 +345,222 @@ int RaGetTlsEnable(struct RaInfo *info, bool *tlsEnable)
     return 0;
 }
 
-int RaQpCreate(void *rdev_handle, int flag, int qp_mode, void **qp_handle)
-{
-    return 0;
-}
+int RaQpCreate(void* rdev_handle, int flag, int qp_mode, void** qp_handle) { return 0; }
 
-int RaQpDestroy(void *qp_handle)
-{
-    return 0;
-}
+int RaQpDestroy(void* qp_handle) { return 0; }
 
-int RaQpConnectAsync(void *qp_handle, const void *fd_handle)
-{
-    return 0;
-}
+int RaQpConnectAsync(void* qp_handle, const void* fd_handle) { return 0; }
 
-int RaGetQpStatus(void *qp_handle, int *status)
-{
-    return 0;
-}
+int RaGetQpStatus(void* qp_handle, int* status) { return 0; }
 
-int RaMrReg(void *qp_handle, struct MrInfoT *info)
-{
-    return 0;
-}
+int RaMrReg(void* qp_handle, struct MrInfoT* info) { return 0; }
 
-int RaMrDereg(void *qp_handle, struct MrInfoT *info)
-{
-    return 0;
-}
+int RaMrDereg(void* qp_handle, struct MrInfoT* info) { return 0; }
 
-int RaRegisterMr(const void* handle, struct MrInfoT *mrInfo, void **mrHandle)
+int RaRegisterMr(const void* handle, struct MrInfoT* mrInfo, void** mrHandle)
 {
     *mrHandle = mrInfo;
     return 0;
 }
- 
-int RaDeregisterMr(const void* handle, void *mrHandle)
-{
-    return 0;
-}
- 
-int RaCqCreate(void *rdev_handle, struct CqAttr *attr)
-{
-    return 0;
-}
- 
-int RaCqDestroy(void *rdev_handle, struct CqAttr *attr)
-{
-    return 0;
-}
- 
-int RaNormalQpCreate(void *rdev_handle, struct ibv_qp_init_attr *qp_init_attr, void **qp_handle, void** qp)
-{
-    return 0;
-}
- 
-int RaNormalQpDestroy(void *qp_handle)
-{
-    return 0;
-}
- 
-int RaLoopbackQpCreate(void *rdevHandle, struct LoopbackQpPair *qpPair, void **qpHandle)
+
+int RaDeregisterMr(const void* handle, void* mrHandle) { return 0; }
+
+int RaCqCreate(void* rdev_handle, struct CqAttr* attr) { return 0; }
+
+int RaCqDestroy(void* rdev_handle, struct CqAttr* attr) { return 0; }
+
+int RaNormalQpCreate(void* rdev_handle, struct ibv_qp_init_attr* qp_init_attr, void** qp_handle, void** qp)
 {
     return 0;
 }
 
-int RaSendWr(void *qp_handle, struct SendWr *wr, struct SendWrRsp *op_rsp)
+int RaNormalQpDestroy(void* qp_handle) { return 0; }
+
+int RaLoopbackQpCreate(void* rdevHandle, struct LoopbackQpPair* qpPair, void** qpHandle) { return 0; }
+
+int RaSendWr(void* qp_handle, struct SendWr* wr, struct SendWrRsp* op_rsp) { return 0; }
+
+int RaCtxInit(struct CtxInitCfg* cfg, struct CtxInitAttr* info, void** ctx_handle)
+{
+    *ctx_handle = reinterpret_cast<void*>(0x12345678);
+    return 0;
+}
+
+int RaCtxDeinit(void* ctx_handle) { return 0; }
+
+int RaCtxTokenIdAlloc(void* ctx_handle, struct HccpTokenId* info, void** token_id_handle) { return 0; }
+
+int RaCtxTokenIdFree(void* ctx_handle, void* token_id_handle) { return 0; }
+
+int RaCtxLmemRegister(void* ctx_handle, struct MrRegInfoT* lmem_info, void** lmem_handle) { return 0; }
+
+int RaCtxLmemUnregister(void* ctx_handle, void* lmem_handle) { return 0; }
+
+int RaCtxRmemImport(void* ctx_handle, struct MrImportInfoT* rmem_info, void** rmem_handle) { return 0; }
+
+int RaCtxRmemUnimport(void* ctx_handle, void* rmem_handle) { return 0; }
+
+int RaCtxCqCreate(void* ctx_handle, struct CqInfoT* info, void** cq_handle) { return 0; }
+
+int RaCtxCqDestroy(void* ctx_handle, void* cq_handle) { return 0; }
+
+int RaCtxQpCreate(void* ctx_handle, struct QpCreateAttr* attr, struct QpCreateInfo* info, void** qp_handle)
 {
     return 0;
 }
 
-int RaCtxInit(struct CtxInitCfg *cfg, struct CtxInitAttr *info, void **ctx_handle)
-{
-    *ctx_handle = reinterpret_cast<void *>(0x12345678);
-    return 0;
-}
+int RaCtxQpDestroy(void* qp_handle) { return 0; }
 
-int RaCtxDeinit(void *ctx_handle)
-{
-    return 0;
-}
+int RaCtxQpImport(void* ctx_handle, struct QpImportInfoT* qp_info, void** rem_qp_handle) { return 0; }
 
-int RaCtxTokenIdAlloc(void *ctx_handle, struct HccpTokenId *info, void **token_id_handle)
-{
-    return 0;
-}
+int RaCtxQpUnimport(void* ctx_handle, void* rem_qp_handle) { return 0; }
 
-int RaCtxTokenIdFree(void *ctx_handle, void *token_id_handle)
+int RaCtxQpBind(void* qp_handle, void* rem_qp_handle) { return 0; }
+
+int RaCtxQpUnbind(void* qp_handle) { return 0; }
+
+int RaBatchSendWr(
+    void* qp_handle, struct SendWrData wr_list[], struct SendWrResp op_resp[], unsigned int num,
+    unsigned int* complete_num)
 {
     return 0;
 }
 
-int RaCtxLmemRegister(void *ctx_handle, struct MrRegInfoT *lmem_info, void **lmem_handle)
+int RaGetDevEidInfoNum(struct RaInfo info, unsigned int* num) { return 0; }
+
+int RaGetDevEidInfoList(struct RaInfo info, struct HccpDevEidInfo info_list[], unsigned int* num) { return 0; }
+
+int RaGetDevBaseAttr(void* ctx_handle, struct DevBaseAttr* attr) { return 0; }
+
+int RaCtxUpdateCi(void* qp_handle, uint16_t ci) { return 0; }
+
+int RaGetAsyncReqResult(void* req_handle, struct AsyncReqResult* req_result) { return 0; }
+
+int RaSocketBatchConnectAsync(struct SocketConnectInfoT conn[], unsigned int num, void** req_handle)
 {
+    *req_handle = reinterpret_cast<void*>(0x12345678);
     return 0;
 }
 
-int RaCtxLmemUnregister(void *ctx_handle, void *lmem_handle)
+int RaSocketListenStartAsync(struct SocketListenInfoT conn[], unsigned int num, void** req_handle)
 {
+    *req_handle = reinterpret_cast<void*>(0x12345678);
     return 0;
 }
 
-int RaCtxRmemImport(void *ctx_handle, struct MrImportInfoT *rmem_info, void **rmem_handle)
+int RaSocketListenStopAsync(struct SocketListenInfoT conn[], unsigned int num, void** req_handle)
 {
+    *req_handle = reinterpret_cast<void*>(0x12345678);
     return 0;
 }
 
-int RaCtxRmemUnimport(void *ctx_handle, void *rmem_handle)
+int RaSocketBatchCloseAsync(struct SocketCloseInfoT conn[], unsigned int num, void** req_handle)
 {
+    *req_handle = reinterpret_cast<void*>(0x12345678);
     return 0;
 }
 
-int RaCtxCqCreate(void *ctx_handle, struct CqInfoT *info, void **cq_handle)
+int RaSocketSendAsync(
+    const void* fd_handle, const void* data, unsigned long long size, unsigned long long* sent_size, void** req_handle)
 {
-    return 0;
-}
-
-int RaCtxCqDestroy(void *ctx_handle, void *cq_handle)
-{
-    return 0;
-}
-
-int RaCtxQpCreate(void *ctx_handle, struct QpCreateAttr *attr, struct QpCreateInfo *info, void **qp_handle)
-{
-    return 0;
-}
-
-int RaCtxQpDestroy(void *qp_handle)
-{
-    return 0;
-}
-
-int RaCtxQpImport(void *ctx_handle, struct QpImportInfoT *qp_info, void **rem_qp_handle)
-{
-    return 0;
-}
-
-int RaCtxQpUnimport(void *ctx_handle, void *rem_qp_handle)
-{
-    return 0;
-}
-
-int RaCtxQpBind(void *qp_handle, void *rem_qp_handle)
-{
-    return 0;
-}
-
-int RaCtxQpUnbind(void *qp_handle)
-{
-    return 0;
-}
-
-int RaBatchSendWr(void *qp_handle, struct SendWrData wr_list[], struct SendWrResp op_resp[], unsigned int num,
-    unsigned int *complete_num)
-{
-    return 0;
-}
-
-int RaGetDevEidInfoNum(struct RaInfo info, unsigned int *num)
-{
-    return 0;
-}
-
-int RaGetDevEidInfoList(struct RaInfo info, struct HccpDevEidInfo info_list[], unsigned int *num)
-{
-    return 0;
-}
-
-int RaGetDevBaseAttr(void *ctx_handle, struct DevBaseAttr *attr)
-{
-    return 0;
-}
-
-int RaCtxUpdateCi(void *qp_handle, uint16_t ci)
-{
-    return 0;
-}
-
-int RaGetAsyncReqResult(void *req_handle, int *req_result)
-{
-    return 0;
-}
-
-int RaSocketBatchConnectAsync(struct SocketConnectInfoT conn[], unsigned int num, void **req_handle)
-{
-    *req_handle = reinterpret_cast<void *>(0x12345678);
-    return 0;
-}
-
-int RaSocketListenStartAsync(struct SocketListenInfoT conn[], unsigned int num, void **req_handle)
-{
-    *req_handle = reinterpret_cast<void *>(0x12345678);
-    return 0;
-}
-
-int RaSocketListenStopAsync(struct SocketListenInfoT conn[], unsigned int num, void **req_handle)
-{
-    *req_handle = reinterpret_cast<void *>(0x12345678);
-    return 0;
-}
-
-int RaSocketBatchCloseAsync(struct SocketCloseInfoT conn[], unsigned int num, void **req_handle)
-{
-    *req_handle = reinterpret_cast<void *>(0x12345678);
-    return 0;
-}
-
-int RaSocketSendAsync(const void *fd_handle, const void *data, unsigned long long size,
-    unsigned long long *sent_size, void **req_handle)
-{
-    *req_handle = reinterpret_cast<void *>(0x12345678);
+    *req_handle = reinterpret_cast<void*>(0x12345678);
     *sent_size = size;
     return 0;
 }
 
-int RaSocketRecvAsync(const void *fd_handle, void *data, unsigned long long size,
-    unsigned long long *received_size, void **req_handle)
+int RaSocketRecvAsync(
+    const void* fd_handle, void* data, unsigned long long size, unsigned long long* received_size, void** req_handle)
 {
-    *req_handle = reinterpret_cast<void *>(0x12345678);
+    *req_handle = reinterpret_cast<void*>(0x12345678);
     *received_size = size;
     return 0;
 }
 
-int RaCtxLmemRegisterAsync(void *ctx_handle, struct MrRegInfoT *lmem_info, void **lmem_handle,
-    void **req_handle)
+int RaCtxLmemRegisterAsync(void* ctx_handle, struct MrRegInfoT* lmem_info, void** lmem_handle, void** req_handle)
 {
-    *req_handle = reinterpret_cast<void *>(0x12345678);
+    *req_handle = reinterpret_cast<void*>(0x12345678);
     return 0;
 }
 
-int RaCtxLmemUnregisterAsync(void *ctx_handle, void *lmem_handle, void **req_handle)
+int RaCtxLmemUnregisterAsync(void* ctx_handle, void* lmem_handle, void** req_handle)
 {
-    *req_handle = reinterpret_cast<void *>(0x12345678);
+    *req_handle = reinterpret_cast<void*>(0x12345678);
     return 0;
 }
 
-int RaCtxQpCreateAsync(void *ctx_handle, struct QpCreateAttr *attr, struct QpCreateInfo *info,
-    void **qp_handle, void **req_handle)
+int RaCtxQpCreateAsync(
+    void* ctx_handle, struct QpCreateAttr* attr, struct QpCreateInfo* info, void** qp_handle, void** req_handle)
 {
-    *req_handle = reinterpret_cast<void *>(0x12345678);
+    *req_handle = reinterpret_cast<void*>(0x12345678);
+    info->key.size = DEV_QP_KEY_SIZE;
     return 0;
 }
 
-int RaCtxQpDestroyAsync(void *qp_handle, void **req_handle)
+int RaCtxQpDestroyAsync(void* qp_handle, void** req_handle)
 {
-    *req_handle = reinterpret_cast<void *>(0x12345678);
+    *req_handle = reinterpret_cast<void*>(0x12345678);
     return 0;
 }
 
-int RaCtxQpImportAsync(void *ctx_handle, struct QpImportInfoT *info, void **rem_qp_handle, void **req_handle)
+int RaCtxQpImportAsync(void* ctx_handle, struct QpImportInfoT* info, void** rem_qp_handle, void** req_handle)
 {
-    *req_handle = reinterpret_cast<void *>(0x12345678);
+    *req_handle = reinterpret_cast<void*>(0x12345678);
     return 0;
 }
 
-int RaCtxQpUnimportAsync(void *rem_qp_handle, void **req_handle)
+int RaCtxQpUnimportAsync(void* rem_qp_handle, void** req_handle)
 {
-    *req_handle = reinterpret_cast<void *>(0x12345678);
+    *req_handle = reinterpret_cast<void*>(0x12345678);
     return 0;
 }
 
-int RaGetTpInfoListAsync(void *ctx_handle, struct GetTpCfg *cfg, struct HccpTpInfo info_list[],
-    unsigned int *num, void **req_handle)
+int RaGetTpInfoListAsync(
+    void* ctx_handle, struct GetTpCfg* cfg, struct HccpTpInfo info_list[], unsigned int* num, void** req_handle)
 {
-    *req_handle = reinterpret_cast<void *>(0x12345678);
+    *req_handle = reinterpret_cast<void*>(0x12345678);
     info_list[0] = HccpTpInfo{0x12345, 0};
     *num = 1; // hccl预期调用1，随意调整可能越界
     return 0;
 }
 
-int RaCreateEventHandle(int *event_handle)
+int RaCreateEventHandle(int* event_handle) { return 0; }
+
+int RaCtlEventHandle(int event_handle, const void* fd_handle, int opcode, enum RaEpollEvent event) { return 0; }
+
+int RaWaitEventHandle(
+    int event_handle, struct SocketEventInfoT* event_infos, int timeout, unsigned int maxevents,
+    unsigned int* events_num)
 {
     return 0;
 }
 
-int RaCtlEventHandle(int event_handle, const void *fd_handle, int opcode, enum RaEpollEvent event)
+int RaDestroyEventHandle(int* event_handle) { return 0; }
+
+int RaEpollCtlAdd(const void* fd_handle, RaEpollEvent event) { return 0; }
+
+int RaEpollCtlMod(const void* fd_handle, RaEpollEvent event) { return 0; }
+
+int RaEpollCtlDel(const void* fd_handle) { return 0; }
+
+int RaGetSecRandom(struct RaInfo* info, uint32_t* value) { return 0; }
+
+int RaCtxGetAuxInfo(void* ctx_handle, struct HccpAuxInfoIn* in, struct HccpAuxInfoOut* out) { return 0; }
+
+int RaCtxQpQueryBatch(void* qp_handle[], struct JettyAttr attr[], unsigned int* num) { return 0; }
+
+int RaGetLbMax(void* rdevHandle, int* lbMax) { return 0; }
+
+int RaCtxQpDestroyBatchAsync(void* ctx_handle, void* qp_handle[], unsigned int* num, void** req_handle) { return 0; }
+
+int RaSocketGetVnicIpInfos(
+    unsigned int phyId, enum IdType type, unsigned int ids[], unsigned int num, struct IpInfo infos[])
 {
     return 0;
 }
 
-int RaWaitEventHandle(int event_handle, struct SocketEventInfoT *event_infos, int timeout, unsigned int maxevents,
-    unsigned int *events_num)
-{
-    return 0;
-}
+int RaGetEidByIp(void* ctxHandle, struct IpInfo ip[], union HccpEid eid[], unsigned int* num) { return 0; }
 
-int RaDestroyEventHandle(int *event_handle)
-{
-    return 0;
-}
-
-int RaEpollCtlAdd(const void *fd_handle, RaEpollEvent event)
-{
-    return 0;
-}
-
-int RaEpollCtlMod(const void *fd_handle, RaEpollEvent event)
-{
-    return 0;
-}
-
-int RaEpollCtlDel(const void *fd_handle)
-{
-    return 0;
-}
-
-int RaGetSecRandom(struct RaInfo *info, uint32_t *value)
-{
-    return 0;
-}
-
-int RaCtxGetAuxInfo(void *ctx_handle, struct HccpAuxInfoIn *in, struct HccpAuxInfoOut *out) {
-    return 0;
-}
-
-int RaCtxQpQueryBatch(void *qp_handle[], struct JettyAttr attr[], unsigned int *num) {
-    return 0;
-}
-
-int RaGetLbMax(void *rdevHandle, int *lbMax)
-{
-    return 0;
-}
-
-int RaCtxQpDestroyBatchAsync(void *ctx_handle, void*qp_handle[], unsigned int *num, void **req_handle)
-{
-    return 0;
-}
-
-int RaSocketGetVnicIpInfos(unsigned int phyId, enum IdType type, unsigned int ids[],
-    unsigned int num, struct IpInfo infos[])
-{
-    return 0;
-}
-
-int RaGetEidByIp(void *ctxHandle, struct IpInfo ip[], union HccpEid eid[], unsigned int *num)
-{
-    return 0;
-}
-
-int RaGetHccnCfg(struct RaInfo *info, enum HccnCfgKey key, char *value, unsigned int *valueLen)
+int RaGetHccnCfg(struct RaInfo* info, enum HccnCfgKey key, char* value, unsigned int* valueLen)
 {
     (void)info;
     (void)key;
@@ -741,10 +570,11 @@ int RaGetHccnCfg(struct RaInfo *info, enum HccnCfgKey key, char *value, unsigned
     if (valueLen != nullptr) {
         *valueLen = 0U;
     }
-    return -1;
+    // 未配置 qos_dscp：返回成功空串，由 GetDscpByQos 走默认 DSCP。
+    return 0;
 }
 
-int RaSetTpAttrAsync(void *ctxHandle, uint64_t tpHandle, uint32_t attrBitmap, struct TpAttr *attr, void **reqHandle)
+int RaSetTpAttrAsync(void* ctxHandle, uint64_t tpHandle, uint32_t attrBitmap, struct TpAttr* attr, void** reqHandle)
 {
     static char kStubRaSetTpAttrReq{};
     (void)ctxHandle;
@@ -757,7 +587,7 @@ int RaSetTpAttrAsync(void *ctxHandle, uint64_t tpHandle, uint32_t attrBitmap, st
     return 0;
 }
 
-int RaGetTpAttrAsync(void *ctxHandle, uint64_t tpHandle, uint32_t *attrBitmap, struct TpAttr *attr, void **reqHandle)
+int RaGetTpAttrAsync(void* ctxHandle, uint64_t tpHandle, uint32_t* attrBitmap, struct TpAttr* attr, void** reqHandle)
 {
     static char kStubRaTpAttrReq{};
     (void)ctxHandle;
@@ -774,13 +604,12 @@ int RaGetTpAttrAsync(void *ctxHandle, uint64_t tpHandle, uint32_t *attrBitmap, s
     return 0;
 }
 
-int RaCtxGetTpInfoList(void *ctxHandle, struct GetTpCfg *cfg, struct HccpTpInfo infoList[],
-    unsigned int *num)
+int RaCtxGetTpInfoList(void* ctxHandle, struct GetTpCfg* cfg, struct HccpTpInfo infoList[], unsigned int* num)
 {
     return 0;
 }
 
-int RaCtxGetTpAttr(void *ctxHandle, uint64_t tpHandle, uint32_t *attrBitmap, struct TpAttr *attr)
+int RaCtxGetTpAttr(void* ctxHandle, uint64_t tpHandle, uint32_t* attrBitmap, struct TpAttr* attr)
 {
     (void)ctxHandle;
     (void)tpHandle;
@@ -795,7 +624,7 @@ int RaCtxGetTpAttr(void *ctxHandle, uint64_t tpHandle, uint32_t *attrBitmap, str
     return 0;
 }
 
-int RaCtxSetTpAttr(void *ctxHandle, uint64_t tpHandle, uint32_t attrBitmap, struct TpAttr *attr)
+int RaCtxSetTpAttr(void* ctxHandle, uint64_t tpHandle, uint32_t attrBitmap, struct TpAttr* attr)
 {
     (void)ctxHandle;
     (void)tpHandle;
@@ -804,8 +633,7 @@ int RaCtxSetTpAttr(void *ctxHandle, uint64_t tpHandle, uint32_t attrBitmap, stru
     return 0;
 }
 
-
-int RaNdaGetDirectFlag(void *rdmaHandle, int *directFlag)
+int RaNdaGetDirectFlag(void* rdmaHandle, int* directFlag)
 {
     if (directFlag != nullptr) {
         *directFlag = 1;
@@ -813,22 +641,13 @@ int RaNdaGetDirectFlag(void *rdmaHandle, int *directFlag)
     return 0;
 }
 
-int RaNdaCqCreate(void *rdmaHandle, struct NdaCqInitAttr *attr, struct NdaCqInfo *info, void **cqHandle)
-{
-    return 0;
-}
+int RaNdaCqCreate(void* rdmaHandle, struct NdaCqInitAttr* attr, struct NdaCqInfo* info, void** cqHandle) { return 0; }
 
-int RaNdaCqDestroy(void *rdmaHandle, void *cqHandle)
-{
-    return 0;
-}
+int RaNdaCqDestroy(void* rdmaHandle, void* cqHandle) { return 0; }
 
-int RaNdaQpCreate(void *rdmaHandle, struct NdaQpInitAttr *attr, struct NdaQpInfo *info, void **qpHandle)
-{
-    return 0;
-}
+int RaNdaQpCreate(void* rdmaHandle, struct NdaQpInitAttr* attr, struct NdaQpInfo* info, void** qpHandle) { return 0; }
 
-int RaGetQpAttr(void *qpHandle, struct QpAttr *attr)
+int RaGetQpAttr(void* qpHandle, struct QpAttr* attr)
 {
     if (attr != nullptr) {
         attr->qpn = 1;

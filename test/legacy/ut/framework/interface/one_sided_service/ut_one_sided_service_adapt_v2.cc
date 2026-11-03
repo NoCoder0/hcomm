@@ -32,87 +32,62 @@
 #include "orion_adapter_rts.h"
 #include "one_sided_service_adapt_v2.h"
 
-#include "hccl_one_sided_service.h"
+#include "hccl_one_sided_service_v2.h"
 using namespace std;
 using namespace Hccl;
 
-static nlohmann::json rank_table_910_1server_4rank =
-{
-    {"status", "completed"},
-    {"deploy_mode", "lab"},
-    {"group_count", "1"},
-    {"chip_info", "910"},
-    {"board_id", "0x0000"},
-    {"para_plane_nic_location", "device"},
-    {"para_plane_nic_num", "4"},
-    {"para_plane_nic_name", {"eth0", "eth1", "eth2", "eth3"}},
-    {
-        "group_list",
-        {
-            {
-                {"group_name", ""},
-                {"device_num", "4"},
-                {"server_num", "1"},
-                {"instance_count", "4"},
-                    {
-                        "instance_list",
-                        {
-                            {   {"rank_id", "0"}, {"server_id", "10.0.0.10"},
-                                {
-                                    "devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}, {"device_port", "16666"}}}
-                                }
-                            },
+static nlohmann::json rank_table_910_1server_4rank
+    = {{"status", "completed"},
+       {"deploy_mode", "lab"},
+       {"group_count", "1"},
+       {"chip_info", "910"},
+       {"board_id", "0x0000"},
+       {"para_plane_nic_location", "device"},
+       {"para_plane_nic_num", "4"},
+       {"para_plane_nic_name", {"eth0", "eth1", "eth2", "eth3"}},
+       {"group_list",
+        {{{"group_name", ""},
+          {"device_num", "4"},
+          {"server_num", "1"},
+          {"instance_count", "4"},
+          {"instance_list",
+           {
+               {{"rank_id", "0"},
+                {"server_id", "10.0.0.10"},
+                {"devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}, {"device_port", "16666"}}}}},
 
-                            {   {"rank_id", "1"}, {"server_id", "10.0.0.10"},
-                                {
-                                    "devices", {{{"device_id", "1"}, {"device_ip", "192.168.0.14"}, {"device_port", "16666"}}}
-                                }
-                            },
-                            {   {"rank_id", "2"}, {"server_id", "10.0.0.10"},
-                                {
-                                    "devices", {{{"device_id", "2"}, {"device_ip", "192.168.0.16"}, {"device_port", "16666"}}}
-                                }
-                            },
+               {{"rank_id", "1"},
+                {"server_id", "10.0.0.10"},
+                {"devices", {{{"device_id", "1"}, {"device_ip", "192.168.0.14"}, {"device_port", "16666"}}}}},
+               {{"rank_id", "2"},
+                {"server_id", "10.0.0.10"},
+                {"devices", {{{"device_id", "2"}, {"device_ip", "192.168.0.16"}, {"device_port", "16666"}}}}},
 
-                            {   {"rank_id", "3"}, {"server_id", "10.0.0.10"},
-                                {
-                                    "devices", {{{"device_id", "3"}, {"device_ip", "192.168.0.18"}, {"device_port", "16666"}}}
-                                }
-                            },
+               {{"rank_id", "3"},
+                {"server_id", "10.0.0.10"},
+                {"devices", {{{"device_id", "3"}, {"device_ip", "192.168.0.18"}, {"device_port", "16666"}}}}},
 
-                        }
-                    },
-                    {
-                        "server_list",
-                        {
-                            {
-                                {"server_id", "10.0.0.10"},
-                                {
-                                    "para_plane_info",
-                                    {{
-                                            {"eth0", "192.168.210.2"},
-                                        },
-                                        {
-                                            {"eth1", "192.168.200.2"},
-                                        },
-                                        {
-                                            {"eth2", "192.168.210.2"},
-                                        },
-                                        {
-                                            {"eth3", "192.168.200.2"},
-                                        }
-                                    }
-                                }
+           }},
+          {"server_list",
+           {
+               {{"server_id", "10.0.0.10"},
+                {"para_plane_info",
+                 {{
+                      {"eth0", "192.168.210.2"},
+                  },
+                  {
+                      {"eth1", "192.168.200.2"},
+                  },
+                  {
+                      {"eth2", "192.168.210.2"},
+                  },
+                  {
+                      {"eth3", "192.168.200.2"},
+                  }}}
 
-                            },
-                        }
-                    }
-            }
-        }
-    }                
-};
-class OneSidedUtV2 : public testing::Test
-{
+               },
+           }}}}}};
+class OneSidedUtV2 : public testing::Test {
 protected:
     static void SetUpTestCase()
     {
@@ -125,13 +100,11 @@ protected:
         unsetenv("HCCL_INTRA_ROCE_ENABLE");
         std::cout << "\033[36m--OneSidedUtV2 TearDown--\033[0m" << std::endl;
     }
-    virtual void SetUp()
-    {
-        std::cout << "A Test SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test SetUP" << std::endl; }
     virtual void TearDown()
     {
         std::cout << "A Test TearDown" << std::endl;
+        GlobalMockObject::verify();
     }
 };
 
@@ -140,7 +113,7 @@ TEST_F(OneSidedUtV2, ut_HcclRegisterMemV2_func)
     u32 remoteRankId = 1;
     s32 count = 1024;
     s8* localbuf;
-    localbuf= (s8*)malloc(count * sizeof(s8));
+    localbuf = (s8*)malloc(count * sizeof(s8));
     memset_s(localbuf, count * sizeof(s8), 0, count * sizeof(s8));
     HcclMemDesc localMemDesc, remoteMemDesc;
 
@@ -149,13 +122,9 @@ TEST_F(OneSidedUtV2, ut_HcclRegisterMemV2_func)
     HcclComm hcom = static_cast<HcclComm>(communicator.get());
     CommunicatorImpl commImpl;
     communicator.get()->pimpl.get()->oneSidedService = std::make_unique<Hccl::HcclOneSidedService>(commImpl);
-    MOCKER_CPP(&HcclCommunicator::GetRankId)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    
-    MOCKER_CPP(&HcclOneSidedService::RegMem)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::GetRankId).stubs().will(returnValue(HCCL_SUCCESS));
+
+    MOCKER_CPP(&HcclOneSidedService::RegMem).stubs().will(returnValue(HCCL_SUCCESS));
     HcclResult ret = HcclRegisterMemV2(hcom, remoteRankId, 0, localbuf, 1024, &localMemDesc);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
@@ -177,12 +146,8 @@ TEST_F(OneSidedUtV2, ut_HcclExchangeMemDescV2_func)
     remote.arrayLength = 1;
     remote.array = &remoteDesc;
     u32 actualNum;
-    MOCKER_CPP(&HcclCommunicator::GetRankId)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&HcclOneSidedService::ExchangeMemDesc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::GetRankId).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclOneSidedService::ExchangeMemDesc).stubs().will(returnValue(HCCL_SUCCESS));
     Hccl::CommParams commParams;
     std::unique_ptr<Hccl::HcclCommunicator> communicator = std::make_unique<Hccl::HcclCommunicator>(commParams);
     HcclComm hcom = static_cast<HcclComm>(communicator.get());
@@ -205,14 +170,10 @@ TEST_F(OneSidedUtV2, ut_HcclEnableMemAccessV2_func)
     CommunicatorImpl commImpl;
     communicator.get()->pimpl.get()->oneSidedService = std::make_unique<Hccl::HcclOneSidedService>(commImpl);
 
-    MOCKER_CPP(&HcclOneSidedService::EnableMemAccess)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclOneSidedService::EnableMemAccess).stubs().will(returnValue(HCCL_SUCCESS));
     HcclResult ret = HcclEnableMemAccessV2(hcom, &remoteMemDesc, &remoteMem);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    MOCKER_CPP(&HcclOneSidedService::DisableMemAccess)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclOneSidedService::DisableMemAccess).stubs().will(returnValue(HCCL_SUCCESS));
     ret = HcclDisableMemAccessV2(hcom, &remoteMemDesc);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
@@ -224,12 +185,10 @@ TEST_F(OneSidedUtV2, ut_HcclBatchPutV2_func)
     char file_name_t[] = "./ut_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -242,10 +201,10 @@ TEST_F(OneSidedUtV2, ut_HcclBatchPutV2_func)
     u32 itemNum = 1;
     s8* localbuf;
     s8* remotebuf;
-    
-    localbuf= (s8*)malloc(count * sizeof(s8));
+
+    localbuf = (s8*)malloc(count * sizeof(s8));
     memset_s(localbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    remotebuf= (s8*)malloc(count * sizeof(s8));
+    remotebuf = (s8*)malloc(count * sizeof(s8));
     memset_s(remotebuf, count * sizeof(s8), 0, count * sizeof(s8));
     HcclOneSideOpDesc desc[itemNum];
     desc[0].count = 1024;
@@ -257,7 +216,7 @@ TEST_F(OneSidedUtV2, ut_HcclBatchPutV2_func)
     char* rank_table_file = "./ut_opbase_test.json";
     MOCKER(RaTlvRequest).stubs().will(returnValue(0));
     MOCKER_CPP(&CommunicatorImpl::TryInitCcuFeature).stubs().with(mockcpp::any()).will(ignoreReturnValue());
-    MOCKER_CPP(static_cast<HcclResult (HcclCommunicator::*)(const std::string &)>(&HcclCommunicator::Init))
+    MOCKER_CPP(static_cast<HcclResult (HcclCommunicator::*)(const std::string&)>(&HcclCommunicator::Init))
         .stubs()
         .with(mockcpp::any())
         .will(returnValue(HCCL_SUCCESS));
@@ -290,10 +249,7 @@ TEST_F(OneSidedUtV2, ut_HcclBatchPutV2_func)
 
     EXPECT_EQ(ret, HCCL_E_PTR);
 
-    MOCKER(&HcomCheckUserRankV2)
-        .stubs()
-        .with(mockcpp::any(),mockcpp::any())
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(&HcomCheckUserRankV2).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     Hccl::CommParams commParams;
     std::unique_ptr<Hccl::HcclCommunicator> communicator = std::make_unique<Hccl::HcclCommunicator>(commParams);
     HcclComm hcom = static_cast<HcclComm>(communicator.get());
@@ -301,14 +257,10 @@ TEST_F(OneSidedUtV2, ut_HcclBatchPutV2_func)
     communicator.get()->pimpl.get()->oneSidedService = std::make_unique<Hccl::HcclOneSidedService>(commImpl);
     u32 a = 10;
     stream = reinterpret_cast<rtStream_t>(&a);
-    MOCKER_CPP(&HcclOneSidedService::BatchGet)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclOneSidedService::BatchGet).stubs().will(returnValue(HCCL_SUCCESS));
     ret = HcclBatchGetV2(hcom, 1, desc, itemNum, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    MOCKER_CPP(&HcclOneSidedService::BatchPut)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclOneSidedService::BatchPut).stubs().will(returnValue(HCCL_SUCCESS));
     ret = HcclBatchPutV2(hcom, 1, desc, itemNum, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 

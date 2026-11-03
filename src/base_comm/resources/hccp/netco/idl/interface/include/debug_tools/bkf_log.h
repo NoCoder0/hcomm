@@ -24,27 +24,27 @@ extern "C" {
 #pragma pack(4)
 /* common */
 /**
-* @brief log库句柄,用于输出私有日志,输出文件的位置由outputOrNull实现决定
-*/
+ * @brief log库句柄,用于输出私有日志,输出文件的位置由outputOrNull实现决定
+ */
 typedef struct tagBkfLog BkfLog;
 
 /**
-* @brief log输出到内存时，允许占用的最大长度，单位：字节
-*/
+ * @brief log输出到内存时，允许占用的最大长度，单位：字节
+ */
 #define BKF_LOG_MEM_BUF_LEN_MAX (BKF_1M * 100)
 
 /* init */
 /**
-* @brief log输出函数原型
-*/
+ * @brief log输出函数原型
+ */
 typedef void (*F_BKF_LOG_OUTPUT)(void *cookieInit, const char *outStr);
 
 /* debug输出函数原型 */
 typedef void (*F_BKF_DEBUG_OUTPUT)(void *cookieInit, const char *outStr);
 
 /**
-* @brief log级别
-*/
+ * @brief log级别
+ */
 enum {
     BKF_LOG_LVL_DEBUG,
     BKF_LOG_LVL_INFO,
@@ -55,24 +55,24 @@ enum {
 };
 
 /**
-* @brief 检查log级别参数是否合法
-*/
+ * @brief 检查log级别参数是否合法
+ */
 #define BKF_LOG_LVL_IS_VALID(lvl) ((lvl) < BKF_LOG_LVL_CNT)
 
 /**
-* @brief log库初始化参数
-*/
+ * @brief log库初始化参数
+ */
 typedef struct tagBkfLogInitArg {
-    char *name; /**< 名称 */
-    BkfMemMng *memMng; /**< 内存库句柄,见bkf_mem.h,同一app内可复用 */
-    BkfDisp *disp; /**< 诊断显示库句柄,见bkf_disp.h,同一app内可复用 */
-    BkfLogCnt *logCnt; /**< log cnt库句柄,见bkf_log_cnt.h,日志记录次数，同一app内可复用 */
-    void *cookie; /**< log输出接口回调cookie */
+    char *name;                    /**< 名称 */
+    BkfMemMng *memMng;             /**< 内存库句柄,见bkf_mem.h,同一app内可复用 */
+    BkfDisp *disp;                 /**< 诊断显示库句柄,见bkf_disp.h,同一app内可复用 */
+    BkfLogCnt *logCnt;             /**< log cnt库句柄,见bkf_log_cnt.h,日志记录次数，同一app内可复用 */
+    void *cookie;                  /**< log输出接口回调cookie */
     F_BKF_LOG_OUTPUT outputOrNull; /**< 输出函数，可以为空 */
-    BOOL outputEnable; /**< output使能开关 */
-    BOOL logFuncName; /**< 是否允许日志中输出函数名 */
-    BOOL logTime; /**< 是否允许日志中输出时间 */
-    uint8_t moduleDefalutLvl; /**< 模块默认的log level */
+    BOOL outputEnable;             /**< output使能开关 */
+    BOOL logFuncName;              /**< 是否允许日志中输出函数名 */
+    BOOL logTime;                  /**< 是否允许日志中输出时间 */
+    uint8_t moduleDefalutLvl;      /**< 模块默认的log level */
     uint8_t pad1[3];
     int32_t memBufLen; /**< 日志输出到内存允许占用的空间 */
     uint8_t rsv[0x10];
@@ -160,11 +160,12 @@ void BkfLogSetOutputEnable(BkfLog *log, BOOL enable);
  * @param[in] ... 格式化字串相关的可变参数。
  * @return none
  */
-#define BKF_LOG(log, modName, line, lvl, fmt, ...) do {                                                    \
-    if (((log) != VOS_NULL) && (BkfLogFirstHalf((log), (char*)(modName), (line), (lvl)) == BKF_OK)) {    \
-        BkfLogSecondHalf((log), (char*)(modName), (line), (lvl), (char*)(__func__), fmt, ##__VA_ARGS__); \
-    }                                                                                                      \
-} while (0)
+#define BKF_LOG(log, modName, line, lvl, fmt, ...)                                                                     \
+    do {                                                                                                               \
+        if (((log) != VOS_NULL) && (BkfLogFirstHalf((log), (char *)(modName), (line), (lvl)) == BKF_OK)) {             \
+            BkfLogSecondHalf((log), (char *)(modName), (line), (lvl), (char *)(__func__), fmt, ##__VA_ARGS__);         \
+        }                                                                                                              \
+    } while (0)
 
 /**
  * @brief debug log宏封装。记录细粒度的诊断信息。
@@ -174,9 +175,10 @@ void BkfLogSetOutputEnable(BkfLog *log, BOOL enable);
  * @param[in] ... 格式化字串相关的可变参数。
  * @return none
  */
-#define BKF_LOG_DEBUG(log, fmt, ...) do {                                                  \
-    BKF_LOG((log), (BKF_MOD_NAME_), (BKF_LINE_), (BKF_LOG_LVL_DEBUG), fmt, ##__VA_ARGS__); \
-} while (0)
+#define BKF_LOG_DEBUG(log, fmt, ...)                                                                                   \
+    do {                                                                                                               \
+        BKF_LOG((log), (BKF_MOD_NAME_), (BKF_LINE_), (BKF_LOG_LVL_DEBUG), fmt, ##__VA_ARGS__);                         \
+    } while (0)
 
 /**
  * @brief info log宏封装。记录粗粒度的诊断信息，例如关键的输入输出点。
@@ -186,9 +188,10 @@ void BkfLogSetOutputEnable(BkfLog *log, BOOL enable);
  * @param[in] ... 格式化字串相关的可变参数。
  * @return none
  */
-#define BKF_LOG_INFO(log, fmt, ...) do {                                                   \
-    BKF_LOG((log), (BKF_MOD_NAME_), (BKF_LINE_), (BKF_LOG_LVL_INFO), fmt, ##__VA_ARGS__);  \
-} while (0)
+#define BKF_LOG_INFO(log, fmt, ...)                                                                                    \
+    do {                                                                                                               \
+        BKF_LOG((log), (BKF_MOD_NAME_), (BKF_LINE_), (BKF_LOG_LVL_INFO), fmt, ##__VA_ARGS__);                          \
+    } while (0)
 
 /**
  * @brief warn log宏封装。记录潜在的错误。
@@ -198,9 +201,10 @@ void BkfLogSetOutputEnable(BkfLog *log, BOOL enable);
  * @param[in] ... 格式化字串相关的可变参数。
  * @return none
  */
-#define BKF_LOG_WARN(log, fmt, ...) do {                                                       \
-    BKF_LOG((log), (BKF_MOD_NAME_), (BKF_LINE_), (BKF_LOG_LVL_WARN), fmt, ##__VA_ARGS__);      \
-} while (0)
+#define BKF_LOG_WARN(log, fmt, ...)                                                                                    \
+    do {                                                                                                               \
+        BKF_LOG((log), (BKF_MOD_NAME_), (BKF_LINE_), (BKF_LOG_LVL_WARN), fmt, ##__VA_ARGS__);                          \
+    } while (0)
 
 /**
  * @brief error log宏封装。记录错误。
@@ -210,15 +214,16 @@ void BkfLogSetOutputEnable(BkfLog *log, BOOL enable);
  * @param[in] ... 格式化字串相关的可变参数。
  * @return none
  */
-#define BKF_LOG_ERROR(log, fmt, ...) do {                                                      \
-    BKF_LOG((log), (BKF_MOD_NAME_), (BKF_LINE_), (BKF_LOG_LVL_ERROR), fmt, ##__VA_ARGS__);     \
-} while (0)
+#define BKF_LOG_ERROR(log, fmt, ...)                                                                                   \
+    do {                                                                                                               \
+        BKF_LOG((log), (BKF_MOD_NAME_), (BKF_LINE_), (BKF_LOG_LVL_ERROR), fmt, ##__VA_ARGS__);                         \
+    } while (0)
 
 #pragma pack()
 
 /**
-* @brief 黑匣子类型，log库内唯一即可
-*/
+ * @brief 黑匣子类型，log库内唯一即可
+ */
 enum {
     BKF_BLACKBOX_TYPE_INVALID = 0,
     BKF_BLACKBOX_TYPE_SESS = 1,
@@ -259,9 +264,9 @@ void BkfBlackBoxDelRegType(BkfLog *log, uint16_t type);
  */
 void BkfBlackBoxLog(BkfLog *log, uint16_t type, void *key, uint32_t bid, const char *format, ...);
 /**
-* @brief 历史日志记录宏
-*/
-#define BKF_BLACKBOX_LOG(LOG, TYPE, KEYPTR, BID, fmt, ...) \
+ * @brief 历史日志记录宏
+ */
+#define BKF_BLACKBOX_LOG(LOG, TYPE, KEYPTR, BID, fmt, ...)                                                             \
     BkfBlackBoxLog((LOG), (TYPE), (KEYPTR), (BID), (fmt), ##__VA_ARGS__)
 
 /**
@@ -285,8 +290,8 @@ void BkfBlackBoxDispOneInstLog(BkfLog *log, uint16_t type, void *key, uint32_t b
  */
 void BkfBlackBoxDelLogInstNode(BkfLog *log, uint16_t type, void *key, uint32_t bid);
 /**
-* @brief 历史日志删除操作宏
-*/
+ * @brief 历史日志删除操作宏
+ */
 #define BKF_BLACKBOX_DELLOGINST(LOG, TYPE, KEYPTR, BID) BkfBlackBoxDelLogInstNode((LOG), (TYPE), (KEYPTR), (BID))
 /**
  * @brief 获取log日志是否打开的开关
@@ -335,4 +340,3 @@ void BkfLogTraceRcvDataFlow(BkfLog *log, char *recBuf, int32_t len);
 }
 #endif
 #endif
-

@@ -34,13 +34,9 @@ using namespace hccl;
  * 该测试类用于验证HcommFlush接口的功能，包括：
  * - 测试正常情况下调用Flush操作
  */
-class UtAicpuTsHcommFlush : public testing::Test
-{
+class UtAicpuTsHcommFlush : public testing::Test {
 protected:
-    virtual void TearDown() override
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() override { GlobalMockObject::verify(); }
 
     int32_t res{HCCL_E_RESERVED};
 };

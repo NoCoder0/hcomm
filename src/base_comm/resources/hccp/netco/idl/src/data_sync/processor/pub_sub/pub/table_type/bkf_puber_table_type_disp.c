@@ -48,9 +48,9 @@ void BkfPuberTableTypeDispType(BkfPuberTableTypeMng *tableTypeMng)
         return;
     }
 
-    BKF_DISP_PRINTF(disp, "typeId[%d] = (%u)/cookie(%#x)/tupleUpdateCode(%#x)/tupleUpdateCode(%#x)\n",
-                    cnt, tableType->vTbl.tableTypeId, BKF_MASK_ADDR(tableType->vTbl.cookie),
-                    BKF_MASK_ADDR(tableType->vTbl.tupleUpdateCode), BKF_MASK_ADDR(tableType->vTbl.tupleUpdateCode));
+    BKF_DISP_PRINTF(disp, "typeId[%d] = (%u)/cookie(%#x)/tupleUpdateCode(%#x)/tupleUpdateCode(%#x)\n", cnt,
+        tableType->vTbl.tableTypeId, BKF_MASK_ADDR(tableType->vTbl.cookie),
+        BKF_MASK_ADDR(tableType->vTbl.tupleUpdateCode), BKF_MASK_ADDR(tableType->vTbl.tupleUpdateCode));
     cnt++;
     BKF_DISP_SAVE_3NUM(disp, tableType->vTbl.tableTypeId, cnt, 0);
 }
@@ -79,4 +79,3 @@ void BkfPuberTableTypeDispUninit(BkfPuberTableTypeMng *tableTypeMng)
 #ifdef __cplusplus
 }
 #endif
-

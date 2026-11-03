@@ -36,19 +36,16 @@ using namespace std;
 using namespace hccl;
 
 /* ===== Stub functions for hrtGetDeviceRefresh ===== */
-static HcclResult stub_hrtGetDeviceRefresh_success(s32 *deviceLogicId)
+static HcclResult stub_hrtGetDeviceRefresh_success(s32* deviceLogicId)
 {
     *deviceLogicId = 0;
     return HCCL_SUCCESS;
 }
 
-static HcclResult stub_hrtGetDeviceRefresh_fail(s32 *deviceLogicId)
-{
-    return HCCL_E_INTERNAL;
-}
+static HcclResult stub_hrtGetDeviceRefresh_fail(s32* deviceLogicId) { return HCCL_E_INTERNAL; }
 
 /* ===== Stub for TypicalMrManager::RegisterMem ===== */
-static HcclResult stub_RegisterMem_success(TypicalMrManager* self, struct MrInfoT &mrInfo)
+static HcclResult stub_RegisterMem_success(TypicalMrManager* self, struct MrInfoT& mrInfo)
 {
     mrInfo.lkey = 0x12345678;
     mrInfo.rkey = 0x9ABCDEF0;
@@ -56,15 +53,15 @@ static HcclResult stub_RegisterMem_success(TypicalMrManager* self, struct MrInfo
 }
 
 /* ===== Stub for TypicalQpManager::CreateCq ===== */
-static HcclResult stub_CreateCq_success(TypicalQpManager* self, AscendCQInfo &cqInfo)
+static HcclResult stub_CreateCq_success(TypicalQpManager* self, AscendCQInfo& cqInfo)
 {
     cqInfo.cqn = 42;
     return HCCL_SUCCESS;
 }
 
 /* ===== Stub for TypicalQpManager::CreateQpWithCQ ===== */
-static HcclResult stub_CreateQpWithCQ_success(TypicalQpManager* self, struct TypicalQp &qpInfo,
-    const QpConfigWithCQInfo &qpConfig)
+static HcclResult
+stub_CreateQpWithCQ_success(TypicalQpManager* self, struct TypicalQp& qpInfo, const QpConfigWithCQInfo& qpConfig)
 {
     qpInfo.qpn = 100;
     qpInfo.gidIdx = 1;
@@ -76,7 +73,7 @@ static HcclResult stub_CreateQpWithCQ_success(TypicalQpManager* self, struct Typ
 }
 
 /* ===== Stub for TypicalQpManager::GetCqDepth ===== */
-static HcclResult stub_GetCqDepth_success(TypicalQpManager* self, uint32_t cqn, uint32_t &cqDepth)
+static HcclResult stub_GetCqDepth_success(TypicalQpManager* self, uint32_t cqn, uint32_t& cqDepth)
 {
     cqDepth = 128;
     return HCCL_SUCCESS;
@@ -90,9 +87,9 @@ static HcclResult stub_GetCqHandle_success(TypicalQpManager* self, uint32_t cqn,
 }
 
 /* ===== Stub for HrtRaPollTypicalCq ===== */
-static s32 stub_HrtRaPollTypicalCq_success(void* cqHandle, u32 num, void *wc)
+static s32 stub_HrtRaPollTypicalCq_success(void* cqHandle, u32 num, void* wc)
 {
-    struct AscendWc *wcArr = static_cast<struct AscendWc*>(wc);
+    struct AscendWc* wcArr = static_cast<struct AscendWc*>(wc);
     wcArr[0].wrId = 0xAAAA;
     wcArr[0].status = ASCEND_WC_SUCCESS;
     wcArr[0].opcode = ASCEND_WC_SEND;
@@ -101,28 +98,24 @@ static s32 stub_HrtRaPollTypicalCq_success(void* cqHandle, u32 num, void *wc)
     return 2;
 }
 
-static s32 stub_HrtRaPollTypicalCq_fail(void* cqHandle, u32 num, void *wc)
-{
-    return -1;
-}
+static s32 stub_HrtRaPollTypicalCq_fail(void* cqHandle, u32 num, void* wc) { return -1; }
 
 /* ===== Stub for TypicalQpManager::GetQpHandleByQpn ===== */
-static HcclResult stub_GetQpHandleByQpn_success(TypicalQpManager* self, u32 qpn, QpHandle &qpHandle)
+static HcclResult stub_GetQpHandleByQpn_success(TypicalQpManager* self, u32 qpn, QpHandle& qpHandle)
 {
     qpHandle = reinterpret_cast<QpHandle>(0xBEEF0000 + qpn);
     return HCCL_SUCCESS;
 }
 
 /* ===== Stub for TypicalQpManager::GetVerbsQpHandleByQpn ===== */
-static HcclResult stub_GetVerbsQpHandleByQpn_success(TypicalQpManager* self, u32 qpn, QpHandle &qpHandle)
+static HcclResult stub_GetVerbsQpHandleByQpn_success(TypicalQpManager* self, u32 qpn, QpHandle& qpHandle)
 {
     qpHandle = reinterpret_cast<QpHandle>(0xBEEF0000 + qpn);
     return HCCL_SUCCESS;
 }
 
 /* ===== Stub for HrtRaSendWrVerbs ===== */
-static HcclResult stub_HrtRaSendWrVerbs_success(QpHandle handle,
-    struct SendWrVerbs *wr, struct SendWrRsp *opRsp)
+static HcclResult stub_HrtRaSendWrVerbs_success(QpHandle handle, struct SendWrVerbs* wr, struct SendWrRsp* opRsp)
 {
     opRsp->db.dbIndex = 1;
     opRsp->db.dbInfo = 0x1000;
@@ -130,18 +123,13 @@ static HcclResult stub_HrtRaSendWrVerbs_success(QpHandle handle,
 }
 
 /* ===== Stub for hrtRDMADBSend ===== */
-static HcclResult stub_hrtRDMADBSend_success(uint32_t dbindex, uint64_t dbinfo,
-    rtStream_t stream)
+static HcclResult stub_hrtRDMADBSend_success(uint32_t dbindex, uint64_t dbinfo, rtStream_t stream)
 {
     return HCCL_SUCCESS;
 }
 
 /* ===== Stub for HrtRaRecvWrVerbs ===== */
-static HcclResult stub_HrtRaRecvWrVerbs_success(QpHandle handle,
-    struct RecvWrVerbs *wr)
-{
-    return HCCL_SUCCESS;
-}
+static HcclResult stub_HrtRaRecvWrVerbs_success(QpHandle handle, struct RecvWrVerbs* wr) { return HCCL_SUCCESS; }
 
 /* ===== Helpers for TypicalQpManagerTest ===== */
 static void ClearAllMaps(TypicalQpManager& instance)
@@ -158,22 +146,16 @@ static void SetRdmaHandle(TypicalQpManager& instance)
 
 /* ===== Stub for hrtGetDevice ===== */
 static s32 g_deviceLogicId = 0;
-static HcclResult stub_hrtGetDevice_success(s32 *deviceLogicId)
+static HcclResult stub_hrtGetDevice_success(s32* deviceLogicId)
 {
     *deviceLogicId = g_deviceLogicId;
     return HCCL_SUCCESS;
 }
 
 /* ===== Stub for GetExternalInputRdmaRetryCnt / GetExternalInputRdmaTimeOut ===== */
-static u32 stub_GetExternalInputRdmaRetryCnt()
-{
-    return 7u;
-}
+static u32 stub_GetExternalInputRdmaRetryCnt() { return 7u; }
 
-static u32 stub_GetExternalInputRdmaTimeOut()
-{
-    return 14u;
-}
+static u32 stub_GetExternalInputRdmaTimeOut() { return 14u; }
 
 /* ===== Stub for RdmaResourceManager::GetRdmaHandle ===== */
 static HcclResult stub_GetRdmaHandle_success(RdmaResourceManager* self, RdmaHandle& rdmaHandle)
@@ -182,64 +164,49 @@ static HcclResult stub_GetRdmaHandle_success(RdmaResourceManager* self, RdmaHand
     return HCCL_SUCCESS;
 }
 
-static HcclResult stub_GetRdmaHandle_fail(RdmaResourceManager* self, RdmaHandle& rdmaHandle)
-{
-    return HCCL_E_INTERNAL;
-}
+static HcclResult stub_GetRdmaHandle_fail(RdmaResourceManager* self, RdmaHandle& rdmaHandle) { return HCCL_E_INTERNAL; }
 
 /* ===== Stub for hrtRaTypicalQpModify ===== */
-static HcclResult stub_hrtRaTypicalQpModify_success(QpHandle qpHandle,
-    struct TypicalQp* localQpInfo, struct TypicalQp* remoteQpInfo)
+static HcclResult
+stub_hrtRaTypicalQpModify_success(QpHandle qpHandle, struct TypicalQp* localQpInfo, struct TypicalQp* remoteQpInfo)
 {
     return HCCL_SUCCESS;
 }
 
-static HcclResult stub_hrtRaTypicalQpModify_fail(QpHandle qpHandle,
-    struct TypicalQp* localQpInfo, struct TypicalQp* remoteQpInfo)
+static HcclResult
+stub_hrtRaTypicalQpModify_fail(QpHandle qpHandle, struct TypicalQp* localQpInfo, struct TypicalQp* remoteQpInfo)
 {
     return HCCL_E_INTERNAL;
 }
 
 /* ===== Stub for HrtRaQpDestroyWithoutCQ ===== */
-static HcclResult stub_HrtRaQpDestroyWithoutCQ_success(QpHandle handle)
-{
-    return HCCL_SUCCESS;
-}
+static HcclResult stub_HrtRaQpDestroyWithoutCQ_success(QpHandle handle) { return HCCL_SUCCESS; }
 
-static HcclResult stub_HrtRaQpDestroyWithoutCQ_fail(QpHandle handle)
-{
-    return HCCL_E_INTERNAL;
-}
+static HcclResult stub_HrtRaQpDestroyWithoutCQ_fail(QpHandle handle) { return HCCL_E_INTERNAL; }
 
 /* ===== Stub for HrtRaQpDestroy ===== */
-static HcclResult stub_HrtRaQpDestroy_success(QpHandle handle)
-{
-    return HCCL_SUCCESS;
-}
+static HcclResult stub_HrtRaQpDestroy_success(QpHandle handle) { return HCCL_SUCCESS; }
 
 /* ===== Stub for CreateQpWithCQConfig ===== */
-static HcclResult stub_CreateQpWithCQConfig_success(RdmaHandle rdmaHandle, s32 qpMode,
-    const QpConfigWithCQInfo& qpConfig, QpHandle &qpHandle, struct TypicalQp& qpInfo)
+static HcclResult stub_CreateQpWithCQConfig_success(
+    RdmaHandle rdmaHandle, s32 qpMode, const QpConfigWithCQInfo& qpConfig, QpHandle& qpHandle, struct TypicalQp& qpInfo)
 {
     qpHandle = reinterpret_cast<QpHandle>(0xBEEF0001);
     qpInfo.qpn = 100;
     return HCCL_SUCCESS;
 }
 
-static HcclResult stub_CreateQpWithCQConfig_fail(RdmaHandle rdmaHandle, s32 qpMode,
-    const QpConfigWithCQInfo& qpConfig, QpHandle &qpHandle, struct TypicalQp& qpInfo)
+static HcclResult stub_CreateQpWithCQConfig_fail(
+    RdmaHandle rdmaHandle, s32 qpMode, const QpConfigWithCQInfo& qpConfig, QpHandle& qpHandle, struct TypicalQp& qpInfo)
 {
     return HCCL_E_INTERNAL;
 }
 
 /* ===== Stub for DestroyTypicalCq ===== */
-static HcclResult stub_DestroyTypicalCq_success(RdmaHandle rdmaHandle, u32 cqn, void *cqHandle)
-{
-    return HCCL_SUCCESS;
-}
+static HcclResult stub_DestroyTypicalCq_success(RdmaHandle rdmaHandle, u32 cqn, void* cqHandle) { return HCCL_SUCCESS; }
 
 /* ===== Stub for CreateTypicalCq ===== */
-static HcclResult stub_CreateTypicalCq_success(RdmaHandle rdmaHandle, u32 cqDepth, u32 &cqn, void **cqHandle)
+static HcclResult stub_CreateTypicalCq_success(RdmaHandle rdmaHandle, u32 cqDepth, u32& cqn, void** cqHandle)
 {
     cqn = 42;
     *cqHandle = reinterpret_cast<void*>(0xDEAD0001);
@@ -251,10 +218,7 @@ static HcclResult stub_CreateTypicalCq_success(RdmaHandle rdmaHandle, u32 cqDept
  * ================================================================== */
 class InterfaceHcclVerbsTest : public testing::Test {
 protected:
-    virtual void SetUp()
-    {
-        std::cout << "InterfaceHcclVerbsTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "InterfaceHcclVerbsTest SetUP" << std::endl; }
     virtual void TearDown()
     {
         GlobalMockObject::verify();
@@ -294,7 +258,10 @@ TEST_F(InterfaceHcclVerbsTest, InitV2_InitFailure)
 TEST_F(InterfaceHcclVerbsTest, RdmaMemRegister_Success)
 {
     MOCKER(hrtGetDeviceRefresh).stubs().will(invoke(stub_hrtGetDeviceRefresh_success));
-    MOCKER_CPP(&TypicalMrManager::RegisterMem).stubs().with(mockcpp::any(), mockcpp::any()).will(invoke(stub_RegisterMem_success));
+    MOCKER_CPP(&TypicalMrManager::RegisterMem)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(invoke(stub_RegisterMem_success));
 
     AscendMrAttr memInfo{};
     memInfo.addr = 0x1000;
@@ -305,10 +272,7 @@ TEST_F(InterfaceHcclVerbsTest, RdmaMemRegister_Success)
     EXPECT_EQ(memInfo.rkey, 0x9ABCDEF0u);
 }
 
-TEST_F(InterfaceHcclVerbsTest, RdmaMemRegister_NullPtr)
-{
-    EXPECT_EQ(hcclRdmaMemRegister(nullptr), HCCL_E_PTR);
-}
+TEST_F(InterfaceHcclVerbsTest, RdmaMemRegister_NullPtr) { EXPECT_EQ(hcclRdmaMemRegister(nullptr), HCCL_E_PTR); }
 
 TEST_F(InterfaceHcclVerbsTest, RdmaMemRegister_RegisterMemFailure)
 {
@@ -335,10 +299,7 @@ TEST_F(InterfaceHcclVerbsTest, RdmaMemDeRegister_Success)
     EXPECT_EQ(hcclRdmaMemDeRegister(&memInfo), HCCL_SUCCESS);
 }
 
-TEST_F(InterfaceHcclVerbsTest, RdmaMemDeRegister_NullPtr)
-{
-    EXPECT_EQ(hcclRdmaMemDeRegister(nullptr), HCCL_E_PTR);
-}
+TEST_F(InterfaceHcclVerbsTest, RdmaMemDeRegister_NullPtr) { EXPECT_EQ(hcclRdmaMemDeRegister(nullptr), HCCL_E_PTR); }
 
 TEST_F(InterfaceHcclVerbsTest, RdmaMemDeRegister_DeRegisterMemFailure)
 {
@@ -355,7 +316,10 @@ TEST_F(InterfaceHcclVerbsTest, RdmaMemDeRegister_DeRegisterMemFailure)
 TEST_F(InterfaceHcclVerbsTest, CreateAscendCQWithAttr_Success)
 {
     MOCKER(hrtGetDeviceRefresh).stubs().will(invoke(stub_hrtGetDeviceRefresh_success));
-    MOCKER_CPP(&TypicalQpManager::CreateCq).stubs().with(mockcpp::any(), mockcpp::any()).will(invoke(stub_CreateCq_success));
+    MOCKER_CPP(&TypicalQpManager::CreateCq)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(invoke(stub_CreateCq_success));
 
     AscendCQInfo cqInfo{};
     cqInfo.cqDepth = 128;
@@ -372,7 +336,7 @@ TEST_F(InterfaceHcclVerbsTest, CreateAscendCQWithAttr_NullPtr)
 TEST_F(InterfaceHcclVerbsTest, CreateAscendCQWithAttr_DepthTooSmall)
 {
     AscendCQInfo cqInfo{};
-    cqInfo.cqDepth = 64;
+    cqInfo.cqDepth = 32;
 
     EXPECT_EQ(hcclCreateAscendCQWithAttr(&cqInfo), HCCL_E_PARA);
 }
@@ -407,10 +371,7 @@ TEST_F(InterfaceHcclVerbsTest, DestroyAscendCQ_Success)
     EXPECT_EQ(hcclDestroyAscendCQ(&cqInfo), HCCL_SUCCESS);
 }
 
-TEST_F(InterfaceHcclVerbsTest, DestroyAscendCQ_NullPtr)
-{
-    EXPECT_EQ(hcclDestroyAscendCQ(nullptr), HCCL_E_PTR);
-}
+TEST_F(InterfaceHcclVerbsTest, DestroyAscendCQ_NullPtr) { EXPECT_EQ(hcclDestroyAscendCQ(nullptr), HCCL_E_PTR); }
 
 TEST_F(InterfaceHcclVerbsTest, DestroyAscendCQ_DestroyCqFailure)
 {
@@ -430,8 +391,14 @@ TEST_F(InterfaceHcclVerbsTest, CreateQPWithCQWithAttr_Success)
 {
     MOCKER(hrtGetDeviceRefresh).stubs().will(invoke(stub_hrtGetDeviceRefresh_success));
     MOCKER_CPP(&TypicalQpManager::ValidateCq).stubs().will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&TypicalQpManager::GetCqDepth).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(invoke(stub_GetCqDepth_success));
-    MOCKER_CPP(&TypicalQpManager::CreateQpWithCQ).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(invoke(stub_CreateQpWithCQ_success));
+    MOCKER_CPP(&TypicalQpManager::GetCqDepth)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(invoke(stub_GetCqDepth_success));
+    MOCKER_CPP(&TypicalQpManager::CreateQpWithCQ)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(invoke(stub_CreateQpWithCQ_success));
     MOCKER_CPP(&RdmaResourceManager::GetResvMemPoolIdByType).stubs().will(returnValue(HCCL_E_INTERNAL));
 
     AscendCQInfo sendCQ{};
@@ -461,8 +428,14 @@ TEST_F(InterfaceHcclVerbsTest, CreateQPWithCQWithAttr_CapDefaults)
 {
     MOCKER(hrtGetDeviceRefresh).stubs().will(invoke(stub_hrtGetDeviceRefresh_success));
     MOCKER_CPP(&TypicalQpManager::ValidateCq).stubs().will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&TypicalQpManager::GetCqDepth).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(invoke(stub_GetCqDepth_success));
-    MOCKER_CPP(&TypicalQpManager::CreateQpWithCQ).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(invoke(stub_CreateQpWithCQ_success));
+    MOCKER_CPP(&TypicalQpManager::GetCqDepth)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(invoke(stub_GetCqDepth_success));
+    MOCKER_CPP(&TypicalQpManager::CreateQpWithCQ)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(invoke(stub_CreateQpWithCQ_success));
     MOCKER_CPP(&RdmaResourceManager::GetResvMemPoolIdByType).stubs().will(returnValue(HCCL_E_INTERNAL));
 
     AscendCQInfo sendCQ{};
@@ -638,7 +611,10 @@ TEST_F(InterfaceHcclVerbsTest, ModifyVerbsQP_GetDeviceRefreshFailure)
 TEST_F(InterfaceHcclVerbsTest, PollAscendCQ_Success)
 {
     MOCKER(hrtGetDeviceRefresh).stubs().will(invoke(stub_hrtGetDeviceRefresh_success));
-    MOCKER_CPP(&TypicalQpManager::GetCqHandle).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(invoke(stub_GetCqHandle_success));
+    MOCKER_CPP(&TypicalQpManager::GetCqHandle)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(invoke(stub_GetCqHandle_success));
     MOCKER(HrtRaPollTypicalCq).stubs().will(invoke(stub_HrtRaPollTypicalCq_success));
 
     AscendCQInfo cqInfo{};
@@ -677,7 +653,10 @@ TEST_F(InterfaceHcclVerbsTest, PollAscendCQ_WcNull)
 TEST_F(InterfaceHcclVerbsTest, PollAscendCQ_PollFailure)
 {
     MOCKER(hrtGetDeviceRefresh).stubs().will(invoke(stub_hrtGetDeviceRefresh_success));
-    MOCKER_CPP(&TypicalQpManager::GetCqHandle).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(invoke(stub_GetCqHandle_success));
+    MOCKER_CPP(&TypicalQpManager::GetCqHandle)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(invoke(stub_GetCqHandle_success));
     MOCKER(HrtRaPollTypicalCq).stubs().will(invoke(stub_HrtRaPollTypicalCq_fail));
 
     AscendCQInfo cqInfo{};
@@ -694,19 +673,22 @@ TEST_F(InterfaceHcclVerbsTest, PollAscendCQ_PollFailure)
 TEST_F(InterfaceHcclVerbsTest, PostSend_Success_SingleWR)
 {
     MOCKER(hrtGetDeviceRefresh).stubs().will(invoke(stub_hrtGetDeviceRefresh_success));
-    MOCKER_CPP(&TypicalQpManager::GetVerbsQpHandleByQpn).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(invoke(stub_GetVerbsQpHandleByQpn_success));
+    MOCKER_CPP(&TypicalQpManager::GetVerbsQpHandleByQpn)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(invoke(stub_GetVerbsQpHandleByQpn_success));
     MOCKER(HrtRaSendWrVerbs).stubs().will(invoke(stub_HrtRaSendWrVerbs_success));
     MOCKER(hrtRDMADBSend).stubs().will(invoke(stub_hrtRDMADBSend_success));
 
     AscendVerbsQPInfo qpInfo{};
     qpInfo.qpn = 100;
 
-    struct AscendSge sge{};
+    struct AscendSge sge {};
     sge.addr = 0x1000;
     sge.len = 256;
     sge.lkey = 0x1234;
 
-    struct AscendSendWr sendWr{};
+    struct AscendSendWr sendWr {};
     sendWr.wrId = 1;
     sendWr.numSge = 1;
     sendWr.sgList = &sge;
@@ -714,7 +696,7 @@ TEST_F(InterfaceHcclVerbsTest, PostSend_Success_SingleWR)
     sendWr.next = nullptr;
 
     aclrtStream stream = (aclrtStream)0x87654321;
-    struct AscendSendWr *badWr = nullptr;
+    struct AscendSendWr* badWr = nullptr;
 
     EXPECT_EQ(hcclAscendPostSend(&qpInfo, &sendWr, stream, &badWr), HCCL_SUCCESS);
     EXPECT_EQ(badWr, nullptr);
@@ -723,25 +705,48 @@ TEST_F(InterfaceHcclVerbsTest, PostSend_Success_SingleWR)
 TEST_F(InterfaceHcclVerbsTest, PostSend_Success_LinkedListWRs)
 {
     MOCKER(hrtGetDeviceRefresh).stubs().will(invoke(stub_hrtGetDeviceRefresh_success));
-    MOCKER_CPP(&TypicalQpManager::GetVerbsQpHandleByQpn).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(invoke(stub_GetVerbsQpHandleByQpn_success));
+    MOCKER_CPP(&TypicalQpManager::GetVerbsQpHandleByQpn)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(invoke(stub_GetVerbsQpHandleByQpn_success));
     MOCKER(HrtRaSendWrVerbs).stubs().will(invoke(stub_HrtRaSendWrVerbs_success));
     MOCKER(hrtRDMADBSend).stubs().will(invoke(stub_hrtRDMADBSend_success));
 
     AscendVerbsQPInfo qpInfo{};
     qpInfo.qpn = 100;
 
-    struct AscendSge sge1{}, sge2{}, sge3{};
-    sge1.addr = 0x1000; sge1.len = 256; sge1.lkey = 0x1234;
-    sge2.addr = 0x2000; sge2.len = 512; sge2.lkey = 0x5678;
-    sge3.addr = 0x3000; sge3.len = 128; sge3.lkey = 0x9ABC;
+    struct AscendSge sge1 {
+    }, sge2{}, sge3{};
+    sge1.addr = 0x1000;
+    sge1.len = 256;
+    sge1.lkey = 0x1234;
+    sge2.addr = 0x2000;
+    sge2.len = 512;
+    sge2.lkey = 0x5678;
+    sge3.addr = 0x3000;
+    sge3.len = 128;
+    sge3.lkey = 0x9ABC;
 
-    struct AscendSendWr wr1{}, wr2{}, wr3{};
-    wr1.wrId = 1; wr1.numSge = 1; wr1.sgList = &sge1; wr1.opcode = ASCEND_WR_RDMA_WRITE; wr1.next = &wr2;
-    wr2.wrId = 2; wr2.numSge = 1; wr2.sgList = &sge2; wr2.opcode = ASCEND_WR_RDMA_WRITE; wr2.next = &wr3;
-    wr3.wrId = 3; wr3.numSge = 1; wr3.sgList = &sge3; wr3.opcode = ASCEND_WR_RDMA_WRITE; wr3.next = nullptr;
+    struct AscendSendWr wr1 {
+    }, wr2{}, wr3{};
+    wr1.wrId = 1;
+    wr1.numSge = 1;
+    wr1.sgList = &sge1;
+    wr1.opcode = ASCEND_WR_RDMA_WRITE;
+    wr1.next = &wr2;
+    wr2.wrId = 2;
+    wr2.numSge = 1;
+    wr2.sgList = &sge2;
+    wr2.opcode = ASCEND_WR_RDMA_WRITE;
+    wr2.next = &wr3;
+    wr3.wrId = 3;
+    wr3.numSge = 1;
+    wr3.sgList = &sge3;
+    wr3.opcode = ASCEND_WR_RDMA_WRITE;
+    wr3.next = nullptr;
 
     aclrtStream stream = (aclrtStream)0x87654321;
-    struct AscendSendWr *badWr = nullptr;
+    struct AscendSendWr* badWr = nullptr;
 
     EXPECT_EQ(hcclAscendPostSend(&qpInfo, &wr1, stream, &badWr), HCCL_SUCCESS);
     EXPECT_EQ(badWr, nullptr);
@@ -749,9 +754,9 @@ TEST_F(InterfaceHcclVerbsTest, PostSend_Success_LinkedListWRs)
 
 TEST_F(InterfaceHcclVerbsTest, PostSend_QpInfoNull)
 {
-    struct AscendSendWr sendWr{};
+    struct AscendSendWr sendWr {};
     aclrtStream stream = (aclrtStream)0x87654321;
-    struct AscendSendWr *badWr = nullptr;
+    struct AscendSendWr* badWr = nullptr;
 
     EXPECT_EQ(hcclAscendPostSend(nullptr, &sendWr, stream, &badWr), HCCL_E_PTR);
 }
@@ -760,7 +765,7 @@ TEST_F(InterfaceHcclVerbsTest, PostSend_SendWrNull)
 {
     AscendVerbsQPInfo qpInfo{};
     aclrtStream stream = (aclrtStream)0x87654321;
-    struct AscendSendWr *badWr = nullptr;
+    struct AscendSendWr* badWr = nullptr;
 
     EXPECT_EQ(hcclAscendPostSend(&qpInfo, nullptr, stream, &badWr), HCCL_E_PTR);
 }
@@ -768,7 +773,7 @@ TEST_F(InterfaceHcclVerbsTest, PostSend_SendWrNull)
 TEST_F(InterfaceHcclVerbsTest, PostSend_BadWrNull)
 {
     AscendVerbsQPInfo qpInfo{};
-    struct AscendSendWr sendWr{};
+    struct AscendSendWr sendWr {};
     aclrtStream stream = (aclrtStream)0x87654321;
 
     EXPECT_EQ(hcclAscendPostSend(&qpInfo, &sendWr, stream, nullptr), HCCL_E_PTR);
@@ -777,8 +782,8 @@ TEST_F(InterfaceHcclVerbsTest, PostSend_BadWrNull)
 TEST_F(InterfaceHcclVerbsTest, PostSend_StreamNull)
 {
     AscendVerbsQPInfo qpInfo{};
-    struct AscendSendWr sendWr{};
-    struct AscendSendWr *badWr = nullptr;
+    struct AscendSendWr sendWr {};
+    struct AscendSendWr* badWr = nullptr;
 
     EXPECT_EQ(hcclAscendPostSend(&qpInfo, &sendWr, nullptr, &badWr), HCCL_E_PTR);
 }
@@ -786,17 +791,20 @@ TEST_F(InterfaceHcclVerbsTest, PostSend_StreamNull)
 TEST_F(InterfaceHcclVerbsTest, PostSend_NumSgeExceedsMax)
 {
     MOCKER(hrtGetDeviceRefresh).stubs().will(invoke(stub_hrtGetDeviceRefresh_success));
-    MOCKER_CPP(&TypicalQpManager::GetVerbsQpHandleByQpn).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(invoke(stub_GetVerbsQpHandleByQpn_success));
+    MOCKER_CPP(&TypicalQpManager::GetVerbsQpHandleByQpn)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(invoke(stub_GetVerbsQpHandleByQpn_success));
 
     AscendVerbsQPInfo qpInfo{};
     qpInfo.qpn = 100;
 
-    struct AscendSendWr sendWr{};
+    struct AscendSendWr sendWr {};
     sendWr.numSge = 17;
     sendWr.sgList = (struct AscendSge*)0x1000;
 
     aclrtStream stream = (aclrtStream)0x87654321;
-    struct AscendSendWr *badWr = nullptr;
+    struct AscendSendWr* badWr = nullptr;
 
     EXPECT_EQ(hcclAscendPostSend(&qpInfo, &sendWr, stream, &badWr), HCCL_E_PARA);
 }
@@ -804,17 +812,20 @@ TEST_F(InterfaceHcclVerbsTest, PostSend_NumSgeExceedsMax)
 TEST_F(InterfaceHcclVerbsTest, PostSend_NullSgList)
 {
     MOCKER(hrtGetDeviceRefresh).stubs().will(invoke(stub_hrtGetDeviceRefresh_success));
-    MOCKER_CPP(&TypicalQpManager::GetVerbsQpHandleByQpn).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(invoke(stub_GetVerbsQpHandleByQpn_success));
+    MOCKER_CPP(&TypicalQpManager::GetVerbsQpHandleByQpn)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(invoke(stub_GetVerbsQpHandleByQpn_success));
 
     AscendVerbsQPInfo qpInfo{};
     qpInfo.qpn = 100;
 
-    struct AscendSendWr sendWr{};
+    struct AscendSendWr sendWr {};
     sendWr.numSge = 1;
     sendWr.sgList = nullptr;
 
     aclrtStream stream = (aclrtStream)0x87654321;
-    struct AscendSendWr *badWr = nullptr;
+    struct AscendSendWr* badWr = nullptr;
 
     EXPECT_EQ(hcclAscendPostSend(&qpInfo, &sendWr, stream, &badWr), HCCL_E_PTR);
 }
@@ -825,25 +836,28 @@ TEST_F(InterfaceHcclVerbsTest, PostSend_NullSgList)
 TEST_F(InterfaceHcclVerbsTest, PostRecv_Success_SingleWR)
 {
     MOCKER(hrtGetDeviceRefresh).stubs().will(invoke(stub_hrtGetDeviceRefresh_success));
-    MOCKER_CPP(&TypicalQpManager::GetVerbsQpHandleByQpn).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(invoke(stub_GetVerbsQpHandleByQpn_success));
+    MOCKER_CPP(&TypicalQpManager::GetVerbsQpHandleByQpn)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(invoke(stub_GetVerbsQpHandleByQpn_success));
     MOCKER(HrtRaRecvWrVerbs).stubs().will(invoke(stub_HrtRaRecvWrVerbs_success));
 
     AscendVerbsQPInfo qpInfo{};
     qpInfo.qpn = 100;
 
-    struct AscendSge sge{};
+    struct AscendSge sge {};
     sge.addr = 0x1000;
     sge.len = 256;
     sge.lkey = 0x1234;
 
-    struct AscendRecvWr recvWr{};
+    struct AscendRecvWr recvWr {};
     recvWr.wrId = 1;
     recvWr.numSge = 1;
     recvWr.sgList = &sge;
     recvWr.next = nullptr;
 
     aclrtStream stream = (aclrtStream)0x87654321;
-    struct AscendRecvWr *badWr = nullptr;
+    struct AscendRecvWr* badWr = nullptr;
 
     EXPECT_EQ(hcclAscendPostRecv(&qpInfo, &recvWr, stream, &badWr), HCCL_SUCCESS);
     EXPECT_EQ(badWr, nullptr);
@@ -852,24 +866,44 @@ TEST_F(InterfaceHcclVerbsTest, PostRecv_Success_SingleWR)
 TEST_F(InterfaceHcclVerbsTest, PostRecv_Success_LinkedListWRs)
 {
     MOCKER(hrtGetDeviceRefresh).stubs().will(invoke(stub_hrtGetDeviceRefresh_success));
-    MOCKER_CPP(&TypicalQpManager::GetVerbsQpHandleByQpn).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(invoke(stub_GetVerbsQpHandleByQpn_success));
+    MOCKER_CPP(&TypicalQpManager::GetVerbsQpHandleByQpn)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(invoke(stub_GetVerbsQpHandleByQpn_success));
     MOCKER(HrtRaRecvWrVerbs).stubs().will(invoke(stub_HrtRaRecvWrVerbs_success));
 
     AscendVerbsQPInfo qpInfo{};
     qpInfo.qpn = 100;
 
-    struct AscendSge sge1{}, sge2{}, sge3{};
-    sge1.addr = 0x1000; sge1.len = 256; sge1.lkey = 0x1234;
-    sge2.addr = 0x2000; sge2.len = 512; sge2.lkey = 0x5678;
-    sge3.addr = 0x3000; sge3.len = 128; sge3.lkey = 0x9ABC;
+    struct AscendSge sge1 {
+    }, sge2{}, sge3{};
+    sge1.addr = 0x1000;
+    sge1.len = 256;
+    sge1.lkey = 0x1234;
+    sge2.addr = 0x2000;
+    sge2.len = 512;
+    sge2.lkey = 0x5678;
+    sge3.addr = 0x3000;
+    sge3.len = 128;
+    sge3.lkey = 0x9ABC;
 
-    struct AscendRecvWr wr1{}, wr2{}, wr3{};
-    wr1.wrId = 1; wr1.numSge = 1; wr1.sgList = &sge1; wr1.next = &wr2;
-    wr2.wrId = 2; wr2.numSge = 1; wr2.sgList = &sge2; wr2.next = &wr3;
-    wr3.wrId = 3; wr3.numSge = 1; wr3.sgList = &sge3; wr3.next = nullptr;
+    struct AscendRecvWr wr1 {
+    }, wr2{}, wr3{};
+    wr1.wrId = 1;
+    wr1.numSge = 1;
+    wr1.sgList = &sge1;
+    wr1.next = &wr2;
+    wr2.wrId = 2;
+    wr2.numSge = 1;
+    wr2.sgList = &sge2;
+    wr2.next = &wr3;
+    wr3.wrId = 3;
+    wr3.numSge = 1;
+    wr3.sgList = &sge3;
+    wr3.next = nullptr;
 
     aclrtStream stream = (aclrtStream)0x87654321;
-    struct AscendRecvWr *badWr = nullptr;
+    struct AscendRecvWr* badWr = nullptr;
 
     EXPECT_EQ(hcclAscendPostRecv(&qpInfo, &wr1, stream, &badWr), HCCL_SUCCESS);
     EXPECT_EQ(badWr, nullptr);
@@ -877,9 +911,9 @@ TEST_F(InterfaceHcclVerbsTest, PostRecv_Success_LinkedListWRs)
 
 TEST_F(InterfaceHcclVerbsTest, PostRecv_QpInfoNull)
 {
-    struct AscendRecvWr recvWr{};
+    struct AscendRecvWr recvWr {};
     aclrtStream stream = (aclrtStream)0x87654321;
-    struct AscendRecvWr *badWr = nullptr;
+    struct AscendRecvWr* badWr = nullptr;
 
     EXPECT_EQ(hcclAscendPostRecv(nullptr, &recvWr, stream, &badWr), HCCL_E_PTR);
 }
@@ -888,7 +922,7 @@ TEST_F(InterfaceHcclVerbsTest, PostRecv_RecvWrNull)
 {
     AscendVerbsQPInfo qpInfo{};
     aclrtStream stream = (aclrtStream)0x87654321;
-    struct AscendRecvWr *badWr = nullptr;
+    struct AscendRecvWr* badWr = nullptr;
 
     EXPECT_EQ(hcclAscendPostRecv(&qpInfo, nullptr, stream, &badWr), HCCL_E_PTR);
 }
@@ -896,7 +930,7 @@ TEST_F(InterfaceHcclVerbsTest, PostRecv_RecvWrNull)
 TEST_F(InterfaceHcclVerbsTest, PostRecv_BadWrNull)
 {
     AscendVerbsQPInfo qpInfo{};
-    struct AscendRecvWr recvWr{};
+    struct AscendRecvWr recvWr {};
     aclrtStream stream = (aclrtStream)0x87654321;
 
     EXPECT_EQ(hcclAscendPostRecv(&qpInfo, &recvWr, stream, nullptr), HCCL_E_PTR);
@@ -905,8 +939,8 @@ TEST_F(InterfaceHcclVerbsTest, PostRecv_BadWrNull)
 TEST_F(InterfaceHcclVerbsTest, PostRecv_StreamNull)
 {
     AscendVerbsQPInfo qpInfo{};
-    struct AscendRecvWr recvWr{};
-    struct AscendRecvWr *badWr = nullptr;
+    struct AscendRecvWr recvWr {};
+    struct AscendRecvWr* badWr = nullptr;
 
     EXPECT_EQ(hcclAscendPostRecv(&qpInfo, &recvWr, nullptr, &badWr), HCCL_E_PTR);
 }
@@ -914,17 +948,20 @@ TEST_F(InterfaceHcclVerbsTest, PostRecv_StreamNull)
 TEST_F(InterfaceHcclVerbsTest, PostRecv_NumSgeExceedsMax)
 {
     MOCKER(hrtGetDeviceRefresh).stubs().will(invoke(stub_hrtGetDeviceRefresh_success));
-    MOCKER_CPP(&TypicalQpManager::GetVerbsQpHandleByQpn).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(invoke(stub_GetVerbsQpHandleByQpn_success));
+    MOCKER_CPP(&TypicalQpManager::GetVerbsQpHandleByQpn)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(invoke(stub_GetVerbsQpHandleByQpn_success));
 
     AscendVerbsQPInfo qpInfo{};
     qpInfo.qpn = 100;
 
-    struct AscendRecvWr recvWr{};
+    struct AscendRecvWr recvWr {};
     recvWr.numSge = 17;
     recvWr.sgList = (struct AscendSge*)0x1000;
 
     aclrtStream stream = (aclrtStream)0x87654321;
-    struct AscendRecvWr *badWr = nullptr;
+    struct AscendRecvWr* badWr = nullptr;
 
     EXPECT_EQ(hcclAscendPostRecv(&qpInfo, &recvWr, stream, &badWr), HCCL_E_PARA);
 }
@@ -932,17 +969,20 @@ TEST_F(InterfaceHcclVerbsTest, PostRecv_NumSgeExceedsMax)
 TEST_F(InterfaceHcclVerbsTest, PostRecv_NullSgList)
 {
     MOCKER(hrtGetDeviceRefresh).stubs().will(invoke(stub_hrtGetDeviceRefresh_success));
-    MOCKER_CPP(&TypicalQpManager::GetVerbsQpHandleByQpn).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(invoke(stub_GetVerbsQpHandleByQpn_success));
+    MOCKER_CPP(&TypicalQpManager::GetVerbsQpHandleByQpn)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(invoke(stub_GetVerbsQpHandleByQpn_success));
 
     AscendVerbsQPInfo qpInfo{};
     qpInfo.qpn = 100;
 
-    struct AscendRecvWr recvWr{};
+    struct AscendRecvWr recvWr {};
     recvWr.numSge = 1;
     recvWr.sgList = nullptr;
 
     aclrtStream stream = (aclrtStream)0x87654321;
-    struct AscendRecvWr *badWr = nullptr;
+    struct AscendRecvWr* badWr = nullptr;
 
     EXPECT_EQ(hcclAscendPostRecv(&qpInfo, &recvWr, stream, &badWr), HCCL_E_PTR);
 }
@@ -961,10 +1001,7 @@ TEST_F(InterfaceHcclVerbsTest, DestroyVerbsQP_Success)
     EXPECT_EQ(hcclDestroyAscendVerbsQP(&qpInfo), HCCL_SUCCESS);
 }
 
-TEST_F(InterfaceHcclVerbsTest, DestroyVerbsQP_NullPtr)
-{
-    EXPECT_EQ(hcclDestroyAscendVerbsQP(nullptr), HCCL_E_PTR);
-}
+TEST_F(InterfaceHcclVerbsTest, DestroyVerbsQP_NullPtr) { EXPECT_EQ(hcclDestroyAscendVerbsQP(nullptr), HCCL_E_PTR); }
 
 TEST_F(InterfaceHcclVerbsTest, DestroyVerbsQP_DestroyQpFailure)
 {
@@ -982,10 +1019,7 @@ TEST_F(InterfaceHcclVerbsTest, DestroyVerbsQP_DestroyQpFailure)
  * ================================================================== */
 class TypicalQpManagerTest : public testing::Test {
 protected:
-    virtual void SetUp()
-    {
-        std::cout << "TypicalQpManagerTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "TypicalQpManagerTest SetUP" << std::endl; }
     virtual void TearDown()
     {
         TypicalQpManager& instance = TypicalQpManager::GetInstance();
@@ -1006,7 +1040,7 @@ TEST_F(TypicalQpManagerTest, GetVerbsQpHandleByQpn_Success)
     TypicalQpManager& instance = TypicalQpManager::GetInstance();
     SetRdmaHandle(instance);
 
-    struct TypicalQp qpInfo{};
+    struct TypicalQp qpInfo {};
     qpInfo.qpn = 42;
     QpHandle qpHandle = reinterpret_cast<QpHandle>(0xABCD0001);
     instance.verbsQpMap_[42] = std::make_pair(qpInfo, qpHandle);
@@ -1037,7 +1071,7 @@ TEST_F(TypicalQpManagerTest, GetVerbsQpHandleByQpn_NullQpHandleInMap)
     TypicalQpManager& instance = TypicalQpManager::GetInstance();
     SetRdmaHandle(instance);
 
-    struct TypicalQp qpInfo{};
+    struct TypicalQp qpInfo {};
     qpInfo.qpn = 43;
     instance.verbsQpMap_[43] = std::make_pair(qpInfo, nullptr);
 
@@ -1071,14 +1105,14 @@ TEST_F(TypicalQpManagerTest, ModifyVerbsQp_Success)
     TypicalQpManager& instance = TypicalQpManager::GetInstance();
     SetRdmaHandle(instance);
 
-    struct TypicalQp qpInfo{};
+    struct TypicalQp qpInfo {};
     qpInfo.qpn = 1;
     QpHandle qpHandle = reinterpret_cast<QpHandle>(0xBEEF0001);
     instance.verbsQpMap_[1] = std::make_pair(qpInfo, qpHandle);
 
-    struct TypicalQp localQp{};
+    struct TypicalQp localQp {};
     localQp.qpn = 1;
-    struct TypicalQp remoteQp{};
+    struct TypicalQp remoteQp {};
     remoteQp.qpn = 2;
 
     EXPECT_EQ(instance.ModifyVerbsQp(localQp, remoteQp), HCCL_SUCCESS);
@@ -1090,9 +1124,9 @@ TEST_F(TypicalQpManagerTest, ModifyVerbsQp_LocalQpnZero)
 {
     TypicalQpManager& instance = TypicalQpManager::GetInstance();
 
-    struct TypicalQp localQp{};
+    struct TypicalQp localQp {};
     localQp.qpn = 0;
-    struct TypicalQp remoteQp{};
+    struct TypicalQp remoteQp {};
     remoteQp.qpn = 1;
 
     EXPECT_EQ(instance.ModifyVerbsQp(localQp, remoteQp), HCCL_E_PARA);
@@ -1102,9 +1136,9 @@ TEST_F(TypicalQpManagerTest, ModifyVerbsQp_RemoteQpnZero)
 {
     TypicalQpManager& instance = TypicalQpManager::GetInstance();
 
-    struct TypicalQp localQp{};
+    struct TypicalQp localQp {};
     localQp.qpn = 1;
-    struct TypicalQp remoteQp{};
+    struct TypicalQp remoteQp {};
     remoteQp.qpn = 0;
 
     EXPECT_EQ(instance.ModifyVerbsQp(localQp, remoteQp), HCCL_E_PARA);
@@ -1119,9 +1153,9 @@ TEST_F(TypicalQpManagerTest, ModifyVerbsQp_GetVerbsQpHandleByQpnFails)
     SetRdmaHandle(instance);
     ClearAllMaps(instance);
 
-    struct TypicalQp localQp{};
+    struct TypicalQp localQp {};
     localQp.qpn = 42;
-    struct TypicalQp remoteQp{};
+    struct TypicalQp remoteQp {};
     remoteQp.qpn = 2;
 
     EXPECT_EQ(instance.ModifyVerbsQp(localQp, remoteQp), HCCL_E_NOT_FOUND);
@@ -1138,14 +1172,14 @@ TEST_F(TypicalQpManagerTest, ModifyVerbsQp_HrtModifyFails)
     TypicalQpManager& instance = TypicalQpManager::GetInstance();
     SetRdmaHandle(instance);
 
-    struct TypicalQp qpInfo{};
+    struct TypicalQp qpInfo {};
     qpInfo.qpn = 1;
     QpHandle qpHandle = reinterpret_cast<QpHandle>(0xBEEF0001);
     instance.verbsQpMap_[1] = std::make_pair(qpInfo, qpHandle);
 
-    struct TypicalQp localQp{};
+    struct TypicalQp localQp {};
     localQp.qpn = 1;
-    struct TypicalQp remoteQp{};
+    struct TypicalQp remoteQp {};
     remoteQp.qpn = 2;
 
     EXPECT_EQ(instance.ModifyVerbsQp(localQp, remoteQp), HCCL_E_INTERNAL);
@@ -1164,7 +1198,7 @@ TEST_F(TypicalQpManagerTest, CreateQpWithCQ_InsertsIntoVerbsQpMap)
     SetRdmaHandle(instance);
     ClearAllMaps(instance);
 
-    struct TypicalQp qpInfo{};
+    struct TypicalQp qpInfo {};
     QpConfigWithCQInfo qpConfig{};
 
     EXPECT_EQ(instance.CreateQpWithCQ(qpInfo, qpConfig), HCCL_SUCCESS);
@@ -1185,7 +1219,7 @@ TEST_F(TypicalQpManagerTest, CreateQpWithCQ_CreateFails)
     SetRdmaHandle(instance);
     ClearAllMaps(instance);
 
-    struct TypicalQp qpInfo{};
+    struct TypicalQp qpInfo {};
     QpConfigWithCQInfo qpConfig{};
 
     EXPECT_EQ(instance.CreateQpWithCQ(qpInfo, qpConfig), HCCL_E_INTERNAL);
@@ -1204,7 +1238,7 @@ TEST_F(TypicalQpManagerTest, DestroyQpWithoutCQ_Success)
     TypicalQpManager& instance = TypicalQpManager::GetInstance();
     SetRdmaHandle(instance);
 
-    struct TypicalQp qpInfo{};
+    struct TypicalQp qpInfo {};
     qpInfo.qpn = 100;
     QpHandle qpHandle = reinterpret_cast<QpHandle>(0xBEEF0001);
     instance.verbsQpMap_[100] = std::make_pair(qpInfo, qpHandle);
@@ -1220,7 +1254,7 @@ TEST_F(TypicalQpManagerTest, DestroyQpWithoutCQ_QpnZero)
 {
     TypicalQpManager& instance = TypicalQpManager::GetInstance();
 
-    struct TypicalQp qpInfo{};
+    struct TypicalQp qpInfo {};
     qpInfo.qpn = 0;
 
     EXPECT_EQ(instance.DestroyQpWithoutCQ(qpInfo), HCCL_E_PARA);
@@ -1235,7 +1269,7 @@ TEST_F(TypicalQpManagerTest, DestroyQpWithoutCQ_QpnNotFound)
     SetRdmaHandle(instance);
     ClearAllMaps(instance);
 
-    struct TypicalQp qpInfo{};
+    struct TypicalQp qpInfo {};
     qpInfo.qpn = 999;
 
     EXPECT_EQ(instance.DestroyQpWithoutCQ(qpInfo), HCCL_E_NOT_FOUND);
@@ -1250,7 +1284,7 @@ TEST_F(TypicalQpManagerTest, DestroyQpWithoutCQ_HrtDestroyFails)
     TypicalQpManager& instance = TypicalQpManager::GetInstance();
     SetRdmaHandle(instance);
 
-    struct TypicalQp qpInfo{};
+    struct TypicalQp qpInfo {};
     qpInfo.qpn = 100;
     QpHandle qpHandle = reinterpret_cast<QpHandle>(0xBEEF0001);
     instance.verbsQpMap_[100] = std::make_pair(qpInfo, qpHandle);

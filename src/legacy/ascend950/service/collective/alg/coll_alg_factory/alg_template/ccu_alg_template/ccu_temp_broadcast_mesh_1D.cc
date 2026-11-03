@@ -22,59 +22,57 @@
 
 namespace Hccl {
 
-static CcuInstRegister<CcuContextBroadcastMesh1D> registrarBroadcast(
-    CcuInstType::CCU_BROADCAST_MESH_1D_DIRECT);
+static CcuInstRegister<CcuContextBroadcastMesh1D> registrarBroadcast(CcuInstType::CCU_BROADCAST_MESH_1D_DIRECT);
 
-CcuTempBroadcastMesh1D::CcuTempBroadcastMesh1D(const RankId virtualRank, const u32 tempRankSize,
-                                   const std::vector<std::vector<RankId>> &tempVTopo,
-                                   const std::map<RankId, u32>            &tempVirtRankMap)
+CcuTempBroadcastMesh1D::CcuTempBroadcastMesh1D(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
     : CcuAlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap)
-{
-}
+{}
 
-CcuTempBroadcastMesh1D::~CcuTempBroadcastMesh1D()
-{
-}
+CcuTempBroadcastMesh1D::~CcuTempBroadcastMesh1D() {}
 
-void CcuTempBroadcastMesh1D::GetInAndOutAddr(const TempFuncs &tempFuncs, uint64_t &inputAddr, uint64_t &outputAddr)
+void CcuTempBroadcastMesh1D::GetInAndOutAddr(const TempFuncs& tempFuncs, uint64_t& inputAddr, uint64_t& outputAddr)
 {
     if (tempFuncs.isForepart) {
         // 从 UserIn 获取数据
         inputAddr = BufferTypeToAddr(tempFuncs.usrData.usrInSlices[0].GetType())
                     + tempFuncs.usrData.usrInSlices[0].GetOffset();
-        HCCL_INFO("[CcuTempBroadcastMesh1D] BufferTypeToAddr(tempFuncs.usrData.usrInSlices[0].GetType()) is [%llu], "
-                  "offset is [%llu]",
-                  BufferTypeToAddr(tempFuncs.usrData.usrInSlices[0].GetType()),
-                  tempFuncs.usrData.usrInSlices[0].GetOffset());
+        HCCL_INFO(
+            "[CcuTempBroadcastMesh1D] BufferTypeToAddr(tempFuncs.usrData.usrInSlices[0].GetType()) is [%llu], "
+            "offset is [%llu]",
+            BufferTypeToAddr(tempFuncs.usrData.usrInSlices[0].GetType()), tempFuncs.usrData.usrInSlices[0].GetOffset());
     } else {
         // 从 inBuff 获取数据
         inputAddr = BufferTypeToAddr(buffInfo_.inBuffType) + buffInfo_.inBuffBaseOff;
-        HCCL_INFO("[CcuTempBroadcastMesh1D] BufferTypeToAddr(tempFuncs.usrData.usrInSlices[0].GetType()) is [%llu], "
-                  "offset is [%llu]",
-                  BufferTypeToAddr(tempFuncs.usrData.usrInSlices[0].GetType()),
-                  tempFuncs.usrData.usrInSlices[0].GetOffset());
+        HCCL_INFO(
+            "[CcuTempBroadcastMesh1D] BufferTypeToAddr(tempFuncs.usrData.usrInSlices[0].GetType()) is [%llu], "
+            "offset is [%llu]",
+            BufferTypeToAddr(tempFuncs.usrData.usrInSlices[0].GetType()), tempFuncs.usrData.usrInSlices[0].GetOffset());
     }
     if (tempFuncs.isBottom) {
         // 把数据写入 UserOut
         outputAddr = BufferTypeToAddr(tempFuncs.usrData.usrOutSlices[0].GetType())
                      + tempFuncs.usrData.usrOutSlices[0].GetOffset();
-        HCCL_INFO("[CcuTempBroadcastMesh1D] BufferTypeToAddr(tempFuncs.usrData.usrInSlices[0].GetType()) is [%llu], "
-                  "offset is [%llu]",
-                  BufferTypeToAddr(tempFuncs.usrData.usrOutSlices[0].GetType()),
-                  tempFuncs.usrData.usrOutSlices[0].GetOffset());
+        HCCL_INFO(
+            "[CcuTempBroadcastMesh1D] BufferTypeToAddr(tempFuncs.usrData.usrInSlices[0].GetType()) is [%llu], "
+            "offset is [%llu]",
+            BufferTypeToAddr(tempFuncs.usrData.usrOutSlices[0].GetType()),
+            tempFuncs.usrData.usrOutSlices[0].GetOffset());
     } else {
         // 把数据写入 outBuff
         outputAddr = BufferTypeToAddr(buffInfo_.outBuffType) + buffInfo_.outBuffBaseOff;
-        HCCL_INFO("[CcuTempBroadcastMesh1D] BufferTypeToAddr(tempFuncs.usrData.usrInSlices[0].GetType()) is [%llu], "
-                  "offset is [%llu]",
-                  BufferTypeToAddr(tempFuncs.usrData.usrOutSlices[0].GetType()),
-                  tempFuncs.usrData.usrOutSlices[0].GetOffset());
+        HCCL_INFO(
+            "[CcuTempBroadcastMesh1D] BufferTypeToAddr(tempFuncs.usrData.usrInSlices[0].GetType()) is [%llu], "
+            "offset is [%llu]",
+            BufferTypeToAddr(tempFuncs.usrData.usrOutSlices[0].GetType()),
+            tempFuncs.usrData.usrOutSlices[0].GetOffset());
     }
     HCCL_INFO("[CcuTempBroadcastMesh1D] inputAddr[%llu], outputAddr[%llu]", inputAddr, outputAddr);
     return;
 }
 
-HcclResult CcuTempBroadcastMesh1D::CalcRes(AlgTempResReq &tempResReq)
+HcclResult CcuTempBroadcastMesh1D::CalcRes(AlgTempResReq& tempResReq)
 {
     tempResReq.queNum = 1;
     tempResReq.streamNum = tempResReq.queNum;
@@ -83,13 +81,12 @@ HcclResult CcuTempBroadcastMesh1D::CalcRes(AlgTempResReq &tempResReq)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CcuTempBroadcastMesh1D::Run(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec,
-                                          const BuffInfo &buffInfo, const ResLinks &tempLinks,
-                                          std::vector<InsQuePtr> &tempInsQues)
+HcclResult CcuTempBroadcastMesh1D::Run(
+    const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, const BuffInfo& buffInfo, const ResLinks& tempLinks,
+    std::vector<InsQuePtr>& tempInsQues)
 {
     (void)sliceInfoVec;
-    CHK_PRT_RET(tempInsQues.empty(),
-        HCCL_ERROR("[CcuTempBroadcastMesh1D] empty queue"), HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(tempInsQues.empty(), HCCL_ERROR("[CcuTempBroadcastMesh1D] empty queue"), HcclResult::HCCL_E_INTERNAL);
     CHK_PTR_NULL(tempInsQues[0]);
     buffInfo_ = buffInfo;
     opMode_ = tempFuncs.opMode;
@@ -110,11 +107,12 @@ HcclResult CcuTempBroadcastMesh1D::Run(const TempFuncs &tempFuncs, const RankSli
     uint64_t token;
     CHK_RET(GetToken(op_, token));
 
-    ccuInsBroadcastMesh1D.Init(static_cast<uint32_t>(myRank_), static_cast<uint32_t>(rootId_), inputAddr, outputAddr,
-                               sliceSize, offset, token, op_, tempVTopo_);
+    ccuInsBroadcastMesh1D.Init(
+        static_cast<uint32_t>(myRank_), static_cast<uint32_t>(rootId_), inputAddr, outputAddr, sliceSize, offset, token,
+        op_, tempVTopo_);
 
     std::vector<LinkData> links;
-    for (auto &pair : tempLinks) {
+    for (auto& pair : tempLinks) {
         if (pair.second.empty()) {
             continue;
         }
@@ -127,7 +125,7 @@ HcclResult CcuTempBroadcastMesh1D::Run(const TempFuncs &tempFuncs, const RankSli
         return HcclResult::HCCL_E_PARA;
     }
     RankGroup rankGroup;
-    for (auto &peer : tempVTopo_[0]) {
+    for (auto& peer : tempVTopo_[0]) {
         rankGroup.AddRank(peer);
     }
     u32 cntCkeNum = 3;

@@ -28,30 +28,27 @@ constexpr unsigned int MAX_VALUE_PORT_LENGTH = 32;
 constexpr unsigned int MIN_VALUE_ADDR_LENGRH = 1;
 constexpr unsigned int MAX_VALUE_ADDR_LENGRH = 256;
 
-class AddressInfo{
+class AddressInfo {
 public:
     AddressInfo() {};
     ~AddressInfo() {};
-    
-    IpAddress                  addr;
-    u32                        socketPort_{0};  // socket监听端口
-    AddrType                   addrType;
-    std::set<std::string>      ports;  // 网口标记
-    std::string                planeId{"0"};
-    void                       Deserialize(const nlohmann::json &addressInfoJson);
-    explicit                   AddressInfo(BinaryStream &binStream);
-    void                       GetBinStream(BinaryStream &binStream) const;
-    std::string                Describe() const;
 
-    private:
-    static const std::unordered_map<std::string , AddrType> strToAddrType;
+    IpAddress addr;
+    u32 socketPort_{0}; // socket监听端口
+    AddrType addrType;
+    std::set<std::string> ports; // 网口标记
+    std::string planeId{"0"};
+    void Deserialize(const nlohmann::json& addressInfoJson);
+    explicit AddressInfo(BinaryStream& binStream);
+    void GetBinStream(BinaryStream& binStream) const;
+    std::string Describe() const;
+
+private:
+    static const std::unordered_map<std::string, AddrType> strToAddrType;
     void EidToAddr(std::string str);
     void IPV4ToAddr(std::string str);
     void IPV6ToAddr(std::string str);
-    static bool IsStringInAddrType(std::string str)
-    {
-        return strToAddrType.count(str) > 0;
-    }
+    static bool IsStringInAddrType(std::string str) { return strToAddrType.count(str) > 0; }
 };
 
 } // namespace Hccl

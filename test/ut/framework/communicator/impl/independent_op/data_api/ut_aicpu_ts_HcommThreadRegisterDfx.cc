@@ -25,6 +25,7 @@
 #include "aicpu_ts_thread.h"
 #include "aicpu_ts_thread_interface.h"
 #undef private
+#include "comm_engine/thread/dfx/thread_dfx_pub.h"
 
 using namespace hccl;
 
@@ -40,8 +41,7 @@ using namespace hccl;
  * - thread：线程句柄
  * - res：用于存储接口返回值的成员变量
  */
-class UtAicpuTsHcommThreadRegisterDfx : public testing::Test
-{
+class UtAicpuTsHcommThreadRegisterDfx : public testing::Test {
 protected:
     virtual void SetUp() override
     {
@@ -49,10 +49,7 @@ protected:
         threadOnDevice.pImpl_ = std::make_unique<Hccl::IAicpuTsThread>();
     }
 
-    virtual void TearDown() override
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() override { GlobalMockObject::verify(); }
 
     AicpuTsThread threadOnDevice{StreamType::STREAM_TYPE_DEVICE, 0, NotifyLoadType::DEVICE_NOTIFY};
     ThreadHandle thread = reinterpret_cast<ThreadHandle>(&threadOnDevice);
@@ -68,10 +65,10 @@ protected:
  */
 TEST_F(UtAicpuTsHcommThreadRegisterDfx, Ut_HcommThreadRegisterDfx_When_Normal_Expect_ReturnHCCL_SUCCESS)
 {
-    std::function<HcclResult(u32, u32, const Hccl::TaskParam&, u64)> callback =
-        [](u32 streamId, u32 taskId, const Hccl::TaskParam& taskParam, u64 handle) {
-            return HCCL_SUCCESS;
-        };
+    std::function<HcclResult(u32, u32, const Hccl::TaskParam&, u64)> callback
+        = [](u32 streamId, u32 taskId, const Hccl::TaskParam& taskParam, u64 handle) {
+              return HCCL_SUCCESS;
+          };
     res = HcommThreadRegisterDfx(thread, callback);
     EXPECT_EQ(res, HCCL_SUCCESS);
 }
@@ -86,10 +83,10 @@ TEST_F(UtAicpuTsHcommThreadRegisterDfx, Ut_HcommThreadRegisterDfx_When_Normal_Ex
  */
 TEST_F(UtAicpuTsHcommThreadRegisterDfx, Ut_HcommThreadRegisterDfx_When_Thread_IsNull_Expect_ReturnHCCL_E_PTR)
 {
-    std::function<HcclResult(u32, u32, const Hccl::TaskParam&, u64)> callback =
-        [](u32 streamId, u32 taskId, const Hccl::TaskParam& taskParam, u64 handle) {
-            return HCCL_SUCCESS;
-        };
+    std::function<HcclResult(u32, u32, const Hccl::TaskParam&, u64)> callback
+        = [](u32 streamId, u32 taskId, const Hccl::TaskParam& taskParam, u64 handle) {
+              return HCCL_SUCCESS;
+          };
     res = HcommThreadRegisterDfx(0, callback);
     EXPECT_EQ(res, HCCL_E_PTR);
 }

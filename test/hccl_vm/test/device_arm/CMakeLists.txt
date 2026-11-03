@@ -1,3 +1,4 @@
+# -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2026 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
@@ -5,43 +6,43 @@
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
 
 cmake_minimum_required(VERSION 3.14)
 
 add_subdirectory(proxy)
 
 set(COMMON_INCLUDE_DIRS
+    ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/src/device_arm
-    ${CMAKE_SOURCE_DIR}/src/device_arm/proxy
+    ${CMAKE_SOURCE_DIR}/src/device_arm/common
+    ${CMAKE_SOURCE_DIR}/src/device_arm/level2/proxy
+    ${CMAKE_SOURCE_DIR}/src/common
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/include/store
-    ${CMAKE_SOURCE_DIR}/include/runnerdb
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/src/utils
     ${CMAKE_SOURCE_DIR}/src/plugin/checker/header/external
     ${CMAKE_SOURCE_DIR}/third_party/CLI11
-    ${CMAKE_BINARY_DIR}/_deps/yaml-cpp-src/include
+    ${YAMLCPP_INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/third_party
-    $ENV{HCCL_CODE_HOME}/src/ops/op_common/inc
-    $ENV{HCCL_CODE_HOME}/src/common
-    $ENV{HCCL_CODE_HOME}/src/common/hcomm_dlsym
-    $ENV{ASCEND_TOOLKIT_HOME}/x86_64-linux/include/driver
-    $ENV{ASCEND_TOOLKIT_HOME}/x86_64-linux/pkg_inc/driver
-    $ENV{ASCEND_TOOLKIT_HOME}/x86_64-linux/pkg_inc/runtime
-    $ENV{ASCEND_TOOLKIT_HOME}/x86_64-linux/pkg_inc/toolchain
-    $ENV{ASCEND_TOOLKIT_HOME}/x86_64-linux/pkg_inc/profiling
-    $ENV{ASCEND_TOOLKIT_HOME}/x86_64-linux/pkg_inc
-    $ENV{ASCEND_TOOLKIT_HOME}/x86_64-linux/pkg_inc/hccl
-    $ENV{ASCEND_TOOLKIT_HOME}/x86_64-linux/pkg_inc/base
-    $ENV{ASCEND_TOOLKIT_HOME}/x86_64-linux/pkg_inc/hcomm/ccu
-    ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc/asc/hccl/internal/hcomm/pkg_inc/hcomm/ccu
-    $ENV{ASCEND_TOOLKIT_HOME}/x86_64-linux/include
-    $ENV{ASCEND_TOOLKIT_HOME}/x86_64-linux/include/hccl
+    ${ASCEND_CANN_PACKAGE_PATH}/${CANN_ARCH_DIR}/include/driver
+    ${ASCEND_CANN_PACKAGE_PATH}/${CANN_ARCH_DIR}/pkg_inc/driver
+    ${ASCEND_CANN_PACKAGE_PATH}/${CANN_ARCH_DIR}/pkg_inc/runtime
+    ${ASCEND_CANN_PACKAGE_PATH}/${CANN_ARCH_DIR}/pkg_inc/toolchain
+    ${ASCEND_CANN_PACKAGE_PATH}/${CANN_ARCH_DIR}/pkg_inc/profiling
+    ${ASCEND_CANN_PACKAGE_PATH}/${CANN_ARCH_DIR}/pkg_inc
+    ${ASCEND_CANN_PACKAGE_PATH}/${CANN_ARCH_DIR}/pkg_inc/hccl
+    ${ASCEND_CANN_PACKAGE_PATH}/${CANN_ARCH_DIR}/pkg_inc/base
+    ${ASCEND_CANN_PACKAGE_PATH}/${CANN_ARCH_DIR}/include
+    ${ASCEND_CANN_PACKAGE_PATH}/${CANN_ARCH_DIR}/include/hccl
+
+    ${HCOMM_CODE_ROOT}/src/base_comm/resources/ccu/ccu_microcode
 )
 
 set(COMMON_SOURCES
     ${CMAKE_SOURCE_DIR}/src/utils/sim_log.cc
-    ${CMAKE_SOURCE_DIR}/src/proxy/log_stub.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/log_stub.cc
 )
 
 set(COMMON_LIBS
@@ -50,16 +51,18 @@ set(COMMON_LIBS
     log
     dl
     rt
+    -Wl,--start-group
     store
-    runnerdb
-    sqlite3
+    runtime_state
+    operation_data
+    -Wl,--end-group
 )
 
 # 1. test_hccl_task_collection (10 TEST_F)
 add_executable(test_hccl_task_collection hccl_task_collection_test.cc)
 
 target_sources(test_hccl_task_collection PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/device_arm/hccl_task_collection.cc
+    ${CMAKE_SOURCE_DIR}/src/device_arm/common/hccl_task_collection.cc
     ${COMMON_SOURCES}
 )
 
@@ -71,70 +74,28 @@ set_target_properties(test_hccl_task_collection PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output/bin"
 )
 
-# 2. test_hccl_device_pub (12 TEST_F)
-add_executable(test_hccl_device_pub hccl_device_pub_test.cc)
+# test_data_op_channel_context_fake —— GetChannelTaskContext 查询次数回归的 Fake
+# 引擎用例（自 data_op_device_stub_test.cc 拆分：ConformanceMemoryEngine 观察点，
+# 不依赖真实后端，全部源码形态构建执行；真实 SQLite fixture 部分在 sqlite/ 子目录）
+add_executable(test_data_op_channel_context_fake data_op_channel_context_fake_test.cc)
 
-target_sources(test_hccl_device_pub PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/device_arm/hccl_device_pub.cc
+target_sources(test_data_op_channel_context_fake PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/device_arm/common/hccl_task_collection.cc
+    ${CMAKE_SOURCE_DIR}/src/device_arm/common/hccl_device_pub.cc
+    ${CMAKE_SOURCE_DIR}/src/common/sim_pipe_io.cc
     ${CMAKE_SOURCE_DIR}/src/store/store_sim_memory_manager.cc
-    ${CMAKE_SOURCE_DIR}/src/runnerdb/tracedb/db_sim_sqlite_db.cc
     ${COMMON_SOURCES}
 )
 
-target_include_directories(test_hccl_device_pub PRIVATE ${COMMON_INCLUDE_DIRS})
+target_include_directories(test_data_op_channel_context_fake PRIVATE ${COMMON_INCLUDE_DIRS})
+target_link_libraries(test_data_op_channel_context_fake PRIVATE ${COMMON_LIBS})
+target_compile_options(test_data_op_channel_context_fake PRIVATE -DCANN_VERSION_NUM=90100000)
 
-target_link_libraries(test_hccl_device_pub PRIVATE ${COMMON_LIBS})
-
-set_target_properties(test_hccl_device_pub PROPERTIES
+set_target_properties(test_data_op_channel_context_fake PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output/bin"
 )
 
-target_compile_options(test_hccl_device_pub PRIVATE
-    -DCANN_VERSION_NUM=90000000
-)
-
-# 3. test_hccl_kernel_executor (21 TEST_F)
-add_executable(test_hccl_kernel_executor hccl_kernel_executor_test.cc)
-
-target_sources(test_hccl_kernel_executor PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/device_arm/hccl_kernel_executor.cc
-    ${CMAKE_SOURCE_DIR}/src/device_arm/hccl_device_pub.cc
-    ${CMAKE_SOURCE_DIR}/src/store/store_sim_memory_manager.cc
-    ${CMAKE_SOURCE_DIR}/src/runnerdb/tracedb/db_sim_sqlite_db.cc
-    ${COMMON_SOURCES}
-)
-
-target_include_directories(test_hccl_kernel_executor PRIVATE
-    ${CMAKE_SOURCE_DIR}/test/stub_headers
-    ${COMMON_INCLUDE_DIRS}
-)
-
-target_link_libraries(test_hccl_kernel_executor PRIVATE ${COMMON_LIBS})
-
-set_target_properties(test_hccl_kernel_executor PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output/bin"
-)
-
-# CANN
-set(HCCL_CANN_VERSION_NUM 0)
-set(_hccl_cann_version_header "${ASCEND_CANN_PACKAGE_PATH}/include/version/cann_version.h")
-message(STATUS "Checking HCCL scoped CANN version header: ${_hccl_cann_version_header}")
-if(EXISTS "${_hccl_cann_version_header}")
-    file(STRINGS "${_hccl_cann_version_header}" _hccl_cann_ver_line
-        REGEX "^#define[ \t]+CANN_VERSION_NUM[ \t]+")
-    if(_hccl_cann_ver_line)
-        string(REGEX REPLACE "^#define[ \t]+CANN_VERSION_NUM[ \t]+(.+)$" "\\1"
-            CANN_EXPR "${_hccl_cann_ver_line}")
-        math(EXPR HCCL_CANN_VERSION_NUM "${CANN_EXPR}" OUTPUT_FORMAT DECIMAL)
-    endif()
-endif()
-
-message(STATUS "HCCL_CANN_VERSION_NUM: ${HCCL_CANN_VERSION_NUM}")
-if(HCCL_CANN_VERSION_NUM EQUAL 0)
-    message(WARNING "HCCL failed to resolve CANN_VERSION_NUM (got 0). "
-        "Compatibility branches (e.g. HCCL_CANN_COMPAT_850) will fall back to the 9.0.0+ path.")
-endif()
-
-target_compile_options(test_hccl_kernel_executor PRIVATE
-    -DCANN_VERSION_NUM=${HCCL_CANN_VERSION_NUM}
-)
+# 引擎专属测试子目录（test/device_arm/<模块名>/）：模块存在才接入
+#（真实 SQLite fixture/惰性默认会话依赖的 device_arm 用例随 sqlite 模块裁剪）。
+include(${CMAKE_SOURCE_DIR}/src/storage_backends/CMakeLists.txt)
+hcclvm_storage_backends_add_test_dir(${CMAKE_CURRENT_SOURCE_DIR})

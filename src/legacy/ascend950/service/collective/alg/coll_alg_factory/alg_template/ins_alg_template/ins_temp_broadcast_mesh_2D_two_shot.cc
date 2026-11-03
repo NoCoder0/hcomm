@@ -14,37 +14,37 @@
 #include "ins_alg_template/ins_temp_broadcast_mesh_2D_two_shot.h"
 
 namespace Hccl {
- 
-InsTempBroadcastMesh2DTwoShot::InsTempBroadcastMesh2DTwoShot(const RankId virtualRank, const u32 tempRankSize,
-                                                             const std::vector<std::vector<RankId>> &tempVTopo,
-                                                             const std::map<RankId, u32> &tempVirtRankMap)
-    : InsAlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap), sizeX_(static_cast<u32>(tempVTopo[0].size())),
+
+InsTempBroadcastMesh2DTwoShot::InsTempBroadcastMesh2DTwoShot(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
+    : InsAlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap),
+      sizeX_(static_cast<u32>(tempVTopo[0].size())),
       sizeY_(static_cast<u32>(tempVTopo[1].size()))
 {
     std::tie(curX_, curY_) = GetRankPos(myRank_);
 }
 
-InsTempBroadcastMesh2DTwoShot::~InsTempBroadcastMesh2DTwoShot()
-{
-}
+InsTempBroadcastMesh2DTwoShot::~InsTempBroadcastMesh2DTwoShot() {}
 
-HcclResult InsTempBroadcastMesh2DTwoShot::CalcRes(AlgTempResReq &tempResReq)
+HcclResult InsTempBroadcastMesh2DTwoShot::CalcRes(AlgTempResReq& tempResReq)
 {
-    tempResReq.queNum = sizeX_ - 1 + sizeY_ - 1  > 0 ?
-                        sizeX_ - 1 + sizeY_ - 1 : 1;
+    tempResReq.queNum = sizeX_ - 1 + sizeY_ - 1 > 0 ? sizeX_ - 1 + sizeY_ - 1 : 1;
     tempResReq.streamNum = tempResReq.queNum;
     tempResReq.queNotifys = CreateMasterSlaveQueNotifiesRequest(tempResReq.queNum);
     QId centerQ = 0;
     tempResReq.localWaitGroupCntNotify.emplace_back(centerQ, 0);
     tempResReq.localBcastPostCntNotify.emplace_back(centerQ, 0);
     CHK_RET(CalcResLinksMesh2D(myRank_, tempVTopo_, linkNumBtwPeers_, tempResReq));
-    HCCL_INFO("[InsTempBroadcastMesh2DTwoShot]CalcRes: queNum[%u], myRank[%d], tempRankSize[%u]", tempResReq.queNum, myRank_, tempRankSize_);
+    HCCL_INFO(
+        "[InsTempBroadcastMesh2DTwoShot]CalcRes: queNum[%u], myRank[%d], tempRankSize[%u]", tempResReq.queNum, myRank_,
+        tempRankSize_);
     return HcclResult::HCCL_SUCCESS;
 }
 u32 InsTempBroadcastMesh2DTwoShot::CalcScratchMultiple(BufferType inBuffType, BufferType outBuffType)
 {
-    (void) inBuffType;
-    (void) outBuffType;
+    (void)inBuffType;
+    (void)outBuffType;
     if (op_.opMode == OpMode::OPBASE) {
         return 1;
     } else {
@@ -52,57 +52,63 @@ u32 InsTempBroadcastMesh2DTwoShot::CalcScratchMultiple(BufferType inBuffType, Bu
     }
 }
 
-HcclResult InsTempBroadcastMesh2DTwoShot::RunScatter(const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues, u64 baseOffset, u64 dataSize, u32 root, bool isRootX)
+HcclResult InsTempBroadcastMesh2DTwoShot::RunScatter(
+    const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues, u64 baseOffset, u64 dataSize, u32 root,
+    bool isRootX)
 {
     if (dataSize == 0) {
         return HcclResult::HCCL_SUCCESS;
     }
     u32 rootX, rootY;
     u64 rankStride = isRootX ? dataSize / sizeX_ / dataTypeSize_ * dataTypeSize_ :
-                           dataSize / sizeY_ / dataTypeSize_ * dataTypeSize_;
+                               dataSize / sizeY_ / dataTypeSize_ * dataTypeSize_;
     std::tie(rootX, rootY) = GetRankPos(root);
     if (root == u32(myRank_)) {
         if (isRootX) {
             // x轴(板内)SendRecvInfo
             for (u32 i = 0, index = 0; i < sizeX_; i++) {
-                if (i == rootY) continue;
+                if (i == rootY)
+                    continue;
                 u64 dataOffset = baseOffset + i * rankStride;
                 u64 curSize = i == sizeX_ - 1 ? dataSize - rankStride * i : rankStride;
                 u32 peerRank = rootX * sizeX_ + i;
-                const LinkData &linkSend = tempLinks.at(peerRank)[0];
+                const LinkData& linkSend = tempLinks.at(peerRank)[0];
                 u64 dataOffsetAll = opMode_ == OpMode::OFFLOAD ? inputOffset_ + dataOffset : dataOffset;
                 BufferType srcDstBufferType = opMode_ == OpMode::OFFLOAD ? BufferType::INPUT : BufferType::SCRATCH;
                 std::vector<DataSlice> srcSlices = {DataSlice(srcDstBufferType, dataOffsetAll, curSize)};
                 std::vector<DataSlice> dstSlices = {DataSlice(srcDstBufferType, dataOffsetAll, curSize)};
                 SlicesList txSlicesList(srcSlices, dstSlices);
                 DataInfo sendData(linkSend, txSlicesList);
-                CHK_PRT_RET(Send(sendData, tempInsQues[index], 0, true, DmaMode::GET), HCCL_ERROR("[InsTempBroadcastMesh2DTwoShot] BatchSend failed"),
-                        HcclResult::HCCL_E_INTERNAL);
+                CHK_PRT_RET(
+                    Send(sendData, tempInsQues[index], 0, true, DmaMode::GET),
+                    HCCL_ERROR("[InsTempBroadcastMesh2DTwoShot] BatchSend failed"), HcclResult::HCCL_E_INTERNAL);
                 index++;
             }
         } else {
             // y轴(板间)SendRecvInfo
             for (u32 i = 0, index = 0; i < sizeY_; i++) {
-                if (i == rootX) continue;
+                if (i == rootX)
+                    continue;
                 u64 dataOffset = baseOffset + i * rankStride;
                 u64 curSize = i == sizeY_ - 1 ? dataSize - rankStride * i : rankStride;
                 u32 peerRank = i * sizeX_ + rootY;
-                const LinkData &linkSend = tempLinks.at(peerRank)[0];
+                const LinkData& linkSend = tempLinks.at(peerRank)[0];
                 u64 dataOffsetAll = opMode_ == OpMode::OFFLOAD ? inputOffset_ + dataOffset : dataOffset;
                 BufferType srcDstBufferType = opMode_ == OpMode::OFFLOAD ? BufferType::INPUT : BufferType::SCRATCH;
                 std::vector<DataSlice> srcSlices = {DataSlice(srcDstBufferType, dataOffsetAll, curSize)};
                 std::vector<DataSlice> dstSlices = {DataSlice(srcDstBufferType, dataOffsetAll, curSize)};
                 SlicesList txSlicesList(srcSlices, dstSlices);
                 DataInfo sendData(linkSend, txSlicesList);
-                CHK_PRT_RET(Send(sendData, tempInsQues[sizeX_ - 1 + index], 0, true, DmaMode::GET), HCCL_ERROR("[InsTempBroadcastMesh2DTwoShot] BatchSend failed"),
-                        HcclResult::HCCL_E_INTERNAL);
+                CHK_PRT_RET(
+                    Send(sendData, tempInsQues[sizeX_ - 1 + index], 0, true, DmaMode::GET),
+                    HCCL_ERROR("[InsTempBroadcastMesh2DTwoShot] BatchSend failed"), HcclResult::HCCL_E_INTERNAL);
                 index++;
             }
         }
     } else if (curX_ == rootX && isRootX) {
         u64 dataOffset = baseOffset + curY_ * rankStride;
         u64 curSize = curY_ == sizeX_ - 1 ? dataSize - rankStride * curY_ : rankStride;
-        const LinkData &linkRecv = tempLinks.at(root)[0];
+        const LinkData& linkRecv = tempLinks.at(root)[0];
         u64 dataOffsetAll = opMode_ == OpMode::OFFLOAD ? inputOffset_ + dataOffset : dataOffset;
         BufferType srcDstBufferType = opMode_ == OpMode::OFFLOAD ? BufferType::INPUT : BufferType::SCRATCH;
         std::vector<DataSlice> srcSlices = {DataSlice(srcDstBufferType, dataOffsetAll, curSize)};
@@ -110,12 +116,13 @@ HcclResult InsTempBroadcastMesh2DTwoShot::RunScatter(const ResLinks &tempLinks, 
         SlicesList rxSlicesList(srcSlices, dstSlices);
         DataInfo recvData(linkRecv, rxSlicesList);
         u32 index = curY_ > rootY ? curY_ - 1 : curY_;
-        CHK_PRT_RET(Recv(recvData, tempInsQues[index], 0, true, DmaMode::GET), HCCL_ERROR("[InsTempBroadcastMesh2DTwoShot] BatchRecv failed"),
-                HcclResult::HCCL_E_INTERNAL);
+        CHK_PRT_RET(
+            Recv(recvData, tempInsQues[index], 0, true, DmaMode::GET),
+            HCCL_ERROR("[InsTempBroadcastMesh2DTwoShot] BatchRecv failed"), HcclResult::HCCL_E_INTERNAL);
     } else if (curY_ == rootY && !isRootX) {
         u64 dataOffset = baseOffset + curX_ * rankStride;
         u64 curSize = curX_ == sizeY_ - 1 ? dataSize - rankStride * curX_ : rankStride;
-        const LinkData &linkRecv = tempLinks.at(root)[0];
+        const LinkData& linkRecv = tempLinks.at(root)[0];
         u64 dataOffsetAll = opMode_ == OpMode::OFFLOAD ? inputOffset_ + dataOffset : dataOffset;
         BufferType srcDstBufferType = opMode_ == OpMode::OFFLOAD ? BufferType::INPUT : BufferType::SCRATCH;
         std::vector<DataSlice> srcSlices = {DataSlice(srcDstBufferType, dataOffsetAll, curSize)};
@@ -123,23 +130,26 @@ HcclResult InsTempBroadcastMesh2DTwoShot::RunScatter(const ResLinks &tempLinks, 
         SlicesList rxSlicesList(srcSlices, dstSlices);
         DataInfo recvData(linkRecv, rxSlicesList);
         u32 index = curX_ > rootX ? curX_ - 1 : curX_;
-        CHK_PRT_RET(Recv(recvData, tempInsQues[sizeX_ - 1 + index], 0, true, DmaMode::GET), HCCL_ERROR("[InsTempBroadcastMesh2DTwoShot] BatchRecv failed"),
-                HcclResult::HCCL_E_INTERNAL);
+        CHK_PRT_RET(
+            Recv(recvData, tempInsQues[sizeX_ - 1 + index], 0, true, DmaMode::GET),
+            HCCL_ERROR("[InsTempBroadcastMesh2DTwoShot] BatchRecv failed"), HcclResult::HCCL_E_INTERNAL);
     }
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempBroadcastMesh2DTwoShot::RunAllgather(const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues, u64 baseOffset, u64 dataSize, bool isX, bool isDma)
+HcclResult InsTempBroadcastMesh2DTwoShot::RunAllgather(
+    const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues, u64 baseOffset, u64 dataSize, bool isX, bool isDma)
 {
     if (dataSize == 0) {
         return HcclResult::HCCL_SUCCESS;
     }
-    u64 rankStride = isX ? dataSize / sizeX_ / dataTypeSize_ * dataTypeSize_ :
-                           dataSize / sizeY_ / dataTypeSize_ * dataTypeSize_;
+    u64 rankStride
+        = isX ? dataSize / sizeX_ / dataTypeSize_ * dataTypeSize_ : dataSize / sizeY_ / dataTypeSize_ * dataTypeSize_;
 
     if (isX) {
         for (u32 i = 0, index = 0; i < sizeX_; i++) {
-            if (i == curY_) continue;
+            if (i == curY_)
+                continue;
             // send to peer rank
             u64 sendOffset = baseOffset + curY_ * rankStride;
             u64 sendSize = curY_ == sizeX_ - 1 ? dataSize - rankStride * curY_ : rankStride;
@@ -147,7 +157,7 @@ HcclResult InsTempBroadcastMesh2DTwoShot::RunAllgather(const ResLinks &tempLinks
             // recv from peer rank
             u64 recvOffset = baseOffset + i * rankStride;
             u64 recvSize = i == sizeX_ - 1 ? dataSize - rankStride * i : rankStride;
-            const LinkData &linkSendRecv = tempLinks.at(peerRank)[0];
+            const LinkData& linkSendRecv = tempLinks.at(peerRank)[0];
             u64 sendOffsetSrc = opMode_ == OpMode::OFFLOAD ? inputOffset_ + sendOffset : sendOffset;
             u64 sendOffsetDst = opMode_ == OpMode::OFFLOAD || isDma ? inputOffset_ + sendOffset : sendOffset;
             u64 recvOffsetSrc = opMode_ == OpMode::OFFLOAD ? inputOffset_ + recvOffset : recvOffset;
@@ -161,13 +171,15 @@ HcclResult InsTempBroadcastMesh2DTwoShot::RunAllgather(const ResLinks &tempLinks
             TxRxSlicesList sendRecvSlicesList({txSrcSlices, txDstSlices}, {rxSrcSlices, rxDstSlices});
             TxRxLinks sendRecvLinks(linkSendRecv, linkSendRecv);
             SendRecvInfo sendRecvInfo(sendRecvLinks, sendRecvSlicesList);
-            CHK_PRT_RET(SendRecv(sendRecvInfo, tempInsQues[index], 0, true, DmaMode::GET), HCCL_ERROR("[InsTempBroadcastMesh2DTwoShot] BatchSendRecv failed"),
-                        HcclResult::HCCL_E_INTERNAL);
+            CHK_PRT_RET(
+                SendRecv(sendRecvInfo, tempInsQues[index], 0, true, DmaMode::GET),
+                HCCL_ERROR("[InsTempBroadcastMesh2DTwoShot] BatchSendRecv failed"), HcclResult::HCCL_E_INTERNAL);
             index++;
         }
     } else {
         for (u32 i = 0, index = 0; i < sizeY_; i++) {
-            if (i == curX_) continue;
+            if (i == curX_)
+                continue;
             // send to peer rank
             u64 sendOffset = baseOffset + curX_ * rankStride;
             u64 sendSize = curX_ == sizeY_ - 1 ? dataSize - rankStride * curX_ : rankStride;
@@ -175,7 +187,7 @@ HcclResult InsTempBroadcastMesh2DTwoShot::RunAllgather(const ResLinks &tempLinks
             // recv from peer rank
             u64 recvOffset = baseOffset + i * rankStride;
             u64 recvSize = i == sizeY_ - 1 ? dataSize - rankStride * i : rankStride;
-            const LinkData &linkSendRecv = tempLinks.at(peerRank)[0];
+            const LinkData& linkSendRecv = tempLinks.at(peerRank)[0];
             u64 sendOffsetSrc = opMode_ == OpMode::OFFLOAD ? inputOffset_ + sendOffset : sendOffset;
             u64 sendOffsetDst = opMode_ == OpMode::OFFLOAD || isDma ? inputOffset_ + sendOffset : sendOffset;
             u64 recvOffsetSrc = opMode_ == OpMode::OFFLOAD ? inputOffset_ + recvOffset : recvOffset;
@@ -189,15 +201,17 @@ HcclResult InsTempBroadcastMesh2DTwoShot::RunAllgather(const ResLinks &tempLinks
             TxRxSlicesList sendRecvSlicesList({txSrcSlices, txDstSlices}, {rxSrcSlices, rxDstSlices});
             TxRxLinks sendRecvLinks(linkSendRecv, linkSendRecv);
             SendRecvInfo sendRecvInfo(sendRecvLinks, sendRecvSlicesList);
-            CHK_PRT_RET(SendRecv(sendRecvInfo, tempInsQues[sizeX_ - 1 + index], 0, true, DmaMode::GET), HCCL_ERROR("[InsTempBroadcastMesh2DTwoShot] BatchSendRecv failed"),
-                        HcclResult::HCCL_E_INTERNAL);
+            CHK_PRT_RET(
+                SendRecv(sendRecvInfo, tempInsQues[sizeX_ - 1 + index], 0, true, DmaMode::GET),
+                HCCL_ERROR("[InsTempBroadcastMesh2DTwoShot] BatchSendRecv failed"), HcclResult::HCCL_E_INTERNAL);
             index++;
         }
     }
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempBroadcastMesh2DTwoShot::Run1RootScatterXY(u64 dataSize, const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues)
+HcclResult InsTempBroadcastMesh2DTwoShot::Run1RootScatterXY(
+    u64 dataSize, const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues)
 {
     u64 perRank = dataSize / (sizeX_ + sizeY_) / dataTypeSize_ * dataTypeSize_;
     u32 rootX, rootY;
@@ -213,7 +227,8 @@ HcclResult InsTempBroadcastMesh2DTwoShot::Run1RootScatterXY(u64 dataSize, const 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempBroadcastMesh2DTwoShot::RunNRootScatterYX(u64 dataSize, const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues)
+HcclResult InsTempBroadcastMesh2DTwoShot::RunNRootScatterYX(
+    u64 dataSize, const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues)
 {
     u64 perRank = dataSize / (sizeX_ + sizeY_) / dataTypeSize_ * dataTypeSize_;
     u32 rootX, rootY;
@@ -241,7 +256,8 @@ HcclResult InsTempBroadcastMesh2DTwoShot::RunNRootScatterYX(u64 dataSize, const 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempBroadcastMesh2DTwoShot::RunAllgatherYX(u64 dataSize, const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues)
+HcclResult InsTempBroadcastMesh2DTwoShot::RunAllgatherYX(
+    u64 dataSize, const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues)
 {
     u64 perRank = dataSize / (sizeX_ + sizeY_) / dataTypeSize_ * dataTypeSize_;
     u32 rootX, rootY;
@@ -264,7 +280,8 @@ HcclResult InsTempBroadcastMesh2DTwoShot::RunAllgatherYX(u64 dataSize, const Res
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempBroadcastMesh2DTwoShot::RunAllgatherXY(u64 dataSize, const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues)
+HcclResult InsTempBroadcastMesh2DTwoShot::RunAllgatherXY(
+    u64 dataSize, const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues)
 {
     u64 perRank = dataSize / (sizeX_ + sizeY_) / dataTypeSize_ * dataTypeSize_;
     u32 rootX, rootY;
@@ -281,18 +298,21 @@ HcclResult InsTempBroadcastMesh2DTwoShot::RunAllgatherXY(u64 dataSize, const Res
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempBroadcastMesh2DTwoShot::PreCopy(const TemplateDataParams &templateDataParams, std::vector<InsQuePtr> &tempInsQues)
+HcclResult InsTempBroadcastMesh2DTwoShot::PreCopy(
+    const TemplateDataParams& templateDataParams, std::vector<InsQuePtr>& tempInsQues)
 {
     if (opMode_ == OpMode::OFFLOAD || u32(myRank_) != root_) {
         return HcclResult::HCCL_SUCCESS;
     }
     std::vector<DataSlice> scratchSlices = {DataSlice(BufferType::SCRATCH, 0, templateDataParams.sliceSize)};
-    std::vector<DataSlice> inputSlices = {DataSlice(BufferType::INPUT, templateDataParams.buffInfo.inBuffBaseOff, templateDataParams.sliceSize)};
+    std::vector<DataSlice> inputSlices
+        = {DataSlice(BufferType::INPUT, templateDataParams.buffInfo.inBuffBaseOff, templateDataParams.sliceSize)};
     CHK_RET(LocalCopySlices(tempInsQues[0], inputSlices, scratchSlices));
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempBroadcastMesh2DTwoShot::PostCopy(const TemplateDataParams &templateDataParams, std::vector<InsQuePtr> &tempInsQues)
+HcclResult InsTempBroadcastMesh2DTwoShot::PostCopy(
+    const TemplateDataParams& templateDataParams, std::vector<InsQuePtr>& tempInsQues)
 {
     if (opMode_ == OpMode::OFFLOAD) {
         return HcclResult::HCCL_SUCCESS;
@@ -309,28 +329,32 @@ HcclResult InsTempBroadcastMesh2DTwoShot::PostCopy(const TemplateDataParams &tem
     u64 curRankDataOffsetY = scratchOffsetY + perRankY * curX_;
     u64 curRankDataSizeY = curX_ == sizeY_ - 1 ? scratchDataSizeY - curX_ * perRankY : perRankY;
 
-    std::vector<DataSlice> scratchSlices = {DataSlice(BufferType::SCRATCH, curRankDataOffsetX, curRankDataSizeX),
-                                             DataSlice(BufferType::SCRATCH, curRankDataOffsetY, curRankDataSizeY)};
-    std::vector<DataSlice> inputSlices = {DataSlice(BufferType::INPUT, templateDataParams.buffInfo.inBuffBaseOff + curRankDataOffsetX, curRankDataSizeX),
-                                           DataSlice(BufferType::INPUT, templateDataParams.buffInfo.inBuffBaseOff + curRankDataOffsetY, curRankDataSizeY)};
+    std::vector<DataSlice> scratchSlices
+        = {DataSlice(BufferType::SCRATCH, curRankDataOffsetX, curRankDataSizeX),
+           DataSlice(BufferType::SCRATCH, curRankDataOffsetY, curRankDataSizeY)};
+    std::vector<DataSlice> inputSlices = {
+        DataSlice(BufferType::INPUT, templateDataParams.buffInfo.inBuffBaseOff + curRankDataOffsetX, curRankDataSizeX),
+        DataSlice(BufferType::INPUT, templateDataParams.buffInfo.inBuffBaseOff + curRankDataOffsetY, curRankDataSizeY)};
     CHK_RET(LocalCopySlices(tempInsQues[0], scratchSlices, inputSlices));
 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempBroadcastMesh2DTwoShot::GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &templateDataParams,
-                         const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues)
+HcclResult InsTempBroadcastMesh2DTwoShot::GenExtIns(
+    const TempFuncs& tempFuncs, const TemplateDataParams& templateDataParams, const ResLinks& tempLinks,
+    std::vector<InsQuePtr>& tempInsQues)
 {
     HCCL_INFO("[InsTempBroadcastMesh2DTwoShot][GenExtIns] Broadcast2DMesh start: rank[%d] end", myRank_);
-    opMode_              = tempFuncs.opMode;
-    dataTypeSize_  = DataTypeSizeGet(dataType_);
+    opMode_ = tempFuncs.opMode;
+    dataTypeSize_ = DataTypeSizeGet(dataType_);
     inputOffset_ = templateDataParams.buffInfo.inBuffBaseOff;
     if (sizeX_ == 1 && sizeY_ == 1) {
         HCCL_INFO("[InsTempBroadcastMesh2DTwoShot][GenExtIns] Broadcast2DMesh finished: rank[%d] end", myRank_);
         return HcclResult::HCCL_SUCCESS;
     }
     queNum_ = sizeX_ - 1 + sizeY_ - 1;
-    CHK_PRT_RET(queNum_ != tempInsQues.size(),
+    CHK_PRT_RET(
+        queNum_ != tempInsQues.size(),
         HCCL_ERROR("[CollAlgFactory] [InsTempBroadcastMesh2DTwoShot] Rank [%d], requiredQue Error.", myRank_),
         HcclResult::HCCL_E_INTERNAL);
 

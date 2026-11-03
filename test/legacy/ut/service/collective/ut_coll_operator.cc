@@ -22,20 +22,11 @@ using namespace std;
 
 class CollOperatorTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CollOperatorTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CollOperatorTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CollOperatorTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CollOperatorTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in CollOperatorTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in CollOperatorTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {

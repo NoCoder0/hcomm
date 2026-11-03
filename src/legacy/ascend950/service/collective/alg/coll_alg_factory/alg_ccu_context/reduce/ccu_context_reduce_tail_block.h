@@ -21,12 +21,12 @@ namespace Hccl {
 
 class CcuContextReduceTailBlock : public CcuContextAlgBase {
 public:
-    CcuContextReduceTailBlock(const CcuCtxArg &arg, const std::vector<CcuTransport *> &transports,
-                              const CcuTransportGroup &group);
+    CcuContextReduceTailBlock(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
     ~CcuContextReduceTailBlock() override {}
 
-    void                  Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    void Algorithm() override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
 
 private:
     void ExportVariables();
@@ -41,7 +41,7 @@ private:
 
     std::vector<CcuRep::Variable> token_;
     std::vector<CcuRep::Variable> input_;
-    CcuRep::Variable              output_;
+    CcuRep::Variable output_;
 
     CcuRep::Variable inputOffset_;
     CcuRep::Variable outputOffset_;

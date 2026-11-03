@@ -1,20 +1,21 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "aicpu_allreduce.h"
 #include <cmath>
 #include <algorithm>
 #include "common/aicpu_hccl_common.h"
 
-HcclResult AicpuAllreduce::RunAlgorithm(HcclReduceOp opType, void *sendBuffer, void *recvBuffer, u64 dataCount,
-    HcclDataType dataType, u64 strideLen, AivAicpuOpParam * /* nextTask */)
+HcclResult AicpuAllreduce::RunAlgorithm(
+    HcclReduceOp opType, void* sendBuffer, void* recvBuffer, u64 dataCount, HcclDataType dataType,
+    [[maybe_unused]] u64 strideLen, AivAicpuOpParam* /* nextTask */)
 {
     CHK_PTR_NULL(ctx_);
     if (CC_EXE_ONE_SHOT_8_STREAM == ctx_->commOpType) {
@@ -51,8 +52,8 @@ int64_t AicpuAllreduce::RoundUpWithDivisor(u64 value, u64 divisor) const
     return ((value + (divisor - 1)) / divisor) * divisor;
 }
 
-HcclResult AicpuAllreduce::PrepareSlice(u64 dataCount, HcclDataType dataType, u32 sliceNum,
-    std::vector<Slice> &dataSlice) const
+HcclResult
+AicpuAllreduce::PrepareSlice(u64 dataCount, HcclDataType dataType, u32 sliceNum, std::vector<Slice>& dataSlice) const
 {
     Slice temp;
     u32 unitSize = DataUnitSize(dataType);
@@ -88,7 +89,7 @@ HcclResult AicpuAllreduce::PrepareSlice(u64 dataCount, HcclDataType dataType, u3
     return HCCL_SUCCESS;
 }
 
-void AicpuAllreduce::GetDataSizes16K(std::vector<u64> &dataSizes, u64 allDataSize) const
+void AicpuAllreduce::GetDataSizes16K(std::vector<u64>& dataSizes, u64 allDataSize) const
 {
     u64 num16k = allDataSize / HCCL_COPY_ALIGN;
     u64 tailSize = allDataSize % HCCL_COPY_ALIGN;
@@ -105,12 +106,12 @@ void AicpuAllreduce::GetDataSizes16K(std::vector<u64> &dataSizes, u64 allDataSiz
     dataSizes[ctx_->rankNum - 1] += tailSize;
 }
 
-HcclResult AicpuAllreduce::RunAllReduceAlignWin2Win(HcclReduceOp opType, void *recvBuffer, u64 dataCount,
-    HcclDataType dataType) const
+HcclResult AicpuAllreduce::RunAllReduceAlignWin2Win(
+    HcclReduceOp opType, void* recvBuffer, u64 dataCount, HcclDataType dataType) const
 {
     u32 unitSize = ctx_->unitSize;
     u64 allDataSize = dataCount * unitSize;
-    u8 *curOutputPtr = static_cast<u8 *>(recvBuffer);
+    u8* curOutputPtr = static_cast<u8*>(recvBuffer);
 
     if (ctx_->rankNum == 0) {
         return HCCL_E_PARA;
@@ -118,8 +119,8 @@ HcclResult AicpuAllreduce::RunAllReduceAlignWin2Win(HcclReduceOp opType, void *r
     std::vector<u64> dataSizes(ctx_->rankNum, 0);
     GetDataSizes16K(dataSizes, allDataSize);
 
-    if (dataSizes[0] > ctx_->windowSize || dataSizes[ctx_->rankNum - 1] > ctx_->windowSize ||
-        (ctx_->rankNum - 1) * HCCL_COPY_ALIGN >= allDataSize) {
+    if (dataSizes[0] > ctx_->windowSize || dataSizes[ctx_->rankNum - 1] > ctx_->windowSize
+        || (ctx_->rankNum - 1) * HCCL_COPY_ALIGN >= allDataSize) {
         return HCCL_E_PARA;
     }
 
@@ -143,8 +144,8 @@ HcclResult AicpuAllreduce::RunAllReduceAlignWin2Win(HcclReduceOp opType, void *r
     TaskOrchestrator::DoPreSync();
 
     // 5. 片内数据 Win拷贝到Rcv
-    TaskOrchestrator::SelfCpyWin2RcvEx1(curOutputPtr, dataSizes[ctx_->rankId], dataOffsets[ctx_->rankId], winOffset,
-        HCCL_REDUCE_RESERVED, dataType);
+    TaskOrchestrator::SelfCpyWin2RcvEx1(
+        curOutputPtr, dataSizes[ctx_->rankId], dataOffsets[ctx_->rankId], winOffset, HCCL_REDUCE_RESERVED, dataType);
 
     // 6. 跨片SDMA，分批拷贝 + 分批结束同步
     TaskOrchestrator::IpcCpyWin2RcvEx(curOutputPtr, dataSizes, dataOffsets, winOffset, HCCL_REDUCE_RESERVED, dataType);
@@ -157,14 +158,14 @@ HcclResult AicpuAllreduce::RunAllReduceAlignWin2Win(HcclReduceOp opType, void *r
     return HCCL_SUCCESS;
 }
 
-HcclResult AicpuAllreduce::RunAllReduceAlign(HcclReduceOp opType, void *sendBuffer, void *recvBuffer, u64 dataCount,
-    HcclDataType dataType) const
+HcclResult AicpuAllreduce::RunAllReduceAlign(
+    HcclReduceOp opType, void* sendBuffer, void* recvBuffer, u64 dataCount, HcclDataType dataType) const
 {
     u32 unitSize = ctx_->unitSize;
     u64 allDataSize = dataCount * unitSize;
 
-    u8 *curInputPtr = static_cast<u8 *>(sendBuffer);
-    u8 *curOutputPtr = static_cast<u8 *>(recvBuffer);
+    u8* curInputPtr = static_cast<u8*>(sendBuffer);
+    u8* curOutputPtr = static_cast<u8*>(recvBuffer);
 
     if (ctx_->rankNum == 0) {
         return HCCL_E_PARA;
@@ -172,8 +173,8 @@ HcclResult AicpuAllreduce::RunAllReduceAlign(HcclReduceOp opType, void *sendBuff
     std::vector<u64> dataSizes(ctx_->rankNum, 0);
     GetDataSizes16K(dataSizes, allDataSize);
 
-    if (dataSizes[0] > ctx_->windowSize || dataSizes[ctx_->rankNum - 1] > ctx_->windowSize ||
-        (ctx_->rankNum - 1) * HCCL_COPY_ALIGN >= allDataSize) {
+    if (dataSizes[0] > ctx_->windowSize || dataSizes[ctx_->rankNum - 1] > ctx_->windowSize
+        || (ctx_->rankNum - 1) * HCCL_COPY_ALIGN >= allDataSize) {
         return HCCL_E_PARA;
     }
 
@@ -183,8 +184,8 @@ HcclResult AicpuAllreduce::RunAllReduceAlign(HcclReduceOp opType, void *sendBuff
     }
 
     // 1. 片内数据 Snd拷贝到Window
-    TaskOrchestrator::SelfCpySnd2Win(curInputPtr, dataSizes[ctx_->rankId], dataOffsets[ctx_->rankId], 0,
-        HCCL_REDUCE_RESERVED, dataType);
+    TaskOrchestrator::SelfCpySnd2Win(
+        curInputPtr, dataSizes[ctx_->rankId], dataOffsets[ctx_->rankId], 0, HCCL_REDUCE_RESERVED, dataType);
 
     // 2. 前同步
     TaskOrchestrator::DoPreSync();
@@ -199,8 +200,8 @@ HcclResult AicpuAllreduce::RunAllReduceAlign(HcclReduceOp opType, void *sendBuff
     TaskOrchestrator::DoPreSync();
 
     // 6. 片内数据 Win拷贝到Rcv
-    TaskOrchestrator::SelfCpyWin2Rcv(curOutputPtr, dataSizes[ctx_->rankId], 0, dataOffsets[ctx_->rankId],
-        HCCL_REDUCE_RESERVED, dataType);
+    TaskOrchestrator::SelfCpyWin2Rcv(
+        curOutputPtr, dataSizes[ctx_->rankId], 0, dataOffsets[ctx_->rankId], HCCL_REDUCE_RESERVED, dataType);
 
     // 7. 跨片SDMA，分批拷贝 + 分批结束同步
     TaskOrchestrator::IpcCpyWin2Rcv(curOutputPtr, dataSizes, nullptr, dataOffsets, HCCL_REDUCE_RESERVED, dataType);
@@ -213,15 +214,15 @@ HcclResult AicpuAllreduce::RunAllReduceAlign(HcclReduceOp opType, void *sendBuff
     return HCCL_SUCCESS;
 }
 
-HcclResult AicpuAllreduce::RunAllReduce(HcclReduceOp opType, void *sendBuffer, void *recvBuffer, u64 dataCount,
-    HcclDataType dataType) const
+HcclResult AicpuAllreduce::RunAllReduce(
+    HcclReduceOp opType, void* sendBuffer, void* recvBuffer, u64 dataCount, HcclDataType dataType) const
 {
     u64 windowSize = ctx_->windowSize; // window size default is 200M, maybe need read from cfg/env.
     u32 unitSize = ctx_->unitSize;
     u64 maxCountPerLoop = (windowSize / unitSize) * ctx_->rankNum; // 中转内存单次最多能够接受的output count
 
-    u8 *curInputPtr = static_cast<u8 *>(sendBuffer);
-    u8 *curOutputPtr = static_cast<u8 *>(recvBuffer);
+    u8* curInputPtr = static_cast<u8*>(sendBuffer);
+    u8* curOutputPtr = static_cast<u8*>(recvBuffer);
     u64 inputOffset = 0;
     u64 outputOffset = 0;
     u64 countLeft = dataCount;
@@ -244,8 +245,9 @@ HcclResult AicpuAllreduce::RunAllReduce(HcclReduceOp opType, void *sendBuffer, v
         }
         sliceSize[ctx_->rankNum - 1] += (curCount - curRankCnt * ctx_->rankNum) * unitSize;
 
-        HCCL_DEBUG("RunAllReducev:curInputPtr[%p], curOutputPtr[%p], curCount[%llu], curSize[%llu]", curInputPtr,
-            curOutputPtr, curCount, curSize);
+        HCCL_DEBUG(
+            "RunAllReducev:curInputPtr[%p], curOutputPtr[%p], curCount[%llu], curSize[%llu]", curInputPtr, curOutputPtr,
+            curCount, curSize);
 
         if (ctx_->useBufferType != MC2_BUFFER_TYPE_WINDOW_IN) {
             RunAllReduceSlice(curOutputPtr, curInputPtr, sliceSize, dataSlice, opType, dataType);
@@ -261,8 +263,8 @@ HcclResult AicpuAllreduce::RunAllReduce(HcclReduceOp opType, void *sendBuffer, v
     return HCCL_SUCCESS;
 }
 
-void AicpuAllreduce::RunAllReduceSliceWin2Win(u8 *curOutputPtr, u64 *sliceSize, u64 *dataSlice, HcclReduceOp opType,
-    HcclDataType dataType) const
+void AicpuAllreduce::RunAllReduceSliceWin2Win(
+    u8* curOutputPtr, u64* sliceSize, u64* dataSlice, HcclReduceOp opType, HcclDataType dataType) const
 {
     u64 winOffset = ctx_->winOffset;
     // 1. 前同步
@@ -278,8 +280,8 @@ void AicpuAllreduce::RunAllReduceSliceWin2Win(u8 *curOutputPtr, u64 *sliceSize, 
     TaskOrchestrator::DoPreSync();
 
     // 5. 片内数据 Win拷贝到Rcv
-    TaskOrchestrator::SelfCpyWin2RcvEx1(curOutputPtr, sliceSize[ctx_->rankId], dataSlice[ctx_->rankId], winOffset,
-        HCCL_REDUCE_RESERVED, dataType);
+    TaskOrchestrator::SelfCpyWin2RcvEx1(
+        curOutputPtr, sliceSize[ctx_->rankId], dataSlice[ctx_->rankId], winOffset, HCCL_REDUCE_RESERVED, dataType);
 
     // 6. 跨片SDMA，分批拷贝 + 分批结束同步
     TaskOrchestrator::IpcCpyWin2RcvEx(curOutputPtr, sliceSize, dataSlice, winOffset, HCCL_REDUCE_RESERVED, dataType);
@@ -290,12 +292,12 @@ void AicpuAllreduce::RunAllReduceSliceWin2Win(u8 *curOutputPtr, u64 *sliceSize, 
     TaskOrchestrator::LaunchTasks();
 }
 
-void AicpuAllreduce::RunAllReduceSlice(u8 *curOutputPtr, u8 *curInputPtr, u64 *sliceSize, u64 *dataSlice,
-    HcclReduceOp opType, HcclDataType dataType) const
+void AicpuAllreduce::RunAllReduceSlice(
+    u8* curOutputPtr, u8* curInputPtr, u64* sliceSize, u64* dataSlice, HcclReduceOp opType, HcclDataType dataType) const
 {
     // 1. 片内数据 Snd拷贝到Window
-    TaskOrchestrator::SelfCpySnd2Win(curInputPtr, sliceSize[ctx_->rankId], dataSlice[ctx_->rankId], 0,
-        HCCL_REDUCE_RESERVED, dataType);
+    TaskOrchestrator::SelfCpySnd2Win(
+        curInputPtr, sliceSize[ctx_->rankId], dataSlice[ctx_->rankId], 0, HCCL_REDUCE_RESERVED, dataType);
 
     // 2. 前同步
     TaskOrchestrator::DoPreSync();
@@ -310,8 +312,8 @@ void AicpuAllreduce::RunAllReduceSlice(u8 *curOutputPtr, u8 *curInputPtr, u64 *s
     TaskOrchestrator::DoPreSync();
 
     // 6. 片内数据 Win拷贝到Rcv
-    TaskOrchestrator::SelfCpyWin2Rcv(curOutputPtr, sliceSize[ctx_->rankId], 0, dataSlice[ctx_->rankId],
-        HCCL_REDUCE_RESERVED, dataType);
+    TaskOrchestrator::SelfCpyWin2Rcv(
+        curOutputPtr, sliceSize[ctx_->rankId], 0, dataSlice[ctx_->rankId], HCCL_REDUCE_RESERVED, dataType);
 
     // 7. 跨片SDMA，分批拷贝 + 分批结束同步
     TaskOrchestrator::IpcCpyWin2Rcv(curOutputPtr, sliceSize, nullptr, dataSlice, HCCL_REDUCE_RESERVED, dataType);
@@ -322,8 +324,8 @@ void AicpuAllreduce::RunAllReduceSlice(u8 *curOutputPtr, u8 *curInputPtr, u64 *s
     TaskOrchestrator::LaunchTasks();
 }
 
-HcclResult AicpuAllreduce::RunAllReduceOneShot4Stream(HcclReduceOp opType, void *sendBuffer, void *recvBuffer,
-    u64 dataSize, HcclDataType dataType) const
+HcclResult AicpuAllreduce::RunAllReduceOneShot4Stream(
+    HcclReduceOp opType, void* sendBuffer, void* recvBuffer, u64 dataSize, HcclDataType dataType) const
 {
     // 第一轮第一组
     u32 mainRankId = ctx_->rankId;
@@ -338,14 +340,14 @@ HcclResult AicpuAllreduce::RunAllReduceOneShot4Stream(HcclReduceOp opType, void 
 
     // 第1轮
     // 1. 片内数据 拷贝到Window
-    TaskOrchestrator::SelfCpySnd2WinEx(mainRankId, sendBuffer, dataSize, 0, 0, HCCL_REDUCE_RESERVED, dataType,
-        maxStreamNum);
+    TaskOrchestrator::SelfCpySnd2WinEx(
+        mainRankId, sendBuffer, dataSize, 0, 0, HCCL_REDUCE_RESERVED, dataType, maxStreamNum);
     TaskOrchestrator::MainSubPreSync(mainRankId, startRank, endRank, maxStreamNum);
 
     TaskOrchestrator::IpcPreSyncEx(startRank, endRank, maxStreamNum, false);
     // 2. 跨片SDMA 片内Send拷贝到对端Window
-    TaskOrchestrator::IpcCpySnd2WinEx(sendBuffer, dataSize, nullptr, nullptr, opType, dataType, startRank, endRank,
-        maxStreamNum, false);
+    TaskOrchestrator::IpcCpySnd2WinEx(
+        sendBuffer, dataSize, nullptr, nullptr, opType, dataType, startRank, endRank, maxStreamNum, false);
     TaskOrchestrator::IpcPostSyncEx(startRank, endRank, maxStreamNum, false);
 
     TaskOrchestrator::MainSubPostSync(mainRankId, startRank, endRank, maxStreamNum);
@@ -353,12 +355,12 @@ HcclResult AicpuAllreduce::RunAllReduceOneShot4Stream(HcclReduceOp opType, void 
     // 第2轮
     u32 remoteRank = (ctx_->rankNum - 1) - mainRankId; // 0-7; 1-6; 2-5; 3-4
     // 3. 片内数据 拷贝到recv
-    TaskOrchestrator::SelfCpyWin2RcvEx(mainRankId, recvBuffer, dataSize, 0, 0, HCCL_REDUCE_RESERVED, dataType,
-        maxStreamNum);
+    TaskOrchestrator::SelfCpyWin2RcvEx(
+        mainRankId, recvBuffer, dataSize, 0, 0, HCCL_REDUCE_RESERVED, dataType, maxStreamNum);
     TaskOrchestrator::IpcPreSyncEx(remoteRank, remoteRank, maxStreamNum, true);
     // 4. 跨片SDMA Window拷贝到对端Recv
-    TaskOrchestrator::IpcCpyWin2RcvEx(recvBuffer, dataSize, nullptr, nullptr, opType, dataType, remoteRank, remoteRank,
-        maxStreamNum, true);
+    TaskOrchestrator::IpcCpyWin2RcvEx(
+        recvBuffer, dataSize, nullptr, nullptr, opType, dataType, remoteRank, remoteRank, maxStreamNum, true);
     TaskOrchestrator::IpcPostSyncEx(remoteRank, remoteRank, maxStreamNum, true);
 
     // 5. 下发sqe
@@ -367,14 +369,15 @@ HcclResult AicpuAllreduce::RunAllReduceOneShot4Stream(HcclReduceOp opType, void 
     return HCCL_SUCCESS;
 }
 
-HcclResult AicpuAllreduce::RunReduceBcastOnMainSq(u32 mainRankId, u32 maxStreamNum, u32 /* startRank */,
-    u32 /* endRank */, void *sendBuffer, void *recvBuffer, u64 dataSize, HcclDataType dataType) const
+HcclResult AicpuAllreduce::RunReduceBcastOnMainSq(
+    u32 mainRankId, u32 maxStreamNum, u32 /* startRank */, u32 /* endRank */, void* sendBuffer, void* recvBuffer,
+    u64 dataSize, HcclDataType dataType) const
 {
     HCCL_DEBUG("run RunReduceBcastOnMainSq start");
     if (ctx_->useBufferType != MC2_BUFFER_TYPE_WINDOW_IN) {
         // 1. reduce
-        TaskOrchestrator::SelfCpySnd2WinEx(mainRankId, sendBuffer, dataSize, 0, 0, HCCL_REDUCE_RESERVED, dataType,
-            maxStreamNum);
+        TaskOrchestrator::SelfCpySnd2WinEx(
+            mainRankId, sendBuffer, dataSize, 0, 0, HCCL_REDUCE_RESERVED, dataType, maxStreamNum);
     }
 
     // 2. 前同步
@@ -387,9 +390,9 @@ HcclResult AicpuAllreduce::RunReduceBcastOnMainSq(u32 mainRankId, u32 maxStreamN
     TaskOrchestrator::MainSubPreSync();
     TaskOrchestrator::IpcPreRecordEx(0, maxStreamNum - 1, maxStreamNum, false);
     // 5. bcast
-    TaskOrchestrator::SelfCpyWin2RcvEx(mainRankId, recvBuffer, dataSize,
-        ctx_->useBufferType != MC2_BUFFER_TYPE_WINDOW_IN ? 0 : ctx_->winOffset, 0, HCCL_REDUCE_RESERVED, dataType,
-        maxStreamNum);
+    TaskOrchestrator::SelfCpyWin2RcvEx(
+        mainRankId, recvBuffer, dataSize, ctx_->useBufferType != MC2_BUFFER_TYPE_WINDOW_IN ? 0 : ctx_->winOffset, 0,
+        HCCL_REDUCE_RESERVED, dataType, maxStreamNum);
     // 6. 后同步
     TaskOrchestrator::IpcPostWaitEx(0, maxStreamNum - 1, maxStreamNum, true);
 
@@ -397,8 +400,9 @@ HcclResult AicpuAllreduce::RunReduceBcastOnMainSq(u32 mainRankId, u32 maxStreamN
     return HCCL_SUCCESS;
 }
 
-HcclResult AicpuAllreduce::RunReduceBcastOnOtherSq(HcclReduceOp opType, u32 mainRankId, u32 maxStreamNum,
-    void *sendBuffer, void *recvBuffer, u64 dataSize, HcclDataType dataType) const
+HcclResult AicpuAllreduce::RunReduceBcastOnOtherSq(
+    HcclReduceOp opType, u32 mainRankId, u32 maxStreamNum, void* sendBuffer, void* recvBuffer, u64 dataSize,
+    HcclDataType dataType) const
 {
     HCCL_DEBUG("run RunReduceBcastOnOtherSq start");
 
@@ -413,16 +417,16 @@ HcclResult AicpuAllreduce::RunReduceBcastOnOtherSq(HcclReduceOp opType, u32 main
 
     // bcast
     TaskOrchestrator::IpcPreWaitEx(mainRankId, mainRankId, maxStreamNum, true);
-    TaskOrchestrator::SelfCpyWin2RcvEx(mainRankId, recvBuffer, dataSize,
-        ctx_->useBufferType != MC2_BUFFER_TYPE_WINDOW_IN ? 0 : ctx_->winOffset, 0, HCCL_REDUCE_RESERVED, dataType,
-        maxStreamNum);
+    TaskOrchestrator::SelfCpyWin2RcvEx(
+        mainRankId, recvBuffer, dataSize, ctx_->useBufferType != MC2_BUFFER_TYPE_WINDOW_IN ? 0 : ctx_->winOffset, 0,
+        HCCL_REDUCE_RESERVED, dataType, maxStreamNum);
     TaskOrchestrator::IpcPostRecordEx(mainRankId, mainRankId, maxStreamNum, true);
     HCCL_DEBUG("run RunReduceBcastOnOtherSq end");
     return HCCL_SUCCESS;
 }
 
-HcclResult AicpuAllreduce::RunAllReduceReduceBcast(HcclReduceOp opType, void *sendBuffer, void *recvBuffer,
-    u64 dataSize, HcclDataType dataType) const
+HcclResult AicpuAllreduce::RunAllReduceReduceBcast(
+    HcclReduceOp opType, void* sendBuffer, void* recvBuffer, u64 dataSize, HcclDataType dataType) const
 {
     HCCL_DEBUG("run RunAllReduceReduceBcast start");
 
@@ -432,8 +436,8 @@ HcclResult AicpuAllreduce::RunAllReduceReduceBcast(HcclReduceOp opType, void *se
     u32 endRank = ctx_->rankNum - 1;
 
     if (ctx_->rankId == mainRankId) {
-        RunReduceBcastOnMainSq(mainRankId, maxStreamNum, startRank, endRank, sendBuffer, recvBuffer, dataSize,
-            dataType);
+        RunReduceBcastOnMainSq(
+            mainRankId, maxStreamNum, startRank, endRank, sendBuffer, recvBuffer, dataSize, dataType);
     } else {
         RunReduceBcastOnOtherSq(opType, mainRankId, maxStreamNum, sendBuffer, recvBuffer, dataSize, dataType);
     }
@@ -445,12 +449,12 @@ HcclResult AicpuAllreduce::RunAllReduceReduceBcast(HcclReduceOp opType, void *se
     return HCCL_SUCCESS;
 }
 
-HcclResult AicpuAllreduce::RunAllReduceOneShot1Stream(HcclReduceOp opType, void *sendBuffer, void *recvBuffer,
-    u64 dataSize, HcclDataType dataType) const
+HcclResult AicpuAllreduce::RunAllReduceOneShot1Stream(
+    HcclReduceOp opType, void* sendBuffer, void* recvBuffer, u64 dataSize, HcclDataType dataType) const
 {
     HCCL_INFO("run RunAllReduceOneShot1Stream start");
     u32 maxStreamNum = ctx_->rankNum;
-    u8 *curOutputPtr = static_cast<u8 *>(recvBuffer);
+    u8* curOutputPtr = static_cast<u8*>(recvBuffer);
     u32 startRank = 0;
     u32 endRank = maxStreamNum - 1;
 
@@ -460,8 +464,8 @@ HcclResult AicpuAllreduce::RunAllReduceOneShot1Stream(HcclReduceOp opType, void 
 
     TaskOrchestrator::IpcPreSyncEx(startRank, endRank, maxStreamNum, true);
 
-    TaskOrchestrator::IpcCpyWin2RcvEx(curOutputPtr, dataSize, nullptr, nullptr, opType, dataType, startRank, endRank,
-        maxStreamNum, true);
+    TaskOrchestrator::IpcCpyWin2RcvEx(
+        curOutputPtr, dataSize, nullptr, nullptr, opType, dataType, startRank, endRank, maxStreamNum, true);
 
     TaskOrchestrator::IpcPostSyncEx(startRank, endRank, maxStreamNum, true);
 
@@ -472,15 +476,15 @@ HcclResult AicpuAllreduce::RunAllReduceOneShot1Stream(HcclReduceOp opType, void 
     return HCCL_SUCCESS;
 }
 
-HcclResult AicpuAllreduce::RunAllReduceTwoShot1Stream(HcclReduceOp opType, void *sendBuffer, void *recvBuffer,
-    u64 dataCount, HcclDataType dataType) const
+HcclResult AicpuAllreduce::RunAllReduceTwoShot1Stream(
+    HcclReduceOp opType, void* sendBuffer, void* recvBuffer, u64 dataCount, HcclDataType dataType) const
 {
     HCCL_INFO("run RunAllReduceTwoShot1Stream start");
     u32 maxStreamNum = ctx_->rankNum;
     u32 startRank = 0;
     u32 endRank = maxStreamNum - 1;
-    u8 *curInputPtr = static_cast<u8 *>(sendBuffer);
-    u8 *curOutputPtr = static_cast<u8 *>(recvBuffer);
+    u8* curInputPtr = static_cast<u8*>(sendBuffer);
+    u8* curOutputPtr = static_cast<u8*>(recvBuffer);
     u32 unitSize = ctx_->unitSize;
     u64 inputOffset = 0;
     u64 outputOffset = 0;
@@ -497,24 +501,25 @@ HcclResult AicpuAllreduce::RunAllReduceTwoShot1Stream(HcclReduceOp opType, void 
         PrepareSlice(curCount, dataType, maxStreamNum, dataSlice);
         u64 sliceSize = dataSlice[ctx_->rankId].size;
 
-        HCCL_INFO("RunAllReducev:curInputPtr[%p], curOutputPtr[%p], curCount[%llu], curSize[%llu]", curInputPtr,
-            curOutputPtr, curCount, curSize);
+        HCCL_INFO(
+            "RunAllReducev:curInputPtr[%p], curOutputPtr[%p], curCount[%llu], curSize[%llu]", curInputPtr, curOutputPtr,
+            curCount, curSize);
 
-        TaskOrchestrator::SelfCpySnd2WinEx1(curInputPtr, sliceSize, dataSlice[ctx_->rankId].offset, 0,
-            HCCL_REDUCE_RESERVED, dataType, maxStreamNum);
+        TaskOrchestrator::SelfCpySnd2WinEx1(
+            curInputPtr, sliceSize, dataSlice[ctx_->rankId].offset, 0, HCCL_REDUCE_RESERVED, dataType, maxStreamNum);
 
         TaskOrchestrator::IpcPreSyncEx(startRank, endRank, maxStreamNum, true);
 
-        TaskOrchestrator::IpcCpySnd2WinSliceEx(curInputPtr, dataSlice, nullptr, opType, dataType, startRank, endRank,
-            maxStreamNum, true);
+        TaskOrchestrator::IpcCpySnd2WinSliceEx(
+            curInputPtr, dataSlice, nullptr, opType, dataType, startRank, endRank, maxStreamNum, true);
 
-        TaskOrchestrator::IpcCpyWin2RcvSliceEx(curOutputPtr, dataSlice, nullptr, HCCL_REDUCE_RESERVED, dataType,
-            startRank, endRank, maxStreamNum, true);
+        TaskOrchestrator::IpcCpyWin2RcvSliceEx(
+            curOutputPtr, dataSlice, nullptr, HCCL_REDUCE_RESERVED, dataType, startRank, endRank, maxStreamNum, true);
 
         TaskOrchestrator::IpcPostSyncEx(startRank, endRank, maxStreamNum, true);
 
-        TaskOrchestrator::SelfCpyWin2Rcv(curOutputPtr, sliceSize, 0, dataSlice[ctx_->rankId].offset,
-            HCCL_REDUCE_RESERVED, dataType);
+        TaskOrchestrator::SelfCpyWin2Rcv(
+            curOutputPtr, sliceSize, 0, dataSlice[ctx_->rankId].offset, HCCL_REDUCE_RESERVED, dataType);
 
         // 下发sqe
         TaskOrchestrator::LaunchTasksEx(0, maxStreamNum - 1, maxStreamNum);
@@ -549,7 +554,7 @@ u32 AicpuAllreduce::GetHdPeer(const u32 hdRound, const u32 curRank) const
 // 只支持卡数大于 2 且为 2 的幂数的场景
 // datasize 需小于 ccl buffer 大小
 HcclResult AicpuAllreduce::RunAllReduceOneshotHD(
-    HcclReduceOp opType, void *sendBuffer, void *recvBuffer, u64 dataSize, HcclDataType dataType) const
+    HcclReduceOp opType, void* sendBuffer, void* recvBuffer, u64 dataSize, HcclDataType dataType) const
 {
     /* 分3个阶段：
      * 第一阶段：将 input 的数据拷贝到 window 上
@@ -560,12 +565,11 @@ HcclResult AicpuAllreduce::RunAllReduceOneshotHD(
      */
     HCCL_INFO("run RunAllReduceOneshotHD start");
 
-    u8 *curOutputPtr = static_cast<u8 *>(recvBuffer);
+    u8* curOutputPtr = static_cast<u8*>(recvBuffer);
     const u32 curRank = ctx_->rankId;
     // 第一阶段：
     // 将输入数据拷贝到 Window
-    CHK_RET(TaskOrchestrator::SelfCpySnd2Win(
-        sendBuffer, dataSize, 0, 0, HCCL_REDUCE_RESERVED, dataType));
+    CHK_RET(TaskOrchestrator::SelfCpySnd2Win(sendBuffer, dataSize, 0, 0, HCCL_REDUCE_RESERVED, dataType));
     // 第二阶段：
     // 片内拷贝 片内Send拷贝到对端Window - 卡内双 die 间 allreduce
     u32 hdRound = 0;
@@ -573,13 +577,11 @@ HcclResult AicpuAllreduce::RunAllReduceOneshotHD(
     CHK_RET(TaskOrchestrator::IpcPreSyncEx(peerRank, peerRank, ctx_->rankNum, true));
 
     // 将输入数据写到对端
-    CHK_RET(TaskOrchestrator::IpcCpySnd2WinP2P(
-        sendBuffer, peerRank, dataSize, 0, 0, opType, dataType));
+    CHK_RET(TaskOrchestrator::IpcCpySnd2WinP2P(sendBuffer, peerRank, dataSize, 0, 0, opType, dataType));
     TaskOrchestrator::IpcPostSyncEx(peerRank, peerRank, ctx_->rankNum, true);
 
     // 片内拷贝 Win拷贝到Rcv
-    CHK_RET(TaskOrchestrator::SelfCpyWin2Rcv(
-        curOutputPtr, dataSize, 0, 0, HCCL_REDUCE_RESERVED, dataType));
+    CHK_RET(TaskOrchestrator::SelfCpyWin2Rcv(curOutputPtr, dataSize, 0, 0, HCCL_REDUCE_RESERVED, dataType));
     // 第三阶段：
     // 循环 log2(rankNum) - 1 次
     u32 remainingHdRounds = ctx_->rankNum >> 1;
@@ -588,13 +590,11 @@ HcclResult AicpuAllreduce::RunAllReduceOneshotHD(
         peerRank = GetHdPeer(hdRound, curRank);
         // 跨片拷贝 对端 window 拷贝到 rcv
         CHK_RET(TaskOrchestrator::IpcPreSyncEx(peerRank, peerRank, ctx_->rankNum, true));
-        CHK_RET(TaskOrchestrator::IpcCpyWin2RcvP2PMainStream(
-            curOutputPtr, peerRank, dataSize, 0, 0, opType, dataType));
+        CHK_RET(TaskOrchestrator::IpcCpyWin2RcvP2PMainStream(curOutputPtr, peerRank, dataSize, 0, 0, opType, dataType));
         CHK_RET(TaskOrchestrator::IpcPostSyncEx(peerRank, peerRank, ctx_->rankNum, true));
         // 如果这不是最后一轮，则需要将rcv里的数据同步到 win 里
         if (remainingHdRounds > 1) {
-            CHK_RET(TaskOrchestrator::SelfCpyRcv2Win(
-                curOutputPtr, dataSize, 0, 0, HCCL_REDUCE_RESERVED, dataType));
+            CHK_RET(TaskOrchestrator::SelfCpyRcv2Win(curOutputPtr, dataSize, 0, 0, HCCL_REDUCE_RESERVED, dataType));
         }
     }
     // 下发sqe
@@ -614,8 +614,7 @@ u64 AicpuAllreduce::AlignWith(u64 oriValue, u64 alignValue) const
 }
 
 // 按照 cclBuffer 大小将数据切分
-HcclResult AicpuAllreduce::GetBurstDataCounts(
-    u64 windowSize, u64 dataCount, std::vector<u64> &burstDataCounts) const
+HcclResult AicpuAllreduce::GetBurstDataCounts(u64 windowSize, u64 dataCount, std::vector<u64>& burstDataCounts) const
 {
     u64 alignedWindowSize = AlignWith(windowSize, HCCL_COPY_ALIGN);
     u32 unitSize = ctx_->unitSize;
@@ -643,8 +642,9 @@ std::vector<std::vector<u32>> AicpuAllreduce::GetRingOrders() const
 }
 
 // 当前只支持从0开始的rankID
-HcclResult AicpuAllreduce::reorderRingSlice(const std::vector<u32> &ringOrder, const std::vector<Slice> &ringSlices,
-    std::vector<Slice> &orderedRingSlices) const
+HcclResult AicpuAllreduce::reorderRingSlice(
+    const std::vector<u32>& ringOrder, const std::vector<Slice>& ringSlices,
+    std::vector<Slice>& orderedRingSlices) const
 {
     size_t ringSize = ringOrder.size();
     CHK_PRT_RET(ringSize == 0, HCCL_ERROR("ringSize is 0"), HCCL_E_UNAVAIL);
@@ -659,8 +659,9 @@ HcclResult AicpuAllreduce::reorderRingSlice(const std::vector<u32> &ringOrder, c
     return HCCL_SUCCESS;
 }
 
-HcclResult AicpuAllreduce::PrepareRingSlice(const std::vector<std::vector<u32>> &ringOrders, u64 dataCount,
-    HcclDataType dataType, std::vector<std::vector<Slice>> &orderedAllRingSlice) const
+HcclResult AicpuAllreduce::PrepareRingSlice(
+    const std::vector<std::vector<u32>>& ringOrders, u64 dataCount, HcclDataType dataType,
+    std::vector<std::vector<Slice>>& orderedAllRingSlice) const
 {
     u32 ringNum = ringOrders.size();
     u32 sliceNum = ctx_->rankNum * ringNum;
@@ -673,8 +674,7 @@ HcclResult AicpuAllreduce::PrepareRingSlice(const std::vector<std::vector<u32>> 
         allRingSlices[i % ringNum].push_back(dataSlices[i]);
     }
     for (size_t i = 0; i < ringNum; i++) {
-        reorderRingSlice(ringOrders[i], allRingSlices[i],
-                         orderedAllRingSlice[i]);
+        reorderRingSlice(ringOrders[i], allRingSlices[i], orderedAllRingSlice[i]);
     }
     return HCCL_SUCCESS;
 }
@@ -697,8 +697,7 @@ HcclResult AicpuAllreduce::RingIPCPostSync(const u32 stream, const u32 prevRank,
     return HCCL_SUCCESS;
 }
 
-HcclResult AicpuAllreduce::GetPrevRankList(const std::vector<u32> &ringOrder,
-    std::vector<u32> &previousRankList) const
+HcclResult AicpuAllreduce::GetPrevRankList(const std::vector<u32>& ringOrder, std::vector<u32>& previousRankList) const
 {
     size_t ringSize = ringOrder.size();
     for (size_t rankIdx = 0; rankIdx < ringSize; rankIdx++) {
@@ -709,15 +708,13 @@ HcclResult AicpuAllreduce::GetPrevRankList(const std::vector<u32> &ringOrder,
     return HCCL_SUCCESS;
 }
 
-size_t AicpuAllreduce::FindNextRank(const std::vector<u32> &previousRankList, const u32 localRank) const
+size_t AicpuAllreduce::FindNextRank(const std::vector<u32>& previousRankList, const u32 localRank) const
 {
-    return std::find(previousRankList.begin(), previousRankList.end(),
-                     localRank) -
-           previousRankList.begin();
+    return std::find(previousRankList.begin(), previousRankList.end(), localRank) - previousRankList.begin();
 }
 
-Slice* AicpuAllreduce::GetNextRingSlice(const std::vector<u32> &previousRankList,
-    std::vector<Slice> &orderedRingSlices, u32 &curSliceIdx) const
+Slice* AicpuAllreduce::GetNextRingSlice(
+    const std::vector<u32>& previousRankList, std::vector<Slice>& orderedRingSlices, u32& curSliceIdx) const
 {
     curSliceIdx = previousRankList[curSliceIdx];
     Slice* nextSlice = &orderedRingSlices[curSliceIdx];
@@ -725,8 +722,8 @@ Slice* AicpuAllreduce::GetNextRingSlice(const std::vector<u32> &previousRankList
 }
 
 HcclResult AicpuAllreduce::RunAllReduceRingAlg(
-    HcclReduceOp opType, void *sendBuffer, void *recvBuffer, std::vector<Slice> &orderedRingSlices,
-    std::vector<u32> &ringOrder, HcclDataType dataType) const
+    HcclReduceOp opType, void* sendBuffer, void* recvBuffer, std::vector<Slice>& orderedRingSlices,
+    std::vector<u32>& ringOrder, HcclDataType dataType) const
 {
     size_t ringSize = ringOrder.size();
     std::vector<u32> previousRankList(ringSize);
@@ -736,8 +733,8 @@ HcclResult AicpuAllreduce::RunAllReduceRingAlg(
     const u32 nextRank = FindNextRank(previousRankList, ctx_->rankId);
     const u32 subStream = prevRank;
     u32 curSliceIdx = ctx_->rankId;
-    Slice *localSlice = &orderedRingSlices[curSliceIdx];
-    Slice *remoteSlice = nullptr;
+    Slice* localSlice = &orderedRingSlices[curSliceIdx];
+    Slice* remoteSlice = nullptr;
     // 第一轮：主流准备前2片数据
     CHK_RET(TaskOrchestrator::SelfCpySnd2Win(
         sendBuffer, localSlice->size, localSlice->offset, localSlice->offset, HCCL_REDUCE_RESERVED, dataType));
@@ -750,55 +747,56 @@ HcclResult AicpuAllreduce::RunAllReduceRingAlg(
         CHK_RET(TaskOrchestrator::MainSubPreSync(subStream)); // 主流启动从流
         // 从流跨片 reduce
         CHK_RET(RingIPCPreSync(subStream, prevRank, nextRank));
-        CHK_RET(TaskOrchestrator::IpcCpyWin2WinP2P(prevRank, remoteSlice->size, remoteSlice->offset,
-            remoteSlice->offset, opType, dataType));
+        CHK_RET(TaskOrchestrator::IpcCpyWin2WinP2P(
+            prevRank, remoteSlice->size, remoteSlice->offset, remoteSlice->offset, opType, dataType));
         CHK_RET(RingIPCPostSync(subStream, prevRank, nextRank));
-        if (rankOffset <  ringSize - 2) { // ringSize - 2： 最后一轮不进行本地搬运
+        if (rankOffset < ringSize - 2) { // ringSize - 2： 最后一轮不进行本地搬运
             // 主流继续准备数据
             localSlice = GetNextRingSlice(previousRankList, orderedRingSlices, curSliceIdx);
-            CHK_RET(TaskOrchestrator::SelfCpySnd2Win(sendBuffer, localSlice->size,
-                localSlice->offset, localSlice->offset, HCCL_REDUCE_RESERVED, dataType));
+            CHK_RET(TaskOrchestrator::SelfCpySnd2Win(
+                sendBuffer, localSlice->size, localSlice->offset, localSlice->offset, HCCL_REDUCE_RESERVED, dataType));
         }
         CHK_RET(TaskOrchestrator::MainSubPostSync(subStream)); // 从流通知主流，回收 notify，主流继续执行
         TaskOrchestrator::LaunchTasksEx(0, ctx_->rankNum - 1, ctx_->rankNum); // 下发sqe
     }
     for (size_t rankOffset = 0; rankOffset < ringSize - 1; rankOffset++) {
         localSlice = remoteSlice; // 主流搬运上一轮从流准备的数据
-        remoteSlice = GetNextRingSlice(previousRankList, orderedRingSlices, curSliceIdx); // 从流继续往下循环，搬运reduce好的数据
-        CHK_RET(TaskOrchestrator::MainSubPreSync(subStream)); // 主流通知从流回收notify资源
-        TaskOrchestrator::SelfCpyWin2Rcv(recvBuffer, localSlice->size, localSlice->offset,
-            localSlice->offset, HCCL_REDUCE_RESERVED, dataType);
+        remoteSlice = GetNextRingSlice(
+            previousRankList, orderedRingSlices, curSliceIdx); // 从流继续往下循环，搬运reduce好的数据
+        CHK_RET(TaskOrchestrator::MainSubPreSync(subStream));  // 主流通知从流回收notify资源
+        TaskOrchestrator::SelfCpyWin2Rcv(
+            recvBuffer, localSlice->size, localSlice->offset, localSlice->offset, HCCL_REDUCE_RESERVED, dataType);
         CHK_RET(RingIPCPreSync(subStream, prevRank, nextRank));
         if (rankOffset < ringSize - 2) { // < RingSize - 2: 不是最后一轮，搬到 window 上，让下游读
-            CHK_RET(TaskOrchestrator::IpcCpyWin2WinP2P(prevRank, remoteSlice->size, remoteSlice->offset,
-                remoteSlice->offset, HCCL_REDUCE_RESERVED, dataType));
-        } else {  // 最后一轮，dma 消减，直接从对端读入 rcv
-            CHK_RET(TaskOrchestrator::IpcCpyWin2RcvP2P(recvBuffer, prevRank, remoteSlice->size,
-                remoteSlice->offset, remoteSlice->offset, HCCL_REDUCE_RESERVED, dataType));
+            CHK_RET(TaskOrchestrator::IpcCpyWin2WinP2P(
+                prevRank, remoteSlice->size, remoteSlice->offset, remoteSlice->offset, HCCL_REDUCE_RESERVED, dataType));
+        } else { // 最后一轮，dma 消减，直接从对端读入 rcv
+            CHK_RET(TaskOrchestrator::IpcCpyWin2RcvP2P(
+                recvBuffer, prevRank, remoteSlice->size, remoteSlice->offset, remoteSlice->offset, HCCL_REDUCE_RESERVED,
+                dataType));
         }
         CHK_RET(RingIPCPostSync(subStream, prevRank, nextRank));
-        CHK_RET(TaskOrchestrator::MainSubPostSync(subStream)); // 通知主流继续
+        CHK_RET(TaskOrchestrator::MainSubPostSync(subStream));                // 通知主流继续
         TaskOrchestrator::LaunchTasksEx(0, ctx_->rankNum - 1, ctx_->rankNum); // 下发sqe
     }
     return HCCL_SUCCESS;
 }
 
 HcclResult AicpuAllreduce::RunAllReduceRingSingleBurst(
-    HcclReduceOp opType, void *sendBuffer, void *recvBuffer, u64 dataCount,
-    HcclDataType dataType, std::vector<std::vector<u32>> &ringOrders) const
+    HcclReduceOp opType, void* sendBuffer, void* recvBuffer, u64 dataCount, HcclDataType dataType,
+    std::vector<std::vector<u32>>& ringOrders) const
 {
     std::vector<std::vector<Slice>> orderedRingSlices;
     PrepareRingSlice(ringOrders, dataCount, dataType, orderedRingSlices);
     for (size_t i = 0; i < ringOrders.size(); i++) {
-        CHK_RET(RunAllReduceRingAlg(opType, sendBuffer, recvBuffer, orderedRingSlices[i],
-            ringOrders[i], dataType));
+        CHK_RET(RunAllReduceRingAlg(opType, sendBuffer, recvBuffer, orderedRingSlices[i], ringOrders[i], dataType));
     }
     return HCCL_SUCCESS;
 }
 
 // 单 ring 算法, 使用了DMA消减
-HcclResult AicpuAllreduce::RunAllReduceRing(HcclReduceOp opType, void *sendBuffer,
-    void *recvBuffer, u64 dataCount, HcclDataType dataType) const
+HcclResult AicpuAllreduce::RunAllReduceRing(
+    HcclReduceOp opType, void* sendBuffer, void* recvBuffer, u64 dataCount, HcclDataType dataType) const
 {
     HCCL_INFO("run RunAllReduceRing start");
     // 数据准备阶段
@@ -806,14 +804,14 @@ HcclResult AicpuAllreduce::RunAllReduceRing(HcclReduceOp opType, void *sendBuffe
     u64 windowSize = ctx_->windowSize;
     u32 unitSize = ctx_->unitSize;
     CHK_RET(GetBurstDataCounts(windowSize, dataCount, burstDataCounts));
-    u8 *currSendBuffer = static_cast<u8 *>(sendBuffer);
-    u8 *currRecvBuffer = static_cast<u8 *>(recvBuffer);
+    u8* currSendBuffer = static_cast<u8*>(sendBuffer);
+    u8* currRecvBuffer = static_cast<u8*>(recvBuffer);
     u64 burstSize;
     std::vector<std::vector<u32>> ringOrders = GetRingOrders();
     for (u64 burstDataCount : burstDataCounts) {
         burstSize = burstDataCount * unitSize;
-        CHK_RET(RunAllReduceRingSingleBurst(
-            opType, currSendBuffer, currRecvBuffer, burstDataCount, dataType, ringOrders));
+        CHK_RET(
+            RunAllReduceRingSingleBurst(opType, currSendBuffer, currRecvBuffer, burstDataCount, dataType, ringOrders));
         currSendBuffer += burstSize;
         currRecvBuffer += burstSize;
     }

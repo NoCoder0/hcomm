@@ -14,4 +14,4 @@ namespace Hccl {
 IChannel::IChannel() = default;
 IChannel::~IChannel() = default;
 
-}
+} // namespace Hccl

@@ -21,26 +21,20 @@
 extern "C" {
 #endif // __cplusplus
 
-static const uint32_t COMM_ADDR_EID_LEN = 16U;
-static const uint32_t HCOMM_CHANNEL_MAGIC_WORD = 0x0fcf0f0fU;
-static const uint32_t HCOMM_CHANNEL_VERSION_ONE = 1U;
-/** ABI v3：相比 v1 增加 uint32_t qos 与 const char *channelName（channel 业务匹配标识） */
-static const uint32_t HCOMM_CHANNEL_VERSION = 3U;
-
-// channelName标识最大长度（字节）
-static const uint32_t HCOMM_CHANNEL_NAME_MAX_LEN = 191U;
+// 用宏而非 static const：该值被用作数组维，C 下需要整型常量表达式（static const 非编译期常量）。
+#define COMM_ADDR_EID_LEN 16U
 
 typedef int32_t HcommResult;
 
 /* 网络设备句柄 */
-typedef void *EndpointHandle;
+typedef void* EndpointHandle;
 
 /**
  * @brief 内存句柄类型（不透明结构）
  */
-typedef void *HcommMemHandle;
+typedef void* HcommMemHandle;
 
-typedef void *HcommSocket;
+typedef void* HcommSocket;
 
 #ifndef CHANNEL_HANDLE_DEFINED
 #define CHANNEL_HANDLE_DEFINED
@@ -64,6 +58,7 @@ typedef uint64_t ThreadHandle;
 typedef enum {
     THREAD_TYPE_INVALID = -1,
     THREAD_TYPE_TS = 0,
+    THREAD_TYPE_CPU = 1, ///< HOST CPU 线程（HostDpu kernel，1 thread 1 kernel）
 } ThreadType;
 
 static const uint32_t HCOMM_THREAD_CONFIG_MAGIC_WORD = 0x0f0f0f2f;
@@ -82,10 +77,10 @@ typedef struct {
     uint8_t reserved[14];
 } ThreadConfig;
 
-static inline HcommResult ThreadConfigInit(ThreadConfig *config, uint32_t num)
+static inline HcommResult ThreadConfigInit(ThreadConfig* config, uint32_t num)
 {
     const HcommResult nullPointerErr = (HcommResult)2; // 对齐HCCL_E_PTR
-    const HcommResult internalErr = (HcommResult)4; // 对齐HCCL_E_INTERNAL
+    const HcommResult internalErr = (HcommResult)4;    // 对齐HCCL_E_INTERNAL
 
     if (config == NULL) {
         return nullPointerErr;
@@ -111,30 +106,32 @@ static inline HcommResult ThreadConfigInit(ThreadConfig *config, uint32_t num)
  * @brief 通信引擎类型枚举
  */
 typedef enum {
-    COMM_ENGINE_RESERVED = -1,    ///< 保留的通信引擎
-    COMM_ENGINE_CPU = 0,          ///< HOST CPU引擎
-    COMM_ENGINE_CPU_TS = 1,       ///< HOST CPU TS引擎
-    COMM_ENGINE_AICPU = 2,        ///< AICPU引擎
-    COMM_ENGINE_AICPU_TS = 3,     ///< AICPU TS引擎
-    COMM_ENGINE_AIV = 4,          ///< AIV引擎
-    COMM_ENGINE_CCU = 5,          ///< CCU引擎
+    COMM_ENGINE_RESERVED = -1, ///< 保留的通信引擎
+    COMM_ENGINE_CPU = 0,       ///< HOST CPU引擎
+    COMM_ENGINE_CPU_TS = 1,    ///< HOST CPU TS引擎
+    COMM_ENGINE_AICPU = 2,     ///< AICPU引擎
+    COMM_ENGINE_AICPU_TS = 3,  ///< AICPU TS引擎
+    COMM_ENGINE_AIV = 4,       ///< AIV引擎
+    COMM_ENGINE_CCU = 5,       ///< CCU引擎
 } CommEngine;
 
 /**
  * @brief 通信协议类型枚举
  */
 typedef enum {
-    COMM_PROTOCOL_RESERVED = -1,  ///< 保留协议类型
-    COMM_PROTOCOL_HCCS = 0,       ///< HCCS协议
-    COMM_PROTOCOL_ROCE = 1,       ///< RDMA over Converged Ethernet
-    COMM_PROTOCOL_PCIE = 2,       ///< PCIE协议
-    COMM_PROTOCOL_SIO = 3,        ///< SIO协议
-    COMM_PROTOCOL_UBC_CTP = 4,    ///< 华为统一总线UBC_CTP
-    COMM_PROTOCOL_UBC_TP = 5,     ///< 华为统一总线UBC_TP
-    COMM_PROTOCOL_UB_MEM = 6,     ///< UB_MEM
-    COMM_PROTOCOL_UBOE = 7,       ///< UBoE
-    COMM_PROTOCOL_HCCS_ONLY = 8,  ///< 一卡双DIE使用HCCS
-    COMM_PROTOCOL_UBG = 9,        ///< UBG
+    COMM_PROTOCOL_RESERVED = -1,                  ///< 保留协议类型
+    COMM_PROTOCOL_HCCS = 0,                       ///< HCCS协议
+    COMM_PROTOCOL_ROCE = 1,                       ///< RDMA over Converged Ethernet
+    COMM_PROTOCOL_PCIE = 2,                       ///< PCIE协议
+    COMM_PROTOCOL_SIO = 3,                        ///< SIO协议
+    COMM_PROTOCOL_UB_CTP = 4,                     ///< 华为统一总线UB_CTP
+    COMM_PROTOCOL_UBC_CTP = COMM_PROTOCOL_UB_CTP, ///< 兼容旧协议名UBC_CTP
+    COMM_PROTOCOL_UBC_TP = 5,                     ///< 华为统一总线UBC_TP
+    COMM_PROTOCOL_UB_MEM = 6,                     ///< UB_MEM
+    COMM_PROTOCOL_UBOE = 7,                       ///< UBoE
+    COMM_PROTOCOL_HCCS_ONLY = 8,                  ///< 一卡双DIE使用HCCS
+    COMM_PROTOCOL_UB_RTP = 9,                     ///< UB_RTP
+    COMM_PROTOCOL_UBG = COMM_PROTOCOL_UB_RTP,     ///< 兼容旧协议名UBG
 } CommProtocol;
 
 /**
@@ -153,13 +150,13 @@ typedef enum {
  * @note 支持CommAddrType的扩展，地址最大长度36字节
  */
 typedef struct {
-    CommAddrType type;         ///< 通信地址类别
+    CommAddrType type; ///< 通信地址类别
     union {
-        uint8_t raws[36];      ///< 通用数据
-        struct in_addr addr;   ///< IPv4地址结构
-        struct in6_addr addr6; ///< IPv6地址结构
-        uint32_t id;           ///< 标识
-        uint8_t eid[COMM_ADDR_EID_LEN];  ///< EID地址类型
+        uint8_t raws[36];               ///< 通用数据
+        struct in_addr addr;            ///< IPv4地址结构
+        struct in6_addr addr6;          ///< IPv6地址结构
+        uint32_t id;                    ///< 标识
+        uint8_t eid[COMM_ADDR_EID_LEN]; ///< EID地址类型
     };
 } CommAddr;
 
@@ -177,17 +174,17 @@ typedef enum {
  * @note 支持EndpointLocType的扩展，最大60字节内容
  */
 typedef struct {
-    EndpointLocType locType;        ///< Endpoint的位置类别
+    EndpointLocType locType; ///< Endpoint的位置类别
     union {
-        uint8_t raws[60];           ///< 通用数据
+        uint8_t raws[60]; ///< 通用数据
         struct {
-            uint32_t devPhyId;      ///< 设备物理Id
-            uint32_t superDevId;    ///< 超节点deviceId
-            uint32_t serverIdx;     ///< Server的索引
-            uint32_t superPodIdx;   ///< 超节点位置索引
-        } device;                   ///< 当locType为DEVICE时使用
+            uint32_t devPhyId;    ///< 设备物理Id
+            uint32_t superDevId;  ///< 超节点deviceId
+            uint32_t serverIdx;   ///< Server的索引
+            uint32_t superPodIdx; ///< 超节点位置索引
+        } device;                 ///< 当locType为DEVICE时使用
         struct {
-            uint32_t id;            ///< 普通Id，当locType为HOST等时可能使用
+            uint32_t id; ///< 普通Id，当locType为HOST等时可能使用
         } host;
     };
 } EndpointLoc;
@@ -196,11 +193,11 @@ typedef struct {
  * @brief 通信设备端点描述结构体
  */
 typedef struct {
-    CommProtocol protocol;  ///< 通信协议
-    CommAddr commAddr;      ///< 通信地址
-    EndpointLoc loc;        ///< Endpoint的位置信息
+    CommProtocol protocol; ///< 通信协议
+    CommAddr commAddr;     ///< 通信地址
+    EndpointLoc loc;       ///< Endpoint的位置信息
     union {
-        uint8_t raws[52];   ///< 通用数据
+        uint8_t raws[52]; ///< 通用数据
     };
 } EndpointDesc;
 
@@ -212,6 +209,7 @@ typedef enum {
     COMM_MEM_TYPE_INVALID = -1, ///< 无效的内存类别
     COMM_MEM_TYPE_DEVICE = 0,   ///< 设备侧内存（如NPU等）
     COMM_MEM_TYPE_HOST = 1,     ///< 主机侧内存
+    COMM_MEM_TYPE_CCU = 2,      ///< CCU资源空间
 } CommMemType;
 
 /**
@@ -219,9 +217,14 @@ typedef enum {
  */
 typedef struct {
     CommMemType type; ///< 内存物理位置类型，参见CommMemType
-    void *addr;       ///< 内存地址
+    void* addr;       ///< 内存地址
     uint64_t size;    ///< 内存区域字节数
 } CommMem;
+
+/**
+ * @brief 内存注册标签（memTag）长度上限，HcommMemReg 入参校验使用
+ */
+static const uint32_t HCOMM_RES_TAG_MAX_LEN = 255U;
 
 /**
  * @brief 套接字角色
@@ -233,53 +236,13 @@ typedef enum {
 } HcommSocketRole;
 
 /**
- * @brief 通道描述参数
- * @note 结构体末尾扩展需要自增版本号，并补充兼容处理逻辑。
- *       ABI v1：HCOMM_CHANNEL_VERSION_ONE，无 union 之后的 qos 字段，见 HCOMM_CHANNEL_DESC_ABI_V1_SIZE。
- *       ABI v3：HCOMM_CHANNEL_VERSION，相比 v1 增加 uint32_t qos 与 const char *channelName（channel 业务匹配标识）。
- */
-typedef struct {
-    CommAbiHeader header;            ///< ABI头部，包含版本等信息
-    EndpointDesc remoteEndpoint;     ///< 远端网络设备端侧描述
-    uint32_t notifyNum;              ///< channel上使用的通知消息数量
-    bool exchangeAllMems;            ///< true表示无需显式传入memHandles
-    HcommMemHandle *memHandles;      ///< 注册到通信域的待交换内存句柄
-    uint32_t memHandleNum;           ///< 待交换内存句柄数量
-    HcommSocket socket;              ///< 预创建socket句柄
-    HcommSocketRole role;            ///< 本端角色(SERVER或CLIENT)
-    uint16_t port;                   ///< 监听端口或目标端口
-    union {
-        uint8_t raws[128];           ///< 通用缓存
-        struct {
-            uint32_t queueNum;       ///< QP数量
-            uint32_t retryCnt;       ///< 最大重传次数
-            uint32_t retryInterval;  ///< 重传间隔（ms）
-            uint8_t tc;              ///< 流量类别（QoS)
-            uint8_t sl;              ///< 服务等级（QoS)
-            uint32_t qpThreshold;    ///< 多QP场景下，每个QP最小数据量(B)
-        } roceAttr;
-        struct {
-            uint32_t qos;            ///< HCCS QoS
-        } hccsAttr;
-        struct {
-            uint32_t sqDepth;         ///< UB队列深度，0表示使用默认值
-        } ubAttr;
-    };
-    uint32_t qos;             ///< 通信域QoS 与协议解耦
-    const char *channelName;  ///< channel业务匹配标识，两端需相同；NULL表示匿名channel
-} HcommChannelDesc;
-
-/** v1 描述符在内存中的长度（不含 union 之后的 trailing qos），用于兼容校验 */
-#define HCOMM_CHANNEL_DESC_ABI_V1_SIZE (offsetof(HcommChannelDesc, qos))
-
-/**
  * @brief 初始化EndpointDesc结构体
  *
  * @param[inout] endpoint 返回的端点描述参数
  * @param[in] num 描述数量
  * @return HcommResult 执行结果状态码
  */
-static inline HcommResult EndpointDescInit(EndpointDesc *endpoint, uint32_t num)
+static inline HcommResult EndpointDescInit(EndpointDesc* endpoint, uint32_t num)
 {
     const HcommResult hcommEPointer = (HcommResult)2; // 对齐HCCL_E_PTR
 
@@ -288,53 +251,14 @@ static inline HcommResult EndpointDescInit(EndpointDesc *endpoint, uint32_t num)
             return hcommEPointer;
         }
 
-        // 用0xFF填充整个结构体 
+        // 用0xFF填充整个结构体
         (void)memset_s(endpoint, sizeof(EndpointDesc), 0xFF, sizeof(EndpointDesc));
 
-        // 显式设置关键字段为无效值 
+        // 显式设置关键字段为无效值
         endpoint->protocol = COMM_PROTOCOL_RESERVED;
         endpoint->commAddr.type = COMM_ADDR_TYPE_RESERVED;
         endpoint->loc.locType = ENDPOINT_LOC_TYPE_RESERVED;
-        ++endpoint; // 移动到下一个描述符 
-    }
-
-    return 0;
-}
-
-/**
- * @brief 初始化HcommChannelDesc结构体
- *
- * @param[inout] channelDesc 返回的通道描述参数
- * @param[in] descNum 描述数量
- * @return HcommResult 执行结果状态码
- */
-static inline HcommResult HcommChannelDescInit(HcommChannelDesc *channelDesc, uint32_t descNum)
-{
-    const HcommResult hcommEPointer = (HcommResult)2; // 对齐HCCL_E_PTR
-    const HcommResult hcommEInternal = (HcommResult)4; // 对齐HCCL_E_INTERNAL
-
-    for (uint32_t idx = 0; idx < descNum; ++idx) {
-        if (channelDesc == NULL) {
-            return hcommEPointer;
-        }
-        
-        (void)memset_s(channelDesc, sizeof(HcommChannelDesc), 0xFF, sizeof(HcommChannelDesc));
-        channelDesc->header.version = HCOMM_CHANNEL_VERSION;
-        channelDesc->header.magicWord = HCOMM_CHANNEL_MAGIC_WORD;
-        channelDesc->header.size = sizeof(HcommChannelDesc);
-        channelDesc->header.reserved = 0;
-        channelDesc->notifyNum = 0;
-        channelDesc->exchangeAllMems = false;
-        channelDesc->memHandles = NULL;
-        channelDesc->memHandleNum = 0;
-        channelDesc->socket = NULL;
-        channelDesc->role = HCOMM_SOCKET_ROLE_RESERVED;
-        channelDesc->port = 0;
-        channelDesc->channelName = NULL;
-        if (EndpointDescInit(&channelDesc->remoteEndpoint, 1) != 0) {
-            return hcommEInternal;
-        }
-        ++channelDesc;
+        ++endpoint; // 移动到下一个描述符
     }
 
     return 0;
@@ -345,8 +269,14 @@ static inline HcommResult HcommChannelDescInit(HcommChannelDesc *channelDesc, ui
  */
 typedef enum {
     HCOMM_ENDPOINT_FEATURE_INVALID = -1,
-    HCOMM_ENDPOINT_FEATURE_NDA = 0,  // NPU Direct RDMA Async 特性
+    HCOMM_ENDPOINT_FEATURE_NDA = 0, // NPU Direct RDMA Async 特性
 } HcommEndpointFeatureType;
+
+// 支持获取的底层资源类型
+typedef enum {
+    THREAD_RES_TYPE_INVALID = -1,
+    THREAD_RES_TYPE_STREAM = 0,
+} ThreadResType;
 
 #ifdef __cplusplus
 }

@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #include "bifrost_cncoi_puber.h"
 #include "bifrost_cncoi_puber_pri.h"
 #include "bifrost_cncoi_svc.h"
@@ -19,11 +18,11 @@
 extern "C" {
 #endif
 
-BifrostCncoiPuber* BifrostCncoiPuberInit(BifrostCncoiPuberInitArg *arg)
+BifrostCncoiPuber *BifrostCncoiPuberInit(BifrostCncoiPuberInitArg *arg)
 {
     BifrostCncoiPuber *bifrostCncoiPuber = VOS_NULL;
     uint32_t len;
-    BkfPuberInitArg puberArg = { 0 };
+    BkfPuberInitArg puberArg = {0};
     if (arg == VOS_NULL) {
         goto error;
     }
@@ -150,4 +149,3 @@ uint32_t BifrostCncoiPuberSetConnUpLimit(BifrostCncoiPuber *bifrostCncoiPuber, u
 #if __cplusplus
 }
 #endif
-

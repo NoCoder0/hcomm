@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef ALLTOALL_V_INFO_PUB_H
 #define ALLTOALL_V_INFO_PUB_H
@@ -15,7 +15,7 @@
 #include "hccl_types.h"
 #include "mem_device_pub.h"
 
-namespace hccl{
+namespace hccl {
 
 struct RemoteMem {
     DeviceMem remoteScratchPingMem;
@@ -60,56 +60,56 @@ const uint32_t DUO_RANK_NUM = 4;
 const uint32_t ALIGN_CONST = 128;
 
 // alltoallv_direct_fullmesh_pub.h
-const uint32_t ALLTOALLV_DIRECT_FULLMESH_SDMA_CONCURRENT_SIZE =  8; // SDMA链路上的并发数量
-const uint32_t ALLTOALLV_DIRECT_FULLMESH_RDMA_CONCURRENT_SIZE =  1; // RDMA链路上的并发数量
-const uint32_t RANK_SET_COMPUTE_CONST = 2; // 计算对端Rank用到的常量
+const uint32_t ALLTOALLV_DIRECT_FULLMESH_SDMA_CONCURRENT_SIZE = 8;   // SDMA链路上的并发数量
+const uint32_t ALLTOALLV_DIRECT_FULLMESH_RDMA_CONCURRENT_SIZE = 1;   // RDMA链路上的并发数量
+const uint32_t RANK_SET_COMPUTE_CONST = 2;                           // 计算对端Rank用到的常量
 const uint32_t ALLTOALLV_DIRECT_FULLMESH_BIG_SIZE = 1 * 1024 * 1024; // 大数据量走并发拷贝的标准
 
-struct AlltoAllVBufferInfo{
-        DeviceMem mem;
-        u64* counts = nullptr;
-        u64* displs = nullptr;
-        HcclDataType dataType = HCCL_DATA_TYPE_RESERVED;
+struct AlltoAllVBufferInfo {
+    DeviceMem mem;
+    u64* counts = nullptr;
+    u64* displs = nullptr;
+    HcclDataType dataType = HCCL_DATA_TYPE_RESERVED;
 
-        AlltoAllVBufferInfo& operator=(const AlltoAllVBufferInfo& that) noexcept
-        {
-            if (&that != this){
-                mem = that.mem;
-                counts = that.counts;
-                displs = that.displs;
-                dataType = that.dataType;
-            }
-            return *this;
+    AlltoAllVBufferInfo& operator=(const AlltoAllVBufferInfo& that) noexcept
+    {
+        if (&that != this) {
+            mem = that.mem;
+            counts = that.counts;
+            displs = that.displs;
+            dataType = that.dataType;
         }
+        return *this;
+    }
 
-        AlltoAllVBufferInfo& operator=(const AlltoAllVBufferInfo&& that) noexcept
-        {
-            if (&that != this){
-                mem = that.mem;
-                counts = that.counts;
-                displs = that.displs;
-                dataType = that.dataType;
-            }
-            return *this;
+    AlltoAllVBufferInfo& operator=(const AlltoAllVBufferInfo&& that) noexcept
+    {
+        if (&that != this) {
+            mem = that.mem;
+            counts = that.counts;
+            displs = that.displs;
+            dataType = that.dataType;
         }
-}; 
+        return *this;
+    }
+};
 
-struct OneSendRecvAddrInfo{
+struct OneSendRecvAddrInfo {
     u64 localOffset;
     u64 localLength;
     u64 remoteOffset;
     u64 remoteLength;
 };
 
-using StageAlltoAllVAddrInfo = std::map<u32, std::list<OneSendRecvAddrInfo>>; //key: remote rank in local communicator
+using StageAlltoAllVAddrInfo = std::map<u32, std::list<OneSendRecvAddrInfo>>; // key: remote rank in local communicator
 
-class A2aPipelineMemory{
+class A2aPipelineMemory {
 public:
     DeviceMem userInput;
     DeviceMem userOutput;
-    DeviceMem scratchMem;  //图模式使用
-    DeviceMem cclInBuffer;  //单算子模式使用
-    DeviceMem cclOutBuffer;   //单算子模式使用
+    DeviceMem scratchMem;   // 图模式使用
+    DeviceMem cclInBuffer;  // 单算子模式使用
+    DeviceMem cclOutBuffer; // 单算子模式使用
 };
 
 } // namespace hccl

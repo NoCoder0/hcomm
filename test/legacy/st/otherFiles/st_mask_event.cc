@@ -18,20 +18,11 @@ using namespace Hccl;
 
 class MaskEventTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AdapterRts tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AdapterRts tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AdapterRts tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AdapterRts tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in AdapterRts SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in AdapterRts SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -44,12 +35,10 @@ TEST(MaskEventTest, ConstructMaskEvent_ok)
 {
     // Given
     RtEvent_t event = new int(0);
-    MOCKER(HrtEventCreateWithFlag)
-        .stubs()
-        .will(returnValue(event));
+    MOCKER(HrtEventCreateWithFlag).stubs().will(returnValue(event));
 
     // when
-    MaskEvent *maskEvent = new MaskEvent();
+    MaskEvent* maskEvent = new MaskEvent();
     delete maskEvent;
     delete event;
 }
@@ -59,28 +48,18 @@ TEST(MaskEventTest, MaskEventRecord_ok)
     // Given
     RtEvent_t event = nullptr;
     void* rtStream = nullptr;
-    MOCKER(HrtEventCreateWithFlag)
-        .stubs()
-        .will(returnValue(event));
-    
-    MOCKER(HrtStreamCreateWithFlags)
-        .stubs()
-        .will(returnValue(rtStream));
-        
-    MOCKER(HrtGetStreamId)
-        .stubs()
-        .will(returnValue(0));
-    
-    MOCKER(HrtGetDevice)
-        .stubs()
-        .will(returnValue(1));
+    MOCKER(HrtEventCreateWithFlag).stubs().will(returnValue(event));
 
-    MOCKER(HrtGetDevicePhyIdByIndex)
-        .stubs()
-        .will(returnValue(static_cast<DevId>(1)));
-    
+    MOCKER(HrtStreamCreateWithFlags).stubs().will(returnValue(rtStream));
+
+    MOCKER(HrtGetStreamId).stubs().will(returnValue(0));
+
+    MOCKER(HrtGetDevice).stubs().will(returnValue(1));
+
+    MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().will(returnValue(static_cast<DevId>(1)));
+
     MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(1)));
+    MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().will(returnValue(static_cast<DevId>(1)));
 
     // when
     MaskEvent maskEvent;
@@ -95,10 +74,7 @@ TEST(MaskEventTest, MaskEventQueryStatus_ok)
     // Given
     HrtEventStatus status1 = HrtEventStatus::EVENT_INIT;
     HrtEventStatus status2 = HrtEventStatus::EVENT_RECORDED;
-    MOCKER(HrtEventQueryStatus)
-        .stubs()
-        .will(returnValue(status1))
-        .then(returnValue(status2));
+    MOCKER(HrtEventQueryStatus).stubs().will(returnValue(status1)).then(returnValue(status2));
 
     // when
     MaskEvent maskEvent;

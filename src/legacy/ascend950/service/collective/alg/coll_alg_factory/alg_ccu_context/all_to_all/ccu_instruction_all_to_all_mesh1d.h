@@ -24,9 +24,15 @@ namespace Hccl {
 // 为AllToAllMesh1D实现的CCUIns、CCUCtxArg与CCUTaskArg
 class CcuCtxArgAllToAllMesh1D : public CcuCtxArg {
 public:
-    explicit CcuCtxArgAllToAllMesh1D(const std::vector<uint64_t> &dSize, uint32_t rId, const CollAlgOperator &op,
-        const std::vector<std::vector<RankId>> &tempVTopo, bool loadFromMem = false) :
-            dimSize(dSize), rankId(rId), op(op), tempVTopo(tempVTopo), loadFromMem(loadFromMem) {}
+    explicit CcuCtxArgAllToAllMesh1D(
+        const std::vector<uint64_t>& dSize, uint32_t rId, const CollAlgOperator& op,
+        const std::vector<std::vector<RankId>>& tempVTopo, bool loadFromMem = false)
+        : dimSize(dSize),
+          rankId(rId),
+          op(op),
+          tempVTopo(tempVTopo),
+          loadFromMem(loadFromMem)
+    {}
     CcuCtxSignature GetCtxSignature() const override
     {
         CcuCtxSignature signature;
@@ -42,9 +48,17 @@ public:
 
 class CcuTaskArgAllToAllMesh1D : public CcuTaskArg {
 public:
-    explicit CcuTaskArgAllToAllMesh1D(uint64_t inputAddr, uint64_t outputAddr, uint64_t sliceSize,
-        uint64_t token, uint64_t srcOffset, uint64_t dstOffset, uint64_t srcStride) :
-        inputAddr(inputAddr), outputAddr(outputAddr), sliceSize(sliceSize), token(token), srcOffset(srcOffset), dstOffset(dstOffset), srcStride(srcStride) {}
+    explicit CcuTaskArgAllToAllMesh1D(
+        uint64_t inputAddr, uint64_t outputAddr, uint64_t sliceSize, uint64_t token, uint64_t srcOffset,
+        uint64_t dstOffset, uint64_t srcStride)
+        : inputAddr(inputAddr),
+          outputAddr(outputAddr),
+          sliceSize(sliceSize),
+          token(token),
+          srcOffset(srcOffset),
+          dstOffset(dstOffset),
+          srcStride(srcStride)
+    {}
 
     uint64_t inputAddr;
     uint64_t outputAddr;
@@ -57,13 +71,12 @@ public:
 
 class CcuInstructionAllToAllMesh1D : public CcuInstruction {
 public:
-    CcuInstructionAllToAllMesh1D() : CcuInstruction()
-    {
-    }
+    CcuInstructionAllToAllMesh1D() : CcuInstruction() {}
 
-    void Init(uint32_t rankId, uint64_t inputAddr, uint64_t outputAddr, uint64_t sliceSize,
-        uint64_t token, uint64_t srcOffset, uint64_t dstOffset, uint64_t srcStride,  CollAlgOperator &op,
-        std::vector<std::vector<RankId>> &tempVTopo, bool loadFromMem = false)
+    void Init(
+        uint32_t rankId, uint64_t inputAddr, uint64_t outputAddr, uint64_t sliceSize, uint64_t token,
+        uint64_t srcOffset, uint64_t dstOffset, uint64_t srcStride, CollAlgOperator& op,
+        std::vector<std::vector<RankId>>& tempVTopo, bool loadFromMem = false)
     {
         u32 maxDimNum = 1;
         if (tempVTopo.size() != maxDimNum) {
@@ -93,7 +106,8 @@ public:
 
     std::string Describe() const override
     {
-        return StringFormat("CcuInstructionAllToAllMesh1D rankId [%u], instType[%s]", rankId_, instType_.Describe().c_str());
+        return StringFormat(
+            "CcuInstructionAllToAllMesh1D rankId [%u], instType[%s]", rankId_, instType_.Describe().c_str());
     }
 
     std::unique_ptr<CcuCtxArg> GetCtxArg() const override
@@ -101,14 +115,12 @@ public:
         return std::make_unique<CcuCtxArgAllToAllMesh1D>(dimSize_, rankId_, op_, tempVTopo_, loadFromMem_);
     }
 
-    void SetInstType(CcuInstType instType) 
-    { 
-        instType_ = instType; 
-    }
+    void SetInstType(CcuInstType instType) { instType_ = instType; }
 
     std::unique_ptr<CcuTaskArg> GetTaskArg() const override
     {
-        return std::make_unique<CcuTaskArgAllToAllMesh1D>(inputAddr_, outputAddr_, sliceSize_, token_, srcOffset_, dstOffset_, srcStride_);
+        return std::make_unique<CcuTaskArgAllToAllMesh1D>(
+            inputAddr_, outputAddr_, sliceSize_, token_, srcOffset_, dstOffset_, srcStride_);
     }
 
 private:
@@ -127,5 +139,5 @@ private:
     bool loadFromMem_{false};
 };
 
-}
+} // namespace Hccl
 #endif // HCCLV2_CCU_INSTRUCTION_ALL_ALL_TO_ALL_MESH_1D_H

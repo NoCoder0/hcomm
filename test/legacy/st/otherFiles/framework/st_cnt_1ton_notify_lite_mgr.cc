@@ -21,19 +21,14 @@ using namespace Hccl;
 
 class Cnt1toNNotifyLiteMgrTest : public testing::Test {
 protected:
-    static void SetUpTestCase() {
-        std::cout << "Cnt1toNNotifyLiteMgrTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "Cnt1toNNotifyLiteMgrTest SetUP" << std::endl; }
 
-    static void TearDownTestCase() {
-        std::cout << "Cnt1toNNotifyLiteMgrTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "Cnt1toNNotifyLiteMgrTest TearDown" << std::endl; }
 
-    virtual void SetUp() {
-        std::cout << "A Test case in Cnt1toNNotifyLiteMgrTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in Cnt1toNNotifyLiteMgrTest SetUP" << std::endl; }
 
-    virtual void TearDown () {
+    virtual void TearDown()
+    {
         GlobalMockObject::verify();
         std::cout << "A Test case in Cnt1toNNotifyLiteMgrTest TearDown" << std::endl;
     }
@@ -42,22 +37,12 @@ protected:
 TEST_F(Cnt1toNNotifyLiteMgrTest, test_parse_packed_data)
 {
     QueueBcastPostCntNotifyManager cnt1toNNotifyMgr;
-    Cnt1tonNotifyLiteMgr           mgr;
+    Cnt1tonNotifyLiteMgr mgr;
 
-    MOCKER(HrtGetDevice)
-            .stubs()
-            .will(returnValue(1));
-    MOCKER(HrtNotifyCreate)
-            .stubs()
-            .will(returnValue((void*)(0)));
-    MOCKER(HrtGetDevicePhyIdByIndex)
-            .stubs()
-            .will(returnValue(static_cast<DevId>(1)));
-    MOCKER(HrtGetNotifyID)
-            .stubs()
-            .will(returnValue(1))
-            .then(returnValue(2))
-            .then(returnValue(3));
+    MOCKER(HrtGetDevice).stubs().will(returnValue(1));
+    MOCKER(HrtNotifyCreate).stubs().will(returnValue((void*)(0)));
+    MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().will(returnValue(static_cast<DevId>(1)));
+    MOCKER(HrtGetNotifyID).stubs().will(returnValue(1)).then(returnValue(2)).then(returnValue(3));
 
     QId fakePostQid = 1;
     u32 fakeTopicId = 2;
@@ -73,9 +58,9 @@ TEST_F(Cnt1toNNotifyLiteMgrTest, test_parse_packed_data)
     mgr.ParsePackedData(data);
 
     EXPECT_EQ(cnt1toNNotifyMgr.notifyPool.size(), mgr.notifys.size());
-    for (auto &it : cnt1toNNotifyMgr.notifyPool) {
-        auto &rts1TONCntNotify = *(it.second);
-        auto &cnt1tonNotifyLite = mgr.notifys[it.first];
+    for (auto& it : cnt1toNNotifyMgr.notifyPool) {
+        auto& rts1TONCntNotify = *(it.second);
+        auto& cnt1tonNotifyLite = mgr.notifys[it.first];
         EXPECT_EQ(rts1TONCntNotify.GetId(), cnt1tonNotifyLite->GetId());
     }
 }

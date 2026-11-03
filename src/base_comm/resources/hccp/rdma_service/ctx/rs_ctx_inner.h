@@ -12,6 +12,7 @@
 #define RS_CTX_INNER_H
 
 #include <pthread.h>
+#include <stdbool.h>
 #include <urma_types.h>
 #include "hccp_ctx.h"
 #include "rs_inner.h"
@@ -23,6 +24,14 @@
 #define CI_ADDR_BUFFER_ALIGN_4K_PAGE_SIZE 4096U
 #define WQE_BB_SIZE 64ULL
 #define UB_ID_OFFSET 16U
+#define EX_UB_RES_TYPE_OFFSET 12U // 4bit(DIE_ID) + 8bit(FUNC_ID) = 12bit
+#define EX_UB_RES_DIE_ID_MAX 16U  // reserve 4bit from original 8bit DIE_ID
+#define RS_MAINBOARD_ID_CARD_NOMESH 0x68
+#define RS_MAINBOARD_ID_CARD_2PMESH 0x6a
+#define RS_MAINBOARD_ID_CARD_4PMESH 0x6c
+
+#define URMA_GET_ABI_VERSION(major, minor, patch)                                                                      \
+    (((major) * UINT64_C(1) << 32) | ((minor) * UINT64_C(1) << 16) | ((patch) * UINT64_C(1)))
 
 struct RsUbDevCb {
     struct rs_cb *rscb;
@@ -176,11 +185,24 @@ struct RsSegCb {
     struct RsListHead list;
 };
 
+struct RsDevEidInfoCb {
+    unsigned int num;
+    struct HccpDevEidInfo *infoList;
+};
+
 struct UdmaVaInfo {
     enum res_addr_type resType;
     int pid;
     uint64_t va;
     uint64_t len;
+};
+
+enum ExternUbResType {
+    EX_UB_RES_TYPE_JETTY = 0,
+    EX_UB_RES_TYPE_JFC = 1,
+    EX_UB_RES_TYPE_JFS = 2,
+    EX_UB_RES_TYPE_JFR = 3,
+    EX_UB_RES_TYPE_MAX = 16 // reserve 4bit for ub resource type
 };
 
 STATIC inline uint32_t RsGenerateUeInfo(uint32_t dieId, uint32_t funcId)
@@ -193,9 +215,17 @@ STATIC inline uint32_t RsGenerateDevIndex(uint32_t devCnt, uint32_t dieId, uint3
     return (devCnt << DEV_INDEX_CNT_OFFSET) | RsGenerateUeInfo(dieId, funcId);
 }
 
-STATIC inline uint32_t RsGenerateMmapResId(uint32_t id, uint32_t dieId, uint32_t funcId)
+STATIC inline bool RsGenerateMmapResIdCheck(uint32_t exUbResType, uint32_t dieId)
 {
-    return (id << UB_ID_OFFSET) | RsGenerateUeInfo(dieId, funcId);
+    if (exUbResType >= EX_UB_RES_TYPE_MAX || dieId >= EX_UB_RES_DIE_ID_MAX) {
+        return false;
+    }
+    return true;
+}
+
+STATIC inline uint32_t RsGenerateMmapResId(uint32_t ubResId, uint32_t exUbResType, uint32_t dieId, uint32_t funcId)
+{
+    return (ubResId << UB_ID_OFFSET) | (exUbResType << EX_UB_RES_TYPE_OFFSET) | RsGenerateUeInfo(dieId, funcId);
 }
 
 #endif // RS_CTX_INNER_H

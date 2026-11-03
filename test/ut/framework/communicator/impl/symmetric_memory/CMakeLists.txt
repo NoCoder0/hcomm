@@ -7,6 +7,7 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
+
 set(src_to_test_list
     main.cc
     ut_allgather_manager.cc
@@ -14,6 +15,7 @@ set(src_to_test_list
     ut_hccl_mem_alloc.cc
     ut_hccl_communicator_host.cc
     ut_aicpu_communicator.cc
+    ut_aicpu_symmetric_memory.cc
 )
 
 add_executable(hccl_utest_framework_symmetric_memory ${src_to_test_list})
@@ -47,7 +49,7 @@ target_link_libraries(hccl_utest_framework_symmetric_memory PRIVATE
     -pthread
     hccl_llt
     -Wl,--whole-archive
-    -Wl,--no-whole-archi
+    -Wl,--no-whole-archive
     -lgcov
     -lrt
     -ldl

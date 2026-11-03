@@ -1,12 +1,13 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "transport_heterog_event_roce.h"
 
 #include "log.h"
@@ -22,7 +23,7 @@ HcclReceivedEnvelope TransportHeterogEventRoce::gReceivedEnvelopes;
 std::mutex TransportHeterogEventRoce::gReceivedEnvelopesMutex;
 
 std::vector<std::atomic<int>> TransportHeterogEventRoce::gCqeCounterPerEvent(MAX_CQECOUNT_ALLLINK);
-std::vector<std::vector<void *>> TransportHeterogEventRoce::gAllLinkVec(MAX_CQECOUNT_ALLLINK);
+std::vector<std::vector<void*>> TransportHeterogEventRoce::gAllLinkVec(MAX_CQECOUNT_ALLLINK);
 std::mutex TransportHeterogEventRoce::gAllLinkVecSendCompMutex;
 std::mutex TransportHeterogEventRoce::gAllLinkVecRecvReqMutex;
 std::mutex TransportHeterogEventRoce::gAllLinkVecRecvCompMutex;
@@ -30,6 +31,7 @@ std::mutex TransportHeterogEventRoce::gAllLinkVecRecvCompMutex;
 std::mutex TransportHeterogEventRoce::gPollTagRqLock;
 std::mutex TransportHeterogEventRoce::gPollDataRqLock;
 std::mutex TransportHeterogEventRoce::gPollDataSqLock;
+std::mutex TransportHeterogEventRoce::gEschedAckMutex;
 
 u32 TransportHeterogEventRoce::gEschedAckRef = 0;
 u32 TransportHeterogEventRoce::gAllLinkInitCount = 0;
@@ -44,14 +46,15 @@ constexpr u32 MAX_WR_NUM = 1023;
 constexpr s32 TAG_QP_APPEND = 1;
 constexpr s32 DATA_QP_APPEND = 2;
 
-atomic<u32> g_tagRecvWqeNum;   // qp0上的recv wqe的数量,recv端消耗
-atomic<u32> g_dataRecvWqeNum;   // qp1上的recv wqe的数量,send端消耗
-map<u32, TransportHeterogEventRoce *> TransportHeterogEventRoce::gQpnToTransportMap;  // tag qpn和transport映射
-map<u32, atomic<u32>> TransportHeterogEventRoce::gQpnToSqMaxWrMap;  // data qpn和sq max wr深度映射
+atomic<u32> g_tagRecvWqeNum;  // qp0上的recv wqe的数量,recv端消耗
+atomic<u32> g_dataRecvWqeNum; // qp1上的recv wqe的数量,send端消耗
+std::shared_mutex TransportHeterogEventRoce::gQpnMapMutex;
+map<u32, TransportHeterogEventRoce*> TransportHeterogEventRoce::gQpnToTransportMap; // tag qpn和transport映射
+map<u32, atomic<u32>> TransportHeterogEventRoce::gQpnToSqMaxWrMap;                  // data qpn和sq max wr深度映射
 bool TransportHeterogEventRoce::gNeedRepoEvent = true;
 
-void TransportHeterogEventRoce::EschedAckCallbackRecvRequest(unsigned int devId, unsigned int subeventId, u8 *msg,
-    unsigned int msgLen)
+void TransportHeterogEventRoce::EschedAckCallbackRecvRequest(
+    unsigned int devId, unsigned int subeventId, u8* msg, unsigned int msgLen)
 {
     (void)subeventId;
     (void)msg;
@@ -59,8 +62,8 @@ void TransportHeterogEventRoce::EschedAckCallbackRecvRequest(unsigned int devId,
     TransportHeterogEventRoce::EschedAckCallback(devId, HCCL_EVENT_RECV_REQUEST_MSG);
 }
 
-void TransportHeterogEventRoce::EschedAckCallbackSendCompletion(unsigned int devId, unsigned int subeventId, u8 *msg,
-    unsigned int msgLen)
+void TransportHeterogEventRoce::EschedAckCallbackSendCompletion(
+    unsigned int devId, unsigned int subeventId, u8* msg, unsigned int msgLen)
 {
     (void)subeventId;
     (void)msg;
@@ -68,8 +71,8 @@ void TransportHeterogEventRoce::EschedAckCallbackSendCompletion(unsigned int dev
     TransportHeterogEventRoce::EschedAckCallback(devId, HCCL_EVENT_SEND_COMPLETION_MSG);
 }
 
-void TransportHeterogEventRoce::EschedAckCallbackRecvCompletion(unsigned int devId, unsigned int subeventId, u8 *msg,
-    unsigned int msgLen)
+void TransportHeterogEventRoce::EschedAckCallbackRecvCompletion(
+    unsigned int devId, unsigned int subeventId, u8* msg, unsigned int msgLen)
 {
     (void)subeventId;
     (void)msg;
@@ -77,8 +80,9 @@ void TransportHeterogEventRoce::EschedAckCallbackRecvCompletion(unsigned int dev
     TransportHeterogEventRoce::EschedAckCallback(devId, HCCL_EVENT_RECV_COMPLETION_MSG);
 }
 
-TransportHeterogEventRoce::TransportHeterogEventRoce(const std::string &transTag, HcclIpAddress &selfIp,
-    HcclIpAddress &peerIp, u32 peerPort, u32 selfPort, const TransportResourceInfo &transportResourceInfo)
+TransportHeterogEventRoce::TransportHeterogEventRoce(
+    const std::string& transTag, HcclIpAddress& selfIp, HcclIpAddress& peerIp, u32 peerPort, u32 selfPort,
+    const TransportResourceInfo& transportResourceInfo)
     : TransportHeterogRoce(transTag, selfIp, peerIp, peerPort, selfPort, transportResourceInfo)
 {
     tagQpInfo_.srq = transportResourceInfo.tagSrqInfo.srq;
@@ -89,7 +93,7 @@ TransportHeterogEventRoce::TransportHeterogEventRoce(const std::string &transTag
     dataQpInfo_.srqContext = transportResourceInfo.dataSrqInfo.context;
     srqInit_ = ((tagQpInfo_.srq != nullptr) && (dataQpInfo_.srq != nullptr));
 }
-TransportHeterogEventRoce::TransportHeterogEventRoce(const TransportResourceInfo &transportResourceInfo)
+TransportHeterogEventRoce::TransportHeterogEventRoce(const TransportResourceInfo& transportResourceInfo)
     : TransportHeterogRoce(transportResourceInfo)
 {
     tagQpInfo_.srq = transportResourceInfo.tagSrqInfo.srq;
@@ -111,6 +115,7 @@ TransportHeterogEventRoce::~TransportHeterogEventRoce()
 
 HcclResult TransportHeterogEventRoce::RegisterEschedAckCallback()
 {
+    std::lock_guard<std::mutex> lock(gEschedAckMutex);
     if (gEschedAckRef == 0) {
         CHK_RET(DlHalFunction::GetInstance().DlHalFunctionInit());
 
@@ -133,6 +138,7 @@ HcclResult TransportHeterogEventRoce::RegisterEschedAckCallback()
 
 HcclResult TransportHeterogEventRoce::DeregisterEschedAckCallback()
 {
+    std::lock_guard<std::mutex> lock(gEschedAckMutex);
     if (gEschedAckRef > 0) {
         gEschedAckRef--;
     } else if (gEschedAckRef == 0) {
@@ -179,27 +185,29 @@ HcclResult TransportHeterogEventRoce::DeinitAllLinkVec()
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogEventRoce::EraseTransportFromAllLinkVec(void *transportPtr)
+HcclResult TransportHeterogEventRoce::EraseTransportFromAllLinkVec(void* transportPtr)
 {
     std::unique_lock<std::mutex> lockRecvReq(gAllLinkVecRecvReqMutex);
-    auto recvReqIter = find(gAllLinkVec[HCCL_EVENT_RECV_REQUEST_MSG].begin(),
-        gAllLinkVec[HCCL_EVENT_RECV_REQUEST_MSG].end(), transportPtr);
+    auto recvReqIter = find(
+        gAllLinkVec[HCCL_EVENT_RECV_REQUEST_MSG].begin(), gAllLinkVec[HCCL_EVENT_RECV_REQUEST_MSG].end(), transportPtr);
     if (recvReqIter != gAllLinkVec[HCCL_EVENT_RECV_REQUEST_MSG].end()) {
         gAllLinkVec[HCCL_EVENT_RECV_REQUEST_MSG].erase(recvReqIter);
     }
     lockRecvReq.unlock();
 
     std::unique_lock<std::mutex> lockSendComp(gAllLinkVecSendCompMutex);
-    auto sendCompIter = find(gAllLinkVec[HCCL_EVENT_SEND_COMPLETION_MSG].begin(),
-        gAllLinkVec[HCCL_EVENT_SEND_COMPLETION_MSG].end(), transportPtr);
+    auto sendCompIter = find(
+        gAllLinkVec[HCCL_EVENT_SEND_COMPLETION_MSG].begin(), gAllLinkVec[HCCL_EVENT_SEND_COMPLETION_MSG].end(),
+        transportPtr);
     if (sendCompIter != gAllLinkVec[HCCL_EVENT_SEND_COMPLETION_MSG].end()) {
         gAllLinkVec[HCCL_EVENT_SEND_COMPLETION_MSG].erase(sendCompIter);
     }
     lockSendComp.unlock();
 
     std::unique_lock<std::mutex> lockRecvComp(gAllLinkVecRecvCompMutex);
-    auto recvCompIter = find(gAllLinkVec[HCCL_EVENT_RECV_COMPLETION_MSG].begin(),
-        gAllLinkVec[HCCL_EVENT_RECV_COMPLETION_MSG].end(), transportPtr);
+    auto recvCompIter = find(
+        gAllLinkVec[HCCL_EVENT_RECV_COMPLETION_MSG].begin(), gAllLinkVec[HCCL_EVENT_RECV_COMPLETION_MSG].end(),
+        transportPtr);
     if (recvCompIter != gAllLinkVec[HCCL_EVENT_RECV_COMPLETION_MSG].end()) {
         gAllLinkVec[HCCL_EVENT_RECV_COMPLETION_MSG].erase(recvCompIter);
     }
@@ -232,8 +240,8 @@ HcclResult TransportHeterogEventRoce::Deinit()
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogEventRoce::Isend(const TransData &sendData, const TransportEndPointParam &epParam,
-    HcclRequestInfo *&request)
+HcclResult TransportHeterogEventRoce::Isend(
+    const TransData& sendData, const TransportEndPointParam& epParam, HcclRequestInfo*& request)
 {
     HcclResult ret = TransportHeterogRoce::Isend(sendData, epParam, request);
     if (ret != HCCL_SUCCESS && request != nullptr) {
@@ -242,8 +250,8 @@ HcclResult TransportHeterogEventRoce::Isend(const TransData &sendData, const Tra
     return ret;
 }
 
-HcclResult TransportHeterogEventRoce::Improbe(const TransportEndPointParam &epParam, s32 &matched,
-    HcclMessageInfo *&msg, HcclStatus &status)
+HcclResult TransportHeterogEventRoce::Improbe(
+    const TransportEndPointParam& epParam, s32& matched, HcclMessageInfo*& msg, HcclStatus& status)
 {
     CHK_RET(TransportHeterogRoce::Improbe(epParam, matched, msg, status));
     if (matched == HCCL_IMPROBE_COMPLETED) {
@@ -252,13 +260,13 @@ HcclResult TransportHeterogEventRoce::Improbe(const TransportEndPointParam &epPa
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogEventRoce::Imrecv(const TransData &recvData, HcclMessageInfo &msg, HcclRequestInfo *&request)
+HcclResult TransportHeterogEventRoce::Imrecv(const TransData& recvData, HcclMessageInfo& msg, HcclRequestInfo*& request)
 {
     CHK_RET(TransportHeterogRoce::Imrecv(recvData, msg, request));
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogEventRoce::Test(HcclRequestInfo &request, s32 &flag, HcclStatus &compState)
+HcclResult TransportHeterogEventRoce::Test(HcclRequestInfo& request, s32& flag, HcclStatus& compState)
 {
     // 建链未完成时，继续推进建链流程；
     if (GetState() != ConnState::CONN_STATE_COMPLETE) {
@@ -320,14 +328,14 @@ HcclResult TransportHeterogEventRoce::PullRecvStatus(bool allowNotify)
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogEventRoce::ParseErrorTagSqe(const struct ibv_wc *wc, int index)
+HcclResult TransportHeterogEventRoce::ParseErrorTagSqe(const struct ibv_wc* wc, int index)
 {
     CHK_RET(TransportHeterogRoce::ParseErrorTagSqe(wc, index));
     gCqeCounterPerEvent[sendCompletionEvent].fetch_add(1);
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogEventRoce::ParseTagRqes(const struct ibv_wc *wc, int num)
+HcclResult TransportHeterogEventRoce::ParseTagRqes(const struct ibv_wc* wc, int num)
 {
     if (srqInit_) {
         CHK_RET(ParseTagSrqes(wc, num));
@@ -339,7 +347,7 @@ HcclResult TransportHeterogEventRoce::ParseTagRqes(const struct ibv_wc *wc, int 
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogEventRoce::ParseDataRqes(const struct ibv_wc *wc, int num)
+HcclResult TransportHeterogEventRoce::ParseDataRqes(const struct ibv_wc* wc, int num)
 {
     if (srqInit_) {
         CHK_RET(ParseDataSrqes(wc, num));
@@ -350,14 +358,14 @@ HcclResult TransportHeterogEventRoce::ParseDataRqes(const struct ibv_wc *wc, int
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogEventRoce::ParseDataSqes(const struct ibv_wc *wc, int num)
+HcclResult TransportHeterogEventRoce::ParseDataSqes(const struct ibv_wc* wc, int num)
 {
     CHK_RET(TransportHeterogRoce::ParseDataSqes(wc, num));
     gCqeCounterPerEvent[recvCompletionEvent].fetch_add(num);
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogEventRoce::QueryRequestStatus(HcclRequestInfo &request, s32 &flag, HcclStatus &compState)
+HcclResult TransportHeterogEventRoce::QueryRequestStatus(HcclRequestInfo& request, s32& flag, HcclStatus& compState)
 {
     flag = HCCL_TEST_INCOMPLETED;
     u32 eventType;
@@ -379,31 +387,31 @@ HcclResult TransportHeterogEventRoce::QueryRequestStatus(HcclRequestInfo &reques
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogEventRoce::PullRecvRequestStatus(void *transportHandle)
+HcclResult TransportHeterogEventRoce::PullRecvRequestStatus(void* transportHandle)
 {
     CHK_PTR_NULL(transportHandle);
-    TransportHeterogEventRoce *transportPtr = reinterpret_cast<TransportHeterogEventRoce *>(transportHandle);
+    TransportHeterogEventRoce* transportPtr = reinterpret_cast<TransportHeterogEventRoce*>(transportHandle);
     if (transportPtr->GetState() == ConnState::CONN_STATE_COMPLETE) {
         CHK_RET(transportPtr->PullRecvRequestStatus(true));
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogEventRoce::PullSendStatus(void *transportHandle)
+HcclResult TransportHeterogEventRoce::PullSendStatus(void* transportHandle)
 {
     CHK_PTR_NULL(transportHandle);
-    TransportHeterogEventRoce *transportPtr = reinterpret_cast<TransportHeterogEventRoce *>(transportHandle);
-    if (transportPtr->GetState() == ConnState::CONN_STATE_COMPLETE ||
-        transportPtr->GetState() == ConnState::CONN_STATE_FLUSH_QUEUE) {
+    TransportHeterogEventRoce* transportPtr = reinterpret_cast<TransportHeterogEventRoce*>(transportHandle);
+    if (transportPtr->GetState() == ConnState::CONN_STATE_COMPLETE
+        || transportPtr->GetState() == ConnState::CONN_STATE_FLUSH_QUEUE) {
         CHK_RET(transportPtr->PullSendStatus(true));
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogEventRoce::PullRecvStatus(void *transportHandle)
+HcclResult TransportHeterogEventRoce::PullRecvStatus(void* transportHandle)
 {
     CHK_PTR_NULL(transportHandle);
-    TransportHeterogEventRoce *transportPtr = reinterpret_cast<TransportHeterogEventRoce *>(transportHandle);
+    TransportHeterogEventRoce* transportPtr = reinterpret_cast<TransportHeterogEventRoce*>(transportHandle);
     if (transportPtr->GetState() == ConnState::CONN_STATE_COMPLETE) {
         CHK_RET(transportPtr->PullRecvStatus(true));
     }
@@ -418,7 +426,7 @@ HcclResult TransportHeterogEventRoce::UpdateStatus(u32 eventId)
     // 检查所有tag的对应cq中有没有cqe，如果没有则继续轮询下一个cq，如果检查到某一cq中存在cqe则退出循环。
     if (eventId == HCCL_EVENT_RECV_REQUEST_MSG) {
         std::unique_lock<std::mutex> lockRecvReq(gAllLinkVecRecvReqMutex);
-        for (auto &iterLink : gAllLinkVec[HCCL_EVENT_RECV_REQUEST_MSG]) {
+        for (auto& iterLink : gAllLinkVec[HCCL_EVENT_RECV_REQUEST_MSG]) {
             CHK_RET(PullRecvRequestStatus(iterLink));
             if ((gCqeCounterPerEvent[HCCL_EVENT_RECV_REQUEST_MSG] > 0)) {
                 return HCCL_SUCCESS;
@@ -427,7 +435,7 @@ HcclResult TransportHeterogEventRoce::UpdateStatus(u32 eventId)
         lockRecvReq.unlock();
     } else if (eventId == HCCL_EVENT_SEND_COMPLETION_MSG) {
         std::unique_lock<std::mutex> lockSendComp(gAllLinkVecSendCompMutex);
-        for (auto &iterLink : gAllLinkVec[HCCL_EVENT_SEND_COMPLETION_MSG]) {
+        for (auto& iterLink : gAllLinkVec[HCCL_EVENT_SEND_COMPLETION_MSG]) {
             CHK_RET(PullSendStatus(iterLink));
             if ((gCqeCounterPerEvent[HCCL_EVENT_SEND_COMPLETION_MSG] > 0)) {
                 return HCCL_SUCCESS;
@@ -436,7 +444,7 @@ HcclResult TransportHeterogEventRoce::UpdateStatus(u32 eventId)
         lockSendComp.unlock();
     } else if (eventId == HCCL_EVENT_RECV_COMPLETION_MSG) {
         std::unique_lock<std::mutex> lockRecvComp(gAllLinkVecRecvCompMutex);
-        for (auto &iterLink : gAllLinkVec[HCCL_EVENT_RECV_COMPLETION_MSG]) {
+        for (auto& iterLink : gAllLinkVec[HCCL_EVENT_RECV_COMPLETION_MSG]) {
             CHK_RET(PullRecvStatus(iterLink));
             if ((gCqeCounterPerEvent[HCCL_EVENT_RECV_COMPLETION_MSG] > 0)) {
                 return HCCL_SUCCESS;
@@ -466,8 +474,9 @@ void TransportHeterogEventRoce::EschedAckCallback(u32 devId, u32 eventId)
     }
 
     HcclUs endut = TIME_NOW();
-    HCCL_INFO("EschedAckCallback cost time: %lld us, event id: %u, devId:%u, compCount:%d.",
-        DURATION_US(endut - startut), eventId, devId, gCqeCounterPerEvent[eventId].load());
+    HCCL_INFO(
+        "EschedAckCallback cost time: %lld us, event id: %u, devId:%u, compCount:%d.", DURATION_US(endut - startut),
+        eventId, devId, gCqeCounterPerEvent[eventId].load());
     return;
 }
 
@@ -476,18 +485,19 @@ HcclResult TransportHeterogEventRoce::CreateCqAndQp()
     HCCL_INFO("TransportHeterogEventRoce CreateCqAndQp. gNeedRepoEvent[%d]", gNeedRepoEvent);
     if (gNeedRepoEvent) {
         CHK_RET(CreateQpWithSharedCq(nicRdmaHandle_, selfIp_, peerIp_, -1, recvRequestEvent, tagQpInfo_));
-        CHK_RET(CreateQpWithSharedCq(nicRdmaHandle_, selfIp_, peerIp_, recvCompletionEvent,
-            sendCompletionEvent, dataQpInfo_));
+        CHK_RET(CreateQpWithSharedCq(
+            nicRdmaHandle_, selfIp_, peerIp_, recvCompletionEvent, sendCompletionEvent, dataQpInfo_));
     } else {
         tagQpAppend_ = TAG_QP_APPEND;
         dataQpAppend_ = DATA_QP_APPEND;
-        CHK_RET(CreateQpWithSharedCq(nicRdmaHandle_, selfIp_, peerIp_, -1, -1,
-            tagQpInfo_, tagQpAppend_, MAX_SCATTER_BUF_NUM));
-        CHK_RET(CreateQpWithSharedCq(nicRdmaHandle_, selfIp_, peerIp_, -1, -1,
-            dataQpInfo_, dataQpAppend_, MAX_SCATTER_BUF_NUM));
+        CHK_RET(CreateQpWithSharedCq(
+            nicRdmaHandle_, selfIp_, peerIp_, -1, -1, tagQpInfo_, tagQpAppend_, MAX_SCATTER_BUF_NUM));
+        CHK_RET(CreateQpWithSharedCq(
+            nicRdmaHandle_, selfIp_, peerIp_, -1, -1, dataQpInfo_, dataQpAppend_, MAX_SCATTER_BUF_NUM));
     }
 
     if (srqInit_) {
+        std::unique_lock<std::shared_mutex> lock(gQpnMapMutex);
         gQpnToTransportMap[tagQpInfo_.qp->qp_num] = this;
         gQpnToSqMaxWrMap[dataQpInfo_.qp->qp_num] = MAX_WR_NUM;
     }
@@ -601,13 +611,13 @@ HcclResult TransportHeterogEventRoce::SupplyDataRecvWqe()
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogEventRoce::IssueRecvWqe(struct ibv_srq *srq, u32 num)
+HcclResult TransportHeterogEventRoce::IssueRecvWqe(struct ibv_srq* srq, u32 num)
 {
-    list<void *> blockList(num, nullptr);
+    list<void*> blockList(num, nullptr);
     CHK_RET(AllocMemBlocks(blockList));
 
     auto iter = blockList.begin();
-    struct ibv_recv_wr *nextRqWr = nullptr;
+    struct ibv_recv_wr* nextRqWr = nullptr;
     struct ibv_recv_wr rqWr[num];
     struct ibv_sge sgeList[num];
     for (int i = num - 1; i >= 0; i--) {
@@ -627,36 +637,42 @@ HcclResult TransportHeterogEventRoce::IssueRecvWqe(struct ibv_srq *srq, u32 num)
         iter++;
     }
 
-    struct ibv_recv_wr *badRqWr = nullptr;
+    struct ibv_recv_wr* badRqWr = nullptr;
     CHK_RET(hrtIbvPostSrqRecv(srq, &rqWr[0], &badRqWr));
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogEventRoce::ParseTagSrqes(const struct ibv_wc *wc, int num)
+HcclResult TransportHeterogEventRoce::ParseTagSrqes(const struct ibv_wc* wc, int num)
 {
     for (int i = 0; i < num; i++) {
-        HCCL_INFO("rq cqe info: wrId[%llu] status[%u] opcode[%u] qpn[%u].", wc[i].wr_id, wc[i].status,
-            wc[i].opcode, wc[i].qp_num);
+        HCCL_INFO(
+            "rq cqe info: wrId[%llu] status[%u] opcode[%u] qpn[%u].", wc[i].wr_id, wc[i].status, wc[i].opcode,
+            wc[i].qp_num);
         CHK_PRT_RET(wc[i].status != 0, HCCL_ERROR("rdma send failed, cqe status[%u].", wc[i].status), HCCL_E_INTERNAL);
-        RecvWrInfo *info = reinterpret_cast<RecvWrInfo *>(wc[i].wr_id);
+        RecvWrInfo* info = reinterpret_cast<RecvWrInfo*>(wc[i].wr_id);
         CHK_PTR_NULL(info);
 
         CHK_RET(SupplyTagRecvWqe());
 
-        HcclEnvelope *envelope = reinterpret_cast<HcclEnvelope *>(info->buf);
+        HcclEnvelope* envelope = reinterpret_cast<HcclEnvelope*>(info->buf);
         CHK_PTR_NULL(envelope);
 
-        HCCL_INFO("recv request: tag:%d srcRank:%u dstRank:%u status:%u msn:0x%016llx count:%d.",
-            envelope->epParam.src.tag, envelope->epParam.src.rank, envelope->epParam.dst.rank, wc[i].status,
-            envelope->msn, envelope->transData.count);
+        HCCL_INFO(
+            "recv request: tag:%d srcRank:%u dstRank:%u status:%u msn:0x%016llx count:%d.", envelope->epParam.src.tag,
+            envelope->epParam.src.rank, envelope->epParam.dst.rank, wc[i].status, envelope->msn,
+            envelope->transData.count);
 
         HcclEnvelopeSummary envelopSummary(*envelope, wc[i].status);
-        if (gQpnToTransportMap.count(wc[i].qp_num) != 0) {
-            gQpnToTransportMap[wc[i].qp_num]->SaveEnvelope(envelopSummary);
-        } else {
-            HCCL_ERROR("The transport is no exist, wrId[%llu] status[%u] opcode[%u] qpn[%u]", wc[i].wr_id,
-                wc[i].status, wc[i].opcode, wc[i].qp_num);
-            return HCCL_E_PTR;
+        {
+            std::shared_lock<std::shared_mutex> lock(gQpnMapMutex);
+            if (gQpnToTransportMap.count(wc[i].qp_num) != 0) {
+                gQpnToTransportMap[wc[i].qp_num]->SaveEnvelope(envelopSummary);
+            } else {
+                HCCL_ERROR(
+                    "The transport does not exist, wrId[%llu] status[%u] opcode[%u] qpn[%u]", wc[i].wr_id, wc[i].status,
+                    wc[i].opcode, wc[i].qp_num);
+                return HCCL_E_PTR;
+            }
         }
 
         CHK_RET(FreeMemBlock(info->buf));
@@ -665,32 +681,38 @@ HcclResult TransportHeterogEventRoce::ParseTagSrqes(const struct ibv_wc *wc, int
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogEventRoce::ParseDataSrqes(const struct ibv_wc *wc, int num)
+HcclResult TransportHeterogEventRoce::ParseDataSrqes(const struct ibv_wc* wc, int num)
 {
     for (int i = 0; i < num; i++) {
         HCCL_INFO("rq cqe info: wrId[%llu] status[%u] opcode[%u].", wc[i].wr_id, wc[i].status, wc[i].opcode);
-        CHK_PRT_RET(wc[i].status != 0, HCCL_ERROR("rdma poll data rq failed, cqe status[%u].",
-            wc[i].status), HCCL_E_INTERNAL);
-        RecvWrInfo *info = reinterpret_cast<RecvWrInfo *>(wc[i].wr_id);
+        CHK_PRT_RET(
+            wc[i].status != 0, HCCL_ERROR("rdma poll data rq failed, cqe status[%u].", wc[i].status), HCCL_E_INTERNAL);
+        RecvWrInfo* info = reinterpret_cast<RecvWrInfo*>(wc[i].wr_id);
         CHK_PTR_NULL(info);
-        HcclRequestInfo *wrPtr = reinterpret_cast<HcclRequestInfo *>(*reinterpret_cast<u64 *>(info->buf));
+        HcclRequestInfo* wrPtr = reinterpret_cast<HcclRequestInfo*>(*reinterpret_cast<u64*>(info->buf));
         CHK_PTR_NULL(wrPtr);
         CHK_RET(SupplyDataRecvWqe());
         wrPtr->transportRequest.status = wc[i].status;
-        if (gQpnToSqMaxWrMap.count(wc[i].qp_num) != 0) {
-            gQpnToSqMaxWrMap[wc[i].qp_num]++;
-        } else {
-            HCCL_ERROR("The qpn is no exist, wrId[%llu] status[%u] opcode[%u] qpn[%u]", wc[i].wr_id,
-                wc[i].status, wc[i].opcode, wc[i].qp_num);
-            return HCCL_E_PTR;
+        {
+            std::shared_lock<std::shared_mutex> lock(gQpnMapMutex);
+            if (gQpnToSqMaxWrMap.count(wc[i].qp_num) != 0) {
+                gQpnToSqMaxWrMap[wc[i].qp_num]++;
+            } else {
+                HCCL_ERROR(
+                    "The qpn does not exist, wrId[%llu] status[%u] opcode[%u] qpn[%u]", wc[i].wr_id, wc[i].status,
+                    wc[i].opcode, wc[i].qp_num);
+                return HCCL_E_PTR;
+            }
         }
 
-        CHK_RET(DeregMr(reinterpret_cast<void *>(wrPtr->transportRequest.transData.srcBuf),
-            static_cast<u64>(wrPtr->transportRequest.transData.count *
-            SIZE_TABLE[wrPtr->transportRequest.transData.dataType])));
+        CHK_RET(DeregMr(
+            reinterpret_cast<void*>(wrPtr->transportRequest.transData.srcBuf),
+            static_cast<u64>(
+                wrPtr->transportRequest.transData.count * SIZE_TABLE[wrPtr->transportRequest.transData.dataType])));
         CHK_RET(FreeMemBlock(info->buf));
         CHK_RET(FreeRecvWrId(wc[i].wr_id));
-        HCCL_INFO("send completion: tag:%d peerRank:%u status:%d msn:0x%016llx request:%p.",
+        HCCL_INFO(
+            "send completion: tag:%d peerRank:%u status:%d msn:0x%016llx request:%p.",
             wrPtr->transportRequest.epParam.src.tag, wrPtr->transportRequest.epParam.src.rank,
             wrPtr->transportRequest.status, wrPtr->transportRequest.msn, wrPtr);
     }

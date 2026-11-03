@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #define BKF_LOG_HND ((co)->log)
 #define BKF_MOD_NAME ((co)->name)
 #include "net_co_log.h"
@@ -83,8 +82,8 @@ char *NetCoLogGetLogFilePath(uint8_t *buf, int32_t bufLen)
         return VOS_NULL;
     }
 
-    int err = snprintf_truncated_s((char*)buf, (uint32_t)bufLen, ".");
-    return (err > 0) ? (char*)buf : VOS_NULL;
+    int err = snprintf_truncated_s((char *)buf, (uint32_t)bufLen, ".");
+    return (err > 0) ? (char *)buf : VOS_NULL;
 }
 
 void NetCoLogOutput2File(NetCo *co, const char *outStr)
@@ -118,4 +117,3 @@ void NetCoOutAssertInfo(const char *fmt, ...)
 #ifdef __cplusplus
 }
 #endif
-

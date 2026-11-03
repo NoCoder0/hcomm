@@ -28,7 +28,7 @@ struct SingleRankTaskQueues {
 
     void AppendTask(Stream* stream, std::shared_ptr<TaskStub> task);
 
-    std::vector<std::shared_ptr<TaskStub>> &operator[](QId queId);
+    std::vector<std::shared_ptr<TaskStub>>& operator[](QId queId);
 
     std::shared_ptr<TaskStub> GetTask(QId queId, u32 pos) const;
     std::vector<std::shared_ptr<TaskStub>> GetQueTasks(QId queId) const;
@@ -36,15 +36,15 @@ struct SingleRankTaskQueues {
 };
 
 struct AllRankTaskQueues {
-    std::map<RankId, SingleRankTaskQueues *> rank2TaskQueues;
+    std::map<RankId, SingleRankTaskQueues*> rank2TaskQueues;
     u32 rankSize = 0;
 
     void Clear();
     void AppendTask(RankId rankId, Stream* stream, std::shared_ptr<TaskStub> task);
 
-    SingleRankTaskQueues *operator[](RankId rankId);
+    SingleRankTaskQueues* operator[](RankId rankId);
 
-    SingleRankTaskQueues *GetRankTaskQues(RankId rankId) const;
+    SingleRankTaskQueues* GetRankTaskQues(RankId rankId) const;
 };
 
 class TaskQueueStub {
@@ -52,11 +52,12 @@ public:
     static TaskQueueStub* Global();
     void Reset();
 
-    static void AppendTask(RankId rankId, Stream *stream, std::shared_ptr<TaskStub> task);
+    static void AppendTask(RankId rankId, Stream* stream, std::shared_ptr<TaskStub> task);
 
     u32 GetRankSize() const;
-    SingleRankTaskQueues *GetTaskQueueOfRank(RankId rankId) const;
+    SingleRankTaskQueues* GetTaskQueueOfRank(RankId rankId) const;
     AllRankTaskQueues& GetAllRankTasks();
+
 private:
     AllRankTaskQueues allRankTaskQueues;
 };

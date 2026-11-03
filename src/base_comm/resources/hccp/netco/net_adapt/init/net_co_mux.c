@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #define BKF_LOG_HND ((co)->log)
 #define BKF_MOD_NAME ((co)->name)
 #include "net_co_mux.h"
@@ -52,7 +51,7 @@ uint32_t NetCoMuxInit(NetCo *co)
         return BKF_ERR;
     }
     WfwMuxInitArg temp;
-    co->mux = WfwMuxInit(WfwMuxLeBuildMuxInitArg((WfwMuxLe*)co->muxAdpee, &temp));
+    co->mux = WfwMuxInit(WfwMuxLeBuildMuxInitArg((WfwMuxLe *)co->muxAdpee, &temp));
     if (co->mux == VOS_NULL) {
         BKF_LOG_ERROR(BKF_LOG_HND, "mux(%#x), ng\n", BKF_MASK_ADDR(co->mux));
         return BKF_ERR;
@@ -70,7 +69,7 @@ void NetCoMuxUninit(NetCo *co)
         co->mux = VOS_NULL;
     }
     if (co->muxAdpee != VOS_NULL) {
-        WfwMuxLeUninit((WfwMuxLe*)co->muxAdpee);
+        WfwMuxLeUninit((WfwMuxLe *)co->muxAdpee);
         co->muxAdpee = VOS_NULL;
     }
 }
@@ -78,4 +77,3 @@ void NetCoMuxUninit(NetCo *co)
 #ifdef __cplusplus
 }
 #endif
-

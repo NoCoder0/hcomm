@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef BKF_JOB_ADP_H
 #define BKF_JOB_ADP_H
 
@@ -24,12 +23,12 @@ extern "C" {
 #pragma GCC visibility push(default)
 #pragma pack(4)
 /**
-* @brief 当app自身job使用静态表分发时，可以选择该文件中的接口实现一个简单的动态job分发
-*/
+ * @brief 当app自身job使用静态表分发时，可以选择该文件中的接口实现一个简单的动态job分发
+ */
 
 /**
-* @brief job回调接口，适配vrp job，有两个入参
-*/
+ * @brief job回调接口，适配vrp job，有两个入参
+ */
 typedef uint32_t (*F_BKF_VRP_JOB_CALLBACK)(void *para1, void *para2);
 
 typedef struct tagBkfDispatchJobInfo {
@@ -40,9 +39,9 @@ typedef struct tagBkfDispatchJobInfo {
 BkfTableMng *BkfDispatchJobInit(BkfMemMng *memMng)
 {
     BkfTableInitArg arg = {.memMng = memMng,
-                           .keyLen = sizeof(uint32_t),
-                           .valLen = sizeof(F_BKF_VRP_JOB_CALLBACK),
-                           .keyCmp = (F_BKF_CMP)Bkfuint32_tCmp};
+        .keyLen = sizeof(uint32_t),
+        .valLen = sizeof(F_BKF_VRP_JOB_CALLBACK),
+        .keyCmp = (F_BKF_CMP)Bkfuint32_tCmp};
     return BkfTableInit(&arg);
 }
 
@@ -63,7 +62,7 @@ uint32_t BkfDispatchJobDispatch(BkfTableMng *handle, uint32_t jobTypeId, void *p
     if (ret != BKF_OK) {
         return BKF_ERR;
     }
-    F_BKF_VRP_JOB_CALLBACK callBack = *((F_BKF_VRP_JOB_CALLBACK*)(info.val));
+    F_BKF_VRP_JOB_CALLBACK callBack = *((F_BKF_VRP_JOB_CALLBACK *)(info.val));
     return callBack(para1, para2);
 }
 

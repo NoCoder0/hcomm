@@ -22,12 +22,13 @@ namespace Hccl {
 
 class CcuContextAllReduceNHR1D : public CcuContextAlgBase {
 public:
-    CcuContextAllReduceNHR1D(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                                                   const CcuTransportGroup &group);
+    CcuContextAllReduceNHR1D(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
     ~CcuContextAllReduceNHR1D() override {}
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
+
 private:
     void LoadArgs();
     void InitResources();
@@ -35,29 +36,28 @@ private:
     void PostSync();
     void AxisSync(uint32_t signalIndex);
     void LocalCopySlices();
-    void DoLocalCopySlice(CcuRep::Memory &src, CcuRep::Memory &dst,
-                          const u32 &copySliceIdx, u32 signalIndex);
-    std::vector<u32> GetNonTxSliceIdxs(const std::vector<u32> &txSliceIdxs) const;
+    void DoLocalCopySlice(CcuRep::Memory& src, CcuRep::Memory& dst, const u32& copySliceIdx, u32 signalIndex);
+    std::vector<u32> GetNonTxSliceIdxs(const std::vector<u32>& txSliceIdxs) const;
     void DoReduceScatterNHR();
-    void DoReduceScatterNHRSingleStep(const NHRStepInfo &nhrStepInfo);
-    void DoWriteReduceSlice(const u32 &toRank, CcuRep::Memory &src, CcuRep::Memory &dst,
-                            const u32 &sendSliceIdx, u32 signalIndex);
+    void DoReduceScatterNHRSingleStep(const NHRStepInfo& nhrStepInfo);
+    void DoWriteReduceSlice(
+        const u32& toRank, CcuRep::Memory& src, CcuRep::Memory& dst, const u32& sendSliceIdx, u32 signalIndex);
     void DoAllGatherNHR();
-    void DoAllGatherNHRSingleStep(const NHRStepInfo &nhrStepInfo);
-    void DoSendRecvSlice(const u32 &toRank, CcuRep::Memory &src, CcuRep::Memory &dst,
-                         const u32 &sendSliceIdx, u32 signalIndex);
+    void DoAllGatherNHRSingleStep(const NHRStepInfo& nhrStepInfo);
+    void DoSendRecvSlice(
+        const u32& toRank, CcuRep::Memory& src, CcuRep::Memory& dst, const u32& sendSliceIdx, u32 signalIndex);
 
     // 构造函数中
     uint64_t dimSize_{0};
     uint32_t axisId_{0};
     uint32_t axisSize_{0};
-    uint32_t localSize_{0};  // 本rank所在行或列的总rank数
+    uint32_t localSize_{0}; // 本rank所在行或列的总rank数
     uint32_t repeatNum_{0};
     uint32_t myRankIdx_{0};
-    uint32_t signalNum_{0};  // 需要使用的signal数量
+    uint32_t signalNum_{0}; // 需要使用的signal数量
     DataType dataType_;
     // DataType outputDataType_;
-    std::vector<NHRStepInfo> stepInfoVector_;   //nhr算法执行过程中的参数
+    std::vector<NHRStepInfo> stepInfoVector_; // nhr算法执行过程中的参数
     std::map<u32, u32> indexMap_;
 
     // load进来参数
@@ -75,8 +75,8 @@ private:
     CcuRep::Variable isInputOutputEqual_;
 
     // 跨轴同步信号
-    std::string        localAxisSignalName_;
-    std::string        anotherAxisSignalName_;
+    std::string localAxisSignalName_;
+    std::string anotherAxisSignalName_;
     CcuRep::MaskSignal localAxisSignal_;
     CcuRep::MaskSignal anotherAxisSignal_;
     CcuRep::MaskSignal localSignal_;

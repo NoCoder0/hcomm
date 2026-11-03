@@ -28,27 +28,17 @@
 #include "binary_stream.h"
 #undef private
 #undef protected
- 
+
 using namespace Hccl;
- 
+
 class HcclCommunicatorTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "HcclCommunicatorTest tests set up." << std::endl;
-    }
- 
-    static void TearDownTestCase()
-    {
-        std::cout << "HcclCommunicatorTest tests tear down." << std::endl;
-    }
- 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in HcclCommunicatorTest SetUP" << std::endl;
- 
-    }
- 
+    static void SetUpTestCase() { std::cout << "HcclCommunicatorTest tests set up." << std::endl; }
+
+    static void TearDownTestCase() { std::cout << "HcclCommunicatorTest tests tear down." << std::endl; }
+
+    virtual void SetUp() { std::cout << "A Test case in HcclCommunicatorTest SetUP" << std::endl; }
+
     virtual void TearDown()
     {
         GlobalMockObject::verify();
@@ -56,8 +46,6 @@ protected:
     }
 };
 
-
- 
 TEST_F(HcclCommunicatorTest, should_return_success_when_calling_communicator_suspend)
 {
     MOCKER_CPP(&CommunicatorImpl::Suspend).stubs().will(returnValue(HCCL_SUCCESS));
@@ -112,8 +100,13 @@ TEST_F(HcclCommunicatorTest, CollOpParams_desc)
 
 TEST_F(HcclCommunicatorTest, should_return_success_when_calling_communicator_create_sub_group)
 {
-    MOCKER_CPP(&HcclCommunicator::Init, HcclResult(HcclCommunicator::*)(const std::string &)).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(static_cast<HcclResult (CommunicatorImpl::*)(const CommParams &subCommParams, const std::vector<u32> &rankIds, CommunicatorImpl *subCommImpl, HcclCommConfig &subConfig)>(&CommunicatorImpl::CreateSubComm))
+    MOCKER_CPP(&HcclCommunicator::Init, HcclResult(HcclCommunicator::*)(const std::string&))
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(static_cast<HcclResult (CommunicatorImpl::*)(
+                   const CommParams& subCommParams, const std::vector<u32>& rankIds, CommunicatorImpl* subCommImpl,
+                   HcclCommConfig& subConfig)>(&CommunicatorImpl::CreateSubComm))
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
         .will(returnValue(HCCL_SUCCESS));
@@ -124,7 +117,7 @@ TEST_F(HcclCommunicatorTest, should_return_success_when_calling_communicator_cre
     std::shared_ptr<HcclCommunicator> subHcclComm;
     std::vector<u32> rankIds;
     HcclCommConfig subConfig;
- 
+
     auto res = comm->CreateSubComm(subCommParams, rankIds, subHcclComm, subConfig);
     EXPECT_EQ(HCCL_SUCCESS, res);
     EXPECT_NE(nullptr, subHcclComm);
@@ -133,19 +126,24 @@ TEST_F(HcclCommunicatorTest, should_return_success_when_calling_communicator_cre
 
 TEST_F(HcclCommunicatorTest, should_return_success_when_calling_communicator_create_sub_group_1)
 {
-    MOCKER_CPP(&HcclCommunicator::Init, HcclResult(HcclCommunicator::*)(const std::string &)).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(static_cast<HcclResult (CommunicatorImpl::*)(const CommParams &subCommParams, const std::vector<u32> &rankIds, CommunicatorImpl *subCommImpl)>(&CommunicatorImpl::CreateSubComm))
+    MOCKER_CPP(&HcclCommunicator::Init, HcclResult(HcclCommunicator::*)(const std::string&))
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(static_cast<HcclResult (CommunicatorImpl::*)(
+                   const CommParams& subCommParams, const std::vector<u32>& rankIds, CommunicatorImpl* subCommImpl)>(
+                   &CommunicatorImpl::CreateSubComm))
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
         .will(returnValue(HCCL_SUCCESS));
     CommParams commParams;
     auto comm = new HcclCommunicator(commParams);
     comm->Init("ranktable.json");
- 
+
     CommParams subCommParams;
     std::shared_ptr<HcclCommunicator> subHcclComm;
     std::vector<u32> rankIds;
- 
+
     auto res = comm->CreateSubComm(subCommParams, rankIds, subHcclComm);
     EXPECT_EQ(HCCL_SUCCESS, res);
     EXPECT_NE(nullptr, subHcclComm);
@@ -155,25 +153,15 @@ TEST_F(HcclCommunicatorTest, should_return_success_when_calling_communicator_cre
 TEST_F(HcclCommunicatorTest, CollOperator_CollOpToString)
 {
     CollOperator collOp;
-    vector<OpType> optypes = {
-        OpType::REDUCESCATTER,
-        OpType::ALLREDUCE,
-        OpType::ALLGATHER,
-        OpType::SCATTER,
-        OpType::ALLTOALL,
-        OpType::ALLTOALLV,
-        OpType::ALLTOALLVC,
-        OpType::SEND,
-        OpType::RECV,
-        OpType::REDUCE
-    };
+    vector<OpType> optypes
+        = {OpType::REDUCESCATTER, OpType::ALLREDUCE,  OpType::ALLGATHER, OpType::SCATTER, OpType::ALLTOALL,
+           OpType::ALLTOALLV,     OpType::ALLTOALLVC, OpType::SEND,      OpType::RECV,    OpType::REDUCE};
     for (auto optype : optypes) {
         collOp.opType = optype;
         std::cout << CollOpToString(collOp);
         EXPECT_NO_THROW(CollOpToString(collOp));
     }
 }
- 
 
 TEST_F(HcclCommunicatorTest, is_comm_ready_should_success)
 {
@@ -181,26 +169,26 @@ TEST_F(HcclCommunicatorTest, is_comm_ready_should_success)
     HcclCommConfig config;
     HcclCommConfigInit(&config);
     HcclCommunicator comm(params, &config);
- 
+
     MOCKER_CPP(&CommunicatorImpl::IsCommReady).stubs().will(returnValue(true));
     EXPECT_TRUE(comm.IsCommReady());
 }
- 
+
 TEST_F(HcclCommunicatorTest, get_snap_shot_dynamic_buf_should_success)
 {
     CommParams params;
     HcclCommConfig config;
     HcclCommConfigInit(&config);
     HcclCommunicator comm(params, &config);
- 
+
     comm.pimpl->collService = new CollServiceDefaultImpl(comm.pimpl.get());
- 
-    BinaryStream bs {};
+
+    BinaryStream bs{};
     void* buf = &bs;
     EXPECT_EQ(comm.GetSnapShotDynamicBuf(buf), HcclResult::HCCL_SUCCESS);
     delete comm.pimpl->collService;
 }
- 
+
 TEST_F(HcclCommunicatorTest, recover_comm_should_success)
 {
     CommParams params;
@@ -208,40 +196,41 @@ TEST_F(HcclCommunicatorTest, recover_comm_should_success)
     HcclCommConfigInit(&config);
     HcclCommunicator comm(params, &config);
 
-    MOCKER_CPP(static_cast<HcclResult (CommunicatorImpl::*)(SnapShotComm &, u32, const char *)>(&CommunicatorImpl::RecoverComm))
+    MOCKER_CPP(
+        static_cast<HcclResult (CommunicatorImpl::*)(SnapShotComm&, u32, const char*)>(&CommunicatorImpl::RecoverComm))
         .stubs()
         .with(mockcpp::any(), mockcpp::any())
         .will(returnValue(HcclResult::HCCL_SUCCESS));
-    SnapShotComm snapShotComm {};
+    SnapShotComm snapShotComm{};
     void* ptr = &snapShotComm;
-    const char * filePath = "test";
+    const char* filePath = "test";
     EXPECT_EQ(comm.RecoverComm(ptr, 0, filePath), HcclResult::HCCL_SUCCESS);
 }
- 
+
 TEST_F(HcclCommunicatorTest, recover_sub_comm_should_success)
 {
     CommParams params;
     HcclCommConfig config;
     HcclCommConfigInit(&config);
     HcclCommunicator comm(params, &config);
- 
+
     MOCKER_CPP(&CommunicatorImpl::RecoverSubComm)
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
         .will(returnValue(HcclResult::HCCL_SUCCESS));
-    SnapShotSubComm snapShotSubComm {};
+    SnapShotSubComm snapShotSubComm{};
     void* ptr = &snapShotSubComm;
     std::shared_ptr<HcclCommunicator> subCommPtr;
     EXPECT_EQ(comm.RecoverSubComm(ptr, subCommPtr, 0), HcclResult::HCCL_SUCCESS);
 }
- 
+
 TEST_F(HcclCommunicatorTest, get_static_binary_info_should_success)
 {
     CommParams params;
     HcclCommConfig config;
     HcclCommConfigInit(&config);
     HcclCommunicator comm(params, &config);
- 
+
     EXPECT_NO_THROW(comm.GetStaticBinaryInfo());
 }
 

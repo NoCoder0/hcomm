@@ -1,38 +1,29 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "send_receive.h"
 
 namespace hccl {
 SendReceive::SendReceive(
-    const HcclDispatcher dispatcher,
-    const std::shared_ptr<Transport> &link,
-    const u32 peerRank,
-    const u64 chunkNum,
+    const HcclDispatcher dispatcher, const std::shared_ptr<Transport>& link, const u32 peerRank, const u64 chunkNum,
     bool retryEnable)
     : AlgTemplateBase(dispatcher),
       transLink_(link),
       peerRank_(peerRank),
       chunkSize_(chunkNum),
       retryEnable_(retryEnable)
-{
-}
+{}
 
-SendReceive::~SendReceive()
-{
-}
+SendReceive::~SendReceive() {}
 
-HcclResult SendReceive::SendPrepare(
-    const DeviceMem &inputMem,
-    const u32 destRank,
-    const Stream &stream)
+HcclResult SendReceive::SendPrepare(const DeviceMem& inputMem, const u32 destRank, const Stream& stream)
 {
     /* 参数赋值 */
     inputMem_ = inputMem;
@@ -41,10 +32,7 @@ HcclResult SendReceive::SendPrepare(
     return HCCL_SUCCESS;
 }
 
-HcclResult SendReceive::ReceivePrepare(
-    const DeviceMem &outputMem,
-    const u32 srcRank,
-    const Stream &stream)
+HcclResult SendReceive::ReceivePrepare(const DeviceMem& outputMem, const u32 srcRank, const Stream& stream)
 {
     /* 参数赋值 */
     outputMem_ = outputMem;
@@ -74,12 +62,17 @@ HcclResult SendReceive::SendRunAsync()
 
         offset += sizePerRound;
         sizePerRound = (sizeResidue > sizePerSlice) ? sizePerSlice : sizeResidue;
-        void* localAddr = static_cast<u8 *>(inputMem_.ptr()) + offset;
+        void* localAddr = static_cast<u8*>(inputMem_.ptr()) + offset;
         HCCL_DEBUG("tx async inputmem's offset[%llu] size[%llu]", offset, sizePerRound);
 
         ret = transLink_->TxAsync(UserMemType::OUTPUT_MEM, offset, localAddr, sizePerRound, stream_);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[SendReceive][SendRunAsync]tx async offset[%llu] "\
-            "size[%llu] failed", offset, sizePerRound), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[SendReceive][SendRunAsync]tx async offset[%llu] "
+                "size[%llu] failed",
+                offset, sizePerRound),
+            ret);
 
         ret = transLink_->RxAsync(UserMemType::OUTPUT_MEM, 0, nullptr, 0, stream_);
         CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[SendReceive][ReceiveRunAsync]tx async failed"), ret);
@@ -113,12 +106,17 @@ HcclResult SendReceive::ReceiveRunAsync()
 
         offset += sizePerRound;
         sizePerRound = (sizeResidue > sizePerSlice) ? sizePerSlice : sizeResidue;
-        void* localAddr = static_cast<u8 *>(outputMem_.ptr()) + offset;
+        void* localAddr = static_cast<u8*>(outputMem_.ptr()) + offset;
         HCCL_DEBUG("rx async outputmem's offset[%llu] size[%llu]", offset, sizePerRound);
 
         ret = transLink_->RxAsync(UserMemType::OUTPUT_MEM, offset, localAddr, sizePerRound, stream_);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[SendReceive][ReceiveRunAsync]rx async with offset[%llu] "\
-            "size[%llu] failed", offset, sizePerRound), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[SendReceive][ReceiveRunAsync]rx async with offset[%llu] "
+                "size[%llu] failed",
+                offset, sizePerRound),
+            ret);
 
         ret = transLink_->TxAsync(UserMemType::OUTPUT_MEM, 0, nullptr, 0, stream_);
         CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[SendReceive][ReceiveRunAsync]tx async failed"), ret);
@@ -144,15 +142,20 @@ HcclResult SendReceive::BatchSendRunAsync()
 
         offset += sizePerRound;
         sizePerRound = (sizeResidue > sizePerSlice) ? sizePerSlice : sizeResidue;
-        void* localAddr = static_cast<u8 *>(inputMem_.ptr()) + offset;
+        void* localAddr = static_cast<u8*>(inputMem_.ptr()) + offset;
         HCCL_DEBUG("tx async inputmem's offset[%llu] size[%llu]", offset, sizePerRound);
 
         ret = transLink_->TxData(UserMemType::OUTPUT_MEM, offset, localAddr, sizePerRound, stream_);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[SendReceive][BatchSendRunAsync]tx async offset[%llu] "\
-            "size[%llu] failed", offset, sizePerRound), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[SendReceive][BatchSendRunAsync]tx async offset[%llu] "
+                "size[%llu] failed",
+                offset, sizePerRound),
+            ret);
 
         ret = transLink_->TxDone(stream_);
-  
+
         CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[SendReceive][BatchSendRunAsync]TxWaitDone failed"), ret);
     }
     return HCCL_SUCCESS;
@@ -176,18 +179,27 @@ HcclResult SendReceive::BatchReceiveRunAsync()
 
         offset += sizePerRound;
         sizePerRound = (sizeResidue > sizePerSlice) ? sizePerSlice : sizeResidue;
-        void* localAddr = static_cast<u8 *>(outputMem_.ptr()) + offset;
+        void* localAddr = static_cast<u8*>(outputMem_.ptr()) + offset;
         HCCL_DEBUG("rx async outputmem's offset[%llu] size[%llu]", offset, sizePerRound);
 
         ret = transLink_->RxData(UserMemType::INPUT_MEM, offset, localAddr, sizePerRound, stream_);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[SendReceive][BatchReceiveRunAsync]rx async with offset[%llu] "\
-            "size[%llu] failed", offset, sizePerRound), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[SendReceive][BatchReceiveRunAsync]rx async with offset[%llu] "
+                "size[%llu] failed",
+                offset, sizePerRound),
+            ret);
 
         ret = transLink_->RxDone(stream_);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[SendReceive][BatchReceiveRunAsync]TxDataSignal offset[%llu]"\
-            "size[%llu] failed", offset, sizePerRound), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[SendReceive][BatchReceiveRunAsync]TxDataSignal offset[%llu]"
+                "size[%llu] failed",
+                offset, sizePerRound),
+            ret);
     }
     return HCCL_SUCCESS;
 }
 } // namespace hccl
-

@@ -1,7 +1,11 @@
-/*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
- * Description: ccu representation base header file
- * Create: 2025-02-18
+/**
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
  */
 
 #ifndef HCOMM_CCU_REPRESENTATION_REMPOSTVAR_H
@@ -13,29 +17,34 @@
 namespace hcomm {
 namespace CcuRep {
 
-class CcuRepRemPostVar : public CcuRepBase {
-public:
-    CcuRepRemPostVar(Variable param, const ChannelHandle channel, uint16_t paramIndex, uint16_t semIndex,
-                       uint16_t mask);
-    bool        Translate(CcuInstr *&instr, uint16_t &instrId, const TransDep &dep) override;
-    std::string Describe() override;
-    uint32_t    GetMask() { return mask; }
-    uint32_t    GetRmtXnId() { return rmtXnId; }
-    uint32_t    GetRmtCkeId() { return rmtCkeId; }
-    uint16_t    GetParamIndex() { return paramIndex; }
-    Variable    GetParam() { return param; }
-    uint32_t    GetChannelId() { return channelId; }
+    class CcuRepRemPostVar : public CcuRepBase {
+    public:
+        CcuRepRemPostVar(
+            CcuInsGeneratorBase* insGenPtr, Variable param, const ChannelHandle channel, uint16_t paramIndex,
+            uint16_t semIndex, uint16_t mask);
+        bool Translate(CcuKernel* ccuKernel, CcuInstr*& instr, uint16_t& instrId, const TransDep& dep) override;
+        std::string Describe() override;
+        uint32_t GetRmtXnId() const { return rmtXnId; }
+        uint32_t GetRmtCkeId() const { return rmtCkeId; }
+        uint16_t GetParamIndex() const { return paramIndex; }
+        Variable GetParam() { return param; }
+        uint32_t GetChannelId() const { return channelId; }
 
-private:
-    Variable                      param;
-    ChannelHandle                 channel;
-    uint16_t                      paramIndex{0};
-    uint16_t                      semIndex{0};
-    uint16_t                      mask{0};
-    uint32_t                      rmtXnId{0};
-    uint32_t                      rmtCkeId{0};
-    uint32_t                      channelId{0};
-};
+        ChannelHandle GetChannel() const { return channel; }
+        uint16_t GetSemIndex() const { return semIndex; }
+        uint16_t GetMask() const { return mask; }
+
+    private:
+        CcuInsGeneratorBase* insGenPtr{nullptr};
+        Variable param;
+        ChannelHandle channel;
+        uint16_t paramIndex{0};
+        uint16_t semIndex{0};
+        uint16_t mask{0};
+        uint32_t rmtXnId{0};
+        uint32_t rmtCkeId{0};
+        uint32_t channelId{0};
+    };
 
 }; // namespace CcuRep
 }; // namespace hcomm

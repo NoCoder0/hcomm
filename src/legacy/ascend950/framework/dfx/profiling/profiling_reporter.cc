@@ -1,29 +1,29 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "profiling_reporter.h"
-#include "dlprof_function.h"
+#include "dlprof_function_v2.h"
 #include "communicator_impl.h"
-#include "comm_engine_utils.h"
+#include "common/comm_engine_utils_pub.h"
 
 namespace Hccl {
 constexpr size_t TASK_INFO_BATCH_RESERVE_SIZE = 128;
 std::array<ProfilingReporter::lastPosesMap, MAX_MODULE_DEVICE_NUM> ProfilingReporter::allLastPoses_{};
-ProfilingReporter::ProfilingReporter(MirrorTaskManager *mirrorTaskMgr, ProfilingHandler* profilingHandler) 
-    : mirrorTaskMgr_(mirrorTaskMgr), profilingHandler_(profilingHandler)
+ProfilingReporter::ProfilingReporter(MirrorTaskManager* mirrorTaskMgr, ProfilingHandler* profilingHandler)
+    : mirrorTaskMgr_(mirrorTaskMgr),
+      profilingHandler_(profilingHandler)
 {
     taskInfoBatch_.reserve(TASK_INFO_BATCH_RESERVE_SIZE);
 }
 
-ProfilingReporter::~ProfilingReporter()
-{
-}
+ProfilingReporter::~ProfilingReporter() {}
 
 HcclResult ProfilingReporter::Init()
 {
@@ -34,7 +34,9 @@ HcclResult ProfilingReporter::Init()
         HCCL_ERROR("[ProfilingReporter][Init] mirrorTaskMgr or profilingHandler is nullptr.");
         return HCCL_E_PTR;
     }
-    mirrorTaskMgr_->RegFullyCallBack([this]() { ReportCallBackAllTasks(); });
+    mirrorTaskMgr_->RegFullyCallBack([this]() {
+        ReportCallBackAllTasks();
+    });
     deviceLogicId_ = HrtGetDevice();
     if (deviceLogicId_ >= static_cast<s32>(MAX_MODULE_DEVICE_NUM) || deviceLogicId_ < 0) {
         HCCL_ERROR("[ProfilingReporter][Init] deviceLogicId_[%d] out of range", deviceLogicId_);
@@ -44,22 +46,24 @@ HcclResult ProfilingReporter::Init()
     return HCCL_SUCCESS;
 }
 
-void ProfilingReporter::SetCurrDfxOpInfo(std::shared_ptr<DfxOpInfo> dfxOpInfo)
+void ProfilingReporter::SetCurrDfxOpInfo(std::shared_ptr<DfxOpInfo> dfxOpInfo) const
 {
-    HCCL_INFO("[ProfilingReporter][SetCurrDfxOpInfo] L1State[%d] L0State[%d]", profilingHandler_->GetHcclL1State(), profilingHandler_->GetHcclL0State());
-    if (profilingHandler_->GetHcclL1State() || profilingHandler_->GetHcclL0State()) {  //这两个值只有profiling使用 如果没开就不进行hash
-        auto it = CMD_OP_TYPE_INFO_MAP.find(static_cast<HcclCMDType>(dfxOpInfo->op_.oldOpType));
-        if (it == CMD_OP_TYPE_INFO_MAP.end()) {
-            HCCL_WARNING("%s dfxOpInfo.opType[%u] is not supported.", __func__, dfxOpInfo->op_.oldOpType);
-        } else {
-            dfxOpInfo->op_.opType = it->second.first; // A3转A5
-            dfxOpInfo->tag_ = it->second.second;      // A5转字符串    延后
-        }
-
-        HCCL_INFO("[ProfilingReporter][SetCurrDfxOpInfo] dfxOpInfo->op_.oldOpType[%u] dfxOpInfo.opType[%u] tag_[%s]", dfxOpInfo->op_.oldOpType, dfxOpInfo->op_.opType, dfxOpInfo->tag_.c_str());
-        dfxOpInfo->op_.reduceOp = Hccl::HcclReduceOpToReduceOp(static_cast<HcclReduceOp>(dfxOpInfo->op_.oldReduceOp));
-        dfxOpInfo->op_.dataType = Hccl::HcclDataTypeToDataType(static_cast<HcclDataType>(dfxOpInfo->op_.oldDataType));
+    HCCL_INFO(
+        "[ProfilingReporter][SetCurrDfxOpInfo] L1State[%d] L0State[%d]", profilingHandler_->GetHcclL1State(),
+        profilingHandler_->GetHcclL0State());
+    auto it = CMD_OP_TYPE_INFO_MAP.find(static_cast<HcclCMDType>(dfxOpInfo->op_.oldOpType));
+    if (it == CMD_OP_TYPE_INFO_MAP.end()) {
+        HCCL_WARNING("%s dfxOpInfo.opType[%u] is not supported.", __func__, dfxOpInfo->op_.oldOpType);
+    } else {
+        dfxOpInfo->op_.opType = it->second.first; // A3转A5
+        dfxOpInfo->tag_ = it->second.second;      // A5转字符串    延后
     }
+
+    HCCL_INFO(
+        "[ProfilingReporter][SetCurrDfxOpInfo] dfxOpInfo->op_.oldOpType[%u] dfxOpInfo.opType[%u] tag_[%s]",
+        dfxOpInfo->op_.oldOpType, dfxOpInfo->op_.opType, dfxOpInfo->tag_.c_str());
+    dfxOpInfo->op_.reduceOp = Hccl::HcclReduceOpToReduceOp(static_cast<HcclReduceOp>(dfxOpInfo->op_.oldReduceOp));
+    dfxOpInfo->op_.dataType = Hccl::HcclDataTypeToDataType(static_cast<HcclDataType>(dfxOpInfo->op_.oldDataType));
     mirrorTaskMgr_->SetCurrDfxOpInfo(dfxOpInfo);
 }
 
@@ -70,17 +74,19 @@ void ProfilingReporter::ReportOp(uint64_t beginTime, bool cachedReq, bool opbase
         HCCL_WARNING("[ProfilingReporter::ReportOp] opInfo is nullptr, skip ReportOp!");
         return;
     }
-    uint64_t endTime   = DlProfFunction::GetInstance().dlMsprofSysCycleTime();
-    OpType   opType    = opInfo->op_.opType;
+    uint64_t endTime = DlProfFunction::GetInstance().dlMsprofSysCycleTime();
+    OpType opType = opInfo->op_.opType;
     bool isAiCpu = false;
     // 新老流程判断
     if (opInfo->isIndop_ == true) {
         if (opInfo->engine == COMM_ENGINE_AICPU_TS || opInfo->engine == COMM_ENGINE_AICPU) {
-            HCCL_INFO("[ProfilingReporter][ReportOp] ReportOp Aicpu,opInfo->engine:[%s]", GetEnumToString(GetCommEngineStatusStrMap(), opInfo->engine).c_str());
+            HCCL_INFO(
+                "[ProfilingReporter][ReportOp] ReportOp Aicpu,opInfo->engine:[%s]",
+                GetEnumToString(GetCommEngineStatusStrMap(), opInfo->engine).c_str());
             isAiCpu = true;
         }
     } else {
-        CommunicatorImpl *commImp = static_cast<CommunicatorImpl *>(opInfo->comm_);
+        CommunicatorImpl* commImp = static_cast<CommunicatorImpl*>(opInfo->comm_);
         if (commImp == nullptr) {
             HCCL_WARNING("[ProfilingReporter::ReportOp] commImp is nullptr, skip ReportOp!");
             return;
@@ -90,10 +96,10 @@ void ProfilingReporter::ReportOp(uint64_t beginTime, bool cachedReq, bool opbase
     // 上报op信息
     opInfo->endTime_ = endTime;
     profilingHandler_->ReportHcclOp(*opInfo, cachedReq);
-    
+
     // 单算子模式涉及HOST API信息上报 注意这个地方
     if (opbased) {
-        profilingHandler_->ReportHostApi(opType, beginTime, endTime, !opbased, isAiCpu);
+        profilingHandler_->ReportHostApi(opType, beginTime, endTime, cachedReq, isAiCpu);
     }
 }
 
@@ -105,15 +111,16 @@ void ProfilingReporter::ReportAllTasksLog() const
     auto& curLastPoses = allLastPoses_[deviceLogicId_];
     for (auto it = mirrorTaskMgr_->Begin(); it != mirrorTaskMgr_->End(); ++it) {
         u32 streamId = it->first;
-        Queue<std::unique_ptr<TaskInfo>> *currQueue = it->second.queue;
-        if (currQueue == nullptr) {
+        Queue<std::unique_ptr<TaskInfo>>* currQueue = it->second.queue;
+        if (currQueue == nullptr || currQueue->IsEmpty()) {
+            // 空队列下 Begin()/Tail() 均为归一化 end()，解引用会越界
             continue;
         }
         if (**(currQueue->Begin()) == nullptr) {
             continue;
         }
         if (curLastPoses.find(streamId) == curLastPoses.end() && currQueue->Begin() != nullptr) {
-            TaskInfo *task = (*currQueue->Begin())->get();
+            TaskInfo* task = (*currQueue->Begin())->get();
             HCCL_INFO("[ProfilingReporter] ReportAllTasksLog, %s", task->Describe().c_str());
         }
         if (curLastPoses.find(streamId) == curLastPoses.end()) {
@@ -127,17 +134,14 @@ void ProfilingReporter::ReportAllTasksLog() const
                 continue;
             }
             if (pastLastPos) {
-                TaskInfo *task = (*logIter)->get();
+                TaskInfo* task = (*logIter)->get();
                 HCCL_INFO("[ProfilingReporter] ReportAllTasksLog, %s", task->Describe().c_str());
             }
         }
     }
 }
 
-void ProfilingReporter::ReportCallBackAllTasks(bool cachedReq)
-{
-    ReportAllTasks(cachedReq);
-}
+void ProfilingReporter::ReportCallBackAllTasks(bool cachedReq) { ReportAllTasks(cachedReq); }
 
 void ProfilingReporter::ReportAllTasks(bool cachedReq)
 {
@@ -146,31 +150,53 @@ void ProfilingReporter::ReportAllTasks(bool cachedReq)
     auto& curLastPoses = allLastPoses_[deviceLogicId_];
     taskInfoBatch_.clear();
     for (auto it = mirrorTaskMgr_->Begin(); it != mirrorTaskMgr_->End(); ++it) {
-        u32  streamId     = it->first;
-        Queue<std::unique_ptr<TaskInfo>> *currQueue = it->second.queue;
+        u32 streamId = it->first;
+        Queue<std::unique_ptr<TaskInfo>>* currQueue = it->second.queue;
         if (currQueue == nullptr || currQueue->Begin() == nullptr || currQueue->Tail() == nullptr) {
             HCCL_WARNING("[ProfilingReporter][ReportAllTasks] currQueue is nullptr, continue to next task.");
             continue;
         }
+        // 空队列：Tail() 返回归一化后的 end()，不能作为游标基准；必须在任何 Begin()/Tail() 解引用前拦截，
+        // 并且不保存 end() 游标，否则队列重新有任务后自增/解引用仍会越界
+        if (currQueue->IsEmpty()) {
+            curLastPoses.erase(streamId);
+            continue;
+        }
         if (*(*(currQueue->Begin())) == nullptr) {
-             HCCL_WARNING("[ProfilingReporter][ReportAllTasks] (*(*(currQueue->Begin())) is nullptr, continue to next task.");
+            HCCL_WARNING(
+                "[ProfilingReporter][ReportAllTasks] (*(*(currQueue->Begin())) is nullptr, continue to next task.");
             continue;
         }
         if (curLastPoses.find(streamId) == curLastPoses.end() && currQueue->Begin() != nullptr) {
-            TaskInfo *task = (*currQueue->Begin())->get();
-            profilingHandler_->ReportHcclTaskApi(task->taskParam_.taskType, task->taskParam_.beginTime,
-                                                 task->taskParam_.endTime, task->isMaster_, cachedReq, true);
+            TaskInfo* task = (*currQueue->Begin())->get();
+            profilingHandler_->ReportHcclTaskApi(
+                task->taskParam_.taskType, task->taskParam_.beginTime, task->taskParam_.endTime, task->isMaster_,
+                cachedReq, true);
             taskInfoBatch_.emplace_back(task);
             curLastPoses[streamId] = currQueue->Begin();
         }
-        
+
         auto endPos = currQueue->Tail();
         auto iter = curLastPoses[streamId];
-        ++(*(iter));
-        for (; (*(iter)) != (*(currQueue->End())); ++(*(iter))) {
-            TaskInfo *task = (*iter)->get();
-            profilingHandler_->ReportHcclTaskApi(task->taskParam_.taskType, task->taskParam_.beginTime,
-                                                 task->taskParam_.endTime, task->isMaster_, cachedReq, true);
+        if (iter == nullptr || endPos == nullptr) {
+            curLastPoses[streamId] = endPos;
+            continue;
+        }
+        // 以 Tail() 快照为边界：双方都是真实槽位地址，不涉及 end() 归一化
+        for (size_t guard = 0; guard <= currQueue->Capacity(); ++guard) {
+            if ((*(iter)) == (*(endPos))) {
+                break; // 已到达本轮最后一个任务
+            }
+            ++(*(iter));
+            TaskInfo* task = (*iter)->get();
+            if (task == nullptr) {
+                // 防御性检查：槽位写入（GetAndUpdate + 赋值）与上报均由 profMutex 互斥，正常路径不会命中；
+                // 若命中则说明该槽位暂无有效任务，本次跳过且后续不再重试
+                continue;
+            }
+            profilingHandler_->ReportHcclTaskApi(
+                task->taskParam_.taskType, task->taskParam_.beginTime, task->taskParam_.endTime, task->isMaster_,
+                cachedReq, true);
             taskInfoBatch_.emplace_back(task);
         }
         curLastPoses[streamId] = endPos;
@@ -196,24 +222,28 @@ void ProfilingReporter::UpdateProfStat(void)
             if (it->second.queue == nullptr) {
                 continue;
             }
+            // 空队列的 Tail() 是归一化 end()，不能作为游标，否则后续自增/解引用会越界
+            if (it->second.queue->IsEmpty()) {
+                curLastPoses.erase(streamId);
+                continue;
+            }
             curLastPoses[streamId] = it->second.queue->Tail();
         }
     }
 }
 
-void ProfilingReporter::CallReportMc2CommInfo(const Stream &kfcStream, const Stream &stream,
-                                   const std::vector<Stream *> &aicpuStreams,
-                                   const std::string &id, RankId myRank, u32 rankSize, RankId rankInParentComm) const
+void ProfilingReporter::CallReportMc2CommInfo(
+    const Stream& kfcStream, const Stream& stream, const std::vector<Stream*>& aicpuStreams, const std::string& id,
+    RankId myRank, u32 rankSize, RankId rankInParentComm) const
 {
     profilingHandler_->ReportHcclMC2CommInfo(kfcStream, stream, aicpuStreams, id, myRank, rankSize, rankInParentComm);
 }
 
-void ProfilingReporter::CallReportMc2CommInfo(const u32 kfcStreamId,
-                                            const std::vector<u32> &aicpuStreamsId, const std::string &id,
-                                            RankId myRank, u32 rankSize, RankId rankInParentComm) const
+void ProfilingReporter::CallReportMc2CommInfo(
+    const u32 kfcStreamId, const std::vector<u32>& aicpuStreamsId, const std::string& id, RankId myRank, u32 rankSize,
+    RankId rankInParentComm) const
 {
-    profilingHandler_->ReportHcclMC2CommInfo(kfcStreamId, aicpuStreamsId, id,
-                                            myRank, rankSize, rankInParentComm);
+    profilingHandler_->ReportHcclMC2CommInfo(kfcStreamId, aicpuStreamsId, id, myRank, rankSize, rankInParentComm);
 }
- 
+
 } // namespace Hccl

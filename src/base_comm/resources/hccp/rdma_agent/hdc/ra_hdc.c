@@ -9,6 +9,7 @@
  */
 
 #include "user_log.h"
+#include "config_log.h"
 #include "ra_hdc.h"
 #include <stdlib.h>
 #include <string.h>
@@ -52,9 +53,11 @@ struct HdcOps gRaHdcOpsHost = {
 struct OpcodeInterfaceInfo gRaInterfaceInfoList[] = {
     // outer opcode version: 1.0
     {RA_RS_SOCKET_CONN, 0},
+    {RA_RS_SOCKET_CONN_V2, 0},
     {RA_RS_SOCKET_CLOSE, 0},
     {RA_RS_SOCKET_ABORT, 0},
     {RA_RS_SOCKET_LISTEN_START, 0},
+    {RA_RS_SOCKET_LISTEN_START_V2, 0},
     {RA_RS_SOCKET_LISTEN_STOP, 0},
     {RA_RS_GET_SOCKET, 0},
     {RA_RS_SOCKET_SEND, 0},
@@ -132,8 +135,14 @@ struct OpcodeInterfaceInfo gRaInterfaceInfoList[] = {
     {RA_RS_GET_SEC_RANDOM, 0},
     {RA_RS_GET_HCCN_CFG, 0},
     {RA_RS_GET_ROCE_API_VERSION, 0},
+    {RA_RS_TYPICAL_CQ_CREATE, 0},
+    {RA_RS_GET_LITE_CQ_ATTR, 0},
+    {RA_RS_QP_CREATE_WITH_CQ_WITH_ATTRS, 0},
+    {RA_RS_TYPICAL_CQ_DESTROY, 0},
 
     // outer opcode version: 2.0
+    {RA_RS_GET_DEV_EID_INFO_NUM, 0},
+    {RA_RS_GET_DEV_EID_INFO_LIST, 0},
     {RA_RS_CTX_INIT, 0},
     {RA_RS_CTX_GET_ASYNC_EVENTS, 0},
     {RA_RS_CTX_DEINIT, 0},
@@ -147,8 +156,6 @@ struct OpcodeInterfaceInfo gRaInterfaceInfoList[] = {
     {RA_RS_LMEM_UNREG, 0},
     {RA_RS_RMEM_IMPORT, 0},
     {RA_RS_RMEM_UNIMPORT, 0},
-    {RA_RS_GET_DEV_EID_INFO_NUM, 0},
-    {RA_RS_GET_DEV_EID_INFO_LIST, 0},
     {RA_RS_CTX_CHAN_CREATE, 0},
     {RA_RS_CTX_CHAN_DESTROY, 0},
     {RA_RS_CTX_CQ_CREATE, 0},
@@ -166,11 +173,9 @@ struct OpcodeInterfaceInfo gRaInterfaceInfoList[] = {
     {RA_RS_CTX_GET_AUX_INFO, 0},
     {RA_RS_CTX_GET_CR_ERR_INFO_LIST, 0},
     {RA_RS_CTX_GET_UB_CONTEXT, 0},
-    {RA_RS_TYPICAL_CQ_CREATE, 0},
-    {RA_RS_GET_LITE_CQ_ATTR, 0},
-    {RA_RS_QP_CREATE_WITH_CQ_WITH_ATTRS, 0},
-    {RA_RS_TYPICAL_CQ_DESTROY, 0},
+    {RA_RS_CTX_NOTIFY_EVENT, 0},
     {RA_RS_GET_NET_API_VERSION, 0},
+    {RA_RS_BATCH_GET_INTERFACE_VERSION, 0},
 
     // inner opcode version
     {RA_RS_HDC_SESSION_CLOSE, 0},
@@ -180,12 +185,13 @@ struct OpcodeInterfaceInfo gRaInterfaceInfoList[] = {
     {RA_RS_SET_PID, 0},
     {RA_RS_ASYNC_HDC_SESSION_CONNECT, 0},
     {RA_RS_ASYNC_HDC_SESSION_CLOSE, 0},
+    {RA_RS_SET_DEBUG_CONFIG, 0},
 };
 
 STATIC int MsgHeadCheck(struct MsgHead *sendRcvHead, unsigned int opcode, int rsRet, unsigned int msgDataLen);
 
-static int HdcSendRecvPktSend(struct drvHdcMsg *pMsgSnd, char *sendRcvBuf, unsigned int inBufLen,
-    HDC_SESSION session, struct drvHdcMsg **pMsgRcv)
+static int HdcSendRecvPktSend(struct drvHdcMsg *pMsgSnd, char *sendRcvBuf, unsigned int inBufLen, HDC_SESSION session,
+    struct drvHdcMsg **pMsgRcv)
 {
     int ret;
     ret = RA_HDC_OPS.addMsgBuffer(pMsgSnd, sendRcvBuf, inBufLen);
@@ -195,15 +201,14 @@ static int HdcSendRecvPktSend(struct drvHdcMsg *pMsgSnd, char *sendRcvBuf, unsig
     CHK_PRT_RETURN(ret != 0, hccp_err("[send][hdc_send_recv_pkt]HDC send err ret(%d)", ret), ret);
 
     ret = RA_HDC_OPS.reuseMsg(pMsgSnd);
-    CHK_PRT_RETURN(ret != 0, hccp_err("[send][hdc_send_recv_pkt]HDC reuser msg err ret(%d)", ret), ret);
+    CHK_PRT_RETURN(ret != 0, hccp_err("[send][hdc_send_recv_pkt]HDC reuse msg err ret(%d)", ret), ret);
 
     *pMsgRcv = pMsgSnd;
     return 0;
 }
 
 #ifndef HNS_ROCE_LLT
-STATIC int HdcSendRetryPkt(
-    unsigned int phyId, void *sendRcvBuf, unsigned int inBufLen, struct drvHdcMsg **pMsgRcv)
+STATIC int HdcSendRetryPkt(unsigned int phyId, void *sendRcvBuf, unsigned int inBufLen, struct drvHdcMsg **pMsgRcv)
 {
     int ret;
     struct drvHdcMsg *pMsgSnd = NULL;
@@ -244,12 +249,11 @@ STATIC int RaHdcSendRetryMsg(unsigned int phyId, struct drvHdcMsg **pMsgRcv)
     unsigned int dataSize = sizeof(union OpIfnumData);
     sendRcvLen = sizeof(struct MsgHead) + dataSize;
     sendRcvBuf = (void *)calloc(sendRcvLen, sizeof(char));
-    CHK_PRT_RETURN(sendRcvBuf == NULL, hccp_err("[process][ra_hdc_msg]send_rcv_buf calloc failed. phyId(%u)",
-        phyId), -ENOMEM);
+    CHK_PRT_RETURN(sendRcvBuf == NULL, hccp_err("[process][ra_hdc_msg]send_rcv_buf calloc failed. phyId(%u)", phyId),
+        -ENOMEM);
     MsgHeadBuildUp(sendRcvBuf, RA_RS_GET_IFNUM, 0, dataSize, hostTgid);
 
-    ret = memcpy_s(
-        sendRcvBuf + sizeof(struct MsgHead), sendRcvLen - sizeof(struct MsgHead), &ifnumData, dataSize);
+    ret = memcpy_s(sendRcvBuf + sizeof(struct MsgHead), sendRcvLen - sizeof(struct MsgHead), &ifnumData, dataSize);
     if (ret) {
         hccp_err("[process][ra_hdc_msg]memcpy_s failed, ret(%d) phyId(%u)", ret, phyId);
         ret = -ESAFEFUNC;
@@ -276,8 +280,7 @@ static int RaHdcRecvRetryMsg(HDC_SESSION session, struct drvHdcMsg *pMsgRcv)
     int rcvBufLen = 0;
     int ret;
 
-    ret = RA_HDC_OPS.recv(
-        session, pMsgRcv, MAX_HDC_DATA, RA_HDC_WAIT_TIMEOUT, &recvBufCnt, RA_HDC_RETRY_SEND_TIMEOUT);
+    ret = RA_HDC_OPS.recv(session, pMsgRcv, MAX_HDC_DATA, RA_HDC_WAIT_TIMEOUT, &recvBufCnt, RA_HDC_RETRY_SEND_TIMEOUT);
     if (ret) {
         hccp_err("[recv][ra_hdc_recv_retry_msg]HDC get retry recv msg failed(%d)", ret);
         return ret;
@@ -291,8 +294,8 @@ static int RaHdcRecvRetryMsg(HDC_SESSION session, struct drvHdcMsg *pMsgRcv)
 
     ret = MsgHeadCheck((struct MsgHead *)recvBuf, RA_RS_GET_IFNUM, 0, sizeof(union OpIfnumData));
     if (rcvBufLen != outBufLen || ret != 0) {
-        hccp_err("[recv][ra_hdc_recv_retry_msg]HDC get retry recv msg failed, ret(%d), rcvBufLen:%d, outBufLen:%d",
-            ret, rcvBufLen, outBufLen);
+        hccp_err("[recv][ra_hdc_recv_retry_msg]HDC get retry recv msg failed, ret(%d), rcvBufLen:%d, outBufLen:%d", ret,
+            rcvBufLen, outBufLen);
         if (rcvBufLen != outBufLen) {
             ret = -EPIPE;
         }
@@ -303,25 +306,24 @@ static int RaHdcRecvRetryMsg(HDC_SESSION session, struct drvHdcMsg *pMsgRcv)
 }
 #endif
 
-static int HdcSendRecvPktRecv(HDC_SESSION session, unsigned int phyId, struct drvHdcMsg *pMsgRcv,
-    char **recvBuf, int *rcvBufLen)
+static int HdcSendRecvPktRecv(HDC_SESSION session, unsigned int phyId, struct drvHdcMsg *pMsgRcv, char **recvBuf,
+    int *rcvBufLen)
 {
     struct drvHdcMsg *pRetryRcv = NULL;
     int recvBufCnt = 0;
     int ret;
 
-    ret =
-        RA_HDC_OPS.recv(session, pMsgRcv, MAX_HDC_DATA, RA_HDC_WAIT_TIMEOUT, &recvBufCnt, RA_HDC_RECV_SEND_TIMEOUT);
+    ret = RA_HDC_OPS.recv(session, pMsgRcv, MAX_HDC_DATA, RA_HDC_WAIT_TIMEOUT, &recvBufCnt, RA_HDC_RECV_SEND_TIMEOUT);
 #ifndef HNS_ROCE_LLT
     /* if timeout, start retry */
-    if (gRaHdc[phyId].startDeinit == 0 && ret == DRV_ERROR_WAIT_TIMEOUT) {
+    if (gRaHdc[phyId].startDeinit == 0 && ret == -DRV_ERROR_WAIT_TIMEOUT) {
         hccp_run_info("[recv][hdc_send_recv_pkt_recv]HDC recv timeout, start retry");
         ret = RaHdcSendRetryMsg(phyId, &pRetryRcv);
-        CHK_PRT_RETURN(
-            ret != 0, hccp_err("[recv][hdc_send_recv_pkt_recv]HDC get msg by first retry failed(%d)", ret), ret);
+        CHK_PRT_RETURN(ret != 0, hccp_err("[recv][hdc_send_recv_pkt_recv]HDC get msg by first retry failed(%d)", ret),
+            ret);
 
-        ret = RA_HDC_OPS.recv(
-            session, pMsgRcv, MAX_HDC_DATA, RA_HDC_WAIT_TIMEOUT, &recvBufCnt, RA_HDC_RECV_SEND_TIMEOUT);
+        ret = RA_HDC_OPS.recv(session, pMsgRcv, MAX_HDC_DATA, RA_HDC_WAIT_TIMEOUT, &recvBufCnt,
+            RA_HDC_RECV_SEND_TIMEOUT);
         if (ret) {
             hccp_err("[recv][hdc_send_recv_pkt_recv]HDC get msg by first retry failed(%d)", ret);
             RA_HDC_OPS.freeMsg(pRetryRcv);
@@ -347,8 +349,8 @@ static int HdcSendRecvPktRecv(HDC_SESSION session, unsigned int phyId, struct dr
     CHK_PRT_RETURN(ret != 0, hccp_err("[recv][hdc_send_recv_pkt]HDC recv msg err ret(%d)", ret), ret);
 
     ret = RA_HDC_OPS.getMsgBuffer(pMsgRcv, 0, (char **)recvBuf, rcvBufLen);
-    CHK_PRT_RETURN(ret != 0, hccp_err("[recv][hdc_send_recv_pkt]HDC get_msg_buffer msg err ret(%d), rcvBufLen(%d)",
-        ret, *rcvBufLen), ret);
+    CHK_PRT_RETURN(ret != 0,
+        hccp_err("[recv][hdc_send_recv_pkt]HDC get_msg_buffer msg err ret(%d), rcvBufLen(%d)", ret, *rcvBufLen), ret);
 
     return 0;
 }
@@ -361,7 +363,7 @@ STATIC int HdcSendRecvPktRecvCheck(int rcvBufLen, unsigned int outDataLen, struc
     rcvBufLenTmp = (unsigned int)rcvBufLen;
     if (outDataLen != rcvBufLenTmp) {
         if (recvMsgHead->ret == -EACCES) {
-            hccp_warn("exceed the speed limit, need try again, ret:%d", recvMsgHead->ret);
+            hccp_warn_init("exceed the speed limit, need try again, ret:%d", recvMsgHead->ret);
             RA_HDC_OPS.freeMsg(pMsgRcv);
             return -EAGAIN;
         } else if (recvMsgHead->ret == -EPROTONOSUPPORT) {
@@ -373,8 +375,8 @@ STATIC int HdcSendRecvPktRecvCheck(int rcvBufLen, unsigned int outDataLen, struc
             RA_HDC_OPS.freeMsg(pMsgRcv);
             return -EPERM;
         }
-        hccp_err("[check][hdc_send_recv_pkt_recv]date len err out_data_len(%d) != rcv_buf_len(%d) ",
-                 outDataLen, rcvBufLen);
+        hccp_err("[check][hdc_send_recv_pkt_recv]data len err out_data_len(%d) != rcv_buf_len(%d) ", outDataLen,
+            rcvBufLen);
         RA_HDC_OPS.freeMsg(pMsgRcv);
         return -EPIPE;
     }
@@ -399,8 +401,8 @@ STATIC int HdcSendRecvPkt(unsigned int phyId, void *sendRcvBuf, unsigned int inB
     }
 
     // check last recv status
-    if (gRaHdc[phyId].lastRecvStatus == DRV_ERROR_WAIT_TIMEOUT) {
-        ret = DRV_ERROR_WAIT_TIMEOUT;
+    if (gRaHdc[phyId].lastRecvStatus == -DRV_ERROR_WAIT_TIMEOUT) {
+        ret = -DRV_ERROR_WAIT_TIMEOUT;
         goto alloc_msg_err;
     }
 
@@ -415,9 +417,9 @@ STATIC int HdcSendRecvPkt(unsigned int phyId, void *sendRcvBuf, unsigned int inB
         goto msg_err;
     }
     ret = HdcSendRecvPktRecv(session, phyId, pMsgRcv, &recvBuf, &rcvBufLen);
-    if (ret == DRV_ERROR_WAIT_TIMEOUT) {
+    if (ret == -DRV_ERROR_WAIT_TIMEOUT) {
         hccp_err("[send_recv][pkt]HDC broken, pkt recv err ret(%d) phyId(%u)", ret, phyId);
-        gRaHdc[phyId].lastRecvStatus = DRV_ERROR_WAIT_TIMEOUT;
+        gRaHdc[phyId].lastRecvStatus = ret;
         goto msg_err;
     }
     if (ret) {
@@ -445,8 +447,8 @@ alloc_msg_err:
     return ret;
 }
 
-void MsgHeadBuildUp(struct MsgHead *pSendRcvHead, unsigned int opcode, unsigned int reqId,
-    unsigned int msgDataLen, pid_t hostTgid)
+void MsgHeadBuildUp(struct MsgHead *pSendRcvHead, unsigned int opcode, unsigned int reqId, unsigned int msgDataLen,
+    pid_t hostTgid)
 {
     pSendRcvHead->opcode = opcode;
     pSendRcvHead->ret = 0;
@@ -485,8 +487,8 @@ int RaHdcProcessMsg(unsigned int opcode, unsigned int phyId, char *data, unsigne
     sendRcvLen = sizeof(struct MsgHead) + dataSize;
     CHK_PRT_RETURN(data == NULL, hccp_err("[process][ra_hdc_msg]data is NULL. phyId(%u)", phyId), -EINVAL);
     sendRcvBuf = (void *)calloc(sendRcvLen, sizeof(char));
-    CHK_PRT_RETURN(sendRcvBuf == NULL, hccp_err("[process][ra_hdc_msg]send_rcv_buf calloc failed. phyId(%u)",
-        phyId), -ENOMEM);
+    CHK_PRT_RETURN(sendRcvBuf == NULL, hccp_err("[process][ra_hdc_msg]send_rcv_buf calloc failed. phyId(%u)", phyId),
+        -ENOMEM);
     MsgHeadBuildUp(sendRcvBuf, opcode, 0, dataSize, hostTgid);
     ret = memcpy_s(sendRcvBuf + sizeof(struct MsgHead), sendRcvLen - sizeof(struct MsgHead), data, dataSize);
     if (ret) {
@@ -505,11 +507,11 @@ int RaHdcProcessMsg(unsigned int opcode, unsigned int phyId, char *data, unsigne
     // opcode RA_RS_SOCKET_RECV not to print EAGAIN to avoid log flush
     if ((ret != 0) && (ret != -EAGAIN || opcode != RA_RS_SOCKET_RECV)) {
         /* maybe has retry return value, record warning log */
-        hccp_warn("message head check unsuccessful, ret[%d] phyId[%u]", ret, phyId);
+        hccp_warn_socket("message head check unsuccessful, ret[%d] phyId[%u]", ret, phyId);
     }
 
     if (memcpy_s(data, dataSize, sendRcvBuf + sizeof(struct MsgHead), dataSize)) {
-        hccp_err("[process][ra_hdc_msg]memcpy_s failed. dest size(%d) ret(%d)  phyId(%u)", dataSize, ret, phyId);
+        hccp_err("[process][ra_hdc_msg]memcpy_s failed. dest size(%d) ret(%d) phyId(%u)", dataSize, ret, phyId);
         ret = -ESAFEFUNC;
     }
 out:
@@ -596,10 +598,9 @@ int HdcAsyncRecvPkt(struct HdcAsyncInfo *asyncInfo, unsigned int phyId, void *re
         goto session_err;
     }
 
-    ret = RA_HDC_OPS.recv(session, pMsgRcv, MAX_HDC_DATA, RA_HDC_WAIT_TIMEOUT, &recvBufCnt,
-        RA_HDC_RECV_SEND_TIMEOUT);
+    ret = RA_HDC_OPS.recv(session, pMsgRcv, MAX_HDC_DATA, RA_HDC_WAIT_TIMEOUT, &recvBufCnt, RA_HDC_RECV_SEND_TIMEOUT);
     // occur hdc time out when async session was closed before async request done
-    if (ret == DRV_ERROR_WAIT_TIMEOUT) {
+    if (ret == -DRV_ERROR_WAIT_TIMEOUT) {
         hccp_run_warn("[async][recv_pkt]HDC recv timeout, phyId(%u)", phyId);
         goto msg_err;
     }
@@ -639,8 +640,9 @@ int RaHdcGetInterfaceVersion(unsigned int phyId, unsigned int interfaceOpcode, u
     int i;
 
     CHK_PRT_RETURN(interfaceVersion == NULL || phyId >= RA_MAX_PHY_ID_NUM,
-        hccp_err("[get][ra_interface_version]para invalid! interface_version is NULL or phyId(%u) >= [%u]",
-        phyId, RA_MAX_PHY_ID_NUM), -EINVAL);
+        hccp_err("[get][ra_interface_version]para invalid! interface_version is NULL or phyId(%u) >= [%u]", phyId,
+            RA_MAX_PHY_ID_NUM),
+        -EINVAL);
 
     *interfaceVersion = 0;
     for (i = 0; i < num; i++) {
@@ -652,35 +654,78 @@ int RaHdcGetInterfaceVersion(unsigned int phyId, unsigned int interfaceOpcode, u
     return 0;
 }
 
-STATIC int RaHdcGetOpcodeVersion(unsigned int phyId, unsigned int interfaceOpcode,
-    unsigned int *interfaceVersion)
+STATIC int RaHdcGetOpcodeVersion(unsigned int phyId, unsigned int interfaceOpcode, unsigned int *interfaceVersion)
 {
     union OpGetVersionData versionInfo = {0};
     int ret;
 
     versionInfo.txData.opcode = interfaceOpcode;
 
-    ret = RaHdcProcessMsg(RA_RS_GET_INTERFACE_VERSION, phyId, (char *)&versionInfo,
-        sizeof(union OpGetVersionData));
-    CHK_PRT_RETURN(ret, hccp_err("[get][ra_hdc_interface_version]ra hdc message process failed ret(%d) phyId(%u)",
-        ret, phyId), ret);
+    ret = RaHdcProcessMsg(RA_RS_GET_INTERFACE_VERSION, phyId, (char *)&versionInfo, sizeof(union OpGetVersionData));
+    CHK_PRT_RETURN(ret,
+        hccp_err("[get][ra_hdc_interface_version]ra hdc message process failed ret(%d) phyId(%u)", ret, phyId), ret);
 
     *interfaceVersion = versionInfo.rxData.version;
     return 0;
 }
 
+STATIC int RaHdcBatchGetOpcodeVersion(unsigned int phyId, unsigned int num)
+{
+    union OpBatchGetVersionData versionInfo = {0};
+    unsigned int batchVersion = 0;
+    unsigned int txOpcodeNum;
+    unsigned int i;
+    int ret;
+
+    CHK_PRT_RETURN(num > MAX_BATCH_OPCODE_NUM,
+        hccp_warn_init("[get][ra_hdc_all_opcode_version]num(%u) exceeds MAX_BATCH_OPCODE_NUM(%u), fallback phyId(%u)",
+            num, MAX_BATCH_OPCODE_NUM, phyId),
+        -EPROTONOSUPPORT);
+
+    ret = RaHdcGetOpcodeVersion(phyId, RA_RS_BATCH_GET_INTERFACE_VERSION, &batchVersion);
+    CHK_PRT_RETURN(ret != 0 || batchVersion < RA_RS_OPCODE_BASE_VERSION,
+        hccp_warn_init("[get][ra_hdc_all_opcode_version]batch not support, ret(%d) batchVersion(%u) phyId(%u)", ret,
+            batchVersion, phyId),
+        -EPROTONOSUPPORT);
+
+    versionInfo.txData.opcodeNum = num;
+    txOpcodeNum = versionInfo.txData.opcodeNum;
+    for (i = 0; i < versionInfo.txData.opcodeNum; i++) {
+        versionInfo.txData.opcode[i] = gRaInterfaceInfoList[i].opcode;
+    }
+
+    ret = RaHdcProcessMsg(RA_RS_BATCH_GET_INTERFACE_VERSION, phyId, (char *)&versionInfo,
+        sizeof(union OpBatchGetVersionData));
+    CHK_PRT_RETURN(ret != 0,
+        hccp_warn_init("[get][ra_hdc_all_opcode_version]batch unsuccessful, fallback ret(%d) phyId(%u)", ret, phyId),
+        ret);
+
+    CHK_PRT_RETURN(versionInfo.rxData.opcodeNum != txOpcodeNum,
+        hccp_warn_init("[get][ra_hdc_all_opcode_version]opcodeNum mismatch, rxNum(%u) txNum(%u) phyId(%u)",
+            versionInfo.rxData.opcodeNum, txOpcodeNum, phyId),
+        -EPIPE);
+
+    for (i = 0; i < versionInfo.rxData.opcodeNum; i++) {
+        gRaInterfaceInfoList[i].version = versionInfo.rxData.version[i];
+    }
+    return 0;
+}
+
 void RaHdcGetAllOpcodeVersion(unsigned int phyId)
 {
-    int num = sizeof(gRaInterfaceInfoList) / sizeof(gRaInterfaceInfoList[0]);
+    unsigned int num = sizeof(gRaInterfaceInfoList) / sizeof(gRaInterfaceInfoList[0]);
+    unsigned int i;
     int ret;
-    int i;
+
+    if (RaHdcBatchGetOpcodeVersion(phyId, num) == 0) {
+        return;
+    }
 
     for (i = 0; i < num; i++) {
-        ret = RaHdcGetOpcodeVersion(phyId, gRaInterfaceInfoList[i].opcode,
-            &gRaInterfaceInfoList[i].version);
+        ret = RaHdcGetOpcodeVersion(phyId, gRaInterfaceInfoList[i].opcode, &gRaInterfaceInfoList[i].version);
         if (ret != 0) {
-            hccp_warn("ra_hdc_get_opcode_version unsuccessful, ret[%d], opcode[%d]",
-                ret, gRaInterfaceInfoList[i].opcode);
+            hccp_warn_init("ra_hdc_get_opcode_version unsuccessful, ret[%d], opcode[%u]", ret,
+                gRaInterfaceInfoList[i].opcode);
             continue;
         }
     }
@@ -717,10 +762,8 @@ STATIC int RaHdcSendPid(unsigned int phyId, struct ProcessRaSign pRaSign)
     ret = strcpy_s(setPidData.txData.pidSign, PROCESS_RA_SIGN_LENGTH, pRaSign.sign);
     CHK_PRT_RETURN(ret, hccp_err("[send][ra_hdc_pid]Invalid pid sign, ret(%d)", ret), -ESAFEFUNC);
 
-    ret = RaHdcProcessMsg(RA_RS_SET_PID, phyId,
-        (char *)&setPidData, sizeof(union OpSetPidData));
-    CHK_PRT_RETURN(ret, hccp_err("[send][ra_hdc_pid]ra hdc message process failed ret(%d) phyId(%u)",
-        ret, phyId), ret);
+    ret = RaHdcProcessMsg(RA_RS_SET_PID, phyId, (char *)&setPidData, sizeof(union OpSetPidData));
+    CHK_PRT_RETURN(ret, hccp_err("[send][ra_hdc_pid]ra hdc message process failed ret(%d) phyId(%u)", ret, phyId), ret);
 
     return 0;
 }
@@ -732,8 +775,8 @@ STATIC int RaHdcInitApart(unsigned int phyId, unsigned int *logicId)
     CHK_PRT_RETURN(ret, hccp_err("[init][ra_hdc_apart]get logic id failed(%d), phyId(%u)", ret, phyId), -ENODEV);
 
     ret = pthread_mutex_init(&gRaHdc[phyId].lock, NULL);
-    CHK_PRT_RETURN(ret, hccp_err("[init][ra_hdc_apart]pthread_mutex_init failed, ret(%d) phyId(%u)",
-        ret, phyId), -ESYSFUNC);
+    CHK_PRT_RETURN(ret, hccp_err("[init][ra_hdc_apart]pthread_mutex_init failed, ret(%d) phyId(%u)", ret, phyId),
+        -ESYSFUNC);
     return 0;
 }
 
@@ -748,8 +791,8 @@ STATIC int RaHdcInitSessionConnectEx(int peerNode, int peerDevid, unsigned int p
     info.proc_type = DEVDRV_PROCESS_HCCP;
     ret = DlHalQueryDevPid(info, &devPid);
     if (ret != 0) {
-        hccp_err("[init][ra_hdc]hdc dl_hal_query_dev_pid failed ret(%d) peer_devid(%d) phyId(%u)",
-            ret, peerDevid, phyId);
+        hccp_err("[init][ra_hdc]hdc dl_hal_query_dev_pid failed ret(%d) peer_devid(%d) phyId(%u)", ret, peerDevid,
+            phyId);
         return ret;
     }
 
@@ -806,8 +849,7 @@ int RaHdcInit(struct RaInitConfig *cfg, struct ProcessRaSign pRaSign)
         }
         ret = RaHdcInitSession(0, (int)logicId, phyId, hdcType, &gRaHdc[phyId].session);
         if (ret != 0) {
-            hccp_err("[init][ra_hdc]hdc session_connect failed ret(%d) logic_id(%u) phyId(%u)",
-                ret, logicId, phyId);
+            hccp_err("[init][ra_hdc]hdc session_connect failed ret(%d) logic_id(%u) phyId(%u)", ret, logicId, phyId);
             goto CONN_ERR;
         }
         ret = RA_HDC_OPS.setSessionReference(gRaHdc[phyId].session);
@@ -816,7 +858,7 @@ int RaHdcInit(struct RaInitConfig *cfg, struct ProcessRaSign pRaSign)
             goto SESS_ERR;
         }
     } else {
-        hccp_warn("hdc session for phyId[%u] already existed", phyId);
+        hccp_warn_socket("hdc session for phyId[%u] already existed", phyId);
         return -EEXIST;
     }
 
@@ -853,8 +895,8 @@ int RaHdcGetTlsEnable(unsigned int phyId, bool *tlsEnable)
 
     opData.txData.phyId = phyId;
     ret = RaHdcProcessMsg(RA_RS_GET_TLS_ENABLE, phyId, (char *)&opData, sizeof(union OpGetTlsEnableData));
-    CHK_PRT_RETURN(ret != 0, hccp_err("[get][tls_enable]ra hdc message process failed ret(%d) phyId(%u)",
-        ret, phyId), ret);
+    CHK_PRT_RETURN(ret != 0, hccp_err("[get][tls_enable]ra hdc message process failed ret(%d) phyId(%u)", ret, phyId),
+        ret);
 
     *tlsEnable = opData.rxData.tlsEnable;
     return ret;
@@ -867,10 +909,9 @@ STATIC int RaHdcSessionClose(unsigned int phyId)
 
     hdcCloseData.txData.phyId = phyId;
 
-    ret = RaHdcProcessMsg(RA_RS_HDC_SESSION_CLOSE, phyId, (char *)&hdcCloseData,
-        sizeof(union OpHdcCloseData));
-    CHK_PRT_RETURN(ret, hccp_err("[close][ra_hdc_session]ra hdc message process failed ret(%d) phyId(%u)",
-        ret, phyId), ret);
+    ret = RaHdcProcessMsg(RA_RS_HDC_SESSION_CLOSE, phyId, (char *)&hdcCloseData, sizeof(union OpHdcCloseData));
+    CHK_PRT_RETURN(ret, hccp_err("[close][ra_hdc_session]ra hdc message process failed ret(%d) phyId(%u)", ret, phyId),
+        ret);
 
     return 0;
 }
@@ -926,8 +967,7 @@ int RaHdcDeinit(struct RaInitConfig *cfg)
     return 0;
 }
 
-STATIC int RaHdcGetValidCqeErrInfo(
-    struct CqeErrInfo *outInfo, struct CqeErrInfo info0, struct CqeErrInfo info1)
+STATIC int RaHdcGetValidCqeErrInfo(struct CqeErrInfo *outInfo, struct CqeErrInfo info0, struct CqeErrInfo info1)
 {
     int ret;
 
@@ -956,7 +996,7 @@ STATIC int RaHdcGetValidCqeErrInfo(
 int RaHdcGetCqeErrInfo(unsigned int phyId, struct CqeErrInfo *info)
 {
     int ret;
-    struct CqeErrInfo opCqeInfo = { 0 };
+    struct CqeErrInfo opCqeInfo = {0};
     union OpGetCqeErrInfoData cqeErrInfoData;
 
     RaHdcLiteGetCqeErrInfo(phyId, &opCqeInfo);
@@ -971,8 +1011,7 @@ int RaHdcGetCqeErrInfo(unsigned int phyId, struct CqeErrInfo *info)
 
     ret = memset_s(&cqeErrInfoData, sizeof(cqeErrInfoData), 0, sizeof(cqeErrInfoData));
     CHK_PRT_RETURN(ret, hccp_err("[init]memset_s failed ret(%d)", ret), -ESAFEFUNC);
-    ret = RaHdcProcessMsg(RA_RS_GET_CQE_ERR_INFO, phyId,
-        (char *)&cqeErrInfoData, sizeof(union OpGetCqeErrInfoData));
+    ret = RaHdcProcessMsg(RA_RS_GET_CQE_ERR_INFO, phyId, (char *)&cqeErrInfoData, sizeof(union OpGetCqeErrInfoData));
     CHK_PRT_RETURN(ret, hccp_err("ra hdc message process failed ret(%d)", ret), ret);
 
     return RaHdcGetValidCqeErrInfo(info, opCqeInfo, cqeErrInfoData.rxData.info);
@@ -1034,8 +1073,8 @@ int RaHdcGetSecRandom(unsigned int phyId, unsigned int *value)
     int ret;
 
     ret = RaHdcProcessMsg(RA_RS_GET_SEC_RANDOM, phyId, (char *)&opData, sizeof(union OpGetSecRandomData));
-    CHK_PRT_RETURN(ret != 0, hccp_err("[get][sec_random]ra hdc message process failed ret(%d) phyId(%u)",
-        ret, phyId), ret);
+    CHK_PRT_RETURN(ret != 0, hccp_err("[get][sec_random]ra hdc message process failed ret(%d) phyId(%u)", ret, phyId),
+        ret);
 
     *value = opData.rxData.value;
     return ret;
@@ -1049,13 +1088,33 @@ int RaHdcGetHccnCfg(unsigned int phyId, enum HccnCfgKey key, char *value, unsign
     opData.txData.phyId = phyId;
     opData.txData.key = key;
     ret = RaHdcProcessMsg(RA_RS_GET_HCCN_CFG, phyId, (char *)&opData, sizeof(union OpGetHccnCfgData));
-    CHK_PRT_RETURN(ret != 0, hccp_err("[get][hccn_cfg]ra hdc message process failed ret(%d) phyId(%u)",
-        ret, phyId), ret);
+    CHK_PRT_RETURN(ret != 0, hccp_err("[get][hccn_cfg]ra hdc message process failed ret(%d) phyId(%u)", ret, phyId),
+        ret);
 
     ret = memcpy_s(value, *valueLen, opData.rxData.value, opData.rxData.valueLen);
-    CHK_PRT_RETURN(ret != 0, hccp_err("[get][hccn_cfg]ra hdc message process failed ret(%d) phyId(%u)",
-        ret, phyId), ret);
+    CHK_PRT_RETURN(ret != 0, hccp_err("[get][hccn_cfg]ra hdc message process failed ret(%d) phyId(%u)", ret, phyId),
+        ret);
 
     *valueLen = opData.rxData.valueLen;
+    return ret;
+}
+
+int RaHdcSetDebugConfig(unsigned int phyId, u64 debugConfig)
+{
+    union OpSetDebugConfigData opData = {0};
+    unsigned int interfaceVersion = 0;
+    int ret;
+
+    HccpSetDebugConfig(debugConfig);
+    ret = RaHdcGetInterfaceVersion(phyId, RA_RS_SET_DEBUG_CONFIG, &interfaceVersion);
+    CHK_PRT_RETURN(ret != 0 || interfaceVersion < RA_RS_OPCODE_BASE_VERSION,
+        hccp_run_warn("[set][debug_config]not support to set debug config, ret(%d), interfaceVersion(%u), phyId(%u)",
+            ret, interfaceVersion, phyId),
+        -EPROTONOSUPPORT);
+
+    opData.txData.debugConfig = debugConfig;
+    ret = RaHdcProcessMsg(RA_RS_SET_DEBUG_CONFIG, phyId, (char *)&opData, sizeof(union OpSetDebugConfigData));
+    CHK_PRT_RETURN(ret != 0, hccp_err("[set][debug_config]ra hdc message process failed ret(%d) phyId(%u)", ret, phyId),
+        ret);
     return ret;
 }

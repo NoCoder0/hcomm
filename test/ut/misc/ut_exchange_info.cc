@@ -26,23 +26,18 @@
 #include "llt_hccl_stub_sal_pub.h"
 #include "calc_crc.h"
 #include "hccl_res_expt.h"
+#include "adapter_rts_common.h"
+#include "env_config/env_config_v2.h"
 #include <hccl/hccl_comm.h>
 #include "llt_hccl_stub_rank_graph.h"
 
 using namespace std;
 using namespace hccl;
 
-class ExchangeInfoTest : public testing::Test
-{
+class ExchangeInfoTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "ExchangeInfoTest SetUp" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "ExchangeInfoTest TearDown" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "ExchangeInfoTest SetUp" << std::endl; }
+    static void TearDownTestCase() { std::cout << "ExchangeInfoTest TearDown" << std::endl; }
     virtual void SetUp()
     {
         setenv("HCCL_DFS_CONFIG", "task_exception:on", 1);
@@ -79,7 +74,7 @@ HcclResult InitCollComm(std::shared_ptr<hccl::hcclComm> hcclCommPtr)
     return hcclCommPtr->InitCollComm(commV2, rankGraphV2.get(), rank, cclBuffer, commName, &config);
 }
 
-void AssertCollCommReady(const std::shared_ptr<hccl::hcclComm> &hcclCommPtr)
+void AssertCollCommReady(const std::shared_ptr<hccl::hcclComm>& hcclCommPtr)
 {
     ASSERT_EQ(InitCollComm(hcclCommPtr), HCCL_SUCCESS);
     ASSERT_NE(hcclCommPtr->GetCollComm(), nullptr);
@@ -103,8 +98,11 @@ TEST_F(ExchangeInfoTest, Ut_CApiGetExchangeInfo_When_ParamValid_Expect_Success)
     hccl::CollComm* collComm = hcclCommPtr_->GetCollComm();
     hccl::MyRank* myRank = collComm->GetMyRank();
     ASSERT_NE(myRank, nullptr);
-    CollCommConfigConsistency &collCommConfigConsistency = myRank->GetCollCommConfigConsistency();
-    collCommConfigConsistency.StoreRemoteExchangeInfo(0, remoteData);
+    CollCommConfigConsistency& collCommConfigConsistency = myRank->GetCollCommConfigConsistency();
+    // 对端数据长度需与本端一致，先添加等长本端数据
+    std::vector<u8> localData(size, 0);
+    ASSERT_EQ(collCommConfigConsistency.AddExchangeInfo(localData.data(), localData.size()), HCCL_SUCCESS);
+    EXPECT_EQ(collCommConfigConsistency.StoreRemoteExchangeInfo(0, remoteData), HCCL_SUCCESS);
 
     HcclComm comm = static_cast<HcclComm>(hcclCommPtr_.get());
     std::vector<u8> recvBuf(size, 0);
@@ -112,6 +110,7 @@ TEST_F(ExchangeInfoTest, Ut_CApiGetExchangeInfo_When_ParamValid_Expect_Success)
     uint32_t actualLen = 0;
     HcclResult ret = HcclCommGetExchangeInfo(comm, 0, recvBufSize, recvBuf.data(), &actualLen);
     EXPECT_EQ(ret, HCCL_SUCCESS);
+    EXPECT_EQ(actualLen, size);
 }
 
 TEST_F(ExchangeInfoTest, Ut_CApiResetExchangeInfo_When_ParamValid_Expect_Success)
@@ -131,7 +130,7 @@ TEST_F(ExchangeInfoTest, Ut_EndToEnd_When_AddStoreGet_Expect_Consistent)
     hccl::CollComm* collComm = hcclCommPtr_->GetCollComm();
     hccl::MyRank* myRank = collComm->GetMyRank();
     ASSERT_NE(myRank, nullptr);
-    CollCommConfigConsistency &collCommConfigConsistency = myRank->GetCollCommConfigConsistency();
+    CollCommConfigConsistency& collCommConfigConsistency = myRank->GetCollCommConfigConsistency();
     HcclResult ret = collCommConfigConsistency.AddExchangeInfo(localData.data(), localData.size());
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
@@ -154,3 +153,18 @@ TEST_F(ExchangeInfoTest, Ut_EndToEnd_When_AddStoreGet_Expect_Consistent)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
 
+// AddExchangeInfo: rankConsistentState 为 off(-1) 时返回 NOT_SUPPORT
+TEST_F(ExchangeInfoTest, Ut_CApiAddExchangeInfo_When_RankConsistentStateOff_Expect_NotSupport)
+{
+    AssertCollCommReady(hcclCommPtr_);
+    setenv("HCCL_DFS_CONFIG", "inconsistent_check:off", 1);
+    Hccl::EnvConfig::GetInstance().Parse();
+
+    std::vector<u8> data = {0x01};
+    HcclComm comm = static_cast<HcclComm>(hcclCommPtr_.get());
+    EXPECT_EQ(HcclCommAddExchangeInfo(comm, data.data(), data.size()), HCCL_E_NOT_SUPPORT);
+
+    // 恢复环境，避免影响后续用例
+    setenv("HCCL_DFS_CONFIG", "task_exception:on", 1);
+    Hccl::EnvConfig::GetInstance().Parse();
+}

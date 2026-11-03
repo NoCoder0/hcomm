@@ -4,7 +4,7 @@
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -26,20 +26,15 @@ namespace checker {
 
 class AllGatherCCU2DTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AllGather CCU 2D test set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AllGather CCU 2D test set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AllGather CCU 2D test tear down" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AllGather CCU 2D test tear down" << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -55,7 +50,7 @@ protected:
 TEST_F(AllGatherCCU2DTest, allgather_ccu_case_test_2_mul_2_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,8,9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -77,7 +72,7 @@ TEST_F(AllGatherCCU2DTest, allgather_ccu_case_test_2_mul_2_rank)
 TEST_F(AllGatherCCU2DTest, allgather_ccu_case_test_3_mul_3_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,8,9,10,16,17,18}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -99,7 +94,7 @@ TEST_F(AllGatherCCU2DTest, allgather_ccu_case_test_3_mul_3_rank)
 TEST_F(AllGatherCCU2DTest, allgather_ccu_case_test_4_mul_3_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,8,9,10,11,16,17,18,19}}};
+    TopoMeta topoMeta{{{0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -121,7 +116,7 @@ TEST_F(AllGatherCCU2DTest, allgather_ccu_case_test_4_mul_3_rank)
 TEST_F(AllGatherCCU2DTest, allgather_ccu_case_test_4_mul_3_rank_512k_count)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,8,9,10,11,16,17,18,19}}};
+    TopoMeta topoMeta{{{0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -143,7 +138,7 @@ TEST_F(AllGatherCCU2DTest, allgather_ccu_case_test_4_mul_3_rank_512k_count)
 TEST_F(AllGatherCCU2DTest, allgather_ccu_case_test_4_mul_3_rank_offload)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,8,9,10,11,16,17,18,19}}};
+    TopoMeta topoMeta{{{0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -165,7 +160,7 @@ TEST_F(AllGatherCCU2DTest, allgather_ccu_case_test_4_mul_3_rank_offload)
 TEST_F(AllGatherCCU2DTest, allgather_ccu_case_test_4_mul_3_rank_offload_512k_count)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,8,9,10,11,16,17,18,19}}};
+    TopoMeta topoMeta{{{0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -184,11 +179,10 @@ TEST_F(AllGatherCCU2DTest, allgather_ccu_case_test_4_mul_3_rank_offload_512k_cou
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 }
 
-
 TEST_F(AllGatherCCU2DTest, allgather_multimission)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,8,9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -210,7 +204,7 @@ TEST_F(AllGatherCCU2DTest, allgather_multimission)
 TEST_F(AllGatherCCU2DTest, allgather_multimission_3)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,8,9,10,16,17,18}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -232,7 +226,7 @@ TEST_F(AllGatherCCU2DTest, allgather_multimission_3)
 TEST_F(AllGatherCCU2DTest, allgather_ccu_mem2mem_2_mul_2_rank_even_count)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,8,9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -254,9 +248,7 @@ TEST_F(AllGatherCCU2DTest, allgather_ccu_mem2mem_2_mul_2_rank_even_count)
 TEST_F(AllGatherCCU2DTest, allgather_ccu_mem2mem_3_mul_3_rank_odd_count_hccl_buff)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,
-        8,9,10,
-        16,17,18}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -285,9 +277,7 @@ TEST_F(AllGatherCCU2DTest, allgather_ccu_mem2mem_3_mul_3_rank_odd_count_hccl_buf
 TEST_F(AllGatherCCU2DTest, allgather_ccu_mem2mem_3_mul_3_rank_odd_count_scratch)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,
-        8,9,10,
-        16,17,18}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -312,14 +302,11 @@ TEST_F(AllGatherCCU2DTest, allgather_ccu_mem2mem_3_mul_3_rank_odd_count_scratch)
 TEST_F(AllGatherCCU2DTest, allgather_ccu_mem2mem_3_mul_4_rank_ub)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,
-        8,9,10,
-        16,17,18,
-        24,25,26}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18, 24, 25, 26}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
-    constexpr u64 HCCL_BUFSIZE = 1024;  // > UB_MAX_TRANS_SIZE, 256MB
+    constexpr u64 HCCL_BUFSIZE = 1024; // > UB_MAX_TRANS_SIZE, 256MB
     std::string envHcclBuffSize = "HCCL_BUFFSIZE";
     setenv(envHcclBuffSize.c_str(), std::to_string(HCCL_BUFSIZE).c_str(), 1);
 
@@ -343,9 +330,7 @@ TEST_F(AllGatherCCU2DTest, allgather_ccu_mem2mem_3_mul_4_rank_ub)
 TEST_F(AllGatherCCU2DTest, allgather_ccu_mem2mem_3_mul_3_rank_int8_count1)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,
-        8,9,10,
-        16,17,18}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -374,9 +359,7 @@ TEST_F(AllGatherCCU2DTest, allgather_ccu_mem2mem_3_mul_3_rank_int8_count1)
 TEST_F(AllGatherCCU2DTest, allgather_ccu_mem2mem_3_mul_3_rank_int8_count2)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,
-        8,9,10,
-        16,17,18}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -405,7 +388,7 @@ TEST_F(AllGatherCCU2DTest, allgather_ccu_mem2mem_3_mul_3_rank_int8_count2)
 TEST_F(AllGatherCCU2DTest, allgather_ccu_mem2mem_case_test_4_mul_3_rank_offload)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,8,9,10,11,16,17,18,19}}};
+    TopoMeta topoMeta{{{0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -424,5 +407,4 @@ TEST_F(AllGatherCCU2DTest, allgather_ccu_mem2mem_case_test_4_mul_3_rank_offload)
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 }
 
-
-}
+} // namespace checker

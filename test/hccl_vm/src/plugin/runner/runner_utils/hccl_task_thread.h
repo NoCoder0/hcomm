@@ -18,12 +18,11 @@
 #include "sim_common_defs.h"
 
 namespace VirtualRunTime {
-HcclSim::HcclVmResult TaskMemcpy(const HcclTaskMetaData &task);
-HcclSim::HcclVmResult TaskReduce(const HcclTaskMetaData &task);
-HcclSim::HcclVmResult TaskNotifyRecord(const HcclTaskMetaData &task);
-HcclSim::HcclVmResult TaskNotifyWait(const HcclTaskMetaData &task);
-HcclSim::HcclVmResult TaskCcuGraph(const HcclTaskMetaData &task);
-HcclSim::HcclVmResult TaskAivGraph(const HcclTaskMetaData &task);
-}
+HcclSim::HcclVmResult TaskMemcpy(const HcclTaskMetaData& task);
+HcclSim::HcclVmResult TaskReduce(const HcclTaskMetaData& task);
+HcclSim::HcclVmResult TaskNotifyRecord(const HcclTaskMetaData& task);
+HcclSim::HcclVmResult TaskNotifyWait(const HcclTaskMetaData& task);
+HcclSim::HcclVmResult TaskCcuGraph(const HcclTaskMetaData& task);
+} // namespace VirtualRunTime
 
 #endif

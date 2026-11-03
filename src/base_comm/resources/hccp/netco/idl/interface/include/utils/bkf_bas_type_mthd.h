@@ -133,7 +133,6 @@ char *Bkfuint16_tGetStr(const uint16_t *input, uint8_t *buf, int32_t bufLen);
  */
 uint32_t BkfXShortCodec(uint16_t *inOut);
 
-
 /**
  * @brief INT32数值比较
  *
@@ -348,4 +347,3 @@ uint32_t BkfIpAddrCodec(uint32_t *ipAddrInOut);
 #endif
 
 #endif
-

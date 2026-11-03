@@ -1,14 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
-
-
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include <assert.h> /* for assert  */
 #include <errno.h>
@@ -18,8 +16,8 @@
 #include <sys/time.h> /* 获取时间 */
 #include <unistd.h>
 #include <sys/mman.h>
-#include <sys/stat.h>    /* For mode constants */
-#include <fcntl.h>       /* For O_* constants */
+#include <sys/stat.h> /* For mode constants */
+#include <fcntl.h>    /* For O_* constants */
 #include <math.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -35,12 +33,13 @@ using namespace std;
 sal_manage_class sal_manage;
 
 /* 检查SAL是否已经初始化完成，若没有则返回错误 */
-#define SAL_ERR_RET_IF_SAL_IS_NOT_ACTIVED(ret) do { \
-    if (sal_manage.sal_active_get() != SAL_TRUE) {        \
-        HCCL_ERROR("sal is not available before activated"); \
-        return ret;                                       \
-    }                                                     \
-} while (0)
+#define SAL_ERR_RET_IF_SAL_IS_NOT_ACTIVED(ret)                   \
+    do {                                                         \
+        if (sal_manage.sal_active_get() != SAL_TRUE) {           \
+            HCCL_ERROR("sal is not available before activated"); \
+            return ret;                                          \
+        }                                                        \
+    } while (0)
 
 #define SAL_LOCK() (sal_manage.sal_manage_lock.lock())
 #define SAL_UNLOCK() (sal_manage.sal_manage_lock.unlock())
@@ -51,16 +50,17 @@ sal_manage_class sal_manage;
 #include <securec.h>
 
 /* 华为安全函数返回值转换 */
-#define HUAWEI_SECC_RET_CHECK_AND_RETURN(ret) do { \
-    switch (ret) {                        \
-        case EOK:                         \
-            return HCCL_SUCCESS;          \
-        case EINVAL:                      \
-            return HCCL_E_PARA;           \
-        default:                          \
-            return HCCL_E_INTERNAL;       \
-    }                                     \
-} while (0)
+#define HUAWEI_SECC_RET_CHECK_AND_RETURN(ret) \
+    do {                                      \
+        switch (ret) {                        \
+            case EOK:                         \
+                return HCCL_SUCCESS;          \
+            case EINVAL:                      \
+                return HCCL_E_PARA;           \
+            default:                          \
+                return HCCL_E_INTERNAL;       \
+        }                                     \
+    } while (0)
 #define HUAWEI_SECC_RET_TRANSFORM(ret) ((ret == EOK) ? HCCL_SUCCESS : ((ret == EINVAL) ? HCCL_E_PARA : HCCL_E_INTERNAL))
 #endif
 
@@ -80,7 +80,7 @@ sal_manage_class sal_manage;
  *    修改内容   : 新生成函数
  *
  */
-HcclResult sal_compute_timeout(struct timespec *ts, s32 usec)
+HcclResult sal_compute_timeout(struct timespec* ts, s32 usec)
 {
     s32 sec;
     u32 nsecs;
@@ -114,45 +114,48 @@ HcclResult sal_compute_timeout(struct timespec *ts, s32 usec)
     /* indicate that we successfully got the time */
     return HCCL_SUCCESS;
 }
-s32 sal_vsnprintf(char *strDest, size_t destMaxSize, size_t count, const char *format, va_list argList)
+s32 sal_vsnprintf(char* strDest, size_t destMaxSize, size_t count, const char* format, va_list argList)
 {
     /* 返回值不是错误码,无需转换 */
     CHK_PTR_NULL(strDest);
     CHK_PTR_NULL(format);
     return vsnprintf_s(strDest, destMaxSize, count, format, argList);
 }
-HcclResult sal_memset(void *dest, size_t destMaxSize, int c, size_t count)
+HcclResult sal_memset(void* dest, size_t destMaxSize, int c, size_t count)
 {
     CHK_PTR_NULL(dest);
     s32 ret = memset_s(dest, destMaxSize, c, count);
     if (ret != EOK) {
-        HCCL_ERROR("errNo[0x%016llx] In sal_memset, memset_s failed. errorno[%d], params: dest[%p], "\
-            "destMaxSize[%d], c[%d], count[%d]", HCCL_ERROR_CODE(HUAWEI_SECC_RET_TRANSFORM(ret)), ret, dest, \
-            destMaxSize, c, count);
+        HCCL_ERROR(
+            "errNo[0x%016llx] In sal_memset, memset_s failed. errorno[%d], params: dest[%p], "
+            "destMaxSize[%d], c[%d], count[%d]",
+            HCCL_ERROR_CODE(HUAWEI_SECC_RET_TRANSFORM(ret)), ret, dest, destMaxSize, c, count);
     }
     HUAWEI_SECC_RET_CHECK_AND_RETURN(ret);
 }
-HcclResult sal_strncpy(char *strDest, size_t destMaxSize, const char *strSrc, size_t count)
+HcclResult sal_strncpy(char* strDest, size_t destMaxSize, const char* strSrc, size_t count)
 {
     CHK_PTR_NULL(strDest);
     CHK_PTR_NULL(strSrc);
     s32 ret = strncpy_s(strDest, destMaxSize, strSrc, count);
     if (ret != EOK) {
-        HCCL_ERROR("errNo[0x%016llx] In sal_strncpy, strncpy_s failed. errorno[%d], params: strDest[%p], "\
-            "destMaxSize[%d], strSrc[%p], count[%d]", HCCL_ERROR_CODE(HUAWEI_SECC_RET_TRANSFORM(ret)),
-            ret, strDest, destMaxSize, strSrc, count);
+        HCCL_ERROR(
+            "errNo[0x%016llx] In sal_strncpy, strncpy_s failed. errorno[%d], params: strDest[%p], "
+            "destMaxSize[%d], strSrc[%p], count[%d]",
+            HCCL_ERROR_CODE(HUAWEI_SECC_RET_TRANSFORM(ret)), ret, strDest, destMaxSize, strSrc, count);
     }
     HUAWEI_SECC_RET_CHECK_AND_RETURN(ret);
 }
-HcclResult sal_memcpy(void *dest, size_t destMaxSize, const void *src, size_t count)
+HcclResult sal_memcpy(void* dest, size_t destMaxSize, const void* src, size_t count)
 {
     CHK_PTR_NULL(dest);
     CHK_PTR_NULL(src);
     s32 ret = memcpy_s(dest, destMaxSize, src, count);
     if (ret != EOK) {
-        HCCL_ERROR("errNo[0x%016llx] In sal_memecpy, memcpy_s failed. errorno[%d], params: dest[%p], "\
-            "destMaxSize[%d], src[%p], count[%d]", HCCL_ERROR_CODE(HUAWEI_SECC_RET_TRANSFORM(ret)), ret, dest, \
-            destMaxSize, src, count);
+        HCCL_ERROR(
+            "errNo[0x%016llx] In sal_memecpy, memcpy_s failed. errorno[%d], params: dest[%p], "
+            "destMaxSize[%d], src[%p], count[%d]",
+            HCCL_ERROR_CODE(HUAWEI_SECC_RET_TRANSFORM(ret)), ret, dest, destMaxSize, src, count);
     }
     HUAWEI_SECC_RET_CHECK_AND_RETURN(ret);
 }
@@ -170,9 +173,9 @@ HcclResult sal_memcpy(void *dest, size_t destMaxSize, const void *src, size_t co
  *    修改内容   : 新生成函数
  *
  */
-sal_mutex_t sal_mutex_create(const char *desc, s32 canBeShared)
+sal_mutex_t sal_mutex_create(const char* desc, s32 canBeShared)
 {
-    recursive_mutex_t *rm;
+    recursive_mutex_t* rm;
     pthread_mutexattr_t attr;
     char myUniqueId[SAL_UNIQUE_ID_BYTES] = {0};
     char mutexUniqueId[SAL_MUTEX_UNIQUE_ID_BYTES] = {0};
@@ -184,21 +187,22 @@ sal_mutex_t sal_mutex_create(const char *desc, s32 canBeShared)
         ret = SalGetUniqueId(myUniqueId);
         HCCL_RET_NULL_IF_RUN_FAILED(ret);
 
-        sRet = snprintf_s(mutexUniqueId, SAL_MUTEX_UNIQUE_ID_BYTES, SAL_MUTEX_UNIQUE_ID_BYTES - 1, "%s%s",
-                           SAL_MUTEX_UNIQUE_ID_PREFIX, myUniqueId);
+        sRet = snprintf_s(
+            mutexUniqueId, SAL_MUTEX_UNIQUE_ID_BYTES, SAL_MUTEX_UNIQUE_ID_BYTES - 1, "%s%s", SAL_MUTEX_UNIQUE_ID_PREFIX,
+            myUniqueId);
         if (sRet == -1) {
             HCCL_ERROR("get mutexUniqueId fail,snprintf_s ERROR");
             return NULL;
         }
 
         /* 新创建的共享内存默认全0，无需memset */
-        rm = (recursive_mutex_t *)sal_share_memory_create(mutexUniqueId, sizeof(recursive_mutex_t));
+        rm = (recursive_mutex_t*)sal_share_memory_create(mutexUniqueId, sizeof(recursive_mutex_t));
         HCCL_RET_NULL_IF_PTR_IS_NULL(rm);
 
         ret = sal_strncpy(rm->rootInfo, SAL_MUTEX_UNIQUE_ID_BYTES, mutexUniqueId, (SAL_MUTEX_UNIQUE_ID_BYTES - 1));
         HCCL_RET_NULL_RELEASE_SHM_IF_RUN_FAILED(ret, rm);
     } else {
-        if ((rm = (recursive_mutex_t *)malloc(sizeof(recursive_mutex_t))) == NULL) {
+        if ((rm = (recursive_mutex_t*)malloc(sizeof(recursive_mutex_t))) == NULL) {
             return NULL;
         }
 
@@ -238,12 +242,12 @@ sal_mutex_t sal_mutex_create(const char *desc, s32 canBeShared)
  *    修改内容   : 新生成函数
  *
  */
-sal_mutex_t sal_mutex_open(const char *mutexUniqueId)
+sal_mutex_t sal_mutex_open(const char* mutexUniqueId)
 {
-    recursive_mutex_t *rm;
+    recursive_mutex_t* rm;
     u32 myRefCnt = 0;
 
-    rm = (recursive_mutex_t *)sal_share_memory_create(mutexUniqueId, sizeof(recursive_mutex_t));
+    rm = (recursive_mutex_t*)sal_share_memory_create(mutexUniqueId, sizeof(recursive_mutex_t));
     HCCL_RET_NULL_IF_PTR_IS_NULL(rm);
 
     /* 刷新引用计数，原子操作避免互斥，先取值，再加一 */
@@ -278,9 +282,9 @@ sal_mutex_t sal_mutex_open(const char *mutexUniqueId)
  *    修改内容   : 新生成函数
  *
  */
-HcclResult sal_mutex_get_unique_id(sal_mutex_t mutex, char *uniqueId)
+HcclResult sal_mutex_get_unique_id(sal_mutex_t mutex, char* uniqueId)
 {
-    recursive_mutex_t *rm = (recursive_mutex_t *)mutex;
+    recursive_mutex_t* rm = (recursive_mutex_t*)mutex;
     HcclResult hcclRet;
 
     CHK_PTR_NULL(mutex);
@@ -311,7 +315,7 @@ HcclResult sal_mutex_get_unique_id(sal_mutex_t mutex, char *uniqueId)
  */
 void sal_mutex_destroy(sal_mutex_t mutex)
 {
-    recursive_mutex_t *rm = (recursive_mutex_t *)mutex;
+    recursive_mutex_t* rm = (recursive_mutex_t*)mutex;
     u32 myRefCnt = 0;
 
     assert(rm);
@@ -349,7 +353,7 @@ void sal_mutex_destroy(sal_mutex_t mutex)
 HcclResult sal_mutex_take(sal_mutex_t mutex, s32 usec)
 {
     CHK_PTR_NULL(mutex);
-    recursive_mutex_t *rm = (recursive_mutex_t *)mutex;
+    recursive_mutex_t* rm = (recursive_mutex_t*)mutex;
     s32 err = 0;
 
     struct timespec ts;
@@ -366,11 +370,11 @@ HcclResult sal_mutex_take(sal_mutex_t mutex, s32 usec)
         if (err) {
             HCCL_WARNING("SAL: take mutex failed[%d]: %s [%d]", err, strerror(errno), errno);
             /* 屏蔽pclint关于获取锁但是未释放的告警 */
-            return HCCL_E_INTERNAL;  //lint !e454
+            return HCCL_E_INTERNAL; // lint !e454
         }
 
         /* 屏蔽pclint关于获取锁但是未释放的告警 */
-        return HCCL_SUCCESS;  //lint !e454
+        return HCCL_SUCCESS; // lint !e454
     } else if (HCCL_SUCCESS == sal_compute_timeout(&ts, usec)) {
         /* Treat EAGAIN as a fatal error on Linux */
         err = pthread_mutex_timedlock(&rm->mutex, &ts);
@@ -402,12 +406,12 @@ HcclResult sal_mutex_take(sal_mutex_t mutex, s32 usec)
  */
 HcclResult sal_mutex_give(sal_mutex_t mutex)
 {
-    recursive_mutex_t *rm = (recursive_mutex_t *)mutex;
+    recursive_mutex_t* rm = (recursive_mutex_t*)mutex;
     s32 err;
 
     assert(rm);
     /* 屏蔽pclint关于未获取锁但是释放的告警 */
-    err = pthread_mutex_unlock(&rm->mutex);  //lint !e455
+    err = pthread_mutex_unlock(&rm->mutex); // lint !e455
 
     return err ? HCCL_E_INTERNAL : HCCL_SUCCESS;
 }
@@ -428,9 +432,9 @@ HcclResult sal_mutex_give(sal_mutex_t mutex)
  *    修改内容   : 新生成函数
  *
  */
-sal_sem_t sal_sem_create(const char *desc, s32 binary, s32 initialCount, s32 canBeShared)
+sal_sem_t sal_sem_create(const char* desc, s32 binary, s32 initialCount, s32 canBeShared)
 {
-    wrapped_sem_t *s = NULL;
+    wrapped_sem_t* s = NULL;
     char myUniqueId[SAL_UNIQUE_ID_BYTES];
     char semUniqueId[SAL_SEM_UNIQUE_ID_BYTES] = {0};
     HcclResult ret;
@@ -441,15 +445,16 @@ sal_sem_t sal_sem_create(const char *desc, s32 binary, s32 initialCount, s32 can
         ret = SalGetUniqueId(myUniqueId);
         HCCL_RET_NULL_IF_RUN_FAILED(ret);
 
-        sRet = snprintf_s(semUniqueId, SAL_SEM_UNIQUE_ID_BYTES, SAL_SEM_UNIQUE_ID_BYTES - 1, "%s%s",
-                           SAL_SEM_UNIQUE_ID_PREFIX, myUniqueId);
+        sRet = snprintf_s(
+            semUniqueId, SAL_SEM_UNIQUE_ID_BYTES, SAL_SEM_UNIQUE_ID_BYTES - 1, "%s%s", SAL_SEM_UNIQUE_ID_PREFIX,
+            myUniqueId);
         if (sRet == -1) {
             HCCL_ERROR("get mutexUniqueId fail,snprintf_s ERROR");
             return NULL;
         }
 
         /* 新创建的共享内存默认全0，无需memset */
-        s = (wrapped_sem_t *)sal_share_memory_create(semUniqueId, sizeof(wrapped_sem_t));
+        s = (wrapped_sem_t*)sal_share_memory_create(semUniqueId, sizeof(wrapped_sem_t));
         HCCL_RET_NULL_IF_PTR_IS_NULL(s);
 
         ret = sal_strncpy(s->rootInfo, SAL_SEM_UNIQUE_ID_BYTES, semUniqueId, (SAL_SEM_UNIQUE_ID_BYTES - 1));
@@ -458,7 +463,7 @@ sal_sem_t sal_sem_create(const char *desc, s32 binary, s32 initialCount, s32 can
         ret = sal_strncpy(s->desc, SAL_SEM_DESC_BYTES, desc, (SAL_SEM_DESC_BYTES - 1));
         HCCL_RET_NULL_RELEASE_SHM_IF_RUN_FAILED(ret, s);
     } else {
-        if ((s = (wrapped_sem_t *)sal_malloc(sizeof(wrapped_sem_t))) == NULL) {
+        if ((s = (wrapped_sem_t*)sal_malloc(sizeof(wrapped_sem_t))) == NULL) {
             return NULL;
         }
 
@@ -474,7 +479,7 @@ sal_sem_t sal_sem_create(const char *desc, s32 binary, s32 initialCount, s32 can
             HCCL_ERROR("sal_memset failed, return[%d]", ret);
             sal_free(s);
             // s指针已经释放，pclint误报内存泄露，此处屏蔽
-            return NULL;  //lint !e429
+            return NULL; // lint !e429
         }
 
         ret = sal_strncpy(s->desc, SAL_SEM_DESC_BYTES, desc, (SAL_SEM_DESC_BYTES - 1));
@@ -483,7 +488,7 @@ sal_sem_t sal_sem_create(const char *desc, s32 binary, s32 initialCount, s32 can
             HCCL_ERROR("sal_strncpy[%s] failed[%d]", desc, ret);
             sal_free(s);
             // s指针已经释放，pclint误报内存泄露，此处屏蔽
-            return NULL;  //lint !e429
+            return NULL; // lint !e429
         }
     }
 
@@ -511,12 +516,12 @@ sal_sem_t sal_sem_create(const char *desc, s32 binary, s32 initialCount, s32 can
  *    修改内容   : 新生成函数
  *
  */
-sal_sem_t sal_sem_open(const char *semUniqueId)
+sal_sem_t sal_sem_open(const char* semUniqueId)
 {
-    wrapped_sem_t *s = NULL;
+    wrapped_sem_t* s = NULL;
     u32 myRefCnt = 0;
 
-    s = (wrapped_sem_t *)sal_share_memory_create(semUniqueId, sizeof(wrapped_sem_t));
+    s = (wrapped_sem_t*)sal_share_memory_create(semUniqueId, sizeof(wrapped_sem_t));
     HCCL_RET_NULL_IF_PTR_IS_NULL(s);
 
     /* 刷新引用计数，原子操作避免互斥，先取值，再加一 */
@@ -550,9 +555,9 @@ sal_sem_t sal_sem_open(const char *semUniqueId)
  *    修改内容   : 新生成函数
  *
  */
-HcclResult sal_sem_get_unique_id(sal_sem_t sem, char *uniqueId)
+HcclResult sal_sem_get_unique_id(sal_sem_t sem, char* uniqueId)
 {
-    wrapped_sem_t *s = (wrapped_sem_t *)sem;
+    wrapped_sem_t* s = (wrapped_sem_t*)sem;
     HcclResult ret = HCCL_SUCCESS;
 
     CHK_PTR_NULL(sem);
@@ -586,7 +591,7 @@ HcclResult sal_sem_get_unique_id(sal_sem_t sem, char *uniqueId)
 void sal_sem_destroy(sal_sem_t sem)
 {
     u32 myRefCnt = 0;
-    wrapped_sem_t *s = (wrapped_sem_t *)sem;
+    wrapped_sem_t* s = (wrapped_sem_t*)sem;
 
     assert(s);
 
@@ -622,7 +627,7 @@ void sal_sem_destroy(sal_sem_t sem)
 HcclResult sal_sem_take(sal_sem_t sem, s32 usec)
 {
     CHK_PTR_NULL(sem);
-    wrapped_sem_t *s = (wrapped_sem_t *)sem;
+    wrapped_sem_t* s = (wrapped_sem_t*)sem;
     s32 err = 0;
 
     struct timespec ts;
@@ -664,7 +669,7 @@ HcclResult sal_sem_take(sal_sem_t sem, s32 usec)
  */
 HcclResult sal_sem_give(sal_sem_t sem)
 {
-    wrapped_sem_t *s = (wrapped_sem_t *)sem;
+    wrapped_sem_t* s = (wrapped_sem_t*)sem;
     s32 err = 0;
     s32 semVal = 0;
 
@@ -707,12 +712,12 @@ HcclResult sal_sem_give(sal_sem_t sem)
  *    修改内容   : 新生成函数
  *
  */
-static void *sal_thread_boot(void *threadInfo)
+static void* sal_thread_boot(void* threadInfo)
 {
-    thread_info_t *ti = (thread_info_t *)threadInfo;
-    void *(*f)(void *);
-    void *arg;
-    void *ret;
+    thread_info_t* ti = (thread_info_t*)threadInfo;
+    void* (*f)(void*);
+    void* arg;
+    void* ret;
 
     /* 线程信号配置,屏蔽 Control-C 对应的 SIGINT 信号 */
     sigset_t newMask, origMask;
@@ -768,13 +773,13 @@ static void *sal_thread_boot(void *threadInfo)
  *    修改内容   : 新生成函数
  *
  */
-sal_thread_t sal_thread_create(string name, void *(*f)(void *), void *arg)
+sal_thread_t sal_thread_create(string name, void* (*f)(void*), void* arg)
 {
     /* 避免变量定义时操作sal，在函数最开头判断 */
     SAL_ERR_RET_IF_SAL_IS_NOT_ACTIVED(NULL);
 
     pthread_attr_t attribs;
-    thread_info_t *ti;
+    thread_info_t* ti;
     pthread_t id;
     sal_sem_t sem;
     s32 ss = SAL_PTHREAD_STACK_SIZE;
@@ -789,7 +794,7 @@ sal_thread_t sal_thread_create(string name, void *(*f)(void *), void *arg)
 
     // 暂时不允许配置实时或者fifo级别的线程, 如有需要可以在线程的业务处理函数中调整优先级.
     // 申请 thread info 结构体
-     HCCL_EXECUTE_CMD((ti = new thread_info_t) == NULL, return NULL);
+    HCCL_EXECUTE_CMD((ti = new thread_info_t) == NULL, return NULL);
     // 申请 线程同步信号量
     if ((sem = sal_sem_create("threadBoot", 1, 0)) == NULL) {
         delete (ti);
@@ -810,7 +815,7 @@ sal_thread_t sal_thread_create(string name, void *(*f)(void *), void *arg)
     SAL_LOCK();
     sal_manage.sal_thread_regist(ti);
     /* 启动线程 */
-    ret = pthread_create(&id, &attribs, sal_thread_boot, (void *)ti);
+    ret = pthread_create(&id, &attribs, sal_thread_boot, (void*)ti);
 
     if (ret) {
         HCCL_ERROR("Create Thread[%s] failed[%d]: [%s] [%d]", name.c_str(), ret, strerror(errno), errno);
@@ -850,7 +855,7 @@ sal_thread_t sal_thread_create(string name, void *(*f)(void *), void *arg)
  */
 HcclResult sal_thread_destroy(sal_thread_t thread)
 {
-    thread_info_t *ti;
+    thread_info_t* ti;
     pthread_t id = (pthread_t)(uintptr_t)thread;
     s32 ret = 0;
 
@@ -939,7 +944,7 @@ s32 sal_thread_is_running_internal(sal_thread_t thread)
  */
 s32 sal_thread_is_running(sal_thread_t thread)
 {
-    thread_info_t *ti;
+    thread_info_t* ti;
     pthread_t id = (pthread_t)(uintptr_t)thread;
     s32 threadIsRunning = SAL_FALSE;
 
@@ -955,8 +960,8 @@ s32 sal_thread_is_running(sal_thread_t thread)
             threadIsRunning = SAL_TRUE;
         } else {
             /* 线程异常退出,且SAL未捕获退出,用户函数中可能直接使用了底层线程退出接口,清理软表并告警. */
-            HCCL_WARNING("Bug: thread[%s] is not running, but task info is remain in mem. Clean it now",
-                        ti->name.c_str());
+            HCCL_WARNING(
+                "Bug: thread[%s] is not running, but task info is remain in mem. Clean it now", ti->name.c_str());
             sal_manage.sal_thread_unregist(ti);
             delete ti;
         }
@@ -982,7 +987,7 @@ s32 sal_thread_is_running(sal_thread_t thread)
  */
 HcclResult sal_thread_show(void)
 {
-    thread_info_t *threadInfo = NULL;
+    thread_info_t* threadInfo = NULL;
     HcclResult ret = HCCL_SUCCESS;
 
     SAL_LOCK(); /* 复合操作，加锁 */
@@ -1009,10 +1014,7 @@ HcclResult sal_thread_show(void)
  *    修改内容   : 新生成函数
  *
  */
-sal_thread_t sal_thread_self(void)
-{
-    return (sal_thread_t)(uintptr_t)pthread_self();
-}
+sal_thread_t sal_thread_self(void) { return (sal_thread_t)(uintptr_t)pthread_self(); }
 
 /*
  * 函 数 名  : sal_thread_exit
@@ -1028,9 +1030,9 @@ sal_thread_t sal_thread_self(void)
  *    修改内容   : 新生成函数
  *
  */
-void sal_thread_exit(void *rc)
+void sal_thread_exit(void* rc)
 {
-    thread_info_t *ti;
+    thread_info_t* ti;
     pthread_t id = pthread_self();
 
     ti = NULL;
@@ -1069,12 +1071,12 @@ void sal_thread_exit(void *rc)
  *
  *
  */
-void *sal_share_memory_create(const char *uniqueId, u64 memSize)
+void* sal_share_memory_create(const char* uniqueId, u64 memSize)
 {
     s32 ret = SAL_OK;
     HcclResult hcclRet;
     s32 fd = 0;
-    share_mem_t *shareMemPtr = NULL;
+    share_mem_t* shareMemPtr = NULL;
     u32 realMemSize = offsetof(share_mem_t, user_data) + memSize;
     u32 currRefCnt = 0;
 
@@ -1104,7 +1106,7 @@ void *sal_share_memory_create(const char *uniqueId, u64 memSize)
     }
 
     /* 将共享内存映射到当前进程的虚拟地址空间 */
-    shareMemPtr = (share_mem_t *)mmap(NULL, realMemSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    shareMemPtr = (share_mem_t*)mmap(NULL, realMemSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
     if (MAP_FAILED == shareMemPtr) {
         HCCL_ERROR("mmap for[%s] failed[%d]: [%s] [%d]", uniqueId, ret, strerror(errno), errno);
@@ -1130,8 +1132,8 @@ void *sal_share_memory_create(const char *uniqueId, u64 memSize)
     }
 
     /* 共享内存管理数据初始化 */
-    hcclRet = sal_strncpy(shareMemPtr->rootInfo, SAL_SHARE_MEM_UNIQUE_ID_BYTES, uniqueId,
-                          (SAL_SHARE_MEM_UNIQUE_ID_BYTES - 1));
+    hcclRet = sal_strncpy(
+        shareMemPtr->rootInfo, SAL_SHARE_MEM_UNIQUE_ID_BYTES, uniqueId, (SAL_SHARE_MEM_UNIQUE_ID_BYTES - 1));
 
     if (HCCL_SUCCESS != hcclRet) {
         HCCL_ERROR("sal_strncpy[%s] failed[%d]", uniqueId, hcclRet);
@@ -1160,23 +1162,24 @@ void *sal_share_memory_create(const char *uniqueId, u64 memSize)
  *
  *
  */
-void sal_share_memory_destroy(void *ptr)
+void sal_share_memory_destroy(void* ptr)
 {
     HCCL_RET_VOID_IF_PTR_IS_NULL(ptr);
 
     s32 ret = SAL_OK;
     HcclResult hcclRet;
-    share_mem_t *shareMemPtr = (share_mem_t *)((char *)ptr - offsetof(share_mem_t, user_data));
+    share_mem_t* shareMemPtr = (share_mem_t*)((char*)ptr - offsetof(share_mem_t, user_data));
     u32 realMemSize = shareMemPtr->mem_size;
     char uniqueId[SAL_SHARE_MEM_UNIQUE_ID_BYTES];
     u32 currRefCnt = 0;
 
-    HCCL_DEBUG("start destroy share mem: id[%s], ref_cnt[%d], size[%d]", shareMemPtr->rootInfo, shareMemPtr->ref_cnt,
-              shareMemPtr->mem_size);
+    HCCL_DEBUG(
+        "start destroy share mem: id[%s], ref_cnt[%d], size[%d]", shareMemPtr->rootInfo, shareMemPtr->ref_cnt,
+        shareMemPtr->mem_size);
 
     /* 缓存 rootInfo, unmap后share_mem_ptr不可用 */
-    hcclRet = sal_strncpy(uniqueId, SAL_SHARE_MEM_UNIQUE_ID_BYTES, shareMemPtr->rootInfo,
-                          (SAL_SHARE_MEM_UNIQUE_ID_BYTES - 1));
+    hcclRet = sal_strncpy(
+        uniqueId, SAL_SHARE_MEM_UNIQUE_ID_BYTES, shareMemPtr->rootInfo, (SAL_SHARE_MEM_UNIQUE_ID_BYTES - 1));
 
     if (HCCL_SUCCESS != hcclRet) {
         HCCL_ERROR("invalid rootInfo[%s] failed[%d]", uniqueId, hcclRet);
@@ -1199,7 +1202,8 @@ void sal_share_memory_destroy(void *ptr)
             最后一个销毁的进程负责销毁共享内存对象
 
             例外场景:
-            当A进程执行销毁动作 将 ref_cnt 减小为0，但是尚未来得及unlink的时候，B进程打开该共享内存对象，将ref_cnt增加为1；
+            当A进程执行销毁动作 将 ref_cnt
+           减小为0，但是尚未来得及unlink的时候，B进程打开该共享内存对象，将ref_cnt增加为1；
             A进程后续会先执行unlink操作，销毁共享内存对象(只销毁句柄，已经映射的物理内存不受影响)成功。
             B进程执行销毁动作时，会再次unlink，但是句柄已经被A进程销毁，此时B进程unlink会报文件不存在。
 
@@ -1217,7 +1221,7 @@ void sal_share_memory_destroy(void *ptr)
 
     return;
     // ptr 指针已经 unmap，共享内存也已销毁，pclint误报，此处屏蔽。
-}  //lint !e429
+} // lint !e429
 
 #endif
 
@@ -1236,10 +1240,7 @@ void sal_share_memory_destroy(void *ptr)
  *    修改内容   : 新生成函数
  *
  */
-s32 sal_manage_class::sal_active_get(void) const
-{
-    return sal_actived;
-}
+s32 sal_manage_class::sal_active_get(void) const { return sal_actived; }
 
 /*
  *
@@ -1257,14 +1258,14 @@ s32 sal_manage_class::sal_active_get(void) const
  *
  *
  */
-HcclResult sal_manage_class::sal_thread_regist(const thread_info_t *thread)
+HcclResult sal_manage_class::sal_thread_regist(const thread_info_t* thread)
 {
     CHK_PTR_NULL(thread);
 
-    sal_thread_list_node_t *node = (sal_thread_list_node_t *)(new (std::nothrow) sal_thread_list_node_t);
+    sal_thread_list_node_t* node = (sal_thread_list_node_t*)(new (std::nothrow) sal_thread_list_node_t);
     HCCL_RET_MEMORY_ERR_IF_PTR_IS_NULL(node);
 
-    node->thread_info = (thread_info_t *)thread;
+    node->thread_info = (thread_info_t*)thread;
 
     sal_thread_list.push_back(node);
     len_of_thread_res++;
@@ -1290,15 +1291,16 @@ HcclResult sal_manage_class::sal_thread_regist(const thread_info_t *thread)
  *
  */
 
-void sal_manage_class::sal_thread_unregist(const thread_info_t *thread)
+void sal_manage_class::sal_thread_unregist(const thread_info_t* thread)
 {
     HCCL_RET_VOID_IF_PTR_IS_NULL(thread);
 
     for (auto it = sal_thread_list.begin(); it != sal_thread_list.end(); ++it) {
         if (thread == (*it)->thread_info) {
             len_of_thread_res--;
-            HCCL_DEBUG("thread Name[%s]\t PID[%08u] is unregistered", (*it)->thread_info->name.c_str(),
-                      (*it)->thread_info->pid);
+            HCCL_DEBUG(
+                "thread Name[%s]\t PID[%08u] is unregistered", (*it)->thread_info->name.c_str(),
+                (*it)->thread_info->pid);
 
             delete (*it);
             *it = NULL;
@@ -1324,7 +1326,7 @@ void sal_manage_class::sal_thread_unregist(const thread_info_t *thread)
  *
  *
  */
-HcclResult sal_manage_class::sal_thread_find(pthread_t id, thread_info_t **ti)
+HcclResult sal_manage_class::sal_thread_find(pthread_t id, thread_info_t** ti)
 {
     HcclResult ret = HCCL_E_PARA;
 
@@ -1354,7 +1356,7 @@ HcclResult sal_manage_class::sal_thread_find(pthread_t id, thread_info_t **ti)
  *
  *
  */
-HcclResult sal_manage_class::sal_thread_info_pop(u32 pos, thread_info_t **ti)
+HcclResult sal_manage_class::sal_thread_info_pop(u32 pos, thread_info_t** ti)
 {
     u32 listLoopCnt = 0;
     HcclResult ret = HCCL_SUCCESS;
@@ -1423,16 +1425,13 @@ sal_manage_class::~sal_manage_class()
         sal_actived = SAL_FALSE;
         len_of_thread_res = 0;
         for (auto* ptr : sal_thread_list) {
-            delete ptr;  // 释放每个对象
+            delete ptr; // 释放每个对象
         }
-        sal_thread_list.clear();  // 清空列表（避免野指针）
+        sal_thread_list.clear(); // 清空列表（避免野指针）
     }
 }
 
-pid_t drvDeviceGetBarePid(void)
-{
-    return getpid();
-}
+pid_t drvDeviceGetBarePid(void) { return getpid(); }
 
 /*
  *
@@ -1450,18 +1449,19 @@ pid_t drvDeviceGetBarePid(void)
  *
  *
  */
-HcclResult SalGetUniqueId(char *salUniqueId, int maxLen)
+HcclResult SalGetUniqueId(char* salUniqueId, int maxLen)
 {
-    static volatile u32 myCounter = 0;    // 静态变量保证每次获取到不同的计数。
+    static volatile u32 myCounter = 0; // 静态变量保证每次获取到不同的计数。
     CHK_PTR_NULL(salUniqueId);
 
-    u32 myPid = drvDeviceGetBarePid();    // 当前进程id
-    u32 currentCounter = __sync_fetch_and_add(&myCounter, 1);   // 本次获取的唯一计数
-    u32 currentTime = SalGetSysTime();  // 本次获取的唯一计数
+    u32 myPid = drvDeviceGetBarePid();                        // 当前进程id
+    u32 currentCounter = __sync_fetch_and_add(&myCounter, 1); // 本次获取的唯一计数
+    u32 currentTime = SalGetSysTime();                        // 本次获取的唯一计数
     s32 hcclRet = sprintf_s(salUniqueId, maxLen, "%08x-%08x-%08x", myPid, currentTime, currentCounter);
     if (hcclRet == -1) {
-        HCCL_ERROR("In get unique id, printf failed.uniqueId[%s], "\
-            "dest max size[%d] mypid[0x%08x] current time[0x%08x] current counter[0x%08x]", \
+        HCCL_ERROR(
+            "In get unique id, printf failed.uniqueId[%s], "
+            "dest max size[%d] mypid[0x%08x] current time[0x%08x] current counter[0x%08x]",
             salUniqueId, maxLen, myPid, currentTime, currentCounter);
     }
 
@@ -1476,12 +1476,17 @@ HcclResult rt_stream_synchronize(HcclRtStream stream)
 
     aclError ret = aclrtSynchronizeStream(rtStream);
     HCCL_DEBUG("Call aclrtSynchronizeStream, return value[%d], para: rt_stream[%p].", ret, rtStream);
-    CHK_PRT_RET(ret != ACL_SUCCESS, HCCL_ERROR("errNo[0x%016llx] rt stream synchronize fail. return[%d], "\
-        "para: rt_stream[%p].", HCCL_ERROR_CODE(HCCL_E_RUNTIME), ret, rtStream), HCCL_E_RUNTIME);
+    CHK_PRT_RET(
+        ret != ACL_SUCCESS,
+        HCCL_ERROR(
+            "errNo[0x%016llx] rt stream synchronize fail. return[%d], "
+            "para: rt_stream[%p].",
+            HCCL_ERROR_CODE(HCCL_E_RUNTIME), ret, rtStream),
+        HCCL_E_RUNTIME);
     return HCCL_SUCCESS;
 }
 
-void *sal_malloc(u32 size)
+void* sal_malloc(u32 size)
 {
     if (size == 0) {
         HCCL_ERROR("errNo[0x%016llx] sal malloc fail, size[%u], return NULL", HCCL_ERROR_CODE(HCCL_E_MEMORY), size);
@@ -1491,7 +1496,7 @@ void *sal_malloc(u32 size)
     return malloc(size);
 }
 
-void sal_free(void *ptr)
+void sal_free(void* ptr)
 {
     if (ptr) {
         free(ptr);
@@ -1521,4 +1526,3 @@ void sal_free(void *ptr)
 // }
 
 #endif
-

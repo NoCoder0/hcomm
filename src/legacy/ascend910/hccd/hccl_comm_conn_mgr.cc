@@ -1,33 +1,28 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "hccl_comm_conn_mgr.h"
 
 using namespace std;
 
 namespace hccl {
-HcclCommConnMgr &HcclCommConnMgr::GetInstance()
+HcclCommConnMgr& HcclCommConnMgr::GetInstance()
 {
     static HcclCommConnMgr connMgr;
     HCCL_INFO("HcclCommConnMgr::GetInstance connMgr[%p]", &connMgr);
     return connMgr;
 }
 
-HcclCommConnMgr::HcclCommConnMgr()
-{
-}
+HcclCommConnMgr::HcclCommConnMgr() {}
 
-HcclCommConnMgr::~HcclCommConnMgr()
-{
-    (void)UninitRa();
-}
+HcclCommConnMgr::~HcclCommConnMgr() { (void)UninitRa(); }
 
 HcclResult HcclCommConnMgr::InitRa()
 {
@@ -62,9 +57,9 @@ HcclResult HcclCommConnMgr::UninitRa()
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclCommConnMgr::AddAndGetCommConn(HcclCommConn *&commConn)
+HcclResult HcclCommConnMgr::AddAndGetCommConn(HcclCommConn*& commConn)
 {
-    commConn = new(nothrow) HcclCommConn();
+    commConn = new (nothrow) HcclCommConn();
     CHK_PTR_NULL(commConn);
 
     lock_guard<mutex> lock(commConnMtx_);
@@ -78,7 +73,7 @@ HcclResult HcclCommConnMgr::AddAndGetCommConn(HcclCommConn *&commConn)
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclCommConnMgr::AddCommConn(HcclCommConn *&commConn)
+HcclResult HcclCommConnMgr::AddCommConn(HcclCommConn*& commConn)
 {
     CHK_PTR_NULL(commConn);
 
@@ -97,26 +92,26 @@ bool HcclCommConnMgr::IsExceedMaxLinkNum(u32 role)
     }
     return commConnSet_.size() > MAX_CONN_LINK_NUM;
 }
- 
-bool HcclCommConnMgr::IsExistCommConn(HcclAddr &connectAddr)
+
+bool HcclCommConnMgr::IsExistCommConn(HcclAddr& connectAddr)
 {
     std::unique_lock<std::mutex> lock(connectCommMapMtx_);
     return connectCommMap_.find(connectAddr.info.tcp.ipv4Addr) != connectCommMap_.end();
 }
 
-void HcclCommConnMgr::InsertConnectCommMap(HcclAddr &connectAddr, HcclConn &conn)
+void HcclCommConnMgr::InsertConnectCommMap(HcclAddr& connectAddr, HcclConn& conn)
 {
     std::unique_lock<std::mutex> lock(connectCommMapMtx_);
     connectCommMap_.insert(std::make_pair(connectAddr.info.tcp.ipv4Addr, conn));
 }
 
-void HcclCommConnMgr::DeleteConnectCommMap(HcclAddr &connectAddr)
+void HcclCommConnMgr::DeleteConnectCommMap(HcclAddr& connectAddr)
 {
     std::unique_lock<std::mutex> lock(connectCommMapMtx_);
     connectCommMap_.erase(connectAddr.info.tcp.ipv4Addr);
 }
 
-HcclResult HcclCommConnMgr::DelCommConn(HcclCommConn *commConn)
+HcclResult HcclCommConnMgr::DelCommConn(HcclCommConn* commConn)
 {
     {
         lock_guard<mutex> lock(commConnMtx_);
@@ -140,4 +135,4 @@ HcclResult HcclCommConnMgr::DelCommConn(HcclCommConn *commConn)
     return HCCL_SUCCESS;
 }
 
-}
+} // namespace hccl

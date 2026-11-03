@@ -22,23 +22,13 @@
 
 using namespace Hccl;
 
-
 class ProfilingReporterLiteTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "ProfilingReporterLiteTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "ProfilingReporterLiteTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "ProfilingReporterLiteTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "ProfilingReporterLiteTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in ProfilingReporterLiteTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in ProfilingReporterLiteTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -47,17 +37,17 @@ protected:
     }
 };
 
-
 // 测试ProfilingReporterLite类接口
 TEST_F(ProfilingReporterLiteTest, Call_profilingReporterLite_api_test)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
     MirrorTaskManagerLite mirrorTaskManagerLite;
-     // 初始化TaskParam
-    TaskParam taskParam = {.taskType = TaskParamType::TASK_NOTIFY_RECORD,
-        .beginTime = 0,
-        .endTime = 0,
-        .taskPara = {.Notify = {.notifyID = 123, .value = 456}}};
+    // 初始化TaskParam
+    TaskParam taskParam
+        = {.taskType = TaskParamType::TASK_NOTIFY_RECORD,
+           .beginTime = 0,
+           .endTime = 0,
+           .taskPara = {.Notify = {.notifyID = 123, .value = 456}}};
     // 初始化dfxOpInfo
     std::shared_ptr<DfxOpInfo> dfxOpInfo = std::make_shared<DfxOpInfo>();
     CollOperator op;

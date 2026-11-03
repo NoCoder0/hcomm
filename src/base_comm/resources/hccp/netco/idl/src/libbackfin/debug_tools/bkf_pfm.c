@@ -64,8 +64,8 @@ static inline uint64_t BkfPfmTick2Ms(uint64_t tick)
 
 #define BKF_PFM_MEA_STR_2HASH_CODE_LEN_MAX 8
 #define BKF_PFM_MEA_STR_HASH_MOD 0x0fff
-#define BKF_PFM_MEA_STR_2CACHE_IDX(str) ((BkfGetStrHashCode((str), BKF_PFM_MEA_STR_2HASH_CODE_LEN_MAX)) & \
-                                          BKF_PFM_MEA_STR_HASH_MOD)
+#define BKF_PFM_MEA_STR_2CACHE_IDX(str)                                                                                \
+    ((BkfGetStrHashCode((str), BKF_PFM_MEA_STR_2HASH_CODE_LEN_MAX)) & BKF_PFM_MEA_STR_HASH_MOD)
 
 typedef struct tagBkfPfmMeaCache {
     BkfPfmMea *mea[BKF_PFM_MEA_STR_HASH_MOD + 1];
@@ -96,7 +96,7 @@ typedef struct tagBkfPfmMea {
     uint64_t okUseTickPeak;
     uint64_t okkUseTickTotal;
     uint32_t cacheIdx; /* 比较加速用 */
-    char meaStr[0]; /* key */
+    char meaStr[0];    /* key */
 } BkfPfmMea;
 BKF_STATIC_ASSERT(BKF_MBR_IS_LAST(BkfPfmMea, meaStr));
 
@@ -140,8 +140,8 @@ BkfPfm *BkfPfmInit(BkfPfmInitArg *arg)
     pfm->name = BkfStrNew(arg->memMng, "%s_pfm", arg->name);
     pfm->argInit.name = pfm->name;
     pfm->enable = BKF_COND_2BIT_FIELD(arg->enable);
-    VOS_AVLL_INIT_TREE(pfm->meaSet, (AVLL_COMPARE)VOS_StrCmp,
-                       BKF_OFFSET(BkfPfmMea, meaStr[0]), BKF_OFFSET(BkfPfmMea, avlNode));
+    VOS_AVLL_INIT_TREE(pfm->meaSet, (AVLL_COMPARE)VOS_StrCmp, BKF_OFFSET(BkfPfmMea, meaStr[0]),
+        BKF_OFFSET(BkfPfmMea, avlNode));
     BkfPfmDispInit(pfm);
 
     return pfm;
@@ -246,8 +246,7 @@ char *BkfPfmGetSummaryStr(BkfPfm *pfm, uint8_t *buf, int32_t bufLen)
         return "pfm_arg_error";
     }
 
-    for (mea = BkfPfmGetFirstMea(pfm, &itor); mea != VOS_NULL;
-         mea = BkfPfmGetNextMea(pfm, &itor)) {
+    for (mea = BkfPfmGetFirstMea(pfm, &itor); mea != VOS_NULL; mea = BkfPfmGetNextMea(pfm, &itor)) {
         meaCnt++;
     }
     if (pfm->meaCache != VOS_NULL) {
@@ -258,21 +257,21 @@ char *BkfPfmGetSummaryStr(BkfPfm *pfm, uint8_t *buf, int32_t bufLen)
             }
         }
     }
-    ret = snprintf_truncated_s((char *)buf, (uint32_t)bufLen, "pfm(%#x, %s), memMng(%#x)/disp(%#x)/log(%#x), "
-                               "enable(%u/%u), meaCnt(%u), meaCache(%#x)/meaCacheSize(%u)/validMeaCntInCache(%u)",
-                               BKF_MASK_ADDR(pfm), pfm->name,
-                               BKF_MASK_ADDR(pfm->argInit.memMng), BKF_MASK_ADDR(pfm->argInit.disp),
-                               BKF_MASK_ADDR(pfm->argInit.log),
-                               pfm->enable, pfm->argInit.enable, meaCnt,
-                               BKF_MASK_ADDR(pfm->meaCache), meaCacheSize, validMeaCntInCache);
+    ret = snprintf_truncated_s((char *)buf, (uint32_t)bufLen,
+        "pfm(%#x, %s), memMng(%#x)/disp(%#x)/log(%#x), "
+        "enable(%u/%u), meaCnt(%u), meaCache(%#x)/meaCacheSize(%u)/validMeaCntInCache(%u)",
+        BKF_MASK_ADDR(pfm), pfm->name, BKF_MASK_ADDR(pfm->argInit.memMng), BKF_MASK_ADDR(pfm->argInit.disp),
+        BKF_MASK_ADDR(pfm->argInit.log), pfm->enable, pfm->argInit.enable, meaCnt, BKF_MASK_ADDR(pfm->meaCache),
+        meaCacheSize, validMeaCntInCache);
     if (ret < 0) {
         return "pfm_snprintf_ng";
     }
-    return (char*)buf;
+    return (char *)buf;
 }
 
 STATIC char *BkfPfmGetMeaStr(BkfPfm *pfm, BkfPfmMea *mea, uint8_t *buf, int32_t bufLen)
 {
+    (void)pfm;
     uint64_t meaOkUseMsTotal = BkfPfmTick2Ms(mea->okkUseTickTotal);
     uint64_t meaOkUseMsPeak = BkfPfmTick2Ms(mea->okUseTickPeak);
     uint64_t meaOkUseMsAvg = 0;
@@ -282,17 +281,16 @@ STATIC char *BkfPfmGetMeaStr(BkfPfm *pfm, BkfPfmMea *mea, uint8_t *buf, int32_t 
         meaOkUseMsAvg = meaOkUseMsTotal / mea->okCnt;
     }
     ret = snprintf_truncated_s((char *)buf, (uint32_t)bufLen,
-                               "meaOkMs_avg(%-6" VOS_PRIu64 ")/t(%-12" VOS_PRIu64 ")/p(%-10" VOS_PRIu64 ")"
-                               "/okCnt(%-12u), "
-                               "begin(%u)/cnt(%u/%u), endCnt(%u/%u), cacheIdx(%u), "
-                               "meaOkTick_t(%" VOS_PRIu64 ")/p(%" VOS_PRIu64 ")",
-                               meaOkUseMsAvg, meaOkUseMsTotal, meaOkUseMsPeak, mea->okCnt,
-                               mea->hasBegin, mea->beginCnt, mea->beginNgCnt, mea->endCnt, mea->endNgCnt, mea->cacheIdx,
-                               mea->okkUseTickTotal, mea->okUseTickPeak);
+        "meaOkMs_avg(%-6" VOS_PRIu64 ")/t(%-12" VOS_PRIu64 ")/p(%-10" VOS_PRIu64 ")"
+        "/okCnt(%-12u), "
+        "begin(%u)/cnt(%u/%u), endCnt(%u/%u), cacheIdx(%u), "
+        "meaOkTick_t(%" VOS_PRIu64 ")/p(%" VOS_PRIu64 ")",
+        meaOkUseMsAvg, meaOkUseMsTotal, meaOkUseMsPeak, mea->okCnt, mea->hasBegin, mea->beginCnt, mea->beginNgCnt,
+        mea->endCnt, mea->endNgCnt, mea->cacheIdx, mea->okkUseTickTotal, mea->okUseTickPeak);
     if (ret < 0) {
         return VOS_NULL;
     }
-    return (char*)buf;
+    return (char *)buf;
 }
 char *BkfPfmGetFirstMeaStr(BkfPfm *pfm, char **meaStrOut, uint8_t *buf, int32_t bufLen)
 {
@@ -335,6 +333,7 @@ char *BkfPfmGetNextMeaStr(BkfPfm *pfm, char **meaStrInOut, uint8_t *buf, int32_t
 
 static inline void BkfPfmTestUseTime(BkfPfm *pfm, uint32_t loopMs)
 {
+    (void)pfm;
     (void)usleep(loopMs * BKF_US_PER_MS);
 }
 void BkfPfmTestAddMea(BkfPfm *pfm)
@@ -381,7 +380,7 @@ void BkfPfmTestAddMea(BkfPfm *pfm)
     BKF_PFM_END(pfm, "t1"); /* last err11 */
     BKF_PFM_END(pfm, "t1"); /* last err12 */
     BKF_PFM_END(pfm, "t22");
-    BKF_PFM_END(pfm, "t1"); /* last err13 */
+    BKF_PFM_END(pfm, "t1");  /* last err13 */
     BKF_PFM_END(pfm, "t22"); /* last err21 */
     BKF_PFM_END(pfm, "t22"); /* last err22 */
 }
@@ -453,8 +452,7 @@ STATIC void BkfPfmDelAllMea(BkfPfm *pfm)
     BkfPfmMea *mea = VOS_NULL;
     void *itor = VOS_NULL;
 
-    for (mea = BkfPfmGetFirstMea(pfm, &itor); mea != VOS_NULL;
-         mea = BkfPfmGetNextMea(pfm, &itor)) {
+    for (mea = BkfPfmGetFirstMea(pfm, &itor); mea != VOS_NULL; mea = BkfPfmGetNextMea(pfm, &itor)) {
         BkfPfmDelMea(pfm, mea);
     }
     return;
@@ -619,4 +617,3 @@ STATIC void BkfPfmDispUninit(BkfPfm *pfm)
 }
 #endif
 #endif
-

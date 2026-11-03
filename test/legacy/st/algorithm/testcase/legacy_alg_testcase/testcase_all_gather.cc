@@ -4,9 +4,10 @@
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #include <mockcpp/mokc.h>
 #include <mockcpp/mockcpp.hpp>
 #include "gtest/gtest.h"
@@ -20,24 +21,19 @@
 #include "testcase_utils.h"
 #include "topo_meta.h"
 
-namespace checker{
+namespace checker {
 
 class AllGatherTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AllGatherTest set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AllGatherTest set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AllGatherTest tear down" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AllGatherTest tear down" << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -49,8 +45,10 @@ protected:
         ClearHcclEnv();
     }
 
-    void RunAllGatherTest(int supNum, int sevNum, int rankNum, CheckerOpMode opMode, int dataCount, std::string algName, int maxTmpMemSize) {
-
+    void RunAllGatherTest(
+        int supNum, int sevNum, int rankNum, CheckerOpMode opMode, int dataCount, std::string algName,
+        int maxTmpMemSize)
+    {
         RankTable_For_LLT gen;
         TopoMeta topoMeta;
         gen.GenTopoMeta(topoMeta, supNum, sevNum, rankNum);
@@ -73,90 +71,90 @@ protected:
 
 TEST_F(AllGatherTest, AllGatherMesh_one_four_test)
 {
-    RunAllGatherTest(1, 1, 4, CheckerOpMode::OPBASE, 100, "InsAllGatherMesh", 1024*1024*200);
+    RunAllGatherTest(1, 1, 4, CheckerOpMode::OPBASE, 100, "InsAllGatherMesh", 1024 * 1024 * 200);
 }
 
 TEST_F(AllGatherTest, AllGatherMesh_one_three_test)
 {
-    RunAllGatherTest(1, 1, 3, CheckerOpMode::OPBASE, 100, "InsAllGatherMesh", 1024*1024*200);
+    RunAllGatherTest(1, 1, 3, CheckerOpMode::OPBASE, 100, "InsAllGatherMesh", 1024 * 1024 * 200);
 }
 
 TEST_F(AllGatherTest, AllGatherMesh_one_eight_test)
 {
-    RunAllGatherTest(1, 1, 8, CheckerOpMode::OPBASE, 100, "InsAllGatherMesh", 1024*1024*400);
+    RunAllGatherTest(1, 1, 8, CheckerOpMode::OPBASE, 100, "InsAllGatherMesh", 1024 * 1024 * 400);
 }
 
 TEST_F(AllGatherTest, AllGatherMesh_one_two_test)
 {
-    RunAllGatherTest(1, 1, 2, CheckerOpMode::OPBASE, 100, "InsAllGatherMesh", 1024*1024*200);
+    RunAllGatherTest(1, 1, 2, CheckerOpMode::OPBASE, 100, "InsAllGatherMesh", 1024 * 1024 * 200);
 }
 
 TEST_F(AllGatherTest, AllGatherNHR_one_four_test)
 {
-    RunAllGatherTest(1, 1, 4, CheckerOpMode::OPBASE, 100, "InsAllGatherNHR", 1024*1024*200);
+    RunAllGatherTest(1, 1, 4, CheckerOpMode::OPBASE, 100, "InsAllGatherNHR", 1024 * 1024 * 200);
 }
 
 TEST_F(AllGatherTest, AllGatherNHR_one_three_test)
 {
-    RunAllGatherTest(1, 1, 3, CheckerOpMode::OPBASE, 100, "InsAllGatherNHR", 1024*1024*200);
+    RunAllGatherTest(1, 1, 3, CheckerOpMode::OPBASE, 100, "InsAllGatherNHR", 1024 * 1024 * 200);
 }
 
 TEST_F(AllGatherTest, AllGatherNHR_one_eight_test)
 {
-    RunAllGatherTest(1, 1, 8, CheckerOpMode::OPBASE, 100, "InsAllGatherNHR", 1024*1024*200);
+    RunAllGatherTest(1, 1, 8, CheckerOpMode::OPBASE, 100, "InsAllGatherNHR", 1024 * 1024 * 200);
 }
 
 TEST_F(AllGatherTest, AllGatherNHR_one_two_test)
 {
-    RunAllGatherTest(1, 1, 2, CheckerOpMode::OPBASE, 100, "InsAllGatherNHR", 1024*1024*200);
+    RunAllGatherTest(1, 1, 2, CheckerOpMode::OPBASE, 100, "InsAllGatherNHR", 1024 * 1024 * 200);
 }
 
 TEST_F(AllGatherTest, AllGatherMesh_one_4G_two_test)
 {
-    RunAllGatherTest(1, 1, 2, CheckerOpMode::OPBASE, 100, "InsAllGatherMesh", 1024*1024*20000);
+    RunAllGatherTest(1, 1, 2, CheckerOpMode::OPBASE, 100, "InsAllGatherMesh", 1024 * 1024 * 20000);
 }
 
 TEST_F(AllGatherTest, AllGatherNHR_one_4G_two_test)
 {
-    RunAllGatherTest(1, 1, 2, CheckerOpMode::OPBASE, 100, "InsAllGatherNHR", 1024*1024*20000);
+    RunAllGatherTest(1, 1, 2, CheckerOpMode::OPBASE, 100, "InsAllGatherNHR", 1024 * 1024 * 20000);
 }
 
 TEST_F(AllGatherTest, AllGatherMesh_one_4G_offload_two_test)
 {
-    RunAllGatherTest(1, 1, 2, CheckerOpMode::OFFLOAD, 100, "InsAllGatherMesh", 1024*1024*20000);
+    RunAllGatherTest(1, 1, 2, CheckerOpMode::OFFLOAD, 100, "InsAllGatherMesh", 1024 * 1024 * 20000);
 }
 
 TEST_F(AllGatherTest, AllGatherNHR_one_4G_offload_two_test)
 {
-    RunAllGatherTest(1, 1, 2, CheckerOpMode::OFFLOAD, 100, "InsAllGatherNHR", 1024*1024*20000);
+    RunAllGatherTest(1, 1, 2, CheckerOpMode::OFFLOAD, 100, "InsAllGatherNHR", 1024 * 1024 * 20000);
 }
 
 TEST_F(AllGatherTest, AllGatherNHR_one_to_six_offload_test)
 {
-    RunAllGatherTest(1, 1, 6, CheckerOpMode::OFFLOAD, 100, "InsAllGatherNHR", 1024*1024*20000);
+    RunAllGatherTest(1, 1, 6, CheckerOpMode::OFFLOAD, 100, "InsAllGatherNHR", 1024 * 1024 * 20000);
 }
 
 TEST_F(AllGatherTest, AllGatherNHR_one_to_six_test)
 {
-    RunAllGatherTest(1, 1, 6, CheckerOpMode::OPBASE, 100, "InsAllGatherNHR", 1024*1024*20000);
+    RunAllGatherTest(1, 1, 6, CheckerOpMode::OPBASE, 100, "InsAllGatherNHR", 1024 * 1024 * 20000);
 }
 
 TEST_F(AllGatherTest, AllGatherNHR_one_to_six_01_test)
 {
-    RunAllGatherTest(1, 1, 6, CheckerOpMode::OPBASE, 400, "InsAllGatherNHR", 1024*1024*20000);
+    RunAllGatherTest(1, 1, 6, CheckerOpMode::OPBASE, 400, "InsAllGatherNHR", 1024 * 1024 * 20000);
 }
 
 TEST_F(AllGatherTest, AllGatherNHR_one_to_six_02_test)
 {
-    RunAllGatherTest(1, 1, 6, CheckerOpMode::OPBASE, 4000, "InsAllGatherNHR", 1024*1024*20000);
+    RunAllGatherTest(1, 1, 6, CheckerOpMode::OPBASE, 4000, "InsAllGatherNHR", 1024 * 1024 * 20000);
 }
 
-}
+} // namespace checker
 
 TEST_F(AllGatherTest, AllGatherParallel_offload_3x2_small)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2}, {0,1,2}}};
+    TopoMeta topoMeta{{{0, 1, 2}, {0, 1, 2}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -178,7 +176,7 @@ TEST_F(AllGatherTest, AllGatherParallel_offload_3x2_small)
 TEST_F(AllGatherTest, AllGatherParallel_opbase_3x2_small)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2}, {0,1,2}}};
+    TopoMeta topoMeta{{{0, 1, 2}, {0, 1, 2}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -200,7 +198,7 @@ TEST_F(AllGatherTest, AllGatherParallel_opbase_3x2_small)
 TEST_F(AllGatherTest, AllGatherParallel_offload_3x2_big)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2}, {0,1,2}}};
+    TopoMeta topoMeta{{{0, 1, 2}, {0, 1, 2}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -222,7 +220,7 @@ TEST_F(AllGatherTest, AllGatherParallel_offload_3x2_big)
 TEST_F(AllGatherTest, AllGatherParallel_opbase_3x2_big)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2}, {0,1,2}}};
+    TopoMeta topoMeta{{{0, 1, 2}, {0, 1, 2}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -241,11 +239,10 @@ TEST_F(AllGatherTest, AllGatherParallel_opbase_3x2_big)
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 }
 
-
 TEST_F(AllGatherTest, AllGatherParallel_offload_2x2_small)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1}, {0,1}}};
+    TopoMeta topoMeta{{{0, 1}, {0, 1}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -267,7 +264,7 @@ TEST_F(AllGatherTest, AllGatherParallel_offload_2x2_small)
 TEST_F(AllGatherTest, AllGatherParallel_opbase_2x2_small)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1}, {0,1}}};
+    TopoMeta topoMeta{{{0, 1}, {0, 1}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -289,7 +286,7 @@ TEST_F(AllGatherTest, AllGatherParallel_opbase_2x2_small)
 TEST_F(AllGatherTest, AllGatherParallel_offload_2x2_little)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1}, {0,2}}};
+    TopoMeta topoMeta{{{0, 1}, {0, 2}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -449,7 +446,7 @@ TEST_F(AllGatherTest, AllGatherParallel_asymmetric_4n6)
 TEST_F(AllGatherTest, AllGatherParallel_asymmetric_offload_6n6n9)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,8,9,10}, {3,4,5,11,12,13},{4,5,6,12,13,14,20,21,22}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10}, {3, 4, 5, 11, 12, 13}, {4, 5, 6, 12, 13, 14, 20, 21, 22}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 

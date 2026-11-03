@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #include "bifrost_cncoi_slice.h"
 #include "securec.h"
 
@@ -26,7 +25,7 @@ int32_t BifrostCncoiSliceKeyCmp(const BifrostCncoiSliceKeyT *key1Input, const Bi
     return 0;
 }
 
-char* BifrostCncoiSliceKeyGetStr(const BifrostCncoiSliceKeyT *key, uint8_t *buf, int32_t bufLen)
+char *BifrostCncoiSliceKeyGetStr(const BifrostCncoiSliceKeyT *key, uint8_t *buf, int32_t bufLen)
 {
     int32_t err;
 
@@ -35,7 +34,7 @@ char* BifrostCncoiSliceKeyGetStr(const BifrostCncoiSliceKeyT *key, uint8_t *buf,
     }
 
     err = snprintf_truncated_s((char *)buf, bufLen, "bifrost_cncoi sliceKey = %u", key->sliceKey);
-    return (err >= 0) ? (char*)buf : "__BifrostCncoiSliceKeyGetStrNgSnprintf";
+    return (err >= 0) ? (char *)buf : "__BifrostCncoiSliceKeyGetStrNgSnprintf";
 }
 
 uint32_t BifrostCncoiSliceKeyCodec(BifrostCncoiSliceKeyT *key)
@@ -46,4 +45,3 @@ uint32_t BifrostCncoiSliceKeyCodec(BifrostCncoiSliceKeyT *key)
 #if __cplusplus
 }
 #endif
-

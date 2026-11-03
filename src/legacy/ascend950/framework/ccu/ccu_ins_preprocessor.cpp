@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "ccu_ins_preprocessor.h"
 #include "ccu_ctx_mgr.h"
@@ -23,44 +23,54 @@ namespace Hccl {
 
 constexpr u32 TEMP_MAX_CNTCKE_NUM = 16;
 
-static bool CreateCcuJettys(CcuCommunicator &ccuComm, const std::vector<LinkData> &links, bool &createStatus)
+static bool CreateCcuJettys(CcuCommunicator& ccuComm, const std::vector<LinkData>& links, bool& createStatus)
 {
     auto ret = ccuComm.GetCcuJettyMgr()->PrepareCreate(links);
     if (ret == HcclResult::HCCL_E_UNAVAIL) {
         createStatus = false; // 预留处理资源不足回退情况，当前不支持回退
-        HCCL_WARNING("[CcuInsPreprocessor][%s] create ccu jettys failed, "
-            "ccu resource is unavaialble, please check.", __func__);
+        HCCL_WARNING(
+            "[CcuInsPreprocessor][%s] create ccu jettys unsuccessfully, "
+            "ccu resource is unavailable, please check.",
+            __func__);
         return false;
     }
 
     if (ret != HcclResult::HCCL_SUCCESS) {
         createStatus = false;
-        HCCL_ERROR("[CcuInsPreprocessor][%s] create ccu jettys failed, "
-            "unexpected error, please check.", __func__);
+        HCCL_ERROR(
+            "[CcuInsPreprocessor][%s] create ccu jettys failed, "
+            "unexpected error, please check.",
+            __func__);
         THROW<InternalException>("[CreateCcuJettys]create ccu jettys failed, unexpected error, please check.");
     }
 
     return true;
 }
 
-static bool CreateCcuTransports(CcuCommunicator &ccuComm, const std::vector<LinkData> &links, bool &createStatus,
-    std::vector<CcuTransport *> &transports)
+static bool CreateCcuTransports(
+    CcuCommunicator& ccuComm, const std::vector<LinkData>& links, bool& createStatus,
+    std::vector<CcuTransport*>& transports)
 {
-    for (auto &link : links) {
-        CcuTransport *tansport = nullptr;
+    for (auto& link : links) {
+        CcuTransport* tansport = nullptr;
         auto ret = ccuComm.GetCcuTransportMgr()->PrepareCreate(link, tansport);
         if (ret == HcclResult::HCCL_E_UNAVAIL) {
             createStatus = false; // 预留处理资源不足回退情况，当前不支持回退
-            HCCL_WARNING("[CcuInsPreprocessor][%s] create ccu transports failed, "
-                "ccu resource is unavaialble, please check.", __func__);
+            HCCL_WARNING(
+                "[CcuInsPreprocessor][%s] create ccu transports unsuccessfully, "
+                "ccu resource is unavailable, please check.",
+                __func__);
             return false;
         }
-        
+
         if (ret != HcclResult::HCCL_SUCCESS) {
             createStatus = false;
-            HCCL_ERROR("[CcuInsPreprocessor][%s] create ccu transports failed, "
-                "unexpected error, please check.", __func__);
-            THROW<InternalException>("[CreateCcuTransports]create ccu transports failed, unexpected error, please check.");
+            HCCL_ERROR(
+                "[CcuInsPreprocessor][%s] create ccu transports failed, "
+                "unexpected error, please check.",
+                __func__);
+            THROW<InternalException>(
+                "[CreateCcuTransports]create ccu transports failed, unexpected error, please check.");
         }
         transports.emplace_back(tansport);
     }
@@ -68,7 +78,7 @@ static bool CreateCcuTransports(CcuCommunicator &ccuComm, const std::vector<Link
     return true;
 }
 
-std::unique_ptr<CcuContext> CcuInsPreprocessor::CreateCcuCtx(const CcuInstruction &ccuInst, bool &createStatus)
+std::unique_ptr<CcuContext> CcuInsPreprocessor::CreateCcuCtx(const CcuInstruction& ccuInst, bool& createStatus)
 {
     HCCL_INFO("[CcuInsPreprocessor::%s] start, ccuInst[%s].", __func__, ccuInst.Describe().c_str());
 
@@ -78,54 +88,55 @@ std::unique_ptr<CcuContext> CcuInsPreprocessor::CreateCcuCtx(const CcuInstructio
         return nullptr;
     }
 
-    std::vector<CcuTransport *> transports;
+    std::vector<CcuTransport*> transports;
     if (!CreateCcuTransports(ccuComm, links, createStatus, transports)) {
         return nullptr;
     }
 
     // 排序links, 使用RemoteRankId排序, 确保相同的通信模式每次生成的LinkGroup顺序一致, 避免重复创建TransportGroup
-    std::sort(links.begin(), links.end(), [](const LinkData &a, const LinkData &b) {
+    std::sort(links.begin(), links.end(), [](const LinkData& a, const LinkData& b) {
         return a.GetRemoteRankId() < b.GetRemoteRankId();
     });
 
     vector<LinkInfo> linkInfos{};
     linkInfos.resize(links.size());
-    std::transform(links.begin(), links.end(), linkInfos.begin(), [](const LinkData& link)
-    {
+    std::transform(links.begin(), links.end(), linkInfos.begin(), [](const LinkData& link) {
         return LinkInfo{link};
     });
 
     LinkGroup linkGroup{linkInfos};
     u32 cntCkeNum = TEMP_MAX_CNTCKE_NUM; // 临时规避多轮不同算子导致CNTCKE资源不足，待后续正式方案修改
-    CcuTransportGroup *transportGrp = ccuComm.GetCcuTransportGrpMgr()->PrepareCreate(linkGroup, cntCkeNum);
+    CcuTransportGroup* transportGrp = ccuComm.GetCcuTransportGrpMgr()->PrepareCreate(linkGroup, cntCkeNum);
     if (transportGrp == nullptr) {
         createStatus = false; // transportGroup当前未适配资源不足场景，需重构
-        HCCL_WARNING("[CcuInsPreprocessor::%s] transportGrp alloc resource fail, but fallback, "
-                     "transports size[%zu],rankGroup size[%zu], cntCkeNum[%u]",
-                     __func__, transports.size(), linkGroup.GetLinks().size(), cntCkeNum);
+        HCCL_WARNING(
+            "[CcuInsPreprocessor::%s] transportGrp alloc resource unsuccessfully, but fallback, "
+            "transports size[%zu],rankGroup size[%zu], cntCkeNum[%u]",
+            __func__, transports.size(), linkGroup.GetLinks().size(), cntCkeNum);
         return nullptr;
     }
 
-    HCCL_INFO("[CcuInsPreprocessor::%s] create ccuContext end, transports size[%zu], createStatus[%d], "
-               "rankGroup size[%zu], cntCkeNum[%u], createStatus[%d], ccuInst[%s].",
-               __func__, transports.size(), createStatus, linkGroup.GetLinks().size(), cntCkeNum, createStatus,
-               ccuInst.GetInstType().Describe().c_str());
+    HCCL_INFO(
+        "[CcuInsPreprocessor::%s] create ccuContext end, transports size[%zu], createStatus[%d], "
+        "rankGroup size[%zu], cntCkeNum[%u], createStatus[%d], ccuInst[%s].",
+        __func__, transports.size(), createStatus, linkGroup.GetLinks().size(), cntCkeNum, createStatus,
+        ccuInst.GetInstType().Describe().c_str());
 
     std::unique_ptr<CcuCtxArg> ctxArg = ccuInst.GetCtxArg();
     CHECK_NULLPTR(ctxArg, "[CcuInsPreprocessor::CreateCcuCtx] ctxArg is nullptr!");
-    return CcuCtxCreatorRegistry::GetInstance().GetCreateFunc(ccuInst.GetInstType())(*ctxArg, transports,
-                                                                                     *transportGrp);
+    return CcuCtxCreatorRegistry::GetInstance().GetCreateFunc(ccuInst.GetInstType())(
+        *ctxArg, transports, *transportGrp);
 }
 
-void CcuInsPreprocessor::CreateCcuCtxGroup(const CcuInstruction &ccuIns, std::unique_ptr<CcuCtxGroup> &ccuCtxGroupPtr,
-                                           bool &createStatus)
+void CcuInsPreprocessor::CreateCcuCtxGroup(
+    const CcuInstruction& ccuIns, std::unique_ptr<CcuCtxGroup>& ccuCtxGroupPtr, bool& createStatus)
 {
     HCCL_INFO("[CcuInsPreprocessor::%s] start, ccuIns[%s].", __func__, ccuIns.Describe().c_str());
 
     CcuInstType insType = ccuIns.GetInstType();
     if (insType == CcuInstType::CCU_INS_GROUP) {
-        const CcuInsGroup &ccuInsGroup = dynamic_cast<const CcuInsGroup &>(ccuIns);
-        for (auto &ins : ccuInsGroup.GetCcuInstructions()) {
+        const CcuInsGroup& ccuInsGroup = dynamic_cast<const CcuInsGroup&>(ccuIns);
+        for (auto& ins : ccuInsGroup.GetCcuInstructions()) {
             std::unique_ptr<CcuContext> ctxPtr = CreateCcuCtx(*ins, createStatus);
             if (ctxPtr == nullptr) {
                 return;
@@ -140,42 +151,45 @@ void CcuInsPreprocessor::CreateCcuCtxGroup(const CcuInstruction &ccuIns, std::un
         ccuCtxGroupPtr->ctxs.emplace_back(std::move(ctxPtr));
     }
 
-    HCCL_INFO("[CcuInsPreprocessor::%s] create ccuCtx end, insType[%s], ccuCtxGroup ctxs size[%zu], "
-               "createStatus[%d].",
-               __func__, insType.Describe().c_str(), ccuCtxGroupPtr->ctxs.size(), createStatus);
+    HCCL_INFO(
+        "[CcuInsPreprocessor::%s] create ccuCtx end, insType[%s], ccuCtxGroup ctxs size[%zu], "
+        "createStatus[%d].",
+        __func__, insType.Describe().c_str(), ccuCtxGroupPtr->ctxs.size(), createStatus);
 }
 
 bool CcuInsPreprocessor::CheckCtxTransportStatus(bool resAllocSuccess)
 {
     if (!resAllocSuccess) {
-        HCCL_INFO("[CcuInsPreprocessor::%s] CreateCcuCtx alloc local resource fail, ccuCtxGroups"
-                   " size[%zu], resPackIdxs size[%zu], ctxSignatures size[%zu], insPtrs size[%zu]",
-                   __func__, ccuCtxGroups.size(), resPackIdxs.size(), ctxSignatures.size(), insPtrs.size());
+        HCCL_WARNING(
+            "[CcuInsPreprocessor::%s] CreateCcuCtx alloc local resource unsuccessfully, ccuCtxGroups"
+            " size[%zu], resPackIdxs size[%zu], ctxSignatures size[%zu], insPtrs size[%zu]",
+            __func__, ccuCtxGroups.size(), resPackIdxs.size(), ctxSignatures.size(), insPtrs.size());
         return false;
     }
 
-    HCCL_INFO("[CcuInsPreprocessor::%s] CreateCcuCtx success, ccuCtxGroups size[%zu], resPackIdxs"
-               " size[%zu], ctxSignatures size[%zu], insPtrs size[%zu]",
-               __func__, ccuCtxGroups.size(), resPackIdxs.size(), ctxSignatures.size(), insPtrs.size());
+    HCCL_INFO(
+        "[CcuInsPreprocessor::%s] CreateCcuCtx success, ccuCtxGroups size[%zu], resPackIdxs"
+        " size[%zu], ctxSignatures size[%zu], insPtrs size[%zu]",
+        __func__, ccuCtxGroups.size(), resPackIdxs.size(), ctxSignatures.size(), insPtrs.size());
     return true;
 }
 
-void CcuInsPreprocessor::InsPreprocess(InsIterator &insIter, u32 resPackIndex, bool isMc2)
+void CcuInsPreprocessor::InsPreprocess(InsIterator& insIter, u32 resPackIndex, bool isMc2)
 {
-    CcuInstruction &ccuIns = dynamic_cast<CcuInstruction &>(*insIter);
+    CcuInstruction& ccuIns = dynamic_cast<CcuInstruction&>(*insIter);
     // 获取Signature
     CcuCtxSignature ctxSignature = ccuIns.GetCtxSignature();
     if (isMc2) {
         ctxSignature.Append("_Mc2");
     }
     // 获取ResPack
-    CcuResPack &ccuResPack = ccuComm.GetCcuResPackMgr()->GetCcuResPack(resPackIndex);
-    uintptr_t   resPackId  = ccuResPack.GetId();
+    CcuResPack& ccuResPack = ccuComm.GetCcuResPackMgr()->GetCcuResPack(resPackIndex);
+    uintptr_t resPackId = ccuResPack.GetId();
 
     u64 execId = 0;
     if (!ccuComm.GetRegisteredCcuCtxMgr()->HasRegistered(ctxSignature, resPackId, execId)) {
         needHandShake = true;
-    
+
         resPackIdxs.emplace_back(resPackIndex);
         insPtrs.emplace_back(insIter);
         ctxSignatures.emplace_back(ctxSignature);
@@ -187,12 +201,12 @@ void CcuInsPreprocessor::InsPreprocess(InsIterator &insIter, u32 resPackIndex, b
         // 根据CCU扩展指令创建CcuContext实例
         std::unique_ptr<CcuCtxGroup> ccuCtxGroupPtr = std::make_unique<CcuCtxGroup>();
         CHECK_NULLPTR(ccuCtxGroupPtr, "[CcuInsPreprocessor::InsPreprocess] ccuCtxGroupPtr is nullptr!");
-        bool                         createStatus   = true;
+        bool createStatus = true;
         CreateCcuCtxGroup(ccuIns, ccuCtxGroupPtr, createStatus);
 
         // 保存一些中间信息，用于后续的注册回退
         ccuCtxGroups[ctxSignature][resPackIndex] = std::move(ccuCtxGroupPtr);
-        resAllocSuccess                          = createStatus && resAllocSuccess;
+        resAllocSuccess = createStatus && resAllocSuccess;
         if (!CheckCtxTransportStatus(resAllocSuccess)) {
             return;
         }
@@ -204,7 +218,7 @@ void CcuInsPreprocessor::InsPreprocess(InsIterator &insIter, u32 resPackIndex, b
             if (res != HcclResult::HCCL_E_UNAVAIL) {
                 THROW<InternalException>("[CcuCtxMgr::AllocRes]AllocRes failed, unexpected error, please check.");
             }
-            HCCL_INFO("[CcuInsPreprocessor::%s] AllocRes failed, ret[%u]", __func__, res);
+            HCCL_WARNING("[CcuInsPreprocessor::%s] AllocRes is unsuccessful, ret[%u]", __func__, res);
             resAllocSuccess = false;
         }
     } else {
@@ -214,7 +228,7 @@ void CcuInsPreprocessor::InsPreprocess(InsIterator &insIter, u32 resPackIndex, b
     HCCL_INFO("[CcuInsPreprocessor::%s] end, ccuResPack handles size[%zu].", __func__, ccuResPack.handles.size());
 }
 
-void CcuInsPreprocessor::PrepareCcuCtx(std::shared_ptr<InsQueue> &insQueue, bool isMc2)
+void CcuInsPreprocessor::PrepareCcuCtx(std::shared_ptr<InsQueue>& insQueue, bool isMc2)
 {
     HCCL_INFO("[CcuInsPreprocessor::%s] start, isMc2[%d].", __func__, isMc2);
 
@@ -223,15 +237,17 @@ void CcuInsPreprocessor::PrepareCcuCtx(std::shared_ptr<InsQueue> &insQueue, bool
     for (auto slaveIter = insQueue->UnConstIterSlaves(); slaveIter.HasNext(); ++slaveIter) {
         for (auto ins = slaveIter->UnConstIter(); ins.HasNext(); ++ins) {
             if (ins->GetType() != InstructionType::CCU_INS) {
-                HCCL_INFO("[CcuInsPreprocessor::%s] slave insQueue ins type[%s] not ccu type.", __func__,
-                           ins->GetType().Describe().c_str());
+                HCCL_INFO(
+                    "[CcuInsPreprocessor::%s] slave insQueue ins type[%s] not ccu type.", __func__,
+                    ins->GetType().Describe().c_str());
                 continue;
             }
             InsPreprocess(ins, resPackIndex, isMc2);
             if (needHandShake && !resAllocSuccess) {
-                HCCL_INFO("[CcuInsPreprocessor::%s] slave insQueue ins alloc local resource fail, "
-                           "resPackIndex[%u], ins[%s].",
-                           __func__, resPackIndex, ins->Describe().c_str());
+                HCCL_WARNING(
+                    "[CcuInsPreprocessor::%s] slave insQueue ins alloc local resource unsuccessfully, "
+                    "resPackIndex[%u], ins[%s].",
+                    __func__, resPackIndex, ins->Describe().c_str());
                 return;
             }
         }
@@ -241,21 +257,24 @@ void CcuInsPreprocessor::PrepareCcuCtx(std::shared_ptr<InsQueue> &insQueue, bool
     // 主队列分配一个ResPack对每个ins进行预处理(构造ctx且分配本地资源)
     for (auto ins = insQueue->UnConstIter(); ins.HasNext(); ++ins) {
         if (ins->GetType() != InstructionType::CCU_INS) {
-            HCCL_INFO("[CcuInsPreprocessor::%s] master insQueue ins type[%s] not ccu type.", __func__,
-                       ins->GetType().Describe().c_str());
+            HCCL_INFO(
+                "[CcuInsPreprocessor::%s] master insQueue ins type[%s] not ccu type.", __func__,
+                ins->GetType().Describe().c_str());
             continue;
         }
         InsPreprocess(ins, resPackIndex, isMc2);
         if (needHandShake && !resAllocSuccess) {
-            HCCL_INFO("[CcuInsPreprocessor::%s] master insQueue ins alloc local resource fail, "
-                       "resPackIndex[%u], ins[%s].",
-                       __func__, resPackIndex, ins->Describe().c_str());
+            HCCL_WARNING(
+                "[CcuInsPreprocessor::%s] master insQueue ins alloc local resource unsuccessfully, "
+                "resPackIndex[%u], ins[%s].",
+                __func__, resPackIndex, ins->Describe().c_str());
             return;
         }
     }
 
-    HCCL_INFO("[CcuInsPreprocessor::%s] prepare ccuContext end, needHandShake[%d], resAllocSuccess[%d].", __func__,
-               needHandShake, resAllocSuccess);
+    HCCL_INFO(
+        "[CcuInsPreprocessor::%s] prepare ccuContext end, needHandShake[%d], resAllocSuccess[%d].", __func__,
+        needHandShake, resAllocSuccess);
 }
 
 void CcuInsPreprocessor::Confirm()
@@ -288,7 +307,7 @@ void CcuInsPreprocessor::RegisterCtx(bool isFuncBlock)
 {
     HCCL_INFO("[CcuInsPreprocessor::%s] start, isFuncBlock[%d].", __func__, isFuncBlock);
 
-    u32 size   = insPtrs.size();
+    u32 size = insPtrs.size();
     u64 execId = 0;
     for (u32 index = 0; index < size; ++index) {
 #ifdef HCCL_ALG_ANALYZER_DAVID
@@ -296,13 +315,13 @@ void CcuInsPreprocessor::RegisterCtx(bool isFuncBlock)
         extern Hccl::Instruction* g_ccuIns;
         g_ccuIns = &(*(insPtrs[index]));
 #endif
-        uintptr_t       resPackId = ccuComm.GetCcuResPackMgr()->GetCcuResPack(resPackIdxs[index]).GetId();
+        uintptr_t resPackId = ccuComm.GetCcuResPackMgr()->GetCcuResPack(resPackIdxs[index]).GetId();
         CcuCtxSignature signature = ctxSignatures[index];
         if (!ccuComm.GetRegisteredCcuCtxMgr()->HasRegistered(signature, resPackId, execId)) {
-            execId = ccuComm.GetRegisteredCcuCtxMgr()->Register(std::move(ccuCtxGroups[signature][resPackIdxs[index]]),
-                                                                signature, resPackId, isFuncBlock);
+            execId = ccuComm.GetRegisteredCcuCtxMgr()->Register(
+                std::move(ccuCtxGroups[signature][resPackIdxs[index]]), signature, resPackId, isFuncBlock);
         }
-        CcuInstruction &ccuIns = dynamic_cast<CcuInstruction &>(*insPtrs[index]);
+        CcuInstruction& ccuIns = dynamic_cast<CcuInstruction&>(*insPtrs[index]);
         ccuIns.SetExecId(execId);
     }
 
@@ -315,11 +334,11 @@ void CcuInsPreprocessor::ClearTmpResRecords()
     resPackIdxs.clear();
     ctxSignatures.clear();
     insPtrs.clear();
-    needHandShake   = false;
+    needHandShake = false;
     resAllocSuccess = true;
 }
 
-void CcuInsPreprocessor::Preprocess(std::shared_ptr<InsQueue> &insQueue, bool isMc2)
+void CcuInsPreprocessor::Preprocess(std::shared_ptr<InsQueue>& insQueue, bool isMc2)
 {
     HCCL_INFO("[CcuInsPreprocessor::%s] insQueue Preprocess start.", __func__);
     isRollback = false;
@@ -333,13 +352,13 @@ void CcuInsPreprocessor::Preprocess(std::shared_ptr<InsQueue> &insQueue, bool is
 
     HCCL_INFO("[CcuInsPreprocessor::%s] resAllocSuccess is[%d]", __func__, resAllocSuccess);
     if (!resAllocSuccess) {
-        HCCL_INFO("[CcuInsPreprocessor::%s] ResAlloc unsuccessful, accelerator fall back.", __func__);
+        HCCL_INFO("[CcuInsPreprocessor::%s] ResAlloc is unsuccessful, accelerator fall back.", __func__);
         if (isMc2) {
             // mc2场景，CCU资源不足时不支持回退
             THROW<InternalException>(StringFormat("[CcuInsPreprocessor::%s] Alloc local resource failed", __func__));
         }
         // CCU资源不足时warning
-        HCCL_WARNING("[CcuInsPreprocessor::%s] Alloc local resource failed", __func__);
+        HCCL_WARNING("[CcuInsPreprocessor::%s] Alloc local resource unsuccessfully", __func__);
         // 若本地资源申请失败,且非用户显式配置CCU模式，则进行握手回退
         Fallback();
         ClearTmpResRecords();
@@ -349,13 +368,10 @@ void CcuInsPreprocessor::Preprocess(std::shared_ptr<InsQueue> &insQueue, bool is
     }
     // 若本地资源申请成功, 则进行握手
     // 资源确认
-    TRY_CATCH_PROCESS_THROW (
-        InternalException,
-        Confirm(),
-        "[CCU Confirm] Comfirm Resources Error",
+    TRY_CATCH_PROCESS_THROW(
+        InternalException, Confirm(), "[CCU Confirm] Confirm Resources Error",
         // 建链失败时，清除临时创建的资源
-        ClearTmpResRecords()
-    );
+        ClearTmpResRecords());
 
     // 注册
     RegisterCtx(isFuncBlock);
@@ -363,10 +379,7 @@ void CcuInsPreprocessor::Preprocess(std::shared_ptr<InsQueue> &insQueue, bool is
     HCCL_INFO("[CcuInsPreprocessor::%s] insQueue Preprocess end.", __func__);
 }
 
-CcuCommunicator *CcuInsPreprocessor::GetCcuComm()
-{
-    return &ccuComm;
-}
+CcuCommunicator* CcuInsPreprocessor::GetCcuComm() { return &ccuComm; }
 
 CcuInsPreprocessor::~CcuInsPreprocessor()
 {
@@ -376,31 +389,33 @@ CcuInsPreprocessor::~CcuInsPreprocessor()
     insPtrs.clear();
 }
 
-HcclResult CcuInsPreprocessor::RecoverCcuTransportCtx(const std::vector<LinkData> &links,
-    vector<std::pair<LinkGroup, u32>> linkGroupPair)
+HcclResult CcuInsPreprocessor::RecoverCcuTransportCtx(
+    const std::vector<LinkData>& links, vector<std::pair<LinkGroup, u32>> linkGroupPair)
 {
-    HCCL_INFO("[CcuInsPreprocessor::%s] start, links size[%u], linkGroupPair size[%u]", __func__, links.size(),
-              linkGroupPair.size());
+    HCCL_INFO(
+        "[CcuInsPreprocessor::%s] start, links size[%u], linkGroupPair size[%u]", __func__, links.size(),
+        linkGroupPair.size());
 
     CHK_RET(ccuComm.GetCcuJettyMgr()->PrepareCreate(links));
 
-    std::vector<CcuTransport *> transports;
+    std::vector<CcuTransport*> transports;
     transports.reserve(links.size());
-    for (auto &link : links) {
-        CcuTransport *tansport = nullptr;
+    for (auto& link : links) {
+        CcuTransport* tansport = nullptr;
         CHK_RET(ccuComm.GetCcuTransportMgr()->PrepareCreate(link, tansport));
         transports.emplace_back(tansport);
     }
 
     // u32 cntCkeNum = TEMP_MAX_CNTCKE_NUM; // 临时规避多轮不同算子导致CNTCKE资源不足，待后续正式方案修改
-    for (auto &iter : linkGroupPair) {
-        LinkGroup          linkGroup    = iter.first;
-        u32                cntCkeNum    = iter.second;
-        CcuTransportGroup *transportGrp = ccuComm.GetCcuTransportGrpMgr()->PrepareCreate(linkGroup, cntCkeNum);
+    for (auto& iter : linkGroupPair) {
+        LinkGroup linkGroup = iter.first;
+        u32 cntCkeNum = iter.second;
+        CcuTransportGroup* transportGrp = ccuComm.GetCcuTransportGrpMgr()->PrepareCreate(linkGroup, cntCkeNum);
         if (transportGrp == nullptr) {
-            HCCL_ERROR("[CcuInsPreprocessor::%s] transportGrp alloc resource fail, but fallback, "
-                       "transports size[%zu],rankGroup size[%zu], cntCkeNum[%u]",
-                       __func__, transports.size(), linkGroup.GetLinks().size(), cntCkeNum);
+            HCCL_ERROR(
+                "[CcuInsPreprocessor::%s] transportGrp alloc resource fail, but fallback, "
+                "transports size[%zu],rankGroup size[%zu], cntCkeNum[%u]",
+                __func__, transports.size(), linkGroup.GetLinks().size(), cntCkeNum);
             return HCCL_E_INTERNAL;
         }
     }
@@ -417,13 +432,10 @@ HcclResult CcuInsPreprocessor::RecoverCcuTransportConfirm()
     ccuComm.GetCcuTransportGrpMgr()->Confirm();
     ccuComm.GetCcuJettyMgr()->Confirm();
 
-    HCCL_INFO("[CcuInsPreprocessor::%s] confirm  resource end.", __func__);
+    HCCL_INFO("[CcuInsPreprocessor::%s] confirm resource end.", __func__);
     return HCCL_SUCCESS;
 }
 
-bool CcuInsPreprocessor::IsRollback() const
-{
-    return isRollback;
-}
+bool CcuInsPreprocessor::IsRollback() const { return isRollback; }
 
 } // namespace Hccl

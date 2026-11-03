@@ -11,19 +11,14 @@
 #include "st_ctx.h"
 #include "../rts_stub/rts_stub.h"
 
-
 thread_local ThreadContext* ctx;
 
+ThreadContext* GetCurrentThreadContext() { return ctx; }
 
-ThreadContext* GetCurrentThreadContext() {
-    return ctx;
-}
+void SetCurrentThreadContext(ThreadContext* newCtx) { ctx = newCtx; }
 
-void SetCurrentThreadContext(ThreadContext* newCtx) {
-    ctx = newCtx;
-}
-
-ThreadContext::~ThreadContext() {
+ThreadContext::~ThreadContext()
+{
     delete comm;
     aclrtFree(sendBuf);
     aclrtFree(recvBuf);

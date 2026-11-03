@@ -16,6 +16,7 @@ clone_cann_target(
     ORIGIN ccl_kernel
     OUTPUT aicpu_custom
     IGNORE_PROP LINK_LIBRARIES      # 忽略链接库属性
+                    LINK_OPTIONS     # 忽略链接选项（含 ccl_kernel 的 version script, aicpu_custom 挂载独立白名单）
 )
 
 # 链接库
@@ -35,6 +36,7 @@ target_link_libraries(aicpu_custom PRIVATE
     ascend_hal
     c_sec
     mmpa
+    aicpu_sharder
     -Wl,--whole-archive
     ccl_kernel_plf_a            # 链接 ccl_kernel_plf 静态库
     -Wl,--no-whole-archive
@@ -57,6 +59,12 @@ add_custom_command(
 add_custom_target(aicpu_custom_json ALL
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/libaicpu_custom.json
 )
+
+# 符号隐藏: 仅导出白名单符号; 非 release 模式依赖动态符号, 不挂载
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_link_options(aicpu_custom PRIVATE "-Wl,--version-script=${CMAKE_CURRENT_LIST_DIR}/aicpu_custom.map")
+    set_property(TARGET aicpu_custom APPEND PROPERTY LINK_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/aicpu_custom.map")
+endif()
 
 # 安装
 install(TARGETS aicpu_custom

@@ -7,6 +7,7 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
+
 target_sources(hccl_v2_utest
         PUBLIC
         ut_communicator_impl.cc
@@ -26,6 +27,7 @@ target_sources(hccl_v2_utest
         ut_hccl_mc2_ex.cc
         ut_task_service.cc
         ut_flush_handle.cc
+        ut_flush_manager.cc
 
         ${HCCL_V2_CODE_ROOT}/framework/fault_recovery/snap_shot_parse.cc
         ${HCCL_V2_CODE_ROOT}/common/checkcrc.cc
@@ -34,9 +36,9 @@ target_sources(hccl_v2_utest
         ${HCCL_V2_CODE_ROOT}/framework/communicator/ccu_super_fast_load.cc
         ${HCCL_V2_CODE_ROOT}/framework/communicator/aicpu/aicpu_mc2_handler.cc
         ${HCCL_V2_CODE_ROOT}/framework/communicator/aicpu/hccl_mc2_ex.cc
-        ${HCCL_V2_CODE_ROOT}/framework/communicator/hostdpu/flush_manager.cc
-        ${HCCL_V2_CODE_ROOT}/framework/communicator/hostdpu/flush_handle.cc
-        ${HCCL_V2_CODE_ROOT}/framework/communicator/hostdpu/dpu_kernel_entrance.cc
-        ${HCCL_V2_CODE_ROOT}/framework/communicator/hostdpu/task_service.cc
+        ${HCCL_CODE_ROOT}/src/base_comm/resources/flush/flush_manager.cc
+        ${HCCL_CODE_ROOT}/src/base_comm/resources/flush/flush_handle.cc
+        ${HCCL_CODE_ROOT}/src/base_comm/resources/comm_engine_res/threads/cpu_thread/legacy_dpu_thread/dpu_kernel_entrance.cc
+        ${HCCL_CODE_ROOT}/src/base_comm/resources/comm_engine_res/threads/cpu_thread/legacy_dpu_thread/task_service.cc
         ${HCCL_V2_CODE_ROOT}/framework/communicator/comm_topo_desc.cc
 )

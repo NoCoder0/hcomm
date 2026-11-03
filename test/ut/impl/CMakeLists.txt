@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
@@ -18,6 +18,8 @@ set(hccl_utest_impl_list
     # ut_zero_copy_memory_agent.cc
     ut_preempt_port_manager.cc
     ut_template_base.cc
+    ut_alltoallv_continuous_pipeline.cc
+    ut_alltoall_operator.cc
     # ut_netdevice.cc
     ut_global_mem_mgr.cc
     ut_global_mem_mgr_multhread.cc
@@ -53,7 +55,7 @@ target_link_libraries(hccl_utest_impl PRIVATE
     -pthread
     hccl_llt
     -Wl,--whole-archive
-    -Wl,--no-whole-archi
+    -Wl,--no-whole-archive
     -lgcov
     -lrt
     -ldl

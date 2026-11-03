@@ -16,11 +16,12 @@
 #include "comm.h"
 #include "env_config.h"
 
-GTEST_API_ int main(int argc, char **argv) {
+GTEST_API_ int main(int argc, char** argv)
+{
     printf("Running main() from gtest_main.cc\n");
     setTargetPort(17427, 31113);
     testing::InitGoogleTest(&argc, argv);
-	setenv("LD_LIBRARY_PATH", "./hcomm/test/stub/workspace/fwkacllib/lib64", 1);
+    setenv("LD_LIBRARY_PATH", "./hcomm/test/stub/workspace/fwkacllib/lib64", 1);
     InitEnvParam();
     return RUN_ALL_TESTS();
 }

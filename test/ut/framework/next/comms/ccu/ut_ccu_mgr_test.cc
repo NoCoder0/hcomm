@@ -25,15 +25,13 @@
 
 #undef private
 #undef protected
+#include "base_comm_node_accessors.h"
 
 using namespace hcomm;
 
 class CcuMgrTest : public testing::Test {
-protected:    
-    static void SetUpTestCase()
-    {
-        std::cout << "CcuMgrTest tests set up." << std::endl;
-    }
+protected:
+    static void SetUpTestCase() { std::cout << "CcuMgrTest tests set up." << std::endl; }
 
     static void TearDownTestCase()
     {
@@ -52,27 +50,20 @@ protected:
         GlobalMockObject::verify();
         std::cout << "A Test case in CcuMgrTest TearDown" << std::endl;
     }
-
 };
 
 class MockCcuKernelArg : public hcomm::CcuKernelArg {
 public:
-    CcuKernelSignature GetKernelSignature() const override {
-        return CcuKernelSignature{};
-    }
+    CcuKernelSignature GetKernelSignature() const override { return CcuKernelSignature{}; }
 };
 
 class MockCcuKernel : public hcomm::CcuKernel {
 public:
-    explicit MockCcuKernel(const hcomm::CcuKernelArg &arg) : hcomm::CcuKernel(arg) {}
-    
-    HcclResult Algorithm() override {
-        return HCCL_SUCCESS;
-    }
-    
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override {
-        return {};
-    }
+    explicit MockCcuKernel(const hcomm::CcuKernelArg& arg) : hcomm::CcuKernel(arg) {}
+
+    HcclResult Algorithm() override { return HCCL_SUCCESS; }
+
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override { return {}; }
 };
 
 TEST_F(CcuMgrTest, Ut_CcuRegister_When_resourceNotEnough_Expect_Return_false)
@@ -86,16 +77,16 @@ TEST_F(CcuMgrTest, Ut_CcuRegister_When_resourceNotEnough_Expect_Return_false)
         resReq.msReq[i] = 1;
     }
     MOCKER_CPP(&hcomm::CcuKernel::GetResourceRequest).stubs().will(returnValue(resReq));
-    
+
     // Mock AllocInstrRes 让它成功返回，这样能走到 CheckResIfAvailable
     MOCKER_CPP(&hcomm::CcuDevMgrImp::AllocIns).stubs().will(returnValue(HcclResult::HCCL_SUCCESS));
 
     uint32_t devicePhyId = 0;
-    auto &kernelMgr = hcomm::CcuKernelMgr::GetInstance(devicePhyId);
+    auto& kernelMgr = hcomm::GetCcuKernelMgr(devicePhyId);
     MockCcuKernelArg kernelArg;
 
     // 给 KernelCreator 赋值一个有效的 lambda
-    hcomm::KernelCreator creator = [](const hcomm::CcuKernelArg &arg) {
+    hcomm::KernelCreator creator = [](const hcomm::CcuKernelArg& arg) {
         return std::make_unique<MockCcuKernel>(arg);
     };
     const auto& arg = *static_cast<const hcomm::CcuKernelArg*>(&kernelArg);
@@ -103,10 +94,10 @@ TEST_F(CcuMgrTest, Ut_CcuRegister_When_resourceNotEnough_Expect_Return_false)
 
     // 构造一个空资源的 resPack（已持有资源为0）
     // 注意：CcuResPack 是 explicit 构造，需要传入 CcuEngine
-    hcomm::CcuResPack *resPack = new hcomm::CcuResPack(hcomm::CcuEngine::CCU_MS);
+    hcomm::CcuResPack* resPack = new hcomm::CcuResPack(hcomm::CcuEngine::CCU_MS);
     // 这里 resPack 的 resRepo_ 初始是空的，所以 GetResNumFromResPack 得到的 totalRes 全是0
     // 而 kernel 请求了 msReq[0..N] = 1，所以 CheckResIfAvailable 会返回 false
-    
+
     CcuKernelHandle newHandle{0};
     HcclResult ret = kernelMgr.Register(std::move(kernel), *resPack, newHandle);
     EXPECT_EQ(ret, HcclResult::HCCL_E_UNAVAIL);

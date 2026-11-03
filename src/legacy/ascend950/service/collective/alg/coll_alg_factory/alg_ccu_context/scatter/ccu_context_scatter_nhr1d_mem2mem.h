@@ -21,14 +21,12 @@
 namespace Hccl {
 class CcuContextScatterNHR1DMem2Mem : public CcuContextAlgBase {
 public:
-    CcuContextScatterNHR1DMem2Mem(const CcuCtxArg &arg, const std::vector<CcuTransport *> &transports,
-                                  const CcuTransportGroup &group);
-    ~CcuContextScatterNHR1DMem2Mem() override
-    {
-    }
+    CcuContextScatterNHR1DMem2Mem(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
+    ~CcuContextScatterNHR1DMem2Mem() override {}
 
-    void                  Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    void Algorithm() override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
 
 private:
     void LoadArgs();
@@ -38,8 +36,8 @@ private:
 
     void AxisSync(uint32_t signalIndex);
     void DoScatterNHR();
-    void DoScatterNHRSingleStep(const NHRStepInfo &nhrStepInfo);
-    void DoSendRecvSlice(const u32 &toRank, CcuRep::Memory &src, CcuRep::Memory &dst, u32 signalIndex);
+    void DoScatterNHRSingleStep(const NHRStepInfo& nhrStepInfo);
+    void DoSendRecvSlice(const u32& toRank, CcuRep::Memory& src, CcuRep::Memory& dst, u32 signalIndex);
 
     // 构造函数中
     uint32_t rootId_{0};
@@ -53,38 +51,38 @@ private:
     DataType dataType_;
     // DataType outputDataType_;
     std::vector<NHRStepInfo> stepInfoVector_; // nhr算法执行过程中的参数
-    std::map<u32, u32>       indexMap_;
+    std::map<u32, u32> indexMap_;
 
     // load进来参数
-    CcuRep::Variable              input_;
-    CcuRep::Variable              output_;
+    CcuRep::Variable input_;
+    CcuRep::Variable output_;
     std::vector<CcuRep::Variable> scratch_;
     std::vector<CcuRep::Variable> token_;
-    CcuRep::Variable              die0Size_;
-    CcuRep::Variable              die1Size_;
-    CcuRep::Variable              inputSliceStride_;
-    CcuRep::Variable              curScratchStride_;
-    CcuRep::Variable              inputRepeatStride_;
-    CcuRep::Variable              outputRepeatStride_;
-    CcuRep::Variable              repeatNumVar_;
-    CcuRep::Variable              isOutputScratch_;
+    CcuRep::Variable die0Size_;
+    CcuRep::Variable die1Size_;
+    CcuRep::Variable inputSliceStride_;
+    CcuRep::Variable curScratchStride_;
+    CcuRep::Variable inputRepeatStride_;
+    CcuRep::Variable outputRepeatStride_;
+    CcuRep::Variable repeatNumVar_;
+    CcuRep::Variable isOutputScratch_;
 
     // 跨轴同步信号
-    std::string        localAxisSignalName_;
-    std::string        anotherAxisSignalName_;
+    std::string localAxisSignalName_;
+    std::string anotherAxisSignalName_;
     CcuRep::MaskSignal localAxisSignal_;
     CcuRep::MaskSignal anotherAxisSignal_;
     CcuRep::MaskSignal localSignal_;
 
-    CcuRep::Variable              repeatNumVarTemp_;
-    CcuRep::Variable              repeatTimeflag_;
+    CcuRep::Variable repeatNumVarTemp_;
+    CcuRep::Variable repeatTimeflag_;
     std::vector<CcuRep::Variable> inputOffset_;
     std::vector<CcuRep::Variable> ScratchOffset_;
-    CcuRep::Variable              curInputOffset_;
-    CcuRep::Variable              curScratchOffset_;
-    CcuRep::Variable              cursliceSize_;
-    CcuRep::Memory                srcMem_;
-    CcuRep::Memory                dstMem_;
+    CcuRep::Variable curInputOffset_;
+    CcuRep::Variable curScratchOffset_;
+    CcuRep::Variable cursliceSize_;
+    CcuRep::Memory srcMem_;
+    CcuRep::Memory dstMem_;
 };
 } // namespace Hccl
 

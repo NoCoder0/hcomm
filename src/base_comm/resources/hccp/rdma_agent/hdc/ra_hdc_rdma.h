@@ -16,7 +16,7 @@
 #include "ra_hdc.h"
 #include "ra_rs_comm.h"
 
-#define RA_MAX_BATCH_QP_MODIFY_NUM  768
+#define RA_MAX_BATCH_QP_MODIFY_NUM 768
 
 union OpRdevInitData {
     struct {
@@ -102,7 +102,7 @@ union OpQpCreateData {
         unsigned int rdevIndex;
         int qpMode;
         int flag;
-        int memAlign;  // 0,1:4KB, 2:2MB
+        int memAlign; // 0,1:4KB, 2:2MB
         unsigned int rsvd;
     } txData;
 
@@ -138,9 +138,9 @@ union OpAiQpCreateData {
 
     struct {
         unsigned int qpn;
-        unsigned long long aiQpAddr;  // refer to struct ibv_qp *
-        unsigned int sqIndex;          // index of sq
-        unsigned int dbIndex;          // index of db
+        unsigned long long aiQpAddr; // refer to struct ibv_qp *
+        unsigned int sqIndex;        // index of sq
+        unsigned int dbIndex;        // index of db
         unsigned int psn;
     } rxData;
 };
@@ -157,8 +157,8 @@ union OpAiQpCreateWithAttrsData {
         unsigned int gidIdx;
         unsigned int psn;
         unsigned long long aiQpAddr;  // refer to struct ibv_qp *
-        unsigned int sqIndex;          // index of sq
-        unsigned int dbIndex;          // index of db
+        unsigned int sqIndex;         // index of sq
+        unsigned int dbIndex;         // index of db
         unsigned long long aiScqAddr; // refer to struct ibv_cq *scq
         unsigned long long aiRcqAddr; // refer to struct ibv_cq *rcq
         struct AiDataPlaneInfo dataPlaneInfo;
@@ -172,7 +172,7 @@ union OpTypicalQpCreateData {
         unsigned int rdevIndex;
         int qpMode;
         int flag;
-        int memAlign;  // 0,1:4KB, 2:2MB
+        int memAlign; // 0,1:4KB, 2:2MB
         unsigned int rsvd;
     } txData;
 
@@ -454,7 +454,7 @@ union OpSetQpAttrTimeoutData {
         unsigned int phyId;
         unsigned int rdevIndex;
         unsigned int qpn;
-        unsigned int timeout;  // Rdma超时时间
+        unsigned int timeout; // Rdma超时时间
     } txData;
 
     struct {
@@ -467,7 +467,7 @@ union OpSetQpAttrRetryCntData {
         unsigned int phyId;
         unsigned int rdevIndex;
         unsigned int qpn;
-        unsigned int retryCnt;  // Rdma重传次数
+        unsigned int retryCnt; // Rdma重传次数
     } txData;
 
     struct {
@@ -503,16 +503,15 @@ union OpGetCqeErrInfoListData {
 
 int RaHdcQpCreate(struct RaRdmaHandle *rdmaHandle, int flag, int qpMode, void **qpHandle);
 int RaHdcQpCreateWithAttrs(struct RaRdmaHandle *rdmaHandle, struct QpExtAttrs *extAttrs, void **qpHandle);
-int RaHdcAiQpCreate(struct RaRdmaHandle *rdmaHandle, struct QpExtAttrs *extAttrs,
-    struct AiQpInfo *info, void **qpHandle);
-int RaHdcAiQpCreateWithAttrs(struct RaRdmaHandle *rdmaHandle, struct QpExtAttrs *extAttrs,
-    struct AiQpInfo *info, void **qpHandle);
+int RaHdcAiQpCreate(struct RaRdmaHandle *rdmaHandle, struct QpExtAttrs *extAttrs, struct AiQpInfo *info,
+    void **qpHandle);
+int RaHdcAiQpCreateWithAttrs(struct RaRdmaHandle *rdmaHandle, struct QpExtAttrs *extAttrs, struct AiQpInfo *info,
+    void **qpHandle);
 int RaHdcTypicalQpCreate(struct RaRdmaHandle *rdmaHandle, int flag, int qpMode, struct TypicalQp *qpInfo,
     void **qpHandle);
 int RaHdcPollCq(struct RaQpHandle *qpHdc, bool isSendCq, unsigned int numEntries, void *wc);
 int RaHdcQpDestroy(struct RaQpHandle *qpHdc);
-int RaHdcTypicalQpModify(struct RaQpHandle *qpHdc, struct TypicalQp *localQpInfo,
-    struct TypicalQp *remoteQpInfo);
+int RaHdcTypicalQpModify(struct RaQpHandle *qpHdc, struct TypicalQp *localQpInfo, struct TypicalQp *remoteQpInfo);
 int RaHdcQpConnectAsync(struct RaQpHandle *qpHdc, const void *sockHandle);
 int RaHdcGetQpStatus(struct RaQpHandle *qpHdc, int *status);
 int RaHdcMrReg(struct RaQpHandle *qpHdc, struct MrInfoT *info);

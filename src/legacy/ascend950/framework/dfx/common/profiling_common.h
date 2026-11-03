@@ -1,12 +1,13 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #ifndef PROFILING_COMMON_H
 #define PROFILING_COMMON_H
 #include <map>
@@ -17,9 +18,10 @@
 
 namespace Hccl {
 
-MAKE_ENUM(HcclWorkflowMode, HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB = 0, HCCL_WORKFLOW_MODE_OP_BASE = 1,
-          HCCL_WORKFLOW_MODE_RESERVED)
- 
+MAKE_ENUM(
+    HcclWorkflowMode, HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB = 0, HCCL_WORKFLOW_MODE_OP_BASE = 1,
+    HCCL_WORKFLOW_MODE_RESERVED)
+
 MAKE_ENUM(SimpleTaskType, SDMA = 0, RDMA, LOCAL, UB, ROCE)
 
 MAKE_ENUM(TaskRole, DST = 0, SRC)
@@ -48,6 +50,7 @@ const std::map<TaskParamType, std::string> PROF_TASK_OP_NAME_V2 = {
     {TaskParamType::TASK_DPU_INLINE_WRITE, "Dpu_Notify_Record"},
     {TaskParamType::TASK_DPU_NOTIFY_WAIT, "Dpu_Notify_Wait"},
     {TaskParamType::TASK_DPU_WRITE_WITH_NOTIFY, "Dpu_Write_With_Notify"},
+    {TaskParamType::TASK_DPU_CHANNEL_DRAIN, "Dpu_ChannelDrain"},
 };
 
 inline std::string GetProfTaskOpNameV2(TaskParamType type)

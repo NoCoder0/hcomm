@@ -1,12 +1,13 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #ifndef TYPICAL_PARAM_CHECK_H
 #define TYPICAL_PARAM_CHECK_H
 #include "interface_hccl.h"
@@ -15,8 +16,9 @@ namespace hccl {
 inline HcclResult CheckDataType(const HcclDataType dataType)
 {
     if ((dataType >= HCCL_DATA_TYPE_RESERVED) || (dataType < HCCL_DATA_TYPE_INT8)) {
-        HCCL_ERROR("[Check][DataType]errNo[0x%016llx] data type[%s] not supported",
-            HCOM_ERROR_CODE(HCCL_E_NOT_SUPPORT), GetDataTypeEnumStr(dataType).c_str());
+        HCCL_ERROR(
+            "[Check][DataType]errNo[0x%016llx] data type[%s] not supported", HCOM_ERROR_CODE(HCCL_E_NOT_SUPPORT),
+            GetDataTypeEnumStr(dataType).c_str());
         return HCCL_E_NOT_SUPPORT;
     }
     return HCCL_SUCCESS;
@@ -25,7 +27,8 @@ inline HcclResult CheckDataType(const HcclDataType dataType)
 inline HcclResult CheckCount(const u64 count)
 {
     if (count > SYS_MAX_COUNT) {
-        HCCL_ERROR("[Check][Count]errNo[0x%016llx] count[%llu] is invalid(bigger than MAX count[%llu])",
+        HCCL_ERROR(
+            "[Check][Count]errNo[0x%016llx] count[%llu] is invalid(bigger than MAX count[%llu])",
             HCOM_ERROR_CODE(HCCL_E_PARA), count, SYS_MAX_COUNT);
         return HCCL_E_PARA;
     }
@@ -84,8 +87,12 @@ inline HcclResult CheckSendLinkInfo(AscendSendLinkInfo* sendInfo)
     CHK_PTR_NULL(sendInfo->remoteNotifyValueMem);
     // 校验sendInfo->remoteNotifyValueMem长度
     const uint32_t NOTIFY_MEM_LEN = 4;
-    CHK_PRT_RET(sendInfo->remoteNotifyValueMem->size != NOTIFY_MEM_LEN, HCCL_ERROR("[CheckSendLinkInfo] remoteNotifyValueMem len expect:[%u], actual:[%llu].",
-        NOTIFY_MEM_LEN, sendInfo->remoteNotifyValueMem->size), HCCL_E_PARA);
+    CHK_PRT_RET(
+        sendInfo->remoteNotifyValueMem->size != NOTIFY_MEM_LEN,
+        HCCL_ERROR(
+            "[CheckSendLinkInfo] remoteNotifyValueMem len expect:[%u], actual:[%llu].", NOTIFY_MEM_LEN,
+            sendInfo->remoteNotifyValueMem->size),
+        HCCL_E_PARA);
     return HCCL_SUCCESS;
 }
 
@@ -97,6 +104,6 @@ inline HcclResult CheckParam(void* buf, uint64_t count, HcclDataType dataType, a
     CHK_PTR_NULL(stream);
     return HCCL_SUCCESS;
 }
-}
+} // namespace hccl
 // namespace hccl
 #endif

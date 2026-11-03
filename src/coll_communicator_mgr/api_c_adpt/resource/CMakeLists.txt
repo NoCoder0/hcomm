@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2026 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
@@ -13,13 +13,14 @@ set(src_list
     comm_mem_c_adpt.cc
     engine_ctx_c_adpt.cc
     thread_c_adpt.cc
+    legacy_thread_c_adapt.cc
 )
 
-if(TARGET hcomm)
-    target_sources(hcomm PRIVATE
+if(TARGET hcomm_coll_comm_obj)
+    target_sources(hcomm_coll_comm_obj PRIVATE
         ${src_list}
     )
-    target_include_directories(hcomm PRIVATE
+    target_include_directories(hcomm_coll_comm_obj PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
     )
 endif()

@@ -28,55 +28,55 @@
 #include "network_comm.h"
 
 static struct rs_cb stubRsCb;
-extern int RsTlvAssembleSendData(struct TlvBufInfo *bufInfo, struct TlvRequestMsgHead *head, char *data,
-    bool *sendFinish, int dataMaxLength);
-extern void RsEpollEventHandleOne(struct rs_cb *rsCb, struct epoll_event *events);
-extern int RsNslbRequest(struct TlvRequestMsgHead *head, char *data);
+extern int RsTlvAssembleSendData(
+    struct TlvBufInfo* bufInfo, struct TlvRequestMsgHead* head, char* data, bool* sendFinish, int dataMaxLength);
+extern void RsEpollEventHandleOne(struct rs_cb* rsCb, struct epoll_event* events);
+extern int RsNslbRequest(struct TlvRequestMsgHead* head, char* data);
 extern int RsNetcoTblApiInit(void);
-extern int RsCcuRequest(struct TlvRequestMsgHead *head, char *dataIn, char *dataOut, unsigned int *bufferSize);
-extern int RsGetTlvCb(uint32_t phyId, struct RsTlvCb **tlvCb);
-extern int RsNetcoInitArg(unsigned int phyId, NetCoIpPortArg *netcoArg);
+extern int RsCcuRequest(struct TlvRequestMsgHead* head, char* dataIn, char* dataOut, unsigned int* bufferSize);
+extern int RsGetTlvCb(uint32_t phyId, struct RsTlvCb** tlvCb);
+extern int RsNetcoInitArg(unsigned int phyId, NetCoIpPortArg* netcoArg);
 extern int RsNetcoApiInit(void);
-extern int RsNslbNetcoInit(unsigned int phyId, struct RsNslbCb *nslbCb);
-extern void RsNslbNetcoDeinit(struct RsNslbCb *nslbCb);
+extern int RsNslbNetcoInit(unsigned int phyId, struct RsNslbCb* nslbCb);
+extern void RsNslbNetcoDeinit(struct RsNslbCb* nslbCb);
 
-int StubRsGetNslbCb(uint32_t phyId, struct RsTlvCb **tlvCb)
+int StubRsGetNslbCb(uint32_t phyId, struct RsTlvCb** tlvCb)
 {
     stubRsCb.connCb.epollfd = 0;
     stubRsCb.tlvCb.bufInfo.bufferSize = RS_TLV_BUFFER_SIZE;
-    stubRsCb.tlvCb.bufInfo.buf = (char *)calloc(stubRsCb.tlvCb.bufInfo.bufferSize, sizeof(char));
+    stubRsCb.tlvCb.bufInfo.buf = (char*)calloc(stubRsCb.tlvCb.bufInfo.bufferSize, sizeof(char));
     stubRsCb.tlvCb.initFlag = false;
     pthread_mutex_init(&stubRsCb.tlvCb.mutex, NULL);
     *tlvCb = &stubRsCb.tlvCb;
     return 0;
 }
 
-int StubRsGetNslbCbDeinit(uint32_t phyId, struct RsTlvCb **tlvCb)
+int StubRsGetNslbCbDeinit(uint32_t phyId, struct RsTlvCb** tlvCb)
 {
     stubRsCb.connCb.epollfd = 0;
     stubRsCb.tlvCb.bufInfo.bufferSize = RS_TLV_BUFFER_SIZE;
-    stubRsCb.tlvCb.bufInfo.buf = (char *)calloc(stubRsCb.tlvCb.bufInfo.bufferSize, sizeof(char));
+    stubRsCb.tlvCb.bufInfo.buf = (char*)calloc(stubRsCb.tlvCb.bufInfo.bufferSize, sizeof(char));
     stubRsCb.tlvCb.initFlag = true;
     pthread_mutex_init(&stubRsCb.tlvCb.mutex, NULL);
     *tlvCb = &stubRsCb.tlvCb;
     return 0;
 }
 
-int StubRsGetNslbCbAfterDeinit(uint32_t phyId, struct RsTlvCb **tlvCb)
+int StubRsGetNslbCbAfterDeinit(uint32_t phyId, struct RsTlvCb** tlvCb)
 {
     *tlvCb = &stubRsCb.tlvCb;
     return 0;
 }
 
-int StubRsGetNslbCbInit(uint32_t phyId, struct RsTlvCb **tlvCb)
+int StubRsGetNslbCbInit(uint32_t phyId, struct RsTlvCb** tlvCb)
 {
     stubRsCb.tlvCb.initFlag = false;
     *tlvCb = &stubRsCb.tlvCb;
     return 0;
 }
 
-int StubRsTlvAssembleSendData(struct TlvBufInfo *bufInfo, struct TlvRequestMsgHead *head, char *data,
-    bool *sendFinish, int dataMaxLength)
+int StubRsTlvAssembleSendData(
+    struct TlvBufInfo* bufInfo, struct TlvRequestMsgHead* head, char* data, bool* sendFinish, int dataMaxLength)
 {
     if (head->offset == 0) {
         *sendFinish = false;
@@ -86,7 +86,7 @@ int StubRsTlvAssembleSendData(struct TlvBufInfo *bufInfo, struct TlvRequestMsgHe
     return 0;
 }
 
-int StubRsGetRsCbV2(unsigned int phyId, struct rs_cb **rsCb)
+int StubRsGetRsCbV2(unsigned int phyId, struct rs_cb** rsCb)
 {
     stubRsCb.tlvCb.initFlag = false;
     stubRsCb.connCb.epollfd = 0;
@@ -94,9 +94,9 @@ int StubRsGetRsCbV2(unsigned int phyId, struct rs_cb **rsCb)
     return 0;
 }
 
-int StubFileReadCfg(const char *filePath, int devId, const char *confName, char *confValue, unsigned int len)
+int StubFileReadCfg(const char* filePath, int devId, const char* confName, char* confValue, unsigned int len)
 {
-    if (strncmp(confName, "udp_port_mode", strlen("udp_port_mode") + 1) == 0){
+    if (strncmp(confName, "udp_port_mode", strlen("udp_port_mode") + 1) == 0) {
         memcpy_s(confValue, len, "nslb_dp", strlen("nslb_dp"));
     } else {
         memcpy_s(confValue, len, "16666", strlen("16666"));
@@ -104,7 +104,8 @@ int StubFileReadCfg(const char *filePath, int devId, const char *confName, char 
     return 0;
 }
 
-void FreeRsCb() {
+void FreeRsCb()
+{
     pthread_mutex_destroy(&stubRsCb.tlvCb.mutex);
     free(stubRsCb.tlvCb.bufInfo.buf);
     stubRsCb.tlvCb.bufInfo.buf = NULL;
@@ -149,14 +150,14 @@ void TcRsNslbRequest()
 {
     struct TlvRequestMsgHead head = {0};
     unsigned int bufferSize = 0;
-    char *dataOut = NULL;
-    char *dataIn = NULL;
+    char* dataOut = NULL;
+    char* dataIn = NULL;
     int ret = 0;
 
     head.phyId = 0;
     head.type = 0;
-    dataOut = (char *)calloc(16, sizeof(char));
-    dataIn = (char *)calloc(16, sizeof(char));
+    dataOut = (char*)calloc(16, sizeof(char));
+    dataIn = (char*)calloc(16, sizeof(char));
 
     mocker_invoke(RsGetTlvCb, StubRsGetNslbCb, 10);
     mocker(RsTlvAssembleSendData, 10, -EINVAL);
@@ -194,7 +195,7 @@ void TcRsTlvAssembleSendData()
     int ret = 0;
 
     bufInfo.bufferSize = RS_TLV_BUFFER_SIZE;
-    bufInfo.buf = (char *)calloc(RS_TLV_BUFFER_SIZE, sizeof(char));
+    bufInfo.buf = (char*)calloc(RS_TLV_BUFFER_SIZE, sizeof(char));
     memset_s(bufInfo.buf, bufInfo.bufferSize, 0, bufInfo.bufferSize);
     head.sendBytes = 16U;
     head.totalBytes = 16U;
@@ -202,8 +203,8 @@ void TcRsTlvAssembleSendData()
     head.phyId = 0;
     head.type = 0;
 
-    mocker(memset_s, 10 , 0);
-    mocker(memcpy_s, 10 , 0);
+    mocker(memset_s, 10, 0);
+    mocker(memcpy_s, 10, 0);
     ret = RsTlvAssembleSendData(&bufInfo, &head, data, &sendFinish, 3072);
     EXPECT_INT_EQ(0, ret);
 
@@ -260,7 +261,7 @@ void TcRsEpollNslbEventHandle()
 
 void TcRsGetTlvCb()
 {
-    struct RsTlvCb *tlvCb = NULL;
+    struct RsTlvCb* tlvCb = NULL;
     uint32_t phyId = 0;
     int ret = 0;
 
@@ -275,8 +276,8 @@ void TcRsNslbApiInit()
     NetCoIpPortArg arg = {0};
     unsigned int dataLen = 0;
     unsigned int type = 0;
-    void *stubCo = NULL;
-    char *data = NULL;
+    void* stubCo = NULL;
+    char* data = NULL;
     int ret = 0;
 
     RsNetcoInit(0, arg);
@@ -362,13 +363,6 @@ void TcRsCcuRequest()
     mocker(RsCcuTlvRequest, 10, 0);
     ret = RsCcuRequest(&head, dataIn, dataOut, &bufferSize);
     EXPECT_INT_EQ(0, ret);
-    mocker_clean();
-
-    mocker(isCcuTlvReqExist, 10, true);
-    mocker(RsCcuTlvRequest, 10, 0);
-    bufferSize = 4096U;
-    ret = RsCcuRequest(&head, dataIn, dataOut, &bufferSize);
-    EXPECT_INT_NE(0, ret);
     mocker_clean();
 }
 

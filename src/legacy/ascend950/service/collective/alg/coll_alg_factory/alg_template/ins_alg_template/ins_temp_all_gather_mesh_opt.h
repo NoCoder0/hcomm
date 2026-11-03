@@ -19,9 +19,9 @@ namespace Hccl {
 
 class InsTempAllGatherMesh1DOpt : public InsAlgTemplateBase {
 public:
-    explicit InsTempAllGatherMesh1DOpt(const RankId virtualRank, const u32 tempRankSize,
-                                  const std::vector<std::vector<RankId>> &tempVTopo,
-                                  const std::map<RankId, u32>            &tempVirtRankMap);
+    explicit InsTempAllGatherMesh1DOpt(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~InsTempAllGatherMesh1DOpt() override;
 
     std::string Describe() const override
@@ -29,24 +29,25 @@ public:
         return StringFormat("Instruction based Template of all gather mesh with tempRankSize [%u].", tempRankSize_);
     }
 
-    HcclResult GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &tempAlgParams,
-                         const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues);
-    HcclResult CalcSliceInfo(const AllignInfo &allignInfo, const u64 dataSize, RankSliceInfo &sliceInfoVec) override;
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
-    u32 CalcScratchMultiple(const BufferType &inBufferTpye, const BufferType &outBufferTpye) const
+    HcclResult GenExtIns(
+        const TempFuncs& tempFuncs, const TemplateDataParams& tempAlgParams, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues);
+    HcclResult CalcSliceInfo(const AllignInfo& allignInfo, const u64 dataSize, RankSliceInfo& sliceInfoVec) override;
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
+    u32 CalcScratchMultiple(const BufferType& inBufferTpye, const BufferType& outBufferTpye) const
     {
-        (void) inBufferTpye;
-        (void) outBufferTpye;
-        HCCL_INFO(
-            "[InsTempAllGatherMesh1DOpt][CalcScratchMultiple] templateScratchMultiplier[%llu]", tempRankSize_);
+        (void)inBufferTpye;
+        (void)outBufferTpye;
+        HCCL_INFO("[InsTempAllGatherMesh1DOpt][CalcScratchMultiple] templateScratchMultiplier[%llu]", tempRankSize_);
         return tempRankSize_;
     }
+
 private:
     HcclResult LocalCopyToScratch(InsQuePtr tempInsQue);
     HcclResult LocalCopyToUsrOut(InsQuePtr tempInsQue);
-    HcclResult RunMesh(const u32 myAlgRank, const std::vector<RankId> &vTopo, std::vector<InsQuePtr> &tempInsQues);
+    HcclResult RunMesh(const u32 myAlgRank, const std::vector<RankId>& vTopo, std::vector<InsQuePtr>& tempInsQues);
 
-    u32 majorQueNum_       = 0;
+    u32 majorQueNum_ = 0;
     u32 queNumPerNeighbor_ = 1;
     bool enableInterRankCounterNotify_ = false;
     TemplateDataParams tempAlgParams_;

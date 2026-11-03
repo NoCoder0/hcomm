@@ -28,31 +28,30 @@ extern "C" {
  * @brief 时间轮定时器参数设置命令字
  */
 typedef enum {
-    UDF_TWL_TMR_ATTR_NAME = 0,        /* (非必选项) 时间轮定时器名称, 类型:字符串,最大长度见模块规格文件 */
+    UDF_TWL_TMR_ATTR_NAME = 0, /* (非必选项) 时间轮定时器名称, 类型:字符串,最大长度见模块规格文件 */
     UDF_TWL_TMR_ATTR_BUTT
 } UdfTwlTimerAttrCmd;
 
 typedef void (*TimerFdEventCB)(struct epoll_event *event, void *timerEventParam);
 typedef struct {
-    int operate;  /* epoll ctrl时的操作：EPOLL_CTL_ADD/EPOLL_CTL_MOD/EPOLL_CTL_DEL */
-    TimerFdEventCB timerFdProc;    /* timer lib的fd事件处理回调 */
-    void *timerEventParam;   /* timer fd事件回调参数 */
-    struct epoll_event event;  /* timer fd event */
+    int operate;                /* epoll ctrl时的操作：EPOLL_CTL_ADD/EPOLL_CTL_MOD/EPOLL_CTL_DEL */
+    TimerFdEventCB timerFdProc; /* timer lib的fd事件处理回调 */
+    void *timerEventParam;      /* timer fd事件回调参数 */
+    struct epoll_event event;   /* timer fd event */
 } UdfTimerFdParams;
 
-
-typedef void *(*TimerMallocCB)(void *handle, size_t size,  const char *name, uint32_t line);
+typedef void *(*TimerMallocCB)(void *handle, size_t size, const char *name, uint32_t line);
 typedef void (*TimerFreeCB)(void *handle, void *ptr, const char *name, uint32_t line);
 typedef uint32_t (*EpollCtrCallBack)(void *appHandle, uint32_t cid, int fd, UdfTimerFdParams *timerFdParam);
 
 typedef struct {
     char timerInstName[UDF_TWL_TMR_NAME_LEN];
     void *appHandle; /* app的handle，不能为NULL，在注册timer fd事件和定时器超时回调时传给app */
-    uint32_t appCid;    /* app的cid，如果没有填0，在注册timer fd事件时传给app */
+    uint32_t appCid; /* app的cid，如果没有填0，在注册timer fd事件时传给app */
     void *memHandle; /* app内存操作handle，如果为NULL，则使用appHandle替代 */
-    EpollCtrCallBack epollCtlCB;  /* 由app在初始化时提供，用于timer lib将timer fd事件注册 */
-    TimerMallocCB mallocCB;       /* 由app在初始化时提供，用于timer lib申请内存 */
-    TimerFreeCB freeCB;             /* 由app在初始化时提供，用于timer lib释放内存 */
+    EpollCtrCallBack epollCtlCB; /* 由app在初始化时提供，用于timer lib将timer fd事件注册 */
+    TimerMallocCB mallocCB;      /* 由app在初始化时提供，用于timer lib申请内存 */
+    TimerFreeCB freeCB;          /* 由app在初始化时提供，用于timer lib释放内存 */
 } UdfTimerInitParam;
 
 /**
@@ -106,11 +105,11 @@ typedef void *UdfTmrInstHandle;
 typedef uint32_t (*UdfTmrInstCallBack)(UdfTmrInstHandle tmrHandle, void *param);
 
 typedef struct {
-    UdfTimerMode tmrMode;                /* 标识定时器周期性：单次或周期 */
-    uint32_t interval;                   /* 定时器超时时间(ms) */
-    char tmrName[UDF_TWL_TMR_NAME_LEN];  /* 定时器名称(16字节) */
-    UdfTmrInstCallBack callBack;         /* 定时器超时回调 */
-    void *usrData;                       /* 定时器超时回调参数 */
+    UdfTimerMode tmrMode;               /* 标识定时器周期性：单次或周期 */
+    uint32_t interval;                  /* 定时器超时时间(ms) */
+    char tmrName[UDF_TWL_TMR_NAME_LEN]; /* 定时器名称(16字节) */
+    UdfTmrInstCallBack callBack;        /* 定时器超时回调 */
+    void *usrData;                      /* 定时器超时回调参数 */
 } UdfTmrInstParam;
 
 /**
@@ -154,7 +153,7 @@ void UdfTimerInstDelete(UdfTmrInstHandle tmrInst);
  * @since V100R023C10
  */
 uint32_t UdfTimerInstResize(UdfTmrInstHandle tmrInst, uint32_t timeOutMs);
-void* UdfTwlTimerGetInstUsrData(UdfTmrInstHandle tmrInst);
+void *UdfTwlTimerGetInstUsrData(UdfTmrInstHandle tmrInst);
 uint32_t UdfTwlTimerRunningInstGetCnt(UdfTwlTimerHandle timerHandle);
 
 #pragma pack()

@@ -7,6 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #ifndef HCCLV2_RMT_RMA_BUF_SLICE_LITE_H
 #define HCCLV2_RMT_RMA_BUF_SLICE_LITE_H
 #include "hccl/base.h"
@@ -16,35 +17,17 @@ class RmtRmaBufSliceLite {
 public:
     RmtRmaBufSliceLite(u64 addr, u64 size, u32 rkey, u32 tokenId, u32 tokenValue, u32 notifyId);
 
-    inline u64 GetAddr() const
-    {
-        return addr_;
-    }
+    inline u64 GetAddr() const { return addr_; }
 
-    inline u64 GetSize() const
-    {
-        return size_;
-    }
+    inline u64 GetSize() const { return size_; }
 
-    inline u32 GetRkey() const
-    {
-        return rkey_;
-    }
+    inline u32 GetRkey() const { return rkey_; }
 
-    inline u32 GetTokenId() const
-    {
-        return tokenId_;
-    }
+    inline u32 GetTokenId() const { return tokenId_; }
 
-    inline u32 GetTokenValue() const
-    {
-        return tokenValue_;
-    }
+    inline u32 GetTokenValue() const { return tokenValue_; }
 
-    inline u32 GetNotifyId() const
-    {
-        return notifyId_;
-    }
+    inline u32 GetNotifyId() const { return notifyId_; }
 
     std::string Describe() const;
 

@@ -1,33 +1,27 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "broadcast_ring.h"
 #include "alg_template_register.h"
 
 namespace hccl {
-BroadcastRing::BroadcastRing(const HcclDispatcher dispatcher)
-    : AlgTemplateBase(dispatcher)
-{
-}
+BroadcastRing::BroadcastRing(const HcclDispatcher dispatcher) : AlgTemplateBase(dispatcher) {}
 
-BroadcastRing::~BroadcastRing()
-{
-}
+BroadcastRing::~BroadcastRing() {}
 
-HcclResult BroadcastRing::RunAsync(const u32 rank, const u32 rankSize,
-    const std::vector<std::shared_ptr<Transport> > &links)
+HcclResult
+BroadcastRing::RunAsync(const u32 rank, const u32 rankSize, const std::vector<std::shared_ptr<Transport>>& links)
 {
     CHK_SMART_PTR_NULL(dispatcher_);
     CHK_PTR_NULL(stream_.ptr());
-    HCCL_INFO("BroadcastRing run: rank[%u] totalrank[%u] count[%llu]", \
-              rank, rankSize, count_);
+    HCCL_INFO("BroadcastRing run: rank[%u] totalrank[%u] count[%llu]", rank, rankSize, count_);
 
     if (rankSize == 1) {
         return HCCL_SUCCESS;
@@ -38,8 +32,7 @@ HcclResult BroadcastRing::RunAsync(const u32 rank, const u32 rankSize,
     u32 ringNextRank = (rank + 1) % rankSize;
 
     if (links.size() < rankSize) {
-        HCCL_ERROR("[BroadcastRing][RunAsync]rank[%u] linksize[%llu] is less than rank size", \
-            rank, links.size());
+        HCCL_ERROR("[BroadcastRing][RunAsync]rank[%u] linksize[%llu] is less than rank size", rank, links.size());
         return HCCL_E_INTERNAL;
     }
     linkLeft_ = links[ringPrevRank];
@@ -58,20 +51,18 @@ HcclResult BroadcastRing::RunAsync(const u32 rank, const u32 rankSize,
         CHK_PRT_RET(!inputMem_, HCCL_ERROR("[BroadcastRing][RunAsync]rank[%u] inputmem is null", rank), HCCL_E_PTR);
         scratch_ = DeviceMem::create(inputMem_.ptr(), inputMem_.size());
     } else {
-        CHK_PRT_RET(!outputMem_, HCCL_ERROR("[BroadcastRing][RunAsync]rank[%u] outputmem is null", rank),
-            HCCL_E_PTR);
+        CHK_PRT_RET(!outputMem_, HCCL_ERROR("[BroadcastRing][RunAsync]rank[%u] outputmem is null", rank), HCCL_E_PTR);
         scratch_ = DeviceMem::create(outputMem_.ptr(), outputMem_.size());
     }
-    HCCL_DEBUG("root[%u] scratch[%p] memsize[%llu]", \
-        root_, scratch_.ptr(), scratch_.size());
+    HCCL_DEBUG("root[%u] scratch[%p] memsize[%llu]", root_, scratch_.ptr(), scratch_.size());
 
     //  所有的数据平均到每个rank上
     u64 sizeAvg = ((count_ + rankSize - 1) / rankSize) * unitSize;
 
     u64 sizePerSlice = AlgTemplateBase::RoundUpWithDivisor(sizeAvg, HCCL_MIN_SLICE_ALIGN);
     u64 sizePerRound = 0;
-    HCCL_DEBUG("bcast total count[%llu] sizeAverage[%llu] sizePerSlice after aligns[%llu]",
-        count_, sizeAvg, sizePerSlice);
+    HCCL_DEBUG(
+        "bcast total count[%llu] sizeAverage[%llu] sizePerSlice after aligns[%llu]", count_, sizeAvg, sizePerSlice);
     CHK_RET(linkLeft_->TxAck(stream_));
     CHK_RET(linkRight_->RxAck(stream_));
 
@@ -80,17 +71,23 @@ HcclResult BroadcastRing::RunAsync(const u32 rank, const u32 rankSize,
         DeviceMem localSrc;
 
         u64 sizeResidue = count_ * unitSize;
-        for (u32 round = 0; round < rankSize; round++, sizeResidue -= sizePerRound) {  // 固定循环次数，避免子图复用出错
+        for (u32 round = 0; round < rankSize; round++, sizeResidue -= sizePerRound) { // 固定循环次数，避免子图复用出错
             sizePerRound = (sizeResidue > sizePerSlice) ? sizePerSlice : sizeResidue;
             localSrc = scratch_.range(count_ * unitSize - sizeResidue, sizePerRound);
 
             // 数据向下一个rank发送
             u64 dstOffset = count_ * unitSize - sizeResidue + baseOffset_;
             ret = linkRight_->TxAsync(UserMemType::OUTPUT_MEM, dstOffset, localSrc.ptr(), sizePerRound, stream_);
-            CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[BroadcastRing][RunAsync]root[%u] right link tx async srcmem "\
-                "[%p] to offset[%llu] failed", rank, localSrc.ptr(), dstOffset), ret);
-            HCCL_DEBUG("root rank[%u] send scratchmem[%p] to offset[%llu] sendsize[%llu]", rank, \
-                       localSrc.ptr(), dstOffset, sizePerRound);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR(
+                    "[BroadcastRing][RunAsync]root[%u] right link tx async srcmem "
+                    "[%p] to offset[%llu] failed",
+                    rank, localSrc.ptr(), dstOffset),
+                ret);
+            HCCL_DEBUG(
+                "root rank[%u] send scratchmem[%p] to offset[%llu] sendsize[%llu]", rank, localSrc.ptr(), dstOffset,
+                sizePerRound);
 
             // 等待后一节点同步信号
             CHK_RET(linkRight_->RxAck(stream_));
@@ -101,22 +98,28 @@ HcclResult BroadcastRing::RunAsync(const u32 rank, const u32 rankSize,
         DeviceMem localSrc;
 
         u64 sizeResidue = count_ * unitSize;
-        for (u32 round = 0; round < rankSize; round++, sizeResidue -= sizePerRound) {  // 固定循环次数，避免子图复用出错
+        for (u32 round = 0; round < rankSize; round++, sizeResidue -= sizePerRound) { // 固定循环次数，避免子图复用出错
             sizePerRound = (sizeResidue > sizePerSlice) ? sizePerSlice : sizeResidue;
             localSrc = scratch_.range(count_ * unitSize - sizeResidue, sizePerRound);
             // 从前一节点接收数据
             u64 dstOffset = count_ * unitSize - sizeResidue + baseOffset_;
             ret = linkLeft_->RxAsync(UserMemType::OUTPUT_MEM, dstOffset, localSrc.ptr(), sizePerRound, stream_);
-            CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[BroadcastRing][RunAsync]rank[%u] rx data from offset[%llu] "\
-                "with localmem[%p] failed", rank, dstOffset, localSrc.ptr()),
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR(
+                    "[BroadcastRing][RunAsync]rank[%u] rx data from offset[%llu] "
+                    "with localmem[%p] failed",
+                    rank, dstOffset, localSrc.ptr()),
                 ret);
-            HCCL_DEBUG("last rank[%u]  rx_sync from  range[%llu] with localmem[%p] size:[%llu] ", rank, \
-                       dstOffset, localSrc.ptr(), sizePerRound);
+            HCCL_DEBUG(
+                "last rank[%u] rx_sync from range[%llu] with localmem[%p] size:[%llu] ", rank, dstOffset,
+                localSrc.ptr(), sizePerRound);
 
             // 给前一节点发送同步
             ret = linkLeft_->TxAck(stream_);
-            CHK_PRT_RET(ret != HCCL_SUCCESS,
-                HCCL_ERROR("[BroadcastRing][RunAsync]rank[%u] left link tx ack failed", rank), ret);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS, HCCL_ERROR("[BroadcastRing][RunAsync]rank[%u] left link tx ack failed", rank),
+                ret);
             ret = linkLeft_->RxWaitDone(stream_);
             CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[BroadcastRing][RunAsync]RxWaitDone failed"), ret);
         }
@@ -124,17 +127,22 @@ HcclResult BroadcastRing::RunAsync(const u32 rank, const u32 rankSize,
         DeviceMem localSrc;
 
         u64 sizeResidue = count_ * unitSize;
-        for (u32 round = 0; round < rankSize; round++, sizeResidue -= sizePerRound) {  // 固定循环次数，避免子图复用出错
+        for (u32 round = 0; round < rankSize; round++, sizeResidue -= sizePerRound) { // 固定循环次数，避免子图复用出错
             sizePerRound = (sizeResidue > sizePerSlice) ? sizePerSlice : sizeResidue;
             // 需要从前一节点接收数据
             localSrc = scratch_.range(count_ * unitSize - sizeResidue, sizePerRound);
             u64 dstOffset = count_ * unitSize - sizeResidue + baseOffset_;
             ret = linkLeft_->RxAsync(UserMemType::OUTPUT_MEM, dstOffset, localSrc.ptr(), sizePerRound, stream_);
-            CHK_PRT_RET(ret != HCCL_SUCCESS, \
-                HCCL_ERROR("[BroadcastRing][RunAsync]rank[%u] left link rx sync from offset[%llu] with "\
-                "localmem[%p] failed", rank, dstOffset, localSrc.ptr()), ret);
-            HCCL_DEBUG("rank[%u] rx_sync from  range[%u] with localmem[%p] size[%llu] ", rank, \
-                dstOffset, localSrc.ptr(), sizePerRound);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR(
+                    "[BroadcastRing][RunAsync]rank[%u] left link rx sync from offset[%llu] with "
+                    "localmem[%p] failed",
+                    rank, dstOffset, localSrc.ptr()),
+                ret);
+            HCCL_DEBUG(
+                "rank[%u] rx_sync from range[%u] with localmem[%p] size[%llu] ", rank, dstOffset, localSrc.ptr(),
+                sizePerRound);
 
             // 给前一节点发送同步
             CHK_RET(linkLeft_->TxAck(stream_));
@@ -144,8 +152,9 @@ HcclResult BroadcastRing::RunAsync(const u32 rank, const u32 rankSize,
             // 数据向下一个节点发送
             CHK_RET(linkRight_->TxAsync(UserMemType::OUTPUT_MEM, dstOffset, localSrc.ptr(), sizePerRound, stream_));
 
-            HCCL_DEBUG("rank[%u] tx_sync from localmem[%p] to offset[%llu] size[%llu] ", \
-                rank, localSrc.ptr(), dstOffset, sizePerRound);
+            HCCL_DEBUG(
+                "rank[%u] tx_sync from localmem[%p] to offset[%llu] size[%llu] ", rank, localSrc.ptr(), dstOffset,
+                sizePerRound);
             // 等待后一节点同步信号
             CHK_RET(linkRight_->RxAck(stream_));
             ret = linkRight_->TxWaitDone(stream_);
@@ -158,10 +167,11 @@ HcclResult BroadcastRing::RunAsync(const u32 rank, const u32 rankSize,
     HCCL_INFO("BroadcastRing finished: rank[%u] end count[%llu]", rank, count_);
     return HCCL_SUCCESS;
 }
-HcclResult BroadcastRing::GetNslbAdjInfo(const u32 rank, const u32 rankSize,
-                                         const std::vector<LINK> &links, AdjInfo& nslbAdjInfo)
+HcclResult BroadcastRing::GetNslbAdjInfo(
+    [[maybe_unused]] const u32 rank, [[maybe_unused]] const u32 rankSize,
+    [[maybe_unused]] const std::vector<LINK>& links, [[maybe_unused]] AdjInfo& nslbAdjInfo)
 {
     return HCCL_SUCCESS;
 }
 REGISTER_TEMPLATE(TemplateType::TEMPLATE_BROADCAST_RING, BroadcastRing);
-}  // namespace hccl
+} // namespace hccl

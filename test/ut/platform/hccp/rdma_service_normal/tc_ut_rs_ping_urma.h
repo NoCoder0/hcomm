@@ -31,8 +31,12 @@ void TcRsPingCommonPollSendJfc();
 void TcRsPongJettyFindTargetNode();
 void TcRsPongJettyResolveResponsePacket();
 void TcRsPingCommonImportJetty();
+void TcRsPingCommonInitJettyCreateJfrFail();
+void TcRsPingCommonInitJettyCreateJettyFail();
 void TcRsPingUrmaResetRecvBuffer();
 void TcRsPingCommonJfrPostRecv();
+void TcRsPingCommonInitSegCbFail();
+void TcRsPingCommonInitLocalJettyFail();
 
 #ifdef __cplusplus
 }

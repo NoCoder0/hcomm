@@ -20,8 +20,9 @@ namespace Hccl {
 
 class AivTempScatterMesh1D : public AivAlgTemplateBase {
 public:
-    explicit AivTempScatterMesh1D(const RankId virtualRank, const u32 tempRankSize,
-        const std::vector<std::vector<RankId>> &tempVTopo, const std::map<RankId, u32> &tempVirtRankMap);
+    explicit AivTempScatterMesh1D(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~AivTempScatterMesh1D() override;
 
     std::string Describe() const override
@@ -29,11 +30,12 @@ public:
         return StringFormat("Instruction based Template of scatter mesh 2D with tempRankSize [%u].", tempRankSize_);
     }
 
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
-    HcclResult GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &templateDataParams, 
-        const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues) override;
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
+    HcclResult GenExtIns(
+        const TempFuncs& tempFuncs, const TemplateDataParams& templateDataParams, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues) override;
 };
 
-}  // namespace Hccl
+} // namespace Hccl
 
-#endif  // AIV_TEMP_ALL_SCATTER_MESH_1D
+#endif // AIV_TEMP_ALL_SCATTER_MESH_1D

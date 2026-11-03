@@ -21,16 +21,16 @@ constexpr u32 TEMPVTOPOSIZE = 2;
 
 class InsTempAlltoAllMesh2D : public InsAlgTemplateBase {
 public:
-    explicit InsTempAlltoAllMesh2D(const RankId virtualRank, const u32 tempRankSize,
-                                  const std::vector<std::vector<RankId>> &tempVTopo,
-                                  const std::map<RankId, u32>            &tempVirtRankMap);
+    explicit InsTempAlltoAllMesh2D(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~InsTempAlltoAllMesh2D() override;
 
     std::string Describe() const override
     {
         return StringFormat("Instruction based Template of all to all mesh 2d with tempRankSize [%u].", tempRankSize_);
     }
-    u32 CalcScratchMultiple(const BufferType &inBufferTpye, const BufferType &outBufferTpye) const
+    u32 CalcScratchMultiple(const BufferType& inBufferTpye, const BufferType& outBufferTpye) const
     {
         (void)inBufferTpye;
         (void)outBufferTpye;
@@ -38,20 +38,22 @@ public:
         return 1;
     }
 
-    HcclResult GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &tempAlgParams,
-                                           const ResLinks &tempLinks,
-                                           std::vector<InsQuePtr> &tempInsQues) const;
+    HcclResult GenExtIns(
+        const TempFuncs& tempFuncs, const TemplateDataParams& tempAlgParams, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues) const;
 
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
 
 private:
-    HcclResult LocalDataCopy(const TemplateDataParams &tempAlgParams, std::vector<InsQuePtr> &tempInsQues);
-    HcclResult PostLocalCopy(const TemplateDataParams &tempAlgParams, std::vector<InsQuePtr> &tempInsQues);
+    HcclResult LocalDataCopy(const TemplateDataParams& tempAlgParams, std::vector<InsQuePtr>& tempInsQues);
+    HcclResult PostLocalCopy(const TemplateDataParams& tempAlgParams, std::vector<InsQuePtr>& tempInsQues);
 
-    HcclResult RunMeshX(std::vector<u64> &xDataInAddr, std::vector<u64> &xDataOutAddr, u64 xSize, BufferType srcBufferType,
-        BufferType dstBufferType, DmaMode dmaMode, std::vector<InsQuePtr> &xInsQues, const ResLinks &tempLinks) const;
-    HcclResult RunMeshY(std::vector<u64> &yDataInAddr, std::vector<u64> &yDataOutAddr, u64 ySize, BufferType srcBufferType,
-        BufferType dstBufferType, DmaMode dmaMode, std::vector<InsQuePtr> &yInsQues, const ResLinks &tempLinks) const;
+    HcclResult RunMeshX(
+        std::vector<u64>& xDataInAddr, std::vector<u64>& xDataOutAddr, u64 xSize, BufferType srcBufferType,
+        BufferType dstBufferType, DmaMode dmaMode, std::vector<InsQuePtr>& xInsQues, const ResLinks& tempLinks) const;
+    HcclResult RunMeshY(
+        std::vector<u64>& yDataInAddr, std::vector<u64>& yDataOutAddr, u64 ySize, BufferType srcBufferType,
+        BufferType dstBufferType, DmaMode dmaMode, std::vector<InsQuePtr>& yInsQues, const ResLinks& tempLinks) const;
 
     u32 rankId_ = 0;
     u32 xRankId_ = 0;

@@ -33,18 +33,18 @@
 #include "rs_common_inner.h"
 #include "rs_inner.h"
 
-#define RS_INTERFACE_LEN    5
-#define RS_INTERFACE_BOND_LEN    6
+#define RS_INTERFACE_LEN 5
+#define RS_INTERFACE_BOND_LEN 6
 #define RS_INTERFACE_ETH_PREFIX_LEN 3
 #define RS_INTERFACE_BOND_PREFIX_LEN 4
 /* pcie card boardid rule: GPIO[75:73]=0x000 */
-#define RS_BOARDID_PCIE_CARD_MASK        0xE00
-#define RS_BOARDID_PCIE_CARD_MASK_VALUE  0x0
-#define RS_BOARDID_AI_SERVER_MODULE  0x0
-#define RS_BOARDID_ARM_SERVER_AG     0x20
-#define RS_BOARDID_ARM_POD     0x30
-#define RS_BOARDID_X86_16P     0x50
-#define RS_BOARDID_ARM_SERVER_2DIE    0xB0
+#define RS_BOARDID_PCIE_CARD_MASK 0xE00
+#define RS_BOARDID_PCIE_CARD_MASK_VALUE 0x0
+#define RS_BOARDID_AI_SERVER_MODULE 0x0
+#define RS_BOARDID_ARM_SERVER_AG 0x20
+#define RS_BOARDID_ARM_POD 0x30
+#define RS_BOARDID_X86_16P 0x50
+#define RS_BOARDID_ARM_SERVER_2DIE 0xB0
 
 enum RsHardwareType {
     RS_HARDWARE_SERVER,
@@ -70,31 +70,30 @@ int RsGetIpv6ScopeId(struct in6_addr localIp);
 enum RsHardwareType RsGetDeviceType(unsigned int phyId);
 int RsCheckDstInterface(unsigned int phyId, const char *ifaName, enum RsHardwareType type, bool isAll);
 int RsPeerFillIfnum(unsigned int phyId, unsigned int *num, struct ifaddrs *ifaddrList);
-int RsPeerFillIfaddrInfos(struct InterfaceInfo interfaceInfos[], unsigned int *num,
-    unsigned int phyId, struct ifaddrs *ifaddrList);
-int RsDrvConnect(int fd, struct RsIpAddrInfo *serverIp, struct RsIpAddrInfo *clientIp, uint16_t port);
+int RsPeerFillIfaddrInfos(struct InterfaceInfo interfaceInfos[], unsigned int *num, unsigned int phyId,
+    struct ifaddrs *ifaddrList);
+int RsDrvConnect(struct RsConnInfo *conn);
 int RsDrvSocketSend(int fd, const void *data, uint64_t size, int flags);
 int RsDrvSocketRecv(int fd, void *data, uint64_t size, int flags);
 int RsDrvSslBindFd(struct RsConnInfo *conn, int fd);
 void ShowConnNode(struct RsListHead *listHead);
-int RsGetConnInfo(struct RsConnCb *connCb, struct SocketConnectInfo *conn,
-    struct RsConnInfo **connInfo, unsigned int serverPort);
+int RsGetConnInfo(struct RsConnCb *connCb, struct SocketConnectInfo *conn, struct RsConnInfo **connInfo,
+    unsigned int serverPort);
 int RsFindListenNode(struct RsConnCb *connCb, struct RsIpAddrInfo *ipAddr, uint32_t serverPort,
     struct RsListenInfo **listenInfo);
 int RsSocketListenAddToEpoll(struct RsConnCb *connCb, struct RsListenInfo *listenInfo);
-int RsListenNodeAlloc(struct RsConnCb *connCb, struct RsIpAddrInfo *ipAddr, uint32_t serverPort,
+int RsListenNodeAlloc(struct RsConnCb *connCb, struct RsIpAddrInfo *ipAddr, uint32_t serverPort, bool tagChkDis,
     struct RsListenInfo **node);
 int RsSocketListenDelFromEpoll(struct RsConnCb *connCb, struct RsListenInfo *listenInfo);
 void RsListenNodeFree(struct RsConnCb *connCb, struct RsListenInfo *node);
 int RsAllocConnNode(struct RsConnInfo **conn, unsigned short serverPort);
-int RsFindWhiteListNode(struct RsWhiteList *rsSocketWhiteList,
-    struct SocketWlistInfoT *whiteListExpect, int family, struct RsWhiteListInfo **whiteListNode);
-int RsFindWhiteList(struct RsConnCb *connCb, struct RsIpAddrInfo *serverIp,
-    struct RsWhiteList **whiteList);
+int RsFindWhiteListNode(struct RsWhiteList *rsSocketWhiteList, struct SocketWlistInfoT *whiteListExpect, int family,
+    struct RsWhiteListInfo **whiteListNode);
+int RsFindWhiteList(struct RsConnCb *connCb, struct RsIpAddrInfo *serverIp, struct RsWhiteList **whiteList);
 void RsSocketGetBindByChip(unsigned int chipId, bool *bindIp);
 bool RsSocketIsVnicIp(unsigned int chipId, unsigned int ipAddr);
 void RsConnCostTime(struct RsConnInfo *conn);
 int RsFd2conn(int fd, struct RsConnInfo **conn);
 int RsSslWriteInnerCheck(struct RsConnInfo *conn, int sslRet, uint64_t size);
-int RsSslReadInnerCheck(struct RsConnInfo *conn, int sslRet, uint64_t size);
+int RsSslReadInnerCheck(SSL *ssl, int fd, int sslRet, uint64_t size);
 #endif // RS_DRV_SOCKET_H

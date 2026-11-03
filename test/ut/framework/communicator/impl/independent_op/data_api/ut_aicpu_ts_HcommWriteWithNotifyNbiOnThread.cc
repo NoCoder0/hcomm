@@ -44,13 +44,9 @@ using namespace hccl;
  * - notifyIdx：通知索引
  * - res：用于存储接口返回值的成员变量
  */
-class UtAicpuTsHcommWriteWithNotifyNbiOnThread : public testing::Test
-{
+class UtAicpuTsHcommWriteWithNotifyNbiOnThread : public testing::Test {
 protected:
-    virtual void TearDown() override
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() override { GlobalMockObject::verify(); }
 
     AicpuTsThread threadOnDevice{StreamType::STREAM_TYPE_DEVICE, 0, NotifyLoadType::DEVICE_NOTIFY};
     ThreadHandle thread = reinterpret_cast<ThreadHandle>(&threadOnDevice);
@@ -59,8 +55,8 @@ protected:
     ChannelHandle channel = reinterpret_cast<ChannelHandle>(&transportOnDevice);
     uint64_t tempDst[6] = {0};
     uint64_t tempSrc[6] = {1, 1, 4, 5, 1, 4};
-    void *dst = reinterpret_cast<void *>(tempDst);
-    void *src = reinterpret_cast<void *>(tempSrc);
+    void* dst = reinterpret_cast<void*>(tempDst);
+    void* src = reinterpret_cast<void*>(tempSrc);
     uint64_t len = sizeof(tempDst);
     uint32_t notifyIdx = 0;
     int32_t res{HCCL_E_RESERVED};
@@ -74,7 +70,9 @@ protected:
  *
  * 预期结果：返回HCCL_E_NOT_SUPPORT（不支持错误码）
  */
-TEST_F(UtAicpuTsHcommWriteWithNotifyNbiOnThread, Ut_HcommWriteWithNotifyNbiOnThread_When_Src_IsNull_Expect_ReturnIsHCCL_E_NOT_SUPPORT)
+TEST_F(
+    UtAicpuTsHcommWriteWithNotifyNbiOnThread,
+    Ut_HcommWriteWithNotifyNbiOnThread_When_Src_IsNull_Expect_ReturnIsHCCL_E_NOT_SUPPORT)
 {
     res = HcommWriteWithNotifyNbiOnThread(thread, channel, nullptr, src, len, notifyIdx);
     EXPECT_EQ(res, HCCL_E_NOT_SUPPORT);
@@ -88,7 +86,9 @@ TEST_F(UtAicpuTsHcommWriteWithNotifyNbiOnThread, Ut_HcommWriteWithNotifyNbiOnThr
  *
  * 预期结果：返回HCCL_E_NOT_SUPPORT（不支持错误码）
  */
-TEST_F(UtAicpuTsHcommWriteWithNotifyNbiOnThread, Ut_HcommWriteWithNotifyNbiOnThread_When_Dst_IsNull_Expect_ReturnIsHCCL_E_NOT_SUPPORT)
+TEST_F(
+    UtAicpuTsHcommWriteWithNotifyNbiOnThread,
+    Ut_HcommWriteWithNotifyNbiOnThread_When_Dst_IsNull_Expect_ReturnIsHCCL_E_NOT_SUPPORT)
 {
     res = HcommWriteWithNotifyNbiOnThread(thread, channel, dst, nullptr, len, notifyIdx);
     EXPECT_EQ(res, HCCL_E_NOT_SUPPORT);
@@ -102,7 +102,9 @@ TEST_F(UtAicpuTsHcommWriteWithNotifyNbiOnThread, Ut_HcommWriteWithNotifyNbiOnThr
  *
  * 预期结果：返回HCCL_E_NOT_SUPPORT（不支持错误码）
  */
-TEST_F(UtAicpuTsHcommWriteWithNotifyNbiOnThread, Ut_HcommWriteWithNotifyNbiOnThread_When_AllValid_Expect_ReturnIsHCCL_E_NOT_SUPPORT)
+TEST_F(
+    UtAicpuTsHcommWriteWithNotifyNbiOnThread,
+    Ut_HcommWriteWithNotifyNbiOnThread_When_AllValid_Expect_ReturnIsHCCL_E_NOT_SUPPORT)
 {
     res = HcommWriteWithNotifyNbiOnThread(thread, channel, dst, src, len, notifyIdx);
     EXPECT_EQ(res, HCCL_E_NOT_SUPPORT);

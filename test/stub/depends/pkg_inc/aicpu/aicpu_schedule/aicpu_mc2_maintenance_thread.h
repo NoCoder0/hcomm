@@ -15,7 +15,7 @@ constexpr int32_t AICPU_SCHEDULE_PARAMETER_IS_NULL = 21600;
 constexpr int32_t AICPU_SCHEDULE_THREAD_ALREADY_EXISTS = 21601;
 constexpr int32_t AICPU_SCHEDULE_NOT_SUPPORT = 21602;
 
-using AicpuCtrlThreadFuncPtr = void(*)(void *);
+using AicpuCtrlThreadFuncPtr = void (*)(void*);
 
 enum AicpuCtrlThreadType : uint32_t {
     THREAD_TYPE_HCOM = 0,
@@ -24,8 +24,9 @@ enum AicpuCtrlThreadType : uint32_t {
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
-__attribute__((weak)) __attribute__((visibility("default"))) int32_t AicpuCreateCtrlThread(uint32_t type, AicpuCtrlThreadFuncPtr loopFun,
-    void *paramLoopFun, AicpuCtrlThreadFuncPtr stopNotifyFun, void *paramStopFun);
+__attribute__((weak)) __attribute__((visibility("default"))) int32_t AicpuCreateCtrlThread(
+    uint32_t type, AicpuCtrlThreadFuncPtr loopFun, void* paramLoopFun, AicpuCtrlThreadFuncPtr stopNotifyFun,
+    void* paramStopFun);
 
 #ifdef __cplusplus
 }

@@ -5,7 +5,7 @@
  * Please refer to the License for details. You may not use this file except in compliance with the License.
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See the License in the root of the software repository for the full text of the License.
+ * See LICENSE in the root of the software repository for the full text of the License.
  */
 
 #ifndef AICPU_TASK_STRUCT_H
@@ -19,22 +19,22 @@ using char_t = char;
 
 #pragma pack(push, 1)
 struct AicpuParamHead {
-    uint32_t        length;                    // Total length: include cunstom message
-    uint32_t        ioAddrNum;                 // Input and output address number
-    uint32_t        extInfoLength;             // extInfo struct Length
-    uint64_t        extInfoAddr;               // extInfo address.
+    uint32_t length;        // Total length: include cunstom message
+    uint32_t ioAddrNum;     // Input and output address number
+    uint32_t extInfoLength; // extInfo struct Length
+    uint64_t extInfoAddr;   // extInfo address.
 };
 
 enum class AicpuConfigMsgType {
-    AICPU_CONFIG_MSG_TYPE_BUF_FREE      = 0,  /* free buf */
-    AICPU_CONFIG_MSG_TYPE_BUF_RESET     = 1,  /* reset buf */
-    AICPU_CONFIG_MSG_TYPE_BUF_SET_ADDR  = 2,  /* set buf addr to aicpu */
+    AICPU_CONFIG_MSG_TYPE_BUF_FREE = 0,     /* free buf */
+    AICPU_CONFIG_MSG_TYPE_BUF_RESET = 1,    /* reset buf */
+    AICPU_CONFIG_MSG_TYPE_BUF_SET_ADDR = 2, /* set buf addr to aicpu */
 };
 
 enum class AicpuErrMsgType {
-    ERR_MSG_TYPE_NULL   = 0,
+    ERR_MSG_TYPE_NULL = 0,
     ERR_MSG_TYPE_AICORE = 1,
-    ERR_MSG_TYPE_AICPU  = 2,
+    ERR_MSG_TYPE_AICPU = 2,
 };
 
 enum class AicpuExtInfoMsgType {
@@ -70,30 +70,29 @@ struct AicpuExtendInfo {
 struct AicoreErrMsgInfo {
     uint8_t errType;
     uint8_t version;
-    uint8_t reserved1[2];    /* reserved1, 4 byte alignment */
+    uint8_t reserved1[2]; /* reserved1, 4 byte alignment */
     uint32_t errorCode;
     uint32_t modelId;
     uint32_t taskId;
     uint32_t streamId;
     uint64_t transactionId;
-    uint8_t reserved2[228];  /* the total byte is 256, reserved2 len = 256 - other lens */
+    uint8_t reserved2[228]; /* the total byte is 256, reserved2 len = 256 - other lens */
 };
 
 struct AicpuErrMsgInfo {
     uint8_t errType;
     uint8_t version;
-    uint8_t reserved1[2];    /* reserved1, 4 byte alignment */
+    uint8_t reserved1[2]; /* reserved1, 4 byte alignment */
     uint32_t errorCode;
     uint32_t modelId;
     uint32_t streamId;
     uint64_t transactionId;
-    char_t opName[64];      /* op name str */
-    char_t errDesc[128];    /* err msg desc info */
-    uint8_t reserved2[40];  /* the total byte is 256, reserved2 len = 256 - other lens */
+    char_t opName[64];     /* op name str */
+    char_t errDesc[128];   /* err msg desc info */
+    uint8_t reserved2[40]; /* the total byte is 256, reserved2 len = 256 - other lens */
 };
 #pragma pack(pop)
 
-}  // namespace aicpu
+} // namespace aicpu
 
-#endif  // AICPU_TASK_STRUCT_H
-
+#endif // AICPU_TASK_STRUCT_H

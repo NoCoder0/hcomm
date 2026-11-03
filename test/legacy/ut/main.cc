@@ -11,7 +11,7 @@
 #include <iostream>
 #include "gtest/gtest.h"
 
-GTEST_API_ int main(int argc, char **argv)
+GTEST_API_ int main(int argc, char** argv)
 {
     // testing::GTEST_FLAG(filter) = "CollServiceAiCpuImplTest.*";
     std::cout << "Start to run all unit tests for hccl v2." << std::endl;

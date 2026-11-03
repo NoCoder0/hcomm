@@ -16,24 +16,28 @@
 #include "subcmd_log.h"
 
 namespace HcclSim {
-void LogCommand::Setup(CLI::App& app) {
+void LogCommand::Setup(CLI::App& app)
+{
     auto subCmdLog = app.add_subcommand("log", "日志管理");
 
     auto* levelOpt = subCmdLog->add_option("-l,--level", level_, "设置日志等级")
-        ->transform(CLI::CheckedTransformer(levelMap_, CLI::ignore_case));
+                         ->transform(CLI::CheckedTransformer(levelMap_, CLI::ignore_case));
     auto* consoleLevelOpt = subCmdLog->add_option("--console-level", consoleLevel_, "设置console日志等级")
-        ->transform(CLI::CheckedTransformer(levelMap_, CLI::ignore_case));
+                                ->transform(CLI::CheckedTransformer(levelMap_, CLI::ignore_case));
     auto* fileLevelOpt = subCmdLog->add_option("--file-level", fileLevel_, "设置file日志等级")
-        ->transform(CLI::CheckedTransformer(levelMap_, CLI::ignore_case));
+                             ->transform(CLI::CheckedTransformer(levelMap_, CLI::ignore_case));
 
     levelOpt->excludes(consoleLevelOpt)->excludes(fileLevelOpt);
     consoleLevelOpt->excludes(levelOpt);
     fileLevelOpt->excludes(levelOpt);
-    
-    subCmdLog->callback([this]() { Execute(); });
+
+    subCmdLog->callback([this]() {
+        Execute();
+    });
 }
 
-void LogCommand::Execute() {
+void LogCommand::Execute()
+{
     if (consoleLevel_.has_value()) {
         HCCL_VM_DEBUG("input console-level: {}", consoleLevel_.value());
         SetConsoleLogLevel(consoleLevel_.value());
@@ -54,4 +58,4 @@ void LogCommand::Execute() {
 }
 
 static inline CommandAutoRegister<LogCommand> g_log_cmd_reg{};
-}
+} // namespace HcclSim

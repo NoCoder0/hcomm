@@ -21,12 +21,12 @@ namespace Hccl {
 
 class CcuContextReduceMesh2D : public CcuContextAlgBase {
 public:
-    CcuContextReduceMesh2D(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                              const CcuTransportGroup &group);
+    CcuContextReduceMesh2D(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
     ~CcuContextReduceMesh2D() override {}
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
 
 private:
     void InitResources();
@@ -38,15 +38,15 @@ private:
     void Step2ReduceForRoot();
 
     std::vector<uint64_t> dimSize_;
-    uint32_t axisId_{0};  // 0 : X轴， 1 : Y轴
+    uint32_t axisId_{0}; // 0 : X轴， 1 : Y轴
 
-    std::vector<uint32_t> dimId_;  // 本rank所在行或列的编号
-    uint32_t localId_{0};  // 本chip所在行或列的编号
-    uint32_t localSize_{0};  // 本rank所在行或列的总rank数
+    std::vector<uint32_t> dimId_; // 本rank所在行或列的编号
+    uint32_t localId_{0};         // 本chip所在行或列的编号
+    uint32_t localSize_{0};       // 本rank所在行或列的总rank数
 
-    std::vector<uint32_t> rootDimId_;  // root所在行或列的编号
-    uint32_t rootId_{0}; // 当rankid == rootid时，为root节点 则跳过write操作
-    uint32_t rootLocalId_{0};  // root所在行或列的编号
+    std::vector<uint32_t> rootDimId_; // root所在行或列的编号
+    uint32_t rootId_{0};              // 当rankid == rootid时，为root节点 则跳过write操作
+    uint32_t rootLocalId_{0};         // root所在行或列的编号
     DataType dataType_;
     DataType outputDataType_;
     ReduceOp reduceOp_;

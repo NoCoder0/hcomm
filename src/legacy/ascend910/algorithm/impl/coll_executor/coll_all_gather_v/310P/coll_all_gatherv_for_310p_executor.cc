@@ -1,20 +1,20 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "coll_all_gatherv_for_310p_executor.h"
 
-#include <algorithm> 
+#include <algorithm>
 
 namespace hccl {
-CollAllGatherVFor310PExecutor::CollAllGatherVFor310PExecutor(const HcclDispatcher dispatcher,
-                                                           std::unique_ptr<TopoMatcher> &topoMatcher)
+CollAllGatherVFor310PExecutor::CollAllGatherVFor310PExecutor(
+    const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher>& topoMatcher)
     : CollAllGatherVExecutor(dispatcher, topoMatcher)
 {
     DMAReduceFlag_ = true;
@@ -37,8 +37,8 @@ HcclResult CollAllGatherVFor310PExecutor::CalcCommInfo(std::vector<LevelNSubComm
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherVFor310PExecutor::CalcTransportMemType(TransportMemType &inputType,
-    TransportMemType &outputType)
+HcclResult
+CollAllGatherVFor310PExecutor::CalcTransportMemType(TransportMemType& inputType, TransportMemType& outputType) const
 {
     if (workflowMode_ == HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE) {
         inputType = TransportMemType::CCL_INPUT;
@@ -47,15 +47,15 @@ HcclResult CollAllGatherVFor310PExecutor::CalcTransportMemType(TransportMemType 
         inputType = TransportMemType::PARAM_INPUT;
         outputType = TransportMemType::PARAM_OUTPUT;
     }
-    HCCL_INFO("[CollAllGatherVFor310PExecutor][CalcTransportMemType]" \
+    HCCL_INFO(
+        "[CollAllGatherVFor310PExecutor][CalcTransportMemType]"
         "tag[%s] inputType[%d], outputType[%d]",
         tag_.c_str(), inputType, outputType);
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherVFor310PExecutor::CalcLevel0CommInfo(TransportMemType inputType,
-    TransportMemType outputType,
-    std::vector<LevelNSubCommTransport>& opTransport)
+HcclResult CollAllGatherVFor310PExecutor::CalcLevel0CommInfo(
+    TransportMemType inputType, TransportMemType outputType, std::vector<LevelNSubCommTransport>& opTransport)
 {
     CommParaInfo commParaInfo(COMM_LEVEL0, CommType::COMM_TAG_RING_INNER);
     CHK_RET(CalcCommPlaneInfo(tag_, commParaInfo, opTransport[COMM_LEVEL0], inputType, outputType));
@@ -65,11 +65,12 @@ HcclResult CollAllGatherVFor310PExecutor::CalcLevel0CommInfo(TransportMemType in
 u64 CollAllGatherVFor310PExecutor::CalcLoopMaxCount(const u64 cclBuffSize, const u32 unitSize)
 {
     // 中转内存单次最多能够接受的output count
-    u64 maxCountPerLoop = cclBuffSize / topoAttr_.userRankSize / HCCL_MIN_SLICE_ALIGN
-        * HCCL_MIN_SLICE_ALIGN / unitSize;
+    u64 maxCountPerLoop = cclBuffSize / topoAttr_.userRankSize / HCCL_MIN_SLICE_ALIGN * HCCL_MIN_SLICE_ALIGN / unitSize;
 
-    HCCL_INFO("[CollAllGatherVExecutor][CalcLoopMaxCount]" \
-        "using default maxCountPerLoop[%llu] as CCLBuffSize / unitSize.", maxCountPerLoop);
+    HCCL_INFO(
+        "[CollAllGatherVExecutor][CalcLoopMaxCount]"
+        "using default maxCountPerLoop[%llu] as CCLBuffSize / unitSize.",
+        maxCountPerLoop);
     return maxCountPerLoop;
 }
 
@@ -79,9 +80,9 @@ bool CollAllGatherVFor310PExecutor::IsHugeData(const u64 curSize)
     return hugeData;
 }
 
-HcclResult CollAllGatherVFor310PExecutor::CalcCurCountsAndCurDispls(const u64 maxTotalCount,
-    std::vector<u64> &countsLeft, std::vector<u64> &displs, std::vector<u64> &curCounts, std::vector<u64> &curDispls,
-    bool &finished)
+HcclResult CollAllGatherVFor310PExecutor::CalcCurCountsAndCurDispls(
+    const u64 maxTotalCount, std::vector<u64>& countsLeft, std::vector<u64>& displs, std::vector<u64>& curCounts,
+    std::vector<u64>& curDispls, bool& finished)
 {
     finished = true;
 
@@ -98,7 +99,7 @@ HcclResult CollAllGatherVFor310PExecutor::CalcCurCountsAndCurDispls(const u64 ma
         countsLeft[i] -= curCount;
         displs[i] += curCount;
 
-        if(countsLeft[i] != 0) {
+        if (countsLeft[i] != 0) {
             finished = false;
         }
     }
@@ -106,10 +107,9 @@ HcclResult CollAllGatherVFor310PExecutor::CalcCurCountsAndCurDispls(const u64 ma
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherVFor310PExecutor::KernelRun(const OpParam &param, ExecMem &execMem)
+HcclResult CollAllGatherVFor310PExecutor::KernelRun(const OpParam& param, ExecMem& execMem)
 {
-    HCCL_CONFIG_INFO(HCCL_ALG,
-        "[CollAllGatherVFor310PExecutor][KernelRun] userRank[%u] starts.", topoAttr_.userRank);
+    HCCL_CONFIG_INFO(HCCL_ALG, "[CollAllGatherVFor310PExecutor][KernelRun] userRank[%u] starts.", topoAttr_.userRank);
     HcclDataType dataType = HCCL_DATA_TYPE_RESERVED;
     dataType = param.VDataDes.dataType;
     const u32 unitSize = SIZE_TABLE[dataType];
@@ -139,9 +139,9 @@ HcclResult CollAllGatherVFor310PExecutor::KernelRun(const OpParam &param, ExecMe
         outputSlices.emplace_back(std::move(userslice));
     }
 
-    HcomCollOpInfo opInfo = {"", execMem.inputPtr, execMem.outputPtr, 0, param.VDataDes.dataType, 
-        param.root, param.reduceType};
-    
+    HcomCollOpInfo opInfo
+        = {"", execMem.inputPtr, execMem.outputPtr, 0, param.VDataDes.dataType, param.root, param.reduceType, 0};
+
     std::unique_ptr<AlgTemplateBase> tempAlg;
     if (!IsHugeData(cclOffset)) {
         tempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(
@@ -153,16 +153,18 @@ HcclResult CollAllGatherVFor310PExecutor::KernelRun(const OpParam &param, ExecMe
         tempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(
             TemplateType::TEMPLATE_ALL_GATHER_RING_CONCURRENT_DIRECT, dispatcher_);
         CHK_SMART_PTR_NULL(tempAlg);
-        CHK_RET(tempAlg->Prepare(&opInfo, topoAttr_.userRank, algResResp_->slaveStreams, algResResp_->notifiesMain,
-            algResResp_->notifiesAux, rankOrder, outputSlices));
+        CHK_RET(tempAlg->Prepare(
+            &opInfo, topoAttr_.userRank, algResResp_->slaveStreams, algResResp_->notifiesMain, algResResp_->notifiesAux,
+            rankOrder, outputSlices));
     }
 
-    CHK_RET(tempAlg->Prepare(execMem.inputMem, execMem.outputMem, execMem.outputMem, execMem.count,
-        dataType, param.stream, param.reduceType, 0, inputSlices));
+    CHK_RET(tempAlg->Prepare(
+        execMem.inputMem, execMem.outputMem, execMem.outputMem, execMem.count, dataType, param.stream, param.reduceType,
+        0, inputSlices));
 
     CHK_RET(tempAlg->RegisterProfiler(
-        (rankSize << PROF_RANKSIZE_OFFSET_OF_PLANEID) + outerCommInfo.localRank,
-        PROF_STAGE_0, HCCL_EXEC_STEP_NOT_SET, param.stream));
+        (rankSize << PROF_RANKSIZE_OFFSET_OF_PLANEID) + outerCommInfo.localRank, PROF_STAGE_0, HCCL_EXEC_STEP_NOT_SET,
+        param.stream));
 
     CHK_RET(RunTemplate(tempAlg, outerCommInfo));
 

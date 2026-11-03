@@ -23,26 +23,16 @@
 #undef private
 #undef protected
 
-
 using namespace std;
 using namespace Hccl;
 
 class TaskExceptionHandlerLiteTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "TaskExceptionHandlerLiteTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "TaskExceptionHandlerLiteTest tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "TaskExceptionHandlerLiteTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "TaskExceptionHandlerLiteTest tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in TaskExceptionHandlerLiteTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in TaskExceptionHandlerLiteTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -75,7 +65,7 @@ TEST_F(TaskExceptionHandlerLiteTest, test_get_group_rank_info)
 {
     auto taskInfo = InitTaskInfo();
 
-    EXPECT_NO_THROW(TaskExceptionHandlerLite::GetGroupRankInfo(*taskInfo));    // communicator is nullptr
+    EXPECT_NO_THROW(TaskExceptionHandlerLite::GetGroupRankInfo(*taskInfo)); // communicator is nullptr
 
     // Mock CommunicatorImplLite
     CommunicatorImplLite commImplLite{0};
@@ -88,8 +78,8 @@ TEST_F(TaskExceptionHandlerLiteTest, test_get_group_rank_info)
 TEST_F(TaskExceptionHandlerLiteTest, test_process_when_task_more_than_50)
 {
     // 打桩 GlobalMirrorTasks
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
-    MirrorTaskManager mirrorTaskManager(0, &globalMirrorTasks, 1);  // diveceId 0
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
+    MirrorTaskManager mirrorTaskManager(0, &globalMirrorTasks, 1); // diveceId 0
     shared_ptr<DfxOpInfo> dfxOpInfo = make_shared<DfxOpInfo>();
     dfxOpInfo->commIndex_ = 3;
     dfxOpInfo->op_.dataCount = 0xff;
@@ -98,7 +88,7 @@ TEST_F(TaskExceptionHandlerLiteTest, test_process_when_task_more_than_50)
     dfxOpInfo->algType_ = AlgType::BINARY_HD;
     dfxOpInfo->op_.inputMem = make_shared<Buffer>(0x111122223333, 0);
     dfxOpInfo->op_.outputMem = make_shared<Buffer>(0xaaaabbbbcccc, 0);
-    CommunicatorImplLite communicator{0};    // Mock CommunicatorImpl
+    CommunicatorImplLite communicator{0}; // Mock CommunicatorImpl
     communicator.commId = "GroupName";
     communicator.rankSize = 4;
     communicator.myRank = 1;
@@ -124,8 +114,8 @@ TEST_F(TaskExceptionHandlerLiteTest, test_process_when_task_more_than_50)
     // 调用 TaskExceptionHandler::Process() 打印异常DFX信息
     rtLogicCqReport_t exceptionInfo{};
     exceptionInfo.streamId = 0;
-    exceptionInfo.taskId = 60;  // 当前异常TaskId 60
+    exceptionInfo.taskId = 60; // 当前异常TaskId 60
     TaskExceptionHandlerLite::Process(&exceptionInfo);
 
-    globalMirrorTasks.DestroyQueue(0, 0);   // diveceId 0, streamId 0
+    globalMirrorTasks.DestroyQueue(0, 0); // diveceId 0, streamId 0
 }

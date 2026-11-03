@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "aicpu_kfc_deprecated_process.h"
 
@@ -22,14 +22,15 @@ using namespace hccl;
 ANONYMOUS_NAMESPACE_BEGIN
 bool HcclOpCheckSupportRetry(HcclCMDType opType)
 {
-    const std::set<HcclCMDType> HcclSupportRetryOpSet = {
-            HcclCMDType::HCCL_CMD_BROADCAST, HcclCMDType::HCCL_CMD_ALLREDUCE,  HcclCMDType::HCCL_CMD_REDUCE,   HcclCMDType::HCCL_CMD_ALLGATHER, HcclCMDType::HCCL_CMD_REDUCE_SCATTER,
-            HcclCMDType::HCCL_CMD_ALLTOALLV, HcclCMDType::HCCL_CMD_ALLTOALLVC, HcclCMDType::HCCL_CMD_ALLTOALL, HcclCMDType::HCCL_CMD_GATHER,    HcclCMDType::HCCL_CMD_SCATTER
-    };
+    const std::set<HcclCMDType> HcclSupportRetryOpSet
+        = {HcclCMDType::HCCL_CMD_BROADCAST,  HcclCMDType::HCCL_CMD_ALLREDUCE,      HcclCMDType::HCCL_CMD_REDUCE,
+           HcclCMDType::HCCL_CMD_ALLGATHER,  HcclCMDType::HCCL_CMD_REDUCE_SCATTER, HcclCMDType::HCCL_CMD_ALLTOALLV,
+           HcclCMDType::HCCL_CMD_ALLTOALLVC, HcclCMDType::HCCL_CMD_ALLTOALL,       HcclCMDType::HCCL_CMD_GATHER,
+           HcclCMDType::HCCL_CMD_SCATTER};
     return (HcclSupportRetryOpSet.find(opType) != HcclSupportRetryOpSet.end());
 }
 
-void HcclUpdateOpIndex(HcclCMDType opType, AicpuComContext *ctx)
+void HcclUpdateOpIndex(HcclCMDType opType, AicpuComContext* ctx)
 {
     if (HcclOpCheckSupportRetry(opType)) {
         auto opIndex = ctx->opIndex + 1;
@@ -40,8 +41,8 @@ void HcclUpdateOpIndex(HcclCMDType opType, AicpuComContext *ctx)
     return;
 }
 
-HcclResult UpdateOpExecStatus(AicpuComContext *ctx, HcclOpExecFSM &fsmState, KfcStatus state, KfcError &errorCode,
-                              uint32_t retryCnt)
+HcclResult UpdateOpExecStatus(
+    AicpuComContext* ctx, HcclOpExecFSM& fsmState, KfcStatus state, KfcError& errorCode, uint32_t retryCnt)
 {
     auto ret = AicpuHdcUtils::SetOpExecStatus(ctx->kfcStatusTransferD2H, state, errorCode, retryCnt);
     if (ret != HCCL_SUCCESS) {
@@ -52,22 +53,23 @@ HcclResult UpdateOpExecStatus(AicpuComContext *ctx, HcclOpExecFSM &fsmState, Kfc
     return ret;
 }
 
-bool HcclOpCheckInplace(const AivAicpuOpParam &opParams)
+bool HcclOpCheckInplace(const AivAicpuOpParam& opParams)
 {
     if (opParams.sendBuffer != opParams.recvBuffer) {
         return false;
     }
 
-    const std::set<HcclCMDType> HcclInplaceOpSet = { HcclCMDType::HCCL_CMD_ALLREDUCE,      HcclCMDType::HCCL_CMD_REDUCE,    HcclCMDType::HCCL_CMD_ALLGATHER,
-                                                     HcclCMDType::HCCL_CMD_REDUCE_SCATTER, HcclCMDType::HCCL_CMD_ALLTOALLV, HcclCMDType::HCCL_CMD_ALLTOALLVC,
-                                                     HcclCMDType::HCCL_CMD_ALLTOALL,       HcclCMDType::HCCL_CMD_GATHER,    HcclCMDType::HCCL_CMD_SCATTER };
+    const std::set<HcclCMDType> HcclInplaceOpSet
+        = {HcclCMDType::HCCL_CMD_ALLREDUCE,      HcclCMDType::HCCL_CMD_REDUCE,    HcclCMDType::HCCL_CMD_ALLGATHER,
+           HcclCMDType::HCCL_CMD_REDUCE_SCATTER, HcclCMDType::HCCL_CMD_ALLTOALLV, HcclCMDType::HCCL_CMD_ALLTOALLVC,
+           HcclCMDType::HCCL_CMD_ALLTOALL,       HcclCMDType::HCCL_CMD_GATHER,    HcclCMDType::HCCL_CMD_SCATTER};
     if (HcclInplaceOpSet.find(opParams.commType) != HcclInplaceOpSet.end()) {
         return true;
     }
     return false;
 }
 
-bool HcclOpSupportRetry(AicpuComContext *ctx, AivAicpuOpParam &opParams)
+bool HcclOpSupportRetry(AicpuComContext* ctx, AivAicpuOpParam& opParams)
 {
     if (!ctx->retryEnable) {
         HCCL_INFO("hccl aicpu can not retry, enable[%u].", ctx->retryEnable);
@@ -76,8 +78,9 @@ bool HcclOpSupportRetry(AicpuComContext *ctx, AivAicpuOpParam &opParams)
 
     // 不支持inplace的通信算子重执行
     if (HcclOpCheckInplace(opParams)) {
-        HCCL_INFO("hccl aicpu can not retry, opType[%u], sendBuffer[0x%016lx], recvBuffer[0x%016lx].",
-                  opParams.commType, opParams.sendBuffer, opParams.recvBuffer);
+        HCCL_INFO(
+            "hccl aicpu can not retry, opType[%u], sendBuffer[0x%016lx], recvBuffer[0x%016lx].", opParams.commType,
+            opParams.sendBuffer, opParams.recvBuffer);
         return false;
     }
 
@@ -92,7 +95,7 @@ static constexpr u32 HCCL_AICPU_WAIT_HOST_BASE_TIME_MS = 200U;
 #else
 static constexpr u32 HCCL_AICPU_WAIT_HOST_BASE_TIME_MS = 200000U;
 #endif
-u32 HcclGetWaitRetryCmdTimeout(AicpuComContext *ctx, uint32_t retryCnt)
+u32 HcclGetWaitRetryCmdTimeout(AicpuComContext* ctx, uint32_t retryCnt)
 {
     if (retryCnt == 0) {
         return HCCL_AICPU_WAIT_HOST_BASE_TIME_MS + ctx->retryHoldTime;
@@ -101,15 +104,15 @@ u32 HcclGetWaitRetryCmdTimeout(AicpuComContext *ctx, uint32_t retryCnt)
     }
 }
 
-HcclResult HcclOpExecFsmInitProcess(AicpuComContext *ctx, HcclOpExecFSM &state, KfcError &errorCode,
-                                    AicpuKfcRpcServer &rpc, AivAicpuOpParam &opParams)
+HcclResult HcclOpExecFsmInitProcess(
+    AicpuComContext* ctx, HcclOpExecFSM& state, KfcError& errorCode, AicpuKfcRpcServer& rpc, AivAicpuOpParam& opParams)
 {
     rpc.CheckRcvAddrMsg(&opParams, 0);
     ctx->directlySendMainSteramSqe = true;
 
     HcclUpdateOpIndex(opParams.commType, ctx);
     opParams.opId.index = ctx->opIndex;
-    if(ctx->endStopLaunch){
+    if (ctx->endStopLaunch) {
         HCCL_WARNING("[NsRecovery] Suspending status should not launch task");
         state = HcclOpExecFSM::HCCL_OP_EXEC_STOP_LAUNCH;
         return HCCL_SUCCESS;
@@ -126,7 +129,7 @@ HcclResult HcclOpExecFsmInitProcess(AicpuComContext *ctx, HcclOpExecFSM &state, 
     return ret;
 }
 
-HcclResult HcclOpExecFsmStoppingProcess(AicpuComContext *ctx, HcclOpExecFSM &state, KfcError &errorCode)
+HcclResult HcclOpExecFsmStoppingProcess(AicpuComContext* ctx, HcclOpExecFSM& state, KfcError& errorCode)
 {
     HCCL_DEBUG("hccl aicpu stopping.");
     if (TaskOrchestrator::IsTaskExceptionForHccs(ctx)) {
@@ -161,8 +164,9 @@ HcclResult HcclOpExecFsmStoppingProcess(AicpuComContext *ctx, HcclOpExecFSM &sta
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclOpExecFsmStoppedProcess(AicpuComContext *ctx, HcclOpExecFSM &state, KfcError &errorCode,
-                                       u32 retryCnt, AivAicpuOpParam &opParams, u32 beginSqePos, u32 endSqePos)
+HcclResult HcclOpExecFsmStoppedProcess(
+    AicpuComContext* ctx, HcclOpExecFSM& state, KfcError& errorCode, u32 retryCnt, AivAicpuOpParam& opParams,
+    u32 beginSqePos, u32 endSqePos)
 {
     HCCL_DEBUG("hccl aicpu stop exec.");
     KfcCommand cmd = KfcCommand::kNone;
@@ -191,17 +195,22 @@ HcclResult HcclOpExecFsmStoppedProcess(AicpuComContext *ctx, HcclOpExecFSM &stat
     uint32_t sqHead = 0xFFFFFFFF;
     CHK_RET(QuerySqStatusByType(ctx->devId, ctx->streamInfo[ctx->rankId].sqId, DRV_SQCQ_PROP_SQ_HEAD, sqHead));
     if (sqHead == endSqePos) {
-        HCCL_INFO("hccl aicpu record complete task is complete, can not retry. params: sqHead %u, beginSqePos %u "
-                  "endSqePos %u", sqHead, beginSqePos, endSqePos);
+        HCCL_INFO(
+            "hccl aicpu record complete task is complete, can not retry. params: sqHead %u, beginSqePos %u "
+            "endSqePos %u",
+            sqHead, beginSqePos, endSqePos);
         state = HcclOpExecFSM::HCCL_OP_EXEC_FSM_END;
     } else if (sqHead == beginSqePos) {
-        HCCL_ERROR("hccl aicpu wait start task is not complete, can not retry. params: sqHead %u, beginSqePos %u "
-                   "endSqePos %u", sqHead, beginSqePos, endSqePos);
+        HCCL_ERROR(
+            "hccl aicpu wait start task is not complete, can not retry. params: sqHead %u, beginSqePos %u "
+            "endSqePos %u",
+            sqHead, beginSqePos, endSqePos);
         errorCode = KfcError::kExec;
         state = HcclOpExecFSM::HCCL_OP_EXEC_FSM_ERROR;
     } else {
-        HCCL_INFO("hccl aicpu op is running, can retry. params: sqHead %u, beginSqePos %u endSqePos %u", sqHead,
-                  beginSqePos, endSqePos);
+        HCCL_INFO(
+            "hccl aicpu op is running, can retry. params: sqHead %u, beginSqePos %u endSqePos %u", sqHead, beginSqePos,
+            endSqePos);
         if (TaskOrchestrator::IsTaskExceptionForHccs(ctx)) {
             HCCL_INFO("hccl aicpu stop by sdma/write task exception, can retry.");
             errorCode = KfcError::kSdma;
@@ -212,7 +221,7 @@ HcclResult HcclOpExecFsmStoppedProcess(AicpuComContext *ctx, HcclOpExecFSM &stat
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclOpExecFsmEndProcess(AicpuComContext *ctx, uint32_t retryCnt, AivAicpuOpParam &opParams)
+HcclResult HcclOpExecFsmEndProcess(AicpuComContext* ctx, uint32_t retryCnt, AivAicpuOpParam& opParams)
 {
     auto ret = AicpuHdcUtils::SetOpExecStatus(ctx->kfcStatusTransferD2H, KfcStatus::kEnd, KfcError::kNone, retryCnt);
     AicpuUpdatComContextMumber(offsetof(AicpuComContext, isOpLaunch), false);
@@ -223,8 +232,8 @@ HcclResult HcclOpExecFsmEndProcess(AicpuComContext *ctx, uint32_t retryCnt, AivA
 }
 ANONYMOUS_NAMESPACE_END
 
-HcclResult AicpuKfcDeprecatedProcess::LaunchHcclOp(AicpuComContext *ctx, AivAicpuOpParam *commParam,
-                                                   uint32_t &beginSqePos, uint32_t &endSqePos)
+HcclResult AicpuKfcDeprecatedProcess::LaunchHcclOp(
+    AicpuComContext* ctx, AivAicpuOpParam* commParam, uint32_t& beginSqePos, uint32_t& endSqePos)
 {
     // 获取通信stream上首次下发的notify wait
     // task的尾指针，已便重执行stop时判断是否已执行该task，如果该task已执行完成则可支持通信重执行
@@ -249,13 +258,14 @@ HcclResult AicpuKfcDeprecatedProcess::LaunchHcclOp(AicpuComContext *ctx, AivAicp
     // 启动通信task执行
     CHK_RET(TaskOrchestrator::ActiveRecordMain(AicpuKfcProcess::GetActiveSqId(ctx)));
     CHK_RET(QuerySqStatusByType(ctx->devId, ctx->streamInfo[ctx->rankId].sqId, DRV_SQCQ_PROP_SQ_TAIL, endSqePos));
-    HCCL_INFO("hccl aicpu launch hccl op task success. stream sqid:%d begin:%u end:%u",
-              ctx->streamInfo[ctx->rankId].sqId, beginSqePos, endSqePos);
+    HCCL_INFO(
+        "hccl aicpu launch hccl op task success. stream sqid:%d begin:%u end:%u", ctx->streamInfo[ctx->rankId].sqId,
+        beginSqePos, endSqePos);
     return HCCL_SUCCESS;
 }
 
-HcclResult AicpuKfcDeprecatedProcess::RetryLaunchHcclOp(AicpuComContext *ctx, AivAicpuOpParam *commParam,
-                                                        uint32_t &endSqePos)
+HcclResult
+AicpuKfcDeprecatedProcess::RetryLaunchHcclOp(AicpuComContext* ctx, AivAicpuOpParam* commParam, uint32_t& endSqePos)
 {
     CHK_RET(AicpuKfcProcess::AicpuCcOpExe(commParam, nullptr, ctx));
 
@@ -267,18 +277,19 @@ HcclResult AicpuKfcDeprecatedProcess::RetryLaunchHcclOp(AicpuComContext *ctx, Ai
 
     CHK_RET(QuerySqStatusByType(ctx->devId, ctx->streamInfo[ctx->rankId].sqId, DRV_SQCQ_PROP_SQ_TAIL, endSqePos));
 
-    HCCL_INFO("hccl aicpu retry launch hccl op task success. stream sqid:%d end:%u",
-              ctx->streamInfo[ctx->rankId].sqId, endSqePos);
+    HCCL_INFO(
+        "hccl aicpu retry launch hccl op task success. stream sqid:%d end:%u", ctx->streamInfo[ctx->rankId].sqId,
+        endSqePos);
     return HCCL_SUCCESS;
 }
 
-HcclResult AicpuKfcDeprecatedProcess::RunRpcServerOneStageWait(AicpuComContext *ctx, AicpuKfcRpcServer &rpc)
+HcclResult AicpuKfcDeprecatedProcess::RunRpcServerOneStageWait(AicpuComContext* ctx, AicpuKfcRpcServer& rpc)
 {
     AivAicpuOpParam g_msg[3];
-    AivAicpuOpParam *msg = &g_msg[0];
-    AivAicpuOpParam *preMsg = &g_msg[1];
-    AivAicpuOpParam *nextMsg = &g_msg[2];
-    AivAicpuOpParam *tmpptr = nullptr;
+    AivAicpuOpParam* msg = &g_msg[0];
+    AivAicpuOpParam* preMsg = &g_msg[1];
+    AivAicpuOpParam* nextMsg = &g_msg[2];
+    AivAicpuOpParam* tmpptr = nullptr;
     AicpuUpdatComContextMumber(offsetof(AicpuComContext, dfxExtendInfo.kfcStatus), DfxKfcStatus::kOneStart);
     AicpuHcclProcess::CallMC2MaintenanceThread(ctx);
     // 读取首轮任务，并准备，直接先下主流(直接激活)，后续还是先下从流，激活时下主流
@@ -289,7 +300,7 @@ HcclResult AicpuKfcDeprecatedProcess::RunRpcServerOneStageWait(AicpuComContext *
     }
     HcclUpdateOpIndex(msg->commType, ctx);
     msg->opId.index = ctx->opIndex;
-    if(ctx->endStopLaunch){
+    if (ctx->endStopLaunch) {
         HCCL_WARNING("the op should not be launched in suspending status");
         return HCCL_E_SUSPENDING;
     }
@@ -329,8 +340,8 @@ HcclResult AicpuKfcDeprecatedProcess::RunRpcServerOneStageWait(AicpuComContext *
     return HCCL_SUCCESS;
 }
 
-HcclResult AicpuKfcDeprecatedProcess::HcclOpExecFsmWaitEndProcess(AicpuComContext *ctx, HcclOpExecFSM &state,
-                                                                  KfcError &errorCode, u32 retryCnt)
+HcclResult AicpuKfcDeprecatedProcess::HcclOpExecFsmWaitEndProcess(
+    AicpuComContext* ctx, HcclOpExecFSM& state, KfcError& errorCode, u32 retryCnt)
 {
     bool isWaitTask = (ctx->debugMode == MC2_DEBUG_WAIT_COMM);
     auto ret = AicpuKfcProcess::WaitTaskFinish(ctx, isWaitTask);
@@ -352,8 +363,8 @@ HcclResult AicpuKfcDeprecatedProcess::HcclOpExecFsmWaitEndProcess(AicpuComContex
     return ret;
 }
 
-HcclResult AicpuKfcDeprecatedProcess::HcclOpExecFsmWaitRetryProcess(AicpuComContext *ctx, HcclOpExecFSM &state,
-                                                                    KfcError &errorCode)
+HcclResult AicpuKfcDeprecatedProcess::HcclOpExecFsmWaitRetryProcess(
+    AicpuComContext* ctx, HcclOpExecFSM& state, KfcError& errorCode)
 {
     KfcCommand cmd = KfcCommand::kNone;
     auto ret = AicpuHdcUtils::GetOpExecCtrlCmd(ctx->kfcControlTransferH2D, cmd);
@@ -383,7 +394,7 @@ HcclResult AicpuKfcDeprecatedProcess::HcclOpExecFsmWaitRetryProcess(AicpuComCont
     return HCCL_SUCCESS;
 }
 
-HcclResult AicpuKfcDeprecatedProcess::AICPU_RpcServerUnfoldStageWait(AicpuComContext *ctx, AicpuKfcRpcServer &rpc)
+HcclResult AicpuKfcDeprecatedProcess::AICPU_RpcServerUnfoldStageWait(AicpuComContext* ctx, AicpuKfcRpcServer& rpc)
 {
     AivAicpuOpParam opParams;
     auto waitStopExecCmdTimeout = std::chrono::milliseconds(HCCL_AICPU_WAIT_HOST_BASE_TIME_MS);
@@ -427,8 +438,8 @@ HcclResult AicpuKfcDeprecatedProcess::AICPU_RpcServerUnfoldStageWait(AicpuComCon
                 }
                 break;
             case HcclOpExecFSM::HCCL_OP_EXEC_FSM_WAIT_RETRY:
-                if ((std::chrono::steady_clock::now() - startTime) >=
-                    std::chrono::milliseconds(HcclGetWaitRetryCmdTimeout(ctx, retryCnt))) {
+                if ((std::chrono::steady_clock::now() - startTime)
+                    >= std::chrono::milliseconds(HcclGetWaitRetryCmdTimeout(ctx, retryCnt))) {
                     HCCL_ERROR("hccl aicpu wait retry timeout[%u ms].", HcclGetWaitRetryCmdTimeout(ctx, retryCnt));
                     errorCode = KfcError::kTimeout;
                     state = HcclOpExecFSM::HCCL_OP_EXEC_FSM_ERROR;
@@ -463,13 +474,13 @@ HcclResult AicpuKfcDeprecatedProcess::AICPU_RpcServerUnfoldStageWait(AicpuComCon
     return HCCL_SUCCESS;
 }
 
-HcclResult AicpuKfcDeprecatedProcess::RunRpcServerTwoStageWait(AicpuComContext *ctx, AicpuKfcRpcServer &rpc)
+HcclResult AicpuKfcDeprecatedProcess::RunRpcServerTwoStageWait(AicpuComContext* ctx, AicpuKfcRpcServer& rpc)
 {
     AivAicpuOpParam gMsg[3];
-    AivAicpuOpParam *msg = &gMsg[0];
-    AivAicpuOpParam *msgWork = &gMsg[1];
-    AivAicpuOpParam *nextMsg = &gMsg[2];
-    AivAicpuOpParam *tmpptr = nullptr;
+    AivAicpuOpParam* msg = &gMsg[0];
+    AivAicpuOpParam* msgWork = &gMsg[1];
+    AivAicpuOpParam* nextMsg = &gMsg[2];
+    AivAicpuOpParam* tmpptr = nullptr;
 
     // 读取首轮任务，并准备，直接先下主流(直接激活)，后续还是先下从流，激活时下主流
     // 1.1、首轮读地址（需要自动产生）
@@ -522,11 +533,12 @@ HcclResult AicpuKfcDeprecatedProcess::RunRpcServerTwoStageWait(AicpuComContext *
         // 8.1 等待执行结束
         TaskOrchestrator::WaitMainStreamFinish(ctx);
         rpc.ClearWorkMsg();
-        HCCL_INFO("[commType:%d, opType:%s, sendBuffer:%p, recvBuffer:%p, count:%d, data_type:%s, "
-                  "sendCnt:%d, rcvCnt:%d, funID:%d, valid:%d, everyTurnRsp:%d, strideLen:%d, isLast:%d",
-                  msg->commType, GetReduceOpEnumStr(msg->opType).c_str(), msg->sendBuffer, msg->recvBuffer, msg->count,
-                  GetDataTypeEnumStr(msg->hcclDataType).c_str(), msg->sendCnt,
-                  msg->rcvCnt, msg->funID, msg->valid, msg->everyTurnRsp, msg->strideLen, msg->isLast);
+        HCCL_INFO(
+            "[commType:%d, opType:%s, sendBuffer:%p, recvBuffer:%p, count:%d, data_type:%s, "
+            "sendCnt:%d, rcvCnt:%d, funID:%d, valid:%d, everyTurnRsp:%d, strideLen:%d, isLast:%d",
+            msg->commType, GetReduceOpEnumStr(msg->opType).c_str(), msg->sendBuffer, msg->recvBuffer, msg->count,
+            GetDataTypeEnumStr(msg->hcclDataType).c_str(), msg->sendCnt, msg->rcvCnt, msg->funID, msg->valid,
+            msg->everyTurnRsp, msg->strideLen, msg->isLast);
         // 9.1 发送最后一轮消息
         rpc.PostMsg(ctx->curTurnCnt);
     }
@@ -534,12 +546,11 @@ HcclResult AicpuKfcDeprecatedProcess::RunRpcServerTwoStageWait(AicpuComContext *
     return HCCL_SUCCESS;
 }
 
-HcclResult AicpuKfcDeprecatedProcess::TryRunRpcServerOneStageWait(AicpuComContext *ctx, AicpuKfcRpcServer &rpc)
+HcclResult AicpuKfcDeprecatedProcess::TryRunRpcServerOneStageWait(AicpuComContext* ctx, AicpuKfcRpcServer& rpc)
 {
     HCCL_INFO("Start to run, round %u", ctx->dfxExtendInfo.kfcRestartConfig.tryRestartTimes);
     if (dfx::DfxExtendInfoHelper::TryRestartTooManyTimes(ctx->dfxExtendInfo)) {
-        HCCL_ERROR("Restart too many times, max try count is %u",
-                   ctx->dfxExtendInfo.kfcRestartConfig.maxRestartTimes);
+        HCCL_ERROR("Restart too many times, max try count is %u", ctx->dfxExtendInfo.kfcRestartConfig.maxRestartTimes);
         return HCCL_E_INTERNAL;
     }
     const auto ret = RunRpcServerOneStageWait(ctx, rpc);
@@ -563,9 +574,9 @@ HcclResult AicpuKfcDeprecatedProcess::TryRunRpcServerOneStageWait(AicpuComContex
     return ret;
 }
 
-HcclResult AicpuKfcDeprecatedProcess::HcclOpExecFsmLaunchProcess(AicpuComContext *ctx, HcclOpExecFSM &state,
-                                                                 KfcError &errorCode, AivAicpuOpParam &opParams,
-                                                                 uint32_t &beginSqePos, uint32_t &endSqePos)
+HcclResult AicpuKfcDeprecatedProcess::HcclOpExecFsmLaunchProcess(
+    AicpuComContext* ctx, HcclOpExecFSM& state, KfcError& errorCode, AivAicpuOpParam& opParams, uint32_t& beginSqePos,
+    uint32_t& endSqePos)
 {
     HCCL_DEBUG("hccl aicpu start launch task");
     auto ret = AicpuKfcDeprecatedProcess::LaunchHcclOp(ctx, &opParams, beginSqePos, endSqePos);
@@ -582,9 +593,9 @@ HcclResult AicpuKfcDeprecatedProcess::HcclOpExecFsmLaunchProcess(AicpuComContext
     return ret;
 }
 
-HcclResult AicpuKfcDeprecatedProcess::HcclOpExecFsmRetryProcess(AicpuComContext *ctx, HcclOpExecFSM &state,
-                                                                KfcError &errorCode, uint32_t &retryCnt,
-                                                                AivAicpuOpParam &opParams, uint32_t &endSqePos)
+HcclResult AicpuKfcDeprecatedProcess::HcclOpExecFsmRetryProcess(
+    AicpuComContext* ctx, HcclOpExecFSM& state, KfcError& errorCode, uint32_t& retryCnt, AivAicpuOpParam& opParams,
+    uint32_t& endSqePos)
 {
     HCCL_DEBUG("hccl retry launch task");
     retryCnt++;

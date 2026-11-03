@@ -15,34 +15,32 @@
 
 namespace Hccl {
 
-template <typename AlgTopoMatch, typename InsAlgTemplate> class InsBroadcastSoleExecutor : public InsCollAlgBase {
+template <typename AlgTopoMatch, typename InsAlgTemplate>
+class InsBroadcastSoleExecutor : public InsCollAlgBase {
 public:
     explicit InsBroadcastSoleExecutor();
     ~InsBroadcastSoleExecutor() override;
 
-    std::string Describe() const override
-    {
-        return "Instruction based broadcast Sole Executor.";
-    }
+    std::string Describe() const override { return "Instruction based broadcast Sole Executor."; }
 
-    HcclResult Orchestrate(const AlgTopoInfo &topoInfo, const CollAlgOperator &op, const CollAlgParams &params,
-                             ConnectedLinkMgr *linkMgr, InsQuePtr insQue) override;
-    HcclResult Orchestrate(const RankGraph *rankGraph, const CollAlgOperator &op, const CollAlgParams &params,
-                          InsQuePtr insQue) override;
-    HcclResult CalcResOffload(const RankGraph *rankGraph, const u64 &dataSize,
-                              CollOffloadOpResReq &resReq) override;
-    HcclResult CalcRes(const RankGraph *rankGraph, CollAlgResReq &algResReq) override;
+    HcclResult Orchestrate(
+        const AlgTopoInfo& topoInfo, const CollAlgOperator& op, const CollAlgParams& params, ConnectedLinkMgr* linkMgr,
+        InsQuePtr insQue) override;
+    HcclResult Orchestrate(
+        const RankGraph* rankGraph, const CollAlgOperator& op, const CollAlgParams& params, InsQuePtr insQue) override;
+    HcclResult CalcResOffload(const RankGraph* rankGraph, const u64& dataSize, CollOffloadOpResReq& resReq) override;
+    HcclResult CalcRes(const RankGraph* rankGraph, CollAlgResReq& algResReq) override;
 
 private:
-    HcclResult OrchestrateOffload(InsAlgTemplate &tempAlg);
-    HcclResult OrchestrateOpbase(InsAlgTemplate &tempAlg);
+    HcclResult OrchestrateOffload(InsAlgTemplate& tempAlg);
+    HcclResult OrchestrateOpbase(InsAlgTemplate& tempAlg);
 
-    std::vector<RankId>              virtRanks_;
-    std::map<RankId, u32>            virtRankMap_; // map<virtRank, virtRankOrder>
+    std::vector<RankId> virtRanks_;
+    std::map<RankId, u32> virtRankMap_; // map<virtRank, virtRankOrder>
     std::vector<std::vector<RankId>> vTopo_;
 
     std::vector<InsQuePtr> requiredQue_;
-    ResLinks               tempResLinks_;
+    ResLinks tempResLinks_;
 };
 
 } // namespace Hccl

@@ -33,14 +33,14 @@
 using namespace hccl;
 
 // Mock 函数用于 rtModelGetId
-rtError_t rtModelGetIdMock(rtModel_t model, uint32_t *modelId)
+rtError_t rtModelGetIdMock(rtModel_t model, uint32_t* modelId)
 {
     *modelId = 1; // 返回一个固定的 mock modelId
     return RT_ERROR_NONE;
 }
 
 // Mock: GetStreamCaptureInfo — 设置 rtModel 非空, isCapture=true
-HcclResult GetStreamCaptureInfoMock(aclrtStream stream, aclmdlRI &rtModel, bool &isCapture)
+HcclResult GetStreamCaptureInfoMock(aclrtStream stream, aclmdlRI& rtModel, bool& isCapture)
 {
     rtModel = reinterpret_cast<aclmdlRI>(0x1);
     isCapture = true;
@@ -48,7 +48,7 @@ HcclResult GetStreamCaptureInfoMock(aclrtStream stream, aclmdlRI &rtModel, bool 
 }
 
 // Mock: GetModelId — 设置固定 modelId
-HcclResult GetModelIdMock(aclmdlRI &rtModel, u64 &modelId)
+HcclResult GetModelIdMock(aclmdlRI& rtModel, u64& modelId)
 {
     modelId = 1;
     return HCCL_SUCCESS;
@@ -56,7 +56,8 @@ HcclResult GetModelIdMock(aclmdlRI &rtModel, u64 &modelId)
 
 class AclgraphCallbackTest : public testing::Test {
 protected:
-    void SetUp() override {
+    void SetUp() override
+    {
         comm.reset(new (std::nothrow) hccl::hcclComm());
         if (!comm) {
             HCCL_ERROR("Failed to create hccl::hcclComm");
@@ -64,7 +65,8 @@ protected:
         }
     }
 
-    void TearDown() override {
+    void TearDown() override
+    {
         // 清理单例状态，避免测试用例之间相互影响
         std::lock_guard<std::mutex> lock(AclgraphCallback::GetInstance().resMutex_);
         AclgraphCallback::GetInstance().captureResMap_.clear();
@@ -80,9 +82,7 @@ protected:
 
 TEST_F(AclgraphCallbackTest, ut_InsertNewTagToCaptureResMap_When_Capture_Expect_SUCCESS)
 {
-    MOCKER(rtModelGetId)
-    .stubs()
-    .will(invoke(rtModelGetIdMock));
+    MOCKER(rtModelGetId).stubs().will(invoke(rtModelGetIdMock));
 
     std::string newTag = "tag";
     OpParam opParam;
@@ -123,7 +123,7 @@ TEST_F(AclgraphCallbackTest, ut_CleanCaptureRes_By_Communicator_With_Multiple_Co
     // 验证插入成功
     bool foundComm1Before = false;
     bool foundComm2Before = false;
-    for (const auto &modelEntry : AclgraphCallback::GetInstance().captureResMap_) {
+    for (const auto& modelEntry : AclgraphCallback::GetInstance().captureResMap_) {
         if (modelEntry.second.find(&communicator1_) != modelEntry.second.end()) {
             foundComm1Before = true;
         }
@@ -140,7 +140,7 @@ TEST_F(AclgraphCallbackTest, ut_CleanCaptureRes_By_Communicator_With_Multiple_Co
     // 验证：communicator1 应该被删除，communicator2 应该仍然存在
     bool foundComm1After = false;
     bool foundComm2After = false;
-    for (const auto &modelEntry : AclgraphCallback::GetInstance().captureResMap_) {
+    for (const auto& modelEntry : AclgraphCallback::GetInstance().captureResMap_) {
         if (modelEntry.second.find(&communicator1_) != modelEntry.second.end()) {
             foundComm1After = true;
         }
@@ -171,10 +171,7 @@ TEST_F(AclgraphCallbackTest, ListCommonRemove_NormalNode)
     EXPECT_EQ(reinterpret_cast<ListCommon*>(nodes[1].preHost), &nodes[1]);
 }
 
-TEST_F(AclgraphCallbackTest, ListCommonRemove_Nullptr)
-{
-    ListCommonRemove(nullptr);
-}
+TEST_F(AclgraphCallbackTest, ListCommonRemove_Nullptr) { ListCommonRemove(nullptr); }
 
 TEST_F(AclgraphCallbackTest, ListCommonRemove_SelfLoopNode)
 {
@@ -262,13 +259,9 @@ TEST_F(AclgraphCallbackTest, CleanCaptureRes_ThreePhase_SimplifiedFlow)
 TEST_F(AclgraphCallbackTest, InsertNewTag_CallbackRegistration)
 {
     // Mock 底层 C 函数使 InsertNewTagToCaptureResMap 能正常走完全程
-    MOCKER(GetStreamCaptureInfo)
-        .stubs()
-        .will(invoke(GetStreamCaptureInfoMock));
+    MOCKER(GetStreamCaptureInfo).stubs().will(invoke(GetStreamCaptureInfoMock));
 
-    MOCKER(GetModelId)
-        .stubs()
-        .will(invoke(GetModelIdMock));
+    MOCKER(GetModelId).stubs().will(invoke(GetModelIdMock));
 
     MOCKER(aclmdlRIDestroyRegisterCallback)
         .stubs()
@@ -279,17 +272,15 @@ TEST_F(AclgraphCallbackTest, InsertNewTag_CallbackRegistration)
     OpParam opParam;
 
     std::string tag1 = "tag1";
-    HcclResult ret = AclgraphCallback::GetInstance().InsertNewTagToCaptureResMap(
-        &communicator1_, tag1, opParam);
+    HcclResult ret = AclgraphCallback::GetInstance().InsertNewTagToCaptureResMap(&communicator1_, tag1, opParam);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     // 第一次插入应注册 callback
     // 验证 captureResMap_ 包含 modelId→communicator1_→tag1
     bool found = false;
-    for (const auto &modelEntry : AclgraphCallback::GetInstance().captureResMap_) {
-        for (const auto &commEntry : modelEntry.second) {
-            if (commEntry.first == &communicator1_ &&
-                commEntry.second.find(tag1) != commEntry.second.end()) {
+    for (const auto& modelEntry : AclgraphCallback::GetInstance().captureResMap_) {
+        for (const auto& commEntry : modelEntry.second) {
+            if (commEntry.first == &communicator1_ && commEntry.second.find(tag1) != commEntry.second.end()) {
                 found = true;
             }
         }
@@ -302,40 +293,34 @@ TEST_F(AclgraphCallbackTest, InsertNewTag_CallbackRegistration)
 TEST_F(AclgraphCallbackTest, InsertNewTag_NoDuplicateCallback)
 {
     // 同一个 modelId 第二次插入不应再次注册 callback
-    MOCKER(GetStreamCaptureInfo)
-        .stubs()
-        .will(invoke(GetStreamCaptureInfoMock));
+    MOCKER(GetStreamCaptureInfo).stubs().will(invoke(GetStreamCaptureInfoMock));
 
-    MOCKER(GetModelId)
-        .stubs()
-        .will(invoke(GetModelIdMock));
+    MOCKER(GetModelId).stubs().will(invoke(GetModelIdMock));
 
-    MOCKER(aclmdlRIDestroyRegisterCallback)
-        .stubs()
-        .will(returnValue(ACL_SUCCESS));
+    MOCKER(aclmdlRIDestroyRegisterCallback).stubs().will(returnValue(ACL_SUCCESS));
 
     OpParam opParam;
 
     // 第一次插入
     std::string tag1 = "tag1";
-    HcclResult ret1 = AclgraphCallback::GetInstance().InsertNewTagToCaptureResMap(
-        &communicator1_, tag1, opParam);
+    HcclResult ret1 = AclgraphCallback::GetInstance().InsertNewTagToCaptureResMap(&communicator1_, tag1, opParam);
     EXPECT_EQ(ret1, HCCL_SUCCESS);
 
     // 第二次插入同 communicator 不同 tag → 不应再次注册
     std::string tag2 = "tag2";
-    HcclResult ret2 = AclgraphCallback::GetInstance().InsertNewTagToCaptureResMap(
-        &communicator1_, tag2, opParam);
+    HcclResult ret2 = AclgraphCallback::GetInstance().InsertNewTagToCaptureResMap(&communicator1_, tag2, opParam);
     EXPECT_EQ(ret2, HCCL_SUCCESS);
 
     // 验证 captureResMap_ 包含两个 tag
     bool foundTag1 = false;
     bool foundTag2 = false;
-    for (const auto &modelEntry : AclgraphCallback::GetInstance().captureResMap_) {
-        for (const auto &commEntry : modelEntry.second) {
+    for (const auto& modelEntry : AclgraphCallback::GetInstance().captureResMap_) {
+        for (const auto& commEntry : modelEntry.second) {
             if (commEntry.first == &communicator1_) {
-                if (commEntry.second.find(tag1) != commEntry.second.end()) foundTag1 = true;
-                if (commEntry.second.find(tag2) != commEntry.second.end()) foundTag2 = true;
+                if (commEntry.second.find(tag1) != commEntry.second.end())
+                    foundTag1 = true;
+                if (commEntry.second.find(tag2) != commEntry.second.end())
+                    foundTag2 = true;
             }
         }
     }

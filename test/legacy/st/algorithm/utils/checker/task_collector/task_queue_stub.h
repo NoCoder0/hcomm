@@ -1,8 +1,11 @@
-/*
- * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
- * Description: task queue stub header file
- * Author: shenyutian
- * Create: 2024-07-27
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
  */
 
 #ifndef HCCLV1_TASK_QUEUE_STUB_H
@@ -35,7 +38,7 @@ struct SingleRankTaskQueues {
 #ifdef HCCL_ALG_ANALYZER_DAVID
     void AppendTask(QId qid, std::shared_ptr<TaskStub> task);
 #endif
-    std::vector<std::shared_ptr<TaskStub>> &operator[](QId queId);
+    std::vector<std::shared_ptr<TaskStub>>& operator[](QId queId);
 
     std::shared_ptr<TaskStub> GetTask(QId queId, u32 pos) const;
     std::vector<std::shared_ptr<TaskStub>> GetQueTasks(QId queId) const;
@@ -43,7 +46,7 @@ struct SingleRankTaskQueues {
 };
 
 struct AllRankTaskQueues {
-    std::map<RankId, SingleRankTaskQueues *> rank2TaskQueues;
+    std::map<RankId, SingleRankTaskQueues*> rank2TaskQueues;
     u32 rankSize = 0;
 
     void Clear();
@@ -56,9 +59,9 @@ struct AllRankTaskQueues {
     void AppendTask(RankId rankId, QId qid, std::shared_ptr<TaskStub> task);
 #endif
 
-    SingleRankTaskQueues *operator[](RankId rankId);
+    SingleRankTaskQueues* operator[](RankId rankId);
 
-    SingleRankTaskQueues *GetRankTaskQues(RankId rankId) const;
+    SingleRankTaskQueues* GetRankTaskQues(RankId rankId) const;
 };
 
 class TaskQueueStub {
@@ -67,7 +70,7 @@ public:
     void Reset();
 
 #ifndef HCCL_ALG_ANALYZER_DAVID
-    static void AppendTask(RankId rankId, Stream *stream, std::shared_ptr<TaskStub> task);
+    static void AppendTask(RankId rankId, Stream* stream, std::shared_ptr<TaskStub> task);
 #endif
 
 #ifdef HCCL_ALG_ANALYZER_DAVID
@@ -75,8 +78,9 @@ public:
 #endif
 
     u32 GetRankSize() const;
-    SingleRankTaskQueues *GetTaskQueueOfRank(RankId rankId) const;
+    SingleRankTaskQueues* GetTaskQueueOfRank(RankId rankId) const;
     AllRankTaskQueues& GetAllRankTasks();
+
 private:
     AllRankTaskQueues allRankTaskQueues;
 };

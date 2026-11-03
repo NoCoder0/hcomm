@@ -17,6 +17,8 @@ extern "C" {
 #include "tc_ra_tlv.h"
 }
 
+#include "ra_rs_comm.h"
+#include "ra_hdc.h"
 #include <stdio.h>
 #include "gtest/gtest.h"
 #include "tc_adp.h"
@@ -28,29 +30,19 @@ extern "C" {
 
 using namespace std;
 
-class RdmaAgent : public testing::Test
-{
+class RdmaAgent : public testing::Test {
 protected:
-   static void SetUpTestCase()
-    {
-        std::cout << "\033[36m--RoCE RdmaAgent SetUP--\033[0m" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "\033[36m--RoCE RdmaAgent TearDown--\033[0m" << std::endl;
-    }
-    virtual void SetUp()
-    {
-    }
-    virtual void TearDown()
-    {
-    }
+    static void SetUpTestCase() { std::cout << "\033[36m--RoCE RdmaAgent SetUP--\033[0m" << std::endl; }
+    static void TearDownTestCase() { std::cout << "\033[36m--RoCE RdmaAgent TearDown--\033[0m" << std::endl; }
+    virtual void SetUp() {}
+    virtual void TearDown() {}
 };
 
 TEST_M(RdmaAgent, TcHdcSocketBatchConnect);
 TEST_M(RdmaAgent, TcHdcSocketListenStart);
 TEST_M(RdmaAgent, TcIfaddr);
 TEST_M(RdmaAgent, TcHost);
+TEST_M(RdmaAgent, TcRaRdevInitCheckIp);
 TEST_M(RdmaAgent, TcPeer);
 TEST_M(RdmaAgent, TcHdcInit);
 TEST_M(RdmaAgent, TcHdcInitFail);
@@ -126,6 +118,7 @@ TEST_M(RdmaAgent, TcGetIfaddrs);
 TEST_M(RdmaAgent, TcGetIfaddrsV2);
 TEST_M(RdmaAgent, TcGetIfnum);
 TEST_M(RdmaAgent, TcGetInterfaceVersion);
+TEST_M(RdmaAgent, TcGetAllInterfaceVersion);
 TEST_M(RdmaAgent, TcTlvInit);
 TEST_M(RdmaAgent, TcTlvDeinit);
 TEST_M(RdmaAgent, TcTlvRequest);
@@ -141,6 +134,8 @@ TEST_M(RdmaAgent, TcRaPeerRdevInit04);
 TEST_M(RdmaAgent, TcRaPeerRdevDeinit01);
 TEST_M(RdmaAgent, TcRaPeerRdevDeinit02);
 TEST_M(RdmaAgent, TcRaPeerRdevDeinit03);
+TEST_M(RdmaAgent, TcRaPeerRdevGetPortStatusSucc);
+TEST_M(RdmaAgent, TcRaPeerRdevGetPortStatusFail);
 TEST_M(RdmaAgent, TcRaPeerSocketWhiteListDel);
 TEST_M(RdmaAgent, TcRaPeerSocketBatchConnect);
 TEST_M(RdmaAgent, TcRaPeerSocketBatchAbort);
@@ -161,6 +156,9 @@ TEST_M(RdmaAgent, TcRaHdcSocketWhiteListDel);
 TEST_M(RdmaAgent, TcRaHdcSocketAcceptCreditAdd);
 TEST_M(RdmaAgent, TcRaHdcRdevInit);
 TEST_M(RdmaAgent, TcRaHdcInitApart);
+TEST_M(RdmaAgent, TcRaHdcGetAllOpcodeVersionFallback);
+TEST_M(RdmaAgent, TcRaHdcGetAllOpcodeVersionBatchSuccess);
+TEST_M(RdmaAgent, TcRaHdcGetAllOpcodeVersionBatchMismatch);
 TEST_M(RdmaAgent, TcRaHdcQpDestroy);
 TEST_M(RdmaAgent, TcRaHdcQpDestroy01);
 TEST_M(RdmaAgent, TcRaGetSocketConnectInfo);
@@ -224,6 +222,8 @@ TEST_M(RdmaAgent, TcRaPeerLoopbackSingleQpCreate);
 TEST_M(RdmaAgent, TcRaPeerSetQpLbValue);
 TEST_M(RdmaAgent, TcRaPeerGetQpLbValue);
 TEST_M(RdmaAgent, TcRaPeerGetLbMax);
+TEST_M(RdmaAgent, TcRaPeerRdevGetAttr);
+TEST_M(RdmaAgent, TcRaPeerGetHccnCfg);
 TEST_M(RdmaAgent, TcRaPollCq);
 TEST_M(RdmaAgent, TcHdcRecvWrlist);
 TEST_M(RdmaAgent, TcHdcPollCq);
@@ -243,12 +243,21 @@ TEST_M(RdmaAgent, TcRaHdcLiteCtxInit);
 TEST_M(RdmaAgent, TcRaRemapMr);
 TEST_M(RdmaAgent, TcRaRegisterMr);
 TEST_M(RdmaAgent, TcRaGetLbMax);
+TEST_M(RdmaAgent, TcRaRdevGetAttr);
 TEST_M(RdmaAgent, TcRaSetQpLbValue);
 TEST_M(RdmaAgent, TcRaGetQpLbValue);
+TEST_M(RdmaAgent, TcRaGetQpHyperFeature);
+TEST_M(RdmaAgent, TcRaPeerGetQpHyperFeature);
+TEST_M(RdmaAgent, TcRaSetDebugConfig);
+TEST_M(RdmaAgent, TcHccpOpCtxQpCreateSync);
+TEST_M(RdmaAgent, TcHccpOpCodeMirrorSync);
 TEST_M(RdmaAgent, TcRaHdcRecvHandleSendPktUnsuccess);
 TEST_M(RdmaAgent, TcRaHdcGetEidByIp);
 TEST_M(RdmaAgent, TcRaRsGetEidByIp);
 TEST_M(RdmaAgent, TcRaPeerGetEidByIp);
+TEST_M(RdmaAgent, TcRaHdcGetIpByEid);
+TEST_M(RdmaAgent, TcRaRsGetIpByEid);
+TEST_M(RdmaAgent, TcRaPeerGetIpByEid);
 TEST_M(RdmaAgent, TcRaCtxGetAuxInfo);
 TEST_M(RdmaAgent, TcRaHdcCtxGetAuxInfo);
 TEST_M(RdmaAgent, TcRaRsCtxGetAuxInfo);
@@ -285,8 +294,11 @@ TEST_M(RdmaAgent, TcRaCtxQpBind);
 TEST_M(RdmaAgent, TcRaBatchSendWr);
 TEST_M(RdmaAgent, TcRaCtxUpdateCi);
 TEST_M(RdmaAgent, TcRaGetEidByIp);
+TEST_M(RdmaAgent, TcRaGetIpByEid);
 TEST_M(RdmaAgent, TcRaCtxGetCrErrInfoList);
 TEST_M(RdmaAgent, TcRaCtxGetJettyContext);
+TEST_M(RdmaAgent, TcRaCtxNotifyEvent);
+TEST_M(RdmaAgent, TcRaHdcCtxNotifyEvent);
 
 TEST_M(RdmaAgent, TcRaRsAsyncHdcSessionConnect);
 TEST_M(RdmaAgent, TcRaHdcAsyncSendPkt);
@@ -328,6 +340,7 @@ TEST_M(RdmaAgent, TcRaCtxQpUnimportAsync);
 TEST_M(RdmaAgent, TcRaSocketSendAsync);
 TEST_M(RdmaAgent, TcRaSocketRecvAsync);
 TEST_M(RdmaAgent, TcRaGetAsyncReqResult);
+TEST_M(RdmaAgent, TcRaGetAsyncReqResultNotDone);
 TEST_M(RdmaAgent, TcRaSocketBatchConnectAsync);
 TEST_M(RdmaAgent, TcRaSocketListenStartAsync);
 TEST_M(RdmaAgent, TcRaSocketListenStopAsync);
@@ -335,6 +348,8 @@ TEST_M(RdmaAgent, TcRaSocketBatchCloseAsync);
 TEST_M(RdmaAgent, TcRaHdcAsyncInitSession);
 TEST_M(RdmaAgent, TcRaGetEidByIpAsync);
 TEST_M(RdmaAgent, TcRaHdcGetEidByIpAsync);
+TEST_M(RdmaAgent, TcRaGetIpByEidAsync);
+TEST_M(RdmaAgent, TcRaHdcGetIpByEidAsync);
 
 TEST_M(RdmaAgent, TcRaTlvInit);
 TEST_M(RdmaAgent, TcRaTlvDeinit);
@@ -374,3 +389,58 @@ TEST_M(RdmaAgent, TcRaNdaGetDirectFlag);
 TEST_M(RdmaAgent, TcRaPeerNdaGetDirectFlag);
 TEST_M(RdmaAgent, TcRaNdaQpCreate);
 TEST_M(RdmaAgent, TcRaPeerNdaQpCreate);
+
+TEST_F(RdmaAgent, RaRsHasCapability_CapabilityInvalid_ReturnFalse)
+{
+    bool ret = RaRsHasCapability(RA_CAP_INVALID, 0, 1);
+    EXPECT_EQ(ret, false);
+}
+
+TEST_F(RdmaAgent, RaRsHasCapability_CapabilityBeyondInvalid_ReturnFalse)
+{
+    bool ret = RaRsHasCapability(RA_CAP_INVALID + 1, 0, 1);
+    EXPECT_EQ(ret, false);
+}
+
+TEST_F(RdmaAgent, RaRsHasCapability_ValidCapabilityRoceAndNetMet_ReturnTrue)
+{
+    bool ret = RaRsHasCapability(RA_CAP_DRV_SHAREPOOL_NON_PIN, 0, 1);
+    EXPECT_EQ(ret, true);
+}
+
+TEST_F(RdmaAgent, RaRsHasCapability_ValidCapabilityRoceMetNetNotMet_ReturnFalse)
+{
+    bool ret = RaRsHasCapability(RA_CAP_DRV_SHAREPOOL_NON_PIN, 0, 0);
+    EXPECT_EQ(ret, false);
+}
+
+TEST_F(RdmaAgent, RaRsHasCapability_ValidCapabilityRoceMetAndNetMet_ReturnTrue)
+{
+    bool ret = RaRsHasCapability(RA_CAP_DRV_SHAREPOOL_NON_PIN, 1, 1);
+    EXPECT_EQ(ret, true);
+}
+
+TEST_F(RdmaAgent, RaHdcIsBroken_WithSocketClose_ReturnTrue)
+{
+    int val = -DRV_ERROR_SOCKET_CLOSE;
+    bool ret = RaHdcIsBroken(-DRV_ERROR_SOCKET_CLOSE);
+    EXPECT_EQ(ret, true);
+}
+
+TEST_F(RdmaAgent, RaHdcIsBroken_WithZero_ReturnFalse)
+{
+    bool ret = RaHdcIsBroken(0);
+    EXPECT_EQ(ret, false);
+}
+
+TEST_F(RdmaAgent, RaHdcIsBroken_WithNonSocketCloseError_ReturnFalse)
+{
+    bool ret = RaHdcIsBroken(DRV_ERROR_WAIT_TIMEOUT);
+    EXPECT_EQ(ret, false);
+}
+
+TEST_F(RdmaAgent, RaHdcIsBroken_WithPositiveOne_ReturnFalse)
+{
+    bool ret = RaHdcIsBroken(1);
+    EXPECT_EQ(ret, false);
+}

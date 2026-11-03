@@ -1,19 +1,19 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "coll_all_reduce_mesh_small_count_executor.h"
 
 namespace hccl {
 
-CollAllReduceMeshSmallCountExecutor::CollAllReduceMeshSmallCountExecutor(const HcclDispatcher dispatcher,
-                                                                         std::unique_ptr<TopoMatcher> &topoMatcher)
+CollAllReduceMeshSmallCountExecutor::CollAllReduceMeshSmallCountExecutor(
+    const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher>& topoMatcher)
     : CollAllReduceExecutor(dispatcher, topoMatcher)
 {
     DMAReduceFlag_ = true;
@@ -27,22 +27,20 @@ void CollAllReduceMeshSmallCountExecutor::ParseParam(const OpParam& param)
     aicpuUnfoldMode_ = param.aicpuUnfoldMode;
 }
 
-bool CollAllReduceMeshSmallCountExecutor::CalcScratchMemFlag(const u64 totalSize)
+bool CollAllReduceMeshSmallCountExecutor::CalcScratchMemFlag(const u64 totalSize, const u8 deterministic)
 {
-    bool isDeter910B = workflowMode_ == HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB &&
-        topoAttr_.deviceType == DevType::DEV_TYPE_910B &&
-        topoMatcher_->GetExternalInputHcclDeterministic() != DETERMINISTIC_DISABLE &&
-        topoAttr_.deviceNumPerAggregation > DEVICE_TWO &&
-        topoAttr_.deviceNumPerAggregation < DEVICE_EIGHT &&
-        totalSize <= HCCL_SMALL_COUNT_GRAPH_64_KB;
-    return workflowMode_ == HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB &&
-        (isDeter910B || topoAttr_.deviceType == DevType::DEV_TYPE_910_93);
+    bool isDeter910B = workflowMode_ == HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB
+                       && topoAttr_.deviceType == DevType::DEV_TYPE_910B && deterministic != DETERMINISTIC_DISABLE
+                       && topoAttr_.deviceNumPerAggregation > DEVICE_TWO
+                       && topoAttr_.deviceNumPerAggregation < DEVICE_EIGHT && totalSize <= HCCL_SMALL_COUNT_GRAPH_64_KB;
+    return workflowMode_ == HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB
+           && (isDeter910B || topoAttr_.deviceType == DevType::DEV_TYPE_910_93);
 }
 
 HcclResult CollAllReduceMeshSmallCountExecutor::CalcScratchMemSize(u64& scratchMemSize)
 {
     const u32 base = 2;
-    if (CalcScratchMemFlag(totalSize_) == true) {
+    if (CalcScratchMemFlag(totalSize_, topoMatcher_->GetExternalInputHcclDeterministic())) {
         if (topoAttr_.deviceType == DevType::DEV_TYPE_910B) {
             scratchMemSize = totalSize_ * (topoAttr_.userRankSize - 1);
         } else {
@@ -52,8 +50,9 @@ HcclResult CollAllReduceMeshSmallCountExecutor::CalcScratchMemSize(u64& scratchM
     } else {
         scratchMemSize = 0U;
     }
-    HCCL_INFO("[CollAllReduceMeshSmallCountExecutor][CalcScratchMemSize] tag[%s] scratchMemSize[%llu]",
-        tag_.c_str(), scratchMemSize);
+    HCCL_INFO(
+        "[CollAllReduceMeshSmallCountExecutor][CalcScratchMemSize] tag[%s] scratchMemSize[%llu]", tag_.c_str(),
+        scratchMemSize);
     return HCCL_SUCCESS;
 }
 
@@ -66,8 +65,7 @@ HcclResult CollAllReduceMeshSmallCountExecutor::CalcStreamNum(u32& streamNum)
         totalStreamNum = topoAttr_.deviceNumPerAggregation;
     }
     streamNum = totalStreamNum - 1U;
-    HCCL_INFO("[CollAllReduceMeshSmallCountExecutor][CalcStreamNum] tag[%s] streamNum[%u]",
-        tag_.c_str(), streamNum);
+    HCCL_INFO("[CollAllReduceMeshSmallCountExecutor][CalcStreamNum] tag[%s] streamNum[%u]", tag_.c_str(), streamNum);
     return HCCL_SUCCESS;
 }
 
@@ -80,29 +78,29 @@ HcclResult CollAllReduceMeshSmallCountExecutor::CalcCommInfo(std::vector<LevelNS
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllReduceMeshSmallCountExecutor::CalcTransportMemType(TransportMemType &inputType,
-    TransportMemType &outputType)
+HcclResult
+CollAllReduceMeshSmallCountExecutor::CalcTransportMemType(TransportMemType& inputType, TransportMemType& outputType)
 {
     if (workflowMode_ == HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE) {
         inputType = TransportMemType::CCL_INPUT;
         outputType = TransportMemType::CCL_OUTPUT;
     } else {
         inputType = TransportMemType::PARAM_INPUT;
-        if (CalcScratchMemFlag(totalSize_) == true) {
+        if (CalcScratchMemFlag(totalSize_, topoMatcher_->GetExternalInputHcclDeterministic())) {
             outputType = TransportMemType::SCRATCH;
         } else {
             outputType = TransportMemType::PARAM_OUTPUT;
         }
     }
-    HCCL_INFO("[CollAllReduceMeshSmallCountExecutor][CalcTransportMemType]" \
+    HCCL_INFO(
+        "[CollAllReduceMeshSmallCountExecutor][CalcTransportMemType]"
         "tag[%s] inputType[%d], outputType[%d]",
         tag_.c_str(), inputType, outputType);
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllReduceMeshSmallCountExecutor::CalcLevel0CommInfo(TransportMemType inputType,
-    TransportMemType outputType,
-    std::vector<LevelNSubCommTransport>& opTransport)
+HcclResult CollAllReduceMeshSmallCountExecutor::CalcLevel0CommInfo(
+    TransportMemType inputType, TransportMemType outputType, std::vector<LevelNSubCommTransport>& opTransport)
 {
     CommParaInfo commParaLevel0(COMM_LEVEL0, CommType::COMM_TAG_MESH);
     commParaLevel0.meshSinglePlane = true;
@@ -129,90 +127,102 @@ HcclResult CollAllReduceMeshSmallCountExecutor::Orchestrate(OpParam& param, AlgR
         execMem.scratchMem = algRes.scratchMem;
     }
     HcclResult ret = KernelRun(param, execMem);
-    CHK_PRT_RET(ret != HCCL_SUCCESS,
-        HCCL_ERROR("[CollAllReduceMeshSmallCountExecutor][Orchestrate]errNo[0x%016llx]executor kernel run failed",
-            HCCL_ERROR_CODE(ret)), ret);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[CollAllReduceMeshSmallCountExecutor][Orchestrate]errNo[0x%016llx]executor kernel run failed",
+            HCCL_ERROR_CODE(ret)),
+        ret);
 
     // Enforce task launch at the end of Orchestrate
     // 注意: 不要删除这里的强制launch, 否则会导致aicpu cache功能问题
     if (!is310P3Common_) {
         HCCL_INFO("%s: enforce task launch at the end of Orchestrate", __func__);
-        CHK_RET(LaunchTaskExtend(dispatcher_,
-            const_cast<Stream &>(param.stream),
-            const_cast<std::vector<Stream> &>(algResResp_->slaveStreams)));
+        CHK_RET(LaunchTaskExtend(
+            dispatcher_, const_cast<Stream&>(param.stream),
+            const_cast<std::vector<Stream>&>(algResResp_->slaveStreams)));
     }
 
-    HCCL_INFO("[CollAllReduceMeshSmallCountExecutor]tag[%s], AllReduce executor orchestrate success, take time [%lld]us",
+    HCCL_INFO(
+        "[CollAllReduceMeshSmallCountExecutor]tag[%s], AllReduce executor orchestrate success, take time [%lld]us",
         param.tag.c_str(), DURATION_US(TIME_NOW() - startut));
     return HCCL_SUCCESS;
 }
 
 HcclResult CollAllReduceMeshSmallCountExecutor::GetAdjInfo(AlgResourceResponse& algRes, AdjInfo& adjInfo)
 {
-    (void) algRes;
-    (void) adjInfo;
+    (void)algRes;
+    (void)adjInfo;
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllReduceMeshSmallCountExecutor::KernelRun(const OpParam &param, ExecMem &execMem)
+HcclResult CollAllReduceMeshSmallCountExecutor::KernelRun(const OpParam& param, ExecMem& execMem)
 {
     HCCL_CONFIG_INFO(HCCL_ALG, "[%s] userRank[%u] starts.", __func__, topoAttr_.userRank);
+    // 算法执行期间确定性配置只读取一次，后续统一复用
+    const u8 deterministic = topoMatcher_->GetExternalInputHcclDeterministic();
     std::vector<Slice> dataSegsSlice; // 数据分成ranksize份，每份的起始偏移和大小
-    if (!CalcScratchMemFlag(totalSize_)) {
+    if (!CalcScratchMemFlag(totalSize_, deterministic)) {
         execMem.scratchMem = execMem.outputMem;
     }
 
     CHK_RET(CheckCommSize(COMM_LEVEL0, COMM_INDEX_0 + 1));
     SubCommInfo level0CommInfo = GetSubCommInfo(COMM_LEVEL0, COMM_INDEX_0);
 
-    ReduceType reduceType = ((param.reduceType != HCCL_REDUCE_PROD) &&
-        (param.DataDes.dataType != HCCL_DATA_TYPE_INT64)) ?
-        ReduceType::INLINE_REDUCE : ReduceType::TBE_REDUCE;
+    ReduceType reduceType
+        = ((param.reduceType != HCCL_REDUCE_PROD) && (param.DataDes.dataType != HCCL_DATA_TYPE_INT64)) ?
+              ReduceType::INLINE_REDUCE :
+              ReduceType::TBE_REDUCE;
     auto originalAlgTypeLevel1 = static_cast<u32>(algType_.algoLevel1);
-    u8 deterministic = topoMatcher_->GetExternalInputHcclDeterministic();
-    auto opMeta = HcclOpMetaInfo::GetOneForAllReduce(originalAlgTypeLevel1, param.DataDes.dataType, reduceType,
-        true, 1, false, CopyPattern::BCOPY, 1, false, true, false, deterministic);
+    auto opMeta = HcclOpMetaInfo::GetOneForAllReduce(
+        originalAlgTypeLevel1, param.DataDes.dataType, reduceType, true, 1, false, CopyPattern::BCOPY, 1, false, true,
+        false, deterministic);
     CHK_RET(InitTask(dispatcher_, const_cast<Stream&>(param.stream), opMeta.isEnableCache, opMeta.GetCacheKey()));
 
     CHK_RET(ActiveSlaveStreams(param.stream));
 
     u64 reduceAttr = GetReduceAttr(execMem.inputMem, execMem.outputMem, param.DataDes.dataType, param.reduceType);
-    HcomCollOpInfo opInfo = {
-        "", execMem.inputPtr, execMem.outputPtr, execMem.count, param.DataDes.dataType, param.root, param.reduceType
-    };
+    HcomCollOpInfo opInfo
+        = {"", execMem.inputPtr, execMem.outputPtr, execMem.count, param.DataDes.dataType, param.root, param.reduceType,
+           0};
 
     bool isUsedRegister = false;
     std::unique_ptr<AlgTemplateBase> level0TempAlg;
     if (topoAttr_.deviceType == DevType::DEV_TYPE_910_93) {
         bool aicpu = true;
-        level0TempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_ALL_REDUCE_HD_OPTIM, dispatcher_);
+        level0TempAlg
+            = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_ALL_REDUCE_HD_OPTIM, dispatcher_);
         HCCL_CONFIG_INFO(HCCL_ALG, "[%s] Run TEMPLATE_ALL_REDUCE_HD_OPTIM in COMM_LEVEL0", __func__);
         CHK_SMART_PTR_NULL(level0TempAlg);
-        CHK_RET(level0TempAlg->Prepare(reduceAttr, algResResp_->slaveStreams, algResResp_->notifiesMain, algResResp_->notifiesAux,
+        CHK_RET(level0TempAlg->Prepare(
+            reduceAttr, algResResp_->slaveStreams, algResResp_->notifiesMain, algResResp_->notifiesAux,
             level0CommInfo.localRank, &opInfo, aicpu));
-    } else if (topoMatcher_->GetExternalInputHcclDeterministic() == DETERMINISTIC_DISABLE) {
+    } else if (deterministic == DETERMINISTIC_DISABLE) {
         isUsedRegister = true;
         level0TempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(
             TemplateType::TEMPLATE_ALL_REDUCE_REDUCE_BCAST, dispatcher_);
         HCCL_CONFIG_INFO(HCCL_ALG, "[%s] Run TEMPLATE_ALL_REDUCE_REDUCE_BCAST in COMM_LEVEL0", __func__);
     } else if (topoAttr_.deviceNumPerAggregation == DEVICE_EIGHT) {
         if (workflowMode_ != HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE || aicpuUnfoldMode_) {
-            level0TempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_ALL_REDUCE_DOUBLING, 
-                dispatcher_);
+            level0TempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(
+                TemplateType::TEMPLATE_ALL_REDUCE_DOUBLING, dispatcher_);
             HCCL_CONFIG_INFO(HCCL_ALG, "[%s] Run TEMPLATE_ALL_REDUCE_DOUBLING in COMM_LEVEL0", __func__);
             CHK_SMART_PTR_NULL(level0TempAlg);
             CHK_RET(level0TempAlg->Prepare(reduceAttr));
         } else {
-            level0TempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_ALL_REDUCE_DOUBLING_DIRECT, dispatcher_);
+            level0TempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(
+                TemplateType::TEMPLATE_ALL_REDUCE_DOUBLING_DIRECT, dispatcher_);
             HCCL_CONFIG_INFO(HCCL_ALG, "[%s] Run TEMPLATE_ALL_REDUCE_DOUBLING_DIRECT in COMM_LEVEL0", __func__);
             CHK_SMART_PTR_NULL(level0TempAlg);
             CHK_RET(level0TempAlg->Prepare(reduceAttr, &opInfo));
         }
     } else {
-        level0TempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_ALL_REDUCE_LOCAL_REDUCE_BCAST, dispatcher_);
+        level0TempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(
+            TemplateType::TEMPLATE_ALL_REDUCE_LOCAL_REDUCE_BCAST, dispatcher_);
         HCCL_CONFIG_INFO(HCCL_ALG, "[%s] Run TEMPLATE_ALL_REDUCE_LOCAL_REDUCE_BCAST in COMM_LEVEL0", __func__);
         CHK_SMART_PTR_NULL(level0TempAlg);
-        CHK_RET(level0TempAlg->Prepare(reduceAttr, algResResp_->slaveStreams, algResResp_->notifiesMain, algResResp_->notifiesAux,
+        CHK_RET(level0TempAlg->Prepare(
+            reduceAttr, algResResp_->slaveStreams, algResResp_->notifiesMain, algResResp_->notifiesAux,
             level0CommInfo.localRank, level0CommInfo.localRankSize, topoAttr_.userRank, &opInfo));
     }
     CHK_SMART_PTR_NULL(level0TempAlg);
@@ -239,14 +249,14 @@ HcclResult CollAllReduceMeshSmallCountExecutor::KernelRun(const OpParam &param, 
 
         CHK_RET(level0TempAlg->Prepare(prepareData));
     } else {
-        CHK_RET(level0TempAlg->Prepare(execMem.inputMem, execMem.scratchMem, execMem.outputMem, execMem.count,
-        param.DataDes.dataType, param.stream, param.reduceType, LEVEL0_BRIDGE_RANK_ID, dataSegsSlice, 0));
+        CHK_RET(level0TempAlg->Prepare(
+            execMem.inputMem, execMem.scratchMem, execMem.outputMem, execMem.count, param.DataDes.dataType,
+            param.stream, param.reduceType, LEVEL0_BRIDGE_RANK_ID, dataSegsSlice, 0));
     }
 
-    CHK_RET(
-        level0TempAlg->RegisterProfiler(
-            (level0CommInfo.localRankSize << PROF_RANKSIZE_OFFSET_OF_PLANEID) + level0CommInfo.localRank,
-            PROF_STAGE_2, HCCL_EXEC_STEP_NOT_SET, param.stream));
+    CHK_RET(level0TempAlg->RegisterProfiler(
+        (level0CommInfo.localRankSize << PROF_RANKSIZE_OFFSET_OF_PLANEID) + level0CommInfo.localRank, PROF_STAGE_2,
+        HCCL_EXEC_STEP_NOT_SET, param.stream));
     CHK_RET(RunTemplate(level0TempAlg, level0CommInfo));
     HCCL_INFO("AllReduce small count executor run success.");
     return HCCL_SUCCESS;

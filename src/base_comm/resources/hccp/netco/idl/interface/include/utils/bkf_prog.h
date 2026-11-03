@@ -40,9 +40,10 @@ int32_t BkfFibo32Get(int32_t idx);
  * @note 外部不要关注itor
  */
 int32_t BkfFibo32GetNextValid(int32_t *itorInOut, int32_t max);
-#define BKF_PROG_INIT_ITOR_FIRST(itor) do { \
-    *(itor) = -1;                           \
-} while (0)
+#define BKF_PROG_INIT_ITOR_FIRST(itor)                                                                                 \
+    do {                                                                                                               \
+        *(itor) = -1;                                                                                                  \
+    } while (0)
 
 /**
  * @brief 获取斐波那契数列前一个有效值
@@ -54,9 +55,10 @@ int32_t BkfFibo32GetNextValid(int32_t *itorInOut, int32_t max);
  * @note 外部不要关注idxItor
  */
 int32_t BkfFibo32GetPrevValid(int32_t *itorInOut, int32_t max);
-#define BKF_PROG_INIT_ITOR_LAST(itor) do {  \
-    *(itor) = 0x7fffffff;                   \
-} while (0)
+#define BKF_PROG_INIT_ITOR_LAST(itor)                                                                                  \
+    do {                                                                                                               \
+        *(itor) = 0x7fffffff;                                                                                          \
+    } while (0)
 
 #pragma pack()
 #pragma GCC visibility pop
@@ -67,4 +69,3 @@ int32_t BkfFibo32GetPrevValid(int32_t *itorInOut, int32_t max);
 #endif
 
 #endif
-

@@ -1,10 +1,20 @@
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "gtest/gtest.h"
 #include "mockcpp/mokc.h"
 #include <mockcpp/mockcpp.hpp>
 
 #include "rank_pair.h"
-#include "endpoint_pair_mgr.h"
-#include "endpoint_pair.h"
+#include "endpoint_pair/endpoint_pair_mgr_pub.h"
+#include "endpoint_pair/endpoint_pair_pub.h"
 
 using namespace hccl;
 using namespace hcomm;
@@ -15,14 +25,15 @@ protected:
     void TearDown() override { GlobalMockObject::verify(); }
 };
 
-TEST_F(RankPairTest, GetEpChannelMap_ReturnsEmptyWhenMgrEmpty) {
+TEST_F(RankPairTest, GetEpChannelMap_ReturnsEmptyWhenMgrEmpty)
+{
     RankIdPair ids = {1, 2};
     RankPair rp(ids, nullptr);
     EXPECT_EQ(rp.Init(), HCCL_SUCCESS);
 
     // Stub EndpointPairMgr::GetEpChannelMap to return empty map
     hcomm::EpChannelMap emptyMap;
-    MOCKER_CPP(&hcomm::EndpointPairMgr::GetEpChannelMap, hcomm::EpChannelMap(hcomm::EndpointPairMgr::* )())
+    MOCKER_CPP(&hcomm::EndpointPairMgr::GetEpChannelMap, hcomm::EpChannelMap(hcomm::EndpointPairMgr::*)())
         .stubs()
         .will(returnValue(emptyMap));
 
@@ -30,7 +41,8 @@ TEST_F(RankPairTest, GetEpChannelMap_ReturnsEmptyWhenMgrEmpty) {
     EXPECT_TRUE(ret.empty());
 }
 
-TEST_F(RankPairTest, GetEpChannelMap_ReturnsProvidedMap) {
+TEST_F(RankPairTest, GetEpChannelMap_ReturnsProvidedMap)
+{
     RankIdPair ids = {10, 20};
     RankPair rp(ids, nullptr);
     EXPECT_EQ(rp.Init(), HCCL_SUCCESS);
@@ -51,12 +63,12 @@ TEST_F(RankPairTest, GetEpChannelMap_ReturnsProvidedMap) {
     EndpointDescPair epPair = std::make_pair(localEp, remoteEp);
 
     std::unordered_map<CommEngine, std::vector<ChannelHandle>> inner;
-    inner[COMM_ENGINE_AICPU] = { (ChannelHandle)0x1, (ChannelHandle)0x2 };
+    inner[COMM_ENGINE_AICPU] = {(ChannelHandle)0x1, (ChannelHandle)0x2};
 
     hcomm::EpChannelMap fakeMap;
     fakeMap[epPair] = inner;
 
-    MOCKER_CPP(&hcomm::EndpointPairMgr::GetEpChannelMap, hcomm::EpChannelMap(hcomm::EndpointPairMgr::* )())
+    MOCKER_CPP(&hcomm::EndpointPairMgr::GetEpChannelMap, hcomm::EpChannelMap(hcomm::EndpointPairMgr::*)())
         .stubs()
         .will(returnValue(fakeMap));
 

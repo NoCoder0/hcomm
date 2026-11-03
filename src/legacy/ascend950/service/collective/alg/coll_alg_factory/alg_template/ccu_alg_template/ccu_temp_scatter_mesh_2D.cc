@@ -26,51 +26,50 @@
 namespace Hccl {
 
 constexpr int DIE_NUM = 2;
+constexpr u32 MESH_2D_DIMENSION_NUM = 2;
 
 static CcuInstRegister<CcuContextScatterMesh2D> registrarScatter(CcuInstType::CCU_SCATTER_MESH_2D_DIRECT);
 
-CcuTempScatterMesh2D::CcuTempScatterMesh2D(const RankId virtualRank, const u32 tempRankSize,
-                                   const std::vector<std::vector<RankId>> &tempVTopo,
-                                   const std::map<RankId, u32>            &tempVirtRankMap)
+CcuTempScatterMesh2D::CcuTempScatterMesh2D(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
     : CcuAlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap)
 {
-    if (tempVTopo_.size() != 2 || tempVTopo_[0].size() <= 1 || tempVTopo_[1].size() <= 1) { // concurrmesh的topoMatch返回的vTopo大小应当为2，对应X轴和Y轴的大小
-        THROW<InvalidParamsException>(StringFormat("[CcuTempScatterMesh2D] Rank[%d], Invalid tempVTopo "
-                                                   "Size[%u] or Invalid tempVTopo[0] size %u or tempVTopo[1] size %u.",
-                                                   myRank_, tempVTopo_.size(), tempVTopo_[0].size(),
-                                                   tempVTopo_[1].size()));
+    if (tempVTopo_.size() != MESH_2D_DIMENSION_NUM || tempVTopo_[0].size() <= 1
+        || tempVTopo_[1].size() <= 1) { // concurrmesh的topoMatch返回的vTopo大小应当为2，对应X轴和Y轴的大小
+        THROW<InvalidParamsException>(StringFormat(
+            "[CcuTempScatterMesh2D] Rank[%d], Invalid tempVTopo "
+            "Size[%u] or Invalid tempVTopo[0] size %u or tempVTopo[1] size %u.",
+            myRank_, tempVTopo_.size(), tempVTopo_[0].size(), tempVTopo_[1].size()));
     }
     dimSize_.emplace_back(tempVTopo[0].size());
     dimSize_.emplace_back(tempVTopo[1].size());
 }
 
-CcuTempScatterMesh2D::~CcuTempScatterMesh2D()
-{
-}
+CcuTempScatterMesh2D::~CcuTempScatterMesh2D() {}
 
-HcclResult CcuTempScatterMesh2D::CalcRes(AlgTempResReq &tempResReq)
+HcclResult CcuTempScatterMesh2D::CalcRes(AlgTempResReq& tempResReq)
 {
-     // 按照IODienum来确定stream数量，支持2D和2D的template
+    // 按照IODienum来确定stream数量，支持2D和2D的template
     tempResReq.queNum = 1; // 只申请一个insQue，填充一个insGroup，由框架将其中的ins放在多个stream上
-    tempResReq.streamNum = tempResReq.queNum + 1;  // 多申请一个 stream 给 ccuInsGroup
+    tempResReq.streamNum = tempResReq.queNum + 1; // 多申请一个 stream 给 ccuInsGroup
     uint32_t dieNum = tempVTopo_.size();
     if (dieNum != 2) { // concurrmesh的topoMatch返回的vTopo大小应当为2，对应X轴和Y轴的大小
         HCCL_ERROR("[CcuTempScatterMesh2D] Rank[%d], Invalid IODieNum[%zu].", myRank_, tempVTopo_.size());
         return HcclResult::HCCL_E_PARA;
     }
     HCCL_INFO(
-        "[CcuTempScatterMesh2D] Rank[%d] requiredQueNum[%u] VtopoSize[%u], VtopoSize0[%u] VtopoSize1[%u].",
-        myRank_, tempResReq.queNum, tempVTopo_.size(), tempVTopo_[0].size(), tempVTopo_[1].size());
+        "[CcuTempScatterMesh2D] Rank[%d] requiredQueNum[%u] VtopoSize[%u], VtopoSize0[%u] VtopoSize1[%u].", myRank_,
+        tempResReq.queNum, tempVTopo_.size(), tempVTopo_[0].size(), tempVTopo_[1].size());
 
     uint32_t myAlgRank;
     for (u32 dim = 0; dim < tempVTopo_.size(); dim++) {
         CHK_RET(GetAlgRank(myRank_, tempVTopo_[dim], myAlgRank));
         for (u32 queIdx = 0; queIdx < tempVTopo_[dim].size() - 1; queIdx++) {
             // find neighbors -> virtualRank
-            u32    neighborAlgRank = (myAlgRank + 1 + queIdx) % (tempVTopo_[dim].size());
-            RankId neighborRank    = tempVTopo_[dim][neighborAlgRank];
-            HCCL_INFO("[CcuTempScatterMesh2D] Rank[%d], Dim[%u], NeighborRank[%d].", myRank_, dim,
-                       neighborRank);
+            u32 neighborAlgRank = (myAlgRank + 1 + queIdx) % (tempVTopo_[dim].size());
+            RankId neighborRank = tempVTopo_[dim][neighborAlgRank];
+            HCCL_INFO("[CcuTempScatterMesh2D] Rank[%d], Dim[%u], NeighborRank[%d].", myRank_, dim, neighborRank);
 
             // LinkNum
             tempResReq.links[neighborRank] = 1;
@@ -84,8 +83,8 @@ dataSize / (rankSize * queNum) --> sliceSize
 
 SliceInfoVecforNHR: [1st chunk: [1st Slice, 2nd Slice, ...], 2nd chunk: [1st Slice, 2nd Slice, ...], ...]
 */
-HcclResult CcuTempScatterMesh2D::CalcSliceInfo(const AllignInfo &allignInfo, const u64 dataSize,
-                                            RankSliceInfo &sliceInfoVec)
+HcclResult
+CcuTempScatterMesh2D::CalcSliceInfo(const AllignInfo& allignInfo, const u64 dataSize, RankSliceInfo& sliceInfoVec)
 {
     std::vector<SliceInfo> tmp(tempVTopo_.size());
     sliceInfoVec.resize(tempRankSize_, tmp);
@@ -94,38 +93,35 @@ HcclResult CcuTempScatterMesh2D::CalcSliceInfo(const AllignInfo &allignInfo, con
     return HcclResult::HCCL_SUCCESS;
 }
 
-void CcuTempScatterMesh2D::SetA2ASendRecvInfo(const A2ASendRecvInfo &sendRecvInfo)
+void CcuTempScatterMesh2D::SetA2ASendRecvInfo(const A2ASendRecvInfo& sendRecvInfo)
 {
     localSendRecvInfo_ = sendRecvInfo;
 }
 
 HcclResult CcuTempScatterMesh2D::SetBuffBlockSize(const u64 buffBlockSize)
 {
-    CHK_PRT_RET(buffBlockSize == 0, HCCL_ERROR("[CcuTempScatterMesh2D][SetBuffBlockSize] buffBlockSize should not be zero"),
-                HcclResult::HCCL_E_PARA);
+    CHK_PRT_RET(
+        buffBlockSize == 0, HCCL_ERROR("[CcuTempScatterMesh2D][SetBuffBlockSize] buffBlockSize should not be zero"),
+        HcclResult::HCCL_E_PARA);
     buffBlockSize_ = buffBlockSize;
     return HcclResult::HCCL_SUCCESS;
 }
 
 HcclResult CcuTempScatterMesh2D::SetConcurrentSendRecvNum(const u32 concurrentSendRecvNum)
 {
-    CHK_PRT_RET(concurrentSendRecvNum == 0, HCCL_ERROR("[CcuTempScatterMesh2D][SetConcurrentSendRecvNum] concurrentSendRecvNum should not be zero"),
-                HcclResult::HCCL_E_PARA);
+    CHK_PRT_RET(
+        concurrentSendRecvNum == 0,
+        HCCL_ERROR("[CcuTempScatterMesh2D][SetConcurrentSendRecvNum] concurrentSendRecvNum should not be zero"),
+        HcclResult::HCCL_E_PARA);
     concurrentSendRecvNum_ = concurrentSendRecvNum;
     return HcclResult::HCCL_SUCCESS;
 }
 
-uint64_t CcuTempScatterMesh2D::GetMaxSliceSize() const
-{
-    return UB_MAX_DATA_SIZE;
-}
+uint64_t CcuTempScatterMesh2D::GetMaxSliceSize() const { return UB_MAX_DATA_SIZE; }
 
-uint64_t CcuTempScatterMesh2D::GetExpandedMode() const
-{
-    return DeviceMode::CCU;
-}
+uint64_t CcuTempScatterMesh2D::GetExpandedMode() const { return DeviceMode::CCU; }
 
-uint64_t CcuTempScatterMesh2D::DataSliceToAddr(const DataSlice &dataSlice)
+uint64_t CcuTempScatterMesh2D::DataSliceToAddr(const DataSlice& dataSlice)
 {
     if (dataSlice.GetType() == BufferType::INPUT) {
         return static_cast<uint64_t>(op_.inputMem->GetAddr());
@@ -136,56 +132,58 @@ uint64_t CcuTempScatterMesh2D::DataSliceToAddr(const DataSlice &dataSlice)
     }
 }
 
-HcclResult CcuTempScatterMesh2D::PrepareLinks(const ResLinks &tempLinks)
+HcclResult CcuTempScatterMesh2D::PrepareLinks(const ResLinks& tempLinks)
 {
     HCCL_INFO("[CcuTempScatterMesh2D] PrepareLinks Starts.");
     // 分别记录两个Die上的link，构造rankGroup
     for (auto pair : tempLinks) {
         if (pair.second.size() == 0 || pair.second[0].GetHop() != 1) { // ESL环境上暂只有直连链路
-            THROW<InvalidParamsException>(
-                StringFormat("[CcuTempScatterMesh2D] Rank[%d]--Peer[%d], InvalidHop[%u].", myRank_, pair.first,
-                             pair.second[0].GetHop()));
+            HCCL_ERROR(
+                "[CcuTempScatterMesh2D] Rank[%d]--Peer[%d], InvalidHop[%u].", myRank_, pair.first,
+                pair.second[0].GetHop());
+            return HcclResult::HCCL_E_PARA;
         }
         if ((pair.first / dimSize_[0] == myRank_ / dimSize_[0]) && pair.second[0].GetHop() == 1) {
-            HCCL_INFO("[CcuTempScatterMesh2D][Run] Rank[%d] insert link to Rank[%d] in linksX", myRank_,
-                       pair.first);
+            HCCL_INFO("[CcuTempScatterMesh2D][Run] Rank[%d] insert link to Rank[%d] in linksX", myRank_, pair.first);
             linksX_.emplace_back(pair.second[0]);
         } else if ((pair.first % dimSize_[0] == myRank_ % dimSize_[0]) && pair.second[0].GetHop() == 1) {
-            HCCL_INFO("[CcuTempScatterMesh2D][Run] Rank[%d] insert link to Rank[%d] in linksY", myRank_,
-                       pair.first);
+            HCCL_INFO("[CcuTempScatterMesh2D][Run] Rank[%d] insert link to Rank[%d] in linksY", myRank_, pair.first);
             linksY_.emplace_back(pair.second[0]);
         } else {
             HCCL_ERROR("[CcuTempScatterMesh2D] Rank[%d], Unexpected peerRank[%d] in tempLinks.", myRank_, pair.first);
             return HcclResult::HCCL_E_PARA;
         }
     }
-    HCCL_INFO("[CcuTempScatterMesh2D] PrepareLinks Ends. linksX Size[%u], linksY Size[%u]",
-        linksX_.size(), linksY_.size());
+    HCCL_INFO(
+        "[CcuTempScatterMesh2D] PrepareLinks Ends. linksX Size[%u], linksY Size[%u]", linksX_.size(), linksY_.size());
     return HcclResult::HCCL_SUCCESS;
 }
 
 HcclResult CcuTempScatterMesh2D::PrepareRankGroups()
 {
     HCCL_INFO("[CcuTempScatterMesh2D] PrepareRankGroups Starts.");
-    for (auto &peer : tempVTopo_[0]) {
+    for (auto& peer : tempVTopo_[0]) {
         rankGroupX_.AddRank(peer);
     }
-    for (auto &peer : tempVTopo_[1]) {
+    for (auto& peer : tempVTopo_[1]) {
         rankGroupY_.AddRank(peer);
     }
-    CHK_PRT_RET(rankGroupX_.GetRanks().size() <= 1 || rankGroupY_.GetRanks().size() <= 1,
-        HCCL_ERROR("[CcuTempScatterMesh2D][PrepareRankGroups] Rank[%d] RankGroupX size[%u] or RankGroupY size[%u] is not greater than 1. ",
-        myRank_, rankGroupX_.GetRanks().size(), rankGroupY_.GetRanks().size()),
+    CHK_PRT_RET(
+        rankGroupX_.GetRanks().size() <= 1 || rankGroupY_.GetRanks().size() <= 1,
+        HCCL_ERROR(
+            "[CcuTempScatterMesh2D][PrepareRankGroups] Rank[%d] RankGroupX size[%u] or RankGroupY size[%u] is not "
+            "greater than 1. ",
+            myRank_, rankGroupX_.GetRanks().size(), rankGroupY_.GetRanks().size()),
         HcclResult::HCCL_E_PARA);
-    HCCL_INFO("[CcuTempScatterMesh2D][PrepareRankGroups] RankGroupX size[%u], RankGroupY size[%u].",
+    HCCL_INFO(
+        "[CcuTempScatterMesh2D][PrepareRankGroups] RankGroupX size[%u], RankGroupY size[%u].",
         rankGroupX_.GetRanks().size(), rankGroupY_.GetRanks().size());
     return HcclResult::HCCL_SUCCESS;
 }
 
-
-HcclResult CcuTempScatterMesh2D::Run(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec,
-                                          const BuffInfo &buffInfo, const ResLinks &tempLinks,
-                                          std::vector<InsQuePtr> &tempInsQues)
+HcclResult CcuTempScatterMesh2D::Run(
+    const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, const BuffInfo& buffInfo, const ResLinks& tempLinks,
+    std::vector<InsQuePtr>& tempInsQues)
 {
     HCCL_INFO("[CcuTempScatterMesh2D] [Run] Template Run start.");
     (void)tempFuncs;
@@ -214,14 +212,16 @@ HcclResult CcuTempScatterMesh2D::Run(const TempFuncs &tempFuncs, const RankSlice
     uint64_t ySliceSize = sliceSize - xSliceSize;
 
     std::unique_ptr<CcuInsGroup> insGroupPtr = std::make_unique<CcuInsGroup>();
-    CHK_PRT_RET(insGroupPtr == nullptr, HCCL_ERROR("[CcuTempScatterMesh2D] insGroupPtr is nullptr!"), HcclResult::HCCL_E_PTR);
+    CHK_PRT_RET(
+        insGroupPtr == nullptr, HCCL_ERROR("[CcuTempScatterMesh2D] insGroupPtr is nullptr!"), HcclResult::HCCL_E_PTR);
     for (uint32_t axisId = 0; axisId < DIE_NUM; axisId++) {
         CcuInstructionScatterMesh2D ccuInsScatterMesh2D;
-        ccuInsScatterMesh2D.Init(static_cast<uint32_t>(myRank_), tempRankSize_, axisId, inputAddr, outputAddr, scratchAddr, token,
-                                 sliceSize, stride, xSliceSize, ySliceSize, op_, tempVTopo_);
+        ccuInsScatterMesh2D.Init(
+            static_cast<uint32_t>(myRank_), tempRankSize_, axisId, inputAddr, outputAddr, scratchAddr, token, sliceSize,
+            stride, xSliceSize, ySliceSize, op_, tempVTopo_);
 
-        ccuInsScatterMesh2D.SetLinks(axisId==0 ? linksX_ : linksY_);
-        ccuInsScatterMesh2D.SetRankGroup(axisId==0 ? rankGroupX_ : rankGroupY_);
+        ccuInsScatterMesh2D.SetLinks(axisId == 0 ? linksX_ : linksY_);
+        ccuInsScatterMesh2D.SetRankGroup(axisId == 0 ? rankGroupX_ : rankGroupY_);
 
         u32 cntCkeNum = 5;
         ccuInsScatterMesh2D.SetCntCkeNum(cntCkeNum);

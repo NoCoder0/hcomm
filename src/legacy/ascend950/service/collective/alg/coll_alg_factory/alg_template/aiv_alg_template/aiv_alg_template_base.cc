@@ -12,19 +12,18 @@
 
 namespace Hccl {
 
+AivAlgTemplateBase::AivAlgTemplateBase(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
+    : myRank_(virtualRank),
+      tempRankSize_(tempRankSize),
+      tempVTopo_(tempVTopo),
+      tempVirtRankMap_(tempVirtRankMap)
+{}
 
-AivAlgTemplateBase::AivAlgTemplateBase(const RankId virtualRank, const u32 tempRankSize,
-                                       const std::vector<std::vector<RankId>> &tempVTopo,
-                                       const std::map<RankId, u32>            &tempVirtRankMap)
-    : myRank_(virtualRank), tempRankSize_(tempRankSize), tempVTopo_(tempVTopo), tempVirtRankMap_(tempVirtRankMap)
-{
-}
+AivAlgTemplateBase::~AivAlgTemplateBase() {}
 
-AivAlgTemplateBase::~AivAlgTemplateBase()
-{
-}
-
-void AivAlgTemplateBase::SetCollOp(const CollAlgOperator &op)
+void AivAlgTemplateBase::SetCollOp(const CollAlgOperator& op)
 {
     op_ = op;
     return;
@@ -36,14 +35,14 @@ void AivAlgTemplateBase::SetDmaMode(const DmaMode dmaMode)
     return;
 }
 
-void AivAlgTemplateBase::InitReduceInfo(const ReduceOp &redOp, const DataType &dataType)
+void AivAlgTemplateBase::InitReduceInfo(const ReduceOp& redOp, const DataType& dataType)
 {
     reduceOp_ = redOp;
     dataType_ = dataType;
     return;
 }
 
-void AivAlgTemplateBase::SetDataType(const DataType &dataType)
+void AivAlgTemplateBase::SetDataType(const DataType& dataType)
 {
     dataType_ = dataType;
     return;
@@ -55,14 +54,14 @@ void AivAlgTemplateBase::SetRoot(const u32 root)
     return;
 }
 
-HcclResult AivAlgTemplateBase::CalcRes(AlgTempResReq &tempResReq)
+HcclResult AivAlgTemplateBase::CalcRes(AlgTempResReq& tempResReq)
 {
     (void)tempResReq;
     HCCL_ERROR("[AivAlgTemplateBase] Unsupported interface of resource calculation!");
     return HcclResult::HCCL_E_INTERNAL;
 }
 
-HcclResult AivAlgTemplateBase::CalcResDetour(const RankGraph *rankGraph, AlgTempResReq &tempResReq)
+HcclResult AivAlgTemplateBase::CalcResDetour(const RankGraph* rankGraph, AlgTempResReq& tempResReq)
 {
     (void)rankGraph;
     (void)tempResReq;
@@ -70,7 +69,7 @@ HcclResult AivAlgTemplateBase::CalcResDetour(const RankGraph *rankGraph, AlgTemp
     return HcclResult::HCCL_E_INTERNAL;
 }
 
-HcclResult AivAlgTemplateBase::CalcResDetour(ConnectedLinkMgr *linkMgr, AlgTempResReq &tempResReq)
+HcclResult AivAlgTemplateBase::CalcResDetour(ConnectedLinkMgr* linkMgr, AlgTempResReq& tempResReq)
 {
     (void)linkMgr;
     (void)tempResReq;
@@ -86,8 +85,9 @@ u32 AivAlgTemplateBase::CalcScratchMultiple(BufferType inBuffType, BufferType ou
     return 1;
 }
 
-HcclResult AivAlgTemplateBase::GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &templateDataParams, 
-    const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues)
+HcclResult AivAlgTemplateBase::GenExtIns(
+    const TempFuncs& tempFuncs, const TemplateDataParams& templateDataParams, const ResLinks& tempLinks,
+    std::vector<InsQuePtr>& tempInsQues)
 {
     (void)tempFuncs;
     (void)templateDataParams;
@@ -105,21 +105,21 @@ void AivAlgTemplateBase::IncSliceId()
 
 HcclResult AivAlgTemplateBase::CalNumBlocks(u32& numBlocks, u64 dataSize, u32 numBlocksLimit)
 {
-    (void) dataSize;
+    (void)dataSize;
     if (numBlocksLimit >= tempRankSize_) {
         numBlocks = tempRankSize_;
     } else {
         numBlocks = numBlocksLimit;
-    } 
+    }
     HCCL_INFO("[AivAlgTemplateBase] Actually use core num[%u]", numBlocks);
     return HCCL_SUCCESS;
 }
 
-HcclResult AivAlgTemplateBase::setPathNumMap(const std::map<u32, u32> &rank2PathNumMap) const
+HcclResult AivAlgTemplateBase::setPathNumMap(const std::map<u32, u32>& rank2PathNumMap) const
 {
     (void)rank2PathNumMap;
     HCCL_WARNING("[AivAlgTemplateBase] Unsupported interface of setPathNumMap!");
     return HCCL_SUCCESS;
 }
- 
+
 } // namespace Hccl

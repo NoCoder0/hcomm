@@ -7,6 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #ifndef HCCLV2_RMA_DEV_NET_CONNECTION_H
 #define HCCLV2_RMA_DEV_NET_CONNECTION_H
 
@@ -19,13 +20,13 @@ namespace Hccl {
 
 class DevRdmaConnection : public RmaConnection {
 public:
-    DevRdmaConnection(Socket *socket, RdmaHandle rdmaHandle, OpMode opMode);
-    void          Connect() override;
+    DevRdmaConnection(Socket* socket, RdmaHandle rdmaHandle, OpMode opMode);
+    void Connect() override;
     RmaConnStatus GetStatus() override;
-    QpHandle      GetHandle();
+    QpHandle GetHandle();
 
-    unique_ptr<BaseTask> PrepareWrite(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                      const SqeConfig &config) override;
+    unique_ptr<BaseTask>
+    PrepareWrite(const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, const SqeConfig& config) override;
 
     ~DevRdmaConnection() override;
 
@@ -33,13 +34,13 @@ public:
 
 private:
     QpHandle qpHandle{nullptr};
-    void     CheckQpStatus(QpHandle handle);
+    void CheckQpStatus(QpHandle handle);
 
     MAKE_ENUM(RdmaConnStatus, INIT, CONNECTING, SOCKET_TIMEOUT)
     RdmaConnStatus rdmaConnStatus{RdmaConnStatus::INIT};
 
-    unique_ptr<BaseTask> PrepareOneRdmaSendForWrite(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                                    u64 offset, u32 size) const;
+    unique_ptr<BaseTask> PrepareOneRdmaSendForWrite(
+        const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, u64 offset, u32 size) const;
 };
 
 } // namespace Hccl

@@ -25,9 +25,9 @@
 #include "hccp_common.h"
 #include "ascend_hal_external.h"
 
-#define DEFAULT_ACCESS_FLAG (IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ | \
-    IBV_ACCESS_REMOTE_ATOMIC)
-#define RS_SGLIST_MAX       16
+#define DEFAULT_ACCESS_FLAG                                                                                            \
+    (IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_ATOMIC)
+#define RS_SGLIST_MAX 16
 
 enum RsCqCreateMode {
     RS_NORMAL_CQ_CREATE = 0,
@@ -45,30 +45,28 @@ int RsDrvQpStateModifytoInit(struct RsQpCb *qpCb, struct ibv_qp_attr *attr);
 enum ibv_mtu RsDrvSetMtu(struct RsQpCb *qpCb);
 int RsDrvQpStateModifytoRtr(struct RsQpCb *qpCb, struct ibv_qp_attr *attr);
 int RsDrvQpStateModifytoRts(struct RsQpCb *qpCb, struct ibv_qp_attr *attr);
-struct ibv_mr* RsDrvMrReg(struct ibv_pd *pd, char *addr, size_t length, int access);
-struct ibv_mr* RsDrvExpMrReg(struct ibv_pd *pd, char *addr, size_t length,
-    int access, struct roce_process_sign roceSign);
+struct ibv_mr *RsDrvMrReg(struct ibv_pd *pd, char *addr, size_t length, int access);
+struct ibv_mr *RsDrvExpMrReg(struct ibv_pd *pd, char *addr, size_t length, int access,
+    struct roce_process_sign roceSign);
 int RsDrvMrDereg(struct ibv_mr *ibMr);
 void RsDrvDestroyCq(struct RsQpCb *qpCb);
 int RsDrvOpenDevice(struct rs_cb *rscb, struct ibv_device *ibDev);
 int RsDrvRegNotifyMr(struct RsRdevCb *rdevCb);
 int RsDrvQueryNotifyAndAllocPd(struct RsRdevCb *rdevCb);
-int RsDrvPostRecv(struct RsQpCb *qpCb, struct RecvWrlistData *wr, unsigned int recvNum,
-    unsigned int *completeNum);
-int RsDrvSendExp(struct RsQpCb *qpCb, struct RsMrCb *mrCb,
-                    struct RsMrCb *remMrCb, struct SendWr *wr, struct SendWrRsp *wrRsp);
-int RsDrvSendIbv(struct RsQpCb *qpCb, struct RsMrCb *mrCb,
-                    struct RsMrCb *remMrCb, struct SendWr *wr, int immData);
+int RsDrvPostRecv(struct RsQpCb *qpCb, struct RecvWrlistData *wr, unsigned int recvNum, unsigned int *completeNum);
+int RsDrvSendExp(struct RsQpCb *qpCb, struct RsMrCb *mrCb, struct RsMrCb *remMrCb, struct SendWr *wr,
+    struct SendWrRsp *wrRsp);
+int RsDrvSendIbv(struct RsQpCb *qpCb, struct RsMrCb *mrCb, struct RsMrCb *remMrCb, struct SendWr *wr, int immData);
 
-int RsDrvQpInfoRelated(struct RsQpCb *qpCb, struct RsRdevCb *rdevCb,
-                           struct ibv_port_attr *attr, struct ibv_qp_attr *qpAttr);
+int RsDrvQpInfoRelated(struct RsQpCb *qpCb, struct RsRdevCb *rdevCb, struct ibv_port_attr *attr,
+    struct ibv_qp_attr *qpAttr);
 int RsDrvQpCreate(struct RsQpCb *qpCb, struct RsQpNorm *qpNorm);
 int RsDrvQpCreateWithAttrs(struct RsQpCb *qpCb, struct RsQpNormWithAttrs *qpNorm);
 void RsDrvQpDestroy(struct RsQpCb *qpCb);
 int RsDrvCreateCqEvent(struct RsCqContext *cqContext, struct CqAttr *attr);
 int RsDrvCreateCqWithChannel(struct RsCqContext *cqContext, struct CqAttr *attr);
-int RsDrvTypicalCqCreate(struct RsRdevCb *rdevCb, unsigned int cqDepth, unsigned int *cqn,
-    struct ibv_cq **ibCq, struct rdma_lite_device_cq_attr *deviceCqAttr);
+int RsDrvTypicalCqCreate(struct RsRdevCb *rdevCb, unsigned int cqDepth, unsigned int *cqn, struct ibv_cq **ibCq,
+    struct rdma_lite_device_cq_attr *deviceCqAttr);
 int RsDrvDestroyCqEvent(struct RsCqContext *cqContext);
 int RsDrvNormalQpCreate(struct RsQpCb *qpCb, struct ibv_qp_init_attr *qpInitAttr);
 int RsDrvInitCqeErrInfo(void);

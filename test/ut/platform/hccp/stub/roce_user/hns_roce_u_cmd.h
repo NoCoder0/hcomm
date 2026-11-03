@@ -76,38 +76,40 @@ struct hns_roce_qp_data_plane_info {
 };
 
 struct ibv_exp_ah_attr {
-	struct ibv_ah_attr	attr;
-	uint32_t			udp_sport;
+    struct ibv_ah_attr attr;
+    uint32_t udp_sport;
 };
 
 struct hns_roce_mr_remap_info {
-	void *va; /**< starting va need to remap of mr */
-	unsigned long long size; /**< size need to remap of mr */
+    void* va;                /**< starting va need to remap of mr */
+    unsigned long long size; /**< size need to remap of mr */
 };
 
-#define ROCE_IOCTL_MAGIC   'R'
-#define ROCE_CMD_SET_TSQP_DEPTH    _IO(ROCE_IOCTL_MAGIC, 1)
-#define ROCE_CMD_GET_TSQP_DEPTH    _IO(ROCE_IOCTL_MAGIC, 2)
+#define ROCE_IOCTL_MAGIC 'R'
+#define ROCE_CMD_SET_TSQP_DEPTH _IO(ROCE_IOCTL_MAGIC, 1)
+#define ROCE_CMD_GET_TSQP_DEPTH _IO(ROCE_IOCTL_MAGIC, 2)
 #define ROCE_CMD_GET_ROCE_DEV_INFO _IO(ROCE_IOCTL_MAGIC, 3)
 
-int roce_set_tsqp_depth(const char *dev_name, unsigned int rdev_index, unsigned int temp_depth,
-    unsigned int *qp_num, unsigned int *sq_depth);
-int roce_get_tsqp_depth(const char *dev_name, unsigned int rdev_index, unsigned int *temp_depth,
-    unsigned int *qp_num, unsigned int *sq_depth);
-int roce_get_roce_dev_data(const char *dev_name, struct roce_dev_data *dev_data);
-int roce_init_mem_pool(const struct roce_mem_cq_qp_attr *mem_attr, struct rdma_lite_device_mem_attr *mem_data,
-    unsigned int dev_id);
+int roce_set_tsqp_depth(
+    const char* dev_name, unsigned int rdev_index, unsigned int temp_depth, unsigned int* qp_num,
+    unsigned int* sq_depth);
+int roce_get_tsqp_depth(
+    const char* dev_name, unsigned int rdev_index, unsigned int* temp_depth, unsigned int* qp_num,
+    unsigned int* sq_depth);
+int roce_get_roce_dev_data(const char* dev_name, struct roce_dev_data* dev_data);
+int roce_init_mem_pool(
+    const struct roce_mem_cq_qp_attr* mem_attr, struct rdma_lite_device_mem_attr* mem_data, unsigned int dev_id);
 int roce_deinit_mem_pool(unsigned int mem_idx);
-int roce_query_qpc(struct ibv_qp *qp, struct hns_roce_qpc_attr_val *attr_val, unsigned int attr_mask);
-struct ibv_ah *ibv_exp_create_ah(struct ibv_pd *pd, struct ibv_exp_ah_attr *attrx);
-int roce_mmap_ai_db_reg(struct ibv_context *ibv_ctx, unsigned int tgid);
-int roce_unmmap_ai_db_reg(struct ibv_context *ibv_ctx);
-int roce_get_cq_data_plane_info(struct ibv_cq *cq, struct hns_roce_cq_data_plane_info *info);
-int roce_get_qp_data_plane_info(struct ibv_qp *qp, struct hns_roce_qp_data_plane_info *info);
-int roce_remap_mr(struct ibv_mr *mr, struct hns_roce_mr_remap_info info[], unsigned int num);
+int roce_query_qpc(struct ibv_qp* qp, struct hns_roce_qpc_attr_val* attr_val, unsigned int attr_mask);
+struct ibv_ah* ibv_exp_create_ah(struct ibv_pd* pd, struct ibv_exp_ah_attr* attrx);
+int roce_mmap_ai_db_reg(struct ibv_context* ibv_ctx, unsigned int tgid);
+int roce_unmmap_ai_db_reg(struct ibv_context* ibv_ctx);
+int roce_get_cq_data_plane_info(struct ibv_cq* cq, struct hns_roce_cq_data_plane_info* info);
+int roce_get_qp_data_plane_info(struct ibv_qp* qp, struct hns_roce_qp_data_plane_info* info);
+int roce_remap_mr(struct ibv_mr* mr, struct hns_roce_mr_remap_info info[], unsigned int num);
 unsigned int roce_get_api_version(void);
 
-int roce_set_qp_lb_value(struct ibv_qp *qp, int lb_value);
-int roce_get_qp_lb_value(struct ibv_qp *qp, int *lb_value);
-int roce_get_qp_num(struct ibv_context *context, int *qp_num);
+int roce_set_qp_lb_value(struct ibv_qp* qp, int lb_value);
+int roce_get_qp_lb_value(struct ibv_qp* qp, int* lb_value);
+int roce_get_qp_num(struct ibv_context* context, int* qp_num);
 #endif

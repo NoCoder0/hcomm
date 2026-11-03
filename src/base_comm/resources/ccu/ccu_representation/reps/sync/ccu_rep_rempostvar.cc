@@ -1,71 +1,65 @@
-/*
- * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
- * Description: ccu representation implementation file
- * Author: sunzhepeng
- * Create: 2024-06-17
+/**
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
  */
 
 #include "ccu_rep_v1.h"
-
 #include "string_util.h"
-#include "exception_util.h"
 #include "ccu_api_exception.h"
 #include "hcomm_c_adpt.h"
-
+#include "ccu_ins_generator_v1.h"
 #include "../../../../endpoint_pairs/channels/ccu/ccu_urma_channel.h"
+#include "ccu_kernel.h"
 
 namespace hcomm {
 namespace CcuRep {
 
-CcuRepRemPostVar::CcuRepRemPostVar(Variable param, const ChannelHandle channel, uint16_t paramIndex,
-                                   uint16_t semIndex, uint16_t mask)
-    : param(param), channel(channel), paramIndex(paramIndex), semIndex(semIndex), mask(mask)
-{
-    type       = CcuRepType::REM_POST_VAR;
-    instrCount = 1;
-}
-
-bool CcuRepRemPostVar::Translate(CcuInstr *&instr, uint16_t &instrId, const TransDep &dep)
-{
-    this->instrId = instrId;
-    translated    = true;
-    void *channelPtr{nullptr};
-    auto ret = HcommChannelGet(channel, &channelPtr);
-    if (ret != HcclResult::HCCL_SUCCESS) {
-        Hccl::THROW<Hccl::CcuApiException>("failed to get ccu channel, type[%d]", type);
+    CcuRepRemPostVar::CcuRepRemPostVar(
+        CcuInsGeneratorBase* insGenPtr, Variable param, const ChannelHandle channel, uint16_t paramIndex,
+        uint16_t semIndex, uint16_t mask)
+        : insGenPtr(insGenPtr),
+          param(param),
+          channel(channel),
+          paramIndex(paramIndex),
+          semIndex(semIndex),
+          mask(mask)
+    {
+        type = CcuRepType::REM_POST_VAR;
+        instrCount = insGenPtr->GetInstrCount(type);
     }
 
-    auto *channelImpl = dynamic_cast<CcuUrmaChannel *>(static_cast<Channel *>(channelPtr));
-    if (channelImpl == nullptr) {
-        Hccl::THROW<Hccl::CcuApiException>("[%s] failed to cast channel[0x%llx] to CcuUrmaChannel",
-            __func__, channel);
+    bool CcuRepRemPostVar::Translate(
+        CcuKernel* ccuKernel, CcuInstr*& instr, uint16_t& instrId, [[maybe_unused]] const TransDep& dep)
+    {
+        this->instrId = instrId;
+        translated = true;
+
+        CHK_PRT_THROW(
+            insGenPtr->CcuRepRemPostVarTranslate(ccuKernel, instr, this) != HcclResult::HCCL_SUCCESS,
+            HCCL_ERROR("[CcuRepRemPostVar][Translate] failed to translate for instrId[%u]", instrId),
+            Hccl::CcuApiException, "CcuRepRemPostVar translate failed");
+        CHK_PRT_THROW(
+            (instrId > UINT16_MAX - instrCount),
+            HCCL_ERROR(
+                "[CcuRepRemPostVar::Translate]uint16 integer overflow occurs, instrId = [%hu], instrCount = [%hu]",
+                instrId, instrCount),
+            Hccl::InternalException, "integer overflow");
+        instrId += instrCount;
+
+        return translated;
     }
-    channelId = channelImpl->GetChannelId();
-    CHK_PRT_THROW(channelImpl->GetRmtXnByIndex(paramIndex, rmtXnId) != HcclResult::HCCL_SUCCESS,
-        HCCL_ERROR("[CcuRepRemPostSem][%s] failed to get remote xn id, channelHandle[0x%llx].",
-            __func__, channel),
-        Hccl::InternalException, "failed to get remote xn id.");
 
-    CHK_PRT_THROW(channelImpl->GetRmtCkeByIndex(semIndex, rmtCkeId) != HcclResult::HCCL_SUCCESS,
-        HCCL_ERROR("[CcuRepRemPostSem][%s] failed to get remote cke id, channelHandle[0x%llx].",
-            __func__, channel),
-        Hccl::InternalException, "failed to get remote cke id.");
-
-    SyncXnInstr(instr++, rmtXnId, param.Id(), channelImpl->GetChannelId(),
-                rmtCkeId, mask, 0, 0, 0, 0, 1);
-    CHK_PRT_THROW((instrId > UINT16_MAX - instrCount),
-                        HCCL_ERROR("[CcuRepRemPostVar::Translate]uint16 integer overflow occurs, instrId = [%hu], instrCount = [%hu]", instrId, instrCount),
-                          Hccl::InternalException, "integer overflow");
-    instrId += instrCount;
-
-    return translated;
-}
-
-std::string CcuRepRemPostVar::Describe()
-{
-    return Hccl::StringFormat("Post Variable[%u] To ParamIndex[%u], Use semIndex[%u] and mask[%04x]", param.Id(), paramIndex,
-                        semIndex, mask);
-}
+    std::string CcuRepRemPostVar::Describe()
+    {
+        return Hccl::StringFormat(
+            "Post Variable[%u] To ParamIndex[%u], Use semIndex[%u] and mask[%04x]", param.Id(), paramIndex, semIndex,
+            mask);
+    }
 
 }; // namespace CcuRep
 }; // namespace hcomm

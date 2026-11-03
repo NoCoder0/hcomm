@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: ccu executor -- load gsa to gsa
  * Author: caiyifan
  */
@@ -34,7 +37,7 @@ void LoadGsaGsaExecutor::Parser()
 
 void LoadGsaGsaExecutor::Run()
 {
-    auto &ccuResMgr = CcuResourceManager::GetInstance();
+    auto& ccuResMgr = CcuResourceManager::GetInstance();
     uint64_t gsa1 = ccuResMgr.GetGsaValue(rankId_, dieId_, gsAmId_);
     uint64_t gsa2 = ccuResMgr.GetGsaValue(rankId_, dieId_, gsAnId_);
     uint64_t val = gsa1 + gsa2;
@@ -44,4 +47,14 @@ void LoadGsaGsaExecutor::Run()
 std::string LoadGsaGsaExecutor::Describe()
 {
     return HcclSim::StringFormat("[Simulation Execute] Load GSA[%u] + GSA[%u] to GSA[%u]\n", gsAmId_, gsAnId_, gsAdId_);
+}
+
+CcuTrace::CcuInstrTraceDetail LoadGsaGsaExecutor::CollectTraceDetail()
+{
+    CcuTrace::CcuInstrTraceDetail detail;
+    detail.typeName = "LoadGsaGsa";
+    auto& ccuResMgr = CcuResourceManager::GetInstance();
+    detail.args["gsa1"] = std::to_string(ccuResMgr.GetGsaValue(rankId_, dieId_, gsAmId_));
+    detail.args["gsa2"] = std::to_string(ccuResMgr.GetGsaValue(rankId_, dieId_, gsAnId_));
+    return detail;
 }

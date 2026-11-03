@@ -70,7 +70,8 @@ BkfSuber *BkfSuberInit(BkfSuberInitArg *arg)
         goto error;
     }
 
-    BkfSuberSubDataMngInitArg dataInitArg = {.env = &suber->env, .cookie = suber->connMng,
+    BkfSuberSubDataMngInitArg dataInitArg = {.env = &suber->env,
+        .cookie = suber->connMng,
         .ntfPuberUrlAdd = (F_BKF_SUBER_DATA_NTF_PUBER_URL_OPER)BkfSuberConnProcInstAddUrl,
         .ntfPuberUrlDel = (F_BKF_SUBER_DATA_NTF_PUBER_URL_OPER)BkfSuberConnProcInstDelUrl,
         .ntfSliceInstAdd = (F_BKF_SUBER_DATA_NTF_SLICE_INST_OPER)BkfSuberConnProcSliceAddInst,
@@ -115,8 +116,7 @@ void BkfSuberUninit(BkfSuber *suber)
     BKF_FREE(suber->env.memMng, suber);
 }
 
-uint32_t BkfSuberRegisterTableTypeEx(BkfSuber *suber, BkfSuberTableTypeVTbl *vTbl, void *userData,
-    uint16_t userDataLen)
+uint32_t BkfSuberRegisterTableTypeEx(BkfSuber *suber, BkfSuberTableTypeVTbl *vTbl, void *userData, uint16_t userDataLen)
 {
     if (suber == VOS_NULL) {
         return BKF_ERR;
@@ -356,6 +356,8 @@ uint32_t BkfSuberSetSelfUrl(BkfSuber *suber, BkfUrl *selfUrl)
 
 void BkfSuberUnSetSelfUrl(BkfSuber *suber, BkfUrl *selfUrl)
 {
+    (void)suber;
+    (void)selfUrl;
     BKF_ASSERT(0);
 }
 
@@ -369,7 +371,7 @@ uint32_t BkfSuberSetSliceInstId(BkfSuber *suber, void *sliceKey, uint32_t instId
     (void)BkfSuberGetSliceKeyStr(&suber->env, sliceKey, dispSliceStr, sizeof(dispSliceStr));
     BKF_LOG_DEBUG(suber->log, "set slice inst, name %s, slice %s, inst id %llu\n", suber->env.name, dispSliceStr,
         instIdVal);
-    BkfSuberSlice *slice  = BkfSuberDataAddSlice(suber->dataMng, sliceKey);
+    BkfSuberSlice *slice = BkfSuberDataAddSlice(suber->dataMng, sliceKey);
     if (slice == VOS_NULL) {
         BKF_LOG_ERROR(suber->log, "set slice inst fail, slice is not exist, name %s, slice %s, inst id %llu\n",
             suber->env.name, dispSliceStr, instIdVal);
@@ -387,7 +389,7 @@ uint32_t BkfSuberSetSliceInstIdEx(BkfSuber *suber, void *sliceKey, uint64_t inst
     (void)BkfSuberGetSliceKeyStr(&suber->env, sliceKey, dispSliceStr, sizeof(dispSliceStr));
     BKF_LOG_DEBUG(suber->log, "set slice inst, name %s, slice %s, inst id %llu\n", suber->env.name, dispSliceStr,
         instId);
-    BkfSuberSlice *slice  = BkfSuberDataAddSlice(suber->dataMng, sliceKey);
+    BkfSuberSlice *slice = BkfSuberDataAddSlice(suber->dataMng, sliceKey);
     if (slice == VOS_NULL) {
         BKF_LOG_ERROR(suber->log, "set slice inst fail, slice is not exist, name %s, slice %s, inst id %llu\n",
             suber->env.name, dispSliceStr, instId);
@@ -472,8 +474,8 @@ uint32_t BkfSuberSub(BkfSuber *suber, BkfSuberSubArg *subArg)
     uint32_t ret = BkfSuberDataAddAppSub(suber->dataMng, subArg->sliceKey, subArg->tableTypeId,
         BKF_SUBER_INVALID_INST_ID, subArg->isVerify);
     if (ret != BKF_OK) {
-        BKF_LOG_DEBUG(suber->log, "suber sub fail, add app sub fail, name %s, table id %u, slice %s\n",
-            suber->env.name, subArg->tableTypeId, dispSliceStr);
+        BKF_LOG_DEBUG(suber->log, "suber sub fail, add app sub fail, name %s, table id %u, slice %s\n", suber->env.name,
+            subArg->tableTypeId, dispSliceStr);
         return BKF_ERR;
     }
     return BKF_OK;
@@ -500,11 +502,10 @@ void BkfSuberUnsubEx(BkfSuber *suber, BkfSuberSubArgEx *subArg)
 
     uint8_t dispSliceStr[BKF_SUBER_DISP_SLICELEN];
     BKF_LOG_DEBUG(suber->log, "suber unsubEx, name %s, table id %u, slice %s instId %llu\n", suber->env.name,
-        subArg->tableTypeId, BkfSuberGetSliceKeyStr(&suber->env, subArg->sliceKey, dispSliceStr,
-        BKF_SUBER_DISP_SLICELEN), subArg->instId);
+        subArg->tableTypeId,
+        BkfSuberGetSliceKeyStr(&suber->env, subArg->sliceKey, dispSliceStr, BKF_SUBER_DISP_SLICELEN), subArg->instId);
     /* 指定instId unsub */
-    BkfSuberDataDelAppSubByKey(suber->dataMng, subArg->sliceKey, subArg->tableTypeId, subArg->instId,
-        subArg->isVerify);
+    BkfSuberDataDelAppSubByKey(suber->dataMng, subArg->sliceKey, subArg->tableTypeId, subArg->instId, subArg->isVerify);
     return;
 }
 

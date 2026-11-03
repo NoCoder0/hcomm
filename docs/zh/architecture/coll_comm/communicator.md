@@ -15,4 +15,4 @@
 
 ## 代码路径
 
-`src/framework/communicator/`
+`src/coll_communicator_mgr/communicator/`

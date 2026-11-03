@@ -38,8 +38,7 @@ using namespace hccl;
  * 该测试类用于验证HcommAclrtNotifyWaitOnThread接口的参数校验和基本功能。
  * 测试场景包括正常调用和空线程句柄校验。
  */
-class UtAicpuTsHcommAclrtNotifyWaitOnThread : public testing::Test
-{
+class UtAicpuTsHcommAclrtNotifyWaitOnThread : public testing::Test {
 protected:
     virtual void SetUp() override
     {
@@ -47,10 +46,7 @@ protected:
         threadOnDevice.pImpl_ = std::make_unique<Hccl::IAicpuTsThread>();
     }
 
-    virtual void TearDown() override
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() override { GlobalMockObject::verify(); }
 
     AicpuTsThread threadOnDevice{StreamType::STREAM_TYPE_DEVICE, 0, NotifyLoadType::DEVICE_NOTIFY};
     ThreadHandle thread = reinterpret_cast<ThreadHandle>(&threadOnDevice);
@@ -79,7 +75,8 @@ TEST_F(UtAicpuTsHcommAclrtNotifyWaitOnThread, Ut_HcommAclrtNotifyWaitOnThread_Wh
  * 测试场景：传入空线程句柄（0）
  * 预期结果：返回HCCL_E_PTR错误码，表示空指针错误
  */
-TEST_F(UtAicpuTsHcommAclrtNotifyWaitOnThread, Ut_HcommAclrtNotifyWaitOnThread_When_Thread_IsNull_Expect_ReturnIsHCCL_E_PTR)
+TEST_F(
+    UtAicpuTsHcommAclrtNotifyWaitOnThread, Ut_HcommAclrtNotifyWaitOnThread_When_Thread_IsNull_Expect_ReturnIsHCCL_E_PTR)
 {
     res = HcommAclrtNotifyWaitOnThread(0, notifyId, timeOut);
     EXPECT_EQ(res, HCCL_E_PTR);

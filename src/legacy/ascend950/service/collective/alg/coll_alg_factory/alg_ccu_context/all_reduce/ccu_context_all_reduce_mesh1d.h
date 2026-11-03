@@ -23,15 +23,16 @@ namespace Hccl {
 
 class CcuContextAllReduceMesh1D : public CcuContextAlgBase {
 public:
-    CcuContextAllReduceMesh1D(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                              const CcuTransportGroup &group);
+    CcuContextAllReduceMesh1D(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
     ~CcuContextAllReduceMesh1D() override {}
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
+
 private:
-    void RunBroadcast(std::vector<CcuRep::Memory> &dst, CcuRep::Memory &src);
-    void RunReduce(CcuRep::Memory &dst, std::vector<CcuRep::Memory> &src);
+    void RunBroadcast(std::vector<CcuRep::Memory>& dst, CcuRep::Memory& src);
+    void RunReduce(CcuRep::Memory& dst, std::vector<CcuRep::Memory>& src);
 
     CcuVersion ccuVersion_ = CcuVersion::CCU_INVALID;
     DataType dataType_;

@@ -20,9 +20,9 @@ namespace gert {
  * 因此在air仓外，仅基础的方法可使用，引用计数和多流能力(Share、Wander等方法)实现在air仓，仅链接air仓的引擎可调用
  */
 class GertTensorData {
- public:
-  GertTensorData()
-      : tensor_data_{nullptr, nullptr, 0U, kTensorPlacementEnd}, gert_mem_block_{nullptr}, stream_id_{-1} {}
+public:
+    GertTensorData() : tensor_data_{nullptr, nullptr, 0U, kTensorPlacementEnd}, gert_mem_block_{nullptr}, stream_id_{-1}
+    {}
 
     /**
      * 有所有权构造函数
@@ -31,7 +31,7 @@ class GertTensorData {
      * @param stream_id
      * @param block
      */
-    GertTensorData(size_t size, TensorPlacement placement, int64_t stream_id, GertMemBlock *block);
+    GertTensorData(size_t size, TensorPlacement placement, int64_t stream_id, GertMemBlock* block);
 
     /**
      * 无所有权构造函数
@@ -40,111 +40,96 @@ class GertTensorData {
      * @param placement
      * @param stream_id
      */
-    GertTensorData(void *addr, size_t size, TensorPlacement placement, int64_t stream_id);
+    GertTensorData(void* addr, size_t size, TensorPlacement placement, int64_t stream_id);
 
-  GertTensorData(const GertTensorData &) = delete;
-  GertTensorData &operator=(const GertTensorData &other) = delete;
+    GertTensorData(const GertTensorData&) = delete;
+    GertTensorData& operator=(const GertTensorData& other) = delete;
 
-  GertTensorData(GertTensorData &&other) noexcept
-      : tensor_data_(std::move(other.tensor_data_)), gert_mem_block_(other.gert_mem_block_),
-        stream_id_(other.stream_id_) {
-    other.Clear();
-  }
-
-  GertTensorData &operator=(GertTensorData &&other) noexcept {
-    if (this != &other) {
-      Free();
-      tensor_data_ = std::move(other.tensor_data_);
-      gert_mem_block_ = other.gert_mem_block_;
-      stream_id_ = other.stream_id_;
-      other.Clear();
+    GertTensorData(GertTensorData&& other) noexcept
+        : tensor_data_(std::move(other.tensor_data_)),
+          gert_mem_block_(other.gert_mem_block_),
+          stream_id_(other.stream_id_)
+    {
+        other.Clear();
     }
-    return *this;
-  }
-  ~GertTensorData() noexcept {
-    Free();
-  }
 
-  size_t GetSize() const {
-    return tensor_data_.GetSize();
-  }
-  void SetSize(const size_t size) {
-    tensor_data_.SetSize(size);
-  }
-
-  TensorPlacement GetPlacement() const {
-    return tensor_data_.GetPlacement();
-  }
-  void SetPlacement(const TensorPlacement placement) {
-    tensor_data_.SetPlacement(placement);
-  }
-
-  TensorAddress GetAddr() const {
-    return tensor_data_.GetAddr();
-  }
-
-  /*
-   * 释放内存且清空地址
-   */
-  ge::graphStatus Free() {
-    if (NeedFree()) {
-      gert_mem_block_->Free(stream_id_);
-      Clear();
+    GertTensorData& operator=(GertTensorData&& other) noexcept
+    {
+        if (this != &other) {
+            Free();
+            tensor_data_ = std::move(other.tensor_data_);
+            gert_mem_block_ = other.gert_mem_block_;
+            stream_id_ = other.stream_id_;
+            other.Clear();
+        }
+        return *this;
     }
-    return ge::GRAPH_SUCCESS;
-  }
+    ~GertTensorData() noexcept { Free(); }
 
-  /*
-   * 释放内存但是依旧持有内存地址
-   */
-  ge::graphStatus FreeHoldAddr() {
-    if (NeedFree()) {
-      gert_mem_block_->Free(stream_id_);
-      gert_mem_block_ = nullptr;
-      stream_id_ = -1;
+    size_t GetSize() const { return tensor_data_.GetSize(); }
+    void SetSize(const size_t size) { tensor_data_.SetSize(size); }
+
+    TensorPlacement GetPlacement() const { return tensor_data_.GetPlacement(); }
+    void SetPlacement(const TensorPlacement placement) { tensor_data_.SetPlacement(placement); }
+
+    TensorAddress GetAddr() const { return tensor_data_.GetAddr(); }
+
+    /*
+     * 释放内存且清空地址
+     */
+    ge::graphStatus Free()
+    {
+        if (NeedFree()) {
+            gert_mem_block_->Free(stream_id_);
+            Clear();
+        }
+        return ge::GRAPH_SUCCESS;
     }
-    return ge::GRAPH_SUCCESS;
-  }
-  int64_t GetStreamId() const {
-    return stream_id_;
-  }
 
-  const TensorData &GetTensorData() const {
-    return tensor_data_;
-  }
-  TensorData &MutableTensorData() {
-    return tensor_data_;
-  }
+    /*
+     * 释放内存但是依旧持有内存地址
+     */
+    ge::graphStatus FreeHoldAddr()
+    {
+        if (NeedFree()) {
+            gert_mem_block_->Free(stream_id_);
+            gert_mem_block_ = nullptr;
+            stream_id_ = -1;
+        }
+        return ge::GRAPH_SUCCESS;
+    }
+    int64_t GetStreamId() const { return stream_id_; }
 
-  GertMemBlock *GetGertMemBlock() const {
-    return gert_mem_block_;
-  }
+    const TensorData& GetTensorData() const { return tensor_data_; }
+    TensorData& MutableTensorData() { return tensor_data_; }
 
-  GertMemBlock *Release() {
-    auto block = gert_mem_block_;
-    gert_mem_block_ = nullptr;
-    return block;
-  }
+    GertMemBlock* GetGertMemBlock() const { return gert_mem_block_; }
 
-  bool IsSharedWith(const GertTensorData &other) const;
-  ge::graphStatus ShareFrom(const GertTensorData &other);
-  ge::graphStatus WanderFrom(const GertTensorData &other, int64_t dst_stream_id);
+    GertMemBlock* Release()
+    {
+        auto block = gert_mem_block_;
+        gert_mem_block_ = nullptr;
+        return block;
+    }
 
- private:
-  void CopyFromWithoutStream(const GertTensorData &other);
-  bool NeedFree() const {
-    return gert_mem_block_ != nullptr;
-  }
-  void Clear() {
-    tensor_data_.SetAddr(nullptr, nullptr);
-    gert_mem_block_ = nullptr;
-    stream_id_ = -1;
-  }
+    bool IsSharedWith(const GertTensorData& other) const;
+    ge::graphStatus ShareFrom(const GertTensorData& other);
+    ge::graphStatus WanderFrom(const GertTensorData& other, int64_t dst_stream_id);
 
- private:
-  TensorData tensor_data_;
-  GertMemBlock *gert_mem_block_{nullptr};
-  int64_t stream_id_;
+private:
+    void CopyFromWithoutStream(const GertTensorData& other);
+    bool NeedFree() const { return gert_mem_block_ != nullptr; }
+    void Clear()
+    {
+        tensor_data_.SetAddr(nullptr, nullptr);
+        gert_mem_block_ = nullptr;
+        stream_id_ = -1;
+    }
+
+private:
+    TensorData tensor_data_;
+    GertMemBlock* gert_mem_block_{nullptr};
+    int64_t stream_id_;
 };
-}  // namespace gert
-#endif  // METADEF_CXX_GERT_TENSOR_DATA_H
+} // namespace gert
+#endif // METADEF_CXX_GERT_TENSOR_DATA_H

@@ -32,16 +32,28 @@ static constexpr u32 MAX_LINK_PATH_NUM = 2;
 
 class LinkData {
 public:
-    // 待修改 构造函数不对外开发，LinkData只能由Link生成
+    // 构造函数不对外开发，LinkData只能由Link生成
     LinkData(BasePortType portType, RankId localRankId, RankId remoteRankId, u32 localPortId, u32 remotePortId)
-        : type(portType.GetType()), linkProtocol_(ConnProto2LinkProtocol(portType.GetProto())), localRankId_(localRankId),
-          remoteRankId_(remoteRankId), localPortId_(localPortId), remotePortId_(remotePortId){};
-    LinkData(PortDeploymentType portDeploymentType, LinkProtocol linkProtocol, RankId localRankId,
-        RankId remoteRankId, IpAddress localAddr, IpAddress remoteAddr, u32 devicePhyId = 0, u32 remoteDevicePhyId = 0, u32 reuseIdx = 0)
-    : type(portDeploymentType), linkProtocol_(linkProtocol), localRankId_(localRankId), remoteRankId_(remoteRankId),
-        localAddr_(localAddr), remoteAddr_(remoteAddr), localDeviceId_(devicePhyId), remoteDeviceId_(remoteDevicePhyId), reuseIdx_(reuseIdx) {};
-    
-    explicit LinkData(const NetInstance::Path &path)
+        : type(portType.GetType()),
+          linkProtocol_(ConnProto2LinkProtocol(portType.GetProto())),
+          localRankId_(localRankId),
+          remoteRankId_(remoteRankId),
+          localPortId_(localPortId),
+          remotePortId_(remotePortId) {};
+    LinkData(
+        PortDeploymentType portDeploymentType, LinkProtocol linkProtocol, RankId localRankId, RankId remoteRankId,
+        IpAddress localAddr, IpAddress remoteAddr, u32 devicePhyId = 0, u32 remoteDevicePhyId = 0, u32 reuseIdx = 0)
+        : type(portDeploymentType),
+          linkProtocol_(linkProtocol),
+          localRankId_(localRankId),
+          remoteRankId_(remoteRankId),
+          localAddr_(localAddr),
+          remoteAddr_(remoteAddr),
+          localDeviceId_(devicePhyId),
+          remoteDeviceId_(remoteDevicePhyId),
+          reuseIdx_(reuseIdx) {};
+
+    explicit LinkData(const NetInstance::Path& path)
     {
         if (path.links.size() == 1) {
             auto link = path.links[0];
@@ -59,7 +71,7 @@ public:
             remoteAddr_ = targetConnIface->GetAddr();
             localDieId_ = srcConnIface->GetLocalDieId();
             hop = path.links[0].GetHop();
-            fullmesh = true;  // 单链路场景，标识为fullmesh
+            fullmesh = true; // 单链路场景，标识为fullmesh
         } else if (path.links.size() == MAX_LINK_PATH_NUM) {
             auto link0 = path.links[0];
             auto link1 = path.links[1];
@@ -67,7 +79,7 @@ public:
             auto targetPeer = link1.GetTargetNode();
             auto srcConnIface = link0.GetSourceIface();
             auto targetConnIface = link1.GetTargetIface();
-            linkProtocol_  = *link0.GetLinkProtocols().begin();
+            linkProtocol_ = *link0.GetLinkProtocols().begin();
             type = AddrPos2PortDeploymentType(srcConnIface->GetPos(), linkProtocol_);
             localRankId_ = std::dynamic_pointer_cast<NetInstance::Peer>(srcPeer)->GetRankId();
             remoteRankId_ = std::dynamic_pointer_cast<NetInstance::Peer>(targetPeer)->GetRankId();
@@ -80,14 +92,15 @@ public:
             portGroupSize = static_cast<u8>(srcConnIface->GetPorts().size());
             auto tgtPortGroupSize = static_cast<u8>(targetConnIface->GetPorts().size());
             if (portGroupSize != tgtPortGroupSize) {
-                HCCL_WARNING("[LinkData][Constructor]srcConnIface.portGroupSize[%u] \
-                is not euqal to targetConnIface.portGroupSize[%u]",static_cast<u32>(portGroupSize), 
-                static_cast<u32>(tgtPortGroupSize));
+                HCCL_WARNING(
+                    "[LinkData][Constructor]srcConnIface.portGroupSize[%u] "
+                    "is not equal to targetConnIface.portGroupSize[%u]",
+                    static_cast<u32>(portGroupSize), static_cast<u32>(tgtPortGroupSize));
             }
-            fullmesh = false;  // 多链路场景，非fullmesh
+            fullmesh = false; // 多链路场景，非fullmesh
         } else {
             HCCL_ERROR("[LinkData][Constructor]path.links.size()[%u] is invalid", path.links.size());
-            fullmesh = false;  // 无效场景，默认为false
+            fullmesh = false; // 无效场景，默认为false
         }
         UpdateIpAddrWithPCIE();
         direction = path.direction;
@@ -96,24 +109,21 @@ public:
         remotePortId_ = 0;
     }
 
-    explicit LinkData(vector<char> &data);
+    explicit LinkData(vector<char>& data);
 
     std::vector<char> GetUniqueId() const;
 
-    bool operator==(const LinkData &rhs) const
+    bool operator==(const LinkData& rhs) const
     {
         return type == rhs.type && linkProtocol_ == rhs.linkProtocol_ && localRankId_ == rhs.localRankId_
-               && remoteRankId_ == rhs.remoteRankId_ && localAddr_ == rhs.localAddr_
-               && remoteAddr_ == rhs.remoteAddr_ && hop == rhs.hop && direction == rhs.direction
-               && portGroupSize == rhs.portGroupSize && fullmesh == rhs.fullmesh && reuseIdx_ == rhs.reuseIdx_;
+               && remoteRankId_ == rhs.remoteRankId_ && localAddr_ == rhs.localAddr_ && remoteAddr_ == rhs.remoteAddr_
+               && hop == rhs.hop && direction == rhs.direction && portGroupSize == rhs.portGroupSize
+               && fullmesh == rhs.fullmesh && reuseIdx_ == rhs.reuseIdx_;
     }
 
-    bool operator!=(const LinkData &rhs) const
-    {
-        return !(rhs == *this);
-    }
+    bool operator!=(const LinkData& rhs) const { return !(rhs == *this); }
 
-    bool operator<(const LinkData &rhs) const
+    bool operator<(const LinkData& rhs) const
     {
         if (type < rhs.type) {
             return true;
@@ -189,10 +199,11 @@ public:
 
     string Describe() const
     {
-        return StringFormat("LinkData:type=%s, protocol=%s, localRankId=%d, localAddr=%s, remoteRankId=%d, "
-                            "remoteAddr=%s, reuseIdx=%u",
-                            type.Describe().c_str(), linkProtocol_.Describe().c_str(), localRankId_,
-                            localAddr_.Describe().c_str(), remoteRankId_, remoteAddr_.Describe().c_str(), reuseIdx_);
+        return StringFormat(
+            "LinkData:type=%s, protocol=%s, localRankId=%d, localAddr=%s, remoteRankId=%d, "
+            "remoteAddr=%s, reuseIdx=%u",
+            type.Describe().c_str(), linkProtocol_.Describe().c_str(), localRankId_, localAddr_.Describe().c_str(),
+            remoteRankId_, remoteAddr_.Describe().c_str(), reuseIdx_);
     };
 
     PortData GetLocalPort() const
@@ -205,141 +216,100 @@ public:
         return {remoteRankId_, type, LinkProtocol2LinkProtoType(linkProtocol_), remotePortId_, remoteAddr_};
     };
 
-    bool IsSymetric(const LinkData &rhs) const
+    bool IsSymetric(const LinkData& rhs) const
     {
         return (type == rhs.type) && (linkProtocol_ == rhs.linkProtocol_) && (localRankId_ == rhs.remoteRankId_)
                && (remoteRankId_ == rhs.localRankId_) && (localAddr_ == rhs.remoteAddr_)
                && (remoteAddr_ == rhs.localAddr_) && (hop == rhs.hop) && (direction == rhs.direction);
     };
 
-    const PortDeploymentType &GetType() const
-    {
-        return type;
-    };
+    const PortDeploymentType& GetType() const { return type; };
 
-    const LinkProtocol &GetLinkProtocol() const
-    {
-        return linkProtocol_;
-    }
+    const LinkProtocol& GetLinkProtocol() const { return linkProtocol_; }
 
-    u32 GetHop() const
-    {
-        return hop;
-    }
+    u32 GetHop() const { return hop; }
 
-    LinkDirection GetDirection() const
-    {
-        return direction;
-    }
+    LinkDirection GetDirection() const { return direction; }
 
-    RankId GetLocalRankId() const
-    {
-        return localRankId_;
-    };
+    RankId GetLocalRankId() const { return localRankId_; };
 
-    RankId GetRemoteRankId() const
-    {
-        return remoteRankId_;
-    };
+    RankId GetRemoteRankId() const { return remoteRankId_; };
 
-    DeviceId GetRemoteDeviceId() const
-    {
-        return remoteDeviceId_;
-    };
+    DeviceId GetRemoteDeviceId() const { return remoteDeviceId_; };
 
-    u32 GetLocalPortId() const
-    {
-        return localPortId_;
-    };
+    u32 GetLocalPortId() const { return localPortId_; };
 
-    u32 GetRemotePortId() const
-    {
-        return remotePortId_;
-    };
+    u32 GetRemotePortId() const { return remotePortId_; };
 
-    const IpAddress &GetLocalAddr() const
-    {
-        return localAddr_;
-    };
+    const IpAddress& GetLocalAddr() const { return localAddr_; };
 
-    const IpAddress &GetRemoteAddr() const
-    {
-        return remoteAddr_;
-    };
+    const IpAddress& GetRemoteAddr() const { return remoteAddr_; };
 
-    u32 GetLocalDieId() const
-    {
-        return localDieId_;
-    };
+    void SetRemoteAddr(const IpAddress& remoteAddr) { remoteAddr_ = remoteAddr; }
 
-    u8 GetPortGroupSize() const
-    {
-        return portGroupSize;
-    };
+    u32 GetLocalDieId() const { return localDieId_; };
 
-    bool Readable() const
-    {
-        return readable;
-    };
+    u8 GetPortGroupSize() const { return portGroupSize; };
 
-    bool Writable() const
-    {
-        return writable;
-    };
+    bool Readable() const { return readable; };
+
+    bool Writable() const { return writable; };
     void UpdateIpAddrWithPCIE();
 
-    bool GetFullmesh() const
-    {
-        return fullmesh;
-    };
+    bool GetFullmesh() const { return fullmesh; };
 
-    std::string GetReuseIdx() const
-    {
-        return std::to_string(reuseIdx_);
-    };
+    std::string GetReuseIdx() const { return std::to_string(reuseIdx_); };
+
+    u8 GetLocalIpIndex() const { return localIpIndex_; }
+    u8 GetRemoteIpIndex() const { return remoteIpIndex_; }
+    void SetLocalIpIndex(u8 idx) { localIpIndex_ = idx; }
+    void SetRemoteIpIndex(u8 idx) { remoteIpIndex_ = idx; }
 
 private:
     PortDeploymentType type;
-    LinkProtocol       linkProtocol_;
-    RankId             localRankId_{0};
-    RankId             remoteRankId_{0};
-    u32                localPortId_{0};
-    u32                remotePortId_{0};
-    IpAddress          localAddr_;
-    IpAddress          remoteAddr_;
-    bool               readable{true};
-    bool               writable{true};
-    u32                hop{0};
-    LinkDirection      direction;
-    u32                localDieId_{};
-    u8                 portGroupSize{1};
-    DeviceId           localDeviceId_{UINT32_MAX};
-    DeviceId           remoteDeviceId_{UINT32_MAX};
-    bool               fullmesh{false};  // 标识是否为全互联单链路场景
-    u32                reuseIdx_{0};     // socket复用idx，加在socket建链tag后面
+    LinkProtocol linkProtocol_;
+    RankId localRankId_{0};
+    RankId remoteRankId_{0};
+    u32 localPortId_{0};
+    u32 remotePortId_{0};
+    IpAddress localAddr_;
+    IpAddress remoteAddr_;
+    bool readable{true};
+    bool writable{true};
+    u32 hop{0};
+    LinkDirection direction;
+    u32 localDieId_{};
+    u8 portGroupSize{1};
+    DeviceId localDeviceId_{UINT32_MAX};
+    DeviceId remoteDeviceId_{UINT32_MAX};
+    bool fullmesh{false}; // 标识是否为全互联单链路场景
+    u32 reuseIdx_{0};     // socket复用idx，加在socket建链tag后面
+    u8 localIpIndex_{0};  // IP逻辑编号，用于hccpTag拼接替代IP字符串
+    u8 remoteIpIndex_{0};
 };
 } // namespace Hccl
 
 namespace std {
 
-template <> class hash<Hccl::LinkData> {
+template <>
+class hash<Hccl::LinkData> {
 public:
-    size_t operator()(const Hccl::LinkData &linkData) const
+    size_t operator()(const Hccl::LinkData& linkData) const
     {
-        auto typeHash         = hash<uint8_t>{}(linkData.GetType());
-        auto linkProtoHash    = hash<uint8_t>{}(linkData.GetLinkProtocol());
-        auto localRankIdHash  = hash<Hccl::RankId>{}(linkData.GetLocalRankId());
+        auto typeHash = hash<uint8_t>{}(linkData.GetType());
+        auto linkProtoHash = hash<uint8_t>{}(linkData.GetLinkProtocol());
+        auto localRankIdHash = hash<Hccl::RankId>{}(linkData.GetLocalRankId());
         auto remoteRankIdHash = hash<Hccl::RankId>{}(linkData.GetRemoteRankId());
-        auto localPortIdHash  = hash<u32>{}(linkData.GetLocalPortId());
+        auto localPortIdHash = hash<u32>{}(linkData.GetLocalPortId());
         auto remotePortIdHash = hash<u32>{}(linkData.GetRemotePortId());
-        auto localAddrHash    = hash<Hccl::IpAddress>{}(linkData.GetLocalAddr());
-        auto remoteAddrHash   = hash<Hccl::IpAddress>{}(linkData.GetRemoteAddr());
-        auto portGrpSizeHash  = hash<uint8_t>{}(linkData.GetPortGroupSize());
-        auto fullmeshHash     = hash<bool>{}(linkData.GetFullmesh());
+        auto localAddrHash = hash<Hccl::IpAddress>{}(linkData.GetLocalAddr());
+        auto remoteAddrHash = hash<Hccl::IpAddress>{}(linkData.GetRemoteAddr());
+        auto portGrpSizeHash = hash<uint8_t>{}(linkData.GetPortGroupSize());
+        auto fullmeshHash = hash<bool>{}(linkData.GetFullmesh());
 
-        return Hccl::HashCombine({typeHash, linkProtoHash, localRankIdHash, remoteRankIdHash,
-            localPortIdHash, remotePortIdHash, localAddrHash, remoteAddrHash, portGrpSizeHash,
-            fullmeshHash});
+        return Hccl::HashCombine(
+            {typeHash, linkProtoHash, localRankIdHash, remoteRankIdHash, localPortIdHash, remotePortIdHash,
+             localAddrHash, remoteAddrHash, portGrpSizeHash, fullmeshHash});
     }
 };
 } // namespace std

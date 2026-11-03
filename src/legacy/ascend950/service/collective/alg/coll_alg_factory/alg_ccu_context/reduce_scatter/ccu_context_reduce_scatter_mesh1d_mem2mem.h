@@ -20,12 +20,12 @@
 namespace Hccl {
 class CcuContextReduceScatterMeshMem2Mem1D : public CcuContextAlgBase {
 public:
-    CcuContextReduceScatterMeshMem2Mem1D(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                              const CcuTransportGroup &group);
+    CcuContextReduceScatterMeshMem2Mem1D(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
     ~CcuContextReduceScatterMeshMem2Mem1D() override {}
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
 
 private:
     void InitResource();
@@ -37,8 +37,9 @@ private:
 
     std::string GetLoopBlockTag(std::string loopType, int32_t index);
     void CreateReduceLoop(uint32_t size, DataType dataType, DataType outputDataType, ReduceOp opType);
-    void ReduceLoopGroup(CcuRep::Memory outDstOrg, CcuRep::Memory srcOrg, std::vector<CcuRep::Memory> &scratchOrg,
-        GroupOpSize goSize, DataType dataType, DataType outputDataType, ReduceOp opType);
+    void ReduceLoopGroup(
+        CcuRep::Memory outDstOrg, CcuRep::Memory srcOrg, std::vector<CcuRep::Memory>& scratchOrg, GroupOpSize goSize,
+        DataType dataType, DataType outputDataType, ReduceOp opType);
 
     const std::string LOOP_BLOCK_TAG{"_local_copy_reduce_loop_"};
 
@@ -49,18 +50,18 @@ private:
     CcuRep::Variable output_;
     std::vector<CcuRep::Variable> scratch_;
     std::vector<CcuRep::Variable> token_;
-    CcuRep::Variable              currentRankSliceInputOffset_;
-    CcuRep::Variable              inputRepeatStride_;
-    CcuRep::Variable              outputRepeatStride_;
-    CcuRep::Variable              normalSliceSize_;
+    CcuRep::Variable currentRankSliceInputOffset_;
+    CcuRep::Variable inputRepeatStride_;
+    CcuRep::Variable outputRepeatStride_;
+    CcuRep::Variable normalSliceSize_;
     GroupOpSize normalGoSize_;
     uint16_t selfBit_{0};
     uint16_t allBit_{0};
-    std::vector<CcuRep::Memory>   localMem_;
-    std::vector<CcuRep::Memory>   remoteMem_;
+    std::vector<CcuRep::Memory> localMem_;
+    std::vector<CcuRep::Memory> remoteMem_;
     CcuRep::MaskSignal localSignal_;
     CcuRep::Variable flag_; // 用以判断是否是第一次重复
 };
-}// namespace Hccl
+} // namespace Hccl
 
 #endif // HCCLV2_CCU_CONTEXT_REDUCE_SCATTER_MESH_1D_MEM2MEM_H_

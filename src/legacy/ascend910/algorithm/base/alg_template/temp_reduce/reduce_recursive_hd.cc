@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "alg_template_register.h"
 #include "reduce_recursive_hd.h"
@@ -14,32 +14,30 @@
 namespace hccl {
 ReduceRecursiveHalvingDoubling::ReduceRecursiveHalvingDoubling(const HcclDispatcher dispatcher)
     : RecursiveHalvingDoublingBase(dispatcher)
-{
-}
+{}
 
-ReduceRecursiveHalvingDoubling::~ReduceRecursiveHalvingDoubling()
-{
-}
+ReduceRecursiveHalvingDoubling::~ReduceRecursiveHalvingDoubling() {}
 
-HcclResult ReduceRecursiveHalvingDoubling::Prepare(u64 reduceAttrBitMap, HcomCollOpInfo *opInfo)
+HcclResult ReduceRecursiveHalvingDoubling::Prepare(u64 reduceAttrBitMap, [[maybe_unused]] HcomCollOpInfo* opInfo)
 {
     reduceAttr = reduceAttrBitMap;
     return HCCL_SUCCESS;
 }
 
 // 算法的主入口
-HcclResult ReduceRecursiveHalvingDoubling::RunAsync(const u32 rank, const u32 rankSize,
-                                                    const std::vector<std::shared_ptr<Transport> > &links)
+HcclResult ReduceRecursiveHalvingDoubling::RunAsync(
+    const u32 rank, const u32 rankSize, const std::vector<std::shared_ptr<Transport>>& links)
 {
     CHK_SMART_PTR_NULL(dispatcher_);
     CHK_PTR_NULL(stream_.ptr());
     if (!outputMem_ || !inputMem_) {
-        HCCL_ERROR("[ReduceRecursiveHalvingDoubling][RunAsync]rank[%u] run_async inputmem or outputmem is null",
-            rank);
+        HCCL_ERROR("[ReduceRecursiveHalvingDoubling][RunAsync]rank[%u] run_async inputmem or outputmem is null", rank);
         return HCCL_E_PTR;
     }
-    HCCL_INFO("ReduceRecursiveHalvingDoubling run: rank[%u] root[%u] totalrank[%u] inputMem[%p] outputMem[%p]" \
-        "count[%llu]", rank, root_, rankSize, inputMem_.ptr(), outputMem_.ptr(), count_);
+    HCCL_INFO(
+        "ReduceRecursiveHalvingDoubling run: rank[%u] root[%u] totalrank[%u] inputMem[%p] outputMem[%p]"
+        "count[%llu]",
+        rank, root_, rankSize, inputMem_.ptr(), outputMem_.ptr(), count_);
 
     HcclResult ret = HCCL_SUCCESS;
 
@@ -57,9 +55,10 @@ HcclResult ReduceRecursiveHalvingDoubling::RunAsync(const u32 rank, const u32 ra
     CHK_SMART_PTR_NULL(reducerInfo_);
 
     bool bRetSize = (links.size() < rankSize);
-    CHK_PRT_RET(bRetSize,
-        HCCL_ERROR("[ReduceRecursiveHalvingDoubling][RunAsync]rank[%u] linksize[%llu] is error",
-        rank, links.size()), HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        bRetSize,
+        HCCL_ERROR("[ReduceRecursiveHalvingDoubling][RunAsync]rank[%u] linksize[%llu] is error", rank, links.size()),
+        HCCL_E_INTERNAL);
 
     CHK_RET(CalcPartOneSizeAndBlockSize(rankSize));
 
@@ -70,7 +69,7 @@ HcclResult ReduceRecursiveHalvingDoubling::RunAsync(const u32 rank, const u32 ra
     // 结果完成需要放在input
     CHK_RET(ReduceInPartOne(rank, links));
 
-    // 此步骤完成后，结果放在ouput中
+    // 此步骤完成后，结果放在output中
     CHK_RET(ReduceScatterInBlock(rank, rankSize, links));
 
     // 使用output进行gather
@@ -80,7 +79,7 @@ HcclResult ReduceRecursiveHalvingDoubling::RunAsync(const u32 rank, const u32 ra
     return HCCL_SUCCESS;
 }
 
-HcclResult ReduceRecursiveHalvingDoubling::ReduceInPartOne(u32 rank, const std::vector<LINK> &links)
+HcclResult ReduceRecursiveHalvingDoubling::ReduceInPartOne(u32 rank, const std::vector<LINK>& links)
 {
     HCCL_INFO("rank[%u] part1Size_[%u] root[%u]", rank, part1Size_, root_);
 
@@ -91,53 +90,62 @@ HcclResult ReduceRecursiveHalvingDoubling::ReduceInPartOne(u32 rank, const std::
     // root在第二部分，需要选取第一部分偶数rank接收，以0作为判断标准，否则在第一部分，与root奇偶性相同rank接收
     u32 rootFlag = (root_ >= part1Size_) ? 0 : root_;
 
-    if (rank % 2 == rootFlag % 2) {  // 1.从下一个rank接收数据到output，2. reduce到本rank的input
+    if (rank % 2 == rootFlag % 2) { // 1.从下一个rank接收数据到output，2. reduce到本rank的input
         u32 peerRank = (rank % 2) == 0 ? (rank + 1) : (rank - 1);
-        HCCL_INFO("rank[%u] outputMem receives from PeerRank[%u] inputMem, Offset[%llu], Size[%llu]", \
-                  rank, peerRank, baseOffset_, outputMem_.size());
+        HCCL_INFO(
+            "rank[%u] outputMem receives from PeerRank[%u] inputMem, Offset[%llu], Size[%llu]", rank, peerRank,
+            baseOffset_, outputMem_.size());
 
         if (peerRank < links.size()) {
             CHK_SMART_PTR_NULL(links[peerRank]);
 
             HcclResult ret = links[peerRank]->TxAck(stream_);
-            CHK_PRT_RET(ret != HCCL_SUCCESS,
-                HCCL_ERROR("[Reduce][InPartOne]tx ack to peerrank[%u] failed", peerRank), ret);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS, HCCL_ERROR("[Reduce][InPartOne]tx ack to peerRank[%u] failed", peerRank), ret);
             ret = links[peerRank]->RxAck(stream_);
-            CHK_PRT_RET(ret != HCCL_SUCCESS,
-                HCCL_ERROR("[Reduce][InPartOne]rx ack from peerank[%u] failed", peerRank), ret);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS, HCCL_ERROR("[Reduce][InPartOne]rx ack from peerRank[%u] failed", peerRank), ret);
 
             //  接收数据到本端的 output
-            HCCL_DEBUG("send mem[%p] size[%llu] to peerank[%u]", outputMem_.ptr(), outputMem_.size(), peerRank);
+            HCCL_DEBUG("send mem[%p] size[%llu] to peerRank[%u]", outputMem_.ptr(), outputMem_.size(), peerRank);
             ret = links[peerRank]->TxAsync(UserMemType::INPUT_MEM, baseOffset_, outputMem_.ptr(), 0, stream_);
-            CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Reduce][InPartOneToEven]TxAsync: tx async size[%llu] "\
-                "failed", 0), ret);
-            CHK_RET(reducerInfo_->run(dispatcher_, links[peerRank], baseOffset_,
-                outputMem_, inputMem_, outputMem_, stream_));
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR(
+                    "[Reduce][InPartOneToEven]TxAsync: tx async size[%llu] "
+                    "failed",
+                    0),
+                ret);
+            CHK_RET(reducerInfo_->run(
+                dispatcher_, links[peerRank], baseOffset_, outputMem_, inputMem_, outputMem_, stream_));
             ret = links[peerRank]->RxWaitDone(stream_);
             CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Reduce][InPartOne]RxWaitDone failed"), ret);
         }
     } else if ((rank % 2) != (rootFlag % 2)) { //  向上一个rank的output发数据 2
-        u32 peerRank = (rank % 2 == 0) ? (rank + 1) : (rank -1);
+        u32 peerRank = (rank % 2 == 0) ? (rank + 1) : (rank - 1);
 
         if (peerRank < links.size()) {
             CHK_SMART_PTR_NULL(links[peerRank]);
             HcclResult ret = links[peerRank]->TxAck(stream_);
-            CHK_PRT_RET(ret != HCCL_SUCCESS,
-                HCCL_ERROR("[Reduce][InPartOne]tx ack to peerrank[%u] failed", peerRank), ret);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS, HCCL_ERROR("[Reduce][InPartOne]tx ack to peerRank[%u] failed", peerRank), ret);
             ret = links[peerRank]->RxAck(stream_);
-            CHK_PRT_RET(ret != HCCL_SUCCESS,
-                HCCL_ERROR("[Reduce][InPartOne]rx ack from peerank[%u] failed", peerRank), ret);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS, HCCL_ERROR("[Reduce][InPartOne]rx ack from peerRank[%u] failed", peerRank), ret);
             //  发送到对端的output
-            HCCL_DEBUG("rank[%u] sends inputMem[%p] to PeerRank[%u] Offset[%llu], Size[%llu]", \
-                rank, inputMem_.ptr(), peerRank, baseOffset_, inputMem_.size());
+            HCCL_DEBUG(
+                "rank[%u] sends inputMem[%p] to PeerRank[%u] Offset[%llu], Size[%llu]", rank, inputMem_.ptr(), peerRank,
+                baseOffset_, inputMem_.size());
             ret = senderInfo_->run(links[peerRank], baseOffset_, inputMem_, stream_);
-            CHK_PRT_RET(ret != HCCL_SUCCESS,
-                HCCL_ERROR("[Reduce][InPartOne]tx sync to peerank[%u] failed", peerRank), ret);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS, HCCL_ERROR("[Reduce][InPartOne]tx sync to peerRank[%u] failed", peerRank), ret);
             ret = links[peerRank]->RxAsync(UserMemType::OUTPUT_MEM, baseOffset_, inputMem_.ptr(), 0, stream_);
-            CHK_PRT_RET(ret != HCCL_SUCCESS,
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
                 HCCL_ERROR("[AlgTemplateBase][ExecuteTxSync]ExecuteTxSync: rx async size[%llu] failed", 0), ret);
             ret = links[peerRank]->DataReceivedAck(stream_);
-            CHK_PRT_RET(ret != HCCL_SUCCESS,
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
                 HCCL_ERROR("[AlgTemplateBase][ExecuteTxSync]ExecuteTxSync: data received ack failed"), ret);
             ret = links[peerRank]->TxWaitDone(stream_);
             CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Reduce][InPartOne]TxWaitDone failed"), ret);
@@ -146,47 +154,51 @@ HcclResult ReduceRecursiveHalvingDoubling::ReduceInPartOne(u32 rank, const std::
     return HCCL_SUCCESS;
 }
 
-
-HcclResult ReduceRecursiveHalvingDoubling::ReduceScatterInBlock(u32 rank, u32 rankSize,
-    const std::vector<LINK> &links)
+HcclResult ReduceRecursiveHalvingDoubling::ReduceScatterInBlock(u32 rank, u32 rankSize, const std::vector<LINK>& links)
 {
     u32 rankInBlock = 0;
 
     u32 rootFlag = (root_ >= part1Size_) ? 0 : root_;
-    HCCL_DEBUG("[ReduceRecursiveHalvingDoubling][ReduceScatterInBlock]rootFlag is %u, rankInBlock is %u", rootFlag, rankInBlock);
+    HCCL_DEBUG(
+        "[ReduceRecursiveHalvingDoubling][ReduceScatterInBlock]rootFlag is %u, rankInBlock is %u", rootFlag,
+        rankInBlock);
     // 需要根据root判断，让root节点必然参加reducescatter,在第一部分的rank若与root奇偶性不同，直接返回
-    if (rank < part1Size_ && (rank % 2) != (rootFlag % 2)) {     // 模2判断奇偶性，本rank处于第一部分，奇偶性与root不同
+    if (rank < part1Size_ && (rank % 2) != (rootFlag % 2)) { // 模2判断奇偶性，本rank处于第一部分，奇偶性与root不同
         return HCCL_SUCCESS;
-    } else if (rank < part1Size_) {     // 模2判断奇偶性，本rank 处于第一部分，奇偶性与root相同
-        rankInBlock = rank / 2;                            // 除2计算block内的rank值
-    } else {           // 本rank不属于第一部分
-        rankInBlock = rank - part1Size_ / 2;               // 除2计算block内的part1的范围
+    } else if (rank < part1Size_) { // 模2判断奇偶性，本rank 处于第一部分，奇偶性与root相同
+        rankInBlock = rank / 2;     // 除2计算block内的rank值
+    } else {                        // 本rank不属于第一部分
+        rankInBlock = rank - part1Size_ / 2; // 除2计算block内的part1的范围
     }
     // 直接调用block的reducscatterhd算法
-    std::unique_ptr<AlgTemplateBase> executor = AlgTemplateRegistry::Instance().GetAlgTemplate(
-        TemplateType::TEMPLATE_REDUCESCATTER_HD, dispatcher_);
+    std::unique_ptr<AlgTemplateBase> executor
+        = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_REDUCESCATTER_HD, dispatcher_);
     CHK_SMART_PTR_NULL(executor);
-    CHK_RET(executor->Prepare(inputMem_, outputMem_, outputMem_, count_, dataType_, stream_,
-        reductionOp_, -1, slices_, baseOffset_, blockSize_, reduceAttr,
-        UserMemType::INPUT_MEM, UserMemType::OUTPUT_MEM));
+    CHK_RET(executor->Prepare(
+        inputMem_, outputMem_, outputMem_, count_, dataType_, stream_, reductionOp_, -1, slices_, baseOffset_,
+        blockSize_, reduceAttr, UserMemType::INPUT_MEM, UserMemType::OUTPUT_MEM));
 
-    CHK_RET(executor->RegisterProfiler(profilerInput_.planeID, profilerInput_.stage, profilerInput_.step,
-        stream_));
+    CHK_RET(executor->RegisterProfiler(profilerInput_.planeID, profilerInput_.stage, profilerInput_.step, stream_));
 
     // 重新建立reducscatterscatter需要的链接
     std::vector<LINK> subLinks;
     CHK_RET(BuildRootSubLinks(links, subLinks, rankSize));
 
-    CHK_PRT_RET(subLinks.size() == 0, HCCL_ERROR("[ReduceRecursiveHalvingDoubling][ReduceScatterInBlock]rank[%u] "\
-        "BuildSubLinks failed", rank), HCCL_E_PARA);
+    CHK_PRT_RET(
+        subLinks.size() == 0,
+        HCCL_ERROR(
+            "[ReduceRecursiveHalvingDoubling][ReduceScatterInBlock]rank[%u] "
+            "BuildSubLinks failed",
+            rank),
+        HCCL_E_PARA);
 
     CHK_RET(executor->RunAsync(rankInBlock, blockSize_, subLinks));
 
     return HCCL_SUCCESS;
 }
 
-HcclResult ReduceRecursiveHalvingDoubling::CalculateStepSlices(const std::vector<Slice> &inputSlices, u32 stepNum,
-                                                               u32 rank, SliceType type, std::vector<Slice> &sliceOut)
+HcclResult ReduceRecursiveHalvingDoubling::CalculateStepSlices(
+    const std::vector<Slice>& inputSlices, u32 stepNum, u32 rank, SliceType type, std::vector<Slice>& sliceOut)
 {
     std::vector<Slice> slice(stepNum);
 
@@ -196,32 +208,35 @@ HcclResult ReduceRecursiveHalvingDoubling::CalculateStepSlices(const std::vector
         u32 peerRank = rank ^ halvingBitmask;
 
         // 计算tx_slice/rx_slice
-        u32 sliceId = (type == SliceType::SLICE_TYPE_RX) ? \
-            (peerRank & (~(halvingBitmask - 1))) : (rank & (~(halvingBitmask - 1)));
+        u32 sliceId = (type == SliceType::SLICE_TYPE_RX) ? (peerRank & (~(halvingBitmask - 1))) :
+                                                           (rank & (~(halvingBitmask - 1)));
 
         slice[step].offset = inputSlices[sliceId].offset;
         CHK_RET(Sum(inputSlices, sliceId, halvingBitmask, slice[step].size));
 
-        HCCL_DEBUG("Slice Info: rank[%u], slices[%u].offset=%llu, slices[%u].size=%llu", \
-                   rank, step, slice[step].offset, step, slice[step].size);
+        HCCL_DEBUG(
+            "Slice Info: rank[%u], slices[%u].offset=%llu, slices[%u].size=%llu", rank, step, slice[step].offset, step,
+            slice[step].size);
     }
 
     sliceOut = std::move(slice);
     return HCCL_SUCCESS;
 }
-HcclResult ReduceRecursiveHalvingDoubling::BuildRootSubLinks(const std::vector<LINK> &links,
-                                                             std::vector<LINK> &subLinks, u32 rankSize) const
+HcclResult ReduceRecursiveHalvingDoubling::BuildRootSubLinks(
+    const std::vector<LINK>& links, std::vector<LINK>& subLinks, u32 rankSize) const
 {
     std::vector<LINK>::const_iterator iter = links.begin();
     subLinks.resize(blockSize_);
     u32 rootFlag = (root_ >= part1Size_) ? 0 : root_;
     for (u32 i = 0; i < rankSize; i++) {
-        if (i < part1Size_ && (i % 2) != rootFlag % 2) {  // 模2与root模2比较代表当前rank在part1的内且与root奇偶性不同，不参与block内的建链
+        if (i < part1Size_
+            && (i % 2)
+                   != rootFlag % 2) { // 模2与root模2比较代表当前rank在part1的内且与root奇偶性不同，不参与block内的建链
             continue;
         } else if (i < part1Size_) {
             std::vector<LINK>::const_iterator niter = std::next(iter, i);
             if (niter != links.end()) {
-                subLinks[i / 2] = *niter;              // 除2计算出在block内的rank号
+                subLinks[i / 2] = *niter; // 除2计算出在block内的rank号
             }
         } else {
             std::vector<LINK>::const_iterator niter = std::next(iter, i);
@@ -234,18 +249,18 @@ HcclResult ReduceRecursiveHalvingDoubling::BuildRootSubLinks(const std::vector<L
     return HCCL_SUCCESS;
 }
 // 结果在output中，直接使用oupt进行数据收发
-HcclResult ReduceRecursiveHalvingDoubling::GatherInBlock(u32 rank, u32 rankSize,
-                                                         const std::vector<LINK> &links)
+HcclResult ReduceRecursiveHalvingDoubling::GatherInBlock(u32 rank, u32 rankSize, const std::vector<LINK>& links)
 {
     u32 rankInBlock = 0;
 
     u32 rootFlag = (root_ >= part1Size_) ? 0 : root_;
-    if (rank < part1Size_ && (rank % 2) != (rootFlag % 2)) {    // 模2判断奇偶性，本rank 处于第一部分，并且和root rank奇偶不同
+    if (rank < part1Size_
+        && (rank % 2) != (rootFlag % 2)) { // 模2判断奇偶性，本rank 处于第一部分，并且和root rank奇偶不同
         return HCCL_SUCCESS;
     } else if (rank < part1Size_) { // 模2判断奇偶性，本rank 处于第一部分，并且奇偶性和root相同
-        rankInBlock = rank / 2;                        // 在block内的rank为实际rank除以2
+        rankInBlock = rank / 2;     // 在block内的rank为实际rank除以2
     } else {
-        rankInBlock = rank - part1Size_ / 2;           // 除2计算block内的part1的范围
+        rankInBlock = rank - part1Size_ / 2; // 除2计算block内的part1的范围
     }
     u32 rootInBlock = (root_ > part1Size_) ? (root_ - part1Size_ / 2) : (root_ / 2);
     // 重新建立gather需要的链接
@@ -253,8 +268,8 @@ HcclResult ReduceRecursiveHalvingDoubling::GatherInBlock(u32 rank, u32 rankSize,
 
     CHK_RET(BuildRootSubLinks(links, subLinks, rankSize));
 
-    CHK_PRT_RET(subLinks.size() == 0,
-        HCCL_ERROR("[Gather][InBlock]rank[%u] build sub links failed", rank), HCCL_E_PARA);
+    CHK_PRT_RET(
+        subLinks.size() == 0, HCCL_ERROR("[Gather][InBlock]rank[%u] build sub links failed", rank), HCCL_E_PARA);
 
     CHK_RET(CalculateStepSlices(slices_, round_, rankInBlock, SliceType::SLICE_TYPE_TX, txSlices_));
 
@@ -262,7 +277,7 @@ HcclResult ReduceRecursiveHalvingDoubling::GatherInBlock(u32 rank, u32 rankSize,
 
     for (u32 step = 0; step < round_; step++) {
         u32 peerRankBitmask = (1 << step);
-        u32 opBitmask = peerRankBitmask - 1 ; // 判断本轮是否进行收发
+        u32 opBitmask = peerRankBitmask - 1; // 判断本轮是否进行收发
         // 断rank是否和root在同一轮次接收发送的block内，第一轮为total，第二轮为1/2，第三轮为1/4....
         if ((step != 0) && ((rankInBlock & opBitmask) != (rootInBlock & opBitmask))) {
             return HCCL_SUCCESS; // rank在本轮同root不在一个操作块内，不操作，直接返回
@@ -272,49 +287,58 @@ HcclResult ReduceRecursiveHalvingDoubling::GatherInBlock(u32 rank, u32 rankSize,
         // 再次判断是否和root在同一1/2，1/4,用来判断数据是收还是发
         if ((rankInBlock & peerRankBitmask) == (rootInBlock & peerRankBitmask)) {
             DeviceMem rxMem = outputMem_.range(rxSlices_[step].offset, rxSlices_[step].size);
-                HcclResult ret = subLinks[peerRank]->TxAck(stream_);
-                CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Gather][InBlock]rank[%u] tx ack from peerank[%u] failed",
-                    rank, peerRank), ret);
-                ret = subLinks[peerRank]->RxAck(stream_);
-                CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Gather][InBlock]rank[%u] rx ack from peerank[%u] failed",
-                    rank, peerRank), ret);
+            HcclResult ret = subLinks[peerRank]->TxAck(stream_);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR("[Gather][InBlock]rank[%u] tx ack from peerRank[%u] failed", rank, peerRank), ret);
+            ret = subLinks[peerRank]->RxAck(stream_);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR("[Gather][InBlock]rank[%u] rx ack from peerRank[%u] failed", rank, peerRank), ret);
 
-                // 等待对端可以接收数据
-                HCCL_DEBUG("rank[%u] outputMem[%p] receive from PeerRank[%u] outputMem, Offset[%llu], "\
-                           "Size[%llu]", rank, outputMem_.ptr(), peerRank,
-                           baseOffset_ + rxSlices_[step].offset, rxSlices_[step].size);
+            // 等待对端可以接收数据
+            HCCL_DEBUG(
+                "rank[%u] outputMem[%p] receive from PeerRank[%u] outputMem, Offset[%llu], "
+                "Size[%llu]",
+                rank, outputMem_.ptr(), peerRank, baseOffset_ + rxSlices_[step].offset, rxSlices_[step].size);
 
-                ret = ExecuteRxSync(subLinks[peerRank], UserMemType::OUTPUT_MEM, baseOffset_ + rxSlices_[step].offset,
-                    rxMem.ptr(), rxSlices_[step].size, stream_);
-                CHK_PRT_RET(ret != HCCL_SUCCESS,
-                    HCCL_ERROR("[Gather][InBlock]rank[%u] rx sync from PeerRank[%u] failed", rank, peerRank), ret);
-                ret = subLinks[peerRank]->RxWaitDone(stream_);
-                CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Reduce][InPartOne]RxWaitDone failed"), ret);
+            ret = ExecuteRxSync(
+                subLinks[peerRank], UserMemType::OUTPUT_MEM, baseOffset_ + rxSlices_[step].offset, rxMem.ptr(),
+                rxSlices_[step].size, stream_);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR("[Gather][InBlock]rank[%u] rx sync from PeerRank[%u] failed", rank, peerRank), ret);
+            ret = subLinks[peerRank]->RxWaitDone(stream_);
+            CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Gather][InBlock]RxWaitDone failed"), ret);
         } else {
             DeviceMem txMem = outputMem_.range(txSlices_[step].offset, txSlices_[step].size);
-                HcclResult ret = subLinks[peerRank]->TxAck(stream_);
-                CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Gather][InBlock]rank[%u] tx ack from peerank[%u] failed",
-                    rank, peerRank), ret);
-                ret = subLinks[peerRank]->RxAck(stream_);
-                CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Gather][InBlock]rank[%u] rx ack from peerank[%u] failed",
-                    rank, peerRank), ret);
-                HCCL_DEBUG("rank[%u] outputMem[%p] sends to peerrank[%u] outputmem, offset[%llu], " \
-                           "size[%llu]", rank, outputMem_.ptr(), peerRank,
-                           baseOffset_ + txSlices_[step].offset, txSlices_[step].size);
-                ret = ExecuteTxSync(subLinks[peerRank], UserMemType::OUTPUT_MEM, baseOffset_ + txSlices_[step].offset,
-                    txMem.ptr(), txSlices_[step].size, stream_);
-                CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Gather][InBlock]rank[%u] tx sync to PeerRank[%u] failed",
-                    rank, peerRank), ret);
-                ret = subLinks[peerRank]->TxWaitDone(stream_);
-                CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Reduce][InPartOne]TxWaitDone failed"), ret);
+            HcclResult ret = subLinks[peerRank]->TxAck(stream_);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR("[Gather][InBlock]rank[%u] tx ack from peerRank[%u] failed", rank, peerRank), ret);
+            ret = subLinks[peerRank]->RxAck(stream_);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR("[Gather][InBlock]rank[%u] rx ack from peerRank[%u] failed", rank, peerRank), ret);
+            HCCL_DEBUG(
+                "rank[%u] outputMem[%p] sends to peerRank[%u] outputmem, offset[%llu], "
+                "size[%llu]",
+                rank, outputMem_.ptr(), peerRank, baseOffset_ + txSlices_[step].offset, txSlices_[step].size);
+            ret = ExecuteTxSync(
+                subLinks[peerRank], UserMemType::OUTPUT_MEM, baseOffset_ + txSlices_[step].offset, txMem.ptr(),
+                txSlices_[step].size, stream_);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR("[Gather][InBlock]rank[%u] tx sync to PeerRank[%u] failed", rank, peerRank), ret);
+            ret = subLinks[peerRank]->TxWaitDone(stream_);
+            CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Gather][InBlock]TxWaitDone failed"), ret);
         }
     }
 
     return HCCL_SUCCESS;
 }
-HcclResult ReduceRecursiveHalvingDoubling::GetNslbAdjInfo(const u32 rank, const u32 rankSize,
-                                                          const std::vector<LINK> &links,
-                                                          AdjInfo& nslbAdjInfo)
+HcclResult ReduceRecursiveHalvingDoubling::GetNslbAdjInfo(
+    const u32 rank, const u32 rankSize, const std::vector<LINK>& links, AdjInfo& nslbAdjInfo)
 {
     u32 nslbRound = 0;
     u32 base = 1;
@@ -338,7 +362,7 @@ HcclResult ReduceRecursiveHalvingDoubling::GetNslbAdjInfo(const u32 rank, const 
         for (u32 step = 0; step < stepNum; step++) {
             u32 peerRankBitmask = 1 << (stepNum - step - 1);
             u32 peerRank = rank ^ peerRankBitmask;
-            NslbDpAdjInfo adjInfoStep = {0};
+            NslbDpAdjInfo adjInfoStep = {};
             u32 remoteuserRank = links[peerRank]->GetRemoteRank();
             HCCL_DEBUG("[ReduceRecursiveHalvingDoubling]now step %u, remoteuserRank is %u", step, remoteuserRank);
             adjInfoStep.dstLocalRankId = remoteuserRank;
@@ -353,7 +377,7 @@ HcclResult ReduceRecursiveHalvingDoubling::GetNslbAdjInfo(const u32 rank, const 
     if (rank < nslbPart1Size && rank % NSLBDP_REDUCE_MOLD2 == 1) {
         u32 peerRank = rank - 1;
         if (peerRank < links.size()) {
-            NslbDpAdjInfo adjInfoStep = {0};
+            NslbDpAdjInfo adjInfoStep = {};
             adjInfoStep.dstLocalRankId = links[peerRank]->GetRemoteRank();
             adjInfoStep.phaseId = 1;
             adjInfoStep.rev = 0;
@@ -368,15 +392,17 @@ HcclResult ReduceRecursiveHalvingDoubling::GetNslbAdjInfo(const u32 rank, const 
     if (rank < nslbPart1Size && (rank % NSLBDP_REDUCE_MOLD2) == 0) {
         rankInBlock = rank / NSLBDP_REDUCE_MOLD2; // 直接除以2即为本rank的在block内的排序
     } else {
-        rankInBlock = rank - nslbPart1Size / NSLBDP_REDUCE_MOLD2; // 通过rank减去part1除2的大小即不处于第一部分的block内rank号
+        rankInBlock
+            = rank - nslbPart1Size / NSLBDP_REDUCE_MOLD2; // 通过rank减去part1除2的大小即不处于第一部分的block内rank号
     }
     std::vector<LINK> subLinks;
     std::vector<LINK>::const_iterator iter = links.begin();
     subLinks.resize(nslbBlockSize);
     for (u32 i = 0; i < rankSize; i++) {
-        if (i < nslbPart1Size && (i % NSLBDP_REDUCE_MOLD2) == 1) {   // 模2余1代表当前rank在part1的奇数位置上，不参与block内的建链
+        if (i < nslbPart1Size
+            && (i % NSLBDP_REDUCE_MOLD2) == 1) { // 模2余1代表当前rank在part1的奇数位置上，不参与block内的建链
             continue;
-        } else if (i < nslbPart1Size && (i % NSLBDP_REDUCE_MOLD2) == 0) {  // 模2余0代表当前rank在part1的偶数位置上
+        } else if (i < nslbPart1Size && (i % NSLBDP_REDUCE_MOLD2) == 0) { // 模2余0代表当前rank在part1的偶数位置上
             std::vector<LINK>::const_iterator niter = std::next(iter, i);
             if (niter != links.end()) {
                 subLinks[i / NSLBDP_REDUCE_MOLD2] = *niter;
@@ -384,7 +410,7 @@ HcclResult ReduceRecursiveHalvingDoubling::GetNslbAdjInfo(const u32 rank, const 
         } else {
             std::vector<LINK>::const_iterator niter = std::next(iter, i);
             if (niter != links.end()) {
-                subLinks[i - nslbPart1Size / NSLBDP_REDUCE_MOLD2] = *niter; 
+                subLinks[i - nslbPart1Size / NSLBDP_REDUCE_MOLD2] = *niter;
             }
         }
     }
@@ -399,7 +425,7 @@ HcclResult ReduceRecursiveHalvingDoubling::GetNslbAdjInfo(const u32 rank, const 
         if (subLinks[peerRank] == nullptr) {
             continue;
         }
-        NslbDpAdjInfo adjInfoStep = {0};
+        NslbDpAdjInfo adjInfoStep = {};
         u32 remoteuserRank = subLinks[peerRank]->GetRemoteRank();
         adjInfoStep.dstLocalRankId = remoteuserRank;
         adjInfoStep.phaseId = step + 1;
@@ -408,7 +434,7 @@ HcclResult ReduceRecursiveHalvingDoubling::GetNslbAdjInfo(const u32 rank, const 
     }
     nslbAdjInfo.dstRankNum = stepNum;
 
-    if(nslbAdjInfo.nsAdjInfo.size() == 0) {
+    if (nslbAdjInfo.nsAdjInfo.size() == 0) {
         return HCCL_SUCCESS;
     }
     // 上面处理完成后，紧接着处理合并部分的偶数rank同步到奇数rank增加phaseId
@@ -416,17 +442,17 @@ HcclResult ReduceRecursiveHalvingDoubling::GetNslbAdjInfo(const u32 rank, const 
         u32 peerRank = rank + 1;
         uint16_t phaseSize = nslbAdjInfo.nsAdjInfo.size();
         if (peerRank < links.size()) {
-                NslbDpAdjInfo adjInfoStep = {0};
-                adjInfoStep.dstLocalRankId = links[peerRank]->GetRemoteRank();
-                adjInfoStep.phaseId = nslbAdjInfo.nsAdjInfo[phaseSize - 1].phaseId + 1;
-                adjInfoStep.rev = 0;
-                HCCL_INFO("Scatter-nslb: peerRank[%u]", peerRank);
-                nslbAdjInfo.nsAdjInfo.push_back(adjInfoStep);
-                nslbAdjInfo.dstRankNum = nslbAdjInfo.nsAdjInfo.size();
+            NslbDpAdjInfo adjInfoStep = {};
+            adjInfoStep.dstLocalRankId = links[peerRank]->GetRemoteRank();
+            adjInfoStep.phaseId = nslbAdjInfo.nsAdjInfo[phaseSize - 1].phaseId + 1;
+            adjInfoStep.rev = 0;
+            HCCL_INFO("Scatter-nslb: peerRank[%u]", peerRank);
+            nslbAdjInfo.nsAdjInfo.push_back(adjInfoStep);
+            nslbAdjInfo.dstRankNum = nslbAdjInfo.nsAdjInfo.size();
         }
         return HCCL_SUCCESS;
     }
     return HCCL_SUCCESS;
 }
 REGISTER_TEMPLATE(TemplateType::TEMPLATE_REDUCE_RECURSIVE_HALVING_DOUBLING, ReduceRecursiveHalvingDoubling);
-}  // namespace hccl
+} // namespace hccl

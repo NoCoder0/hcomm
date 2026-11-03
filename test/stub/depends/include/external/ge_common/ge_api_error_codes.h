@@ -33,13 +33,14 @@
 #endif
 
 #ifndef GE_ERRORNO_DEFINE
-#define GE_ERRORNO_DEFINE(runtime, type, level, sysid, modid, name, value)                                \
-  constexpr ge::Status name = ((static_cast<uint32_t>(0xFFU & (static_cast<uint32_t>(runtime))) << 30U) | \
-                              (static_cast<uint32_t>(0xFFU & (static_cast<uint32_t>(type))) << 28U) |     \
-                              (static_cast<uint32_t>(0xFFU & (static_cast<uint32_t>(level))) << 25U) |    \
-                              (static_cast<uint32_t>(0xFFU & (static_cast<uint32_t>(sysid))) << 17U) |    \
-                              (static_cast<uint32_t>(0xFFU & (static_cast<uint32_t>(modid))) << 12U) |    \
-                              (static_cast<uint32_t>(0x0FFFU) & (static_cast<uint32_t>(value))))
+#define GE_ERRORNO_DEFINE(runtime, type, level, sysid, modid, name, value)          \
+    constexpr ge::Status name                                                       \
+        = ((static_cast<uint32_t>(0xFFU & (static_cast<uint32_t>(runtime))) << 30U) \
+           | (static_cast<uint32_t>(0xFFU & (static_cast<uint32_t>(type))) << 28U)  \
+           | (static_cast<uint32_t>(0xFFU & (static_cast<uint32_t>(level))) << 25U) \
+           | (static_cast<uint32_t>(0xFFU & (static_cast<uint32_t>(sysid))) << 17U) \
+           | (static_cast<uint32_t>(0xFFU & (static_cast<uint32_t>(modid))) << 12U) \
+           | (static_cast<uint32_t>(0x0FFFU) & (static_cast<uint32_t>(value))))
 #endif
 
 #ifndef GE_ERRORNO_EXTERNAL
@@ -48,79 +49,86 @@
 
 #ifndef GE_ERRORNO
 // Code compose(4 byte), runtime: 2 bit,  type: 2 bit,   level: 3 bit,  sysid: 8 bit, modid: 5 bit, value: 12 bit
-#define GE_ERRORNO(runtime, type, level, sysid, modid, name, value, desc)     \
-  GE_ERRORNO_DEFINE(runtime, type, level, sysid, modid, name, value);         \
-  GE_ERRORNO_EXTERNAL(name, desc)
+#define GE_ERRORNO(runtime, type, level, sysid, modid, name, value, desc) \
+    GE_ERRORNO_DEFINE(runtime, type, level, sysid, modid, name, value);   \
+    GE_ERRORNO_EXTERNAL(name, desc)
 
 namespace ge {
 class GE_FUNC_VISIBILITY StatusFactory {
- public:
-  static StatusFactory *Instance() {
-    static StatusFactory instance;
-    return &instance;
-  }
-
-  void RegisterErrorNo(const uint32_t err, const std::string &desc) {
-    // Avoid repeated addition
-    if (err_desc_.find(err) != err_desc_.end()) {
-      return;
+public:
+    static StatusFactory* Instance()
+    {
+        static StatusFactory instance;
+        return &instance;
     }
-    err_desc_[err] = desc;
-  }
 
-  void RegisterErrorNo(const uint32_t err, const char *const desc) {
-    if (desc == nullptr) {
-      return;
+    void RegisterErrorNo(const uint32_t err, const std::string& desc)
+    {
+        // Avoid repeated addition
+        if (err_desc_.find(err) != err_desc_.end()) {
+            return;
+        }
+        err_desc_[err] = desc;
     }
-    const std::string error_desc = desc;
-    if (err_desc_.find(err) != err_desc_.end()) {
-      return;
+
+    void RegisterErrorNo(const uint32_t err, const char* const desc)
+    {
+        if (desc == nullptr) {
+            return;
+        }
+        const std::string error_desc = desc;
+        if (err_desc_.find(err) != err_desc_.end()) {
+            return;
+        }
+        err_desc_[err] = error_desc;
     }
-    err_desc_[err] = error_desc;
-  }
 
-  std::string GetErrDesc(const uint32_t err) {
-    const auto iter_find = static_cast<const std::map<uint32_t, std::string>::const_iterator>(err_desc_.find(err));
-    if (iter_find == err_desc_.cend()) {
-      return "";
+    std::string GetErrDesc(const uint32_t err)
+    {
+        const auto iter_find = static_cast<const std::map<uint32_t, std::string>::const_iterator>(err_desc_.find(err));
+        if (iter_find == err_desc_.cend()) {
+            return "";
+        }
+        return iter_find->second;
     }
-    return iter_find->second;
-  }
 
-  AscendString GetErrDescV2(const uint32_t err) {
-    const auto iter_find = static_cast<const std::map<uint32_t, std::string>::const_iterator>(err_desc_.find(err));
-    if (iter_find == err_desc_.cend()) {
-      return AscendString("");
+    AscendString GetErrDescV2(const uint32_t err)
+    {
+        const auto iter_find = static_cast<const std::map<uint32_t, std::string>::const_iterator>(err_desc_.find(err));
+        if (iter_find == err_desc_.cend()) {
+            return AscendString("");
+        }
+        return AscendString(iter_find->second.c_str());
     }
-    return AscendString(iter_find->second.c_str());
-  }
 
- protected:
-  StatusFactory() = default;
-  ~StatusFactory() = default;
+protected:
+    StatusFactory() = default;
+    ~StatusFactory() = default;
 
- private:
-  std::map<uint32_t, std::string> err_desc_;
+private:
+    std::map<uint32_t, std::string> err_desc_;
 };
 
 class GE_FUNC_VISIBILITY ErrorNoRegisterar {
- public:
-  ErrorNoRegisterar(const uint32_t err, const std::string &desc) noexcept {
-    StatusFactory::Instance()->RegisterErrorNo(err, desc);
-  }
-  ErrorNoRegisterar(const uint32_t err, const char *const desc) noexcept {
-    StatusFactory::Instance()->RegisterErrorNo(err, desc);
-  }
-  ~ErrorNoRegisterar() = default;
+public:
+    ErrorNoRegisterar(const uint32_t err, const std::string& desc) noexcept
+    {
+        StatusFactory::Instance()->RegisterErrorNo(err, desc);
+    }
+    ErrorNoRegisterar(const uint32_t err, const char* const desc) noexcept
+    {
+        StatusFactory::Instance()->RegisterErrorNo(err, desc);
+    }
+    ~ErrorNoRegisterar() = default;
 };
 
 // General error code
 GE_ERRORNO(0, 0, 0, 0, 0, SUCCESS, 0, "success");
 GE_ERRORNO(0b11, 0b11, 0b111, 0xFFU, 0b11111, FAILED, 0xFFFU, "failed"); /*lint !e401*/
-}  // namespace ge
+} // namespace ge
 #endif
 
 namespace ge {
-  GE_ERRORNO_DEFINE(0b01, 0b01, 0b000, 8, 0, END_OF_SEQUENCE, 7);
+GE_ERRORNO_DEFINE(0b01, 0b01, 0b000, 8, 0, END_OF_SEQUENCE, 7);
 }
-#endif  // INC_EXTERNAL_GE_COMMON_GE_API_ERROR_CODES_H_
+#endif // INC_EXTERNAL_GE_COMMON_GE_API_ERROR_CODES_H_

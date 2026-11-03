@@ -1,25 +1,23 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "coll_scatter_ring_executor.h"
 
 namespace hccl {
-CollScatterRingExecutor::CollScatterRingExecutor(const HcclDispatcher dispatcher,
-                                std::unique_ptr<TopoMatcher> &topoMatcher)
+CollScatterRingExecutor::CollScatterRingExecutor(
+    const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher>& topoMatcher)
     : CollScatterExecutor(dispatcher, topoMatcher)
-{
-}
+{}
 
-HcclResult CollScatterRingExecutor::CalcLevel0CommInfo(TransportMemType inputType,
-    TransportMemType outputType,
-    std::vector<LevelNSubCommTransport>& opTransport)
+HcclResult CollScatterRingExecutor::CalcLevel0CommInfo(
+    TransportMemType inputType, TransportMemType outputType, std::vector<LevelNSubCommTransport>& opTransport)
 {
     HCCL_INFO("[CollScatterRingExecutor][CalcLevel0CommInfo]tag[%s] start", tag_.c_str());
     CommParaInfo commParaLevel0(COMM_LEVEL0, CommType::COMM_TAG_RING_INNER);
@@ -40,7 +38,7 @@ HcclResult CollScatterRingExecutor::CalcStreamNum(u32& streamNum)
     return HCCL_SUCCESS;
 }
 
-HcclResult CollScatterRingExecutor::KernelRun(const OpParam &param, ExecMem &execMem)
+HcclResult CollScatterRingExecutor::KernelRun(const OpParam& param, ExecMem& execMem)
 {
     HCCL_CONFIG_INFO(HCCL_ALG, "[CollScatterRingExecutor] scatter starts.");
     Stream& stream = const_cast<Stream&>(param.stream);
@@ -59,19 +57,25 @@ HcclResult CollScatterRingExecutor::KernelRun(const OpParam &param, ExecMem &exe
     u32 level1LocalRankSize = level1CommInfo.localRankSize;
 
     bool bRet = level0LocalRankSize == 0;
-    CHK_PRT_RET(bRet, HCCL_ERROR("[CollScatterRingExecutor][KernelRun]tag[%s],comm level0 is empty", tag_.c_str()),
+    CHK_PRT_RET(
+        bRet, HCCL_ERROR("[CollScatterRingExecutor][KernelRun]tag[%s],comm level0 is empty", tag_.c_str()),
         HCCL_E_INTERNAL);
 
     /* ***********第一步: 节点间scatter ****************************/
     u32 subRoot = INVALID_VALUE_RANKID;
     CHK_RET(topoMatcher_->GetSubRootForScatter(param.root, subRoot));
-    CHK_PRT_RET(subRoot == INVALID_VALUE_RANKID,
-        HCCL_ERROR("[CollScatterRingExecutor][KernelRun]GetSubRootForScatter failed, "\
-        "userRank[%u], root[%u], subRoot[%u]", topoAttr_.userRank, param.root, subRoot), HCCL_E_INTERNAL);
-    HCCL_DEBUG("[CollScatterRingExecutor][KernelRun]GetSubRootForScatter, userRank[%u], root[%u], subRoot[%u]",
+    CHK_PRT_RET(
+        subRoot == INVALID_VALUE_RANKID,
+        HCCL_ERROR(
+            "[CollScatterRingExecutor][KernelRun]GetSubRootForScatter failed, "
+            "userRank[%u], root[%u], subRoot[%u]",
+            topoAttr_.userRank, param.root, subRoot),
+        HCCL_E_INTERNAL);
+    HCCL_DEBUG(
+        "[CollScatterRingExecutor][KernelRun]GetSubRootForScatter, userRank[%u], root[%u], subRoot[%u]",
         topoAttr_.userRank, param.root, subRoot);
-    CHK_RET(KernelRunLevel1(execMem.inputMem, execMem.count, param.DataDes.dataType, commIndex,
-        param.root, subRoot, COMM_LEVEL1, stream));
+    CHK_RET(KernelRunLevel1(
+        execMem.inputMem, execMem.count, param.DataDes.dataType, commIndex, param.root, subRoot, COMM_LEVEL1, stream));
 
     /* ***********第二步: 节点内scatter*****************************/
     u32 sliceNum = level0LocalRankSize;
@@ -88,45 +92,49 @@ HcclResult CollScatterRingExecutor::KernelRun(const OpParam &param, ExecMem &exe
     DeviceMem scatterRingOutput = execMem.inputMem.range(serverSliceOffset, serverSliceSize);
     CHK_SMART_PTR_NULL(scatterRingOutput);
 
-    std::unique_ptr<AlgTemplateBase> level0TempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(
-        TemplateType::TEMPLATE_SCATTER_RING, dispatcher_);
+    std::unique_ptr<AlgTemplateBase> level0TempAlg
+        = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_SCATTER_RING, dispatcher_);
     CHK_SMART_PTR_NULL(level0TempAlg);
     HCCL_CONFIG_INFO(HCCL_ALG, "[%s] Run TEMPLATE_SCATTER_RING in COMM_LEVEL0", __func__);
 
     // 偏移需要带入prepare
     u32 rootRankLevel0 = 0;
     CHK_RET(GetRankByUserRank(COMM_LEVEL0, COMM_INDEX_0, subRoot, rootRankLevel0));
-    CHK_PRT_RET(rootRankLevel0 == INVALID_VALUE_RANKID,
-        HCCL_ERROR("[CollScatterRingExecutor][KernelRun]rootRankLevel0[%u] is invalid, userRank[%u], subRoot[%u]",
+    CHK_PRT_RET(
+        rootRankLevel0 == INVALID_VALUE_RANKID,
+        HCCL_ERROR(
+            "[CollScatterRingExecutor][KernelRun]rootRankLevel0[%u] is invalid, userRank[%u], subRoot[%u]",
             rootRankLevel0, topoAttr_.userRank, subRoot),
         HCCL_E_INTERNAL);
 
-    CHK_RET(level0TempAlg->Prepare(scatterRingInput, scatterRingOutput, execMem.inputMem, execMem.count,
-        param.DataDes.dataType, stream, HCCL_REDUCE_RESERVED, rootRankLevel0, dataSegsSlice, serverSliceOffset));
+    CHK_RET(level0TempAlg->Prepare(
+        scatterRingInput, scatterRingOutput, execMem.inputMem, execMem.count, param.DataDes.dataType, stream,
+        HCCL_REDUCE_RESERVED, rootRankLevel0, dataSegsSlice, serverSliceOffset));
 
     HcclResult ret = RunTemplate(level0TempAlg, level0CommInfo);
-    CHK_PRT_RET(ret != HCCL_SUCCESS,
-        HCCL_ERROR("[CollScatterRingExecutor][KernelRun]scatter(ring) RunTemplate failed,return[%d]", ret),
-        ret);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR("[CollScatterRingExecutor][KernelRun]scatter(ring) RunTemplate failed,return[%d]", ret), ret);
 
     // 将scratchMem赋值给outputMem
-    u8 *scatterRingOutputPtr = static_cast<u8 *>(scatterRingOutput.ptr());
+    u8* scatterRingOutputPtr = static_cast<u8*>(scatterRingOutput.ptr());
     DeviceMem resultMem(scatterRingOutputPtr + execMem.outputMem.size() * outputOffset, execMem.outputMem.size());
     CHK_RET(HcclD2DMemcpyAsync(dispatcher_, execMem.outputMem, resultMem, stream));
     return HCCL_SUCCESS;
 }
 
-HcclResult CollScatterRingExecutor::PrepareScatterRingSliceData(u64 dataCount, u32 unitSize, u32 sliceNum,
-    std::vector<Slice> &dataSlice, u32 &outputOffset)
+HcclResult CollScatterRingExecutor::PrepareScatterRingSliceData(
+    u64 dataCount, u32 unitSize, u32 sliceNum, std::vector<Slice>& dataSlice, u32& outputOffset)
 {
-    CHK_PRT_RET((sliceNum == 0),
-        HCCL_ERROR("[CollScatterRingExecutor][PrepareScatterRingSliceData]sliceNum is zero."), HCCL_E_PARA);
+    CHK_PRT_RET(
+        (sliceNum == 0), HCCL_ERROR("[CollScatterRingExecutor][PrepareScatterRingSliceData]sliceNum is zero."),
+        HCCL_E_PARA);
 
     // 根据数据量算每个环上数据的偏移和大小
     CHK_RET(PrepareDataSlice(dataCount, unitSize, sliceNum, dataSlice));
 
     if (topoType_ == TopoType::TOPO_TYPE_8P_RING) {
-        std::vector<u32> tmpRing0 = { 0, 1, 2, 6, 5, 4, 7, 3 };
+        std::vector<u32> tmpRing0 = {0, 1, 2, 6, 5, 4, 7, 3};
         outputOffset = tmpRing0[outputOffset];
         CHK_RET(ReorderSlice(dataSlice, tmpRing0));
     }
@@ -135,4 +143,4 @@ HcclResult CollScatterRingExecutor::PrepareScatterRingSliceData(u64 dataCount, u
 
 REGISTER_EXEC("ScatterRingExecutor", ScatterRing, CollScatterRingExecutor);
 
-}
+} // namespace hccl

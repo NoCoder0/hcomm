@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef AIV_MEMORY_STUB_H
 #define AIV_MEMORY_STUB_H
@@ -49,11 +49,11 @@ enum class TPosition : uint8_t {
 
 using QuePosition = TPosition;
 
-constexpr uint32_t MAX_QUE_NUM = 64;  // 一个kernel中所有的buffer num之和不能超过64
+constexpr uint32_t MAX_QUE_NUM = 64; // 一个kernel中所有的buffer num之和不能超过64
 
-struct TensorMem{
-    void *ptr; 
-    uint64_t size; 
+struct TensorMem {
+    void* ptr;
+    uint64_t size;
     uint32_t isUse;
     uint32_t inQue;
     bool needWait;
@@ -70,23 +70,26 @@ struct TBuffAddr {
 };
 
 // Tensor打桩
-template <typename T> class LocalTensor {
+template <typename T>
+class LocalTensor {
 public:
     __inout_pipe__(S) T GetValue(const uint32_t offset) const;
-    template <typename T1> __inout_pipe__(S) void SetValue(const uint32_t index, const T1 value) const;
+    template <typename T1>
+    __inout_pipe__(S) void SetValue(const uint32_t index, const T1 value) const;
     LocalTensor operator[](const uint32_t offset) const;
 
-    void *ptr_ = nullptr;
+    void* ptr_ = nullptr;
     uint64_t size_ = 0;
 };
 
-template <typename T> class GlobalTensor {
+template <typename T>
+class GlobalTensor {
 public:
     __aicore__ void SetGlobalBuffer(__gm__ T* buffer, uint64_t bufferSize);
     __aicore__ void SetGlobalBuffer(__gm__ T* buffer) {};
     __aicore__ GlobalTensor operator[](const uint64_t offset) const;
-        
-    void *ptr_ = nullptr;
+
+    void* ptr_ = nullptr;
     uint64_t size_ = 0;
 };
 
@@ -100,22 +103,21 @@ __aicore__ constexpr TPosition GetBufferLogicPos(TPosition pos, bool isSrc)
     return TPosition::MAX;
 };
 
-template <TPosition src, TPosition dst, int32_t depth, auto mask = 0> class TQueBind {
+template <TPosition src, TPosition dst, int32_t depth, auto mask = 0>
+class TQueBind {
 public:
-    __aicore__ TQueBind() 
-        : ptr_(0), 
-          size_(0), 
-          num(0), 
-          srcPostion(src), 
-          dstPostion(dst) {
-    }
-    template <typename T> __aicore__ LocalTensor<T> AllocTensor();
-    template <typename T> __aicore__ void FreeTensor(LocalTensor<T>& tensor);
-    template <typename T> __aicore__ bool EnQue(const LocalTensor<T>& tensor);
-    template <typename T> __aicore__ LocalTensor<T> DeQue();
+    __aicore__ TQueBind() : ptr_(0), size_(0), num(0), srcPostion(src), dstPostion(dst) {}
+    template <typename T>
+    __aicore__ LocalTensor<T> AllocTensor();
+    template <typename T>
+    __aicore__ void FreeTensor(LocalTensor<T>& tensor);
+    template <typename T>
+    __aicore__ bool EnQue(const LocalTensor<T>& tensor);
+    template <typename T>
+    __aicore__ LocalTensor<T> DeQue();
 
-    void *ptr_; 
-    uint64_t size_; 
+    void* ptr_;
+    uint64_t size_;
     uint32_t num;
     std::map<uint32_t, TensorMem> tensor;
     TPosition srcPostion;
@@ -126,17 +128,22 @@ template <TPosition pos, int32_t depth, auto mask = 0>
 class TQue : public TQueBind<GetBufferLogicPos(pos, true), GetBufferLogicPos(pos, false), depth, mask> {
 public:
     __aicore__ TQue() = default;
+
 private:
     friend class TPipe;
-    template<TPosition bufPos, uint32_t bufIDSize> friend class TBufPool;
+    template <TPosition bufPos, uint32_t bufIDSize>
+    friend class TBufPool;
     static constexpr bool isTQue = true;
 };
 
-template <TPosition pos = TPosition::LCM> class TBuf : public TQueBind<pos, pos, 0, 0> {
+template <TPosition pos = TPosition::LCM>
+class TBuf : public TQueBind<pos, pos, 0, 0> {
 public:
     __aicore__ TBuf() = default;
-    template <typename T> __aicore__ LocalTensor<T> Get();
-    template <typename T> __aicore__ LocalTensor<T> GetWithOffset(uint32_t size, uint32_t bufOffset);
+    template <typename T>
+    __aicore__ LocalTensor<T> Get();
+    template <typename T>
+    __aicore__ LocalTensor<T> GetWithOffset(uint32_t size, uint32_t bufOffset);
 };
 
 class TPipeBase {
@@ -150,18 +157,23 @@ public:
     __aicore__ TPipe();
     __aicore__ ~TPipe();
     __aicore__ void Init();
-    template <class T> __aicore__ bool InitBuffer(T& que, uint8_t num, uint32_t len);
-    template <TPosition pos> __aicore__ bool InitBuffer(TBuf<pos>& buf, uint32_t len);
+    template <class T>
+    __aicore__ bool InitBuffer(T& que, uint8_t num, uint32_t len);
+    template <TPosition pos>
+    __aicore__ bool InitBuffer(TBuf<pos>& buf, uint32_t len);
     __aicore__ TEventID FetchEventID(HardEvent evt);
 
 protected:
-    template <TPosition src, TPosition dst, int32_t depth, auto mask> friend class TQueBind;
-    template <TPosition pos, int32_t depth, auto mask> friend class TQue;
-    template <TPosition pos> friend class TBuf;
+    template <TPosition src, TPosition dst, int32_t depth, auto mask>
+    friend class TQueBind;
+    template <TPosition pos, int32_t depth, auto mask>
+    friend class TQue;
+    template <TPosition pos>
+    friend class TBuf;
 
-    void *startPtr = 0;
-    void *endPtr = 0;
-    void *curPtr = 0;
+    void* startPtr = 0;
+    void* endPtr = 0;
+    void* curPtr = 0;
     uint64_t usedLen = 0;
     uint32_t usedNum = 0;
 };
@@ -174,10 +186,10 @@ std::unique_ptr<T> GetBufValue(uint64_t addr);
 template <typename T>
 void SetBufValue(uint64_t addr, T value);
 
-void GetTPipe(TPosition pos, pipe_t &src, pipe_t &dst);
+void GetTPipe(TPosition pos, pipe_t& src, pipe_t& dst);
 
 template <typename T, CacheLine entireType, DcciDst dcciDst>
-extern __aicore__ inline void DataCacheCleanAndInvalid(const GlobalTensor<T>& dstTensor){};
-}  // namespace AscendC
+extern __aicore__ inline void DataCacheCleanAndInvalid(const GlobalTensor<T>& dstTensor) {};
+} // namespace AscendC
 
 #endif

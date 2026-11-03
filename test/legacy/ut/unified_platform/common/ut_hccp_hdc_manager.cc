@@ -17,20 +17,11 @@ using namespace Hccl;
 
 class HccpHdcManagerTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "HccpHdcManagerTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "HccpHdcManagerTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "HccpHdcManagerTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "HccpHdcManagerTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in HccpHdcManagerTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in HccpHdcManagerTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -42,9 +33,9 @@ protected:
 TEST_F(HccpHdcManagerTest, hccp_hdc_manager_getInstance)
 {
     // Given
-    DevId fakedevPhyId  = 3;
-	DevId fakedevPhyId1  = 4;
-    MOCKER(HrtGetDevicePhyIdByIndex)
+    DevId fakedevPhyId = 3;
+    DevId fakedevPhyId1 = 4;
+    MOCKER(HrtGetDevicePhyIdByUserDevId)
         .stubs()
         .with(mockcpp::any())
         .will(returnValue(fakedevPhyId))
@@ -66,11 +57,8 @@ TEST_F(HccpHdcManagerTest, hccp_hdc_manager_init)
     s32 deviceLogicId = 0;
     s32 deviceLogicId1 = 1;
     s32 deviceLogicId2 = 2;
-	DevId fakedevPhyId   = 3;
-    MOCKER(HrtGetDevicePhyIdByIndex)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(fakedevPhyId));
+    DevId fakedevPhyId = 3;
+    MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().with(mockcpp::any()).will(returnValue(fakedevPhyId));
     // when
     HccpHdcManager::GetInstance().Init(deviceLogicId);
     auto res1 = HccpHdcManager::GetInstance().GetSet();

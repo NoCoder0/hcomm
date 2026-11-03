@@ -11,18 +11,20 @@
 #include "../../../hccl_api_base_test.h"
 #include "hcomm_c_adpt.h"
 #include "local_notify_impl.h"
-#include "aicpu_launch_manager.h"
+#include "comm_engine/aicpu_launch_manager_pub.h"
 #include "llt_hccl_stub_rank_graph.h"
 
 class TestHcclGetHcclBufferA3 : public BaseInit {
 public:
-    void SetUp() override {
+    void SetUp() override
+    {
         GlobalMockObject::verify();
         BaseInit::SetUp();
-        const char *fakeA3SocName = "Ascend910_9362";
+        const char* fakeA3SocName = "Ascend910_9362";
         MOCKER(aclrtGetSocName).stubs().will(returnValue(fakeA3SocName));
     }
-    void TearDown() override {
+    void TearDown() override
+    {
         BaseInit::TearDown();
         GlobalMockObject::verify();
     }
@@ -31,10 +33,7 @@ public:
 TEST_F(TestHcclGetHcclBufferA3, Ut_HcclGetHcclBufferA3_When_Normal_Return_HCCL_Success)
 {
     DevType deviceType = DevType::DEV_TYPE_910_93;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
 
     HcclComm commHandle;
     UT_USE_RANK_TABLE_910_1SERVER_1RANK;

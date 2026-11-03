@@ -22,18 +22,15 @@
 namespace Hccl {
 template <typename AlgTopoMatch, typename AlgTemplate>
 AllGatherSoleExecutor<AlgTopoMatch, AlgTemplate>::AllGatherSoleExecutor() : CollAlgBase()
-{
-}
+{}
 
 template <typename AlgTopoMatch, typename AlgTemplate>
 AllGatherSoleExecutor<AlgTopoMatch, AlgTemplate>::~AllGatherSoleExecutor()
-{
-}
+{}
 
 template <typename AlgTopoMatch, typename AlgTemplate>
-HcclResult AllGatherSoleExecutor<AlgTopoMatch, AlgTemplate>::CalcResOffload(const RankGraph *rankGraph,
-                                                                            const u64 &dataSize,
-                                                                            CollOffloadOpResReq &resReq)
+HcclResult AllGatherSoleExecutor<AlgTopoMatch, AlgTemplate>::CalcResOffload(
+    const RankGraph* rankGraph, const u64& dataSize, CollOffloadOpResReq& resReq)
 {
     (void)dataSize;
     resReq.requiredScratchMemSize = 0;
@@ -60,10 +57,8 @@ HcclResult AllGatherSoleExecutor<AlgTopoMatch, AlgTemplate>::CalcResOffload(cons
 
 // dataSize_ as input
 template <typename AlgTopoMatch, typename AlgTemplate>
-HcclResult AllGatherSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQues(const RankGraph *rankGraph,
-                                                                         const CollAlgOperator &op,
-                                                                         const CollAlgParams &params,
-                                                                         PrimQuePtr primQue)
+HcclResult AllGatherSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQues(
+    const RankGraph* rankGraph, const CollAlgOperator& op, const CollAlgParams& params, PrimQuePtr primQue)
 {
     // init and check params
     CHK_RET(Init(op, params, primQue));
@@ -87,13 +82,14 @@ HcclResult AllGatherSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQues(const R
     }
 
     CHK_RET(InitQueue(tempResReq.queNum, requiredQue_));
-    HCCL_INFO("[CollAlgFactory] Rank[%d], template [%s], requiredQue Num [%u].", myRank_, tempAlg.Describe().c_str(),
-               tempResReq.queNum);
+    HCCL_INFO(
+        "[CollAlgFactory] Rank[%d], template [%s], requiredQue Num [%u].", myRank_, tempAlg.Describe().c_str(),
+        tempResReq.queNum);
 
     CHK_RET(PrepResLinks(myRank_, rankGraph, linkPriority_, tempResReq.links, tempResLinks_));
 
     u32 dataSizePerVolume = DataTypeSizeGet(dataType_);
-    dataSize_             = dataCount_ * dataSizePerVolume;
+    dataSize_ = dataCount_ * dataSizePerVolume;
 
     if (opMode_ == OpMode::OFFLOAD) {
         HCCL_INFO("[CollAlgFactory] Rank[%d], Generating Primitive Queues in OFFLOAD Mode for HOST.", myRank_);
@@ -107,8 +103,8 @@ HcclResult AllGatherSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQues(const R
 }
 
 template <typename AlgTopoMatch, typename AlgTemplate>
-HcclResult AllGatherSoleExecutor<AlgTopoMatch, AlgTemplate>::CalcRes(const RankGraph *rankGraph,
-                                                                     CollAlgResReq     &algResReq)
+HcclResult
+AllGatherSoleExecutor<AlgTopoMatch, AlgTemplate>::CalcRes(const RankGraph* rankGraph, CollAlgResReq& algResReq)
 {
     // Topo Match
     AlgTopoMatch topoMatch(myRank_, rankSize_, rankGraph, devType_);
@@ -133,11 +129,9 @@ HcclResult AllGatherSoleExecutor<AlgTopoMatch, AlgTemplate>::CalcRes(const RankG
 }
 
 template <typename AlgTopoMatch, typename AlgTemplate>
-HcclResult AllGatherSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQuesAIC(const AlgTopoInfo &topoInfo,
-                                                                            const CollAlgOperator &op,
-                                                                            const CollAlgParams &params,
-                                                                            ConnectedLinkMgr *linkMgr,
-                                                                            PrimQuePtr primQue)
+HcclResult AllGatherSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQuesAIC(
+    const AlgTopoInfo& topoInfo, const CollAlgOperator& op, const CollAlgParams& params, ConnectedLinkMgr* linkMgr,
+    PrimQuePtr primQue)
 {
     // init and check params
     CHK_RET(Init(op, params, primQue));
@@ -157,13 +151,14 @@ HcclResult AllGatherSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQuesAIC(cons
     }
 
     CHK_RET(InitQueue(tempResReq.queNum, requiredQue_));
-    HCCL_INFO("[CollAlgFactory] Rank[%d], template [%s], requiredQue Num [%u].", myRank_, tempAlg.Describe().c_str(),
-               tempResReq.queNum);
+    HCCL_INFO(
+        "[CollAlgFactory] Rank[%d], template [%s], requiredQue Num [%u].", myRank_, tempAlg.Describe().c_str(),
+        tempResReq.queNum);
 
     CHK_RET(PrepResLinks(myRank_, tempResReq.links, linkMgr, tempResLinks_));
 
     u32 dataSizePerVolume = DataTypeSizeGet(dataType_);
-    dataSize_             = dataCount_ * dataSizePerVolume;
+    dataSize_ = dataCount_ * dataSizePerVolume;
 
     if (opMode_ == OpMode::OFFLOAD) {
         HCCL_INFO("[CollAlgFactory] Rank[%d], Generating Primitive Queues in OFFLOAD Mode for AICPU.", myRank_);
@@ -177,20 +172,20 @@ HcclResult AllGatherSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQuesAIC(cons
 }
 
 template <typename AlgTopoMatch, typename AlgTemplate>
-HcclResult AllGatherSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQues4Offload(AlgTemplateBase &tempAlg)
+HcclResult AllGatherSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQues4Offload(AlgTemplateBase& tempAlg)
 {
     RankSliceInfo sliceInfoVec;
-    AllignInfo    allignInfo = {enableAllign_, allignSize_, dataType_};
+    AllignInfo allignInfo = {enableAllign_, allignSize_, dataType_};
     CHK_RET(tempAlg.CalcSliceInfo(allignInfo, dataSize_, sliceInfoVec));
 
     BuffInfo buffInfo;
-    buffInfo.inBuffType     = BufferType::INPUT;
-    buffInfo.outBuffType    = BufferType::OUTPUT;
-    buffInfo.inBuffBaseOff  = 0;
+    buffInfo.inBuffType = BufferType::INPUT;
+    buffInfo.outBuffType = BufferType::OUTPUT;
+    buffInfo.inBuffBaseOff = 0;
     buffInfo.outBuffBaseOff = 0;
 
     TempFuncs tempFuncs;
-    tempFuncs.opMode              = opMode_;
+    tempFuncs.opMode = opMode_;
     tempFuncs.enableCounterNotify = IsEnableCounterNotify();
 
     CHK_RET(tempAlg.GenPrimQue(tempFuncs, sliceInfoVec, buffInfo, tempResLinks_, requiredQue_));
@@ -199,26 +194,28 @@ HcclResult AllGatherSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQues4Offload
 }
 
 template <typename AlgTopoMatch, typename AlgTemplate>
-HcclResult AllGatherSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQues4Opbase(const u32        dataSizePerVolume,
-                                                                                AlgTemplateBase &tempAlg)
+HcclResult AllGatherSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQues4Opbase(
+    const u32 dataSizePerVolume, AlgTemplateBase& tempAlg)
 {
-    CHK_PRT_RET(dataSizePerVolume == 0,
-                HCCL_ERROR("[CollAlgFactory] Rank [%d], Invalid dataSizePerVolume [%u].", myRank_, dataSizePerVolume),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        dataSizePerVolume == 0,
+        HCCL_ERROR("[CollAlgFactory] Rank [%d], Invalid dataSizePerVolume [%u].", myRank_, dataSizePerVolume),
+        HcclResult::HCCL_E_INTERNAL);
 
-    u32 scratchInputMemSize
-        = static_cast<int>((rankSize_ % dataSizePerVolume == 0)
-                               ? floor(maxTmpMemSize_ / rankSize_)
-                               : floor(maxTmpMemSize_ / (rankSize_ * dataSizePerVolume)) * dataSizePerVolume);
+    u32 scratchInputMemSize = static_cast<int>(
+        (rankSize_ % dataSizePerVolume == 0) ?
+            floor(maxTmpMemSize_ / rankSize_) :
+            floor(maxTmpMemSize_ / (rankSize_ * dataSizePerVolume)) * dataSizePerVolume);
 
-    CHK_PRT_RET(scratchInputMemSize == 0,
-                HCCL_ERROR("[CollAlgFactory] Rank [%d], Invalid input maxTmpMemSize [%u].", myRank_, maxTmpMemSize_),
-                HcclResult::HCCL_E_PARA);
+    CHK_PRT_RET(
+        scratchInputMemSize == 0,
+        HCCL_ERROR("[CollAlgFactory] Rank [%d], Invalid input maxTmpMemSize [%u].", myRank_, maxTmpMemSize_),
+        HcclResult::HCCL_E_PARA);
 
     BuffInfo buffInfo;
-    buffInfo.inBuffType     = BufferType::SCRATCH;
-    buffInfo.outBuffType    = BufferType::SCRATCH;
-    buffInfo.inBuffBaseOff  = 0;
+    buffInfo.inBuffType = BufferType::SCRATCH;
+    buffInfo.outBuffType = BufferType::SCRATCH;
+    buffInfo.inBuffBaseOff = 0;
     buffInfo.outBuffBaseOff = 0;
 
     u32 sendRecvTimes = (dataSize_ / scratchInputMemSize) + ((dataSize_ % scratchInputMemSize) == 0 ? 0 : 1);
@@ -228,17 +225,17 @@ HcclResult AllGatherSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQues4Opbase(
         u64 currDataSize = (idx == (sendRecvTimes - 1)) ? (dataSize_ - idx * scratchInputMemSize) : scratchInputMemSize;
 
         RankSliceInfo sliceInfoVec;
-        AllignInfo    allignInfo = {enableAllign_, allignSize_, dataType_};
+        AllignInfo allignInfo = {enableAllign_, allignSize_, dataType_};
         CHK_RET(tempAlg.CalcSliceInfo(allignInfo, currDataSize, sliceInfoVec));
 
         TempFuncs tempFuncs;
-        tempFuncs.opMode              = opMode_;
+        tempFuncs.opMode = opMode_;
         tempFuncs.enableCounterNotify = IsEnableCounterNotify();
-        tempFuncs.isForepart          = true; // Usr Buff to CCL Buff required
-        tempFuncs.isBottom            = true; // CCL Buff to Usr Buff required
+        tempFuncs.isForepart = true; // Usr Buff to CCL Buff required
+        tempFuncs.isBottom = true;   // CCL Buff to Usr Buff required
 
-        UsrData   usrData;
-        DataSlice usrInSlice     = DataSlice(BufferType::INPUT, idx * scratchInputMemSize, currDataSize);
+        UsrData usrData;
+        DataSlice usrInSlice = DataSlice(BufferType::INPUT, idx * scratchInputMemSize, currDataSize);
         DataSlice scratchInSlice = DataSlice(BufferType::SCRATCH, virtRankMap_[myRank_] * currDataSize, currDataSize);
         usrData.usrInSlices.push_back(usrInSlice);
         usrData.scratchInSlices.push_back(scratchInSlice);
@@ -260,6 +257,6 @@ HcclResult AllGatherSoleExecutor<AlgTopoMatch, AlgTemplate>::GenPrimQues4Opbase(
 }
 
 REGISTER_IMPL_BY_TEMP(OpType::ALLGATHER, AllGatherMesh, AllGatherSoleExecutor, TopoMatchMesh, TempAllGatherMesh);
-REGISTER_IMPL_BY_TEMP(OpType::ALLGATHER, AllGatherConcurrMesh, AllGatherSoleExecutor, TopoMatchConcurrMesh,
-                      TempAllGatherConcurrMesh);
+REGISTER_IMPL_BY_TEMP(
+    OpType::ALLGATHER, AllGatherConcurrMesh, AllGatherSoleExecutor, TopoMatchConcurrMesh, TempAllGatherConcurrMesh);
 } // namespace Hccl

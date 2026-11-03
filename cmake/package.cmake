@@ -1,13 +1,12 @@
 # -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
-#### CPACK to package run #####
 
 # download makeself package
 add_cann_third_party(makeself-fetch)
@@ -106,18 +105,11 @@ function(pack_built_in)
       ${COMMON_FILES}
       ${CANN_CMAKE_DIR}/scripts/install/multi_version.inc
   )
-  set(CONF_FILES
-      ${CANN_CMAKE_DIR}/scripts/package/cfg/path.cfg
-  )
 
   install(FILES ${CMAKE_BINARY_DIR}/version.hcomm.info
       DESTINATION share/info/hcomm
       RENAME version.info
       ${INSTALL_OPTIONAL}
-      COMPONENT hcomm
-  )
-  install(FILES ${CONF_FILES}
-      DESTINATION ${CMAKE_SYSTEM_PROCESSOR}-linux/conf
       COMPONENT hcomm
   )
   install(FILES ${PACKAGE_FILES}
@@ -139,6 +131,6 @@ function(pack_built_in)
 
   # ============= CPack =============
   if (NOT ENABLE_COV AND NOT ENABLE_UT)
- 	  set_cann_cpack_config(hcomm ENABLE_DEVICE ${ENABLE_DEVICE} SHARE_INFO_NAME hcomm)
+ 	  set_cann_cpack_config(hcomm ENABLE_DEVICE ${ENABLE_DEVICE} SHARE_INFO_NAME hcomm PACKAGE_TYPE "${PACKAGE_TYPE}")
   endif()
 endfunction()

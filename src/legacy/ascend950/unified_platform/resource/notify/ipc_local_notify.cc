@@ -24,21 +24,15 @@ IpcLocalNotify::IpcLocalNotify(bool devUsed) : BaseLocalNotify(RmaType::IPC, dev
     }
 }
 
-void IpcLocalNotify::Wait(const Stream &stream, u32 timeout) const
-{
-    GetNotify()->Wait(stream, timeout);
-}
+void IpcLocalNotify::Wait(const Stream& stream, u32 timeout) const { GetNotify()->Wait(stream, timeout); }
 
-void IpcLocalNotify::Post(const Stream &stream) const
-{
-    GetNotify()->Post(stream);
-}
+void IpcLocalNotify::Post(const Stream& stream) const { GetNotify()->Post(stream); }
 
 std::unique_ptr<Serializable> IpcLocalNotify::GetExchangeDto()
 {
-    std::unique_ptr<ExchangeIpcNotifyDto> dto
-        = make_unique<ExchangeIpcNotifyDto>(GetNotify()->GetHandleAddr(), GetNotify()->GetId(), HrtDeviceGetBareTgid(),
-                                            GetNotify()->GetDevPhyId(), GetNotify()->IsDevUsed());
+    std::unique_ptr<ExchangeIpcNotifyDto> dto = make_unique<ExchangeIpcNotifyDto>(
+        GetNotify()->GetHandleAddr(), GetNotify()->GetId(), HrtDeviceGetBareTgid(), GetNotify()->GetDevPhyId(),
+        GetNotify()->IsDevUsed());
     (void)memcpy_s(dto->name, RTS_IPC_MEM_NAME_LEN, ipcName, RTS_IPC_MEM_NAME_LEN);
     return std::unique_ptr<Serializable>(dto.release());
 }

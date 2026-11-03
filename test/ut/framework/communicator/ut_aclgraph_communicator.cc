@@ -21,12 +21,17 @@
 #include "stream_pub.h"
 #include "launch_aicpu.h"
 #include "adapter_rts_common.h"
+#include "dispatcher.h"
+#include "local_notify.h"
+#include "order_launch.h"
+#include "profiling_manager_pub.h"
+#include "workflow.h"
 
 using namespace hccl;
 
 static int g_launchCallCount = 0;
-static HcclResult LaunchCountStub(
-    const rtStream_t, void *, u32, aclrtBinHandle, const std::string &, bool, u16, void *, u32)
+static HcclResult
+LaunchCountStub(const rtStream_t, void*, u32, aclrtBinHandle, const std::string&, bool, u16, void*, u32)
 {
     ++g_launchCallCount;
     return HCCL_SUCCESS;
@@ -34,10 +39,7 @@ static HcclResult LaunchCountStub(
 
 class AclgraphCommunicatorTest : public testing::Test {
 protected:
-    void SetUp() override
-    {
-        GlobalMockObject::reset();
-    }
+    void SetUp() override { GlobalMockObject::reset(); }
 
     void TearDown() override
     {
@@ -246,7 +248,7 @@ TEST_F(AclgraphCommunicatorTest, ClearAclgraphHostLinks_FullPath)
     // 1. 预置 host 端 HccltagRemoteResV2（模拟通信域分配的 remote res）
     HccltagRemoteResV2 remoteResV2;
     ListCommonInit(&remoteResV2.nextTagRes, &remoteResV2.nextTagRes);
-    HccltagRemoteResV2 *hostPtr = &remoteResV2;
+    HccltagRemoteResV2* hostPtr = &remoteResV2;
     // 将 HostMem 包装 remoteResV2 的指针后存入 hostMemVec_
     auto hostMem = std::make_shared<HostMem>(HostMem::create(hostPtr, sizeof(remoteResV2)));
     communicator_.hostMemVec_.push_back(hostMem);
@@ -270,7 +272,7 @@ TEST_F(AclgraphCommunicatorTest, ClearAclgraphHostLinks_FullPath)
     EXPECT_EQ(communicator_.rankTagRemoteRes_[rankId].count(tag), 0);
     // 验证：hostMemVec_ 中对应的条目已被 erase
     bool foundInHostMemVec = false;
-    for (auto &hm : communicator_.hostMemVec_) {
+    for (auto& hm : communicator_.hostMemVec_) {
         if (hm && hm->ptr() == hostPtr) {
             foundInHostMemVec = true;
             break;
@@ -281,11 +283,11 @@ TEST_F(AclgraphCommunicatorTest, ClearAclgraphHostLinks_FullPath)
 
 /**
  * @brief TC-COMM-11: AicpuKfcClearOpResLaunch 空 tags
- * 验证：传入空集合时直接返回 SUCCESS
+ * 验证：空 tags (非零拷贝capture图不登记tag) 时不再提前返回, 但 binHandle_ 默认为空, 跳过 aicpu 清理返回 SUCCESS
  */
 TEST_F(AclgraphCommunicatorTest, KfcClearOpResLaunch_EmptyTags)
 {
-    HcclResult ret = communicator_.AicpuKfcClearOpResLaunch({});
+    HcclResult ret = communicator_.AicpuKfcClearOpResLaunch({}, 1);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
 
@@ -296,7 +298,7 @@ TEST_F(AclgraphCommunicatorTest, KfcClearOpResLaunch_EmptyTags)
 TEST_F(AclgraphCommunicatorTest, KfcClearOpResLaunch_NullBinHandle)
 {
     communicator_.binHandle_ = nullptr;
-    HcclResult ret = communicator_.AicpuKfcClearOpResLaunch({"tag1"});
+    HcclResult ret = communicator_.AicpuKfcClearOpResLaunch({"tag1"}, 1);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
 
@@ -309,7 +311,7 @@ TEST_F(AclgraphCommunicatorTest, KfcClearOpResLaunch_NullOpStream)
     // 预置 binHandle_ 非空但 opStream_ 为空
     communicator_.binHandle_ = reinterpret_cast<aclrtBinHandle>(0x1);
     // opStream_ 默认空
-    HcclResult ret = communicator_.AicpuKfcClearOpResLaunch({"tag1"});
+    HcclResult ret = communicator_.AicpuKfcClearOpResLaunch({"tag1"}, 1);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
 
@@ -323,10 +325,10 @@ TEST_F(AclgraphCommunicatorTest, KfcClearOpResLaunch_LaunchPath)
     // 预置成功能进 launch 路径的条件
     communicator_.binHandle_ = reinterpret_cast<aclrtBinHandle>(0x1);
     // 直接设置内部 stream_ 指针，避免 Stream(fake_ptr) 构造函数调用 InitStream 触发 hrt 函数访问
-    communicator_.opStream_.stream_ = reinterpret_cast<void *>(0x1234);
+    communicator_.opStream_.stream_ = reinterpret_cast<void*>(0x1234);
     communicator_.identifier_ = "test_group";
     // 预置 buffer 避免走 DeviceMem::alloc 路径（需要 mock 该静态方法）
-    communicator_.aicpuCleanupBuf_ = DeviceMem(reinterpret_cast<void *>(0x5678), 4096, false);
+    communicator_.aicpuCleanupBuf_ = DeviceMem(reinterpret_cast<void*>(0x5678), 4096, false);
     communicator_.aicpuCleanupHostBuf_.reset(new (std::nothrow) HcclKfcClearOpResTilingData());
     ASSERT_NE(communicator_.aicpuCleanupHostBuf_, nullptr);
 
@@ -335,7 +337,7 @@ TEST_F(AclgraphCommunicatorTest, KfcClearOpResLaunch_LaunchPath)
     MOCKER(AicpuAclKernelLaunchV2).stubs().will(returnValue(HCCL_SUCCESS));
     MOCKER(hcclStreamSynchronize).stubs().will(returnValue(HCCL_SUCCESS));
 
-    HcclResult ret = communicator_.AicpuKfcClearOpResLaunch({"tag1", "tag2"});
+    HcclResult ret = communicator_.AicpuKfcClearOpResLaunch({"tag1", "tag2"}, 1);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
 
@@ -346,9 +348,9 @@ TEST_F(AclgraphCommunicatorTest, KfcClearOpResLaunch_LaunchPath)
 TEST_F(AclgraphCommunicatorTest, KfcClearOpResLaunch_MultiBatch)
 {
     communicator_.binHandle_ = reinterpret_cast<aclrtBinHandle>(0x1);
-    communicator_.opStream_.stream_ = reinterpret_cast<void *>(0x1234);
+    communicator_.opStream_.stream_ = reinterpret_cast<void*>(0x1234);
     communicator_.identifier_ = "test_group";
-    communicator_.aicpuCleanupBuf_ = DeviceMem(reinterpret_cast<void *>(0x5678), 4096, false);
+    communicator_.aicpuCleanupBuf_ = DeviceMem(reinterpret_cast<void*>(0x5678), 4096, false);
     communicator_.aicpuCleanupHostBuf_.reset(new (std::nothrow) HcclKfcClearOpResTilingData());
     ASSERT_NE(communicator_.aicpuCleanupHostBuf_, nullptr);
 
@@ -363,7 +365,7 @@ TEST_F(AclgraphCommunicatorTest, KfcClearOpResLaunch_MultiBatch)
     MOCKER(AicpuAclKernelLaunchV2).stubs().will(invoke(LaunchCountStub));
     MOCKER(hcclStreamSynchronize).stubs().will(returnValue(HCCL_SUCCESS));
 
-    HcclResult ret = communicator_.AicpuKfcClearOpResLaunch(manyTags);
+    HcclResult ret = communicator_.AicpuKfcClearOpResLaunch(manyTags, 1);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     // 应分 2 批 launch（MAX_BATCH + 10 需要 2 批）
     EXPECT_EQ(g_launchCallCount, 2);
@@ -433,4 +435,75 @@ TEST_F(AclgraphCommunicatorTest, AicpuInitTilingCache_OpsMode)
     HcclResult ret = communicator_.AicpuInitOpTilingDataAicpuCache(opParam, HCCL_CMD_ALLREDUCE, &tilingData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(tilingData.aicpuCacheEnable, 1);
+}
+
+/**
+ * @brief AIL-01: AicpuKfcTilingDataLaunchIn capture 成功路径
+ * 验证：isCapture=true 时走完两段 event 按序同步逻辑，返回 SUCCESS，
+ *       覆盖 KERNEL_INDEX_ACLGRAPH_EVENT_0/1 的 record/wait 及按序下发新增代码行。
+ */
+TEST_F(AclgraphCommunicatorTest, AicpuKfcTilingDataLaunchIn_CaptureSuccess)
+{
+    OpParam opParam;
+    opParam.tag = "test_tag";
+    opParam.stream.stream_ = reinterpret_cast<void*>(0x1000);
+    opParam.inputPtr = nullptr;
+    opParam.outputPtr = nullptr;
+    opParam.isCapture = true;
+    opParam.opType = HCCL_CMD_ALLREDUCE;
+
+    DeviceMem deviceContext;
+    std::string kernelName = "test_kernel";
+    AicpuOpTiling opTilingInfo{};
+
+    communicator_.deviceLogicId_ = 0;
+    communicator_.identifier_ = "test_group";
+    communicator_.opStream_.stream_ = reinterpret_cast<void*>(0x2000);
+
+    MOCKER(SetNormalMode).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(LocalNotify::Post).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(LocalNotify::Wait).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(GetWorkflowMode).stubs().will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB));
+    MOCKER(hrtMsprofSysCycleTime).stubs().will(returnValue(static_cast<uint64_t>(0)));
+    MOCKER(aclrtRecordEvent).stubs().will(returnValue(ACL_SUCCESS));
+    MOCKER(aclrtStreamWaitEvent).stubs().will(returnValue(ACL_SUCCESS));
+    MOCKER_CPP(&OrderLaunch::AclgraphLaunchInOrderToOrderStream).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&OrderLaunch::AclgraphLaunchInOrderToKernelStream).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::KernelLaunchChooseAicpuOrCustom).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(ProfilingManagerPub::CallMsprofReportNodeInfo).stubs().will(returnValue(HCCL_SUCCESS));
+
+    HcclResult ret
+        = communicator_.AicpuKfcTilingDataLaunchIn(opParam, deviceContext, kernelName, opTilingInfo, 0, false);
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+}
+
+/**
+ * @brief AIL-02: AicpuKfcTilingDataLaunchIn capture 首次 recordEvent 失败
+ * 验证：第一段 aclrtRecordEvent 返回非 ACL_SUCCESS 时，CHK_PRT_RET 提前返回 HCCL_E_RUNTIME。
+ */
+TEST_F(AclgraphCommunicatorTest, AicpuKfcTilingDataLaunchIn_CaptureRecordEventFail)
+{
+    OpParam opParam;
+    opParam.tag = "test_tag";
+    opParam.stream.stream_ = reinterpret_cast<void*>(0x1000);
+    opParam.isCapture = true;
+    opParam.opType = HCCL_CMD_ALLREDUCE;
+
+    DeviceMem deviceContext;
+    std::string kernelName = "test_kernel";
+    AicpuOpTiling opTilingInfo{};
+
+    communicator_.deviceLogicId_ = 0;
+    communicator_.identifier_ = "test_group";
+    communicator_.opStream_.stream_ = reinterpret_cast<void*>(0x2000);
+
+    MOCKER(SetNormalMode).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(LocalNotify::Post).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(GetWorkflowMode).stubs().will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB));
+    MOCKER(hrtMsprofSysCycleTime).stubs().will(returnValue(static_cast<uint64_t>(0)));
+    MOCKER(aclrtRecordEvent).stubs().will(returnValue(1));
+
+    HcclResult ret
+        = communicator_.AicpuKfcTilingDataLaunchIn(opParam, deviceContext, kernelName, opTilingInfo, 0, false);
+    EXPECT_EQ(ret, HCCL_E_RUNTIME);
 }

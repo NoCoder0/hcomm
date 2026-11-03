@@ -12,7 +12,7 @@
 #define HCCLV2_CCU_TEMP_SCATTER_MESH_1D_H_
 
 #include "string_util.h"
-#include "env_config.h"
+#include "env_config_v2.h"
 #include "ccu_alg_template_base.h"
 #include "executor_utils.h"
 
@@ -20,9 +20,9 @@ namespace Hccl {
 
 class CcuTempScatterMesh1D : public CcuAlgTemplateBase {
 public:
-    explicit CcuTempScatterMesh1D(const RankId virtualRank, const u32 tempRankSize,
-                                   const std::vector<std::vector<RankId>> &tempVTopo,
-                                   const std::map<RankId, u32>            &tempVirtRankMap);
+    explicit CcuTempScatterMesh1D(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~CcuTempScatterMesh1D() override;
 
     std::string Describe() const override
@@ -30,13 +30,14 @@ public:
         return StringFormat("Template of scatter ccu mesh 1D, tempRankSize [%u].", tempRankSize_);
     }
 
-    HcclResult GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &templateDataParams,
-                         const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues);
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
+    HcclResult GenExtIns(
+        const TempFuncs& tempFuncs, const TemplateDataParams& templateDataParams, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues);
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
     uint64_t GetExpandedMode() const;
     uint64_t GetMaxSliceSize() const;
-    HcclResult GenExtIns(const RankGraph *rankGraph, const TemplateInfo &tmpInfo,
-                         const std::vector<InsQuePtr> &tempInsQues) const;
+    HcclResult
+    GenExtIns(const RankGraph* rankGraph, const TemplateInfo& tmpInfo, const std::vector<InsQuePtr>& tempInsQues) const;
 };
 
 } // namespace Hccl

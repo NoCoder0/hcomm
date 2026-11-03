@@ -12,7 +12,8 @@
 
 #include "topo_cluster_ir.h"
 
-LinkType ParseLinkType(const std::string& str) {
+LinkType ParseLinkType(const std::string& str)
+{
     if (str == "PEER2PEER") {
         return LinkType::PEER2PEER;
     }
@@ -22,15 +23,20 @@ LinkType ParseLinkType(const std::string& str) {
     return LinkType::UNKNOWN;
 }
 
-std::string LinkTypeToString(LinkType type) {
+std::string LinkTypeToString(LinkType type)
+{
     switch (type) {
-        case LinkType::PEER2PEER: return "PEER2PEER";
-        case LinkType::PEER2NET: return "PEER2NET";
-        default: return "UNKNOWN";
+        case LinkType::PEER2PEER:
+            return "PEER2PEER";
+        case LinkType::PEER2NET:
+            return "PEER2NET";
+        default:
+            return "UNKNOWN";
     }
 }
 
-TopoType ParseTopoType(const std::string& str) {
+TopoType ParseTopoType(const std::string& str)
+{
     if (str == "1DMESH") {
         return TopoType::MESH_1D;
     }
@@ -46,17 +52,24 @@ TopoType ParseTopoType(const std::string& str) {
     return TopoType::UNKNOWN;
 }
 
-std::string TopoTypeToString(TopoType type) {
+std::string TopoTypeToString(TopoType type)
+{
     switch (type) {
-        case TopoType::MESH_1D: return "1DMESH";
-        case TopoType::MESH_2D: return "2DMESH";
-        case TopoType::CLOS: return "CLOS";
-        case TopoType::RING: return "RING";
-        default: return "UNKNOWN";
+        case TopoType::MESH_1D:
+            return "1DMESH";
+        case TopoType::MESH_2D:
+            return "2DMESH";
+        case TopoType::CLOS:
+            return "CLOS";
+        case TopoType::RING:
+            return "RING";
+        default:
+            return "UNKNOWN";
     }
 }
 
-Protocol ParseProtocol(const std::string& str) {
+Protocol ParseProtocol(const std::string& str)
+{
     if (str == "UB_CTP") {
         return Protocol::UB_CTP;
     }
@@ -66,23 +79,40 @@ Protocol ParseProtocol(const std::string& str) {
     if (str == "UB_TP") {
         return Protocol::UB_TP;
     }
+    if (str == "UBG") {
+        return Protocol::UBG;
+    }
+    if (str == "UBOE") {
+        return Protocol::UBOE;
+    }
     if (str == "ROCE") {
         return Protocol::ROCE;
     }
     return Protocol::UNKNOWN;
 }
 
-std::string ProtocolToString(Protocol proto) {
+std::string ProtocolToString(Protocol proto)
+{
     switch (proto) {
-        case Protocol::UB_CTP: return "UB_CTP";
-        case Protocol::UB_MEM: return "UB_MEM";
-        case Protocol::UB_TP: return "UB_TP";
-        case Protocol::ROCE: return "ROCE";
-        default: return "UNKNOWN";
+        case Protocol::UB_CTP:
+            return "UB_CTP";
+        case Protocol::UB_MEM:
+            return "UB_MEM";
+        case Protocol::UB_TP:
+            return "UB_TP";
+        case Protocol::UBG:
+            return "UBG";
+        case Protocol::UBOE:
+            return "UBOE";
+        case Protocol::ROCE:
+            return "ROCE";
+        default:
+            return "UNKNOWN";
     }
 }
 
-Position ParsePosition(const std::string& str) {
+Position ParsePosition(const std::string& str)
+{
     if (str == "DEVICE") {
         return Position::DEVICE;
     }
@@ -92,15 +122,20 @@ Position ParsePosition(const std::string& str) {
     return Position::UNKNOWN;
 }
 
-std::string PositionToString(Position pos) {
+std::string PositionToString(Position pos)
+{
     switch (pos) {
-        case Position::DEVICE: return "DEVICE";
-        case Position::HOST: return "HOST";
-        default: return "UNKNOWN";
+        case Position::DEVICE:
+            return "DEVICE";
+        case Position::HOST:
+            return "HOST";
+        default:
+            return "UNKNOWN";
     }
 }
 
-SimDevType ParseDevType(const std::string& str) {
+SimDevType ParseDevType(const std::string& str)
+{
     if (str == "ascend950" || str == "ASCEND950" || str == "950") {
         return SimDevType::DEV_TYPE_950;
     }
@@ -116,17 +151,24 @@ SimDevType ParseDevType(const std::string& str) {
     return SimDevType::UNKNOWN;
 }
 
-std::string DevTypeToString(SimDevType type) {
+std::string DevTypeToString(SimDevType type)
+{
     switch (type) {
-        case SimDevType::DEV_TYPE_950: return "ASCEND950";
-        case SimDevType::DEV_TYPE_910B: return "ASCEND910B";
-        case SimDevType::DEV_TYPE_910C: return "ASCEND910C";
-        case SimDevType::DEV_TYPE_910D: return "ASCEND910D";
-        default: return "UNKNOWN";
+        case SimDevType::DEV_TYPE_950:
+            return "ASCEND950";
+        case SimDevType::DEV_TYPE_910B:
+            return "ASCEND910B";
+        case SimDevType::DEV_TYPE_910C:
+            return "ASCEND910C";
+        case SimDevType::DEV_TYPE_910D:
+            return "ASCEND910D";
+        default:
+            return "UNKNOWN";
     }
 }
 
-std::vector<const Port*> Device::GetPortsByLayer(int layer) const {
+std::vector<const Port*> Device::GetPortsByLayer(int layer) const
+{
     std::vector<const Port*> result;
     for (const auto& p : ports) {
         if (p.layer == layer) {
@@ -136,7 +178,8 @@ std::vector<const Port*> Device::GetPortsByLayer(int layer) const {
     return result;
 }
 
-std::vector<const Port*> Device::GetPortsByLinkType(LinkType type) const {
+std::vector<const Port*> Device::GetPortsByLinkType(LinkType type) const
+{
     std::vector<const Port*> result;
     for (const auto& p : ports) {
         if (p.linkType == type) {
@@ -146,7 +189,8 @@ std::vector<const Port*> Device::GetPortsByLinkType(LinkType type) const {
     return result;
 }
 
-std::vector<const Port*> Device::GetPortsByPlane(const std::string& pid) const {
+std::vector<const Port*> Device::GetPortsByPlane(const std::string& pid) const
+{
     std::vector<const Port*> result;
     for (const auto& p : ports) {
         if (p.planeId == pid) {
@@ -156,7 +200,8 @@ std::vector<const Port*> Device::GetPortsByPlane(const std::string& pid) const {
     return result;
 }
 
-const Port* Device::GetPort(const std::string& pid) const {
+const Port* Device::GetPort(const std::string& pid) const
+{
     for (const auto& p : ports) {
         if (p.portId == pid) {
             return &p;
@@ -165,7 +210,8 @@ const Port* Device::GetPort(const std::string& pid) const {
     return nullptr;
 }
 
-const Device* Server::GetDevice(int localId) const {
+const Device* Server::GetDevice(int localId) const
+{
     for (const auto& d : devices) {
         if (d.localId == localId) {
             return &d;
@@ -174,7 +220,8 @@ const Device* Server::GetDevice(int localId) const {
     return nullptr;
 }
 
-const Link* Server::GetLink(const std::string& lid) const {
+const Link* Server::GetLink(const std::string& lid) const
+{
     for (const auto& l : links) {
         if (l.linkId == lid) {
             return &l;
@@ -183,7 +230,8 @@ const Link* Server::GetLink(const std::string& lid) const {
     return nullptr;
 }
 
-std::vector<const Link*> Server::GetLinksByLayer(int layer) const {
+std::vector<const Link*> Server::GetLinksByLayer(int layer) const
+{
     std::vector<const Link*> result;
     for (const auto& l : links) {
         if (l.netLayer == layer) {
@@ -193,7 +241,8 @@ std::vector<const Link*> Server::GetLinksByLayer(int layer) const {
     return result;
 }
 
-std::vector<const Link*> Server::GetLinksByType(LinkType type) const {
+std::vector<const Link*> Server::GetLinksByType(LinkType type) const
+{
     std::vector<const Link*> result;
     for (const auto& l : links) {
         if (l.linkType == type) {
@@ -203,7 +252,8 @@ std::vector<const Link*> Server::GetLinksByType(LinkType type) const {
     return result;
 }
 
-std::vector<const Link*> Server::GetDeviceLinks(int localId) const {
+std::vector<const Link*> Server::GetDeviceLinks(int localId) const
+{
     std::vector<const Link*> result;
     for (const auto& l : links) {
         if (l.sideA.localId == localId || l.sideB.localId == localId) {
@@ -213,7 +263,8 @@ std::vector<const Link*> Server::GetDeviceLinks(int localId) const {
     return result;
 }
 
-const Server* SuperPod::GetServer(int serverId) const {
+const Server* SuperPod::GetServer(int serverId) const
+{
     for (const auto& s : servers) {
         if (s.serverId == serverId) {
             return &s;
@@ -222,7 +273,8 @@ const Server* SuperPod::GetServer(int serverId) const {
     return nullptr;
 }
 
-int SuperPod::GetTotalDeviceCount() const {
+int SuperPod::GetTotalDeviceCount() const
+{
     int count = 0;
     for (const auto& s : servers) {
         count += s.GetDeviceCount();
@@ -230,7 +282,8 @@ int SuperPod::GetTotalDeviceCount() const {
     return count;
 }
 
-const SuperPod* Network::GetSuperPod(int superPodId) const {
+const SuperPod* Network::GetSuperPod(int superPodId) const
+{
     for (const auto& sp : superPods) {
         if (sp.superPodId == superPodId) {
             return &sp;
@@ -239,7 +292,8 @@ const SuperPod* Network::GetSuperPod(int superPodId) const {
     return nullptr;
 }
 
-const Server* Network::GetServer(int superPodId, int serverId) const {
+const Server* Network::GetServer(int superPodId, int serverId) const
+{
     const SuperPod* sp = GetSuperPod(superPodId);
     if (sp) {
         return sp->GetServer(serverId);
@@ -247,7 +301,8 @@ const Server* Network::GetServer(int superPodId, int serverId) const {
     return nullptr;
 }
 
-const Device* Network::GetDeviceByGlobalId(int deviceId) const {
+const Device* Network::GetDeviceByGlobalId(int deviceId) const
+{
     auto it = deviceIndex.find(deviceId);
     if (it != deviceIndex.end() && !it->second.empty()) {
         int spId = it->second[0].first;
@@ -260,7 +315,8 @@ const Device* Network::GetDeviceByGlobalId(int deviceId) const {
     return nullptr;
 }
 
-std::vector<const Device*> Network::GetAllDevices() const {
+std::vector<const Device*> Network::GetAllDevices() const
+{
     std::vector<const Device*> result;
     for (const auto& sp : superPods) {
         for (const auto& srv : sp.servers) {
@@ -272,7 +328,8 @@ std::vector<const Device*> Network::GetAllDevices() const {
     return result;
 }
 
-std::vector<const Port*> Network::GetAllPortsByLayer(int layer) const {
+std::vector<const Port*> Network::GetAllPortsByLayer(int layer) const
+{
     std::vector<const Port*> result;
     for (const auto& sp : superPods) {
         for (const auto& srv : sp.servers) {
@@ -285,7 +342,8 @@ std::vector<const Port*> Network::GetAllPortsByLayer(int layer) const {
     return result;
 }
 
-std::vector<const Port*> Network::GetAllPortsByLinkType(LinkType type) const {
+std::vector<const Port*> Network::GetAllPortsByLinkType(LinkType type) const
+{
     std::vector<const Port*> result;
     for (const auto& sp : superPods) {
         for (const auto& srv : sp.servers) {
@@ -298,7 +356,8 @@ std::vector<const Port*> Network::GetAllPortsByLinkType(LinkType type) const {
     return result;
 }
 
-std::vector<const Link*> Network::GetAllLinksByType(LinkType type) const {
+std::vector<const Link*> Network::GetAllLinksByType(LinkType type) const
+{
     std::vector<const Link*> result;
     for (const auto& sp : superPods) {
         for (const auto& srv : sp.servers) {
@@ -309,7 +368,8 @@ std::vector<const Link*> Network::GetAllLinksByType(LinkType type) const {
     return result;
 }
 
-int Network::GetTotalDeviceCount() const {
+int Network::GetTotalDeviceCount() const
+{
     int count = 0;
     for (const auto& sp : superPods) {
         count += sp.GetTotalDeviceCount();
@@ -317,7 +377,8 @@ int Network::GetTotalDeviceCount() const {
     return count;
 }
 
-int Network::GetTotalLinkCount() const {
+int Network::GetTotalLinkCount() const
+{
     int count = 0;
     for (const auto& sp : superPods) {
         for (const auto& srv : sp.servers) {
@@ -327,7 +388,8 @@ int Network::GetTotalLinkCount() const {
     return count;
 }
 
-ParseStatus Network::BuildIndexes() {
+ParseStatus Network::BuildIndexes()
+{
     deviceIndex.clear();
     eidIndex.clear();
     for (const auto& sp : superPods) {

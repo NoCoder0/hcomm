@@ -120,7 +120,7 @@ sequenceDiagram
     Note right of HCD: 更新开关状态
     HCD->>MTM: SetCurrDfxOpInfo
     Note right of MTM: 存储当前算子信息，供后续上报使用
-    HCD->>PH: SetIsOpbase
+    HCD->>PH: SetOpModeFlags
     Note right of PH: 设置算子模式标记
 ```
 
@@ -139,7 +139,7 @@ sequenceDiagram
     alt currDfxOpInfo为空
         Note right of HCD: 跳过上报，返回成功
     else currDfxOpInfo非空
-        HCD->>HCD: IsOpBase
+        HCD->>HCD: GetOpModeFlags
         HCD->>HCP: ReportAllTasks
         HCP->>PR: ReportAllTasks
         Note right of PR: 遍历MirrorTaskManager中的任务队列
@@ -512,7 +512,7 @@ classDiagram
 5. **空指针保护**：所有上报接口在调用Reporter前均检查指针非空，避免空指针解引用
 6. **EXCEPTION_CATCH宏**：`ReportKernel`中使用`EXCEPTION_CATCH`宏捕获`ProfilingHandler`上报异常，失败时返回`HCCL_E_PTR`
 7. **MC2 Stream分组上报**：`ReportMc2CommInfo`每8个streamId为一组通过`ProfilingDeviceCommResInfo`上报，`commStreamIds`数组大小固定为8
-8. **Device侧设备类型限制**：`HcommProfilingReportDeviceOp`、`HcommProfilingReportKernelStartTask`、`HcommProfilingReportKernelEndTask`仅在`DEV_TYPE_950`设备上执行，其他设备类型直接返回成功
+8. **Device侧设备类型限制**：`HcommProfilingReportDeviceOp`、`HcommProfilingReportKernelStartTask`、`HcommProfilingReportKernelEndTask`仅在`DEV_TYPE_950`和`DEV_TYPE_960`设备上执行，其他设备类型直接返回成功
 
 ### 已知限制
 

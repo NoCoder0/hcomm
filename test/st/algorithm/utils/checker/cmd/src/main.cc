@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include <string.h>
 #include <getopt.h>
@@ -18,10 +18,10 @@
 using namespace hccl;
 using namespace checker;
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     std::unique_ptr<CheckerCmd> checkerCmd(new CheckerCmd());
-    if(checkerCmd == nullptr) {
+    if (checkerCmd == nullptr) {
         printf("checkerCmd is null!\n");
         return EXIT_FAILURE;
     }
@@ -44,7 +44,8 @@ int main(int argc, char *argv[])
     u32 rankSize = GetRankNumFormTopoMeta(topoMeta);
     u64 dataSize = checkerCmd->data->minBytes;
     for (; dataSize <= checkerCmd->data->maxBytes;
-        (checkerCmd->stepfactorFlag == false ? dataSize += checkerCmd->data->dataStepBytes : dataSize *= checkerCmd->data->dataStepFactor)) {
+         (checkerCmd->stepfactorFlag == false ? dataSize += checkerCmd->data->dataStepBytes :
+                                                dataSize *= checkerCmd->data->dataStepFactor)) {
         struct CheckerOpParam testOpParam;
         checkerCmd->uiParam.count = dataSize / CHECK_SIZE_TABLE[checkerCmd->uiParam.dataType];
         if (GenTestOpParams(rankSize, checkerCmd->uiParam, testOpParam) != HCCL_SUCCESS) {

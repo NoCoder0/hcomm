@@ -1,13 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
-
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -56,23 +55,19 @@
 using namespace std;
 using namespace hccl;
 
-class OpbaseMultiThreadTest : public testing::TestWithParam<bool>
-{
+class OpbaseMultiThreadTest : public testing::TestWithParam<bool> {
 protected:
     virtual void SetUp()
     {
         ra_set_test_type(0, "ST_TEST");
-        static s32  call_cnt = 0;
+        static s32 call_cnt = 0;
         DlTdtFunction::GetInstance().DlTdtFunctionInit();
-        TsdOpen(1,2);
-        string name =std::to_string(call_cnt++) +"_" + __PRETTY_FUNCTION__;
-        ra_set_shm_name(name .c_str());
+        TsdOpen(1, 2);
+        string name = std::to_string(call_cnt++) + "_" + __PRETTY_FUNCTION__;
+        ra_set_shm_name(name.c_str());
         ResetInitState();
         s32 portNum = -1;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
         std::cout << "A Test SetUP" << std::endl;
     }
     virtual void TearDown()
@@ -92,7 +87,6 @@ struct ThreadContext {
 
 void ExecAllReduce(int ndev, HcclComm comm, uint32_t deviceLogicID, uint32_t rankId)
 {
-
     int ret = HCCL_SUCCESS;
     /* 1. 申请相关资源 */
     ret = hrtSetDevice(deviceLogicID);
@@ -105,15 +99,14 @@ void ExecAllReduce(int ndev, HcclComm comm, uint32_t deviceLogicID, uint32_t ran
 
     s32 count = HCCL_COM_DATA_SIZE;
     s8* sendbuf;
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
     s8* recvbuf;
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
 
@@ -136,11 +129,9 @@ void ExecAllReduce(int ndev, HcclComm comm, uint32_t deviceLogicID, uint32_t ran
 
     /* 3. 校验执行结果准确性 */
     s32 errors = 0;
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
@@ -155,7 +146,7 @@ void ExecAllReduce(int ndev, HcclComm comm, uint32_t deviceLogicID, uint32_t ran
     EXPECT_EQ(ret, 0);
     return;
 }
-#if 0 //执行失败Unknown comm devType
+#if 0 // 执行失败Unknown comm devType
 TEST_F(OpbaseMultiThreadTest, ut_HcclAllReduce)
 {
     int ret = HCCL_SUCCESS;
@@ -188,10 +179,8 @@ TEST_F(OpbaseMultiThreadTest, ut_HcclAllReduce)
 }
 #endif
 
-
 void ExecAllGather(int ndev, HcclComm comm, uint32_t deviceLogicID, uint32_t rankId)
 {
-
     int ret = HCCL_SUCCESS;
     /* 1. 申请相关资源 */
     ret = hrtSetDevice(deviceLogicID);
@@ -204,15 +193,14 @@ void ExecAllGather(int ndev, HcclComm comm, uint32_t deviceLogicID, uint32_t ran
 
     s32 count = 8;
     s8* sendbuf;
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
     s8* recvbuf;
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
 
@@ -227,7 +215,7 @@ void ExecAllGather(int ndev, HcclComm comm, uint32_t deviceLogicID, uint32_t ran
     EXPECT_EQ(rankID, rankId);
 
     /* 2. 执行allreduce */
-    ret =  HcclAllGatherInner(sendbuf, recvbuf, count, HCCL_DATA_TYPE_INT8, comm, stream);
+    ret = HcclAllGatherInner(sendbuf, recvbuf, count, HCCL_DATA_TYPE_INT8, comm, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     rt_ret = aclrtSynchronizeStream(stream);
@@ -235,11 +223,9 @@ void ExecAllGather(int ndev, HcclComm comm, uint32_t deviceLogicID, uint32_t ran
 
     /* 3. 校验执行结果准确性 */
     s32 errors = 0;
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
@@ -254,7 +240,7 @@ void ExecAllGather(int ndev, HcclComm comm, uint32_t deviceLogicID, uint32_t ran
     EXPECT_EQ(ret, 0);
     return;
 }
-#if 0 //执行失败Unknown comm devType
+#if 0 // 执行失败Unknown comm devType
 TEST_F(OpbaseMultiThreadTest, ut_HcclAllGather)
 {
     int ret = HCCL_SUCCESS;
@@ -288,7 +274,6 @@ TEST_F(OpbaseMultiThreadTest, ut_HcclAllGather)
 #endif
 void ExecBroadCast(int ndev, HcclComm comm, uint32_t deviceLogicID, uint32_t rankId)
 {
-
     int ret = HCCL_SUCCESS;
     /* 1. 申请相关资源 */
     ret = hrtSetDevice(deviceLogicID);
@@ -302,11 +287,10 @@ void ExecBroadCast(int ndev, HcclComm comm, uint32_t deviceLogicID, uint32_t ran
     s32 count = HCCL_COM_DATA_SIZE;
 
     s8* sendbuf;
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
 
@@ -329,11 +313,9 @@ void ExecBroadCast(int ndev, HcclComm comm, uint32_t deviceLogicID, uint32_t ran
 
     /* 3. 校验执行结果准确性 */
     s32 errors = 0;
-    for (int j = 0; j < count; j++)
-    {
-        if (sendbuf[j] != 2)
-        {
-            errors ++;
+    for (int j = 0; j < count; j++) {
+        if (sendbuf[j] != 2) {
+            errors++;
             break;
         }
     }
@@ -347,7 +329,7 @@ void ExecBroadCast(int ndev, HcclComm comm, uint32_t deviceLogicID, uint32_t ran
     EXPECT_EQ(ret, 0);
     return;
 }
-#if 0 //执行失败Unknown comm devType
+#if 0 // 执行失败Unknown comm devType
 TEST_F(OpbaseMultiThreadTest, ut_HcclBroadCast)
 {
     int ret = HCCL_SUCCESS;
@@ -382,7 +364,6 @@ TEST_F(OpbaseMultiThreadTest, ut_HcclBroadCast)
 
 void ExecReduceScatter(int ndev, HcclComm comm, uint32_t deviceLogicID, uint32_t rankId)
 {
-
     int ret = HCCL_SUCCESS;
     /* 1. 申请相关资源 */
     ret = hrtSetDevice(deviceLogicID);
@@ -396,15 +377,14 @@ void ExecReduceScatter(int ndev, HcclComm comm, uint32_t deviceLogicID, uint32_t
     s32 count = HCCL_COM_DATA_SIZE;
 
     s8* sendbuf;
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
     s8* recvbuf;
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
 
@@ -427,11 +407,9 @@ void ExecReduceScatter(int ndev, HcclComm comm, uint32_t deviceLogicID, uint32_t
 
     /* 3. 校验执行结果准确性 */
     s32 errors = 0;
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
@@ -446,7 +424,7 @@ void ExecReduceScatter(int ndev, HcclComm comm, uint32_t deviceLogicID, uint32_t
     EXPECT_EQ(ret, 0);
     return;
 }
-#if 0 //执行失败Unknown comm devType
+#if 0 // 执行失败Unknown comm devType
 TEST_F(OpbaseMultiThreadTest, ut_HcclReduceScatter)
 {
     int ret = HCCL_SUCCESS;
@@ -480,7 +458,6 @@ TEST_F(OpbaseMultiThreadTest, ut_HcclReduceScatter)
 #endif
 void ExecReduce(int ndev, HcclComm comm, uint32_t deviceLogicID, uint32_t rankId)
 {
-
     int ret = HCCL_SUCCESS;
     /* 1. 申请相关资源 */
     ret = hrtSetDevice(deviceLogicID);
@@ -494,15 +471,14 @@ void ExecReduce(int ndev, HcclComm comm, uint32_t deviceLogicID, uint32_t rankId
     s32 count = HCCL_COM_DATA_SIZE;
 
     s8* sendbuf;
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
     s8* recvbuf;
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
 
@@ -528,12 +504,10 @@ void ExecReduce(int ndev, HcclComm comm, uint32_t deviceLogicID, uint32_t rankId
     s32 errors = 0;
 
     if (rankId == 0) {
-        for (int j = 0; j < count; j++)
-        {
-            if (recvbuf[j] != 2)
-            {
+        for (int j = 0; j < count; j++) {
+            if (recvbuf[j] != 2) {
                 printf("rankId : %d, deviceLogicID: %d, j : %d, val : %d \n", rankId, deviceLogicID, j, recvbuf[j]);
-                errors ++;
+                errors++;
                 break;
             }
         }
@@ -549,7 +523,7 @@ void ExecReduce(int ndev, HcclComm comm, uint32_t deviceLogicID, uint32_t rankId
     EXPECT_EQ(ret, 0);
     return;
 }
-#if 0 //执行失败Unknown comm devType
+#if 0 // 执行失败Unknown comm devType
 TEST_F(OpbaseMultiThreadTest, ut_HcclReduce)
 {
     int ret = HCCL_SUCCESS;
@@ -581,3 +555,20 @@ TEST_F(OpbaseMultiThreadTest, ut_HcclReduce)
     }
 }
 #endif
+
+// 覆盖 op_base.RunGather 空 addrInfo 分支：清零 sendCounts/sdispls 后直接返回成功，避免越界访问
+TEST(OpbaseRunGatherTest, ut_RunGatherEmptyAddrInfo)
+{
+    GatherPara gatherPara;
+    gatherPara.rankSize = 4;
+    gatherPara.addrLength = -1; // 退化输入下 addrInfo 为空数组
+    u64 sendCounts[4] = {1, 1, 1, 1};
+    u64 sdispls[4] = {0, 1, 2, 3};
+    HcclResult ret = RunGather(sendCounts, sdispls, nullptr, gatherPara);
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+    for (u32 i = 0; i < gatherPara.rankSize; i++) {
+        EXPECT_EQ(sendCounts[i], 0);
+        EXPECT_EQ(sdispls[i], 0);
+    }
+    GlobalMockObject::verify();
+}

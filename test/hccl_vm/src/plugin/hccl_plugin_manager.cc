@@ -32,7 +32,8 @@
 #include "sim_common_api.h"
 #include "store_dump_shm_data.h"
 #include "sim_log.h"
-#include "sim_process_syncer.h"
+#include "runtime_state/sim_models.h"
+#include "runtime_state/db_sim_runner_ops.h"
 
 using namespace HcclSim;
 
@@ -65,7 +66,7 @@ bool HcclPluginManager::IsMatchingPlugin(const std::string& manifestPath, const 
 
         if (data.contains(nameKey) && data[nameKey].is_string()) {
             std::string currentPluginName = data[nameKey].get<std::string>();
-            
+
             // 进行 Tag 匹配
             if (currentPluginName == targetTag) {
                 // 如果必需字段缺失，认为是一个损坏的插件，返回 false 并记录日志
@@ -113,13 +114,13 @@ bool HcclPluginManager::GetPluginFolderPath(const std::string& pluginTag, std::s
             char absPath[PATH_MAX];
             if (realpath(current.path.c_str(), absPath)) {
                 std::string currentAbsPath(absPath);
-                
+
                 // 冲突检查：如果之前已经找到了一个路径，且不是当前路径
                 if (!foundPath.empty() && foundPath != currentAbsPath) {
-                    HCCL_VM_ERROR("Conflict detected: Tag '{}' exists in both: {} and {}",
-                        pluginTag, foundPath, currentAbsPath);
+                    HCCL_VM_ERROR(
+                        "Conflict detected: Tag '{}' exists in both: {} and {}", pluginTag, foundPath, currentAbsPath);
                     hasConflict = true;
-                    break; 
+                    break;
                 }
                 foundPath = currentAbsPath;
             }
@@ -166,14 +167,13 @@ bool HcclPluginManager::GetPluginFolderPath(const std::string& pluginTag, std::s
     return false;
 }
 
-std::vector<std::string> HcclPluginManager::GetPluginStatus() const {
+std::vector<std::string> HcclPluginManager::GetPluginStatus() const
+{
     std::vector<std::string> result;
-    
+
     // 1. 定义表头 (使用左对齐和固定宽度确保整齐)
     std::stringstream header;
-    header << std::left << std::setw(20) << "PLUGIN_TAG" 
-           << std::setw(10) << "PID" 
-           << std::setw(15) << "STATUS";
+    header << std::left << std::setw(20) << "PLUGIN_TAG" << std::setw(10) << "PID" << std::setw(15) << "STATUS";
     result.push_back(header.str());
 
     // 2. 遍历插件获取数据
@@ -188,10 +188,9 @@ std::vector<std::string> HcclPluginManager::GetPluginStatus() const {
         std::string statusStr = running ? "RUNNING" : "STOPPED/EXITED";
 
         std::stringstream row;
-        row << std::left << std::setw(20) << tag 
-            << std::setw(10) << (pid > 0 ? std::to_string(pid) : "N/A") 
+        row << std::left << std::setw(20) << tag << std::setw(10) << (pid > 0 ? std::to_string(pid) : "N/A")
             << std::setw(15) << statusStr;
-        
+
         result.push_back(row.str());
     }
 
@@ -201,7 +200,7 @@ std::vector<std::string> HcclPluginManager::GetPluginStatus() const {
 HcclVmResult HcclPluginManager::RegisterPlugin(const std::string& pluginTag)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
-    
+
     // 防止重复注册
     if (m_plugins.find(pluginTag) != m_plugins.end()) {
         HCCL_VM_WARN("Plugin {} already registered", pluginTag);
@@ -217,6 +216,8 @@ HcclVmResult HcclPluginManager::RegisterPlugin(const std::string& pluginTag)
         // 创建即启动 (符合你 HcclPlugin 构造函数的逻辑)
         auto plugin = std::make_shared<HcclPlugin>(folderPath);
         m_plugins[pluginTag] = plugin;
+        AddInstallRecordToDB(pluginTag);
+
     } catch (const std::exception& e) {
         HCCL_VM_ERROR("Failed to register plugin {}: {}", pluginTag, e.what());
         return HcclSim::HcclVmResult::HCCL_SIM_E_INTERNAL;
@@ -225,7 +226,8 @@ HcclVmResult HcclPluginManager::RegisterPlugin(const std::string& pluginTag)
     return HcclSim::HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult HcclPluginManager::SendMessageToPlugin(const std::string& pluginTag, const std::string& action, const nlohmann::json& payload)
+HcclVmResult HcclPluginManager::SendMessageToPlugin(
+    const std::string& pluginTag, const std::string& action, const nlohmann::json& payload)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     auto it = m_plugins.find(pluginTag);
@@ -255,7 +257,8 @@ HcclVmResult HcclPluginManager::BroadcastToAllPlugin(const std::string& action, 
     return ret;
 }
 
-std::vector<HcclSim::HcclVmResult> HcclPluginManager::StartPlugins(const std::vector<std::string>& tags) {
+std::vector<HcclSim::HcclVmResult> HcclPluginManager::StartPlugins(const std::vector<std::string>& tags)
+{
     std::vector<HcclSim::HcclVmResult> results;
     std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -277,32 +280,48 @@ std::vector<HcclSim::HcclVmResult> HcclPluginManager::StartPlugins(const std::ve
     return results;
 }
 
-HcclVmResult ExitRunnerPlugin() {
-    sim::ProcessSyncer syncer;
-    syncer.signalRunnerExit();
-    HCCL_VM_INFO("Runner exit signal sent.");
+HcclVmResult ExitRunnerPlugin()
+{
+    // 走与 `hccl-vm plugin uninstall @runner` 完全相同的卸载通道：
+    // StopPlugins -> HcclPlugin::Stop() 通过 stdin 管道下发 {"action":"stop"}，
+    // runner 主循环据此置 g_keep_running=false 退出，随后 Stop() 回收子进程、
+    // StopPlugins 从 m_plugins 摘除并清理安装记录。
+    // 旧实现只写 proxy_ready.flag 的 kRunnerExitSignal 哨兵，而 runner 侧从不
+    // 读取该文件（checkProxyReadySignal 无任何调用方），信号发出即石沉大海。
+    auto rets = HcclPluginManager::GetInstance().StopPlugins({"runner"});
+    HcclVmResult ret = rets.empty() ? HcclVmResult::HCCL_SIM_SUCCESS : rets.front();
+    if (ret == HcclVmResult::HCCL_SIM_E_NOT_FOUND) {
+        HCCL_VM_ERROR("Runner process is alive but not managed by this host process, "
+                      "cannot unload it. Please terminate the runner process manually.");
+        return ret;
+    }
+    if (ret != HcclVmResult::HCCL_SIM_SUCCESS) {
+        HCCL_VM_ERROR("Failed to unload runner plugin, result={}", static_cast<int32_t>(ret));
+        return ret;
+    }
+
+    // Stop() 等待 5 秒超时后同样返回 SUCCESS（只告警不强杀），故不能以返回值判定
+    // 退出成功；runner.lock 上的 flock 由内核在进程真正退出时释放，是唯一可靠判据。
+    if (IsRunnerAlive()) {
+        HCCL_VM_ERROR("Runner did not exit within the grace period and is still holding the lock. "
+                      "[ACTION REQUIRED] Please terminate the runner process manually.");
+        return HcclVmResult::HCCL_SIM_E_TIMEOUT;
+    }
+
+    HCCL_VM_INFO("Runner plugin unloaded and runner process exited.");
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-std::vector<HcclSim::HcclVmResult> HcclPluginManager::StopPlugins(const std::vector<std::string>& tags) {
+std::vector<HcclSim::HcclVmResult> HcclPluginManager::StopPlugins(const std::vector<std::string>& tags)
+{
     std::vector<HcclSim::HcclVmResult> results;
     std::lock_guard<std::mutex> lock(m_mutex);
 
     for (const auto& tag : tags) {
-        if (tag == "runner") {
-            auto exitRet = ExitRunnerPlugin();
-            auto it = m_plugins.find(tag);
-            if (it == m_plugins.end()) {
-                results.push_back(exitRet);
-                continue;
-            }
-
-            auto stopRet = it->second->Stop();
-            m_plugins.erase(it);
-            results.push_back(exitRet != HcclVmResult::HCCL_SIM_SUCCESS ? exitRet : stopRet);
-            continue;
-        }
-
+        // 注意：此处不得为 "runner" 开特殊分支回调 ExitRunnerPlugin()。
+        // ExitRunnerPlugin() 会反过来调用 StopPlugins()，而本函数已持有非递归的
+        // m_mutex，形成自死锁。runner 与其它插件一样走下面的通用卸载路径即可
+        // （Stop() 经 stdin 下发 stop 命令，runner 主循环会响应）。
         auto it = m_plugins.find(tag);
         if (it == m_plugins.end()) {
             results.push_back(HcclSim::HcclVmResult::HCCL_SIM_E_NOT_FOUND);
@@ -316,11 +335,13 @@ std::vector<HcclSim::HcclVmResult> HcclPluginManager::StopPlugins(const std::vec
         // 2. 从管理 Map 中移除（卸载）
         // 即使 Stop 失败（如超时），我们通常也从 Manager 中移除它，将其交由系统清理或用户手动处理
         m_plugins.erase(it);
+        RemoveInstallRecordFromDB(tag);
     }
     return results;
 }
 
-HcclSim::HcclVmResult HcclPluginManager::StopAllPlugins() {
+HcclSim::HcclVmResult HcclPluginManager::StopAllPlugins()
+{
     // 1. 获取当前所有插件的 Tag
     std::vector<std::string> allTags;
     {
@@ -349,7 +370,8 @@ HcclPluginManager::HcclPluginManager()
     });
 }
 
-HcclPluginManager::~HcclPluginManager() {
+HcclPluginManager::~HcclPluginManager()
+{
     m_monitorThreadStop = true;
     StopAllPlugins();
     if (m_monitorThread.joinable()) {
@@ -365,16 +387,18 @@ void HcclPluginManager::MonitorThread()
         pid_t terminatedPid = waitpid(-1, &status, WNOHANG);
         if (terminatedPid > 0) {
             std::lock_guard<std::mutex> lock(m_mutex);
-            for (auto it: m_plugins) {
+            for (auto it : m_plugins) {
                 // 用户通过命令行关闭的plugin已经不在map里 不会有输出
                 if (it.second->GetPid() == terminatedPid) {
                     // 解析退出原因
                     if (WIFEXITED(status)) {
-                        HCCL_VM_INFO("Plugin [{}] (PID: {}) exit normally. Code {}",
-                            it.second->GetTag(), terminatedPid, WEXITSTATUS(status));
+                        HCCL_VM_INFO(
+                            "Plugin [{}] (PID: {}) exit normally. Code {}", it.second->GetTag(), terminatedPid,
+                            WEXITSTATUS(status));
                     } else if (WIFSIGNALED(status)) {
-                        HCCL_VM_ERROR("Plugin [{}] (PID: {}) exit with failure. Code {} ({})",
-                            it.second->GetTag(), terminatedPid, WTERMSIG(status), strsignal(WTERMSIG(status)));
+                        HCCL_VM_ERROR(
+                            "Plugin [{}] (PID: {}) exit with failure. Code {} ({})", it.second->GetTag(), terminatedPid,
+                            WTERMSIG(status), strsignal(WTERMSIG(status)));
                     }
                     m_plugins.erase(it.first);
                     break;
@@ -389,5 +413,25 @@ void HcclPluginManager::MonitorThread()
                 continue;
             }
         }
+    }
+}
+
+void HcclPluginManager::AddInstallRecordToDB(const std::string& pluginTag)
+{
+    sim::runtime::Plugin pluginRow{};
+    std::strcpy(pluginRow.tag, pluginTag.c_str());
+    sim::runtime::Db::Add<sim::runtime::Plugin>(pluginRow);
+}
+
+void HcclPluginManager::RemoveInstallRecordFromDB(const std::string& pluginTag)
+{
+    // 正常情况一个tag只会有一行db记录，使用vector接口删除此tag相关的全部行，可以应对意外场景
+    auto pluginRows = sim::runtime::Db::GetByPred<sim::runtime::Plugin>(
+        HcclSim::Storage::Eq(&sim::runtime::Plugin::tag, pluginTag));
+    if (!pluginRows.ok() || !pluginRows.value.has_value()) {
+        return;
+    }
+    for (const sim::runtime::Plugin& row : *pluginRows.value) {
+        sim::runtime::Db::Delete<sim::runtime::Plugin>(HcclSim::Storage::Eq(&sim::runtime::Plugin::id, row.id));
     }
 }

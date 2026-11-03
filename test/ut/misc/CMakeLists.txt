@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
@@ -30,10 +30,11 @@ set(hccl_utest_misc_list
     ut_op_base_stream_manager.cc
     ut_offload_stream_manager.cc
     ut_stream.cc
+    ut_local_rdma_rma_buffer_impl.cc
     ut_topoinfo_exchange_dispatcher.cc
     ut_op_counter.cc
     ut_hccl_hdc.cc
-    # ut_opretry.cc
+    ut_opretry.cc
     ut_peterson_lock.cc
     ut_task_abort_handler.cc
     # ut_hccl_comm_aicpuunfold.cc
@@ -82,7 +83,7 @@ target_link_libraries(hccl_utest_misc PRIVATE
     -pthread
     hccl_llt
     -Wl,--whole-archive
-    -Wl,--no-whole-archi
+    -Wl,--no-whole-archive
     -lgcov
     -lrt
     -ldl

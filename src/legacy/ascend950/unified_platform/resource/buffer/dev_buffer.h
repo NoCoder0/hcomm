@@ -7,13 +7,13 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #ifndef HCCLV2_DEV_BUFFER_H
 #define HCCLV2_DEV_BUFFER_H
 
-#include <cstddef>
-#include <string>
 #include <memory>
 #include "buffer.h"
+
 namespace Hccl {
 
 struct PolicyTag {};
@@ -30,9 +30,9 @@ public:
 
     ~DevBuffer() override;
 
-    DevBuffer(const DevBuffer &that) = delete;
+    DevBuffer(const DevBuffer& that) = delete;
 
-    DevBuffer &operator=(const DevBuffer &that) = delete;
+    DevBuffer& operator=(const DevBuffer& that) = delete;
 
     std::string Describe() const override;
 

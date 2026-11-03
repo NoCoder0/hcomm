@@ -24,9 +24,15 @@ namespace Hccl {
 // 为AllGatherMesh1D实现的CCUIns、CCUCtxArg与CCUTaskArg
 class CcuCtxArgAllGatherMesh1D2Die : public CcuCtxArg {
 public:
-    explicit CcuCtxArgAllGatherMesh1D2Die(const std::vector<uint64_t> &dSize, uint32_t rId, bool withMyRank, const CollAlgOperator &op,
-        const std::vector<std::vector<RankId>> &tempVTopo) :
-            dimSize_(dSize), rankId_(rId), withMyRank_(withMyRank), op_(op), tempVTopo_(tempVTopo) {}
+    explicit CcuCtxArgAllGatherMesh1D2Die(
+        const std::vector<uint64_t>& dSize, uint32_t rId, bool withMyRank, const CollAlgOperator& op,
+        const std::vector<std::vector<RankId>>& tempVTopo)
+        : dimSize_(dSize),
+          rankId_(rId),
+          withMyRank_(withMyRank),
+          op_(op),
+          tempVTopo_(tempVTopo)
+    {}
     CcuCtxSignature GetCtxSignature() const override
     {
         CcuCtxSignature signature;
@@ -42,9 +48,14 @@ public:
 
 class CcuTaskArgAllGatherMesh1D2Die : public CcuTaskArg {
 public:
-    explicit CcuTaskArgAllGatherMesh1D2Die(uint64_t inputAddr, uint64_t outputAddr, uint64_t sliceSize, uint64_t outputSliceStride,
-        uint64_t token) :
-        inputAddr_(inputAddr), outputAddr_(outputAddr), sliceSize_(sliceSize), outputSliceStride_(outputSliceStride), token_(token) {}
+    explicit CcuTaskArgAllGatherMesh1D2Die(
+        uint64_t inputAddr, uint64_t outputAddr, uint64_t sliceSize, uint64_t outputSliceStride, uint64_t token)
+        : inputAddr_(inputAddr),
+          outputAddr_(outputAddr),
+          sliceSize_(sliceSize),
+          outputSliceStride_(outputSliceStride),
+          token_(token)
+    {}
 
     uint64_t inputAddr_;
     uint64_t outputAddr_;
@@ -55,12 +66,11 @@ public:
 
 class CcuInstructionAllGatherMesh1D2Die : public CcuInstruction {
 public:
-    CcuInstructionAllGatherMesh1D2Die() : CcuInstruction()
-    {
-    }
+    CcuInstructionAllGatherMesh1D2Die() : CcuInstruction() {}
 
-    void Init(uint32_t rankId, uint64_t inputAddr, uint64_t outputAddr, uint64_t sliceSize, uint64_t outputSliceStride,
-        uint64_t token, uint64_t withMyRank, CollAlgOperator &op, std::vector<std::vector<RankId>> &tempVTopo)
+    void Init(
+        uint32_t rankId, uint64_t inputAddr, uint64_t outputAddr, uint64_t sliceSize, uint64_t outputSliceStride,
+        uint64_t token, uint64_t withMyRank, CollAlgOperator& op, std::vector<std::vector<RankId>>& tempVTopo)
     {
         u32 maxDimNum = 1;
         if (tempVTopo.size() != maxDimNum) {
@@ -80,14 +90,12 @@ public:
         return;
     }
 
-    void SetInstType(CcuInstType instType) 
-    { 
-        instType_ = instType; 
-    }
+    void SetInstType(CcuInstType instType) { instType_ = instType; }
 
     std::string Describe() const override
     {
-        return StringFormat("CcuInstructionAllGatherMesh1D2Die rankId [%u], instType[%s]", rankId_, instType_.Describe().c_str());
+        return StringFormat(
+            "CcuInstructionAllGatherMesh1D2Die rankId [%u], instType[%s]", rankId_, instType_.Describe().c_str());
     }
 
     CcuInstType GetInstType() const override
@@ -103,7 +111,8 @@ public:
 
     std::unique_ptr<CcuTaskArg> GetTaskArg() const override
     {
-        return std::make_unique<CcuTaskArgAllGatherMesh1D2Die>(inputAddr_, outputAddr_, sliceSize_, outputSliceStride_, token_);
+        return std::make_unique<CcuTaskArgAllGatherMesh1D2Die>(
+            inputAddr_, outputAddr_, sliceSize_, outputSliceStride_, token_);
     }
 
 private:
@@ -120,5 +129,5 @@ private:
     std::vector<std::vector<RankId>> tempVTopo_;
 };
 
-}
+} // namespace Hccl
 #endif // HCCLV2_CCU_INSTRUCTION_ALL_GATHER_MESH_1D_2DIE_H_

@@ -27,20 +27,11 @@ using namespace Hccl;
 // Test suite class
 class HccpTlvHdcManagerTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "HccpTlvHdcManagerTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "HccpTlvHdcManagerTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "HccpTlvHdcManagerTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "HccpTlvHdcManagerTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in HccpTlvHdcManagerTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in HccpTlvHdcManagerTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -49,12 +40,19 @@ protected:
     }
 };
 
-TEST_F(HccpTlvHdcManagerTest, should_successfully_init_HccpTlvHdcManager) {
+TEST_F(HccpTlvHdcManagerTest, should_successfully_init_HccpTlvHdcManager)
+{
     u32 deviceLogicId = 0;
-    MOCKER(HrtGetDevicePhyIdByIndex)
+    MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().with(mockcpp::any()).will(returnValue(static_cast<DevId>(0)));
+    MOCKER(RaTlvInit)
         .stubs()
         .with(mockcpp::any())
-        .will(returnValue(static_cast<DevId>(0)));
-    MOCKER(RaTlvInit).stubs().will(returnValue(0));
+        .will(invoke(+[](struct TlvInitInfo*, unsigned int*, void** tlvHandle) {
+            static char fakeTlvHandle;
+            if (tlvHandle != nullptr) {
+                *tlvHandle = &fakeTlvHandle;
+            }
+            return 0;
+        }));
     HccpTlvHdcManager::GetInstance().Init(deviceLogicId);
 }

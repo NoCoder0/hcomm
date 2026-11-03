@@ -20,29 +20,29 @@
 namespace HcclSim {
 class DumpV3Manager {
 public:
-    static DumpV3Manager &GetInstance()
+    static DumpV3Manager& GetInstance()
     {
         static DumpV3Manager instance;
         return instance;
     }
 
-    DumpV3Manager(const DumpV3Manager &) = delete;
-    DumpV3Manager &operator=(const DumpV3Manager &) = delete;
+    DumpV3Manager(const DumpV3Manager&) = delete;
+    DumpV3Manager& operator=(const DumpV3Manager&) = delete;
 
-    HcclResult Initialize(const std::string &dataId = "");
+    HcclResult Initialize(const std::string& dataId = "");
     void Reset();
 
     bool IsEnabled() const;
     std::string GetRootDir() const;
 
-    HcclResult WriteMsgpack(const std::string &relativePath, const nlohmann::json &document) const;
-    HcclResult WriteJson(const std::string &relativePath, const nlohmann::json &document) const;
+    HcclResult WriteMsgpack(const std::string& relativePath, const nlohmann::json& document) const;
+    HcclResult WriteJson(const std::string& relativePath, const nlohmann::json& document) const;
 
 private:
     DumpV3Manager() = default;
 
     HcclResult PrepareDirs() const;
-    std::string GetOutputPath(const std::string &relativePath) const;
+    std::string GetOutputPath(const std::string& relativePath) const;
 
     mutable std::mutex m_mutex;
     std::string m_dataId;
@@ -50,6 +50,6 @@ private:
     std::string m_dataDir;
     std::string m_rootDir;
 };
-}  // namespace HcclSim
+} // namespace HcclSim
 
-#endif  // HCCL_VM_DUMP_V3_MANAGER_H
+#endif // HCCL_VM_DUMP_V3_MANAGER_H

@@ -21,6 +21,7 @@ set(ra_adp_list
     ${BASIC_PATH}/rdma_agent/adapter/ctx/ra_adp_ctx.c
     ${BASIC_PATH}/common/dl_hal_function.c
     ${BASIC_PATH}/common/ascend_hal_dl.c
+    ${BASIC_PATH}/inc/private/network/log/config_log.c
     $<$<STREQUAL:${PRODUCT_SIDE},device>:${TLV_DIR}/ra_adp_tlv.c>
 )
 
@@ -31,12 +32,12 @@ add_library(ra_adp SHARED
 
 target_compile_definitions(ra_adp PRIVATE
     LOG_CPP
-    $<$<STREQUAL:${PRODUCT_SIDE},device>:CONFIG_TLV>
 )
 
 target_include_directories(ra_adp PRIVATE
     ${BASIC_PATH}/inc/network
     ${BASIC_PATH}/inc/private/network
+    ${BASIC_PATH}/inc/private/network/log
     ${BASIC_PATH}/rdma_agent/inc
     ${BASIC_PATH}/rdma_agent/hdc/
     ${BASIC_PATH}/rdma_agent/hdc/async/
@@ -64,8 +65,6 @@ endif()
 #编译选项
 target_compile_options(ra_adp PRIVATE
     -Werror
-    -Wno-unused-parameter
-    -Wno-missing-field-initializers
     -fvisibility=hidden
     -fsigned-char
     -fno-common
@@ -73,6 +72,12 @@ target_compile_options(ra_adp PRIVATE
     -std=gnu11
     $<$<CONFIG:Debug>:-Og -g>
 )
+
+# 符号隐藏: 仅导出白名单符号; 非 release 模式依赖动态符号, 不挂载
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_link_options(ra_adp PRIVATE "-Wl,--version-script=${CMAKE_CURRENT_LIST_DIR}/ra_adp.map")
+    set_property(TARGET ra_adp APPEND PROPERTY LINK_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/ra_adp.map")
+endif()
 
 target_link_options(ra_adp PRIVATE
     -Wl,-Bsymbolic

@@ -35,7 +35,7 @@ void BkfSuberConnProcDelConnByUrlType(BkfSuberConnMng *connMng, uint8_t urlType)
     void *itor = VOS_NULL;
 
     for (conn = BkfSuberConnDataGetFirstByUrlType(connMng, urlType, &itor); conn != VOS_NULL;
-        conn = BkfSuberConnDataGetNextByUrlType(connMng, urlType, &itor)) {
+         conn = BkfSuberConnDataGetNextByUrlType(connMng, urlType, &itor)) {
         BkfSuberConnProcDelConn(conn);
     }
 
@@ -58,7 +58,7 @@ void BkfSuberConnProcStartConnByUrlType(BkfSuberConnMng *connMng, uint8_t urlTyp
     void *itor = VOS_NULL;
 
     for (conn = BkfSuberConnDataGetFirstByUrlType(connMng, urlType, &itor); conn != VOS_NULL;
-        conn = BkfSuberConnDataGetNextByUrlType(connMng, urlType, &itor)) {
+         conn = BkfSuberConnDataGetNextByUrlType(connMng, urlType, &itor)) {
         BkfSuberConnProcConn(conn);
     }
 
@@ -125,8 +125,7 @@ uint32_t BkfSuberConnProcAddPuberUrl(BkfSuberConnMng *connMng, BkfSuberInst *ins
     return BKF_OK;
 }
 
-void BkfSuberConnProcDelPuberUrl(BkfSuberConnMng *connMng, BkfUrl *puberUrl, BkfUrl *localUrl,
-    BkfDlNode *instNodeForOb)
+void BkfSuberConnProcDelPuberUrl(BkfSuberConnMng *connMng, BkfUrl *puberUrl, BkfUrl *localUrl, BkfDlNode *instNodeForOb)
 {
     BkfSuberConn *conn = BkfSuberConnDataFind(connMng, puberUrl, localUrl);
     if (conn == VOS_NULL) {
@@ -149,10 +148,10 @@ void BkfSuberConnProcDelPuberUrl(BkfSuberConnMng *connMng, BkfUrl *puberUrl, Bkf
 void BkfSuberConnProcCreateSess(BkfSuberAppSub *appSub, BkfSuberConnTrigSessPara *para, BOOL *needContinue)
 {
     BkfSuberConnSessArg arg = {.puberUrl = para->puberUrl,
-                               .sliceKey = appSub->key.sliceKey,
-                               .tableTypeId = appSub->key.tableTypeId,
-                               .isVerify = appSub->isVerify,
-                               .localUrl = para->localUrl };
+        .sliceKey = appSub->key.sliceKey,
+        .tableTypeId = appSub->key.tableTypeId,
+        .isVerify = appSub->isVerify,
+        .localUrl = para->localUrl};
     uint32_t ret = BkfSuberConnCreateSess(para->connMng, &arg);
     if (needContinue != VOS_NULL) {
         if (ret != BKF_OK) {
@@ -168,12 +167,9 @@ void BkfSuberConnProcCreateSess(BkfSuberAppSub *appSub, BkfSuberConnTrigSessPara
 void BkfSuberConnProcCreateSessBySlice(BkfSuberConnMng *connMng, BkfSuberSlice *slice, BkfUrl *puberUrl,
     BkfUrl *localUrl, uint64_t instId)
 {
-    BkfSuberConnTrigSessPara para = {.connMng = connMng,
-                                     .puberUrl = puberUrl,
-                                     .localUrl = localUrl };
-    BkfSuberDataScanAppSubBySlice(slice, instId,
-                                   (F_BKF_SUBER_DATA_SCAN_APPSUB_BY_SLICE_PROC)BkfSuberConnProcCreateSess,
-                                   &para);
+    BkfSuberConnTrigSessPara para = {.connMng = connMng, .puberUrl = puberUrl, .localUrl = localUrl};
+    BkfSuberDataScanAppSubBySlice(slice, instId, (F_BKF_SUBER_DATA_SCAN_APPSUB_BY_SLICE_PROC)BkfSuberConnProcCreateSess,
+        &para);
 
     return;
 }
@@ -198,10 +194,10 @@ void BkfSuberConnProcCreateSessByInst(BkfSuberConnMng *connMng, BkfSuberInst *in
 void BkfSuberConnProcDelSess(BkfSuberAppSub *appSub, BkfSuberConnTrigSessPara *para, BOOL *needContinue)
 {
     BkfSuberConnSessArg arg = {.puberUrl = para->puberUrl,
-                               .sliceKey = appSub->key.sliceKey,
-                               .tableTypeId = appSub->key.tableTypeId,
-                               .isVerify = appSub->isVerify,
-                               .localUrl = para->localUrl };
+        .sliceKey = appSub->key.sliceKey,
+        .tableTypeId = appSub->key.tableTypeId,
+        .isVerify = appSub->isVerify,
+        .localUrl = para->localUrl};
     BkfSuberConnDelSess(para->connMng, &arg);
     if (needContinue != VOS_NULL) {
         *needContinue = VOS_TRUE;
@@ -210,15 +206,12 @@ void BkfSuberConnProcDelSess(BkfSuberAppSub *appSub, BkfSuberConnTrigSessPara *p
     return;
 }
 
-void BkfSuberConnProcDelSessBySlice(BkfSuberConnMng *connMng, BkfSuberSlice *slice, BkfUrl *puberUrl,
-    BkfUrl *localUrl, uint64_t instId)
+void BkfSuberConnProcDelSessBySlice(BkfSuberConnMng *connMng, BkfSuberSlice *slice, BkfUrl *puberUrl, BkfUrl *localUrl,
+    uint64_t instId)
 {
-    BkfSuberConnTrigSessPara para = {.connMng = connMng,
-                                     .puberUrl = puberUrl,
-                                     .localUrl = localUrl };
-    BkfSuberDataScanAppSubBySlice(slice, instId,
-                                   (F_BKF_SUBER_DATA_SCAN_APPSUB_BY_SLICE_PROC)BkfSuberConnProcDelSess,
-                                   &para);
+    BkfSuberConnTrigSessPara para = {.connMng = connMng, .puberUrl = puberUrl, .localUrl = localUrl};
+    BkfSuberDataScanAppSubBySlice(slice, instId, (F_BKF_SUBER_DATA_SCAN_APPSUB_BY_SLICE_PROC)BkfSuberConnProcDelSess,
+        &para);
 
     return;
 }
@@ -283,14 +276,13 @@ uint32_t BkfSuberConnMngSetSelfUrl(BkfSuberConnMng *connMng, BkfUrl *selfUrl)
     if (ret != BKF_OK) {
         uint8_t urlStr[BKF_URL_STR_LEN_MAX] = {0};
         BKF_LOG_ERROR(connMng->log, "ch set self url fail, ret %u, url %s", ret,
-                      BkfUrlGetStr(selfUrl, urlStr, sizeof(urlStr)));
+            BkfUrlGetStr(selfUrl, urlStr, sizeof(urlStr)));
         return ret;
     }
 
     tableTypeMng->selfUrl = *selfUrl;
 
     if (selfUrl->type == BKF_URL_TYPE_V8TLS || selfUrl->type == BKF_URL_TYPE_V8TCP) {
-        /* v8tls类型,不依赖selfurl:todo:可以整体url封装，mesh suber也不依赖selfurl */
         return BKF_OK;
     }
     if (connMng->isEnable) {
@@ -306,12 +298,12 @@ uint32_t BkfSuberConnEnable(BkfSuberConnMng *connMng)
     }
 
     BkfChCliEnableArg chCliEnableArg = {.cookie = connMng,
-                                        .onRcvData = (F_BKF_CH_CLI_ON_RCV_DATA)BkfSuberConnRcvData,
-                                        .onRcvDataEvent = (F_BKF_CH_CLI_ON_RCV_DATA_EVENT)BkfSuberConnRcvDataEvent,
-                                        .onUnblock = (F_BKF_CH_CLI_ON_UNBLOCK)BkfSuberConnUnBlock,
-                                        .onDisconn = (F_BKF_CH_CLI_ON_DISCONN)BkfSuberConnDisConn,
-                                        .onDisconnEx = (F_BKF_CH_CLI_ON_DISCONNEX)BkfSuberConnDisConnEx,
-                                        .onConn = (F_BKF_CH_CLI_ON_CONN)BkfSuberConnOnConn };
+        .onRcvData = (F_BKF_CH_CLI_ON_RCV_DATA)BkfSuberConnRcvData,
+        .onRcvDataEvent = (F_BKF_CH_CLI_ON_RCV_DATA_EVENT)BkfSuberConnRcvDataEvent,
+        .onUnblock = (F_BKF_CH_CLI_ON_UNBLOCK)BkfSuberConnUnBlock,
+        .onDisconn = (F_BKF_CH_CLI_ON_DISCONN)BkfSuberConnDisConn,
+        .onDisconnEx = (F_BKF_CH_CLI_ON_DISCONNEX)BkfSuberConnDisConnEx,
+        .onConn = (F_BKF_CH_CLI_ON_CONN)BkfSuberConnOnConn};
     uint32_t ret = BkfChCliEnable(connMng->env->chCliMng, &chCliEnableArg);
     if (ret != BKF_OK) {
         BKF_LOG_ERROR(connMng->log, "ch enable fail, ret %u", ret);

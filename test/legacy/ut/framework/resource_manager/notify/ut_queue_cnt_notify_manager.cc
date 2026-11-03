@@ -20,20 +20,11 @@ using namespace Hccl;
 
 class QueueWaitGroupCntNotifyManagerTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "QueueWaitGroupCntNotifyManagerTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "QueueWaitGroupCntNotifyManagerTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "QueueWaitGroupCntNotifyManagerTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "QueueWaitGroupCntNotifyManagerTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in QueueWaitGroupCntNotifyManagerTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in QueueWaitGroupCntNotifyManagerTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -51,7 +42,7 @@ TEST_F(QueueWaitGroupCntNotifyManagerTest, apply_for_test)
     // Given
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(DevType(DevType::DEV_TYPE_910A2)));
     MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtCntNotifyCreate).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
+    MOCKER(HrtCntNotifyCreate).stubs().will(returnValue((void*)(fakeNotifyHandleAddr)));
     MOCKER(HrtGetCntNotifyId).stubs().will(returnValue(fakeNotifyId));
 
     QId qid = 1;
@@ -66,7 +57,7 @@ TEST_F(QueueWaitGroupCntNotifyManagerTest, get_test)
     // Given
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(DevType(DevType::DEV_TYPE_910A2)));
     MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtCntNotifyCreate).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
+    MOCKER(HrtCntNotifyCreate).stubs().will(returnValue((void*)(fakeNotifyHandleAddr)));
     MOCKER(HrtGetCntNotifyId).stubs().will(returnValue(fakeNotifyId));
 
     QId qid = 1;
@@ -88,7 +79,7 @@ TEST_F(QueueWaitGroupCntNotifyManagerTest, release_return_ok)
     // Given
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(DevType::DEV_TYPE_910A2));
     MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtCntNotifyCreate).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
+    MOCKER(HrtCntNotifyCreate).stubs().will(returnValue((void*)(fakeNotifyHandleAddr)));
     MOCKER(HrtGetCntNotifyId).stubs().will(returnValue(fakeNotifyId));
 
     QId qid = 1;
@@ -110,7 +101,7 @@ TEST_F(QueueWaitGroupCntNotifyManagerTest, getalldtos_ok)
     // Given
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(DevType::DEV_TYPE_910A2));
     MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtCntNotifyCreate).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
+    MOCKER(HrtCntNotifyCreate).stubs().will(returnValue((void*)(fakeNotifyHandleAddr)));
     MOCKER(HrtGetCntNotifyId).stubs().will(returnValue(fakeNotifyId));
 }
 

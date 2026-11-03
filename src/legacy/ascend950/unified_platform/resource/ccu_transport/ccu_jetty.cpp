@@ -16,32 +16,34 @@
 
 namespace Hccl {
 
-HcclResult CcuCreateJetty(const IpAddress &ipAddr, const CcuJettyInfo &jettyInfo,
-    std::unique_ptr<CcuJetty> &ccuJetty)
+HcclResult CcuCreateJetty(const IpAddress& ipAddr, const CcuJettyInfo& jettyInfo, std::unique_ptr<CcuJetty>& ccuJetty)
 {
-    TRY_CATCH_RETURN(
-        ccuJetty = std::make_unique<CcuJetty>(ipAddr, jettyInfo);
-    );
+    TRY_CATCH_RETURN(ccuJetty = std::make_unique<CcuJetty>(ipAddr, jettyInfo););
     return HcclResult::HCCL_SUCCESS;
 }
 
-CcuJetty::CcuJetty(const IpAddress &ipAddr, const CcuJettyInfo &jettyInfo)
-    : ipAddr_(ipAddr), jettyInfo_(jettyInfo)
+CcuJetty::CcuJetty(const IpAddress& ipAddr, const CcuJettyInfo& jettyInfo) : ipAddr_(ipAddr), jettyInfo_(jettyInfo)
 {
     devLogicId_ = HrtGetDevice();
-    Hccl::CqCreateInfo cqInfo{0};
-    uint32_t devPhyId = HrtGetDevicePhyIdByIndex(devLogicId_);
-    auto &rdmaHandleMgr = RdmaHandleManager::GetInstance();
+    Hccl::CqCreateInfo cqInfo{};
+    uint32_t devPhyId = HrtGetDevicePhyIdByUserDevId(devLogicId_);
+    auto& rdmaHandleMgr = RdmaHandleManager::GetInstance();
     rdmaHandle_ = rdmaHandleMgr.GetByIp(devPhyId, ipAddr);
     const auto jfcHandle = rdmaHandleMgr.GetJfcHandle(rdmaHandle_, cqInfo, HrtUbJfcMode::CCU_POLL);
-    const auto &tokenInfo = rdmaHandleMgr.GetTokenIdInfo(rdmaHandle_);
-    const auto tokenIdHandle = tokenInfo.first;
     const auto tokenValue = GetUbToken();
     const auto jettyMode = HrtJettyMode::CCU_CCUM_CACHE; // 当前仅支持该模式
 
-    inParam_ = HrtRaUbCreateJettyParam{jfcHandle, jfcHandle, tokenValue,
-        tokenIdHandle, jettyMode, jettyInfo.taJettyId, jettyInfo.sqBufVa,
-        jettyInfo.sqBufSize, jettyInfo.wqeBBStartId, jettyInfo.sqDepth};
+    inParam_ = HrtRaUbCreateJettyParam{
+        jfcHandle,
+        jfcHandle,
+        tokenValue,
+        0,
+        jettyMode,
+        jettyInfo.taJettyId,
+        jettyInfo.sqBufVa,
+        jettyInfo.sqBufSize,
+        jettyInfo.wqeBBStartId,
+        jettyInfo.sqDepth};
 }
 
 CcuJetty::~CcuJetty()
@@ -53,42 +55,40 @@ CcuJetty::~CcuJetty()
     });
 }
 
-bool CheckRequestResult(RequestHandle &reqHandle)
+bool CheckRequestResult(RequestHandle& reqHandle)
 {
     if (reqHandle == 0) {
         return true;
     }
- 
+
     ReqHandleResult result = HrtRaGetAsyncReqResult(reqHandle);
     if (result == ReqHandleResult::NOT_COMPLETED) {
         return false;
     }
- 
+
     if (result != ReqHandleResult::COMPLETED) {
-        THROW<InternalException>("[CcuJetty][%s] failed, result[%s] is unexpected.",
-            __func__, result.Describe().c_str());
+        THROW<InternalException>(
+            "[CcuJetty][%s] failed, result[%s] is unexpected.", __func__, result.Describe().c_str());
     }
- 
+
     return true;
 }
 
-static HcclResult ParseCreateInfo(const struct QpCreateInfo *infoPtr,
-    const JettyHandle jettyHandle, HrtRaUbJettyCreatedOutParam &outParam)
+static HcclResult ParseCreateInfo(
+    const struct QpCreateInfo* infoPtr, const JettyHandle jettyHandle, HrtRaUbJettyCreatedOutParam& outParam)
 {
     outParam.handle = jettyHandle;
-    auto ret = memcpy_s(outParam.key, HRT_UB_QP_KEY_MAX_LEN,
-        infoPtr->key.value, infoPtr->key.size);
+    auto ret = memcpy_s(outParam.key, HRT_UB_QP_KEY_MAX_LEN, infoPtr->key.value, infoPtr->key.size);
     if (ret != 0) {
-        HCCL_ERROR("[CcuJetty][%s] create info key memcpy_s failed, ret[%d].",
-            __func__, ret);
+        HCCL_ERROR("[CcuJetty][%s] create info key memcpy_s failed, ret[%d].", __func__, ret);
         return HcclResult::HCCL_E_MEMORY;
     }
-    outParam.jettyVa         = infoPtr->va;
-    outParam.uasid           = infoPtr->ub.uasid;
-    outParam.id              = infoPtr->ub.id;
-    outParam.keySize         = infoPtr->key.size;
-    outParam.dbVa            = infoPtr->ub.dbAddr;
-    outParam.dbTokenId       = infoPtr->ub.dbTokenId >> URMA_TOKEN_ID_RIGHT_SHIFT;
+    outParam.jettyVa = infoPtr->va;
+    outParam.uasid = infoPtr->ub.uasid;
+    outParam.id = infoPtr->ub.id;
+    outParam.keySize = infoPtr->key.size;
+    outParam.dbVa = infoPtr->ub.dbAddr;
+    outParam.dbTokenId = infoPtr->ub.dbTokenId >> URMA_TOKEN_ID_RIGHT_SHIFT;
     // 不提供 tokenValue，不得打印token相关信息
     return HcclResult::HCCL_SUCCESS;
 }
@@ -101,13 +101,9 @@ HcclResult CcuJetty::HandleAsyncRequest()
             return HcclResult::HCCL_E_AGAIN;
         }
 
-        if (!CheckRequestResult(reqHandle_)) {
-            return HcclResult::HCCL_E_AGAIN;
-        };
-    );
+        if (!CheckRequestResult(reqHandle_)) { return HcclResult::HCCL_E_AGAIN; };);
 
-    const struct QpCreateInfo *info =
-        reinterpret_cast<const QpCreateInfo *>(reqDataBuffer_.data());
+    const struct QpCreateInfo* info = reinterpret_cast<const QpCreateInfo*>(reqDataBuffer_.data());
     const JettyHandle jettyHandle = reinterpret_cast<JettyHandle>(jettyHandlePtr_);
     return ParseCreateInfo(info, jettyHandle, outParam_);
 }
@@ -115,14 +111,15 @@ HcclResult CcuJetty::HandleAsyncRequest()
 HcclResult CcuJetty::CreateJetty()
 {
     if (isError_) {
-        HCCL_ERROR("[CcuJetty][%s] failed, jetty[%u] is error, "
-            "refused to create.", __func__, inParam_.jettyId);
+        HCCL_ERROR(
+            "[CcuJetty][%s] failed, jetty[%u] is error, "
+            "refused to create.",
+            __func__, inParam_.jettyId);
         return HcclResult::HCCL_E_INTERNAL;
     }
 
     if (isCreated_) {
-        HCCL_INFO("[CcuJetty][%s] passed, jetty[%u] has been created.",
-            __func__, inParam_.jettyId);
+        HCCL_INFO("[CcuJetty][%s] passed, jetty[%u] has been created.", __func__, inParam_.jettyId);
         return HcclResult::HCCL_SUCCESS;
     }
 
@@ -136,15 +133,9 @@ HcclResult CcuJetty::CreateJetty()
     return ret;
 }
 
-HrtRaUbCreateJettyParam CcuJetty::GetCreateJettyParam() const
-{
-    return inParam_;
-}
+HrtRaUbCreateJettyParam CcuJetty::GetCreateJettyParam() const { return inParam_; }
 
-HrtRaUbJettyCreatedOutParam CcuJetty::GetJettyedOutParam() const
-{
-    return outParam_;
-}
+HrtRaUbJettyCreatedOutParam CcuJetty::GetJettyedOutParam() const { return outParam_; }
 
 void CcuJetty::GetJettyInfo(ConnJettyInfo& connJettyInfo)
 {
@@ -155,14 +146,12 @@ void CcuJetty::GetJettyInfo(ConnJettyInfo& connJettyInfo)
 
 HcclResult CcuJetty::Clean()
 {
-    TRY_CATCH_RETURN(
-        if (isCreated_ && outParam_.handle != 0) {
-            isCreated_ = false;
-            reqHandle_ = 0;
-            jettyHandlePtr_ = nullptr;
-            reqDataBuffer_.clear();
-        }
-        isError_ = false;);
+    TRY_CATCH_RETURN(if (isCreated_ && outParam_.handle != 0) {
+        isCreated_ = false;
+        reqHandle_ = 0;
+        jettyHandlePtr_ = nullptr;
+        reqDataBuffer_.clear();
+    } isError_ = false;);
     return HcclResult::HCCL_SUCCESS;
 }
 } // namespace Hccl

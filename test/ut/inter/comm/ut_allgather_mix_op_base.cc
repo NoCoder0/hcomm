@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -55,22 +55,12 @@
 using namespace std;
 using namespace hccl;
 
-class AllGatherMix_Opbase_Test : public testing::Test
-{
+class AllGatherMix_Opbase_Test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AllGatherMix_Opbase_Test SetUP" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "AllGatherMix_Opbase_Test TearDown" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AllGatherMix_Opbase_Test SetUP" << std::endl; }
+    static void TearDownTestCase() { std::cout << "AllGatherMix_Opbase_Test TearDown" << std::endl; }
     // Some expensive resource shared by all tests.
-    virtual void SetUp()
-    {
-        std::cout << "A Test SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test SetUP" << std::endl; }
     virtual void TearDown()
     {
         GlobalMockObject::verify();
@@ -88,29 +78,16 @@ TEST_F(AllGatherMix_Opbase_Test, ut_HcclAllGatherOutPlace_mix_ranksize_1)
     InitExternalInput();
 
     DevType deviceType = DevType::DEV_TYPE_910_93;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&HcclCallbackTask::CallbackRegStream)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCallbackTask::CallbackRegStream).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     s32 portNum = -1;
-    MOCKER(hrtGetHccsPortNum)
-    .stubs()
-    .with(mockcpp::any(), outBound(portNum))
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&HcclCommunicator::InitPreResource)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(hrtProfRegisterCtrlCallback)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitPreResource).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtProfRegisterCtrlCallback).stubs().will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&HcclCommunicator::RegisterToHeartBeat, HcclResult(HcclCommunicator::*)())
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = HCCL_SUCCESS;
     rtError_t rt_ret = RT_ERROR_NONE;
@@ -140,13 +117,9 @@ TEST_F(AllGatherMix_Opbase_Test, ut_HcclAllGatherOutPlace_mix_ranksize_1)
     ret = HcclCommInitRootInfo(1, &id, 0, &newcomm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::IsAtomicInit)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER_CPP(&HcclCommunicator::IsAtomicInit).stubs().will(returnValue(true));
 
     HcclCommunicator impl;
     HcclCommParams params;
@@ -163,7 +136,7 @@ TEST_F(AllGatherMix_Opbase_Test, ut_HcclAllGatherOutPlace_mix_ranksize_1)
     vector<RankInfo_t> rankVec(1);
     rankVec[0].rankId = 0;
     rankVec[0].deviceInfo.devicePhyId = 0;
-    HcclIpAddress ipAddr1(1695197376);  // 1,695,197,376
+    HcclIpAddress ipAddr1(1695197376);                 // 1,695,197,376
     rankVec[0].deviceInfo.deviceIp.push_back(ipAddr1); // 101.10.168.192
     rankVec[0].serverIdx = 0;
     rankVec[0].serverId = "192.168.0.101";

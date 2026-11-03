@@ -23,15 +23,15 @@ namespace Hccl {
 
 class CcuContextAlltoAllMesh2D : public CcuContextAlgBase {
 public:
-    CcuContextAlltoAllMesh2D(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                             const CcuTransportGroup &group);
+    CcuContextAlltoAllMesh2D(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
     ~CcuContextAlltoAllMesh2D() override {}
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
 
 private:
-    void CalculateArgs(const CcuTaskArgAlltoAllMesh2D *taskArg);
+    void CalculateArgs(const CcuTaskArgAlltoAllMesh2D* taskArg);
     void InitResources();
     void LoadArgs();
     void ExchangeInfoAndSync();
@@ -41,23 +41,23 @@ private:
     void FirstStepOneSlice(uint16_t sliceId);
     void SecondStep();
     void CreateLocalCopyLoop();
-    void LocalCopyByLoopGroup(CcuRep::Memory dst, CcuRep::Memory src, GroupOpSize &goPara);
+    void LocalCopyByLoopGroup(CcuRep::Memory dst, CcuRep::Memory src, GroupOpSize& goPara);
 
     std::vector<uint32_t> dimSize;
     uint32_t axisId{0};
 
-    std::vector<uint32_t> dimId;  // 本rank所在行或列的编号
-    uint32_t localId{0};  // 本chip所在行或列的编号
-    uint32_t localSize{0};  // 本rank所在行或列的总rank数
-    uint32_t anotherId{0};  // 本rank在另一个轴上的Id
+    std::vector<uint32_t> dimId; // 本rank所在行或列的编号
+    uint32_t localId{0};         // 本chip所在行或列的编号
+    uint32_t localSize{0};       // 本rank所在行或列的总rank数
+    uint32_t anotherId{0};       // 本rank在另一个轴上的Id
     uint32_t anotherSize{0};
 
     GroupOpSize goSize_;
 
     // 从外部获取的参数
     CcuRep::Variable input;
-    std::vector<CcuRep::Variable> bufferA;  // 第一轮的目的地，需要交换
-    CcuRep::Variable bufferB;  // 第二轮的起始，不需要交换
+    std::vector<CcuRep::Variable> bufferA; // 第一轮的目的地，需要交换
+    CcuRep::Variable bufferB;              // 第二轮的起始，不需要交换
     std::vector<CcuRep::Variable> output;  // 第二轮的目的地，需要交换
     std::vector<CcuRep::Variable> token;
 
@@ -71,10 +71,10 @@ private:
     std::vector<CcuRep::MaskSignal> secondSignal;
 
     CcuRep::Variable sliceSize_;
-    CcuRep::Variable baseOffset;  // 多轮搬运时的每轮基础偏移
+    CcuRep::Variable baseOffset; // 多轮搬运时的每轮基础偏移
     // 地址计算：srcStride=sendRecvSize+sendStride，dstStride=sendRecvSize+recvStride
-    CcuRep::Variable firstTransportSize;  // a/b块大小
-    CcuRep::Variable firstChunkOffset;  // 0/a块大小的偏移
+    CcuRep::Variable firstTransportSize; // a/b块大小
+    CcuRep::Variable firstChunkOffset;   // 0/a块大小的偏移
     // 第一轮中，从inputMem，每次循环向每个对端发自己的一片，多次循环中的偏移+步进：
     // (die0--baseOffset+srcStride+D0*srcStride, die1--baseOffset+D0*srcStride+srcStride)
     CcuRep::Variable firstInputStrideLocal;
@@ -86,8 +86,8 @@ private:
     // 第一轮中，写到对端output，自身rankId对应到输出偏移：(baseOffset+rankId*dstStride)
     CcuRep::Variable firstOutputOffset;
 
-    CcuRep::Variable secondTransportSize;  // b/a块大小
-    CcuRep::Variable secondChunkOffset;  // a/0块大小的偏移
+    CcuRep::Variable secondTransportSize; // b/a块大小
+    CcuRep::Variable secondChunkOffset;   // a/0块大小的偏移
     // 第二轮中，从inputMem，在某一次循环中，给每个对端发送自己的一片，共localSize片；给多个对端的偏移+步进：
     // (die0--baseOffset+yId*D0*srcStride+srcStride, die1--baseOffset+xId*srcStride+D0*srcStride)
     CcuRep::Variable secondInputOffset;

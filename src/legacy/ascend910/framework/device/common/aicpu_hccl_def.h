@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef __AICPU_HCCL_DEF_H__
 #define __AICPU_HCCL_DEF_H__
@@ -48,8 +48,8 @@ enum AicpuCcOpFinishMode {
 };
 
 struct KFCTaskComm {
-    u64 context;     // HCCL通信context
-    u64 tilingData;  // 通信
+    u64 context;    // HCCL通信context
+    u64 tilingData; // 通信
 };
 
 struct AicpuComProfCommLoop {
@@ -101,19 +101,19 @@ struct AicpuComProf {
 
 struct AicpuComRankInfo {
     u32 rankId;
-    u64 window;  // default size 200*1024*1024
+    u64 window; // default size 200*1024*1024
     u64 windowOut;
 };
 
 struct AicpuComSignalInfo {
-    u64 address;  // notify地址
+    u64 address; // notify地址
     s32 actualNotifyId;
 };
 
 // preparePosition标记
 enum TASK_PREPARE_POSITION {
-    TASK_PREPARE_HOST = 0,        // host模式，通信由host下发
-    TASK_PREPARE_KERNEL = 1,      // kernel模式，通信由kernel下发
+    TASK_PREPARE_HOST = 0,   // host模式，通信由host下发
+    TASK_PREPARE_KERNEL = 1, // kernel模式，通信由kernel下发
     TASK_PREPARE_RESERVED = 100
 };
 
@@ -124,12 +124,7 @@ enum class DfxKfcStatus : int64_t {
     kTimeOut,
 };
 
-enum class CommandToKfc : int64_t {
-    kDefault = 0,
-    kClear,
-    kStop,
-    kRestart
-};
+enum class CommandToKfc : int64_t { kDefault = 0, kClear, kStop, kRestart };
 
 enum class CommandToBackGroud : int64_t {
     kDefault = 0,
@@ -162,30 +157,30 @@ struct AicpuComContext {
     char hcomId[HCCL_COMM_DOMAIN_KEY_MAX_LEN];
     u32 devId;
     u32 ssid;
-    u32 rankId;   // self rank id
-    u32 rankNum;  // total rank, include self
+    u32 rankId;  // self rank id
+    u32 rankNum; // total rank, include self
 
     HcclCMDType commType;    // AllReduce, scatter..
-    HcclReduceOp reducekind;  // ADD,MAX,MIN,EQUAL
+    HcclReduceOp reducekind; // ADD,MAX,MIN,EQUAL
 
-    AicpuCCExecOp commOpType;  // twoshot.onshot...
+    AicpuCCExecOp commOpType; // twoshot.oneshot...
     u32 unitSize;
     u64 commLen;
     u64 totalCnt; // 发送总数据个数
     u64 windowSize;
 
     u64 workSpaceAddr;
-    u32 notifyOff;       // device notify write/read value偏移
-    u16 notifyBeginCnt;  // notify write value的使用个数
-    u16 notifyEndCnt;    // notify read value的使用个数
+    u32 notifyOff;      // device notify write/read value偏移
+    u16 notifyBeginCnt; // notify write value的使用个数
+    u16 notifyEndCnt;   // notify read value的使用个数
     u8 useBufferType;   // 使用recvbuf类型
     u64 winOffset;
 
-    u64 kfcNotifyId;  // 用于主流全部任务最后添加record，激活kfc流(即内部创建用于launch
-                      // kfc算子的流)wait，kfc流开始执行下一个算子
+    u64 kfcNotifyId; // 用于主流全部任务最后添加record，激活kfc流(即内部创建用于launch
+                     // kfc算子的流)wait，kfc流开始执行下一个算子
     u32 eventIds[AC_MAX_RANK_NUM];
 
-    u32 curTurnCnt;  // 当前算法执行通信轮次
+    u32 curTurnCnt; // 当前算法执行通信轮次
     u32 turnValue[TILING_TURN_MAX * AC_MAX_RANK_NUM];
     u32 totalTurnCnt; // 需要通信总轮次
 
@@ -204,8 +199,8 @@ struct AicpuComContext {
     AicpuComSignalInfo ipcPostWaitNotify[AC_MAX_RANK_NUM];
     AicpuComSignalInfo aicpuOpNotify[2]; // 集合通信AICPU展开资源
 
-    uint8_t commAlg; // 指定通信算法
-    bool directlySendMainSteramSqe;  // 消除头开销，第一需要直接执行时先下发主流
+    uint8_t commAlg;                // 指定通信算法
+    bool directlySendMainSteramSqe; // 消除头开销，第一需要直接执行时先下发主流
     bool alreadyInit;
     bool determinism;
     bool retryEnable;
@@ -214,9 +209,9 @@ struct AicpuComContext {
     uint8_t debugMode = 0;
     u64 overflowAddr;
     TASK_PREPARE_POSITION preparePosition; // mc2高阶api，记录当前的模式
-    u32 msgPosForKernel;     // mc2高阶api，记录当前处理的msg的位置
-    u8 curTurnCntForKernel;  // mc2高阶api，记录当前msg的通信轮次
-    u8 onlyRead;  // 只使用 SDMA 读进行拷贝
+    u32 msgPosForKernel;                   // mc2高阶api，记录当前处理的msg的位置
+    u8 curTurnCntForKernel;                // mc2高阶api，记录当前msg的通信轮次
+    u8 onlyRead;                           // 只使用 SDMA 读进行拷贝
     DfxExtendInfo dfxExtendInfo;
 
     int sendCntRecord[4]; // 4 记录aicpu过程中的sendCnt,最多记录4次
@@ -224,44 +219,41 @@ struct AicpuComContext {
     u32 retryHoldTime;
     u32 retryIntervalTime;
     u32 opIndex;
-    bool isOpLaunch = false; //每个算子下发记录 （kNull/KRunning）
-    bool isStopLaunch = false;  //MC2测试用例下，主线程是否实现停止算子展开
-    bool endStopLaunch = false;  //NsStopLaunch是否处理 （背景线程/主线程）
-    bool commOpenStatus = false; //通信域使用情况
+    bool isOpLaunch = false;     // 每个算子下发记录 （kNull/KRunning）
+    bool isStopLaunch = false;   // MC2测试用例下，主线程是否实现停止算子展开
+    bool endStopLaunch = false;  // NsStopLaunch是否处理 （背景线程/主线程）
+    bool commOpenStatus = false; // 通信域使用情况
     bool isRunning = false;
     std::shared_ptr<hccl::HDCommunicate> kfcControlTransferH2D{nullptr};
     std::shared_ptr<hccl::HDCommunicate> kfcStatusTransferD2H{nullptr};
     dfx::ProfilingExtendInfo profilingExtendInfo;
     u8 totalTurnCntForKernel; // mc2高阶api，记录当前msg的总通信轮次
-    bool skipLocalDataCopy; // 通信算法是否拷贝本卡数据，根据isCommOut配置
-                            // isCommOut = 1时，该项为0；isCommOut = 0时，该项为1
+    bool skipLocalDataCopy;   // 通信算法是否拷贝本卡数据，根据isCommOut配置
+                              // isCommOut = 1时，该项为0；isCommOut = 0时，该项为1
     u64 gatherOut;
     std::vector<struct hccl::TransportDeviceNormalData> ibversData;
     bool multiServerFlag;
     int64_t chipId;
 };
 
-extern AicpuComContext *AicpuGetComContext();
-extern void AicpuGetAllComContext(AicpuComContext *&contextBase, uint32_t &contextNum);
+extern AicpuComContext* AicpuGetComContext();
+extern void AicpuGetAllComContext(AicpuComContext*& contextBase, uint32_t& contextNum);
 
-template <typename T> void AicpuUpdatComContextMumber(u64 offset, T value)
+template <typename T>
+void AicpuUpdatComContextMumber(u64 offset, T value)
 {
-    AicpuComContext *contextBase = nullptr;
+    AicpuComContext* contextBase = nullptr;
     uint32_t contextNum = 0;
     AicpuGetAllComContext(contextBase, contextNum);
     for (uint32_t i = 0; i < contextNum; i++) {
-        T *dst = reinterpret_cast<T *>(reinterpret_cast<u64>(&contextBase[i]) + offset);
+        T* dst = reinterpret_cast<T*>(reinterpret_cast<u64>(&contextBase[i]) + offset);
         *dst = value;
     }
     return;
 };
 
 struct KfcState {
-    KfcState() {
-        AicpuUpdatComContextMumber(offsetof(AicpuComContext, isRunning), true);
-    }
-    ~KfcState() {
-        AicpuUpdatComContextMumber(offsetof(AicpuComContext, isRunning), false);
-    }
+    KfcState() { AicpuUpdatComContextMumber(offsetof(AicpuComContext, isRunning), true); }
+    ~KfcState() { AicpuUpdatComContextMumber(offsetof(AicpuComContext, isRunning), false); }
 };
 #endif

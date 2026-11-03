@@ -17,10 +17,7 @@ protected:
     void TearDown() override {}
 };
 
-TEST_F(HcclHcclOpResParamStructTest, TestHcclOpResParamSize)
-{
-    EXPECT_EQ(sizeof(HcclOpResParam), 2122720u);
-}
+TEST_F(HcclHcclOpResParamStructTest, TestHcclOpResParamSize) { EXPECT_EQ(sizeof(HcclOpResParam), 2122720u); }
 
 TEST_F(HcclHcclOpResParamStructTest, TestHcclOpResParamFieldOffsets)
 {
@@ -47,7 +44,9 @@ TEST_F(HcclHcclOpResParamStructTest, TestHcclOpResParamFieldOffsets)
     EXPECT_EQ(offsetof(HcclOpResParam, remoteResNum), offsetof(HcclOpResParam, notifysize) + 4u);
     EXPECT_EQ(offsetof(HcclOpResParam, remoteRes), offsetof(HcclOpResParam, remoteResNum) + 4u);
     EXPECT_EQ(offsetof(HcclOpResParam, kfcControlTransferH2DParams), offsetof(HcclOpResParam, remoteRes) + 2097152u);
-    EXPECT_EQ(offsetof(HcclOpResParam, kfcStatusTransferD2HParams), offsetof(HcclOpResParam, kfcControlTransferH2DParams) + 40u);
+    EXPECT_EQ(
+        offsetof(HcclOpResParam, kfcStatusTransferD2HParams),
+        offsetof(HcclOpResParam, kfcControlTransferH2DParams) + 40u);
     EXPECT_EQ(offsetof(HcclOpResParam, tinyMem), offsetof(HcclOpResParam, kfcStatusTransferD2HParams) + 40u);
     EXPECT_EQ(offsetof(HcclOpResParam, tinyMemSize), offsetof(HcclOpResParam, tinyMem) + 8u);
     EXPECT_EQ(offsetof(HcclOpResParam, zeroCopyHeadPtr), offsetof(HcclOpResParam, tinyMemSize) + 8u);
@@ -67,7 +66,8 @@ TEST_F(HcclHcclOpResParamStructTest, TestHcclOpResParamFieldOffsets)
     EXPECT_EQ(offsetof(HcclOpResParam, aicpuOrderStreamParam), offsetof(HcclOpResParam, userMemType) + 8u);
     EXPECT_EQ(offsetof(HcclOpResParam, aicpuOrderNotifyAddr), offsetof(HcclOpResParam, aicpuOrderStreamParam) + 32u);
     EXPECT_EQ(offsetof(HcclOpResParam, aicpuOrderNotifySize), offsetof(HcclOpResParam, aicpuOrderNotifyAddr) + 8u);
-    EXPECT_EQ(offsetof(HcclOpResParam, multiSuperPodDiffDeviceNumMode), offsetof(HcclOpResParam, aicpuOrderNotifySize) + 8u);
+    EXPECT_EQ(
+        offsetof(HcclOpResParam, multiSuperPodDiffDeviceNumMode), offsetof(HcclOpResParam, aicpuOrderNotifySize) + 8u);
     EXPECT_EQ(offsetof(HcclOpResParam, isARSDoubleRing), offsetof(HcclOpResParam, multiSuperPodDiffDeviceNumMode) + 4u);
     EXPECT_EQ(offsetof(HcclOpResParam, opEntry), offsetof(HcclOpResParam, isARSDoubleRing) + 1u);
     EXPECT_EQ(offsetof(HcclOpResParam, hcclSdmaQos), offsetof(HcclOpResParam, opEntry) + 3u);

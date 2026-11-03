@@ -8,6 +8,7 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
+#include "config_log.h"
 #include <errno.h>
 #include <infiniband/verbs.h>
 #include "securec.h"
@@ -28,8 +29,8 @@
 
 #define RS_PING_ROCE_RECV_WC_NUM 16
 
-struct ibv_wc gPingQpRecvWc[RS_PING_ROCE_RECV_WC_NUM] = { 0 };
-struct ibv_wc gPongQpRecvWc[RS_PING_ROCE_RECV_WC_NUM] = { 0 };
+struct ibv_wc gPingQpRecvWc[RS_PING_ROCE_RECV_WC_NUM] = {0};
+struct ibv_wc gPongQpRecvWc[RS_PING_ROCE_RECV_WC_NUM] = {0};
 
 STATIC bool RsPingRoceCheckFd(struct RsPingCtxCb *pingCb, int fd)
 {
@@ -51,8 +52,10 @@ STATIC bool RsPongRoceCheckFd(struct RsPingCtxCb *pingCb, int fd)
 
 STATIC int RsPingCbGetDevRdevIndex(struct RsPingCtxCb *pingCb, int index)
 {
+    (void)pingCb;
+    (void)index;
 #ifdef CUSTOM_INTERFACE
-    struct roce_dev_data rdevData = { 0 };
+    struct roce_dev_data rdevData = {0};
     int ret;
 
     if (RsIsCustomInterfaceSupported()) {
@@ -105,40 +108,44 @@ STATIC int RsPingCbGetIbCtxAndIndex(struct rdev *rdevInfo, struct RsPingCtxCb *p
         }
     }
 
-    CHK_PRT_RETURN(i == pingCb->rdevCb.devNum, hccp_err("can not find ib_ctx for phyId[%u] local_ip[0x%x] "
-        "in dev_list!", rdevInfo->phyId, rdevInfo->localIp.addr.s_addr), -ENODEV);
+    CHK_PRT_RETURN(i == pingCb->rdevCb.devNum,
+        hccp_err("can not find ib_ctx for phyId[%u] local_ip[0x%x] "
+                 "in dev_list!",
+            rdevInfo->phyId, rdevInfo->localIp.addr.s_addr),
+        -ENODEV);
     return 0;
 }
 
 STATIC int RsPingCommonModifyLocalQp(struct RsPingCtxCb *pingCb, struct RsPingLocalQpCb *qpCb)
 {
     struct ibv_qp_init_attr initAttr;
-    struct ibv_qp_attr attr = { 0 };
+    struct ibv_qp_attr attr = {0};
     int ret;
 
     ret = RsIbvQueryQp(qpCb->ibQp, &attr, IBV_QP_STATE, &initAttr);
     CHK_PRT_RETURN(ret != 0 || attr.qp_state != IBV_QPS_RESET,
-        hccp_err("rs_ibv_query_qp qpn:%u fail, ret:%d attr.qp_state:%d != %d",
-        qpCb->ibQp->qp_num, ret, attr.qp_state, IBV_QPS_RESET), -EOPENSRC);
+        hccp_err("rs_ibv_query_qp qpn:%u fail, ret:%d attr.qp_state:%d != %d", qpCb->ibQp->qp_num, ret, attr.qp_state,
+            IBV_QPS_RESET),
+        -EOPENSRC);
 
     attr.qp_state = IBV_QPS_INIT;
     attr.pkey_index = 0;
     attr.port_num = pingCb->rdevCb.ibPort;
     attr.qkey = qpCb->qkey;
     ret = RsIbvModifyQp(qpCb->ibQp, &attr, IBV_QP_STATE | IBV_QP_PKEY_INDEX | IBV_QP_PORT | IBV_QP_QKEY);
-    CHK_PRT_RETURN(ret != 0, hccp_err("rs_ibv_modify_qp qpn:%u to init fail, ret:%d, errno:%d",
-        qpCb->ibQp->qp_num, ret, errno), -EOPENSRC);
+    CHK_PRT_RETURN(ret != 0,
+        hccp_err("rs_ibv_modify_qp qpn:%u to init fail, ret:%d, errno:%d", qpCb->ibQp->qp_num, ret, errno), -EOPENSRC);
 
     attr.qp_state = IBV_QPS_RTR;
     ret = RsIbvModifyQp(qpCb->ibQp, &attr, IBV_QP_STATE);
-    CHK_PRT_RETURN(ret != 0, hccp_err("rs_ibv_modify_qp qpn:%u to rtr fail, ret:%d, errno:%d",
-        qpCb->ibQp->qp_num, ret, errno), -EOPENSRC);
+    CHK_PRT_RETURN(ret != 0,
+        hccp_err("rs_ibv_modify_qp qpn:%u to rtr fail, ret:%d, errno:%d", qpCb->ibQp->qp_num, ret, errno), -EOPENSRC);
 
     attr.qp_state = IBV_QPS_RTS;
     attr.sq_psn = 0;
     ret = RsIbvModifyQp(qpCb->ibQp, &attr, IBV_QP_STATE | IBV_QP_SQ_PSN);
-    CHK_PRT_RETURN(ret != 0, hccp_err("rs_ibv_modify_qp qpn:%u to rts fail, ret:%d, errno:%d",
-        qpCb->ibQp->qp_num, ret, errno), -EOPENSRC);
+    CHK_PRT_RETURN(ret != 0,
+        hccp_err("rs_ibv_modify_qp qpn:%u to rts fail, ret:%d, errno:%d", qpCb->ibQp->qp_num, ret, errno), -EOPENSRC);
 
     return 0;
 }
@@ -146,19 +153,18 @@ STATIC int RsPingCommonModifyLocalQp(struct RsPingCtxCb *pingCb, struct RsPingLo
 STATIC int RsPingCommonInitLocalQp(struct rs_cb *rscb, struct RsPingCtxCb *pingCb, union PingQpAttr *attr,
     struct RsPingLocalQpCb *qpCb)
 {
-    struct ibv_exp_qp_init_attr qpInitAttr = { 0 };
-    struct rdma_lite_device_qp_attr qpResp = { 0 };
+    struct ibv_exp_qp_init_attr qpInitAttr = {0};
+    struct rdma_lite_device_qp_attr qpResp = {0};
     int randNum;
     int ret;
 
-    hccp_info("cq_attr{%d %d, %d %d}", attr->rdma.cqAttr.sendCqDepth, attr->rdma.cqAttr.sendCqCompVector,
+    hccp_info_rma("cq_attr{%d %d, %d %d}", attr->rdma.cqAttr.sendCqDepth, attr->rdma.cqAttr.sendCqCompVector,
         attr->rdma.cqAttr.recvCqDepth, attr->rdma.cqAttr.recvCqCompVector);
 
     // create send cq with attr
     qpCb->sendCq.depth = attr->rdma.cqAttr.sendCqDepth;
     qpCb->sendCq.compVector = attr->rdma.cqAttr.sendCqCompVector;
-    qpCb->sendCq.ibCq = RsIbvCreateCq(pingCb->rdevCb.ibCtx, qpCb->sendCq.depth, NULL, NULL,
-        qpCb->sendCq.compVector);
+    qpCb->sendCq.ibCq = RsIbvCreateCq(pingCb->rdevCb.ibCtx, qpCb->sendCq.depth, NULL, NULL, qpCb->sendCq.compVector);
     qpCb->sendCq.maxRecvWcNum = RS_PING_ROCE_RECV_WC_NUM;
     ret = -errno;
     CHK_PRT_RETURN(qpCb->sendCq.ibCq == NULL, hccp_err("rs_ibv_create_cq send cq fail, ret:%d", ret), ret);
@@ -198,7 +204,7 @@ STATIC int RsPingCommonInitLocalQp(struct rs_cb *rscb, struct RsPingCtxCb *pingC
     qpInitAttr.attr.qp_type = IBV_QPT_UD;
     qpInitAttr.udp_sport = attr->rdma.qpAttr.udpSport;
 
-    hccp_info("qkey:%u udp_sport:%u qp_cap{%u %u %u %u %u}", qpCb->qkey, qpCb->udpSport,
+    hccp_info_rma("qkey:%u udp_sport:%u qp_cap{%u %u %u %u %u}", qpCb->qkey, qpCb->udpSport,
         attr->rdma.qpAttr.cap.maxSendWr, attr->rdma.qpAttr.cap.maxRecvWr, attr->rdma.qpAttr.cap.maxSendSge,
         attr->rdma.qpAttr.cap.maxRecvSge, attr->rdma.qpAttr.cap.maxInlineData);
     qpCb->ibQp = RsIbvExpCreateQp(pingCb->rdevCb.ibPd, &qpInitAttr, &qpResp);
@@ -247,18 +253,18 @@ STATIC int RsPingCommonInitMrCb(struct rs_cb *rscb, struct RsPingCtxCb *pingCb, 
     uint32_t idx = 0;
     int ret;
 
-    hccp_info("payload_offset:%u len:0x%llx sge_num:%u grp_id:%u",
-        mrCb->payloadOffset, mrCb->len, mrCb->sgeNum, rscb->grpId);
+    hccp_info_rma("payload_offset:%u len:0x%llx sge_num:%u grp_id:%u", mrCb->payloadOffset, mrCb->len, mrCb->sgeNum,
+        rscb->grpId);
 
     ret = pthread_mutex_init(&mrCb->mutex, NULL);
     CHK_PRT_RETURN(ret != 0, hccp_err("pthread_mutex_init mr_cb mutex failed, ret:%d", ret), ret);
 
     flag = ((unsigned long)pingCb->logicDevid << BUFF_FLAGS_DEVID_OFFSET) | BUFF_SP_SVM;
-    ret = DlHalBuffAllocAlignEx(mrCb->len, (unsigned int)RA_RS_4K_PAGE_SIZE, flag,
-        (int)rscb->grpId, (void **)&mrCb->addr);
+    ret = DlHalBuffAllocAlignEx(mrCb->len, (unsigned int)RA_RS_4K_PAGE_SIZE, flag, (int)rscb->grpId,
+        (void **)&mrCb->addr);
     if (ret != 0) {
-        hccp_err("DlHalBuffAllocAlignEx failed, length:0x%llx, dev_id:0x%x, flag:0x%lx, grpId:%u, ret:%d",
-            mrCb->len, pingCb->logicDevid, flag, rscb->grpId, ret);
+        hccp_err("DlHalBuffAllocAlignEx failed, length:0x%llx, dev_id:0x%x, flag:0x%lx, grpId:%u, ret:%d", mrCb->len,
+            pingCb->logicDevid, flag, rscb->grpId, ret);
         goto alloc_fail;
     }
 
@@ -288,7 +294,7 @@ STATIC int RsPingCommonInitMrCb(struct rs_cb *rscb, struct RsPingCtxCb *pingCb, 
     }
     mrCb->sgeIdx = 0;
 
-    hccp_info("addr:0x%llx lkey:%u ", mrCb->addr, mrCb->ibMr->lkey);
+    hccp_info_rma("addr:0x%llx lkey:%u ", mrCb->addr, mrCb->ibMr->lkey);
 
     return 0;
 
@@ -369,8 +375,8 @@ init_ping_qp_recv_mr_fail:
 STATIC int RsPingCommonPostRecv(struct RsPingLocalQpCb *qpCb)
 {
     struct ibv_recv_wr *badWr = NULL;
-    struct ibv_recv_wr wr = { 0 };
-    struct ibv_sge list = { 0 };
+    struct ibv_recv_wr wr = {0};
+    struct ibv_sge list = {0};
     uint32_t sgeIdx;
     int ret;
 
@@ -419,9 +425,9 @@ STATIC void RsPingCommonDeinitLocalBuffer(struct RsPingCtxCb *pingCb)
     RsPingCommonDeinitMrCb(&pingCb->pingQp.sendMrCb);
 }
 
-STATIC void RsPingCommonDeinitLocalQp(struct rs_cb *rscb, struct RsPingCtxCb *pingCb,
-    struct RsPingLocalQpCb *qpCb)
+STATIC void RsPingCommonDeinitLocalQp(struct rs_cb *rscb, struct RsPingCtxCb *pingCb, struct RsPingLocalQpCb *qpCb)
 {
+    (void)pingCb;
     if (qpCb == NULL || qpCb->channel == NULL) {
         hccp_err("qp_cb is NULL or qp_cb->channel is NULL");
         return;
@@ -573,7 +579,7 @@ STATIC int RsPingRoceFindTargetNode(struct RsPingCtxCb *pingCb, struct PingQpInf
     RS_PTHREAD_MUTEX_LOCK(&pingCb->pingMutex);
     RS_LIST_GET_HEAD_ENTRY(targetCurr, targetNext, &pingCb->pingList, list, struct RsPingTargetInfo);
     for (; (&targetCurr->list) != &pingCb->pingList;
-        targetCurr = targetNext, targetNext = list_entry(targetNext->list.next, struct RsPingTargetInfo, list)) {
+         targetCurr = targetNext, targetNext = list_entry(targetNext->list.next, struct RsPingTargetInfo, list)) {
         if (RsPingCommonCompareRdmaInfo(&targetCurr->qpInfo, target)) {
             *node = targetCurr;
             RS_PTHREAD_MUTEX_ULOCK(&pingCb->pingMutex);
@@ -582,7 +588,7 @@ STATIC int RsPingRoceFindTargetNode(struct RsPingCtxCb *pingCb, struct PingQpInf
     }
     RS_PTHREAD_MUTEX_ULOCK(&pingCb->pingMutex);
 
-    hccp_info("ping target node for qpn:%u gid:%016llx:%016llx not found", target->rdma.qpn,
+    hccp_info_rma("ping target node for qpn:%u gid:%016llx:%016llx not found", target->rdma.qpn,
         target->rdma.gid.global.subnetPrefix, target->rdma.gid.global.interfaceId);
     return -ENODEV;
 }
@@ -590,9 +596,9 @@ STATIC int RsPingRoceFindTargetNode(struct RsPingCtxCb *pingCb, struct PingQpInf
 STATIC int RsPingCommonCreateAh(struct RsPingCtxCb *pingCb, struct PingLocalCommInfo *localInfo,
     struct PingQpInfo *remoteInfo, struct ibv_ah **ah)
 {
-    struct ibv_exp_ah_attr attrx = { 0 };
-    struct ibv_global_route grh = { 0 };
-    struct ibv_ah_attr attr = { 0 };
+    struct ibv_exp_ah_attr attrx = {0};
+    struct ibv_global_route grh = {0};
+    struct ibv_ah_attr attr = {0};
     struct ibv_ah *ahTmp = NULL;
     int ret = 0;
 
@@ -610,8 +616,9 @@ STATIC int RsPingCommonCreateAh(struct RsPingCtxCb *pingCb, struct PingLocalComm
     attrx.udp_sport = localInfo->rdma.udpSport;
 
     hccp_dbg("remote_qpn:%u flow_label:%u sgid_index:%u hop_limit:%u traffic_class:%u sl:%u is_global:%u "
-        "port_num:%u udp_sport:%u", remoteInfo->rdma.qpn, grh.flow_label, grh.sgid_index, grh.hop_limit,
-        grh.traffic_class, attr.sl, attr.is_global, attr.port_num, attrx.udp_sport);
+             "port_num:%u udp_sport:%u",
+        remoteInfo->rdma.qpn, grh.flow_label, grh.sgid_index, grh.hop_limit, grh.traffic_class, attr.sl, attr.is_global,
+        attr.port_num, attrx.udp_sport);
 
     ahTmp = RsIbvExpCreateAh(pingCb->rdevCb.ibPd, &attrx);
     if (ahTmp == NULL) {
@@ -650,8 +657,8 @@ STATIC int RsPingRoceAllocTargetNode(struct RsPingCtxCb *pingCb, struct PingTarg
         (void)memcpy_s(targetInfo->payloadBuffer, target->payload.size, target->payload.buffer, target->payload.size);
     }
 
-    (void)memcpy_s(&targetInfo->qpInfo, sizeof(struct PingQpInfo),
-        &target->remoteInfo.qpInfo, sizeof(struct PingQpInfo));
+    (void)memcpy_s(&targetInfo->qpInfo, sizeof(struct PingQpInfo), &target->remoteInfo.qpInfo,
+        sizeof(struct PingQpInfo));
     ret = RsPingCommonCreateAh(pingCb, &target->localInfo, &target->remoteInfo.qpInfo, &targetInfo->ah);
     if (ret != 0) {
         hccp_err("rs_ping_common_create_ah fail! ret:%d", ret);
@@ -679,8 +686,8 @@ free_target_info:
 STATIC void RsPingRoceResetRecvBuffer(struct RsPingCtxCb *pingCb)
 {
     RS_PTHREAD_MUTEX_LOCK(&pingCb->pongQp.recvMrCb.mutex);
-    (void)memset_s((void *)(uintptr_t)pingCb->pongQp.recvMrCb.addr, pingCb->pongQp.recvMrCb.len,
-        0, pingCb->pongQp.recvMrCb.len);
+    (void)memset_s((void *)(uintptr_t)pingCb->pongQp.recvMrCb.addr, pingCb->pongQp.recvMrCb.len, 0,
+        pingCb->pongQp.recvMrCb.len);
     RS_PTHREAD_MUTEX_ULOCK(&pingCb->pongQp.recvMrCb.mutex);
 }
 
@@ -701,20 +708,19 @@ STATIC int RsPingRocePostSend(struct RsPingCtxCb *pingCb, struct RsPingTargetInf
 {
     struct RsPingPayloadHeader *header = NULL;
     struct ibv_send_wr *badWr = NULL;
-    struct timeval timestamp = { 0 };
-    struct ibv_send_wr wr = { 0 };
-    struct ibv_sge list = { 0 };
+    struct timeval timestamp = {0};
+    struct ibv_send_wr wr = {0};
+    struct ibv_sge list = {0};
     uint32_t sgeIdx;
     int ret = 0;
 
-    hccp_dbg("target uuid:0x%llx state:%d payload_size:%u qpn:%u gid:%016llx:%016llx",
-        target->uuid, target->state, target->payloadSize, target->qpInfo.rdma.qpn,
-        target->qpInfo.rdma.gid.global.subnetPrefix, target->qpInfo.rdma.gid.global.interfaceId);
+    hccp_dbg("target uuid:0x%llx state:%d payload_size:%u qpn:%u gid:%016llx:%016llx", target->uuid, target->state,
+        target->payloadSize, target->qpInfo.rdma.qpn, target->qpInfo.rdma.gid.global.subnetPrefix,
+        target->qpInfo.rdma.gid.global.interfaceId);
 
     RS_PTHREAD_MUTEX_LOCK(&pingCb->pingQp.sendMrCb.mutex);
     sgeIdx = pingCb->pingQp.sendMrCb.sgeIdx;
-    (void)memcpy_s(&list, sizeof(struct ibv_sge),
-        &pingCb->pingQp.sendMrCb.sgeList[sgeIdx], sizeof(struct ibv_sge));
+    (void)memcpy_s(&list, sizeof(struct ibv_sge), &pingCb->pingQp.sendMrCb.sgeList[sgeIdx], sizeof(struct ibv_sge));
     pingCb->pingQp.sendMrCb.sgeIdx = (sgeIdx + 1) % pingCb->pingQp.sendMrCb.sgeNum;
     RS_PTHREAD_MUTEX_ULOCK(&pingCb->pingQp.sendMrCb.mutex);
 
@@ -729,10 +735,11 @@ STATIC int RsPingRocePostSend(struct RsPingCtxCb *pingCb, struct RsPingTargetInf
 
     if (target->payloadSize > 0) {
         ret = memcpy_s((void *)(uintptr_t)(list.addr + RS_PING_PAYLOAD_HEADER_RESV_CUSTOM),
-            (list.length - RS_PING_PAYLOAD_HEADER_RESV_CUSTOM),
-            (void *)target->payloadBuffer, target->payloadSize);
-        CHK_PRT_RETURN(ret != 0, hccp_err("memcpy_s buffer payload_size:%u list.length:%u failed, ret:%d",
-            target->payloadSize, (list.length - RS_PING_PAYLOAD_HEADER_RESV_CUSTOM), ret), -ESAFEFUNC);
+            (list.length - RS_PING_PAYLOAD_HEADER_RESV_CUSTOM), (void *)target->payloadBuffer, target->payloadSize);
+        CHK_PRT_RETURN(ret != 0,
+            hccp_err("memcpy_s buffer payload_size:%u list.length:%u failed, ret:%d", target->payloadSize,
+                (list.length - RS_PING_PAYLOAD_HEADER_RESV_CUSTOM), ret),
+            -ESAFEFUNC);
     }
     list.length = RS_PING_PAYLOAD_HEADER_RESV_CUSTOM + target->payloadSize;
 
@@ -757,7 +764,7 @@ STATIC int RsPingRocePostSend(struct RsPingCtxCb *pingCb, struct RsPingTargetInf
 
 STATIC int RsPingRocePollScq(struct RsPingCtxCb *pingCb, struct RsPingTargetInfo *target)
 {
-    struct ibv_wc wc = { 0 };
+    struct ibv_wc wc = {0};
     int polledCnt;
 
     polledCnt = RsIbvPollCq(pingCb->pingQp.sendCq.ibCq, 1, &wc);
@@ -804,12 +811,12 @@ STATIC int RsPingRocePollRcq(struct RsPingCtxCb *pingCb, int *polledCnt, struct 
 
 STATIC int RsPingCommonPollScq(struct RsPingLocalQpCb *qpCb)
 {
-    struct ibv_wc wc = { 0 };
+    struct ibv_wc wc = {0};
     int polledCnt;
 
     polledCnt = RsIbvPollCq(qpCb->sendCq.ibCq, 1, &wc);
     if (polledCnt < 0) {
-        hccp_warn("rs_ibv_poll_cq unsuccessful, polledCnt:%d", polledCnt);
+        hccp_warn_rma("rs_ibv_poll_cq unsuccessful, polledCnt:%d", polledCnt);
     } else if (polledCnt > 0) {
         if (wc.status != IBV_WC_SUCCESS) {
             hccp_err("wr_id:0x%llx error cqe %s(%d)", wc.wr_id, RsIbvWcStatusStr(wc.status), wc.status);
@@ -820,8 +827,7 @@ STATIC int RsPingCommonPollScq(struct RsPingLocalQpCb *qpCb)
     return 0;
 }
 
-STATIC int RsPongFindTargetNode(struct RsPingCtxCb *pingCb, struct PingQpInfo *target,
-    struct RsPongTargetInfo **node)
+STATIC int RsPongFindTargetNode(struct RsPingCtxCb *pingCb, struct PingQpInfo *target, struct RsPongTargetInfo **node)
 {
     struct RsPongTargetInfo *targetNext = NULL;
     struct RsPongTargetInfo *targetCurr = NULL;
@@ -830,7 +836,7 @@ STATIC int RsPongFindTargetNode(struct RsPingCtxCb *pingCb, struct PingQpInfo *t
     RS_PTHREAD_MUTEX_LOCK(&pingCb->pongMutex);
     RS_LIST_GET_HEAD_ENTRY(targetCurr, targetNext, &pingCb->pongList, list, struct RsPongTargetInfo);
     for (; (&targetCurr->list) != &pingCb->pongList;
-        targetCurr = targetNext, targetNext = list_entry(targetNext->list.next, struct RsPongTargetInfo, list)) {
+         targetCurr = targetNext, targetNext = list_entry(targetNext->list.next, struct RsPongTargetInfo, list)) {
         if (RsPingCommonCompareRdmaInfo(&targetCurr->qpInfo, target)) {
             *node = targetCurr;
             RS_PTHREAD_MUTEX_ULOCK(&pingCb->pongMutex);
@@ -839,7 +845,7 @@ STATIC int RsPongFindTargetNode(struct RsPingCtxCb *pingCb, struct PingQpInfo *t
     }
     RS_PTHREAD_MUTEX_ULOCK(&pingCb->pongMutex);
 
-    hccp_info("pong target node for qpn:%u gid:%016llx:%016llx not found", target->rdma.qpn,
+    hccp_info_rma("pong target node for qpn:%u gid:%016llx:%016llx not found", target->rdma.qpn,
         target->rdma.gid.global.subnetPrefix, target->rdma.gid.global.interfaceId);
     return -ENODEV;
 }
@@ -855,7 +861,7 @@ STATIC int RsPongFindAllocTargetNode(struct RsPingCtxCb *pingCb, struct PingQpIn
         return 0;
     } else if (ret == 0) {
         targetInfo = *node;
-        hccp_info("delete pong target uuid:0x%llx state:%d, realloc again", targetInfo->uuid, targetInfo->state);
+        hccp_info_rma("delete pong target uuid:0x%llx state:%d, realloc again", targetInfo->uuid, targetInfo->state);
         RsListDel(&targetInfo->list);
         if (targetInfo->ah) {
             (void)RsIbvDestroyAh(targetInfo->ah);
@@ -895,10 +901,10 @@ STATIC int RsPongPostSend(struct RsPingCtxCb *pingCb, struct ibv_wc *wc, struct 
     struct RsPongTargetInfo *targetInfo = NULL;
     struct RsPingPayloadHeader *header = NULL;
     struct ibv_send_wr *badWr = NULL;
-    struct timeval timestamp3 = { 0 };
-    struct ibv_sge recvList = { 0 };
-    struct ibv_sge sendList = { 0 };
-    struct ibv_send_wr wr = { 0 };
+    struct timeval timestamp3 = {0};
+    struct ibv_sge recvList = {0};
+    struct ibv_sge sendList = {0};
+    struct ibv_send_wr wr = {0};
     uint32_t recvSgeIdx;
     uint32_t sendSgeIdx;
     int ret = 0;
@@ -912,13 +918,13 @@ STATIC int RsPongPostSend(struct RsPingCtxCb *pingCb, struct ibv_wc *wc, struct 
         hccp_err("param err recv_sge_idx:%u >= sge_num:%u", recvSgeIdx, pingCb->pingQp.recvMrCb.sgeNum);
         return -EIO;
     }
-    (void)memcpy_s(&recvList, sizeof(struct ibv_sge),
-        &pingCb->pingQp.recvMrCb.sgeList[recvSgeIdx], sizeof(struct ibv_sge));
+    (void)memcpy_s(&recvList, sizeof(struct ibv_sge), &pingCb->pingQp.recvMrCb.sgeList[recvSgeIdx],
+        sizeof(struct ibv_sge));
 
     RS_PTHREAD_MUTEX_LOCK(&pingCb->pongQp.sendMrCb.mutex);
     sendSgeIdx = pingCb->pongQp.sendMrCb.sgeIdx;
-    (void)memcpy_s(&sendList, sizeof(struct ibv_sge),
-        &pingCb->pongQp.sendMrCb.sgeList[sendSgeIdx], sizeof(struct ibv_sge));
+    (void)memcpy_s(&sendList, sizeof(struct ibv_sge), &pingCb->pongQp.sendMrCb.sgeList[sendSgeIdx],
+        sizeof(struct ibv_sge));
     pingCb->pongQp.sendMrCb.sgeIdx = (sendSgeIdx + 1) % pingCb->pongQp.sendMrCb.sgeNum;
     RS_PTHREAD_MUTEX_ULOCK(&pingCb->pongQp.sendMrCb.mutex);
 
@@ -931,8 +937,10 @@ STATIC int RsPongPostSend(struct RsPingCtxCb *pingCb, struct ibv_wc *wc, struct 
     ret = memcpy_s((void *)(uintptr_t)sendList.addr, sendList.length,
         (void *)(uintptr_t)(recvList.addr + RS_PING_PAYLOAD_HEADER_RESV_GRH),
         wc->byte_len - RS_PING_PAYLOAD_HEADER_RESV_GRH);
-    CHK_PRT_RETURN(ret != 0, hccp_err("memcpy_s buffer wc->byte_len:%u send_list.length:%u failed, ret:%d",
-        wc->byte_len, sendList.length, ret), -ESAFEFUNC);
+    CHK_PRT_RETURN(ret != 0,
+        hccp_err("memcpy_s buffer wc->byte_len:%u send_list.length:%u failed, ret:%d", wc->byte_len, sendList.length,
+            ret),
+        -ESAFEFUNC);
     sendList.length = wc->byte_len - RS_PING_PAYLOAD_HEADER_RESV_GRH;
     header = (struct RsPingPayloadHeader *)(uintptr_t)sendList.addr;
     header->type = RS_PING_TYPE_ROCE_RESPONSE;
@@ -1016,7 +1024,7 @@ STATIC int RsPongResolveResponsePacket(struct RsPingCtxCb *pingCb, uint32_t sgeI
     // UD consume 40 Bytes for GRH
     header = (struct RsPingPayloadHeader *)(uintptr_t)(recvList->addr + RS_PING_PAYLOAD_HEADER_RESV_GRH);
     if (header->taskId != pingCb->taskId) {
-        hccp_warn("drop received packet, recv_task_id:%u, curr_task_id:%u", header->taskId, pingCb->taskId);
+        hccp_warn_rma("drop received packet, recv_task_id:%u, curr_task_id:%u", header->taskId, pingCb->taskId);
         return 0;
     }
 
@@ -1032,36 +1040,13 @@ STATIC int RsPongResolveResponsePacket(struct RsPingCtxCb *pingCb, uint32_t sgeI
     }
 
     (void)memset_s((void *)header, RS_PING_PAYLOAD_HEADER_MASK_SIZE, 0, RS_PING_PAYLOAD_HEADER_MASK_SIZE);
-    RS_PTHREAD_MUTEX_LOCK(&targetInfo->tripMutex);
-    targetInfo->resultSummary.recvCnt++;
-    targetInfo->resultSummary.taskId = header->taskId;
-    // rtt timeout, increase timeout_cnt
-    if ((targetInfo->resultSummary.taskAttr.timeoutInterval * RS_PING_MSEC_TO_USEC) < rtt) {
-        targetInfo->resultSummary.timeoutCnt++;
-        hccp_dbg("recv_cnt:%u timeout_interval:%u rtt:%u timeout_cnt:%u", targetInfo->resultSummary.recvCnt,
-            targetInfo->resultSummary.taskAttr.timeoutInterval, rtt, targetInfo->resultSummary.timeoutCnt);
-        RS_PTHREAD_MUTEX_ULOCK(&targetInfo->tripMutex);
-        return 0;
-    }
-
-    // handle rtt_min, rtt_max, rtt_avg
-    if (targetInfo->resultSummary.rttMin > rtt) {
-        targetInfo->resultSummary.rttMin = rtt;
-    }
-    if (targetInfo->resultSummary.rttMax < rtt) {
-        targetInfo->resultSummary.rttMax = rtt;
-    }
-    if (targetInfo->resultSummary.rttAvg == 0) {
-        targetInfo->resultSummary.rttAvg = rtt;
-    }
-    targetInfo->resultSummary.rttAvg = (targetInfo->resultSummary.rttAvg + rtt) / 2U;
-    RS_PTHREAD_MUTEX_ULOCK(&targetInfo->tripMutex);
+    RsPingUpdateResultSummary(targetInfo, rtt, header->taskId);
     return 0;
 }
 
 STATIC void RsPongRocePollRcq(struct RsPingCtxCb *pingCb)
 {
-    struct timeval timestamp = { 0 };
+    struct timeval timestamp = {0};
     struct ibv_cq *evCq = NULL;
     struct ibv_wc *wc = NULL;
     uint32_t recvSgeIdx;
@@ -1180,7 +1165,7 @@ STATIC void RsPingPongDelTargetList(struct RsPingCtxCb *pingCb)
     RS_PTHREAD_MUTEX_LOCK(&pingCb->pingMutex);
     RS_LIST_GET_HEAD_ENTRY(pingCurr, pingNext, &pingCb->pingList, list, struct RsPingTargetInfo);
     for (; (&pingCurr->list) != &pingCb->pingList;
-        pingCurr = pingNext, pingNext = list_entry(pingNext->list.next, struct RsPingTargetInfo, list)) {
+         pingCurr = pingNext, pingNext = list_entry(pingNext->list.next, struct RsPingTargetInfo, list)) {
         RsListDel(&pingCurr->list);
         if (pingCurr->payloadSize > 0 && pingCurr->payloadBuffer != NULL) {
             free(pingCurr->payloadBuffer);
@@ -1199,7 +1184,7 @@ STATIC void RsPingPongDelTargetList(struct RsPingCtxCb *pingCb)
     RS_PTHREAD_MUTEX_LOCK(&pingCb->pongMutex);
     RS_LIST_GET_HEAD_ENTRY(pongCurr, pongNext, &pingCb->pongList, list, struct RsPongTargetInfo);
     for (; (&pongCurr->list) != &pingCb->pongList;
-        pongCurr = pongNext, pongNext = list_entry(pongNext->list.next, struct RsPongTargetInfo, list)) {
+         pongCurr = pongNext, pongNext = list_entry(pongNext->list.next, struct RsPongTargetInfo, list)) {
         RsListDel(&pongCurr->list);
         if (pongCurr->ah) {
             (void)RsIbvDestroyAh(pongCurr->ah);
@@ -1237,50 +1222,52 @@ STATIC void RsPingRocePingCbDeinit(unsigned int phyId, struct RsPingCtxCb *pingC
 
 STATIC void RsPingRoceAddTargetSuccess(struct PingTargetInfo *target, struct RsPingTargetInfo *targetInfo)
 {
-    hccp_info("target ip:0x%llx payload_size:%u add success, qpn:%u uuid:0x%llx",
-        target->remoteInfo.ip.addr.s_addr, target->payload.size, targetInfo->qpInfo.rdma.qpn, targetInfo->uuid);
+    hccp_info_rma("target ip:0x%llx payload_size:%u add success, qpn:%u uuid:0x%llx", target->remoteInfo.ip.addr.s_addr,
+        target->payload.size, targetInfo->qpInfo.rdma.qpn, targetInfo->uuid);
 }
 
 STATIC void RsPingRocePingCbInitSuccess(unsigned int phyId, struct PingInitAttr *attr, unsigned int devIndex)
 {
-    hccp_run_info("ping_cb init success, phyId:%u, localIp:0x%x, devIndex:%u",
-        phyId, attr->dev.rdma.localIp.addr.s_addr, devIndex);
+    hccp_run_info("ping_cb init success, phyId:%u, localIp:0x%x, devIndex:%u", phyId,
+        attr->dev.rdma.localIp.addr.s_addr, devIndex);
 }
 
 STATIC void RsPingRoceCannotFindTargetNode(unsigned int i, int ret, struct PingTargetCommInfo target,
     unsigned int phyId)
 {
-    hccp_err("rs_ping_roce_find_target_node i:%u failed, ret:%d ip:0x%llx qpn:%u phyId:%u",i, ret,
+    hccp_err("rs_ping_roce_find_target_node i:%u failed, ret:%d ip:0x%llx qpn:%u phyId:%u", i, ret,
         target.ip.addr.s_addr, target.qpInfo.rdma.qpn, phyId);
 }
 
 struct RsPingPongOps gRsPingRoceOps = {
-    .checkPingFd          = RsPingRoceCheckFd,
-    .checkPongFd          = RsPongRoceCheckFd,
-    .initPingCb           = RsPingRocePingCbInit,
-    .pingFindTargetNode  = RsPingRoceFindTargetNode,
+    .checkPingFd = RsPingRoceCheckFd,
+    .checkPongFd = RsPongRoceCheckFd,
+    .initPingCb = RsPingRocePingCbInit,
+    .pingFindTargetNode = RsPingRoceFindTargetNode,
     .pingAllocTargetNode = RsPingRoceAllocTargetNode,
-    .resetRecvBuffer      = RsPingRoceResetRecvBuffer,
-    .pingPostSend         = RsPingRocePostSend,
-    .pingPollScq          = RsPingRocePollScq,
-    .pingPollRcq          = RsPingRocePollRcq,
-    .pongHandleSend       = RsPongRoceHandleSend,
-    .pongPollRcq          = RsPongRocePollRcq,
-    .getTargetResult      = RsPingRoceGetTargetResult,
-    .pingFreeTargetNode  = RsPingRoceFreeTargetNode,
-    .deinitPingCb         = RsPingRocePingCbDeinit,
+    .resetRecvBuffer = RsPingRoceResetRecvBuffer,
+    .pingPostSend = RsPingRocePostSend,
+    .pingPollScq = RsPingRocePollScq,
+    .pingPollRcq = RsPingRocePollRcq,
+    .pongHandleSend = RsPongRoceHandleSend,
+    .pongPollRcq = RsPongRocePollRcq,
+    .getTargetResult = RsPingRoceGetTargetResult,
+    .pingFreeTargetNode = RsPingRoceFreeTargetNode,
+    .deinitPingCb = RsPingRocePingCbDeinit,
 };
 
 struct RsPingPongDfx gRsPingRoceDfx = {
-    .addTargetSuccess           = RsPingRoceAddTargetSuccess,
-    .initPingCbSuccess         = RsPingRocePingCbInitSuccess,
+    .addTargetSuccess = RsPingRoceAddTargetSuccess,
+    .initPingCbSuccess = RsPingRocePingCbInitSuccess,
     .pingCannotFindTargetNode = RsPingRoceCannotFindTargetNode,
 };
 
-struct RsPingPongOps *RsPingRoceGetOps(void) {
+struct RsPingPongOps *RsPingRoceGetOps(void)
+{
     return &gRsPingRoceOps;
 }
 
-struct RsPingPongDfx *RsPingRoceGetDfx(void) {
+struct RsPingPongDfx *RsPingRoceGetDfx(void)
+{
     return &gRsPingRoceDfx;
 }

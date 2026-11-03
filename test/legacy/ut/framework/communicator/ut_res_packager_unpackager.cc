@@ -19,15 +19,9 @@ using namespace Hccl;
 
 class ResPackagerTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "ResPackagerTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "ResPackagerTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "ResPackagerTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "ResPackagerTest TearDown" << std::endl; }
 
     virtual void SetUp()
     {
@@ -49,12 +43,12 @@ TEST_F(ResPackagerTest, test_package_res)
     CommunicatorImpl impl;
 
     impl.connLocalNotifyManager = std::make_unique<ConnLocalNotifyManager>(&impl);
-    impl.aicpuQueueNotifyManager_      = std::make_unique<QueueNotifyManager>(impl);
+    impl.aicpuQueueNotifyManager_ = std::make_unique<QueueNotifyManager>(impl);
     impl.queueWaitGroupCntNotifyManager = std::make_unique<QueueWaitGroupCntNotifyManager>();
     impl.queueBcastPostCntNotifyManager = std::make_unique<QueueBcastPostCntNotifyManager>();
-    impl.localRmaBufManager      = std::make_unique<LocalRmaBufManager>(impl);
-    impl.remoteRmaBufManager     = std::make_unique<RemoteRmaBufManager>(impl);
-    impl.dataBufferManager       = std::make_unique<DataBufManager>();
+    impl.localRmaBufManager = std::make_unique<LocalRmaBufManager>(impl);
+    impl.remoteRmaBufManager = std::make_unique<RemoteRmaBufManager>(impl);
+    impl.dataBufferManager = std::make_unique<DataBufManager>();
 
     u64 addr = 0;
     u64 size = 0;
@@ -65,56 +59,29 @@ TEST_F(ResPackagerTest, test_package_res)
 
 class MockResFetcher : public ResMgrFetcher {
 public:
-    HostDeviceSyncNotifyLiteMgr *GetHostDeviceSyncNotifyLiteMgr()
-    {
-        return &hostDeviceSyncNotifyLiteMgr;
-    }
+    HostDeviceSyncNotifyLiteMgr* GetHostDeviceSyncNotifyLiteMgr() { return &hostDeviceSyncNotifyLiteMgr; }
 
-    StreamLiteMgr *GetStreamLiteMgr()
-    {
-        return &streamLiteMgr;
-    }
+    StreamLiteMgr* GetStreamLiteMgr() { return &streamLiteMgr; }
 
-    u32 GetExecTimeOut() override
-    {
-        return 1836;
-    }
+    u32 GetExecTimeOut() override { return 1836; }
 
-    QueueNotifyLiteMgr *GetQueueNotifyLiteMgr()
-    {
-        return &queueNotifyLiteMgr;
-    }
+    QueueNotifyLiteMgr* GetQueueNotifyLiteMgr() { return &queueNotifyLiteMgr; }
 
-    Cnt1tonNotifyLiteMgr *GetCnt1tonNotifyLiteMgr()
-    {
-        return &cnt1tonNotifyLiteMgr;
-    }
+    Cnt1tonNotifyLiteMgr* GetCnt1tonNotifyLiteMgr() { return &cnt1tonNotifyLiteMgr; }
 
-    CntNto1NotifyLiteMgr *GetCntNto1NotifyLiteMgr()
-    {
-        return &cntNto1NotifyLiteMgr;
-    }
+    CntNto1NotifyLiteMgr* GetCntNto1NotifyLiteMgr() { return &cntNto1NotifyLiteMgr; }
 
-    ConnectedLinkMgr *GetConnectedLinkMgr()
-    {
-        return &connectedLinkMgr;
-    }
+    ConnectedLinkMgr* GetConnectedLinkMgr() { return &connectedLinkMgr; }
 
-    DevId GetDevPhyId()
-    {
-        return 0;
-    }
+    DevId GetDevPhyId() { return 0; }
 
-    u64 GetLocAddr(BufferType type)
-    {
-        return 0xffffffff;
-    }
+    u64 GetLocAddr(BufferType type) const { return 0xffffffff; }
 
 private:
     HostDeviceSyncNotifyLiteMgr hostDeviceSyncNotifyLiteMgr;
-    StreamLiteMgr               streamLiteMgr;
-    QueueNotifyLiteMgr          queueNotifyLiteMgr;
-    Cnt1tonNotifyLiteMgr        cnt1tonNotifyLiteMgr;
-    CntNto1NotifyLiteMgr        cntNto1NotifyLiteMgr;
-    ConnectedLinkMgr    connectedLinkMgr;
+    StreamLiteMgr streamLiteMgr;
+    QueueNotifyLiteMgr queueNotifyLiteMgr;
+    Cnt1tonNotifyLiteMgr cnt1tonNotifyLiteMgr;
+    CntNto1NotifyLiteMgr cntNto1NotifyLiteMgr;
+    ConnectedLinkMgr connectedLinkMgr;
 };

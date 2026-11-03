@@ -7,6 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #ifndef __TOPO_H_
 #define __TOPO_H_
 
@@ -21,10 +22,9 @@ extern "C" {
  */
 int GetTopoFilePathFromFile(const char* filePath, char* topoFilePath, size_t bufSize);
 
-
 /**
  * 根据mainboard id选择对于的拓扑文件
-*/
+ */
 int TopoGetFilePath(unsigned mainboard_id, unsigned int spod_type, char* buf_size, size_t buf_len);
 
 #ifdef __cplusplus

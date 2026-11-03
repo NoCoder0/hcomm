@@ -14,13 +14,11 @@
 #include "checker_enum_factory.h"
 namespace hccl {
 
-MAKE_ENUM(OpType, BROADCAST, ALLREDUCE, REDUCE, SEND, RECEIVE, ALLGATHER, ALLGATHERV, REDUCESCATTER, REDUCESCATTERV, ALLTOALLV, ALLTOALLVC,
-          ALLTOALL, GATHER, SCATTER, BATCH_SEND_RECV, RESERVED)
+MAKE_ENUM(
+    OpType, BROADCAST, ALLREDUCE, REDUCE, SEND, RECEIVE, ALLGATHER, ALLGATHERV, REDUCESCATTER, REDUCESCATTERV,
+    ALLTOALLV, ALLTOALLVC, ALLTOALL, GATHER, SCATTER, BATCH_SEND_RECV, RESERVED)
 
-inline std::string OpTypeToString(OpType type)
-{
-    return type.Describe();
-}
+inline std::string OpTypeToString(OpType type) { return type.Describe(); }
 
 } // namespace hccl
 #endif

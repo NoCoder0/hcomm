@@ -17,24 +17,25 @@
 namespace Hccl {
 
 RdmaLocalNotify::RdmaLocalNotify(RdmaHandle rdmaHandle, bool devUsed)
-    : BaseLocalNotify(RmaType::RDMA, devUsed), rdmaHandle(rdmaHandle)
+    : BaseLocalNotify(RmaType::RDMA, devUsed),
+      rdmaHandle(rdmaHandle)
 {
+    auto devType = HrtGetDeviceType(); // 先查询，避免后续失败资源泄露
     HrtDevResInfo devResInfo;
-    devResInfo.dieId            = 0;
-    devResInfo.procType         = HrtDevResProcType::PROCESS_CP1;
-    devResInfo.resType          = HrtDevResType::RES_TYPE_STARS_NOTIFY_RECORD;
-    devResInfo.resId            = GetNotify()->GetId();
-    devResInfo.flag             = HRT_DEV_RES_FLAG_USE_UNIQUE_VA;
-    auto resAddrInfo            = HrtGetDevResAddress(devResInfo);
-    addr                        = resAddrInfo.address;
-    DevCapability::GetInstance().Init(DevType::DEV_TYPE_950); // 单例初始化
-    size                        = DevCapability::GetInstance().GetNotifySize();
+    devResInfo.dieId = 0;
+    devResInfo.procType = HrtDevResProcType::PROCESS_CP1;
+    devResInfo.resType = HrtDevResType::RES_TYPE_STARS_NOTIFY_RECORD;
+    devResInfo.resId = GetNotify()->GetId();
+    devResInfo.flag = HRT_DEV_RES_FLAG_USE_UNIQUE_VA;
+    auto resAddrInfo = HrtGetDevResAddress(devResInfo);
+    addr = resAddrInfo.address;
+    DevCapability::GetInstance().Init(devType); // 单例初始化
+    size = DevCapability::GetInstance().GetNotifySize();
+    HCCL_DEBUG("[RdmaLocalNotify] addr=0x%llx, size=%u", addr, size);
     // 注册内存
     struct MrInfoT mrInfo;
-    addr = addr & ~(4096 - 1ULL); // 临时规避，待ubdevmem适配后修改
-    size = 4096;
-    mrInfo.addr   = reinterpret_cast<void *>(addr);
-    mrInfo.size   = size;
+    mrInfo.addr = reinterpret_cast<void*>(addr);
+    mrInfo.size = size;
     mrInfo.access = RA_ACCESS_REMOTE_WRITE | RA_ACCESS_LOCAL_WRITE | RA_ACCESS_REMOTE_READ;
     s32 ret = RaRegisterMr(rdmaHandle, &mrInfo, &mrHandle);
     if (ret != 0 || mrHandle == nullptr) {
@@ -50,27 +51,25 @@ RdmaLocalNotify::~RdmaLocalNotify()
     if (mrHandle) {
         s32 ret = RaDeregisterMr(rdmaHandle, mrHandle);
         if (ret != 0) {
-            HCCL_ERROR("[~RdmaLocalNotify]errNo[0x%016llx] RaDeregisterMr failed, return[%d]",
-                HCCL_ERROR_CODE(HCCL_E_NETWORK), ret);
+            HCCL_ERROR(
+                "[~RdmaLocalNotify]errNo[0x%016llx] RaDeregisterMr failed, return[%d]", HCCL_ERROR_CODE(HCCL_E_NETWORK),
+                ret);
         }
         mrHandle = nullptr;
     }
 
     HrtDevResInfo devResInfo;
-    devResInfo.dieId    = 0;
+    devResInfo.dieId = 0;
     devResInfo.procType = HrtDevResProcType::PROCESS_CP1;
-    devResInfo.resType  = HrtDevResType::RES_TYPE_STARS_NOTIFY_RECORD;
-    devResInfo.resId    = GetNotify()->GetId();
-    devResInfo.flag     = HRT_DEV_RES_FLAG_USE_UNIQUE_VA;
+    devResInfo.resType = HrtDevResType::RES_TYPE_STARS_NOTIFY_RECORD;
+    devResInfo.resId = GetNotify()->GetId();
+    devResInfo.flag = HRT_DEV_RES_FLAG_USE_UNIQUE_VA;
     HrtReleaseDevResAddress(devResInfo);
 }
 
-void RdmaLocalNotify::Wait(const Stream &stream, u32 timeout) const
-{
-    GetNotify()->Wait(stream, timeout);
-}
+void RdmaLocalNotify::Wait(const Stream& stream, u32 timeout) const { GetNotify()->Wait(stream, timeout); }
 
-void RdmaLocalNotify::Post(const Stream &stream) const
+void RdmaLocalNotify::Post([[maybe_unused]] const Stream& stream) const
 {
     HCCL_ERROR("RdmaLocalNotify does not support submit record task");
     throw NotSupportException("RdmaLocalNotify does not support submit record task");
@@ -78,15 +77,14 @@ void RdmaLocalNotify::Post(const Stream &stream) const
 
 string RdmaLocalNotify::Describe() const
 {
-    return StringFormat("RdmaLocalNotify[notify=%s, addr=0x%llx, size=%u]", GetNotify()->Describe().c_str(), addr, size);
+    return StringFormat(
+        "RdmaLocalNotify[notify=%s, addr=0x%llx, size=%u]", GetNotify()->Describe().c_str(), addr, size);
 }
 
 std::unique_ptr<Serializable> RdmaLocalNotify::GetExchangeDto()
 {
-    std::unique_ptr<ExchangeRdmaBufferDto> dto
-        = make_unique<ExchangeRdmaBufferDto>(addr, size, rkey, "RdmaNotify");
+    std::unique_ptr<ExchangeRdmaBufferDto> dto = make_unique<ExchangeRdmaBufferDto>(addr, size, rkey, "RdmaNotify");
     return std::unique_ptr<Serializable>(dto.release());
 }
 
-} // namesapce Hccl
-
+} // namespace Hccl

@@ -58,8 +58,8 @@ BkfSuberConnMng *BkfSuberConnDataMngInit(BkfSuberConnMngInitArg *initArg)
         connMng->log = env->log;
     }
 
-    VOS_AVLL_INIT_TREE(connMng->connSetByConnId, (AVLL_COMPARE)BkfCmpPtrAddr,
-                       BKF_OFFSET(BkfSuberConn, connId), BKF_OFFSET(BkfSuberConn, connIdKeyNode));
+    VOS_AVLL_INIT_TREE(connMng->connSetByConnId, (AVLL_COMPARE)BkfCmpPtrAddr, BKF_OFFSET(BkfSuberConn, connId),
+        BKF_OFFSET(BkfSuberConn, connIdKeyNode));
     return connMng;
 }
 
@@ -239,7 +239,7 @@ BkfSuberConn *BkfSuberConnDataGetNextByUrlType(BkfSuberConnMng *connMng, uint8_t
         return VOS_NULL;
     }
 
-    BkfSuberConn *conn = *(BkfSuberConn**)itorInOut;
+    BkfSuberConn *conn = *(BkfSuberConn **)itorInOut;
     if (conn == VOS_NULL) {
         *itorInOut = VOS_NULL;
     } else {
@@ -288,8 +288,8 @@ BkfSuberConnUrlTypeMng *BkfSuberConnDataCreateAndGetUrlTypeMng(BkfSuberConnMng *
     }
 
     (void)memset_s(urlTypeMng, len, 0, len);
-    VOS_AVLL_INIT_TREE(urlTypeMng->connSet, (AVLL_COMPARE)BkfSuberConnDataAvllCmp,
-                       0, BKF_OFFSET(BkfSuberConn, avlNode));
+    VOS_AVLL_INIT_TREE(urlTypeMng->connSet, (AVLL_COMPARE)BkfSuberConnDataAvllCmp, 0,
+        BKF_OFFSET(BkfSuberConn, avlNode));
     urlTypeMng->urlType = urlType;
     urlTypeMng->connMng = connMng;
     connMng->urlTypeSet[urlType] = urlTypeMng;
@@ -310,7 +310,7 @@ uint32_t BkfSuberConnStartJob(BkfSuberConn *conn)
 {
     if (conn->jobId == VOS_NULL) {
         conn->jobId = BkfJobCreate(conn->urlTypeMng->connMng->env->jobMng, conn->urlTypeMng->connMng->env->jobTypeId1,
-                                    "jobIdSched", conn);
+            "jobIdSched", conn);
         if (conn->jobId == VOS_NULL) {
             BKF_ASSERT(0);
             return BKF_ERR;

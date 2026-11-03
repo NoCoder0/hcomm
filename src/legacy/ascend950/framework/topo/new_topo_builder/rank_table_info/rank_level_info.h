@@ -26,30 +26,27 @@ constexpr unsigned int MAX_VALUE_NETLAYER = 7;
 constexpr unsigned int MIN_VALUE_NETID = 1;
 constexpr unsigned int MAX_VALUE_NETID = 1024;
 constexpr unsigned int MIN_VALUE_RANKADDR_SIZE = 0;
-constexpr unsigned int MAX_VALUE_RANKADDR_SIZE= 24;
-constexpr unsigned int MIN_VALUE_U32= 0;
+constexpr unsigned int MAX_VALUE_RANKADDR_SIZE = 24;
+constexpr unsigned int MIN_VALUE_U32 = 0;
 
-class RankLevelInfo{
+class RankLevelInfo {
 public:
     RankLevelInfo() {};
-    u32                      netLayer{0};
-    std::string              netInstId;
-    NetType                  netType{NetType::CLOS};
-    std::string              netAttr;
+    u32 netLayer{0};
+    std::string netInstId;
+    NetType netType{NetType::CLOS};
+    std::string netAttr;
     std::vector<AddressInfo> rankAddrs;
-    std::string              Describe() const;
+    std::string Describe() const;
     std::map<std::string, std::vector<IpAddress>> portAddrMap;
-    void                     Deserialize(const nlohmann::json &rankLevelInfoJson);
-    explicit                 RankLevelInfo(BinaryStream &binaStream);
-    void                     GetBinStream(BinaryStream& binaStream) const;
+    void Deserialize(const nlohmann::json& rankLevelInfoJson);
+    explicit RankLevelInfo(BinaryStream& binaStream);
+    HcclResult GetBinStream(BinaryStream& binaStream) const;
 
 private:
-    static const std::unordered_map<std::string , NetType> strToNetType;
+    static const std::unordered_map<std::string, NetType> strToNetType;
 
-    static bool IsStringInNetType(std::string str)
-    {
-        return strToNetType.count(str) > 0;
-    }
+    static bool IsStringInNetType(std::string str) { return strToNetType.count(str) > 0; }
 };
 
 } // namespace Hccl

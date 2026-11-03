@@ -30,8 +30,6 @@ if(BUILD_OPEN_PROJECT)
     # 编译选项
     set(CCL_KERNEL_PLF_COMPILE_OPTIONS
         -Werror
-        -Wno-unused-parameter
-        -Wno-missing-field-initializers
         -Wno-deprecated-declarations
         -fno-common
         -fno-strict-aliasing
@@ -62,6 +60,7 @@ if(BUILD_OPEN_PROJECT)
     # 链接选项
     set(CCL_KERNEL_PLF_LINK_OPTIONS
         -Wl,-Bsymbolic
+        -Wl,--no-undefined
         -Wl,--exclude-libs,ALL
     )
 else()
@@ -87,6 +86,7 @@ set(CCL_KERNEL_PLF_INCLUDE_LIST
     ${HCOMM_DIR}/pkg_inc/hccl
     ${HCOMM_DIR}/pkg_inc/legacy
     ${HCOMM_DIR}/pkg_inc/legacy/hccl
+    ${HCOMM_DIR}/src/base_comm/common
 
     # pub_inc (legacy/ascend910)
     ${HCOMM_DIR}/src/legacy/ascend910/pub_inc
@@ -162,6 +162,7 @@ set(CCL_KERNEL_PLF_INCLUDE_LIST
     ${HCOMM_DIR}/src/legacy/ascend910/framework/communicator/impl/zero_copy
     ${HCOMM_DIR}/src/legacy/ascend910/framework/communicator/impl/resource_manager
     ${HCOMM_DIR}/src/coll_communicator_mgr/common
+    ${HCOMM_DIR}/src/coll_communicator_mgr/api_c_adpt
     ${HCOMM_DIR}/src/coll_communicator_mgr/rank_graph
     ${HCOMM_DIR}/src/legacy/ascend910/framework/op_base/src/
 
@@ -170,9 +171,8 @@ set(CCL_KERNEL_PLF_INCLUDE_LIST
     ${HCOMM_DIR}/src/coll_communicator_mgr/communicator
     ${HCOMM_DIR}/src/coll_communicator_mgr/communicator/device
     ${HCOMM_DIR}/src/coll_communicator_mgr/resource_mgr/remote/rank_pairs
-    ${HCOMM_DIR}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_engine_reses/threads
-    ${HCOMM_DIR}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_engine_reses/notify
-    ${HCOMM_DIR}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_engine_reses
+    ${HCOMM_DIR}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_engine/threads
+    ${HCOMM_DIR}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_engine
     ${HCOMM_DIR}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_mems
     ${HCOMM_DIR}/src/base_comm/resources/comm_engine_res/engine_ctxs
     ${HCOMM_DIR}/src/base_comm/resources/comm_engine_res/launch
@@ -182,6 +182,7 @@ set(CCL_KERNEL_PLF_INCLUDE_LIST
     ${HCOMM_DIR}/src/coll_communicator_mgr/resource_mgr/local/my_rank/endpoints
     ${HCOMM_DIR}/src/base_comm/resources/reged_mems
     ${HCOMM_DIR}/src/base_comm/resources/endpoint_pairs/
+    ${HCOMM_DIR}/src/base_comm/inc
 
     # platform (legacy/ascend910)
     ${HCOMM_DIR}/src/legacy/ascend910/platform/
@@ -226,7 +227,7 @@ set(CCL_KERNEL_PLF_INCLUDE_LIST
 target_include_directories(ccl_kernel_plf PRIVATE
     ${CCL_KERNEL_PLF_INCLUDE_LIST}
     ${HCOMM_DIR}/src/legacy/ascend910/common
-    ${HCOMM_DIR}/externel_depends/tsch
+    ${HCOMM_DIR}/external_depends/tsch
 )
 target_include_directories(ccl_kernel_plf_a PRIVATE
     ${CCL_KERNEL_PLF_INCLUDE_LIST}
@@ -242,8 +243,8 @@ if(BUILD_OPEN_PROJECT)
     )
 
     set(CCL_KERNEL_PLF_OPEN_INCLUDE_LIST
-        # 临时依赖头文件，待删除
-        ${HCOMM_DIR}/externel_depends/tsch/
+        # 临时依赖头文件
+        ${HCOMM_DIR}/external_depends/tsch/
     )
     target_include_directories(ccl_kernel_plf PRIVATE
         ${CCL_KERNEL_PLF_OPEN_INCLUDE_LIST}
@@ -353,6 +354,12 @@ else()
         ARCHIVE DESTINATION ${INSTALL_LIBRARY_DIR} ${INSTALL_OPTIONAL}
         COMPONENT hcomm
     )
+endif()
+
+# 符号隐藏: 仅导出白名单符号; 非 release 模式依赖动态符号, 不挂载
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_link_options(ccl_kernel_plf PRIVATE "-Wl,--version-script=${CMAKE_CURRENT_LIST_DIR}/ccl_kernel_plf.map")
+    set_property(TARGET ccl_kernel_plf APPEND PROPERTY LINK_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/ccl_kernel_plf.map")
 endif()
 
 # 设置 ccl_kernel_plf_a 输出文件名

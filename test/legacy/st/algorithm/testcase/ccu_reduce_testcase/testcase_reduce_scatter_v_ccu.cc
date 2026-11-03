@@ -4,7 +4,7 @@
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -25,21 +25,15 @@ namespace checker {
 
 class ReduceScatterVCCUTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "Scatter CCU test set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "Scatter CCU test set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "Scatter CCU test tear down" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "Scatter CCU test tear down" << std::endl; }
 
     virtual void SetUp()
     {
-        const ::testing::TestInfo *const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName =
-            "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -143,7 +137,7 @@ TEST_F(ReduceScatterVCCUTest, reduce_scatter_v_ccu_case_test_8rank)
     RankTable_For_LLT gen;
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 8);
-    vector<u64> counts{0, 300, 500, 1024, 300*1024, 0, 500, 0};
+    vector<u64> counts{0, 300, 500, 1024, 300 * 1024, 0, 500, 0};
     vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
         displs.emplace_back(displs[i - 1] + counts[i - 1]);
@@ -168,21 +162,18 @@ TEST_F(ReduceScatterVCCUTest, reduce_scatter_v_ccu_case_test_8rank)
 
 TEST_F(ReduceScatterVCCUTest, reduce_scatter_v_ccu_case_test_4rank_auto_test)
 {
-    vector<u64> randomNumbersList {
-        106, 41, 38, 126, 122, 33, 25, 13, 20, 3, 86, 110, 53, 9, 23, 104, 75, 71, 27, 55, 103, 42, 10, 100, 45,
-        74, 29, 82, 65, 107, 120, 12, 116, 59, 92, 64, 31, 18, 22, 98, 95, 84, 124, 7, 115, 117, 8, 66, 34, 16,
-        111, 4, 78, 46, 2, 49, 67, 81, 24, 114, 76, 21, 36, 52, 113, 50, 70, 15, 108, 39, 97, 60, 91, 43, 1, 93,
-        101, 119, 109, 51, 6, 61, 112, 121, 127, 17, 62, 88, 26, 35, 105, 63, 118, 19, 54, 80, 48, 96, 128, 11
-    };
+    vector<u64> randomNumbersList{106, 41, 38, 126, 122, 33,  25,  13,  20,  3,   86,  110, 53,  9,   23,  104, 75,
+                                  71,  27, 55, 103, 42,  10,  100, 45,  74,  29,  82,  65,  107, 120, 12,  116, 59,
+                                  92,  64, 31, 18,  22,  98,  95,  84,  124, 7,   115, 117, 8,   66,  34,  16,  111,
+                                  4,   78, 46, 2,   49,  67,  81,  24,  114, 76,  21,  36,  52,  113, 50,  70,  15,
+                                  108, 39, 97, 60,  91,  43,  1,   93,  101, 119, 109, 51,  6,   61,  112, 121, 127,
+                                  17,  62, 88, 26,  35,  105, 63,  118, 19,  54,  80,  48,  96,  128, 11};
 
-    vector<u64> randomNumbersMultipiler {
-        1, 0, 6, 4, 1024, 3, 10, 7, 2, 8, 9, 1, 2, 1024 * 256, 0, 512, 3, 7
-    };
+    vector<u64> randomNumbersMultipiler{1, 0, 6, 4, 1024, 3, 10, 7, 2, 8, 9, 1, 2, 1024 * 256, 0, 512, 3, 7};
 
-    vector<CheckerDataType> dataTypeList {
-        CheckerDataType::DATA_TYPE_BFP16, CheckerDataType::DATA_TYPE_INT16,
-        CheckerDataType::DATA_TYPE_INT32, CheckerDataType::DATA_TYPE_FP16,
-        CheckerDataType::DATA_TYPE_FP32,
+    vector<CheckerDataType> dataTypeList{
+        CheckerDataType::DATA_TYPE_BFP16, CheckerDataType::DATA_TYPE_INT16, CheckerDataType::DATA_TYPE_INT32,
+        CheckerDataType::DATA_TYPE_FP16,  CheckerDataType::DATA_TYPE_FP32,
     };
 
     vector<CheckerOpMode> opModeList{CheckerOpMode::OFFLOAD, CheckerOpMode::OPBASE};
@@ -217,8 +208,8 @@ TEST_F(ReduceScatterVCCUTest, reduce_scatter_v_ccu_case_test_4rank_auto_test)
         checkerOpParam.VDataDes.counts.clear();
         checkerOpParam.VDataDes.displs = {0};
         for (auto r = 0; r < rankSize; ++r) {
-            u64 count = randomNumbersMultipiler[multipilerIterIdx++ % randomNumbersMultipiler.size()] *
-                        randomNumbersList[randomNumbersIdx++ % randomNumbersList.size()];
+            u64 count = randomNumbersMultipiler[multipilerIterIdx++ % randomNumbersMultipiler.size()]
+                        * randomNumbersList[randomNumbersIdx++ % randomNumbersList.size()];
             checkerOpParam.VDataDes.counts.push_back(count);
             if (r != 0) {
                 checkerOpParam.VDataDes.displs.push_back(
@@ -226,12 +217,12 @@ TEST_F(ReduceScatterVCCUTest, reduce_scatter_v_ccu_case_test_4rank_auto_test)
             }
         }
         std::cout << "counts: ";
-        for (auto &x : checkerOpParam.VDataDes.counts) {
+        for (auto& x : checkerOpParam.VDataDes.counts) {
             std::cout << x << " ";
         }
         std::cout << std::endl;
         std::cout << "displs: ";
-        for (auto &x : checkerOpParam.VDataDes.displs) {
+        for (auto& x : checkerOpParam.VDataDes.displs) {
             std::cout << x << " ";
         }
         std::cout << std::endl;
@@ -244,21 +235,18 @@ TEST_F(ReduceScatterVCCUTest, reduce_scatter_v_ccu_case_test_4rank_auto_test)
 
 TEST_F(ReduceScatterVCCUTest, reduce_scatter_v_mem2mem_ccu_case_test_4rank_auto_test)
 {
-    vector<u64> randomNumbersList {
-        106, 41, 38, 126, 122, 33, 25, 13, 20, 3, 86, 110, 53, 9, 23, 104, 75, 71, 27, 55, 103, 42, 10, 100, 45,
-        74, 29, 82, 65, 107, 120, 12, 116, 59, 92, 64, 31, 18, 22, 98, 95, 84, 124, 7, 115, 117, 8, 66, 34, 16,
-        111, 4, 78, 46, 2, 49, 67, 81, 24, 114, 76, 21, 36, 52, 113, 50, 70, 15, 108, 39, 97, 60, 91, 43, 1, 93,
-        101, 119, 109, 51, 6, 61, 112, 121, 127, 17, 62, 88, 26, 35, 105, 63, 118, 19, 54, 80, 48, 96, 128, 11
-    };
+    vector<u64> randomNumbersList{106, 41, 38, 126, 122, 33,  25,  13,  20,  3,   86,  110, 53,  9,   23,  104, 75,
+                                  71,  27, 55, 103, 42,  10,  100, 45,  74,  29,  82,  65,  107, 120, 12,  116, 59,
+                                  92,  64, 31, 18,  22,  98,  95,  84,  124, 7,   115, 117, 8,   66,  34,  16,  111,
+                                  4,   78, 46, 2,   49,  67,  81,  24,  114, 76,  21,  36,  52,  113, 50,  70,  15,
+                                  108, 39, 97, 60,  91,  43,  1,   93,  101, 119, 109, 51,  6,   61,  112, 121, 127,
+                                  17,  62, 88, 26,  35,  105, 63,  118, 19,  54,  80,  48,  96,  128, 11};
 
-    vector<u64> randomNumbersMultipiler {
-        1, 0, 6, 4, 1024, 3, 10, 7, 2, 8, 9, 1, 2, 1024 * 256, 0, 512, 3, 7
-    };
+    vector<u64> randomNumbersMultipiler{1, 0, 6, 4, 1024, 3, 10, 7, 2, 8, 9, 1, 2, 1024 * 256, 0, 512, 3, 7};
 
-    vector<CheckerDataType> dataTypeList {
-        CheckerDataType::DATA_TYPE_BFP16, CheckerDataType::DATA_TYPE_INT16,
-        CheckerDataType::DATA_TYPE_INT32, CheckerDataType::DATA_TYPE_FP16,
-        CheckerDataType::DATA_TYPE_FP32,
+    vector<CheckerDataType> dataTypeList{
+        CheckerDataType::DATA_TYPE_BFP16, CheckerDataType::DATA_TYPE_INT16, CheckerDataType::DATA_TYPE_INT32,
+        CheckerDataType::DATA_TYPE_FP16,  CheckerDataType::DATA_TYPE_FP32,
     };
 
     vector<CheckerOpMode> opModeList{CheckerOpMode::OFFLOAD, CheckerOpMode::OPBASE};
@@ -293,8 +281,8 @@ TEST_F(ReduceScatterVCCUTest, reduce_scatter_v_mem2mem_ccu_case_test_4rank_auto_
         checkerOpParam.VDataDes.counts.clear();
         checkerOpParam.VDataDes.displs = {0};
         for (auto r = 0; r < rankSize; ++r) {
-            u64 count = randomNumbersMultipiler[multipilerIterIdx++ % randomNumbersMultipiler.size()] *
-                        randomNumbersList[randomNumbersIdx++ % randomNumbersList.size()];
+            u64 count = randomNumbersMultipiler[multipilerIterIdx++ % randomNumbersMultipiler.size()]
+                        * randomNumbersList[randomNumbersIdx++ % randomNumbersList.size()];
             checkerOpParam.VDataDes.counts.push_back(count);
             if (r != 0) {
                 checkerOpParam.VDataDes.displs.push_back(
@@ -302,12 +290,12 @@ TEST_F(ReduceScatterVCCUTest, reduce_scatter_v_mem2mem_ccu_case_test_4rank_auto_
             }
         }
         std::cout << "counts: ";
-        for (auto &x : checkerOpParam.VDataDes.counts) {
+        for (auto& x : checkerOpParam.VDataDes.counts) {
             std::cout << x << " ";
         }
         std::cout << std::endl;
         std::cout << "displs: ";
-        for (auto &x : checkerOpParam.VDataDes.displs) {
+        for (auto& x : checkerOpParam.VDataDes.displs) {
             std::cout << x << " ";
         }
         std::cout << std::endl;
@@ -317,4 +305,4 @@ TEST_F(ReduceScatterVCCUTest, reduce_scatter_v_mem2mem_ccu_case_test_4rank_auto_
         EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
     }
 }
-}
+} // namespace checker

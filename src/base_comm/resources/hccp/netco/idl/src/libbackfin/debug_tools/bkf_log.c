@@ -30,11 +30,12 @@ struct tagBkfLog {
     char *name;
     BOOL outputEnable;
     F_BKF_DEBUG_OUTPUT debugOutputOrNull; /* debug输出函数 */
-    uint8_t debugOutputEnable; /* debug使能判断函数, 一个比特位对应一个级别的开关，except, error,  warning , info ,默认全关 */
+    uint8_t debugOutputEnable; /* debug使能判断函数, 一个比特位对应一个级别的开关，except, error,  warning , info
+                                  ,默认全关 */
     uint8_t res[3];
     AVLL_TREE modLvlSet; /* 非默认，设置的值 */
     BkfLogModLvl *modLvlCache;
-    uint32_t seqSeed; /* 会溢出，没有关系 */
+    uint32_t seqSeed;          /* 会溢出，没有关系 */
     AVLL_TREE blackBoxTypeSet; /* 单元log管理 */
     BkfBufr *memBuf;
 };
@@ -64,7 +65,7 @@ void BkfBlackBoxLogDispSpecType(BkfLog *log, uintptr_t blackboxType);
 #define BKF_LOG_MEM_BUF_LEN_INIT (BKF_1K / 4)
 #define BKF_LOG_MEM_BUF_LEN_DEFAULT (BKF_1K)
 
-typedef struct {  /* 模块启动时注册  */
+typedef struct { /* 模块启动时注册  */
     uint16_t logType;
     uint16_t uintLogBuffLen;
     AVLL_NODE avlNode;
@@ -148,14 +149,15 @@ BkfLog *BkfLogInit(BkfLogInitArg *arg)
     log->outputEnable = arg->outputEnable;
     log->debugOutputEnable = 0; /* BKF在线debug功能默认关闭 */
     log->debugOutputOrNull = NULL;
-    VOS_AVLL_INIT_TREE(log->modLvlSet, (AVLL_COMPARE)VOS_StrCmp,
-        BKF_OFFSET(BkfLogModLvl, name[0]), BKF_OFFSET(BkfLogModLvl, avlNode));
+    VOS_AVLL_INIT_TREE(log->modLvlSet, (AVLL_COMPARE)VOS_StrCmp, BKF_OFFSET(BkfLogModLvl, name[0]),
+        BKF_OFFSET(BkfLogModLvl, avlNode));
 
-    uint32_t initLen = arg->memBufLen > BKF_LOG_MEM_BUF_LEN_INIT ? BKF_LOG_MEM_BUF_LEN_INIT : ((uint32_t)arg->memBufLen);
+    uint32_t initLen = arg->memBufLen > BKF_LOG_MEM_BUF_LEN_INIT ? BKF_LOG_MEM_BUF_LEN_INIT
+                                                                 : ((uint32_t)arg->memBufLen);
     log->memBuf = BkfBufrInit(arg->memMng, initLen);
 
-    VOS_AVLL_INIT_TREE(log->blackBoxTypeSet, (AVLL_COMPARE)Bkfuint16_tCmp,
-        BKF_OFFSET(BkfBlackBoxType, logType), BKF_OFFSET(BkfBlackBoxType, avlNode));
+    VOS_AVLL_INIT_TREE(log->blackBoxTypeSet, (AVLL_COMPARE)Bkfuint16_tCmp, BKF_OFFSET(BkfBlackBoxType, logType),
+        BKF_OFFSET(BkfBlackBoxType, avlNode));
     BkfLogDispInit(log);
 
     return log;
@@ -225,6 +227,7 @@ STATIC BkfLogModLvl *BkfLogFindModLvl(BkfLog *log, char *modName)
 
 uint32_t BkfLogFirstHalf(BkfLog *log, char *modName, uint16_t line, uint8_t lvl)
 {
+    (void)line;
     BkfLogModLvl *modLvl = VOS_NULL;
     BOOL ret = (log == VOS_NULL) || (modName == VOS_NULL) || !BKF_LOG_LVL_IS_VALID(lvl);
     if (ret) {
@@ -258,11 +261,11 @@ STATIC int32_t BkfLogSecondHalfTime(BkfLog *log, char *buf, int32_t totalLen, in
     }
 
     (void)VOS_SystimeGet(&sysTime);
-    return snprintf_truncated_s(&buf[usedLen], totalLen - usedLen, "[%02u:%02u:%02u:%03u], ",
-                                sysTime.ucHour, sysTime.ucMinute, sysTime.ucSecond, sysTime.uiMillSec);
+    return snprintf_truncated_s(&buf[usedLen], totalLen - usedLen, "[%02u:%02u:%02u:%03u], ", sysTime.ucHour,
+        sysTime.ucMinute, sysTime.ucSecond, sysTime.uiMillSec);
 }
-STATIC int32_t BkfLogSecondHalfSeqAndModInfo(BkfLog *log, char *buf, int32_t totalLen, int32_t usedLen,
-                                             char *modName, uint16_t line, uint8_t lvl, char *funcName)
+STATIC int32_t BkfLogSecondHalfSeqAndModInfo(BkfLog *log, char *buf, int32_t totalLen, int32_t usedLen, char *modName,
+    uint16_t line, uint8_t lvl, char *funcName)
 {
     char *funcNameOutInfo = log->argInit.logFuncName ? funcName : "*";
 
@@ -271,8 +274,7 @@ STATIC int32_t BkfLogSecondHalfSeqAndModInfo(BkfLog *log, char *buf, int32_t tot
     }
 
     return snprintf_truncated_s(&buf[usedLen], totalLen - usedLen, "[%-6u], [%-18s, %5u, %s@[%s]], ",
-                                BKF_GET_NEXT_VAL(log->seqSeed), modName, line, g_BkfLogLvlStrTbl[lvl],
-                                funcNameOutInfo);
+        BKF_GET_NEXT_VAL(log->seqSeed), modName, line, g_BkfLogLvlStrTbl[lvl], funcNameOutInfo);
 }
 
 STATIC int32_t BkfLogOutputToBufr(BkfBufr *memBuf, int32_t maxLen, uint8_t *buf, int32_t bufLen)
@@ -291,7 +293,7 @@ STATIC int32_t BkfLogOutputToBufr(BkfBufr *memBuf, int32_t maxLen, uint8_t *buf,
 
         (void)BkfBufrResize(memBuf, newLen);
     }
-    return BkfBufrPutForce(memBuf, (uint8_t*)buf, bufLen);
+    return BkfBufrPutForce(memBuf, (uint8_t *)buf, bufLen);
 }
 
 void BkfLogSecondHalf(BkfLog *log, char *modName, uint16_t line, uint8_t lvl, char *funcName, const char *fmt, ...)
@@ -303,8 +305,7 @@ void BkfLogSecondHalf(BkfLog *log, char *modName, uint16_t line, uint8_t lvl, ch
 
     BOOL needOutputFile = ((log->argInit.outputOrNull != VOS_NULL) && (log->outputEnable));
     BOOL needWrite2Mem = (log->memBuf != VOS_NULL) && (log->argInit.memBufLen > 0);
-    BOOL needOutDebug = ((log->debugOutputOrNull != VOS_NULL) &&
-        (((log->debugOutputEnable) & (1 << lvl)) != 0));
+    BOOL needOutDebug = ((log->debugOutputOrNull != VOS_NULL) && (((log->debugOutputEnable) & (1 << lvl)) != 0));
     BOOL judgeFlg = !needOutputFile && !needOutDebug;
     /* 判断私有日志、内存日志、debug日志是否都不输出 */
     if (judgeFlg) {
@@ -337,13 +338,13 @@ void BkfLogSecondHalf(BkfLog *log, char *modName, uint16_t line, uint8_t lvl, ch
     usedLen += len;
 
     if (needWrite2Mem) {
-        (void)BkfLogOutputToBufr(log->memBuf, log->argInit.memBufLen, (uint8_t*)buf, usedLen);
+        (void)BkfLogOutputToBufr(log->memBuf, log->argInit.memBufLen, (uint8_t *)buf, usedLen);
     }
     if (needOutputFile) {
-        log->argInit.outputOrNull(log->argInit.cookie, (const char*)(&buf[0]));
+        log->argInit.outputOrNull(log->argInit.cookie, (const char *)(&buf[0]));
     }
     if (needOutDebug) {
-        log->debugOutputOrNull(log->argInit.cookie, (const char*)(&buf[0]));
+        log->debugOutputOrNull(log->argInit.cookie, (const char *)(&buf[0]));
     }
     return;
 }
@@ -405,15 +406,14 @@ uint8_t BkfLogGetDebugOutputEnable(BkfLog *log)
 void BkfLogTraceRcvDataFlow(BkfLog *log, char *recBuf, int32_t len)
 {
     uint32_t i;
-    char buf[BKF_1K / BKF_4BYTE] = { 0 };
+    char buf[BKF_1K / BKF_4BYTE] = {0};
     int32_t writeLen = 0;
     if (BkfLogGetOutputEnable(log) == VOS_FALSE) {
         return;
     }
     BKF_LOG_INFO(log, "TraceRecBuf_:\n");
     for (i = 0; i < (uint32_t)len; i++) {
-        writeLen += snprintf_truncated_s(buf + writeLen,
-                                         sizeof(buf) - (uint32_t)writeLen, "%02hhx ", recBuf[i]);
+        writeLen += snprintf_truncated_s(buf + writeLen, sizeof(buf) - (uint32_t)writeLen, "%02hhx ", recBuf[i]);
         if (i == 0) {
             continue;
         }
@@ -452,7 +452,7 @@ STATIC BkfLogModLvl *BkfLogAddModLvl(BkfLog *log, char *modName, uint8_t lvl)
     }
     (void)memset_s(modLvl, len, 0, len);
     modLvl->lvl = lvl;
-    err = snprintf_truncated_s(modLvl->name, strLen + 1,  "%s", modName);
+    err = snprintf_truncated_s(modLvl->name, strLen + 1, "%s", modName);
     if (err < 0) {
         goto error;
     }
@@ -489,8 +489,7 @@ STATIC void BkfLogDelAllModLvl(BkfLog *log)
     BkfLogModLvl *modLvl = VOS_NULL;
     void *itor = VOS_NULL;
 
-    for (modLvl = BkfLogGetFirstModLvl(log, &itor); modLvl != VOS_NULL;
-         modLvl = BkfLogGetNextModLvl(log, &itor)) {
+    for (modLvl = BkfLogGetFirstModLvl(log, &itor); modLvl != VOS_NULL; modLvl = BkfLogGetNextModLvl(log, &itor)) {
         BkfLogDelModLvl(log, modLvl);
     }
     return;
@@ -537,26 +536,24 @@ STATIC void BkfLogDispArg(BkfLog *log)
     uint8_t buf[BKF_1K];
 
     modLvlCnt = 0;
-    for (modLvl = BkfLogGetFirstModLvl(log, &itor); modLvl != VOS_NULL;
-         modLvl = BkfLogGetNextModLvl(log, &itor)) {
+    for (modLvl = BkfLogGetFirstModLvl(log, &itor); modLvl != VOS_NULL; modLvl = BkfLogGetNextModLvl(log, &itor)) {
         modLvlCnt++;
     }
 
     BKF_DISP_PRINTF(disp, "===argInit===\n");
-    BKF_DISP_PRINTF(disp, "memMng(%#x)/disp(%#x)\n",
-                    BKF_MASK_ADDR(arg->memMng), BKF_MASK_ADDR(arg->disp));
-    BKF_DISP_PRINTF(disp, "cookie(%#x)/debugOutputOrNull(%#x)",
-                    BKF_MASK_ADDR(arg->cookie), BKF_MASK_ADDR(log->debugOutputOrNull));
-    BKF_DISP_PRINTF(disp, "cookie(%#x)/outputOrNull(%#x)",
-                    BKF_MASK_ADDR(arg->cookie), BKF_MASK_ADDR(arg->outputOrNull));
-    BKF_DISP_PRINTF(disp, "outputEnable(%u)/logTime(%u)/moduleDefalutLvl(%u)/\n",
-                    arg->outputEnable, arg->logTime, arg->moduleDefalutLvl);
+    BKF_DISP_PRINTF(disp, "memMng(%#x)/disp(%#x)\n", BKF_MASK_ADDR(arg->memMng), BKF_MASK_ADDR(arg->disp));
+    BKF_DISP_PRINTF(disp, "cookie(%#x)/debugOutputOrNull(%#x)", BKF_MASK_ADDR(arg->cookie),
+        BKF_MASK_ADDR(log->debugOutputOrNull));
+    BKF_DISP_PRINTF(disp, "cookie(%#x)/outputOrNull(%#x)", BKF_MASK_ADDR(arg->cookie),
+        BKF_MASK_ADDR(arg->outputOrNull));
+    BKF_DISP_PRINTF(disp, "outputEnable(%u)/logTime(%u)/moduleDefalutLvl(%u)/\n", arg->outputEnable, arg->logTime,
+        arg->moduleDefalutLvl);
     BKF_DISP_PRINTF(disp, "name(%s)\n", log->name);
     BKF_DISP_PRINTF(disp, "===runtime===\n");
-    BKF_DISP_PRINTF(disp, "outputEnable(%u)/modLvlCnt(%u)/modLvlCache(%#x)/seqSeed(%u)\n",
-                    log->outputEnable, modLvlCnt, BKF_MASK_ADDR(log->modLvlCache), log->seqSeed);
-    BKF_DISP_PRINTF(disp, "memBuf(%#x), %s\n",
-                    BKF_MASK_ADDR(log->memBuf), BkfBufrGetStr(log->memBuf, buf, sizeof(buf)));
+    BKF_DISP_PRINTF(disp, "outputEnable(%u)/modLvlCnt(%u)/modLvlCache(%#x)/seqSeed(%u)\n", log->outputEnable, modLvlCnt,
+        BKF_MASK_ADDR(log->modLvlCache), log->seqSeed);
+    BKF_DISP_PRINTF(disp, "memBuf(%#x), %s\n", BKF_MASK_ADDR(log->memBuf),
+        BkfBufrGetStr(log->memBuf, buf, sizeof(buf)));
     return;
 }
 void BkfLogDisp(BkfLog *log)
@@ -720,7 +717,7 @@ void BkfBlackBoxUninit(BkfLog *log)
 
 STATIC int32_t BkfBlackBoxLogNodeCmp(BkfBlackBoxNode *key1Input, BkfBlackBoxNode *key2InDs)
 {
-    int32_t ret  = BKF_CMP_X(key1Input->keyAddr, key2InDs->keyAddr);
+    int32_t ret = BKF_CMP_X(key1Input->keyAddr, key2InDs->keyAddr);
     if (ret != 0) {
         return ret;
     }
@@ -744,8 +741,8 @@ uint32_t BkfBlackBoxRegType(BkfLog *log, uint16_t type, uint16_t logBuffLen)
     blackBoxType->uintLogBuffLen = logBuffLen;
     blackBoxType->logType = type;
     VOS_AVLL_INIT_NODE(blackBoxType->avlNode);
-    VOS_AVLL_INIT_TREE(blackBoxType->blackBoxInstSet, (AVLL_COMPARE)BkfBlackBoxLogNodeCmp,
-                       0, BKF_OFFSET(BkfBlackBoxNode, avlNode));
+    VOS_AVLL_INIT_TREE(blackBoxType->blackBoxInstSet, (AVLL_COMPARE)BkfBlackBoxLogNodeCmp, 0,
+        BKF_OFFSET(BkfBlackBoxNode, avlNode));
     (void)VOS_AVLL_INSERT(log->blackBoxTypeSet, blackBoxType->avlNode);
     return BKF_OK;
 }
@@ -808,8 +805,8 @@ void BkfBlackBoxLog(BkfLog *log, uint16_t type, void *key, uint32_t bid, const c
     if (!blackBoxType) {
         return;
     }
-    BkfBlackBoxNode tmpLogNode = { .keyAddr = key, .bid = bid };
-    BkfBlackBoxNode *logNode = (BkfBlackBoxNode*)VOS_AVLL_FIND(blackBoxType->blackBoxInstSet, &tmpLogNode);
+    BkfBlackBoxNode tmpLogNode = {.keyAddr = key, .bid = bid};
+    BkfBlackBoxNode *logNode = (BkfBlackBoxNode *)VOS_AVLL_FIND(blackBoxType->blackBoxInstSet, &tmpLogNode);
     if (!logNode) {
         logNode = BkfBlackBoxNewLogNode(log, blackBoxType, key, bid);
     }
@@ -822,8 +819,8 @@ void BkfBlackBoxLog(BkfLog *log, uint16_t type, void *key, uint32_t bid, const c
     int32_t len = 0;
     int32_t ret = 0;
     len += snprintf_truncated_s((char *)logBuf + len, BKF_1K - (uint32_t)len,
-                                "\n<%02hhu%02hhu %02hhu:%02hhu:%02hhu:%03u> ", sysTime.ucMonth,
-                                sysTime.ucDate, sysTime.ucHour, sysTime.ucMinute, sysTime.ucSecond, sysTime.uiMillSec);
+        "\n<%02hhu%02hhu %02hhu:%02hhu:%02hhu:%03u> ", sysTime.ucMonth, sysTime.ucDate, sysTime.ucHour,
+        sysTime.ucMinute, sysTime.ucSecond, sysTime.uiMillSec);
     va_list args;
     va_start(args, format);
     ret = vsnprintf_truncated_s((char *)logBuf + len, BKF_1K - (uint32_t)len, format, args);
@@ -847,8 +844,8 @@ void BkfBlackBoxDelLogInstNode(BkfLog *log, uint16_t type, void *key, uint32_t b
     if (!logType) {
         return;
     }
-    BkfBlackBoxNode tmpLogNode = { .keyAddr = key, .bid = bid };
-    BkfBlackBoxNode *logNode = (BkfBlackBoxNode*)VOS_AVLL_FIND(logType->blackBoxInstSet, &tmpLogNode);
+    BkfBlackBoxNode tmpLogNode = {.keyAddr = key, .bid = bid};
+    BkfBlackBoxNode *logNode = (BkfBlackBoxNode *)VOS_AVLL_FIND(logType->blackBoxInstSet, &tmpLogNode);
     if (!logNode) {
         return;
     }
@@ -864,18 +861,17 @@ void BkfBlackBoxDispOneInstLog(BkfLog *log, uint16_t type, void *key, uint32_t b
     if (!blackBoxType) {
         return;
     }
-    BkfBlackBoxNode tmpLogNode = { .keyAddr = key, .bid = bid };
-    BkfBlackBoxNode *logInst = (BkfBlackBoxNode*)VOS_AVLL_FIND(blackBoxType->blackBoxInstSet, &tmpLogNode);
+    BkfBlackBoxNode tmpLogNode = {.keyAddr = key, .bid = bid};
+    BkfBlackBoxNode *logInst = (BkfBlackBoxNode *)VOS_AVLL_FIND(blackBoxType->blackBoxInstSet, &tmpLogNode);
     if (!logInst) {
         return;
     }
     BKF_DISP_PRINTF(log->argInit.disp, "BlackBoxLog:%#x\n%s\n", BKF_MASK_ADDR(key), logInst->logBuf);
 }
 
-
 void BkfBlackBoxLogDispAll(BkfLog *log)
 {
-    BkfBlackBoxDispCtx currBlackBoxLogCtx = { 0 };
+    BkfBlackBoxDispCtx currBlackBoxLogCtx = {0};
     BkfBlackBoxDispCtx *lastBlackBoxLogCtx = NULL;
     BkfDisp *disp = log->argInit.disp;
     lastBlackBoxLogCtx = BKF_DISP_GET_LAST_CTX(disp, NULL);
@@ -896,8 +892,8 @@ void BkfBlackBoxLogDispAll(BkfLog *log)
             BKF_DISP_PRINTF(disp, "BlackBox log disp end\n");
             return;
         }
-        BkfBlackBoxNode tmBlackBoxNode = { .keyAddr = lastBlackBoxLogCtx->entityKey, .bid = lastBlackBoxLogCtx->bid };
-        entity = (BkfBlackBoxNode*)VOS_AVLL_FIND_NEXT(blackBoxType->blackBoxInstSet, &tmBlackBoxNode);
+        BkfBlackBoxNode tmBlackBoxNode = {.keyAddr = lastBlackBoxLogCtx->entityKey, .bid = lastBlackBoxLogCtx->bid};
+        entity = (BkfBlackBoxNode *)VOS_AVLL_FIND_NEXT(blackBoxType->blackBoxInstSet, &tmBlackBoxNode);
         if (!entity) {
             blackBoxType = (BkfBlackBoxType *)VOS_AVLL_FIND_NEXT(log->blackBoxTypeSet, &lastBlackBoxLogCtx->logType);
             if (!blackBoxType) {
@@ -923,7 +919,7 @@ void BkfBlackBoxLogDispAll(BkfLog *log)
 
 void BkfBlackBoxLogDispSpecType(BkfLog *log, uintptr_t blackboxType)
 {
-    BkfBlackBoxDispCtx currBlackBoxLogCtx = { 0 };
+    BkfBlackBoxDispCtx currBlackBoxLogCtx = {0};
     BkfBlackBoxDispCtx *lastBlackBoxLogCtx = NULL;
     BkfDisp *disp = log->argInit.disp;
     lastBlackBoxLogCtx = BKF_DISP_GET_LAST_CTX(disp, NULL);
@@ -945,8 +941,8 @@ void BkfBlackBoxLogDispSpecType(BkfLog *log, uintptr_t blackboxType)
             BKF_DISP_PRINTF(disp, "BlackBox log disp end %u\n", logType);
             return;
         }
-        BkfBlackBoxNode tmBlackBoxNode = { .keyAddr = lastBlackBoxLogCtx->entityKey, .bid = lastBlackBoxLogCtx->bid };
-        boxNode = (BkfBlackBoxNode*)VOS_AVLL_FIND_NEXT(blackBoxType->blackBoxInstSet, &tmBlackBoxNode);
+        BkfBlackBoxNode tmBlackBoxNode = {.keyAddr = lastBlackBoxLogCtx->entityKey, .bid = lastBlackBoxLogCtx->bid};
+        boxNode = (BkfBlackBoxNode *)VOS_AVLL_FIND_NEXT(blackBoxType->blackBoxInstSet, &tmBlackBoxNode);
         if (!boxNode) {
             BKF_DISP_PRINTF(disp, "BlackBox log type %u disp end\n", logType);
             return;
@@ -970,4 +966,3 @@ void BkfBlackBoxLogDispSpecType(BkfLog *log, uintptr_t blackboxType)
 #ifdef __cplusplus
 }
 #endif
-

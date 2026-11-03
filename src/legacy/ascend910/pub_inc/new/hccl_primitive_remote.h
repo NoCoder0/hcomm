@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef HCCL_PRIMITIVE_REMOTE_H
 #define HCCL_PRIMITIVE_REMOTE_H
@@ -30,7 +30,8 @@ extern "C" {
  * @param[in] locBuf 本地缓冲区描述
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclRemoteWrite(StreamHandle streamHandle, HcclMemTransport memTransport, HcclBuf *rmtBuf, HcclBuf *locBuf);
+extern HcclResult
+HcclRemoteWrite(StreamHandle streamHandle, HcclMemTransport memTransport, HcclBuf* rmtBuf, HcclBuf* locBuf);
 
 /**
  * @brief 执行远端读操作
@@ -40,7 +41,8 @@ extern HcclResult HcclRemoteWrite(StreamHandle streamHandle, HcclMemTransport me
  * @param[in] rmtBuf 源远端缓冲区
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclRemoteRead(StreamHandle streamHandle, HcclMemTransport memTransport, HcclBuf *locBuf, HcclBuf *rmtBuf);
+extern HcclResult
+HcclRemoteRead(StreamHandle streamHandle, HcclMemTransport memTransport, HcclBuf* locBuf, HcclBuf* rmtBuf);
 
 /**
  * @brief 带规约的远端写操作
@@ -52,7 +54,8 @@ extern HcclResult HcclRemoteRead(StreamHandle streamHandle, HcclMemTransport mem
  * @return 执行状态码 HcclResult
  */
 extern HcclResult HcclRemoteWriteReduce(
-    StreamHandle streamHandle, HcclMemTransport memTransport, HcclBuf *rmtBuf, HcclBuf *locBuf, HcclReduceInfo reduceInfo);
+    StreamHandle streamHandle, HcclMemTransport memTransport, HcclBuf* rmtBuf, HcclBuf* locBuf,
+    HcclReduceInfo reduceInfo);
 
 /**
  * @brief 带规约的远端读操作
@@ -64,7 +67,8 @@ extern HcclResult HcclRemoteWriteReduce(
  * @return 执行状态码 HcclResult
  */
 extern HcclResult HcclRemoteReadReduce(
-    StreamHandle streamHandle, HcclMemTransport memTransport, HcclBuf *locBuf, HcclBuf *rmtBuf, HcclReduceInfo reduceInfo);
+    StreamHandle streamHandle, HcclMemTransport memTransport, HcclBuf* locBuf, HcclBuf* rmtBuf,
+    HcclReduceInfo reduceInfo);
 
 /**
  * @brief 记录远端通知事件（生产者）
@@ -73,7 +77,8 @@ extern HcclResult HcclRemoteReadReduce(
  * @param[in] notifyIndex 通知索引号
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclRemoteNotifyRecord(StreamHandle streamHandle, HcclMemTransport memTransport, uint32_t notifyIndex);
+extern HcclResult
+HcclRemoteNotifyRecord(StreamHandle streamHandle, HcclMemTransport memTransport, uint32_t notifyIndex);
 
 /**
  * @brief 等待远端通知事件（消费者）
@@ -82,8 +87,8 @@ extern HcclResult HcclRemoteNotifyRecord(StreamHandle streamHandle, HcclMemTrans
  * @param[in] notifyIndex 通知索引号
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclRemoteNotifyWait(StreamHandle streamHandle, HcclMemTransport memTransport, uint32_t notifyIndex,
-    const uint32_t timeOut);
+extern HcclResult HcclRemoteNotifyWait(
+    StreamHandle streamHandle, HcclMemTransport memTransport, uint32_t notifyIndex, const uint32_t timeOut);
 
 /**
  * @brief 带通知的远端写操作
@@ -95,7 +100,7 @@ extern HcclResult HcclRemoteNotifyWait(StreamHandle streamHandle, HcclMemTranspo
  * @return 执行状态码 HcclResult
  */
 extern HcclResult HcclRemoteWriteWithNotify(
-    StreamHandle streamHandle, HcclMemTransport memTransport, HcclBuf *rmtBuf, HcclBuf *locBuf, uint32_t notifyIndex);
+    StreamHandle streamHandle, HcclMemTransport memTransport, HcclBuf* rmtBuf, HcclBuf* locBuf, uint32_t notifyIndex);
 
 /**
  * @brief 带通知和规约的远端写操作
@@ -107,8 +112,9 @@ extern HcclResult HcclRemoteWriteWithNotify(
  * @param[in] notifyIndex 通知索引号
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclRemoteWriteReduceWithNotify(StreamHandle streamHandle, HcclMemTransport memTransport,
-    HcclBuf *rmtBuf, HcclBuf *locBuf, HcclReduceInfo reduceInfo, uint32_t notifyIndex);
+extern HcclResult HcclRemoteWriteReduceWithNotify(
+    StreamHandle streamHandle, HcclMemTransport memTransport, HcclBuf* rmtBuf, HcclBuf* locBuf,
+    HcclReduceInfo reduceInfo, uint32_t notifyIndex);
 
 /**
  * @brief 远端内存访问顺序栅栏
@@ -128,7 +134,7 @@ extern HcclResult HcclRemoteFence(StreamHandle streamHandle, HcclMemTransport me
  * @return 执行状态码 HcclResult
  */
 extern HcclResult HcclRemoteBatchWrite(
-    StreamHandle streamHandle, HcclMemTransport memTransport, HcclBufPair *bufPairs, uint32_t bufPairNum);
+    StreamHandle streamHandle, HcclMemTransport memTransport, HcclBufPair* bufPairs, uint32_t bufPairNum);
 
 /**
  * @brief 批量远端读操作
@@ -139,7 +145,7 @@ extern HcclResult HcclRemoteBatchWrite(
  * @return 执行状态码 HcclResult
  */
 extern HcclResult HcclRemoteBatchRead(
-    StreamHandle streamHandle, HcclMemTransport memTransport, HcclBufPair *bufPairs, uint32_t bufPairNum);
+    StreamHandle streamHandle, HcclMemTransport memTransport, HcclBufPair* bufPairs, uint32_t bufPairNum);
 
 /**
  * @brief 批量远端传输操作（支持读写/规约等复合操作）
@@ -150,7 +156,8 @@ extern HcclResult HcclRemoteBatchRead(
  * @return 执行状态码 HcclResult
  */
 extern HcclResult HcclRemoteBatchTransfer(
-    StreamHandle streamHandle, HcclMemTransport memTransport, const HcclBatchTransferInfo *transferInfo, uint32_t bufPairNum);
+    StreamHandle streamHandle, HcclMemTransport memTransport, const HcclBatchTransferInfo* transferInfo,
+    uint32_t bufPairNum);
 
 /**
  * @brief 单边阻塞等待接口

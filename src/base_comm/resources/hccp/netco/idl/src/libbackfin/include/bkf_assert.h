@@ -34,18 +34,20 @@ static inline void BkfLogAssertInfo(char *funcName, uint16_t line)
     return;
 }
 
-#define BKF_ASSERT(expr) do {                 \
-    if (!(expr)) {                            \
-        VOS_ASSERT(0);                        \
-        BkfLogAssertInfo((char *)__func__, __LINE__); \
-    }                                                  \
-} while (0)
+#define BKF_ASSERT(expr)                                                                                               \
+    do {                                                                                                               \
+        if (!(expr)) {                                                                                                 \
+            VOS_ASSERT(0);                                                                                             \
+            BkfLogAssertInfo((char *)__func__, __LINE__);                                                              \
+        }                                                                                                              \
+    } while (0)
 
-#define BKF_ASSERT_WITHLOG(expr, file, line, log) do {       \
-    if (!(expr)) {                               \
-        VOS_ASSERT(0);                           \
-    }                                            \
-} while (0)
+#define BKF_ASSERT_WITHLOG(expr, file, line, log)                                                                      \
+    do {                                                                                                               \
+        if (!(expr)) {                                                                                                 \
+            VOS_ASSERT(0);                                                                                             \
+        }                                                                                                              \
+    } while (0)
 
 #ifdef __cplusplus
 }

@@ -11,34 +11,26 @@
 #include "stream.h"
 
 namespace hccl {
-Stream::Stream()
-{
-}
+Stream::Stream() {}
 
+Stream::~Stream() {}
 
-Stream::~Stream()
-{
-}
+Stream::Stream(const Stream& that) : stream_(that.ptr()), isMainStream_(that.isMainStream_), streamId_(that.streamId_)
+{}
 
-Stream::Stream(const Stream &that)
-    : stream_(that.ptr()), isMainStream_(that.isMainStream_), streamId_(that.streamId_) {
-    }
-
-Stream::Stream(Stream &&that)
-    : stream_(that.ptr()), isMainStream_(that.isMainStream_), streamId_(that.streamId_)
+Stream::Stream(Stream&& that) : stream_(that.ptr()), isMainStream_(that.isMainStream_), streamId_(that.streamId_)
 {
     that.stream_ = nullptr;
 }
 
 Stream::Stream(const rtStream_t rtStream, bool isMainStream)
-    : stream_(const_cast<void *>(rtStream)), isMainStream_(isMainStream)
-{
-}
-
-Stream::Stream(const StreamType streamType, bool isMainStream)
+    : stream_(const_cast<void*>(rtStream)),
+      isMainStream_(isMainStream)
 {}
 
-Stream Stream::operator=(Stream &&that)
+Stream::Stream(const StreamType streamType, bool isMainStream) {}
+
+Stream Stream::operator=(Stream&& that)
 {
     if (&that != this) {
         stream_ = that.stream_;
@@ -49,7 +41,7 @@ Stream Stream::operator=(Stream &&that)
     return *this;
 }
 
-Stream &Stream::operator=(const Stream &that)
+Stream& Stream::operator=(const Stream& that)
 {
     if (&that != this) {
         stream_ = that.ptr();
@@ -59,10 +51,7 @@ Stream &Stream::operator=(const Stream &that)
     return *this;
 }
 
-HcclResult Stream::PopTaskLogicInfo(TaskLogicInfo &taskLogicInfo)
-{
-    return HCCL_SUCCESS;
-}
+HcclResult Stream::PopTaskLogicInfo(TaskLogicInfo& taskLogicInfo) { return HCCL_SUCCESS; }
 
 StreamAddrRecorder* StreamAddrRecorder::Global()
 {
@@ -70,4 +59,4 @@ StreamAddrRecorder* StreamAddrRecorder::Global()
     return streamAddrRecorder;
 }
 
-}  // namespace hccl
+} // namespace hccl

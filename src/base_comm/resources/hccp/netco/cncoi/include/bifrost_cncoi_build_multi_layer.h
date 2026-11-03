@@ -16,8 +16,7 @@
 extern "C" {
 #endif
 
-static SIMPO_INLINE int32_t BifrostCncoiComminfoEntryPacketNumAdd(SimpoBuilderT *builder,
-    uint16_t value)
+static SIMPO_INLINE int32_t BifrostCncoiComminfoEntryPacketNumAdd(SimpoBuilderT *builder, uint16_t value)
 {
     if (builder->errorCode != SIMPO_BUILD_OK) {
         return builder->errorCode;
@@ -42,7 +41,7 @@ static SIMPO_INLINE int32_t BifrostCncoiComminfoEntrySendRankInfoIgnored(SimpoBu
         builder->errorCode = SIMPO_BUILD_NOMEM;
     }
     SIMPO_CHECK_OPER_ORDER(builder, 1, BifrostCncoiComminfoEntrySendRankInfoDeprecated, 2);
-    *((uint32_t*)(builder->curWriteAddr)) = 0;
+    *((uint32_t *)(builder->curWriteAddr)) = 0;
     builder->curWriteAddr += SIMPO_BUILD_LENGTH_SIZE;
     return builder->errorCode;
 }
@@ -66,7 +65,7 @@ static SIMPO_INLINE int32_t BifrostCncoiComminfoEntrySendRankInfoEnd(SimpoBuilde
     if (builder->errorCode != SIMPO_BUILD_OK) {
         return builder->errorCode;
     }
-    *((uint32_t*)(builder->structVecLengthAddr)) = builder->structVecLength;
+    *((uint32_t *)(builder->structVecLengthAddr)) = builder->structVecLength;
 
     return SIMPO_BUILD_OK;
 }
@@ -96,8 +95,7 @@ static SIMPO_INLINE int32_t BifrostCncoiComminfoEntryMd5sumCreate(SimpoBuilderT 
 
     return SIMPO_BUILD_OK;
 }
-static SIMPO_INLINE int32_t BifrostCncoiComminfoEntryRankTotalNumAdd(SimpoBuilderT *builder,
-    uint16_t value)
+static SIMPO_INLINE int32_t BifrostCncoiComminfoEntryRankTotalNumAdd(SimpoBuilderT *builder, uint16_t value)
 {
     if (builder->errorCode != SIMPO_BUILD_OK) {
         return builder->errorCode;
@@ -106,8 +104,7 @@ static SIMPO_INLINE int32_t BifrostCncoiComminfoEntryRankTotalNumAdd(SimpoBuilde
     *((uint16_t *)(builder->curWriteAddr + 16)) = value;
     return SIMPO_BUILD_OK;
 }
-static SIMPO_INLINE int32_t BifrostCncoiComminfoEntryResv2Add(SimpoBuilderT *builder,
-    uint16_t value)
+static SIMPO_INLINE int32_t BifrostCncoiComminfoEntryResv2Add(SimpoBuilderT *builder, uint16_t value)
 {
     if (builder->errorCode != SIMPO_BUILD_OK) {
         return builder->errorCode;
@@ -123,7 +120,7 @@ static SIMPO_INLINE int32_t BifrostCncoiComminfoEntryRankInfoIgnored(SimpoBuilde
         builder->errorCode = SIMPO_BUILD_NOMEM;
     }
     SIMPO_CHECK_OPER_ORDER(builder, 1, BifrostCncoiComminfoEntryRankInfoDeprecated, 6);
-    *((uint32_t*)(builder->curWriteAddr)) = 0;
+    *((uint32_t *)(builder->curWriteAddr)) = 0;
     builder->curWriteAddr += SIMPO_BUILD_LENGTH_SIZE;
     return builder->errorCode;
 }
@@ -147,7 +144,7 @@ static SIMPO_INLINE int32_t BifrostCncoiComminfoEntryRankInfoEnd(SimpoBuilderT *
     if (builder->errorCode != SIMPO_BUILD_OK) {
         return builder->errorCode;
     }
-    *((uint32_t*)(builder->structVecLengthAddr)) = builder->structVecLength;
+    *((uint32_t *)(builder->structVecLengthAddr)) = builder->structVecLength;
 
     return SIMPO_BUILD_OK;
 }
@@ -209,7 +206,7 @@ static SIMPO_INLINE int32_t BifrostCncoiAdjacencyEntryAdjInfoIgnored(SimpoBuilde
         builder->errorCode = SIMPO_BUILD_NOMEM;
     }
     SIMPO_CHECK_OPER_ORDER(builder, 1, BifrostCncoiAdjacencyEntryAdjInfoDeprecated, 0);
-    *((uint32_t*)(builder->curWriteAddr)) = 0;
+    *((uint32_t *)(builder->curWriteAddr)) = 0;
     builder->curWriteAddr += SIMPO_BUILD_LENGTH_SIZE;
     return builder->errorCode;
 }
@@ -232,13 +229,12 @@ static SIMPO_INLINE int32_t BifrostCncoiAdjacencyEntryAdjInfoEnd(SimpoBuilderT *
     if (builder->errorCode != SIMPO_BUILD_OK) {
         return builder->errorCode;
     }
-    *((uint32_t*)(builder->structVecLengthAddr)) = builder->structVecLength;
+    *((uint32_t *)(builder->structVecLengthAddr)) = builder->structVecLength;
 
     return SIMPO_BUILD_OK;
 }
 
-static SIMPO_INLINE int32_t BifrostCncoiAdjacencyEntryAdjInfoPush(SimpoBuilderT *builder,
-    BifrostCncoiAdjInfoT *input)
+static SIMPO_INLINE int32_t BifrostCncoiAdjacencyEntryAdjInfoPush(SimpoBuilderT *builder, BifrostCncoiAdjInfoT *input)
 {
     if (builder->curWriteAddr + sizeof(BifrostCncoiAdjInfoT) > builder->bufferEnd) {
         builder->errorCode = SIMPO_BUILD_NOMATCH;
@@ -251,8 +247,7 @@ static SIMPO_INLINE int32_t BifrostCncoiAdjacencyEntryAdjInfoPush(SimpoBuilderT 
     return SIMPO_BUILD_OK;
 }
 
-static SIMPO_INLINE int32_t BifrostCncoiRankEntryPacketNumAdd(SimpoBuilderT *builder,
-    uint16_t value)
+static SIMPO_INLINE int32_t BifrostCncoiRankEntryPacketNumAdd(SimpoBuilderT *builder, uint16_t value)
 {
     if (builder->errorCode != SIMPO_BUILD_OK) {
         return builder->errorCode;
@@ -277,7 +272,7 @@ static SIMPO_INLINE int32_t BifrostCncoiRankEntrySendRankInfoIgnored(SimpoBuilde
         builder->errorCode = SIMPO_BUILD_NOMEM;
     }
     SIMPO_CHECK_OPER_ORDER(builder, 1, BifrostCncoiRankEntrySendRankInfoDeprecated, 2);
-    *((uint32_t*)(builder->curWriteAddr)) = 0;
+    *((uint32_t *)(builder->curWriteAddr)) = 0;
     builder->curWriteAddr += SIMPO_BUILD_LENGTH_SIZE;
     return builder->errorCode;
 }
@@ -301,7 +296,7 @@ static SIMPO_INLINE int32_t BifrostCncoiRankEntrySendRankInfoEnd(SimpoBuilderT *
     if (builder->errorCode != SIMPO_BUILD_OK) {
         return builder->errorCode;
     }
-    *((uint32_t*)(builder->structVecLengthAddr)) = builder->structVecLength;
+    *((uint32_t *)(builder->structVecLengthAddr)) = builder->structVecLength;
 
     return SIMPO_BUILD_OK;
 }
@@ -319,8 +314,7 @@ static SIMPO_INLINE int32_t BifrostCncoiRankEntrySendRankInfoPush(SimpoBuilderT 
 
     return SIMPO_BUILD_OK;
 }
-static SIMPO_INLINE int32_t BifrostCncoiRankEntryMd5sumCreate(SimpoBuilderT *builder,
-    BifrostCncoiCommMd5sumT *value)
+static SIMPO_INLINE int32_t BifrostCncoiRankEntryMd5sumCreate(SimpoBuilderT *builder, BifrostCncoiCommMd5sumT *value)
 {
     if (builder->curWriteAddr + 20 > builder->bufferEnd) {
         builder->errorCode = SIMPO_BUILD_NOMEM;
@@ -331,8 +325,7 @@ static SIMPO_INLINE int32_t BifrostCncoiRankEntryMd5sumCreate(SimpoBuilderT *bui
 
     return SIMPO_BUILD_OK;
 }
-static SIMPO_INLINE int32_t BifrostCncoiRankEntryRankTotalNumAdd(SimpoBuilderT *builder,
-    uint32_t value)
+static SIMPO_INLINE int32_t BifrostCncoiRankEntryRankTotalNumAdd(SimpoBuilderT *builder, uint32_t value)
 {
     if (builder->errorCode != SIMPO_BUILD_OK) {
         return builder->errorCode;
@@ -348,7 +341,7 @@ static SIMPO_INLINE int32_t BifrostCncoiRankEntryRankInfoIgnored(SimpoBuilderT *
         builder->errorCode = SIMPO_BUILD_NOMEM;
     }
     SIMPO_CHECK_OPER_ORDER(builder, 1, BifrostCncoiRankEntryRankInfoDeprecated, 5);
-    *((uint32_t*)(builder->curWriteAddr)) = 0;
+    *((uint32_t *)(builder->curWriteAddr)) = 0;
     builder->curWriteAddr += SIMPO_BUILD_LENGTH_SIZE;
     return builder->errorCode;
 }
@@ -372,13 +365,12 @@ static SIMPO_INLINE int32_t BifrostCncoiRankEntryRankInfoEnd(SimpoBuilderT *buil
     if (builder->errorCode != SIMPO_BUILD_OK) {
         return builder->errorCode;
     }
-    *((uint32_t*)(builder->structVecLengthAddr)) = builder->structVecLength;
+    *((uint32_t *)(builder->structVecLengthAddr)) = builder->structVecLength;
 
     return SIMPO_BUILD_OK;
 }
 
-static SIMPO_INLINE int32_t BifrostCncoiRankEntryRankInfoPush(SimpoBuilderT *builder,
-    BifrostCncoiRankInfoT *input)
+static SIMPO_INLINE int32_t BifrostCncoiRankEntryRankInfoPush(SimpoBuilderT *builder, BifrostCncoiRankInfoT *input)
 {
     if (builder->curWriteAddr + sizeof(BifrostCncoiRankInfoT) > builder->bufferEnd) {
         builder->errorCode = SIMPO_BUILD_NOMATCH;
@@ -391,8 +383,7 @@ static SIMPO_INLINE int32_t BifrostCncoiRankEntryRankInfoPush(SimpoBuilderT *bui
     return SIMPO_BUILD_OK;
 }
 
-static SIMPO_INLINE int32_t BifrostCncoiRankDistributeEntryServerIpAdd(SimpoBuilderT *builder,
-    uint32_t value)
+static SIMPO_INLINE int32_t BifrostCncoiRankDistributeEntryServerIpAdd(SimpoBuilderT *builder, uint32_t value)
 {
     if (builder->errorCode != SIMPO_BUILD_OK) {
         return builder->errorCode;
@@ -401,8 +392,7 @@ static SIMPO_INLINE int32_t BifrostCncoiRankDistributeEntryServerIpAdd(SimpoBuil
     ((BifrostCncoiRankDistributeEntryT *)(builder->curWriteAddr))->serverIp = value;
     return SIMPO_BUILD_OK;
 }
-static SIMPO_INLINE int32_t BifrostCncoiRankDistributeEntryNodeIdAdd(SimpoBuilderT *builder,
-    uint32_t value)
+static SIMPO_INLINE int32_t BifrostCncoiRankDistributeEntryNodeIdAdd(SimpoBuilderT *builder, uint32_t value)
 {
     if (builder->errorCode != SIMPO_BUILD_OK) {
         return builder->errorCode;
@@ -411,8 +401,7 @@ static SIMPO_INLINE int32_t BifrostCncoiRankDistributeEntryNodeIdAdd(SimpoBuilde
     ((BifrostCncoiRankDistributeEntryT *)(builder->curWriteAddr))->nodeId = value;
     return SIMPO_BUILD_OK;
 }
-static SIMPO_INLINE int32_t BifrostCncoiRankDistributeEntryLocalRankNumAdd(SimpoBuilderT *builder,
-    uint8_t value)
+static SIMPO_INLINE int32_t BifrostCncoiRankDistributeEntryLocalRankNumAdd(SimpoBuilderT *builder, uint8_t value)
 {
     if (builder->errorCode != SIMPO_BUILD_OK) {
         return builder->errorCode;
@@ -421,8 +410,7 @@ static SIMPO_INLINE int32_t BifrostCncoiRankDistributeEntryLocalRankNumAdd(Simpo
     ((BifrostCncoiRankDistributeEntryT *)(builder->curWriteAddr))->localRankNum = value;
     return SIMPO_BUILD_OK;
 }
-static SIMPO_INLINE int32_t BifrostCncoiRankDistributeEntryPad1Add(SimpoBuilderT *builder,
-    uint8_t value)
+static SIMPO_INLINE int32_t BifrostCncoiRankDistributeEntryPad1Add(SimpoBuilderT *builder, uint8_t value)
 {
     if (builder->errorCode != SIMPO_BUILD_OK) {
         return builder->errorCode;
@@ -431,8 +419,7 @@ static SIMPO_INLINE int32_t BifrostCncoiRankDistributeEntryPad1Add(SimpoBuilderT
     ((BifrostCncoiRankDistributeEntryT *)(builder->curWriteAddr))->pad1 = value;
     return SIMPO_BUILD_OK;
 }
-static SIMPO_INLINE int32_t BifrostCncoiRankDistributeEntryPad2Add(SimpoBuilderT *builder,
-    uint16_t value)
+static SIMPO_INLINE int32_t BifrostCncoiRankDistributeEntryPad2Add(SimpoBuilderT *builder, uint16_t value)
 {
     if (builder->errorCode != SIMPO_BUILD_OK) {
         return builder->errorCode;
@@ -441,8 +428,7 @@ static SIMPO_INLINE int32_t BifrostCncoiRankDistributeEntryPad2Add(SimpoBuilderT
     ((BifrostCncoiRankDistributeEntryT *)(builder->curWriteAddr))->pad2 = value;
     return SIMPO_BUILD_OK;
 }
-static SIMPO_INLINE int32_t BifrostCncoiRankDistributeEntryRankTotalNumAdd(
-    SimpoBuilderT *builder, uint32_t value)
+static SIMPO_INLINE int32_t BifrostCncoiRankDistributeEntryRankTotalNumAdd(SimpoBuilderT *builder, uint32_t value)
 {
     if (builder->errorCode != SIMPO_BUILD_OK) {
         return builder->errorCode;
@@ -458,7 +444,7 @@ static SIMPO_INLINE int32_t BifrostCncoiRootRankEntryRootRankInfoIgnored(SimpoBu
         builder->errorCode = SIMPO_BUILD_NOMEM;
     }
     SIMPO_CHECK_OPER_ORDER(builder, 1, BifrostCncoiRootRankEntryRootRankInfoDeprecated, 0);
-    *((uint32_t*)(builder->curWriteAddr)) = 0;
+    *((uint32_t *)(builder->curWriteAddr)) = 0;
     builder->curWriteAddr += SIMPO_BUILD_LENGTH_SIZE;
     return builder->errorCode;
 }
@@ -481,7 +467,7 @@ static SIMPO_INLINE int32_t BifrostCncoiRootRankEntryRootRankInfoEnd(SimpoBuilde
     if (builder->errorCode != SIMPO_BUILD_OK) {
         return builder->errorCode;
     }
-    *((uint32_t*)(builder->structVecLengthAddr)) = builder->structVecLength;
+    *((uint32_t *)(builder->structVecLengthAddr)) = builder->structVecLength;
 
     return SIMPO_BUILD_OK;
 }
@@ -499,8 +485,8 @@ static SIMPO_INLINE int32_t BifrostCncoiRootRankEntryRootRankInfoPush(SimpoBuild
 
     return SIMPO_BUILD_OK;
 }
-static SIMPO_INLINE int32_t BifrostCncoiComminfoUpdateStartAsRoot(SimpoBuilderT *builder,
-    uint8_t *buffer, uint32_t bufferLen)
+static SIMPO_INLINE int32_t BifrostCncoiComminfoUpdateStartAsRoot(SimpoBuilderT *builder, uint8_t *buffer,
+    uint32_t bufferLen)
 {
     builder->buffer = buffer;
     builder->bufferEnd = buffer + bufferLen;
@@ -527,8 +513,7 @@ static SIMPO_INLINE int32_t BifrostCncoiComminfoUpdateEndAsRoot(SimpoBuilderT *b
 
     return size;
 }
-static SIMPO_INLINE int32_t BifrostCncoiComminfoUpdateKeyCreate(SimpoBuilderT *builder,
-    BifrostCncoiComminfoKeyT *value)
+static SIMPO_INLINE int32_t BifrostCncoiComminfoUpdateKeyCreate(SimpoBuilderT *builder, BifrostCncoiComminfoKeyT *value)
 {
     if (builder->errorCode != SIMPO_BUILD_OK) {
         return builder->errorCode;
@@ -559,11 +544,11 @@ static SIMPO_INLINE int32_t BifrostCncoiComminfoUpdateEntryEnd(SimpoBuilderT *bu
     }
     SIMPO_CHECK_OPER_END(builder, 1, BifrostCncoiComminfoUpdateEntryEnd, 6);
     uint32_t len = builder->curWriteAddr - builder->tempWriteAddr[1] - SIMPO_BUILD_LENGTH_SIZE;
-    *((uint32_t*)(builder->tempWriteAddr[1])) = len;
+    *((uint32_t *)(builder->tempWriteAddr[1])) = len;
     return SIMPO_BUILD_OK;
 }
-static SIMPO_INLINE int32_t BifrostCncoiComminfoDeleteStartAsRoot(SimpoBuilderT *builder,
-    uint8_t *buffer, uint32_t bufferLen)
+static SIMPO_INLINE int32_t BifrostCncoiComminfoDeleteStartAsRoot(SimpoBuilderT *builder, uint8_t *buffer,
+    uint32_t bufferLen)
 {
     builder->buffer = buffer;
     builder->bufferEnd = buffer + bufferLen;
@@ -590,8 +575,7 @@ static SIMPO_INLINE int32_t BifrostCncoiComminfoDeleteEndAsRoot(SimpoBuilderT *b
 
     return size;
 }
-static SIMPO_INLINE int32_t BifrostCncoiComminfoDeleteKeyCreate(SimpoBuilderT *builder,
-    BifrostCncoiComminfoKeyT *value)
+static SIMPO_INLINE int32_t BifrostCncoiComminfoDeleteKeyCreate(SimpoBuilderT *builder, BifrostCncoiComminfoKeyT *value)
 {
     if (builder->errorCode != SIMPO_BUILD_OK) {
         return builder->errorCode;
@@ -629,8 +613,7 @@ static SIMPO_INLINE int32_t BifrostCncoiOperatorUpdateEndAsRoot(SimpoBuilderT *b
 
     return size;
 }
-static SIMPO_INLINE int32_t BifrostCncoiOperatorUpdateKeyCreate(SimpoBuilderT *builder,
-    BifrostCncoiOperatorKeyT *value)
+static SIMPO_INLINE int32_t BifrostCncoiOperatorUpdateKeyCreate(SimpoBuilderT *builder, BifrostCncoiOperatorKeyT *value)
 {
     if (builder->errorCode != SIMPO_BUILD_OK) {
         return builder->errorCode;
@@ -649,7 +632,7 @@ static SIMPO_INLINE int32_t BifrostCncoiOperatorUpdateEntryStart(SimpoBuilderT *
     }
     SIMPO_CHECK_OPER_ORDER(builder, 3, BifrostCncoiOperatorUpdateEntryStart, 1);
     SIMPO_OPER_INIT(builder, 1);
-    *((uint32_t*)(builder->curWriteAddr)) = 16;
+    *((uint32_t *)(builder->curWriteAddr)) = 16;
     builder->curWriteAddr += SIMPO_BUILD_LENGTH_SIZE;
     return builder->errorCode;
 }
@@ -689,8 +672,7 @@ static SIMPO_INLINE int32_t BifrostCncoiOperatorDeleteEndAsRoot(SimpoBuilderT *b
 
     return size;
 }
-static SIMPO_INLINE int32_t BifrostCncoiOperatorDeleteKeyCreate(SimpoBuilderT *builder,
-    BifrostCncoiOperatorKeyT *value)
+static SIMPO_INLINE int32_t BifrostCncoiOperatorDeleteKeyCreate(SimpoBuilderT *builder, BifrostCncoiOperatorKeyT *value)
 {
     if (builder->errorCode != SIMPO_BUILD_OK) {
         return builder->errorCode;
@@ -700,8 +682,8 @@ static SIMPO_INLINE int32_t BifrostCncoiOperatorDeleteKeyCreate(SimpoBuilderT *b
 
     return SIMPO_BUILD_OK;
 }
-static SIMPO_INLINE int32_t BifrostCncoiAdjacencyUpdateStartAsRoot(SimpoBuilderT *builder,
-    uint8_t *buffer, uint32_t bufferLen)
+static SIMPO_INLINE int32_t BifrostCncoiAdjacencyUpdateStartAsRoot(SimpoBuilderT *builder, uint8_t *buffer,
+    uint32_t bufferLen)
 {
     builder->buffer = buffer;
     builder->bufferEnd = buffer + bufferLen;
@@ -756,11 +738,11 @@ static SIMPO_INLINE int32_t BifrostCncoiAdjacencyUpdateEntryEnd(SimpoBuilderT *b
     }
     SIMPO_CHECK_OPER_END(builder, 1, BifrostCncoiAdjacencyUpdateEntryEnd, 0);
     uint32_t len = builder->curWriteAddr - builder->tempWriteAddr[1] - SIMPO_BUILD_LENGTH_SIZE;
-    *((uint32_t*)(builder->tempWriteAddr[1])) = len;
+    *((uint32_t *)(builder->tempWriteAddr[1])) = len;
     return SIMPO_BUILD_OK;
 }
-static SIMPO_INLINE int32_t BifrostCncoiAdjacencyDeleteStartAsRoot(SimpoBuilderT *builder,
-    uint8_t *buffer, uint32_t bufferLen)
+static SIMPO_INLINE int32_t BifrostCncoiAdjacencyDeleteStartAsRoot(SimpoBuilderT *builder, uint8_t *buffer,
+    uint32_t bufferLen)
 {
     builder->buffer = buffer;
     builder->bufferEnd = buffer + bufferLen;
@@ -798,8 +780,8 @@ static SIMPO_INLINE int32_t BifrostCncoiAdjacencyDeleteKeyCreate(SimpoBuilderT *
 
     return SIMPO_BUILD_OK;
 }
-static SIMPO_INLINE int32_t BifrostCncoiRankUpdateStartAsRoot(SimpoBuilderT *builder,
-    uint8_t *buffer, uint32_t bufferLen)
+static SIMPO_INLINE int32_t BifrostCncoiRankUpdateStartAsRoot(SimpoBuilderT *builder, uint8_t *buffer,
+    uint32_t bufferLen)
 {
     builder->buffer = buffer;
     builder->bufferEnd = buffer + bufferLen;
@@ -826,8 +808,7 @@ static SIMPO_INLINE int32_t BifrostCncoiRankUpdateEndAsRoot(SimpoBuilderT *build
 
     return size;
 }
-static SIMPO_INLINE int32_t BifrostCncoiRankUpdateKeyCreate(SimpoBuilderT *builder,
-    BifrostCncoiRankKeyT *value)
+static SIMPO_INLINE int32_t BifrostCncoiRankUpdateKeyCreate(SimpoBuilderT *builder, BifrostCncoiRankKeyT *value)
 {
     if (builder->errorCode != SIMPO_BUILD_OK) {
         return builder->errorCode;
@@ -858,11 +839,11 @@ static SIMPO_INLINE int32_t BifrostCncoiRankUpdateEntryEnd(SimpoBuilderT *builde
     }
     SIMPO_CHECK_OPER_END(builder, 1, BifrostCncoiRankUpdateEntryEnd, 5);
     uint32_t len = builder->curWriteAddr - builder->tempWriteAddr[1] - SIMPO_BUILD_LENGTH_SIZE;
-    *((uint32_t*)(builder->tempWriteAddr[1])) = len;
+    *((uint32_t *)(builder->tempWriteAddr[1])) = len;
     return SIMPO_BUILD_OK;
 }
-static SIMPO_INLINE int32_t BifrostCncoiRankDeleteStartAsRoot(SimpoBuilderT *builder,
-    uint8_t *buffer, uint32_t bufferLen)
+static SIMPO_INLINE int32_t BifrostCncoiRankDeleteStartAsRoot(SimpoBuilderT *builder, uint8_t *buffer,
+    uint32_t bufferLen)
 {
     builder->buffer = buffer;
     builder->bufferEnd = buffer + bufferLen;
@@ -889,8 +870,7 @@ static SIMPO_INLINE int32_t BifrostCncoiRankDeleteEndAsRoot(SimpoBuilderT *build
 
     return size;
 }
-static SIMPO_INLINE int32_t BifrostCncoiRankDeleteKeyCreate(SimpoBuilderT *builder,
-    BifrostCncoiRankKeyT *value)
+static SIMPO_INLINE int32_t BifrostCncoiRankDeleteKeyCreate(SimpoBuilderT *builder, BifrostCncoiRankKeyT *value)
 {
     if (builder->errorCode != SIMPO_BUILD_OK) {
         return builder->errorCode;
@@ -900,8 +880,8 @@ static SIMPO_INLINE int32_t BifrostCncoiRankDeleteKeyCreate(SimpoBuilderT *build
 
     return SIMPO_BUILD_OK;
 }
-static SIMPO_INLINE int32_t BifrostCncoiRankDistributeUpdateStartAsRoot(SimpoBuilderT *builder,
-    uint8_t *buffer, uint32_t bufferLen)
+static SIMPO_INLINE int32_t BifrostCncoiRankDistributeUpdateStartAsRoot(SimpoBuilderT *builder, uint8_t *buffer,
+    uint32_t bufferLen)
 {
     builder->buffer = buffer;
     builder->bufferEnd = buffer + bufferLen;
@@ -948,7 +928,7 @@ static SIMPO_INLINE int32_t BifrostCncoiRankDistributeUpdateEntryStart(SimpoBuil
     }
     SIMPO_CHECK_OPER_ORDER(builder, 3, BifrostCncoiRankDistributeUpdateEntryStart, 1);
     SIMPO_OPER_INIT(builder, 1);
-    *((uint32_t*)(builder->curWriteAddr)) = 16;
+    *((uint32_t *)(builder->curWriteAddr)) = 16;
     builder->curWriteAddr += SIMPO_BUILD_LENGTH_SIZE;
     return builder->errorCode;
 }
@@ -960,8 +940,8 @@ static SIMPO_INLINE int32_t BifrostCncoiRankDistributeUpdateEntryEnd(SimpoBuilde
 
     return builder->errorCode;
 }
-static SIMPO_INLINE int32_t BifrostCncoiRankDistributeDeleteStartAsRoot(SimpoBuilderT *builder,
-    uint8_t *buffer, uint32_t bufferLen)
+static SIMPO_INLINE int32_t BifrostCncoiRankDistributeDeleteStartAsRoot(SimpoBuilderT *builder, uint8_t *buffer,
+    uint32_t bufferLen)
 {
     builder->buffer = buffer;
     builder->bufferEnd = buffer + bufferLen;
@@ -999,8 +979,8 @@ static SIMPO_INLINE int32_t BifrostCncoiRankDistributeDeleteKeyCreate(SimpoBuild
 
     return SIMPO_BUILD_OK;
 }
-static SIMPO_INLINE int32_t BifrostCncoiRootRankUpdateStartAsRoot(SimpoBuilderT *builder,
-    uint8_t *buffer, uint32_t bufferLen)
+static SIMPO_INLINE int32_t BifrostCncoiRootRankUpdateStartAsRoot(SimpoBuilderT *builder, uint8_t *buffer,
+    uint32_t bufferLen)
 {
     builder->buffer = buffer;
     builder->bufferEnd = buffer + bufferLen;
@@ -1027,8 +1007,7 @@ static SIMPO_INLINE int32_t BifrostCncoiRootRankUpdateEndAsRoot(SimpoBuilderT *b
 
     return size;
 }
-static SIMPO_INLINE int32_t BifrostCncoiRootRankUpdateKeyCreate(SimpoBuilderT *builder,
-    BifrostCncoiRootRankKeyT *value)
+static SIMPO_INLINE int32_t BifrostCncoiRootRankUpdateKeyCreate(SimpoBuilderT *builder, BifrostCncoiRootRankKeyT *value)
 {
     if (builder->errorCode != SIMPO_BUILD_OK) {
         return builder->errorCode;
@@ -1055,11 +1034,11 @@ static SIMPO_INLINE int32_t BifrostCncoiRootRankUpdateEntryEnd(SimpoBuilderT *bu
     }
     SIMPO_CHECK_OPER_END(builder, 1, BifrostCncoiRootRankUpdateEntryEnd, 0);
     uint32_t len = builder->curWriteAddr - builder->tempWriteAddr[1] - SIMPO_BUILD_LENGTH_SIZE;
-    *((uint32_t*)(builder->tempWriteAddr[1])) = len;
+    *((uint32_t *)(builder->tempWriteAddr[1])) = len;
     return SIMPO_BUILD_OK;
 }
-static SIMPO_INLINE int32_t BifrostCncoiRootRankDeleteStartAsRoot(SimpoBuilderT *builder,
-    uint8_t *buffer, uint32_t bufferLen)
+static SIMPO_INLINE int32_t BifrostCncoiRootRankDeleteStartAsRoot(SimpoBuilderT *builder, uint8_t *buffer,
+    uint32_t bufferLen)
 {
     builder->buffer = buffer;
     builder->bufferEnd = buffer + bufferLen;
@@ -1086,8 +1065,7 @@ static SIMPO_INLINE int32_t BifrostCncoiRootRankDeleteEndAsRoot(SimpoBuilderT *b
 
     return size;
 }
-static SIMPO_INLINE int32_t BifrostCncoiRootRankDeleteKeyCreate(SimpoBuilderT *builder,
-    BifrostCncoiRootRankKeyT *value)
+static SIMPO_INLINE int32_t BifrostCncoiRootRankDeleteKeyCreate(SimpoBuilderT *builder, BifrostCncoiRootRankKeyT *value)
 {
     if (builder->errorCode != SIMPO_BUILD_OK) {
         return builder->errorCode;

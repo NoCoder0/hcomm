@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "transport_heterog_raw_roce.h"
 #include "adapter_hccp.h"
@@ -23,31 +23,27 @@ constexpr u32 RECV_WQE_BATCH_NUM = MEM_BLOCK_RECV_WQE_BATCH_NUM;
 constexpr u32 RECV_WQE_NUM_THRESHOLD = 96;
 constexpr u32 RECV_WQE_BATCH_SUPPLEMENT = 96;
 
-TransportHeterogRawRoce::TransportHeterogRawRoce(const std::string &transTag, HcclIpAddress &selfIp,
-    HcclIpAddress &peerIp, u32 peerPort, u32 selfPort, const TransportResourceInfo &transportResourceInfo)
+TransportHeterogRawRoce::TransportHeterogRawRoce(
+    const std::string& transTag, HcclIpAddress& selfIp, HcclIpAddress& peerIp, u32 peerPort, u32 selfPort,
+    const TransportResourceInfo& transportResourceInfo)
     : TransportHeterogRoce(transTag, selfIp, peerIp, peerPort, selfPort, transportResourceInfo)
-{
-}
+{}
 
-TransportHeterogRawRoce::~TransportHeterogRawRoce()
-{
-}
+TransportHeterogRawRoce::~TransportHeterogRawRoce() {}
 
-HcclResult TransportHeterogRawRoce::Init()
-{
-    return HCCL_SUCCESS;
-}
+HcclResult TransportHeterogRawRoce::Init() { return HCCL_SUCCESS; }
 
-HcclResult TransportHeterogRawRoce::Init(SocketInfoT &socketInfo, RdmaHandle rdmaHandle, MrHandle mrHandle)
+HcclResult TransportHeterogRawRoce::Init(SocketInfoT& socketInfo, RdmaHandle rdmaHandle, MrHandle mrHandle)
 {
     CHK_PTR_NULL(socketInfo.socketHandle);
     CHK_PTR_NULL(socketInfo.fdHandle);
     CHK_PTR_NULL(rdmaHandle);
     CHK_PTR_NULL(mrHandle);
-    HCCL_INFO("TransportHeterogRawRoce Init start socketHandle[%p] fdHandle[%p] rdmaHandle[%p] mrHandle[%p]",
+    HCCL_INFO(
+        "TransportHeterogRawRoce Init start socketHandle[%p] fdHandle[%p] rdmaHandle[%p] mrHandle[%p]",
         socketInfo.socketHandle, socketInfo.fdHandle, rdmaHandle, mrHandle);
 
-    mrManager_ = static_cast<MrManager *>(mrHandle);
+    mrManager_ = static_cast<MrManager*>(mrHandle);
     nicRdmaHandle_ = rdmaHandle;
     nicSocketHandle_ = socketInfo.socketHandle;
 
@@ -70,10 +66,10 @@ HcclResult TransportHeterogRawRoce::Init(SocketInfoT &socketInfo, RdmaHandle rdm
 
 HcclResult TransportHeterogRawRoce::CreateCqAndQp()
 {
-    CHK_RET(CreateQpWithSharedCq(nicRdmaHandle_, selfIp_, peerIp_, -1, -1,
-        tagQpInfo_, TAG_QP_APPEND, MAX_SCATTER_BUF_NUM));
-    CHK_RET(CreateQpWithSharedCq(nicRdmaHandle_, selfIp_, peerIp_, -1, -1,
-        dataQpInfo_, DATA_QP_APPEND, MAX_SCATTER_BUF_NUM));
+    CHK_RET(
+        CreateQpWithSharedCq(nicRdmaHandle_, selfIp_, peerIp_, -1, -1, tagQpInfo_, TAG_QP_APPEND, MAX_SCATTER_BUF_NUM));
+    CHK_RET(CreateQpWithSharedCq(
+        nicRdmaHandle_, selfIp_, peerIp_, -1, -1, dataQpInfo_, DATA_QP_APPEND, MAX_SCATTER_BUF_NUM));
     return HCCL_SUCCESS;
 }
 
@@ -164,13 +160,15 @@ HcclResult TransportHeterogRawRoce::LoopStateProcess()
             CHK_RET(TryTransition(testRet, completed, ConnState::CONN_STATE_SEND_TAG_QP_INFO));
             break;
         case ConnState::CONN_STATE_SEND_TAG_QP_INFO:
-            testRet = SocketSend(initSM_.locInitInfo.socketInfo[0].fdHandle, &localTagModifyInfo_,
-                initSM_.size, initSM_.completeSize, completed);
+            testRet = SocketSend(
+                initSM_.locInitInfo.socketInfo[0].fdHandle, &localTagModifyInfo_, initSM_.size, initSM_.completeSize,
+                completed);
             CHK_RET(TryTransition(testRet, completed, ConnState::CONN_STATE_RECV_TAG_QP_INFO));
             break;
         case ConnState::CONN_STATE_RECV_TAG_QP_INFO:
-            testRet = SocketRecv(initSM_.locInitInfo.socketInfo[0].fdHandle, &remoteTagModifyInfo_,
-                initSM_.size, initSM_.completeSize, completed);
+            testRet = SocketRecv(
+                initSM_.locInitInfo.socketInfo[0].fdHandle, &remoteTagModifyInfo_, initSM_.size, initSM_.completeSize,
+                completed);
             CHK_RET(TryTransition(testRet, completed, ConnState::CONN_STATE_MODIFY_TAG_QP));
             break;
         case ConnState::CONN_STATE_MODIFY_TAG_QP:
@@ -182,13 +180,15 @@ HcclResult TransportHeterogRawRoce::LoopStateProcess()
             CHK_RET(TryTransition(testRet, completed, ConnState::CONN_STATE_SEND_DATA_QP_INFO));
             break;
         case ConnState::CONN_STATE_SEND_DATA_QP_INFO:
-            testRet = SocketSend(initSM_.locInitInfo.socketInfo[0].fdHandle, &localDataModifyInfo_,
-                initSM_.size, initSM_.completeSize, completed);
+            testRet = SocketSend(
+                initSM_.locInitInfo.socketInfo[0].fdHandle, &localDataModifyInfo_, initSM_.size, initSM_.completeSize,
+                completed);
             CHK_RET(TryTransition(testRet, completed, ConnState::CONN_STATE_RECV_DATA_QP_INFO));
             break;
         case ConnState::CONN_STATE_RECV_DATA_QP_INFO:
-            testRet = SocketRecv(initSM_.locInitInfo.socketInfo[0].fdHandle, &remoteDataModifyInfo_,
-                initSM_.size, initSM_.completeSize, completed);
+            testRet = SocketRecv(
+                initSM_.locInitInfo.socketInfo[0].fdHandle, &remoteDataModifyInfo_, initSM_.size, initSM_.completeSize,
+                completed);
             CHK_RET(TryTransition(testRet, completed, ConnState::CONN_STATE_MODIFY_DATA_QP));
             break;
         case ConnState::CONN_STATE_MODIFY_DATA_QP:
@@ -196,24 +196,27 @@ HcclResult TransportHeterogRawRoce::LoopStateProcess()
             CHK_RET(TryTransition(testRet, completed, ConnState::CONN_STATE_SEND_STATUS));
             break;
         case ConnState::CONN_STATE_SEND_STATUS:
-            testRet = SocketSend(initSM_.locInitInfo.socketInfo[0].fdHandle,
-                &(initSM_.locInitInfo.signal), initSM_.size, initSM_.completeSize, completed);
+            testRet = SocketSend(
+                initSM_.locInitInfo.socketInfo[0].fdHandle, &(initSM_.locInitInfo.signal), initSM_.size,
+                initSM_.completeSize, completed);
             CHK_RET(TryTransition(testRet, completed, ConnState::CONN_STATE_RECV_STATUS));
             break;
         case ConnState::CONN_STATE_RECV_STATUS:
-            testRet = SocketRecv(initSM_.locInitInfo.socketInfo[0].fdHandle,
-                &(initSM_.remInitInfo.signal), initSM_.size, initSM_.completeSize, completed);
+            testRet = SocketRecv(
+                initSM_.locInitInfo.socketInfo[0].fdHandle, &(initSM_.remInitInfo.signal), initSM_.size,
+                initSM_.completeSize, completed);
             CHK_RET(TryTransition(testRet, completed, ConnState::CONN_STATE_COMPLETE));
             break;
         default:
-            HCCL_ERROR("Establish communication connection failed[%s]: state[%u]",
-                initSM_.locInitInfo.socketInfo[0].tag, GetState());
+            HCCL_ERROR(
+                "Establish communication connection failed[%s]: state[%u]", initSM_.locInitInfo.socketInfo[0].tag,
+                GetState());
             return HCCL_E_INTERNAL;
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRawRoce::PrepareModifyInfo(struct QpAttr &qpAttr, struct TypicalQp &typicalQpInfo)
+HcclResult TransportHeterogRawRoce::PrepareModifyInfo(struct QpAttr& qpAttr, struct TypicalQp& typicalQpInfo)
 {
     typicalQpInfo.qpn = qpAttr.qpn;
     typicalQpInfo.psn = qpAttr.psn;
@@ -222,26 +225,28 @@ HcclResult TransportHeterogRawRoce::PrepareModifyInfo(struct QpAttr &qpAttr, str
     typicalQpInfo.sl = GetExternalInputRdmaServerLevel();
     typicalQpInfo.retryCnt = GetExternalInputRdmaRetryCnt();
     typicalQpInfo.retryTime = GetExternalInputRdmaTimeOut();
-    CHK_SAFETY_FUNC_RET(memcpy_s(typicalQpInfo.gid, HCCP_GID_RAW_LEN , qpAttr.gid, HCCP_GID_RAW_LEN ));
-    HCCL_INFO("TransportHeterogRawRoce ModifyInfo qpn[%u] psn[%u] gid_idxp[%u] gid[%p] tc[%u] sl[%u] retryCnt[%u]"
-        "retryTime[%u]", typicalQpInfo.qpn, typicalQpInfo.psn, typicalQpInfo.gidIdx, typicalQpInfo.gid,
-        typicalQpInfo.tc, typicalQpInfo.sl, typicalQpInfo.retryCnt, typicalQpInfo.retryTime);
+    CHK_SAFETY_FUNC_RET(memcpy_s(typicalQpInfo.gid, HCCP_GID_RAW_LEN, qpAttr.gid, HCCP_GID_RAW_LEN));
+    HCCL_INFO(
+        "TransportHeterogRawRoce ModifyInfo qpn[%u] psn[%u] gid_idxp[%u] gid[%p] tc[%u] sl[%u] retryCnt[%u] "
+        "retryTime[%u]",
+        typicalQpInfo.qpn, typicalQpInfo.psn, typicalQpInfo.gidIdx, typicalQpInfo.gid, typicalQpInfo.tc,
+        typicalQpInfo.sl, typicalQpInfo.retryCnt, typicalQpInfo.retryTime);
 
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRawRoce::ImrecvScatter(void *buf[], int count[], int bufCount, HcclDataType datatype,
-    HcclMessageInfo &msg, HcclRequestInfo *&request)
+HcclResult TransportHeterogRawRoce::ImrecvScatter(
+    void* buf[], int count[], int bufCount, HcclDataType datatype, HcclMessageInfo& msg, HcclRequestInfo*& request)
 {
     CHK_RET(CheckRecvScatterEnvelope(buf, count, bufCount, datatype, msg.envelope));
     CHK_RET(GenerateRecvScatterRequest(msg, request));
 
-    HcclEnvelope &envelope = msg.envelope.envelope;
+    HcclEnvelope& envelope = msg.envelope.envelope;
     u32 dataSize = SIZE_TABLE[datatype];
     for (s32 i = 0; i < bufCount; i++) {
         u32 lkey = 0;
         u64 dstBuf = reinterpret_cast<u64>(buf[i]);
-        CHK_RET(RegMr(reinterpret_cast<void *>(dstBuf), static_cast<u64>(count[i] * dataSize), lkey));
+        CHK_RET(RegMr(reinterpret_cast<void*>(dstBuf), static_cast<u64>(count[i] * dataSize), lkey));
         dataReadSgeArry_[i].lkey = lkey;
     }
 
@@ -264,17 +269,18 @@ HcclResult TransportHeterogRawRoce::ImrecvScatter(void *buf[], int count[], int 
     dataAckSge_.lkey = 0;
     dataAckWrScatter_.wr_id = 0;
 
-    struct ibv_send_wr *badWr = nullptr;
-    HCCL_INFO("rdma read: remote addr[%llu] count[%d] datatype[%s] wrId[%llu] num_sge[%d] qpHandle[%p]",
+    struct ibv_send_wr* badWr = nullptr;
+    HCCL_INFO(
+        "rdma read: remote addr[%llu] count[%d] datatype[%s] wrId[%llu] num_sge[%d] qpHandle[%p]",
         reinterpret_cast<u64>(envelope.transData.srcBuf), envelope.transData.count,
-        GetDataTypeEnumStr(envelope.transData.dataType).c_str(), dataReadWr_.wr_id, bufCount,
-        dataQpInfo_.qp);
+        GetDataTypeEnumStr(envelope.transData.dataType).c_str(), dataReadWr_.wr_id, bufCount, dataQpInfo_.qp);
     HcclResult ret = hrtIbvPostSend(dataQpInfo_.qp, &dataReadWrScatter_, &badWr);
     if (ret != HCCL_SUCCESS) {
         if (ret == HCCL_E_AGAIN) {
             HCCL_WARNING("rdma read post send wqe overflow.[%d]", ret);
         } else {
-            HCCL_ERROR("rdma read fail: remote addr[%llx] count[%d] datatype[%s] wrId[%llu] bufCount[%d]",
+            HCCL_ERROR(
+                "rdma read fail: remote addr[%llx] count[%d] datatype[%s] wrId[%llu] bufCount[%d]",
                 reinterpret_cast<u64>(envelope.transData.srcBuf), envelope.transData.count,
                 GetDataTypeEnumStr(envelope.transData.dataType).c_str(), dataReadWr_.wr_id, bufCount);
         }
@@ -286,32 +292,34 @@ HcclResult TransportHeterogRawRoce::ImrecvScatter(void *buf[], int count[], int 
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRawRoce::GetQpAttr(QpHandle &qpHandle, struct QpAttr *attr, bool &completed)
+HcclResult TransportHeterogRawRoce::GetQpAttr(QpHandle& qpHandle, struct QpAttr* attr, bool& completed)
 {
     HcclResult ret = hrtRaGetQpAttr(qpHandle, attr);
     if (ret == HCCL_SUCCESS) {
         completed = true;
     } else {
-        HCCL_ERROR("GetQpAttr fail qpHandle[%p] qpn[%u] udpSport[%u] psn[%u] gidIdx[%u] gid[%p] completed[%u]",
-        qpHandle, attr->qpn, attr->udpSport, attr->psn, attr->gidIdx, attr->gid, completed);
+        HCCL_ERROR(
+            "GetQpAttr fail qpHandle[%p] qpn[%u] udpSport[%u] psn[%u] gidIdx[%u] gid[%p] completed[%u]", qpHandle,
+            attr->qpn, attr->udpSport, attr->psn, attr->gidIdx, attr->gid, completed);
     }
     return ret;
 }
 
-HcclResult TransportHeterogRawRoce::TypicalQpModify(QpHandle &qpHandle, struct TypicalQp* localQpInfo,
-    struct TypicalQp* remoteQpInfo, bool &completed)
+HcclResult TransportHeterogRawRoce::TypicalQpModify(
+    QpHandle& qpHandle, struct TypicalQp* localQpInfo, struct TypicalQp* remoteQpInfo, bool& completed)
 {
     HcclResult ret = hrtRaTypicalQpModify(qpHandle, localQpInfo, remoteQpInfo);
     if (ret == HCCL_SUCCESS) {
         completed = true;
     } else if (ret != HCCL_E_AGAIN) {
-        HCCL_ERROR("hrtRaTypicalQpModify fail qpHandle[%p] completed[%u]"
+        HCCL_ERROR(
+            "hrtRaTypicalQpModify fail qpHandle[%p] completed[%u] "
             "local: qpn[%u] psn[%u] gidIdx[%u] gid[%p] tc[%u] sl[%u] retryCnt[%u] retryTime[%u]"
-            "remote: qpn[%u] psn[%u] gidIdx[%u] gid[%p] tc[%u] sl[%u]  retryCnt[%u] retryTime[%u] ",
+            "remote: qpn[%u] psn[%u] gidIdx[%u] gid[%p] tc[%u] sl[%u] retryCnt[%u] retryTime[%u] ",
             qpHandle, completed, localQpInfo->qpn, localQpInfo->psn, localQpInfo->gidIdx, localQpInfo->gid,
-            localQpInfo->tc, localQpInfo->sl, localQpInfo->retryCnt, localQpInfo->retryTime,
-            remoteQpInfo->qpn, remoteQpInfo->psn, remoteQpInfo->gidIdx, remoteQpInfo->gid, remoteQpInfo->tc,
-            remoteQpInfo->sl, remoteQpInfo->retryCnt, remoteQpInfo->retryTime);
+            localQpInfo->tc, localQpInfo->sl, localQpInfo->retryCnt, localQpInfo->retryTime, remoteQpInfo->qpn,
+            remoteQpInfo->psn, remoteQpInfo->gidIdx, remoteQpInfo->gid, remoteQpInfo->tc, remoteQpInfo->sl,
+            remoteQpInfo->retryCnt, remoteQpInfo->retryTime);
     }
     return ret;
 }

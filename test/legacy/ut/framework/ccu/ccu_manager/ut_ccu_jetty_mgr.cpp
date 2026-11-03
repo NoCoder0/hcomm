@@ -15,7 +15,6 @@
 #define private public
 #define protected public
 
-
 #include "ccu_jetty_mgr.h"
 
 #include "hccl_common_v2.h"
@@ -27,7 +26,7 @@
 
 using namespace Hccl;
 
-class CcuJettyMgrTest: public testing::Test {
+class CcuJettyMgrTest : public testing::Test {
 protected:
     static void SetUpTestCase()
     {
@@ -35,21 +34,21 @@ protected:
         GlobalMockObject::reset();
         std::cout << "CcuJettyMgrTest tests set up." << std::endl;
     }
- 
+
     static void TearDownTestCase()
     {
         GlobalMockObject::verify();
         GlobalMockObject::reset();
         std::cout << "CcuJettyMgrTest tests tear down." << std::endl;
     }
- 
+
     virtual void SetUp()
     {
         GlobalMockObject::verify();
         GlobalMockObject::reset();
         std::cout << "A Test case in CcuJettyMgrTest SetUP" << std::endl;
     }
- 
+
     virtual void TearDown()
     {
         GlobalMockObject::verify();
@@ -61,8 +60,8 @@ protected:
 constexpr uint32_t CCU_CHANNLE_GOURP_SIZE = 8; // 真实环境，ccu v1 为 1，ccu v2 根据配比关系确定
 constexpr uint32_t CCU_JETTY_GOURP_SIZE = 2; // 真实环境，ccu v1 默认为 1，可变，ccu v2 根据配比关系确定
 
-HcclResult CcuAllocChannelsStub(const int32_t deviceLogicId, const CcuChannelPara &channelPara,
-    std::vector<CcuChannelInfo> &channelInfos)
+HcclResult CcuAllocChannelsStub(
+    const int32_t deviceLogicId, const CcuChannelPara& channelPara, std::vector<CcuChannelInfo>& channelInfos)
 {
     static uint32_t channelCnt = 0;
     static uint32_t jettyCnt = 0;
@@ -80,9 +79,9 @@ HcclResult CcuAllocChannelsStub(const int32_t deviceLogicId, const CcuChannelPar
         channelInfo.channelId = 0 + channelCnt;
         channelCnt += 1; // 保证 channel id 申请总是不同
         channelInfo.dieId = 1;
-        
+
         vector<unique_ptr<CcuJetty>> ccuJettys;
-        vector<CcuJetty *> ccuJettyPtrs;
+        vector<CcuJetty*> ccuJettyPtrs;
         for (uint32_t i = 0; i < CCU_JETTY_GOURP_SIZE; i++) {
             CcuJettyInfo jettyInfo;
             jettyInfo.jettyCtxId = 0 + jettyCnt + i; // 保证同一组channel jetty编号一致
@@ -96,7 +95,7 @@ HcclResult CcuAllocChannelsStub(const int32_t deviceLogicId, const CcuChannelPar
             ccuJettyPtrs.emplace_back(ccuJetty.get());
             ccuJettys.emplace_back(std::move(ccuJetty));
         }
-        
+
         channelInfos.emplace_back(channelInfo);
     }
 
@@ -107,7 +106,7 @@ HcclResult CcuAllocChannelsStub(const int32_t deviceLogicId, const CcuChannelPar
 
 void MockPlatformDeps(uint32_t ccuVersion)
 {
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().with(mockcpp::any()).will(returnValue((DevId)(MAX_MODULE_DEVICE_NUM)));
+    MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().with(mockcpp::any()).will(returnValue((DevId)(MAX_MODULE_DEVICE_NUM)));
     MOCKER_CPP(&RdmaHandleManager::GetByIp).stubs().will(returnValue((void*)0x12345678));
     pair<uint32_t, uint32_t> fakeDieFuncPair = make_pair(1, 4);
     MOCKER_CPP(&RdmaHandleManager::GetDieAndFuncId).stubs().will(returnValue(fakeDieFuncPair));
@@ -122,7 +121,6 @@ void MockPlatformDeps(uint32_t ccuVersion)
 
 vector<LinkData> MockMultiLinkData(uint32_t baseIpAddrInt, uint32_t num)
 {
-    
     vector<LinkData> links;
     for (uint32_t i = 0; i < num; i++) {
         BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
@@ -132,7 +130,7 @@ vector<LinkData> MockMultiLinkData(uint32_t baseIpAddrInt, uint32_t num)
         for (uint32_t j = 0; j < num; j++) {
             link.remoteAddr_ = IpAddress(baseIpAddrInt + j);
             links.push_back(link);
-        } 
+        }
     }
 
     return links;
@@ -142,7 +140,7 @@ TEST_F(CcuJettyMgrTest, Ut_GetChannelJettys_When_InterfaceOk_Expect_Return_Ok)
 {
     const uint32_t baseIpAddrInt = 100;
     const uint32_t rankNum = 4;
-    const auto &links = MockMultiLinkData(baseIpAddrInt, rankNum);
+    const auto& links = MockMultiLinkData(baseIpAddrInt, rankNum);
     const uint32_t linkNum = links.size();
     MockPlatformDeps(0);
 
@@ -150,9 +148,9 @@ TEST_F(CcuJettyMgrTest, Ut_GetChannelJettys_When_InterfaceOk_Expect_Return_Ok)
     CcuJettyMgr ccuJettyMgr(devLogicId);
 
     EXPECT_EQ(ccuJettyMgr.PrepareCreate(links), HcclResult::HCCL_SUCCESS);
-    for (const auto &link: links) {
-        std::pair<CcuChannelInfo, std::vector<CcuJetty *>> channelJettyPair;
-        EXPECT_NO_THROW(channelJettyPair = ccuJettyMgr.GetChannelJettys(link));
+    for (const auto& link : links) {
+        std::pair<CcuChannelInfo, std::vector<CcuJetty*>> channelJettyPair;
+        EXPECT_EQ(ccuJettyMgr.GetChannelJettys(link, channelJettyPair), HcclResult::HCCL_SUCCESS);
     }
     // 打桩的channel分配函数，每个本端分配8个channel
     EXPECT_EQ(ccuJettyMgr.unconfirmedRecord_.allocations.size(), linkNum);
@@ -161,9 +159,9 @@ TEST_F(CcuJettyMgrTest, Ut_GetChannelJettys_When_InterfaceOk_Expect_Return_Ok)
 
     // 模拟新一轮算子下发，链路与之前重叠
     EXPECT_EQ(ccuJettyMgr.PrepareCreate(links), HcclResult::HCCL_SUCCESS);
-    for (const auto &link: links) {
-        std::pair<CcuChannelInfo, std::vector<CcuJetty *>> channelJettyPair;
-        EXPECT_NO_THROW(channelJettyPair = ccuJettyMgr.GetChannelJettys(link));
+    for (const auto& link : links) {
+        std::pair<CcuChannelInfo, std::vector<CcuJetty*>> channelJettyPair;
+        EXPECT_EQ(ccuJettyMgr.GetChannelJettys(link, channelJettyPair), HcclResult::HCCL_SUCCESS);
     }
     // channel全部复用
     EXPECT_EQ(ccuJettyMgr.unconfirmedRecord_.allocations.size(), 0);
@@ -174,9 +172,9 @@ TEST_F(CcuJettyMgrTest, Ut_GetChannelJettys_When_InterfaceOk_Expect_Return_Ok)
     uint32_t newAddrNum = 2;
     auto newLinks = MockMultiLinkData(baseIpAddrInt - newAddrNum, rankNum + newAddrNum);
     EXPECT_EQ(ccuJettyMgr.PrepareCreate(newLinks), HcclResult::HCCL_SUCCESS);
-    for (const auto &link: newLinks) {
-        std::pair<CcuChannelInfo, std::vector<CcuJetty *>> channelJettyPair;
-        EXPECT_NO_THROW(channelJettyPair = ccuJettyMgr.GetChannelJettys(link));
+    for (const auto& link : newLinks) {
+        std::pair<CcuChannelInfo, std::vector<CcuJetty*>> channelJettyPair;
+        EXPECT_EQ(ccuJettyMgr.GetChannelJettys(link, channelJettyPair), HcclResult::HCCL_SUCCESS);
     }
     // 新增两条两条连续需要申请
     uint32_t newRankNum = rankNum + newAddrNum;
@@ -188,8 +186,8 @@ TEST_F(CcuJettyMgrTest, Ut_GetChannelJettys_When_InterfaceOk_Expect_Return_Ok)
 TEST_F(CcuJettyMgrTest, Ut_GetChannelJettysAndNeedAllocResOverOneTime_When_InterfaceOk_Expect_Return_Ok)
 {
     const uint32_t baseIpAddrInt = 100;
-    const uint32_t rankNum = 10; // 模拟数量超过单轮申请数量
-    const auto &links = MockMultiLinkData(baseIpAddrInt, rankNum); // rank * rank 个链路
+    const uint32_t rankNum = 10;                                   // 模拟数量超过单轮申请数量
+    const auto& links = MockMultiLinkData(baseIpAddrInt, rankNum); // rank * rank 个链路
     const uint32_t linkNum = links.size();
     MockPlatformDeps(0);
 
@@ -197,9 +195,9 @@ TEST_F(CcuJettyMgrTest, Ut_GetChannelJettysAndNeedAllocResOverOneTime_When_Inter
     CcuJettyMgr ccuJettyMgr(devLogicId);
 
     EXPECT_EQ(ccuJettyMgr.PrepareCreate(links), HcclResult::HCCL_SUCCESS);
-    for (const auto &link: links) {
-        std::pair<CcuChannelInfo, std::vector<CcuJetty *>> channelJettyPair;
-        EXPECT_NO_THROW(channelJettyPair = ccuJettyMgr.GetChannelJettys(link));
+    for (const auto& link : links) {
+        std::pair<CcuChannelInfo, std::vector<CcuJetty*>> channelJettyPair;
+        EXPECT_EQ(ccuJettyMgr.GetChannelJettys(link, channelJettyPair), HcclResult::HCCL_SUCCESS);
     }
     // 打桩的channel分配函数，每个本端分配8个channel
     EXPECT_EQ(ccuJettyMgr.unconfirmedRecord_.allocations.size(), linkNum);
@@ -208,7 +206,7 @@ TEST_F(CcuJettyMgrTest, Ut_GetChannelJettysAndNeedAllocResOverOneTime_When_Inter
     ccuJettyMgr.Confirm();
 }
 
-static void CheckCcuJettyMgrDataEmpty(const CcuJettyMgr &ccuJettyMgr)
+static void CheckCcuJettyMgrDataEmpty(const CcuJettyMgr& ccuJettyMgr)
 {
     EXPECT_EQ(ccuJettyMgr.batchMap_.empty(), true);
 
@@ -223,7 +221,7 @@ TEST_F(CcuJettyMgrTest, Ut_AllocResUnavailable_When_InterfaceRetUnavailable_Expe
 {
     const uint32_t baseIpAddrInt = 100;
     const uint32_t rankNum = 4;
-    const auto &links = MockMultiLinkData(baseIpAddrInt, rankNum);
+    const auto& links = MockMultiLinkData(baseIpAddrInt, rankNum);
 
     MOCKER(CcuAllocChannels).stubs().will(returnValue(HcclResult::HCCL_E_UNAVAIL));
 
@@ -238,7 +236,7 @@ TEST_F(CcuJettyMgrTest, Ut_ReleaseTempRes_When_CatchUnexpectedThrow_Expect_ResIs
 {
     const uint32_t baseIpAddrInt = 100;
     const uint32_t rankNum = 4;
-    const auto &links = MockMultiLinkData(baseIpAddrInt, rankNum);
+    const auto& links = MockMultiLinkData(baseIpAddrInt, rankNum);
     const uint32_t linkNum = links.size();
     MockPlatformDeps(0);
 
@@ -255,7 +253,7 @@ TEST_F(CcuJettyMgrTest, Ut_Fallback_When_InterfaceOk_Expect_NoThrow)
 {
     const uint32_t baseIpAddrInt = 100;
     const uint32_t rankNum = 4;
-    const auto &links = MockMultiLinkData(baseIpAddrInt, rankNum);
+    const auto& links = MockMultiLinkData(baseIpAddrInt, rankNum);
     const uint32_t linkNum = links.size();
     MockPlatformDeps(0);
 
@@ -263,14 +261,14 @@ TEST_F(CcuJettyMgrTest, Ut_Fallback_When_InterfaceOk_Expect_NoThrow)
     CcuJettyMgr ccuJettyMgr(devLogicId);
 
     EXPECT_EQ(ccuJettyMgr.PrepareCreate(links), HcclResult::HCCL_SUCCESS);
-    for (const auto &link: links) {
-        std::pair<CcuChannelInfo, std::vector<CcuJetty *>> channelJettyPair;
-        EXPECT_NO_THROW(channelJettyPair = ccuJettyMgr.GetChannelJettys(link));
+    for (const auto& link : links) {
+        std::pair<CcuChannelInfo, std::vector<CcuJetty*>> channelJettyPair;
+        EXPECT_EQ(ccuJettyMgr.GetChannelJettys(link, channelJettyPair), HcclResult::HCCL_SUCCESS);
     }
     // 打桩的channel分配函数，每个本端分配8个channel
     EXPECT_EQ(ccuJettyMgr.unconfirmedRecord_.allocations.size(), linkNum);
     EXPECT_EQ(ccuJettyMgr.unconfirmedRecord_.newBatchSet.size(), rankNum); // rankNum个远端
-    
+
     EXPECT_NO_THROW(ccuJettyMgr.Fallback());
     CheckCcuJettyMgrDataEmpty(ccuJettyMgr); // 因为是首轮申请所以全空
 }
@@ -279,7 +277,7 @@ TEST_F(CcuJettyMgrTest, Ut_FallbackAndGetChannelJettys_When_InterfaceOk_Expect_R
 {
     const uint32_t baseIpAddrInt = 100;
     const uint32_t rankNum = 4;
-    const auto &links = MockMultiLinkData(baseIpAddrInt, rankNum);
+    const auto& links = MockMultiLinkData(baseIpAddrInt, rankNum);
     const uint32_t linkNum = links.size();
     MockPlatformDeps(0);
 
@@ -287,39 +285,39 @@ TEST_F(CcuJettyMgrTest, Ut_FallbackAndGetChannelJettys_When_InterfaceOk_Expect_R
     CcuJettyMgr ccuJettyMgr(devLogicId);
 
     EXPECT_EQ(ccuJettyMgr.PrepareCreate(links), HcclResult::HCCL_SUCCESS);
-    for (const auto &link: links) {
-        std::pair<CcuChannelInfo, std::vector<CcuJetty *>> channelJettyPair;
-        EXPECT_NO_THROW(channelJettyPair = ccuJettyMgr.GetChannelJettys(link));
+    for (const auto& link : links) {
+        std::pair<CcuChannelInfo, std::vector<CcuJetty*>> channelJettyPair;
+        EXPECT_EQ(ccuJettyMgr.GetChannelJettys(link, channelJettyPair), HcclResult::HCCL_SUCCESS);
     }
     // 打桩的channel分配函数，每个本端分配8个channel
     EXPECT_EQ(ccuJettyMgr.unconfirmedRecord_.allocations.size(), linkNum);
     EXPECT_EQ(ccuJettyMgr.unconfirmedRecord_.newBatchSet.size(), rankNum); // rankNum个远端
     ccuJettyMgr.Confirm();
-    
+
     // 以某个ipAddr为例，找到其申请资源的最后批次的剩余资源
-    const uint32_t leftResourceNum =
-        ccuJettyMgr.batchMap_[links[0].GetLocalAddr()].back()->availableChannelIdKeys.size();
+    const uint32_t leftResourceNum
+        = ccuJettyMgr.batchMap_[links[0].GetLocalAddr()].back()->availableChannelIdKeys.size();
     EXPECT_NE(leftResourceNum, 0); // 当前剩余资源应该不为0
 
     // 模拟新一轮算子下发，链路与之前重叠
     EXPECT_EQ(ccuJettyMgr.PrepareCreate(links), HcclResult::HCCL_SUCCESS);
-    for (const auto &link: links) {
-        std::pair<CcuChannelInfo, std::vector<CcuJetty *>> channelJettyPair;
-        EXPECT_NO_THROW(channelJettyPair = ccuJettyMgr.GetChannelJettys(link));
+    for (const auto& link : links) {
+        std::pair<CcuChannelInfo, std::vector<CcuJetty*>> channelJettyPair;
+        EXPECT_EQ(ccuJettyMgr.GetChannelJettys(link, channelJettyPair), HcclResult::HCCL_SUCCESS);
     }
     // channel全部复用
     EXPECT_EQ(ccuJettyMgr.unconfirmedRecord_.allocations.size(), 0);
     EXPECT_EQ(ccuJettyMgr.unconfirmedRecord_.newBatchSet.size(), 0);
 
-    const uint32_t newLeftResourceNum =
-        ccuJettyMgr.batchMap_[links[0].GetLocalAddr()].back()->availableChannelIdKeys.size();
-    EXPECT_NE(newLeftResourceNum, 0); // 当前剩余资源应该不为0
+    const uint32_t newLeftResourceNum
+        = ccuJettyMgr.batchMap_[links[0].GetLocalAddr()].back()->availableChannelIdKeys.size();
+    EXPECT_NE(newLeftResourceNum, 0);               // 当前剩余资源应该不为0
     EXPECT_EQ(newLeftResourceNum, leftResourceNum); // 因全部复用，资源与之前一致
 
     ccuJettyMgr.Fallback(); // fallback，但实际无需释放资源，但需要回退分配请求
 
-    const uint32_t fallbackLeftResourceNum =
-        ccuJettyMgr.batchMap_[links[0].GetLocalAddr()].back()->availableChannelIdKeys.size();
+    const uint32_t fallbackLeftResourceNum
+        = ccuJettyMgr.batchMap_[links[0].GetLocalAddr()].back()->availableChannelIdKeys.size();
     EXPECT_EQ(leftResourceNum, fallbackLeftResourceNum); // 资源回退到上一轮
 }
 
@@ -327,7 +325,7 @@ TEST_F(CcuJettyMgrTest, Ut_CleanAndResume_When_InterfaceOk_Expect_NoThrow)
 {
     const uint32_t baseIpAddrInt = 100;
     const uint32_t rankNum = 4;
-    const auto &links = MockMultiLinkData(baseIpAddrInt, rankNum);
+    const auto& links = MockMultiLinkData(baseIpAddrInt, rankNum);
     const uint32_t linkNum = links.size();
     MockPlatformDeps(0);
 
@@ -335,15 +333,15 @@ TEST_F(CcuJettyMgrTest, Ut_CleanAndResume_When_InterfaceOk_Expect_NoThrow)
     CcuJettyMgr ccuJettyMgr(devLogicId);
 
     EXPECT_EQ(ccuJettyMgr.PrepareCreate(links), HcclResult::HCCL_SUCCESS);
-    for (const auto &link: links) {
-        std::pair<CcuChannelInfo, std::vector<CcuJetty *>> channelJettyPair;
-        EXPECT_NO_THROW(channelJettyPair = ccuJettyMgr.GetChannelJettys(link));
+    for (const auto& link : links) {
+        std::pair<CcuChannelInfo, std::vector<CcuJetty*>> channelJettyPair;
+        EXPECT_EQ(ccuJettyMgr.GetChannelJettys(link, channelJettyPair), HcclResult::HCCL_SUCCESS);
     }
     // 打桩的channel分配函数，每个本端分配8个channel
     EXPECT_EQ(ccuJettyMgr.unconfirmedRecord_.allocations.size(), linkNum);
     EXPECT_EQ(ccuJettyMgr.unconfirmedRecord_.newBatchSet.size(), rankNum); // rankNum个远端
     ccuJettyMgr.Confirm();
-    
+
     EXPECT_NO_THROW(ccuJettyMgr.Clean());
     EXPECT_NE(ccuJettyMgr.allocatedChannelIdMap_.empty(), true); // linkData 不清理
 
@@ -353,9 +351,9 @@ TEST_F(CcuJettyMgrTest, Ut_CleanAndResume_When_InterfaceOk_Expect_NoThrow)
     EXPECT_EQ(ccuJettyMgr.unconfirmedRecord_.newBatchSet.empty(), true);
 
     EXPECT_NO_THROW(ccuJettyMgr.Resume());
-    for (const auto &link: links) {
-        std::pair<CcuChannelInfo, std::vector<CcuJetty *>> channelJettyPair;
-        EXPECT_NO_THROW(channelJettyPair = ccuJettyMgr.GetChannelJettys(link));
+    for (const auto& link : links) {
+        std::pair<CcuChannelInfo, std::vector<CcuJetty*>> channelJettyPair;
+        EXPECT_EQ(ccuJettyMgr.GetChannelJettys(link, channelJettyPair), HcclResult::HCCL_SUCCESS);
     }
 }
 
@@ -363,7 +361,7 @@ TEST_F(CcuJettyMgrTest, Ut_GetUsedChannelCount_When_InterfaceOk_Expect_Ok)
 {
     const uint32_t baseIpAddrInt = 100;
     const uint32_t rankNum = 4;
-    const auto &links = MockMultiLinkData(baseIpAddrInt, rankNum);
+    const auto& links = MockMultiLinkData(baseIpAddrInt, rankNum);
     const uint32_t linkNum = links.size();
     MockPlatformDeps(0);
 
@@ -371,9 +369,9 @@ TEST_F(CcuJettyMgrTest, Ut_GetUsedChannelCount_When_InterfaceOk_Expect_Ok)
     CcuJettyMgr ccuJettyMgr(devLogicId);
 
     EXPECT_EQ(ccuJettyMgr.PrepareCreate(links), HcclResult::HCCL_SUCCESS);
-    for (const auto &link: links) {
-        std::pair<CcuChannelInfo, std::vector<CcuJetty *>> channelJettyPair;
-        EXPECT_NO_THROW(channelJettyPair = ccuJettyMgr.GetChannelJettys(link));
+    for (const auto& link : links) {
+        std::pair<CcuChannelInfo, std::vector<CcuJetty*>> channelJettyPair;
+        EXPECT_EQ(ccuJettyMgr.GetChannelJettys(link, channelJettyPair), HcclResult::HCCL_SUCCESS);
     }
     // 打桩的channel分配函数，每个本端分配8个channel
     EXPECT_EQ(ccuJettyMgr.unconfirmedRecord_.allocations.size(), linkNum);

@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
@@ -18,6 +18,7 @@ set(hccp_utest_list
     ${SRC_DIR}/src/base_comm/resources/hccp/common/dl_hal_function.c
     ${SRC_DIR}/src/base_comm/resources/hccp/common/ascend_hal_dl.c
     ${SRC_DIR}/src/base_comm/resources/hccp/hccp_service/main.c
+    ${SRC_DIR}/src/base_comm/resources/hccp/inc/private/network/log/config_log.c
     st_test.cc
     tc_hccp.c
     )
@@ -30,6 +31,7 @@ target_include_directories(hccp_utest BEFORE PRIVATE
     stub
     ${SRC_DIR}/test/ut/platform/hccp/ut_include
     ${SRC_DIR}/test/stub/depends/include
+    ${SRC_DIR}/test/stub/depends/pkg_inc/base
     ${SRC_DIR}/test/stub/depends/pkg_inc/aicpu/tsd
     ${SRC_DIR}/test/stub/depends/pkg_inc/aicpu/
     ${SRC_DIR}/test/ut/hccp/rdma_service_normal/rdma_service_normal/include
@@ -42,6 +44,7 @@ target_include_directories(hccp_utest BEFORE PRIVATE
     ${SRC_DIR}/src/base_comm/resources/hccp/rdma_service
     ${SRC_DIR}/src/base_comm/resources/hccp/common
     ${SRC_DIR}/src/base_comm/resources/hccp/inc/private/network
+    ${SRC_DIR}/src/base_comm/resources/hccp/inc/private/network/log
     ${SRC_DIR}/src/base_comm/resources/hccp/inc/network
     ${SRC_DIR}/src/base_comm/resources/hccp/external_depends/inc
     ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc/driver/

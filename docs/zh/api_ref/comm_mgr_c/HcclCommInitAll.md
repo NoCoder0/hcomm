@@ -3,19 +3,19 @@
 ## 产品支持情况
 
 <!-- npu="950" id1 -->
-- Ascend 950PR/Ascend 950DT：支持
+- Ascend 950PR&950DT系列产品：支持
 <!-- end id1 -->
 <!-- npu="A3" id2 -->
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：支持
+- Atlas A3系列产品：支持
 <!-- end id2 -->
 <!-- npu="910b" id3 -->
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：支持
+- Atlas A2系列产品：支持
 <!-- end id3 -->
 <!-- npu="310p" id4 -->
-- Atlas 推理系列产品：支持
+- Atlas推理系列产品：支持
 <!-- end id4 -->
 <!-- npu="910" id5 -->
-- Atlas 训练系列产品：支持
+- Atlas训练系列产品：支持
 <!-- end id5 -->
 
 ## 功能说明
@@ -25,7 +25,7 @@
 ## 函数原型
 
 ```c
-HcclResult HcclCommInitAll(uint32_t ndev, int32_t*  devices, HcclComm* comms)
+HcclResult HcclCommInitAll(uint32_t ndev, int32_t* devices, HcclComm* comms)
 ```
 
 ## 参数说明
@@ -49,13 +49,21 @@ HcclResult HcclCommInitAll(uint32_t ndev, int32_t*  devices, HcclComm* comms)
 ## 调用示例
 
 ```c
+// 设备资源初始化
+aclInit(NULL);
 uint32_t rankSize = 2;
 int32_t devices[rankSize] = {0, 1};
 HcclComm comms[rankSize];
+// 指定集合通信操作使用的设备
+for (uint32_t i = 0; i < rankSize; i++) {
+    aclrtSetDevice(devices[i]);
+}
 // 初始化通信域
 HcclCommInitAll(rankSize, devices, comms);
 // 销毁通信域
-for (uint32_t i = 0; i &lt; rankSize; i++) {
+for (uint32_t i = 0; i < rankSize; i++) {
     HcclCommDestroy(comms[i]);
 }
+// 设备资源去初始化
+aclFinalize();
 ```

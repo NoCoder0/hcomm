@@ -26,7 +26,7 @@ typedef struct {
             uint64_t count;         /* 元素个数 */
             void *dst;              /* 远端目的地址 */
             void *src;              /* 本地源地址 */
-            HcommReduceOp reduceOp; /* 规约操作类型 */
+            HcommReduceOp reduceOp; /* 归约操作类型 */
             HcommDataType dataType; /* 数据类型 */
         } reduce;
         struct {
@@ -42,9 +42,9 @@ typedef struct {
             uint64_t count;         /* 元素个数 */
             void *dst;              /* 远端目的地址 */
             void *src;              /* 本地源地址 */
-            HcommReduceOp reduceOp; /* 规约操作类型 */
+            HcommReduceOp reduceOp; /* 归约操作类型 */
             HcommDataType dataType; /* 数据类型 */
-            uint32_t notifyIdx;     /* 写规约完成后通知的远端通知索引 */
+            uint32_t notifyIdx;     /* 写归约完成后通知的远端通知索引 */
         } writeReduceWithNotify;
     } transferInfo;
 } HcommBatchTransferDesc;

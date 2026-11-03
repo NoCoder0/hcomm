@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef ALLTOALL_V_CONTINUOUS_PIPELINE_PUB_H
 #define ALLTOALL_V_CONTINUOUS_PIPELINE_PUB_H
@@ -18,9 +18,9 @@ namespace hccl {
 constexpr u32 PINGPONG_MEM_NUM = 2;
 
 struct TaskState {
-    u32 stepNum{0}; // stepNum来分别表示当前做到哪一步
+    u32 stepNum{0};     // stepNum来分别表示当前做到哪一步
     u32 stepNumNext{0}; // next表示每种task在这一轮要做到哪一步，步长是RDMA并发度
-    u32 loopNum{0}; // 记录每种task现在进行了几轮
+    u32 loopNum{0};     // 记录每种task现在进行了几轮
 };
 
 enum class SdmaSyncType {
@@ -32,27 +32,27 @@ class AlltoallvContinuousPipeline : public AlgTemplateBase {
 public:
     explicit AlltoallvContinuousPipeline(const HcclDispatcher dispatcher);
     ~AlltoallvContinuousPipeline() override;
-    HcclResult Prepare(const u32 userRank, const A2aPipelineMemory &a2aPipelineMemory,
-        const SubCommInfo &level0CommInfo, const SubCommInfo &level1CommInfo,
-        const Stream &mainStream, std::vector<Stream> &subStream,
-        std::vector<std::shared_ptr<LocalNotify>> &notifyMain, std::vector<std::shared_ptr<LocalNotify>> &notifySub,
-        std::vector<SendRecvInfo> &sendRecvInfoList, const HcclDataType dataType,
-        const HcclWorkflowMode workMode) override;
+    HcclResult Prepare(
+        const u32 userRank, const A2aPipelineMemory& a2aPipelineMemory, const SubCommInfo& level0CommInfo,
+        const SubCommInfo& level1CommInfo, const Stream& mainStream, std::vector<Stream>& subStream,
+        std::vector<std::shared_ptr<LocalNotify>>& notifyMain, std::vector<std::shared_ptr<LocalNotify>>& notifySub,
+        std::vector<SendRecvInfo>& sendRecvInfoList, const HcclDataType dataType, const HcclWorkflowMode workMode,
+        u32 timeOut) override;
     HcclResult RunAsync() override;
 
 private:
     // Prepare子函数
-    HcclResult PrepareSendRecvInfo(std::vector<SendRecvInfo> &sendRecvInfoList);
-    HcclResult PrepareTopoInfo(const u32 userRank, const SubCommInfo &level0CommInfo,
-        const SubCommInfo &level1CommInfo);
+    HcclResult PrepareSendRecvInfo(std::vector<SendRecvInfo>& sendRecvInfoList);
+    HcclResult
+    PrepareTopoInfo(const u32 userRank, const SubCommInfo& level0CommInfo, const SubCommInfo& level1CommInfo);
 
     // 对buffer进行切分，in和out buffer都分为数据区域和信息区域，数据区域和信息区域里再分成user rank size块
     HcclResult SplitBuffer(const bool enablePingPong);
 
     // 将从流资源划分为RDMA并发流和SDMA并发流，对Notify资源也进行相应的划分
-    HcclResult PartitionSubStreamsAndNotifies(const std::vector<Stream> &subStreams,
-        const std::vector<std::shared_ptr<LocalNotify>> &signalMainToSub,
-        const std::vector<std::shared_ptr<LocalNotify>> &signalSubToMain);
+    HcclResult PartitionSubStreamsAndNotifies(
+        const std::vector<Stream>& subStreams, const std::vector<std::shared_ptr<LocalNotify>>& signalMainToSub,
+        const std::vector<std::shared_ptr<LocalNotify>>& signalSubToMain);
 
     // 将一块准备要发送到remoteRank的数据从input拷贝到in buffer对应分块里，拷贝size为MIN(剩余要发送的size，ccl分块大小)
     HcclResult LocalCopyFromInputToInBuffer(const u32 targetRank, Stream& stream, const u32 loopIdx);
@@ -63,10 +63,12 @@ private:
     // 将自己发送到自己的那块数据，从input拷贝到output对应位置，拷贝size为完整数据大小
     HcclResult LocalCopySelfDataFromInputToOutput(Stream& stream);
 
-    // 将一块要通过SDMA发送给机内另一个rank的数据，从本端input发送到对端的out buffer对应分块里，拷贝size为MIN(剩余要发送的size，ccl分块大小)
+    // 将一块要通过SDMA发送给机内另一个rank的数据，从本端input发送到对端的out
+    // buffer对应分块里，拷贝size为MIN(剩余要发送的size，ccl分块大小)
     HcclResult SdmaSendFromInputToRemoteOutBuffer(const u32 targetRank, Stream& stream, const u32 loopIdx);
 
-    // 通过SDMA从机内另一个rank的out buffer对应分块读取自己接收的数据，放到本端output，拷贝size为MIN(剩余要接收的size，ccl分块大小)
+    // 通过SDMA从机内另一个rank的out
+    // buffer对应分块读取自己接收的数据，放到本端output，拷贝size为MIN(剩余要接收的size，ccl分块大小)
     HcclResult SdmaReadFromRemoteOutBufferToOutput(const u32 sourceRank, Stream& stream, const u32 loopIdx);
 
     // 跨module，向sendRank发送数据，从recvRank接收数据，数据从in buffer到out buffer
@@ -74,7 +76,7 @@ private:
 
     // 处理发送给跨module rank数据的本地拷贝，根据起始stepNum和步长计算具体要处理哪些rank的数据
     HcclResult DoLocalCopy(const u32 beginStepNum, const u32 endStepNum, const u32 loopIdx);
-    
+
     // 在module内分发来自跨module rank发送过来的数据，根据起始stepNum和步长计算具体要处理哪些rank的数据
     HcclResult DoIntraDistribution(const u32 beginStepNum, const u32 endStepNum, const u32 loopIdx);
 
@@ -89,7 +91,7 @@ private:
 
     // Sdma前后同步
     HcclResult DoSdmaSync(const SdmaSyncType syncType);
-    
+
     // 向module内其他rank广播本rank的counts信息
     HcclResult DoIntraInfoBroadcast();
 
@@ -97,7 +99,7 @@ private:
     HcclResult DoLocalWriteInfoAndFlagAndInterSync();
 
     // 轮询等待某个rank的flag，阻塞函数
-    HcclResult WaitValueOfRank(const u32 rank, const HcclUs &startTimeUs, u32& value);
+    HcclResult WaitValueOfRank(const u32 rank, const HcclUs& startTimeUs, u32& value);
 
     // 等待counts信息并刷新receive info，阻塞函数
     HcclResult WaitAndCalReceiveInfo();
@@ -109,19 +111,21 @@ private:
     HcclResult NotifySdmaSubStreamStart();
     // 主流等待SDMA从流，SDMA从流通知主流
     HcclResult WaitSdmaSubStreamFinish();
-    
+
     // 主流通知RDMA从流，RDMA从流等待主流
     HcclResult NotifyRdmaSubStreamStart();
     // 主流等待RDMA从流，RDMA从流通知主流
     HcclResult WaitRdmaSubStreamFinish();
 
     // 跨module通信，通过SDMA从link left读
-    HcclResult InterSdmaRx(const LINK& linkLeft, const LINK& linkRight, std::vector<TxMemoryInfo>& sendMems,
-        std::vector<RxMemoryInfo>& recvMems, Stream& stream);
+    HcclResult InterSdmaRx(
+        const LINK& linkLeft, const LINK& linkRight, std::vector<TxMemoryInfo>& sendMems,
+        std::vector<RxMemoryInfo>& recvMems, Stream& stream) const;
 
     // 跨module通信，通过RDMA从link left读或向link right写
-    HcclResult InterRdmaTxRx(const LINK& linkLeft, const LINK& linkRight, std::vector<TxMemoryInfo>& sendMems,
-        std::vector<RxMemoryInfo>& recvMems, Stream& stream);
+    HcclResult InterRdmaTxRx(
+        const LINK& linkLeft, const LINK& linkRight, std::vector<TxMemoryInfo>& sendMems,
+        std::vector<RxMemoryInfo>& recvMems, Stream& stream) const;
 
     // 获取本rank的counts和displacements信息
     inline u64 GetLocalSendCountOfRank(const u32 targetRank) const;
@@ -148,16 +152,16 @@ private:
     u32 userRankSize_{0};
     u32 intraRankSize_{0};
     u32 interRankSize_{0};
- 
+
     u32 userRank_{0};
     u32 intraRankId_{0};
     u32 interRankId_{0};
- 
+
     std::vector<std::vector<u32>> ranksPerModule_; // 按照module将rank分组
 
     u32 rdmaConcurrentNum_{0}; // 跨module通信并发度
 
-    bool enablePingPong_{false}; //跨module通信只有1步时需要将in buffer和out buffer的data区域平分成两份，避免内存冲突
+    bool enablePingPong_{false}; // 跨module通信只有1步时需要将in buffer和out buffer的data区域平分成两份，避免内存冲突
 
     Stream mainStream_;
     std::vector<Stream> subStreams_;
@@ -175,8 +179,8 @@ private:
 
     u32 unitSize_{0}; // 数据类型对应的字节数
 
-    u64 sizePerBlock_{0}; // buffer中每个数据分块的大小，一共有user rank size块
-    u64 countsPerBlock_{0}; // buffer中每个数据分块的count数
+    u64 sizePerBlock_{0};               // buffer中每个数据分块的大小，一共有user rank size块
+    u64 countsPerBlock_{0};             // buffer中每个数据分块的count数
     std::vector<u64> dataBlockOffsets_; // 每个数据分块的首地址，数组长度为user rank size，索引是user rank
     std::vector<u64> infoOffsets_; // counts或flag分块的首地址，数组长度为user rank size，索引是user rank
 
@@ -193,7 +197,7 @@ private:
 
     std::vector<u32> flagAreaRefreshData_;
 
-    u32 waitFlagTimeoutSec_{0};   // 等待Flag的超时时间，单位秒
+    u32 waitFlagTimeoutSec_{NOTIFY_DEFAULT_WAIT_TIME}; // 等待Flag的超时时间，单位秒
 
     u32 flagAreaRefreshFlag_{0}; // 标识flag区域已经被刷0，避免刷0的任务还没执行，下发态kernel就开始轮询
     u32 flagAreaRefreshValue_{1};
@@ -201,6 +205,6 @@ private:
     u32 intraLoopNum_{0}; // 本module内所有rank的最大loop数
 };
 
-}
+} // namespace hccl
 
 #endif /* * ALLTOALL_V_CONTINUOUS_PIPELINE_PUB_H */

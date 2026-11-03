@@ -29,14 +29,12 @@ using namespace Hccl;
 
 class StubDevUbConnection : public DevUbConnection {
 public:
-    StubDevUbConnection(const LinkData &linkData) : link(linkData), DevUbConnection((void *)0x100, linkData.GetLocalAddr(), linkData.GetRemoteAddr(), OpMode::OPBASE)
-    {
-    }
+    StubDevUbConnection(const LinkData& linkData)
+        : link(linkData),
+          DevUbConnection((void*)0x100, linkData.GetLocalAddr(), linkData.GetRemoteAddr(), OpMode::OPBASE)
+    {}
 
-    RmaConnStatus GetStatus() override
-    {
-        return RmaConnStatus::INIT;
-    }
+    RmaConnStatus GetStatus() override { return RmaConnStatus::INIT; }
 
 private:
     LinkData link;
@@ -44,20 +42,18 @@ private:
 
 class MemTransportLiteMgrTest : public testing::Test {
 protected:
-    static void SetUpTestCase() {
-        std::cout << "MemTransportLiteMgrTest SetUP" << std::endl;
-    }
- 
-    static void TearDownTestCase() {
-        std::cout << "MemTransportLiteMgrTest TearDown" << std::endl;
-    }
- 
-    virtual void SetUp() {
+    static void SetUpTestCase() { std::cout << "MemTransportLiteMgrTest SetUP" << std::endl; }
+
+    static void TearDownTestCase() { std::cout << "MemTransportLiteMgrTest TearDown" << std::endl; }
+
+    virtual void SetUp()
+    {
         std::cout << "A Test case in MemTransportLiteMgrTest SetUP" << std::endl;
         MOCKER(HrtGetDeviceType).stubs().will(returnValue((DevType)DevType::DEV_TYPE_910A2));
     }
- 
-    virtual void TearDown () {
+
+    virtual void TearDown()
+    {
         GlobalMockObject::verify();
         std::cout << "A Test case in MemTransportLiteMgrTest TearDown" << std::endl;
     }
@@ -67,9 +63,16 @@ protected:
         BinaryStream binaryStream;
         u32 type = (u32)TransportType::UB;
         binaryStream << type;
-        binaryStream << (u32)0; // notifyNum=0, skip ParseLocNotifyVec
-        binaryStream << (u32)0; // bufferNum=0, skip ParseRmtBufferVec
+        binaryStream << (u32)0; // notifyNum=0
+        binaryStream << (u32)0; // bufferNum=0
+        binaryStream << (u32)0; // rmtbufferNum=0
         binaryStream << (u32)0; // connNum=0, skip ParseConnVec
+        std::vector<char> emptyVec;
+        binaryStream << emptyVec; // notifyUniqueIds
+        binaryStream << emptyVec; // rmtNotifyUniqueIds
+        binaryStream << emptyVec; // locBufferUniqueIds
+        binaryStream << emptyVec; // rmtBufferUniqueIds
+        binaryStream << emptyVec; // connUniqueIds
         std::vector<char> liteData;
         binaryStream.Dump(liteData);
         return liteData;
@@ -89,7 +92,7 @@ TEST_F(MemTransportLiteMgrTest, test_get_and_reset)
 TEST_F(MemTransportLiteMgrTest, test_parse_opbase_packed_data)
 {
     RmaConnLite rmaConnLite;
-    RmaConnLite *connLite = &rmaConnLite;
+    RmaConnLite* connLite = &rmaConnLite;
     MOCKER_CPP(&UbConnLiteMgr::Get).stubs().will(returnValue(connLite));
     std::vector<char> transportUniqueId = BuildMinimalUbTransportLiteUniqueId();
 
@@ -114,7 +117,7 @@ TEST_F(MemTransportLiteMgrTest, test_parse_opbase_packed_data)
 TEST_F(MemTransportLiteMgrTest, test_parse_offload_packed_data)
 {
     RmaConnLite rmaConnLite;
-    RmaConnLite *connLite = &rmaConnLite;
+    RmaConnLite* connLite = &rmaConnLite;
     MOCKER_CPP(&UbConnLiteMgr::Get).stubs().will(returnValue(connLite));
     std::vector<char> transportUniqueId = BuildMinimalUbTransportLiteUniqueId();
 
@@ -134,13 +137,13 @@ TEST_F(MemTransportLiteMgrTest, test_parse_offload_packed_data)
     MemTransportLiteMgr liteMgr(&mirrorTaskMgrLite);
 
     const string opTag = "opTag";
-    EXPECT_NO_THROW(liteMgr.ParseOffloadPackedData(opTag, packedData)); 
+    EXPECT_NO_THROW(liteMgr.ParseOffloadPackedData(opTag, packedData));
 }
 
 TEST_F(MemTransportLiteMgrTest, test_parse_all_packed_data)
 {
     RmaConnLite rmaConnLite;
-    RmaConnLite *connLite = &rmaConnLite;
+    RmaConnLite* connLite = &rmaConnLite;
     MOCKER_CPP(&UbConnLiteMgr::Get).stubs().will(returnValue(connLite));
     std::vector<char> transportUniqueId = BuildMinimalUbTransportLiteUniqueId();
 
@@ -167,5 +170,5 @@ TEST_F(MemTransportLiteMgrTest, test_parse_all_packed_data)
 
     MirrorTaskManagerLite mirrorTaskMgrLite;
     MemTransportLiteMgr liteMgr(&mirrorTaskMgrLite);
-    EXPECT_NO_THROW(liteMgr.ParseAllPackedData(packedData)); 
+    EXPECT_NO_THROW(liteMgr.ParseAllPackedData(packedData));
 }

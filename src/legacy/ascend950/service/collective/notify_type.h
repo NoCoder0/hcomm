@@ -11,7 +11,6 @@
 #ifndef HCCLV2_NOTIFY_TYPE_H
 #define HCCLV2_NOTIFY_TYPE_H
 
-
 namespace Hccl {
 
 MAKE_ENUM(NotifyType, NORMAL, COUNTER)

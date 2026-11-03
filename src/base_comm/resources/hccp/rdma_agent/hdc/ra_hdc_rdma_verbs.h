@@ -55,11 +55,10 @@ union OpTypicalCqDestroyData {
     } rxData;
 };
 
-int RaHdcTypicalCqCreate(struct RaRdmaHandle *rdmaHandle, unsigned int cqDepth, unsigned int *cqn,
-    void **cqHandle);
+int RaHdcTypicalCqCreate(struct RaRdmaHandle *rdmaHandle, unsigned int cqDepth, unsigned int *cqn, void **cqHandle);
 int RaHdcTypicalCqDestroy(struct RaRdmaHandle *rdmaHandle, unsigned int cqn, void *cqHandle);
-int RaHdcQpCreateWithCQWithAttrs(struct RaRdmaHandle *rdmaHandle, struct QpExtAttrs *extAttrs,
-    unsigned int sendCqn, unsigned int recvCqn, void **qpHandle);
+int RaHdcQpCreateWithCQWithAttrs(struct RaRdmaHandle *rdmaHandle, struct QpExtAttrs *extAttrs, unsigned int sendCqn,
+    unsigned int recvCqn, void **qpHandle);
 int RaHdcPollTypicalCq(struct RaTypicalCqHandle *cqHdc, unsigned int numEntries, void *wc);
 int RaHdcQpDestroyWithoutCQ(struct RaQpHandle *qpHdc);
 int RaHdcSendWrVerbs(struct RaQpHandle *qpHdc, struct SendWrVerbs *wr, struct SendWrRsp *opRsp);

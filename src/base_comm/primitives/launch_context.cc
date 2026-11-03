@@ -1,26 +1,25 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "launch_context.h"
 #include "new/hccl_primitive_local.h"
+#include "common/dev_type_utils_pub.h"
 
 constexpr u32 THREAD_VECTOR_DEFAULT_SIZE = 128; // 设置vector初始长度，避免频繁扩容
-constexpr u32 NOTIFY_WAIT_TIMEOUT_OFFSET = 50; // AICPU device侧notify等待超时偏移量
+constexpr u32 NOTIFY_WAIT_TIMEOUT_OFFSET = 27;  // AICPU device侧notify等待超时偏移量
 
-extern HcclResult CommTaskLaunch(ThreadHandle *threads, uint32_t threadNum); // host ffts+或aicpu stars使用"
-extern HcclResult CommTaskPrepare(char *key, uint32_t keyLen); // host ffts+使用
-extern HcclResult DispatchAllStreams(ThreadHandle *threads, uint32_t threadNum);
+extern HcclResult CommTaskLaunch(ThreadHandle* threads, uint32_t threadNum); // host ffts+或aicpu stars使用"
+extern HcclResult CommTaskPrepare(const char* key, uint32_t keyLen);         // host ffts+使用
+extern HcclResult DispatchAllStreams(const ThreadHandle* threads, uint32_t threadNum);
 
-LaunchContext::LaunchContext()
-{
-    threadVec_.reserve(THREAD_VECTOR_DEFAULT_SIZE);
-}
+LaunchContext::LaunchContext() { threadVec_.reserve(THREAD_VECTOR_DEFAULT_SIZE); }
 
 HcclResult LaunchContext::HandleEagerMode()
 {
@@ -30,14 +29,14 @@ HcclResult LaunchContext::HandleEagerMode()
         if (it != launchModeMap_.end()) {
             std::vector<ThreadHandle> threadVec(it->second.begin(), it->second.end());
             CHK_RET(CommTaskLaunch(threadVec.data(), threadVec.size()));
-            HCCL_INFO("[%s]success, launchTag[%s], size[%u]", __func__, launchTag_.c_str(), threadVec.size());
+            HCCL_INFO("[%s] success, launchTag[%s], size[%zu]", __func__, launchTag_.c_str(), threadVec.size());
         }
     }
 
     // 不带launchTag部分
     if (!threadVec_.empty()) {
         CHK_RET(CommTaskLaunch(threadVec_.data(), threadVec_.size()));
-        HCCL_INFO("[%s]success, size[%u]", __func__, threadVec_.size());
+        HCCL_INFO("[%s] success, size[%zu]", __func__, threadVec_.size());
     }
     return HCCL_SUCCESS;
 }
@@ -66,13 +65,12 @@ HcclResult LaunchContext::HandleClear()
     if (!launchModeMap_.empty()) {
         launchModeMap_.erase(launchTag_);
     }
-    HCCL_INFO("[%s] begin clear, launchTag[%s], launchMode[%d].",
-        __func__, launchTag_.c_str(), static_cast<int32_t>(mode_));
+    HCCL_INFO(
+        "[%s] begin clear, launchTag[%s], launchMode[%d].", __func__, launchTag_.c_str(), static_cast<int32_t>(mode_));
 
-    DevType devType = DevType::DEV_TYPE_COUNT;
-    hrtGetDeviceType(devType);
-    if (devType == DevType::DEV_TYPE_950) {
-        HCCL_INFO("[%s] Running on A5, HcclTaskClear skipped.", __func__);
+    // 原站点忽略 hrtGetDeviceType 返回值，失败按 value_or(false) 兜底，仍走 HcclTaskClear
+    if (hcomm::EqualToOrGreaterThan950().value_or(false)) {
+        HCCL_INFO("[%s] Running on A5/A6, HcclTaskClear skipped.", __func__);
         return HCCL_SUCCESS;
     }
     return HcclTaskClear(launchTag_);
@@ -103,10 +101,7 @@ HcclResult LaunchContext::SetSqFullTimeOut(uint32_t timeout)
     return HCCL_SUCCESS;
 }
 
-uint32_t LaunchContext::GetSqFullTimeOut()
-{
-    return sqFullTimeoutConfig_.sqFullTimeout;
-}
+uint32_t LaunchContext::GetSqFullTimeOut() { return sqFullTimeoutConfig_.sqFullTimeout; }
 
 /*
     1 AICPU_TS模式
@@ -142,24 +137,22 @@ HcclResult LaunchContext::SetLaunchMode(const char* launchTag, HcommLaunchMode m
     // 统一处理 launchTag
     bool defaultTag = (launchTag == nullptr);
     launchTag_ = defaultTag ? "" : std::string(launchTag);
-    HCCL_INFO("[%s] SetLaunchMode begin, launchTag[%s], launchMode[%d].",
-        __func__, launchTag_.c_str(), static_cast<int32_t>(mode));
+    HCCL_INFO(
+        "[%s] SetLaunchMode begin, launchTag[%s], launchMode[%d].", __func__, launchTag_.c_str(),
+        static_cast<int32_t>(mode));
 
-#ifndef CCL_KERNEL_AICPU
-    DevType devType = DevType::DEV_TYPE_COUNT;
-#endif
     switch (mode_) {
         case HCOMM_LAUNCH_MODE_BATCH:
 #ifndef CCL_KERNEL_AICPU
-            hrtGetDeviceType(devType);
-            if (devType == DevType::DEV_TYPE_950) {
+            // 原站点忽略 hrtGetDeviceType 返回值，失败按 value_or(false) 兜底，仍走 host CommTaskPrepare 路径
+            if (hcomm::EqualToOrGreaterThan950().value_or(false)) {
                 HCCL_INFO("[%s] Running on A5, CommTaskPrepare skipped.", __func__);
                 return HCCL_SUCCESS;
             }
-            HCCL_INFO("[%s]host mode, need CommTaskPrepare", __func__);
+            HCCL_INFO("[%s] host mode, need CommTaskPrepare", __func__);
             if (!defaultTag) {
                 // 仅非缺省 tag 需要准备任务缓存
-                return CommTaskPrepare(const_cast<char*>(launchTag_.c_str()), launchTag_.length());
+                return CommTaskPrepare(launchTag_.c_str(), launchTag_.length());
             }
 #endif
             return HCCL_SUCCESS;
@@ -176,4 +169,3 @@ HcclResult LaunchContext::SetLaunchMode(const char* launchTag, HcommLaunchMode m
             return HCCL_SUCCESS;
     }
 }
-

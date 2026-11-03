@@ -30,8 +30,8 @@ extern "C" {
 /* common */
 
 /**
-* @brief dc库句柄
-*/
+ * @brief dc库句柄
+ */
 typedef struct tagBkfDc BkfDc;
 
 /* init */
@@ -41,15 +41,15 @@ typedef struct tagBkfDc BkfDc;
 typedef struct tagBkfDcSliceVTbl {
     uint16_t keyLen; /**< 切片key长度 */
     uint8_t pad1[2];
-    F_BKF_CMP keyCmp; /**< 切片key比较函数*/
+    F_BKF_CMP keyCmp;              /**< 切片key比较函数*/
     F_BKF_GET_STR keyGetStrOrNull; /**< 切片key获取字符串提示信息  */
-    F_BKF_DO keyCodec; /**< key的转码函数 */
+    F_BKF_DO keyCodec;             /**< key的转码函数 */
     uint8_t rsv[0x10];
 } BkfDcSliceVTbl;
 
 /**
-* @brief 切片 key最大长度
-*/
+ * @brief 切片 key最大长度
+ */
 #define BKF_DC_SLICE_KEY_LEN_MAX (BKF_1K / 4)
 
 typedef void (*F_BKF_DC_DOBEFORE)(void *cookie);
@@ -59,15 +59,15 @@ typedef void (*F_BKF_DC_DOAFTER)(void *cookie);
  * @brief dc初始化参数
  */
 typedef struct tagBkfDcInitArg {
-    char *name; /**< 库名称 */
-    BOOL dbgOn; /**< 诊断开关 */
-    BkfMemMng *memMng; /**< 内存库句柄,见bkf_mem.h,同一app内可复用 */
-    BkfDisp *disp; /**< 诊断显示库句柄,见bkf_disp.h,同一app内可复用 */
-    BkfLog *log; /**< log库句柄,见bkf_log.h,同一app内可复用 */
-    BkfPfm *pfm; /**< 性能测量库句柄,见bkf_pfm.h,同一app内可复用 */
-    BkfJobMng *jobMng; /**< job库句柄,见bkf_job.h,同一app内可复用 */
-    uint32_t jobTypeId; /**< dc库使用的job类型id,不能与其他库复用 */
-    uint32_t jobPrio; /**< dc库使用的job优先级 */
+    char *name;              /**< 库名称 */
+    BOOL dbgOn;              /**< 诊断开关 */
+    BkfMemMng *memMng;       /**< 内存库句柄,见bkf_mem.h,同一app内可复用 */
+    BkfDisp *disp;           /**< 诊断显示库句柄,见bkf_disp.h,同一app内可复用 */
+    BkfLog *log;             /**< log库句柄,见bkf_log.h,同一app内可复用 */
+    BkfPfm *pfm;             /**< 性能测量库句柄,见bkf_pfm.h,同一app内可复用 */
+    BkfJobMng *jobMng;       /**< job库句柄,见bkf_job.h,同一app内可复用 */
+    uint32_t jobTypeId;      /**< dc库使用的job类型id,不能与其他库复用 */
+    uint32_t jobPrio;        /**< dc库使用的job优先级 */
     BkfSysLogMng *sysLogMng; /**< 系统日志句柄，见bkf_sys_log.h,同一app内可复用 */
 
     BkfDcSliceVTbl sliceVTbl; /**< 切片虚表 */
@@ -78,9 +78,9 @@ typedef struct tagBkfDcInitArg {
 } BkfDcInitArg;
 
 /**
-* @brief 获取切片虚表
-*/
-#define BKF_DC_GET_SLICE_VTBL(dc) (&((BkfDcInitArg*)(dc))->sliceVTbl)
+ * @brief 获取切片虚表
+ */
+#define BKF_DC_GET_SLICE_VTBL(dc) (&((BkfDcInitArg *)(dc))->sliceVTbl)
 
 /**
  * @brief 业务注册钩子函数，get指定表项第一个记录
@@ -108,29 +108,47 @@ typedef uint32_t (*F_BKF_DC_GET_FIRSTTUPLE)(void *cookie, uint32_t type, void *o
 typedef uint32_t (*F_BKF_DC_GET_NEXTTUPLE)(void *cookie, uint32_t type, void *lastKey, void *outputKey,
     void *outputTupleVal);
 
+/**
+ * @brief Get a tuple value diagnostic string using the table registration context.
+ *
+ * @param[in] cookie The BkfDcTableTypeVTbl.cookie supplied to BkfDcRegTableType, forwarded unchanged.
+ * @param[in] tupleVal The non-null tuple value passed to BkfDcGetTupleValStr.
+ * @param[out] buf Caller-owned output buffer. The callback must not write beyond bufLen bytes.
+ * @param[in] bufLen Positive output buffer capacity in bytes, including the terminating null character.
+ * @return Diagnostic string pointer, forwarded unchanged by BkfDcGetTupleValStr. Return a null-terminated
+ *         string in buf or another string whose lifetime covers the caller's use; DC does not free it.
+ * @note Migration: tupleValGetStrOrNull previously used the three-argument F_BKF_GET_STR type.
+ *       Downstream registrants must add void *cookie as the first callback parameter and rebuild against
+ *       this header. If unused, explicitly ignore cookie; do not cast the old callback to this type.
+ *       F_BKF_GET_STR and tupleKeyGetStrOrNull remain three-argument interfaces.
+ */
+typedef char *(*F_BKF_DC_GET_TUPLE_VAL_STR)(void *cookie, void *tupleVal, uint8_t *buf, int32_t bufLen);
+
 /* reg type */
 /**
- * @brief 表类型虚表，表类型指定的是dc中包含的数据类型，dc用策略模式处理不同类型数据，因此每种表类型都要注入一个虚表，用于处理某种数据类型
+ * @brief
+ * 表类型虚表，表类型指定的是dc中包含的数据类型，dc用策略模式处理不同类型数据，因此每种表类型都要注入一个虚表，用于处理某种数据类型
  */
 typedef struct tagBkfDcTableTypeVTbl {
-    char *name; /**< 虚表名称 */
+    char *name;           /**< 虚表名称 */
     uint16_t tableTypeId; /**< 表类型 */
-    uint8_t noDcTuple; /* 没有dc数据，依赖回调拉数据，实时变化处理完之后释放内存 */
+    uint8_t noDcTuple;    /* 没有dc数据，依赖回调拉数据，实时变化处理完之后释放内存 */
     uint8_t pad[1];
-    void *cookie; /**< 回调cookie */
-    int32_t tupleCntMax; /**< tuple最大数量 */
-    uint16_t tupleKeyLen; /**< tuple key长度 */
-    uint16_t tupleValLen; /**< tuple val长度 */
-    F_BKF_CMP tupleKeyCmp; /**< tuple key比较接口 */
+    void *cookie;                       /**< 回调cookie */
+    int32_t tupleCntMax;                /**< tuple最大数量 */
+    uint16_t tupleKeyLen;               /**< tuple key长度 */
+    uint16_t tupleValLen;               /**< tuple val长度 */
+    F_BKF_CMP tupleKeyCmp;              /**< tuple key比较接口 */
     F_BKF_GET_STR tupleKeyGetStrOrNull; /**< tuple key获取诊断字符串接口 */
-    F_BKF_GET_STR tupleValGetStrOrNull; /**< tuple val获取诊断字符串接口 */
+    F_BKF_DC_GET_TUPLE_VAL_STR
+    tupleValGetStrOrNull; /**< 可为空；非空时首参传入本虚表的cookie，空时使用内存格式化输出 */
     F_BKF_DC_GET_FIRSTTUPLE getFirst;
-    F_BKF_DC_GET_NEXTTUPLE  getNext;
+    F_BKF_DC_GET_NEXTTUPLE getNext;
 } BkfDcTableTypeVTbl;
 
 /**
-* @brief tuple key最大长度
-*/
+ * @brief tuple key最大长度
+ */
 #define BKF_DC_TUPLE_KEY_LEN_MAX (BKF_1K / 2)
 
 /* get */
@@ -138,10 +156,10 @@ typedef struct tagBkfDcTableTypeVTbl {
  * @brief 元组信息，用于业务获取元组,元组是dc中保存数据的原子单位，切片 + 表类型 = 表实例，每个表实例下可以有若干元组
  */
 typedef struct tagBkfDcTupleInfo {
-    void *key; /**< key指针 */
-    BOOL isAddUpd; /**< 删除标记 */
+    void *key;       /**< key指针 */
+    BOOL isAddUpd;   /**< 删除标记 */
     void *valOrNull; /**< val指针,实际与key指针指向连续空间 */
-    uint64_t seq; /**< 数据版本号 */
+    uint64_t seq;    /**< 数据版本号 */
 } BkfDcTupleInfo;
 
 /* func */
@@ -335,7 +353,7 @@ BOOL BkfDcIsTableExist(BkfDc *dc, void *sliceKey, uint16_t tableTypeId, BOOL *is
  *   @retval 其他 失败
  */
 uint32_t BkfDcUpdateTuple(BkfDc *dc, void *sliceKey, uint16_t tableTypeId, void *tupleKey, void *tupleValOrNull,
-                         BkfDcTupleInfo *infoOrNull);
+    BkfDcTupleInfo *infoOrNull);
 
 /**
  * @brief 删除元组
@@ -430,4 +448,3 @@ void BkfDcSpyDeleteTuple(void *cookieOfSpy, void *sliceKey, uint16_t tableTypeId
 #endif
 
 #endif
-

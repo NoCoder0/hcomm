@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "aicpu_kfc_batchwrite_process.h"
 
@@ -22,8 +22,7 @@ class CommonHcclMsgRingBuffer {
 public:
     static constexpr uint8_t DEFAULT_CAPACITY = 4;
 
-    CommonHcclMsgRingBuffer() : CommonHcclMsgRingBuffer(DEFAULT_CAPACITY)
-    {}
+    CommonHcclMsgRingBuffer() : CommonHcclMsgRingBuffer(DEFAULT_CAPACITY) {}
 
     CommonHcclMsgRingBuffer(uint8_t capacity) : capacity_(capacity)
     {
@@ -41,7 +40,7 @@ public:
         }
     }
 
-    bool Enqueue(const CommonHcclMsg *msg)
+    bool Enqueue(const CommonHcclMsg* msg)
     {
         if (capacity_ == 0) {
             HCCL_ERROR("capacity is zero");
@@ -62,7 +61,7 @@ public:
         return true;
     }
 
-    bool Peek(CommonHcclMsg *msg)
+    bool Peek(CommonHcclMsg* msg)
     {
         uint32_t tempIdx;
         do {
@@ -75,7 +74,7 @@ public:
                 HCCL_ERROR("memcpy_s failed, errorno[%d]", sRet);
                 return false;
             }
-        } while (tempIdx != head_.load(std::memory_order_acquire));  // 确保在读取过程中head没被修改
+        } while (tempIdx != head_.load(std::memory_order_acquire)); // 确保在读取过程中head没被修改
         return true;
     }
 
@@ -100,7 +99,7 @@ private:
     uint8_t capacity_{0};
     std::atomic<uint32_t> head_{0};
     std::atomic<uint32_t> tail_{0};
-    CommonHcclMsg *buffer_{nullptr};
+    CommonHcclMsg* buffer_{nullptr};
 };
 
 struct BatchWriteItem {
@@ -121,10 +120,11 @@ std::mutex g_mtxForCpuCheck;
 std::mutex g_mtxForLLT;
 #endif
 
-HcclResult ConcurrentPostSendWqe(const CommonHcclMsg &commonHcclMsg, const AicpuComContext *ctx, u8 *needSendTotalNum) {
-    const BatchWriteItem *item = reinterpret_cast<BatchWriteItem *>(static_cast<uintptr_t>(commonHcclMsg.sendBuffer));
-    std::vector <Transport::Buffer> remoteList = {{}};
-    std::vector <Transport::Buffer> local = {{}};
+HcclResult ConcurrentPostSendWqe(const CommonHcclMsg& commonHcclMsg, const AicpuComContext* ctx, u8* needSendTotalNum)
+{
+    const BatchWriteItem* item = reinterpret_cast<BatchWriteItem*>(static_cast<uintptr_t>(commonHcclMsg.sendBuffer));
+    std::vector<Transport::Buffer> remoteList = {{}};
+    std::vector<Transport::Buffer> local = {{}};
     int32_t cpuId = 0;
     {
 #ifdef CCL_LLT
@@ -138,21 +138,15 @@ HcclResult ConcurrentPostSendWqe(const CommonHcclMsg &commonHcclMsg, const Aicpu
         if (item->remoteRankId != ctx->rankId) {
             (*needSendTotalNum)++;
             if (item->remoteRankId % g_sharedCtx.workedThreadNum == threadId) {
-                remoteList[0].addr = reinterpret_cast<void *>(item->remoteBuf);
-                local[0].addr = reinterpret_cast<void *>(item->localBuf);
-                remoteList[0].size = local[0].size =
-                        item->count * DataUnitSize(static_cast<HcclDataType>(item->dataType));
+                remoteList[0].addr = reinterpret_cast<void*>(item->remoteBuf);
+                local[0].addr = reinterpret_cast<void*>(item->localBuf);
+                remoteList[0].size = local[0].size
+                    = item->count * DataUnitSize(static_cast<HcclDataType>(item->dataType));
                 HCCL_INFO(
-                        "Batch write item[%u]: context rankId [%u], remoteRankId[%u], sendThreadId[%ld], remoteBuf[%#llx],"
-                        " localBuf[%#llx], dataType[%u], count[%lu]",
-                        i,
-                        ctx->rankId,
-                        item->remoteRankId,
-                        threadId,
-                        item->remoteBuf,
-                        item->localBuf,
-                        item->dataType,
-                        item->count);
+                    "Batch write item[%u]: context rankId [%u], remoteRankId[%u], sendThreadId[%ld], remoteBuf[%#llx],"
+                    " localBuf[%#llx], dataType[%u], count[%lu]",
+                    i, ctx->rankId, item->remoteRankId, threadId, item->remoteBuf, item->localBuf, item->dataType,
+                    item->count);
                 CHK_RET(HcclAicpuUtils::PostSend(*ctx, item->remoteRankId, remoteList, local, true));
                 sendWqeNum++;
             }
@@ -164,7 +158,8 @@ HcclResult ConcurrentPostSendWqe(const CommonHcclMsg &commonHcclMsg, const Aicpu
     return HCCL_SUCCESS;
 }
 
-bool CheckTimeOut(u64 startTimeStamp, u64 timeOutTime) {
+bool CheckTimeOut(u64 startTimeStamp, u64 timeOutTime)
+{
     if ((GetCurCpuTimestamp() - startTimeStamp) > static_cast<unsigned long long>(NSEC_PER_SEC * timeOutTime)) {
         HCCL_ERROR("Execution TimeOut %lus...", timeOutTime);
         return true;
@@ -172,7 +167,8 @@ bool CheckTimeOut(u64 startTimeStamp, u64 timeOutTime) {
     return false;
 }
 
-HcclResult WaitForSlaveCompletion(u8 needSendTotalNum) {
+HcclResult WaitForSlaveCompletion(u8 needSendTotalNum)
+{
     HCCL_DEBUG("needsendTotalNum is %ld.", needSendTotalNum);
     u64 startTimeStamp = GetCurCpuTimestamp();
     while (true) {
@@ -196,7 +192,8 @@ HcclResult WaitForSlaveCompletion(u8 needSendTotalNum) {
     }
 }
 
-void InitMultiThreadSharedCtx(int32_t cpuId) {
+void InitMultiThreadSharedCtx(int32_t cpuId)
+{
     g_sharedCtx.startedThreadNum = 1;
     g_hcclMsgQueue.Clear();
     g_sharedCtx.taskFinishFlag.store(false, std::memory_order_release);
@@ -207,32 +204,34 @@ void InitMultiThreadSharedCtx(int32_t cpuId) {
     }
 }
 
-HcclResult OrchestrateSdmaSqe(const OpParam &param, hccl::HcclCommAicpu &comm)
+HcclResult OrchestrateSdmaSqe(const OpParam& param, hccl::HcclCommAicpu& comm)
 {
     AicpuKfcProf::SetKfcTimeLine(KfcTimeLine::HCC_EXEC_START_TIME);
     const u32 queueIdx = param.BatchWriteDataDes.queueIdx;
     auto streams = comm.GetSlaveStream();
-    CHK_PRT_RET(queueIdx >= streams.size(),
-                HCCL_ERROR("Invalid queue idx %u, stream number %u", queueIdx, streams.size()), HCCL_E_PARA);
+    CHK_PRT_RET(
+        queueIdx >= streams.size(), HCCL_ERROR("Invalid queue idx %u, stream number %u", queueIdx, streams.size()),
+        HCCL_E_PARA);
     auto streamInfo = streams[queueIdx];
-    u8 *newSqAddr = static_cast<u8 *>(param.inputPtr);
-    auto &sqeBuffer = streamInfo.GetSqeContextPtr()->buffer;
-    u16 &taskId = sqeBuffer.tailSqeTaskId;
+    u8* newSqAddr = static_cast<u8*>(param.inputPtr);
+    auto& sqeBuffer = streamInfo.GetSqeContextPtr()->buffer;
+    u16& taskId = sqeBuffer.tailSqeTaskId;
     const u32 sqeCnt = param.BatchWriteDataDes.itemNum;
     const u32 depth = streamInfo.GetHcclStreamInfo().sqDepth;
     CHK_PRT_RET(sqeCnt >= depth, HCCL_ERROR("Sqe count %u reaches the sq depth %u.", sqeCnt, depth), HCCL_E_PARA);
     u8 sqeType;
     for (u32 i = 0U; i < sqeCnt; ++i) {
-        const uint8_t *sqe = newSqAddr + i * AC_SQE_SIZE;
-        AddOneMemcpySqeV1(streamInfo.id(), taskId++, nullptr, 0U, ACL_DT_UNDEFINED, ACL_RT_MEMCPY_SDMA_AUTOMATIC_SUM,
-                          nullptr, 0U, 0U, 0U, 0U, static_cast<uint8_t>(LinkType::LINK_RESERVED), sqe, &sqeType, SDMA_QOS_DEFAULT);
+        const uint8_t* sqe = newSqAddr + i * AC_SQE_SIZE;
+        AddOneMemcpySqeV1(
+            streamInfo.id(), taskId++, nullptr, 0U, ACL_DT_UNDEFINED, ACL_RT_MEMCPY_SDMA_AUTOMATIC_SUM, nullptr, 0U, 0U,
+            0U, 0U, static_cast<uint8_t>(LinkType::LINK_RESERVED), sqe, &sqeType, SDMA_QOS_DEFAULT);
     }
 
-    u32 &head = sqeBuffer.sqHead;
-    u32 &tail = sqeBuffer.sqTail;
+    u32& head = sqeBuffer.sqHead;
+    u32& tail = sqeBuffer.sqTail;
     u32 newTail = (tail + sqeCnt) % depth;
-    HCCL_INFO("Before send sqe:%d cnt:%u head:%u curtail:%u newTail:%u.", streamInfo.sqId(),
-              sqeCnt, head, tail, newTail);
+    HCCL_INFO(
+        "Before send sqe:%d cnt:%u head:%u curtail:%u newTail:%u.", streamInfo.sqId(), sqeCnt, head, tail, newTail);
     const u64 startUsec = GetCurCpuTimestamp();
     const u32 devId = comm.GetDevId();
     while ((tail + depth - head) % depth + sqeCnt >= depth) {
@@ -243,10 +242,11 @@ HcclResult OrchestrateSdmaSqe(const OpParam &param, hccl::HcclCommAicpu &comm)
         }
     }
 
-    u8 *sqAddr = static_cast<u8 *>(streamInfo.GetHcclStreamInfo().sqBaseAddr);
+    u8* sqAddr = static_cast<u8*>(streamInfo.GetHcclStreamInfo().sqBaseAddr);
     const u32 left = depth - tail;
-    HCCL_INFO("Before copy sqe:%d cnt:%u head:%u curtail:%u newTail:%u left:%u", streamInfo.sqId(),
-              sqeCnt, head, tail, newTail, left);
+    HCCL_INFO(
+        "Before copy sqe:%d cnt:%u head:%u curtail:%u newTail:%u left:%u", streamInfo.sqId(), sqeCnt, head, tail,
+        newTail, left);
     if (sqeCnt <= left) {
         (void)memcpy_s(sqAddr + tail * AC_SQE_SIZE, left * AC_SQE_SIZE, newSqAddr, sqeCnt * AC_SQE_SIZE);
     } else {
@@ -257,13 +257,14 @@ HcclResult OrchestrateSdmaSqe(const OpParam &param, hccl::HcclCommAicpu &comm)
     __asm__ __volatile__("dsb st" : : : "memory");
 #endif
     if (UNLIKELY(HcclCheckLogLevel(DLOG_DEBUG))) {
-        rtStarsMemcpyAsyncSqe_t *tmp = reinterpret_cast<rtStarsMemcpyAsyncSqe_t *>(sqAddr) + tail;
+        rtStarsMemcpyAsyncSqe_t* tmp = reinterpret_cast<rtStarsMemcpyAsyncSqe_t*>(sqAddr) + tail;
         for (u32 i = tail; i < newTail; ++i) {
-            HCCL_DEBUG("[Sdma-BatchWrite]Orchestrated sq %u, idx %u, stream %u, task %u, data length %u, "
-                       "src addr %#llx, dst addr %#llx.", streamInfo.sqId(), i, tmp->header.rtStreamId,
-                       tmp->header.taskId, tmp->length,
-                       (static_cast<uint64_t>(tmp->src_addr_high) << 32U) | tmp->src_addr_low,
-                       (static_cast<uint64_t>(tmp->dst_addr_high) << 32U) | tmp->dst_addr_low);
+            HCCL_DEBUG(
+                "[Sdma-BatchWrite]Orchestrated sq %u, idx %u, stream %u, task %u, data length %u, "
+                "src addr %#llx, dst addr %#llx.",
+                streamInfo.sqId(), i, tmp->header.rtStreamId, tmp->header.taskId, tmp->length,
+                (static_cast<uint64_t>(tmp->src_addr_high) << 32U) | tmp->src_addr_low,
+                (static_cast<uint64_t>(tmp->dst_addr_high) << 32U) | tmp->dst_addr_low);
             ++tmp;
         }
     }
@@ -278,11 +279,11 @@ ANONYMOUS_NAMESPACE_END
 
 void AicpuKfcBatchwriteProcess::FinishProcess()
 {
-    HCCL_INFO("master over task is finish.");
+    HCCL_INFO("master task is finished.");
     g_sharedCtx.taskFinishFlag.store(true, std::memory_order_release);
 }
 
-AicpuServerRole AicpuKfcBatchwriteProcess::GetVerifiedServerRole(const AicpuComContext &ctx)
+AicpuServerRole AicpuKfcBatchwriteProcess::GetVerifiedServerRole(const AicpuComContext& ctx)
 {
     if (!ctx.multiServerFlag) {
         HCCL_INFO("Skip server start check for non-multi server scene.");
@@ -292,8 +293,8 @@ AicpuServerRole AicpuKfcBatchwriteProcess::GetVerifiedServerRole(const AicpuComC
     static std::atomic<u32> opThreadIdx{0U};
     if (HcclAicpuUtils::GetCurClusterId() != PREFER_CLUSTER_ID) {
         u64 startTimestamp = GetCurCpuTimestamp();
-        while (opThreadIdx.load(std::memory_order_acquire) == 0U &&
-            GetCurCpuTimestamp() - startTimestamp < DELAY_TIME_IN_NS) {
+        while (opThreadIdx.load(std::memory_order_acquire) == 0U
+               && GetCurCpuTimestamp() - startTimestamp < DELAY_TIME_IN_NS) {
             usleep(1);
         }
     }
@@ -306,16 +307,18 @@ AicpuServerRole AicpuKfcBatchwriteProcess::GetVerifiedServerRole(const AicpuComC
         HCCL_INFO("Master thread starts on cpu %d, clusterID %d", cpuId, HcclAicpuUtils::GetCurClusterId());
         role = AicpuServerRole::MASTER;
     } else {
-        if (HcclAicpuUtils::GetCurClusterId() != PREFER_CLUSTER_ID ||
-            g_sharedCtx.startedThreadNum >= MAX_BATCH_WRITE_THREAD_NUM) {
-            HCCL_INFO("This is invalid thread, cluster id %d, started thread number %ld.",
-                      HcclAicpuUtils::GetCurClusterId(), g_sharedCtx.startedThreadNum);
+        if (HcclAicpuUtils::GetCurClusterId() != PREFER_CLUSTER_ID
+            || g_sharedCtx.startedThreadNum >= MAX_BATCH_WRITE_THREAD_NUM) {
+            HCCL_INFO(
+                "This is invalid thread, cluster id %d, started thread number %ld.", HcclAicpuUtils::GetCurClusterId(),
+                g_sharedCtx.startedThreadNum);
             role = AicpuServerRole::INVALID;
         } else {
             g_sharedCtx.sendWqeNum[g_sharedCtx.startedThreadNum] = 0;
             g_sharedCtx.curThreadIdsOnCpu[cpuId] = g_sharedCtx.startedThreadNum++;
-            HCCL_INFO("Slave thread index %u on cpu %d. clusterID %d",
-                      g_sharedCtx.curThreadIdsOnCpu[cpuId], cpuId, HcclAicpuUtils::GetCurClusterId());
+            HCCL_INFO(
+                "Slave thread index %u on cpu %d. clusterID %d", g_sharedCtx.curThreadIdsOnCpu[cpuId], cpuId,
+                HcclAicpuUtils::GetCurClusterId());
             role = AicpuServerRole::SLAVE;
         }
     }
@@ -329,13 +332,15 @@ AicpuServerRole AicpuKfcBatchwriteProcess::GetVerifiedServerRole(const AicpuComC
 }
 
 // 真正处理BatchWrite master 从commonHcclMsg中取消息，更新工作线程数，放到队列中。 从队列中取数据进行发送。
-HcclResult AicpuKfcBatchwriteProcess::HandleBatchWriteOperation(const CommonHcclMsg &commonHcclMsg,
-                                                                const AicpuComContext *ctx) {
+HcclResult
+AicpuKfcBatchwriteProcess::HandleBatchWriteOperation(const CommonHcclMsg& commonHcclMsg, const AicpuComContext* ctx)
+{
     if (commonHcclMsg.dataCnt == 0UL || commonHcclMsg.sendBuffer == 0UL) {
-        HCCL_ERROR("Get msg send buffer is nullptr or dataCnt is zero. "
-                   "Msg[commType %u, opType %u, sendBuffer %p, dataCnt %lu]",
-                   static_cast<uint32_t>(commonHcclMsg.commType),
-                   static_cast<uint32_t>(commonHcclMsg.opType), commonHcclMsg.sendBuffer, commonHcclMsg.dataCnt);
+        HCCL_ERROR(
+            "Get msg send buffer is nullptr or dataCnt is zero. "
+            "Msg[commType %u, opType %u, sendBuffer %p, dataCnt %lu]",
+            static_cast<uint32_t>(commonHcclMsg.commType), static_cast<uint32_t>(commonHcclMsg.opType),
+            commonHcclMsg.sendBuffer, commonHcclMsg.dataCnt);
         return HCCL_E_PARA;
     }
 
@@ -354,7 +359,7 @@ HcclResult AicpuKfcBatchwriteProcess::HandleBatchWriteOperation(const CommonHccl
     return HCCL_SUCCESS;
 }
 
-HcclResult AicpuKfcBatchwriteProcess::RunSlaveRpcServerForApi(AicpuComContext *ctx)
+HcclResult AicpuKfcBatchwriteProcess::RunSlaveRpcServerForApi(AicpuComContext* ctx)
 {
     HCCL_INFO("----------start Slave Rpc Server For Api Hccl, ctx:%p ----------", ctx);
     if (ctx->devType != DevType::DEV_TYPE_910B) {
@@ -370,11 +375,12 @@ HcclResult AicpuKfcBatchwriteProcess::RunSlaveRpcServerForApi(AicpuComContext *c
 #endif
 
         if (g_sharedCtx.taskFinishFlag.load(std::memory_order_acquire)) {
-            HCCL_INFO("task is finish, slave process exit");
+            HCCL_INFO("task is finished, slave process exit");
             break;
         }
         u8 needSendTotalNum = 0;
-        if (threadId < g_sharedCtx.workedThreadNum && g_hcclMsgQueue.Peek(&commonHcclMsg) && commonHcclMsg.seqNum != sendSeqNum) {
+        if (threadId < g_sharedCtx.workedThreadNum && g_hcclMsgQueue.Peek(&commonHcclMsg)
+            && commonHcclMsg.seqNum != sendSeqNum) {
             if (commonHcclMsg.commType == HcclCMDType::HCCL_CMD_BATCH_WRITE) {
                 CHK_RET(ConcurrentPostSendWqe(commonHcclMsg, ctx, &needSendTotalNum));
                 sendSeqNum = commonHcclMsg.seqNum;
@@ -384,22 +390,22 @@ HcclResult AicpuKfcBatchwriteProcess::RunSlaveRpcServerForApi(AicpuComContext *c
     return HCCL_SUCCESS;
 }
 
-HcclResult AicpuKfcBatchwriteProcess::BatchWriteProcess(hccl::OpParam &opParam, hccl::HcclCommAicpu &comm,
-                                                        HcclOpResParam &param)
+HcclResult
+AicpuKfcBatchwriteProcess::BatchWriteProcess(hccl::OpParam& opParam, hccl::HcclCommAicpu& comm, HcclOpResParam& param)
 {
-    static hccl::AlgResourceResponse *algResResponse = nullptr;
+    static hccl::AlgResourceResponse* algResResponse = nullptr;
     if (UNLIKELY(algResResponse == nullptr || algResResponse->slaveStreams.empty())) {
-        const std::string tag =
-                comm.GetGroupName() + std::to_string(static_cast<uint8_t>(HcclCMDType::HCCL_CMD_BATCH_WRITE)) +
-                std::string("_mc2") + std::string(BATCH_WRITE_ALG_NAME) + std::string("_device");
+        const std::string tag = comm.GetGroupName()
+                                + std::to_string(static_cast<uint8_t>(HcclCMDType::HCCL_CMD_BATCH_WRITE))
+                                + std::string("_mc2") + std::string(BATCH_WRITE_ALG_NAME) + std::string("_device");
         std::unique_ptr<hccl::CollExecutorBase> executor;
         CHK_RET(comm.GetAlgResponseRes(tag, BATCH_WRITE_ALG_NAME, opParam, &param, executor, algResResponse));
     }
     const u64 ts = GetCurCpuTimestamp();
     while (algResResponse->slaveStreams.empty()) {
-        CHK_PRT_RET(GetCurCpuTimestamp() - ts > static_cast<u64>(NSEC_PER_SEC),
-                    HCCL_ERROR("[%s]Timeout during batchwrite initialization.", __func__),
-                    HCCL_E_INTERNAL);
+        CHK_PRT_RET(
+            GetCurCpuTimestamp() - ts > static_cast<u64>(NSEC_PER_SEC),
+            HCCL_ERROR("[%s]Timeout during batchwrite initialization.", __func__), HCCL_E_INTERNAL);
     }
     HcclResult ret = OrchestrateSdmaSqe(opParam, comm);
     AicpuKfcProf::GetCurrentAicpuProf()->workCnt++;

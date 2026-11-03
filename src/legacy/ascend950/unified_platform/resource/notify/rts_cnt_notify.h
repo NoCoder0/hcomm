@@ -20,7 +20,6 @@
 
 namespace Hccl {
 
-
 class BaseTask;
 class RtsCntNotify {
 public:
@@ -28,45 +27,35 @@ public:
     ~RtsCntNotify();
     std::unique_ptr<BaseTask> PostBits(u32 bitValue);
     std::unique_ptr<BaseTask> WaitValue(u32 value);
-    void                      PostBits(u32 bitValue, const Stream &stream) const;
-    void                      WaitValue(u32 value, u32 timeout, const aclrtStream &rtStream) const;
-    void                      WaitValue(u32 value, u32 timeout, const Stream &stream) const;
+    void PostBits(u32 bitValue, const Stream& stream) const;
+    void WaitValue(u32 value, u32 timeout, const aclrtStream& rtStream) const;
+    void WaitValue(u32 value, u32 timeout, const Stream& stream) const;
 
     std::string Describe() const;
 
-    u32 GetId() const
-    {
-        return id;
-    }
+    u32 GetId() const { return id; }
 
-    u64 GetAddr() const
-    {
-        return addr;
-    }
- 
-    u32 GetSize() const
-    {
-        return size;
-    }
+    u64 GetAddr() const { return addr; }
+
+    u32 GetSize() const { return size; }
 
     std::vector<char> GetUniqueId() const;
 
 private:
-    u32           deviceId;
-    u32           devPhyId;
+    u32 deviceId;
+    u32 devPhyId;
     RtCntNotify_t handle{nullptr};
-    u32           id{0};
-    u64           addr{0};
-    u32           size{0};
+    u32 id{0};
+    u64 addr{0};
+    u32 size{0};
 };
- 
- 
+
 struct UbCntNotifyExchangeData {
     u32 userData;
     u64 addr{0};
     u32 id{0};
     u32 size{0};
-    u8  key[HRT_UB_MEM_KEY_MAX_LEN]{0};
+    u8 key[HRT_UB_MEM_KEY_MAX_LEN]{0};
     u32 tokenValue{0};
     u32 tokenId{0};
     u32 keySize{0};

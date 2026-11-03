@@ -33,8 +33,7 @@ struct RsIbverbsOps {
     int (*rsIbvQueryGidType)(struct ibv_context *context, uint8_t portNum, unsigned int index,
         enum ibv_gid_type_sysfs *type);
     int (*rsIbvDeregMr)(struct ibv_mr *mr);
-    int (*rsIbvQueryQp)(struct ibv_qp *qp, struct ibv_qp_attr *attr, int attrMask,
-        struct ibv_qp_init_attr *initAttr);
+    int (*rsIbvQueryQp)(struct ibv_qp *qp, struct ibv_qp_attr *attr, int attrMask, struct ibv_qp_init_attr *initAttr);
     int (*rsIbvDestroyQp)(struct ibv_qp *qp);
     int (*rsIbvGetCqEvent)(struct ibv_comp_channel *channel, struct ibv_cq **cq, void **cqContext);
     int (*rsIbvDestroyCq)(struct ibv_cq *cq);
@@ -60,13 +59,12 @@ struct RsIbverbsOps {
 };
 
 struct RsRoceUserOps {
-    int (*rsRoceSetTsqpDepth)(const char *devName, unsigned int rdevIndex, unsigned int tempDepth,
-        unsigned int *qpNum, unsigned int *sqDepth);
-    int (*rsRoceGetTsqpDepth)(const char *devName, unsigned int rdevIndex, unsigned int *tempDepth,
-        unsigned int *qpNum, unsigned int *sqDepth);
+    int (*rsRoceSetTsqpDepth)(const char *devName, unsigned int rdevIndex, unsigned int tempDepth, unsigned int *qpNum,
+        unsigned int *sqDepth);
+    int (*rsRoceGetTsqpDepth)(const char *devName, unsigned int rdevIndex, unsigned int *tempDepth, unsigned int *qpNum,
+        unsigned int *sqDepth);
     int (*rsRoceGetRoceDevData)(const char *devName, struct roce_dev_data *rdevData);
-    int (*rsIbvExpQueryNotify)(struct ibv_context *context, unsigned long long *notifyVa,
-        unsigned long long *size);
+    int (*rsIbvExpQueryNotify)(struct ibv_context *context, unsigned long long *notifyVa, unsigned long long *size);
     int (*rsIbvExpPostSend)(struct ibv_qp *qp, struct ibv_send_wr *wr, struct ibv_send_wr **badWr,
         struct wr_exp_rsp *expRsp);
     int (*rsIbvExtPostSend)(struct ibv_qp *qp, struct ibv_send_wr *wr, struct ibv_send_wr **badWr,
@@ -79,8 +77,8 @@ struct RsRoceUserOps {
         struct ibv_comp_channel *channel, int compVector, struct rdma_lite_device_cq_init_attr *attr,
         struct rdma_lite_device_cq_attr *cqResp);
     int (*rsIbvExpQueryDevice)(struct ibv_context *context, struct dev_cap_info *cap);
-    int (*rsRoceInitMemPool)(const struct roce_mem_cq_qp_attr *memAttr,
-        struct rdma_lite_device_mem_attr *memData, unsigned int devId);
+    int (*rsRoceInitMemPool)(const struct roce_mem_cq_qp_attr *memAttr, struct rdma_lite_device_mem_attr *memData,
+        unsigned int devId);
     int (*rsRoceDeinitMemPool)(unsigned int memIdx);
     int (*rsRoceQueryQpc)(struct ibv_qp *qp, struct hns_roce_qpc_attr_val *attrVal, unsigned int attrMask);
     struct ibv_ah *(*rsIbvExpCreateAh)(struct ibv_pd *pd, struct ibv_exp_ah_attr *attrx);
@@ -101,16 +99,15 @@ struct RsHrnOps {
 struct ibv_mr *RsIbvExpRegMr(struct ibv_pd *pd, void *addr, size_t length, int access,
     struct roce_process_sign roceSign);
 int RsIbvExpQueryNotify(struct ibv_context *context, unsigned long long *notifyVa, unsigned long long *size);
-int RsIbvExpPostSend(struct ibv_qp *qp, struct ibv_send_wr *wr, struct ibv_send_wr **badWr,
-    struct wr_exp_rsp *expRsp);
+int RsIbvExpPostSend(struct ibv_qp *qp, struct ibv_send_wr *wr, struct ibv_send_wr **badWr, struct wr_exp_rsp *expRsp);
 int RsIbvExtPostSend(struct ibv_qp *qp, struct ibv_send_wr *wr, struct ibv_send_wr **badWr,
     struct ibv_post_send_ext_attr *extAttr, struct ibv_post_send_ext_resp *extResp);
-struct ibv_qp *RsIbvExpCreateQp(
-    struct ibv_pd *pd, struct ibv_exp_qp_init_attr *qpInitAttr, struct rdma_lite_device_qp_attr *qpResp);
-int RsRoceSetTsqpDepth(const char *devName, unsigned int rdevIndex, unsigned int tempDepth,
-    unsigned int *qpNum, unsigned int *sqDepth);
-int RsRoceGetTsqpDepth(const char *devName, unsigned int rdevIndex, unsigned int *tempDepth,
-    unsigned int *qpNum, unsigned int *sqDepth);
+struct ibv_qp *RsIbvExpCreateQp(struct ibv_pd *pd, struct ibv_exp_qp_init_attr *qpInitAttr,
+    struct rdma_lite_device_qp_attr *qpResp);
+int RsRoceSetTsqpDepth(const char *devName, unsigned int rdevIndex, unsigned int tempDepth, unsigned int *qpNum,
+    unsigned int *sqDepth);
+int RsRoceGetTsqpDepth(const char *devName, unsigned int rdevIndex, unsigned int *tempDepth, unsigned int *qpNum,
+    unsigned int *sqDepth);
 int RsRoceGetRoceDevData(const char *devName, struct roce_dev_data *rdevData);
 
 DL_ATTRI_VISI_DEF void RsApiDeinit(void);
@@ -119,8 +116,7 @@ void RsIbvFreeDeviceList(struct ibv_device **list);
 void RsIbvAckCqEvents(struct ibv_cq *cq, unsigned int nevents);
 const char *RsIbvGetDeviceName(struct ibv_device *device);
 const char *RsIbvWcStatusStr(enum ibv_wc_status status);
-int RsIbvQueryGidType(struct ibv_context *context, uint8_t portNum, unsigned int index,
-    enum ibv_gid_type_sysfs *type);
+int RsIbvQueryGidType(struct ibv_context *context, uint8_t portNum, unsigned int index, enum ibv_gid_type_sysfs *type);
 int RsIbvDeregMr(struct ibv_mr *mr);
 int RsIbvPostSend(struct ibv_qp *qp, struct ibv_send_wr *wr, struct ibv_send_wr **badWr);
 int RsIbvPostRecv(struct ibv_qp *qp, struct ibv_recv_wr *wr, struct ibv_recv_wr **badWr);
@@ -140,8 +136,8 @@ int RsIbvDestroyCompChannel(struct ibv_comp_channel *channel);
 struct ibv_context *RsIbvOpenDevice(struct ibv_device *device);
 struct ibv_pd *RsIbvAllocPd(struct ibv_context *context);
 struct ibv_device **RsIbvGetDeviceList(int *numDevices);
-struct ibv_cq *RsIbvCreateCq(struct ibv_context *context, int cqe, void *cqContext,
-    struct ibv_comp_channel *channel, int compVector);
+struct ibv_cq *RsIbvCreateCq(struct ibv_context *context, int cqe, void *cqContext, struct ibv_comp_channel *channel,
+    int compVector);
 struct ibv_mr *RsIbvRegMr(struct ibv_pd *pd, void *addr, size_t length, int access);
 struct ibv_qp *RsIbvCreateQp(struct ibv_pd *pd, struct ibv_qp_init_attr *qpInitAttr);
 struct ibv_comp_channel *RsIbvCreateCompChannel(struct ibv_context *context);
@@ -149,9 +145,8 @@ struct ibv_srq *RsIbvCreateSrq(struct ibv_pd *pd, struct ibv_srq_init_attr *srqI
 int RsIbvDestroySrq(struct ibv_srq *srq);
 struct ibv_ah *RsIbvCreateAh(struct ibv_pd *pd, struct ibv_ah_attr *attr);
 int RsIbvDestroyAh(struct ibv_ah *ah);
-struct ibv_cq *RsIbvExpCreateCq(struct ibv_context *context, int cqe, void *cqContext,
-    struct ibv_comp_channel *channel, int compVector, struct rdma_lite_device_cq_init_attr *attr,
-    struct rdma_lite_device_cq_attr *cqResp);
+struct ibv_cq *RsIbvExpCreateCq(struct ibv_context *context, int cqe, void *cqContext, struct ibv_comp_channel *channel,
+    int compVector, struct rdma_lite_device_cq_init_attr *attr, struct rdma_lite_device_cq_attr *cqResp);
 int RsIbvExpQueryDevice(struct ibv_context *context, struct dev_cap_info *cap);
 int RsRoceInitMemPool(const struct roce_mem_cq_qp_attr *memAttr, struct rdma_lite_device_mem_attr *memData,
     unsigned int devId);

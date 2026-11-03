@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "hccp_hdc_manager.h"
 #include "orion_adapter_tsd.h"
@@ -14,7 +14,7 @@
 
 namespace Hccl {
 
-HccpHdcManager &HccpHdcManager::GetInstance()
+HccpHdcManager& HccpHdcManager::GetInstance()
 {
     static HccpHdcManager hccpHdcManager;
     return hccpHdcManager;
@@ -30,8 +30,8 @@ void HccpHdcManager::Init(u32 deviceLogicId)
     HrtOpenTsdProcess(deviceLogicId);
 
     HRaInitConfig cfg;
-    cfg.phyId = HrtGetDevicePhyIdByIndex(deviceLogicId);
-    cfg.mode  = HrtNetworkMode::HDC;
+    cfg.phyId = HrtGetDevicePhyIdByUserDevId(deviceLogicId);
+    cfg.mode = HrtNetworkMode::HDC;
     HrtRaInit(cfg);
 
     instances.insert(deviceLogicId);
@@ -52,7 +52,7 @@ void HccpHdcManager::DeInit(u32 deviceLogicId)
     instances.erase(deviceLogicId);
 
     HRaInitConfig cfg;
-    cfg.phyId = HrtGetDevicePhyIdByIndex(deviceLogicId);
+    cfg.phyId = HrtGetDevicePhyIdByUserDevId(deviceLogicId);
     cfg.mode = HrtNetworkMode::HDC;
     DECTOR_TRY_CATCH("HccpHdcManager", HrtRaDeInit(cfg));
     HCCL_INFO("[HccpHdcManager::%s] devLogicId [%u] ra deinit success.", __func__, deviceLogicId);
@@ -65,7 +65,7 @@ void HccpHdcManager::DestroyAll()
     }
     destroyed.store(true);
 
-    //析构前先注销reset devcie的回调，防止嵌套调用
+    // 析构前先注销reset device的回调，防止嵌套调用
     UnregisterDeviceResetCallback();
 
     std::lock_guard<std::recursive_mutex> lock(managerMutex);
@@ -73,8 +73,8 @@ void HccpHdcManager::DestroyAll()
         HCCL_INFO("HccpHdcManager deinit");
 
         HRaInitConfig cfg;
-        cfg.phyId = HrtGetDevicePhyIdByIndex(deviceLogicId);
-        cfg.mode  = HrtNetworkMode::HDC;
+        cfg.phyId = HrtGetDevicePhyIdByUserDevId(deviceLogicId);
+        cfg.mode = HrtNetworkMode::HDC;
         DECTOR_TRY_CATCH("HccpHdcManager", HrtRaDeInit(cfg));
         DECTOR_TRY_CATCH("HccpHdcManager", HrtResetDevice(deviceLogicId));
     }
@@ -85,15 +85,12 @@ void HccpHdcManager::UnregisterDeviceResetCallback() const
 {
     aclError ret = aclrtRegDeviceStateCallback("hcomm_res_mgr", nullptr, nullptr);
     if (ret != ACL_SUCCESS) {
-        HCCL_WARNING("[HccpHdcManager] aclrtRegDeviceStateCallback unregister failed, ret[%d]", ret);
+        HCCL_WARNING("[HccpHdcManager] aclrtRegDeviceStateCallback unregister is unsuccessful, ret[%d]", ret);
         return;
     }
     HCCL_INFO("[HccpHdcManager] aclrtRegDeviceStateCallback unregister success");
 }
 
-HccpHdcManager::~HccpHdcManager()
-{
-    DECTOR_TRY_CATCH("HccpHdcManager", DestroyAll());
-}
+HccpHdcManager::~HccpHdcManager() { DECTOR_TRY_CATCH("HccpHdcManager", DestroyAll()); }
 
 } // namespace Hccl

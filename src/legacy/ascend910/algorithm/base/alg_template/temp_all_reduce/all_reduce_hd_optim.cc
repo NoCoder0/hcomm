@@ -1,28 +1,24 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include <cmath>
 #include "alg_template_register.h"
 #include "all_reduce_hd_optim_pub.h"
 namespace hccl {
-AllReduceHDOptim::AllReduceHDOptim(const HcclDispatcher dispatcher) : AlgTemplateBase(dispatcher)
-{
-}
+AllReduceHDOptim::AllReduceHDOptim(const HcclDispatcher dispatcher) : AlgTemplateBase(dispatcher) {}
 
-AllReduceHDOptim::~AllReduceHDOptim()
-{
-}
+AllReduceHDOptim::~AllReduceHDOptim() {}
 
-HcclResult AllReduceHDOptim::Prepare(u64 reduceAttrBitMap, std::vector<Stream> &meshStreams,
-    std::vector<std::shared_ptr<LocalNotify>> &meshSignal, std::vector<std::shared_ptr<LocalNotify>> &meshSignalAux,
-    u32 userRank, HcomCollOpInfo *opInfo, bool aicpu)
+HcclResult AllReduceHDOptim::Prepare(
+    u64 reduceAttrBitMap, std::vector<Stream>& meshStreams, std::vector<std::shared_ptr<LocalNotify>>& meshSignal,
+    std::vector<std::shared_ptr<LocalNotify>>& meshSignalAux, u32 userRank, HcomCollOpInfo* opInfo, bool aicpu)
 {
     reduceAttr_ = reduceAttrBitMap;
     userRank_ = userRank;
@@ -36,7 +32,7 @@ HcclResult AllReduceHDOptim::Prepare(u64 reduceAttrBitMap, std::vector<Stream> &
 
 HcclResult AllReduceHDOptim::MainRecordSub(u32 streamNum)
 {
-    if(aicpu_) {
+    if (aicpu_) {
         return HCCL_SUCCESS;
     }
     for (u32 signalIndex = 0; signalIndex < streamNum; signalIndex++) {
@@ -47,7 +43,7 @@ HcclResult AllReduceHDOptim::MainRecordSub(u32 streamNum)
 
 HcclResult AllReduceHDOptim::SubWaitMain(u32 streamNum)
 {
-    if(aicpu_) {
+    if (aicpu_) {
         return HCCL_SUCCESS;
     }
     for (u32 streamIndex = 0; streamIndex < streamNum; streamIndex++) {
@@ -59,7 +55,7 @@ HcclResult AllReduceHDOptim::SubWaitMain(u32 streamNum)
 
 HcclResult AllReduceHDOptim::MainWaitSub(u32 streamNum)
 {
-    if(aicpu_) {
+    if (aicpu_) {
         return HCCL_SUCCESS;
     }
     for (u32 signalIndex = 0; signalIndex < streamNum; signalIndex++) {
@@ -70,34 +66,37 @@ HcclResult AllReduceHDOptim::MainWaitSub(u32 streamNum)
 
 HcclResult AllReduceHDOptim::SubRecordMain(u32 streamNum)
 {
-    if(aicpu_) {
+    if (aicpu_) {
         return HCCL_SUCCESS;
     }
     for (u32 streamIndex = 0; streamIndex < streamNum; streamIndex++) {
-        CHK_RET(
-            LocalNotify::Post(meshStreams_[streamIndex], dispatcher_, (*meshSignal_)[streamIndex], profilerInput_.stage));
+        CHK_RET(LocalNotify::Post(
+            meshStreams_[streamIndex], dispatcher_, (*meshSignal_)[streamIndex], profilerInput_.stage));
     }
     return HCCL_SUCCESS;
 }
 
 // allreduce算法的函数入口
-HcclResult AllReduceHDOptim::RunAsync(const u32 rank, const u32 rankSize, const std::vector<LINK> &links)
+HcclResult AllReduceHDOptim::RunAsync(const u32 rank, const u32 rankSize, const std::vector<LINK>& links)
 {
     HcclResult ret = HCCL_SUCCESS;
     CHK_SMART_PTR_NULL(dispatcher_);
     CHK_PTR_NULL(stream_.ptr());
-    HCCL_INFO("AllReduceHDOptim run: rank[%u] ranksize[%u] inputMem[%p] outputMem[%p] count[%llu]",
-        rank, rankSize, outputMem_.ptr(), outputMem_.ptr(), count_);
+    HCCL_INFO(
+        "AllReduceHDOptim run: rank[%u] ranksize[%u] inputMem[%p] outputMem[%p] count[%llu]", rank, rankSize,
+        outputMem_.ptr(), outputMem_.ptr(), count_);
 
     if (links.size() < rankSize) {
-        HCCL_ERROR("[AllReduceHDOptim][RunAsync]rank[%u] linksize[%llu] is less than rankSize[%u]",
-            rank, links.size(), rankSize);
+        HCCL_ERROR(
+            "[AllReduceHDOptim][RunAsync]rank[%u] linksize[%llu] is less than rankSize[%u]", rank, links.size(),
+            rankSize);
         return HCCL_E_INTERNAL;
     }
 
     if (meshStreams_.size() < base) {
-        HCCL_ERROR("[AllReduceHDOptim][RunAsync]rank[%u] meshStreams_[%llu] is less than need[%u]",
-            rank, meshStreams_.size(), base);
+        HCCL_ERROR(
+            "[AllReduceHDOptim][RunAsync]rank[%u] meshStreams_[%llu] is less than need[%u]", rank, meshStreams_.size(),
+            base);
         return HCCL_E_INTERNAL;
     }
     u32 totalSize = SIZE_TABLE[dataType_] * count_;
@@ -108,29 +107,31 @@ HcclResult AllReduceHDOptim::RunAsync(const u32 rank, const u32 rankSize, const 
     stepPow = static_cast<u32>(pow(base, nSteps));
 
     ret = RunPreCopy(rank, rankSize, links);
-    CHK_PRT_RET(ret != HCCL_SUCCESS,
-        HCCL_ERROR("[AllReduceHDOptim][RunAsync]rank[%u] count[%llu] failed RunPreCopy step" ,
-            rank, count_), ret);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR("[AllReduceHDOptim][RunAsync]rank[%u] count[%llu] failed RunPreCopy step", rank, count_), ret);
 
     if (rank < stepPow) {
         ret = RunAllReduceHDOptim(rank, rankSize, links);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[AllReduceHDOptim][RunAsync]rank[%u] count[%llu] failed RunAllReduceHDOptim step",
-                rank, count_), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[AllReduceHDOptim][RunAsync]rank[%u] count[%llu] failed RunAllReduceHDOptim step", rank, count_),
+            ret);
     }
-    
+
     if (stepPow != rankSize) {
         ret = RunFinalStep(rank, rankSize, links);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[AllReduceHDOptim][RunAsync]rank[%u] count[%llu] failed RunFinalStep step",
-                rank, count_), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR("[AllReduceHDOptim][RunAsync]rank[%u] count[%llu] failed RunFinalStep step", rank, count_), ret);
     }
 
     HCCL_INFO("AllReduceHDOptim finished: rank[%u] ranksize[%u]", rank, rankSize);
     return HCCL_SUCCESS;
 }
 
-HcclResult AllReduceHDOptim::RunPreCopy(u32 rank, u32 rankSize, const std::vector<LINK> &links)
+HcclResult AllReduceHDOptim::RunPreCopy(u32 rank, u32 rankSize, const std::vector<LINK>& links)
 {
     u32 totalSize = SIZE_TABLE[dataType_] * count_;
 
@@ -149,19 +150,12 @@ HcclResult AllReduceHDOptim::RunPreCopy(u32 rank, u32 rankSize, const std::vecto
         if (rank >= pow(base, nSteps)) {
             CHK_PTR_NULL(links[neighCur]);
             CHK_RET(links[neighCur]->RxAck(stream_));
-            void *remMemPtr = nullptr;
+            void* remMemPtr = nullptr;
             CHK_RET(links[neighCur]->GetRemoteMem(UserMemType::OUTPUT_MEM, &remMemPtr));
-            dst = DeviceMem::create(static_cast<u8 *>(remMemPtr), totalSize);
+            dst = DeviceMem::create(static_cast<u8*>(remMemPtr), totalSize);
             CHK_RET(HcclReduceAsync(
-                dispatcher_,
-                static_cast<void *>(src.ptr()),
-                count_,
-                dataType_,
-                reductionOp_,
-                stream_,
-                static_cast<void *>(dst.ptr()),
-                links[neighCur]->GetRemoteRank(),
-                links[neighCur]->GetLinkType(),
+                dispatcher_, static_cast<void*>(src.ptr()), count_, dataType_, reductionOp_, stream_,
+                static_cast<void*>(dst.ptr()), links[neighCur]->GetRemoteRank(), links[neighCur]->GetLinkType(),
                 INLINE_REDUCE_BIT));
             CHK_RET(links[neighCur]->TxDataSignal(stream_));
         } else {
@@ -179,9 +173,9 @@ HcclResult AllReduceHDOptim::RunPreCopy(u32 rank, u32 rankSize, const std::vecto
 }
 
 HcclResult AllReduceHDOptim::RunBetweenStep(
-    u32 rank, u32 step, u32 neighBefore, u32 neighNext, u32 rankSize, const std::vector<LINK> &links)
+    u32 rank, u32 step, u32 neighBefore, u32 neighNext, u32 rankSize, const std::vector<LINK>& links)
 {
-    (void) rank;
+    (void)rank;
     u32 totalSize = SIZE_TABLE[dataType_] * count_;
 
     DeviceMem src;
@@ -206,17 +200,17 @@ HcclResult AllReduceHDOptim::RunBetweenStep(
     } else {
         dst = outputMem_.range((step + 1) * totalSize, totalSize);
     }
-    CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dst, src, aicpu_?stream_:meshStreams_[0]));
+    CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dst, src, aicpu_ ? stream_ : meshStreams_[0]));
 
-    CHK_RET(links[neighNext]->TxAck(aicpu_?stream_:meshStreams_[1]));
-    CHK_RET(links[neighNext]->RxAck(aicpu_?stream_:meshStreams_[1]));
+    CHK_RET(links[neighNext]->TxAck(aicpu_ ? stream_ : meshStreams_[1]));
+    CHK_RET(links[neighNext]->RxAck(aicpu_ ? stream_ : meshStreams_[1]));
 
     CHK_RET(SubRecordMain(base));
     CHK_RET(MainWaitSub(base));
     return HCCL_SUCCESS;
 }
 
-HcclResult AllReduceHDOptim::RunAllReduceHDOptim(u32 rank, u32 rankSize, const std::vector<LINK> &links)
+HcclResult AllReduceHDOptim::RunAllReduceHDOptim(u32 rank, u32 rankSize, const std::vector<LINK>& links)
 {
     u32 unitSize = SIZE_TABLE[dataType_];
     u32 totalSize = unitSize * count_;
@@ -229,7 +223,7 @@ HcclResult AllReduceHDOptim::RunAllReduceHDOptim(u32 rank, u32 rankSize, const s
     CHK_RET(links[neighCur]->RxAck(stream_));
 
     u32 neighNext = 0;
-    void *remMemPtr = nullptr;
+    void* remMemPtr = nullptr;
     for (u32 step = 1; step <= nSteps; step++) {
         if ((step != nSteps) || (stepPow != rankSize)) {
             dst = outputMem_.range(step * totalSize, totalSize);
@@ -237,22 +231,16 @@ HcclResult AllReduceHDOptim::RunAllReduceHDOptim(u32 rank, u32 rankSize, const s
             dst = userMemOut.range(0, totalSize);
         }
         CHK_RET(links[neighCur]->GetRemoteMem(UserMemType::OUTPUT_MEM, &remMemPtr));
-        src = DeviceMem::create(static_cast<u8 *>(remMemPtr) + (step - 1) * totalSize, totalSize);
+        src = DeviceMem::create(static_cast<u8*>(remMemPtr) + (step - 1) * totalSize, totalSize);
         if ((step == 1) && (stepPow == rankSize)) {
             // 二次幂整第一步写
             src = userMemIn.range(0, totalSize);
-            dst = DeviceMem::create(static_cast<u8 *>(remMemPtr) + totalSize, totalSize);
+            dst = DeviceMem::create(static_cast<u8*>(remMemPtr) + totalSize, totalSize);
         }
 
-        CHK_RET(HcclReduceAsync(dispatcher_,
-            static_cast<void *>(src.ptr()),
-            count_,
-            dataType_,
-            reductionOp_,
-            stream_,
-            static_cast<void *>(dst.ptr()),
-            links[neighCur]->GetRemoteRank(),
-            links[neighCur]->GetLinkType(),
+        CHK_RET(HcclReduceAsync(
+            dispatcher_, static_cast<void*>(src.ptr()), count_, dataType_, reductionOp_, stream_,
+            static_cast<void*>(dst.ptr()), links[neighCur]->GetRemoteRank(), links[neighCur]->GetLinkType(),
             INLINE_REDUCE_BIT));
 
         if (step != nSteps) {
@@ -268,7 +256,7 @@ HcclResult AllReduceHDOptim::RunAllReduceHDOptim(u32 rank, u32 rankSize, const s
     return HCCL_SUCCESS;
 }
 
-HcclResult AllReduceHDOptim::RunFinalStep(u32 rank, u32 rankSize, const std::vector<LINK> &links)
+HcclResult AllReduceHDOptim::RunFinalStep(u32 rank, u32 rankSize, const std::vector<LINK>& links)
 {
     u32 unitSize = SIZE_TABLE[dataType_];
     u32 totalSize = unitSize * count_;
@@ -285,9 +273,9 @@ HcclResult AllReduceHDOptim::RunFinalStep(u32 rank, u32 rankSize, const std::vec
         CHK_RET(links[neighCur]->RxDataSignal(stream_));
     } else {
         CHK_RET(links[neighCur]->RxAck(stream_));
-        void *remMemPtr = nullptr;
+        void* remMemPtr = nullptr;
         CHK_RET(links[neighCur]->GetRemoteMem(UserMemType::OUTPUT_MEM, &remMemPtr));
-        src = DeviceMem::create(static_cast<u8 *>(remMemPtr) + nSteps * totalSize, totalSize);
+        src = DeviceMem::create(static_cast<u8*>(remMemPtr) + nSteps * totalSize, totalSize);
         CHK_RET(HcclD2DMemcpyAsync(
             dispatcher_, dst, src, stream_, links[neighCur]->GetRemoteRank(), links[neighCur]->GetLinkType()));
         CHK_RET(links[neighCur]->TxDataSignal(stream_));
@@ -295,4 +283,4 @@ HcclResult AllReduceHDOptim::RunFinalStep(u32 rank, u32 rankSize, const std::vec
     return HCCL_SUCCESS;
 }
 REGISTER_TEMPLATE(TemplateType::TEMPLATE_ALL_REDUCE_HD_OPTIM, AllReduceHDOptim);
-}  // namespace hccl
+} // namespace hccl

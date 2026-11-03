@@ -26,6 +26,7 @@
 #include "dev_buffer.h"
 #include "rma_buffer.h"
 #include "internal_exception.h"
+#include "invalid_params_exception.h"
 #undef private
 #undef protected
 
@@ -35,20 +36,11 @@ using namespace std;
 
 class AivMc2CompontTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AivMc2CompontTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AivMc2CompontTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AivMc2CompontTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AivMc2CompontTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in AivMc2CompontTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in AivMc2CompontTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -60,15 +52,14 @@ protected:
 
 class FakeCollAlgComponent : public CollAlgComponent {
 public:
-    FakeCollAlgComponent() : CollAlgComponent(nullptr, DevType::DEV_TYPE_950, 0, 1){};
-    HcclResult Orchestrate(const CollAlgOperator &op, const CollAlgParams &params,
-                                   InsQuePtr queue, string &algName)
+    FakeCollAlgComponent() : CollAlgComponent(nullptr, DevType::DEV_TYPE_950, 0, 1) {};
+    HcclResult Orchestrate(const CollAlgOperator& op, const CollAlgParams& params, InsQuePtr queue, string& algName)
     {
         queue->Append(std::move(std::make_unique<CcuInstructionAllGatherMesh1D>()));
         return HCCL_SUCCESS;
     }
 
-    HcclResult Orchestrate(const CollAlgOperator &op, const CollAlgParams &params, PrimQuePtr queue, string &algName)
+    HcclResult Orchestrate(const CollAlgOperator& op, const CollAlgParams& params, PrimQuePtr queue, string& algName)
     {
         return HCCL_SUCCESS;
     }
@@ -81,7 +72,7 @@ TEST_F(AivMc2CompontTest, should_return_fail_when_calling_AllocCommResource_comm
     std::unique_ptr<CommunicatorImpl> comm = std::make_unique<CommunicatorImpl>();
     AivMc2Compont aivMc2Compont(comm.get());
     comm->rankSize = 1;
-    EXPECT_THROW(aivMc2Compont.AllocCommResource((void *)&mc2Tiling, nullptr), NotSupportException);
+    EXPECT_THROW(aivMc2Compont.AllocCommResource((void*)&mc2Tiling, nullptr), NotSupportException);
 }
 
 TEST_F(AivMc2CompontTest, should_return_fail_when_calling_AllocCommResource_tilingVersion_not_UNKNOWN_TILING)
@@ -91,7 +82,7 @@ TEST_F(AivMc2CompontTest, should_return_fail_when_calling_AllocCommResource_tili
     std::unique_ptr<CommunicatorImpl> comm = std::make_unique<CommunicatorImpl>();
     AivMc2Compont aivMc2Compont(comm.get());
     comm->rankSize = 1;
-    EXPECT_THROW(aivMc2Compont.AllocCommResource((void *)&mc2Tiling, nullptr), NotSupportException);
+    EXPECT_THROW(aivMc2Compont.AllocCommResource((void*)&mc2Tiling, nullptr), NotSupportException);
 }
 
 TEST_F(AivMc2CompontTest, should_return_success_when_calling_GenerateCommContext)
@@ -99,8 +90,8 @@ TEST_F(AivMc2CompontTest, should_return_success_when_calling_GenerateCommContext
     // when
     MOCKER(CcuRep::GetTokenInfo).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(1000));
     HcclCombinOpParam opParam;
-    MOCKER(HrtMallocHost).stubs().with(mockcpp::any()).will(returnValue(static_cast<void *>(&opParam)));
-    MOCKER(HrtMalloc).stubs().with(mockcpp::any(),mockcpp::any()).will(returnValue((void *)0x10000));
+    MOCKER(HrtMallocHost).stubs().with(mockcpp::any()).will(returnValue(static_cast<void*>(&opParam)));
+    MOCKER(HrtMalloc).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue((void*)0x10000));
 
     // then
     CommunicatorImpl comm{};
@@ -112,10 +103,10 @@ TEST_F(AivMc2CompontTest, should_return_success_when_calling_GenerateCommContext
 
     auto tmp = std::make_shared<CollServiceDeviceMode>(&comm);
     comm.collService = tmp.get();
-    auto collService = dynamic_cast<CollServiceDeviceMode *>(comm.GetCollService());
+    auto collService = dynamic_cast<CollServiceDeviceMode*>(comm.GetCollService());
     collService->GetAivInsPreprocessor()->SetProtocol(0);
 
-    void *commContext;
+    void* commContext;
     // check
     Mc2Tiling mc2Tiling;
     mc2Tiling.version = UNKNOWN_TILING_V1;
@@ -130,8 +121,8 @@ TEST_F(AivMc2CompontTest, should_throw_InternalException_when_calling_GenerateCo
     // when
     MOCKER(CcuRep::GetTokenInfo).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(1000));
     HcclCombinOpParam opParam;
-    MOCKER(HrtMallocHost).stubs().with(mockcpp::any()).will(returnValue(static_cast<void *>(&opParam)));
-    MOCKER(HrtMalloc).stubs().with(mockcpp::any(),mockcpp::any()).will(returnValue((void *)0x10000));
+    MOCKER(HrtMallocHost).stubs().with(mockcpp::any()).will(returnValue(static_cast<void*>(&opParam)));
+    MOCKER(HrtMalloc).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue((void*)0x10000));
 
     // then
     std::unique_ptr<CommunicatorImpl> comm = std::make_unique<CommunicatorImpl>();
@@ -141,10 +132,10 @@ TEST_F(AivMc2CompontTest, should_throw_InternalException_when_calling_GenerateCo
 
     auto tmp = std::make_shared<CollServiceDeviceMode>(comm.get());
     comm->collService = tmp.get();
-    auto collService = dynamic_cast<CollServiceDeviceMode *>(comm->GetCollService());
+    auto collService = dynamic_cast<CollServiceDeviceMode*>(comm->GetCollService());
     collService->GetAivInsPreprocessor()->SetProtocol(0);
 
-    void *commContext;
+    void* commContext;
     // check
     Mc2Tiling mc2Tiling;
     mc2Tiling.version = UNKNOWN_TILING_V1;
@@ -157,8 +148,33 @@ TEST_F(AivMc2CompontTest, should_return_early_when_mc2Tiling_is_nullptr)
     std::unique_ptr<CommunicatorImpl> comm = std::make_unique<CommunicatorImpl>();
     comm->rankSize = 2;
     AivMc2Compont aivMc2Compont(comm.get());
-    
-    void *commContext = nullptr;
+
+    void* commContext = nullptr;
     aivMc2Compont.AllocCommResource(nullptr, &commContext);
     EXPECT_EQ(nullptr, commContext);
+}
+
+// 覆盖 GenerateAivUrmaCommContext 的 links.empty() 异常路径及 opTag 改动（GetAivUrmaBufferTag）
+TEST_F(AivMc2CompontTest, should_throw_when_calling_GenerateCommContext_urma_links_empty)
+{
+    MOCKER(CcuRep::GetTokenInfo).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(1000));
+    HcclCombinOpParam opParam;
+    MOCKER(HrtMallocHost).stubs().with(mockcpp::any()).will(returnValue(static_cast<void*>(&opParam)));
+    MOCKER(HrtMalloc).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue((void*)0x10000));
+
+    std::unique_ptr<CommunicatorImpl> comm = std::make_unique<CommunicatorImpl>();
+    comm->rankSize = 1;
+    comm->myRank = 0;
+    AivMc2Compont aivMc2Compont(comm.get());
+    comm->cclBuffer = DevBuffer::Create(0x100, 0x100);
+    comm->ubMemoryTransportMgr = std::make_unique<UbMemoryTransportMgr>(*comm);
+
+    auto tmp = std::make_shared<CollServiceDeviceMode>(comm.get());
+    comm->collService = tmp.get();
+    auto collService = dynamic_cast<CollServiceDeviceMode*>(comm->GetCollService());
+    collService->GetAivInsPreprocessor()->SetProtocol(1); // urma 走 GenerateAivUrmaCommContext
+
+    // fullMeshLinks 默认为空，触发 links.empty() 异常
+    void* commContext;
+    EXPECT_THROW(aivMc2Compont.GenerateCommContext(&commContext), InvalidParamsException);
 }

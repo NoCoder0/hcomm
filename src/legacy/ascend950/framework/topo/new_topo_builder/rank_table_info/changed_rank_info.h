@@ -21,15 +21,15 @@
 namespace Hccl {
 class ChangedRankInfo {
 public:
-    ChangedRankInfo(){};
-    std::string              version;
-    u32                      rankCount{0};
+    ChangedRankInfo() {};
+    std::string version;
+    u32 rankCount{0};
     std::vector<NewRankInfo> ranks;
-    void                     Dump() const;
-    std::string              Describe() const;
-    void                     Deserialize(const nlohmann::json &changedRankInfoJson);
+    void Dump() const;
+    std::string Describe() const;
+    void Deserialize(const nlohmann::json& changedRankInfoJson);
 };
 
 } // namespace Hccl
 
-#endif //CHANGED_RANK_INFO_H
+#endif // CHANGED_RANK_INFO_H

@@ -1,12 +1,14 @@
+#!/usr/bin/env bash
 # -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
+
 set -e
 
 CURRENT_DIR=$(dirname $(readlink -f ${BASH_SOURCE[0]}))
@@ -24,9 +26,9 @@ ENABLE_BUILD_DEVICE="OFF"
 ENABLE_BUILD_AARCH="OFF"
 ENABLE_EXPERIMENTAL="OFF"
 CANN_3RD_LIB_PATH="${CURRENT_DIR}/third_party"
-CUSTOM_SIGN_SCRIPT="${CURRENT_DIR}/scripts/sign/community_sign_build.py"
+CUSTOM_SIGN_SCRIPT=""
 ENABLE_SIGN="false"
-VERSION_INFO="8.5.0"
+PACKAGE_TYPE="run"
 
 MOCK_FWK_HLT="0"
 
@@ -37,7 +39,7 @@ ENABLE_ST="off"
 ST_TASKS=()
 ENABLE_GCOV="off"
 ENABLE_NO_EXEC="off"
-CMAKE_BUILD_TYPE="Debug"
+BUILD_TYPE="Release"
 
 if [ "${USER_ID}" != "0" ]; then
     DEFAULT_TOOLKIT_INSTALL_DIR="${HOME}/Ascend/ascend-toolkit/latest"
@@ -103,6 +105,70 @@ function run_ctest() {
         log "Error: Testcases failed"
     fi
     return ${ctest_ret}
+}
+
+function build_hccp_test() {
+    log "Info: Building hccp_test with ${CPU_NUM} parallel jobs"
+    # 显式回到主构建目录：函数内使用相对路径 cmake ..，须与调用方 cwd 解耦
+    cd "${BUILD_DIR}"
+    ENABLE_ST="on"
+    ENABLE_TEST="on"
+
+    local rc=0
+    cmake .. ${CUSTOM_OPTION} -DENABLE_TEST=${ENABLE_TEST} -DENABLE_ST=${ENABLE_ST} -DPRODUCT_SIDE=host -DUSE_CXX11_ABI=0 -DHCCP_TEST_DIR=${BUILD_DIR}/hccp_test || rc=$?
+    if [ "${rc}" -ne 0 ]; then
+        log "Error: build_hccp_test: cmake config failed (rc=${rc})"
+        exit 1
+    fi
+    cmake --build . --target hccp_test.bin hccp_verdict_test.bin test_hccp_service.bin ascend_hal_host_stub ascend_hal_device_stub urma mock net_adapt ccu-user-drv ascend_rdma_lite hrn3-rdmav34 hns-rdmav17 -j ${CPU_NUM} || rc=$?
+    if [ "${rc}" -ne 0 ]; then
+        log "Error: build_hccp_test: cmake build failed (rc=${rc})"
+        exit 1
+    fi
+    cmake --install . --component hccp_test || rc=$?
+    if [ "${rc}" -ne 0 ]; then
+        log "Error: build_hccp_test: cmake install failed (rc=${rc})"
+        exit 1
+    fi
+    # 设置 --noexec 选项，则跳过执行测试用例
+    if [[ "${ENABLE_NO_EXEC}" = "on" ]]; then
+        log "Info: Skip executing hccp_test cases"
+        return 0
+    fi
+    # 运行 HCCP ST 用例。set -e 下命令失败会立即退出 shell，`if [ $? -ne 0 ]` 的错误分支
+    # 不可达，本函数统一以 `|| rc=$?` 显式捕获退出码后再判定；124=超时，1=用例失败，139 等=崩溃
+    # LD_LIBRARY_PATH 整体加引号并用 ${VAR:+:} 拼接：防参数分词与空值尾随冒号（空条目使 loader 搜 CWD）
+    local hccp_timeout=300   # 全量实测约 50s，5 分钟上限（6 倍余量）
+    local hccp_kill_after=30 # TERM 后 KILL 宽限，仅失败路径延长（最坏 330s）
+    local hccp_test_dir="${BUILD_DIR}/hccp_test"
+    local hccp_test_bin="${hccp_test_dir}/host/hccp_test.bin"
+    local hccp_test_libs="${hccp_test_dir}/host:${hccp_test_dir}/common${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+    # 判定链自测独立运行，不受业务用例的 gtest 过滤或重复次数影响。
+    # 与下方业务路径同构显式捕获退出码：if ! 形式会丢弃原始 rc，超时(124)与用例失败不可区分
+    local verdict_rc=0
+    timeout --kill-after="${hccp_kill_after}" "${hccp_timeout}" \
+        "${hccp_test_dir}/host/hccp_verdict_test.bin" --gtest_filter='*' --gtest_repeat=1 || verdict_rc=$?
+    if [ "${verdict_rc}" -ne 0 ]; then
+        if [ "${verdict_rc}" -eq 124 ]; then
+            log "Error: build_hccp_test: verdict self-tests timed out after ${hccp_timeout}s"
+        else
+            log "Error: build_hccp_test: verdict self-tests failed (rc=${verdict_rc})"
+        fi
+        exit 1
+    fi
+    local hccp_rc=0
+    timeout --kill-after="${hccp_kill_after}" "${hccp_timeout}" env \
+        "LD_LIBRARY_PATH=${hccp_test_libs}" "${hccp_test_bin}" || hccp_rc=$?
+    if [ "${hccp_rc}" -ne 0 ]; then
+        if [ "${hccp_rc}" -eq 124 ]; then
+            log "Error: build_hccp_test: hccp test cases timed out after ${hccp_timeout}s"
+        else
+            log "Error: build_hccp_test: hccp test cases failed (rc=${hccp_rc})"
+        fi
+        exit 1
+    fi
+
+    log "Info: Build and tests completed successfully!"
 }
 
 function build_st() {
@@ -179,59 +245,98 @@ function build_ut() {
     log "Info: Build and tests completed successfully!"
 }
 
+# 覆盖率报告生成公共实现，由 make_ut_gov / make_st_gov 调用
+# 用法: make_coverage_report <报告类型(UT/ST)> <输出目录> <lcov捕获目录>...
+# 示例: make_coverage_report UT cov_ut ${BUILD_UT_DIR}/test/ut/ ${BUILD_UT_DIR}/test/legacy/ut/
+#       make_coverage_report ST cov_st ${BUILD_ST_DIR}/
+function make_coverage_report() {
+    local report_tag=$1
+    local out_dir=$2
+    shift 2
+
+    # --noexec 时用例未执行，构建树里只有 .gcno 没有 .gcda，lcov/genhtml 会以非 0 退出；
+    # 叠加 set -e 会让“只编译不执行”的流水线整体失败，这里直接跳过并提示
+    if [[ "X${ENABLE_NO_EXEC}" = "Xon" ]]; then
+        log "Warn: --noexec is set, no test data collected, skip ${report_tag} coverage report"
+        return 0
+    fi
+
+    log "Info: Generating ${report_tag} coverage statistics, please wait..."
+    rm -rf ${CURRENT_DIR}/${out_dir}
+    mk_dir ${CURRENT_DIR}/${out_dir}
+    cd ${CURRENT_DIR}/${out_dir}
+ 
+    # 解析 lcov 版本号
+    local major_version
+    if ! major_version=$(set -o pipefail; lcov --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)*' | head -1 | cut -d. -f1); then
+        log "Error: Failed to parse lcov major version number, please check 'lcov --version'" >&2
+        exit 1
+    fi
+ 
+    # 适配 lcov 2.x 版本，支持并行处理覆盖率报告
+    # 注意：--ignore-errors需与其取值整体写入变量，lcov 1.x分支置空时整个参数随之消失；
+    # 否则残留的孤立--ignore-errors会吞掉后续-o，导致"Extra parameter found"参数错位报错
+    local LCOV_IGNORE_ERRORS LCOV_PARALLEL GENHTML_IGNORE_ERRORS
+
+    if [[ "${major_version}" -ge 2 ]]; then
+        log "Info: Detected lcov version 2.x, running with ${CPU_NUM} parallel jobs"
+        LCOV_IGNORE_ERRORS="--ignore-errors mismatch,corrupt,empty,inconsistent,negative,unused"
+        LCOV_PARALLEL="-j ${CPU_NUM}"
+        GENHTML_IGNORE_ERRORS="--ignore-errors inconsistent,corrupt"
+    else
+        LCOV_IGNORE_ERRORS=""
+        LCOV_PARALLEL=""
+        GENHTML_IGNORE_ERRORS=""
+    fi
+ 
+    # 捕获覆盖率数据（lcov -c 的捕获目录由剩余参数传入，支持一个或多个）
+    local capture_args=""
+    local dir
+    for dir in "$@"; do
+        capture_args="${capture_args} -d ${dir}"
+    done
+    lcov -c \
+         ${LCOV_PARALLEL} \
+         ${capture_args} \
+         ${LCOV_IGNORE_ERRORS} \
+         -o coverage.info
+    # 排除路径
+    lcov -r coverage.info \
+         */src/base_comm/resources/hccp/external_depends/* \
+         ${LCOV_PARALLEL} \
+         ${LCOV_IGNORE_ERRORS} \
+         -o coverage.info
+    # 提取目标路径
+    lcov -e coverage.info \
+         */src/* \
+         ${LCOV_PARALLEL} \
+         ${LCOV_IGNORE_ERRORS} \
+         -o coverage.info
+ 
+    # 生成覆盖率报告，html格式
+    # 必须显式指定 -o：lcov 2.0-1 的 genhtml 未传 -o 时会拼接出 /cmd_line 并因无权限写失败；
+    # 选项放在 tracefile 之前，避免 POSIXLY_CORRECT 等环境下选项被当作输入文件
+    genhtml ${LCOV_PARALLEL} ${GENHTML_IGNORE_ERRORS} -o . coverage.info
+    # 明确统计范围：lcov -e 只保留 coverage.info 中已存在的记录，未插桩的代码不会出现在报告里，
+    # 因此报告百分比的分母只是编译进 ${report_tag} target 的那部分源码，而非全量 src/
+    log "Warn: Coverage scope is limited to instrumented sources linked into the ${report_tag} target;"
+    log "Warn: sources that were never instrumented are absent from the report (not shown as 0%),"
+    log "Warn: so the reported percentage is NOT the coverage of the whole src/ directory"
+    log "Info: ${report_tag} coverage statistics generated successfully"
+}
+
 function make_ut_gov() {
     # 生成 UT 覆盖率报告
     if [[ "X$ENABLE_UT" = "Xon" && "X$ENABLE_GCOV" = "Xon" ]]; then
-        log "Info: Generating coverage statistics, please wait..."
-        rm -rf ${CURRENT_DIR}/cov
-        mk_dir ${CURRENT_DIR}/cov
-        cd ${CURRENT_DIR}/cov
-
-        # 解析 lcov 版本号
-        local major_version
-        if ! major_version=$(set -o pipefail; lcov --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)*' | head -1 | cut -d. -f1); then
-            log "Error: Failed to parse lcov major version number, please check 'lcov --version'" >&2
-            exit 1
-        fi
-
-        # 适配 lcov 2.x 版本，支持并行处理覆盖率报告
-        if [[ "${major_version}" -ge 2 ]]; then
-            log "Info: Detected lcov version 2.x, running with ${CPU_NUM} parallel jobs"
-            LCOV_IGNORE_ERRORS="mismatch,corrupt,empty,inconsistent,negative,unused"
-            LCOV_RC_PARAM=""
-            LCOV_PARALLEL="-j ${CPU_NUM}"
-            GENHTML_IGNORE_ERRORS="inconsistent,corrupt"
-        else
-            LCOV_IGNORE_ERRORS=""
-            LCOV_RC_PARAM=""
-            LCOV_PARALLEL=""
-            GENHTML_IGNORE_ERRORS=""
-        fi
-
-        # 捕获覆盖率数据
-        lcov -c \
-             ${LCOV_PARALLEL} \
-             -d ${BUILD_UT_DIR}/test/ut/ \
-             -d ${BUILD_UT_DIR}/test/legacy/ut/ \
-             --ignore-errors ${LCOV_IGNORE_ERRORS} ${LCOV_RC_PARAM} \
-             -o coverage.info
-        # 排除路径
-        lcov -r coverage.info \
- 	            */src/base_comm/resources/hccp/external_depends/* \
-             ${LCOV_PARALLEL} \
- 	         --ignore-errors ${LCOV_IGNORE_ERRORS} \
- 	         -o coverage.info
-        # 提取目标路径
-        lcov -e coverage.info \
-                */src/* \
-             ${LCOV_PARALLEL} \
-             --ignore-errors ${LCOV_IGNORE_ERRORS} \
-             -o coverage.info
-
-        # 生成覆盖率报告，html格式
-        genhtml coverage.info ${LCOV_PARALLEL} --ignore-errors ${GENHTML_IGNORE_ERRORS}
-        log "Info: coverage statistics generated successfully"
-  fi
+        make_coverage_report UT cov_ut ${BUILD_UT_DIR}/test/ut/ ${BUILD_UT_DIR}/test/legacy/ut/
+    fi
+}
+ 
+function make_st_gov() {
+    # 生成 ST 覆盖率报告
+    if [[ "X$ENABLE_ST" = "Xon" && "X$ENABLE_GCOV" = "Xon" ]]; then
+        make_coverage_report ST cov_st ${BUILD_ST_DIR}/
+    fi
 }
 
 function build_hcomm() {
@@ -272,14 +377,17 @@ function usage() {
   echo "  sh build.sh --pkg [-h | --help] [-j<N>]"
   echo "              [--cann_3rd_lib_path=<PATH>] [-p|--package-path <PATH>]"
   echo "              [--asan]"
-  echo "              [--sign-script <PATH>] [--enable-sign] [--version <VERSION>]"
+  echo "              [--sign-script <PATH>] [--enable-sign]"
   echo ""
   echo "Options:"
   echo "    -h, --help     Print usage"
   echo "    --asan         Enable AddressSanitizer"
   echo "    --build-type=<TYPE>"
   echo "                   Specify build type (TYPE options: Release/Debug), Default: Release"
+  echo "    --cov          Enable coverage statistics (with -u/--ut or -s/--st)"
   echo "    -j<N>          Set the number of threads used for building, default is 8"
+  echo "    --pkg-type=<TYPE>"
+  echo "                   Specify package type (TYPE option: run/rpm/deb/all), Default: run"
   echo "    --cann_3rd_lib_path=<PATH>"
   echo "                   Set ascend third_party package install path, default ./output/third_party"
   echo "    -p, --package-path <PATH>"
@@ -288,10 +396,9 @@ function usage() {
   echo "                   Set sign-script's path to <PATH>"
   echo "    --enable-sign"
   echo "                   Enable to sign"
-  echo "    --version <VERSION>"
-  echo "                   Set sign version to <VERSION>"
   echo "    -u, --ut       Run all unit tests (UT)"
   echo "    -s, --st       Run all system tests (ST)"
+  echo "    --hccp_test    Build and run HCCP ST test (hccp_test.bin)"
   echo "    --noexec       Run build and skip executing tests"
   echo "    --experimental Build experimental components"
   echo ""
@@ -329,6 +436,17 @@ while [[ $# -gt 0 ]]; do
         # 跳过 --pkg，不做处理
         shift
         ;;
+    --pkg-type=*)
+ 	     PACKAGE_TYPE="${1#*=}"
+ 	     case "${PACKAGE_TYPE}" in
+ 	         run|rpm|deb|all) ;;
+ 	         *)
+ 	             log "Error: --pkg-type only supports run/rpm/deb/all"
+ 	             exit 1
+ 	             ;;
+ 	     esac
+ 	     shift
+ 	     ;;
     --cann_3rd_lib_path=*)
         OPTARG=$1
         CANN_3RD_LIB_PATH="$(realpath ${OPTARG#*=})"
@@ -351,6 +469,12 @@ while [[ $# -gt 0 ]]; do
         ENABLE_TEST="on"
         ENABLE_ST="on"
         ST_TASKS+=("all")
+        shift
+        ;;
+    --hccp_test)
+        ENABLE_TEST="on"
+        ENABLE_ST="on"
+        RUN_HCCP_TEST="on"
         shift
         ;;
     --open_hccl_test)
@@ -468,10 +592,6 @@ while [[ $# -gt 0 ]]; do
         CUSTOM_SIGN_SCRIPT="$(realpath $2)"
         shift 2
         ;;
-    --version)
-        VERSION_INFO="$2"
-        shift 2
-        ;;
     *)
         log "Error: Undefined option: $1"
         usage
@@ -485,6 +605,15 @@ if [ "${ASAN}" == "true" ];then
 fi
 
 if [ "${COV}" == "true" ];then
+    # 覆盖率报告由 UT/ST 流程生成，单独使用 --cov 不会产生任何报告，直接报错避免静默无效
+    if [[ "X${ENABLE_UT}" != "Xon" && "X${ENABLE_ST}" != "Xon" ]]; then
+        log "Error: --cov must be used together with -u/--ut or -s/--st"
+        exit 1
+    fi
+    if [ "${RUN_HCCP_TEST}" == "on" ]; then
+        log "Error: --cov is not supported with --hccp_test"
+        exit 1
+    fi
     CUSTOM_OPTION="${CUSTOM_OPTION} -DENABLE_GCOV=ON"
 fi
 
@@ -511,16 +640,18 @@ CUSTOM_OPTION="${CUSTOM_OPTION} -DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
 CUSTOM_OPTION="${CUSTOM_OPTION} -DENABLE_BUILD_DEVICE=${ENABLE_BUILD_DEVICE}"
 CUSTOM_OPTION="${CUSTOM_OPTION} -DENABLE_BUILD_AARCH=${ENABLE_BUILD_AARCH}"
 CUSTOM_OPTION="${CUSTOM_OPTION} -DENABLE_EXPERIMENTAL=${ENABLE_EXPERIMENTAL}"
+CUSTOM_OPTION="${CUSTOM_OPTION} -DPACKAGE_TYPE=${PACKAGE_TYPE}"
 
 CUSTOM_OPTION="${CUSTOM_OPTION} -DCUSTOM_SIGN_SCRIPT=${CUSTOM_SIGN_SCRIPT}"
 CUSTOM_OPTION="${CUSTOM_OPTION} -DENABLE_SIGN=${ENABLE_SIGN}"
-CUSTOM_OPTION="${CUSTOM_OPTION} -DVERSION_INFO=${VERSION_INFO}"
 CUSTOM_OPTION="${CUSTOM_OPTION} -DPRODUCT=ascend"
 
 CUSTOM_OPTION="${CUSTOM_OPTION} -DENABLE_TEST=${ENABLE_TEST}"
 CUSTOM_OPTION="${CUSTOM_OPTION} -DENABLE_UT=${ENABLE_UT}"
 CUSTOM_OPTION="${CUSTOM_OPTION} -DENABLE_ST=${ENABLE_ST}"
 CUSTOM_OPTION="${CUSTOM_OPTION} -DENABLE_GCOV=${ENABLE_GCOV}"
+# 导出 compile_commands.json，供 clang-tidy 增量检查使用
+CUSTOM_OPTION="${CUSTOM_OPTION} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
 
 set_env
 
@@ -528,12 +659,20 @@ mkdir -p "${BUILD_DIR}"
 cd ${BUILD_DIR}
 
 if [ "${ENABLE_UT}" == "on" ]; then
+    # Clang-Tidy 增量检查脚本单测（纯 python，无 CANN 依赖）
+    python3 "${CURRENT_DIR}/scripts/clang-tidy/clang_tidy_check_test.py"
     # 编译并执行 UT
     build_ut
     make_ut_gov
+elif [ "${RUN_HCCP_TEST}" == "on" ]; then
+    # 编译并执行 HCCP ST 测试 (hccp_test.bin)
+    build_hccp_test
 elif [ "${ENABLE_ST}" == "on" ]; then
     # 编译并执行 ST
-    build_st 
+    build_st
+    make_st_gov
+    # 触发 HCCP ST 测试 (hccp_test.bin)
+    build_hccp_test
 elif [ "${BUILD_CB_TEST}" == "true" ]; then
     # 前冒烟测试
     log "Info: Building cb_test_verify"
@@ -550,5 +689,18 @@ else
     if [ $? -ne 0 ]; then
         log "Error: build hcomm failed"
         exit 1
+    fi
+    # Clang-Tidy incremental check: after build, compile_commands.json ready.
+    # Blocks new-code complexity warnings; also blocks (exit 1) when the
+    # incremental diff cannot be computed (interception incomplete). Skips
+    # (exit 0) only when clang-tidy / compile_commands.json is unavailable;
+    # escape hatch: ENABLE_CLANG_TIDY_CHECK=off.
+    clang_tidy_opt="${ENABLE_CLANG_TIDY_CHECK:-on}"
+    if [ "${clang_tidy_opt,,}" == "on" ] && [ -f "${BUILD_DIR}/compile_commands.json" ]; then
+        log "Info: Running clang-tidy incremental check (ENABLE_CLANG_TIDY_CHECK=${clang_tidy_opt})"
+        if ! bash ${CURRENT_DIR}/scripts/clang-tidy/clang_tidy_check.sh --build-dir ${BUILD_DIR}; then
+            log "Error: clang-tidy incremental check failed (violation or interception incomplete)"
+            exit 1
+        fi
     fi
 fi

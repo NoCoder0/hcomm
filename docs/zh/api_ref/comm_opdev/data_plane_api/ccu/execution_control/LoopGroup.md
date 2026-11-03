@@ -3,14 +3,20 @@
 ## 产品支持情况
 
 <!-- npu="950" id1 -->
-- Ascend 950PR/Ascend 950DT：支持
+- Ascend 950PR&950DT系列产品：支持
 <!-- end id1 -->
 <!-- npu="A3" id2 -->
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：不支持
+- Atlas A3系列产品：不支持
 <!-- end id2 -->
 <!-- npu="910b" id3 -->
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：不支持
+- Atlas A2系列产品：不支持
 <!-- end id3 -->
+<!-- npu="910" id4 -->
+- Atlas训练系列产品：不支持
+<!-- end id4 -->
+<!-- npu="310p" id5 -->
+- Atlas推理系列产品：不支持
+<!-- end id5 -->
 
 ## 功能说明
 
@@ -53,7 +59,7 @@ public:
 
 | 参数名 | 输入/输出 | 描述 |
 | --- | --- | --- |
-| parallelCfg | 输入 | 并行配置Variable，运行期决定并行参数。该参数包含64bit，其中[47:41]表示loopgroup内包含的Loop指令个数，其中[54:48]表似乎Loopgroup中包含的Loop指令需要完成Loop自动展开的Loop偏移，其中[61:55]表示Loop需要展开的次数。举例：X[47:41]=4表示程序中包含4个Loop指令，Xn[54:48]=1表示从编号为1的Loop开始展开，Xn[61:55]=3表示loop1，loop2，loop3分别复制展开3次，loop0不进行复制，经过展开后总Loop个数为4 + (4-1) * 3 = 13 |
+| parallelCfg | 输入 | 并行配置Variable，运行期决定并行参数。该参数包含64bit，其中[47:41]表示loopgroup内包含的Loop指令个数，其中[54:48]表示Loopgroup中包含的Loop指令需要完成Loop自动展开的Loop偏移，其中[61:55]表示Loop需要展开的次数。举例：parallelCfg[47:41]=4表示程序中包含4个Loop指令，parallelCfg[54:48]=1表示从编号为1的Loop开始展开，parallelCfg[61:55]=3表示loop1，loop2，loop3分别复制展开3次，loop0不进行复制，经过展开后总Loop个数为4 + (4-1) * 3 = 13 |
 | offsetCfg | 输入 | 偏移配置Variable，运行期决定偏移参数。 该参数包含64bit，其中[9:0]表示Loop进行展开后使用的Event资源偏移量，[20:10]表示Loop进行展开后使用的CcuBuffer资源偏移量，[52:21]表示Loop进行展开后各个数据传输类指令使用的Address累加的偏移量。|
 | maxLoopNum | 输入 | 同构造方式1。 |
 | loops | 输入 | 同构造方式1。 |
@@ -78,7 +84,7 @@ config-based构造使用的参数结构，字段如下：
 | --- | --- |
 | `maxLoopNum`为0，或var-based构造的运行期配置Variable为空 | `CCU_E_PARA` |
 | 实际加入的Loop数超过`maxLoopNum`（LoopEngine池容量不足） | `CCU_E_PARA` |
-| 物理资源（XN/GSA/CKE/MS等）不足 | `CCU_E_UNAVAIL` 等 |
+| 物理资源不足 | `CCU_E_UNAVAIL` 等 |
 
 ## 约束说明
 
@@ -88,6 +94,7 @@ config-based构造使用的参数结构，字段如下：
 - Group内各Loop的body约束与独立`ccu::Loop`相同（参见[Loop](Loop.md)的约束说明）。
 - `maxLoopNum`必须大于0，为0时构造直接失败（`CCU_E_PARA`）。
 - `maxLoopNum`应 ≥ `loops`列表实际大小（即真正会加入Group的Loop数，含展开复用）；偏小会导致后续加入Loop时因LoopEngine池容量不足而失败（`CCU_E_PARA`）。
+- 通过var-based方式构造`ccu::LoopGroup`时，需要保证`parallelCfg`的值符合运行时预期，其中[47:41]位表示构造时`loops`中包含的`ccu::Loop`个数，该值需要等于`loops`的size；[54:48]位表示需要自动展开Loop ID，该ID的值需要小于等于`ccu::Loop`的个数；[61:55]位表示的展开次数，按照该值将所有需要展开的loop展开后，得到的loop总数需要小于等于`maxLoopNum`值。
 
 ## 调用示例
 
@@ -122,5 +129,46 @@ CcuResult MyKernel(CcuKernelArg arg) {
     LoopGroup g(grpCfg, /*maxLoopNum=*/2, {l1, l2});
 
     return CCU_SUCCESS;
+}
+```
+
+基于variable直接构建loop/loopgroup，要保证variable的值符合指令要求。
+
+```cpp
+CcuResult CcuLoopAddDemoKernel(CcuKernelArg arg)
+{
+    using namespace ccu;
+    auto* args = static_cast<CcuLoopAddKernelArg*>(arg);
+
+    Variable numA{}, numB{}, r1{}, r2{};
+    numA = args->numA;
+    numB = args->numB;
+
+    // ========== LoopGroup variable-based ==========
+    Variable varLoopParam1{}, varLoopParam2{}, varParallel{}, varOffset{};
+
+    // loopParam: ctxId[52:45] | addrOffset[44:13] | iterNum[12:0]
+    varLoopParam1 = 0x0000000002000003ULL; // addrOffset=4096, iterNum=3
+    varLoopParam2 = 0x0000000002000004ULL; // addrOffset=4096, iterNum=4
+
+    // repeatNum=2, repeatLoopIndex=1, totalLoopNum=2
+    varParallel = 0x0101040000000000ULL;
+
+    // addrOffset=4096, ccuBufferOffset=1, eventOffset=1
+    varOffset = 0x0000000200000401ULL;
+
+    Func body1([&]() {
+        r1 = numA + numB;
+    });
+    Func body2([&]() {
+        r2 = numA + numB;
+    });
+
+    Loop loop1(varLoopParam1, body1);
+    Loop loop2(varLoopParam2, body2);
+
+    LoopGroup group(varParallel, varOffset, /*maxLoopNum=*/4, {loop1, loop2});
+
+    return CcuResult::CCU_SUCCESS;
 }
 ```

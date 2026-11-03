@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "checkcrc.h"
 #include "log.h"
@@ -19,13 +19,9 @@
 
 namespace Hccl {
 constexpr s32 FILE_MAX_LENGTH = 40 * 1024 * 1024; // file max length 40*1024*1024=40M.
-CheckCrc::CheckCrc() : initFlag_(0), crcCalcTable{0}, crcTable_(0)
-{
-}
+CheckCrc::CheckCrc() : initFlag_(0), crcCalcTable{0}, crcTable_(0) {}
 
-CheckCrc::~CheckCrc()
-{
-}
+CheckCrc::~CheckCrc() {}
 
 HcclResult CheckCrc::AddCrc(u32 crcValue)
 {
@@ -35,7 +31,7 @@ HcclResult CheckCrc::AddCrc(u32 crcValue)
     return HCCL_SUCCESS;
 }
 
-HcclResult CheckCrc::GetCrcNum(u32 *num)
+HcclResult CheckCrc::GetCrcNum(u32* num)
 {
     CHK_PTR_NULL(num);
     HCCL_INFO("num[%u]", *num);
@@ -43,7 +39,7 @@ HcclResult CheckCrc::GetCrcNum(u32 *num)
     return HCCL_SUCCESS;
 }
 
-HcclResult CheckCrc::GetCrc(u32 num, u32 *crcAddr)
+HcclResult CheckCrc::GetCrc(u32 num, u32* crcAddr)
 {
     CHK_PTR_NULL(crcAddr);
     HCCL_INFO("num[%u], crc[%u]", num, *crcAddr);
@@ -54,8 +50,9 @@ HcclResult CheckCrc::GetCrc(u32 num, u32 *crcAddr)
     }
 
     if (num != crcTable_.size()) {
-        HCCL_ERROR("[Get][Crc]errNo[0x%016llx] num error inputNum[%u], localNum[%llu]",
-            HCCL_ERROR_CODE(HCCL_E_INTERNAL), num, crcTable_.size());
+        HCCL_ERROR(
+            "[Get][Crc]errNo[0x%016llx] num error inputNum[%u], localNum[%llu]", HCCL_ERROR_CODE(HCCL_E_INTERNAL), num,
+            crcTable_.size());
         return HCCL_E_INTERNAL;
     }
 
@@ -97,7 +94,7 @@ std::string CheckCrc::GetString(void)
     return str;
 }
 
-HcclResult CheckCrc::Calc32Crc(const char *data, u64 length, u32 *crcValue)
+HcclResult CheckCrc::Calc32Crc(const char* data, u64 length, u32* crcValue)
 {
     CHK_PTR_NULL(data);
     CHK_PTR_NULL(crcValue);
@@ -115,17 +112,15 @@ HcclResult CheckCrc::Calc32Crc(const char *data, u64 length, u32 *crcValue)
     return HCCL_SUCCESS;
 }
 
-HcclResult CheckCrc::CalcStringCrc(const char *str, u32 *crcValue)
+HcclResult CheckCrc::CalcStringCrc(const char* str, u32* crcValue)
 {
     CHK_PTR_NULL(str);
     CHK_PTR_NULL(crcValue);
     s32 strLength;
 
     strLength = strlen(str);
-    CHK_PRT_RET(strLength <= 0, \
-        HCCL_ERROR("[Calc][StringCrc]String is empty, String length[%d].", strLength), HCCL_E_PARA);
-    CHK_PRT_RET(strLength > FILE_MAX_LENGTH, \
-        HCCL_ERROR("[Calc][StringCrc]String length is over than %d bytes.", FILE_MAX_LENGTH), HCCL_E_PARA);
+    CHK_PRT_RET(
+        strLength <= 0, HCCL_ERROR("[Calc][StringCrc]String is empty, String length[%d].", strLength), HCCL_E_PARA);
 
     // 计算并设置CRC值
     CHK_RET(this->Calc32Crc(str, static_cast<u64>(strLength), crcValue));
@@ -142,4 +137,4 @@ HcclResult CheckCrc::ClearCrcInfo(void)
     }
     return HCCL_SUCCESS;
 }
-}  // namespace hccl
+} // namespace Hccl

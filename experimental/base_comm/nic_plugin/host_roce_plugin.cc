@@ -20,12 +20,9 @@ struct HostRocePluginTraits {
     using EndpointT = hcomm_experimental::CpuRoceEndpoint;
     using ChannelT = hcomm_experimental::HostCpuRoceChannel;
 
-    static const char *LogTag()
-    {
-        return "HostRocePlugin";
-    }
+    static const char* LogTag() { return "HostRocePlugin"; }
 
-    static HcommResult GetUserRemoteMem(ChannelT *channel, CommMem **remoteMem, char ***memTags, uint32_t *memNum)
+    static HcommResult GetUserRemoteMem(ChannelT* channel, CommMem** remoteMem, char*** memTags, uint32_t* memNum)
     {
         CHK_PTR_NULL(channel);
         return channel->GetUserRemoteMem(remoteMem, memTags, memNum);
@@ -34,13 +31,12 @@ struct HostRocePluginTraits {
 
 using PluginOps = hcomm_experimental::NicPluginOps<HostRocePluginTraits>;
 
-const HcommNicPluginInfo kPluginInfo = {
-    {HCOMM_NIC_PLUGIN_INFO_VERSION, HCOMM_NIC_PLUGIN_INFO_MAGIC_WORD, sizeof(HcommNicPluginInfo), 0},
-    "hcomm_cpu_roce",
-    1U,
-    {COMM_PROTOCOL_ROCE, COMM_PROTOCOL_HCCS, COMM_PROTOCOL_HCCS, COMM_PROTOCOL_HCCS},
-    {}
-};
+const HcommNicPluginInfo kPluginInfo
+    = {{HCOMM_NIC_PLUGIN_INFO_VERSION, HCOMM_NIC_PLUGIN_INFO_MAGIC_WORD, sizeof(HcommNicPluginInfo), 0},
+       "hcomm_cpu_roce",
+       1U,
+       {COMM_PROTOCOL_ROCE, COMM_PROTOCOL_HCCS, COMM_PROTOCOL_HCCS, COMM_PROTOCOL_HCCS},
+       {}};
 
 HcommNicEndpointOps kEndpointOps = PluginOps::EndpointOps();
 HcommNicChannelOps kChannelOps = PluginOps::ChannelOps();

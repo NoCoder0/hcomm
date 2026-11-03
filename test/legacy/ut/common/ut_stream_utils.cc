@@ -20,23 +20,15 @@ using namespace Hccl;
 
 class StreamUtilsTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "StreamUtilsTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "StreamUtilsTest tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "StreamUtilsTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "StreamUtilsTest tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in StreamUtilsTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in StreamUtilsTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
+        GlobalMockObject::verify();
         std::cout << "A Test case in StreamUtilsTest TearDown" << std::endl;
     }
 };
@@ -73,4 +65,16 @@ TEST_F(StreamUtilsTest, Ut_GetStreamCaptureInfo_When_aclmdlRICaptureGetInfo_succ
 
     // 后置验证
     EXPECT_EQ(GetStreamCaptureInfo(stream, rtModel, isCapture), HCCL_SUCCESS);
+}
+
+TEST_F(StreamUtilsTest, Ut_GetStreamCaptureInfo_When_aclmdlRICaptureGetInfo_fail_Expect_HCCL_E_RUNTIME)
+{
+    // 前置条件
+    MOCKER(&aclmdlRICaptureGetInfo).stubs().will(returnValue(1));
+    rtStream_t stream;
+    rtModel_t rtModel;
+    bool isCapture;
+
+    // 后置验证
+    EXPECT_EQ(GetStreamCaptureInfo(stream, rtModel, isCapture), HCCL_E_RUNTIME);
 }

@@ -1,12 +1,13 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "gtest/gtest.h"
 
 #include <vector>
@@ -25,20 +26,15 @@ using namespace checker;
 
 class BroadcastTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "BroadcastTest set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "BroadcastTest set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "BroadcastTest tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "BroadcastTest tear down." << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -335,7 +331,6 @@ TEST_F(BroadcastTest, broadcast_BroadCastRingExecutor_test)
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 }
 
-
 TEST_F(BroadcastTest, broadcast_BroadCastRingExecutor_NSLB_test)
 {
     RankTable_For_LLT gen;
@@ -476,9 +471,9 @@ TEST_F(BroadcastTest, broadcast_ax_4server_16p)
 TEST_F(BroadcastTest, broadcast_superpod_asym_gcd)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0, 1, 2}, {0, 1, 2}}, {{0, 1, 2}, {0, 1, 2}}, {{0, 1, 2}, {0, 1, 2}, {0, 1, 2}, {0, 1, 2}}};
+    TopoMeta topoMeta{{{0, 1, 2}, {0, 1, 2}}, {{0, 1, 2}, {0, 1, 2}}, {{0, 1, 2}, {0, 1, 2}, {0, 1, 2}, {0, 1, 2}}};
 
-    CheckerOpParam  checkerOpParam;
+    CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::BROADCAST;
     checkerOpParam.tag = "broadcast";
     checkerOpParam.opMode = CheckerOpMode::OPBASE;
@@ -496,9 +491,10 @@ TEST_F(BroadcastTest, broadcast_superpod_asym_gcd)
 TEST_F(BroadcastTest, broadcast_superpod_asym_gcd_graph)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0, 1, 2}, {0, 1, 2}, {0, 1, 2}}, {{0, 1, 2}, {0, 1, 2}, {0, 1, 2}, {0, 1, 2}, {0, 1, 2}, {0, 1, 2}}};
+    TopoMeta topoMeta{
+        {{0, 1, 2}, {0, 1, 2}, {0, 1, 2}}, {{0, 1, 2}, {0, 1, 2}, {0, 1, 2}, {0, 1, 2}, {0, 1, 2}, {0, 1, 2}}};
 
-    CheckerOpParam  checkerOpParam;
+    CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::BROADCAST;
     checkerOpParam.tag = "broadcast";
     checkerOpParam.opMode = CheckerOpMode::OFFLOAD;
@@ -735,7 +731,7 @@ TEST_F(BroadcastTest, broadcast_BroadCastRingFor91093Executor)
 
 TEST_F(BroadcastTest, broadcast_aivsmallcount)
 {
-    setenv("HCCL_OP_EXPANSION_MODE","AIV",1);
+    setenv("HCCL_OP_EXPANSION_MODE", "AIV", 1);
     RankTable_For_LLT gen;
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 8);
@@ -755,10 +751,9 @@ TEST_F(BroadcastTest, broadcast_aivsmallcount)
     ret = checker.Check(checkerOpParam, topoMeta);
 }
 
-
 TEST_F(BroadcastTest, broadcast_BroadcastMidCountFor91093Executor)
 {
-    setenv("HCCL_ALGO","level1:NHR",1);
+    setenv("HCCL_ALGO", "level1:NHR", 1);
     RankTable_For_LLT gen;
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 2, 1, 4);
@@ -771,7 +766,7 @@ TEST_F(BroadcastTest, broadcast_BroadcastMidCountFor91093Executor)
     checkerOpParam.root = 0;
     checkerOpParam.DataDes.dataType = CheckerDataType::DATA_TYPE_FP16;
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_910_93;
-    checkerOpParam.algName = "BroadcastMidCountFor91093Executor";  // BroadCastComm BroadcastMidCountFor91093Executor
+    checkerOpParam.algName = "BroadcastMidCountFor91093Executor"; // BroadCastComm BroadcastMidCountFor91093Executor
 
     Checker checker;
     HcclResult ret;

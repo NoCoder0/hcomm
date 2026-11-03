@@ -17,23 +17,17 @@ using namespace Hccl;
 
 class DetourServiceTest : public testing::Test {
 protected:
-    static void SetUpTestCase() {
-        std::cout << "DetourServiceTest SetUP" << std::endl;
-    }
- 
-    static void TearDownTestCase() {
-        std::cout << "DetourServiceTest TearDown" << std::endl;
-    }
- 
-    virtual void SetUp() {
-        std::cout << "A Test case in DetourServiceTest SetUP" << std::endl;
-    }
- 
-    virtual void TearDown() {
+    static void SetUpTestCase() { std::cout << "DetourServiceTest SetUP" << std::endl; }
+
+    static void TearDownTestCase() { std::cout << "DetourServiceTest TearDown" << std::endl; }
+
+    virtual void SetUp() { std::cout << "A Test case in DetourServiceTest SetUP" << std::endl; }
+
+    virtual void TearDown()
+    {
         GlobalMockObject::verify();
         std::cout << "A Test case in DetourServiceTest TearDown" << std::endl;
     }
-    
 };
 
 TEST_F(DetourServiceTest, SetDetourTable4P)

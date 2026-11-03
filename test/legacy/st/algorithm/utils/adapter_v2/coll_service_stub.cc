@@ -1,3 +1,13 @@
+/**
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include <vector>
 
 #define private public
@@ -18,14 +28,11 @@
 #include "rank_graph_builder.h"
 #include "coll_gen_json.h"
 #include "coll_alg_component_builder.h"
-#include "env_config.h"
+#include "env_config_v2.h"
 
 namespace Hccl {
 
-void CollServiceStub::Init()
-{
-    CollAlgComponentInit();
-}
+void CollServiceStub::Init() { CollAlgComponentInit(); }
 
 void CollServiceStub::CollAlgComponentInit()
 {
@@ -39,8 +46,9 @@ void CollServiceStub::CollAlgComponentInit()
                             .SetMyRank(comm_->GetMyRank())
                             .SetRankSize(comm_->GetRankSize())
                             .SetMainboardId(hcclMainboardId)
-                            .EnableDetour(EnvConfig::GetInstance().GetDetourConfig().GetDetourType()
-                                            == HcclDetourType::HCCL_DETOUR_ENABLE_2P) // 当前只支持4P场景的绕路
+                            .EnableDetour(
+                                EnvConfig::GetInstance().GetDetourConfig().GetDetourType()
+                                == HcclDetourType::HCCL_DETOUR_ENABLE_2P) // 当前只支持4P场景的绕路
                             .Build();
 
     if (collAlgComponent_ == nullptr) {
@@ -49,13 +57,13 @@ void CollServiceStub::CollAlgComponentInit()
     }
 }
 
-shared_ptr<InsQueue> CollServiceStub::Orchestrate(CollAlgOperator &op, std::string& algName)
+shared_ptr<InsQueue> CollServiceStub::Orchestrate(CollAlgOperator& op, std::string& algName)
 {
     u64 tmpMemSize = static_cast<u32>(EnvConfig::GetInstance().GetAlgoConfig().GetBuffSize());
     CollAlgParams params;
-    auto          insQueue = make_shared<InsQueue>();
+    auto insQueue = make_shared<InsQueue>();
 
-    params.opMode        = op.opMode;
+    params.opMode = op.opMode;
     params.maxTmpMemSize = tmpMemSize;
     HCCL_DEBUG("[CollServiceDeviceMode::%s] orchestrate with Ins start", __func__);
     HcclResult errCode = collAlgComponent_->Orchestrate(op, params, algName, insQueue);
@@ -69,7 +77,7 @@ shared_ptr<InsQueue> CollServiceStub::Orchestrate(CollAlgOperator &op, std::stri
     return insQueue;
 }
 
-void CollServiceStub::LoadWithOpBasedMode(CollOperator &op, std::string& algName)
+void CollServiceStub::LoadWithOpBasedMode(CollOperator& op, std::string& algName)
 {
     insQue_ = Orchestrate(op, algName);
     // ccuResPack资源扩充
@@ -102,14 +110,8 @@ void CollServiceStub::TransformTask()
 }
 
 // 这边需要再改造一下
-void CollServiceStub::LoadWithOffloadMode(CollOperator &op)
-{
-    ;
-}
+void CollServiceStub::LoadWithOffloadMode(CollOperator& op) { ; }
 
-CcuInsPreprocessor *CollServiceStub::GetCcuInsPreprocessor()
-{
-    return &ccuInsPreprocessor_;
-}
+CcuInsPreprocessor* CollServiceStub::GetCcuInsPreprocessor() { return &ccuInsPreprocessor_; }
 
-}// namespace Hccl
+} // namespace Hccl

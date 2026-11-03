@@ -26,7 +26,8 @@ extern "C" {
 #if BKF_BLOCK("私有函数定义")
 uint32_t BkfSubConnReConnTmrProc(void *paramTmrStart, void *noUse)
 {
-    BkfSuberConn *conn = (BkfSuberConn*)paramTmrStart;
+    (void)noUse;
+    BkfSuberConn *conn = (BkfSuberConn *)paramTmrStart;
     BkfSuberSessSetDisconnectReason(conn->sessMng, BKF_SUBER_DISCONNECT_REASON_CONNECTFAIL);
     if (conn->urlTypeMng->connMng->env->onDisConn) {
         conn->urlTypeMng->connMng->env->onDisConn(conn->urlTypeMng->connMng->env->cookie, &conn->puberUrl,
@@ -39,7 +40,8 @@ uint32_t BkfSubConnReConnTmrProc(void *paramTmrStart, void *noUse)
 
 uint32_t BkfSubConnReConnTmrProcOnce(void *paramTmrStart, void *noUse)
 {
-    BkfSuberConn *conn = (BkfSuberConn*)paramTmrStart;
+    (void)noUse;
+    BkfSuberConn *conn = (BkfSuberConn *)paramTmrStart;
     conn->reConnTmrId = VOS_NULL;
     BkfSuberSessResetDisconnectReason(conn->sessMng);
     return BkfSuberConnFsmInputEvt(conn, BACKFIN_SUB_CONN_INPUT_STARTINST, VOS_NULL, VOS_NULL);
@@ -50,12 +52,12 @@ void BkfSuberConnStartReConnTmr(BkfSuberConn *conn)
     if (conn->reConnTmrId != VOS_NULL) {
         return;
     }
-    uint32_t intervalMs = (BKF_URL_TYPE_IS_TCP(conn->puberUrl.type)) ?
-        BKF_SUBER_CONN_RECONN_TIMER_TLS_INTERVAL : BKF_SUBER_CONN_RECONN_TIMER_INTERVAL;
+    uint32_t intervalMs = (BKF_URL_TYPE_IS_TCP(conn->puberUrl.type)) ? BKF_SUBER_CONN_RECONN_TIMER_TLS_INTERVAL
+                                                                     : BKF_SUBER_CONN_RECONN_TIMER_INTERVAL;
     BkfSuberConnMng *connMng = conn->urlTypeMng->connMng;
     BKF_LOG_DEBUG(connMng->log, "start reConnTmr_: conn %x, tmrval %u\n", BKF_MASK_ADDR(conn), intervalMs);
     conn->reConnTmrId = BkfTmrStartLoop(connMng->env->tmrMng, (F_BKF_TMR_TIMEOUT_PROC)BkfSubConnReConnTmrProc,
-                                         intervalMs, conn);
+        intervalMs, conn);
     if (conn->reConnTmrId == VOS_NULL) {
         BKF_LOG_ERROR(connMng->log, "Conn Create Timer failed.\n");
     }
@@ -69,7 +71,7 @@ void BkfSuberConnStartReConnTmrForDisc(BkfSuberConn *conn)
     }
     BkfSuberConnMng *connMng = conn->urlTypeMng->connMng;
     conn->reConnTmrId = BkfTmrStartOnce(connMng->env->tmrMng, (F_BKF_TMR_TIMEOUT_PROC)BkfSubConnReConnTmrProcOnce,
-                                         BKF_SUBER_CONN_RECONN_TIMER_INTERVALFORDISC, conn);
+        BKF_SUBER_CONN_RECONN_TIMER_INTERVALFORDISC, conn);
     if (conn->reConnTmrId == VOS_NULL) {
         BKF_LOG_ERROR(connMng->log, "Conn Create Timer failed.\n");
     }
@@ -241,6 +243,8 @@ void BkfSuberConnDelChConn(BkfSuberConn *conn)
 
 uint32_t BkfSubConnActCreateConn(BkfSuberConn *conn, void *noUse1, void *noUse2)
 {
+    (void)noUse1;
+    (void)noUse2;
     BkfSuberConnStartReConnTmr(conn);
 
     uint32_t ret = BkfSuberConnCreateChConn(conn);
@@ -259,11 +263,11 @@ uint32_t BkfSubConnParseHelloAck(BkfSuberConn *conn, BkfMsgDecoder *decoder, Bkf
         BKF_ASSERT(errCode == BKF_OK);
 
         if (tl->typeId == BKF_TLV_PUBER_NAME) {
-            helloAck->puberName = (BkfTlvProjectName*)tl;
+            helloAck->puberName = (BkfTlvProjectName *)tl;
         } else if (tl->typeId == BKF_TLV_REASON_CODE) {
-            helloAck->reasonCode = (BkfTlvReasonCode*)tl;
+            helloAck->reasonCode = (BkfTlvReasonCode *)tl;
         } else if (tl->typeId == BKF_TLV_IDL_VERSION) {
-            helloAck->puberIdlVersion = (BkfTlvIdlVersion*)tl;
+            helloAck->puberIdlVersion = (BkfTlvIdlVersion *)tl;
         } else {
             BKF_LOG_ERROR(conn->urlTypeMng->connMng->log, "HelloACK tlv type(%u, %s)\n", tl->typeId,
                 BkfTlvGetTypeStr(tl->typeId));
@@ -282,27 +286,26 @@ uint32_t BkfSuberConnSndHello(BkfSuberConn *conn)
     uint8_t *sendBuf = VOS_NULL;
     uint32_t ret = BkfSuberConnMallocSendBuf(conn, &sendBuf, BKF_CH_CLI_MALLOC_DATA_BUF_LEN_MAX);
     if (ret != BKF_OK) {
-        BKF_LOG_ERROR(connMng->log, "SendHello mem alloc faild.url %s\n",
+        BKF_LOG_ERROR(connMng->log, "SendHello mem alloc failed. url %s\n",
             BkfUrlGetStr(&conn->puberUrl, urlStr, sizeof(urlStr)));
         return BKF_ERR;
     }
-    BkfMsgCoder coder = { { 0 }, 0 };
+    BkfMsgCoder coder = {};
     BkfSuberEnv *env = connMng->env;
     ret = BkfMsgCodeInit(&coder, env->name, sendBuf, env->msgLenMax, env->sliceVTbl.keyLen, env->sliceVTbl.keyCodec,
         env->sliceVTbl.keyGetStrOrNull, connMng->log);
     ret |= BkfMsgCodeMsgHead(&coder, BKF_MSG_HELLO, 0);
 
     char *projectName = BKF_PROJECT_NAME;
-    BkfTlvProjectVersion projectVersion = { .version =  BKF_PROJECT_VERSION };
-    ret |= BkfMsgCodeRawTLV(&coder, BKF_TLV_PROJECT_NAME, 0, projectName,
-        VOS_StrLen((const char*)projectName) + 1, VOS_FALSE);
+    BkfTlvProjectVersion projectVersion = {.version = BKF_PROJECT_VERSION};
+    ret |= BkfMsgCodeRawTLV(&coder, BKF_TLV_PROJECT_NAME, 0, projectName, VOS_StrLen((const char *)projectName) + 1,
+        VOS_FALSE);
     ret |= BkfMsgCodeTLV(&coder, BKF_TLV_PROJECT_VERSION, 0, &projectVersion.tl + 1, VOS_FALSE);
     ret |= BkfMsgCodeRawTLV(&coder, BKF_TLV_SERVICE_NAME, 0, (void *)env->svcName, VOS_StrLen(env->svcName) + 1,
         VOS_FALSE);
 
-    BkfTlvIdlVersion idlVersion = { .major = env->idlVersionMajor,
-                                    .minor = env->idlVersionMinor };
-    ret |= BkfMsgCodeRawTLV(&coder, BKF_TLV_SUBER_NAME, 0, (void*)env->name, VOS_StrLen(env->name) + 1, VOS_FALSE);
+    BkfTlvIdlVersion idlVersion = {.major = env->idlVersionMajor, .minor = env->idlVersionMinor};
+    ret |= BkfMsgCodeRawTLV(&coder, BKF_TLV_SUBER_NAME, 0, (void *)env->name, VOS_StrLen(env->name) + 1, VOS_FALSE);
     if (BkfUrlIsValid(&env->lsnUrl)) {
         ret |= BkfMsgCodeTLV(&coder, BKF_TLV_IDL_VERSION, 0, &idlVersion.tl + 1, VOS_FALSE);
         ret |= BkfMsgCodeTLV(&coder, BKF_TLV_SUBER_LSNURL, 0, &env->lsnUrl, VOS_TRUE);
@@ -311,15 +314,15 @@ uint32_t BkfSuberConnSndHello(BkfSuberConn *conn)
     }
 
     if (ret != BKF_OK) {
-        BkfChCliFreeDataBuf(env->chCliMng, conn->connId, (void*)sendBuf);
-        BKF_LOG_DEBUG(connMng->log, "Connect Send Hello encap fal.url %s\n",
+        BkfChCliFreeDataBuf(env->chCliMng, conn->connId, (void *)sendBuf);
+        BKF_LOG_DEBUG(connMng->log, "Connect Send Hello encap fail. url %s\n",
             BkfUrlGetStr(&conn->puberUrl, urlStr, sizeof(urlStr)));
         return BKF_SUBER_SESS_SEND_BUF_NOT_ENOUGH;
     }
 
     int32_t needLen = BkfMsgCodeGetValidMsgLen(&coder);
     if (needLen == 0) {
-        BkfChCliFreeDataBuf(conn->urlTypeMng->connMng->env->chCliMng, conn->connId, (void*)sendBuf);
+        BkfChCliFreeDataBuf(conn->urlTypeMng->connMng->env->chCliMng, conn->connId, (void *)sendBuf);
         BKF_LOG_DEBUG(connMng->log, "Connect Send Hello needlen is zero.url %s\n",
             BkfUrlGetStr(&conn->puberUrl, urlStr, sizeof(urlStr)));
         return BKF_ERR;
@@ -330,6 +333,8 @@ uint32_t BkfSuberConnSndHello(BkfSuberConn *conn)
 
 uint32_t BkfSubConnActSndHello(BkfSuberConn *conn, BkfMsgDecoder *decoder, void *param)
 {
+    (void)decoder;
+    (void)param;
     uint32_t ret = BkfSuberConnSndHello(conn);
     if (ret == BKF_OK) {
         (void)BKF_FSM_CHG_STATE(&conn->fsm, BACKFIN_SUB_CONN_STATE_WAIT_HELLO_ACK);
@@ -339,6 +344,7 @@ uint32_t BkfSubConnActSndHello(BkfSuberConn *conn, BkfMsgDecoder *decoder, void 
 
 uint32_t BkfSubConnChkHelloAck(BkfSuberConn *conn, BkfWrapMsgHelloAck *helloAck)
 {
+    (void)conn;
     BOOL isValid = (helloAck->reasonCode != VOS_NULL) && (helloAck->reasonCode->reasonCode == BKF_RC_OK);
     if (!isValid) {
         return BKF_ERR;
@@ -349,7 +355,8 @@ uint32_t BkfSubConnChkHelloAck(BkfSuberConn *conn, BkfWrapMsgHelloAck *helloAck)
 
 uint32_t BkfSubConnActRcvHelloAck(BkfSuberConn *conn, BkfMsgDecoder *decoder, void *param)
 {
-    BkfWrapMsgHelloAck helloAck = { 0 };
+    (void)param;
+    BkfWrapMsgHelloAck helloAck = {0};
     uint32_t ret = BkfSubConnParseHelloAck(conn, decoder, &helloAck);
     ret |= BkfSubConnChkHelloAck(conn, &helloAck);
     BkfSuberConnMng *connMng = conn->urlTypeMng->connMng;
@@ -361,8 +368,7 @@ uint32_t BkfSubConnActRcvHelloAck(BkfSuberConn *conn, BkfMsgDecoder *decoder, vo
         return BKF_ERR;
     }
 
-    BKF_LOG_DEBUG(connMng->log, "rcv hello ack.url %s\n",
-        BkfUrlGetStr(&conn->puberUrl, urlStr, sizeof(urlStr)));
+    BKF_LOG_DEBUG(connMng->log, "rcv hello ack.url %s\n", BkfUrlGetStr(&conn->puberUrl, urlStr, sizeof(urlStr)));
     BkfSuberConnStopReConnTmr(conn);
     (void)BKF_FSM_CHG_STATE(&conn->fsm, BACKFIN_SUB_CONN_STATE_UP);
     if (connMng->env->onConn) {
@@ -371,14 +377,13 @@ uint32_t BkfSubConnActRcvHelloAck(BkfSuberConn *conn, BkfMsgDecoder *decoder, vo
     return BkfSuberConnStartJob(conn); /* 建立连接后强制调度一次，避免sess之前发起的调度请求被忽略 */
 }
 
-uint32_t BkfSuberConnProcAfterSchedSess(BkfSuberConn *conn, BkfMsgCoder *coder, uint8_t *sendBuf,
-                                        uint32_t retSchedSess)
+uint32_t BkfSuberConnProcAfterSchedSess(BkfSuberConn *conn, BkfMsgCoder *coder, uint8_t *sendBuf, uint32_t retSchedSess)
 {
     BkfSuberConnMng *connMng = conn->urlTypeMng->connMng;
     BkfSuberEnv *env = connMng->env;
 
     if (retSchedSess != BKF_OK && retSchedSess != BKF_SUBER_SESS_SEND_BUF_NOT_ENOUGH) {
-        BkfChCliFreeDataBuf(env->chCliMng, conn->connId, (void*)sendBuf);
+        BkfChCliFreeDataBuf(env->chCliMng, conn->connId, (void *)sendBuf);
         return retSchedSess;
     }
 
@@ -398,6 +403,8 @@ uint32_t BkfSuberConnProcAfterSchedSess(BkfSuberConn *conn, BkfMsgCoder *coder, 
 
 uint32_t BkfSubConnActSchedSess(BkfSuberConn *conn, BkfMsgDecoder *decoder, void *param)
 {
+    (void)decoder;
+    (void)param;
     BkfSuberConnMng *connMng = conn->urlTypeMng->connMng;
     uint8_t *sendBuf = VOS_NULL;
     uint32_t ret = BkfSuberConnMallocSendBuf(conn, &sendBuf, BKF_CH_CLI_MALLOC_DATA_BUF_LEN_MAX);
@@ -407,7 +414,7 @@ uint32_t BkfSubConnActSchedSess(BkfSuberConn *conn, BkfMsgDecoder *decoder, void
     }
 
     BkfSuberEnv *env = connMng->env;
-    BkfMsgCoder coder = { { 0 }, 0 };
+    BkfMsgCoder coder = {};
     (void)BkfMsgCodeInit(&coder, env->name, sendBuf, env->msgLenMax, env->sliceVTbl.keyLen, env->sliceVTbl.keyCodec,
         env->sliceVTbl.keyGetStrOrNull, connMng->log);
     /* 驱动处于SUB/UNSUB状态的session进行sub、verify/unsub操作,unsub操作只发送一次 */
@@ -417,6 +424,8 @@ uint32_t BkfSubConnActSchedSess(BkfSuberConn *conn, BkfMsgDecoder *decoder, void
 
 uint32_t BkfSubConnActTcpDisconn(BkfSuberConn *conn, BkfMsgDecoder *decoder, void *param)
 {
+    (void)decoder;
+    (void)param;
     /* 通知所有会话回退状态，并更新序列号 */
     BKF_LOG_DEBUG(conn->urlTypeMng->connMng->log, "Act disconnect\n");
     uint32_t ret = BkfSuberSessProcDisconn(conn->sessMng);
@@ -440,6 +449,8 @@ uint32_t BkfSubConnActTcpDisconn(BkfSuberConn *conn, BkfMsgDecoder *decoder, voi
 
 uint32_t BkfSubConnActReleaseFd(BkfSuberConn *conn, BkfMsgDecoder *decoder, void *param)
 {
+    (void)decoder;
+    (void)param;
     BKF_LOG_ERROR(conn->urlTypeMng->connMng->log, "Rcv Release FD Msg.\n"); // 记录里程碑
     BkfSuberConnDelChConn(conn);
     (void)BKF_FSM_CHG_STATE(&conn->fsm, BACKFIN_SUB_CONN_STATE_CRTINGFD); // 回退到初始状态
@@ -451,20 +462,13 @@ uint32_t BkfSubConnActReleaseFd(BkfSuberConn *conn, BkfMsgDecoder *decoder, void
 #if BKF_BLOCK("表定义")
 const char *subConnFsmStr = "SubscribeConnectionFsm";
 const char *subConnTrsStr = "SubscribeConnectionTrs";
-const char *subConnStateStrTbl[] = {"BACKFIN_SUB_CONN_STATE_CRTINGFD",
-                                    "BACKFIN_SUB_CONN_STATE_WAIT_SND_HELLO",
-                                    "BACKFIN_SUB_CONN_STATE_WAIT_HELLO_ACK",
-                                    "BACKFIN_SUB_CONN_STATE_UP"
-                                   };
+const char *subConnStateStrTbl[] = {"BACKFIN_SUB_CONN_STATE_CRTINGFD", "BACKFIN_SUB_CONN_STATE_WAIT_SND_HELLO",
+    "BACKFIN_SUB_CONN_STATE_WAIT_HELLO_ACK", "BACKFIN_SUB_CONN_STATE_UP"};
 BKF_STATIC_ASSERT(BKF_GET_ARY_COUNT(subConnStateStrTbl) == BACKFIN_SUB_CONN_STATE_MAX);
 
-const char *subConnEvtStrTbl[] = {"BACKFIN_SUB_CONN_INPUT_STARTINST",
-                                  "BACKFIN_SUB_CONN_INPUT_UNBLOCK",
-                                  "BACKFIN_SUB_CONN_INPUT_RCVHELLOACK",
-                                  "BACKFIN_SUB_CONN_INPUT_TCPDISCONN",
-                                  "BACKFIN_SUB_CONN_INPUT_STOPINST",
-                                  "BACKFIN_SUB_CONN_INPUT_JOB"
-                                 };
+const char *subConnEvtStrTbl[] = {"BACKFIN_SUB_CONN_INPUT_STARTINST", "BACKFIN_SUB_CONN_INPUT_UNBLOCK",
+    "BACKFIN_SUB_CONN_INPUT_RCVHELLOACK", "BACKFIN_SUB_CONN_INPUT_TCPDISCONN", "BACKFIN_SUB_CONN_INPUT_STOPINST",
+    "BACKFIN_SUB_CONN_INPUT_JOB"};
 BKF_STATIC_ASSERT(BKF_GET_ARY_COUNT(subConnEvtStrTbl) == BACKFIN_SUB_CONN_INPUT_MAX);
 
 /*
@@ -492,36 +496,40 @@ F   BACKFIN_SUB_CONN_ACTION_RELEASEFD       关闭连接，重新发起连接
 */
 BkfFsmProcItem subConnStateEvtProcItemMtrx[BACKFIN_SUB_CONN_STATE_MAX][BACKFIN_SUB_CONN_INPUT_MAX] = {
     /* BACKFIN_SUB_CONN_STATE_CRTINGFD */
-    {{BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActCreateConn)}, /* BACKFIN_SUB_CONN_INPUT_STARTINST */
-     {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)}, /* BACKFIN_SUB_CONN_INPUT_UNBLOCK */
-     {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)}, /* BACKFIN_SUB_CONN_INPUT_RCVHELLOACK */
-     {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)}, /* BACKFIN_SUB_CONN_INPUT_TCPDISCONN */
-     {BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActReleaseFd)}, /* BACKFIN_SUB_CONN_INPUT_STOPINST */
-     {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)} /* BACKFIN_SUB_CONN_INPUT_JOB */
+    {
+        {BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActCreateConn)}, /* BACKFIN_SUB_CONN_INPUT_STARTINST */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},     /* BACKFIN_SUB_CONN_INPUT_UNBLOCK */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},     /* BACKFIN_SUB_CONN_INPUT_RCVHELLOACK */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},     /* BACKFIN_SUB_CONN_INPUT_TCPDISCONN */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActReleaseFd)},  /* BACKFIN_SUB_CONN_INPUT_STOPINST */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)}      /* BACKFIN_SUB_CONN_INPUT_JOB */
     },
     /* BACKFIN_SUB_CONN_STATE_WAIT_SND_HELLO */
-    {{BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActSndHello)}, /* BACKFIN_SUB_CONN_INPUT_STARTINST */
-     {BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActSndHello)}, /* BACKFIN_SUB_CONN_INPUT_UNBLOCK */
-     {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)}, /* BACKFIN_SUB_CONN_INPUT_RCVHELLOACK */
-     {BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActTcpDisconn)}, /* BACKFIN_SUB_CONN_INPUT_TCPDISCONN */
-     {BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActReleaseFd)}, /* BACKFIN_SUB_CONN_INPUT_STOPINST */
-     {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)} /* BACKFIN_SUB_CONN_INPUT_JOB */
+    {
+        {BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActSndHello)},   /* BACKFIN_SUB_CONN_INPUT_STARTINST */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActSndHello)},   /* BACKFIN_SUB_CONN_INPUT_UNBLOCK */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},     /* BACKFIN_SUB_CONN_INPUT_RCVHELLOACK */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActTcpDisconn)}, /* BACKFIN_SUB_CONN_INPUT_TCPDISCONN */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActReleaseFd)},  /* BACKFIN_SUB_CONN_INPUT_STOPINST */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)}      /* BACKFIN_SUB_CONN_INPUT_JOB */
     },
     /* BACKFIN_SUB_CONN_STATE_WAIT_HELLO_ACK */
-    {{BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActSndHello)}, /* BACKFIN_SUB_CONN_INPUT_STARTINST */
-     {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)}, /* BACKFIN_SUB_CONN_INPUT_UNBLOCK */
-     {BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActRcvHelloAck)}, /* BACKFIN_SUB_CONN_INPUT_RCVHELLOACK */
-     {BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActTcpDisconn)}, /* BACKFIN_SUB_CONN_INPUT_TCPDISCONN */
-     {BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActReleaseFd)}, /* BACKFIN_SUB_CONN_INPUT_STOPINST */
-     {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)} /* BACKFIN_SUB_CONN_INPUT_JOB */
+    {
+        {BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActSndHello)},    /* BACKFIN_SUB_CONN_INPUT_STARTINST */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},      /* BACKFIN_SUB_CONN_INPUT_UNBLOCK */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActRcvHelloAck)}, /* BACKFIN_SUB_CONN_INPUT_RCVHELLOACK */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActTcpDisconn)},  /* BACKFIN_SUB_CONN_INPUT_TCPDISCONN */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActReleaseFd)},   /* BACKFIN_SUB_CONN_INPUT_STOPINST */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)}       /* BACKFIN_SUB_CONN_INPUT_JOB */
     },
     /* BACKFIN_SUB_CONN_STATE_UP */
-    {{BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)}, /* BACKFIN_SUB_CONN_INPUT_STARTINST */
-     {BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActSchedSess)}, /* BACKFIN_SUB_CONN_INPUT_UNBLOCK */
-     {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)}, /* BACKFIN_SUB_CONN_INPUT_RCVHELLOACK */
-     {BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActTcpDisconn)}, /* BACKFIN_SUB_CONN_INPUT_TCPDISCONN */
-     {BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActReleaseFd)}, /* BACKFIN_SUB_CONN_INPUT_STOPINST */
-     {BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActSchedSess)} /* BACKFIN_SUB_CONN_INPUT_JOB */
+    {
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},     /* BACKFIN_SUB_CONN_INPUT_STARTINST */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActSchedSess)},  /* BACKFIN_SUB_CONN_INPUT_UNBLOCK */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},     /* BACKFIN_SUB_CONN_INPUT_RCVHELLOACK */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActTcpDisconn)}, /* BACKFIN_SUB_CONN_INPUT_TCPDISCONN */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActReleaseFd)},  /* BACKFIN_SUB_CONN_INPUT_STOPINST */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfSubConnActSchedSess)}   /* BACKFIN_SUB_CONN_INPUT_JOB */
     },
 };
 #endif

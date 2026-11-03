@@ -13,7 +13,7 @@
 #include "log.h"
 
 using namespace Hccl;
-HcclResult HcclGetCommHandleByCtx(void *ctx, void **opHandle)
+HcclResult HcclGetCommHandleByCtx(void* ctx, void** opHandle)
 {
     if (ctx == nullptr) {
         HCCL_ERROR("[HcclGetCommHandleByCtx]Args ctx is nullptr.");
@@ -27,7 +27,7 @@ HcclResult HcclGetCommHandleByCtx(void *ctx, void **opHandle)
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclReleaseComm(void *opHandle)
+HcclResult HcclReleaseComm(void* opHandle)
 {
     if (opHandle == nullptr) {
         HCCL_WARNING("[HcclReleaseComm] opHandle is nullptr.");
@@ -37,7 +37,7 @@ HcclResult HcclReleaseComm(void *opHandle)
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclGetTaskStatus(void *opHandle, HcclTaskStatus *status)
+HcclResult HcclGetTaskStatus(void* opHandle, HcclTaskStatus* status)
 {
     if (opHandle == nullptr) {
         HCCL_ERROR("[HcclGetTaskStatus]Args opHandle is nullptr.");
@@ -51,8 +51,8 @@ HcclResult HcclGetTaskStatus(void *opHandle, HcclTaskStatus *status)
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclCheckFinishByStream(void *opHandle)
-{    
+HcclResult HcclCheckFinishByStream(void* opHandle)
+{
     if (opHandle == nullptr) {
         HCCL_ERROR("[HcclCheckFinishByStream]Args opHandle is nullptr.");
         return HCCL_E_PTR;
@@ -61,7 +61,7 @@ HcclResult HcclCheckFinishByStream(void *opHandle)
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclPrintTaskExceptionAllComm(void *opHandle)
+HcclResult HcclPrintTaskExceptionAllComm(void* opHandle)
 {
     if (opHandle == nullptr) {
         HCCL_WARNING("[HcclPrintTaskExceptionAllComm]Args opHandle is nullptr.");
@@ -71,27 +71,29 @@ HcclResult HcclPrintTaskExceptionAllComm(void *opHandle)
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclLaunchCcoreWait(void *opHandle, uint64_t waitAddr, uint32_t turnNum, uint64_t turnNumAddr, bool isLast)
+HcclResult HcclLaunchCcoreWait(void* opHandle, uint64_t waitAddr, uint32_t turnNum, uint64_t turnNumAddr, bool isLast)
 {
     if (opHandle == nullptr) {
         HCCL_ERROR("[HcclLaunchCcoreWait]Args opHandle is nullptr.");
         return HCCL_E_PTR;
     }
-    TRY_CATCH_RETURN(CHK_RET(AicpuMc2Handler::GetInstance().HcclLaunchCcoreWait(opHandle, waitAddr, turnNum, turnNumAddr, isLast)));
+    TRY_CATCH_RETURN(
+        CHK_RET(AicpuMc2Handler::GetInstance().HcclLaunchCcoreWait(opHandle, waitAddr, turnNum, turnNumAddr, isLast)));
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclLaunchCcorePost(void *opHandle, uint64_t recordAddr, uint32_t turnNum, uint64_t turnNumAddr)
+HcclResult HcclLaunchCcorePost(void* opHandle, uint64_t recordAddr, uint32_t turnNum, uint64_t turnNumAddr)
 {
     if (opHandle == nullptr) {
         HCCL_ERROR("[HcclLaunchCcorePost]Args opHandle is nullptr.");
         return HCCL_E_PTR;
     }
-    TRY_CATCH_RETURN(CHK_RET(AicpuMc2Handler::GetInstance().HcclLaunchCcorePost(opHandle, recordAddr, turnNum, turnNumAddr)));
+    TRY_CATCH_RETURN(
+        CHK_RET(AicpuMc2Handler::GetInstance().HcclLaunchCcorePost(opHandle, recordAddr, turnNum, turnNumAddr)));
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclLaunchOp(void *opHandle, HcclOpData *data)
+HcclResult HcclLaunchOp(void* opHandle, HcclOpData* data)
 {
     if (opHandle == nullptr) {
         HCCL_ERROR("[HcclLaunchOp]Args opHandle is nullptr.");

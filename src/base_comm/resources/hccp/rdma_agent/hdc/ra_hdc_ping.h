@@ -106,8 +106,7 @@ union OpPingDeinitData {
     } rxData;
 };
 
-int RaHdcPingInit(struct RaPingHandle *pingHandle, struct PingInitAttr *initAttr,
-    struct PingInitInfo *initInfo);
+int RaHdcPingInit(struct RaPingHandle *pingHandle, struct PingInitAttr *initAttr, struct PingInitInfo *initInfo);
 int RaHdcPingTargetAdd(struct RaPingHandle *pingHandle, struct PingTargetInfo target[], uint32_t num);
 int RaHdcPingTaskStart(struct RaPingHandle *pingHandle, struct PingTaskAttr *attr);
 int RaHdcPingGetResults(struct RaPingHandle *pingHandle, struct PingTargetResult target[], uint32_t *num);

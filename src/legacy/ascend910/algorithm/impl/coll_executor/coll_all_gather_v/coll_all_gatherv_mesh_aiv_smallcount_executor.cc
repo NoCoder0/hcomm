@@ -1,19 +1,19 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "coll_all_gatherv_mesh_aiv_smallcount_executor.h"
 
 namespace hccl {
 
-CollAllGatherVMeshAivSmallCountExecutor::CollAllGatherVMeshAivSmallCountExecutor(const HcclDispatcher dispatcher,
-                                                           std::unique_ptr<TopoMatcher> &topoMatcher)
+CollAllGatherVMeshAivSmallCountExecutor::CollAllGatherVMeshAivSmallCountExecutor(
+    const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher>& topoMatcher)
     : CollAllGatherVExecutor(dispatcher, topoMatcher)
 {
     desc_.isAivMode = true;
@@ -28,18 +28,19 @@ HcclResult CollAllGatherVMeshAivSmallCountExecutor::CalcCommInfo(std::vector<Lev
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherVMeshAivSmallCountExecutor::CalcTransportMemType(TransportMemType &inputType, TransportMemType &outputType)
+HcclResult CollAllGatherVMeshAivSmallCountExecutor::CalcTransportMemType(
+    TransportMemType& inputType, TransportMemType& outputType) const
 {
     inputType = TransportMemType::AIV_INPUT;
     outputType = TransportMemType::AIV_OUTPUT;
-    HCCL_INFO("[CollAllGatherVMeshAivSmallCountExecutor][CalcTransportMemType] tag[%s] inputType[%d], outputType[%d].",
+    HCCL_INFO(
+        "[CollAllGatherVMeshAivSmallCountExecutor][CalcTransportMemType] tag[%s] inputType[%d], outputType[%d].",
         tag_.c_str(), inputType, outputType);
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherVMeshAivSmallCountExecutor::CalcLevel0CommInfo(TransportMemType inputType,
-    TransportMemType outputType,
-    std::vector<LevelNSubCommTransport>& opTransport)
+HcclResult CollAllGatherVMeshAivSmallCountExecutor::CalcLevel0CommInfo(
+    TransportMemType inputType, TransportMemType outputType, std::vector<LevelNSubCommTransport>& opTransport)
 {
     CommParaInfo commParaLevel0(COMM_LEVEL0, CommType::COMM_TAG_MESH);
     commParaLevel0.meshSinglePlane = true;
@@ -47,16 +48,21 @@ HcclResult CollAllGatherVMeshAivSmallCountExecutor::CalcLevel0CommInfo(Transport
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherVMeshAivSmallCountExecutor::CalNumBlocks(u32& numBlocks, u32 rankSize, u64 dataSize, HcclCMDType cmdType)
+HcclResult CollAllGatherVMeshAivSmallCountExecutor::CalNumBlocks(
+    u32& numBlocks, u32 rankSize, [[maybe_unused]] u64 dataSize, [[maybe_unused]] HcclCMDType cmdType)
 {
     numBlocks = rankSize; // 默认情况使用rankSize个AIV
     u32 bestNumBlocks = numBlocks;
 
-    CHK_PRT_RET(numBlocks_ < numBlocks,
-        HCCL_WARNING("[CollAllGatherVMeshAivSmallCountExecutor][CalNumBlocks]aivCore[%u] is invalid, at least need [%u].",
-        numBlocks_, numBlocks), HCCL_E_PARA);
+    CHK_PRT_RET(
+        numBlocks_ < numBlocks,
+        HCCL_WARNING(
+            "[CollAllGatherVMeshAivSmallCountExecutor][CalNumBlocks]aivCore[%u] is invalid, at least need [%u].",
+            numBlocks_, numBlocks),
+        HCCL_E_PARA);
 
-    HCCL_INFO("[CollAllGatherVMeshAivSmallCountExecutor][CalNumBlocks] numBlocks is set to [%u], limit[%u], recommanded[%u]",
+    HCCL_INFO(
+        "[CollAllGatherVMeshAivSmallCountExecutor][CalNumBlocks] numBlocks is set to [%u], limit[%u], recommended[%u]",
         numBlocks, numBlocks_, bestNumBlocks);
     return HCCL_SUCCESS;
 }
@@ -72,39 +78,45 @@ HcclResult CollAllGatherVMeshAivSmallCountExecutor::Orchestrate(OpParam& param, 
 
     execMem.inputPtr = param.inputPtr;
     execMem.outputPtr = param.outputPtr;
-    execMem.count = (static_cast<const u64 *>(param.VDataDes.counts))[topoAttr_.userRank];
+    execMem.count = (static_cast<const u64*>(param.VDataDes.counts))[topoAttr_.userRank];
 
     execMem.inputMem = algRes.aivInputMem;
     execMem.outputMem = algRes.aivOutputMem;
     ret = KernelRun(param, execMem);
 
-    CHK_PRT_RET(ret != HCCL_SUCCESS,
-        HCCL_ERROR("[CollAllGatherVMeshAivSmallCountExecutor][Orchestrate]errNo[0x%016llx] tag[%s] executor kernel run failed",
-            HCCL_ERROR_CODE(ret), param.tag.c_str()), ret);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[CollAllGatherVMeshAivSmallCountExecutor][Orchestrate]errNo[0x%016llx] tag[%s] executor kernel run failed",
+            HCCL_ERROR_CODE(ret), param.tag.c_str()),
+        ret);
 
-    HCCL_INFO("tag[%s], CollAllGatherVMeshAivSmallCountExecutor orchestrate success, take time [%lld]us",
-        param.tag.c_str(), DURATION_US(TIME_NOW() - startut));
+    HCCL_INFO(
+        "tag[%s], CollAllGatherVMeshAivSmallCountExecutor orchestrate success, take time [%lld]us", param.tag.c_str(),
+        DURATION_US(TIME_NOW() - startut));
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherVMeshAivSmallCountExecutor::KernelRun(const OpParam &param, ExecMem &execMem)
+HcclResult CollAllGatherVMeshAivSmallCountExecutor::KernelRun(const OpParam& param, ExecMem& execMem)
 {
     HCCL_CONFIG_INFO(HCCL_ALG, "[CollAllGatherVMeshAivSmallCountExecutor][KernelRun]AllGatherV aiv enter.");
 
     CHK_RET(CheckCommSize(COMM_LEVEL0, COMM_INDEX_0 + 1));
     SubCommInfo outerCommInfo = GetSubCommInfo(COMM_LEVEL0, COMM_INDEX_0);
 
-    void *buffersIn[MAX_RANK_SIZE];
-    void *buffersOut[MAX_RANK_SIZE];
+    void* buffersIn[MAX_RANK_SIZE];
+    void* buffersOut[MAX_RANK_SIZE];
 
     u32 localRank = outerCommInfo.localRank;
     u32 localRankSize = outerCommInfo.localRankSize;
-    HCCL_DEBUG("[CollAllGatherVMeshAivSmallCountExecutor][KernelRun] userRank [%u] localRank [%u]", topoAttr_.userRank, localRank);
+    HCCL_DEBUG(
+        "[CollAllGatherVMeshAivSmallCountExecutor][KernelRun] userRank [%u] localRank [%u]", topoAttr_.userRank,
+        localRank);
 
     ExtraArgs extraArgs;
     for (u32 i = 0; i < localRankSize; i++) {
-        extraArgs.recvCounts[i] = *(static_cast<const u64 *>(param.VDataDes.counts) + i);
-        extraArgs.recvDispls[i] = *(static_cast<const u64 *>(param.VDataDes.displs) + i);
+        extraArgs.recvCounts[i] = *(static_cast<const u64*>(param.VDataDes.counts) + i);
+        extraArgs.recvDispls[i] = *(static_cast<const u64*>(param.VDataDes.displs) + i);
         if (i != localRank) {
             CHK_RET(outerCommInfo.links[i]->GetRemoteMem(UserMemType::INPUT_MEM, &(buffersIn[i])));
             CHK_RET(outerCommInfo.links[i]->GetRemoteMem(UserMemType::OUTPUT_MEM, &(buffersOut[i])));
@@ -118,35 +130,34 @@ HcclResult CollAllGatherVMeshAivSmallCountExecutor::KernelRun(const OpParam &par
     }
 
     bool isOpbase = (workflowMode_ == HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
-    AivOpArgs opArgs {
-        HcclCMDType::HCCL_CMD_ALLGATHER_V, execMem.inputPtr, execMem.outputPtr, extraArgs.maxCount,
-        param.VDataDes.dataType, param.reduceType, param.root, isOpbase
-    };
-    AivTopoArgs topoArgs { localRank, localRankSize };
+    AivOpArgs opArgs{HcclCMDType::HCCL_CMD_ALLGATHER_V, execMem.inputPtr, execMem.outputPtr, extraArgs.maxCount,
+                     param.VDataDes.dataType,           param.reduceType, param.root,        isOpbase};
+    AivTopoArgs topoArgs{localRank, localRankSize};
     u32 numBlocks;
-    CHK_PRT_RET(CalNumBlocks(numBlocks, localRankSize) != HCCL_SUCCESS,
-        HCCL_ERROR("[%s] CalNumBlocks failed", __func__),
+    CHK_PRT_RET(
+        CalNumBlocks(numBlocks, localRankSize) != HCCL_SUCCESS, HCCL_ERROR("[%s] CalNumBlocks failed", __func__),
         HCCL_E_PARA);
     numBlocks_ = numBlocks;
     topoArgs.identify = algoAttr_.identifier;
-    AivResourceArgs resourceArgs {
-        param.tag, param.stream.ptr(), buffersIn, buffersOut, execMem.inputMem.size(), numBlocks_, param.aivTag
-    };
-    AivAlgArgs algArgs {};
+    AivResourceArgs resourceArgs{param.tag,  param.stream.ptr(), buffersIn, buffersOut, execMem.inputMem.size(),
+                                 numBlocks_, param.aivTag};
+    AivAlgArgs algArgs{};
     algArgs.execTimeOut = topoMatcher_->GetExecTimeOutConfig();
     algArgs.execTimeOutSet = true;
     struct AivProfilingInfo aivProfilingInfo;
     aivProfilingInfo.counter = opCounter_;
 
     HcclResult ret = ExecuteKernelLaunch(opArgs, topoArgs, resourceArgs, algArgs, extraArgs, aivProfilingInfo);
-    CHK_PRT_RET(ret != HCCL_SUCCESS,
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
         HCCL_ERROR("[CollAllGatherVMeshAivSmallCountExecutor][KernelRun]AllGatherV aiv failed, return[%d]", ret), ret);
 
     HCCL_INFO("[CollAllGatherVMeshAivSmallCountExecutor][KernelRun]AllGatherV aiv run success.");
     return HCCL_SUCCESS;
 }
 
-REGISTER_EXEC("AllGatherVMeshAivSmallCountExecutor", AllGatherVMeshAivSmallCountExecutor, 
-            CollAllGatherVMeshAivSmallCountExecutor);
+REGISTER_EXEC(
+    "AllGatherVMeshAivSmallCountExecutor", AllGatherVMeshAivSmallCountExecutor,
+    CollAllGatherVMeshAivSmallCountExecutor);
 
 } // namespace hccl

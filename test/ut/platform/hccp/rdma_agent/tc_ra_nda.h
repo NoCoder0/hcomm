@@ -17,6 +17,7 @@ void TcRaNdaGetDirectFlag();
 void TcRaPeerNdaGetDirectFlag();
 void TcRaNdaQpCreate();
 void TcRaPeerNdaQpCreate();
+void TcRaPeerGetQpHyperFeature();
 #ifdef __cplusplus
 }
 #endif

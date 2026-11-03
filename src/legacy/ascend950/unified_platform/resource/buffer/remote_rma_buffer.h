@@ -21,158 +21,124 @@ namespace Hccl {
 
 class RemoteRmaBuffer {
 public:
-    explicit RemoteRmaBuffer(const RmaType rmaType) : rmaType(rmaType)
-    {
-    }
+    explicit RemoteRmaBuffer(const RmaType rmaType) : rmaType(rmaType) {}
 
     virtual ~RemoteRmaBuffer() = default;
 
-    RmaType GetRmaType() const
-    {
-        return rmaType;
-    }
+    RmaType GetRmaType() const { return rmaType; }
 
-    inline uintptr_t GetAddr() const
-    {
-        return addr;
-    }
+    inline uintptr_t GetAddr() const { return addr; }
 
-    inline u64 GetSize() const
-    {
-        return size;
-    }
+    inline u64 GetSize() const { return size; }
 
-    inline HcclMemType GetMemType() const
-    {
-        return memType;
-    }
+    inline HcclMemType GetMemType() const { return memType; }
 
-    inline const std::string GetMemInfo() const
-    {
-        return memInfo;
-    }
+    inline const std::string GetMemInfo() const { return memInfo; }
 
-    u64 GetMemHandle() const
-    {
-        return memHandle;
-    }
+    u64 GetMemHandle() const { return memHandle; }
 
     virtual std::string Describe() const = 0;
 
 protected:
-    uintptr_t   addr{0};
-    u64         size{0};
-    RmaType     rmaType;
+    uintptr_t addr{0};
+    u64 size{0};
+    RmaType rmaType;
     HcclMemType memType;
     std::string memInfo;
-    u64         memHandle{0};
+    u64 memHandle{0};
 };
 
 class RemoteIpcRmaBuffer : public RemoteRmaBuffer {
 public:
     RemoteIpcRmaBuffer();
 
-    explicit RemoteIpcRmaBuffer(const Serializable &rmtDto);
-    
-    RemoteIpcRmaBuffer(const Serializable &rmtDto, const std::string tag);
+    explicit RemoteIpcRmaBuffer(const Serializable& rmtDto, uint8_t pathMode = 0);
+
+    RemoteIpcRmaBuffer(const Serializable& rmtDto, const std::string tag, uint8_t pathMode = 0);
 
     ~RemoteIpcRmaBuffer() override;
 
-    RemoteIpcRmaBuffer(const RemoteIpcRmaBuffer &that) = delete;
+    RemoteIpcRmaBuffer(const RemoteIpcRmaBuffer& that) = delete;
 
-    RemoteIpcRmaBuffer &operator=(const RemoteIpcRmaBuffer &that) = delete;
+    RemoteIpcRmaBuffer& operator=(const RemoteIpcRmaBuffer& that) = delete;
 
     std::string Describe() const override;
 
 private:
     void Close() const;
+    bool OpenIpcMemory();
+    bool OpenIpcMemoryLegacy();
 
-    char  ipcName[RTS_IPC_MEM_NAME_LEN]{0};
-    u64   ipcAddr{0};
-    u64   ipcOffset{0};
-    void *ipcPtr{};
-    u32   remotePid{0};
-    u32   myPid{0};
-    bool  isOpened;
+    uint8_t pathMode_{0};
+
+    char ipcName[RTS_IPC_MEM_NAME_LEN]{0};
+    u64 ipcAddr{0};
+    u64 ipcOffset{0};
+    void* ipcPtr{};
+    u32 remotePid{0};
+    u32 myPid{0};
+    bool isOpened;
 };
 
 class RemoteRdmaRmaBuffer : public RemoteRmaBuffer {
 public:
     explicit RemoteRdmaRmaBuffer(RdmaHandle rdmaHandle);
 
-    RemoteRdmaRmaBuffer(RdmaHandle rdmaHandle, const Serializable &rmtDto);
+    RemoteRdmaRmaBuffer(RdmaHandle rdmaHandle, const Serializable& rmtDto);
 
     ~RemoteRdmaRmaBuffer() override;
 
-    RemoteRdmaRmaBuffer(const RemoteRdmaRmaBuffer &that) = delete;
+    RemoteRdmaRmaBuffer(const RemoteRdmaRmaBuffer& that) = delete;
 
-    RemoteRdmaRmaBuffer &operator=(const RemoteRdmaRmaBuffer &that) = delete;
+    RemoteRdmaRmaBuffer& operator=(const RemoteRdmaRmaBuffer& that) = delete;
 
     std::string Describe() const override;
 
-    const u8 *GetKey() const
-    {
-        return key;
-    }
+    const u8* GetKey() const { return key; }
 
-    u32 GetRkey() const
-    {
-        return rkey;
-    }
+    u32 GetRkey() const { return rkey; }
 
 private:
     RdmaHandle rdmaHandle{nullptr};
-    u8         exchangedKey[RDMA_MEM_KEY_MAX_LEN]{0};
-    u8         key[RDMA_MEM_KEY_MAX_LEN]{0};
-    u32        keyValidLen{0};
-    u32        rkey{0};
+    u8 exchangedKey[RDMA_MEM_KEY_MAX_LEN]{0};
+    u8 key[RDMA_MEM_KEY_MAX_LEN]{0};
+    u32 keyValidLen{0};
+    u32 rkey{0};
 };
 
 class RemoteUbRmaBuffer : public RemoteRmaBuffer {
 public:
     explicit RemoteUbRmaBuffer(RdmaHandle rdmaHandle);
 
-    RemoteUbRmaBuffer(uintptr_t addr, u64 size, u32 tokenId, u32 tokenValue, HcclMemType memType,
-        const std::string &memInfo);
+    RemoteUbRmaBuffer(
+        uintptr_t addr, u64 size, u32 tokenId, u32 tokenValue, HcclMemType memType, const std::string& memInfo);
 
-    RemoteUbRmaBuffer(RdmaHandle rdmaHandle1, const Serializable &rmtDto);
+    RemoteUbRmaBuffer(RdmaHandle rdmaHandle1, const Serializable& rmtDto);
 
     ~RemoteUbRmaBuffer() override;
 
-    RemoteUbRmaBuffer(const RemoteUbRmaBuffer &that) = delete;
+    RemoteUbRmaBuffer(const RemoteUbRmaBuffer& that) = delete;
 
-    RemoteUbRmaBuffer &operator=(const RemoteUbRmaBuffer &that) = delete;
+    RemoteUbRmaBuffer& operator=(const RemoteUbRmaBuffer& that) = delete;
 
     std::string Describe() const final;
 
-    uint32_t GetTokenId() const
-    {
-        return tokenId;
-    }
+    uint32_t GetTokenId() const { return tokenId; }
 
-    uint32_t GetTokenValue() const
-    {
-        return tokenValue;
-    }
+    uint32_t GetTokenValue() const { return tokenValue; }
 
-    uint64_t GetSegVa() const
-    {
-        return segVa;
-    }
+    uint64_t GetSegVa() const { return segVa; }
 
-    uint32_t GetNotifyId() const
-    {
-        return notifyId;
-    }
+    uint32_t GetNotifyId() const { return notifyId; }
 
 private:
     RdmaHandle rdmaHandle{nullptr};
-    u8         key[HRT_UB_MEM_KEY_MAX_LEN]{0};
-    u32        tokenId{0};
-    u32        tokenValue{0};
-    u32        keySize{0};
-    u64        segVa{0};
-    u32        notifyId{UINT32_MAX};
+    u8 key[HRT_UB_MEM_KEY_MAX_LEN]{0};
+    u32 tokenId{0};
+    u32 tokenValue{0};
+    u32 keySize{0};
+    u64 segVa{0};
+    u32 notifyId{UINT32_MAX};
 };
 
 } // namespace Hccl

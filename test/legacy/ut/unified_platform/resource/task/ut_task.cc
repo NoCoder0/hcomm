@@ -22,31 +22,25 @@ using namespace std;
 
 class TaskTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "TaskTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "TaskTest tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "TaskTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "TaskTest tests tear down." << std::endl; }
 
     virtual void SetUp()
     {
         InitLocalNotify();
         ipcRemoteNotify = new IpcRemoteNotify();
-        ipcLocalNotify  = new IpcLocalNotify();
+        ipcLocalNotify = new IpcLocalNotify();
 
         taskLocalCopy = new TaskLocalCopy(dstAddr, srcAddr, size, kind);
         taskP2pMemcpy = new TaskP2pMemcpy(dstAddr, srcAddr, size, kind);
-        remoteRecord  = new TaskRemoteRecord(ipcRemoteNotify);
-        taskWait      = new TaskWait(ipcLocalNotify);
-        localRecord   = new TaskLocalRecord(ipcLocalNotify);
-        sdmaReduce    = new TaskSdmaReduce(dstAddr, srcAddr, size, dataType, reduceOp);
-        localReduce   = new TaskLocalReduce(srcAddr1, srcAddr2, dstAddr, size, dataType, reduceOp);
-        rdmaSendDb    = new TaskRdmaSend(dbIndex, dbInfo);
-        rdmaSendQpn   = new TaskRdmaSend(qpn, wqeIndex);
+        remoteRecord = new TaskRemoteRecord(ipcRemoteNotify);
+        taskWait = new TaskWait(ipcLocalNotify);
+        localRecord = new TaskLocalRecord(ipcLocalNotify);
+        sdmaReduce = new TaskSdmaReduce(dstAddr, srcAddr, size, dataType, reduceOp);
+        localReduce = new TaskLocalReduce(srcAddr1, srcAddr2, dstAddr, size, dataType, reduceOp);
+        rdmaSendDb = new TaskRdmaSend(dbIndex, dbInfo);
+        rdmaSendQpn = new TaskRdmaSend(qpn, wqeIndex);
         localAddrCopy = new TaskLocalAddrCopy(dstAddr, srcAddr, size);
         ubDbSend = new TaskUbDbSend(jettyId, funcId, piVal, dieId);
         ubDirectSend = new TaskUbDirectSend(funcId, dieId, jettyId, dwqeSize, dwqe);
@@ -78,7 +72,7 @@ protected:
     void InitLocalNotify()
     {
         MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-        MOCKER(HrtNotifyCreate).stubs().will(returnValue((void *)(1)));
+        MOCKER(HrtNotifyCreate).stubs().will(returnValue((void*)(1)));
         MOCKER(HrtIpcSetNotifyName).stubs();
         MOCKER(HrtGetNotifyID).stubs().will(returnValue(1));
         MOCKER(HrtNotifyGetAddr).stubs().will(returnValue((u64)0));
@@ -87,29 +81,29 @@ protected:
         MOCKER(HrtGetDeviceType).stubs().will(returnValue(DevType(DevType::DEV_TYPE_910A2)));
     }
 
-    TaskLocalCopy     *taskLocalCopy;
-    TaskP2pMemcpy     *taskP2pMemcpy;
-    TaskSdmaReduce    *sdmaReduce;
-    TaskLocalReduce   *localReduce;
-    TaskRdmaSend      *rdmaSendDb;
-    TaskRdmaSend      *rdmaSendQpn;
-    TaskLocalAddrCopy *localAddrCopy;
+    TaskLocalCopy* taskLocalCopy;
+    TaskP2pMemcpy* taskP2pMemcpy;
+    TaskSdmaReduce* sdmaReduce;
+    TaskLocalReduce* localReduce;
+    TaskRdmaSend* rdmaSendDb;
+    TaskRdmaSend* rdmaSendQpn;
+    TaskLocalAddrCopy* localAddrCopy;
 
-    TaskLocalRecord  *localRecord;
-    TaskWait         *taskWait;
-    TaskRemoteRecord *remoteRecord;
-    TaskUbDirectSend *ubDirectSend;
-    TaskWriteValue *writeDoorbell;
-    TaskUbDbSend *ubDbSend;
+    TaskLocalRecord* localRecord;
+    TaskWait* taskWait;
+    TaskRemoteRecord* remoteRecord;
+    TaskUbDirectSend* ubDirectSend;
+    TaskWriteValue* writeDoorbell;
+    TaskUbDbSend* ubDbSend;
 
-    u32 dbIndex  = 100;
-    u64 dbInfo   = 200;
-    u32 qpn      = 100;
+    u32 dbIndex = 100;
+    u64 dbInfo = 200;
+    u32 qpn = 100;
     u32 wqeIndex = 200;
 
     u64 srcAddr = 0x100;
     u64 dstAddr = 0x200;
-    u64 size    = 0x300;
+    u64 size = 0x300;
 
     u64 srcAddr1 = 0x500;
     u64 srcAddr2 = 0x300;
@@ -122,12 +116,12 @@ protected:
     u32 dwqeSize = 128;
     u8 dwqe[128]{0};
 
-    MemcpyKind kind     = MemcpyKind::D2D;
-    DataType   dataType = DataType::INT8;
-    ReduceOp   reduceOp = ReduceOp::MAX;
+    MemcpyKind kind = MemcpyKind::D2D;
+    DataType dataType = DataType::INT8;
+    ReduceOp reduceOp = ReduceOp::MAX;
 
-    IpcRemoteNotify *ipcRemoteNotify;
-    IpcLocalNotify  *ipcLocalNotify;
+    IpcRemoteNotify* ipcRemoteNotify;
+    IpcLocalNotify* ipcLocalNotify;
 };
 
 TEST_F(TaskTest, test_task_print_all)
@@ -149,5 +143,5 @@ TEST_F(TaskTest, test_task_print_all)
 
 TEST_F(TaskTest, test_task_ub_direct_send_exception)
 {
-    EXPECT_THROW( TaskUbDirectSend(funcId, dieId, jettyId, 0, dwqe), InternalException);
+    EXPECT_THROW(TaskUbDirectSend(funcId, dieId, jettyId, 0, dwqe), InternalException);
 }

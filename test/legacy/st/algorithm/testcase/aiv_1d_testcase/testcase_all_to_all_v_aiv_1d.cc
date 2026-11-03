@@ -4,9 +4,10 @@
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #include "gtest/gtest.h"
 #include <mockcpp/mokc.h>
 #include <mockcpp/mockcpp.hpp>
@@ -40,20 +41,15 @@ using namespace Hccl;
 
 class AivAlltoAllVMesh1D : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AivAlltoAllVMesh1D set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AivAlltoAllVMesh1D set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AivAlltoAllVMesh1D tear down" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AivAlltoAllVMesh1D tear down" << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -65,8 +61,10 @@ protected:
         ClearHcclEnv();
     }
 
-    void GenAivAllToAllVParams(u32 rankSize, u64 count, std::vector<u64>& sendCounts, std::vector<u64>& sdispls,
-                            std::vector<u64>& recvCounts, std::vector<u64>& rdispls) {
+    void GenAivAllToAllVParams(
+        u32 rankSize, u64 count, std::vector<u64>& sendCounts, std::vector<u64>& sdispls, std::vector<u64>& recvCounts,
+        std::vector<u64>& rdispls)
+    {
         u64 sendDisplacement = 0;
         u64 recvDisplacement = 0;
         for (u32 i = 0; i < rankSize; i++) {
@@ -79,9 +77,10 @@ protected:
         }
     }
 
-    void RunAivAlltoAllVMesh1DTest(int supNum, int sevNum, int rankNum, CheckerOpMode opMode, int dataCount,
-        CheckerDataType dataType, int maxTmpMemSize) {
-
+    void RunAivAlltoAllVMesh1DTest(
+        int supNum, int sevNum, int rankNum, CheckerOpMode opMode, int dataCount, CheckerDataType dataType,
+        int maxTmpMemSize)
+    {
         RankTable_For_LLT gen;
         TopoMeta topoMeta;
         gen.GenTopoMeta(topoMeta, supNum, sevNum, rankNum);
@@ -97,9 +96,9 @@ protected:
         checkerOpParam.devtype = CheckerDevType::DEV_TYPE_950;
         checkerOpParam.algName = "AivAlltoAllVMesh1D";
 
-        GenAivAllToAllVParams(rankNum, dataCount, checkerOpParam.All2AllDataDes.sendCounts,
-            checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts,
-            checkerOpParam.All2AllDataDes.rdispls);
+        GenAivAllToAllVParams(
+            rankNum, dataCount, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+            checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
 
         Checker checker;
         HcclResult ret;
@@ -110,68 +109,70 @@ protected:
 
 TEST_F(AivAlltoAllVMesh1D, AivAlltoAllVMesh1d_test_1)
 {
-    RunAivAlltoAllVMesh1DTest(1, 1, 4, CheckerOpMode::OPBASE, 0, CheckerDataType::DATA_TYPE_INT8, 1024*1024);
+    RunAivAlltoAllVMesh1DTest(1, 1, 4, CheckerOpMode::OPBASE, 0, CheckerDataType::DATA_TYPE_INT8, 1024 * 1024);
 }
 
 TEST_F(AivAlltoAllVMesh1D, AivAlltoAllVMesh1d_test_2)
 {
-    RunAivAlltoAllVMesh1DTest(1, 1, 4, CheckerOpMode::OFFLOAD, 1, CheckerDataType::DATA_TYPE_INT16, 1024*1024);
+    RunAivAlltoAllVMesh1DTest(1, 1, 4, CheckerOpMode::OFFLOAD, 1, CheckerDataType::DATA_TYPE_INT16, 1024 * 1024);
 }
 
 TEST_F(AivAlltoAllVMesh1D, AivAlltoAllVMesh1d_test_3)
 {
-    RunAivAlltoAllVMesh1DTest(1, 1, 3, CheckerOpMode::OPBASE, 13, CheckerDataType::DATA_TYPE_INT32, 1024*1024);
+    RunAivAlltoAllVMesh1DTest(1, 1, 3, CheckerOpMode::OPBASE, 13, CheckerDataType::DATA_TYPE_INT32, 1024 * 1024);
 }
 
 TEST_F(AivAlltoAllVMesh1D, AivAlltoAllVMesh1d_test_4)
 {
-    RunAivAlltoAllVMesh1DTest(1, 1, 3, CheckerOpMode::OFFLOAD, 99, CheckerDataType::DATA_TYPE_INT64, 1024*1024);
+    RunAivAlltoAllVMesh1DTest(1, 1, 3, CheckerOpMode::OFFLOAD, 99, CheckerDataType::DATA_TYPE_INT64, 1024 * 1024);
 }
 
 TEST_F(AivAlltoAllVMesh1D, AivAlltoAllVMesh1d_test_5)
 {
-    RunAivAlltoAllVMesh1DTest(1, 1, 8, CheckerOpMode::OPBASE, 4096, CheckerDataType::DATA_TYPE_UINT8, 1024*1024);
+    RunAivAlltoAllVMesh1DTest(1, 1, 8, CheckerOpMode::OPBASE, 4096, CheckerDataType::DATA_TYPE_UINT8, 1024 * 1024);
 }
 
 TEST_F(AivAlltoAllVMesh1D, AivAlltoAllVMesh1d_test_6)
 {
-    RunAivAlltoAllVMesh1DTest(1, 1, 2, CheckerOpMode::OFFLOAD, 128*1024*1024, CheckerDataType::DATA_TYPE_UINT16, 1024*1024);
+    RunAivAlltoAllVMesh1DTest(
+        1, 1, 2, CheckerOpMode::OFFLOAD, 128 * 1024 * 1024, CheckerDataType::DATA_TYPE_UINT16, 1024 * 1024);
 }
 
 TEST_F(AivAlltoAllVMesh1D, AivAlltoAllVMesh1d_test_7)
 {
-    RunAivAlltoAllVMesh1DTest(1, 1, 2, CheckerOpMode::OPBASE, 1024*1024*1024, CheckerDataType::DATA_TYPE_UINT32, 1024*1024);
+    RunAivAlltoAllVMesh1DTest(
+        1, 1, 2, CheckerOpMode::OPBASE, 1024 * 1024 * 1024, CheckerDataType::DATA_TYPE_UINT32, 1024 * 1024);
 }
 
 TEST_F(AivAlltoAllVMesh1D, AivAlltoAllVMesh1d_test_8)
 {
-    RunAivAlltoAllVMesh1DTest(1, 1, 8, CheckerOpMode::OFFLOAD, 4*1024*1024*1024, CheckerDataType::DATA_TYPE_UINT64, 1024*1024*200);
+    RunAivAlltoAllVMesh1DTest(
+        1, 1, 8, CheckerOpMode::OFFLOAD, 4 * 1024 * 1024 * 1024, CheckerDataType::DATA_TYPE_UINT64, 1024 * 1024 * 200);
 }
 
 TEST_F(AivAlltoAllVMesh1D, AivAlltoAllVMesh1d_test_9)
 {
-    RunAivAlltoAllVMesh1DTest(1, 1, 6, CheckerOpMode::OPBASE, 10*1024*1024*1024, CheckerDataType::DATA_TYPE_FP16, 1024*1024*200);
+    RunAivAlltoAllVMesh1DTest(
+        1, 1, 6, CheckerOpMode::OPBASE, 10 * 1024 * 1024 * 1024, CheckerDataType::DATA_TYPE_FP16, 1024 * 1024 * 200);
 }
 
 TEST_F(AivAlltoAllVMesh1D, AivAlltoAllVMesh1d_test_10)
 {
-    RunAivAlltoAllVMesh1DTest(1, 1, 6, CheckerOpMode::OFFLOAD, 1024*1024*1024, CheckerDataType::DATA_TYPE_FP32, 1024*1024*200);
+    RunAivAlltoAllVMesh1DTest(
+        1, 1, 6, CheckerOpMode::OFFLOAD, 1024 * 1024 * 1024, CheckerDataType::DATA_TYPE_FP32, 1024 * 1024 * 200);
 }
 
 TEST_F(AivAlltoAllVMesh1D, AivAlltoAllVMesh1d_test_11)
 {
-    RunAivAlltoAllVMesh1DTest(1, 1, 6, CheckerOpMode::OPBASE, 1024*1024*1024, CheckerDataType::DATA_TYPE_BFP16, 1024*1024*200);
+    RunAivAlltoAllVMesh1DTest(
+        1, 1, 6, CheckerOpMode::OPBASE, 1024 * 1024 * 1024, CheckerDataType::DATA_TYPE_BFP16, 1024 * 1024 * 200);
 }
 
 TEST_F(AivAlltoAllVMesh1D, AivAlltoAllVMesh1d_excutor_template_test)
 {
     InsV2AlltoAllVSoleExecutor<TopoMatchMesh, AivTempAlltoAllVMesh1D> executor;
     std::shared_ptr<AivTempAlltoAllVMesh1D> tempAlltoAllV = std::make_shared<AivTempAlltoAllVMesh1D>(
-    0,
-    4,
-    std::vector<std::vector<RankId>>{{0, 1, 2, 3}},
-    std::map<RankId, u32>{{0, 0}, {1, 1}, {2, 2}, {3, 3}}
-    );
+        0, 4, std::vector<std::vector<RankId>>{{0, 1, 2, 3}}, std::map<RankId, u32>{{0, 0}, {1, 1}, {2, 2}, {3, 3}});
     std::shared_ptr<AivAlgTemplateBase> tempAiv = tempAlltoAllV;
     AlgTopoInfo topoInfo;
     topoInfo.virtRanks = std::vector<std::vector<RankId>>{{0, 1, 2, 3}};

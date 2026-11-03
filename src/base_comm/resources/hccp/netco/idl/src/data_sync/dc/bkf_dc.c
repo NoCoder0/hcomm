@@ -51,10 +51,10 @@ BkfDc *BkfDcInit(BkfDcInitArg *arg)
     dc->log = arg->log;
 
     VOS_AVLL_INIT_TREE(dc->tableTypeSet, (AVLL_COMPARE)Bkfuint16_tCmp,
-                       BKF_OFFSET(BkfDcTableType, vTbl) + BKF_OFFSET(BkfDcTableTypeVTbl, tableTypeId),
-                       BKF_OFFSET(BkfDcTableType, avlNode));
-    VOS_AVLL_INIT_TREE(dc->sliceSet, (AVLL_COMPARE)dc->argInit.sliceVTbl.keyCmp,
-                       BKF_OFFSET(BkfDcSlice, key[0]), BKF_OFFSET(BkfDcSlice, avlNode));
+        BKF_OFFSET(BkfDcTableType, vTbl) + BKF_OFFSET(BkfDcTableTypeVTbl, tableTypeId),
+        BKF_OFFSET(BkfDcTableType, avlNode));
+    VOS_AVLL_INIT_TREE(dc->sliceSet, (AVLL_COMPARE)dc->argInit.sliceVTbl.keyCmp, BKF_OFFSET(BkfDcSlice, key[0]),
+        BKF_OFFSET(BkfDcSlice, avlNode));
     dc->seq64Seed = BKF_DC_SEQ_INVALID;
 
     ret = BkfDcItorInit(dc);
@@ -94,14 +94,14 @@ uint32_t BkfDcRegTableType(BkfDc *dc, BkfDcTableTypeVTbl *vTbl)
     BOOL paramIsInvalid = VOS_FALSE;
     BkfDcTableType *tableType = VOS_NULL;
 
-    paramIsInvalid = (dc == VOS_NULL) || (vTbl == VOS_NULL) || (vTbl->name == VOS_NULL) ||
-                     (vTbl->tupleCntMax <= 0) || (vTbl->tupleKeyLen == 0) || !BKF_LEN_IS_ALIGN4(vTbl->tupleKeyLen) ||
+    paramIsInvalid = (dc == VOS_NULL) || (vTbl == VOS_NULL) || (vTbl->name == VOS_NULL) || (vTbl->tupleCntMax <= 0) ||
+                     (vTbl->tupleKeyLen == 0) || !BKF_LEN_IS_ALIGN4(vTbl->tupleKeyLen) ||
                      (vTbl->tupleKeyLen > BKF_DC_TUPLE_KEY_LEN_MAX) || (vTbl->tupleKeyCmp == VOS_NULL);
     if (paramIsInvalid) {
         return BKF_ERR;
     }
-    BKF_LOG_DEBUG(BKF_LOG_HND, "dc(%#x)/table(%u, %s), vTbl(%#x)\n", BKF_MASK_ADDR(dc),
-                  vTbl->tableTypeId, vTbl->name, BKF_MASK_ADDR(vTbl));
+    BKF_LOG_DEBUG(BKF_LOG_HND, "dc(%#x)/table(%u, %s), vTbl(%#x)\n", BKF_MASK_ADDR(dc), vTbl->tableTypeId, vTbl->name,
+        BKF_MASK_ADDR(vTbl));
 
     tableType = BkfDcAddTableType(dc, vTbl);
     if (tableType == VOS_NULL) {
@@ -135,8 +135,7 @@ STATIC void BkfDcNtfAllMatchTableComplete(BkfDc *dc, uint16_t tableTypeId)
     void *itor = VOS_NULL;
     BkfDcTable *table = VOS_NULL;
 
-    for (slice = BkfDcGetFirstSlice(dc, &itor); slice != VOS_NULL;
-         slice = BkfDcGetNextSlice(dc, &itor)) {
+    for (slice = BkfDcGetFirstSlice(dc, &itor); slice != VOS_NULL; slice = BkfDcGetNextSlice(dc, &itor)) {
         table = BkfDcFindTable(dc, slice, tableTypeId);
         if (table != VOS_NULL) {
             BkfDcNtfTableAllSeqItor(dc, table, BkfDcNtfAfterTableCompleteBySeqItor);
@@ -177,11 +176,10 @@ void BkfDcResetTableTypeComplete(BkfDc *dc, uint16_t tableTypeId)
     BkfDcTableType *tableType = BkfDcFindTableType(dc, tableTypeId);
     if (tableType == VOS_NULL) {
         BKF_LOG_INFO(BKF_LOG_HND, "table(%u)/tableType(%#x)\n", tableTypeId, BKF_MASK_ADDR(tableType));
-        return ;
+        return;
     }
     tableType->complete = VOS_FALSE;
 }
-
 
 BOOL BkfDcIsTableTypeComplete(BkfDc *dc, uint16_t tableTypeId)
 {
@@ -223,7 +221,7 @@ uint32_t BkfDcCreateSlice(BkfDc *dc, void *sliceKey)
         return BKF_ERR;
     }
     BKF_LOG_DEBUG(BKF_LOG_HND, "dc(%#x), sliceKey(%s)\n", BKF_MASK_ADDR(dc),
-                  BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)));
+        BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)));
 
     slice = BkfDcFindSlice(dc, sliceKey);
     if (slice == VOS_NULL) {
@@ -247,7 +245,7 @@ void BkfDcDeleteSlice(BkfDc *dc, void *sliceKey)
         return;
     }
     BKF_LOG_DEBUG(BKF_LOG_HND, "dc(%#x), sliceKey(%s)\n", BKF_MASK_ADDR(dc),
-                  BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)));
+        BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)));
 
     slice = BkfDcFindSlice(dc, sliceKey);
     if (slice == VOS_NULL) {
@@ -258,9 +256,8 @@ void BkfDcDeleteSlice(BkfDc *dc, void *sliceKey)
 
     /* 直接删切片之前，一定要有其下表 release相关的通知。否则上层的seqItor没有释放，
     table会在下面流程中释放，导致野指针 */
-    for (table = BkfDcGetFirstTable(dc, slice, &itor); table != VOS_NULL;
-         table = BkfDcGetNextTable(dc, slice, &itor)) {
-        if (!table->isRelease)  {
+    for (table = BkfDcGetFirstTable(dc, slice, &itor); table != VOS_NULL; table = BkfDcGetNextTable(dc, slice, &itor)) {
+        if (!table->isRelease) {
             BkfDcReleaseTable(dc, sliceKey, table->tableTypeId);
         }
     }
@@ -343,14 +340,14 @@ uint32_t BkfDcCreateTable(BkfDc *dc, void *sliceKey, uint16_t tableTypeId)
         return BKF_ERR;
     }
     BKF_LOG_DEBUG(BKF_LOG_HND, "dc(%#x), sliceKey(%s)/type(%u, %s)\n", BKF_MASK_ADDR(dc),
-                  BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)),
-                  tableTypeId, BkfDcGetTableTypeIdStr(dc, tableTypeId));
+        BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)), tableTypeId,
+        BkfDcGetTableTypeIdStr(dc, tableTypeId));
 
     slice = BkfDcFindSlice(dc, sliceKey);
     if (slice == VOS_NULL) {
         BKF_LOG_ERROR(BKF_LOG_HND, "slice not exist, dc(%#x), sliceKey(%s)/type(%u, %s)\n", BKF_MASK_ADDR(dc),
-            BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)),
-            tableTypeId, BkfDcGetTableTypeIdStr(dc, tableTypeId));
+            BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)), tableTypeId,
+            BkfDcGetTableTypeIdStr(dc, tableTypeId));
         return BKF_ERR;
     }
 
@@ -362,8 +359,8 @@ uint32_t BkfDcCreateTable(BkfDc *dc, void *sliceKey, uint16_t tableTypeId)
     }
     if (table == VOS_NULL) {
         BKF_LOG_ERROR(BKF_LOG_HND, "add fail, dc(%#x), sliceKey(%s)/type(%u, %s)\n", BKF_MASK_ADDR(dc),
-            BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)),
-            tableTypeId, BkfDcGetTableTypeIdStr(dc, tableTypeId));
+            BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)), tableTypeId,
+            BkfDcGetTableTypeIdStr(dc, tableTypeId));
     }
     return ((table != VOS_NULL) ? BKF_OK : BKF_ERR);
 }
@@ -384,21 +381,21 @@ void BkfDcReleaseTable(BkfDc *dc, void *sliceKey, uint16_t tableTypeId)
         return;
     }
     BKF_LOG_DEBUG(BKF_LOG_HND, "dc(%#x), sliceKey(%s)/type(%u,  %s)\n", BKF_MASK_ADDR(dc),
-                  BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)),
-                  tableTypeId, BkfDcGetTableTypeIdStr(dc, tableTypeId));
+        BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)), tableTypeId,
+        BkfDcGetTableTypeIdStr(dc, tableTypeId));
 
     slice = BkfDcFindSlice(dc, sliceKey);
     if (slice == VOS_NULL) {
         BKF_LOG_ERROR(BKF_LOG_HND, "slice not exist dc(%#x), sliceKey(%s)/type(%u,  %s)\n", BKF_MASK_ADDR(dc),
-            BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)),
-            tableTypeId, BkfDcGetTableTypeIdStr(dc, tableTypeId));
+            BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)), tableTypeId,
+            BkfDcGetTableTypeIdStr(dc, tableTypeId));
         return;
     }
     table = BkfDcFindTable(dc, slice, tableTypeId);
     if (table == VOS_NULL) {
         BKF_LOG_ERROR(BKF_LOG_HND, "table not exist dc(%#x), sliceKey(%s)/type(%u,  %s)\n", BKF_MASK_ADDR(dc),
-            BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)),
-            tableTypeId, BkfDcGetTableTypeIdStr(dc, tableTypeId));
+            BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)), tableTypeId,
+            BkfDcGetTableTypeIdStr(dc, tableTypeId));
         return;
     }
 
@@ -417,25 +414,25 @@ void BkfDcDeleteTable(BkfDc *dc, void *sliceKey, uint16_t tableTypeId)
         return;
     }
     BKF_LOG_DEBUG(BKF_LOG_HND, "dc(%#x), sliceKey(%s)/type(%u, %s)\n", BKF_MASK_ADDR(dc),
-                  BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)),
-                  tableTypeId, BkfDcGetTableTypeIdStr(dc, tableTypeId));
+        BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)), tableTypeId,
+        BkfDcGetTableTypeIdStr(dc, tableTypeId));
 
     BkfDcSlice *slice = BkfDcFindSlice(dc, sliceKey);
     if (slice == VOS_NULL) {
         BKF_LOG_ERROR(BKF_LOG_HND, "slice not exist dc(%#x), sliceKey(%s)/type(%u,  %s)\n", BKF_MASK_ADDR(dc),
-            BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)),
-            tableTypeId, BkfDcGetTableTypeIdStr(dc, tableTypeId));
+            BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)), tableTypeId,
+            BkfDcGetTableTypeIdStr(dc, tableTypeId));
         return;
     }
     BkfDcTable *table = BkfDcFindTable(dc, slice, tableTypeId);
     if (table == VOS_NULL) {
         BKF_LOG_ERROR(BKF_LOG_HND, "table not exist dc(%#x), sliceKey(%s)/type(%u,  %s)\n", BKF_MASK_ADDR(dc),
-            BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)),
-            tableTypeId, BkfDcGetTableTypeIdStr(dc, tableTypeId));
+            BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)), tableTypeId,
+            BkfDcGetTableTypeIdStr(dc, tableTypeId));
         return;
     }
     /* 直接删表之前，一定要有release相关的通知。否则上层的seqItor没有释放，table会在下面流程中释放，导致野指针 */
-    if (!table->isRelease)  {
+    if (!table->isRelease) {
         BkfDcReleaseTable(dc, sliceKey, tableTypeId);
     }
     BkfDcDelTable(dc, table);
@@ -504,8 +501,8 @@ BOOL BkfDcGetFirstTableInfo(BkfDc *dc, void *sliceKey, uint16_t *tableTypeId, BO
     return VOS_TRUE;
 }
 
-BOOL BkfDcGetNextTableInfo(BkfDc *dc, void *sliceKey, uint16_t prevTableTypeId,
-                            uint16_t *tableTypeId, BOOL *isTableReleaseOrNull)
+BOOL BkfDcGetNextTableInfo(BkfDc *dc, void *sliceKey, uint16_t prevTableTypeId, uint16_t *tableTypeId,
+    BOOL *isTableReleaseOrNull)
 {
     if ((dc == VOS_NULL) || (sliceKey == VOS_NULL) || (tableTypeId == VOS_NULL)) {
         return VOS_FALSE;
@@ -529,8 +526,7 @@ BOOL BkfDcGetNextTableInfo(BkfDc *dc, void *sliceKey, uint16_t prevTableTypeId,
 
 /* tuple */
 STATIC void BkfDcUpdateTupleDoBefore(BkfDc *dc, void *sliceKey, uint16_t tableTypeId, void *tupleKey,
-                                       void *tupleValOrNull, BkfDcTableType **tableType, BkfDcSlice **slice,
-                                       BkfDcTable **table)
+    void *tupleValOrNull, BkfDcTableType **tableType, BkfDcSlice **slice, BkfDcTable **table)
 {
     uint8_t sliceBuf[BKF_1K / 8];
     uint8_t tupleKeyBuf[BKF_1K / 8];
@@ -539,11 +535,11 @@ STATIC void BkfDcUpdateTupleDoBefore(BkfDc *dc, void *sliceKey, uint16_t tableTy
     if ((dc == VOS_NULL) || (sliceKey == VOS_NULL) || (tupleKey == VOS_NULL)) {
         return;
     }
-    BKF_LOG_DEBUG(BKF_LOG_HND, "dc(%#x), sliceKey(%s)/type(%u, %s)/tupleKey(%s)/val(%s)\n",
-                  BKF_MASK_ADDR(dc), BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)),
-                  tableTypeId, BkfDcGetTableTypeIdStr(dc, tableTypeId),
-                  BkfDcGetTupleKeyStr(dc, tableTypeId, tupleKey, tupleKeyBuf, sizeof(tupleKeyBuf)),
-                  BkfDcGetTupleValStr(dc, tableTypeId, tupleValOrNull, tupleValBuf, sizeof(tupleValBuf)));
+    BKF_LOG_DEBUG(BKF_LOG_HND, "dc(%#x), sliceKey(%s)/type(%u, %s)/tupleKey(%s)/val(%s)\n", BKF_MASK_ADDR(dc),
+        BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)), tableTypeId,
+        BkfDcGetTableTypeIdStr(dc, tableTypeId),
+        BkfDcGetTupleKeyStr(dc, tableTypeId, tupleKey, tupleKeyBuf, sizeof(tupleKeyBuf)),
+        BkfDcGetTupleValStr(dc, tableTypeId, tupleValOrNull, tupleValBuf, sizeof(tupleValBuf)));
 
     *tableType = BkfDcFindTableType(dc, tableTypeId);
     if (*tableType == VOS_NULL) {
@@ -596,9 +592,9 @@ uint32_t BkfDcUpdateTupleDoUpdate(BkfDc *dc, void *tupleValOrNull, BkfDcTable *t
 
     mayAddTuple = tuple->isAddUpd || BkfDcTupleLimitMayAddTuple(dc, table->tableTypeId);
     if (!mayAddTuple) {
-        BKF_LOG_WARN(BKF_LOG_HND, "dc(%#x), sliceKey(%s)/type(%u, %s), mayAddTuple(%u)\n",
-            BKF_MASK_ADDR(dc), BkfDcGetSliceKeyStr(dc, table->slice->key, sliceBuf, sizeof(sliceBuf)),
-            table->tableTypeId, BkfDcGetTableTypeIdStr(dc, table->tableTypeId), mayAddTuple);
+        BKF_LOG_WARN(BKF_LOG_HND, "dc(%#x), sliceKey(%s)/type(%u, %s), mayAddTuple(%u)\n", BKF_MASK_ADDR(dc),
+            BkfDcGetSliceKeyStr(dc, table->slice->key, sliceBuf, sizeof(sliceBuf)), table->tableTypeId,
+            BkfDcGetTableTypeIdStr(dc, table->tableTypeId), mayAddTuple);
         (void)BkfDcTupleLimitSysLog(dc, table->tableTypeId);
         return BKF_ERR;
     }
@@ -615,35 +611,37 @@ BkfDcTuple *BkfDcUpdateTupleDoAdd(BkfDc *dc, void *tupleKey, void *tupleValOrNul
 
     mayAddTuple = BkfDcTupleLimitMayAddTuple(dc, table->tableTypeId);
     if (!mayAddTuple) {
-        BKF_LOG_WARN(BKF_LOG_HND, "dc(%#x), sliceKey(%s)/type(%u, %s), mayAddTuple(%u)\n",
-            BKF_MASK_ADDR(dc), BkfDcGetSliceKeyStr(dc, table->slice->key, sliceBuf, sizeof(sliceBuf)),
-            table->tableTypeId, BkfDcGetTableTypeIdStr(dc, table->tableTypeId), mayAddTuple);
+        BKF_LOG_WARN(BKF_LOG_HND, "dc(%#x), sliceKey(%s)/type(%u, %s), mayAddTuple(%u)\n", BKF_MASK_ADDR(dc),
+            BkfDcGetSliceKeyStr(dc, table->slice->key, sliceBuf, sizeof(sliceBuf)), table->tableTypeId,
+            BkfDcGetTableTypeIdStr(dc, table->tableTypeId), mayAddTuple);
         (void)BkfDcTupleLimitSysLog(dc, table->tableTypeId);
         return VOS_NULL;
     }
 
     tuple = BkfDcAddTuple(dc, table, tupleKey, tupleValOrNull);
     if (tuple == VOS_NULL) {
-        BKF_LOG_ERROR(BKF_LOG_HND, "dc(%#x), sliceKey(%s)/type(%u, %s), add fail\n",
-            BKF_MASK_ADDR(dc), BkfDcGetSliceKeyStr(dc, table->slice->key, sliceBuf, sizeof(sliceBuf)),
-            table->tableTypeId, BkfDcGetTableTypeIdStr(dc, table->tableTypeId));
+        BKF_LOG_ERROR(BKF_LOG_HND, "dc(%#x), sliceKey(%s)/type(%u, %s), add fail\n", BKF_MASK_ADDR(dc),
+            BkfDcGetSliceKeyStr(dc, table->slice->key, sliceBuf, sizeof(sliceBuf)), table->tableTypeId,
+            BkfDcGetTableTypeIdStr(dc, table->tableTypeId));
         return VOS_NULL;
     }
 
     return tuple;
 }
 
-#define BKF_DC_DOBEFORE(dc) do { \
-    if ((dc)->argInit.beforeProc) { \
-        (dc)->argInit.beforeProc((dc)->argInit.cookie); \
-    } \
-} while (0)
+#define BKF_DC_DOBEFORE(dc)                                                                                            \
+    do {                                                                                                               \
+        if ((dc)->argInit.beforeProc) {                                                                                \
+            (dc)->argInit.beforeProc((dc)->argInit.cookie);                                                            \
+        }                                                                                                              \
+    } while (0)
 
-#define BKF_DC_DOAFTER(dc) do { \
-    if ((dc)->argInit.afterProc) { \
-        (dc)->argInit.afterProc((dc)->argInit.cookie); \
-    } \
-} while (0)
+#define BKF_DC_DOAFTER(dc)                                                                                             \
+    do {                                                                                                               \
+        if ((dc)->argInit.afterProc) {                                                                                 \
+            (dc)->argInit.afterProc((dc)->argInit.cookie);                                                             \
+        }                                                                                                              \
+    } while (0)
 
 uint32_t BkfDcUpdateTuple(BkfDc *dc, void *sliceKey, uint16_t tableTypeId, void *tupleKey, void *tupleValOrNull,
     BkfDcTupleInfo *infoOrNull)
@@ -663,21 +661,21 @@ uint32_t BkfDcUpdateTuple(BkfDc *dc, void *sliceKey, uint16_t tableTypeId, void 
     isInvalid = (tableType == VOS_NULL) || (slice == VOS_NULL) || (table == VOS_NULL);
     if (isInvalid) {
         BKF_LOG_ERROR(BKF_LOG_HND, "dc(%#x), sliceKey(%s)/type(%u, %s), tableType(%#x), slice(%#x), table(%#x)\n",
-            BKF_MASK_ADDR(dc), BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)),
-            tableTypeId, BkfDcGetTableTypeIdStr(dc, tableTypeId), BKF_MASK_ADDR(tableType),
-            BKF_MASK_ADDR(slice), BKF_MASK_ADDR(table));
+            BKF_MASK_ADDR(dc), BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)), tableTypeId,
+            BkfDcGetTableTypeIdStr(dc, tableTypeId), BKF_MASK_ADDR(tableType), BKF_MASK_ADDR(slice),
+            BKF_MASK_ADDR(table));
         BKF_DC_DOAFTER(dc);
         return BKF_ERR;
     }
 
-    BKF_LOG_DEBUG(BKF_LOG_HND, "dc(%#x), sliceKey(%s)/type(%u, %s)\n",
-        BKF_MASK_ADDR(dc), BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)),
-        tableTypeId, BkfDcGetTableTypeIdStr(dc, tableTypeId));
+    BKF_LOG_DEBUG(BKF_LOG_HND, "dc(%#x), sliceKey(%s)/type(%u, %s)\n", BKF_MASK_ADDR(dc),
+        BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)), tableTypeId,
+        BkfDcGetTableTypeIdStr(dc, tableTypeId));
 
     if (table->isRelease) {
-        BKF_LOG_INFO(BKF_LOG_HND, "dc(%#x), sliceKey(%s)/type(%u, %s)/isRelease(%u)\n",
-                     BKF_MASK_ADDR(dc), BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)),
-                     tableTypeId, BkfDcGetTableTypeIdStr(dc, tableTypeId), table->isRelease);
+        BKF_LOG_INFO(BKF_LOG_HND, "dc(%#x), sliceKey(%s)/type(%u, %s)/isRelease(%u)\n", BKF_MASK_ADDR(dc),
+            BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)), tableTypeId,
+            BkfDcGetTableTypeIdStr(dc, tableTypeId), table->isRelease);
         BKF_DC_DOAFTER(dc);
         return BKF_ERR;
     }
@@ -724,23 +722,23 @@ void BkfDcDeleteTuple(BkfDc *dc, void *sliceKey, uint16_t tableTypeId, void *tup
     }
 
     BKF_LOG_DEBUG(BKF_LOG_HND, "dc(%#x), sliceKey(%s)/type(%u, %s)/tupleKey(%s)\n", BKF_MASK_ADDR(dc),
-                  BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)),
-                  tableTypeId, BkfDcGetTableTypeIdStr(dc, tableTypeId),
-                  BkfDcGetTupleKeyStr(dc, tableTypeId, tupleKey, tupleKeyBuf, sizeof(tupleKeyBuf)));
+        BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)), tableTypeId,
+        BkfDcGetTableTypeIdStr(dc, tableTypeId),
+        BkfDcGetTupleKeyStr(dc, tableTypeId, tupleKey, tupleKeyBuf, sizeof(tupleKeyBuf)));
 
     BkfDcSlice *slice = BkfDcFindSlice(dc, sliceKey);
     if (slice == VOS_NULL) {
         BKF_LOG_ERROR(BKF_LOG_HND, "slice not exist, dc(%#x), sliceKey(%s)/type(%u, %s)/tupleKey(%s)\n",
-            BKF_MASK_ADDR(dc), BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)),
-            tableTypeId, BkfDcGetTableTypeIdStr(dc, tableTypeId),
+            BKF_MASK_ADDR(dc), BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)), tableTypeId,
+            BkfDcGetTableTypeIdStr(dc, tableTypeId),
             BkfDcGetTupleKeyStr(dc, tableTypeId, tupleKey, tupleKeyBuf, sizeof(tupleKeyBuf)));
         return;
     }
     BkfDcTable *table = BkfDcFindTable(dc, slice, tableTypeId);
     if (table == VOS_NULL) {
         BKF_LOG_ERROR(BKF_LOG_HND, "table not exist, dc(%#x), sliceKey(%s)/type(%u, %s)/tupleKey(%s)\n",
-            BKF_MASK_ADDR(dc), BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)),
-            tableTypeId, BkfDcGetTableTypeIdStr(dc, tableTypeId),
+            BKF_MASK_ADDR(dc), BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)), tableTypeId,
+            BkfDcGetTableTypeIdStr(dc, tableTypeId),
             BkfDcGetTupleKeyStr(dc, tableTypeId, tupleKey, tupleKeyBuf, sizeof(tupleKeyBuf)));
         return;
     }
@@ -752,8 +750,8 @@ void BkfDcDeleteTuple(BkfDc *dc, void *sliceKey, uint16_t tableTypeId, void *tup
     }
     if (tuple == VOS_NULL) {
         BKF_LOG_ERROR(BKF_LOG_HND, "tuple not exist, dc(%#x), sliceKey(%s)/type(%u, %s)/tupleKey(%s)\n",
-            BKF_MASK_ADDR(dc), BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)),
-            tableTypeId, BkfDcGetTableTypeIdStr(dc, tableTypeId),
+            BKF_MASK_ADDR(dc), BkfDcGetSliceKeyStr(dc, sliceKey, sliceBuf, sizeof(sliceBuf)), tableTypeId,
+            BkfDcGetTableTypeIdStr(dc, tableTypeId),
             BkfDcGetTupleKeyStr(dc, tableTypeId, tupleKey, tupleKeyBuf, sizeof(tupleKeyBuf)));
         BKF_DC_DOAFTER(dc);
         return;
@@ -894,7 +892,7 @@ char *BkfDcGetTupleValStr(BkfDc *dc, uint16_t tableTypeId, void *tupleVal, uint8
     }
 
     if (tableType->vTbl.tupleValGetStrOrNull != VOS_NULL) {
-        return tableType->vTbl.tupleValGetStrOrNull(tupleVal, buf, bufLen);
+        return tableType->vTbl.tupleValGetStrOrNull(tableType->vTbl.cookie, tupleVal, buf, bufLen);
     } else {
         return BKF_GET_MEM_STD_STR(tupleVal, tableType->vTbl.tupleValLen, buf, bufLen);
     }
@@ -911,10 +909,19 @@ void BkfDcEnableSpy(BkfDc *dc, void *cookie)
 
 void BkfDcSpyUpdateTuple(void *cookieOfSpy, void *sliceKey, uint16_t tableTypeId, void *tupleKey, void *tupleValOrNull)
 {
+    (void)cookieOfSpy;
+    (void)sliceKey;
+    (void)tableTypeId;
+    (void)tupleKey;
+    (void)tupleValOrNull;
 }
 
 void BkfDcSpyDeleteTuple(void *cookieOfSpy, void *sliceKey, uint16_t tableTypeId, void *tupleKey)
 {
+    (void)cookieOfSpy;
+    (void)sliceKey;
+    (void)tableTypeId;
+    (void)tupleKey;
 }
 
 #ifdef __cplusplus
@@ -922,4 +929,3 @@ void BkfDcSpyDeleteTuple(void *cookieOfSpy, void *sliceKey, uint16_t tableTypeId
 }
 #endif
 #endif
-

@@ -19,7 +19,7 @@
 extern "C" {
 #endif
 
-#define ACL_PKG_VERSION_MAX_SIZE       128
+#define ACL_PKG_VERSION_MAX_SIZE 128
 #define ACL_PKG_VERSION_PARTS_MAX_SIZE 64
 
 /**
@@ -32,7 +32,7 @@ extern "C" {
  * @retval ACL_SUCCESS The function is successfully executed.
  * @retval OtherValues Failure
  */
-ACL_FUNC_VISIBILITY aclError aclInit(const char *configPath);
+ACL_FUNC_VISIBILITY aclError aclInit(const char* configPath);
 
 /**
  * @ingroup AscendCL
@@ -56,11 +56,12 @@ ACL_FUNC_VISIBILITY aclError aclFinalize();
  * To get the current reference count, pass a valid pointer to refCount.
  * To ignore the reference count, pass nullptr instead.
  *
- * @param refCount [IN/OUT] Pointer to receive current reference count after calling aclFinalizeReference; can be nullptr.
+ * @param refCount [IN/OUT] Pointer to receive current reference count after calling aclFinalizeReference; can be
+ * nullptr.
  * @retval ACL_SUCCESS The function is successfully executed.
  * @retval OtherValues Failure
  */
-ACL_FUNC_VISIBILITY aclError aclFinalizeReference(uint64_t *refCount);
+ACL_FUNC_VISIBILITY aclError aclFinalizeReference(uint64_t* refCount);
 
 /**
  * @ingroup AscendCL
@@ -68,8 +69,8 @@ ACL_FUNC_VISIBILITY aclError aclFinalizeReference(uint64_t *refCount);
  *
  * @retval null for failed
  * @retval OtherValues success
-*/
-ACL_FUNC_VISIBILITY const char *aclGetRecentErrMsg();
+ */
+ACL_FUNC_VISIBILITY const char* aclGetRecentErrMsg();
 
 /**
  * @ingroup AscendCL
@@ -108,7 +109,7 @@ typedef struct aclCANNPackageVersion {
  * @retval ACL_SUCCESS The function is successfully executed.
  * @retval ACL_ERROR_INVALID_FILE Failure
  */
-ACL_FUNC_VISIBILITY aclError aclsysGetCANNVersion(aclCANNPackageName name, aclCANNPackageVersion *version);
+ACL_FUNC_VISIBILITY aclError aclsysGetCANNVersion(aclCANNPackageName name, aclCANNPackageVersion* version);
 
 ACL_FUNC_VISIBILITY aclError aclsysGetVersionStr(char* pkgNname, char* versionStr);
 

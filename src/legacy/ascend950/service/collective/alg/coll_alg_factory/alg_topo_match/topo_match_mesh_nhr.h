@@ -24,26 +24,23 @@ namespace Hccl {
 class TopoMatchMeshNHR : public TopoMatchBase {
 public:
     explicit TopoMatchMeshNHR(
-        const RankId vRank, const u32 rankSize, const RankGraph *rankGraph, const DevType devType);
+        const RankId vRank, const u32 rankSize, const RankGraph* rankGraph, const DevType devType);
     ~TopoMatchMeshNHR() override;
 
-    std::string Describe() const override
-    {
-        return "Topo Match for combined Algorithm: level 0 Mesh, level 1 NHR.";
-    }
+    std::string Describe() const override { return "Topo Match for combined Algorithm: level 0 Mesh, level 1 NHR."; }
     using TopoMatchBase::MatchTopo;
-    HcclResult MatchTopo(std::vector<std::vector<std::vector<RankId>>> &vTopo,
-        std::vector<std::vector<RankId>> &virtRanks, std::vector<std::map<RankId, u32>> &virtRankMap) override;
+    HcclResult MatchTopo(
+        std::vector<std::vector<std::vector<RankId>>>& vTopo, std::vector<std::vector<RankId>>& virtRanks,
+        std::vector<std::map<RankId, u32>>& virtRankMap) override;
 
 private:
     HcclResult GenerateLevel0(
-        const std::set<RankId> &rankSet, u32 levelSize, RankId rankId,
-                              std::vector<std::vector<std::vector<RankId>>> &vTopo,
-                              std::vector<std::vector<RankId>> &virtRanks);
-    std::vector<std::vector<RankId>> rankOnSameBoardVector_;  // ranks vector with same boardIds in rack
-    std::vector<std::vector<RankId>> rankOnSameSlotVector_;   // ranks vector with same slotIds in rack
-    std::vector<u32> numRanksPerBoard_;                       // ranks num with same boardIds in rack
+        const std::set<RankId>& rankSet, u32 levelSize, RankId rankId,
+        std::vector<std::vector<std::vector<RankId>>>& vTopo, std::vector<std::vector<RankId>>& virtRanks);
+    std::vector<std::vector<RankId>> rankOnSameBoardVector_; // ranks vector with same boardIds in rack
+    std::vector<std::vector<RankId>> rankOnSameSlotVector_;  // ranks vector with same slotIds in rack
+    std::vector<u32> numRanksPerBoard_;                      // ranks num with same boardIds in rack
 };
-}  // namespace Hccl
+} // namespace Hccl
 
-#endif  // !HCCLV2_TOPO_MATCH_MESH_NHR
+#endif // !HCCLV2_TOPO_MATCH_MESH_NHR

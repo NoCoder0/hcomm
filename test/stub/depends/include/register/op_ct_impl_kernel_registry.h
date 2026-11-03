@@ -18,22 +18,21 @@
 
 namespace gert {
 struct OpCtImplKernelRegistry {
-  using OpType = ge::AscendString;
-  using OpCalcParamKernelFunc = UINT32 (*)(ExeResGenerationContext *context);
-  using OpGenTaskKernelFunc = UINT32 (*)(const ExeResGenerationContext *context,
-                                         std::vector<std::vector<uint8_t>> &tasks);
-  using OP_CHECK_FUNC_V2 = ge::graphStatus (*)(const OpCheckContext *context,
-                                               ge::AscendString &result);
-  struct OpCtImplFunctions {
-    uint32_t st_size = sizeof(OpCtImplFunctions);
-    uint32_t version = OP_CT_IMPL_MAIM_VERSION;
-    OpCalcParamKernelFunc calc_op_param = nullptr;
-    OpGenTaskKernelFunc gen_task = nullptr;
-    OP_CHECK_FUNC_V2 check_support = nullptr;
-    OP_CHECK_FUNC_V2 op_select_format = nullptr;
-    OP_CHECK_FUNC_V2 get_op_support_info = nullptr;
-    OP_CHECK_FUNC_V2 get_op_specific_info = nullptr;
-  };
+    using OpType = ge::AscendString;
+    using OpCalcParamKernelFunc = UINT32 (*)(ExeResGenerationContext* context);
+    using OpGenTaskKernelFunc
+        = UINT32 (*)(const ExeResGenerationContext* context, std::vector<std::vector<uint8_t>>& tasks);
+    using OP_CHECK_FUNC_V2 = ge::graphStatus (*)(const OpCheckContext* context, ge::AscendString& result);
+    struct OpCtImplFunctions {
+        uint32_t st_size = sizeof(OpCtImplFunctions);
+        uint32_t version = OP_CT_IMPL_MAIM_VERSION;
+        OpCalcParamKernelFunc calc_op_param = nullptr;
+        OpGenTaskKernelFunc gen_task = nullptr;
+        OP_CHECK_FUNC_V2 check_support = nullptr;
+        OP_CHECK_FUNC_V2 op_select_format = nullptr;
+        OP_CHECK_FUNC_V2 get_op_support_info = nullptr;
+        OP_CHECK_FUNC_V2 get_op_specific_info = nullptr;
+    };
 };
-}  // namespace gert
+} // namespace gert
 #endif

@@ -7,6 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #ifndef HCCLV2_CNT_1TON_NOTIFY_LITE_H
 #define HCCLV2_CNT_1TON_NOTIFY_LITE_H
 
@@ -17,7 +18,7 @@
 namespace Hccl {
 class Cnt1tonNotifyLite {
 public:
-    explicit Cnt1tonNotifyLite(std::vector<char> &uniqueId);
+    explicit Cnt1tonNotifyLite(std::vector<char>& uniqueId);
 
     u32 GetId() const;
     u32 GetDevPhyId() const;
@@ -28,6 +29,6 @@ private:
     u32 notifyId;
     u32 devPhyId;
 };
-} // namesapce Hccl
+} // namespace Hccl
 
 #endif // HCCLV2_CNT_1TON_NOTIFY_LITE_H

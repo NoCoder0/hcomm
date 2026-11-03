@@ -11,6 +11,7 @@
 #include "gtest/gtest.h"
 #include <mockcpp/mokc.h>
 #include <mockcpp/mockcpp.hpp>
+#include "test_mock_setup.h"
 #define private public
 #define protected public
 #include "host_device_sync_notify_manager.h"
@@ -29,25 +30,12 @@ protected:
         u32 fakeNotifyId = 1;
         u64 fakeOffset = 200;
         char fakeName[65] = "testRtsNotify";
-        MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-        MOCKER(HrtNotifyCreate).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
-        MOCKER(HrtNotifyCreateWithFlag).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
-        MOCKER(HrtGetNotifyID).stubs().will(returnValue(fakeNotifyId));
-        MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(fakeDevPhyId)));
-        MOCKER(HrtIpcSetNotifyName).stubs().with(mockcpp::any(), outBoundP(fakeName, sizeof(fakeName)), mockcpp::any());
-        MOCKER(HrtNotifyGetOffset).stubs().will(returnValue(fakeOffset));
-        MOCKER(HrtGetDeviceType).stubs().will(returnValue(DevType(DevType::DEV_TYPE_950)));
+        SETUP_COMM_NOTIFY_MOCKS();
     }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "HostDeviceSyncNotifyManagerTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "HostDeviceSyncNotifyManagerTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in HostDeviceSyncNotifyManagerTest SetUp" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in HostDeviceSyncNotifyManagerTest SetUp" << std::endl; }
 
     virtual void TearDown()
     {

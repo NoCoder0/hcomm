@@ -16,9 +16,9 @@
 extern "C" {
 #endif // __cplusplus
 
-HcclResult HcclGetCommHandleByCtx(void *ctx, void **opHandle);
+HcclResult HcclGetCommHandleByCtx(void* ctx, void** opHandle);
 HcclResult HcclReleaseComm(void* opHandle);
-HcclResult HcclGetTaskStatus(void* opHandle, HcclTaskStatus *status);
+HcclResult HcclGetTaskStatus(void* opHandle, HcclTaskStatus* status);
 HcclResult HcclCheckFinishByStream(void* opHandle);
 HcclResult HcclPrintTaskExceptionAllComm(void* opHandle);
 HcclResult HcclLaunchCcoreWait(void* opHandle, uint64_t waitAddr, uint32_t turnNum, uint64_t turnNumAddr, bool isLast);

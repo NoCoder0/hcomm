@@ -20,17 +20,23 @@ typedef enum {
 
 ## 产品支持情况
 
-针对Ascend 950PR/Ascend 950DT，支持的通信引擎如下：
+<!-- npu="950" id1 -->
+针对Ascend 950PR&950DT系列产品，支持的通信引擎如下：
 
   - COMM_ENGINE_CPU
   - COMM_ENGINE_AICPU_TS
   - COMM_ENGINE_AIV
   - COMM_ENGINE_CCU
+<!-- end id1 -->
     
-针对Atlas A3 训练系列产品/Atlas A3 推理系列产品，支持的通信引擎如下：
+<!-- npu="A3" id2 -->
+针对Atlas A3系列产品，支持的通信引擎如下：
 
   - COMM_ENGINE_AICPU_TS
+<!-- end id2 -->
 
-针对Atlas A2 训练系列产品/Atlas A2 推理系列产品，支持的通信引擎如下：
+<!-- npu="910b" id3 -->
+针对Atlas A2系列产品，支持的通信引擎如下：
 
   - COMM_ENGINE_CPU_TS
+<!-- end id3 -->

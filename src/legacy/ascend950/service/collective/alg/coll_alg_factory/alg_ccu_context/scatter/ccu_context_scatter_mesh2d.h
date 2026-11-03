@@ -22,12 +22,13 @@ namespace Hccl {
 
 class CcuContextScatterMesh2D : public CcuContextAlgBase {
 public:
-    CcuContextScatterMesh2D(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                              const CcuTransportGroup &group);
+    CcuContextScatterMesh2D(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
     ~CcuContextScatterMesh2D() override {}
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
+
 private:
     uint64_t root_{0};
     std::vector<uint64_t> dimSize_;
@@ -58,14 +59,15 @@ private:
     void PreSync();
     void Sync(uint32_t ckeId);
     void AxisSync(uint32_t signalIndex);
-    void CcuWrite1DMesh(std::vector<CcuRep::Memory> &src, std::vector<CcuRep::Memory> &dst, CcuRep::Variable &size);
+    void CcuWrite1DMesh(std::vector<CcuRep::Memory>& src, std::vector<CcuRep::Memory>& dst, CcuRep::Variable& size);
     uint64_t CoordinateToGlobalId(uint32_t x, uint32_t y);
-    void CcuMultiply(CcuRep::Memory &a, CcuRep::Variable &b, uint64_t i) const;
+    void CcuMultiply(CcuRep::Memory& a, CcuRep::Variable& b, uint64_t i) const;
 
-    void PrepareAndTransferRootRelayInfo(std::vector<CcuRep::Memory> &relaySrc, std::vector<CcuRep::Memory> &relayDst);
-    void RelaySendFor1D(std::vector<CcuRep::Memory> &relaySrc, std::vector<CcuRep::Memory> &relayDst, uint64_t j);
-    void PrepareAndTransferRootDirectInfo(std::vector<CcuRep::Memory> &directSrc, std::vector<CcuRep::Memory> &directDst);
-    void RelaySend(std::vector<CcuRep::Memory> &relaySrc, std::vector<CcuRep::Memory> &relayDst);
+    void PrepareAndTransferRootRelayInfo(std::vector<CcuRep::Memory>& relaySrc, std::vector<CcuRep::Memory>& relayDst);
+    void RelaySendFor1D(std::vector<CcuRep::Memory>& relaySrc, std::vector<CcuRep::Memory>& relayDst, uint64_t j);
+    void
+    PrepareAndTransferRootDirectInfo(std::vector<CcuRep::Memory>& directSrc, std::vector<CcuRep::Memory>& directDst);
+    void RelaySend(std::vector<CcuRep::Memory>& relaySrc, std::vector<CcuRep::Memory>& relayDst);
     void LocalTransfer();
 
     void RootSendAlgorithm();

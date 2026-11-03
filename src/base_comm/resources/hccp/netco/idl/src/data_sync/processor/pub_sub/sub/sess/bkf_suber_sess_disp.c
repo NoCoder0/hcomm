@@ -36,8 +36,8 @@ STATIC uint32_t BkfSuberSessDispSaveCtx(BkfSuberSessDispSessCtx *curCtx, BkfSube
 #endif
 
 #if BKF_BLOCK("公有函数定义")
-uint32_t BkfSuberSessDispOneSessFsm(BkfSuberSessMng *sessMng, BkfDisp *disp,
-    BkfDispTempCtx *lastTempCtxOrNull, BkfDispTempCtx *curTempCtx)
+uint32_t BkfSuberSessDispOneSessFsm(BkfSuberSessMng *sessMng, BkfDisp *disp, BkfDispTempCtx *lastTempCtxOrNull,
+    BkfDispTempCtx *curTempCtx)
 {
     BkfSuberSessDispSessCtx *curCtx;
     BkfSuberSess *sess = BkfSuberSessDispGetSesByCtx(sessMng, lastTempCtxOrNull, curTempCtx, &curCtx);
@@ -57,8 +57,8 @@ uint32_t BkfSuberSessDispOneSessFsm(BkfSuberSessMng *sessMng, BkfDisp *disp,
     }
 }
 
-uint32_t BkfSuberSessDispOneSessSummary(BkfSuberSessMng *sessMng, BkfDisp *disp,
-    BkfDispTempCtx *lastTempCtxOrNull, BkfDispTempCtx *curTempCtx)
+uint32_t BkfSuberSessDispOneSessSummary(BkfSuberSessMng *sessMng, BkfDisp *disp, BkfDispTempCtx *lastTempCtxOrNull,
+    BkfDispTempCtx *curTempCtx)
 {
     BkfSuberSessDispSessCtx *curCtx;
     BkfSuberSess *sess = BkfSuberSessDispGetSesByCtx(sessMng, lastTempCtxOrNull, curTempCtx, &curCtx);
@@ -66,11 +66,13 @@ uint32_t BkfSuberSessDispOneSessSummary(BkfSuberSessMng *sessMng, BkfDisp *disp,
         uint8_t dispSliceStr[BKF_SUBER_DISP_SLICELEN] = {0};
         curCtx->sessCnt++;
         BKF_DISP_PRINTF(disp, "==========\n");
-        BKF_DISP_PRINTF(disp, "++sess[%d], slice(%s)/tableTypeId(%u), state(%u, %s), "
-                "seq(%"VOS_PRIu64")/verify(%u)\n", curCtx->sessCnt,
-                BkfSuberGetSliceKeyStr(sessMng->env, sess->key.sliceKey, dispSliceStr, sizeof(dispSliceStr)),
-                sess->key.tableTypeId, BKF_FSM_GET_STATE(&sess->fsm), BkfFsmGetStateStr(&sess->fsm),
-                sess->seq, sess->isVerify);
+        BKF_DISP_PRINTF(disp,
+            "++sess[%d], slice(%s)/tableTypeId(%u), state(%u, %s), "
+            "seq(%" VOS_PRIu64 ")/verify(%u)\n",
+            curCtx->sessCnt,
+            BkfSuberGetSliceKeyStr(sessMng->env, sess->key.sliceKey, dispSliceStr, sizeof(dispSliceStr)),
+            sess->key.tableTypeId, BKF_FSM_GET_STATE(&sess->fsm), BkfFsmGetStateStr(&sess->fsm), sess->seq,
+            sess->isVerify);
         return BkfSuberSessDispSaveCtx(curCtx, sess);
     } else {
         BKF_DISP_PRINTF(disp, "Sess Cnt: %u\n", curCtx->sessCnt);
@@ -81,8 +83,8 @@ uint32_t BkfSuberSessDispOneSessSummary(BkfSuberSessMng *sessMng, BkfDisp *disp,
 #endif
 
 #if BKF_BLOCK("私有函数定义")
-STATIC BkfSuberSess *BkfSuberSessDispGetSesByCtx(BkfSuberSessMng *sessMng,
-    BkfDispTempCtx *lastTempCtxOrNull, BkfDispTempCtx *curTempCtx, BkfSuberSessDispSessCtx **curCtx)
+STATIC BkfSuberSess *BkfSuberSessDispGetSesByCtx(BkfSuberSessMng *sessMng, BkfDispTempCtx *lastTempCtxOrNull,
+    BkfDispTempCtx *curTempCtx, BkfSuberSessDispSessCtx **curCtx)
 {
     BkfSuberSessDispSessCtx *lastCtx = BKF_DISP_TMEP_CTX_2X(lastTempCtxOrNull, BkfSuberSessDispSessCtx);
     *curCtx = BKF_DISP_TMEP_CTX_2X(curTempCtx, BkfSuberSessDispSessCtx);
@@ -108,11 +110,12 @@ STATIC uint32_t BkfSuberSessDispSaveCtx(BkfSuberSessDispSessCtx *curCtx, BkfSube
 
 uint32_t BkfSuberSessDispBatchTimeoutTest(BkfSuberSessMng *sessMng, BkfDisp *disp)
 {
+    (void)disp;
     BkfSuberSess *sess = VOS_NULL;
     void *itor = VOS_NULL;
     uint32_t testCnt = 0;
     for (sess = BkfSuberSessDataGetFirst(sessMng, &itor); sess != VOS_NULL;
-        sess = BkfSuberSessDataGetNext(sessMng, &itor)) {
+         sess = BkfSuberSessDataGetNext(sessMng, &itor)) {
         BkfSuberSessNtfyAppBatchTimeout(sess);
         testCnt++;
     }
@@ -121,12 +124,13 @@ uint32_t BkfSuberSessDispBatchTimeoutTest(BkfSuberSessMng *sessMng, BkfDisp *dis
 
 uint32_t BkfSuberSessDispCloseBatchTimeout(BkfSuberSessMng *sessMng, BkfDisp *disp)
 {
+    (void)disp;
     BkfSuberSess *sess = VOS_NULL;
     void *itor = VOS_NULL;
     sessMng->batchTimeoutChkFlag = VOS_TRUE;
     uint32_t closeCnt = 0;
     for (sess = BkfSuberSessDataGetFirst(sessMng, &itor); sess != VOS_NULL;
-        sess = BkfSuberSessDataGetNext(sessMng, &itor)) {
+         sess = BkfSuberSessDataGetNext(sessMng, &itor)) {
         BkfSuberSessBatchChkTmrStop(sess);
         closeCnt++;
     }

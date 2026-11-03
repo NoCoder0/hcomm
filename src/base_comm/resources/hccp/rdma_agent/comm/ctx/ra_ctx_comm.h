@@ -17,8 +17,7 @@
 
 int RaCtxPrepareLmemRegister(struct MrRegInfoT *lmemInfo, struct MemRegAttrT *memAttr);
 
-void RaCtxGetLmemInfo(struct MemRegInfoT *memInfo, struct MrRegInfoT *lmemInfo,
-    struct RaLmemHandle *lmemHandle);
+void RaCtxGetLmemInfo(struct MemRegInfoT *memInfo, struct MrRegInfoT *lmemInfo, struct RaLmemHandle *lmemHandle);
 
 void RaCtxPrepareRmemImport(struct MrImportInfoT *rmemInfo, struct MemImportAttrT *memAttr);
 
@@ -28,8 +27,8 @@ void RaCtxGetCqCreateInfo(struct CtxCqInfo *cqInfo, struct CqInfoT *info);
 
 int RaCtxPrepareQpCreate(struct QpCreateAttr *qpAttr, struct CtxQpAttr *ctxQpAttr);
 
-void RaCtxGetQpCreateInfo(struct RaCtxHandle *ctxHandle, struct QpCreateAttr *qpAttr,
-    struct QpCreateInfo *qpInfo, struct RaCtxQpHandle *qpHandle);
+void RaCtxGetQpCreateInfo(struct RaCtxHandle *ctxHandle, struct QpCreateAttr *qpAttr, struct QpCreateInfo *qpInfo,
+    struct RaCtxQpHandle *qpHandle);
 
 void RaCtxPrepareQpImport(struct QpImportInfoT *qpInfo, struct RaRsJettyImportAttr *importAttr);
 

@@ -18,8 +18,8 @@
 #include "communicator_impl.h"
 #include "phy_topo_builder.h"
 #include "detour_service.h"
-#include "base_config.h"
-#include "env_config.h"
+#include "base_config_legacy.h"
+#include "env_config_v2.h"
 #include <iostream>
 #include <unistd.h>
 #include "hccl_types_in.h"
@@ -33,23 +33,17 @@ using namespace Hccl;
 
 class RankGraphBuilderTest : public testing::Test {
 protected:
-    static void SetUpTestCase() {
-        std::cout << "RankGraphBuilderTest SetUP" << std::endl;
-    }
- 
-    static void TearDownTestCase() {
-        std::cout << "RankGraphBuilderTest TearDown" << std::endl;
-    }
- 
-    virtual void SetUp() {
-        std::cout << "A Test case in RankGraphBuilderTest SetUP" << std::endl;
-    }
- 
-    virtual void TearDown() {
+    static void SetUpTestCase() { std::cout << "RankGraphBuilderTest SetUP" << std::endl; }
+
+    static void TearDownTestCase() { std::cout << "RankGraphBuilderTest TearDown" << std::endl; }
+
+    virtual void SetUp() { std::cout << "A Test case in RankGraphBuilderTest SetUP" << std::endl; }
+
+    virtual void TearDown()
+    {
         GlobalMockObject::verify();
         std::cout << "A Test case in RankGraphBuilderTest TearDown" << std::endl;
     }
-    
 };
 
 TEST_F(RankGraphBuilderTest, st_Build_When_Normal_Expect_Success)
@@ -68,11 +62,17 @@ TEST_F(RankGraphBuilderTest, st_Build_When_Normal_Expect_Success)
 TEST_F(RankGraphBuilderTest, st_BuildRankGraph_When_Normal_Expect_Success)
 {
     // when
-    MOCKER_CPP(&RankGraphBuilder::BuildFromRankTable).stubs().will(ignoreReturnValue());
-    MOCKER_CPP(&RankGraph::InitInnerRanks).stubs().will(ignoreReturnValue());
-    MOCKER_CPP(&RankGraphBuilder::BuildPeer2PeerLinks).stubs().will(ignoreReturnValue());
-    MOCKER_CPP(&DetourService::InsertDetourLinks).stubs().with(mockcpp::any()).will(ignoreReturnValue());
-    MOCKER_CPP(&RankGraphBuilder::UpdateTopoInstForMyRankOnly).stubs().with(mockcpp::any()).will(ignoreReturnValue());
+    MOCKER_CPP(&RankGraphBuilder::BuildFromRankTable).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&RankGraph::InitInnerRanks).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&RankGraphBuilder::BuildPeer2PeerLinks).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&DetourService::InsertDetourLinks)
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HcclResult::HCCL_SUCCESS));
+    MOCKER_CPP(&RankGraphBuilder::UpdateTopoInstForMyRankOnly)
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
     // then
     RankGraphBuilder rankGraphBuilder;
@@ -80,18 +80,21 @@ TEST_F(RankGraphBuilderTest, st_BuildRankGraph_When_Normal_Expect_Success)
     tmpRankTable.rankCount = 3;
     rankGraphBuilder.rankTable_ = make_unique<Hccl::RankTableInfo>(tmpRankTable);
     rankGraphBuilder.myRank_ = 0;
-    EXPECT_NO_THROW(rankGraphBuilder.BuildRankGraph());
+    EXPECT_EQ(rankGraphBuilder.BuildRankGraph(), HcclResult::HCCL_SUCCESS);
 }
 
 TEST_F(RankGraphBuilderTest, st_BuildFromRankTable_When_Normal_Expect_Success)
 {
     // 校验BuildFromRankTable的Add(RankId, Peer)
     // when
-    MOCKER_CPP(&PhyTopoBuilder::Build).stubs().with(mockcpp::any()).will(ignoreReturnValue());
-    MOCKER_CPP(&RankGraph::InitInnerRanks).stubs().will(ignoreReturnValue());
-    MOCKER_CPP(&DetourService::InsertDetourLinks).stubs().with(mockcpp::any()).will(ignoreReturnValue());
-    MOCKER_CPP(&RankGraphBuilder::BuildPeer2PeerLinks).stubs().will(ignoreReturnValue());
-    MOCKER_CPP(&RankGraphBuilder::AddFabricInfo).stubs().will(ignoreReturnValue());
+    MOCKER_CPP(&PhyTopoBuilder::Build).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&RankGraph::InitInnerRanks).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&DetourService::InsertDetourLinks)
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HcclResult::HCCL_SUCCESS));
+    MOCKER_CPP(&RankGraphBuilder::BuildPeer2PeerLinks).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&RankGraphBuilder::AddFabricInfo).stubs().will(returnValue(HCCL_SUCCESS));
     // then
     RankGraphBuilder rankGraphBuilder;
     std::string topoPath = "llt/ace/comop/hccl/orion/st/otherFiles/rank_graph/topo.json";
@@ -116,8 +119,8 @@ TEST_F(RankGraphBuilderTest, st_Build_When_4pRankTable_Expect_Success)
     EXPECT_NE(nullptr, rankGraph);
     std::vector<std::string> netIds = {"az0-rack0", "az0", "all"};
     for (s32 rankId = 0; rankId < 3; rankId++) {
-                for (u32 netLayer = 0; netLayer < 3; netLayer++) {
-            const NetInstance *fabGroup = rankGraph->GetNetInstanceByRankId(netLayer, rankId);
+        for (u32 netLayer = 0; netLayer < 3; netLayer++) {
+            const NetInstance* fabGroup = rankGraph->GetNetInstanceByRankId(netLayer, rankId);
             EXPECT_EQ(netIds[netLayer], fabGroup->GetNetInstId());
 
             EXPECT_EQ(true, fabGroup->HasNode(NetInstance::Peer(rankId, 0, 0, 0).GetLocalId()));

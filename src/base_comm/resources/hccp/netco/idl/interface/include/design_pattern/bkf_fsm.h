@@ -25,13 +25,13 @@ extern "C" {
 #pragma pack(4)
 /* common */
 /**
-* @brief fsm模板。
-*/
+ * @brief fsm模板。
+ */
 typedef struct tagBkfFsmTmpl BkfFsmTmpl;
 
 /**
-* @brief fsm统计。
-*/
+ * @brief fsm统计。
+ */
 typedef struct tagBkfFsmStatInfo BkfFsmStatInfo;
 
 /**
@@ -48,8 +48,8 @@ typedef struct tagBkfFsm {
 } BkfFsm;
 
 /**
-* @brief state: [0, 0xff)
-*/
+ * @brief state: [0, 0xff)
+ */
 #define BKF_FSM_STATE_INVALID ((uint8_t)0xff)
 
 /* tmpl init */
@@ -82,26 +82,26 @@ typedef struct tagBkfFsmProcItem {
  * @param[in] *buf 分发参数,信息缓冲区
  * @param[in] bufLen 分发参数,缓冲区长度
  * @return 诊断信息字串
-*/
+ */
 typedef char *(*F_BKF_GET_APP_DATA_STR_BY_FSM_NODE)(BkfFsm *fsm, uint8_t *buf, int32_t bufLen);
 
 /**
  * @brief 状态机模板初始化参数
  */
 typedef struct tagBkfFsmTmplInitArg {
-    char *name; /**< 库名称 */
-    BOOL dbgOn; /**< 诊断开关 */
+    char *name;        /**< 库名称 */
+    BOOL dbgOn;        /**< 诊断开关 */
     BkfMemMng *memMng; /**< 内存库句柄,见bkf_mem.h,同一app内可复用 */
-    BkfDisp *disp; /**< 诊断显示库句柄,见bkf_disp.h,同一app内可复用 */
-    BkfLog *log; /**< log库句柄,见bkf_log.h,同一app内可复用 */
+    BkfDisp *disp;     /**< 诊断显示库句柄,见bkf_disp.h,同一app内可复用 */
+    BkfLog *log;       /**< log库句柄,见bkf_log.h,同一app内可复用 */
 
-    uint8_t stateCnt; /**< 状态数量 */
+    uint8_t stateCnt;  /**< 状态数量 */
     uint8_t stateInit; /**< 初始状态 */
-    uint8_t evtCnt; /**< 事件数量 */
+    uint8_t evtCnt;    /**< 事件数量 */
     uint8_t pad1[1];
-    const char **stateStrTbl; /**< 状态字串表 */
-    const char **evtStrTbl; /**< 事件字串表 */
-    const BkfFsmProcItem *stateEvtProcItemMtrx; /**< 状态事件分发表 */
+    const char **stateStrTbl;                               /**< 状态字串表 */
+    const char **evtStrTbl;                                 /**< 事件字串表 */
+    const BkfFsmProcItem *stateEvtProcItemMtrx;             /**< 状态事件分发表 */
     F_BKF_GET_APP_DATA_STR_BY_FSM_NODE getAppDataStrOrNull; /**< 诊断信息获取接口 */
     uint8_t rsv[0x10];
 } BkfFsmTmplInitArg;
@@ -250,7 +250,7 @@ char *BkfFsmGetStr(BkfFsm *fsm, uint8_t *buf, int32_t bufLen);
 /**
  * @brief 状态机事件派发宏封装。@see BkfFsmDispatch
  */
-#define BKF_FSM_DISPATCH(fsm, evt, dispatchParam1, dispatchParam2, dispatchParam3) \
+#define BKF_FSM_DISPATCH(fsm, evt, dispatchParam1, dispatchParam2, dispatchParam3)                                     \
     BkfFsmDispatch((fsm), (evt), (dispatchParam1), (dispatchParam2), (dispatchParam3))
 
 /**
@@ -272,4 +272,3 @@ char *BkfFsmGetStr(BkfFsm *fsm, uint8_t *buf, int32_t bufLen);
 #endif
 
 #endif
-

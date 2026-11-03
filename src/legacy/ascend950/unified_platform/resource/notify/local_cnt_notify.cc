@@ -16,18 +16,23 @@
 
 namespace Hccl {
 
-LocalCntNotify::LocalCntNotify(RdmaHandle rdmaHandle, RtsCntNotify* notify) : rdmaHandle(rdmaHandle), notify(notify),
-    tokenValue(GetUbToken()), addr(notify->GetAddr()), size(notify->GetSize())
+LocalCntNotify::LocalCntNotify(RdmaHandle rdmaHandle, RtsCntNotify* notify)
+    : rdmaHandle(rdmaHandle),
+      notify(notify),
+      tokenValue(GetUbToken()),
+      addr(notify->GetAddr()),
+      size(notify->GetSize())
 {
-    auto tokenIdInfoPair = RdmaHandleManager::GetInstance().GetTokenIdInfo(rdmaHandle);
-    TokenIdHandle tokenIdHandle = tokenIdInfoPair.first;
-    tokenId = tokenIdInfoPair.second;
-    HCCL_INFO("[LocalCntNotify] tokenIdHandle=0x[%llx].", tokenIdHandle);
     std::pair<u64, u64> alignBuf = BufAlign(addr, size);
-    HrtRaUbLocMemRegParam      memRegInput(alignBuf.first, alignBuf.second, tokenValue, tokenIdHandle);
+    bufKey_ = BufferKey<uintptr_t, u64>{alignBuf.first, alignBuf.second};
+    auto tokenIdInfoPair = RdmaHandleManager::GetInstance().GetTokenIdInfo(rdmaHandle, bufKey_);
+    tokenIdHandle_ = tokenIdInfoPair.first;
+    tokenId = tokenIdInfoPair.second;
+    HCCL_INFO("[LocalCntNotify] tokenIdHandle=0x[%llx].", tokenIdHandle_);
+    HrtRaUbLocMemRegParam memRegInput(alignBuf.first, alignBuf.second, tokenValue, tokenIdHandle_);
     reqReg = HrtRaUbLocalMemReg(rdmaHandle, memRegInput);
-    keySize         = reqReg.keySize;
-    memHandle       = reqReg.handle;
+    keySize = reqReg.keySize;
+    memHandle = reqReg.handle;
     (void)memcpy_s(key, HRT_UB_MEM_KEY_MAX_LEN, reqReg.key, HRT_UB_MEM_KEY_MAX_LEN);
 }
 
@@ -41,14 +46,32 @@ std::unique_ptr<Serializable> LocalCntNotify::GetExchangeDto()
 
 std::string LocalCntNotify::Describe() const
 {
-    return StringFormat("UbLocalNotify:notify=%s, addr=0x%llx, keySize=%u, memHandle=0x%llx",
-                        notify->Describe().c_str(), addr, keySize, memHandle);
+    return StringFormat(
+        "UbLocalNotify:notify=%s, addr=0x%llx, keySize=%u, memHandle=0x%llx", notify->Describe().c_str(), addr, keySize,
+        memHandle);
 }
 
 LocalCntNotify::~LocalCntNotify()
 {
+    const bool ctxValid = rdmaHandle != nullptr && RdmaHandleManager::GetInstance().IsHandleValid(rdmaHandle);
+
     if (rdmaHandle && memHandle != 0) {
-        DECTOR_TRY_CATCH("LocalCntNotify", HrtRaUbLocalMemUnreg(rdmaHandle, memHandle));
+        if (!ctxValid) {
+            HCCL_WARNING(
+                "[LocalCntNotify][%s] skip HrtRaUbLocalMemUnreg, "
+                "rdmaHandle=%p invalid (DeInit/DestroyAll done), memHandle=0x%llx",
+                __func__, rdmaHandle, static_cast<unsigned long long>(memHandle));
+        } else {
+            DECTOR_TRY_CATCH("LocalCntNotify", HrtRaUbLocalMemUnreg(rdmaHandle, memHandle));
+        }
+        memHandle = 0;
     }
+
+    if (ctxValid) {
+        RdmaHandleManager::GetInstance().PutTokenIdInfo(rdmaHandle, bufKey_, tokenIdHandle_);
+    } else if (rdmaHandle != nullptr) {
+        HCCL_WARNING("[LocalCntNotify][%s] skip PutTokenIdInfo, rdmaHandle=%p invalid", __func__, rdmaHandle);
+    }
+    tokenIdHandle_ = 0; // 防御性置零
 }
 } // namespace Hccl

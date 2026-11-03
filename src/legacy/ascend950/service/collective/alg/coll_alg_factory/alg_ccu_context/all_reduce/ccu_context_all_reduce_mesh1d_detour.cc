@@ -8,8 +8,8 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
- #include "ccu_context_all_reduce_mesh1d_detour.h"
- #include "ccu_instruction_all_reduce_mesh1d_detour.h"
+#include "ccu_context_all_reduce_mesh1d_detour.h"
+#include "ccu_instruction_all_reduce_mesh1d_detour.h"
 
 namespace Hccl {
 
@@ -21,12 +21,11 @@ constexpr int CKE_IDX_1 = 1;
 constexpr int CKE_IDX_2 = 2;
 constexpr int CKE_IDX_3 = 3;
 
-CcuContextAllReduceMeshDetour1D::CcuContextAllReduceMeshDetour1D(const CcuCtxArg       &arg,
-                                                     const std::vector<CcuTransport *> &transports,
-                                                     const CcuTransportGroup           &group)
+CcuContextAllReduceMeshDetour1D::CcuContextAllReduceMeshDetour1D(
+    const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group)
     : CcuContextAlgBase(arg, transports, group)
 {
-    const CcuCtxArgAllReduceMeshDetour1D *ctxArg = dynamic_cast<const CcuCtxArgAllReduceMeshDetour1D *>(&arg);
+    const CcuCtxArgAllReduceMeshDetour1D* ctxArg = dynamic_cast<const CcuCtxArgAllReduceMeshDetour1D*>(&arg);
     if (ctxArg == nullptr) {
         THROW<NullPtrException>(StringFormat("CcuContextAllReduceMeshDetour1D::ctxArg ptr is null"));
     }
@@ -36,19 +35,22 @@ CcuContextAllReduceMeshDetour1D::CcuContextAllReduceMeshDetour1D(const CcuCtxArg
     outputDataType_ = ctxArg->op_.outputDataType;
     if (outputDataType_ == DataType::INVALID) {
         outputDataType_ = dataType_;
-        HCCL_INFO("[CcuContextAllReduceMeshDetour1D] outputDataType is [INVALID], set outputDataType to[%s]",
+        HCCL_INFO(
+            "[CcuContextAllReduceMeshDetour1D] outputDataType is [INVALID], set outputDataType to[%s]",
             outputDataType_.Describe().c_str());
     }
     reduceOp_ = ctxArg->op_.reduceOp;
     singleTransportSize = ctxArg->singleTransportSize_;
     detourPathNum = ctxArg->detourPathNum_;
     pathNumPerPeer = ctxArg->pathNumPerPeer_;
-    HCCL_INFO("[CcuContextAllReduceMeshDetour1D] Init, CtxArgs are rankId_[%u], rankSize_[%u], dataType[%s], "
-        "outputDataType[%s], reduceOp[%s]", rankId_, rankSize_, dataType_.Describe().c_str(),
-        outputDataType_.Describe().c_str(), reduceOp_.Describe().c_str());
+    HCCL_INFO(
+        "[CcuContextAllReduceMeshDetour1D] Init, CtxArgs are rankId_[%u], rankSize_[%u], dataType[%s], "
+        "outputDataType[%s], reduceOp[%s]",
+        rankId_, rankSize_, dataType_.Describe().c_str(), outputDataType_.Describe().c_str(),
+        reduceOp_.Describe().c_str());
 
     HCCL_INFO("[CcuContextAllReduceMeshDetour1D] transport.size[%zu]", transports.size());
-    if (transports.size() < rankSize_ -1) {
+    if (transports.size() < rankSize_ - 1) {
         THROW<NullPtrException>(StringFormat("CcuContextAllReduceMeshDetour1D transports size is less"));
     }
     for (uint64_t i = 0; i < pathNumPerPeer; i++) {
@@ -61,19 +63,23 @@ CcuContextAllReduceMeshDetour1D::CcuContextAllReduceMeshDetour1D(const CcuCtxArg
         for (uint64_t j = 0; j < rankSize_ - 1; j++) {
             detourTransports_[i].emplace_back(transports[j]);
         }
-        HCCL_INFO("[CcuContextAllReduceMeshDetour1D] Add directTransports[%llu], size[%zu]", i, detourTransports_[i].size());
+        HCCL_INFO(
+            "[CcuContextAllReduceMeshDetour1D] Add directTransports[%llu], size[%zu]", i, detourTransports_[i].size());
     }
     for (uint64_t i = 0; i < detourPathNum; i++) {
         for (uint64_t j = 0; j < rankSize_ - 1; j++) {
             detourTransports_[i + directPathNum].emplace_back(transports[(i + 1) * (rankSize_ - 1) + j]);
-            detourTransports_[i + directPathNum].emplace_back(transports[(i + 1) * (rankSize_ - 1) + j + detourPathNum * (rankSize_ - 1)]);
-            HCCL_INFO("detourTransports_ emplace_back sendLink[%u], recvLink[%u]",
-                (i + 1) * (rankSize_ - 1) + j, (i + 1) * (rankSize_ - 1) + j + detourPathNum * (rankSize_ - 1));
+            detourTransports_[i + directPathNum].emplace_back(
+                transports[(i + 1) * (rankSize_ - 1) + j + detourPathNum * (rankSize_ - 1)]);
+            HCCL_INFO(
+                "detourTransports_ emplace_back sendLink[%u], recvLink[%u]", (i + 1) * (rankSize_ - 1) + j,
+                (i + 1) * (rankSize_ - 1) + j + detourPathNum * (rankSize_ - 1));
         }
     }
 }
 
-void CcuContextAllReduceMeshDetour1D::CreateMultiOpReduceDetour(DataType &dataType, DataType &outputDataType, ReduceOp &opType)
+void CcuContextAllReduceMeshDetour1D::CreateMultiOpReduceDetour(
+    DataType& dataType, DataType& outputDataType, ReduceOp& opType)
 {
     moConfig.loopCount = CcuRep::CCU_MS_DEFAULT_LOOP_COUNT;
     moConfig.msInterleave = pathNumPerPeer * rankSize_;
@@ -133,7 +139,8 @@ void CcuContextAllReduceMeshDetour1D::CreateMultiOpReduceDetour(DataType &dataTy
         }
 
         for (uint64_t i = 0; i < pathNumPerPeer; i++) {
-            LocalCopy(bufs[i][rankSize_ - 1], src[i * rankSize_ + rankSize_ - 1], lengths[i], sems[i], 1 << (rankSize_ - 1));
+            LocalCopy(
+                bufs[i][rankSize_ - 1], src[i * rankSize_ + rankSize_ - 1], lengths[i], sems[i], 1 << (rankSize_ - 1));
         }
         for (uint64_t i = 0; i < pathNumPerPeer; i++) {
             LocalWait(sems[i], (1 << rankSize_) - 1);
@@ -153,21 +160,24 @@ void CcuContextAllReduceMeshDetour1D::CreateMultiOpReduceDetour(DataType &dataTy
     return;
 }
 
-void CcuContextAllReduceMeshDetour1D::GroupReduceDetour(std::vector<CcuRep::Memory> &src,
-    std::vector<CcuRep::Memory> &dst, DataType &dataType, DataType &outputDataType, ReduceOp &opType)
+void CcuContextAllReduceMeshDetour1D::GroupReduceDetour(
+    std::vector<CcuRep::Memory>& src, std::vector<CcuRep::Memory>& dst, DataType& dataType, DataType& outputDataType,
+    ReduceOp& opType)
 {
     CreateMultiOpReduceDetour(dataType, outputDataType, opType);
     uint32_t interLeave = 8;
 
-    CCU_IF(iterNum_ != 0) {
+    CCU_IF(iterNum_ != 0)
+    {
         CcuRep::Variable loopParam = CreateVariable();
         CcuRep::Variable paraCfg = CreateVariable();
         CcuRep::Variable offsetCfg = CreateVariable();
 
-        loopParam = CcuRep::GetLoopParam(0, singleTransportSize * moConfig.loopCount, 0);  // 下次迭代的偏移是单次总搬运量*loopNum
-        loopParam += iterNum_;  // 加上loop的迭代次数构成完整loop参数
-        paraCfg = CcuRep::GetParallelParam(moConfig.loopCount - 1, 0, 1);  // loop固定展开到128个
-        offsetCfg = CcuRep::GetOffsetParam(singleTransportSize, interLeave, pathNumPerPeer);  // 下一个loop偏移量
+        loopParam = CcuRep::GetLoopParam(
+            0, singleTransportSize * moConfig.loopCount, 0); // 下次迭代的偏移是单次总搬运量*loopNum
+        loopParam += iterNum_;                               // 加上loop的迭代次数构成完整loop参数
+        paraCfg = CcuRep::GetParallelParam(moConfig.loopCount - 1, 0, 1); // loop固定展开到128个
+        offsetCfg = CcuRep::GetOffsetParam(singleTransportSize, interLeave, pathNumPerPeer); // 下一个loop偏移量
         auto lc = Loop("reduceDetour_loop")(src, dst, lengths_);
         LoopGroup({lc}, {loopParam}, paraCfg, offsetCfg);
     }
@@ -177,7 +187,7 @@ void CcuContextAllReduceMeshDetour1D::GroupReduceDetour(std::vector<CcuRep::Memo
 void CcuContextAllReduceMeshDetour1D::CreateMultiOpBroadcastDetour()
 {
     moConfig.loopCount = CcuRep::CCU_MS_DEFAULT_LOOP_COUNT;
-    moConfig.msInterleave = pathNumPerPeer * 1;  // Bcast为msNum*1，Reduce为msNum*rankSize_
+    moConfig.msInterleave = pathNumPerPeer * 1; // Bcast为msNum*1，Reduce为msNum*rankSize_
     if (moRes.executor.size() == 0) {
         moRes.executor = CreateBlockExecutor(moConfig.loopCount);
         moRes.maskSignal = CreateBlockMaskSignal(moConfig.loopCount);
@@ -239,21 +249,22 @@ void CcuContextAllReduceMeshDetour1D::CreateMultiOpBroadcastDetour()
     return;
 }
 
-void CcuContextAllReduceMeshDetour1D::GroupBroadcastDetour(std::vector<CcuRep::Variable> &lengths, std::vector<CcuRep::Memory> &src,
-    std::vector<CcuRep::Memory> &dst)
+void CcuContextAllReduceMeshDetour1D::GroupBroadcastDetour(
+    std::vector<CcuRep::Variable>& lengths, std::vector<CcuRep::Memory>& src, std::vector<CcuRep::Memory>& dst)
 {
     CreateMultiOpBroadcastDetour();
     uint32_t interLeave = 8;
 
-    CCU_IF(iterNum_ != 0) {
+    CCU_IF(iterNum_ != 0)
+    {
         CcuRep::Variable loopParam = CreateVariable();
         CcuRep::Variable paraCfg = CreateVariable();
         CcuRep::Variable offsetCfg = CreateVariable();
 
-        loopParam = CcuRep::GetLoopParam(0, singleTransportSize * moConfig.loopCount, 0);  // 偏移是单次总搬运量*loopNum
-        loopParam += iterNum_;  // 加上loop的迭代次数构成完整loop参数
-        paraCfg = CcuRep::GetParallelParam(moConfig.loopCount - 1, 0, 1);  // loop固定展开到128个
-        offsetCfg = CcuRep::GetOffsetParam(singleTransportSize, interLeave, pathNumPerPeer);  // 下一个loop偏移量
+        loopParam = CcuRep::GetLoopParam(0, singleTransportSize * moConfig.loopCount, 0); // 偏移是单次总搬运量*loopNum
+        loopParam += iterNum_; // 加上loop的迭代次数构成完整loop参数
+        paraCfg = CcuRep::GetParallelParam(moConfig.loopCount - 1, 0, 1); // loop固定展开到128个
+        offsetCfg = CcuRep::GetOffsetParam(singleTransportSize, interLeave, pathNumPerPeer); // 下一个loop偏移量
         auto lc = Loop("broadcastDetour_loop")(src, dst, lengths);
         LoopGroup({lc}, {loopParam}, paraCfg, offsetCfg);
     }
@@ -339,7 +350,6 @@ void CcuContextAllReduceMeshDetour1D::ReduceScatterSecondStep()
     return;
 }
 
-
 void CcuContextAllReduceMeshDetour1D::AllGatherFirstStep()
 {
     // 开始AllGather
@@ -422,7 +432,7 @@ void CcuContextAllReduceMeshDetour1D::Algorithm()
 {
     HCCL_INFO("[CcuContextAllReduceMeshDetour1D] AllReduceMeshDetour1D run.");
     uint16_t selfBit = 1 << rankId_;
-    uint16_t allBit  = ((1 << rankSize_) - 1) & (~(1 << rankId_));
+    uint16_t allBit = ((1 << rankSize_) - 1) & (~(1 << rankId_));
 
     // 初始化资源
     uint16_t transportIdx = 0;
@@ -433,10 +443,12 @@ void CcuContextAllReduceMeshDetour1D::Algorithm()
             output_.push_back(CreateVariable());
             token_.push_back(CreateVariable());
         } else {
-            HCCL_INFO("[CcuContextAllReduceMeshDetour1D] MyRank[%u], PeerId[%llu], TransportId[%u]",
-                rankId_, peerId, transportIdx);
-            CHK_PRT_RET(detourTransports_[0][transportIdx] == nullptr,
-                HCCL_ERROR("[CcuContextAllReduceMeshDetour1D] Algorithm transport ptr is null"),);
+            HCCL_INFO(
+                "[CcuContextAllReduceMeshDetour1D] MyRank[%u], PeerId[%llu], TransportId[%u]", rankId_, peerId,
+                transportIdx);
+            CHK_PRT_RET(
+                detourTransports_[0][transportIdx] == nullptr,
+                HCCL_ERROR("[CcuContextAllReduceMeshDetour1D] Algorithm transport ptr is null"), );
             input_.push_back(CreateVariable((*detourTransports_[0][transportIdx]), INPUT_XN_ID));
             output_.push_back(CreateVariable((*detourTransports_[0][transportIdx]), OUTPUT_XN_ID));
             token_.push_back(CreateVariable((*detourTransports_[0][transportIdx]), TOKEN_XN_ID));
@@ -464,7 +476,7 @@ void CcuContextAllReduceMeshDetour1D::Algorithm()
         Load(lengths_[i]);
     }
 
-    for (auto &t : detourTransports_[0]) {
+    for (auto& t : detourTransports_[0]) {
         WriteVariableWithSignal(*t, input_[rankId_], INPUT_XN_ID, CKE_IDX_1, selfBit);
         WriteVariableWithSignal(*t, output_[rankId_], OUTPUT_XN_ID, CKE_IDX_2, selfBit);
         WriteVariableWithSignal(*t, token_[rankId_], TOKEN_XN_ID, CKE_IDX_3, selfBit);
@@ -489,30 +501,31 @@ void CcuContextAllReduceMeshDetour1D::Algorithm()
     return;
 }
 
-std::vector<uint64_t> CcuContextAllReduceMeshDetour1D::GeneArgs(const CcuTaskArg &arg)
+std::vector<uint64_t> CcuContextAllReduceMeshDetour1D::GeneArgs(const CcuTaskArg& arg)
 {
-    const CcuTaskArgAllReduceMeshDetour1D *taskArg = dynamic_cast<const CcuTaskArgAllReduceMeshDetour1D *>(&arg);
+    const CcuTaskArgAllReduceMeshDetour1D* taskArg = dynamic_cast<const CcuTaskArgAllReduceMeshDetour1D*>(&arg);
     if (taskArg == nullptr) {
         THROW<NullPtrException>(StringFormat("CcuContextAllReduceMeshDetour1D::taskArg ptr is null"));
     }
-    uint64_t inputAddr   = taskArg->inputAddr_;
-    uint64_t outputAddr  = taskArg->outputAddr_;
-    uint64_t tokenInfo   = taskArg->token_;
-    uint64_t offset      = taskArg->offset_;
-    uint64_t iterNum     = taskArg->iterNum_;
-    uint64_t tailOffset  = taskArg->tailOffset_;
-    uint64_t tailSize    = taskArg->tailSize_;
-    auto     goSize      = CalGoSize(tailSize);
+    uint64_t inputAddr = taskArg->inputAddr_;
+    uint64_t outputAddr = taskArg->outputAddr_;
+    uint64_t tokenInfo = taskArg->token_;
+    uint64_t offset = taskArg->offset_;
+    uint64_t iterNum = taskArg->iterNum_;
+    uint64_t tailOffset = taskArg->tailOffset_;
+    uint64_t tailSize = taskArg->tailSize_;
+    auto goSize = CalGoSize(tailSize);
 
-    HCCL_INFO("[CcuContextAllReduceMeshDetour1D] GeneArgs, taskArg are inputAddr[%llu], outputAddr[%llu], "
+    HCCL_INFO(
+        "[CcuContextAllReduceMeshDetour1D] GeneArgs, taskArg are inputAddr[%llu], outputAddr[%llu], "
         "offset[%llu], iterNum[%llu], tailOffset[%llu], tailSize[%llu]",
         inputAddr, outputAddr, offset, iterNum, tailOffset, tailSize);
-    std::vector<uint64_t> sqeArgs = {inputAddr, outputAddr, tokenInfo, offset, iterNum, tailOffset, tailSize,
-                                     goSize[0], goSize[1], goSize[2], goSize[3]};
+    std::vector<uint64_t> sqeArgs = {inputAddr, outputAddr, tokenInfo, offset,    iterNum,  tailOffset,
+                                     tailSize,  goSize[0],  goSize[1], goSize[2], goSize[3]};
     for (auto len : taskArg->lengths_) {
         sqeArgs.emplace_back(len);
     }
     return sqeArgs;
 }
 
-}
+} // namespace Hccl

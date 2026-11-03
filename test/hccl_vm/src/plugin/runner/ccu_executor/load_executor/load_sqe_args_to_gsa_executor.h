@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: ccu executor -- load sqe arg to gsa
  * Author: caiyifan
  */
@@ -18,11 +21,13 @@
 
 #include "ccu_executor_base.h"
 #include "ccu_microcode_common_v1.h"
+#include "ccu_microcode_common_v2.h"
 #include "ccu_resource_manager.h"
 
 class LoadSqeArgsToGsaExecutor : public CcuExecutorBase {
 public:
-    explicit LoadSqeArgsToGsaExecutor(int streamId, int rankId, int dieId, const hcomm::CcuRep::CcuInstr &instr, CcuSimulator *ccuSimulator)
+    explicit LoadSqeArgsToGsaExecutor(
+        int streamId, int rankId, int dieId, const hcomm::CcuRep::CcuInstr& instr, CcuSimulator* ccuSimulator)
         : CcuExecutorBase(streamId, rankId, dieId, instr, ccuSimulator)
     {}
     LoadSqeArgsToGsaExecutor() = default;
@@ -31,6 +36,7 @@ public:
     void Parser() override;
     void Run() override;
     std::string Describe() override;
+    CcuTrace::CcuInstrTraceDetail CollectTraceDetail() override;
 
 private:
     uint16_t gsaId_{SimCcuV1::CCU_RESOURCE_GSA_MAX};

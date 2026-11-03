@@ -15,44 +15,46 @@
 #include "ra_tlv.h"
 #include "ra_hdc_tlv.h"
 
-#define TC_TLV_MSG_SIZE    (64 * 1024)
-#define TC_TLV_MSG_SIZE_INVALID    (64 * 1024 + 1U)
+#define TC_TLV_MSG_SIZE (64 * 1024)
+#define TC_TLV_MSG_SIZE_INVALID (64 * 1024 + 1U)
 
-void TcRaTlvInit() {
+void TcRaTlvInit()
+{
     struct TlvInitInfo initInfo = {0};
-    struct RaTlvHandle *tlvHandleTmp = NULL;
+    struct RaTlvHandle* tlvHandleTmp = NULL;
     unsigned int bufferSize = 0;
     int ret = 0;
 
     initInfo.nicPosition = NETWORK_OFFLINE;
     initInfo.phyId = 0;
 
-    mocker(memcpy_s, 10 , 0);
-    mocker(RaHdcTlvInit, 100 , -1);
-    ret = RaTlvInit(&initInfo, &bufferSize, (void **)&tlvHandleTmp);
+    mocker(memcpy_s, 10, 0);
+    mocker(RaHdcTlvInit, 100, -1);
+    ret = RaTlvInit(&initInfo, &bufferSize, (void**)&tlvHandleTmp);
     EXPECT_INT_NE(0, ret);
     mocker_clean();
 
-    mocker(RaHdcTlvInit, 100 , 0);
-    mocker(memcpy_s, 10 , 0);
-    mocker(pthread_mutex_init, 100 , -1);
-    ret = RaTlvInit(&initInfo, &bufferSize, (void **)&tlvHandleTmp);
+    mocker(RaHdcTlvInit, 100, 0);
+    mocker(memcpy_s, 10, 0);
+    mocker(pthread_mutex_init, 100, -1);
+    ret = RaTlvInit(&initInfo, &bufferSize, (void**)&tlvHandleTmp);
     EXPECT_INT_NE(0, ret);
     mocker_clean();
 
-    mocker(RaHdcTlvInit, 100 , 0);
-    mocker(memcpy_s, 10 , 0);
-    mocker(pthread_mutex_init, 100 , 0);
-    ret = RaTlvInit(&initInfo, &bufferSize, (void **)&tlvHandleTmp);
+    mocker(RaHdcTlvInit, 100, 0);
+    mocker(memcpy_s, 10, 0);
+    mocker(pthread_mutex_init, 100, 0);
+    ret = RaTlvInit(&initInfo, &bufferSize, (void**)&tlvHandleTmp);
     EXPECT_INT_EQ(0, ret);
     mocker_clean();
     free(tlvHandleTmp);
     tlvHandleTmp = NULL;
 }
 
-void TcRaTlvDeinit() {
-    struct RaTlvHandle *tlvHandleTmp = calloc(1, sizeof(struct RaTlvHandle));
-    struct RaTlvOps tlvOps  = {0};
+void TcRaTlvDeinit()
+{
+    struct RaTlvHandle* tlvHandleTmp = calloc(1, sizeof(struct RaTlvHandle));
+    struct RaTlvOps tlvOps = {0};
     int ret = 0;
 
     tlvHandleTmp->tlvOps = &tlvOps;
@@ -65,7 +67,7 @@ void TcRaTlvDeinit() {
     tlvHandleTmp->tlvOps = &tlvOps;
     tlvHandleTmp->initInfo.phyId = 0;
     tlvOps.raTlvDeinit = RaHdcTlvDeinit;
-    mocker(RaHdcTlvDeinit, 100 , -1);
+    mocker(RaHdcTlvDeinit, 100, -1);
     ret = RaTlvDeinit(tlvHandleTmp);
     EXPECT_INT_NE(0, ret);
     mocker_clean();
@@ -74,16 +76,17 @@ void TcRaTlvDeinit() {
     tlvHandleTmp->tlvOps = &tlvOps;
     tlvHandleTmp->initInfo.phyId = 0;
     tlvOps.raTlvDeinit = RaHdcTlvDeinit;
-    mocker(RaHdcTlvDeinit, 100 , 0);
+    mocker(RaHdcTlvDeinit, 100, 0);
     ret = RaTlvDeinit(tlvHandleTmp);
     EXPECT_INT_EQ(0, ret);
     mocker_clean();
 }
 
-void TcRaTlvRequest() {
+void TcRaTlvRequest()
+{
     unsigned int moduleType = TLV_MODULE_TYPE_CCU;
     struct RaTlvHandle tlvHandleTmp = {0};
-    struct RaTlvOps tlvOps  = {0};
+    struct RaTlvOps tlvOps = {0};
     struct TlvMsg sendMsg = {0};
     struct TlvMsg recvMsg = {0};
     int ret = 0;
@@ -100,12 +103,12 @@ void TcRaTlvRequest() {
     EXPECT_INT_NE(0, ret);
 
     tlvOps.raTlvRequest = RaHdcTlvRequest;
-    mocker(RaHdcTlvRequest, 100 , -1);
+    mocker(RaHdcTlvRequest, 100, -1);
     ret = RaTlvRequest(&tlvHandleTmp, moduleType, &sendMsg, &recvMsg);
     EXPECT_INT_NE(0, ret);
     mocker_clean();
 
-    mocker(RaHdcTlvRequest, 100 , 0);
+    mocker(RaHdcTlvRequest, 100, 0);
     ret = RaTlvRequest(&tlvHandleTmp, moduleType, &sendMsg, &recvMsg);
     EXPECT_INT_EQ(0, ret);
     mocker_clean();

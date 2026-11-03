@@ -12,14 +12,15 @@
 
 namespace checker {
 
-HcclResult TaskGraphGenerator::GenGraph(const TaskQueueStub &taskQueues, TaskNodePtr dummyStart)
+HcclResult TaskGraphGenerator::GenGraph(const TaskQueueStub& taskQueues, TaskNodePtr dummyStart)
 {
     for (RankId rankId = 0; rankId < taskQueues.GetRankSize(); rankId++) {
         CHK_RET(GenGraph4Rank(taskQueues.GetTaskQueueOfRank(rankId), rankId, dummyStart));
         HCCL_DEBUG("[TaskGraphGenerator] Rank [%d], local dependency graph generation done.", rankId);
     }
-    HCCL_DEBUG("[TaskGraphGenerator] rankSize [%u] and numChildren of dummyStart [%u].", taskQueues.GetRankSize(),
-               dummyStart->children.size());
+    HCCL_DEBUG(
+        "[TaskGraphGenerator] rankSize [%u] and numChildren of dummyStart [%u].", taskQueues.GetRankSize(),
+        dummyStart->children.size());
 
     /*
     Mismatch may occur when: 1) fail to generate local dependency graph correctly --> ERROR
@@ -28,28 +29,28 @@ HcclResult TaskGraphGenerator::GenGraph(const TaskQueueStub &taskQueues, TaskNod
 
     CHK_RET(GenGraphInterRanks(dummyStart));
 
-    //Handling the synchronization relationship between AIV, if exist.
+    // Handling the synchronization relationship between AIV, if exist.
     if (dummyStart->hasAivTask) {
         CHK_RET(GenGraphInterAivs(AivTaskQueueStub::Global()->GetAllAivTasks().rank2AivTask));
     }
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TaskGraphGenerator::GenGraph4Rank(const SingleRankTaskQueues *rankTaskQueues, const RankId rankIdx,
-                                             TaskNodePtr dummyStart)
+HcclResult TaskGraphGenerator::GenGraph4Rank(
+    const SingleRankTaskQueues* rankTaskQueues, const RankId rankIdx, TaskNodePtr dummyStart)
 {
-    std::vector<TaskNodePtr> rankNodeQue;      // executable task nodes
-    SeenLocalPost            seenLocalPosts;   // seen Local Posts
-    u64                      unmatchedCnt = 0; // for deadlock checking
+    std::vector<TaskNodePtr> rankNodeQue; // executable task nodes
+    SeenLocalPost seenLocalPosts;         // seen Local Posts
+    u64 unmatchedCnt = 0;                 // for deadlock checking
 
-    CHK_PRT_RET(InitRankNodeQue(rankTaskQueues, rankIdx, dummyStart, rankNodeQue) != HcclResult::HCCL_SUCCESS,
-                HCCL_ERROR("[TaskGraphGenerator] Rank [%d], fail to  init rankNodeQue.", rankIdx),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        InitRankNodeQue(rankTaskQueues, rankIdx, dummyStart, rankNodeQue) != HcclResult::HCCL_SUCCESS,
+        HCCL_ERROR("[TaskGraphGenerator] Rank [%d], fail to  init rankNodeQue.", rankIdx), HcclResult::HCCL_E_INTERNAL);
 
     while (!rankNodeQue.empty()) {
         if (unmatchedCnt >= rankNodeQue.size()) {
             // DeadLocking
-            for (auto &rankNodeUnmatch : rankNodeQue) {
+            for (auto& rankNodeUnmatch : rankNodeQue) {
                 rankNodeUnmatch->unmatch = true;
             }
             HCCL_ERROR("[TaskGraphGenerator] deadLocking occurs due to mismatch of LOCAL_POST_TO and LOCAL_WAIT_FROM.");
@@ -70,7 +71,7 @@ HcclResult TaskGraphGenerator::GenGraph4Rank(const SingleRankTaskQueues *rankTas
             case TaskTypeStub::WRITE:
             case TaskTypeStub::WRITE_REDUCE:
             case TaskTypeStub::CCU_GRAPH:
-                dummyStart->hasCcuTask =  true;
+                dummyStart->hasCcuTask = true;
                 CHK_RET(ExecFlitPrim(rankTaskQueues, currNode, rankNodeQue, unmatchedCnt));
                 break;
 
@@ -83,7 +84,7 @@ HcclResult TaskGraphGenerator::GenGraph4Rank(const SingleRankTaskQueues *rankTas
                 break;
 
             case TaskTypeStub::AIV_TASK:
-                dummyStart->hasAivTask =  true;
+                dummyStart->hasAivTask = true;
                 CHK_RET(ExecAivTaskPrim(rankTaskQueues, currNode, rankNodeQue, unmatchedCnt));
                 break;
 
@@ -92,19 +93,19 @@ HcclResult TaskGraphGenerator::GenGraph4Rank(const SingleRankTaskQueues *rankTas
                 return HcclResult::HCCL_E_INTERNAL;
         }
     }
-    if (!seenLocalPosts.empty()){
-        for (auto &localPost : seenLocalPosts) {
+    if (!seenLocalPosts.empty()) {
+        for (auto& localPost : seenLocalPosts) {
             localPost->unmatch = true;
-            HCCL_ERROR("[TaskGraphGenerator] unmatched local_post: %s.",
-                       localPost->GenPosInfo().c_str());
+            HCCL_ERROR("[TaskGraphGenerator] unmatched local_post: %s.", localPost->GenPosInfo().c_str());
             return HcclResult::HCCL_E_INTERNAL;
-	    }
+        }
     }
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TaskGraphGenerator::InitRankNodeQue(const SingleRankTaskQueues *rankTaskQueues, const RankId rankIdx,
-                                               TaskNodePtr dummyStart, std::vector<TaskNodePtr> &rankNodeQue)
+HcclResult TaskGraphGenerator::InitRankNodeQue(
+    const SingleRankTaskQueues* rankTaskQueues, const RankId rankIdx, TaskNodePtr dummyStart,
+    std::vector<TaskNodePtr>& rankNodeQue)
 {
     // first task of master queue
     auto currNode = std::make_shared<TaskNode>(rankTaskQueues->GetTask(0, 0).get(), rankIdx, 0, 0);
@@ -114,9 +115,10 @@ HcclResult TaskGraphGenerator::InitRankNodeQue(const SingleRankTaskQueues *rankT
     dummyStart->children.push_back(currNode.get());
     currNode->parents.push_back(dummyStart);
     rankNodeQue.push_back(currNode.get());
-    HCCL_DEBUG("[TaskGraphGenerator] Rank [%d], connect dummyStart -> first taskNode of master queue, put taskNode in "
-               "rankNodeQue",
-               rankIdx);
+    HCCL_DEBUG(
+        "[TaskGraphGenerator] Rank [%d], connect dummyStart -> first taskNode of master queue, put taskNode in "
+        "rankNodeQue",
+        rankIdx);
 
     // first task of slave queues: first task should be local wait
     for (u32 qIdx = 1; qIdx < rankTaskQueues->taskQueues.size(); qIdx++) {
@@ -129,8 +131,9 @@ HcclResult TaskGraphGenerator::InitRankNodeQue(const SingleRankTaskQueues *rankT
         nodes_.push_back(currNode);
         CHK_PRT_RET(
             currNode->task->GetType() != TaskTypeStub::LOCAL_WAIT_FROM,
-            HCCL_ERROR("[TaskGraphGenerator] Rank[%d], Que [%u], first task of slave queue should be localWaitFrom.",
-                       currNode->rankIdx, currNode->queIdx),
+            HCCL_ERROR(
+                "[TaskGraphGenerator] Rank[%d], Que [%u], first task of slave queue should be localWaitFrom.",
+                currNode->rankIdx, currNode->queIdx),
             HcclResult::HCCL_E_INTERNAL);
         rankNodeQue.push_back(currNode.get());
         HCCL_DEBUG("[TaskGraphGenerator] Rank [%d], put first taskNode of slave queues in rankNodeQue", rankIdx);
@@ -139,7 +142,7 @@ HcclResult TaskGraphGenerator::InitRankNodeQue(const SingleRankTaskQueues *rankT
     return HcclResult::HCCL_SUCCESS;
 }
 
-void TaskGraphGenerator::LocateUnmatchedNode(const std::vector<TaskNodePtr> &rankNodeQue)
+void TaskGraphGenerator::LocateUnmatchedNode(const std::vector<TaskNodePtr>& rankNodeQue)
 {
     auto rankNodeIter = rankNodeQue.begin();
     for (; rankNodeIter != rankNodeQue.end(); rankNodeIter++) {
@@ -150,68 +153,76 @@ void TaskGraphGenerator::LocateUnmatchedNode(const std::vector<TaskNodePtr> &ran
     return;
 }
 
-HcclResult TaskGraphGenerator::ExecFlitPrim(const SingleRankTaskQueues *rankTaskQueues, TaskNodePtr currNode,
-                                            std::vector<TaskNodePtr> &rankNodeQue, u64 &unmatchedCnt)
+HcclResult TaskGraphGenerator::ExecFlitPrim(
+    const SingleRankTaskQueues* rankTaskQueues, TaskNodePtr currNode, std::vector<TaskNodePtr>& rankNodeQue,
+    u64& unmatchedCnt)
 {
     // curr -> its nxt, push nxt to nodeQue
-    CHK_PRT_RET(ConnectNextAndPushInQue(rankTaskQueues, currNode, rankNodeQue) != HcclResult::HCCL_SUCCESS,
-                HCCL_ERROR("[TaskGraphGenerator] Rank [%d], fail to generate dependency graph: TaskType [%s].",
-                           currNode->rankIdx, currNode->task->GetType().Describe().c_str()),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        ConnectNextAndPushInQue(rankTaskQueues, currNode, rankNodeQue) != HcclResult::HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[TaskGraphGenerator] Rank [%d], fail to generate dependency graph: TaskType [%s].", currNode->rankIdx,
+            currNode->task->GetType().Describe().c_str()),
+        HcclResult::HCCL_E_INTERNAL);
     unmatchedCnt = 0;
 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TaskGraphGenerator::ConnectNextAndPushInQue(const SingleRankTaskQueues *rankTaskQueues, TaskNodePtr currNode,
-                                                       std::vector<TaskNodePtr> &rankNodeQue)
+HcclResult TaskGraphGenerator::ConnectNextAndPushInQue(
+    const SingleRankTaskQueues* rankTaskQueues, TaskNodePtr currNode, std::vector<TaskNodePtr>& rankNodeQue)
 {
     if (currNode->pos < rankTaskQueues->GetQueTaskNum(currNode->queIdx) - 1) {
-        auto nxtNode = std::make_shared<TaskNode>(rankTaskQueues->GetTask(currNode->queIdx, currNode->pos + 1).get(),
-                                                  currNode->rankIdx, currNode->queIdx, currNode->pos + 1);
+        auto nxtNode = std::make_shared<TaskNode>(
+            rankTaskQueues->GetTask(currNode->queIdx, currNode->pos + 1).get(), currNode->rankIdx, currNode->queIdx,
+            currNode->pos + 1);
         CHK_PTR_NULL(nxtNode);
         nodes_.push_back(nxtNode);
         nxtNode->parents.push_back(currNode);
         currNode->children.push_back(nxtNode.get());
         rankNodeQue.push_back(nxtNode.get());
     } else {
-        HCCL_DEBUG("[TaskGraphGenerator] Rank [%d], end of current Que [%u]: TrimType [%s].", currNode->rankIdx,
-                   currNode->queIdx, currNode->task->GetType().Describe().c_str());
+        HCCL_DEBUG(
+            "[TaskGraphGenerator] Rank [%d], end of current Que [%u]: TrimType [%s].", currNode->rankIdx,
+            currNode->queIdx, currNode->task->GetType().Describe().c_str());
     }
 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TaskGraphGenerator::ExecLocalPostPrim(const SingleRankTaskQueues *rankTaskQueues, TaskNodePtr currNode,
-                                                 std::vector<TaskNodePtr> &rankNodeQue, SeenLocalPost &seenLocalPosts,
-                                                 u64 &unmatchedCnt)
+HcclResult TaskGraphGenerator::ExecLocalPostPrim(
+    const SingleRankTaskQueues* rankTaskQueues, TaskNodePtr currNode, std::vector<TaskNodePtr>& rankNodeQue,
+    SeenLocalPost& seenLocalPosts, u64& unmatchedCnt)
 {
     // curr -> its nxt, nxt in nodeQue
-    CHK_PRT_RET(ConnectNextAndPushInQue(rankTaskQueues, currNode, rankNodeQue) != HcclResult::HCCL_SUCCESS,
-                HCCL_ERROR("[TaskGraphGenerator] Rank [%d], fail to generate dependency graph: TaskType [%s].",
-                           currNode->rankIdx, "LocalPostTo"),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        ConnectNextAndPushInQue(rankTaskQueues, currNode, rankNodeQue) != HcclResult::HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[TaskGraphGenerator] Rank [%d], fail to generate dependency graph: TaskType [%s].", currNode->rankIdx,
+            "LocalPostTo"),
+        HcclResult::HCCL_E_INTERNAL);
 
     seenLocalPosts.push_back(currNode);
     unmatchedCnt = 0;
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TaskGraphGenerator::ExecLocalWaitPrim(const SingleRankTaskQueues *rankTaskQueues, TaskNodePtr currNode,
-                                                 std::vector<TaskNodePtr> &rankNodeQue, SeenLocalPost &seenLocalPosts,
-                                                 u64 &unmatchedCnt)
+HcclResult TaskGraphGenerator::ExecLocalWaitPrim(
+    const SingleRankTaskQueues* rankTaskQueues, TaskNodePtr currNode, std::vector<TaskNodePtr>& rankNodeQue,
+    SeenLocalPost& seenLocalPosts, u64& unmatchedCnt)
 {
     std::vector<TaskNodePtr>::iterator postIter;
     for (postIter = seenLocalPosts.begin(); postIter != seenLocalPosts.end(); postIter++) {
         if (IsSemPeer((*postIter), currNode)) {
             (*postIter)->children.push_back(currNode);
-            currNode->parents.push_back((*postIter));    // local_post_to -> curr local_wait_from
-            (seenLocalPosts).erase(postIter); // remove local_post_to from seenLocalPosts
+            currNode->parents.push_back((*postIter)); // local_post_to -> curr local_wait_from
+            (seenLocalPosts).erase(postIter);         // remove local_post_to from seenLocalPosts
             // curr local_wait_from -> its nxt
             CHK_PRT_RET(
                 ConnectNextAndPushInQue(rankTaskQueues, currNode, rankNodeQue) != HcclResult::HCCL_SUCCESS,
-                HCCL_ERROR("[TaskGraphGenerator] Rank [%d], fail to generate dependency graph: TaskType [%s].",
-                            currNode->rankIdx, "LocalWaitFrom"),
+                HCCL_ERROR(
+                    "[TaskGraphGenerator] Rank [%d], fail to generate dependency graph: TaskType [%s].",
+                    currNode->rankIdx, "LocalWaitFrom"),
                 HcclResult::HCCL_E_INTERNAL);
             unmatchedCnt = 0;
             return HcclResult::HCCL_SUCCESS;
@@ -233,26 +244,28 @@ bool TaskGraphGenerator::IsSemPeer(const TaskNodePtr postNode, const TaskNodePtr
     }
 
     // check queId
-    TaskStubLocalPostTo   *localPostTo   = dynamic_cast<TaskStubLocalPostTo *>(postNode->task);
-    TaskStubLocalWaitFrom *localWaitFrom = dynamic_cast<TaskStubLocalWaitFrom *>(waitNode->task);
+    TaskStubLocalPostTo* localPostTo = dynamic_cast<TaskStubLocalPostTo*>(postNode->task);
+    TaskStubLocalWaitFrom* localWaitFrom = dynamic_cast<TaskStubLocalWaitFrom*>(waitNode->task);
 
-    return ((localPostTo->GetTopicId() == localWaitFrom->GetTopicId()) &&
-        (localPostTo->GetPostQid() == localWaitFrom->GetPostQid()) &&
-        (localPostTo->GetWaitQid() == localWaitFrom->GetWaitQid()));
+    return (
+        (localPostTo->GetTopicId() == localWaitFrom->GetTopicId())
+        && (localPostTo->GetPostQid() == localWaitFrom->GetPostQid())
+        && (localPostTo->GetWaitQid() == localWaitFrom->GetWaitQid()));
 }
 
 HcclResult TaskGraphGenerator::GenGraphInterRanks(TaskNodePtr dummyStart)
 {
-    std::vector<TaskNodePtr> graphNodeQue;       // executable primnodes
-    SeenInterRankPosts       seenInterRankPosts; // seen inter-rank Posts
-    u64                      unmatchedCnt = 0;   // for deadlock checking
+    std::vector<TaskNodePtr> graphNodeQue; // executable primnodes
+    SeenInterRankPosts seenInterRankPosts; // seen inter-rank Posts
+    u64 unmatchedCnt = 0;                  // for deadlock checking
 
-    CHK_PRT_RET(ExecNode4Graph(dummyStart, graphNodeQue) != HcclResult::HCCL_SUCCESS,
-                HCCL_ERROR("[TaskGraphGenerator] Fail to init graphNodeQue."), HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        ExecNode4Graph(dummyStart, graphNodeQue) != HcclResult::HCCL_SUCCESS,
+        HCCL_ERROR("[TaskGraphGenerator] Fail to init graphNodeQue."), HcclResult::HCCL_E_INTERNAL);
 
     while (!graphNodeQue.empty()) {
         if (unmatchedCnt >= graphNodeQue.size()) {
-            for (auto &graphNodeUnmatch : graphNodeQue) {
+            for (auto& graphNodeUnmatch : graphNodeQue) {
                 graphNodeUnmatch->unmatch = true;
             }
             HCCL_ERROR("[TaskGraphGenerator] deadLocking occurs due to mismatch of inter-rank Post/Wait.");
@@ -263,20 +276,21 @@ HcclResult TaskGraphGenerator::GenGraphInterRanks(TaskNodePtr dummyStart)
         TaskNodePtr currNode = graphNodeQue[0];
         graphNodeQue.erase(graphNodeQue.begin());
 
-        CHK_PRT_RET(ProcNode4Graph(currNode, graphNodeQue, seenInterRankPosts, unmatchedCnt)
-                        != HcclResult::HCCL_SUCCESS,
-                    HCCL_ERROR("[TaskGraphGenerator] Rank [%d], fail to proceed taskNode.", currNode->rankIdx),
-                    HcclResult::HCCL_E_INTERNAL);
+        CHK_PRT_RET(
+            ProcNode4Graph(currNode, graphNodeQue, seenInterRankPosts, unmatchedCnt) != HcclResult::HCCL_SUCCESS,
+            HCCL_ERROR("[TaskGraphGenerator] Rank [%d], fail to proceed taskNode.", currNode->rankIdx),
+            HcclResult::HCCL_E_INTERNAL);
     }
 
     bool hasChanged = false;
     if (!seenInterRankPosts.empty()) {
-        for (auto &curRankPosts : seenInterRankPosts) {
-            for (auto &peerRankPosts : curRankPosts.second) {
-                for (auto &post : peerRankPosts.second) {
+        for (auto& curRankPosts : seenInterRankPosts) {
+            for (auto& peerRankPosts : curRankPosts.second) {
+                for (auto& post : peerRankPosts.second) {
                     post->unmatch = true;
-                    HCCL_ERROR("[TaskGraphGenerator] unmatched inter-rank post: %s, PeerRank [%d],  ",
-                               post->GenPosInfo().c_str(), peerRankPosts.first);
+                    HCCL_ERROR(
+                        "[TaskGraphGenerator] unmatched inter-rank post: %s, PeerRank [%d],  ",
+                        post->GenPosInfo().c_str(), peerRankPosts.first);
                     hasChanged = true;
                 }
             }
@@ -288,7 +302,7 @@ HcclResult TaskGraphGenerator::GenGraphInterRanks(TaskNodePtr dummyStart)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TaskGraphGenerator::ExecNode4Graph(TaskNodePtr node, std::vector<TaskNodePtr> &graphNodeQue)
+HcclResult TaskGraphGenerator::ExecNode4Graph(TaskNodePtr node, std::vector<TaskNodePtr>& graphNodeQue)
 {
     node->execFlag = true;
     std::vector<TaskNodePtr>::iterator childIter = node->children.begin();
@@ -301,8 +315,9 @@ HcclResult TaskGraphGenerator::ExecNode4Graph(TaskNodePtr node, std::vector<Task
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TaskGraphGenerator::ProcNode4Graph(TaskNodePtr currNode, std::vector<TaskNodePtr> &graphNodeQue,
-                                              SeenInterRankPosts &seenInterRankPosts, u64 &unmatchedCnt)
+HcclResult TaskGraphGenerator::ProcNode4Graph(
+    TaskNodePtr currNode, std::vector<TaskNodePtr>& graphNodeQue, SeenInterRankPosts& seenInterRankPosts,
+    u64& unmatchedCnt)
 {
     // taskNode not executable
     if (!IsExecutable(currNode)) {
@@ -323,9 +338,10 @@ HcclResult TaskGraphGenerator::ProcNode4Graph(TaskNodePtr currNode, std::vector<
         case TaskTypeStub::WRITE_REDUCE:
         case TaskTypeStub::AIV_TASK:
         case TaskTypeStub::CCU_GRAPH:
-            CHK_PRT_RET(ExecNode4Graph(currNode, graphNodeQue) != HcclResult::HCCL_SUCCESS,
-                        HCCL_ERROR("[TaskGraphGenerator] Rank [%d], fail to execute taskNode.", currNode->rankIdx),
-                        HcclResult::HCCL_E_INTERNAL);
+            CHK_PRT_RET(
+                ExecNode4Graph(currNode, graphNodeQue) != HcclResult::HCCL_SUCCESS,
+                HCCL_ERROR("[TaskGraphGenerator] Rank [%d], fail to execute taskNode.", currNode->rankIdx),
+                HcclResult::HCCL_E_INTERNAL);
             unmatchedCnt = 0;
             return HcclResult::HCCL_SUCCESS;
 
@@ -359,13 +375,13 @@ bool TaskGraphGenerator::IsExecutable(TaskNodePtr currNode)
     return true;
 }
 
-HcclResult TaskGraphGenerator::ProcInterRankPostNode4Graph(TaskNodePtr currNode, std::vector<TaskNodePtr> &graphNodeQue,
-                                                           SeenInterRankPosts &seenInterRankPosts,
-                                                           u64                &unmatchedCnt)
+HcclResult TaskGraphGenerator::ProcInterRankPostNode4Graph(
+    TaskNodePtr currNode, std::vector<TaskNodePtr>& graphNodeQue, SeenInterRankPosts& seenInterRankPosts,
+    u64& unmatchedCnt)
 {
-    RankId        currRank = currNode->rankIdx;
-    TaskStubPost *post     = dynamic_cast<TaskStubPost *>(currNode->task);
-    RankId        peerRank = post->GetRemoteRank();
+    RankId currRank = currNode->rankIdx;
+    TaskStubPost* post = dynamic_cast<TaskStubPost*>(currNode->task);
+    RankId peerRank = post->GetRemoteRank();
 
     if (seenInterRankPosts.find(currRank) == seenInterRankPosts.end()) {
         std::vector<TaskNodePtr> tmpPosts;
@@ -384,20 +400,21 @@ HcclResult TaskGraphGenerator::ProcInterRankPostNode4Graph(TaskNodePtr currNode,
     }
     CHK_PRT_RET(
         ExecNode4Graph(currNode, graphNodeQue) != HcclResult::HCCL_SUCCESS,
-        HCCL_ERROR("[TaskGraphGenerator] Fail to execute node %s: TaskType [%s].",
-                   currNode->GenPosInfo().c_str(), currNode->task->GetType().Describe().c_str()),
+        HCCL_ERROR(
+            "[TaskGraphGenerator] Fail to execute node %s: TaskType [%s].", currNode->GenPosInfo().c_str(),
+            currNode->task->GetType().Describe().c_str()),
         HcclResult::HCCL_E_INTERNAL);
     unmatchedCnt = 0;
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TaskGraphGenerator::ProcInterRankWaitNode4Graph(TaskNodePtr currNode, std::vector<TaskNodePtr> &graphNodeQue,
-                                                           SeenInterRankPosts &seenInterRankPosts,
-                                                           u64                &unmatchedCnt)
+HcclResult TaskGraphGenerator::ProcInterRankWaitNode4Graph(
+    TaskNodePtr currNode, std::vector<TaskNodePtr>& graphNodeQue, SeenInterRankPosts& seenInterRankPosts,
+    u64& unmatchedCnt)
 {
-    RankId        currRank = currNode->rankIdx;
-    TaskStubWait *wait     = dynamic_cast<TaskStubWait *>(currNode->task);
-    RankId        peerRank = wait->GetRemoteRank();
+    RankId currRank = currNode->rankIdx;
+    TaskStubWait* wait = dynamic_cast<TaskStubWait*>(currNode->task);
+    RankId peerRank = wait->GetRemoteRank();
     if ((seenInterRankPosts.find(peerRank) != seenInterRankPosts.end())
         && (seenInterRankPosts[peerRank].find(currRank) != seenInterRankPosts[peerRank].end())) {
         std::vector<TaskNodePtr>::iterator postIter = seenInterRankPosts[peerRank][currRank].begin();
@@ -407,11 +424,12 @@ HcclResult TaskGraphGenerator::ProcInterRankWaitNode4Graph(TaskNodePtr currNode,
                 (*postIter)->children.push_back(currNode);
                 currNode->parents.push_back((*postIter));
                 seenInterRankPosts[peerRank][currRank].erase(postIter); // remove post from seenInterRankPosts
-                CHK_PRT_RET(ExecNode4Graph(currNode, graphNodeQue) != HcclResult::HCCL_SUCCESS,
-                            HCCL_ERROR("[TaskGraphGenerator] Fail to execute node %s: TaskType [%s].",
-                                       currNode->GenPosInfo().c_str(),
-                                       currNode->task->GetType().Describe().c_str()),
-                            HcclResult::HCCL_E_INTERNAL);
+                CHK_PRT_RET(
+                    ExecNode4Graph(currNode, graphNodeQue) != HcclResult::HCCL_SUCCESS,
+                    HCCL_ERROR(
+                        "[TaskGraphGenerator] Fail to execute node %s: TaskType [%s].", currNode->GenPosInfo().c_str(),
+                        currNode->task->GetType().Describe().c_str()),
+                    HcclResult::HCCL_E_INTERNAL);
                 unmatchedCnt = 0;
                 return HcclResult::HCCL_SUCCESS;
             }
@@ -426,8 +444,8 @@ HcclResult TaskGraphGenerator::ProcInterRankWaitNode4Graph(TaskNodePtr currNode,
 
 bool TaskGraphGenerator::IsPostWaitPeer(const TaskNodePtr postNode, const TaskNodePtr waitNode)
 {
-    TaskStubPost *post = dynamic_cast<TaskStubPost *>(postNode->task);
-    TaskStubWait *wait = dynamic_cast<TaskStubWait *>(waitNode->task);
+    TaskStubPost* post = dynamic_cast<TaskStubPost*>(postNode->task);
+    TaskStubWait* wait = dynamic_cast<TaskStubWait*>(waitNode->task);
 
     // check rankId
     if ((postNode->rankIdx != wait->GetRemoteRank()) || (waitNode->rankIdx != post->GetRemoteRank())) {
@@ -447,42 +465,48 @@ bool TaskGraphGenerator::IsPostWaitPeer(const TaskNodePtr postNode, const TaskNo
     return post->GetNotifyType() == wait->GetNotifyType();
 }
 
-HcclResult TaskGraphGenerator::ExecAivTaskPrim(const SingleRankTaskQueues *rankTaskQueues, TaskNodePtr currNode,
-                                               std::vector<TaskNodePtr> &rankNodeQue, u64 &unmatchedCnt)
+HcclResult TaskGraphGenerator::ExecAivTaskPrim(
+    const SingleRankTaskQueues* rankTaskQueues, TaskNodePtr currNode, std::vector<TaskNodePtr>& rankNodeQue,
+    u64& unmatchedCnt)
 {
-    //init aivStart for rank, record aiv tasknode to map
+    // init aivStart for rank, record aiv tasknode to map
     auto curRankPos = ((AivTaskStub*)(currNode->task))->GetRankPos();
     std::shared_ptr<TaskStub> aivStartTask = std::make_shared<TaskStubAivStart>(currNode->rankIdx, curRankPos);
     auto aivStart = std::make_shared<TaskNode>(aivStartTask.get(), currNode->rankIdx, curRankPos, -1, -1, -2);
     nodes_.push_back(aivStart);
-    ((AivTaskStub *)currNode->task)->SetAivStart(aivStart.get());
+    ((AivTaskStub*)currNode->task)->SetAivStart(aivStart.get());
     AivTaskQueueStub::Global()->SetRank2AivStart(currNode->rankIdx, aivStart.get());
     AivTaskQueueStub::Global()->GetAllAivTasks().headAndTailResource.push_back(aivStartTask);
 
     std::shared_ptr<TaskStub> aivEndTask = std::make_shared<TaskStubAivEnd>(currNode->rankIdx, curRankPos);
     auto aivEnd = std::make_shared<TaskNode>(aivEndTask.get(), currNode->rankIdx, curRankPos, -1, -1, -3);
     nodes_.push_back(aivEnd);
-    ((AivTaskStub *)currNode->task)->SetAivEnd(aivEnd.get());
+    ((AivTaskStub*)currNode->task)->SetAivEnd(aivEnd.get());
     AivTaskQueueStub::Global()->GetAllAivTasks().headAndTailResource.push_back(aivEndTask);
-    
 
-    //match the dependency relationships between the same pipe and different pipes in the same AIV
+    // match the dependency relationships between the same pipe and different pipes in the same AIV
     for (auto& curRankAivTask : AivTaskQueueStub::Global()->GetAllAivTasks().rsb2AivTaskQueues[currNode->rankIdx]) {
         auto curBlock = curRankAivTask.first;
         AivSingleBlockTaskQues* curBlockAivTaskQueuesPtr = curRankAivTask.second[curRankPos];
         std::shared_ptr<TaskStub> blockStartTask = std::make_shared<TaskStubBlockStart>(currNode->rankIdx, curBlock);
-        auto blockStart = std::make_shared<TaskNode>(blockStartTask.get(), currNode->rankIdx, curRankPos, curBlock, -1, -1);
+        auto blockStart
+            = std::make_shared<TaskNode>(blockStartTask.get(), currNode->rankIdx, curRankPos, curBlock, -1, -1);
         nodes_.push_back(blockStart);
         AivTaskQueueStub::Global()->GetAllAivTasks().headAndTailResource.push_back(blockStartTask);
         aivStart->children.push_back(blockStart.get());
         blockStart->parents.push_back(aivStart.get());
-        CHK_PRT_RET(GenGraph4Aiv(curBlockAivTaskQueuesPtr, currNode->rankIdx, curBlock, blockStart.get(), aivEnd.get()) != HcclResult::HCCL_SUCCESS,
-                    HCCL_ERROR("[TaskGraphGenerator] Rank [%d], fail to generate dependency aiv graph: TaskType [%s].",
-                               currNode->rankIdx, currNode->task->GetType().Describe().c_str()), HcclResult::HCCL_E_INTERNAL);
+        CHK_PRT_RET(
+            GenGraph4Aiv(curBlockAivTaskQueuesPtr, currNode->rankIdx, curBlock, blockStart.get(), aivEnd.get())
+                != HcclResult::HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[TaskGraphGenerator] Rank [%d], fail to generate dependency aiv graph: TaskType [%s].",
+                currNode->rankIdx, currNode->task->GetType().Describe().c_str()),
+            HcclResult::HCCL_E_INTERNAL);
     }
 
-    //merge PipeBarrierAll Node
-    std::map<TaskStub*, std::vector<TaskNode*>> *barrierRecord = &AivTaskQueueStub::Global()->GetAllAivTasks().pipeBarrierAllRecord;
+    // merge PipeBarrierAll Node
+    std::map<TaskStub*, std::vector<TaskNode*>>* barrierRecord
+        = &AivTaskQueueStub::Global()->GetAllAivTasks().pipeBarrierAllRecord;
     for (auto& taskNodes : *barrierRecord) {
         TaskNode* firstNode = taskNodes.second[0];
         TaskStubPipeBarrier* firstStub = (TaskStubPipeBarrier*)firstNode->task;
@@ -494,15 +518,18 @@ HcclResult TaskGraphGenerator::ExecAivTaskPrim(const SingleRankTaskQueues *rankT
             for (auto& taskNode : taskNodes.second[idx]->parents) {
                 firstNode->parents.push_back(taskNode);
                 taskNode->children.push_back(firstNode);
-                taskNode->children.erase(std::remove(taskNode->children.begin(), taskNode->children.end(), taskNodes.second[idx]), taskNode->children.end());
+                taskNode->children.erase(
+                    std::remove(taskNode->children.begin(), taskNode->children.end(), taskNodes.second[idx]),
+                    taskNode->children.end());
             }
 
             for (auto& taskNode : taskNodes.second[idx]->children) {
                 firstNode->children.push_back(taskNode);
                 taskNode->parents.push_back(firstNode);
-                taskNode->parents.erase(std::remove(taskNode->parents.begin(), taskNode->parents.end(), taskNodes.second[idx]), taskNode->parents.end());
+                taskNode->parents.erase(
+                    std::remove(taskNode->parents.begin(), taskNode->parents.end(), taskNodes.second[idx]),
+                    taskNode->parents.end());
             }
-
         }
     }
 
@@ -513,21 +540,23 @@ HcclResult TaskGraphGenerator::ExecAivTaskPrim(const SingleRankTaskQueues *rankT
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TaskGraphGenerator::GenGraph4Aiv(const AivSingleBlockTaskQues* aivTaskQueues, RankId rankIdx,
-                                            BlockId blockIdx, TaskNodePtr blockStart, TaskNodePtr aivEnd)
+HcclResult TaskGraphGenerator::GenGraph4Aiv(
+    const AivSingleBlockTaskQues* aivTaskQueues, RankId rankIdx, BlockId blockIdx, TaskNodePtr blockStart,
+    TaskNodePtr aivEnd)
 {
     std::vector<TaskNodePtr> aivNodeQue;
     std::vector<TaskNodePtr> SeenSetFlag;
     u64 unmatchedCnt = 0;
 
-    //init the first tasknode of each pipe in the same block
+    // init the first tasknode of each pipe in the same block
     auto pipeNum = aivTaskQueues->taskQueues.size();
     for (int currPipe = 0; currPipe < pipeNum; currPipe++) {
-        if(aivTaskQueues->GetPipeTaskNum((pipe_t)currPipe) == 0) {
+        if (aivTaskQueues->GetPipeTaskNum((pipe_t)currPipe) == 0) {
             continue;
         }
 
-        auto currNode = std::make_shared<TaskNode>(aivTaskQueues->GetTask((pipe_t)currPipe, 0).get(), rankIdx, blockStart->rankPos, blockIdx, currPipe, 0);
+        auto currNode = std::make_shared<TaskNode>(
+            aivTaskQueues->GetTask((pipe_t)currPipe, 0).get(), rankIdx, blockStart->rankPos, blockIdx, currPipe, 0);
         CHK_PTR_NULL(currNode);
         nodes_.push_back(currNode);
         blockStart->children.push_back(currNode.get());
@@ -578,7 +607,6 @@ HcclResult TaskGraphGenerator::GenGraph4Aiv(const AivSingleBlockTaskQues* aivTas
             default:
                 HCCL_ERROR("[TaskGraphGenerator] taskType not supported.");
                 return HcclResult::HCCL_E_INTERNAL;
-
         }
     }
 
@@ -587,8 +615,10 @@ HcclResult TaskGraphGenerator::GenGraph4Aiv(const AivSingleBlockTaskQues* aivTas
             bool isGenFromfree = ((TaskStubSetFlag*)(setFlag->task))->IsGenFromFree();
             if (!isGenFromfree) {
                 setFlag->unmatch = true;
-                HCCL_ERROR("[TaskGraphGenerator] unmatched setFlag: rankId=%d, blockId=%d, pipeId=%s, pipePOs=%d, %s", setFlag->rankIdx, 
-                            setFlag->blockIdx, GetPipeName((pipe_t)(setFlag->pipeIdx)).c_str(), setFlag->pipePos, setFlag->task->Describe().c_str());
+                HCCL_ERROR(
+                    "[TaskGraphGenerator] unmatched setFlag: rankId=%d, blockId=%d, pipeId=%s, pipePOs=%d, %s",
+                    setFlag->rankIdx, setFlag->blockIdx, GetPipeName((pipe_t)(setFlag->pipeIdx)).c_str(),
+                    setFlag->pipePos, setFlag->task->Describe().c_str());
                 return HcclResult::HCCL_E_INTERNAL;
             }
         }
@@ -596,25 +626,32 @@ HcclResult TaskGraphGenerator::GenGraph4Aiv(const AivSingleBlockTaskQues* aivTas
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TaskGraphGenerator::ExecAivFlitPrim(const AivSingleBlockTaskQues* aivTaskQueues, TaskNodePtr currNode,
-                                            std::vector<TaskNodePtr> &aivNodeQue, u64 &unmatchedCnt, TaskNodePtr aivEnd)
+HcclResult TaskGraphGenerator::ExecAivFlitPrim(
+    const AivSingleBlockTaskQues* aivTaskQueues, TaskNodePtr currNode, std::vector<TaskNodePtr>& aivNodeQue,
+    u64& unmatchedCnt, TaskNodePtr aivEnd)
 {
     // curr -> its nxt, push nxt to nodeQue
-    CHK_PRT_RET(ConnectNextAivTaskNodeAndPushInQue(aivTaskQueues, currNode, aivNodeQue, aivEnd) != HcclResult::HCCL_SUCCESS,
-                HCCL_ERROR("[TaskGraphGenerator] Rank [%d], RankPos [%d], Block [%d], Pipe [%d], fail to generate dependency graph: TaskType [%s].",
-                           currNode->rankIdx, currNode->rankPos, currNode->blockIdx, currNode->pipeIdx, currNode->task->GetType().Describe().c_str()),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        ConnectNextAivTaskNodeAndPushInQue(aivTaskQueues, currNode, aivNodeQue, aivEnd) != HcclResult::HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[TaskGraphGenerator] Rank [%d], RankPos [%d], Block [%d], Pipe [%d], fail to generate dependency graph: "
+            "TaskType [%s].",
+            currNode->rankIdx, currNode->rankPos, currNode->blockIdx, currNode->pipeIdx,
+            currNode->task->GetType().Describe().c_str()),
+        HcclResult::HCCL_E_INTERNAL);
     unmatchedCnt = 0;
 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TaskGraphGenerator::ConnectNextAivTaskNodeAndPushInQue(const AivSingleBlockTaskQues* aivTaskQueues, TaskNodePtr currNode,
-                                                                  std::vector<TaskNodePtr> &aivNodeQue, TaskNodePtr aivEnd)
+HcclResult TaskGraphGenerator::ConnectNextAivTaskNodeAndPushInQue(
+    const AivSingleBlockTaskQues* aivTaskQueues, TaskNodePtr currNode, std::vector<TaskNodePtr>& aivNodeQue,
+    TaskNodePtr aivEnd)
 {
     if (currNode->pipePos < aivTaskQueues->GetPipeTaskNum((pipe_t)(currNode->pipeIdx)) - 1) {
-        auto nxtNode = std::make_shared<TaskNode>(aivTaskQueues->GetTask((pipe_t)(currNode->pipeIdx), currNode->pipePos + 1).get(),
-                                                  currNode->rankIdx, currNode->rankPos, currNode->blockIdx, currNode->pipeIdx, currNode->pipePos + 1);
+        auto nxtNode = std::make_shared<TaskNode>(
+            aivTaskQueues->GetTask((pipe_t)(currNode->pipeIdx), currNode->pipePos + 1).get(), currNode->rankIdx,
+            currNode->rankPos, currNode->blockIdx, currNode->pipeIdx, currNode->pipePos + 1);
         CHK_PTR_NULL(nxtNode);
         nodes_.push_back(nxtNode);
         nxtNode->parents.push_back(currNode);
@@ -629,38 +666,49 @@ HcclResult TaskGraphGenerator::ConnectNextAivTaskNodeAndPushInQue(const AivSingl
         return HcclResult::HCCL_SUCCESS;
     }
 
-    HCCL_DEBUG("[TaskGraphGenerator] Rank [%d], Block [%d], Pipe [%d], end of current Pipe [%d]: TrimType [%s].", currNode->rankIdx,
-                   currNode->blockIdx, currNode->pipeIdx, currNode->pipeIdx, currNode->task->GetType().Describe().c_str());
+    HCCL_DEBUG(
+        "[TaskGraphGenerator] Rank [%d], Block [%d], Pipe [%d], end of current Pipe [%d]: TrimType [%s].",
+        currNode->rankIdx, currNode->blockIdx, currNode->pipeIdx, currNode->pipeIdx,
+        currNode->task->GetType().Describe().c_str());
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TaskGraphGenerator::ExecSetFlagPrim(const AivSingleBlockTaskQues* aivTaskQueues, TaskNodePtr currNode,
-                                               std::vector<TaskNodePtr> &aivNodeQue, std::vector<TaskNodePtr> &SeenSetFlag,
-                                               u64 &unmatchedCnt, TaskNodePtr aivEnd)
+HcclResult TaskGraphGenerator::ExecSetFlagPrim(
+    const AivSingleBlockTaskQues* aivTaskQueues, TaskNodePtr currNode, std::vector<TaskNodePtr>& aivNodeQue,
+    std::vector<TaskNodePtr>& SeenSetFlag, u64& unmatchedCnt, TaskNodePtr aivEnd)
 {
-     CHK_PRT_RET(ConnectNextAivTaskNodeAndPushInQue(aivTaskQueues, currNode, aivNodeQue, aivEnd) != HcclResult::HCCL_SUCCESS,
-                HCCL_ERROR("[TaskGraphGenerator] Rank [%d], RankPos [%d], Block [%d], Pipe [%d], fail to generate dependency graph: TaskType [%s].",
-                           currNode->rankIdx, currNode->rankPos, currNode->blockIdx, currNode->pipeIdx, currNode->task->GetType().Describe().c_str()),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        ConnectNextAivTaskNodeAndPushInQue(aivTaskQueues, currNode, aivNodeQue, aivEnd) != HcclResult::HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[TaskGraphGenerator] Rank [%d], RankPos [%d], Block [%d], Pipe [%d], fail to generate dependency graph: "
+            "TaskType [%s].",
+            currNode->rankIdx, currNode->rankPos, currNode->blockIdx, currNode->pipeIdx,
+            currNode->task->GetType().Describe().c_str()),
+        HcclResult::HCCL_E_INTERNAL);
 
     SeenSetFlag.push_back(currNode);
     unmatchedCnt = 0;
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TaskGraphGenerator::ExecWaitFlagPrim(const AivSingleBlockTaskQues* aivTaskQueues, TaskNodePtr currNode,
-                                               std::vector<TaskNodePtr> &aivNodeQue, std::vector<TaskNodePtr> &SeenSetFlag,
-                                               u64 &unmatchedCnt, TaskNodePtr aivEnd)
+HcclResult TaskGraphGenerator::ExecWaitFlagPrim(
+    const AivSingleBlockTaskQues* aivTaskQueues, TaskNodePtr currNode, std::vector<TaskNodePtr>& aivNodeQue,
+    std::vector<TaskNodePtr>& SeenSetFlag, u64& unmatchedCnt, TaskNodePtr aivEnd)
 {
     std::vector<TaskNodePtr>::iterator setFlagIter;
     for (setFlagIter = SeenSetFlag.begin(); setFlagIter != SeenSetFlag.end(); setFlagIter++) {
-        if(IsSetWaitPeer((*setFlagIter), currNode)) {
+        if (IsSetWaitPeer((*setFlagIter), currNode)) {
             (*setFlagIter)->children.push_back(currNode);
             currNode->parents.push_back((*setFlagIter));
             (SeenSetFlag).erase(setFlagIter);
-             CHK_PRT_RET(ConnectNextAivTaskNodeAndPushInQue(aivTaskQueues, currNode, aivNodeQue, aivEnd) != HcclResult::HCCL_SUCCESS,
-                HCCL_ERROR("[TaskGraphGenerator] Rank [%d], RankPos [%d], Block [%d], Pipe [%d], fail to generate dependency graph: TaskType [%s].",
-                           currNode->rankIdx, currNode->rankPos, currNode->blockIdx, currNode->pipeIdx, currNode->task->GetType().Describe().c_str()),
+            CHK_PRT_RET(
+                ConnectNextAivTaskNodeAndPushInQue(aivTaskQueues, currNode, aivNodeQue, aivEnd)
+                    != HcclResult::HCCL_SUCCESS,
+                HCCL_ERROR(
+                    "[TaskGraphGenerator] Rank [%d], RankPos [%d], Block [%d], Pipe [%d], fail to generate dependency "
+                    "graph: TaskType [%s].",
+                    currNode->rankIdx, currNode->rankPos, currNode->blockIdx, currNode->pipeIdx,
+                    currNode->task->GetType().Describe().c_str()),
                 HcclResult::HCCL_E_INTERNAL);
             unmatchedCnt = 0;
             return HcclResult::HCCL_SUCCESS;
@@ -673,19 +721,25 @@ HcclResult TaskGraphGenerator::ExecWaitFlagPrim(const AivSingleBlockTaskQues* ai
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TaskGraphGenerator::ExecPipeBarrierPrim(const AivSingleBlockTaskQues* aivTaskQueues, TaskNodePtr currNode,
-                                                   std::vector<TaskNodePtr> &aivNodeQue, u64 &unmatchedCnt, TaskNodePtr aivEnd)
+HcclResult TaskGraphGenerator::ExecPipeBarrierPrim(
+    const AivSingleBlockTaskQues* aivTaskQueues, TaskNodePtr currNode, std::vector<TaskNodePtr>& aivNodeQue,
+    u64& unmatchedCnt, TaskNodePtr aivEnd)
 {
     TaskStubPipeBarrier* currBarrierStub = (TaskStubPipeBarrier*)(currNode->task);
     if (currBarrierStub->IsPipeBarrierAll()) {
-        map<TaskStub*, std::vector<TaskNode*>> *pipeRecord = &(AivTaskQueueStub::Global()->GetAllAivTasks().pipeBarrierAllRecord);
+        map<TaskStub*, std::vector<TaskNode*>>* pipeRecord
+            = &(AivTaskQueueStub::Global()->GetAllAivTasks().pipeBarrierAllRecord);
         (*pipeRecord)[currNode->task].push_back(currNode);
     }
 
-     CHK_PRT_RET(ConnectNextAivTaskNodeAndPushInQue(aivTaskQueues, currNode, aivNodeQue, aivEnd) != HcclResult::HCCL_SUCCESS,
-                HCCL_ERROR("[TaskGraphGenerator] Rank [%d], RankPos [%d], Block [%d], Pipe [%d], fail to generate dependency graph: TaskType [%s].",
-                           currNode->rankIdx, currNode->rankPos, currNode->blockIdx, currNode->pipeIdx, currNode->task->GetType().Describe().c_str()),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        ConnectNextAivTaskNodeAndPushInQue(aivTaskQueues, currNode, aivNodeQue, aivEnd) != HcclResult::HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[TaskGraphGenerator] Rank [%d], RankPos [%d], Block [%d], Pipe [%d], fail to generate dependency graph: "
+            "TaskType [%s].",
+            currNode->rankIdx, currNode->rankPos, currNode->blockIdx, currNode->pipeIdx,
+            currNode->task->GetType().Describe().c_str()),
+        HcclResult::HCCL_E_INTERNAL);
 
     unmatchedCnt = 0;
     return HcclResult::HCCL_SUCCESS;
@@ -698,8 +752,8 @@ bool TaskGraphGenerator::IsSetWaitPeer(const TaskNodePtr setFlagNode, const Task
         return false;
     }
 
-    TaskStubSetFlag *setFlag = dynamic_cast<TaskStubSetFlag*>(setFlagNode->task);
-    TaskStubWaitFlag *waitFlag = dynamic_cast<TaskStubWaitFlag*>(waitFlagNode->task);
+    TaskStubSetFlag* setFlag = dynamic_cast<TaskStubSetFlag*>(setFlagNode->task);
+    TaskStubWaitFlag* waitFlag = dynamic_cast<TaskStubWaitFlag*>(waitFlagNode->task);
 
     if (setFlag->GetBlockId() != waitFlag->GetBlockId()) {
         return false;
@@ -720,14 +774,15 @@ bool TaskGraphGenerator::IsSetWaitPeer(const TaskNodePtr setFlagNode, const Task
     return (setFlag->GetEventId() == waitFlag->GetEventId());
 }
 
-HcclResult TaskGraphGenerator::GenGraphInterAivs(std::map<RankId, std::vector<TaskNode*>> &rank2AivTask)
+HcclResult TaskGraphGenerator::GenGraphInterAivs(std::map<RankId, std::vector<TaskNode*>>& rank2AivTask)
 {
     std::vector<TaskNodePtr> graphNodeQue;
     SeenInterRankSendSync seenInterAivSendSync;
     u64 unmatchedCnt = 0;
 
-    CHK_PRT_RET(ExecAivNode4Graph(rank2AivTask, graphNodeQue) != HcclResult::HCCL_SUCCESS,
-                HCCL_ERROR("[TaskGraphGenerator] Fail to init graphAivNodeQue."), HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        ExecAivNode4Graph(rank2AivTask, graphNodeQue) != HcclResult::HCCL_SUCCESS,
+        HCCL_ERROR("[TaskGraphGenerator] Fail to init graphAivNodeQue."), HcclResult::HCCL_E_INTERNAL);
 
     while (!graphNodeQue.empty()) {
         if (unmatchedCnt >= graphNodeQue.size()) {
@@ -742,10 +797,10 @@ HcclResult TaskGraphGenerator::GenGraphInterAivs(std::map<RankId, std::vector<Ta
         TaskNodePtr currNode = graphNodeQue[0];
         graphNodeQue.erase(graphNodeQue.begin());
 
-        CHK_PRT_RET(ProcAivNode4Graph(currNode, graphNodeQue, seenInterAivSendSync, unmatchedCnt)
-                        != HcclResult::HCCL_SUCCESS,
-                    HCCL_ERROR("[TaskGraphGenerator] Rank [%d], fail to proceed taskNode.", currNode->rankIdx),
-                    HcclResult::HCCL_E_INTERNAL);
+        CHK_PRT_RET(
+            ProcAivNode4Graph(currNode, graphNodeQue, seenInterAivSendSync, unmatchedCnt) != HcclResult::HCCL_SUCCESS,
+            HCCL_ERROR("[TaskGraphGenerator] Rank [%d], fail to proceed taskNode.", currNode->rankIdx),
+            HcclResult::HCCL_E_INTERNAL);
     }
 
     if (!seenInterAivSendSync.empty()) {
@@ -753,8 +808,8 @@ HcclResult TaskGraphGenerator::GenGraphInterAivs(std::map<RankId, std::vector<Ta
             if (!std::get<2>(curGmAddrRecord.second)) {
                 for (auto& sendSyncNode : std::get<1>(curGmAddrRecord.second)) {
                     sendSyncNode->unmatch = true;
-                    HCCL_WARNING("[TaskGraphGenerator] unmatched inter-aiv sendSyncNode: GmAddr [%d],  ",
-                               curGmAddrRecord.first);
+                    HCCL_WARNING(
+                        "[TaskGraphGenerator] unmatched inter-aiv sendSyncNode: GmAddr [%d],  ", curGmAddrRecord.first);
                 }
             }
         }
@@ -763,23 +818,25 @@ HcclResult TaskGraphGenerator::GenGraphInterAivs(std::map<RankId, std::vector<Ta
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TaskGraphGenerator::ExecAivNode4Graph(std::map<RankId, std::vector<TaskNode*>> &rank2AivTask, std::vector<TaskNodePtr> &graphNodeQue)
+HcclResult TaskGraphGenerator::ExecAivNode4Graph(
+    std::map<RankId, std::vector<TaskNode*>>& rank2AivTask, std::vector<TaskNodePtr>& graphNodeQue)
 {
     for (auto& aivPair : rank2AivTask) {
         for (auto& aivStart : aivPair.second) {
             aivStart->execFlag = true;
             for (auto& blockStart : aivStart->children) {
-                CHK_PRT_RET(ExecNode4Graph(blockStart, graphNodeQue) != HcclResult::HCCL_SUCCESS,
-                            HCCL_ERROR("[TaskGraphGenerator] Fail to init graphAivNodeQue."), HcclResult::HCCL_E_INTERNAL);
+                CHK_PRT_RET(
+                    ExecNode4Graph(blockStart, graphNodeQue) != HcclResult::HCCL_SUCCESS,
+                    HCCL_ERROR("[TaskGraphGenerator] Fail to init graphAivNodeQue."), HcclResult::HCCL_E_INTERNAL);
             }
         }
     }
-    return HcclResult::HCCL_SUCCESS; 
+    return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TaskGraphGenerator::ProcAivNode4Graph(TaskNodePtr currNode, std::vector<TaskNodePtr> &graphNodeQue,
-                                                 SeenInterRankSendSync &seenInterRankSendSync,
-                                                 u64 &unmatchedCnt)
+HcclResult TaskGraphGenerator::ProcAivNode4Graph(
+    TaskNodePtr currNode, std::vector<TaskNodePtr>& graphNodeQue, SeenInterRankSendSync& seenInterRankSendSync,
+    u64& unmatchedCnt)
 {
     if (!IsExecutable(currNode)) {
         graphNodeQue.push_back(currNode);
@@ -787,7 +844,7 @@ HcclResult TaskGraphGenerator::ProcAivNode4Graph(TaskNodePtr currNode, std::vect
         HCCL_DEBUG("[TaskGraphGenerator] taskNode not executable, push back to the queue.");
         return HcclResult::HCCL_SUCCESS;
     }
-    if(currNode->task == nullptr){
+    if (currNode->task == nullptr) {
         currNode->execFlag = true;
         HCCL_DEBUG("[TaskGraphGenerator] aiv end node.");
         return HcclResult::HCCL_SUCCESS;
@@ -805,9 +862,10 @@ HcclResult TaskGraphGenerator::ProcAivNode4Graph(TaskNodePtr currNode, std::vect
         case TaskTypeStub::WAIT_FLAG:
         case TaskTypeStub::PIPE_BARRIER:
         case TaskTypeStub::AIV_END:
-            CHK_PRT_RET(ExecNode4Graph(currNode, graphNodeQue) != HcclResult::HCCL_SUCCESS,
-                        HCCL_ERROR("[TaskGraphGenerator] Rank [%d], fail to execute taskNode.", currNode->rankIdx),
-                        HcclResult::HCCL_E_INTERNAL);
+            CHK_PRT_RET(
+                ExecNode4Graph(currNode, graphNodeQue) != HcclResult::HCCL_SUCCESS,
+                HCCL_ERROR("[TaskGraphGenerator] Rank [%d], fail to execute taskNode.", currNode->rankIdx),
+                HcclResult::HCCL_E_INTERNAL);
             unmatchedCnt = 0;
             return HcclResult::HCCL_SUCCESS;
 
@@ -828,11 +886,12 @@ HcclResult TaskGraphGenerator::ProcAivNode4Graph(TaskNodePtr currNode, std::vect
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TaskGraphGenerator::ProcInterAivSendSyncNode4Graph(TaskNodePtr currNode, std::vector<TaskNodePtr> &graphNodeQue,
-                                                           SeenInterRankSendSync &seenInterRankSendSync, u64 &unmatchedCnt)
+HcclResult TaskGraphGenerator::ProcInterAivSendSyncNode4Graph(
+    TaskNodePtr currNode, std::vector<TaskNodePtr>& graphNodeQue, SeenInterRankSendSync& seenInterRankSendSync,
+    u64& unmatchedCnt)
 {
     int32_t* flagAddr;
-    int32_t  flagValue;
+    int32_t flagValue;
     switch (currNode->task->GetType()) {
         case TaskTypeStub::SEND_SYNC:
             flagAddr = ((TaskStubSendSync*)(currNode->task))->GetFlagAddr();
@@ -865,18 +924,20 @@ HcclResult TaskGraphGenerator::ProcInterAivSendSyncNode4Graph(TaskNodePtr currNo
     }
     std::get<1>(seenInterRankSendSync[flagAddr]).push_back(currNode);
 
-    CHK_PRT_RET(ExecNode4Graph(currNode, graphNodeQue) != HcclResult::HCCL_SUCCESS,
-                        HCCL_ERROR("[TaskGraphGenerator] Fail to init graphAivNodeQue."), HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        ExecNode4Graph(currNode, graphNodeQue) != HcclResult::HCCL_SUCCESS,
+        HCCL_ERROR("[TaskGraphGenerator] Fail to init graphAivNodeQue."), HcclResult::HCCL_E_INTERNAL);
 
     unmatchedCnt = 0;
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TaskGraphGenerator::ProcInterAivRecvSyncNode4Graph(TaskNodePtr currNode, std::vector<TaskNodePtr> &graphNodeQue,
-                                                              SeenInterRankSendSync &seenInterRankSendSync, u64 &unmatchedCnt)
+HcclResult TaskGraphGenerator::ProcInterAivRecvSyncNode4Graph(
+    TaskNodePtr currNode, std::vector<TaskNodePtr>& graphNodeQue, SeenInterRankSendSync& seenInterRankSendSync,
+    u64& unmatchedCnt)
 {
     int32_t* flagAddr = ((TaskStubRecvSync*)(currNode->task))->GetFlagAddr();
-    int32_t  flagValue = ((TaskStubRecvSync*)(currNode->task))->GetFlagValue();
+    int32_t flagValue = ((TaskStubRecvSync*)(currNode->task))->GetFlagValue();
 
     if (seenInterRankSendSync.find(flagAddr) == seenInterRankSendSync.end()) {
         graphNodeQue.push_back(currNode);
@@ -889,12 +950,13 @@ HcclResult TaskGraphGenerator::ProcInterAivRecvSyncNode4Graph(TaskNodePtr currNo
                 sendNodePtr->children.push_back(currNode);
                 currNode->parents.push_back(sendNodePtr);
             }
-            CHK_PRT_RET(ExecNode4Graph(currNode, graphNodeQue) != HcclResult::HCCL_SUCCESS,
-                        HCCL_ERROR("[TaskGraphGenerator] Fail to init graphAivNodeQue."), HcclResult::HCCL_E_INTERNAL);
+            CHK_PRT_RET(
+                ExecNode4Graph(currNode, graphNodeQue) != HcclResult::HCCL_SUCCESS,
+                HCCL_ERROR("[TaskGraphGenerator] Fail to init graphAivNodeQue."), HcclResult::HCCL_E_INTERNAL);
             std::get<2>(seenInterRankSendSync[flagAddr]) = true;
             unmatchedCnt = 0;
             return HcclResult::HCCL_SUCCESS;
-        }    
+        }
     }
 
     graphNodeQue.push_back(currNode);
@@ -902,4 +964,4 @@ HcclResult TaskGraphGenerator::ProcInterAivRecvSyncNode4Graph(TaskNodePtr currNo
     return HcclResult::HCCL_SUCCESS;
 }
 
-} // namespace hccl
+} // namespace checker

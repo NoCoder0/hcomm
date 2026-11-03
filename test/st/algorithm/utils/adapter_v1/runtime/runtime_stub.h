@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef RUNTIME_STUB_H
 #define RUNTIME_STUB_H
@@ -32,39 +32,39 @@ using namespace hccl;
 extern "C" {
 #endif
 
-HcclResult hrtGetDevice(s32 *deviceLogicId);
+HcclResult hrtGetDevice(s32* deviceLogicId);
 
-HcclResult hrtMalloc(void **devPtr, u64 size, bool Level2Address);
+HcclResult hrtMalloc(void** devPtr, u64 size, bool Level2Address);
 
-HcclResult hrtGetDeviceType(DevType &devType);
+HcclResult hrtGetDeviceType(DevType& devType);
 
-HcclResult hrtGetHccsPortNum(u32 deviceLogicId, s32 &num);
+HcclResult hrtGetHccsPortNum(u32 deviceLogicId, s32& num);
 
-HcclResult hrtGetDeviceIndexByPhyId(u32 devicePhyId, u32 &deviceLogicId);
+HcclResult hrtGetDeviceIndexByPhyId(u32 devicePhyId, u32& deviceLogicId);
 
-HcclResult hrtFree(void *devPtr);
-HcclResult hrtGetDeviceInfo(u32 deviceId, HcclRtDeviceModuleType hcclModuleType,
-    HcclRtDeviceInfoType hcclInfoType, s64 &val);
+HcclResult hrtFree(void* devPtr);
+HcclResult
+hrtGetDeviceInfo(u32 deviceId, HcclRtDeviceModuleType hcclModuleType, HcclRtDeviceInfoType hcclInfoType, s64& val);
 
 HcclResult hrtGetDeviceSatMode(aclrtFloatOverflowMode* floatOverflowMode);
-HcclResult hrtMemSyncCopy(void *dst, uint64_t destMax, const void *src, uint64_t count, HcclRtMemcpyKind kind);
+HcclResult hrtMemSyncCopy(void* dst, uint64_t destMax, const void* src, uint64_t count, HcclRtMemcpyKind kind);
 #ifdef __cplusplus
 }
 #endif
 
-rtError_t rtStreamGetCaptureInfo(rtStream_t stm, rtStreamCaptureStatus *status, rtModel_t *captureMdl);
+rtError_t rtStreamGetCaptureInfo(rtStream_t stm, rtStreamCaptureStatus* status, rtModel_t* captureMdl);
 
 HcclResult hrtSetDevice(s32 deviceLogicId);
 
-HcclResult hrtGetPairDeviceLinkType(u32 phyDevId, u32 otherPhyDevId, LinkTypeInServer &linkType);
+HcclResult hrtGetPairDeviceLinkType(u32 phyDevId, u32 otherPhyDevId, LinkTypeInServer& linkType);
 
-HcclResult hrtHalGetDeviceInfo(uint32_t devId, int32_t moduleType, int32_t infoType, int64_t *value);
+HcclResult hrtHalGetDeviceInfo(uint32_t devId, int32_t moduleType, int32_t infoType, int64_t* value);
 
-HcclResult hrtGetStreamId(HcclRtStream stream, s32 &streamId);
+HcclResult hrtGetStreamId(HcclRtStream stream, s32& streamId);
 
 HcclResult hrtStreamActive(HcclRtStream active_stream, HcclRtStream stream);
 
-HcclResult hrtCtxGetCurrent(HcclRtContext *ctx);
+HcclResult hrtCtxGetCurrent(HcclRtContext* ctx);
 
 HcclResult hrtCtxSetCurrent(HcclRtContext ctx);
 
@@ -72,63 +72,62 @@ void hrtErrMSetErrorContextPub(ErrContextPub errorContextPub);
 
 ErrContextPub hrtErrMGetErrorContextPub();
 
-HcclResult hrtRaGetSingleSocketVnicIpInfo(u32 phy_id, DeviceIdType deviceType, u32 deviceId, hccl::HcclIpAddress &vnicIP);
+HcclResult
+hrtRaGetSingleSocketVnicIpInfo(u32 phy_id, DeviceIdType deviceType, u32 deviceId, hccl::HcclIpAddress& vnicIP);
 
+HcclResult hrtGetHostIf(vector<pair<string, HcclIpAddress>>& hostIfs, u32 devPhyId);
 
+HcclResult hrtDrvGetPlatformInfo(uint32_t* info);
 
-HcclResult hrtGetHostIf(vector<pair<string, HcclIpAddress>> &hostIfs, u32 devPhyId);
+HcclResult hrtDrvGetDevNum(uint32_t* num_dev);
 
-HcclResult hrtDrvGetPlatformInfo(uint32_t *info);
+HcclResult hrtFreeHost(void* hostPtr);
 
-HcclResult hrtDrvGetDevNum(uint32_t *num_dev);
-
-HcclResult hrtFreeHost(void *hostPtr);
-
-HcclResult hrtMallocHost(void **hostPtr, u64 size);
+HcclResult hrtMallocHost(void** hostPtr, u64 size);
 HcclResult hrtResetDevice(s32 deviceLogicId);
 
 HcclResult hrtOpenTrace(void);
 
 void hrtTraceDestroy(TraHandle handle);
 
-HcclResult hrtTraceSubmit(TraHandle handle, const void *buffer, u32 bufSize);
+HcclResult hrtTraceSubmit(TraHandle handle, const void* buffer, u32 bufSize);
 
-HcclResult hrtTraceCreateWithAttr(const char *objName, TraHandle &handle);
+HcclResult hrtTraceCreateWithAttr(const char* objName, TraHandle& handle);
 
-HcclResult hrtTraceSetGlobalAttr(const TraceGlobalAttr *attr);
+HcclResult hrtTraceSetGlobalAttr(const TraceGlobalAttr* attr);
 
 HcclResult hrtTraceSave(TracerType tracerType, bool syncFlag);
-HcclResult hrtRaGetDeviceAllNicIP(std::vector<std::vector<hccl::HcclIpAddress>> &ipAddr);
+HcclResult hrtRaGetDeviceAllNicIP(std::vector<std::vector<hccl::HcclIpAddress>>& ipAddr);
 
 uint64_t MsprofSysCycleTime();
-using BinHandle = void *;
+using BinHandle = void*;
 typedef struct tagRtDevBinary rtDevBinary_t;
-HcclResult hrtMemAsyncCopy(void *dst, uint64_t destMax, const void *src, uint64_t count,
-    HcclRtMemcpyKind kind, rtStream_t stream);
+HcclResult
+hrtMemAsyncCopy(void* dst, uint64_t destMax, const void* src, uint64_t count, HcclRtMemcpyKind kind, rtStream_t stream);
 
-HcclResult  hrtFunctionRegister(BinHandle binHandle, const void *stubFunc, const char *stubName, const void *devFunc,
-                                uint32_t funcMode);
+HcclResult hrtFunctionRegister(
+    BinHandle binHandle, const void* stubFunc, const char* stubName, const void* devFunc, uint32_t funcMode);
 
-HcclResult hrtDevBinaryRegister(const rtDevBinary_t *bin, BinHandle *handle);
+HcclResult hrtDevBinaryRegister(const rtDevBinary_t* bin, BinHandle* handle);
 
-HcclResult hrtKernelLaunchWithFlagV2(const void *stubFunc, uint32_t numBlocks, rtArgsEx_t *argsInfo, rtSmDesc_t *smDesc,
-    rtStream_t stream, uint32_t flags, const rtTaskCfgInfo_t *cfgInfo);
+HcclResult hrtKernelLaunchWithFlagV2(
+    const void* stubFunc, uint32_t numBlocks, rtArgsEx_t* argsInfo, rtSmDesc_t* smDesc, rtStream_t stream,
+    uint32_t flags, const rtTaskCfgInfo_t* cfgInfo);
 
-aclError aclrtBinaryGetFunction(const aclrtBinHandle binHandle, const char *kernelName,
-    aclrtFuncHandle *funcHandle);
+aclError aclrtBinaryGetFunction(const aclrtBinHandle binHandle, const char* kernelName, aclrtFuncHandle* funcHandle);
 
 aclError aclrtBinaryUnLoad(aclrtBinHandle binHandle);
 
-aclError aclrtBinaryLoadFromFile(const char* binPath, aclrtBinaryLoadOptions *options,
-    aclrtBinHandle *binHandle);
+aclError aclrtBinaryLoadFromFile(const char* binPath, aclrtBinaryLoadOptions* options, aclrtBinHandle* binHandle);
 
-aclError aclrtLaunchKernelWithHostArgs(aclrtFuncHandle funcHandle, uint32_t numBlocks, aclrtStream stream, aclrtLaunchKernelCfg *cfg,
-    void *hostArgs, size_t argsSize, aclrtPlaceHolderInfo *placeHolderArray, size_t placeHolderNum);
+aclError aclrtLaunchKernelWithHostArgs(
+    aclrtFuncHandle funcHandle, uint32_t numBlocks, aclrtStream stream, aclrtLaunchKernelCfg* cfg, void* hostArgs,
+    size_t argsSize, aclrtPlaceHolderInfo* placeHolderArray, size_t placeHolderNum);
 
-aclError aclmdlRICaptureGetInfo(aclrtStream stream, aclmdlRICaptureStatus *captureStatus, aclmdlRI *rtModel);
+aclError aclmdlRICaptureGetInfo(aclrtStream stream, aclmdlRICaptureStatus* captureStatus, aclmdlRI* rtModel);
 
-aclError aclrtGetStreamAttribute(aclrtStream stream, aclrtStreamAttr stmAttrType, aclrtStreamAttrValue *value);
+aclError aclrtGetStreamAttribute(aclrtStream stream, aclrtStreamAttr stmAttrType, aclrtStreamAttrValue* value);
 
-aclError aclrtCacheLastTaskExtendInfo(const char *tag, size_t tagLen);
+aclError aclrtCacheLastTaskExtendInfo(const char* tag, size_t tagLen);
 
 #endif

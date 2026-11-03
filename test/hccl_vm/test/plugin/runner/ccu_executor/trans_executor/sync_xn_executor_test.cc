@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: unit test for SyncXnExecutor
  * Author: xx
  */
@@ -24,8 +27,9 @@ using namespace hcomm::CcuRep;
 
 class SyncXnExecutorTest : public testing::Test {
 protected:
-    void SetUp() override {
-        auto &mgr = CcuResourceManager::GetInstance();
+    void SetUp() override
+    {
+        auto& mgr = CcuResourceManager::GetInstance();
         mgr.Init(0, 2, RunnerCcuVersion::CCU_V1, {});
         mgr.Init(1, 2, RunnerCcuVersion::CCU_V1, {});
     }
@@ -33,12 +37,11 @@ protected:
 };
 
 // Test: SyncXnExecutor struct size check
-TEST_F(SyncXnExecutorTest, StructSize) {
-    EXPECT_GT(sizeof(SyncXnExecutor), 0);
-}
+TEST_F(SyncXnExecutorTest, StructSize) { EXPECT_GT(sizeof(SyncXnExecutor), 0); }
 
 // Test: SyncXnExecutor default constructor
-TEST_F(SyncXnExecutorTest, DefaultConstructor) {
+TEST_F(SyncXnExecutorTest, DefaultConstructor)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
     SyncXnExecutor executor(0, 0, 0, instr, nullptr);
@@ -46,45 +49,49 @@ TEST_F(SyncXnExecutorTest, DefaultConstructor) {
 }
 
 // Test: SyncXnExecutor parameterized constructor
-TEST_F(SyncXnExecutorTest, ParameterizedConstructor) {
+TEST_F(SyncXnExecutorTest, ParameterizedConstructor)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     SyncXnExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Describe());
 }
 
 // Test: SyncXnExecutor Parser with zero values
-TEST_F(SyncXnExecutorTest, ParserZeroValues) {
+TEST_F(SyncXnExecutorTest, ParserZeroValues)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     SyncXnExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Parser());
     EXPECT_NO_THROW(executor.Describe());
 }
 
 // Test: SyncXnExecutor Parser with max values
-TEST_F(SyncXnExecutorTest, ParserMaxValues) {
+TEST_F(SyncXnExecutorTest, ParserMaxValues)
+{
     CcuInstr instr;
     memset(&instr, 0xFF, sizeof(instr));
-    
+
     SyncXnExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Parser());
     EXPECT_NO_THROW(executor.Describe());
 }
 
 // Test: SyncXnExecutor Parser with specific Xn parameters
-TEST_F(SyncXnExecutorTest, ParserXnParameters) {
+TEST_F(SyncXnExecutorTest, ParserXnParameters)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     instr.v1.syncXn.rmtXnId = 100;
     instr.v1.syncXn.locXnId = 200;
     instr.v1.syncXn.channelId = 5;
     instr.v1.syncXn.setRmtCKEId = 10;
     instr.v1.syncXn.setRmtCKEMask = 0xFF;
-    
+
     SyncXnExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Parser());
     std::string desc = executor.Describe();
@@ -92,12 +99,13 @@ TEST_F(SyncXnExecutorTest, ParserXnParameters) {
 }
 
 // Test: SyncXnExecutor with different Xn IDs
-TEST_F(SyncXnExecutorTest, DifferentXnIds) {
+TEST_F(SyncXnExecutorTest, DifferentXnIds)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     uint16_t xnIds[] = {0, 1, SimCcuV1::CCU_RESOURCE_XN_NUM / 2, SimCcuV1::CCU_RESOURCE_XN_NUM - 1, 0xFFFF};
-    
+
     for (auto xnId : xnIds) {
         instr.v1.syncXn.locXnId = xnId;
         instr.v1.syncXn.rmtXnId = xnId;
@@ -108,13 +116,14 @@ TEST_F(SyncXnExecutorTest, DifferentXnIds) {
 }
 
 // Test: SyncXnExecutor Describe contains expected keywords
-TEST_F(SyncXnExecutorTest, DescribeContent) {
+TEST_F(SyncXnExecutorTest, DescribeContent)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
     instr.v1.syncXn.rmtXnId = 10;
     instr.v1.syncXn.locXnId = 20;
     instr.v1.syncXn.channelId = 5;
-    
+
     SyncXnExecutor executor(0, 0, 0, instr, nullptr);
     executor.Parser();
     std::string desc = executor.Describe();
@@ -123,17 +132,19 @@ TEST_F(SyncXnExecutorTest, DescribeContent) {
 }
 
 // Test: SyncXnExecutor inheritance check
-TEST_F(SyncXnExecutorTest, InheritanceCheck) {
+TEST_F(SyncXnExecutorTest, InheritanceCheck)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     SyncXnExecutor executor(0, 0, 0, instr, nullptr);
     CcuExecutorBase* base = &executor;
     EXPECT_NE(base, nullptr);
 }
 
-TEST_F(SyncXnExecutorTest, ProcessWithInvalidChannelId) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(SyncXnExecutorTest, ProcessWithInvalidChannelId)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
     instr.v1.syncXn.channelId = SimCcuV1::MAX_CCU_CHANNEL_NUM;
@@ -149,7 +160,8 @@ TEST_F(SyncXnExecutorTest, ProcessWithInvalidChannelId) {
     EXPECT_NO_THROW(executor.Process(mgr));
 }
 
-TEST_F(SyncXnExecutorTest, RunWithCkeNotSatisfied) {
+TEST_F(SyncXnExecutorTest, RunWithCkeNotSatisfied)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
     instr.v1.syncXn.channelId = 0;
@@ -162,8 +174,9 @@ TEST_F(SyncXnExecutorTest, RunWithCkeNotSatisfied) {
     executor.Run();
 }
 
-TEST_F(SyncXnExecutorTest, ProcessWithValidChannel) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(SyncXnExecutorTest, ProcessWithValidChannel)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     mgr.UpdateXnValue(0, 0, 0, 0x2000);
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
@@ -180,7 +193,8 @@ TEST_F(SyncXnExecutorTest, ProcessWithValidChannel) {
     EXPECT_NO_THROW(executor.Process(mgr));
 }
 
-TEST_F(SyncXnExecutorTest, RunWithCkeNotSatisfied) {
+TEST_F(SyncXnExecutorTest, RunWithCkeNotSatisfied)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
     instr.v1.syncXn.channelId = 0;

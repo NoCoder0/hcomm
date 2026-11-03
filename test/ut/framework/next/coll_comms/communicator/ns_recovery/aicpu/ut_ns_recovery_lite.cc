@@ -1,3 +1,13 @@
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "gtest/gtest.h"
 #include <memory>
 
@@ -12,7 +22,7 @@ protected:
     void TearDown() override {}
 
     // 初始化 NsRecoveryLite 并用两个默认构造的 HDCommunicate 填充 hdcHandler_
-    void InitWithDefaultHdc(NsRecoveryLite &lite)
+    void InitWithDefaultHdc(NsRecoveryLite& lite)
     {
         auto h2d = std::make_shared<HDCommunicate>();
         auto d2h = std::make_shared<HDCommunicate>();

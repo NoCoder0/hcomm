@@ -28,8 +28,8 @@
 #include "communicator_impl.h"
 #include "stream_manager.h"
 #include "coll_alg_component.h"
-#include "base_config.h"
-#include "env_config.h"
+#include "base_config_legacy.h"
+#include "env_config_v2.h"
 #include "not_support_exception.h"
 #undef private
 #undef protected
@@ -40,15 +40,9 @@ using namespace std;
 
 class NewCollServiceCcuImplTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CommunicatorImplTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CommunicatorImplTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CommunicatorImplTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CommunicatorImplTest TearDown" << std::endl; }
 
     virtual void SetUp()
     {
@@ -56,8 +50,9 @@ protected:
         BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
         LinkData linkData(portType, 0, 1, 0, 1);
         CcuChannelInfo channelInfo;
-        vector<CcuJetty *> ccuJettys;
-        auto c = std::make_unique<CcuConnection>(linkData.GetLocalAddr(), linkData.GetRemoteAddr(), channelInfo, ccuJettys);
+        vector<CcuJetty*> ccuJettys;
+        auto c = std::make_unique<CcuConnection>(
+            linkData.GetLocalAddr(), linkData.GetRemoteAddr(), channelInfo, ccuJettys);
         ccuTransport = new CcuTransport(fakeSocket, connection);
         std::cout << "A Test case in CommunicatorImplTest SetUP" << std::endl;
     }
@@ -66,19 +61,19 @@ protected:
     {
         GlobalMockObject::verify();
         delete fakeSocket;
-    
+
         delete ccuTransport;
         std::cout << "A Test case in CommunicatorImplTest TearDown" << std::endl;
     }
 
-    Socket *fakeSocket;
+    Socket* fakeSocket;
     IpAddress localIp;
     IpAddress remoteIp;
 
     Eid eid;
     RdmaHandle rdmaHandle;
-    CcuConnection *connection;
-    CcuTransport *ccuTransport;
+    CcuConnection* connection;
+    CcuTransport* ccuTransport;
 };
 
 TEST(NewCollServiceCcuImplTest, should_return_success_when_calling_init)
@@ -87,7 +82,7 @@ TEST(NewCollServiceCcuImplTest, should_return_success_when_calling_init)
     MOCKER_CPP(&NewCollServiceCcuImpl::CollAlgComponentInit).stubs().will(ignoreReturnValue());
 
     // then
-    CommunicatorImpl *comm;
+    CommunicatorImpl* comm;
     NewCollServiceCcuImpl collServiceCcuImpl(comm);
 
     // check
@@ -123,14 +118,15 @@ TEST(NewCollServiceCcuImplTest, should_return_success_when_calling_LoadWithOpBas
 
 class FakeCollAlgComponent : public CollAlgComponent {
 public:
-    FakeCollAlgComponent() : CollAlgComponent(nullptr, DevType::DEV_TYPE_950, 0, 1){};
-    HcclResult Orchestrate(const CollAlgOperator &op, const CollAlgParams &params,
-                                   const string &algName, InsQuePtr queue)
+    FakeCollAlgComponent() : CollAlgComponent(nullptr, DevType::DEV_TYPE_950, 0, 1) {};
+    HcclResult
+    Orchestrate(const CollAlgOperator& op, const CollAlgParams& params, const string& algName, InsQuePtr queue)
     {
-    return HCCL_SUCCESS;
+        return HCCL_SUCCESS;
     }
 
-    HcclResult Orchestrate(const CollAlgOperator &op, const CollAlgParams &params, const string &algName, PrimQuePtr queue)
+    HcclResult
+    Orchestrate(const CollAlgOperator& op, const CollAlgParams& params, const string& algName, PrimQuePtr queue)
     {
         return HCCL_SUCCESS;
     }
@@ -138,7 +134,7 @@ public:
 
 TEST(NewCollServiceCcuImplTest, should_return_success_when_calling_Orchestrate)
 {
-    CommunicatorImpl *comm;
+    CommunicatorImpl* comm;
     NewCollServiceCcuImpl collServiceCcuImpl(comm);
     CollAlgOperator op;
     // collServiceCcuImpl.collAlgComponent = std::make_unique<FakeCollAlgComponent>();
@@ -159,12 +155,13 @@ TEST(NewCollServiceCcuImplTest, should_return_fail_when_calling_CollAlgComponent
     GlobalMockObject::verify();
     MOCKER(HrtGetDevice).stubs().will(returnValue(0));
     EnvTestConfig envTestConfig;
-    EnvTestConfig &fakeEnvTestConfig = envTestConfig;
-    fakeEnvTestConfig.testCase = CfgField<HcclDebugTestCase>("CHIP_VERIFY_HCCL_TEST_CASE", HcclDebugTestCase::HCCL_INTRA_RANK_NOTIFY, CastTestCase);
+    EnvTestConfig& fakeEnvTestConfig = envTestConfig;
+    fakeEnvTestConfig.testCase = CfgField<HcclDebugTestCase>(
+        "CHIP_VERIFY_HCCL_TEST_CASE", HcclDebugTestCase::HCCL_INTRA_RANK_NOTIFY, CastTestCase);
     fakeEnvTestConfig.testCase.isParsed = true;
     MOCKER_CPP(&EnvConfig::GetTestConfig).stubs().will(returnValue(fakeEnvTestConfig));
 
-    CommunicatorImpl *comm;
+    CommunicatorImpl* comm;
     NewCollServiceCcuImpl collServiceCcuImpl(comm);
 
     EXPECT_THROW(collServiceCcuImpl.CollAlgComponentInit(), NullPtrException);
@@ -194,6 +191,6 @@ TEST(NewCollServiceCcuImplTest, should_return_success_when_calling_getCcuTaskInf
     NewCollServiceCcuImpl collServiceCcuImpl(comm.get());
     rtCcuTaskGroup_t group;
 
-    EXPECT_NO_THROW(collServiceCcuImpl.GetCcuTaskInfo(nullptr, (void *)&group));
+    EXPECT_NO_THROW(collServiceCcuImpl.GetCcuTaskInfo(nullptr, (void*)&group));
     EXPECT_EQ(1, group.taskNum);
 }

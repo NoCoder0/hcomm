@@ -10,35 +10,76 @@
 
 #ifndef SERVER_SOCKET_MGR_H
 #define SERVER_SOCKET_MGR_H
-
 #include <mutex>
-#include <memory>
-
+#include <unordered_map>
+#include <vector>
 #include "hccl/hccl_res.h"
-#include "ip_address.h"
-#include "../../../../../../legacy/ascend950/unified_platform/resource/socket/socket.h"
+// Orion
+#include "socket/socket.h"
+#include "virtual_topo.h"
+#include "socket_config.h"
+#include "socket_manager.h"
+#include "orion_adapter_rts.h"
+#include "socket_handle_manager.h"
+#include "host_socket_handle_manager.h"
 
 namespace hcomm {
 
 class ServerSocketMgr {
 public:
-    static HcclResult ListenStart(const uint32_t devPhyId, const CommAddr &commAddr, const Hccl::NicType nicType);
-    static void DeInit(u32 devPhyId);
+    ServerSocketMgr()
+    {
+        // Ensure that (Host)SocketHandleManager destruct after the destruction of device/host ServerSocketMap_.
+        (void)Hccl::SocketHandleManager::GetInstance();
+        (void)Hccl::HostSocketHandleManager::GetInstance();
+    };
+    // 进程级唯一实例：EndpointProcMgr 值成员
+    ServerSocketMgr(const ServerSocketMgr&) = delete;
+    ServerSocketMgr& operator=(const ServerSocketMgr&) = delete;
+    ServerSocketMgr(ServerSocketMgr&&) = delete;
+    ServerSocketMgr& operator=(ServerSocketMgr&&) = delete;
+
+    ~ServerSocketMgr() {};
+
+    HcclResult ServerSocketStartListen(
+        const Hccl::PortData& localPort, const Hccl::NicType nicType, const uint32_t devPhyId, uint32_t* port);
+    HcclResult
+    ServerSocketStopListen(const Hccl::PortData& localPort, const Hccl::NicType nicType, const uint32_t port);
+    void DeInit(u32 devPhyId);
+
+    HcclResult GetServerSocket(
+        const Hccl::PortData& localPort, const Hccl::NicType nicType, const uint32_t port,
+        std::shared_ptr<Hccl::Socket>& serverSocket);
+    HcclResult AddWhiteList(
+        const Hccl::PortData& localPort, const Hccl::NicType nicType, const uint32_t devPhyId, const std::string& tag,
+        uint32_t connLimit);
+    HcclResult DeleteWhiteList(
+        const Hccl::PortData& localPort, const Hccl::NicType nicType, const uint32_t devPhyId, const std::string& tag,
+        uint32_t connLimit);
 
 private:
-    static ServerSocketMgr &GetInstance(const uint32_t devicePhyId);
-    HcclResult ListenStart_(const CommAddr &commAddr, const Hccl::NicType nicType);
+    HcclResult DeviceSocketListen(const Hccl::PortData& localPort, const uint32_t devPhyId, uint32_t* port);
+    HcclResult HostSocketListen(const Hccl::PortData& localPort, const uint32_t devPhyId, uint32_t* port);
+    HcclResult DeviceSocketStopListen(const Hccl::PortData& localPort, const uint32_t port);
+    HcclResult HostSocketStopListen(const Hccl::PortData& localPort, const uint32_t port);
+    HcclResult
+    ListenSocketIfNeeded(Hccl::Socket* serverSocket, bool isListen, uint32_t& actualPort, uint32_t* outPort) const;
+    HcclResult DeInitCompatServerIfListening(const Hccl::PortData& localPort, const uint32_t port);
+    void DeInitDeviceSockets(u32 devPhyId);
+    void DeInitHostSockets(u32 devPhyId);
+    HcclResult GetSocketHandle(
+        const Hccl::PortData& localPort, const Hccl::NicType nicType, const uint32_t devPhyId,
+        Hccl::SocketHandle& socketHandle) const;
+    std::vector<Hccl::RaSocketWhitelist> BuildWhiteList(const std::string& tag, uint32_t connLimit);
 
-private:
-    ServerSocketMgr() = default;
-    ~ServerSocketMgr() = default;
-    ServerSocketMgr(const ServerSocketMgr &that) = delete;
-    ServerSocketMgr &operator=(const ServerSocketMgr &that) = delete;
-
-    uint32_t devPhyId_{0};
-    std::mutex innerMutex_{};
-    std::unordered_map<Hccl::IpAddress, std::unique_ptr<Hccl::Socket>> deviceServerSocketMap_{};
-    std::unordered_map<Hccl::IpAddress, std::unique_ptr<Hccl::Socket>> hostServerSocketMap_{};
+    // PortData : {ListenPort : {Socket, Count}}
+    std::unordered_map<Hccl::PortData, std::unordered_map<uint32_t, std::pair<std::shared_ptr<Hccl::Socket>, uint32_t>>>
+        deviceServerSocketMap_{};
+    std::unordered_map<Hccl::PortData, std::unordered_map<uint32_t, std::pair<std::shared_ptr<Hccl::Socket>, uint32_t>>>
+        hostServerSocketMap_{};
+    std::unique_ptr<Hccl::SocketManager> socketMgrCompat_;
+    std::mutex hostMutex_{};
+    std::mutex deviceMutex_{};
 };
 
 } // namespace hcomm

@@ -69,20 +69,23 @@ extern "C" {
 
 #define BKF_NAME_LEN_MAX 63
 
-#define BKF_SIGN_SET(sign, val) do { \
-    (sign) = (val);                  \
-} while (0)
-#define BKF_SIGN_CLR(sign) do { \
-    (sign) = 1;                 \
-} while (0)
+#define BKF_SIGN_SET(sign, val)                                                                                        \
+    do {                                                                                                               \
+        (sign) = (val);                                                                                                \
+    } while (0)
+#define BKF_SIGN_CLR(sign)                                                                                             \
+    do {                                                                                                               \
+        (sign) = 1;                                                                                                    \
+    } while (0)
 #define BKF_SIGN_IS_VALID(sign, val) ((sign) == (val))
 
-#define BKF_SELF_ASSIGN(x) do { \
-    (x) = (x);                  \
-} while (0)
+#define BKF_SELF_ASSIGN(x)                                                                                             \
+    do {                                                                                                               \
+        (x) = (x);                                                                                                     \
+    } while (0)
 
-typedef uint32_t(*F_BKF_DO)(void *x);
-typedef void(*F_BKF_DOV)(void *x);
+typedef uint32_t (*F_BKF_DO)(void *x);
+typedef void (*F_BKF_DOV)(void *x);
 typedef struct tagBkfModVTbl {
     F_BKF_DO init;
     F_BKF_DOV uninit;
@@ -97,7 +100,7 @@ void BkfModsUninit(const BkfModVTbl *modsVTbl, void *doArg, int32_t cnt);
 
 #define BKF_OFFSET(type, mbr) (uint16_t)((char *)(&(((type *)200)->mbr)) - (char *)200)
 #define BKF_MBR_SIZE(type, mbr) sizeof(((type *)200)->mbr)
-#define BKF_MBR_PARENT(type, mbr, mbrAddr) ((type*)((uint8_t*)(mbrAddr) - BKF_OFFSET(type, mbr)))
+#define BKF_MBR_PARENT(type, mbr, mbrAddr) ((type *)((uint8_t *)(mbrAddr) - BKF_OFFSET(type, mbr)))
 #define BKF_MBR_IS_FIRST(type, mbr) (offsetof(type, mbr) == 0)
 #define BKF_MBR_IS_LAST(type, mbr) (offsetof(type, mbr) == (sizeof(type) - BKF_MBR_SIZE(type, mbr)))
 
@@ -122,7 +125,7 @@ void BkfModsUninit(const BkfModVTbl *modsVTbl, void *doArg, int32_t cnt);
 
 #define BKF_GET_U8_FOLD4_VAL(x) ((((uint8_t)(x) >> 4) + ((uint8_t)(x))) & 0x0fu)
 #define BKF_GET_U16_FOLD8_VAL(x) ((uint8_t)(((uint16_t)(x) >> 8) + ((uint16_t)(x))))
-#define BKF_GET_U32_FOLD8_VAL(x) \
+#define BKF_GET_U32_FOLD8_VAL(x)                                                                                       \
     ((uint8_t)(((uint32_t)(x) >> 24) + ((uint32_t)(x) >> 16) + ((uint32_t)(x) >> 8) + ((uint32_t)(x))))
 
 static inline uint32_t BkfGetStrHashCode(char *str, uint32_t chCntMaxOfCalcHashCode)
@@ -147,7 +150,7 @@ static inline uint32_t BkfGetStrHashCode(char *str, uint32_t chCntMaxOfCalcHashC
 #define BKF_GET_NEXT_VAL(valSeed) ((valSeed)++)
 
 char *BkfGetMemStr(uint8_t *mem, uint32_t memLen, uint32_t newLenPerByte, uint8_t *buf, int32_t bufLen);
-#define BKF_GET_MEM_STD_STR(mem, memLen, buf, bufLen) BkfGetMemStr((uint8_t*)(mem), (memLen), 16, (buf), (bufLen))
+#define BKF_GET_MEM_STD_STR(mem, memLen, buf, bufLen) BkfGetMemStr((uint8_t *)(mem), (memLen), 16, (buf), (bufLen))
 
 char *BkfTrimStrPath(char *str);
 
@@ -161,19 +164,21 @@ char *BkfTrimStrPath(char *str);
 #define unlikely(x) __builtin_expect(!!(x), 0)
 #endif
 
-#define BKF_RETURNVAL_IF(expr, val) do {   \
-    if (unlikely(expr)) {                  \
-        return (val);                      \
-    }                                      \
-} while (0)
+#define BKF_RETURNVAL_IF(expr, val)                                                                                    \
+    do {                                                                                                               \
+        if (unlikely(expr)) {                                                                                          \
+            return (val);                                                                                              \
+        }                                                                                                              \
+    } while (0)
 
 #define BKF_RETURNNULL_IF(expr) BKF_RETURNVAL_IF(expr, VOS_NULL)
 
-#define BKF_RETURNvoid_IF(expr) do {       \
-    if (unlikely(expr)) {                  \
-        return;                            \
-    }                                      \
-} while (0)
+#define BKF_RETURNvoid_IF(expr)                                                                                        \
+    do {                                                                                                               \
+        if (unlikely(expr)) {                                                                                          \
+            return;                                                                                                    \
+        }                                                                                                              \
+    } while (0)
 
 #pragma pack()
 #pragma GCC visibility pop
@@ -184,4 +189,3 @@ char *BkfTrimStrPath(char *str);
 #endif
 
 #endif
-

@@ -1,12 +1,13 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #ifndef MIRROR_TASK_MANAGER_LITE_H
 #define MIRROR_TASK_MANAGER_LITE_H
 
@@ -35,13 +36,13 @@ public:
 
     void RegFullyCallBack(std::function<void()> callBack);
     void RegGetRemoteRankCallBack(std::function<u32(u64)> callBack);
-    HcclResult AddTaskInfo(u32 streamId, u32 taskId, const Hccl::TaskParam &taskParam, u64 handle);
-    void AddTaskInfo(std::unique_ptr<TaskInfo> &&taskInfo);
+    HcclResult AddTaskInfo(u32 streamId, u32 taskId, const Hccl::TaskParam& taskParam, u64 handle);
+    void AddTaskInfo(std::unique_ptr<TaskInfo>&& taskInfo);
     HcclResult SetCurrDfxOpInfo(std::shared_ptr<DfxOpInfo> dfxOpInfo);
 
     std::shared_ptr<DfxOpInfo> GetCurrDfxOpInfo() const;
     TaskInfo* GetTaskInfo(u32 streamId, u32 taskId) const;
-    TaskInfoQueue             *GetQueue(u32 streamId) const;
+    TaskInfoQueue* GetQueue(u32 streamId) const;
 
 public:
     std::unordered_map<u32, StreamQueueEntry>::iterator Begin();
@@ -51,8 +52,8 @@ public:
 
 private:
     std::unordered_map<u32, StreamQueueEntry> streamQueues_{};
-    std::shared_ptr<DfxOpInfo>     currDfxOpInfo_{nullptr};
-    std::function<void()>          fullyCallBack_{};
+    std::shared_ptr<DfxOpInfo> currDfxOpInfo_{nullptr};
+    std::function<void()> fullyCallBack_{};
     std::function<u32(u64)> getRemoteRankCallback_{};
 };
 

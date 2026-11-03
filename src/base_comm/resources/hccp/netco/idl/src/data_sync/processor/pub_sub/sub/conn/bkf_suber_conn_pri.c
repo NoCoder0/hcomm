@@ -70,8 +70,7 @@ static inline BkfSuberConn *BkfSuberConnGetConnByChannel(BkfSuberConnMng *connMn
     return BkfSuberConnDataFindByConnId(connMng, connId);
 }
 
-uint32_t BkfSuberConnProcRcvDataDoBefore(BkfSuberConn *conn, uint8_t *rcvData, int32_t dataLen,
-                                         BkfMsgDecoder *decoder)
+uint32_t BkfSuberConnProcRcvDataDoBefore(BkfSuberConn *conn, uint8_t *rcvData, int32_t dataLen, BkfMsgDecoder *decoder)
 {
     BkfSuberConnMng *connMng = conn->urlTypeMng->connMng;
     BkfSuberEnv *env = connMng->env;
@@ -84,9 +83,8 @@ uint32_t BkfSuberConnProcRcvDataDoBefore(BkfSuberConn *conn, uint8_t *rcvData, i
     */
 
     if (conn->rcvDataBuf == VOS_NULL) {
-        ret = BkfMsgDecodeInit(decoder, env->name, rcvData, dataLen,
-                                env->sliceVTbl.keyLen, env->sliceVTbl.keyCodec,
-                                env->sliceVTbl.keyGetStrOrNull, connMng->log);
+        ret = BkfMsgDecodeInit(decoder, env->name, rcvData, dataLen, env->sliceVTbl.keyLen, env->sliceVTbl.keyCodec,
+            env->sliceVTbl.keyGetStrOrNull, connMng->log);
         if (ret != BKF_OK) {
             return BKF_ERR;
         }
@@ -95,10 +93,9 @@ uint32_t BkfSuberConnProcRcvDataDoBefore(BkfSuberConn *conn, uint8_t *rcvData, i
         if ((enqLen < 0) || (enqLen != dataLen)) {
             return BKF_ERR;
         }
-        ret = BkfMsgDecodeInit(decoder, env->name,
-                                BkfBufqGetUsedBegin(conn->rcvDataBuf), BkfBufqGetUsedLen(conn->rcvDataBuf),
-                                env->sliceVTbl.keyLen, env->sliceVTbl.keyCodec,
-                                env->sliceVTbl.keyGetStrOrNull, connMng->log);
+        ret = BkfMsgDecodeInit(decoder, env->name, BkfBufqGetUsedBegin(conn->rcvDataBuf),
+            BkfBufqGetUsedLen(conn->rcvDataBuf), env->sliceVTbl.keyLen, env->sliceVTbl.keyCodec,
+            env->sliceVTbl.keyGetStrOrNull, connMng->log);
         if (ret != BKF_OK) {
             return BKF_ERR;
         }
@@ -166,8 +163,8 @@ uint32_t BkfSuberConnProcDataInDecoder(BkfSuberConn *conn, BkfMsgDecoder *decode
 
     while ((msgHead = BkfMsgDecodeMsgHead(decoder, &errCode)) != VOS_NULL) {
         BKF_ASSERT(errCode == BKF_OK);
-        BKF_LOG_DEBUG(conn->urlTypeMng->connMng->log, "msgId(%u, %s)/bodyLen(%u), errCode(%u)\n",
-                      msgHead->msgId, BkfMsgGetIdStr(msgHead->msgId), msgHead->bodyLen, errCode);
+        BKF_LOG_DEBUG(conn->urlTypeMng->connMng->log, "msgId(%u, %s)/bodyLen(%u), errCode(%u)\n", msgHead->msgId,
+            BkfMsgGetIdStr(msgHead->msgId), msgHead->bodyLen, errCode);
         ret = BkfSuberConnProcOneMsgInDecoder(conn, decoder, msgHead);
         if (ret == BKF_SUBER_CONN_NEED_DELETE) {
             return ret;
@@ -209,7 +206,7 @@ uint32_t BkfSuberConnProcRcvDataEventDo(BkfSuberConn *conn)
     int32_t bufFreeLen = 0;
     int32_t readLen = 0;
     int32_t enqLen = 0;
-    BkfMsgDecoder decoder = { { 0 }, 0 };
+    BkfMsgDecoder decoder = {};
     uint32_t ret = 0;
     int32_t leftLen = 0;
 
@@ -232,10 +229,9 @@ uint32_t BkfSuberConnProcRcvDataEventDo(BkfSuberConn *conn)
             return BKF_ERR;
         }
 
-        ret = BkfMsgDecodeInit(&decoder, env->name,
-                                BkfBufqGetUsedBegin(conn->rcvDataBuf), BkfBufqGetUsedLen(conn->rcvDataBuf),
-                                env->sliceVTbl.keyLen, connMng->env->sliceVTbl.keyCodec,
-                                env->sliceVTbl.keyGetStrOrNull, connMng->log);
+        ret = BkfMsgDecodeInit(&decoder, env->name, BkfBufqGetUsedBegin(conn->rcvDataBuf),
+            BkfBufqGetUsedLen(conn->rcvDataBuf), env->sliceVTbl.keyLen, connMng->env->sliceVTbl.keyCodec,
+            env->sliceVTbl.keyGetStrOrNull, connMng->log);
         if (ret != BKF_OK) {
             return ret;
         }
@@ -330,9 +326,12 @@ BkfSuberConn *BkfSuberConnCreateConn(BkfSuberConnMng *connMng, BkfSuberInst *ins
     }
 
     if (conn->sessMng == VOS_NULL) {
-        BkfSuberSessMngInitArg arg = {.env = connMng->env, .cookie = conn,
-                                      .trigSchedSelf = (F_BKF_SUBER_SESS_TRIG_SCHED_SELF)BkfSuberConnTrigSched,
-                                      .dataMng = inst->dataMng, .pubUrl = conn->puberUrl, .locUrl = conn->localUrl };
+        BkfSuberSessMngInitArg arg = {.env = connMng->env,
+            .cookie = conn,
+            .trigSchedSelf = (F_BKF_SUBER_SESS_TRIG_SCHED_SELF)BkfSuberConnTrigSched,
+            .dataMng = inst->dataMng,
+            .pubUrl = conn->puberUrl,
+            .locUrl = conn->localUrl};
         conn->sessMng = BkfSuberSessMngInit(&arg);
         if (conn->sessMng == VOS_NULL) {
             BkfSuberConnDataDel(conn);
@@ -412,8 +411,8 @@ void BkfSuberConnDisConnEx(BkfSuberConnMng *connMng, BkfChCliConnId *connId, BOO
         BKF_LOG_ERROR(connMng->log, "can't get conn.\n");
         return;
     }
-    BkfSuberSessSetDisconnectReason(conn->sessMng, isPeerFin ? BKF_SUBER_DISCONNECT_REASON_PEERFIN :
-        BKF_SUBER_DISCONNECT_REASON_PEERERROR);
+    BkfSuberSessSetDisconnectReason(conn->sessMng,
+        isPeerFin ? BKF_SUBER_DISCONNECT_REASON_PEERFIN : BKF_SUBER_DISCONNECT_REASON_PEERERROR);
     if (connMng->env->onDisConn && BKF_FSM_GET_STATE(&conn->fsm) == BACKFIN_SUB_CONN_STATE_UP) {
         connMng->env->onDisConn(connMng->env->cookie, &conn->puberUrl, &conn->localUrl,
             BkfSuberSessGetDisconnectReason(conn->sessMng));
@@ -449,8 +448,7 @@ void BkfSuberConnRcvDataEvent(BkfSuberConnMng *connMng, BkfChCliConnId *connId)
     return;
 }
 
-void BkfSuberConnRcvData(BkfSuberConnMng *connMng, BkfChCliConnId *connId, uint8_t *data,
-    int32_t dataLen)
+void BkfSuberConnRcvData(BkfSuberConnMng *connMng, BkfChCliConnId *connId, uint8_t *data, int32_t dataLen)
 {
     BkfSuberConn *conn = BkfSuberConnGetConnByChannel(connMng, connId);
     if (conn == VOS_NULL) {
@@ -507,8 +505,7 @@ void BkfSuberConnProcDisConn(BkfSuberConn *conn)
 uint32_t BkfSuberConnJobRegType(BkfSuberConnMng *connMng)
 {
     BkfSuberEnv *env = connMng->env;
-    uint32_t ret = BkfJobRegType(env->jobMng, env->jobTypeId1, (F_BKF_JOB_PROC)BkfSuberConnJobProc,
-                                env->jobPrioL);
+    uint32_t ret = BkfJobRegType(env->jobMng, env->jobTypeId1, (F_BKF_JOB_PROC)BkfSuberConnJobProc, env->jobPrioL);
     if (unlikely(ret != BKF_OK)) {
         BKF_ASSERT(0);
         return BKF_ERR;

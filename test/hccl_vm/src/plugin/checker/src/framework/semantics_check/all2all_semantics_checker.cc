@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: All2All语义校验函数实现
  * Author: yinding
  * Create: 2024-09-30
@@ -22,13 +25,17 @@
 #include "utils/error_codes.h"
 
 namespace HcclSim {
-void GenSendOffsetForOneRank(All2AllDataDesTagInner &all2AllDataDes, u32 rankSize, RankId targetRank, std::vector<u64> &sendOffsets)
+// 计算 targetRankIdx 接收每个 srcRank 数据时各 srcRank 在其 INPUT 中的起始偏移。
+// 前提：targetRankIdx 必须是有效 rank 下标（调用方需先校验），否则矩阵索引越界。
+void GenSendOffsetForOneRank(
+    const All2AllDataDesTagInner& all2AllDataDes, uint32_t rankSize, uint32_t targetRankIdx,
+    std::vector<uint64_t>& sendOffsets)
 {
-    for (RankId srcRank = 0; srcRank < rankSize; srcRank++) {
-        u64 offset = 0;
-        for (RankId dstRank = 0; dstRank < targetRank; dstRank++) {
-            u64 count = all2AllDataDes.sendCountMatrix[srcRank * rankSize + dstRank];
-            u64 size = count * CHECK_SIZE_TABLE[all2AllDataDes.recvType];
+    for (uint32_t srcRankIdx = 0; srcRankIdx < rankSize; srcRankIdx++) {
+        uint64_t offset = 0;
+        for (uint32_t dstRankIdx = 0; dstRankIdx < targetRankIdx; dstRankIdx++) {
+            uint64_t count = all2AllDataDes.sendCountMatrix[srcRankIdx * rankSize + dstRankIdx];
+            uint64_t size = count * CHECK_SIZE_TABLE[all2AllDataDes.recvType];
             offset += size;
         }
         sendOffsets.push_back(offset);
@@ -36,130 +43,166 @@ void GenSendOffsetForOneRank(All2AllDataDesTagInner &all2AllDataDes, u32 rankSiz
     return;
 }
 
-HcclResult TaskCheckAll2AllSemantics(std::map<RankId, RankMemorySemantics> &allRankMemSemantics,
-                                     All2AllDataDesTagInner &all2AllDataDes)
+HcclResult TaskCheckAll2AllSemantics(
+    const PhysicalMemorySemantics& memorySemantics, const DeviceBufferAddressLayouts& bufferLayouts,
+    const All2AllDataDesTagInner& all2AllDataDes, const std::vector<DeviceId>& rankToDevice)
 {
-    u32 rankSize = allRankMemSemantics.size();
+    const uint32_t rankSize = memorySemantics.size();
 
-    for (RankId rankId = 0; rankId < rankSize; rankId++) {
-        // 对应的rank不存在需要报错
-        if (allRankMemSemantics.count(rankId) == 0) {
-            HCCL_VM_ERROR("{} AllToAll produced no output data for rank {}, but it should receive data "
-                "from all {} participating ranks.",
-                MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_MISSING), rankId, rankSize);
+    for (const auto& [deviceId, mem] : memorySemantics) {
+        const RankId deviceRank = FindRankIndexByDeviceId(rankToDevice, deviceId);
+        if (deviceRank == TaskGraphGeneratorV3::INVALID_RANK_ID) {
+            // rank 映射与参与设备集不一致属于校验环境异常，继续推转会按错误的 rank 语义校验
+            // （sendCountMatrix/counts 按 rank 下标索引，非法下标会越界）。
+            HCCL_VM_ERROR(
+                "{} Device {} is not found in the rank-to-device mapping, cannot resolve "
+                "its rank index for the semantic check.",
+                MakeErrorCodeText(ErrorCode::CHECKER_RUNTIME_ERROR), deviceId);
             return HcclResult::HCCL_E_PARA;
         }
-
-        std::vector<u64> sendOffsets;
-        GenSendOffsetForOneRank(all2AllDataDes, rankSize, rankId, sendOffsets);
-
-        u64    totalSize   = 0;
-        RankId curRankId   = 0;
-        u64    curDataSize = 0;
-
-        // curRankId向rankId发送的数据量是0 直接跳过
-        while (curRankId < rankSize && all2AllDataDes.sendCountMatrix[curRankId * rankSize + rankId] == 0) {
-            curRankId++;
+        uint64_t outputBase = 0;
+        uint64_t outputBufferSize = 0;
+        GetSemanticBufferExtent(bufferLayouts, deviceId, BufferType::OUTPUT, outputBase, outputBufferSize);
+        std::vector<uint64_t> sendOffsets;
+        GenSendOffsetForOneRank(all2AllDataDes, rankSize, deviceRank, sendOffsets);
+        uint64_t outputSize = 0;
+        for (uint32_t srcRank = 0; srcRank < rankSize; ++srcRank) {
+            outputSize += all2AllDataDes.sendCountMatrix[srcRank * rankSize + deviceRank]
+                          * CHECK_SIZE_TABLE[all2AllDataDes.recvType];
         }
 
-        for (auto &ele : allRankMemSemantics[rankId][BufferType::OUTPUT]) {
-            const u64 rangeEnd = ele.startAddr + ele.size;
-            if (ele.startAddr != totalSize) {
-                HCCL_VM_ERROR("{} AllToAll output for rank {} should continue at 0x{:x}, "
+        uint64_t totalSize = 0;
+        uint32_t curRankIdx = 0;
+        uint64_t curDataSize = 0;
+
+        // curRankIdx向当前device发送的数据量是0 直接跳过
+        while (curRankIdx < rankSize && all2AllDataDes.sendCountMatrix[curRankIdx * rankSize + deviceRank] == 0) {
+            curRankIdx++;
+        }
+
+        for (const auto& [eleAddr, original] : mem) {
+            BufferSemantic ele = original;
+            if (!ClipSemanticToBuffer(ele, outputBase, outputBufferSize)) {
+                continue;
+            }
+            if (ele.startAddr >= outputBase + outputSize) {
+                // 已裁剪到注册缓冲区；超出期望结果大小的非空语义段仍应报错。
+                // 注册大小未知时保留原有兼容行为。
+                if (outputBufferSize != 0 && ele.size != 0) {
+                    HCCL_VM_ERROR(
+                        "{} AllToAll output for device {} contains unexpected extra data: range "
+                        "[0x{:x},0x{:x}) starts beyond the expected result size 0x{:x} but inside the "
+                        "output buffer (size 0x{:x}).\nCurrent result range detail:\n{}",
+                        MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_SIZE_ERROR), deviceId, ele.startAddr,
+                        ele.startAddr + ele.size, outputSize, outputBufferSize, ele.Describe());
+                    return HcclResult::HCCL_E_PARA;
+                }
+                break;
+            }
+            const uint64_t rangeEnd = ele.startAddr + ele.size;
+            if (ele.startAddr != outputBase + totalSize) {
+                HCCL_VM_ERROR(
+                    "{} AllToAll output for device {} should continue at 0x{:x}, "
                     "but the next actual range starts at 0x{:x} (actual range: [0x{:x},0x{:x}))."
                     "\nCurrent result range detail:\n{}",
-                    MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_MISSING),
-                    rankId, totalSize, ele.startAddr,
-                    ele.startAddr, rangeEnd, ele.Describe());
+                    MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_MISSING), deviceId, outputBase + totalSize,
+                    ele.startAddr, ele.startAddr, rangeEnd, ele.Describe());
                 return HcclResult::HCCL_E_PARA;
             }
 
             if (ele.srcBufs.size() != 1) {
-                HCCL_VM_ERROR("{} AllToAll output range [0x{:x},0x{:x}) for rank {} should "
+                HCCL_VM_ERROR(
+                    "{} AllToAll output range [0x{:x},0x{:x}) for device {} should "
                     "come from exactly one source, but it actually comes from {} sources."
                     "\nCurrent result range detail:\n{}",
-                    MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_REDUCE_ERROR),
-                    ele.startAddr, rangeEnd, rankId, ele.srcBufs.size(), ele.Describe());
+                    MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_REDUCE_ERROR), ele.startAddr, rangeEnd, deviceId,
+                    ele.srcBufs.size(), ele.Describe());
                 return HcclResult::HCCL_E_PARA;
             }
 
-            if (curRankId >= rankSize) {
-                HCCL_VM_ERROR("{} AllToAll expected output for rank {} has already ended, "
+            if (curRankIdx >= rankSize) {
+                HCCL_VM_ERROR(
+                    "{} AllToAll expected output for device {} has already ended, "
                     "but outputRange [0x{:x},0x{:x}) is still present.\nCurrent result range detail:\n{}",
-                    MakeErrorCodeText(ErrorCode::CHECKER_RUNTIME_ERROR),
-                    rankId, ele.startAddr, rangeEnd, ele.Describe());
+                    MakeErrorCodeText(ErrorCode::CHECKER_RUNTIME_ERROR), deviceId, ele.startAddr, rangeEnd,
+                    ele.Describe());
                 return HcclResult::HCCL_E_PARA;
             }
 
-            const auto &srcBuf = *ele.srcBufs.begin();
-            const u64 expectedSrcAddr = sendOffsets[curRankId] + curDataSize;
-            const u64 expectedSrcEnd = expectedSrcAddr + ele.size;
-            const u64 actualSrcAddr = srcBuf.srcAddr;
-            const u64 actualSrcEnd = actualSrcAddr + ele.size;
+            const auto& srcBuf = *ele.srcBufs.begin();
+            const uint64_t expectedSrcAddr
+                = GetSemanticBufferBase(bufferLayouts, rankToDevice[curRankIdx], BufferType::INPUT)
+                  + sendOffsets[curRankIdx] + curDataSize;
+            const uint64_t expectedSrcEnd = expectedSrcAddr + ele.size;
+            const uint64_t actualSrcAddr = srcBuf.srcAddr;
+            const uint64_t actualSrcEnd = actualSrcAddr + ele.size;
 
-            if (srcBuf.rankId != curRankId) {
-                HCCL_VM_ERROR("{} AllToAll output range [0x{:x},0x{:x}) should come from "
-                    "rank{}.INPUT[0x{:x},0x{:x}), but it actually comes from rank{}.{}[0x{:x},0x{:x})."
+            if (srcBuf.deviceId != rankToDevice[curRankIdx]) {
+                HCCL_VM_ERROR(
+                    "{} AllToAll output range [0x{:x},0x{:x}) should come from "
+                    "rank{}.INPUT[0x{:x},0x{:x}), but it actually comes from device{}.{}[0x{:x},0x{:x})."
                     "\nCurrent result range detail:\n{}",
-                    MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_SRC_ERROR),
-                    ele.startAddr, rangeEnd, curRankId, expectedSrcAddr, expectedSrcEnd,
-                    srcBuf.rankId, BufferTypeToString(srcBuf.bufType), actualSrcAddr, actualSrcEnd,
-                    ele.Describe());
+                    MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_SRC_ERROR), ele.startAddr, rangeEnd, curRankIdx,
+                    expectedSrcAddr, expectedSrcEnd, srcBuf.deviceId, BufferTypeToString(srcBuf.bufType), actualSrcAddr,
+                    actualSrcEnd, ele.Describe());
                 return HcclResult::HCCL_E_PARA;
             }
 
             if (srcBuf.bufType != BufferType::INPUT) {
-                HCCL_VM_ERROR("{} AllToAll output range [0x{:x},0x{:x}) should come from "
-                    "rank{}.INPUT[0x{:x},0x{:x}), but it actually comes from rank{}.{}[0x{:x},0x{:x})."
+                HCCL_VM_ERROR(
+                    "{} AllToAll output range [0x{:x},0x{:x}) should come from "
+                    "rank{}.INPUT[0x{:x},0x{:x}), but it actually comes from device{}.{}[0x{:x},0x{:x})."
                     "\nCurrent result range detail:\n{}",
-                    MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_SRC_ERROR),
-                    ele.startAddr, rangeEnd, curRankId, expectedSrcAddr, expectedSrcEnd,
-                    srcBuf.rankId, BufferTypeToString(srcBuf.bufType), actualSrcAddr, actualSrcEnd,
-                    ele.Describe());
+                    MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_SRC_ERROR), ele.startAddr, rangeEnd, curRankIdx,
+                    expectedSrcAddr, expectedSrcEnd, srcBuf.deviceId, BufferTypeToString(srcBuf.bufType), actualSrcAddr,
+                    actualSrcEnd, ele.Describe());
                 return HcclResult::HCCL_E_PARA;
             }
 
             if (srcBuf.srcAddr != expectedSrcAddr) {
-                HCCL_VM_ERROR("{} AllToAll output range [0x{:x},0x{:x}) should come from "
-                    "rank{}.INPUT[0x{:x},0x{:x}), but it actually comes from rank{}.INPUT[0x{:x},0x{:x})."
+                HCCL_VM_ERROR(
+                    "{} AllToAll output range [0x{:x},0x{:x}) should come from "
+                    "rank{}.INPUT[0x{:x},0x{:x}), but it actually comes from device{}.INPUT[0x{:x},0x{:x})."
                     "\nCurrent result range detail:\n{}",
-                    MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_SRC_ERROR),
-                    ele.startAddr, rangeEnd, curRankId, expectedSrcAddr, expectedSrcEnd, srcBuf.rankId,
-                    actualSrcAddr, actualSrcEnd, ele.Describe());
+                    MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_SRC_ERROR), ele.startAddr, rangeEnd, curRankIdx,
+                    expectedSrcAddr, expectedSrcEnd, srcBuf.deviceId, actualSrcAddr, actualSrcEnd, ele.Describe());
                 return HcclResult::HCCL_E_PARA;
             }
 
             curDataSize += ele.size;
-            u64 recvCountFromCurRank = all2AllDataDes.sendCountMatrix[curRankId * rankSize + rankId];
-            u64 recvDataSizeFromCurRank = recvCountFromCurRank * CHECK_SIZE_TABLE[all2AllDataDes.recvType];
+            uint64_t recvCountFromCurRank = all2AllDataDes.sendCountMatrix[curRankIdx * rankSize + deviceRank];
+            uint64_t recvDataSizeFromCurRank = recvCountFromCurRank * CHECK_SIZE_TABLE[all2AllDataDes.recvType];
             if (curDataSize == recvDataSizeFromCurRank) {
                 curDataSize = 0;
-                curRankId++;
-                while (curRankId < rankSize && all2AllDataDes.sendCountMatrix[curRankId * rankSize + rankId] == 0) {
+                curRankIdx++;
+                while (curRankIdx < rankSize
+                       && all2AllDataDes.sendCountMatrix[curRankIdx * rankSize + deviceRank] == 0) {
                     // 跳过后续所有发送量为0的rank
-                    curRankId++;
+                    curRankIdx++;
                 }
             } else if (curDataSize > recvDataSizeFromCurRank) {
-                HCCL_VM_ERROR("{} AllToAll data collected from rank{}.INPUT for rank {} becomes larger "
+                HCCL_VM_ERROR(
+                    "{} AllToAll data collected from rank{}.INPUT for device {} becomes larger "
                     "than expected after outputRange [0x{:x},0x{:x}). The accumulated size is 0x{:x}, "
                     "but the expected size from this source rank is 0x{:x}.\nCurrent result range detail:\n{}",
-                    MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_SIZE_ERROR),
-                    curRankId, rankId, ele.startAddr, rangeEnd, curDataSize,
-                    recvDataSizeFromCurRank, ele.Describe());
+                    MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_SIZE_ERROR), curRankIdx, deviceId, ele.startAddr,
+                    rangeEnd, curDataSize, recvDataSizeFromCurRank, ele.Describe());
                 return HcclResult::HCCL_E_PARA;
             }
             totalSize += ele.size;
         }
-        // 如果curRankId等于rankSize，表示已经接受到其他所有rank的数据
-        if (curRankId != rankSize) {
-            const u64 expectedDataSizeFromCurRank =
-                all2AllDataDes.sendCountMatrix[curRankId * rankSize + rankId] * CHECK_SIZE_TABLE[all2AllDataDes.recvType];
-            const u64 missingSizeFromCurRank = expectedDataSizeFromCurRank - curDataSize;
-            HCCL_VM_ERROR("{} AllToAll output for rank {} ends too early. The checker has "
+        // 如果curRankIdx等于rankSize，表示已经接受到其他所有rank的数据
+        if (curRankIdx != rankSize) {
+            const uint64_t expectedDataSizeFromCurRank
+                = all2AllDataDes.sendCountMatrix[curRankIdx * rankSize + deviceRank]
+                  * CHECK_SIZE_TABLE[all2AllDataDes.recvType];
+            const uint64_t missingSizeFromCurRank = expectedDataSizeFromCurRank - curDataSize;
+            HCCL_VM_ERROR(
+                "{} AllToAll output for device {} ends too early. The checker has "
                 "validated 0x{:x} bytes in total, but data from rank{} is still incomplete: "
                 "0x{:x} bytes are missing (received 0x{:x}, expected 0x{:x}).",
-                MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_MISSING),
-                rankId, totalSize, curRankId, missingSizeFromCurRank, curDataSize, expectedDataSizeFromCurRank);
+                MakeErrorCodeText(ErrorCode::SEMANTIC_FINAL_MISSING), deviceId, totalSize, curRankIdx,
+                missingSizeFromCurRank, curDataSize, expectedDataSizeFromCurRank);
             return HcclResult::HCCL_E_PARA;
         }
     }

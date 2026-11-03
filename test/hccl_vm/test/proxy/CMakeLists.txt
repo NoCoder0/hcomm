@@ -1,3 +1,4 @@
+# -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2026 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
@@ -5,6 +6,7 @@
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
 
 cmake_minimum_required(VERSION 3.14)
 
@@ -12,20 +14,17 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -D_GLIBCXX_USE_CXX11_ABI=0")
 
-if(NOT DEFINED ENV{ASCEND_TOOLKIT_HOME})
-    set(ASCEND_TOOLKIT_HOME ${ASCEND_CANN_PACKAGE_PATH})
-else()
-    set(ASCEND_TOOLKIT_HOME $ENV{ASCEND_TOOLKIT_HOME})
-endif()
-
 include_directories(
+    ${CMAKE_SOURCE_DIR}/src/proxy/common
+    ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/src/proxy
+    ${CMAKE_SOURCE_DIR}/src/common
+    ${CMAKE_SOURCE_DIR}/src/store
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/include/store
-    ${CMAKE_SOURCE_DIR}/include/runnerdb
     ${CMAKE_SOURCE_DIR}/include/hccl
     ${CMAKE_SOURCE_DIR}/src/plugin/checker/header/external
-    ${CMAKE_BINARY_DIR}/_deps/yaml-cpp-src/include
+    ${YAMLCPP_INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/third_party/nlohmann_json
     # From level1 library includes
     ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc
@@ -33,34 +32,29 @@ include_directories(
     ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc/runtime
     ${ASCEND_CANN_PACKAGE_PATH}/include
     ${ASCEND_CANN_PACKAGE_PATH}/include/hccl
-    ${ASCEND_CANN_PACKAGE_PATH}/x86_64-linux/include
-    ${ASCEND_CANN_PACKAGE_PATH}/x86_64-linux/asc/include/adv_api
-    ${ASCEND_TOOLKIT_HOME}/x86_64-linux/include
+    ${ASCEND_CANN_PACKAGE_PATH}/${CANN_ARCH_DIR}/include
+    ${ASCEND_CANN_PACKAGE_PATH}/${CANN_ARCH_DIR}/asc/include/adv_api
     ${HCOMM_CODE_ROOT}/test/ut/depends/include
     ${HCOMM_CODE_ROOT}/include
     ${HCOMM_CODE_ROOT}/include/hccl
     ${HCOMM_CODE_ROOT}/pkg_inc
     ${HCOMM_CODE_ROOT}/pkg_inc/hccl
-    ${ASCEND_CANN_PACKAGE_PATH}/x86_64-linux/pkg_inc/hccl
     ${HCOMM_CODE_ROOT}/src/pub_inc
     ${HCOMM_CODE_ROOT}/src/framework/communicator/impl/independent_op/rank_graph
     ${HCOMM_CODE_ROOT}/src/framework/inc
-    ${CMAKE_SOURCE_DIR}/hccl_common
-    ${CMAKE_SOURCE_DIR}/store
-    ${CMAKE_SOURCE_DIR}/hccl_ipc
-    ${CMAKE_SOURCE_DIR}/hccl_host/hccl_vm
-    ${CMAKE_SOURCE_DIR}/utils/base
-    ${CMAKE_SOURCE_DIR}/utils/exception
+    ${HCOMM_CODE_ROOT}/src/base_comm/resources/ccu/ccu_microcode
+    ${HCOMM_CODE_ROOT}/src/base_comm/resources/ccu/pub_inc
     ${CMAKE_SOURCE_DIR}/include
     ${HCOMM_CODE_ROOT}/test/ut/depends/pkg_inc/profiling
     ${HCOMM_CODE_ROOT}/test/ut/depends/pkg_inc/aicpu/tsd
     ${HCOMM_CODE_ROOT}/test/ut/depends/pkg_inc/aicpu
-    ${ASCEND_CANN_PACKAGE_PATH}/x86_64-linux/pkg_inc/profiling
+    ${ASCEND_CANN_PACKAGE_PATH}/${CANN_ARCH_DIR}/pkg_inc/profiling
     ${HCOMM_CODE_ROOT}/src/platform/hccp/inc/network
     ${HCOMM_CODE_ROOT}/src/legacy/common
-    ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc/hcomm/ccu
     ${ASCEND_CANN_PACKAGE_PATH}/include
+    ${ASCEND_CANN_PACKAGE_PATH}/${CANN_ARCH_DIR}/pkg_inc/hccl
 
+    ${HCOMM_CODE_ROOT}/src/base_comm/inc
     ${HCOMM_CODE_ROOT}/src/base_comm/resources/hccp
     ${HCOMM_CODE_ROOT}/src/base_comm/resources/hccp/inc
     ${HCOMM_CODE_ROOT}/src/base_comm/resources/hccp/inc/network
@@ -70,10 +64,13 @@ include_directories(
 
 link_libraries(
     gtest
+    stat
     log
+    -Wl,--start-group
     store
-    runnerdb
-    sqlite3
+    runtime_state
+    operation_data
+    -Wl,--end-group
     dl
     rt
 )
@@ -81,7 +78,7 @@ link_libraries(
 # test_hccl_proxy_common
 add_executable(test_hccl_proxy_common hccl_proxy_common_test.cc)
 target_sources(test_hccl_proxy_common PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/proxy/hccl_proxy_common.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/common/hccl_proxy_common.cc
 )
 set_target_properties(test_hccl_proxy_common PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output/bin"
@@ -91,7 +88,7 @@ target_link_libraries(test_hccl_proxy_common gtest_main)
 # test_hccl_inner_stub
 add_executable(test_hccl_inner_stub hccl_inner_stub_test.cc)
 target_sources(test_hccl_inner_stub PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/proxy/hccl_inner_stub.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/hccl_inner_stub.cc
 )
 set_target_properties(test_hccl_inner_stub PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output/bin"
@@ -101,7 +98,7 @@ target_link_libraries(test_hccl_inner_stub gtest_main)
 # test_tsd_client_stub
 add_executable(test_tsd_client_stub tsd_client_stub_test.cc)
 target_sources(test_tsd_client_stub PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/proxy/tsd_client_stub.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/tsd_client_stub.cc
 )
 set_target_properties(test_tsd_client_stub PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output/bin"
@@ -111,7 +108,7 @@ target_link_libraries(test_tsd_client_stub gtest_main)
 # test_scatter_stub
 add_executable(test_scatter_stub scatter_stub_test.cc)
 target_sources(test_scatter_stub PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/proxy/scatter_stub.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/scatter_stub.cc
 )
 set_target_properties(test_scatter_stub PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output/bin"
@@ -121,7 +118,7 @@ target_link_libraries(test_scatter_stub gtest_main)
 # test_log_stub
 add_executable(test_log_stub log_stub_test.cc)
 target_sources(test_log_stub PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/proxy/log_stub.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/log_stub.cc
 )
 set_target_properties(test_log_stub PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output/bin"
@@ -131,7 +128,7 @@ target_link_libraries(test_log_stub gtest_main)
 # test_aprofiling_stub
 add_executable(test_aprofiling_stub aprofiling_stub_test.cc)
 target_sources(test_aprofiling_stub PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/proxy/aprofiling_stub.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/aprofiling_stub.cc
 )
 set_target_properties(test_aprofiling_stub PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output/bin"
@@ -141,45 +138,75 @@ target_link_libraries(test_aprofiling_stub gtest_main)
 # test_aclrt_stub
 add_executable(test_aclrt_stub aclrt_stub_test.cc)
 target_sources(test_aclrt_stub PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/proxy/aclrt_stub.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/aclrt_stub.cc
 )
 set_target_properties(test_aclrt_stub PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output/bin"
 )
 target_link_libraries(test_aclrt_stub gtest_main)
 
-# test_aclrt_memory_stub —— 主机侧大块引流/上界/FreeHost 行为单测
-# InsertTaskToCollection 由 link_libraries 的 store 库提供，无需额外编 device_arm 源。
-add_executable(test_aclrt_memory_stub aclrt_memory_stub_test.cc)
-target_sources(test_aclrt_memory_stub PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/proxy/aclrt_memory_stub.cc
-    ${CMAKE_SOURCE_DIR}/src/proxy/hccl_proxy_common.cc
-)
-set_target_properties(test_aclrt_memory_stub PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output/bin"
-)
-target_link_libraries(test_aclrt_memory_stub gtest_main)
-
 add_executable(test_hccl_comm_stub hccl_comm_stub_test.cc)
 target_sources(test_hccl_comm_stub PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/proxy/hccl_comm_stub.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level0/hccl_comm_stub.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/common/hccl_proxy_common.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level1/level1_proxy_common.cc
+)
+target_include_directories(test_hccl_comm_stub PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/proxy/level1
 )
 set_target_properties(test_hccl_comm_stub PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output/bin"
 )
-target_link_libraries(test_hccl_comm_stub gtest_main)
+target_link_libraries(test_hccl_comm_stub gtest_main
+    ${ASCEND_CANN_PACKAGE_PATH}/${CANN_ARCH_DIR}/lib64/libc_sec.a
+)
+target_link_options(test_hccl_comm_stub PRIVATE
+    -Wl,--unresolved-symbols=ignore-in-object-files
+)
 
 add_executable(test_ai_core_stub ai_core_stub_test.cc)
 target_sources(test_ai_core_stub PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/aiv_mode_stub/ai_core_stub.cc
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/aiv_mode_stub/aiv_task.cc
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/ascendc_stub/ascendc_base_stub.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/aiv_kernel/aiv_mode_stub/ai_core_stub.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/aiv_kernel/aiv_mode_stub/aiv_task.cc
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/aiv_kernel/ascendc_stub/ascendc_base_stub.cc
 )
 target_include_directories(test_ai_core_stub PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/aiv_mode_stub
-    ${CMAKE_SOURCE_DIR}/src/proxy/aiv_kernel/ascendc_stub
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/aiv_kernel/aiv_mode_stub
+    ${CMAKE_SOURCE_DIR}/src/proxy/level2/aiv_kernel/ascendc_stub
 )
 set_target_properties(test_ai_core_stub PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output/bin"
 )
 target_link_libraries(test_ai_core_stub gtest_main)
+
+# test_ccu_fallback_stub —— CCU 协商/回退接口 level0 短路桩单测
+add_executable(test_ccu_fallback_stub ccu_fallback_stub_test.cc)
+target_sources(test_ccu_fallback_stub PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/proxy/level0/ccu_fallback_stub.cc
+)
+set_target_properties(test_ccu_fallback_stub PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output/bin"
+)
+target_link_libraries(test_ccu_fallback_stub gtest_main)
+
+# test_sim_sub_process_manager —— AICPU device 子进程 QEMU 启动配置合同
+# （HCCL_VM_QEMU_PATH/HCCL_VM_QEMU_TB_SIZE：路径校验、TB 解析与十进制重序列化、
+#  argv 顺序、PATH 同名不抢先、既有环境继承、READY 协议）。
+# 自定义 main：InstallPath 首次解析即缓存安装根，夹具目录/固定环境须在用例前就绪。
+add_executable(test_sim_sub_process_manager sim_sub_process_manager_test.cc)
+target_sources(test_sim_sub_process_manager PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/common/sim_sub_process_manager.cc
+    ${CMAKE_SOURCE_DIR}/src/common/sim_pipe_io.cc
+    ${CMAKE_SOURCE_DIR}/src/utils/sim_common_api.cc
+)
+target_include_directories(test_sim_sub_process_manager PRIVATE
+    ${CMAKE_SOURCE_DIR}/third_party
+)
+set_target_properties(test_sim_sub_process_manager PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output/bin"
+)
+
+# 引擎专属测试子目录（test/proxy/<模块名>/）：模块存在才接入
+#（sqlite 的真实文件 fixture 用例与 mariadb 的 hccp_rmem endpoint_id 回环用例）。
+include(${CMAKE_SOURCE_DIR}/src/storage_backends/CMakeLists.txt)
+hcclvm_storage_backends_add_test_dir(${CMAKE_CURRENT_SOURCE_DIR})

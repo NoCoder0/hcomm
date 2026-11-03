@@ -20,7 +20,7 @@ void GenWhiteListFile()
         nlohmann::json rankTableJson = nlohmann::json::parse(whitelist);
         std::ofstream out(filePath, std::ofstream::out);
         out << rankTableJson;
-    } catch(...) {
+    } catch (...) {
         std::cout << filePath << " generate failed!" << std::endl;
         return;
     }

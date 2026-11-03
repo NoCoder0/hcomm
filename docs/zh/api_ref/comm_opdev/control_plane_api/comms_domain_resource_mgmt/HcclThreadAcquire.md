@@ -2,13 +2,25 @@
 
 ## 产品支持情况
 
-- Ascend 950PR/Ascend 950DT：支持
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：支持
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：支持
+<!-- npu="950" id1 -->
+- Ascend 950PR&950DT系列产品：支持
+<!-- end id1 -->
+<!-- npu="A3" id2 -->
+- Atlas A3系列产品：支持
+<!-- end id2 -->
+<!-- npu="910b" id3 -->
+- Atlas A2系列产品：支持
+<!-- end id3 -->
+<!-- npu="910" id4 -->
+- Atlas训练系列产品：不支持
+<!-- end id4 -->
+<!-- npu="310p" id5 -->
+- Atlas推理系列产品：不支持
+<!-- end id5 -->
 
 ## 功能说明
 
-基于通信域获取通信线程。
+基于通信域获取通信线程，并为每条通信线程分配指定数量的同步资源（Notify）。相关概念可参见[通信算子开发指南-并发模型](../../../../comm_op_dev_guide/prog_models_concepts/concurrency_model.md)章节。
 
 ## 函数原型
 
@@ -20,10 +32,10 @@ HcclResult HcclThreadAcquire(HcclComm comm, CommEngine engine, uint32_t threadNu
 
 | 参数名 | 输入/输出 | 描述 |
 | --- | --- | --- |
-| comm | 输入 | 通信域。<br>HcclComm类型的定义如下：<br>typedef void *HcclComm; |
+| comm | 输入 | 通信域句柄。<br>HcclComm类型的定义可参见[HcclComm](../../../comm_mgr_c/data_type_definition/HcclComm.md)。 |
 | engine | 输入 | 通信引擎类型。<br>CommEngine类型的定义可参见[CommEngine](../../datatype_definition/CommEngine.md)。 |
 | threadNum | 输入 | 通信线程数量。 |
-| notifyNumPerThread | 输入 | 每个通信线程中的同步资源（Notify）数量。 |
+| notifyNumPerThread | 输入 | 每个通信线程中的同步资源（Notify）数量。取值范围为：\[0, 65535\]（受ThreadConfig字段宽度限制），实际可用数量由底层资源（notify创建、device内存等）决定。建议根据业务场景合理配置，避免资源不足或浪费。 |
 | threads | 输出 | 返回的通信线程句柄。需传入threadNum大小的ThreadHandle类型数组。<br>ThreadHandle类型的定义可参见[ThreadHandle](../../datatype_definition/ThreadHandle.md)。 |
 
 ## 返回值
@@ -36,29 +48,37 @@ HcclResult HcclThreadAcquire(HcclComm comm, CommEngine engine, uint32_t threadNu
 
 2. 当前各产品形态支持的CommEngine范围：
 
-  - Ascend 950PR/Ascend 950DT：
-    - COMM_ENGINE_CPU_TS
-    - COMM_ENGINE_AICPU_TS
+   <!-- npu="950" id6 -->
+   - Ascend 950PR&950DT系列产品：
+     - COMM_ENGINE_CPU_TS
+     - COMM_ENGINE_AICPU_TS
+   <!-- end id6 -->
 
-  - Atlas A3 训练系列产品/Atlas A3 推理系列产品：
-    - COMM_ENGINE_CPU_TS
-    - COMM_ENGINE_AICPU_TS
+   <!-- npu="A3" id7 -->
+   - Atlas A3系列产品：
+     - COMM_ENGINE_CPU_TS
+     - COMM_ENGINE_AICPU_TS
+   <!-- end id7 -->
 
-  - Atlas A2 训练系列产品/Atlas A2 推理系列产品：
-    - COMM_ENGINE_CPU_TS
-    - COMM_ENGINE_AICPU_TS
+   <!-- npu="910b" id8 -->
+   - Atlas A2系列产品：
+     - COMM_ENGINE_CPU_TS
+     - COMM_ENGINE_AICPU_TS
+   <!-- end id8 -->
 
 3. 该接口不支持COMM_ENGINE_AIV和COMM_ENGINE_CCU两种通信引擎。
+4. comm必须为有效的通信域句柄（由通信域创建接口获得，调用期间保持有效）。禁止传入空指针、野指针或已销毁的句柄。
 
 ## 调用示例
 
 创建线程资源示例如下：
 
 ```c
+// 通信域句柄
 HcclComm comm;
+// 申请5条AICPU_TS类型的thread通信线程，每条thread包含2个notify
 CommEngine engine = COMM_ENGINE_AICPU_TS;
 ThreadHandle threads[5];
-// 申请5条流，每条流2个notify
 HcclThreadAcquire(comm, engine, 5, 2, threads);
 ```
 
@@ -80,7 +100,7 @@ aclrtSynchronizeStream(stream);
 同步AICPU线程资源示例如下：
 
 ```c
-// --host侧调用流程--
+// --Host侧调用流程--
 // 申请1条host流
 aclrtStream stream;
 aclrtCreateStream(&stream);
@@ -107,7 +127,7 @@ uint32_t timeout = 1;
 // 等待同步信号
 HcommThreadNotifyWaitOnThread(cpuThread, 0, timeout);
 
-// --aicpu侧调用流程--
+// --Device侧调用流程--
 // 等待同步信号
 uint32_t timeout = 1;
 HcommThreadNotifyWaitOnThread(aicpuThread, 0, timeout);
@@ -116,6 +136,7 @@ HcommThreadNotifyWaitOnThread(aicpuThread, 0, timeout);
 // 发送同步信号
 HcommThreadNotifyRecordOnThread(aicpuThread, exportedAicpuThread, 0);
 
+// --Host侧调用流程--
 // 流同步
 aclrtSynchronizeStream(stream);
 ```

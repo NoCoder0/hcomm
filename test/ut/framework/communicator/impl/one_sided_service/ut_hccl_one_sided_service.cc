@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -45,7 +45,7 @@
 #include "hccl_one_sided_service.h"
 #include <hccl/hccl_one_sided_services.h>
 #include "hccl_one_sided_conn.h"
-#include "rma_buffer_mgr.h"
+#include "common/rma_buffer_mgr_pub.h"
 #include "local_rdma_rma_buffer.h"
 #include "local_ipc_rma_buffer.h"
 #include "remote_rdma_rma_buffer.h"
@@ -68,36 +68,29 @@
 using namespace std;
 using namespace hccl;
 
-class OneSidedUt : public testing::Test
-{
+class OneSidedUt : public testing::Test {
 protected:
-    void SetUp() override {
+    void SetUp() override
+    {
         s32 portNum = -1;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
         std::cout << "A Test SetUP" << std::endl;
     }
 
-    void TearDown() override {
-        std::cout << "A Test TearDown" << std::endl;
-    }
+    void TearDown() override { std::cout << "A Test TearDown" << std::endl; }
 };
 
 TEST_F(OneSidedUt, Prepare_When_PrepareFullMeshFail_With_NullptrConn_Expect_SkipClean)
 {
-    unique_ptr<HcclSocketManager> socketManager = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
+    unique_ptr<HcclSocketManager> socketManager
+        = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
     unique_ptr<NotifyPool> notifyPool = std::make_unique<NotifyPool>();
     CommConfig commConfig;
-    unique_ptr<HcclOneSidedService> service = std::make_unique<HcclOneSidedService>(socketManager, notifyPool, commConfig);
+    unique_ptr<HcclOneSidedService> service
+        = std::make_unique<HcclOneSidedService>(socketManager, notifyPool, commConfig);
 
-    MOCKER_CPP(&HcclOneSidedService::CreateLinkFullmesh)
-    .stubs()
-    .will(returnValue(HCCL_E_INTERNAL));
-    MOCKER_CPP(&HcclOneSidedConn::CleanSocketResource)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclOneSidedService::CreateLinkFullmesh).stubs().will(returnValue(HCCL_E_INTERNAL));
+    MOCKER_CPP(&HcclOneSidedConn::CleanSocketResource).stubs().will(returnValue(HCCL_SUCCESS));
 
     // 构造ranktable
     HcclDispatcher dispatcher = &notifyPool;
@@ -140,7 +133,8 @@ TEST_F(OneSidedUt, HcclRemapRegistedMemory_ValidParams_Expect_ReinterpretCastCov
     auto commObj = std::make_unique<hccl::hcclComm>();
     void* commArr[1] = {static_cast<void*>(commObj.get())};
 
-    unique_ptr<HcclSocketManager> socketManager = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
+    unique_ptr<HcclSocketManager> socketManager
+        = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
     unique_ptr<NotifyPool> notifyPool = std::make_unique<NotifyPool>();
     CommConfig commConfig;
     hccl::HcclOneSidedService service(socketManager, notifyPool, commConfig);
@@ -153,9 +147,9 @@ TEST_F(OneSidedUt, HcclRemapRegistedMemory_ValidParams_Expect_ReinterpretCastCov
     memInfoArray[0].size = 1024;
 
     MOCKER_CPP(&hccl::hcclComm::GetOneSidedService)
-    .stubs()
-    .with(outBoundP(&servicePtr))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(outBoundP(&servicePtr))
+        .will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = HcclRemapRegistedMemory(commArr, memInfoArray, 1, 1);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -168,7 +162,8 @@ TEST_F(OneSidedUt, HcclEnableMemAccess_LegacyPath_Expect_ReinterpretCastCovered)
 {
     auto commObj = std::make_unique<hccl::hcclComm>();
 
-    unique_ptr<HcclSocketManager> socketManager = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
+    unique_ptr<HcclSocketManager> socketManager
+        = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
     unique_ptr<NotifyPool> notifyPool = std::make_unique<NotifyPool>();
     CommConfig commConfig;
     hccl::HcclOneSidedService service(socketManager, notifyPool, commConfig);
@@ -176,13 +171,13 @@ TEST_F(OneSidedUt, HcclEnableMemAccess_LegacyPath_Expect_ReinterpretCastCovered)
     hccl::IHcclOneSidedService* servicePtr = &service;
 
     MOCKER_CPP(&hccl::hcclComm::GetOneSidedService)
-    .stubs()
-    .with(outBoundP(&servicePtr))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(outBoundP(&servicePtr))
+        .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclOneSidedService::EnableMemAccess, void(HcclOneSidedService::*)(const HcclMemDesc &, HcclMem &))
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclOneSidedService::EnableMemAccess, void(HcclOneSidedService::*)(const HcclMemDesc&, HcclMem&))
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
 
     HcclMemDesc remoteMemDesc{};
     CommMem remoteMem{};
@@ -195,17 +190,15 @@ TEST_F(OneSidedUt, HcclEnableMemAccess_LegacyPath_Expect_ReinterpretCastCovered)
 
 TEST_F(OneSidedUt, Ut_Prepare_When_PrepareFullMeshFailAndRankMissing_Expect_NoSpuriousEntry)
 {
-    unique_ptr<HcclSocketManager> socketManager = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
+    unique_ptr<HcclSocketManager> socketManager
+        = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
     unique_ptr<NotifyPool> notifyPool = std::make_unique<NotifyPool>();
     CommConfig commConfig;
-    unique_ptr<HcclOneSidedService> service = std::make_unique<HcclOneSidedService>(socketManager, notifyPool, commConfig);
+    unique_ptr<HcclOneSidedService> service
+        = std::make_unique<HcclOneSidedService>(socketManager, notifyPool, commConfig);
 
-    MOCKER_CPP(&HcclOneSidedService::PrepareFullMesh)
-        .stubs()
-        .will(returnValue(HCCL_E_INTERNAL));
-    MOCKER_CPP(&HcclOneSidedConn::CleanSocketResource)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclOneSidedService::PrepareFullMesh).stubs().will(returnValue(HCCL_E_INTERNAL));
+    MOCKER_CPP(&HcclOneSidedConn::CleanSocketResource).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclDispatcher dispatcher = &notifyPool;
     HcclRankLinkInfo localRankInfo{};
@@ -237,14 +230,14 @@ TEST_F(OneSidedUt, Ut_Prepare_When_PrepareFullMeshFailAndRankMissing_Expect_NoSp
 
 TEST_F(OneSidedUt, Ut_Prepare_When_AlreadyPrepared_Expect_ReturnSuccessImmediately)
 {
-    unique_ptr<HcclSocketManager> socketManager = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
+    unique_ptr<HcclSocketManager> socketManager
+        = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
     unique_ptr<NotifyPool> notifyPool = std::make_unique<NotifyPool>();
     CommConfig commConfig;
-    unique_ptr<HcclOneSidedService> service = std::make_unique<HcclOneSidedService>(socketManager, notifyPool, commConfig);
+    unique_ptr<HcclOneSidedService> service
+        = std::make_unique<HcclOneSidedService>(socketManager, notifyPool, commConfig);
 
-    MOCKER_CPP(&HcclOneSidedService::PrepareFullMesh)
-        .stubs()
-        .will(returnValue(HCCL_E_INTERNAL));
+    MOCKER_CPP(&HcclOneSidedService::PrepareFullMesh).stubs().will(returnValue(HCCL_E_INTERNAL));
 
     HcclDispatcher dispatcher = &notifyPool;
     HcclRankLinkInfo localRankInfo{};
@@ -268,14 +261,14 @@ TEST_F(OneSidedUt, Ut_Prepare_When_AlreadyPrepared_Expect_ReturnSuccessImmediate
 
 TEST_F(OneSidedUt, Ut_Prepare_When_TopoNotFullMesh_Expect_SkipFullMeshAndSuccess)
 {
-    unique_ptr<HcclSocketManager> socketManager = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
+    unique_ptr<HcclSocketManager> socketManager
+        = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
     unique_ptr<NotifyPool> notifyPool = std::make_unique<NotifyPool>();
     CommConfig commConfig;
-    unique_ptr<HcclOneSidedService> service = std::make_unique<HcclOneSidedService>(socketManager, notifyPool, commConfig);
+    unique_ptr<HcclOneSidedService> service
+        = std::make_unique<HcclOneSidedService>(socketManager, notifyPool, commConfig);
 
-    MOCKER_CPP(&HcclOneSidedService::PrepareFullMesh)
-        .stubs()
-        .will(returnValue(HCCL_E_INTERNAL));
+    MOCKER_CPP(&HcclOneSidedService::PrepareFullMesh).stubs().will(returnValue(HCCL_E_INTERNAL));
 
     HcclDispatcher dispatcher = &notifyPool;
     HcclRankLinkInfo localRankInfo{};
@@ -298,14 +291,14 @@ TEST_F(OneSidedUt, Ut_Prepare_When_TopoNotFullMesh_Expect_SkipFullMeshAndSuccess
 
 TEST_F(OneSidedUt, Ut_Prepare_When_PrepareFullMeshSuccess_Expect_PreparedTrue)
 {
-    unique_ptr<HcclSocketManager> socketManager = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
+    unique_ptr<HcclSocketManager> socketManager
+        = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
     unique_ptr<NotifyPool> notifyPool = std::make_unique<NotifyPool>();
     CommConfig commConfig;
-    unique_ptr<HcclOneSidedService> service = std::make_unique<HcclOneSidedService>(socketManager, notifyPool, commConfig);
+    unique_ptr<HcclOneSidedService> service
+        = std::make_unique<HcclOneSidedService>(socketManager, notifyPool, commConfig);
 
-    MOCKER_CPP(&HcclOneSidedService::PrepareFullMesh)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclOneSidedService::PrepareFullMesh).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclDispatcher dispatcher = &notifyPool;
     HcclRankLinkInfo localRankInfo{};
@@ -328,14 +321,14 @@ TEST_F(OneSidedUt, Ut_Prepare_When_PrepareFullMeshSuccess_Expect_PreparedTrue)
 
 TEST_F(OneSidedUt, Ut_ExchangeMemDesc_When_SetupRemoteRankInfoFail_Expect_ReturnError)
 {
-    unique_ptr<HcclSocketManager> socketManager = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
+    unique_ptr<HcclSocketManager> socketManager
+        = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
     unique_ptr<NotifyPool> notifyPool = std::make_unique<NotifyPool>();
     CommConfig commConfig;
-    unique_ptr<HcclOneSidedService> service = std::make_unique<HcclOneSidedService>(socketManager, notifyPool, commConfig);
+    unique_ptr<HcclOneSidedService> service
+        = std::make_unique<HcclOneSidedService>(socketManager, notifyPool, commConfig);
 
-    MOCKER_CPP(&HcclOneSidedService::SetupRemoteRankInfo)
-        .stubs()
-        .will(returnValue(HCCL_E_NOT_FOUND));
+    MOCKER_CPP(&HcclOneSidedService::SetupRemoteRankInfo).stubs().will(returnValue(HCCL_E_NOT_FOUND));
 
     HcclMemDesc localDesc{};
     HcclMemDescs localMemDescs{&localDesc, 1};
@@ -350,10 +343,12 @@ TEST_F(OneSidedUt, Ut_ExchangeMemDesc_When_SetupRemoteRankInfoFail_Expect_Return
 
 TEST_F(OneSidedUt, Ut_EnableMemAccess_When_ConnNotFound_Expect_ThrowLogicError)
 {
-    unique_ptr<HcclSocketManager> socketManager = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
+    unique_ptr<HcclSocketManager> socketManager
+        = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
     unique_ptr<NotifyPool> notifyPool = std::make_unique<NotifyPool>();
     CommConfig commConfig;
-    unique_ptr<HcclOneSidedService> service = std::make_unique<HcclOneSidedService>(socketManager, notifyPool, commConfig);
+    unique_ptr<HcclOneSidedService> service
+        = std::make_unique<HcclOneSidedService>(socketManager, notifyPool, commConfig);
 
     HcclMemDesc desc{};
     const u32 notFoundRank = 999;
@@ -364,10 +359,12 @@ TEST_F(OneSidedUt, Ut_EnableMemAccess_When_ConnNotFound_Expect_ThrowLogicError)
 
 TEST_F(OneSidedUt, Ut_DisableMemAccess_When_ConnNotFound_Expect_ThrowLogicError)
 {
-    unique_ptr<HcclSocketManager> socketManager = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
+    unique_ptr<HcclSocketManager> socketManager
+        = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
     unique_ptr<NotifyPool> notifyPool = std::make_unique<NotifyPool>();
     CommConfig commConfig;
-    unique_ptr<HcclOneSidedService> service = std::make_unique<HcclOneSidedService>(socketManager, notifyPool, commConfig);
+    unique_ptr<HcclOneSidedService> service
+        = std::make_unique<HcclOneSidedService>(socketManager, notifyPool, commConfig);
 
     HcclMemDesc desc{};
     const u32 notFoundRank = 999;
@@ -377,10 +374,12 @@ TEST_F(OneSidedUt, Ut_DisableMemAccess_When_ConnNotFound_Expect_ThrowLogicError)
 
 TEST_F(OneSidedUt, Ut_BatchPut_When_ConnNotFound_Expect_ThrowOutOfRange)
 {
-    unique_ptr<HcclSocketManager> socketManager = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
+    unique_ptr<HcclSocketManager> socketManager
+        = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
     unique_ptr<NotifyPool> notifyPool = std::make_unique<NotifyPool>();
     CommConfig commConfig;
-    unique_ptr<HcclOneSidedService> service = std::make_unique<HcclOneSidedService>(socketManager, notifyPool, commConfig);
+    unique_ptr<HcclOneSidedService> service
+        = std::make_unique<HcclOneSidedService>(socketManager, notifyPool, commConfig);
 
     HcclOneSideOpDesc opDesc{};
     rtStream_t stream = nullptr;
@@ -389,10 +388,12 @@ TEST_F(OneSidedUt, Ut_BatchPut_When_ConnNotFound_Expect_ThrowOutOfRange)
 
 TEST_F(OneSidedUt, Ut_BatchGet_When_ConnNotFound_Expect_ThrowOutOfRange)
 {
-    unique_ptr<HcclSocketManager> socketManager = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
+    unique_ptr<HcclSocketManager> socketManager
+        = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
     unique_ptr<NotifyPool> notifyPool = std::make_unique<NotifyPool>();
     CommConfig commConfig;
-    unique_ptr<HcclOneSidedService> service = std::make_unique<HcclOneSidedService>(socketManager, notifyPool, commConfig);
+    unique_ptr<HcclOneSidedService> service
+        = std::make_unique<HcclOneSidedService>(socketManager, notifyPool, commConfig);
 
     HcclOneSideOpDesc opDesc{};
     rtStream_t stream = nullptr;
@@ -404,11 +405,10 @@ TEST_F(OneSidedUt, Ut_ConcurrentReadWrite_When_MixedReadWrite_Expect_NoDeadlock)
     auto socketManager = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
     auto notifyPool = std::make_unique<NotifyPool>();
     CommConfig commConfig;
-    std::shared_ptr<HcclOneSidedService> service = std::make_shared<HcclOneSidedService>(socketManager, notifyPool, commConfig);
+    std::shared_ptr<HcclOneSidedService> service
+        = std::make_shared<HcclOneSidedService>(socketManager, notifyPool, commConfig);
 
-    MOCKER_CPP(&HcclOneSidedService::SetupRemoteRankInfo)
-        .stubs()
-        .will(returnValue(HCCL_E_NOT_FOUND));
+    MOCKER_CPP(&HcclOneSidedService::SetupRemoteRankInfo).stubs().will(returnValue(HCCL_E_NOT_FOUND));
 
     auto writer = std::async(std::launch::async, [service]() {
         HcclMemDesc localDesc{};
@@ -427,13 +427,14 @@ TEST_F(OneSidedUt, Ut_ConcurrentReadWrite_When_MixedReadWrite_Expect_NoDeadlock)
             for (int i = 0; i < 50; ++i) {
                 try {
                     service->BatchPut(0, &opDesc, 1, stream);
-                } catch (const std::out_of_range &) {}
+                } catch (const std::out_of_range&) {
+                }
             }
         }));
     }
 
     EXPECT_EQ(writer.wait_for(std::chrono::seconds(10)), std::future_status::ready);
-    for (auto &f : readers) {
+    for (auto& f : readers) {
         EXPECT_EQ(f.wait_for(std::chrono::seconds(10)), std::future_status::ready);
     }
     GlobalMockObject::verify();

@@ -14,19 +14,19 @@
 
 using namespace std;
 
-bool MemCpy(FakeSqe &sqe)
+bool MemCpy(FakeSqe& sqe)
 {
     memcpy(sqe.dst, sqe.src, sqe.count);
     return true;
 }
 
-bool MemReduce(FakeSqe &sqe)
+bool MemReduce(FakeSqe& sqe)
 {
     if (sqe.reduceOp == rtRecudeKind_t::RT_MEMCPY_SDMA_AUTOMATIC_ADD) {
         if (rtDataType_t::RT_DATA_TYPE_FP32 == sqe.dataType) {
-            float *dst       = (float *)(sqe.dst);
-            float *src       = (float *)(sqe.src);
-            auto   dataCount = sqe.count / sizeof(float);
+            float* dst = (float*)(sqe.dst);
+            float* src = (float*)(sqe.src);
+            auto dataCount = sqe.count / sizeof(float);
             for (auto index = 0; index < dataCount; ++index) {
                 dst[index] += src[index];
             }
@@ -37,7 +37,7 @@ bool MemReduce(FakeSqe &sqe)
     return false;
 }
 
-bool ExecuteSqe(FakeSqe &sqe, FakeNotifyMgr *notifyMgr)
+bool ExecuteSqe(FakeSqe& sqe, FakeNotifyMgr* notifyMgr)
 {
     if (sqe.type == FakeSqeType::NOTIFY_RECORD) {
         return notifyMgr->Record(sqe.notifyId);
@@ -58,11 +58,11 @@ bool ExecuteSqe(FakeSqe &sqe, FakeNotifyMgr *notifyMgr)
     return false;
 }
 
-int *FakeStreamMgr::CreateStream(int rank)
+int* FakeStreamMgr::CreateStream(int rank)
 {
     lock_guard<mutex> lock(lmutex);
-    int               currentId = streamIdGen++;
-    int              *streamId  = new int(currentId);
+    int currentId = streamIdGen++;
+    int* streamId = new int(currentId);
 
     streamIdRankMap[currentId] = rank;
 
@@ -94,7 +94,7 @@ void FakeStreamMgr::Sync(int streamId)
     lock_guard<mutex> lock(lmutex);
     // 虽然每个rank都会sync，但只让第一个rank触发执行就行。 后续rank进来时发现已经没有等待的sqe，直接退出。
     while (HasSqe()) {
-        for (auto &stream : stores) {
+        for (auto& stream : stores) {
             auto id = stream.first;
             // 开始按序执行sqe，删掉执行完的sqe，碰到执行不下去的时候退出本次循环
             auto it = stream.second.begin();
@@ -122,17 +122,14 @@ void FakeStreamMgr::Append(int streamId, FakeSqe sqe)
     stores[streamId].push_back(sqe);
 }
 
-void FakeStreamMgr::DestroyStream(int *streamId)
+void FakeStreamMgr::DestroyStream(int* streamId)
 {
     lock_guard<mutex> lock(lmutex);
-    //delete streamId;
+    // delete streamId;
     streamIds.erase(streamId);
 }
 
-FakeNotifyMgr *FakeStreamMgr::GetFakeNotifyMgr()
-{
-    return fakeNotifyMgr.get();
-}
+FakeNotifyMgr* FakeStreamMgr::GetFakeNotifyMgr() { return fakeNotifyMgr.get(); }
 
 FakeStreamMgr::~FakeStreamMgr()
 {
@@ -141,21 +138,21 @@ FakeStreamMgr::~FakeStreamMgr()
     }
 }
 
-int *FakeNotifyMgr::CreateNotify(int rank)
+int* FakeNotifyMgr::CreateNotify(int rank)
 {
     lock_guard<mutex> lock(lmutex);
-    int               currentNotifyId = notifyIdGen++;
-    int              *notify          = new int(currentNotifyId);
+    int currentNotifyId = notifyIdGen++;
+    int* notify = new int(currentNotifyId);
     notifyIds.emplace(notify);
     notifyStatusMap[currentNotifyId] = 0;
-    notifyRankMap[currentNotifyId]   = rank;
+    notifyRankMap[currentNotifyId] = rank;
     return notify;
 }
 
 bool FakeNotifyMgr::Record(int notifyId)
 {
     lock_guard<mutex> lock(lmutex);
-    auto              it = notifyStatusMap.find(notifyId);
+    auto it = notifyStatusMap.find(notifyId);
     if (it == notifyStatusMap.end()) {
         throw std::exception();
     }
@@ -182,7 +179,7 @@ bool FakeNotifyMgr::Wait(int notifyId)
     return false;
 }
 
-void FakeNotifyMgr::DestroyNotify(int *notifyId)
+void FakeNotifyMgr::DestroyNotify(int* notifyId)
 {
     lock_guard<mutex> lock(lmutex);
 

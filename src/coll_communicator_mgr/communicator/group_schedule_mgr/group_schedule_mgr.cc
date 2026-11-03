@@ -7,6 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #include "group_schedule_mgr.h"
 #include "log.h"
 #include "coll_alg_utils.h"
@@ -35,38 +36,24 @@ uint32_t pow2Up(uint32_t n)
 
 namespace hccl {
 
-void ClearHcclGroupCommList()
-{
-    hcclGroupCommListV2.clear();
-}
+void ClearHcclGroupCommList() { hcclGroupCommListV2.clear(); }
 
-std::vector<HcclComm> &GetHcclGroupCommList()
-{
-    return hcclGroupCommListV2;
-}
+std::vector<HcclComm>& GetHcclGroupCommList() { return hcclGroupCommListV2; }
 
-int32_t GetHcclP2pTaskNums()
-{
-    return hcclP2pTaskNums;
-}
+int32_t GetHcclP2pTaskNums() { return hcclP2pTaskNums; }
 
-void SetHcclP2pTaskNums(int32_t targetP2pTaskNums)
-{
-    hcclP2pTaskNums = targetP2pTaskNums;
-}
+void SetHcclP2pTaskNums(int32_t targetP2pTaskNums) { hcclP2pTaskNums = targetP2pTaskNums; }
 
-GroupScheduleMgr::~GroupScheduleMgr()
-{
-}
+GroupScheduleMgr::~GroupScheduleMgr() {}
 
-HcclResult GroupScheduleMgr::GetUsrStream(aclrtStream &usrStream)
+HcclResult GroupScheduleMgr::GetUsrStream(aclrtStream& usrStream)
 {
     CHK_PTR_NULL(this->usrStream_);
     usrStream = this->usrStream_;
     return HCCL_SUCCESS;
 }
 
-HcclResult GroupScheduleMgr::SetUsrStream(const aclrtStream &usrStream)
+HcclResult GroupScheduleMgr::SetUsrStream(const aclrtStream& usrStream)
 {
     CHK_PTR_NULL(usrStream);
     this->usrStream_ = usrStream;
@@ -76,12 +63,12 @@ HcclResult GroupScheduleMgr::SetUsrStream(const aclrtStream &usrStream)
 HcclResult GroupScheduleMgr::InitGroupPlanner(HcclComm comm)
 {
     CHK_PTR_NULL(comm);
-    hccl::hcclComm *hcclComm = static_cast<hccl::hcclComm *>(comm);
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
     CHK_PTR_NULL(hcclComm);
-    hccl::CollComm *collComm = hcclComm->GetCollComm();
+    hccl::CollComm* collComm = hcclComm->GetCollComm();
     CHK_PTR_NULL(collComm);
     constexpr uint32_t netLayerServer = 0;
-    uint32_t *serverSizeList = nullptr;
+    uint32_t* serverSizeList = nullptr;
     uint32_t serverNum = 0;
     CHK_RET(HcclRankGraphGetInstSizeListByLayer(comm, netLayerServer, &serverSizeList, &serverNum));
     CHK_PTR_NULL(serverSizeList);
@@ -95,13 +82,14 @@ HcclResult GroupScheduleMgr::InitGroupPlanner(HcclComm comm)
             this->serverToRankList_[serverIdx].emplace_back(rankIdx++);
         }
     }
-    HCCL_INFO("[InitGroupPlanner] ranksize:%d, serverNum:%d nTaskP2p:%d", this->rankSize_, this->serverNum_,
+    HCCL_INFO(
+        "[InitGroupPlanner] ranksize:%u, serverNum:%u nTaskP2p:%d", this->rankSize_, this->serverNum_,
         this->nTasksP2p_);
 
     return HCCL_SUCCESS;
 }
 
-HcclResult GroupScheduleMgr::GetCurLocalRank(uint32_t &localRank)
+HcclResult GroupScheduleMgr::GetCurLocalRank(uint32_t& localRank)
 {
     uint32_t curServerIdx = 0;
     for (uint32_t cumulativeRank = 0, serverIdx = 0; serverIdx < this->serverNum_; serverIdx++) {
@@ -113,7 +101,7 @@ HcclResult GroupScheduleMgr::GetCurLocalRank(uint32_t &localRank)
     }
 
     u32 curLocalRank = 0;
-    for (u32 rankIdx: this->serverToRankList_.at(curServerIdx)) {
+    for (u32 rankIdx : this->serverToRankList_.at(curServerIdx)) {
         if (this->userRank_ == rankIdx) {
             break;
         }
@@ -121,7 +109,9 @@ HcclResult GroupScheduleMgr::GetCurLocalRank(uint32_t &localRank)
     }
 
     if (curLocalRank >= this->serverToRankSize_.at(curServerIdx)) {
-        HCCL_ERROR("[getCurLocalRank] is inValid:%u", curLocalRank);
+        HCCL_ERROR(
+            "[getCurLocalRank] curLocalRank[%u] is invalid, valid range [0, %u)", curLocalRank,
+            this->serverToRankSize_.at(curServerIdx));
         return HCCL_E_INTERNAL;
     }
 
@@ -141,15 +131,16 @@ HcclResult GroupScheduleMgr::CalculateGroupSize()
     }
 
     std::vector<uint32_t> serverRankSizeList;
-    for (const auto &pair : this->serverToRankSize_) {
+    for (const auto& pair : this->serverToRankSize_) {
         serverRankSizeList.emplace_back(pair.second);
     }
     this->groupSize_ = hccl::CalGCD(serverRankSizeList);
     return HCCL_SUCCESS;
 }
 
-uint32_t GroupScheduleMgr::GenerateP2pSchedule(const std::vector<uint32_t> &groupToServer,
-    const std::vector<uint32_t> &groupToLocalRankBase, uint32_t curGroupIdx, uint32_t curGroupLocalRankIdx)
+uint32_t GroupScheduleMgr::GenerateP2pSchedule(
+    const std::vector<uint32_t>& groupToServer, const std::vector<uint32_t>& groupToLocalRankBase, uint32_t curGroupIdx,
+    uint32_t curGroupLocalRankIdx)
 {
     this->p2pSchedule_.resize(this->rankSize_);
     uint32_t round = 0;
@@ -198,13 +189,14 @@ HcclResult GroupScheduleMgr::HcclP2pSchedulerGenerate()
     uint32_t curGroupLocalRankIdx = curLocalRank % this->groupSize_;
     uint32_t curGroupIdx = this->userRank_ / this->groupSize_;
     this->nGroups_ = this->rankSize_ / this->groupSize_;
-    HCCL_INFO("[HcclP2pSchedulerGenerate] userRank:%u, localRank:%u, groupSize:%u, nGroups:%u", this->userRank_,
-        curLocalRank, this->groupSize_, this->nGroups_);
+    HCCL_INFO(
+        "[HcclP2pSchedulerGenerate] userRank:%u, localRank:%u, groupSize:%u, nGroups:%u", this->userRank_, curLocalRank,
+        this->groupSize_, this->nGroups_);
 
     std::vector<uint32_t> groupToServer(this->nGroups_);
     std::vector<uint32_t> groupToLocalRankBase(this->nGroups_);
     uint32_t groupIdx = 0;
-    for (const auto &pair : this->serverToRankList_) {
+    for (const auto& pair : this->serverToRankList_) {
         uint32_t serverIdx = pair.first;
         uint32_t localRankSize = this->serverToRankSize_.at(serverIdx);
         uint32_t localGroupSize = localRankSize / this->groupSize_;
@@ -225,7 +217,7 @@ HcclResult GroupScheduleMgr::HcclP2pSchedulerGenerate()
     return HCCL_SUCCESS;
 }
 
-HcclResult GroupScheduleMgr::AppendGroupP2pTask(HcclComm comm, const HcclP2pTask &task, const HcclOpP2pDesc &p2pDesc)
+HcclResult GroupScheduleMgr::AppendGroupP2pTask(HcclComm comm, const HcclP2pTask& task, const HcclOpP2pDesc& p2pDesc)
 {
     CHK_PTR_NULL(comm);
     if (hcclP2pTaskNums == MAX_P2P_TASK_NUM) {
@@ -253,8 +245,8 @@ HcclResult GroupScheduleMgr::AppendGroupP2pTask(HcclComm comm, const HcclP2pTask
     return HCCL_SUCCESS;
 }
 
-HcclResult GroupScheduleMgr::GetP2pTaskSchedule(
-    std::vector<HcclP2pTask> &sortedSendQue, std::vector<HcclP2pTask> &sortedRecvQue)
+HcclResult
+GroupScheduleMgr::GetP2pTaskSchedule(std::vector<HcclP2pTask>& sortedSendQue, std::vector<HcclP2pTask>& sortedRecvQue)
 {
     HCCL_INFO("[HcclP2pTaskSchedule] nTaskP2p:%d", this->nTasksP2p_);
 
@@ -266,14 +258,14 @@ HcclResult GroupScheduleMgr::GetP2pTaskSchedule(
             uint32_t recvRank = this->p2pSchedule_[round].recvRank;
 
             if (!this->peers_[sendRank].sendQue.empty()) {
-                auto &sendTask = this->peers_[sendRank].sendQue.front();
+                auto& sendTask = this->peers_[sendRank].sendQue.front();
                 sortedSendQue.emplace_back(sendTask);
                 this->peers_[sendRank].sendQue.pop_front();
                 this->nTasksP2p_--;
             }
 
             if (!this->peers_[recvRank].recvQue.empty()) {
-                auto &recvTask = this->peers_[recvRank].recvQue.front();
+                auto& recvTask = this->peers_[recvRank].recvQue.front();
                 sortedRecvQue.emplace_back(recvTask);
                 this->peers_[recvRank].recvQue.pop_front();
                 this->nTasksP2p_--;
@@ -286,7 +278,8 @@ HcclResult GroupScheduleMgr::GetP2pTaskSchedule(
             return HCCL_E_INTERNAL;
         }
     }
-    HCCL_INFO("[HcclP2pTaskSchedule] done, use epochs:%u, sendQueSize:%u, recvQueSize:%u ", epoch,
+    HCCL_INFO(
+        "[HcclP2pTaskSchedule] done, use epochs:%u, sendQueSize:%u, recvQueSize:%u ", epoch,
         static_cast<uint32_t>(sortedSendQue.size()), static_cast<uint32_t>(sortedRecvQue.size()));
 
     return HCCL_SUCCESS;

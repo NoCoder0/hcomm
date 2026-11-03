@@ -13,10 +13,9 @@
 #include "coll_operator.h"
 
 namespace Hccl {
-SelectorStatus AlltoAllAutoSelector::SelectCcuMsAlgo(const TopoInfo &topoInfo,
-                                                    const CollAlgOperator &op,
-                                                    const std::map<OpType, std::vector<HcclAlgoType>> &configAlgMap,
-                                                    std::string &primQueueGenName) const
+SelectorStatus AlltoAllAutoSelector::SelectCcuMsAlgo(
+    const TopoInfo& topoInfo, const CollAlgOperator& op,
+    const std::map<OpType, std::vector<HcclAlgoType>>& configAlgMap, std::string& primQueueGenName) const
 {
     (void)topoInfo;
     (void)op;
@@ -26,9 +25,8 @@ SelectorStatus AlltoAllAutoSelector::SelectCcuMsAlgo(const TopoInfo &topoInfo,
     return SelectorStatus::NOT_MATCH;
 }
 
-SelectorStatus AlltoAllAutoSelector::SelectCcuScheduleAlgoLevel1(const TopoInfo &topoInfo,
-                                                           const CollAlgOperator &op,
-                                                           std::string &primQueueGenName) const
+SelectorStatus AlltoAllAutoSelector::SelectCcuScheduleAlgoLevel1(
+    const TopoInfo& topoInfo, const CollAlgOperator& op, std::string& primQueueGenName) const
 {
     if (isMc2_) {
         HCCL_WARNING("[Algo][AlltoAllAutoSelector] levelNum > 1 is not supported yet for ccu_schedule mode.");
@@ -45,17 +43,17 @@ SelectorStatus AlltoAllAutoSelector::SelectCcuScheduleAlgoLevel1(const TopoInfo 
             primQueueGenName = "CcuAllToAllMesh1D2Die";
         }
     } else {
-        HCCL_WARNING("[Algo][AlltoAllAutoSelector] level0Shape[%d] is not supported yet for ccu schedule mode.",
+        HCCL_WARNING(
+            "[Algo][AlltoAllAutoSelector] level0Shape[%d] is not supported yet for ccu schedule mode.",
             topoInfo.level0Shape);
         return SelectorStatus::NOT_MATCH;
     }
     return SelectorStatus::MATCH;
 }
 
-SelectorStatus AlltoAllAutoSelector::SelectCcuScheduleAlgo(const TopoInfo &topoInfo,
-                                                    const CollAlgOperator &op,
-                                                    const std::map<OpType, std::vector<HcclAlgoType>> &configAlgMap,
-                                                    std::string &primQueueGenName) const
+SelectorStatus AlltoAllAutoSelector::SelectCcuScheduleAlgo(
+    const TopoInfo& topoInfo, const CollAlgOperator& op,
+    const std::map<OpType, std::vector<HcclAlgoType>>& configAlgMap, std::string& primQueueGenName) const
 {
     (void)op;
     (void)configAlgMap;
@@ -82,19 +80,23 @@ SelectorStatus AlltoAllAutoSelector::SelectCcuScheduleAlgo(const TopoInfo &topoI
                     primQueueGenName = "CcuAlltoAllMesh1D";
                 }
             } else if (topoInfo.level0PcieMix) {
-                HCCL_WARNING("[Algo][AlltoAllAutoSelector] level0 PCIE mix is not supported yet for ccu schedule mode.");
+                HCCL_WARNING(
+                    "[Algo][AlltoAllAutoSelector] level0 PCIE mix is not supported yet for ccu schedule mode.");
                 return SelectorStatus::NOT_MATCH;
             } else {
-                HCCL_WARNING("[Algo][AlltoAllAutoSelector] level0Shape[%d] is not supported yet for ccu schedule mode.",
+                HCCL_WARNING(
+                    "[Algo][AlltoAllAutoSelector] level0Shape[%d] is not supported yet for ccu schedule mode.",
                     topoInfo.level0Shape);
                 return SelectorStatus::NOT_MATCH;
             }
         } else if (topoInfo.level0Shape == Level0Shape::CLOS) {
-            HCCL_WARNING("[Algo][AlltoAllAutoSelector] level0Shape[%d] is not supported yet for ccu schedule mode.",
+            HCCL_WARNING(
+                "[Algo][AlltoAllAutoSelector] level0Shape[%d] is not supported yet for ccu schedule mode.",
                 topoInfo.level0Shape);
             return SelectorStatus::NOT_MATCH;
         } else {
-            HCCL_WARNING("[Algo][AlltoAllAutoSelector] level0Shape[%d] is not supported yet for ccu schedule mode.",
+            HCCL_WARNING(
+                "[Algo][AlltoAllAutoSelector] level0Shape[%d] is not supported yet for ccu schedule mode.",
                 topoInfo.level0Shape);
             return SelectorStatus::NOT_MATCH;
         }
@@ -103,10 +105,9 @@ SelectorStatus AlltoAllAutoSelector::SelectCcuScheduleAlgo(const TopoInfo &topoI
     return SelectorStatus::MATCH;
 }
 
-SelectorStatus AlltoAllAutoSelector::SelectAicpuAlgo(const TopoInfo &topoInfo,
-                                                      const CollAlgOperator &op,
-                                                      const std::map<OpType, std::vector<HcclAlgoType>> &configAlgMap,
-                                                      std::string &primQueueGenName) const
+SelectorStatus AlltoAllAutoSelector::SelectAicpuAlgo(
+    const TopoInfo& topoInfo, const CollAlgOperator& op,
+    const std::map<OpType, std::vector<HcclAlgoType>>& configAlgMap, std::string& primQueueGenName) const
 {
     (void)op;
     (void)configAlgMap;
@@ -132,7 +133,7 @@ SelectorStatus AlltoAllAutoSelector::SelectAicpuAlgo(const TopoInfo &topoInfo,
                 // MESH_1D 即可链接所有卡， 使用 MESH_1D 算法
                 primQueueGenName = "InsAlltoAllMesh";
             } else if (topoInfo.level0PcieMix) {
-                    primQueueGenName = "InsAlltoAllMesh";
+                primQueueGenName = "InsAlltoAllMesh";
             } else {
                 primQueueGenName = "InsAlltoAllMesh";
             }
@@ -147,10 +148,9 @@ SelectorStatus AlltoAllAutoSelector::SelectAicpuAlgo(const TopoInfo &topoInfo,
     return SelectorStatus::MATCH;
 }
 
-SelectorStatus AlltoAllAutoSelector::SelectAivAlgo(const TopoInfo &topoInfo,
-                                                   const CollAlgOperator &op,
-                                                   const std::map<OpType, std::vector<HcclAlgoType>> &configAlgMap,
-                                                   std::string &primQueueGenName) const
+SelectorStatus AlltoAllAutoSelector::SelectAivAlgo(
+    const TopoInfo& topoInfo, const CollAlgOperator& op,
+    const std::map<OpType, std::vector<HcclAlgoType>>& configAlgMap, std::string& primQueueGenName) const
 {
     (void)op;
     (void)configAlgMap;

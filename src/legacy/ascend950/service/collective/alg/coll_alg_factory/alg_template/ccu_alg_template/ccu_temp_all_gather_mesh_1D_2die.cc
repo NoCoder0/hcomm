@@ -21,21 +21,17 @@
 
 namespace Hccl {
 
-static CcuInstRegister<CcuContextAllGatherMesh1D2Die> g_registrarAllGather(
-    CcuInstType::CCU_ALLGATHER_MESH_1D_2DIE);
+static CcuInstRegister<CcuContextAllGatherMesh1D2Die> g_registrarAllGather(CcuInstType::CCU_ALLGATHER_MESH_1D_2DIE);
 
-CcuTempAllGatherMesh1D2Die::CcuTempAllGatherMesh1D2Die(const RankId virtualRank, const u32 tempRankSize,
-                                   const std::vector<std::vector<RankId>> &tempVTopo,
-                                   const std::map<RankId, u32>            &tempVirtRankMap)
+CcuTempAllGatherMesh1D2Die::CcuTempAllGatherMesh1D2Die(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
     : CcuAlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap)
-{
-}
+{}
 
-CcuTempAllGatherMesh1D2Die::~CcuTempAllGatherMesh1D2Die()
-{
-}
+CcuTempAllGatherMesh1D2Die::~CcuTempAllGatherMesh1D2Die() {}
 
-HcclResult CcuTempAllGatherMesh1D2Die::CalcRes(AlgTempResReq &tempResReq)
+HcclResult CcuTempAllGatherMesh1D2Die::CalcRes(AlgTempResReq& tempResReq)
 {
     tempResReq.queNum = 1;
     tempResReq.streamNum = tempResReq.queNum + 1;
@@ -45,16 +41,14 @@ HcclResult CcuTempAllGatherMesh1D2Die::CalcRes(AlgTempResReq &tempResReq)
     return HcclResult::HCCL_SUCCESS;
 }
 
-uint64_t CcuTempAllGatherMesh1D2Die::GetMaxSliceSize() const
-{
-    return UB_MAX_DATA_SIZE;
-}
+uint64_t CcuTempAllGatherMesh1D2Die::GetMaxSliceSize() const { return UB_MAX_DATA_SIZE; }
 
-HcclResult CcuTempAllGatherMesh1D2Die::GenExtIns(const TempFuncs &tempFuncs, TemplateDataParams &tempAlgParams,
-                                                const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues)
+HcclResult CcuTempAllGatherMesh1D2Die::GenExtIns(
+    const TempFuncs& tempFuncs, TemplateDataParams& tempAlgParams, const ResLinks& tempLinks,
+    std::vector<InsQuePtr>& tempInsQues)
 {
-    CHK_PRT_RET(tempInsQues.empty(),
-        HCCL_ERROR("[CcuTempAllGatherMesh1D2Die] empty queue"), HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        tempInsQues.empty(), HCCL_ERROR("[CcuTempAllGatherMesh1D2Die] empty queue"), HcclResult::HCCL_E_INTERNAL);
     CHK_PTR_NULL(tempInsQues[0]);
     opMode_ = tempFuncs.opMode;
     CcuInstructionAllGatherMesh1D2Die ccuInsAllGatherMesh1D2Die;
@@ -67,7 +61,8 @@ HcclResult CcuTempAllGatherMesh1D2Die::GenExtIns(const TempFuncs &tempFuncs, Tem
     uint64_t outputSliceStride = tempAlgParams.outputSliceStride;
     uint64_t token;
     CHK_RET(GetToken(op_, token));
-    HCCL_INFO("[CcuTempAllGatherMesh1D2Die] dimSize[%llu], sliceSize[%llu], inputAddr[%llu],"\
+    HCCL_INFO(
+        "[CcuTempAllGatherMesh1D2Die] dimSize[%llu], sliceSize[%llu], inputAddr[%llu],"
         "outputAddr[%llu], outputSliceStride[%llu]",
         dimSize[0], sliceSize, inputAddr, outputAddr, outputSliceStride);
 
@@ -75,10 +70,10 @@ HcclResult CcuTempAllGatherMesh1D2Die::GenExtIns(const TempFuncs &tempFuncs, Tem
     std::map<uint32_t, std::vector<LinkData>> linksDie;
     std::map<uint32_t, RankGroup> rankGroup;
 
-    for (auto link: tempLinks) {
+    for (auto link : tempLinks) {
         std::vector<LinkData> linkData = link.second;
         RankId peerRankId = link.first;
-        if (linkData.size() == 0){
+        if (linkData.size() == 0) {
             continue;
         }
 
@@ -86,22 +81,24 @@ HcclResult CcuTempAllGatherMesh1D2Die::GenExtIns(const TempFuncs &tempFuncs, Tem
         rankGroup[linkData[0].GetLocalDieId()].AddRank(peerRankId);
     }
 
-    HCCL_INFO("[CcuTempAllGatherMesh1D2Die] linksDie0Size[%llu], linksDie1Size[%llu]", linksDie[0].size(), linksDie[1].size());
+    HCCL_INFO(
+        "[CcuTempAllGatherMesh1D2Die] linksDie0Size[%zu], linksDie1Size[%zu]", linksDie[0].size(), linksDie[1].size());
 
     rankGroup[0].AddRank(myRank_);
     rankGroup[1].AddRank(myRank_);
 
     std::unique_ptr<CcuInsGroup> insGroupPtr = std::make_unique<CcuInsGroup>();
-    for (uint32_t dieId = 0; dieId < 2; dieId++) {  // 2Die算法，需要下发 2 条通信指令
+    for (uint32_t dieId = 0; dieId < 2; dieId++) { // 2Die算法，需要下发 2 条通信指令
         CcuInstructionAllGatherMesh1D2Die ccuInstruction;
         bool withMyRank = linksDie[dieId].size() > linksDie[1 - dieId].size() ? false : true;
-        ccuInstruction.Init(myRank_, inputAddr, outputAddr, sliceSize, outputSliceStride, token, withMyRank, op_, tempVTopo_);
+        ccuInstruction.Init(
+            myRank_, inputAddr, outputAddr, sliceSize, outputSliceStride, token, withMyRank, op_, tempVTopo_);
         ccuInstruction.SetLinks(linksDie[dieId]);
         ccuInstruction.SetRankGroup(rankGroup[dieId]);
-        ccuInstruction.SetCntCkeNum(5);  // 每个transport用5个CKE
+        ccuInstruction.SetCntCkeNum(5); // 每个transport用5个CKE
         insGroupPtr->Append(std::move(std::make_unique<CcuInstructionAllGatherMesh1D2Die>(ccuInstruction)));
     }
-    tempInsQues[0]->Append(std::move(insGroupPtr));  // 只有一条que
+    tempInsQues[0]->Append(std::move(insGroupPtr)); // 只有一条que
     HCCL_INFO("[CcuTempAllGatherMesh1D2Die] Template Run for all steps Ends.");
     return HcclResult::HCCL_SUCCESS;
 }

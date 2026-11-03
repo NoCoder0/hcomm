@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
@@ -11,6 +11,7 @@
 set (include_list
     ${checker_include_list}
     ${HCOMM_CODE_LEGACY}/common
+    ${HCOMM_DIR}/src/base_comm/common/debug
 
     ${UTILS_DIR}/adapter_v1/aiv
 
@@ -83,7 +84,7 @@ add_library(hccl_alg_adaption_v2 SHARED
     ${HCOMM_CODE_LEGACY}/common/utils/hash_utils.cc
     ${HCOMM_CODE_LEGACY}/common/log.cc
     ${HCOMM_CODE_LEGACY}/common/exception/hccl_exception.cc
-    ${HCOMM_CODE_LEGACY}/common/exception/exception_defination.cc
+    ${HCOMM_CODE_LEGACY}/common/exception/exception_definition.cc
 
     ${HCOMM_LEGACY_FRAMEWORK}/communicator/hccl_params_pub.cc
 
@@ -99,26 +100,27 @@ add_library(hccl_alg_adaption_v2 SHARED
     ${HCOMM_LEGACY_FRAMEWORK}/resource_manager/transport/aicpu/connected_link_mgr.cc
 
     ${HCOMM_LEGACY_FRAMEWORK}/topo/virtual_topo.cc
-    ${HCOMM_LEGACY_FRAMEWORK}/topo/new_topo_builder/common/conn_interface.cc
-    ${HCOMM_LEGACY_FRAMEWORK}/topo/new_topo_builder/rank_table_info/rank_table_info.cc
-    ${HCOMM_LEGACY_FRAMEWORK}/topo/new_topo_builder/rank_table_info/new_rank_info.cc
-    ${HCOMM_LEGACY_FRAMEWORK}/topo/new_topo_builder/rank_table_info/rank_level_info.cc
-    ${HCOMM_LEGACY_FRAMEWORK}/topo/new_topo_builder/rank_table_info/address_info.cc
-    ${HCOMM_LEGACY_FRAMEWORK}/topo/new_topo_builder/rank_table_info/control_plane.cc
-    ${HCOMM_LEGACY_FRAMEWORK}/topo/new_topo_builder/phy_topo/phy_topo.cc
-    ${HCOMM_LEGACY_FRAMEWORK}/topo/new_topo_builder/phy_topo_builder/phy_topo_builder.cc
-    ${HCOMM_LEGACY_FRAMEWORK}/topo/new_topo_builder/topo_info/topo_info.cc
-    ${HCOMM_LEGACY_FRAMEWORK}/topo/new_topo_builder/topo_info/edge_info.cc
-    ${HCOMM_LEGACY_FRAMEWORK}/topo/new_topo_builder/topo_info/peer_info.cc
-    ${HCOMM_LEGACY_FRAMEWORK}/topo/new_topo_builder/rank_graph/rank_graph.cc
-    ${HCOMM_LEGACY_FRAMEWORK}/topo/new_topo_builder/rank_graph/net_instance.cc
-    ${HCOMM_LEGACY_FRAMEWORK}/topo/new_topo_builder/rank_graph_builder/rank_graph_builder.cc
-    ${HCOMM_LEGACY_FRAMEWORK}/topo/new_topo_builder/rank_graph_builder/detour_service.cc
-    ${HCOMM_LEGACY_FRAMEWORK}/topo/new_topo_builder/rank_graph_builder/detour_rules.cc
-    ${HCOMM_LEGACY_FRAMEWORK}/topo/new_topo_builder/rank_graph_builder/updater_for_64_plus_1.cc
+    ${HCOMM_RANK_GRAPH}/common/conn_interface.cc
+    ${HCOMM_RANK_GRAPH}/rank_table_info/rank_table_info.cc
+    ${HCOMM_RANK_GRAPH}/rank_table_info/new_rank_info.cc
+    ${HCOMM_RANK_GRAPH}/rank_table_info/rank_level_info.cc
+    ${HCOMM_RANK_GRAPH}/rank_table_info/address_info.cc
+    ${HCOMM_RANK_GRAPH}/rank_table_info/control_plane.cc
+    ${HCOMM_RANK_GRAPH}/phy_topo/phy_topo.cc
+    ${HCOMM_RANK_GRAPH}/phy_topo_builder/phy_topo_builder.cc
+    ${HCOMM_RANK_GRAPH}/topo_info/topo_info.cc
+    ${HCOMM_RANK_GRAPH}/topo_info/edge_info.cc
+    ${HCOMM_RANK_GRAPH}/topo_info/peer_info.cc
+    ${HCOMM_RANK_GRAPH}/rank_graph/rank_graph.cc
+    ${HCOMM_RANK_GRAPH}/rank_graph/net_instance.cc
+    ${HCOMM_RANK_GRAPH}/rank_graph_builder/rank_graph_builder.cc
+    ${HCOMM_RANK_GRAPH}/rank_graph_builder/detour_service.cc
+    ${HCOMM_RANK_GRAPH}/rank_graph_builder/detour_rules.cc
+    ${HCOMM_RANK_GRAPH}/rank_graph_builder/updater_for_64_plus_1.cc
     ${HCOMM_LEGACY_FRAMEWORK}/env_config/env_config.cc
     ${HCOMM_LEGACY_FRAMEWORK}/env_config/env_func.cc
-    ${HCOMM_LEGACY_FRAMEWORK}/env_config/base_config.cc
+    ${HCOMM_LEGACY_FRAMEWORK}/env_config/base_config_legacy.cc
+    ${HCOMM_DIR}/src/base_comm/common/debug/plf_debug_config.cc
 
     ${HCOMM_LEGACY_FRAMEWORK}/misc/json_parser/json_parser.cc
 
@@ -131,6 +133,8 @@ target_include_directories(hccl_alg_adaption_v2 PRIVATE
     ${include_list}
     ${HCOMM_DIR}/src/legacy/ascend910/common
     ${HCOMM_DIR}/src/legacy/ascend910/common/error_manager
+    ${HCOMM_DIR}/src/legacy/ascend950
+    ${HCOMM_DIR}/pkg_inc/hcomm
     ${HCOMM_DIR}/test/stub/depends/pkg_inc/base
 )
 

@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #include "bifrost_cncoi_suber.h"
 #include "bifrost_cncoi_suber_pri.h"
 #include "bifrost_cncoi_svc.h"
@@ -18,7 +17,7 @@
 extern "C" {
 #endif
 
-BifrostCncoiSuber* BifrostCncoiSuberInit(BifrostCncoiSuberInitArg *arg)
+BifrostCncoiSuber *BifrostCncoiSuberInit(BifrostCncoiSuberInitArg *arg)
 {
     if (arg == VOS_NULL) {
         return VOS_NULL;
@@ -55,7 +54,7 @@ BifrostCncoiSuber* BifrostCncoiSuberInit(BifrostCncoiSuberInitArg *arg)
     initArg.svcName = BIFROST_CNCOI_SVC_NAME;
     initArg.lsnUrl = arg->lsnUrl;
     bifrostCncoiSuber->suber = BkfSuberInit(&initArg);
-    if (bifrostCncoiSuber->suber  == VOS_NULL) {
+    if (bifrostCncoiSuber->suber == VOS_NULL) {
         goto error;
     }
     return bifrostCncoiSuber;
@@ -144,8 +143,7 @@ uint32_t BifrostCncoiSuberSetSvcInstUrl(BifrostCncoiSuber *bifrostCncoiSuber, ui
     return BkfSuberSetSvcInstUrl(bifrostCncoiSuber->suber, instId, puberUrl);
 }
 
-uint32_t BifrostCncoiSuberSetSvcInstUrlEx(BifrostCncoiSuber *bifrostCncoiSuber, uint64_t instId,
-    BkfUrl *puberUrl)
+uint32_t BifrostCncoiSuberSetSvcInstUrlEx(BifrostCncoiSuber *bifrostCncoiSuber, uint64_t instId, BkfUrl *puberUrl)
 {
     if (bifrostCncoiSuber == VOS_NULL) {
         return BKF_ERR;
@@ -154,9 +152,7 @@ uint32_t BifrostCncoiSuberSetSvcInstUrlEx(BifrostCncoiSuber *bifrostCncoiSuber, 
     return BkfSuberSetSvcInstUrlEx(bifrostCncoiSuber->suber, instId, puberUrl);
 }
 
-
-uint32_t BifrostCncoiSuberSetSvcInstLocalUrl(BifrostCncoiSuber *bifrostCncoiSuber, uint64_t instId,
-    BkfUrl *localUrl)
+uint32_t BifrostCncoiSuberSetSvcInstLocalUrl(BifrostCncoiSuber *bifrostCncoiSuber, uint64_t instId, BkfUrl *localUrl)
 {
     if (bifrostCncoiSuber == VOS_NULL) {
         return BKF_ERR;
@@ -185,7 +181,6 @@ void BifrostCncoiSuberUnsetSvcInstUrlEx(BifrostCncoiSuber *bifrostCncoiSuber, ui
     return;
 }
 
-
 void BifrostCncoiSuberUnsetSvcInstLocalUrl(BifrostCncoiSuber *bifrostCncoiSuber, uint64_t instId)
 {
     if (bifrostCncoiSuber == VOS_NULL) {
@@ -195,8 +190,8 @@ void BifrostCncoiSuberUnsetSvcInstLocalUrl(BifrostCncoiSuber *bifrostCncoiSuber,
     return;
 }
 
-uint32_t BifrostCncoiSuberBindSliceInstId(BifrostCncoiSuber *bifrostCncoiSuber,
-    BifrostCncoiSliceKeyT *sliceKey, uint32_t instId)
+uint32_t BifrostCncoiSuberBindSliceInstId(BifrostCncoiSuber *bifrostCncoiSuber, BifrostCncoiSliceKeyT *sliceKey,
+    uint32_t instId)
 {
     if (bifrostCncoiSuber == VOS_NULL) {
         return BKF_ERR;
@@ -205,8 +200,8 @@ uint32_t BifrostCncoiSuberBindSliceInstId(BifrostCncoiSuber *bifrostCncoiSuber,
     return BkfSuberSetSliceInstId(bifrostCncoiSuber->suber, sliceKey, instId);
 }
 
-uint32_t BifrostCncoiSuberBindSliceInstIdEx(BifrostCncoiSuber *bifrostCncoiSuber,
-    BifrostCncoiSliceKeyT *sliceKey, uint64_t instId)
+uint32_t BifrostCncoiSuberBindSliceInstIdEx(BifrostCncoiSuber *bifrostCncoiSuber, BifrostCncoiSliceKeyT *sliceKey,
+    uint64_t instId)
 {
     if (bifrostCncoiSuber == VOS_NULL) {
         return BKF_ERR;
@@ -215,8 +210,7 @@ uint32_t BifrostCncoiSuberBindSliceInstIdEx(BifrostCncoiSuber *bifrostCncoiSuber
     return BkfSuberSetSliceInstIdEx(bifrostCncoiSuber->suber, sliceKey, instId);
 }
 
-void BifrostCncoiSuberUnbindSliceInstId(BifrostCncoiSuber *bifrostCncoiSuber,
-    BifrostCncoiSliceKeyT *sliceKey)
+void BifrostCncoiSuberUnbindSliceInstId(BifrostCncoiSuber *bifrostCncoiSuber, BifrostCncoiSliceKeyT *sliceKey)
 {
     if (bifrostCncoiSuber == VOS_NULL) {
         return;
@@ -225,8 +219,8 @@ void BifrostCncoiSuberUnbindSliceInstId(BifrostCncoiSuber *bifrostCncoiSuber,
     return;
 }
 
-void BifrostCncoiSuberUnbindSliceSpecInstId(BifrostCncoiSuber *bifrostCncoiSuber,
-    BifrostCncoiSliceKeyT *sliceKey, uint64_t instId)
+void BifrostCncoiSuberUnbindSliceSpecInstId(BifrostCncoiSuber *bifrostCncoiSuber, BifrostCncoiSliceKeyT *sliceKey,
+    uint64_t instId)
 {
     if (bifrostCncoiSuber == VOS_NULL) {
         return;
@@ -238,4 +232,3 @@ void BifrostCncoiSuberUnbindSliceSpecInstId(BifrostCncoiSuber *bifrostCncoiSuber
 #if __cplusplus
 }
 #endif
-

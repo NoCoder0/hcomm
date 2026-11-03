@@ -1,31 +1,33 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
- 
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "aiv_communication_base.h"
- 
+
 using namespace AscendC;
 
 class AivAll2AllV91093Single : public AivCommBase {
 public:
     __aicore__ inline AivAll2AllV91093Single() {}
- 
-    template<typename T>
-    __aicore__ inline void Process(GM_ADDR input, GM_ADDR output, int32_t tag, uint64_t bufferSize,
-        ExtraArgs* extraArgs);
 
-    __aicore__ inline void CalBlockCountAndOffset(uint64_t len, uint32_t blockNumPerGroup, uint32_t blockIdxInGroup,
-        uint32_t padCount, uint64_t &count, uint64_t &blockOffset);
+    template <typename T>
+    __aicore__ inline void
+    Process(GM_ADDR input, GM_ADDR output, int32_t tag, uint64_t bufferSize, ExtraArgs* extraArgs);
+
+    __aicore__ inline void CalBlockCountAndOffset(
+        uint64_t len, uint32_t blockNumPerGroup, uint32_t blockIdxInGroup, uint32_t padCount, uint64_t& count,
+        uint64_t& blockOffset);
 };
 
-__aicore__ inline void AivAll2AllV91093Single::CalBlockCountAndOffset(uint64_t len, uint32_t blockNumPerGroup,
-uint32_t blockIdxInGroup, uint32_t padCount, uint64_t &count, uint64_t &blockOffset)
+__aicore__ inline void AivAll2AllV91093Single::CalBlockCountAndOffset(
+    uint64_t len, uint32_t blockNumPerGroup, uint32_t blockIdxInGroup, uint32_t padCount, uint64_t& count,
+    uint64_t& blockOffset)
 {
     uint64_t avgLengthPerBlock = CeilDiv(len, blockNumPerGroup);
     uint64_t avgLengthPerSlice = CeilDiv(avgLengthPerBlock, padCount) * padCount; // 32B对齐
@@ -36,23 +38,23 @@ uint32_t blockIdxInGroup, uint32_t padCount, uint64_t &count, uint64_t &blockOff
     blockOffset = blockIdxInGroup * avgLengthPerSlice;
 }
 
-template<typename T>
-__aicore__ inline void AivAll2AllV91093Single::Process(GM_ADDR input, GM_ADDR output, int32_t tag, uint64_t bufferSize,
-    ExtraArgs* extraArgs)
+template <typename T>
+__aicore__ inline void
+AivAll2AllV91093Single::Process(GM_ADDR input, GM_ADDR output, int32_t tag, uint64_t bufferSize, ExtraArgs* extraArgs)
 {
     // 每张卡的CCLBuffer大小为bufferSize，平均分给ranksize块，每块的大小
     uint64_t avgBufferCount = bufferSize / numBlocks_ / sizeof(T); // numBlocks_需要能被rankSize_整除
 
-    __gm__ T *inputGM = (__gm__ T *)input;
-    __gm__ T *outputGM = (__gm__ T *)output;
- 
-    uint32_t blockNumPerGroup = numBlocks_ / rankSize_; 
+    __gm__ T* inputGM = (__gm__ T*)input;
+    __gm__ T* outputGM = (__gm__ T*)output;
+
+    uint32_t blockNumPerGroup = numBlocks_ / rankSize_;
     uint32_t blockIdxInGroup = blockIdx_ % blockNumPerGroup;
     uint32_t dstRank = blockIdx_ / blockNumPerGroup;
     uint32_t padCount = UB_ALIGN_SIZE / sizeof(T);
 
-    __gm__ T *cclGMSelf = (__gm__ T *)(GM_IN[rank_]);
-    __gm__ T *cclGMOther = (__gm__ T *)(GM_IN[dstRank]);
+    __gm__ T* cclGMSelf = (__gm__ T*)(GM_IN[rank_]);
+    __gm__ T* cclGMOther = (__gm__ T*)(GM_IN[dstRank]);
 
     uint64_t sendCount = extraArgs->sendCounts[dstRank];
     uint64_t recvCount = extraArgs->recvCounts[dstRank];
@@ -120,8 +122,8 @@ __aicore__ inline void AivAll2AllV91093Single::Process(GM_ADDR input, GM_ADDR ou
         curTag += 1;
     }
 }
- 
-template<typename T>
+
+template <typename T>
 __aicore__ inline void aiv_all_to_all_v_91093_single(KERNEL_ARGS_DEF, ExtraArgs* extraArgs)
 {
     AivAll2AllV91093Single op;

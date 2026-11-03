@@ -14,28 +14,24 @@
 #include "dev_buffer.h"
 #include "rma_buffer.h"
 #include "local_ub_rma_buffer.h"
-#include "local_rdma_rma_buffer.h"
-#include "local_ipc_rma_buffer.h"
+#include "local_rdma_rma_buffer_v2.h"
+#include "local_ipc_rma_buffer_v2.h"
 #include "remote_rma_buffer.h"
 
 using namespace Hccl;
 
 class LocalRmaBufferTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "LocalRmaBuffer tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "LocalRmaBuffer tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "LocalRmaBuffer tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "LocalRmaBuffer tests tear down." << std::endl; }
 
     virtual void SetUp()
     {
         MOCKER(HrtIpcSetMemoryName).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any());
-        MOCKER(HrtDevMemAlignWithPage).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any());
+        MOCKER(HrtDevMemAlignWithPage)
+            .stubs()
+            .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any());
         MOCKER(HrtIpcDestroyMemoryName).stubs().with(mockcpp::any());
 
         std::cout << "A Test case in LocalRmaBuffer SetUP." << std::endl;
@@ -59,7 +55,7 @@ TEST_F(LocalRmaBufferTest, localubrmabuffer_serialize)
 {
     u32 token = 1;
     MOCKER(GetUbToken).stubs().will(returnValue(token));
-    RdmaHandle rdmaHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
     LocalUbRmaBuffer localUbRmaBuffer(devBuf, rdmaHandle);
     string msg = localUbRmaBuffer.Describe();
     EXPECT_NE(0, msg.length());
@@ -77,7 +73,7 @@ TEST_F(LocalRmaBufferTest, getExchangeDto_rdma_test)
 {
     u32 token = 1;
     MOCKER(GetUbToken).stubs().will(returnValue(token));
-    RdmaHandle rdmaHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
     LocalUbRmaBuffer localUbRmaBuffer(devBuf, rdmaHandle);
 
     localUbRmaBuffer.GetExchangeDto();
@@ -87,7 +83,7 @@ TEST_F(LocalRmaBufferTest, Serialize_test)
 {
     u32 token = 1;
     MOCKER(GetUbToken).stubs().will(returnValue(token));
-    RdmaHandle rdmaHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
     LocalRdmaRmaBuffer localRdmaRmaBuffer(devBuf, rdmaHandle);
 
     localRdmaRmaBuffer.Describe();
@@ -103,14 +99,14 @@ TEST_F(LocalRmaBufferTest, getExchangeDto_ipc_test)
     localIpcRmaBuffer.GetExchangeDto();
 
     u32 pid = 1;
-    MOCKER(HrtDeviceGetBareTgid).stubs().will(returnValue(pid));
+    MOCKER(HrtDeviceGetBareTgid).stubs().will(returnValue(static_cast<s32>(pid)));
     localIpcRmaBuffer.Grant(pid);
 };
 
 TEST_F(LocalRmaBufferTest, generate_safe_random_number)
 {
     MOCKER(HrtGetDevice).stubs().will(returnValue(1));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(1)));
+    MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().will(returnValue(static_cast<DevId>(1)));
     MOCKER(HrtRaGetSecRandom).stubs().with(mockcpp::any(), mockcpp::any());
     u32 token = GetUbToken();
 }

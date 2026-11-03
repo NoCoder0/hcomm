@@ -29,27 +29,29 @@ BKF_STATIC_ASSERT(BKF_URL_IP_STR_BUF_LEN_MIN >= BKF_URL_TCP_STR_BUF_LEN_MIN);
 BKF_STATIC_ASSERT(BKF_URL_IP_STR_BUF_LEN_MIN >= BKF_URL_MESH_STR_BUF_LEN_MIN);
 BKF_STATIC_ASSERT(BKF_URL_IP_STR_BUF_LEN_MIN >= BKF_URL_V8TLS_STR_BUF_LEN_MIN);
 
-#define BKF_URL_SIGN_SET(url) do {               \
-    BKF_SIGN_SET((url)->sign, BKF_URL_SIGN0); \
-    BKF_SIGN_SET((url)->signH, BKF_URL_SIGN1); \
-} while (0)
-#define BKF_URL_SIGN_CLR(url) do {  \
-    BKF_SIGN_CLR((url)->sign);   \
-    BKF_SIGN_CLR((url)->signH);   \
-} while (0)
-#define BKF_URL_SIGN_CLONE(urlDest, urlSrc) do { \
-    (urlDest)->sign = (urlSrc)->sign;      \
-    (urlDest)->signH = (urlSrc)->signH;      \
-} while (0)
-#define BKF_URL_IS_VALID(url) \
-    (((url) != VOS_NULL) && BKF_SIGN_IS_VALID((url)->sign, BKF_URL_SIGN0) && \
-     BKF_SIGN_IS_VALID((url)->signH, BKF_URL_SIGN1) && BKF_URL_TYPE_IS_VALID((url)->type))
+#define BKF_URL_SIGN_SET(url)                                                                                          \
+    do {                                                                                                               \
+        BKF_SIGN_SET((url)->sign, BKF_URL_SIGN0);                                                                      \
+        BKF_SIGN_SET((url)->signH, BKF_URL_SIGN1);                                                                     \
+    } while (0)
+#define BKF_URL_SIGN_CLR(url)                                                                                          \
+    do {                                                                                                               \
+        BKF_SIGN_CLR((url)->sign);                                                                                     \
+        BKF_SIGN_CLR((url)->signH);                                                                                    \
+    } while (0)
+#define BKF_URL_SIGN_CLONE(urlDest, urlSrc)                                                                            \
+    do {                                                                                                               \
+        (urlDest)->sign = (urlSrc)->sign;                                                                              \
+        (urlDest)->signH = (urlSrc)->signH;                                                                            \
+    } while (0)
+#define BKF_URL_IS_VALID(url)                                                                                          \
+    (((url) != VOS_NULL) && BKF_SIGN_IS_VALID((url)->sign, BKF_URL_SIGN0) &&                                           \
+        BKF_SIGN_IS_VALID((url)->signH, BKF_URL_SIGN1) && BKF_URL_TYPE_IS_VALID((url)->type))
 
-
-typedef uint32_t(*F_BKF_URL_STR_2VAL)(char *urlStr, BkfUrl *url);
+typedef uint32_t (*F_BKF_URL_STR_2VAL)(char *urlStr, BkfUrl *url);
 typedef char *(*F_BKF_URL_VAL_2STR)(BkfUrl *url, uint8_t *buf, int32_t bufLen);
-typedef uint32_t(*F_BKF_URL_H2N)(BkfUrl *urlH, BkfUrl *urlN);
-typedef uint32_t(*F_BKF_URL_N2H)(BkfUrl *urlN, BkfUrl *urlH);
+typedef uint32_t (*F_BKF_URL_H2N)(BkfUrl *urlH, BkfUrl *urlN);
+typedef uint32_t (*F_BKF_URL_N2H)(BkfUrl *urlN, BkfUrl *urlH);
 typedef struct TagBkfUrlVTbl {
     const char *urlStrPrefix;
     F_BKF_URL_STR_2VAL str2Val;
@@ -103,46 +105,57 @@ uint32_t BkfUrlLeTcpH2N(BkfUrl *urlH, BkfUrl *urlN);
 uint32_t BkfUrlLeTcpN2H(BkfUrl *urlN, BkfUrl *urlH);
 
 const BkfUrlVTbl g_BkfUrlVTbl[] = {
-    { "invalid://", BkfUrlInvalidStr2Val, BkfUrlInvalidVal2Str, (F_BKF_CMP)BkfUrlInvalidCmp, 1,
-      BkfUrlInvalidH2N, BkfUrlInvalidN2H },
-    { "dms://", BkfUrlDmsStr2Val, BkfUrlDmsVal2Str, (F_BKF_CMP)BkfUrlDmsCmp, BKF_URL_DMS_STR_BUF_LEN_MIN,
-      BkfUrlDmsH2N, BkfUrlDmsN2H },
-    { "tcp://", BkfUrlTcpStr2Val, BkfUrlTcpVal2Str, (F_BKF_CMP)BkfUrlTcpCmp, BKF_URL_TCP_STR_BUF_LEN_MIN,
-      BkfUrlTcpH2N, BkfUrlTcpN2H },
-    { "mesh://", BkfUrlMeshStr2Val, BkfUrlMeshVal2Str, (F_BKF_CMP)BkfUrlMeshCmp, BKF_URL_MESH_STR_BUF_LEN_MIN,
-      BkfUrlMeshH2N, BkfUrlMeshN2H },
-    { "v8tls://", BkfUrlV8TlsStr2Val, BkfUrlV8TlsVal2Str, (F_BKF_CMP)BkfUrlV8TlsCmp,
-      BKF_URL_V8TLS_STR_BUF_LEN_MIN, BkfUrlV8TlsH2N, BkfUrlV8TlsN2H },
-    { "v8tcp://", BkfUrlV8TcpStr2Val, BkfUrlV8TcpVal2Str, (F_BKF_CMP)BkfUrlV8TcpCmp,
-      BKF_URL_V8TCP_STR_BUF_LEN_MIN, BkfUrlV8TcpH2N, BkfUrlV8TcpN2H },
-    { "letcp://", BkfUrlLeTcpStr2Val, BkfUrlLeTcpVal2Str, (F_BKF_CMP)BkfUrlLeTcpCmp,
-      BKF_URL_LETCP_STR_BUF_LEN_MIN, BkfUrlLeTcpH2N, BkfUrlLeTcpN2H },
+    {"invalid://", BkfUrlInvalidStr2Val, BkfUrlInvalidVal2Str, (F_BKF_CMP)BkfUrlInvalidCmp, 1, BkfUrlInvalidH2N,
+        BkfUrlInvalidN2H},
+    {"dms://", BkfUrlDmsStr2Val, BkfUrlDmsVal2Str, (F_BKF_CMP)BkfUrlDmsCmp, BKF_URL_DMS_STR_BUF_LEN_MIN, BkfUrlDmsH2N,
+        BkfUrlDmsN2H},
+    {"tcp://", BkfUrlTcpStr2Val, BkfUrlTcpVal2Str, (F_BKF_CMP)BkfUrlTcpCmp, BKF_URL_TCP_STR_BUF_LEN_MIN, BkfUrlTcpH2N,
+        BkfUrlTcpN2H},
+    {"mesh://", BkfUrlMeshStr2Val, BkfUrlMeshVal2Str, (F_BKF_CMP)BkfUrlMeshCmp, BKF_URL_MESH_STR_BUF_LEN_MIN,
+        BkfUrlMeshH2N, BkfUrlMeshN2H},
+    {"v8tls://", BkfUrlV8TlsStr2Val, BkfUrlV8TlsVal2Str, (F_BKF_CMP)BkfUrlV8TlsCmp, BKF_URL_V8TLS_STR_BUF_LEN_MIN,
+        BkfUrlV8TlsH2N, BkfUrlV8TlsN2H},
+    {"v8tcp://", BkfUrlV8TcpStr2Val, BkfUrlV8TcpVal2Str, (F_BKF_CMP)BkfUrlV8TcpCmp, BKF_URL_V8TCP_STR_BUF_LEN_MIN,
+        BkfUrlV8TcpH2N, BkfUrlV8TcpN2H},
+    {"letcp://", BkfUrlLeTcpStr2Val, BkfUrlLeTcpVal2Str, (F_BKF_CMP)BkfUrlLeTcpCmp, BKF_URL_LETCP_STR_BUF_LEN_MIN,
+        BkfUrlLeTcpH2N, BkfUrlLeTcpN2H},
 };
 BKF_STATIC_ASSERT(BKF_GET_ARY_COUNT(g_BkfUrlVTbl) == BKF_URL_TYPE_CNT);
 
 #define BKF_URL_STR_INVALID "-"
 uint32_t BkfUrlInvalidStr2Val(char *urlStr, BkfUrl *url)
 {
+    (void)urlStr;
+    (void)url;
     BKF_ASSERT(0);
     return BKF_ERR;
 }
 char *BkfUrlInvalidVal2Str(BkfUrl *url, uint8_t *buf, int32_t bufLen)
 {
+    (void)url;
+    (void)buf;
+    (void)bufLen;
     BKF_ASSERT(0);
     return BKF_URL_STR_INVALID;
 }
 int32_t BkfUrlInvalidCmp(BkfUrl *url1Input, BkfUrl *url2InDs)
 {
+    (void)url1Input;
+    (void)url2InDs;
     BKF_ASSERT(0);
     return 0;
 }
 uint32_t BkfUrlInvalidH2N(BkfUrl *urlH, BkfUrl *urlN)
 {
+    (void)urlH;
+    (void)urlN;
     BKF_ASSERT(0);
     return BKF_ERR;
 }
 uint32_t BkfUrlInvalidN2H(BkfUrl *urlN, BkfUrl *urlH)
 {
+    (void)urlN;
+    (void)urlH;
     BKF_ASSERT(0);
     return BKF_ERR;
 }
@@ -175,13 +188,12 @@ char *BkfUrlDmsVal2Str(BkfUrl *url, uint8_t *buf, int32_t bufLen)
         return BKF_URL_STR_INVALID;
     }
 
-    ret = snprintf_truncated_s((char*)buf, bufLen, "%s0x%X",
-                               g_BkfUrlVTbl[BKF_URL_TYPE_DMS].urlStrPrefix, url->dmsId);
+    ret = snprintf_truncated_s((char *)buf, bufLen, "%s0x%X", g_BkfUrlVTbl[BKF_URL_TYPE_DMS].urlStrPrefix, url->dmsId);
     if (ret <= 0) {
         return BKF_URL_STR_INVALID;
     }
 
-    return (char*)buf;
+    return (char *)buf;
 }
 int32_t BkfUrlDmsCmp(BkfUrl *url1Input, BkfUrl *url2InDs)
 {
@@ -235,7 +247,7 @@ uint32_t BkfUrlIpStr2Val(char *urlStr, BkfUrl *url, uint8_t urlType)
 char *BkfUrlIpVal2Str(BkfUrl *url, uint8_t *buf, int32_t bufLen, uint8_t urlType)
 {
     char *addrStr = VOS_NULL;
-    char addrStrBuf[BKF_URL_IP_STR_BUF_LEN_MIN] = { 0 };
+    char addrStrBuf[BKF_URL_IP_STR_BUF_LEN_MIN] = {0};
     int32_t ret;
 
     if (bufLen < g_BkfUrlVTbl[urlType].urlStrBufLenMin) {
@@ -246,13 +258,13 @@ char *BkfUrlIpVal2Str(BkfUrl *url, uint8_t *buf, int32_t bufLen, uint8_t urlType
     if (addrStr == VOS_NULL) {
         return BKF_URL_STR_INVALID;
     }
-    ret = snprintf_truncated_s((char*)buf, bufLen, "%s%s:%u",
-                               g_BkfUrlVTbl[urlType].urlStrPrefix, addrStr, url->ip.port);
+    ret = snprintf_truncated_s((char *)buf, bufLen, "%s%s:%u", g_BkfUrlVTbl[urlType].urlStrPrefix, addrStr,
+        url->ip.port);
     if (ret <= 0) {
         return BKF_URL_STR_INVALID;
     }
 
-    return (char*)buf;
+    return (char *)buf;
 }
 static inline int32_t BkfUrlIpCmp(BkfUrl *url1Input, BkfUrl *url2InDs)
 {
@@ -282,7 +294,6 @@ static inline uint32_t BkfUrlIpN2H(BkfUrl *urlN, BkfUrl *urlH)
     return BKF_OK;
 }
 
-
 uint32_t BkfUrlTcpStr2Val(char *urlStr, BkfUrl *url)
 {
     return BkfUrlIpStr2Val(urlStr, url, BKF_URL_TYPE_TCP);
@@ -303,7 +314,6 @@ uint32_t BkfUrlTcpN2H(BkfUrl *urlN, BkfUrl *urlH)
 {
     return BkfUrlIpN2H(urlN, urlH);
 }
-
 
 uint32_t BkfUrlMeshStr2Val(char *urlStr, BkfUrl *url)
 {
@@ -420,12 +430,12 @@ uint32_t BkfUrlSet(BkfUrl *url, char *urlStr)
     if (VOS_StrLen(urlStr) > BKF_URL_STR_LEN_MAX) {
         return BKF_ERR;
     }
-    ret = snprintf_truncated_s((char*)copyStr, sizeof(copyStr), "%s", urlStr);
+    ret = snprintf_truncated_s((char *)copyStr, sizeof(copyStr), "%s", urlStr);
     if (ret <= 0) {
         return BKF_ERR;
     }
 
-    begin = VOS_StrTrim((char*)copyStr);
+    begin = VOS_StrTrim((char *)copyStr);
     if (begin == VOS_NULL) {
         return BKF_ERR;
     }
@@ -583,4 +593,3 @@ uint32_t BkfUrlN2H(BkfUrl *urlN, BkfUrl *urlH)
 }
 #endif
 #endif
-

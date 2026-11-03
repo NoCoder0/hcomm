@@ -20,9 +20,9 @@ namespace Hccl {
 
 class InsTempBroadcastMesh1DOneShot : public InsAlgTemplateBase {
 public:
-    explicit InsTempBroadcastMesh1DOneShot(const RankId virtualRank, const u32 tempRankSize,
-                                   const std::vector<std::vector<RankId>> &tempVTopo,
-                                   const std::map<RankId, u32>            &tempVirtRankMap);
+    explicit InsTempBroadcastMesh1DOneShot(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~InsTempBroadcastMesh1DOneShot() override;
 
     std::string Describe() const override
@@ -30,11 +30,13 @@ public:
         return StringFormat("Template of broadcast mesh with tempRankSize [%u].", tempRankSize_);
     }
 
-    HcclResult GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &templateDataParams,
-                         const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues);
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
+    HcclResult GenExtIns(
+        const TempFuncs& tempFuncs, const TemplateDataParams& templateDataParams, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues);
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
 
     u32 CalcScratchMultiple(BufferType inBuffType, BufferType outBuffType);
+
 private:
 };
 

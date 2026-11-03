@@ -1,25 +1,24 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "reduce_scatter_mesh_mix_single_stream.h"
 #include "alg_template_register.h"
 
 namespace hccl {
 ReduceScatterMeshMixSingleStream::ReduceScatterMeshMixSingleStream(const HcclDispatcher dispatcher)
-    : AlgTemplateBase(dispatcher), reduceAttr_(0), streamIndex_(0)
-{
-}
+    : AlgTemplateBase(dispatcher),
+      reduceAttr_(0),
+      streamIndex_(0)
+{}
 
-ReduceScatterMeshMixSingleStream::~ReduceScatterMeshMixSingleStream()
-{
-}
+ReduceScatterMeshMixSingleStream::~ReduceScatterMeshMixSingleStream() {}
 
 HcclResult ReduceScatterMeshMixSingleStream::Prepare(u64 reduceAttrBitMap, u32 streamIndex)
 {
@@ -28,15 +27,17 @@ HcclResult ReduceScatterMeshMixSingleStream::Prepare(u64 reduceAttrBitMap, u32 s
     return HCCL_SUCCESS;
 }
 
-HcclResult ReduceScatterMeshMixSingleStream::RunSourceReducer(const LINK &link, const std::vector<Slice> &txSlices,
-    const std::vector<Slice> &dstSlices)
+HcclResult ReduceScatterMeshMixSingleStream::RunSourceReducer(
+    const LINK& link, const std::vector<Slice>& txSlices, const std::vector<Slice>& dstSlices)
 {
     // 发送inputmem
     std::vector<SenderMemoryInfo> txMems;
     for (u64 i = 0; i < txSlices.size(); i++) {
         DeviceMem srcMem = inputMem_.range(txSlices[i].offset, txSlices[i].size);
-        HCCL_DEBUG("[ReduceScatterMeshMixSingleStream][RunSourceReducer] send inputmem range[%llu], size[%llu] "
-            "tx dstmem offset[%llu]", txSlices[i].offset, txSlices[i].size, dstSlices[i].offset);
+        HCCL_DEBUG(
+            "[ReduceScatterMeshMixSingleStream][RunSourceReducer] send inputmem range[%llu], size[%llu] "
+            "tx dstmem offset[%llu]",
+            txSlices[i].offset, txSlices[i].size, dstSlices[i].offset);
         txMems.emplace_back(SenderMemoryInfo{baseOffset_ + dstSlices[i].offset, srcMem});
     }
 
@@ -44,15 +45,16 @@ HcclResult ReduceScatterMeshMixSingleStream::RunSourceReducer(const LINK &link, 
     return HCCL_SUCCESS;
 }
 
-HcclResult ReduceScatterMeshMixSingleStream::RunDestReducer(const LINK &link, const std::vector<Slice> &rxSlices,
-    const std::vector<Slice> &dstSlices)
+HcclResult ReduceScatterMeshMixSingleStream::RunDestReducer(
+    const LINK& link, const std::vector<Slice>& rxSlices, const std::vector<Slice>& dstSlices)
 {
     // 使用scratchmem接收数据，并同inputmem数据做reduce
     std::vector<ReducerMemoryInfo> rxReduceMems;
     for (u64 i = 0; i < rxSlices.size(); i++) {
         DeviceMem dstMem = inputMem_.range(rxSlices[i].offset, rxSlices[i].size);
         DeviceMem srcMem = scratchMem_.range(dstSlices[i].offset, dstSlices[i].size);
-        HCCL_DEBUG("[ReduceScatterMeshMixSingleStream][RunDestReducer] rcv offset[%llu], size[%llu] ,then reduce with "
+        HCCL_DEBUG(
+            "[ReduceScatterMeshMixSingleStream][RunDestReducer] rcv offset[%llu], size[%llu] ,then reduce with "
             "offset[%llu] size[%llu] ",
             dstSlices[i].offset, dstSlices[i].size, rxSlices[i].offset, rxSlices[i].size);
         rxReduceMems.emplace_back(ReducerMemoryInfo{baseOffset_ + rxSlices[i].offset, dstMem, dstMem, srcMem});
@@ -62,8 +64,9 @@ HcclResult ReduceScatterMeshMixSingleStream::RunDestReducer(const LINK &link, co
     return HCCL_SUCCESS;
 }
 
-HcclResult ReduceScatterMeshMixSingleStream::RunReduceScatter(const u32 rank, const u32 rankSize,
-    const std::vector<LINK> &links, const std::vector<Slice> &inputSlices, const std::vector<Slice> &scratchSlices)
+HcclResult ReduceScatterMeshMixSingleStream::RunReduceScatter(
+    const u32 rank, const u32 rankSize, const std::vector<LINK>& links, const std::vector<Slice>& inputSlices,
+    const std::vector<Slice>& scratchSlices)
 {
     u32 interRankSize = inputSlices.size() / rankSize;
     std::vector<u32> txRankOpOrder;
@@ -86,18 +89,21 @@ HcclResult ReduceScatterMeshMixSingleStream::RunReduceScatter(const u32 rank, co
         CHK_SMART_PTR_NULL(links[srcRank]);
         HCCL_INFO("rank[%u] will tx_ack to rank[%u]", rank, srcRank);
         ret = links[srcRank]->TxAck(stream_);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[Run][ReduceScatter]rank[%u] tx ack to rank[%u] failed", rank, srcRank), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS, HCCL_ERROR("[Run][ReduceScatter]rank[%u] tx ack to rank[%u] failed", rank, srcRank),
+            ret);
         CHK_SMART_PTR_NULL(links[dstRank]);
         HCCL_INFO("rank[%u] will rx_ack from rank[%d]", rank, dstRank);
 
         ret = links[dstRank]->RxAck(stream_);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[Run][ReduceScatter]rank[%u] rx ack from rank[%d] failed", rank, dstRank), ret);
-        HCCL_INFO("rank:%u round[%u] send to rank:[%d], inputSlices offset[%llu]"
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS, HCCL_ERROR("[Run][ReduceScatter]rank[%u] rx ack from rank[%d] failed", rank, dstRank),
+            ret);
+        HCCL_INFO(
+            "rank:%u round[%u] send to rank:[%d], inputSlices offset[%llu]"
             "size[%llu] scratchSlice offset[%llu] size[%llu] ",
-            rank, round, dstRank, inputSlices[dstRank].offset, inputSlices[dstRank].size,
-            scratchSlices[dstRank].offset, scratchSlices[dstRank].size);
+            rank, round, dstRank, inputSlices[dstRank].offset, inputSlices[dstRank].size, scratchSlices[dstRank].offset,
+            scratchSlices[dstRank].size);
         // 发送数据
         std::vector<Slice> txSlices;
         std::vector<Slice> txDstSlices;
@@ -106,12 +112,14 @@ HcclResult ReduceScatterMeshMixSingleStream::RunReduceScatter(const u32 rank, co
             txDstSlices.push_back(scratchSlices[i]);
         }
         ret = RunSourceReducer(links[dstRank], txSlices, txDstSlices);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
             HCCL_ERROR("[Run][ReduceScatter]rank:%u round[%u] reducer src run failed", rank, round), ret);
-        HCCL_INFO("rank[%u] round[%u] rx from rank[%u], inSlicesoffset[%llu] size[%llu] "\
+        HCCL_INFO(
+            "rank[%u] round[%u] rx from rank[%u], inSlicesoffset[%llu] size[%llu] "
             "scratchSlices offset[%llu] size[%llu]",
-            rank, round, srcRank, inputSlices[rank].offset, inputSlices[rank].size,
-            scratchSlices[rank].offset, scratchSlices[rank].size);
+            rank, round, srcRank, inputSlices[rank].offset, inputSlices[rank].size, scratchSlices[rank].offset,
+            scratchSlices[rank].size);
 
         std::vector<Slice> rxSlices;
         std::vector<Slice> rxDstSlices;
@@ -120,7 +128,8 @@ HcclResult ReduceScatterMeshMixSingleStream::RunReduceScatter(const u32 rank, co
             rxDstSlices.push_back(scratchSlices[i]);
         }
         ret = RunDestReducer(links[srcRank], rxSlices, rxDstSlices);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
             HCCL_ERROR("[Run][ReduceScatter]rank[%u] round[%u] reducer dst run failed", rank, round), ret);
 
         ret = links[srcRank]->RxWaitDone(stream_);
@@ -135,9 +144,13 @@ HcclResult ReduceScatterMeshMixSingleStream::RunReduceScatter(const u32 rank, co
             s32 dstRank = txRankOpOrder[orderIndex];
 
             ret = ExecuteBarrier(links[srcRank], links[dstRank]);
-            CHK_PRT_RET(ret != HCCL_SUCCESS,
-                HCCL_ERROR("[Run][ReduceScatter]rank[%u] run ReduceScatter executor barrier "\
-                    "failed. srcRank:%u dstRank:%d", rank, srcRank, dstRank), ret);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR(
+                    "[Run][ReduceScatter]rank[%u] run ReduceScatter executor barrier "
+                    "failed. srcRank:%u dstRank:%d",
+                    rank, srcRank, dstRank),
+                ret);
         }
     }
 
@@ -145,16 +158,20 @@ HcclResult ReduceScatterMeshMixSingleStream::RunReduceScatter(const u32 rank, co
 }
 
 // reducescatter的入口函数
-HcclResult ReduceScatterMeshMixSingleStream::RunAsync(const u32 rank, const u32 rankSize, const std::vector<LINK> &links)
+HcclResult
+ReduceScatterMeshMixSingleStream::RunAsync(const u32 rank, const u32 rankSize, const std::vector<LINK>& links)
 {
     CHK_SMART_PTR_NULL(dispatcher_);
     CHK_PTR_NULL(stream_.ptr());
     if (!outputMem_ || !inputMem_) {
-        HCCL_ERROR("[ReduceScatterMeshMixSingleStream][RunAsync]rank[%u] run_async inputmem or outputmem is null", rank);
+        HCCL_ERROR(
+            "[ReduceScatterMeshMixSingleStream][RunAsync]rank[%u] run_async inputmem or outputmem is null", rank);
         return HCCL_E_PTR;
     }
-    HCCL_INFO("[ReduceScatterMeshMixSingleStream][RunAsync]rank[%u] totalrank[%u] inputMem[%p] outputMem[%p] "
-        "count[%llu]", rank, rankSize, inputMem_.ptr(), outputMem_.ptr(), count_);
+    HCCL_INFO(
+        "[ReduceScatterMeshMixSingleStream][RunAsync]rank[%u] totalrank[%u] inputMem[%p] outputMem[%p] "
+        "count[%llu]",
+        rank, rankSize, inputMem_.ptr(), outputMem_.ptr(), count_);
 
     // 创建reducer & sender
     senderInfo_.reset(new (std::nothrow) Sender(dataType_, reductionOp_, reduceAttr_));
@@ -175,7 +192,8 @@ HcclResult ReduceScatterMeshMixSingleStream::RunAsync(const u32 rank, const u32 
     }
 
     if (streamIndex_ >= rankSize - 1) {
-        HCCL_ERROR("[ReduceScatterMeshMixSingleStream][RunAsync]rank[%u] stream index[%u] is out of range when ranksize[%u]",
+        HCCL_ERROR(
+            "[ReduceScatterMeshMixSingleStream][RunAsync]rank[%u] stream index[%u] is out of range when ranksize[%u]",
             rank, streamIndex_, rankSize);
         return HCCL_E_INTERNAL;
     }
@@ -195,4 +213,4 @@ HcclResult ReduceScatterMeshMixSingleStream::RunAsync(const u32 rank, const u32 
     return HCCL_SUCCESS;
 }
 REGISTER_TEMPLATE(TemplateType::TEMPLATE_REDUCESCATTER_MESH_MIX_SS, ReduceScatterMeshMixSingleStream);
-}  // namespace hccl
+} // namespace hccl

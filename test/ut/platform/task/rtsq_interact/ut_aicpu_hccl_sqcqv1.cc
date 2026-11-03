@@ -9,6 +9,7 @@
  */
 
 #include "gtest/gtest.h"
+#include <cstring>
 #include <mockcpp/mockcpp.hpp>
 #include "hccl/base.h"
 #include <hccl/hccl_types.h>
@@ -21,18 +22,9 @@ using namespace hccl;
 
 class RtsqInteract_Sqcqv1_UT : public testing::Test {
 protected:
-static void SetUpTestCase()
-    {
-        std::cout << "RtsqInteract_Sqcqv1_UT SetUP" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "RtsqInteract_Sqcqv1_UT TearDown" << std::endl;
-    }
-    virtual void SetUp()
-    {
-        std::cout << "RtsqInteract_Sqcqv1_UT Test SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "RtsqInteract_Sqcqv1_UT SetUP" << std::endl; }
+    static void TearDownTestCase() { std::cout << "RtsqInteract_Sqcqv1_UT TearDown" << std::endl; }
+    virtual void SetUp() { std::cout << "RtsqInteract_Sqcqv1_UT Test SetUP" << std::endl; }
     virtual void TearDown()
     {
         GlobalMockObject::verify();
@@ -40,7 +32,8 @@ static void SetUpTestCase()
     }
 };
 
-TEST_F(RtsqInteract_Sqcqv1_UT, Ut_AddOneRdmaDbSendSqeV1_When_DbAddrIsZero_Expect_SqeTypeIsInvalid) {
+TEST_F(RtsqInteract_Sqcqv1_UT, Ut_AddOneRdmaDbSendSqeV1_When_DbAddrIsZero_Expect_SqeTypeIsInvalid)
+{
     uint8_t sqe[64] = {0};
     uint8_t sqeType = 0;
     AddOneRdmaDbSendSqeV1(1, 1, 0, 0, 100, 1, sqe, &sqeType);
@@ -49,7 +42,8 @@ TEST_F(RtsqInteract_Sqcqv1_UT, Ut_AddOneRdmaDbSendSqeV1_When_DbAddrIsZero_Expect
     EXPECT_EQ(sqeStruct->header.type, RT_STARS_SQE_TYPE_INVALID);
 }
 
-TEST_F(RtsqInteract_Sqcqv1_UT, Ut_AddOneRdmaDbSendSqeV1_When_NormalParams_Expect_SqeTypeIsRdmaDbSend) {
+TEST_F(RtsqInteract_Sqcqv1_UT, Ut_AddOneRdmaDbSendSqeV1_When_NormalParams_Expect_SqeTypeIsRdmaDbSend)
+{
     uint8_t sqe[64] = {0};
     uint8_t sqeType = 0;
     uint64_t dbAddr = 0x1000000ULL;
@@ -59,7 +53,8 @@ TEST_F(RtsqInteract_Sqcqv1_UT, Ut_AddOneRdmaDbSendSqeV1_When_NormalParams_Expect
     EXPECT_EQ(sqeStruct->header.type, RT_STARS_SQE_TYPE_WRITE_VALUE);
 }
 
-TEST_F(RtsqInteract_Sqcqv1_UT, Ut_AddOneRdmaDbSendSqeV1_When_NormalParams_Expect_SqeFieldsAreCorrect) {
+TEST_F(RtsqInteract_Sqcqv1_UT, Ut_AddOneRdmaDbSendSqeV1_When_NormalParams_Expect_SqeFieldsAreCorrect)
+{
     uint8_t sqe[64] = {0};
     uint8_t sqeType = 0;
     uint64_t dbInfo = 0xABCD;
@@ -68,9 +63,9 @@ TEST_F(RtsqInteract_Sqcqv1_UT, Ut_AddOneRdmaDbSendSqeV1_When_NormalParams_Expect
     uint8_t rdmaType = 3;
     uint16_t streamId = 5;
     uint16_t taskId = 10;
-    
+
     AddOneRdmaDbSendSqeV1(streamId, taskId, dbInfo, dbAddr, length, rdmaType, sqe, &sqeType);
-    
+
     rtStarsWriteValueSqe_t* sqeStruct = reinterpret_cast<rtStarsWriteValueSqe_t*>(sqe);
     EXPECT_EQ(sqeStruct->header.type, RT_STARS_SQE_TYPE_WRITE_VALUE);
     EXPECT_EQ(sqeStruct->header.rtStreamId, streamId);
@@ -161,8 +156,9 @@ TEST_F(RtsqInteract_Sqcqv1_UT, Ut_AddOneMemcpySqeV1_WithReduce)
     uint8_t linkType = 0;
     uint32_t hcclQos = 3;
 
-    AddOneMemcpySqeV1(streamId, taskId, src, length, runtimeDataType, rtReduceOp, dst, partId, ssid,
-        devId, overflowAddr, linkType, sqe, &sqeType, hcclQos);
+    AddOneMemcpySqeV1(
+        streamId, taskId, src, length, runtimeDataType, rtReduceOp, dst, partId, ssid, devId, overflowAddr, linkType,
+        sqe, &sqeType, hcclQos);
 
     EXPECT_EQ(sqeType, MEMCPY_ASYNC_SQE);
     rtStarsMemcpyAsyncSqe_t* sqeStruct = reinterpret_cast<rtStarsMemcpyAsyncSqe_t*>(sqe);
@@ -191,8 +187,9 @@ TEST_F(RtsqInteract_Sqcqv1_UT, Ut_AddOneMemcpySqeV1_WithLinkSio)
     uint8_t linkType = static_cast<uint8_t>(hccl::LinkType::LINK_SIO);
     uint32_t hcclQos = 10;
 
-    AddOneMemcpySqeV1(streamId, taskId, src, length, runtimeDataType, rtReduceOp, dst, partId, ssid,
-        devId, overflowAddr, linkType, sqe, &sqeType, hcclQos);
+    AddOneMemcpySqeV1(
+        streamId, taskId, src, length, runtimeDataType, rtReduceOp, dst, partId, ssid, devId, overflowAddr, linkType,
+        sqe, &sqeType, hcclQos);
 
     EXPECT_EQ(sqeType, MEMCPY_ASYNC_SQE);
     rtStarsMemcpyAsyncSqe_t* sqeStruct = reinterpret_cast<rtStarsMemcpyAsyncSqe_t*>(sqe);
@@ -274,6 +271,37 @@ TEST_F(RtsqInteract_Sqcqv1_UT, Ut_AddOneFlipPlaceHolderSqeV1)
     EXPECT_EQ(sqeStruct->header.taskId, taskId);
     EXPECT_EQ(sqeStruct->header.blockDim, RT_TASK_TYPE_FLIP);
     EXPECT_EQ(sqeStruct->kernel_credit, RT_STARS_DEFAULT_KERNEL_CREDIT);
+    EXPECT_EQ(sqeStruct->u.flip_task_info.flipNumReport, flipNum);
+}
+
+TEST_F(RtsqInteract_Sqcqv1_UT, Ut_AddOneFlipPlaceHolderSqeV1_ClearsDirtyBuffer)
+{
+    // 模拟缓存路径未清零的脏缓冲, 验证组包后残留字节全部清零且有效字段不被破坏
+    uint8_t sqe[64];
+    (void)memset(sqe, 0xFF, sizeof(sqe));
+    uint8_t sqeType = 0;
+    uint16_t streamId = 1;
+    uint16_t flipNum = 10;
+    uint16_t taskId = 2;
+
+    AddOneFlipPlaceHolderSqeV1(streamId, flipNum, taskId, sqe, &sqeType);
+
+    EXPECT_EQ(sqeType, FLIP_PLACEHOLDER_SQE);
+    rtStarsPlaceHolderSqe_t* sqeStruct = reinterpret_cast<rtStarsPlaceHolderSqe_t*>(sqe);
+    for (size_t i = 0; i < sizeof(sqeStruct->u.flip_task_info.reserved); i++) {
+        EXPECT_EQ(sqeStruct->u.flip_task_info.reserved[i], 0) << "reserved[" << i << "] not zeroed";
+    }
+    EXPECT_EQ(sqeStruct->res1, 0U);
+    EXPECT_EQ(sqeStruct->res2, 0U);
+    EXPECT_EQ(sqeStruct->res3, 0U);
+    EXPECT_EQ(sqeStruct->header.l1Lock, 0);
+    EXPECT_EQ(sqeStruct->header.l1Unlock, 0);
+    EXPECT_EQ(sqeStruct->header.type, RT_STARS_SQE_TYPE_PLACE_HOLDER);
+    EXPECT_EQ(sqeStruct->header.preP, 1);
+    EXPECT_EQ(sqeStruct->header.blockDim, RT_TASK_TYPE_FLIP);
+    EXPECT_EQ(sqeStruct->kernel_credit, RT_STARS_DEFAULT_KERNEL_CREDIT);
+    EXPECT_EQ(sqeStruct->header.rtStreamId, streamId);
+    EXPECT_EQ(sqeStruct->header.taskId, taskId);
     EXPECT_EQ(sqeStruct->u.flip_task_info.flipNumReport, flipNum);
 }
 
@@ -362,8 +390,10 @@ TEST_F(RtsqInteract_Sqcqv1_UT, Ut_AddOneCacheWriteValuePlaceholderSqeV1)
 
     EXPECT_EQ(sqeType, CACHE_WRITE_VALUE_PLACEHOLDER_SQE);
     rtStarsPlaceHolderSqe_t* sqeStruct = reinterpret_cast<rtStarsPlaceHolderSqe_t*>(sqe);
-    EXPECT_EQ(sqeStruct->u.cache_write_value_task_info.write_addr_low, static_cast<uint32_t>(notifyWRAddr & MASK_32_BIT));
-    EXPECT_EQ(sqeStruct->u.cache_write_value_task_info.write_addr_high,
+    EXPECT_EQ(
+        sqeStruct->u.cache_write_value_task_info.write_addr_low, static_cast<uint32_t>(notifyWRAddr & MASK_32_BIT));
+    EXPECT_EQ(
+        sqeStruct->u.cache_write_value_task_info.write_addr_high,
         static_cast<uint32_t>((notifyWRAddr >> UINT32_BIT_NUM) & MASK_17_BIT));
 }
 
@@ -385,8 +415,9 @@ TEST_F(RtsqInteract_Sqcqv1_UT, Ut_AddOneCacheMemcpyRecordPlaceholderSqeV1_WithRe
     uint8_t linkType = 0;
     uint32_t hcclQos = 3;
 
-    AddOneCacheMemcpyRecordPlaceholderSqeV1(streamId, taskId, src, length, runtimeDataType, rtReduceOp, dst,
-        partId, ssid, devId, overflowAddr, linkType, sqe, &sqeType, hcclQos);
+    AddOneCacheMemcpyRecordPlaceholderSqeV1(
+        streamId, taskId, src, length, runtimeDataType, rtReduceOp, dst, partId, ssid, devId, overflowAddr, linkType,
+        sqe, &sqeType, hcclQos);
 
     EXPECT_EQ(sqeType, CACHE_MEMCPY_RECORD_PLACEHOLDER_SQE);
     rtStarsPlaceHolderSqe_t* sqeStruct = reinterpret_cast<rtStarsPlaceHolderSqe_t*>(sqe);
@@ -411,8 +442,9 @@ TEST_F(RtsqInteract_Sqcqv1_UT, Ut_AddOneCacheMemcpyRecordPlaceholderSqeV1_WithLi
     uint8_t linkType = static_cast<uint8_t>(hccl::LinkType::LINK_SIO);
     uint32_t hcclQos = 10;
 
-    AddOneCacheMemcpyRecordPlaceholderSqeV1(streamId, taskId, src, length, runtimeDataType, rtReduceOp, dst,
-        partId, ssid, devId, overflowAddr, linkType, sqe, &sqeType, hcclQos);
+    AddOneCacheMemcpyRecordPlaceholderSqeV1(
+        streamId, taskId, src, length, runtimeDataType, rtReduceOp, dst, partId, ssid, devId, overflowAddr, linkType,
+        sqe, &sqeType, hcclQos);
 
     EXPECT_EQ(sqeType, CACHE_MEMCPY_RECORD_PLACEHOLDER_SQE);
     rtStarsPlaceHolderSqe_t* sqeStruct = reinterpret_cast<rtStarsPlaceHolderSqe_t*>(sqe);

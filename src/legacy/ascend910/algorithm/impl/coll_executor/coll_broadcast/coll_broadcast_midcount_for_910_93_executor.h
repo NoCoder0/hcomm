@@ -14,24 +14,30 @@
 namespace hccl {
 class CollBroadcastMidCountFor91093Executor : public CollBroadcastExecutor {
 public:
-    explicit CollBroadcastMidCountFor91093Executor(const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher> &topoMatcher);
+    explicit CollBroadcastMidCountFor91093Executor(
+        const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher>& topoMatcher);
     ~CollBroadcastMidCountFor91093Executor() override = default;
     HcclResult Orchestrate(OpParam& param, AlgResourceResponse& algRes) override;
+
 private:
     /* *************** 资源计算 *************** */
     HcclResult CalcStreamNum(u32& streamNum) override;
     HcclResult CalcCommInfo(std::vector<LevelNSubCommTransport>& opTransport) override;
-    HcclResult CalcTransportMemType(TransportMemType &inputType, TransportMemType &outputType) const;
-    HcclResult CalcLevel1CommInfo(TransportMemType inputType, TransportMemType outputType,
+    HcclResult CalcTransportMemType(TransportMemType& inputType, TransportMemType& outputType) const;
+    HcclResult CalcLevel1CommInfo(
+        TransportMemType inputType, TransportMemType outputType,
         std::vector<LevelNSubCommTransport>& opTransport) override;
-    HcclResult CalcLevel2CommInfo(TransportMemType inputType, TransportMemType outputType,
+    HcclResult CalcLevel2CommInfo(
+        TransportMemType inputType, TransportMemType outputType,
         std::vector<LevelNSubCommTransport>& opTransport) override;
     u64 CalcLoopMaxCount(const u64 cclBuffSize, const u32 unitSize) override;
     /* *************** 算法编排 *************** */
-    HcclResult RunLevel2ByNHR(const OpParam &param, ExecMem &execMem, SubCommInfo  &level1CommInfo, SubCommInfo &level2CommInfo) const;
-    HcclResult RunLevel1ByNHR(const OpParam &param, ExecMem &execMem, SubCommInfo  &level1CommInfo, SubCommInfo &level2CommInfo);
-    HcclResult KernelRun(const OpParam &param, ExecMem &execMem) override;
-    HcclResult RunLoopInner(OpParam &param, ExecMem &execMem);
+    HcclResult RunLevel2ByNHR(
+        const OpParam& param, ExecMem& execMem, SubCommInfo& level1CommInfo, SubCommInfo& level2CommInfo) const;
+    HcclResult
+    RunLevel1ByNHR(const OpParam& param, ExecMem& execMem, SubCommInfo& level1CommInfo, SubCommInfo& level2CommInfo);
+    HcclResult KernelRun(const OpParam& param, ExecMem& execMem) override;
+    HcclResult RunLoopInner(OpParam& param, ExecMem& execMem);
 };
 
 } // namespace hccl

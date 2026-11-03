@@ -1,3 +1,13 @@
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
 #include <thread>
@@ -8,7 +18,7 @@
 #include "ping_mesh.h"
 #include "hccn_rping.h"
 #include "hccl_ip_address.h"
- 
+
 #include "hccn_rping.h"
 #include "ping_mesh.h"
 #include "hccl_ip_address.h"
@@ -20,7 +30,7 @@
 
 using namespace hccl;
 
-HcclResult HccnRpingGetResultStub(PingMesh *obj, u32 deviceId, u32 targetNum, RpingInput *input, RpingOutput *output)
+HcclResult HccnRpingGetResultStub(PingMesh* obj, u32 deviceId, u32 targetNum, RpingInput* input, RpingOutput* output)
 {
     for (int i = 0; i < targetNum; i++) {
         output[i].state = 2;
@@ -33,7 +43,7 @@ HcclResult HccnRpingGetResultStub(PingMesh *obj, u32 deviceId, u32 targetNum, Rp
     return HCCL_SUCCESS;
 }
 
-inline HcclResult hrtGetDeviceRefreshStub(s32 *deviceLogicId)
+inline HcclResult hrtGetDeviceRefreshStub(s32* deviceLogicId)
 {
     *deviceLogicId = 1;
     return HCCL_SUCCESS;
@@ -41,77 +51,38 @@ inline HcclResult hrtGetDeviceRefreshStub(s32 *deviceLogicId)
 
 class HccnRping_UT : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "HccnRping_UT SetUP" << std::endl;
-    }
- 
-    static void TearDownTestCase()
-    {
-        std::cout << "HccnRping_UT TearDown" << std::endl;
-    }
- 
+    static void SetUpTestCase() { std::cout << "HccnRping_UT SetUP" << std::endl; }
+
+    static void TearDownTestCase() { std::cout << "HccnRping_UT TearDown" << std::endl; }
+
     // Some expensive resource shared by all tests.
     virtual void SetUp()
     {
         s32 portNum = 7;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
-        MOCKER_CPP(&PingMesh::HccnRpingInit)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
+        MOCKER_CPP(&PingMesh::HccnRpingInit).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-        MOCKER_CPP(&PingMesh::HccnRpingDeinit)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(HCCL_SUCCESS));
+        MOCKER_CPP(&PingMesh::HccnRpingDeinit).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-        MOCKER_CPP(&PingMesh::HccnRpingAddTarget)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(HCCL_SUCCESS));
+        MOCKER_CPP(&PingMesh::HccnRpingAddTarget).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-        MOCKER_CPP(&PingMesh::HccnRpingRemoveTarget)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(HCCL_SUCCESS));
+        MOCKER_CPP(&PingMesh::HccnRpingRemoveTarget).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-        MOCKER_CPP(&PingMesh::HccnRpingGetTarget)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(HCCL_SUCCESS));
+        MOCKER_CPP(&PingMesh::HccnRpingGetTarget).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-        MOCKER_CPP(&PingMesh::HccnRpingBatchPingStart)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(HCCL_SUCCESS));
+        MOCKER_CPP(&PingMesh::HccnRpingBatchPingStart).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-        MOCKER_CPP(&PingMesh::HccnRpingBatchPingStop)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(HCCL_SUCCESS));
+        MOCKER_CPP(&PingMesh::HccnRpingBatchPingStop).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-        MOCKER_CPP(&PingMesh::HccnRpingGetResult)
-        .stubs()
-        .with(mockcpp::any())
-        .will(invoke(HccnRpingGetResultStub));
+        MOCKER_CPP(&PingMesh::HccnRpingGetResult).stubs().with(mockcpp::any()).will(invoke(HccnRpingGetResultStub));
 
-        MOCKER_CPP(&PingMesh::HccnRpingGetPayload)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(HCCL_SUCCESS));
+        MOCKER_CPP(&PingMesh::HccnRpingGetPayload).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-        MOCKER(hrtGetDeviceRefresh)
-        .stubs()
-        .with(mockcpp::any())
-        .will(invoke(hrtGetDeviceRefreshStub));
+        MOCKER(hrtGetDeviceRefresh).stubs().with(mockcpp::any()).will(invoke(hrtGetDeviceRefreshStub));
 
         std::cout << "HccnRping_UT Test SetUP" << std::endl;
     }
- 
+
     virtual void TearDown()
     {
         GlobalMockObject::verify();
@@ -119,30 +90,19 @@ protected:
     }
 
 public:
-    char deviceIp_[8][11] = {
-        "192.1.1.58",
-        "192.1.2.58",
-        "192.1.3.58",
-        "192.1.4.58",
-        "192.1.1.59",
-        "192.1.2.59",
-        "192.1.3.59",
-        "192.1.4.59"
-    };
+    char deviceIp_[8][11] = {"192.1.1.58", "192.1.2.58", "192.1.3.58", "192.1.4.58",
+                             "192.1.1.59", "192.1.2.59", "192.1.3.59", "192.1.4.59"};
 
     int ipLen_ = 16;
 };
 
 TEST_F(HccnRping_UT, ut_HccnRpingInit)
 {
-    MOCKER_CPP(&PingMesh::GetDeviceLogicId)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(1));
+    MOCKER_CPP(&PingMesh::GetDeviceLogicId).stubs().with(mockcpp::any()).will(returnValue(1));
 
     u32 devId = 1;
     u32 devserverId = 2;
-    HccnRpingInitAttr *initAttr = new HccnRpingInitAttr();
+    HccnRpingInitAttr* initAttr = new HccnRpingInitAttr();
     initAttr->mode = HCCN_RPING_MODE_ROCE;
     initAttr->port = 13886;
     initAttr->npuNum = 128;
@@ -151,7 +111,7 @@ TEST_F(HccnRping_UT, ut_HccnRpingInit)
     initAttr->tc = 0;
     initAttr->ipAddr = new char[ipLen_];
     strcpy(initAttr->ipAddr, deviceIp_[devId]);
-    void *pingmesh = nullptr;
+    void* pingmesh = nullptr;
 
     // 初始化
     auto ret = HccnRpingInit(devId, initAttr, &pingmesh);
@@ -160,28 +120,22 @@ TEST_F(HccnRping_UT, ut_HccnRpingInit)
     delete[] initAttr->ipAddr;
     delete initAttr;
 
-
     // 反初始化
     ret = HccnRpingDeinit(pingmesh);
     EXPECT_EQ(ret, HCCN_SUCCESS);
-
 }
 
 TEST_F(HccnRping_UT, ut_HccnRpingInit_error)
 {
-    MOCKER_CPP(&PingMesh::GetDeviceLogicId)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(1));
+    MOCKER_CPP(&PingMesh::GetDeviceLogicId).stubs().with(mockcpp::any()).will(returnValue(1));
 
     u32 devId = 1;
     u32 devserverId = 2;
-    HccnRpingInitAttr *initAttr = nullptr;
-    void *pingmesh = nullptr;
+    HccnRpingInitAttr* initAttr = nullptr;
+    void* pingmesh = nullptr;
     // 空initAttr初始化错误检查
     auto ret = HccnRpingInit(devId, initAttr, &pingmesh);
     EXPECT_EQ(ret, HCCN_E_PARA);
-
 
     initAttr = new HccnRpingInitAttr();
     initAttr->mode = HCCN_RPING_MODE_ROCE;
@@ -192,25 +146,21 @@ TEST_F(HccnRping_UT, ut_HccnRpingInit_error)
     initAttr->tc = 0;
     initAttr->ipAddr = new char[ipLen_];
     strcpy(initAttr->ipAddr, deviceIp_[devId]);
-    
+
     ret = HccnRpingInit(devId, initAttr, &pingmesh);
     EXPECT_EQ(ret, HCCN_SUCCESS);
     EXPECT_TRUE(pingmesh != nullptr);
     delete[] initAttr->ipAddr;
     delete initAttr;
-
 }
 
 TEST_F(HccnRping_UT, ut_HccnRping)
 {
-    MOCKER_CPP(&PingMesh::GetDeviceLogicId)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(1));
+    MOCKER_CPP(&PingMesh::GetDeviceLogicId).stubs().with(mockcpp::any()).will(returnValue(1));
 
     u32 devId = 1;
     u32 devserverId = 2;
-    HccnRpingInitAttr *initAttr = new HccnRpingInitAttr();
+    HccnRpingInitAttr* initAttr = new HccnRpingInitAttr();
     initAttr->mode = HCCN_RPING_MODE_ROCE;
     initAttr->port = 13886;
     initAttr->npuNum = 128;
@@ -219,7 +169,7 @@ TEST_F(HccnRping_UT, ut_HccnRping)
     initAttr->tc = 0;
     initAttr->ipAddr = new char[ipLen_];
     strcpy(initAttr->ipAddr, deviceIp_[devId]);
-    void *pingmesh = nullptr;
+    void* pingmesh = nullptr;
 
     // 初始化
     auto ret = HccnRpingInit(devId, initAttr, &pingmesh);
@@ -230,7 +180,7 @@ TEST_F(HccnRping_UT, ut_HccnRping)
 
     // 添加节点
     int targetNum = 1;
-    HccnRpingTargetInfo *target = new HccnRpingTargetInfo[1];
+    HccnRpingTargetInfo* target = new HccnRpingTargetInfo[1];
     target[0].srcPort = 0;
     target[0].sl = 0;
     target[0].tc = 0;
@@ -247,7 +197,7 @@ TEST_F(HccnRping_UT, ut_HccnRping)
     EXPECT_EQ(ret, HCCN_SUCCESS);
 
     // 获取节点
-    HccnRpingAddTargetState targetState[1] {HCCN_RPING_ADDTARGET_STATE_DONE};
+    HccnRpingAddTargetState targetState[1]{HCCN_RPING_ADDTARGET_STATE_DONE};
     ret = HccnRpingGetTarget(pingmesh, targetNum, target, targetState);
     EXPECT_EQ(ret, HCCN_SUCCESS);
 
@@ -263,12 +213,12 @@ TEST_F(HccnRping_UT, ut_HccnRping)
     EXPECT_EQ(ret, HCCN_SUCCESS);
 
     // 获取结果
-    HccnRpingResultInfo result[1] {0};
+    HccnRpingResultInfo result[1]{0};
     ret = HccnRpingGetResult(pingmesh, targetNum, target, result);
     EXPECT_EQ(ret, HCCN_SUCCESS);
 
     // 获取payload
-    void *payloadOutput = nullptr;
+    void* payloadOutput = nullptr;
     u32 payloadLenOutput = 0;
     ret = HccnRpingGetPayload(pingmesh, &payloadOutput, &payloadLenOutput);
     EXPECT_EQ(ret, HCCN_SUCCESS);
@@ -288,14 +238,11 @@ TEST_F(HccnRping_UT, ut_HccnRping)
 
 TEST_F(HccnRping_UT, ut_HccnRping_RpingAddTargetV2)
 {
-    MOCKER_CPP(&PingMesh::GetDeviceLogicId)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(1));
+    MOCKER_CPP(&PingMesh::GetDeviceLogicId).stubs().with(mockcpp::any()).will(returnValue(1));
 
     u32 devId = 1;
     u32 devserverId = 2;
-    HccnRpingInitAttr *initAttr = new HccnRpingInitAttr();
+    HccnRpingInitAttr* initAttr = new HccnRpingInitAttr();
     initAttr->mode = HCCN_RPING_MODE_ROCE;
     initAttr->port = 13886;
     initAttr->npuNum = 128;
@@ -304,7 +251,7 @@ TEST_F(HccnRping_UT, ut_HccnRping_RpingAddTargetV2)
     initAttr->tc = 0;
     initAttr->ipAddr = new char[ipLen_];
     strcpy(initAttr->ipAddr, deviceIp_[devId]);
-    void *pingmesh = nullptr;
+    void* pingmesh = nullptr;
 
     // 初始化
     auto ret = HccnRpingInit(devId, initAttr, &pingmesh);
@@ -315,7 +262,7 @@ TEST_F(HccnRping_UT, ut_HccnRping_RpingAddTargetV2)
 
     // 添加节点
     int targetNum = 1;
-    HccnRpingTargetInfo *target = new HccnRpingTargetInfo[1];
+    HccnRpingTargetInfo* target = new HccnRpingTargetInfo[1];
     target[0].srcPort = 0;
     target[0].sl = 0;
     target[0].tc = 0;
@@ -328,7 +275,7 @@ TEST_F(HccnRping_UT, ut_HccnRping_RpingAddTargetV2)
     strcpy(target[0].payload, payload);
     strcpy(target[0].srcIp, deviceIp_[devserverId]);
     strcpy(target[0].dstIp, deviceIp_[devId]);
-    
+
     HccnRpingAddTargetConfig config;
     config.connectTimeout = 1000;
     ret = HccnRpingAddTargetV2(pingmesh, targetNum, target, &config);
@@ -349,14 +296,11 @@ TEST_F(HccnRping_UT, ut_HccnRping_RpingAddTargetV2)
 
 TEST_F(HccnRping_UT, ut_HccnRping_RpingAddTargetWithCfg)
 {
-    MOCKER_CPP(&PingMesh::GetDeviceLogicId)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(1));
+    MOCKER_CPP(&PingMesh::GetDeviceLogicId).stubs().with(mockcpp::any()).will(returnValue(1));
 
     u32 devId = 1;
     u32 devserverId = 2;
-    HccnRpingInitAttr *initAttr = new HccnRpingInitAttr();
+    HccnRpingInitAttr* initAttr = new HccnRpingInitAttr();
     initAttr->mode = HCCN_RPING_MODE_ROCE;
     initAttr->port = 13886;
     initAttr->npuNum = 128;
@@ -365,7 +309,7 @@ TEST_F(HccnRping_UT, ut_HccnRping_RpingAddTargetWithCfg)
     initAttr->tc = 0;
     initAttr->ipAddr = new char[ipLen_];
     strcpy(initAttr->ipAddr, deviceIp_[devId]);
-    void *pingmesh = nullptr;
+    void* pingmesh = nullptr;
 
     // 初始化
     auto ret = HccnRpingInit(devId, initAttr, &pingmesh);
@@ -376,7 +320,7 @@ TEST_F(HccnRping_UT, ut_HccnRping_RpingAddTargetWithCfg)
 
     // 添加节点
     int targetNum = 1;
-    HccnRpingTargetInfo *target = new HccnRpingTargetInfo[1];
+    HccnRpingTargetInfo* target = new HccnRpingTargetInfo[1];
     target[0].srcPort = 0;
     target[0].sl = 0;
     target[0].tc = 0;
@@ -389,7 +333,7 @@ TEST_F(HccnRping_UT, ut_HccnRping_RpingAddTargetWithCfg)
     strcpy(target[0].payload, payload);
     strcpy(target[0].srcIp, deviceIp_[devserverId]);
     strcpy(target[0].dstIp, deviceIp_[devId]);
-    
+
     HccnRpingAddTargetConfig config;
     config.connectTimeout = 1000;
     ret = HccnRpingAddTargetWithCfg(pingmesh, targetNum, target, &config);
@@ -418,10 +362,9 @@ TEST_F(HccnRping_UT, ut_HccnRping_RpingAddTargetV2_err)
 
 TEST_F(HccnRping_UT, ut_HccnRpingHandleCheck)
 {
- 
     u32 devId = 3;
     u32 devserverId = 2;
-    HccnRpingInitAttr *initAttr = new HccnRpingInitAttr();
+    HccnRpingInitAttr* initAttr = new HccnRpingInitAttr();
     initAttr->mode = HCCN_RPING_MODE_ROCE;
     initAttr->port = 13886;
     initAttr->npuNum = 128;
@@ -430,7 +373,7 @@ TEST_F(HccnRping_UT, ut_HccnRpingHandleCheck)
     initAttr->tc = 0;
     initAttr->ipAddr = new char[ipLen_];
     strcpy(initAttr->ipAddr, deviceIp_[devId]);
-    void *pingmesh = nullptr;
+    void* pingmesh = nullptr;
 
     // 初始化
     auto ret = HccnRpingInit(1, initAttr, &pingmesh);
@@ -441,7 +384,7 @@ TEST_F(HccnRping_UT, ut_HccnRpingHandleCheck)
 
     // 添加节点
     int targetNum = 1;
-    HccnRpingTargetInfo *target = new HccnRpingTargetInfo[1];
+    HccnRpingTargetInfo* target = new HccnRpingTargetInfo[1];
     target[0].srcPort = 0;
     target[0].sl = 0;
     target[0].tc = 0;
@@ -458,7 +401,7 @@ TEST_F(HccnRping_UT, ut_HccnRpingHandleCheck)
     EXPECT_EQ(ret, HCCN_E_PARA);
 
     // 获取节点
-    HccnRpingAddTargetState targetState[1] {HCCN_RPING_ADDTARGET_STATE_DONE};
+    HccnRpingAddTargetState targetState[1]{HCCN_RPING_ADDTARGET_STATE_DONE};
     ret = HccnRpingGetTarget(pingmesh, targetNum, target, targetState);
     EXPECT_EQ(ret, HCCN_E_PARA);
 
@@ -474,7 +417,7 @@ TEST_F(HccnRping_UT, ut_HccnRpingHandleCheck)
     EXPECT_EQ(ret, HCCN_E_PARA);
 
     // 获取结果
-    HccnRpingResultInfo result[1] {0};
+    HccnRpingResultInfo result[1]{0};
     ret = HccnRpingGetResult(pingmesh, targetNum, target, result);
     EXPECT_EQ(ret, HCCN_E_PARA);
 
@@ -491,22 +434,26 @@ TEST_F(HccnRping_UT, ut_HccnRpingHandleCheck)
     delete[] target;
     delete static_cast<PingMesh*>(pingmesh);
 }
- 
+
 TEST_F(HccnRping_UT, ut_HccnRpingAdapter)
 {
     // 补充覆盖率
     auto ret = DlRaFunction::GetInstance().DlRaFunctionInit();
     EXPECT_EQ(ret, HCCL_SUCCESS);
- 
+
     // 未初始化新增接口
-    struct PingInitAttr initAttr {0};
-    struct PingInitInfo initInfo {0};
-    void *pingHandle = nullptr;
+    struct PingInitAttr initAttr {
+        0
+    };
+    struct PingInitInfo initInfo {
+        0
+    };
+    void* pingHandle = nullptr;
     ret = hrtRaPingInit(&initAttr, &initInfo, &pingHandle);
     EXPECT_EQ(ret, HCCL_E_NOT_SUPPORT);
     ret = hrtRaPingDeinit(pingHandle);
     EXPECT_EQ(ret, HCCL_E_NOT_SUPPORT);
- 
+
     struct PingTargetInfo target[2];
     struct PingTargetCommInfo targetRemoteInfo[2];
     struct PingTaskAttr attr;
@@ -522,20 +469,30 @@ TEST_F(HccnRping_UT, ut_HccnRpingAdapter)
     EXPECT_EQ(ret, HCCL_E_NOT_SUPPORT);
     ret = hrtRaPingGetResults(pingHandle, result, &num);
     EXPECT_EQ(ret, HCCL_E_NOT_SUPPORT);
- 
+
     // 手动初始化新增接口
-    DlRaFunction::GetInstance().dlRaPingInit =
-        [](struct PingInitAttr*, struct PingInitInfo*, void**)-> int{ return 0; };
-    DlRaFunction::GetInstance().dlRaPingDeinit = [](void*)-> int { return 0; };
-    DlRaFunction::GetInstance().dlRaPingTargetAdd = [](void*, struct PingTargetInfo*, uint32_t)-> int{ return 0; };
-    DlRaFunction::GetInstance().dlRaPingTargetDel = [](void *, struct PingTargetCommInfo *, uint32_t) -> int {
+    DlRaFunction::GetInstance().dlRaPingInit = [](struct PingInitAttr*, struct PingInitInfo*, void**) -> int {
         return 0;
     };
-    DlRaFunction::GetInstance().dlRaPingTaskStart = [](void*, struct PingTaskAttr*)-> int { return 0; };
-    DlRaFunction::GetInstance().dlRaPingTaskStop = [](void*)-> int { return 0; };
-    DlRaFunction::GetInstance().dlRaPingGetResults =
-        [](void*, struct PingTargetResult*, uint32_t*)-> int { return 0; };
- 
+    DlRaFunction::GetInstance().dlRaPingDeinit = [](void*) -> int {
+        return 0;
+    };
+    DlRaFunction::GetInstance().dlRaPingTargetAdd = [](void*, struct PingTargetInfo*, uint32_t) -> int {
+        return 0;
+    };
+    DlRaFunction::GetInstance().dlRaPingTargetDel = [](void*, struct PingTargetCommInfo*, uint32_t) -> int {
+        return 0;
+    };
+    DlRaFunction::GetInstance().dlRaPingTaskStart = [](void*, struct PingTaskAttr*) -> int {
+        return 0;
+    };
+    DlRaFunction::GetInstance().dlRaPingTaskStop = [](void*) -> int {
+        return 0;
+    };
+    DlRaFunction::GetInstance().dlRaPingGetResults = [](void*, struct PingTargetResult*, uint32_t*) -> int {
+        return 0;
+    };
+
     ret = hrtRaPingInit(&initAttr, &initInfo, &pingHandle);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ret = hrtRaPingDeinit(pingHandle);
@@ -552,9 +509,9 @@ TEST_F(HccnRping_UT, ut_HccnRpingAdapter)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     // rts新增接口
-    char dst[10] {0};
+    char dst[10]{0};
     uint64_t destMax = 10;
-    char src[10] {1};
+    char src[10]{1};
     uint64_t count = 10;
     HcclRtMemcpyKind kind = HcclRtMemcpyKind::HCCL_RT_MEMCPY_KIND_HOST_TO_HOST;
     ret = hrtMemSyncCopyEx(dst, destMax, src, count, kind);

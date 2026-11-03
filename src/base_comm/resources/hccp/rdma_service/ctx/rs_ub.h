@@ -11,7 +11,6 @@
 #ifndef RS_UB_H
 #define RS_UB_H
 
-#include <udma_u_ctl.h>
 #include <urma_types.h>
 #include "dl_urma_function.h"
 #include "hccp_async_ctx.h"
@@ -43,44 +42,47 @@ struct JettyDestroyBatchInfo {
     urma_jetty_t **jettyArr;
 };
 
-int RsUbGetDevEidInfoNum(unsigned int phyId, unsigned int *num);
+struct RsEidList {
+    urma_device_t *dev;
+    urma_eid_info_t *eidList;
+    unsigned int eidNum;
+    struct RsListHead list;
+};
+
 int RsUbGetUeInfo(urma_context_t *urmaCtx, struct DevBaseAttr *devAttr);
-int RsUbGetDevEidInfoList(unsigned int phyId, struct HccpDevEidInfo infoList[], unsigned int startIndex,
-    unsigned int count);
-int RsUbCtxInit(struct rs_cb *rsCb, struct CtxInitAttr *attr, unsigned int *devIndex,
-    struct DevBaseAttr *devAttr);
+void RsDeinitDevEidInfoCb(struct rs_cb *rscb);
+int RsInitDevEidInfoCb(struct rs_cb *rscb);
+int RsUbCtxInit(struct rs_cb *rsCb, struct CtxInitAttr *attr, unsigned int *devIndex, struct DevBaseAttr *devAttr);
 int RsUbGetDevCb(struct rs_cb *rscb, unsigned int devIndex, struct RsUbDevCb **devCb);
 int RsUbCtxDeinit(struct RsUbDevCb *devCb);
 int RsUbGetEidByIp(struct RsUbDevCb *devCb, struct IpInfo ip[], union HccpEid eid[], unsigned int *num);
+int RsUbGetIpByEid(struct RsUbDevCb *devCb, union HccpEid eid[], struct IpInfo ip[], unsigned int *num);
 int RsUbCtxTokenIdAlloc(struct RsUbDevCb *devCb, unsigned long long *addr, unsigned int *tokenId);
 int RsUbCtxTokenIdFree(struct RsUbDevCb *devCb, unsigned long long addr);
 int RsUbCtxLmemReg(struct RsUbDevCb *devCb, struct MemRegAttrT *memAttr, struct MemRegInfoT *memInfo);
 int RsUbCtxLmemUnreg(struct RsUbDevCb *devCb, unsigned long long addr);
-int RsUbCtxRmemImport(struct RsUbDevCb *devCb, struct MemImportAttrT *memAttr,
-    struct MemImportInfoT *memInfo);
+int RsUbCtxRmemImport(struct RsUbDevCb *devCb, struct MemImportAttrT *memAttr, struct MemImportInfoT *memInfo);
 int RsUbCtxRmemUnimport(struct RsUbDevCb *devCb, unsigned long long addr);
-int RsUbCtxChanCreate(struct RsUbDevCb *devCb, union DataPlaneCstmFlag dataPlaneFlag,
-    unsigned long long *addr, int *fd);
+int RsUbCtxChanCreate(struct RsUbDevCb *devCb, union DataPlaneCstmFlag dataPlaneFlag, unsigned long long *addr,
+    int *fd);
 int RsUbCtxChanDestroy(struct RsUbDevCb *devCb, unsigned long long addr);
 int RsUbCtxJfcCreate(struct RsUbDevCb *devCb, struct CtxCqAttr *attr, struct CtxCqInfo *info);
 int RsUbCtxJfcDestroy(struct RsUbDevCb *devCb, unsigned long long addr);
 int RsUbCtxJettyCreate(struct RsUbDevCb *devCb, struct CtxQpAttr *attr, struct QpCreateInfo *info);
-int RsUbCtxRegJettyDb(struct RsCtxJettyCb *jettyCb, struct udma_u_jetty_info *jettyInfo);
+int RsUbCtxRegJettyDb(struct RsCtxJettyCb *jettyCb, uint64_t dwqeAddr);
 int RsUbCtxQueryJettyBatch(struct RsUbDevCb *devCb, unsigned int jettyIds[], struct JettyAttr attr[],
     unsigned int *num);
 int RsUbCtxJettyDestroy(struct RsUbDevCb *devCb, unsigned int jettyId);
 int RsUbCtxJettyDestroyBatch(struct RsUbDevCb *devCb, unsigned int jettyIds[], unsigned int *num);
 int RsUbCtxJettyImport(struct RsUbDevCb *devCb, struct RsJettyImportAttr *importAttr,
     struct RsJettyImportInfo *importInfo);
-int RsUbCtxJettyUnimport(struct RsUbDevCb *devCb, unsigned int remJettyId);
-int RsUbCtxJettyBind(struct RsUbDevCb *devCb, struct RsCtxQpInfo *jettyInfo,
-    struct RsCtxQpInfo *rjettyInfo);
+int RsUbCtxJettyUnimport(struct RsUbDevCb *devCb, unsigned char rawRemJettyId[], unsigned int size);
+int RsUbCtxJettyBind(struct RsUbDevCb *devCb, struct RsCtxQpInfo *jettyInfo, struct RsCtxQpInfo *rjettyInfo);
 int RsUbCtxJettyUnbind(struct RsUbDevCb *devCb, unsigned int jettyId);
 int RsUbCtxJettyFree(struct rs_cb *rscb, unsigned int ueInfo, unsigned int jettyId);
-void RsUbFreeJettyCbList(struct RsUbDevCb *devCb, struct RsListHead *jettyList,
-    struct RsListHead *rjettyList);
-int RsUbCtxBatchSendWr(struct rs_cb *rsCb, struct WrlistBaseInfo *baseInfo,
-    struct BatchSendWrData *wrData, struct SendWrResp *wrResp, struct WrlistSendCompleteNum *wrlistNum);
+void RsUbFreeJettyCbList(struct RsUbDevCb *devCb, struct RsListHead *jettyList, struct RsListHead *rjettyList);
+int RsUbCtxBatchSendWr(struct rs_cb *rsCb, struct WrlistBaseInfo *baseInfo, struct BatchSendWrData *wrData,
+    struct SendWrResp *wrResp, struct WrlistSendCompleteNum *wrlistNum);
 int RsUbCtxJettyUpdateCi(struct RsUbDevCb *devCb, unsigned int jettyId, uint16_t ci);
 int RsUbGetJettyCb(struct RsUbDevCb *devCb, unsigned int jettyId, struct RsCtxJettyCb **jettyCb);
 void RsUbFreeAsyncEventCb(struct RsUbDevCb *devCb, struct RsCtxAsyncEventCb *asyncEventCb);

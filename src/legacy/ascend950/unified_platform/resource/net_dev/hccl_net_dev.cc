@@ -7,32 +7,24 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #include "hccl_net_dev_v2.h"
 #include "hccl_net_dev.h"
 
 using namespace std;
 
-HcclResult HcclNetDevOpen(const HcclNetDevInfos *info, HcclNetDev *netDev)
-{
-    return HcclNetDevOpenV2(info, netDev);
-}
+HcclResult HcclNetDevOpen(const HcclNetDevInfos* info, HcclNetDev* netDev) { return HcclNetDevOpenV2(info, netDev); }
 
-HcclResult HcclNetDevClose(HcclNetDev netDev)
-{
-    return HcclNetDevCloseV2(netDev);
-}
+HcclResult HcclNetDevClose(HcclNetDev netDev) { return HcclNetDevCloseV2(netDev); }
 
-HcclResult HcclNetDevGetAddr(HcclNetDev netDev, HcclAddress *addr)
-{
-    return HcclNetDevGetAddrV2(netDev, addr);
-}
+HcclResult HcclNetDevGetAddr(const HcclNetDev netDev, HcclAddress* addr) { return HcclNetDevGetAddrV2(netDev, addr); }
 
-HcclResult HcclNetDevGetBusAddr(HcclDeviceId dstDevId, HcclAddress *busAddr)
+HcclResult HcclNetDevGetBusAddr(HcclDeviceId dstDevId, HcclAddress* busAddr)
 {
     return HcclNetDevGetBusAddrV2(dstDevId, busAddr);
 }
 
-HcclResult HcclNetDevGetNicAddr(int32_t devicePhyId, HcclAddress **addr, uint32_t *addrNum)
+HcclResult HcclNetDevGetNicAddr(int32_t devicePhyId, HcclAddress** addr, uint32_t* addrNum)
 {
     return HcclNetDevGetNicAddrV2(devicePhyId, addr, addrNum);
 }

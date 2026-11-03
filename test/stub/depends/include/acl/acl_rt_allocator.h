@@ -17,10 +17,10 @@
 extern "C" {
 #endif
 
-typedef void *(*aclrtAllocatorAllocFunc)(aclrtAllocator allocator, size_t size);
+typedef void* (*aclrtAllocatorAllocFunc)(aclrtAllocator allocator, size_t size);
 typedef void (*aclrtAllocatorFreeFunc)(aclrtAllocator allocator, aclrtAllocatorBlock block);
-typedef void *(*aclrtAllocatorAllocAdviseFunc)(aclrtAllocator allocator, size_t size, aclrtAllocatorAddr addr);
-typedef void *(*aclrtAllocatorGetAddrFromBlockFunc)(aclrtAllocatorBlock block);
+typedef void* (*aclrtAllocatorAllocAdviseFunc)(aclrtAllocator allocator, size_t size, aclrtAllocatorAddr addr);
+typedef void* (*aclrtAllocatorGetAddrFromBlockFunc)(aclrtAllocatorBlock block);
 
 /**
  * @ingroup AscendCL
@@ -68,8 +68,8 @@ ACL_FUNC_VISIBILITY aclError aclrtAllocatorSetObjToDesc(aclrtAllocatorDesc alloc
  * @retval ACL_SUCCESS The function is successfully executed.
  * @retval OtherValues Failure
  */
-ACL_FUNC_VISIBILITY aclError aclrtAllocatorSetAllocFuncToDesc(aclrtAllocatorDesc allocatorDesc,
-                                                              aclrtAllocatorAllocFunc func);
+ACL_FUNC_VISIBILITY aclError
+aclrtAllocatorSetAllocFuncToDesc(aclrtAllocatorDesc allocatorDesc, aclrtAllocatorAllocFunc func);
 
 /**
  * @ingroup AscendCL
@@ -81,8 +81,8 @@ ACL_FUNC_VISIBILITY aclError aclrtAllocatorSetAllocFuncToDesc(aclrtAllocatorDesc
  * @retval ACL_SUCCESS The function is successfully executed.
  * @retval OtherValues Failure
  */
-ACL_FUNC_VISIBILITY aclError aclrtAllocatorSetFreeFuncToDesc(aclrtAllocatorDesc allocatorDesc,
-                                                             aclrtAllocatorFreeFunc func);
+ACL_FUNC_VISIBILITY aclError
+aclrtAllocatorSetFreeFuncToDesc(aclrtAllocatorDesc allocatorDesc, aclrtAllocatorFreeFunc func);
 
 /**
  * @ingroup AscendCL
@@ -94,8 +94,8 @@ ACL_FUNC_VISIBILITY aclError aclrtAllocatorSetFreeFuncToDesc(aclrtAllocatorDesc 
  * @retval ACL_SUCCESS The function is successfully executed.
  * @retval OtherValues Failure
  */
-ACL_FUNC_VISIBILITY aclError aclrtAllocatorSetAllocAdviseFuncToDesc(aclrtAllocatorDesc allocatorDesc,
-                                                                    aclrtAllocatorAllocAdviseFunc func);
+ACL_FUNC_VISIBILITY aclError
+aclrtAllocatorSetAllocAdviseFuncToDesc(aclrtAllocatorDesc allocatorDesc, aclrtAllocatorAllocAdviseFunc func);
 
 /**
  * @ingroup AscendCL
@@ -107,8 +107,8 @@ ACL_FUNC_VISIBILITY aclError aclrtAllocatorSetAllocAdviseFuncToDesc(aclrtAllocat
  * @retval ACL_SUCCESS The function is successfully executed.
  * @retval OtherValues Failure
  */
-ACL_FUNC_VISIBILITY aclError aclrtAllocatorSetGetAddrFromBlockFuncToDesc(aclrtAllocatorDesc allocatorDesc,
-                                                                         aclrtAllocatorGetAddrFromBlockFunc func);
+ACL_FUNC_VISIBILITY aclError
+aclrtAllocatorSetGetAddrFromBlockFuncToDesc(aclrtAllocatorDesc allocatorDesc, aclrtAllocatorGetAddrFromBlockFunc func);
 
 /**
  * @ingroup AscendCL
@@ -138,13 +138,10 @@ ACL_FUNC_VISIBILITY aclError aclrtAllocatorRegister(aclrtStream stream, aclrtAll
  * @retval ACL_SUCCESS The function is successfully executed.
  * @retval OtherValues Failure
  */
-ACL_FUNC_VISIBILITY aclError aclrtAllocatorGetByStream(aclrtStream stream,
-                                                       aclrtAllocatorDesc *allocatorDesc,
-                                                       aclrtAllocator *allocator,
-                                                       aclrtAllocatorAllocFunc *allocFunc,
-                                                       aclrtAllocatorFreeFunc *freeFunc,
-                                                       aclrtAllocatorAllocAdviseFunc *allocAdviseFunc,
-                                                       aclrtAllocatorGetAddrFromBlockFunc *getAddrFromBlockFunc);
+ACL_FUNC_VISIBILITY aclError aclrtAllocatorGetByStream(
+    aclrtStream stream, aclrtAllocatorDesc* allocatorDesc, aclrtAllocator* allocator,
+    aclrtAllocatorAllocFunc* allocFunc, aclrtAllocatorFreeFunc* freeFunc,
+    aclrtAllocatorAllocAdviseFunc* allocAdviseFunc, aclrtAllocatorGetAddrFromBlockFunc* getAddrFromBlockFunc);
 
 /**
  * @ingroup AscendCL

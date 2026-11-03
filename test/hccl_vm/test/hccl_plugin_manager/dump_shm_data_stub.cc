@@ -17,7 +17,8 @@
 #include "sim_log.h"
 
 namespace HcclSim {
-std::string GetBinLocation() {
+std::string GetBinLocation()
+{
     char cwd[PATH_MAX];
     if (getcwd(cwd, sizeof(cwd)) != nullptr) {
         return std::string(cwd);
@@ -25,9 +26,9 @@ std::string GetBinLocation() {
     return "";
 }
 
-HcclVmResult DumpHcclVmFlagData(HcclSim::HcclVmFlagData &flagData)
+HcclVmResult DumpHcclVmFlagData(HcclSim::HcclVmFlagData& flagData)
 {
-    std::cout<<"[INFO][DumpHcclVmFlagData] Stub called for UT."<<std::endl;
+    std::cout << "[INFO][DumpHcclVmFlagData] Stub called for UT." << std::endl;
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
-}
+} // namespace HcclSim

@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 /**
  * @defgroup vos_base 公共定义模块 通用错误码
  * @ingroup bare
@@ -34,7 +33,7 @@ extern "C" {
 #ifndef VOS_ERR
 #define VOS_ERR 1 /* 出错 For VRP VOS adaptation */
 #endif
-#define VOS_ERROR (~0)                         /* Compatible V1 */
+#define VOS_ERROR (~0) /* Compatible V1 */
 
 /* Common Error Code */
 #define VOS_OK 0 /* 正确 */
@@ -44,4 +43,3 @@ extern "C" {
 #endif
 
 #endif /* __VOS_ERRNO_H__ */
-

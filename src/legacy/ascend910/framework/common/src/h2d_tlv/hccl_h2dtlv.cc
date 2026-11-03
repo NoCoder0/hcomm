@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include <unistd.h>
 #include <hccl/hccl_types.h>
@@ -17,7 +17,7 @@
 
 namespace hccl {
 
-hcclH2dTlv &hcclH2dTlv::GetInstance()
+hcclH2dTlv& hcclH2dTlv::GetInstance()
 {
     static hcclH2dTlv phcclH2dTlv;
     return phcclH2dTlv;
@@ -38,11 +38,12 @@ HcclResult hcclH2dTlv::InitHccpChannel(u32 devicePhyId)
     nslbHccp.nic_posion = NSLBDP_HCCP_NICPOSION;
 
     u32 tlvBuffersize = 0;
-    void *tlvHandle;
-    HCCL_INFO("Entry InitHccpChannel version:[%u]-phy_id:[%u]-nic_posion:[%u] .",
-        nslbHccp.version, nslbHccp.phyId, nslbHccp.nic_posion);
+    void* tlvHandle;
+    HCCL_INFO(
+        "Entry InitHccpChannel version:[%u]-phy_id:[%u]-nic_position:[%u] .", nslbHccp.version, nslbHccp.phyId,
+        nslbHccp.nic_posion);
 
-    HcclResult ret = H2DTlvInit(reinterpret_cast<TlvInitInfo *>(&nslbHccp), &tlvBuffersize, &tlvHandle);
+    HcclResult ret = H2DTlvInit(reinterpret_cast<TlvInitInfo*>(&nslbHccp), &tlvBuffersize, &tlvHandle);
     if (ret != HCCL_SUCCESS) {
         return ret;
     }
@@ -75,19 +76,10 @@ void hcclH2dTlv::DeinitHccpChannel()
     return;
 }
 
-bool hcclH2dTlv::GetH2dTlvInitFlag()
-{
-    return hcclH2dTlvInitFlag_;
-}
+bool hcclH2dTlv::GetH2dTlvInitFlag() { return hcclH2dTlvInitFlag_; }
 
-unsigned int hcclH2dTlv::GetH2dTlvBufferSize()
-{
-    return hcclH2dTlvBuffsize_;
-}
+unsigned int hcclH2dTlv::GetH2dTlvBufferSize() const { return hcclH2dTlvBuffsize_; }
 
-void* hcclH2dTlv::GetH2dTlvHandle()
-{
-    return hcclH2dTlvHandle_;
-}
+void* hcclH2dTlv::GetH2dTlvHandle() { return hcclH2dTlvHandle_; }
 
-}
+} // namespace hccl

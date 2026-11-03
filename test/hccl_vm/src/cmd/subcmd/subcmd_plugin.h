@@ -21,10 +21,10 @@ class PluginCommand : public CommandBase {
 public:
     static std::string StaticName() { return "plugin"; }
     void Setup(CLI::App& app) override;
-    
+
 private:
     std::string plugName;
 };
-}
+} // namespace HcclSim
 
 #endif

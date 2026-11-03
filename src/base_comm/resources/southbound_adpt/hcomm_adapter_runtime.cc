@@ -16,13 +16,14 @@ namespace hcomm {
 
 constexpr uint32_t kDefaultResourceId = 0U;
 
-HcclResult ResolveRuntimeDevicePhyId(uint32_t &devicePhyId, bool &noDevice)
+HcclResult ResolveRuntimeDevicePhyId(uint32_t& devicePhyId, bool& noDevice)
 {
     uint32_t deviceCount = 0;
     HcclResult ret = hrtGetDeviceCount(&deviceCount);
     if (ret != HCCL_SUCCESS) {
-        HCCL_WARNING("[HcommAdapterRuntime][%s] get device count failed, ret[%d], use resource id[%u].",
-            __func__, ret, kDefaultResourceId);
+        HCCL_WARNING(
+            "[HcommAdapterRuntime][%s] get device count unsuccessfully, ret[%d], use resource id[%u].", __func__, ret,
+            kDefaultResourceId);
         devicePhyId = kDefaultResourceId;
         noDevice = true;
         return HCCL_SUCCESS;
@@ -38,8 +39,9 @@ HcclResult ResolveRuntimeDevicePhyId(uint32_t &devicePhyId, bool &noDevice)
     CHK_RET(hrtGetDevice(&devLogicId));
     CHK_RET(hrtGetDevicePhyIdByIndex(static_cast<uint32_t>(devLogicId), devicePhyId));
     noDevice = false;
-    HCCL_INFO("[HcommAdapterRuntime][%s] deviceCount[%u], devLogicId[%d], devicePhyId[%u].",
-        __func__, deviceCount, devLogicId, devicePhyId);
+    HCCL_INFO(
+        "[HcommAdapterRuntime][%s] deviceCount[%u], devLogicId[%d], devicePhyId[%u].", __func__, deviceCount,
+        devLogicId, devicePhyId);
     return HCCL_SUCCESS;
 }
 

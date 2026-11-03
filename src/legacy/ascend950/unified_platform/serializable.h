@@ -19,9 +19,9 @@ class Serializable {
 public:
     virtual ~Serializable() = default;
 
-    virtual void Serialize(BinaryStream &stream) = 0;
+    virtual void Serialize(BinaryStream& stream) = 0;
 
-    virtual void Deserialize(BinaryStream &stream) = 0;
+    virtual void Deserialize(BinaryStream& stream) = 0;
 
     virtual std::string Describe() const = 0;
 };

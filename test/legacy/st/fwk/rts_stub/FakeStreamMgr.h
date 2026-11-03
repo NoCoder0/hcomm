@@ -22,12 +22,12 @@
 enum class FakeSqeType { NOTIFY_WAIT, NOTIFY_RECORD, SDMA_REDUCE, MEM_CPY };
 
 struct FakeSqe {
-    FakeSqeType    type;
-    int            notifyId;
-    void          *dst;
-    const void    *src;
-    uint64_t       count; // 代表数据实际长度，并不是 dataSize;
-    rtDataType_t   dataType;
+    FakeSqeType type;
+    int notifyId;
+    void* dst;
+    const void* src;
+    uint64_t count; // 代表数据实际长度，并不是 dataSize;
+    rtDataType_t dataType;
     rtRecudeKind_t reduceOp;
 
     int srcRank{-1};
@@ -36,11 +36,11 @@ struct FakeSqe {
 
 class FakeNotifyMgr {
 public:
-    int *CreateNotify(int rank);
-    int  GetRank(int notifyId);
+    int* CreateNotify(int rank);
+    int GetRank(int notifyId);
     bool Record(int notifyId);
     bool Wait(int notifyId);
-    void DestroyNotify(int *notifyId);
+    void DestroyNotify(int* notifyId);
 
     virtual ~FakeNotifyMgr();
 
@@ -48,7 +48,7 @@ private:
     std::mutex lmutex;
 
     std::atomic_int notifyIdGen{0};
-    std::set<int *> notifyIds;
+    std::set<int*> notifyIds;
 
     std::map<int, int> notifyStatusMap;
     std::map<int, int> notifyRankMap;
@@ -56,24 +56,24 @@ private:
 
 class FakeStreamMgr {
 public:
-    int *CreateStream(int rank);
-    int  GetRank(int streamId);
+    int* CreateStream(int rank);
+    int GetRank(int streamId);
     void Sync(int streamId);
     void Append(int streamId, FakeSqe sqe);
-    void DestroyStream(int *streamId);
+    void DestroyStream(int* streamId);
 
-    FakeNotifyMgr *GetFakeNotifyMgr();
+    FakeNotifyMgr* GetFakeNotifyMgr();
 
     virtual ~FakeStreamMgr();
 
 private:
-    std::mutex         lmutex;
-    std::atomic_int    streamIdGen{0};
-    std::set<int *>    streamIds;
+    std::mutex lmutex;
+    std::atomic_int streamIdGen{0};
+    std::set<int*> streamIds;
     std::map<int, int> streamIdRankMap;
 
     std::map<int, std::vector<FakeSqe>> stores;
-    std::unique_ptr<FakeNotifyMgr>      fakeNotifyMgr = std::make_unique<FakeNotifyMgr>();
+    std::unique_ptr<FakeNotifyMgr> fakeNotifyMgr = std::make_unique<FakeNotifyMgr>();
 
     bool HasSqe();
 };

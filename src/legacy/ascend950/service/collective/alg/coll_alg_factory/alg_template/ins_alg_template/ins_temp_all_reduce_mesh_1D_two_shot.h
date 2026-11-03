@@ -19,8 +19,9 @@ namespace Hccl {
 
 class InsTempAllReduceMesh1DTwoShot : public InsAlgTemplateBase {
 public:
-    explicit InsTempAllReduceMesh1DTwoShot(const RankId virtualRank, const u32 tempRankSize,
-        const std::vector<std::vector<RankId>> &tempVTopo, const std::map<RankId, u32> &tempVirtRankMap);
+    explicit InsTempAllReduceMesh1DTwoShot(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~InsTempAllReduceMesh1DTwoShot() override;
 
     std::string Describe() const override
@@ -29,19 +30,22 @@ public:
     }
 
     u32 CalcScratchMultiple(BufferType input, BufferType output) const;
-    HcclResult GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &tempAlgParams,
-    const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues);
-    HcclResult CalcSlice(const u64 dataSize, const u64 baseOff, RankSliceInfo &sliceInfoVec);
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
+    HcclResult GenExtIns(
+        const TempFuncs& tempFuncs, const TemplateDataParams& tempAlgParams, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues);
+    HcclResult CalcSlice(const u64 dataSize, const u64 baseOff, RankSliceInfo& sliceInfoVec);
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
 
 private:
-    HcclResult RunAllReduceScatter(const RankSliceInfo &sliceInfoVec, const ResLinks &tempLinks,
-        std::vector<InsQuePtr> &tempInsQues, const TemplateDataParams &tempAlgParams, u32 linkIdx);
-    HcclResult RunAllReduceAllgather(const RankSliceInfo &sliceInfoVec, const ResLinks &tempLinks,
-        std::vector<InsQuePtr> &tempInsQues, const TemplateDataParams &tempAlgParams, u32 linkIdx);
+    HcclResult RunAllReduceScatter(
+        const RankSliceInfo& sliceInfoVec, const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues,
+        const TemplateDataParams& tempAlgParams, u32 linkIdx);
+    HcclResult RunAllReduceAllgather(
+        const RankSliceInfo& sliceInfoVec, const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues,
+        const TemplateDataParams& tempAlgParams, u32 linkIdx);
     RankId GetRankFromMap(const u32 rankIdx);
 };
 
-}  // namespace Hccl
+} // namespace Hccl
 
-#endif  // !HCCLV2_INS_TEMP_ALL_REDUCE_1D_MESH_TWO_SHOT
+#endif // !HCCLV2_INS_TEMP_ALL_REDUCE_1D_MESH_TWO_SHOT

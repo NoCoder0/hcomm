@@ -20,20 +20,11 @@ using namespace Hccl;
 
 class BinaryStreamTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "BinaryStream tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "BinaryStream tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "BinaryStream tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "BinaryStream tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in BinaryStream SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in BinaryStream SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -49,7 +40,7 @@ TEST_F(BinaryStreamTest, test_binarystream_input)
     unsigned varUChar = 0x78, varUCharOut;
     int varInt = 2344, varIntOut;
     unsigned int varUInt = 3427897, varUIntOut;
-    char varArray[8] {"ui83jks"}, varArrayOut[8];
+    char varArray[8]{"ui83jks"}, varArrayOut[8];
 
     bs << varChar << varUChar << varInt << varUInt << varArray;
 

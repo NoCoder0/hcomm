@@ -35,15 +35,15 @@
 using namespace std;
 using namespace hccl;
 
-
-class CommInnerTest : public testing::Test
-{
+class CommInnerTest : public testing::Test {
 protected:
     static void SetUpTestCase()
     {
         s32 ret = HcclDispatcherInit(DispatcherType::DISPATCHER_NORMAL, 0, &dispatcherPtr);
-        if (ret != HCCL_SUCCESS) return;
-        if (dispatcherPtr == nullptr) return;
+        if (ret != HCCL_SUCCESS)
+            return;
+        if (dispatcherPtr == nullptr)
+            return;
         dispatcher = reinterpret_cast<DispatcherPub*>(dispatcherPtr);
         std::cout << "\033[36m--CommInnerTest SetUP--\033[0m" << std::endl;
     }
@@ -61,25 +61,17 @@ protected:
     virtual void SetUp()
     {
         s32 portNum = -1;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
         std::cout << "A Test SetUP" << std::endl;
     }
-    virtual void TearDown()
-    {
-        std::cout << "A Test TearDown" << std::endl;
-    }
+    virtual void TearDown() { std::cout << "A Test TearDown" << std::endl; }
     static HcclDispatcher dispatcherPtr;
-    static DispatcherPub *dispatcher;
-
+    static DispatcherPub* dispatcher;
 };
 HcclDispatcher CommInnerTest::dispatcherPtr = nullptr;
-DispatcherPub *CommInnerTest::dispatcher = nullptr;
+DispatcherPub* CommInnerTest::dispatcher = nullptr;
 
-typedef struct innerpara_struct
-{
+typedef struct innerpara_struct {
     std::string collectiveId;
     u32 userRank;
     u32 user_rank_size;
@@ -91,7 +83,7 @@ typedef struct innerpara_struct
     std::vector<u32> user_ranks;
     std::string tag;
     HcclDispatcher dispatcher;
-    IntraExchanger *exchanger;
+    IntraExchanger* exchanger;
     std::vector<RankInfo> para_vector;
     std::shared_ptr<CommBase> comm_inner;
 } innerpara_t;
@@ -104,7 +96,9 @@ TEST_F(CommInnerTest, ut_destructor_D0)
 
     TopoType topoFlag = TopoType::TOPO_TYPE_8P_RING;
     std::map<HcclIpAddress, HcclNetDevCtx> netDevCtxMap;
-    CommBase* comm_inner = new CommBase(rootInfo, 0, 1, 0, 1, para_vector, topoFlag, dispatcher, nullptr, netDevCtxMap, exchanger,  DeviceMem(), DeviceMem(), true);
+    CommBase* comm_inner = new CommBase(
+        rootInfo, 0, 1, 0, 1, para_vector, topoFlag, dispatcher, nullptr, netDevCtxMap, exchanger, DeviceMem(),
+        DeviceMem(), true);
 
     delete comm_inner;
 }
@@ -118,7 +112,9 @@ TEST_F(CommInnerTest, ut_gget_transport_by_rank_err)
     TopoType topoFlag = TopoType::TOPO_TYPE_8P_RING;
 
     std::map<HcclIpAddress, HcclNetDevCtx> netDevCtxMap;
-    CommBase* comm_inner = new CommBase(rootInfo, 0, 1, 0, 1, para_vector, topoFlag, dispatcher, nullptr, netDevCtxMap, exchanger,  DeviceMem(), DeviceMem(), true);
+    CommBase* comm_inner = new CommBase(
+        rootInfo, 0, 1, 0, 1, para_vector, topoFlag, dispatcher, nullptr, netDevCtxMap, exchanger, DeviceMem(),
+        DeviceMem(), true);
 
     std::shared_ptr<Transport> link = comm_inner->GetTransportByRank(3);
     EXPECT_EQ(link, nullptr);
@@ -173,8 +169,9 @@ TEST_F(CommInnerTest, ut_get_rank_by_userrank)
 
     TopoType topoFlag = TopoType::TOPO_TYPE_8P_RING;
     std::map<HcclIpAddress, HcclNetDevCtx> netDevCtxMap;
-    CommBase* comm_inner = new CommBase(collective_id_tmp, userRank, user_rank_size, 0, 1, para_vector, topoFlag, dispatcher, nullptr, netDevCtxMap, exchanger,
-        DeviceMem::alloc(1024), DeviceMem::alloc(1024), true);
+    CommBase* comm_inner = new CommBase(
+        collective_id_tmp, userRank, user_rank_size, 0, 1, para_vector, topoFlag, dispatcher, nullptr, netDevCtxMap,
+        exchanger, DeviceMem::alloc(1024), DeviceMem::alloc(1024), true);
 
     ret = comm_inner->Init();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -201,8 +198,6 @@ TEST_F(CommInnerTest, ut_get_userrank_by_rank)
 
     RankInfo tmp_para;
 
-
-
     tmp_para.userRank = userRank;
 
     s32 devicePhyId = 0;
@@ -226,8 +221,9 @@ TEST_F(CommInnerTest, ut_get_userrank_by_rank)
 
     TopoType topoFlag = TopoType::TOPO_TYPE_8P_RING;
     std::map<HcclIpAddress, HcclNetDevCtx> netDevCtxMap;
-    CommBase* comm_inner = new CommBase(collective_id_tmp, userRank, user_rank_size, userRank, 1,  para_vector, topoFlag, dispatcher, nullptr,
-        netDevCtxMap, exchanger, DeviceMem::alloc(1024),DeviceMem::alloc(1024), true);
+    CommBase* comm_inner = new CommBase(
+        collective_id_tmp, userRank, user_rank_size, userRank, 1, para_vector, topoFlag, dispatcher, nullptr,
+        netDevCtxMap, exchanger, DeviceMem::alloc(1024), DeviceMem::alloc(1024), true);
 
     ret = comm_inner->Init();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -274,8 +270,9 @@ TEST_F(CommInnerTest, ut_get_userrank_by_rank_with_err)
 
     TopoType topoFlag = TopoType::TOPO_TYPE_8P_RING;
     std::map<HcclIpAddress, HcclNetDevCtx> netDevCtxMap;
-    CommBase* comm_inner = new CommBase(collective_id_tmp, userRank, user_rank_size, 0, 1, para_vector, topoFlag, dispatcher, nullptr,
-        netDevCtxMap, exchanger, DeviceMem::alloc(1024),DeviceMem::alloc(1024), true);
+    CommBase* comm_inner = new CommBase(
+        collective_id_tmp, userRank, user_rank_size, 0, 1, para_vector, topoFlag, dispatcher, nullptr, netDevCtxMap,
+        exchanger, DeviceMem::alloc(1024), DeviceMem::alloc(1024), true);
 
     ret = comm_inner->Init();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -328,8 +325,9 @@ TEST_F(CommInnerTest, ut_SetTransportType)
 
     TopoType topoFlag = TopoType::TOPO_TYPE_8P_RING;
     std::map<HcclIpAddress, HcclNetDevCtx> netDevCtxMap;
-    CommBase* comm_inner = new CommBase(collective_id_tmp, userRank, user_rank_size, 0, 2, para_vector, topoFlag, dispatcher, nullptr,
-        netDevCtxMap, exchanger, DeviceMem::alloc(1024),DeviceMem::alloc(1024), true);
+    CommBase* comm_inner = new CommBase(
+        collective_id_tmp, userRank, user_rank_size, 0, 2, para_vector, topoFlag, dispatcher, nullptr, netDevCtxMap,
+        exchanger, DeviceMem::alloc(1024), DeviceMem::alloc(1024), true);
 
     ret = comm_inner->SetTransportType(1);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -339,10 +337,7 @@ TEST_F(CommInnerTest, ut_SetTransportType)
 
 TEST_F(CommInnerTest, ut_TransportInit)
 {
-    MOCKER_CPP(&CommBase::SetTransportType)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&CommBase::SetTransportType).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     s32 ret = HCCL_SUCCESS;
 
@@ -374,9 +369,12 @@ TEST_F(CommInnerTest, ut_TransportInit)
 
     TopoType topoFlag = TopoType::TOPO_TYPE_8P_RING;
     std::map<HcclIpAddress, HcclNetDevCtx> netDevCtxMap;
-    ConstructNetDevCtx(netDevCtxMap, NICDeployment::NIC_DEPLOYMENT_DEVICE, devicePhyId, devicePhyId, NicType::DEVICE_NIC_TYPE, tmp_para.nicIp[0]);
-    CommBase* comm_inner = new CommBase(collective_id_tmp, userRank, user_rank_size, userRank, 1,  para_vector, topoFlag, dispatcher, nullptr,
-        netDevCtxMap, exchanger, DeviceMem::alloc(1024),DeviceMem::alloc(1024), true);
+    ConstructNetDevCtx(
+        netDevCtxMap, NICDeployment::NIC_DEPLOYMENT_DEVICE, devicePhyId, devicePhyId, NicType::DEVICE_NIC_TYPE,
+        tmp_para.nicIp[0]);
+    CommBase* comm_inner = new CommBase(
+        collective_id_tmp, userRank, user_rank_size, userRank, 1, para_vector, topoFlag, dispatcher, nullptr,
+        netDevCtxMap, exchanger, DeviceMem::alloc(1024), DeviceMem::alloc(1024), true);
 
     MachinePara machinePara;
     HcclIpAddress invalidIp;
@@ -385,22 +383,25 @@ TEST_F(CommInnerTest, ut_TransportInit)
     IpSocket socket;
     socket.listenedPort.insert(1);
     machinePara.deviceLogicId = 0;
-    RaResourceInfo &raResourceInfo = NetworkManager::GetInstance(machinePara.deviceLogicId).raResourceInfo_;
+    RaResourceInfo& raResourceInfo = NetworkManager::GetInstance(machinePara.deviceLogicId).raResourceInfo_;
     raResourceInfo.nicSocketMap[invalidIp] = socket;
     machinePara.inputMem = DeviceMem::alloc(1024);
     machinePara.outputMem = DeviceMem::alloc(1024);
 
-    comm_inner->interSocketManager_.reset(new (std::nothrow) HcclSocketManager(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0));
+    comm_inner->interSocketManager_.reset(new (std::nothrow)
+                                              HcclSocketManager(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0));
     comm_inner->interSocketManager_->ServerInit(netDevCtxMap[tmp_para.nicIp[0]], 18000);
 
     ret = comm_inner->TransportInit(0, machinePara);
     EXPECT_EQ(ret, HCCL_E_NOT_SUPPORT);
 
-    CommBase* comm_star = new CommStar(collective_id_tmp, userRank, user_rank_size, userRank, 1, topoFlag, dispatcher, nullptr, netDevCtxMap, exchanger,
-        para_vector, DeviceMem::alloc(1024),DeviceMem::alloc(1024), true);
+    CommBase* comm_star = new CommStar(
+        collective_id_tmp, userRank, user_rank_size, userRank, 1, topoFlag, dispatcher, nullptr, netDevCtxMap,
+        exchanger, para_vector, DeviceMem::alloc(1024), DeviceMem::alloc(1024), true);
     comm_star->transportType_[0] = TransportType::TRANS_TYPE_RESERVED;
     comm_star->isHaveCpuRank_ = true;
-    comm_star->interSocketManager_.reset(new (std::nothrow) HcclSocketManager(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0));
+    comm_star->interSocketManager_.reset(new (std::nothrow)
+                                             HcclSocketManager(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0));
     comm_star->interSocketManager_->ServerInit(netDevCtxMap[tmp_para.nicIp[0]], 16666);
     ret = comm_star->TransportInit(0, machinePara);
     EXPECT_EQ(ret, HCCL_E_NOT_SUPPORT);
@@ -420,8 +421,8 @@ TEST_F(CommInnerTest, ut_AiCpuNotifyDataGet)
     HcclResult ret = HCCL_SUCCESS;
     std::chrono::milliseconds kdefaultTimeout = std::chrono::seconds(120);
     MachinePara linkPara;
-    std::shared_ptr<Transport> link(new Transport(new (std::nothrow) TransportBase(
-        nullptr, nullptr, linkPara, kdefaultTimeout)));
+    std::shared_ptr<Transport> link(
+        new Transport(new (std::nothrow) TransportBase(nullptr, nullptr, linkPara, kdefaultTimeout)));
 
     std::unique_ptr<NotifyPool> notifyPool = nullptr;
     notifyPool.reset(new (std::nothrow) NotifyPool());
@@ -435,7 +436,7 @@ TEST_F(CommInnerTest, ut_AiCpuNotifyDataGet)
     std::shared_ptr<LocalIpcNotify> localNotify = nullptr;
     std::shared_ptr<RemoteNotify> remoteNotify = nullptr;
     s32 pid = 0;
-    ret = SalGetBareTgid(&pid);    // 当前进程id
+    ret = SalGetBareTgid(&pid); // 当前进程id
     RemoteRankInfo info(0, 0, pid);
     ret = notifyPool->Alloc(tag, info, localNotify, NotifyLoadType::DEVICE_NOTIFY);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -456,13 +457,9 @@ TEST_F(CommInnerTest, ut_AiCpuNotifyDataGet)
     link->pimpl_->localSendReadyDeviceNotify_ = localNotify;
     HcclSignalInfo tmp;
 
-    MOCKER(rtGetNotifyAddress)
-    .stubs()
-    .will(returnValue(RT_ERROR_NONE));
+    MOCKER(rtGetNotifyAddress).stubs().will(returnValue(RT_ERROR_NONE));
 
-    MOCKER(aclrtGetNotifyId)
-    .stubs()
-    .will(returnValue(ACL_SUCCESS));
+    MOCKER(aclrtGetNotifyId).stubs().will(returnValue(ACL_SUCCESS));
 
     ret = link->GetTxAckDevNotifyInfo(tmp);
     EXPECT_EQ(tmp.devId, 1);
@@ -509,7 +506,9 @@ TEST_F(CommInnerTest, ut_get_intra_rank_ipinfo)
     TopoType topoFlag = TopoType::TOPO_TYPE_8P_RING;
 
     std::map<HcclIpAddress, HcclNetDevCtx> netDevCtxMap;
-    CommBase* comm_inner = new CommBase(rootInfo, 0, 1, 0, 1, para_vector, topoFlag, dispatcher, nullptr, netDevCtxMap, exchanger,  DeviceMem(), DeviceMem(), true);
+    CommBase* comm_inner = new CommBase(
+        rootInfo, 0, 1, 0, 1, para_vector, topoFlag, dispatcher, nullptr, netDevCtxMap, exchanger, DeviceMem(),
+        DeviceMem(), true);
 
     std::vector<u32> dstIntraVec;
     HcclIpAddress localIP(0);
@@ -524,10 +523,7 @@ TEST_F(CommInnerTest, ut_get_intra_rank_ipinfo)
 
 TEST_F(CommInnerTest, ut_create_dest_link_memorry_error)
 {
-    MOCKER_CPP(&CommBase::TransportInit)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_E_MEMORY));
+    MOCKER_CPP(&CommBase::TransportInit).stubs().with(mockcpp::any()).will(returnValue(HCCL_E_MEMORY));
 
     s32 ret = HCCL_SUCCESS;
 
@@ -560,16 +556,17 @@ TEST_F(CommInnerTest, ut_create_dest_link_memorry_error)
     TopoType topoFlag = TopoType::TOPO_TYPE_8P_RING;
     std::map<HcclIpAddress, HcclNetDevCtx> netDevCtxMap;
 
-    CommBase* comm_inner = new CommBase(collective_id_tmp, userRank, user_rank_size, userRank, 1,  para_vector, topoFlag, dispatcher, nullptr,
-        netDevCtxMap, exchanger, DeviceMem::alloc(1024),DeviceMem::alloc(1024), true);
+    CommBase* comm_inner = new CommBase(
+        collective_id_tmp, userRank, user_rank_size, userRank, 1, para_vector, topoFlag, dispatcher, nullptr,
+        netDevCtxMap, exchanger, DeviceMem::alloc(1024), DeviceMem::alloc(1024), true);
     ErrContextPub error_context;
     error_context.work_stream_id = 1234567890;
-    std::vector<std::shared_ptr<HcclSocket> > sockets;
-    ret = comm_inner->CreateDestLink(error_context, MachineType::MACHINE_SERVER_TYPE, "10.21.78.208", 0, "threadStr", sockets);
+    std::vector<std::shared_ptr<HcclSocket>> sockets;
+    ret = comm_inner->CreateDestLink(
+        error_context, MachineType::MACHINE_SERVER_TYPE, "10.21.78.208", 0, "threadStr", sockets);
     EXPECT_EQ(ret, HCCL_E_MEMORY);
     delete comm_inner;
     GlobalMockObject::verify();
-
 }
 
 TEST_F(CommInnerTest, ut_PrepareDeInit_fail)
@@ -584,10 +581,9 @@ TEST_F(CommInnerTest, ut_PrepareDeInit_fail)
 
     ret = NetworkManager::GetInstance(device_id).PrepareDeInit(ref, NICDeployment::NIC_DEPLOYMENT_HOST);
     EXPECT_EQ(ret, HCCL_E_INTERNAL);
-    
+
     GlobalMockObject::verify();
 }
-
 
 TEST_F(CommInnerTest, ut_HeterogDeinit_fail)
 {
@@ -605,6 +601,6 @@ TEST_F(CommInnerTest, ut_HeterogDeinit_fail)
 
     ret = NetworkManager::GetInstance(device_id).HeterogDeinit(device_id, ipAddr, port);
     EXPECT_EQ(ret, HCCL_E_INTERNAL);
-    
+
     GlobalMockObject::verify();
 }

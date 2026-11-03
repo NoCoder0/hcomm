@@ -12,7 +12,4 @@
 #include "rt_external_device.h"
 #include "acl/acl_rt.h"
 
-rtError_t rtOpenNetService(const rtNetServiceOpenArgs *args)
-{
-    return 0;
-}
+rtError_t rtOpenNetService(const rtNetServiceOpenArgs* args) { return 0; }

@@ -30,20 +30,11 @@ using namespace Hccl;
 
 class OpParamsCheckerTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "OpParamsCheckerTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "OpParamsCheckerTest tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "OpParamsCheckerTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "OpParamsCheckerTest tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in OpParamsCheckerTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in OpParamsCheckerTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -61,42 +52,45 @@ TEST_F(OpParamsCheckerTest, should_return_success_when_check_datatype_ccu_opbase
 
     std::vector<OpType> optypeWithReduce = {OpType::REDUCESCATTER, OpType::ALLREDUCE, OpType::REDUCE};
     std::vector<OpType> optypeWithoutReduce = {OpType::ALLGATHER, OpType::SCATTER, OpType::BROADCAST};
-    std::vector<DataType> datatypeWithReduce = {DataType::INT8, DataType::INT16, DataType::INT32, DataType::FP16,
-                                                DataType::FP32, DataType::BFP16};
-    std::vector<DataType> datatypeWithoutReduce = {DataType::INT8, DataType::INT16, DataType::INT32,
-                                                   DataType::INT64, DataType::UINT8, DataType::UINT16,
-                                                   DataType::UINT32, DataType::UINT64, DataType::FP16,
-                                                   DataType::FP32, DataType::FP64, DataType::BFP16,
-                                                   DataType::HIF8, DataType::FP8E4M3, DataType::FP8E5M2,
-                                                   DataType::FP8E8M0};
-    
+    std::vector<DataType> datatypeWithReduce
+        = {DataType::INT8, DataType::INT16, DataType::INT32, DataType::FP16, DataType::FP32, DataType::BFP16};
+    std::vector<DataType> datatypeWithoutReduce
+        = {DataType::INT8,   DataType::INT16,   DataType::INT32,   DataType::INT64,  DataType::UINT8, DataType::UINT16,
+           DataType::UINT32, DataType::UINT64,  DataType::FP16,    DataType::FP32,   DataType::FP64,  DataType::BFP16,
+           DataType::HIF8,   DataType::FP8E4M3, DataType::FP8E5M2, DataType::FP8E8M0};
+
     for (auto optype : optypeWithReduce) {
         opParams.opType = optype;
         for (auto dtype : datatypeWithReduce) {
             opParams.dataType = dtype;
-            EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_SUCCESS);
+            EXPECT_EQ(
+                OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv),
+                HcclResult::HCCL_SUCCESS);
         }
     }
     for (auto optype : optypeWithoutReduce) {
         opParams.opType = optype;
         for (auto dtype : datatypeWithoutReduce) {
             opParams.dataType = dtype;
-            EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_SUCCESS);
+            EXPECT_EQ(
+                OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv),
+                HcclResult::HCCL_SUCCESS);
         }
     }
 
     opParams.opType = OpType::ALLTOALL;
     for (auto dtype : datatypeWithoutReduce) {
         opParams.all2AllDataDes.sendType = dtype;
-        EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_SUCCESS);
+        EXPECT_EQ(
+            OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_SUCCESS);
     }
     opParams.opType = OpType::ALLTOALLV;
     for (auto dtype : datatypeWithoutReduce) {
         opParams.all2AllVDataDes.sendType = dtype;
-        EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_SUCCESS);
+        EXPECT_EQ(
+            OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_SUCCESS);
     }
 }
-
 
 TEST_F(OpParamsCheckerTest, should_return_success_when_check_datatype_ccu_offload)
 {
@@ -105,44 +99,45 @@ TEST_F(OpParamsCheckerTest, should_return_success_when_check_datatype_ccu_offloa
     bool isDevUsed = false;
     bool isAiv = false;
 
-
     std::vector<OpType> optypeWithReduce = {OpType::REDUCESCATTER, OpType::ALLREDUCE, OpType::REDUCE};
     std::vector<OpType> optypeWithoutReduce = {OpType::ALLGATHER, OpType::BROADCAST};
-    std::vector<DataType> datatypeWithReduce = {DataType::INT8, DataType::INT16, DataType::INT32, DataType::FP16,
-                                                DataType::FP32, DataType::BFP16};
-    std::vector<DataType> datatypeWithoutReduce = {DataType::INT8, DataType::INT16, DataType::INT32,
-                                                   DataType::INT64, DataType::UINT8, DataType::UINT16,
-                                                   DataType::UINT32, DataType::UINT64, DataType::FP16,
-                                                   DataType::FP32, DataType::FP64, DataType::BFP16,
-                                                   DataType::HIF8, DataType::FP8E4M3, DataType::FP8E5M2,
-                                                   DataType::FP8E8M0};
-    
+    std::vector<DataType> datatypeWithReduce
+        = {DataType::INT8, DataType::INT16, DataType::INT32, DataType::FP16, DataType::FP32, DataType::BFP16};
+    std::vector<DataType> datatypeWithoutReduce
+        = {DataType::INT8,   DataType::INT16,   DataType::INT32,   DataType::INT64,  DataType::UINT8, DataType::UINT16,
+           DataType::UINT32, DataType::UINT64,  DataType::FP16,    DataType::FP32,   DataType::FP64,  DataType::BFP16,
+           DataType::HIF8,   DataType::FP8E4M3, DataType::FP8E5M2, DataType::FP8E8M0};
+
     for (auto optype : optypeWithReduce) {
         opParams.opType = optype;
         for (auto dtype : datatypeWithReduce) {
             opParams.dataType = dtype;
-            EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOffload(opParams, ccuEnable, isDevUsed, isAiv),
-                      HcclResult::HCCL_SUCCESS);
+            EXPECT_EQ(
+                OpParamsChecker::CheckOpDataTypeOffload(opParams, ccuEnable, isDevUsed, isAiv),
+                HcclResult::HCCL_SUCCESS);
         }
     }
     for (auto optype : optypeWithoutReduce) {
         opParams.opType = optype;
         for (auto dtype : datatypeWithoutReduce) {
             opParams.dataType = dtype;
-            EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOffload(opParams, ccuEnable, isDevUsed, isAiv),
-                      HcclResult::HCCL_SUCCESS);
+            EXPECT_EQ(
+                OpParamsChecker::CheckOpDataTypeOffload(opParams, ccuEnable, isDevUsed, isAiv),
+                HcclResult::HCCL_SUCCESS);
         }
     }
 
     opParams.opType = OpType::ALLTOALL;
     for (auto dtype : datatypeWithoutReduce) {
         opParams.all2AllDataDes.sendType = dtype;
-        EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOffload(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_SUCCESS);
+        EXPECT_EQ(
+            OpParamsChecker::CheckOpDataTypeOffload(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_SUCCESS);
     }
     opParams.opType = OpType::ALLTOALLV;
     for (auto dtype : datatypeWithoutReduce) {
         opParams.all2AllVDataDes.sendType = dtype;
-        EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOffload(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_SUCCESS);
+        EXPECT_EQ(
+            OpParamsChecker::CheckOpDataTypeOffload(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_SUCCESS);
     }
 }
 
@@ -154,42 +149,45 @@ TEST_F(OpParamsCheckerTest, should_return_success_when_check_datatype_aicpu_opba
     bool isAiv = false;
 
     std::vector<OpType> optypeWithReduce = {OpType::REDUCESCATTER, OpType::ALLREDUCE, OpType::REDUCE};
-    std::vector<OpType> optypeWithoutReduce = {OpType::ALLGATHER, OpType::SCATTER,
-                                               OpType::BROADCAST, OpType::SEND,
-                                               OpType::RECV};
-    std::vector<DataType> datatypeWithReduce = {DataType::INT8, DataType::INT16, DataType::INT32,
-                                                DataType::FP16, DataType::FP32, DataType::BFP16};
-    std::vector<DataType> datatypeWithoutReduce = {DataType::INT8, DataType::INT16, DataType::INT32,
-                                                   DataType::INT64, DataType::UINT8, DataType::UINT16,
-                                                   DataType::UINT32, DataType::UINT64, DataType::FP16,
-                                                   DataType::FP32, DataType::FP64, DataType::BFP16,
-                                                   DataType::HIF8, DataType::FP8E4M3, DataType::FP8E5M2,
-                                                   DataType::FP8E8M0};
-    
+    std::vector<OpType> optypeWithoutReduce
+        = {OpType::ALLGATHER, OpType::SCATTER, OpType::BROADCAST, OpType::SEND, OpType::RECV};
+    std::vector<DataType> datatypeWithReduce
+        = {DataType::INT8, DataType::INT16, DataType::INT32, DataType::FP16, DataType::FP32, DataType::BFP16};
+    std::vector<DataType> datatypeWithoutReduce
+        = {DataType::INT8,   DataType::INT16,   DataType::INT32,   DataType::INT64,  DataType::UINT8, DataType::UINT16,
+           DataType::UINT32, DataType::UINT64,  DataType::FP16,    DataType::FP32,   DataType::FP64,  DataType::BFP16,
+           DataType::HIF8,   DataType::FP8E4M3, DataType::FP8E5M2, DataType::FP8E8M0};
+
     for (auto optype : optypeWithReduce) {
         opParams.opType = optype;
         for (auto dtype : datatypeWithReduce) {
             opParams.dataType = dtype;
-            EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_SUCCESS);
+            EXPECT_EQ(
+                OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv),
+                HcclResult::HCCL_SUCCESS);
         }
     }
     for (auto optype : optypeWithoutReduce) {
         opParams.opType = optype;
         for (auto dtype : datatypeWithoutReduce) {
             opParams.dataType = dtype;
-            EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_SUCCESS);
+            EXPECT_EQ(
+                OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv),
+                HcclResult::HCCL_SUCCESS);
         }
     }
 
     opParams.opType = OpType::ALLTOALL;
     for (auto dtype : datatypeWithoutReduce) {
         opParams.all2AllDataDes.sendType = dtype;
-        EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_SUCCESS);
+        EXPECT_EQ(
+            OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_SUCCESS);
     }
     opParams.opType = OpType::ALLTOALLV;
     for (auto dtype : datatypeWithoutReduce) {
         opParams.all2AllVDataDes.sendType = dtype;
-        EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_SUCCESS);
+        EXPECT_EQ(
+            OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_SUCCESS);
     }
 }
 
@@ -201,23 +199,24 @@ TEST_F(OpParamsCheckerTest, should_return_success_when_check_datatype_aicpu_opba
     bool isAiv = false;
 
     std::vector<HcclDataType> datatypeWithoutReduce = {
-        HcclDataType::HCCL_DATA_TYPE_INT8, HcclDataType::HCCL_DATA_TYPE_INT16, HcclDataType::HCCL_DATA_TYPE_INT32,
-        HcclDataType::HCCL_DATA_TYPE_INT64, HcclDataType::HCCL_DATA_TYPE_UINT8, HcclDataType::HCCL_DATA_TYPE_UINT16,
-        HcclDataType::HCCL_DATA_TYPE_UINT32, HcclDataType::HCCL_DATA_TYPE_UINT64, HcclDataType::HCCL_DATA_TYPE_FP16,
-        HcclDataType::HCCL_DATA_TYPE_FP32, HcclDataType::HCCL_DATA_TYPE_FP64, HcclDataType::HCCL_DATA_TYPE_BFP16,
-        HcclDataType::HCCL_DATA_TYPE_HIF8, HcclDataType::HCCL_DATA_TYPE_FP8E4M3, HcclDataType::HCCL_DATA_TYPE_FP8E5M2,
+        HcclDataType::HCCL_DATA_TYPE_INT8,   HcclDataType::HCCL_DATA_TYPE_INT16,   HcclDataType::HCCL_DATA_TYPE_INT32,
+        HcclDataType::HCCL_DATA_TYPE_INT64,  HcclDataType::HCCL_DATA_TYPE_UINT8,   HcclDataType::HCCL_DATA_TYPE_UINT16,
+        HcclDataType::HCCL_DATA_TYPE_UINT32, HcclDataType::HCCL_DATA_TYPE_UINT64,  HcclDataType::HCCL_DATA_TYPE_FP16,
+        HcclDataType::HCCL_DATA_TYPE_FP32,   HcclDataType::HCCL_DATA_TYPE_FP64,    HcclDataType::HCCL_DATA_TYPE_BFP16,
+        HcclDataType::HCCL_DATA_TYPE_HIF8,   HcclDataType::HCCL_DATA_TYPE_FP8E4M3, HcclDataType::HCCL_DATA_TYPE_FP8E5M2,
         HcclDataType::HCCL_DATA_TYPE_FP8E8M0};
 
     opParams.opType = OpType::BATCHSENDRECV;
-    HcclSendRecvItem *sendRecvItemdata = nullptr;
+    HcclSendRecvItem* sendRecvItemdata = nullptr;
     sendRecvItemdata = new HcclSendRecvItem[1];
     opParams.batchSendRecvDataDes.itemNum = 1;
     for (auto dtype : datatypeWithoutReduce) {
         sendRecvItemdata->dataType = dtype;
-        opParams.batchSendRecvDataDes.sendRecvItemsPtr = static_cast<void *>(sendRecvItemdata);
-        EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_SUCCESS);
+        opParams.batchSendRecvDataDes.sendRecvItemsPtr = static_cast<void*>(sendRecvItemdata);
+        EXPECT_EQ(
+            OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_SUCCESS);
     }
-    delete [] sendRecvItemdata;
+    delete[] sendRecvItemdata;
 }
 
 TEST_F(OpParamsCheckerTest, should_return_error_when_check_unsupported_datatype_aicpu_opbased_batchsendrecv)
@@ -227,20 +226,19 @@ TEST_F(OpParamsCheckerTest, should_return_error_when_check_unsupported_datatype_
     bool isDevUsed = true;
     bool isAiv = false;
 
-    std::vector<HcclDataType> datatypeWithoutReduce = {
-        HcclDataType::HCCL_DATA_TYPE_INT128
-    };
+    std::vector<HcclDataType> datatypeWithoutReduce = {HcclDataType::HCCL_DATA_TYPE_INT128};
 
     opParams.opType = OpType::BATCHSENDRECV;
-    HcclSendRecvItem *sendRecvItemdata = nullptr;
+    HcclSendRecvItem* sendRecvItemdata = nullptr;
     sendRecvItemdata = new HcclSendRecvItem[1];
     opParams.batchSendRecvDataDes.itemNum = 1;
     for (auto dtype : datatypeWithoutReduce) {
         sendRecvItemdata->dataType = dtype;
-        opParams.batchSendRecvDataDes.sendRecvItemsPtr = static_cast<void *>(sendRecvItemdata);
-        EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_E_PARA);
+        opParams.batchSendRecvDataDes.sendRecvItemsPtr = static_cast<void*>(sendRecvItemdata);
+        EXPECT_EQ(
+            OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_E_PARA);
     }
-    delete [] sendRecvItemdata;
+    delete[] sendRecvItemdata;
 }
 
 TEST_F(OpParamsCheckerTest, should_return_success_when_check_datatype_aicpu_offload)
@@ -252,40 +250,42 @@ TEST_F(OpParamsCheckerTest, should_return_success_when_check_datatype_aicpu_offl
 
     std::vector<OpType> optypeWithReduce = {OpType::REDUCESCATTER, OpType::ALLREDUCE, OpType::REDUCE};
     std::vector<OpType> optypeWithoutReduce = {OpType::ALLGATHER, OpType::BROADCAST};
-    std::vector<DataType> datatypeWithReduce = {DataType::INT8, DataType::INT16, DataType::INT32,
-                                                DataType::FP16, DataType::FP32, DataType::BFP16};
-    std::vector<DataType> datatypeWithoutReduce = {DataType::INT8, DataType::INT16, DataType::INT32,
-                                                   DataType::INT64, DataType::UINT8, DataType::UINT16,
-                                                   DataType::UINT32, DataType::UINT64, DataType::FP16,
-                                                   DataType::FP32, DataType::FP64, DataType::BFP16,
-                                                   DataType::HIF8, DataType::FP8E4M3, DataType::FP8E5M2,
-                                                   DataType::FP8E8M0};
-    
+    std::vector<DataType> datatypeWithReduce
+        = {DataType::INT8, DataType::INT16, DataType::INT32, DataType::FP16, DataType::FP32, DataType::BFP16};
+    std::vector<DataType> datatypeWithoutReduce
+        = {DataType::INT8,   DataType::INT16,   DataType::INT32,   DataType::INT64,  DataType::UINT8, DataType::UINT16,
+           DataType::UINT32, DataType::UINT64,  DataType::FP16,    DataType::FP32,   DataType::FP64,  DataType::BFP16,
+           DataType::HIF8,   DataType::FP8E4M3, DataType::FP8E5M2, DataType::FP8E8M0};
+
     for (auto optype : optypeWithReduce) {
         opParams.opType = optype;
         for (auto dtype : datatypeWithReduce) {
             opParams.dataType = dtype;
-            EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOffload(opParams, ccuEnable, isDevUsed, isAiv),
-                      HcclResult::HCCL_SUCCESS);
+            EXPECT_EQ(
+                OpParamsChecker::CheckOpDataTypeOffload(opParams, ccuEnable, isDevUsed, isAiv),
+                HcclResult::HCCL_SUCCESS);
         }
     }
     for (auto optype : optypeWithoutReduce) {
         opParams.opType = optype;
         for (auto dtype : datatypeWithoutReduce) {
             opParams.dataType = dtype;
-            EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOffload(opParams, ccuEnable, isDevUsed, isAiv),
-                      HcclResult::HCCL_SUCCESS);
+            EXPECT_EQ(
+                OpParamsChecker::CheckOpDataTypeOffload(opParams, ccuEnable, isDevUsed, isAiv),
+                HcclResult::HCCL_SUCCESS);
         }
     }
     opParams.opType = OpType::ALLTOALL;
     for (auto dtype : datatypeWithoutReduce) {
         opParams.all2AllDataDes.sendType = dtype;
-        EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOffload(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_SUCCESS);
+        EXPECT_EQ(
+            OpParamsChecker::CheckOpDataTypeOffload(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_SUCCESS);
     }
     opParams.opType = OpType::ALLTOALLV;
     for (auto dtype : datatypeWithoutReduce) {
         opParams.all2AllVDataDes.sendType = dtype;
-        EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOffload(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_SUCCESS);
+        EXPECT_EQ(
+            OpParamsChecker::CheckOpDataTypeOffload(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_SUCCESS);
     }
 }
 
@@ -298,36 +298,37 @@ TEST_F(OpParamsCheckerTest, should_return_success_when_check_datatype_host_offlo
 
     std::vector<OpType> optypeWithReduce = {OpType::ALLREDUCE, OpType::REDUCESCATTER};
     std::vector<OpType> optypeWithoutReduce = {OpType::ALLGATHER, OpType::BROADCAST, OpType::SEND, OpType::RECV};
-    std::vector<DataType> datatypeWithReduce = {DataType::INT8, DataType::INT16, DataType::INT32,
-                                                DataType::FP16, DataType::FP32, DataType::BFP16};
-    std::vector<DataType> datatypeWithoutReduce = {DataType::INT8, DataType::INT16, DataType::INT32,
-                                                   DataType::INT64, DataType::UINT8, DataType::UINT16,
-                                                   DataType::UINT32, DataType::UINT64, DataType::FP16,
-                                                   DataType::FP32, DataType::FP64, DataType::BFP16,
-                                                   DataType::HIF8, DataType::FP8E4M3, DataType::FP8E5M2,
-                                                   DataType::FP8E8M0};
-    
+    std::vector<DataType> datatypeWithReduce
+        = {DataType::INT8, DataType::INT16, DataType::INT32, DataType::FP16, DataType::FP32, DataType::BFP16};
+    std::vector<DataType> datatypeWithoutReduce
+        = {DataType::INT8,   DataType::INT16,   DataType::INT32,   DataType::INT64,  DataType::UINT8, DataType::UINT16,
+           DataType::UINT32, DataType::UINT64,  DataType::FP16,    DataType::FP32,   DataType::FP64,  DataType::BFP16,
+           DataType::HIF8,   DataType::FP8E4M3, DataType::FP8E5M2, DataType::FP8E8M0};
+
     for (auto optype : optypeWithReduce) {
         opParams.opType = optype;
         for (auto dtype : datatypeWithReduce) {
             opParams.dataType = dtype;
-            EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOffload(opParams, ccuEnable, isDevUsed, isAiv),
-                      HcclResult::HCCL_SUCCESS);
+            EXPECT_EQ(
+                OpParamsChecker::CheckOpDataTypeOffload(opParams, ccuEnable, isDevUsed, isAiv),
+                HcclResult::HCCL_SUCCESS);
         }
     }
     for (auto optype : optypeWithoutReduce) {
         opParams.opType = optype;
         for (auto dtype : datatypeWithoutReduce) {
             opParams.dataType = dtype;
-            EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOffload(opParams, ccuEnable, isDevUsed, isAiv),
-                      HcclResult::HCCL_SUCCESS);
+            EXPECT_EQ(
+                OpParamsChecker::CheckOpDataTypeOffload(opParams, ccuEnable, isDevUsed, isAiv),
+                HcclResult::HCCL_SUCCESS);
         }
     }
 
     opParams.opType = OpType::ALLTOALL;
     for (auto dtype : datatypeWithoutReduce) {
         opParams.all2AllDataDes.sendType = dtype;
-        EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOffload(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_SUCCESS);
+        EXPECT_EQ(
+            OpParamsChecker::CheckOpDataTypeOffload(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_SUCCESS);
     }
 }
 
@@ -338,8 +339,7 @@ TEST_F(OpParamsCheckerTest, Ut_CheckOpDataTypeOpbase_When_datatype_not_support_E
     bool isDevUsed = false;
     bool isAiv = false;
     opParams.opType = OpType::DEBUGCASE;
-    EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv),
-                HcclResult::HCCL_E_PARA);
+    EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_E_PARA);
 }
 
 TEST_F(OpParamsCheckerTest, Ut_CheckOpDataTypeOffload_When_host_offload_Expect_fail)
@@ -349,8 +349,7 @@ TEST_F(OpParamsCheckerTest, Ut_CheckOpDataTypeOffload_When_host_offload_Expect_f
     bool isDevUsed = false;
     bool isAiv = false;
 
-    EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOffload(opParams, ccuEnable, isDevUsed, isAiv),
-                HcclResult::HCCL_E_PARA);
+    EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOffload(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_E_PARA);
 }
 
 TEST_F(OpParamsCheckerTest, should_return_error_when_check_unsupported_datatype_ccu_opbased)
@@ -362,38 +361,39 @@ TEST_F(OpParamsCheckerTest, should_return_error_when_check_unsupported_datatype_
 
     std::vector<OpType> optypeWithReduce = {OpType::REDUCESCATTER, OpType::ALLREDUCE, OpType::REDUCE};
     std::vector<OpType> optypeWithoutReduce = {OpType::ALLGATHER, OpType::SCATTER, OpType::BROADCAST};
-    std::vector<DataType> datatypeWithReduce = {DataType::INT64, DataType::UINT64,
-                                                DataType::UINT16, DataType::UINT32, DataType::FP64,
-                                                DataType::INT128, DataType::HIF8, DataType::BF16_SAT,
-                                                DataType::FP8E4M3, DataType::FP8E5M2, DataType::UINT8};
+    std::vector<DataType> datatypeWithReduce
+        = {DataType::INT64, DataType::UINT64,   DataType::UINT16,  DataType::UINT32,  DataType::FP64, DataType::INT128,
+           DataType::HIF8,  DataType::BF16_SAT, DataType::FP8E4M3, DataType::FP8E5M2, DataType::UINT8};
     std::vector<DataType> datatypeWithoutReduce = {DataType::BF16_SAT};
 
     for (auto optype : optypeWithReduce) {
         opParams.opType = optype;
         for (auto dtype : datatypeWithReduce) {
             opParams.dataType = dtype;
-            EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv),
-                HcclResult::HCCL_E_PARA);
+            EXPECT_EQ(
+                OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_E_PARA);
         }
     }
     for (auto optype : optypeWithoutReduce) {
         opParams.opType = optype;
         for (auto dtype : datatypeWithoutReduce) {
             opParams.dataType = dtype;
-            EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv),
-                HcclResult::HCCL_E_PARA);
+            EXPECT_EQ(
+                OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_E_PARA);
         }
     }
 
     opParams.opType = OpType::ALLTOALL;
     for (auto dtype : datatypeWithoutReduce) {
         opParams.all2AllDataDes.sendType = dtype;
-        EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_E_PARA);
+        EXPECT_EQ(
+            OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_E_PARA);
     }
     opParams.opType = OpType::ALLTOALLV;
     for (auto dtype : datatypeWithoutReduce) {
         opParams.all2AllVDataDes.sendType = dtype;
-        EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_E_PARA);
+        EXPECT_EQ(
+            OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_E_PARA);
     }
 }
 
@@ -405,57 +405,59 @@ TEST_F(OpParamsCheckerTest, should_return_error_when_check_unsupported_datatype_
     bool isAiv = false;
 
     std::vector<OpType> optypeWithReduce = {OpType::REDUCESCATTER, OpType::ALLREDUCE, OpType::REDUCE};
-    std::vector<OpType> optypeWithoutReduce = {OpType::ALLGATHER, OpType::SEND, OpType::RECV,
-                                               OpType::SCATTER, OpType::BROADCAST};
-    std::vector<DataType> datatypeWithReduce = {DataType::UINT8, DataType::UINT16, DataType::UINT32, 
-                                                DataType::INT128, DataType::HIF8, DataType::BF16_SAT,
-                                                DataType::FP8E4M3, DataType::FP8E5M2};
+    std::vector<OpType> optypeWithoutReduce
+        = {OpType::ALLGATHER, OpType::SEND, OpType::RECV, OpType::SCATTER, OpType::BROADCAST};
+    std::vector<DataType> datatypeWithReduce
+        = {DataType::UINT8, DataType::UINT16,   DataType::UINT32,  DataType::INT128,
+           DataType::HIF8,  DataType::BF16_SAT, DataType::FP8E4M3, DataType::FP8E5M2};
     std::vector<DataType> datatypeWithoutReduce = {DataType::INT128, DataType::BF16_SAT};
 
     for (auto optype : optypeWithReduce) {
         opParams.opType = optype;
         for (auto dtype : datatypeWithReduce) {
             opParams.dataType = dtype;
-            EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv),
-                HcclResult::HCCL_E_PARA);
+            EXPECT_EQ(
+                OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_E_PARA);
         }
     }
     for (auto optype : optypeWithoutReduce) {
         opParams.opType = optype;
         for (auto dtype : datatypeWithoutReduce) {
             opParams.dataType = dtype;
-            EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv),
-                HcclResult::HCCL_E_PARA);
+            EXPECT_EQ(
+                OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_E_PARA);
         }
     }
 
     opParams.opType = OpType::ALLTOALL;
     for (auto dtype : datatypeWithoutReduce) {
         opParams.all2AllDataDes.sendType = dtype;
-        EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_E_PARA);
+        EXPECT_EQ(
+            OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_E_PARA);
     }
     opParams.opType = OpType::ALLTOALLV;
     for (auto dtype : datatypeWithoutReduce) {
         opParams.all2AllVDataDes.sendType = dtype;
-        EXPECT_EQ(OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_E_PARA);
+        EXPECT_EQ(
+            OpParamsChecker::CheckOpDataTypeOpbase(opParams, ccuEnable, isDevUsed, isAiv), HcclResult::HCCL_E_PARA);
     }
 }
 
 TEST_F(OpParamsCheckerTest, should_suc_when_check_datatype_mc2_highP)
 {
     Mc2CommConfig config;
- 
-    std::vector<uint32_t> optypeWithReduce = {static_cast<uint32_t>(AicpuComType::HCCL_CMD_REDUCE_SCATTER),
-                                              static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLREDUCE)};
-    std::vector<uint32_t> optypeWithoutReduce = {static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLGATHER),
-                                                 static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLTOALL),
-                                                 static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLTOALLV),
-                                                 static_cast<uint32_t>(AicpuComType::HCCL_CMD_HALF_ALLTOALLV)};
-    std::vector<uint32_t> dataTypeHighP = {static_cast<uint32_t>(DataType::INT16),
-                                           static_cast<uint32_t>(DataType::INT32),
-                                           static_cast<uint32_t>(DataType::FP16),
-                                           static_cast<uint32_t>(DataType::FP32),
-                                           static_cast<uint32_t>(DataType::BFP16)};
+
+    std::vector<uint32_t> optypeWithReduce
+        = {static_cast<uint32_t>(AicpuComType::HCCL_CMD_REDUCE_SCATTER),
+           static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLREDUCE)};
+    std::vector<uint32_t> optypeWithoutReduce = {
+        static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLGATHER), static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLTOALL),
+        static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLTOALLV),
+        static_cast<uint32_t>(AicpuComType::HCCL_CMD_HALF_ALLTOALLV)};
+    std::vector<uint32_t> dataTypeHighP
+        = {static_cast<uint32_t>(DataType::INT16), static_cast<uint32_t>(DataType::INT32),
+           static_cast<uint32_t>(DataType::FP16), static_cast<uint32_t>(DataType::FP32),
+           static_cast<uint32_t>(DataType::BFP16)};
 
     for (auto optype : optypeWithReduce) {
         config.opType = optype;
@@ -478,18 +480,18 @@ TEST_F(OpParamsCheckerTest, should_suc_when_check_datatype_mc2_highP)
 TEST_F(OpParamsCheckerTest, should_suc_when_check_datatype_mc2_highP_V2)
 {
     Mc2CcTilingInner config;
- 
-    std::vector<uint32_t> optypeWithReduce = {static_cast<uint32_t>(AicpuComType::HCCL_CMD_REDUCE_SCATTER),
-                                              static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLREDUCE)};
-    std::vector<uint32_t> optypeWithoutReduce = {static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLGATHER),
-                                                 static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLTOALL),
-                                                 static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLTOALLV),
-                                                 static_cast<uint32_t>(AicpuComType::HCCL_CMD_HALF_ALLTOALLV)};
-    std::vector<uint32_t> dataTypeHighP = {static_cast<uint32_t>(DataType::INT16),
-                                           static_cast<uint32_t>(DataType::INT32),
-                                           static_cast<uint32_t>(DataType::FP16),
-                                           static_cast<uint32_t>(DataType::FP32),
-                                           static_cast<uint32_t>(DataType::BFP16)};
+
+    std::vector<uint32_t> optypeWithReduce
+        = {static_cast<uint32_t>(AicpuComType::HCCL_CMD_REDUCE_SCATTER),
+           static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLREDUCE)};
+    std::vector<uint32_t> optypeWithoutReduce = {
+        static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLGATHER), static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLTOALL),
+        static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLTOALLV),
+        static_cast<uint32_t>(AicpuComType::HCCL_CMD_HALF_ALLTOALLV)};
+    std::vector<uint32_t> dataTypeHighP
+        = {static_cast<uint32_t>(DataType::INT16), static_cast<uint32_t>(DataType::INT32),
+           static_cast<uint32_t>(DataType::FP16), static_cast<uint32_t>(DataType::FP32),
+           static_cast<uint32_t>(DataType::BFP16)};
 
     for (auto optype : optypeWithReduce) {
         config.opType = optype;
@@ -513,15 +515,15 @@ TEST_F(OpParamsCheckerTest, should_suc_when_check_datatype_mc2_lowP)
 {
     Mc2CommConfig config;
 
-    std::vector<uint32_t> optypeWithReduce = {static_cast<uint32_t>(AicpuComType::HCCL_CMD_REDUCE_SCATTER),
-                                              static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLREDUCE)};
-    std::vector<uint32_t> inputDataType = {static_cast<uint32_t>(DataType::INT8),
-                                           static_cast<uint32_t>(DataType::FP8E5M2),
-                                           static_cast<uint32_t>(DataType::FP8E4M3),
-                                           static_cast<uint32_t>(DataType::HIF8)};
-    std::vector<uint32_t> outputDataType = {static_cast<uint32_t>(DataType::FP16),
-                                            static_cast<uint32_t>(DataType::FP32),
-                                            static_cast<uint32_t>(DataType::BFP16)};
+    std::vector<uint32_t> optypeWithReduce
+        = {static_cast<uint32_t>(AicpuComType::HCCL_CMD_REDUCE_SCATTER),
+           static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLREDUCE)};
+    std::vector<uint32_t> inputDataType
+        = {static_cast<uint32_t>(DataType::INT8), static_cast<uint32_t>(DataType::FP8E5M2),
+           static_cast<uint32_t>(DataType::FP8E4M3), static_cast<uint32_t>(DataType::HIF8)};
+    std::vector<uint32_t> outputDataType
+        = {static_cast<uint32_t>(DataType::FP16), static_cast<uint32_t>(DataType::FP32),
+           static_cast<uint32_t>(DataType::BFP16)};
 
     for (auto optype : optypeWithReduce) {
         config.opType = optype;
@@ -539,15 +541,15 @@ TEST_F(OpParamsCheckerTest, should_suc_when_check_datatype_mc2_lowP_V2)
 {
     Mc2CcTilingInner config;
 
-    std::vector<uint32_t> optypeWithReduce = {static_cast<uint32_t>(AicpuComType::HCCL_CMD_REDUCE_SCATTER),
-                                              static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLREDUCE)};
-    std::vector<uint32_t> inputDataType = {static_cast<uint32_t>(DataType::INT8),
-                                           static_cast<uint32_t>(DataType::FP8E5M2),
-                                           static_cast<uint32_t>(DataType::FP8E4M3),
-                                           static_cast<uint32_t>(DataType::HIF8)};
-    std::vector<uint32_t> outputDataType = {static_cast<uint32_t>(DataType::FP16),
-                                            static_cast<uint32_t>(DataType::FP32),
-                                            static_cast<uint32_t>(DataType::BFP16)};
+    std::vector<uint32_t> optypeWithReduce
+        = {static_cast<uint32_t>(AicpuComType::HCCL_CMD_REDUCE_SCATTER),
+           static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLREDUCE)};
+    std::vector<uint32_t> inputDataType
+        = {static_cast<uint32_t>(DataType::INT8), static_cast<uint32_t>(DataType::FP8E5M2),
+           static_cast<uint32_t>(DataType::FP8E4M3), static_cast<uint32_t>(DataType::HIF8)};
+    std::vector<uint32_t> outputDataType
+        = {static_cast<uint32_t>(DataType::FP16), static_cast<uint32_t>(DataType::FP32),
+           static_cast<uint32_t>(DataType::BFP16)};
 
     for (auto optype : optypeWithReduce) {
         config.opType = optype;
@@ -568,11 +570,11 @@ TEST_F(OpParamsCheckerTest, should_fail_when_check_unsupported_datatype_mc2_lowP
     config.opType = static_cast<uint32_t>(AicpuComType::HCCL_CMD_REDUCE_SCATTER);
     config.dataType = static_cast<uint32_t>(DataType::INT16);
     config.outputDataType = static_cast<uint32_t>(DataType::FP16);
-    EXPECT_THROW(OpParamsChecker::CheckOpDataTypeMC2(config), InvalidParamsException);
+    EXPECT_EQ(OpParamsChecker::CheckOpDataTypeMC2(config), HcclResult::HCCL_E_PARA);
 
     config.dataType = static_cast<uint32_t>(DataType::INT8);
     config.outputDataType = static_cast<uint32_t>(DataType::INT32);
-    EXPECT_THROW(OpParamsChecker::CheckOpDataTypeMC2(config), InvalidParamsException);
+    EXPECT_EQ(OpParamsChecker::CheckOpDataTypeMC2(config), HcclResult::HCCL_E_PARA);
 }
 
 TEST_F(OpParamsCheckerTest, should_fail_when_check_unsupported_datatype_mc2_lowP_V2)
@@ -582,11 +584,11 @@ TEST_F(OpParamsCheckerTest, should_fail_when_check_unsupported_datatype_mc2_lowP
     config.opType = static_cast<uint32_t>(AicpuComType::HCCL_CMD_REDUCE_SCATTER);
     config.srcDataType = static_cast<uint32_t>(DataType::INT16);
     config.dstDataType = static_cast<uint32_t>(DataType::FP16);
-    EXPECT_THROW(OpParamsChecker::CheckOpDataTypeMC2V2(config), InvalidParamsException);
+    EXPECT_EQ(OpParamsChecker::CheckOpDataTypeMC2V2(config), HcclResult::HCCL_E_PARA);
 
     config.srcDataType = static_cast<uint32_t>(DataType::INT8);
     config.dstDataType = static_cast<uint32_t>(DataType::INT32);
-    EXPECT_THROW(OpParamsChecker::CheckOpDataTypeMC2V2(config), InvalidParamsException);
+    EXPECT_EQ(OpParamsChecker::CheckOpDataTypeMC2V2(config), HcclResult::HCCL_E_PARA);
 }
 
 TEST_F(OpParamsCheckerTest, should_fail_when_check_unsupported_datatype_mc2_highP)
@@ -596,7 +598,7 @@ TEST_F(OpParamsCheckerTest, should_fail_when_check_unsupported_datatype_mc2_high
     config.opType = static_cast<uint32_t>(AicpuComType::HCCL_CMD_REDUCE_SCATTER);
     config.dataType = static_cast<uint32_t>(DataType::INT64);
     config.outputDataType = static_cast<uint32_t>(DataType::INT64);
-    EXPECT_THROW(OpParamsChecker::CheckOpDataTypeMC2(config), InvalidParamsException);
+    EXPECT_EQ(OpParamsChecker::CheckOpDataTypeMC2(config), HcclResult::HCCL_E_PARA);
 }
 
 TEST_F(OpParamsCheckerTest, should_fail_when_check_unsupported_datatype_mc2_highP_V2)
@@ -606,23 +608,23 @@ TEST_F(OpParamsCheckerTest, should_fail_when_check_unsupported_datatype_mc2_high
     config.opType = static_cast<uint32_t>(AicpuComType::HCCL_CMD_REDUCE_SCATTER);
     config.srcDataType = static_cast<uint32_t>(DataType::INT64);
     config.dstDataType = static_cast<uint32_t>(DataType::INT64);
-    EXPECT_THROW(OpParamsChecker::CheckOpDataTypeMC2V2(config), InvalidParamsException);
+    EXPECT_EQ(OpParamsChecker::CheckOpDataTypeMC2V2(config), HcclResult::HCCL_E_PARA);
 }
 
 TEST_F(OpParamsCheckerTest, should_fail_when_check_unsupported_datatype_mc2_optype_without_reduce)
 {
     Mc2CommConfig config;
 
-    std::vector<uint32_t> optypeWithoutReduce = {static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLGATHER),
-                                                 static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLTOALL),
-                                                 static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLTOALLV),
-                                                 static_cast<uint32_t>(AicpuComType::HCCL_CMD_HALF_ALLTOALLV)};
+    std::vector<uint32_t> optypeWithoutReduce = {
+        static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLGATHER), static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLTOALL),
+        static_cast<uint32_t>(AicpuComType::HCCL_CMD_ALLTOALLV),
+        static_cast<uint32_t>(AicpuComType::HCCL_CMD_HALF_ALLTOALLV)};
 
     for (auto optype : optypeWithoutReduce) {
         config.opType = optype;
         config.dataType = static_cast<uint32_t>(DataType::INT8);
         config.outputDataType = static_cast<uint32_t>(DataType::INT16);
-        EXPECT_THROW(OpParamsChecker::CheckOpDataTypeMC2(config), InvalidParamsException);
+        EXPECT_EQ(OpParamsChecker::CheckOpDataTypeMC2(config), HcclResult::HCCL_E_PARA);
     }
 }
 

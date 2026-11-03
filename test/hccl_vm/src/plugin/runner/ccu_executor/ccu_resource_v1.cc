@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: ccu executor resource manager
  * Author: caiyifan
  */
@@ -28,7 +31,8 @@ void CcuResourceV1::Reset()
     channelId2RmtRankMap_ = {};
 }
 
-CcuResourceV1::CcuResourceV1(int rankId, uint32_t rankSize) {
+CcuResourceV1::CcuResourceV1(int rankId, uint32_t rankSize)
+{
     rankId_ = rankId;
     rankSize_ = rankSize;
     for (int i = 0; i < HcclSim::DIE_NUM; i++) {

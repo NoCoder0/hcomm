@@ -17,20 +17,11 @@ using namespace Hccl;
 
 class AlgTopoPackageHelperTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AlgTopoPackageHelperTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AlgTopoPackageHelperTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AlgTopoPackageHelperTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AlgTopoPackageHelperTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in AlgTopoPackageHelperTest SetUp" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in AlgTopoPackageHelperTest SetUp" << std::endl; }
 
     virtual void TearDown()
     {
@@ -51,7 +42,7 @@ TEST_F(AlgTopoPackageHelperTest, serialize_and_deserialize)
     info.virtRankMap = virtRankMap;
     std::vector<std::vector<std::vector<RankId>>> vTopo = {{{1, 2}, {3, 4}}, {{5, 6}, {7, 8}}};
     info.vTopo = vTopo;
-    std::vector<std::vector<RankId>>              virtRanks = {{1, 2}, {3, 4}};
+    std::vector<std::vector<RankId>> virtRanks = {{1, 2}, {3, 4}};
     info.virtRanks = virtRanks;
 
     auto data = tool.GetPackedData(info);

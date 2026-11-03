@@ -9,7 +9,7 @@ This directory provides two example plugins:
 | Plugin | Artifact | Registered Protocol |
 | --- | --- | --- |
 | HOST RoCE plugin | `libhcomm_cpu_roce_plugin.so` | `COMM_PROTOCOL_ROCE` |
-| HOST UB plugin | `libhcomm_cpu_ub_plugin.so` | `COMM_PROTOCOL_UBC_TP`, `COMM_PROTOCOL_UBC_CTP` |
+| HOST UB plugin | `libhcomm_cpu_ub_plugin.so` | `COMM_PROTOCOL_UB_CTP` |
 
 ## Building and Packaging
 

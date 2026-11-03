@@ -18,10 +18,10 @@
 #define NETCO_PORT_NUM_BASE 10
 #define CFG_VAL_LEN 16
 
-#define NETCO_REQ_TYPE_INIT    9001
-#define NETCO_REQ_TYPE_DEINIT  9002
+#define NETCO_REQ_TYPE_INIT 9001
+#define NETCO_REQ_TYPE_DEINIT 9002
 
-int RsNslbNetcoRequest(unsigned int phyId, struct RsNslbCb *nslbCb,
-    unsigned int type, char *data, unsigned int dataLen);
+int RsNslbNetcoRequest(unsigned int phyId, struct RsNslbCb *nslbCb, unsigned int type, char *data,
+    unsigned int dataLen);
 int RsEpollNslbEventHandle(struct RsNslbCb *nslbCb, int fd, unsigned int events);
 #endif // RS_ADP_NSLB_H

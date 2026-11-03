@@ -1,22 +1,20 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "coll_all_gather_executor.h"
 #include <numeric>
 
 namespace hccl {
-CollAllGatherExecutor::CollAllGatherExecutor(const HcclDispatcher dispatcher,
-    std::unique_ptr<TopoMatcher> &topoMatcher)
+CollAllGatherExecutor::CollAllGatherExecutor(const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher>& topoMatcher)
     : CollCommExecutor(dispatcher, topoMatcher)
-{
-}
+{}
 
 HcclResult CollAllGatherExecutor::Orchestrate(OpParam& param, AlgResourceResponse& algRes)
 {
@@ -40,7 +38,8 @@ HcclResult CollAllGatherExecutor::Orchestrate(OpParam& param, AlgResourceRespons
         execMem.scratchMem = algRes.scratchMem;
         execMem.inputPtr = param.inputPtr;
         execMem.outputPtr = param.outputPtr;
-        HCCL_DEBUG("[CollAllGatherExecutor][Orchestrate]offload inputMem[%p][%llu], outputMem[%p][%llu]," \
+        HCCL_DEBUG(
+            "[CollAllGatherExecutor][Orchestrate]offload inputMem[%p][%llu], outputMem[%p][%llu],"
             "scratchMem[%p][%llu], inputPtr[%p] outputPtr[%p], count[%llu].",
             execMem.inputMem.ptr(), execMem.inputMem.size(), execMem.outputMem.ptr(), execMem.outputMem.size(),
             execMem.scratchMem.ptr(), execMem.scratchMem.size(), execMem.inputPtr, execMem.outputPtr, execMem.count);
@@ -60,11 +59,15 @@ HcclResult CollAllGatherExecutor::Orchestrate(OpParam& param, AlgResourceRespons
         // 在Level1和Level2执行RunLoop
         if (topoAttr_.serverNum > 1) {
             ret = RunLoop(param, algRes);
-            CHK_PRT_RET(ret != HCCL_SUCCESS,
-                HCCL_ERROR("[CollAllGatherExecutor][Orchestrate]errNo[0x%016llx]AllGather executor run loop failed",
-                    HCCL_ERROR_CODE(ret)), ret);
-        } else {        // 单机场景，数据直接从UserInput搬到UserOutput
-            DeviceMem dstMem = DeviceMem::create(static_cast<u8 *>(algRes.paramOutputMem.ptr()) + totalSize * topoAttr_.userRank, totalSize);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR(
+                    "[CollAllGatherExecutor][Orchestrate]errNo[0x%016llx]AllGather executor run loop failed",
+                    HCCL_ERROR_CODE(ret)),
+                ret);
+        } else { // 单机场景，数据直接从UserInput搬到UserOutput
+            DeviceMem dstMem = DeviceMem::create(
+                static_cast<u8*>(algRes.paramOutputMem.ptr()) + totalSize * topoAttr_.userRank, totalSize);
             DeviceMem srcMem = DeviceMem::create(algRes.paramInputMem.ptr(), totalSize);
             CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dstMem, srcMem, param.stream));
         }
@@ -85,9 +88,12 @@ HcclResult CollAllGatherExecutor::Orchestrate(OpParam& param, AlgResourceRespons
         }
         needLaunchAtTheEnd = false;
     }
-    CHK_PRT_RET(ret != HCCL_SUCCESS,
-        HCCL_ERROR("[CollAllGatherExecutor][Orchestrate]errNo[0x%016llx]AllGather executor kernel run failed",
-            HCCL_ERROR_CODE(ret)), ret);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[CollAllGatherExecutor][Orchestrate]errNo[0x%016llx]AllGather executor kernel run failed",
+            HCCL_ERROR_CODE(ret)),
+        ret);
 
     // Enforce task launch at the end of Orchestrate
     // 注意: 不要删除这里的强制launch, 否则会导致aicpu cache功能问题
@@ -96,45 +102,48 @@ HcclResult CollAllGatherExecutor::Orchestrate(OpParam& param, AlgResourceRespons
         CHK_RET(LaunchTaskExtend(dispatcher_, param.stream, algResResp_->slaveStreams));
     }
 
-    HCCL_INFO("tag[%s], Allgather executor orchestrate success, take time [%lld]us",
-        param.tag.c_str(), DURATION_US(TIME_NOW() - startut));
+    HCCL_INFO(
+        "tag[%s], Allgather executor orchestrate success, take time [%lld]us", param.tag.c_str(),
+        DURATION_US(TIME_NOW() - startut));
     return HCCL_SUCCESS;
 }
 
 u64 CollAllGatherExecutor::CalcLoopMaxCount(const u64 cclBuffSize, const u32 unitSize)
 {
     // 中转内存单次最多能够接受的output count
-    u64 maxCountPerLoop = cclBuffSize / topoAttr_.userRankSize / HCCL_MIN_SLICE_ALIGN
-        * HCCL_MIN_SLICE_ALIGN / unitSize;
-    HCCL_WARNING("[CollAllGatherExecutor][CalcLoopMaxCount]" \
-        "using default maxCountPerLoop[%llu] as CCLBuffSize / unitSize", maxCountPerLoop);
+    u64 maxCountPerLoop = cclBuffSize / topoAttr_.userRankSize / HCCL_MIN_SLICE_ALIGN * HCCL_MIN_SLICE_ALIGN / unitSize;
+    HCCL_WARNING(
+        "[CollAllGatherExecutor][CalcLoopMaxCount]"
+        "using default maxCountPerLoop[%llu] as CCLBuffSize / unitSize",
+        maxCountPerLoop);
     return maxCountPerLoop;
 }
 
 bool CollAllGatherExecutor::IsHugeData(const u64 curSize)
 {
-    bool hugeData = curSize * topoAttr_.userRankSize / HCCL_INTERNODE_MAX_DATA_RATE > RDMA_SEND_MAX_SIZE ||
-            curSize > SDMA_SEND_MAX_SIZE;
+    bool hugeData = curSize * topoAttr_.userRankSize / HCCL_INTERNODE_MAX_DATA_RATE > RDMA_SEND_MAX_SIZE
+                    || curSize > SDMA_SEND_MAX_SIZE;
     return hugeData;
 }
 
-bool CollAllGatherExecutor::IsSmallData(const u64 size)
+bool CollAllGatherExecutor::IsSmallData([[maybe_unused]] const u64 size)
 {
     HCCL_INFO("[CollAllGatherExecutor][IsSmallData]opMeta is using the default option: not small data");
     return false;
 }
 
-u64 CollAllGatherExecutor::CalcTotalCount(const OpParam &param) const
+u64 CollAllGatherExecutor::CalcTotalCount(const OpParam& param) const
 {
     if (isAllGatherV_) {
-        const auto *countsPtr = static_cast<const u64 *>(param.VDataDes.counts);
+        const auto* countsPtr = static_cast<const u64*>(param.VDataDes.counts);
         return std::accumulate(countsPtr, countsPtr + topoAttr_.userRankSize, 0ULL);
     }
     return param.DataDes.count * topoAttr_.userRankSize;
 }
 
-bool CollAllGatherExecutor::CalcCountsDispls(const u64 maxTotalCount, std::vector<u64> &countsLeft,
-    std::vector<u64> &displs, std::vector<u64> &curCounts, std::vector<u64> &curDispls)
+bool CollAllGatherExecutor::CalcCountsDispls(
+    const u64 maxTotalCount, std::vector<u64>& countsLeft, std::vector<u64>& displs, std::vector<u64>& curCounts,
+    std::vector<u64>& curDispls)
 {
     bool finished = true;
 
@@ -161,8 +170,8 @@ bool CollAllGatherExecutor::CalcCountsDispls(const u64 maxTotalCount, std::vecto
     return finished;
 }
 
-void CollAllGatherExecutor::PrintCountsDispls(bool finished, const std::vector<u64> &curCounts,
-    const std::vector<u64> &curDispls)
+void CollAllGatherExecutor::PrintCountsDispls(
+    bool finished, const std::vector<u64>& curCounts, const std::vector<u64>& curDispls) const
 {
     if (HcclCheckLogLevel(DLOG_DEBUG)) {
         std::ostringstream curLoopInfo;
@@ -175,86 +184,92 @@ void CollAllGatherExecutor::PrintCountsDispls(bool finished, const std::vector<u
             curLoopInfo << displ << " ";
         }
         curLoopInfo << "]";
-        HCCL_DEBUG("[CollAllGatherExecutor][CountsDispls]finished[%u], Current loop info: %s", finished,
+        HCCL_DEBUG(
+            "[CollAllGatherExecutor][CountsDispls]finished[%u], Current loop info: %s", finished,
             curLoopInfo.str().c_str());
     }
 }
 
-std::vector<u64> CollAllGatherExecutor::GetCounts(const OpParam &param) const
+std::vector<u64> CollAllGatherExecutor::GetCounts(const OpParam& param) const
 {
-    const auto *countsPtr = static_cast<const u64 *>(param.VDataDes.counts);
+    const auto* countsPtr = static_cast<const u64*>(param.VDataDes.counts);
     return std::vector<u64>(countsPtr, countsPtr + topoAttr_.userRankSize);
 }
 
-std::vector<u64> CollAllGatherExecutor::GetDispls(const OpParam &param) const
+std::vector<u64> CollAllGatherExecutor::GetDispls(const OpParam& param) const
 {
-    const auto *displsPtr = static_cast<const u64 *>(param.VDataDes.displs);
+    const auto* displsPtr = static_cast<const u64*>(param.VDataDes.displs);
     return std::vector<u64>(displsPtr, displsPtr + topoAttr_.userRankSize);
 }
 
-u64 CollAllGatherExecutor::GetCurrentCount(const OpParam &param, const std::vector<u64> &curCounts) const
+u64 CollAllGatherExecutor::GetCurrentCount(
+    [[maybe_unused]] const OpParam& param, const std::vector<u64>& curCounts) const
 {
     return curCounts[topoAttr_.userRank];
 }
 
-u64 CollAllGatherExecutor::CalcCurrentTotalCount(const OpParam &param, const std::vector<u64> &curCounts) const
+u64 CollAllGatherExecutor::CalcCurrentTotalCount(
+    [[maybe_unused]] const OpParam& param, const std::vector<u64>& curCounts) const
 {
     return std::accumulate(curCounts.cbegin(), curCounts.cend(), 0ULL);
 }
 
-HcclOpMetaInfoDef CollAllGatherExecutor::GetOpMetaInfo(u32 algTypeLevel1, bool hugeData, bool smallData,
-    bool dataSplit) const
+HcclOpMetaInfoDef
+CollAllGatherExecutor::GetOpMetaInfo(u32 algTypeLevel1, bool hugeData, bool smallData, bool dataSplit) const
 {
     return HcclOpMetaInfo::GetOneForAllGatherV(algTypeLevel1, hugeData, smallData, CopyPattern::BCOPY, dataSplit);
 }
 
-void CollAllGatherExecutor::UpdateOpParam(OpParam &param, std::vector<u64> &curCounts,
-    std::vector<u64> &curDispls) const
+void CollAllGatherExecutor::UpdateOpParam(
+    OpParam& param, std::vector<u64>& curCounts, std::vector<u64>& curDispls) const
 {
     param.VDataDes.counts = curCounts.data();
     param.VDataDes.displs = curDispls.data();
 }
 
 // 基于性能考量，合并RunLoop和RunLoopInner
-HcclResult CollAllGatherExecutor::RunLoop(OpParam &param, AlgResourceResponse &algRes)
+HcclResult CollAllGatherExecutor::RunLoop(OpParam& param, AlgResourceResponse& algRes)
 {
     u32 unitSize = SIZE_TABLE[param.DataDes.dataType];
 
-    u8 *curInputPtr = static_cast<u8 *>(param.inputPtr);
-    u8 *curOutputPtr = static_cast<u8 *>(param.outputPtr);
-    void *commInputPtr = algRes.cclInputMem.ptr();
-    u8 *commOutputPtr = static_cast<u8 *>(algRes.cclOutputMem.ptr());
+    u8* curInputPtr = static_cast<u8*>(param.inputPtr);
+    u8* curOutputPtr = static_cast<u8*>(param.outputPtr);
+    void* commInputPtr = algRes.cclInputMem.ptr();
+    u8* commOutputPtr = static_cast<u8*>(algRes.cclOutputMem.ptr());
     CHK_PTR_NULL(curInputPtr);
     CHK_PTR_NULL(curOutputPtr);
     CHK_PTR_NULL(commInputPtr);
     CHK_PTR_NULL(commOutputPtr);
 
     u64 maxCountPerLoop = CalcLoopMaxCount(algRes.cclInputMem.size(), unitSize);
-    CHK_PRT_RET(maxCountPerLoop == 0,
-        HCCL_ERROR("[CollAllGatherExecutor][RunLoop]tag[%s], userRankSize is [%u], maxCountPerLoop is [%llu].",
+    CHK_PRT_RET(
+        maxCountPerLoop == 0,
+        HCCL_ERROR(
+            "[CollAllGatherExecutor][RunLoop]tag[%s], userRankSize is [%u], maxCountPerLoop is [%llu].",
             param.tag.c_str(), topoAttr_.userRankSize, maxCountPerLoop),
         HCCL_E_PARA);
 
     bool smallData = IsSmallData(param.DataDes.count * unitSize);
-    for (u64 countLeft = param.DataDes.count, curCount = 0, inputOffset = 0, outputOffset = 0;
-            countLeft > 0; countLeft -= curCount) {
+    for (u64 countLeft = param.DataDes.count, curCount = 0, inputOffset = 0, outputOffset = 0; countLeft > 0;
+         countLeft -= curCount) {
         curInputPtr += inputOffset;
         curOutputPtr += outputOffset;
         // 判断剩余数据量对应的output size是否大于中转output size
         curCount = (countLeft > maxCountPerLoop) ? maxCountPerLoop : countLeft;
         u64 curSize = curCount * unitSize; // 单位：字节
 
-        HCCL_DEBUG("[CollAllGatherExecutor][RunLoop]tag[%s], inputOffset[%llu], outputOffset[%llu], " \
+        HCCL_DEBUG(
+            "[CollAllGatherExecutor][RunLoop]tag[%s], inputOffset[%llu], outputOffset[%llu], "
             "sendBuf[%p], recvBuf[%p], sendCount[%llu], dataType[%d]",
             param.tag.c_str(), inputOffset, outputOffset, curInputPtr, curOutputPtr, curCount, param.DataDes.dataType);
 
         if (!is310P3Common_) {
             /* 设置子图复用标志 */
             auto autoSelectedAlgTypeLevel1 = static_cast<u32>(algType_.algoLevel1);
-            bool hugeData = IsHugeData(curSize);    // override
+            bool hugeData = IsHugeData(curSize); // override
             bool dataSplit = false;
-            auto opMeta = HcclOpMetaInfo::GetOneForAllGather(autoSelectedAlgTypeLevel1, hugeData, smallData,
-                CopyPattern::BCOPY, dataSplit);
+            auto opMeta = HcclOpMetaInfo::GetOneForAllGather(
+                autoSelectedAlgTypeLevel1, hugeData, smallData, CopyPattern::BCOPY, dataSplit);
             CHK_RET(InitTask(dispatcher_, param.stream, opMeta.isEnableCache, opMeta.GetCacheKey()));
         }
 
@@ -282,11 +297,12 @@ HcclResult CollAllGatherExecutor::RunLoop(OpParam &param, AlgResourceResponse &a
         } else {
             ret = KernelRunInterServer(param, execMem);
         }
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[CollAllGatherExecutor][RunLoop]errNo[0x%016llx]kernel run error, tag[%s], " \
-            "inputMem ptr[%p], outputMem ptr[%p], count[%llu], dataType[%d].",
-            HCCL_ERROR_CODE(ret), param.tag.c_str(), commInputPtr, commOutputPtr,
-            curCount, param.DataDes.dataType),
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[CollAllGatherExecutor][RunLoop]errNo[0x%016llx]kernel run error, tag[%s], "
+                "inputMem ptr[%p], outputMem ptr[%p], count[%llu], dataType[%d].",
+                HCCL_ERROR_CODE(ret), param.tag.c_str(), commInputPtr, commOutputPtr, curCount, param.DataDes.dataType),
             ret);
 
         if (!DMAReduceFlag_) {
@@ -309,17 +325,17 @@ HcclResult CollAllGatherExecutor::RunLoop(OpParam &param, AlgResourceResponse &a
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherExecutor::RunLoopV(OpParam &param, AlgResourceResponse &algRes)
+HcclResult CollAllGatherExecutor::RunLoopV(OpParam& param, AlgResourceResponse& algRes)
 {
     auto counts = GetCounts(param);
     auto displs = GetDispls(param);
     const HcclDataType dataType = param.GetDataType();
     u32 unitSize = SIZE_TABLE[dataType];
 
-    u8 *curInputPtr = static_cast<u8 *>(param.inputPtr);
-    u8 *curOutputPtr = static_cast<u8 *>(param.outputPtr);
-    u8 *commInputPtr = static_cast<u8 *>(algRes.cclInputMem.ptr());
-    u8 *commOutputPtr = static_cast<u8 *>(algRes.cclOutputMem.ptr());
+    u8* curInputPtr = static_cast<u8*>(param.inputPtr);
+    u8* curOutputPtr = static_cast<u8*>(param.outputPtr);
+    u8* commInputPtr = static_cast<u8*>(algRes.cclInputMem.ptr());
+    u8* commOutputPtr = static_cast<u8*>(algRes.cclOutputMem.ptr());
 
     if (UNLIKELY(curInputPtr == nullptr)) {
         // 若本rank的input count为0，此时允许curInputPtr传入空指针，为保证后续流程正常执行，赋值为cclin的地址
@@ -333,8 +349,10 @@ HcclResult CollAllGatherExecutor::RunLoopV(OpParam &param, AlgResourceResponse &
     CHK_PTR_NULL(commOutputPtr);
 
     u64 maxCountPerLoop = CalcLoopMaxCount(algRes.cclInputMem.size(), unitSize);
-    CHK_PRT_RET(maxCountPerLoop == 0,
-        HCCL_ERROR("[CollAllGatherExecutor][RunLoopV]tag[%s], userRankSize is [%u], maxCountPerLoop is [%llu].",
+    CHK_PRT_RET(
+        maxCountPerLoop == 0,
+        HCCL_ERROR(
+            "[CollAllGatherExecutor][RunLoopV]tag[%s], userRankSize is [%u], maxCountPerLoop is [%llu].",
             param.tag.c_str(), topoAttr_.userRankSize, maxCountPerLoop),
         HCCL_E_PARA);
 
@@ -348,13 +366,15 @@ HcclResult CollAllGatherExecutor::RunLoopV(OpParam &param, AlgResourceResponse &
         u64 curSize = curCount * unitSize; // 单位：字节
         const u64 totalSize = CalcCurrentTotalCount(param, curCounts) * unitSize;
 
-        HCCL_DEBUG("[CollAllGatherExecutor][RunLoopV]tag[%s], sendBuf[%p], recvBuf[%p], sendSize[%llu], "
-            "recvSize[%llu], cclInputMem[%u], cclOutputMem[%u], dataType[%d]", param.tag.c_str(), curInputPtr,
-            curOutputPtr, curSize, totalSize, algRes.cclInputMem.size(), algRes.cclOutputMem.size(), dataType);
+        HCCL_DEBUG(
+            "[CollAllGatherExecutor][RunLoopV]tag[%s], sendBuf[%p], recvBuf[%p], sendSize[%llu], "
+            "recvSize[%llu], cclInputMem[%u], cclOutputMem[%u], dataType[%d]",
+            param.tag.c_str(), curInputPtr, curOutputPtr, curSize, totalSize, algRes.cclInputMem.size(),
+            algRes.cclOutputMem.size(), dataType);
 
         /* 设置子图复用标志 */
         auto autoSelectedAlgTypeLevel1 = static_cast<u32>(algType_.algoLevel1);
-        bool hugeData = IsHugeData(curSize);    // override
+        bool hugeData = IsHugeData(curSize); // override
         bool smallData = IsSmallData(curSize);
         bool dataSplit = false;
         auto opMeta = GetOpMetaInfo(autoSelectedAlgTypeLevel1, hugeData, smallData, dataSplit);
@@ -370,10 +390,13 @@ HcclResult CollAllGatherExecutor::RunLoopV(OpParam &param, AlgResourceResponse &
         execMem.outputPtr = curOutputPtr;
         UpdateOpParam(param, curCounts, curDispls);
         HcclResult ret = KernelRun(param, execMem);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[CollAllGatherExecutor][RunLoopV]errNo[0x%016llx]kernel run error, tag[%s], "
-                "inputMem ptr[%p], outputMem ptr[%p], count[%llu], dataType[%d]", HCCL_ERROR_CODE(ret),
-                param.tag.c_str(), commInputPtr, commOutputPtr, curCount, dataType), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[CollAllGatherExecutor][RunLoopV]errNo[0x%016llx]kernel run error, tag[%s], "
+                "inputMem ptr[%p], outputMem ptr[%p], count[%llu], dataType[%d]",
+                HCCL_ERROR_CODE(ret), param.tag.c_str(), commInputPtr, commOutputPtr, curCount, dataType),
+            ret);
 
         CHK_RET(LaunchTaskExtend(dispatcher_, param.stream, algResResp_->slaveStreams));
 
@@ -383,8 +406,8 @@ HcclResult CollAllGatherExecutor::RunLoopV(OpParam &param, AlgResourceResponse &
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherExecutor::PrepareAllgatherSlice(u32 sliceNum, u64 inputMemSize,
-    std::vector<Slice> &dataSegsSlice) const
+HcclResult
+CollAllGatherExecutor::PrepareAllgatherSlice(u32 sliceNum, u64 inputMemSize, std::vector<Slice>& dataSegsSlice) const
 {
     Slice sliceTemp;
     for (u32 i = 0; i < sliceNum; i++) { // 根据数据量计算每个环上数据的偏移和大小
@@ -395,20 +418,23 @@ HcclResult CollAllGatherExecutor::PrepareAllgatherSlice(u32 sliceNum, u64 inputM
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherExecutor::CalculateLevel1AllgatherSlice(u64 inputMemSize, u32 level0RankSize, u32 level1RankSize,
-    std::vector<std::vector<Slice>> multRingsSliceZero, std::vector<std::vector<Slice>> &multRingsSlice) const
+HcclResult CollAllGatherExecutor::CalculateLevel1AllgatherSlice(
+    u64 inputMemSize, u32 level0RankSize, u32 level1RankSize, std::vector<std::vector<Slice>> multRingsSliceZero,
+    std::vector<std::vector<Slice>>& multRingsSlice) const
 {
     for (u32 ringIndex = 0; ringIndex < multRingsSliceZero.size(); ringIndex++) {
         std::vector<Slice> level1DataSlice;
         for (u32 level0Idx = 0; level0Idx < level0RankSize; level0Idx++) {
-            CHK_PRT_RET(multRingsSliceZero[ringIndex].size() < level0RankSize,
-                HCCL_ERROR("[CalculateLevel1AllgatherSlice]multRingsSliceZero[ringIndex]" \
-                "size is smaller than level0RankSize."), HCCL_E_INTERNAL);
+            CHK_PRT_RET(
+                multRingsSliceZero[ringIndex].size() < level0RankSize,
+                HCCL_ERROR("[CalculateLevel1AllgatherSlice]multRingsSliceZero[ringIndex] "
+                           "size is smaller than level0RankSize."),
+                HCCL_E_INTERNAL);
             for (u32 level1Idx = 0; level1Idx < level1RankSize; level1Idx++) {
                 Slice tmpSlice;
                 tmpSlice.size = multRingsSliceZero[ringIndex][level0Idx].size;
-                tmpSlice.offset =
-                    multRingsSliceZero[ringIndex][level0Idx].offset + level1Idx * level0RankSize * inputMemSize;
+                tmpSlice.offset
+                    = multRingsSliceZero[ringIndex][level0Idx].offset + level1Idx * level0RankSize * inputMemSize;
                 level1DataSlice.push_back(tmpSlice);
             }
         }
@@ -417,17 +443,18 @@ HcclResult CollAllGatherExecutor::CalculateLevel1AllgatherSlice(u64 inputMemSize
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherExecutor::CalculateLevel2AllgatherSlice(u64 inputMemSize, u32 level0RankSize,
-    u32 level1RankSize, u32 level2RankSize, std::vector<std::vector<Slice>> multRingsSliceZero,
-    std::vector<Slice> &level2DataSlice, u32 ringIndex) const
+HcclResult CollAllGatherExecutor::CalculateLevel2AllgatherSlice(
+    u64 inputMemSize, u32 level0RankSize, u32 level1RankSize, u32 level2RankSize,
+    std::vector<std::vector<Slice>> multRingsSliceZero, std::vector<Slice>& level2DataSlice, u32 ringIndex) const
 {
     for (u32 level0Idx = 0; level0Idx < level0RankSize; level0Idx++) {
         for (u32 level2Idx = 0; level2Idx < level2RankSize; level2Idx++) {
             for (u32 level1Idx = 0; level1Idx < level1RankSize; level1Idx++) {
                 Slice tmpSlice;
                 tmpSlice.size = multRingsSliceZero[ringIndex][level0Idx].size;
-                tmpSlice.offset = multRingsSliceZero[ringIndex][level0Idx].offset +
-                    (level1Idx * level0RankSize + level2Idx * level0RankSize * level1RankSize) *inputMemSize;
+                tmpSlice.offset
+                    = multRingsSliceZero[ringIndex][level0Idx].offset
+                      + (level1Idx * level0RankSize + level2Idx * level0RankSize * level1RankSize) * inputMemSize;
                 level2DataSlice.push_back(tmpSlice);
             }
         }
@@ -435,8 +462,9 @@ HcclResult CollAllGatherExecutor::CalculateLevel2AllgatherSlice(u64 inputMemSize
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherExecutor::AllGatherLevel2(const std::string &tag, DeviceMem &inputMem, DeviceMem &outputMem,
-    u64 count, HcclDataType dataType, Stream &stream, HcomCollOpInfo *opInfo)
+HcclResult CollAllGatherExecutor::AllGatherLevel2(
+    const std::string& tag, DeviceMem& inputMem, DeviceMem& outputMem, u64 count, HcclDataType dataType, Stream& stream,
+    HcomCollOpInfo* opInfo)
 {
     u32 perDataSize = 0;
     CHK_RET(SalGetDataTypeSize(dataType, perDataSize));
@@ -455,8 +483,8 @@ HcclResult CollAllGatherExecutor::AllGatherLevel2(const std::string &tag, Device
     u32 level1ServerIndex = level1CommInfo.localRank;
 
     std::unique_ptr<AlgTemplateBase> level2AGExecutor;
-    level2AGExecutor = AlgTemplateRegistry::Instance().GetAlgTemplate(
-        TemplateType::TEMPLATE_ALL_GATHER_RING, dispatcher_);
+    level2AGExecutor
+        = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_ALL_GATHER_RING, dispatcher_);
     HCCL_INFO("AllGather ring: using ring algo inter-server.");
     CHK_SMART_PTR_NULL(level2AGExecutor);
 
@@ -470,33 +498,33 @@ HcclResult CollAllGatherExecutor::AllGatherLevel2(const std::string &tag, Device
     }
     //  outputMem传整块，通过baseOffset偏移
     u64 level2BaseOffset = (level0ServerIndex + level1ServerIndex * level1RankSize) * inputMemSize;
-    CHK_RET(level2AGExecutor->Prepare(outputMem, outputMem, inputMem, count, dataType, stream,
-        HCCL_REDUCE_RESERVED, INVALID_VALUE_RANKID, level2DataSegsSlice, level2BaseOffset));
+    CHK_RET(level2AGExecutor->Prepare(
+        outputMem, outputMem, inputMem, count, dataType, stream, HCCL_REDUCE_RESERVED, INVALID_VALUE_RANKID,
+        level2DataSegsSlice, level2BaseOffset));
 
-    CHK_RET(level2AGExecutor->RegisterProfiler((
-        level2RankSize << PROF_RANKSIZE_OFFSET_OF_PLANEID) + level2CommInfo.localRank,
-        PROF_STAGE_0, HCCL_EXEC_STEP_NOT_SET, stream));
+    CHK_RET(level2AGExecutor->RegisterProfiler(
+        (level2RankSize << PROF_RANKSIZE_OFFSET_OF_PLANEID) + level2CommInfo.localRank, PROF_STAGE_0,
+        HCCL_EXEC_STEP_NOT_SET, stream));
 
     CHK_RET(RunTemplate(level2AGExecutor, level2CommInfo));
     HCCL_INFO("AllGather double ring [superpod] level2 AllGather run success");
 
     // 第二步，各个AI Server 间 AllGather (ring/NHR)
-    HCCL_INFO("commIdx:%u Tag[%s].commLevel1.size():%u", commIndex, tag.c_str(),
-        level1RankSize);
+    HCCL_INFO("commIdx:%u Tag[%s].commLevel1.size():%u", commIndex, tag.c_str(), level1RankSize);
 
     if (level1RankSize > 1) {
         std::unique_ptr<AlgTemplateBase> level1AGExecutor;
         if (algType_.algoLevel1 == AlgTypeLevel1::ALG_LEVEL1_RING) {
-            level1AGExecutor = AlgTemplateRegistry::Instance().GetAlgTemplate(
-                TemplateType::TEMPLATE_ALL_GATHER_RING, dispatcher_);
+            level1AGExecutor
+                = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_ALL_GATHER_RING, dispatcher_);
             HCCL_INFO("AllGather ring: using ring algo inter-server.");
         } else if (algType_.algoLevel1 == AlgTypeLevel1::ALG_LEVEL1_NB) {
-            level1AGExecutor = AlgTemplateRegistry::Instance().GetAlgTemplate(
-                TemplateType::TEMPLATE_ALL_GATHER_NB, dispatcher_);
+            level1AGExecutor
+                = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_ALL_GATHER_NB, dispatcher_);
             HCCL_INFO("AllGather ring: using nonuniform-bruck algo inter-server.");
         } else if (algType_.algoLevel1 == AlgTypeLevel1::ALG_LEVEL1_NHR) {
-            level1AGExecutor = AlgTemplateRegistry::Instance().GetAlgTemplate(
-                TemplateType::TEMPLATE_ALL_GATHER_NHR, dispatcher_);
+            level1AGExecutor
+                = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_ALL_GATHER_NHR, dispatcher_);
             HCCL_INFO("AllGather ring: using nonuniform-hierarchical-ring algo inter-server.");
         } else {
             HCCL_ERROR("AllGather ring: unsupported algtype [%s].", AlgTypeToStr(algType_).c_str());
@@ -509,18 +537,19 @@ HcclResult CollAllGatherExecutor::AllGatherLevel2(const std::string &tag, Device
         for (u32 j = 0; j < level2RankSize; j++) {
             for (u32 i = 0; i < level1RankSize; i++) {
                 sliceTemp.size = inputMemSize;
-                sliceTemp.offset =
-                    (i * level0RankSize +  j * level1RankSize * level0RankSize + level0ServerIndex) *inputMemSize;
+                sliceTemp.offset
+                    = (i * level0RankSize + j * level1RankSize * level0RankSize + level0ServerIndex) * inputMemSize;
                 level1DataSegsSlice.push_back(sliceTemp);
             }
         }
 
-        CHK_RET(level1AGExecutor->Prepare(outputMem, outputMem, inputMem, count, dataType, stream,
-            HCCL_REDUCE_RESERVED, INVALID_VALUE_RANKID, level1DataSegsSlice, 0));
+        CHK_RET(level1AGExecutor->Prepare(
+            outputMem, outputMem, inputMem, count, dataType, stream, HCCL_REDUCE_RESERVED, INVALID_VALUE_RANKID,
+            level1DataSegsSlice, 0));
 
-        CHK_RET(level1AGExecutor->RegisterProfiler((
-            level1RankSize << PROF_RANKSIZE_OFFSET_OF_PLANEID) + level2CommInfo.localRank,
-            PROF_STAGE_1, HCCL_EXEC_STEP_NOT_SET, stream));
+        CHK_RET(level1AGExecutor->RegisterProfiler(
+            (level1RankSize << PROF_RANKSIZE_OFFSET_OF_PLANEID) + level2CommInfo.localRank, PROF_STAGE_1,
+            HCCL_EXEC_STEP_NOT_SET, stream));
 
         CHK_RET(RunTemplate(level1AGExecutor, level1CommInfo));
         HCCL_INFO("AllGather double ring [superpod] level1 AllGather run success");
@@ -540,8 +569,9 @@ HcclResult CollAllGatherExecutor::AllGatherLevel2(const std::string &tag, Device
     std::vector<std::vector<Slice>> multRingsSlice;
     for (u32 ringIndex = 0; ringIndex < multRingsSliceZero.size(); ringIndex++) {
         std::vector<Slice> level2DataSlice;
-        CHK_RET(CalculateLevel2AllgatherSlice(inputMemSize, level0RankSize, level1RankSize, level2RankSize,
-            multRingsSliceZero, level2DataSlice, ringIndex));
+        CHK_RET(CalculateLevel2AllgatherSlice(
+            inputMemSize, level0RankSize, level1RankSize, level2RankSize, multRingsSliceZero, level2DataSlice,
+            ringIndex));
         multRingsSlice.push_back(level2DataSlice);
     }
 
@@ -551,15 +581,15 @@ HcclResult CollAllGatherExecutor::AllGatherLevel2(const std::string &tag, Device
     } else {
         for (u32 ringIndex = 0; ringIndex < multRingsSlice.size(); ringIndex++) {
             std::vector<Slice> level2UserMemSlice;
-            for (auto &cclSlice : multRingsSlice[ringIndex]) {
+            for (auto& cclSlice : multRingsSlice[ringIndex]) {
                 Slice tmpSlice;
                 tmpSlice.size = cclSlice.size;
-                tmpSlice.offset =
-                    (cclSlice.offset / inputMemSize) * count * perDataSize +
-                    multRingsSliceZero[ringIndex][0].offset;
+                tmpSlice.offset
+                    = (cclSlice.offset / inputMemSize) * count * perDataSize + multRingsSliceZero[ringIndex][0].offset;
                 level2UserMemSlice.push_back(tmpSlice);
-                HCCL_DEBUG("rank[%u], ringIndex[%u], tmpSlice.offset=[%llu], size=[%llu]",
-                    topoAttr_.userRank, ringIndex, tmpSlice.offset, tmpSlice.size);
+                HCCL_DEBUG(
+                    "rank[%u], ringIndex[%u], tmpSlice.offset=[%llu], size=[%llu]", topoAttr_.userRank, ringIndex,
+                    tmpSlice.offset, tmpSlice.size);
             }
             multRingsUserMemSlice.push_back(level2UserMemSlice);
         }
@@ -570,8 +600,9 @@ HcclResult CollAllGatherExecutor::AllGatherLevel2(const std::string &tag, Device
         // AllGather输入放在CCL buffer上，通过设置nullptr指示要从CCL buffer获取输入
         opInfo->inputAddr = nullptr;
     }
-    CHK_RET(MultiRingAllGather(tag, inputMem, outputMem, count,
-        dataType, multRingsSlice, stream, PROF_STAGE_2, 0, opInfo, multRingsUserMemSlice));
+    CHK_RET(MultiRingAllGather(
+        tag, inputMem, outputMem, count, dataType, multRingsSlice, stream, PROF_STAGE_2, 0, opInfo,
+        multRingsUserMemSlice));
 
     HCCL_INFO("AllGather double ring [superpod] level2 AllGather run success");
     return HCCL_SUCCESS;

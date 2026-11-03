@@ -22,6 +22,7 @@ void TcRaCtxQpUnimportAsync();
 void TcRaSocketSendAsync();
 void TcRaSocketRecvAsync();
 void TcRaGetAsyncReqResult();
+void TcRaGetAsyncReqResultNotDone();
 void TcRaSocketBatchConnectAsync();
 void TcRaSocketListenStartAsync();
 void TcRaSocketListenStopAsync();
@@ -29,6 +30,8 @@ void TcRaSocketBatchCloseAsync();
 void TcRaHdcAsyncInitSession();
 void TcRaGetEidByIpAsync();
 void TcRaHdcGetEidByIpAsync();
+void TcRaGetIpByEidAsync();
+void TcRaHdcGetIpByEidAsync();
 void TcRaHdcAsyncSessionClose();
 #ifdef __cplusplus
 }

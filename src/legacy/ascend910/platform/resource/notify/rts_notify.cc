@@ -1,57 +1,55 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "rts_notify.h"
 #include "sal_pub.h"
+#include "common/dev_type_utils_pub.h"
 
 namespace hccl {
 
-RtsNotify::RtsNotify(NotifyType notifyType)
-    : NotifyBase(notifyType)
-{
-}
+constexpr u32 CHIP_ID = 32;
 
-RtsNotify::RtsNotify(NotifyType notifyType, HcclNotifyInfo notifyInfo)
-    : NotifyBase(notifyType, notifyInfo)
-{
-}
+RtsNotify::RtsNotify(NotifyType notifyType) : NotifyBase(notifyType) {}
 
-RtsNotify::RtsNotify(NotifyType notifyType, const HcclSignalInfo &notifyInfo)
-    : NotifyBase(notifyType)
+RtsNotify::RtsNotify(NotifyType notifyType, HcclNotifyInfo notifyInfo) : NotifyBase(notifyType, notifyInfo) {}
+
+RtsNotify::RtsNotify(NotifyType notifyType, const HcclSignalInfo& notifyInfo) : NotifyBase(notifyType)
 {
     (void)SetNotifyData(notifyInfo);
 }
 
-RtsNotify::~RtsNotify()
-{
-    (void)Destroy();
-}
+RtsNotify::~RtsNotify() { (void)Destroy(); }
 
 HcclResult RtsNotify::Open()
 {
-    HCCL_DEBUG("[RtsNotify][Open]remote withIpc[%d], notify type[%d], ipcName[%s].",
-        notifyInfo_.ipcNotify.withIpc, notifyType, notifyInfo_.ipcNotify.ipcName);
+    HCCL_DEBUG(
+        "[RtsNotify][Open]remote withIpc[%d], notify type[%d], ipcName[%s].", notifyInfo_.ipcNotify.withIpc, notifyType,
+        notifyInfo_.ipcNotify.ipcName);
     if (notifyInfo_.ipcNotify.withIpc) {
         if (notifyType == NotifyType::RUNTIME_NOTIFY) {
             CHK_RET(hrtIpcOpenNotify(&notifyPtr, notifyInfo_.ipcNotify.ipcName));
         } else {
-            CHK_RET(hrtIpcOpenNotifyWithFlag(&notifyPtr, notifyInfo_.ipcNotify.ipcName,
-                ACL_NOTIFY_DEVICE_USE_ONLY));
+            CHK_RET(hrtIpcOpenNotifyWithFlag(&notifyPtr, notifyInfo_.ipcNotify.ipcName, ACL_NOTIFY_DEVICE_USE_ONLY));
         }
     } else {
         notifyPtr = notifyInfo_.ipcNotify.ptr;
     }
     HCCL_DEBUG("[RtsNotify][Open]notifyPtr[%p], ipcNotify[%p].", notifyPtr, notifyInfo_.ipcNotify.ptr);
 
-    CHK_PRT_RET(notifyPtr == nullptr, HCCL_ERROR("[RtsNotify][Open]errNo[0x%016llx] Notify open failed. "\
-        "notify is nullptr", HCCL_ERROR_CODE(HCCL_E_RUNTIME)), HCCL_E_RUNTIME);
+    CHK_PRT_RET(
+        notifyPtr == nullptr,
+        HCCL_ERROR(
+            "[RtsNotify][Open]errNo[0x%016llx] Notify open failed. "
+            "notify is nullptr",
+            HCCL_ERROR_CODE(HCCL_E_RUNTIME)),
+        HCCL_E_RUNTIME);
 
     inchip = false;
     isLocal = false;
@@ -61,38 +59,36 @@ HcclResult RtsNotify::Open()
     return HCCL_SUCCESS;
 }
 
-HcclResult RtsNotify::Close()
-{
-    return Destroy();
-}
+HcclResult RtsNotify::Close() { return Destroy(); }
 
 HcclResult RtsNotify::Wait(Stream& stream, HcclDispatcher dispatcher, s32 stage, u32 timeOut)
 {
     CHK_PTR_NULL(dispatcher);
-    return reinterpret_cast<DispatcherPub*>(dispatcher)->SignalWait(
-        notifyPtr, stream, INVALID_VALUE_RANKID, INVALID_VALUE_RANKID, stage, inchip, INVALID_UINT, timeOut);
+    return reinterpret_cast<DispatcherPub*>(dispatcher)
+        ->SignalWait(
+            notifyPtr, stream, INVALID_VALUE_RANKID, INVALID_VALUE_RANKID, stage, inchip, INVALID_UINT, timeOut);
 }
 
 HcclResult RtsNotify::Post(Stream& stream, HcclDispatcher dispatcher, s32 stage)
 {
     CHK_PTR_NULL(dispatcher);
-    return reinterpret_cast<DispatcherPub*>(dispatcher)->SignalRecord(
-        notifyPtr, stream, INVALID_VALUE_RANKID, notifyInfo_.ipcNotify.offset, stage, inchip, address);
+    return reinterpret_cast<DispatcherPub*>(dispatcher)
+        ->SignalRecord(notifyPtr, stream, INVALID_VALUE_RANKID, notifyInfo_.ipcNotify.offset, stage, inchip, address);
 }
 
-HcclResult RtsNotify::Wait(Stream& stream, HcclDispatcher dispatcher, s32 stage, u32 timeOut,
-    u32 userRank, u32 remoteUserRank)
+HcclResult
+RtsNotify::Wait(Stream& stream, HcclDispatcher dispatcher, s32 stage, u32 timeOut, u32 userRank, u32 remoteUserRank)
 {
     CHK_PTR_NULL(dispatcher);
-    return reinterpret_cast<DispatcherPub*>(dispatcher)->SignalWait(
-        notifyPtr, stream, userRank, remoteUserRank, stage, inchip, INVALID_UINT, timeOut);
+    return reinterpret_cast<DispatcherPub*>(dispatcher)
+        ->SignalWait(notifyPtr, stream, userRank, remoteUserRank, stage, inchip, INVALID_UINT, timeOut);
 }
 
 HcclResult RtsNotify::Post(Stream& stream, HcclDispatcher dispatcher, s32 stage, u32 remoteUserRank)
 {
     CHK_PTR_NULL(dispatcher);
-    return reinterpret_cast<DispatcherPub*>(dispatcher)->SignalRecord(
-        notifyPtr, stream, remoteUserRank, notifyInfo_.ipcNotify.offset, stage, inchip, address);
+    return reinterpret_cast<DispatcherPub*>(dispatcher)
+        ->SignalRecord(notifyPtr, stream, remoteUserRank, notifyInfo_.ipcNotify.offset, stage, inchip, address);
 }
 
 HcclResult RtsNotify::Post(Stream& stream)
@@ -110,13 +106,18 @@ HcclResult RtsNotify::Wait(Stream& stream, u32 timeOut)
 HcclResult RtsNotify::SetIpc()
 {
     SecIpcName_t ipcName;
-    HcclResult ret = hrtIpcSetNotifyName(notifyPtr, reinterpret_cast<u8 *>(ipcName.ipcName),
-        sizeof(ipcName.ipcName));
-    CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[SetIpc][hrtIpcSetNotifyName]errNo[0x%016llx]  "\
-        " IPC set notify name fail. return[%d] name len=[%zu].", HCCL_ERROR_CODE(HCCL_E_RUNTIME),\
-        ret, sizeof(ipcName.ipcName)), HCCL_E_RUNTIME);
-    if (memcpy_s(notifyInfo_.ipcNotify.ipcName, HCCL_IPC_MEM_NAME_LEN,
-        reinterpret_cast<char *>(ipcName.ipcName), sizeof(ipcName.ipcName)) != EOK) {
+    HcclResult ret = hrtIpcSetNotifyName(notifyPtr, reinterpret_cast<u8*>(ipcName.ipcName), sizeof(ipcName.ipcName));
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[SetIpc][hrtIpcSetNotifyName]errNo[0x%016llx] "
+            "IPC set notify name fail. return[%d] name len=[%zu].",
+            HCCL_ERROR_CODE(HCCL_E_RUNTIME), ret, sizeof(ipcName.ipcName)),
+        HCCL_E_RUNTIME);
+    if (memcpy_s(
+            notifyInfo_.ipcNotify.ipcName, HCCL_IPC_MEM_NAME_LEN, reinterpret_cast<char*>(ipcName.ipcName),
+            sizeof(ipcName.ipcName))
+        != EOK) {
         HCCL_ERROR("ipcName:%s, size:%u", ipcName.ipcName, sizeof(ipcName.ipcName));
         return HCCL_E_MEMORY;
     };
@@ -131,14 +132,15 @@ HcclResult RtsNotify::Grant(s64 recvId)
 {
     // 设置notify 的白名单
     inchip = false;
-    s32 pid  = static_cast<s32>((recvId & 0x00000000FFFFFFFF));
+    s32 pid = static_cast<s32>((recvId & 0x00000000FFFFFFFF));
     s32 localPid = 0;
     CHK_RET(SalGetBareTgid(&localPid)); // 当前进程id
 
     // 多进程操作多卡场景，notify pool用pid区分notify
     s32 sdid = static_cast<s32>((recvId & 0xFFFFFFFF00000000) >> 32);
-    HCCL_DEBUG("[RtsNotify][Grant]remote sdid[%016llx], remote pid[%d], local pid[%d], withIpc[%d].",
-        sdid, pid, localPid, notifyInfo_.ipcNotify.withIpc);
+    HCCL_DEBUG(
+        "[RtsNotify][Grant]remote sdid[%016llx], remote pid[%d], local pid[%d], withIpc[%d].", sdid, pid, localPid,
+        notifyInfo_.ipcNotify.withIpc);
 
     // 单进程多线程操作多卡场景，notify pool用rankId区分notify
     if (pid == localPid && sdid == INVALID_INT) {
@@ -170,8 +172,13 @@ HcclResult RtsNotify::Alloc()
     } else {
         CHK_RET(hrtNotifyCreateWithFlag(deviceId, &notifyPtr));
     }
-    CHK_PRT_RET(notifyPtr == nullptr, HCCL_ERROR("[RtsNotify][Alloc]errNo[0x%016llx] Notify create failed. "\
-        "notify is nullptr", HCCL_ERROR_CODE(HCCL_E_RUNTIME)), HCCL_E_RUNTIME);
+    CHK_PRT_RET(
+        notifyPtr == nullptr,
+        HCCL_ERROR(
+            "[RtsNotify][Alloc]errNo[0x%016llx] Notify create failed. "
+            "notify is nullptr",
+            HCCL_ERROR_CODE(HCCL_E_RUNTIME)),
+        HCCL_E_RUNTIME);
     if (notifyType == NotifyType::RUNTIME_NOTIFY_MC2) {
         CHK_RET(UpdateNotifyInfo());
     }
@@ -193,16 +200,16 @@ HcclResult RtsNotify::Destroy()
 HcclResult RtsNotify::UpdateNotifyInfo()
 {
     CHK_RET(hrtGetNotifyID(notifyPtr, &id));
-        
-    DevType devType_ = DevType::DEV_TYPE_COUNT;
-    CHK_RET(hrtGetDeviceType(devType_));
-    if (devType_ == DevType::DEV_TYPE_950) {
+
+    auto isGe950 = hcomm::EqualToOrGreaterThan950();
+    CHK_PRT_RET(!isGe950.has_value(), HCCL_ERROR("[%s] get device type failed.", __func__), HCCL_E_RUNTIME);
+    if (*isGe950) {
         s32 deviceLogicId;
         CHK_RET(hrtGetDevice(&deviceLogicId));
         CHK_RET(hrtGetDevicePhyIdByIndex(static_cast<uint32_t>(deviceLogicId), devId));
         return HCCL_SUCCESS;
     }
-    
+
     CHK_RET(hrtNotifyGetPhyInfo(notifyPtr, &devId, &tsId));
 
     rtNotifyPhyInfo notifyInfo;
@@ -213,12 +220,86 @@ HcclResult RtsNotify::UpdateNotifyInfo()
 }
 
 extern "C" {
-drvError_t __attribute__((weak)) halResourceIdCheck(struct drvResIdKey *info);
-drvError_t __attribute__((weak)) halResourceIdInfoGet(struct drvResIdKey *key, drvResIdProcType type, uint64_t *value);
+drvError_t __attribute__((weak)) halResourceIdCheck(struct drvResIdKey* info);
+drvError_t __attribute__((weak)) halResourceIdInfoGet(struct drvResIdKey* key, drvResIdProcType type, uint64_t* value);
 };
 
-HcclResult RtsNotify::InitAndVerifySingleSignal()
+#ifdef CCL_KERNEL
+static HcclResult GetResVerifyDevId(bool isLocalSignal, u32& resDevId)
 {
+    if (!isLocalSignal) {
+        return HCCL_SUCCESS;
+    }
+    u32 localDevId = 0;
+    u32 hostPid = 0;
+    CHK_RET(HrtHalDrvQueryProcessHostPid(getpid(), &localDevId, nullptr, &hostPid, nullptr));
+    if (localDevId >= CHIP_ID) {
+        CHK_PRT(HrtHalDrvGetDevIDByLocalDevID(localDevId, &resDevId));
+    }
+    return HCCL_SUCCESS;
+}
+
+static HcclResult RestoreResourceId(drvResIdKey& resInfo)
+{
+    static bool init = false;
+    if (!init) {
+        CHK_PRT_RET(
+            halResourceIdCheck == nullptr,
+            HCCL_ERROR("halResourceIdCheck is nullptr, "
+                       "Does not support this interface."),
+            HCCL_E_DRV);
+        CHK_PRT_RET(
+            halResourceIdInfoGet == nullptr,
+            HCCL_ERROR("halResourceIdInfoGet is nullptr, "
+                       "Does not support this interface."),
+            HCCL_E_DRV);
+        init = true;
+    }
+
+    HcclResult ret
+        = hrtHalResourceIdRestore(resInfo.ruDevId, resInfo.tsId, resInfo.resType, resInfo.resId, resInfo.flag);
+    if (ret != HCCL_SUCCESS && ret != HCCL_E_NOT_SUPPORT) {
+        HCCL_ERROR(
+            "[drv api]res restore failed, result:%d, resType:%d, resId:%u, tsId:%d, ruDevId:%d, flag:%d", ret,
+            resInfo.resType, resInfo.resId, resInfo.tsId, resInfo.ruDevId, resInfo.flag);
+        return HCCL_E_DRV;
+    }
+    HCCL_DEBUG(
+        "res restore end, ret:%d, resType:%d, resId:%u, tsId:%u, ruDevId:%u, flag:%u", ret, resInfo.resType,
+        resInfo.resId, resInfo.tsId, resInfo.ruDevId, resInfo.flag);
+    return HCCL_SUCCESS;
+}
+
+static HcclResult CheckAndGetResourceAddr(drvResIdKey& resInfo, u64& address)
+{
+    int checkResult = halResourceIdCheck(&resInfo);
+    if (checkResult != 0) {
+        HCCL_ERROR(
+            "[drv api]res check failed, result:%d, resType:%d, resId:%u, tsId:%u, ruDevId:%u, flag:%u", checkResult,
+            resInfo.resType, resInfo.resId, resInfo.tsId, resInfo.ruDevId, resInfo.flag);
+        return HCCL_E_DRV;
+    }
+    HCCL_DEBUG(
+        "res check success, resType:%d, resId:%u, tsId:%u, ruDevId:%u, flag:%u", resInfo.resType, resInfo.resId,
+        resInfo.tsId, resInfo.ruDevId, resInfo.flag);
+
+    checkResult = halResourceIdInfoGet(&resInfo, TRS_RES_ID_ADDR, reinterpret_cast<uint64_t*>(&address));
+    if (checkResult != 0) {
+        HCCL_ERROR(
+            "[drv api]res get addr failed, result:%d, resType:%d, resId:%u, tsId:%d, ruDevId:%u, flag:%u", checkResult,
+            resInfo.resType, resInfo.resId, resInfo.tsId, resInfo.ruDevId, resInfo.flag);
+        return HCCL_E_DRV;
+    }
+    HCCL_DEBUG(
+        "res get write value success, resType:%d, resId:%u, tsId:%u, ruDevId:%u, flag:%u, addr:0x%lx", resInfo.resType,
+        resInfo.resId, resInfo.tsId, resInfo.ruDevId, resInfo.flag, address);
+    return HCCL_SUCCESS;
+}
+#endif
+
+HcclResult RtsNotify::InitAndVerifySingleSignal(bool isLocalSignal)
+{
+    (void)isLocalSignal;
 #ifdef CCL_KERNEL
     if (id == INVALID_UINT) {
         // 无效值不做校验
@@ -226,8 +307,11 @@ HcclResult RtsNotify::InitAndVerifySingleSignal()
         return HCCL_SUCCESS;
     }
 
+    u32 tmpDevId = devId;
+    CHK_RET(GetResVerifyDevId(isLocalSignal, tmpDevId));
+
     drvResIdKey resInfo = {};
-    resInfo.ruDevId = devId;
+    resInfo.ruDevId = tmpDevId;
     resInfo.tsId = tsId;
     resInfo.resType = DRV_NOTIFY_ID;
     resInfo.resId = static_cast<uint32_t>(id);
@@ -236,43 +320,10 @@ HcclResult RtsNotify::InitAndVerifySingleSignal()
     resInfo.rsv[1] = 0; // 1 is reserved array idx
     resInfo.rsv[2] = 0; // 2 is reserved array idx
 
-    static bool init = false;
-    if (!init) {
-        CHK_PRT_RET(halResourceIdCheck == nullptr, HCCL_ERROR("halResourceIdCheck is nullptr, "
-            "Does not support this interface."), HCCL_E_DRV);
-        CHK_PRT_RET(halResourceIdInfoGet == nullptr, HCCL_ERROR("halResourceIdInfoGet is nullptr, "
-            "Does not support this interface."), HCCL_E_DRV);
-        init = true;
-    }
-
-    HcclResult ret = hrtHalResourceIdRestore(resInfo.ruDevId, resInfo.tsId, resInfo.resType, resInfo.resId, resInfo.flag);
-    if (ret != HCCL_SUCCESS && ret != HCCL_E_NOT_SUPPORT) {
-        HCCL_ERROR("[drv api]res restore failed, result:%d, resType:%d, resId:%u, tsId:%d, ruDevId:%d, flag:%d",
-            ret, resInfo.resType, resInfo.resId, resInfo.tsId, resInfo.ruDevId, resInfo.flag);
-        return HCCL_E_DRV;
-    }
-    HCCL_DEBUG("res restore end, ret:%d, resType:%d, resId:%u, tsId:%u, ruDevId:%u, flag:%u",
-        ret, resInfo.resType, resInfo.resId, resInfo.tsId, resInfo.ruDevId, resInfo.flag);
-
-    int checkResult = halResourceIdCheck(&resInfo);
-    if (checkResult != 0) {
-        HCCL_ERROR("[drv api]res check failed, result:%d, resType:%d, resId:%u, tsId:%u, ruDevId:%u, flag:%u",
-            checkResult, resInfo.resType, resInfo.resId, resInfo.tsId, resInfo.ruDevId, resInfo.flag);
-        return HCCL_E_DRV;
-    }
-    HCCL_DEBUG("res check success, resType:%d, resId:%u, tsId:%u, ruDevId:%u, flag:%u", resInfo.resType, resInfo.resId,
-        resInfo.tsId, resInfo.ruDevId, resInfo.flag);
-
-    checkResult = halResourceIdInfoGet(&resInfo, TRS_RES_ID_ADDR, reinterpret_cast<uint64_t *>(&address));
-    if (checkResult != 0) {
-        HCCL_ERROR("[drv api]res get addr failed, result:%d, resType:%d, resId:%u, tsId:%d, ruDevId:%u, flag:%u",
-            checkResult, resInfo.resType, resInfo.resId, resInfo.tsId, resInfo.ruDevId, resInfo.flag);
-        return HCCL_E_DRV;
-    }
-    HCCL_DEBUG("res get write value success, resType:%d, resId:%u, tsId:%u, ruDevId:%u, flag:%u, addr:%llu",
-        resInfo.resType, resInfo.resId, resInfo.tsId, resInfo.ruDevId, resInfo.flag, address);
+    CHK_RET(RestoreResourceId(resInfo));
+    CHK_RET(CheckAndGetResourceAddr(resInfo, address));
 #endif
 
     return HCCL_SUCCESS;
 }
-}
+} // namespace hccl

@@ -30,8 +30,8 @@
 #include "rank_info_dispatcher.h"
 #include "rank_info_detect_service.h"
 #include "orion_adapter_rts.h"
-#include "env_config.h"
-#include "base_config.h"
+#include "env_config_v2.h"
+#include "base_config_legacy.h"
 #include "socket_agent.h"
 #undef private
 
@@ -39,22 +39,16 @@ using namespace Hccl;
 
 class RankInfoDetectServiceTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "RankInfoDetectService tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "RankInfoDetectService tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "RankInfoDetectService tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "RankInfoDetectService tests tear down." << std::endl; }
 
     virtual void SetUp()
     {
         std::cout << "A Test case in RankInfoDetectService SetUP" << std::endl;
         // 初始化模拟 Socket 句柄
         hccpSocketHandle = new int(0);
-        MOCKER(HrtRaSocketInit).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(hccpSocketHandle)); 
+        MOCKER(HrtRaSocketInit).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(hccpSocketHandle));
 
         // 1. 构造测试所需参数
         u32 devPhyId_ = 0;
@@ -65,20 +59,20 @@ protected:
 
         // 2. 创建服务器 Socket（用于传入被测试类构造函数）
         auto serverSocket_ = std::make_shared<Socket>(
-            hccpSocketHandle, hostIp_, hostPort_, remoteIp_,
-            serverSocketTag_, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE
-        );
+            hccpSocketHandle, hostIp_, hostPort_, remoteIp_, serverSocketTag_, SocketRole::SERVER,
+            NicType::DEVICE_NIC_TYPE);
 
         MOCKER_CPP(&HccpPeerManager::Init).stubs().with(mockcpp::any());
         MOCKER_CPP(&HccpPeerManager::DeInit).stubs().with(mockcpp::any());
-        MOCKER_CPP(&HostSocketHandleManager::Create).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(hccpSocketHandle));
+        MOCKER_CPP(&HostSocketHandleManager::Create)
+            .stubs()
+            .with(mockcpp::any(), mockcpp::any())
+            .will(returnValue(hccpSocketHandle));
 
         serverSocket_->Listen(); // 启动监听（模拟真实场景）
 
         // 4. 初始化被测试对象
-        rankInfoDetectService_ = new RankInfoDetectService(
-            devPhyId_, serverSocket_, "test", {}
-        );
+        rankInfoDetectService_ = new RankInfoDetectService(devPhyId_, serverSocket_, "test", {});
     }
 
     virtual void TearDown()
@@ -91,10 +85,7 @@ protected:
         std::cout << "A Test case in RankInfoDetectService TearDown" << std::endl;
     }
 
-    IpAddress GetAnIpAddress()
-    {
-        return IpAddress("1.0.0.0"); 
-    }
+    IpAddress GetAnIpAddress() { return IpAddress("1.0.0.0"); }
 
     // 辅助函数：生成模拟的 RankInfo 消息（用于 GetRankTable 测试）
     std::string GenMockRankInfoMsg(const std::string& rankTableStr, u32 step)
@@ -106,8 +97,8 @@ protected:
     }
 
     // 成员变量
-    void* hccpSocketHandle;                   
-    RankInfoDetectService* rankInfoDetectService_; 
+    void* hccpSocketHandle;
+    RankInfoDetectService* rankInfoDetectService_;
 };
 
 TEST_F(RankInfoDetectServiceTest, St_RankInfoDetectService_When_Init_Expect_Success)
@@ -127,19 +118,22 @@ TEST_F(RankInfoDetectServiceTest, St_RankInfoDetectService_When_Init_Expect_Succ
 TEST_F(RankInfoDetectServiceTest, St_GetConnections_When_Timeout_Expect_fail)
 {
     EnvSocketConfig envSocketConfig;
-    EnvSocketConfig &fakeEnvSocketConfig = envSocketConfig;
+    EnvSocketConfig& fakeEnvSocketConfig = envSocketConfig;
     fakeEnvSocketConfig.linkTimeOut = CfgField<s32>{"HCCL_CONNECT_TIMEOUT", s32(1), Str2T<s32>};
     fakeEnvSocketConfig.linkTimeOut.isParsed = true;
     MOCKER_CPP(&EnvConfig::GetSocketConfig).stubs().will(returnValue(fakeEnvSocketConfig));
 
-    MOCKER_CPP(&HostSocketHandleManager::Get).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(hccpSocketHandle));
+    MOCKER_CPP(&HostSocketHandleManager::Get)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(returnValue(hccpSocketHandle));
 
     MOCKER_CPP(&Socket::GetStatus)
         .stubs()
         .then(returnValue((SocketStatus)SocketStatus::CONNECTING))
         .then(returnValue((SocketStatus)SocketStatus::TIMEOUT));
 
-    EXPECT_THROW(rankInfoDetectService_->GetConnections(), InternalException);
+    EXPECT_EQ(rankInfoDetectService_->GetConnections(), HcclResult::HCCL_E_INTERNAL);
 
     auto res1 = rankInfoDetectService_->connSockets_.size();
     EXPECT_EQ(0, res1);
@@ -147,7 +141,10 @@ TEST_F(RankInfoDetectServiceTest, St_GetConnections_When_Timeout_Expect_fail)
 
 TEST_F(RankInfoDetectServiceTest, St_GetConnections_When_Normal_Expect_Success)
 {
-    MOCKER_CPP(&HostSocketHandleManager::Get).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(hccpSocketHandle));
+    MOCKER_CPP(&HostSocketHandleManager::Get)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(returnValue(hccpSocketHandle));
 
     MOCKER_CPP(&Socket::GetStatus)
         .stubs()
@@ -155,41 +152,37 @@ TEST_F(RankInfoDetectServiceTest, St_GetConnections_When_Normal_Expect_Success)
         .then(returnValue((SocketStatus)SocketStatus::OK));
 
     u32 rankSize = 1;
-    void *msg = &rankSize;
+    void* msg = &rankSize;
     u64 msgLen = sizeof(u32);
-    u64 &revMsgLen = msgLen;
-    MOCKER_CPP(&SocketAgent::RecvMsg)
-            .stubs()
-            .with(outBound(msg), outBound(revMsgLen))
-            .will(returnValue(true));
+    u64& revMsgLen = msgLen;
+    MOCKER_CPP(&SocketAgent::RecvMsg).stubs().with(outBound(msg), outBound(revMsgLen)).will(returnValue(true));
 
-    rankInfoDetectService_->GetConnections();
+    EXPECT_EQ(rankInfoDetectService_->GetConnections(), HcclResult::HCCL_SUCCESS);
 
     auto res1 = rankInfoDetectService_->connSockets_.size();
     EXPECT_EQ(1, res1);
 
-    for (auto &iter: rankInfoDetectService_->connSockets_) {
+    for (auto& iter : rankInfoDetectService_->connSockets_) {
         EXPECT_NE(nullptr, iter.second);
     }
 }
 
-TEST_F(RankInfoDetectServiceTest, St_GetRankTable_When_Normal_Expect_Success) {
+TEST_F(RankInfoDetectServiceTest, St_GetRankTable_When_Normal_Expect_Success)
+{
     u32 port1 = 12345;
     std::string socketKey1 = std::to_string(port1);
 
     IpAddress hostIp = rankInfoDetectService_->serverSocket_->GetLocalIp();
     std::string tag1 = RANK_INFO_DETECT_TAG + "_" + socketKey1;
     auto mockSocket1 = std::make_shared<Socket>(
-        hccpSocketHandle, hostIp, port1, hostIp, tag1,
-        SocketRole::SERVER, NicType::DEVICE_NIC_TYPE
-    );
-    
+        hccpSocketHandle, hostIp, port1, hostIp, tag1, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+
     rankInfoDetectService_->connSockets_[socketKey1] = mockSocket1;
 
     auto res0 = rankInfoDetectService_->connSockets_.size();
     EXPECT_EQ(1, res0);
 
-    for (auto &iter: rankInfoDetectService_->connSockets_) {
+    for (auto& iter : rankInfoDetectService_->connSockets_) {
         EXPECT_NE(nullptr, iter.second);
     }
 
@@ -205,7 +198,7 @@ TEST_F(RankInfoDetectServiceTest, St_GetRankTable_When_Normal_Expect_Success) {
     // 把构造好的ranktableinfo转为vector<char> rankInfoMsg
     // 消息格式: [ranktable数据(n字节)][step(4字节)]
     BinaryStream binaryStream;
-    localRankTable.GetBinStream(true, binaryStream);
+    EXPECT_EQ(localRankTable.GetBinStream(true, binaryStream), HCCL_SUCCESS);
     binaryStream << rankInfoDetectService_->currentStep_;
 
     // 字节流转换为vector<char>格式
@@ -220,33 +213,30 @@ TEST_F(RankInfoDetectServiceTest, St_GetRankTable_When_Normal_Expect_Success) {
     MOCKER(aclrtMallocHostWithCfg).stubs().will(returnValue(1));
     MOCKER(HrtMallocHost).stubs().with(mockcpp::any()).will(returnValue((void*)rankInfoMsg.data()));
     MOCKER(HrtFreeHost).stubs().with(mockcpp::any()).will(ignoreReturnValue());
-    char *rankInfoMsgToSend = rankInfoMsg.data();
-    void *msg = rankInfoMsg.data();
+    char* rankInfoMsgToSend = rankInfoMsg.data();
+    void* msg = rankInfoMsg.data();
     u64 msgLen = rankInfoMsg.size();
-    u64 &revMsgLen = msgLen;
-    MOCKER_CPP(&SocketAgent::RecvMsg)
-            .stubs()
-            .with(outBoundP(msg, msgLen), outBound(revMsgLen))
-            .will(returnValue(true));
+    u64& revMsgLen = msgLen;
+    MOCKER_CPP(&SocketAgent::RecvMsg).stubs().with(outBoundP(msg, msgLen), outBound(revMsgLen)).will(returnValue(true));
 
-    EXPECT_NO_THROW(rankInfoDetectService_->GetRankTable());
+    EXPECT_EQ(rankInfoDetectService_->GetRankTable(), HcclResult::HCCL_SUCCESS);
 }
 
 TEST_F(RankInfoDetectServiceTest, St_BroadcastRankTable_When_Normal_Expect_Success)
 {
-    MOCKER_CPP(&RankInfoDispather::BroadcastRankTable)
+    MOCKER_CPP(&RankInfoDispatcher::BroadcastRankTable)
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
-        .will(returnValue(true));
+        .will(returnValue(HcclResult::HCCL_SUCCESS));
 
-    EXPECT_NO_THROW(rankInfoDetectService_->BroadcastRankTable());
+    EXPECT_EQ(rankInfoDetectService_->BroadcastRankTable(), HcclResult::HCCL_SUCCESS);
 
     IpAddress localIp, remoteIp;
     SocketHandle socketHandle;
     std::string tag = "test";
-    rankInfoDetectService_->connSockets_[tag] = std::make_shared<Socket>(socketHandle, 
-        localIp, 0, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
-    EXPECT_NO_THROW(rankInfoDetectService_->BroadcastRankTable());
+    rankInfoDetectService_->connSockets_[tag] = std::make_shared<Socket>(
+        socketHandle, localIp, 0, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    EXPECT_EQ(rankInfoDetectService_->BroadcastRankTable(), HcclResult::HCCL_SUCCESS);
 }
 
 TEST_F(RankInfoDetectServiceTest, St_Disconnect_When_Normal_Expect_Success)
@@ -260,13 +250,9 @@ TEST_F(RankInfoDetectServiceTest, St_Disconnect_When_Normal_Expect_Success)
     std::string tag1 = RANK_INFO_DETECT_TAG + "_" + socketKey1;
     std::string tag2 = RANK_INFO_DETECT_TAG + "_" + socketKey2;
     auto mockSocket1 = std::make_shared<Socket>(
-        hccpSocketHandle, hostIp, port1, hostIp, tag1,
-        SocketRole::SERVER, NicType::DEVICE_NIC_TYPE
-    );
+        hccpSocketHandle, hostIp, port1, hostIp, tag1, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
     auto mockSocket2 = std::make_shared<Socket>(
-        hccpSocketHandle, hostIp, port2, hostIp, tag2,
-        SocketRole::SERVER, NicType::DEVICE_NIC_TYPE
-    );
+        hccpSocketHandle, hostIp, port2, hostIp, tag2, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
 
     rankInfoDetectService_->connSockets_[socketKey1] = mockSocket1;
     rankInfoDetectService_->connSockets_[socketKey2] = mockSocket2;
@@ -274,7 +260,7 @@ TEST_F(RankInfoDetectServiceTest, St_Disconnect_When_Normal_Expect_Success)
     auto res1 = rankInfoDetectService_->connSockets_.size();
     EXPECT_EQ(2, res1);
 
-    for (auto &iter: rankInfoDetectService_->connSockets_) {
+    for (auto& iter : rankInfoDetectService_->connSockets_) {
         EXPECT_NE(nullptr, iter.second);
     }
 
@@ -297,19 +283,19 @@ TEST_F(RankInfoDetectServiceTest, St_ParseRankTable_When_Normal_Expect_Success)
     // 把构造好的ranktableinfo转为vector<char> rankInfoMsg
     // 消息格式: [ranktable数据(n字节)][step(4字节)]
     BinaryStream binaryStream;
-    localRankTable.GetBinStream(true, binaryStream);
+    EXPECT_EQ(localRankTable.GetBinStream(true, binaryStream), HCCL_SUCCESS);
     binaryStream << rankInfoDetectService_->currentStep_;
 
     // 字节流转换为vector<char>格式
     vector<char> rankInfoMsg;
     binaryStream.Dump(rankInfoMsg);
-    
+
     // Mock UpdateRankTable方法
     MOCKER_CPP(&RankTableInfo::UpdateRankTable)
         .expects(exactly(1))
         .with(mockcpp::any())
-        .will(returnValue(true));
-    
+        .will(returnValue(HCCL_SUCCESS));
+
     // 6. 执行测试
-    EXPECT_NO_THROW(rankInfoDetectService_->ParseRankTable(rankInfoMsg));
+    EXPECT_EQ(rankInfoDetectService_->ParseRankTable(rankInfoMsg), HcclResult::HCCL_SUCCESS);
 }

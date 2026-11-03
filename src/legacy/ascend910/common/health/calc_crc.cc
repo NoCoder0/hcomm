@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "calc_crc.h"
 #include <string>
@@ -25,12 +25,14 @@ constexpr u32 CRC_CALC_10 = 10;
 constexpr s32 STRING_MAX_LENGTH = 40 * 1024 * 1024;
 u32 g_crcCalcTable[CRC_TABLE_LENGTH];
 
-HcclResult CalcCrc::HcclCalcCrc(const char *data, u64 length, u32 &crcValue)
+HcclResult CalcCrc::HcclCalcCrc(const char* data, u64 length, u32& crcValue)
 {
     CHK_PTR_NULL(data);
 
-    CHK_PRT_RET(length <= 0 || length > STRING_MAX_LENGTH,
-        HCCL_ERROR("[Calc][StringCrc]String length[%llu] is empty or over than %d bytes.", length, STRING_MAX_LENGTH),
+    CHK_PRT_RET(
+        length <= 0 || length > STRING_MAX_LENGTH,
+        HCCL_ERROR(
+            "[Calc][StringCrc]String length[%llu] is empty or greater than %d bytes.", length, STRING_MAX_LENGTH),
         HCCL_E_PARA);
     HCCL_DEBUG("data[%s], length[%llu]", data, length);
 
@@ -58,4 +60,4 @@ __attribute__((constructor)) void InitTable()
         g_crcCalcTable[i] = crc;
     }
 }
-}   // namespace hccl
+} // namespace hccl

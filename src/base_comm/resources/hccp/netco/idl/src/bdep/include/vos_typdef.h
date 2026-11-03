@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef VOS_TYPDEF_H
 #define VOS_TYPDEF_H
 
@@ -27,7 +26,7 @@ typedef uint32_t VOS_BOOL; /* 原先dopra中定义为unsigned int，长度不确
 
 enum VOS_BOOL_DEFINE {
     VOS_FALSE = 0, /**< BOOL 型的逻辑假 */
-    VOS_TRUE = 1 /**< BOOL 型的逻辑真 */
+    VOS_TRUE = 1   /**< BOOL 型的逻辑真 */
 };
 
 #define VOS_NULL NULL
@@ -37,4 +36,3 @@ enum VOS_BOOL_DEFINE {
 #endif
 
 #endif
-

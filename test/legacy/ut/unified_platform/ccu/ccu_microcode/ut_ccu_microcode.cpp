@@ -19,20 +19,11 @@ using namespace CcuRep;
 
 class CcuMicroCodeTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CcuMicroCodeTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CcuMicroCodeTest tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CcuMicroCodeTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CcuMicroCodeTest tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in CcuMicroCodeTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in CcuMicroCodeTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {

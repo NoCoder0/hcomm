@@ -24,12 +24,15 @@ namespace Hccl {
 // 为AllReduceMesh2DTwoShot实现的CCUIns、CCUCtxArg与CCUTaskArg
 class CcuCtxArgAllReduceMeshTwoShotMem2Mem2D : public CcuCtxArg {
 public:
-    explicit CcuCtxArgAllReduceMeshTwoShotMem2Mem2D(const std::vector<uint64_t> &dSize, uint32_t rId, uint32_t axisId,
-                                                    const CollAlgOperator                  &op,
-                                                    const std::vector<std::vector<RankId>> &tempVTopo)
-        : dimSize_(dSize), rankId_(rId), axisId_(axisId), op_(op), tempVTopo_(tempVTopo)
-    {
-    }
+    explicit CcuCtxArgAllReduceMeshTwoShotMem2Mem2D(
+        const std::vector<uint64_t>& dSize, uint32_t rId, uint32_t axisId, const CollAlgOperator& op,
+        const std::vector<std::vector<RankId>>& tempVTopo)
+        : dimSize_(dSize),
+          rankId_(rId),
+          axisId_(axisId),
+          op_(op),
+          tempVTopo_(tempVTopo)
+    {}
     CcuCtxSignature GetCtxSignature() const override
     {
         CcuCtxSignature signature;
@@ -37,24 +40,26 @@ public:
         return signature;
     }
 
-    std::vector<uint64_t>            dimSize_;
-    uint32_t                         rankId_;
-    uint32_t                         axisId_;
-    CollAlgOperator                  op_;
+    std::vector<uint64_t> dimSize_;
+    uint32_t rankId_;
+    uint32_t axisId_;
+    CollAlgOperator op_;
     std::vector<std::vector<RankId>> tempVTopo_;
 };
 
 class CcuTaskArgAllReduceMeshTwoShotMem2Mem2D : public CcuTaskArg {
 public:
-    explicit CcuTaskArgAllReduceMeshTwoShotMem2Mem2D(uint64_t inputAddr, uint64_t outputAddr,
-                                                     uint64_t normalRankXSliceSize, uint64_t normalRankYSliceSize,
-                                                     uint64_t lastRankXSliceSize, uint64_t lastRankYSliceSize,
-                                                     uint64_t token)
-        : inputAddr_(inputAddr), outputAddr_(outputAddr), normalRankXSliceSize_(normalRankXSliceSize),
-          normalRankYSliceSize_(normalRankYSliceSize), lastRankXSliceSize_(lastRankXSliceSize),
-          lastRankYSliceSize_(lastRankYSliceSize), token_(token)
-    {
-    }
+    explicit CcuTaskArgAllReduceMeshTwoShotMem2Mem2D(
+        uint64_t inputAddr, uint64_t outputAddr, uint64_t normalRankXSliceSize, uint64_t normalRankYSliceSize,
+        uint64_t lastRankXSliceSize, uint64_t lastRankYSliceSize, uint64_t token)
+        : inputAddr_(inputAddr),
+          outputAddr_(outputAddr),
+          normalRankXSliceSize_(normalRankXSliceSize),
+          normalRankYSliceSize_(normalRankYSliceSize),
+          lastRankXSliceSize_(lastRankXSliceSize),
+          lastRankYSliceSize_(lastRankYSliceSize),
+          token_(token)
+    {}
     uint64_t inputAddr_;
     uint64_t outputAddr_;
     uint64_t normalRankXSliceSize_;
@@ -66,29 +71,27 @@ public:
 
 class CcuInstructionAllReduceMeshTwoShotMem2Mem2D : public CcuInstruction {
 public:
-    CcuInstructionAllReduceMeshTwoShotMem2Mem2D() : CcuInstruction()
-    {
-    }
+    CcuInstructionAllReduceMeshTwoShotMem2Mem2D() : CcuInstruction() {}
 
-    void Init(std::vector<uint64_t> &dimSize, uint32_t rankId, uint64_t inputAddr, uint64_t outputAddr, uint32_t axisId,
-              uint64_t normalRankXSliceSize, uint64_t normalRankYSliceSize, uint64_t lastRankXSliceSize,
-              uint64_t lastRankYSliceSize, uint64_t token, CollAlgOperator &op,
-              std::vector<std::vector<RankId>> &tempVTopo)
+    void Init(
+        std::vector<uint64_t>& dimSize, uint32_t rankId, uint64_t inputAddr, uint64_t outputAddr, uint32_t axisId,
+        uint64_t normalRankXSliceSize, uint64_t normalRankYSliceSize, uint64_t lastRankXSliceSize,
+        uint64_t lastRankYSliceSize, uint64_t token, CollAlgOperator& op, std::vector<std::vector<RankId>>& tempVTopo)
     {
-        dimSize_    = dimSize;
-        rankId_     = rankId;
-        inputAddr_  = inputAddr;
+        dimSize_ = dimSize;
+        rankId_ = rankId;
+        inputAddr_ = inputAddr;
         outputAddr_ = outputAddr;
 
         axisId_ = axisId;
 
         normalRankXSliceSize_ = normalRankXSliceSize;
         normalRankYSliceSize_ = normalRankYSliceSize;
-        lastRankXSliceSize_   = lastRankXSliceSize;
-        lastRankYSliceSize_   = lastRankYSliceSize;
+        lastRankXSliceSize_ = lastRankXSliceSize;
+        lastRankYSliceSize_ = lastRankYSliceSize;
 
-        token_     = token;
-        op_        = op;
+        token_ = token;
+        op_ = op;
         tempVTopo_ = tempVTopo;
         return;
     }
@@ -101,14 +104,12 @@ public:
 
     std::string Describe() const override
     {
-        return StringFormat("CcuInstructionAllReduceMeshTwoShotMem2Mem2D rankId [%u], instType[%s]", rankId_,
-                            instType_.Describe().c_str());
+        return StringFormat(
+            "CcuInstructionAllReduceMeshTwoShotMem2Mem2D rankId [%u], instType[%s]", rankId_,
+            instType_.Describe().c_str());
     }
 
-    void SetInstType(CcuInstType instType)
-    {
-        instType_ = instType;
-    }
+    void SetInstType(CcuInstType instType) { instType_ = instType; }
 
     std::unique_ptr<CcuCtxArg> GetCtxArg() const override
     {
@@ -117,13 +118,13 @@ public:
 
     std::unique_ptr<CcuTaskArg> GetTaskArg() const override
     {
-        return std::make_unique<CcuTaskArgAllReduceMeshTwoShotMem2Mem2D>(inputAddr_, outputAddr_, normalRankXSliceSize_,
-                                                                         normalRankYSliceSize_, lastRankXSliceSize_,
-                                                                         lastRankYSliceSize_, token_);
+        return std::make_unique<CcuTaskArgAllReduceMeshTwoShotMem2Mem2D>(
+            inputAddr_, outputAddr_, normalRankXSliceSize_, normalRankYSliceSize_, lastRankXSliceSize_,
+            lastRankYSliceSize_, token_);
     }
 
 private:
-    CcuInstType           instType_ = CcuInstType::CCU_ALL_REDUCE_MESH_2D_TWO_SHOT_MEM2MEM;
+    CcuInstType instType_ = CcuInstType::CCU_ALL_REDUCE_MESH_2D_TWO_SHOT_MEM2MEM;
     std::vector<uint64_t> dimSize_;
     uint32_t rankId_{0};
     uint32_t axisId_{0};
@@ -134,7 +135,7 @@ private:
     uint64_t lastRankXSliceSize_{0};
     uint64_t lastRankYSliceSize_{0};
     uint64_t token_{0};
-    CollAlgOperator                  op_;
+    CollAlgOperator op_;
     std::vector<std::vector<RankId>> tempVTopo_;
 };
 

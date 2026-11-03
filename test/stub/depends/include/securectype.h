@@ -1,30 +1,13 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- *
- * The code snippet comes from Openeuler project.
- *
- * Copyright (c) Huawei Technologies Co., Ltd. 2014-2021. All rights reserved.
- * Licensed under Mulan PSL v2.
- * You can use this software according to the terms and conditions of the Mulan PSL v2.
- * You may obtain a copy of Mulan PSL v2 at:
- *          http://license.coscl.org.cn/MulanPSL2
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
- * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
- * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
- * See the Mulan PSL v2 for more details.
- * Description: Define internal used macro and data type. The marco of SECUREC_ON_64BITS
- *              will be determined in this header file, which is a switch for part
- *              of code. Some macro are used to suppress warning by MS compiler.
- * Create: 2014-02-25
- * Notes: User can change the value of SECUREC_STRING_MAX_LEN and SECUREC_MEM_MAX_LEN
- *        macro to meet their special need, but The maximum value should not exceed 2G.
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 /*
  * [Standardize-exceptions]: Performance-sensitive
  * [reason]: Strict parameter verification has been done before use
@@ -37,29 +20,29 @@
 #if defined(_MSC_VER) && _MSC_VER >= 1400
 #if defined(__STDC_WANT_SECURE_LIB__) && (!__STDC_WANT_SECURE_LIB__)
 /* Security functions have been provided since vs2005, default use of system library functions */
-#define SECUREC_USING_STD_SECURE_LIB    0
+#define SECUREC_USING_STD_SECURE_LIB 0
 #else
-#define SECUREC_USING_STD_SECURE_LIB    1
+#define SECUREC_USING_STD_SECURE_LIB 1
 #endif
 #else
-#define SECUREC_USING_STD_SECURE_LIB    0
+#define SECUREC_USING_STD_SECURE_LIB 0
 #endif
 #endif
 
 /* Compatibility with older Secure C versions, shielding VC symbol redefinition warning */
 #if defined(_MSC_VER) && (_MSC_VER >= 1400) && (!SECUREC_USING_STD_SECURE_LIB)
 #ifndef SECUREC_DISABLE_CRT_FUNC
-#define SECUREC_DISABLE_CRT_FUNC        1
+#define SECUREC_DISABLE_CRT_FUNC 1
 #endif
 #ifndef SECUREC_DISABLE_CRT_IMP
-#define SECUREC_DISABLE_CRT_IMP         1
+#define SECUREC_DISABLE_CRT_IMP 1
 #endif
 #else /*  MSC VER */
 #ifndef SECUREC_DISABLE_CRT_FUNC
-#define SECUREC_DISABLE_CRT_FUNC        0
+#define SECUREC_DISABLE_CRT_FUNC 0
 #endif
 #ifndef SECUREC_DISABLE_CRT_IMP
-#define SECUREC_DISABLE_CRT_IMP         0
+#define SECUREC_DISABLE_CRT_IMP 0
 #endif
 #endif
 
@@ -67,240 +50,240 @@
 #ifdef __STDC_WANT_SECURE_LIB__
 #undef __STDC_WANT_SECURE_LIB__
 #endif
-#define __STDC_WANT_SECURE_LIB__        0
+#define __STDC_WANT_SECURE_LIB__ 0
 #endif
 
 #if SECUREC_DISABLE_CRT_IMP
 #ifdef _CRTIMP_ALTERNATIVE
 #undef _CRTIMP_ALTERNATIVE
 #endif
-#define _CRTIMP_ALTERNATIVE     /* Comment Microsoft *_s function */
+#define _CRTIMP_ALTERNATIVE /* Comment Microsoft *_s function */
 #endif
 
 /* Compile in kernel under macro control */
 #ifndef SECUREC_IN_KERNEL
 #ifdef __KERNEL__
-#define SECUREC_IN_KERNEL               1
+#define SECUREC_IN_KERNEL 1
 #else
-#define SECUREC_IN_KERNEL               0
+#define SECUREC_IN_KERNEL 0
 #endif
 #endif
 
 /* make kernel symbols of functions available to loadable modules */
 #ifndef SECUREC_EXPORT_KERNEL_SYMBOL
 #if SECUREC_IN_KERNEL
-#define SECUREC_EXPORT_KERNEL_SYMBOL    1
+#define SECUREC_EXPORT_KERNEL_SYMBOL 1
 #else
-#define SECUREC_EXPORT_KERNEL_SYMBOL    0
+#define SECUREC_EXPORT_KERNEL_SYMBOL 0
 #endif
 #endif
 
 #if SECUREC_IN_KERNEL
 #ifndef SECUREC_ENABLE_SCANF_FILE
-#define SECUREC_ENABLE_SCANF_FILE       0
+#define SECUREC_ENABLE_SCANF_FILE 0
 #endif
 #ifndef SECUREC_ENABLE_WCHAR_FUNC
-#define SECUREC_ENABLE_WCHAR_FUNC       0
+#define SECUREC_ENABLE_WCHAR_FUNC 0
 #endif
 #else /* SECUREC_IN_KERNEL */
 #ifndef SECUREC_ENABLE_SCANF_FILE
-#define SECUREC_ENABLE_SCANF_FILE       1
+#define SECUREC_ENABLE_SCANF_FILE 1
 #endif
 #ifndef SECUREC_ENABLE_WCHAR_FUNC
-#define SECUREC_ENABLE_WCHAR_FUNC       1
+#define SECUREC_ENABLE_WCHAR_FUNC 1
 #endif
 #endif
 
 /* Default secure function declaration, default declarations for non-standard functions */
 #ifndef SECUREC_SNPRINTF_TRUNCATED
-#define SECUREC_SNPRINTF_TRUNCATED      1
+#define SECUREC_SNPRINTF_TRUNCATED 1
 #endif
 
 #if SECUREC_USING_STD_SECURE_LIB
 #if defined(_MSC_VER) && _MSC_VER >= 1400
 /* Declare secure functions that are not available in the VS compiler */
 #ifndef SECUREC_ENABLE_MEMSET
-#define SECUREC_ENABLE_MEMSET           1
+#define SECUREC_ENABLE_MEMSET 1
 #endif
 /* VS 2005 have vsnprintf_s function */
 #ifndef SECUREC_ENABLE_VSNPRINTF
-#define SECUREC_ENABLE_VSNPRINTF        0
+#define SECUREC_ENABLE_VSNPRINTF 0
 #endif
 #ifndef SECUREC_ENABLE_SNPRINTF
 /* VS 2005 have vsnprintf_s function Adapt the snprintf_s of the security function */
 #define snprintf_s _snprintf_s
-#define SECUREC_ENABLE_SNPRINTF         0
+#define SECUREC_ENABLE_SNPRINTF 0
 #endif
 /* Before VS 2010 do not have v functions */
 #if _MSC_VER <= 1600 || defined(SECUREC_FOR_V_SCANFS)
 #ifndef SECUREC_ENABLE_VFSCANF
-#define SECUREC_ENABLE_VFSCANF          1
+#define SECUREC_ENABLE_VFSCANF 1
 #endif
 #ifndef SECUREC_ENABLE_VSCANF
-#define SECUREC_ENABLE_VSCANF           1
+#define SECUREC_ENABLE_VSCANF 1
 #endif
 #ifndef SECUREC_ENABLE_VSSCANF
-#define SECUREC_ENABLE_VSSCANF          1
+#define SECUREC_ENABLE_VSSCANF 1
 #endif
 #endif
 
 #else /* MSC VER */
 #ifndef SECUREC_ENABLE_MEMSET
-#define SECUREC_ENABLE_MEMSET           0
+#define SECUREC_ENABLE_MEMSET 0
 #endif
 #ifndef SECUREC_ENABLE_SNPRINTF
-#define SECUREC_ENABLE_SNPRINTF         0
+#define SECUREC_ENABLE_SNPRINTF 0
 #endif
 #ifndef SECUREC_ENABLE_VSNPRINTF
-#define SECUREC_ENABLE_VSNPRINTF        0
+#define SECUREC_ENABLE_VSNPRINTF 0
 #endif
 #endif
 
 #ifndef SECUREC_ENABLE_MEMMOVE
-#define SECUREC_ENABLE_MEMMOVE          0
+#define SECUREC_ENABLE_MEMMOVE 0
 #endif
 #ifndef SECUREC_ENABLE_MEMCPY
-#define SECUREC_ENABLE_MEMCPY           0
+#define SECUREC_ENABLE_MEMCPY 0
 #endif
 #ifndef SECUREC_ENABLE_STRCPY
-#define SECUREC_ENABLE_STRCPY           0
+#define SECUREC_ENABLE_STRCPY 0
 #endif
 #ifndef SECUREC_ENABLE_STRNCPY
-#define SECUREC_ENABLE_STRNCPY          0
+#define SECUREC_ENABLE_STRNCPY 0
 #endif
 #ifndef SECUREC_ENABLE_STRCAT
-#define SECUREC_ENABLE_STRCAT           0
+#define SECUREC_ENABLE_STRCAT 0
 #endif
 #ifndef SECUREC_ENABLE_STRNCAT
-#define SECUREC_ENABLE_STRNCAT          0
+#define SECUREC_ENABLE_STRNCAT 0
 #endif
 #ifndef SECUREC_ENABLE_SPRINTF
-#define SECUREC_ENABLE_SPRINTF          0
+#define SECUREC_ENABLE_SPRINTF 0
 #endif
 #ifndef SECUREC_ENABLE_VSPRINTF
-#define SECUREC_ENABLE_VSPRINTF          0
+#define SECUREC_ENABLE_VSPRINTF 0
 #endif
 #ifndef SECUREC_ENABLE_SSCANF
-#define SECUREC_ENABLE_SSCANF           0
+#define SECUREC_ENABLE_SSCANF 0
 #endif
 #ifndef SECUREC_ENABLE_VSSCANF
-#define SECUREC_ENABLE_VSSCANF          0
+#define SECUREC_ENABLE_VSSCANF 0
 #endif
 #ifndef SECUREC_ENABLE_SCANF
-#define SECUREC_ENABLE_SCANF            0
+#define SECUREC_ENABLE_SCANF 0
 #endif
 #ifndef SECUREC_ENABLE_VSCANF
-#define SECUREC_ENABLE_VSCANF           0
+#define SECUREC_ENABLE_VSCANF 0
 #endif
 
 #ifndef SECUREC_ENABLE_FSCANF
-#define SECUREC_ENABLE_FSCANF           0
+#define SECUREC_ENABLE_FSCANF 0
 #endif
 #ifndef SECUREC_ENABLE_VFSCANF
-#define SECUREC_ENABLE_VFSCANF          0
+#define SECUREC_ENABLE_VFSCANF 0
 #endif
 #ifndef SECUREC_ENABLE_STRTOK
-#define SECUREC_ENABLE_STRTOK           0
+#define SECUREC_ENABLE_STRTOK 0
 #endif
 #ifndef SECUREC_ENABLE_GETS
-#define SECUREC_ENABLE_GETS             0
+#define SECUREC_ENABLE_GETS 0
 #endif
 
 #else /* SECUREC USE STD SECURE LIB */
 
 #ifndef SECUREC_ENABLE_MEMSET
-#define SECUREC_ENABLE_MEMSET           1
+#define SECUREC_ENABLE_MEMSET 1
 #endif
 #ifndef SECUREC_ENABLE_MEMMOVE
-#define SECUREC_ENABLE_MEMMOVE          1
+#define SECUREC_ENABLE_MEMMOVE 1
 #endif
 #ifndef SECUREC_ENABLE_MEMCPY
-#define SECUREC_ENABLE_MEMCPY           1
+#define SECUREC_ENABLE_MEMCPY 1
 #endif
 #ifndef SECUREC_ENABLE_STRCPY
-#define SECUREC_ENABLE_STRCPY           1
+#define SECUREC_ENABLE_STRCPY 1
 #endif
 #ifndef SECUREC_ENABLE_STRNCPY
-#define SECUREC_ENABLE_STRNCPY          1
+#define SECUREC_ENABLE_STRNCPY 1
 #endif
 #ifndef SECUREC_ENABLE_STRCAT
-#define SECUREC_ENABLE_STRCAT           1
+#define SECUREC_ENABLE_STRCAT 1
 #endif
 #ifndef SECUREC_ENABLE_STRNCAT
-#define SECUREC_ENABLE_STRNCAT          1
+#define SECUREC_ENABLE_STRNCAT 1
 #endif
 #ifndef SECUREC_ENABLE_SPRINTF
-#define SECUREC_ENABLE_SPRINTF          1
+#define SECUREC_ENABLE_SPRINTF 1
 #endif
 #ifndef SECUREC_ENABLE_VSPRINTF
-#define SECUREC_ENABLE_VSPRINTF          1
+#define SECUREC_ENABLE_VSPRINTF 1
 #endif
 #ifndef SECUREC_ENABLE_SNPRINTF
-#define SECUREC_ENABLE_SNPRINTF         1
+#define SECUREC_ENABLE_SNPRINTF 1
 #endif
 #ifndef SECUREC_ENABLE_VSNPRINTF
-#define SECUREC_ENABLE_VSNPRINTF        1
+#define SECUREC_ENABLE_VSNPRINTF 1
 #endif
 #ifndef SECUREC_ENABLE_SSCANF
-#define SECUREC_ENABLE_SSCANF           1
+#define SECUREC_ENABLE_SSCANF 1
 #endif
 #ifndef SECUREC_ENABLE_VSSCANF
-#define SECUREC_ENABLE_VSSCANF          1
+#define SECUREC_ENABLE_VSSCANF 1
 #endif
 #ifndef SECUREC_ENABLE_SCANF
 #if SECUREC_ENABLE_SCANF_FILE
-#define SECUREC_ENABLE_SCANF            1
+#define SECUREC_ENABLE_SCANF 1
 #else
-#define SECUREC_ENABLE_SCANF            0
+#define SECUREC_ENABLE_SCANF 0
 #endif
 #endif
 #ifndef SECUREC_ENABLE_VSCANF
 #if SECUREC_ENABLE_SCANF_FILE
-#define SECUREC_ENABLE_VSCANF           1
+#define SECUREC_ENABLE_VSCANF 1
 #else
-#define SECUREC_ENABLE_VSCANF           0
+#define SECUREC_ENABLE_VSCANF 0
 #endif
 #endif
 
 #ifndef SECUREC_ENABLE_FSCANF
 #if SECUREC_ENABLE_SCANF_FILE
-#define SECUREC_ENABLE_FSCANF           1
+#define SECUREC_ENABLE_FSCANF 1
 #else
-#define SECUREC_ENABLE_FSCANF           0
+#define SECUREC_ENABLE_FSCANF 0
 #endif
 #endif
 #ifndef SECUREC_ENABLE_VFSCANF
 #if SECUREC_ENABLE_SCANF_FILE
-#define SECUREC_ENABLE_VFSCANF          1
+#define SECUREC_ENABLE_VFSCANF 1
 #else
-#define SECUREC_ENABLE_VFSCANF          0
+#define SECUREC_ENABLE_VFSCANF 0
 #endif
 #endif
 
 #ifndef SECUREC_ENABLE_STRTOK
-#define SECUREC_ENABLE_STRTOK           1
+#define SECUREC_ENABLE_STRTOK 1
 #endif
 #ifndef SECUREC_ENABLE_GETS
-#define SECUREC_ENABLE_GETS             1
+#define SECUREC_ENABLE_GETS 1
 #endif
 #endif /* SECUREC_USE_STD_SECURE_LIB */
 
 #if !SECUREC_ENABLE_SCANF_FILE
 #if SECUREC_ENABLE_FSCANF
 #undef SECUREC_ENABLE_FSCANF
-#define SECUREC_ENABLE_FSCANF           0
+#define SECUREC_ENABLE_FSCANF 0
 #endif
 #if SECUREC_ENABLE_VFSCANF
 #undef SECUREC_ENABLE_VFSCANF
-#define SECUREC_ENABLE_VFSCANF          0
+#define SECUREC_ENABLE_VFSCANF 0
 #endif
 #if SECUREC_ENABLE_SCANF
 #undef SECUREC_ENABLE_SCANF
-#define SECUREC_ENABLE_SCANF            0
+#define SECUREC_ENABLE_SCANF 0
 #endif
 #if SECUREC_ENABLE_FSCANF
 #undef SECUREC_ENABLE_FSCANF
-#define SECUREC_ENABLE_FSCANF           0
+#define SECUREC_ENABLE_FSCANF 0
 #endif
 
 #endif
@@ -357,8 +340,8 @@
 #endif
 #endif
 
-#if defined(__VXWORKS__) || defined(__vxworks) || defined(__VXWORKS) || defined(_VXWORKS_PLATFORM_)  || \
-    defined(SECUREC_VXWORKS_VERSION_5_4)
+#if defined(__VXWORKS__) || defined(__vxworks) || defined(__VXWORKS) || defined(_VXWORKS_PLATFORM_) \
+    || defined(SECUREC_VXWORKS_VERSION_5_4)
 #ifndef SECUREC_VXWORKS_PLATFORM
 #define SECUREC_VXWORKS_PLATFORM
 #endif
@@ -393,7 +376,7 @@
 #endif
 
 #if SECUREC_SUPPORT_FORMAT_WARNING
-#define SECUREC_ATTRIBUTE(x, y)  __attribute__((format(printf, (x), (y))))
+#define SECUREC_ATTRIBUTE(x, y) __attribute__((format(printf, (x), (y))))
 #else
 #define SECUREC_ATTRIBUTE(x, y)
 #endif
@@ -405,8 +388,8 @@
 #define SECUREC_SUPPORT_BUILTIN_EXPECT 1
 #endif
 
-#if SECUREC_SUPPORT_BUILTIN_EXPECT && defined(__GNUC__) && ((__GNUC__ > 3) || \
-    (defined(__GNUC_MINOR__) && (__GNUC__ == 3 && __GNUC_MINOR__ > 3)))
+#if SECUREC_SUPPORT_BUILTIN_EXPECT && defined(__GNUC__) \
+    && ((__GNUC__ > 3) || (defined(__GNUC_MINOR__) && (__GNUC__ == 3 && __GNUC_MINOR__ > 3)))
 /*
  * This is a built-in function that can be used without a declaration, if warning for declaration not found occurred,
  * you can add -DSECUREC_NEED_BUILTIN_EXPECT_DECLARE to compiler options
@@ -472,17 +455,15 @@ long __builtin_expect(long exp, long c);
 #ifndef SECUREC_SUPPORT_STRTOLD
 #define SECUREC_SUPPORT_STRTOLD 0
 #if (defined(SECUREC_COMPATIBLE_LINUX_FORMAT))
-#if defined(__USE_ISOC99)  || \
-    (defined(_AIX) && defined(_ISOC99_SOURCE)) || \
-    (defined(__hpux) && defined(__ia64)) || \
-    (defined(SECUREC_ON_SOLARIS) && (!defined(_STRICT_STDC) && !defined(__XOPEN_OR_POSIX)) || \
-    defined(_STDC_C99) || defined(__EXTENSIONS__))
-#undef  SECUREC_SUPPORT_STRTOLD
+#if defined(__USE_ISOC99) || (defined(_AIX) && defined(_ISOC99_SOURCE)) || (defined(__hpux) && defined(__ia64))     \
+    || (defined(SECUREC_ON_SOLARIS) && (!defined(_STRICT_STDC) && !defined(__XOPEN_OR_POSIX)) || defined(_STDC_C99) \
+        || defined(__EXTENSIONS__))
+#undef SECUREC_SUPPORT_STRTOLD
 #define SECUREC_SUPPORT_STRTOLD 1
 #endif
 #endif
 #if ((defined(SECUREC_WRLINUX_BELOW4) || defined(_WRLINUX_BELOW4_)))
-#undef  SECUREC_SUPPORT_STRTOLD
+#undef SECUREC_SUPPORT_STRTOLD
 #define SECUREC_SUPPORT_STRTOLD 0
 #endif
 #endif
@@ -494,102 +475,104 @@ long __builtin_expect(long exp, long c);
 #endif
 
 /* For strncpy_s performance optimization */
-#define SECUREC_STRNCPY_SM(dest, destMax, src, count) \
-    (((void *)(dest) != NULL && (const void *)(src) != NULL && (size_t)(destMax) > 0 && \
-    (((unsigned long long)(destMax) & (unsigned long long)(-2)) < SECUREC_STRING_MAX_LEN) && \
-    (SECUREC_TWO_MIN((size_t)(count), strlen(src)) + 1) <= (size_t)(destMax)) ? \
-    (((size_t)(count) < strlen(src)) ? (memcpy((dest), (src), (count)), *((char *)(dest) + (count)) = '\0', EOK) : \
-    (memcpy((dest), (src), strlen(src) + 1), EOK)) : (strncpy_error((dest), (destMax), (src), (count))))
+#define SECUREC_STRNCPY_SM(dest, destMax, src, count)                                                                  \
+    (((void*)(dest) != NULL && (const void*)(src) != NULL && (size_t)(destMax) > 0                                     \
+      && (((unsigned long long)(destMax) & (unsigned long long)(-2)) < SECUREC_STRING_MAX_LEN)                         \
+      && (SECUREC_TWO_MIN((size_t)(count), strlen(src)) + 1) <= (size_t)(destMax)) ?                                   \
+         (((size_t)(count) < strlen(src)) ? (memcpy((dest), (src), (count)), *((char*)(dest) + (count)) = '\0', EOK) : \
+                                            (memcpy((dest), (src), strlen(src) + 1), EOK)) :                           \
+         (strncpy_error((dest), (destMax), (src), (count))))
 
-#define SECUREC_STRCPY_SM(dest, destMax, src) \
-    (((void *)(dest) != NULL && (const void *)(src) != NULL && (size_t)(destMax) > 0 && \
-    (((unsigned long long)(destMax) & (unsigned long long)(-2)) < SECUREC_STRING_MAX_LEN) && \
-    (strlen(src) + 1) <= (size_t)(destMax)) ? (memcpy((dest), (src), strlen(src) + 1), EOK) : \
-    (strcpy_error((dest), (destMax), (src))))
+#define SECUREC_STRCPY_SM(dest, destMax, src)                                                  \
+    (((void*)(dest) != NULL && (const void*)(src) != NULL && (size_t)(destMax) > 0             \
+      && (((unsigned long long)(destMax) & (unsigned long long)(-2)) < SECUREC_STRING_MAX_LEN) \
+      && (strlen(src) + 1) <= (size_t)(destMax)) ?                                             \
+         (memcpy((dest), (src), strlen(src) + 1), EOK) :                                       \
+         (strcpy_error((dest), (destMax), (src))))
 
 /* For strcat_s performance optimization */
 #if defined(__GNUC__)
-#define SECUREC_STRCAT_SM(dest, destMax, src) ({ \
-    int catRet_ = EOK; \
-    if ((void *)(dest) != NULL && (const void *)(src) != NULL && (size_t)(destMax) > 0 && \
-        (((unsigned long long)(destMax) & (unsigned long long)(-2)) < SECUREC_STRING_MAX_LEN)) { \
-        char *catTmpDst_ = (char *)(dest); \
-        size_t catRestSize_ = (destMax); \
-        while (catRestSize_ > 0 && *catTmpDst_ != '\0') { \
-            ++catTmpDst_; \
-            --catRestSize_; \
-        } \
-        if (catRestSize_ == 0) { \
-            catRet_ = EINVAL; \
-        } else if ((strlen(src) + 1) <= catRestSize_) { \
-            memcpy(catTmpDst_, (src), strlen(src) + 1); \
-            catRet_ = EOK; \
-        } else { \
-            catRet_ = ERANGE; \
-        } \
-        if (catRet_ != EOK) { \
-            catRet_ = strcat_s((dest), (destMax), (src)); \
-        } \
-    } else { \
-        catRet_ = strcat_s((dest), (destMax), (src)); \
-    } \
-    catRet_; \
-})
+#define SECUREC_STRCAT_SM(dest, destMax, src)                                                           \
+    ({                                                                                                  \
+        int catRet_ = EOK;                                                                              \
+        if ((void*)(dest) != NULL && (const void*)(src) != NULL && (size_t)(destMax) > 0                \
+            && (((unsigned long long)(destMax) & (unsigned long long)(-2)) < SECUREC_STRING_MAX_LEN)) { \
+            char* catTmpDst_ = (char*)(dest);                                                           \
+            size_t catRestSize_ = (destMax);                                                            \
+            while (catRestSize_ > 0 && *catTmpDst_ != '\0') {                                           \
+                ++catTmpDst_;                                                                           \
+                --catRestSize_;                                                                         \
+            }                                                                                           \
+            if (catRestSize_ == 0) {                                                                    \
+                catRet_ = EINVAL;                                                                       \
+            } else if ((strlen(src) + 1) <= catRestSize_) {                                             \
+                memcpy(catTmpDst_, (src), strlen(src) + 1);                                             \
+                catRet_ = EOK;                                                                          \
+            } else {                                                                                    \
+                catRet_ = ERANGE;                                                                       \
+            }                                                                                           \
+            if (catRet_ != EOK) {                                                                       \
+                catRet_ = strcat_s((dest), (destMax), (src));                                           \
+            }                                                                                           \
+        } else {                                                                                        \
+            catRet_ = strcat_s((dest), (destMax), (src));                                               \
+        }                                                                                               \
+        catRet_;                                                                                        \
+    })
 #else
 #define SECUREC_STRCAT_SM(dest, destMax, src) strcat_s((dest), (destMax), (src))
 #endif
 
 /* For strncat_s performance optimization */
 #if defined(__GNUC__)
-#define SECUREC_STRNCAT_SM(dest, destMax, src, count) ({ \
-    int ncatRet_ = EOK; \
-    if ((void *)(dest) != NULL && (const void *)(src) != NULL && (size_t)(destMax) > 0 && \
-        (((unsigned long long)(destMax) & (unsigned long long)(-2)) < SECUREC_STRING_MAX_LEN)  && \
-        (((unsigned long long)(count) & (unsigned long long)(-2)) < SECUREC_STRING_MAX_LEN)) { \
-        char *ncatTmpDest_ = (char *)(dest); \
-        size_t ncatRestSize_ = (size_t)(destMax); \
-        while (ncatRestSize_ > 0 && *ncatTmpDest_ != '\0') { \
-            ++ncatTmpDest_; \
-            --ncatRestSize_; \
-        } \
-        if (ncatRestSize_ == 0) { \
-            ncatRet_ = EINVAL; \
-        } else if ((SECUREC_TWO_MIN((count), strlen(src)) + 1) <= ncatRestSize_) { \
-            if ((size_t)(count) < strlen(src)) { \
-                memcpy(ncatTmpDest_, (src), (count)); \
-                *(ncatTmpDest_ + (count)) = '\0'; \
-            } else { \
-                memcpy(ncatTmpDest_, (src), strlen(src) + 1); \
-            } \
-        } else { \
-            ncatRet_ = ERANGE; \
-        } \
-        if (ncatRet_ != EOK) { \
-            ncatRet_ = strncat_s((dest), (destMax), (src), (count)); \
-        } \
-    } else { \
-        ncatRet_ = strncat_s((dest), (destMax), (src), (count)); \
-    } \
-    ncatRet_; \
-})
+#define SECUREC_STRNCAT_SM(dest, destMax, src, count)                                                 \
+    ({                                                                                                \
+        int ncatRet_ = EOK;                                                                           \
+        if ((void*)(dest) != NULL && (const void*)(src) != NULL && (size_t)(destMax) > 0              \
+            && (((unsigned long long)(destMax) & (unsigned long long)(-2)) < SECUREC_STRING_MAX_LEN)  \
+            && (((unsigned long long)(count) & (unsigned long long)(-2)) < SECUREC_STRING_MAX_LEN)) { \
+            char* ncatTmpDest_ = (char*)(dest);                                                       \
+            size_t ncatRestSize_ = (size_t)(destMax);                                                 \
+            while (ncatRestSize_ > 0 && *ncatTmpDest_ != '\0') {                                      \
+                ++ncatTmpDest_;                                                                       \
+                --ncatRestSize_;                                                                      \
+            }                                                                                         \
+            if (ncatRestSize_ == 0) {                                                                 \
+                ncatRet_ = EINVAL;                                                                    \
+            } else if ((SECUREC_TWO_MIN((count), strlen(src)) + 1) <= ncatRestSize_) {                \
+                if ((size_t)(count) < strlen(src)) {                                                  \
+                    memcpy(ncatTmpDest_, (src), (count));                                             \
+                    *(ncatTmpDest_ + (count)) = '\0';                                                 \
+                } else {                                                                              \
+                    memcpy(ncatTmpDest_, (src), strlen(src) + 1);                                     \
+                }                                                                                     \
+            } else {                                                                                  \
+                ncatRet_ = ERANGE;                                                                    \
+            }                                                                                         \
+            if (ncatRet_ != EOK) {                                                                    \
+                ncatRet_ = strncat_s((dest), (destMax), (src), (count));                              \
+            }                                                                                         \
+        } else {                                                                                      \
+            ncatRet_ = strncat_s((dest), (destMax), (src), (count));                                  \
+        }                                                                                             \
+        ncatRet_;                                                                                     \
+    })
 #else
 #define SECUREC_STRNCAT_SM(dest, destMax, src, count) strncat_s((dest), (destMax), (src), (count))
 #endif
 
 /* This macro do not check buffer overlap by default */
-#define  SECUREC_MEMCPY_SM(dest, destMax, src, count) \
-    (!(((size_t)(destMax) == 0) || \
-        (((unsigned long long)(destMax) & (unsigned long long)(-2)) > SECUREC_MEM_MAX_LEN) || \
-        ((size_t)(count) > (size_t)(destMax)) || ((void *)(dest)) == NULL || ((const void *)(src) == NULL)) ? \
-        (memcpy((dest), (src), (count)), EOK) : \
-        (memcpy_s((dest), (destMax), (src), (count))))
+#define SECUREC_MEMCPY_SM(dest, destMax, src, count)                                                                  \
+    (!(((size_t)(destMax) == 0) || (((unsigned long long)(destMax) & (unsigned long long)(-2)) > SECUREC_MEM_MAX_LEN) \
+       || ((size_t)(count) > (size_t)(destMax)) || ((void*)(dest)) == NULL || ((const void*)(src) == NULL)) ?         \
+         (memcpy((dest), (src), (count)), EOK) :                                                                      \
+         (memcpy_s((dest), (destMax), (src), (count))))
 
-#define  SECUREC_MEMSET_SM(dest, destMax, c, count) \
-    (!((((unsigned long long)(destMax) & (unsigned long long)(-2)) > SECUREC_MEM_MAX_LEN) || \
-        ((void *)(dest) == NULL) || ((size_t)(count) > (size_t)(destMax))) ? \
-        (memset((dest), (c), (count)), EOK) : \
-        (memset_s((dest), (destMax), (c), (count))))
+#define SECUREC_MEMSET_SM(dest, destMax, c, count)                                                                   \
+    (!((((unsigned long long)(destMax) & (unsigned long long)(-2)) > SECUREC_MEM_MAX_LEN) || ((void*)(dest) == NULL) \
+       || ((size_t)(count) > (size_t)(destMax))) ?                                                                   \
+         (memset((dest), (c), (count)), EOK) :                                                                       \
+         (memset_s((dest), (destMax), (c), (count))))
 
 #endif
 #endif
-

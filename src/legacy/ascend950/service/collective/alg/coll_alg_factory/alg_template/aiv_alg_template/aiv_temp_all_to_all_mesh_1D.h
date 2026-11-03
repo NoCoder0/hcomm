@@ -20,8 +20,9 @@ namespace Hccl {
 
 class AivTempAlltoAllMesh1D : public AivAlgTemplateBase {
 public:
-    explicit AivTempAlltoAllMesh1D(const RankId virtualRank, const u32 tempRankSize,
-        const std::vector<std::vector<RankId>> &tempVTopo, const std::map<RankId, u32> &tempVirtRankMap);
+    explicit AivTempAlltoAllMesh1D(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~AivTempAlltoAllMesh1D() override;
 
     std::string Describe() const override
@@ -31,11 +32,12 @@ public:
 
     u32 CalcScratchMultiple(BufferType inBuffType, BufferType outBuffType) override;
     HcclResult CalNumBlocks(u32& numBlocks, u64 dataSize, u32 numBlocksLimit) override;
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
-    HcclResult GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &templateDataParams,
-        const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues) override;
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
+    HcclResult GenExtIns(
+        const TempFuncs& tempFuncs, const TemplateDataParams& templateDataParams, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues) override;
 };
 
-}  // namespace Hccl
+} // namespace Hccl
 
-#endif  // AIV_TEMP_ALL_TO_ALL_MESH_1D
+#endif // AIV_TEMP_ALL_TO_ALL_MESH_1D

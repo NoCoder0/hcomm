@@ -22,20 +22,11 @@ using namespace std;
 
 class CollOperatorCheckTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CollOperatorCheckTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CollOperatorCheckTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CollOperatorCheckTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CollOperatorCheckTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in CollOperatorCheckTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in CollOperatorCheckTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -205,7 +196,10 @@ TEST_F(CollOperatorCheckTest, test_CheckCollOperator_allgather_opType_not_ok)
     remoteOpData.staticShape = false;
     remoteOpData.outputDataType = DataType::INT8;
 
+    testing::internal::CaptureStdout();
     EXPECT_THROW(CheckCollOperator(localOpData, remoteOpData), InvalidParamsException);
+    const std::string log = testing::internal::GetCapturedStdout();
+    EXPECT_NE(log.find("[InitChannelStage][ParameterConflict] errNo["), std::string::npos);
 }
 
 TEST_F(CollOperatorCheckTest, test_CheckCollOperator_allgather_reduceOp_not_ok)
@@ -711,7 +705,7 @@ TEST_F(CollOperatorCheckTest, test_CheckCollOperator_alltoallv_recvType_not_ok)
     EXPECT_THROW(CheckCollOperator(localOpData, remoteOpData), InvalidParamsException);
 }
 
-void All2AllVCSetSendTypeAndRecvType(CollOperator &opData, DataType sType, DataType rType)
+void All2AllVCSetSendTypeAndRecvType(CollOperator& opData, DataType sType, DataType rType)
 {
     opData.opType = OpType::ALLTOALLVC;
     opData.all2AllVCDataDes.sendType = sType;

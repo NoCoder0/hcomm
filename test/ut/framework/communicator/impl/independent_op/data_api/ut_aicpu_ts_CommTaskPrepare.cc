@@ -39,18 +39,14 @@ using namespace hccl;
  * 该测试类用于验证CommTaskPrepare接口的参数校验和基本功能。
  * 测试场景包括空密钥校验和有效密钥输入。
  */
-class UtAicpuTsCommTaskPrepare : public testing::Test
-{
+class UtAicpuTsCommTaskPrepare : public testing::Test {
 protected:
     virtual void SetUp() override
     {
         MOCKER_CPP(&Hccl::IAicpuTsThread::SdmaCopy).stubs().will(returnValue(HCCL_SUCCESS));
     }
 
-    virtual void TearDown() override
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() override { GlobalMockObject::verify(); }
 
     int32_t res{HCCL_E_RESERVED};
 };

@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: unit test for SetCkeExecutor
  * Author: xx
  */
@@ -27,12 +30,11 @@ protected:
 };
 
 // Test: SetCkeExecutor struct size check
-TEST_F(SetCkeExecutorTest, StructSize) {
-    EXPECT_GT(sizeof(SetCkeExecutor), 0);
-}
+TEST_F(SetCkeExecutorTest, StructSize) { EXPECT_GT(sizeof(SetCkeExecutor), 0); }
 
 // Test: SetCkeExecutor default constructor
-TEST_F(SetCkeExecutorTest, DefaultConstructor) {
+TEST_F(SetCkeExecutorTest, DefaultConstructor)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
     SetCkeExecutor executor(0, 0, 0, instr, nullptr);
@@ -40,48 +42,52 @@ TEST_F(SetCkeExecutorTest, DefaultConstructor) {
 }
 
 // Test: SetCkeExecutor parameterized constructor
-TEST_F(SetCkeExecutorTest, ParameterizedConstructor) {
+TEST_F(SetCkeExecutorTest, ParameterizedConstructor)
+{
     int streamId = 0;
     int rankId = 0;
     int dieId = 0;
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     SetCkeExecutor executor(streamId, rankId, dieId, instr, nullptr);
     EXPECT_NO_THROW(executor.Describe());
 }
 
 // Test: SetCkeExecutor Parser with zero values
-TEST_F(SetCkeExecutorTest, ParserZeroValues) {
+TEST_F(SetCkeExecutorTest, ParserZeroValues)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     SetCkeExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Parser());
     EXPECT_NO_THROW(executor.Describe());
 }
 
 // Test: SetCkeExecutor Parser with max values
-TEST_F(SetCkeExecutorTest, ParserMaxValues) {
+TEST_F(SetCkeExecutorTest, ParserMaxValues)
+{
     CcuInstr instr;
     memset(&instr, 0xFF, sizeof(instr));
-    
+
     SetCkeExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Parser());
     EXPECT_NO_THROW(executor.Describe());
 }
 
 // Test: SetCkeExecutor Parser with specific CKE parameters
-TEST_F(SetCkeExecutorTest, ParserCkeParameters) {
+TEST_F(SetCkeExecutorTest, ParserCkeParameters)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     instr.v1.setCKE.clearType = 1;
     instr.v1.setCKE.setCKEId = 100;
     instr.v1.setCKE.setCKEMask = 0xFF00;
     instr.v1.setCKE.waitCKEId = 50;
     instr.v1.setCKE.waitCKEMask = 0x00FF;
-    
+
     SetCkeExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Parser());
     std::string desc = executor.Describe();
@@ -89,10 +95,11 @@ TEST_F(SetCkeExecutorTest, ParserCkeParameters) {
 }
 
 // Test: SetCkeExecutor with different clearType values
-TEST_F(SetCkeExecutorTest, DifferentClearTypeValues) {
+TEST_F(SetCkeExecutorTest, DifferentClearTypeValues)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     for (uint16_t clearType = 0; clearType <= 2; clearType++) {
         instr.v1.setCKE.clearType = clearType;
         SetCkeExecutor executor(0, 0, 0, instr, nullptr);
@@ -102,12 +109,13 @@ TEST_F(SetCkeExecutorTest, DifferentClearTypeValues) {
 }
 
 // Test: SetCkeExecutor with different mask patterns
-TEST_F(SetCkeExecutorTest, DifferentMaskPatterns) {
+TEST_F(SetCkeExecutorTest, DifferentMaskPatterns)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     uint16_t masks[] = {0x0000, 0x0001, 0x00FF, 0xFF00, 0xFFFF, 0x5555, 0xAAAA};
-    
+
     for (auto mask : masks) {
         instr.v1.setCKE.setCKEMask = mask;
         instr.v1.setCKE.waitCKEMask = mask;
@@ -118,14 +126,15 @@ TEST_F(SetCkeExecutorTest, DifferentMaskPatterns) {
 }
 
 // Test: SetCkeExecutor Describe contains expected keywords
-TEST_F(SetCkeExecutorTest, DescribeContent) {
+TEST_F(SetCkeExecutorTest, DescribeContent)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
     instr.v1.setCKE.setCKEId = 10;
     instr.v1.setCKE.setCKEMask = 0xFF;
     instr.v1.setCKE.waitCKEId = 5;
     instr.v1.setCKE.waitCKEMask = 0xF0;
-    
+
     SetCkeExecutor executor(0, 0, 0, instr, nullptr);
     executor.Parser();
     std::string desc = executor.Describe();
@@ -134,22 +143,24 @@ TEST_F(SetCkeExecutorTest, DescribeContent) {
 }
 
 // Test: SetCkeExecutor inheritance check
-TEST_F(SetCkeExecutorTest, InheritanceCheck) {
+TEST_F(SetCkeExecutorTest, InheritanceCheck)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     SetCkeExecutor executor(0, 0, 0, instr, nullptr);
     CcuExecutorBase* base = &executor;
     EXPECT_NE(base, nullptr);
 }
 
 // Test: SetCkeExecutor with various CKE IDs
-TEST_F(SetCkeExecutorTest, VariousCkeIds) {
+TEST_F(SetCkeExecutorTest, VariousCkeIds)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     uint16_t ckeIds[] = {0, 1, 100, SimCcuV1::CCU_RESOURCE_CKE_NUM - 1, 0xFFFF};
-    
+
     for (auto ckeId : ckeIds) {
         instr.v1.setCKE.setCKEId = ckeId;
         instr.v1.setCKE.waitCKEId = ckeId;

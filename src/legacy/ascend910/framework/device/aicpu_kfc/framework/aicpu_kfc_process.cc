@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "aicpu_kfc_process.h"
 
@@ -28,7 +28,7 @@
 #include "common/aicpu_kfc_tiling_utils.h"
 #include "coll_batch_write_executor.h"
 #include "dfx/aicpu_profiling_manager.h"
-#include "read_write_lock.h"
+#include <shared_mutex>
 
 using namespace hccl;
 using namespace HcclApi;
@@ -43,41 +43,34 @@ struct TimeOutCheckInfo {
     std::unordered_map<u32, u32> invalidMsgCount;
 };
 thread_local TimeOutCheckInfo g_timeOutInfoInst{};
-void SetMsgEnableFlag(u32 groupIdx, bool flag) {
-    g_timeOutInfoInst.msgFlag[groupIdx] = flag;
-}
+void SetMsgEnableFlag(u32 groupIdx, bool flag) { g_timeOutInfoInst.msgFlag[groupIdx] = flag; }
 
-bool CheckMsgEnableFlag(u32 groupIdx) {
+bool CheckMsgEnableFlag(u32 groupIdx)
+{
     if (g_timeOutInfoInst.msgFlag.find(groupIdx) == g_timeOutInfoInst.msgFlag.end()) {
         return false;
     }
     return g_timeOutInfoInst.msgFlag[groupIdx];
 }
 
-void SetMsgStartTime(u32 groupIdx) {
-    g_timeOutInfoInst.msgStartTime[groupIdx] = GetCurCpuTimestamp();
-}
+void SetMsgStartTime(u32 groupIdx) { g_timeOutInfoInst.msgStartTime[groupIdx] = GetCurCpuTimestamp(); }
 
-u64 GetMsgStartTime(u32 groupIdx) {
+u64 GetMsgStartTime(u32 groupIdx)
+{
     if (g_timeOutInfoInst.msgStartTime.find(groupIdx) == g_timeOutInfoInst.msgStartTime.end()) {
         return 0UL;
     }
     return g_timeOutInfoInst.msgStartTime[groupIdx];
 }
 
-void SetKernelStartTime(void) {
-    g_timeOutInfoInst.kernelStartTime = GetCurCpuTimestamp();
-}
+void SetKernelStartTime(void) { g_timeOutInfoInst.kernelStartTime = GetCurCpuTimestamp(); }
 
-void AddMsgInValidCount(u32 groupIdx) {
-    g_timeOutInfoInst.invalidMsgCount[groupIdx]++;
-}
+void AddMsgInValidCount(u32 groupIdx) { g_timeOutInfoInst.invalidMsgCount[groupIdx]++; }
 
-void ClearMsgInValidCount(u32 groupIdx) {
-    g_timeOutInfoInst.invalidMsgCount[groupIdx] = 0;
-}
+void ClearMsgInValidCount(u32 groupIdx) { g_timeOutInfoInst.invalidMsgCount[groupIdx] = 0; }
 
-uint32_t GetMsgInValidCount(u32 groupIdx) {
+uint32_t GetMsgInValidCount(u32 groupIdx)
+{
     if (g_timeOutInfoInst.invalidMsgCount.find(groupIdx) == g_timeOutInfoInst.invalidMsgCount.end()) {
         return 0U;
     }
@@ -85,34 +78,33 @@ uint32_t GetMsgInValidCount(u32 groupIdx) {
 }
 
 struct CommInstMgr {
-    HcclOpResParam *resParam;
-    hccl::HcclCommAicpu *hcclCommAicpu;
+    HcclOpResParam* resParam;
+    hccl::HcclCommAicpu* hcclCommAicpu;
     AicpuKfcRpcServerV2 rpcServer;
 };
 
 struct KfcGroupIndexInfo {
-    ReadWriteLockBase mutex;
+    std::shared_mutex mutex;
     u32 nextId{0U};
     std::unordered_map<std::string, int32_t> groupNameToId{};
     std::unordered_map<int32_t, CommInstMgr> instMap{};
 } g_commIdMap;
 
-int32_t InsertComIdMap(const std::string &group) {
-    ReadWriteLock rwlock(g_commIdMap.mutex);
-    rwlock.writeLock();
+int32_t InsertComIdMap(const std::string& group)
+{
+    std::unique_lock<std::shared_mutex> rwlock(g_commIdMap.mutex);
     if (g_commIdMap.groupNameToId.find(group) == g_commIdMap.groupNameToId.end()) {
         HCCL_INFO("Insert group %s at index %u.", group.c_str(), g_commIdMap.nextId);
         g_commIdMap.groupNameToId[group] = g_commIdMap.nextId++;
     } else {
         HCCL_INFO("Group %s is already at index %u.", group.c_str(), g_commIdMap.groupNameToId[group]);
     }
-    rwlock.writeUnlock();
     return g_commIdMap.groupNameToId[group];
 }
 
-int32_t GetComGroupIdx(const std::string &group) {
-    ReadWriteLock rwlock(g_commIdMap.mutex);
-    rwlock.readLock();
+int32_t GetComGroupIdx(const std::string& group)
+{
+    std::shared_lock<std::shared_mutex> rwlock(g_commIdMap.mutex);
     int32_t idx;
     if (g_commIdMap.groupNameToId.find(group) == g_commIdMap.groupNameToId.end()) {
         HCCL_ERROR("Failed to find group %s in index map.", group.c_str());
@@ -120,18 +112,17 @@ int32_t GetComGroupIdx(const std::string &group) {
     } else {
         idx = g_commIdMap.groupNameToId[group];
     }
-    rwlock.readUnlock();
     return idx;
 }
 
-HcclResult InsertCommInst(uint32_t idx, hccl::HcclCommAicpu *comm, HcclOpResParam *resParam)
+HcclResult InsertCommInst(uint32_t idx, hccl::HcclCommAicpu* comm, HcclOpResParam* resParam)
 {
     g_commIdMap.instMap[idx].resParam = resParam;
     g_commIdMap.instMap[idx].hcclCommAicpu = comm;
     return HCCL_SUCCESS;
 }
 
-hccl::HcclCommAicpu *GetCommAicpuCommInst(uint32_t idx)
+hccl::HcclCommAicpu* GetCommAicpuCommInst(uint32_t idx)
 {
     if (g_commIdMap.instMap.find(idx) == g_commIdMap.instMap.end()) {
         return nullptr;
@@ -139,7 +130,7 @@ hccl::HcclCommAicpu *GetCommAicpuCommInst(uint32_t idx)
     return g_commIdMap.instMap[idx].hcclCommAicpu;
 }
 
-HcclOpResParam *GetCommAicpuResInst(uint32_t idx)
+HcclOpResParam* GetCommAicpuResInst(uint32_t idx)
 {
     if (g_commIdMap.instMap.find(idx) == g_commIdMap.instMap.end()) {
         return nullptr;
@@ -147,7 +138,7 @@ HcclOpResParam *GetCommAicpuResInst(uint32_t idx)
     return g_commIdMap.instMap[idx].resParam;
 }
 
-AicpuKfcRpcServerV2 *GetCommRpcServer(uint32_t idx)
+AicpuKfcRpcServerV2* GetCommRpcServer(uint32_t idx)
 {
     if (g_commIdMap.instMap.find(idx) == g_commIdMap.instMap.end()) {
         return nullptr;
@@ -156,15 +147,9 @@ AicpuKfcRpcServerV2 *GetCommRpcServer(uint32_t idx)
 }
 
 static thread_local uint8_t g_expectPrepareId[MAX_QUE_NUM];
-void SetExpectPrepareId(uint8_t queueId, uint8_t msgId)
-{
-    g_expectPrepareId[queueId] = msgId;
-}
+void SetExpectPrepareId(uint8_t queueId, uint8_t msgId) { g_expectPrepareId[queueId] = msgId; }
 
-uint8_t GetExpectPrepareId(uint8_t queueId)
-{
-    return g_expectPrepareId[queueId];
-}
+uint8_t GetExpectPrepareId(uint8_t queueId) { return g_expectPrepareId[queueId]; }
 
 struct CommInfoCtx {
     AlgType algType;
@@ -172,52 +157,45 @@ struct CommInfoCtx {
     std::string tag;
 };
 static std::unordered_map<std::string, std::unordered_map<u8, CommInfoCtx>> g_commTypeInfoMap;
-static ReadWriteLockBase g_mutexForTypeInfoMap;
-void SetCommInfoCtx(const std::string &groupName, u8 commType, const CommInfoCtx &ctx)
+static std::shared_mutex g_mutexForTypeInfoMap;
+void SetCommInfoCtx(const std::string& groupName, u8 commType, const CommInfoCtx& ctx)
 {
-    ReadWriteLock rwlock(g_mutexForTypeInfoMap);
-    rwlock.writeLock();
+    std::unique_lock<std::shared_mutex> rwlock(g_mutexForTypeInfoMap);
     g_commTypeInfoMap[groupName][commType] = ctx;
-    rwlock.writeUnlock();
 }
 
-HcclResult GetCommInfoCtx(const std::string &commName, u8 commType, CommInfoCtx &ctx)
+HcclResult GetCommInfoCtx(const std::string& commName, u8 commType, CommInfoCtx& ctx)
 {
-    ReadWriteLock rwlock(g_mutexForTypeInfoMap);
-    rwlock.readLock();
+    std::shared_lock<std::shared_mutex> rwlock(g_mutexForTypeInfoMap);
     const auto groupIter = g_commTypeInfoMap.find(commName);
     if (groupIter == g_commTypeInfoMap.end()) {
         HCCL_ERROR("Failed to find group %s in type info map.", commName.c_str());
-        rwlock.readUnlock();
         return HCCL_E_INTERNAL;
     }
 
     const auto commIter = groupIter->second.find(commType);
     if (commIter == groupIter->second.end()) {
         HCCL_ERROR("Failed to find type %u in map for group %s.", static_cast<u32>(commType), commName.c_str());
-        rwlock.readUnlock();
         return HCCL_E_INTERNAL;
     }
 
     ctx = commIter->second;
-    rwlock.readUnlock();
     return HCCL_SUCCESS;
 }
 
-const std::unordered_map<std::string, std::string> g_algName = {
-    {"AllGather=level0:ring", "AllGatherRingFor91093Executor"},
-    {"AllGather=level0:fullmesh", "AllGatherMeshOpbaseExecutor"},
-    {"AllGather=level0:doublering", "AlignedAllGatherDoubleRingFor91093Executor"},
-    {"ReduceScatter=level0:ring", "ReduceScatterRingFor91093Executor"},
-    {"ReduceScatter=level0:fullmesh", "ReduceScatterMeshDmaEliminationExecutor"},
-    {"ReduceScatter=level0:doublering", "AlignedReduceScatterDoubleRingFor91093Executor"},
-    {"AllReduce=level0:ring", "AllReduceRingFor91093Executor"},
-    {"AllReduce=level0:fullmesh", "AllReduceMeshOpbaseLoopExecutor"},
-    {"AllReduce=level0:doublering", "AlignedAllReduceDoubleRingFor91093Executor"},
-    {"AlltoAll=level0:pairwise", "RunAlltoAllVStaged"},
-    {"AlltoAll=level0:fullmesh", "RunAlltoAllDirectFullmesh"},
-    {"BatchWrite=level0:fullmesh", BATCH_WRITE_ALG_NAME}
-};
+const std::unordered_map<std::string, std::string> g_algName
+    = {{"AllGather=level0:ring", "AllGatherRingFor91093Executor"},
+       {"AllGather=level0:fullmesh", "AllGatherMeshOpbaseExecutor"},
+       {"AllGather=level0:doublering", "AlignedAllGatherDoubleRingFor91093Executor"},
+       {"ReduceScatter=level0:ring", "ReduceScatterRingFor91093Executor"},
+       {"ReduceScatter=level0:fullmesh", "ReduceScatterMeshDmaEliminationExecutor"},
+       {"ReduceScatter=level0:doublering", "AlignedReduceScatterDoubleRingFor91093Executor"},
+       {"AllReduce=level0:ring", "AllReduceRingFor91093Executor"},
+       {"AllReduce=level0:fullmesh", "AllReduceMeshOpbaseLoopExecutor"},
+       {"AllReduce=level0:doublering", "AlignedAllReduceDoubleRingFor91093Executor"},
+       {"AlltoAll=level0:pairwise", "RunAlltoAllVStaged"},
+       {"AlltoAll=level0:fullmesh", "RunAlltoAllDirectFullmesh"},
+       {"BatchWrite=level0:fullmesh", BATCH_WRITE_ALG_NAME}};
 ANONYMOUS_NAMESPACE_END
 
 AicpuAddOneNotifyWaitSqe g_addOneNotifyWaitSqe = nullptr;
@@ -240,7 +218,7 @@ AicpuAddOneRdmaDbSendSqe AicpuGetAddOneRdmaDbSendSqe() { return g_addOneRdmaDbSe
 AicpuAddOneFlipPlaceHolderSqe AicpuGetAddOneFlipPlaceHolderSqe() { return g_addOneFlipPlaceHolderSqe; }
 
 ANONYMOUS_NAMESPACE_BEGIN
-void InitSqCqFun(AicpuComContext *ctx)
+void InitSqCqFun(AicpuComContext* ctx)
 {
     if (ctx->devType == DevType::DEV_TYPE_310P1 || ctx->devType == DevType::DEV_TYPE_310P3) {
         g_addOneNotifyWaitSqe = AddOneNotifyWaitSqeV2;
@@ -263,23 +241,25 @@ void InitSqCqFun(AicpuComContext *ctx)
     }
 }
 
-HcclResult InitIbversData(HccCommResParamTask *commParam, AicpuComContext *ctx) {
+HcclResult InitIbversData(HccCommResParamTask* commParam, AicpuComContext* ctx)
+{
     HCCL_INFO("commParam->ibverbsData:%llu", commParam->ibverbsData);
     if (commParam->ibverbsDataSize != static_cast<u64>(ctx->rankNum) * sizeof(TransportDeviceNormalData)) {
-        HCCL_ERROR("ibverbsData size[%llu] is not valid, expect size[%llu]",
-                   commParam->ibverbsDataSize, static_cast<u64>(ctx->rankNum) * sizeof(TransportDeviceNormalData));
+        HCCL_ERROR(
+            "ibverbsData size[%llu] is not valid, expect size[%llu]", commParam->ibverbsDataSize,
+            static_cast<u64>(ctx->rankNum) * sizeof(TransportDeviceNormalData));
         return HCCL_E_PARA;
     }
     ctx->ibversData.resize(ctx->rankNum);
     for (u32 i = 0; i < ctx->rankNum; i++) {
-        void *memPtr = reinterpret_cast<void *>(commParam->ibverbsData + sizeof(TransportDeviceNormalData) * i);
-        ctx->ibversData[i] = *(static_cast<TransportDeviceNormalData *>(memPtr));
+        void* memPtr = reinterpret_cast<void*>(commParam->ibverbsData + sizeof(TransportDeviceNormalData) * i);
+        ctx->ibversData[i] = *(static_cast<TransportDeviceNormalData*>(memPtr));
         ctx->ibversData[i].Print();
     }
     return HCCL_SUCCESS;
 }
 
-void InitRankInfo(HccCommResParamTask *commParam, AicpuComContext *ctx)
+void InitRankInfo(HccCommResParamTask* commParam, AicpuComContext* ctx)
 {
     for (u32 i = 0; i < ctx->rankNum; i++) {
         ctx->rankInfo[i].rankId = i;
@@ -289,7 +269,7 @@ void InitRankInfo(HccCommResParamTask *commParam, AicpuComContext *ctx)
 }
 
 template <typename T>
-HcclResult InitAndVerifySignal(const HcclSignalInfo &signalInfo, std::shared_ptr<T> &notify, u64 &addr)
+HcclResult InitAndVerifySignal(const HcclSignalInfo& signalInfo, std::shared_ptr<T>& notify, u64& addr)
 {
     if (signalInfo.resId == INVALID_U64) {
         HCCL_INFO("[HcclCommAicpu][%s] resId is invalid, need not check", __func__);
@@ -302,12 +282,13 @@ HcclResult InitAndVerifySignal(const HcclSignalInfo &signalInfo, std::shared_ptr
     HcclSignalInfo notifyInfo;
     CHK_RET(notify->GetNotifyData(notifyInfo));
     addr = notifyInfo.addr;
-    HCCL_INFO("[HcclCommAicpu][%s] success, resId[%u], tsId:%d, devId[%u]", __func__, signalInfo.resId,
-              signalInfo.tsId, signalInfo.devId);
+    HCCL_INFO(
+        "[HcclCommAicpu][%s] success, resId[%u], tsId:%d, devId[%u]", __func__, signalInfo.resId, signalInfo.tsId,
+        signalInfo.devId);
     return HCCL_SUCCESS;
 }
 
-HcclResult InitSignalInfo(HccCommResParamTask *commParam, AicpuComContext *ctx)
+HcclResult InitSignalInfo(HccCommResParamTask* commParam, AicpuComContext* ctx)
 {
     for (u32 i = 0; i < ctx->rankNum; i++) {
         // 跨片notify只用在其它rank上，本片位置未填写有效值
@@ -318,13 +299,13 @@ HcclResult InitSignalInfo(HccCommResParamTask *commParam, AicpuComContext *ctx)
         // no ipc pre sync
         u64 address = 0;
         std::shared_ptr<LocalNotify> localNotify;
-        HcclSignalInfo *sigInfo = &commParam->signalInfo.noIpcNotifys[i];
+        HcclSignalInfo* sigInfo = &commParam->signalInfo.noIpcNotifys[i];
         CHK_RET(InitAndVerifySignal(*sigInfo, localNotify, address));
         ctx->noIpcPreNotify[i].actualNotifyId = static_cast<s32>(sigInfo->resId);
 
         if (sigInfo->rankId != ctx->rankInfo[i].rankId) {
-            HCCL_DEBUG("rankId mismatch. current process rank:%d, sigInfo rank:%d", ctx->rankInfo[i].rankId,
-                       sigInfo->rankId);
+            HCCL_DEBUG(
+                "rankId mismatch. current process rank:%d, sigInfo rank:%d", ctx->rankInfo[i].rankId, sigInfo->rankId);
             return HCCL_E_INTERNAL;
         }
 
@@ -357,11 +338,11 @@ HcclResult InitSignalInfo(HccCommResParamTask *commParam, AicpuComContext *ctx)
     return HCCL_SUCCESS;
 }
 
-HcclResult InitEventId(HccCommResParamTask *commParam, AicpuComContext *ctx)
+HcclResult InitEventId(HccCommResParamTask* commParam, AicpuComContext* ctx)
 {
     for (u32 i = 0; i < ctx->rankNum; i++) {
         // eventid只用在片内，放全局
-        HcclSignalInfo *sigInfo = &commParam->signalInfo.noIpcEvents[i];
+        HcclSignalInfo* sigInfo = &commParam->signalInfo.noIpcEvents[i];
         if (sigInfo->rankId == ctx->rankId) {
             // 盘古230B入图场景连续跑第二次会出现eventId校验失败，当前不使用event，删除KfcResIsInvalid校验
             ctx->eventIds[i] = sigInfo->resId;
@@ -370,10 +351,10 @@ HcclResult InitEventId(HccCommResParamTask *commParam, AicpuComContext *ctx)
     return HCCL_SUCCESS;
 }
 
-HcclResult InitAicpuOpNotify(HccCommResParamTask *commParam, AicpuComContext *ctx)
+HcclResult InitAicpuOpNotify(HccCommResParamTask* commParam, AicpuComContext* ctx)
 {
     for (u32 i = 0; i < sizeof(ctx->aicpuOpNotify) / sizeof(ctx->aicpuOpNotify[0]); i++) {
-        HcclSignalInfo *sigInfo = &commParam->signalInfo.aicpuOpNotify[i];
+        HcclSignalInfo* sigInfo = &commParam->signalInfo.aicpuOpNotify[i];
         std::shared_ptr<LocalNotify> localNitfy;
         EXCEPTION_CATCH((localNitfy = std::make_shared<LocalNotify>()), return HCCL_E_PTR);
         CHK_RET(localNitfy->Init(*sigInfo, NotifyLoadType::DEVICE_NOTIFY));
@@ -385,23 +366,24 @@ HcclResult InitAicpuOpNotify(HccCommResParamTask *commParam, AicpuComContext *ct
     return HCCL_SUCCESS;
 }
 
-HcclResult InitTimeOutConfig(HccCommResParamTask *commParam, AicpuComContext *ctx)
+HcclResult InitTimeOutConfig(HccCommResParamTask* commParam, AicpuComContext* ctx)
 {
     ctx->dfxExtendInfo.dfxTimeOutConfig.sqeTimeOutTimeOut = commParam->config.notifyWaitTime;
     ctx->dfxExtendInfo.dfxTimeOutConfig.sqeCreditTimeOut = RT_STARS_NEVER_TIMEOUT_KERNEL_CREDIT;
     ctx->dfxExtendInfo.dfxTimeOutConfig.sqeWaitTimeOut = dfx::kKfcTimeOut;
     ctx->dfxExtendInfo.dfxTimeOutConfig.sqFullWaitTimeOut = dfx::kSqFullWaitTimeOut;
-    HCCL_INFO("DFX timeout config init successfully with details: [%s]",
-              ctx->dfxExtendInfo.dfxTimeOutConfig.ToString().c_str());
+    HCCL_INFO(
+        "DFX timeout config init successfully with details: [%s]",
+        ctx->dfxExtendInfo.dfxTimeOutConfig.ToString().c_str());
     return HCCL_SUCCESS;
 }
 
-HcclResult InitChipType(AicpuComContext *ctx)
+HcclResult InitChipType(AicpuComContext* ctx)
 {
     CHK_RET(hrtHalGetDeviceType(ctx->devId, ctx->devType));
     CHK_RET(hrtHalGetDeviceInfo(ctx->devId, MODULE_TYPE_SYSTEM, INFO_TYPE_PHY_CHIP_ID, &ctx->chipId));
-    if (ctx->devType == DevType::DEV_TYPE_910 || ctx->devType == DevType::DEV_TYPE_NOSOC ||
-        ctx->devType == DevType::DEV_TYPE_COUNT) {
+    if (ctx->devType == DevType::DEV_TYPE_910 || ctx->devType == DevType::DEV_TYPE_NOSOC
+        || ctx->devType == DevType::DEV_TYPE_COUNT) {
         HCCL_ERROR("Get devtype [%d] is invalid", ctx->devType);
         return HCCL_E_DRV;
     }
@@ -417,7 +399,7 @@ HcclResult InitChipType(AicpuComContext *ctx)
     return HCCL_SUCCESS;
 }
 
-void GetNextMsgFromMsg(AivAicpuOpParam *msg, AivAicpuOpParam *nextMsg, u64 dataLen, u32 rankNum)
+void GetNextMsgFromMsg(AivAicpuOpParam* msg, AivAicpuOpParam* nextMsg, u64 dataLen, u32 rankNum)
 {
     *(nextMsg) = *(msg);
     // nextMsg的偏移同UpdateMsg
@@ -431,7 +413,7 @@ void GetNextMsgFromMsg(AivAicpuOpParam *msg, AivAicpuOpParam *nextMsg, u64 dataL
     nextMsg->PrintMsg("nextMsg");
 }
 
-void GetCommonHcclMsg(HcclMsg *hcclMsg, CommonHcclMsg *commonHcclMsg, u64 tilingBase)
+void GetCommonHcclMsg(HcclMsg* hcclMsg, CommonHcclMsg* commonHcclMsg, u64 tilingBase)
 {
     const HcclTilingVersion ver = hcclMsg->addMsg.v0Msg.version;
     if (ver != HcclTilingVersion::DEPRECATED_TILING_VERSION) {
@@ -458,7 +440,7 @@ void GetCommonHcclMsg(HcclMsg *hcclMsg, CommonHcclMsg *commonHcclMsg, u64 tiling
 AicpuCCExecOp GetCcOpType(u64 comDataLen, u64 rankNum)
 {
     AicpuCCExecOp ccType;
-    AicpuComContext *ctx = AicpuGetComContext();
+    AicpuComContext* ctx = AicpuGetComContext();
     if (ctx->devType == DevType::DEV_TYPE_310P1 || ctx->devType == DevType::DEV_TYPE_310P3) {
         if (ctx->onlyRead > 0) {
             HCCL_DEBUG("Only read mode enabled");
@@ -486,7 +468,7 @@ AicpuCCExecOp GetCcOpType(u64 comDataLen, u64 rankNum)
     return ccType;
 }
 
-void UpdateMsg(AivAicpuOpParam *msg, u64 dataLen, u32 rankNum)
+void UpdateMsg(AivAicpuOpParam* msg, u64 dataLen, u32 rankNum)
 {
     // 如果是reduceScatter算法，sendBuffer和recvBuffer的偏移为recvCnt，即sendCnt/rankNum
     // allgather和allreduce算法，sendBuffer和recvBuffer的偏移为recvCnt=sendCnt
@@ -505,16 +487,15 @@ void UpdateMsg(AivAicpuOpParam *msg, u64 dataLen, u32 rankNum)
     msg->PrintMsg("update msg");
 }
 
-HcclResult SetMsgWinOffset(AicpuComContext *ctx, AivAicpuOpParam *msg)
+HcclResult SetMsgWinOffset(AicpuComContext* ctx, AivAicpuOpParam* msg)
 {
-    if (msg->useBufferType == MC2_BUFFER_TYPE_WINDOW_IN &&
-        ((msg->commType == HcclCMDType::HCCL_CMD_ALLREDUCE && !ctx->determinism) ||
-        msg->commType == HcclCMDType::HCCL_CMD_ALLTOALL)) {
+    if (msg->useBufferType == MC2_BUFFER_TYPE_WINDOW_IN
+        && ((msg->commType == HcclCMDType::HCCL_CMD_ALLREDUCE && !ctx->determinism)
+            || msg->commType == HcclCMDType::HCCL_CMD_ALLTOALL)) {
         // sendBuffer 减去本卡的winIn
-        AicpuComRankInfo *selfRankInfo = &ctx->rankInfo[ctx->rankId];
+        AicpuComRankInfo* selfRankInfo = &ctx->rankInfo[ctx->rankId];
         if (msg->sendBuffer < selfRankInfo->window) {
-            HCCL_ERROR("sendBuffer addr[%p] must bigger than window addr[%p].", msg->sendBuffer,
-                       selfRankInfo->window);
+            HCCL_ERROR("sendBuffer addr[%p] must bigger than window addr[%p].", msg->sendBuffer, selfRankInfo->window);
             return HCCL_E_PARA;
         }
         msg->winOffset = msg->sendBuffer - selfRankInfo->window;
@@ -523,20 +504,21 @@ HcclResult SetMsgWinOffset(AicpuComContext *ctx, AivAicpuOpParam *msg)
     return HCCL_SUCCESS;
 }
 
-bool CheckNsCommand(hccl::HcclCommAicpu *comm) {
+bool CheckNsCommand(hccl::HcclCommAicpu* comm)
+{
     KfcCommand cmd;
     if (comm->BackGroundGetCmd(cmd) != HCCL_SUCCESS || cmd != KfcCommand::NsStopLaunch) {
         return false;
     }
     comm->SetNsStopLaunchStatus(true);
-    HCCL_WARNING("N second stop Launch for recv stop launch cmd.");
+    HCCL_WARNING("N second stop launch for receiving stop launch cmd.");
     return true;
 }
 
-HcclResult CheckNsStopLaunchStatus(const std::vector<u32> &groupIds)
+HcclResult CheckNsStopLaunchStatus(const std::vector<u32>& groupIds)
 {
-    for (const auto i: groupIds) {
-        hccl::HcclCommAicpu *comm = GetCommAicpuCommInst(i);
+    for (const auto i : groupIds) {
+        hccl::HcclCommAicpu* comm = GetCommAicpuCommInst(i);
         if (comm != nullptr && comm->GetNsStopLaunchStatus()) {
             return HCCL_E_SUSPENDING;
         }
@@ -544,10 +526,10 @@ HcclResult CheckNsStopLaunchStatus(const std::vector<u32> &groupIds)
     return HCCL_SUCCESS;
 }
 
-bool GetOpRetryEnable(const std::vector<u32> &groupIds)
+bool GetOpRetryEnable(const std::vector<u32>& groupIds)
 {
-    for (const auto i: groupIds) {
-        hccl::HcclCommAicpu *comm = GetCommAicpuCommInst(i);
+    for (const auto i : groupIds) {
+        hccl::HcclCommAicpu* comm = GetCommAicpuCommInst(i);
         if (comm == nullptr || !comm->GetOpRetryEnable()) {
             return false;
         }
@@ -555,7 +537,8 @@ bool GetOpRetryEnable(const std::vector<u32> &groupIds)
     return true;
 }
 
-HcclResult CheckRestartError(hccl::HcclCommAicpu *comm) {
+HcclResult CheckRestartError(hccl::HcclCommAicpu* comm)
+{
     // 支持重执行时，检测是否有可重执行的sdma异常, 或者kStopLaunch命令
     if (comm->GetOpRetryEnable()) {
         if (comm->IsTaskExceptionForHccs()) {
@@ -574,10 +557,10 @@ HcclResult CheckRestartError(hccl::HcclCommAicpu *comm) {
 }
 
 static constexpr u32 LOG_INTERVAL = 10000U;
-HcclResult CheckFinishByStream(HcclCommAicpu &comm, size_t streamIdx, bool tailQueryFlag = true)
+HcclResult CheckFinishByStream(HcclCommAicpu& comm, size_t streamIdx, bool tailQueryFlag = true)
 {
     uint32_t sqHead, sqTail;
-    Stream &stream = (streamIdx == SIZE_MAX ? comm.GetMainStream() : comm.GetSlaveStream()[streamIdx]);
+    Stream& stream = (streamIdx == SIZE_MAX ? comm.GetMainStream() : comm.GetSlaveStream()[streamIdx]);
     const uint32_t sqId = stream.sqId();
     if (tailQueryFlag) {
         CHK_RET(QuerySqStatusByType(comm.GetDevId(), sqId, DRV_SQCQ_PROP_SQ_TAIL, sqTail));
@@ -597,14 +580,15 @@ HcclResult CheckFinishByStream(HcclCommAicpu &comm, size_t streamIdx, bool tailQ
         if (logHead != sqHead || logTail != sqTail) {
             logHead = sqHead;
             logTail = sqTail;
-            HCCL_RUN_INFO("Current state. devId:%u sqid:%d, head:%u, tail:%u, group[%s]",
-                          comm.GetDevId(), sqId, sqHead, sqTail, comm.GetGroupName().c_str());
+            HCCL_RUN_INFO(
+                "Current state. devId:%u sqid:%d, head:%u, tail:%u, group[%s]", comm.GetDevId(), sqId, sqHead, sqTail,
+                comm.GetGroupName().c_str());
         }
     }
     return HCCL_E_UNAVAIL;
 }
 
-HcclResult RpcServerPreCheck(AicpuKfcRpcServerV2 *rpc, hccl::HcclCommAicpu *comm, bool &finalizeFlag)
+HcclResult RpcServerPreCheck(AicpuKfcRpcServerV2* rpc, hccl::HcclCommAicpu* comm, bool& finalizeFlag)
 {
     if (CheckNsCommand(comm)) {
         return HCCL_E_SUSPENDING;
@@ -631,25 +615,26 @@ HcclResult RpcServerPreCheck(AicpuKfcRpcServerV2 *rpc, hccl::HcclCommAicpu *comm
 }
 
 static constexpr u64 BARRIER_TIMEOUT = static_cast<u64>(NSEC_PER_SEC) * 60UL;
-HcclResult BarrierProcess(u32 groupIdx, u32 localGroupIdx, u32 queueId, BarrierStatus &status)
+HcclResult BarrierProcess(u32 groupIdx, u32 localGroupIdx, u32 queueId, BarrierStatus& status)
 {
-    AicpuKfcRpcServerV2 *rpc = GetCommRpcServer(groupIdx);
-    BarrierInfo *barrierInfos = rpc->GetBarrierInfoByGroupIdx(localGroupIdx);
-    BarrierStatus &selfFlag = barrierInfos[queueId].status;
+    AicpuKfcRpcServerV2* rpc = GetCommRpcServer(groupIdx);
+    BarrierInfo* barrierInfos = rpc->GetBarrierInfoByGroupIdx(localGroupIdx);
+    BarrierStatus& selfFlag = barrierInfos[queueId].status;
     if (selfFlag == BarrierStatus::NO_BARRIER) {
         barrierInfos[queueId].lastTimeStamp = GetCurCpuTimestamp();
         status = BarrierStatus::NO_BARRIER;
         return HCCL_SUCCESS;
     }
 
-    u32 &barrierFinishCnt = rpc->GetBarrierFinishCnts()[HcclAicpuUtils::GetBlockIdx()];
+    u32& barrierFinishCnt = rpc->GetBarrierFinishCnts()[HcclAicpuUtils::GetBlockIdx()];
     if (selfFlag == BarrierStatus::SELF_BARRIER) {
         if (CheckFinishByStream(*GetCommAicpuCommInst(groupIdx), queueId, false) == HCCL_SUCCESS) {
             barrierInfos[queueId].lastTimeStamp = GetCurCpuTimestamp();
             selfFlag = BarrierStatus::INTER_BARRIER;
             ++barrierFinishCnt;
-            HCCL_INFO("[%s][Queue %u]All tasks in queue are finished in block %u, finish count %u.",
-                      __func__, queueId, HcclAicpuUtils::GetBlockIdx(), barrierFinishCnt);
+            HCCL_INFO(
+                "[%s][Queue %u]All tasks in queue are finished in block %u, finish count %u.", __func__, queueId,
+                HcclAicpuUtils::GetBlockIdx(), barrierFinishCnt);
         }
     }
 
@@ -658,10 +643,12 @@ HcclResult BarrierProcess(u32 groupIdx, u32 localGroupIdx, u32 queueId, BarrierS
         u32 end = 0U;
         rpc->GetLocalQueueRange(start, end);
         if (barrierFinishCnt == end + 1U - start) {
-            CHK_PRT_RET(AicpuKfcUtils::ThreadBarrier(BARRIER_TIMEOUT) != HCCL_SUCCESS,
-                        HCCL_ERROR("[%s]Failed to wait in block %u, finish count %u.",
-                                   __func__, HcclAicpuUtils::GetBlockIdx(), barrierFinishCnt),
-                        HCCL_E_AGAIN);
+            CHK_PRT_RET(
+                AicpuKfcUtils::ThreadBarrier(BARRIER_TIMEOUT) != HCCL_SUCCESS,
+                HCCL_ERROR(
+                    "[%s]Failed to wait in block %u, finish count %u.", __func__, HcclAicpuUtils::GetBlockIdx(),
+                    barrierFinishCnt),
+                HCCL_E_AGAIN);
             rpc->ClearBarrierStatus(localGroupIdx, start, barrierFinishCnt);
             barrierFinishCnt = 0U;
             return HCCL_SUCCESS;
@@ -670,15 +657,15 @@ HcclResult BarrierProcess(u32 groupIdx, u32 localGroupIdx, u32 queueId, BarrierS
 
     status = selfFlag;
     const u64 ts = GetCurCpuTimestamp();
-    CHK_PRT_RET(ts - barrierInfos[queueId].lastTimeStamp > BARRIER_TIMEOUT,
-                HCCL_ERROR("[%s]Timeout when checking queue %u, finish count %u.",
-                           __func__, queueId, barrierFinishCnt),
-                HCCL_E_AGAIN);
+    CHK_PRT_RET(
+        ts - barrierInfos[queueId].lastTimeStamp > BARRIER_TIMEOUT,
+        HCCL_ERROR("[%s]Timeout when checking queue %u, finish count %u.", __func__, queueId, barrierFinishCnt),
+        HCCL_E_AGAIN);
 
     return HCCL_SUCCESS;
 }
 
-void FinalizeProcess(u32 queueIdx, hccl::HcclCommAicpu &commAicpu, AicpuKfcRpcServerV2 &rpcServer)
+void FinalizeProcess(u32 queueIdx, hccl::HcclCommAicpu& commAicpu, AicpuKfcRpcServerV2& rpcServer)
 {
     if (AicpuKfcProf::IsDebugModeEquals(MC2_DEBUG_PRINT_BUFF)) {
         rpcServer.PrintAllHcclMsgAreaData();
@@ -691,18 +678,19 @@ void FinalizeProcess(u32 queueIdx, hccl::HcclCommAicpu &commAicpu, AicpuKfcRpcSe
     SetExpectPrepareId(queueIdx, 0U);
 }
 
-HcclResult AddTaskForGroupSyncMsg(const std::vector<u32> &groupIds, u32 localGroupIdx, CommonHcclMsg *hcclMsg)
+HcclResult AddTaskForGroupSyncMsg(const std::vector<u32>& groupIds, u32 localGroupIdx, CommonHcclMsg* hcclMsg)
 {
     if (static_cast<uint32_t>(hcclMsg->commDepGroupID) == localGroupIdx) {
-        HCCL_ERROR("InterHcclGroupSync must be used for cross-domain synchronization, group id %d",
-                   hcclMsg->commDepGroupID);
+        HCCL_ERROR(
+            "InterHcclGroupSync must be used for cross-domain synchronization, group id %d", hcclMsg->commDepGroupID);
         return HCCL_E_INTERNAL;
     }
 
-    CHK_PRT_RET(static_cast<size_t>(hcclMsg->commDepGroupID) >= groupIds.size(),
-                HCCL_ERROR("Invalid group id %d.", hcclMsg->commDepGroupID), HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        static_cast<size_t>(hcclMsg->commDepGroupID) >= groupIds.size(),
+        HCCL_ERROR("Invalid group id %d.", hcclMsg->commDepGroupID), HCCL_E_INTERNAL);
 
-    AicpuKfcRpcServerV2 *rpcServerDep = GetCommRpcServer(groupIds[hcclMsg->commDepGroupID]);
+    AicpuKfcRpcServerV2* rpcServerDep = GetCommRpcServer(groupIds[hcclMsg->commDepGroupID]);
     if (rpcServerDep == nullptr) {
         HCCL_ERROR("get rpc server failed, group id %d", hcclMsg->commDepGroupID);
         return HCCL_E_INTERNAL;
@@ -719,25 +707,25 @@ HcclResult AddTaskForGroupSyncMsg(const std::vector<u32> &groupIds, u32 localGro
     }
 
     const u32 groupIdx = groupIds[localGroupIdx];
-    hccl::HcclCommAicpu *commAicpu = GetCommAicpuCommInst(groupIdx);
-    AicpuKfcRpcServerV2 *rpcServer = GetCommRpcServer(groupIdx);
-    CHK_PRT_RET(commAicpu == nullptr || rpcServer == nullptr,
-                HCCL_ERROR("Invalid group index %u.", groupIdx), HCCL_E_INTERNAL);
+    hccl::HcclCommAicpu* commAicpu = GetCommAicpuCommInst(groupIdx);
+    AicpuKfcRpcServerV2* rpcServer = GetCommRpcServer(groupIdx);
+    CHK_PRT_RET(
+        commAicpu == nullptr || rpcServer == nullptr, HCCL_ERROR("Invalid group index %u.", groupIdx), HCCL_E_INTERNAL);
     rpcServer->SetNeedRetryFlag(false);
-    CHK_RET(rpcServer->AddCcoreWait(commAicpu->GetDispatcher(), waitAddr, static_cast<uint32_t>(turnNum),
-                                    &(commAicpu->GetMainStream()), false));
+    CHK_RET(rpcServer->AddCcoreWait(
+        commAicpu->GetDispatcher(), waitAddr, static_cast<uint32_t>(turnNum), &(commAicpu->GetMainStream()), false));
     return HCCL_SUCCESS;
 }
 
-void PrepareOpParam(hccl::OpParam *opParam, CommonHcclMsg *hcclMsg, AicpuKfcRpcServerV2 &rpc,
-                    hccl::HcclCommAicpu *commAicpu)
+void PrepareOpParam(
+    hccl::OpParam* opParam, CommonHcclMsg* hcclMsg, AicpuKfcRpcServerV2& rpc, hccl::HcclCommAicpu* commAicpu)
 {
     if (AicpuKfcProf::IsDebugModeEquals(MC2_DEBUG_SDMA_ERROR)) {
-        opParam->inputPtr = reinterpret_cast<void *>(0xdeadbeef);
-        opParam->outputPtr = reinterpret_cast<void *>(0xdeadbeef);
+        opParam->inputPtr = reinterpret_cast<void*>(0xdeadbeef);
+        opParam->outputPtr = reinterpret_cast<void*>(0xdeadbeef);
     } else {
-        opParam->inputPtr = reinterpret_cast<void *>(hcclMsg->sendBuffer);
-        opParam->outputPtr = reinterpret_cast<void *>(hcclMsg->recvBuffer);
+        opParam->inputPtr = reinterpret_cast<void*>(hcclMsg->sendBuffer);
+        opParam->outputPtr = reinterpret_cast<void*>(hcclMsg->recvBuffer);
     }
     opParam->reduceType = hcclMsg->opType;
     opParam->stream = commAicpu->GetMainStream();
@@ -745,7 +733,7 @@ void PrepareOpParam(hccl::OpParam *opParam, CommonHcclMsg *hcclMsg, AicpuKfcRpcS
     opParam->opBaseAtraceInfo = nullptr;
     opParam->opType = static_cast<HcclCMDType>(hcclMsg->commType);
     if (hcclMsg->commType == HcclCMDType::HCCL_CMD_ALLTOALLV || hcclMsg->commType == HcclCMDType::HCCL_CMD_ALLTOALL) {
-        HcclMsgExt *hcclMsgExt = rpc.GetHcclMsgExtPtr();
+        HcclMsgExt* hcclMsgExt = rpc.GetHcclMsgExtPtr();
         opParam->All2AllDataDes.sendType = opParam->All2AllDataDes.recvType = hcclMsg->hcclDataType;
         opParam->All2AllDataDes.sendCount = hcclMsg->dataCnt;
         if (hcclMsg->commType == HcclCMDType::HCCL_CMD_ALLTOALL && hcclMsg->strideCount > 0UL) {
@@ -756,18 +744,18 @@ void PrepareOpParam(hccl::OpParam *opParam, CommonHcclMsg *hcclMsg, AicpuKfcRpcS
             opParam->opType = static_cast<HcclCMDType>(HcclCMDType::HCCL_CMD_ALLTOALLV);
         }
         if (opParam->opType == static_cast<HcclCMDType>(HcclCMDType::HCCL_CMD_ALLTOALLV)) {
-            opParam->All2AllDataDes.sendCounts = static_cast<void *>(hcclMsgExt->sendCounts);
-            opParam->All2AllDataDes.recvCounts = static_cast<void *>(hcclMsgExt->recvCounts);
-            opParam->All2AllDataDes.sdispls = static_cast<void *>(hcclMsgExt->sendOffset);
-            opParam->All2AllDataDes.rdispls = static_cast<void *>(hcclMsgExt->recvOffset);
+            opParam->All2AllDataDes.sendCounts = static_cast<void*>(hcclMsgExt->sendCounts);
+            opParam->All2AllDataDes.recvCounts = static_cast<void*>(hcclMsgExt->recvCounts);
+            opParam->All2AllDataDes.sdispls = static_cast<void*>(hcclMsgExt->sendOffset);
+            opParam->All2AllDataDes.rdispls = static_cast<void*>(hcclMsgExt->recvOffset);
         }
     } else if (hcclMsg->commType == HcclCMDType::HCCL_CMD_BATCH_WRITE) {
         opParam->BatchWriteDataDes.itemNum = hcclMsg->dataCnt;
         opParam->BatchWriteDataDes.queueNum = rpc.GetTotalQueueNum();
         opParam->BatchWriteDataDes.queueIdx = static_cast<u32>(hcclMsg->opType);
-        HCCL_DEBUG("[Sdma-BatchWrite]Queue size %u, global queue id %u, item number %u.",
-                   opParam->BatchWriteDataDes.queueNum, opParam->BatchWriteDataDes.queueIdx,
-                   opParam->BatchWriteDataDes.itemNum);
+        HCCL_DEBUG(
+            "[Sdma-BatchWrite]Queue size %u, global queue id %u, item number %u.", opParam->BatchWriteDataDes.queueNum,
+            opParam->BatchWriteDataDes.queueIdx, opParam->BatchWriteDataDes.itemNum);
     } else {
         const u64 totalSize = hcclMsg->dataCnt * DataUnitSize(hcclMsg->hcclDataType);
         opParam->DataDes.count = hcclMsg->dataCnt;
@@ -778,7 +766,7 @@ void PrepareOpParam(hccl::OpParam *opParam, CommonHcclMsg *hcclMsg, AicpuKfcRpcS
     }
 }
 
-bool SelectAlgName(const std::string &algConfig, u32 topoType, std::string &algName)
+bool SelectAlgName(const std::string& algConfig, u32 topoType, std::string& algName)
 {
     std::string curConfig;
     std::size_t found = algConfig.find(";");
@@ -790,8 +778,8 @@ bool SelectAlgName(const std::string &algConfig, u32 topoType, std::string &algN
         curConfig = algConfig.substr(0, found);
     }
     if (static_cast<TopoType>(topoType) == TopoType::TOPO_TYPE_NP_SINGLE_RING) {
-        if (curConfig == "AllGather=level0:doublering" || curConfig == "ReduceScatter=level0:doublering" ||
-            curConfig == "AllReduce=level0:doublering") {
+        if (curConfig == "AllGather=level0:doublering" || curConfig == "ReduceScatter=level0:doublering"
+            || curConfig == "AllReduce=level0:doublering") {
             std::size_t pos = curConfig.find(":");
             std::string algConfigTmp = curConfig.substr(0, pos + 1) + "ring";
             algName = g_algName.at(algConfigTmp);
@@ -803,16 +791,17 @@ bool SelectAlgName(const std::string &algConfig, u32 topoType, std::string &algN
         algName = res->second;
         return true;
     }
-    HCCL_ERROR("[AicpuHcclProcess][%s] algo_name is not exist, algConfig %s is no.", __func__, algConfig.c_str());
+    HCCL_ERROR(
+        "[AicpuHcclProcess][%s] algo_name does not exist, algConfig %s is invalid.", __func__, algConfig.c_str());
     return false;
 }
 
-bool SplitHcclAlgoGetLevel1Res(std::string &algoConfig, std::string &algos)
+bool SplitHcclAlgoGetLevel1Res(std::string& algoConfig, std::string& algos)
 {
     std::string remainAlgoConfig;
     std::size_t found = algoConfig.find(";");
     if ((found == 0) || (found == (algoConfig.length() - 1)) || (found == std::string::npos)) {
-        HCCL_INFO("algoConfig %s thereis no level1 algo config", algoConfig.c_str());
+        HCCL_INFO("algoConfig %s: there is no level1 algo config", algoConfig.c_str());
         return true;
     }
     remainAlgoConfig = algoConfig.substr(found + 1);
@@ -828,7 +817,7 @@ bool SplitHcclAlgoGetLevel1Res(std::string &algoConfig, std::string &algos)
     return false;
 }
 
-HcclResult ParserHcclAlgoLevel1(std::string &algoLevel, uint32_t &level, HcclAlgoType &algoType)
+HcclResult ParserHcclAlgoLevel1(std::string& algoLevel, uint32_t& level, HcclAlgoType& algoType)
 {
     std::size_t found = algoLevel.find(":");
     if ((found == 0) || (found == (algoLevel.length() - 1))) {
@@ -862,7 +851,7 @@ HcclResult ParserHcclAlgoLevel1(std::string &algoLevel, uint32_t &level, HcclAlg
     return HCCL_SUCCESS;
 }
 
-bool SetAlgTypeLevel1(HcclAlgoType algoConfig, AlgTypeLevel1 &algType, uint32_t moduleNum)
+bool SetAlgTypeLevel1(HcclAlgoType algoConfig, AlgTypeLevel1& algType, uint32_t moduleNum)
 {
     switch (algoConfig) {
         case HcclAlgoType::HCCL_ALGO_TYPE_HDR:
@@ -899,23 +888,22 @@ bool SetAlgTypeLevel1(HcclAlgoType algoConfig, AlgTypeLevel1 &algType, uint32_t 
     return true;
 }
 
-void SetAlgoLevel1(hccl::HcclCommAicpu *commAicpu, HcclAlgoType algoConfig,
-                   uint32_t moduleNum, AlgTypeLevel1 &algType, bool isDefault)
+void SetAlgoLevel1(
+    hccl::HcclCommAicpu* commAicpu, HcclAlgoType algoConfig, uint32_t moduleNum, AlgTypeLevel1& algType, bool isDefault)
 {
     if ((isDefault == false) && (SetAlgTypeLevel1(algoConfig, algType, moduleNum))) {
         // 不使用default配置
         HCCL_INFO("[AicpuHcclProcess][%s] algType[%u], moduleNum[%u]", __func__, algType, moduleNum);
         return;
     }
-    if (moduleNum >=  HCCL_INTER_SERVER_RING_ALGO_MAX_SUPPORT_SERVER_NUM) {
+    if (moduleNum >= HCCL_INTER_SERVER_RING_ALGO_MAX_SUPPORT_SERVER_NUM) {
         // server 数为 8 以上：使用 HD 算法
         algType = AlgTypeLevel1::ALG_LEVEL1_HD;
     } else {
         // server 数为 2 的非整数次幂：使用 RING 算法
         // server 数为 2 的整数次幂：使用 HD 算法
-        algType = (((moduleNum & (moduleNum - 1)) != 0) || (moduleNum == 1)) ?
-                  AlgTypeLevel1::ALG_LEVEL1_RING :
-                  AlgTypeLevel1::ALG_LEVEL1_HD;
+        algType = (((moduleNum & (moduleNum - 1)) != 0) || (moduleNum == 1)) ? AlgTypeLevel1::ALG_LEVEL1_RING :
+                                                                               AlgTypeLevel1::ALG_LEVEL1_HD;
     }
     DevType devType = commAicpu->GetDevType();
     if (algType == AlgTypeLevel1::ALG_LEVEL1_HD && devType == DevType::DEV_TYPE_910_93) {
@@ -924,12 +912,12 @@ void SetAlgoLevel1(hccl::HcclCommAicpu *commAicpu, HcclAlgoType algoConfig,
     HCCL_INFO("[AicpuHcclProcess][%s] algType[%u], moduleNum[%u]", __func__, algType, moduleNum);
 }
 
-void SelectAlgType(hccl::HcclCommAicpu *commAicpu, const std::string &algConfig, uint32_t moduleNum, AlgType &algType)
+void SelectAlgType(hccl::HcclCommAicpu* commAicpu, const std::string& algConfig, uint32_t moduleNum, AlgType& algType)
 {
     // 当前默认只会穿入0 1两层算法配置，多余层数穿入不做解析.
     // 0层算法 当前先写死
     // 1层算法 按默认值取
-    AlgTypeLevel0 algType0 =  AlgTypeLevel0::ALG_LEVEL0_NP_DOUBLE_RING;
+    AlgTypeLevel0 algType0 = AlgTypeLevel0::ALG_LEVEL0_NP_DOUBLE_RING;
     // 构造 1层 algoType, 未填写则取默认值
     HcclAlgoType level1AlgoConfig = HcclAlgoType::HCCL_ALGO_TYPE_DEFAULT;
     std::string algos;
@@ -947,21 +935,19 @@ void SelectAlgType(hccl::HcclCommAicpu *commAicpu, const std::string &algConfig,
     algType.algoLevel1 = algType1;
 }
 
-static const std::unordered_set<std::string> STEP_SIZE_SUPPORT_LIST = {
-    "AlltoAll=level0:fullmesh;level1:pairwise"
-};
-HcclResult ParseCcOpTilingData(CommonHcclMsg *commonHcclMsg, int32_t groupIdx)
+static const std::unordered_set<std::string> STEP_SIZE_SUPPORT_LIST = {"AlltoAll=level0:fullmesh;level1:pairwise"};
+HcclResult ParseCcOpTilingData(CommonHcclMsg* commonHcclMsg, int32_t groupIdx)
 {
     const HcclTilingVersion version = commonHcclMsg->version;
     HCCL_INFO("Hccl client message version %u", static_cast<u32>(version));
-    AicpuKfcRpcServerV2 *rpc = GetCommRpcServer(groupIdx);
+    AicpuKfcRpcServerV2* rpc = GetCommRpcServer(groupIdx);
     rpc->SetStepSize(0U);
     rpc->SetTotalStep((0U));
     if (version == HcclTilingVersion::DEPRECATED_TILING_VERSION) {
         return HCCL_SUCCESS;
     }
 
-    Mc2CcTilingInner *mc2CcTiling = reinterpret_cast<Mc2CcTilingInner *>(commonHcclMsg->ccOpTilingData);
+    Mc2CcTilingInner* mc2CcTiling = reinterpret_cast<Mc2CcTilingInner*>(commonHcclMsg->ccOpTilingData);
     if (mc2CcTiling == nullptr) {
         HCCL_ERROR("Tiling is nullptr.");
         return HCCL_E_PARA;
@@ -970,49 +956,54 @@ HcclResult ParseCcOpTilingData(CommonHcclMsg *commonHcclMsg, int32_t groupIdx)
     // 校验tiling的groupName与当前接收数据的group 的index是否一致
     int32_t tilingGroupIdx = GetComGroupIdx(std::string(mc2CcTiling->groupName));
     if (tilingGroupIdx != groupIdx) {
-        HCCL_ERROR("Failed to check groupName %s, groupIdx %d, tiling GroupIdx %d",
-                   mc2CcTiling->groupName, groupIdx, tilingGroupIdx);
+        HCCL_ERROR(
+            "Failed to check groupName %s, groupIdx %d, tiling GroupIdx %d", mc2CcTiling->groupName, groupIdx,
+            tilingGroupIdx);
         return HCCL_E_PARA;
     }
 
-    HcclOpResParam *commParam = GetCommAicpuResInst(groupIdx);
+    HcclOpResParam* commParam = GetCommAicpuResInst(groupIdx);
     std::string curAlgName;
-    CHK_PRT_RET(!SelectAlgName(mc2CcTiling->algConfig, commParam->topoInfo.topoType, curAlgName),
-                HCCL_ERROR("Failed to select algname."), HCCL_E_PARA);
+    CHK_PRT_RET(
+        !SelectAlgName(mc2CcTiling->algConfig, commParam->topoInfo.topoType, curAlgName),
+        HCCL_ERROR("Failed to select algname."), HCCL_E_PARA);
     AlgType algType;
-    HcclCommAicpu *commAicpu = GetCommAicpuCommInst(groupIdx);
+    HcclCommAicpu* commAicpu = GetCommAicpuCommInst(groupIdx);
     SelectAlgType(commAicpu, mc2CcTiling->algConfig, commParam->topoInfo.moduleNum, algType);
     std::string curTag = std::string(mc2CcTiling->groupName) + std::to_string(mc2CcTiling->opType);
-    SetCommInfoCtx(std::string(mc2CcTiling->groupName), static_cast<u8>(mc2CcTiling->opType),
-                   CommInfoCtx{algType, curAlgName, curTag});
+    SetCommInfoCtx(
+        std::string(mc2CcTiling->groupName), static_cast<u8>(mc2CcTiling->opType),
+        CommInfoCtx{algType, curAlgName, curTag});
 
     if (mc2CcTiling->stepSize > 0U) {
-        CHK_PRT_RET(STEP_SIZE_SUPPORT_LIST.find(mc2CcTiling->algConfig) == STEP_SIZE_SUPPORT_LIST.end(),
-                    HCCL_ERROR("Alg %s is not supported when step size is %u.", mc2CcTiling->algConfig, mc2CcTiling->stepSize),
-                    HCCL_E_PARA);
+        CHK_PRT_RET(
+            STEP_SIZE_SUPPORT_LIST.find(mc2CcTiling->algConfig) == STEP_SIZE_SUPPORT_LIST.end(),
+            HCCL_ERROR("Alg %s is not supported when step size is %u.", mc2CcTiling->algConfig, mc2CcTiling->stepSize),
+            HCCL_E_PARA);
         rpc->SetStepSize(mc2CcTiling->stepSize);
         rpc->SetTotalStep(commParam->rankSize);
     }
     return HCCL_SUCCESS;
 }
 
-void RepeatUpdateOpParam(hccl::OpParam &opParam, CommonHcclMsg *hcclMsg, HcclMsgExt *hcclMsgExt,
-                         hccl::HcclCommAicpu *commAicpu)
+void RepeatUpdateOpParam(
+    hccl::OpParam& opParam, CommonHcclMsg* hcclMsg, HcclMsgExt* hcclMsgExt, hccl::HcclCommAicpu* commAicpu)
 {
     uint64_t dataLen = hcclMsg->dataCnt * DataUnitSize(hcclMsg->hcclDataType);
-    if (hcclMsg->commType == HcclCMDType::HCCL_CMD_ALLTOALLV || (hcclMsg->commType == HcclCMDType::HCCL_CMD_ALLTOALL && hcclMsg->strideCount > 0)) {
+    if (hcclMsg->commType == HcclCMDType::HCCL_CMD_ALLTOALLV
+        || (hcclMsg->commType == HcclCMDType::HCCL_CMD_ALLTOALL && hcclMsg->strideCount > 0)) {
         for (uint32_t i = 0; i < commAicpu->GetRankSize(); i++) {
             hcclMsgExt->sendOffset[i] += hcclMsgExt->sendCounts[i];
             hcclMsgExt->recvOffset[i] += hcclMsgExt->recvCounts[i];
         }
     } else {
-        opParam.outputPtr = reinterpret_cast<void *>(reinterpret_cast<int8_t *>(opParam.outputPtr) + dataLen);
-        opParam.inputPtr = reinterpret_cast<void *>(reinterpret_cast<int8_t *>(opParam.inputPtr) + dataLen);
+        opParam.outputPtr = reinterpret_cast<void*>(reinterpret_cast<int8_t*>(opParam.outputPtr) + dataLen);
+        opParam.inputPtr = reinterpret_cast<void*>(reinterpret_cast<int8_t*>(opParam.inputPtr) + dataLen);
     }
 }
 
-HcclResult AddTaskForHcclMsgV2(hccl::HcclCommAicpu *comm, AicpuKfcRpcServerV2 *rpc, CommonHcclMsg *hcclMsg,
-                               const HcclOpResParam *commParam)
+HcclResult AddTaskForHcclMsgV2(
+    hccl::HcclCommAicpu* comm, AicpuKfcRpcServerV2* rpc, CommonHcclMsg* hcclMsg, const HcclOpResParam* commParam)
 {
     uint32_t curTurnCntForKernel = 0;
     rpc->SetMsgPosForKernel(0);
@@ -1027,12 +1018,12 @@ HcclResult AddTaskForHcclMsgV2(hccl::HcclCommAicpu *comm, AicpuKfcRpcServerV2 *r
     opParam.tag = curCtx.tag;
     std::string newTag = opParam.tag + "_mc2" + algName + "_device";
 
-    u32 aicpuAlgType = (static_cast<u32>(curCtx.algType.algoLevel2) << (HCCL_LEVEL_ALGO_WIDTH + HCCL_LEVEL_ALGO_WIDTH)) +
-                       (static_cast<u32>(curCtx.algType.algoLevel1) << HCCL_LEVEL_ALGO_WIDTH) +
-                       static_cast<u32>(curCtx.algType.algoLevel0);
+    u32 aicpuAlgType = (static_cast<u32>(curCtx.algType.algoLevel2) << (HCCL_LEVEL_ALGO_WIDTH + HCCL_LEVEL_ALGO_WIDTH))
+                       + (static_cast<u32>(curCtx.algType.algoLevel1) << HCCL_LEVEL_ALGO_WIDTH)
+                       + static_cast<u32>(curCtx.algType.algoLevel0);
     comm->SetAlgType(static_cast<u64>(aicpuAlgType));
     PrepareOpParam(&opParam, hcclMsg, *rpc, comm);
-    hccl::AlgResourceResponse *algResResponse;
+    hccl::AlgResourceResponse* algResResponse;
     std::unique_ptr<hccl::CollExecutorBase> executor;
     while (curTurnCntForKernel < hcclMsg->repeatCnt) {
         HCCL_INFO("Orchestrate curTurnCntForKernel %u, hcclMsg->repeatCnt %u", curTurnCntForKernel, hcclMsg->repeatCnt);
@@ -1041,22 +1032,22 @@ HcclResult AddTaskForHcclMsgV2(hccl::HcclCommAicpu *comm, AicpuKfcRpcServerV2 *r
         CHK_RET(comm->GetAlgResponseRes(newTag, algName, opParam, commParam, executor, algResResponse));
         HcclResult hcclRet = comm->Orchestrate(newTag, algName, opParam, executor, *algResResponse, commParam);
         AicpuKfcProf::GetCurrentAicpuProf()->workCnt++;
-        CHK_PRT_RET(hcclRet != HCCL_SUCCESS,
-                    HCCL_ERROR("Executor op fail, opParam.tag[%s], algName[%s]",
-                               newTag.c_str(), algName.c_str()), hcclRet);
+        CHK_PRT_RET(
+            hcclRet != HCCL_SUCCESS,
+            HCCL_ERROR("Executor op fail, opParam.tag[%s], algName[%s]", newTag.c_str(), algName.c_str()), hcclRet);
         RepeatUpdateOpParam(opParam, hcclMsg, rpc->GetHcclMsgExtPtr(), comm);
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult RunRpcServerLoopProcess(const std::vector<u32> &groupIds, u32 localGroupIdx, bool &finalizeFlag)
+HcclResult RunRpcServerLoopProcess(const std::vector<u32>& groupIds, u32 localGroupIdx, bool& finalizeFlag)
 {
     HcclMsg hcclMsg;
     CommonHcclMsg commonHcclMsg;
     const u32 groupIdx = groupIds[localGroupIdx];
-    AicpuKfcRpcServerV2 *rpc = GetCommRpcServer(groupIdx);
-    HcclCommAicpu *comm = GetCommAicpuCommInst(groupIdx);
-    HcclOpResParam *commParam = GetCommAicpuResInst(groupIdx);
+    AicpuKfcRpcServerV2* rpc = GetCommRpcServer(groupIdx);
+    HcclCommAicpu* comm = GetCommAicpuCommInst(groupIdx);
+    HcclOpResParam* commParam = GetCommAicpuResInst(groupIdx);
     u32 start = 0U;
     u32 end = 0U;
     rpc->GetLocalQueueRange(start, end);
@@ -1070,7 +1061,7 @@ HcclResult RunRpcServerLoopProcess(const std::vector<u32> &groupIds, u32 localGr
             return ret;
         }
 
-        HcclMsg (*msgLists)[HCCL_MSG_CNT] = rpc->GetMsgWorkSpace();
+        HcclMsg(*msgLists)[HCCL_MSG_CNT] = rpc->GetMsgWorkSpace();
         SetMsgEnableFlag(groupIdx, false);
         for (u32 i = start; i <= end; ++i) {
             if (rpc->GetIsFinalize(i)) {
@@ -1096,8 +1087,9 @@ HcclResult RunRpcServerLoopProcess(const std::vector<u32> &groupIds, u32 localGr
                 }
                 AddMsgInValidCount(groupIdx);
                 if (GetMsgInValidCount(groupIdx) == LOGCOUNT_PRINT_TIMEOUT) {
-                    HCCL_WARNING("Fail to get msg, addr is %p, queue %u, msgPos %u, group %s",
-                                 msgLists[i], i, currMsgPos, comm->GetGroupName().c_str());
+                    HCCL_WARNING(
+                        "Fail to get msg, addr is %p, queue %u, msgPos %u, group %s", msgLists[i], i, currMsgPos,
+                        comm->GetGroupName().c_str());
                 }
                 if (rpc->IsPrintLog()) {
                     LogControl logControl(false, true);
@@ -1107,16 +1099,18 @@ HcclResult RunRpcServerLoopProcess(const std::vector<u32> &groupIds, u32 localGr
             }
 
             if (GetMsgInValidCount(groupIdx) > LOGCOUNT_PRINT_TIMEOUT) {
-                HCCL_WARNING("Msg channel restores, addr is %p, queue %u, msgPos %u, group %s",
-                             msgLists[i], i, currMsgPos, comm->GetGroupName().c_str());
+                HCCL_WARNING(
+                    "Msg channel restores, addr is %p, queue %u, msgPos %u, group %s", msgLists[i], i, currMsgPos,
+                    comm->GetGroupName().c_str());
             }
             SetMsgStartTime(groupIdx);
             ClearMsgInValidCount(groupIdx);
             SetMsgEnableFlag(groupIdx, true);
 
             GetCommonHcclMsg(&hcclMsg, &commonHcclMsg, tilingBase);
-            HCCL_INFO("Process message queue %u pos %u seq num %u type %u group %s.", i, currMsgPos,
-                      commonHcclMsg.seqNum, commonHcclMsg.commType, comm->GetGroupName().c_str());
+            HCCL_INFO(
+                "Process message queue %u pos %u seq num %u type %u group %s.", i, currMsgPos, commonHcclMsg.seqNum,
+                commonHcclMsg.commType, comm->GetGroupName().c_str());
             if (commonHcclMsg.commType == HcclCMDType::HCCL_CMD_FINALIZE) {
                 FinalizeProcess(i, *comm, *rpc);
                 continue;
@@ -1149,8 +1143,8 @@ HcclResult RunRpcServerLoopProcess(const std::vector<u32> &groupIds, u32 localGr
                     CHK_RET(AicpuKfcBatchwriteProcess::BatchWriteProcess(opParam, *comm, *commParam));
                 } else {
                     CHK_RET(ParseCcOpTilingData(&commonHcclMsg, groupIdx));
-                    CHK_RET(TaskOrchestrator::IsSupportRDMAReduce(commonHcclMsg.commType, commonHcclMsg.hcclDataType,
-                                                                  commonHcclMsg.opType));
+                    CHK_RET(TaskOrchestrator::IsSupportRDMAReduce(
+                        commonHcclMsg.commType, commonHcclMsg.hcclDataType, commonHcclMsg.opType));
                     CHK_RET(AddTaskForHcclMsgV2(comm, rpc, &commonHcclMsg, commParam));
                 }
                 SetExpectPrepareId(i, commonHcclMsg.seqNum + 1U);
@@ -1163,18 +1157,19 @@ HcclResult RunRpcServerLoopProcess(const std::vector<u32> &groupIds, u32 localGr
 
 std::string GetNewTag(uint32_t groupIdx)
 {
-    hccl::HcclCommAicpu *comm = GetCommAicpuCommInst(groupIdx);
-    AicpuKfcRpcServerV2 *rpc = GetCommRpcServer(groupIdx);
+    hccl::HcclCommAicpu* comm = GetCommAicpuCommInst(groupIdx);
+    AicpuKfcRpcServerV2* rpc = GetCommRpcServer(groupIdx);
     uint32_t currMsgPos = rpc->GetMsgPos();
     currMsgPos = currMsgPos > 0 ? currMsgPos - 1 : currMsgPos;
-    HcclMsg (*msgLists)[HCCL_MSG_CNT] = rpc->GetMsgWorkSpace();
+    HcclMsg(*msgLists)[HCCL_MSG_CNT] = rpc->GetMsgWorkSpace();
     CommInfoCtx curCtx;
-    GetCommInfoCtx(comm->GetGroupName(), static_cast<HcclCMDType>(msgLists[0U][currMsgPos].commType.prepareType),
-                   curCtx);
-    return curCtx.tag + "_mc2" + curCtx.algName + "_device";;
+    GetCommInfoCtx(
+        comm->GetGroupName(), static_cast<HcclCMDType>(msgLists[0U][currMsgPos].commType.prepareType), curCtx);
+    return curCtx.tag + "_mc2" + curCtx.algName + "_device";
+    ;
 }
 
-void ResetRestartParam(RestartParam &restartParam)
+void ResetRestartParam(RestartParam& restartParam)
 {
     restartParam.restartCnt++;
     restartParam.restartFlag = false;
@@ -1187,14 +1182,14 @@ void ResetRestartParam(RestartParam &restartParam)
     }
 }
 
-HcclResult RestartProcessConsulation(RestartParam &restartParam, bool &finalizeAllEnd, bool *finalizeMask,
-                                     std::vector<u32> groupIds)
+HcclResult RestartProcessConsulation(
+    RestartParam& restartParam, bool& finalizeAllEnd, bool* finalizeMask, std::vector<u32> groupIds)
 {
     for (size_t i = 0U; i < groupIds.size(); ++i) {
         if (restartParam.consultationResult[i]) {
             continue;
         }
-        hccl::HcclCommAicpu *comm = GetCommAicpuCommInst(groupIds[i]);
+        hccl::HcclCommAicpu* comm = GetCommAicpuCommInst(groupIds[i]);
         if (comm == nullptr) {
             HCCL_ERROR("Failed to obtain the AICPU communication domain pointer."
                        "Check whether the parameters are correct.");
@@ -1209,7 +1204,9 @@ HcclResult RestartProcessConsulation(RestartParam &restartParam, bool &finalizeA
             }
         } else {
             // 重执行协商流程失败，直接返回错误
-            HCCL_ERROR("[MC2][AICPU]MC2 restart process groupIdx %u failed at state %u ret is %u tag is %s", i, restartParam.fsmState[i], ret, newTag.c_str());
+            HCCL_ERROR(
+                "[MC2][AICPU]MC2 restart process groupIdx %u failed at state %u ret is %u tag is %s", i,
+                restartParam.fsmState[i], ret, newTag.c_str());
             return ret;
         }
     }
@@ -1224,7 +1221,7 @@ HcclResult RestartProcessConsulation(RestartParam &restartParam, bool &finalizeA
             // 重置结束标志
             finalizeMask[i] = false;
             // 重置rpc
-            AicpuKfcRpcServerV2 *rpc = GetCommRpcServer(groupIds[i]);
+            AicpuKfcRpcServerV2* rpc = GetCommRpcServer(groupIds[i]);
             rpc->Reset();
             rpc->WriteRestartFlag();
             SetMsgStartTime(groupIds[i]);
@@ -1235,25 +1232,28 @@ HcclResult RestartProcessConsulation(RestartParam &restartParam, bool &finalizeA
     return HCCL_SUCCESS;
 }
 
-void RecordReportStatus(const std::vector<u32> &groupIds, dfx::ReportStatus status) {
-    for (const auto i: groupIds) {
-        hccl::HcclCommAicpu *comm = GetCommAicpuCommInst(i);
+void RecordReportStatus(const std::vector<u32>& groupIds, dfx::ReportStatus status)
+{
+    for (const auto i : groupIds) {
+        hccl::HcclCommAicpu* comm = GetCommAicpuCommInst(i);
         if (comm != nullptr) {
             comm->RecordReportStatus(status);
         }
     }
 }
 
-bool CheckMsgTimeOut(const std::vector<u32> &groupIds) {
-    if ((GetCurCpuTimestamp() - g_timeOutInfoInst.kernelStartTime) >
-        static_cast<unsigned long long>(NSEC_PER_SEC * KERNEL_TIMEOUT)) {
+bool CheckMsgTimeOut(const std::vector<u32>& groupIds)
+{
+    if ((GetCurCpuTimestamp() - g_timeOutInfoInst.kernelStartTime)
+        > static_cast<unsigned long long>(NSEC_PER_SEC * KERNEL_TIMEOUT)) {
         HCCL_ERROR("Kernel Execute TimeOut %lus...", KERNEL_TIMEOUT);
         return true;
     }
     int timeoutFlag = 0;
-    for (u32 idx: groupIds) {
-        if (CheckMsgEnableFlag(idx) && (GetCurCpuTimestamp() - GetMsgStartTime(idx)) >
-            static_cast<unsigned long long>(NSEC_PER_SEC * KERNEL_TIMEOUT)) {
+    for (u32 idx : groupIds) {
+        if (CheckMsgEnableFlag(idx)
+            && (GetCurCpuTimestamp() - GetMsgStartTime(idx))
+                   > static_cast<unsigned long long>(NSEC_PER_SEC * KERNEL_TIMEOUT)) {
             HCCL_ERROR("comm group idx %d ReadValidMsg timeout %lus... ", idx, KERNEL_TIMEOUT);
             timeoutFlag++;
         }
@@ -1264,10 +1264,10 @@ bool CheckMsgTimeOut(const std::vector<u32> &groupIds) {
     return false;
 }
 
-HcclResult SetNsOpStatus(const std::vector<u32> &groupIds, bool state)
+HcclResult SetNsOpStatus(const std::vector<u32>& groupIds, bool state)
 {
-    for (const auto i: groupIds) {
-        hccl::HcclCommAicpu *comm = GetCommAicpuCommInst(i);
+    for (const auto i : groupIds) {
+        hccl::HcclCommAicpu* comm = GetCommAicpuCommInst(i);
         if (comm != nullptr) {
             comm->SetNsOpStatus(state);
         }
@@ -1275,7 +1275,7 @@ HcclResult SetNsOpStatus(const std::vector<u32> &groupIds, bool state)
     return HCCL_SUCCESS;
 }
 
-HcclResult RunRpcServerInnerProcessV2(const std::vector<u32> &groupIds)
+HcclResult RunRpcServerInnerProcessV2(const std::vector<u32>& groupIds)
 {
     const bool retryEnable = GetOpRetryEnable(groupIds);
     RestartParam restartParam;
@@ -1304,10 +1304,10 @@ HcclResult RunRpcServerInnerProcessV2(const std::vector<u32> &groupIds)
                     restartParam.restartFlag = true;
                     break;
                 }
-                HcclCommAicpu *comm = GetCommAicpuCommInst(groupIds[i]);
+                HcclCommAicpu* comm = GetCommAicpuCommInst(groupIds[i]);
                 if (comm != nullptr && comm->GetNsStopLaunchStatus()) {
                     finalizeMask[i] = true;
-                    AicpuKfcRpcServerV2 *rpc = GetCommRpcServer(groupIds[i]);
+                    AicpuKfcRpcServerV2* rpc = GetCommRpcServer(groupIds[i]);
                     rpc->SetNeedRetryFlag(false);
                     comm->SetCommRecoveryFlag(true);
                     (void)comm->BackGroundSetStatus(KfcStatus::kStoplaunch);
@@ -1324,8 +1324,8 @@ HcclResult RunRpcServerInnerProcessV2(const std::vector<u32> &groupIds)
         if (restartParam.restartFlag && HcclAicpuUtils::GetBlockIdx() == 0U) {
             HcclResult res = RestartProcessConsulation(restartParam, finishFlag, finalizeMask, groupIds);
             if (res != HCCL_SUCCESS) {
-                HCCL_ERROR("[MC2][AICPU]MC2 restart process failed, restartCnt = %u, res = %u",
-                           restartParam.restartCnt, res);
+                HCCL_ERROR(
+                    "[MC2][AICPU]MC2 restart process failed, restartCnt = %u, res = %u", restartParam.restartCnt, res);
                 RecordReportStatus(groupIds, dfx::ReportStatus::kRetryFail);
                 return res;
             }
@@ -1338,7 +1338,9 @@ HcclResult RunRpcServerInnerProcessV2(const std::vector<u32> &groupIds)
             if (restartParam.restartCnt > 0) {
                 auto opEndTime = std::chrono::steady_clock::now();
                 auto duration = std::chrono::duration_cast<std::chrono::seconds>(opEndTime - opStartTime).count();
-                HCCL_RUN_INFO("[MC2][AICPU]MC2 restart exec success, restartCnt = %u, take time = %ld s", restartParam.restartCnt, duration);
+                HCCL_RUN_INFO(
+                    "[MC2][AICPU]MC2 restart exec success, restartCnt = %u, take time = %ld s", restartParam.restartCnt,
+                    duration);
                 RecordReportStatus(groupIds, dfx::ReportStatus::kRetrySuccess);
             }
             return HCCL_SUCCESS;
@@ -1346,9 +1348,9 @@ HcclResult RunRpcServerInnerProcessV2(const std::vector<u32> &groupIds)
         // 消息超时或总执行时间超时
         if (CheckMsgTimeOut(groupIds)) {
             HCCL_ERROR("RPC server process Timeout.");
-            for (uint32_t i: groupIds) {
-                AicpuKfcRpcServerV2 *rpc = GetCommRpcServer(i);
-                HcclOpResParam *commParam = GetCommAicpuResInst(i);
+            for (uint32_t i : groupIds) {
+                AicpuKfcRpcServerV2* rpc = GetCommRpcServer(i);
+                HcclOpResParam* commParam = GetCommAicpuResInst(i);
                 if (rpc != nullptr && commParam != nullptr) {
                     rpc->PrintAllHcclMsgArea(commParam->rankSize);
                 }
@@ -1359,23 +1361,23 @@ HcclResult RunRpcServerInnerProcessV2(const std::vector<u32> &groupIds)
     return HCCL_SUCCESS;
 }
 
-HcclResult RunRpcServerApiV2(void *tilingData, const std::vector<u32> &groupIds)
+HcclResult RunRpcServerApiV2(void* tilingData, const std::vector<u32>& groupIds)
 {
     // 待适配 startthread DFX
     uint32_t commNum = MC2TilingGetHcommCnt(tilingData);
     for (uint32_t i = 0; i < commNum; i++) {
-        Mc2HcommCfg *cfg = MC2TilingGetHcommCfg(tilingData, i);
+        Mc2HcommCfg* cfg = MC2TilingGetHcommCfg(tilingData, i);
         int32_t groupIdx = GetComGroupIdx(std::string(cfg->groupName));
         if (groupIdx < 0) {
             HCCL_ERROR("%s idx %d cannot get group by hcomId %s", __func__, i, cfg->groupName);
             return HCCL_E_INTERNAL;
         }
-        hccl::HcclCommAicpu *comm = GetCommAicpuCommInst(groupIdx);
+        hccl::HcclCommAicpu* comm = GetCommAicpuCommInst(groupIdx);
         if (comm == nullptr) {
             HCCL_ERROR("%s cannot get CommAicpu by groupIdx %d", __func__, groupIdx);
             return HCCL_E_INTERNAL;
         }
-        HcclOpResParam *commParam = GetCommAicpuResInst(groupIdx);
+        HcclOpResParam* commParam = GetCommAicpuResInst(groupIdx);
         std::string curAlgName;
         if (!SelectAlgName(cfg->algConfig, commParam->topoInfo.topoType, curAlgName)) {
             return HCCL_E_INTERNAL;
@@ -1384,24 +1386,24 @@ HcclResult RunRpcServerApiV2(void *tilingData, const std::vector<u32> &groupIds)
         uint32_t moduleNum = commParam->topoInfo.moduleNum;
         AlgType algType;
         SelectAlgType(comm, cfg->algConfig, moduleNum, algType);
-        SetCommInfoCtx(std::string(cfg->groupName), static_cast<u8>(cfg->opType),
-                       CommInfoCtx{algType, curAlgName, curTag});
+        SetCommInfoCtx(
+            std::string(cfg->groupName), static_cast<u8>(cfg->opType), CommInfoCtx{algType, curAlgName, curTag});
     }
     CHK_RET(RunRpcServerInnerProcessV2(groupIds));
     return HCCL_SUCCESS;
 }
 
-HcclResult KfcStepSizeHandler(const std::vector<u64> &args)
+HcclResult KfcStepSizeHandler(const std::vector<u64>& args)
 {
     CHK_PRT_RET(args.size() != 3U, HCCL_ERROR("Invalid args size %zu.", args.size()), HCCL_E_INTERNAL);
-    const AicpuKfcRpcServerV2 *rpc = reinterpret_cast<const AicpuKfcRpcServerV2 *>(args[0]);
+    const AicpuKfcRpcServerV2* rpc = reinterpret_cast<const AicpuKfcRpcServerV2*>(args[0]);
     u8 stepSize = rpc->GetStepSize();
     if (stepSize == 0U) {
         HCCL_INFO("The orchestrating OP is not a fine-grained one.");
         return HCCL_SUCCESS;
     }
 
-    Mc2Handler *handler = reinterpret_cast<Mc2Handler *>(args[1]);
+    Mc2Handler* handler = reinterpret_cast<Mc2Handler*>(args[1]);
     handler->version = 0U;
     handler->commitAddr = rpc->GetCommitareaAddr(rpc->GetMsgPos());
     handler->finishAddr = rpc->GetFinishAddr(rpc->GetMsgPos());
@@ -1411,43 +1413,46 @@ HcclResult KfcStepSizeHandler(const std::vector<u64> &args)
     handler->stepSize = stepSize;
     handler->skipLocalRankCopy = 0U;
     handler->skipBufferWindowCopy = 0U;
-    HCCL_INFO("Prepare MC2 handler: commitAddr %p, finishAddr %p, valueAddr %p, rankSize %u, repeat %u, stepSize %u.",
-              handler->commitAddr, handler->finishAddr, handler->valueAddr, handler->rankSize, handler->repeatCnt,
-              handler->stepSize);
+    HCCL_INFO(
+        "Prepare MC2 handler: commitAddr %p, finishAddr %p, valueAddr %p, rankSize %u, repeat %u, stepSize %u.",
+        handler->commitAddr, handler->finishAddr, handler->valueAddr, handler->rankSize, handler->repeatCnt,
+        handler->stepSize);
     return HCCL_SUCCESS;
 }
 
-HcclResult KfcNotifyPost(const std::vector<u64> &args)
+HcclResult KfcNotifyPost(const std::vector<u64>& args)
 {
     CHK_PRT_RET(args.size() != 3U, HCCL_ERROR("Invalid args size %zu.", args.size()), HCCL_E_INTERNAL);
-    AicpuKfcRpcServerV2 *rpc = reinterpret_cast<AicpuKfcRpcServerV2 *>(args[0]);
+    AicpuKfcRpcServerV2* rpc = reinterpret_cast<AicpuKfcRpcServerV2*>(args[0]);
     CHK_PRT_RET(rpc == nullptr, HCCL_ERROR("Failed to get rpc pointer."), HCCL_E_INTERNAL);
     if (rpc->GetStepSize() != 0 || rpc->GetTotalQueueNum() > 0U) {
         HCCL_DEBUG("No need to add notify for MC2.");
         return HCCL_SUCCESS;
     }
-    return rpc->AddCcoreNotify(reinterpret_cast<HcclDispatcher>(args[1]), rpc->GetFinishAddr(rpc->GetMsgPos()),
-                               rpc->GetMsgPosForKernel(), reinterpret_cast<Stream *>(args[2]));
+    return rpc->AddCcoreNotify(
+        reinterpret_cast<HcclDispatcher>(args[1]), rpc->GetFinishAddr(rpc->GetMsgPos()), rpc->GetMsgPosForKernel(),
+        reinterpret_cast<Stream*>(args[2]));
 }
 
-HcclResult KfcNotifyWait(const std::vector<u64> &args)
+HcclResult KfcNotifyWait(const std::vector<u64>& args)
 {
     CHK_PRT_RET(args.size() != 3U, HCCL_ERROR("Invalid args size %zu.", args.size()), HCCL_E_INTERNAL);
-    AicpuKfcRpcServerV2 *rpc = reinterpret_cast<AicpuKfcRpcServerV2 *>(args[0]);
+    AicpuKfcRpcServerV2* rpc = reinterpret_cast<AicpuKfcRpcServerV2*>(args[0]);
     CHK_PRT_RET(rpc == nullptr, HCCL_ERROR("Failed to get rpc pointer."), HCCL_E_INTERNAL);
     if (rpc->GetStepSize() != 0 || rpc->GetTotalQueueNum() > 0U) {
         HCCL_DEBUG("No need to add wait for MC2.");
         return HCCL_SUCCESS;
     }
-    return rpc->AddCcoreWait(reinterpret_cast<HcclDispatcher>(args[1]), rpc->GetCommitareaAddr(rpc->GetMsgPos()),
-                             rpc->GetMsgPosForKernel(), reinterpret_cast<Stream *>(args[2]), false);
+    return rpc->AddCcoreWait(
+        reinterpret_cast<HcclDispatcher>(args[1]), rpc->GetCommitareaAddr(rpc->GetMsgPos()), rpc->GetMsgPosForKernel(),
+        reinterpret_cast<Stream*>(args[2]), false);
 }
 
-HcclResult KfcClearMsgArea(const std::vector<u64> &args)
+HcclResult KfcClearMsgArea(const std::vector<u64>& args)
 {
     CHK_PRT_RET(args.size() != 1U, HCCL_ERROR("Invalid args size %zu.", args.size()), HCCL_E_INTERNAL);
-    AicpuKfcRpcServerV2 *rpc = reinterpret_cast<AicpuKfcRpcServerV2 *>(args[0]);
-    HcclMsgArea *hcclMsgArea = rpc->GetHcclMsgArea();
+    AicpuKfcRpcServerV2* rpc = reinterpret_cast<AicpuKfcRpcServerV2*>(args[0]);
+    HcclMsgArea* hcclMsgArea = rpc->GetHcclMsgArea();
     if (hcclMsgArea != nullptr) {
         (void)memset_s(hcclMsgArea, sizeof(HcclMsgArea), 0, sizeof(HcclMsgArea));
     }
@@ -1455,11 +1460,11 @@ HcclResult KfcClearMsgArea(const std::vector<u64> &args)
     return HCCL_SUCCESS;
 }
 
-HcclResult KfcClearCommitTurn(const std::vector<u64> &args)
+HcclResult KfcClearCommitTurn(const std::vector<u64>& args)
 {
     CHK_PRT_RET(args.size() != 1U, HCCL_ERROR("Invalid args size %zu.", args.size()), HCCL_E_INTERNAL);
-    AicpuKfcRpcServerV2 *rpc = reinterpret_cast<AicpuKfcRpcServerV2 *>(args[0]);
-    HcclMsgArea *hcclMsgArea = rpc->GetHcclMsgArea();
+    AicpuKfcRpcServerV2* rpc = reinterpret_cast<AicpuKfcRpcServerV2*>(args[0]);
+    HcclMsgArea* hcclMsgArea = rpc->GetHcclMsgArea();
     if (hcclMsgArea != nullptr) {
         for (uint32_t i = 0; i < HCCL_MSG_CNT; i++) {
             hcclMsgArea->commMsg.singleMsg.commitTurnCnt[i].cnt = 0xFF;
@@ -1468,32 +1473,36 @@ HcclResult KfcClearCommitTurn(const std::vector<u64> &args)
     return HCCL_SUCCESS;
 }
 
-HcclResult PrepareHcommInstance(HcclOpResParam *commParam, const Mc2InitTilingInner *tiling = nullptr)
+HcclResult PrepareHcommInstance(HcclOpResParam* commParam, const Mc2InitTilingInner* tiling = nullptr)
 {
-    const std::string &group = commParam->hcomId;
-    hccl::HcclCommAicpu *hcclCommAicpu = AicpuHcclProcess::AicpuGetCommbyGroup(group);
-    CHK_PRT_RET(hcclCommAicpu == nullptr,
-                HCCL_ERROR("RunAicpuRpcSrvLaunchV2 get Hcclcomm error group [%s]", group.c_str()), HCCL_E_INTERNAL);
+    const std::string& group = commParam->hcomId;
+    hccl::HcclCommAicpu* hcclCommAicpu = AicpuHcclProcess::AicpuGetCommbyGroup(group);
+    CHK_PRT_RET(
+        hcclCommAicpu == nullptr, HCCL_ERROR("RunAicpuRpcSrvLaunchV2 get Hcclcomm error group [%s]", group.c_str()),
+        HCCL_E_INTERNAL);
 
     DevType devType = hcclCommAicpu->GetDevType();
-    CHK_PRT_RET(devType != DevType::DEV_TYPE_910_93,
-                HCCL_ERROR("Platform %u not support, please use 910_93 platform.", static_cast<u32>(devType)),
-                HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        devType != DevType::DEV_TYPE_910_93,
+        HCCL_ERROR("Platform %u not support, please use 910_93 platform.", static_cast<u32>(devType)), HCCL_E_INTERNAL);
 
-    const DfxExtendInfo *dfxInfo = hcclCommAicpu->GetDfxExtendInfo();
-    CHK_PRT_RET(dfxInfo->cqeStatus != dfx::CqeStatus::kDefault ||
-                dfxInfo->pollStatus == PollStatus::kStopAsException,
-                HCCL_ERROR("Exist errors before, cqeStatus:%d, pollStatus:%d, group[%s]",
-                           dfxInfo->cqeStatus, dfxInfo->pollStatus, group.c_str()), HCCL_E_INTERNAL);
+    const DfxExtendInfo* dfxInfo = hcclCommAicpu->GetDfxExtendInfo();
+    CHK_PRT_RET(
+        dfxInfo->cqeStatus != dfx::CqeStatus::kDefault || dfxInfo->pollStatus == PollStatus::kStopAsException,
+        HCCL_ERROR(
+            "Exist errors before, cqeStatus:%d, pollStatus:%d, group[%s]", dfxInfo->cqeStatus, dfxInfo->pollStatus,
+            group.c_str()),
+        HCCL_E_INTERNAL);
 
     const u32 groupIdx = InsertComIdMap(group);
     HcclResult ret = InsertCommInst(groupIdx, hcclCommAicpu, commParam);
     CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("Failed to insert comm inst."), HCCL_E_INTERNAL);
 
-    AicpuKfcRpcServerV2 *rpcServer = GetCommRpcServer(groupIdx);
-    CHK_PRT_RET(rpcServer == nullptr,
-                HCCL_ERROR("RunAicpuRpcSrvLaunchV2 get rpc inst error idx %d group [%s]", groupIdx, group.c_str()),
-                HCCL_E_INTERNAL);
+    AicpuKfcRpcServerV2* rpcServer = GetCommRpcServer(groupIdx);
+    CHK_PRT_RET(
+        rpcServer == nullptr,
+        HCCL_ERROR("RunAicpuRpcSrvLaunchV2 get rpc inst error idx %d group [%s]", groupIdx, group.c_str()),
+        HCCL_E_INTERNAL);
 
     ret = rpcServer->Init(commParam->mc2WorkSpace, tiling);
     CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("Failed to init for group [%s]", group.c_str()), HCCL_E_INTERNAL);
@@ -1505,30 +1514,30 @@ HcclResult PrepareHcommInstance(HcclOpResParam *commParam, const Mc2InitTilingIn
     hcclCommAicpu->RegisterKfcHandler(AicpuKfcHandlerType::kNotifyWait, KfcNotifyWait);
     hcclCommAicpu->RegisterKfcHandler(AicpuKfcHandlerType::kClearMsgArea, KfcClearMsgArea);
     hcclCommAicpu->RegisterKfcHandler(AicpuKfcHandlerType::kClearCommitTurn, KfcClearCommitTurn);
-    hcclCommAicpu->RegisterKfcHandler(AicpuKfcHandlerType::kSetProfTimeStart,
-                                      [](const std::vector<u64>& args) -> HcclResult {
-                                          AicpuKfcProf::SetKfcTimeLine(KfcTimeLine::HCC_EXEC_START_TIME);
-                                          return HCCL_SUCCESS;
-                                      });
-    hcclCommAicpu->RegisterKfcHandler(AicpuKfcHandlerType::kSetProfTimeOrch,
-                                      [](const std::vector<u64>& args) -> HcclResult {
-                                          AicpuKfcProf::SetKfcTimeLine(KfcTimeLine::SEND_TASK_START_TIME);
-                                          return HCCL_SUCCESS;
-                                      });
-    hcclCommAicpu->RegisterKfcHandler(AicpuKfcHandlerType::kSetProfTimeEnd,
-                                      [](const std::vector<u64>& args) -> HcclResult {
-                                          AicpuKfcProf::SetKfcTimeLine(KfcTimeLine::SEND_SQE_FINISH_TIME);
-                                          return HCCL_SUCCESS;
-                                      });
+    hcclCommAicpu->RegisterKfcHandler(
+        AicpuKfcHandlerType::kSetProfTimeStart, []([[maybe_unused]] const std::vector<u64>& args) -> HcclResult {
+            AicpuKfcProf::SetKfcTimeLine(KfcTimeLine::HCC_EXEC_START_TIME);
+            return HCCL_SUCCESS;
+        });
+    hcclCommAicpu->RegisterKfcHandler(
+        AicpuKfcHandlerType::kSetProfTimeOrch, []([[maybe_unused]] const std::vector<u64>& args) -> HcclResult {
+            AicpuKfcProf::SetKfcTimeLine(KfcTimeLine::SEND_TASK_START_TIME);
+            return HCCL_SUCCESS;
+        });
+    hcclCommAicpu->RegisterKfcHandler(
+        AicpuKfcHandlerType::kSetProfTimeEnd, []([[maybe_unused]] const std::vector<u64>& args) -> HcclResult {
+            AicpuKfcProf::SetKfcTimeLine(KfcTimeLine::SEND_SQE_FINISH_TIME);
+            return HCCL_SUCCESS;
+        });
     return HCCL_SUCCESS;
 }
 ANONYMOUS_NAMESPACE_END
 
-u32 AicpuKfcProcess::AicpuRpcResInit(HccCommResParamTask *commParam)
+u32 AicpuKfcProcess::AicpuRpcResInit(HccCommResParamTask* commParam)
 {
     HcclAicpuUtils::PrintHcclCombinOpParam(*commParam);
 
-    AicpuComContext *ctx = AicpuGetComContext();
+    AicpuComContext* ctx = AicpuGetComContext();
     if (ctx->alreadyInit) {
         if (strncmp(ctx->hcomId, commParam->hcomId, HCCL_COMM_DOMAIN_KEY_MAX_LEN)) {
             HCCL_ERROR("the comm domain is not valid old [%s] != new[%s].", ctx->hcomId, commParam->hcomId);
@@ -1538,7 +1547,7 @@ u32 AicpuKfcProcess::AicpuRpcResInit(HccCommResParamTask *commParam)
         return 0;
     }
     AicpuSqeContext::InitSqeContext();
-    memset_s(ctx, sizeof(AicpuComContext), 0, sizeof(AicpuComContext));
+    (void)memset_s(ctx, sizeof(AicpuComContext), 0, sizeof(AicpuComContext));
     s32 enableEvent = 0;
     ctx->logLevel = dlog_getlevel(HCCL, &enableEvent);
     ctx->rankId = commParam->rankId;
@@ -1549,7 +1558,7 @@ u32 AicpuKfcProcess::AicpuRpcResInit(HccCommResParamTask *commParam)
     ctx->commAlg = 0;
     ctx->multiServerFlag = commParam->multiServerFlag;
     std::iota(ctx->turnValue, ctx->turnValue + TILING_TURN_MAX * AC_MAX_RANK_NUM, 0);
-    HcclSignalInfo *sigInfo = &commParam->signalInfo.aicpuNotify;
+    HcclSignalInfo* sigInfo = &commParam->signalInfo.aicpuNotify;
     std::shared_ptr<LocalNotify> localNitfy;
     EXCEPTION_CATCH((localNitfy = std::make_shared<LocalNotify>()), return HCCL_E_PTR);
     CHK_RET(localNitfy->Init(*sigInfo, NotifyLoadType::DEVICE_NOTIFY));
@@ -1577,8 +1586,9 @@ u32 AicpuKfcProcess::AicpuRpcResInit(HccCommResParamTask *commParam)
     ctx->retryEnable = (commParam->config.retryEnable == 1);
     ctx->retryHoldTime = commParam->config.retryHoldTime;
     ctx->retryIntervalTime = commParam->config.retryIntervalTime;
-    HCCL_DEBUG("[%s] ctx->retryEnable [%d], ctx->retryHoldTime [%u], ctx->retryIntervalTime [%u]",
-               __func__, ctx->retryEnable, ctx->retryHoldTime, ctx->retryIntervalTime);
+    HCCL_DEBUG(
+        "[%s] ctx->retryEnable [%d], ctx->retryHoldTime [%u ms], ctx->retryIntervalTime [%u ms]", __func__,
+        ctx->retryEnable, ctx->retryHoldTime, ctx->retryIntervalTime);
     CHK_RET(InitChipType(ctx));
     ctx->overflowAddr = commParam->overFlowAddr;
     ctx->onlyRead = commParam->onlyRead;
@@ -1614,7 +1624,7 @@ u32 AicpuKfcProcess::GetStreamRankIdx(s32 actualStreamId)
     return it == g_streamIdMap.cend() ? UINT32_MAX : it->second;
 }
 
-HcclResult AicpuKfcProcess::DealReturnValue(const AicpuComContext *ctx, const HcclResult ret)
+HcclResult AicpuKfcProcess::DealReturnValue(const AicpuComContext* ctx, const HcclResult ret)
 {
     if (ctx->isStopLaunch) {
         AicpuHcclProcess::CopyCtxForBackGroundDfx(ctx);
@@ -1628,29 +1638,28 @@ HcclResult AicpuKfcProcess::DealReturnValue(const AicpuComContext *ctx, const Hc
     }
 }
 
-HcclResult AicpuKfcProcess::AddTaskForHcclMsg(AicpuComContext *ctx, AicpuKfcRpcServer &rpc, CommonHcclMsg *hcclMsg,
-                                              AivAicpuOpParam *msg, u64 tilingBase)
+HcclResult AicpuKfcProcess::AddTaskForHcclMsg(
+    AicpuComContext* ctx, AicpuKfcRpcServer& rpc, CommonHcclMsg* hcclMsg, AivAicpuOpParam* msg, u64 tilingBase)
 {
     // reduce scatter:在strideLen使能的情况下，如果recvCount * repeat > strideLen 则偏移越界，报错
-    if (hcclMsg->commType == HcclCMDType::HCCL_CMD_REDUCE_SCATTER && hcclMsg->strideCount != 0 &&
-        hcclMsg->dataCnt * hcclMsg->repeatCnt > hcclMsg->strideCount) {
+    if (hcclMsg->commType == HcclCMDType::HCCL_CMD_REDUCE_SCATTER && hcclMsg->strideCount != 0
+        && hcclMsg->dataCnt * hcclMsg->repeatCnt > hcclMsg->strideCount) {
         HCCL_ERROR("In ReduceScatter algorithm, when stride Count is not zero, repeatCnt * dataCnt"
                    " should not be greater than strideCount.");
         hcclMsg->PrintMsg("");
         return HCCL_E_PARA;
     }
 
-    AivAicpuOpParam *tmpptr = nullptr;
+    AivAicpuOpParam* tmpptr = nullptr;
     AivAicpuOpParam nextMsg;
     u64 dataLen = DataUnitSize(msg->hcclDataType) * msg->count;
     ctx->curTurnCntForKernel = 0;
     ctx->totalTurnCntForKernel = hcclMsg->repeatCnt;
     while (ctx->curTurnCntForKernel < hcclMsg->repeatCnt) {
-        HCCL_INFO("ctx->curTurnCntForKernel %u, hcclMsg->repeatCnt %u", ctx->curTurnCntForKernel,
-                  hcclMsg->repeatCnt);
+        HCCL_INFO("ctx->curTurnCntForKernel %u, hcclMsg->repeatCnt %u", ctx->curTurnCntForKernel, hcclMsg->repeatCnt);
         // 当前msg预取仅支持当前及下一条msg都为allgather
-        if (hcclMsg->commType == HcclCMDType::HCCL_CMD_ALLGATHER &&
-            (hcclMsg->hcclDataType == HCCL_DATA_TYPE_FP16 || hcclMsg->hcclDataType == HCCL_DATA_TYPE_BFP16)) {
+        if (hcclMsg->commType == HcclCMDType::HCCL_CMD_ALLGATHER
+            && (hcclMsg->hcclDataType == HCCL_DATA_TYPE_FP16 || hcclMsg->hcclDataType == HCCL_DATA_TYPE_BFP16)) {
             HCCL_INFO("Try get AllGather next msg");
             HcclMsg tmpMsg;
             if (ctx->curTurnCntForKernel < (hcclMsg->repeatCnt - 1)) {
@@ -1666,8 +1675,8 @@ HcclResult AicpuKfcProcess::AddTaskForHcclMsg(AicpuComContext *ctx, AicpuKfcRpcS
                 tmpptr = nullptr;
             }
             // 如果nextMsg和hcclMsg不同commtype或datatype，nextMsg要置为nullptr
-            if (tmpptr != nullptr && (tmpptr->commType != hcclMsg->commType ||
-                                      tmpptr->hcclDataType != hcclMsg->hcclDataType)) {
+            if (tmpptr != nullptr
+                && (tmpptr->commType != hcclMsg->commType || tmpptr->hcclDataType != hcclMsg->hcclDataType)) {
                 HCCL_INFO("Set nextMsg nullptr");
                 tmpptr = nullptr;
             }
@@ -1681,7 +1690,7 @@ HcclResult AicpuKfcProcess::AddTaskForHcclMsg(AicpuComContext *ctx, AicpuKfcRpcS
     return HCCL_SUCCESS;
 }
 
-HcclResult AicpuKfcProcess::RunRpcServerApi(AicpuComContext *ctx, AicpuKfcRpcServer &rpc, u64 tilingBase)
+HcclResult AicpuKfcProcess::RunRpcServerApi(AicpuComContext* ctx, AicpuKfcRpcServer& rpc, u64 tilingBase)
 {
     if (ctx->devType != DevType::DEV_TYPE_910B) {
         HCCL_ERROR("Platform not support, please use 910B platform.");
@@ -1712,7 +1721,7 @@ HcclResult AicpuKfcProcess::RunRpcServerApi(AicpuComContext *ctx, AicpuKfcRpcSer
             return HCCL_E_TIMEOUT;
         }
         GetCommonHcclMsg(&hcclMsg, &commonHcclMsg, tilingBase);
-        // 处理finalzie消息
+        // 处理finalize消息
         if (commonHcclMsg.commType == HcclCMDType::HCCL_CMD_FINALIZE) {
             AicpuKfcProf::GetProInst(*ctx).receiveFinalizeTime = GetCurCpuTimestamp(true);
             if (ctx->debugMode == MC2_DEBUG_PRINT_BUFF) {
@@ -1721,8 +1730,9 @@ HcclResult AicpuKfcProcess::RunRpcServerApi(AicpuComContext *ctx, AicpuKfcRpcSer
             break;
         } else if (commonHcclMsg.commType == HcclCMDType::HCCL_CMD_INIT) {
             continue;
-        } else if (commonHcclMsg.commType == HcclCMDType::HCCL_CMD_INTER_GROUP_SYNC ||
-                   commonHcclMsg.commType == HcclCMDType::HCCL_CMD_BARRIER) {
+        } else if (
+            commonHcclMsg.commType == HcclCMDType::HCCL_CMD_INTER_GROUP_SYNC
+            || commonHcclMsg.commType == HcclCMDType::HCCL_CMD_BARRIER) {
             HCCL_ERROR("Msg %u is not supported.", static_cast<uint32_t>(commonHcclMsg.commType));
             return HCCL_E_PARA;
         } else if (commonHcclMsg.commType == HcclCMDType::HCCL_CMD_BATCH_WRITE) {
@@ -1763,7 +1773,8 @@ HcclResult AicpuKfcProcess::RunRpcServerApi(AicpuComContext *ctx, AicpuKfcRpcSer
     return HCCL_SUCCESS;
 }
 
-HcclResult AicpuKfcProcess::AicpuRunRpcServerForApi(AicpuComContext *ctx, u64 tilingBase) {
+HcclResult AicpuKfcProcess::AicpuRunRpcServerForApi(AicpuComContext* ctx, u64 tilingBase)
+{
     static AicpuKfcRpcServer rpc;
     rpc.Init(ctx->workSpaceAddr);
     AicpuKfcProf::GetProInst(*ctx).commInitEndTime = GetCurCpuTimestamp(true);
@@ -1777,35 +1788,35 @@ HcclResult AicpuKfcProcess::AicpuRunRpcServerForApi(AicpuComContext *ctx, u64 ti
     }
 }
 
-u32 AicpuKfcProcess::AicpuRunRpcServerForMC2V2(KFCTaskV2 *task, const Mc2InitTilingInner *tilingData)
+u32 AicpuKfcProcess::AicpuRunRpcServerForMC2V2(KFCTaskV2* task, const Mc2InitTilingInner* tilingData)
 {
     static std::atomic<bool> initFlag(false);
     if (HcclAicpuUtils::GetBlockNum() <= 1U || !initFlag.exchange(true)) {
         for (u64 i = 0UL; i < task->ctxNum; i++) {
-            HcclOpResParam *ctx = reinterpret_cast<HcclOpResParam *>(task->context[i]);
+            HcclOpResParam* ctx = reinterpret_cast<HcclOpResParam*>(task->context[i]);
             HcclAicpuUtils::PrintHcclOpResParam(ctx);
-            CHK_PRT_RET(PrepareHcommInstance(ctx, tilingData) != HCCL_SUCCESS,
-                        AicpuHcclProcess::AicpuReleaseCommbyGroup(ctx->hcomId),
-                        HCCL_E_INTERNAL);
+            CHK_PRT_RET(
+                PrepareHcommInstance(ctx, tilingData) != HCCL_SUCCESS,
+                AicpuHcclProcess::AicpuReleaseCommbyGroup(ctx->hcomId), HCCL_E_INTERNAL);
         }
     }
-    CHK_PRT_RET(AicpuKfcUtils::ThreadBarrier(BARRIER_TIMEOUT) != HCCL_SUCCESS,
-                HCCL_ERROR("[%s]Timeout during instance preparation.", __func__),
-                HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        AicpuKfcUtils::ThreadBarrier(BARRIER_TIMEOUT) != HCCL_SUCCESS,
+        HCCL_ERROR("[%s]Timeout during instance preparation.", __func__), HCCL_E_INTERNAL);
 
     std::vector<u32> groupIds{};
     for (u64 i = 0UL; i < task->ctxNum; i++) {
-        HcclOpResParam *ctx = reinterpret_cast<HcclOpResParam *>(task->context[i]);
+        HcclOpResParam* ctx = reinterpret_cast<HcclOpResParam*>(task->context[i]);
         groupIds.emplace_back(GetComGroupIdx(ctx->hcomId));
     }
     HcclResult ret = RunRpcServerInnerProcessV2(groupIds);
-    CHK_PRT_RET(AicpuKfcUtils::ThreadBarrier(BARRIER_TIMEOUT) != HCCL_SUCCESS,
-                HCCL_ERROR("[%s]Timeout during instance finalize.", __func__),
-                HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        AicpuKfcUtils::ThreadBarrier(BARRIER_TIMEOUT) != HCCL_SUCCESS,
+        HCCL_ERROR("[%s]Timeout during instance finalize.", __func__), HCCL_E_INTERNAL);
 
     if (HcclAicpuUtils::GetBlockIdx() == 0U) {
         for (u64 i = 0UL; i < task->ctxNum; i++) {
-            HcclOpResParam *ctx = reinterpret_cast<HcclOpResParam *>(task->context[i]);
+            HcclOpResParam* ctx = reinterpret_cast<HcclOpResParam*>(task->context[i]);
             AicpuHcclProcess::AicpuReleaseCommbyGroup(ctx->hcomId);
         }
         initFlag = false;
@@ -1818,16 +1829,16 @@ u32 AicpuKfcProcess::AicpuRunRpcServerForMC2V2(KFCTaskV2 *task, const Mc2InitTil
     return ret;
 }
 
-u32 AicpuKfcProcess::AicpuRunRpcServerForMC2(KFCTaskV2 *task)
+u32 AicpuKfcProcess::AicpuRunRpcServerForMC2(KFCTaskV2* task)
 {
-    HcclOpResParam *commParam[MAX_COMM_CTX_NUM]{};
+    HcclOpResParam* commParam[MAX_COMM_CTX_NUM]{};
     std::vector<u32> groupIds{};
     for (int i = 0; i < static_cast<int>(task->ctxNum); i++) {
-        commParam[i] = reinterpret_cast<HcclOpResParam *>(task->context[i]);
+        commParam[i] = reinterpret_cast<HcclOpResParam*>(task->context[i]);
         CHK_RET(static_cast<HcclResult>(PrepareHcommInstance(commParam[i])));
         groupIds.emplace_back(GetComGroupIdx(commParam[i]->hcomId));
     }
-    HcclResult ret = RunRpcServerApiV2(reinterpret_cast<void *>(task->tilingData), groupIds);
+    HcclResult ret = RunRpcServerApiV2(reinterpret_cast<void*>(task->tilingData), groupIds);
     for (int i = 0; i < static_cast<int>(task->ctxNum); i++) {
         std::string group = commParam[i]->hcomId;
         AicpuHcclProcess::AicpuReleaseCommbyGroup(group);
@@ -1840,8 +1851,8 @@ u32 AicpuKfcProcess::AicpuRunRpcServerForMC2(KFCTaskV2 *task)
     return ret;
 }
 
-HcclResult AicpuKfcProcess::AicpuCcOpExe(AivAicpuOpParam *commParam, AivAicpuOpParam *commParamNext,
-                                         AicpuComContext *ctx)
+HcclResult
+AicpuKfcProcess::AicpuCcOpExe(AivAicpuOpParam* commParam, AivAicpuOpParam* commParamNext, AicpuComContext* ctx)
 {
     HCCL_DEBUG("----------start %s -------", __func__);
     if (commParam == nullptr || ctx == nullptr) {
@@ -1855,7 +1866,7 @@ HcclResult AicpuKfcProcess::AicpuCcOpExe(AivAicpuOpParam *commParam, AivAicpuOpP
     ctx->commLen = ctx->unitSize * commParam->count;
     ctx->commType = commParam->commType;
     ctx->reducekind = commParam->opType;
-    ctx->commOpType = GetCcOpType(ctx->commLen, ctx->rankNum); // twoshot.onshot...
+    ctx->commOpType = GetCcOpType(ctx->commLen, ctx->rankNum); // twoshot.oneshot...
     ctx->totalTurnCnt = commParam->totalTurnCnt;
     ctx->useBufferType = commParam->useBufferType;
     ctx->winOffset = commParam->winOffset;
@@ -1874,61 +1885,59 @@ HcclResult AicpuKfcProcess::AicpuCcOpExe(AivAicpuOpParam *commParam, AivAicpuOpP
     }
     profInst.workCnt = ctx->curTurnCnt;
     // 所有轮次执行完毕后通知aclnn
-    if (ctx->curTurnCnt == ctx->totalTurnCnt &&
-        (ctx->devType != DevType::DEV_TYPE_310P1 && ctx->devType != DevType::DEV_TYPE_310P3) &&
-        ctx->preparePosition != TASK_PREPARE_KERNEL) {
+    if (ctx->curTurnCnt == ctx->totalTurnCnt
+        && (ctx->devType != DevType::DEV_TYPE_310P1 && ctx->devType != DevType::DEV_TYPE_310P3)
+        && ctx->preparePosition != TASK_PREPARE_KERNEL) {
         CHK_RET(AicpuDispatcher::AddAllEndTaskOnMainStream(AicpuKfcProcess::GetActiveSqId(ctx)));
     }
 
     return HCCL_SUCCESS;
 }
 
-HcclResult AicpuKfcProcess::WaitTaskFinish(AicpuComContext *ctx, bool isWaitTask)
+HcclResult AicpuKfcProcess::WaitTaskFinish(AicpuComContext* ctx, bool isWaitTask)
 {
     HcclResult ret = HCCL_SUCCESS;
     CHK_RET(AicpuKfcUtils::TraceProfSubmit());
     if (isWaitTask || ctx->retryEnable) {
         ret = TaskOrchestrator::WaitMainStreamFinish(ctx);
-        CHK_PRT_RET((ret != HCCL_SUCCESS && ret != HCCL_E_SUSPENDING),
-                    HCCL_ERROR("wait main stream finish failed"), ret);
+        CHK_PRT_RET(
+            (ret != HCCL_SUCCESS && ret != HCCL_E_SUSPENDING), HCCL_ERROR("wait main stream finish failed"), ret);
     }
     return ret;
 }
 
-HcclResult AicpuKfcProcess::ResetSqBuff(AicpuComContext *ctx)
+HcclResult AicpuKfcProcess::ResetSqBuff(AicpuComContext* ctx)
 {
     CHK_RET(AicpuSqeContext::ClearLocalBuff());
-    SqeContext *sqeContext = GetSqeContext();
-    u32 streamNum =  (ctx->multiServerFlag) ? 1 : ctx->rankNum;
+    SqeContext* sqeContext = GetSqeContext();
+    u32 streamNum = (ctx->multiServerFlag) ? 1 : ctx->rankNum;
     for (u32 i = 0; i < streamNum; i++) {
-        auto &buff = sqeContext->buffPtr[i];
+        auto& buff = sqeContext->buffPtr[i];
         CHK_RET(QuerySqStatusByType(ctx->devId, ctx->streamInfo[i].sqId, DRV_SQCQ_PROP_SQ_TAIL, buff.sqTail));
         CHK_RET(QuerySqStatusByType(ctx->devId, ctx->streamInfo[i].sqId, DRV_SQCQ_PROP_SQ_HEAD, buff.sqHead));
-        HCCL_INFO("hccl aicpu reset stream buffer, sqid:%d head:%u tail:%u.",
-                  ctx->streamInfo[i].sqId, buff.sqHead, buff.sqTail);
+        HCCL_INFO(
+            "hccl aicpu reset stream buffer, sqid:%d head:%u tail:%u.", ctx->streamInfo[i].sqId, buff.sqHead,
+            buff.sqTail);
     }
     HCCL_INFO("reset stream sq buffer success.");
     return HCCL_SUCCESS;
 }
 
-u32 AicpuKfcProcess::GetActiveSqId(AicpuComContext *ctx)
-{
-    return ctx->rankId;
-}
+u32 AicpuKfcProcess::GetActiveSqId(AicpuComContext* ctx) { return ctx->rankId; }
 
-HcclResult AicpuKfcProcess::InitStreamInfo(HccCommResParamTask *commParam, AicpuComContext *ctx)
+HcclResult AicpuKfcProcess::InitStreamInfo(HccCommResParamTask* commParam, AicpuComContext* ctx)
 {
     g_streamIdMap.clear();
     u32 streamNum = (ctx->multiServerFlag) ? 1U : ctx->rankNum;
     for (u32 i = 0; i < streamNum; i++) {
-        auto &streamInfo = ctx->streamInfo[i];
+        auto& streamInfo = ctx->streamInfo[i];
         streamInfo.sqId = commParam->streamInfo[i].sqIds;
         streamInfo.logicCqId = commParam->streamInfo[i].logicCqids;
         streamInfo.actualStreamId = commParam->streamInfo[i].streamIds;
         HCCL_INFO("streamInfo.sqId :%d, streamId:%d", streamInfo.sqId, streamInfo.actualStreamId);
         u64 sq_addr = 0;
         CHK_RET(QuerySqBaseAddr(ctx->devId, streamInfo.sqId, sq_addr));
-        streamInfo.sqBaseAddr = reinterpret_cast<void *>(sq_addr);
+        streamInfo.sqBaseAddr = reinterpret_cast<void*>(sq_addr);
         CHK_RET(QuerySqStatusByType(ctx->devId, streamInfo.sqId, DRV_SQCQ_PROP_SQ_DEPTH, streamInfo.sqDepth));
         g_streamIdMap[streamInfo.actualStreamId] = i;
     }

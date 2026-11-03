@@ -14,21 +14,24 @@
 namespace hccl {
 class CollAllReduceMidCountFor91093Executor : public CollAllReduceExecutor {
 public:
-    explicit CollAllReduceMidCountFor91093Executor(const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher> &topoMatcher);
+    explicit CollAllReduceMidCountFor91093Executor(
+        const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher>& topoMatcher);
     ~CollAllReduceMidCountFor91093Executor() override = default;
 
 private:
     /* *************** 资源计算 *************** */
     HcclResult CalcCommInfo(std::vector<LevelNSubCommTransport>& opTransport) override;
-    HcclResult CalcTransportMemType(TransportMemType &inputType, TransportMemType &outputType) const;
-    HcclResult CalcLevel1CommInfo(TransportMemType inputType, TransportMemType outputType,
+    HcclResult CalcTransportMemType(TransportMemType& inputType, TransportMemType& outputType) const;
+    HcclResult CalcLevel1CommInfo(
+        TransportMemType inputType, TransportMemType outputType,
         std::vector<LevelNSubCommTransport>& opTransport) override;
-    HcclResult CalcLevel2CommInfo(TransportMemType inputType, TransportMemType outputType,
+    HcclResult CalcLevel2CommInfo(
+        TransportMemType inputType, TransportMemType outputType,
         std::vector<LevelNSubCommTransport>& opTransport) override;
 
     /* *************** 算法编排 *************** */
     u64 CalcLoopMaxCount(const u64 cclBuffSize, const u32 unitSize) override;
-    HcclResult KernelRun(const OpParam &param, ExecMem &execMem) override;
+    HcclResult KernelRun(const OpParam& param, ExecMem& execMem) override;
 };
 
 } // namespace hccl

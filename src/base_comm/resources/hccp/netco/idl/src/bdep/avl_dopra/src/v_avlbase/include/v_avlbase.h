@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef V_AVLBASE_H
 #define V_AVLBASE_H
 
@@ -35,23 +34,22 @@ typedef struct AVLBaseTree {
 /* Macro to determine the largest value of two variables (internal use) */
 #define VOS_V2_AVL_MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
 
-#define FIND_LEFTMOST_NODE(pstNode) \
-    do { \
-        while ((pstNode)->pstLeft != AVL_NULL_PTR) { \
-            (pstNode) = (pstNode)->pstLeft; \
-        } \
+#define FIND_LEFTMOST_NODE(pstNode)                                                                                    \
+    do {                                                                                                               \
+        while ((pstNode)->pstLeft != AVL_NULL_PTR) {                                                                   \
+            (pstNode) = (pstNode)->pstLeft;                                                                            \
+        }                                                                                                              \
     } while (0)
 
-#define FIND_RIGHTMOST_NODE(pstNode) \
-    do { \
-        while ((pstNode)->pstRight != AVL_NULL_PTR) { \
-            (pstNode) = (pstNode)->pstRight; \
-        } \
+#define FIND_RIGHTMOST_NODE(pstNode)                                                                                   \
+    do {                                                                                                               \
+        while ((pstNode)->pstRight != AVL_NULL_PTR) {                                                                  \
+            (pstNode) = (pstNode)->pstRight;                                                                           \
+        }                                                                                                              \
     } while (0)
 
-static inline void VosAvlNodeRightInsert(AVLBASE_TREE_S *pstTree,
-                                         AVLBASE_NODE_S *pstParentNode,
-                                         AVLBASE_NODE_S *pstNode)
+static inline void VosAvlNodeRightInsert(AVLBASE_TREE_S *pstTree, AVLBASE_NODE_S *pstParentNode,
+    AVLBASE_NODE_S *pstNode)
 {
     pstNode->pstParent = pstParentNode;
     pstParentNode->pstRight = pstNode;
@@ -63,9 +61,7 @@ static inline void VosAvlNodeRightInsert(AVLBASE_TREE_S *pstTree,
     }
 }
 
-static inline void VosAvlNodeLeftInsert(AVLBASE_TREE_S *pstTree,
-                                        AVLBASE_NODE_S *pstParentNode,
-                                        AVLBASE_NODE_S *pstNode)
+static inline void VosAvlNodeLeftInsert(AVLBASE_TREE_S *pstTree, AVLBASE_NODE_S *pstParentNode, AVLBASE_NODE_S *pstNode)
 {
     pstNode->pstParent = pstParentNode;
     pstParentNode->pstLeft = pstNode;
@@ -83,7 +79,7 @@ extern void VosAvlSwapRightMost(AVLBASE_TREE_S *pstTree, AVLBASE_NODE_S *pstSubT
 extern void VosAvlSwapLeftMost(AVLBASE_TREE_S *pstTree, AVLBASE_NODE_S *pstSubTree, AVLBASE_NODE_S *pstNode);
 extern void VosAvlRebalance(AVLBASE_NODE_S **ppstSubTree);
 extern void VosAvlBalanceTree(AVLBASE_TREE_S *pstTree, AVLBASE_NODE_S *pstNode);
-extern AVLBASE_NODE_S* VosAvlDeleteCheck(AVLBASE_TREE_S *pstTree, AVLBASE_NODE_S *pstNode);
+extern AVLBASE_NODE_S *VosAvlDeleteCheck(AVLBASE_TREE_S *pstTree, AVLBASE_NODE_S *pstNode);
 extern void VosAvlDelete(AVLBASE_NODE_S *pstBaseNode, AVLBASE_TREE_S *pstBaseTree);
 
 #ifdef __cplusplus

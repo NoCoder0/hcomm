@@ -1,54 +1,49 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "all_gather_ring.h"
 #include "alg_template_register.h"
 
 namespace hccl {
-AllGatherRing::AllGatherRing(const HcclDispatcher dispatcher) : AlgTemplateBase(dispatcher)
-{
-}
+AllGatherRing::AllGatherRing(const HcclDispatcher dispatcher) : AlgTemplateBase(dispatcher) {}
 
-AllGatherRing::~AllGatherRing()
-{
-}
+AllGatherRing::~AllGatherRing() {}
 
-HcclResult AllGatherRing::TxVector(const LINK &link, const std::vector<Slice> &txSlices)
+HcclResult AllGatherRing::TxVector(const LINK& link, const std::vector<Slice>& txSlices)
 {
     std::vector<TxMemoryInfo> txMems;
-    for (const Slice &txSlice : txSlices) {
+    for (const Slice& txSlice : txSlices) {
         DeviceMem srcMem = outputMem_.range(txSlice.offset, txSlice.size);
         HCCL_DEBUG("tx srcMem[%p] range[%llu] size[%llu] ", srcMem.ptr(), txSlice.offset, txSlice.size);
-        txMems.emplace_back(TxMemoryInfo{UserMemType::OUTPUT_MEM, txSlice.offset + baseOffset_,
-            srcMem.ptr(), txSlice.size});
+        txMems.emplace_back(
+            TxMemoryInfo{UserMemType::OUTPUT_MEM, txSlice.offset + baseOffset_, srcMem.ptr(), txSlice.size});
     }
     CHK_RET(link->TxAsync(txMems, stream_));
     HCCL_DEBUG("[AllGatherRing]TxVector for txMems success");
     return HCCL_SUCCESS;
 }
 
-HcclResult AllGatherRing::RxVector(const LINK &link, const std::vector<Slice> &rxSlices)
+HcclResult AllGatherRing::RxVector(const LINK& link, const std::vector<Slice>& rxSlices)
 {
     std::vector<RxMemoryInfo> rxMems;
-    for (const Slice &rxSlice : rxSlices) {
+    for (const Slice& rxSlice : rxSlices) {
         DeviceMem dstMem = outputMem_.range(rxSlice.offset, rxSlice.size);
-        HCCL_DEBUG("rx dstMem[%p] range[%llu], size[%llu] ",  dstMem.ptr(),
-            rxSlice.offset, rxSlice.size);
-        rxMems.emplace_back(RxMemoryInfo{UserMemType::OUTPUT_MEM, rxSlice.offset + baseOffset_,
-            dstMem.ptr(), rxSlice.size});
+        HCCL_DEBUG("rx dstMem[%p] range[%llu], size[%llu] ", dstMem.ptr(), rxSlice.offset, rxSlice.size);
+        rxMems.emplace_back(
+            RxMemoryInfo{UserMemType::OUTPUT_MEM, rxSlice.offset + baseOffset_, dstMem.ptr(), rxSlice.size});
     }
     CHK_RET(link->RxAsync(rxMems, stream_));
     return HCCL_SUCCESS;
 }
 
-HcclResult AllGatherRing::Tx(const LINK &link, const Slice &txSlice)
+HcclResult AllGatherRing::Tx(const LINK& link, const Slice& txSlice)
 {
     DeviceMem srcMem = outputMem_.range(txSlice.offset, txSlice.size);
     HCCL_DEBUG("tx srcMem[%p] range[%llu] size[%llu] ", srcMem.ptr(), txSlice.offset, txSlice.size);
@@ -56,22 +51,22 @@ HcclResult AllGatherRing::Tx(const LINK &link, const Slice &txSlice)
     return HCCL_SUCCESS;
 }
 
-HcclResult AllGatherRing::Rx(const LINK &link, const Slice &rxSlice)
+HcclResult AllGatherRing::Rx(const LINK& link, const Slice& rxSlice)
 {
     DeviceMem dstMem = outputMem_.range(rxSlice.offset, rxSlice.size);
-    HCCL_DEBUG("rx dstMem[%p] range[%llu], size[%llu] ",  dstMem.ptr(),
-        rxSlice.offset, rxSlice.size);
+    HCCL_DEBUG("rx dstMem[%p] range[%llu], size[%llu] ", dstMem.ptr(), rxSlice.offset, rxSlice.size);
     CHK_RET(link->RxAsync(UserMemType::OUTPUT_MEM, rxSlice.offset + baseOffset_, dstMem.ptr(), rxSlice.size, stream_));
     return HCCL_SUCCESS;
 }
 
 // 服务器间allgather的入口函数
-HcclResult AllGatherRing::RunAsync(const u32 rank, const u32 rankSize, const std::vector<LINK> &links)
+HcclResult AllGatherRing::RunAsync(const u32 rank, const u32 rankSize, const std::vector<LINK>& links)
 {
     CHK_SMART_PTR_NULL(dispatcher_);
     CHK_PTR_NULL(stream_.ptr());
-    HCCL_INFO("AllGatherRing run_async rank[%u] ranksize[%u] inputMem[%p] outputMem[%p] count[%llu]", \
-              rank, rankSize, inputMem_.ptr(), outputMem_.ptr(), count_);
+    HCCL_INFO(
+        "AllGatherRing run_async rank[%u] ranksize[%u] inputMem[%p] outputMem[%p] count[%llu]", rank, rankSize,
+        inputMem_.ptr(), outputMem_.ptr(), count_);
 
     if (rankSize == 1) {
         if (inputMem_ != outputMem_) {
@@ -79,7 +74,7 @@ HcclResult AllGatherRing::RunAsync(const u32 rank, const u32 rankSize, const std
         }
         return HCCL_SUCCESS;
     }
-HCCL_DEBUG("[AllGatherRing][RunAsync] AllGather Ring begins");
+    HCCL_DEBUG("[AllGatherRing][RunAsync] AllGather Ring begins");
     // 获取ring algorithm所需的通信连接
     u32 ringPrevRank = (rank + rankSize - 1) % rankSize;
     u32 ringNextRank = (rank + 1) % rankSize;
@@ -112,8 +107,9 @@ HCCL_DEBUG("[AllGatherRing][RunAsync] AllGather Ring begins");
             slices_[i].offset = sliceSize * i;
             inputSlices[i].size = sliceSize;
             inputSlices[i].offset = (inputMem_.size() < outputMem_.size()) ? 0 : (sliceSize * i);
-            HCCL_DEBUG("rank[%u], slices[%u].offset=%llu, slices[%u].size=%llu", \
-                       rank, i, slices_[i].offset, i, slices_[i].size);
+            HCCL_DEBUG(
+                "rank[%u], slices[%u].offset=%llu, slices[%u].size=%llu", rank, i, slices_[i].offset, i,
+                slices_[i].size);
         }
     }
 
@@ -144,7 +140,7 @@ HCCL_DEBUG("[AllGatherRing][RunAsync] AllGather Ring begins");
     return HCCL_SUCCESS;
 }
 
-HcclResult AllGatherRing::RunAllGather(u32 rank, u32 rankSize, const std::vector<Slice> &outputSlices)
+HcclResult AllGatherRing::RunAllGather(u32 rank, u32 rankSize, const std::vector<Slice>& outputSlices)
 {
     if (outputSlices.size() < rankSize) {
         HCCL_ERROR("[Run][AllGather]rank[%u] OutputSlice Size is less than rank size", rank);
@@ -158,13 +154,15 @@ HcclResult AllGatherRing::RunAllGather(u32 rank, u32 rankSize, const std::vector
     u32 txSliceIndex = rank;
     HCCL_DEBUG("[AllGatherRing][RunAllGather]sliceSize is %u, rxSliceIndex is %u", sliceSize, rxSliceIndex);
     for (u32 i = 0; i < rankSize - 1; i++) {
-        HCCL_DEBUG("rank[%u] round[%u] will tx_ack  outputslice[%u].offset is[%llu] size[%llu]",
-            rank, i, rxSliceIndex, outputSlices[rxSliceIndex].offset, outputSlices[rxSliceIndex].size);
+        HCCL_DEBUG(
+            "rank[%u] round[%u] will tx_ack outputslice[%u].offset is[%llu] size[%llu]", rank, i, rxSliceIndex,
+            outputSlices[rxSliceIndex].offset, outputSlices[rxSliceIndex].size);
         CHK_RET(linkLeft_->TxAck(stream_));
 
         // reduce目的操作
-        HCCL_DEBUG("rank[%u] round[%u] will rx ack because outputSlices[%u] size[%llu] ", rank, \
-            i, txSliceIndex, outputSlices[txSliceIndex].size);
+        HCCL_DEBUG(
+            "rank[%u] round[%u] will rx ack because outputSlices[%u] size[%llu] ", rank, i, txSliceIndex,
+            outputSlices[txSliceIndex].size);
         CHK_RET(linkRight_->RxAck(stream_));
 
         std::vector<Slice> txSegsSlice;
@@ -174,17 +172,26 @@ HcclResult AllGatherRing::RunAllGather(u32 rank, u32 rankSize, const std::vector
             rxSegsSlice.push_back(outputSlices[rxSliceIndex * sliceSize + j]);
         }
         ret = TxVector(linkRight_, txSegsSlice);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[Run][AllGather]rank[%u] round[%u] Right Link tx outputSlices[%u] "\
-                "Failed", rank, i, txSliceIndex), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[Run][AllGather]rank[%u] round[%u] Right Link tx outputSlices[%u] "
+                "Failed",
+                rank, i, txSliceIndex),
+            ret);
 
         // reduce源操作
-        HCCL_DEBUG("rank[%u]  round[%u] rx data outputSlices[%u] offset[%llu] size[%llu]", \
-            rank, i, rxSliceIndex, outputSlices[rxSliceIndex].offset, outputSlices[rxSliceIndex].size);
+        HCCL_DEBUG(
+            "rank[%u] round[%u] rx data outputSlices[%u] offset[%llu] size[%llu]", rank, i, rxSliceIndex,
+            outputSlices[rxSliceIndex].offset, outputSlices[rxSliceIndex].size);
         ret = RxVector(linkLeft_, rxSegsSlice);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[Run][AllGather]rank[%u] round[%u]  Left Link rx outputSlices[%u] "\
-                "Failed", rank, i, rxSliceIndex), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[Run][AllGather]rank[%u] round[%u] Left Link rx outputSlices[%u] "
+                "Failed",
+                rank, i, rxSliceIndex),
+            ret);
 
         // 末尾传输, 只接收一次, 不用再次发送
         txSliceIndex = ForwordRank(txSliceIndex, rankSize, 1);
@@ -198,8 +205,7 @@ HcclResult AllGatherRing::RunAllGather(u32 rank, u32 rankSize, const std::vector
     return HCCL_SUCCESS;
 }
 
-HcclResult AllGatherRing::RunAllGatherChunk(const u32 rank, const u32 rankSize,
-                                            const std::vector<Slice> &outputSlices)
+HcclResult AllGatherRing::RunAllGatherChunk(const u32 rank, const u32 rankSize, const std::vector<Slice>& outputSlices)
 {
     if (outputSlices.size() < rankSize) {
         HCCL_ERROR("[Run][AllGatherChunk]rank[%u] OutputSlice Size is less than rank size", rank);
@@ -212,7 +218,8 @@ HcclResult AllGatherRing::RunAllGatherChunk(const u32 rank, const u32 rankSize,
         CHK_RET(HeadAllGatherChunk(rank, rankSize, outputSlices));
         for (u32 midRankIdx = 1; midRankIdx < sendSliceLen - 1; midRankIdx++) {
             ret = MidAllGatherChunk(rank, rankSize, midRankIdx, outputSlices);
-            CHK_PRT_RET(ret != HCCL_SUCCESS,
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
                 HCCL_ERROR("[Run][AllGatherChunk]rank[%u] run mid[%u] ReduceScatter chunk failed", rank, midRankIdx),
                 HCCL_E_INTERNAL);
         }
@@ -222,14 +229,19 @@ HcclResult AllGatherRing::RunAllGatherChunk(const u32 rank, const u32 rankSize,
             CHK_RET(linkLeft_->TxAck(stream_));
 
             ret = Rx(linkLeft_, outputSlices[rxSliceIndex]);
-            CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][AllGatherChunk]rank[%u] Left Link rx outputSlices[%u] "\
-                "Failed", rank, rxSliceIndex), ret);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR(
+                    "[Run][AllGatherChunk]rank[%u] Left Link rx outputSlices[%u] "
+                    "Failed",
+                    rank, rxSliceIndex),
+                ret);
         }
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult AllGatherRing::HeadAllGatherChunk(u32 rank, u32 rankSize, const std::vector<Slice> &outputSlices)
+HcclResult AllGatherRing::HeadAllGatherChunk(u32 rank, u32 rankSize, const std::vector<Slice>& outputSlices)
 {
     if (outputSlices.size() < rankSize) {
         HCCL_ERROR("[AllGatherRing][HeadAllGatherChunk]rank[%u] OutputSlice Size is less than rank size", rank);
@@ -244,8 +256,13 @@ HcclResult AllGatherRing::HeadAllGatherChunk(u32 rank, u32 rankSize, const std::
         CHK_RET(linkLeft_->TxAck(stream_));
 
         ret = Rx(linkLeft_, outputSlices[rxSliceIndex]);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[AllGatherRing][HeadAllGatherChunk]rank[%u] Left Link rx "\
-            "outputSlices[%u] Failed", rank, rxSliceIndex), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[AllGatherRing][HeadAllGatherChunk]rank[%u] Left Link rx "
+                "outputSlices[%u] Failed",
+                rank, rxSliceIndex),
+            ret);
     }
 
     iterSlice = std::find(preRankSlices.begin(), preRankSlices.end(), rankSliceLists_[rank][1]);
@@ -255,14 +272,19 @@ HcclResult AllGatherRing::HeadAllGatherChunk(u32 rank, u32 rankSize, const std::
         CHK_RET(linkRight_->RxAck(stream_));
 
         ret = Tx(linkRight_, outputSlices[txSliceIndex]);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[AllGatherRing][HeadAllGatherChunk]rank[%u] Right Link tx "\
-            "outputSlices[%u] Failed", rank, txSliceIndex), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[AllGatherRing][HeadAllGatherChunk]rank[%u] Right Link tx "
+                "outputSlices[%u] Failed",
+                rank, txSliceIndex),
+            ret);
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult AllGatherRing::MidAllGatherChunk(u32 rank, u32 rankSize, u32 sliceIdx,
-                                            const std::vector<Slice> &outputSlices)
+HcclResult
+AllGatherRing::MidAllGatherChunk(u32 rank, u32 rankSize, u32 sliceIdx, const std::vector<Slice>& outputSlices)
 {
     if (outputSlices.size() < rankSize) {
         HCCL_ERROR("[AllGatherRing][MidAllGatherChunk]rank[%u] OutputSlice Size is less than rank size", rank);
@@ -279,23 +301,38 @@ HcclResult AllGatherRing::MidAllGatherChunk(u32 rank, u32 rankSize, u32 sliceIdx
         CHK_RET(linkRight_->RxAck(stream_));
 
         ret = Tx(linkRight_, outputSlices[txSliceIndex]);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[AllGatherRing][MidAllGatherChunk]rank[%u] Right Link tx "\
-            "outputSlices[%u] Failed", rank, txSliceIndex), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[AllGatherRing][MidAllGatherChunk]rank[%u] Right Link tx "
+                "outputSlices[%u] Failed",
+                rank, txSliceIndex),
+            ret);
         ret = Rx(linkLeft_, outputSlices[rxSliceIndex]);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[AllGatherRing][MidAllGatherChunk]rank[%u] Left Link rx "\
-            "outputSlices[%u] Failed", rank, rxSliceIndex), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[AllGatherRing][MidAllGatherChunk]rank[%u] Left Link rx "
+                "outputSlices[%u] Failed",
+                rank, rxSliceIndex),
+            ret);
     } else {
         CHK_RET(linkRight_->RxAck(stream_));
 
         ret = Tx(linkRight_, outputSlices[txSliceIndex]);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[AllGatherRing][MidAllGatherChunk]rank[%u] Right Link tx "\
-            "outputSlices[%u] Failed", rank, txSliceIndex), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[AllGatherRing][MidAllGatherChunk]rank[%u] Right Link tx "
+                "outputSlices[%u] Failed",
+                rank, txSliceIndex),
+            ret);
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult AllGatherRing::TailAllGatherChunk(u32 rank, u32 rankSize, u32 sliceIdx,
-                                             const std::vector<Slice> &outputSlices)
+HcclResult
+AllGatherRing::TailAllGatherChunk(u32 rank, u32 rankSize, u32 sliceIdx, const std::vector<Slice>& outputSlices)
 {
     if (outputSlices.size() < rankSize) {
         HCCL_ERROR("[AllGatherRing][TailAllGatherChunk]rank[%u] OutputSlice Size is less than rank size", rank);
@@ -315,26 +352,46 @@ HcclResult AllGatherRing::TailAllGatherChunk(u32 rank, u32 rankSize, u32 sliceId
         CHK_RET(linkRight_->RxAck(stream_));
 
         ret = Tx(linkRight_, outputSlices[txSliceIndex]);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[AllGatherRing][TailAllGatherChunk]rank[%u] Right Link tx "\
-            "outputSlices[%u] Failed", rank, txSliceIndex), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[AllGatherRing][TailAllGatherChunk]rank[%u] Right Link tx "
+                "outputSlices[%u] Failed",
+                rank, txSliceIndex),
+            ret);
         ret = Rx(linkLeft_, outputSlices[rxSliceIndex]);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[AllGatherRing][TailAllGatherChunk]rank[%u] Left Link rx "\
-            "outputSlices[%u] Failed", rank, rxSliceIndex), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[AllGatherRing][TailAllGatherChunk]rank[%u] Left Link rx "
+                "outputSlices[%u] Failed",
+                rank, rxSliceIndex),
+            ret);
 
         for (u32 sliceIdx = 1; sliceIdx < chunkSize; sliceIdx++) {
             rxSliceIndex = chunkStart + sliceIdx;
             CHK_RET(linkLeft_->TxAck(stream_));
 
             ret = Rx(linkLeft_, outputSlices[rxSliceIndex]);
-            CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[AllGatherRing][TailAllGatherChunk]rank[%u] Left Link rx "\
-                "outputSlices[%u] Failed", rank, rxSliceIndex), ret);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR(
+                    "[AllGatherRing][TailAllGatherChunk]rank[%u] Left Link rx "
+                    "outputSlices[%u] Failed",
+                    rank, rxSliceIndex),
+                ret);
         }
     } else {
         CHK_RET(linkRight_->RxAck(stream_));
 
         ret = Tx(linkRight_, outputSlices[txSliceIndex]);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[AllGatherRing][TailAllGatherChunk]rank[%u] Right Link tx "\
-            "outputSlices[%u] Failed", rank, txSliceIndex), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[AllGatherRing][TailAllGatherChunk]rank[%u] Right Link tx "
+                "outputSlices[%u] Failed",
+                rank, txSliceIndex),
+            ret);
     }
     return HCCL_SUCCESS;
 }
@@ -344,11 +401,11 @@ HcclResult AllGatherRing::AllGatherSlicesPrep(u32 rankSize, u32 nicSize)
 {
     u32 chunkSize = HCCL_NIC_MAX_NUM / nicSize;
     for (u32 rankIdx = 0; rankIdx < rankSize; rankIdx++) {
-        std::vector<u32> sliceList;    // 单个rank上的发送slice编号
-        for (u32 nicDis = 0; nicDis <= rankSize - 2; nicDis++) {  // 递减从当前rank遍历至(rank+2+ranksize)%ranksize的位置
+        std::vector<u32> sliceList;                              // 单个rank上的发送slice编号
+        for (u32 nicDis = 0; nicDis <= rankSize - 2; nicDis++) { // 递减从当前rank遍历至(rank+2+ranksize)%ranksize的位置
             u32 nicIdx = (rankIdx + rankSize - nicDis) % rankSize;
             std::vector<u32>::iterator iterNic = std::find(nicRankList_.begin(), nicRankList_.end(), nicIdx);
-            if (iterNic != nicRankList_.end()) {    // 当前rank为网口所在位置，将网口对应的chunksize份silce放入sliceList
+            if (iterNic != nicRankList_.end()) { // 当前rank为网口所在位置，将网口对应的chunksize份slice放入sliceList
                 u32 nicListIdx = distance(nicRankList_.begin(), iterNic);
                 for (u32 chunkIdx = 0; chunkIdx < chunkSize; chunkIdx++) {
                     sliceList.push_back(chunkSize * nicListIdx + chunkIdx);
@@ -361,10 +418,10 @@ HcclResult AllGatherRing::AllGatherSlicesPrep(u32 rankSize, u32 nicSize)
     return HCCL_SUCCESS;
 }
 
-HcclResult AllGatherRing::GetNslbAdjInfo(const u32 rank, const u32 rankSize,
-                                         const std::vector<LINK> &links, AdjInfo& nslbAdjInfo)
+HcclResult
+AllGatherRing::GetNslbAdjInfo(const u32 rank, const u32 rankSize, const std::vector<LINK>& links, AdjInfo& nslbAdjInfo)
 {
-    NslbDpAdjInfo adjInfoStep = {0};
+    NslbDpAdjInfo adjInfoStep = {};
     u32 ringNextRank = (rank + 1) % rankSize;
     LINK nslbNext = links[ringNextRank];
 
@@ -377,4 +434,4 @@ HcclResult AllGatherRing::GetNslbAdjInfo(const u32 rank, const u32 rankSize,
     return HCCL_SUCCESS;
 }
 REGISTER_TEMPLATE(TemplateType::TEMPLATE_ALL_GATHER_RING, AllGatherRing);
-}  // namespace hccl
+} // namespace hccl

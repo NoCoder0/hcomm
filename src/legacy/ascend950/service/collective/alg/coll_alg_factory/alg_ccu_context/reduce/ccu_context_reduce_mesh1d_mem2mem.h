@@ -22,17 +22,17 @@ namespace Hccl {
 
 class CcuContextReduceMeshMem2Mem1D : public CcuContextAlgBase {
 public:
-    CcuContextReduceMeshMem2Mem1D(const CcuCtxArg &arg, const std::vector<CcuTransport *> &transports,
-                                            const CcuTransportGroup &group);
+    CcuContextReduceMeshMem2Mem1D(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
 
 private:
     void InitResource();
     void LoadArgs();
     void PreSync();
-    void DoRepeatReduce(const std::vector<CcuRep::Variable> &srcAddr, const CcuRep::Variable &dstAddr);
+    void DoRepeatReduce(const std::vector<CcuRep::Variable>& srcAddr, const CcuRep::Variable& dstAddr);
     void PostSync();
 
     uint32_t rootId_{0}; // 当rankid == rootid时，为root节点 则跳过write操作
@@ -41,25 +41,25 @@ private:
     std::vector<CcuRep::Variable> input_;
     std::vector<CcuRep::Variable> output_;
     std::vector<CcuRep::Variable> token_;
-    CcuRep::Variable              inputRepeatStride_;
-    CcuRep::Variable              outputRepeatStride_;
-    CcuRep::Variable              normalSliceSize_;
-    CcuRep::Variable              lastSliceSize_;
-    CcuRep::Variable              repeatNumVar_;
-    CcuRep::Variable              flag_;
+    CcuRep::Variable inputRepeatStride_;
+    CcuRep::Variable outputRepeatStride_;
+    CcuRep::Variable normalSliceSize_;
+    CcuRep::Variable lastSliceSize_;
+    CcuRep::Variable repeatNumVar_;
+    CcuRep::Variable flag_;
 
-    CcuRep::MaskSignal            locMask_;
-    CcuRep::Memory                srcMem_;
-    CcuRep::Memory                dstMem_;
-    GroupOpSize                   localGoSize_;
+    CcuRep::MaskSignal locMask_;
+    CcuRep::Memory srcMem_;
+    CcuRep::Memory dstMem_;
+    GroupOpSize localGoSize_;
 
-    CcuRep::Variable              isInputOutputEqual_;
+    CcuRep::Variable isInputOutputEqual_;
     uint16_t selfBit_{0};
     uint16_t allBit_{0};
-    
+
     // variables for mesh_chunk
     std::vector<CcuRep::Variable> chunkSize_;
-    CcuRep::Variable              chunkOffset_;
+    CcuRep::Variable chunkOffset_;
 };
 } // namespace Hccl
 

@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mokc.h>
@@ -23,21 +23,15 @@
 
 class AllReduceAICPUMesh2dNHRTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AllReduce AICPU ParrallelMesh1DNHR test set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AllReduce AICPU ParrallelMesh1DNHR test set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AllReduce AICPU ParrallelMesh1DNHR test tear down" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AllReduce AICPU ParrallelMesh1DNHR test tear down" << std::endl; }
 
     virtual void SetUp()
     {
-        const ::testing::TestInfo *const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName =
-            "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -74,8 +68,9 @@ TEST_F(AllReduceAICPUMesh2dNHRTest, allreduce_aicpu_case_test_2_pod_Symmetric_2m
 
 TEST_F(AllReduceAICPUMesh2dNHRTest, allreduce_aicpu_case_test_2_pod_Symmetric_4mul4)
 {
-    TopoMeta topoMeta{{{0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19, 24, 25, 26, 27},
-                       {4, 5, 6, 7, 12, 13, 14, 15, 20, 21, 22, 23, 28, 29, 30, 31}}};
+    TopoMeta topoMeta{
+        {{0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19, 24, 25, 26, 27},
+         {4, 5, 6, 7, 12, 13, 14, 15, 20, 21, 22, 23, 28, 29, 30, 31}}};
     setenv("HCCL_IODIE_NUM", "2", 1);
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLREDUCE;
@@ -95,9 +90,10 @@ TEST_F(AllReduceAICPUMesh2dNHRTest, allreduce_aicpu_case_test_2_pod_Symmetric_4m
 
 TEST_F(AllReduceAICPUMesh2dNHRTest, allreduce_aicpu_case_test_3_pod_Symmetric_4mul3)
 {
-    TopoMeta topoMeta{{{0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19},
-                       {0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19},
-                       {0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19}}};
+    TopoMeta topoMeta{
+        {{0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19},
+         {0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19},
+         {0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19}}};
     setenv("HCCL_IODIE_NUM", "2", 1);
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLREDUCE;
@@ -117,9 +113,10 @@ TEST_F(AllReduceAICPUMesh2dNHRTest, allreduce_aicpu_case_test_3_pod_Symmetric_4m
 
 TEST_F(AllReduceAICPUMesh2dNHRTest, allreduce_aicpu_case_test_3_pod_Symmetric_3mul3)
 {
-    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18, 24, 25, 26},
-                       {4, 5, 6, 12, 13, 14, 20, 21, 22, 28, 29, 30},
-                       {0, 1, 2, 8, 9, 10, 16, 17, 18, 24, 25, 26}}};
+    TopoMeta topoMeta{
+        {{0, 1, 2, 8, 9, 10, 16, 17, 18, 24, 25, 26},
+         {4, 5, 6, 12, 13, 14, 20, 21, 22, 28, 29, 30},
+         {0, 1, 2, 8, 9, 10, 16, 17, 18, 24, 25, 26}}};
     setenv("HCCL_IODIE_NUM", "2", 1);
 
     CheckerOpParam checkerOpParam;

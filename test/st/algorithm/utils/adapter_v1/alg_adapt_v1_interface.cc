@@ -28,15 +28,16 @@ TaskQuesGenerator::~TaskQuesGenerator()
     DeviceInfoRecorder::Global()->Reset();
 }
 
-HcclResult TaskQuesGenerator::Run(CheckerOpParam &checkerOpParam, TopoMeta &topoMeta)
+HcclResult TaskQuesGenerator::Run(CheckerOpParam& checkerOpParam, TopoMeta& topoMeta)
 {
     hccl::RankTable_t rankTable;
     GenRankTable(rankTable, topoMeta);
 
     // 混合组网场景
     if (checkerOpParam.devTypes.size() != 0) {
-        for (auto &rankInfo : rankTable.rankList) {
-            rankInfo.deviceInfo.deviceType = g_CheckerDevType2HcclDevType[checkerOpParam.devTypes[rankInfo.superPodIdx]];
+        for (auto& rankInfo : rankTable.rankList) {
+            rankInfo.deviceInfo.deviceType
+                = g_CheckerDevType2HcclDevType[checkerOpParam.devTypes[rankInfo.superPodIdx]];
         }
     }
     // 为本次执行初始化状态
@@ -74,4 +75,4 @@ HcclResult TaskQuesGenerator::Run(CheckerOpParam &checkerOpParam, TopoMeta &topo
     return ret;
 }
 
-}
+} // namespace hccl

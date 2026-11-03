@@ -20,19 +20,16 @@
 using namespace Hccl;
 class SocketTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "Socket tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "Socket tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "Socket tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "Socket tests tear down." << std::endl; }
 
-    virtual void SetUp() {
-        socketServer = new Socket(nullptr, localIp, listenPort, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
-        socketClient = new Socket(nullptr, localIp, listenPort, remoteIp, tag, SocketRole::CLIENT, NicType::DEVICE_NIC_TYPE);
+    virtual void SetUp()
+    {
+        socketServer
+            = new Socket(nullptr, localIp, listenPort, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+        socketClient
+            = new Socket(nullptr, localIp, listenPort, remoteIp, tag, SocketRole::CLIENT, NicType::DEVICE_NIC_TYPE);
         std::cout << "A Test case in Socket SetUP" << std::endl;
     }
 
@@ -47,9 +44,9 @@ protected:
     IpAddress remoteIp;
     u32 listenPort = 100;
     std::string tag = "testxxxxx";
-    Socket *socketServer;
-    Socket *socketClient;
-    FdHandle fakeFdHandle = (void *)100;
+    Socket* socketServer;
+    Socket* socketClient;
+    FdHandle fakeFdHandle = (void*)100;
 };
 
 TEST_F(SocketTest, listen_stop_listen_ok)
@@ -67,10 +64,10 @@ TEST_F(SocketTest, server_connect_ok_then_close)
 {
     // Given
     int fakeFdStatus = SOCKET_CONNECTED;
-    RaSocketFdHandleParam fakeParam(fakeFdHandle, fakeFdStatus);
+    RaSocketFdHandleParam fakeParam(fakeFdHandle, fakeFdStatus, remoteIp);
 
     MOCKER(HrtRaBlockGetOneSocket).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(fakeParam));
-    
+
     // when
     socketServer->Connect();
     auto status = socketServer->GetStatus();
@@ -85,7 +82,7 @@ TEST_F(SocketTest, server_connect_timeout)
 {
     // Given
     int fakeFdStatus = SOCKET_CONNECT_TIMEOUT;
-    RaSocketFdHandleParam fakeParam(fakeFdHandle, fakeFdStatus);
+    RaSocketFdHandleParam fakeParam(fakeFdHandle, fakeFdStatus, remoteIp);
 
     MOCKER(HrtRaBlockGetOneSocket).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(fakeParam));
 
@@ -101,7 +98,7 @@ TEST_F(SocketTest, server_connect_connecting)
 {
     // Given
     int fakeFdStatus = SOCKET_CONNECTING;
-    RaSocketFdHandleParam fakeParam(fakeFdHandle, fakeFdStatus);
+    RaSocketFdHandleParam fakeParam(fakeFdHandle, fakeFdStatus, remoteIp);
 
     MOCKER(HrtRaBlockGetOneSocket).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(fakeParam));
 
@@ -117,7 +114,7 @@ TEST_F(SocketTest, server_connect_init)
 {
     // Given
     int fakeFdStatus = SOCKET_NOT_CONNECTED;
-    RaSocketFdHandleParam fakeParam(fakeFdHandle, fakeFdStatus);
+    RaSocketFdHandleParam fakeParam(fakeFdHandle, fakeFdStatus, remoteIp);
 
     MOCKER(HrtRaBlockGetOneSocket).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(fakeParam));
 
@@ -133,12 +130,10 @@ TEST_F(SocketTest, server_connect_ok_then_async_send_recv_close)
 {
     // Given
     int fakeFdStatus = SOCKET_CONNECTED;
-    RaSocketFdHandleParam fakeParam(fakeFdHandle, fakeFdStatus);
+    RaSocketFdHandleParam fakeParam(fakeFdHandle, fakeFdStatus, remoteIp);
 
-    MOCKER(RaGetOneSocket).stubs()
-        .with(mockcpp::any(), mockcpp::any())
-        .will(returnValue(fakeParam));
-    
+    MOCKER(RaGetOneSocket).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(fakeParam));
+
     u8 buf[32] = {0};
     RequestHandle fakeReqHandle = 1;
     unsigned long long dataSize = 32;
@@ -188,7 +183,7 @@ TEST_F(SocketTest, async_connect_close_ok)
 {
     // Given
     int fakeFdStatus = SOCKET_CONNECTED;
-    RaSocketFdHandleParam fakeParam(fakeFdHandle, fakeFdStatus);
+    RaSocketFdHandleParam fakeParam(fakeFdHandle, fakeFdStatus, remoteIp);
     MOCKER(HrtRaBlockGetOneSocket).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(fakeParam));
 
     // when
@@ -206,7 +201,8 @@ TEST_F(SocketTest, async_listen_eagain_stop_ok)
     ReqHandleResult notCompletedResult = ReqHandleResult::NOT_COMPLETED;
     ReqHandleResult sockEAagainResult = ReqHandleResult::SOCK_E_AGAIN;
     ReqHandleResult completedResult = ReqHandleResult::COMPLETED;
-    MOCKER(HrtRaGetAsyncReqResult).stubs()
+    MOCKER(HrtRaGetAsyncReqResult)
+        .stubs()
         .will(returnValue(notCompletedResult))
         .then(returnValue(sockEAagainResult))
         .then(returnValue(notCompletedResult))
@@ -227,14 +223,15 @@ TEST_F(SocketTest, async_connect_eagain_close_ok)
     ReqHandleResult notCompletedResult = ReqHandleResult::NOT_COMPLETED;
     ReqHandleResult sockEAagainResult = ReqHandleResult::SOCK_E_AGAIN;
     ReqHandleResult completedResult = ReqHandleResult::COMPLETED;
-    MOCKER(HrtRaGetAsyncReqResult).stubs()
+    MOCKER(HrtRaGetAsyncReqResult)
+        .stubs()
         .will(returnValue(notCompletedResult))
         .then(returnValue(sockEAagainResult))
         .then(returnValue(notCompletedResult))
         .then(returnValue(completedResult));
 
     int fakeFdStatus = SOCKET_CONNECTED;
-    RaSocketFdHandleParam fakeParam(fakeFdHandle, fakeFdStatus);
+    RaSocketFdHandleParam fakeParam(fakeFdHandle, fakeFdStatus, remoteIp);
     MOCKER(HrtRaBlockGetOneSocket).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(fakeParam));
 
     // when
@@ -252,8 +249,7 @@ TEST_F(SocketTest, async_listen_error)
 {
     // Given
     ReqHandleResult invalidParaResult = ReqHandleResult::INVALID_PARA;
-    MOCKER(HrtRaGetAsyncReqResult).stubs()
-        .will(returnValue(invalidParaResult));
+    MOCKER(HrtRaGetAsyncReqResult).stubs().will(returnValue(invalidParaResult));
 
     // when
     socketServer->ListenAsync();
@@ -264,8 +260,7 @@ TEST_F(SocketTest, async_connect_error)
 {
     // Given
     ReqHandleResult invalidParaResult = ReqHandleResult::INVALID_PARA;
-    MOCKER(HrtRaGetAsyncReqResult).stubs()
-        .will(returnValue(invalidParaResult));
+    MOCKER(HrtRaGetAsyncReqResult).stubs().will(returnValue(invalidParaResult));
 
     // when
     socketClient->ConnectAsync();
@@ -276,12 +271,10 @@ TEST_F(SocketTest, server_connect_async_ok_then_async_send_recv_close)
 {
     // Given
     int fakeFdStatus = SOCKET_CONNECTED;
-    RaSocketFdHandleParam fakeParam(fakeFdHandle, fakeFdStatus);
+    RaSocketFdHandleParam fakeParam(fakeFdHandle, fakeFdStatus, remoteIp);
 
-    MOCKER(RaGetOneSocket).stubs()
-        .with(mockcpp::any(), mockcpp::any())
-        .will(returnValue(fakeParam));
-    
+    MOCKER(RaGetOneSocket).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(fakeParam));
+
     u8 buf[32] = {0};
     RequestHandle fakeReqHandle = 1;
     unsigned long long dataSize = 32;
@@ -322,12 +315,10 @@ TEST_F(SocketTest, server_connect_async_ok_then_async_send_recv_close)
 TEST_F(SocketTest, server_connect_async_ok_then_async_send_recv_egain_close)
 {
     int fakeFdStatus = SOCKET_CONNECTED;
-    RaSocketFdHandleParam fakeParam(fakeFdHandle, fakeFdStatus);
+    RaSocketFdHandleParam fakeParam(fakeFdHandle, fakeFdStatus, remoteIp);
 
-    MOCKER(RaGetOneSocket).stubs()
-        .with(mockcpp::any(), mockcpp::any())
-        .will(returnValue(fakeParam));
-    
+    MOCKER(RaGetOneSocket).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(fakeParam));
+
     u8 buf[32] = {0};
     RequestHandle fakeReqHandle = 1;
     unsigned long long dataSize = 32;
@@ -349,7 +340,8 @@ TEST_F(SocketTest, server_connect_async_ok_then_async_send_recv_egain_close)
     ReqHandleResult notCompletedResult = ReqHandleResult::NOT_COMPLETED;
     ReqHandleResult sockEAagainResult = ReqHandleResult::SOCK_E_AGAIN;
     ReqHandleResult completedResult = ReqHandleResult::COMPLETED;
-    MOCKER(HrtRaGetAsyncReqResult).stubs()
+    MOCKER(HrtRaGetAsyncReqResult)
+        .stubs()
         .will(returnValue(notCompletedResult)) // send wait
         .then(returnValue(sockEAagainResult))  // send retry
         .then(returnValue(completedResult))    // send done
@@ -360,7 +352,7 @@ TEST_F(SocketTest, server_connect_async_ok_then_async_send_recv_egain_close)
     // then
     status = socketServer->GetAsyncStatus();
     EXPECT_EQ(status, SocketStatus::OK);
- 
+
     // send test
     socketServer->SendAsync(buf, dataSize);
 
@@ -392,16 +384,9 @@ TEST_F(SocketTest, server_connect_async_ok_then_async_send_recv_egain_close)
     socketServer->Close();
 }
 
+TEST_F(SocketTest, send_nullptr) { EXPECT_THROW(socketServer->SendAsync(nullptr, 1), SocketException); }
 
-TEST_F(SocketTest, send_nullptr)
-{
-    EXPECT_THROW(socketServer->SendAsync(nullptr, 1), SocketException);
-}
-
-TEST_F(SocketTest, recv_nullptr)
-{
-    EXPECT_THROW(socketServer->RecvAsync(nullptr, 1), SocketException);
-}
+TEST_F(SocketTest, recv_nullptr) { EXPECT_THROW(socketServer->RecvAsync(nullptr, 1), SocketException); }
 
 TEST_F(SocketTest, send_size_zero)
 {

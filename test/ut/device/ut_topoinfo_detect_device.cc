@@ -27,18 +27,9 @@ using namespace hccl;
 
 class TopoInfoDetectDeviceTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "TopoInfoDetectDeviceTest SetUpTestCase" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "TopoInfoDetectDeviceTest TearDownTestCase" << std::endl;
-    }
-    virtual void SetUp()
-    {
-        std::cout << "TopoInfoDetectDeviceTest SetUp" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "TopoInfoDetectDeviceTest SetUpTestCase" << std::endl; }
+    static void TearDownTestCase() { std::cout << "TopoInfoDetectDeviceTest TearDownTestCase" << std::endl; }
+    virtual void SetUp() { std::cout << "TopoInfoDetectDeviceTest SetUp" << std::endl; }
     virtual void TearDown()
     {
         GlobalMockObject::verify();
@@ -64,4 +55,12 @@ TEST_F(TopoInfoDetectDeviceTest, Ut_StartGroupLeaderNetwork_ReturnIsHCCL_E_NOT_S
     std::vector<HcclSocketPortRange> portRanges;
     HcclResult ret = topoDetect.StartGroupLeaderNetwork(whitelist, hostIP, bindPort, portRanges);
     EXPECT_EQ(ret, HCCL_E_NOT_SUPPORT);
+}
+
+TEST_F(TopoInfoDetectDeviceTest, Ut_CheckHostNicLinkUp_ReturnIsHCCL_E_NOT_SUPPORT)
+{
+    const TopoInfoDetect topoDetect;
+    const HcclIpAddress hostIP;
+
+    EXPECT_EQ(topoDetect.CheckHostNicLinkUp(hostIP), HCCL_E_NOT_SUPPORT);
 }

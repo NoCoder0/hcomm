@@ -25,15 +25,9 @@
 using namespace Hccl;
 class RmtDataBufferMgrTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "RmtDataBufferMgr tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "RmtDataBufferMgr tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "RmtDataBufferMgr tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "RmtDataBufferMgr tests tear down." << std::endl; }
 
     virtual void SetUp()
     {
@@ -52,9 +46,9 @@ protected:
         std::cout << "A Test case in RmtDataBufferMgr TearDown" << std::endl;
     }
 
-    MemTransportLiteMgr *memTransportLiteMgr;
-    MirrorTaskManagerLite *mirrorTaskMgrLite;
-    CollAlgInfo *algInfo;
+    MemTransportLiteMgr* memTransportLiteMgr;
+    MirrorTaskManagerLite* mirrorTaskMgrLite;
+    CollAlgInfo* algInfo;
     std::string tag = "tag";
     OpMode mode{OpMode::OPBASE};
 
@@ -82,22 +76,21 @@ protected:
 
     std::vector<char> GetConnUniqueId()
     {
-        u32  dieId           = 0;
-        u32  funcId          = 0;
-        u32  jettyId         = 0;
-        u32  jfcPollMode     = 0;     // 待修改，0代表STARS POLL，1代表software Poll
+        u32 dieId = 0;
+        u32 funcId = 0;
+        u32 jettyId = 0;
+        u32 jfcPollMode = 0;          // 待修改，0代表STARS POLL，1代表software Poll
         bool dwqeCacheLocked = false; // 待修改，该jetty是否支持dwqeCachedLocked，默认不支持
-        u64  dbAddr          = 0x100;
-        u64  sqVa            = 0x100;
-        u32  sqDepth         = 100;
-        u32  tpn             = 100;
-        Eid  rmtEid;
+        u64 dbAddr = 0x100;
+        u64 sqVa = 0x100;
+        u32 sqDepth = 100;
+        u32 tpn = 100;
+        Eid rmtEid;
 
         BinaryStream binaryStream;
         binaryStream << dieId;
         binaryStream << funcId;
         binaryStream << jettyId;
-
 
         binaryStream << jfcPollMode;
         binaryStream << dwqeCacheLocked;
@@ -126,8 +119,8 @@ protected:
         u32 buffeNum = 2;
 
         auto conn0 = GetConnUniqueId();
-        u32  connNum = 1;
-            
+        u32 connNum = 1;
+
         BinaryStream binaryStream;
 
         u32 type = (u32)TransportType::UB;
@@ -170,7 +163,8 @@ TEST_F(RmtDataBufferMgrTest, get_GetBuffer_opbase_success)
     LinkData linkData(BasePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB), 0, 1, 0, 1);
     MirrorTaskManagerLite mirrorTaskMgrLite;
     auto transportCallbackLite = MemTransportCallbackLite(linkData, mirrorTaskMgrLite);
-    std::unique_ptr<MemTransportLite> transportLite = std::make_unique<MemTransportLite>(liteData, transportCallbackLite);
+    std::unique_ptr<MemTransportLite> transportLite
+        = std::make_unique<MemTransportLite>(liteData, transportCallbackLite);
     memTransportLiteMgr->opBaseTranspMap[linkData] = std::move(transportLite);
     RmtDataBufferMgr rmtDataBufferMgr(memTransportLiteMgr, algInfo);
 

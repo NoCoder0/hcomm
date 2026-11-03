@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "transport_remote_access.h"
 #include "externalinput_pub.h"
@@ -16,13 +16,20 @@ using namespace std;
 std::array<DeviceMem, MAX_MODULE_DEVICE_NUM> TransportRemoteAccess::notifyValueMem_;
 std::array<std::mutex, MAX_MODULE_DEVICE_NUM> TransportRemoteAccess::notifyValueMutex_;
 std::array<Referenced, MAX_MODULE_DEVICE_NUM> TransportRemoteAccess::instanceRef_; // 实例计数，用于释放静态资源
-TransportRemoteAccess::TransportRemoteAccess(const std::string tag, const HcclDispatcher dispatcher,
-    const std::unique_ptr<NotifyPool> &notifyPool,
-    const RemoteAccessPara &remoteAccessPara, const std::vector<MemRegisterAddr> &memRegistInfos, s32 deviceLogicId)
-    : dispatcher_(dispatcher), notifyPool_(notifyPool), MemRegistInfos_(memRegistInfos),
-      RemoteAccessPara_(remoteAccessPara), handle_(nullptr), ackNotify_(nullptr),
+TransportRemoteAccess::TransportRemoteAccess(
+    const std::string tag, const HcclDispatcher dispatcher, const std::unique_ptr<NotifyPool>& notifyPool,
+    const RemoteAccessPara& remoteAccessPara, const std::vector<MemRegisterAddr>& memRegistInfos, s32 deviceLogicId)
+    : dispatcher_(dispatcher),
+      notifyPool_(notifyPool),
+      MemRegistInfos_(memRegistInfos),
+      RemoteAccessPara_(remoteAccessPara),
+      handle_(nullptr),
+      ackNotify_(nullptr),
       access_(RA_ACCESS_LOCAL_WRITE | RA_ACCESS_REMOTE_WRITE | RA_ACCESS_REMOTE_READ),
-      notifySize_(NOTIFY_BUFFER_SIZE), tag_(tag), timeout_(HCCL_LINK_TIME_OUT_S), deviceLogicId_(deviceLogicId)
+      notifySize_(NOTIFY_BUFFER_SIZE),
+      tag_(tag),
+      timeout_(HCCL_LINK_TIME_OUT_S),
+      deviceLogicId_(deviceLogicId)
 {
     instanceRef_[deviceLogicId_].Ref();
 }
@@ -30,15 +37,15 @@ TransportRemoteAccess::TransportRemoteAccess(const std::string tag, const HcclDi
 TransportRemoteAccess::~TransportRemoteAccess()
 {
     HCCL_DEBUG("~TransportRemoteAccess Enter!");
-    HcclResult ret;
-    struct MrInfoT mrInfo = {nullptr};
+    HcclResult ret = HCCL_SUCCESS;
+    struct MrInfoT mrInfo = {};
     /* 销毁本端mr */
     for (u32 idx = 0; idx < localRegMem_.size(); idx++) {
         mrInfo.addr = localRegMem_[idx];
         ret = HrtRaMrDereg(handle_, &mrInfo);
         if (ret != HCCL_SUCCESS) {
-            HCCL_WARNING("errNo[0x%016llx] in TransportRemoteAccess deconstruct, mr dereg failed. ",
-                HCCL_ERROR_CODE(ret));
+            HCCL_WARNING(
+                "errNo[0x%016llx] in TransportRemoteAccess deconstruct, mr dereg failed. ", HCCL_ERROR_CODE(ret));
         }
     }
 
@@ -46,8 +53,8 @@ TransportRemoteAccess::~TransportRemoteAccess()
     if (handle_ != nullptr) {
         ret = HrtRaQpDestroy(handle_);
         if (ret != HCCL_SUCCESS) {
-            HCCL_WARNING("errNo[0x%016llx] in TransportRemoteAccess deconstruct, qp destroy failed. ",
-                HCCL_ERROR_CODE(ret));
+            HCCL_WARNING(
+                "errNo[0x%016llx] in TransportRemoteAccess deconstruct, qp destroy failed. ", HCCL_ERROR_CODE(ret));
         }
     }
     if (instanceRef_[deviceLogicId_].Unref() == 0) {
@@ -75,8 +82,13 @@ HcclResult TransportRemoteAccess::CreateQp()
 {
     // 创建qp handle, mode:普通qp
     HcclResult ret = HrtRaQpCreate(RemoteAccessPara_.nicRdmaHandle, QP_FLAG_RC, NORMAL_QP_MODE, handle_);
-    CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Create][Qp]create qp mode failed, handle is null, "\
-        "localRank[%u], qpMode[%d]", RemoteAccessPara_.localRank, NORMAL_QP_MODE), HCCL_E_ROCE_CONNECT);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[Create][Qp]create qp mode failed, handle is null, "
+            "localRank[%u], qpMode[%d]",
+            RemoteAccessPara_.localRank, NORMAL_QP_MODE),
+        HCCL_E_ROCE_CONNECT);
     CHK_RET(SetQpAttrQos(handle_));
     // 配置RDMA Timeout时间
     CHK_RET(SetQpAttrTimeOut(handle_));
@@ -101,10 +113,10 @@ HcclResult TransportRemoteAccess::MrRegister()
         HCCL_ERROR("[Register][Mr]local mem info to register is empty!");
         return HCCL_E_PARA;
     }
-    struct MrInfoT mrInfo = {nullptr};
+    struct MrInfoT mrInfo = {};
     mrInfo.access = access_;
     for (size_t idx = 0; idx < MemRegistInfos_.size(); idx++) {
-        memPtr = reinterpret_cast<void *>(static_cast<uintptr_t>(MemRegistInfos_[idx].addr));
+        memPtr = reinterpret_cast<void*>(static_cast<uintptr_t>(MemRegistInfos_[idx].addr));
         mrInfo.addr = memPtr;
         mrInfo.size = MemRegistInfos_[idx].length;
 
@@ -126,7 +138,7 @@ HcclResult TransportRemoteAccess::SetLocalNotify()
 HcclResult TransportRemoteAccess::CreateNotify()
 {
     u64 offset = 0;
-    u64 notifyBaseVa = 0;  // notify寄存器虚拟地址
+    u64 notifyBaseVa = 0; // notify寄存器虚拟地址
     u64 notifyTotalSize = 0;
 
     /* 申请Notify Group ID */
@@ -147,12 +159,12 @@ HcclResult TransportRemoteAccess::CreateNotify()
     u64 notifyVa = notifyBaseVa + offset;
 
     HCCL_INFO(
-        "notifyBaseVa=0x%llx, notifyTotalSize=0x%x, offset=0x%llx, notifyVa=0x%llx ",
-        notifyBaseVa, notifyTotalSize, offset, notifyVa);
+        "notifyBaseVa=0x%llx, notifyTotalSize=0x%x, offset=0x%llx, notifyVa=0x%llx ", notifyBaseVa, notifyTotalSize,
+        offset, notifyVa);
 
     /* notify地址注册为mr, 在roce驱动中注册 */
-    ackNotifyMsg_.mrRegFlag = 0; // mem注册给网卡标志位
-    ackNotifyMsg_.addr = reinterpret_cast<void *>(static_cast<uintptr_t>(notifyVa));  // 本端notify地址交换给对端
+    ackNotifyMsg_.mrRegFlag = 0;                                                    // mem注册给网卡标志位
+    ackNotifyMsg_.addr = reinterpret_cast<void*>(static_cast<uintptr_t>(notifyVa)); // 本端notify地址交换给对端
     ackNotifyMsg_.len = notifySize_;
     ackNotifyMsg_.offset = offset;
 
@@ -163,16 +175,23 @@ HcclResult TransportRemoteAccess::GetRemoteNotifyInfo()
 {
     NotifyMsg mrMsg;
     s32 sRet = memset_s(&mrMsg, sizeof(NotifyMsg), 0, sizeof(NotifyMsg));
-    CHK_PRT_RET(sRet != EOK, HCCL_ERROR("[Get][NotifyInfo]errNo[0x%016llx]get remote addr, memory set 0 failed. "\
-        "params: destMaxSize[%zu], count[%zu]", HCCL_ERROR_CODE(HCCL_E_MEMORY), \
-        sizeof(NotifyMsg), sizeof(NotifyMsg)), HCCL_E_MEMORY);
+    CHK_PRT_RET(
+        sRet != EOK,
+        HCCL_ERROR(
+            "[Get][NotifyInfo]errNo[0x%016llx]get remote addr, memory set 0 failed. "
+            "params: destMaxSize[%zu], count[%zu]",
+            HCCL_ERROR_CODE(HCCL_E_MEMORY), sizeof(NotifyMsg), sizeof(NotifyMsg)),
+        HCCL_E_MEMORY);
 
     CHK_RET(hrtRaSocketBlockRecv(RemoteAccessPara_.socketFdhandle, &mrMsg, sizeof(NotifyMsg)));
     sRet = memcpy_s(&remoteNotifyDataMsg_, sizeof(NotifyMsg), &mrMsg, sizeof(NotifyMsg));
-    CHK_PRT_RET(sRet != EOK, HCCL_ERROR(
-        "[Get][NotifyInfo]errNo[0x%016llx] In TransportRemoteAccess get remote addr, memcpy failed. "\
-        "errorno[%d], params:destMaxSize[%zu],count[%zu]", HCCL_ERROR_CODE(HCCL_E_MEMORY),
-        sRet, sizeof(NotifyMsg), sizeof(NotifyMsg)), HCCL_E_MEMORY);
+    CHK_PRT_RET(
+        sRet != EOK,
+        HCCL_ERROR(
+            "[Get][NotifyInfo]errNo[0x%016llx] In TransportRemoteAccess get remote addr, memcpy failed. "
+            "errorno[%d], params:destMaxSize[%zu],count[%zu]",
+            HCCL_ERROR_CODE(HCCL_E_MEMORY), sRet, sizeof(NotifyMsg), sizeof(NotifyMsg)),
+        HCCL_E_MEMORY);
     HCCL_INFO("recv success:len=%llu", mrMsg.len);
 
     return HCCL_SUCCESS;
@@ -186,11 +205,12 @@ HcclResult TransportRemoteAccess::CreateNotifyValueBuffer()
         CHK_RET(DeviceMem::alloc(notifyValueMem_[deviceLogicId_], notifyValueSize_));
         HCCL_DEBUG("create notify value size[%u]", notifySize_);
 
-        CHK_RET(hrtMemSyncCopy(notifyValueMem_[deviceLogicId_].ptr(), notifyValueMem_[deviceLogicId_].size(),
-            &notifyVaule, notifySize_, HcclRtMemcpyKind::HCCL_RT_MEMCPY_KIND_HOST_TO_DEVICE));
+        CHK_RET(hrtMemSyncCopy(
+            notifyValueMem_[deviceLogicId_].ptr(), notifyValueMem_[deviceLogicId_].size(), &notifyVaule, notifySize_,
+            HcclRtMemcpyKind::HCCL_RT_MEMCPY_KIND_HOST_TO_DEVICE));
     }
     lock.unlock();
-    struct MrInfoT mrInfo = {nullptr};
+    struct MrInfoT mrInfo = {};
     mrInfo.addr = notifyValueMem_[deviceLogicId_].ptr();
     mrInfo.size = notifySize_;
     mrInfo.access = access_;
@@ -204,14 +224,14 @@ HcclResult TransportRemoteAccess::CreateNotifyValueBuffer()
 
     /* 发送mem消息给对端 */
     HcclResult ret = hrtRaSocketBlockSend(RemoteAccessPara_.socketFdhandle, &msg, sizeof(NotifyMsg));
-    if (ret != HCCL_SUCCESS) {  // 发送成功字节数与发送字节数不等，发送失败
+    if (ret != HCCL_SUCCESS) { // 发送成功字节数与发送字节数不等，发送失败
         HCCL_ERROR("[Create][NotifyValueBuffer]send=%zu", sizeof(NotifyMsg));
         return HCCL_E_INTERNAL;
     }
 
     return HCCL_SUCCESS;
 }
-HcclResult TransportRemoteAccess::RemoteRead(const std::vector<HcomRemoteAccessAddrInfo>& addrInfos, Stream &stream)
+HcclResult TransportRemoteAccess::RemoteRead(const std::vector<HcomRemoteAccessAddrInfo>& addrInfos, Stream& stream)
 {
     CHK_SMART_PTR_NULL(stream);
     HCCL_INFO("TransportRemoteAccess RemoteRead begin");
@@ -221,14 +241,15 @@ HcclResult TransportRemoteAccess::RemoteRead(const std::vector<HcomRemoteAccessA
     CHK_RET(ReadRemoteNotifyBuffer());
 
     // 等待TS把任务处理完成
-    CHK_RET(LocalIpcNotify::Wait(stream, const_cast<HcclDispatcher>(dispatcher_), ackNotify_, INVALID_VALUE_STAGE,
-        NOTIFY_INVALID_WAIT_TIME, RemoteAccessPara_.localRank, RemoteAccessPara_.remoteRank));
+    CHK_RET(LocalIpcNotify::Wait(
+        stream, const_cast<HcclDispatcher>(dispatcher_), ackNotify_, INVALID_VALUE_STAGE, NOTIFY_INVALID_WAIT_TIME,
+        RemoteAccessPara_.localRank, RemoteAccessPara_.remoteRank));
 
     HCCL_INFO("TransportRemoteAccess RemoteRead end");
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportRemoteAccess::RemoteWrite(const std::vector<HcomRemoteAccessAddrInfo>& addrInfos, Stream &stream)
+HcclResult TransportRemoteAccess::RemoteWrite(const std::vector<HcomRemoteAccessAddrInfo>& addrInfos, Stream& stream)
 {
     CHK_SMART_PTR_NULL(stream);
     HCCL_RUN_INFO("TransportRemoteAccess RemoteWrite begin, addressNum[%u]", addrInfos.size());
@@ -236,8 +257,9 @@ HcclResult TransportRemoteAccess::RemoteWrite(const std::vector<HcomRemoteAccess
     // 读取远端notify buffer，用于notify同步
     CHK_RET(ReadRemoteNotifyBuffer());
     // 等待TS把任务处理完成
-    CHK_RET(LocalIpcNotify::Wait(stream, const_cast<HcclDispatcher>(dispatcher_), ackNotify_, INVALID_VALUE_STAGE,
-        NOTIFY_INVALID_WAIT_TIME, RemoteAccessPara_.localRank, RemoteAccessPara_.remoteRank));
+    CHK_RET(LocalIpcNotify::Wait(
+        stream, const_cast<HcclDispatcher>(dispatcher_), ackNotify_, INVALID_VALUE_STAGE, NOTIFY_INVALID_WAIT_TIME,
+        RemoteAccessPara_.localRank, RemoteAccessPara_.remoteRank));
 
     return HCCL_SUCCESS;
 }
@@ -253,9 +275,9 @@ HcclResult TransportRemoteAccess::RdmaDataTransport(const std::vector<HcomRemote
     // 构造wr信息
     std::vector<struct SendWrlistDataExt> wrVec(addressNum);
     std::vector<struct SendWrRsp> opRspVec(addressNum);
-    struct SendWrlistDataExt *wr = wrVec.data();
-    struct SendWrRsp *opRsp = opRspVec.data();
-    struct SgList list = {0};
+    struct SendWrlistDataExt* wr = wrVec.data();
+    struct SendWrRsp* opRsp = opRspVec.data();
+    struct SgList list = {};
     u64 length = addrInfos[0].length;
 
     HCCL_RUN_INFO("RdmaDataTransport begin, addressNum[%u], length[%u]", addressNum, length);
@@ -271,7 +293,7 @@ HcclResult TransportRemoteAccess::RdmaDataTransport(const std::vector<HcomRemote
     u32 nowIdex = 0;
     u32 singleCompleteNum = 0;
     u32 sendNum = 0;
-    HcclResult ret;
+    HcclResult ret = HCCL_SUCCESS;
     u32 tryCount = 0;
     while (nowIdex < addressNum) {
         sendNum = addressNum - nowIdex;
@@ -284,13 +306,16 @@ HcclResult TransportRemoteAccess::RdmaDataTransport(const std::vector<HcomRemote
             wr += singleCompleteNum;
             opRsp += singleCompleteNum;
             tryCount++;
-            CHK_PRT_RET(tryCount > SEND_WRLIST_MAX_COUNT,
-                HCCL_ERROR("[Transport][RdmaData]dlRaSendWrlist count beyond maxnum[%u], completenum[%u]",
-                    SEND_WRLIST_MAX_COUNT, nowIdex), HCCL_E_NETWORK);
+            CHK_PRT_RET(
+                tryCount > SEND_WRLIST_MAX_COUNT,
+                HCCL_ERROR(
+                    "[Transport][RdmaData]dlRaSendWrlist count beyond maxnum[%u], completenum[%u]",
+                    SEND_WRLIST_MAX_COUNT, nowIdex),
+                HCCL_E_NETWORK);
             continue;
         } else {
-            HCCL_ERROR("[Transport][RdmaData]In RdmaDataTransport, hrtRaSendWrlist failed. op[%d], ret[%d]",
-                rdmaOp, ret);
+            HCCL_ERROR(
+                "[Transport][RdmaData]In RdmaDataTransport, hrtRaSendWrlist failed. op[%d], ret[%d]", rdmaOp, ret);
             return HCCL_E_NETWORK;
         }
     }
@@ -301,8 +326,8 @@ HcclResult TransportRemoteAccess::RdmaDataTransport(const std::vector<HcomRemote
 HcclResult TransportRemoteAccess::ReadRemoteNotifyBuffer()
 {
     HCCL_INFO("In TransportRemoteAccess ReadRemoteNotifyBuffer begin");
-    struct SgList list = {0};
-    struct SendWr wr = {nullptr};
+    struct SgList list = {};
+    struct SendWr wr = {};
 
     // 构造wr信息
     list.addr = static_cast<u64>(reinterpret_cast<uintptr_t>(ackNotifyMsg_.addr));
@@ -314,7 +339,7 @@ HcclResult TransportRemoteAccess::ReadRemoteNotifyBuffer()
     wr.op = RDMA_OP_READ; /* RDMA_WRITE: 0 */
     wr.sendFlag = RA_SEND_SIGNALED;
 
-    struct SendWrRsp opRsp = {0};
+    struct SendWrRsp opRsp = {};
     CHK_RET(HrtRaSendWr(handle_, &wr, &opRsp));
     HCCL_INFO("In TransportRemoteAccess ReadRemoteNotifyBuffer end");
     return HCCL_SUCCESS;
@@ -325,9 +350,10 @@ HcclResult TransportRemoteAccess::ConnectQp()
     // QP建链
     CHK_RET(HrtRaQpConnectAsync(handle_, RemoteAccessPara_.socketFdhandle));
 
-    HCCL_INFO("TransportRemoteAccess ConnectQp LocalRank[%u] "\
-        "RemoteRank[%u] LocalIp[%s]", RemoteAccessPara_.localRank,
-        RemoteAccessPara_.remoteRank, RemoteAccessPara_.localIp.GetReadableAddress());
+    HCCL_INFO(
+        "TransportRemoteAccess ConnectQp LocalRank[%u] "
+        "RemoteRank[%u] LocalIp[%s]",
+        RemoteAccessPara_.localRank, RemoteAccessPara_.remoteRank, RemoteAccessPara_.localIp.GetReadableAddress());
 
     // 查询QP建链是否成功
     s32 qpStatus = 0;
@@ -350,4 +376,4 @@ HcclResult TransportRemoteAccess::ConnectQp()
     }
     return HCCL_SUCCESS;
 }
-}
+} // namespace hccl

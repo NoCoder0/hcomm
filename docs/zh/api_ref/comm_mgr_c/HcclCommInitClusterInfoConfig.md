@@ -3,19 +3,19 @@
 ## 产品支持情况
 
 <!-- npu="950" id1 -->
-- Ascend 950PR/Ascend 950DT：支持
+- Ascend 950PR&950DT系列产品：支持
 <!-- end id1 -->
 <!-- npu="A3" id2 -->
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：支持
+- Atlas A3系列产品：支持
 <!-- end id2 -->
 <!-- npu="910b" id3 -->
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：支持
+- Atlas A2系列产品：支持
 <!-- end id3 -->
 <!-- npu="310p" id4 -->
-- Atlas 推理系列产品：支持
+- Atlas推理系列产品：支持
 <!-- end id4 -->
 <!-- npu="910" id5 -->
-- Atlas 训练系列产品：支持
+- Atlas训练系列产品：支持
 <!-- end id5 -->
 
 ## 功能说明
@@ -61,7 +61,8 @@ HcclCommConfig config;
 HcclCommConfigInit(&config);
 // 按需修改通信域配置
 config.hcclBufferSize = 50;  // 共享数据的缓存区大小，单位为：MB，取值需 >= 1，默认值为：200
-std::strcpy(config.hcclCommName, "comm_1");
+strncpy(config.hcclCommName, "comm_1", COMM_NAME_MAX_LENGTH - 1);
+config.hcclCommName[COMM_NAME_MAX_LENGTH - 1] = '\0';
 // 初始化通信域
 HcclComm hcclComm;
 // 此样例以devId作为当前rank的rank id

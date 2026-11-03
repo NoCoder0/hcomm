@@ -4,7 +4,7 @@
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -37,8 +37,8 @@ std::vector<u64> GenerateSendCountMatrix(u64 count, u32 rankSize)
 namespace Hccl {
 std::unique_ptr<RankGraph> BuildRankGraph(std::string rankTableFilePath, std::string topoFilePath, RankId myRank)
 {
-    char buffer[PATH_MAX + 1];  // 使用堆上 buffer, 避免 malloc 和 free 操作
-    char *res = realpath(rankTableFilePath.data(), buffer);
+    char buffer[PATH_MAX + 1]; // 使用堆上 buffer, 避免 malloc 和 free 操作
+    char* res = realpath(rankTableFilePath.data(), buffer);
     std::string realRankTableFilePath;
     if (res) {
         realRankTableFilePath = std::string(res);
@@ -65,4 +65,4 @@ std::unique_ptr<RankGraph> BuildRankGraph(std::string rankTableFilePath, std::st
     PhyTopo::GetInstance()->Clear();
     return rankGraphBuilder.Build(ranktableData, realTopoFilePath, myRank);
 }
-}
+} // namespace Hccl

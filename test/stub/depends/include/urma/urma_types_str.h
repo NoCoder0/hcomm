@@ -1,18 +1,18 @@
-/*
- * SPDX-License-Identifier: MIT
- * Copyright (c) Huawei Technologies Co., Ltd. 2022-2025. All rights reserved.
- * Description: URMA type string header file
- * Author: Qian Guoxin
- * Create: 2022-10-18
- * Note:
- * History: 2022-10-18   Create File
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
  */
 
 #ifndef URMA_TYPES_STR_H
 #define URMA_TYPES_STR_H
 #include "urma_types.h"
 
-static const char *const g_urma_mtu_str[] = {
+static const char* const g_urma_mtu_str[] = {
     [URMA_MTU_256] = "MTU_256",   //
     [URMA_MTU_512] = "MTU_512",   //
     [URMA_MTU_1024] = "MTU_1024", //
@@ -21,7 +21,7 @@ static const char *const g_urma_mtu_str[] = {
     [URMA_MTU_8192] = "MTU_8192", //
 };
 
-static inline const char *urma_mtu_to_string(urma_mtu_t mtu)
+static inline const char* urma_mtu_to_string(urma_mtu_t mtu)
 {
     if (mtu < URMA_MTU_256 || mtu > URMA_MTU_8192) {
         return "Invalid Value";
@@ -29,7 +29,7 @@ static inline const char *urma_mtu_to_string(urma_mtu_t mtu)
     return g_urma_mtu_str[mtu];
 }
 
-static const char *const g_urma_port_state_str[] = {
+static const char* const g_urma_port_state_str[] = {
     [URMA_PORT_NOP] = "NOP",                   //
     [URMA_PORT_DOWN] = "DOWN",                 //
     [URMA_PORT_INIT] = "INIT",                 //
@@ -38,7 +38,7 @@ static const char *const g_urma_port_state_str[] = {
     [URMA_PORT_ACTIVE_DEFER] = "ACTIVE_DEFER", //
 };
 
-static inline const char *urma_port_state_to_string(urma_port_state_t state)
+static inline const char* urma_port_state_to_string(urma_port_state_t state)
 {
     if (state > URMA_PORT_ACTIVE_DEFER) {
         return "Invalid Value";
@@ -46,7 +46,7 @@ static inline const char *urma_port_state_to_string(urma_port_state_t state)
     return g_urma_port_state_str[state];
 }
 
-static const char *const g_urma_speed_str[] = {
+static const char* const g_urma_speed_str[] = {
     [URMA_SP_10M] = "SP_10M",   //
     [URMA_SP_100M] = "SP_100M", //
     [URMA_SP_1G] = "SP_1G",     //
@@ -63,7 +63,7 @@ static const char *const g_urma_speed_str[] = {
     [URMA_SP_800G] = "SP_800G", //
 };
 
-static inline const char *urma_speed_to_string(urma_speed_t speed)
+static inline const char* urma_speed_to_string(urma_speed_t speed)
 {
     if (speed > URMA_SP_800G) {
         return "Invalid Value";
@@ -71,7 +71,7 @@ static inline const char *urma_speed_to_string(urma_speed_t speed)
     return g_urma_speed_str[speed];
 }
 
-static const char *const g_urma_link_width_str[] = {
+static const char* const g_urma_link_width_str[] = {
     [0] = "unknow",
     [URMA_LINK_X1] = "LINK_X1",
     [URMA_LINK_X2] = "LINK_X2",
@@ -81,7 +81,7 @@ static const char *const g_urma_link_width_str[] = {
     [URMA_LINK_X32] = "LINK_X32",
 };
 
-static inline const char *urma_link_width_to_string(urma_link_width_t width)
+static inline const char* urma_link_width_to_string(urma_link_width_t width)
 {
     if (width > URMA_LINK_X32) {
         return "Invalid Value";
@@ -89,13 +89,13 @@ static inline const char *urma_link_width_to_string(urma_link_width_t width)
     return g_urma_link_width_str[width];
 }
 
-static const char * const g_urma_tp_type_en_str[] = {
-    [URMA_RTP]  =      "RTP",
-    [URMA_CTP]  =      "CTP",
-    [URMA_UTP]  =      "UTP",
+static const char* const g_urma_tp_type_en_str[] = {
+    [URMA_RTP] = "RTP",
+    [URMA_CTP] = "CTP",
+    [URMA_UTP] = "UTP",
 };
- 
-static inline const char *urma_tp_type_en_to_string(union urma_tp_type_en tp_type)
+
+static inline const char* urma_tp_type_en_to_string(union urma_tp_type_en tp_type)
 {
     if (tp_type.bs.rtp == 1 && tp_type.bs.ctp == 0 && tp_type.bs.utp == 0) {
         return g_urma_tp_type_en_str[URMA_RTP];
@@ -111,7 +111,7 @@ static inline const char *urma_tp_type_en_to_string(union urma_tp_type_en tp_typ
 
 #define URMA_DEVICE_FEAT_NUM 9
 
-static const char *const g_urma_device_feat_str[URMA_DEVICE_FEAT_NUM] = {
+static const char* const g_urma_device_feat_str[URMA_DEVICE_FEAT_NUM] = {
     "OUT_OF_ORDER",      //
     "JFC_PER_WR",        //
     "STRIDE_OP",         //
@@ -123,7 +123,7 @@ static const char *const g_urma_device_feat_str[URMA_DEVICE_FEAT_NUM] = {
     "SELECTIVE_RETRANS", //
 };
 
-static inline const char *urma_device_feat_to_string(uint8_t bit)
+static inline const char* urma_device_feat_to_string(uint8_t bit)
 {
     if (bit >= URMA_DEVICE_FEAT_NUM) {
         return "Invalid Value";
@@ -133,7 +133,7 @@ static inline const char *urma_device_feat_to_string(uint8_t bit)
 
 #define URMA_ATOMIC_FEAT_NUM 7
 
-static const char *const g_urma_atomic_feat_str[URMA_ATOMIC_FEAT_NUM] = {
+static const char* const g_urma_atomic_feat_str[URMA_ATOMIC_FEAT_NUM] = {
     "compare_and_swap", //
     "swap",             //
     "fetch_and_add",    //
@@ -143,7 +143,7 @@ static const char *const g_urma_atomic_feat_str[URMA_ATOMIC_FEAT_NUM] = {
     "fetch_and_xor",    //
 };
 
-static inline const char *urma_atomic_feat_to_string(uint8_t bit)
+static inline const char* urma_atomic_feat_to_string(uint8_t bit)
 {
     if (bit >= URMA_ATOMIC_FEAT_NUM) {
         return "Invalid Value";
@@ -151,13 +151,13 @@ static inline const char *urma_atomic_feat_to_string(uint8_t bit)
     return g_urma_atomic_feat_str[bit];
 }
 
-static const char *const g_urma_trans_mode_str[] = {
+static const char* const g_urma_trans_mode_str[] = {
     [URMA_TM_RM] = "RM(Reliable message)",
     [URMA_TM_RC] = "RC(Reliable connection)",
     [URMA_TM_UM] = "UM(Unreliable message)",
 };
 
-static inline const char *urma_trans_mode_to_string(urma_transport_mode_t mode)
+static inline const char* urma_trans_mode_to_string(urma_transport_mode_t mode)
 {
     if (mode > URMA_TM_UM) {
         return "Invalid Value";
@@ -165,11 +165,11 @@ static inline const char *urma_trans_mode_to_string(urma_transport_mode_t mode)
     return g_urma_trans_mode_str[mode];
 }
 
-static const char *const g_urma_tp_type_str[] = {
+static const char* const g_urma_tp_type_str[] = {
     [URMA_TRANSPORT_UB] = "UB",
 };
 
-static inline const char *urma_tp_type_to_string(urma_transport_type_t type)
+static inline const char* urma_tp_type_to_string(urma_transport_type_t type)
 {
     if (type <= URMA_TRANSPORT_INVALID || type >= URMA_TRANSPORT_MAX) {
         return "Invalid Value";
@@ -177,7 +177,7 @@ static inline const char *urma_tp_type_to_string(urma_transport_type_t type)
     return g_urma_tp_type_str[type];
 }
 
-static const char *const g_urma_congestion_ctrl_alg_str[] = {
+static const char* const g_urma_congestion_ctrl_alg_str[] = {
     [URMA_TP_CC_NONE] = "NONE",
     [URMA_TP_CC_DCQCN] = "DCQCN",
     [URMA_TP_CC_DCQCN_AND_NETWORK_CC] = "DCQCN_AND_NETWORK_CC",
@@ -189,7 +189,7 @@ static const char *const g_urma_congestion_ctrl_alg_str[] = {
     [URMA_TP_CC_ACC] = "ACC",
 };
 
-static inline const char *urma_congestion_ctrl_alg_to_string(uint8_t bit)
+static inline const char* urma_congestion_ctrl_alg_to_string(uint8_t bit)
 {
     if (bit > URMA_TP_CC_DIP) {
         return "Invalid Value";
@@ -197,13 +197,13 @@ static inline const char *urma_congestion_ctrl_alg_to_string(uint8_t bit)
     return g_urma_congestion_ctrl_alg_str[bit];
 }
 
-static const char *const g_urma_jfc_state[] = {
+static const char* const g_urma_jfc_state[] = {
     [URMA_JFC_STATE_INVALID] = "INVALID",
     [URMA_JFC_STATE_VALID] = "VALID",
     [URMA_JFC_STATE_ERROR] = "ERROR",
 };
 
-static inline const char *urma_jfc_state_to_string(uint8_t bit)
+static inline const char* urma_jfc_state_to_string(uint8_t bit)
 {
     if (bit > URMA_JFC_STATE_ERROR) {
         return "Invalid Value";
@@ -211,14 +211,14 @@ static inline const char *urma_jfc_state_to_string(uint8_t bit)
     return g_urma_jfc_state[bit];
 }
 
-static const char *const g_urma_jetty_state[] = {
+static const char* const g_urma_jetty_state[] = {
     [URMA_JETTY_STATE_RESET] = "RESET",
     [URMA_JETTY_STATE_READY] = "READY",
     [URMA_JETTY_STATE_SUSPENDED] = "SUSPENDED",
     [URMA_JETTY_STATE_ERROR] = "ERROR",
 };
 
-static inline const char *urma_jetty_state_to_string(uint8_t bit)
+static inline const char* urma_jetty_state_to_string(uint8_t bit)
 {
     if (bit > URMA_JETTY_STATE_ERROR) {
         return "Invalid Value";
@@ -226,13 +226,13 @@ static inline const char *urma_jetty_state_to_string(uint8_t bit)
     return g_urma_jetty_state[bit];
 }
 
-static const char *const g_urma_jfr_state[] = {
+static const char* const g_urma_jfr_state[] = {
     [URMA_JFR_STATE_RESET] = "RESET",
     [URMA_JFR_STATE_READY] = "READY",
     [URMA_JFR_STATE_ERROR] = "ERROR",
 };
 
-static inline const char *urma_jfr_state_to_string(uint8_t bit)
+static inline const char* urma_jfr_state_to_string(uint8_t bit)
 {
     if (bit > URMA_JFR_STATE_ERROR) {
         return "Invalid Value";

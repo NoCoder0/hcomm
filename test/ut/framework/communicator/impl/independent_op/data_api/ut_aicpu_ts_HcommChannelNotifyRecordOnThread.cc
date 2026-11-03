@@ -13,13 +13,9 @@
 
 using namespace hccl;
 
-class UtAicpuTsHcommChannelNotifyRecordOnThread : public UtAicpuTsBase
-{
+class UtAicpuTsHcommChannelNotifyRecordOnThread : public UtAicpuTsBase {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "UtAicpuTsHcommChannelNotifyRecordOnThread tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "UtAicpuTsHcommChannelNotifyRecordOnThread tests set up." << std::endl; }
 
     static void TearDownTestCase()
     {
@@ -45,19 +41,25 @@ protected:
     int32_t res{HCCL_E_RESERVED};
 };
 
-TEST_F(UtAicpuTsHcommChannelNotifyRecordOnThread, Ut_HcommChannelNotifyRecordOnThread_When_Normal_Expect_ReturnIsHCCL_SUCCESS)
+TEST_F(
+    UtAicpuTsHcommChannelNotifyRecordOnThread,
+    Ut_HcommChannelNotifyRecordOnThread_When_Normal_Expect_ReturnIsHCCL_SUCCESS)
 {
     res = HcommChannelNotifyRecordOnThread(thread, channel, notifyIdx);
     EXPECT_EQ(res, HCCL_SUCCESS);
 }
 
-TEST_F(UtAicpuTsHcommChannelNotifyRecordOnThread, Ut_HcommChannelNotifyRecordOnThread_When_Thread_IsNull_Expect_ReturnIsHCCL_E_PTR)
+TEST_F(
+    UtAicpuTsHcommChannelNotifyRecordOnThread,
+    Ut_HcommChannelNotifyRecordOnThread_When_Thread_IsNull_Expect_ReturnIsHCCL_E_PTR)
 {
     res = HcommChannelNotifyRecordOnThread(0, channel, notifyIdx);
     EXPECT_EQ(res, HCCL_E_PTR);
 }
 
-TEST_F(UtAicpuTsHcommChannelNotifyRecordOnThread, Ut_HcommChannelNotifyRecordOnThread_When_Channel_IsNull_Expect_ReturnIsHCCL_E_PTR)
+TEST_F(
+    UtAicpuTsHcommChannelNotifyRecordOnThread,
+    Ut_HcommChannelNotifyRecordOnThread_When_Channel_IsNull_Expect_ReturnIsHCCL_E_PTR)
 {
     res = HcommChannelNotifyRecordOnThread(thread, 0, notifyIdx);
     EXPECT_EQ(res, HCCL_E_PTR);

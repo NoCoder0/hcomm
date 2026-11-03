@@ -13,31 +13,34 @@
 
 namespace Hccl {
 
-InsTempReduceMesh2D::InsTempReduceMesh2D(const RankId virtualRank, const u32 tempRankSize,
-                                         const std::vector <std::vector<RankId>> &tempVTopo,
-                                         const std::map <RankId, u32> &tempVirtRankMap)
+InsTempReduceMesh2D::InsTempReduceMesh2D(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
     : InsAlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap)
-{
-}
+{}
 
-InsTempReduceMesh2D::~InsTempReduceMesh2D()
-{
-}
+InsTempReduceMesh2D::~InsTempReduceMesh2D() {}
 
-HcclResult InsTempReduceMesh2D::CalcRes(AlgTempResReq &tempResReq)
+HcclResult InsTempReduceMesh2D::CalcRes(AlgTempResReq& tempResReq)
 {
     HCCL_INFO("[InsTempReduceMesh2D] Calculate communication resources start");
 
-    CHK_PRT_RET(tempVTopo_.size() != AXIS_NUM,
-        HCCL_ERROR("[InsTempReduceMesh2D] The dimension of topo is invalid, expect [%u], now is [%u]", 
-            AXIS_NUM, tempVTopo_.size()), HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        tempVTopo_.size() != AXIS_NUM,
+        HCCL_ERROR(
+            "[InsTempReduceMesh2D] The dimension of topo is invalid, expect [%u], now is [%u]", AXIS_NUM,
+            tempVTopo_.size()),
+        HcclResult::HCCL_E_INTERNAL);
 
     axisRankSize_[AXIS_X] = tempVTopo_.at(AXIS_X).size();
     axisRankSize_[AXIS_Y] = tempVTopo_.at(AXIS_Y).size();
 
-    CHK_PRT_RET(axisRankSize_[AXIS_X] == 0 || axisRankSize_[AXIS_Y] == 0,
-        HCCL_ERROR("[InsTempReduceMesh2D] The rankSize of dimension is invalid, xRankSize is [%u], yRankSize is [%u]", 
-            axisRankSize_[AXIS_X], axisRankSize_[AXIS_Y]), HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        axisRankSize_[AXIS_X] == 0 || axisRankSize_[AXIS_Y] == 0,
+        HCCL_ERROR(
+            "[InsTempReduceMesh2D] The rankSize of dimension is invalid, xRankSize is [%u], yRankSize is [%u]",
+            axisRankSize_[AXIS_X], axisRankSize_[AXIS_Y]),
+        HcclResult::HCCL_E_INTERNAL);
 
     tempResReq.queNum = axisRankSize_[AXIS_X] + axisRankSize_[AXIS_Y];
     tempResReq.streamNum = tempResReq.queNum;
@@ -46,9 +49,10 @@ HcclResult InsTempReduceMesh2D::CalcRes(AlgTempResReq &tempResReq)
 
     CHK_RET(CalcResLinksConcurrMesh(myRank_, tempRankSize_, tempVTopo_, linkNumBtwPeers_, tempResReq));
 
-    HCCL_INFO("[InsTempReduceMesh2D] Calculate communication resources finished, queNum[%u], streamNum[%u], "
-              "queNotifyNum[%u] linkNum[%u]", tempResReq.queNum, tempResReq.streamNum, tempResReq.queNotifys.size(),
-              tempResReq.links.size());
+    HCCL_INFO(
+        "[InsTempReduceMesh2D] Calculate communication resources finished, queNum[%u], streamNum[%u], "
+        "queNotifyNum[%zu] linkNum[%zu]",
+        tempResReq.queNum, tempResReq.streamNum, tempResReq.queNotifys.size(), tempResReq.links.size());
 
     return HcclResult::HCCL_SUCCESS;
 }
@@ -72,9 +76,9 @@ std::vector<std::tuple<QId, QId, u32>> InsTempReduceMesh2D::CreateNotifiesReques
         return notifyRequests;
     }
 
-    u32 ctrlNotfiyReqNum = 2;  // X轴向的控制流（主流）和Y轴向的控制流之间的Notify
-    u32 xNotifyReqNum = (xQueueNum - 1) * 2;  // X轴向的控制流和业务流之间的Notify
-    u32 yNotifyReqNum = (yQueueNum - 1) * 2;  // Y轴向的控制流和业务流之间的Notify
+    u32 ctrlNotfiyReqNum = 2;                // X轴向的控制流（主流）和Y轴向的控制流之间的Notify
+    u32 xNotifyReqNum = (xQueueNum - 1) * 2; // X轴向的控制流和业务流之间的Notify
+    u32 yNotifyReqNum = (yQueueNum - 1) * 2; // Y轴向的控制流和业务流之间的Notify
     u32 totalNotifyReqNum = ctrlNotfiyReqNum + xNotifyReqNum + yNotifyReqNum;
     notifyRequests.reserve(totalNotifyReqNum);
 
@@ -94,15 +98,17 @@ std::vector<std::tuple<QId, QId, u32>> InsTempReduceMesh2D::CreateNotifiesReques
         notifyRequests.emplace_back(std::make_tuple(yId, yCtrlId, 0));
     }
 
-    HCCL_DEBUG("[InsTempReduceMesh2D] Create notifies request: "
-              "totalNotifyReqNum[%u], ctrlNotfiyReqNum[%u], xNotifyReqNum[%u], yNotifyReqNum[%u]",
-              totalNotifyReqNum, ctrlNotfiyReqNum, xNotifyReqNum, yNotifyReqNum);
+    HCCL_DEBUG(
+        "[InsTempReduceMesh2D] Create notifies request: "
+        "totalNotifyReqNum[%u], ctrlNotifyReqNum[%u], xNotifyReqNum[%u], yNotifyReqNum[%u]",
+        totalNotifyReqNum, ctrlNotfiyReqNum, xNotifyReqNum, yNotifyReqNum);
 
     return notifyRequests;
 }
 
-HcclResult InsTempReduceMesh2D::CalcResLinksConcurrMesh(const RankId myRank, const u32 tempRankSize,
-    const std::vector<std::vector<RankId>> &tempVTopo, const u32 linkNumBtwPeers, AlgTempResReq &tempResReq) const
+HcclResult InsTempReduceMesh2D::CalcResLinksConcurrMesh(
+    const RankId myRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const u32 linkNumBtwPeers, AlgTempResReq& tempResReq) const
 {
     (void)tempRankSize;
     u32 myAlgRank;
@@ -127,8 +133,9 @@ u32 InsTempReduceMesh2D::CalcScratchMultiple(BufferType inBuffType, BufferType o
     return scratchMultiple;
 }
 
-HcclResult InsTempReduceMesh2D::GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &templateDataParams,
-    const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues)
+HcclResult InsTempReduceMesh2D::GenExtIns(
+    const TempFuncs& tempFuncs, const TemplateDataParams& templateDataParams, const ResLinks& tempLinks,
+    std::vector<InsQuePtr>& tempInsQues)
 {
     (void)tempFuncs;
     HCCL_INFO("[InsTempReduceMesh2D] GenExtIns start rank[%d]", myRank_);
@@ -147,7 +154,7 @@ HcclResult InsTempReduceMesh2D::GenExtIns(const TempFuncs &tempFuncs, const Temp
     std::vector<InsQuePtr> yTempInsQues;
     CHK_RET(SplitInsQues(tempInsQues, ctrlTempInsQues, xTempInsQues, yTempInsQues));
 
-    CHK_RET(PreSyncInterQueues(ctrlTempInsQues));  // XY轴并行启动
+    CHK_RET(PreSyncInterQueues(ctrlTempInsQues)); // XY轴并行启动
 
     if (u32(myRank_) == root_) {
         // 数据片A第一步通信
@@ -186,14 +193,14 @@ HcclResult InsTempReduceMesh2D::GenExtIns(const TempFuncs &tempFuncs, const Temp
         CHK_RET(SendFromInput(SLICE_B, AXIS_Y, tempLinks, yTempInsQues));
     }
 
-    CHK_RET(PostSyncInterQueues(ctrlTempInsQues));  // 返回主流
+    CHK_RET(PostSyncInterQueues(ctrlTempInsQues)); // 返回主流
 
     HCCL_INFO("[InsTempReduceMesh2D] GenExtIns finished rank[%d]", myRank_);
 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempReduceMesh2D::CalcParams(const TemplateDataParams &templateDataParams)
+HcclResult InsTempReduceMesh2D::CalcParams(const TemplateDataParams& templateDataParams)
 {
     axisRankSize_[AXIS_X] = tempVTopo_.at(AXIS_X).size();
     axisRankSize_[AXIS_Y] = tempVTopo_.at(AXIS_Y).size();
@@ -221,43 +228,50 @@ HcclResult InsTempReduceMesh2D::CalcParams(const TemplateDataParams &templateDat
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempReduceMesh2D::SplitInsQues(std::vector<InsQuePtr> &tempInsQues, 
-    std::vector<InsQuePtr> &ctrlTempInsQues, std::vector<InsQuePtr> &xTempInsQues, std::vector<InsQuePtr> &yTempInsQues)
+HcclResult InsTempReduceMesh2D::SplitInsQues(
+    std::vector<InsQuePtr>& tempInsQues, std::vector<InsQuePtr>& ctrlTempInsQues, std::vector<InsQuePtr>& xTempInsQues,
+    std::vector<InsQuePtr>& yTempInsQues)
 {
     u32 expectQueNum = axisRankSize_[AXIS_X] + axisRankSize_[AXIS_Y];
-    CHK_PRT_RET(tempInsQues.size() != expectQueNum,
-        HCCL_ERROR("[InsTempReduceMesh2D] The count of queues is invalid, expect [%u], now is [%u]", 
-            expectQueNum, tempInsQues.size()), HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        tempInsQues.size() != expectQueNum,
+        HCCL_ERROR(
+            "[InsTempReduceMesh2D] The count of queues is invalid, expect [%u], now is [%u]", expectQueNum,
+            tempInsQues.size()),
+        HcclResult::HCCL_E_INTERNAL);
 
     ctrlTempInsQues.emplace_back(tempInsQues.at(0));
     ctrlTempInsQues.emplace_back(tempInsQues.at(axisRankSize_[AXIS_X]));
     xTempInsQues = std::vector<InsQuePtr>(tempInsQues.begin(), tempInsQues.begin() + axisRankSize_[AXIS_X]);
     yTempInsQues = std::vector<InsQuePtr>(tempInsQues.begin() + axisRankSize_[AXIS_X], tempInsQues.end());
 
-    HCCL_INFO("[InsTempReduceMesh2D] splitInsQues success, ctrlTempInsQuesNum[%u], xTempInsQuesNum[%u], "
-              "yTempInsQuesNum[%u]", ctrlTempInsQues.size(), xTempInsQues.size(), yTempInsQues.size());
+    HCCL_INFO(
+        "[InsTempReduceMesh2D] splitInsQues success, ctrlTempInsQuesNum[%zu], xTempInsQuesNum[%zu], "
+        "yTempInsQuesNum[%zu]",
+        ctrlTempInsQues.size(), xTempInsQues.size(), yTempInsQues.size());
 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempReduceMesh2D::LocalCopyFromInputToOutput(const TemplateDataParams &templateDataParams,
-    std::vector<InsQuePtr> &tempInsQues) const
+HcclResult InsTempReduceMesh2D::LocalCopyFromInputToOutput(
+    const TemplateDataParams& templateDataParams, std::vector<InsQuePtr>& tempInsQues) const
 {
     DataSlice srcLocalSlice(BufferType::INPUT, 0, templateDataParams.sliceSize);
     DataSlice dstLocalSlice(BufferType::OUTPUT, 0, templateDataParams.sliceSize);
-    CHK_PRT_RET(LocalCopy(tempInsQues[0], srcLocalSlice, dstLocalSlice),
-        HCCL_ERROR("[InsTempReduceMesh2D] LocalCopy data failed"),
-        HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        LocalCopy(tempInsQues[0], srcLocalSlice, dstLocalSlice),
+        HCCL_ERROR("[InsTempReduceMesh2D] LocalCopy data failed"), HcclResult::HCCL_E_INTERNAL);
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempReduceMesh2D::GatherFromInput(const u32 slice, const u32 axis,
-    const ResLinks &tempLinks, std::vector<InsQuePtr> &axisTempInsQues)
+HcclResult InsTempReduceMesh2D::GatherFromInput(
+    const u32 slice, const u32 axis, const ResLinks& tempLinks, std::vector<InsQuePtr>& axisTempInsQues)
 {
     HCCL_DEBUG("[InsTempReduceMesh2D] Gather from input start.");
 
-    CHK_PRT_RET(axisTempInsQues.empty(),
-        HCCL_ERROR("[InsTempReduceMesh2D][GatherFromInput] axisTempInsQues is empty."), HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        axisTempInsQues.empty(), HCCL_ERROR("[InsTempReduceMesh2D][GatherFromInput] axisTempInsQues is empty."),
+        HcclResult::HCCL_E_INTERNAL);
     CHK_PTR_NULL(axisTempInsQues[0]);
     u64 sliceSize = sliceSize_[slice];
     u64 sliceScratchBaseOffset = sliceScratchBaseOffset_[slice];
@@ -270,10 +284,10 @@ HcclResult InsTempReduceMesh2D::GatherFromInput(const u32 slice, const u32 axis,
 
     // 主队列本地拷贝，从Input拷贝到Scratch
     DataSlice dstLocalSlice(BufferType::SCRATCH, sliceScratchBaseOffset + axisRoot_[axis] * sliceSize, sliceSize);
-    CHK_PRT_RET(LocalCopy(axisTempInsQues[0], srcDataSlice, dstLocalSlice),
-            HCCL_ERROR("[InsTempReduceMesh2D] LocalCopy data failed"),
-            HcclResult::HCCL_E_INTERNAL);
-    
+    CHK_PRT_RET(
+        LocalCopy(axisTempInsQues[0], srcDataSlice, dstLocalSlice),
+        HCCL_ERROR("[InsTempReduceMesh2D] LocalCopy data failed"), HcclResult::HCCL_E_INTERNAL);
+
     // 从队列负责接收来自其它rank的数据
     u32 queIdx = 1;
     for (u32 axisRank = 0; axisRank < tempVTopo_.at(axis).size(); ++axisRank) {
@@ -281,19 +295,21 @@ HcclResult InsTempReduceMesh2D::GatherFromInput(const u32 slice, const u32 axis,
         if (rmtRank == myRank_) {
             continue;
         }
-        
-        const LinkData &recvLink = tempLinks.at(rmtRank).at(0);
+
+        const LinkData& recvLink = tempLinks.at(rmtRank).at(0);
         // 按照发送rank的序号来计算接收数据存放的偏移
         DataSlice dstDataSlice(BufferType::SCRATCH, sliceScratchBaseOffset + axisRank * sliceSize, sliceSize);
         SlicesList recvSlicesList({srcDataSlice}, {dstDataSlice});
         DataInfo recvInfo(recvLink, recvSlicesList);
-        CHK_PRT_THROW(queIdx >= axisTempInsQues.size(),
-                      HCCL_ERROR("[InsTempReduceMesh2D] queIdx[%u] is bigger than axisTempInsQues size[%zu].", queIdx,
-                                 axisTempInsQues.size()),
-                      InvalidParamsException, "queIdx is invalid");
-        CHK_PRT_RET(Recv(recvInfo, axisTempInsQues[queIdx], 0, true, DmaMode::PUT),
-            HCCL_ERROR("[InsTempReduceMesh2D] Recv data failed"),
-            HcclResult::HCCL_E_INTERNAL);
+        CHK_PRT_RET(
+            queIdx >= axisTempInsQues.size(),
+            HCCL_ERROR(
+                "[InsTempReduceMesh2D] queIdx[%u] is bigger than axisTempInsQues size[%zu].", queIdx,
+                axisTempInsQues.size()),
+            HcclResult::HCCL_E_PARA);
+        CHK_PRT_RET(
+            Recv(recvInfo, axisTempInsQues[queIdx], 0, true, DmaMode::PUT),
+            HCCL_ERROR("[InsTempReduceMesh2D] Recv data failed"), HcclResult::HCCL_E_INTERNAL);
 
         queIdx++;
     }
@@ -305,8 +321,8 @@ HcclResult InsTempReduceMesh2D::GatherFromInput(const u32 slice, const u32 axis,
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempReduceMesh2D::GatherFromScratch(const u32 slice, const u32 axis,
-    const ResLinks &tempLinks, std::vector<InsQuePtr> &axisTempInsQues)
+HcclResult InsTempReduceMesh2D::GatherFromScratch(
+    const u32 slice, const u32 axis, const ResLinks& tempLinks, std::vector<InsQuePtr>& axisTempInsQues)
 {
     HCCL_DEBUG("[InsTempReduceMesh2D] Gather from scratch start");
 
@@ -321,10 +337,10 @@ HcclResult InsTempReduceMesh2D::GatherFromScratch(const u32 slice, const u32 axi
 
     // 主队列本地拷贝，从Scratch拷贝到Output
     DataSlice dstLocalSlice(BufferType::OUTPUT, sliceOutputBaseOffset_[slice], sliceSize);
-    CHK_PRT_RET(LocalCopy(axisTempInsQues[0], srcDataSlice, dstLocalSlice),
-            HCCL_ERROR("[InsTempReduceMesh2D] LocalCopy data failed"),
-            HcclResult::HCCL_E_INTERNAL);
-    
+    CHK_PRT_RET(
+        LocalCopy(axisTempInsQues[0], srcDataSlice, dstLocalSlice),
+        HCCL_ERROR("[InsTempReduceMesh2D] LocalCopy data failed"), HcclResult::HCCL_E_INTERNAL);
+
     // 从队列负责接收来自其它rank的数据
     u32 queIdx = 1;
     for (u32 axisRank = 0; axisRank < tempVTopo_.at(axis).size(); ++axisRank) {
@@ -332,16 +348,16 @@ HcclResult InsTempReduceMesh2D::GatherFromScratch(const u32 slice, const u32 axi
         if (rmtRank == myRank_) {
             continue;
         }
-        
-        const LinkData &recvLink = tempLinks.at(rmtRank).at(0);
+
+        const LinkData& recvLink = tempLinks.at(rmtRank).at(0);
         // 按照发送rank的序号来计算接收数据存放的偏移
         DataSlice dstDataSlice(BufferType::SCRATCH, sliceScratchBaseOffset + axisRank * sliceSize, sliceSize);
         SlicesList recvSlicesList({srcDataSlice}, {dstDataSlice});
         DataInfo recvInfo(recvLink, recvSlicesList);
 
-        CHK_PRT_RET(Recv(recvInfo, axisTempInsQues[queIdx], 0, true, DmaMode::PUT),
-            HCCL_ERROR("[InsTempReduceMesh2D] Recv data failed"),
-            HcclResult::HCCL_E_INTERNAL);
+        CHK_PRT_RET(
+            Recv(recvInfo, axisTempInsQues[queIdx], 0, true, DmaMode::PUT),
+            HCCL_ERROR("[InsTempReduceMesh2D] Recv data failed"), HcclResult::HCCL_E_INTERNAL);
 
         queIdx++;
     }
@@ -353,30 +369,31 @@ HcclResult InsTempReduceMesh2D::GatherFromScratch(const u32 slice, const u32 axi
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempReduceMesh2D::SendFromInput(const u32 slice, const u32 axis, const ResLinks &tempLinks,
-    std::vector<InsQuePtr> &axisTempInsQues)
+HcclResult InsTempReduceMesh2D::SendFromInput(
+    const u32 slice, const u32 axis, const ResLinks& tempLinks, std::vector<InsQuePtr>& axisTempInsQues)
 {
     HCCL_DEBUG("[InsTempReduceMesh2D] Send from input start");
 
     u64 sliceSize = sliceSize_[slice];
 
     RankId rmtRank = tempVTopo_.at(axis).at(axisRoot_[axis]);
-    const LinkData &sendLink = tempLinks.at(rmtRank).at(0);
+    const LinkData& sendLink = tempLinks.at(rmtRank).at(0);
 
     DataSlice srcDataSlice(BufferType::INPUT, sliceInputBaseOffset_[slice], sliceSize);
-    DataSlice dstDataSlice(BufferType::SCRATCH, sliceScratchBaseOffset_[slice] + axisRank_[axis] * sliceSize, sliceSize);
+    DataSlice dstDataSlice(
+        BufferType::SCRATCH, sliceScratchBaseOffset_[slice] + axisRank_[axis] * sliceSize, sliceSize);
     SlicesList sendSlicesList({srcDataSlice}, {dstDataSlice});
     DataInfo sendInfo(sendLink, sendSlicesList);
 
-    CHK_PRT_RET(Send(sendInfo, axisTempInsQues[0], 0, true, DmaMode::PUT),
-        HCCL_ERROR("[InsTempReduceMesh2D] Send data failed"),
+    CHK_PRT_RET(
+        Send(sendInfo, axisTempInsQues[0], 0, true, DmaMode::PUT), HCCL_ERROR("[InsTempReduceMesh2D] Send data failed"),
         HcclResult::HCCL_E_INTERNAL);
 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempReduceMesh2D::SendFromScratch(const u32 slice, const u32 axis, const ResLinks &tempLinks,
-    std::vector<InsQuePtr> &axisTempInsQues)
+HcclResult InsTempReduceMesh2D::SendFromScratch(
+    const u32 slice, const u32 axis, const ResLinks& tempLinks, std::vector<InsQuePtr>& axisTempInsQues)
 {
     HCCL_DEBUG("[InsTempReduceMesh2D] Send from scratch start");
 
@@ -384,21 +401,22 @@ HcclResult InsTempReduceMesh2D::SendFromScratch(const u32 slice, const u32 axis,
     u64 sliceScratchBaseOffset = sliceScratchBaseOffset_[slice];
 
     RankId rmtRank = tempVTopo_.at(axis).at(axisRoot_[axis]);
-    const LinkData &sendLink = tempLinks.at(rmtRank).at(0);
+    const LinkData& sendLink = tempLinks.at(rmtRank).at(0);
 
     DataSlice srcDataSlice(BufferType::SCRATCH, sliceScratchBaseOffset + axisRoot_[axis] * sliceSize, sliceSize);
     DataSlice dstDataSlice(BufferType::SCRATCH, sliceScratchBaseOffset + axisRank_[axis] * sliceSize, sliceSize);
     SlicesList sendSlicesList({srcDataSlice}, {dstDataSlice});
     DataInfo sendInfo(sendLink, sendSlicesList);
 
-    CHK_PRT_RET(Send(sendInfo, axisTempInsQues[0], 0, true, DmaMode::PUT),
-        HCCL_ERROR("[InsTempReduceMesh2D] Send data failed"),
+    CHK_PRT_RET(
+        Send(sendInfo, axisTempInsQues[0], 0, true, DmaMode::PUT), HCCL_ERROR("[InsTempReduceMesh2D] Send data failed"),
         HcclResult::HCCL_E_INTERNAL);
 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempReduceMesh2D::ReduceToScratch(const u32 slice, const u32 axis, std::vector<InsQuePtr> &axisTempInsQues)
+HcclResult
+InsTempReduceMesh2D::ReduceToScratch(const u32 slice, const u32 axis, std::vector<InsQuePtr>& axisTempInsQues)
 {
     HCCL_DEBUG("[InsTempReduceMesh2D] Reduce to scratch start");
 
@@ -406,41 +424,41 @@ HcclResult InsTempReduceMesh2D::ReduceToScratch(const u32 slice, const u32 axis,
     u64 sliceScratchBaseOffset = sliceScratchBaseOffset_[slice];
 
     // 数据规约到scratch时，下一步会交换处理另一片数据，因此数据规约至axisRoot_[1-axis]的偏移位置，便于后续数据搬运
-    DataSlice dstDataSlice(BufferType::SCRATCH, sliceScratchBaseOffset + axisRoot_[1-axis] * sliceSize, sliceSize);
+    DataSlice dstDataSlice(BufferType::SCRATCH, sliceScratchBaseOffset + axisRoot_[1 - axis] * sliceSize, sliceSize);
 
     // 另一轴Root值大于等于当前轴的RankSize时，需要将数据规约至原本无数据的区域，需要先拷贝第一片数据
-    bool needLocalCopy = axisRoot_[1-axis] >= axisRankSize_[axis];
+    bool needLocalCopy = axisRoot_[1 - axis] >= axisRankSize_[axis];
     if (needLocalCopy) {
         DataSlice srcLocalSlice(BufferType::SCRATCH, sliceScratchBaseOffset, sliceSize);
-        CHK_PRT_RET(LocalCopy(axisTempInsQues[0], srcLocalSlice, dstDataSlice),
-            HCCL_ERROR("[InsTempReduceMesh2D] LocalCopy data failed"),
-            HcclResult::HCCL_E_INTERNAL);
-        
+        CHK_PRT_RET(
+            LocalCopy(axisTempInsQues[0], srcLocalSlice, dstDataSlice),
+            HCCL_ERROR("[InsTempReduceMesh2D] LocalCopy data failed"), HcclResult::HCCL_E_INTERNAL);
+
         for (u32 sliceId = 1; sliceId < axisRankSize_[axis]; ++sliceId) {
             DataSlice srcDataSlice(BufferType::SCRATCH, sliceScratchBaseOffset + sliceId * sliceSize, sliceSize);
-            CHK_PRT_RET(LocalReduce(axisTempInsQues[0], srcDataSlice, dstDataSlice, dataType_, redOp_),
-                HCCL_ERROR("[InsTempReduceMesh2D] Local reduce data failed"),
-                HcclResult::HCCL_E_INTERNAL);
+            CHK_PRT_RET(
+                LocalReduce(axisTempInsQues[0], srcDataSlice, dstDataSlice, dataType_, redOp_),
+                HCCL_ERROR("[InsTempReduceMesh2D] Local reduce data failed"), HcclResult::HCCL_E_INTERNAL);
         }
-        
+
         return HcclResult::HCCL_SUCCESS;
     }
-    
+
     // 另一轴Root值小于当前轴RankSize时，按照数据片顺序逐个Reduce
     for (u32 sliceId = 0; sliceId < axisRankSize_[axis]; ++sliceId) {
-        if (sliceId == axisRoot_[1-axis]) {
+        if (sliceId == axisRoot_[1 - axis]) {
             continue;
         }
         DataSlice srcDataSlice(BufferType::SCRATCH, sliceScratchBaseOffset + sliceId * sliceSize, sliceSize);
-        CHK_PRT_RET(LocalReduce(axisTempInsQues[0], srcDataSlice, dstDataSlice, dataType_, redOp_),
-            HCCL_ERROR("[InsTempReduceMesh2D] Local reduce data failed"),
-            HcclResult::HCCL_E_INTERNAL);
+        CHK_PRT_RET(
+            LocalReduce(axisTempInsQues[0], srcDataSlice, dstDataSlice, dataType_, redOp_),
+            HCCL_ERROR("[InsTempReduceMesh2D] Local reduce data failed"), HcclResult::HCCL_E_INTERNAL);
     }
 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempReduceMesh2D::ReduceToOutput(const u32 slice, const u32 axis, std::vector<InsQuePtr> &axisTempInsQues)
+HcclResult InsTempReduceMesh2D::ReduceToOutput(const u32 slice, const u32 axis, std::vector<InsQuePtr>& axisTempInsQues)
 {
     HCCL_DEBUG("[InsTempReduceMesh2D] Reduce to output start");
 
@@ -448,18 +466,18 @@ HcclResult InsTempReduceMesh2D::ReduceToOutput(const u32 slice, const u32 axis, 
     u64 sliceScratchBaseOffset = sliceScratchBaseOffset_[slice];
 
     DataSlice dstDataSlice(BufferType::OUTPUT, sliceOutputBaseOffset_[slice], sliceSize);
-    
+
     for (u32 sliceId = 0; sliceId < axisRankSize_[axis]; ++sliceId) {
-        if (sliceId == axisRoot_[axis]) {  // 跳过轴向root的数据片，这一片已经提前拷贝至Output
+        if (sliceId == axisRoot_[axis]) { // 跳过轴向root的数据片，这一片已经提前拷贝至Output
             continue;
         }
         DataSlice srcDataSlice(BufferType::SCRATCH, sliceScratchBaseOffset + sliceId * sliceSize, sliceSize);
-        CHK_PRT_RET(LocalReduce(axisTempInsQues[0], srcDataSlice, dstDataSlice, dataType_, redOp_),
-            HCCL_ERROR("[InsTempReduceMesh2D] Local reduce data failed"),
-            HcclResult::HCCL_E_INTERNAL);
+        CHK_PRT_RET(
+            LocalReduce(axisTempInsQues[0], srcDataSlice, dstDataSlice, dataType_, redOp_),
+            HCCL_ERROR("[InsTempReduceMesh2D] Local reduce data failed"), HcclResult::HCCL_E_INTERNAL);
     }
 
     return HcclResult::HCCL_SUCCESS;
 }
 
-}  // namespace Hccl
+} // namespace Hccl

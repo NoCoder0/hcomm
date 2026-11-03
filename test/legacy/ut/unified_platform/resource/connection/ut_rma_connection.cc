@@ -18,21 +18,16 @@
 using namespace Hccl;
 
 class RmaConnectionTest : public testing::Test {
-    protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "DevUbConnection tests set up." << std::endl;
-    }
+protected:
+    static void SetUpTestCase() { std::cout << "DevUbConnection tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "DevUbConnection tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "DevUbConnection tests tear down." << std::endl; }
 
     virtual void SetUp()
     {
         std::cout << "A Test case in DevUbConnection SetUP" << std::endl;
-        fakeSocket = new Socket(nullptr, localIp, listenPort, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+        fakeSocket
+            = new Socket(nullptr, localIp, listenPort, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
     }
 
     virtual void TearDown()
@@ -42,7 +37,7 @@ class RmaConnectionTest : public testing::Test {
         std::cout << "A Test case in DevUbConnection TearDown" << std::endl;
     }
 
-    Socket *fakeSocket;
+    Socket* fakeSocket;
     IpAddress localIp;
     IpAddress remoteIp;
     u32 listenPort = 100;
@@ -51,13 +46,14 @@ class RmaConnectionTest : public testing::Test {
 
 class FakeRmaConnection : public RmaConnection {
 public:
-    FakeRmaConnection(Socket *socket, const RmaConnType rmaConnType) : RmaConnection(socket, rmaConnType) {}
+    FakeRmaConnection(Socket* socket, const RmaConnType rmaConnType) : RmaConnection(socket, rmaConnType) {}
 
     void Connect() override {}
     string Describe() const override {}
 };
 
-TEST_F(RmaConnectionTest, test_rma_connection_inline_write) {
+TEST_F(RmaConnectionTest, test_rma_connection_inline_write)
+{
     BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
 

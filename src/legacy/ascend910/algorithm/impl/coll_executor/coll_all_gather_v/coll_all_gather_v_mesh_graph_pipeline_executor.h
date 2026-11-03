@@ -15,23 +15,25 @@ namespace hccl {
 class CollAllGatherVMeshGraphPipelineExecutor : public CollAllGatherVExecutor {
 public:
     explicit CollAllGatherVMeshGraphPipelineExecutor(
-        const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher> &topoMatcher);
+        const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher>& topoMatcher);
     ~CollAllGatherVMeshGraphPipelineExecutor() override = default;
 
 private:
     /* *************** 资源计算 *************** */
-    HcclResult CalcCommInfo(std::vector<LevelNSubCommTransport> &opTransport) override;
-    HcclResult CalcLevel0CommInfo(TransportMemType inputType, TransportMemType outputType,
-        std::vector<LevelNSubCommTransport> &opTransport) override;
-    HcclResult CalcLevel1CommInfo(TransportMemType inputType, TransportMemType outputType,
-        std::vector<LevelNSubCommTransport> &opTransport) override;
-    HcclResult CalcTransportMemType(TransportMemType &inputType, TransportMemType &outputType);
-    HcclResult CalcStreamNum(u32 &streamNum) override;
+    HcclResult CalcCommInfo(std::vector<LevelNSubCommTransport>& opTransport) override;
+    HcclResult CalcLevel0CommInfo(
+        TransportMemType inputType, TransportMemType outputType,
+        std::vector<LevelNSubCommTransport>& opTransport) override;
+    HcclResult CalcLevel1CommInfo(
+        TransportMemType inputType, TransportMemType outputType,
+        std::vector<LevelNSubCommTransport>& opTransport) override;
+    HcclResult CalcTransportMemType(TransportMemType& inputType, TransportMemType& outputType) const;
+    HcclResult CalcStreamNum(u32& streamNum) override;
 
     /* *************** 算法编排 *************** */
-    HcclResult KernelRun(const OpParam &param, ExecMem &execMem) override;
+    HcclResult KernelRun(const OpParam& param, ExecMem& execMem) override;
 };
 
-}  // namespace hccl
+} // namespace hccl
 
 #endif

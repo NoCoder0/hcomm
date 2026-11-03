@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #include "net_vo_tbl_rank.h"
 #include "bkf_bas_type_mthd.h"
 #include "v_stringlib.h"
@@ -221,4 +220,3 @@ error:
 #ifdef __cplusplus
 }
 #endif
-

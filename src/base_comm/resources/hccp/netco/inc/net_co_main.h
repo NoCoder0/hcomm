@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef NET_CO_MAIN_H
 #define NET_CO_MAIN_H
 
@@ -69,4 +68,3 @@ uint32_t NetCoFdEvtDispatch(NetCo *co, int fd, uint32_t curEvents);
 #endif
 
 #endif
-

@@ -55,7 +55,7 @@ typedef struct tagBkfChCliMngInitArg {
     uint8_t dmsIntfId;
     uint8_t dmsSubIntfId;
     uint8_t pad1[2];
-    WfwMux *mux; /* 和mesh/tcp等传输层配套使用 */
+    WfwMux *mux;  /* 和mesh/tcp等传输层配套使用 */
     void *sslHnd; /* sslLib全局句柄 */
     uint8_t rsv1[0x10];
 } BkfChCliMngInitArg;
@@ -63,12 +63,12 @@ typedef struct tagBkfChCliMngInitArg {
 #define BKF_CH_CLI_MALLOC_DATA_BUF_LEN_MAX (0xffff - 0x40)
 
 /* enable */
-typedef void(*F_BKF_CH_CLI_ON_RCV_DATA)(void *cookieEnable, BkfChCliConnId *connId, void *data, int32_t dataLen);
-typedef void(*F_BKF_CH_CLI_ON_RCV_DATA_EVENT)(void *cookieEnable, BkfChCliConnId *connId);
-typedef void(*F_BKF_CH_CLI_ON_UNBLOCK)(void *cookieEnable, BkfChCliConnId *connId);
-typedef void(*F_BKF_CH_CLI_ON_DISCONN)(void *cookieEnable, BkfChCliConnId *connId);
-typedef void(*F_BKF_CH_CLI_ON_DISCONNEX)(void *cookieEnable, BkfChCliConnId *connId, BOOL isPeerFin);
-typedef void(*F_BKF_CH_CLI_ON_CONN)(void *cookieEnable, BkfChCliConnId *connId, uint16_t srcPort);
+typedef void (*F_BKF_CH_CLI_ON_RCV_DATA)(void *cookieEnable, BkfChCliConnId *connId, void *data, int32_t dataLen);
+typedef void (*F_BKF_CH_CLI_ON_RCV_DATA_EVENT)(void *cookieEnable, BkfChCliConnId *connId);
+typedef void (*F_BKF_CH_CLI_ON_UNBLOCK)(void *cookieEnable, BkfChCliConnId *connId);
+typedef void (*F_BKF_CH_CLI_ON_DISCONN)(void *cookieEnable, BkfChCliConnId *connId);
+typedef void (*F_BKF_CH_CLI_ON_DISCONNEX)(void *cookieEnable, BkfChCliConnId *connId, BOOL isPeerFin);
+typedef void (*F_BKF_CH_CLI_ON_CONN)(void *cookieEnable, BkfChCliConnId *connId, uint16_t srcPort);
 
 typedef struct tagBkfChCliEnableArg {
     void *cookie;
@@ -86,24 +86,23 @@ typedef struct tagBkfChCli BkfChCli;
 typedef struct tagBkfChCliInitArg BkfChCliInitArg;
 
 typedef BkfChCli *(*F_BKF_CH_CLI_INIT)(BkfChCliInitArg *arg);
-typedef void(*F_BKF_CH_CLI_UNINIT)(BkfChCli *ch);
-typedef uint32_t(*F_BKF_CH_CLI_ENABLE)(BkfChCli *ch, BkfChCliEnableArg *arg);
-typedef uint32_t(*F_BKF_CH_CLI_SET_SELF_CID)(BkfChCli *ch, uint32_t selfCid);
-typedef uint32_t(*F_BKF_CH_CLI_SET_SELF_URL)(BkfChCli *ch, BkfUrl *selfUrl);
+typedef void (*F_BKF_CH_CLI_UNINIT)(BkfChCli *ch);
+typedef uint32_t (*F_BKF_CH_CLI_ENABLE)(BkfChCli *ch, BkfChCliEnableArg *arg);
+typedef uint32_t (*F_BKF_CH_CLI_SET_SELF_CID)(BkfChCli *ch, uint32_t selfCid);
+typedef uint32_t (*F_BKF_CH_CLI_SET_SELF_URL)(BkfChCli *ch, BkfUrl *selfUrl);
 
 typedef BkfChCliConnId *(*F_BKF_CH_CLI_CONN)(BkfChCli *ch, BkfUrl *urlServer);
 typedef BkfChCliConnId *(*F_BKF_CH_CLI_CONNEX)(BkfChCli *ch, BkfUrl *urlServer, BkfUrl *urlClient);
 
-typedef void(*F_BKF_CH_CLI_DISCONN)(BkfChCli *ch, BkfChCliConnId *connId);
+typedef void (*F_BKF_CH_CLI_DISCONN)(BkfChCli *ch, BkfChCliConnId *connId);
 typedef void (*F_BKF_CH_CLI_CONN_TIMOUT)(BkfChCli *ch, BkfUrl *urlServer);
 
-typedef void* (*F_BKF_CH_CLI_MALLOC_DATA_BUF)(BkfChCliConnId *connId, int32_t dataBufLen);
+typedef void *(*F_BKF_CH_CLI_MALLOC_DATA_BUF)(BkfChCliConnId *connId, int32_t dataBufLen);
 typedef void (*F_BKF_CH_CLI_FREE_DATA_BUF)(BkfChCliConnId *connId, void *dataBuf);
 typedef int32_t (*F_BKF_CH_CLI_READ)(BkfChCliConnId *connId, void *dataBuf, int32_t bufLen);
 typedef int32_t (*F_BKF_CH_CLI_WRITE)(BkfChCliConnId *connId, void *dataBuf, int32_t dataLen);
-typedef uint32_t(*F_BKF_CH_CLI_SET_CERA)(BkfChCli *ch, BkfCera *cera);
-typedef uint32_t(*F_BKF_CH_CLI_UNSET_CERA)(BkfChCli *ch);
-
+typedef uint32_t (*F_BKF_CH_CLI_SET_CERA)(BkfChCli *ch, BkfCera *cera);
+typedef uint32_t (*F_BKF_CH_CLI_UNSET_CERA)(BkfChCli *ch);
 
 typedef struct tagBkfChCliTypeVTbl {
     char *name;
@@ -143,4 +142,3 @@ struct tagBkfChCliInitArg {
 #endif
 
 #endif
-

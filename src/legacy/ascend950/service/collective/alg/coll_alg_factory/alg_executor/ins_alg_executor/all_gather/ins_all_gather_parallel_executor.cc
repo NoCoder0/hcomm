@@ -43,12 +43,12 @@ InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::~I
 
 template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
 HcclResult InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::CalcResOffload(
-    const RankGraph *rankGraph, const u64 &dataSize, CollOffloadOpResReq &resReq)
+    const RankGraph* rankGraph, const u64& dataSize, CollOffloadOpResReq& resReq)
 {
     (void)dataSize;
 
     u64 scratchMemSize = 200 * 1024 * 1024;
-    resReq.requiredScratchMemSize = scratchMemSize;  // 200MB
+    resReq.requiredScratchMemSize = scratchMemSize; // 200MB
 
     // Topo Match
     AlgTopoMatch topoMatch(myRank_, rankSize_, rankGraph, devType_);
@@ -71,11 +71,9 @@ HcclResult InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTem
         HCCL_DEBUG("[%s] Rank[%d], CalcResOffload with detouring enabled.", __func__, myRank_);
         CHK_RET(intraTempAlg.CalcResDetour(rankGraph, resReqIntra));
     } else {
-        HCCL_DEBUG("[%s] Rank[%d], CalcResOffload with detouring disabled. rankSizeLevel0[%u] rankSizeLevel1[%u]",
-            __func__,
-            myRank_,
-            rankSizeLevel0_,
-            rankSizeLevel1_);
+        HCCL_DEBUG(
+            "[%s] Rank[%d], CalcResOffload with detouring disabled. rankSizeLevel0[%u] rankSizeLevel1[%u]", __func__,
+            myRank_, rankSizeLevel0_, rankSizeLevel1_);
         CHK_RET(intraTempAlg.CalcRes(resReqIntra));
     }
 
@@ -88,7 +86,7 @@ HcclResult InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTem
 
 template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
 HcclResult InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::CalcRes(
-    const RankGraph *rankGraph, CollAlgResReq &algResReq)
+    const RankGraph* rankGraph, CollAlgResReq& algResReq)
 {
     // Topo Match
     AlgTopoMatch topoMatch(myRank_, rankSize_, rankGraph, devType_);
@@ -107,7 +105,7 @@ HcclResult InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTem
     CHK_RET(SetPathNumMapByRankGraphMultiLevel(rankGraph, virtRanks_, myRank_, rank2PathNumMap));
     intraTempAlg.setPathNumMap(rank2PathNumMap[0]);
     interTempAlg.setPathNumMap(rank2PathNumMap[1]);
- 
+
     // calculate required insQues and prepare queue
     AlgTempResReq resReqIntra;
     AlgTempResReq resReqInter;
@@ -115,11 +113,10 @@ HcclResult InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTem
         HCCL_DEBUG("[InsAllGatherParallelExecutor] Rank[%d], CalcRes with detouring enabled.", myRank_);
         CHK_RET(intraTempAlg.CalcResDetour(rankGraph, resReqIntra));
     } else {
-        HCCL_DEBUG("[InsAllGatherParallelExecutor] Rank[%d], CalcRes with detouring disabled."
-                   "rankSizeLevel0[%u] rankSizeLevel1[%u]",
-                    myRank_,
-                    rankSizeLevel0_,
-                    rankSizeLevel1_);
+        HCCL_DEBUG(
+            "[InsAllGatherParallelExecutor] Rank[%d], CalcRes with detouring disabled."
+            "rankSizeLevel0[%u] rankSizeLevel1[%u]",
+            myRank_, rankSizeLevel0_, rankSizeLevel1_);
         CHK_RET(intraTempAlg.CalcRes(resReqIntra));
     }
     CHK_RET(interTempAlg.CalcRes(resReqInter));
@@ -140,7 +137,7 @@ HcclResult InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTem
 template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
 void InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::GenTemplateAlgParamsIntra0(
     const u64 dataOffset, const u64 dataCountPerLoopAixs0, const u64 scratchOffset,
-    TemplateDataParams &tempAlgParamsIntra0) const
+    TemplateDataParams& tempAlgParamsIntra0) const
 {
     tempAlgParamsIntra0.buffInfo.inBuffType = BufferType::INPUT;
     tempAlgParamsIntra0.buffInfo.outBuffType = BufferType::OUTPUT;
@@ -160,23 +157,16 @@ void InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1
         "[InsAllGatherParallelExecutor][GenTemplateAlgParamsIntra0] rank[%d] inBuffBaseOff[%llu] "
         "outBuffBaseOff[%llu] scratchBuffBaseOff[%llu] sliceSize[%llu] outputSliceStride[%llu] rankSizeLevel0[%u] "
         "rankSizeLevel1[%u] rankIdxLevel0[%u] rankIdxLevel1[%u]",
-        myRank_,
-        tempAlgParamsIntra0.buffInfo.inBuffBaseOff,
-        tempAlgParamsIntra0.buffInfo.outBuffBaseOff,
-        tempAlgParamsIntra0.buffInfo.scratchBuffBaseOff,
-        tempAlgParamsIntra0.sliceSize,
-        tempAlgParamsIntra0.outputSliceStride,
-        rankSizeLevel0_,
-        rankSizeLevel1_,
-        rankIdxLevel0_,
-        rankIdxLevel1_);
+        myRank_, tempAlgParamsIntra0.buffInfo.inBuffBaseOff, tempAlgParamsIntra0.buffInfo.outBuffBaseOff,
+        tempAlgParamsIntra0.buffInfo.scratchBuffBaseOff, tempAlgParamsIntra0.sliceSize,
+        tempAlgParamsIntra0.outputSliceStride, rankSizeLevel0_, rankSizeLevel1_, rankIdxLevel0_, rankIdxLevel1_);
     return;
 }
 
 template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
 void InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::GenTemplateAlgParamsInter0(
     const u64 dataOffset, const u64 dataCountPerLoopAixs0, const u64 scratchOffset,
-    TemplateDataParams &tempAlgParamsInter0) const
+    TemplateDataParams& tempAlgParamsInter0) const
 {
     tempAlgParamsInter0.buffInfo.inBuffType = BufferType::OUTPUT;
     tempAlgParamsInter0.buffInfo.outBuffType = BufferType::OUTPUT;
@@ -191,29 +181,26 @@ void InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1
     tempAlgParamsInter0.repeatNum = rankSizeLevel0_;
     tempAlgParamsInter0.inputRepeatStride = dataSize_;
     tempAlgParamsInter0.outputRepeatStride = dataSize_;
-    HCCL_DEBUG("[InsAllGatherParallelExecutor][GenTemplateAlgParamsInter0] rank[%d] inBuffBaseOff[%llu] "
-               "outBuffBaseOff[%llu] scratchBuffBaseOff[%llu] sliceSize[%llu] outputSliceStride[%llu] "
-               "outputRepeatStride[%llu]",
-        myRank_,
-        tempAlgParamsInter0.buffInfo.inBuffBaseOff,
-        tempAlgParamsInter0.buffInfo.outBuffBaseOff,
-        tempAlgParamsInter0.buffInfo.scratchBuffBaseOff,
-        tempAlgParamsInter0.sliceSize,
-        tempAlgParamsInter0.outputSliceStride,
-        tempAlgParamsInter0.outputRepeatStride);
+    HCCL_DEBUG(
+        "[InsAllGatherParallelExecutor][GenTemplateAlgParamsInter0] rank[%d] inBuffBaseOff[%llu] "
+        "outBuffBaseOff[%llu] scratchBuffBaseOff[%llu] sliceSize[%llu] outputSliceStride[%llu] "
+        "outputRepeatStride[%llu]",
+        myRank_, tempAlgParamsInter0.buffInfo.inBuffBaseOff, tempAlgParamsInter0.buffInfo.outBuffBaseOff,
+        tempAlgParamsInter0.buffInfo.scratchBuffBaseOff, tempAlgParamsInter0.sliceSize,
+        tempAlgParamsInter0.outputSliceStride, tempAlgParamsInter0.outputRepeatStride);
     return;
 }
 
 template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
 void InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::GenTemplateAlgParamsInter1(
     const u64 dataOffset, const u64 dataCountPerLoopAixs1, const u64 scratchOffset,
-    TemplateDataParams &tempAlgParamsInter1) const
+    TemplateDataParams& tempAlgParamsInter1) const
 {
     tempAlgParamsInter1.buffInfo.inBuffType = BufferType::INPUT;
     tempAlgParamsInter1.buffInfo.outBuffType = BufferType::OUTPUT;
     tempAlgParamsInter1.buffInfo.scratBuffType = BufferType::SCRATCH;
     tempAlgParamsInter1.buffInfo.inBuffBaseOff = dataOffset;
-    tempAlgParamsInter1.buffInfo.outBuffBaseOff = rankIdxLevel0_ * dataSize_ + dataOffset;  // for example 0 2 4 | 1 3 5
+    tempAlgParamsInter1.buffInfo.outBuffBaseOff = rankIdxLevel0_ * dataSize_ + dataOffset; // for example 0 2 4 | 1 3 5
     tempAlgParamsInter1.buffInfo.scratchBuffBaseOff = scratchOffset;
     tempAlgParamsInter1.sliceSize = dataCountPerLoopAixs1 * dataTypeSize_;
     tempAlgParamsInter1.tailSize = dataCountPerLoopAixs1 * dataTypeSize_;
@@ -222,13 +209,11 @@ void InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1
     tempAlgParamsInter1.repeatNum = 1;
     tempAlgParamsInter1.inputRepeatStride = 0;
     tempAlgParamsInter1.outputRepeatStride = 0;
-    HCCL_DEBUG("[InsAllGatherParallelExecutor][GenTemplateAlgParamsInter1] rank[%d] inBuffBaseOff[%llu] "
-               "outBuffBaseOff[%llu] scratchBuffBaseOff[%llu] sliceSize[%llu] outputSliceStride[%llu]",
-        myRank_,
-        tempAlgParamsInter1.buffInfo.inBuffBaseOff,
-        tempAlgParamsInter1.buffInfo.outBuffBaseOff,
-        tempAlgParamsInter1.buffInfo.scratchBuffBaseOff,
-        tempAlgParamsInter1.sliceSize,
+    HCCL_DEBUG(
+        "[InsAllGatherParallelExecutor][GenTemplateAlgParamsInter1] rank[%d] inBuffBaseOff[%llu] "
+        "outBuffBaseOff[%llu] scratchBuffBaseOff[%llu] sliceSize[%llu] outputSliceStride[%llu]",
+        myRank_, tempAlgParamsInter1.buffInfo.inBuffBaseOff, tempAlgParamsInter1.buffInfo.outBuffBaseOff,
+        tempAlgParamsInter1.buffInfo.scratchBuffBaseOff, tempAlgParamsInter1.sliceSize,
         tempAlgParamsInter1.outputSliceStride);
     return;
 }
@@ -236,7 +221,7 @@ void InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1
 template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
 void InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::GenTemplateAlgParamsIntra1(
     const u64 dataOffset, const u64 dataCountPerLoopAixs1, const u64 scratchOffset,
-    TemplateDataParams &tempAlgParamsIntra1) const
+    TemplateDataParams& tempAlgParamsIntra1) const
 {
     tempAlgParamsIntra1.buffInfo.inBuffType = BufferType::OUTPUT;
     tempAlgParamsIntra1.buffInfo.outBuffType = BufferType::OUTPUT;
@@ -251,22 +236,19 @@ void InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1
     tempAlgParamsIntra1.repeatNum = rankSizeLevel1_;
     tempAlgParamsIntra1.inputRepeatStride = dataSize_ * rankSizeLevel0_;
     tempAlgParamsIntra1.outputRepeatStride = dataSize_ * rankSizeLevel0_;
-    HCCL_DEBUG("[InsAllGatherParallelExecutor][GenTemplateAlgParamsIntra1] rank[%d] inBuffBaseOff[%llu] "
-               "outBuffBaseOff[%llu] scratchBuffBaseOff[%llu] sliceSize[%llu] outputSliceStride[%llu] "
-               "outputRepeatStride[%llu]",
-        myRank_,
-        tempAlgParamsIntra1.buffInfo.inBuffBaseOff,
-        tempAlgParamsIntra1.buffInfo.outBuffBaseOff,
-        tempAlgParamsIntra1.buffInfo.scratchBuffBaseOff,
-        tempAlgParamsIntra1.sliceSize,
-        tempAlgParamsIntra1.outputSliceStride,
-        tempAlgParamsIntra1.outputRepeatStride);
+    HCCL_DEBUG(
+        "[InsAllGatherParallelExecutor][GenTemplateAlgParamsIntra1] rank[%d] inBuffBaseOff[%llu] "
+        "outBuffBaseOff[%llu] scratchBuffBaseOff[%llu] sliceSize[%llu] outputSliceStride[%llu] "
+        "outputRepeatStride[%llu]",
+        myRank_, tempAlgParamsIntra1.buffInfo.inBuffBaseOff, tempAlgParamsIntra1.buffInfo.outBuffBaseOff,
+        tempAlgParamsIntra1.buffInfo.scratchBuffBaseOff, tempAlgParamsIntra1.sliceSize,
+        tempAlgParamsIntra1.outputSliceStride, tempAlgParamsIntra1.outputRepeatStride);
     return;
 }
 
 template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
 void InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::GetParallelDataSplit(
-    std::vector<float> &splitDataSize) const
+    std::vector<float>& splitDataSize) const
 {
     // to do 先做等分，后续根据性能做调整
     double splitData = 0.5;
@@ -277,7 +259,7 @@ void InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1
 
 template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
 HcclResult InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::PrepareResForTemplate(
-    const RankGraph *rankGraph, InsAlgTemplate0 &tempAlgIntra, InsAlgTemplate1 &tempAlgInter)
+    const RankGraph* rankGraph, InsAlgTemplate0& tempAlgIntra, InsAlgTemplate1& tempAlgInter)
 {
     AlgTempResReq resReqInter;
     AlgTempResReq resReqIntra;
@@ -291,7 +273,7 @@ HcclResult InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTem
 
     // 申请算法模板所需资源
     if (!(resReqIntra.queNum > 0 && resReqInter.queNum > 0)) {
-        HCCL_ERROR("Intra queNum and Inter queNum must larger than 0.");
+        HCCL_ERROR("Intra queNum and Inter queNum must be larger than 0.");
         return HcclResult::HCCL_E_INTERNAL;
     }
     u32 totalQueueNum = resReqIntra.queNum + resReqInter.queNum;
@@ -304,19 +286,19 @@ HcclResult InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTem
         }
     }
     syncQueues_.emplace_back(intraQue_[0]);
-    syncQueues_.emplace_back(interQue_[0]);   
+    syncQueues_.emplace_back(interQue_[0]);
 
     CHK_RET(PrepResLinks(myRank_, rankGraph, linkPriority_, resReqIntra.links, intraLinks_));
     CHK_RET(PrepResLinks(myRank_, rankGraph, linkPriority_, resReqInter.links, interLinks_));
-    HCCL_INFO("[InsAllGatherParallelExecutor] intraLinks_ size[%zu], interLinks_ size[%zu]",
-        intraLinks_.size(),
+    HCCL_INFO(
+        "[InsAllGatherParallelExecutor] intraLinks_ size[%zu], interLinks_ size[%zu]", intraLinks_.size(),
         interLinks_.size());
     return HCCL_SUCCESS;
 }
 
 template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
 HcclResult InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::PrepareResForTemplate(
-    ConnectedLinkMgr *linkMgr, InsAlgTemplate0 &tempAlgIntra, InsAlgTemplate1 &tempAlgInter)
+    ConnectedLinkMgr* linkMgr, InsAlgTemplate0& tempAlgIntra, InsAlgTemplate1& tempAlgInter)
 {
     AlgTempResReq resReqIntra;
     AlgTempResReq resReqInter;
@@ -331,7 +313,7 @@ HcclResult InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTem
 
     // 申请算法模板所需资源
     if (!(resReqIntra.queNum > 0 && resReqInter.queNum > 0)) {
-        HCCL_ERROR("[InsAllGatherParallelExecutor]resReqIntra.queNum and resReqInter.queNum must larger than 0.");
+        HCCL_ERROR("[InsAllGatherParallelExecutor]resReqIntra.queNum and resReqInter.queNum must be larger than 0.");
         return HcclResult::HCCL_E_INTERNAL;
     }
     u32 totalQueueNum = resReqIntra.queNum + resReqInter.queNum;
@@ -348,15 +330,15 @@ HcclResult InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTem
 
     CHK_RET(PrepResLinks(myRank_, resReqIntra.links, linkMgr, intraLinks_));
     CHK_RET(PrepResLinks(myRank_, resReqInter.links, linkMgr, interLinks_));
-    HCCL_INFO("[InsAllGatherParallelExecutor] intraLinks_ size[%zu], interLinks_ size[%zu]",
-        intraLinks_.size(),
+    HCCL_INFO(
+        "[InsAllGatherParallelExecutor] intraLinks_ size[%zu], interLinks_ size[%zu]", intraLinks_.size(),
         interLinks_.size());
     return HCCL_SUCCESS;
 }
 
 template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
 HcclResult InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::Orchestrate(
-    const AlgTopoInfo &topoInfo, const CollAlgOperator &op, const CollAlgParams &params, ConnectedLinkMgr *linkMgr,
+    const AlgTopoInfo& topoInfo, const CollAlgOperator& op, const CollAlgParams& params, ConnectedLinkMgr* linkMgr,
     InsQuePtr insQue)
 {
     HCCL_INFO("[InsAllGatherParallelExecutor] Orchestrate begins.");
@@ -372,20 +354,20 @@ HcclResult InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTem
     rankIdxLevel1_ = myRank_ / virtRanks_[0].size();
 
     // 实例化算法模板类
-    InsAlgTemplate0 tempAlgIntra(myRank_, rankSizeLevel0_, vTopo_[0], virtRankMap_[0]);  // server内算法，比如mesh
-    InsAlgTemplate1 tempAlgInter(myRank_, rankSizeLevel1_, vTopo_[1], virtRankMap_[1]);  // server间算法，比如nhr
+    InsAlgTemplate0 tempAlgIntra(myRank_, rankSizeLevel0_, vTopo_[0], virtRankMap_[0]); // server内算法，比如mesh
+    InsAlgTemplate1 tempAlgInter(myRank_, rankSizeLevel1_, vTopo_[1], virtRankMap_[1]); // server间算法，比如nhr
 
     // 实例化算法模板类
 
     tempAlgIntra.SetDmaMode(dmaMode_);
-    tempAlgIntra.SetCollOp(op);  // CCU template需要传递op信息
+    tempAlgIntra.SetCollOp(op); // CCU template需要传递op信息
     tempAlgIntra.SetDataType(dataType_);
 
     tempAlgInter.SetDmaMode(dmaMode_);
-    tempAlgInter.SetCollOp(op);  // CCU template需要传递op信息
+    tempAlgInter.SetCollOp(op); // CCU template需要传递op信息
     tempAlgInter.SetDataType(dataType_);
 
-    std::vector<std::map<u32, u32>>rank2PathNumMap;
+    std::vector<std::map<u32, u32>> rank2PathNumMap;
     CHK_RET(SetPathNumMapByLinkMgrMultiLevel(linkMgr, virtRanks_, myRank_, rank2PathNumMap));
     tempAlgIntra.setPathNumMap(rank2PathNumMap[0]);
     tempAlgInter.setPathNumMap(rank2PathNumMap[1]);
@@ -401,7 +383,7 @@ HcclResult InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTem
 
 template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
 HcclResult InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::Orchestrate(
-    const RankGraph *rankGraph, const CollAlgOperator &op, const CollAlgParams &params, InsQuePtr insQue)
+    const RankGraph* rankGraph, const CollAlgOperator& op, const CollAlgParams& params, InsQuePtr insQue)
 {
     HCCL_INFO("[InsAllGatherParallelExecutor] Host Orchestrate begins.");
     // init and check params
@@ -413,23 +395,21 @@ HcclResult InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTem
     CHK_RET(CalcLocalRankSize(myRank_, virtRanks_, rankSizeLevel0_, rankSizeLevel1_));
     rankIdxLevel0_ = myRank_ % virtRanks_[0].size();
     rankIdxLevel1_ = myRank_ / virtRanks_[0].size();
-    HCCL_DEBUG("[InsAllGatherParallelExecutor] my rank is [%d] ranksize is [%u], rankIdxLevel0_ = [%u], rankIdxLevel1_ "
-               "= [%u] .",
-        myRank_,
-        rankSize_,
-        rankIdxLevel0_,
-        rankIdxLevel1_);
+    HCCL_DEBUG(
+        "[InsAllGatherParallelExecutor] my rank is [%d] ranksize is [%u], rankIdxLevel0_ = [%u], rankIdxLevel1_ "
+        "= [%u] .",
+        myRank_, rankSize_, rankIdxLevel0_, rankIdxLevel1_);
     // 实例化算法模板类
-    InsAlgTemplate0 tempAlgIntra(myRank_, rankSizeLevel0_, vTopo_[0], virtRankMap_[0]);  // server内算法，比如mesh
-    InsAlgTemplate1 tempAlgInter(myRank_, rankSizeLevel1_, vTopo_[1], virtRankMap_[1]);  // server间算法，比如nhr
+    InsAlgTemplate0 tempAlgIntra(myRank_, rankSizeLevel0_, vTopo_[0], virtRankMap_[0]); // server内算法，比如mesh
+    InsAlgTemplate1 tempAlgInter(myRank_, rankSizeLevel1_, vTopo_[1], virtRankMap_[1]); // server间算法，比如nhr
 
     tempAlgIntra.SetDmaMode(dmaMode_);
     tempAlgIntra.SetDataType(dataType_);
-    tempAlgIntra.SetCollOp(op);  // CCU template需要传递op信息
- 
+    tempAlgIntra.SetCollOp(op); // CCU template需要传递op信息
+
     tempAlgInter.SetDmaMode(dmaMode_);
     tempAlgInter.SetDataType(dataType_);
-    tempAlgInter.SetCollOp(op);  // CCU template需要传递op信息
+    tempAlgInter.SetCollOp(op); // CCU template需要传递op信息
 
     // 计算算法模板所需资源
     CHK_RET(PrepareResForTemplate(rankGraph, tempAlgIntra, tempAlgInter));
@@ -442,22 +422,24 @@ HcclResult InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTem
 
 template <typename AlgTopoMatch, typename InsAlgTemplate0, typename InsAlgTemplate1>
 HcclResult InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTemplate1>::GenInsQuesHost(
-    InsAlgTemplate0 &tempAlgIntra, InsAlgTemplate1 &tempAlgInter)
+    InsAlgTemplate0& tempAlgIntra, InsAlgTemplate1& tempAlgInter)
 {
     HCCL_INFO("[InsAllGatherParallelExecutor] AlgTemplate inter server is [%s]", tempAlgIntra.Describe().c_str());
     HCCL_INFO("[InsAllGatherParallelExecutor] AlgTemplate intra server is [%s]", tempAlgInter.Describe().c_str());
     std::vector<float> dataSplitSize;
     GetParallelDataSplit(dataSplitSize);
-    u64 alignedSize = 16 * 1024;  // 假设需要16K对齐
+    u64 alignedSize = 16 * 1024; // 假设需要16K对齐
     BufferType inBuffType = BufferType::INPUT;
     BufferType outBuffType = BufferType::OUTPUT;
     u32 intraScatchteMultipleStage0 = tempAlgIntra.CalcScratchMultiple(inBuffType, outBuffType);
     u32 interScatchteMultipleStage0 = tempAlgInter.CalcScratchMultiple(inBuffType, outBuffType);
     u32 intraScatchteMultipleStage1 = tempAlgIntra.CalcScratchMultiple(outBuffType, outBuffType);
     u32 interScatchteMultipleStage1 = tempAlgInter.CalcScratchMultiple(outBuffType, outBuffType);
-    u32 scratchMultipleIntra = static_cast<u32>(std::max(std::ceil(dataSplitSize[0] * intraScatchteMultipleStage0),
+    u32 scratchMultipleIntra = static_cast<u32>(std::max(
+        std::ceil(dataSplitSize[0] * intraScatchteMultipleStage0),
         std::ceil(dataSplitSize[1] * intraScatchteMultipleStage1 * rankSizeLevel1_)));
-    u32 scratchMultipleInter = static_cast<u32>(std::max(std::ceil(dataSplitSize[1] * interScatchteMultipleStage0),
+    u32 scratchMultipleInter = static_cast<u32>(std::max(
+        std::ceil(dataSplitSize[1] * interScatchteMultipleStage0),
         std::ceil(dataSplitSize[0] * interScatchteMultipleStage1 * rankSizeLevel0_)));
     u32 totalScratchMultiple = scratchMultipleIntra + scratchMultipleInter;
     u64 scratchMemBlockSize = maxTmpMemSize_;
@@ -468,8 +450,9 @@ HcclResult InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTem
     u64 interScratchOffset = scratchMultipleIntra * scratchMemBlockSize;
 
     // dataSplitSize为分数，这里maxCountPerLoop对10取整
-    u64 maxCountPerLoop =
-        (std::min(static_cast<u64>(scratchMemBlockSize), static_cast<u64>(UB_MAX_DATA_SIZE)) / dataTypeSize_ / 10) * 10;
+    u64 maxCountPerLoop
+        = (std::min(static_cast<u64>(scratchMemBlockSize), static_cast<u64>(UB_MAX_DATA_SIZE)) / dataTypeSize_ / 10)
+          * 10;
 
     u32 loopTimes = dataCount_ / maxCountPerLoop + ((dataCount_ % maxCountPerLoop == 0) ? 0 : 1);
 
@@ -491,8 +474,7 @@ HcclResult InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTem
         // 数据0的server内的mesh算法
         GenTemplateAlgParamsIntra0(dataOffset0, dataCountPerLoopAixs0, intraScratchOffset, tempAlgParamsIntra0);
         // 把每个template需要的queue传进去，比如stars的mesh要传多条queue
-        CHK_RET(tempAlgIntra.GenExtIns(
-            tempFuncs, tempAlgParamsIntra0, intraLinks_, intraQue_));  // Todo: 这里要把tempFuncs去掉
+        CHK_RET(tempAlgIntra.GenExtIns(tempFuncs, tempAlgParamsIntra0, intraLinks_, intraQue_));
         // 数据1的server间的nhr算法
         GenTemplateAlgParamsInter1(dataOffset1, dataCountPerLoopAixs1, interScratchOffset, tempAlgParamsInter1);
         CHK_RET(tempAlgInter.GenExtIns(tempFuncs, tempAlgParamsInter1, interLinks_, interQue_));
@@ -513,19 +495,24 @@ HcclResult InsAllGatherParallelExecutor<AlgTopoMatch, InsAlgTemplate0, InsAlgTem
     return HcclResult::HCCL_SUCCESS;
 }
 
-INS_REGISTER_IMPL_BY_TWO_TEMPS(OpType::ALLGATHER, InsAllGatherParallelMesh1DNHR, InsAllGatherParallelExecutor,
-    TopoMatchMeshNHR, InsTempAllGatherMesh1D, InsTempAllGatherNHR);
-INS_REGISTER_IMPL_BY_TWO_TEMPS(OpType::ALLGATHER, InsAllGatherParallelMesh2DNHR, InsAllGatherParallelExecutor,
-    TopoMatchConcurrMeshNHR, InsTempAllGatherMesh2D, InsTempAllGatherNHR);
-INS_REGISTER_IMPL_BY_TWO_TEMPS(OpType::ALLGATHER, InsAllGatherParallelNHRNHR, InsAllGatherParallelExecutor,
-    TopoMatchMeshNHR, InsTempAllGatherMesh2D, InsTempAllGatherNHR);
-INS_REGISTER_IMPL_BY_TWO_TEMPS(OpType::ALLGATHER, InsAllGatherParallelMesh1DNHRPcie, InsAllGatherParallelExecutor,
-    TopoMatchMeshNHRPcie, InsTempAllGatherMesh1D, InsTempAllGatherNHR);
+INS_REGISTER_IMPL_BY_TWO_TEMPS(
+    OpType::ALLGATHER, InsAllGatherParallelMesh1DNHR, InsAllGatherParallelExecutor, TopoMatchMeshNHR,
+    InsTempAllGatherMesh1D, InsTempAllGatherNHR);
+INS_REGISTER_IMPL_BY_TWO_TEMPS(
+    OpType::ALLGATHER, InsAllGatherParallelMesh2DNHR, InsAllGatherParallelExecutor, TopoMatchConcurrMeshNHR,
+    InsTempAllGatherMesh2D, InsTempAllGatherNHR);
+INS_REGISTER_IMPL_BY_TWO_TEMPS(
+    OpType::ALLGATHER, InsAllGatherParallelNHRNHR, InsAllGatherParallelExecutor, TopoMatchMeshNHR,
+    InsTempAllGatherMesh2D, InsTempAllGatherNHR);
+INS_REGISTER_IMPL_BY_TWO_TEMPS(
+    OpType::ALLGATHER, InsAllGatherParallelMesh1DNHRPcie, InsAllGatherParallelExecutor, TopoMatchMeshNHRPcie,
+    InsTempAllGatherMesh1D, InsTempAllGatherNHR);
 
 // 算法注册
 #ifndef CCL_KERNEL_AICPU
-INS_REGISTER_IMPL_BY_TWO_TEMPS(OpType::ALLGATHER, CcuAllGatherParallelMesh1DNHR, InsAllGatherParallelExecutor,
-    TopoMatchMeshNHR, CcuTempAllGatherMesh1DMem2MemWithStride, CcuTempAllGatherNHRMem2Mem1D);
+INS_REGISTER_IMPL_BY_TWO_TEMPS(
+    OpType::ALLGATHER, CcuAllGatherParallelMesh1DNHR, InsAllGatherParallelExecutor, TopoMatchMeshNHR,
+    CcuTempAllGatherMesh1DMem2MemWithStride, CcuTempAllGatherNHRMem2Mem1D);
 #endif
 
-}  // namespace Hccl
+} // namespace Hccl

@@ -22,13 +22,16 @@ target_compile_definitions(hccl_plf PRIVATE
 # 编译选项
 target_compile_options(hccl_plf PRIVATE
     -Werror
-    -Wno-unused-parameter
-    -Wno-missing-field-initializers
     -Wno-deprecated-declarations
     -fno-common
     -fno-strict-aliasing
     $<$<CONFIG:Debug>:-Og -g>
     $<$<CONFIG:Release>:-O3>
+)
+
+# 链接选项
+target_link_options(hccl_plf PRIVATE
+    $<$<BOOL:${BUILD_OPEN_PROJECT}>:-Wl,--no-undefined>
 )
 
 # 头文件搜索路径
@@ -64,6 +67,8 @@ target_include_directories(hccl_plf PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/aiv_communication
     ${HCOMM_DIR}/src/base_comm/resources/hccp/inc/
     ${HCOMM_DIR}/src/base_comm/resources/hccp/inc/network
+    ${HCOMM_DIR}/src/base_comm/common
+    ${HCOMM_DIR}/src/base_comm/inc
 
     ${HCOMM_DIR}/include
     ${HCOMM_DIR}/include/hccl/
@@ -93,8 +98,8 @@ target_include_directories(hccl_plf PRIVATE
     ${HCOMM_DIR}/src/legacy/ascend950/unified_platform/pub_inc
     ${HCOMM_DIR}/src/legacy/ascend950/unified_platform/resource
     ${HCOMM_DIR}/src/legacy/ascend950/framework/topo
-    ${HCOMM_DIR}/src/legacy/ascend950/framework/topo/new_topo_builder/common
-    ${HCOMM_DIR}/src/legacy/ascend950/framework/topo/new_topo_builder/rank_graph
+    ${HCOMM_DIR}/src/coll_communicator_mgr/rank_graph/common
+    ${HCOMM_DIR}/src/coll_communicator_mgr/rank_graph/rank_graph
 )
 
 if(BUILD_OPEN_PROJECT)
@@ -167,6 +172,12 @@ else()
 endif()
 
 # 安装
+# 符号隐藏: 仅导出白名单符号; 非 release 模式依赖动态符号, 不挂载
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_link_options(hccl_plf PRIVATE "-Wl,--version-script=${CMAKE_CURRENT_LIST_DIR}/hccl_plf.map")
+    set_property(TARGET hccl_plf APPEND PROPERTY LINK_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/hccl_plf.map")
+endif()
+
 install(TARGETS hccl_plf
     LIBRARY DESTINATION ${INSTALL_LIBRARY_DIR} ${INSTALL_OPTIONAL}
     COMPONENT hcomm

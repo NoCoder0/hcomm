@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #include "bifrost_cncoi_table.h"
 #include "v_stringlib.h"
 
@@ -16,8 +15,7 @@
 extern "C" {
 #endif
 
-int32_t BifrostCncoiComminfoKeyCmp(const BifrostCncoiComminfoKeyT *key1Input,
-    const BifrostCncoiComminfoKeyT *key2InDs)
+int32_t BifrostCncoiComminfoKeyCmp(const BifrostCncoiComminfoKeyT *key1Input, const BifrostCncoiComminfoKeyT *key2InDs)
 {
     int32_t ret;
 
@@ -29,7 +27,7 @@ int32_t BifrostCncoiComminfoKeyCmp(const BifrostCncoiComminfoKeyT *key1Input,
     return ret;
 }
 
-char* BifrostCncoiComminfoKeyGetStr(const BifrostCncoiComminfoKeyT *key, uint8_t *buf, int32_t bufLen)
+char *BifrostCncoiComminfoKeyGetStr(const BifrostCncoiComminfoKeyT *key, uint8_t *buf, int32_t bufLen)
 {
     int32_t strLen;
     int32_t strTotalLen = 0;
@@ -98,7 +96,7 @@ int32_t BifrostCncoiOperatorKeyCmp(const BifrostCncoiOperatorKeyT *key1Input, co
 char *BifrostCncoiOperatorKeyGetStr(const BifrostCncoiOperatorKeyT *key, uint8_t *buf, int32_t bufLen)
 {
     int32_t strTotalLen = 0;
-	
+
     if (key == VOS_NULL || buf == VOS_NULL || bufLen <= 0) {
         return "__SEGR_SidiAlgoGetStr_ng_param__";
     }
@@ -322,8 +320,7 @@ int32_t BifrostCncoiRankDistributeKeyCmp(const BifrostCncoiRankDistributeKeyT *k
     return ret;
 }
 
-char *BifrostCncoiRankDistributeKeyGetStr(const BifrostCncoiRankDistributeKeyT *key, uint8_t *buf,
-    int32_t bufLen)
+char *BifrostCncoiRankDistributeKeyGetStr(const BifrostCncoiRankDistributeKeyT *key, uint8_t *buf, int32_t bufLen)
 {
     int32_t strLen;
     int32_t strTotalLen = 0;
@@ -358,8 +355,7 @@ error:
     return (char *)buf;
 }
 
-int32_t BifrostCncoiRootRankKeyCmp(const BifrostCncoiRootRankKeyT *key1Input,
-    const BifrostCncoiRootRankKeyT *key2InDs)
+int32_t BifrostCncoiRootRankKeyCmp(const BifrostCncoiRootRankKeyT *key1Input, const BifrostCncoiRootRankKeyT *key2InDs)
 {
     int32_t ret;
 
@@ -423,16 +419,14 @@ char *BifrostCncoiRootRankKeyGetStr(const BifrostCncoiRootRankKeyT *key, uint8_t
     }
     strTotalLen += strLen;
 
-    return (char*)buf;
+    return (char *)buf;
 
 error:
 
     buf[strTotalLen] = '\0';
-    return (char*)buf;
+    return (char *)buf;
 }
-
 
 #if __cplusplus
 }
 #endif
-

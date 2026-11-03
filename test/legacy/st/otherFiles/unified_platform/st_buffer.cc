@@ -20,20 +20,11 @@
 using namespace Hccl;
 class BufferTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "Buffer tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "Buffer tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "Buffer tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "Buffer tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in DataBufManager SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in DataBufManager SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -62,7 +53,7 @@ TEST_F(BufferTest, DevBuffer_selfowned)
 
     uintptr_t fakeAddr = 1000;
     size_t fakeSize = 1000;
-    MOCKER(HrtMalloc).stubs().with(mockcpp::any(),mockcpp::any()).will(returnValue((void *)fakeAddr));
+    MOCKER(HrtMalloc).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue((void*)fakeAddr));
     MOCKER(HrtFree).stubs().with(mockcpp::any());
 
     DevBuffer buffer(fakeSize);

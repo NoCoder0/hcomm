@@ -1,13 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
-
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "aiv_communication_base.h"
 #include "aiv_crossnode_91093_base.h"
@@ -18,16 +17,18 @@ class AivAllReduceCrossnode91093 : public AivCrossNode91093Base {
 public:
     __aicore__ inline AivAllReduceCrossnode91093() {}
 
-    template<typename T>
+    template <typename T>
     __aicore__ inline void InitDataCopyOffset(uint64_t perRankBufferCount, uint64_t totalBufferCount, uint64_t len);
 
-    template<typename T>
-    __aicore__ inline void Process(GM_ADDR buffIn0, GM_ADDR buffOut0, GM_ADDR commInfoAddr, GM_ADDR input,
-        GM_ADDR output, int32_t tag, uint64_t totalBufferCount, uint64_t avgBuffercount, uint64_t len);
+    template <typename T>
+    __aicore__ inline void Process(
+        GM_ADDR buffIn0, GM_ADDR buffOut0, GM_ADDR commInfoAddr, GM_ADDR input, GM_ADDR output, int32_t tag,
+        uint64_t totalBufferCount, uint64_t avgBuffercount, uint64_t len);
 };
 
-template<typename T>
-__aicore__ inline void AivAllReduceCrossnode91093::InitDataCopyOffset(uint64_t perRankBufferCount, uint64_t totalBufferCount, uint64_t len)
+template <typename T>
+__aicore__ inline void
+AivAllReduceCrossnode91093::InitDataCopyOffset(uint64_t perRankBufferCount, uint64_t totalBufferCount, uint64_t len)
 {
     // 以下根据不同情况，计算每个aiv核的数据搬运参数
     // 当rankSize大于总aiv核数，使用1个aiv服务一个对端，需要多次通信
@@ -62,7 +63,7 @@ __aicore__ inline void AivAllReduceCrossnode91093::InitDataCopyOffset(uint64_t p
         groupMid_ = countMid;
         groupTail_ = countTail;
         groupTailLast_ = countTailLast_;
-    // 当rankSize小于等于总aiv核数时，根据ranksize和数据量大小选择使用多个aiv服务一个对端（多核并行），只需一次通信
+        // 当rankSize小于等于总aiv核数时，根据ranksize和数据量大小选择使用多个aiv服务一个对端（多核并行），只需一次通信
     } else {
         numTargets = 1;
         blockNumPerGroup = numBlocks_ / rankSize_; // 多少个aiv服务一个rank
@@ -79,7 +80,8 @@ __aicore__ inline void AivAllReduceCrossnode91093::InitDataCopyOffset(uint64_t p
             groupTail_ = len / rankSize_;
             groupTailLast_ = len - (rankSize_ - 1) * groupTail_;
             CalCountAndBlockOffset(groupTail_, blockNumPerGroup, blockIdxInGroup, padCount, countTail, blockOffsetTail);
-            CalCountAndBlockOffset(groupTailLast_, blockNumPerGroup, blockIdxInGroup, padCount, countTailLast_, blockOffsetTailLast_);
+            CalCountAndBlockOffset(
+                groupTailLast_, blockNumPerGroup, blockIdxInGroup, padCount, countTailLast_, blockOffsetTailLast_);
         } else if (len % totalBufferCount == 0) { // ccl不够用，要搬多轮的情况1: 能整除
             groupMid_ = perRankBufferCount;
             CalCountAndBlockOffset(groupMid_, blockNumPerGroup, blockIdxInGroup, padCount, countMid, blockOffsetMid);
@@ -99,16 +101,18 @@ __aicore__ inline void AivAllReduceCrossnode91093::InitDataCopyOffset(uint64_t p
             groupTailLast_ = remainLen - (rankSize_ - 1) * groupTail_;
 
             CalCountAndBlockOffset(groupTail_, blockNumPerGroup, blockIdxInGroup, padCount, countTail, blockOffsetTail);
-            CalCountAndBlockOffset(groupTailLast_, blockNumPerGroup, blockIdxInGroup, padCount, countTailLast_, blockOffsetTailLast_);
+            CalCountAndBlockOffset(
+                groupTailLast_, blockNumPerGroup, blockIdxInGroup, padCount, countTailLast_, blockOffsetTailLast_);
         }
         flagOffsetInGroup = blockIdxInGroup * FLAG_SIZE;
         CalCountAndBlockOffset(len, blockNumPerGroup, blockIdxInGroup, padCount, countPerCore, blockOffset);
     }
 }
 
-template<typename T>
-__aicore__ inline void AivAllReduceCrossnode91093::Process(GM_ADDR buffIn0, GM_ADDR buffOut0, GM_ADDR commInfoAddr,
-    GM_ADDR input, GM_ADDR output, int32_t tag, uint64_t totalBufferCount, uint64_t avgBufferCount, uint64_t len)
+template <typename T>
+__aicore__ inline void AivAllReduceCrossnode91093::Process(
+    GM_ADDR buffIn0, GM_ADDR buffOut0, GM_ADDR commInfoAddr, GM_ADDR input, GM_ADDR output, int32_t tag,
+    uint64_t totalBufferCount, uint64_t avgBufferCount, uint64_t len)
 {
     TQue<AscendC::TPosition::VECIN, 1> syncQue;
     GlobalTensor<int32_t> syncGlobal;
@@ -118,11 +122,12 @@ __aicore__ inline void AivAllReduceCrossnode91093::Process(GM_ADDR buffIn0, GM_A
 
     pipe.InitBuffer(syncQue, 1, syncBufferSize);
     syncGlobal.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t*>(buffOut0 + syncAllOffset), syncBufferSize);
-    syncGlobalSecond.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t*>(buffOut0 + syncAllOffset + syncBufferSize), syncBufferSize);
+    syncGlobalSecond.SetGlobalBuffer(
+        reinterpret_cast<__gm__ int32_t*>(buffOut0 + syncAllOffset + syncBufferSize), syncBufferSize);
     // 内存准备
-    __gm__ T *inputGM = (__gm__ T *)input;
-    __gm__ T *outputGM = (__gm__ T *)output;
-    __gm__ T *cclGMSelf = (__gm__ T *)buffIn0;
+    __gm__ T* inputGM = (__gm__ T*)input;
+    __gm__ T* outputGM = (__gm__ T*)output;
+    __gm__ T* cclGMSelf = (__gm__ T*)buffIn0;
 
     int32_t curTag = (tag << TAG_MOVE_LEFT_BITS);
     uint64_t curOffset = 0;
@@ -158,10 +163,14 @@ __aicore__ inline void AivAllReduceCrossnode91093::Process(GM_ADDR buffIn0, GM_A
             uint64_t recvOffset = avgBufferCount * targetRanks[i];
             uint64_t sendOffset = curGroupCount * targetRanks[i];
             PipeBarrier<PIPE_ALL>();
-            if (targetRanks[i] == rankSize_ - 1){
-                CpGM2GM(cclGMSelf + recvOffset + curBlockOffsetLast, inputGM + curOffset + sendOffset + curBlockOffsetLast, curCountLast);
+            if (targetRanks[i] == rankSize_ - 1) {
+                CpGM2GM(
+                    cclGMSelf + recvOffset + curBlockOffsetLast, inputGM + curOffset + sendOffset + curBlockOffsetLast,
+                    curCountLast);
             } else {
-                CpGM2GM(cclGMSelf + recvOffset + curBlockOffset, inputGM + curOffset + sendOffset + curBlockOffset, curCount);
+                CpGM2GM(
+                    cclGMSelf + recvOffset + curBlockOffset, inputGM + curOffset + sendOffset + curBlockOffset,
+                    curCount);
             }
         }
 
@@ -177,21 +186,24 @@ __aicore__ inline void AivAllReduceCrossnode91093::Process(GM_ADDR buffIn0, GM_A
         uint64_t curCountforReduce = (rank_ == rankSize_ - 1) ? curCountLast : curCount;
         uint64_t curBlockOffsetforReduce = (rank_ == rankSize_ - 1) ? curBlockOffsetLast : curBlockOffset;
         for (uint32_t i = 0; i < numTargets; i++) {
-            if(targetRanks[i] == rank_) {
+            if (targetRanks[i] == rank_) {
                 continue;
             }
-            __gm__ T *cclGMOther = (__gm__ T *)(buffersIn[i]);
+            __gm__ T* cclGMOther = (__gm__ T*)(buffersIn[i]);
             PipeBarrier<PIPE_ALL>();
-            CpGM2GM(cclGMSelf + selfRankOffset + curBlockOffsetforReduce, cclGMOther + selfRankOffset + curBlockOffsetforReduce,
-                curCountforReduce, true, reduceOp_);
+            CpGM2GM(
+                cclGMSelf + selfRankOffset + curBlockOffsetforReduce,
+                cclGMOther + selfRankOffset + curBlockOffsetforReduce, curCountforReduce, true, reduceOp_);
             PipeBarrier<PIPE_ALL>();
             RecordNv1(curTag, flagAddrSelf_, false, AivNotifyType::DataSignal); // 累加tag，表明从对端拿过来数据了
         }
 
         for (uint32_t i = 0; i < numTargets; i++) {
-            if(targetRanks[i] == rank_) {
+            if (targetRanks[i] == rank_) {
                 PipeBarrier<PIPE_ALL>();
-                Wait1vN(curTag * (rankSize_ - 1), CommPattern::interRank, true, AivNotifyType::DataSignal); // 表明对端数据全reduce过来
+                Wait1vN(
+                    curTag * (rankSize_ - 1), CommPattern::interRank, true,
+                    AivNotifyType::DataSignal); // 表明对端数据全reduce过来
                 PipeBarrier<PIPE_ALL>();
                 Record1vN(curTag, CommPattern::interRank, AivNotifyType::DataSignal); // 告诉别人自己已经加完所有卡了
                 break;
@@ -200,30 +212,34 @@ __aicore__ inline void AivAllReduceCrossnode91093::Process(GM_ADDR buffIn0, GM_A
 
         // step3 对端 ccl -> 本端 output
         for (uint32_t i = 0; i < numTargets; i++) {
-            __gm__ T *cclGMOther = (__gm__ T *)(buffersIn[i]);
+            __gm__ T* cclGMOther = (__gm__ T*)(buffersIn[i]);
             uint64_t sendOffset = avgBufferCount * targetRanks[i];
             uint64_t recvOffset = curGroupCount * targetRanks[i];
             PipeBarrier<PIPE_ALL>();
             WaitNv1(curTag, buffersOut[i], false, AivNotifyType::DataSignal); // 等待对端加完所有卡
             PipeBarrier<PIPE_ALL>();
             if (targetRanks[i] == rankSize_ - 1) {
-                CpGM2GM(outputGM + curOffset + recvOffset + curBlockOffsetLast, cclGMOther + sendOffset + curBlockOffsetLast, curCountLast);
+                CpGM2GM(
+                    outputGM + curOffset + recvOffset + curBlockOffsetLast,
+                    cclGMOther + sendOffset + curBlockOffsetLast, curCountLast);
             } else {
-                CpGM2GM(outputGM + curOffset + recvOffset + curBlockOffset, cclGMOther + sendOffset + curBlockOffset, curCount);
+                CpGM2GM(
+                    outputGM + curOffset + recvOffset + curBlockOffset, cclGMOther + sendOffset + curBlockOffset,
+                    curCount);
             }
             PipeBarrier<PIPE_ALL>();
             RecordNv1(curTag, buffersOut[i], false, AivNotifyType::Done); // 告诉对端已经拿来数据了
         }
 
         for (uint32_t i = 0; i < numTargets; i++) {
-            if(targetRanks[i] == rank_) {
+            if (targetRanks[i] == rank_) {
                 PipeBarrier<PIPE_ALL>();
                 Wait1vN(curTag * rankSize_, CommPattern::interRank, true, AivNotifyType::Done); // 等待n个对端拿走数据
                 break;
             }
         }
 
-        if (bufferLoopNum > 1){
+        if (bufferLoopNum > 1) {
             PipeBarrier<PIPE_ALL>();
             SyncAll(syncGlobalSecond, workLocal, numBlocks_);
             PipeBarrier<PIPE_ALL>();
@@ -235,11 +251,12 @@ __aicore__ inline void AivAllReduceCrossnode91093::Process(GM_ADDR buffIn0, GM_A
     }
 }
 
-template<typename T>
+template <typename T>
 __aicore__ inline void aiv_all_reduce_crossnode_91093(KERNEL_ARGS_DEF_A3)
 {
     AivAllReduceCrossnode91093 op;
-    uint64_t totalBufferCount = (uint64_t)bufferSize / (rankSize * UB_ALIGN_SIZE) * (rankSize * UB_ALIGN_SIZE) / sizeof(T);
+    uint64_t totalBufferCount
+        = (uint64_t)bufferSize / (rankSize * UB_ALIGN_SIZE) * (rankSize * UB_ALIGN_SIZE) / sizeof(T);
     uint64_t avgBufferCount = totalBufferCount / rankSize;
     uint64_t calTotalBufferCount = avgBufferCount * rankSize;
 
@@ -262,21 +279,33 @@ __aicore__ inline void sk_allreduce_crossnode(SUPERKERNEL_ARGS_DEF)
 
     if (op.dataType_ == HcclDataType::HCCL_DATA_TYPE_INT8) {
         op.InitDataCopyOffset<int8_t>(avgBufferCount, totalBufferCount, op.len_);
-        op.Process<int8_t>(op.dataAddrSelf_, op.flagAddrSelf_, op.commAddr_, input, output, op.tag_, totalBufferCount, avgBufferCount, op.len_);
+        op.Process<int8_t>(
+            op.dataAddrSelf_, op.flagAddrSelf_, op.commAddr_, input, output, op.tag_, totalBufferCount, avgBufferCount,
+            op.len_);
     } else if (op.dataType_ == HcclDataType::HCCL_DATA_TYPE_INT16) {
         op.InitDataCopyOffset<int16_t>(avgBufferCount, totalBufferCount, op.len_);
-        op.Process<int16_t>(op.dataAddrSelf_, op.flagAddrSelf_, op.commAddr_, input, output, op.tag_, totalBufferCount, avgBufferCount, op.len_);
-    } else if (op.dataType_ ==HCCL_DATA_TYPE_INT32) {
+        op.Process<int16_t>(
+            op.dataAddrSelf_, op.flagAddrSelf_, op.commAddr_, input, output, op.tag_, totalBufferCount, avgBufferCount,
+            op.len_);
+    } else if (op.dataType_ == HCCL_DATA_TYPE_INT32) {
         op.InitDataCopyOffset<int32_t>(avgBufferCount, totalBufferCount, op.len_);
-        op.Process<int32_t>(op.dataAddrSelf_, op.flagAddrSelf_, op.commAddr_, input, output, op.tag_, totalBufferCount, avgBufferCount,  op.len_);
+        op.Process<int32_t>(
+            op.dataAddrSelf_, op.flagAddrSelf_, op.commAddr_, input, output, op.tag_, totalBufferCount, avgBufferCount,
+            op.len_);
     } else if (op.dataType_ == HCCL_DATA_TYPE_FP16) {
         op.InitDataCopyOffset<half>(avgBufferCount, totalBufferCount, op.len_);
-        op.Process<half>(op.dataAddrSelf_, op.flagAddrSelf_, op.commAddr_, input, output, op.tag_, totalBufferCount, avgBufferCount, op.len_);
+        op.Process<half>(
+            op.dataAddrSelf_, op.flagAddrSelf_, op.commAddr_, input, output, op.tag_, totalBufferCount, avgBufferCount,
+            op.len_);
     } else if (op.dataType_ == HCCL_DATA_TYPE_FP32) {
         op.InitDataCopyOffset<float>(avgBufferCount, totalBufferCount, op.len_);
-        op.Process<float>(op.dataAddrSelf_, op.flagAddrSelf_, op.commAddr_, input, output, op.tag_, totalBufferCount, avgBufferCount, op.len_);
+        op.Process<float>(
+            op.dataAddrSelf_, op.flagAddrSelf_, op.commAddr_, input, output, op.tag_, totalBufferCount, avgBufferCount,
+            op.len_);
     } else {
         op.InitDataCopyOffset<bfloat16_t>(avgBufferCount, totalBufferCount, op.len_);
-        op.Process<bfloat16_t>(op.dataAddrSelf_, op.flagAddrSelf_, op.commAddr_, input, output, op.tag_, totalBufferCount, avgBufferCount, op.len_);
+        op.Process<bfloat16_t>(
+            op.dataAddrSelf_, op.flagAddrSelf_, op.commAddr_, input, output, op.tag_, totalBufferCount, avgBufferCount,
+            op.len_);
     }
 }

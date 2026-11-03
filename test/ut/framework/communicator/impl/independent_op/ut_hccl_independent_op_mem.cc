@@ -1,12 +1,13 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include <gtest/gtest.h>
 #include "hccl_tbe_task.h"
 #include "../../hccl_api_base_test.h"
@@ -16,19 +17,17 @@ static const char* RANKTABLE_FILE_NAME = nullptr;
 static constexpr uint64_t MB_UNIT = 1 * 1024 * 1024;
 class HcclIndependentOpMemTest : public BaseInit {
 public:
-    void SetUp() override {
+    void SetUp() override
+    {
         BaseInit::SetUp();
-        MOCKER(HcclTbeTaskInit)
-            .stubs()
-            .will(returnValue(HCCL_SUCCESS));
-        MOCKER(&HcclCommunicator::InitRaResource)
-            .stubs()
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(HcclTbeTaskInit).stubs().will(returnValue(HCCL_SUCCESS));
+        MOCKER(&HcclCommunicator::InitRaResource).stubs().will(returnValue(HCCL_SUCCESS));
         UT_USE_RANK_TABLE_910_1SERVER_2RANK;
         RANKTABLE_FILE_NAME = rankTableFileName;
         EXPECT_EQ(RANKTABLE_FILE_NAME != nullptr, true);
     }
-    void TearDown() override {
+    void TearDown() override
+    {
         BaseInit::TearDown();
         GlobalMockObject::verify();
     }
@@ -37,7 +36,7 @@ public:
 TEST_F(HcclIndependentOpMemTest, Ut_HcclGetHcclBuffer_When_Param_Is_Invalid_Expect_Para_Error)
 {
     UT_COMM_CREATE_DEFAULT(comm);
-    void *buffer = nullptr;
+    void* buffer = nullptr;
     uint64_t size = 0;
     HcclResult ret = HcclGetHcclBuffer(comm, nullptr, nullptr);
     EXPECT_EQ(ret, HCCL_E_PTR);
@@ -51,14 +50,14 @@ TEST_F(HcclIndependentOpMemTest, Ut_HcclGetHcclBuffer_When_Param_Is_Invalid_Expe
 TEST_F(HcclIndependentOpMemTest, Ut_HcclGetHcclBuffer_When_Get_Default_Mem_Size_Expect_400M)
 {
     UT_COMM_CREATE_DEFAULT(comm);
-    void *buffer = nullptr;
+    void* buffer = nullptr;
     uint64_t size = 0;
     HcclResult ret = HcclGetHcclBuffer(comm, &buffer, &size);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(buffer != nullptr, true);
     EXPECT_EQ(size, 400 * MB_UNIT);
 
-    void *secondGetBuffer = nullptr;
+    void* secondGetBuffer = nullptr;
     uint64_t secondGetSize = 0;
     ret = HcclGetHcclBuffer(comm, &secondGetBuffer, &secondGetSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -71,14 +70,14 @@ TEST_F(HcclIndependentOpMemTest, Ut_HcclGetHcclBuffer_When_Set_Mem_Size_Expect_B
 {
     setenv("HCCL_BUFFSIZE", "1", 1);
     UT_COMM_CREATE_DEFAULT(comm);
-    void *buffer = nullptr;
+    void* buffer = nullptr;
     uint64_t size = 0;
     HcclResult ret = HcclGetHcclBuffer(comm, &buffer, &size);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(buffer != nullptr, true);
     EXPECT_EQ(size, 2 * MB_UNIT);
 
-    void *secondGetBuffer = nullptr;
+    void* secondGetBuffer = nullptr;
     uint64_t secondGetSize = 0;
     ret = HcclGetHcclBuffer(comm, &secondGetBuffer, &secondGetSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -87,7 +86,7 @@ TEST_F(HcclIndependentOpMemTest, Ut_HcclGetHcclBuffer_When_Set_Mem_Size_Expect_B
     Ut_Comm_Destroy(comm);
 }
 
-HcclResult CreateCommByConfig(HcclComm *comm, uint64_t buffSize)
+HcclResult CreateCommByConfig(HcclComm* comm, uint64_t buffSize)
 {
     Ut_Device_Set(0);
     u32 rankId = 0;
@@ -105,14 +104,14 @@ TEST_F(HcclIndependentOpMemTest, Ut_HcclGetHcclBuffer_When_Set_Mem_Size_Expect_S
     uint64_t buffSize = 400;
     HcclResult ret = CreateCommByConfig(&comm, buffSize);
     ASSERT_EQ(ret, HCCL_SUCCESS);
-    void *buffer = nullptr;
+    void* buffer = nullptr;
     uint64_t size = 0;
     ret = HcclGetHcclBuffer(comm, &buffer, &size);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(buffer != nullptr, true);
     EXPECT_EQ(size, buffSize * 2 * MB_UNIT);
 
-    void *secondGetBuffer = nullptr;
+    void* secondGetBuffer = nullptr;
     uint64_t secondGetSize = 0;
     ret = HcclGetHcclBuffer(comm, &secondGetBuffer, &secondGetSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);

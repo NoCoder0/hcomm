@@ -33,7 +33,7 @@ HostBuffer::HostBuffer(std::size_t allocSize) : Buffer(allocSize), selfOwned(tru
 HostBuffer::~HostBuffer()
 {
     if (selfOwned) {
-        DECTOR_TRY_CATCH("Buffer", HrtFreeHost(reinterpret_cast<void *>(addr_)))
+        DECTOR_TRY_CATCH("Buffer", HrtFreeHost(reinterpret_cast<void*>(addr_)))
     }
 }
 
@@ -42,9 +42,6 @@ std::string HostBuffer::Describe() const
     return StringFormat("HostBuffer[addr=0x%llx, size=0x%llx, selfOwned=%d]", addr_, size_, selfOwned);
 }
 
-bool HostBuffer::GetSelfOwned() const
-{
-    return selfOwned;
-}
+bool HostBuffer::GetSelfOwned() const { return selfOwned; }
 
 } // namespace Hccl

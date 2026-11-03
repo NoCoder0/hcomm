@@ -23,13 +23,13 @@ extern "C" {
 #pragma pack(4)
 typedef struct TagBkfPuberSessMng BkfPuberSessMng;
 
-typedef void(*F_BKF_PUBER_SESS_TRIG_SCHED_SELF)(void *cookieInit);
-typedef void(*F_BKF_PUBER_SESS_TRIG_SLOW_SCHED_SELF)(void *cookieInit);
+typedef void (*F_BKF_PUBER_SESS_TRIG_SCHED_SELF)(void *cookieInit);
+typedef void (*F_BKF_PUBER_SESS_TRIG_SLOW_SCHED_SELF)(void *cookieInit);
 
-#define BKF_PUBER_SESS_SEND_BUF_NOT_ENOUGH      200
-#define BKF_PUBER_SESS_SCHED_FINISH             201
-#define BKF_PUBER_SESS_FATAL_ERR                202
-#define BKF_PUBER_SESS_SCHED_YIELD              203
+#define BKF_PUBER_SESS_SEND_BUF_NOT_ENOUGH 200
+#define BKF_PUBER_SESS_SCHED_FINISH 201
+#define BKF_PUBER_SESS_FATAL_ERR 202
+#define BKF_PUBER_SESS_SCHED_YIELD 203
 
 typedef struct {
     int32_t procCntMax;
@@ -38,8 +38,8 @@ typedef struct {
 #pragma pack()
 
 BkfPuberSessMng *BkfPuberSessInit(BkfPuberInitArg *arg, BkfPuberTableTypeMng *tableTypeMng,
-                                   F_BKF_PUBER_SESS_TRIG_SCHED_SELF trigSchedSess,
-                                   F_BKF_PUBER_SESS_TRIG_SLOW_SCHED_SELF trigSlowSchedSess, void *cookie);
+    F_BKF_PUBER_SESS_TRIG_SCHED_SELF trigSchedSess, F_BKF_PUBER_SESS_TRIG_SLOW_SCHED_SELF trigSlowSchedSess,
+    void *cookie);
 void BkfPuberSessUninit(BkfPuberSessMng *sessMng);
 uint32_t BkfPuberSessProcRcvData(BkfPuberSessMng *sessMng, BkfMsgHead *msgHead, BkfMsgDecoder *decoder);
 uint32_t BkfPuberSessProcSched(BkfPuberSessMng *sessMng, BkfMsgCoder *coder, BOOL isSlowSched, void *ctx);
@@ -47,7 +47,7 @@ void BkfPuberSessDispGetSummary(BkfPuberSessMng *sessMng, BkfDispTempCtx *ctx);
 void BkfPuberSessDispPrintfSummary(BkfDisp *disp, BkfDispTempCtx *ctx);
 int32_t BkfPuberSessDispSess(BkfPuberSessMng *sessMng, BkfDisp *disp, BkfDispTempCtx *lastCtx, BkfDispTempCtx *curCtx);
 int32_t BkfPuberSessDispSessFsm(BkfPuberSessMng *sessMng, BkfDisp *disp, BkfDispTempCtx *lastCtx,
-                               BkfDispTempCtx *curCtx);
+    BkfDispTempCtx *curCtx);
 
 uint32_t BkfPuberSessDispCloseBatchTimeout(BkfPuberSessMng *sessMng, BkfDisp *disp);
 uint32_t BkfPuberSessDispBatchTimeoutTest(BkfPuberSessMng *sessMng, BkfDisp *disp);
@@ -56,4 +56,3 @@ uint32_t BkfPuberSessDispBatchTimeoutTest(BkfPuberSessMng *sessMng, BkfDisp *dis
 #endif
 
 #endif
-

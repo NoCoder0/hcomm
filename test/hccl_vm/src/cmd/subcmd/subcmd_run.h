@@ -21,14 +21,16 @@ class RunCommand : public CommandBase {
 public:
     static std::string StaticName() { return "run"; }
     void Setup(CLI::App& app) override;
-    
+
 private:
     void Execute(CLI::App& app);
-    
+
     std::string configClusterName;
     std::vector<std::string> leftargvs;
     bool checkOnlyMode = false;
+    bool estimateMode = false;
+    uint64_t kPoolSize_ = DEFAULT_KPOOL_SIZE;
 };
-}
+} // namespace HcclSim
 
 #endif

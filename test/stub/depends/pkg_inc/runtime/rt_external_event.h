@@ -27,7 +27,7 @@ extern "C" {
  * @return RT_ERROR_INVALID_VALUE for error input
  * @return RT_ERROR_DRV_ERR for driver error
  */
-RTS_API rtError_t rtNotifyGetAddrOffset(rtNotify_t notify, uint64_t *devAddrOffset);
+RTS_API rtError_t rtNotifyGetAddrOffset(rtNotify_t notify, uint64_t* devAddrOffset);
 
 /**
  * @ingroup dvrt_event
@@ -38,7 +38,7 @@ RTS_API rtError_t rtNotifyGetAddrOffset(rtNotify_t notify, uint64_t *devAddrOffs
  * @return RT_ERROR_NONE for ok
  * @return RT_ERROR_INVALID_VALUE for error input
  */
-RTS_API rtError_t rtNotifyGetPhyInfo(rtNotify_t notify, uint32_t *phyDevId, uint32_t *tsId);
+RTS_API rtError_t rtNotifyGetPhyInfo(rtNotify_t notify, uint32_t* phyDevId, uint32_t* tsId);
 
 typedef struct tagNotifyPhyInfo {
     uint32_t phyId;  /* phy id */
@@ -58,11 +58,11 @@ typedef struct tagNotifyPhyInfo {
  * @return RT_ERROR_NONE for ok
  * @return RT_ERROR_INVALID_VALUE for error input
  */
-RTS_API rtError_t rtNotifyGetPhyInfoExt(rtNotify_t notify, rtNotifyPhyInfo *notifyInfo);
+RTS_API rtError_t rtNotifyGetPhyInfoExt(rtNotify_t notify, rtNotifyPhyInfo* notifyInfo);
 
-//dfx
-// max task tag buffer is 1024(include '\0')
-#define TASK_TAG_MAX_LEN    1024U
+// dfx
+//  max task tag buffer is 1024(include '\0')
+#define TASK_TAG_MAX_LEN 1024U
 
 /**
  * @brief set task tag.
@@ -75,7 +75,7 @@ RTS_API rtError_t rtNotifyGetPhyInfoExt(rtNotify_t notify, rtNotifyPhyInfo *noti
  * @return RT_ERROR_NONE for ok
  * @return other failed
  */
-RTS_API rtError_t rtSetTaskTag(const char_t *taskTag);
+RTS_API rtError_t rtSetTaskTag(const char_t* taskTag);
 
 /**
  * @ingroup dvrt_event
@@ -91,7 +91,7 @@ RTS_API rtError_t rtEventWorkModeSet(uint8_t mode);
  * @param [out] mode // 0 default Software events; 1 HardWare events
  * @return RT_ERROR_NONE for ok, others failed
  */
-RTS_API rtError_t rtEventWorkModeGet(uint8_t *mode);
+RTS_API rtError_t rtEventWorkModeGet(uint8_t* mode);
 
 /**
  * @ingroup dvrt_event
@@ -104,4 +104,4 @@ RTS_API rtError_t rtNotifyResetAll();
 }
 #endif
 
-#endif  // CCE_RUNTIME_RT_EXTERNAL_EVENT_H
+#endif // CCE_RUNTIME_RT_EXTERNAL_EVENT_H

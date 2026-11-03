@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "aiv_communication_base.h"
 
@@ -16,18 +16,17 @@ class AivAllGatherVBig910B : public AivCommBase {
 public:
     __aicore__ inline AivAllGatherVBig910B() {}
 
-    template<typename T>
-    __aicore__ inline void MemcpyWithFlagWrap(__gm__ T *cclGmSelf, __gm__ T *cclGmOther,
-        uint64_t count, int32_t dstRank, int32_t tag);
+    template <typename T>
+    __aicore__ inline void
+    MemcpyWithFlagWrap(__gm__ T* cclGmSelf, __gm__ T* cclGmOther, uint64_t count, int32_t dstRank, int32_t tag);
 
-    template<typename T>
-    __aicore__ inline void Process(GM_ADDR input, GM_ADDR output, uint64_t curCount,
-                                   ExtraArgs &extraArgs, int32_t tag);
+    template <typename T>
+    __aicore__ inline void Process(GM_ADDR input, GM_ADDR output, uint64_t curCount, ExtraArgs& extraArgs, int32_t tag);
 };
 
-template<typename T>
-__aicore__ inline void AivAllGatherVBig910B::MemcpyWithFlagWrap(__gm__ T *cclGmSelf, __gm__ T *cclGmOther,
-    uint64_t count, int32_t dstRank, int32_t tag)
+template <typename T>
+__aicore__ inline void AivAllGatherVBig910B::MemcpyWithFlagWrap(
+    __gm__ T* cclGmSelf, __gm__ T* cclGmOther, uint64_t count, int32_t dstRank, int32_t tag)
 {
     uint64_t processedBatchCount = 0;
     uint64_t avgSizePerSlice = count * sizeof(T);
@@ -41,8 +40,9 @@ __aicore__ inline void AivAllGatherVBig910B::MemcpyWithFlagWrap(__gm__ T *cclGmS
         uint64_t localFlagValueX = CountWait(dstRank, dstRank);
 #else
         LocalTensor<int32_t> localFlagX = flagInQue.AllocTensor<int32_t>();
-        uint64_t localFlagValueX = GetSignalValueWithExpected((int32_t *)(GM_OUT[dstRank] + countOffset + dstRank * FLAG_SIZE),
-            localFlagX, CeilDiv(avgSizePerSlice, UB_DB_DATA_BATCH_SIZE) + tag);
+        uint64_t localFlagValueX = GetSignalValueWithExpected(
+            (int32_t*)(GM_OUT[dstRank] + countOffset + dstRank * FLAG_SIZE), localFlagX,
+            CeilDiv(avgSizePerSlice, UB_DB_DATA_BATCH_SIZE) + tag);
         flagInQue.FreeTensor(localFlagX);
 #endif
 
@@ -56,8 +56,8 @@ __aicore__ inline void AivAllGatherVBig910B::MemcpyWithFlagWrap(__gm__ T *cclGmS
         }
 
         uint64_t curSize = (preparedBatchCount * UB_DB_DATA_BATCH_SIZE > avgSizePerSlice) ?
-            avgSizePerSlice - processedBatchCount * UB_DB_DATA_BATCH_SIZE : 
-            (preparedBatchCount - processedBatchCount) * UB_DB_DATA_BATCH_SIZE;
+                               avgSizePerSlice - processedBatchCount * UB_DB_DATA_BATCH_SIZE :
+                               (preparedBatchCount - processedBatchCount) * UB_DB_DATA_BATCH_SIZE;
 
         set_flag(PIPE_S, PIPE_MTE2, EVENT_ID0);
         wait_flag(PIPE_S, PIPE_MTE2, EVENT_ID0);
@@ -69,21 +69,20 @@ __aicore__ inline void AivAllGatherVBig910B::MemcpyWithFlagWrap(__gm__ T *cclGmS
     }
 }
 
-template<typename T>
-__aicore__ inline void AivAllGatherVBig910B::Process(GM_ADDR input, GM_ADDR output, uint64_t curCount,
-                                                     ExtraArgs &extraArgs, int32_t tag)
+template <typename T>
+__aicore__ inline void
+AivAllGatherVBig910B::Process(GM_ADDR input, GM_ADDR output, uint64_t curCount, ExtraArgs& extraArgs, int32_t tag)
 {
     uint32_t blockNumPerGroup = rankSize_;
     uint32_t targetRank = blockIdx_ >= rankSize_ ? blockIdx_ - rankSize_ : blockIdx_;
 
-
-    __gm__ T *inputGm = (__gm__ T *)input;
-    __gm__ T *outputGm = (__gm__ T *)output;
-    __gm__ T *cclGmSelf = (__gm__ T *)(GM_IN[rank_]);
-    __gm__ T *cclGmOther = (__gm__ T *)(GM_IN[targetRank]);
+    __gm__ T* inputGm = (__gm__ T*)input;
+    __gm__ T* outputGm = (__gm__ T*)output;
+    __gm__ T* cclGmSelf = (__gm__ T*)(GM_IN[rank_]);
+    __gm__ T* cclGmOther = (__gm__ T*)(GM_IN[targetRank]);
 
     if (blockIdx_ < blockNumPerGroup) {
-        if (blockIdx_ == rank_) {   //把数据从UserIn 搬运到 CCLIn，同时检测有多少个核在搬运这个数据
+        if (blockIdx_ == rank_) { // 把数据从UserIn 搬运到 CCLIn，同时检测有多少个核在搬运这个数据
             CpGM2GMWithFlagWrap(cclGmSelf, inputGm, curCount, rank_, 8, tag);
             // 所有对端都取走数据
             pipe_barrier(PIPE_ALL);
@@ -99,7 +98,7 @@ __aicore__ inline void AivAllGatherVBig910B::Process(GM_ADDR input, GM_ADDR outp
     return;
 }
 
-template<typename T>
+template <typename T>
 __aicore__ inline void aiv_all_gather_v_910b_bigdata(EXTERN_KERNEL_ARGS_DEF)
 {
     AivAllGatherVBig910B op;
@@ -127,7 +126,7 @@ __aicore__ inline void aiv_all_gather_v_910b_bigdata(EXTERN_KERNEL_ARGS_DEF)
         countLeft -= curCount;
         curInput += curSize;
         curOutput += curSize;
-        curTag += maxCountPerLoop * sizeof(T) / UB_DB_DATA_BATCH_SIZE + 1;  //确认按最大值增加tag的合理性
+        curTag += maxCountPerLoop * sizeof(T) / UB_DB_DATA_BATCH_SIZE + 1; // 确认按最大值增加tag的合理性
     }
     op.TailCounter();
 }

@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include <gtest/gtest.h>
 #include <mockcpp/mockcpp.hpp>
@@ -24,27 +24,21 @@
 #undef private
 #undef protected
 
+#include "transport_pub.h"
+#include "common/aicpu_kfc_def.h"
+
 using namespace std;
 using namespace hccl;
 
 class Communicator_Device_UT : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "Communicator_Device_UT SetUP" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "Communicator_Device_UT TearDown" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "Communicator_Device_UT SetUP" << std::endl; }
+    static void TearDownTestCase() { std::cout << "Communicator_Device_UT TearDown" << std::endl; }
     // Some expensive resource shared by all tests.
     virtual void SetUp()
     {
         s32 portNum = -1;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
         std::cout << "A Test SetUP" << std::endl;
     }
     virtual void TearDown()
@@ -54,7 +48,8 @@ protected:
     }
 };
 
-TEST_F(Communicator_Device_UT, CommunicatorTest) {
+TEST_F(Communicator_Device_UT, CommunicatorTest)
+{
     RankTable_t rankTable;
     HcclCommParams params;
     std::vector<RankInfo> rankList;
@@ -68,10 +63,8 @@ TEST_F(Communicator_Device_UT, CommunicatorTest) {
     HcclCommunicator hcclCommunicator;
     hcclCommunicator.Init(params, rankTable);
     hcclCommunicator.Init(params, rankList, groupCommonData);
-    
-    MOCKER_CPP(&HcclCommunicator::InitOneSidedService)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+
+    MOCKER_CPP(&HcclCommunicator::InitOneSidedService).stubs().will(returnValue(HCCL_SUCCESS));
 
     hcclCommunicator.InitOneSidedServiceNetDevCtx(0);
     hcclCommunicator.DeInitOneSidedServiceNetDevCtx();
@@ -112,7 +105,7 @@ TEST_F(Communicator_Device_UT, CommunicatorTest) {
     hcclCommunicator.CreateOpBasedResources(HcclCMDType::HCCL_CMD_ALL, "", opInfo);
     hcclCommunicator.CreateRemoteOpBasedResources(0, tag);
     hcclCommunicator.DestroyRemoteOpBasedMem(tag);
-    
+
     hcclCommunicator.IsAtomicInit();
     hcclCommunicator.IsNeedNicInit();
 
@@ -167,8 +160,9 @@ TEST_F(Communicator_Device_UT, CommunicatorTest) {
     u32 numBlocks;
     hcclCommunicator.HcclCalcNumBlocks(HcclCMDType::HCCL_CMD_ALL, 0, nullptr, dataType, 0, tag, numBlocks);
 
-    void *commContext = nullptr;
-    hcclCommunicator.HcclGetAlgExecParam(tag, HcclCMDType::HCCL_CMD_ALL, 0, nullptr, nullptr, true, dataType, op, commContext, count, 0);
+    void* commContext = nullptr;
+    hcclCommunicator.HcclGetAlgExecParam(
+        tag, HcclCMDType::HCCL_CMD_ALL, 0, nullptr, nullptr, true, dataType, op, commContext, count, 0);
 
     DevType devType = DevType::DEV_TYPE_910;
     hcclCommunicator.CheckDeviceType(devType);
@@ -179,7 +173,7 @@ TEST_F(Communicator_Device_UT, CommunicatorTest) {
     std::vector<u32> groupRanks;
     hcclCommunicator.GetGroupRanksInfo(groupRanks, rankList);
     hcclCommunicator.GetGroupCommonData(groupCommonData);
-    hcclCommunicator.GetWorkspaceMemSize(tag, 0, dataType, buffer,count, devType);
+    hcclCommunicator.GetWorkspaceMemSize(tag, 0, dataType, buffer, count, devType);
     hcclCommunicator.GetWorkspaceScracthMem(tag, 0);
     hcclCommunicator.GetWorkspaceSubStreams(tag, 0);
 
@@ -208,7 +202,7 @@ TEST_F(Communicator_Device_UT, CommunicatorTest) {
     hcclCommunicator.RegisterToHeartBeat(0, tag);
     hcclCommunicator.UnRegisterToHeartBeat();
 
-    std::vector<void *> globalWorkSpaceAddr;
+    std::vector<void*> globalWorkSpaceAddr;
     hcclCommunicator.SetGlobalWorkSpace(globalWorkSpaceAddr);
 
     std::vector<HcclDumpInfo> hcclDumpInfo;
@@ -240,7 +234,8 @@ TEST_F(Communicator_Device_UT, CommunicatorTest) {
     hcclCommunicator.AllReduceOutPlace(tag, nullptr, nullptr, 0, dataType, op, rtStream, syncModel);
     rtStream_t stream_t;
     hcclCommunicator.AlltoAllV(nullptr, nullptr, nullptr, dataType, nullptr, nullptr, nullptr, dataType, stream_t, tag);
-    hcclCommunicator.AlltoAllVOutPlace(nullptr, nullptr, nullptr, dataType, nullptr, nullptr, nullptr, dataType, stream_t, tag);
+    hcclCommunicator.AlltoAllVOutPlace(
+        nullptr, nullptr, nullptr, dataType, nullptr, nullptr, nullptr, dataType, stream_t, tag);
     hcclCommunicator.AlltoAllVC(nullptr, nullptr, dataType, nullptr, dataType, stream_t, tag);
     hcclCommunicator.AlltoAllVCOutPlace(nullptr, nullptr, dataType, nullptr, dataType, stream_t, tag);
     hcclCommunicator.AlltoAll(nullptr, 0, dataType, nullptr, 0, dataType, stream_t, tag);
@@ -253,7 +248,7 @@ TEST_F(Communicator_Device_UT, CommunicatorTest) {
 
     hcclCommunicator.Reduce(tag, nullptr, nullptr, 0, dataType, op, 0, rtStream);
     hcclCommunicator.ReduceOutPlace(tag, nullptr, nullptr, 0, dataType, op, 0, rtStream);
-    HcomCollOpInfo *opInfoPtr = nullptr;
+    HcomCollOpInfo* opInfoPtr = nullptr;
     hcclCommunicator.ReduceScatter(tag, nullptr, nullptr, 0, dataType, op, rtStream, opInfoPtr);
     hcclCommunicator.ReduceScatterOutPlace(tag, nullptr, nullptr, 0, dataType, op, rtStream);
     hcclCommunicator.ReduceScatterV(tag, nullptr, nullptr, nullptr, nullptr, 0, dataType, op, rtStream, opInfoPtr);
@@ -266,7 +261,7 @@ TEST_F(Communicator_Device_UT, CommunicatorTest) {
     hcclCommunicator.Receive(tag, nullptr, 0, dataType, 0, stream_t);
     hcclCommunicator.ReceiveOutPlace(tag, nullptr, 0, dataType, 0, stream_t);
 
-    AlltoAllOperator *alltoAllOperator = nullptr;
+    AlltoAllOperator* alltoAllOperator = nullptr;
     std::unique_ptr<PreProcessMetaInfo> preMetaInfo = nullptr;
     hcclCommunicator.RegressCalPreOp(alltoAllOperator, opParam, preMetaInfo);
     Stream stream;
@@ -283,7 +278,7 @@ TEST_F(Communicator_Device_UT, CommunicatorTest) {
     std::vector<Stream> slaveStreams;
     hcclCommunicator.CaptureSlaveStreams(stream_t, slaveStreams);
 
-    LocalResInfoV2 *localResHostPtr = nullptr;
+    LocalResInfoV2* localResHostPtr = nullptr;
     hcclCommunicator.BuildOpLocalScratchMemResParam(algResource, tag, localResHostPtr);
 
     hcclCommunicator.CheckSetRetryStateToWaitResume();
@@ -313,16 +308,17 @@ TEST_F(Communicator_Device_UT, CommunicatorTest) {
     hcclCommunicator.BuildOpRemoteLinkP2pResParam(link, remoteResV3, linkType);
     hcclCommunicator.BuildOpRemoteLinkRoceResParam(link, remoteResV3, true, true, true);
 
-    HcclRankRelationResV2 *rankRelationResHostPtr = nullptr;
-    HcclRankRelationResV2 *rankRelationResDevicePtr = nullptr;
+    HcclRankRelationResV2* rankRelationResHostPtr = nullptr;
+    HcclRankRelationResV2* rankRelationResDevicePtr = nullptr;
     hcclCommunicator.BuildRemoteResByTag(tag, buffer, rankRelationResHostPtr, rankRelationResDevicePtr, true, true);
     TransportRequest transportRequest;
-    hcclCommunicator.BuildRelationResByRemoteRankId(transportRequest, link, rankRelationResHostPtr, rankRelationResDevicePtr);
+    hcclCommunicator.BuildRelationResByRemoteRankId(
+        transportRequest, link, rankRelationResHostPtr, rankRelationResDevicePtr);
     OpCommTransport opTransportResponse;
     hcclCommunicator.ParseRemoteDataToMem(opTransportResponse, tag, HcclCMDType::HCCL_CMD_ALL, true, true);
     hcclCommunicator.BuildOpRemoteResParam(algResource, tag, HcclCMDType::HCCL_CMD_ALL, true);
 
-    ListCommon *headHostList = nullptr;
+    ListCommon* headHostList = nullptr;
     hcclCommunicator.CopyHostListResToDeviceParam(tag, headHostList, 0);
     hcclCommunicator.CopyHostOpResToDeviceParam(tag);
 
@@ -350,14 +346,14 @@ TEST_F(Communicator_Device_UT, CommunicatorTest) {
     hcclCommunicator.AllocAndClearHostMem(0, hostMemPtr);
 
     hcclCommunicator.CreateWorkSpace(0, deviceMem);
-    u64 *workSpace = nullptr;
+    u64* workSpace = nullptr;
     hcclCommunicator.GetWorkSpace(workSpace, workSpace);
     hcclCommunicator.InitWorkSpace();
     hcclCommunicator.FillOpParam(HcclCMDType::HCCL_CMD_ALL, opParam, 0, nullptr, nullptr);
 
     hcclCommunicator.AllocComResource(tag, tag, HcclCMDType::HCCL_CMD_ALL, opParam, stream_t);
     hcclCommunicator.AllocComResourceByTiling(tag, nullptr);
-    void **commContextPtr = nullptr;
+    void** commContextPtr = nullptr;
     hcclCommunicator.CreateCommResource(tag, stream_t, true, commContextPtr);
     hcclCommunicator.Mc2CreateAndLaunchContext(stream_t, true, commContextPtr, tag);
     std::shared_ptr<LocalNotify> localNotify;
@@ -374,7 +370,8 @@ TEST_F(Communicator_Device_UT, CommunicatorTest) {
     hcclCommunicator.AicpuKfcTilingDataLaunch(opParam, HcclCMDType::HCCL_CMD_ALL, deviceMem, tag, opTilingInfo);
     hcclCommunicator.AicpuInitOpTilingDataBuf(opParam, HcclCMDType::HCCL_CMD_ALL, tag, opTilingInfo, 0);
     hcclCommunicator.AicpuKfcTilingDataLaunchIn(opParam, deviceMem, tag, opTilingInfo, 0, true);
-    hcclCommunicator.AicpuKfcTilingDataLaunchExt(opParam, HcclCMDType::HCCL_CMD_ALL, deviceMem, tag, opTilingInfo, true);
+    hcclCommunicator.AicpuKfcTilingDataLaunchExt(
+        opParam, HcclCMDType::HCCL_CMD_ALL, deviceMem, tag, opTilingInfo, true);
     HcclWorkflowMode mode = HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE;
     hcclCommunicator.AicpuUnfoldKernelLaunch(nullptr, nullptr, stream_t, 0, nullptr, 0, tag, mode, tag);
     hcclCommunicator.AicpuUnfoldKernelLaunchV2(nullptr, nullptr, stream_t, 0, nullptr, 0, tag, mode, tag, true);
@@ -387,7 +384,8 @@ TEST_F(Communicator_Device_UT, CommunicatorTest) {
     hcclCommunicator.GetAicpuOpStreamAndNotify(nullptr, 0, nullptr);
 
     hcclCommunicator.SetAicpuNotifyInvalid();
-    std::unique_ptr<CommInfo> commInfo = nullptr;;
+    std::unique_ptr<CommInfo> commInfo = nullptr;
+    ;
     hcclCommunicator.ReplaceCommInfoByTag(tag, commInfo);
     level1StreamInfo_t streamInfo;
     hcclCommunicator.CreateMutiStreamResFor310P(tag, streamInfo);
@@ -433,7 +431,8 @@ TEST_F(Communicator_Device_UT, CommunicatorTest) {
     hcclCommunicator.SetOnlyAivModeConfig(true);
 }
 
-TEST_F(Communicator_Device_UT, CommunicatorAttrsTest) {
+TEST_F(Communicator_Device_UT, CommunicatorAttrsTest)
+{
     RankTable_t rankTable;
     HcclCommParams params;
     std::vector<RankInfo> rankList;
@@ -504,15 +503,40 @@ TEST_F(Communicator_Device_UT, CommunicatorAttrsTest) {
 
 TEST_F(Communicator_Device_UT, Ut_WaitAsyncFlag_When_ParamIsNullptr_Expect_ReturnIsHCCL_E_PTR)
 {
-    MOCKER(GetCurCpuTimestamp)
-        .stubs()
-        .will(returnValue(static_cast<u64>(0)));
+    MOCKER(GetCurCpuTimestamp).stubs().will(returnValue(static_cast<u64>(0)));
     HcclResult ret = AicpuHcclProcess::WaitAsyncFlag(nullptr, 1, 0);
     EXPECT_EQ(ret, HCCL_E_PTR);
 }
 
-TEST_F(Communicator_Device_UT, Ut_AicpuIndOpNotifyInit_When_ParamIsNullptr_Expect_ReturnIsHCCL_E_PTR)
+TEST_F(Communicator_Device_UT, Ut_WaitAsyncFlag_When_FlagValueLessThanOffset_Expect_ReturnIsHCCL_E_PARA)
 {
-    HcclResult ret = AicpuHcclProcess::AicpuIndOpNotifyInit(nullptr);
-    EXPECT_EQ(ret, HCCL_E_PTR);
+    HcclResult ret = AicpuHcclProcess::WaitAsyncFlag(nullptr, 0, 0);
+    EXPECT_EQ(ret, HCCL_E_PARA);
+}
+
+TEST_F(Communicator_Device_UT, Ut_WaitAsyncFlag_When_Timeout_Expect_ReturnIsHCCL_E_INTERNAL)
+{
+    uint32_t flagMem[POST_SEND_FLAG_COUNT] = {0};
+    Transport::Buffer buffers[POST_SEND_FLAG_COUNT];
+    for (uint32_t i = 0; i < POST_SEND_FLAG_COUNT; i++) {
+        buffers[i].addr = &flagMem[i];
+        buffers[i].size = sizeof(uint32_t);
+    }
+    HcclResult ret = AicpuHcclProcess::WaitAsyncFlag(buffers, FLAG_OFFSET, 0);
+    EXPECT_EQ(ret, HCCL_E_INTERNAL);
+}
+
+TEST_F(Communicator_Device_UT, Ut_WaitAsyncFlag_When_FlagMatched_Expect_ReturnSuccess)
+{
+    uint32_t flagMem[POST_SEND_FLAG_COUNT] = {0};
+    Transport::Buffer buffers[POST_SEND_FLAG_COUNT];
+    for (uint32_t i = 0; i < POST_SEND_FLAG_COUNT; i++) {
+        buffers[i].addr = &flagMem[i];
+        buffers[i].size = sizeof(uint32_t);
+    }
+    uint32_t flagValue = FLAG_OFFSET;
+    flagMem[flagValue - FLAG_OFFSET] = flagValue;
+    HcclResult ret = AicpuHcclProcess::WaitAsyncFlag(buffers, flagValue, 1);
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+    EXPECT_EQ(flagMem[flagValue - FLAG_OFFSET], 0U);
 }

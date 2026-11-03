@@ -23,30 +23,29 @@ extern "C" {
 #pragma pack(4)
 /* common */
 /**
-* @brief dc库Key迭代器，用于批备
-*/
+ * @brief dc库Key迭代器，用于批备
+ */
 typedef struct tagBkfDcTupleKeyItor BkfDcTupleKeyItor;
 
 /**
-* @brief dc库seq迭代器，用于实备
-*/
+ * @brief dc库seq迭代器，用于实备
+ */
 typedef struct tagBkfDcTupleSeqItor BkfDcTupleSeqItor;
 
 /* add */
 /**
-* @brief dc迭代器回调函数
-*/
+ * @brief dc迭代器回调函数
+ */
 typedef void (*F_BKF_DC_NTF_BY_ITOR)(void *cookieAddItor);
 
-
 /**
-* @brief dc迭代器虚表
-*/
+ * @brief dc迭代器虚表
+ */
 typedef struct tagBkfDcTupleItorVTbl {
     char *name; /**< 迭代器虚表名称 */
     void *cookie;
-    F_BKF_DC_NTF_BY_ITOR afterTupleChangeOrNull; /**< 在回调中不能有删当前表的操作 */
-    F_BKF_DC_NTF_BY_ITOR afterTableReleaseOrNull; /**< 在回调中不能有删当前表的操作 */
+    F_BKF_DC_NTF_BY_ITOR afterTupleChangeOrNull;   /**< 在回调中不能有删当前表的操作 */
+    F_BKF_DC_NTF_BY_ITOR afterTableReleaseOrNull;  /**< 在回调中不能有删当前表的操作 */
     F_BKF_DC_NTF_BY_ITOR afterTableCompleteOrNull; /**< 在回调中不能有删当前表的操作 */
 } BkfDcTupleItorVTbl;
 
@@ -178,4 +177,3 @@ BOOL BkfDcGetTupleByKeyItorFromDcOrApp(BkfDc *dc, BkfDcTupleKeyItor *keyItor, Bk
 #endif
 
 #endif
-

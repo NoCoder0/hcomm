@@ -19,20 +19,14 @@
 using namespace Hccl;
 class DataBufManagerTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "DataBufManager tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "DataBufManager tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "DataBufManager tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "DataBufManager tests tear down." << std::endl; }
 
     virtual void SetUp()
     {
         dataBufManager = new DataBufManager();
-        devBuffer      = DevBuffer::Create(0x100, 0x100);
+        devBuffer = DevBuffer::Create(0x100, 0x100);
         std::cout << "A Test case in DataBufManager SetUP" << std::endl;
     }
 
@@ -44,8 +38,8 @@ protected:
     }
 
     DataBufManager* dataBufManager;
-    std::string     opTag        = "opTag";
-    BufferType      bufferType   = BufferType::SCRATCH;
+    std::string opTag = "opTag";
+    BufferType bufferType = BufferType::SCRATCH;
 
     shared_ptr<DevBuffer> devBuffer;
 };
@@ -59,7 +53,7 @@ TEST_F(DataBufManagerTest, get_null)
 TEST_F(DataBufManagerTest, register_and_get_then_register_err)
 {
     auto expect = devBuffer.get();
-    auto res    = dataBufManager->Register(opTag, bufferType, devBuffer);
+    auto res = dataBufManager->Register(opTag, bufferType, devBuffer);
     EXPECT_EQ(expect, res);
 
     auto res2 = dataBufManager->Register(opTag, bufferType, devBuffer);

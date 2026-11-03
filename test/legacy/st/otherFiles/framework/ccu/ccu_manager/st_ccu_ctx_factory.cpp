@@ -35,42 +35,34 @@
 using namespace Hccl;
 using namespace std;
 
-
 class CcuCtxFactoryTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CommunicatorImplTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CommunicatorImplTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CommunicatorImplTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CommunicatorImplTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in CommunicatorImplTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in CommunicatorImplTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
-        GlobalMockObject::verify();        
+        GlobalMockObject::verify();
         std::cout << "A Test case in CommunicatorImplTest TearDown" << std::endl;
     }
 };
 
 class FakeCcuContextAlltoallMesh2D : public CcuContext {
 public:
-    FakeCcuContextAlltoallMesh2D(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                              const CcuTransportGroup &group) : CcuContext(arg, transports, group){}
+    FakeCcuContextAlltoallMesh2D(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group)
+        : CcuContext(arg, transports, group)
+    {}
     ~FakeCcuContextAlltoallMesh2D() {}
 
     void Algorithm() override {}
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override{ return {};}
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override { return {}; }
+
 private:
 };
-
 
 TEST(CcuCtxFactoryTest, should_return_success_when_calling_ccuinstregister)
 {
@@ -85,49 +77,58 @@ TEST(CcuCtxFactoryTest, should_return_success_when_calling_ccuinstregister)
 TEST(CcuCtxFactoryTest, should_return_success_when_calling_register)
 {
     // check
-    EXPECT_NO_THROW(CcuCtxFactory::GetInstance().Register<FakeCcuContextAlltoallMesh2D>(CcuInstType::CCU_ALLTOALL_MESH_2D_DIRECT));
+    EXPECT_NO_THROW(
+        CcuCtxFactory::GetInstance().Register<FakeCcuContextAlltoallMesh2D>(CcuInstType::CCU_ALLTOALL_MESH_2D_DIRECT));
     EXPECT_EQ(2, CcuCtxFactory::GetInstance().creators.size());
 }
 
 TEST(CcuCtxFactoryTest, should_return_success_when_calling_register_create)
 {
     // when
-    GlobalMockObject::verify(); 
+    GlobalMockObject::verify();
     MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(CcuDeviceManager::ReleaseCke).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(HcclResult::HCCL_SUCCESS));
-    MOCKER(GenerateCcuCtxSignature)
+    MOCKER(CcuDeviceManager::ReleaseCke)
         .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
         .will(returnValue(HcclResult::HCCL_SUCCESS));
+    MOCKER(GenerateCcuCtxSignature).stubs().will(returnValue(HcclResult::HCCL_SUCCESS));
     vector<CcuTransport*> transports;
     IpAddress localIp;
     IpAddress remoteIp;
     RdmaHandle rdmaHandle;
-    Socket *fakeSocket = new Socket(nullptr, localIp, 100, remoteIp, "test", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    Socket* fakeSocket
+        = new Socket(nullptr, localIp, 100, remoteIp, "test", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     LinkData linkData(portType, 0, 1, 0, 1);
     CcuChannelInfo channelInfo;
-    vector<CcuJetty *> ccuJettys;
+    vector<CcuJetty*> ccuJettys;
     auto c = std::make_unique<CcuConnection>(linkData.GetLocalAddr(), linkData.GetRemoteAddr(), channelInfo, ccuJettys);
     connection->status = CcuConnStatus::EXCHANGEABLE;
 
     CcuTransport::CclBufferInfo locCclBufInfo;
-    CcuTransport *ccuTransport = new CcuTransport(fakeSocket, std::move(c), locCclBufInfo);
-    
+    CcuTransport* ccuTransport = new CcuTransport(fakeSocket, std::move(c), locCclBufInfo);
+
     SocketStatus fakeSocketStatus = SocketStatus::OK;
     MOCKER_CPP(&Socket::GetAsyncStatus).stubs().will(returnValue(fakeSocketStatus));
 
     transports.push_back(ccuTransport);
     std::unique_ptr<CcuTransportGroup> ccuTransportGrp = std::make_unique<CcuTransportGroup>(transports, 0);
     ccuTransportGrp->grpStatus = TransportGrpStatus::INIT;
-    MOCKER_CPP(&CcuTransportMgr::PrepareCreate).stubs().with(mockcpp::any(), outBound(ccuTransport)).will(returnValue(HcclResult::HCCL_SUCCESS));
-    MOCKER_CPP(&CcuTransportGroupMgr::PrepareCreate).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(ccuTransportGrp.get()));
-    
-    //then
+    MOCKER_CPP(&CcuTransportMgr::PrepareCreate)
+        .stubs()
+        .with(mockcpp::any(), outBound(ccuTransport))
+        .will(returnValue(HcclResult::HCCL_SUCCESS));
+    MOCKER_CPP(&CcuTransportGroupMgr::PrepareCreate)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(returnValue(ccuTransportGrp.get()));
+
+    // then
     std::unique_ptr<CcuInstructionAllGatherMesh1D> ccuIns = std::make_unique<CcuInstructionAllGatherMesh1D>();
     std::vector<LinkData> links;
     links.emplace_back(LinkData(portType, 0, 1, 0, 1));
     ccuIns->SetLinks(links);
-    const CcuInstruction &ins = dynamic_cast<const CcuInstruction &>(*ccuIns);
+    const CcuInstruction& ins = dynamic_cast<const CcuInstruction&>(*ccuIns);
     bool transportStatus = false;
 
     // check
@@ -142,7 +143,7 @@ TEST(CcuCtxFactoryTest, should_return_success_when_calling_register_create)
 TEST(CcuCtxFactoryTest, should_return_success_when_calling_setmgr)
 {
     // check
-    CommunicatorImpl *comm;
+    CommunicatorImpl* comm;
     CcuTransportMgr transportMgr(*comm);
     CcuTransportGroupMgr transportGrpMgr(*comm);
     EXPECT_NO_THROW(CcuCtxFactory::GetInstance().SetTransportMgr(transportMgr));

@@ -17,30 +17,33 @@
 #include "ra_rs_comm.h"
 #include "ra_comm.h"
 
-#define HCCP_CLOSE_RETRY_FOR_EINTR(fd) do { \
-    int ret_; \
-    do { \
-        ret_ = close(fd); \
-        if (ret_ < 0) { \
-            hccp_warn("close filedscp[%d] unsuccessful, errno:%d", fd, errno); \
-        } \
-    } while ((ret_ < 0) && (errno == EINTR)); \
-    fd = -1; \
-} while (0)
+#define HCCP_CLOSE_RETRY_FOR_EINTR(fd)                                                                                 \
+    do {                                                                                                               \
+        int ret_;                                                                                                      \
+        do {                                                                                                           \
+            ret_ = close(fd);                                                                                          \
+            if (ret_ < 0) {                                                                                            \
+                hccp_warn("close fd[%d] unsuccessful, errno:%d", fd, errno);                                           \
+            }                                                                                                          \
+        } while ((ret_ < 0) && (errno == EINTR));                                                                      \
+        fd = -1;                                                                                                       \
+    } while (0)
 
-#define PEER_PTHREAD_MUTEX_LOCK(mutex) do { \
-    int ret_lock = pthread_mutex_lock(mutex); \
-    if (ret_lock) { \
-        hccp_warn("pthread_mutex_lock unsuccessful, ret[%d]", ret_lock); \
-    }\
-} while (0)
+#define PEER_PTHREAD_MUTEX_LOCK(mutex)                                                                                 \
+    do {                                                                                                               \
+        int ret_lock = pthread_mutex_lock(mutex);                                                                      \
+        if (ret_lock) {                                                                                                \
+            hccp_warn("pthread_mutex_lock unsuccessful, ret[%d]", ret_lock);                                           \
+        }                                                                                                              \
+    } while (0)
 
-#define PEER_PTHREAD_MUTEX_UNLOCK(mutex) do { \
-    int ret_ulock = pthread_mutex_unlock(mutex); \
-    if (ret_ulock) { \
-        hccp_warn("pthread_mutex_unlock unsuccessful, ret[%d]", ret_ulock); \
-    } \
-} while (0)
+#define PEER_PTHREAD_MUTEX_UNLOCK(mutex)                                                                               \
+    do {                                                                                                               \
+        int ret_ulock = pthread_mutex_unlock(mutex);                                                                   \
+        if (ret_ulock) {                                                                                               \
+            hccp_warn("pthread_mutex_unlock unsuccessful, ret[%d]", ret_ulock);                                        \
+        }                                                                                                              \
+    } while (0)
 
 #define RA_SSL_DISABLE 0
 
@@ -50,10 +53,10 @@ struct HostRoceNotifyInfo {
     unsigned long long sz;
 };
 
-#define HOST_DEVICE_NAME     "/dev/host_rdma"
-#define RA_NOTIFY_TYPE_TOTAL_SIZE   1
+#define HOST_DEVICE_NAME "/dev/host_rdma"
+#define RA_NOTIFY_TYPE_TOTAL_SIZE 1
 
-#define HOST_CDEV_IOC_MAGIC  '%'
+#define HOST_CDEV_IOC_MAGIC '%'
 
 #define HOST_CDEV_IOC_FREE_NOTIFY _IOWR(HOST_CDEV_IOC_MAGIC, 1, struct HostRoceNotifyInfo)
 
@@ -95,8 +98,7 @@ int RaPeerLoopbackQpCreate(struct RaRdmaHandle *rdmaHandle, struct LoopbackQpPai
 
 int RaPeerQpDestroy(struct RaQpHandle *qpPeer);
 
-int RaPeerTypicalQpModify(struct RaQpHandle *qpPeer, struct TypicalQp *localQpInfo,
-    struct TypicalQp *remoteQpInfo);
+int RaPeerTypicalQpModify(struct RaQpHandle *qpPeer, struct TypicalQp *localQpInfo, struct TypicalQp *remoteQpInfo);
 
 int RaPeerSetQpLbValue(struct RaQpHandle *qpHandle, int lbValue);
 
@@ -128,6 +130,8 @@ int RaPeerInit(struct RaInitConfig *cfg, unsigned int whiteListStatus);
 
 int RaPeerGetTlsEnable(unsigned int phyId, bool *tlsEnable);
 
+int RaPeerGetHccnCfg(struct RaInfo *info, enum HccnCfgKey key, char *value, unsigned int *valueLen);
+
 int RaPeerGetSecRandom(unsigned int *value);
 
 int RaPeerDeinit(struct RaInitConfig *cfg);
@@ -136,8 +140,12 @@ int RaPeerGetIfnum(unsigned int phyId, unsigned int *num);
 
 int RaPeerGetIfaddrs(unsigned int phyId, struct InterfaceInfo interfaceInfos[], unsigned int *num);
 
-int RaPeerRdevInit(
-    struct RaRdmaHandle *rdmaHandle, unsigned int notifyType, struct rdev rdevInfo, unsigned int *rdevIndex);
+int RaPeerRdevInit(struct RaRdmaHandle *rdmaHandle, unsigned int notifyType, struct rdev rdevInfo,
+    unsigned int *rdevIndex);
+
+int RaPeerRdevGetPortStatus(struct RaRdmaHandle *rdmaHandle, enum PortStatus *status);
+
+int RaPeerRdevGetAttr(struct RaRdmaHandle *rdmaHandle, struct RdevAttr *attr);
 
 int RaPeerGetLbMax(struct RaRdmaHandle *rdmaHandle, int *lbMax);
 
@@ -155,10 +163,10 @@ int RaPeerSetTsqpDepth(struct RaRdmaHandle *rdmaHandle, unsigned int tempDepth, 
 
 int RaPeerGetTsqpDepth(struct RaRdmaHandle *rdmaHandle, unsigned int *tempDepth, unsigned int *qpNum);
 
-int RaPeerGetQpContext(struct RaQpHandle *qpPeer, void** qp, void** sendCq, void** recvCq);
+int RaPeerGetQpContext(struct RaQpHandle *qpPeer, void **qp, void **sendCq, void **recvCq);
 
-int RaPeerNormalQpCreate(struct RaRdmaHandle *rdmaHandle, struct ibv_qp_init_attr *qpInitAttr,
-    void **qpHandle, void** qp);
+int RaPeerNormalQpCreate(struct RaRdmaHandle *rdmaHandle, struct ibv_qp_init_attr *qpInitAttr, void **qpHandle,
+    void **qp);
 
 int RaPeerNormalQpDestroy(struct RaQpHandle *qpPeer);
 
@@ -172,9 +180,9 @@ int RaPeerSetQpAttrTimeout(struct RaQpHandle *qpPeer, unsigned int *timeout);
 
 int RaPeerSetQpAttrRetryCnt(struct RaQpHandle *qpPeer, unsigned int *retryCnt);
 
-int RaPeerCreateCompChannel(struct RaRdmaHandle *rdmaHandle, void** compChannel);
+int RaPeerCreateCompChannel(struct RaRdmaHandle *rdmaHandle, void **compChannel);
 
-int RaPeerDestroyCompChannel(void* compChannel);
+int RaPeerDestroyCompChannel(void *compChannel);
 
 int RaPeerCreateSrq(struct RaRdmaHandle *rdmaHandle, struct SrqAttr *attr);
 
@@ -184,12 +192,14 @@ int RaPeerCreateEventHandle(int *eventHandle);
 
 int RaPeerCtlEventHandle(int eventHandle, const void *fdHandle, int opcode, enum RaEpollEvent event);
 
-int RaPeerWaitEventHandle(int eventHandle, struct SocketEventInfoT *eventInfos, int timeout,
-    unsigned int maxevents, unsigned int *eventsNum);
+int RaPeerWaitEventHandle(int eventHandle, struct SocketEventInfoT *eventInfos, int timeout, unsigned int maxevents,
+    unsigned int *eventsNum);
 
 int RaPeerDestroyEventHandle(int *eventHandle);
 
 void RaPeerMutexLock(unsigned int phyId);
 
 void RaPeerMutexUnlock(unsigned int phyId);
+
+void RaPeerSetDebugConfig(uint64_t debugConfig);
 #endif // RA_PEER_H

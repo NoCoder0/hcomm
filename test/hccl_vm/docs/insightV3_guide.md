@@ -21,8 +21,8 @@ HVRM Insight V3 当前主要支持 `DAGView` 任务图查看。本文档围绕 D
   ...
   "setting": {              // Checker插件配置项
       ...
-      "enable_insight_dump": true,         // 是否启用可视化数据输出（默认为关闭状态）
-      "enable_memory_snapshot_dump": false  // 是否启用可视化内存快照数据输出（默认关闭，仅支持老Checker，需要先开启可视化数据输出"enable_insight_dump"）
+      "enable_insight_dump": true,         // 是否输出 Checker V3 Insight 数据（默认为关闭状态）
+      "enable_memory_snapshot_dump": false  // 是否输出内存快照数据（暂不支持，默认关闭，需要先开启 Insight 数据输出）
   }
 }
 ```

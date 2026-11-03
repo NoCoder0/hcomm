@@ -1,28 +1,29 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "hccl_api_base_test.h"
+#include "coll_comm_mgr.h"
+extern thread_local s32 g_hcclDeviceId;
 
 class HcclCommInitRootInfoConfigTest : public BaseInit {
 public:
-    void SetUp() override {
+    void SetUp() override
+    {
         BaseInit::SetUp();
         // 将建链超时时间设置为1s，减少测试用例运行时间
-        MOCKER(GetExternalInputHcclLinkTimeOut)
-            .stubs()
-            .with(mockcpp::any())
-            .will(returnValue(1));
+        MOCKER(GetExternalInputHcclLinkTimeOut).stubs().with(mockcpp::any()).will(returnValue(1));
     }
-    void TearDown() override {
+    void TearDown() override
+    {
         // 删除所有拓扑建链的线程
-        HcclOpInfoCtx& opBaseInfo = GetHcclOpInfoCtx();
+        HcclOpInfoCtx& opBaseInfo = CollCommMgr::GetInstance().LegacyGetHcclOpInfoCtx();
         opBaseInfo.hcclCommTopoInfoDetectServer.clear();
         opBaseInfo.hcclCommTopoInfoDetectAgent.clear();
 
@@ -38,8 +39,8 @@ TEST_F(HcclCommInitRootInfoConfigTest, Ut_HcclCommInitRootInfoConfig_When_nRanks
     int rank = 0;
     HcclCommConfig commConfig;
     HcclCommConfigInit(&commConfig);
-    commConfig.hcclBufferSize= 400;
- 
+    commConfig.hcclBufferSize = 400;
+
     HcclResult ret = HcclCommInitRootInfoConfig(nRanks, &id, rank, &commConfig, &comm);
     EXPECT_EQ(ret, HCCL_E_PARA);
 
@@ -50,11 +51,11 @@ TEST_F(HcclCommInitRootInfoConfigTest, Ut_HcclCommInitRootInfoConfig_When_RootIn
 {
     Ut_Device_Set(0);
     int nRanks = 1;
-    HcclRootInfo *pId = nullptr;
+    HcclRootInfo* pId = nullptr;
     int rank = 0;
     HcclCommConfig commConfig;
     HcclCommConfigInit(&commConfig);
-    commConfig.hcclBufferSize= 400;
+    commConfig.hcclBufferSize = 400;
 
     HcclResult ret = HcclCommInitRootInfoConfig(nRanks, pId, rank, &commConfig, &comm);
     EXPECT_EQ(ret, HCCL_E_PTR);
@@ -62,15 +63,16 @@ TEST_F(HcclCommInitRootInfoConfigTest, Ut_HcclCommInitRootInfoConfig_When_RootIn
     Ut_Comm_Destroy(comm);
 }
 
-TEST_F(HcclCommInitRootInfoConfigTest, Ut_HcclCommInitRootInfoConfig_When_RankGreaterThannRanks_Expect_ReturnIsHCCL_E_PARA)
+TEST_F(
+    HcclCommInitRootInfoConfigTest, Ut_HcclCommInitRootInfoConfig_When_RankGreaterThannRanks_Expect_ReturnIsHCCL_E_PARA)
 {
     int nRanks = 10;
     HcclRootInfo id = Ut_Get_Root_Info(0);
     int rank = 10;
     HcclCommConfig commConfig;
     HcclCommConfigInit(&commConfig);
-    commConfig.hcclBufferSize= 400;
- 
+    commConfig.hcclBufferSize = 400;
+
     HcclResult ret = HcclCommInitRootInfoConfig(nRanks, &id, rank, &commConfig, &comm);
     EXPECT_EQ(ret, HCCL_E_PARA);
 
@@ -82,7 +84,7 @@ TEST_F(HcclCommInitRootInfoConfigTest, Ut_HcclCommInitRootInfoConfig_When_PCommI
     int nRanks = 1;
     HcclRootInfo id = Ut_Get_Root_Info(0);
     int rank = 0;
-    HcclCommConfig *pCommConfig = nullptr;
+    HcclCommConfig* pCommConfig = nullptr;
 
     HcclResult ret = HcclCommInitRootInfoConfig(nRanks, &id, rank, pCommConfig, &comm);
     EXPECT_EQ(ret, HCCL_E_PARA);
@@ -97,7 +99,7 @@ TEST_F(HcclCommInitRootInfoConfigTest, Ut_HcclCommInitRootInfoConfig_When_PCommC
     int rank = 0;
     HcclCommConfig commConfig;
     HcclCommConfigInit(&commConfig);
-    commConfig.hcclBufferSize= 400;
+    commConfig.hcclBufferSize = 400;
 
     HcclResult ret = HcclCommInitRootInfoConfig(nRanks, &id, rank, &commConfig, nullptr);
     EXPECT_EQ(ret, HCCL_E_PTR);

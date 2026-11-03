@@ -26,18 +26,18 @@
 #include "invalid_params_exception.h"
 #include "host_ip_not_found_exception.h"
 #include "null_ptr_exception.h"
-#include "env_config.h"
+#include "env_config_v2.h"
 #include "env_func.h"
 #include "bootstrap_ip.h"
-#include "preempt_port_manager.h"
+#include "preempt_port_manager_v2.h"
 #include "rank_info_detect.h"
-#include "env_config.h"
+#include "env_config_v2.h"
 #undef private
 
 using namespace std;
 using namespace Hccl;
 
-string whitelistFilePath = "llt/ace/comop/hccl/orion/ut/framework/topo/rank_info_detect/whitelist.json";
+string whitelistFilePath = "llt/ace/comop/hccl/orion/st/otherFiles/rank_info_detect/whitelist.json";
 
 const u32 RANKINFO_DETECT_SERVER_STATUS_IDLE = 0;
 const u32 RANKINFO_DETECT_SERVER_STATUS_RUNING = 1;
@@ -45,15 +45,9 @@ const u32 RANKINFO_DETECT_SERVER_STATUS_ERROR = 2;
 
 class RankInfoDetectTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "RankInfoDetectTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "RankInfoDetectTest tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "RankInfoDetectTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "RankInfoDetectTest tests tear down." << std::endl; }
 
     virtual void SetUp()
     {
@@ -61,10 +55,16 @@ protected:
         MOCKER_CPP(&HccpPeerManager::Init).stubs().with(mockcpp::any()).will(ignoreReturnValue());
         MOCKER_CPP(&HccpPeerManager::DeInit).stubs().with(mockcpp::any()).will(ignoreReturnValue());
         SocketHandle hostSocketHandle;
-        MOCKER_CPP(&HostSocketHandleManager::Create).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(hostSocketHandle));
-        MOCKER(HrtRaSocketWhiteListAdd).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(ignoreReturnValue());
+        MOCKER_CPP(&HostSocketHandleManager::Create)
+            .stubs()
+            .with(mockcpp::any(), mockcpp::any())
+            .will(returnValue(hostSocketHandle));
+        MOCKER(HrtRaSocketWhiteListAdd)
+            .stubs()
+            .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+            .will(ignoreReturnValue());
         MOCKER(HrtGetDevice).stubs().with().will(returnValue(0));
-        MOCKER(HrtGetDevicePhyIdByIndex).stubs().with(mockcpp::any()).will(returnValue(static_cast<DevId>(0)));
+        MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().with(mockcpp::any()).will(returnValue(static_cast<DevId>(0)));
         MOCKER(HrtRaInit).stubs().with(mockcpp::any()).will(ignoreReturnValue());
         MOCKER(HrtRaDeInit).stubs().with(mockcpp::any()).will(ignoreReturnValue());
         MOCKER(HrtGetDeviceType).stubs().will(returnValue((DevType)DevType::DEV_TYPE_950));
@@ -86,10 +86,10 @@ protected:
     IpAddress remoteIp;
     IpAddress localIp;
     SocketHandle socketHandle;
-    std::string tag = "test";  
+    std::string tag = "test";
 };
 
-TEST_F(RankInfoDetectTest, St_SetupServer_When_Invalid_Ip_Expect_THROW)
+TEST_F(RankInfoDetectTest, St_SetupServer_When_Invalid_Ip_Expect_E_INTERNAL)
 {
     // when
     MOCKER(GetBootstrapIp).stubs().with(mockcpp::any()).will(returnValue(IpAddress()));
@@ -97,12 +97,12 @@ TEST_F(RankInfoDetectTest, St_SetupServer_When_Invalid_Ip_Expect_THROW)
     SocketHandle socketHandle;
     MOCKER_CPP(&RankInfoDetect::GetHostSocketHandle).stubs().with().will(returnValue(socketHandle));
     MOCKER_CPP(&RankInfoDetect::SetupRankInfoDetectService).stubs().with(mockcpp::any()).will(ignoreReturnValue());
-    MOCKER_CPP(&RankInfoDetect::GetRootHandle).stubs().with(mockcpp::any()).will(ignoreReturnValue());
+    MOCKER_CPP(&RankInfoDetect::GetRootHandle).stubs().with(mockcpp::any()).will(returnValue(HcclResult::HCCL_SUCCESS));
 
     // check
     shared_ptr<RankInfoDetect> rankInfoDetect = make_shared<RankInfoDetect>();
     HcclRootHandleV2 outRootHandle;
-    EXPECT_THROW(rankInfoDetect->SetupServer(outRootHandle), InternalException);
+    EXPECT_EQ(rankInfoDetect->SetupServer(outRootHandle), HcclResult::HCCL_E_INTERNAL);
 }
 
 TEST_F(RankInfoDetectTest, St_GetHostSocketHandle_When_Whitelist_Expect_AddHost_NO_THROW)
@@ -112,10 +112,11 @@ TEST_F(RankInfoDetectTest, St_GetHostSocketHandle_When_Whitelist_Expect_AddHost_
     MOCKER(HrtRaSocketWhiteListAdd).stubs().with(mockcpp::any(), mockcpp::any()).will(ignoreReturnValue());
     MOCKER(HrtRaSocketSetWhiteListStatus).stubs().with(mockcpp::any()).will(ignoreReturnValue());
     EnvHostNicConfig envConfig;
-    EnvHostNicConfig &fakeEnvConfig = envConfig;
+    EnvHostNicConfig& fakeEnvConfig = envConfig;
     fakeEnvConfig.whitelistDisable = CfgField<bool>{"HCCL_WHITELIST_DISABLE", false, CastBin2Bool};
     fakeEnvConfig.whitelistDisable.isParsed = true;
-    fakeEnvConfig.hcclWhiteListFile = CfgField<std::string>{"HCCL_WHITELIST_FILE", whitelistFilePath, Str2T<std::string>};
+    fakeEnvConfig.hcclWhiteListFile
+        = CfgField<std::string>{"HCCL_WHITELIST_FILE", whitelistFilePath, Str2T<std::string>};
     fakeEnvConfig.hcclWhiteListFile.isParsed = true;
     fakeEnvConfig.hcclIfIp.isParsed = true;
     fakeEnvConfig.hcclSocketIfName.isParsed = true;
@@ -141,7 +142,10 @@ TEST_F(RankInfoDetectTest, St_ClientInit_When_InpSt_Expect_NO_THROW)
 TEST_F(RankInfoDetectTest, St_ServerInit_When_Invalid_Port_Expect_ListenPreempt)
 {
     // when
-    MOCKER_CPP(&PreemptPortManager::ListenPreempt).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(throws(InternalException("aaa")));
+    MOCKER_CPP(&PreemptPortManager::ListenPreempt)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(throws(InternalException("aaa")));
 
     // check
     shared_ptr<RankInfoDetect> rankInfoDetect = make_shared<RankInfoDetect>();
@@ -154,39 +158,42 @@ TEST_F(RankInfoDetectTest, St_SetupAgent_When_InpSt_Expect_NO_THROW)
     // when
     MOCKER_CPP(&RankInfoDetectClient::Setup).stubs().with(mockcpp::any()).will(ignoreReturnValue());
     MOCKER_CPP(&IpAddress::InitBinaryAddr).stubs().with(mockcpp::any()).will(ignoreReturnValue());
-    
+
     // check
     RankInfoDetect rankInfoDetect;
     HcclRootHandleV2 rootHandle;
-    EXPECT_NO_THROW(rankInfoDetect.SetupAgent(0, 0, rootHandle));
+    EXPECT_EQ(rankInfoDetect.SetupAgent(0, 0, rootHandle), HcclResult::HCCL_SUCCESS);
 }
 
 TEST_F(RankInfoDetectTest, St_SetupRankInfoDetectService_When_InpSt_Expect_NO_THROW)
 {
     // when
-    MOCKER_CPP(&RankInfoDetectService::Setup).stubs().with(mockcpp::any()).will(ignoreReturnValue());
+    MOCKER_CPP(&RankInfoDetectService::Setup).stubs().with(mockcpp::any()).will(returnValue(HcclResult::HCCL_SUCCESS));
 
     // check
     RankInfoDetect rankInfoDetect;
     HcclRootHandleV2 rootHandle;
-    std::shared_ptr<Socket> socket = std::make_shared<Socket>(socketHandle, localIp, 0, remoteIp, tag,
-        SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
-    EXPECT_NO_THROW(rankInfoDetect.SetupRankInfoDetectService(socket, 0, 0, "test", {}));
+    std::shared_ptr<Socket> socket = std::make_shared<Socket>(
+        socketHandle, localIp, 0, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    EXPECT_NO_THROW(rankInfoDetect.SetupRankInfoDetectService(ErrContextPub{}, socket, 0, 0, "test", {}));
 }
 
-TEST_F(RankInfoDetectTest, St_SetupRankInfoDetectService_When_Setup_Fail_Expect_THROW)
+TEST_F(RankInfoDetectTest, St_SetupRankInfoDetectService_When_Setup_Fail_Expect_E_INTERNAL)
 {
     // when
-    MOCKER_CPP(&RankInfoDetectService::Setup).stubs().with(mockcpp::any()).will(throws(InternalException("aaa")));
+    MOCKER_CPP(&RankInfoDetectService::Setup)
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HcclResult::HCCL_E_INTERNAL));
 
     // check
     RankInfoDetect rankInfoDetect;
     HcclRootHandleV2 rootHandle;
     u32 listenPort = 50;
-    std::shared_ptr<Socket> socket = std::make_shared<Socket>(socketHandle, localIp, listenPort, remoteIp, tag,
-        SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
-    
-    EXPECT_NO_THROW(rankInfoDetect.SetupRankInfoDetectService(socket, 0, 0, "test", {}));
+    std::shared_ptr<Socket> socket = std::make_shared<Socket>(
+        socketHandle, localIp, listenPort, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+
+    EXPECT_NO_THROW(rankInfoDetect.SetupRankInfoDetectService(ErrContextPub{}, socket, 0, 0, "test", {}));
     EXPECT_EQ(rankInfoDetect.g_detectServerStatus_.Find(listenPort).first->second, RANKINFO_DETECT_SERVER_STATUS_ERROR);
 }
 
@@ -201,11 +208,13 @@ TEST_F(RankInfoDetectTest, St_GetHostListenPort_When_Config_PORT_RANGE_Expect_Ri
 {
     // when
     EnvHostNicConfig envConfig;
-    EnvHostNicConfig &fakeEnvConfig = envConfig;
+    EnvHostNicConfig& fakeEnvConfig = envConfig;
     std::vector<SocketPortRange> range;
     range.push_back(SocketPortRange{50000, 50001});
-    fakeEnvConfig.hcclHostSocketPortRange = CfgField<std::vector<SocketPortRange>>{"HCCL_HOST_SOCKET_PORT_RANGE", range, 
-        [] (const std::string &s) -> std::vector<SocketPortRange> { return CastSocketPortRange(s, "HCCL_HOST_SOCKET_PORT_RANGE"); }};
+    fakeEnvConfig.hcclHostSocketPortRange = CfgField<std::vector<SocketPortRange>>{
+        "HCCL_HOST_SOCKET_PORT_RANGE", range, [](const std::string& s) -> std::vector<SocketPortRange> {
+            return CastSocketPortRange(s, "HCCL_HOST_SOCKET_PORT_RANGE");
+        }};
     fakeEnvConfig.hcclHostSocketPortRange.isParsed = true;
     MOCKER_CPP(&EnvConfig::GetHostNicConfig).stubs().will(returnValue(fakeEnvConfig));
 
@@ -218,7 +227,7 @@ TEST_F(RankInfoDetectTest, St_GetHostListenPort_When_Config_PORT_BASE_Expect_Rig
 {
     // when
     EnvHostNicConfig envConfig;
-    EnvHostNicConfig &fakeEnvConfig = envConfig;
+    EnvHostNicConfig& fakeEnvConfig = envConfig;
     fakeEnvConfig.hcclIfBasePort = CfgField<u32>{"HCCL_IF_BASE_PORT", 40000, Str2T<u32>};
     fakeEnvConfig.hcclIfBasePort.isParsed = true;
     fakeEnvConfig.hcclHostSocketPortRange.isParsed = true;
@@ -234,7 +243,7 @@ TEST_F(RankInfoDetectTest, St_GetRootHandle_When_InpSt_Expect_NO_THROW)
     // check
     RankInfoDetect rankInfoDetect;
     HcclRootHandleV2 rootHandle;
-    EXPECT_NO_THROW(rankInfoDetect.GetRootHandle(rootHandle));
+    EXPECT_EQ(rankInfoDetect.GetRootHandle(rootHandle), HcclResult::HCCL_SUCCESS);
 }
 
 TEST_F(RankInfoDetectTest, St_WaitComplete_When_InpSt_Expect_Right)
@@ -250,17 +259,16 @@ TEST_F(RankInfoDetectTest, St_WaitComplete_When_InpSt_Expect_Right)
     // check
     RankInfoDetect rankInfoDetect;
     HcclRootHandleV2 rootHandle;
-    EXPECT_THROW(rankInfoDetect.WaitComplete(5000), InternalException);
-    EXPECT_NO_THROW(rankInfoDetect.WaitComplete(6000));
+    EXPECT_EQ(rankInfoDetect.WaitComplete(5000, RANKINFO_DETECT_SERVER_STATUS_IDLE), HcclResult::HCCL_E_INTERNAL);
+    EXPECT_EQ(rankInfoDetect.WaitComplete(6000, RANKINFO_DETECT_SERVER_STATUS_IDLE), HcclResult::HCCL_SUCCESS);
 
     // when
     EnvSocketConfig envConfig;
-    EnvSocketConfig &fakeEnvConfig = envConfig;
+    EnvSocketConfig& fakeEnvConfig = envConfig;
     fakeEnvConfig.linkTimeOut = CfgField<s32>{"HCCL_CONNECT_TIMEOUT", s32(0.1), Str2T<s32>};
     fakeEnvConfig.linkTimeOut.isParsed = true;
     MOCKER_CPP(&EnvConfig::GetSocketConfig).stubs().will(returnValue(fakeEnvConfig));
 
     // check
-    EXPECT_THROW(rankInfoDetect.WaitComplete(4000), TimeoutException);
+    EXPECT_EQ(rankInfoDetect.WaitComplete(4000, RANKINFO_DETECT_SERVER_STATUS_IDLE), HcclResult::HCCL_E_TIMEOUT);
 }
-

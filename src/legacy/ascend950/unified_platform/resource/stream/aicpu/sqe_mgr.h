@@ -25,7 +25,7 @@ struct SqInfo {
     u32 sqTail;
     u32 sqHead;
     u64 sqBaseAddr;
-    u8  sqeBuffer[AC_SQE_SIZE * AC_SQE_MAX_CNT];
+    u8 sqeBuffer[AC_SQE_SIZE * AC_SQE_MAX_CNT];
 };
 
 class SqeMgr {
@@ -34,7 +34,7 @@ public:
 
     HcclResult Begin(u32 sqId);
 
-    HcclResult Add(u32 sqId, HcclSqe *sqe);
+    HcclResult Add(u32 sqId, HcclSqe* sqe);
 
     HcclResult Commit(u32 sqId);
 
@@ -55,7 +55,7 @@ private:
 
     u32 GetTailToHeadDist(u32 sqId, u32 head, u32 tail);
 
-    void AddSqeToBuffer(void *bufferAddr, void *sqeAddr) const;
+    HcclResult AddSqeToBuffer(void* bufferAddr, void* sqeAddr) const;
 
     u32 devPhyId;
 

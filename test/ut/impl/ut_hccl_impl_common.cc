@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -61,13 +61,12 @@
 using namespace std;
 using namespace hccl;
 
-typedef struct para_struct
-{
+typedef struct para_struct {
     HcclRootInfo rootInfo;
     std::string identify;
     s32 comm_num;
     s32 device_id;
-    s32 ranks_local; //本服务器内的rank数
+    s32 ranks_local; // 本服务器内的rank数
 
     char* file_name;
     void* sendbuff;
@@ -110,56 +109,47 @@ void* impl_common_broadcast_task(void* parg)
     EXPECT_EQ(ret, HCCL_SUCCESS);
     sal_memcpy(hcom_info.params.id.internal, sizeof(HcclRootInfo), &para_info->rootInfo, sizeof(HcclRootInfo));
 
-    hcom_info.pComm.reset(new(std::nothrow) hccl::hcclComm());
+    hcom_info.pComm.reset(new (std::nothrow) hccl::hcclComm());
     rtModel_t model = (void*)1;
 
-    if (ret != HCCL_SUCCESS)
-    {
+    if (ret != HCCL_SUCCESS) {
         HCCL_ERROR("dev[%d] task rt_set_device fails", hcom_info.params.rank);
     }
 
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = hcom_info.pComm->init(hcom_info.params, commConfig, hcom_info.rankTable);
-    if (ret != HCCL_SUCCESS)
-    {
+    if (ret != HCCL_SUCCESS) {
         HCCL_ERROR("dev[%d] task broadcast fails", para_info->device_id);
     }
 
     bool swapped;
 
-
     rank_num_tmp = *(para_info->sync_addr) - 1;
 
-    do
-    {
+    do {
         rank_num_tmp += 1;
 
         swapped = __sync_bool_compare_and_swap(para_info->sync_addr, rank_num_tmp, rank_num_tmp + 1);
-    }
-    while (!swapped);
+    } while (!swapped);
 
-    while (*(para_info->sync_addr) < para_info->ranks_local)
-    { sched_yield(); } // linux提供一个系统调用运行进程主动让出执行权
+    while (*(para_info->sync_addr) < para_info->ranks_local) {
+        sched_yield();
+    } // linux提供一个系统调用运行进程主动让出执行权
 
-    __sync_synchronize();  // 插入内存屏障，对顺序性有要求，但是有没有使用lock指令的时候
+    __sync_synchronize(); // 插入内存屏障，对顺序性有要求，但是有没有使用lock指令的时候
     HCCL_DEBUG("all %d  ranks init ok ,then broadcast", hcom_info.params.totalRanks);
-    ret = hcom_info.pComm->Broadcast("tag_impl_common_broadcast_task",
-                                      para_info->sendbuff,
-                                      para_info->count,
-                                      para_info->datatype,
-                                      para_info->root,
-                                      para_info->stream);
+    ret = hcom_info.pComm->Broadcast(
+        "tag_impl_common_broadcast_task", para_info->sendbuff, para_info->count, para_info->datatype, para_info->root,
+        para_info->stream);
 
-    if (ret != HCCL_SUCCESS)
-    {
+    if (ret != HCCL_SUCCESS) {
         HCCL_ERROR("rank[%d] task broadcast fails", hcom_info.params.rank);
     }
 
     rtError_t rt_ret = RT_ERROR_NONE;
     rt_ret = aclrtSynchronizeStream(para_info->stream);
 
-    if ( rt_ret != RT_ERROR_NONE)
-    {
+    if (rt_ret != RT_ERROR_NONE) {
         HCCL_ERROR("rank[%d] task allgather fails", hcom_info.params.rank);
     }
     RankConsistentcyChecker::GetInstance().ClearCheckInfo();
@@ -195,83 +185,65 @@ void* impl_common_all_reduce_task(void* parg)
     EXPECT_EQ(ret, HCCL_SUCCESS);
     sal_memcpy(hcom_info.params.id.internal, sizeof(HcclRootInfo), &para_info->rootInfo, sizeof(HcclRootInfo));
 
-    hcom_info.pComm.reset(new(std::nothrow) hccl::hcclComm());
+    hcom_info.pComm.reset(new (std::nothrow) hccl::hcclComm());
     rtModel_t model = (void*)1;
 
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = hcom_info.pComm->init(hcom_info.params, commConfig, hcom_info.rankTable);
-    if (ret != HCCL_SUCCESS)
-    {
+    if (ret != HCCL_SUCCESS) {
         HCCL_ERROR("dev[%d] task all_reduce fails", para_info->device_id);
     }
     bool swapped;
 
     rank_num_tmp = *(para_info->sync_addr) - 1;
 
-    do
-    {
+    do {
         rank_num_tmp += 1;
 
         swapped = __sync_bool_compare_and_swap(para_info->sync_addr, rank_num_tmp, rank_num_tmp + 1);
-    }
-    while (!swapped);
+    } while (!swapped);
 
-    while (*(para_info->sync_addr) < para_info->ranks_local)
-    { sched_yield(); } // linux提供一个系统调用运行进程主动让出执行权
+    while (*(para_info->sync_addr) < para_info->ranks_local) {
+        sched_yield();
+    } // linux提供一个系统调用运行进程主动让出执行权
 
-    __sync_synchronize();  // 插入内存屏障，对顺序性有要求，但是有没有使用lock指令的时候
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB);
-    ret =  hcom_info.pComm->AllReduce("tag_impl_common_all_reduce_task",
-                               para_info->sendbuff,
-                               para_info->recvbuff,
-                               para_info->count,
-                               para_info->datatype,
-                               para_info->op,
-                               para_info->stream);
+    __sync_synchronize(); // 插入内存屏障，对顺序性有要求，但是有没有使用lock指令的时候
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB);
+    ret = hcom_info.pComm->AllReduce(
+        "tag_impl_common_all_reduce_task", para_info->sendbuff, para_info->recvbuff, para_info->count,
+        para_info->datatype, para_info->op, para_info->stream);
 
-    if (ret != HCCL_SUCCESS)
-    {
+    if (ret != HCCL_SUCCESS) {
         HCCL_ERROR("dev[%d] task HcclAllReduce fails", para_info->device_id);
     }
 
     rtError_t rt_ret = RT_ERROR_NONE;
     rt_ret = aclrtSynchronizeStream(para_info->stream);
 
-    if ( rt_ret != RT_ERROR_NONE)
-    {
+    if (rt_ret != RT_ERROR_NONE) {
         HCCL_ERROR("rank[%d] task allgather fails", hcom_info.params.rank);
     }
     RankConsistentcyChecker::GetInstance().ClearCheckInfo();
     return (NULL);
 }
 
-class HcclImplCommonTest : public testing::Test
-{
+class HcclImplCommonTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "HcclImplCommonTest SetUP" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "HcclImplCommonTest TearDown" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "HcclImplCommonTest SetUP" << std::endl; }
+    static void TearDownTestCase() { std::cout << "HcclImplCommonTest TearDown" << std::endl; }
     // Some expensive resource shared by all tests.
     virtual void SetUp()
     {
         GlobalMockObject::verify();
-        static s32  call_cnt = 0;
+        static s32 call_cnt = 0;
         DlTdtFunction::GetInstance().DlTdtFunctionInit();
         TsdOpen(1, 2);
-        string name =std::to_string(call_cnt++) +"_" + __PRETTY_FUNCTION__;
-        ra_set_shm_name(name .c_str());
+        string name = std::to_string(call_cnt++) + "_" + __PRETTY_FUNCTION__;
+        ra_set_shm_name(name.c_str());
         ra_set_test_type(0, "UT_TEST");
         set_board_id(0x2000);
         s32 portNum = 7;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
         std::cout << "A Test SetUP" << std::endl;
     }
     virtual void TearDown()
@@ -296,13 +268,10 @@ TEST_F(HcclImplCommonTest, ut_hccl_impl_610_8rank_1server_allreduce_char)
     char file_name_t[] = "./st_hccl_impl_610_8rank_1server_allreduce_char.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(4) << g_rank_table_610_8rank_1server << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
     outfile.close();
@@ -335,8 +304,7 @@ TEST_F(HcclImplCommonTest, ut_hccl_impl_610_8rank_1server_allreduce_char)
     ret = hccl::hcclComm::GetUniqueId(&rootInfo);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     /** 初始化输入输出缓存 */
-    for (s32 i = 0; i < ndev; i++ )
-    {
+    for (s32 i = 0; i < ndev; i++) {
         ret = hrtMalloc((void**)&sendbuf[i], count * sizeof(s8));
         EXPECT_EQ(ret, HCCL_SUCCESS);
         sal_memset(sendbuf[i], count * sizeof(s8), 0, count * sizeof(s8));
@@ -350,37 +318,31 @@ TEST_F(HcclImplCommonTest, ut_hccl_impl_610_8rank_1server_allreduce_char)
         outputbuf[i] = recvbuf[i];
     }
 
-    //sendbuf 赋值
-    for (u32 j = 0; j < ndev; j++)
-    {
-        for (u32 i = 0; i < count; i++)
-        {
+    // sendbuf 赋值
+    for (u32 j = 0; j < ndev; j++) {
+        for (u32 i = 0; i < count; i++) {
             inputbuf[j][i] = 1;
         }
     }
 
-    //resultbuf 赋值
-   for (s32 i = 0; i < ndev; ++i)
- {
-    for (u32 j = 0; j < count; j++)
-     {
+    // resultbuf 赋值
+    for (s32 i = 0; i < ndev; ++i) {
+        for (u32 j = 0; j < count; j++) {
             result_buff[i][j] = ndev;
-     }
+        }
     }
-    for (s32 i = 0; i < ndev; ++i)
-    {
+    for (s32 i = 0; i < ndev; ++i) {
         rt_ret = aclrtCreateStream(&stream[i]);
         EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     }
 
-    for (s32 i = 0; i < ndev; i++)
-    {
+    for (s32 i = 0; i < ndev; i++) {
         sal_memcpy(&para_info[i].rootInfo, sizeof(HcclRootInfo), &rootInfo, sizeof(HcclRootInfo));
         std::ostringstream identify("");
         identify << i;
         para_info[i].identify = identify.str();
         para_info[i].comm_num = ndev;
-        para_info[i].device_id = i ;
+        para_info[i].device_id = i;
         para_info[i].ranks_local = ndev;
 
         para_info[i].count = count;
@@ -395,51 +357,41 @@ TEST_F(HcclImplCommonTest, ut_hccl_impl_610_8rank_1server_allreduce_char)
     }
 
     // 创建每个Dev的allreduce任务线程
-    for (s32 i = 0; i < ndev; i++)
-    {
+    for (s32 i = 0; i < ndev; i++) {
         tid[i] = sal_thread_create("thread", impl_common_all_reduce_task, (void*)&para_info[i]);
-        EXPECT_NE(tid[i], (sal_thread_t )NULL);
+        EXPECT_NE(tid[i], (sal_thread_t)NULL);
     }
 
-    for (s32 i = 0; i < ndev; i++)
-    {
-        while ( sal_thread_is_running(tid[i]))
-        {
+    for (s32 i = 0; i < ndev; i++) {
+        while (sal_thread_is_running(tid[i])) {
             SaluSleep(SAL_MILLISECOND_USEC * 10);
         }
     }
 
-    //获取stream的操作的同步信号量
-    for (s32 i = 0; i < ndev; i++)
-    {
-        for (s32 j = 0; j < count; j++)
-        {
+    // 获取stream的操作的同步信号量
+    for (s32 i = 0; i < ndev; i++) {
+        for (s32 j = 0; j < count; j++) {
             s8 res = result_buff[i][j];
             s8 recv = outputbuf[i][j];
 
-            if (res != recv)
-            {
+            if (res != recv) {
                 HCCL_ERROR(" rank :%d recvbuf[%d] :%d result_buff[%d]:%d \n", i, j, recv, j, res);
             }
         }
     }
-      if (errors)
-        {
-            HCCL_ERROR("%d errors. Test FAILED.\n", errors);
-        }
-        else
-        {
-            HCCL_INFO("Test PASSED.\n");
-        }
-    for (s32 i = 0; i < ndev; i++)
-   {
+    if (errors) {
+        HCCL_ERROR("%d errors. Test FAILED.\n", errors);
+    } else {
+        HCCL_INFO("Test PASSED.\n");
+    }
+    for (s32 i = 0; i < ndev; i++) {
         hrtFree(sendbuf[i]);
         hrtFree(recvbuf[i]);
         hrtFree(result_buff[i]);
-    rt_ret = aclrtDestroyStream(stream[i]);
+        rt_ret = aclrtDestroyStream(stream[i]);
 
-    EXPECT_EQ(rt_ret, RT_ERROR_NONE);
-   }
+        EXPECT_EQ(rt_ret, RT_ERROR_NONE);
+    }
     set_board_id(0);
     remove(file_name_t);
     EXPECT_EQ(errors, 0);
@@ -771,13 +723,10 @@ TEST_F(HcclImplCommonTest, ut_hccl_impl_610_4rank_1server_allreduce_char)
     char file_name_t[] = "./st_hccl_impl_610_4rank_1server_allreduce_char.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(4) << g_rank_table_610_4rank_1server << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
     outfile.close();
@@ -810,8 +759,7 @@ TEST_F(HcclImplCommonTest, ut_hccl_impl_610_4rank_1server_allreduce_char)
     ret = hccl::hcclComm::GetUniqueId(&rootInfo);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     /** 初始化输入输出缓存 */
-    for (s32 i = 0; i < ndev; i++ )
-    {
+    for (s32 i = 0; i < ndev; i++) {
         ret = hrtMalloc((void**)&sendbuf[i], count * sizeof(s8));
         EXPECT_EQ(ret, HCCL_SUCCESS);
         sal_memset(sendbuf[i], count * sizeof(s8), 0, count * sizeof(s8));
@@ -825,37 +773,31 @@ TEST_F(HcclImplCommonTest, ut_hccl_impl_610_4rank_1server_allreduce_char)
         outputbuf[i] = recvbuf[i];
     }
 
-    //sendbuf 赋值
-    for (u32 j = 0; j < ndev; j++)
-    {
-        for (u32 i = 0; i < count; i++)
-        {
+    // sendbuf 赋值
+    for (u32 j = 0; j < ndev; j++) {
+        for (u32 i = 0; i < count; i++) {
             inputbuf[j][i] = 1;
         }
     }
 
-    //resultbuf 赋值
-   for (s32 i = 0; i < ndev; ++i)
- {
-    for (u32 j = 0; j < count; j++)
-     {
+    // resultbuf 赋值
+    for (s32 i = 0; i < ndev; ++i) {
+        for (u32 j = 0; j < count; j++) {
             result_buff[i][j] = ndev;
-     }
+        }
     }
-    for (s32 i = 0; i < ndev; ++i)
-    {
+    for (s32 i = 0; i < ndev; ++i) {
         rt_ret = aclrtCreateStream(&stream[i]);
         EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     }
 
-    for (s32 i = 0; i < ndev; i++)
-    {
+    for (s32 i = 0; i < ndev; i++) {
         sal_memcpy(&para_info[i].rootInfo, sizeof(HcclRootInfo), &rootInfo, sizeof(HcclRootInfo));
         std::ostringstream identify("");
         identify << i;
         para_info[i].identify = identify.str();
         para_info[i].comm_num = ndev;
-        para_info[i].device_id = i ;
+        para_info[i].device_id = i;
         para_info[i].ranks_local = ndev;
 
         para_info[i].count = count;
@@ -870,51 +812,41 @@ TEST_F(HcclImplCommonTest, ut_hccl_impl_610_4rank_1server_allreduce_char)
     }
 
     // 创建每个Dev的allreduce任务线程
-    for (s32 i = 0; i < ndev; i++)
-    {
+    for (s32 i = 0; i < ndev; i++) {
         tid[i] = sal_thread_create("thread", impl_common_all_reduce_task, (void*)&para_info[i]);
-        EXPECT_NE(tid[i], (sal_thread_t )NULL);
+        EXPECT_NE(tid[i], (sal_thread_t)NULL);
     }
 
-    for (s32 i = 0; i < ndev; i++)
-    {
-        while ( sal_thread_is_running(tid[i]))
-        {
+    for (s32 i = 0; i < ndev; i++) {
+        while (sal_thread_is_running(tid[i])) {
             SaluSleep(SAL_MILLISECOND_USEC * 10);
         }
     }
 
-    //获取stream的操作的同步信号量
-    for (s32 i = 0; i < ndev; i++)
-  {
-     for (s32 j = 0; j < count; j++)
-    {
+    // 获取stream的操作的同步信号量
+    for (s32 i = 0; i < ndev; i++) {
+        for (s32 j = 0; j < count; j++) {
             s8 res = result_buff[i][j];
             s8 recv = outputbuf[i][j];
 
-            if (res != recv)
-            {
+            if (res != recv) {
                 HCCL_ERROR(" rank :%d recvbuf[%d] :%d result_buff[%d]:%d \n", i, j, recv, j, res);
             }
+        }
     }
-        }
-      if (errors)
-        {
-            HCCL_ERROR("%d errors. Test FAILED.\n", errors);
-        }
-        else
-        {
-            HCCL_INFO("Test PASSED.\n");
-        }
-    for (s32 i = 0; i < ndev; i++)
-   {
+    if (errors) {
+        HCCL_ERROR("%d errors. Test FAILED.\n", errors);
+    } else {
+        HCCL_INFO("Test PASSED.\n");
+    }
+    for (s32 i = 0; i < ndev; i++) {
         hrtFree(sendbuf[i]);
         hrtFree(recvbuf[i]);
         hrtFree(result_buff[i]);
-    rt_ret = aclrtDestroyStream(stream[i]);
+        rt_ret = aclrtDestroyStream(stream[i]);
 
-    EXPECT_EQ(rt_ret, RT_ERROR_NONE);
-   }
+        EXPECT_EQ(rt_ret, RT_ERROR_NONE);
+    }
     set_board_id(0);
     remove(file_name_t);
     EXPECT_EQ(errors, 0);
@@ -927,13 +859,10 @@ TEST_F(HcclImplCommonTest, ut_hccl_impl_610_2rank_1server_allreduce_char)
     char file_name_t[] = "./st_hccl_impl_610_2rank_1server_allreduce_char.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(4) << g_rank_table_610_2rank_1server << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
     outfile.close();
@@ -966,8 +895,7 @@ TEST_F(HcclImplCommonTest, ut_hccl_impl_610_2rank_1server_allreduce_char)
     ret = hccl::hcclComm::GetUniqueId(&rootInfo);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     /** 初始化输入输出缓存 */
-    for (s32 i = 0; i < ndev; i++ )
-    {
+    for (s32 i = 0; i < ndev; i++) {
         ret = hrtMalloc((void**)&sendbuf[i], count * sizeof(s8));
         EXPECT_EQ(ret, HCCL_SUCCESS);
         sal_memset(sendbuf[i], count * sizeof(s8), 0, count * sizeof(s8));
@@ -981,37 +909,31 @@ TEST_F(HcclImplCommonTest, ut_hccl_impl_610_2rank_1server_allreduce_char)
         outputbuf[i] = recvbuf[i];
     }
 
-    //sendbuf 赋值
-    for (u32 j = 0; j < ndev; j++)
-    {
-        for (u32 i = 0; i < count; i++)
-        {
+    // sendbuf 赋值
+    for (u32 j = 0; j < ndev; j++) {
+        for (u32 i = 0; i < count; i++) {
             inputbuf[j][i] = 1;
         }
     }
 
-    //resultbuf 赋值
-   for (s32 i = 0; i < ndev; ++i)
- {
-    for (u32 j = 0; j < count; j++)
-     {
+    // resultbuf 赋值
+    for (s32 i = 0; i < ndev; ++i) {
+        for (u32 j = 0; j < count; j++) {
             result_buff[i][j] = ndev;
-     }
+        }
     }
-    for (s32 i = 0; i < ndev; ++i)
-    {
+    for (s32 i = 0; i < ndev; ++i) {
         rt_ret = aclrtCreateStream(&stream[i]);
         EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     }
 
-    for (s32 i = 0; i < ndev; i++)
-    {
+    for (s32 i = 0; i < ndev; i++) {
         sal_memcpy(&para_info[i].rootInfo, sizeof(HcclRootInfo), &rootInfo, sizeof(HcclRootInfo));
         std::ostringstream identify("");
         identify << i;
         para_info[i].identify = identify.str();
         para_info[i].comm_num = ndev;
-        para_info[i].device_id = i ;
+        para_info[i].device_id = i;
         para_info[i].ranks_local = ndev;
 
         para_info[i].count = count;
@@ -1026,51 +948,41 @@ TEST_F(HcclImplCommonTest, ut_hccl_impl_610_2rank_1server_allreduce_char)
     }
 
     // 创建每个Dev的allreduce任务线程
-    for (s32 i = 0; i < ndev; i++)
-    {
+    for (s32 i = 0; i < ndev; i++) {
         tid[i] = sal_thread_create("thread", impl_common_all_reduce_task, (void*)&para_info[i]);
-        EXPECT_NE(tid[i], (sal_thread_t )NULL);
+        EXPECT_NE(tid[i], (sal_thread_t)NULL);
     }
 
-    for (s32 i = 0; i < ndev; i++)
-    {
-        while ( sal_thread_is_running(tid[i]))
-        {
+    for (s32 i = 0; i < ndev; i++) {
+        while (sal_thread_is_running(tid[i])) {
             SaluSleep(SAL_MILLISECOND_USEC * 10);
         }
     }
 
-    //获取stream的操作的同步信号量
-    for (s32 i = 0; i < ndev; i++)
-  {
-     for (s32 j = 0; j < count; j++)
-    {
+    // 获取stream的操作的同步信号量
+    for (s32 i = 0; i < ndev; i++) {
+        for (s32 j = 0; j < count; j++) {
             s8 res = result_buff[i][j];
             s8 recv = outputbuf[i][j];
 
-            if (res != recv)
-            {
+            if (res != recv) {
                 HCCL_ERROR(" rank :%d recvbuf[%d] :%d result_buff[%d]:%d \n", i, j, recv, j, res);
             }
+        }
     }
-        }
-      if (errors)
-        {
-            HCCL_ERROR("%d errors. Test FAILED.\n", errors);
-        }
-        else
-        {
-            HCCL_INFO("Test PASSED.\n");
-        }
-    for (s32 i = 0; i < ndev; i++)
-   {
+    if (errors) {
+        HCCL_ERROR("%d errors. Test FAILED.\n", errors);
+    } else {
+        HCCL_INFO("Test PASSED.\n");
+    }
+    for (s32 i = 0; i < ndev; i++) {
         hrtFree(sendbuf[i]);
         hrtFree(recvbuf[i]);
         hrtFree(result_buff[i]);
-    rt_ret = aclrtDestroyStream(stream[i]);
+        rt_ret = aclrtDestroyStream(stream[i]);
 
-    EXPECT_EQ(rt_ret, RT_ERROR_NONE);
-   }
+        EXPECT_EQ(rt_ret, RT_ERROR_NONE);
+    }
     set_board_id(0);
     remove(file_name_t);
     EXPECT_EQ(errors, 0);
@@ -2655,7 +2567,7 @@ TEST_F(HcclImplCommonTest, ut_hccl_impl_610_5rank_1server_broadcast_char)
 #endif
 
 #if 1
-static void TestConstructParam(HcclCommParams &params, RankTable_t &rankTable)
+static void TestConstructParam(HcclCommParams& params, RankTable_t& rankTable)
 {
     string commId = "comm ";
     memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
@@ -2686,4 +2598,3 @@ static void TestConstructParam(HcclCommParams &params, RankTable_t &rankTable)
 }
 
 #endif
-

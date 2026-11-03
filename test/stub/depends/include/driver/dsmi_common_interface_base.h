@@ -23,11 +23,7 @@ typedef enum {
     DSMI_DETECT_MAIN_CMD_MAX,
 } DSMI_DETECT_MAIN_CMD;
 
-typedef enum {
-    SECURE_BOOT,
-    ROOTFS_CMS,
-    BOOT_TYPE_MAX
-} BOOT_TYPE;
+typedef enum { SECURE_BOOT, ROOTFS_CMS, BOOT_TYPE_MAX } BOOT_TYPE;
 
 #define DSMI_EMU_ISP_MAX 2
 #define DSMI_EMU_DVPP_MAX 3
@@ -35,7 +31,7 @@ typedef enum {
 #define DSMI_EMU_AICORE_MAX 10
 #define DSMI_EMU_AIVECTOR_MAX 8
 
-struct  dsmi_emu_subsys_state_stru {
+struct dsmi_emu_subsys_state_stru {
     DSMI_FAULT_STATE emu_sys;
     DSMI_FAULT_STATE emu_sils;
     DSMI_FAULT_STATE emu_sub_sils;
@@ -56,7 +52,7 @@ struct  dsmi_emu_subsys_state_stru {
     DSMI_FAULT_STATE emu_sub_tsc;
 };
 
-struct  dsmi_safetyisland_status_stru {
+struct dsmi_safetyisland_status_stru {
     DSMI_FAULT_STATE status;
 };
 
@@ -85,7 +81,7 @@ struct dsmi_reboot_reason {
  * @param [out] status return the value of gpio value
  * @return  0 for success, others for fail
  */
-DLLEXPORT int dsmi_get_gpio_status(int device_id, unsigned int gpio_num, unsigned int *status);
+DLLEXPORT int dsmi_get_gpio_status(int device_id, unsigned int gpio_num, unsigned int* status);
 
 /**
  * @ingroup driver
@@ -94,7 +90,7 @@ DLLEXPORT int dsmi_get_gpio_status(int device_id, unsigned int gpio_num, unsigne
  * @param [out] emu_subsys_state_data dsmi emu subsys status information.
  * @return  0 for success, others for fail
  */
-DLLEXPORT int dsmi_get_sochwfault(int device_id, struct dsmi_emu_subsys_state_stru *emu_subsys_state_data);
+DLLEXPORT int dsmi_get_sochwfault(int device_id, struct dsmi_emu_subsys_state_stru* emu_subsys_state_data);
 
 /**
  * @ingroup driver
@@ -103,13 +99,13 @@ DLLEXPORT int dsmi_get_sochwfault(int device_id, struct dsmi_emu_subsys_state_st
  * @param [out] safetyisland_status_data dsmi safetyisland status information.
  * @return  0 for success, others for fail
  */
-DLLEXPORT int dsmi_get_safetyisland_status(int device_id,
-    struct dsmi_safetyisland_status_stru *safetyisland_status_data);
+DLLEXPORT int
+dsmi_get_safetyisland_status(int device_id, struct dsmi_safetyisland_status_stru* safetyisland_status_data);
 
 /**
-* @ingroup driver
-* @brief set detect info
-* @attention NULL
+ * @ingroup driver
+ * @brief set detect info
+ * @attention NULL
  * @param [in] device_id device id
  * @param [in] main_cmd main command type for detect information
  * @param [in] sub_cmd sub command type for detect information
@@ -117,13 +113,14 @@ DLLEXPORT int dsmi_get_safetyisland_status(int device_id,
  * @param [in] buf_size buffer size
  * @return  0 for success, others for fail
  */
-DLLEXPORT int dsmi_set_detect_info(unsigned int device_id, DSMI_DETECT_MAIN_CMD main_cmd,
-    unsigned int sub_cmd, const void *buf, unsigned int buf_size);
+DLLEXPORT int dsmi_set_detect_info(
+    unsigned int device_id, DSMI_DETECT_MAIN_CMD main_cmd, unsigned int sub_cmd, const void* buf,
+    unsigned int buf_size);
 
 /**
-* @ingroup driver
-* @brief get detect info
-* @attention NULL
+ * @ingroup driver
+ * @brief get detect info
+ * @attention NULL
  * @param [in] device_id device id
  * @param [in] main_cmd main command type for detect information
  * @param [in] sub_cmd sub command type for detect information
@@ -131,30 +128,30 @@ DLLEXPORT int dsmi_set_detect_info(unsigned int device_id, DSMI_DETECT_MAIN_CMD 
  * @param [in out] buf_size input buffer size and output data size
  * @return  0 for success, others for fail
  */
-DLLEXPORT int dsmi_get_detect_info(unsigned int device_id, DSMI_DETECT_MAIN_CMD main_cmd,
-    unsigned int sub_cmd, void *buf, unsigned int *buf_size);
+DLLEXPORT int dsmi_get_detect_info(
+    unsigned int device_id, DSMI_DETECT_MAIN_CMD main_cmd, unsigned int sub_cmd, void* buf, unsigned int* buf_size);
 
 /**
-* @ingroup driver
-* @brief inject fault
-* @attention call dsmi_get_fault_inject_info() to get fault inject info that supported by dsmi_fault_inject();
-* @param [in] fault_inject_info a fault that the customer want to inject;
-* @return 0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief inject fault
+ * @attention call dsmi_get_fault_inject_info() to get fault inject info that supported by dsmi_fault_inject();
+ * @param [in] fault_inject_info a fault that the customer want to inject;
+ * @return 0 for success, others for fail
+ */
 DLLEXPORT int dsmi_fault_inject(DSMI_FAULT_INJECT_INFO fault_inject_info);
 
 /**
-* @ingroup driver
-* @brief get the inject fault infos supported by device
-* @attention real_info_cnt will <= 64;
-* @param [in] device_id
-* @param [in] max_info_cnt how many DSMI_FAULT_INJECT_INFO type structs did the info_buf contain;
-* @param [out] info_buf  the memory malloced by users to store DSMI_FAULT_INJECT_INFO structs;
-* @param [out] real_info_cnt DSMI_FAULT_INJECT_INFO supported by device;
-* @return 0 for success, others for fail
-*/
-DLLEXPORT int dsmi_get_fault_inject_info(unsigned int device_id, unsigned int max_info_cnt,
-    DSMI_FAULT_INJECT_INFO *info_buf, unsigned int *real_info_cnt);
+ * @ingroup driver
+ * @brief get the inject fault infos supported by device
+ * @attention real_info_cnt will <= 64;
+ * @param [in] device_id
+ * @param [in] max_info_cnt how many DSMI_FAULT_INJECT_INFO type structs did the info_buf contain;
+ * @param [out] info_buf  the memory malloced by users to store DSMI_FAULT_INJECT_INFO structs;
+ * @param [out] real_info_cnt DSMI_FAULT_INJECT_INFO supported by device;
+ * @return 0 for success, others for fail
+ */
+DLLEXPORT int dsmi_get_fault_inject_info(
+    unsigned int device_id, unsigned int max_info_cnt, DSMI_FAULT_INJECT_INFO* info_buf, unsigned int* real_info_cnt);
 
 /**
  * @ingroup driver
@@ -162,49 +159,49 @@ DLLEXPORT int dsmi_get_fault_inject_info(unsigned int device_id, unsigned int ma
  * @param [in] config_xml_path    full path of configuration file
  * @return  0 for success, others for fail
  */
-DLLEXPORT int dsmi_check_partitions(const char *config_xml_path);
+DLLEXPORT int dsmi_check_partitions(const char* config_xml_path);
 
 /**
-* @ingroup driver
-* @brief Get the reboot reason
-* @attention NULL
-* @param [in] device_id  The device id
-* @param [out] reboot_reason  Indicates the reset reason of the AI processor.
-* @return  0 for success, others for fail
-*/
-DLLEXPORT int dsmi_get_reboot_reason(int device_id, struct dsmi_reboot_reason *reboot_reason);
+ * @ingroup driver
+ * @brief Get the reboot reason
+ * @attention NULL
+ * @param [in] device_id  The device id
+ * @param [out] reboot_reason  Indicates the reset reason of the AI processor.
+ * @return  0 for success, others for fail
+ */
+DLLEXPORT int dsmi_get_reboot_reason(int device_id, struct dsmi_reboot_reason* reboot_reason);
 
 /**
-* @ingroup driver
-* @brief Get boot state
-* @attention NULL
-* @param [in] device_id: the device id
-* @param [in] boot_type: the stage boot_type. 0 for Secure Boot, 1 for rootfs cms
-* @param [out] state: the boot state. 0 for normal, others for abnormal
-* @return  0 for success, others for fail
-*/
-DLLEXPORT int dsmi_get_last_bootstate(int device_id, BOOT_TYPE boot_type, unsigned int *state);
+ * @ingroup driver
+ * @brief Get boot state
+ * @attention NULL
+ * @param [in] device_id: the device id
+ * @param [in] boot_type: the stage boot_type. 0 for Secure Boot, 1 for rootfs cms
+ * @param [out] state: the boot state. 0 for normal, others for abnormal
+ * @return  0 for success, others for fail
+ */
+DLLEXPORT int dsmi_get_last_bootstate(int device_id, BOOT_TYPE boot_type, unsigned int* state);
 
 /**
-* @ingroup driver
-* @brief get centre notify info
-* @attention NULL
-* @param [in] device_id: the device id
-* @param [in] index: which index you want to get(0-1023)
-* @param [out] value: the valve you want to get
-* @return  0 for success, others for fail
-*/
-DLLEXPORT int dsmi_get_centre_notify_info(int device_id, int index, int *value);
+ * @ingroup driver
+ * @brief get centre notify info
+ * @attention NULL
+ * @param [in] device_id: the device id
+ * @param [in] index: which index you want to get(0-1023)
+ * @param [out] value: the valve you want to get
+ * @return  0 for success, others for fail
+ */
+DLLEXPORT int dsmi_get_centre_notify_info(int device_id, int index, int* value);
 
 /**
-* @ingroup driver
-* @brief set centre notify info
-* @attention NULL
-* @param [in] device_id: the device id
-* @param [in] index: which index you want to set(0-1022)
-* @param [in] value: the valve you want to set
-* @return  0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief set centre notify info
+ * @attention NULL
+ * @param [in] device_id: the device id
+ * @param [in] index: which index you want to set(0-1022)
+ * @param [in] value: the valve you want to set
+ * @return  0 for success, others for fail
+ */
 DLLEXPORT int dsmi_set_centre_notify_info(int device_id, int index, int value);
 
 #endif

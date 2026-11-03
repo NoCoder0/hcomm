@@ -1,25 +1,20 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "scatter_nhr.h"
 #include "alg_template_register.h"
 
 namespace hccl {
-ScatterNHR::ScatterNHR(const HcclDispatcher dispatcher)
-    : NHRBase(dispatcher), interRank_(0), interRankSize_(0)
-{
-}
+ScatterNHR::ScatterNHR(const HcclDispatcher dispatcher) : NHRBase(dispatcher), interRank_(0), interRankSize_(0) {}
 
-ScatterNHR::~ScatterNHR()
-{
-}
+ScatterNHR::~ScatterNHR() {}
 
 HcclResult ScatterNHR::Prepare(bool needMerge)
 {
@@ -28,8 +23,8 @@ HcclResult ScatterNHR::Prepare(bool needMerge)
 }
 
 // scatter的入口函数
-HcclResult ScatterNHR::RunAsync(const u32 rank, const u32 rankSize,
-    const std::vector<std::shared_ptr<Transport> > &links)
+HcclResult
+ScatterNHR::RunAsync(const u32 rank, const u32 rankSize, const std::vector<std::shared_ptr<Transport>>& links)
 {
     // 从Broadcast调用Scatter需要merge
     if (isNeedMerge) {
@@ -55,15 +50,16 @@ HcclResult ScatterNHR::RunAsync(const u32 rank, const u32 rankSize,
     }
 
     u32 unitSize = DataUnitSize(dataType_);
-    CHK_PRT_RET(unitSize == 0, HCCL_ERROR("[ScatterNHR][RunAsync] rank[%u] unit data size is zero", rank),
-        HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        unitSize == 0, HCCL_ERROR("[ScatterNHR][RunAsync] rank[%u] unit data size is zero", rank), HCCL_E_INTERNAL);
 
-    // 带入vecotr为空，计算每个rank的结果偏移和大小
+    // 带入vector为空，计算每个rank的结果偏移和大小
     if (slices_.size() == 0) {
         PrepareSlicesData(unitSize, count_, interRankSize_);
     }
 
-    CHK_PRT_RET(links.size() < rankSize,
+    CHK_PRT_RET(
+        links.size() < rankSize,
         HCCL_ERROR("[ScatterNHR][RunAsync] rank[%u] link size[%llu] is less than rank size", rank, links.size()),
         HCCL_E_INTERNAL);
 
@@ -80,9 +76,13 @@ HcclResult ScatterNHR::RunAsync(const u32 rank, const u32 rankSize,
 
         src = inputMem_.range(slices_[targetIdx].offset, slices_[targetIdx].size);
         ret = HcclD2DMemcpyAsync(dispatcher_, outputMem_, src, stream_);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[ScatterNHR][RunAsync] root rank[%u] memcpy async from input[%p] "\
-            "failed to output[%p]", interRank_, inputMem_.ptr(), outputMem_.ptr()), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[ScatterNHR][RunAsync] root rank[%u] memcpy async from input[%p] "
+                "failed to output[%p]",
+                interRank_, inputMem_.ptr(), outputMem_.ptr()),
+            ret);
     }
 
     // 运行scatter, NHR 算法
@@ -90,8 +90,8 @@ HcclResult ScatterNHR::RunAsync(const u32 rank, const u32 rankSize,
     return HCCL_SUCCESS;
 }
 
-HcclResult ScatterNHR::SdmaRx(LINK &linkLeft, LINK &linkRight, InterServerAlgoStep &stepInfo, 
-    const std::vector<LINK> &links)
+HcclResult ScatterNHR::SdmaRx(
+    LINK& linkLeft, LINK& linkRight, InterServerAlgoStep& stepInfo, [[maybe_unused]] const std::vector<LINK>& links)
 {
     if (linkRight != nullptr) {
         CHK_RET(linkRight->TxAck(stream_));
@@ -103,15 +103,16 @@ HcclResult ScatterNHR::SdmaRx(LINK &linkLeft, LINK &linkRight, InterServerAlgoSt
             rxSlices.push_back(slices_[stepInfo.rxSliceIdxs[i]]);
         }
         MergeSlices(rxSlices);
-        void *srcMemPtr = nullptr;
+        void* srcMemPtr = nullptr;
         CHK_RET(linkLeft->GetRemoteMem(UserMemType::OUTPUT_MEM, &srcMemPtr));
-        for (const Slice &rxSlice : rxSlices) {
+        for (const Slice& rxSlice : rxSlices) {
             DeviceMem dstMem = outputMem_.range(rxSlice.offset, rxSlice.size);
-            DeviceMem srcMem(static_cast<s8 *>(srcMemPtr) + baseOffset_ + rxSlice.offset, rxSlice.size);
-            HCCL_DEBUG("[ScatterNHR] rx dstMem[%p] range[%llu], size[%llu] ",  dstMem.ptr(),
-                rxSlice.offset, rxSlice.size);
-            CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dstMem, srcMem, stream_, linkLeft->GetRemoteRank(), // Memecpy
-                    linkLeft->GetLinkType()));
+            DeviceMem srcMem(static_cast<s8*>(srcMemPtr) + baseOffset_ + rxSlice.offset, rxSlice.size);
+            HCCL_DEBUG(
+                "[ScatterNHR] rx dstMem[%p] range[%llu], size[%llu] ", dstMem.ptr(), rxSlice.offset, rxSlice.size);
+            CHK_RET(HcclD2DMemcpyAsync(
+                dispatcher_, dstMem, srcMem, stream_, linkLeft->GetRemoteRank(), // Memecpy
+                linkLeft->GetLinkType()));
         }
         CHK_RET(linkLeft->TxDataSignal(stream_)); // 告知left读完了
     }
@@ -121,8 +122,8 @@ HcclResult ScatterNHR::SdmaRx(LINK &linkLeft, LINK &linkRight, InterServerAlgoSt
     return HCCL_SUCCESS;
 }
 
-HcclResult ScatterNHR::RdmaTxRx(LINK &linkLeft, LINK &linkRight, InterServerAlgoStep &stepInfo, 
-    const std::vector<LINK> &links)
+HcclResult ScatterNHR::RdmaTxRx(
+    LINK& linkLeft, LINK& linkRight, InterServerAlgoStep& stepInfo, [[maybe_unused]] const std::vector<LINK>& links)
 {
     HcclResult ret = HCCL_SUCCESS;
 
@@ -162,7 +163,7 @@ HcclResult ScatterNHR::RdmaTxRx(LINK &linkLeft, LINK &linkRight, InterServerAlgo
     return HCCL_SUCCESS;
 }
 
-HcclResult ScatterNHR::RunScatterNHR(const std::vector<std::shared_ptr<Transport> > &links)
+HcclResult ScatterNHR::RunScatterNHR(const std::vector<std::shared_ptr<Transport>>& links)
 {
     // 计算通信步数
     u32 nSteps = GetStepNumInterServer(interRankSize_);
@@ -172,8 +173,9 @@ HcclResult ScatterNHR::RunScatterNHR(const std::vector<std::shared_ptr<Transport
         InterServerAlgoStep stepInfo;
         GetStepInfo(step, nSteps, interRank_, interRankSize_, stepInfo);
 
-        HCCL_DEBUG("[ScatterNHR][RunScatterNHR] rank[%u] recvFrom[%u] sendTo[%u] step[%u]",
-            interRank_, stepInfo.fromRank, stepInfo.toRank, step);
+        HCCL_DEBUG(
+            "[ScatterNHR][RunScatterNHR] rank[%u] recvFrom[%u] sendTo[%u] step[%u]", interRank_, stepInfo.fromRank,
+            stepInfo.toRank, step);
 
         LINK linkLeft;
         LINK linkRight;
@@ -186,8 +188,8 @@ HcclResult ScatterNHR::RunScatterNHR(const std::vector<std::shared_ptr<Transport
             CHK_SMART_PTR_NULL(linkLeft);
         }
 
-        if ((linkRight != nullptr && linkRight->IsSpInlineReduce()) ||
-            (linkLeft != nullptr && linkLeft->IsSpInlineReduce())) {
+        if ((linkRight != nullptr && linkRight->IsSpInlineReduce())
+            || (linkLeft != nullptr && linkLeft->IsSpInlineReduce())) {
             CHK_RET(SdmaRx(linkLeft, linkRight, stepInfo, links));
         } else {
             CHK_RET(RdmaTxRx(linkLeft, linkRight, stepInfo, links));
@@ -208,7 +210,7 @@ void ScatterNHR::PrepareSlicesData(const u32 unitSize, const u64 totalCount, con
     return;
 }
 
-HcclResult ScatterNHR::Tx(const LINK &link, std::vector<Slice> &txSlices)
+HcclResult ScatterNHR::Tx(const LINK& link, std::vector<Slice>& txSlices)
 {
     std::vector<TxMemoryInfo> txMems;
 
@@ -221,14 +223,14 @@ HcclResult ScatterNHR::Tx(const LINK &link, std::vector<Slice> &txSlices)
         DeviceMem srcMem = outputMem_.range(txSlice.offset, txSlice.size);
         HCCL_DEBUG("[ScatterNHR][Tx] tx srcMem[%p] range[%llu] size[%llu]", srcMem.ptr(), txSlice.offset, txSlice.size);
         txMems.emplace_back(
-            TxMemoryInfo { UserMemType::OUTPUT_MEM, txSlice.offset + baseOffset_, srcMem.ptr(), txSlice.size });
+            TxMemoryInfo{UserMemType::OUTPUT_MEM, txSlice.offset + baseOffset_, srcMem.ptr(), txSlice.size});
     }
 
     CHK_RET(link->TxAsync(txMems, stream_));
     return HCCL_SUCCESS;
 }
 
-HcclResult ScatterNHR::Rx(const LINK &link, std::vector<Slice> &rxSlices)
+HcclResult ScatterNHR::Rx(const LINK& link, std::vector<Slice>& rxSlices)
 {
     std::vector<RxMemoryInfo> rxMems;
 
@@ -241,7 +243,7 @@ HcclResult ScatterNHR::Rx(const LINK &link, std::vector<Slice> &rxSlices)
         DeviceMem dstMem = outputMem_.range(rxSlice.offset, rxSlice.size);
         HCCL_DEBUG("[ScatterNHR][Rx] rx dstMem[%p] range[%llu] size[%llu]", dstMem.ptr(), rxSlice.offset, rxSlice.size);
         rxMems.emplace_back(
-            RxMemoryInfo { UserMemType::OUTPUT_MEM, rxSlice.offset + baseOffset_, dstMem.ptr(), rxSlice.size });
+            RxMemoryInfo{UserMemType::OUTPUT_MEM, rxSlice.offset + baseOffset_, dstMem.ptr(), rxSlice.size});
     }
 
     CHK_RET(link->RxAsync(rxMems, stream_));
@@ -249,7 +251,7 @@ HcclResult ScatterNHR::Rx(const LINK &link, std::vector<Slice> &rxSlices)
 }
 
 // NHR每步的算法描述原理函数
-HcclResult ScatterNHR::GetStepInfo(u32 step, u32 nSteps, u32 rank, u32 rankSize, InterServerAlgoStep &stepInfo)
+HcclResult ScatterNHR::GetStepInfo(u32 step, u32 nSteps, u32 rank, u32 rankSize, InterServerAlgoStep& stepInfo)
 {
     stepInfo.txSliceIdxs.clear();
     stepInfo.rxSliceIdxs.clear();
@@ -301,8 +303,8 @@ HcclResult ScatterNHR::GetStepInfo(u32 step, u32 nSteps, u32 rank, u32 rankSize,
     return HCCL_SUCCESS;
 }
 
-HcclResult ScatterNHR::GetNslbAdjInfo(const u32 rank, const u32 rankSize,
-                                      const std::vector<LINK> &links, AdjInfo& nslbAdjInfo)
+HcclResult
+ScatterNHR::GetNslbAdjInfo(const u32 rank, const u32 rankSize, const std::vector<LINK>& links, AdjInfo& nslbAdjInfo)
 {
     if (rankSize == 1) {
         return HCCL_SUCCESS;
@@ -310,8 +312,9 @@ HcclResult ScatterNHR::GetNslbAdjInfo(const u32 rank, const u32 rankSize,
     if (links.size() < rankSize) {
         return HCCL_SUCCESS;
     }
-    u32 nSteps  = 0;
-    for(u32 temp = rankSize - 1; temp != 0; temp >>= 1, ++nSteps){}
+    u32 nSteps = 0;
+    for (u32 temp = rankSize - 1; temp != 0; temp >>= 1, ++nSteps) {
+    }
 
     u32 deltaRoot = (rankSize - rank) % rankSize;
     for (u32 step = 0; step < nSteps; step++) {
@@ -327,11 +330,11 @@ HcclResult ScatterNHR::GetNslbAdjInfo(const u32 rank, const u32 rankSize,
             continue;
         }
 
-        u32 sendTo =(rank + rankSize- deltaRankPair) % rankSize;
+        u32 sendTo = (rank + rankSize - deltaRankPair) % rankSize;
         LINK linkRight = links[sendTo];
         CHK_SMART_PTR_NULL(linkRight);
 
-        NslbDpAdjInfo adjInfoStep = {0};
+        NslbDpAdjInfo adjInfoStep = {};
         adjInfoStep.dstLocalRankId = linkRight->GetRemoteRank();
         adjInfoStep.phaseId = step + 1;
         adjInfoStep.rev = 0;
@@ -341,4 +344,4 @@ HcclResult ScatterNHR::GetNslbAdjInfo(const u32 rank, const u32 rankSize,
     return HCCL_SUCCESS;
 }
 REGISTER_TEMPLATE(TemplateType::TEMPLATE_SCATTER_NHR, ScatterNHR);
-}  // namespace hccl
+} // namespace hccl

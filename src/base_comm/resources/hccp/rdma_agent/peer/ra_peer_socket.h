@@ -13,10 +13,10 @@
 
 #include "hccp_common.h"
 
-int RaPeerGetClientSocketErrInfo(unsigned int phyId, struct SocketConnectInfoT conn[],
-    struct SocketErrInfo err[], unsigned int num);
-int RaPeerGetServerSocketErrInfo(unsigned int phyId, struct SocketListenInfoT conn[],
-    struct ServerSocketErrInfo err[], unsigned int num);
+int RaPeerGetClientSocketErrInfo(unsigned int phyId, struct SocketConnectInfoT conn[], struct SocketErrInfo err[],
+    unsigned int num);
+int RaPeerGetServerSocketErrInfo(unsigned int phyId, struct SocketListenInfoT conn[], struct ServerSocketErrInfo err[],
+    unsigned int num);
 int RaPeerSocketAcceptCreditAdd(unsigned int phyId, struct SocketListenInfoT conn[], unsigned int num,
     unsigned int creditLimit);
 #endif // RA_PEER_SOCKET_H

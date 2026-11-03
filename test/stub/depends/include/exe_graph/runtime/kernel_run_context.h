@@ -17,33 +17,33 @@
 extern "C" {
 #endif
 
-typedef void (*FreeCallback)(void *);
+typedef void (*FreeCallback)(void*);
 
 /**
  * Chain的底层数据结构，不要直接引用和操作此数据结构
  */
 typedef struct {
-  union {
-    void *pointer;
-    unsigned char inplace[sizeof(void *)];
-  } data;
-  FreeCallback deleter;
+    union {
+        void* pointer;
+        unsigned char inplace[sizeof(void*)];
+    } data;
+    FreeCallback deleter;
 } AsyncAnyValue;
 
 /**
  * KernelContext的底层数据结构，不要直接引用和操作此数据结构
  */
 typedef struct {
-  size_t input_size;
-  size_t output_size;
-  const void *compute_node_info;
-  const void *kernel_extend_info;
-  AsyncAnyValue **output_start;  // todo delete this
-  AsyncAnyValue *values[1];
+    size_t input_size;
+    size_t output_size;
+    const void* compute_node_info;
+    const void* kernel_extend_info;
+    AsyncAnyValue** output_start; // todo delete this
+    AsyncAnyValue* values[1];
 } KernelRunContext;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // METADEF_CXX_INC_EXE_GRAPH_KERNEL_RUN_CONTEXT_H_
+#endif // METADEF_CXX_INC_EXE_GRAPH_KERNEL_RUN_CONTEXT_H_

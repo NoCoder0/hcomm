@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef BIFROST_CNCOI_SUBER_PRI_H
 
 #define BIFROST_CNCOI_SUBER_PRI_H
@@ -26,7 +25,6 @@ typedef struct tagBifrostCncoiSuber {
     BkfSuber *suber;
 } BifrostCncoiSuber;
 
-
 #pragma pack()
 
 #if __cplusplus
@@ -34,4 +32,3 @@ typedef struct tagBifrostCncoiSuber {
 #endif
 
 #endif
-

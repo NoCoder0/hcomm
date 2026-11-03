@@ -20,8 +20,9 @@ namespace Hccl {
 
 class InsTempAllReduceMesh1DOneShot : public InsAlgTemplateBase {
 public:
-    explicit InsTempAllReduceMesh1DOneShot(const RankId virtualRank, const u32 tempRankSize,
-        const std::vector<std::vector<RankId>> &tempVTopo, const std::map<RankId, u32> &tempVirtRankMap);
+    explicit InsTempAllReduceMesh1DOneShot(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~InsTempAllReduceMesh1DOneShot() override;
 
     std::string Describe() const override
@@ -30,12 +31,14 @@ public:
     }
 
     u32 CalcScratchMultiple(BufferType input, BufferType output) const;
-    HcclResult CalcSlice(const u64 dataSize, RankSliceInfo &sliceInfoVec);
-    HcclResult GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &tempAlgParams,
-                         const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues);
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
-    HcclResult RunAllReduce(const TemplateDataParams &tempAlgParams, const RankSliceInfo &sliceInfoVec, const ResLinks &tempLinks,
-        std::vector<InsQuePtr> &tempInsQues);
+    HcclResult CalcSlice(const u64 dataSize, RankSliceInfo& sliceInfoVec);
+    HcclResult GenExtIns(
+        const TempFuncs& tempFuncs, const TemplateDataParams& tempAlgParams, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues);
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
+    HcclResult RunAllReduce(
+        const TemplateDataParams& tempAlgParams, const RankSliceInfo& sliceInfoVec, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues);
 };
 
 } // namespace Hccl

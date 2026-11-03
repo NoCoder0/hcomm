@@ -1,5 +1,7 @@
 # HCCL LLT
 
+简体中文 | [English](./README_en.md)
+
 ## 概述
 
 HCCL LLT（Low Level Test）是 HCCL 的测试框架，旨在系统化验证 HCCL 各层级组件的功能完整性与性能稳定性。LLT 涵盖了 HCCL 的算法层、框架层、平台层、对外接口层多个部分，通过全面的测试用例，保障 HCCL 在各种业务场景下的可靠性和高效性。

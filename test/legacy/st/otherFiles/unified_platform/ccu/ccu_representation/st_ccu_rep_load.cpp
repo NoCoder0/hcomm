@@ -20,25 +20,13 @@ using namespace CcuRep;
 
 class CcuRepLoadTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CcuRepLoadTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CcuRepLoadTest tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CcuRepLoadTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CcuRepLoadTest tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in CcuRepLoadTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in CcuRepLoadTest SetUP" << std::endl; }
 
-    virtual void TearDown()
-    {
-        std::cout << "A Test case in CcuRepLoadTest TearDown" << std::endl;
-    }
+    virtual void TearDown() { std::cout << "A Test case in CcuRepLoadTest TearDown" << std::endl; }
 
 public:
     const uint16_t INSTR_NUM = 7;

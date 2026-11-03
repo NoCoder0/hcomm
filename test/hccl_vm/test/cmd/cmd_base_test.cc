@@ -18,9 +18,7 @@ using namespace HcclSim;
 class MockCommand : public CommandBase {
 public:
     static std::string StaticName() { return "mock"; }
-    void Setup(CLI::App& app) override {
-        app.add_flag("--mock-flag", flag_);
-    }
+    void Setup(CLI::App& app) override { app.add_flag("--mock-flag", flag_); }
     bool flag_ = false;
 };
 
@@ -28,11 +26,10 @@ class CommandBaseTest : public testing::Test {
 protected:
 };
 
-TEST_F(CommandBaseTest, StaticName_ShouldReturnMock) {
-    EXPECT_EQ(MockCommand::StaticName(), "mock");
-}
+TEST_F(CommandBaseTest, StaticName_ShouldReturnMock) { EXPECT_EQ(MockCommand::StaticName(), "mock"); }
 
-TEST_F(CommandBaseTest, CreateAll_ShouldReturnVector) {
+TEST_F(CommandBaseTest, CreateAll_ShouldReturnVector)
+{
     auto commands = CommandRegistry::CreateAll();
     EXPECT_GE(commands.size(), 0);
     for (auto& cmd : commands) {
@@ -40,7 +37,8 @@ TEST_F(CommandBaseTest, CreateAll_ShouldReturnVector) {
     }
 }
 
-TEST_F(CommandBaseTest, VirtualDestructorShouldNotCrash) {
+TEST_F(CommandBaseTest, VirtualDestructorShouldNotCrash)
+{
     auto cmd = std::make_unique<MockCommand>();
     EXPECT_NE(cmd, nullptr);
 }

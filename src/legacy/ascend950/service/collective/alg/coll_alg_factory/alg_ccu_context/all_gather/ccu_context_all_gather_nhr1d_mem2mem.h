@@ -22,14 +22,12 @@ namespace Hccl {
 
 class CcuContextAllGatherNHR1D : public CcuContextAlgBase {
 public:
-    CcuContextAllGatherNHR1D(const CcuCtxArg &arg, const std::vector<CcuTransport *> &transports,
-                             const CcuTransportGroup &group);
-    ~CcuContextAllGatherNHR1D() override
-    {
-    }
+    CcuContextAllGatherNHR1D(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
+    ~CcuContextAllGatherNHR1D() override {}
 
-    void                  Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    void Algorithm() override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
 
 private:
     void LoadArgs();
@@ -38,8 +36,8 @@ private:
     void PostSync();
     void AxisSync(uint32_t signalIndex);
     void DoRepeatAllGatherNHR();
-    void DoRepeatAllGatherNHRSingleStep(const NHRStepInfo                   &nhrStepInfo);
-    void DoRepeatSendRecvSlices(const u32 &toRank, CcuRep::Memory &src, CcuRep::Memory &dst, u32 signalIndex);
+    void DoRepeatAllGatherNHRSingleStep(const NHRStepInfo& nhrStepInfo);
+    void DoRepeatSendRecvSlices(const u32& toRank, CcuRep::Memory& src, CcuRep::Memory& dst, u32 signalIndex);
 
     // 构造函数中
     uint64_t dimSize_{0};
@@ -50,32 +48,32 @@ private:
     uint32_t signalNum_{0}; // 需要使用的signal数量
 
     std::vector<NHRStepInfo> stepInfoVector_; // nhr算法执行过程中的参数
-    std::map<u32, u32>       indexMap_;
+    std::map<u32, u32> indexMap_;
 
     // load进来参数
-    CcuRep::Variable              input_;
+    CcuRep::Variable input_;
     std::vector<CcuRep::Variable> output_;
     std::vector<CcuRep::Variable> token_;
-    CcuRep::Variable              die0Size_;
-    CcuRep::Variable              die1Size_;
-    CcuRep::Variable              inputSliceStride_;
-    CcuRep::Variable              outputSliceStride_;
-    CcuRep::Variable              inputRepeatStride_;
-    CcuRep::Variable              outputRepeatStride_;
-    CcuRep::Variable              repeatNum_;
-    CcuRep::Variable              isInputOutputEqual_;
-    CcuRep::Variable              myrankInputSliceOffset_;
-    CcuRep::Variable              tmpSliceOffset_;
+    CcuRep::Variable die0Size_;
+    CcuRep::Variable die1Size_;
+    CcuRep::Variable inputSliceStride_;
+    CcuRep::Variable outputSliceStride_;
+    CcuRep::Variable inputRepeatStride_;
+    CcuRep::Variable outputRepeatStride_;
+    CcuRep::Variable repeatNum_;
+    CcuRep::Variable isInputOutputEqual_;
+    CcuRep::Variable myrankInputSliceOffset_;
+    CcuRep::Variable tmpSliceOffset_;
     std::vector<CcuRep::Variable> outputSliceOffset_;
-    CcuRep::Variable              tmpRepeatNum_;
-    CcuRep::Variable              tmpCopyRepeatNum_;
-    CcuRep::Variable              constVar1_;
-    CcuRep::Variable              ckeBitCounter_;
-    CcuRep::Variable              repeatTimeflag_;
+    CcuRep::Variable tmpRepeatNum_;
+    CcuRep::Variable tmpCopyRepeatNum_;
+    CcuRep::Variable constVar1_;
+    CcuRep::Variable ckeBitCounter_;
+    CcuRep::Variable repeatTimeflag_;
 
     // 跨轴同步信号
-    std::string        localAxisSignalName_;
-    std::string        anotherAxisSignalName_;
+    std::string localAxisSignalName_;
+    std::string anotherAxisSignalName_;
     CcuRep::MaskSignal localAxisSignal_;
     CcuRep::MaskSignal anotherAxisSignal_;
     CcuRep::MaskSignal localSignal_;

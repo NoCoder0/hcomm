@@ -4,7 +4,7 @@
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -25,21 +25,15 @@ namespace checker {
 
 class Reduce2DCCUTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "Reduce2D CCU test set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "Reduce2D CCU test set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "Reduce2D CCU test tear down" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "Reduce2D CCU test tear down" << std::endl; }
 
     virtual void SetUp()
     {
-        const ::testing::TestInfo *const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName =
-            "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -199,11 +193,8 @@ TEST_F(Reduce2DCCUTest, reduce2d_ccu_case_test_4_mul_2_rank)
 TEST_F(Reduce2DCCUTest, reduce2d_ccu_case_test_5_mul_7_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta{{{0,1,2,3,4,8,9,
-                        10,11,12,16,17,18,19,
-                        20,24,25,26,27,28,32,
-                        33,34,35,36,40,41,42,
-                        43,44,48,49,50,51,52}}};
+    TopoMeta topoMeta{{{0,  1,  2,  3,  4,  8,  9,  10, 11, 12, 16, 17, 18, 19, 20, 24, 25, 26,
+                        27, 28, 32, 33, 34, 35, 36, 40, 41, 42, 43, 44, 48, 49, 50, 51, 52}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -299,11 +290,8 @@ TEST_F(Reduce2DCCUTest, reduce2d_m2m_ccu_case_test_4_mul_3_rank)
 TEST_F(Reduce2DCCUTest, reduce2d_m2m_ccu_case_test_5_mul_7_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta{{{0,1,2,3,4,8,9,
-                        10,11,12,16,17,18,19,
-                        20,24,25,26,27,28,32,
-                        33,34,35,36,40,41,42,
-                        43,44,48,49,50,51,52}}};
+    TopoMeta topoMeta{{{0,  1,  2,  3,  4,  8,  9,  10, 11, 12, 16, 17, 18, 19, 20, 24, 25, 26,
+                        27, 28, 32, 33, 34, 35, 36, 40, 41, 42, 43, 44, 48, 49, 50, 51, 52}}};
     setenv("HCCL_IODIE_NUM", "2", 1);
 
     CheckerOpParam checkerOpParam;
@@ -326,9 +314,9 @@ TEST_F(Reduce2DCCUTest, reduce2d_m2m_ccu_case_test_5_mul_7_rank)
 TEST_F(Reduce2DCCUTest, reduce_ccu_mem2mem_parallel)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1}, {2,3}}};
+    TopoMeta topoMeta{{{0, 1}, {2, 3}}};
     setenv("HCCL_IODIE_NUM", "2", 1);
- 
+
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::REDUCE;
     checkerOpParam.tag = "reduce";
@@ -338,7 +326,7 @@ TEST_F(Reduce2DCCUTest, reduce_ccu_mem2mem_parallel)
     checkerOpParam.DataDes.dataType = CheckerDataType::DATA_TYPE_INT8;
     checkerOpParam.algName = "CcuReduceParallelMesh1DNHR";
     checkerOpParam.root = 1;
- 
+
     Checker checker;
     HcclResult ret;
     ret = checker.CheckA5Aicpu(checkerOpParam, topoMeta);
@@ -348,9 +336,9 @@ TEST_F(Reduce2DCCUTest, reduce_ccu_mem2mem_parallel)
 TEST_F(Reduce2DCCUTest, reduce_ccu_mem2mem_parallel_root2)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1}, {2,3}}};
+    TopoMeta topoMeta{{{0, 1}, {2, 3}}};
     setenv("HCCL_IODIE_NUM", "2", 1);
- 
+
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::REDUCE;
     checkerOpParam.tag = "reduce";
@@ -360,7 +348,7 @@ TEST_F(Reduce2DCCUTest, reduce_ccu_mem2mem_parallel_root2)
     checkerOpParam.DataDes.dataType = CheckerDataType::DATA_TYPE_INT16;
     checkerOpParam.algName = "CcuReduceParallelMesh1DNHR";
     checkerOpParam.root = 0;
- 
+
     Checker checker;
     HcclResult ret;
     checker.EnableTaskPrint();
@@ -371,9 +359,9 @@ TEST_F(Reduce2DCCUTest, reduce_ccu_mem2mem_parallel_root2)
 TEST_F(Reduce2DCCUTest, reduce_ccu_mem2mem_parallel_offload)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1}, {2,3}}};
+    TopoMeta topoMeta{{{0, 1}, {2, 3}}};
     setenv("HCCL_IODIE_NUM", "2", 1);
- 
+
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::REDUCE;
     checkerOpParam.tag = "reduce";
@@ -383,7 +371,7 @@ TEST_F(Reduce2DCCUTest, reduce_ccu_mem2mem_parallel_offload)
     checkerOpParam.DataDes.dataType = CheckerDataType::DATA_TYPE_INT32;
     checkerOpParam.algName = "CcuReduceParallelMesh1DNHR";
     checkerOpParam.root = 0;
- 
+
     Checker checker;
     HcclResult ret;
     ret = checker.CheckA5Aicpu(checkerOpParam, topoMeta);
@@ -393,9 +381,9 @@ TEST_F(Reduce2DCCUTest, reduce_ccu_mem2mem_parallel_offload)
 TEST_F(Reduce2DCCUTest, reduce_ccu_mem2mem_parallel_opbase)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1}, {2,3}}};
+    TopoMeta topoMeta{{{0, 1}, {2, 3}}};
     setenv("HCCL_IODIE_NUM", "2", 1);
- 
+
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::REDUCE;
     checkerOpParam.tag = "reduce";
@@ -405,11 +393,11 @@ TEST_F(Reduce2DCCUTest, reduce_ccu_mem2mem_parallel_opbase)
     checkerOpParam.DataDes.dataType = CheckerDataType::DATA_TYPE_INT32;
     checkerOpParam.algName = "CcuReduceParallelMesh1DNHR";
     checkerOpParam.root = 0;
- 
+
     Checker checker;
     HcclResult ret;
     ret = checker.CheckA5Aicpu(checkerOpParam, topoMeta);
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 }
 
-}  // namespace checker
+} // namespace checker

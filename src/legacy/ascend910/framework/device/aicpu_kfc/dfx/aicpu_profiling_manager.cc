@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "aicpu_profiling_manager.h"
 
@@ -21,15 +21,16 @@ uint64_t g_groupNameHashId{0U};
 
 HcclResult AicpuProfilingManager::ReportTaskInfo()
 {
-    SqeContext *context = GetSqeContext();
+    SqeContext* context = GetSqeContext();
     auto ctx = AicpuGetComContext();
     CHK_PTR_NULL(context->buffPtr);
-    MsprofAicpuHcclTaskInfo taskInfos[HCCLINFO_REPORT_BATCH_NUM] = {0};
+    MsprofAicpuHcclTaskInfo taskInfos[HCCLINFO_REPORT_BATCH_NUM] = {};
     for (uint32_t streamId = 0; streamId < AC_MAX_RANK_NUM; streamId++) {
-        auto &buff = context->buffPtr[streamId];
-        uint16_t &lastSqeIdx = ctx->profilingExtendInfo.lastSqeIdxs[streamId];
-        HCCL_INFO("Rank %u stream %u has %u sqes, sqeCnt: %u, lastSqeIdx: %u", ctx->rankId, streamId,
-                  buff.tailSqeIdx, buff.sqeCnt, lastSqeIdx);
+        auto& buff = context->buffPtr[streamId];
+        uint16_t& lastSqeIdx = ctx->profilingExtendInfo.lastSqeIdxs[streamId];
+        HCCL_INFO(
+            "Rank %u stream %u has %u sqes, sqeCnt: %u, lastSqeIdx: %u", ctx->rankId, streamId, buff.tailSqeIdx,
+            buff.sqeCnt, lastSqeIdx);
         auto endIdx = static_cast<uint32_t>(buff.tailSqeIdx);
         for (uint32_t idx = lastSqeIdx, batchId = 0; idx < endIdx; ++idx) {
             auto& taskInfo = taskInfos[batchId++];
@@ -42,10 +43,10 @@ HcclResult AicpuProfilingManager::ReportTaskInfo()
             taskInfo.timeStamp = buff.profTimestap[idx]; // 时间戳
             ProfilingManager::DumpHcclInfo(taskInfo, batchId, idx);
             if (batchId == HCCLINFO_REPORT_BATCH_NUM || idx == (endIdx - 1)) {
-                CHK_PRT(ProfilingManager::CallMsprofReportAdditionInfo(MSPROF_REPORT_AICPU_MC2_BATCH_HCCL_INFO,
-                    0, taskInfos, sizeof(MsprofAicpuHcclTaskInfo) * batchId));
+                CHK_PRT(ProfilingManager::CallMsprofReportAdditionInfo(
+                    MSPROF_REPORT_AICPU_MC2_BATCH_HCCL_INFO, 0, taskInfos, sizeof(MsprofAicpuHcclTaskInfo) * batchId));
                 batchId = 0;
-                memset_s(taskInfos, sizeof(taskInfos), 0, sizeof(taskInfos));
+                CHK_SAFETY_FUNC_RET(memset_s(taskInfos, sizeof(taskInfos), 0, sizeof(taskInfos)));
             }
         }
         lastSqeIdx = buff.tailSqeIdx;
@@ -53,7 +54,7 @@ HcclResult AicpuProfilingManager::ReportTaskInfo()
     return HCCL_SUCCESS;
 }
 
-HcclResult AicpuProfilingManager::ReportTaskExecTimeLine(AicpuComProf *acprof, u32 turnOffset)
+HcclResult AicpuProfilingManager::ReportTaskExecTimeLine(AicpuComProf* acprof, u32 turnOffset)
 {
     if (!ProfilingManager::GetProfL1State()) {
         return HCCL_SUCCESS;
@@ -61,9 +62,9 @@ HcclResult AicpuProfilingManager::ReportTaskExecTimeLine(AicpuComProf *acprof, u
     uint64_t taskId = 0U;
     uint32_t streamId = 0;
     if (AicpuGetStreamId == nullptr || AicpuGetTaskId == nullptr) {
-        CHK_PRT_RET(aicpu::GetTaskAndStreamId(taskId, streamId) != aicpu::status_t::AICPU_ERROR_NONE,
-        HCCL_ERROR("Failed to get task id and stream id."),
-        HCCL_E_PARA);
+        CHK_PRT_RET(
+            aicpu::GetTaskAndStreamId(taskId, streamId) != aicpu::status_t::AICPU_ERROR_NONE,
+            HCCL_ERROR("Failed to get task id and stream id."), HCCL_E_PARA);
     } else {
         streamId = AicpuGetStreamId();
         taskId = AicpuGetTaskId();
@@ -72,12 +73,12 @@ HcclResult AicpuProfilingManager::ReportTaskExecTimeLine(AicpuComProf *acprof, u
 
     // 正常一个kfc算子的展开任务不会超过`AC_MAX_PROF_COMM_CNT`轮
     u32 workRcdCnt = acprof->workCnt;
-    CHK_PRT_RET(workRcdCnt > AC_MAX_PROF_COMM_CNT,
-        HCCL_ERROR("WorkRcdCnt %u should not bigger than %u,", workRcdCnt, AC_MAX_PROF_COMM_CNT),
-        HCCL_E_PARA);
+    CHK_PRT_RET(
+        workRcdCnt > AC_MAX_PROF_COMM_CNT,
+        HCCL_ERROR("WorkRcdCnt %u should not bigger than %u,", workRcdCnt, AC_MAX_PROF_COMM_CNT), HCCL_E_PARA);
 
     for (u32 j = 0; j < workRcdCnt; j++) {
-        AicpuComProfCommLoop *commRcd = &acprof->commLoop[j];
+        AicpuComProfCommLoop* commRcd = &acprof->commLoop[j];
         AicpuKfcProfCommTurn commTurnProf;
         commTurnProf.serverStartTime = acprof->launchEntryTime;
         commTurnProf.waitMsgStartTime = acprof->commInitEndTime;
@@ -101,7 +102,7 @@ HcclResult AicpuProfilingManager::ReportTaskExecTimeLine(AicpuComProf *acprof, u
     return HCCL_SUCCESS;
 }
 
-void AicpuProfilingManager::Init(const AicpuComContext *ctx)
+void AicpuProfilingManager::Init(const AicpuComContext* ctx)
 {
     if (AdprofGetHashId == nullptr) {
         HCCL_INFO("AdprofGetHashId is null, just return");
@@ -109,16 +110,16 @@ void AicpuProfilingManager::Init(const AicpuComContext *ctx)
     }
     ProfilingExtendInfoHelper::InitProfItemId();
     // ctx保证了非空
-    u32 len = 0;                        // 初始化长度为0
-    while (ctx->hcomId[len] != '\0') {  // 遍历数组，直到遇到'\0'
-        len++;                          // 每遍历一个字符，长度加1
+    u32 len = 0;                       // 初始化长度为0
+    while (ctx->hcomId[len] != '\0') { // 遍历数组，直到遇到'\0'
+        len++;                         // 每遍历一个字符，长度加1
     }
     g_groupNameHashId = AdprofGetHashId(ctx->hcomId, len);
     HCCL_DEBUG("Using %s and len %u to get hash %lu", ctx->hcomId, len, g_groupNameHashId);
 }
 
 void AicpuProfilingManager::Ctx2MsprofAicpuMC2HcclInfo(
-    const AicpuComContext *ctx, MsprofAicpuHcclTaskInfo &msprofAicpuMC2HcclInfo)
+    const AicpuComContext* ctx, MsprofAicpuHcclTaskInfo& msprofAicpuMC2HcclInfo)
 {
     ProfilingExtendInfoHelper::InitHcclInfo(msprofAicpuMC2HcclInfo);
     msprofAicpuMC2HcclInfo.groupName = g_groupNameHashId;
@@ -128,7 +129,7 @@ void AicpuProfilingManager::Ctx2MsprofAicpuMC2HcclInfo(
     msprofAicpuMC2HcclInfo.opType = static_cast<uint32_t>(ctx->reducekind);
 }
 
-std::string AicpuProfilingManager::AicpuKfcProfCommTurnToString(const AicpuKfcProfCommTurn &aicpuKfcProfCommTurn)
+std::string AicpuProfilingManager::AicpuKfcProfCommTurnToString(const AicpuKfcProfCommTurn& aicpuKfcProfCommTurn)
 {
     std::stringstream ss;
     ss << "serverStartTime: " << aicpuKfcProfCommTurn.serverStartTime;
@@ -148,4 +149,4 @@ std::string AicpuProfilingManager::AicpuKfcProfCommTurnToString(const AicpuKfcPr
     return ss.str();
 }
 
-}  // namespace dfx
+} // namespace dfx

@@ -19,33 +19,30 @@ public:
     explicit InsV2AllReduceSoleExecutor();
     ~InsV2AllReduceSoleExecutor() override;
 
-    std::string Describe() const override
-    {
-        return "Instruction based All Reduce Sole Executor.";
-    }
-   
+    std::string Describe() const override { return "Instruction based All Reduce Sole Executor."; }
+
     // AICPU 接口
-    HcclResult Orchestrate(const AlgTopoInfo &topoInfo, const CollAlgOperator &op, const CollAlgParams &params,
-        ConnectedLinkMgr *linkMgr, InsQuePtr insQue) override;
-
-    HcclResult CalcResOffload(
-        const RankGraph *rankGraph, const u64 &dataSize, CollOffloadOpResReq &resReq) override;
-
-    HcclResult CalcRes(const RankGraph *rankGraph, CollAlgResReq &algResReq) override;
-    HcclResult CalNumBlocks(u32& numBlocks, u64 dataSize, u32 numBlocksLimit) override;
-    // HOST 接口
-    HcclResult Orchestrate(const RankGraph *rankGraph, const CollAlgOperator &op, const CollAlgParams &params,
+    HcclResult Orchestrate(
+        const AlgTopoInfo& topoInfo, const CollAlgOperator& op, const CollAlgParams& params, ConnectedLinkMgr* linkMgr,
         InsQuePtr insQue) override;
 
+    HcclResult CalcResOffload(const RankGraph* rankGraph, const u64& dataSize, CollOffloadOpResReq& resReq) override;
+
+    HcclResult CalcRes(const RankGraph* rankGraph, CollAlgResReq& algResReq) override;
+    HcclResult CalNumBlocks(u32& numBlocks, u64 dataSize, u32 numBlocksLimit) override;
+    // HOST 接口
+    HcclResult Orchestrate(
+        const RankGraph* rankGraph, const CollAlgOperator& op, const CollAlgParams& params, InsQuePtr insQue) override;
+
 private:
-    HcclResult CreateTemplates(std::shared_ptr<InsAlgTemplate> &algTemplatePtr);
+    HcclResult CreateTemplates(std::shared_ptr<InsAlgTemplate>& algTemplatePtr);
     HcclResult GetTemplateResRequest(
-        const RankGraph *rankGraph, std::shared_ptr<InsAlgTemplate> &algTemplate, AlgTempResReq &tempResReq) const;
+        const RankGraph* rankGraph, std::shared_ptr<InsAlgTemplate>& algTemplate, AlgTempResReq& tempResReq) const;
     HcclResult GetTemplateResRequest(
-        ConnectedLinkMgr *linkMgr, std::shared_ptr<InsAlgTemplate> &algTemplate, AlgTempResReq &tempResReq) const;
+        ConnectedLinkMgr* linkMgr, std::shared_ptr<InsAlgTemplate>& algTemplate, AlgTempResReq& tempResReq) const;
     HcclResult OrchestrateLoop(std::shared_ptr<InsAlgTemplate> algTemplate);
-    HcclResult InitCommInfo(const RankGraph *rankGraph);
-    HcclResult InitCommInfo(const AlgTopoInfo &topoInfo);
+    HcclResult InitCommInfo(const RankGraph* rankGraph);
+    HcclResult InitCommInfo(const AlgTopoInfo& topoInfo);
 
     std::vector<RankId> virtRanks_;
     std::vector<std::vector<RankId>> vTopo_;
@@ -53,6 +50,6 @@ private:
     std::vector<InsQuePtr> tempInsQue_;
     std::map<RankId, u32> virtRankMap_;
 };
-}  // namespace Hccl
+} // namespace Hccl
 
-#endif  // HCCLV2_INS_V2_ALL_REDUCE_SOLE_EXECUTOR_H
+#endif // HCCLV2_INS_V2_ALL_REDUCE_SOLE_EXECUTOR_H

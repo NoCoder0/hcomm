@@ -21,18 +21,9 @@ using namespace hccl;
 
 class ErrorCqeTest_UT : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "ErrorCqeTest_UT SetUP" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "ErrorCqeTest_UT TearDown" << std::endl;
-    }
-    virtual void SetUp()
-    {
-        std::cout << "A Test SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "ErrorCqeTest_UT SetUP" << std::endl; }
+    static void TearDownTestCase() { std::cout << "ErrorCqeTest_UT TearDown" << std::endl; }
+    virtual void SetUp() { std::cout << "A Test SetUP" << std::endl; }
     virtual void TearDown()
     {
         GlobalMockObject::verify();
@@ -40,33 +31,25 @@ protected:
     }
 };
 
-static HcclResult StubHcclNetDevGetLocalIp(HcclNetDevCtx, HcclIpAddress &ip)
-{
-    return HCCL_SUCCESS;
-}
+static HcclResult StubHcclNetDevGetLocalIp(HcclNetDevCtx, HcclIpAddress& ip) { return HCCL_SUCCESS; }
 
-static HcclResult  StubGetTransportErrorCqe(const HcclNetDevCtx,
-                                     std::vector<std::pair<Transport *, CqeInfo>> &infolist,
-                                     u32 &num)
+static HcclResult
+StubGetTransportErrorCqe(const HcclNetDevCtx, std::vector<std::pair<Transport*, CqeInfo>>& infolist, u32& num)
 {
     CqeInfo cqe;
-    infolist.push_back({reinterpret_cast<Transport *>(0x1000), cqe});
+    infolist.push_back({reinterpret_cast<Transport*>(0x1000), cqe});
     num = 1;
-    return HCCL_SUCCESS; 
+    return HCCL_SUCCESS;
 }
 
 TEST_F(ErrorCqeTest_UT, GetMc2TransportCqeErrors)
 {
     HcclCommunicator communicator;
     HcclNetDevCtx ctx = reinterpret_cast<HcclNetDevCtx>(0x1);
-    Transport *mapTransport = reinterpret_cast<Transport *>(0x2000);
-    MOCKER(HcclNetDevGetLocalIp)
-        .stubs()
-        .will(invoke(StubHcclNetDevGetLocalIp));
+    Transport* mapTransport = reinterpret_cast<Transport*>(0x2000);
+    MOCKER(HcclNetDevGetLocalIp).stubs().will(invoke(StubHcclNetDevGetLocalIp));
 
-    MOCKER(Transport::GetTransportErrorCqe)
-        .stubs()
-        .will(invoke(StubGetTransportErrorCqe));
+    MOCKER(Transport::GetTransportErrorCqe).stubs().will(invoke(StubGetTransportErrorCqe));
 
     std::vector<ErrCqeInfo> infos;
     u32 num = 0;

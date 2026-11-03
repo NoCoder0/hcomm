@@ -129,21 +129,19 @@ void BkfPuberUninit(BkfPuber *puber)
     BKF_FREE(puber->argInit.memMng, puber);
 }
 
-STATIC uint32_t BkfPuberAttachTableTypeExChkArg(BkfPuber *puber, BkfPuberTableTypeVTbl *vTbl,
-                                                void *userData, uint16_t userDataLen)
+STATIC uint32_t BkfPuberAttachTableTypeExChkArg(BkfPuber *puber, BkfPuberTableTypeVTbl *vTbl, void *userData,
+    uint16_t userDataLen)
 {
-    BOOL argIsInvalid = (puber == VOS_NULL) || (vTbl == VOS_NULL) ||
-                        (vTbl->tupleUpdateCode == VOS_NULL) || (vTbl->tupleDeleteCode == VOS_NULL) ||
-                        ((userDataLen > 0) && (userData == VOS_NULL));
+    BOOL argIsInvalid = (puber == VOS_NULL) || (vTbl == VOS_NULL) || (vTbl->tupleUpdateCode == VOS_NULL) ||
+                        (vTbl->tupleDeleteCode == VOS_NULL) || ((userDataLen > 0) && (userData == VOS_NULL));
     if (argIsInvalid) {
         return BKF_ERR;
     }
 
     BKF_LOG_DEBUG(BKF_LOG_HND, "puber(%#x, %s), tableTypeId(%u, %s)/(%#x, %#x), userData(%#x)/userDataLen(%u)\n",
-                  BKF_MASK_ADDR(puber), puber->name,
-                  vTbl->tableTypeId, BkfDcGetTableTypeIdStr(puber->argInit.dc, vTbl->tableTypeId),
-                  BKF_MASK_ADDR(vTbl->tupleUpdateCode), BKF_MASK_ADDR(vTbl->tupleDeleteCode),
-                  BKF_MASK_ADDR(userData), userDataLen);
+        BKF_MASK_ADDR(puber), puber->name, vTbl->tableTypeId,
+        BkfDcGetTableTypeIdStr(puber->argInit.dc, vTbl->tableTypeId), BKF_MASK_ADDR(vTbl->tupleUpdateCode),
+        BKF_MASK_ADDR(vTbl->tupleDeleteCode), BKF_MASK_ADDR(userData), userDataLen);
     return BKF_OK;
 }
 
@@ -203,9 +201,9 @@ STATIC uint32_t BkfPuberSetUnsetUrlChkArg(BkfPuber *puber, BkfUrl *url, BOOL isS
         return BKF_ERR;
     }
 
-    uint8_t buf[BKF_LOG_LEN] = { 0 };
+    uint8_t buf[BKF_LOG_LEN] = {0};
     BKF_LOG_DEBUG(BKF_LOG_HND, "puber(%#x, %s), url(%s), isSet(%u)\n", BKF_MASK_ADDR(puber), puber->name,
-                  BkfUrlGetStr(url, buf, sizeof(buf)), isSet);
+        BkfUrlGetStr(url, buf, sizeof(buf)), isSet);
     return BKF_OK;
 }
 
@@ -240,4 +238,3 @@ uint32_t BkfPuberSetConnUpLimit(BkfPuber *puber, uint32_t connMax)
 #ifdef __cplusplus
 }
 #endif
-

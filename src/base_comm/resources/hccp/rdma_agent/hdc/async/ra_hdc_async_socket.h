@@ -40,11 +40,10 @@ void RaHdcAsyncHandleSocketRecv(struct RaRequestHandle *reqHandle);
 int RaHdcSocketListenStartAsync(unsigned int phyId, struct SocketListenInfoT conn[], unsigned int num,
     void **reqHandle);
 void RaHdcAsyncHandleSocketListenStart(struct RaRequestHandle *reqHandle);
-int RaHdcSocketListenStopAsync(unsigned int phyId, struct SocketListenInfoT conn[], unsigned int num,
-    void **reqHandle);
+void RaHdcAsyncHandleSocketListenStartV2(struct RaRequestHandle *reqHandle);
+int RaHdcSocketListenStopAsync(unsigned int phyId, struct SocketListenInfoT conn[], unsigned int num, void **reqHandle);
 int RaHdcSocketBatchConnectAsync(unsigned int phyId, struct SocketConnectInfoT conn[], unsigned int num,
     void **reqHandle);
-int RaHdcSocketBatchCloseAsync(unsigned int phyId, struct SocketCloseInfoT conn[], unsigned int num,
-    void **reqHandle);
+int RaHdcSocketBatchCloseAsync(unsigned int phyId, struct SocketCloseInfoT conn[], unsigned int num, void **reqHandle);
 void RaHdcAsyncHandleSocketBatchClose(struct RaRequestHandle *reqHandle);
 #endif // RA_ASYNC_SOCKET_H

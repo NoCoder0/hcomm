@@ -44,8 +44,7 @@ using namespace hccl;
  * - len：数据长度
  * - res：用于存储接口返回值的成员变量
  */
-class UtAicpuTsHcommWriteNbiOnThread : public testing::Test
-{
+class UtAicpuTsHcommWriteNbiOnThread : public testing::Test {
 protected:
     virtual void SetUp() override
     {
@@ -53,10 +52,7 @@ protected:
         threadOnDevice.pImpl_ = std::make_unique<Hccl::IAicpuTsThread>();
     }
 
-    virtual void TearDown() override
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() override { GlobalMockObject::verify(); }
 
     AicpuTsThread threadOnDevice{StreamType::STREAM_TYPE_DEVICE, 0, NotifyLoadType::DEVICE_NOTIFY};
     ThreadHandle thread = reinterpret_cast<ThreadHandle>(&threadOnDevice);
@@ -65,8 +61,8 @@ protected:
     ChannelHandle channel = reinterpret_cast<ChannelHandle>(&transportOnDevice);
     uint64_t tempDst[6] = {0};
     uint64_t tempSrc[6] = {1, 1, 4, 5, 1, 4};
-    void *dst = reinterpret_cast<void *>(tempDst);
-    void *src = reinterpret_cast<void *>(tempSrc);
+    void* dst = reinterpret_cast<void*>(tempDst);
+    void* src = reinterpret_cast<void*>(tempSrc);
     uint64_t len = sizeof(tempDst);
     int32_t res{HCCL_E_RESERVED};
 };

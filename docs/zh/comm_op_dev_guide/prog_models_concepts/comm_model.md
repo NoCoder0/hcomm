@@ -38,7 +38,7 @@
 - Channel关联一个或多个QP（Queue Pair）实例，与远端Channel关联的QP实例存在对应关系，Channel建立时对应QP会建链。
 - Channel包含多个Notify实例，用于通信对象之间的同步操作。Notify是用于同步操作的抽象概念，在不同通信引擎下可能由不同实体实现。
   - 创建Channel时可以指定Channel包含的Notify实例数量。
-  - 本端可以通过Channel向远端对象对应Channel中的某个Notify（使用序号指定）发送同步信号，详见[数据面接口](../../api_ref/comm_opdev/README.md)章节。
+  - 本端可以通过Channel向远端对象对应Channel中的某个Notify（使用序号指定）发送同步信号。
   - 本端可以基于Channel的某个Notify，等待来自远端通信对象的同步信号，等到同步信号后才可以执行后续操作。
 
 ## 内存语义通信模型

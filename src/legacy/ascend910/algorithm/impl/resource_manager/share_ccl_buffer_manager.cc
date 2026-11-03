@@ -12,7 +12,7 @@
 #include "share_ccl_buffer_manager.h"
 
 namespace hccl {
- 
+
 ShareCCLbufferMgr& ShareCCLbufferMgr::GetInstance()
 {
     static ShareCCLbufferMgr shareCCLbufferMgr[MAX_MODULE_DEVICE_NUM];
@@ -25,25 +25,37 @@ ShareCCLbufferMgr& ShareCCLbufferMgr::GetInstance()
     return shareCCLbufferMgr[deviceLogicId];
 }
 
-HcclResult ShareCCLbufferMgr::CreateDevMem(u64 size, DeviceMem &buffer)
+HcclResult ShareCCLbufferMgr::CreateDevMem(u64 size, DeviceMem& buffer)
 {
-    CHK_PRT_RET(size == 0, HCCL_INFO("[ShareCCLbufferMgr][CreateDevMem]buffer size is zero. not need to malloc memory"),
+    CHK_PRT_RET(
+        size == 0, HCCL_INFO("[ShareCCLbufferMgr][CreateDevMem]buffer size is zero. not need to malloc memory"),
         HCCL_SUCCESS);
 
-    CHK_PRT_RET((size > ULONG_MAX),
-        HCCL_ERROR("[ShareCCLbufferMgr][CreateDevMem]buffer size is greater than %llu", ULONG_MAX), HCCL_E_PARA);
+    CHK_PRT_RET(
+        (size > ULONG_MAX), HCCL_ERROR("[ShareCCLbufferMgr][CreateDevMem]buffer size is greater than %llu", ULONG_MAX),
+        HCCL_E_PARA);
 
     buffer = DeviceMem::alloc(size);
-    CHK_PRT_RET(buffer.ptr() == nullptr,HCCL_ERROR("[ShareCCLbufferMgr][CreateDevMem]Create ccl buffer fail,buffer ptr is nullptr"),HCCL_E_PTR);
+    CHK_PRT_RET(
+        buffer.ptr() == nullptr,
+        HCCL_ERROR("[ShareCCLbufferMgr][CreateDevMem]Create ccl buffer fail,buffer ptr is nullptr"), HCCL_E_PTR);
     HCCL_INFO("[ShareCCLbufferMgr][CreateDevMem] buffer ptr[%p], size[%llu]", buffer.ptr(), buffer.size());
-    CHK_PRT_RET(static_cast<bool>(size) && !buffer, HCCL_ERROR("[ShareCCLbufferMgr][CreateDevMem]Create ccl buffer size[%llu] fail,"
-        "please check env ironmental variable HCCL_BUFFSIZE.", size), HCCL_E_PTR);
+    CHK_PRT_RET(
+        static_cast<bool>(size) && !buffer,
+        HCCL_ERROR(
+            "[ShareCCLbufferMgr][CreateDevMem]Create ccl buffer size[%llu] fail,"
+            "please check environmental variable HCCL_BUFFSIZE.",
+            size),
+        HCCL_E_PTR);
     return HCCL_SUCCESS;
 }
 
-HcclResult ShareCCLbufferMgr::RecordShareCCLbuffer(const std::string &bufferName)
+HcclResult ShareCCLbufferMgr::RecordShareCCLbuffer(const std::string& bufferName)
 {
-    CHK_PRT_RET(bufferName.empty(), HCCL_INFO("[ShareCCLbufferMgr][RecordShareCCLbuffer]: buffername is empty, no need record share buffer"), HCCL_SUCCESS);
+    CHK_PRT_RET(
+        bufferName.empty(),
+        HCCL_INFO("[ShareCCLbufferMgr][RecordShareCCLbuffer]: buffername is empty, no need record share buffer"),
+        HCCL_SUCCESS);
 
     std::lock_guard<std::mutex> lock(lock_);
     auto memIter = memRecord_.find(bufferName);
@@ -54,25 +66,33 @@ HcclResult ShareCCLbufferMgr::RecordShareCCLbuffer(const std::string &bufferName
         HCCL_INFO("[ShareCCLbufferMgr][RecordShareCCLbuffer]: buffername=%s, refCount=1", bufferName.c_str());
     } else {
         memIter->second.refCount++;
-        HCCL_INFO("[ShareCCLbufferMgr][RecordShareCCLbuffer]: buffername=%s, refCount=%d", bufferName.c_str(), memIter->second.refCount);
+        HCCL_INFO(
+            "[ShareCCLbufferMgr][RecordShareCCLbuffer]: buffername=%s, refCount=%d", bufferName.c_str(),
+            memIter->second.refCount);
     }
     return HCCL_SUCCESS;
 }
 
-
-HcclResult ShareCCLbufferMgr::CreateShareCCLbuffer(const std::string &bufferName, u64 bufferSize, DeviceMem &cclBuffer)
+HcclResult ShareCCLbufferMgr::CreateShareCCLbuffer(const std::string& bufferName, u64 bufferSize, DeviceMem& cclBuffer)
 {
-    CHK_PRT_RET(bufferName.empty(), HCCL_INFO("[ShareCCLbufferMgr][CreateShareCCLbuffer]: buffername is empty, no need create share buffer"), HCCL_SUCCESS);
+    CHK_PRT_RET(
+        bufferName.empty(),
+        HCCL_INFO("[ShareCCLbufferMgr][CreateShareCCLbuffer]: buffername is empty, no need create share buffer"),
+        HCCL_SUCCESS);
 
     std::lock_guard<std::mutex> lock(lock_);
-    CHK_PRT_RET(bufferSize == 0, HCCL_ERROR("[ShareCCLbufferMgr][CreateShareCCLbuffer]: ccl buffer size is abnormal!"), HCCL_E_PARA);
+    CHK_PRT_RET(
+        bufferSize == 0, HCCL_ERROR("[ShareCCLbufferMgr][CreateShareCCLbuffer]: ccl buffer size is abnormal!"),
+        HCCL_E_PARA);
     if (shareBufferSize_ == 0) {
         shareBufferSize_ = bufferSize;
     }
     if (shareBufferSize_ != bufferSize) {
-        HCCL_WARNING("[ShareCCLbufferMgr][CreateShareCCLbuffer]: share ccLBuffer size [%d], expect buffsize [%d]", shareBufferSize_, bufferSize);
+        HCCL_WARNING(
+            "[ShareCCLbufferMgr][CreateShareCCLbuffer]: share ccLBuffer size [%d], expect buffsize [%d]",
+            shareBufferSize_, bufferSize);
     }
-    
+
     auto memIter = memRecord_.find(bufferName);
     // 申请inCCL,outCCL buffer
     if (memIter->second.cclBuffer.ptr() == nullptr) {
@@ -80,20 +100,24 @@ HcclResult ShareCCLbufferMgr::CreateShareCCLbuffer(const std::string &bufferName
         CHK_RET(hrtMemSet(memIter->second.cclBuffer.ptr(), bufferSize, bufferSize));
     }
     cclBuffer = memIter->second.cclBuffer;
-    HCCL_INFO("[ShareCCLbufferMgr][CreateShareCCLbuffer]: buffername=%s, cclBuffer=%p", bufferName.c_str(), cclBuffer.ptr());
+    HCCL_INFO(
+        "[ShareCCLbufferMgr][CreateShareCCLbuffer]: buffername=%s, cclBuffer=%p", bufferName.c_str(), cclBuffer.ptr());
     return HCCL_SUCCESS;
 }
 
-
-HcclResult ShareCCLbufferMgr::FreeShareCCLbuffer(const std::string &bufferName)
+HcclResult ShareCCLbufferMgr::FreeShareCCLbuffer(const std::string& bufferName)
 {
-    CHK_PRT_RET(bufferName.empty(), HCCL_INFO("[ShareCCLbufferMgr][FreeShareCCLbuffer]: buffername is empty, no need free share cclbuffer"),
+    CHK_PRT_RET(
+        bufferName.empty(),
+        HCCL_INFO("[ShareCCLbufferMgr][FreeShareCCLbuffer]: buffername is empty, no need free share cclbuffer"),
         HCCL_SUCCESS);
 
     std::lock_guard<std::mutex> lock(lock_);
     auto it = memRecord_.find(bufferName);
     if (it == memRecord_.end()) {
-        HCCL_ERROR("[ShareCCLbufferMgr][FreeShareCCLbuffer] Cannot found the corresponding record of memory[%s].", bufferName.c_str());
+        HCCL_ERROR(
+            "[ShareCCLbufferMgr][FreeShareCCLbuffer] Cannot find the corresponding record of memory[%s].",
+            bufferName.c_str());
         return HCCL_E_PARA;
     }
     int refCnt = --(it->second.refCount);
@@ -107,12 +131,14 @@ HcclResult ShareCCLbufferMgr::FreeShareCCLbuffer(const std::string &bufferName)
 }
 
 // 约束共享buffer的算子下发到同一条流
-HcclResult ShareCCLbufferMgr::CheckCCLbuffConflict(const std::string &bufferName, s32 streamId) 
+HcclResult ShareCCLbufferMgr::CheckCCLbuffConflict(const std::string& bufferName, s32 streamId)
 {
-    CHK_PRT_RET(bufferName.empty(), HCCL_INFO("[ShareCCLbufferMgr][CheckCCLbuffConflict]: buffername is empty, no need check CCLbuff conflict"),
+    CHK_PRT_RET(
+        bufferName.empty(),
+        HCCL_INFO("[ShareCCLbufferMgr][CheckCCLbuffConflict]: buffername is empty, no need check CCLbuff conflict"),
         HCCL_SUCCESS);
 
-    std::lock_guard<std::mutex> lock(lock_); 
+    std::lock_guard<std::mutex> lock(lock_);
     auto streamIter = streamIdMap_.find(bufferName);
     if (streamIter == streamIdMap_.end()) {
         // 首次记录该缓冲区的stream ID
@@ -122,11 +148,13 @@ HcclResult ShareCCLbufferMgr::CheckCCLbuffConflict(const std::string &bufferName
     }
     const s32 recordedStreamId = streamIter->second;
     if (streamId != recordedStreamId) {
-        HCCL_ERROR("[CheckCCLbuffConflict] sharebuffer[%s] stream conflict: "
-                  "current %d vs recorded %d", bufferName.c_str(), streamId, recordedStreamId);
+        HCCL_ERROR(
+            "[CheckCCLbuffConflict] sharebuffer[%s] stream conflict: "
+            "current %d vs recorded %d",
+            bufferName.c_str(), streamId, recordedStreamId);
         return HCCL_E_PARA;
     }
     return HCCL_SUCCESS;
 }
 
-}
+} // namespace hccl

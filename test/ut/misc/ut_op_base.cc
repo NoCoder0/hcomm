@@ -1,13 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
-
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -61,6 +60,7 @@
 #include "v80_rank_table.h"
 #include "externalinput.h"
 #include "op_base.h"
+#include "coll_comm_mgr.h"
 #include "param_check_pub.h"
 #include "hcom_pub.h"
 #include "comm_config_pub.h"
@@ -73,8 +73,7 @@
 using namespace std;
 using namespace hccl;
 
-class OpbaseTest : public testing::TestWithParam<bool>
-{
+class OpbaseTest : public testing::TestWithParam<bool> {
 protected:
     // static void SetUpTestCase()
     // {
@@ -86,17 +85,14 @@ protected:
     // }
     virtual void SetUp()
     {
-        static s32  call_cnt = 0;
+        static s32 call_cnt = 0;
         DlTdtFunction::GetInstance().DlTdtFunctionInit();
-        TsdOpen(1,2);
-        string name =std::to_string(call_cnt++) +"_" + __PRETTY_FUNCTION__;
-        ra_set_shm_name(name .c_str());
+        TsdOpen(1, 2);
+        string name = std::to_string(call_cnt++) + "_" + __PRETTY_FUNCTION__;
+        ra_set_shm_name(name.c_str());
         ResetInitState();
         s32 portNum = 7;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
         std::cout << "A Test SetUP" << std::endl;
     }
     virtual void TearDown()
@@ -110,72 +106,48 @@ INSTANTIATE_TEST_CASE_P(FFTSSwitch, OpbaseTest, testing::Bool());
 #define HCCL_COM_DATA_SIZE 1024
 TEST_P(OpbaseTest, ut_hcclBroadcast)
 {
-    MOCKER(GetExternalInputHcclEnableEntryLog)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(true));
-    nlohmann::json rank_table =
-    {
-        {"status", "completed"},
-        {"deploy_mode", "lab"},
-        {"group_count", "1"},
-        {"chip_info", "910"},
-        {"board_id", "0x0000"},
-        {"para_plane_nic_location", "device"},
-        {"para_plane_nic_num", "1"},
-        {"para_plane_nic_name", {"eth0"}},
-        {
-            "group_list",
-            {
-                {
-                    {"group_name", ""},
-                    {"device_num", "1"},
-                    {"server_num", "1"},
-                    {"instance_count", "1"},
-                        {
-                            "instance_list",
-                            {
-                                {   {"rank_id", "0"}, {"server_id", "10.0.0.10"},
-                                    {
-                                        "devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}
-                                    }
-                                },
-                            }
-                        },
-                        {
-                            "server_list",
-                            {
-                                {
-                                    {"server_id", "192.168.10.2"},
-                                    {
-                                        "para_plane_info",
-                                        {{
-                                                {"eth1", "192.168.210.2"},
-                                            },
-                                            {
-                                                {"eth0", "192.168.200.2"},
-                                            }
-                                        }
-                                    }
+    MOCKER(GetExternalInputHcclEnableEntryLog).stubs().with(mockcpp::any()).will(returnValue(true));
+    nlohmann::json rank_table
+        = {{"status", "completed"},
+           {"deploy_mode", "lab"},
+           {"group_count", "1"},
+           {"chip_info", "910"},
+           {"board_id", "0x0000"},
+           {"para_plane_nic_location", "device"},
+           {"para_plane_nic_num", "1"},
+           {"para_plane_nic_name", {"eth0"}},
+           {"group_list",
+            {{{"group_name", ""},
+              {"device_num", "1"},
+              {"server_num", "1"},
+              {"instance_count", "1"},
+              {"instance_list",
+               {
+                   {{"rank_id", "0"},
+                    {"server_id", "10.0.0.10"},
+                    {"devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}}},
+               }},
+              {"server_list",
+               {
+                   {{"server_id", "192.168.10.2"},
+                    {"para_plane_info",
+                     {{
+                          {"eth1", "192.168.210.2"},
+                      },
+                      {
+                          {"eth0", "192.168.200.2"},
+                      }}}
 
-                                },
-                            }
-                        }
-                }
-            }
-        }
-    };
+                   },
+               }}}}}};
 
     char file_name_t[] = "./st_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -202,10 +174,9 @@ TEST_P(OpbaseTest, ut_hcclBroadcast)
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     sendbuf = (s8*)sal_malloc(count * sizeof(s8));
-    sal_memset(sendbuf, count * sizeof(s8) , 0, count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
 
@@ -220,12 +191,10 @@ TEST_P(OpbaseTest, ut_hcclBroadcast)
     rt_ret = aclrtSynchronizeStream(stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    for (int j = 0; j < count; j++)
-    {
-        if (sendbuf[j] != 2)
-        {
-            HCCL_ERROR("\n rank:%d sendbuf[%d]:%f", rank, j, sendbuf[j] );
-            errors ++;
+    for (int j = 0; j < count; j++) {
+        if (sendbuf[j] != 2) {
+            HCCL_ERROR("\n rank:%d sendbuf[%d]:%f", rank, j, sendbuf[j]);
+            errors++;
             break;
         }
     }
@@ -247,72 +216,48 @@ TEST_P(OpbaseTest, ut_hcclBroadcast)
 
 TEST_F(OpbaseTest, ut_hcclAllReduce)
 {
-    MOCKER(GetExternalInputHcclEnableEntryLog)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(true));
-    nlohmann::json rank_table =
-    {
-        {"status", "completed"},
-        {"deploy_mode", "lab"},
-        {"group_count", "1"},
-        {"chip_info", "910"},
-        {"board_id", "0x0000"},
-        {"para_plane_nic_location", "device"},
-        {"para_plane_nic_num", "1"},
-        {"para_plane_nic_name", {"eth0"}},
-        {
-            "group_list",
-            {
-                {
-                    {"group_name", ""},
-                    {"device_num", "1"},
-                    {"server_num", "1"},
-                    {"instance_count", "1"},
-                        {
-                            "instance_list",
-                            {
-                                {   {"rank_id", "0"}, {"server_id", "10.0.0.10"},
-                                    {
-                                        "devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}
-                                    }
-                                },
-                            }
-                        },
-                        {
-                            "server_list",
-                            {
-                                {
-                                    {"server_id", "192.168.10.2"},
-                                    {
-                                        "para_plane_info",
-                                        {{
-                                                {"eth1", "192.168.210.2"},
-                                            },
-                                            {
-                                                {"eth0", "192.168.200.2"},
-                                            }
-                                        }
-                                    }
+    MOCKER(GetExternalInputHcclEnableEntryLog).stubs().with(mockcpp::any()).will(returnValue(true));
+    nlohmann::json rank_table
+        = {{"status", "completed"},
+           {"deploy_mode", "lab"},
+           {"group_count", "1"},
+           {"chip_info", "910"},
+           {"board_id", "0x0000"},
+           {"para_plane_nic_location", "device"},
+           {"para_plane_nic_num", "1"},
+           {"para_plane_nic_name", {"eth0"}},
+           {"group_list",
+            {{{"group_name", ""},
+              {"device_num", "1"},
+              {"server_num", "1"},
+              {"instance_count", "1"},
+              {"instance_list",
+               {
+                   {{"rank_id", "0"},
+                    {"server_id", "10.0.0.10"},
+                    {"devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}}},
+               }},
+              {"server_list",
+               {
+                   {{"server_id", "192.168.10.2"},
+                    {"para_plane_info",
+                     {{
+                          {"eth1", "192.168.210.2"},
+                      },
+                      {
+                          {"eth0", "192.168.200.2"},
+                      }}}
 
-                                },
-                            }
-                        }
-                }
-            }
-        }
-    };
+                   },
+               }}}}}};
 
     char file_name_t[] = "./st_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -342,13 +287,12 @@ TEST_F(OpbaseTest, ut_hcclAllReduce)
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
 
@@ -366,11 +310,9 @@ TEST_F(OpbaseTest, ut_hcclAllReduce)
     rt_ret = aclrtSynchronizeStream(stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
@@ -386,28 +328,26 @@ TEST_F(OpbaseTest, ut_hcclAllReduce)
     EXPECT_EQ(errors, 0);
 }
 
-TEST_F(OpbaseTest, ut_PluginRunner_not_support) {
+TEST_F(OpbaseTest, ut_PluginRunner_not_support)
+{
     aclmdlRICaptureStatus captureStatus = aclmdlRICaptureStatus::ACL_MODEL_RI_CAPTURE_STATUS_ACTIVE;
     int mockModel = 0;
-    void *pmockModel = &mockModel;
+    void* pmockModel = &mockModel;
     MOCKER(aclmdlRICaptureGetInfo)
-    .stubs()
-    .with(mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)), outBoundP(&pmockModel, sizeof(pmockModel)))
-    .will(returnValue(207000));
+        .stubs()
+        .with(
+            mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)),
+            outBoundP(&pmockModel, sizeof(pmockModel)))
+        .will(returnValue(207000));
 
-    MOCKER(GetExternalInputHcclEnableFfts)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(true));
+    MOCKER(GetExternalInputHcclEnableFfts).stubs().with(mockcpp::any()).will(returnValue(true));
 
     MOCKER(GetWorkflowMode)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE));
 
-    MOCKER(GetExternalInputTaskExceptionSwitch)
-    .stubs()
-    .will(returnValue(1));
+    MOCKER(GetExternalInputTaskExceptionSwitch).stubs().will(returnValue(1));
 
     u32 deviceLogicId = 0;
     TaskExceptionHandler taskExceptionHandler(deviceLogicId);
@@ -435,78 +375,56 @@ TEST_F(OpbaseTest, ut_hcclAllReduce_capture)
 {
     aclmdlRICaptureStatus captureStatus = aclmdlRICaptureStatus::ACL_MODEL_RI_CAPTURE_STATUS_ACTIVE;
     int mockModel = 0;
-    void *pmockModel = &mockModel;
+    void* pmockModel = &mockModel;
     MOCKER(aclmdlRICaptureGetInfo)
-    .stubs()
-    .with(mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)), outBoundP(&pmockModel, sizeof(pmockModel)))
-    .will(returnValue(207000));
+        .stubs()
+        .with(
+            mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)),
+            outBoundP(&pmockModel, sizeof(pmockModel)))
+        .will(returnValue(207000));
 
-    MOCKER(GetExternalInputHcclEnableEntryLog)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(true));
-    nlohmann::json rank_table =
-    {
-        {"status", "completed"},
-        {"deploy_mode", "lab"},
-        {"group_count", "1"},
-        {"chip_info", "910"},
-        {"board_id", "0x0000"},
-        {"para_plane_nic_location", "device"},
-        {"para_plane_nic_num", "1"},
-        {"para_plane_nic_name", {"eth0"}},
-        {
-            "group_list",
-            {
-                {
-                    {"group_name", ""},
-                    {"device_num", "1"},
-                    {"server_num", "1"},
-                    {"instance_count", "1"},
-                        {
-                            "instance_list",
-                            {
-                                {   {"rank_id", "0"}, {"server_id", "10.0.0.10"},
-                                    {
-                                        "devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}
-                                    }
-                                },
-                            }
-                        },
-                        {
-                            "server_list",
-                            {
-                                {
-                                    {"server_id", "192.168.10.2"},
-                                    {
-                                        "para_plane_info",
-                                        {{
-                                                {"eth1", "192.168.210.2"},
-                                            },
-                                            {
-                                                {"eth0", "192.168.200.2"},
-                                            }
-                                        }
-                                    }
+    MOCKER(GetExternalInputHcclEnableEntryLog).stubs().with(mockcpp::any()).will(returnValue(true));
+    nlohmann::json rank_table
+        = {{"status", "completed"},
+           {"deploy_mode", "lab"},
+           {"group_count", "1"},
+           {"chip_info", "910"},
+           {"board_id", "0x0000"},
+           {"para_plane_nic_location", "device"},
+           {"para_plane_nic_num", "1"},
+           {"para_plane_nic_name", {"eth0"}},
+           {"group_list",
+            {{{"group_name", ""},
+              {"device_num", "1"},
+              {"server_num", "1"},
+              {"instance_count", "1"},
+              {"instance_list",
+               {
+                   {{"rank_id", "0"},
+                    {"server_id", "10.0.0.10"},
+                    {"devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}}},
+               }},
+              {"server_list",
+               {
+                   {{"server_id", "192.168.10.2"},
+                    {"para_plane_info",
+                     {{
+                          {"eth1", "192.168.210.2"},
+                      },
+                      {
+                          {"eth0", "192.168.200.2"},
+                      }}}
 
-                                },
-                            }
-                        }
-                }
-            }
-        }
-    };
+                   },
+               }}}}}};
 
     char file_name_t[] = "./st_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -536,13 +454,12 @@ TEST_F(OpbaseTest, ut_hcclAllReduce_capture)
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
 
@@ -560,11 +477,9 @@ TEST_F(OpbaseTest, ut_hcclAllReduce_capture)
     rt_ret = aclrtSynchronizeStream(stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
@@ -584,48 +499,32 @@ TEST_F(OpbaseTest, ut_hcclAllReduce_capture_rdma)
 {
     aclmdlRICaptureStatus captureStatus = aclmdlRICaptureStatus::ACL_MODEL_RI_CAPTURE_STATUS_ACTIVE;
     int mockModel = 0;
-    void *pmockModel = &mockModel;
+    void* pmockModel = &mockModel;
     MOCKER(aclmdlRICaptureGetInfo)
-    .stubs()
-    .with(mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)), outBoundP(&pmockModel, sizeof(pmockModel)))
-    .will(returnValue(207000));
+        .stubs()
+        .with(
+            mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)),
+            outBoundP(&pmockModel, sizeof(pmockModel)))
+        .will(returnValue(207000));
 
-    MOCKER(GetExternalInputHcclEnableEntryLog)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(true));
+    MOCKER(GetExternalInputHcclEnableEntryLog).stubs().with(mockcpp::any()).will(returnValue(true));
     nlohmann::json rank_table = rank_table_910_2server_4rank;
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::AllocAlgResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::AllocAlgResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::ExecOp)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::ExecOp).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::StreamIsCapture)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(true));
+    MOCKER_CPP(&HcclCommunicator::StreamIsCapture).stubs().with(mockcpp::any()).will(returnValue(true));
 
     char file_name_t[] = "./st_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -651,20 +550,19 @@ TEST_F(OpbaseTest, ut_hcclAllReduce_capture_rdma)
     ret = HcclCommInitClusterInfo(rank_table_file, rank_ID, &comm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
     ret = hcclComm->GetRankSize(rankSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
 
@@ -692,72 +590,48 @@ TEST_F(OpbaseTest, ut_hcclAllReduce_capture_rdma)
 
 TEST_F(OpbaseTest, ut_hcclReducescatter)
 {
-    MOCKER(GetExternalInputHcclEnableEntryLog)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(true));
-    nlohmann::json rank_table =
-    {
-        {"status", "completed"},
-        {"deploy_mode", "lab"},
-        {"group_count", "1"},
-        {"chip_info", "910"},
-        {"board_id", "0x0000"},
-        {"para_plane_nic_location", "device"},
-        {"para_plane_nic_num", "1"},
-        {"para_plane_nic_name", {"eth0"}},
-        {
-            "group_list",
-            {
-                {
-                    {"group_name", ""},
-                    {"device_num", "1"},
-                    {"server_num", "1"},
-                    {"instance_count", "1"},
-                        {
-                            "instance_list",
-                            {
-                                {   {"rank_id", "0"}, {"server_id", "10.0.0.10"},
-                                    {
-                                        "devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}
-                                    }
-                                },
-                            }
-                        },
-                        {
-                            "server_list",
-                            {
-                                {
-                                    {"server_id", "192.168.10.2"},
-                                    {
-                                        "para_plane_info",
-                                        {{
-                                                {"eth1", "192.168.210.2"},
-                                            },
-                                            {
-                                                {"eth0", "192.168.200.2"},
-                                            }
-                                        }
-                                    }
+    MOCKER(GetExternalInputHcclEnableEntryLog).stubs().with(mockcpp::any()).will(returnValue(true));
+    nlohmann::json rank_table
+        = {{"status", "completed"},
+           {"deploy_mode", "lab"},
+           {"group_count", "1"},
+           {"chip_info", "910"},
+           {"board_id", "0x0000"},
+           {"para_plane_nic_location", "device"},
+           {"para_plane_nic_num", "1"},
+           {"para_plane_nic_name", {"eth0"}},
+           {"group_list",
+            {{{"group_name", ""},
+              {"device_num", "1"},
+              {"server_num", "1"},
+              {"instance_count", "1"},
+              {"instance_list",
+               {
+                   {{"rank_id", "0"},
+                    {"server_id", "10.0.0.10"},
+                    {"devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}}},
+               }},
+              {"server_list",
+               {
+                   {{"server_id", "192.168.10.2"},
+                    {"para_plane_info",
+                     {{
+                          {"eth1", "192.168.210.2"},
+                      },
+                      {
+                          {"eth0", "192.168.200.2"},
+                      }}}
 
-                                },
-                            }
-                        }
-                }
-            }
-        }
-    };
+                   },
+               }}}}}};
 
     char file_name_t[] = "./st_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -785,13 +659,12 @@ TEST_F(OpbaseTest, ut_hcclReducescatter)
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
 
@@ -801,11 +674,9 @@ TEST_F(OpbaseTest, ut_hcclReducescatter)
     rt_ret = aclrtSynchronizeStream(stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
@@ -825,78 +696,56 @@ TEST_F(OpbaseTest, ut_hcclReducescatter_capture)
 {
     aclmdlRICaptureStatus captureStatus = aclmdlRICaptureStatus::ACL_MODEL_RI_CAPTURE_STATUS_ACTIVE;
     int mockModel = 0;
-    void *pmockModel = &mockModel;
+    void* pmockModel = &mockModel;
     MOCKER(aclmdlRICaptureGetInfo)
-    .stubs()
-    .with(mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)), outBoundP(&pmockModel, sizeof(pmockModel)))
-    .will(returnValue(0));
+        .stubs()
+        .with(
+            mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)),
+            outBoundP(&pmockModel, sizeof(pmockModel)))
+        .will(returnValue(0));
 
-    MOCKER(GetExternalInputHcclEnableEntryLog)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(true));
-    nlohmann::json rank_table =
-    {
-        {"status", "completed"},
-        {"deploy_mode", "lab"},
-        {"group_count", "1"},
-        {"chip_info", "910"},
-        {"board_id", "0x0000"},
-        {"para_plane_nic_location", "device"},
-        {"para_plane_nic_num", "1"},
-        {"para_plane_nic_name", {"eth0"}},
-        {
-            "group_list",
-            {
-                {
-                    {"group_name", ""},
-                    {"device_num", "1"},
-                    {"server_num", "1"},
-                    {"instance_count", "1"},
-                        {
-                            "instance_list",
-                            {
-                                {   {"rank_id", "0"}, {"server_id", "10.0.0.10"},
-                                    {
-                                        "devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}
-                                    }
-                                },
-                            }
-                        },
-                        {
-                            "server_list",
-                            {
-                                {
-                                    {"server_id", "192.168.10.2"},
-                                    {
-                                        "para_plane_info",
-                                        {{
-                                                {"eth1", "192.168.210.2"},
-                                            },
-                                            {
-                                                {"eth0", "192.168.200.2"},
-                                            }
-                                        }
-                                    }
+    MOCKER(GetExternalInputHcclEnableEntryLog).stubs().with(mockcpp::any()).will(returnValue(true));
+    nlohmann::json rank_table
+        = {{"status", "completed"},
+           {"deploy_mode", "lab"},
+           {"group_count", "1"},
+           {"chip_info", "910"},
+           {"board_id", "0x0000"},
+           {"para_plane_nic_location", "device"},
+           {"para_plane_nic_num", "1"},
+           {"para_plane_nic_name", {"eth0"}},
+           {"group_list",
+            {{{"group_name", ""},
+              {"device_num", "1"},
+              {"server_num", "1"},
+              {"instance_count", "1"},
+              {"instance_list",
+               {
+                   {{"rank_id", "0"},
+                    {"server_id", "10.0.0.10"},
+                    {"devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}}},
+               }},
+              {"server_list",
+               {
+                   {{"server_id", "192.168.10.2"},
+                    {"para_plane_info",
+                     {{
+                          {"eth1", "192.168.210.2"},
+                      },
+                      {
+                          {"eth0", "192.168.200.2"},
+                      }}}
 
-                                },
-                            }
-                        }
-                }
-            }
-        }
-    };
+                   },
+               }}}}}};
 
     char file_name_t[] = "./st_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -924,13 +773,12 @@ TEST_F(OpbaseTest, ut_hcclReducescatter_capture)
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
 
@@ -941,11 +789,9 @@ TEST_F(OpbaseTest, ut_hcclReducescatter_capture)
     rt_ret = aclrtSynchronizeStream(stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
@@ -963,22 +809,16 @@ TEST_F(OpbaseTest, ut_hcclReducescatter_capture)
 
 TEST_F(OpbaseTest, ut_hcclScatter_Ring_1rank)
 {
-    MOCKER(GetExternalInputHcclEnableEntryLog)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(true));
+    MOCKER(GetExternalInputHcclEnableEntryLog).stubs().with(mockcpp::any()).will(returnValue(true));
     nlohmann::json rank_table = rank_table_910_1server_1rank;
 
     char file_name_t[] = "./st_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -1006,13 +846,12 @@ TEST_F(OpbaseTest, ut_hcclScatter_Ring_1rank)
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
 
@@ -1021,11 +860,9 @@ TEST_F(OpbaseTest, ut_hcclScatter_Ring_1rank)
     rt_ret = aclrtSynchronizeStream(stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
@@ -1055,13 +892,10 @@ TEST_P(OpbaseTest, ut_hcclScatter_inptr_EQ_outPtr)
     char file_name_t[] = "./ut_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -1088,12 +922,11 @@ TEST_P(OpbaseTest, ut_hcclScatter_inptr_EQ_outPtr)
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf = sendbuf ;
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    recvbuf = sendbuf;
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
 
@@ -1102,17 +935,15 @@ TEST_P(OpbaseTest, ut_hcclScatter_inptr_EQ_outPtr)
     rt_ret = aclrtSynchronizeStream(stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
 
     sal_free(sendbuf);
-    recvbuf = nullptr ;
+    recvbuf = nullptr;
 
     rt_ret = aclrtDestroyStream(stream);
 
@@ -1129,10 +960,7 @@ TEST_P(OpbaseTest, ut_hcclScatter_inptr_EQ_outPtr)
 
 TEST_P(OpbaseTest, ut_HcclReduce_inptr_EQ_outPtr)
 {
-    MOCKER(GetExternalInputHcclEnableEntryLog)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(true));
+    MOCKER(GetExternalInputHcclEnableEntryLog).stubs().with(mockcpp::any()).will(returnValue(true));
     bool fftsSwitch = GetParam();
     if (fftsSwitch) {
         SetFftsSwitch(true);
@@ -1143,13 +971,10 @@ TEST_P(OpbaseTest, ut_HcclReduce_inptr_EQ_outPtr)
     char file_name_t[] = "./st_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -1177,12 +1002,11 @@ TEST_P(OpbaseTest, ut_HcclReduce_inptr_EQ_outPtr)
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf = sendbuf ;
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    recvbuf = sendbuf;
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
     unsigned int rankSize = 0;
@@ -1205,13 +1029,11 @@ TEST_P(OpbaseTest, ut_HcclReduce_inptr_EQ_outPtr)
 
     rt_ret = aclrtSynchronizeStream(stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
-    HCCL_ERROR("count %d",count);
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            HCCL_ERROR("j %d",j);
-            errors ++;
+    HCCL_ERROR("count %d", count);
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            HCCL_ERROR("j %d", j);
+            errors++;
             break;
         }
     }
@@ -1232,13 +1054,8 @@ TEST_P(OpbaseTest, ut_HcclReduce_inptr_EQ_outPtr)
 
 TEST_F(OpbaseTest, ut_HcclAllGatherOutPlace310P_ranksize_1)
 {
-    MOCKER(hrtRaGetInterfaceVersion)
-    .expects(atMost(1))
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(GetExternalInputHcclEnableEntryLog)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(true));
+    MOCKER(hrtRaGetInterfaceVersion).expects(atMost(1)).will(returnValue(HCCL_SUCCESS));
+    MOCKER(GetExternalInputHcclEnableEntryLog).stubs().with(mockcpp::any()).will(returnValue(true));
     s8* sendBuf;
     s8* recvBuf;
     s32 rank = 0;
@@ -1246,15 +1063,12 @@ TEST_F(OpbaseTest, ut_HcclAllGatherOutPlace310P_ranksize_1)
     s32 count = HCCL_COM_DATA_SIZE;
     HcclRootInfo id;
     char group[ROOTINFO_INDENTIFIER_MAX_LENGTH] = {0};
-    void *commContext = nullptr;
-    void *aicpuNotify = nullptr;
+    void* commContext = nullptr;
+    void* aicpuNotify = nullptr;
     rtStream_t stream;
 
     DevType deviceType = DevType::DEV_TYPE_310P3;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = HcclGetRootInfo(&id);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -1284,7 +1098,7 @@ TEST_F(OpbaseTest, ut_HcclAllGatherOutPlace310P_ranksize_1)
     vector<RankInfo_t> rankVec(1);
     rankVec[0].rankId = 0;
     rankVec[0].deviceInfo.devicePhyId = 0;
-    HcclIpAddress ipAddr1(1695197376);  // 1,695,197,376
+    HcclIpAddress ipAddr1(1695197376);                 // 1,695,197,376
     rankVec[0].deviceInfo.deviceIp.push_back(ipAddr1); // 101.10.168.192
     rankVec[0].serverIdx = 0;
     rankVec[0].serverId = "192.168.0.101";
@@ -1322,23 +1136,14 @@ TEST_F(OpbaseTest, ut_HcclAllGatherOutPlace_mix_ranksize_1_capture)
     SetFftsSwitch(false);
 
     DevType deviceType = DevType::DEV_TYPE_910_93;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&HcclCallbackTask::CallbackRegStream)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCallbackTask::CallbackRegStream).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     s32 portNum = -1;
-    MOCKER(hrtGetHccsPortNum)
-    .stubs()
-    .with(mockcpp::any(), outBound(portNum))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&HcclCommunicator::RegisterToHeartBeat, HcclResult(HcclCommunicator::*)())
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = HCCL_SUCCESS;
     rtError_t rt_ret = RT_ERROR_NONE;
@@ -1368,20 +1173,18 @@ TEST_F(OpbaseTest, ut_HcclAllGatherOutPlace_mix_ranksize_1_capture)
     ret = HcclCommInitRootInfo(1, &id, 0, &newcomm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::IsAtomicInit)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER_CPP(&HcclCommunicator::IsAtomicInit).stubs().will(returnValue(true));
     aclmdlRICaptureStatus captureStatus = aclmdlRICaptureStatus::ACL_MODEL_RI_CAPTURE_STATUS_ACTIVE;
     int mockModel = 0;
-    void *pmockModel = &mockModel;
+    void* pmockModel = &mockModel;
     MOCKER(aclmdlRICaptureGetInfo)
-    .stubs()
-    .with(mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)), outBoundP(&pmockModel, sizeof(pmockModel)))
-    .will(returnValue(0));
+        .stubs()
+        .with(
+            mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)),
+            outBoundP(&pmockModel, sizeof(pmockModel)))
+        .will(returnValue(0));
 
     HcclCommunicator impl;
     HcclCommParams params;
@@ -1398,7 +1201,7 @@ TEST_F(OpbaseTest, ut_HcclAllGatherOutPlace_mix_ranksize_1_capture)
     vector<RankInfo_t> rankVec(1);
     rankVec[0].rankId = 0;
     rankVec[0].deviceInfo.devicePhyId = 0;
-    HcclIpAddress ipAddr1(1695197376);  // 1,695,197,376
+    HcclIpAddress ipAddr1(1695197376);                 // 1,695,197,376
     rankVec[0].deviceInfo.deviceIp.push_back(ipAddr1); // 101.10.168.192
     rankVec[0].serverIdx = 0;
     rankVec[0].serverId = "192.168.0.101";
@@ -1432,72 +1235,48 @@ TEST_F(OpbaseTest, ut_HcclAllGatherOutPlace_mix_ranksize_1_capture)
 
 TEST_F(OpbaseTest, ut_hcclAllGather)
 {
-    MOCKER(GetExternalInputHcclEnableEntryLog)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(true));
-    nlohmann::json rank_table =
-    {
-        {"status", "completed"},
-        {"deploy_mode", "lab"},
-        {"group_count", "1"},
-        {"chip_info", "910"},
-        {"board_id", "0x0000"},
-        {"para_plane_nic_location", "device"},
-        {"para_plane_nic_num", "1"},
-        {"para_plane_nic_name", {"eth0"}},
-        {
-            "group_list",
-            {
-                {
-                    {"group_name", ""},
-                    {"device_num", "1"},
-                    {"server_num", "1"},
-                    {"instance_count", "1"},
-                        {
-                            "instance_list",
-                            {
-                                {   {"rank_id", "0"}, {"server_id", "10.0.0.10"},
-                                    {
-                                        "devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}
-                                    }
-                                },
-                            }
-                        },
-                        {
-                            "server_list",
-                            {
-                                {
-                                    {"server_id", "192.168.10.2"},
-                                    {
-                                        "para_plane_info",
-                                        {{
-                                                {"eth1", "192.168.210.2"},
-                                            },
-                                            {
-                                                {"eth0", "192.168.200.2"},
-                                            }
-                                        }
-                                    }
+    MOCKER(GetExternalInputHcclEnableEntryLog).stubs().with(mockcpp::any()).will(returnValue(true));
+    nlohmann::json rank_table
+        = {{"status", "completed"},
+           {"deploy_mode", "lab"},
+           {"group_count", "1"},
+           {"chip_info", "910"},
+           {"board_id", "0x0000"},
+           {"para_plane_nic_location", "device"},
+           {"para_plane_nic_num", "1"},
+           {"para_plane_nic_name", {"eth0"}},
+           {"group_list",
+            {{{"group_name", ""},
+              {"device_num", "1"},
+              {"server_num", "1"},
+              {"instance_count", "1"},
+              {"instance_list",
+               {
+                   {{"rank_id", "0"},
+                    {"server_id", "10.0.0.10"},
+                    {"devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}}},
+               }},
+              {"server_list",
+               {
+                   {{"server_id", "192.168.10.2"},
+                    {"para_plane_info",
+                     {{
+                          {"eth1", "192.168.210.2"},
+                      },
+                      {
+                          {"eth0", "192.168.200.2"},
+                      }}}
 
-                                },
-                            }
-                        }
-                }
-            }
-        }
-    };
+                   },
+               }}}}}};
 
     char file_name_t[] = "./st_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -1525,13 +1304,12 @@ TEST_F(OpbaseTest, ut_hcclAllGather)
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
 
@@ -1541,11 +1319,9 @@ TEST_F(OpbaseTest, ut_hcclAllGather)
     rt_ret = aclrtSynchronizeStream(stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
@@ -1563,80 +1339,58 @@ TEST_F(OpbaseTest, ut_hcclAllGather)
 
 TEST_F(OpbaseTest, ut_hcclAllGather_capture)
 {
-    MOCKER(GetExternalInputHcclEnableEntryLog)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(true));
+    MOCKER(GetExternalInputHcclEnableEntryLog).stubs().with(mockcpp::any()).will(returnValue(true));
     aclmdlRICaptureStatus captureStatus = aclmdlRICaptureStatus::ACL_MODEL_RI_CAPTURE_STATUS_ACTIVE;
     int mockModel = 0;
-    void *pmockModel = &mockModel;
+    void* pmockModel = &mockModel;
     MOCKER(aclmdlRICaptureGetInfo)
-    .stubs()
-    .with(mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)), outBoundP(&pmockModel, sizeof(pmockModel)))
-    .will(returnValue(207000));
+        .stubs()
+        .with(
+            mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)),
+            outBoundP(&pmockModel, sizeof(pmockModel)))
+        .will(returnValue(207000));
 
-    nlohmann::json rank_table =
-    {
-        {"status", "completed"},
-        {"deploy_mode", "lab"},
-        {"group_count", "1"},
-        {"chip_info", "910"},
-        {"board_id", "0x0000"},
-        {"para_plane_nic_location", "device"},
-        {"para_plane_nic_num", "1"},
-        {"para_plane_nic_name", {"eth0"}},
-        {
-            "group_list",
-            {
-                {
-                    {"group_name", ""},
-                    {"device_num", "1"},
-                    {"server_num", "1"},
-                    {"instance_count", "1"},
-                        {
-                            "instance_list",
-                            {
-                                {   {"rank_id", "0"}, {"server_id", "10.0.0.10"},
-                                    {
-                                        "devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}
-                                    }
-                                },
-                            }
-                        },
-                        {
-                            "server_list",
-                            {
-                                {
-                                    {"server_id", "192.168.10.2"},
-                                    {
-                                        "para_plane_info",
-                                        {{
-                                                {"eth1", "192.168.210.2"},
-                                            },
-                                            {
-                                                {"eth0", "192.168.200.2"},
-                                            }
-                                        }
-                                    }
+    nlohmann::json rank_table
+        = {{"status", "completed"},
+           {"deploy_mode", "lab"},
+           {"group_count", "1"},
+           {"chip_info", "910"},
+           {"board_id", "0x0000"},
+           {"para_plane_nic_location", "device"},
+           {"para_plane_nic_num", "1"},
+           {"para_plane_nic_name", {"eth0"}},
+           {"group_list",
+            {{{"group_name", ""},
+              {"device_num", "1"},
+              {"server_num", "1"},
+              {"instance_count", "1"},
+              {"instance_list",
+               {
+                   {{"rank_id", "0"},
+                    {"server_id", "10.0.0.10"},
+                    {"devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}}},
+               }},
+              {"server_list",
+               {
+                   {{"server_id", "192.168.10.2"},
+                    {"para_plane_info",
+                     {{
+                          {"eth1", "192.168.210.2"},
+                      },
+                      {
+                          {"eth0", "192.168.200.2"},
+                      }}}
 
-                                },
-                            }
-                        }
-                }
-            }
-        }
-    };
+                   },
+               }}}}}};
 
     char file_name_t[] = "./st_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -1664,13 +1418,12 @@ TEST_F(OpbaseTest, ut_hcclAllGather_capture)
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
 
@@ -1680,11 +1433,9 @@ TEST_F(OpbaseTest, ut_hcclAllGather_capture)
     rt_ret = aclrtSynchronizeStream(stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
@@ -1702,51 +1453,36 @@ TEST_F(OpbaseTest, ut_hcclAllGather_capture)
 
 TEST_F(OpbaseTest, ut_hcclAllGather_capture_rdma)
 {
-    MOCKER(GetExternalInputHcclEnableEntryLog)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(true));
+    MOCKER(GetExternalInputHcclEnableEntryLog).stubs().with(mockcpp::any()).will(returnValue(true));
 
     aclmdlRICaptureStatus captureStatus = aclmdlRICaptureStatus::ACL_MODEL_RI_CAPTURE_STATUS_ACTIVE;
     int mockModel = 0;
-    void *pmockModel = &mockModel;
+    void* pmockModel = &mockModel;
     MOCKER(aclmdlRICaptureGetInfo)
-    .stubs()
-    .with(mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)), outBoundP(&pmockModel, sizeof(pmockModel)))
-    .will(returnValue(207000));
+        .stubs()
+        .with(
+            mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)),
+            outBoundP(&pmockModel, sizeof(pmockModel)))
+        .will(returnValue(207000));
 
-    MOCKER_CPP(&HcclCommunicator::StreamIsCapture)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(true));
+    MOCKER_CPP(&HcclCommunicator::StreamIsCapture).stubs().with(mockcpp::any()).will(returnValue(true));
 
     DevType deviceType = DevType::DEV_TYPE_910B;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::ExecOp)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::ExecOp).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     nlohmann::json rank_table = rank_table_910_2server_4rank;
 
     char file_name_t[] = "./st_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -1771,20 +1507,19 @@ TEST_F(OpbaseTest, ut_hcclAllGather_capture_rdma)
     ret = HcclCommInitClusterInfo(rank_table_file, rank_ID, &comm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
     ret = hcclComm->GetRankSize(rankSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(rankSize * count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(rankSize * count * sizeof(s8));
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
 
@@ -1808,100 +1543,62 @@ TEST_F(OpbaseTest, ut_hcclAllGather_capture_rdma)
 
 TEST_F(OpbaseTest, ut_hcclAllGatherV)
 {
-    MOCKER(GetExternalInputHcclEnableEntryLog)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(true));
+    MOCKER(GetExternalInputHcclEnableEntryLog).stubs().with(mockcpp::any()).will(returnValue(true));
 
     DevType deviceType = DevType::DEV_TYPE_910B;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::AllocAlgResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::AllocAlgResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::ExecOp)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::ExecOp).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    nlohmann::json rank_table =
-    {
-        {"status", "completed"},
-        {"deploy_mode", "lab"},
-        {"group_count", "1"},
-        {"chip_info", "910"},
-        {"board_id", "0x0000"},
-        {"para_plane_nic_location", "device"},
-        {"para_plane_nic_num", "2"},
-        {"para_plane_nic_name", {"eth0", "eth1"}},
-        {
-            "group_list",
-            {
-                {
-                    {"group_name", ""},
-                    {"device_num", "2"},
-                    {"server_num", "1"},
-                    {"instance_count", "2"},
-                        {
-                            "instance_list",
-                            {
-                                {   {"rank_id", "0"}, {"server_id", "10.0.0.10"},
-                                    {
-                                        "devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}
-                                    }
-                                },
+    nlohmann::json rank_table
+        = {{"status", "completed"},
+           {"deploy_mode", "lab"},
+           {"group_count", "1"},
+           {"chip_info", "910"},
+           {"board_id", "0x0000"},
+           {"para_plane_nic_location", "device"},
+           {"para_plane_nic_num", "2"},
+           {"para_plane_nic_name", {"eth0", "eth1"}},
+           {"group_list",
+            {{{"group_name", ""},
+              {"device_num", "2"},
+              {"server_num", "1"},
+              {"instance_count", "2"},
+              {"instance_list",
+               {
+                   {{"rank_id", "0"},
+                    {"server_id", "10.0.0.10"},
+                    {"devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}}},
 
-                                {   {"rank_id", "1"}, {"server_id", "10.0.0.10"},
-                                    {
-                                        "devices", {{{"device_id", "1"}, {"device_ip", "192.168.0.14"}}}
-                                    }
-                                },
-                            }
-                        },
-                        {
-                            "server_list",
-                            {
-                                {
-                                    {"server_id", "192.168.10.2"},
-                                    {
-                                        "para_plane_info",
-                                        {{
-                                                {"eth1", "192.168.210.2"},
-                                            },
-                                            {
-                                                {"eth0", "192.168.200.2"},
-                                            }
-                                        }
-                                    }
+                   {{"rank_id", "1"},
+                    {"server_id", "10.0.0.10"},
+                    {"devices", {{{"device_id", "1"}, {"device_ip", "192.168.0.14"}}}}},
+               }},
+              {"server_list",
+               {
+                   {{"server_id", "192.168.10.2"},
+                    {"para_plane_info",
+                     {{
+                          {"eth1", "192.168.210.2"},
+                      },
+                      {
+                          {"eth0", "192.168.200.2"},
+                      }}}
 
-                                },
-                            }
-                        }
-                }
-            }
-        }
-    };
+                   },
+               }}}}}};
 
     char file_name_t[] = "./st_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -1929,33 +1626,31 @@ TEST_F(OpbaseTest, ut_hcclAllGatherV)
     ret = HcclCommInitClusterInfo(rank_table_file, rank_ID, &comm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
     ret = hcclComm->GetRankSize(rankSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
-    recvCounts= (u64*)sal_malloc(rankSize * sizeof(u64));
-     sal_memset(recvCounts, rankSize * sizeof(u64), 0, rankSize * sizeof(u64));
-    recvDispls= (u64*)sal_malloc(rankSize * sizeof(u64));
-     sal_memset(recvDispls, rankSize * sizeof(u64), 0, rankSize * sizeof(u64));
+    recvCounts = (u64*)sal_malloc(rankSize * sizeof(u64));
+    sal_memset(recvCounts, rankSize * sizeof(u64), 0, rankSize * sizeof(u64));
+    recvDispls = (u64*)sal_malloc(rankSize * sizeof(u64));
+    sal_memset(recvDispls, rankSize * sizeof(u64), 0, rankSize * sizeof(u64));
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
 
-    for (int i = 0; i < rankSize; i++)
-    {
+    for (int i = 0; i < rankSize; i++) {
         recvCounts[i] = count;
         if (i > 0) {
-            recvDispls[i] = recvDispls[i-1] + recvCounts[i-1];
+            recvDispls[i] = recvDispls[i - 1] + recvCounts[i - 1];
         }
     }
 
@@ -1980,39 +1675,24 @@ TEST_F(OpbaseTest, ut_hcclAllGatherV)
 
 TEST_F(OpbaseTest, ut_hcomAllGatherV)
 {
-    MOCKER(GetExternalInputHcclEnableEntryLog)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(true));
+    MOCKER(GetExternalInputHcclEnableEntryLog).stubs().with(mockcpp::any()).will(returnValue(true));
 
     DevType deviceType = DevType::DEV_TYPE_910B;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::ExecOp)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
-
+    MOCKER_CPP(&HcclCommunicator::ExecOp).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     nlohmann::json rank_table = rank_table_910_1server_2rank;
 
     char file_name_t[] = "./ut_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -2045,33 +1725,33 @@ TEST_F(OpbaseTest, ut_hcomAllGatherV)
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(rankSize * count * sizeof(s8));
-     sal_memset(recvbuf, rankSize * count * sizeof(s8), 0, rankSize * count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(rankSize * count * sizeof(s8));
+    sal_memset(recvbuf, rankSize * count * sizeof(s8), 0, rankSize * count * sizeof(s8));
 
-    recvCounts= (u64*)sal_malloc(rankSize * sizeof(u64));
-     sal_memset(recvCounts, rankSize * sizeof(u64), 0, rankSize * sizeof(u64));
-    recvDispls= (u64*)sal_malloc(rankSize * sizeof(u64));
-     sal_memset(recvDispls, rankSize * sizeof(u64), 0, rankSize * sizeof(u64));
+    recvCounts = (u64*)sal_malloc(rankSize * sizeof(u64));
+    sal_memset(recvCounts, rankSize * sizeof(u64), 0, rankSize * sizeof(u64));
+    recvDispls = (u64*)sal_malloc(rankSize * sizeof(u64));
+    sal_memset(recvDispls, rankSize * sizeof(u64), 0, rankSize * sizeof(u64));
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
 
-    for (int i = 0; i < rankSize; i++)
-    {
+    for (int i = 0; i < rankSize; i++) {
         recvCounts[i] = count;
         if (i > 0) {
-            recvDispls[i] = recvDispls[i-1] + recvCounts[i-1];
+            recvDispls[i] = recvDispls[i - 1] + recvCounts[i - 1];
         }
     }
 
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
     string strTag = "allgatherv";
 
-    ret = hcclComm->AllGatherV(strTag, static_cast<void *>(sendbuf), 2, static_cast<void *>(recvbuf), static_cast<void *>(recvCounts), static_cast<void *>(recvDispls), HCCL_DATA_TYPE_INT8, stream);
+    ret = hcclComm->AllGatherV(
+        strTag, static_cast<void*>(sendbuf), 2, static_cast<void*>(recvbuf), static_cast<void*>(recvCounts),
+        static_cast<void*>(recvDispls), HCCL_DATA_TYPE_INT8, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     sal_free(sendbuf);
@@ -2090,103 +1770,64 @@ TEST_F(OpbaseTest, ut_hcomAllGatherV)
     GlobalMockObject::verify();
 }
 
-
 TEST_F(OpbaseTest, ut_HcclReduceScatterV)
 {
-    MOCKER(GetExternalInputHcclEnableEntryLog)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(true));
+    MOCKER(GetExternalInputHcclEnableEntryLog).stubs().with(mockcpp::any()).will(returnValue(true));
 
     DevType deviceType = DevType::DEV_TYPE_910B;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::AllocAlgResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::AllocAlgResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::ExecOp)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::ExecOp).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    nlohmann::json rank_table =
-    {
-        {"status", "completed"},
-        {"deploy_mode", "lab"},
-        {"group_count", "1"},
-        {"chip_info", "910"},
-        {"board_id", "0x0000"},
-        {"para_plane_nic_location", "device"},
-        {"para_plane_nic_num", "2"},
-        {"para_plane_nic_name", {"eth0", "eth1"}},
-        {
-            "group_list",
-            {
-                {
-                    {"group_name", ""},
-                    {"device_num", "2"},
-                    {"server_num", "1"},
-                    {"instance_count", "2"},
-                        {
-                            "instance_list",
-                            {
-                                {   {"rank_id", "0"}, {"server_id", "10.0.0.10"},
-                                    {
-                                        "devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}
-                                    }
-                                },
+    nlohmann::json rank_table
+        = {{"status", "completed"},
+           {"deploy_mode", "lab"},
+           {"group_count", "1"},
+           {"chip_info", "910"},
+           {"board_id", "0x0000"},
+           {"para_plane_nic_location", "device"},
+           {"para_plane_nic_num", "2"},
+           {"para_plane_nic_name", {"eth0", "eth1"}},
+           {"group_list",
+            {{{"group_name", ""},
+              {"device_num", "2"},
+              {"server_num", "1"},
+              {"instance_count", "2"},
+              {"instance_list",
+               {
+                   {{"rank_id", "0"},
+                    {"server_id", "10.0.0.10"},
+                    {"devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}}},
 
-                                {   {"rank_id", "1"}, {"server_id", "10.0.0.10"},
-                                    {
-                                        "devices", {{{"device_id", "1"}, {"device_ip", "192.168.0.14"}}}
-                                    }
-                                },
-                            }
-                        },
-                        {
-                            "server_list",
-                            {
-                                {
-                                    {"server_id", "192.168.10.2"},
-                                    {
-                                        "para_plane_info",
-                                        {{
-                                                {"eth1", "192.168.210.2"},
-                                            },
-                                            {
-                                                {"eth0", "192.168.200.2"},
-                                            }
-                                        }
-                                    }
+                   {{"rank_id", "1"},
+                    {"server_id", "10.0.0.10"},
+                    {"devices", {{{"device_id", "1"}, {"device_ip", "192.168.0.14"}}}}},
+               }},
+              {"server_list",
+               {
+                   {{"server_id", "192.168.10.2"},
+                    {"para_plane_info",
+                     {{
+                          {"eth1", "192.168.210.2"},
+                      },
+                      {
+                          {"eth0", "192.168.200.2"},
+                      }}}
 
-                                },
-                            }
-                        }
-                }
-            }
-        }
-    };
+                   },
+               }}}}}};
 
     char file_name_t[] = "./st_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -2214,41 +1855,39 @@ TEST_F(OpbaseTest, ut_HcclReduceScatterV)
     ret = HcclCommInitClusterInfo(rank_table_file, rank_ID, &comm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
     ret = hcclComm->GetRankSize(rankSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    sendbuf= (s8*)sal_malloc(rankSize * count * sizeof(s8));
-     sal_memset(sendbuf, rankSize * count * sizeof(s8), 0, rankSize * count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(rankSize * count * sizeof(s8));
+    sal_memset(sendbuf, rankSize * count * sizeof(s8), 0, rankSize * count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
-    sendCounts= (u64*)sal_malloc(rankSize * sizeof(u64));
-     sal_memset(sendCounts, rankSize * sizeof(u64), 0, rankSize * sizeof(u64));
-    sendDispls= (u64*)sal_malloc(rankSize * sizeof(u64));
-     sal_memset(sendDispls, rankSize * sizeof(u64), 0, rankSize * sizeof(u64));
+    sendCounts = (u64*)sal_malloc(rankSize * sizeof(u64));
+    sal_memset(sendCounts, rankSize * sizeof(u64), 0, rankSize * sizeof(u64));
+    sendDispls = (u64*)sal_malloc(rankSize * sizeof(u64));
+    sal_memset(sendDispls, rankSize * sizeof(u64), 0, rankSize * sizeof(u64));
 
-    for (int j = 0; j < rankSize * count; j++)
-    {
+    for (int j = 0; j < rankSize * count; j++) {
         sendbuf[j] = 2;
     }
 
-    for (int i = 0; i < rankSize; i++)
-    {
+    for (int i = 0; i < rankSize; i++) {
         sendCounts[i] = count;
         if (i > 0) {
-            sendDispls[i] = sendDispls[i-1] + sendCounts[i-1];
+            sendDispls[i] = sendDispls[i - 1] + sendCounts[i - 1];
         }
     }
 
-    ret = HcclReduceScatterVInner(sendbuf, sendCounts, sendDispls, recvbuf, count, HCCL_DATA_TYPE_INT8,
-        HCCL_REDUCE_SUM, comm, stream);
+    ret = HcclReduceScatterVInner(
+        sendbuf, sendCounts, sendDispls, recvbuf, count, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_SUM, comm, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    ret = HcclReduceScatterVInner(sendbuf, sendCounts, sendDispls, recvbuf, count, HCCL_DATA_TYPE_INT8,
-        HCCL_REDUCE_SUM, comm, stream);
+    ret = HcclReduceScatterVInner(
+        sendbuf, sendCounts, sendDispls, recvbuf, count, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_SUM, comm, stream);
     rt_ret = aclrtSynchronizeStream(stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
@@ -2268,38 +1907,24 @@ TEST_F(OpbaseTest, ut_HcclReduceScatterV)
 
 TEST_F(OpbaseTest, ut_hcomReduceScatterV)
 {
-    MOCKER(GetExternalInputHcclEnableEntryLog)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(true));
+    MOCKER(GetExternalInputHcclEnableEntryLog).stubs().with(mockcpp::any()).will(returnValue(true));
 
     DevType deviceType = DevType::DEV_TYPE_910B;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::ExecOp)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::ExecOp).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     nlohmann::json rank_table = rank_table_910_1server_2rank;
 
     char file_name_t[] = "./ut_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -2330,33 +1955,32 @@ TEST_F(OpbaseTest, ut_hcomReduceScatterV)
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    sendbuf= (s8*)sal_malloc(rankSize * count * sizeof(s8));
-     sal_memset(sendbuf, rankSize * count * sizeof(s8), 0, rankSize * count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(rankSize * count * sizeof(s8));
+    sal_memset(sendbuf, rankSize * count * sizeof(s8), 0, rankSize * count * sizeof(s8));
 
-    sendCounts= (u64*)sal_malloc(rankSize * sizeof(u64));
-     sal_memset(sendCounts, rankSize * sizeof(u64), 0, rankSize * sizeof(u64));
-    sendDispls= (u64*)sal_malloc(rankSize * sizeof(u64));
-     sal_memset(sendDispls, rankSize * sizeof(u64), 0, rankSize * sizeof(u64));
+    sendCounts = (u64*)sal_malloc(rankSize * sizeof(u64));
+    sal_memset(sendCounts, rankSize * sizeof(u64), 0, rankSize * sizeof(u64));
+    sendDispls = (u64*)sal_malloc(rankSize * sizeof(u64));
+    sal_memset(sendDispls, rankSize * sizeof(u64), 0, rankSize * sizeof(u64));
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         recvbuf[j] = 2;
     }
 
-    for (int i = 0; i < rankSize; i++)
-    {
+    for (int i = 0; i < rankSize; i++) {
         sendCounts[i] = count;
         if (i > 0) {
-            sendDispls[i] = sendDispls[i-1] + sendDispls[i-1];
+            sendDispls[i] = sendDispls[i - 1] + sendDispls[i - 1];
         }
     }
 
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
     string strTag = "reducescatterv";
-    ret = hcclComm->ReduceScatterV(strTag, static_cast<void *>(sendbuf), static_cast<void *>(sendCounts),
-        static_cast<void *>(sendDispls), static_cast<void *>(recvbuf), 2, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_SUM, stream);
+    ret = hcclComm->ReduceScatterV(
+        strTag, static_cast<void*>(sendbuf), static_cast<void*>(sendCounts), static_cast<void*>(sendDispls),
+        static_cast<void*>(recvbuf), 2, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_SUM, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     sal_free(sendbuf);
@@ -2375,100 +1999,62 @@ TEST_F(OpbaseTest, ut_hcomReduceScatterV)
 
 TEST_F(OpbaseTest, ut_hcclAllGatherVFor310P3)
 {
-    MOCKER(GetExternalInputHcclEnableEntryLog)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(true));
+    MOCKER(GetExternalInputHcclEnableEntryLog).stubs().with(mockcpp::any()).will(returnValue(true));
 
     DevType deviceType = DevType::DEV_TYPE_310P3;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::AllocAlgResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::AllocAlgResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::ExecOp)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::ExecOp).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    nlohmann::json rank_table =
-    {
-        {"status", "completed"},
-        {"deploy_mode", "lab"},
-        {"group_count", "1"},
-        {"chip_info", "910"},
-        {"board_id", "0x0000"},
-        {"para_plane_nic_location", "device"},
-        {"para_plane_nic_num", "2"},
-        {"para_plane_nic_name", {"eth0", "eth1"}},
-        {
-            "group_list",
-            {
-                {
-                    {"group_name", ""},
-                    {"device_num", "2"},
-                    {"server_num", "1"},
-                    {"instance_count", "2"},
-                        {
-                            "instance_list",
-                            {
-                                {   {"rank_id", "0"}, {"server_id", "10.0.0.10"},
-                                    {
-                                        "devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}
-                                    }
-                                },
+    nlohmann::json rank_table
+        = {{"status", "completed"},
+           {"deploy_mode", "lab"},
+           {"group_count", "1"},
+           {"chip_info", "910"},
+           {"board_id", "0x0000"},
+           {"para_plane_nic_location", "device"},
+           {"para_plane_nic_num", "2"},
+           {"para_plane_nic_name", {"eth0", "eth1"}},
+           {"group_list",
+            {{{"group_name", ""},
+              {"device_num", "2"},
+              {"server_num", "1"},
+              {"instance_count", "2"},
+              {"instance_list",
+               {
+                   {{"rank_id", "0"},
+                    {"server_id", "10.0.0.10"},
+                    {"devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}}},
 
-                                {   {"rank_id", "1"}, {"server_id", "10.0.0.10"},
-                                    {
-                                        "devices", {{{"device_id", "1"}, {"device_ip", "192.168.0.14"}}}
-                                    }
-                                },
-                            }
-                        },
-                        {
-                            "server_list",
-                            {
-                                {
-                                    {"server_id", "192.168.10.2"},
-                                    {
-                                        "para_plane_info",
-                                        {{
-                                                {"eth1", "192.168.210.2"},
-                                            },
-                                            {
-                                                {"eth0", "192.168.200.2"},
-                                            }
-                                        }
-                                    }
+                   {{"rank_id", "1"},
+                    {"server_id", "10.0.0.10"},
+                    {"devices", {{{"device_id", "1"}, {"device_ip", "192.168.0.14"}}}}},
+               }},
+              {"server_list",
+               {
+                   {{"server_id", "192.168.10.2"},
+                    {"para_plane_info",
+                     {{
+                          {"eth1", "192.168.210.2"},
+                      },
+                      {
+                          {"eth0", "192.168.200.2"},
+                      }}}
 
-                                },
-                            }
-                        }
-                }
-            }
-        }
-    };
+                   },
+               }}}}}};
 
     char file_name_t[] = "./st_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -2496,33 +2082,31 @@ TEST_F(OpbaseTest, ut_hcclAllGatherVFor310P3)
     ret = HcclCommInitClusterInfo(rank_table_file, rank_ID, &comm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
     ret = hcclComm->GetRankSize(rankSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
-    recvCounts= (u64*)sal_malloc(rankSize * sizeof(u64));
-     sal_memset(recvCounts, rankSize * sizeof(u64), 0, rankSize * sizeof(u64));
-    recvDispls= (u64*)sal_malloc(rankSize * sizeof(u64));
-     sal_memset(recvDispls, rankSize * sizeof(u64), 0, rankSize * sizeof(u64));
+    recvCounts = (u64*)sal_malloc(rankSize * sizeof(u64));
+    sal_memset(recvCounts, rankSize * sizeof(u64), 0, rankSize * sizeof(u64));
+    recvDispls = (u64*)sal_malloc(rankSize * sizeof(u64));
+    sal_memset(recvDispls, rankSize * sizeof(u64), 0, rankSize * sizeof(u64));
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
 
-    for (int i = 0; i < rankSize; i++)
-    {
+    for (int i = 0; i < rankSize; i++) {
         recvCounts[i] = count;
         if (i > 0) {
-            recvDispls[i] = recvDispls[i-1] + recvCounts[i-1];
+            recvDispls[i] = recvDispls[i - 1] + recvCounts[i - 1];
         }
     }
 
@@ -2547,100 +2131,62 @@ TEST_F(OpbaseTest, ut_hcclAllGatherVFor310P3)
 
 TEST_F(OpbaseTest, ut_HcclReduceScatterVFor310P3)
 {
-    MOCKER(GetExternalInputHcclEnableEntryLog)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(true));
+    MOCKER(GetExternalInputHcclEnableEntryLog).stubs().with(mockcpp::any()).will(returnValue(true));
 
     DevType deviceType = DevType::DEV_TYPE_310P3;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::AllocAlgResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::AllocAlgResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::ExecOp)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::ExecOp).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    nlohmann::json rank_table =
-    {
-        {"status", "completed"},
-        {"deploy_mode", "lab"},
-        {"group_count", "1"},
-        {"chip_info", "910"},
-        {"board_id", "0x0000"},
-        {"para_plane_nic_location", "device"},
-        {"para_plane_nic_num", "2"},
-        {"para_plane_nic_name", {"eth0", "eth1"}},
-        {
-            "group_list",
-            {
-                {
-                    {"group_name", ""},
-                    {"device_num", "2"},
-                    {"server_num", "1"},
-                    {"instance_count", "2"},
-                        {
-                            "instance_list",
-                            {
-                                {   {"rank_id", "0"}, {"server_id", "10.0.0.10"},
-                                    {
-                                        "devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}
-                                    }
-                                },
+    nlohmann::json rank_table
+        = {{"status", "completed"},
+           {"deploy_mode", "lab"},
+           {"group_count", "1"},
+           {"chip_info", "910"},
+           {"board_id", "0x0000"},
+           {"para_plane_nic_location", "device"},
+           {"para_plane_nic_num", "2"},
+           {"para_plane_nic_name", {"eth0", "eth1"}},
+           {"group_list",
+            {{{"group_name", ""},
+              {"device_num", "2"},
+              {"server_num", "1"},
+              {"instance_count", "2"},
+              {"instance_list",
+               {
+                   {{"rank_id", "0"},
+                    {"server_id", "10.0.0.10"},
+                    {"devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}}},
 
-                                {   {"rank_id", "1"}, {"server_id", "10.0.0.10"},
-                                    {
-                                        "devices", {{{"device_id", "1"}, {"device_ip", "192.168.0.14"}}}
-                                    }
-                                },
-                            }
-                        },
-                        {
-                            "server_list",
-                            {
-                                {
-                                    {"server_id", "192.168.10.2"},
-                                    {
-                                        "para_plane_info",
-                                        {{
-                                                {"eth1", "192.168.210.2"},
-                                            },
-                                            {
-                                                {"eth0", "192.168.200.2"},
-                                            }
-                                        }
-                                    }
+                   {{"rank_id", "1"},
+                    {"server_id", "10.0.0.10"},
+                    {"devices", {{{"device_id", "1"}, {"device_ip", "192.168.0.14"}}}}},
+               }},
+              {"server_list",
+               {
+                   {{"server_id", "192.168.10.2"},
+                    {"para_plane_info",
+                     {{
+                          {"eth1", "192.168.210.2"},
+                      },
+                      {
+                          {"eth0", "192.168.200.2"},
+                      }}}
 
-                                },
-                            }
-                        }
-                }
-            }
-        }
-    };
+                   },
+               }}}}}};
 
     char file_name_t[] = "./st_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -2668,41 +2214,39 @@ TEST_F(OpbaseTest, ut_HcclReduceScatterVFor310P3)
     ret = HcclCommInitClusterInfo(rank_table_file, rank_ID, &comm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
     ret = hcclComm->GetRankSize(rankSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    sendbuf= (s8*)sal_malloc(rankSize * count * sizeof(s8));
-     sal_memset(sendbuf, rankSize * count * sizeof(s8), 0, rankSize * count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(rankSize * count * sizeof(s8));
+    sal_memset(sendbuf, rankSize * count * sizeof(s8), 0, rankSize * count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
-    sendCounts= (u64*)sal_malloc(rankSize * sizeof(u64));
-     sal_memset(sendCounts, rankSize * sizeof(u64), 0, rankSize * sizeof(u64));
-    sendDispls= (u64*)sal_malloc(rankSize * sizeof(u64));
-     sal_memset(sendDispls, rankSize * sizeof(u64), 0, rankSize * sizeof(u64));
+    sendCounts = (u64*)sal_malloc(rankSize * sizeof(u64));
+    sal_memset(sendCounts, rankSize * sizeof(u64), 0, rankSize * sizeof(u64));
+    sendDispls = (u64*)sal_malloc(rankSize * sizeof(u64));
+    sal_memset(sendDispls, rankSize * sizeof(u64), 0, rankSize * sizeof(u64));
 
-    for (int j = 0; j < rankSize * count; j++)
-    {
+    for (int j = 0; j < rankSize * count; j++) {
         sendbuf[j] = 2;
     }
 
-    for (int i = 0; i < rankSize; i++)
-    {
+    for (int i = 0; i < rankSize; i++) {
         sendCounts[i] = count;
         if (i > 0) {
-            sendDispls[i] = sendDispls[i-1] + sendCounts[i-1];
+            sendDispls[i] = sendDispls[i - 1] + sendCounts[i - 1];
         }
     }
 
-    ret = HcclReduceScatterVInner(sendbuf, sendCounts, sendDispls, recvbuf, count, HCCL_DATA_TYPE_INT8,
-        HCCL_REDUCE_SUM, comm, stream);
+    ret = HcclReduceScatterVInner(
+        sendbuf, sendCounts, sendDispls, recvbuf, count, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_SUM, comm, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    ret = HcclReduceScatterVInner(sendbuf, sendCounts, sendDispls, recvbuf, count, HCCL_DATA_TYPE_INT8,
-        HCCL_REDUCE_SUM, comm, stream);
+    ret = HcclReduceScatterVInner(
+        sendbuf, sendCounts, sendDispls, recvbuf, count, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_SUM, comm, stream);
     rt_ret = aclrtSynchronizeStream(stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
@@ -2721,72 +2265,50 @@ TEST_F(OpbaseTest, ut_HcclReduceScatterVFor310P3)
 }
 
 #if 1
-#define HCCL_COM_BIG_DATA_SIZE (300 * 1024 *1024) //300M
+#define HCCL_COM_BIG_DATA_SIZE (300 * 1024 * 1024) // 300M
 TEST_F(OpbaseTest, ut_BighcclAllReduce)
 {
+    nlohmann::json rank_table
+        = {{"status", "completed"},
+           {"deploy_mode", "lab"},
+           {"group_count", "1"},
+           {"chip_info", "910"},
+           {"board_id", "0x0000"},
+           {"para_plane_nic_location", "device"},
+           {"para_plane_nic_num", "1"},
+           {"para_plane_nic_name", {"eth0"}},
+           {"group_list",
+            {{{"group_name", ""},
+              {"device_num", "1"},
+              {"server_num", "1"},
+              {"instance_count", "1"},
+              {"instance_list",
+               {
+                   {{"rank_id", "0"},
+                    {"server_id", "10.0.0.10"},
+                    {"devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}}},
+               }},
+              {"server_list",
+               {
+                   {{"server_id", "192.168.10.2"},
+                    {"para_plane_info",
+                     {{
+                          {"eth1", "192.168.210.2"},
+                      },
+                      {
+                          {"eth0", "192.168.200.2"},
+                      }}}
 
-    nlohmann::json rank_table =
-    {
-        {"status", "completed"},
-        {"deploy_mode", "lab"},
-        {"group_count", "1"},
-        {"chip_info", "910"},
-        {"board_id", "0x0000"},
-        {"para_plane_nic_location", "device"},
-        {"para_plane_nic_num", "1"},
-        {"para_plane_nic_name", {"eth0"}},
-        {
-            "group_list",
-            {
-                {
-                    {"group_name", ""},
-                    {"device_num", "1"},
-                    {"server_num", "1"},
-                    {"instance_count", "1"},
-                        {
-                            "instance_list",
-                            {
-                                {   {"rank_id", "0"}, {"server_id", "10.0.0.10"},
-                                    {
-                                        "devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}
-                                    }
-                                },
-                            }
-                        },
-                        {
-                            "server_list",
-                            {
-                                {
-                                    {"server_id", "192.168.10.2"},
-                                    {
-                                        "para_plane_info",
-                                        {{
-                                                {"eth1", "192.168.210.2"},
-                                            },
-                                            {
-                                                {"eth0", "192.168.200.2"},
-                                            }
-                                        }
-                                    }
-
-                                },
-                            }
-                        }
-                }
-            }
-        }
-    };
+                   },
+               }}}}}};
 
     char file_name_t[] = "./st_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -2814,13 +2336,12 @@ TEST_F(OpbaseTest, ut_BighcclAllReduce)
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
 
@@ -2830,11 +2351,9 @@ TEST_F(OpbaseTest, ut_BighcclAllReduce)
     rt_ret = aclrtSynchronizeStream(stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
@@ -2852,69 +2371,47 @@ TEST_F(OpbaseTest, ut_BighcclAllReduce)
 
 TEST_F(OpbaseTest, ut_BighcclReducescatter)
 {
+    nlohmann::json rank_table
+        = {{"status", "completed"},
+           {"deploy_mode", "lab"},
+           {"group_count", "1"},
+           {"chip_info", "910"},
+           {"board_id", "0x0000"},
+           {"para_plane_nic_location", "device"},
+           {"para_plane_nic_num", "1"},
+           {"para_plane_nic_name", {"eth0"}},
+           {"group_list",
+            {{{"group_name", ""},
+              {"device_num", "1"},
+              {"server_num", "1"},
+              {"instance_count", "1"},
+              {"instance_list",
+               {
+                   {{"rank_id", "0"},
+                    {"server_id", "10.0.0.10"},
+                    {"devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}}},
+               }},
+              {"server_list",
+               {
+                   {{"server_id", "192.168.10.2"},
+                    {"para_plane_info",
+                     {{
+                          {"eth1", "192.168.210.2"},
+                      },
+                      {
+                          {"eth0", "192.168.200.2"},
+                      }}}
 
-    nlohmann::json rank_table =
-    {
-        {"status", "completed"},
-        {"deploy_mode", "lab"},
-        {"group_count", "1"},
-        {"chip_info", "910"},
-        {"board_id", "0x0000"},
-        {"para_plane_nic_location", "device"},
-        {"para_plane_nic_num", "1"},
-        {"para_plane_nic_name", {"eth0"}},
-        {
-            "group_list",
-            {
-                {
-                    {"group_name", ""},
-                    {"device_num", "1"},
-                    {"server_num", "1"},
-                    {"instance_count", "1"},
-                        {
-                            "instance_list",
-                            {
-                                {   {"rank_id", "0"}, {"server_id", "10.0.0.10"},
-                                    {
-                                        "devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}
-                                    }
-                                },
-                            }
-                        },
-                        {
-                            "server_list",
-                            {
-                                {
-                                    {"server_id", "192.168.10.2"},
-                                    {
-                                        "para_plane_info",
-                                        {{
-                                                {"eth1", "192.168.210.2"},
-                                            },
-                                            {
-                                                {"eth0", "192.168.200.2"},
-                                            }
-                                        }
-                                    }
-
-                                },
-                            }
-                        }
-                }
-            }
-        }
-    };
+                   },
+               }}}}}};
 
     char file_name_t[] = "./st_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -2942,13 +2439,12 @@ TEST_F(OpbaseTest, ut_BighcclReducescatter)
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
 
@@ -2958,11 +2454,9 @@ TEST_F(OpbaseTest, ut_BighcclReducescatter)
     rt_ret = aclrtSynchronizeStream(stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
@@ -2980,69 +2474,47 @@ TEST_F(OpbaseTest, ut_BighcclReducescatter)
 
 TEST_F(OpbaseTest, ut_BighcclAllGather)
 {
+    nlohmann::json rank_table
+        = {{"status", "completed"},
+           {"deploy_mode", "lab"},
+           {"group_count", "1"},
+           {"chip_info", "910"},
+           {"board_id", "0x0000"},
+           {"para_plane_nic_location", "device"},
+           {"para_plane_nic_num", "1"},
+           {"para_plane_nic_name", {"eth0"}},
+           {"group_list",
+            {{{"group_name", ""},
+              {"device_num", "1"},
+              {"server_num", "1"},
+              {"instance_count", "1"},
+              {"instance_list",
+               {
+                   {{"rank_id", "0"},
+                    {"server_id", "10.0.0.10"},
+                    {"devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}}},
+               }},
+              {"server_list",
+               {
+                   {{"server_id", "192.168.10.2"},
+                    {"para_plane_info",
+                     {{
+                          {"eth1", "192.168.210.2"},
+                      },
+                      {
+                          {"eth0", "192.168.200.2"},
+                      }}}
 
-    nlohmann::json rank_table =
-    {
-        {"status", "completed"},
-        {"deploy_mode", "lab"},
-        {"group_count", "1"},
-        {"chip_info", "910"},
-        {"board_id", "0x0000"},
-        {"para_plane_nic_location", "device"},
-        {"para_plane_nic_num", "1"},
-        {"para_plane_nic_name", {"eth0"}},
-        {
-            "group_list",
-            {
-                {
-                    {"group_name", ""},
-                    {"device_num", "1"},
-                    {"server_num", "1"},
-                    {"instance_count", "1"},
-                        {
-                            "instance_list",
-                            {
-                                {   {"rank_id", "0"}, {"server_id", "10.0.0.10"},
-                                    {
-                                        "devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}
-                                    }
-                                },
-                            }
-                        },
-                        {
-                            "server_list",
-                            {
-                                {
-                                    {"server_id", "192.168.10.2"},
-                                    {
-                                        "para_plane_info",
-                                        {{
-                                                {"eth1", "192.168.210.2"},
-                                            },
-                                            {
-                                                {"eth0", "192.168.200.2"},
-                                            }
-                                        }
-                                    }
-
-                                },
-                            }
-                        }
-                }
-            }
-        }
-    };
+                   },
+               }}}}}};
 
     char file_name_t[] = "./st_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -3070,13 +2542,12 @@ TEST_F(OpbaseTest, ut_BighcclAllGather)
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
 
@@ -3086,11 +2557,9 @@ TEST_F(OpbaseTest, ut_BighcclAllGather)
     rt_ret = aclrtSynchronizeStream(stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
@@ -3108,69 +2577,47 @@ TEST_F(OpbaseTest, ut_BighcclAllGather)
 
 TEST_F(OpbaseTest, ut_BIGhcclBroadcast)
 {
+    nlohmann::json rank_table
+        = {{"status", "completed"},
+           {"deploy_mode", "lab"},
+           {"group_count", "1"},
+           {"chip_info", "910"},
+           {"board_id", "0x0000"},
+           {"para_plane_nic_location", "device"},
+           {"para_plane_nic_num", "1"},
+           {"para_plane_nic_name", {"eth0"}},
+           {"group_list",
+            {{{"group_name", ""},
+              {"device_num", "1"},
+              {"server_num", "1"},
+              {"instance_count", "1"},
+              {"instance_list",
+               {
+                   {{"rank_id", "0"},
+                    {"server_id", "10.0.0.10"},
+                    {"devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}}},
+               }},
+              {"server_list",
+               {
+                   {{"server_id", "192.168.10.2"},
+                    {"para_plane_info",
+                     {{
+                          {"eth1", "192.168.210.2"},
+                      },
+                      {
+                          {"eth0", "192.168.200.2"},
+                      }}}
 
-    nlohmann::json rank_table =
-    {
-        {"status", "completed"},
-        {"deploy_mode", "lab"},
-        {"group_count", "1"},
-        {"chip_info", "910"},
-        {"board_id", "0x0000"},
-        {"para_plane_nic_location", "device"},
-        {"para_plane_nic_num", "1"},
-        {"para_plane_nic_name", {"eth0"}},
-        {
-            "group_list",
-            {
-                {
-                    {"group_name", ""},
-                    {"device_num", "1"},
-                    {"server_num", "1"},
-                    {"instance_count", "1"},
-                        {
-                            "instance_list",
-                            {
-                                {   {"rank_id", "0"}, {"server_id", "10.0.0.10"},
-                                    {
-                                        "devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}
-                                    }
-                                },
-                            }
-                        },
-                        {
-                            "server_list",
-                            {
-                                {
-                                    {"server_id", "192.168.10.2"},
-                                    {
-                                        "para_plane_info",
-                                        {{
-                                                {"eth1", "192.168.210.2"},
-                                            },
-                                            {
-                                                {"eth0", "192.168.200.2"},
-                                            }
-                                        }
-                                    }
-
-                                },
-                            }
-                        }
-                }
-            }
-        }
-    };
+                   },
+               }}}}}};
 
     char file_name_t[] = "./st_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -3197,10 +2644,9 @@ TEST_F(OpbaseTest, ut_BIGhcclBroadcast)
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     sendbuf = (s8*)sal_malloc(count * sizeof(s8));
-    sal_memset(sendbuf, count * sizeof(s8) , 0, count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
 
@@ -3210,12 +2656,10 @@ TEST_F(OpbaseTest, ut_BIGhcclBroadcast)
     rt_ret = aclrtSynchronizeStream(stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    for (int j = 0; j < count; j++)
-    {
-        if (sendbuf[j] != 2)
-        {
-            HCCL_ERROR("\n rank:%d sendbuf[%d]:%f", rank, j, sendbuf[j] );
-            errors ++;
+    for (int j = 0; j < count; j++) {
+        if (sendbuf[j] != 2) {
+            HCCL_ERROR("\n rank:%d sendbuf[%d]:%f", rank, j, sendbuf[j]);
+            errors++;
             break;
         }
     }
@@ -3234,69 +2678,47 @@ TEST_F(OpbaseTest, ut_BIGhcclBroadcast)
 
 TEST_F(OpbaseTest, ut_multi_hcclAllReduce)
 {
+    nlohmann::json rank_table
+        = {{"status", "completed"},
+           {"deploy_mode", "lab"},
+           {"group_count", "1"},
+           {"chip_info", "910"},
+           {"board_id", "0x0000"},
+           {"para_plane_nic_location", "device"},
+           {"para_plane_nic_num", "1"},
+           {"para_plane_nic_name", {"eth0"}},
+           {"group_list",
+            {{{"group_name", ""},
+              {"device_num", "1"},
+              {"server_num", "1"},
+              {"instance_count", "1"},
+              {"instance_list",
+               {
+                   {{"rank_id", "0"},
+                    {"server_id", "10.0.0.10"},
+                    {"devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}}},
+               }},
+              {"server_list",
+               {
+                   {{"server_id", "192.168.10.2"},
+                    {"para_plane_info",
+                     {{
+                          {"eth1", "192.168.210.2"},
+                      },
+                      {
+                          {"eth0", "192.168.200.2"},
+                      }}}
 
-    nlohmann::json rank_table =
-    {
-        {"status", "completed"},
-        {"deploy_mode", "lab"},
-        {"group_count", "1"},
-        {"chip_info", "910"},
-        {"board_id", "0x0000"},
-        {"para_plane_nic_location", "device"},
-        {"para_plane_nic_num", "1"},
-        {"para_plane_nic_name", {"eth0"}},
-        {
-            "group_list",
-            {
-                {
-                    {"group_name", ""},
-                    {"device_num", "1"},
-                    {"server_num", "1"},
-                    {"instance_count", "1"},
-                        {
-                            "instance_list",
-                            {
-                                {   {"rank_id", "0"}, {"server_id", "10.0.0.10"},
-                                    {
-                                        "devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.12"}}}
-                                    }
-                                },
-                            }
-                        },
-                        {
-                            "server_list",
-                            {
-                                {
-                                    {"server_id", "192.168.10.2"},
-                                    {
-                                        "para_plane_info",
-                                        {{
-                                                {"eth1", "192.168.210.2"},
-                                            },
-                                            {
-                                                {"eth0", "192.168.200.2"},
-                                            }
-                                        }
-                                    }
-
-                                },
-                            }
-                        }
-                }
-            }
-        }
-    };
+                   },
+               }}}}}};
 
     char file_name_t[] = "./st_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -3324,16 +2746,15 @@ TEST_F(OpbaseTest, ut_multi_hcclAllReduce)
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    sendbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    recvbuf= (s8*)sal_malloc(count * sizeof(s8));
-     sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    sendbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(sendbuf, count * sizeof(s8), 0, count * sizeof(s8));
+    recvbuf = (s8*)sal_malloc(count * sizeof(s8));
+    sal_memset(recvbuf, count * sizeof(s8), 0, count * sizeof(s8));
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         sendbuf[j] = 2;
     }
-    auto &profilingManager = hccl::ProfilingManager::Instance();
+    auto& profilingManager = hccl::ProfilingManager::Instance();
     profilingManager.StartFftsLaunchSubscribe();
     profilingManager.StartHostApiSubscribe();
     profilingManager.StartTaskApiSubscribe();
@@ -3361,11 +2782,9 @@ TEST_F(OpbaseTest, ut_multi_hcclAllReduce)
     rt_ret = aclrtSynchronizeStream(stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    for (int j = 0; j < count; j++)
-    {
-        if (recvbuf[j] != 2)
-        {
-            errors ++;
+    for (int j = 0; j < count; j++) {
+        if (recvbuf[j] != 2) {
+            errors++;
             break;
         }
     }
@@ -4347,11 +3766,10 @@ TEST_F(OpbaseTest, ut_HcclAiCpuResourceByTiling_A3)
 }
 
 extern thread_local s32 g_hcclDeviceId;
-extern HcclOpInfoCtx g_opHcomInfos[MAX_MODULE_DEVICE_NUM + 1];
-TEST_F(OpbaseTest, ut_GetHcclOpInfoCtx_cover_bottom_false)
+TEST_F(OpbaseTest, ut_LegacyGetHcclOpInfoCtx_cover_bottom_false)
 {
     for (int i = 0; i < MAX_MODULE_DEVICE_NUM + 1; i++) {
-        g_opHcomInfos[i].isUsed = false;
+        CollCommMgr::GetInstance().LegacyGetOpHcomInfo(i).isUsed = false;
     }
     g_hcclDeviceId = INVALID_INT;
     HcclResult ret = HCCL_SUCCESS;
@@ -4367,12 +3785,12 @@ TEST_F(OpbaseTest, ut_GetHcclOpInfoCtx_cover_bottom_false)
     GlobalMockObject::verify();
 }
 
-TEST_F(OpbaseTest, ut_GetHcclOpInfoCtx_cover_bottom_true)
+TEST_F(OpbaseTest, ut_LegacyGetHcclOpInfoCtx_cover_bottom_true)
 {
     for (int i = 0; i < MAX_MODULE_DEVICE_NUM; i++) {
-        g_opHcomInfos[i].isUsed = false;
+        CollCommMgr::GetInstance().LegacyGetOpHcomInfo(i).isUsed = false;
     }
-    g_opHcomInfos[MAX_MODULE_DEVICE_NUM].isUsed = true;
+    CollCommMgr::GetInstance().LegacyGetOpHcomInfo(MAX_MODULE_DEVICE_NUM).isUsed = true;
     g_hcclDeviceId = INVALID_INT;
     HcclResult ret = HCCL_SUCCESS;
     MOCKER(hrtGetDevice)

@@ -3,19 +3,19 @@
 ## 产品支持情况
 
 <!-- npu="950" id1 -->
-- Ascend 950PR/Ascend 950DT：不支持
+- Ascend 950PR&950DT系列产品：支持
 <!-- end id1 -->
 <!-- npu="A3" id2 -->
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：支持
+- Atlas A3系列产品：支持
 <!-- end id2 -->
 <!-- npu="910b" id3 -->
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：支持
+- Atlas A2系列产品：支持
 <!-- end id3 -->
 <!-- npu="310p" id4 -->
-- Atlas 推理系列产品：支持
+- Atlas推理系列产品：支持
 <!-- end id4 -->
 <!-- npu="910" id5 -->
-- Atlas 训练系列产品：支持
+- Atlas训练系列产品：支持
 <!-- end id5 -->
 
 ## 功能说明
@@ -45,7 +45,9 @@ HcclResult HcclSetConfig(HcclConfig config, HcclConfigValue configValue)
 
 ## 约束说明
 
-无
+- config为HCCL_DETERMINISTIC时，configValue.value仅支持0、1或2，配置其他值时返回HCCL_E_PARA。
+- 若已通过HCCL_DETERMINISTIC环境变量配置确定性计算，调用本接口不会覆盖环境变量配置。
+- 本接口配置进程级确定性计算。通过HcclCommConfig的hcclDeterministic为通信域显式配置确定性计算时，通信域创建阶段以通信域配置为准。
 
 ## 调用示例
 

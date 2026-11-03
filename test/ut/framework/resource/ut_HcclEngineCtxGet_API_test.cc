@@ -38,9 +38,9 @@ public:
 
 TEST_F(HcclEngineCtxGetTest, ut_HcclEngineCtxGet_When_Normal_Expect_ReturnIsHCCL_SUCCESS)
 {
-    const char *ctxTag = "1";
+    const char* ctxTag = "1";
     CommEngine engine = COMM_ENGINE_CPU;
-    void * ctx;
+    void* ctx;
     uint64_t size = 256;
 
     HcclResult result = HcclEngineCtxCreate(comm, ctxTag, engine, size, &ctx);
@@ -56,7 +56,7 @@ TEST_F(HcclEngineCtxGetTest, ut_HcclEngineCtxGet_When_Normal_Expect_ReturnIsHCCL
 TEST_F(HcclEngineCtxGetTest, ut_HcclEngineCtxGet_When_commNULL_Expect_ReturnIsHCCL_ERROR)
 {
     CommEngine engine = COMM_ENGINE_CPU;
-    void * ctx;
+    void* ctx;
     uint64_t size = 256;
 
     HcclResult result = HcclEngineCtxGet(nullptr, nullptr, engine, &ctx, &size);
@@ -66,7 +66,7 @@ TEST_F(HcclEngineCtxGetTest, ut_HcclEngineCtxGet_When_commNULL_Expect_ReturnIsHC
 TEST_F(HcclEngineCtxGetTest, ut_HcclEngineCtxGet_When_EngineTagIsNull_Expect_ReturnIsHCCL_SUCCESS)
 {
     CommEngine engine = COMM_ENGINE_CPU;
-    void * ctx;
+    void* ctx;
     uint64_t size = 256;
 
     HcclResult result = HcclEngineCtxCreate(comm, nullptr, engine, size, &ctx);
@@ -78,9 +78,9 @@ TEST_F(HcclEngineCtxGetTest, ut_HcclEngineCtxGet_When_EngineTagIsNull_Expect_Ret
 
 TEST_F(HcclEngineCtxGetTest, ut_HcclEngineCtxGet_When_ctxIsNull_Expect_ReturnIsHCCL_ERROR)
 {
-    const char *ctxTag = "1";
+    const char* ctxTag = "1";
     CommEngine engine = COMM_ENGINE_CPU;
-    void * ctx = nullptr;
+    void* ctx = nullptr;
     uint64_t size = 256;
 
     HcclResult result = HcclEngineCtxGet(comm, ctxTag, engine, nullptr, &size);
@@ -89,9 +89,9 @@ TEST_F(HcclEngineCtxGetTest, ut_HcclEngineCtxGet_When_ctxIsNull_Expect_ReturnIsH
 
 TEST_F(HcclEngineCtxGetTest, ut_HcclEngineCtxGet_When_sizeIsNull_Expect_ReturnIsHCCL_ERROR)
 {
-    const char *ctxTag = "1";
+    const char* ctxTag = "1";
     CommEngine engine = COMM_ENGINE_CPU;
-    void * ctx;
+    void* ctx;
 
     HcclResult result = HcclEngineCtxGet(comm, ctxTag, engine, &ctx, nullptr);
     EXPECT_EQ(result, HCCL_E_PTR);
@@ -102,9 +102,9 @@ TEST_F(HcclEngineCtxGetTest, ut_HcclEngineCtxGet_When_EngineTagIslong_Expect_Ret
     char ctxTagBuffer[257];
     memset(ctxTagBuffer, '1', 256);
     ctxTagBuffer[256] = '\0';
-    const char *ctxTag = ctxTagBuffer;
+    const char* ctxTag = ctxTagBuffer;
     CommEngine engine = COMM_ENGINE_CPU;
-    void * ctx;
+    void* ctx;
     uint64_t size = 256;
 
     HcclResult result = HcclEngineCtxGet(comm, ctxTag, engine, &ctx, &size);
@@ -113,9 +113,9 @@ TEST_F(HcclEngineCtxGetTest, ut_HcclEngineCtxGet_When_EngineTagIslong_Expect_Ret
 
 TEST_F(HcclEngineCtxGetTest, ut_HcclEngineCtxGet_When_NotExistCtxwithTag_Expect_ReturnIsHCCL_ERROR)
 {
-    const char *ctxTag = "1";
+    const char* ctxTag = "1";
     CommEngine engine = COMM_ENGINE_CPU;
-    void * ctx;
+    void* ctx;
     uint64_t size = 256;
 
     HcclResult result = HcclEngineCtxCreate(comm, ctxTag, engine, size, &ctx);
@@ -129,9 +129,9 @@ TEST_F(HcclEngineCtxGetTest, ut_HcclEngineCtxGet_When_NotExistCtxwithTag_Expect_
 
 TEST_F(HcclEngineCtxGetTest, ut_HcclEngineCtxGet_When_NotExistCtxwithTagEngine_ReturnIsHCCL_ERROR)
 {
-    const char *ctxTag = "1";
+    const char* ctxTag = "1";
     CommEngine engine = COMM_ENGINE_CPU;
-    void * ctx;
+    void* ctx;
     uint64_t size = 256;
 
     HcclResult result = HcclEngineCtxCreate(comm, ctxTag, engine, size, &ctx);

@@ -14,29 +14,36 @@
 namespace hccl {
 class CollAllGatherMidCountFor91093Executor : public CollAllGatherExecutor {
 public:
-    explicit CollAllGatherMidCountFor91093Executor(const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher> &topoMatcher);
+    explicit CollAllGatherMidCountFor91093Executor(
+        const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher>& topoMatcher);
     ~CollAllGatherMidCountFor91093Executor() override = default;
 
 private:
     /* *************** 资源计算 *************** */
     // HcclResult CalcStreamNum(u32& streamNum) override;
     HcclResult CalcCommInfo(std::vector<LevelNSubCommTransport>& opTransport) override;
-    HcclResult CalcTransportMemType(TransportMemType &inputType, TransportMemType &outputType) const;
-    HcclResult CalcLevel1CommInfo(TransportMemType inputType, TransportMemType outputType,
+    HcclResult CalcTransportMemType(TransportMemType& inputType, TransportMemType& outputType) const;
+    HcclResult CalcLevel1CommInfo(
+        TransportMemType inputType, TransportMemType outputType,
         std::vector<LevelNSubCommTransport>& opTransport) override;
-    HcclResult CalcLevel2CommInfo(TransportMemType inputType, TransportMemType outputType,
+    HcclResult CalcLevel2CommInfo(
+        TransportMemType inputType, TransportMemType outputType,
         std::vector<LevelNSubCommTransport>& opTransport) override;
-    
+
     /* *************** 算法编排 *************** */
     u64 CalcLoopMaxCount(const u64 cclBuffSize, const u32 unitSize) override;
-    u64 CalcDstMemOffset(const OpParam &param, u64 inputMemSize) const;
-    HcclResult PrepareL2DataSlices(const OpParam &param, const SubCommInfo &level1CommInfo, const SubCommInfo &level2CommInfo,
-        u64 inputMemSize, std::vector<Slice> &dataSlices) const;
-    HcclResult RunLevel2ByNHR(const OpParam &param, ExecMem &execMem, SubCommInfo  &level1CommInfo, SubCommInfo &level2CommInfo) const;
-    HcclResult PrepareL1DataSlices(const OpParam &param, const SubCommInfo &level1CommInfo, const SubCommInfo &level2CommInfo,
-        u64 inputMemSize, u32 moduleId, std::vector<Slice> &dataSlices) const;
-    HcclResult RunLevel1ByNHR(const OpParam &param, ExecMem &execMem, SubCommInfo  &level1CommInfo, SubCommInfo &level2CommInfo);
-    HcclResult KernelRun(const OpParam &param, ExecMem &execMem) override;
+    u64 CalcDstMemOffset(const OpParam& param, u64 inputMemSize) const;
+    HcclResult PrepareL2DataSlices(
+        const OpParam& param, const SubCommInfo& level1CommInfo, const SubCommInfo& level2CommInfo, u64 inputMemSize,
+        std::vector<Slice>& dataSlices) const;
+    HcclResult RunLevel2ByNHR(
+        const OpParam& param, ExecMem& execMem, SubCommInfo& level1CommInfo, SubCommInfo& level2CommInfo) const;
+    HcclResult PrepareL1DataSlices(
+        const OpParam& param, const SubCommInfo& level1CommInfo, const SubCommInfo& level2CommInfo, u64 inputMemSize,
+        u32 moduleId, std::vector<Slice>& dataSlices) const;
+    HcclResult RunLevel1ByNHR(
+        const OpParam& param, ExecMem& execMem, SubCommInfo& level1CommInfo, SubCommInfo& level2CommInfo) const;
+    HcclResult KernelRun(const OpParam& param, ExecMem& execMem) override;
 };
 
 } // namespace hccl

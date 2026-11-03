@@ -31,20 +31,11 @@ using namespace Hccl;
 
 class LocalCntNotifyTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "LocalCntNotifyTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "LocalCntNotifyTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "LocalCntNotifyTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "LocalCntNotifyTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in LocalCntNotifyTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in LocalCntNotifyTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -53,24 +44,13 @@ protected:
     }
 };
 
-
-
 class InsRulesTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "InsRulesTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "InsRulesTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "InsRulesTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "InsRulesTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in InsRulesTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in InsRulesTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -81,19 +61,14 @@ protected:
 
 class ConnLocalCntNotifyManagerTest : public testing::Test {
 protected:
-    static void SetUpTestCase() {
-        std::cout << "ConnLocalCntNotifyManagerTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "ConnLocalCntNotifyManagerTest SetUP" << std::endl; }
 
-    static void TearDownTestCase() {
-        std::cout << "ConnLocalCntNotifyManagerTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "ConnLocalCntNotifyManagerTest TearDown" << std::endl; }
 
-    virtual void SetUp() {
-        std::cout << "A Test case in ConnLocalCntNotifyManagerTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in ConnLocalCntNotifyManagerTest SetUP" << std::endl; }
 
-    virtual void TearDown () {
+    virtual void TearDown()
+    {
         GlobalMockObject::verify();
         std::cout << "A Test case in ConnLocalCntNotifyManagerTest TearDown" << std::endl;
     }

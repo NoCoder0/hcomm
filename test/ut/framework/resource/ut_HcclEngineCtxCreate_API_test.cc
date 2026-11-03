@@ -39,14 +39,14 @@ public:
 
 TEST_F(HcclEngineCtxCreateTest, ut_HcclEngineCtxCreate_When_Normal_Expect_ReturnIsHCCL_SUCCESS)
 {
-    const char *ctxTag = "1";
+    const char* ctxTag = "1";
     CommEngine engine = COMM_ENGINE_CPU;
-    void * ctx;
+    void* ctx;
     uint64_t size = 256;
 
     HcclResult result = HcclEngineCtxCreate(comm, ctxTag, engine, size, &ctx);
     EXPECT_EQ(result, HCCL_SUCCESS);
-    HcclMem engineCtx = {HcclMemType::HCCL_MEM_TYPE_HOST, ctx, size}; 
+    HcclMem engineCtx = {HcclMemType::HCCL_MEM_TYPE_HOST, ctx, size};
     result = HcclEngineCtxDestroy(comm, ctxTag, engine);
     EXPECT_EQ(result, HCCL_SUCCESS);
 }
@@ -54,8 +54,8 @@ TEST_F(HcclEngineCtxCreateTest, ut_HcclEngineCtxCreate_When_Normal_Expect_Return
 TEST_F(HcclEngineCtxCreateTest, ut_HcclEngineCtxCreate_When_commNULL_Expect_ReturnIsHCCL_ERROR)
 {
     CommEngine engine = COMM_ENGINE_CPU;
-    void * ctx;
-    uint64_t size = 256; 
+    void* ctx;
+    uint64_t size = 256;
     HcclResult result = HcclEngineCtxCreate(nullptr, nullptr, engine, size, &ctx);
     EXPECT_EQ(result, HCCL_E_PTR);
 }
@@ -63,7 +63,7 @@ TEST_F(HcclEngineCtxCreateTest, ut_HcclEngineCtxCreate_When_commNULL_Expect_Retu
 TEST_F(HcclEngineCtxCreateTest, ut_HcclEngineCtxCreate_When_CtxTagIsNull_Expect_ReturnIsHCCL_SUCCESS)
 {
     CommEngine engine = COMM_ENGINE_CPU;
-    void * ctx;
+    void* ctx;
     uint64_t size = 256;
 
     HcclResult result = HcclEngineCtxCreate(comm, nullptr, engine, size, &ctx);
@@ -72,9 +72,9 @@ TEST_F(HcclEngineCtxCreateTest, ut_HcclEngineCtxCreate_When_CtxTagIsNull_Expect_
 
 TEST_F(HcclEngineCtxCreateTest, ut_HcclEngineCtxCreate_When_CtxIsNull_Expect_ReturnIsHCCL_ERROR)
 {
-    const char *ctxTag = "1";
+    const char* ctxTag = "1";
     CommEngine engine = COMM_ENGINE_CPU;
-    void *ctx = nullptr;
+    void* ctx = nullptr;
     uint64_t size = 256;
 
     HcclResult result = HcclEngineCtxCreate(comm, ctxTag, engine, size, nullptr);
@@ -86,9 +86,9 @@ TEST_F(HcclEngineCtxCreateTest, ut_HcclEngineCtxCreate_When_EngineTagIslong_Expe
     char ctxTagBuffer[257];
     memset(ctxTagBuffer, '1', 256);
     ctxTagBuffer[256] = '\0';
-    const char *ctxTag = ctxTagBuffer;
+    const char* ctxTag = ctxTagBuffer;
     CommEngine engine = COMM_ENGINE_CPU;
-    void * ctx;
+    void* ctx;
     uint64_t size = 256;
 
     HcclResult result = HcclEngineCtxCreate(comm, ctxTag, engine, size, &ctx);
@@ -97,9 +97,9 @@ TEST_F(HcclEngineCtxCreateTest, ut_HcclEngineCtxCreate_When_EngineTagIslong_Expe
 
 TEST_F(HcclEngineCtxCreateTest, ut_HcclEngineCtxCreate_When_engineCtxExist_Expect_ReturnIsHCCL_ERROR)
 {
-    const char *ctxTag = "1";
+    const char* ctxTag = "1";
     CommEngine engine = COMM_ENGINE_CPU;
-    void * ctx;
+    void* ctx;
     uint64_t size = 256;
 
     HcclResult result = HcclEngineCtxCreate(comm, ctxTag, engine, size, &ctx);
@@ -107,38 +107,36 @@ TEST_F(HcclEngineCtxCreateTest, ut_HcclEngineCtxCreate_When_engineCtxExist_Expec
 
     result = HcclEngineCtxCreate(comm, ctxTag, engine, size, &ctx);
     EXPECT_EQ(result, HCCL_E_PARA);
-    HcclMem engineCtx = {HcclMemType::HCCL_MEM_TYPE_HOST, ctx, size}; 
+    HcclMem engineCtx = {HcclMemType::HCCL_MEM_TYPE_HOST, ctx, size};
     result = HcclEngineCtxDestroy(comm, ctxTag, engine);
     EXPECT_EQ(result, HCCL_SUCCESS);
 }
 
 TEST_F(HcclEngineCtxCreateTest, ut_HcclEngineCtxCreate_When_Devicemallocfailed_Expect_ReturnIsHCCL_ERROR)
 {
-    const char *ctxTag = "1";
+    const char* ctxTag = "1";
     CommEngine engine = COMM_ENGINE_AICPU;
-    void * ctx;
+    void* ctx;
     uint64_t size = 256;
-    
-    MOCKER(hrtMalloc)
-        .expects(once())
-        .will(returnValue(HCCL_E_RUNTIME));
-    
+
+    MOCKER(hrtMalloc).expects(once()).will(returnValue(HCCL_E_RUNTIME));
+
     HcclResult result = HcclEngineCtxCreate(comm, ctxTag, engine, size, &ctx);
     EXPECT_EQ(result, HCCL_E_RUNTIME);
 }
 
 TEST_F(HcclEngineCtxCreateTest, ut_HcclEngineCtxCreate_WithDifferentCommEngines_Expect_ReturnIsHCCL_SUCCESS)
 {
-    const char *ctxTag = "test_ctx";
-    void * ctx;
+    const char* ctxTag = "test_ctx";
+    void* ctx;
     uint64_t size = 256;
-    
+
     HcclResult result;
-    
+
     result = HcclEngineCtxCreate(comm, ctxTag, COMM_ENGINE_CPU, size, &ctx);
     EXPECT_EQ(result, HCCL_SUCCESS);
     HcclEngineCtxDestroy(comm, ctxTag, COMM_ENGINE_CPU);
-    
+
     result = HcclEngineCtxCreate(comm, ctxTag, COMM_ENGINE_AICPU, size, &ctx);
     EXPECT_EQ(result, HCCL_SUCCESS);
     HcclEngineCtxDestroy(comm, ctxTag, COMM_ENGINE_AICPU);

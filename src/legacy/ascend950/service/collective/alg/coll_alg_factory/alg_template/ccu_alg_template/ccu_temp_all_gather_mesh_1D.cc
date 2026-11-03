@@ -23,18 +23,15 @@ namespace Hccl {
 
 static CcuInstRegister<CcuContextAllGatherMesh1D> g_registrarAllGather(CcuInstType::CCU_ALLGATHER_MESH_1D_DIRECT);
 
-CcuTempAllGatherMesh1D::CcuTempAllGatherMesh1D(const RankId virtualRank, const u32 tempRankSize,
-                                   const std::vector<std::vector<RankId>> &tempVTopo,
-                                   const std::map<RankId, u32>            &tempVirtRankMap)
+CcuTempAllGatherMesh1D::CcuTempAllGatherMesh1D(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
     : CcuAlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap)
-{
-}
+{}
 
-CcuTempAllGatherMesh1D::~CcuTempAllGatherMesh1D()
-{
-}
+CcuTempAllGatherMesh1D::~CcuTempAllGatherMesh1D() {}
 
-HcclResult CcuTempAllGatherMesh1D::CalcRes(AlgTempResReq &tempResReq)
+HcclResult CcuTempAllGatherMesh1D::CalcRes(AlgTempResReq& tempResReq)
 {
     tempResReq.queNum = 1;
     tempResReq.streamNum = tempResReq.queNum;
@@ -43,8 +40,8 @@ HcclResult CcuTempAllGatherMesh1D::CalcRes(AlgTempResReq &tempResReq)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CcuTempAllGatherMesh1D::CalcSliceInfo(const AllignInfo &allignInfo, const u64 dataSize,
-                                            RankSliceInfo &sliceInfoVec)
+HcclResult
+CcuTempAllGatherMesh1D::CalcSliceInfo(const AllignInfo& allignInfo, const u64 dataSize, RankSliceInfo& sliceInfoVec)
 {
     std::vector<SliceInfo> tmp(tempVTopo_.size());
     sliceInfoVec.resize(tempRankSize_, tmp);
@@ -54,19 +51,15 @@ HcclResult CcuTempAllGatherMesh1D::CalcSliceInfo(const AllignInfo &allignInfo, c
     return HcclResult::HCCL_SUCCESS;
 }
 
-uint64_t CcuTempAllGatherMesh1D::GetMaxSliceSize() const
-{
-    return UB_MAX_DATA_SIZE;
-}
+uint64_t CcuTempAllGatherMesh1D::GetMaxSliceSize() const { return UB_MAX_DATA_SIZE; }
 
-HcclResult CcuTempAllGatherMesh1D::Run(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec,
-                                          const BuffInfo &buffInfo, const ResLinks &tempLinks,
-                                          std::vector<InsQuePtr> &tempInsQues)
+HcclResult CcuTempAllGatherMesh1D::Run(
+    const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, const BuffInfo& buffInfo, const ResLinks& tempLinks,
+    std::vector<InsQuePtr>& tempInsQues)
 {
-    CHK_PRT_RET(tempInsQues.empty(),
-        HCCL_ERROR("[CcuTempAllGatherMesh1D] empty queue"), HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(tempInsQues.empty(), HCCL_ERROR("[CcuTempAllGatherMesh1D] empty queue"), HcclResult::HCCL_E_INTERNAL);
     CHK_PTR_NULL(tempInsQues[0]);
-    opMode_   = tempFuncs.opMode;
+    opMode_ = tempFuncs.opMode;
     buffInfo_ = buffInfo;
     CcuInstructionAllGatherMesh1D ccuInsAllGatherMesh1D;
     std::vector<uint64_t> dimSize;
@@ -78,7 +71,7 @@ HcclResult CcuTempAllGatherMesh1D::Run(const TempFuncs &tempFuncs, const RankSli
     if (opMode_ == OpMode::OPBASE) {
         if (tempFuncs.isForepart) {
             inputAddr = BufferTypeToAddr(tempFuncs.usrData.usrInSlices[0].GetType())
-                + tempFuncs.usrData.usrInSlices[0].GetOffset();
+                        + tempFuncs.usrData.usrInSlices[0].GetOffset();
         } else {
             inputAddr = BufferTypeToAddr(buffInfo_.inBuffType) + buffInfo_.inBuffBaseOff;
         }
@@ -92,21 +85,24 @@ HcclResult CcuTempAllGatherMesh1D::Run(const TempFuncs &tempFuncs, const RankSli
             offset = sliceInfoVec[myRank_][0].offset;
         }
     } else {
-        inputAddr = BufferTypeToAddr(buffInfo_.inBuffType) + buffInfo_.inBuffBaseOff + tempFuncs.usrData.usrInSlices[0].GetOffset();
+        inputAddr = BufferTypeToAddr(buffInfo_.inBuffType) + buffInfo_.inBuffBaseOff
+                    + tempFuncs.usrData.usrInSlices[0].GetOffset();
         outputAddr = BufferTypeToAddr(buffInfo_.outBuffType) + buffInfo_.outBuffBaseOff;
         offset = tempFuncs.usrData.usrOutSlices[myRank_].GetOffset();
     }
 
-    uint64_t sliceSize = sliceInfoVec[myRank_][0].size;  // 获取本rank需要处理的数据量
+    uint64_t sliceSize = sliceInfoVec[myRank_][0].size; // 获取本rank需要处理的数据量
     uint64_t token;
     CHK_RET(GetToken(op_, token));
-    ccuInsAllGatherMesh1D.Init(static_cast<uint32_t>(myRank_), inputAddr, outputAddr, sliceSize, offset, token, op_, tempVTopo_);
-    HCCL_INFO("[CcuTempAllGatherMesh1D] Run Init: myRank_[%d], dimSize[%llu], inputAddr[%llu],"\
+    ccuInsAllGatherMesh1D.Init(
+        static_cast<uint32_t>(myRank_), inputAddr, outputAddr, sliceSize, offset, token, op_, tempVTopo_);
+    HCCL_INFO(
+        "[CcuTempAllGatherMesh1D] Run Init: myRank_[%d], dimSize[%llu], inputAddr[%llu],"
         "outputAddr[%llu], sliceSize[%llu], offset[%llu]",
         myRank_, dimSize[0], inputAddr, outputAddr, sliceSize, offset);
 
     std::vector<LinkData> links;
-    for (auto &pair : tempLinks) {
+    for (auto& pair : tempLinks) {
         if (pair.second.empty()) {
             continue;
         }
@@ -116,7 +112,7 @@ HcclResult CcuTempAllGatherMesh1D::Run(const TempFuncs &tempFuncs, const RankSli
     ccuInsAllGatherMesh1D.SetLinks(links);
 
     RankGroup rankGroup;
-    for (auto &peer : tempVTopo_[0]) {
+    for (auto& peer : tempVTopo_[0]) {
         rankGroup.AddRank(peer);
     }
     u32 cntCkeNum = 3;
@@ -129,8 +125,8 @@ HcclResult CcuTempAllGatherMesh1D::Run(const TempFuncs &tempFuncs, const RankSli
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CcuTempAllGatherMesh1D::GenExtIns(const RankGraph *rankGraph, const TemplateInfo &tmpInfo,
-        const std::vector<InsQuePtr> &tempInsQues) const
+HcclResult CcuTempAllGatherMesh1D::GenExtIns(
+    const RankGraph* rankGraph, const TemplateInfo& tmpInfo, const std::vector<InsQuePtr>& tempInsQues) const
 {
     (void)rankGraph;
     (void)tmpInfo;

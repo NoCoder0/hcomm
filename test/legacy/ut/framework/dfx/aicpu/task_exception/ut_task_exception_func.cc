@@ -23,21 +23,21 @@ using namespace std;
 using namespace Hccl;
 
 class TaskExceptionFuncTest : public testing::Test {
-protected:   
-    static void SetUpTestCase()
-    {
-        std::cout << "TaskExceptionFuncTest SetUP" << std::endl;
-    }
+protected:
+    static void SetUpTestCase() { std::cout << "TaskExceptionFuncTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "TaskExceptionFuncTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "TaskExceptionFuncTest TearDown" << std::endl; }
 
     virtual void SetUp()
     {
-        MOCKER_CPP(&RtsqBase::QuerySqBaseAddr).stubs().with(mockcpp::any()).will(returnValue(reinterpret_cast<u64>(&mockSq)));
-        MOCKER_CPP(&RtsqBase::QuerySqDepth).stubs().with(mockcpp::any()).will(returnValue(static_cast<u32>(AC_SQE_MAX_CNT)));
+        MOCKER_CPP(&RtsqBase::QuerySqBaseAddr)
+            .stubs()
+            .with(mockcpp::any())
+            .will(returnValue(reinterpret_cast<u64>(&mockSq)));
+        MOCKER_CPP(&RtsqBase::QuerySqDepth)
+            .stubs()
+            .with(mockcpp::any())
+            .will(returnValue(static_cast<u32>(AC_SQE_MAX_CNT)));
         MOCKER_CPP(&RtsqBase::QuerySqStatusByType).stubs().will(returnValue(static_cast<u32>(0)));
         std::cout << "A Test case in TaskExceptionFuncTest SetUp" << std::endl;
     }
@@ -48,20 +48,20 @@ protected:
         GlobalMockObject::verify();
     }
 
-    u8  mockSq[AC_SQE_SIZE * AC_SQE_MAX_CNT]{0};
+    u8 mockSq[AC_SQE_SIZE * AC_SQE_MAX_CNT]{0};
 };
 
 TEST_F(TaskExceptionFuncTest, SetDevId_ShouldSetDevId_WhenCalled)
 {
-    TaskExceptionFunc &instance = TaskExceptionFunc::GetInstance();
+    TaskExceptionFunc& instance = TaskExceptionFunc::GetInstance();
     instance.SetDevId(12345);
     EXPECT_EQ(instance.GetDevId(), 12345);
 }
 
 TEST_F(TaskExceptionFuncTest, RegisterCallback_ShouldRegisterCallback_WhenCalled)
 {
-    TaskExceptionFunc &instance = TaskExceptionFunc::GetInstance();
-    instance.RegisterCallback([](const CommunicatorImplLite * communicatorImplLite, const rtLogicCqReport_t *report) {
+    TaskExceptionFunc& instance = TaskExceptionFunc::GetInstance();
+    instance.RegisterCallback([](const CommunicatorImplLite* communicatorImplLite, const rtLogicCqReport_t* report) {
         // Do something with the report
     });
 }
@@ -71,7 +71,7 @@ TEST_F(TaskExceptionFuncTest, Register_ShouldRegisterStreamLite_WhenCalled)
     std::vector<char> uniqueId{'0', '0', '0'};
     StreamLite streamLite(uniqueId);
 
-    TaskExceptionFunc &instance = TaskExceptionFunc::GetInstance();
+    TaskExceptionFunc& instance = TaskExceptionFunc::GetInstance();
     instance.Register(&streamLite);
 }
 
@@ -80,15 +80,15 @@ TEST_F(TaskExceptionFuncTest, UnRegister_ShouldUnRegisterStreamLite_WhenCalled)
     std::vector<char> uniqueId{'0', '0', '0'};
     StreamLite streamLite(uniqueId);
 
-    TaskExceptionFunc &instance = TaskExceptionFunc::GetInstance();
+    TaskExceptionFunc& instance = TaskExceptionFunc::GetInstance();
     instance.Register(&streamLite);
     instance.UnRegister(&streamLite);
 }
 
 TEST_F(TaskExceptionFuncTest, StringLogicCqReportInfo_ShouldReturnCorrectString_WhenCalled)
 {
-    TaskExceptionFunc &instance = TaskExceptionFunc::GetInstance();
-    
+    TaskExceptionFunc& instance = TaskExceptionFunc::GetInstance();
+
     rtLogicCqReport_t report;
     report.streamId = 1;
     report.taskId = 2;
@@ -101,41 +101,63 @@ TEST_F(TaskExceptionFuncTest, StringLogicCqReportInfo_ShouldReturnCorrectString_
     report.dropFlag = 9;
     report.errorBit = 10;
     report.accError = 11;
-    EXPECT_EQ(instance.StringLogicCqReportInfo(report), "streamId :1 taskId :2 errorCode :3 errorType :0 sqeType :5 sqId :6 sqHead :7 matchFlag :0 dropFlag :1 errorBit :0 accError :1");
+    EXPECT_EQ(
+        instance.StringLogicCqReportInfo(report), "streamId :1 taskId :2 errorCode :3 errorType :0 sqeType :5 sqId :6 "
+                                                  "sqHead :7 matchFlag :0 dropFlag :1 errorBit :0 accError :1");
 
     report.errorType = 0b11;
-    EXPECT_EQ(instance.StringLogicCqReportInfo(report), "streamId :1 taskId :2 errorCode :3 errorType :3(bus error) sqeType :5 sqId :6 sqHead :7 matchFlag :0 dropFlag :1 errorBit :0 accError :1");
+    EXPECT_EQ(
+        instance.StringLogicCqReportInfo(report),
+        "streamId :1 taskId :2 errorCode :3 errorType :3(bus error) sqeType :5 sqId :6 sqHead :7 matchFlag :0 dropFlag "
+        ":1 errorBit :0 accError :1");
 
     report.errorType = 0b101;
-    EXPECT_EQ(instance.StringLogicCqReportInfo(report), "streamId :1 taskId :2 errorCode :3 errorType :5(rsv) sqeType :5 sqId :6 sqHead :7 matchFlag :0 dropFlag :1 errorBit :0 accError :1");
+    EXPECT_EQ(
+        instance.StringLogicCqReportInfo(report), "streamId :1 taskId :2 errorCode :3 errorType :5(rsv) sqeType :5 "
+                                                  "sqId :6 sqHead :7 matchFlag :0 dropFlag :1 errorBit :0 accError :1");
 
     report.errorType = 0b1001;
-    EXPECT_EQ(instance.StringLogicCqReportInfo(report), "streamId :1 taskId :2 errorCode :3 errorType :9(sqe error) sqeType :5 sqId :6 sqHead :7 matchFlag :0 dropFlag :1 errorBit :0 accError :1");
+    EXPECT_EQ(
+        instance.StringLogicCqReportInfo(report),
+        "streamId :1 taskId :2 errorCode :3 errorType :9(sqe error) sqeType :5 sqId :6 sqHead :7 matchFlag :0 dropFlag "
+        ":1 errorBit :0 accError :1");
 
     report.errorType = 0b10001;
-    EXPECT_EQ(instance.StringLogicCqReportInfo(report), "streamId :1 taskId :2 errorCode :3 errorType :17(res conflict error) sqeType :5 sqId :6 sqHead :7 matchFlag :0 dropFlag :1 errorBit :0 accError :1");
+    EXPECT_EQ(
+        instance.StringLogicCqReportInfo(report),
+        "streamId :1 taskId :2 errorCode :3 errorType :17(res conflict error) sqeType :5 sqId :6 sqHead :7 matchFlag "
+        ":0 dropFlag :1 errorBit :0 accError :1");
 
     report.errorType = 0b100001;
-    EXPECT_EQ(instance.StringLogicCqReportInfo(report), "streamId :1 taskId :2 errorCode :3 errorType :33(pre_p/post_p error) sqeType :5 sqId :6 sqHead :7 matchFlag :0 dropFlag :1 errorBit :0 accError :1");
+    EXPECT_EQ(
+        instance.StringLogicCqReportInfo(report),
+        "streamId :1 taskId :2 errorCode :3 errorType :33(pre_p/post_p error) sqeType :5 sqId :6 sqHead :7 matchFlag "
+        ":0 dropFlag :1 errorBit :0 accError :1");
 
     report.errorType = 0b1;
     report.sqeType = 9; // sqeType等于9时代表UBDMA类型，按照UB格式解析errorCode
     report.errorCode = 0x4;
-    EXPECT_EQ(instance.StringLogicCqReportInfo(report), "streamId :1 taskId :2 errorCode :4(Transaction Retry Counter Exceeded) errorType :1(exception) sqeType :9 sqId :6 sqHead :7 matchFlag :0 dropFlag :1 errorBit :0 accError :1");
+    EXPECT_EQ(
+        instance.StringLogicCqReportInfo(report),
+        "streamId :1 taskId :2 errorCode :4(Transaction Retry Counter Exceeded) errorType :1(exception) sqeType :9 "
+        "sqId :6 sqHead :7 matchFlag :0 dropFlag :1 errorBit :0 accError :1");
 
     report.errorCode = 0xF;
-    EXPECT_EQ(instance.StringLogicCqReportInfo(report), "streamId :1 taskId :2 errorCode :15(Reserved) errorType :1(exception) sqeType :9 sqId :6 sqHead :7 matchFlag :0 dropFlag :1 errorBit :0 accError :1");
+    EXPECT_EQ(
+        instance.StringLogicCqReportInfo(report),
+        "streamId :1 taskId :2 errorCode :15(Reserved) errorType :1(exception) sqeType :9 sqId :6 sqHead :7 matchFlag "
+        ":0 dropFlag :1 errorBit :0 accError :1");
 }
 
 TEST_F(TaskExceptionFuncTest, getTrailingZeros_ShouldReturnCorrectCount_WhenCalled)
 {
-    TaskExceptionFunc &instance = TaskExceptionFunc::GetInstance();
+    TaskExceptionFunc& instance = TaskExceptionFunc::GetInstance();
     EXPECT_EQ(instance.GetTrailingZeros(16), 4);
 }
 
 TEST_F(TaskExceptionFuncTest, IsExceptionCqe_ShouldReturnTrue_WhenErrorTypeIsException)
 {
-    TaskExceptionFunc &instance = TaskExceptionFunc::GetInstance();
+    TaskExceptionFunc& instance = TaskExceptionFunc::GetInstance();
     rtLogicCqReport_t report;
     report.errorType = 0x3F;
     EXPECT_TRUE(instance.IsExceptionCqe(report));
@@ -143,7 +165,7 @@ TEST_F(TaskExceptionFuncTest, IsExceptionCqe_ShouldReturnTrue_WhenErrorTypeIsExc
 
 TEST_F(TaskExceptionFuncTest, IsExceptionCqe_ShouldReturnFalse_WhenErrorTypeIsNotException)
 {
-    TaskExceptionFunc &instance = TaskExceptionFunc::GetInstance();
+    TaskExceptionFunc& instance = TaskExceptionFunc::GetInstance();
     rtLogicCqReport_t report;
     report.errorType = 0x00;
     EXPECT_FALSE(instance.IsExceptionCqe(report));
@@ -154,9 +176,12 @@ TEST_F(TaskExceptionFuncTest, ShouldContinueOnWaitTimeout)
     std::vector<char> uniqueId{'0', '0', '0'};
     StreamLite streamLite(uniqueId);
 
-    TaskExceptionFunc &instance = TaskExceptionFunc::GetInstance();
+    TaskExceptionFunc& instance = TaskExceptionFunc::GetInstance();
     instance.Register(&streamLite);
-    MOCKER(halCqReportRecv).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(static_cast<error_t>((int)DRV_ERROR_WAIT_TIMEOUT)));
+    MOCKER(halCqReportRecv)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(returnValue(static_cast<error_t>((int)DRV_ERROR_WAIT_TIMEOUT)));
     instance.Call();
 }
 
@@ -165,9 +190,12 @@ TEST_F(TaskExceptionFuncTest, ShouldContinueOnNonNoneError)
     std::vector<char> uniqueId{'0', '0', '0'};
     StreamLite streamLite(uniqueId);
 
-    TaskExceptionFunc &instance = TaskExceptionFunc::GetInstance();
+    TaskExceptionFunc& instance = TaskExceptionFunc::GetInstance();
     instance.Register(&streamLite);
-    MOCKER(halCqReportRecv).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(static_cast<error_t>((int)DRV_ERROR_NO_DEVICE)));
+    MOCKER(halCqReportRecv)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(returnValue(static_cast<error_t>((int)DRV_ERROR_NO_DEVICE)));
     instance.Call();
 }
 
@@ -176,10 +204,10 @@ TEST_F(TaskExceptionFuncTest, ShouldContinueWhenReportNumError)
     std::vector<char> uniqueId{'0', '0', '0'};
     StreamLite streamLite(uniqueId);
 
-    TaskExceptionFunc &instance = TaskExceptionFunc::GetInstance();
+    TaskExceptionFunc& instance = TaskExceptionFunc::GetInstance();
     instance.Register(&streamLite);
 
-    drvError_t (*MockHalCqReportRecv) (uint32_t, halReportRecvInfo*) = [](uint32_t devId, halReportRecvInfo *info) {
+    drvError_t (*MockHalCqReportRecv)(uint32_t, halReportRecvInfo*) = [](uint32_t devId, halReportRecvInfo* info) {
         info->report_cqe_num = 1000;
         return DRV_ERROR_NONE;
     };

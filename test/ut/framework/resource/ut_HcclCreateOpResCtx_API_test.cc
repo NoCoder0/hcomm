@@ -29,16 +29,19 @@ public:
     }
 };
 
-HcclResult hrtGetDeviceTypeStub91093(DevType &devType) {
+HcclResult hrtGetDeviceTypeStub91093(DevType& devType)
+{
     devType = DevType::DEV_TYPE_910_93;
     return HCCL_SUCCESS;
 }
 
-HcclResult hrtGetDeviceTypeStub910B(DevType &devType) {
+HcclResult hrtGetDeviceTypeStub910B(DevType& devType)
+{
     devType = DevType::DEV_TYPE_910B;
     return HCCL_SUCCESS;
 }
-HcclResult hrtGetDeviceTypeStub91095(DevType &devType) {
+HcclResult hrtGetDeviceTypeStub91095(DevType& devType)
+{
     devType = DevType::DEV_TYPE_950;
     return HCCL_SUCCESS;
 }
@@ -53,13 +56,14 @@ TEST_F(HcclCreateOpResCtxTest, ut_HcclCreateOpResCtx_When_Normal_Expect_ReturnIs
     uint64_t count = 256;
     char algConfig[128] = "AllReduce=level0:ring";
     CommEngine engine = COMM_ENGINE_AIV;
-    void * ctx;
+    void* ctx;
 
     MOCKER(hrtGetDeviceType).stubs().will(invoke(hrtGetDeviceTypeStub91093));
     MOCKER(hrtStreamSetMode).stubs().will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&HcclCommunicator::AllocComResourceByTiling).stubs().will(returnValue(HCCL_SUCCESS));
 
-    HcclResult result = HcclCreateOpResCtxInner(comm, opType, srcDataType, dstDataType, reduceType, count, algConfig, engine, &ctx);
+    HcclResult result
+        = HcclCreateOpResCtxInner(comm, opType, srcDataType, dstDataType, reduceType, count, algConfig, engine, &ctx);
     EXPECT_EQ(result, HCCL_SUCCESS);
 
     Ut_Comm_Destroy(comm);
@@ -76,17 +80,19 @@ TEST_F(HcclCreateOpResCtxTest, ut_HcclCreateOpResCtx_When_ParamIsNullptr_Expect_
     uint64_t count = 256;
     char algConfig[128] = "AllReduce=level0:ring";
     CommEngine engine = COMM_ENGINE_AIV;
-    void * ctx;
+    void* ctx;
 
     MOCKER(hrtGetDeviceType).stubs().will(invoke(hrtGetDeviceTypeStub91093));
 
-    HcclResult result = HcclCreateOpResCtxInner(nullptr, opType, srcDataType, dstDataType, reduceType, count, algConfig, engine, &ctx);
+    HcclResult result = HcclCreateOpResCtxInner(
+        nullptr, opType, srcDataType, dstDataType, reduceType, count, algConfig, engine, &ctx);
     EXPECT_EQ(result, HCCL_E_PTR);
 
     result = HcclCreateOpResCtxInner(comm, opType, srcDataType, dstDataType, reduceType, count, nullptr, engine, &ctx);
     EXPECT_EQ(result, HCCL_E_PTR);
 
-    result = HcclCreateOpResCtxInner(comm, opType, srcDataType, dstDataType, reduceType, count, algConfig, engine, nullptr);
+    result = HcclCreateOpResCtxInner(
+        comm, opType, srcDataType, dstDataType, reduceType, count, algConfig, engine, nullptr);
     EXPECT_EQ(result, HCCL_E_PTR);
 
     Ut_Comm_Destroy(comm);
@@ -103,11 +109,12 @@ TEST_F(HcclCreateOpResCtxTest, ut_HcclCreateOpResCtx_When_DevTypeIs91095_Expect_
     uint64_t count = 256;
     char algConfig[128] = "AllReduce=level0:ring";
     CommEngine engine = COMM_ENGINE_AIV;
-    void * ctx;
+    void* ctx;
 
     MOCKER(hrtGetDeviceType).stubs().will(invoke(hrtGetDeviceTypeStub91095));
 
-    HcclResult result = HcclCreateOpResCtxInner(comm, opType, srcDataType, dstDataType, reduceType, count, algConfig, engine, &ctx);
+    HcclResult result
+        = HcclCreateOpResCtxInner(comm, opType, srcDataType, dstDataType, reduceType, count, algConfig, engine, &ctx);
     EXPECT_EQ(result, HCCL_E_NOT_SUPPORT);
 
     Ut_Comm_Destroy(comm);
@@ -124,14 +131,15 @@ TEST_F(HcclCreateOpResCtxTest, ut_HcclCreateOpResCtx_A2When_Normal_Expect_Return
     uint64_t count = 256;
     char algConfig[128] = "AllReduce=level0:ring";
     CommEngine engine = COMM_ENGINE_AICPU;
-    void * ctx;
+    void* ctx;
 
     MOCKER(hrtGetDeviceType).stubs().will(invoke(hrtGetDeviceTypeStub910B));
     MOCKER(hrtStreamSetMode).stubs().will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&HcclCommunicator::AllocComResourceByTiling).stubs().will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&HcclCommunicator::Mc2CreateAndLaunchContext).stubs().will(returnValue(HCCL_SUCCESS));
 
-    HcclResult result = HcclCreateOpResCtxInner(comm, opType, srcDataType, dstDataType, reduceType, count, algConfig, engine, &ctx);
+    HcclResult result
+        = HcclCreateOpResCtxInner(comm, opType, srcDataType, dstDataType, reduceType, count, algConfig, engine, &ctx);
     EXPECT_EQ(result, HCCL_SUCCESS);
 
     Ut_Comm_Destroy(comm);

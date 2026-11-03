@@ -19,9 +19,9 @@ namespace Hccl {
 
 class InsTempReduceMesh1D : public InsAlgTemplateBase {
 public:
-    explicit InsTempReduceMesh1D(const RankId virtualRank, const u32 tempRankSize,
-                                 const std::vector<std::vector<RankId>> &tempVTopo,
-                                 const std::map<RankId, u32> &tempVirtRankMap);
+    explicit InsTempReduceMesh1D(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~InsTempReduceMesh1D() override;
 
     std::string Describe() const override
@@ -29,22 +29,23 @@ public:
         return StringFormat("Template of reduce Mesh1D with tempRankSize [%u].", tempRankSize_);
     }
 
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
     u32 CalcScratchMultiple(BufferType inBuffType, BufferType outBuffType) const;
 
-    HcclResult GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &dataParams,
-        const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues);
+    HcclResult GenExtIns(
+        const TempFuncs& tempFuncs, const TemplateDataParams& dataParams, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues);
 
 private:
-    HcclResult RunReduce(const TemplateDataParams &dataParams, const ResLinks &tempLinks,
-        std::vector<InsQuePtr> &tempInsQues);
-    HcclResult SendData(const TemplateDataParams &dataParams, const ResLinks &tempLinks,
-        std::vector<InsQuePtr> &tempInsQues);
-    HcclResult GatherData(const TemplateDataParams &dataParams, const ResLinks &tempLinks,
-        std::vector<InsQuePtr> &tempInsQues);
-    HcclResult ReduceData(const TemplateDataParams &dataParams, std::vector<InsQuePtr> &tempInsQues);
+    HcclResult
+    RunReduce(const TemplateDataParams& dataParams, const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues);
+    HcclResult
+    SendData(const TemplateDataParams& dataParams, const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues);
+    HcclResult
+    GatherData(const TemplateDataParams& dataParams, const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues);
+    HcclResult ReduceData(const TemplateDataParams& dataParams, std::vector<InsQuePtr>& tempInsQues);
 
-    u32 myIdx_ = INVALID_U32;  // 本rank在通信域内的索引
+    u32 myIdx_ = INVALID_U32; // 本rank在通信域内的索引
 };
 
 } // namespace Hccl

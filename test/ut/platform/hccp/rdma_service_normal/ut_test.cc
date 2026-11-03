@@ -25,24 +25,12 @@ extern "C" {
 
 using namespace std;
 
-class RS : public testing::Test
-{
+class RS : public testing::Test {
 protected:
-   static void SetUpTestCase()
-    {
-        std::cout << "\033[36m--RoCE RS SetUP--\033[0m" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "\033[36m--RoCE RS TearDown--\033[0m" << std::endl;
-    }
-    virtual void SetUp()
-    {
-    }
-    virtual void TearDown()
-    {
-	 GlobalMockObject::verify();
-    }
+    static void SetUpTestCase() { std::cout << "\033[36m--RoCE RS SetUP--\033[0m" << std::endl; }
+    static void TearDownTestCase() { std::cout << "\033[36m--RoCE RS TearDown--\033[0m" << std::endl; }
+    virtual void SetUp() {}
+    virtual void TearDown() { GlobalMockObject::verify(); }
 };
 
 TEST_M(RS, TcRsSocketListen);
@@ -124,12 +112,17 @@ TEST_M(RS, TcRsEpollWaitHandle);
 TEST_M(RS, TcRsGetVnicIpInfo);
 TEST_M(RS, TcRsTypicalRegisterMr);
 TEST_M(RS, TcRsTypicalQpModify);
+TEST_M(RS, TcRsGetQpHyperFeature);
 TEST_M(RS, TcRsRemapMr);
 TEST_M(RS, tc_RsGetApiVersion);
 TEST_M(RS, TcRsGetTlsEnable);
 TEST_M(RS, TcRsGetSecRandom);
 TEST_M(RS, TcRsGetHccnCfg);
 TEST_M(RS, TcRsJfcCallbackProcess);
+TEST_M(RS, TcRsUbFreeSegCbFail);
+TEST_M(RS, TcRsUbGetTpInfoListFail);
+TEST_M(RS, TcRsHandleEpollPollJfcFail);
+TEST_M(RS, TcRsUbGetUeInfoFail);
 
 /**
  ******************** Beginning of UB TEST ***************************
@@ -137,9 +130,20 @@ TEST_M(RS, TcRsJfcCallbackProcess);
 
 TEST_M(RS, TcRsUbGetRdevCb);
 TEST_M(RS, TcRsUrmaApiInitAbnormal);
+TEST_M(RS, TcRsInitDevEidInfoCbDevListNull);
+TEST_M(RS, TcRsInitDevEidInfoCbAlreadyInit);
+TEST_M(RS, TcRsInitDevEidInfoCbSuccess);
+TEST_M(RS, TcRsInitDevEidInfoCbSuccessNonOffline);
+TEST_M(RS, TcRsUbGetDevEidInfoTotalSuccess);
+TEST_M(RS, TcRsUbGetDevEidInfoTotalMultiDev);
+TEST_M(RS, TcRsUbGetDevEidInfoTotalEidListNull);
+TEST_M(RS, TcRsDeinitDevEidInfoCb);
 
 TEST_M(RS, TcRsGetDevEidInfoNum);
 TEST_M(RS, TcRsGetDevEidInfoList);
+TEST_M(RS, TcRsGetDevEidInfoListOutOfRange);
+TEST_M(RS, TcRsGetDevEidInfoListStartIndexOverflow);
+TEST_M(RS, TcRsGetDevEidInfoListStartIndexOffset);
 TEST_M(RS, TcRsCtxInit);
 TEST_M(RS, TcRsCtxDeinit);
 TEST_M(RS, TcRsCtxTokenIdAlloc);
@@ -162,6 +166,7 @@ TEST_M(RS, TcRsCtxBatchSendWr);
 TEST_M(RS, TcRsCtxUpdateCi);
 TEST_M(RS, TcRsCtxEsched);
 TEST_M(RS, TcRsGetEidByIp);
+TEST_M(RS, TcRsGetIpByEid);
 
 /* pingMesh ut cases */
 TEST_M(RS, TcRsPayloadHeaderResvCustomCheck);
@@ -210,6 +215,7 @@ TEST_M(RS, TcRsPongJettyResolveResponsePacket);
 TEST_M(RS, TcRsPingCommonImportJetty);
 TEST_M(RS, TcRsPingUrmaResetRecvBuffer);
 TEST_M(RS, TcRsPingCommonJfrPostRecv);
+TEST_M(RS, TcRsPingCommonInitSegCbFail);
 
 TEST_M(RS, TcRsPeerSocketRecv);
 TEST_M(RS, TcRsSocketGetServerSocketErrInfo);
@@ -230,6 +236,7 @@ TEST_M(RS, TcRsUbCtxJettyCreateFail);
 TEST_M(RS, TcRsUbCtxJettyImportFail);
 TEST_M(RS, TcRsUbCtxBatchSendWrFail);
 TEST_M(RS, TcRsUbGetEidByIp);
+TEST_M(RS, TcRsUbGetIpByEid);
 TEST_M(RS, TcRsCtxGetAuxInfo);
 TEST_M(RS, TcRsUbCtxGetAuxInfo);
 
@@ -262,11 +269,19 @@ TEST_M(RS, TcRsSetTpAttr);
 TEST_M(RS, TcRsUbGetTpAttr);
 TEST_M(RS, TcRsUbSetTpAttr);
 TEST_M(RS, TcRsCtxGetCrErrInfoList);
+TEST_M(RS, TcRsCtxNotifyEvent);
+TEST_M(RS, TcRsCtxNotifyEventAubdfxFail);
+TEST_M(RS, TcRsCtxNotifyNetDfxEvent);
+TEST_M(RS, TcRsCtxNotifyNetDfxEventAubdfxFail);
+TEST_M(RS, TcRsCtxNotifyEventUnsupportedType);
+TEST_M(RS, TcRsAubdfxApiInitRollback);
 TEST_M(RS, TcRsRetryTimeoutExceptionCheck);
 TEST_M(RS, TcRsSetQpLbValue);
 TEST_M(RS, TcRsGetQpLbValue);
 TEST_M(RS, TcRsGetLbMax);
 TEST_M(RS, TcRsNdaGetDirectFlag);
+TEST_M(RS, TcRsNdaGetDirectFlagExt);
+TEST_M(RS, TcRsInitNdaCb);
 TEST_M(RS, TcRsNdaQpCreateFailed);
 TEST_M(RS, TcRsNdaQpCreate);
 TEST_M(RS, TcRsNdaQpCreateEx);
@@ -275,3 +290,31 @@ TEST_M(RS, TcRsNdaDbMmapHostVa);
 TEST_M(RS, TcRsNdaDbMmapUbRes);
 TEST_M(RS, TcRsNdaCqCreateFailed);
 TEST_M(RS, TcRsNdaCqCreate);
+TEST_M(RS, TcRsNdaAlignDownWithMixedTypeAlign);
+TEST_M(RS, TcRsUbCtxInitDeviceByEidFail);
+TEST_M(RS, TcRsUbCreateCtxFail);
+TEST_M(RS, TcRsUbGetDevAttrQueryFail);
+TEST_M(RS, TcRsUbGetIpByEidUrmaFail);
+TEST_M(RS, TcRsUbCtxDeinitDeleteFail);
+TEST_M(RS, TcRsUbSetTpAttrSmacFail);
+TEST_M(RS, TcRsUbSetTpAttrDmacFail);
+TEST_M(RS, TcRsPingUrmaPingCbInitDeviceByEidFail);
+TEST_M(RS, TcRsPingCbGetUrmaContextAndIndexCreateFail);
+TEST_M(RS, TcRsUbDevShareJfrInitFail);
+TEST_M(RS, TcRsUbFreeRemJettyCbFail);
+TEST_M(RS, TcRsUbCtxDrvJettyImportNormalFail);
+TEST_M(RS, TcRsUbAsyncEventGetJettyContextFail);
+TEST_M(RS, TcRsUbGetJettyContextFail);
+TEST_M(RS, TcRsPingCommonInitJettyCreateJfrFail);
+TEST_M(RS, TcRsPingCommonInitJettyCreateJettyFail);
+TEST_M(RS, TcRsUrmaErrnoMacro);
+TEST_M(RS, TcRsUbDevShareJfrInitCreateJfcFail);
+TEST_M(RS, TcRsUbCtxChanDestroyJfceFail);
+TEST_M(RS, TcRsUbFreeJfceCbDeleteJfceFail);
+TEST_M(RS, TcRsUbCtxJfcCreateExtFail);
+TEST_M(RS, TcRsUbDeleteJfcExtFail);
+TEST_M(RS, TcRsJfcOptFail);
+TEST_M(RS, TcRsUbAsyncEventGetJfcContextFail);
+TEST_M(RS, TcRsUbGetSaveAsyncEventFail);
+TEST_M(RS, TcRsPingCommonInitLocalJettyFail);
+TEST_M(RS, TcRsUbCtxJfcCreateNormal);

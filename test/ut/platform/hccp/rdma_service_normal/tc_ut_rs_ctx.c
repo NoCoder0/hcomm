@@ -20,58 +20,66 @@
 #include "rs_ub_dfx.h"
 #include "rs_ub.h"
 #include "rs_ctx.h"
+#include "aubdfx_api.h"
+#include "ra_rs_err.h"
 #include "rs_esched.h"
 #include "tc_ut_rs_ctx.h"
 #include "ascend_hal_dl.h"
+#include "dl_aubdfx_function.h"
 #include "dl_hal_function.h"
 #include "hccp_msg.h"
 
-extern void RsUbCtxDrvJettyDelete(struct RsCtxJettyCb *jettyCb);
-extern void RsUbCtxFreeJettyCb(struct RsCtxJettyCb *jettyCb);
+extern void RsUbCtxDrvJettyDelete(struct RsCtxJettyCb* jettyCb);
+extern void RsUbCtxFreeJettyCb(struct RsCtxJettyCb* jettyCb);
 extern int RsCcuDeviceApiInit(void);
 extern int RsOpenCcuSo(void);
 extern void RsCloseCcuSo(void);
-extern int RsEschedProcessEvent(struct rs_cb *rscb, struct event_info *event);
-extern void RsEschedHandleEvent(struct rs_cb *rscb);
-extern void RsEschedAckEvent(struct rs_cb *rscb, struct event_info *event);
+extern int RsEschedProcessEvent(struct rs_cb* rscb, struct event_info* event);
+extern void RsEschedHandleEvent(struct rs_cb* rscb);
+extern void RsEschedAckEvent(struct rs_cb* rscb, struct event_info* event);
 extern int RsNetApiInit(void);
 extern void RsNetApiDeinit(void);
-extern int RsNetAllocJfcId(const char *udevName, unsigned int jfcMode, unsigned int *jfcId);
-extern int RsNetFreeJfcId(const char *udevName, unsigned int jfcMode, unsigned int jfcId);
-extern int RsNetAllocJettyId(const char *udevName, unsigned int jettyMode, unsigned int *jettyId);
-extern int RsNetFreeJettyId(const char *udevName, unsigned int jettyMode, unsigned int jettyId);
-extern int RsNetGetCqeBaseAddr(unsigned int dieId, unsigned long long *cqeBaseAddr);
-extern int RsCcuGetCqeBaseAddr(unsigned int dieId, unsigned long long *cqeBaseAddr);
+extern int RsNetAllocJfcId(const char* udevName, unsigned int jfcMode, unsigned int* jfcId);
+extern int RsNetFreeJfcId(const char* udevName, unsigned int jfcMode, unsigned int jfcId);
+extern int RsNetAllocJettyId(const char* udevName, unsigned int jettyMode, unsigned int* jettyId);
+extern int RsNetFreeJettyId(const char* udevName, unsigned int jettyMode, unsigned int jettyId);
+extern int RsNetGetCqeBaseAddr(unsigned int dieId, unsigned long long* cqeBaseAddr);
+extern int RsCcuGetCqeBaseAddr(unsigned int dieId, unsigned long long* cqeBaseAddr);
 
-struct rs_cb stubRsCb;
-struct RsUbDevCb stubDevCb;
-struct RsUbDevCb crErrDevCb = {0};
-
-int StubRsUbGetDevCbCrErr(struct rs_cb *rscb, unsigned int devIndex, struct RsUbDevCb **devCb)
+int StubRsUbGetDevCbCrErr(struct rs_cb* rscb, unsigned int devIndex, struct RsUbDevCb** devCb)
 {
+    static struct RsUbDevCb crErrDevCb = {0};
+
     *devCb = &crErrDevCb;
     return 0;
 }
 
-int StubRsGetRsCbV1(unsigned int phyId, struct rs_cb **rsCb)
+int StubRsUbGetDevCb(struct rs_cb* rscb, unsigned int devIndex, struct RsUbDevCb** devCb)
 {
-    *rsCb = &stubRsCb;
-    return 0;
-}
+    static struct RsUbDevCb stubDevCb;
 
-int StubRsUbGetDevCb(struct rs_cb *rscb, unsigned int devIndex, struct RsUbDevCb **devCb)
-{
-    stubDevCb.rscb = &stubRsCb;
+    stubDevCb.rscb = rscb;
+    stubDevCb.devAttr.ub.dieId = 0;
+    stubDevCb.devAttr.ub.funcId = 0;
     *devCb = &stubDevCb;
     return 0;
 }
 
-int StubRsGetRsCb(unsigned int phyId, struct rs_cb **rsCb)
+int StubRsGetRsCb(unsigned int phyId, struct rs_cb** rsCb)
 {
-    static struct rs_cb rsCbTmp = {0};
+    static struct HccpDevEidInfo eidArr[2];
+    static struct rs_cb stubRsCb = {0};
+    static struct RsDevEidInfoCb eidCb;
 
-    rsCbTmp.protocol = 1;
-    *rsCb = &rsCbTmp;
+    stubRsCb.protocol = PROTOCOL_UDMA;
+    if (eidCb.num == 0) {
+        eidArr[0].eidIndex = 0;
+        eidArr[1].eidIndex = 1;
+        eidCb.infoList = eidArr;
+        eidCb.num = 2;
+    }
+    stubRsCb.devEidInfoCb = &eidCb;
+    *rsCb = &stubRsCb;
     return 0;
 }
 
@@ -81,24 +89,67 @@ void TcRsGetDevEidInfoNum()
     int ret = 0;
 
     mocker_clean();
+    mocker(RsGetProductType, 100, PRODUCT_TYPE_950);
     mocker_invoke(RsGetRsCb, StubRsGetRsCb, 1);
-    mocker(RsUbGetDevEidInfoNum, 1, 0);
     ret = RsGetDevEidInfoNum(0, &num);
     EXPECT_INT_EQ(ret, 0);
+    EXPECT_INT_EQ(num, 2);
     mocker_clean();
 }
 
 void TcRsGetDevEidInfoList()
 {
     struct HccpDevEidInfo infoList[5] = {0};
-    unsigned int count = 0;
+    unsigned int count = 2;
     int ret = 0;
 
     mocker_clean();
+    mocker(RsGetProductType, 100, PRODUCT_TYPE_950);
     mocker_invoke(RsGetRsCb, StubRsGetRsCb, 1);
-    mocker(RsUbGetDevEidInfoList, 1, 0);
     ret = RsGetDevEidInfoList(0, infoList, 0, count);
     EXPECT_INT_EQ(ret, 0);
+    EXPECT_INT_EQ(infoList[0].eidIndex, 0);
+    EXPECT_INT_EQ(infoList[1].eidIndex, 1);
+    mocker_clean();
+}
+
+void TcRsGetDevEidInfoListOutOfRange()
+{
+    struct HccpDevEidInfo infoList[5] = {0};
+    int ret = 0;
+
+    mocker_clean();
+    mocker(RsGetProductType, 100, PRODUCT_TYPE_950);
+    mocker_invoke(RsGetRsCb, StubRsGetRsCb, 1);
+    ret = RsGetDevEidInfoList(0, infoList, 0, 3);
+    EXPECT_INT_EQ(ret, -EINVAL);
+    mocker_clean();
+}
+
+void TcRsGetDevEidInfoListStartIndexOverflow()
+{
+    struct HccpDevEidInfo infoList[5] = {0};
+    int ret = 0;
+
+    mocker_clean();
+    mocker(RsGetProductType, 100, PRODUCT_TYPE_950);
+    mocker_invoke(RsGetRsCb, StubRsGetRsCb, 1);
+    ret = RsGetDevEidInfoList(0, infoList, UINT_MAX, 1);
+    EXPECT_INT_EQ(ret, -EINVAL);
+    mocker_clean();
+}
+
+void TcRsGetDevEidInfoListStartIndexOffset()
+{
+    struct HccpDevEidInfo infoList[5] = {0};
+    int ret = 0;
+
+    mocker_clean();
+    mocker(RsGetProductType, 100, PRODUCT_TYPE_950);
+    mocker_invoke(RsGetRsCb, StubRsGetRsCb, 1);
+    ret = RsGetDevEidInfoList(0, infoList, 1, 1);
+    EXPECT_INT_EQ(ret, 0);
+    EXPECT_INT_EQ(infoList[0].eidIndex, 1);
     mocker_clean();
 }
 
@@ -340,7 +391,7 @@ void TcRsCtxQpUnimport()
     mocker_invoke(RsGetRsCb, StubRsGetRsCb, 1);
     mocker(RsUbGetDevCb, 1, 0);
     mocker(RsUbCtxJettyUnimport, 1, 0);
-    ret = RsCtxQpUnimport(&devInfo, 0);
+    ret = RsCtxQpUnimport(&devInfo, NULL, 0);
     EXPECT_INT_EQ(ret, 0);
     mocker_clean();
 }
@@ -427,7 +478,7 @@ void TcRsCtxEsched()
     mocker(RsUbCtxFreeJettyCb, 10, 0);
 
     event.priv.msg_len = sizeof(struct TagTsHccpMsg);
-    struct TagTsHccpMsg  *hccpMsg = (struct TagTsHccpMsg *)event.priv.msg;
+    struct TagTsHccpMsg* hccpMsg = (struct TagTsHccpMsg*)event.priv.msg;
     ccuTaskInfo.num = 1;
     ubTaskInfo.num = 1;
     RS_INIT_LIST_HEAD(&rscb.udevList);
@@ -514,10 +565,9 @@ void TcRsGetTpInfoList()
     EXPECT_INT_EQ(-EINVAL, ret);
     mocker_clean();
 
-    stubRsCb.protocol = PROTOCOL_UDMA;
-    mocker_invoke(RsGetRsCb, StubRsGetRsCbV1, 10);
+    mocker_invoke(RsGetRsCb, StubRsGetRsCb, 10);
     mocker_invoke(RsUbGetDevCb, StubRsUbGetDevCb, 10);
-    ret =  RsGetTpInfoList(&devInfo, &cfg, infoList, &num);
+    ret = RsGetTpInfoList(&devInfo, &cfg, infoList, &num);
     EXPECT_INT_EQ(0, ret);
     mocker_clean();
 }
@@ -543,11 +593,10 @@ void TcRsCtxQpDestroyBatch()
     EXPECT_INT_EQ(-EINVAL, ret);
     mocker_clean();
 
-    stubRsCb.protocol = PROTOCOL_UDMA;
-    mocker_invoke(RsGetRsCb, StubRsGetRsCbV1, 10);
+    mocker_invoke(RsGetRsCb, StubRsGetRsCb, 10);
     mocker_invoke(RsUbGetDevCb, StubRsUbGetDevCb, 10);
     mocker(RsUbCtxJettyDestroyBatch, 1, 0);
-    ret =  RsCtxQpDestroyBatch(&devInfo, ids, &num);
+    ret = RsCtxQpDestroyBatch(&devInfo, ids, &num);
     EXPECT_INT_EQ(0, ret);
     mocker_clean();
 }
@@ -577,12 +626,11 @@ void TcRsCtxQpQueryBatch()
     EXPECT_INT_EQ(-EINVAL, ret);
     mocker_clean();
 
-    stubRsCb.protocol = PROTOCOL_UDMA;
-    mocker_invoke(RsGetRsCb, StubRsGetRsCbV1, 10);
+    mocker_invoke(RsGetRsCb, StubRsGetRsCb, 10);
     mocker_invoke(RsUbGetDevCb, StubRsUbGetDevCb, 10);
     mocker(RsUbCtxQueryJettyBatch, 1, 0);
     num = 1;
-    ret =  RsCtxQpQueryBatch(&devInfo, ids, attr, &num);
+    ret = RsCtxQpQueryBatch(&devInfo, ids, attr, &num);
     EXPECT_INT_EQ(0, ret);
     mocker_clean();
 }
@@ -715,11 +763,10 @@ void TcRsGetTpAttr()
     EXPECT_INT_EQ(-EINVAL, ret);
     mocker_clean();
 
-    stubRsCb.protocol = PROTOCOL_UDMA;
-    mocker_invoke(RsGetRsCb, StubRsGetRsCbV1, 10);
+    mocker_invoke(RsGetRsCb, StubRsGetRsCb, 10);
     mocker_invoke(RsUbGetDevCb, StubRsUbGetDevCb, 10);
     mocker(RsUbGetTpAttr, 1, 0);
-    ret =  RsGetTpAttr(&devInfo, &attrBitmap, tpHandle, &attr);
+    ret = RsGetTpAttr(&devInfo, &attrBitmap, tpHandle, &attr);
     EXPECT_INT_EQ(0, ret);
     mocker_clean();
 }
@@ -743,11 +790,10 @@ void TcRsSetTpAttr()
     EXPECT_INT_EQ(-EINVAL, ret);
     mocker_clean();
 
-    stubRsCb.protocol = PROTOCOL_UDMA;
-    mocker_invoke(RsGetRsCb, StubRsGetRsCbV1, 10);
+    mocker_invoke(RsGetRsCb, StubRsGetRsCb, 10);
     mocker_invoke(RsUbGetDevCb, StubRsUbGetDevCb, 10);
     mocker(RsUbSetTpAttr, 1, 0);
-    ret =  RsSetTpAttr(&devInfo, attrBitmap, tpHandle, &attr);
+    ret = RsSetTpAttr(&devInfo, attrBitmap, tpHandle, &attr);
     EXPECT_INT_EQ(0, ret);
     mocker_clean();
 }
@@ -783,17 +829,115 @@ void TcRsCtxGetCrErrInfoList()
 
     mocker(RsGetRsCb, 1, 0);
     mocker_invoke(RsUbGetDevCb, StubRsUbGetDevCbCrErr, 10);
-    RS_INIT_LIST_HEAD(&crErrDevCb.jettyList);
+    struct RsUbDevCb* crErrDevCb = NULL;
+    StubRsUbGetDevCbCrErr(NULL, 0, &crErrDevCb);
+    RS_INIT_LIST_HEAD(&crErrDevCb->jettyList);
     ret = RsCtxGetCrErrInfoList(&devInfo, infoList, &num);
     EXPECT_INT_EQ(0, ret);
     mocker_clean();
 
-    RsListAddTail(&jettyCb.list, &crErrDevCb.jettyList);
-    jettyCb.devCb = &crErrDevCb;
+    RsListAddTail(&jettyCb.list, &crErrDevCb->jettyList);
+    jettyCb.devCb = crErrDevCb;
     jettyCb.crErrInfo.info.status = 1;
     mocker(RsGetRsCb, 1, 0);
     mocker_invoke(RsUbGetDevCb, StubRsUbGetDevCbCrErr, 1);
     ret = RsCtxGetCrErrInfoList(&devInfo, infoList, &num);
     EXPECT_INT_EQ(0, ret);
+    mocker_clean();
+}
+
+void TcRsCtxNotifyEvent()
+{
+    struct RaRsDevInfo devInfo = {0};
+    struct CtxNotifyEvent event = {0};
+
+    mocker_clean();
+    EXPECT_INT_EQ(RsCtxNotifyEvent(NULL, &event), -EINVAL);
+    EXPECT_INT_EQ(RsCtxNotifyEvent(&devInfo, NULL), -EINVAL);
+
+    devInfo.phyId = 0;
+    devInfo.devIndex = 0;
+    event.eventType = 0;
+    event.eventInfo.serviceErrInfo.serviceType = UBMEM_TYPE;
+    event.eventInfo.serviceErrInfo.errorType = 1;
+    mocker_invoke(RsGetRsCb, StubRsGetRsCb, 1);
+    mocker_invoke(RsUbGetDevCb, StubRsUbGetDevCb, 1);
+    mocker(RsAubdfxNotifyEvent, 1, 0);
+    EXPECT_INT_EQ(RsCtxNotifyEvent(&devInfo, &event), 0);
+    mocker_clean();
+}
+
+void TcRsCtxNotifyEventAubdfxFail()
+{
+    struct RaRsDevInfo devInfo = {0};
+    struct CtxNotifyEvent event = {0};
+
+    mocker_clean();
+    mocker_invoke(RsGetRsCb, StubRsGetRsCb, 1);
+    mocker_invoke(RsUbGetDevCb, StubRsUbGetDevCb, 1);
+    mocker(RsAubdfxNotifyEvent, 1, -EINVAL);
+    EXPECT_INT_EQ(RsCtxNotifyEvent(&devInfo, &event), -EINVAL);
+    mocker_clean();
+}
+
+void TcRsCtxNotifyNetDfxEvent()
+{
+    struct RaRsDevInfo devInfo = {0};
+    struct CtxNotifyEvent event = {0};
+
+    mocker_clean();
+    EXPECT_INT_EQ(RsCtxNotifyEvent(NULL, &event), -EINVAL);
+    EXPECT_INT_EQ(RsCtxNotifyEvent(&devInfo, NULL), -EINVAL);
+
+    devInfo.phyId = 0;
+    devInfo.devIndex = 0;
+    event.eventType = NET_DFX_SNAPSHOT_CMD;
+    event.eventInfo.netDfxInfo.pid = 1000;
+    event.eventInfo.netDfxInfo.status = 1;
+    mocker_invoke(RsGetRsCb, StubRsGetRsCb, 1);
+    mocker_invoke(RsUbGetDevCb, StubRsUbGetDevCb, 1);
+    mocker(RsAubdfxNotifyEvent, 1, 0);
+    EXPECT_INT_EQ(RsCtxNotifyEvent(&devInfo, &event), 0);
+    mocker_clean();
+}
+
+void TcRsCtxNotifyNetDfxEventAubdfxFail()
+{
+    struct RaRsDevInfo devInfo = {0};
+    struct CtxNotifyEvent event = {0};
+
+    mocker_clean();
+    devInfo.phyId = 0;
+    devInfo.devIndex = 0;
+    event.eventType = NET_DFX_SNAPSHOT_CMD;
+    event.eventInfo.netDfxInfo.pid = 1000;
+    event.eventInfo.netDfxInfo.status = 1;
+    mocker_invoke(RsGetRsCb, StubRsGetRsCb, 1);
+    mocker_invoke(RsUbGetDevCb, StubRsUbGetDevCb, 1);
+    mocker(RsAubdfxNotifyEvent, 1, -EINVAL);
+    EXPECT_INT_EQ(RsCtxNotifyEvent(&devInfo, &event), 0);
+    mocker_clean();
+}
+
+void TcRsCtxNotifyEventUnsupportedType()
+{
+    struct RaRsDevInfo devInfo = {0};
+    struct CtxNotifyEvent event = {0};
+
+    mocker_clean();
+    devInfo.phyId = 0;
+    devInfo.devIndex = 0;
+    event.eventType = CMD_MAX;
+    mocker_invoke(RsGetRsCb, StubRsGetRsCb, 1);
+    mocker_invoke(RsUbGetDevCb, StubRsUbGetDevCb, 1);
+    EXPECT_INT_EQ(RsCtxNotifyEvent(&devInfo, &event), -EINVAL);
+    mocker_clean();
+}
+
+void TcRsAubdfxApiInitRollback()
+{
+    mocker_clean();
+    mocker(RsAubdfxApiInit, 1, -EINVAL);
+    EXPECT_INT_EQ(RsAubdfxApiInit(), -EINVAL);
     mocker_clean();
 }

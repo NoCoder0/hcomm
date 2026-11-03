@@ -16,10 +16,6 @@ class SimMemoryManagerTest : public testing::Test {
 protected:
 };
 
-TEST_F(SimMemoryManagerTest, MemoryManager_StructSize) {
-    EXPECT_GT(sizeof(sim::MemoryManager), 0);
-}
+TEST_F(SimMemoryManagerTest, MemoryManager_StructSize) { EXPECT_GT(sizeof(sim::MemoryManager), 0); }
 
-TEST_F(SimMemoryManagerTest, MemInfo_StructSize) {
-    EXPECT_GT(sizeof(sim::MemInfo), 0);
-}
+TEST_F(SimMemoryManagerTest, MemInfo_StructSize) { EXPECT_GT(sizeof(sim::MemInfo), 0); }

@@ -18,25 +18,26 @@
 
 namespace hcomm {
 
-inline HcclResult MakeRmaBufferVecFromMemHandles(HcommMemHandle *memHandles, uint32_t memHandleNum,
-    std::vector<Hccl::LocalRmaBuffer *> &bufferVec, const char *channelName)
+inline HcclResult MakeRmaBufferVecFromMemHandles(
+    HcommMemHandle* memHandles, uint32_t memHandleNum, std::vector<Hccl::LocalRmaBuffer*>& bufferVec,
+    const char* channelName)
 {
     bufferVec.clear();
     for (uint32_t i = 0; i < memHandleNum; ++i) {
-        auto localRmaBuffer = reinterpret_cast<Hccl::LocalRmaBuffer *>(memHandles[i]);
+        auto localRmaBuffer = static_cast<Hccl::LocalRmaBuffer*>(memHandles[i]);
         CHK_PTR_NULL(localRmaBuffer);
         auto buf = localRmaBuffer->GetBuf();
         CHK_PTR_NULL(buf);
-        HCCL_INFO("[%s][%s] addr[0x%llx], size[0x%llx], memType[%d], memInfo[%s]",
-            channelName, __func__,
+        HCCL_INFO(
+            "[%s::%s] addr[0x%llx], size[0x%llx], memType[%d], memInfo[%s]", channelName, __func__,
             static_cast<unsigned long long>(localRmaBuffer->GetAddr()),
-            static_cast<unsigned long long>(localRmaBuffer->GetSize()),
-            static_cast<int>(buf->GetMemType()), buf->GetMemInfo().c_str());
+            static_cast<unsigned long long>(localRmaBuffer->GetSize()), static_cast<int>(buf->GetMemType()),
+            buf->GetMemInfo().c_str());
         bufferVec.push_back(localRmaBuffer);
     }
     return HCCL_SUCCESS;
 }
 
-}  // namespace hcomm
+} // namespace hcomm
 
-#endif  // CHANNEL_MAKEBUFS_HELPER_H
+#endif // CHANNEL_MAKEBUFS_HELPER_H

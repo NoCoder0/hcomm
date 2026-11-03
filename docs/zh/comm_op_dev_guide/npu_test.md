@@ -171,8 +171,8 @@ all:
     @echo "${TARGET} compile completed"
 
 # Test target
-test: 
-    export LD_LIBRARY_PATH=${CUSTOM_P2P_LIB_DIR}:${LD_LIBRARY_PATH}; \
+test:
+    export LD_LIBRARY_PATH=${CUSTOM_OPS_LIB_DIR}:${LD_LIBRARY_PATH}; \
     ./$(TARGET)
 
 # Clean build artifacts
@@ -188,7 +188,7 @@ clean:
 
     AI CPU算子包会在业务启动时加载至Device，加载过程中驱动默认会执行安全验签，以确保包的可信性。但用户自行编译生成的AI CPU算子包不包含签名头，因此需要手工关闭驱动的验签机制，才可以正常加载。
 
-    参考如下命令，使用root用户在物理机上执行， 以device 0为例：
+    参考如下命令，使用root用户在物理机上执行，以device 0为例：
 
     ```bash
     npu-smi set -t custom-op-secverify-enable -i 0 -d 1    # 开启验签配置

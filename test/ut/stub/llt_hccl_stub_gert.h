@@ -22,57 +22,59 @@
 
 #include "exe_graph/runtime/tensor_data_utils.h"
 
-namespace gert{
-namespace bg{
-class GenerateExeGraph {
- public:
-  struct ExeGraphGenerator {
-    using InferShapeFunc = std::vector<ValueHolderPtr> (*)(const ge::NodePtr &node,
-                                                           const std::vector<ValueHolderPtr> &shapes);
-    using AllocOutputMemoryFunc = std::vector<DevMemValueHolderPtr> (*)(TensorPlacement placement, const ge::NodePtr &node,
-                                                                        const std::vector<ValueHolderPtr> &output_sizes,
-                                                                        LoweringGlobalData &global_data);
-    using CalcTensorSizeFunc = std::vector<ValueHolderPtr> (*)(const ge::NodePtr &node,
-                                                               const std::vector<ValueHolderPtr> &output_shapes);
+namespace gert {
+namespace bg {
+    class GenerateExeGraph {
+    public:
+        struct ExeGraphGenerator {
+            using InferShapeFunc
+                = std::vector<ValueHolderPtr> (*)(const ge::NodePtr& node, const std::vector<ValueHolderPtr>& shapes);
+            using AllocOutputMemoryFunc = std::vector<DevMemValueHolderPtr> (*)(
+                TensorPlacement placement, const ge::NodePtr& node, const std::vector<ValueHolderPtr>& output_sizes,
+                LoweringGlobalData& global_data);
+            using CalcTensorSizeFunc = std::vector<ValueHolderPtr> (*)(
+                const ge::NodePtr& node, const std::vector<ValueHolderPtr>& output_shapes);
 
-    InferShapeFunc infer_shape;
-    AllocOutputMemoryFunc alloc_output_memory;
-    CalcTensorSizeFunc calc_tensor_size;
-  };
+            InferShapeFunc infer_shape;
+            AllocOutputMemoryFunc alloc_output_memory;
+            CalcTensorSizeFunc calc_tensor_size;
+        };
 
- public:
-  static std::vector<ValueHolderPtr> InferShape(const ge::NodePtr &node, const std::vector<ValueHolderPtr> &shapes) {
-    if (generator_.infer_shape == nullptr) {
-      return {};
-    }
-    return generator_.infer_shape(node, shapes);
-  }
-  static std::vector<DevMemValueHolderPtr> AllocOutputMemory(TensorPlacement placement, const ge::NodePtr &node,
-                                                             const std::vector<ValueHolderPtr> &output_sizes,
-                                                             LoweringGlobalData &global_data) {
-    if (generator_.alloc_output_memory == nullptr) {
-      return {};
-    }
-    return generator_.alloc_output_memory(placement, node, output_sizes, global_data);
-  }
-  static std::vector<ValueHolderPtr> CalcTensorSize(const ge::NodePtr &node,
-                                                    const std::vector<ValueHolderPtr> &output_shapes) {
-    std::vector<ValueHolderPtr> holders;
-    size_t outputSize = output_shapes.size();
-    ValueHolderPtr outputHolder;
-    for (size_t i = 0; i < outputSize; i++) {
-        holders.push_back(outputHolder);
-    }
-    return holders;
-  }
+    public:
+        static std::vector<ValueHolderPtr>
+        InferShape(const ge::NodePtr& node, const std::vector<ValueHolderPtr>& shapes)
+        {
+            if (generator_.infer_shape == nullptr) {
+                return {};
+            }
+            return generator_.infer_shape(node, shapes);
+        }
+        static std::vector<DevMemValueHolderPtr> AllocOutputMemory(
+            TensorPlacement placement, const ge::NodePtr& node, const std::vector<ValueHolderPtr>& output_sizes,
+            LoweringGlobalData& global_data)
+        {
+            if (generator_.alloc_output_memory == nullptr) {
+                return {};
+            }
+            return generator_.alloc_output_memory(placement, node, output_sizes, global_data);
+        }
+        static std::vector<ValueHolderPtr>
+        CalcTensorSize(const ge::NodePtr& node, const std::vector<ValueHolderPtr>& output_shapes)
+        {
+            std::vector<ValueHolderPtr> holders;
+            size_t outputSize = output_shapes.size();
+            ValueHolderPtr outputHolder;
+            for (size_t i = 0; i < outputSize; i++) {
+                holders.push_back(outputHolder);
+            }
+            return holders;
+        }
 
-  static void AddBuilderImplement(ExeGraphGenerator generator) {
-    generator_ = generator;
-  }
+        static void AddBuilderImplement(ExeGraphGenerator generator) { generator_ = generator; }
 
- private:
-  static ExeGraphGenerator generator_;
-};
-}
-}
-#endif  // __LLT_HCCL_STUB_GERT_H__
+    private:
+        static ExeGraphGenerator generator_;
+    };
+} // namespace bg
+} // namespace gert
+#endif // __LLT_HCCL_STUB_GERT_H__

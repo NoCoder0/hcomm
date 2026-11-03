@@ -7,6 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #ifndef HCCLV2_EXCHANGE_RDMA_BUFFER_DTO_H
 #define HCCLV2_EXCHANGE_RDMA_BUFFER_DTO_H
 #include <map>
@@ -17,29 +18,22 @@ namespace Hccl {
 
 class ExchangeRdmaBufferDto : public Serializable { // RDMA RMA Buffer / Notify  需要交换的DTO
 public:
-    ExchangeRdmaBufferDto()
-    {
-    }
+    ExchangeRdmaBufferDto() {}
 
-    ExchangeRdmaBufferDto(u64 addr, u64 size, u32 rkey, const char *memInfo)
-        : addr(addr), size(size), rkey(rkey), memInfo(memInfo)
-    {
-    }
+    ExchangeRdmaBufferDto(u64 addr, u64 size, u32 rkey, const char* memInfo)
+        : addr(addr),
+          size(size),
+          rkey(rkey),
+          memInfo(memInfo)
+    {}
 
-    void Serialize(Hccl::BinaryStream &stream) override
-    {
-        stream << addr << size << rkey << memInfo;
-    }
+    void Serialize(Hccl::BinaryStream& stream) override { stream << addr << size << rkey << memInfo; }
 
-    void Deserialize(Hccl::BinaryStream &stream) override
-    {
-        stream >> addr >> size >> rkey >> memInfo;
-    }
+    void Deserialize(Hccl::BinaryStream& stream) override { stream >> addr >> size >> rkey >> memInfo; }
 
     std::string Describe() const override
     {
-        return StringFormat("ExchangeRdmaBufferDto[addr=0x%llx, size=0x%llx, memInfo=%s]", addr, size,
-                            memInfo.c_str());
+        return StringFormat("ExchangeRdmaBufferDto[addr=0x%llx, size=0x%llx, memInfo=%s]", addr, size, memInfo.c_str());
     }
 
     u64 addr{0};

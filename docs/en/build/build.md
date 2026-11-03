@@ -12,7 +12,7 @@ The software dependencies required for compiling this project are listed below. 
 - pip3 >= 20.3.0
 - setuptools >= 45.0.0
 - wheel >= 0.34.0
-- gcc and g++: 7.3.0 to 13.3.x
+- gcc and g++: 7.3.0 to 14.2.x
 - cmake >= 3.16.0
 - pkg-config >= 0.29.1 (for compiling rdma-core)
 - patch >= 2.7.0 (for applying patch files)
@@ -23,13 +23,13 @@ The software dependencies required for compiling this project are listed below. 
 
 1. **Install the driver and firmware (runtime dependency)**
 
-    For downloading and installing the driver and firmware, refer to the "Prepare Software Package" and "Install NPU Driver and Firmware" sections in the [CANN Software Installation Guide](https://www.hiascend.com/document/redirect/CannCommunityInstWizard). The driver and firmware are runtime dependencies. If you are only compiling the source code of this project, they do not need to be installed.
+    For downloading and installing the driver and firmware, refer to the "Prepare Software Package" and "Install NPU Driver and Firmware" sections in the [CANN Software Installation](https://www.hiascend.com/document/redirect/CannCommunityInstWizard). The driver and firmware are runtime dependencies. If you are only compiling the source code of this project, they do not need to be installed.
 
 2. **Install the CANN software package**
 
     - **Scenario 1: Experience or develop based on the master version**
 
-        Click the [download link](https://ascend.devcloud.huaweicloud.com/artifactory/cann-run-mirror/software/master/), select the latest version, and download the corresponding package based on the product model and environment architecture. The installation commands are as follows. For more guidance, refer to the [CANN Software Installation Guide](https://www.hiascend.com/document/redirect/CannCommunityInstWizard).
+        Click the [download link](https://ascend.devcloud.huaweicloud.com/artifactory/cann-run-mirror/software/master/), select the latest version, and download the corresponding package based on the product model and environment architecture. The installation commands are as follows. For more guidance, refer to the [CANN Software Installation](https://www.hiascend.com/document/redirect/CannCommunityInstWizard).
 
         1. Install the CANN Toolkit development kit package.
 
@@ -52,7 +52,7 @@ The software dependencies required for compiling this project are listed below. 
             ```
 
         - \$\{cann\_version\}: Indicates the CANN software package version number.
-        - \$\{arch\}$: Indicates the CPU architecture, for example, aarch64 or x86_64.
+        - \$\{arch\}: Indicates the CPU architecture, for example, aarch64 or x86_64.
         - \$\{soc\_name\}: Indicates the NPU model name.
         - \$\{install\_path\}: Indicates the specified installation path. The CANN ops operator package must be installed in the same path as the CANN Toolkit development kit package. The default installation path for the root user is `/usr/local/Ascend`.
 
@@ -113,7 +113,19 @@ bash build.sh --pkg
 bash build.sh --pkg --full
 ```
 
-During compilation, the dependency packages listed in [Open Source Third-Party Software Dependencies](#open-source-third-party-software-dependencies) are automatically downloaded. If the compilation environment does not have network access, download the required dependency packages in a networked environment, manually upload them to the compilation environment, and specify the dependency package storage path using the `--cann_3rd_lib_path` parameter.
+During compilation, the dependency packages listed in [Open Source Third-Party Software Dependencies](#open-source-third-party-software-dependencies) are automatically downloaded. If the compilation environment does not have network access, you can run the following script in a networked environment to obtain the open source component packages. The script automatically downloads them to the specified directory:
+
+```shell
+bash scripts/download_3rd_party.sh
+# Specify the download directory
+bash scripts/download_3rd_party.sh --3rd_party third_party
+```
+
+If no parameter is specified, the packages are downloaded to the `third_party` directory in the repository root. The packages are saved directly to the download directory, and all patches are saved to its `patch` subdirectory. If a download directory is specified, set `--cann_3rd_lib_path` to the same path during compilation.
+
+The script uses SHA256 to verify the integrity of downloaded files. When the script is invoked again, cached files that pass the verification are automatically skipped without being downloaded again, while caches that fail the verification are downloaded again. If a download or verification fails, the script returns a non-zero exit code.
+
+After the download is complete, use the following command to compile:
 
 ```shell
 # Specify the dependency package storage path. Default: ./third_party
@@ -158,7 +170,7 @@ bash build.sh --ut
 
 ### On-Board Testing
 
-> **Note**
+> [!Note]NOTE
 > Before on-board testing, ensure that the driver, firmware, CANN Toolkit development kit package, and CANN ops operator package are installed.
 
 Developers can use the HCCL Test tool for collective communication function and performance testing on the board. The workflow for using the HCCL Test tool is as follows:
@@ -214,21 +226,35 @@ Developers can use the HCCL Test tool for collective communication function and 
 
 ### Open Source Third-Party Software Dependencies
 
-When compiling this project, the following third-party open source software dependencies are required:
+When compiling this project, the following third-party open source software dependencies are required (grouped by build scenario, sorted alphabetically by software name within each group):
 
-| Open Source Software | Version | Download URL |
-| ------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| json | 3.11.3 | [include.zip](https://gitcode.com/cann-src-third-party/json/releases/download/v3.11.3/include.zip) |
-| makeself | 2.5.0 | [makeself-release-2.5.0-patch1.tar.gz](https://gitcode.com/cann-src-third-party/makeself/releases/download/release-2.5.0-patch1.0/makeself-release-2.5.0-patch1.tar.gz) |
-| openssl | 3.0.9 | [openssl-openssl-3.0.9.tar.gz](https://gitcode.com/cann-src-third-party/openssl/releases/download/openssl-3.0.9/openssl-openssl-3.0.9.tar.gz) |
-| hcomm_utils | 9.0.0 (aarch64) | [cann-hcomm-utils_9.0.0_linux-aarch64.tar.gz](https://ascend-cann.obs.cn-north-4.myhuaweicloud.com/CANN/20260330_newest/cann-hcomm-utils_9.0.0_linux-aarch64.tar.gz) |
-| hcomm_utils | 9.0.0 (x86_64) | [cann-hcomm-utils_9.0.0_linux-x86_64.tar.gz](https://ascend-cann.obs.cn-north-4.myhuaweicloud.com/CANN/20260330_newest/cann-hcomm-utils_9.0.0_linux-x86_64.tar.gz) |
-| googletest | 1.14.0 | [googletest-1.14.0.tar.gz](https://gitcode.com/cann-src-third-party/googletest/releases/download/v1.14.0/googletest-1.14.0.tar.gz) |
-| boost | 1.87.0 | [boost_1_87_0.tar.gz](https://gitcode.com/cann-src-third-party/boost/releases/download/v1.87.0/boost_1_87_0.tar.gz) |
-| mockcpp | 2.7-h4 | [mockcpp-2.7.tar.gz](https://gitcode.com/cann-src-third-party/mockcpp/releases/download/v2.7-h4/mockcpp-2.7.tar.gz) |
-| mockcpp-patch | 2.7-h4 | [mockcpp-2.7_py3.patch](https://gitcode.com/cann-src-third-party/mockcpp/releases/download/v2.7-h4/mockcpp-2.7_py3.patch) |
-| abseil-cpp | 20250127.0 | [abseil-cpp-20250127.0.tar.gz](https://gitcode.com/cann-src-third-party/abseil-cpp/releases/download/20250127.0/abseil-cpp-20250127.0.tar.gz) |
-| protobuf | 25.1 | [protobuf-25.1.tar.gz](https://gitcode.com/cann-src-third-party/protobuf/releases/download/v25.1/protobuf-25.1.tar.gz) |
-| rdma-core | v42.7-h1 | [rdma-core-42.7.tar.gz](https://gitcode.com/cann-src-third-party/rdma-core/releases/download/v42.7-h1/rdma-core-42.7.tar.gz) |
-| rdma-core-patch | v42.7-h1 | [rdma-core-42.7.patch](https://gitcode.com/cann-src-third-party/rdma-core/releases/download/v42.7-h1/rdma-core-42.7.patch) |
-| cann-cmake | master-025 | [cmake-master-025.tar.gz](https://cann-3rd.obs.cn-north-4.myhuaweicloud.com/cmake/cmake-master-025.tar.gz) |
+**Required for package build (--pkg / --full)**
+
+| Open Source Software | Version         | Download URL                                                                                                                                                         |
+| -------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| cann-cmake           | master-061      | [cmake-master-061.tar.gz](https://cann-3rd.obs.cn-north-4.myhuaweicloud.com/cmake/cmake-master-061.tar.gz)                                                           |
+| hcomm_utils          | 9.2.0 (aarch64) | [cann-hcomm-utils_9.2.0_linux-aarch64.tar.gz](https://ascend-cann.obs.cn-north-4.myhuaweicloud.com/CANN/20260729_newest/cann-hcomm-utils_9.2.0_linux-aarch64.tar.gz) |
+| hcomm_utils          | 9.2.0 (x86_64)  | [cann-hcomm-utils_9.2.0_linux-x86_64.tar.gz](https://ascend-cann.obs.cn-north-4.myhuaweicloud.com/CANN/20260729_newest/cann-hcomm-utils_9.2.0_linux-x86_64.tar.gz)   |
+| json                 | 3.12.0          | [json-3.12.0.tar.gz](https://cann-3rd.obs.cn-north-4.myhuaweicloud.com/json/json-3.12.0.tar.gz)                                                                      |
+| makeself             | 2.5.0-h1        | [makeself-release-2.5.0.tar.gz](https://cann-3rd.obs.cn-north-4.myhuaweicloud.com/makeself/makeself-release-2.5.0.tar.gz)                                            |
+| makeself-patch       | 2.5.0-h1        | [makeself-2.5.0.patch](https://cann-3rd.obs.cn-north-4.myhuaweicloud.com/makeself/fix/makeself-2.5.0.patch)                                                          |
+| openssl              | 3.0.9           | [openssl-openssl-3.0.9.tar.gz](https://cann-3rd.obs.cn-north-4.myhuaweicloud.com/openssl/openssl-openssl-3.0.9.tar.gz)                                               |
+| rdma-core            | 42.7-h2         | [rdma-core-42.7.tar.gz](https://cann-3rd.obs.cn-north-4.myhuaweicloud.com/rdma-core/rdma-core-42.7.tar.gz)                                                           |
+| rdma-core-patch      | 42.7-h2         | [rdma-core-42.7.patch](https://cann-3rd.obs.cn-north-4.myhuaweicloud.com/rdma-core/rdma-core-42.7.patch)                                                             |
+
+**Additional for UT/ST testing (--ut / --st)**
+
+| Open Source Software | Version       | Download URL                                                                                                                                     |
+| -------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| abseil-cpp           | 20230802.1    | [abseil-cpp-20230802.1.tar.gz](https://cann-3rd.obs.cn-north-4.myhuaweicloud.com/abseil-cpp/abseil-cpp-20230802.1.tar.gz)                        |
+| abseil-cpp-patch     | 20230802.1-h0 | [backport-CVE-2025-0838.patch](https://gitcode.com/cann-src-third-party/abseil-cpp/releases/download/20230802.1-h0/backport-CVE-2025-0838.patch) |
+| boost                | 1.87.0        | [boost_1_87_0.tar.gz](https://cann-3rd.obs.cn-north-4.myhuaweicloud.com/boost/boost_1_87_0.tar.gz)                                               |
+| googletest           | 1.14.0        | [googletest-1.14.0.tar.gz](https://cann-3rd.obs.cn-north-4.myhuaweicloud.com/googletest/googletest-1.14.0.tar.gz)                                |
+| mockcpp              | 2.7-h6        | [mockcpp-2.7.tar.gz](https://cann-3rd.obs.cn-north-4.myhuaweicloud.com/mockcpp/mockcpp-2.7.tar.gz)                                               |
+| mockcpp-patch        | 2.7-h6        | [mockcpp-2.7-h6.patch](https://gitcode.com/cann-src-third-party/mockcpp/releases/download/v2.7-h6/mockcpp-2.7-h6.patch)                          |
+| protobuf             | 25.1          | [protobuf-25.1.tar.gz](https://cann-3rd.obs.cn-north-4.myhuaweicloud.com/protobuf/protobuf-25.1.tar.gz)                                          |
+
+> [!NOTE]NOTE
+> The download list and patch layout match [cann/cmake master-061](https://gitcode.com/cann/cmake/tree/master-061/third_party). The download URLs and SHA256 checksums are fixed in `scripts/download_3rd_party.sh`.
+> If you download the packages from other addresses, ensure that the version numbers and SHA256 checksums are consistent.
+> The rdma-core and abseil-cpp patches are saved in the `patch` directory and copied to the `patch/device` directory, for offline Host and Device builds respectively.

@@ -19,27 +19,27 @@
 
 namespace hccl {
 struct ShareCCLMem {
-    DeviceMem cclBuffer =  DeviceMem();
-    uint64_t refCount{0};  // 引用计数
+    DeviceMem cclBuffer = DeviceMem();
+    uint64_t refCount{0}; // 引用计数
 };
 
- // 进程粒度的内存管理单例
+// 进程粒度的内存管理单例
 class ShareCCLbufferMgr {
 public:
     static ShareCCLbufferMgr& GetInstance(); // 获取单例
     ~ShareCCLbufferMgr() = default;
 
-    HcclResult RecordShareCCLbuffer(const std::string &bufferName);
-    HcclResult CreateShareCCLbuffer(const std::string &bufferName, u64 bufferSize, DeviceMem &cclBuffer);
-    HcclResult FreeShareCCLbuffer(const std::string &bufferName);
-    HcclResult CheckCCLbuffConflict(const std::string &bufferName, s32 streamId);
+    HcclResult RecordShareCCLbuffer(const std::string& bufferName);
+    HcclResult CreateShareCCLbuffer(const std::string& bufferName, u64 bufferSize, DeviceMem& cclBuffer);
+    HcclResult FreeShareCCLbuffer(const std::string& bufferName);
+    HcclResult CheckCCLbuffConflict(const std::string& bufferName, s32 streamId);
 
 private:
-    HcclResult CreateDevMem(u64 size, DeviceMem &buffer);
+    HcclResult CreateDevMem(u64 size, DeviceMem& buffer);
 
-    std::mutex lock_;   // 锁保证多线程访问安全
-    u64 shareBufferSize_ = 0;    // 共享buffer大小
-    std::unordered_map<std::string, s32> streamIdMap_;  // bufferName与streamID映射关系
-    std::unordered_map<std::string, ShareCCLMem> memRecord_;  // 记录内存的次数
+    std::mutex lock_;                                        // 锁保证多线程访问安全
+    u64 shareBufferSize_ = 0;                                // 共享buffer大小
+    std::unordered_map<std::string, s32> streamIdMap_;       // bufferName与streamID映射关系
+    std::unordered_map<std::string, ShareCCLMem> memRecord_; // 记录内存的次数
 };
-}
+} // namespace hccl

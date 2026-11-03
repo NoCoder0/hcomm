@@ -7,6 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #ifndef USER_REMOTE_MEM_GETTER_H
 #define USER_REMOTE_MEM_GETTER_H
 
@@ -24,22 +25,28 @@ constexpr uint32_t MAX_BUFFER_NUM = 30000;
 namespace Hccl {
 
 template <typename T>
-struct RemoteMemCtx{
-    bool                            &cacheValid;
-    std::vector<T>                  &rmtBufferVec;
-    std::vector<CommMem>            &remoteUserMems;
-    std::vector<std::string>        &tagCopies;
-    std::vector<char*>              &tagPointers;
-    CommMem                         **remoteMem;
-    char                            ***memInfos;
-    uint32_t                        *memNum;
+struct RemoteMemCtx {
+    bool& cacheValid;
+    std::vector<T>& rmtBufferVec;
+    std::vector<CommMem>& remoteUserMems;
+    std::vector<std::string>& memInfoCopies;
+    std::vector<char*>& memInfoPointers;
+    CommMem** remoteMem;
+    char*** memInfos;
+    uint32_t* memNum;
 
-    RemoteMemCtx(bool &cacheValid, std::vector<T> &rmtBufferVec,
-        std::vector<CommMem> &remoteUserMems, std::vector<std::string> &tagCopies, std::vector<char*> &tagPointers,
-        CommMem **remoteMem, char ***memInfos, uint32_t *memNum) :
-        cacheValid(cacheValid), rmtBufferVec(rmtBufferVec), remoteUserMems(remoteUserMems),
-        tagCopies(tagCopies), tagPointers(tagPointers), remoteMem(remoteMem), memInfos(memInfos), memNum(memNum)
-    {};
+    RemoteMemCtx(
+        bool& cacheValid, std::vector<T>& rmtBufferVec, std::vector<CommMem>& remoteUserMems,
+        std::vector<std::string>& memInfoCopies, std::vector<char*>& memInfoPointers, CommMem** remoteMem,
+        char*** memInfos, uint32_t* memNum)
+        : cacheValid(cacheValid),
+          rmtBufferVec(rmtBufferVec),
+          remoteUserMems(remoteUserMems),
+          memInfoCopies(memInfoCopies),
+          memInfoPointers(memInfoPointers),
+          remoteMem(remoteMem),
+          memInfos(memInfos),
+          memNum(memNum) {};
 };
 
 inline HcclMemType CommMemTypeToHcclMemType(CommMemType type)
@@ -66,8 +73,8 @@ inline CommMemType HcclMemTypeToCommMemType(HcclMemType type)
     }
 }
 
-template<typename T>
-HcclResult GetRemoteUserMems(RemoteMemCtx<T> &remoteMemCtx)
+template <typename T>
+HcclResult GetRemoteUserMems(RemoteMemCtx<T>& remoteMemCtx)
 {
     CHK_PRT_RET(!remoteMemCtx.remoteMem, HCCL_ERROR("[GetRemoteUserMems] remoteMem is nullptr"), HCCL_E_PARA);
     CHK_PRT_RET(!remoteMemCtx.memInfos, HCCL_ERROR("[GetRemoteUserMems] memInfos is nullptr"), HCCL_E_PARA);
@@ -83,30 +90,31 @@ HcclResult GetRemoteUserMems(RemoteMemCtx<T> &remoteMemCtx)
     // 检查是否有缓存
     if (!remoteMemCtx.cacheValid) {
         remoteMemCtx.remoteUserMems.clear();
-        remoteMemCtx.tagCopies.clear();
-        remoteMemCtx.tagCopies.reserve(userMemCount);
-        remoteMemCtx.tagPointers.clear();
-        remoteMemCtx.tagPointers.reserve(userMemCount);
+        remoteMemCtx.memInfoCopies.clear();
+        remoteMemCtx.memInfoCopies.reserve(userMemCount);
+        remoteMemCtx.memInfoPointers.clear();
+        remoteMemCtx.memInfoPointers.reserve(userMemCount);
         for (uint32_t i = 0; i < userMemCount; ++i) {
-            auto &rmtBuffer = remoteMemCtx.rmtBufferVec[i];
+            auto& rmtBuffer = remoteMemCtx.rmtBufferVec[i];
             if (rmtBuffer == nullptr) {
                 return HCCL_E_PTR;
             }
             CommMem mem{};
             mem.type = HcclMemTypeToCommMemType(rmtBuffer->GetMemType());
-            mem.addr = reinterpret_cast<void *>(rmtBuffer->GetAddr());
+            mem.addr = reinterpret_cast<void*>(rmtBuffer->GetAddr());
             mem.size = rmtBuffer->GetSize();
             remoteMemCtx.remoteUserMems.push_back(mem);
-            std::string tagCopy = rmtBuffer->GetMemInfo();
-            remoteMemCtx.tagCopies.push_back(std::move(tagCopy));
-            remoteMemCtx.tagPointers.push_back(const_cast<char*>(remoteMemCtx.tagCopies.back().c_str()));
-            HCCL_INFO("[%s] Found buffer[addr:%p, size:%llu, memInfo:%s]", __func__, mem.addr, mem.size,
-                remoteMemCtx.tagCopies.back().c_str());
+            std::string memInfoCopy = rmtBuffer->GetMemInfo();
+            remoteMemCtx.memInfoCopies.push_back(std::move(memInfoCopy));
+            remoteMemCtx.memInfoPointers.push_back(&remoteMemCtx.memInfoCopies.back()[0]);
+            HCCL_INFO(
+                "[%s] Found buffer[addr:%p, size:%llu, memInfo:%s]", __func__, mem.addr, mem.size,
+                remoteMemCtx.memInfoCopies.back().c_str());
         }
         remoteMemCtx.cacheValid = true;
     }
     *(remoteMemCtx.remoteMem) = remoteMemCtx.remoteUserMems.data();
-    *(remoteMemCtx.memInfos) = remoteMemCtx.tagPointers.data();
+    *(remoteMemCtx.memInfos) = remoteMemCtx.memInfoPointers.data();
     *(remoteMemCtx.memNum) = userMemCount;
     return HCCL_SUCCESS;
 }

@@ -12,6 +12,7 @@
 #define TC_RA_HOST_H
 extern "C" void TcHost();
 extern "C" void TcIfaddr();
+extern "C" void TcRaRdevInitCheckIp();
 extern "C" void TcRaRecvWrlist(void);
 extern "C" void TcHostRaSendWrlistExt();
 extern "C" void TcHostRaSendNormalWrlist();
@@ -31,6 +32,11 @@ extern "C" void TcRaSocketAcceptCreditAdd(void);
 extern "C" void TcRaRemapMr(void);
 extern "C" void TcRaRegisterMr(void);
 extern "C" void TcRaGetLbMax(void);
+extern "C" void TcRaRdevGetAttr(void);
 extern "C" void TcRaSetQpLbValue(void);
 extern "C" void TcRaGetQpLbValue(void);
+extern "C" void TcRaGetQpHyperFeature(void);
+extern "C" void TcRaSetDebugConfig(void);
+extern "C" void TcHccpOpCtxQpCreateSync(void);
+extern "C" void TcHccpOpCodeMirrorSync(void);
 #endif

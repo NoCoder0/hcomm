@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef HCCLV2_CCU_CONTEXT_REDUCE_SCATTER_MESH_1D_2Die_H_
 #define HCCLV2_CCU_CONTEXT_REDUCE_SCATTER_MESH_1D_2Die_H_
 
@@ -22,12 +21,13 @@ namespace Hccl {
 
 class CcuContextReduceScatterMesh1D2Die : public CcuContextAlgBase {
 public:
-    CcuContextReduceScatterMesh1D2Die(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                              const CcuTransportGroup &group);
+    CcuContextReduceScatterMesh1D2Die(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
     ~CcuContextReduceScatterMesh1D2Die() override {}
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
+
 private:
     void InitResources();
     void LoadArgs();
@@ -36,11 +36,10 @@ private:
     void MissionSync(uint32_t signalIndex);
     void RmtReduce();
     std::string GetLoopBlockTag(std::string loopType, int32_t index) const;
-    void CreateReduceLoop(uint32_t size, DataType dataType, DataType outputDataType,
-        ReduceOp opType);
-    void ReduceLoopGroup(CcuRep::Memory &outDstOrg, std::vector<CcuRep::Memory> &srcOrg,
-        GroupOpSize goSize, DataType dataType, DataType outputDataType,
-        ReduceOp opType);
+    void CreateReduceLoop(uint32_t size, DataType dataType, DataType outputDataType, ReduceOp opType);
+    void ReduceLoopGroup(
+        CcuRep::Memory& outDstOrg, std::vector<CcuRep::Memory>& srcOrg, GroupOpSize goSize, DataType dataType,
+        DataType outputDataType, ReduceOp opType);
     void DoLocalReduce();
 
 private:
@@ -55,7 +54,8 @@ private:
     DataType dataType_;
     DataType outputDataType_;
 
-    std::string ctxName_ = "";;
+    std::string ctxName_ = "";
+    ;
 
     uint32_t missionSyncMybit_{0};
     uint32_t missionSyncWaitBit_{0};

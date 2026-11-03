@@ -1,25 +1,24 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "scatter_ring.h"
 #include "alg_template_register.h"
 
 namespace hccl {
 ScatterRing::ScatterRing(const HcclDispatcher dispatcher)
-    : AlgTemplateBase(dispatcher), interRank_(0), interRankSize_(0)
-{
-}
+    : AlgTemplateBase(dispatcher),
+      interRank_(0),
+      interRankSize_(0)
+{}
 
-ScatterRing::~ScatterRing()
-{
-}
+ScatterRing::~ScatterRing() {}
 
 HcclResult ScatterRing::RunScatterOnRootRank()
 {
@@ -35,12 +34,17 @@ HcclResult ScatterRing::RunScatterOnRootRank()
         src = inputMem_.range(scatterOffset, scatterResult);
         dst = outputMem_.range(scatterOffset, scatterResult);
 
-        HCCL_DEBUG("rootrank[%u] copy input[%p] to output[%p] scatter_offset[%llu] copysize[%llu]", \
-                   interRank_, src.ptr(), dst.ptr(), scatterOffset, scatterResult);
+        HCCL_DEBUG(
+            "rootrank[%u] copy input[%p] to output[%p] scatter_offset[%llu] copysize[%llu]", interRank_, src.ptr(),
+            dst.ptr(), scatterOffset, scatterResult);
         ret = HcclD2DMemcpyAsync(dispatcher_, outputMem_, inputMem_, stream_);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[Run][ScatterOnRootRank]root rank[%u] memcpy async from input[%p] "\
-            "failed to output[%p]", interRank_, inputMem_.ptr(), outputMem_.ptr()), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[Run][ScatterOnRootRank]root rank[%u] memcpy async from input[%p] "
+                "failed to output[%p]",
+                interRank_, inputMem_.ptr(), outputMem_.ptr()),
+            ret);
     }
 
     // 数据向下一个rank发送，依次发送后继所有rank的数据
@@ -54,10 +58,11 @@ HcclResult ScatterRing::RunScatterOnRootRank()
         CHK_RET(linkRight_->RxAck(stream_));
 
         // 向root rank的后一rank发送
-        HCCL_DEBUG(" root rank[%u] sendto dstrank[%u] from srcmem offset[%llu] size[%llu]", \
-                   interRank_, preRank, scatterOffset, scatterResult);
-        CHK_RET(linkRight_->TxAsync(UserMemType::OUTPUT_MEM, scatterOffset + baseOffset_, src.ptr(),
-            scatterResult, stream_));
+        HCCL_DEBUG(
+            " root rank[%u] sendto dstrank[%u] from srcmem offset[%llu] size[%llu]", interRank_, preRank, scatterOffset,
+            scatterResult);
+        CHK_RET(linkRight_->TxAsync(
+            UserMemType::OUTPUT_MEM, scatterOffset + baseOffset_, src.ptr(), scatterResult, stream_));
 
         HCCL_DEBUG("root rank[%u] will rx_ack", interRank_);
         ret = linkRight_->TxWaitDone(stream_);
@@ -75,12 +80,11 @@ HcclResult ScatterRing::RunScatterOnEndRank()
     CHK_RET(linkLeft_->TxAck(stream_));
 
     dst = outputMem_.range(scatterOffset, scatterResult);
-    HCCL_DEBUG("last rank[%u] rx data ouputoffset[%llu] size[%llu]", \
-        interRank_, scatterOffset, scatterResult);
-    HcclResult ret = linkLeft_->RxAsync(UserMemType::OUTPUT_MEM, scatterOffset + baseOffset_, dst.ptr(),
-        scatterResult, stream_);
-    CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][ScatterOnEndRank]last rank[%u] rx sync failed", \
-        interRank_), ret);
+    HCCL_DEBUG("last rank[%u] rx data outputoffset[%llu] size[%llu]", interRank_, scatterOffset, scatterResult);
+    HcclResult ret
+        = linkLeft_->RxAsync(UserMemType::OUTPUT_MEM, scatterOffset + baseOffset_, dst.ptr(), scatterResult, stream_);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS, HCCL_ERROR("[Run][ScatterOnEndRank]last rank[%u] rx sync failed", interRank_), ret);
     ret = linkLeft_->RxWaitDone(stream_);
     CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][ScatterOnRootRank]RxWaitDone failed"), ret);
     return HCCL_SUCCESS;
@@ -94,8 +98,8 @@ HcclResult ScatterRing::RunScatterOnMidRank()
     u32 round = (root_ + interRankSize_ - interRank_) % interRankSize_;
     HCCL_DEBUG("rank:[%u] will receive %u rounds data", interRank_, round);
 
-    UserMemType memType = (interRank_ == ((root_ + 1) % interRankSize_)) ?
-        UserMemType::INPUT_MEM : UserMemType::OUTPUT_MEM;
+    UserMemType memType
+        = (interRank_ == ((root_ + 1) % interRankSize_)) ? UserMemType::INPUT_MEM : UserMemType::OUTPUT_MEM;
 
     HcclResult ret = HCCL_SUCCESS;
     // 需要接收的和发送的轮数，包含接收自己的数据
@@ -114,27 +118,33 @@ HcclResult ScatterRing::RunScatterOnMidRank()
         if (i != 1) {
             // 给前一节点发送同步，以便前一rank进行下一轮的操作
             ret = linkLeft_->TxAck(stream_);
-            CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][ScatterOnMidRank]rank[%u] round[%u] tx ack  failed",
-                interRank_, i), ret);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR("[Run][ScatterOnMidRank]rank[%u] round[%u] tx ack failed", interRank_, i), ret);
             // 从后一rank接收同步信号
             ret = linkRight_->RxAck(stream_);
-            CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][ScatterOnMidRank]rank[%u]round[%u] rx ack failed",
-                interRank_, i), ret);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR("[Run][ScatterOnMidRank]rank[%u]round[%u] rx ack failed", interRank_, i), ret);
             // 向后一rank发送数据
-            HCCL_DEBUG("rank[%u] round[%u] tx async offset[%llu] size[%llu]", interRank_, \
-                i, scatterLastOffset, scatterLastResult);
-            ret = linkRight_->TxAsync(UserMemType::OUTPUT_MEM, scatterLastOffset + baseOffset_, dstLast.ptr(),
-                scatterLastResult, stream_);
-            CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][ScatterOnMidRank]rank[%u] round[%u] tx async failed",
-                interRank_, i), ret);
+            HCCL_DEBUG(
+                "rank[%u] round[%u] tx async offset[%llu] size[%llu]", interRank_, i, scatterLastOffset,
+                scatterLastResult);
+            ret = linkRight_->TxAsync(
+                UserMemType::OUTPUT_MEM, scatterLastOffset + baseOffset_, dstLast.ptr(), scatterLastResult, stream_);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR("[Run][ScatterOnMidRank]rank[%u] round[%u] tx async failed", interRank_, i), ret);
         } else { // 最后一轮接收数据，拷贝到自己的outputmem
             // 给前一节点发送同步，以便前一rank进行下一轮的操作
             ret = linkLeft_->TxAck(stream_);
-            CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][ScatterOnMidRank]rank[%u] round[%u]  tx ack  failed",
-                interRank_, i), ret);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR("[Run][ScatterOnMidRank]rank[%u] round[%u] tx ack failed", interRank_, i), ret);
         }
-        HCCL_DEBUG("rank[%u] round[%u] rcv with rank[%u]'s offset[%llu] size[%llu]", \
-            interRank_, i, dataRank, scatterOffset, scatterResult);
+        HCCL_DEBUG(
+            "rank[%u] round[%u] rcv with rank[%u]'s offset[%llu] size[%llu]", interRank_, i, dataRank, scatterOffset,
+            scatterResult);
         CHK_RET(linkLeft_->RxAsync(memType, scatterOffset + baseOffset_, dst.ptr(), scatterResult, stream_));
         ret = linkRight_->TxWaitDone(stream_);
         CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][ScatterOnMidRank]TxWaitDone failed"), ret);
@@ -157,8 +167,8 @@ void ScatterRing::PrepareSlicesData(const u32 unitSize, const u64 totalCount, co
 }
 
 // scatter的入口函数
-HcclResult ScatterRing::RunAsync(const u32 rank, const u32 rankSize,
-    const std::vector<std::shared_ptr<Transport> > &links)
+HcclResult
+ScatterRing::RunAsync(const u32 rank, const u32 rankSize, const std::vector<std::shared_ptr<Transport>>& links)
 {
     CHK_SMART_PTR_NULL(dispatcher_);
     CHK_PTR_NULL(stream_.ptr());
@@ -170,8 +180,9 @@ HcclResult ScatterRing::RunAsync(const u32 rank, const u32 rankSize,
     interRank_ = rank;
     interRankSize_ = rankSize;
 
-    HCCL_INFO("ScatterRing run: rank[%u] totalrank[%u] count[%llu] input[%p] output[%p]",
-              interRank_, interRankSize_, count_, inputMem_.ptr(), outputMem_.ptr());
+    HCCL_INFO(
+        "ScatterRing run: rank[%u] totalrank[%u] count[%llu] input[%p] output[%p]", interRank_, interRankSize_, count_,
+        inputMem_.ptr(), outputMem_.ptr());
 
     // ranksize为1时，只有当input!=output 时候进行拷贝
     if (interRankSize_ == 1) {
@@ -182,10 +193,10 @@ HcclResult ScatterRing::RunAsync(const u32 rank, const u32 rankSize,
     }
 
     u32 unitSize = DataUnitSize(dataType_);
-    CHK_PRT_RET(unitSize == 0, HCCL_ERROR("[ScatterRing][RunAsync]rank[%u] unit data size is zero", rank),
-        HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        unitSize == 0, HCCL_ERROR("[ScatterRing][RunAsync]rank[%u] unit data size is zero", rank), HCCL_E_INTERNAL);
 
-    // 带入vecotr为空，计算每个rank的结果偏移和大小
+    // 带入vector为空，计算每个rank的结果偏移和大小
     if (slices_.size() == 0) {
         PrepareSlicesData(unitSize, count_, interRankSize_);
     }
@@ -233,7 +244,7 @@ HcclResult ScatterRing::RunAsync(const u32 rank, const u32 rankSize,
     return HCCL_SUCCESS;
 }
 
-HcclResult ScatterRing::RunScatterChunk(const u32 rank, const u32 rankSize, const std::vector<Slice> &outputSlices)
+HcclResult ScatterRing::RunScatterChunk(const u32 rank, const u32 rankSize, const std::vector<Slice>& outputSlices)
 {
     HcclResult ret;
     DeviceMem dst;
@@ -243,9 +254,10 @@ HcclResult ScatterRing::RunScatterChunk(const u32 rank, const u32 rankSize, cons
         CHK_RET(HeadScatterChunk(rank, rankSize, outputSlices));
         for (u32 midRankIdx = 1; midRankIdx < sendSliceLen - 1; midRankIdx++) {
             ret = MidScatterChunk(rank, rankSize, midRankIdx, outputSlices);
-            CHK_PRT_RET(ret != HCCL_SUCCESS,
-                HCCL_ERROR("[Run][ScatterChunk]rank[%u] run mid[%u] ReduceScatter chunk failed",
-                rank, midRankIdx), HCCL_E_INTERNAL);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR("[Run][ScatterChunk]rank[%u] run mid[%u] ReduceScatter chunk failed", rank, midRankIdx),
+                HCCL_E_INTERNAL);
         }
         CHK_RET(TailScatterChunk(rank, rankSize, sendSliceLen - 1, outputSlices));
     } else if (rankSliceLists_[(rank + rankSize - 1) % rankSize].size() != 0) {
@@ -259,17 +271,18 @@ HcclResult ScatterRing::RunScatterChunk(const u32 rank, const u32 rankSize, cons
             dst = outputMem_.range(rxScatterOffset, rxScatterResult);
             CHK_RET(linkLeft_->TxAck(stream_));
 
-            ret = linkLeft_->RxAsync(UserMemType::OUTPUT_MEM, rxScatterOffset + baseOffset_, dst.ptr(),
-                rxScatterResult, stream_);
-            CHK_PRT_RET(ret != HCCL_SUCCESS,
-                HCCL_ERROR("[Run][ScatterChunk]rank[%u] Left Link rx outputSlices[%u] Failed",
-                rank, rxSliceIndex), ret);
+            ret = linkLeft_->RxAsync(
+                UserMemType::OUTPUT_MEM, rxScatterOffset + baseOffset_, dst.ptr(), rxScatterResult, stream_);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR("[Run][ScatterChunk]rank[%u] Left Link rx outputSlices[%u] Failed", rank, rxSliceIndex),
+                ret);
         }
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult ScatterRing::HeadScatterChunk(u32 rank, u32 rankSize, const std::vector<Slice> &outputSlices)
+HcclResult ScatterRing::HeadScatterChunk(u32 rank, u32 rankSize, const std::vector<Slice>& outputSlices)
 {
     HcclResult ret;
     DeviceMem dst;
@@ -283,10 +296,15 @@ HcclResult ScatterRing::HeadScatterChunk(u32 rank, u32 rankSize, const std::vect
     if (iterSlice != preRankSlices.end()) {
         CHK_RET(linkLeft_->TxAck(stream_));
 
-        ret = linkLeft_->RxAsync(UserMemType::OUTPUT_MEM, scatterOffset + baseOffset_, dst.ptr(),
-            scatterResult, stream_);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[ScatterRing][HeadScatterChunk]rank[%u] Left Link rx "\
-            "outputSlices[%u] Failed", rank, rxSliceIndex), ret);
+        ret = linkLeft_->RxAsync(
+            UserMemType::OUTPUT_MEM, scatterOffset + baseOffset_, dst.ptr(), scatterResult, stream_);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[ScatterRing][HeadScatterChunk]rank[%u] Left Link rx "
+                "outputSlices[%u] Failed",
+                rank, rxSliceIndex),
+            ret);
     }
     iterSlice = std::find(preRankSlices.begin(), preRankSlices.end(), rankSliceLists_[rank][1]);
     if (iterSlice != preRankSlices.end()) {
@@ -294,15 +312,20 @@ HcclResult ScatterRing::HeadScatterChunk(u32 rank, u32 rankSize, const std::vect
     } else {
         CHK_RET(linkRight_->RxAck(stream_));
 
-        ret = linkRight_->TxAsync(UserMemType::OUTPUT_MEM, scatterOffset + baseOffset_, dst.ptr(),
-            scatterResult, stream_);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[ScatterRing][HeadScatterChunk]rank[%u] Right Link tx "\
-            "outputSlices[%u] Failed", rank, txSliceIndex), ret);
+        ret = linkRight_->TxAsync(
+            UserMemType::OUTPUT_MEM, scatterOffset + baseOffset_, dst.ptr(), scatterResult, stream_);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[ScatterRing][HeadScatterChunk]rank[%u] Right Link tx "
+                "outputSlices[%u] Failed",
+                rank, txSliceIndex),
+            ret);
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult ScatterRing::MidScatterChunk(u32 rank, u32 rankSize, u32 sliceIdx, const std::vector<Slice> &outputSlices)
+HcclResult ScatterRing::MidScatterChunk(u32 rank, u32 rankSize, u32 sliceIdx, const std::vector<Slice>& outputSlices)
 {
     (void)outputSlices;
     HcclResult ret;
@@ -322,28 +345,43 @@ HcclResult ScatterRing::MidScatterChunk(u32 rank, u32 rankSize, u32 sliceIdx, co
         dst = outputMem_.range(txScatterOffset, txScatterResult);
         CHK_RET(linkRight_->RxAck(stream_));
 
-        ret = linkRight_->TxAsync(UserMemType::OUTPUT_MEM, txScatterOffset + baseOffset_, dst.ptr(),
-            txScatterResult, stream_);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[ScatterRing][MidScatterChunk]rank[%u] Right Link tx "\
-            "outputSlices[%u] Failed", rank, txSliceIndex), ret);
+        ret = linkRight_->TxAsync(
+            UserMemType::OUTPUT_MEM, txScatterOffset + baseOffset_, dst.ptr(), txScatterResult, stream_);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[ScatterRing][MidScatterChunk]rank[%u] Right Link tx "
+                "outputSlices[%u] Failed",
+                rank, txSliceIndex),
+            ret);
         dst = outputMem_.range(rxScatterOffset, rxScatterResult);
-        ret = linkLeft_->RxAsync(UserMemType::OUTPUT_MEM, rxScatterOffset + baseOffset_, dst.ptr(),
-            rxScatterResult, stream_);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[ScatterRing][MidScatterChunk]rank[%u] Left Link rx "\
-            "outputSlices[%u] Failed", rank, rxSliceIndex), ret);
+        ret = linkLeft_->RxAsync(
+            UserMemType::OUTPUT_MEM, rxScatterOffset + baseOffset_, dst.ptr(), rxScatterResult, stream_);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[ScatterRing][MidScatterChunk]rank[%u] Left Link rx "
+                "outputSlices[%u] Failed",
+                rank, rxSliceIndex),
+            ret);
     } else {
         dst = outputMem_.range(txScatterOffset, txScatterResult);
         CHK_RET(linkRight_->RxAck(stream_));
 
-        ret = linkRight_->TxAsync(UserMemType::OUTPUT_MEM, txScatterOffset + baseOffset_, dst.ptr(),
-            txScatterResult, stream_);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[ScatterRing][MidScatterChunk]rank[%u] Right Link tx "\
-            "outputSlices[%u] Failed", rank, txSliceIndex), ret);
+        ret = linkRight_->TxAsync(
+            UserMemType::OUTPUT_MEM, txScatterOffset + baseOffset_, dst.ptr(), txScatterResult, stream_);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[ScatterRing][MidScatterChunk]rank[%u] Right Link tx "
+                "outputSlices[%u] Failed",
+                rank, txSliceIndex),
+            ret);
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult ScatterRing::TailScatterChunk(u32 rank, u32 rankSize, u32 sliceIdx, const std::vector<Slice> &outputSlices)
+HcclResult ScatterRing::TailScatterChunk(u32 rank, u32 rankSize, u32 sliceIdx, const std::vector<Slice>& outputSlices)
 {
     (void)rankSize;
     (void)outputSlices;
@@ -365,15 +403,25 @@ HcclResult ScatterRing::TailScatterChunk(u32 rank, u32 rankSize, u32 sliceIdx, c
         dst = outputMem_.range(txScatterOffset, txScatterResult);
         CHK_RET(linkRight_->RxAck(stream_));
 
-        ret = linkRight_->TxAsync(UserMemType::OUTPUT_MEM, txScatterOffset + baseOffset_, dst.ptr(),
-            txScatterResult, stream_);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[ScatterRing][TailScatterChunk]rank[%u] Right Link tx "\
-            "outputSlices[%u] Failed", rank, txSliceIndex), ret);
+        ret = linkRight_->TxAsync(
+            UserMemType::OUTPUT_MEM, txScatterOffset + baseOffset_, dst.ptr(), txScatterResult, stream_);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[ScatterRing][TailScatterChunk]rank[%u] Right Link tx "
+                "outputSlices[%u] Failed",
+                rank, txSliceIndex),
+            ret);
         dst = outputMem_.range(rxScatterOffset, rxScatterResult);
-        ret = linkLeft_->RxAsync(UserMemType::OUTPUT_MEM, rxScatterOffset + baseOffset_, dst.ptr(),
-            rxScatterResult, stream_);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[ScatterRing][TailScatterChunk]rank[%u] Left Link rx "\
-            "outputSlices[%u] Failed", rank, rxSliceIndex), ret);
+        ret = linkLeft_->RxAsync(
+            UserMemType::OUTPUT_MEM, rxScatterOffset + baseOffset_, dst.ptr(), rxScatterResult, stream_);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[ScatterRing][TailScatterChunk]rank[%u] Left Link rx "
+                "outputSlices[%u] Failed",
+                rank, rxSliceIndex),
+            ret);
 
         for (u32 sliceIdx = 1; sliceIdx < chunkSize; sliceIdx++) {
             rxSliceIndex = chunkStart + sliceIdx;
@@ -382,19 +430,29 @@ HcclResult ScatterRing::TailScatterChunk(u32 rank, u32 rankSize, u32 sliceIdx, c
             dst = outputMem_.range(rxScatterOffset, rxScatterResult);
             CHK_RET(linkLeft_->TxAck(stream_));
 
-            ret = linkLeft_->RxAsync(UserMemType::OUTPUT_MEM, rxScatterOffset + baseOffset_, dst.ptr(),
-                rxScatterResult, stream_);
-            CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[ScatterRing][TailScatterChunk]rank[%u] Left Link rx "\
-                "outputSlices[%u] Failed", rank, rxSliceIndex), ret);
+            ret = linkLeft_->RxAsync(
+                UserMemType::OUTPUT_MEM, rxScatterOffset + baseOffset_, dst.ptr(), rxScatterResult, stream_);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR(
+                    "[ScatterRing][TailScatterChunk]rank[%u] Left Link rx "
+                    "outputSlices[%u] Failed",
+                    rank, rxSliceIndex),
+                ret);
         }
     } else {
         dst = outputMem_.range(txScatterOffset, txScatterResult);
         CHK_RET(linkRight_->RxAck(stream_));
 
-        ret = linkRight_->TxAsync(UserMemType::OUTPUT_MEM, txScatterOffset + baseOffset_, dst.ptr(),
-            txScatterResult, stream_);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[ScatterRing][TailScatterChunk]rank[%u] Right Link tx "\
-            "outputSlices[%u] Failed", rank, txSliceIndex), ret);
+        ret = linkRight_->TxAsync(
+            UserMemType::OUTPUT_MEM, txScatterOffset + baseOffset_, dst.ptr(), txScatterResult, stream_);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[ScatterRing][TailScatterChunk]rank[%u] Right Link tx "
+                "outputSlices[%u] Failed",
+                rank, txSliceIndex),
+            ret);
     }
     return HCCL_SUCCESS;
 }
@@ -403,14 +461,14 @@ HcclResult ScatterRing::ScatterSlicesPrep(u32 rankSize, u32 nicSize)
 {
     u32 chunkSize = HCCL_NIC_MAX_NUM / nicSize;
     for (u32 rankIdx = 0; rankIdx < rankSize; rankIdx++) {
-        std::vector<u32> sliceList;    // 单个rank上的发送slice编号
-        for (u32 nicDis = 1; nicDis <= rankSize; nicDis++) {    // 递减从root遍历至当前rank的位置
+        std::vector<u32> sliceList;                          // 单个rank上的发送slice编号
+        for (u32 nicDis = 1; nicDis <= rankSize; nicDis++) { // 递减从root遍历至当前rank的位置
             u32 nicIdx = (root_ + rankSize - nicDis) % rankSize;
             if (rankIdx == nicIdx) {
                 break;
             }
             std::vector<u32>::iterator iterNic = std::find(nicRankList_.begin(), nicRankList_.end(), nicIdx);
-            if (iterNic != nicRankList_.end()) {    // 当前rank为网口所在位置，将网口对应的chunksize份silce放入sliceList
+            if (iterNic != nicRankList_.end()) { // 当前rank为网口所在位置，将网口对应的chunksize份slice放入sliceList
                 u32 nicListIdx = distance(nicRankList_.begin(), iterNic);
                 for (u32 chunkIdx = 0; chunkIdx < chunkSize; chunkIdx++) {
                     sliceList.push_back(chunkSize * nicListIdx + chunkIdx);
@@ -421,8 +479,8 @@ HcclResult ScatterRing::ScatterSlicesPrep(u32 rankSize, u32 nicSize)
     }
     return HCCL_SUCCESS;
 }
-HcclResult ScatterRing::GetNslbAdjInfo(const u32 rank, const u32 rankSize,
-                                       const std::vector<LINK> &links, AdjInfo& nslbAdjInfo)
+HcclResult
+ScatterRing::GetNslbAdjInfo(const u32 rank, const u32 rankSize, const std::vector<LINK>& links, AdjInfo& nslbAdjInfo)
 {
     if (rankSize == 1) {
         return HCCL_E_NOT_SUPPORT;
@@ -430,7 +488,7 @@ HcclResult ScatterRing::GetNslbAdjInfo(const u32 rank, const u32 rankSize,
     u32 ringNextRank = (rank + 1) % rankSize;
     LINK nslbNext = links[ringNextRank];
 
-    NslbDpAdjInfo adjInfoStep = {0};
+    NslbDpAdjInfo adjInfoStep = {};
     nslbAdjInfo.dstRankNum = 1;
     adjInfoStep.dstLocalRankId = nslbNext->GetRemoteRank();
     adjInfoStep.phaseId = 1;
@@ -441,4 +499,4 @@ HcclResult ScatterRing::GetNslbAdjInfo(const u32 rank, const u32 rankSize,
 }
 
 REGISTER_TEMPLATE(TemplateType::TEMPLATE_SCATTER_RING, ScatterRing);
-}  // namespace hccl
+} // namespace hccl

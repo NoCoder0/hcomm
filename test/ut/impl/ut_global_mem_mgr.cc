@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include <vector>
 
@@ -24,25 +24,12 @@
 using namespace std;
 using namespace hccl;
 
-class GlobalMemMgrTest : public testing::Test
-{
+class GlobalMemMgrTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "\033[36m--GlobalMemMgrTest SetUP--\033[0m" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "\033[36m--GlobalMemMgrTest TearDown--\033[0m" << std::endl;
-    }
-    virtual void SetUp()
-    {
-        std::cout << "A Test SetUP" << std::endl;
-    }
-    virtual void TearDown()
-    {
-        std::cout << "A Test TearDown" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "\033[36m--GlobalMemMgrTest SetUP--\033[0m" << std::endl; }
+    static void TearDownTestCase() { std::cout << "\033[36m--GlobalMemMgrTest TearDown--\033[0m" << std::endl; }
+    virtual void SetUp() { std::cout << "A Test SetUP" << std::endl; }
+    virtual void TearDown() { std::cout << "A Test TearDown" << std::endl; }
 };
 
 TEST_F(GlobalMemMgrTest, ut_global_mem_mgr_reg)
@@ -95,7 +82,6 @@ TEST_F(GlobalMemMgrTest, ut_global_mem_mgr_dereg)
     GlobalMemRegMgr mgr;
     HcclResult ret = HCCL_SUCCESS;
 
-
     auto buffer1 = std::vector<int8_t>(10);
     HcclMem mem1{HCCL_MEM_TYPE_DEVICE, buffer1.data(), buffer1.size()};
 
@@ -105,7 +91,7 @@ TEST_F(GlobalMemMgrTest, ut_global_mem_mgr_dereg)
         ret = mgr.DeReg(&record);
         EXPECT_EQ(ret, HCCL_E_NOT_FOUND);
     }
-    
+
     void* memHandle1 = nullptr;
     ret = mgr.Reg(&mem1, &memHandle1);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -132,44 +118,44 @@ TEST_F(GlobalMemMgrTest, ut_global_mem_mgr_dereg)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
 
-HcclResult hrtGetPairDevicePhyIdForTest(u32 localDevPhyId, u32 &pairDevPhyId)
+HcclResult hrtGetPairDevicePhyIdForTest(u32 localDevPhyId, u32& pairDevPhyId)
 {
     pairDevPhyId = 1;
     return HCCL_SUCCESS;
 }
 
-HcclResult hrtGetDeviceTypeForTest(DevType &devType)
+HcclResult hrtGetDeviceTypeForTest(DevType& devType)
 {
     devType = DevType::DEV_TYPE_910_93;
     return HCCL_SUCCESS;
 }
 
-HcclResult hrtGetDeviceIndexByPhyIdForTest(u32 devicePhyId, u32 &deviceLogicId)
+HcclResult hrtGetDeviceIndexByPhyIdForTest(u32 devicePhyId, u32& deviceLogicId)
 {
     deviceLogicId = 1;
     return HCCL_SUCCESS;
 }
 
-HcclResult hrtRaGetDeviceAllNicIPForTest(std::vector<std::vector<HcclIpAddress>> &ipAddr)
+HcclResult hrtRaGetDeviceAllNicIPForTest(std::vector<std::vector<HcclIpAddress>>& ipAddr)
 {
     ipAddr.clear();
-    HcclIpAddress testIp1{ "10.10.10.11"};
+    HcclIpAddress testIp1{"10.10.10.11"};
     std::vector<HcclIpAddress> vec1;
     vec1.push_back(testIp1);
-    HcclIpAddress testIp2{ "10.10.10.12"};
+    HcclIpAddress testIp2{"10.10.10.12"};
     std::vector<HcclIpAddress> vec2;
     vec2.push_back(testIp2);
     ipAddr.push_back(vec1);
     ipAddr.push_back(vec2);
     GTEST_LOG_(INFO) << "lyy ipAddr.size: " << ipAddr.size();
-    
+
     return HCCL_SUCCESS;
 }
 
-HcclResult hrtRaGetDeviceIPForTest(u32 devicePhyId, std::vector<hccl::HcclIpAddress> &ipAddr)
+HcclResult hrtRaGetDeviceIPForTest(u32 devicePhyId, std::vector<hccl::HcclIpAddress>& ipAddr)
 {
     ipAddr.clear();
-    hccl::HcclIpAddress testIp1{ "10.10.10.11"};
+    hccl::HcclIpAddress testIp1{"10.10.10.11"};
     ipAddr.push_back(testIp1);
     return HCCL_SUCCESS;
 }
@@ -193,7 +179,7 @@ TEST_F(GlobalMemMgrTest, ut_global_mem_mgr_backupInit)
     HcclIpAddress remoteIp2{"10.10.10.12"};
     u32 port = 16667;
 
-    GlobalMemRegMgr mgr; 
+    GlobalMemRegMgr mgr;
     HcclResult ret = mgr.GetNetDevCtx(NicType::DEVICE_NIC_TYPE, remoteIp1, port, ctx);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     GlobalMockObject::verify();

@@ -1,28 +1,12 @@
- /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- * 
- * The code snippet comes from Cann project.
- * 
- * Copyright 2012-2020 Huawei Technologies Co., Ltd
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef __ASCEND_HAL_ERROR_H__
 #define __ASCEND_HAL_ERROR_H__
@@ -42,25 +26,25 @@ typedef enum tagDrvError {
     DRV_ERROR_INNER_ERR = 7,           /**< driver inside error */
     DRV_ERROR_PARA_ERROR = 8,          /**< driver wrong parameter */
     DRV_ERROR_UNINIT = 9,              /**< driver uninit */
-    DRV_ERROR_REPEATED_INIT = 10,          /**< driver repeated init */
-    DRV_ERROR_NOT_EXIST = 11,        /**< there is resource*/
+    DRV_ERROR_REPEATED_INIT = 10,      /**< driver repeated init */
+    DRV_ERROR_NOT_EXIST = 11,          /**< there is resource*/
     DRV_ERROR_REPEATED_USERD = 12,
-    DRV_ERROR_BUSY = 13,                /**< task already running */
-    DRV_ERROR_NO_RESOURCES = 14,        /**< driver short of resources */
+    DRV_ERROR_BUSY = 13,         /**< task already running */
+    DRV_ERROR_NO_RESOURCES = 14, /**< driver short of resources */
     DRV_ERROR_OUT_OF_CMD_SLOT = 15,
-    DRV_ERROR_WAIT_TIMEOUT = 16,       /**< driver wait timeout*/
-    DRV_ERROR_IOCRL_FAIL = 17,         /**< driver ioctl fail*/
+    DRV_ERROR_WAIT_TIMEOUT = 16, /**< driver wait timeout*/
+    DRV_ERROR_IOCRL_FAIL = 17,   /**< driver ioctl fail*/
 
-    DRV_ERROR_SOCKET_CREATE = 18,      /**< driver create socket error*/
-    DRV_ERROR_SOCKET_CONNECT = 19,     /**< driver connect socket error*/
-    DRV_ERROR_SOCKET_BIND = 20,        /**< driver bind socket error*/
-    DRV_ERROR_SOCKET_LISTEN = 21,      /**< driver listen socket error*/
-    DRV_ERROR_SOCKET_ACCEPT = 22,      /**< driver accept socket error*/
-    DRV_ERROR_CLIENT_BUSY = 23,        /**< driver client busy error*/
-    DRV_ERROR_SOCKET_SET = 24,         /**< driver socket set error*/
-    DRV_ERROR_SOCKET_CLOSE = 25,       /**< driver socket close error*/
-    DRV_ERROR_RECV_MESG = 26,          /**< driver recv message error*/
-    DRV_ERROR_SEND_MESG = 27,          /**< driver send message error*/
+    DRV_ERROR_SOCKET_CREATE = 18,  /**< driver create socket error*/
+    DRV_ERROR_SOCKET_CONNECT = 19, /**< driver connect socket error*/
+    DRV_ERROR_SOCKET_BIND = 20,    /**< driver bind socket error*/
+    DRV_ERROR_SOCKET_LISTEN = 21,  /**< driver listen socket error*/
+    DRV_ERROR_SOCKET_ACCEPT = 22,  /**< driver accept socket error*/
+    DRV_ERROR_CLIENT_BUSY = 23,    /**< driver client busy error*/
+    DRV_ERROR_SOCKET_SET = 24,     /**< driver socket set error*/
+    DRV_ERROR_SOCKET_CLOSE = 25,   /**< driver socket close error*/
+    DRV_ERROR_RECV_MESG = 26,      /**< driver recv message error*/
+    DRV_ERROR_SEND_MESG = 27,      /**< driver send message error*/
     DRV_ERROR_SERVER_BUSY = 28,
     DRV_ERROR_CONFIG_READ_FAIL = 29,
     DRV_ERROR_STATUS_FAIL = 30,
@@ -92,16 +76,16 @@ typedef enum tagDrvError {
     DRV_ERROR_NO_MODEL_RESOURCES = 50,
     DRV_ERROR_TRY_AGAIN = 51,
 
-    DRV_ERROR_DST_PATH_ILLEGAL = 52,                    /**< send file dst path illegal*/
-    DRV_ERROR_OPEN_FAILED = 53,                         /**< send file open failed */
-    DRV_ERROR_NO_FREE_SPACE = 54,                       /**< send file no free space */
-    DRV_ERROR_LOCAL_ABNORMAL_FILE = 55,                 /**< send file local file abnormal*/
-    DRV_ERROR_DST_PERMISSION_DENIED = 56,               /**< send file dst Permission denied*/
-    DRV_ERROR_DST_NO_SUCH_FILE = 57,                    /**< pull file no such file or directory*/
+    DRV_ERROR_DST_PATH_ILLEGAL = 52,      /**< send file dst path illegal*/
+    DRV_ERROR_OPEN_FAILED = 53,           /**< send file open failed */
+    DRV_ERROR_NO_FREE_SPACE = 54,         /**< send file no free space */
+    DRV_ERROR_LOCAL_ABNORMAL_FILE = 55,   /**< send file local file abnormal*/
+    DRV_ERROR_DST_PERMISSION_DENIED = 56, /**< send file dst Permission denied*/
+    DRV_ERROR_DST_NO_SUCH_FILE = 57,      /**< pull file no such file or directory*/
 
     DRV_ERROR_MEMORY_OPT_FAIL = 58,
     DRV_ERROR_RUNTIME_ON_OTHER_PLAT = 59,
-    DRV_ERROR_SQID_FULL = 60,                           /**< driver SQ   is full */
+    DRV_ERROR_SQID_FULL = 60, /**< driver SQ   is full */
 
     DRV_ERROR_SERVER_HAS_BEEN_CREATED = 61,
     DRV_ERROR_NO_PROCESS = 62,
@@ -122,8 +106,8 @@ typedef enum tagDrvError {
     DRV_ERROR_RUN_IN_ILLEGAL_CPU = 77,
     DRV_ERROR_SUBSCRIBE_THREAD_TIMEOUT = 78,
     DRV_ERROR_BAD_ADDRESS = 79,
-    DRV_ERROR_DST_FILE_IS_BEING_WRITTEN = 80,           /**< send file The dts file is being written */
-    DRV_ERROR_EPOLL_CLOSE = 81,                         /**< epoll close */
+    DRV_ERROR_DST_FILE_IS_BEING_WRITTEN = 80, /**< send file The dts file is being written */
+    DRV_ERROR_EPOLL_CLOSE = 81,               /**< epoll close */
     DRV_ERROR_CDQ_ABNORMAL = 82,
     DRV_ERROR_CDQ_NOT_EXIST = 83,
     DRV_ERROR_NO_CDQ_RESOURCES = 84,
@@ -137,12 +121,12 @@ typedef enum tagDrvError {
     DEV_ERROR_BIST_SW_ERR = 92,
     DEV_ERROR_DUP_CONFIG = 93,
     DRV_ERROR_POWER_OP_FAIL = 94,
-    DRV_ERROR_NET_UNREACH = 95,         /**< net error or device failure*/
+    DRV_ERROR_NET_UNREACH = 95, /**< net error or device failure*/
     DRV_ERROR_TRANS_LINK_ABNORMAL = 96,
     DRV_ERROR_TRANS_LINK_ACK_TIMEOUT_ERR = 97,
-    DRV_ERROR_CALL_NO_RETRY,            /**< Function call error，no need to retry */   
+    DRV_ERROR_CALL_NO_RETRY, /**< Function call error，no need to retry */
     DRV_ERROR_NOT_SUPPORT = 0xfffe,
     DRV_ERROR_RESERVED
-} drvError_t;//lint !e116 !e17
+} drvError_t; // lint !e116 !e17
 
 #endif

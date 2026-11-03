@@ -25,16 +25,16 @@ namespace ccu = ::AscendC::ccu;
 
 constexpr uint32_t AG_MAX_RANK_SIZE = 16;
 
-constexpr int AG_OUTPUT_XN_ID  = 1;
-constexpr int AG_TOKEN_XN_ID   = 2;
-constexpr int AG_CKE_IDX_0     = 0;
-constexpr int AG_POST_SYNC_ID  = 3;
+constexpr int AG_OUTPUT_XN_ID = 1;
+constexpr int AG_TOKEN_XN_ID = 2;
+constexpr int AG_CKE_IDX_0 = 0;
+constexpr int AG_POST_SYNC_ID = 3;
 
-constexpr uint64_t AG_CCU_MS_SIZE               = 4096;
-constexpr uint64_t AG_CCU_MS_INTERLEAVE         = 8;
+constexpr uint64_t AG_CCU_MS_SIZE = 4096;
+constexpr uint64_t AG_CCU_MS_INTERLEAVE = 8;
 constexpr uint64_t AG_CCU_MS_DEFAULT_LOOP_COUNT = 64;
 
-constexpr uint64_t AG_LOCAL_COPY_MS_PER_LOOP       = 8;
+constexpr uint64_t AG_LOCAL_COPY_MS_PER_LOOP = 8;
 constexpr uint64_t AG_CCU_MS_LOCAL_COPY_LOOP_COUNT = 8;
 
 // =============================================================================
@@ -42,10 +42,10 @@ constexpr uint64_t AG_CCU_MS_LOCAL_COPY_LOOP_COUNT = 8;
 // =============================================================================
 
 struct AllGatherKernelArg {
-    uint64_t      rankSize;
-    uint32_t      rankId;
+    uint64_t rankSize;
+    uint32_t rankId;
     ChannelHandle channels[AG_MAX_RANK_SIZE];
-    uint32_t      channelCount;
+    uint32_t channelCount;
 };
 
 struct GroupCopyGoSizeVars {
@@ -66,20 +66,17 @@ struct GroupCopyLoopGroupConfig {
 };
 
 struct GroupCopyLoopGroupResource {
-    ccu::Array<ccu::Event>     completedEvent{0};
+    ccu::Array<ccu::Event> completedEvent{0};
     ccu::Array<ccu::CcuBuffer> ccuBuf{0};
-    uint32_t                   eventCount{0};
-    uint32_t                   bufCount{0};
+    uint32_t eventCount{0};
+    uint32_t bufCount{0};
 };
 
 // =============================================================================
 // Bit-packing 辅助（纯 host 计算，无 IR 副作用）
 // =============================================================================
 
-static inline constexpr uint64_t AgSetBits(uint16_t end)
-{
-    return ((uint64_t(1) << (end + 1)) - uint64_t(1));
-}
+static inline constexpr uint64_t AgSetBits(uint16_t end) { return ((uint64_t(1) << (end + 1)) - uint64_t(1)); }
 
 static inline uint64_t AgGetMaxLoopIterNum()
 {
@@ -89,41 +86,39 @@ static inline uint64_t AgGetMaxLoopIterNum()
 
 static inline uint64_t AgGetLoopParam(uint64_t loopCtxId, uint64_t gsaOffset, uint64_t loopIterNum)
 {
-    constexpr uint16_t ctxIdBitNum     = 8;
-    constexpr uint16_t ctxIdShiftBit   = 45;
-    constexpr uint16_t gsaBitNum       = 32;
-    constexpr uint16_t gsaShiftBit     = 13;
-    constexpr uint16_t loopNumBitNum   = 13;
+    constexpr uint16_t ctxIdBitNum = 8;
+    constexpr uint16_t ctxIdShiftBit = 45;
+    constexpr uint16_t gsaBitNum = 32;
+    constexpr uint16_t gsaShiftBit = 13;
+    constexpr uint16_t loopNumBitNum = 13;
     constexpr uint16_t loopNumShiftBit = 0;
-    return ((loopCtxId & AgSetBits(ctxIdBitNum)) << ctxIdShiftBit) |
-           ((gsaOffset & AgSetBits(gsaBitNum)) << gsaShiftBit) |
-           ((loopIterNum & AgSetBits(loopNumBitNum)) << loopNumShiftBit);
+    return ((loopCtxId & AgSetBits(ctxIdBitNum)) << ctxIdShiftBit) | ((gsaOffset & AgSetBits(gsaBitNum)) << gsaShiftBit)
+           | ((loopIterNum & AgSetBits(loopNumBitNum)) << loopNumShiftBit);
 }
 
 static inline uint64_t AgGetParallelParam(uint64_t repeatNum, uint64_t repeatLoopIndex, uint64_t totalLoopNum)
 {
-    constexpr uint16_t repeatBitNum       = 7;
-    constexpr uint16_t repeatNumShiftBit  = 55;
-    constexpr uint16_t repeatLoopBitNum   = 7;
+    constexpr uint16_t repeatBitNum = 7;
+    constexpr uint16_t repeatNumShiftBit = 55;
+    constexpr uint16_t repeatLoopBitNum = 7;
     constexpr uint16_t repeatLoopShiftBit = 48;
-    constexpr uint16_t totalLoopBitNum    = 7;
-    constexpr uint16_t totalLoopShiftBit  = 41;
-    return ((repeatNum & AgSetBits(repeatBitNum)) << repeatNumShiftBit) |
-           ((repeatLoopIndex & AgSetBits(repeatLoopBitNum)) << repeatLoopShiftBit) |
-           ((totalLoopNum & AgSetBits(totalLoopBitNum)) << totalLoopShiftBit);
+    constexpr uint16_t totalLoopBitNum = 7;
+    constexpr uint16_t totalLoopShiftBit = 41;
+    return ((repeatNum & AgSetBits(repeatBitNum)) << repeatNumShiftBit)
+           | ((repeatLoopIndex & AgSetBits(repeatLoopBitNum)) << repeatLoopShiftBit)
+           | ((totalLoopNum & AgSetBits(totalLoopBitNum)) << totalLoopShiftBit);
 }
 
 static inline uint64_t AgGetOffsetParam(uint64_t gsaOffset, uint64_t msOffset, uint64_t ckeOffset)
 {
-    constexpr uint16_t gsaBitNum   = 32;
+    constexpr uint16_t gsaBitNum = 32;
     constexpr uint16_t gsaShiftBit = 21;
-    constexpr uint16_t msBitNum    = 11;
-    constexpr uint16_t msShiftBit  = 10;
-    constexpr uint16_t ckeBitNum   = 10;
+    constexpr uint16_t msBitNum = 11;
+    constexpr uint16_t msShiftBit = 10;
+    constexpr uint16_t ckeBitNum = 10;
     constexpr uint16_t ckeShiftBit = 0;
-    return ((gsaOffset & AgSetBits(gsaBitNum)) << gsaShiftBit) |
-           ((msOffset & AgSetBits(msBitNum)) << msShiftBit) |
-           ((ckeOffset & AgSetBits(ckeBitNum)) << ckeShiftBit);
+    return ((gsaOffset & AgSetBits(gsaBitNum)) << gsaShiftBit) | ((msOffset & AgSetBits(msBitNum)) << msShiftBit)
+           | ((ckeOffset & AgSetBits(ckeBitNum)) << ckeShiftBit);
 }
 
 // =============================================================================
@@ -131,7 +126,7 @@ static inline uint64_t AgGetOffsetParam(uint64_t gsaOffset, uint64_t msOffset, u
 // =============================================================================
 
 struct AllGatherContext {
-    const AllGatherKernelArg *arg;
+    const AllGatherKernelArg* arg;
 
     ccu::Variable input;
     ccu::Variable output[AG_MAX_RANK_SIZE];
@@ -148,30 +143,30 @@ struct AllGatherContext {
 
     GroupCopyGoSizeVars goSize;
 
-    ccu::Event      event;
-    ccu::LocalAddr  srcLocCopy;
-    ccu::LocalAddr  localDst;
+    ccu::Event event;
+    ccu::LocalAddr srcLocCopy;
+    ccu::LocalAddr localDst;
 
-    GroupCopyLoopGroupConfig   moConfig;
+    GroupCopyLoopGroupConfig moConfig;
     GroupCopyLoopGroupResource moRes;
-    bool                       resourceAllocated;
-    bool                       groupCopyRegistered;
+    bool resourceAllocated;
+    bool groupCopyRegistered;
 
     std::unique_ptr<ccu::Func> copyBody[2];
     std::unique_ptr<ccu::Loop> copyLoops[2];
-    ccu::Variable              copyLoopParam[2];
+    ccu::Variable copyLoopParam[2];
 
     ccu::LocalAddr loopSrc[2];
     ccu::LocalAddr loopDst[2];
-    ccu::Variable  loopLen[2];
+    ccu::Variable loopLen[2];
 };
 
 // =============================================================================
 // AllocGoResource —— 纯资源分配，不展开 CCU_IF，放在头里 inline 安全
 // =============================================================================
 
-static inline CcuResult AgAllocGoResource(GroupCopyLoopGroupConfig &config,
-    GroupCopyLoopGroupResource &res, bool &allocated,
+static inline CcuResult AgAllocGoResource(
+    GroupCopyLoopGroupConfig& config, GroupCopyLoopGroupResource& res, bool& allocated,
     uint32_t parallelDim = AG_CCU_MS_DEFAULT_LOOP_COUNT, uint32_t msPerLoop = 1)
 {
     if (allocated) {
@@ -179,21 +174,20 @@ static inline CcuResult AgAllocGoResource(GroupCopyLoopGroupConfig &config,
     }
 
     config.msInterleave = AG_CCU_MS_INTERLEAVE;
-    config.loopCount    = parallelDim;
-    config.memSlice     = msPerLoop * AG_CCU_MS_SIZE;
+    config.loopCount = parallelDim;
+    config.memSlice = msPerLoop * AG_CCU_MS_SIZE;
 
-    res.eventCount     = config.loopCount;
+    res.eventCount = config.loopCount;
     res.completedEvent = ccu::Array<ccu::Event>(res.eventCount);
 
     res.bufCount = config.loopCount * config.msInterleave;
-    res.ccuBuf   = ccu::Array<ccu::CcuBuffer>(res.bufCount);
+    res.ccuBuf = ccu::Array<ccu::CcuBuffer>(res.bufCount);
 
     allocated = true;
     return CCU_SUCCESS;
 }
 
-CcuResult AgGroupCopy(AllGatherContext &ctx, ccu::LocalAddr dst, ccu::LocalAddr src,
-    GroupCopyGoSizeVars &goSize);
+CcuResult AgGroupCopy(AllGatherContext& ctx, ccu::LocalAddr dst, ccu::LocalAddr src, GroupCopyGoSizeVars& goSize);
 
 CcuResult CcuAllGatherMesh1dMem2MemKernel(CcuKernelArg arg);
 

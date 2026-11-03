@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -31,21 +31,21 @@
 using namespace std;
 using namespace hccl;
 
-int stub_SocketRaGetAsyncReqResult(void *reqHandle, int *reqResult)
+int stub_SocketRaGetAsyncReqResult(void* reqHandle, struct AsyncReqResult* reqResult)
 {
-    *reqResult = 0;
+    reqResult->reqResult = 0;
     return 0;
 }
 
-int stub_SocketRaSocketSendAsync(const FdHandle fdHandle, const void *data, unsigned long long size,
-    unsigned long long *sentSize, void **reqHandle)
+int stub_SocketRaSocketSendAsync(
+    const FdHandle fdHandle, const void* data, unsigned long long size, unsigned long long* sentSize, void** reqHandle)
 {
     *reqHandle = (Void*)0x01;
     return 0;
 }
 
-int stub_SocketRaSocketRecvAsync(const FdHandle fdHandle, void *data, unsigned long long size,
-    unsigned long long *receivedSize, void **reqHandle)
+int stub_SocketRaSocketRecvAsync(
+    const FdHandle fdHandle, void* data, unsigned long long size, unsigned long long* receivedSize, void** reqHandle)
 {
     *reqHandle = (Void*)0x02;
     return 0;
@@ -53,19 +53,10 @@ int stub_SocketRaSocketRecvAsync(const FdHandle fdHandle, void *data, unsigned l
 
 class SocketTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "\033[36m--SocketTest SetUP--\033[0m" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "\033[36m--SocketTest TearDown--\033[0m" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "\033[36m--SocketTest SetUP--\033[0m" << std::endl; }
+    static void TearDownTestCase() { std::cout << "\033[36m--SocketTest TearDown--\033[0m" << std::endl; }
     virtual void SetUp() {}
-    virtual void TearDown()
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() { GlobalMockObject::verify(); }
 };
 
 TEST_F(SocketTest, Ut_SendAsync_When_ParamErrOrRaSocketErr_Expect_Error)
@@ -76,24 +67,24 @@ TEST_F(SocketTest, Ut_SendAsync_When_ParamErrOrRaSocketErr_Expect_Error)
 
     u8 data[2] = {1, 2};
     u64 sentSize = 0;
-    void *handle = nullptr;
-    ret = tempSocket.SendAsync(data, 2, &sentSize, &handle);  // fdHandle_ is null
+    void* handle = nullptr;
+    ret = tempSocket.SendAsync(data, 2, &sentSize, &handle); // fdHandle_ is null
     EXPECT_EQ(ret, HCCL_E_PTR);
 
-    tempSocket.fdHandle_ = (void *)0x01;
-    ret = tempSocket.SendAsync(nullptr, 2, &sentSize, &handle);  // data is null
+    tempSocket.fdHandle_ = (void*)0x01;
+    ret = tempSocket.SendAsync(nullptr, 2, &sentSize, &handle); // data is null
     EXPECT_EQ(ret, HCCL_E_PTR);
 
-    ret = tempSocket.SendAsync(data, 2, &sentSize, nullptr);  // handle is null
+    ret = tempSocket.SendAsync(data, 2, &sentSize, nullptr); // handle is null
     EXPECT_EQ(ret, HCCL_E_PTR);
 
-    ret = tempSocket.SendAsync(data, 2, nullptr, &handle);  // sentSize is null
+    ret = tempSocket.SendAsync(data, 2, nullptr, &handle); // sentSize is null
     EXPECT_EQ(ret, HCCL_E_PTR);
 
-    ret = tempSocket.SendAsync(data, 0, &sentSize, &handle);  // size is 0
+    ret = tempSocket.SendAsync(data, 0, &sentSize, &handle); // size is 0
     EXPECT_EQ(ret, HCCL_E_PARA);
 
-    ret = tempSocket.SendAsync(data, 2049, &sentSize, &handle);  // size > SOCKET_SEND_MAXLEN (2048)
+    ret = tempSocket.SendAsync(data, 2049, &sentSize, &handle); // size > SOCKET_SEND_MAXLEN (2048)
     EXPECT_EQ(ret, HCCL_E_PARA);
 
     DlRaFunction::GetInstance().dlRaSocketSendAsync = nullptr;
@@ -110,7 +101,7 @@ TEST_F(SocketTest, Ut_SendAsync_When_ParamErrOrRaSocketErr_Expect_Error)
     EXPECT_EQ(ret, HCCL_E_PTR);
 
     DlRaFunction::GetInstance().dlRaGetAsyncReqResult = nullptr;
-    handle = (void *)0x02;
+    handle = (void*)0x02;
     ret = tempSocket.GetAsyncReqResult(handle, sendResult);
     EXPECT_EQ(ret, HCCL_E_NETWORK);
 
@@ -123,21 +114,22 @@ TEST_F(SocketTest, Ut_SendAsync_When_RaSocketSuccess_Expect_Success)
     HcclSocket tempSocket(&devCtx, 16666);
     HcclResult ret;
 
-    tempSocket.fdHandle_ = (void *)0x01;
+    tempSocket.fdHandle_ = (void*)0x01;
     DlRaFunction::GetInstance().dlRaSocketSendAsync = stub_SocketRaSocketSendAsync;
     DlRaFunction::GetInstance().dlRaGetAsyncReqResult = stub_SocketRaGetAsyncReqResult;
 
     u8 data[2] = {1, 2};
     u64 sentSize = 0;
-    void *handle = nullptr;
+    void* handle = nullptr;
     ret = tempSocket.SendAsync(data, 2, &sentSize, &handle);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    int sendResultOut = SOCK_EAGAIN;
-    MOCKER(stub_SocketRaGetAsyncReqResult).stubs()
-    .with(mockcpp::any(), outBoundP(&sendResultOut))
-    .will(returnValue(OTHERS_EAGAIN))
-    .then(returnValue(0));
+    struct AsyncReqResult sendResultOut = {SOCK_EAGAIN, 0};
+    MOCKER(stub_SocketRaGetAsyncReqResult)
+        .stubs()
+        .with(mockcpp::any(), outBoundP(&sendResultOut, sizeof(sendResultOut)))
+        .will(returnValue(OTHERS_EAGAIN))
+        .then(returnValue(0));
 
     HcclResult sendResult;
     ret = tempSocket.GetAsyncReqResult(handle, sendResult);
@@ -158,21 +150,21 @@ TEST_F(SocketTest, Ut_RecvAsync_When_ParamErrOrRaSocketErr_Expect_Error)
 
     u8 data[2];
     u64 recvSize = 0;
-    void *handle = nullptr;
-    ret = tempSocket.RecvAsync(data, 2, &recvSize, &handle);  // fdHandle_ is null
+    void* handle = nullptr;
+    ret = tempSocket.RecvAsync(data, 2, &recvSize, &handle); // fdHandle_ is null
     EXPECT_EQ(ret, HCCL_E_PTR);
 
-    tempSocket.fdHandle_ = (void *)0x01;
-    ret = tempSocket.RecvAsync(nullptr, 2, &recvSize, &handle);  // recvBuf is null
+    tempSocket.fdHandle_ = (void*)0x01;
+    ret = tempSocket.RecvAsync(nullptr, 2, &recvSize, &handle); // recvBuf is null
     EXPECT_EQ(ret, HCCL_E_PTR);
 
-    ret = tempSocket.RecvAsync(data, 2, &recvSize, nullptr);  // handle is null
+    ret = tempSocket.RecvAsync(data, 2, &recvSize, nullptr); // handle is null
     EXPECT_EQ(ret, HCCL_E_PTR);
 
-    ret = tempSocket.RecvAsync(data, 2, nullptr, &handle);  // recvSize is null
+    ret = tempSocket.RecvAsync(data, 2, nullptr, &handle); // recvSize is null
     EXPECT_EQ(ret, HCCL_E_PTR);
 
-    ret = tempSocket.RecvAsync(data, 0, &recvSize, &handle);  // recvBufLen is 0
+    ret = tempSocket.RecvAsync(data, 0, &recvSize, &handle); // recvBufLen is 0
     EXPECT_EQ(ret, HCCL_E_PARA);
 
     DlRaFunction::GetInstance().dlRaSocketRecvAsync = nullptr;
@@ -193,21 +185,22 @@ TEST_F(SocketTest, Ut_RecvAsync_When_RaSocketSuccess_Expect_Success)
     HcclSocket tempSocket(&devCtx, 16666);
     HcclResult ret;
 
-    tempSocket.fdHandle_ = (void *)0x01;
+    tempSocket.fdHandle_ = (void*)0x01;
     DlRaFunction::GetInstance().dlRaSocketRecvAsync = stub_SocketRaSocketRecvAsync;
     DlRaFunction::GetInstance().dlRaGetAsyncReqResult = stub_SocketRaGetAsyncReqResult;
 
     u8 data[2];
     u64 recvSize = 0;
-    void *handle = nullptr;
+    void* handle = nullptr;
     ret = tempSocket.RecvAsync(data, 2, &recvSize, &handle);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    int recvResultOut = SOCK_EAGAIN;
-    MOCKER(stub_SocketRaGetAsyncReqResult).stubs()
-    .with(mockcpp::any(), outBoundP(&recvResultOut))
-    .will(returnValue(OTHERS_EAGAIN))
-    .then(returnValue(0));
+    struct AsyncReqResult recvResultOut = {SOCK_EAGAIN, 0};
+    MOCKER(stub_SocketRaGetAsyncReqResult)
+        .stubs()
+        .with(mockcpp::any(), outBoundP(&recvResultOut, sizeof(recvResultOut)))
+        .will(returnValue(OTHERS_EAGAIN))
+        .then(returnValue(0));
 
     HcclResult recvResult;
     ret = tempSocket.GetAsyncReqResult(handle, recvResult);
@@ -223,9 +216,7 @@ TEST_F(SocketTest, Ut_RecvAsync_When_RaSocketSuccess_Expect_Success)
 TEST_F(SocketTest, Ut_IsSupportAsync_When_RaSocketNotSupportAsync_Expect_ReturnFalse)
 {
     bool isSupportRaSocketAsync = false;
-    MOCKER(IsSupportHdcAsync).stubs()
-    .with(outBound(isSupportRaSocketAsync))
-    .will(returnValue(HCCL_E_NOT_SUPPORT));
+    MOCKER(IsSupportHdcAsync).stubs().with(outBound(isSupportRaSocketAsync)).will(returnValue(HCCL_E_NOT_SUPPORT));
 
     bool support = HcclSocket::IsSupportAsync();
     EXPECT_FALSE(support);

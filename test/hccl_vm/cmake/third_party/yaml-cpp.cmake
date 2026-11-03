@@ -1,3 +1,13 @@
+# -----------------------------------------------------------------------------------------------------------
+# Copyright (c) 2026 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
+
 include_guard(GLOBAL)
 
 unset(yaml_cpp_FOUND CACHE)
@@ -48,18 +58,27 @@ if(NOT yaml_cpp_FOUND)
         -DYAML_CPP_BUILD_TOOLS=OFF
         -DYAML_CPP_BUILD_CONTRIB=OFF
         -DBUILD_SHARED_LIBS=OFF
+        -DCMAKE_POLICY_VERSION_MINIMUM=3.5
     )
+
+    # DOWNLOAD_EXTRACT_TIMESTAMP 为 CMake 3.24+ 引入的选项(配套策略 CMP0135),
+    # 旧版本(如3.22)不识别该关键字, 会将其与TRUE误解析为URL的值, 导致报错:
+    # "At least one entry of URL is a path (invalid in a list)", 故仅在高版本传入。
+    # (新旧版本的默认行为一致: 提取时更新源码时间戳)
+    set(YAMLCPP_DOWNLOAD_OPTS "")
+    if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.24)
+        list(APPEND YAMLCPP_DOWNLOAD_OPTS DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+    endif()
 
     include(ExternalProject)
     ExternalProject_Add(third_party_yaml_cpp
         URL ${YAMLCPP_PROJECT_URL}
-        TLS_VERIFY OFF
-        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        ${YAMLCPP_DOWNLOAD_OPTS}
         DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/third_party
         DOWNLOAD_NO_PROGRESS TRUE
         CONFIGURE_COMMAND ${CMAKE_COMMAND} ${YAMLCPP_OPTS} <SOURCE_DIR>
-        BUILD_COMMAND $(MAKE)
-        INSTALL_COMMAND $(MAKE) install
+        BUILD_COMMAND ${CMAKE_MAKE_PROGRAM}
+        INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
         EXCLUDE_FROM_ALL TRUE
     )
     set(YAMLCPP_LIB_DIR "${YAMLCPP_INSTALL_PATH}/lib64")

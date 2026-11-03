@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef HCCL_TEMPLATE_UTILS_H
 #define HCCL_TEMPLATE_UTILS_H
@@ -49,19 +49,19 @@ struct ZCopySendRecvInfo {
 
 struct Slice {
     u64 offset{0}; // Slice相对于input/output的偏移字节数，gather类操作取output，scatter类操作取input
-    u64 size{0};    // Slice的数据大小，单位：字节
+    u64 size{0};   // Slice的数据大小，单位：字节
 };
 
 struct MemBlockInfo {
-    std::vector<u64> size;     // 每块数据块的字节大小
-    std::vector<u64> userInputOffsets;  // 每个输入块的起始偏移字节数(UserIn)
-    std::vector<u64> inputOffsets;      // 每个输入块的起始偏移字节数(CclIn)
-    std::vector<u64> outputOffsets;     // 每个输出块的起始偏移字节数
+    std::vector<u64> size;             // 每块数据块的字节大小
+    std::vector<u64> userInputOffsets; // 每个输入块的起始偏移字节数(UserIn)
+    std::vector<u64> inputOffsets;     // 每个输入块的起始偏移字节数(CclIn)
+    std::vector<u64> outputOffsets;    // 每个输出块的起始偏移字节数
 };
 
 namespace hccl {
 // common.h
-constexpr s64 HCCL_SMALL_COUNT_32_KB = 32 * 1024;  // hccl小数据量标准，暂定512KB
+constexpr s64 HCCL_SMALL_COUNT_32_KB = 32 * 1024; // hccl小数据量标准，暂定512KB
 
 struct SubCommInfo {
     u32 localRank;
@@ -84,11 +84,11 @@ struct AdjInfo {
 };
 
 // broadcast_nb_binary_pub.h
-bool ShouldUseBinaryBroadcastOfNB(const u64 dataSize, const u32 rankSize, const u32 userRankSize,
-    const float bandwidth);
+bool ShouldUseBinaryBroadcastOfNB(
+    const u64 dataSize, const u32 rankSize, const u32 userRankSize, const float deviceNumPerAggregation);
 
 // all_reduce_nb_pub.h
 u64 GetSliceSizeOfNB(const u64 dataSize, const u32 rankSize);
-}  // namespace hccl
+} // namespace hccl
 
 #endif /* HCCL_TEMPLATE_UTILS_H */

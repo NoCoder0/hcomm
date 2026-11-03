@@ -13,9 +13,7 @@
 
 namespace Hccl {
 
-DevUbConnection::UbCiUpdater::UbCiUpdater(DevUbConnection *devUbConn) : devUbConnPtr(devUbConn)
-{
-}
+DevUbConnection::UbCiUpdater::UbCiUpdater(DevUbConnection* devUbConn) : devUbConnPtr(devUbConn) {}
 
 void DevUbConnection::UbCiUpdater::UpdateCi() const
 {
@@ -23,10 +21,6 @@ void DevUbConnection::UbCiUpdater::UpdateCi() const
     devUbConnPtr->UpdateCiVal(ciVal);
 }
 
-void DevUbConnection::UbCiUpdater::SaveCi()
-{
-    ciVal = devUbConnPtr->GetPiVal();
-}
-
+void DevUbConnection::UbCiUpdater::SaveCi() { ciVal = devUbConnPtr->GetPiVal(); }
 
 } // namespace Hccl

@@ -28,14 +28,14 @@ extern "C" {
 #pragma pack(4)
 /* common */
 /**
-* @brief WfwMuxLe库句柄，封装linux epoll
-*/
+ * @brief WfwMuxLe库句柄，封装linux epoll
+ */
 typedef struct tagWfwMuxLe WfwMuxLe;
 
 /* init */
 /**
-* @brief WfwMuxLe库初始化参数
-*/
+ * @brief WfwMuxLe库初始化参数
+ */
 typedef struct tagWfwMuxLeInitArg {
     char *name;
     BOOL dbgOn;
@@ -89,4 +89,3 @@ WfwMuxInitArg *WfwMuxLeBuildMuxInitArg(WfwMuxLe *muxLe, WfwMuxInitArg *temp);
 #endif
 
 #endif
-

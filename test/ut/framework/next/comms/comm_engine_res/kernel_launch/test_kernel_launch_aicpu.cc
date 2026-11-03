@@ -27,12 +27,14 @@ extern HcclResult groupLaunchA5();
 
 class TestKernelLaunchAicpu : public BaseInit {
 public:
-    void SetUp() override {
+    void SetUp() override
+    {
         BaseInit::SetUp();
         SetHcclP2pTaskNums(0);
         GetHcclGroupCommList().clear();
     }
-    void TearDown() override {
+    void TearDown() override
+    {
         BaseInit::TearDown();
         GlobalMockObject::verify();
         SetHcclP2pTaskNums(0);
@@ -46,31 +48,31 @@ static aclrtFuncHandle g_mockFuncHandle = reinterpret_cast<aclrtFuncHandle>(0x70
 static aclrtArgsHandle g_mockArgsHandle = reinterpret_cast<aclrtArgsHandle>(0x8000);
 static aclrtParamHandle g_mockParamHandle = reinterpret_cast<aclrtParamHandle>(0x9000);
 
-HcclResult MockGetUsrStream(aclrtStream &usrStream)
+HcclResult MockGetUsrStream(aclrtStream& usrStream)
 {
     usrStream = g_usrStream;
     return HCCL_SUCCESS;
 }
 
-HcclResult MockHcclGetNotifyNumInThread(HcclComm, ThreadHandle, CommEngine, uint32_t *notifyNum)
+HcclResult MockHcclGetNotifyNumInThread(HcclComm, ThreadHandle, CommEngine, uint32_t* notifyNum)
 {
     *notifyNum = g_notifyNum;
     return HCCL_SUCCESS;
 }
 
-aclError MockAclrtBinaryGetFunction(const aclrtBinHandle, const char *, aclrtFuncHandle *funcHandle)
+aclError MockAclrtBinaryGetFunction(const aclrtBinHandle, const char*, aclrtFuncHandle* funcHandle)
 {
     *funcHandle = g_mockFuncHandle;
     return ACL_SUCCESS;
 }
 
-aclError MockAclrtKernelArgsInit(aclrtFuncHandle, aclrtArgsHandle *argsHandle)
+aclError MockAclrtKernelArgsInit(aclrtFuncHandle, aclrtArgsHandle* argsHandle)
 {
     *argsHandle = g_mockArgsHandle;
     return ACL_SUCCESS;
 }
 
-aclError MockAclrtKernelArgsAppend(aclrtArgsHandle, void*, uint64_t, aclrtParamHandle *paramHandle)
+aclError MockAclrtKernelArgsAppend(aclrtArgsHandle, void*, uint64_t, aclrtParamHandle* paramHandle)
 {
     *paramHandle = g_mockParamHandle;
     return ACL_SUCCESS;
@@ -85,7 +87,8 @@ TEST_F(TestKernelLaunchAicpu, Ut_HcclAicpuKernelLaunch_When_CommIsNull_Expect_HC
     HcclKernelLaunchCfg kernelLaunchCfg;
     kernelLaunchCfg.timeOut = 120U;
 
-    HcclResult ret = HcclAicpuKernelLaunch(nullptr, &opInfo, &funcInfo, aicpuThreadHandle, userStream, &kernelLaunchCfg);
+    HcclResult ret
+        = HcclAicpuKernelLaunch(nullptr, &opInfo, &funcInfo, aicpuThreadHandle, userStream, &kernelLaunchCfg);
     EXPECT_EQ(ret, HCCL_E_PTR);
 }
 
@@ -140,18 +143,23 @@ TEST_F(TestKernelLaunchAicpu, Ut_HcclAicpuKernelLaunch_Expect_AicpuKernelLaunchD
     uint8_t arg;
     HcclOpDesc opInfo;
     opInfo.p2p.unfoldStream = reinterpret_cast<aclrtStream>(0x2000);
-    HcclKernelFuncInfo funcInfo;
+    HcclKernelFuncInfo funcInfo{};
     funcInfo.argSize = 1;
     funcInfo.args = static_cast<void*>(&arg);
+    ASSERT_EQ(strcpy_s(funcInfo.kernelSoName, HCCL_KERNEL_SO_NAME_MAX_LEN, "libscatter_aicpu_kernel.so"), EOK);
     ThreadHandle aicpuThreadHandle = 0;
     aclrtStream userStream = reinterpret_cast<aclrtStream>(0x1000);
     HcclKernelLaunchCfg kernelLaunchCfg;
     kernelLaunchCfg.timeOut = 120U;
 
+    static CollComm g_mockCollComm(nullptr, 0, "test", ManagerCallbacks{}, CollCommInitMode::simpleMode);
+    MOCKER_CPP(&hcclComm::GetCollComm).stubs().will(returnValue(&g_mockCollComm));
+    MOCKER_CPP(&hcclComm::GetBinHandle).stubs().will(returnValue((aclrtBinHandle)0x1000));
     MOCKER(HcclThreadAcquire).stubs().will(returnValue(HCCL_SUCCESS));
     MOCKER(HcclThreadAcquireWithStream).stubs().will(returnValue(HCCL_SUCCESS));
     MOCKER(HcclThreadExportToCommEngine).stubs().will(returnValue(HCCL_SUCCESS));
     MOCKER(HcclGetNotifyNumInThread).stubs().will(invoke(MockHcclGetNotifyNumInThread));
+    MOCKER(HcclGetCommName).stubs().will(returnValue(HCCL_SUCCESS));
     MOCKER(HcommThreadNotifyRecordOnThread).stubs().will(returnValue(0));
     MOCKER(HcommThreadNotifyWaitOnThreadWithDefaultTimeout).stubs().will(returnValue(0));
     MOCKER(aclrtBinaryGetFunction).stubs().will(invoke(MockAclrtBinaryGetFunction));
@@ -163,6 +171,7 @@ TEST_F(TestKernelLaunchAicpu, Ut_HcclAicpuKernelLaunch_Expect_AicpuKernelLaunchD
     MOCKER(HcommGetProfilingSysCycleTime).stubs().will(returnValue(0x1000U));
 
     HcclResult ret = HcclAicpuKernelLaunch(comm, &opInfo, &funcInfo, aicpuThreadHandle, userStream, &kernelLaunchCfg);
+    EXPECT_EQ(ret, HCCL_SUCCESS);
     GlobalMockObject::verify();
 }
 
@@ -175,7 +184,7 @@ TEST_F(TestKernelLaunchAicpu, Ut_groupLaunchA5_When_OneSendAndOneRecvTask_Expect
     GetHcclGroupCommList().push_back(comm);
     static CollComm g_mockCollComm(nullptr, 0, "test", ManagerCallbacks{}, CollCommInitMode::simpleMode);
     g_mockCollComm.groupScheduleMgr.reset(new GroupScheduleMgr());
-    
+
     std::vector<HcclP2pTask> mockSendQue;
     std::vector<HcclP2pTask> mockRecvQue;
     HcclP2pTask sendTask;
@@ -183,20 +192,21 @@ TEST_F(TestKernelLaunchAicpu, Ut_groupLaunchA5_When_OneSendAndOneRecvTask_Expect
     sendTask.usrStream = reinterpret_cast<aclrtStream>(0x4000);
     sendTask.argSize = 1;
     sendTask.funcInfo.kernelFuncName[0] = '\0';
-    sendTask.funcInfo.kernelSoName[0] = '\0';
+    ASSERT_EQ(strcpy_s(sendTask.funcInfo.kernelSoName, HCCL_KERNEL_SO_NAME_MAX_LEN, "libscatter_aicpu_kernel.so"), EOK);
     HcclP2pTask recvTask;
     recvTask.stream = reinterpret_cast<aclrtStream>(0x5000);
     recvTask.usrStream = reinterpret_cast<aclrtStream>(0x6000);
     recvTask.argSize = 1;
     recvTask.funcInfo.kernelFuncName[0] = '\0';
-    recvTask.funcInfo.kernelSoName[0] = '\0';
+    ASSERT_EQ(strcpy_s(recvTask.funcInfo.kernelSoName, HCCL_KERNEL_SO_NAME_MAX_LEN, "libscatter_aicpu_kernel.so"), EOK);
     mockSendQue.push_back(sendTask);
     mockRecvQue.push_back(recvTask);
 
     MOCKER_CPP(&hcclComm::GetCollComm).stubs().will(returnValue(&g_mockCollComm));
     MOCKER_CPP(&hcclComm::GetBinHandle).stubs().will(returnValue((aclrtBinHandle)0x1000));
-    MOCKER_CPP(&GroupScheduleMgr::GetP2pTaskSchedule,
-        HcclResult (GroupScheduleMgr::*)(std::vector<HcclP2pTask> &, std::vector<HcclP2pTask> &))
+    MOCKER_CPP(
+        &GroupScheduleMgr::GetP2pTaskSchedule,
+        HcclResult(GroupScheduleMgr::*)(std::vector<HcclP2pTask>&, std::vector<HcclP2pTask>&))
         .stubs()
         .with(outBound(mockSendQue), outBound(mockRecvQue))
         .will(returnValue(HCCL_SUCCESS));
@@ -211,8 +221,45 @@ TEST_F(TestKernelLaunchAicpu, Ut_groupLaunchA5_When_OneSendAndOneRecvTask_Expect
     MOCKER(aclrtKernelArgsAppend).stubs().will(invoke(MockAclrtKernelArgsAppend));
     MOCKER(aclrtKernelArgsFinalize).stubs().will(returnValue(ACL_SUCCESS));
     MOCKER(aclrtLaunchKernelWithConfig).stubs().will(returnValue(ACL_SUCCESS));
+    MOCKER(HcclGetCommName).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcclReportAicpuKernel).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcommGetProfilingSysCycleTime).stubs().will(returnValue(0x1000U));
+    MOCKER(HcclProfilingReportOp).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = groupLaunchA5();
     EXPECT_EQ(ret, HCCL_SUCCESS);
     GlobalMockObject::verify();
+}
+
+TEST_F(TestKernelLaunchAicpu, Ut_HcclAicpuKernelLaunch_When_OpInfoNull_Expect_HCCL_E_PTR)
+{
+    HcclComm comm = reinterpret_cast<HcclComm>(0x1000);
+    HcclKernelFuncInfo funcInfo;
+    ThreadHandle aicpuThreadHandle = 0;
+    aclrtStream userStream = reinterpret_cast<aclrtStream>(0x1000);
+    HcclKernelLaunchCfg kernelLaunchCfg;
+    kernelLaunchCfg.timeOut = 120U;
+
+    HcclResult ret = HcclAicpuKernelLaunch(comm, nullptr, &funcInfo, aicpuThreadHandle, userStream, &kernelLaunchCfg);
+    EXPECT_EQ(ret, HCCL_E_PTR);
+}
+
+TEST_F(TestKernelLaunchAicpu, Ut_HcclAicpuKernelLaunch_When_KernelLaunchCfgNull_Expect_HCCL_E_PTR)
+{
+    HcclComm comm = reinterpret_cast<HcclComm>(0x1000);
+    HcclOpDesc opInfo;
+    HcclKernelFuncInfo funcInfo;
+    ThreadHandle aicpuThreadHandle = 0;
+    aclrtStream userStream = reinterpret_cast<aclrtStream>(0x1000);
+
+    HcclResult ret = HcclAicpuKernelLaunch(comm, &opInfo, &funcInfo, aicpuThreadHandle, userStream, nullptr);
+    EXPECT_EQ(ret, HCCL_E_PTR);
+}
+
+TEST_F(TestKernelLaunchAicpu, Ut_groupLaunchA5_When_NoGroupComm_Expect_HCCL_SUCCESS)
+{
+    GetHcclGroupCommList().clear();
+    SetHcclP2pTaskNums(0);
+    HcclResult ret = groupLaunchA5();
+    EXPECT_EQ(ret, HCCL_SUCCESS);
 }

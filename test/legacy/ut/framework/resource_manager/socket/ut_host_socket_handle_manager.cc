@@ -21,39 +21,36 @@ using namespace Hccl;
 
 class HostSocketHandleManagerTest : public testing::Test {
 protected:
-    static void SetUpTestCase() {
-        std::cout << "HostSocketHandleManagerTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "HostSocketHandleManagerTest SetUP" << std::endl; }
 
-    static void TearDownTestCase() {
-        std::cout << "HostSocketHandleManagerTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "HostSocketHandleManagerTest TearDown" << std::endl; }
 
-    virtual void SetUp() {
+    virtual void SetUp()
+    {
         std::cout << "A Test case in HostSocketHandleManagerTest SetUP" << std::endl;
         socketHandle = new int(0);
-        MOCKER(HrtRaSocketInit)
-        .stubs()
-        .with(mockcpp::any(), mockcpp::any())
-        .will(returnValue(socketHandle));
+        MOCKER(HrtRaSocketInit).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(socketHandle));
     }
 
-    virtual void TearDown() {
+    virtual void TearDown()
+    {
         GlobalMockObject::verify();
         delete socketHandle;
         std::cout << "A Test case in HostSocketHandleManagerTest TearDown" << std::endl;
     }
 
-    IpAddress GetAnIpAddress() {
+    IpAddress GetAnIpAddress()
+    {
         IpAddress ipAddress("1.0.0.0");
         return ipAddress;
     }
 
-    void *socketHandle;;
+    void* socketHandle;
+    ;
 };
 
-
-TEST_F(HostSocketHandleManagerTest, should_return_valid_ptr_when_calling_create_with_valid_params) {
+TEST_F(HostSocketHandleManagerTest, should_return_valid_ptr_when_calling_create_with_valid_params)
+{
     // Given
     u32 devicePhyId = 0;
     IpAddress ipAddress = GetAnIpAddress();

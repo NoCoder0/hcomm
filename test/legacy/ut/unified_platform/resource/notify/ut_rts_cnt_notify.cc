@@ -11,6 +11,7 @@
 #include "gtest/gtest.h"
 #include <mockcpp/mokc.h>
 #include <mockcpp/mockcpp.hpp>
+#include "test_mock_setup.h"
 #define private public
 #define protected public
 #include "rts_cnt_notify.h"
@@ -21,20 +22,11 @@ using namespace Hccl;
 
 class RtsCntNotifyTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "RtsCntNotifyTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "RtsCntNotifyTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "RtsCntNotifyTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "RtsCntNotifyTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in RtsCntNotifyTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in RtsCntNotifyTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -55,7 +47,7 @@ TEST_F(RtsCntNotifyTest, rtscntnotify_construct_ok)
     // Given
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(DevType(DevType::DEV_TYPE_910A2)));
     MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtCntNotifyCreate).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
+    MOCKER(HrtCntNotifyCreate).stubs().will(returnValue((void*)(fakeNotifyHandleAddr)));
     MOCKER(HrtGetCntNotifyId).stubs().will(returnValue(fakeNotifyId));
 
     // When
@@ -69,11 +61,7 @@ TEST_F(RtsCntNotifyTest, rtscntnotify_construct_ok)
 TEST_F(RtsCntNotifyTest, rtscntnotify_postbits_submit_test)
 {
     // Given
-    MOCKER(HrtGetDeviceType).stubs().will(returnValue(DevType::DEV_TYPE_910A2));
-    MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(1)));
-    MOCKER(HrtCntNotifyCreate).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
-    MOCKER(HrtGetCntNotifyId).stubs().will(returnValue(fakeNotifyId));
+    SETUP_CNT_NOTIFY_MOCKS();
 
     // When
     RtsCntNotify rtsCntNotify;
@@ -87,11 +75,7 @@ TEST_F(RtsCntNotifyTest, rtscntnotify_postbits_submit_test)
 TEST_F(RtsCntNotifyTest, rtscntnotify_waitvalue_submit_test)
 {
     // Given
-    MOCKER(HrtGetDeviceType).stubs().will(returnValue(DevType::DEV_TYPE_910A2));
-    MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(1)));
-    MOCKER(HrtCntNotifyCreate).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
-    MOCKER(HrtGetCntNotifyId).stubs().will(returnValue(fakeNotifyId));
+    SETUP_CNT_NOTIFY_MOCKS();
 
     // When
     RtsCntNotify rtsCntNotify;
@@ -104,11 +88,7 @@ TEST_F(RtsCntNotifyTest, rtscntnotify_waitvalue_submit_test)
 
 TEST_F(RtsCntNotifyTest, rtscntnotify_getuniqueid_test)
 {
-    MOCKER(HrtGetDeviceType).stubs().will(returnValue(DevType::DEV_TYPE_910A2));
-    MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(1)));
-    MOCKER(HrtCntNotifyCreate).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
-    MOCKER(HrtGetCntNotifyId).stubs().will(returnValue(fakeNotifyId));
+    SETUP_CNT_NOTIFY_MOCKS();
 
     RtsCntNotify rtsCntNotify;
     rtsCntNotify.id = fakeNotifyId;

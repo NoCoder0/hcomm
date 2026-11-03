@@ -1,12 +1,13 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "gtest/gtest.h"
 
 #include <vector>
@@ -23,22 +24,18 @@
 #include "checker.h"
 using namespace checker;
 
-class ReduceScatterMeshGraphPipelineTest: public ::testing::TestWithParam<std::tuple<int, CheckerDataType, vector<int>>> {
+class ReduceScatterMeshGraphPipelineTest :
+    public ::testing::TestWithParam<std::tuple<int, CheckerDataType, vector<int>>> {
 public:
-    static void SetUpTestCase()
-    {
-        std::cout << "ReduceScatterMeshGraphPipelineTest set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "ReduceScatterMeshGraphPipelineTest set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "ReduceScatterMeshGraphPipelineTest tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "ReduceScatterMeshGraphPipelineTest tear down." << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -49,7 +46,6 @@ public:
         // 这边每个case执行完成需要清理所有的环境变量，如果有新增的环境变量，需要在这个函数中进行清理
         ClearHcclEnv();
     }
-
 };
 
 TEST_P(ReduceScatterMeshGraphPipelineTest, reduce_scatter_test)
@@ -83,11 +79,10 @@ TEST_P(ReduceScatterMeshGraphPipelineTest, reduce_scatter_test)
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 }
 
-INSTANTIATE_TEST_SUITE_P(ReduceScatterMeshGraphPipelineCaseTestGeneralization, ReduceScatterMeshGraphPipelineTest,
-    testing::Combine
-    (
+INSTANTIATE_TEST_SUITE_P(
+    ReduceScatterMeshGraphPipelineCaseTestGeneralization, ReduceScatterMeshGraphPipelineTest,
+    testing::Combine(
         testing::Values(800, 1000000008, 5000000008),
-        testing::Values(CheckerDataType::DATA_TYPE_INT32, CheckerDataType::DATA_TYPE_INT8, CheckerDataType::DATA_TYPE_BFP16),
-        testing::ValuesIn(std::vector<std::vector<int>>{{1,2,7}, {1,2,8}, {1,4,8}, {1,4,16}})
-    )
-);
+        testing::Values(
+            CheckerDataType::DATA_TYPE_INT32, CheckerDataType::DATA_TYPE_INT8, CheckerDataType::DATA_TYPE_BFP16),
+        testing::ValuesIn(std::vector<std::vector<int>>{{1, 2, 7}, {1, 2, 8}, {1, 4, 8}, {1, 4, 16}})));

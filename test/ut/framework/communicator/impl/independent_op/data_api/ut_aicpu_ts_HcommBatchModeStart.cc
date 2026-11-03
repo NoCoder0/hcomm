@@ -38,13 +38,9 @@ using namespace hccl;
  * 该测试类用于验证HcommBatchModeStart接口的基本功能。
  * 测试场景包括正常调用启动批量操作。
  */
-class UtAicpuTsHcommBatchModeStart : public testing::Test
-{
+class UtAicpuTsHcommBatchModeStart : public testing::Test {
 protected:
-    virtual void TearDown() override
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() override { GlobalMockObject::verify(); }
 
     int32_t res{HCCL_E_RESERVED};
 };

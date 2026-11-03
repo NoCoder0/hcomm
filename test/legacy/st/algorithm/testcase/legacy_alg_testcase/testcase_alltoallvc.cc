@@ -1,17 +1,17 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mokc.h>
 #include <mockcpp/mockcpp.hpp>
- 
+
 #include <vector>
 #include <iostream>
 #include <string>
@@ -25,20 +25,15 @@ using namespace Hccl;
 
 class AllToAllVCTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AllToAllVCTest set up." << std::endl;
-    }
- 
-    static void TearDownTestCase()
-    {
-        std::cout << "AllToAllVCTest tear down" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AllToAllVCTest set up." << std::endl; }
+
+    static void TearDownTestCase() { std::cout << "AllToAllVCTest tear down" << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -50,9 +45,9 @@ protected:
         ClearHcclEnv();
     }
 
-    void RunAlltoAllvcMeshTest(int supNum, int sevNum, int rankNum, CheckerOpMode opMode, 
-        int dataCount, string algName, int maxTmpMemSize) {
-
+    void RunAlltoAllvcMeshTest(
+        int supNum, int sevNum, int rankNum, CheckerOpMode opMode, int dataCount, string algName, int maxTmpMemSize)
+    {
         RankTable_For_LLT gen;
         TopoMeta topoMeta;
         gen.GenTopoMeta(topoMeta, supNum, sevNum, rankNum);
@@ -76,35 +71,35 @@ protected:
 
 TEST_F(AllToAllVCTest, AlltoAllVCMesh_one_four_test)
 {
-    RunAlltoAllvcMeshTest(1, 1, 4, CheckerOpMode::OPBASE, 400, "InsAlltoAllvcMesh", 1024*1024*200);
+    RunAlltoAllvcMeshTest(1, 1, 4, CheckerOpMode::OPBASE, 400, "InsAlltoAllvcMesh", 1024 * 1024 * 200);
 }
 
 TEST_F(AllToAllVCTest, AlltoAllVCMesh_one_six_test)
 {
-    RunAlltoAllvcMeshTest(1, 1, 6, CheckerOpMode::OPBASE, 400, "InsAlltoAllvcMesh", 1024*1024*200);
+    RunAlltoAllvcMeshTest(1, 1, 6, CheckerOpMode::OPBASE, 400, "InsAlltoAllvcMesh", 1024 * 1024 * 200);
 }
 
 TEST_F(AllToAllVCTest, AlltoAllVCMesh_one_three_test)
 {
-    RunAlltoAllvcMeshTest(1, 1, 3, CheckerOpMode::OPBASE, 400, "InsAlltoAllvcMesh", 1024*1024*200);
+    RunAlltoAllvcMeshTest(1, 1, 3, CheckerOpMode::OPBASE, 400, "InsAlltoAllvcMesh", 1024 * 1024 * 200);
 }
 
 TEST_F(AllToAllVCTest, AlltoAllVCMesh_one_eight_test)
 {
-    RunAlltoAllvcMeshTest(1, 1, 8, CheckerOpMode::OPBASE, 400, "InsAlltoAllvcMesh", 1024*1024*200);
+    RunAlltoAllvcMeshTest(1, 1, 8, CheckerOpMode::OPBASE, 400, "InsAlltoAllvcMesh", 1024 * 1024 * 200);
 }
 
 TEST_F(AllToAllVCTest, AlltoAllVCMesh_one_eight_4G_test)
 {
-    RunAlltoAllvcMeshTest(1, 1, 8, CheckerOpMode::OPBASE, 400, "InsAlltoAllvcMesh", 1024*1024*9000);
+    RunAlltoAllvcMeshTest(1, 1, 8, CheckerOpMode::OPBASE, 400, "InsAlltoAllvcMesh", 1024 * 1024 * 9000);
 }
 
 TEST_F(AllToAllVCTest, AlltoAllVCMesh_one_eight_4G_offload_test)
 {
-    RunAlltoAllvcMeshTest(1, 1, 8, CheckerOpMode::OFFLOAD, 400, "InsAlltoAllvcMesh", 1024*1024*9000);
+    RunAlltoAllvcMeshTest(1, 1, 8, CheckerOpMode::OFFLOAD, 400, "InsAlltoAllvcMesh", 1024 * 1024 * 9000);
 }
 
 TEST_F(AllToAllVCTest, AlltoAllVCMesh_one_three_offload_test)
 {
-    RunAlltoAllvcMeshTest(1, 1, 3, CheckerOpMode::OFFLOAD, 400, "InsAlltoAllvcMesh", 1024*1024*200);
+    RunAlltoAllvcMeshTest(1, 1, 3, CheckerOpMode::OFFLOAD, 400, "InsAlltoAllvcMesh", 1024 * 1024 * 200);
 }

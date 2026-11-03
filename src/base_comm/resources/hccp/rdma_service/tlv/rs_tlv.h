@@ -11,13 +11,15 @@
 #ifndef RS_TLV_H
 #define RS_TLV_H
 
+#include "hccp_tlv.h"
 #include "ra_rs_comm.h"
 #include "rs.h"
 
-#define RS_TLV_BUFFER_SIZE    (64 * 1024) // 64KB
+#define RS_TLV_BUFFER_SIZE (64 * 1024) // 64KB
 
 RS_ATTRI_VISI_DEF int RsTlvInit(unsigned int phyId, unsigned int *bufferSize);
 RS_ATTRI_VISI_DEF int RsTlvDeinit(unsigned int phyId);
 RS_ATTRI_VISI_DEF int RsTlvRequest(struct TlvRequestMsgHead *head, char *dataIn, char *dataOut,
     unsigned int *bufferSize, unsigned int dataMaxLength);
+RS_ATTRI_VISI_DEF int RsCtxCustomChannel(const struct CustomChanInfoIn *in, struct CustomChanInfoOut *out);
 #endif // RS_TLV_H

@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef NET_VO_TBL_RANK_H
 #define NET_VO_TBL_RANK_H
 
@@ -142,4 +141,3 @@ char *NetTblGlobalRankValGetStr(NetTblGlobalRankVal *val, uint8_t *buf, int32_t 
 #endif
 
 #endif
-

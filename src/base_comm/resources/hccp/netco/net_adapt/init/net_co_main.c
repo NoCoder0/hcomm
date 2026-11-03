@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #define BKF_LOG_HND ((co)->log)
 #define BKF_MOD_NAME ((co)->name)
 
@@ -68,20 +67,20 @@ STATIC void NetCoDataDelete(NetCo *co)
     free(co);
 }
 STATIC const BkfModVTbl g_NetCoModVTbl[] = {
-    { (F_BKF_DO)NetCoMemInit,        (F_BKF_DOV)NetCoMemUninit },
-    { (F_BKF_DO)NetCoXMapInit,       (F_BKF_DOV)NetCoXMapUninit },
-    { (F_BKF_DO)NetCoDispInit,       (F_BKF_DOV)NetCoDispUninit },
-    { (F_BKF_DO)NetCoLogCntInit,     (F_BKF_DOV)NetCoLogCntUninit },
-    { (F_BKF_DO)NetCoLogInit,        (F_BKF_DOV)NetCoLogUninit },
-    { (F_BKF_DO)NetCoPfmInit,        (F_BKF_DOV)NetCoPfmUninit },
-    { (F_BKF_DO)NetCoMuxInit,        (F_BKF_DOV)NetCoMuxUninit },
-    { (F_BKF_DO)NetCoTmrInit,        (F_BKF_DOV)NetCoTmrUninit },
-    { (F_BKF_DO)NetCoDispOutInit,    (F_BKF_DOV)NetCoDispOutUninit },
-    { (F_BKF_DO)NetCoJobInit,        (F_BKF_DOV)NetCoJobUninit },
-    { (F_BKF_DO)NetCoSysLogInit,     (F_BKF_DOV)NetCoSysLogUninit },
+    {(F_BKF_DO)NetCoMemInit, (F_BKF_DOV)NetCoMemUninit},
+    {(F_BKF_DO)NetCoXMapInit, (F_BKF_DOV)NetCoXMapUninit},
+    {(F_BKF_DO)NetCoDispInit, (F_BKF_DOV)NetCoDispUninit},
+    {(F_BKF_DO)NetCoLogCntInit, (F_BKF_DOV)NetCoLogCntUninit},
+    {(F_BKF_DO)NetCoLogInit, (F_BKF_DOV)NetCoLogUninit},
+    {(F_BKF_DO)NetCoPfmInit, (F_BKF_DOV)NetCoPfmUninit},
+    {(F_BKF_DO)NetCoMuxInit, (F_BKF_DOV)NetCoMuxUninit},
+    {(F_BKF_DO)NetCoTmrInit, (F_BKF_DOV)NetCoTmrUninit},
+    {(F_BKF_DO)NetCoDispOutInit, (F_BKF_DOV)NetCoDispOutUninit},
+    {(F_BKF_DO)NetCoJobInit, (F_BKF_DOV)NetCoJobUninit},
+    {(F_BKF_DO)NetCoSysLogInit, (F_BKF_DOV)NetCoSysLogUninit},
 
-    { (F_BKF_DO)NetCoInInit,         (F_BKF_DOV)NetCoInUninit },
-    { (F_BKF_DO)NetCoOutInit,        (F_BKF_DOV)NetCoOutUninit },
+    {(F_BKF_DO)NetCoInInit, (F_BKF_DOV)NetCoInUninit},
+    {(F_BKF_DO)NetCoOutInit, (F_BKF_DOV)NetCoOutUninit},
 };
 NetCo *NetCoInit(NetCoInitArg *arg)
 {
@@ -137,4 +136,3 @@ uint32_t NetCoFdEvtDispatch(NetCo *co, int fd, uint32_t curEvents)
 #ifdef __cplusplus
 }
 #endif
-

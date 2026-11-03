@@ -12,21 +12,20 @@
 
 using namespace AscendC;
 
-template<typename T>
-// todo 简化参数
+template <typename T>
 class AivAlltoAllVMesh1D : public AivCommBase {
 public:
+    __aicore__ inline AivAlltoAllVMesh1D() {}
 
-    __aicore__ inline AivAlltoAllVMesh1D() {
-    }
-
-    __aicore__ inline void InitCoreInfo(uint64_t len, ExtraArgs &extraArgsPerLoop)
+    __aicore__ inline void InitCoreInfo(uint64_t len, ExtraArgs& extraArgsPerLoop)
     {
         targetRank = block_idx / coreNumPerRank; // 每个核负责哪个rank的数据
-        coreIndex = (block_idx - (targetRank * coreNumPerRank)) % coreNumPerRank;  // 每个核在当前coreNumPerRank里面的排序
+        coreIndex
+            = (block_idx - (targetRank * coreNumPerRank)) % coreNumPerRank; // 每个核在当前coreNumPerRank里面的排序
 
         // 发送数据的编排
-        uint64_t dataPerCore = extraArgsPerLoop.sendCounts[targetRank] / coreNumPerRank; // 数据量很少的时候，dataPerCore为0
+        uint64_t dataPerCore
+            = extraArgsPerLoop.sendCounts[targetRank] / coreNumPerRank; // 数据量很少的时候，dataPerCore为0
         uint64_t remainder = extraArgsPerLoop.sendCounts[targetRank] % coreNumPerRank;
         // 数据对不齐的情况
         uint64_t innerDispls = 0;
@@ -37,10 +36,10 @@ public:
             innerDispls = coreIndex * dataPerCore + remainder;
             sendCurCount = dataPerCore;
         }
-        sendInputOffset = input_ + (extraArgsPerLoop.sendDispls[targetRank] + innerDispls)  * sizeof(T);
+        sendInputOffset = input_ + (extraArgsPerLoop.sendDispls[targetRank] + innerDispls) * sizeof(T);
         sendOutputOffset = reinterpret_cast<uint64_t>(GM_IN[rank_]) + (targetRank * len + innerDispls) * sizeof(T);
 
-        //接收数据的编排
+        // 接收数据的编排
         dataPerCore = extraArgsPerLoop.recvCounts[targetRank] / coreNumPerRank;
         remainder = extraArgsPerLoop.recvCounts[targetRank] % coreNumPerRank;
         if (coreIndex < remainder) { // 这部分核需要多处理一个数据
@@ -62,7 +61,7 @@ public:
         uint64_t flag_offset = block_idx;
         WaitFlag(rank_, flag_offset, 0);
 
-        CpGM2GM((__gm__ T *)sendOutputOffset, (__gm__ T *)sendInputOffset, sendCurCount);
+        CpGM2GM((__gm__ T*)sendOutputOffset, (__gm__ T*)sendInputOffset, sendCurCount);
         PipeBarrier<PIPE_ALL>();
 
         Record(rank_, flag_offset, curTag);
@@ -76,13 +75,13 @@ public:
         uint64_t flag_offset = rank_ * coreNumPerRank + coreIndex;
         WaitFlag(targetRank, flag_offset, curTag);
 
-        CpGM2GM((__gm__ T *)recvOutputOffset, (__gm__ T *)recvInputOffset, recvCurCount);
+        CpGM2GM((__gm__ T*)recvOutputOffset, (__gm__ T*)recvInputOffset, recvCurCount);
         PipeBarrier<PIPE_ALL>(); // 核内自己的同步
 
         Record(targetRank, flag_offset, 0);
     }
 
-    __aicore__ inline void Process(uint64_t len, uint32_t tag, ExtraArgs &extraArgs)
+    __aicore__ inline void Process(uint64_t len, uint32_t tag, ExtraArgs& extraArgs)
     {
         // 先看一个或者多个核处理一张卡数据的情况
         coreNumPerRank = numBlocks_ / rankSize_;
@@ -111,11 +110,12 @@ public:
 
         uint64_t processedDataCount = 0;
         // 每张卡的loopTimes可能是不一样的
-        uint64_t loopTimes = maxSendOrRecvDataCount / cclBufferCountPerRank +
-            static_cast<uint64_t>(maxSendOrRecvDataCount % cclBufferCountPerRank != 0);
+        uint64_t loopTimes = maxSendOrRecvDataCount / cclBufferCountPerRank
+                             + static_cast<uint64_t>(maxSendOrRecvDataCount % cclBufferCountPerRank != 0);
         for (uint64_t loop = 0; loop < loopTimes; loop++) {
             ExtraArgs extraArgsPerLoop;
-            uint64_t currDataCount = (loop == loopTimes - 1) ? maxSendOrRecvDataCount - processedDataCount : cclBufferCountPerRank;
+            uint64_t currDataCount
+                = (loop == loopTimes - 1) ? maxSendOrRecvDataCount - processedDataCount : cclBufferCountPerRank;
             for (uint64_t i = 0; i < rankSize_; i++) {
                 if (extraArgs.sendCounts[i] > processedDataCount) {
                     extraArgsPerLoop.sendCounts[i] = min(currDataCount, extraArgs.sendCounts[i] - processedDataCount);
@@ -158,7 +158,7 @@ public:
     uint64_t cclBufferCountPerRank;
 };
 
-template<typename T>
+template <typename T>
 __aicore__ inline void AivAlltoAllVV2Mesh1D(EXTERN_KERNEL_ARGS_DEF_V2)
 {
     AivAlltoAllVMesh1D<T> op;

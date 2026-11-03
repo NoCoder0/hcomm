@@ -1,8 +1,11 @@
-/*
- * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
- * Description: ccu representation implementation file
- * Author: sunzhepeng
- * Create: 2024-06-17
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
  */
 
 #include "ccu_rep_v1.h"
@@ -15,24 +18,13 @@
 namespace hcomm {
 namespace CcuRep {
 
-FuncBlock::FuncBlock(CcuRepContext *context, std::string label, uint16_t callLayer)
-    : context(context), label(label), callLayer(callLayer)
-{
-    repFuncBlock = std::make_shared<CcuRepFuncBlock>(label);
-    AppendToContext(context, repFuncBlock);
+    FuncBlock::FuncBlock(CcuRepContext* context, std::string label, uint16_t callLayer)
+        : context(context),
+          label(label),
+          callLayer(callLayer)
+    {}
 
-    curActiveBlock = CurrentBlock(context);
-
-    SetCurrentBlock(context, repFuncBlock);
-
-    HCCL_INFO("Enter block %s, last block %s", repFuncBlock->Describe().c_str(), curActiveBlock->Describe().c_str());
-}
-
-FuncBlock::~FuncBlock()
-{
-    repFuncBlock->SetCallLayer(callLayer);
-    SetCurrentBlock(context, curActiveBlock);
-}
+    FuncBlock::~FuncBlock() {}
 
 }; // namespace CcuRep
 }; // namespace hcomm

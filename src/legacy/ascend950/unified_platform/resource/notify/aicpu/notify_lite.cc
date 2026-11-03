@@ -7,13 +7,14 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #include "notify_lite.h"
 #include "binary_stream.h"
 #include "string_util.h"
 #include "log.h"
 namespace Hccl {
 
-NotifyLite::NotifyLite(std::vector<char> &uniqueId)
+NotifyLite::NotifyLite(std::vector<char>& uniqueId)
 {
     BinaryStream binaryStream(uniqueId);
     binaryStream >> notifyId;
@@ -21,15 +22,9 @@ NotifyLite::NotifyLite(std::vector<char> &uniqueId)
     HCCL_INFO("NotifyLite::NotifyLite:%s", Describe().c_str());
 }
 
-u32 NotifyLite::GetId() const
-{
-    return notifyId;
-}
+u32 NotifyLite::GetId() const { return notifyId; }
 
-u32 NotifyLite::GetDevPhyId() const
-{
-    return devPhyId;
-}
+u32 NotifyLite::GetDevPhyId() const { return devPhyId; }
 
 std::string NotifyLite::Describe() const
 {

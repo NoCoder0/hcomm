@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -71,40 +71,24 @@
 using namespace std;
 using namespace hccl;
 
-class HcclCommTest : public testing::Test
-{
+class HcclCommTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "\033[36m--HcclCommTest SetUP--\033[0m" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "\033[36m--HcclCommTest TearDown--\033[0m" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "\033[36m--HcclCommTest SetUP--\033[0m" << std::endl; }
+    static void TearDownTestCase() { std::cout << "\033[36m--HcclCommTest TearDown--\033[0m" << std::endl; }
     // Some expensive resource shared by all tests.
     virtual void SetUp()
     {
         s32 portNum = 7;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
-        MOCKER(GetExternalInputHcclLinkTimeOut)
-            .stubs()
-            .will(returnValue(1));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
+        MOCKER(GetExternalInputHcclLinkTimeOut).stubs().will(returnValue(1));
         DlTdtFunction::GetInstance().DlTdtFunctionInit();
         DlTraceFunction::GetInstance().DlTraceFunctionInit();
         TsdOpen(1, 2);
-        static s32  call_cnt = 0;
-        string name =std::to_string(call_cnt++) +"_" + __PRETTY_FUNCTION__;
-        ra_set_shm_name(name .c_str());
-        MOCKER_CPP(&Heartbeat::RegisterRanks)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
-        MOCKER_CPP(&Heartbeat::UnRegisterRanks)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+        static s32 call_cnt = 0;
+        string name = std::to_string(call_cnt++) + "_" + __PRETTY_FUNCTION__;
+        ra_set_shm_name(name.c_str());
+        MOCKER_CPP(&Heartbeat::RegisterRanks).stubs().will(returnValue(HCCL_SUCCESS));
+        MOCKER_CPP(&Heartbeat::UnRegisterRanks).stubs().will(returnValue(HCCL_SUCCESS));
     }
     virtual void TearDown()
     {
@@ -117,39 +101,24 @@ void public_stubs(bool needStubOp)
 {
     u32 interfaceVersion = 1;
     MOCKER(hrtRaGetInterfaceVersion)
-    .stubs()
-    .with(mockcpp::any(), mockcpp::any(), outBoundP(&interfaceVersion))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), outBoundP(&interfaceVersion))
+        .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(hrtTraceCreateWithAttr)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtTraceCreateWithAttr).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(hccl::RegisterKernel)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hccl::RegisterKernel).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::InitProfiler)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitProfiler).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclSocketManager::ServerInit)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclSocketManager::ServerInit).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     if (needStubOp) {
-        MOCKER_CPP(&HcclCommunicator::ExecOp)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(HCCL_SUCCESS));
+        MOCKER_CPP(&HcclCommunicator::ExecOp).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     }
 }
 
-static void TestConstructParam(HcclCommParams &params, RankTable_t &rankTable)
+static void TestConstructParam(HcclCommParams& params, RankTable_t& rankTable)
 {
     string commId = "comm ";
     memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
@@ -179,7 +148,8 @@ static void TestConstructParam(HcclCommParams &params, RankTable_t &rankTable)
     rankTable.serverNum = 2;
 }
 
-static void TestConstructParamsByRankInfo(HcclCommParams &params,  WorldGroupInfo &groupCommonData, std::vector<RankInfo> &ranks)
+static void
+TestConstructParamsByRankInfo(HcclCommParams& params, WorldGroupInfo& groupCommonData, std::vector<RankInfo>& ranks)
 {
     string commId = "comm ";
     memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
@@ -338,7 +308,7 @@ RankTable_t get_rank_table_rank_nic_host()
     server.networkInfo.push_back(net);
     rankTable.serverList.push_back(server);
 
-   return rankTable;
+    return rankTable;
 }
 
 RankTable_t get_rank_table_rank_4p_mesh()
@@ -352,8 +322,7 @@ RankTable_t get_rank_table_rank_4p_mesh()
     rankTable.nicNames.push_back("eth0");
     rankTable.rankNum = 1;
 
-    for(int i = 0; i < rankTable.deviceNum; ++i)
-    {
+    for (int i = 0; i < rankTable.deviceNum; ++i) {
         // rank 信息
         RankInfo_t rank;
         rank.rankId = i;
@@ -366,7 +335,6 @@ RankTable_t get_rank_table_rank_4p_mesh()
 
     return rankTable;
 }
-
 
 RankTable_t get_rank_table_rank_nic_device()
 {
@@ -388,22 +356,22 @@ RankTable_t get_rank_table_rank_nic_device()
     rank.deviceInfo.deviceIp.push_back(HcclIpAddress("172.17.10.1"));
     rankTable.rankList.push_back(rank);
 
-//    rank.rankId = 1;
-//    rank.deviceInfo.devicePhyId = 1;
-//    rank.deviceInfo.deviceIp = "172.17.10.2";
-//    rankTable.rankList.push_back(rank);
-//
-//    rank.rankId = 2;
-//    rank.deviceInfo.devicePhyId = 2;
-//    rank.deviceInfo.deviceIp = "172.17.10.3";
-//    rankTable.rankList.push_back(rank);
-//
-//    rank.rankId = 3;
-//    rank.deviceInfo.devicePhyId = 3;
-//    rank.deviceInfo.deviceIp = "172.17.10.4";
-//    rankTable.rankList.push_back(rank);
+    //    rank.rankId = 1;
+    //    rank.deviceInfo.devicePhyId = 1;
+    //    rank.deviceInfo.deviceIp = "172.17.10.2";
+    //    rankTable.rankList.push_back(rank);
+    //
+    //    rank.rankId = 2;
+    //    rank.deviceInfo.devicePhyId = 2;
+    //    rank.deviceInfo.deviceIp = "172.17.10.3";
+    //    rankTable.rankList.push_back(rank);
+    //
+    //    rank.rankId = 3;
+    //    rank.deviceInfo.devicePhyId = 3;
+    //    rank.deviceInfo.deviceIp = "172.17.10.4";
+    //    rankTable.rankList.push_back(rank);
 
-   return rankTable;
+    return rankTable;
 }
 
 // hcclComm的API成功用例
@@ -426,7 +394,7 @@ TEST_F(HcclCommTest, hcclComm_init_nic_host)
     para.deviceType = DevType::DEV_TYPE_910;
 
     RankTable_t rankTable = get_rank_table_rank_nic_device();
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = comm.init(para, commConfig, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
@@ -447,7 +415,7 @@ TEST_F(HcclCommTest, hcclComm_init_inline_reduce_switch)
     para.logicDevId = 0;
     para.deviceType = DevType::DEV_TYPE_910;
     RankTable_t rankTable = get_rank_table_rank_nic_device();
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = comm.init(para, commConfig, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
@@ -457,7 +425,7 @@ TEST_F(HcclCommTest, hcclComm_get_unique_id)
     s32 ret = HCCL_SUCCESS;
     hcclComm comm;
     HcclRootInfo uniqueid;
-    ret =comm.GetUniqueId(&uniqueid);
+    ret = comm.GetUniqueId(&uniqueid);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
 
@@ -503,14 +471,13 @@ TEST_F(HcclCommTest, hcclComm_allgather)
 
     hcclComm comm;
     RankTable_t rankTable = get_rank_table_rank_nic_device();
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = comm.init(comm_params, commConfig, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    if (HCCL_SUCCESS == ret)
-    {
+    if (HCCL_SUCCESS == ret) {
         // 执行all-gather
-        ret = comm.AllGather("allgather",mem_dev_input, mem_dev_output, 1, HCCL_DATA_TYPE_INT8, stream);
+        ret = comm.AllGather("allgather", mem_dev_input, mem_dev_output, 1, HCCL_DATA_TYPE_INT8, stream);
         EXPECT_EQ(ret, HCCL_SUCCESS);
     }
 
@@ -533,8 +500,8 @@ TEST_F(HcclCommTest, hcclComm_allreduce)
     s32 ret = HCCL_SUCCESS;
     s32 rt_ret = RT_ERROR_NONE;
 
-    setenv("HCCL_LL_THRESHOLD","2", 1);
-    setenv("HCCL_HB_THRESHOLD","4", 1);
+    setenv("HCCL_LL_THRESHOLD", "2", 1);
+    setenv("HCCL_HB_THRESHOLD", "4", 1);
     setenv("HCCL_NET_NAME", "eth0", 1);
 
     ret = hrtSetDevice(0);
@@ -571,14 +538,14 @@ TEST_F(HcclCommTest, hcclComm_allreduce)
     EXPECT_EQ(ret, HCCL_SUCCESS);
     hcclComm comm;
     RankTable_t rankTable = get_rank_table_rank_nic_device();
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = comm.init(comm_params, commConfig, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    if (HCCL_SUCCESS == ret)
-    {
+    if (HCCL_SUCCESS == ret) {
         // 执行all-reduce
-        ret = comm.AllReduce("allreduce", mem_dev_input, mem_dev_output, 1, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_SUM, stream);
+        ret = comm.AllReduce(
+            "allreduce", mem_dev_input, mem_dev_output, 1, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_SUM, stream);
         EXPECT_EQ(ret, HCCL_SUCCESS);
     }
 
@@ -601,8 +568,8 @@ TEST_F(HcclCommTest, hcclComm_allreduce_mesh)
     s32 ret = HCCL_SUCCESS;
     s32 rt_ret = RT_ERROR_NONE;
 
-    setenv("HCCL_LL_THRESHOLD","2", 1);
-    setenv("HCCL_HB_THRESHOLD","4", 1);
+    setenv("HCCL_LL_THRESHOLD", "2", 1);
+    setenv("HCCL_HB_THRESHOLD", "4", 1);
     setenv("HCCL_NET_NAME", "eth0", 1);
 
     ret = hrtSetDevice(0);
@@ -639,13 +606,13 @@ TEST_F(HcclCommTest, hcclComm_allreduce_mesh)
 
     hcclComm comm;
     RankTable_t rankTable = get_rank_table_rank_nic_device();
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = comm.init(comm_params, commConfig, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    if (HCCL_SUCCESS == ret)
-    {
+    if (HCCL_SUCCESS == ret) {
         // 执行all-reduce
-        ret = comm.AllReduce("allreduce", mem_dev_input, mem_dev_output, 1, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_SUM, stream);
+        ret = comm.AllReduce(
+            "allreduce", mem_dev_input, mem_dev_output, 1, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_SUM, stream);
         EXPECT_EQ(ret, HCCL_SUCCESS);
     }
 
@@ -664,15 +631,14 @@ TEST_F(HcclCommTest, hcclComm_allreduce_mesh)
 
 #define DEV_NUM_4 4
 #define HCCL_ALLREDUCE_DATA_SIZE 10
-#define HCCL_ALLREDUCE_DATA_SLICE 1024*1024*2+10
+#define HCCL_ALLREDUCE_DATA_SLICE 1024 * 1024 * 2 + 10
 
-typedef struct para_struct
-{
+typedef struct para_struct {
     HcclRootInfo rootInfo;
     std::string identify;
     s32 comm_num;
     s32 device_id;
-    s32 ranks_local; //本服务器内的rank数
+    s32 ranks_local; // 本服务器内的rank数
 
     char* file_name;
     void* sendbuff;
@@ -709,33 +675,30 @@ void* inter_all_reduce_task_0(void* parg)
     sal_memset(hcom_info.params.id.internal, HCCL_ROOT_INFO_BYTES, 0, sizeof(hcom_info.params.id.internal));
     sal_memcpy(hcom_info.params.id.internal, sizeof(HcclRootInfo), &para_info->rootInfo, sizeof(HcclRootInfo));
 
-    hcom_info.pComm.reset(new(std::nothrow) hccl::hcclComm());
+    hcom_info.pComm.reset(new (std::nothrow) hccl::hcclComm());
     rtModel_t model = (void*)1;
 
-
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = hcom_info.pComm->init(hcom_info.params, commConfig, hcom_info.rankTable);
-    if (ret != HCCL_SUCCESS)
-    {
+    if (ret != HCCL_SUCCESS) {
         HCCL_ERROR("dev[%d] task all_reduce fails", para_info->device_id);
     }
     SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB);
     u64 stream_list_size = 0;
-    ret = hcom_info.pComm->GetWorkspaceSubStreamNum(para_info->count, para_info->datatype, para_info->op, para_info->identify, stream_list_size);
+    ret = hcom_info.pComm->GetWorkspaceSubStreamNum(
+        para_info->count, para_info->datatype, para_info->op, para_info->identify, stream_list_size);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     HCCL_INFO("get stream_list_size[%d] success", stream_list_size);
     vector<HcclRtStream> streamList(stream_list_size);
-    void *memptr = nullptr;
-
+    void* memptr = nullptr;
 
     //-----------------Set Workspace Resource Start------------------//
     rtError_t rt_ret;
-    //生成从stream
-    for (s32 i = 0; i < stream_list_size; i++)
-    {
+    // 生成从stream
+    for (s32 i = 0; i < stream_list_size; i++) {
         rt_ret = aclrtCreateStreamWithConfig(&streamList[i], 0, ACL_STREAM_PERSISTENT);
         EXPECT_EQ(rt_ret, RT_ERROR_NONE);
-        //从流bind到model
+        // 从流bind到model
         rt_ret = aclmdlRIBindStream(model, streamList[i], RT_MODEL_WAIT_ACTIVE_STREAM);
         EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     }
@@ -745,7 +708,8 @@ void* inter_all_reduce_task_0(void* parg)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u64 memSize = 0;
-    ret = hcom_info.pComm->GetWorkspaceMemSize("HcomAllReduce", para_info->count, para_info->datatype, rankSize, memSize);
+    ret = hcom_info.pComm->GetWorkspaceMemSize(
+        "HcomAllReduce", para_info->count, para_info->datatype, rankSize, memSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     ret = hrtMalloc(&memptr, memSize);
@@ -759,40 +723,32 @@ void* inter_all_reduce_task_0(void* parg)
 
     rank_num_tmp = *(para_info->sync_addr) - 1;
 
-    do
-    {
+    do {
         rank_num_tmp += 1;
 
         swapped = __sync_bool_compare_and_swap(para_info->sync_addr, rank_num_tmp, rank_num_tmp + 1);
-    }
-    while (!swapped);
+    } while (!swapped);
 
-    while (*(para_info->sync_addr) < para_info->ranks_local)
-    { sched_yield(); } // linux提供一个系统调用运行进程主动让出执行权
+    while (*(para_info->sync_addr) < para_info->ranks_local) {
+        sched_yield();
+    } // linux提供一个系统调用运行进程主动让出执行权
 
-    __sync_synchronize();  // 插入内存屏障，对顺序性有要求，但是有没有使用lock指令的时候
+    __sync_synchronize(); // 插入内存屏障，对顺序性有要求，但是有没有使用lock指令的时候
 
-    if (ret != HCCL_SUCCESS)
-    {
+    if (ret != HCCL_SUCCESS) {
         HCCL_ERROR("dev[%d] comm get map streamModel fail!", para_info->device_id);
     }
-    ret =  hcom_info.pComm->AllReduce("tag_inter_all_reduce_task_0_inter",
-                               para_info->sendbuff,
-                               para_info->recvbuff,
-                               para_info->count,
-                               para_info->datatype,
-                               para_info->op,
-                               para_info->stream);
+    ret = hcom_info.pComm->AllReduce(
+        "tag_inter_all_reduce_task_0_inter", para_info->sendbuff, para_info->recvbuff, para_info->count,
+        para_info->datatype, para_info->op, para_info->stream);
 
-    if (ret != HCCL_SUCCESS)
-    {
+    if (ret != HCCL_SUCCESS) {
         HCCL_ERROR("dev[%d] task HcclAllReduce fails", hcom_info.params.rank);
     }
 
     rt_ret = aclrtSynchronizeStream(para_info->stream);
     //--------------Resource destroy----------------//
-    for (s32 i = 0; i < stream_list_size; i++)
-    {
+    for (s32 i = 0; i < stream_list_size; i++) {
         rt_ret = aclmdlRIUnbindStream(model, streamList[i]);
         EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
@@ -801,8 +757,7 @@ void* inter_all_reduce_task_0(void* parg)
     }
     hrtFree(memptr);
 
-    if ( rt_ret != RT_ERROR_NONE)
-    {
+    if (rt_ret != RT_ERROR_NONE) {
         HCCL_ERROR("rank[%d] task allgather fails", hcom_info.params.rank);
     }
 
@@ -817,13 +772,10 @@ TEST_F(HcclCommTest, ut_allreduce_4p_ring)
     char file_name_t[] = "./ut_allreduce_4p_ring.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(4) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -856,52 +808,45 @@ TEST_F(HcclCommTest, ut_allreduce_4p_ring)
     ret = hccl::hcclComm::GetUniqueId(&rootInfo);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     /** 初始化输入输出缓存 */
-    for (s32 i = 0; i < ndev; i++ )
-    {
-        ret = hrtMalloc((void **)&(sendbuf[i]), count * sizeof(s8));
+    for (s32 i = 0; i < ndev; i++) {
+        ret = hrtMalloc((void**)&(sendbuf[i]), count * sizeof(s8));
         EXPECT_EQ(ret, HCCL_SUCCESS);
-        sal_memset(sendbuf[i],count * sizeof(s8), 0, count * sizeof(s8));
-        ret = hrtMalloc((void **)&(recvbuf[i]), count * sizeof(s8));
+        sal_memset(sendbuf[i], count * sizeof(s8), 0, count * sizeof(s8));
+        ret = hrtMalloc((void**)&(recvbuf[i]), count * sizeof(s8));
         EXPECT_EQ(ret, HCCL_SUCCESS);
-        sal_memset(recvbuf[i], count  * sizeof(s8), 0,  count * sizeof(s8));
-        ret = hrtMalloc((void **)&(result_buff[i]), count * sizeof(s8));
+        sal_memset(recvbuf[i], count * sizeof(s8), 0, count * sizeof(s8));
+        ret = hrtMalloc((void**)&(result_buff[i]), count * sizeof(s8));
         EXPECT_EQ(ret, HCCL_SUCCESS);
         sal_memset(result_buff[i], count * sizeof(s8), 0, count * sizeof(s8));
         inputbuf[i] = sendbuf[i];
         outputbuf[i] = recvbuf[i];
     }
 
-    //sendbuf 赋值
-    for (u32 j = 0; j < ndev; j++)
-    {
-        for (u32 i = 0; i < count; i++)
-        {
+    // sendbuf 赋值
+    for (u32 j = 0; j < ndev; j++) {
+        for (u32 i = 0; i < count; i++) {
             inputbuf[j][i] = 1;
         }
     }
 
-    //resultbuf 赋值
-   for (s32 i = 0; i < ndev; ++i)
- {
-    for (u32 j = 0; j < count; j++)
-     {
+    // resultbuf 赋值
+    for (s32 i = 0; i < ndev; ++i) {
+        for (u32 j = 0; j < count; j++) {
             result_buff[i][j] = ndev;
-     }
+        }
     }
-    for (s32 i = 0; i < ndev; ++i)
-    {
+    for (s32 i = 0; i < ndev; ++i) {
         rt_ret = aclrtCreateStream(&stream[i]);
         EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     }
 
-    for (s32 i = 0; i < ndev; i++)
-    {
+    for (s32 i = 0; i < ndev; i++) {
         sal_memcpy(&para_info[i].rootInfo, sizeof(HcclRootInfo), &rootInfo, sizeof(HcclRootInfo));
         std::ostringstream identify("");
         identify << i;
         para_info[i].identify = identify.str();
         para_info[i].comm_num = ndev;
-        para_info[i].device_id = i ;
+        para_info[i].device_id = i;
         para_info[i].ranks_local = ndev;
 
         para_info[i].count = count;
@@ -914,55 +859,44 @@ TEST_F(HcclCommTest, ut_allreduce_4p_ring)
         para_info[i].sync_addr = &sync_value;
         para_info[i].file_name = file_name_t;
         para_info[i].offline = false;
-
     }
 
     // 创建每个Dev的allreduce任务线程
-    for (s32 i = 0; i < ndev; i++)
-    {
+    for (s32 i = 0; i < ndev; i++) {
         tid[i] = sal_thread_create("thread", inter_all_reduce_task_0, (void*)&para_info[i]);
-        EXPECT_NE(tid[i], (sal_thread_t )NULL);
+        EXPECT_NE(tid[i], (sal_thread_t)NULL);
     }
 
-    for (s32 i = 0; i < ndev; i++)
-    {
-        while ( sal_thread_is_running(tid[i]))
-        {
+    for (s32 i = 0; i < ndev; i++) {
+        while (sal_thread_is_running(tid[i])) {
             SaluSleep(SAL_MILLISECOND_USEC * 10);
         }
     }
 
-    //获取stream的操作的同步信号量
-    for (s32 i = 0; i < ndev; i++)
-  {
-     for (s32 j = 0; j < count; j++)
-    {
+    // 获取stream的操作的同步信号量
+    for (s32 i = 0; i < ndev; i++) {
+        for (s32 j = 0; j < count; j++) {
             s8 res = result_buff[i][j];
             s8 recv = outputbuf[i][j];
 
-            if (res != recv)
-            {
+            if (res != recv) {
                 HCCL_ERROR(" recvbuf[%d] result_buff[%d] \n", recv, res);
             }
+        }
     }
-        }
-      if (errors)
-        {
-            HCCL_ERROR("%d errors. Test FAILED.\n", errors);
-        }
-        else
-        {
-            HCCL_INFO("Test PASSED.\n");
-        }
-    for (s32 i = 0; i < ndev; i++)
-   {
+    if (errors) {
+        HCCL_ERROR("%d errors. Test FAILED.\n", errors);
+    } else {
+        HCCL_INFO("Test PASSED.\n");
+    }
+    for (s32 i = 0; i < ndev; i++) {
         hrtFree(sendbuf[i]);
         hrtFree(recvbuf[i]);
         hrtFree(result_buff[i]);
-    rt_ret = aclrtDestroyStream(stream[i]);
+        rt_ret = aclrtDestroyStream(stream[i]);
 
-    EXPECT_EQ(rt_ret, RT_ERROR_NONE);
-   }
+        EXPECT_EQ(rt_ret, RT_ERROR_NONE);
+    }
     set_board_id(0);
     remove(file_name_t);
     EXPECT_EQ(errors, 0);
@@ -1001,14 +935,13 @@ TEST_F(HcclCommTest, hcclComm_broadcast)
 
     hcclComm comm;
     RankTable_t rankTable = get_rank_table_rank_nic_device();
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = comm.init(comm_params, commConfig, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    if (HCCL_SUCCESS == ret)
-    {
+    if (HCCL_SUCCESS == ret) {
         // 执行broadcast
-        ret = comm.Broadcast("broadcast",mem_dev, 1, HCCL_DATA_TYPE_INT8, 0, stream);
+        ret = comm.Broadcast("broadcast", mem_dev, 1, HCCL_DATA_TYPE_INT8, 0, stream);
         EXPECT_EQ(ret, HCCL_SUCCESS);
     }
 
@@ -1055,20 +988,18 @@ TEST_F(HcclCommTest, hcclComm_broadcast_mesh)
 
     hcclComm comm;
     RankTable_t rankTable = get_rank_table_rank_nic_device();
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = comm.init(comm_params, commConfig, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    if (HCCL_SUCCESS == ret)
-    {
+    if (HCCL_SUCCESS == ret) {
         // 执行broadcast
-        ret = comm.Broadcast("broadcast",mem_dev, 1, HCCL_DATA_TYPE_INT8, 0, stream);
+        ret = comm.Broadcast("broadcast", mem_dev, 1, HCCL_DATA_TYPE_INT8, 0, stream);
         EXPECT_EQ(ret, HCCL_SUCCESS);
     }
 
     rt_ret = aclrtSynchronizeStream(stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
-
 
     rt_ret = aclrtFree(mem_dev);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
@@ -1077,17 +1008,13 @@ TEST_F(HcclCommTest, hcclComm_broadcast_mesh)
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 }
 
-
 #define HCCL_BROADCAST_DATA_SIZE 10
 #define HCCL_BROADCAST_DATA_SLICE 1024
 
 void* inter_broadcast_task_0(void* parg)
 {
     s32 portNum = 7;
-    MOCKER(hrtGetHccsPortNum)
-        .stubs()
-        .with(mockcpp::any(), outBound(portNum))
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
     HcclResult ret = HCCL_SUCCESS;
     para_t* para_info = (para_t*)parg;
     s32 rank_num_tmp;
@@ -1105,13 +1032,12 @@ void* inter_broadcast_task_0(void* parg)
     sal_memset(hcom_info.params.id.internal, HCCL_ROOT_INFO_BYTES, 0, sizeof(hcom_info.params.id.internal));
     sal_memcpy(hcom_info.params.id.internal, sizeof(HcclRootInfo), &para_info->rootInfo, sizeof(HcclRootInfo));
 
-    hcom_info.pComm.reset(new(std::nothrow) hccl::hcclComm());
+    hcom_info.pComm.reset(new (std::nothrow) hccl::hcclComm());
     rtModel_t model = (void*)1;
 
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = hcom_info.pComm->init(hcom_info.params, commConfig, hcom_info.rankTable);
-    if (ret != HCCL_SUCCESS)
-    {
+    if (ret != HCCL_SUCCESS) {
         HCCL_ERROR("dev[%d] task broadcast fails", para_info->device_id);
     }
 
@@ -1121,37 +1047,31 @@ void* inter_broadcast_task_0(void* parg)
 
     rank_num_tmp = *(para_info->sync_addr) - 1;
 
-    do
-    {
+    do {
         rank_num_tmp += 1;
 
         swapped = __sync_bool_compare_and_swap(para_info->sync_addr, rank_num_tmp, rank_num_tmp + 1);
-    }
-    while (!swapped);
+    } while (!swapped);
 
-    while (*(para_info->sync_addr) < para_info->ranks_local)
-    { sched_yield(); } // linux提供一个系统调用运行进程主动让出执行权
+    while (*(para_info->sync_addr) < para_info->ranks_local) {
+        sched_yield();
+    } // linux提供一个系统调用运行进程主动让出执行权
 
-    __sync_synchronize();  // 插入内存屏障，对顺序性有要求，但是有没有使用lock指令的时候
+    __sync_synchronize(); // 插入内存屏障，对顺序性有要求，但是有没有使用lock指令的时候
 
     HCCL_DEBUG("all %d  ranks init ok ,then broadcast", hcom_info.params.totalRanks);
-    ret = hcom_info.pComm->Broadcast("tag_inter_broadcast_task_0_inter",
-                                      para_info->sendbuff,
-                                      para_info->count,
-                                      para_info->datatype,
-                                      para_info->root,
-                                      para_info->stream);
+    ret = hcom_info.pComm->Broadcast(
+        "tag_inter_broadcast_task_0_inter", para_info->sendbuff, para_info->count, para_info->datatype, para_info->root,
+        para_info->stream);
 
-    if (ret != HCCL_SUCCESS)
-    {
+    if (ret != HCCL_SUCCESS) {
         HCCL_ERROR("rank[%d] task broadcast fails", hcom_info.params.rank);
     }
 
     rtError_t rt_ret = RT_ERROR_NONE;
     rt_ret = aclrtSynchronizeStream(para_info->stream);
 
-    if ( rt_ret != RT_ERROR_NONE)
-    {
+    if (rt_ret != RT_ERROR_NONE) {
         HCCL_ERROR("rank[%d] task allgather fails", hcom_info.params.rank);
     }
 
@@ -1195,14 +1115,14 @@ TEST_F(HcclCommTest, hcclComm_reduce)
 
     hcclComm comm;
     RankTable_t rankTable = get_rank_table_rank_nic_device();
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = comm.init(comm_params, commConfig, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    if (HCCL_SUCCESS == ret)
-    {
+    if (HCCL_SUCCESS == ret) {
         // 执行reduce
-        ret = comm.Reduce("reduce",mem_dev_input + 128, mem_dev_output + 128, 1, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_SUM, 0, stream);
+        ret = comm.Reduce(
+            "reduce", mem_dev_input + 128, mem_dev_output + 128, 1, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_SUM, 0, stream);
         EXPECT_EQ(ret, HCCL_SUCCESS);
     }
 
@@ -1256,7 +1176,7 @@ TEST_F(HcclCommTest, hcclComm_reduce_scatter_ring)
 
     hcclComm comm;
     RankTable_t rankTable = get_rank_table_rank_nic_device();
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = comm.init(comm_params, commConfig, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB);
@@ -1270,11 +1190,10 @@ TEST_F(HcclCommTest, hcclComm_reduce_scatter_ring)
     EXPECT_EQ(ret, HCCL_SUCCESS);
     HCCL_INFO("get stream_list_size[%d] success", stream_list_size);
     vector<HcclRtStream> streamList(stream_list_size);
-    //从流bind到model
+    // 从流bind到model
     rtModel_t model = (void*)1;
-    //生成从stream
-    for (s32 i = 0; i < stream_list_size; i++)
-    {
+    // 生成从stream
+    for (s32 i = 0; i < stream_list_size; i++) {
         rt_ret = aclrtCreateStreamWithConfig(&streamList[i], 0, ACL_STREAM_PERSISTENT);
         EXPECT_EQ(rt_ret, RT_ERROR_NONE);
         rt_ret = aclmdlRIBindStream(model, streamList[i], RT_MODEL_WAIT_ACTIVE_STREAM);
@@ -1290,7 +1209,7 @@ TEST_F(HcclCommTest, hcclComm_reduce_scatter_ring)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     HCCL_INFO("HCCL TEST memSize[%llu]", memSize);
-    void *memptr = nullptr;
+    void* memptr = nullptr;
     ret = hrtMalloc(&memptr, memSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
@@ -1299,10 +1218,11 @@ TEST_F(HcclCommTest, hcclComm_reduce_scatter_ring)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     //-----------------Set Workspace Resource End------------------//
-    if (HCCL_SUCCESS == ret)
-    {
+    if (HCCL_SUCCESS == ret) {
         // 执行reduce-scatter
-        ret = comm.ReduceScatter("reducescatter",mem_dev_input + 128, mem_dev_output + 128, 1, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_SUM, stream);
+        ret = comm.ReduceScatter(
+            "reducescatter", mem_dev_input + 128, mem_dev_output + 128, 1, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_SUM,
+            stream);
         EXPECT_EQ(ret, HCCL_SUCCESS);
     }
 
@@ -1356,7 +1276,7 @@ TEST_F(HcclCommTest, hcclComm_reduce_scatter)
 
     hcclComm comm;
     RankTable_t rankTable = get_rank_table_rank_nic_device();
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = comm.init(comm_params, commConfig, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB);
@@ -1370,11 +1290,10 @@ TEST_F(HcclCommTest, hcclComm_reduce_scatter)
     EXPECT_EQ(ret, HCCL_SUCCESS);
     HCCL_INFO("get stream_list_size[%d] success", stream_list_size);
     vector<HcclRtStream> streamList(stream_list_size);
-    //从流bind到model
+    // 从流bind到model
     rtModel_t model = (void*)1;
-    //生成从stream
-    for (s32 i = 0; i < stream_list_size; i++)
-    {
+    // 生成从stream
+    for (s32 i = 0; i < stream_list_size; i++) {
         rt_ret = aclrtCreateStreamWithConfig(&streamList[i], 0, ACL_STREAM_PERSISTENT);
         EXPECT_EQ(rt_ret, RT_ERROR_NONE);
         rt_ret = aclmdlRIBindStream(model, streamList[i], RT_MODEL_WAIT_ACTIVE_STREAM);
@@ -1390,7 +1309,7 @@ TEST_F(HcclCommTest, hcclComm_reduce_scatter)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     HCCL_INFO("HCCL TEST memSize[%llu]", memSize);
-    void *memptr = nullptr;
+    void* memptr = nullptr;
     ret = hrtMalloc(&memptr, memSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
@@ -1399,13 +1318,13 @@ TEST_F(HcclCommTest, hcclComm_reduce_scatter)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     //-----------------Set Workspace Resource End------------------//
-    if (HCCL_SUCCESS == ret)
-    {
+    if (HCCL_SUCCESS == ret) {
         // 执行reduce-scatter
-        ret = comm.ReduceScatter("reducescatter",mem_dev_input + 128, mem_dev_output + 128, 1, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_SUM, stream);
+        ret = comm.ReduceScatter(
+            "reducescatter", mem_dev_input + 128, mem_dev_output + 128, 1, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_SUM,
+            stream);
         EXPECT_EQ(ret, HCCL_SUCCESS);
     }
-
 
     rt_ret = aclrtSynchronizeStream(stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
@@ -1432,7 +1351,7 @@ TEST_F(HcclCommTest, hcclImpl_check_root_err)
     EXPECT_EQ(ret, HCCL_SUCCESS);
     RankTable_t rankTable = get_rank_table_rank_nic_device();
     HcclCommunicator impl;
-    ret = impl.Init(comm_params,rankTable);
+    ret = impl.Init(comm_params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ret = impl.CheckUserRank(-1);
     EXPECT_EQ(ret, HCCL_E_PARA);
@@ -1447,13 +1366,10 @@ TEST_F(HcclCommTest, hcclImpl_check_params_err)
     char file_name_t[] = "./hcclImpl_check_params_err.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(4) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -1473,16 +1389,14 @@ TEST_F(HcclCommTest, hcclImpl_check_params_err)
     ret = CfgGetClusterInfo(rankTableM, "0", hcom_info.params, hcom_info.rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    hcom_info.pComm.reset(new(std::nothrow) hccl::hcclComm());
+    hcom_info.pComm.reset(new (std::nothrow) hccl::hcclComm());
     hcom_info.params.totalRanks = 10;
     hcom_info.params.rank = 12;
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = hcom_info.pComm->init(hcom_info.params, commConfig, hcom_info.rankTable);
-    if (ret != HCCL_SUCCESS)
-    {
+    if (ret != HCCL_SUCCESS) {
         HCCL_ERROR("rank[%d] task all_gather fails", hcom_info.params.rank);
     }
-
 
     HcclCommParams params;
     RankTable_t rankTable;
@@ -1513,7 +1427,6 @@ TEST_F(HcclCommTest, hcclImpl_check_params_err)
     ret = hcom_info.pComm->init(params, commConfig, rankTable);
     remove(file_name_t);
     EXPECT_EQ(ret, HCCL_E_PARA);
-
 }
 #endif
 
@@ -1593,7 +1506,6 @@ TEST_F(HcclCommTest, ut_check_rank_table1)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
 
-
 TEST_F(HcclCommTest, ut_check_rank_table2)
 {
     s32 ret = HCCL_SUCCESS;
@@ -1618,7 +1530,6 @@ TEST_F(HcclCommTest, ut_check_rank_table2)
     servRankInfo.insert(rankInfoPair2);
     ret = impl.attrCollector_.CheckRankTable(rankTable, servRankInfo);
     EXPECT_EQ(ret, HCCL_E_PARA);
-
 }
 
 TEST_F(HcclCommTest, ut_check_rank_table3)
@@ -1648,7 +1559,6 @@ TEST_F(HcclCommTest, ut_check_rank_table3)
     EXPECT_EQ(ret, HCCL_E_PARA);
 }
 
-
 TEST_F(HcclCommTest, ut_check_rank_table4)
 {
     s32 ret = HCCL_SUCCESS;
@@ -1676,7 +1586,6 @@ TEST_F(HcclCommTest, ut_check_rank_table4)
     servRankInfo.insert(rankInfoPair2);
     ret = impl.attrCollector_.CheckRankTable(rankTable, servRankInfo);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-
 }
 
 TEST_F(HcclCommTest, ut_allreduce_common_char)
@@ -1689,13 +1598,10 @@ TEST_F(HcclCommTest, ut_allreduce_common_char)
     char file_name_t[] = "./ut_allreduce_common_char.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(4) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -1727,53 +1633,46 @@ TEST_F(HcclCommTest, ut_allreduce_common_char)
     ret = hccl::hcclComm::GetUniqueId(&rootInfo);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     /** 初始化输入输出缓存 */
-    for (s32 i = 0; i < ndev; i++ )
-    {
-        ret = hrtMalloc((void **)&(sendbuf[i]), count * sizeof(s8));
+    for (s32 i = 0; i < ndev; i++) {
+        ret = hrtMalloc((void**)&(sendbuf[i]), count * sizeof(s8));
         EXPECT_EQ(ret, HCCL_SUCCESS);
-        sal_memset(sendbuf[i],count * sizeof(s8), 0, count * sizeof(s8));
-        ret = hrtMalloc((void **)&(recvbuf[i]), count * sizeof(s8));
+        sal_memset(sendbuf[i], count * sizeof(s8), 0, count * sizeof(s8));
+        ret = hrtMalloc((void**)&(recvbuf[i]), count * sizeof(s8));
         EXPECT_EQ(ret, HCCL_SUCCESS);
-        sal_memset(recvbuf[i], count  * sizeof(s8), 0,  count * sizeof(s8));
-        ret = hrtMalloc((void **)&(result_buff[i]), count * sizeof(s8));
+        sal_memset(recvbuf[i], count * sizeof(s8), 0, count * sizeof(s8));
+        ret = hrtMalloc((void**)&(result_buff[i]), count * sizeof(s8));
         EXPECT_EQ(ret, HCCL_SUCCESS);
         sal_memset(result_buff[i], count * sizeof(s8), 0, count * sizeof(s8));
         inputbuf[i] = sendbuf[i];
         outputbuf[i] = recvbuf[i];
     }
 
-    //sendbuf 赋值
-    for (u32 j = 0; j < ndev; j++)
-    {
-        for (u32 i = 0; i < count; i++)
-        {
+    // sendbuf 赋值
+    for (u32 j = 0; j < ndev; j++) {
+        for (u32 i = 0; i < count; i++) {
             inputbuf[j][i] = 1;
         }
     }
 
-    //resultbuf 赋值
-   for (s32 i = 0; i < ndev; ++i)
- {
-    for (u32 j = 0; j < count; j++)
-     {
+    // resultbuf 赋值
+    for (s32 i = 0; i < ndev; ++i) {
+        for (u32 j = 0; j < count; j++) {
             result_buff[i][j] = ndev;
-     }
+        }
     }
-    for (s32 i = 0; i < ndev; ++i)
-    {
+    for (s32 i = 0; i < ndev; ++i) {
         hrtSetDevice(i);
         rt_ret = aclrtCreateStream(&stream[i]);
         EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     }
 
-    for (s32 i = 0; i < ndev; i++)
-    {
+    for (s32 i = 0; i < ndev; i++) {
         sal_memcpy(&para_info[i].rootInfo, sizeof(HcclRootInfo), &rootInfo, sizeof(HcclRootInfo));
         std::ostringstream identify("");
         identify << i;
         para_info[i].identify = identify.str();
         para_info[i].comm_num = ndev;
-        para_info[i].device_id = i ;
+        para_info[i].device_id = i;
         para_info[i].ranks_local = ndev;
 
         para_info[i].count = count;
@@ -1788,52 +1687,42 @@ TEST_F(HcclCommTest, ut_allreduce_common_char)
         para_info[i].offline = false;
     }
     // 创建每个Dev的allreduce任务线程
-    for (s32 i = 0; i < ndev; i++)
-    {
+    for (s32 i = 0; i < ndev; i++) {
         tid[i] = sal_thread_create("thread", inter_all_reduce_task_0, (void*)&para_info[i]);
-        EXPECT_NE(tid[i], (sal_thread_t )NULL);
+        EXPECT_NE(tid[i], (sal_thread_t)NULL);
     }
 
-    for (s32 i = 0; i < ndev; i++)
-    {
-        while ( sal_thread_is_running(tid[i]))
-        {
+    for (s32 i = 0; i < ndev; i++) {
+        while (sal_thread_is_running(tid[i])) {
             SaluSleep(SAL_MILLISECOND_USEC * 10);
         }
     }
 
-    //获取stream的操作的同步信号量
-    for (s32 i = 0; i < ndev; i++)
-  {
-     for (s32 j = 0; j < count; j++)
-    {
+    // 获取stream的操作的同步信号量
+    for (s32 i = 0; i < ndev; i++) {
+        for (s32 j = 0; j < count; j++) {
             s8 res = result_buff[i][j];
             s8 recv = outputbuf[i][j];
 
-            if (res != recv)
-            {
+            if (res != recv) {
                 HCCL_ERROR(" recvbuf[%d] result_buff[%d] \n", recv, res);
             }
+        }
     }
-        }
-      if (errors)
-        {
-            HCCL_ERROR("%d errors. Test FAILED.\n", errors);
-        }
-        else
-        {
-            HCCL_INFO("Test PASSED.\n");
-        }
-    for (s32 i = 0; i < ndev; i++)
-   {
+    if (errors) {
+        HCCL_ERROR("%d errors. Test FAILED.\n", errors);
+    } else {
+        HCCL_INFO("Test PASSED.\n");
+    }
+    for (s32 i = 0; i < ndev; i++) {
         hrtFree(sendbuf[i]);
         hrtFree(recvbuf[i]);
         hrtFree(result_buff[i]);
         hrtSetDevice(i);
-    rt_ret = aclrtDestroyStream(stream[i]);
+        rt_ret = aclrtDestroyStream(stream[i]);
 
-    EXPECT_EQ(rt_ret, RT_ERROR_NONE);
-   }
+        EXPECT_EQ(rt_ret, RT_ERROR_NONE);
+    }
     remove(file_name_t);
     EXPECT_EQ(errors, 0);
 
@@ -1857,7 +1746,7 @@ TEST_F(HcclCommTest, ut_get_nic_info)
 
     hcclComm comm;
     RankTable_t rankTable = get_rank_table_rank_4p_mesh();
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = comm.init(comm_params, commConfig, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
@@ -1870,19 +1759,16 @@ TEST_F(HcclCommTest, ut_create_comm_by_alg)
     TestConstructParam(params, rankTable);
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     u32 ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
 
-    DeviceMem output =  DeviceMem::alloc(0);
-    DeviceMem input =  DeviceMem::alloc(0);
-    DeviceMem expMem =  DeviceMem::alloc(0);
+    DeviceMem output = DeviceMem::alloc(0);
+    DeviceMem input = DeviceMem::alloc(0);
+    DeviceMem expMem = DeviceMem::alloc(0);
     CommInfo commInfo;
     AlgType algType = AlgType::Reserved();
     ret = impl->CreateCommByAlg("qq", algType, commInfo, input, output, expMem);
@@ -1891,22 +1777,20 @@ TEST_F(HcclCommTest, ut_create_comm_by_alg)
     GlobalMockObject::verify();
 }
 
-TEST_F(HcclCommTest, TestCommTypeStar) {
+TEST_F(HcclCommTest, TestCommTypeStar)
+{
     public_stubs(true);
     HcclCommParams params;
     RankTable_t rankTable;
     TestConstructParam(params, rankTable);
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     u32 ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
 
     DeviceMem output = DeviceMem::alloc(0);
     DeviceMem input = DeviceMem::alloc(0);
@@ -1922,22 +1806,20 @@ TEST_F(HcclCommTest, TestCommTypeStar) {
     GlobalMockObject::verify();
 }
 
-TEST_F(HcclCommTest, TestCommTypeWholeNHR) {
+TEST_F(HcclCommTest, TestCommTypeWholeNHR)
+{
     public_stubs(true);
     HcclCommParams params;
     RankTable_t rankTable;
     TestConstructParam(params, rankTable);
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     u32 ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
 
     DeviceMem output = DeviceMem::alloc(0);
     DeviceMem input = DeviceMem::alloc(0);
@@ -1954,7 +1836,8 @@ TEST_F(HcclCommTest, TestCommTypeWholeNHR) {
     GlobalMockObject::verify();
 }
 
-TEST_F(HcclCommTest, TestCommTypeWholeNHRV1) {
+TEST_F(HcclCommTest, TestCommTypeWholeNHRV1)
+{
     public_stubs(true);
 
     HcclCommParams params;
@@ -1962,15 +1845,12 @@ TEST_F(HcclCommTest, TestCommTypeWholeNHRV1) {
     TestConstructParam(params, rankTable);
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     u32 ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
 
     DeviceMem output = DeviceMem::alloc(0);
     DeviceMem input = DeviceMem::alloc(0);
@@ -1987,22 +1867,20 @@ TEST_F(HcclCommTest, TestCommTypeWholeNHRV1) {
     GlobalMockObject::verify();
 }
 
-TEST_F(HcclCommTest, TestCommTypeWholeAHC_BROKE) {
+TEST_F(HcclCommTest, TestCommTypeWholeAHC_BROKE)
+{
     public_stubs(true);
     HcclCommParams params;
     RankTable_t rankTable;
     TestConstructParam(params, rankTable);
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     u32 ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
 
     DeviceMem output = DeviceMem::alloc(0);
     DeviceMem input = DeviceMem::alloc(0);
@@ -2019,22 +1897,20 @@ TEST_F(HcclCommTest, TestCommTypeWholeAHC_BROKE) {
     GlobalMockObject::verify();
 }
 
-TEST_F(HcclCommTest, TestCommTypeWholeNB) {
+TEST_F(HcclCommTest, TestCommTypeWholeNB)
+{
     public_stubs(true);
     HcclCommParams params;
     RankTable_t rankTable;
     TestConstructParam(params, rankTable);
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     u32 ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
 
     DeviceMem output = DeviceMem::alloc(0);
     DeviceMem input = DeviceMem::alloc(0);
@@ -2061,20 +1937,17 @@ TEST_F(HcclCommTest, ut_create_comm_tag_null)
     TestConstructParam(params, rankTable);
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
 
-    DeviceMem output =  DeviceMem::alloc(0);
-    DeviceMem input =  DeviceMem::alloc(0);
+    DeviceMem output = DeviceMem::alloc(0);
+    DeviceMem input = DeviceMem::alloc(0);
 
-    ret = impl->CreateComm("", input, output,AlgType());
+    ret = impl->CreateComm("", input, output, AlgType());
     EXPECT_EQ(ret, HCCL_E_PARA);
 }
 
@@ -2084,7 +1957,7 @@ TEST_F(HcclCommTest, ut_hccl_create_comm_fail)
     s32 ret = HCCL_SUCCESS;
     s32 rt_ret = RT_ERROR_NONE;
 
-     // 初始化通信域
+    // 初始化通信域
     HcclCommParams comm_params;
     comm_params.rank = 0;
     comm_params.totalRanks = 1;
@@ -2096,7 +1969,7 @@ TEST_F(HcclCommTest, ut_hccl_create_comm_fail)
 
     hcclComm comm;
     RankTable_t rankTable = get_rank_table_rank_nic_device();
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = comm.init(comm_params, commConfig, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
@@ -2121,12 +1994,11 @@ TEST_F(HcclCommTest, ut_hccl_create_comm_fail)
     char* charModel = new char;
     rtModel_t model = (void*)charModel;
 
-    //生成从stream
-    for (s32 i = 0; i < stream_list_size; i++)
-    {
+    // 生成从stream
+    for (s32 i = 0; i < stream_list_size; i++) {
         rt_ret = aclrtCreateStreamWithConfig(&streamList[i], 0, ACL_STREAM_PERSISTENT);
         EXPECT_EQ(rt_ret, RT_ERROR_NONE);
-        //从流bind到model
+        // 从流bind到model
         rt_ret = aclmdlRIBindStream(model, streamList[i], RT_MODEL_WAIT_ACTIVE_STREAM);
         EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     }
@@ -2139,14 +2011,13 @@ TEST_F(HcclCommTest, ut_hccl_create_comm_fail)
     ret = comm.GetWorkspaceMemSize("HcomReduceScatter", 1, HCCL_DATA_TYPE_INT8, rankSize, memSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    void *memptr = nullptr;
+    void* memptr = nullptr;
     ret = hrtMalloc(&memptr, memSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     ret = comm.SetWorkspaceResource("reducescatter", memptr, memSize, streamList);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     //-----------------Set Workspace Resource End------------------//
-
 
     // 申请device memory
     aclrtMallocAttrValue moduleIdValue;
@@ -2161,17 +2032,14 @@ TEST_F(HcclCommTest, ut_hccl_create_comm_fail)
     aclRet = aclrtMallocWithCfg(&mem_dev_output, 1024, ACL_MEM_TYPE_HIGH_BAND_WIDTH, &cfg);
     EXPECT_EQ(aclRet, ACL_SUCCESS);
 
-    MOCKER_CPP(&TransportManager::Alloc)
-       .expects(atMost(1))
-       .will(returnValue(HCCL_E_INTERNAL));
+    MOCKER_CPP(&TransportManager::Alloc).expects(atMost(1)).will(returnValue(HCCL_E_INTERNAL));
 
-    if (HCCL_SUCCESS == ret)
-    {
+    if (HCCL_SUCCESS == ret) {
         // 执行reduce-scatter
-        ret = comm.ReduceScatter("reducescatter",mem_dev_input + 1, mem_dev_output + 1, 1, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_SUM, stream);
+        ret = comm.ReduceScatter(
+            "reducescatter", mem_dev_input + 1, mem_dev_output + 1, 1, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_SUM, stream);
         EXPECT_EQ(ret, HCCL_E_INTERNAL);
     }
-
 
     rt_ret = aclrtSynchronizeStream(stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
@@ -2187,8 +2055,7 @@ TEST_F(HcclCommTest, ut_hccl_create_comm_fail)
     rt_ret = aclrtDestroyStream(stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     //--------------Resource destroy----------------//
-    for (s32 i = 0; i < stream_list_size; i++)
-    {
+    for (s32 i = 0; i < stream_list_size; i++) {
         rt_ret = aclmdlRIUnbindStream(model, streamList[i]);
         EXPECT_EQ(rt_ret, RT_ERROR_NONE);
         rt_ret = aclrtDestroyStream(streamList[i]);
@@ -2211,30 +2078,26 @@ TEST_F(HcclCommTest, ut_comm_inner_create)
     TestConstructParam(params, rankTable);
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
 
     CommType commType = CommType::COMM_TAG_MAX;
     CommInfo commInfo;
     AlgType algType;
     algType.algoLevel0 = AlgTypeLevel0::ALG_LEVEL0_8P_RING;
     algType.algoLevel1 = AlgTypeLevel1::ALG_LEVEL1_HD;
-    DeviceMem output =  DeviceMem::alloc(0);
-    DeviceMem input =  DeviceMem::alloc(0);
+    DeviceMem output = DeviceMem::alloc(0);
+    DeviceMem input = DeviceMem::alloc(0);
     DeviceMem expMem = DeviceMem::alloc(0);
     HcclResult retOut = HCCL_SUCCESS;
     ErrContextPub err_context;
     err_context.work_stream_id = 0;
     CommParaInfo commParaInfo(COMM_LEVEL1, commType);
-    ret = impl->CreateCommThread(err_context, "bb", input, output, expMem,
-                                 commParaInfo, commInfo.commLevel1, retOut);
+    ret = impl->CreateCommThread(err_context, "bb", input, output, expMem, commParaInfo, commInfo.commLevel1, retOut);
     EXPECT_EQ(ret, HCCL_E_PARA);
 }
 
@@ -2245,7 +2108,7 @@ TEST_F(HcclCommTest, ut_hccl_create_comm_success_ringInner)
     s32 ret = HCCL_SUCCESS;
     s32 rt_ret = RT_ERROR_NONE;
 
-     // 初始化通信域
+    // 初始化通信域
     HcclCommParams comm_params;
     comm_params.rank = 0;
     comm_params.totalRanks = 1;
@@ -2255,25 +2118,24 @@ TEST_F(HcclCommTest, ut_hccl_create_comm_success_ringInner)
     EXPECT_EQ(ret, HCCL_SUCCESS);
     HcclCommunicator impl;
     RankTable_t rankTable = get_rank_table_rank_nic_device();
-    ret = impl.Init(comm_params,rankTable);
+    ret = impl.Init(comm_params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-
 
     CommType commType = CommType::COMM_TAG_RING_INNER;
     CommInfo commInfo;
     AlgType algType;
     algType.algoLevel0 = AlgTypeLevel0::ALG_LEVEL0_8P_RING;
     algType.algoLevel1 = AlgTypeLevel1::ALG_LEVEL1_HD;
-    DeviceMem output =  DeviceMem::alloc(0);
-    DeviceMem input =  DeviceMem::alloc(0);
+    DeviceMem output = DeviceMem::alloc(0);
+    DeviceMem input = DeviceMem::alloc(0);
     DeviceMem expMem = DeviceMem::alloc(0);
     HcclResult retOut = HCCL_SUCCESS;
-    hcclImpl *innImpl = impl.implAlg_->pimpl_.get();
+    hcclImpl* innImpl = impl.implAlg_->pimpl_.get();
     ErrContextPub err_context;
     err_context.work_stream_id = 0;
     CommParaInfo commParaInfo(COMM_LEVEL1, commType);
-    ret = innImpl->CreateCommThread(err_context, "cc", input, output, expMem,
-                                    commParaInfo, commInfo.commLevel1, retOut);
+    ret = innImpl->CreateCommThread(
+        err_context, "cc", input, output, expMem, commParaInfo, commInfo.commLevel1, retOut);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
 
@@ -2296,7 +2158,7 @@ TEST_F(HcclCommTest, ut_get_rank_info_list)
     RankTable_t rankTable = get_rank_table_rank_nic_device();
     rankTable.serverList.clear();
 
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = comm.init(comm_params, commConfig, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     GlobalMockObject::verify();
@@ -2320,7 +2182,7 @@ TEST_F(HcclCommTest, ut_get_rank_info_list1)
     hcclComm comm;
     RankTable_t rankTable = get_rank_table_rank_nic_device();
     rankTable.rankList[0].rankId = 2;
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = comm.init(comm_params, commConfig, rankTable);
     EXPECT_EQ(ret, HCCL_E_PARA);
 }
@@ -2334,13 +2196,10 @@ TEST_F(HcclCommTest, ut_comm_8pring_1910)
     char file_name_t[] = "./ut_comm_8pring_1910.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(4) << rank_table_1910 << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -2366,7 +2225,7 @@ TEST_F(HcclCommTest, ut_comm_8pring_1910)
     HcclDataType datatype = HCCL_DATA_TYPE_FP32;
 
     HcclReduceOp op = HCCL_REDUCE_MAX;
-    s32 count = 128*8;
+    s32 count = 128 * 8;
     s32 ndev = DEV_NUM_8;
     HcclRootInfo rootInfo;
     ret = hccl::hcclComm::GetUniqueId(&rootInfo);
@@ -2374,8 +2233,7 @@ TEST_F(HcclCommTest, ut_comm_8pring_1910)
     HCCL_ERROR("test allreduce");
     set_board_id(0x0000);
     /** 初始化输入输出缓存 */
-    for (s32 i = 0; i < ndev; i++ )
-    {
+    for (s32 i = 0; i < ndev; i++) {
         ret = hrtMalloc((void**)&sendbuf[i], (count * sizeof(float)));
         EXPECT_EQ(ret, HCCL_SUCCESS);
 
@@ -2392,38 +2250,32 @@ TEST_F(HcclCommTest, ut_comm_8pring_1910)
         outputbuf[i] = recvbuf[i];
     }
 
-    //sendbuf 赋值
-    for (u32 j = 0; j < ndev; j++)
-    {
-        for (u32 i = 0; i < count; i++)
-        {
-            inputbuf[j][i] = i*1.0;
+    // sendbuf 赋值
+    for (u32 j = 0; j < ndev; j++) {
+        for (u32 i = 0; i < count; i++) {
+            inputbuf[j][i] = i * 1.0;
         }
     }
 
-    //resultbuf 赋值
-    for (s32 i = 0; i < ndev; ++i)
-    {
-        for (u32 j = 0; j < count; j++)
-        {
-            result_buff[i][j] = j*1.0;
+    // resultbuf 赋值
+    for (s32 i = 0; i < ndev; ++i) {
+        for (u32 j = 0; j < count; j++) {
+            result_buff[i][j] = j * 1.0;
         }
     }
 
-    for (s32 i = 0; i < ndev; ++i)
-    {
+    for (s32 i = 0; i < ndev; ++i) {
         rt_ret = aclrtCreateStream(&stream[i]);
         EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     }
 
-    for (s32 i = 0; i < ndev; i++)
-    {
+    for (s32 i = 0; i < ndev; i++) {
         sal_memcpy(&para_info[i].rootInfo, sizeof(HcclRootInfo), &rootInfo, sizeof(HcclRootInfo));
         std::ostringstream identify("");
         identify << i;
         para_info[i].identify = identify.str();
         para_info[i].comm_num = ndev;
-        para_info[i].device_id = i ;
+        para_info[i].device_id = i;
         para_info[i].ranks_local = ndev;
 
         para_info[i].count = count;
@@ -2436,56 +2288,44 @@ TEST_F(HcclCommTest, ut_comm_8pring_1910)
         para_info[i].sync_addr = &sync_value;
         para_info[i].file_name = file_name_t;
         para_info[i].offline = false;
-
     }
 
     // 创建每个Dev的allreduce任务线程
-    for (s32 i = 0; i < ndev; i++)
-    {
+    for (s32 i = 0; i < ndev; i++) {
         tid[i] = sal_thread_create("thread", inter_all_reduce_task_0, (void*)&para_info[i]);
-        EXPECT_NE(tid[i], (sal_thread_t )NULL);
+        EXPECT_NE(tid[i], (sal_thread_t)NULL);
     }
 
-    for (s32 i = 0; i < ndev; i++)
-    {
-        while ( sal_thread_is_running(tid[i]))
-        {
+    for (s32 i = 0; i < ndev; i++) {
+        while (sal_thread_is_running(tid[i])) {
             SaluSleep(SAL_MILLISECOND_USEC * 10);
         }
     }
 
-    //获取stream的操作的同步信号量
+    // 获取stream的操作的同步信号量
 
-
-    //获取stream的操作的同步信号量
-    for (s32 i = 0; i < ndev; i++)
-    {
-        for (s32 j = 0; j < count; j++)
-        {
+    // 获取stream的操作的同步信号量
+    for (s32 i = 0; i < ndev; i++) {
+        for (s32 j = 0; j < count; j++) {
             float res = result_buff[i][j];
             float recv = outputbuf[i][j];
 
-            if (abs(res - recv) > 1e-6)
-            {
-                HCCL_ERROR("rank:%d result[%d]:%f recv[%d]:%f \n", i, j, res ,j,recv );
+            if (abs(res - recv) > 1e-6) {
+                HCCL_ERROR("rank:%d result[%d]:%f recv[%d]:%f \n", i, j, res, j, recv);
                 errors++;
                 break;
             }
         }
     }
 
-    if (errors)
-    {
+    if (errors) {
         HCCL_ERROR("%d errors. Test FAILED.\n", errors);
-    }
-    else
-    {
+    } else {
         HCCL_INFO("Test PASSED.\n");
     }
 
     set_board_id(0);
-    for (s32 i = 0; i < ndev; i++)
-    {
+    for (s32 i = 0; i < ndev; i++) {
         hrtFree(sendbuf[i]);
         hrtFree(recvbuf[i]);
         sal_free(result_buff[i]);
@@ -2494,7 +2334,7 @@ TEST_F(HcclCommTest, ut_comm_8pring_1910)
         EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     }
     remove(file_name_t);
-    //EXPECT_EQ(errors, 0);
+    // EXPECT_EQ(errors, 0);
 }
 
 TEST_F(HcclCommTest, hcclComm_ra_init_failed)
@@ -2515,11 +2355,8 @@ TEST_F(HcclCommTest, hcclComm_ra_init_failed)
     hcclComm comm;
     RankTable_t rankTable = get_rank_table_rank_4p_mesh();
 
-
-    MOCKER(HrtRaInit)
-    .expects(atMost(1))
-    .will(returnValue(HCCL_E_NETWORK));
-    CommConfig commConfig("hccl_world_group"); 
+    MOCKER(HrtRaInit).expects(atMost(1)).will(returnValue(HCCL_E_NETWORK));
+    CommConfig commConfig("hccl_world_group");
     ret = comm.init(comm_params, commConfig, rankTable);
 
     EXPECT_EQ(ret, HCCL_E_NETWORK);
@@ -2536,9 +2373,9 @@ TEST_F(HcclCommTest, hcclComm_ra_deinit_multi_proccess)
 
     bool supportMultiProcHCCP = true;
     MOCKER_CPP(&NetworkManager::TsdCapabilityGet)
-    .stubs()
-    .with(outBound(supportMultiProcHCCP))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(outBound(supportMultiProcHCCP))
+        .will(returnValue(HCCL_SUCCESS));
 
     NetworkManager::GetInstance(devLogicId).deviceNicInitRef_.Ref();
 
@@ -2566,17 +2403,15 @@ void* inter_reduce_task_0(void* parg)
     ret = DlRaFunction::GetInstance().DlRaFunctionInit();
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-
     sal_memset(hcom_info.params.id.internal, HCCL_ROOT_INFO_BYTES, 0, sizeof(hcom_info.params.id.internal));
     sal_memcpy(hcom_info.params.id.internal, sizeof(HcclRootInfo), &para_info->rootInfo, sizeof(HcclRootInfo));
 
-    hcom_info.pComm.reset(new(std::nothrow) hccl::hcclComm(0, 0, HCCL_WORLD_GROUP));
+    hcom_info.pComm.reset(new (std::nothrow) hccl::hcclComm(0, 0, HCCL_WORLD_GROUP));
     rtModel_t model = (void*)1;
 
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = hcom_info.pComm->init(hcom_info.params, commConfig, hcom_info.rankTable);
-    if (ret != HCCL_SUCCESS)
-    {
+    if (ret != HCCL_SUCCESS) {
         HCCL_ERROR("dev[%d] task reduce fails", para_info->device_id);
     }
 
@@ -2584,24 +2419,24 @@ void* inter_reduce_task_0(void* parg)
 
     rank_num_tmp = *(para_info->sync_addr) - 1;
 
-    do
-    {
+    do {
         rank_num_tmp += 1;
 
         swapped = __sync_bool_compare_and_swap(para_info->sync_addr, rank_num_tmp, rank_num_tmp + 1);
-    }
-    while (!swapped);
+    } while (!swapped);
 
-    while (*(para_info->sync_addr) < para_info->ranks_local)
-    { sched_yield(); } // linux提供一个系统调用运行进程主动让出执行权
+    while (*(para_info->sync_addr) < para_info->ranks_local) {
+        sched_yield();
+    } // linux提供一个系统调用运行进程主动让出执行权
 
-    __sync_synchronize();  // 插入内存屏障，对顺序性有要求，但是有没有使用lock指令的时候
+    __sync_synchronize(); // 插入内存屏障，对顺序性有要求，但是有没有使用lock指令的时候
 
     HCCL_DEBUG("all %d  ranks init ok ,then reduce", hcom_info.params.totalRanks);
 
     //-----------------Set Workspace Resource Start------------------//
     u64 stream_list_size = 0;
-    ret = hcom_info.pComm->GetWorkspaceSubStreamNum(para_info->count, para_info->datatype, para_info->op, para_info->identify, stream_list_size);
+    ret = hcom_info.pComm->GetWorkspaceSubStreamNum(
+        para_info->count, para_info->datatype, para_info->op, para_info->identify, stream_list_size);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     u32 rankSize = 0;
     ret = hcom_info.pComm->GetRankSize(rankSize);
@@ -2610,9 +2445,8 @@ void* inter_reduce_task_0(void* parg)
     vector<HcclRtStream> streamList(stream_list_size);
 
     rtError_t rt_ret;
-    //生成从stream
-    for (s32 i = 0; i < stream_list_size; i++)
-    {
+    // 生成从stream
+    for (s32 i = 0; i < stream_list_size; i++) {
         rt_ret = aclrtCreateStreamWithConfig(&streamList[i], 0, ACL_STREAM_PERSISTENT);
         EXPECT_EQ(rt_ret, RT_ERROR_NONE);
         HCCL_INFO("HCCL TEST NNNNNN i[%d]", i);
@@ -2621,43 +2455,36 @@ void* inter_reduce_task_0(void* parg)
         EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     }
 
-
     u64 memSize = 0;
-    ret = hcom_info.pComm->GetWorkspaceMemSize(HCCL_KERNEL_OP_TYPE_REDUCE, para_info->count, para_info->datatype, rankSize, memSize);
+    ret = hcom_info.pComm->GetWorkspaceMemSize(
+        HCCL_KERNEL_OP_TYPE_REDUCE, para_info->count, para_info->datatype, rankSize, memSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    void *memptr = nullptr;
+    void* memptr = nullptr;
     ret = hrtMalloc(&memptr, memSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     ret = hcom_info.pComm->SetWorkspaceResource("tag_inter_reduce_task_0_inter", memptr, memSize, streamList);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     //-----------------Set Workspace Resource End------------------//
-    ret = hcom_info.pComm->Reduce("tag_inter_reduce_task_0_inter", para_info->sendbuff,
-                                   para_info->recvbuff,
-                                   para_info->count,
-                                   para_info->datatype,
-                                   para_info->op,
-                                   para_info->root,
-                                   para_info->stream);
+    ret = hcom_info.pComm->Reduce(
+        "tag_inter_reduce_task_0_inter", para_info->sendbuff, para_info->recvbuff, para_info->count,
+        para_info->datatype, para_info->op, para_info->root, para_info->stream);
 
-    if (ret != HCCL_SUCCESS)
-    {
+    if (ret != HCCL_SUCCESS) {
         HCCL_ERROR("rank[%d] task reduce fails", hcom_info.params.rank);
     }
 
     rt_ret = RT_ERROR_NONE;
     rt_ret = aclrtSynchronizeStream(para_info->stream);
-    for (s32 i = 0; i < stream_list_size; i++)
-    {
+    for (s32 i = 0; i < stream_list_size; i++) {
         rt_ret = aclmdlRIUnbindStream(model, streamList[i]);
         EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
         rt_ret = aclrtDestroyStream(streamList[i]);
         EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     }
-    if ( rt_ret != RT_ERROR_NONE)
-    {
+    if (rt_ret != RT_ERROR_NONE) {
         HCCL_ERROR("rank[%d] task allgather fails", hcom_info.params.rank);
     }
 
@@ -2682,51 +2509,42 @@ void* inter_reduce_scatter_task_0(void* parg)
     sal_memset(hcom_info.params.id.internal, HCCL_ROOT_INFO_BYTES, 0, sizeof(hcom_info.params.id.internal));
     sal_memcpy(hcom_info.params.id.internal, sizeof(HcclRootInfo), &para_info->rootInfo, sizeof(HcclRootInfo));
 
-    hcom_info.pComm.reset(new(std::nothrow) hccl::hcclComm());
+    hcom_info.pComm.reset(new (std::nothrow) hccl::hcclComm());
     rtModel_t model = (void*)1;
 
-
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = hcom_info.pComm->init(hcom_info.params, commConfig, hcom_info.rankTable);
-    if (ret != HCCL_SUCCESS)
-    {
+    if (ret != HCCL_SUCCESS) {
         HCCL_ERROR("dev[%d] task reduce_scatter fails", para_info->device_id);
     }
 
-     bool swapped;
+    bool swapped;
 
     rank_num_tmp = *(para_info->sync_addr) - 1;
 
-    do
-    {
+    do {
         rank_num_tmp += 1;
 
         swapped = __sync_bool_compare_and_swap(para_info->sync_addr, rank_num_tmp, rank_num_tmp + 1);
-    }
-    while (!swapped);
+    } while (!swapped);
 
-    while (*(para_info->sync_addr) < para_info->ranks_local)
-    { sched_yield(); } // linux提供一个系统调用运行进程主动让出执行权
+    while (*(para_info->sync_addr) < para_info->ranks_local) {
+        sched_yield();
+    } // linux提供一个系统调用运行进程主动让出执行权
 
-    __sync_synchronize();  // 插入内存屏障，对顺序性有要求，但是有没有使用lock指令的时候
+    __sync_synchronize(); // 插入内存屏障，对顺序性有要求，但是有没有使用lock指令的时候
 
-    ret =  hcom_info.pComm->ReduceScatter("tag_inter_reduce_scatter_task_0_inter",
-                               para_info->sendbuff,
-                               para_info->recvbuff,
-                               para_info->count,
-                               para_info->datatype,
-                               para_info->op,
-                               para_info->stream);
-    if (ret != HCCL_SUCCESS)
-    {
+    ret = hcom_info.pComm->ReduceScatter(
+        "tag_inter_reduce_scatter_task_0_inter", para_info->sendbuff, para_info->recvbuff, para_info->count,
+        para_info->datatype, para_info->op, para_info->stream);
+    if (ret != HCCL_SUCCESS) {
         HCCL_ERROR("rank[%d] task reduce_scatter fails", hcom_info.params.rank);
     }
 
     rtError_t rt_ret = RT_ERROR_NONE;
     rt_ret = aclrtSynchronizeStream(para_info->stream);
 
-    if ( rt_ret != RT_ERROR_NONE)
-    {
+    if (rt_ret != RT_ERROR_NONE) {
         HCCL_ERROR("rank[%d] task allgather fails", hcom_info.params.rank);
     }
     return (nullptr);
@@ -2741,13 +2559,10 @@ TEST_F(HcclCommTest, ut_comm_reduce_V80_inline)
     char file_name_t[] = "./ut_reduce_inter_sum_float_slice.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(4) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -2773,7 +2588,7 @@ TEST_F(HcclCommTest, ut_comm_reduce_V80_inline)
     HcclDataType datatype = HCCL_DATA_TYPE_FP32;
 
     HcclReduceOp op = HCCL_REDUCE_SUM;
-  //  s32 count = 100;
+    //  s32 count = 100;
     s32 count = 10;
     s32 ndev = DEV_NUM_4;
 
@@ -2782,50 +2597,44 @@ TEST_F(HcclCommTest, ut_comm_reduce_V80_inline)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     /** 初始化输入输出缓存 */
-    for (s32 i = 0; i < ndev; i++ )
-    {
-        ret = hrtMalloc((void **)&sendbuf[i], count * sizeof(float));
+    for (s32 i = 0; i < ndev; i++) {
+        ret = hrtMalloc((void**)&sendbuf[i], count * sizeof(float));
         EXPECT_EQ(ret, HCCL_SUCCESS);
         sal_memset(sendbuf[i], count * sizeof(float), 0, count * sizeof(float));
-         ret = hrtMalloc((void **)&recvbuf[i], count * sizeof(float));
+        ret = hrtMalloc((void**)&recvbuf[i], count * sizeof(float));
         EXPECT_EQ(ret, HCCL_SUCCESS);
         sal_memset(recvbuf[i], count * sizeof(float), 0, count * sizeof(float));
-        ret = hrtMalloc((void **)&result_buff[i], count * sizeof(float));
+        ret = hrtMalloc((void**)&result_buff[i], count * sizeof(float));
         EXPECT_EQ(ret, HCCL_SUCCESS);
         sal_memset(result_buff[i], count * sizeof(float), 0, count * sizeof(float));
     }
 
-    //sendbuf 赋值
-    for (u32 j = 0; j < ndev; j++)
-    {
-        for (u32 i = 0; i < count; i++)
-        {
+    // sendbuf 赋值
+    for (u32 j = 0; j < ndev; j++) {
+        for (u32 i = 0; i < count; i++) {
             sendbuf[j][i] = 1.0;
         }
     }
 
-    //resultbuf 赋值
+    // resultbuf 赋值
 
-    for (u32 j = 0; j < count; j++)
-    {
+    for (u32 j = 0; j < count; j++) {
         result_buff[0][j] = 4.0;
     }
 
-    for (s32 i = 0; i < ndev; ++i)
-    {
+    for (s32 i = 0; i < ndev; ++i) {
         hrtSetDevice(i);
         rt_ret = aclrtCreateStream(&stream[i]);
         EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     }
 
-    for (s32 i = 0; i < ndev; i++)
-    {
+    for (s32 i = 0; i < ndev; i++) {
         sal_memcpy(&para_info[i].rootInfo, sizeof(HcclRootInfo), &rootInfo, sizeof(HcclRootInfo));
         std::ostringstream identify("");
         identify << i;
         para_info[i].identify = identify.str();
         para_info[i].comm_num = ndev;
-        para_info[i].device_id = i ;
+        para_info[i].device_id = i;
         para_info[i].ranks_local = ndev;
 
         para_info[i].count = count;
@@ -2841,48 +2650,37 @@ TEST_F(HcclCommTest, ut_comm_reduce_V80_inline)
     }
 
     // 创建每个Dev的allreduce任务线程
-    for (s32 i = 0; i < ndev; ++i)
-    {
+    for (s32 i = 0; i < ndev; ++i) {
         tid[i] = sal_thread_create("thread", inter_reduce_task_0, (void*)&para_info[i]);
-        EXPECT_NE(tid[i], (sal_thread_t )NULL);
+        EXPECT_NE(tid[i], (sal_thread_t)NULL);
     }
 
-    for (s32 i = 0; i < ndev; ++i)
-    {
-        while ( sal_thread_is_running(tid[i]))
-        {
+    for (s32 i = 0; i < ndev; ++i) {
+        while (sal_thread_is_running(tid[i])) {
             SaluSleep(SAL_MILLISECOND_USEC * 10);
         }
     }
 
-    //获取stream的操作的同步信号量
+    // 获取stream的操作的同步信号量
 
-    for (s32 i = 0; i < count; i++)
-    {
+    for (s32 i = 0; i < count; i++) {
         float res = result_buff[0][i];
         float recv = recvbuf[0][i];
 
-        if ( abs(res - recv) > 1e-6 )
-        {
+        if (abs(res - recv) > 1e-6) {
             HCCL_ERROR(" recvbuf[%f] result_buff[%f] \n", recv, res);
-            errors ++;
+            errors++;
             break;
         }
     }
 
-
-
-    if (errors)
-    {
+    if (errors) {
         HCCL_ERROR("%d errors. Test FAILED.\n", errors);
-    }
-    else
-    {
+    } else {
         HCCL_INFO("Test PASSED.\n");
     }
 
-    for (s32 i = 0; i < ndev; i++)
-    {
+    for (s32 i = 0; i < ndev; i++) {
         hrtFree(sendbuf[i]);
         hrtFree(recvbuf[i]);
         hrtFree(result_buff[i]);
@@ -2900,8 +2698,8 @@ TEST_F(HcclCommTest, hcclComm_allreduce_external_input)
     s32 ret = HCCL_SUCCESS;
     s32 rt_ret = RT_ERROR_NONE;
 
-    setenv("HCCL_LL_THRESHOLD","2", 1);
-    setenv("HCCL_HB_THRESHOLD","4", 1);
+    setenv("HCCL_LL_THRESHOLD", "2", 1);
+    setenv("HCCL_HB_THRESHOLD", "4", 1);
     setenv("HCCL_NET_NAME", "eth0", 1);
 
     ret = hrtSetDevice(0);
@@ -2938,17 +2736,16 @@ TEST_F(HcclCommTest, hcclComm_allreduce_external_input)
 
     hcclComm comm;
     RankTable_t rankTable = get_rank_table_rank_nic_device();
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = comm.init(comm_params, commConfig, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    if (HCCL_SUCCESS == ret)
-    {
+    if (HCCL_SUCCESS == ret) {
         // 执行all-reduce
-        ret = comm.AllReduce("allreduce", mem_dev_input, mem_dev_output, 1, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_MAX, stream);
+        ret = comm.AllReduce(
+            "allreduce", mem_dev_input, mem_dev_output, 1, HCCL_DATA_TYPE_INT8, HCCL_REDUCE_MAX, stream);
         EXPECT_EQ(ret, HCCL_SUCCESS);
     }
-
 
     rt_ret = aclrtSynchronizeStream(stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
@@ -3020,7 +2817,7 @@ void get_ranks_1server_1dev(std::vector<RankInfo>& rank_vector)
 
     tmp_para_0.userRank = 0;
     tmp_para_0.devicePhyId = 0;
-    tmp_para_0.deviceType =DevType::DEV_TYPE_910;
+    tmp_para_0.deviceType = DevType::DEV_TYPE_910;
     tmp_para_0.serverIdx = 0;
     tmp_para_0.serverId = "10.0.0.10";
     tmp_para_0.nicIp.push_back(HcclIpAddress("192.168.0.11"));
@@ -3426,15 +3223,12 @@ TEST_F(HcclCommTest, ut_SetAlgType)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -3462,15 +3256,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_1server_1dev_ring_hd)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -3502,15 +3293,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_1server_1dev_ring_ring)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -3542,15 +3330,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_1server_1dev_mesh_hd)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -3582,15 +3367,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_1server_1dev_hd_hd)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -3622,15 +3404,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_1server_1dev_ring_mesh)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -3662,15 +3441,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_1server_2dev_ring_hd)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -3702,15 +3478,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_1server_2dev_mesh_hd)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -3742,16 +3515,13 @@ TEST_F(HcclCommTest, ut_SetAlgType_1server_2dev_hd_ring)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
-	impl->isStandardCard_ = false;
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
+    impl->isStandardCard_ = false;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
     algConfigurator->topoAttr_.isStandardCard = false;
 
@@ -3784,26 +3554,18 @@ TEST_F(HcclCommTest, ut_SetAlgType_1server_3dev_mesh_hd)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicatorAttrs::IsStandardCard)
-	.stubs()
-    .with(mockcpp::any())
-	.will(returnValue(true));
+    MOCKER_CPP(&HcclCommunicatorAttrs::IsStandardCard).stubs().with(mockcpp::any()).will(returnValue(true));
 
-    MOCKER_CPP_VIRTUAL(*implBase, &HcclCommunicator::IsStandardCard)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER_CPP_VIRTUAL(*implBase, &HcclCommunicator::IsStandardCard).stubs().will(returnValue(true));
 
-	implBase->isStandardCard_ = true;
-	ret = implBase->Init(params, ranks, groupCommonData);
+    implBase->isStandardCard_ = true;
+    ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -3835,10 +3597,7 @@ TEST_F(HcclCommTest, ut_SetAlgType_1server_3dev_ring_hd)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_NE(ret, HCCL_SUCCESS);
@@ -3864,25 +3623,17 @@ TEST_F(HcclCommTest, ut_SetAlgType_1server_3dev_hd_ring)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP_VIRTUAL(*implBase, &HcclCommunicator::IsStandardCard)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER_CPP_VIRTUAL(*implBase, &HcclCommunicator::IsStandardCard).stubs().will(returnValue(true));
 
-    MOCKER_CPP(&HcclCommunicatorAttrs::IsStandardCard)
-	.stubs()
-    .with(mockcpp::any())
-	.will(returnValue(true));
+    MOCKER_CPP(&HcclCommunicatorAttrs::IsStandardCard).stubs().with(mockcpp::any()).will(returnValue(true));
 
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -3903,7 +3654,7 @@ TEST_F(HcclCommTest, ut_SetAlgType_1server_4dev_mesh_hd)
     HcclResult ret;
     // setenv("HCCL_ALGORITHM", "level0:fullmesh;level1:H-D_R", 1);
     // ResetInitState();
-    std::string algo =  "level0:fullmesh;level1:H-D_R";
+    std::string algo = "level0:fullmesh;level1:H-D_R";
     ret = SetHcclAlgoConfig(algo);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
@@ -3915,15 +3666,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_1server_4dev_mesh_hd)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -3956,15 +3704,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_1server_4dev_ring_hd)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -3998,15 +3743,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_1server_4dev_hd_ring)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
     std::map<HcclCMDType, AlgType> algType;
 
@@ -4039,15 +3781,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_1server_4dev_default)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
     std::map<HcclCMDType, AlgType> algType;
     ret = algConfigurator->SelectAlgType(serverNum, DevType::DEV_TYPE_COUNT, algType);
@@ -4079,15 +3818,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_1server_8dev_mesh_hd)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -4120,15 +3856,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_1server_8dev_ring_hd)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -4161,15 +3894,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_1server_8dev_default)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -4202,15 +3932,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_module_1server_4dev_mesh_hd)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -4243,15 +3970,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_module_1server_4dev_ring_hd)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -4284,15 +4008,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_module_1server_4dev_hd_ring)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -4325,15 +4046,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_module_1server_4dev_default)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -4366,15 +4084,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_module_1server_8dev_ring_hd)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -4407,15 +4122,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_module_1server_8dev_mesh_hd)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -4448,15 +4160,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_module_1server_8dev_hd_ring)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -4488,20 +4197,15 @@ TEST_F(HcclCommTest, ut_SetAlgType_module_1server_8dev_default)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP_VIRTUAL(*implBase, &HcclCommunicator::IsStandardCard)
-    .stubs()
-    .will(returnValue(false));
+    MOCKER_CPP_VIRTUAL(*implBase, &HcclCommunicator::IsStandardCard).stubs().will(returnValue(false));
 
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
 
     // 相当于插入个桩，强制设置 isSingleMeshAggregation_ 的值
     impl->isSingleMeshAggregation_ = true;
@@ -4539,15 +4243,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_module_7server_1dev_default)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -4580,15 +4281,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_module_7server_1dev_ring_ring)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -4621,15 +4319,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_module_7server_1dev_ring_hd)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -4650,7 +4345,7 @@ TEST_F(HcclCommTest, ut_SetAlgType_module_8server_1dev_default)
     HcclResult ret;
     // unsetenv("HCCL_ALGORITHM");
     ResetInitState();
-    ret =InitExternalInput();
+    ret = InitExternalInput();
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     std::vector<RankInfo> ranks;
@@ -4661,15 +4356,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_module_8server_1dev_default)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -4702,15 +4394,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_module_8server_1dev_ring_ring)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -4743,15 +4432,12 @@ TEST_F(HcclCommTest, ut_SetAlgType_module_8server_1dev_ring_hd)
     TestConstructParamsByRankInfo(params, groupCommonData, ranks);
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, ranks, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u32 serverNum = implBase->serverNum_;
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -4783,7 +4469,7 @@ TEST_F(HcclCommTest, ut_gradient_segment)
 
     hcclComm comm;
     RankTable_t rankTable = get_rank_table_rank_nic_device();
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = comm.init(comm_params, commConfig, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
@@ -4792,7 +4478,7 @@ TEST_F(HcclCommTest, ut_gradient_segment)
     std::vector<u32> segment_index;
     char group[] = "";
     char model_name[] = "resnet";
-    feature.gradient_num=2;
+    feature.gradient_num = 2;
     feature.gradient_size = (float*)sal_malloc(2 * sizeof(float));
     sal_memset(feature.gradient_size, 2 * sizeof(float), 0, 2 * sizeof(float));
     feature.gradient_time = (float*)sal_malloc(2 * sizeof(float));
@@ -4800,9 +4486,7 @@ TEST_F(HcclCommTest, ut_gradient_segment)
     feature.model_name = model_name;
 
     segment_index.push_back(feature.gradient_num - 1);
-    MOCKER_CPP(&GradientSegment::GetGradientSegmentExecutor)
-    .expects(atMost(1))
-    .will(returnValue(0));
+    MOCKER_CPP(&GradientSegment::GetGradientSegmentExecutor).expects(atMost(1)).will(returnValue(0));
 
     // ret = comm.GetGradientSegment(group, &feature, segment_index);
     bool isConfig = true;
@@ -4842,7 +4526,7 @@ RankTable_t get_rank_table_v71()
     rank1.deviceInfo.devicePhyId = 8;
     rank1.deviceInfo.deviceIp.push_back(HcclIpAddress("172.17.11.1"));
     rankTable.rankList.push_back(rank1);
-   return rankTable;
+    return rankTable;
 }
 
 TEST_F(HcclCommTest, ut_SetInnerServerAverageDevice)
@@ -4863,11 +4547,10 @@ TEST_F(HcclCommTest, ut_SetInnerServerAverageDevice)
 
     hcclComm comm(inCCLbufferSizeConf, outCCLbufferSizeConf);
     RankTable_t rankTable = get_rank_table_v71();
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = comm.init(comm_params, commConfig, rankTable);
     EXPECT_EQ(ret, HCCL_E_PARA);
 }
-
 
 TEST_F(HcclCommTest, ut_CommCheckErrorCqe)
 {
@@ -4886,7 +4569,7 @@ TEST_F(HcclCommTest, ut_CommCheckErrorCqe)
 
     hcclComm comm;
     RankTable_t rankTable = get_rank_table_rank_nic_device();
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = comm.init(comm_params, commConfig, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
@@ -4909,8 +4592,7 @@ RankTable_t get_rank_table_rank_2server_3p_2_1()
     int server1rankNum = 2;
     int server2rankNum = 1;
 
-    for(int i = 0; i < server1rankNum; ++i)
-    {
+    for (int i = 0; i < server1rankNum; ++i) {
         RankInfo_t rank;
         rank.rankId = i;
         rank.serverIdx = 0;
@@ -4920,8 +4602,7 @@ RankTable_t get_rank_table_rank_2server_3p_2_1()
         rankTable.rankList.push_back(rank);
     }
 
-    for(int i = 0; i < server2rankNum; ++i)
-    {
+    for (int i = 0; i < server2rankNum; ++i) {
         RankInfo_t rank;
         rank.rankId = i + server1rankNum;
         rank.serverIdx = 1;
@@ -4942,7 +4623,7 @@ TEST_F(HcclCommTest, ut_implbase_hcclalg_nullptr)
     EXPECT_EQ(ret, HCCL_E_PTR);
 }
 
-void get_rank_table_rank_1server_2module_7p_4_3(HcclCommParams &params, RankTable_t &rankTable)
+void get_rank_table_rank_1server_2module_7p_4_3(HcclCommParams& params, RankTable_t& rankTable)
 {
     string commId = "comm ";
     memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
@@ -4963,8 +4644,7 @@ void get_rank_table_rank_1server_2module_7p_4_3(HcclCommParams &params, RankTabl
     int server1rankNum = 4;
     int server2rankNum = 3;
 
-    for(int i = 0; i < server1rankNum; ++i)
-    {
+    for (int i = 0; i < server1rankNum; ++i) {
         RankInfo_t rank;
         rank.rankId = i;
         rank.serverIdx = 0;
@@ -4974,8 +4654,7 @@ void get_rank_table_rank_1server_2module_7p_4_3(HcclCommParams &params, RankTabl
         rankTable.rankList.push_back(rank);
     }
 
-    for(int i = 0; i < server2rankNum; ++i)
-    {
+    for (int i = 0; i < server2rankNum; ++i) {
         RankInfo_t rank;
         rank.rankId = i + server1rankNum;
         rank.serverIdx = 0;
@@ -4986,7 +4665,6 @@ void get_rank_table_rank_1server_2module_7p_4_3(HcclCommParams &params, RankTabl
     }
     return;
 }
-
 
 TEST_F(HcclCommTest, ut_multiModuleDiffDeviceNumMode_GetModuleInfo)
 {
@@ -5021,6 +4699,60 @@ TEST_F(HcclCommTest, ut_multiModuleDiffDeviceNumMode_GetModuleInfo)
     EXPECT_EQ(impl->attrCollector_.moduleNum_, 2);
     EXPECT_EQ(impl->attrCollector_.multiModuleDiffDeviceNumMode_, false);
     EXPECT_EQ(ret, HCCL_SUCCESS);
+}
+
+RankTable_t get_rank_table_rank_1server_4dev_standard_910B()
+{
+    RankTable_t rankTable;
+    rankTable.deviceNum = 4;
+    rankTable.serverNum = 1;
+    rankTable.nicDeploy = NICDeployment::NIC_DEPLOYMENT_DEVICE;
+    rankTable.nicNum = 1;
+    rankTable.nicNames.push_back("eth0");
+    rankTable.rankNum = 4;
+
+    // 同server内910B标卡4卡，deviceId为6/7/8/9
+    std::vector<u32> devicePhyIds = {6, 7, 8, 9};
+    for (u32 i = 0; i < devicePhyIds.size(); ++i) {
+        RankInfo_t rank;
+        rank.rankId = i;
+        rank.serverIdx = 0;
+        rank.serverId = "192.168.1.1";
+        rank.deviceInfo.devicePhyId = devicePhyIds[i];
+        rank.deviceInfo.deviceIp.push_back(HcclIpAddress("172.17.10.1"));
+        rankTable.rankList.push_back(rank);
+    }
+    return rankTable;
+}
+
+TEST_F(HcclCommTest, ut_standardCard_910B_4dev_pcie_moduleNum)
+{
+    public_stubs(true);
+
+    // 910B标卡4卡(6/7/8/9)同server, mesh建链
+    std::unique_ptr<HcclCommunicator> impl(new (std::nothrow) HcclCommunicator());
+    impl->attrCollector_.deviceType_ = DevType::DEV_TYPE_910B;
+    impl->attrCollector_.serverId_ = "192.168.1.1";
+    impl->attrCollector_.deviceNumPerServer_ = 4;
+
+    // 打桩设备类型为910B, server内设备间链路均为PCIE(无HCCS/SIO)
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(DevType::DEV_TYPE_910B)).will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetPairDeviceLinkType)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), outBound(LinkTypeInServer::PXI_TYPE))
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(Is310PDevice).stubs().will(returnValue(false));
+
+    RankTable_t rankTable = get_rank_table_rank_1server_4dev_standard_910B();
+    s32 ret = impl->attrCollector_.InitTopoInfo(rankTable);
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+
+    ret = impl->attrCollector_.SetModuleInfo(rankTable.rankList);
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+    EXPECT_EQ(impl->attrCollector_.GetStandardCard(), true);
+    EXPECT_EQ(impl->attrCollector_.GetDiffDeviceModule(), false);
+    // 标卡场景下4卡均归属同一module，topo module数为1
+    EXPECT_EQ(impl->attrCollector_.GetModuleNum(), 1);
 }
 
 TEST_F(HcclCommTest, hcclComm_printErrIndex)
@@ -5060,25 +4792,17 @@ TEST_F(HcclCommTest, hcclComm_printErrIndex)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     HcclCommunicator impl2;
-    MOCKER_CPP_VIRTUAL(impl2, &HcclCommunicator::AllGather)
-    .stubs()
-    .will(returnValue(HCCL_E_PARA));
+    MOCKER_CPP_VIRTUAL(impl2, &HcclCommunicator::AllGather).stubs().will(returnValue(HCCL_E_PARA));
 
-    MOCKER_CPP_VIRTUAL(impl2, &HcclCommunicator::Broadcast)
-    .stubs()
-    .will(returnValue(HCCL_E_PARA));
+    MOCKER_CPP_VIRTUAL(impl2, &HcclCommunicator::Broadcast).stubs().will(returnValue(HCCL_E_PARA));
 
-    MOCKER_CPP_VIRTUAL(impl2, &HcclCommunicator::SendOutPlace)
-    .stubs()
-    .will(returnValue(HCCL_E_PARA));
+    MOCKER_CPP_VIRTUAL(impl2, &HcclCommunicator::SendOutPlace).stubs().will(returnValue(HCCL_E_PARA));
 
-    MOCKER_CPP_VIRTUAL(impl2, &HcclCommunicator::ReceiveOutPlace)
-    .stubs()
-    .will(returnValue(HCCL_E_PARA));
+    MOCKER_CPP_VIRTUAL(impl2, &HcclCommunicator::ReceiveOutPlace).stubs().will(returnValue(HCCL_E_PARA));
 
     hcclComm comm;
     RankTable_t rankTable = get_rank_table_rank_nic_device();
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = comm.init(comm_params, commConfig, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
@@ -5113,13 +4837,13 @@ TEST_F(HcclCommTest, hcclComm_SetRanksPort)
     hcclCommunicator.commPortConfig_.devPortSwitchOn = true;
     HcclIpAddress localIp{"10.10.10.10"};
     hcclCommunicator.userRankSize_ = 1;
-    std::vector<RankInfo_t> rankLists= {};
+    std::vector<RankInfo_t> rankLists = {};
     RankInfo_t node;
     node.rankId = 0;
     node.deviceInfo.port = 50000;
     node.deviceInfo.vnicPort = 50001;
     rankLists.push_back(node);
-    HcclResult ret ;
+    HcclResult ret;
     ret = hcclCommunicator.SetRanksPort(rankLists);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
@@ -5130,13 +4854,13 @@ TEST_F(HcclCommTest, hcclCommAttr_SetRanksPort)
     MOCKER(GetExternalInputNpuPortSwitch).stubs().will(returnValue(true));
     HcclIpAddress localIp{"10.10.10.10"};
     hcclCommunicator.userRankSize_ = 1;
-    std::vector<RankInfo_t> rankLists= {};
+    std::vector<RankInfo_t> rankLists = {};
     RankInfo_t node;
     node.rankId = 0;
     node.deviceInfo.port = 50000;
     node.deviceInfo.vnicPort = 50001;
     rankLists.push_back(node);
-    HcclResult ret ;
+    HcclResult ret;
     ret = hcclCommunicator.SetRanksPort(rankLists);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
@@ -5151,26 +4875,26 @@ TEST_F(HcclCommTest, hcclComm_ReleasePreemptSocket)
 
     HcclCommunicator hcclCommunicator;
     HcclIpAddress remoteIp1{"10.10.10.10"};
-    std::shared_ptr<HcclSocket> listenSocket1(new (std::nothrow)HcclSocket("my tag1", nullptr, remoteIp1, 0,
-        HcclSocketRole::SOCKET_ROLE_SERVER));
-    HcclNetDevCtx  ctx1 ;
+    std::shared_ptr<HcclSocket> listenSocket1(
+        new (std::nothrow) HcclSocket("my tag1", nullptr, remoteIp1, 0, HcclSocketRole::SOCKET_ROLE_SERVER));
+    HcclNetDevCtx ctx1;
     hcclCommunicator.commPortConfig_.devNicListen = std::make_pair(listenSocket1, ctx1);
 
     HcclIpAddress remoteIp2{"10.10.10.11"};
-    std::shared_ptr<HcclSocket> listenSocket2(new (std::nothrow)HcclSocket("my tag2", nullptr, remoteIp2, 0,
-        HcclSocketRole::SOCKET_ROLE_SERVER));
-    HcclNetDevCtx  ctx2;
+    std::shared_ptr<HcclSocket> listenSocket2(
+        new (std::nothrow) HcclSocket("my tag2", nullptr, remoteIp2, 0, HcclSocketRole::SOCKET_ROLE_SERVER));
+    HcclNetDevCtx ctx2;
     hcclCommunicator.commPortConfig_.devVnicListen = std::make_pair(listenSocket2, ctx2);
 
     HcclIpAddress remoteIp3{"10.10.10.12"};
-    std::shared_ptr<HcclSocket> listenSocket3(new (std::nothrow)HcclSocket("my tag3", nullptr, remoteIp3, 0,
-        HcclSocketRole::SOCKET_ROLE_SERVER));
-    HcclNetDevCtx  ctx3 ;
+    std::shared_ptr<HcclSocket> listenSocket3(
+        new (std::nothrow) HcclSocket("my tag3", nullptr, remoteIp3, 0, HcclSocketRole::SOCKET_ROLE_SERVER));
+    HcclNetDevCtx ctx3;
     hcclCommunicator.commPortConfig_.backupDevNicListen = std::make_pair(listenSocket3, ctx3);
 
     hcclCommunicator.deviceBackUpLogicId_ = 1;
 
-    HcclResult ret ;
+    HcclResult ret;
     ret = hcclCommunicator.ReleasePreemptSocket();
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
@@ -5186,7 +4910,7 @@ TEST_F(HcclCommTest, hcclComm_InitRankInfoSubGroup_devPortSwitchOn_branch)
     MOCKER(SetRetryEnable).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     MOCKER(IsHostUseDevNic).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    std::vector<RankInfo> rankLists= {};
+    std::vector<RankInfo> rankLists = {};
     RankInfo node;
     node.worldRank = 0;
     node.userRank = 0;
@@ -5197,7 +4921,7 @@ TEST_F(HcclCommTest, hcclComm_InitRankInfoSubGroup_devPortSwitchOn_branch)
     HcclCommunicator hcclCommunicator;
     hcclCommunicator.commPortConfig_.devPortSwitchOn = true;
     hcclCommunicator.vnicRanksPort_.push_back(50000);
-    HcclResult ret ;
+    HcclResult ret;
     ret = hcclCommunicator.InitRankInfoSubGroup(groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
@@ -5207,12 +4931,12 @@ TEST_F(HcclCommTest, hcclComm_InitRankInfoSubGroup_devPortSwitchOn_branch)
 TEST_F(HcclCommTest, ut_InitRaResource_notSupportChangelink)
 {
     std::unique_ptr<HcclCommunicator> communicator(new (std::nothrow) HcclCommunicator());
-    std::unique_ptr<HcclSocketManager> socketManager(new (std::nothrow) HcclSocketManager(
-        NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0));
+    std::unique_ptr<HcclSocketManager> socketManager(
+        new (std::nothrow) HcclSocketManager(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0));
     u32 devicePhyId = 0;
     HcclNetDevCtx vnicPortCtx;
-    HcclResult ret = HcclNetOpenDev(&vnicPortCtx, NicType::DEVICE_NIC_TYPE, devicePhyId, devicePhyId,
-        HcclIpAddress(devicePhyId));
+    HcclResult ret
+        = HcclNetOpenDev(&vnicPortCtx, NicType::DEVICE_NIC_TYPE, devicePhyId, devicePhyId, HcclIpAddress(devicePhyId));
     EXPECT_EQ(ret, HCCL_SUCCESS);
     communicator->devicePhyId_ = devicePhyId;
     communicator->netDevCtxMap_.insert(make_pair(HcclIpAddress(devicePhyId), vnicPortCtx));
@@ -5242,10 +4966,13 @@ TEST_F(HcclCommTest, hcclComm_InitRaResource_devVnicSocket_branch)
     MOCKER(HcclNetInit).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     MOCKER(Is310PDevice).stubs().with(mockcpp::any()).will(returnValue(false));
     MOCKER_CPP(&HcclCommunicator::IsEnableBackupLink).stubs().with(mockcpp::any()).will(returnValue(false));
-    MOCKER_CPP(& HcclCommunicator::InitSocketManager).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitSocketManager).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&HcclCommunicatorAttrs::IsEnableRoce).stubs().with(mockcpp::any()).will(returnValue(false));
     MOCKER_CPP(&HcclSocketManager::ServerInit).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&HcclSocketManager::ServerDeInit, HcclResult(HcclSocketManager::*)(const HcclNetDevCtx, u32)).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclSocketManager::ServerDeInit, HcclResult(HcclSocketManager::*)(const HcclNetDevCtx, u32))
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&HcclCommunicatorAttrs::GenSupportRdmaLite).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&HcclCommunicatorAttrs::GetSupportRdmaLite).stubs().with(mockcpp::any()).will(returnValue(false));
     MOCKER_CPP(&HcclCommunicator::ReleasePreemptSocket).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
@@ -5253,20 +4980,21 @@ TEST_F(HcclCommTest, hcclComm_InitRaResource_devVnicSocket_branch)
     HcclCommunicator hcclCommunicator;
     hcclCommunicator.userRankSize_ = 2;
     hcclCommunicator.devicePhyId_ = 0;
-    hcclCommunicator.nicDeployment_ = NICDeployment::NIC_DEPLOYMENT_HOST; 
+    hcclCommunicator.nicDeployment_ = NICDeployment::NIC_DEPLOYMENT_HOST;
     hcclCommunicator.isHaveCpuRank_ = false;
-    hcclCommunicator.socketManager_.reset(new (std::nothrow) HcclSocketManager(NICDeployment::NIC_DEPLOYMENT_HOST, 0, 0, 0));
+    hcclCommunicator.socketManager_.reset(new (std::nothrow)
+                                              HcclSocketManager(NICDeployment::NIC_DEPLOYMENT_HOST, 0, 0, 0));
 
     HcclIpAddress remoteIp{"10.10.10.11"};
-    std::shared_ptr<HcclSocket> listenSocket(new (std::nothrow)HcclSocket("my tag2", nullptr, remoteIp, 0,
-        HcclSocketRole::SOCKET_ROLE_SERVER));
-    HcclIpAddress  localIp{"127.0.0.1"};
+    std::shared_ptr<HcclSocket> listenSocket(
+        new (std::nothrow) HcclSocket("my tag2", nullptr, remoteIp, 0, HcclSocketRole::SOCKET_ROLE_SERVER));
+    HcclIpAddress localIp{"127.0.0.1"};
     listenSocket->localIp_ = localIp;
     listenSocket->localPort_ = 50000;
 
-    HcclResult ret ;
+    HcclResult ret;
 
-    HcclNetDevCtx  ctx = nullptr;
+    HcclNetDevCtx ctx = nullptr;
     ret = HcclNetOpenDev(&ctx, NicType::DEVICE_NIC_TYPE, 0, 0, localIp);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
@@ -5274,7 +5002,7 @@ TEST_F(HcclCommTest, hcclComm_InitRaResource_devVnicSocket_branch)
 
     ret = hcclCommunicator.InitRaResource();
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    
+
     hcclCommunicator.GetRanksPort();
 
     HcclNetCloseDev(ctx);
@@ -5289,29 +5017,31 @@ TEST_F(HcclCommTest, hcclComm_InitNic_IsEnableBackupLink_branch1)
     setenv("HCCL_INTRA_ROCE_ENABLE", "1", 1);
     MOCKER_CPP(&HcclCommunicator::IsEnableBackupLink).stubs().with(mockcpp::any()).will(returnValue(true));
     MOCKER_CPP(&HcclSocketManager::ServerInit).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&HcclSocketManager::ServerDeInit, HcclResult(HcclSocketManager::*)(const HcclNetDevCtx, u32)).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclSocketManager::ServerDeInit, HcclResult(HcclSocketManager::*)(const HcclNetDevCtx, u32))
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&HcclCommunicatorAttrs::SetNeedInitNicFlag).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     MOCKER(Is310PDevice).stubs().with(mockcpp::any()).will(returnValue(false));
     MOCKER_CPP(&HcclCommunicator::ReleasePreemptSocket).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    
+
     HcclIpAddress remoteIp{"10.10.10.11"};
-    std::shared_ptr<HcclSocket> listenSocket(new (std::nothrow)HcclSocket("my tag2", nullptr, remoteIp, 0,
-        HcclSocketRole::SOCKET_ROLE_SERVER));
-    HcclIpAddress  localIp{"127.0.0.1"};
+    std::shared_ptr<HcclSocket> listenSocket(
+        new (std::nothrow) HcclSocket("my tag2", nullptr, remoteIp, 0, HcclSocketRole::SOCKET_ROLE_SERVER));
+    HcclIpAddress localIp{"127.0.0.1"};
     listenSocket->localIp_ = localIp;
     listenSocket->localPort_ = 50000;
 
     HcclNetDevCtx ctx1;
-    HcclResult ret = HcclNetOpenDev(&ctx1, NicType::DEVICE_NIC_TYPE, 0, 0,
-        HcclIpAddress("1.1.1.1"));
+    HcclResult ret = HcclNetOpenDev(&ctx1, NicType::DEVICE_NIC_TYPE, 0, 0, HcclIpAddress("1.1.1.1"));
 
     HcclIpAddress remoteIp2{"10.10.10.12"};
-    std::shared_ptr<HcclSocket> listenSocket2(new (std::nothrow)HcclSocket("my tag2", nullptr, remoteIp2, 0,
-        HcclSocketRole::SOCKET_ROLE_SERVER));
-    HcclIpAddress  localIp2{"127.0.0.1"};
+    std::shared_ptr<HcclSocket> listenSocket2(
+        new (std::nothrow) HcclSocket("my tag2", nullptr, remoteIp2, 0, HcclSocketRole::SOCKET_ROLE_SERVER));
+    HcclIpAddress localIp2{"127.0.0.1"};
     listenSocket2->localIp_ = localIp2;
     listenSocket2->localPort_ = 50001;
-    HcclNetDevCtx  ctx2;
+    HcclNetDevCtx ctx2;
 
     HcclCommunicator hcclCommunicator;
     hcclCommunicator.nicDeployment_ = NICDeployment::NIC_DEPLOYMENT_RESERVED;
@@ -5332,7 +5062,7 @@ TEST_F(HcclCommTest, hcclComm_InitNic_IsEnableBackupLink_branch1)
     hcclCommunicator.nicInitialized_ = 0;
     hcclCommunicator.raResourceInit_ = false;
     ResetInitState();
-    
+
     GlobalMockObject::verify();
 }
 
@@ -5344,37 +5074,52 @@ TEST_F(HcclCommTest, hcclComm_InitRankInfoSubGroup_devicePortSwitchOn)
     MOCKER_CPP(&HcclCommunicatorAttrs::SetModuleInfo).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     MOCKER_CPP(&HcclCommunicatorAttrs::SetSuperPodInfo).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&HcclCommunicatorAttrs::SetLocalRankInfoSubGroup).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&HcclCommunicatorAttrs::SetInterModeInSuperPod).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicatorAttrs::SetLocalRankInfoSubGroup)
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicatorAttrs::SetInterModeInSuperPod)
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
     MOCKER_CPP(&HcclCommunicatorAttrs::UpdateNicList).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&HcclCommunicatorAttrs::CheckLocalRankInfo).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&HcclCommunicatorAttrs::CalAndSetMeshAggRankSize).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicatorAttrs::CalAndSetMeshAggRankSize)
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&HcclCommunicatorAttrs::IsEnableRoce).stubs().with(mockcpp::any()).will(returnValue(false));
     MOCKER_CPP(&HcclCommunicatorAttrs::SetWorldGroupInfo).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     MOCKER(HcclCheckLogLevel).stubs().with(mockcpp::any()).will(returnValue(false));
     MOCKER(IsHostUseDevNic).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicatorAttrs::SetInnerServerAverageDevice,
-        HcclResult (HcclCommunicatorAttrs::*)(const std::vector<RankInfo> &rankList))
-        .stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&HcclCommunicatorAttrs::InitTopoInfo,
-        HcclResult (HcclCommunicatorAttrs::*)(const std::vector<RankInfo> &rankList))
-        .stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(
+        &HcclCommunicatorAttrs::SetInnerServerAverageDevice,
+        HcclResult(HcclCommunicatorAttrs::*)(const std::vector<RankInfo>& rankList))
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(
+        &HcclCommunicatorAttrs::InitTopoInfo,
+        HcclResult(HcclCommunicatorAttrs::*)(const std::vector<RankInfo>& rankList))
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
     HcclCommunicatorAttrs hcomattr;
-    
-    std::vector<RankInfo> rankLists ;
+
+    std::vector<RankInfo> rankLists;
     RankInfo node;
     node.worldRank = 0;
     node.userRank = 0;
     rankLists.push_back(node);
     WorldGroupInfo groupCommonData;
     groupCommonData.devPortSwitchOn = true;
- 
+
     hcomattr.vnicRanksPort_.push_back(50000);
-    HcclResult ret ;
+    HcclResult ret;
     ret = hcomattr.InitRankInfoSubGroup(rankLists, groupCommonData);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     GlobalMockObject::verify();
@@ -5415,12 +5160,13 @@ TEST_F(HcclCommTest, hcclComm_AllGatherV_call)
     int sendBuff[4] = {0};
     u64 sendCount = 4;
     int recvBuff[8];
-    u64 recvCount[4] = {4,4};
-    u64 rdispls[4] = {4,4};
+    u64 recvCount[4] = {4, 4};
+    u64 rdispls[4] = {4, 4};
     aclrtStream stream;
     aclError ret = aclrtCreateStream(&stream);
     EXPECT_EQ(ret, ACL_SUCCESS);
-    ret = hcclCommunicator.AllGatherV(strTag, sendBuff, sendCount, recvBuff, recvCount, rdispls, HcclDataType::HCCL_DATA_TYPE_INT32, stream);
+    ret = hcclCommunicator.AllGatherV(
+        strTag, sendBuff, sendCount, recvBuff, recvCount, rdispls, HcclDataType::HCCL_DATA_TYPE_INT32, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     GlobalMockObject::verify();
@@ -5445,12 +5191,13 @@ TEST_F(HcclCommTest, hcclComm_AllGatherVOutPlace_call)
     int sendBuff[4] = {0};
     u64 sendCount = 4;
     int recvBuff[8];
-    u64 recvCount[4] = {4,4};
-    u64 rdispls[4] = {4,4};
+    u64 recvCount[4] = {4, 4};
+    u64 rdispls[4] = {4, 4};
     aclrtStream stream;
     aclError ret = aclrtCreateStream(&stream);
     EXPECT_EQ(ret, ACL_SUCCESS);
-    ret = hcclCommunicator.AllGatherVOutPlace(strTag, sendBuff, recvBuff, sendCount, recvCount, rdispls, HcclDataType::HCCL_DATA_TYPE_INT32, stream);
+    ret = hcclCommunicator.AllGatherVOutPlace(
+        strTag, sendBuff, recvBuff, sendCount, recvCount, rdispls, HcclDataType::HCCL_DATA_TYPE_INT32, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     GlobalMockObject::verify();

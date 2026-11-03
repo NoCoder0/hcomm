@@ -19,25 +19,20 @@ using namespace Hccl;
 
 class ConnectedLinkMgrTest : public testing::Test {
 protected:
-    static void SetUpTestCase() {
-        std::cout << "ConnectedLinkMgrTest SetUP" << std::endl;
-    }
- 
-    static void TearDownTestCase() {
-        std::cout << "ConnectedLinkMgrTest TearDown" << std::endl;
-    }
- 
-    virtual void SetUp() {
-        std::cout << "A Test case in ConnectedLinkMgrTest SetUP" << std::endl;
-    }
- 
-    virtual void TearDown () {
+    static void SetUpTestCase() { std::cout << "ConnectedLinkMgrTest SetUP" << std::endl; }
+
+    static void TearDownTestCase() { std::cout << "ConnectedLinkMgrTest TearDown" << std::endl; }
+
+    virtual void SetUp() { std::cout << "A Test case in ConnectedLinkMgrTest SetUP" << std::endl; }
+
+    virtual void TearDown()
+    {
         GlobalMockObject::verify();
         std::cout << "A Test case in ConnectedLinkMgrTest TearDown" << std::endl;
     }
 
-    std::shared_ptr<NetInstance::Link> InitBaseLink(std::shared_ptr<NetInstance::Node> srcNodePtr,
-                                                    std::shared_ptr<NetInstance::Node> dstNodePtr, u32 hop = 1)
+    std::shared_ptr<NetInstance::Link> InitBaseLink(
+        std::shared_ptr<NetInstance::Node> srcNodePtr, std::shared_ptr<NetInstance::Node> dstNodePtr, u32 hop = 1)
     {
         IpAddress srcAddr = IpAddress(0);
         IpAddress dstAddr = IpAddress(0);
@@ -59,7 +54,8 @@ protected:
     }
 };
 
-void GenerateRankPairLinkDataMap5(std::unordered_map<RankId, std::vector<LinkData>> &rankPairLinkDataMap,const LinkData *dto)
+void GenerateRankPairLinkDataMap5(
+    std::unordered_map<RankId, std::vector<LinkData>>& rankPairLinkDataMap, const LinkData* dto)
 {
     auto iter = rankPairLinkDataMap.find(dto->GetRemoteRankId());
     if (iter == rankPairLinkDataMap.end()) {
@@ -70,7 +66,7 @@ void GenerateRankPairLinkDataMap5(std::unordered_map<RankId, std::vector<LinkDat
     }
 }
 
-ConnectedLinkMgr MakeLinkMgr5(std::vector<LinkData> &links)
+ConnectedLinkMgr MakeLinkMgr5(std::vector<LinkData>& links)
 {
     ConnectedLinkMgr mgr;
     std::unordered_map<RankId, std::vector<LinkData>> rankPairLinkDataMap;
@@ -81,14 +77,14 @@ ConnectedLinkMgr MakeLinkMgr5(std::vector<LinkData> &links)
 
     std::unordered_map<u32, std::unordered_map<RankId, std::vector<LinkData>>> levelRankPairLinkDataMap;
     u32 level = 0;
-    levelRankPairLinkDataMap.insert(std::make_pair(level, rankPairLinkDataMap)); 
+    levelRankPairLinkDataMap.insert(std::make_pair(level, rankPairLinkDataMap));
     mgr.levelRankPairLinkDataMap = levelRankPairLinkDataMap;
     return mgr;
 }
 
 TEST_F(ConnectedLinkMgrTest, test_update_and_get_links)
 {
-    LinkData         link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
+    LinkData link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
     std::vector<LinkData> links{link};
     ConnectedLinkMgr mgr = MakeLinkMgr5(links);
 
@@ -139,8 +135,8 @@ TEST_F(ConnectedLinkMgrTest, test_parse_packed_data)
 
     EXPECT_EQ(mgr.levelRankPairLinkDataMap[level].size(), dstRanks.size());
     std::vector<LinkData> links;
-    for (const auto &it : levelRankPairs) {
-        for (const auto &path : fabGroup->GetPaths(myRank, it.second)) {
+    for (const auto& it : levelRankPairs) {
+        for (const auto& path : fabGroup->GetPaths(myRank, it.second)) {
             links.emplace_back(path);
         }
     }

@@ -17,8 +17,8 @@
 #include "exception_util.h"
 namespace Hccl {
 
-MemTransportLite::MemTransportLite(std::vector<char>                                                 &uniqueId,
-                                   std::function<void(u32 streamId, u32 taskId, const TaskParam &taskParam)> callback)
+MemTransportLite::MemTransportLite(
+    std::vector<char>& uniqueId, std::function<void(u32 streamId, u32 taskId, const TaskParam& taskParam)> callback)
 {
     BinaryStream binaryStream(uniqueId);
     // 反序列化，得到type，基于type创建不同的 impl
@@ -32,7 +32,7 @@ MemTransportLite::MemTransportLite(std::vector<char>                            
 
     if (type == TransportType::UB) {
         impl = std::make_unique<UbTransportLiteImpl>(uniqueId, callback);
-    } else if(type == TransportType::P2P) {
+    } else if (type == TransportType::P2P) {
         impl = std::make_unique<P2PTransportLiteImpl>(uniqueId, callback);
     } else {
         THROW<NotSupportException>(StringFormat("%s doesnot support now", type.Describe().c_str()));
@@ -43,6 +43,5 @@ std::string MemTransportLite::Describe() const
 {
     return StringFormat("MemTransportLite[type=%s]", type.Describe().c_str());
 }
-
 
 } // namespace Hccl

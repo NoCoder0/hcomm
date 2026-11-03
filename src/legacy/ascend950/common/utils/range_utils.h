@@ -23,7 +23,8 @@ namespace Hccl {
  * @param len2    范围2的长度
  * @return 范围1包含范围2则返回true；否则返回false
  */
-template <typename T1, typename T2> inline bool IsRangeInclude(T1 begin1, T2 len1, T1 begin2, T2 len2)
+template <typename T1, typename T2>
+inline bool IsRangeInclude(T1 begin1, T2 len1, T1 begin2, T2 len2)
 {
     // 检查begin1 + len1是否会溢出
     if (len1 > static_cast<T2>(std::numeric_limits<T1>::max() - begin1)) {

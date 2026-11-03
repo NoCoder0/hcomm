@@ -1,28 +1,12 @@
- /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- * 
- * The code snippet comes from Ascend project.
- * 
- * Copyright 2021 Huawei Technologies Co., Ltd
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef CCE_RUNTIME_RT_EXTERNAL_FFTS_DEFINE_H
 #define CCE_RUNTIME_RT_EXTERNAL_FFTS_DEFINE_H
@@ -34,7 +18,7 @@ extern "C" {
 #endif
 
 #pragma pack(push)
-#pragma pack (1)
+#pragma pack(1)
 
 // hardware context type
 typedef enum tagFftsPlusHwType {
@@ -87,7 +71,7 @@ typedef enum tagFftsPlusContextType {
     RT_CTX_TYPE_PERSISTENT_CACHE = 0x0600,
     RT_CTX_TYPE_DSA = 0x0700,
     RT_CTX_TYPE_WRITE_VALUE_RDMA = 0x0805,
-}rtFftsPlusContextType_t;
+} rtFftsPlusContextType_t;
 
 // condition type
 typedef enum tagFftsPlusCondType {
@@ -102,7 +86,7 @@ typedef enum tagFftsPlusCondType {
 
 // the definition of ffts plus context
 
-#define RT_CTX_SUCCESSOR_NUM   26
+#define RT_CTX_SUCCESSOR_NUM 26
 
 // ffts plus common context
 typedef struct tagFftsPlusComCtx {
@@ -190,7 +174,7 @@ typedef struct tagFftsPlusAicAivCtx {
     uint32_t res14;
     uint32_t res15;
     // 120-127
-    uint16_t srcSlot[4];    // src_slot0-3(context ID for source data which is out of subgraph)
+    uint16_t srcSlot[4]; // src_slot0-3(context ID for source data which is out of subgraph)
 } rtFftsPlusAicAivCtx_t;
 
 // mix aic/aiv context
@@ -256,7 +240,7 @@ typedef struct tagFftsPlusMixAicAivCtx {
     uint16_t tailAivTaskStartPcH;
     uint32_t tailAivTaskStartPcL;
     // 120-127
-    uint16_t srcSlot[4];    // src_slot0-3(context ID for source data which is out of subgraph)
+    uint16_t srcSlot[4]; // src_slot0-3(context ID for source data which is out of subgraph)
 } rtFftsPlusMixAicAivCtx_t;
 
 // sdma context
@@ -292,7 +276,7 @@ typedef struct tagFftsPlusSdmaCtx {
     uint16_t threadId;
     uint16_t threadDim;
     // 76-79
-    uint32_t sdmaSqeHeader;  // (FORMAT/MPAMNS/PARTID/DRO/SRO/QOS/DNS/SNS/DSSV/SSSV/IE/UPCODE)
+    uint32_t sdmaSqeHeader; // (FORMAT/MPAMNS/PARTID/DRO/SRO/QOS/DNS/SNS/DSSV/SSSV/IE/UPCODE)
     // 80-83
     uint16_t sourceStreamId;
     uint16_t sourceSubstreamId;
@@ -435,7 +419,7 @@ typedef struct tagFftsPlusAiCpuCtx {
     uint16_t nonTailNumBlocks;
     uint16_t tailNumBlocks;
     // 80-115
-    uint32_t usrData[9];   // usr_data0 -> usr_data8 usr_data2(task_param_base_l) usr_data3(task_param_base_h)
+    uint32_t usrData[9]; // usr_data0 -> usr_data8 usr_data2(task_param_base_l) usr_data3(task_param_base_h)
     // 116--119
     uint32_t res8;
     // 120-123
@@ -541,8 +525,8 @@ typedef struct tagFftsPlusAtStartCtx {
 } rtFftsPlusAtStartCtx_t;
 
 // at end context
-#define RT_CTX_SUCC_AT_START_SLOT_NUM   12
-#define RT_CTX_SUCC_OUT_LABEL_SLOT_NUM  12
+#define RT_CTX_SUCC_AT_START_SLOT_NUM 12
+#define RT_CTX_SUCC_OUT_LABEL_SLOT_NUM 12
 
 typedef struct tagFftsPlusAtEndCtx {
     // 0-3 bytes
@@ -769,7 +753,6 @@ typedef struct tagFftsPlusPersistentCacheCtx {
     // 72-127
     uint32_t res6[14];
 } rtFftsPlusPersistentCacheCtx_t;
-
 
 typedef struct tagFftsPlusDsaCtx {
     // 0-3bytes

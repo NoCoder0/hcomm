@@ -21,9 +21,9 @@ namespace Hccl {
 
 class InsTempReduceScatterAicpuReduceMesh2D : public InsAlgTemplateBase {
 public:
-    explicit InsTempReduceScatterAicpuReduceMesh2D(const RankId virtualRank, const u32 tempRankSize,
-                                   const std::vector<std::vector<RankId>> &tempVTopo,
-                                   const std::map<RankId, u32>            &tempVirtRankMap);
+    explicit InsTempReduceScatterAicpuReduceMesh2D(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~InsTempReduceScatterAicpuReduceMesh2D() override;
 
     std::string Describe() const override
@@ -31,13 +31,15 @@ public:
         return StringFormat("Template of aicpu reduce reducescatter 2D Mesh with tempRankSize [%u].", tempRankSize_);
     }
 
-    HcclResult GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &templateDataParams,
-                         const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues);
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
+    HcclResult GenExtIns(
+        const TempFuncs& tempFuncs, const TemplateDataParams& templateDataParams, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues);
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
 
     u32 CalcScratchMultiple(BufferType inBuffType, BufferType outBuffType) const;
+
 private:
-    HcclResult RunAicpuLocalReduce(const TemplateDataParams &templateDataParams, std::vector<InsQuePtr> &tempInsQues);
+    HcclResult RunAicpuLocalReduce(const TemplateDataParams& templateDataParams, std::vector<InsQuePtr>& tempInsQues);
     InsTempAlltoAllMesh2D alltoallMesh2D_;
 };
 

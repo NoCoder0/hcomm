@@ -44,16 +44,15 @@ struct wr_exp_rsp {
     unsigned long db_info;
 };
 
-struct ibv_qp *ibv_exp_create_qp(struct ibv_pd *pd,
-                             struct ibv_exp_qp_init_attr *qp_init_attr, struct rdma_lite_device_qp_attr *qp_resp);
-int ibv_exp_post_send(struct ibv_qp *qp,
-			struct ibv_send_wr *wr,
-			struct ibv_send_wr **bad_wr, struct wr_exp_rsp *exp_rsp);
+struct ibv_qp* ibv_exp_create_qp(
+    struct ibv_pd* pd, struct ibv_exp_qp_init_attr* qp_init_attr, struct rdma_lite_device_qp_attr* qp_resp);
+int ibv_exp_post_send(
+    struct ibv_qp* qp, struct ibv_send_wr* wr, struct ibv_send_wr** bad_wr, struct wr_exp_rsp* exp_rsp);
 
-int ibv_exp_query_notify(struct ibv_context *context, unsigned long long *notify_va, unsigned long long *size);
+int ibv_exp_query_notify(struct ibv_context* context, unsigned long long* notify_va, unsigned long long* size);
 
-struct ibv_mr *ibv_exp_reg_mr(struct ibv_pd *pd, void *addr, size_t length,
-				int access, struct roce_process_sign roce_sign);
+struct ibv_mr*
+ibv_exp_reg_mr(struct ibv_pd* pd, void* addr, size_t length, int access, struct roce_process_sign roce_sign);
 
 struct ibv_post_send_ext_resp {
     unsigned int wqe_index;
@@ -65,22 +64,18 @@ struct ibv_post_send_ext_attr {
     uint8_t reduce_type;
 };
 
-int ibv_ext_post_send(struct ibv_qp *qp, struct ibv_send_wr *wr,
-                                   struct ibv_send_wr **bad_wr, struct ibv_post_send_ext_attr *ext_attr,
-                                   struct ibv_post_send_ext_resp *ext_resp);
+int ibv_ext_post_send(
+    struct ibv_qp* qp, struct ibv_send_wr* wr, struct ibv_send_wr** bad_wr, struct ibv_post_send_ext_attr* ext_attr,
+    struct ibv_post_send_ext_resp* ext_resp);
 
-struct ibv_cq *ibv_create_ext_cq(struct ibv_context *context,
-                                              int cqe, void *cq_context,
-                                              struct ibv_comp_channel *channel,
-                                              int comp_vector, int partid);
+struct ibv_cq* ibv_create_ext_cq(
+    struct ibv_context* context, int cqe, void* cq_context, struct ibv_comp_channel* channel, int comp_vector,
+    int partid);
 
-struct ibv_cq *ibv_exp_create_cq(struct ibv_context *context,
-					      int cqe, void *cq_context,
-					      struct ibv_comp_channel *channel,
-					      int comp_vector,
-					      struct rdma_lite_device_cq_init_attr *attr, struct rdma_lite_device_cq_attr *cq_resp);
+struct ibv_cq* ibv_exp_create_cq(
+    struct ibv_context* context, int cqe, void* cq_context, struct ibv_comp_channel* channel, int comp_vector,
+    struct rdma_lite_device_cq_init_attr* attr, struct rdma_lite_device_cq_attr* cq_resp);
 
-int ibv_exp_query_device(struct ibv_context *context, struct dev_cap_info *cap);
-int ibv_exp_set_dev_id(struct ibv_context *context, unsigned int dev_id);
+int ibv_exp_query_device(struct ibv_context* context, struct dev_cap_info* cap);
+int ibv_exp_set_dev_id(struct ibv_context* context, unsigned int dev_id);
 #endif
-

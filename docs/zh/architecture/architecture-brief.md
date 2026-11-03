@@ -24,13 +24,13 @@ flowchart LR
 |------|------|
 | **集合通信原语** | AllReduce、Broadcast、AllGather、ReduceScatter、AlltoAllv、Send、Receive、... |
 | **通信算法** | Ring、Mesh、RHD(Halving-Doubling)、Star + 自研算法 |
-| **通信协议** | UBC、UBG、UBoE、RoCE(v2)、HCCS、UB_MEM |
+| **通信协议** | UBC、UB_RTP、UBoE、RoCE(v2)、HCCS、UB_MEM |
 | **执行模式** | 单算子模式 + 图模式 |
 | **扩展能力** | 通信算子自定义开发 |
 | **应用场景** | 大模型训练（数据/模型/专家并行）与推理（TP/PP/EP）的集合通信 |
 
 HCCL 在 CANN 软件栈中的位置——介于 AI 框架与硬件驱动之间，承上启下：
-![HCCL 在 CANN 架构中的位置](figures/cann-hccl-architecture.png)
+![HCCL 在 CANN 架构中的位置](figures/hccl_architecture.png)
 
 ---
 
@@ -79,7 +79,7 @@ RankGraph 使用图（Graph）对通信域内不同 Rank 间的连接关系进�
 |------|-----------|---------|
 | **通信设备(Endpoint)** | 网络通信的逻辑接口，包含协议与地址 | NPU 网口 / Host NIC |
 | **通信通道(Channel)** | 两端通信设备间的数据通道（含同步 Notify） | RoCE QP / UB Jetty 连接 |
-| **通信内存(CommMem)** | 注册到通信域、可被通信设备(Endpoint)访问的内存段 | NPU HBM / Host 内存 |
+| **通信内存(CommMem)** | 注册到通信域、可被通信设备(Endpoint)访问的内存段 | NPU片上内存 / Host内存 |
 | **通信引擎(CommEngine)** | 执行通信任务的模块，含 Thread 与线程调度器，驱动通信硬件搬移数据 | AICPU_TS、CCU、AIV |
 
 > **组合关系**: Channel = 两端通信设备 + 通信协议 + N Notifys
@@ -97,7 +97,9 @@ RankGraph 使用图（Graph）对通信域内不同 Rank 间的连接关系进�
 | **通信模型** | 单边操作、双边操作（需两端配合） | 单边操作（只需一端发起） |
 | **适用协议** | RoCE、UB | UB_MEM、HCCS |
 
-![网络语义模型](../comm_op_dev_guide/prog_models_concepts/figures/semantic_communication.png) ![内存语义模型](../comm_op_dev_guide/prog_models_concepts/figures/memory_semantic_model.png)
+![网络语义模型](../comm_op_dev_guide/prog_models_concepts/figures/semantic_communication.png)
+
+![内存语义模型](../comm_op_dev_guide/prog_models_concepts/figures/memory_semantic_model.png)
 
 > 选择哪种语义取决于底层协议与场景需求
 
@@ -143,6 +145,7 @@ RankGraph 使用图（Graph）对通信域内不同 Rank 间的连接关系进�
 > **要点**: AICPU 通过 Task 描述符下发通信任务，**不占计算核**，适合大数据高带宽场景
 
 #### 2.4.2 CCU通信引擎
+
 - 专用加速单元执行模式
 
 CCU（Collective Communication Unit，集合通信加速单元）是位于 IO Die 的专用集合通信协处理器，Thread 抽象为 Mission。
@@ -156,6 +159,7 @@ CCU（Collective Communication Unit，集合通信加速单元）是位于 IO Di
 > **要点**: CCU 是专用集合通信加速单元，执行预置的 CCU 指令流（经 URMA 搬运数据）；**高带宽、低时延**且少占计算核与访存带宽，但受片上资源限制、支持的通信域数量有限（Ascend 950PR/950DT）
 
 #### 2.4.3 AIV通信引擎
+
 - Vector Core 执行模式
 
 ![AIV 通信](../comm_op_dev_guide/prog_models_concepts/figures/aiv_communication.png)
@@ -198,6 +202,7 @@ CCU（Collective Communication Unit，集合通信加速单元）是位于 IO Di
 ### 3.2 目标目录结构——与软件架构对应
 
 HCCL仓的目标目录结构：
+
 ```text
 hccl
 │── src                         # HCCL算子源码目录
@@ -225,11 +230,14 @@ hccl
 ```
 
 HCOMM仓的目标目录结构：
+
 ```text
 hcomm
 ├── src                                  # 源码目录
 │   ├── base_comm                        # 基础通信层
 │   │   ├── common                       # 基础通信层公共基础功能目录
+│   │   ├── config_mgr                   # 环境变量配置管理
+│   │   ├── inc                          # 基础通信层对上层（coll_communicator_mgr 等）的边界投影头（*_pub.h）
 │   │   ├── primitives                   # 基础通信原语
 │   │   └── resource                     # 基础通信资源
 │   ├── coll_communicator_mgr            # 集合通信域管理
@@ -260,9 +268,10 @@ hcomm
 |------|------|------|---------|
 | L1 | HCCL 算子（hccl.h） | AI框架适配层 | 提供 AllReduce 等标准集合通信算子入口 |
 | L2-comm | HCOMM 集合通信域管理中的通信域（hccl_comm.h） | 框架适配层 | 通信域创建 |
-| L2-res-rank_graph | HCOMM 集合通信域管理（hccl_res.h / hccl_rank_graph.h） | 算子开发者 | 拓扑查询、资源（Thread/Channel）获取 |
+| L2-res-rank_graph | HCOMM 集合通信域管理（hccl_res.h / hccl_channel.h / hccl_rank_graph.h） | 算子开发者 | 拓扑查询、资源（Thread/Channel）获取 |
 | L3-prim | HCOMM 基础通信原语（hcomm_primitives.h） | 算子开发者、通信库开发者 | 数据搬运（Write/Read/Reduce）+ 同步（Notify） |
-| L3-res | HCOMM 基础通信资源（hcomm_res.h） | 通信库开发者 | 通信设备/通道/内存等基础资源的获取与管理 |
+| L3-res | HCOMM 基础通信资源（hcomm_res.h / hcomm_channel.h） | 通信库开发者 | 通信设备/通道/内存等基础资源的获取与管理 |
+| CCU | HCOMM CCU 算子开发接口（include/ccu/，含 ccu_primitives.hpp、ccu_res.h、ccu_launch.h 等） | CCU 算子开发者 | CCU 资源对象封装与 Kernel Launch 接口 |
 
 - L2-res-rank_graph + L3-prim 是**新开放的算子编程接口**，专门面向自定义通信算子开发
 - L3-res + L3-prim 是**通信库开发接口**，专门面向集合通信库等开发

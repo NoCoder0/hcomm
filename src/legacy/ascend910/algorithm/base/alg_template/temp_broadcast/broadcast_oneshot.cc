@@ -1,31 +1,27 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include <cmath>
 #include "broadcast_oneshot_pub.h"
 #include "alg_template_register.h"
 
 namespace hccl {
-BroadcastHD::BroadcastHD(const HcclDispatcher dispatcher)
-    : AlgTemplateBase(dispatcher)
-{}
+BroadcastHD::BroadcastHD(const HcclDispatcher dispatcher) : AlgTemplateBase(dispatcher) {}
 
-BroadcastHD::~BroadcastHD()
-{}
+BroadcastHD::~BroadcastHD() {}
 
-HcclResult BroadcastHD::Prepare(DeviceMem &inputMem, DeviceMem &outputMem, DeviceMem &scratchMem, const u64 count,
-                                const HcclDataType dataType, const Stream &stream,
-                                const HcclReduceOp reductionOp, const u32 root, std::vector<Stream> &meshStreams,
-                                const std::vector<std::shared_ptr<LocalNotify>> &meshSignal,
-                                const std::vector<std::shared_ptr<LocalNotify>> &meshSignalAux,
-                                u32 interRank, const HcomCollOpInfo *opInfo)
+HcclResult BroadcastHD::Prepare(
+    DeviceMem& inputMem, DeviceMem& outputMem, DeviceMem& scratchMem, const u64 count, const HcclDataType dataType,
+    const Stream& stream, const HcclReduceOp reductionOp, const u32 root, std::vector<Stream>& meshStreams,
+    const std::vector<std::shared_ptr<LocalNotify>>& meshSignal,
+    const std::vector<std::shared_ptr<LocalNotify>>& meshSignalAux, u32 interRank, const HcomCollOpInfo* opInfo)
 {
     localRank_ = interRank;
     meshStreams_ = meshStreams;
@@ -63,9 +59,8 @@ HcclResult BroadcastHD::MainWaitSub()
 HcclResult BroadcastHD::SubRecordMain()
 {
     for (u32 streamIndex = 0; streamIndex < meshSignalPtr_->size(); streamIndex++) {
-        CHK_RET(
-            LocalNotify::Post(meshStreams_[streamIndex], dispatcher_,
-                (*meshSignalPtr_)[streamIndex], profilerInput_.stage));
+        CHK_RET(LocalNotify::Post(
+            meshStreams_[streamIndex], dispatcher_, (*meshSignalPtr_)[streamIndex], profilerInput_.stage));
     }
     return HCCL_SUCCESS;
 }
@@ -82,13 +77,14 @@ HcclResult BroadcastHD::PrepareStep(u32 rankSize)
 }
 
 // 算法的函数入口
-HcclResult BroadcastHD::RunAsync(const u32 rank, const u32 rankSize, const std::vector<LINK> &links)
+HcclResult BroadcastHD::RunAsync(const u32 rank, const u32 rankSize, const std::vector<LINK>& links)
 {
     HcclResult ret = HCCL_SUCCESS;
     CHK_SMART_PTR_NULL(dispatcher_);
     CHK_PTR_NULL(stream_.ptr());
-    HCCL_INFO("BroadcastHD run: rank[%u] ranksize[%u] inputMem[%p] outputMem[%p] count[%llu]",
-        rank, rankSize, inputMem_.ptr(), outputMem_.ptr(), count_);
+    HCCL_INFO(
+        "BroadcastHD run: rank[%u] ranksize[%u] inputMem[%p] outputMem[%p] count[%llu]", rank, rankSize,
+        inputMem_.ptr(), outputMem_.ptr(), count_);
 
     if (links.size() < rankSize) {
         HCCL_ERROR(
@@ -97,8 +93,8 @@ HcclResult BroadcastHD::RunAsync(const u32 rank, const u32 rankSize, const std::
     }
 
     if (meshStreams_.size() < 1) {
-        HCCL_ERROR("[BroadcastHD][RunAsync]rank[%u] meshStreams_[%llu] is less than need[1]",
-            rank, meshStreams_.size());
+        HCCL_ERROR(
+            "[BroadcastHD][RunAsync]rank[%u] meshStreams_[%llu] is less than need[1]", rank, meshStreams_.size());
         return HCCL_E_INTERNAL;
     }
 
@@ -111,35 +107,48 @@ HcclResult BroadcastHD::RunAsync(const u32 rank, const u32 rankSize, const std::
         if (step == stepMap_[rank]) {
             if (step != 0) {
                 ret = RunReceive(rank, step, rankSize, links);
-                CHK_PRT_RET(ret != HCCL_SUCCESS,
-                    HCCL_ERROR("[BroadcastHD][RunAsync]rank[%u] count[%llu] step [%llu] failed in RunReceive step",
-                        rank, count_, step), ret);
+                CHK_PRT_RET(
+                    ret != HCCL_SUCCESS,
+                    HCCL_ERROR(
+                        "[BroadcastHD][RunAsync]rank[%u] count[%llu] step [%llu] failed in RunReceive step", rank,
+                        count_, step),
+                    ret);
             } else if (rank != root_) {
                 ret = RunReceiveFirst(rank, rankSize, links);
-                CHK_PRT_RET(ret != HCCL_SUCCESS,
-                    HCCL_ERROR("[BroadcastHD][RunAsync]rank[%u] count[%llu] step [%llu] failed in RunReceiveFirst step",
-                        rank, count_, step), ret);
+                CHK_PRT_RET(
+                    ret != HCCL_SUCCESS,
+                    HCCL_ERROR(
+                        "[BroadcastHD][RunAsync]rank[%u] count[%llu] step [%llu] failed in RunReceiveFirst step", rank,
+                        count_, step),
+                    ret);
             } else {
                 ret = RunSendFirst(rank, rankSize, links);
-                CHK_PRT_RET(ret != HCCL_SUCCESS,
-                    HCCL_ERROR("[BroadcastHD][RunAsync]rank[%u] count[%llu] step [%llu] failed in RunSendFirst step",
-                        rank, count_, step), ret);
+                CHK_PRT_RET(
+                    ret != HCCL_SUCCESS,
+                    HCCL_ERROR(
+                        "[BroadcastHD][RunAsync]rank[%u] count[%llu] step [%llu] failed in RunSendFirst step", rank,
+                        count_, step),
+                    ret);
             }
         } else {
             ret = RunSend(rank, step, rankSize, links);
-            CHK_PRT_RET(ret != HCCL_SUCCESS,
-                HCCL_ERROR("[BroadcastHD][RunAsync]rank[%u] count[%llu] step [%llu] failed in RunSend step",
-                    rank, count_, step), ret);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR(
+                    "[BroadcastHD][RunAsync]rank[%u] count[%llu] step [%llu] failed in RunSend step", rank, count_,
+                    step),
+                ret);
         }
     }
     ret = RunFinalStep(rank, rankSize, links);
-    CHK_PRT_RET(ret != HCCL_SUCCESS,
-        HCCL_ERROR("[BroadcastHD][RunAsync]rank[%u] count[%llu]failed in RunFinalStep", rank, count_), ret);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR("[BroadcastHD][RunAsync]rank[%u] count[%llu] failed in RunFinalStep", rank, count_), ret);
     HCCL_INFO("BroadcastHD finished: rank[%u] ranksize[%u].", rank, rankSize);
     return HCCL_SUCCESS;
 }
 
-HcclResult BroadcastHD::RunFinalStep(u32 rank, u32 rankSize, const std::vector<LINK> &links)
+HcclResult BroadcastHD::RunFinalStep(u32 rank, u32 rankSize, const std::vector<LINK>& links)
 {
     HcclResult ret = HCCL_SUCCESS;
     u32 half = static_cast<u32>(pow(2, nSteps_ - 1));
@@ -147,14 +156,20 @@ HcclResult BroadcastHD::RunFinalStep(u32 rank, u32 rankSize, const std::vector<L
     if ((logicRank % half) < (rankSize - half)) {
         if (stepMap_[rank] == (nSteps_ - 1)) {
             ret = RunReceive(rank, nSteps_ - 1, rankSize, links);
-            CHK_PRT_RET(ret != HCCL_SUCCESS,
-                HCCL_ERROR("[BroadcastHD][RunAsync]rank[%u] count[%llu] step [%llu] failed in RunReceive step",
-                    rank, count_, nSteps_ - 1), ret);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR(
+                    "[BroadcastHD][RunAsync]rank[%u] count[%llu] step [%llu] failed in RunReceive step", rank, count_,
+                    nSteps_ - 1),
+                ret);
         } else {
             ret = RunSend(rank, nSteps_ - 1, rankSize, links);
-            CHK_PRT_RET(ret != HCCL_SUCCESS,
-                HCCL_ERROR("[BroadcastHD][RunAsync]rank[%u] count[%llu] step [%llu] failed in RunSend step",
-                    rank, count_, nSteps_ - 1), ret);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR(
+                    "[BroadcastHD][RunAsync]rank[%u] count[%llu] step [%llu] failed in RunSend step", rank, count_,
+                    nSteps_ - 1),
+                ret);
         }
     } else {
         u32 unitSize = SIZE_TABLE[dataType_];
@@ -170,10 +185,10 @@ u32 BroadcastHD::GetDstRank(u32 rank, u32 step, u32 rankSize)
 {
     u32 logicRank = (rank - root_ + rankSize) % rankSize;
     u32 logicDstRank = logicRank ^ (1 << step);
-    return (logicDstRank + root_) % rankSize; 
+    return (logicDstRank + root_) % rankSize;
 }
 
-HcclResult BroadcastHD::RunSend(u32 rank, u32 step, u32 rankSize, const std::vector<LINK> &links)
+HcclResult BroadcastHD::RunSend(u32 rank, u32 step, u32 rankSize, const std::vector<LINK>& links)
 {
     u32 dstRank = GetDstRank(rank, step, rankSize);
     HCCL_INFO("RunSend: rank[%u] dstRank[%u] step [%u] count[%llu].", rank, dstRank, step, count_);
@@ -201,7 +216,7 @@ HcclResult BroadcastHD::RunSend(u32 rank, u32 step, u32 rankSize, const std::vec
     return HCCL_SUCCESS;
 }
 
-HcclResult BroadcastHD::RunReceive(u32 rank, u32 step, u32 rankSize, const std::vector<LINK> &links)
+HcclResult BroadcastHD::RunReceive(u32 rank, u32 step, u32 rankSize, const std::vector<LINK>& links)
 {
     u32 dstRank = GetDstRank(rank, step, rankSize);
     HCCL_INFO("RunReceive: rank[%u] step[%u] outputMem[%p] count[%llu].", rank, step, outputMem_.ptr(), count_);
@@ -216,16 +231,16 @@ HcclResult BroadcastHD::RunReceive(u32 rank, u32 step, u32 rankSize, const std::
     }
 
     CHK_RET(links[dstRank]->RxAck(stream_));
-    void *remMemPtr = nullptr;
+    void* remMemPtr = nullptr;
     CHK_RET(links[dstRank]->GetRemoteMem(UserMemType::OUTPUT_MEM, &remMemPtr));
-    DeviceMem src = DeviceMem::create(static_cast<u8 *>(remMemPtr), count_ * unitSize);
+    DeviceMem src = DeviceMem::create(static_cast<u8*>(remMemPtr), count_ * unitSize);
     CHK_RET(HcclD2DMemcpyAsync(
         dispatcher_, dst, src, stream_, links[dstRank]->GetRemoteRank(), links[dstRank]->GetLinkType()));
     CHK_RET(links[dstRank]->TxDataSignal(stream_));
     return HCCL_SUCCESS;
 }
 
-HcclResult BroadcastHD::RunSendFirst(u32 rank, u32 rankSize, const std::vector<LINK> &links)
+HcclResult BroadcastHD::RunSendFirst(u32 rank, u32 rankSize, const std::vector<LINK>& links)
 {
     u32 dstRank = GetDstRank(rank, 0, rankSize);
     HCCL_INFO("RunSendFirst: rank[%u] dstRank[%u] count[%llu].", rank, dstRank, count_);
@@ -240,9 +255,9 @@ HcclResult BroadcastHD::RunSendFirst(u32 rank, u32 rankSize, const std::vector<L
     CHK_RET(HcclD2DMemcpyAsync(dispatcher_, commMemOut, userMemIn, meshStreams_[0]));
 
     CHK_RET(links[dstRank]->RxAck(stream_));
-    void *remMemPtr = nullptr;
+    void* remMemPtr = nullptr;
     CHK_RET(links[dstRank]->GetRemoteMem(UserMemType::OUTPUT_MEM, &remMemPtr));
-    DeviceMem dst = DeviceMem::create(static_cast<u8 *>(remMemPtr), count_ * unitSize);
+    DeviceMem dst = DeviceMem::create(static_cast<u8*>(remMemPtr), count_ * unitSize);
     CHK_RET(HcclD2DMemcpyAsync(
         dispatcher_, dst, userMemIn, stream_, links[dstRank]->GetRemoteRank(), links[dstRank]->GetLinkType()));
     CHK_RET(links[dstRank]->TxDataSignal(stream_));
@@ -253,7 +268,7 @@ HcclResult BroadcastHD::RunSendFirst(u32 rank, u32 rankSize, const std::vector<L
     return HCCL_SUCCESS;
 }
 
-HcclResult BroadcastHD::RunReceiveFirst(u32 rank, u32 rankSize, const std::vector<LINK> &links)
+HcclResult BroadcastHD::RunReceiveFirst(u32 rank, u32 rankSize, const std::vector<LINK>& links)
 {
     u32 dstRank = GetDstRank(rank, 0, rankSize);
     HCCL_INFO("RunReceiveFirst: rank[%u] dstRank[%u] count[%llu].", rank, dstRank, count_);
@@ -271,4 +286,4 @@ HcclResult BroadcastHD::RunReceiveFirst(u32 rank, u32 rankSize, const std::vecto
     return HCCL_SUCCESS;
 }
 REGISTER_TEMPLATE(TemplateType::TEMPLATE_BROADCAST_HD, BroadcastHD);
-}  // namespace hccl
+} // namespace hccl

@@ -1,19 +1,20 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "coll_all_reduce_mesh_opbase_small_count_deterministic_executor.h"
 
 namespace hccl {
 // 准入条件: 确定性&小数据量
-CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::CollAllReduceMeshOpbaseSmallCountDeterministicExecutor(const HcclDispatcher dispatcher,
-    std::unique_ptr<TopoMatcher> &topoMatcher): CollAllReduceExecutor(dispatcher, topoMatcher)
+CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::CollAllReduceMeshOpbaseSmallCountDeterministicExecutor(
+    const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher>& topoMatcher)
+    : CollAllReduceExecutor(dispatcher, topoMatcher)
 {
     DMAReduceFlag_ = true;
     if (!IsPowerOfTwo(topoAttr_.deviceNumPerAggregation)) {
@@ -27,19 +28,21 @@ HcclResult CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::CalcStreamNum
     u32 totalStreamNum;
     if (!IsPowerOfTwo(topoAttr_.deviceNumPerAggregation)) {
         // level0 为localreduce+Bcast时，需要level0 ranksize条
-        totalStreamNum = topoAttr_.deviceNumPerAggregation; 
+        totalStreamNum = topoAttr_.deviceNumPerAggregation;
     } else {
         // Doubling、nhr/ring算法只需要一条主流
         totalStreamNum = 1U;
     }
 
     streamNum = totalStreamNum - 1U;
-    HCCL_INFO("[CollAllReduceMeshOpbaseSmallCountDeterministicExecutor][CalcStreamNum] tag[%s] streamNum[%u]",
-        tag_.c_str(), streamNum);
+    HCCL_INFO(
+        "[CollAllReduceMeshOpbaseSmallCountDeterministicExecutor][CalcStreamNum] tag[%s] streamNum[%u]", tag_.c_str(),
+        streamNum);
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::CalcCommInfo(std::vector<LevelNSubCommTransport>& opTransport)
+HcclResult
+CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::CalcCommInfo(std::vector<LevelNSubCommTransport>& opTransport)
 {
     TransportMemType inputType = TransportMemType::RESERVED;
     TransportMemType outputType = TransportMemType::RESERVED;
@@ -49,25 +52,25 @@ HcclResult CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::CalcCommInfo(
     return HCCL_SUCCESS;
 }
 
-bool CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::IsPowerOfTwo(u32 num)
+bool CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::IsPowerOfTwo(u32 num) const
 {
     return (num & (num - 1)) == 0;
 }
 
-HcclResult CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::CalcTransportMemType(TransportMemType &inputType,
-    TransportMemType &outputType)
+HcclResult CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::CalcTransportMemType(
+    TransportMemType& inputType, TransportMemType& outputType) const
 {
     inputType = TransportMemType::CCL_INPUT;
     outputType = TransportMemType::CCL_OUTPUT;
-    HCCL_INFO("[CollAllReduceMeshOpbaseSmallCountDeterministicExecutor][CalcTransportMemType]" \
+    HCCL_INFO(
+        "[CollAllReduceMeshOpbaseSmallCountDeterministicExecutor][CalcTransportMemType]"
         "tag[%s] inputType[%d], outputType[%d]",
         tag_.c_str(), inputType, outputType);
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::CalcLevel0CommInfo(TransportMemType inputType,
-    TransportMemType outputType,
-    std::vector<LevelNSubCommTransport>& opTransport)
+HcclResult CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::CalcLevel0CommInfo(
+    TransportMemType inputType, TransportMemType outputType, std::vector<LevelNSubCommTransport>& opTransport)
 {
     CommType commType;
     if (topoAttr_.deviceNumPerAggregation > 1 && IsPowerOfTwo(topoAttr_.deviceNumPerAggregation)) {
@@ -83,8 +86,8 @@ HcclResult CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::CalcLevel0Com
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::CalcLevel1CommInfo(TransportMemType inputType,
-    TransportMemType outputType, std::vector<LevelNSubCommTransport>& opTransport)
+HcclResult CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::CalcLevel1CommInfo(
+    TransportMemType inputType, TransportMemType outputType, std::vector<LevelNSubCommTransport>& opTransport)
 {
     HCCL_INFO("[%s][CalcLevel1CommInfo]tag[%s] start", __func__, tag_.c_str());
     CommParaInfo commParaLevel1(COMM_LEVEL1, CommType::COMM_TAG_MAX);
@@ -124,17 +127,18 @@ bool CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::IsHugeData(const u6
     return hugeData;
 }
 
-
-bool CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::IsSmallData(const u64 totalSize, const u64 curSize)
+bool CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::IsSmallData(
+    [[maybe_unused]] const u64 totalSize, [[maybe_unused]] const u64 curSize)
 {
     // 选到本执行器必为小数据量
     return true;
 }
 
-HcclResult CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::KernelRun(const OpParam &param, ExecMem &execMem)
+HcclResult CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::KernelRun(const OpParam& param, ExecMem& execMem)
 {
-    HCCL_CONFIG_INFO(HCCL_ALG,
-        "[CollAllReduceMeshOpbaseSmallCountDeterministicExecutor][Run]CollAllReduceMeshOpbaseSmallCountDeterministicExecutor begins.");
+    HCCL_CONFIG_INFO(
+        HCCL_ALG, "[CollAllReduceMeshOpbaseSmallCountDeterministicExecutor][Run]"
+                  "CollAllReduceMeshOpbaseSmallCountDeterministicExecutor begins.");
 
     CHK_RET(CheckCommSize(COMM_LEVEL0, COMM_INDEX_0 + 1));
     SubCommInfo level0CommInfo = GetSubCommInfo(COMM_LEVEL0, COMM_INDEX_0);
@@ -154,8 +158,14 @@ HcclResult CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::KernelRun(con
         CHK_RET(RunDoublingSingleLevel(param, reduceAttr, execMem, level0CommInfo));
         HCCL_INFO("allreduce small count deterministic: using doubling algo intra-server.");
     } else {
-        HcomCollOpInfo opInfo = {
-            "", execMem.inputPtr, execMem.inputMem.ptr(), execMem.count, param.DataDes.dataType, param.root, param.reduceType};
+        HcomCollOpInfo opInfo = {"",
+                                 execMem.inputPtr,
+                                 execMem.inputMem.ptr(),
+                                 execMem.count,
+                                 param.DataDes.dataType,
+                                 param.root,
+                                 param.reduceType,
+                                 0};
         CHK_RET(RunReduceBcastSingleLevel(param, opInfo, reduceAttr, execMem, level0CommInfo));
         HCCL_INFO("allreduce small count deterministic: using reduce bcast algo intra-server.");
     }
@@ -164,8 +174,8 @@ HcclResult CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::KernelRun(con
         CHK_RET(RunDoublingSingleLevel(param, reduceAttr, execMem, level1CommInfo));
         HCCL_INFO("allreduce small count deterministic: using doubling algo inter-server.");
     } else if (algType_.algoLevel1 == AlgTypeLevel1::ALG_LEVEL1_HD) {
-        CHK_RET(RunTempLevel1(TemplateType::TEMPLATE_ALL_REDUCE_RECURSIVE_HALVING_DOUBLING, param, reduceAttr, execMem, 
-            level1CommInfo));
+        CHK_RET(RunTempLevel1(
+            TemplateType::TEMPLATE_ALL_REDUCE_RECURSIVE_HALVING_DOUBLING, param, reduceAttr, execMem, level1CommInfo));
         HCCL_INFO("allreduce small count deterministic: using rhd algo inter-server.");
     } else if (algType_.algoLevel1 == AlgTypeLevel1::ALG_LEVEL1_RING) {
         CHK_RET(RunTempLevel1(TemplateType::TEMPLATE_ALL_REDUCE_RING, param, reduceAttr, execMem, level1CommInfo));
@@ -189,58 +199,62 @@ HcclResult CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::KernelRun(con
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::RunDoublingSingleLevel(const OpParam &param, u64 reduceAttr, ExecMem &execMem,
-                                                        SubCommInfo &levelCommInfo)
+HcclResult CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::RunDoublingSingleLevel(
+    const OpParam& param, u64 reduceAttr, ExecMem& execMem, SubCommInfo& levelCommInfo) const
 {
     std::unique_ptr<AlgTemplateBase> tempAlg;
-    tempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_ALL_REDUCE_DOUBLING_LOCAL_REDUCE,
-        dispatcher_);
+    tempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(
+        TemplateType::TEMPLATE_ALL_REDUCE_DOUBLING_LOCAL_REDUCE, dispatcher_);
     CHK_SMART_PTR_NULL(tempAlg);
     CHK_RET(tempAlg->Prepare(reduceAttr));
-    CHK_RET(tempAlg->Prepare(execMem.inputMem, execMem.outputMem, execMem.outputMem, execMem.count,
-        param.DataDes.dataType, param.stream, param.reduceType,
-        LEVEL0_BRIDGE_RANK_ID, std::vector<Slice>(0), 0));
+    CHK_RET(tempAlg->Prepare(
+        execMem.inputMem, execMem.outputMem, execMem.outputMem, execMem.count, param.DataDes.dataType, param.stream,
+        param.reduceType, LEVEL0_BRIDGE_RANK_ID, std::vector<Slice>(0), 0));
 
     CHK_RET(tempAlg->RegisterProfiler(
-        (levelCommInfo.localRankSize << PROF_RANKSIZE_OFFSET_OF_PLANEID) + levelCommInfo.localRank,
-        PROF_STAGE_0, HCCL_EXEC_STEP_NOT_SET, param.stream));
+        (levelCommInfo.localRankSize << PROF_RANKSIZE_OFFSET_OF_PLANEID) + levelCommInfo.localRank, PROF_STAGE_0,
+        HCCL_EXEC_STEP_NOT_SET, param.stream));
 
     CHK_RET(RunTemplate(tempAlg, levelCommInfo));
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::RunReduceBcastSingleLevel(const OpParam &param, HcomCollOpInfo& opInfo, u64 reduceAttr, ExecMem &execMem,
-                                                        SubCommInfo &levelCommInfo)
+HcclResult CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::RunReduceBcastSingleLevel(
+    const OpParam& param, HcomCollOpInfo& opInfo, u64 reduceAttr, ExecMem& execMem, SubCommInfo& levelCommInfo) const
 {
     std::unique_ptr<AlgTemplateBase> tempAlg;
-    tempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_ALL_REDUCE_LOCAL_REDUCE_BCAST, dispatcher_);
+    tempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(
+        TemplateType::TEMPLATE_ALL_REDUCE_LOCAL_REDUCE_BCAST, dispatcher_);
     CHK_SMART_PTR_NULL(tempAlg);
-    CHK_RET(tempAlg->Prepare(reduceAttr, algResResp_->slaveStreams, algResResp_->notifiesMain, algResResp_->notifiesAux,
+    CHK_RET(tempAlg->Prepare(
+        reduceAttr, algResResp_->slaveStreams, algResResp_->notifiesMain, algResResp_->notifiesAux,
         levelCommInfo.localRank, levelCommInfo.localRankSize, topoAttr_.userRank, &opInfo));
     CHK_SMART_PTR_NULL(tempAlg);
-    CHK_RET(tempAlg->Prepare(execMem.inputMem, execMem.outputMem, execMem.outputMem, execMem.count,
-        param.DataDes.dataType, param.stream, param.reduceType, LEVEL0_BRIDGE_RANK_ID, std::vector<Slice>(0), 0));
+    CHK_RET(tempAlg->Prepare(
+        execMem.inputMem, execMem.outputMem, execMem.outputMem, execMem.count, param.DataDes.dataType, param.stream,
+        param.reduceType, LEVEL0_BRIDGE_RANK_ID, std::vector<Slice>(0), 0));
 
     CHK_RET(tempAlg->RegisterProfiler(
-            (levelCommInfo.localRankSize << PROF_RANKSIZE_OFFSET_OF_PLANEID) + levelCommInfo.localRank,
-            PROF_STAGE_0, HCCL_EXEC_STEP_NOT_SET, param.stream));
+        (levelCommInfo.localRankSize << PROF_RANKSIZE_OFFSET_OF_PLANEID) + levelCommInfo.localRank, PROF_STAGE_0,
+        HCCL_EXEC_STEP_NOT_SET, param.stream));
     CHK_RET(RunTemplate(tempAlg, levelCommInfo));
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::RunTempLevel1(const TemplateType type, 
-    const OpParam &param, u64 reduceAttr, ExecMem &execMem, SubCommInfo &level1CommInfo)
+HcclResult CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::RunTempLevel1(
+    const TemplateType type, const OpParam& param, u64 reduceAttr, ExecMem& execMem, SubCommInfo& level1CommInfo) const
 {
     std::unique_ptr<AlgTemplateBase> tempAlg;
     tempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(type, dispatcher_);
     CHK_SMART_PTR_NULL(tempAlg);
     CHK_RET(tempAlg->Prepare(reduceAttr));
 
-    CHK_RET(tempAlg->Prepare(execMem.inputMem, execMem.outputMem, execMem.outputMem, execMem.count,
-        param.DataDes.dataType, param.stream, param.reduceType,
-        LEVEL0_BRIDGE_RANK_ID, std::vector<Slice>(0), 0));
-    CHK_RET(tempAlg->RegisterProfiler((level1CommInfo.localRankSize << PROF_RANKSIZE_OFFSET_OF_PLANEID) +
-        level1CommInfo.localRank, PROF_STAGE_0, HCCL_EXEC_STEP_NOT_SET, param.stream));
+    CHK_RET(tempAlg->Prepare(
+        execMem.inputMem, execMem.outputMem, execMem.outputMem, execMem.count, param.DataDes.dataType, param.stream,
+        param.reduceType, LEVEL0_BRIDGE_RANK_ID, std::vector<Slice>(0), 0));
+    CHK_RET(tempAlg->RegisterProfiler(
+        (level1CommInfo.localRankSize << PROF_RANKSIZE_OFFSET_OF_PLANEID) + level1CommInfo.localRank, PROF_STAGE_0,
+        HCCL_EXEC_STEP_NOT_SET, param.stream));
 
     CHK_RET(RunTemplate(tempAlg, level1CommInfo));
     if (type == TemplateType::TEMPLATE_ALL_REDUCE_NHR) {
@@ -249,7 +263,8 @@ HcclResult CollAllReduceMeshOpbaseSmallCountDeterministicExecutor::RunTempLevel1
     return HCCL_SUCCESS;
 }
 
-REGISTER_EXEC("AllReduceMeshOpbaseSmallCountDeterministicExecutor",
-    AllReduceMeshOpbaseSmallCountDeterministic, CollAllReduceMeshOpbaseSmallCountDeterministicExecutor);
+REGISTER_EXEC(
+    "AllReduceMeshOpbaseSmallCountDeterministicExecutor", AllReduceMeshOpbaseSmallCountDeterministic,
+    CollAllReduceMeshOpbaseSmallCountDeterministicExecutor);
 
 } // namespace hccl

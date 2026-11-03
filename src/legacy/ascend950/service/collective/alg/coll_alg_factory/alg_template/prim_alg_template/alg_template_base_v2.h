@@ -27,61 +27,63 @@ using PrimQuePtr = std::shared_ptr<PrimQueue>;
 
 class AlgTemplateBase {
 public:
-    explicit AlgTemplateBase(const RankId virtualRank, const u32 tempRankSize,
-                             const std::vector<std::vector<RankId>> &tempVTopo,
-                             const std::map<RankId, u32>            &tempVirtRankMap);
+    explicit AlgTemplateBase(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     virtual ~AlgTemplateBase();
 
     virtual std::string Describe() const = 0;
 
-    virtual HcclResult GenPrimQue(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec,
-                                  const BuffInfo &buffInfo, const ResLinks &tempLinks,
-                                  std::vector<PrimQuePtr> &tempPrimQues)
+    virtual HcclResult GenPrimQue(
+        const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, const BuffInfo& buffInfo,
+        const ResLinks& tempLinks, std::vector<PrimQuePtr>& tempPrimQues)
         = 0;
 
     // init reduceInfo
-    void InitReduceInfo(const ReduceOp &redOp, const DataType &dataType);
-    void SetDataType(const DataType &dataType);
+    void InitReduceInfo(const ReduceOp& redOp, const DataType& dataType);
+    void SetDataType(const DataType& dataType);
 
     void SetDmaMode(const DmaMode dmaMode);
 
     // calculate slices
-    virtual HcclResult CalcSliceInfo(const AllignInfo &allignInfo, const bool forAllReduce, const u64 dataSize,
-                                     RankSliceInfo &sliceInfoVec);
-    virtual HcclResult CalcSliceInfo(const AllignInfo &allignInfo, const u64 dataSize, RankSliceInfo &sliceInfoVec);
+    virtual HcclResult CalcSliceInfo(
+        const AllignInfo& allignInfo, const bool forAllReduce, const u64 dataSize, RankSliceInfo& sliceInfoVec);
+    virtual HcclResult CalcSliceInfo(const AllignInfo& allignInfo, const u64 dataSize, RankSliceInfo& sliceInfoVec);
 
     // calculate resources
-    virtual HcclResult CalcRes(AlgTempResReq &tempResReq);
-    virtual HcclResult CalcResDetour(const RankGraph *rankGraph, AlgTempResReq &tempResReq);
-    virtual HcclResult CalcResDetour(ConnectedLinkMgr *linkMgr, AlgTempResReq &tempResReq);
+    virtual HcclResult CalcRes(AlgTempResReq& tempResReq);
+    virtual HcclResult CalcResDetour(const RankGraph* rankGraph, AlgTempResReq& tempResReq);
+    virtual HcclResult CalcResDetour(ConnectedLinkMgr* linkMgr, AlgTempResReq& tempResReq);
 
-    virtual HcclResult CalcRes(const bool forAllReduce, AlgTempResReq &tempResReq,
-                               u32 &requiredScratchMultiplier); // reduction-involved operations
-    virtual HcclResult CalcResDetour(const bool forAllReduce, const RankGraph *rankGraph, AlgTempResReq &tempResReq,
-                                     u32 &requiredScratchMultiplier); // reduction-involved
-    virtual HcclResult CalcResDetour(const bool forAllReduce, ConnectedLinkMgr *linkMgr, AlgTempResReq &tempResReq,
-                                     u32 &requiredScratchMultiplier);
+    virtual HcclResult CalcRes(
+        const bool forAllReduce, AlgTempResReq& tempResReq,
+        u32& requiredScratchMultiplier); // reduction-involved operations
+    virtual HcclResult CalcResDetour(
+        const bool forAllReduce, const RankGraph* rankGraph, AlgTempResReq& tempResReq,
+        u32& requiredScratchMultiplier); // reduction-involved
+    virtual HcclResult CalcResDetour(
+        const bool forAllReduce, ConnectedLinkMgr* linkMgr, AlgTempResReq& tempResReq, u32& requiredScratchMultiplier);
 
     // Sync
-    HcclResult PreSync(const u32 queIdx, std::vector<PrimQuePtr> &syncPrimQues) const;
-    HcclResult PostSync(const u32 queIdx, std::vector<PrimQuePtr> &syncPrimQues) const;
-    HcclResult PreSyncInterQueues(std::vector<PrimQuePtr> &syncPrimQues) const;
-    HcclResult PostSyncInterQueues(std::vector<PrimQuePtr> &syncPrimQues) const;
+    HcclResult PreSync(const u32 queIdx, std::vector<PrimQuePtr>& syncPrimQues) const;
+    HcclResult PostSync(const u32 queIdx, std::vector<PrimQuePtr>& syncPrimQues) const;
+    HcclResult PreSyncInterQueues(std::vector<PrimQuePtr>& syncPrimQues) const;
+    HcclResult PostSyncInterQueues(std::vector<PrimQuePtr>& syncPrimQues) const;
 
 protected:
-    HcclResult PostCopyOpbase(const UsrData &usrData, std::vector<PrimQuePtr> &tempPrimQues) const;
-    HcclResult PreCopyOpbase(const UsrData &usrData, std::vector<PrimQuePtr> &tempPrimQues) const;
+    HcclResult PostCopyOpbase(const UsrData& usrData, std::vector<PrimQuePtr>& tempPrimQues) const;
+    HcclResult PreCopyOpbase(const UsrData& usrData, std::vector<PrimQuePtr>& tempPrimQues) const;
 
     OpMode opMode_;
 
-    RankId                           myRank_       = INVALID_RANKID;
-    u32                              tempRankSize_ = 0;
+    RankId myRank_ = INVALID_RANKID;
+    u32 tempRankSize_ = 0;
     std::vector<std::vector<RankId>> tempVTopo_;
-    std::map<RankId, u32>            tempVirtRankMap_;
+    std::map<RankId, u32> tempVirtRankMap_;
 
     BuffInfo buffInfo_;
 
-    u32      queNum_ = 0;
+    u32 queNum_ = 0;
     ReduceOp redOp_;
     DataType dataType_;
 
@@ -89,8 +91,8 @@ protected:
 
     DmaMode dmaMode_ = DmaMode::DEFAULT;
 
-    bool enableDetour_    = false;
-    u32  linkNumBtwPeers_ = 1;
+    bool enableDetour_ = false;
+    u32 linkNumBtwPeers_ = 1;
 };
 
 } // namespace Hccl

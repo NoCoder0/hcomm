@@ -13,187 +13,169 @@
 
 #include "hccl/hccl_common.h"
 #include "hccl/hccl_types.h"
+#include "hccl_proxy_common.h"
 
 using u32 = uint32_t;
 
-namespace sim {
-    const std::map<HcclDataType, u32> DATA_TYPE_SIZE_MAP = {
-        {HcclDataType::HCCL_DATA_TYPE_INT8, 1},
-        {HcclDataType::HCCL_DATA_TYPE_INT16, 2},
-        {HcclDataType::HCCL_DATA_TYPE_INT32, 4},
-        {HcclDataType::HCCL_DATA_TYPE_FP16, 2},
-        {HcclDataType::HCCL_DATA_TYPE_FP32, 4},
-        {HcclDataType::HCCL_DATA_TYPE_INT64, 8},
-        {HcclDataType::HCCL_DATA_TYPE_UINT64, 8},
-        {HcclDataType::HCCL_DATA_TYPE_UINT8, 1},
-        {HcclDataType::HCCL_DATA_TYPE_UINT16, 2},
-        {HcclDataType::HCCL_DATA_TYPE_UINT32, 4},
-        {HcclDataType::HCCL_DATA_TYPE_FP64, 8},
-        {HcclDataType::HCCL_DATA_TYPE_BFP16, 2},
-        {HcclDataType::HCCL_DATA_TYPE_INT128, 16},
-        {HcclDataType::HCCL_DATA_TYPE_HIF8, 1},
-        {HcclDataType::HCCL_DATA_TYPE_FP8E4M3, 1},
-        {HcclDataType::HCCL_DATA_TYPE_FP8E5M2, 1},
-        {HcclDataType::HCCL_DATA_TYPE_FP8E8M0, 1}
-    };
-
-    int GetDataTypeSize(HcclDataType dataType, uint32_t &size);
-}
-
 class HcclProxyCommonTest : public testing::Test {
 protected:
-    void SetUp() override {
-    }
-    void TearDown() override {
-    }
+    void SetUp() override {}
+    void TearDown() override {}
 };
 
-TEST_F(HcclProxyCommonTest, GetDataTypeSize_Int8) {
+TEST_F(HcclProxyCommonTest, GetDataTypeSize_Int8)
+{
     uint32_t size = 0;
     int result = sim::GetDataTypeSize(HcclDataType::HCCL_DATA_TYPE_INT8, size);
     EXPECT_EQ(result, 0);
     EXPECT_EQ(size, 1);
 }
 
-TEST_F(HcclProxyCommonTest, GetDataTypeSize_Int16) {
+TEST_F(HcclProxyCommonTest, GetDataTypeSize_Int16)
+{
     uint32_t size = 0;
     int result = sim::GetDataTypeSize(HcclDataType::HCCL_DATA_TYPE_INT16, size);
     EXPECT_EQ(result, 0);
     EXPECT_EQ(size, 2);
 }
 
-TEST_F(HcclProxyCommonTest, GetDataTypeSize_Int32) {
+TEST_F(HcclProxyCommonTest, GetDataTypeSize_Int32)
+{
     uint32_t size = 0;
     int result = sim::GetDataTypeSize(HcclDataType::HCCL_DATA_TYPE_INT32, size);
     EXPECT_EQ(result, 0);
     EXPECT_EQ(size, 4);
 }
 
-TEST_F(HcclProxyCommonTest, GetDataTypeSize_Int64) {
+TEST_F(HcclProxyCommonTest, GetDataTypeSize_Int64)
+{
     uint32_t size = 0;
     int result = sim::GetDataTypeSize(HcclDataType::HCCL_DATA_TYPE_INT64, size);
     EXPECT_EQ(result, 0);
     EXPECT_EQ(size, 8);
 }
 
-TEST_F(HcclProxyCommonTest, GetDataTypeSize_Uint8) {
+TEST_F(HcclProxyCommonTest, GetDataTypeSize_Uint8)
+{
     uint32_t size = 0;
     int result = sim::GetDataTypeSize(HcclDataType::HCCL_DATA_TYPE_UINT8, size);
     EXPECT_EQ(result, 0);
     EXPECT_EQ(size, 1);
 }
 
-TEST_F(HcclProxyCommonTest, GetDataTypeSize_Uint16) {
+TEST_F(HcclProxyCommonTest, GetDataTypeSize_Uint16)
+{
     uint32_t size = 0;
     int result = sim::GetDataTypeSize(HcclDataType::HCCL_DATA_TYPE_UINT16, size);
     EXPECT_EQ(result, 0);
     EXPECT_EQ(size, 2);
 }
 
-TEST_F(HcclProxyCommonTest, GetDataTypeSize_Uint32) {
+TEST_F(HcclProxyCommonTest, GetDataTypeSize_Uint32)
+{
     uint32_t size = 0;
     int result = sim::GetDataTypeSize(HcclDataType::HCCL_DATA_TYPE_UINT32, size);
     EXPECT_EQ(result, 0);
     EXPECT_EQ(size, 4);
 }
 
-TEST_F(HcclProxyCommonTest, GetDataTypeSize_Uint64) {
+TEST_F(HcclProxyCommonTest, GetDataTypeSize_Uint64)
+{
     uint32_t size = 0;
     int result = sim::GetDataTypeSize(HcclDataType::HCCL_DATA_TYPE_UINT64, size);
     EXPECT_EQ(result, 0);
     EXPECT_EQ(size, 8);
 }
 
-TEST_F(HcclProxyCommonTest, GetDataTypeSize_Fp16) {
+TEST_F(HcclProxyCommonTest, GetDataTypeSize_Fp16)
+{
     uint32_t size = 0;
     int result = sim::GetDataTypeSize(HcclDataType::HCCL_DATA_TYPE_FP16, size);
     EXPECT_EQ(result, 0);
     EXPECT_EQ(size, 2);
 }
 
-TEST_F(HcclProxyCommonTest, GetDataTypeSize_Fp32) {
+TEST_F(HcclProxyCommonTest, GetDataTypeSize_Fp32)
+{
     uint32_t size = 0;
     int result = sim::GetDataTypeSize(HcclDataType::HCCL_DATA_TYPE_FP32, size);
     EXPECT_EQ(result, 0);
     EXPECT_EQ(size, 4);
 }
 
-TEST_F(HcclProxyCommonTest, GetDataTypeSize_Fp64) {
+TEST_F(HcclProxyCommonTest, GetDataTypeSize_Fp64)
+{
     uint32_t size = 0;
     int result = sim::GetDataTypeSize(HcclDataType::HCCL_DATA_TYPE_FP64, size);
     EXPECT_EQ(result, 0);
     EXPECT_EQ(size, 8);
 }
 
-TEST_F(HcclProxyCommonTest, GetDataTypeSize_Bfp16) {
+TEST_F(HcclProxyCommonTest, GetDataTypeSize_Bfp16)
+{
     uint32_t size = 0;
     int result = sim::GetDataTypeSize(HcclDataType::HCCL_DATA_TYPE_BFP16, size);
     EXPECT_EQ(result, 0);
     EXPECT_EQ(size, 2);
 }
 
-TEST_F(HcclProxyCommonTest, GetDataTypeSize_Int128) {
+TEST_F(HcclProxyCommonTest, GetDataTypeSize_Int128)
+{
     uint32_t size = 0;
     int result = sim::GetDataTypeSize(HcclDataType::HCCL_DATA_TYPE_INT128, size);
     EXPECT_EQ(result, 0);
     EXPECT_EQ(size, 16);
 }
 
-TEST_F(HcclProxyCommonTest, GetDataTypeSize_Hif8) {
+TEST_F(HcclProxyCommonTest, GetDataTypeSize_Hif8)
+{
     uint32_t size = 0;
     int result = sim::GetDataTypeSize(HcclDataType::HCCL_DATA_TYPE_HIF8, size);
     EXPECT_EQ(result, 0);
     EXPECT_EQ(size, 1);
 }
 
-TEST_F(HcclProxyCommonTest, GetDataTypeSize_Fp8E4M3) {
+TEST_F(HcclProxyCommonTest, GetDataTypeSize_Fp8E4M3)
+{
     uint32_t size = 0;
     int result = sim::GetDataTypeSize(HcclDataType::HCCL_DATA_TYPE_FP8E4M3, size);
     EXPECT_EQ(result, 0);
     EXPECT_EQ(size, 1);
 }
 
-TEST_F(HcclProxyCommonTest, GetDataTypeSize_Fp8E5M2) {
+TEST_F(HcclProxyCommonTest, GetDataTypeSize_Fp8E5M2)
+{
     uint32_t size = 0;
     int result = sim::GetDataTypeSize(HcclDataType::HCCL_DATA_TYPE_FP8E5M2, size);
     EXPECT_EQ(result, 0);
     EXPECT_EQ(size, 1);
 }
 
-TEST_F(HcclProxyCommonTest, GetDataTypeSize_Fp8E8M0) {
+TEST_F(HcclProxyCommonTest, GetDataTypeSize_Fp8E8M0)
+{
     uint32_t size = 0;
     int result = sim::GetDataTypeSize(HcclDataType::HCCL_DATA_TYPE_FP8E8M0, size);
     EXPECT_EQ(result, 0);
     EXPECT_EQ(size, 1);
 }
 
-TEST_F(HcclProxyCommonTest, GetDataTypeSize_InvalidType) {
+TEST_F(HcclProxyCommonTest, GetDataTypeSize_InvalidType)
+{
     uint32_t size = 0;
     int result = sim::GetDataTypeSize(HcclDataType::HCCL_DATA_TYPE_RESERVED, size);
-    EXPECT_EQ(result, 1);  // Returns error for invalid type
+    EXPECT_EQ(result, 1); // Returns error for invalid type
 }
 
-TEST_F(HcclProxyCommonTest, GetDataTypeSize_AllValidTypes) {
+TEST_F(HcclProxyCommonTest, GetDataTypeSize_AllValidTypes)
+{
     // Test all valid data types
     std::vector<HcclDataType> validTypes = {
-        HcclDataType::HCCL_DATA_TYPE_INT8,
-        HcclDataType::HCCL_DATA_TYPE_INT16,
-        HcclDataType::HCCL_DATA_TYPE_INT32,
-        HcclDataType::HCCL_DATA_TYPE_FP16,
-        HcclDataType::HCCL_DATA_TYPE_FP32,
-        HcclDataType::HCCL_DATA_TYPE_INT64,
-        HcclDataType::HCCL_DATA_TYPE_UINT64,
-        HcclDataType::HCCL_DATA_TYPE_UINT8,
-        HcclDataType::HCCL_DATA_TYPE_UINT16,
-        HcclDataType::HCCL_DATA_TYPE_UINT32,
-        HcclDataType::HCCL_DATA_TYPE_FP64,
-        HcclDataType::HCCL_DATA_TYPE_BFP16,
-        HcclDataType::HCCL_DATA_TYPE_INT128,
-        HcclDataType::HCCL_DATA_TYPE_HIF8,
-        HcclDataType::HCCL_DATA_TYPE_FP8E4M3,
-        HcclDataType::HCCL_DATA_TYPE_FP8E5M2,
-        HcclDataType::HCCL_DATA_TYPE_FP8E8M0
-    };
+        HcclDataType::HCCL_DATA_TYPE_INT8,    HcclDataType::HCCL_DATA_TYPE_INT16,  HcclDataType::HCCL_DATA_TYPE_INT32,
+        HcclDataType::HCCL_DATA_TYPE_FP16,    HcclDataType::HCCL_DATA_TYPE_FP32,   HcclDataType::HCCL_DATA_TYPE_INT64,
+        HcclDataType::HCCL_DATA_TYPE_UINT64,  HcclDataType::HCCL_DATA_TYPE_UINT8,  HcclDataType::HCCL_DATA_TYPE_UINT16,
+        HcclDataType::HCCL_DATA_TYPE_UINT32,  HcclDataType::HCCL_DATA_TYPE_FP64,   HcclDataType::HCCL_DATA_TYPE_BFP16,
+        HcclDataType::HCCL_DATA_TYPE_INT128,  HcclDataType::HCCL_DATA_TYPE_HIF8,   HcclDataType::HCCL_DATA_TYPE_FP8E4M3,
+        HcclDataType::HCCL_DATA_TYPE_FP8E5M2, HcclDataType::HCCL_DATA_TYPE_FP8E8M0};
 
     for (auto type : validTypes) {
         uint32_t size = 0;
@@ -203,7 +185,8 @@ TEST_F(HcclProxyCommonTest, GetDataTypeSize_AllValidTypes) {
     }
 }
 
-TEST_F(HcclProxyCommonTest, DataTypeSizeMap_ContainsExpectedEntries) {
+TEST_F(HcclProxyCommonTest, DataTypeSizeMap_ContainsExpectedEntries)
+{
     EXPECT_EQ(sim::DATA_TYPE_SIZE_MAP.size(), 17u);
     EXPECT_TRUE(sim::DATA_TYPE_SIZE_MAP.count(HcclDataType::HCCL_DATA_TYPE_INT8) > 0);
     EXPECT_TRUE(sim::DATA_TYPE_SIZE_MAP.count(HcclDataType::HCCL_DATA_TYPE_FP16) > 0);

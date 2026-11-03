@@ -30,7 +30,7 @@ const std::vector<BasePortType> DEFAULT_LINK_PRIORITY
 
 bool IsEnableCounterNotifyByDevType(const RankId myRank, const DevType devType);
 
-struct TemplateDataParams{
+struct TemplateDataParams {
     BuffInfo buffInfo;
     u64 sliceSize{0};
     u64 inputSliceStride{0};
@@ -41,35 +41,39 @@ struct TemplateDataParams{
     u64 tailSize{0};
 };
 
-HcclResult InitOpInfo(const CollAlgOperator &op, OpType &opType, ReduceOp &redOp, u32 &root);
-HcclResult InitDataInfo(const CollAlgOperator &op, DataType &dataType, DataType &outputDataType, u64 &dataCount);
+HcclResult InitOpInfo(const CollAlgOperator& op, OpType& opType, ReduceOp& redOp, u32& root);
+HcclResult InitDataInfo(const CollAlgOperator& op, DataType& dataType, DataType& outputDataType, u64& dataCount);
 
 // link prepare
-const std::vector<NetInstance::Path> GetPathsFromRankGraph(const RankGraph *rankGraph,
-                                                           const RankId srcRank, const RankId dstRank);
-HcclResult  AddToResLinks(const RankId vNeighborRank, const LinkData &linkData, ResLinks &resLinks);
-HcclResult  PrepResLinks(const RankId myRank, const RankGraph *rankGraph,
-                         const std::vector<BasePortType> &linkPriority, const LinkReq &linkReq,
-                         ResLinks &resLinks); // host
-HcclResult  PrepResLinks(const RankId myRank, const LinkReq &linkReq, ConnectedLinkMgr *linkMgr,
-                         ResLinks &resLinks); // aicpu
-HcclResult  CalcResLinks(const RankId myRank, const RankGraph *rankGraph,
-                         const std::vector<BasePortType> &linkPriority, const LinkReq &linkReq,
-                         std::vector<LinkData> &links);
-HcclResult  CalcLinkInfo(const RankId myRank, const RankGraph *rankGraph, const LinkReq &linkReq,
-                         std::vector<std::pair<u32, RankId>> &algTempLinksInfo);
-HcclResult SetPathNumMapByRankGraphMultiLevel(const RankGraph *rankGraph, 
-std::vector<std::vector<RankId>>&virtRanks_, RankId myRank_, std::vector<map<u32, u32>>&rank2PathNumMap);
+const std::vector<NetInstance::Path>
+GetPathsFromRankGraph(const RankGraph* rankGraph, const RankId srcRank, const RankId dstRank);
+HcclResult AddToResLinks(const RankId vNeighborRank, const LinkData& linkData, ResLinks& resLinks);
+HcclResult PrepResLinks(
+    const RankId myRank, const RankGraph* rankGraph, const std::vector<BasePortType>& linkPriority,
+    const LinkReq& linkReq,
+    ResLinks& resLinks); // host
+HcclResult PrepResLinks(
+    const RankId myRank, const LinkReq& linkReq, ConnectedLinkMgr* linkMgr,
+    ResLinks& resLinks); // aicpu
+HcclResult CalcResLinks(
+    const RankId myRank, const RankGraph* rankGraph, const std::vector<BasePortType>& linkPriority,
+    const LinkReq& linkReq, std::vector<LinkData>& links);
+HcclResult CalcLinkInfo(
+    const RankId myRank, const RankGraph* rankGraph, const LinkReq& linkReq,
+    std::vector<std::pair<u32, RankId>>& algTempLinksInfo);
+HcclResult SetPathNumMapByRankGraphMultiLevel(
+    const RankGraph* rankGraph, std::vector<std::vector<RankId>>& virtRanks_, RankId myRank_,
+    std::vector<map<u32, u32>>& rank2PathNumMap);
 
-HcclResult SetPathNumMapByRankGraphMultiLevel(const RankGraph *rankGraph,
-std::vector<RankId>&virtRanks_, RankId myRank_, std::map<u32, u32>&rank2PathNumMap);
-    
-HcclResult SetPathNumMapByLinkMgrMultiLevel(ConnectedLinkMgr*linkMgr, 
-std::vector<std::vector<RankId>>&virtRanks_, RankId myRank_, std::vector<map<u32, u32>>&rank2PathNumMap);
+HcclResult SetPathNumMapByRankGraphMultiLevel(
+    const RankGraph* rankGraph, std::vector<RankId>& virtRanks_, RankId myRank_, std::map<u32, u32>& rank2PathNumMap);
 
-HcclResult SetPathNumMapByLinkMgrMultiLevel(ConnectedLinkMgr*linkMgr, std::vector<RankId>&virtRanks_,
-RankId myRank_, map<u32, u32>&rank2PathNumMap);
+HcclResult SetPathNumMapByLinkMgrMultiLevel(
+    ConnectedLinkMgr* linkMgr, std::vector<std::vector<RankId>>& virtRanks_, RankId myRank_,
+    std::vector<map<u32, u32>>& rank2PathNumMap);
 
+HcclResult SetPathNumMapByLinkMgrMultiLevel(
+    ConnectedLinkMgr* linkMgr, std::vector<RankId>& virtRanks_, RankId myRank_, map<u32, u32>& rank2PathNumMap);
 
 } // namespace Hccl
 

@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "reduce_scatter_halving_doubling.h"
 #include "alg_template_register.h"
@@ -14,24 +14,22 @@
 namespace hccl {
 ReduceScatterHalvingDoubling::ReduceScatterHalvingDoubling(const HcclDispatcher dispatcher)
     : AlgTemplateBase(dispatcher)
-{
-}
+{}
 
-ReduceScatterHalvingDoubling::~ReduceScatterHalvingDoubling()
-{
-}
+ReduceScatterHalvingDoubling::~ReduceScatterHalvingDoubling() {}
 
-HcclResult ReduceScatterHalvingDoubling::Prepare(DeviceMem &inputMem, DeviceMem &outputMem, DeviceMem &scratchMem,
-    const u64 count, const HcclDataType dataType, const Stream &stream, const HcclReduceOp reductionOp,
-    const u32 root, const std::vector<Slice> &slices, const u64 baseOffset, const u32 blockSize,
-    const u64 reduceAttrBitMap, const UserMemType hdInputMemType, const UserMemType hdOutputMemType)
+HcclResult ReduceScatterHalvingDoubling::Prepare(
+    DeviceMem& inputMem, DeviceMem& outputMem, DeviceMem& scratchMem, const u64 count, const HcclDataType dataType,
+    const Stream& stream, const HcclReduceOp reductionOp, const u32 root, const std::vector<Slice>& slices,
+    const u64 baseOffset, const u32 blockSize, const u64 reduceAttrBitMap, const UserMemType hdInputMemType,
+    const UserMemType hdOutputMemType)
 {
     blockSize_ = blockSize;
     reduceAttr_ = reduceAttrBitMap;
     hdInputMemType_ = hdInputMemType;
     hdOutputMemType_ = hdOutputMemType;
-    return AlgTemplateBase::Prepare(inputMem, outputMem, scratchMem, count, dataType, stream, reductionOp,
-        root, slices, baseOffset);
+    return AlgTemplateBase::Prepare(
+        inputMem, outputMem, scratchMem, count, dataType, stream, reductionOp, root, slices, baseOffset);
 }
 
 u32 ReduceScatterHalvingDoubling::GetBlockStep(u32 blocksize) const
@@ -45,8 +43,8 @@ u32 ReduceScatterHalvingDoubling::GetBlockStep(u32 blocksize) const
     return step;
 }
 
-HcclResult ReduceScatterHalvingDoubling::CalculateSlices(const u64 size, const u32 sliceNum,
-                                                         std::vector<Slice> &slicesOut)
+HcclResult
+ReduceScatterHalvingDoubling::CalculateSlices(const u64 size, const u32 sliceNum, std::vector<Slice>& slicesOut) const
 {
     CHK_PRT_RET((sliceNum == 0), HCCL_ERROR("[Calculate][Slices]calculate_slices failed"), HCCL_E_INTERNAL);
 
@@ -64,8 +62,9 @@ HcclResult ReduceScatterHalvingDoubling::CalculateSlices(const u64 size, const u
     return HCCL_SUCCESS;
 }
 
-HcclResult ReduceScatterHalvingDoubling::CalcStepSlices(const std::vector<Slice> &inputSlices,
-    const u32 stepNum, const u32 rank, const SliceType type, std::vector<Slice> &slicesOut)
+HcclResult ReduceScatterHalvingDoubling::CalcStepSlices(
+    const std::vector<Slice>& inputSlices, const u32 stepNum, const u32 rank, const SliceType type,
+    std::vector<Slice>& slicesOut)
 {
     std::vector<Slice> slice(stepNum);
 
@@ -75,31 +74,33 @@ HcclResult ReduceScatterHalvingDoubling::CalcStepSlices(const std::vector<Slice>
         u32 peerRank = rank ^ halvingBitmask;
 
         // 计算tx_slice/rx_slice
-        u32 sliceId = (type == SliceType::SLICE_TYPE_TX) ? \
-            (peerRank & (~(halvingBitmask - 1))) : (rank & (~(halvingBitmask - 1)));
+        u32 sliceId = (type == SliceType::SLICE_TYPE_TX) ? (peerRank & (~(halvingBitmask - 1))) :
+                                                           (rank & (~(halvingBitmask - 1)));
 
         slice[step].offset = inputSlices[sliceId].offset;
         HcclResult ret = Sum(inputSlices, sliceId, halvingBitmask, slice[step].size);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
             HCCL_ERROR("[Calc][StepSlices]rank[%u] ReduceScatter Halving Doubling sum error", rank), ret);
-        HCCL_DEBUG("rank[%u] step[%u] type[%u] slice[%u].offset[%llu] slice[%u].size[%llu] ", \
-                   rank, step, type, step, slice[step].offset, step, slice[step].size);
+        HCCL_DEBUG(
+            "rank[%u] step[%u] type[%u] slice[%u].offset[%llu] slice[%u].size[%llu] ", rank, step, type, step,
+            slice[step].offset, step, slice[step].size);
     }
 
     slicesOut = std::move(slice);
     return HCCL_SUCCESS;
 }
 
-HcclResult ReduceScatterHalvingDoubling::RunSourceReducer(const LINK &link, const Slice &txSlice)
+HcclResult ReduceScatterHalvingDoubling::RunSourceReducer(const LINK& link, const Slice& txSlice)
 {
     HcclResult ret = link->RxAck(stream_);
-    CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][SourceReducer]txSlice.size[%llu] rx ack run failed",
-        txSlice.size), ret);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS, HCCL_ERROR("[Run][SourceReducer]txSlice.size[%llu] rx ack run failed", txSlice.size), ret);
 
     DeviceMem txMem = inputMem_.range(txSlice.offset, txSlice.size);
 
-    HCCL_DEBUG("tx_slice.offset[%llu],base_offset[%llu],tx_slice.size[%llu]",
-        txSlice.offset, baseOffset_, txSlice.size);
+    HCCL_DEBUG(
+        "tx_slice.offset[%llu],base_offset[%llu],tx_slice.size[%llu]", txSlice.offset, baseOffset_, txSlice.size);
 
     // 发送到对端的output
     CHK_RET(senderInfo_->run(link, txSlice.offset + baseOffset_, txMem, stream_));
@@ -107,20 +108,18 @@ HcclResult ReduceScatterHalvingDoubling::RunSourceReducer(const LINK &link, cons
     return HCCL_SUCCESS;
 }
 
-HcclResult ReduceScatterHalvingDoubling::RunDestRducer(const LINK &link,
-                                                       const HcclDispatcher dispatcher,
-                                                       const Slice &rxSlice, const DstMemType reduceDst)
+HcclResult ReduceScatterHalvingDoubling::RunDestRducer(
+    const LINK& link, const HcclDispatcher dispatcher, const Slice& rxSlice, const DstMemType reduceDst)
 {
-    (void) reduceDst;
+    (void)reduceDst;
     DeviceMem rxMem = scratchMem_.range(rxSlice.offset, rxSlice.size);
-    HCCL_DEBUG("rx_mem.offset[%llu],base_offset[%llu],rx_slice.size[%llu]",
-        rxSlice.offset, baseOffset_, rxSlice.size);
+    HCCL_DEBUG("rx_mem.offset[%llu],base_offset[%llu],rx_slice.size[%llu]", rxSlice.offset, baseOffset_, rxSlice.size);
 
     DeviceMem reduceSrcMem;
     DeviceMem reduceDstMem;
 
     if (DataUnitSize(dataType_) == 0) {
-        HCCL_ERROR("[Run][DestRducer]DataUnitSize(data_type_) == 0, error");
+        HCCL_ERROR("[Run][DestReducer]DataUnitSize(data_type_) == 0, error");
         return HCCL_E_INTERNAL;
     }
 
@@ -131,16 +130,17 @@ HcclResult ReduceScatterHalvingDoubling::RunDestRducer(const LINK &link,
     }
     reduceDstMem = inputMem_.range(rxSlice.offset, rxSlice.size);
 
-    HcclResult ret = reducerInfo_->run(dispatcher, link, rxSlice.offset + baseOffset_,
-        reduceSrcMem, reduceDstMem, rxMem, stream_, DstMemType::RESULT_INPUT_MEM);
+    HcclResult ret = reducerInfo_->run(
+        dispatcher, link, rxSlice.offset + baseOffset_, reduceSrcMem, reduceDstMem, rxMem, stream_,
+        DstMemType::RESULT_INPUT_MEM);
 
-    CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][DestRducer]offset[%llu] reduce_async failed",
-        rxSlice.offset), ret);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS, HCCL_ERROR("[Run][DestReducer]offset[%llu] reduce_async failed", rxSlice.offset), ret);
 
     return HCCL_SUCCESS;
 }
 
-HcclResult ReduceScatterHalvingDoubling::RunAsync(const u32 rank, const u32 rankSize, const std::vector<LINK> &links)
+HcclResult ReduceScatterHalvingDoubling::RunAsync(const u32 rank, const u32 rankSize, const std::vector<LINK>& links)
 {
     CHK_SMART_PTR_NULL(dispatcher_);
     CHK_PTR_NULL(stream_.ptr());
@@ -149,8 +149,9 @@ HcclResult ReduceScatterHalvingDoubling::RunAsync(const u32 rank, const u32 rank
         return HCCL_E_PTR;
     }
 
-    HCCL_INFO("ReduceScatterHalvingDoubling run: rank[%u] totalrank[%u] \
-        inputMem[%p] outputMem[%p] count[%llu]", \
+    HCCL_INFO(
+        "ReduceScatterHalvingDoubling run: rank[%u] totalrank[%u] "
+        "inputMem[%p] outputMem[%p] count[%llu]",
         rank, rankSize, inputMem_.ptr(), outputMem_.ptr(), count_);
     HcclResult ret = HCCL_SUCCESS;
 
@@ -170,8 +171,10 @@ HcclResult ReduceScatterHalvingDoubling::RunAsync(const u32 rank, const u32 rank
     CHK_SMART_PTR_NULL(reducerInfo_);
 
     bool bRetSize = (links.size() < rankSize);
-    CHK_PRT_RET(bRetSize, HCCL_ERROR("[ReduceScatterHalvingDoubling][RunAsync]rank[%u] linksize[%llu] is error",
-        rank, links.size()), HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        bRetSize,
+        HCCL_ERROR("[ReduceScatterHalvingDoubling][RunAsync]rank[%u] linksize[%llu] is error", rank, links.size()),
+        HCCL_E_INTERNAL);
 
     // 检查是否已对数据分片
     if (slices_.size() != rankSize) {
@@ -190,10 +193,8 @@ HcclResult ReduceScatterHalvingDoubling::RunAsync(const u32 rank, const u32 rank
     return HCCL_SUCCESS;
 }
 
-
-HcclResult ReduceScatterHalvingDoubling::RunReduceScatter(const u32 rank, const u32 stepNum,
-                                                          const HcclDispatcher dispatcher,
-                                                          const std::vector<LINK> &links)
+HcclResult ReduceScatterHalvingDoubling::RunReduceScatter(
+    const u32 rank, const u32 stepNum, const HcclDispatcher dispatcher, const std::vector<LINK>& links)
 {
     HcclResult ret = HCCL_SUCCESS;
 
@@ -205,46 +206,62 @@ HcclResult ReduceScatterHalvingDoubling::RunReduceScatter(const u32 rank, const 
         CHK_SMART_PTR_NULL(links[peerRank]);
 
         ret = links[peerRank]->TxAck(stream_);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][ReduceScatter]rank[%u] tx ack to peerrank[%u] in step[%u] "\
-            "run failed", rank, peerRank, step), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[Run][ReduceScatter]rank[%u] tx ack to peerrank[%u] in step[%u] "
+                "run failed",
+                rank, peerRank, step),
+            ret);
 
-        HCCL_DEBUG("rank[%u] send to peerrank[%u] in step[%u], silce.offset[%llu], slice.size[%llu]", \
-                   rank, peerRank, step, txSlices_[step].offset, txSlices_[step].size);
+        HCCL_DEBUG(
+            "rank[%u] send to peerrank[%u] in step[%u], slice.offset[%llu], slice.size[%llu]", rank, peerRank, step,
+            txSlices_[step].offset, txSlices_[step].size);
         // 本rank作为reducer的发送侧的动作
         ret = RunSourceReducer(links[peerRank], txSlices_[step]);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][ReduceScatter]rank[%u] to peerrank[%u] reducer_src_run "\
-            "failed", rank, peerRank), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[Run][ReduceScatter]rank[%u] to peerrank[%u] reducer_src_run "
+                "failed",
+                rank, peerRank),
+            ret);
 
         // 本rank作为reducer的接收侧的动作, 结果除最后一轮存放至output外, 均存放至input
-        DstMemType reduceDst = (step == stepNum - 1) ? \
-            DstMemType::RESULT_OUTPUT_MEM : DstMemType::RESULT_INPUT_MEM;
+        DstMemType reduceDst = (step == stepNum - 1) ? DstMemType::RESULT_OUTPUT_MEM : DstMemType::RESULT_INPUT_MEM;
 
-        HCCL_DEBUG("rank[%u] Reduce from peerrank[%u] in step[%u], silce.offset[%llu], slice.size[%llu]", \
-                   rank, peerRank, step, rxSlices_[step].offset, rxSlices_[step].size);
+        HCCL_DEBUG(
+            "rank[%u] Reduce from peerrank[%u] in step[%u], slice.offset[%llu], slice.size[%llu]", rank, peerRank, step,
+            rxSlices_[step].offset, rxSlices_[step].size);
 
         ret = RunDestRducer(links[peerRank], dispatcher, rxSlices_[step], reduceDst);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][ReduceScatter]rank[%u] to peerrank[%u] reducer_dst_run "\
-            "failed", rank, peerRank), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[Run][ReduceScatter]rank[%u] to peerrank[%u] reducer_dst_run "
+                "failed",
+                rank, peerRank),
+            ret);
         ret = links[peerRank]->RxWaitDone(stream_);
         CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][ReduceScatter]RxWaitDone failed"), ret);
         ret = links[peerRank]->TxWaitDone(stream_);
         CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][ReduceScatter]TxWaitDone failed"), ret);
     }
 
-    DeviceMem reduceSrcMem = inputMem_.range(rxSlices_[stepNum-1].offset, rxSlices_[stepNum-1].size);
-    DeviceMem reduceDstMem = outputMem_.range(rxSlices_[stepNum-1].offset, rxSlices_[stepNum-1].size);
+    DeviceMem reduceSrcMem = inputMem_.range(rxSlices_[stepNum - 1].offset, rxSlices_[stepNum - 1].size);
+    DeviceMem reduceDstMem = outputMem_.range(rxSlices_[stepNum - 1].offset, rxSlices_[stepNum - 1].size);
     ret = HcclD2DMemcpyAsync(dispatcher_, reduceDstMem, reduceSrcMem, stream_);
     CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Run][ReduceScatter]HcclD2DMemcpyAsync failed"), ret);
 
     return ret;
 }
 
-HcclResult ReduceScatterHalvingDoubling::GetNslbAdjInfo(const u32 rank, const u32 rankSize,
-                                                        const std::vector<LINK> &links, AdjInfo& nslbAdjInfo)
+HcclResult ReduceScatterHalvingDoubling::GetNslbAdjInfo(
+    [[maybe_unused]] const u32 rank, [[maybe_unused]] const u32 rankSize,
+    [[maybe_unused]] const std::vector<LINK>& links, [[maybe_unused]] AdjInfo& nslbAdjInfo)
 {
     return HCCL_SUCCESS;
 }
 
-
 REGISTER_TEMPLATE(TemplateType::TEMPLATE_REDUCESCATTER_HD, ReduceScatterHalvingDoubling);
-}  // namespace hccl
+} // namespace hccl

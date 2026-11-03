@@ -1,3 +1,4 @@
+# -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2026 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
@@ -5,35 +6,70 @@
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
 
+include_directories(${HCOMM_VM_ROOT_PATH}/src)
 add_subdirectory(utils)
 add_subdirectory(common)
 add_subdirectory(proxy)
-add_subdirectory(runnerdb)
+# 把后端无关 storage 抽象层加入正式 hccl-vm 构建。
+add_subdirectory(storage)
+# 模拟器业务存储层：唯一装配入口，以及运行态、操作数据两个领域库。
+# hccl_vm 本身已是模拟器工程，不再增加无语义的 simulation 目录层级。
+add_subdirectory(storage_composition)
+add_subdirectory(runtime_state)
+add_subdirectory(operation_data)
 add_subdirectory(store)
+# 仿真插件(checker/runner/ccu_executor)对 hcomm 仓的依赖收敛于 ccu_microcode_v1.h
+# 一个自包含头, 已由顶层 HCCLVM_CCU_MICROCODE_DIR 解析(hcomm 仓优先, 否则 vendor
+# 副本), 所有构建模式均可编译
 add_subdirectory(plugin)
 add_subdirectory(cmd)
 add_subdirectory(topo)
 
-add_executable(hccl-vm 
-    main.cc
+add_library(hccl_plugin_objs OBJECT
     plugin/hccl_plugin_manager.cc
     plugin/hccl_plugin.cc
 )
+target_include_directories(hccl_plugin_objs PRIVATE
+    ${HCOMM_VM_ROOT_PATH}/include
+    ${HCOMM_VM_ROOT_PATH}/include/runtime_state
+    ${HCOMM_VM_ROOT_PATH}/include/store
+    ${HCOMM_VM_ROOT_PATH}/src/cmd
+    ${HCOMM_VM_ROOT_PATH}/src/common
+    ${HCOMM_VM_ROOT_PATH}/src/plugin
+    ${HCOMM_VM_ROOT_PATH}/src/proxy
+    ${HCOMM_VM_ROOT_PATH}/src/store
+    ${HCOMM_VM_ROOT_PATH}/src/utils
+    ${HCCL_VM_SRC}/store
+    ${THRID_PARTY_DIR}/nlohmann_json
+    ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc
+    ${ASCEND_CANN_PACKAGE_PATH}/include
+    ${ASCEND_CANN_PACKAGE_PATH}/include/hccl
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/common
+    ${CMAKE_CURRENT_SOURCE_DIR}/plugin
+    ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc/runtime
+)
+if(NOT BUILD_LEVEL1_ONLY)
+    target_include_directories(hccl_plugin_objs PRIVATE
+        ${HCOMM_CODE_ROOT}/src/base_comm/resources/ccu/ccu_microcode
+    )
+endif()
+hcclvm_apply_common_flags(hccl_plugin_objs)
 
-message(STATUS "ASCEND_CANN_PACKAGE_PATH12 = ${ASCEND_CANN_PACKAGE_PATH}")
-target_include_directories(hccl-vm PUBLIC
-    ${ASCEND_CANN_PACKAGE_PATH}/x86_64-linux/pkg_inc/hcomm/ccu
-    ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc/asc/hccl/internal/hcomm/pkg_inc/hcomm/ccu
+add_executable(hccl-vm
+    main.cc
+    $<TARGET_OBJECTS:hccl_plugin_objs>
+)
+
+message(STATUS "ASCEND_CANN_PACKAGE_PATH = ${ASCEND_CANN_PACKAGE_PATH}")
+target_include_directories(hccl-vm PRIVATE
     # hccl vm头文件
     ${HCOMM_VM_ROOT_PATH}/include
-    ${HCOMM_VM_ROOT_PATH}/include/runnerdb
+    ${HCOMM_VM_ROOT_PATH}/include/runtime_state
     ${HCOMM_VM_ROOT_PATH}/src/store
-    ${HCOMM_VM_ROOT_PATH}/src/dep
-    ${HCOMM_VM_ROOT_PATH}/src/host
-    ${HCOMM_VM_ROOT_PATH}/src/host/hccl_cmd
-    ${HCOMM_VM_ROOT_PATH}/src/host/hccl_plugin
-    ${HCOMM_VM_ROOT_PATH}/src/runnerdb
+    ${HCOMM_VM_ROOT_PATH}/src/runtime_state
     ${HCOMM_VM_ROOT_PATH}/src/cmd
 
     ${HCCL_VM_SRC}/store
@@ -42,7 +78,7 @@ target_include_directories(hccl-vm PUBLIC
     ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc
     ${ASCEND_CANN_PACKAGE_PATH}/include
     ${ASCEND_CANN_PACKAGE_PATH}/include/hccl
-    ${ASCEND_CANN_PACKAGE_PATH}/x86_64-linux/include/toolchain
+    ${ASCEND_CANN_PACKAGE_PATH}/${CANN_ARCH_DIR}/include/toolchain
 
     # cann包头文件
     ${ASCEND_CANN_PACKAGE_PATH}/include/driver
@@ -50,65 +86,48 @@ target_include_directories(hccl-vm PUBLIC
     ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc/runtime
     ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc/runtime/runtime
     ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc/runtime/runtime/rts
-    
 
     # hccl_vm头文件
-    ${HCOMM_VM_ROOT_PATH}/include
-    ${HCOMM_VM_ROOT_PATH}/include/runnerdb
     ${HCOMM_VM_ROOT_PATH}/include/store
-    ${HCOMM_VM_ROOT_PATH}/include
-    ${HCOMM_VM_ROOT_PATH}/hccl_host/hccl_cmd
-    ${HCOMM_VM_ROOT_PATH}/src/proxy
 
     # hccl_proxy模块内部头文件
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/common
-    ${CMAKE_CURRENT_SOURCE_DIR}/topomodel
     ${CMAKE_CURRENT_SOURCE_DIR}/proxy
     ${CMAKE_CURRENT_SOURCE_DIR}/plugin
 )
 
+if(NOT BUILD_LEVEL1_ONLY)
+    target_include_directories(hccl-vm PRIVATE
+        ${HCOMM_CODE_ROOT}/src/base_comm/resources/ccu/ccu_microcode
+    )
+endif()
+
 target_link_libraries(hccl-vm
     PRIVATE
     -Wl,--whole-archive
+    -Wl,--start-group
     cmd
     common
     store
     topo
     loader
-    runnerdb
-    modeldb
+    # 主程序只链接公共 storage 合同；具体引擎由后端模块经收集器接入 storage
+    #（客户库依赖经 PUBLIC 传递），本层不出现具体后端名。
+    storage
+    runtime_state
+    operation_data
     log
+    -Wl,--end-group
     -Wl,--no-whole-archive
     dl
     rt
-    sqlite3
     yaml-cpp::yaml-cpp
     CLI11::CLI11
     JSON::JSON
 )
 
-target_compile_options(hccl-vm PRIVATE
-    -Werror
-    -fno-common
-    -fno-strict-aliasing
-    -pipe
-    -O0
-    -g
-    -D_GLIBCXX_USE_CXX11_ABI=0
-)
-
-target_include_directories(hccl-vm PRIVATE
-    ${PROJECT_SOURCE_DIR}/include
-    ${ASCEND_CANN_PACKAGE_PATH}/include
-    ${ASCEND_CANN_PACKAGE_PATH}/include/hccl
-)
-
-set(JSON_REQ_VERSION "3.11.3")
-
-target_link_libraries(hccl-vm PRIVATE CLI11::CLI11)
-target_link_libraries(hccl-vm PRIVATE yaml-cpp::yaml-cpp)
-target_link_libraries(hccl-vm PRIVATE JSON::JSON)
+hcclvm_apply_common_flags(hccl-vm)
 
 if(TARGET third_party_yaml_cpp)
     add_dependencies(hccl-vm third_party_yaml_cpp)
@@ -117,8 +136,8 @@ endif()
 install(TARGETS hccl-vm
     DESTINATION "bin"
     # 文件的权限 (755)
-    PERMISSIONS 
-        OWNER_READ OWNER_WRITE OWNER_EXECUTE 
-        GROUP_READ GROUP_EXECUTE 
+    PERMISSIONS
+        OWNER_READ OWNER_WRITE OWNER_EXECUTE
+        GROUP_READ GROUP_EXECUTE
         WORLD_READ WORLD_EXECUTE
 )

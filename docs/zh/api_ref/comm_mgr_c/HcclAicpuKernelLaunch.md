@@ -3,26 +3,26 @@
 ## 产品支持情况
 
 <!-- npu="950" id1 -->
-- Ascend 950PR/Ascend 950DT：支持
+- Ascend 950PR&950DT系列产品：支持
 <!-- end id1 -->
 <!-- npu="A3" id2 -->
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：不支持
+- Atlas A3系列产品：不支持
 <!-- end id2 -->
 <!-- npu="910b" id3 -->
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：不支持
+- Atlas A2系列产品：不支持
 <!-- end id3 -->
 <!-- npu="310p" id4 -->
-- Atlas 推理系列产品：不支持
+- Atlas推理系列产品：不支持
 <!-- end id4 -->
 <!-- npu="910" id5 -->
-- Atlas 训练系列产品：不支持
+- Atlas训练系列产品：不支持
 <!-- end id5 -->
 
 ## 功能说明
 
-在AICPU上运行核函数。该接口用于下发自定义通信算子到AICPU执行，支持在Group通信场景和非Group通信场景下使用。
+在AI CPU上运行核函数。该接口用于下发自定义通信算子到AI CPU执行，支持在Group通信场景和非Group通信场景下使用。
 
-在Group通信场景下（调用了HcclGroupStart），该接口会将任务添加到Group任务队列中，等待HcclGroupEnd时统一执行；在非Group通信场景下，直接在AICPU上运行核函数。
+在Group通信场景下（调用了HcclGroupStart），该接口会将任务添加到Group任务队列中，等待HcclGroupEnd时统一执行；在非Group通信场景下，直接在AI CPU上运行核函数。
 
 ## 函数原型
 
@@ -34,7 +34,7 @@ HcclResult HcclAicpuKernelLaunch(HcclComm comm, const HcclOpDesc *opInfo, const 
 
 | 参数名 | 输入/输出 | 描述 |
 | --- | --- | --- |
-| comm | 输入 | 集合通信操作所在的通信域。 |
+| comm | 输入 | 集合通信操作所在的通信域。<br>HcclComm类型的定义可参见[HcclComm](./data_type_definition/HcclComm.md)。 |
 | opInfo | 输入 | 算子描述参数，包含算子类型和名称相关参数。<br>HcclOpDesc类型的定义可参见数据类型[HcclOpDesc](./data_type_definition/HcclOpDesc.md)。 |
 | funcInfo | 输入 | 核函数信息，包含动态库名、函数名、参数及参数大小。<br>HcclKernelFuncInfo类型的定义可参见数据类型[HcclKernelFuncInfo](./data_type_definition/HcclKernelFuncInfo.md)。 |
 | aicpuThreadHandle | 输入 | AICPU通信主流线程句柄。<br>ThreadHandle类型的定义可参见[ThreadHandle](../comm_opdev/datatype_definition/ThreadHandle.md) |
@@ -48,7 +48,7 @@ HcclResult HcclAicpuKernelLaunch(HcclComm comm, const HcclOpDesc *opInfo, const 
 ## 约束说明
 
 - 自定义通信算子场景使用（当前仅支持Send和Receive算子）。
-- 调用前需确保通信域已正确初始化。
+- comm必须为有效的通信域句柄（由通信域创建接口获得，调用期间保持有效）。禁止传入空指针、野指针或已销毁的句柄。
 
 ## 调用示例
 
@@ -66,13 +66,13 @@ if (ret != HCCL_SUCCESS) {
 
 HcclOpDesc opInfo;
 HcclOpDescInit(&opInfo);
-opInfo.opDescType = 1;
+opInfo.opDescType = 1;  // 代表Send或Receive算子
 opInfo.p2p.buffer = sendBuffer;
 opInfo.p2p.cmdType = HCCL_CMD_SEND;
 opInfo.p2p.dataType = HCCL_DATA_TYPE_FP32;
 opInfo.p2p.count = dataSize;
 opInfo.p2p.remoteRank = destRank;
-opInfo.p2p.unfoldStream = aicpuStream;
+opInfo.p2p.unfoldStream = userStream;
 
 // 初始化核函数信息
 HcclKernelFuncInfo funcInfo;
@@ -89,7 +89,7 @@ HcclKernelLaunchCfg kernelLaunchCfg;
 HcclKernelLaunchCfgInit(&kernelLaunchCfg);
 kernelLaunchCfg.timeOut = kernelLaunchTimeout;
 
-// 运行AICPU核函数
+// 运行AI CPU核函数
 ret = HcclAicpuKernelLaunch(comm, &opInfo, &funcInfo, aicpuThreadHandle, userStream, &kernelLaunchCfg);
 if (ret != HCCL_SUCCESS) {
     // 处理错误

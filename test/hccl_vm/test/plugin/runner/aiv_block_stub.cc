@@ -11,9 +11,9 @@
 #include <cstdint>
 #include "aiv_graph_executor.h"
 
-AivBlock::AivBlock(uint32_t blockIdx, size_t maxEventId, size_t ubSize) : blockIdx_(blockIdx), ubSize_(ubSize) {
+AivBlock::AivBlock(uint32_t blockIdx, size_t maxEventId, size_t ubSize) : blockIdx_(blockIdx), ubSize_(ubSize)
+{
     ub_ = nullptr;
 }
 
-AivBlock::~AivBlock() {
-}
+AivBlock::~AivBlock() {}

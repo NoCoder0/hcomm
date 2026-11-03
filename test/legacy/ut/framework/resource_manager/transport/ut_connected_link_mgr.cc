@@ -19,20 +19,11 @@ using namespace Hccl;
 
 class ConnectedLinkMgrTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "ConnectedLinkMgrTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "ConnectedLinkMgrTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "ConnectedLinkMgrTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "ConnectedLinkMgrTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in ConnectedLinkMgrTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in ConnectedLinkMgrTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -40,8 +31,8 @@ protected:
         std::cout << "A Test case in ConnectedLinkMgrTest TearDown" << std::endl;
     }
 
-    std::shared_ptr<NetInstance::Link> InitBaseLink(std::shared_ptr<NetInstance::Node> srcNodePtr,
-                                                    std::shared_ptr<NetInstance::Node> dstNodePtr, u32 hop = 1)
+    std::shared_ptr<NetInstance::Link> InitBaseLink(
+        std::shared_ptr<NetInstance::Node> srcNodePtr, std::shared_ptr<NetInstance::Node> dstNodePtr, u32 hop = 1)
     {
         IpAddress srcAddr = IpAddress(0);
         IpAddress dstAddr = IpAddress(0);
@@ -63,8 +54,8 @@ protected:
     }
 };
 
-void GenerateRankPairLinkDataMap4(std::unordered_map<RankId, std::vector<LinkData>> &rankPairLinkDataMap,
-                                  const LinkData *dto)
+void GenerateRankPairLinkDataMap4(
+    std::unordered_map<RankId, std::vector<LinkData>>& rankPairLinkDataMap, const LinkData* dto)
 {
     auto iter = rankPairLinkDataMap.find(dto->GetRemoteRankId());
     if (iter == rankPairLinkDataMap.end()) {
@@ -75,7 +66,7 @@ void GenerateRankPairLinkDataMap4(std::unordered_map<RankId, std::vector<LinkDat
     }
 }
 
-ConnectedLinkMgr MakeLinkMgr4(std::vector<LinkData> &links)
+ConnectedLinkMgr MakeLinkMgr4(std::vector<LinkData>& links)
 {
     ConnectedLinkMgr mgr;
     std::unordered_map<RankId, std::vector<LinkData>> rankPairLinkDataMap;
@@ -144,8 +135,8 @@ TEST_F(ConnectedLinkMgrTest, test_parse_packed_data)
 
     EXPECT_EQ(mgr.levelRankPairLinkDataMap[level].size(), dstRanks.size());
     std::vector<LinkData> links;
-    for (const auto &it : levelRankPairs) {
-        for (const auto &path : fabGroup->GetPaths(myRank, it.second)) {
+    for (const auto& it : levelRankPairs) {
+        for (const auto& path : fabGroup->GetPaths(myRank, it.second)) {
             links.emplace_back(path);
         }
     }

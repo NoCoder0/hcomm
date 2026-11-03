@@ -11,31 +11,29 @@
 #include "topo_match_nhr.h"
 
 namespace Hccl {
-TopoMatchNHR::TopoMatchNHR(const RankId vRank, const u32 rankSize, const RankGraph *rankGraph,
-                             const DevType devType)
+TopoMatchNHR::TopoMatchNHR(const RankId vRank, const u32 rankSize, const RankGraph* rankGraph, const DevType devType)
     : TopoMatchBase(vRank, rankSize, rankGraph, devType)
-{
-}
+{}
 
-TopoMatchNHR::~TopoMatchNHR()
-{
-}
+TopoMatchNHR::~TopoMatchNHR() {}
 
-HcclResult TopoMatchNHR::MatchTopo(std::vector<std::vector<RankId>> &vTopo, std::vector<RankId> &virtRanks,
-                                    std::map<RankId, u32> &virtRankMap)
+HcclResult TopoMatchNHR::MatchTopo(
+    std::vector<std::vector<RankId>>& vTopo, std::vector<RankId>& virtRanks, std::map<RankId, u32>& virtRankMap)
 {
     // 获取并校验通信层数
     std::set<u32> levelSet = rankGraph_->GetLevels(myRank_);
-    CHK_PRT_RET((levelSet.size() == COMM_LEVEL_SIZE_0),
-                HCCL_ERROR("[CollAlgFactory] [TopoMatchNHR] Rank [%d], Invalid virtual topo.", myRank_),
-                HcclResult::HCCL_E_PARA);
+    CHK_PRT_RET(
+        (levelSet.size() == COMM_LEVEL_SIZE_0),
+        HCCL_ERROR("[CollAlgFactory] [TopoMatchNHR] Rank [%d], Invalid virtual topo.", myRank_),
+        HcclResult::HCCL_E_PARA);
     CHK_RET(NHRTopoForAllRanks());
     virtRanks = rankIds_;
     vTopo.push_back(rankIds_);
 
-    CHK_PRT_RET(GenVirtRankMapping(virtRanks, virtRankMap) != HcclResult::HCCL_SUCCESS,
-                HCCL_ERROR("[CollAlgFactory] [TopoMatchNHR] Rank [%d], Fail to generate virtRankMapping.", myRank_),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        GenVirtRankMapping(virtRanks, virtRankMap) != HcclResult::HCCL_SUCCESS,
+        HCCL_ERROR("[CollAlgFactory] [TopoMatchNHR] Rank [%d], Fail to generate virtRankMapping.", myRank_),
+        HcclResult::HCCL_E_INTERNAL);
 
     return HcclResult::HCCL_SUCCESS;
 }

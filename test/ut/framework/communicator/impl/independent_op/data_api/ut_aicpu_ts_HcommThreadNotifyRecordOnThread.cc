@@ -12,13 +12,9 @@
 
 using namespace hccl;
 
-class UtAicpuTsHcommThreadNotifyRecordOnThread : public UtAicpuTsBase
-{
+class UtAicpuTsHcommThreadNotifyRecordOnThread : public UtAicpuTsBase {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "UtAicpuTsHcommThreadNotifyRecordOnThread tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "UtAicpuTsHcommThreadNotifyRecordOnThread tests set up." << std::endl; }
 
     static void TearDownTestCase()
     {
@@ -32,18 +28,13 @@ protected:
 
         GlobalMockObject::reset();
 
-        dstThreadOnDevice = std::make_unique<hccl::AicpuTsThread>(StreamType::STREAM_TYPE_DEVICE, 1, NotifyLoadType::DEVICE_NOTIFY);
+        dstThreadOnDevice
+            = std::make_unique<hccl::AicpuTsThread>(StreamType::STREAM_TYPE_DEVICE, 1, NotifyLoadType::DEVICE_NOTIFY);
         bool isDeviceSide = false;
-        MOCKER(GetRunSideIsDevice)
-            .stubs()
-            .with(outBound(isDeviceSide))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(GetRunSideIsDevice).stubs().with(outBound(isDeviceSide)).will(returnValue(HCCL_SUCCESS));
 
-        MOCKER(hrtGetDeviceType)
-            .stubs()
-            .with(outBound(DevType::DEV_TYPE_950))
-            .will(returnValue(HCCL_SUCCESS));
-        
+        MOCKER(hrtGetDeviceType).stubs().with(outBound(DevType::DEV_TYPE_950)).will(returnValue(HCCL_SUCCESS));
+
         HcclResult ret = dstThreadOnDevice->Init();
         EXPECT_EQ(ret, HCCL_SUCCESS);
         std::string mainStr = dstThreadOnDevice->GetUniqueId();
@@ -51,21 +42,17 @@ protected:
         GlobalMockObject::reset();
 
         isDeviceSide = true;
-        MOCKER(GetRunSideIsDevice)
-            .stubs()
-            .with(outBound(isDeviceSide))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(GetRunSideIsDevice).stubs().with(outBound(isDeviceSide)).will(returnValue(HCCL_SUCCESS));
 
-        MOCKER(hrtGetDeviceType)
-            .stubs()
-            .with(outBound(DevType::DEV_TYPE_950))
-            .will(returnValue(HCCL_SUCCESS));
-        
+        MOCKER(hrtGetDeviceType).stubs().with(outBound(DevType::DEV_TYPE_950)).will(returnValue(HCCL_SUCCESS));
+
         slaveDevThread = std::make_unique<hccl::AicpuTsThread>(mainStr);
         ret = slaveDevThread->Init();
         dstThread = reinterpret_cast<ThreadHandle>(slaveDevThread.get());
 
-        MOCKER_CPP(&Hccl::IAicpuTsThread::NotifyRecordLoc, HcclResult (Hccl::IAicpuTsThread::*)(uint32_t) const).stubs().will(returnValue(HCCL_SUCCESS));
+        MOCKER_CPP(&Hccl::IAicpuTsThread::NotifyRecordLoc, HcclResult(Hccl::IAicpuTsThread::*)(uint32_t) const)
+            .stubs()
+            .will(returnValue(HCCL_SUCCESS));
     }
 
     virtual void TearDown() override
@@ -82,20 +69,51 @@ protected:
     int32_t res{HCCL_E_RESERVED};
 };
 
-TEST_F(UtAicpuTsHcommThreadNotifyRecordOnThread, Ut_HcommThreadNotifyRecordOnThread_When_Normal_Expect_ReturnIsHCCL_SUCCESS)
+TEST_F(
+    UtAicpuTsHcommThreadNotifyRecordOnThread,
+    Ut_HcommThreadNotifyRecordOnThread_When_Normal_Expect_ReturnIsHCCL_SUCCESS)
 {
     res = HcommThreadNotifyRecordOnThread(thread, dstThread, notifyIdx);
     EXPECT_EQ(res, HCCL_SUCCESS);
 }
 
-TEST_F(UtAicpuTsHcommThreadNotifyRecordOnThread, Ut_HcommThreadNotifyRecordOnThread_When_Thread_IsNull_Expect_ReturnIsHCCL_E_PTR)
+TEST_F(
+    UtAicpuTsHcommThreadNotifyRecordOnThread,
+    Ut_HcommThreadNotifyRecordOnThread_When_Thread_IsNull_Expect_ReturnIsHCCL_E_PTR)
 {
     res = HcommThreadNotifyRecordOnThread(0, dstThread, notifyIdx);
     EXPECT_EQ(res, HCCL_E_PTR);
 }
 
-TEST_F(UtAicpuTsHcommThreadNotifyRecordOnThread, Ut_HcommThreadNotifyRecordOnThread_When_DstThread_IsNull_Expect_ReturnIsHCCL_E_PTR)
+TEST_F(
+    UtAicpuTsHcommThreadNotifyRecordOnThread,
+    Ut_HcommThreadNotifyRecordOnThread_When_DstThread_IsNull_Expect_ReturnIsHCCL_E_PTR)
 {
     res = HcommThreadNotifyRecordOnThread(thread, 0, notifyIdx);
     EXPECT_EQ(res, HCCL_E_PTR);
+}
+
+TEST_F(UtAicpuTsHcommThreadNotifyRecordOnThread, WrappedSourceAndDestination)
+{
+    HcommThreadEntity sourceCtx{};
+    sourceCtx.abiHeader = {HCOMM_THREAD_ENTITY_VERSION, HCOMM_THREAD_ENTITY_MAGIC_WORD, sizeof(HcommThreadEntity), 0};
+    HcommThreadEntity destinationCtx{};
+    destinationCtx.abiHeader
+        = {HCOMM_THREAD_ENTITY_VERSION, HCOMM_THREAD_ENTITY_MAGIC_WORD, sizeof(HcommThreadEntity), 0};
+    sourceCtx.compatThreadHandle = reinterpret_cast<ThreadHandle>(mainDevThread.get());
+    destinationCtx.compatThreadHandle = reinterpret_cast<ThreadHandle>(slaveDevThread.get());
+    EXPECT_EQ(
+        HcommThreadNotifyRecordOnThread(
+            reinterpret_cast<ThreadHandle>(&sourceCtx), reinterpret_cast<ThreadHandle>(&destinationCtx), notifyIdx),
+        HCCL_SUCCESS);
+}
+
+TEST_F(UtAicpuTsHcommThreadNotifyRecordOnThread, UninitializedDestinationCtx)
+{
+    HcommThreadEntity destinationCtx{};
+    destinationCtx.abiHeader
+        = {HCOMM_THREAD_ENTITY_VERSION, HCOMM_THREAD_ENTITY_MAGIC_WORD, sizeof(HcommThreadEntity), 0};
+    EXPECT_EQ(
+        HcommThreadNotifyRecordOnThread(thread, reinterpret_cast<ThreadHandle>(&destinationCtx), notifyIdx),
+        HCCL_E_INTERNAL);
 }

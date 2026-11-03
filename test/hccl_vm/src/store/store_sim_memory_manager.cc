@@ -16,7 +16,8 @@ namespace sim {
 static MemoryManager* s_instance = nullptr;
 static std::mutex s_instanceLock;
 
-MemoryManager& MemoryManager::GetInstance() {
+MemoryManager& MemoryManager::GetInstance()
+{
     if (s_instance == nullptr) {
         std::lock_guard<std::mutex> lock(s_instanceLock);
         if (s_instance == nullptr) {
@@ -26,10 +27,10 @@ MemoryManager& MemoryManager::GetInstance() {
     return *s_instance;
 }
 
-MemoryManager::MemoryManager() {
-}
+MemoryManager::MemoryManager() {}
 
-MemoryManager::~MemoryManager() {
+MemoryManager::~MemoryManager()
+{
     std::lock_guard<std::mutex> lock(m_memLock);
     // 遍历所有内存，关闭共享内存
     for (auto& pair : m_memMap) {
@@ -39,7 +40,8 @@ MemoryManager::~MemoryManager() {
     m_memMap.clear();
 }
 
-void* MemoryManager::AllocMemByName(const char* name, size_t size) {
+void* MemoryManager::AllocMemByName(const char* name, size_t size)
+{
     if (!name || size == 0) {
         return NULL;
     }
@@ -65,12 +67,13 @@ void* MemoryManager::AllocMemByName(const char* name, size_t size) {
     memInfo.size = size;
     memInfo.type = 0; // 0: 共享内存
     memInfo.refCount = 1;
-    HCCL_VM_INFO("alloc name: {}, size: {:d}, ptr: {:p}", name, size, ptr);
+    HCCL_VM_DEBUG("alloc name: {}, size: {:d}, ptr: {:p}", name, size, ptr);
     m_memMap[nameStr] = memInfo;
     return ptr;
 }
 
-void MemoryManager::FreeMemByName(const char* name) {
+void MemoryManager::FreeMemByName(const char* name)
+{
     if (!name) {
         return;
     }
@@ -81,14 +84,15 @@ void MemoryManager::FreeMemByName(const char* name) {
     auto it = m_memMap.find(nameStr);
     if (it != m_memMap.end()) {
         // 关闭共享内存
-        HCCL_VM_INFO("free name: {}, size: {:d}, ptr: {:p}", name, it->second.size, it->second.ptr);
+        HCCL_VM_DEBUG("free name: {}, size: {:d}, ptr: {:p}", name, it->second.size, it->second.ptr);
         ShmClose(it->second.ptr);
         // 从映射表中移除
         m_memMap.erase(it);
     }
 }
 
-void MemoryManager::LockMemByName(const char* name) {
+void MemoryManager::LockMemByName(const char* name)
+{
     if (!name) {
         return;
     }
@@ -102,7 +106,8 @@ void MemoryManager::LockMemByName(const char* name) {
     }
 }
 
-void MemoryManager::UnlockMemByName(const char* name) {
+void MemoryManager::UnlockMemByName(const char* name)
+{
     if (!name) {
         return;
     }
@@ -116,7 +121,8 @@ void MemoryManager::UnlockMemByName(const char* name) {
     }
 }
 
-void* MemoryManager::AcquireMemByName(const char* name) {
+void* MemoryManager::AcquireMemByName(const char* name)
+{
     if (!name) {
         return NULL;
     }
@@ -143,14 +149,15 @@ void* MemoryManager::AcquireMemByName(const char* name) {
     MemInfo memInfo;
     memInfo.ptr = ptr;
     memInfo.size = size; // 使用ShmOpen返回的大小
-    memInfo.type = 0; // 0: 共享内存
+    memInfo.type = 0;    // 0: 共享内存
     memInfo.refCount = 1;
-    HCCL_VM_INFO("acquire name: {}, size: {:d}, ptr: {:p}", name, size, ptr);
+    HCCL_VM_DEBUG("acquire name: {}, size: {:d}, ptr: {:p}", name, size, ptr);
     m_memMap[nameStr] = memInfo;
     return ptr;
 }
 
-void MemoryManager::ReleaseMemByName(const char* name) {
+void MemoryManager::ReleaseMemByName(const char* name)
+{
     if (!name) {
         return;
     }
@@ -164,7 +171,7 @@ void MemoryManager::ReleaseMemByName(const char* name) {
         int refCount = __sync_fetch_and_sub(&it->second.refCount, 1);
         if (refCount == 1) {
             // 引用计数归0，关闭共享内存并从映射表中移除
-            HCCL_VM_INFO("release name: {}, ptr: {:p}", name, it->second.ptr);
+            HCCL_VM_DEBUG("release name: {}, ptr: {:p}", name, it->second.ptr);
             ShmClose(it->second.ptr);
             m_memMap.erase(it);
         }

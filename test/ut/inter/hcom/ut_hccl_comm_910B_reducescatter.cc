@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -66,13 +66,8 @@ protected:
     virtual void SetUp()
     {
         s32 portNum = 7;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
-        MOCKER(GetExternalInputHcclLinkTimeOut)
-            .stubs()
-            .will(returnValue(1));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
+        MOCKER(GetExternalInputHcclLinkTimeOut).stubs().will(returnValue(1));
         DlTdtFunction::GetInstance().DlTdtFunctionInit();
         DlRaFunction::GetInstance().DlRaFunctionInit();
         TsdOpen(1, 2);
@@ -96,26 +91,26 @@ typedef struct para_struct {
     std::string identify;
     s32 comm_num;
     s32 device_id;
-    s32 ranks_local;  // 本服务器内的rank数
+    s32 ranks_local; // 本服务器内的rank数
 
-    char *file_name;
-    void *sendbuff;
-    void *recvbuff;
+    char* file_name;
+    void* sendbuff;
+    void* recvbuff;
     s32 count;
     HcclDataType datatype;
     HcclReduceOp op;
     s32 root;
     rtStream_t stream;
     int id;
-    volatile s32 *sync_addr;
+    volatile s32* sync_addr;
     bool offline;
     u32 deviceNumPerServer = 0;
 } para_t;
 
-void *inter_reduce_scatter_task_deter_graph(void *parg)
+void* inter_reduce_scatter_task_deter_graph(void* parg)
 {
     HcclResult ret = HCCL_SUCCESS;
-    para_t *para_info = (para_t *)parg;
+    para_t* para_info = (para_t*)parg;
     s32 rank_num_tmp;
 
     HcomInfo hcom_info;
@@ -134,21 +129,22 @@ void *inter_reduce_scatter_task_deter_graph(void *parg)
     sal_memset(hcom_info.params.id.internal, HCCL_ROOT_INFO_BYTES, 0, sizeof(hcom_info.params.id.internal));
     sal_memcpy(hcom_info.params.id.internal, sizeof(HcclRootInfo), &para_info->rootInfo, sizeof(HcclRootInfo));
 
-    hcom_info.pComm.reset(
-        new (std::nothrow) hccl::hcclComm(HCCL_ALLREDUCE_DATA_SLICE, HCCL_ALLREDUCE_DATA_SLICE, HCCL_WORLD_GROUP));
-    rtModel_t model = (void *)1;
+    hcom_info.pComm.reset(new (std::nothrow)
+                              hccl::hcclComm(HCCL_ALLREDUCE_DATA_SLICE, HCCL_ALLREDUCE_DATA_SLICE, HCCL_WORLD_GROUP));
+    rtModel_t model = (void*)1;
 
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = hcom_info.pComm->init(hcom_info.params, commConfig, hcom_info.rankTable);
     if (ret != HCCL_SUCCESS) {
         HCCL_ERROR("dev[%d] task all_reduce fails", para_info->device_id);
     }
     u64 stream_list_size = 0;
-    ret = hcom_info.pComm->GetWorkspaceSubStreamNum(para_info->count, para_info->datatype, para_info->op, para_info->identify, stream_list_size);
+    ret = hcom_info.pComm->GetWorkspaceSubStreamNum(
+        para_info->count, para_info->datatype, para_info->op, para_info->identify, stream_list_size);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     HCCL_INFO("get stream_list_size[%d] success", stream_list_size);
     vector<HcclRtStream> streamList(stream_list_size);
-    void *memptr = nullptr;
+    void* memptr = nullptr;
 
     //-----------------Set Workspace Resource Start------------------//
     rtError_t rt_ret;
@@ -189,25 +185,21 @@ void *inter_reduce_scatter_task_deter_graph(void *parg)
 
     while (*(para_info->sync_addr) < para_info->ranks_local) {
         sched_yield();
-    }  // linux提供一个系统调用运行进程主动让出执行权
+    } // linux提供一个系统调用运行进程主动让出执行权
 
-    __sync_synchronize();  // 插入内存屏障，对顺序性有要求，但是有没有使用lock指令的时候
+    __sync_synchronize(); // 插入内存屏障，对顺序性有要求，但是有没有使用lock指令的时候
 
     if (ret != HCCL_SUCCESS) {
         HCCL_ERROR("dev[%d] comm get map streamModel fail!", para_info->device_id);
     }
 
     if (para_info->deviceNumPerServer > 0) {
-        hcclImpl *impl = hcom_info.pComm->communicator_->implAlg_->pimpl_.get();
+        hcclImpl* impl = hcom_info.pComm->communicator_->implAlg_->pimpl_.get();
         impl->deviceNumPerAggregation_ = para_info->deviceNumPerServer;
     }
     (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB);
-    ret = hcom_info.pComm->ReduceScatter(strTag,
-        para_info->sendbuff,
-        para_info->recvbuff,
-        para_info->count,
-        para_info->datatype,
-        para_info->op,
+    ret = hcom_info.pComm->ReduceScatter(
+        strTag, para_info->sendbuff, para_info->recvbuff, para_info->count, para_info->datatype, para_info->op,
         para_info->stream);
 
     if (ret != HCCL_SUCCESS) {
@@ -235,10 +227,10 @@ void *inter_reduce_scatter_task_deter_graph(void *parg)
     return nullptr;
 }
 
-void *inter_reduce_scatter_task_deter_opbase(void *parg)
+void* inter_reduce_scatter_task_deter_opbase(void* parg)
 {
     HcclResult ret = HCCL_SUCCESS;
-    para_t *para_info = (para_t *)parg;
+    para_t* para_info = (para_t*)parg;
     s32 rank_num_tmp;
 
     HcomInfo hcom_info;
@@ -257,21 +249,22 @@ void *inter_reduce_scatter_task_deter_opbase(void *parg)
     sal_memset(hcom_info.params.id.internal, HCCL_ROOT_INFO_BYTES, 0, sizeof(hcom_info.params.id.internal));
     sal_memcpy(hcom_info.params.id.internal, sizeof(HcclRootInfo), &para_info->rootInfo, sizeof(HcclRootInfo));
 
-    hcom_info.pComm.reset(
-        new (std::nothrow) hccl::hcclComm(HCCL_ALLREDUCE_DATA_SLICE, HCCL_ALLREDUCE_DATA_SLICE, HCCL_WORLD_GROUP));
-    rtModel_t model = (void *)1;
+    hcom_info.pComm.reset(new (std::nothrow)
+                              hccl::hcclComm(HCCL_ALLREDUCE_DATA_SLICE, HCCL_ALLREDUCE_DATA_SLICE, HCCL_WORLD_GROUP));
+    rtModel_t model = (void*)1;
 
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = hcom_info.pComm->init(hcom_info.params, commConfig, hcom_info.rankTable);
     if (ret != HCCL_SUCCESS) {
         HCCL_ERROR("dev[%d] task all_reduce fails", para_info->device_id);
     }
     u64 stream_list_size = 0;
-    ret = hcom_info.pComm->GetWorkspaceSubStreamNum(para_info->count, para_info->datatype, para_info->op, para_info->identify, stream_list_size);
+    ret = hcom_info.pComm->GetWorkspaceSubStreamNum(
+        para_info->count, para_info->datatype, para_info->op, para_info->identify, stream_list_size);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     HCCL_INFO("get stream_list_size[%d] success", stream_list_size);
     vector<HcclRtStream> streamList(stream_list_size);
-    void *memptr = nullptr;
+    void* memptr = nullptr;
 
     //-----------------Set Workspace Resource Start------------------//
     rtError_t rt_ret;
@@ -312,25 +305,21 @@ void *inter_reduce_scatter_task_deter_opbase(void *parg)
 
     while (*(para_info->sync_addr) < para_info->ranks_local) {
         sched_yield();
-    }  // linux提供一个系统调用运行进程主动让出执行权
+    } // linux提供一个系统调用运行进程主动让出执行权
 
-    __sync_synchronize();  // 插入内存屏障，对顺序性有要求，但是有没有使用lock指令的时候
+    __sync_synchronize(); // 插入内存屏障，对顺序性有要求，但是有没有使用lock指令的时候
 
     if (ret != HCCL_SUCCESS) {
         HCCL_ERROR("dev[%d] comm get map streamModel fail!", para_info->device_id);
     }
 
     if (para_info->deviceNumPerServer > 0) {
-        hcclImpl *impl = hcom_info.pComm->communicator_->implAlg_->pimpl_.get();
+        hcclImpl* impl = hcom_info.pComm->communicator_->implAlg_->pimpl_.get();
         impl->deviceNumPerServer_ = para_info->deviceNumPerServer;
     }
     (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
-    ret = hcom_info.pComm->ReduceScatterOutPlace(strTag,
-        para_info->sendbuff,
-        para_info->recvbuff,
-        para_info->count,
-        para_info->datatype,
-        para_info->op,
+    ret = hcom_info.pComm->ReduceScatterOutPlace(
+        strTag, para_info->sendbuff, para_info->recvbuff, para_info->count, para_info->datatype, para_info->op,
         para_info->stream);
 
     if (ret != HCCL_SUCCESS) {
@@ -357,10 +346,10 @@ void *inter_reduce_scatter_task_deter_opbase(void *parg)
     return nullptr;
 }
 
-void *inter_reduce_scatter_task_undeter_opbase(void *parg)
+void* inter_reduce_scatter_task_undeter_opbase(void* parg)
 {
     HcclResult ret = HCCL_SUCCESS;
-    para_t *para_info = (para_t *)parg;
+    para_t* para_info = (para_t*)parg;
     s32 rank_num_tmp;
 
     HcomInfo hcom_info;
@@ -379,21 +368,22 @@ void *inter_reduce_scatter_task_undeter_opbase(void *parg)
     sal_memset(hcom_info.params.id.internal, HCCL_ROOT_INFO_BYTES, 0, sizeof(hcom_info.params.id.internal));
     sal_memcpy(hcom_info.params.id.internal, sizeof(HcclRootInfo), &para_info->rootInfo, sizeof(HcclRootInfo));
 
-    hcom_info.pComm.reset(
-        new (std::nothrow) hccl::hcclComm(HCCL_ALLREDUCE_DATA_SLICE, HCCL_ALLREDUCE_DATA_SLICE, HCCL_WORLD_GROUP));
-    rtModel_t model = (void *)1;
+    hcom_info.pComm.reset(new (std::nothrow)
+                              hccl::hcclComm(HCCL_ALLREDUCE_DATA_SLICE, HCCL_ALLREDUCE_DATA_SLICE, HCCL_WORLD_GROUP));
+    rtModel_t model = (void*)1;
 
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = hcom_info.pComm->init(hcom_info.params, commConfig, hcom_info.rankTable);
     if (ret != HCCL_SUCCESS) {
         HCCL_ERROR("dev[%d] task all_reduce fails", para_info->device_id);
     }
     u64 stream_list_size = 0;
-    ret = hcom_info.pComm->GetWorkspaceSubStreamNum(para_info->count, para_info->datatype, para_info->op, para_info->identify, stream_list_size);
+    ret = hcom_info.pComm->GetWorkspaceSubStreamNum(
+        para_info->count, para_info->datatype, para_info->op, para_info->identify, stream_list_size);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     HCCL_INFO("get stream_list_size[%d] success", stream_list_size);
     vector<HcclRtStream> streamList(stream_list_size);
-    void *memptr = nullptr;
+    void* memptr = nullptr;
 
     //-----------------Set Workspace Resource Start------------------//
     rtError_t rt_ret;
@@ -434,25 +424,21 @@ void *inter_reduce_scatter_task_undeter_opbase(void *parg)
 
     while (*(para_info->sync_addr) < para_info->ranks_local) {
         sched_yield();
-    }  // linux提供一个系统调用运行进程主动让出执行权
+    } // linux提供一个系统调用运行进程主动让出执行权
 
-    __sync_synchronize();  // 插入内存屏障，对顺序性有要求，但是有没有使用lock指令的时候
+    __sync_synchronize(); // 插入内存屏障，对顺序性有要求，但是有没有使用lock指令的时候
 
     if (ret != HCCL_SUCCESS) {
         HCCL_ERROR("dev[%d] comm get map streamModel fail!", para_info->device_id);
     }
 
     if (para_info->deviceNumPerServer > 0) {
-        hcclImpl *impl = hcom_info.pComm->communicator_->implAlg_->pimpl_.get();
+        hcclImpl* impl = hcom_info.pComm->communicator_->implAlg_->pimpl_.get();
         impl->deviceNumPerAggregation_ = para_info->deviceNumPerServer;
     }
     (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
-    ret = hcom_info.pComm->ReduceScatterOutPlace(strTag,
-        para_info->sendbuff,
-        para_info->recvbuff,
-        para_info->count,
-        para_info->datatype,
-        para_info->op,
+    ret = hcom_info.pComm->ReduceScatterOutPlace(
+        strTag, para_info->sendbuff, para_info->recvbuff, para_info->count, para_info->datatype, para_info->op,
         para_info->stream);
 
     if (ret != HCCL_SUCCESS) {
@@ -483,35 +469,20 @@ void reducescatter_public_stubs(bool needStubOp)
 {
     u32 interfaceVersion = 1;
     MOCKER(hrtRaGetInterfaceVersion)
-    .stubs()
-    .with(mockcpp::any(), mockcpp::any(), outBoundP(&interfaceVersion))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), outBoundP(&interfaceVersion))
+        .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(hrtTraceCreateWithAttr)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtTraceCreateWithAttr).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(hccl::RegisterKernel)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hccl::RegisterKernel).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::InitProfiler)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitProfiler).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclSocketManager::ServerInit)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclSocketManager::ServerInit).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     if (needStubOp) {
-        MOCKER_CPP(&HcclCommunicator::ExecOp)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(HCCL_SUCCESS));
+        MOCKER_CPP(&HcclCommunicator::ExecOp).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     }
 }
 
@@ -540,9 +511,9 @@ TEST_F(HcclCommTest910BReduceScatter, ut_reducescatter_8p_mesh_undeterministic_s
     int ret = HCCL_SUCCESS;
     rtError_t rt_ret = RT_ERROR_NONE;
 
-    s8 *result_buff[DEV_NUM_4];
-    s8 *sendbuf[DEV_NUM_4];
-    s8 *recvbuf[DEV_NUM_4];
+    s8* result_buff[DEV_NUM_4];
+    s8* sendbuf[DEV_NUM_4];
+    s8* recvbuf[DEV_NUM_4];
     s32 sync_value = 0;
 
     rtStream_t stream[DEV_NUM_4];
@@ -563,14 +534,14 @@ TEST_F(HcclCommTest910BReduceScatter, ut_reducescatter_8p_mesh_undeterministic_s
     EXPECT_EQ(ret, HCCL_SUCCESS);
     /** 初始化输入输出缓存 */
     for (s32 i = 0; i < ndev; i++) {
-        ret = hrtMalloc((void **)&sendbuf[i], ndev * count * sizeof(s8));
+        ret = hrtMalloc((void**)&sendbuf[i], ndev * count * sizeof(s8));
         EXPECT_EQ(ret, HCCL_SUCCESS);
         sal_memset(sendbuf[i], ndev * count * sizeof(s8), 0, ndev * count * sizeof(s8));
 
-        ret = hrtMalloc((void **)&recvbuf[i], count * sizeof(s8));
+        ret = hrtMalloc((void**)&recvbuf[i], count * sizeof(s8));
         EXPECT_EQ(ret, HCCL_SUCCESS);
         sal_memset(recvbuf[i], count * sizeof(s8), 0, count * sizeof(s8));
-        result_buff[i] = (s8 *)sal_malloc(count * sizeof(s8));
+        result_buff[i] = (s8*)sal_malloc(count * sizeof(s8));
         sal_memset(result_buff[i], count * sizeof(s8), 0, count * sizeof(s8));
     }
 
@@ -618,7 +589,7 @@ TEST_F(HcclCommTest910BReduceScatter, ut_reducescatter_8p_mesh_undeterministic_s
 
     // 创建每个Dev的allreduce任务线程
     for (s32 i = 0; i < ndev; i++) {
-        tid[i] = sal_thread_create("thread", inter_reduce_scatter_task_undeter_opbase, (void *)&para_info[i]);
+        tid[i] = sal_thread_create("thread", inter_reduce_scatter_task_undeter_opbase, (void*)&para_info[i]);
         EXPECT_NE(tid[i], (sal_thread_t)NULL);
     }
 
@@ -690,9 +661,9 @@ TEST_F(HcclCommTest910BReduceScatter, ut_reducescatter_4p_mesh_deterministic_sma
     int ret = HCCL_SUCCESS;
     rtError_t rt_ret = RT_ERROR_NONE;
 
-    s8 *result_buff[DEV_NUM_4];
-    s8 *sendbuf[DEV_NUM_4];
-    s8 *recvbuf[DEV_NUM_4];
+    s8* result_buff[DEV_NUM_4];
+    s8* sendbuf[DEV_NUM_4];
+    s8* recvbuf[DEV_NUM_4];
     s32 sync_value = 0;
 
     rtStream_t stream[DEV_NUM_4];
@@ -713,14 +684,14 @@ TEST_F(HcclCommTest910BReduceScatter, ut_reducescatter_4p_mesh_deterministic_sma
     EXPECT_EQ(ret, HCCL_SUCCESS);
     /** 初始化输入输出缓存 */
     for (s32 i = 0; i < ndev; i++) {
-        ret = hrtMalloc((void **)&sendbuf[i], ndev * count * sizeof(s8));
+        ret = hrtMalloc((void**)&sendbuf[i], ndev * count * sizeof(s8));
         EXPECT_EQ(ret, HCCL_SUCCESS);
         sal_memset(sendbuf[i], ndev * count * sizeof(s8), 0, ndev * count * sizeof(s8));
 
-        ret = hrtMalloc((void **)&recvbuf[i], count * sizeof(s8));
+        ret = hrtMalloc((void**)&recvbuf[i], count * sizeof(s8));
         EXPECT_EQ(ret, HCCL_SUCCESS);
         sal_memset(recvbuf[i], count * sizeof(s8), 0, count * sizeof(s8));
-        result_buff[i] = (s8 *)sal_malloc(count * sizeof(s8));
+        result_buff[i] = (s8*)sal_malloc(count * sizeof(s8));
         sal_memset(result_buff[i], count * sizeof(s8), 0, count * sizeof(s8));
     }
 
@@ -767,7 +738,7 @@ TEST_F(HcclCommTest910BReduceScatter, ut_reducescatter_4p_mesh_deterministic_sma
 
     // 创建每个Dev的allreduce任务线程
     for (s32 i = 0; i < ndev; i++) {
-        tid[i] = sal_thread_create("thread", inter_reduce_scatter_task_deter_opbase, (void *)&para_info[i]);
+        tid[i] = sal_thread_create("thread", inter_reduce_scatter_task_deter_opbase, (void*)&para_info[i]);
         EXPECT_NE(tid[i], (sal_thread_t)NULL);
     }
 
@@ -839,9 +810,9 @@ TEST_F(HcclCommTest910BReduceScatter, ut_reducescatter_4p_mesh_deterministic_sma
     int ret = HCCL_SUCCESS;
     rtError_t rt_ret = RT_ERROR_NONE;
 
-    s8 *result_buff[DEV_NUM_4];
-    s8 *sendbuf[DEV_NUM_4];
-    s8 *recvbuf[DEV_NUM_4];
+    s8* result_buff[DEV_NUM_4];
+    s8* sendbuf[DEV_NUM_4];
+    s8* recvbuf[DEV_NUM_4];
     s32 sync_value = 0;
 
     rtStream_t stream[DEV_NUM_4];
@@ -862,14 +833,14 @@ TEST_F(HcclCommTest910BReduceScatter, ut_reducescatter_4p_mesh_deterministic_sma
     EXPECT_EQ(ret, HCCL_SUCCESS);
     /** 初始化输入输出缓存 */
     for (s32 i = 0; i < ndev; i++) {
-        ret = hrtMalloc((void **)&sendbuf[i], ndev * count * sizeof(s8));
+        ret = hrtMalloc((void**)&sendbuf[i], ndev * count * sizeof(s8));
         EXPECT_EQ(ret, HCCL_SUCCESS);
         sal_memset(sendbuf[i], ndev * count * sizeof(s8), 0, ndev * count * sizeof(s8));
 
-        ret = hrtMalloc((void **)&recvbuf[i], count * sizeof(s8));
+        ret = hrtMalloc((void**)&recvbuf[i], count * sizeof(s8));
         EXPECT_EQ(ret, HCCL_SUCCESS);
         sal_memset(recvbuf[i], count * sizeof(s8), 0, count * sizeof(s8));
-        result_buff[i] = (s8 *)sal_malloc(count * sizeof(s8));
+        result_buff[i] = (s8*)sal_malloc(count * sizeof(s8));
         sal_memset(result_buff[i], count * sizeof(s8), 0, count * sizeof(s8));
     }
 
@@ -916,7 +887,7 @@ TEST_F(HcclCommTest910BReduceScatter, ut_reducescatter_4p_mesh_deterministic_sma
 
     // 创建每个Dev的allreduce任务线程
     for (s32 i = 0; i < ndev; i++) {
-        tid[i] = sal_thread_create("thread", inter_reduce_scatter_task_deter_opbase, (void *)&para_info[i]);
+        tid[i] = sal_thread_create("thread", inter_reduce_scatter_task_deter_opbase, (void*)&para_info[i]);
         EXPECT_NE(tid[i], (sal_thread_t)NULL);
     }
 
@@ -988,9 +959,9 @@ TEST_F(HcclCommTest910BReduceScatter, ut_reducescatter_4p_mesh_deterministic_sma
     int ret = HCCL_SUCCESS;
     rtError_t rt_ret = RT_ERROR_NONE;
 
-    s8 *result_buff[DEV_NUM_4];
-    s8 *sendbuf[DEV_NUM_4];
-    s8 *recvbuf[DEV_NUM_4];
+    s8* result_buff[DEV_NUM_4];
+    s8* sendbuf[DEV_NUM_4];
+    s8* recvbuf[DEV_NUM_4];
 
     s32 sync_value = 0;
 
@@ -1012,14 +983,14 @@ TEST_F(HcclCommTest910BReduceScatter, ut_reducescatter_4p_mesh_deterministic_sma
     EXPECT_EQ(ret, HCCL_SUCCESS);
     /** 初始化输入输出缓存 */
     for (s32 i = 0; i < ndev; i++) {
-        ret = hrtMalloc((void **)&sendbuf[i], ndev * count * sizeof(s8));
+        ret = hrtMalloc((void**)&sendbuf[i], ndev * count * sizeof(s8));
         EXPECT_EQ(ret, HCCL_SUCCESS);
         sal_memset(sendbuf[i], ndev * count * sizeof(s8), 0, ndev * count * sizeof(s8));
 
-        ret = hrtMalloc((void **)&recvbuf[i], count * sizeof(s8));
+        ret = hrtMalloc((void**)&recvbuf[i], count * sizeof(s8));
         EXPECT_EQ(ret, HCCL_SUCCESS);
         sal_memset(recvbuf[i], count * sizeof(s8), 0, count * sizeof(s8));
-        result_buff[i] = (s8 *)sal_malloc(count * sizeof(s8));
+        result_buff[i] = (s8*)sal_malloc(count * sizeof(s8));
         sal_memset(result_buff[i], count * sizeof(s8), 0, count * sizeof(s8));
     }
 
@@ -1066,7 +1037,7 @@ TEST_F(HcclCommTest910BReduceScatter, ut_reducescatter_4p_mesh_deterministic_sma
 
     // 创建每个Dev的allreduce任务线程
     for (s32 i = 0; i < ndev; i++) {
-        tid[i] = sal_thread_create("thread", inter_reduce_scatter_task_deter_graph, (void *)&para_info[i]);
+        tid[i] = sal_thread_create("thread", inter_reduce_scatter_task_deter_graph, (void*)&para_info[i]);
         EXPECT_NE(tid[i], (sal_thread_t)NULL);
     }
 

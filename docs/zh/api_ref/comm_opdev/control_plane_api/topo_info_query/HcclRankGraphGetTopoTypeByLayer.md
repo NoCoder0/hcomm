@@ -2,9 +2,21 @@
 
 ## 产品支持情况
 
-- Ascend 950PR/Ascend 950DT：支持
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：支持
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：支持
+<!-- npu="950" id1 -->
+- Ascend 950PR&950DT系列产品：支持
+<!-- end id1 -->
+<!-- npu="A3" id2 -->
+- Atlas A3系列产品：支持
+<!-- end id2 -->
+<!-- npu="910b" id3 -->
+- Atlas A2系列产品：支持
+<!-- end id3 -->
+<!-- npu="910" id4 -->
+- Atlas训练系列产品：不支持
+<!-- end id4 -->
+<!-- npu="310p" id5 -->
+- Atlas推理系列产品：不支持
+<!-- end id5 -->
 
 ## 功能说明
 
@@ -37,7 +49,9 @@ HcclResult HcclRankGraphGetTopoTypeByLayer(HcclComm comm, uint32_t netLayer, Com
 
 ## 约束说明
 
-无
+- comm必须为有效的通信域句柄（由通信域创建接口获得，调用期间保持有效）。禁止传入空指针、野指针或已销毁的句柄。
+- 线程安全：在Ascend 950PR&950DT系列产品上，同一通信域多线程并发调用本接口是安全的；Atlas A2系列与Atlas A3系列产品不支持多线程并发调用。
+- 通信域销毁（HcclCommDestroy）不得与本接口并发。
 
 ## 调用示例
 
@@ -47,7 +61,7 @@ HcclResult HcclRankGraphGetTopoTypeByLayer(HcclComm comm, uint32_t netLayer, Com
 
 ```c
 HcclComm comm;
-uint32_t topoType;
+CommTopo topoType;
 HcclRankGraphGetTopoTypeByLayer(comm, 0, &topoType);  
 // Layer0的topoType=1 (1DMesh)
 HcclRankGraphGetTopoTypeByLayer(comm, 1, &topoType);  
@@ -58,7 +72,7 @@ HcclRankGraphGetTopoTypeByLayer(comm, 1, &topoType);
 
 ```c
 HcclComm comm;
-uint32_t topoType;
+CommTopo topoType;
 HcclRankGraphGetTopoTypeByLayer(comm, 0, &topoType);  
 // Layer0的topoType=0 (Clos)
 HcclRankGraphGetTopoTypeByLayer(comm, 1, &topoType);  

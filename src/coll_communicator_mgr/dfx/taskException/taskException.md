@@ -27,11 +27,18 @@ taskException/
 │   ├── hcclCommTaskException.h              # TaskExceptionHost / TaskExceptionHostManager 类声明
 │   ├── hcclCommTaskException.cc             # Host 侧通用异常处理实现 + 回调注册管理
 │   ├── ccuTaskException.h                   # CcuTaskException 类声明
-│   ├── ccuTaskException.cc                  # CCU 任务异常处理实现（指令解析、寄存器读取、错误信息生成）
-│   └── ccu_error_info_v1.h                  # CCU 错误信息数据结构定义（CcuErrorInfo、CcuLoopContext、CcuMissionContext 等）
+│   └── ccuTaskException.cc                  # CCU 任务异常处理实现（指令解析、寄存器读取、错误信息生成）
 └── aicpu/                                   # AICPU 侧异常处理
     ├── hcclCommTaskExceptionLite.h          # HcclCommTaskExceptionLite 类声明
     └── hcclCommTaskExceptionLite.cc         # AICPU 侧异常检测、CQE 解析、错误上报实现
+```
+
+```text
+ccu_dfx/（位于 base_comm/resources/ccu/ccu_dfx/）
+├── ccu_error_info_v1.h                  # Ascend 950 错误信息数据结构定义（CcuErrorInfo、CcuLoopContext、CcuMissionContext 等）
+├── ccu_error_info_v2.h                  # Ascend 960 错误信息数据结构定义（CcuLoopContextV2、CcuMissionContextV2）
+├── ccu_dfx_schema.h                     # V1/V2 schema 分派接口声明（CcuVersionOps、GetCcuOps）
+└── ccu_dfx_schema.cc                    # V1/V2 schema 分派实现（按设备类型 950→V1 / 960→V2 选取解码与打印实现）
 ```
 
 ### 文件间关系
@@ -40,7 +47,10 @@ taskException/
 |------|------|----------|
 | `hcclCommTaskException.h/.cc` | Host 侧主入口，注册 Runtime 异常回调，分发到通用/CCU 异常处理 | 依赖 `ccuTaskException.h` 处理 CCU 类型异常；依赖 `global_mirror_tasks.h` 查找 TaskInfo；通过回调从 AICPU 侧获取 ErrorMessageReport |
 | `ccuTaskException.h/.cc` | CCU 任务异常专用处理，解析 CcuRep 指令表示、读取硬件寄存器 | 依赖 `ccu_error_info_v1.h` 的数据结构；依赖 `ccu_kernel_mgr.h` 获取 CcuRepContext；依赖 `ccu_urma_channel.h` 获取通道信息 |
-| `ccu_error_info_v1.h` | CCU 错误信息数据结构定义 | 被 `ccuTaskException.h/.cc` 引用；依赖 `ccu_rep_type_v1.h` 定义 CcuRepType 枚举 |
+| `ccu_error_info_v1.h`（位于 `base_comm/resources/ccu/ccu_dfx/`） | Ascend 950 错误信息数据结构定义（CcuErrorInfo、CcuLoopContext、CcuMissionContext 等） | 被 `ccuTaskException.h/.cc` 引用；依赖 `ccu_rep_type_v1.h` 定义 CcuRepType 枚举 |
+| `ccu_error_info_v2.h`（位于 `base_comm/resources/ccu/ccu_dfx/`） | Ascend 960 错误信息数据结构定义（CcuLoopContextV2、CcuMissionContextV2） | 被 `ccuTaskException.h` 引用；零外部依赖 |
+| `ccu_dfx_schema.h`（位于 `base_comm/resources/ccu/ccu_dfx/`） | V1/V2 schema 分派接口声明，定义 CcuMissionInfo/CcuLoopInfo 语义输出结构与 CcuVersionOps 分派表项，声明 GetCcuOps 入口 | 依赖 `hccl_types.h` 定义 HcclResult；被 `ccu_dfx_schema.cc` 实现并被 `ccuTaskException.cc` 引用（GetCcuOps 被 ProcessCcuException / PrintPanicLogInfo / DecodeRawMissionInfo / FetchAndDecodeLoopInfo 调用） |
+| `ccu_dfx_schema.cc`（位于 `base_comm/resources/ccu/ccu_dfx/`） | V1/V2 schema 分派实现，按设备类型（950→V1 / 960→V2）选取对应的 Mission/Loop 上下文解码与 CCUM DFX 寄存器打印实现 | 依赖 `ccu_dfx_schema.h` 接口；依赖 `ccu_error_info_v1.h` 的 CcuMissionContext / CcuLoopContext；依赖 `ccu_error_info_v2.h` 的 CcuMissionContextV2 / CcuLoopContextV2；依赖 `adapter_rts_common.h` 的 hrtGetDeviceType 获取设备类型 |
 | `hcclCommTaskExceptionLite.h/.cc` | AICPU 侧守护线程，检测 CQE 异常并上报 Host | 依赖 `coll_comm_aicpu.h` 获取 AICPU 通信域；依赖 `error_message_v2.h` 组织 ErrorMessageReport 并通过 HDC 上报 Host |
 
 ### TaskException文件交互
@@ -136,7 +146,7 @@ sequenceDiagram
     Note right of CollComm: 注册AICPU异常回调
 
     CollComm->>TaskExceptionHost: Register
-    Note right of TaskExceptionHost: 写入CommRegisterMap_<br/>首个comm注册时调用<br/>aclrtSetExceptionInfoCallback
+    Note right of TaskExceptionHost: 写入CommRegisterMap_<br/>首个comm注册时调用<br/>aclrtExceptionInfoCallbackRegister
 
     hcomm_c_adpt->>HcclCommDfx: GetMirrorTaskManager
     HcclCommDfx-->>hcomm_c_adpt: mirrorTaskManager
@@ -404,12 +414,13 @@ sequenceDiagram
     alt LOOPGROUP
         CcuTaskException->>CcuTaskException: GenErrorInfoLoopGroup
         Note right of CcuTaskException: 解析LoopGroup→遍历Loop→GenErrorInfoLoop
-    else LOC_WAIT_EVENT/LOC_WAIT_NOTIFY
+    else LOC_WAIT_EVENT
         CcuTaskException->>CcuTaskException: GenErrorInfoByRepType
-        Note right of CcuTaskException: 检查CKE期望值vs实际值
-    else 其他Rep
+        CcuTaskException->>CcuTaskException: 按mask位回溯依赖Rep
+        Note right of CcuTaskException: 检查CKE期望值vs实际值<br/>按未置位bit回溯依赖Rep
+    else 其他Rep(含LOC_WAIT_NOTIFY)
         CcuTaskException->>CcuTaskException: GenErrorInfoByRepType
-        Note right of CcuTaskException: HANDLER_MAP分派到<br/>Read/Write等处理
+        Note right of CcuTaskException: HANDLER_MAP分派到<br/>Read/Write/Notify等处理
     end
 
     CcuTaskException->>CcuTaskException: PrintCcuErrorLog
@@ -461,11 +472,11 @@ classDiagram
     class CcuTaskException {
         +ProcessCcuException(rtExceptionInfo_t*, TaskInfo) void$
         -InitChannelMap(s32, u64) HcclResult$
-        -GetCcuErrorMsg(deviceId, missionStatus, ParaCcu, vector~CcuErrorInfo~&) HcclResult$
+        -GetCcuErrorMsg(deviceId, missionStatus, TaskInfo, vector~CcuErrorInfo~&) HcclResult$
         -GenErrorInfoByRepType(ErrorInfoBase, CcuRepBase*, vector~CcuErrorInfo~&) void$
         -GenErrorInfoLoop(ErrorInfoBase, CcuRepContext&, vector~CcuErrorInfo~&) HcclResult$
         -GenErrorInfoLoopGroup(ErrorInfoBase, CcuRepBase*, CcuRepContext&, vector~CcuErrorInfo~&) HcclResult$
-        -GenStatusInfo(ErrorInfoBase, vector~CcuErrorInfo~&) void$
+        -GenStatusInfo(ErrorInfoBase, TaskInfo, vector~CcuErrorInfo~&) void$
         -PrintCcuErrorInfo(...) void$
         -PrintCcuErrorLog(...) void$
         -PrintCcuUbRegisters(...) HcclResult$
@@ -569,8 +580,8 @@ classDiagram
 | 接口 | 类型 | 参数 | 返回值 | 功能说明 |
 |------|------|------|--------|----------|
 | `GetInstance(s32)` | 公有静态 | [in] deviceLogicID | `TaskExceptionHost*` | 获取指定设备的异常处理器，最大支持 65 个设备 |
-| `Register(u64)` | 公有 | [in] commHandle | `HcclResult` | 将 commHandle 写入 CommRegisterMap_；首个 comm 注册时调用 `aclrtSetExceptionInfoCallback(ProcessCallback)` 向 RTS 注册异常回调 |
-| `UnRegister(u64)` | 公有 | [in] commHandle | `HcclResult` | 从 CommRegisterMap_ 移除 commHandle；最后一个 comm 注销时将回调设为 nullptr |
+| `Register(u64)` | 公有 | [in] commHandle | `HcclResult` | 将 commHandle 写入 CommRegisterMap_；首个 comm 注册时调用 `aclrtExceptionInfoCallbackRegister(ProcessCallback)` 向 RTS 注册异常回调 |
+| `UnRegister(u64)` | 公有 | [in] commHandle | `HcclResult` | 从 CommRegisterMap_ 移除 commHandle；最后一个 comm 注销时调用 `aclrtExceptionInfoCallbackUnregister(ProcessCallback)` 向 RTS 注销回调 |
 | `ProcessCallback(rtExceptionInfo_t*)` | 公有静态 | [in] exceptionInfo | void | Runtime 异常回调入口，通过 GetInstance 获取处理器后转发到 Process |
 | `HandleAicpuErrorReport(rtExceptionInfo_t*, const ErrorMessageReport&, const TaskInfo&)` | 私有 | [in] exceptionInfo, [in] errorMessage, [in] taskInfo | void | 处理 AICPU 侧已上报的错误：打印 BaseInfo/ParaInfo/GroupInfo/OpDataInfo，调用 PrintUbDfxInfo、ReportErrorMsg，ubCqeStatus 非零时调用 GetAicpuCqeErrInfo |
 | `HandleHostErrorReport(rtExceptionInfo_t*, const TaskInfo&)` | 私有 | [in] exceptionInfo, [in] taskInfo | void | Host 侧自行处理异常：TASK_NOTIFY_WAIT 时打印前序 task 上下文并上报 EI0002，打印集群监控错误信息 |
@@ -589,7 +600,8 @@ classDiagram
 |------|------|------|--------|----------|
 | `ProcessCcuException(const rtExceptionInfo_t*, const TaskInfo&)` | 公有静态 | [in] exceptionInfo, [in] taskInfo | void | CCU 任务异常处理主入口，初始化通道映射、遍历 Mission、打印错误和寄存器、清理 TaskKill 状态 |
 | `InitChannelMap(s32, u64)` | 私有静态 | [in] deviceId, [in] ccuKernelHandle | `HcclResult` | 初始化 channelId→channelHandle 全局映射 `g_channelIdToHandle` |
-| `GetCcuErrorMsg(int32_t, uint16_t, const ParaCcu&, vector<CcuErrorInfo>&)` | 私有静态 | [in] deviceId, [in] missionStatus, [in] ccuTaskParam, [out] errorInfo | `HcclResult` | 获取 CCU 错误信息核心方法：读取 MissionContext，查找异常 Rep，分派到不同的 GenErrorInfo 方法 |
+| `GetCcuErrorMsg(int32_t, uint16_t, const TaskInfo&, vector<CcuErrorInfo>&)` | 私有静态 | [in] deviceId, [in] missionStatus, [in] taskInfo, [out] errorInfo | `HcclResult` | 获取 CCU 错误信息核心方法：读取 MissionContext，查找异常 Rep，分派到不同的 GenErrorInfo 方法 |
+| `GenStatusInfo(const ErrorInfoBase&, const TaskInfo&, vector<CcuErrorInfo>&)` | 私有静态 | [in] baseInfo, [in] taskInfo, [out] errorInfo | void | 生成状态错误信息；EI0002 分支经 GetGroupRankInfo(taskInfo) 填充 group_rank_content（含 hcclUdi） |
 | `GenErrorInfoByRepType(const ErrorInfoBase&, shared_ptr<CcuRepBase>, vector<CcuErrorInfo>&)` | 私有静态 | [in] baseInfo, [in] repBase, [out] errorInfo | void | 根据 CcuRepType 分派到对应的 GenErrorInfo 方法（使用 HANDLER_MAP 函数表） |
 | `GenErrorInfoLoop(const ErrorInfoBase&, CcuRepContext&, vector<CcuErrorInfo>&)` | 私有静态 | [in] baseInfo, [in] ctx, [out] errorInfo | `HcclResult` | 解析 Loop 类型异常：读取 LoopContext 寄存器，递归解析 Loop 内的 Rep |
 | `GenErrorInfoLoopGroup(const ErrorInfoBase&, shared_ptr<CcuRepBase>, CcuRepContext&, vector<CcuErrorInfo>&)` | 私有静态 | [in] baseInfo, [in] repBase, [in] ctx, [out] errorInfo | `HcclResult` | 解析 LoopGroup 类型异常：展开所有 Loop 并逐个解析 |
@@ -623,7 +635,7 @@ classDiagram
 | `PrintCommTaskException(CollCommAicpu*)` | 公有 | [in] aicpuComm | `HcclResult` | 打印指定通信域所有线程的 Task 异常信息 |
 | `PrintTaskExceptionBySqeId(CollCommAicpu*, u32, u32)` | 私有 | [in] aicpuComm, [in] sqId, [in] sqeId | `HcclResult` | 打印指定 sqId/sqeId 的 Task 异常信息：BaseInfo/ParaInfo、EID、GroupInfo、OpData/TaskContext |
 | `PrintTaskContextInfo(CollCommAicpu*, u32, u32)` | 私有 | [in] aicpuComm, [in] sqId, [in] taskId | `HcclResult` | 打印异常 task 前最多 50 条前序 task 上下文信息（按 opIndex 分段打印） |
-| `CollectTaskContext(CollCommAicpu*, u32, u32, vector<shared_ptr<TaskInfo>>&)` | 私有 | [in] aicpuComm, [in] sqId, [in] taskId, [out] taskContext | `HcclResult` | 从 MirrorTaskManagerLite 的队列中收集异常 task 前最多 50 条 task 信息 |
+| `CollectTaskContext(CollCommAicpu*, u32, u32, vector<TaskInfo*>&)` | 私有 | [in] aicpuComm, [in] sqId, [in] taskId, [out] taskContext | `HcclResult` | 从 MirrorTaskManagerLite 的队列中收集异常 task 前最多 50 条 task 信息 |
 | `PrintEid(const TaskInfo&)` | 私有 | [in] taskInfo | void | UB 类型任务打印 localEid 和 remoteEid |
 | `GetGroupInfo(CollCommAicpu*)` | 私有 | [in] aicpuComm | string | 获取通信域的 group/rankSize/localRank 信息 |
 | `GetSqeId(uint16_t, uint16_t)` | 私有 | [in] taskId, [in] streamId | `u32` | 将 taskId 和 streamId 组合为 sqeId |

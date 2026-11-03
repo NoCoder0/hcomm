@@ -1,3 +1,4 @@
+# -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2026 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
@@ -5,6 +6,7 @@
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
 
 add_library(topo STATIC "")
 
@@ -18,9 +20,8 @@ target_sources(topo PRIVATE
 target_include_directories(topo PRIVATE
     ${THRID_PARTY_DIR}/nlohmann_json
     ${HCOMM_VM_ROOT_PATH}/include
-    ${HCOMM_VM_ROOT_PATH}/include
-    ${HCOMM_VM_ROOT_PATH}/include/runnerdb
     ${HCOMM_VM_ROOT_PATH}/include/topo
+    ${HCOMM_VM_ROOT_PATH}/src
     ${HCOMM_VM_ROOT_PATH}/src/cmd
     ${ASCEND_CANN_PACKAGE_PATH}/include
     ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc
@@ -28,16 +29,7 @@ target_include_directories(topo PRIVATE
     ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc/profiling
 )
 
-target_compile_options(topo PRIVATE
-        -fPIC
-        -Werror
-        -fno-common
-        -fno-strict-aliasing
-        -pipe
-        -O0
-        -g
-        -D_GLIBCXX_USE_CXX11_ABI=0
-)
+hcclvm_apply_common_flags(topo)
 
 target_link_libraries(topo PRIVATE log)
 

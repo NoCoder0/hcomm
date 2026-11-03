@@ -36,20 +36,11 @@ using namespace std;
 
 class RegisteredCcuCtxMgrTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CommunicatorImplTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CommunicatorImplTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CommunicatorImplTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CommunicatorImplTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in CommunicatorImplTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in CommunicatorImplTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -72,14 +63,19 @@ TEST_F(RegisteredCcuCtxMgrTest, should_return_fail_when_calling_hasregistered)
     EXPECT_EQ(false, res);
     EXPECT_EQ(0, execId);
     EXPECT_EQ(0, registeredCcuCtxMgr.registeredIds.size());
-
 }
 
 TEST_F(RegisteredCcuCtxMgrTest, should_return_success_when_calling_register)
 {
     // when
-    MOCKER(InsExeQue::RegisterExtendInstruction).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(HcclResult::HCCL_SUCCESS));
-    MOCKER(InsExeQue::DeregisterExtendInstruction).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(HcclResult::HCCL_SUCCESS));
+    MOCKER(InsExeQue::RegisterExtendInstruction)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(returnValue(HcclResult::HCCL_SUCCESS));
+    MOCKER(InsExeQue::DeregisterExtendInstruction)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(returnValue(HcclResult::HCCL_SUCCESS));
 
     RegisteredCcuCtxMgr registeredCcuCtxMgr(1);
     CcuCtxSignature ctxSignature;

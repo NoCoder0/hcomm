@@ -41,14 +41,15 @@ using namespace std;
 class FakeTransportBase : public TransportBase {
 public:
     FakeTransportBase() : TransportBase(nullptr, fakeNotifyPool_, fakeMachinePara_, std::chrono::milliseconds(0)) {}
-    HcclResult TxPrepare(Stream &) override { return HCCL_SUCCESS; }
-    HcclResult TxData(UserMemType, u64, const void *, u64, Stream &) override { return HCCL_SUCCESS; }
-    HcclResult TxDone(Stream &) override { return HCCL_SUCCESS; }
-    HcclResult RxPrepare(Stream &) override { return HCCL_SUCCESS; }
-    HcclResult RxData(UserMemType, u64, void *, u64, Stream &) override { return HCCL_SUCCESS; }
-    HcclResult RxDone(Stream &) override { return HCCL_SUCCESS; }
-    HcclResult TxWaitDone(Stream &) override { return HCCL_SUCCESS; }
-    HcclResult RxWaitDone(Stream &) override { return HCCL_SUCCESS; }
+    HcclResult TxPrepare(Stream&) override { return HCCL_SUCCESS; }
+    HcclResult TxData(UserMemType, u64, const void*, u64, Stream&) override { return HCCL_SUCCESS; }
+    HcclResult TxDone(Stream&) override { return HCCL_SUCCESS; }
+    HcclResult RxPrepare(Stream&) override { return HCCL_SUCCESS; }
+    HcclResult RxData(UserMemType, u64, void*, u64, Stream&) override { return HCCL_SUCCESS; }
+    HcclResult RxDone(Stream&) override { return HCCL_SUCCESS; }
+    HcclResult TxWaitDone(Stream&) override { return HCCL_SUCCESS; }
+    HcclResult RxWaitDone(Stream&) override { return HCCL_SUCCESS; }
+
 private:
     static std::unique_ptr<NotifyPool> fakeNotifyPool_;
     static MachinePara fakeMachinePara_;
@@ -63,10 +64,7 @@ protected:
         DlRaFunction::GetInstance().DlRaFunctionInit();
         std::cout << "CollBatchSendRecvGroupExecutorTest SetUpTestCase" << std::endl;
     }
-    static void TearDownTestCase()
-    {
-        std::cout << "CollBatchSendRecvGroupExecutorTest TearDownTestCase" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CollBatchSendRecvGroupExecutorTest TearDownTestCase" << std::endl; }
 
     virtual void SetUp()
     {
@@ -81,15 +79,9 @@ protected:
         // ExternalEnable defaults are fine
 
         topoMatcher_ = std::make_unique<TopoMatcher>(
-            commPlaneRanks_,
-            isBridgeVector_,
-            topoInfo_,
-            algoInfo_,
-            externalEnable_,
-            serverAndsuperPodToRank_);
+            commPlaneRanks_, isBridgeVector_, topoInfo_, algoInfo_, externalEnable_, serverAndsuperPodToRank_);
 
-        executor_ = std::make_unique<CollBatchSendRecvGroupExecutor>(
-            nullptr, topoMatcher_);
+        executor_ = std::make_unique<CollBatchSendRecvGroupExecutor>(nullptr, topoMatcher_);
 
         // Set up a real DispatcherPub so HcclD2DMemcpyAsync and LocalNotify work.
         // Individual tests mock hrtMemAsyncCopy and virtual methods as needed.
@@ -120,27 +112,21 @@ protected:
     }
 
     // Helper: set topoAttr_ fields (const in base class, but mutable for testing)
-    void SetTopoAttrUserRank(u32 rank)
-    {
-        const_cast<HcclTopoInfo&>(executor_->topoAttr_).userRank = rank;
-    }
-    void SetTopoAttrUserRankSize(u32 size)
-    {
-        const_cast<HcclTopoInfo&>(executor_->topoAttr_).userRankSize = size;
-    }
+    void SetTopoAttrUserRank(u32 rank) { const_cast<HcclTopoInfo&>(executor_->topoAttr_).userRank = rank; }
+    void SetTopoAttrUserRankSize(u32 size) { const_cast<HcclTopoInfo&>(executor_->topoAttr_).userRankSize = size; }
 
     // Helper: set up algResResp_ with memory and streams for RunTasks/Process* tests.
     void SetupAlgResResp(u32 streamNum = 18, u64 memSize = 4 * 1024 * 1024)
     {
         // Use real allocated memory so stream background threads can memcpy without crashing
         memBuffer_.resize(memSize);
-        void *memPtr = memBuffer_.data();
+        void* memPtr = memBuffer_.data();
         algRes_.cclInputMem = DeviceMem(memPtr, memSize);
         algRes_.cclOutputMem = DeviceMem(memPtr, memSize);
         algRes_.slaveStreams.clear();
         algRes_.slaveStreams.resize(streamNum);
         // Create real streams so MemcpyAsync/aclrtMemcpyAsync stubs work
-        for (auto &s : algRes_.slaveStreams) {
+        for (auto& s : algRes_.slaveStreams) {
             s = Stream(StreamType::STREAM_TYPE_OFFLINE);
         }
         algRes_.notifiesAux.clear();
@@ -154,7 +140,7 @@ protected:
     // Uses FakeTransportBase as pimpl_ so TxPrepare/TxData/etc. return success.
     LINK MakeFakeLink(TransportType type = TransportType::TRANS_TYPE_P2P)
     {
-        auto *fakeBase = new FakeTransportBase();
+        auto* fakeBase = new FakeTransportBase();
         LINK link = std::make_shared<Transport>(fakeBase);
         const_cast<TransportType&>(link->type_) = type;
         return link;
@@ -169,13 +155,13 @@ protected:
         if (algRes_.opTransportResponse.size() <= COMM_COMBINE_ORDER) {
             algRes_.opTransportResponse.resize(COMM_COMBINE_ORDER + 1);
         }
-        auto &level = algRes_.opTransportResponse[COMM_COMBINE_ORDER];
+        auto& level = algRes_.opTransportResponse[COMM_COMBINE_ORDER];
         while (level.size() < 2) {
             level.push_back(SingleSubCommTransport());
         }
         // Set up both subComms so both GetSendTargetLink and GetRecvTargetLink work
         for (u32 commIndex = 0; commIndex < 2; commIndex++) {
-            SingleSubCommTransport &sub = level[commIndex];
+            SingleSubCommTransport& sub = level[commIndex];
             for (u32 r = 0; r <= remoteRank; r++) {
                 if (sub.userRank2subCommRank.count(r) == 0) {
                     u32 sr = sub.links.size();
@@ -270,9 +256,9 @@ TEST_F(CollBatchSendRecvGroupExecutorTest, IsRemoteRankRdma_RankAtPodBoundary_Re
 {
     // pod = ranks [0, 3]
     SetPodRange(0, 3, 4);
-    EXPECT_FALSE(executor_->IsRemoteRankRdma(0));   // pod start
-    EXPECT_FALSE(executor_->IsRemoteRankRdma(3));   // pod end
-    EXPECT_TRUE(executor_->IsRemoteRankRdma(4));    // just outside
+    EXPECT_FALSE(executor_->IsRemoteRankRdma(0)); // pod start
+    EXPECT_FALSE(executor_->IsRemoteRankRdma(3)); // pod end
+    EXPECT_TRUE(executor_->IsRemoteRankRdma(4));  // just outside
 }
 
 TEST_F(CollBatchSendRecvGroupExecutorTest, IsRemoteRankRdma_SingleRankPod)
@@ -370,7 +356,7 @@ TEST_F(CollBatchSendRecvGroupExecutorTest, GetNextDstRank_OverflowWrap)
 
     u32 curRank = 17; // > userRankSize
     u32 result = executor_->GetNextDstRank(curRank);
-    EXPECT_EQ(result, 1u);  // 17 % 16 = 1
+    EXPECT_EQ(result, 1u); // 17 % 16 = 1
     EXPECT_EQ(curRank, 2u);
 }
 
@@ -839,7 +825,7 @@ TEST_F(CollBatchSendRecvGroupExecutorTest, CalcPodRange_ResultState_RdmaRankingW
 TEST_F(CollBatchSendRecvGroupExecutorTest, CalcSendSlices_SdmaOnly_NoRdmaRanks)
 {
     // All ranks in pod — no RDMA, all SDMA
-    SetPodRange(0, 15, 16);  // entire cluster is pod
+    SetPodRange(0, 15, 16); // entire cluster is pod
     SetTopoAttrUserRankSize(16);
     SetTopoAttrUserRank(0);
     SetStreamNum(4, 4);
@@ -851,7 +837,7 @@ TEST_F(CollBatchSendRecvGroupExecutorTest, CalcSendSlices_SdmaOnly_NoRdmaRanks)
     item.buf = reinterpret_cast<void*>(0x1000);
     item.count = 512;
     item.dataType = HCCL_DATA_TYPE_INT32; // 4 bytes
-    item.remoteRank = 3; // within pod [0,15]
+    item.remoteRank = 3;                  // within pod [0,15]
     item.sendRecvType = HcclSendRecvType::HCCL_SEND;
 
     executor_->sendStreamNum_ = 4;
@@ -885,7 +871,7 @@ TEST_F(CollBatchSendRecvGroupExecutorTest, CalcSendSlices_RdmaRankSeparated)
     item.buf = reinterpret_cast<void*>(0x2000);
     item.count = 128;
     item.dataType = HCCL_DATA_TYPE_INT32; // 4 bytes, total 512 bytes
-    item.remoteRank = 5; // outside pod [0,3] -> RDMA
+    item.remoteRank = 5;                  // outside pod [0,3] -> RDMA
     item.sendRecvType = HcclSendRecvType::HCCL_SEND;
 
     executor_->sendStreamNum_ = 4;
@@ -1093,8 +1079,7 @@ TEST_F(CollBatchSendRecvGroupExecutorTest, CalcPodRange_InterHccsDisable_Branch)
     // Set up serverAndsuperPodToRank_ so GetLocalServerRankSize works with real data
     serverAndsuperPodToRank_ = {{{0, 1, 2, 3}, {4, 5, 6, 7}, {8, 9, 10, 11}, {12, 13, 14, 15}}};
     topoMatcher_ = std::make_unique<TopoMatcher>(
-        commPlaneRanks_, isBridgeVector_, topoInfo_, algoInfo_,
-        externalEnable_, serverAndsuperPodToRank_);
+        commPlaneRanks_, isBridgeVector_, topoInfo_, algoInfo_, externalEnable_, serverAndsuperPodToRank_);
     executor_ = std::make_unique<CollBatchSendRecvGroupExecutor>(nullptr, topoMatcher_);
 
     SetTopoAttrUserRank(4);
@@ -1120,8 +1105,7 @@ TEST_F(CollBatchSendRecvGroupExecutorTest, CalcPodRange_SuperPod_Branch)
         {{0, 1, 2, 3, 4, 5, 6, 7}, {8, 9, 10, 11, 12, 13, 14, 15}}      // level 1: superPods
     };
     topoMatcher_ = std::make_unique<TopoMatcher>(
-        commPlaneRanks_, isBridgeVector_, topoInfo_, algoInfo_,
-        externalEnable_, serverAndsuperPodToRank_);
+        commPlaneRanks_, isBridgeVector_, topoInfo_, algoInfo_, externalEnable_, serverAndsuperPodToRank_);
     executor_ = std::make_unique<CollBatchSendRecvGroupExecutor>(nullptr, topoMatcher_);
 
     SetTopoAttrUserRank(4);
@@ -1155,6 +1139,62 @@ TEST_F(CollBatchSendRecvGroupExecutorTest, Orchestrate_SingleRankEarlyReturn)
     // Expect failure since sendRecvItemsPtr/itemNum not set up for GetPairWiseList
     // but we exercise lines 102-110 (Orchestrate initialization and CheckCommSize)
     EXPECT_NE(ret, HCCL_SUCCESS);
+}
+
+// ============================================================================
+// CollBatchSendRecvExecutor::Orchestrate aicpuUnfoldMode dispatch tests
+// ============================================================================
+
+TEST_F(CollBatchSendRecvGroupExecutorTest, Orchestrate_AicpuUnfoldModeTrue_Expect_RunLoopInAicpuUnfoldMode)
+{
+    // 使用基类 executor 覆盖 CollBatchSendRecvExecutor::Orchestrate 中
+    // param.aicpuUnfoldMode 为 true 时走 aicpu 展开模式分支
+    CollBatchSendRecvExecutor baseExecutor(dispatcher_.get(), topoMatcher_);
+
+    algRes_.opTransportResponse.resize(COMM_COMBINE_ORDER + 1);
+    algRes_.opTransportResponse[COMM_COMBINE_ORDER].resize(COMM_SIZE_TWO); // COMM_SIZE_TWO
+    baseExecutor.algResResp_ = &algRes_;
+
+    HcclSendRecvItem dummyItem;
+    OpParam param;
+    param.BatchSendRecvDataDes.sendRecvItemsPtr = &dummyItem;
+    param.BatchSendRecvDataDes.itemNum = 0;
+    param.aicpuUnfoldMode = true;
+
+    MOCKER_CPP(&CollBatchSendRecvExecutor::RunLoopInAicpuUnfoldMode)
+        .expects(exactly(1))
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&CollBatchSendRecvExecutor::RunLoopInHostUnfoldMode).expects(never());
+
+    HcclResult ret = baseExecutor.Orchestrate(param, algRes_);
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+}
+
+TEST_F(CollBatchSendRecvGroupExecutorTest, Orchestrate_AicpuUnfoldModeFalse_Expect_RunLoopInHostUnfoldMode)
+{
+    // 使用基类 executor 覆盖 CollBatchSendRecvExecutor::Orchestrate 中
+    // param.aicpuUnfoldMode 为 false 时走 host 展开模式分支
+    CollBatchSendRecvExecutor baseExecutor(dispatcher_.get(), topoMatcher_);
+
+    algRes_.opTransportResponse.resize(COMM_COMBINE_ORDER + 1);
+    algRes_.opTransportResponse[COMM_COMBINE_ORDER].resize(COMM_SIZE_TWO); // COMM_SIZE_TWO
+    baseExecutor.algResResp_ = &algRes_;
+
+    HcclSendRecvItem dummyItem;
+    OpParam param;
+    param.BatchSendRecvDataDes.sendRecvItemsPtr = &dummyItem;
+    param.BatchSendRecvDataDes.itemNum = 0;
+    param.aicpuUnfoldMode = false;
+
+    MOCKER_CPP(&CollBatchSendRecvExecutor::RunLoopInAicpuUnfoldMode).expects(never());
+    MOCKER_CPP(&CollBatchSendRecvExecutor::RunLoopInHostUnfoldMode)
+        .expects(exactly(1))
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+
+    HcclResult ret = baseExecutor.Orchestrate(param, algRes_);
+    EXPECT_EQ(ret, HCCL_SUCCESS);
 }
 
 // ============================================================================
@@ -1216,6 +1256,7 @@ TEST_F(CollBatchSendRecvGroupExecutorTest, ProcessNewRankSendSlice_SingleSlice)
 {
     SetStreamNum(2, 2);
     SetupAlgResResp(6, 4 * 1024 * 1024);
+    MOCKER(hrtMemAsyncCopy).stubs().will(returnValue(HCCL_SUCCESS));
     executor_->bufferSliceSize_ = 16384;
     LINK fakeLink = MakeFakeLink();
     SetupOpTransportForRank(1, fakeLink); // remoteRank=1 < userRank=4 -> send
@@ -1224,7 +1265,6 @@ TEST_F(CollBatchSendRecvGroupExecutorTest, ProcessNewRankSendSlice_SingleSlice)
     executor_->sendDataSlicesBySendStream_.resize(2);
     executor_->sendDataSlicesBySendStream_[0].emplace_back(buf, 16, 1);
 
-    // hrtMemAsyncCopy is already stubbed in runtime_stub.cc
     // Initialize per-stream state vectors
     executor_->sendCurPhase_.assign(2, 0);
     executor_->sendLoadedSize_.assign(2, 0);
@@ -1242,14 +1282,15 @@ TEST_F(CollBatchSendRecvGroupExecutorTest, ProcessNewRankSendSlice_TwoSlicesSame
 {
     SetStreamNum(2, 2);
     SetupAlgResResp(6, 4 * 1024 * 1024);
+    MOCKER(hrtMemAsyncCopy).stubs().will(returnValue(HCCL_SUCCESS));
     executor_->bufferSliceSize_ = 16384;
     LINK fakeLink = MakeFakeLink();
     SetupOpTransportForRank(1, fakeLink);
 
-    u8 buf[64];
+    std::vector<u8> buf(64);
     executor_->sendDataSlicesBySendStream_.resize(2);
-    executor_->sendDataSlicesBySendStream_[0].emplace_back(buf, 16, 1);
-    executor_->sendDataSlicesBySendStream_[0].emplace_back(buf + 16, 32, 1);
+    executor_->sendDataSlicesBySendStream_[0].emplace_back(buf.data(), 16, 1);
+    executor_->sendDataSlicesBySendStream_[0].emplace_back(buf.data() + 16, 32, 1);
 
     executor_->sendCurPhase_.assign(2, 0);
     executor_->sendLoadedSize_.assign(2, 0);
@@ -1271,6 +1312,7 @@ TEST_F(CollBatchSendRecvGroupExecutorTest, ProcessPreloadedSendSlice_Basic)
 {
     SetStreamNum(2, 2);
     SetupAlgResResp(6, 4 * 1024 * 1024);
+    MOCKER(hrtMemAsyncCopy).stubs().will(returnValue(HCCL_SUCCESS));
     executor_->bufferSliceSize_ = 16384;
     LINK fakeLink = MakeFakeLink();
     SetupOpTransportForRank(1, fakeLink);
@@ -1374,6 +1416,7 @@ TEST_F(CollBatchSendRecvGroupExecutorTest, ProcessRdmaSendSlice_Basic)
 {
     SetStreamNum(2, 2);
     SetupAlgResResp(6, 4 * 1024 * 1024);
+    MOCKER(hrtMemAsyncCopy).stubs().will(returnValue(HCCL_SUCCESS));
     executor_->rdmaDataBlockSize_ = 32768;
     LINK fakeLink = MakeFakeLink();
     SetupOpTransportForRank(5, fakeLink);

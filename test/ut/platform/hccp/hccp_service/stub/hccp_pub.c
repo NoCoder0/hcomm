@@ -12,19 +12,13 @@
 #include <sys/time.h>
 #include "hccp_pub.h"
 #include "rs.h"
-int HccpInit(unsigned int chipId, pid_t pid, int hdcType, unsigned int whiteListStatus)
-{
-	return 0;
-}
-int HccpDeinit(unsigned int chipId)
-{
-	return 0;
-}
+int HccpInit(unsigned int chipId, pid_t pid, int hdcType, unsigned int whiteListStatus) { return 0; }
+int HccpDeinit(unsigned int chipId) { return 0; }
 
-#define MS_PER_SECOND_F   1000.0
-#define MS_PER_SECOND_I   1000
+#define MS_PER_SECOND_F 1000.0
+#define MS_PER_SECOND_I 1000
 
-void RsGetCurTime(struct timeval *time)
+void RsGetCurTime(struct timeval* time)
 {
     int ret;
 
@@ -36,7 +30,7 @@ void RsGetCurTime(struct timeval *time)
     return;
 }
 
-void HccpTimeInterval(struct timeval *end_time, struct timeval *start_time, float *msec)
+void HccpTimeInterval(struct timeval* end_time, struct timeval* start_time, float* msec)
 {
     /* if low position is sufficient, then borrow one from the high position */
     if (end_time->tv_usec < start_time->tv_usec) {
@@ -44,22 +38,14 @@ void HccpTimeInterval(struct timeval *end_time, struct timeval *start_time, floa
         end_time->tv_usec += MS_PER_SECOND_I * MS_PER_SECOND_I;
     }
 
-    *msec = (end_time->tv_sec - start_time->tv_sec) * MS_PER_SECOND_F +
-            (end_time->tv_usec - start_time->tv_usec) / MS_PER_SECOND_F;
+    *msec = (end_time->tv_sec - start_time->tv_sec) * MS_PER_SECOND_F
+            + (end_time->tv_usec - start_time->tv_usec) / MS_PER_SECOND_F;
 
     return;
 }
 
-void RsApiDeinit(void)
-{
+void RsApiDeinit(void) {}
 
-}
+int RsApiInit(void) { return 0; }
 
-int RsApiInit(void)
-{
-    return 0;
-}
-
-enum ProductType RsGetProductType(int devId){
-    return PRODUCT_TYPE_950;
-}
+enum ProductType RsGetProductType(int devId) { return PRODUCT_TYPE_950; }

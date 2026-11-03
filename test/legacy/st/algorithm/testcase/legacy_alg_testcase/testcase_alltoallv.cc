@@ -1,17 +1,17 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mokc.h>
 #include <mockcpp/mockcpp.hpp>
- 
+
 #include <vector>
 #include <iostream>
 #include <string>
@@ -25,20 +25,15 @@ using namespace Hccl;
 
 class AllToAllVTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AllToAllVTest set up." << std::endl;
-    }
- 
-    static void TearDownTestCase()
-    {
-        std::cout << "AllToAllVTest tear down" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AllToAllVTest set up." << std::endl; }
+
+    static void TearDownTestCase() { std::cout << "AllToAllVTest tear down" << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -50,8 +45,10 @@ protected:
         ClearHcclEnv();
     }
 
-    void GenAllToAllVParams(u32 rankSize, u64 count, std::vector<u64>& sendCounts, std::vector<u64>& sdispls,
-                            std::vector<u64>& recvCounts, std::vector<u64>& rdispls) {
+    void GenAllToAllVParams(
+        u32 rankSize, u64 count, std::vector<u64>& sendCounts, std::vector<u64>& sdispls, std::vector<u64>& recvCounts,
+        std::vector<u64>& rdispls)
+    {
         u64 sendDisplacement = 0;
         u64 recvDisplacement = 0;
         for (u32 i = 0; i < rankSize; i++) {
@@ -64,7 +61,9 @@ protected:
         }
     }
 
-    void RunAlltoAllvMeshTest(int supNum, int sevNum, int rankNum, CheckerOpMode opMode, int dataCount, string algName, int maxTmpMemSize) {
+    void RunAlltoAllvMeshTest(
+        int supNum, int sevNum, int rankNum, CheckerOpMode opMode, int dataCount, string algName, int maxTmpMemSize)
+    {
         RankTable_For_LLT gen;
         TopoMeta topoMeta;
         gen.GenTopoMeta(topoMeta, supNum, sevNum, rankNum);
@@ -78,9 +77,10 @@ protected:
         checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_FP16;
         checkerOpParam.algName = algName;
 
-        GenAllToAllVParams(rankNum, dataCount, checkerOpParam.All2AllDataDes.sendCounts, 
-        checkerOpParam.All2AllDataDes.sdispls, checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
-        
+        GenAllToAllVParams(
+            rankNum, dataCount, checkerOpParam.All2AllDataDes.sendCounts, checkerOpParam.All2AllDataDes.sdispls,
+            checkerOpParam.All2AllDataDes.recvCounts, checkerOpParam.All2AllDataDes.rdispls);
+
         Checker checker;
         HcclResult ret;
         ret = checker.CheckA5Aicpu(checkerOpParam, topoMeta);
@@ -90,35 +90,35 @@ protected:
 
 TEST_F(AllToAllVTest, AlltoAllVMesh_one_four_test)
 {
-    RunAlltoAllvMeshTest(1, 1, 4, CheckerOpMode::OPBASE, 100, "InsAlltoAllvMesh", 1024*1024*200);
+    RunAlltoAllvMeshTest(1, 1, 4, CheckerOpMode::OPBASE, 100, "InsAlltoAllvMesh", 1024 * 1024 * 200);
 }
 
 TEST_F(AllToAllVTest, AlltoAllVMesh_one_four_test_01)
 {
-    RunAlltoAllvMeshTest(1, 1, 4, CheckerOpMode::OPBASE, 200, "InsAlltoAllvMesh", 1024*1024*200);
+    RunAlltoAllvMeshTest(1, 1, 4, CheckerOpMode::OPBASE, 200, "InsAlltoAllvMesh", 1024 * 1024 * 200);
 }
 
 TEST_F(AllToAllVTest, AlltoAllVMesh_one_three_test)
 {
-    RunAlltoAllvMeshTest(1, 1, 3, CheckerOpMode::OPBASE, 100, "InsAlltoAllvMesh", 1024*1024*200);
+    RunAlltoAllvMeshTest(1, 1, 3, CheckerOpMode::OPBASE, 100, "InsAlltoAllvMesh", 1024 * 1024 * 200);
 }
 
 TEST_F(AllToAllVTest, AlltoAllVMesh_one_fix_test)
 {
-    RunAlltoAllvMeshTest(1, 1, 6, CheckerOpMode::OPBASE, 100, "InsAlltoAllvMesh", 1024*1024*200);
+    RunAlltoAllvMeshTest(1, 1, 6, CheckerOpMode::OPBASE, 100, "InsAlltoAllvMesh", 1024 * 1024 * 200);
 }
 
 TEST_F(AllToAllVTest, AlltoAllVMesh_one_four_offload_test)
 {
-    RunAlltoAllvMeshTest(1, 1, 4, CheckerOpMode::OFFLOAD, 100, "InsAlltoAllvMesh", 1024*1024*200);
+    RunAlltoAllvMeshTest(1, 1, 4, CheckerOpMode::OFFLOAD, 100, "InsAlltoAllvMesh", 1024 * 1024 * 200);
 }
 
 TEST_F(AllToAllVTest, AlltoAllVMesh_one_four_4G_offload_test)
 {
-    RunAlltoAllvMeshTest(1, 1, 4, CheckerOpMode::OFFLOAD, 100, "InsAlltoAllvMesh", 1024*1024*6000);
+    RunAlltoAllvMeshTest(1, 1, 4, CheckerOpMode::OFFLOAD, 100, "InsAlltoAllvMesh", 1024 * 1024 * 6000);
 }
 
 TEST_F(AllToAllVTest, AlltoAllVMesh_one_four_4G_test)
 {
-    RunAlltoAllvMeshTest(1, 1, 4, CheckerOpMode::OPBASE, 100, "InsAlltoAllvMesh", 1024*1024*6000);
+    RunAlltoAllvMeshTest(1, 1, 4, CheckerOpMode::OPBASE, 100, "InsAlltoAllvMesh", 1024 * 1024 * 6000);
 }

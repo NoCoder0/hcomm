@@ -26,11 +26,11 @@
 #undef private
 #undef protected
 #include "../framework/stub_communicator_impl_trans_mgr.h"
-#include "dlprof_func.h"
+#include "dlprof_func_v2.h"
 #include "rdma_handle_manager.h"
 using namespace Hccl;
 
-static int memcpy_stub(void *dest, int dest_max, const void *src, int count)
+static int memcpy_stub(void* dest, int dest_max, const void* src, int count)
 {
     memcpy(dest, src, count);
     return 0;
@@ -38,103 +38,98 @@ static int memcpy_stub(void *dest, int dest_max, const void *src, int count)
 
 class StubUbRmaConnection : public DevUbConnection {
 public:
-    StubUbRmaConnection(const LinkData &linkData) : link(linkData), DevUbConnection((void *)0x100,
-        linkData.GetLocalAddr(), linkData.GetRemoteAddr(), OpMode::OPBASE)
+    StubUbRmaConnection(const LinkData& linkData)
+        : link(linkData),
+          DevUbConnection((void*)0x100, linkData.GetLocalAddr(), linkData.GetRemoteAddr(), OpMode::OPBASE)
     {
         status = RmaConnStatus::READY;
     }
 
-    unique_ptr<BaseTask> PrepareRead(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                     const SqeConfig &config) override
+    unique_ptr<BaseTask>
+    PrepareRead(const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, const SqeConfig& config) override
     {
         u32 jettyId = 100;
-        u64 funcId  = 100;
-        u32 piVal   = 100;
-        u64 dieId   = 100;
+        u64 funcId = 100;
+        u32 piVal = 100;
+        u64 dieId = 100;
         return make_unique<TaskUbDbSend>(jettyId, funcId, piVal, dieId);
     }
 
-    unique_ptr<BaseTask> PrepareReadReduce(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                           DataType datatype, ReduceOp reduceOp, const SqeConfig &config) override
+    unique_ptr<BaseTask> PrepareReadReduce(
+        const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, DataType datatype, ReduceOp reduceOp,
+        const SqeConfig& config) override
     {
         u8 dwqe[64]{0};
         u32 jettyId = 100;
-        u64 funcId  = 100;
+        u64 funcId = 100;
         u32 dwqeSize = 64;
-        u64 dieId   = 100;
+        u64 dieId = 100;
         return make_unique<TaskUbDirectSend>(funcId, dieId, jettyId, dwqeSize, dwqe);
     }
 
-    unique_ptr<BaseTask> PrepareWrite(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                      const SqeConfig &config) override
+    unique_ptr<BaseTask>
+    PrepareWrite(const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, const SqeConfig& config) override
     {
         u32 jettyId = 100;
-        u64 funcId  = 100;
-        u32 piVal   = 100;
-        u64 dieId   = 100;
-        return make_unique<TaskUbDbSend>(jettyId, funcId, piVal, dieId);
-    }
-    
-    unique_ptr<BaseTask> PrepareWriteWithNotify(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                                u64 data, const MemoryBuffer &remoteNotifyMemBuf,
-                                                const SqeConfig &config) override
-    {
-        u32 jettyId = 100;
-        u64 funcId  = 100;
-        u32 piVal   = 100;
-        u64 dieId   = 100;
+        u64 funcId = 100;
+        u32 piVal = 100;
+        u64 dieId = 100;
         return make_unique<TaskUbDbSend>(jettyId, funcId, piVal, dieId);
     }
 
-    unique_ptr<BaseTask> PrepareWriteReduce(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                            DataType datatype, ReduceOp reduceOp, const SqeConfig &config) override
+    unique_ptr<BaseTask> PrepareWriteWithNotify(
+        const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, u64 data,
+        const MemoryBuffer& remoteNotifyMemBuf, const SqeConfig& config) override
     {
         u32 jettyId = 100;
-        u64 funcId  = 100;
-        u32 piVal   = 100;
-        u64 dieId   = 100;
+        u64 funcId = 100;
+        u32 piVal = 100;
+        u64 dieId = 100;
         return make_unique<TaskUbDbSend>(jettyId, funcId, piVal, dieId);
     }
 
-    unique_ptr<BaseTask> PrepareInlineWriteReduce(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                                  DataType datatype, ReduceOp reduceOp, const SqeConfig &config)
+    unique_ptr<BaseTask> PrepareWriteReduce(
+        const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, DataType datatype, ReduceOp reduceOp,
+        const SqeConfig& config) override
     {
         u32 jettyId = 100;
-        u64 funcId  = 100;
-        u32 piVal   = 100;
-        u64 dieId   = 100;
+        u64 funcId = 100;
+        u32 piVal = 100;
+        u64 dieId = 100;
         return make_unique<TaskUbDbSend>(jettyId, funcId, piVal, dieId);
     }
 
-    unique_ptr<BaseTask> PrepareInlineWrite(const MemoryBuffer &remoteMemBuf, u64 data,
-                                            const SqeConfig &config) override
+    unique_ptr<BaseTask> PrepareInlineWriteReduce(
+        const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, DataType datatype, ReduceOp reduceOp,
+        const SqeConfig& config)
     {
-        u64 dbAddr  = 100;
-        u32 piVal   = 100;
+        u32 jettyId = 100;
+        u64 funcId = 100;
+        u32 piVal = 100;
+        u64 dieId = 100;
+        return make_unique<TaskUbDbSend>(jettyId, funcId, piVal, dieId);
+    }
+
+    unique_ptr<BaseTask>
+    PrepareInlineWrite(const MemoryBuffer& remoteMemBuf, u64 data, const SqeConfig& config) override
+    {
+        u64 dbAddr = 100;
+        u32 piVal = 100;
         return make_unique<TaskWriteValue>(dbAddr, piVal);
     }
 
-    unique_ptr<BaseTask> PrepareWriteReduceWithNotify(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                                      DataType datatype, ReduceOp reduceOp, u64 data,
-                                                      const MemoryBuffer &remoteNotifyMemBuf,
-                                                      const SqeConfig    &config) override
+    unique_ptr<BaseTask> PrepareWriteReduceWithNotify(
+        const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, DataType datatype, ReduceOp reduceOp,
+        u64 data, const MemoryBuffer& remoteNotifyMemBuf, const SqeConfig& config) override
     {
         return nullptr;
     }
 
-    string Describe() const override
-    {
-        return "StubUbRmaConnection";
-    }
+    string Describe() const override { return "StubUbRmaConnection"; }
 
-    void Connect() override
-    {
-    }
+    void Connect() override {}
 
-    RmaConnStatus GetStatus() override
-    {
-        return RmaConnStatus::READY;
-    }
+    RmaConnStatus GetStatus() override { return RmaConnStatus::READY; }
 
 private:
     LinkData link;
@@ -142,22 +137,25 @@ private:
 
 class StubSocket : public Socket {
 public:
-    StubSocket() : Socket(nullptr, IpAddress("1.0.0.0"), 0, IpAddress("1.0.0.0"), "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE)
+    StubSocket()
+        : Socket(
+              nullptr, IpAddress("1.0.0.0"), 0, IpAddress("1.0.0.0"), "tag", SocketRole::SERVER,
+              NicType::DEVICE_NIC_TYPE)
     {
         MOCKER(HrtRaSocketBlockSend).stubs().will(invoke(Send));
         MOCKER(HrtRaSocketBlockRecv).stubs().will(invoke(Recv));
     }
 
-    static bool Send(Socket *This, const u8 *sendBuf, u32 size)
+    static bool Send(Socket* This, const u8* sendBuf, u32 size)
     {
         buffer.resize(size);
         memcpy(buffer.data(), sendBuf, size);
         return true;
     }
 
-    static bool Recv(Socket *This, u8 *recvBuf, u32 size)
+    static bool Recv(Socket* This, u8* recvBuf, u32 size)
     {
-        if(buffer.size() < size) {
+        if (buffer.size() < size) {
             return false;
         }
         memcpy(recvBuf, buffer.data(), size);
@@ -170,21 +168,21 @@ private:
 
 std::vector<char> StubSocket::buffer;
 
-static RmaBufferSlice    locSlice;
+static RmaBufferSlice locSlice;
 static RmtRmaBufferSlice rmtSlice;
 static std::shared_ptr<DevBuffer> devBuf = DevBuffer::Create(0x100, 0x100);
 
 static HrtRaUbLocalMemRegOutParam fakeLocalOutParam;
 static HrtRaUbRemMemImportedOutParam fakeRemoteOutParam;
-static u64               fakeNotifyHandleAddr = 100;
-static u64               fakeTargetSegVa      = 150;
-static u32               fakeNotifyId         = 1;
-static u64               fakeOffset           = 200;
-static u64               fakeAddress          = 300;
-static u32               fakePid              = 100;
-static u32               fakeTokenId          = 100;
-static u8                fakeKey[HRT_UB_MEM_KEY_MAX_LEN] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-static u32               fakeKeySize          = 10;
+static u64 fakeNotifyHandleAddr = 100;
+static u64 fakeTargetSegVa = 150;
+static u32 fakeNotifyId = 1;
+static u64 fakeOffset = 200;
+static u64 fakeAddress = 300;
+static u32 fakePid = 100;
+static u32 fakeTokenId = 100;
+static u8 fakeKey[HRT_UB_MEM_KEY_MAX_LEN] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+static u32 fakeKeySize = 10;
 
 static void Mock()
 {
@@ -195,18 +193,21 @@ static void Mock()
     MOCKER(HrtGetStreamId).stubs().with(mockcpp::any()).will(returnValue(0));
     MOCKER(HrtStreamDestroy).stubs();
     MOCKER(HrtGetDeviceType).stubs().will(returnValue((DevType)DevType::DEV_TYPE_910A2));
-    fakeLocalOutParam.handle       = fakeNotifyHandleAddr;
+    fakeLocalOutParam.handle = fakeNotifyHandleAddr;
     memcpy_s(fakeLocalOutParam.key, HRT_UB_MEM_KEY_MAX_LEN, fakeKey, HRT_UB_MEM_KEY_MAX_LEN);
-    fakeLocalOutParam.tokenId      = fakeTokenId;
-    fakeLocalOutParam.targetSegVa  = fakeTargetSegVa;
-    fakeLocalOutParam.keySize      = fakeKeySize;
+    fakeLocalOutParam.tokenId = fakeTokenId;
+    fakeLocalOutParam.targetSegVa = fakeTargetSegVa;
+    fakeLocalOutParam.keySize = fakeKeySize;
     MOCKER(HrtRaUbLocalMemReg).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(fakeLocalOutParam));
-    fakeRemoteOutParam.handle      = fakeNotifyHandleAddr;
+    fakeRemoteOutParam.handle = fakeNotifyHandleAddr;
     fakeRemoteOutParam.targetSegVa = fakeTargetSegVa;
-    MOCKER(HrtRaUbRemoteMemImport).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(fakeRemoteOutParam));
+    MOCKER(HrtRaUbRemoteMemImport)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(returnValue(fakeRemoteOutParam));
     MOCKER(HrtDeviceGetBareTgid).stubs().will(returnValue(fakePid));
     MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtNotifyCreate).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
+    MOCKER(HrtNotifyCreate).stubs().will(returnValue((void*)(fakeNotifyHandleAddr)));
     MOCKER(HrtGetNotifyID).stubs().will(returnValue(fakeNotifyId));
     MOCKER(HrtNotifyGetAddr).stubs().with(mockcpp::any()).will(returnValue(fakeAddress));
     MOCKER(HrtNotifyGetOffset).stubs().will(returnValue(fakeOffset));
@@ -218,20 +219,11 @@ static void Mock()
 
 class UbMemTransportTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "UbMemTransportTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "UbMemTransportTest tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "UbMemTransportTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "UbMemTransportTest tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in UbMemTransportTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in UbMemTransportTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -245,14 +237,14 @@ TEST(UbMemTransportTest, UbMemTransport_describe)
     GlobalMockObject::verify();
     Mock();
 
-    BaseMemTransport::CommonLocRes    locRes;
-    BaseMemTransport::Attribution     attr;
+    BaseMemTransport::CommonLocRes locRes;
+    BaseMemTransport::Attribution attr;
     BaseMemTransport::LocCntNotifyRes locCntRes;
-    LinkData                          link(BasePortType(PortDeploymentType::DEV_NET), 0, 1, 0, 1);
-    void                             *rdmaHandle = (void *)0x100;
-    IpAddress                         ipAddress("1.0.0.0");
-    Socket                            fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
-    bool                              isRecvFirst = false;                
+    LinkData link(BasePortType(PortDeploymentType::DEV_NET), 0, 1, 0, 1);
+    void* rdmaHandle = (void*)0x100;
+    IpAddress ipAddress("1.0.0.0");
+    Socket fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    bool isRecvFirst = false;
     UbMemTransport transport(locRes, attr, link, fakeSocket, rdmaHandle, locCntRes, isRecvFirst);
     transport.Describe();
 }
@@ -262,14 +254,14 @@ TEST(UbMemTransportTest, UbMemTransport_get_status)
     GlobalMockObject::verify();
     Mock();
 
-    BaseMemTransport::CommonLocRes    locRes;
-    BaseMemTransport::Attribution     attr;
+    BaseMemTransport::CommonLocRes locRes;
+    BaseMemTransport::Attribution attr;
     BaseMemTransport::LocCntNotifyRes locCntRes;
-    LinkData                          link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
-    void                             *rdmaHandle = (void *)0x100;
-    IpAddress                         ipAddress("1.0.0.0");
-    Socket                            fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
-    bool                              isRecvFirst = false;   
+    LinkData link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
+    void* rdmaHandle = (void*)0x100;
+    IpAddress ipAddress("1.0.0.0");
+    Socket fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    bool isRecvFirst = false;
     UbMemTransport transport(locRes, attr, link, fakeSocket, rdmaHandle, locCntRes, isRecvFirst);
 
     MOCKER_CPP(&UbMemTransport::SendExchangeData).stubs().will(ignoreReturnValue());
@@ -279,18 +271,16 @@ TEST(UbMemTransportTest, UbMemTransport_get_status)
     MOCKER_CPP(&UbMemTransport::RecvFinish).stubs().will(ignoreReturnValue());
 
     SocketStatus socketStatusInit = SocketStatus::INIT;
-    SocketStatus socketStatusOK   = SocketStatus::OK;
+    SocketStatus socketStatusOK = SocketStatus::OK;
 
     StubSocket stubSocket;
     transport.socket = &stubSocket;
 
     int fakeFdStatus = SOCKET_CONNECTED;
-    FdHandle fakeFdHandle = (void *)100;
-    RaSocketFdHandleParam fakeParam(fakeFdHandle, fakeFdStatus);
+    FdHandle fakeFdHandle = (void*)100;
+    RaSocketFdHandleParam fakeParam(fakeFdHandle, fakeFdStatus, IpAddress());
 
-    MOCKER(RaGetOneSocket).stubs()
-        .with(mockcpp::any(), mockcpp::any())
-        .will(returnValue(fakeParam));
+    MOCKER(RaGetOneSocket).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(fakeParam));
 
     // 需要发送 finish
     TransportStatus transStatus = transport.GetStatus();
@@ -332,10 +322,8 @@ TEST(UbMemTransportTest, UbMemTransport_get_status)
     MOCKER_CPP(&UbMemTransport::RecvDataProcess).stubs().will(returnValue(false));
     MOCKER_CPP(&UbMemTransport::SendFinish).stubs().will(ignoreReturnValue());
     MOCKER_CPP(&UbMemTransport::RecvFinish).stubs().will(ignoreReturnValue());
-    
-    MOCKER(RaGetOneSocket).stubs()
-        .with(mockcpp::any(), mockcpp::any())
-        .will(returnValue(fakeParam));
+
+    MOCKER(RaGetOneSocket).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(fakeParam));
 
     // 不需要发送finish
     transStatus = transport.GetStatus();
@@ -360,30 +348,30 @@ TEST(UbMemTransportTest, UbMemTransport_send_recv_exchange_data)
     GlobalMockObject::verify();
     Mock();
 
-    BaseMemTransport::CommonLocRes    locRes;
-    BaseMemTransport::Attribution     attr;
+    BaseMemTransport::CommonLocRes locRes;
+    BaseMemTransport::Attribution attr;
     BaseMemTransport::LocCntNotifyRes locCntRes;
-    LinkData                          link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
-    void                             *rdmaHandle = (void *)0x100;
-    IpAddress                         ipAddress("1.0.0.0");
-    Socket                            fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    LinkData link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
+    void* rdmaHandle = (void*)0x100;
+    IpAddress ipAddress("1.0.0.0");
+    Socket fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
 
-    StubUbRmaConnection  stubRmaConnection(link);
-    RmaConnection       *rmaConnection    = &stubRmaConnection;
+    StubUbRmaConnection stubRmaConnection(link);
+    RmaConnection* rmaConnection = &stubRmaConnection;
     locRes.connVec.push_back(rmaConnection);
-    UbLocalNotify        ubLocalNotify(rdmaHandle);
-    BaseLocalNotify     *validLocalNotify = &ubLocalNotify;
+    UbLocalNotify ubLocalNotify(rdmaHandle);
+    BaseLocalNotify* validLocalNotify = &ubLocalNotify;
     locRes.notifyVec.push_back(validLocalNotify);
-    LocalUbRmaBuffer     ubLocalRmaBuffer(devBuf, rdmaHandle);
-    LocalRmaBuffer      *validLocalRmaBuffer = &ubLocalRmaBuffer;
+    LocalUbRmaBuffer ubLocalRmaBuffer(devBuf, rdmaHandle);
+    LocalRmaBuffer* validLocalRmaBuffer = &ubLocalRmaBuffer;
     locRes.bufferVec.push_back(validLocalRmaBuffer);
 
-    RtsCntNotify   rtsCntNotify;
+    RtsCntNotify rtsCntNotify;
     LocalCntNotify localCntNotify(rdmaHandle, &rtsCntNotify);
     locCntRes.vec.push_back(&localCntNotify);
     locCntRes.desc.push_back('0');
     locCntRes.desc.push_back(0);
-    bool isRecvFirst = false;   
+    bool isRecvFirst = false;
     UbMemTransport transport(locRes, attr, link, fakeSocket, rdmaHandle, locCntRes, isRecvFirst);
     EXPECT_THROW(transport.GetUniqueId(), InternalException);
     MOCKER(memcpy_s).stubs().with().will(invoke(memcpy_stub));
@@ -395,12 +383,10 @@ TEST(UbMemTransportTest, UbMemTransport_send_recv_exchange_data)
     transport.socket = &stubSocket;
 
     int fakeFdStatus = SOCKET_CONNECTED;
-    FdHandle fakeFdHandle = (void *)100;
-    RaSocketFdHandleParam fakeParam(fakeFdHandle, fakeFdStatus);
+    FdHandle fakeFdHandle = (void*)100;
+    RaSocketFdHandleParam fakeParam(fakeFdHandle, fakeFdStatus, IpAddress());
 
-    MOCKER(RaGetOneSocket).stubs()
-        .with(mockcpp::any(), mockcpp::any())
-        .will(returnValue(fakeParam));
+    MOCKER(RaGetOneSocket).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(fakeParam));
 
     int max_times = 10;
     while (!transport.IsSocketReady()) {
@@ -433,18 +419,18 @@ TEST(UbMemTransportTest, UbMemTransport_send_recv_finish)
     GlobalMockObject::verify();
     Mock();
 
-    BaseMemTransport::CommonLocRes    locRes;
-    BaseMemTransport::Attribution     attr;
+    BaseMemTransport::CommonLocRes locRes;
+    BaseMemTransport::Attribution attr;
     BaseMemTransport::LocCntNotifyRes locCntRes;
-    LinkData                          link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
-    void                             *rdmaHandle = (void *)0x100;
-    IpAddress                         ipAddress("1.0.0.0");
-    Socket                            fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
-    bool                              isRecvFirst = false;  
+    LinkData link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
+    void* rdmaHandle = (void*)0x100;
+    IpAddress ipAddress("1.0.0.0");
+    Socket fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    bool isRecvFirst = false;
     UbMemTransport transport(locRes, attr, link, fakeSocket, rdmaHandle, locCntRes, isRecvFirst);
 
     MOCKER(memcpy_s).stubs().will(returnValue(-1));
-    EXPECT_THROW(transport.SendFinish(), SocketException);
+    EXPECT_EQ(transport.SendFinish(), HCCL_E_TCP_CONNECT);
 
     GlobalMockObject::verify();
     MOCKER(memcpy_s).stubs().with().will(invoke(memcpy_stub));
@@ -454,12 +440,10 @@ TEST(UbMemTransportTest, UbMemTransport_send_recv_finish)
     transport.socket = &stubSocket;
 
     int fakeFdStatus = SOCKET_CONNECTED;
-    FdHandle fakeFdHandle = (void *)100;
-    RaSocketFdHandleParam fakeParam(fakeFdHandle, fakeFdStatus);
+    FdHandle fakeFdHandle = (void*)100;
+    RaSocketFdHandleParam fakeParam(fakeFdHandle, fakeFdStatus, IpAddress());
 
-    MOCKER(RaGetOneSocket).stubs()
-        .with(mockcpp::any(), mockcpp::any())
-        .will(returnValue(fakeParam));
+    MOCKER(RaGetOneSocket).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(fakeParam));
 
     int max_times = 10;
     while (!transport.IsSocketReady()) {
@@ -487,22 +471,23 @@ TEST(UbMemTransportTest, UbMemTransport_read_write_read_reduce_write_reduce)
     GlobalMockObject::verify();
     Mock();
 
-    BaseMemTransport::CommonLocRes    locRes;
-    BaseMemTransport::Attribution     attr;
+    BaseMemTransport::CommonLocRes locRes;
+    BaseMemTransport::Attribution attr;
     BaseMemTransport::LocCntNotifyRes locCntRes;
-    LinkData                          link(BasePortType(PortDeploymentType::DEV_NET), 0, 1, 0, 1);
-    IpAddress                         ipAddress("1.0.0.0");
-    Socket                            fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    LinkData link(BasePortType(PortDeploymentType::DEV_NET), 0, 1, 0, 1);
+    IpAddress ipAddress("1.0.0.0");
+    Socket fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
 
     StubUbRmaConnection stubRmaConnection(link);
-    RmaConnection      *rmaConnection = &stubRmaConnection;
+    RmaConnection* rmaConnection = &stubRmaConnection;
     locRes.connVec.push_back(rmaConnection);
 
     Stream stream;
-    
-    void *rdmaHandle = (void *)0x100;
-    LocalUbRmaBuffer  localRmaBuffer(devBuf, rdmaHandle);
-    RemoteUbRmaBuffer remoteRmaBuffer(rdmaHandle);;
+
+    void* rdmaHandle = (void*)0x100;
+    LocalUbRmaBuffer localRmaBuffer(devBuf, rdmaHandle);
+    RemoteUbRmaBuffer remoteRmaBuffer(rdmaHandle);
+    ;
     locSlice.buf = &localRmaBuffer;
     rmtSlice.buf = &remoteRmaBuffer;
 
@@ -524,20 +509,20 @@ TEST(UbMemTransportTest, UbMemTransport_post_wait)
     GlobalMockObject::verify();
     Mock();
 
-    BaseMemTransport::CommonLocRes    locRes;
-    BaseMemTransport::Attribution     attr;
+    BaseMemTransport::CommonLocRes locRes;
+    BaseMemTransport::Attribution attr;
     BaseMemTransport::LocCntNotifyRes locCntRes;
-    LinkData                          link(BasePortType(PortDeploymentType::DEV_NET), 0, 1, 0, 1);
-    IpAddress                         ipAddress("1.0.0.0");
-    Socket                            fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    LinkData link(BasePortType(PortDeploymentType::DEV_NET), 0, 1, 0, 1);
+    IpAddress ipAddress("1.0.0.0");
+    Socket fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
 
     StubUbRmaConnection stubRmaConnection(link);
-    RmaConnection      *rmaConnection = &stubRmaConnection;
+    RmaConnection* rmaConnection = &stubRmaConnection;
     locRes.connVec.push_back(rmaConnection);
 
-    void *rdmaHandle = (void *)0x100;
+    void* rdmaHandle = (void*)0x100;
     UbLocalNotify ubLocalNotify(rdmaHandle);
-    BaseLocalNotify *validLocalNotify = &ubLocalNotify;
+    BaseLocalNotify* validLocalNotify = &ubLocalNotify;
     locRes.notifyVec.push_back(validLocalNotify);
 
     Stream stream;
@@ -560,24 +545,25 @@ TEST(UbMemTransportTest, UbMemTransport_write_with_notify_write_reduce_with_noti
     GlobalMockObject::verify();
     Mock();
 
-    BaseMemTransport::CommonLocRes    locRes;
-    BaseMemTransport::Attribution     attr;
+    BaseMemTransport::CommonLocRes locRes;
+    BaseMemTransport::Attribution attr;
     BaseMemTransport::LocCntNotifyRes locCntRes;
-    LinkData                          link(BasePortType(PortDeploymentType::DEV_NET), 0, 1, 0, 1);
-    IpAddress                         ipAddress("1.0.0.0");
-    Socket                            fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    LinkData link(BasePortType(PortDeploymentType::DEV_NET), 0, 1, 0, 1);
+    IpAddress ipAddress("1.0.0.0");
+    Socket fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
 
     StubUbRmaConnection stubRmaConnection(link);
-    RmaConnection      *rmaConnection = &stubRmaConnection;
+    RmaConnection* rmaConnection = &stubRmaConnection;
     locRes.connVec.push_back(rmaConnection);
 
     Stream stream;
 
-    void             *rdmaHandle = (void *)0x100;
-    LocalUbRmaBuffer  localRmaBuffer(devBuf, rdmaHandle);
-    RemoteUbRmaBuffer remoteRmaBuffer(rdmaHandle);;
-    locSlice.buf  = &localRmaBuffer;
-    rmtSlice.buf  = &remoteRmaBuffer;
+    void* rdmaHandle = (void*)0x100;
+    LocalUbRmaBuffer localRmaBuffer(devBuf, rdmaHandle);
+    RemoteUbRmaBuffer remoteRmaBuffer(rdmaHandle);
+    ;
+    locSlice.buf = &localRmaBuffer;
+    rmtSlice.buf = &remoteRmaBuffer;
     locSlice.size = devBuf->GetSize();
     rmtSlice.size = devBuf->GetSize();
 
@@ -597,7 +583,7 @@ TEST(UbMemTransportTest, UbMemTransport_write_with_notify_write_reduce_with_noti
 
     constexpr uint32_t NOTIFY_INDEX_FIN = 1;
     WithNotifyIn withNotify(TransportNotifyType::INVALID, NOTIFY_INDEX_FIN);
-    
+
     // normal notify
     withNotify.notifyType_ = TransportNotifyType::NORMAL;
     transport.WriteWithNotify(locSlice, rmtSlice, withNotify, stream);
@@ -630,47 +616,47 @@ TEST(UbMemTransportTest, UbMemTransport_write_with_notify_write_reduce_with_noti
 
 TEST(UbMemTransportTest, UbMemTransport_wait)
 {
-    BaseMemTransport::CommonLocRes    locRes;
-    BaseMemTransport::Attribution     attr;
+    BaseMemTransport::CommonLocRes locRes;
+    BaseMemTransport::Attribution attr;
     BaseMemTransport::LocCntNotifyRes locCntRes;
-    LinkData                          link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
-    void                             *rdmaHandle = (void *)0x100;
-    IpAddress                         ipAddress("1.0.0.0");
-    Socket                            fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    LinkData link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
+    void* rdmaHandle = (void*)0x100;
+    IpAddress ipAddress("1.0.0.0");
+    Socket fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
 
-    StubUbRmaConnection  stubRmaConnection(link);
-    RmaConnection       *rmaConnection    = &stubRmaConnection;
+    StubUbRmaConnection stubRmaConnection(link);
+    RmaConnection* rmaConnection = &stubRmaConnection;
     locRes.connVec.push_back(rmaConnection);
-    UbLocalNotify        ubLocalNotify(rdmaHandle);
-    BaseLocalNotify     *validLocalNotify = &ubLocalNotify;
+    UbLocalNotify ubLocalNotify(rdmaHandle);
+    BaseLocalNotify* validLocalNotify = &ubLocalNotify;
     locRes.notifyVec.push_back(validLocalNotify);
-    LocalUbRmaBuffer     ubLocalRmaBuffer(devBuf, rdmaHandle);
-    LocalRmaBuffer      *validLocalRmaBuffer = &ubLocalRmaBuffer;
+    LocalUbRmaBuffer ubLocalRmaBuffer(devBuf, rdmaHandle);
+    LocalRmaBuffer* validLocalRmaBuffer = &ubLocalRmaBuffer;
     locRes.bufferVec.push_back(validLocalRmaBuffer);
 
-    RtsCntNotify   rtsCntNotify;
+    RtsCntNotify rtsCntNotify;
     LocalCntNotify localCntNotify(rdmaHandle, &rtsCntNotify);
     locCntRes.vec.push_back(&localCntNotify);
     locCntRes.desc.push_back('0');
     locCntRes.desc.push_back(0);
-    bool isRecvFirst = false;  
+    bool isRecvFirst = false;
     UbMemTransport transport(locRes, attr, link, fakeSocket, rdmaHandle, locCntRes, isRecvFirst);
     transport.IsResReady();
 }
 
 TEST(UbMemTransportTest, UbMemTransport_ConnVecUnpackProc)
 {
-    BaseMemTransport::CommonLocRes    locRes;
-    BaseMemTransport::Attribution     attr;
+    BaseMemTransport::CommonLocRes locRes;
+    BaseMemTransport::Attribution attr;
     BaseMemTransport::LocCntNotifyRes locCntRes;
-    LinkData                          link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
-    void                             *rdmaHandle = (void *)0x100;
-    IpAddress                         ipAddress("1.0.0.0");
-    Socket                            fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
-    StubUbRmaConnection  stubRmaConnection(link);
-    RmaConnection       *rmaConnection    = &stubRmaConnection;
+    LinkData link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
+    void* rdmaHandle = (void*)0x100;
+    IpAddress ipAddress("1.0.0.0");
+    Socket fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    StubUbRmaConnection stubRmaConnection(link);
+    RmaConnection* rmaConnection = &stubRmaConnection;
     locRes.connVec.push_back(rmaConnection);
-    bool isRecvFirst = false;  
+    bool isRecvFirst = false;
     UbMemTransport transport(locRes, attr, link, fakeSocket, rdmaHandle, locCntRes, isRecvFirst);
     u32 connNum = 1;
     transport.connNum = connNum;

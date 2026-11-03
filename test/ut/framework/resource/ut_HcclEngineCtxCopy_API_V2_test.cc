@@ -15,6 +15,7 @@
 #include "hccl_comm_pub.h"
 #include "independent_op.h"
 #include "llt_hccl_stub_rank_graph.h"
+#include "adapter_hal_pub.h" // GetRunSideIsDevice（UT mock 使用，不依赖传递包含）
 #include <string>
 #include "mockcpp/mockcpp.hpp"
 
@@ -27,7 +28,7 @@ public:
     void SetUp() override
     {
         BaseInit::SetUp();
-        const char *fakeA5SocName = "Ascend950PR_958b";
+        const char* fakeA5SocName = "Ascend950PR_958b";
         MOCKER(aclrtGetSocName).stubs().will(returnValue(fakeA5SocName));
     }
     void TearDown() override
@@ -35,15 +36,15 @@ public:
         BaseInit::TearDown();
         GlobalMockObject::verify();
     }
-protected: 
-    void SetUpCommAndGraph(std::shared_ptr < hccl::hcclComm > &hcclCommPtr, 
-        std::shared_ptr < Hccl::RankGraph > &rankGraphV2, void* &comm, HcclResult &ret) 
+
+protected:
+    void SetUpCommAndGraph(
+        std::shared_ptr<hccl::hcclComm>& hcclCommPtr, std::shared_ptr<Hccl::RankGraph>& rankGraphV2, void*& comm,
+        HcclResult& ret)
     {
         MOCKER(hrtGetDeviceType).stubs().with(outBound(DevType::DEV_TYPE_950)).will(returnValue(HCCL_SUCCESS));
 
-        bool isDeviceSide {
-            false
-        };
+        bool isDeviceSide{false};
         MOCKER(GetRunSideIsDevice).stubs().with(outBound(isDeviceSide)).will(returnValue(HCCL_SUCCESS));
         MOCKER(IsSupportHCCLV2).stubs().will(returnValue(true));
         setenv("HCCL_INDEPENDENT_OP", "1", 1);
@@ -59,7 +60,7 @@ protected:
         hcclCommPtr = std::make_shared<hccl::hcclComm>(1, 1, commName);
         HcclCommConfig config;
         UtInitHcclCommConfig(config);
-        config.hcclOpExpansionMode = 1; // 非CCU模式，避免拉起CCU平台层
+        config.hcclOpExpansionMode = 1;           // 非CCU模式，避免拉起CCU平台层
         config.hcclRdmaTrafficClass = 0xFFFFFFFF; // 不配置RDMA Traffic Class
         config.hcclRdmaServiceLevel = 0xFFFFFFFF; // 不配置RDMA Service Level
         unsetenv("HCCL_DFS_CONFIG");
@@ -72,16 +73,16 @@ protected:
 TEST_F(HcclEngineCtxCopyV2Test, Ut_HcclEngineCtxCopyV2_When_Overflow_Expect_Return_EPARA)
 {
     unsetenv("HCCL_DFS_CONFIG");
-    std::shared_ptr<hccl::hcclComm>hcclCommPtr;
-    std::shared_ptr<Hccl::RankGraph>rankGraphV2;
+    std::shared_ptr<hccl::hcclComm> hcclCommPtr;
+    std::shared_ptr<Hccl::RankGraph> rankGraphV2;
     void* comm;
     HcclResult ret;
     SetUpCommAndGraph(hcclCommPtr, rankGraphV2, comm, ret);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    const char *ctxTag = "host_tag";
-    void * ctx;
+    const char* ctxTag = "host_tag";
+    void* ctx;
     uint64_t size = 256;
-    
+
     HcclResult createResult = HcclEngineCtxCreate(comm, ctxTag, COMM_ENGINE_CPU, size, &ctx);
     EXPECT_EQ(createResult, HCCL_SUCCESS);
 

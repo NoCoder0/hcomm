@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef NET_VO_TBL_COMM_INFO_H
 #define NET_VO_TBL_COMM_INFO_H
 
@@ -19,10 +18,10 @@ extern "C" {
 #endif
 #pragma pack(4)
 
-#define NET_COMMDESC_MAXLEN             128
-#define NET_COMMMD5SUM_MAXLEN           16
-#define NET_COMMINFO_MAXRANKINFOLEN     4
-#define NET_TBL_MEM_LEN_MAX             20 // BKF_GET_MEM_STD_STR操作的允许的最大长度
+#define NET_COMMDESC_MAXLEN 128
+#define NET_COMMMD5SUM_MAXLEN 16
+#define NET_COMMINFO_MAXRANKINFOLEN 4
+#define NET_TBL_MEM_LEN_MAX 20 // BKF_GET_MEM_STD_STR操作的允许的最大长度
 
 typedef struct TagNetTblRankInfo {
     uint32_t deviceIp;
@@ -139,10 +138,8 @@ char *NetTblCommInfoGetStr(NetTblCommInfo *kv, uint8_t *buf, int32_t bufLen);
  */
 char *NetTblCommInfoValGetStr(NetTblCommInfoVal *val, uint8_t *buf, int32_t bufLen);
 
-
 #ifdef __cplusplus
 }
 #endif
 
 #endif
-

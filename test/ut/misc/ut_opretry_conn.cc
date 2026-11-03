@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include <fstream>
 #include <iostream>
@@ -39,10 +39,7 @@ public:
     virtual void SetUp()
     {
         s32 portNum = -1;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
         std::cout << "A Test SetUP" << std::endl;
     }
 
@@ -54,12 +51,8 @@ public:
 };
 
 struct UTGenWhitelist {
-    UTGenWhitelist(const std::string filePath, const std::string whitelist) : f(filePath), wl(whitelist)
-    {}
-    ~UTGenWhitelist()
-    {
-        DelFile();
-    }
+    UTGenWhitelist(const std::string filePath, const std::string whitelist) : f(filePath), wl(whitelist) {}
+    ~UTGenWhitelist() { DelFile(); }
 
     bool GenJson()
     {
@@ -74,10 +67,7 @@ struct UTGenWhitelist {
         return true;
     }
 
-    void DelFile()
-    {
-        unlink(f.c_str());
-    }
+    void DelFile() { unlink(f.c_str()); }
 
     std::string f;
     std::string wl;
@@ -195,9 +185,7 @@ TEST_F(OpRetryConnTest, ut_opretry_connection_static_init)
     HcclIpAddress hostIp(std::string("127.0.0.1"));
     HcclIpAddress localIp(std::string("127.0.0.1"));
     std::string groupName = "Test_group";
-    MOCKER(hrtRaGetInterfaceVersion)
-    .expects(atMost(1))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtRaGetInterfaceVersion).expects(atMost(1)).will(returnValue(HCCL_SUCCESS));
 
     OpRetryServerInfo serverInfo = {hostIp, 50001, 0};
     OpRetryAgentInfo agentInfo = {rankId, 0, localIp, localIp};
@@ -246,7 +234,10 @@ TEST_F(OpRetryConnTest, ut_opretry_connect_error)
 
     // mocker内部接口失败
     MOCKER(GetExternalInputHcclLinkTimeOut).stubs().will(returnValue(1));
-    MOCKER_CPP(&OpRetryConnection::RecvAckInfo).stubs().will(returnValue(HCCL_E_AGAIN)).then(returnValue(HCCL_E_INTERNAL));
+    MOCKER_CPP(&OpRetryConnection::RecvAckInfo)
+        .stubs()
+        .will(returnValue(HCCL_E_AGAIN))
+        .then(returnValue(HCCL_E_INTERNAL));
     EXPECT_NE(OpRetryConnectionPub::Init(group, rankSize, serverInfo, agentInfo, rootRank), HCCL_SUCCESS);
     OpRetryConnectionPub::DeInit(group);
     GlobalMockObject::verify();

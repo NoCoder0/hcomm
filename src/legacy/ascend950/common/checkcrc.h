@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef HCCL_INC_CRC_CHECK_H
 #define HCCL_INC_CRC_CHECK_H
@@ -30,16 +30,16 @@ public:
     HcclResult AddCrc(u32 crcValue);
 
     // 获取num个CRC值
-    HcclResult GetCrc(u32 num, u32 *crcAddr);
+    HcclResult GetCrc(u32 num, u32* crcAddr);
 
     // 获取CRC的数目
-    HcclResult GetCrcNum(u32 *num);
+    HcclResult GetCrcNum(u32* num);
 
     // 根据输入的字符串指针和长度计算CRC值
-    HcclResult Calc32Crc(const char *data, u64 length, u32 *crcValue);
+    HcclResult Calc32Crc(const char* data, u64 length, u32* crcValue);
 
     // 根据输入的String内容，计算CRC值
-    HcclResult CalcStringCrc(const char *str, u32 *crcValue);
+    HcclResult CalcStringCrc(const char* str, u32* crcValue);
 
     // 将本地的CRC值和NUM组成字符串，格式为CRC_NUM CRC1 CRC2 CRC3...
     std::string GetString(void);
@@ -55,6 +55,6 @@ private:
     u32 crcCalcTable[CRC_TABLE_LENTH];
     std::vector<u32> crcTable_;
 };
-}  // namespace hccl
+} // namespace Hccl
 
-#endif  // HCCL_SRC_CRC_CHECK_H
+#endif // HCCL_SRC_CRC_CHECK_H

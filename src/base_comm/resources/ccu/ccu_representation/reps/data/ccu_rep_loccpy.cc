@@ -1,57 +1,121 @@
-/*
- * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
- * Description: ccu representation implementation file
- * Author: sunzhepeng
- * Create: 2024-06-17
+/**
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
  */
 
 #include "ccu_rep_v1.h"
-
 #include "string_util.h"
+#include "ccu_ins_generator_v1.h"
+#include "ccu_ins_generator_base.h"
+#include "ccu_kernel.h"
+
+#include "ccu_api_exception.h"
+#include "ccu_log.h"
 
 namespace hcomm {
 namespace CcuRep {
 
-CcuRepLocCpy::CcuRepLocCpy(LocalAddr dst, LocalAddr src, Variable len, CompletedEvent sem, uint16_t mask)
-    : dst(dst), src(src), len(len), sem(sem), mask(mask)
-{
-    type       = CcuRepType::LOCAL_CPY;
-    instrCount = 1;
-}
-
-CcuRepLocCpy::CcuRepLocCpy(LocalAddr dst, LocalAddr src, Variable len, uint16_t dataType, uint16_t opType, CompletedEvent sem,
-                           uint16_t mask)
-    : dst(dst), src(src), len(len), sem(sem), mask(mask), dataType(dataType), opType(opType), reduceFlag(1)
-{
-    type       = CcuRepType::LOCAL_REDUCE;
-    instrCount = 1;
-}
-
-bool CcuRepLocCpy::Translate(CcuInstr *&instr, uint16_t &instrId, const TransDep &dep)
-{
-    this->instrId = instrId;
-    translated    = true;
-
-    if (reduceFlag == 0) {
-        TransLocMemToLocMemInstr(instr++, dst.addr.Id(), dst.token.Id(), src.addr.Id(), src.token.Id(), len.Id(),
-                                 dep.reserveChannalId[0], sem.Id(), mask, 0, 0, 1, 1);
-    } else {
-        // 这个翻译需要验证
-        TransLocMemToRmtMemInstr(instr++, dst.addr.Id(), dst.token.Id(), src.addr.Id(), src.token.Id(), len.Id(),
-                                 dep.reserveChannalId[0], dataType, opType, sem.Id(), mask, 0, 0, 1, 1, reduceFlag);
+    CcuRepLocCpy::CcuRepLocCpy(
+        CcuInsGeneratorBase* insGenPtr, LocalAddr dst, LocalAddr src, Variable len, CompletedEvent sem, uint16_t mask)
+        : insGenPtr(insGenPtr),
+          dst(dst),
+          src(src),
+          len(len),
+          sem(sem),
+          mask(mask)
+    {
+        type = CcuRepType::LOCAL_CPY;
+        instrCount = insGenPtr->GetInstrCount(type);
+        useCcuBuffer = false;
     }
 
-    instrId += instrCount;
+    CcuRepLocCpy::CcuRepLocCpy(
+        CcuInsGeneratorBase* insGenPtr, LocalAddr dst, LocalAddr src, Variable len, uint16_t dataType, uint16_t opType,
+        CompletedEvent sem, uint16_t mask)
+        : insGenPtr(insGenPtr),
+          dst(dst),
+          src(src),
+          len(len),
+          sem(sem),
+          mask(mask),
+          dataType(dataType),
+          opType(opType)
+    {
+        type = CcuRepType::LOCAL_REDUCE;
+        instrCount = insGenPtr->GetInstrCount(type);
+        reduceFlag = 1;
+        // A5和A6都走环回
+        useCcuBuffer = false;
+    }
 
-    return translated;
-}
+    CcuRepLocCpy::CcuRepLocCpy(
+        CcuInsGeneratorBase* insGenPtr, LocalAddr dst, LocalAddr src, Variable len, const std::vector<CcuBuf>& bufs,
+        CompletedEvent sem, uint16_t mask)
+        : insGenPtr(insGenPtr),
+          dst(dst),
+          src(src),
+          len(len),
+          bufs(bufs),
+          sem(sem),
+          mask(mask)
+    {
+        type = CcuRepType::LOCAL_CPY;
+        instrCount = insGenPtr->GetInstrCount(type);
+        useCcuBuffer = true;
+    }
 
-std::string CcuRepLocCpy::Describe()
-{
-    return Hccl::StringFormat(
-        "Read LocalAddr[%u] to LocalAddr[%u], length[%u], set sem[%u] with mask[%04x], dataType[%u], opType[%u]",
-        src.addr.Id(), dst.addr.Id(), len.Id(), sem.Id(), mask, dataType, opType);
-}
+    CcuResult CcuRepLocCpy::ValidateInsGeneratorForLocCpy() const
+    {
+        CcuInsGeneratorV1* tmpPtrV1 = dynamic_cast<CcuInsGeneratorV1*>(insGenPtr);
+        if (tmpPtrV1 && useCcuBuffer) {
+            // 使用了A6场景的ms中转搬运
+            HCCL_ERROR("[%s] Cannot translate CcuRepLocCpy for A5 when useCcuBuffer is true!", __func__);
+            return CCU_E_INTERNAL;
+        }
+        return CCU_SUCCESS;
+    }
+
+    CcuResult CcuRepLocCpy::GetFirstBufId(uint16_t& result)
+    {
+        if (bufs.size() == 0) {
+            HCCL_ERROR("The length of CcuBuffer is 0!");
+            return CCU_E_PARA;
+        }
+        result = bufs[0].Id();
+        return CCU_SUCCESS;
+    }
+
+    uint16_t CcuRepLocCpy::GetUsedBufNum() { return bufs.size(); }
+
+    bool CcuRepLocCpy::Translate(CcuKernel* ccuKernel, CcuInstr*& instr, uint16_t& instrId, const TransDep& dep)
+    {
+        CCU_CHK_RET_THROW(
+            Hccl::CcuApiException, "[CcuRepLocCpy::Translate] ValidateInsGeneratorForLocCpy failed",
+            ValidateInsGeneratorForLocCpy());
+
+        this->instrId = instrId;
+        translated = true;
+
+        CHK_PRT_THROW(
+            insGenPtr->CcuRepLocCpyTranslate(ccuKernel, instr, this, dep) != HcclResult::HCCL_SUCCESS,
+            HCCL_ERROR("[CcuRepLocCpy][Translate] failed to translate for instrId[%u]", instrId), Hccl::CcuApiException,
+            "CcuRepLocCpy translate failed");
+        instrId += instrCount;
+
+        return translated;
+    }
+
+    std::string CcuRepLocCpy::Describe()
+    {
+        return Hccl::StringFormat(
+            "Read LocalAddr[%u] to LocalAddr[%u], length[%u], set sem[%u] with mask[%04x], dataType[%u], opType[%u]",
+            src.addr.Id(), dst.addr.Id(), len.Id(), sem.Id(), mask, dataType, opType);
+    }
 
 }; // namespace CcuRep
 }; // namespace hcomm

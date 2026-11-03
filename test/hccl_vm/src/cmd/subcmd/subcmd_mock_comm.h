@@ -21,13 +21,13 @@ class MockCommCommand : public CommandBase {
 public:
     static std::string StaticName() { return "mock-comm"; }
     void Setup(CLI::App& app) override;
-    
+
 private:
     void Execute();
-    
+
     std::string configFileName;
     TopoMeta topoMeta;
 };
-}
+} // namespace HcclSim
 
 #endif

@@ -1,20 +1,19 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "coll_reduce_scatter_mesh_dma_elimination.h"
 
 namespace hccl {
 
 CollReduceScatterMeshDmaEliminationExecutor::CollReduceScatterMeshDmaEliminationExecutor(
-    const HcclDispatcher dispatcher,
-    std::unique_ptr<TopoMatcher> &topoMatcher)
+    const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher>& topoMatcher)
     : CollReduceScatterExecutor(dispatcher, topoMatcher)
 {
     DMAReduceFlag_ = true;
@@ -31,13 +30,12 @@ HcclResult CollReduceScatterMeshDmaEliminationExecutor::CalcStreamNum(u32& strea
 {
     u32 totalStreamNum = topoAttr_.deviceNumPerAggregation;
     streamNum = totalStreamNum - 1U;
-    HCCL_INFO("[CollReduceScatterMeshDmaEliminationExecutor][CalcStreamNum] tag[%s] streamNum[%u]",
-        tag_.c_str(), streamNum);
+    HCCL_INFO(
+        "[CollReduceScatterMeshDmaEliminationExecutor][CalcStreamNum] tag[%s] streamNum[%u]", tag_.c_str(), streamNum);
     return HCCL_SUCCESS;
 }
 
-HcclResult CollReduceScatterMeshDmaEliminationExecutor::CalcCommInfo(
-    std::vector<LevelNSubCommTransport>& opTransport)
+HcclResult CollReduceScatterMeshDmaEliminationExecutor::CalcCommInfo(std::vector<LevelNSubCommTransport>& opTransport)
 {
     TransportMemType inputType = TransportMemType::RESERVED;
     TransportMemType outputType = TransportMemType::RESERVED;
@@ -46,8 +44,8 @@ HcclResult CollReduceScatterMeshDmaEliminationExecutor::CalcCommInfo(
     return HCCL_SUCCESS;
 }
 
-HcclResult CollReduceScatterMeshDmaEliminationExecutor::CalcTransportMemType(TransportMemType &inputType,
-    TransportMemType &outputType)
+HcclResult CollReduceScatterMeshDmaEliminationExecutor::CalcTransportMemType(
+    TransportMemType& inputType, TransportMemType& outputType) const
 {
     if (workflowMode_ == HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE) {
         inputType = TransportMemType::CCL_INPUT;
@@ -56,14 +54,15 @@ HcclResult CollReduceScatterMeshDmaEliminationExecutor::CalcTransportMemType(Tra
         inputType = TransportMemType::PARAM_INPUT;
         outputType = TransportMemType::PARAM_OUTPUT;
     }
-    HCCL_INFO("[CollReduceScatterMeshDmaEliminationExecutor][CalcTransportMemType] tag[%s] inputType[%d],"
-        " outputType[%d]", tag_.c_str(), inputType, outputType);
+    HCCL_INFO(
+        "[CollReduceScatterMeshDmaEliminationExecutor][CalcTransportMemType] tag[%s] inputType[%d],"
+        " outputType[%d]",
+        tag_.c_str(), inputType, outputType);
     return HCCL_SUCCESS;
 }
 
-HcclResult CollReduceScatterMeshDmaEliminationExecutor::CalcLevel0CommInfo(TransportMemType inputType,
-    TransportMemType outputType,
-    std::vector<LevelNSubCommTransport>& opTransport)
+HcclResult CollReduceScatterMeshDmaEliminationExecutor::CalcLevel0CommInfo(
+    TransportMemType inputType, TransportMemType outputType, std::vector<LevelNSubCommTransport>& opTransport)
 {
     CommParaInfo commParaLevel0(COMM_LEVEL0, CommType::COMM_TAG_MESH);
     commParaLevel0.meshSinglePlane = true;
@@ -78,23 +77,23 @@ u64 CollReduceScatterMeshDmaEliminationExecutor::CalcLoopMaxCount(const u32 unit
     return maxCountPerLoop;
 }
 
-bool CollReduceScatterMeshDmaEliminationExecutor::IsHugeData(const u64 curSize, OpParam *param)
+bool CollReduceScatterMeshDmaEliminationExecutor::IsHugeData(const u64 curSize, [[maybe_unused]] OpParam* param)
 {
     // 只有server内通信，多QP哈希散列下不刷新子图
     bool hugeData = curSize > SDMA_SEND_MAX_SIZE;
     return hugeData;
 }
 
-bool CollReduceScatterMeshDmaEliminationExecutor::IsSmallData(const u64 totalSize, const u64 curSize)
+bool CollReduceScatterMeshDmaEliminationExecutor::IsSmallData(const u64 totalSize, [[maybe_unused]] const u64 curSize)
 {
     bool smallData = totalSize <= HCCL_SMALL_COUNT_32_KB;
     return smallData;
 }
 
-HcclResult CollReduceScatterMeshDmaEliminationExecutor::KernelRun(const OpParam &param, ExecMem &execMem)
+HcclResult CollReduceScatterMeshDmaEliminationExecutor::KernelRun(const OpParam& param, ExecMem& execMem)
 {
-    HCCL_CONFIG_INFO(HCCL_ALG,
-        "[CollReduceScatterMeshDmaEliminationExecutor][KernelRun] userRank[%u] starts.", topoAttr_.userRank);
+    HCCL_CONFIG_INFO(
+        HCCL_ALG, "[CollReduceScatterMeshDmaEliminationExecutor][KernelRun] userRank[%u] starts.", topoAttr_.userRank);
     CHK_RET(CheckCommSize(COMM_LEVEL0, COMM_INDEX_0 + 1));
     SubCommInfo level0CommInfo = GetSubCommInfo(COMM_LEVEL0, COMM_INDEX_0);
 
@@ -107,33 +106,42 @@ HcclResult CollReduceScatterMeshDmaEliminationExecutor::KernelRun(const OpParam 
     // 根据数据量算每个环上数据的偏移和大小，把做完hd的slice均分成RankSize份
     std::vector<Slice> dataSegsSlice;
 
-    HCCL_DEBUG("inputMem.size()=%llu, level0CommInfo.localRankSize=%u, commIndex=%u",
-        execMem.inputMem.size(), level0CommInfo.localRankSize, commIndex);
+    HCCL_DEBUG(
+        "inputMem.size()=%llu, level0CommInfo.localRankSize=%u, commIndex=%u", execMem.inputMem.size(),
+        level0CommInfo.localRankSize, commIndex);
 
-    HcomCollOpInfo *opInfoPtr = nullptr;
-    HcomCollOpInfo opInfo = {"", execMem.inputPtr, execMem.outputPtr, param.DataDes.count, param.DataDes.dataType,
-        param.root, param.reduceType};
+    HcomCollOpInfo* opInfoPtr = nullptr;
+    HcomCollOpInfo opInfo = {"",
+                             execMem.inputPtr,
+                             execMem.outputPtr,
+                             param.DataDes.count,
+                             param.DataDes.dataType,
+                             param.root,
+                             param.reduceType,
+                             0};
     if (DMAReduceFlag_) {
         opInfoPtr = &opInfo;
     }
 
-    if (topoMatcher_->GetExternalInputHcclDeterministic() == DETERMINISTIC_DISABLE &&
-        (param.DataDes.dataType != HCCL_DATA_TYPE_INT64) &&
-        (topoAttr_.deviceType == DevType::DEV_TYPE_910B && param.reduceType != HCCL_REDUCE_PROD)) {
-        CHK_RET(MultiStreamReduceScatterMeshAtomic(param.tag, execMem.inputMem, execMem.scratchMem,
-            execMem.count, param.DataDes.dataType, param.reduceType, dataSegsSlice, const_cast<Stream&>(param.stream),
-            COMM_LEVEL0, 0, opInfoPtr));
+    if (topoMatcher_->GetExternalInputHcclDeterministic() == DETERMINISTIC_DISABLE
+        && (param.DataDes.dataType != HCCL_DATA_TYPE_INT64)
+        && (topoAttr_.deviceType == DevType::DEV_TYPE_910B && param.reduceType != HCCL_REDUCE_PROD)) {
+        CHK_RET(MultiStreamReduceScatterMeshAtomic(
+            param.tag, execMem.inputMem, execMem.scratchMem, execMem.count, param.DataDes.dataType, param.reduceType,
+            dataSegsSlice, const_cast<Stream&>(param.stream), COMM_LEVEL0, 0, opInfoPtr));
     } else {
-        std::vector<std::vector<Slice> > multiStreamSlice; // 每个stream使用的数据基于用户buffer的偏移
+        std::vector<std::vector<Slice>> multiStreamSlice; // 每个stream使用的数据基于用户buffer的偏移
         // mesh算法stream数量为rank数减1
         CHK_RET(AlgTemplateBase::PrepareSliceMeshStreams(dataSegsSlice, sliceNum - 1, multiStreamSlice));
-        CHK_RET(MultiStreamReduceScatterMesh(param.tag, execMem.inputMem, execMem.scratchMem,
-            execMem.count, param.DataDes.dataType, param.reduceType, multiStreamSlice, param.stream, COMM_LEVEL0, 0));
+        CHK_RET(MultiStreamReduceScatterMesh(
+            param.tag, execMem.inputMem, execMem.scratchMem, execMem.count, param.DataDes.dataType, param.reduceType,
+            multiStreamSlice, param.stream, COMM_LEVEL0, 0));
     }
 
     return HCCL_SUCCESS;
 }
 
-REGISTER_EXEC("ReduceScatterMeshDmaEliminationExecutor",
-    ReduceScatterMeshDmaElimination, CollReduceScatterMeshDmaEliminationExecutor);
-}
+REGISTER_EXEC(
+    "ReduceScatterMeshDmaEliminationExecutor", ReduceScatterMeshDmaElimination,
+    CollReduceScatterMeshDmaEliminationExecutor);
+} // namespace hccl

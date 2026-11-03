@@ -7,12 +7,12 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
+
 if(TARGET hccl_v2)
     target_sources(hccl_v2 PRIVATE
             mem_transport_lite.cc
             ub_transport_lite_impl.cc
             p2p_transport_lite_impl.cc
-            roce_transport_lite_impl.cc
     )
 endif()
 
@@ -21,6 +21,5 @@ if(TARGET ccl_kernel)
             mem_transport_lite.cc
             ub_transport_lite_impl.cc
             p2p_transport_lite_impl.cc
-            roce_transport_lite_impl.cc
     )
 endif()

@@ -9,12 +9,11 @@
  */
 
 #include "ccu_transport_group.h"
-#include "exception_util.h"
 #include "ccu_device_manager.h"
 
 namespace Hccl {
 
-bool CcuTransportGroup::CheckTransports(const vector<CcuTransport*> &transports)
+bool CcuTransportGroup::CheckTransports(const vector<CcuTransport*>& transports)
 {
     if (transports.size() == 0) {
         HCCL_ERROR("[CcuTransportGroup::%s] Transports size is 0, please check.", __func__);
@@ -36,8 +35,9 @@ HcclResult CcuTransportGroup::CheckTransportCntCke()
 {
     HcclResult allocResHandleReturnValue = HcclResult::HCCL_SUCCESS;
 
-    TRY_CATCH_RETURN(allocResHandleReturnValue = CcuDeviceManager::AllocCke(HrtGetDevice(), 
-                    cntCkesGroupDieId, cntCkeNumTransportGroupUse, ckeInfoTransportGroupUse));
+    TRY_CATCH_RETURN(
+        allocResHandleReturnValue = CcuDeviceManager::AllocCke(
+            HrtGetDevice(), cntCkesGroupDieId, cntCkeNumTransportGroupUse, ckeInfoTransportGroupUse));
 
     if (allocResHandleReturnValue != HCCL_SUCCESS) {
         HCCL_ERROR("[CcuTransportGroup::%s] Failed to allocate cntCke resource, please check.", __func__);
@@ -52,13 +52,13 @@ HcclResult CcuTransportGroup::CheckTransportCntCke()
         }
     }
 
-    for (auto &transport : transportsGrp) {
+    for (auto& transport : transportsGrp) {
         transport->SetCntCke(cntCkesGroup);
     }
     return HcclResult::HCCL_SUCCESS;
 }
 
-CcuTransportGroup::CcuTransportGroup(const vector<CcuTransport*> &transports, u32 cntCkeNum):isDestroyed(false)
+CcuTransportGroup::CcuTransportGroup(const vector<CcuTransport*>& transports, u32 cntCkeNum) : isDestroyed(false)
 {
     HCCL_INFO("[CcuTransportGroup] cntCkeNum[%u].", cntCkeNum);
     if (!CheckTransports(transports)) {
@@ -96,9 +96,13 @@ CcuTransportGroup::~CcuTransportGroup()
     // 调用ReleaseResHandle接口，用来释放cntResHandleTransportGroupUse
     auto ret = CcuDeviceManager::ReleaseCke(HrtGetDevice(), cntCkesGroupDieId, ckeInfoTransportGroupUse);
     if (ret != HcclResult::HCCL_SUCCESS) {
-        HCCL_ERROR("[CcuTransportGroup::%s] Release ckesRes failed, ret[%d], ckeInfo size is [%u]", __func__, ret, ckeInfoTransportGroupUse.size());
+        HCCL_ERROR(
+            "[CcuTransportGroup::%s] Release ckesRes failed, ret[%d], ckeInfo size is [%u]", __func__, ret,
+            ckeInfoTransportGroupUse.size());
         for (auto& ckeInfo : ckeInfoTransportGroupUse) {
-            HCCL_ERROR("[CcuTransportGroup::%s] Release ckesRes failed, ckeInfo.startId[%u], ckeInfo.num[%u]", __func__, ckeInfo.startId, ckeInfo.num);
+            HCCL_ERROR(
+                "[CcuTransportGroup::%s] Release ckesRes failed, ckeInfo.startId[%u], ckeInfo.num[%u]", __func__,
+                ckeInfo.startId, ckeInfo.num);
         }
     } else {
         HCCL_INFO("[CcuTransportGroup::%s] CcuTransportGroup Destructor success.", __func__);
@@ -111,12 +115,13 @@ void CcuTransportGroup::Destroy()
     transportsGrp.clear();
 }
 
- HcclResult CcuTransportGroup::GetCntCkeId(u32 index, u32 &cntCkeId) const
+HcclResult CcuTransportGroup::GetCntCkeId(u32 index, u32& cntCkeId) const
 {
     HCCL_INFO("[GetCntCkeId] index[%u].", index);
     if (index >= cntCkesGroup.size()) {
-        HCCL_ERROR("[GetCntCkeId] err[%s], index[%u] is bigger than cntCkesGroup size[%u], please check.",
-                __func__, index, cntCkesGroup.size());
+        HCCL_ERROR(
+            "[GetCntCkeId] err[%s], index[%u] is bigger than cntCkesGroup size[%u], please check.", __func__, index,
+            cntCkesGroup.size());
         return HcclResult::HCCL_E_PARA;
     }
 
@@ -124,9 +129,6 @@ void CcuTransportGroup::Destroy()
     return HcclResult::HCCL_SUCCESS;
 }
 
-const vector<CcuTransport*> &CcuTransportGroup::GetTransports() const
-{
-    return transportsGrp;
-}
+const vector<CcuTransport*>& CcuTransportGroup::GetTransports() const { return transportsGrp; }
 
 } // namespace Hccl

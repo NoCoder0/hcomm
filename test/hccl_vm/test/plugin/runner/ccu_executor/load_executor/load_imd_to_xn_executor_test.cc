@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: unit test for LoadImdToXnExecutor
  * Author: xx
  */
@@ -27,12 +30,11 @@ protected:
 };
 
 // Test: LoadImdToXnExecutor struct size check
-TEST_F(LoadImdToXnExecutorTest, StructSize) {
-    EXPECT_GT(sizeof(LoadImdToXnExecutor), 0);
-}
+TEST_F(LoadImdToXnExecutorTest, StructSize) { EXPECT_GT(sizeof(LoadImdToXnExecutor), 0); }
 
 // Test: LoadImdToXnExecutor default constructor
-TEST_F(LoadImdToXnExecutorTest, DefaultConstructor) {
+TEST_F(LoadImdToXnExecutorTest, DefaultConstructor)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
     LoadImdToXnExecutor executor(0, 0, 0, instr, nullptr);
@@ -40,42 +42,46 @@ TEST_F(LoadImdToXnExecutorTest, DefaultConstructor) {
 }
 
 // Test: LoadImdToXnExecutor parameterized constructor
-TEST_F(LoadImdToXnExecutorTest, ParameterizedConstructor) {
+TEST_F(LoadImdToXnExecutorTest, ParameterizedConstructor)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     LoadImdToXnExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Describe());
 }
 
 // Test: LoadImdToXnExecutor Parser with zero values
-TEST_F(LoadImdToXnExecutorTest, ParserZeroValues) {
+TEST_F(LoadImdToXnExecutorTest, ParserZeroValues)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     LoadImdToXnExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Parser());
     EXPECT_NO_THROW(executor.Describe());
 }
 
 // Test: LoadImdToXnExecutor Parser with max values
-TEST_F(LoadImdToXnExecutorTest, ParserMaxValues) {
+TEST_F(LoadImdToXnExecutorTest, ParserMaxValues)
+{
     CcuInstr instr;
     memset(&instr, 0xFF, sizeof(instr));
-    
+
     LoadImdToXnExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Parser());
     EXPECT_NO_THROW(executor.Describe());
 }
 
 // Test: LoadImdToXnExecutor Parser with specific parameters
-TEST_F(LoadImdToXnExecutorTest, ParserSpecificParameters) {
+TEST_F(LoadImdToXnExecutorTest, ParserSpecificParameters)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     instr.v1.loadImdToXn.xnId = 100;
     instr.v1.loadImdToXn.immediate = 0x12345678ABCDEF00ULL;
-    
+
     LoadImdToXnExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Parser());
     std::string desc = executor.Describe();
@@ -83,12 +89,13 @@ TEST_F(LoadImdToXnExecutorTest, ParserSpecificParameters) {
 }
 
 // Test: LoadImdToXnExecutor with different immediate values
-TEST_F(LoadImdToXnExecutorTest, DifferentImmediateValues) {
+TEST_F(LoadImdToXnExecutorTest, DifferentImmediateValues)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     uint64_t immediates[] = {0, 1, 0x7FFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, 0xDEADBEEFCAFEBABEULL};
-    
+
     for (auto imm : immediates) {
         instr.v1.loadImdToXn.xnId = 10;
         instr.v1.loadImdToXn.immediate = imm;
@@ -99,12 +106,13 @@ TEST_F(LoadImdToXnExecutorTest, DifferentImmediateValues) {
 }
 
 // Test: LoadImdToXnExecutor with different Xn IDs
-TEST_F(LoadImdToXnExecutorTest, DifferentXnIds) {
+TEST_F(LoadImdToXnExecutorTest, DifferentXnIds)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     uint16_t xnIds[] = {0, 1, SimCcuV1::CCU_RESOURCE_XN_NUM / 2, SimCcuV1::CCU_RESOURCE_XN_NUM - 1, 0xFFFF};
-    
+
     for (auto xnId : xnIds) {
         instr.v1.loadImdToXn.xnId = xnId;
         LoadImdToXnExecutor executor(0, 0, 0, instr, nullptr);
@@ -114,12 +122,13 @@ TEST_F(LoadImdToXnExecutorTest, DifferentXnIds) {
 }
 
 // Test: LoadImdToXnExecutor Describe contains expected keywords
-TEST_F(LoadImdToXnExecutorTest, DescribeContent) {
+TEST_F(LoadImdToXnExecutorTest, DescribeContent)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
     instr.v1.loadImdToXn.xnId = 10;
     instr.v1.loadImdToXn.immediate = 12345;
-    
+
     LoadImdToXnExecutor executor(0, 0, 0, instr, nullptr);
     executor.Parser();
     std::string desc = executor.Describe();
@@ -129,10 +138,11 @@ TEST_F(LoadImdToXnExecutorTest, DescribeContent) {
 }
 
 // Test: LoadImdToXnExecutor inheritance check
-TEST_F(LoadImdToXnExecutorTest, InheritanceCheck) {
+TEST_F(LoadImdToXnExecutorTest, InheritanceCheck)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     LoadImdToXnExecutor executor(0, 0, 0, instr, nullptr);
     CcuExecutorBase* base = &executor;
     EXPECT_NE(base, nullptr);

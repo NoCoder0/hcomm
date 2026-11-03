@@ -2,13 +2,27 @@
 
 ## 产品支持情况
 
-- Ascend 950PR/Ascend 950DT：支持
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：不支持
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：不支持
+<!-- npu="950" id1 -->
+- Ascend 950PR&950DT系列产品：支持
+<!-- end id1 -->
+<!-- npu="A3" id2 -->
+- Atlas A3系列产品：支持
+<!-- end id2 -->
+<!-- npu="910b" id3 -->
+- Atlas A2系列产品：支持
+<!-- end id3 -->
+<!-- npu="910" id4 -->
+- Atlas训练系列产品：不支持
+<!-- end id4 -->
+<!-- npu="310p" id5 -->
+- Atlas推理系列产品：不支持
+<!-- end id5 -->
 
 ## 功能说明
 
 该接口为创建通信通道的资源管理接口，基于已创建的网络端点（Endpoint），根据给定的通道描述信息批量创建通信通道，为点对点通信或集合通信提供数据传输的基础设施。
+
+该接口执行后仅完成通道对象的创建，**不会立即建立链路连接**。调用者需在后续通过[HcommChannelGetStatus](HcommChannelGetStatus.md)接口推动建链状态机，直至通道状态变为就绪后方可进行通信操作。
 
 ## 函数原型
 
@@ -35,29 +49,36 @@ HcommResult：接口成功返回0，其他失败。
 - channelDescs数组长度必须与channelNum参数一致。
 - HcommChannelDesc中的remoteEndpoint必须正确填充远端端点信息。
 - 当HcommChannelDesc中exchangeAllMems为false时，必须配置memHandles和memHandleNum。
+- RoCE场景下，roceAttr.sqDepth/scqDepth须成对配置（仅配置其一返回参数错误），双边显式配置时要求scqDepth不小于sqDepth；字段取值范围与默认值参见[HcommChannelDesc](../../datatype_definition/HcommChannelDesc.md)。
+- HcommChannelDesc中的port字段（监听端口或目标端口）不支持与通信域创建时使用的端口范围重复，否则会与通信域内部占用的监听端口冲突，导致通道建链失败。
+- AIV直驱URMA场景下，本端与远端参与交换的内存数量必须一致，否则Channel创建失败。
 - 当前CommEngine配置为CCU时，仅支持交换1份memHandle。
-- 当前CommEngine配置为CCU时，不支持外部配置NotifyNum，默认为8个CCU Notify。
+- 当前CommEngine配置为CCU时，不支持外部配置NotifyNum，默认为4个CCU Notify。
 - 当前各CommEngine支持的通信协议与芯片型号有关，具体如下：
 
-  针对Ascend 950PR/Ascend 950DT，各通信引擎支持的通信协议如下：
+  <!-- npu="950" id6 -->
+  针对Ascend 950PR&950DT系列产品，各通信引擎支持的通信协议如下：
 
   - COMM_ENGINE_CPU
     - COMM_PROTOCOL_ROCE
-    - COMM_PROTOCOL_UBC_CTP
-    - COMM_PROTOCOL_UBC_TP
+    - COMM_PROTOCOL_UB_CTP
   - COMM_ENGINE_AICPU_TS
     - COMM_PROTOCOL_UBOE
-    - COMM_PROTOCOL_UBC_CTP
-    - COMM_PROTOCOL_UBC_TP
+    - COMM_PROTOCOL_UB_CTP
     - COMM_PROTOCOL_ROCE
   - COMM_ENGINE_AIV
-    - COMM_PROTOCOL_UBC_CTP
-    - COMM_PROTOCOL_UBC_TP
+    - COMM_PROTOCOL_UB_CTP
     - COMM_PROTOCOL_UB_MEM
     - COMM_PROTOCOL_ROCE
-  - COMM_ENGINE_CCU
-    - COMM_PROTOCOL_UBC_CTP
-    - COMM_PROTOCOL_UBC_TP
+
+  - AICPU_TS或AIV引擎使用Host RoCE网卡的场景下，需要确保：
+    - 网卡驱动支持NDA（NPU Direct Asynchronous，指NPU直接操作网卡，不需要Host CPU代理实现，减少固定开销），例如基于Hi1825芯片的SP561系列网卡。
+    - 总线体系及引擎支持，例如AIV引擎支持PCIe总线体系下的NDA，但AICPU_TS引擎不支持PCIe总线体系下的NDA。
+  <!-- end id6 -->
+
+  **注意事项：**
+    - Atlas 350加速卡不支持COMM_ENGINE_CPU通信引擎以及相应的通信协议
+    - Atlas 350加速卡不支持COMM_ENGINE_AICPU_TS通信引擎的COMM_PROTOCOL_ROCE通信协议
 
 ## 调用示例
 

@@ -1,19 +1,18 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "coll_send_executor.h"
 
 namespace hccl {
 
-CollSendExecutor::CollSendExecutor(const HcclDispatcher dispatcher,
-                                   std::unique_ptr<TopoMatcher> &topoMatcher)
+CollSendExecutor::CollSendExecutor(const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher>& topoMatcher)
     : CollNativeExecutorBase(dispatcher, topoMatcher)
 {
     DMAReduceFlag_ = workflowMode_ == HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE;
@@ -34,12 +33,15 @@ HcclResult CollSendExecutor::Orchestrate(OpParam& param, AlgResourceResponse& al
         ret = RunLoop(param, algRes);
     }
 
-    CHK_PRT_RET(ret != HCCL_SUCCESS,
-        HCCL_ERROR("[CollSendExecutor][Orchestrate]errNo[0x%016llx]send executor kernel run failed",
-            HCCL_ERROR_CODE(ret)), ret);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[CollSendExecutor][Orchestrate]errNo[0x%016llx]send executor kernel run failed", HCCL_ERROR_CODE(ret)),
+        ret);
 
-    HCCL_INFO("tag[%s] Send Executor orchestrate success, take time [%lld]us.",
-        param.tag.c_str(), DURATION_US(TIME_NOW() - startut));
+    HCCL_INFO(
+        "tag[%s] Send Executor orchestrate success, take time [%lld]us.", param.tag.c_str(),
+        DURATION_US(TIME_NOW() - startut));
     return HCCL_SUCCESS;
 }
 
@@ -51,7 +53,7 @@ HcclResult CollSendExecutor::GetAdjInfo(AlgResourceResponse& algRes, AdjInfo& ad
     if (level1CommInfo.links.size() == 0) {
         HCCL_ERROR("[CollSendExecutor]links size is 0");
     }
-    u32 localRank= level1CommInfo.localRank;
+    u32 localRank = level1CommInfo.localRank;
     u32 localRankSize = level1CommInfo.localRankSize;
 
     if (localRankSize == 1) {
@@ -60,17 +62,17 @@ HcclResult CollSendExecutor::GetAdjInfo(AlgResourceResponse& algRes, AdjInfo& ad
     u32 ringNextRank = (localRank + 1) % localRankSize;
 
     adjInfo.dstRankNum = 1;
-    NslbDpAdjInfo adjInfoStep = {0};
+    NslbDpAdjInfo adjInfoStep = {};
     adjInfoStep.dstLocalRankId = ringNextRank;
     adjInfoStep.phaseId = 1;
     adjInfoStep.rev = 0;
     adjInfo.nsAdjInfo.push_back(adjInfoStep);
 
-    HCCL_INFO("[nslbdp]GetAdjInfo localRank[%u], phaseId[%u].",localRank, ringNextRank);
+    HCCL_INFO("[NSLB-DP]GetAdjInfo localRank[%u], phaseId[%u].", localRank, ringNextRank);
     return HCCL_SUCCESS;
 }
 
-HcclResult CollSendExecutor::CalcTransportMemType(TransportMemType &inputType, TransportMemType &outputType)
+HcclResult CollSendExecutor::CalcTransportMemType(TransportMemType& inputType, TransportMemType& outputType)
 {
     if (workflowMode_ == HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE) {
         inputType = TransportMemType::CCL_INPUT;
@@ -79,13 +81,15 @@ HcclResult CollSendExecutor::CalcTransportMemType(TransportMemType &inputType, T
         inputType = TransportMemType::PARAM_INPUT;
         outputType = TransportMemType::PARAM_OUTPUT;
     }
-    HCCL_INFO("[CollSendExecutor][CalcTransportMemType] tag[%s] inputType[%d], outputType[%d]",
-        tag_.c_str(), inputType, outputType);
+    HCCL_INFO(
+        "[CollSendExecutor][CalcTransportMemType] tag[%s] inputType[%d], outputType[%d]", tag_.c_str(), inputType,
+        outputType);
     return HCCL_SUCCESS;
 }
 
-HcclResult CollSendExecutor::CalcP2PCommInfo(TransportMemType inputType,
-    TransportMemType outputType, std::vector<LevelNSubCommTransport>& opTransport, u32 dstRank)
+HcclResult CollSendExecutor::CalcP2PCommInfo(
+    TransportMemType inputType, TransportMemType outputType, std::vector<LevelNSubCommTransport>& opTransport,
+    u32 dstRank)
 {
     HCCL_INFO("[CollSendExecutor][CalcLevel0CommInfo]tag[%s] start", tag_.c_str());
     CommParaInfo commP2P(COMM_COMBINE, CommType::COMM_TAG_P2P);
@@ -112,22 +116,21 @@ HcclResult CollSendExecutor::CalcResRequest(const OpParam& param, AlgResourceReq
     u32 streamNum = 0U;
     u32 notifyNum = 0U;
     u64 aivBufferRequest = 0U;
-    std::vector<LevelNSubCommTransport> opTransport {
-        std::vector<LevelNSubCommTransport>(static_cast<u32>(COMM_LEVEL_RESERVED))
-    };
+    std::vector<LevelNSubCommTransport> opTransport{
+        std::vector<LevelNSubCommTransport>(static_cast<u32>(COMM_LEVEL_RESERVED))};
 
     CHK_RET(CalcCommInfo(opTransport, param.dstRank));
 
     CHK_RET(BuildResourceRequest(scratchMemSize, streamNum, notifyNum, aivBufferRequest, opTransport, resourceRequest));
-    HCCL_INFO("streamNum[%u], notifyNum[%u], sctrachMemSize[%llu], aivBufferRequest[%llu]",
-        resourceRequest.streamNum, resourceRequest.notifyNum, resourceRequest.scratchMemSize,
-        resourceRequest.aivBufferRequest);
+    HCCL_INFO(
+        "streamNum[%u], notifyNum[%u], scratchMemSize[%llu], aivBufferRequest[%llu]", resourceRequest.streamNum,
+        resourceRequest.notifyNum, resourceRequest.scratchMemSize, resourceRequest.aivBufferRequest);
     // 打印建链诉求
     PrintTransportRequest(resourceRequest);
     return HCCL_SUCCESS;
 }
 
-HcclResult CollSendExecutor::RunLoop(OpParam &param, AlgResourceResponse &algRes)
+HcclResult CollSendExecutor::RunLoop(OpParam& param, AlgResourceResponse& algRes)
 {
     HcclResult ret;
 
@@ -135,7 +138,7 @@ HcclResult CollSendExecutor::RunLoop(OpParam &param, AlgResourceResponse &algRes
 
     u32 unitSize = SIZE_TABLE[param.DataDes.dataType];
     auto meta = HcclOpMetaInfo::GetOneForSend();
-    u8 *curInputPtr = static_cast<u8 *>(param.inputPtr);
+    u8* curInputPtr = static_cast<u8*>(param.inputPtr);
     CHK_PTR_NULL(curInputPtr);
 
     u64 inputOffset = 0;
@@ -154,11 +157,15 @@ HcclResult CollSendExecutor::RunLoop(OpParam &param, AlgResourceResponse &algRes
         DeviceMem inCommMem(algRes.cclInputMem.ptr(), curSize);
         DeviceMem inMem(curInputPtr, curSize);
         CHK_RET(HcclD2DMemcpyAsync(dispatcher_, inCommMem, inMem, const_cast<Stream&>(param.stream)));
-        HCCL_INFO("[CollSendExecutor] inCommMem[%p]size[%lld], inMem[%p]size[%lld]", inCommMem.ptr(), inCommMem.size(), inMem.ptr(), inMem.size());
+        HCCL_INFO(
+            "[CollSendExecutor] inCommMem[%p]size[%lld], inMem[%p]size[%lld]", inCommMem.ptr(), inCommMem.size(),
+            inMem.ptr(), inMem.size());
         ret = RunTemplate(param, inCommMem);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("errNo[0x%016llx] SendOutPlace: send error, tag[%s], ptr[%p], count[%llu], dataType[%d]",
-            HCCL_ERROR_CODE(ret), param.tag.c_str(), curInputPtr, curCount, param.DataDes.dataType),
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "errNo[0x%016llx] SendOutPlace: send error, tag[%s], ptr[%p], count[%llu], dataType[%d]",
+                HCCL_ERROR_CODE(ret), param.tag.c_str(), curInputPtr, curCount, param.DataDes.dataType),
             ret);
         HCCL_DEBUG("[CollSendExecutor][RunLoop]copy from user input to ccl input.");
 
@@ -171,7 +178,7 @@ HcclResult CollSendExecutor::RunLoop(OpParam &param, AlgResourceResponse &algRes
     return HCCL_SUCCESS;
 }
 
-HcclResult CollSendExecutor::RunTemplate(const OpParam &param, DeviceMem &inputMem)
+HcclResult CollSendExecutor::RunTemplate(const OpParam& param, DeviceMem& inputMem)
 {
     SubCommInfo commInfo = GetSubCommInfo(COMM_COMBINE, 0);
     if (commInfo.links.size() == 0) {
@@ -190,4 +197,4 @@ HcclResult CollSendExecutor::RunTemplate(const OpParam &param, DeviceMem &inputM
 
 REGISTER_EXEC("SendExecutor", Send, CollSendExecutor);
 
-} // namespace hcclss
+} // namespace hccl

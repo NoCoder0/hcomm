@@ -1,7 +1,11 @@
-/*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
- * Description: ccu jetty manager header file
- * Create: 2025-08-11
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
  */
 
 #ifndef HCCL_CCU_JETTY_MGR_H
@@ -22,8 +26,8 @@ public:
     explicit CcuJettyMgr(int32_t devLogicId);
     ~CcuJettyMgr();
 
-    HcclResult PrepareCreate(const std::vector<LinkData> &links);
-    std::pair<CcuChannelInfo, std::vector<CcuJetty *>> GetChannelJettys(const LinkData &link) const;
+    HcclResult PrepareCreate(const std::vector<LinkData>& links);
+    HcclResult GetChannelJettys(const LinkData& link, std::pair<CcuChannelInfo, std::vector<CcuJetty*>>& result) const;
 
     void Confirm();
     void Fallback();
@@ -35,13 +39,10 @@ public:
 
 private:
     int32_t devLogicId_{0};
-    bool    isReleased{true};
+    bool isReleased{true};
 
     struct ResIdHash {
-        std::size_t operator()(const std::pair<uint8_t, uint32_t>& p) const
-        {
-            return HashCombine({p.first, p.second});
-        }
+        std::size_t operator()(const std::pair<uint8_t, uint32_t>& p) const { return HashCombine({p.first, p.second}); }
     };
 
     using CcuJettyPtr = CcuJetty*;
@@ -55,20 +56,19 @@ private:
         std::vector<ChannelIdKey> channelIdKeys;
         std::vector<ChannelIdKey> availableChannelIdKeys;
         std::unordered_map<JettyIdKey, std::unique_ptr<CcuJetty>, ResIdHash> jettys;
-    
-        ResourceBatch(const BatchKey &batchKey, const std::vector<CcuChannelInfo> &channelInfos)
-            : key(batchKey)
+
+        ResourceBatch(const BatchKey& batchKey, const std::vector<CcuChannelInfo>& channelInfos) : key(batchKey)
         {
             const uint32_t channelNum = channelInfos.size();
             channelIdKeys.reserve(channelNum);
             availableChannelIdKeys.reserve(channelNum);
-            for (const auto &channelInfo : channelInfos) {
+            for (const auto& channelInfo : channelInfos) {
                 const auto dieId = channelInfo.dieId;
                 const auto channelId = channelInfo.channelId;
                 channelIdKeys.emplace_back(dieId, channelId);
                 availableChannelIdKeys.emplace_back(dieId, channelId);
 
-                for (const auto &jettyInfo : channelInfo.jettyInfos) {
+                for (const auto& jettyInfo : channelInfo.jettyInfos) {
                     const auto taJettyId = jettyInfo.taJettyId;
                     const auto jettyIdKey = std::make_pair(dieId, taJettyId);
                     if (jettys.find(jettyIdKey) != jettys.end()) {
@@ -76,10 +76,12 @@ private:
                     }
 
                     std::unique_ptr<CcuJetty> ccuJetty;
-                    CHK_RET_THROW(InternalException,
-                        StringFormat("[CcuJettyMgr][%s] failed to create ccu jetty, locAddr[%s] "
-                            "dieId[%u] taJettyId[%u].", __func__, key.Describe().c_str(),
-                            dieId, taJettyId),
+                    CHK_RET_THROW(
+                        InternalException,
+                        StringFormat(
+                            "[CcuJettyMgr][%s] failed to create ccu jetty, locAddr[%s] "
+                            "dieId[%u] taJettyId[%u].",
+                            __func__, key.Describe().c_str(), dieId, taJettyId),
                         CcuCreateJetty(key, jettyInfo, ccuJetty));
 
                     jettys[jettyIdKey] = std::move(ccuJetty);
@@ -91,14 +93,15 @@ private:
     struct Allocation {
         LinkData link;
         ChannelIdKey channelIdKey;
-        ResourceBatch *batchPtr;
+        ResourceBatch* batchPtr;
     };
 
     struct UnconfirmedRecord {
-        std::vector<Allocation> allocations; // 记录从已申请的资源中的分配操作
-        std::unordered_set<ResourceBatch *> newBatchSet; // 记录新申请资源的操作
+        std::vector<Allocation> allocations;            // 记录从已申请的资源中的分配操作
+        std::unordered_set<ResourceBatch*> newBatchSet; // 记录新申请资源的操作
 
-        void Clear() {
+        void Clear()
+        {
             allocations.clear();
             newBatchSet.clear();
         }
@@ -111,17 +114,17 @@ private:
     // 各link已分配的channel资源Id信息
     std::unordered_map<LinkData, ChannelIdKey> allocatedChannelIdMap_;
     // 全部已申请的channel资源信息，资源申请成功后将要记录到该map中
-    using CcuChannelJettyInfo = std::pair<CcuChannelInfo, std::vector<CcuJetty *>>;
+    using CcuChannelJettyInfo = std::pair<CcuChannelInfo, std::vector<CcuJetty*>>;
     std::unordered_map<ChannelIdKey, CcuChannelJettyInfo, ResIdHash> channelJettyInfoMap_;
     // 以die粒度记录已分配channel资源, index: dieId
     std::unordered_map<uint8_t, uint32_t> usedChannelCntMap_;
     // 记录channel与对端rank的映射关系, index: (die, channelId)
     std::unordered_map<ChannelIdKey, RankId, ResIdHash> channelRemoteRankIdMap_;
 
-    HcclResult GetAvailableBatch(const BatchKey &batchKey, ResourceBatch *&batchPtr);
-    bool FindAvailableBatch(const BatchKey &batchKey, ResourceBatch *&batchPtr) const;
-    HcclResult CreateAndSaveNewBatch(const BatchKey &batchKey,
-        const std::vector<CcuChannelInfo> channelInfos, ResourceBatch *&batchPtr);
+    HcclResult GetAvailableBatch(const BatchKey& batchKey, ResourceBatch*& batchPtr);
+    bool FindAvailableBatch(const BatchKey& batchKey, ResourceBatch*& batchPtr) const;
+    HcclResult CreateAndSaveNewBatch(
+        const BatchKey& batchKey, const std::vector<CcuChannelInfo> channelInfos, ResourceBatch*& batchPtr);
     void FallbackAndRemoveBatches();
     void FallbackAllocatedChannelJettyInfo();
     void ReleaseConfirmedChannelRes();

@@ -23,12 +23,13 @@ namespace Hccl {
 
 class CcuContextAllToAllMesh1D : public CcuContextAlgBase {
 public:
-    CcuContextAllToAllMesh1D(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                              const CcuTransportGroup &group);
+    CcuContextAllToAllMesh1D(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
     ~CcuContextAllToAllMesh1D() override {}
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
+
 private:
     std::vector<CcuRep::Variable> input_;
     std::vector<CcuRep::Variable> output_;

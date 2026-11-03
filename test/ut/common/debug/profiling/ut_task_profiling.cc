@@ -27,35 +27,32 @@ using namespace std;
 using namespace hccl;
 
 namespace {
-constexpr u32 kTestDeviceId      = 0;
-constexpr s32 kTestPlaneId       = 7;
-constexpr s32 kCaptureStreamId   = 100;
-constexpr s32 kRealStreamId      = 0;
-constexpr u32 kTestTaskId        = 1;
-constexpr u32 kTestRankSize      = 8;
-constexpr u32 kTestLocalRank     = 2;
-constexpr u64 kTestDataSize      = 4096;
-constexpr u64 kMockHashValue     = 0xABCDEF;
-constexpr u64 kMockTs            = 123456789;
-const     string kTestTag        = "ut_test_tag";
-const     string kTestGroupName  = "ut_test_group";
+constexpr u32 kTestDeviceId = 0;
+constexpr s32 kTestPlaneId = 7;
+constexpr s32 kCaptureStreamId = 100;
+constexpr s32 kRealStreamId = 0;
+constexpr u32 kTestTaskId = 1;
+constexpr u32 kTestRankSize = 8;
+constexpr u32 kTestLocalRank = 2;
+constexpr u64 kTestDataSize = 4096;
+constexpr u64 kMockHashValue = 0xABCDEF;
+constexpr u64 kMockTs = 123456789;
+const string kTestTag = "ut_test_tag";
+const string kTestGroupName = "ut_test_group";
 
 static HCCLReportData g_capturedReportData{};
-static bool           g_reportDataCaptured = false;
+static bool g_reportDataCaptured = false;
 
-HcclResult stub_ReportMsprofData_Capture(HCCLReportData &hcclReportData)
+HcclResult stub_ReportMsprofData_Capture(HCCLReportData& hcclReportData)
 {
-    g_capturedReportData  = hcclReportData;
-    g_reportDataCaptured  = true;
+    g_capturedReportData = hcclReportData;
+    g_reportDataCaptured = true;
     return HCCL_SUCCESS;
 }
 
-u64 stub_hrtMsprofSysCycleTime()
-{
-    return kMockTs;
-}
+u64 stub_hrtMsprofSysCycleTime() { return kMockTs; }
 
-u64 stub_hrtMsprofGetHashId(const char *buf, size_t len)
+u64 stub_hrtMsprofGetHashId(const char* buf, size_t len)
 {
     (void)buf;
     (void)len;
@@ -76,15 +73,9 @@ protected:
         g_capturedReportData = HCCLReportData{};
         g_reportDataCaptured = false;
 
-        MOCKER(&TaskProfiling::ReportMsprofData)
-            .stubs()
-            .will(invoke(stub_ReportMsprofData_Capture));
-        MOCKER(hrtMsprofSysCycleTime)
-            .stubs()
-            .will(returnValue(static_cast<uint64_t>(kMockTs)));
-        MOCKER(hrtMsprofGetHashId)
-            .stubs()
-            .will(returnValue(static_cast<uint64_t>(kMockHashValue)));
+        MOCKER(&TaskProfiling::ReportMsprofData).stubs().will(invoke(stub_ReportMsprofData_Capture));
+        MOCKER(hrtMsprofSysCycleTime).stubs().will(returnValue(static_cast<uint64_t>(kMockTs)));
+        MOCKER(hrtMsprofGetHashId).stubs().will(returnValue(static_cast<uint64_t>(kMockHashValue)));
     }
 
     virtual void TearDown()
@@ -99,14 +90,14 @@ protected:
 TaskParaAiv MakeParaAiv()
 {
     TaskParaAiv para;
-    para.cmdType  = HcclCMDType::HCCL_CMD_ALLREDUCE;
-    para.tag      = 0;
-    para.size     = kTestDataSize;
+    para.cmdType = HcclCMDType::HCCL_CMD_ALLREDUCE;
+    para.tag = 0;
+    para.size = kTestDataSize;
     para.numBlocks = 0;
     para.rankSize = kTestRankSize;
     para.aivRdmaStep = 0;
-    para.flagMem  = nullptr;
-    para.rank     = kTestLocalRank;
+    para.flagMem = nullptr;
+    para.rank = kTestLocalRank;
     para.isOpbase = true;
     return para;
 }
@@ -118,56 +109,56 @@ TEST_F(TaskProfilingSaveTest, Ut_Save_CaptureStreamID_NotInMap_FillsUnknown)
     ASSERT_TRUE(ProfilerBase::streamRecordInfoMap_[kTestDeviceId].empty());
 
     TaskProfiling profiler(kTestDeviceId, kTestLocalRank, kTestRankSize, true);
-    TaskParaAiv   paraAiv = MakeParaAiv();
+    TaskParaAiv paraAiv = MakeParaAiv();
 
     HcclResult ret = profiler.Save(kCaptureStreamId, kRealStreamId, kTestTaskId, paraAiv);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     ASSERT_TRUE(g_reportDataCaptured);
-    EXPECT_EQ(g_capturedReportData.tag,                     "unknown");
-    EXPECT_EQ(g_capturedReportData.profInfo.planeID,        0u);
-    EXPECT_EQ(g_capturedReportData.groupName,               "unknown");
-    EXPECT_EQ(g_capturedReportData.profInfo.workFlowMode,   0u);
+    EXPECT_EQ(g_capturedReportData.tag, "unknown");
+    EXPECT_EQ(g_capturedReportData.profInfo.planeID, 0u);
+    EXPECT_EQ(g_capturedReportData.groupName, "unknown");
+    EXPECT_EQ(g_capturedReportData.profInfo.workFlowMode, 0u);
 }
 
 TEST_F(TaskProfilingSaveTest, Ut_Save_CaptureStreamID_InMap_PopulatesFromMaps)
 {
-    ProfilerBase::streamRecordInfoMap_[kTestDeviceId][kCaptureStreamId] =
-        StreamRecordInfo(kTestPlaneId, AlgType(), kTestTag);
+    ProfilerBase::streamRecordInfoMap_[kTestDeviceId][kCaptureStreamId]
+        = StreamRecordInfo(kTestPlaneId, AlgType(), kTestTag);
     ProfilerBase::tagGroupMap_[kTestDeviceId].insert({kTestTag, kTestGroupName});
     ProfilerBase::tagModeMap_[kTestDeviceId].insert({kTestTag, HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE});
 
     ASSERT_EQ(ProfilerBase::streamRecordInfoMap_[kTestDeviceId].count(kCaptureStreamId), 1u);
 
     TaskProfiling profiler(kTestDeviceId, kTestLocalRank, kTestRankSize, true);
-    TaskParaAiv   paraAiv = MakeParaAiv();
+    TaskParaAiv paraAiv = MakeParaAiv();
 
     HcclResult ret = profiler.Save(kCaptureStreamId, kRealStreamId, kTestTaskId, paraAiv);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     ASSERT_TRUE(g_reportDataCaptured);
-    EXPECT_EQ(g_capturedReportData.tag,                     kTestTag);
-    EXPECT_EQ(g_capturedReportData.profInfo.planeID,        static_cast<u32>(kTestPlaneId));
-    EXPECT_EQ(g_capturedReportData.groupName,               kTestGroupName);
-    EXPECT_EQ(g_capturedReportData.profInfo.workFlowMode,
-              static_cast<u32>(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE));
+    EXPECT_EQ(g_capturedReportData.tag, kTestTag);
+    EXPECT_EQ(g_capturedReportData.profInfo.planeID, static_cast<u32>(kTestPlaneId));
+    EXPECT_EQ(g_capturedReportData.groupName, kTestGroupName);
+    EXPECT_EQ(
+        g_capturedReportData.profInfo.workFlowMode, static_cast<u32>(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE));
 }
 
 TEST_F(TaskProfilingSaveTest, Ut_Save_CaptureStreamID_InMap_TagNotInGroupModeMaps_DefaultsInserted)
 {
-    ProfilerBase::streamRecordInfoMap_[kTestDeviceId][kCaptureStreamId] =
-        StreamRecordInfo(kTestPlaneId, AlgType(), "orphan_tag");
+    ProfilerBase::streamRecordInfoMap_[kTestDeviceId][kCaptureStreamId]
+        = StreamRecordInfo(kTestPlaneId, AlgType(), "orphan_tag");
 
     TaskProfiling profiler(kTestDeviceId, kTestLocalRank, kTestRankSize, true);
-    TaskParaAiv   paraAiv = MakeParaAiv();
+    TaskParaAiv paraAiv = MakeParaAiv();
 
     HcclResult ret = profiler.Save(kCaptureStreamId, kRealStreamId, kTestTaskId, paraAiv);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     ASSERT_TRUE(g_reportDataCaptured);
-    EXPECT_EQ(g_capturedReportData.tag,                "orphan_tag");
-    EXPECT_EQ(g_capturedReportData.profInfo.planeID,   static_cast<u32>(kTestPlaneId));
-    EXPECT_EQ(g_capturedReportData.groupName,          "");
+    EXPECT_EQ(g_capturedReportData.tag, "orphan_tag");
+    EXPECT_EQ(g_capturedReportData.profInfo.planeID, static_cast<u32>(kTestPlaneId));
+    EXPECT_EQ(g_capturedReportData.groupName, "");
     EXPECT_EQ(g_capturedReportData.profInfo.workFlowMode, 0u);
 
     ProfilerBase::tagGroupMap_[kTestDeviceId].erase("orphan_tag");

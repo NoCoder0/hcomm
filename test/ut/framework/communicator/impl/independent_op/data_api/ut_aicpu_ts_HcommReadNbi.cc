@@ -37,21 +37,17 @@ using namespace hccl;
  * - 测试目标地址为空时的错误处理
  * - 测试所有参数有效时的调用
  */
-class UtAicpuTsHcommReadNbi : public testing::Test
-{
+class UtAicpuTsHcommReadNbi : public testing::Test {
 protected:
-    virtual void TearDown() override
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() override { GlobalMockObject::verify(); }
 
     std::vector<char> uniqueId;
     Hccl::UbTransportLiteImpl transportOnDevice{uniqueId};
     ChannelHandle channel = reinterpret_cast<ChannelHandle>(&transportOnDevice);
     uint64_t tempDst[6] = {0};
     uint64_t tempSrc[6] = {1, 1, 4, 5, 1, 4};
-    void *dst = reinterpret_cast<void *>(tempDst);
-    void *src = reinterpret_cast<void *>(tempSrc);
+    void* dst = reinterpret_cast<void*>(tempDst);
+    void* src = reinterpret_cast<void*>(tempSrc);
     uint64_t len = sizeof(tempDst);
     int32_t res{HCCL_E_RESERVED};
 };

@@ -41,13 +41,14 @@
 #include "rs.h"
 #include "rs_list.h"
 
-/* priority of algos and forbid unsafety algos */
-#define CHIPER_LIST "ECDHE-RSA-AES256-GCM-SHA384:\
+/* priority of algos and forbid unsafe algos */
+#define CHIPER_LIST                                                                                                    \
+    "ECDHE-RSA-AES256-GCM-SHA384:\
     !RC2:!RC4:!MD2:!MD4:!MD5:!DES:!3DES:!SHA1:!BLOWFISH:!CBC:!ECB:!ADH:!LOW:!PSK:!SRP:!DSS:!eNULL:!aNULL:!EXP:@STRENGTH"
 
 #define RS_S6_ADDR32 2
 #define RS_USLEEP_TIME 20000
-#define RS_RECV_MAX_TIME (1000.0 * 5) // ms
+#define RS_RECV_MAX_TIME (1000.0 * 5)      // ms
 #define RS_RECV_TAG_MAX_TIME (1000.0 * 90) // ms
 #define RS_DEVICE_NUM 0x3
 #define RS_HOSTID2DEVID(dev_id) ((dev_id) & RS_DEVICE_NUM)
@@ -66,17 +67,17 @@
 #define RS_VNIC_FOUTH 199
 #define RS_VNIC_FLAG 1
 
-#define RS_TCP_DSCP_0      0
-#define RS_ROCE_DSCP_33    33
-#define RS_DSCP_MASK       0x3f
-#define RS_DSCP_OFF        2
+#define RS_TCP_DSCP_0 0
+#define RS_ROCE_DSCP_33 33
+#define RS_DSCP_MASK 0x3f
+#define RS_DSCP_OFF 2
 
 #define RS_MAX_FD_NUM 65536
 #define TLS_CA_SSL_MAX_NEW_CERT_NUM 8
 
 #define RS_CONN_EXIT_FLAG 2
 #define RS_TRY_TIME 200
-#define RS_WLIST_VALID_FLAG_SIZE   6
+#define RS_WLIST_VALID_FLAG_SIZE 6
 #define RS_SSL_CERT_LEN 2048
 #define RS_SSL_MIN_CERT_NUM 2
 #define RS_SSL_MAX_CERT_NUM 15
@@ -98,28 +99,25 @@
 #define RS_EC_KY_BITS_MIN_LEN 256
 #define RS_SSL_ERR_MSG_LEN 256
 #define RS_SOCKET_MAXLEN 2048
-#define RS_INTERFACE_BOND_LEN    6
+#define RS_INTERFACE_BOND_LEN 6
 #define RS_INTERFACE_ETH_PREFIX_LEN 3
 #define RS_INTERFACE_BOND_PREFIX_LEN 4
 
 /* pcie card boardid rule: GPIO[75:73]=0x000 */
-#define RS_BOARDID_PCIE_CARD_MASK        0xE00
-#define RS_BOARDID_PCIE_CARD_MASK_VALUE  0x0
-#define RS_BOARDID_AI_SERVER_MODULE  0x0
-#define RS_BOARDID_ARM_SERVER_AG     0x20
-#define RS_BOARDID_ARM_POD     0x30
-#define RS_BOARDID_X86_16P     0x50
-#define RS_BOARDID_ARM_SERVER_2DIE    0xB0
+#define RS_BOARDID_PCIE_CARD_MASK 0xE00
+#define RS_BOARDID_PCIE_CARD_MASK_VALUE 0x0
+#define RS_BOARDID_AI_SERVER_MODULE 0x0
+#define RS_BOARDID_ARM_SERVER_AG 0x20
+#define RS_BOARDID_ARM_POD 0x30
+#define RS_BOARDID_X86_16P 0x50
+#define RS_BOARDID_ARM_SERVER_2DIE 0xB0
 
-#define RS_MAX_RD_ATOMIC_NUM_PEER_ONLINE    16      // host RDMA adapt
-#define RS_QP_TX_DEPTH_PEER_ONLINE          4096    // host RDMA adapt
+#define RS_MAX_RD_ATOMIC_NUM_PEER_ONLINE 16 // host RDMA adapt
+#define RS_QP_TX_DEPTH_PEER_ONLINE 4096     // host RDMA adapt
 
-#define RS_CLOSE_TIMEOUT    5
+#define RS_CLOSE_TIMEOUT 5
 
-enum CaPtye {
-    RS_EQPT_CA = 0,
-    RS_ROOT_CA
-};
+enum CaPtye { RS_EQPT_CA = 0, RS_ROOT_CA };
 
 #define RS_SSL_DISABLE 0
 #define RS_SSL_ENABLE 1
@@ -135,11 +133,11 @@ struct RsCerts {
     struct RsCertInfo certs[RS_SSL_MAX_CERT_NUM];
 };
 
-#define HCCP_NEW_CERTS_CB1_INDEX    0
-#define HCCP_NEW_CERTS_CB2_INDEX    1
-#define HCCP_NEW_CERTS_CB3_INDEX    2
-#define HCCP_NEW_CERTS_CB4_INDEX    3
-#define MAX_CERT_NUM_IN_CB          8
+#define HCCP_NEW_CERTS_CB1_INDEX 0
+#define HCCP_NEW_CERTS_CB2_INDEX 1
+#define HCCP_NEW_CERTS_CB3_INDEX 2
+#define HCCP_NEW_CERTS_CB4_INDEX 3
+#define MAX_CERT_NUM_IN_CB 8
 #define RS_SSL_NEW_CERT_CB_NUM 4
 
 struct CertFile {
@@ -161,67 +159,75 @@ struct RsSecPara {
     unsigned int outBufSize;
 };
 
-#define RS_CLOSE_RETRY_FOR_EINTR(ret, fd) do { \
-    do { \
-        (ret) = close((fd)); \
-    } while (((ret) < 0) && (errno == EINTR)); \
-} while (0)
+#define RS_CLOSE_RETRY_FOR_EINTR(ret, fd)                                                                              \
+    do {                                                                                                               \
+        do {                                                                                                           \
+            (ret) = close((fd));                                                                                       \
+        } while (((ret) < 0) && (errno == EINTR));                                                                     \
+    } while (0)
 
-#define RS_CHECK_RET_WITHOUT_RETURN(ret, fmt, val...) do { \
-    if (ret) { \
-        hccp_warn(fmt, ##val); \
-    } \
-} while (0)
+#define RS_CHECK_RET_WITHOUT_RETURN(ret, fmt, val...)                                                                  \
+    do {                                                                                                               \
+        if (ret) {                                                                                                     \
+            hccp_warn(fmt, ##val);                                                                                     \
+        }                                                                                                              \
+    } while (0)
 
-#define RS_CHECK_POINTER_NULL_WITH_RET(ptr) do { \
-        if ((ptr) == NULL) { \
-            hccp_err("pointer is NULL!"); \
-            return (-EINVAL); \
-        } \
-} while (0)
+#define RS_CHECK_POINTER_NULL_WITH_RET(ptr)                                                                            \
+    do {                                                                                                               \
+        if ((ptr) == NULL) {                                                                                           \
+            hccp_err("pointer is NULL!");                                                                              \
+            return (-EINVAL);                                                                                          \
+        }                                                                                                              \
+    } while (0)
 
-#define RS_CHECK_POINTER_NULL_RETURN_VOID(ptr) do { \
-        if ((ptr) == NULL) { \
-            hccp_err("pointer is NULL!"); \
-            return; \
-        } \
-} while (0)
+#define RS_CHECK_POINTER_NULL_RETURN_VOID(ptr)                                                                         \
+    do {                                                                                                               \
+        if ((ptr) == NULL) {                                                                                           \
+            hccp_err("pointer is NULL!");                                                                              \
+            return;                                                                                                    \
+        }                                                                                                              \
+    } while (0)
 
-#define RS_CHECK_POINTER_NULL_RETURN_NULL(ptr) do { \
-        if ((ptr) == NULL) { \
-            hccp_err("null pointer exception!"); \
-            return NULL; \
-        } \
-} while (0)
+#define RS_CHECK_POINTER_NULL_RETURN_NULL(ptr)                                                                         \
+    do {                                                                                                               \
+        if ((ptr) == NULL) {                                                                                           \
+            hccp_err("null pointer exception!");                                                                       \
+            return NULL;                                                                                               \
+        }                                                                                                              \
+    } while (0)
 
-#define RS_CHECK_POINTER_NULL_RETURN_INT(ptr) do { \
-        if ((ptr) == NULL) { \
-            hccp_err("null pointer exception!"); \
-            return (-EINVAL); \
-        } \
-} while (0)
+#define RS_CHECK_POINTER_NULL_RETURN_INT(ptr)                                                                          \
+    do {                                                                                                               \
+        if ((ptr) == NULL) {                                                                                           \
+            hccp_err("null pointer exception!");                                                                       \
+            return (-EINVAL);                                                                                          \
+        }                                                                                                              \
+    } while (0)
 
-#define RS_PTHREAD_MUTEX_LOCK(conn_mutex) do { \
-    int ret_lock = pthread_mutex_lock(conn_mutex); \
-    if (ret_lock) { \
-        hccp_warn("pthread_mutex_lock unsuccessful, ret[%d]", ret_lock); \
-    }\
-} while (0)
+#define RS_PTHREAD_MUTEX_LOCK(conn_mutex)                                                                              \
+    do {                                                                                                               \
+        int ret_lock = pthread_mutex_lock(conn_mutex);                                                                 \
+        if (ret_lock) {                                                                                                \
+            hccp_warn("pthread_mutex_lock unsuccessful, ret[%d]", ret_lock);                                           \
+        }                                                                                                              \
+    } while (0)
 
-#define RS_PTHREAD_MUTEX_ULOCK(conn_mutex) do { \
-    int ret_ulock = pthread_mutex_unlock(conn_mutex); \
-    if (ret_ulock) { \
-        hccp_warn("pthread_mutex_unlock unsuccessful, ret[%d]", ret_ulock); \
-    } \
-} while (0)
+#define RS_PTHREAD_MUTEX_ULOCK(conn_mutex)                                                                             \
+    do {                                                                                                               \
+        int ret_ulock = pthread_mutex_unlock(conn_mutex);                                                              \
+        if (ret_ulock) {                                                                                               \
+            hccp_warn("pthread_mutex_unlock unsuccessful, ret[%d]", ret_ulock);                                        \
+        }                                                                                                              \
+    } while (0)
 
-#define RS_FD_INVALID       (-1)
+#define RS_FD_INVALID (-1)
 
 /*
  * mr_cb also used to sync to remote
  */
 struct RsMrCb {
-    struct RsMrInfo mrInfo;   /* MUST be the first element */
+    struct RsMrInfo mrInfo; /* MUST be the first element */
 
     uint64_t wrId;
     uint32_t state;
@@ -233,7 +239,7 @@ struct RsMrCb {
 };
 
 struct RsQpInfo {
-    uint32_t cmd;    /* MUST be the first element */
+    uint32_t cmd; /* MUST be the first element */
 
     int lid;
     int qpn;
@@ -270,7 +276,7 @@ struct RsConnInfo {
 
     int connfd;
     SSL *ssl;
-    uint32_t state;  /* refer to enum rs_conn_state */
+    uint32_t state; /* refer to enum rs_conn_state */
     struct timeval startTime;
     struct timeval endTime;
     bool isGot;
@@ -287,6 +293,7 @@ struct RsConnInfo {
     struct SocketErrInfo errInfo;
 
     struct RsListHead list;
+    bool tagChkDis;
 };
 
 enum ListenFdState {
@@ -300,7 +307,7 @@ struct RsListenInfo {
     uint16_t sockPort;
 
     int listenFd;
-    uint32_t state;  /* refer to enum rs_conn_state */
+    uint32_t state; /* refer to enum rs_conn_state */
     int counter;
 
     int lastAcceptErrno; /* last accept errno, avoid log flush */
@@ -312,6 +319,7 @@ struct RsListenInfo {
     unsigned int acceptCreditLimit;
 
     struct RsListHead list;
+    bool tagChkDis;
 };
 
 struct RsAcceptInfo {
@@ -323,6 +331,7 @@ struct RsAcceptInfo {
     uint32_t state;
 
     struct RsListHead list;
+    bool tagChkDis;
 };
 
 struct RsWhiteList {
@@ -502,18 +511,18 @@ struct TlvBufInfo {
     char *buf;
 };
 
-struct RsNslbCb {	
-    bool initFlag;	
+struct RsNslbCb {
+    bool initFlag;
     void *netcoCb;
     pthread_mutex_t mutex;
 };
 
 struct RsTlvCb {
-    unsigned int phyId;	
-    pthread_mutex_t mutex;	
-    struct TlvBufInfo bufInfo;	
-    bool initFlag;	
-    struct RsNslbCb nslbCb;	
+    unsigned int phyId;
+    pthread_mutex_t mutex;
+    struct TlvBufInfo bufInfo;
+    bool initFlag;
+    struct RsNslbCb nslbCb;
 };
 
 /*
@@ -567,6 +576,8 @@ struct rs_cb {
     void *ndaCb;
     int ndaCbRefCnt;
     void *custom_ssl;
+
+    void *devEidInfoCb;
 };
 
 extern __thread struct rs_cb *gRsCb;
@@ -579,7 +590,7 @@ int RsQpn2qpcb(unsigned int phyId, unsigned int rdevIndex, uint32_t qpn, struct 
 int RsRdev2rdevCb(unsigned int chipId, unsigned int rdevIndex, struct RsRdevCb **rdevCb);
 int RsGetRdevCb(struct rs_cb *rsCb, unsigned int rdevIndex, struct RsRdevCb **rdevCb);
 void RsAccpetListNodeFree(struct rs_cb *rscb);
-int RsWlistCheckConnAdd(struct rs_cb *rsCb, struct RsConnInfo* connTmp);
+int RsWlistCheckConnAdd(struct rs_cb *rsCb, struct RsConnInfo *connTmp);
 #ifdef CUSTOM_INTERFACE
 int RsSetupSharemem(struct rs_cb *rsCb, bool backupFlag, unsigned int backupPhyid);
 #endif

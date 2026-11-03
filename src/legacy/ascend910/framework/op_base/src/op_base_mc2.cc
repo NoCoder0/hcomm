@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "op_base.h"
 #include <algorithm>
@@ -20,18 +20,23 @@
 #include "kernel_tiling/kernel_tiling.h"
 #include "param_check_pub.h"
 #include "hccl_tiling_msg.h"
-#include "op_base_v2.h"
+#include "dpu_types.h" // Hccl::DPU_TAG：与 base_comm 侧同一份 tag 常量，避免双源静默走错分支
 
 using namespace std;
 using namespace hccl;
 
+// HcclDevMemAcquire 的 DPUTAG 分支实现落在 op_base_host.cc（仅 host 编译）：取址要 CollComm/ThreadMgr
+// 完整类型，而本文件与 device 共编，故此处只留声明
+HcclResult HcclAcquireDpuTagShmemHost(HcclComm comm, uint64_t* size, void** addr, bool* newCreated);
+
 namespace {
 const u32 MC2_TILING_VERSION = 2U;
 const u32 ENABLE_AICPU_COMM_ENGINE = 0U;
-}
-HcclResult HcclGetInitTilingList(const void *mc2Tiling, const void *p[], uint32_t &cnt)
+} // namespace
+
+HcclResult HcclGetInitTilingList(const void* mc2Tiling, const void* p[], uint32_t& cnt)
 {
-    const u32 *versionPtr = static_cast<const u32 *>(mc2Tiling);
+    const u32* versionPtr = static_cast<const u32*>(mc2Tiling);
     const u32 version = *(versionPtr++);
     CHK_PRT_RET(version < MC2_TILING_VERSION, HCCL_ERROR("Invalid tiling version %u.", version), HCCL_E_PARA);
 
@@ -41,27 +46,27 @@ HcclResult HcclGetInitTilingList(const void *mc2Tiling, const void *p[], uint32_
     u64 serverCfgAddr = reinterpret_cast<u64>(versionPtr) + sizeof(Mc2ServerCfg);
     for (uint32_t i = 0U; i < cnt; ++i) {
         if (version == MC2_TILING_VERSION) {
-            p[i] = reinterpret_cast<const void *>(serverCfgAddr + i * sizeof(Mc2HcommCfg));
+            p[i] = reinterpret_cast<const void*>(serverCfgAddr + i * sizeof(Mc2HcommCfg));
         } else {
-            p[i] = reinterpret_cast<const void *>(reinterpret_cast<const u8 *>(mc2Tiling) + versionPtr[i]);
+            p[i] = reinterpret_cast<const void*>(reinterpret_cast<const u8*>(mc2Tiling) + versionPtr[i]);
         }
     }
     HCCL_INFO("HcclGetInitTilingList version[%u] cnt[%u]", version, cnt);
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclMc2ComResourceByTiling(HcclComm comm, void *mc2Tiling, rtStream_t &aicpuStream)
+HcclResult HcclMc2ComResourceByTiling(HcclComm comm, void* mc2Tiling, rtStream_t& aicpuStream)
 {
-    const void *tilingList[MAX_HCOM_NUM];
+    const void* tilingList[MAX_HCOM_NUM];
     uint32_t tilingNum;
     CHK_RET(HcclGetInitTilingList(mc2Tiling, tilingList, tilingNum));
     CHK_PRT_RET(tilingNum == 0, HCCL_ERROR("Invalid tilingNum %u.", tilingNum), HCCL_E_PARA);
 
-    hccl::hcclComm *hcclComm = static_cast<hccl::hcclComm *>(comm);
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
     string commIdentifier = hcclComm->GetIdentifier();
     bool isAicpuCommEngine = false;
     for (uint32_t i = 0U; i < tilingNum; ++i) {
-        const HcclApi::Mc2CcTilingInner *tiling = static_cast<const HcclApi::Mc2CcTilingInner *>(tilingList[i]);
+        const HcclApi::Mc2CcTilingInner* tiling = static_cast<const HcclApi::Mc2CcTilingInner*>(tilingList[i]);
         if (tiling == nullptr || string(tiling->groupName) != commIdentifier) {
             continue;
         }
@@ -77,9 +82,10 @@ HcclResult HcclMc2ComResourceByTiling(HcclComm comm, void *mc2Tiling, rtStream_t
             opParam.BatchWriteDataDes.queueNum = LOCAL_STREAM_MAX_NUM;
             HCCL_INFO("Requiring %u queues for batch-write.", opParam.BatchWriteDataDes.queueNum);
         }
-        HCCL_INFO("Comm resource will be created for group %s. isAicpuCommEngine[%d] commEngine[%u]",
-            commIdentifier.c_str(), isAicpuCommEngine, tiling->commEngine);
-        CHK_RET(hcclComm->AllocComResourceByTiling(tiling->algConfig, reinterpret_cast<void *>(&opParam)));
+        HCCL_INFO(
+            "Comm resource will be created for group %s. isAicpuCommEngine[%d] commEngine[%u]", commIdentifier.c_str(),
+            isAicpuCommEngine, tiling->commEngine);
+        CHK_RET(hcclComm->AllocComResourceByTiling(tiling->algConfig, reinterpret_cast<void*>(&opParam)));
         // commEngine为0代表使能AICPU引擎
         if (!isAicpuCommEngine && tiling->commEngine == ENABLE_AICPU_COMM_ENGINE) {
             isAicpuCommEngine = true;
@@ -93,11 +99,12 @@ HcclResult HcclMc2ComResourceByTiling(HcclComm comm, void *mc2Tiling, rtStream_t
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclMc2ComOpResCtx(HcclComm comm, uint8_t opType, HcclDataType srcDataType, HcclDataType dstDataType,
-                              HcclReduceOp reduceType, uint64_t count, char *algConfig, uint32_t commEngine, rtStream_t &aicpuStream)
+HcclResult HcclMc2ComOpResCtx(
+    HcclComm comm, uint8_t opType, HcclDataType srcDataType, HcclDataType dstDataType, HcclReduceOp reduceType,
+    uint64_t count, char* algConfig, uint32_t commEngine, rtStream_t& aicpuStream)
 {
     HCCL_DEBUG("HcclMc2ComOpResCtx: srcDataType[%d], dstDataType[%d], count[%llu]", srcDataType, dstDataType, count);
-    hccl::hcclComm *hcclComm = static_cast<hccl::hcclComm *>(comm);
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
     string commIdentifier = hcclComm->GetIdentifier();
 
     OpParam opParam;
@@ -112,7 +119,7 @@ HcclResult HcclMc2ComOpResCtx(HcclComm comm, uint8_t opType, HcclDataType srcDat
         HCCL_INFO("Requiring %u queues for batch-write.", opParam.BatchWriteDataDes.queueNum);
     }
     HCCL_INFO("Comm resource will be created for group[%s] commEngine[%u]", commIdentifier.c_str(), commEngine);
-    CHK_RET(hcclComm->AllocComResourceByTiling(algConfig, reinterpret_cast<void *>(&opParam)));
+    CHK_RET(hcclComm->AllocComResourceByTiling(algConfig, reinterpret_cast<void*>(&opParam)));
 
     if (commEngine == COMM_ENGINE_AICPU) {
         CHK_RET(hcclComm->SetAicpuCommEngine(true));
@@ -121,8 +128,9 @@ HcclResult HcclMc2ComOpResCtx(HcclComm comm, uint8_t opType, HcclDataType srcDat
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclCreateOpResCtxInner(HcclComm comm, uint8_t opType, HcclDataType srcDataType, HcclDataType dstDataType,
-                                   HcclReduceOp reduceType, uint64_t count, char *algConfig, uint32_t commEngine, void **opResCtx)
+HcclResult HcclCreateOpResCtxInner(
+    HcclComm comm, uint8_t opType, HcclDataType srcDataType, HcclDataType dstDataType, HcclReduceOp reduceType,
+    uint64_t count, char* algConfig, uint32_t commEngine, void** opResCtx)
 {
     // 校验
     CHK_PTR_NULL(comm);
@@ -137,14 +145,15 @@ HcclResult HcclCreateOpResCtxInner(HcclComm comm, uint8_t opType, HcclDataType s
     }
 
     HcclUs startut = TIME_NOW();
-    uint64_t streamMode = 0; //streamMode未使用，固定传0
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
+    uint64_t streamMode = 0; // streamMode未使用，固定传0
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
     string commIdentifier = hcclComm->GetIdentifier();
     HCCL_INFO("[%s]commIdentifier[%s], opType[%d]", __func__, commIdentifier.c_str(), opType);
     string cclBufferName = hcclComm->GetCCLbufferName();
     bool isShareComm = cclBufferName.empty() ? false : true;
     if (isShareComm) {
-        HCCL_RUN_WARNING("MC2 using share CCLbuffer[%s], potential conflict with coll communicator", cclBufferName.c_str());
+        HCCL_RUN_WARNING(
+            "MC2 using share CCLbuffer[%s], potential conflict with coll communicator", cclBufferName.c_str());
     }
 
     // 根据streamMode创建aicpuStream
@@ -157,21 +166,25 @@ HcclResult HcclCreateOpResCtxInner(HcclComm comm, uint8_t opType, HcclDataType s
 
     /* 接口交互信息日志 */
     if (GetExternalInputHcclEnableEntryLog()) {
-        s32 ret = snprintf_s(stackLogBuffer, LOG_TMPBUF_SIZE, LOG_TMPBUF_SIZE - 1U, "commIdentifier[%s]", commIdentifier.c_str());
+        s32 ret = snprintf_s(
+            stackLogBuffer, LOG_TMPBUF_SIZE, LOG_TMPBUF_SIZE - 1U, "commIdentifier[%s]", commIdentifier.c_str());
         CHK_PRT_CONT(ret == -1, HCCL_WARNING("Failed to build log info, commIdentifier[%s].", commIdentifier.c_str()));
 
-        std::string logInfo = "MC2 create resource by tiling: localRank[" + std::to_string(localRank)
-                              + "]" + std::string(stackLogBuffer);
+        std::string logInfo = "MC2 create resource by tiling: localRank[" + std::to_string(localRank) + "]"
+                              + std::string(stackLogBuffer);
         CHK_RET(hcclComm->SaveTraceInfo(logInfo));
     }
 
     if (DevType::DEV_TYPE_910_93 == devType) {
-        CHK_RET(HcclMc2ComOpResCtx(comm, opType, srcDataType, dstDataType, reduceType, count, algConfig, commEngine, aicpuStream));
+        CHK_RET(HcclMc2ComOpResCtx(
+            comm, opType, srcDataType, dstDataType, reduceType, count, algConfig, commEngine, aicpuStream));
 
         // 获取 commContext
         hcclComm->GetCommResource(*opResCtx);
         if (*opResCtx == nullptr) {
-            HCCL_ERROR("[%s] GetCommResource failed, opResCtx is nullptr, commIdentifier[%s]", __func__, commIdentifier.c_str());
+            HCCL_ERROR(
+                "[%s] GetCommResource failed, opResCtx is nullptr, commIdentifier[%s]", __func__,
+                commIdentifier.c_str());
             return HCCL_E_INTERNAL;
         }
     } else {
@@ -188,13 +201,12 @@ HcclResult HcclCreateOpResCtxInner(HcclComm comm, uint8_t opType, HcclDataType s
         }
         CHK_RET(hcclComm->CreateCommResource(tag, aicpuStream, true, opResCtx, algConfig));
     }
-    
+
     if (GetExternalInputHcclEnableEntryLog()) {
         HcclUs endut = TIME_NOW();
         /* 关键状态记录 */
-        std::string endInfo = "MC2 create resource take time ["
-                              + std::to_string(DURATION_US(endut - startut).count()) + "]us, localRank["
-                              + std::to_string(localRank) + "] " + std::string(stackLogBuffer);
+        std::string endInfo = "MC2 create resource take time [" + std::to_string(DURATION_US(endut - startut).count())
+                              + "]us, localRank[" + std::to_string(localRank) + "] " + std::string(stackLogBuffer);
         CHK_RET(hcclComm->SaveTraceInfo(endInfo));
     }
 
@@ -213,26 +225,27 @@ HcclResult HcclAllocComResourceByTiling(HcclComm comm, void* stream, void* Mc2Ti
     CHK_PTR_NULL(commContext);
 
     HcclUs startut = TIME_NOW();
-    uint64_t streamMode = 0; //streamMode未使用，固定传0
+    uint64_t streamMode = 0; // streamMode未使用，固定传0
     // 兼容老版本
-    uint32_t *pVersion = reinterpret_cast<uint32_t *>(Mc2Tiling);
+    uint32_t* pVersion = reinterpret_cast<uint32_t*>(Mc2Tiling);
     DevType devType;
     CHK_RET(hrtGetDeviceType(devType));
     HCCL_INFO("[%s]version ptr[%p] val[%u] devType[%u]", __func__, pVersion, *pVersion, devType);
-#if (!defined (HCCD)) && (!defined (CCL_KERNEL_AICPU))
+#if (!defined(HCCD)) && (!defined(CCL_KERNEL_AICPU))
     HCCLV2_FUNC_RUN([&]() -> HcclResult {
-        hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
+        hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
         CHK_RET(HcclAllocComResourceByTilingV2(hcclComm->GetCommunicatorV2(), stream, Mc2Tiling, commContext));
         return HCCL_SUCCESS;
     }());
 #endif
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
     string commIdentifier = hcclComm->GetIdentifier();
     HCCL_INFO("[%s]commIdentifier[%s]", __func__, commIdentifier.c_str());
     string cclBufferName = hcclComm->GetCCLbufferName();
     bool isShareComm = cclBufferName.empty() ? false : true;
     if (isShareComm) {
-        HCCL_RUN_WARNING("MC2 using share CCLbuffer[%s], potential conflict with coll communicator", cclBufferName.c_str());
+        HCCL_RUN_WARNING(
+            "MC2 using share CCLbuffer[%s], potential conflict with coll communicator", cclBufferName.c_str());
     }
     if (*pVersion < MC2_TILING_VERSION || devType != DevType::DEV_TYPE_910_93) {
         return HcclCreateComResourceByComm(comm, streamMode, true, commContext, true, Mc2Tiling);
@@ -249,12 +262,13 @@ HcclResult HcclAllocComResourceByTiling(HcclComm comm, void* stream, void* Mc2Ti
 
     /* 接口交互信息日志 */
     if (GetExternalInputHcclEnableEntryLog()) {
-        s32 ret = snprintf_s(stackLogBuffer, LOG_TMPBUF_SIZE, LOG_TMPBUF_SIZE - 1U, "commIdentifier[%s], version[%u]",
-                             commIdentifier.c_str(), *pVersion);
+        s32 ret = snprintf_s(
+            stackLogBuffer, LOG_TMPBUF_SIZE, LOG_TMPBUF_SIZE - 1U, "commIdentifier[%s], version[%u]",
+            commIdentifier.c_str(), *pVersion);
         CHK_PRT_CONT(ret == -1, HCCL_WARNING("Failed to build log info, commIdentifier[%s].", commIdentifier.c_str()));
 
-        std::string logInfo = "MC2 create resource by tiling: localRank[" + std::to_string(localRank)
-                              + "]" + std::string(stackLogBuffer);
+        std::string logInfo = "MC2 create resource by tiling: localRank[" + std::to_string(localRank) + "]"
+                              + std::string(stackLogBuffer);
         CHK_RET(hcclComm->SaveTraceInfo(logInfo));
     }
 
@@ -263,66 +277,67 @@ HcclResult HcclAllocComResourceByTiling(HcclComm comm, void* stream, void* Mc2Ti
     // 获取 commContext
     hcclComm->GetCommResource(*commContext);
     if (*commContext == nullptr) {
-        HCCL_ERROR("[%s] GetCommResource failed, commContext is nullptr, commIdentifier[%s]", __func__, commIdentifier.c_str());
+        HCCL_ERROR(
+            "[%s] GetCommResource failed, commContext is nullptr, commIdentifier[%s]", __func__,
+            commIdentifier.c_str());
         return HCCL_E_INTERNAL;
     }
 
     if (GetExternalInputHcclEnableEntryLog()) {
         HcclUs endut = TIME_NOW();
         /* 关键状态记录 */
-        std::string endInfo = "MC2 create resource take time ["
-                              + std::to_string(DURATION_US(endut - startut).count()) + "]us, localRank["
-                              + std::to_string(localRank) + "] " + std::string(stackLogBuffer);
+        std::string endInfo = "MC2 create resource take time [" + std::to_string(DURATION_US(endut - startut).count())
+                              + "]us, localRank[" + std::to_string(localRank) + "] " + std::string(stackLogBuffer);
         CHK_RET(hcclComm->SaveTraceInfo(endInfo));
     }
 
     return HCCL_SUCCESS;
 }
 
-#if (!defined (HCCD)) && (!defined (CCL_KERNEL_AICPU))
-HcclResult HcclGetOpArgs(void **opArgs) 
+#if (!defined(HCCD)) && (!defined(CCL_KERNEL_AICPU))
+HcclResult HcclGetOpArgs(void** opArgs)
 {
     CHK_PTR_NULL(opArgs);
     HCCLV2_FUNC_RUN(HcclGetOpArgsV2(opArgs));
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclFreeOpArgs(void *opArgs)
+HcclResult HcclFreeOpArgs(void* opArgs)
 {
     CHK_PTR_NULL(opArgs);
     HCCLV2_FUNC_RUN(HcclFreeOpArgsV2(opArgs));
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclSetOpSrcDataType(void *opArgs, uint8_t srcDataType)
+HcclResult HcclSetOpSrcDataType(void* opArgs, uint8_t srcDataType)
 {
     CHK_PTR_NULL(opArgs);
     HCCLV2_FUNC_RUN(HcclSetOpSrcDataTypeV2(opArgs, srcDataType));
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclSetOpDstDataType(void *opArgs, uint8_t dstDataType)
+HcclResult HcclSetOpDstDataType(void* opArgs, uint8_t dstDataType)
 {
     CHK_PTR_NULL(opArgs);
     HCCLV2_FUNC_RUN(HcclSetOpDstDataTypeV2(opArgs, dstDataType));
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclSetOpReduceType(void *opArgs, uint32_t reduceType)
+HcclResult HcclSetOpReduceType(void* opArgs, uint32_t reduceType)
 {
     CHK_PTR_NULL(opArgs);
     HCCLV2_FUNC_RUN(HcclSetOpReduceTypeV2(opArgs, reduceType));
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclSetOpCount(void *opArgs, uint64_t count)
+HcclResult HcclSetOpCount(void* opArgs, uint64_t count)
 {
     CHK_PTR_NULL(opArgs);
     HCCLV2_FUNC_RUN(HcclSetOpCountV2(opArgs, count));
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclSetOpAlgConfig(void *opArgs, char *algConfig)
+HcclResult HcclSetOpAlgConfig(void* opArgs, char* algConfig)
 {
     CHK_PTR_NULL(opArgs);
     CHK_PTR_NULL(algConfig);
@@ -330,33 +345,41 @@ HcclResult HcclSetOpAlgConfig(void *opArgs, char *algConfig)
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclSetOpCommEngine(void *opArgs, uint8_t commEngine)
+HcclResult HcclSetOpCommEngine(void* opArgs, uint8_t commEngine)
 {
     CHK_PTR_NULL(opArgs);
     HCCLV2_FUNC_RUN(HcclSetOpCommEngineV2(opArgs, commEngine));
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclCommResPrepare(HcclComm comm, char *opName, void *opArgs, void **addr)
+HcclResult HcclCommResPrepare(HcclComm comm, char* opName, void* opArgs, void** addr)
 {
     CHK_PTR_NULL(comm);
     CHK_PTR_NULL(opName);
     CHK_PTR_NULL(opArgs);
     CHK_PTR_NULL(addr);
     HCCLV2_FUNC_RUN([&]() -> HcclResult {
-        hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
+        hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
         CHK_RET(HcclCommResPrepareV2(hcclComm->GetCommunicatorV2(), opName, opArgs, addr));
         return HCCL_SUCCESS;
     }());
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclDevMemAcquire(HcclComm comm, const char *memTag, uint64_t *size, void **addr, bool *newCreated)
+HcclResult HcclDevMemAcquire(HcclComm comm, const char* memTag, uint64_t* size, void** addr, bool* newCreated)
 {
     CHK_PTR_NULL(comm);
     CHK_PTR_NULL(size);
     CHK_PTR_NULL(addr);
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
+
+    // DPUTAG 共享内存已收编到 base_comm（LegacyDpuThread::InitShmem → DpuShmemMgr），唯一取用入口收敛到本条分支
+    // （实现见 op_base_host.cc）：经查找链取回与 device 侧同一块地址
+    // 不再走 hccl_v2 侧通用 workspace 表或 910 DpuManager 的旧申请
+    if (memTag != nullptr && std::string(memTag) == Hccl::DPU_TAG) {
+        return HcclAcquireDpuTagShmemHost(comm, size, addr, newCreated);
+    }
+
     if (hcclComm->GetCommunicatorV2() != nullptr) {
         HCCLV2_FUNC_RUN(HcclDevMemAcquireV2(hcclComm->GetCommunicatorV2(), memTag, size, addr, newCreated));
     } else {
@@ -365,22 +388,23 @@ HcclResult HcclDevMemAcquire(HcclComm comm, const char *memTag, uint64_t *size, 
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclGetRemoteIpcHcclBuf(HcclComm comm, uint64_t remoteRank, void **addr, uint64_t *size)
+HcclResult HcclGetRemoteIpcHcclBuf(HcclComm comm, uint64_t remoteRank, void** addr, uint64_t* size)
 {
     CHK_PTR_NULL(comm);
     CHK_PTR_NULL(addr);
     CHK_PTR_NULL(size);
 
     HCCLV2_FUNC_RUN([&]() -> HcclResult {
-        hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
+        hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
         CHK_RET(HcclGetRemoteIpcHcclBuf(hcclComm->GetCommunicatorV2(), remoteRank, addr, size));
         return HCCL_SUCCESS;
     }());
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
-    void *opResCtx = nullptr;
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
+    void* opResCtx = nullptr;
     hcclComm->GetCommResource(opResCtx);
     if (opResCtx == nullptr) {
-        HCCL_ERROR("[%s]comm[%s] remoteRank[%llu] get resource fail", __func__, hcclComm->GetIdentifier().c_str(), remoteRank);
+        HCCL_ERROR(
+            "[%s]comm[%s] remoteRank[%llu] get resource fail", __func__, hcclComm->GetIdentifier().c_str(), remoteRank);
         return HCCL_E_PARA;
     }
 
@@ -388,7 +412,8 @@ HcclResult HcclGetRemoteIpcHcclBuf(HcclComm comm, uint64_t remoteRank, void **ad
     if (*addr == nullptr) {
         u32 localRank = INVALID_VALUE_RANKID;
         CHK_RET(hcclComm->GetUserRank(localRank));
-        HCCL_ERROR("[%s]comm[%s] get remote CCL buffer fail, ret is nullptr. Possible reasons:"
+        HCCL_ERROR(
+            "[%s]comm[%s] get remote CCL buffer fail, ret is nullptr. Possible reasons:"
             "The selected AlgConfig has not create link between localRank[%u] to remoteRank[%llu].",
             __func__, hcclComm->GetIdentifier().c_str(), localRank, remoteRank);
         return HCCL_E_PTR;

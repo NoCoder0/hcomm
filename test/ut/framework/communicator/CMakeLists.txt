@@ -7,6 +7,7 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
+
 set(src_to_test_list
     main.cc
     hccl_api_base_test.cc
@@ -15,6 +16,8 @@ set(src_to_test_list
     ut_HcclCommConfigInit_API_test.cc
     ut_HcclCommDeactivateCommMemory_API_test.cc
     ut_HcclCommDestroy_API_test.cc
+    ut_HcclCommDestroyGroup_API_test.cc
+    ut_HcomDestroyStateNotify_API_test.cc
     ut_HcclCommEngineCtx_API_test.cc
     ut_HcclCommGetHandleWithName_API_test.cc
     ut_HcclCommGetStatus_API_test.cc
@@ -24,6 +27,7 @@ set(src_to_test_list
     ut_HcclCommInitClusterInfo_API_test.cc
     ut_HcclCommInitRootInfoConfig_API_test.cc
     ut_HcclCommInitRootInfo_API_test.cc
+    ut_HcclCommInitRootInfoScalable_API_test.cc
     ut_HcclCommResume_API_test.cc
     ut_HcclCommSetMemoryRange_API_test.cc
     ut_HcclCommSuspend_API_test.cc
@@ -46,6 +50,7 @@ set(src_to_test_list
     ut_hccl_comm_host.cc
     ut_ind_op_transport_alloc.cc
     ut_aclgraph_communicator.cc
+    ut_coll_comm_mgr.cc
 )
 
 add_executable(hccl_utest_framework_communicator ${src_to_test_list})
@@ -77,7 +82,7 @@ target_link_libraries(hccl_utest_framework_communicator PRIVATE
     -pthread
     hccl_llt
     -Wl,--whole-archive
-    -Wl,--no-whole-archi
+    -Wl,--no-whole-archive
     -lgcov
     -lrt
     -ldl

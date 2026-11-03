@@ -12,21 +12,15 @@
 #include <mockcpp/mokc.h>
 #include <mockcpp/mockcpp.hpp>
 #define private public
-#include "task_abort_handler.h"
+#include "task_abort_handler_v2.h"
 #undef private
 
 using namespace Hccl;
 class TaskAbortHandlerTest : public testing::Test {
 public:
-    static void SetUpTestCase()
-    {
-        std::cout << "TaskAbortHandlerTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "TaskAbortHandlerTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "TaskAbortHandlerTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "TaskAbortHandlerTest TearDown" << std::endl; }
 
     virtual void SetUp()
     {
@@ -55,10 +49,10 @@ TEST_F(TaskAbortHandlerTest, test_task_abort_handle_call_back_stage_pre_success)
     TaskAbortHandler::GetInstance().Register(communicator.get());
     void* args = reinterpret_cast<void*>(&TaskAbortHandler::GetInstance().commVector);
 
-    MOCKER_CPP(&HcclCommunicator::Suspend, HcclResult(HcclCommunicator:: *)())
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::Suspend, HcclResult(HcclCommunicator::*)())
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
     auto ret = ProcessTaskAbortHandleCallback(deviceLogicId, stage, time, args);
     EXPECT_EQ(ret, 0);
 
@@ -81,10 +75,10 @@ TEST_F(TaskAbortHandlerTest, test_task_abort_handle_call_back_stage_pre_fail)
     TaskAbortHandler::GetInstance().Register(communicator.get());
     void* args = reinterpret_cast<void*>(&TaskAbortHandler::GetInstance().commVector);
 
-    MOCKER_CPP(&HcclCommunicator::Suspend, HcclResult(HcclCommunicator:: *)())
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_E_INTERNAL));
+    MOCKER_CPP(&HcclCommunicator::Suspend, HcclResult(HcclCommunicator::*)())
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_E_INTERNAL));
     auto ret = ProcessTaskAbortHandleCallback(deviceLogicId, stage, time, args);
     EXPECT_EQ(ret, 1);
 
@@ -110,9 +104,9 @@ TEST_F(TaskAbortHandlerTest, test_task_abort_handle_call_back_stage_post_success
     MOCKER(HcclCcuTaskKillPreProcess).stubs().will(returnValue(HcclResult::HCCL_SUCCESS));
     MOCKER(HcclCcuTaskKillPostProcess).stubs().will(returnValue(HcclResult::HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::Clean, HcclResult(HcclCommunicator:: *)())
-    .stubs()
-    .will(returnValue(HcclResult::HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::Clean, HcclResult(HcclCommunicator::*)())
+        .stubs()
+        .will(returnValue(HcclResult::HCCL_SUCCESS));
     auto ret = ProcessTaskAbortHandleCallback(deviceLogicId, stage, time, args);
     EXPECT_EQ(ret, 0);
 
@@ -138,9 +132,9 @@ TEST_F(TaskAbortHandlerTest, test_task_abort_handle_call_back_stage_post_fail)
     MOCKER(HcclCcuTaskKillPreProcess).stubs().will(returnValue(HcclResult::HCCL_SUCCESS));
     MOCKER(HcclCcuTaskKillPostProcess).stubs().will(returnValue(HcclResult::HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::Clean, HcclResult(HcclCommunicator:: *)())
-    .stubs()
-    .will(returnValue(HcclResult::HCCL_E_INTERNAL));
+    MOCKER_CPP(&HcclCommunicator::Clean, HcclResult(HcclCommunicator::*)())
+        .stubs()
+        .will(returnValue(HcclResult::HCCL_E_INTERNAL));
     auto ret = ProcessTaskAbortHandleCallback(deviceLogicId, stage, time, args);
     EXPECT_EQ(ret, 1);
 

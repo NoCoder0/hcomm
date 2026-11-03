@@ -1,4 +1,4 @@
- /**
+/**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
@@ -7,6 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #ifndef TS_TASK_STRUCT_V2_H
 #define TS_TASK_STRUCT_V2_H
 
@@ -17,18 +18,18 @@ extern "C" {
 #endif /* __cplusplus */
 
 enum tag_ts_to_aicpu_msg_cmd_type {
-    TS_AICPU_MSG_VERSION            = 0,         /* 0 aicpu msg version */
-    TS_AICPU_MODEL_OPERATE          = 1,         /* 1 model operate */
-    TS_AICPU_TASK_REPORT            = 2,         /* 2 aic task report */
-    TS_AICPU_ACTIVE_STREAM          = 3,         /* 3 aicpu active stream */
-    TS_AICPU_RECORD                 = 4,         /* 4 aicpu notify */
-    TS_AICPU_NORMAL_DATADUMP_REPORT = 5,         /* 5 normal data dump report */
-    TS_AICPU_DEBUG_DATADUMP_REPORT  = 6,         /* 6 debug datadump report */
-    TS_AICPU_DATADUMP_INFO_LOAD     = 7,         /* 7 datadump info load */
-    TS_AICPU_TIMEOUT_CONFIG         = 8,         /* 8 aicpu timeout config */
-    TS_AICPU_INFO_LOAD              = 9,         /* 9 aicpu info load for tiling key sink */
-    TS_AIC_ERROR_REPORT            = 10,        /* 10 aic task err report */
-    TS_INVALID_AICPU_CMD                         /* invalid flag */
+    TS_AICPU_MSG_VERSION = 0,            /* 0 aicpu msg version */
+    TS_AICPU_MODEL_OPERATE = 1,          /* 1 model operate */
+    TS_AICPU_TASK_REPORT = 2,            /* 2 aic task report */
+    TS_AICPU_ACTIVE_STREAM = 3,          /* 3 aicpu active stream */
+    TS_AICPU_RECORD = 4,                 /* 4 aicpu notify */
+    TS_AICPU_NORMAL_DATADUMP_REPORT = 5, /* 5 normal data dump report */
+    TS_AICPU_DEBUG_DATADUMP_REPORT = 6,  /* 6 debug datadump report */
+    TS_AICPU_DATADUMP_INFO_LOAD = 7,     /* 7 datadump info load */
+    TS_AICPU_TIMEOUT_CONFIG = 8,         /* 8 aicpu timeout config */
+    TS_AICPU_INFO_LOAD = 9,              /* 9 aicpu info load for tiling key sink */
+    TS_AIC_ERROR_REPORT = 10,            /* 10 aic task err report */
+    TS_INVALID_AICPU_CMD                 /* invalid flag */
 };
 
 typedef struct tag_ts_aicpu_msg_version {
@@ -62,8 +63,8 @@ typedef struct tag_ts_aicpu_record_msg {
     uint32_t record_id;
     uint8_t record_type;
     uint8_t reserved;
-    uint16_t ret_code;  // using ts_error_t
-    uint32_t fault_task_id;    // using report error of operator
+    uint16_t ret_code;      // using ts_error_t
+    uint32_t fault_task_id; // using report error of operator
 } ts_aicpu_record_msg_t;
 
 typedef struct tag_ts_to_aicpu_normal_datadump_msg {
@@ -103,7 +104,7 @@ typedef struct tag_ts_aicpu_response_msg {
     uint32_t task_id;
     uint16_t stream_id;
     uint16_t result_code;
-    uint8_t reserved;     /* for normal/debug dump, and info load */
+    uint8_t reserved; /* for normal/debug dump, and info load */
     uint8_t rsv[3];
 } ts_aicpu_response_msg_t;
 
@@ -156,11 +157,11 @@ typedef struct tag_stream_snapshot {
 } ts_stream_snapshot_t;
 
 // ts_to_aicpu_task_report_t  resultcode
-#define TASK_REPORT_RESULT_CODE_FAIL  (1U)
+#define TASK_REPORT_RESULT_CODE_FAIL (1U)
 
 typedef enum tag_ts_aicpu_record_type_v2 {
-    AICPU_MSG_EVENT_RECORD_V2 = 1,      /* 1 aicpu event record */
-    AICPU_MSG_NOTIFY_RECORD_V2          /* 2 aicpu notify record */
+    AICPU_MSG_EVENT_RECORD_V2 = 1, /* 1 aicpu event record */
+    AICPU_MSG_NOTIFY_RECORD_V2     /* 2 aicpu notify record */
 } ts_aicpu_record_type_t_v2;
 
 #ifdef __cplusplus

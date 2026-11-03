@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef HCCL_MC2_CONTEXT_H
 #define HCCL_MC2_CONTEXT_H
@@ -26,9 +26,9 @@ public:
 
     void Algorithm() override;
 
-    void SetAlgoTemplateInfo(const std::map<uint64_t, uint32_t> &algoTemplateInfo);
+    void SetAlgoTemplateInfo(const std::map<uint64_t, uint32_t>& algoTemplateInfo);
     void SetMissionNumAndId(uint32_t miNum, uint32_t miIndex);
-    void MissionPreSync(CcuRep::Variable &func);
+    void MissionPreSync(CcuRep::Variable& func);
     void MissionPostSync();
 
 protected:
@@ -58,16 +58,16 @@ public:
     void SetCommAddr(uint64_t syncAddr, uint64_t paramAddr);
     void SetDieNum(uint32_t dieNum);
 
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
 
 protected:
     void GenCircularQueue() override;
 
 private:
-
-    void WaitTurnStartSig(const CcuRep::Variable &hbmSigAddr, CcuRep::Variable &turnStartSig);
-    void SetTurnEndSig(const CcuRep::Variable &hbmSigAddr, const CcuRep::Variable &turnEndSig);
-    void LoadFuncParamFromMemory(CcuRep::Variable &paramAddr, std::array<CcuRep::Variable, CCU_PARAM_NUM_PER_DIE> &param);
+    void WaitTurnStartSig(const CcuRep::Variable& hbmSigAddr, CcuRep::Variable& turnStartSig);
+    void SetTurnEndSig(const CcuRep::Variable& hbmSigAddr, const CcuRep::Variable& turnEndSig);
+    void
+    LoadFuncParamFromMemory(CcuRep::Variable& paramAddr, std::array<CcuRep::Variable, CCU_PARAM_NUM_PER_DIE>& param);
 
 private:
     // HBM上的每轮开始信号的首地址
@@ -89,7 +89,7 @@ public:
     Mc2SlaveContext() = default;
     ~Mc2SlaveContext() override {}
 
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
 
 protected:
     void GenCircularQueue() override;

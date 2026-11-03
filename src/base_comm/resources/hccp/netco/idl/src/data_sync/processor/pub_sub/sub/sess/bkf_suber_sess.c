@@ -32,7 +32,7 @@ STATIC uint32_t BkfSuberSessProcOneSessData(BkfSuberSess *sess, BkfMsgDecoder *d
 #if BKF_BLOCK("公有函数定义")
 BkfSuberSessMng *BkfSuberSessMngInit(BkfSuberSessMngInitArg *initArg)
 {
-    BkfSuberSessMng *sessMng =  BkfSuberSessMngDataInit(initArg);
+    BkfSuberSessMng *sessMng = BkfSuberSessMngDataInit(initArg);
     if (sessMng == VOS_NULL) {
         return VOS_NULL;
     }
@@ -48,11 +48,11 @@ BkfSuberSessMng *BkfSuberSessMngInit(BkfSuberSessMngInitArg *initArg)
 
 void BkfSuberSessMngUnInit(BkfSuberSessMng *sessMng)
 {
-    BkfSuberSess *sess  = VOS_NULL;
+    BkfSuberSess *sess = VOS_NULL;
     void *itor = VOS_NULL;
 
     for (sess = BkfSuberSessDataGetFirst(sessMng, &itor); sess != VOS_NULL;
-        sess = BkfSuberSessDataGetNext(sessMng, &itor)) {
+         sess = BkfSuberSessDataGetNext(sessMng, &itor)) {
         BkfSuberSessDel(sess);
         BkfSuberSessDataDel(sess);
     }
@@ -66,14 +66,14 @@ BkfSuberSess *BkfSuberSessCreate(BkfSuberSessMng *sessMng, void *sliceKey, uint1
     uint8_t urlStr[BKF_URL_STR_LEN_MAX];
     uint8_t locUrlStr[BKF_URL_STR_LEN_MAX];
     (void)BkfSuberGetSliceKeyStr(sessMng->env, sliceKey, dispSliceStr, sizeof(dispSliceStr));
-    BKF_LOG_DEBUG(sessMng->log, "create sess slice %s, table id %u, pubUrl %s, locUrl %s, isverify %u\n",
-        dispSliceStr, tableTypeId, BkfUrlGetStr(&sessMng->pubUrl, urlStr, sizeof(urlStr)),
+    BKF_LOG_DEBUG(sessMng->log, "create sess slice %s, table id %u, pubUrl %s, locUrl %s, isverify %u\n", dispSliceStr,
+        tableTypeId, BkfUrlGetStr(&sessMng->pubUrl, urlStr, sizeof(urlStr)),
         BkfUrlGetStr(&sessMng->locUrl, locUrlStr, sizeof(locUrlStr)), isVerify);
 
     BkfSuberSess *sess = BkfSuberSessDataAdd(sessMng, sliceKey, tableTypeId);
     if (sess == VOS_NULL) {
-        BKF_LOG_DEBUG(sessMng->log, "create sess slice %s, table id %u, isverify %u. create data fail\n",
-            dispSliceStr, tableTypeId, isVerify);
+        BKF_LOG_DEBUG(sessMng->log, "create sess slice %s, table id %u, isverify %u. create data fail\n", dispSliceStr,
+            tableTypeId, isVerify);
         return VOS_NULL;
     }
     if (isVerify) {
@@ -82,7 +82,6 @@ BkfSuberSess *BkfSuberSessCreate(BkfSuberSessMng *sessMng, void *sliceKey, uint1
     BkfSuberSessTrigSub(sessMng, sess);
     return sess;
 }
-
 
 /* 1.对账->去对账->发送unsub后切换为batok,sess标记不变 */
 /* 2.any->去订阅->发送unsub后删除sess，sess标记强制为false */
@@ -95,8 +94,8 @@ void BkfSuberSessDel(BkfSuberSess *sess)
     uint8_t urlStr2[BKF_URL_STR_LEN_MAX];
     BkfSuberSessMng *sessMng = sess->sessMng;
     (void)BkfSuberGetSliceKeyStr(sessMng->env, sess->key.sliceKey, dispSliceStr, sizeof(dispSliceStr));
-    BKF_LOG_DEBUG(sessMng->log, "del sess slice %s, table id %u, pubUrl %s, locUrl %s, isverify %u\n",
-        dispSliceStr, sess->key.tableTypeId, BkfUrlGetStr(&sess->sessMng->pubUrl, urlStr, sizeof(urlStr)),
+    BKF_LOG_DEBUG(sessMng->log, "del sess slice %s, table id %u, pubUrl %s, locUrl %s, isverify %u\n", dispSliceStr,
+        sess->key.tableTypeId, BkfUrlGetStr(&sess->sessMng->pubUrl, urlStr, sizeof(urlStr)),
         BkfUrlGetStr(&sess->sessMng->locUrl, urlStr2, sizeof(urlStr2)), sess->isVerify);
     sess->isVerify = VOS_FALSE;
     BkfSuberSessTrigUnSub(sessMng, sess);
@@ -109,8 +108,8 @@ void BkfSuberSessUnVerify(BkfSuberSess *sess)
     uint8_t urlStr2[BKF_URL_STR_LEN_MAX];
     BkfSuberSessMng *sessMng = sess->sessMng;
     (void)BkfSuberGetSliceKeyStr(sessMng->env, sess->key.sliceKey, dispSliceStr, sizeof(dispSliceStr));
-    BKF_LOG_DEBUG(sessMng->log, "sess unverify slice %s, table id %u, pubUrl %s locUrl %s, isverify %u\n",
-        dispSliceStr, sess->key.tableTypeId, BkfUrlGetStr(&sess->sessMng->pubUrl, urlStr, sizeof(urlStr)),
+    BKF_LOG_DEBUG(sessMng->log, "sess unverify slice %s, table id %u, pubUrl %s locUrl %s, isverify %u\n", dispSliceStr,
+        sess->key.tableTypeId, BkfUrlGetStr(&sess->sessMng->pubUrl, urlStr, sizeof(urlStr)),
         BkfUrlGetStr(&sess->sessMng->locUrl, urlStr2, sizeof(urlStr2)), sess->isVerify);
 
     if (!sess->isVerify) {
@@ -139,8 +138,8 @@ void BkfSuberSessReLoad(BkfSuberSess *sess, BOOL isVerify)
     uint8_t dispSliceStr[BKF_SUBER_DISP_SLICELEN] = {0};
     BkfSuberSessMng *sessMng = sess->sessMng;
     (void)BkfSuberGetSliceKeyStr(sessMng->env, sess->key.sliceKey, dispSliceStr, sizeof(dispSliceStr));
-    BKF_LOG_DEBUG(sessMng->log, "sess reload slice %s, table id %u, isverify %u\n",
-        dispSliceStr, sess->key.tableTypeId, isVerify);
+    BKF_LOG_DEBUG(sessMng->log, "sess reload slice %s, table id %u, isverify %u\n", dispSliceStr, sess->key.tableTypeId,
+        isVerify);
 
     sess->isVerify = isVerify;
     BkfSuberSessTrigSub(sessMng, sess);
@@ -148,12 +147,12 @@ void BkfSuberSessReLoad(BkfSuberSess *sess, BOOL isVerify)
 
 uint32_t BkfSuberSessProcDisconn(BkfSuberSessMng *sessMng)
 {
-    BkfSuberSess *sess  = VOS_NULL;
+    BkfSuberSess *sess = VOS_NULL;
     void *itor = VOS_NULL;
     uint32_t ret;
 
     for (sess = BkfSuberSessDataGetFirst(sessMng, &itor); sess != VOS_NULL;
-        sess = BkfSuberSessDataGetNext(sessMng, &itor)) {
+         sess = BkfSuberSessDataGetNext(sessMng, &itor)) {
         ret = BkfSuberSessFsmInputEvt(sess, BACKFIN_SUB_SESS_INPUT_DISCONN, VOS_NULL, VOS_NULL);
         if (ret == BKF_SUBER_CONN_NEED_DELETE) {
             return ret;
@@ -168,7 +167,7 @@ uint32_t BkfSuberSessProcDisconn(BkfSuberSessMng *sessMng)
 
 uint32_t BkfSuberSessProcSched(BkfSuberSessMng *sessMng, BkfMsgCoder *coder)
 {
-    BkfSuberSess *sess  = VOS_NULL;
+    BkfSuberSess *sess = VOS_NULL;
     BkfDlNode *temp;
     BkfDlNode *tempNext;
     BkfDl *list[3] = {&sessMng->subSess, &sessMng->unSubSess, &sessMng->verifySubSess};
@@ -246,6 +245,7 @@ void BkfSuberSessResetUnBlockFlag(BkfSuberSessMng *sessMng)
 #if BKF_BLOCK("私有函数定义")
 STATIC void BkfSuberSessTrigSub(BkfSuberSessMng *sessMng, BkfSuberSess *sess)
 {
+    (void)sessMng;
     if (sess->isVerify) {
         BkfSuberSessFsmInputEvt(sess, BACKFIN_SUB_SESS_INPUT_VERIFYSUB, VOS_NULL, VOS_NULL);
     } else {
@@ -255,12 +255,13 @@ STATIC void BkfSuberSessTrigSub(BkfSuberSessMng *sessMng, BkfSuberSess *sess)
 
 STATIC void BkfSuberSessTrigUnSub(BkfSuberSessMng *sessMng, BkfSuberSess *sess)
 {
+    (void)sessMng;
     BkfSuberSessFsmInputEvt(sess, BACKFIN_SUB_SESS_INPUT_UNSUB, VOS_NULL, VOS_NULL);
 }
 
-STATIC BkfSuberSess *BkfSuberSessGetSessByRcvData(BkfSuberSessMng *sessMng, BkfMsgDecoder *decoder,
-    BkfMsgHead *msgHead)
+STATIC BkfSuberSess *BkfSuberSessGetSessByRcvData(BkfSuberSessMng *sessMng, BkfMsgDecoder *decoder, BkfMsgHead *msgHead)
 {
+    (void)msgHead;
     BkfTL *tl = VOS_NULL;
     uint32_t errCode;
     BOOL tlvIsOk = VOS_FALSE;
@@ -270,7 +271,7 @@ STATIC BkfSuberSess *BkfSuberSessGetSessByRcvData(BkfSuberSessMng *sessMng, BkfM
         return VOS_NULL;
     }
     BkfTlvSliceKey *tlvSliceKey = VOS_NULL;
-    tlvSliceKey = (BkfTlvSliceKey*)tl;
+    tlvSliceKey = (BkfTlvSliceKey *)tl;
 
     tl = BkfMsgDecodeTLV(decoder, &errCode);
     tlvIsOk = (tl != VOS_NULL) && (tl->typeId == BKF_TLV_TABLE_TYPE);
@@ -278,7 +279,7 @@ STATIC BkfSuberSess *BkfSuberSessGetSessByRcvData(BkfSuberSessMng *sessMng, BkfM
         return VOS_NULL;
     }
     BkfTlvTableType *tlvTableType = VOS_NULL;
-    tlvTableType = (BkfTlvTableType*)tl;
+    tlvTableType = (BkfTlvTableType *)tl;
 
     return BkfSuberSessDataFind(sessMng, tlvSliceKey->sliceKey, tlvTableType->tableTypeId);
 }
@@ -293,11 +294,11 @@ STATIC uint32_t BkfSuberSessProcOneSessData(BkfSuberSess *sess, BkfMsgDecoder *d
         {0, 0},
         {BACKFIN_SUB_SESS_INPUT_SUBACK, BACKFIN_SUB_SESS_INPUT_VERIFYSUBACK}, /* subACK */
         {0, 0},
-        {BACKFIN_SUB_SESS_INPUT_BATCHBEGIN, BACKFIN_SUB_SESS_INPUT_VERIFYBEGIN},  /* batchBegin */
-        {BACKFIN_SUB_SESS_INPUT_BATCHEND, BACKFIN_SUB_SESS_INPUT_VERIFYEND},  /* batchEnd */
+        {BACKFIN_SUB_SESS_INPUT_BATCHBEGIN, BACKFIN_SUB_SESS_INPUT_VERIFYBEGIN}, /* batchBegin */
+        {BACKFIN_SUB_SESS_INPUT_BATCHEND, BACKFIN_SUB_SESS_INPUT_VERIFYEND},     /* batchEnd */
         {BACKFIN_SUB_SESS_INPUT_DATA, BACKFIN_SUB_SESS_INPUT_DATA},
         {BACKFIN_SUB_SESS_INPUT_NTF, BACKFIN_SUB_SESS_INPUT_NTF},
-        };
+    };
     uint32_t tmpIdx = 0;
     BKF_RETURNVAL_IF(sess == VOS_NULL, BKF_ERR);
     BKF_RETURNVAL_IF(decoder == VOS_NULL, BKF_ERR);
@@ -314,8 +315,8 @@ STATIC uint32_t BkfSuberSessProcOneSessData(BkfSuberSess *sess, BkfMsgDecoder *d
         case BKF_MSG_DEL_SUB_NTF:
             return BkfSuberSessFsmInputEvt(sess, inputFlag[msgHead->msgId][tmpIdx], decoder, VOS_NULL);
         default:
-            BKF_LOG_ERROR(sess->sessMng->log, "Sess (%#x) msgId(%u, %s), ng\n",
-                BKF_MASK_ADDR(sess), msgHead->msgId, BkfMsgGetIdStr(msgHead->msgId));
+            BKF_LOG_ERROR(sess->sessMng->log, "Sess (%#x) msgId(%u, %s), ng\n", BKF_MASK_ADDR(sess), msgHead->msgId,
+                BkfMsgGetIdStr(msgHead->msgId));
             return BKF_ERR;
     }
 }

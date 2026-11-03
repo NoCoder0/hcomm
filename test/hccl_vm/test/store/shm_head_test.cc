@@ -16,12 +16,16 @@ class ShmHeadTest : public testing::Test {
 protected:
 };
 
-TEST_F(ShmHeadTest, ShmHead_Size) {
+TEST_F(ShmHeadTest, ShmHead_Size)
+{
     static_assert(sizeof(ShmHead) > 0, "ShmHead should have size");
-    EXPECT_EQ(sizeof(ShmHead), 88u);
+    // packed 布局：magic4+version4+name256(含 pid 前缀)+size8+lock4+refCount4=280。
+    // name 自 64 扩到 256（SimResourceRoot pid 前缀命名）后该断言未跟，两侧基线同红。
+    EXPECT_EQ(sizeof(ShmHead), 280u);
 }
 
-TEST_F(ShmHeadTest, ShmConstants_Match) {
+TEST_F(ShmHeadTest, ShmConstants_Match)
+{
     EXPECT_EQ(SHM_MAGIC, 0x53484D50);
     EXPECT_EQ(SHM_VERSION, 1);
 }

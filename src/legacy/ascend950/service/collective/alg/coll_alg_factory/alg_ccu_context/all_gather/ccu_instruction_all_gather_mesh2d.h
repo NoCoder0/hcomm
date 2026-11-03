@@ -24,9 +24,15 @@ namespace Hccl {
 // 为AllGatherMesh2D实现的CCUIns、CCUCtxArg与CCUTaskArg
 class CcuCtxArgAllGatherMesh2D : public CcuCtxArg {
 public:
-    explicit CcuCtxArgAllGatherMesh2D(const std::vector<uint64_t> &dSize, uint32_t rId, uint32_t axisId, const CollAlgOperator &op,
-        const std::vector<std::vector<RankId>> &tempVTopo) :
-            dimSize_(dSize), rankId_(rId), axisId_(axisId), op_(op), tempVTopo_(tempVTopo) {}
+    explicit CcuCtxArgAllGatherMesh2D(
+        const std::vector<uint64_t>& dSize, uint32_t rId, uint32_t axisId, const CollAlgOperator& op,
+        const std::vector<std::vector<RankId>>& tempVTopo)
+        : dimSize_(dSize),
+          rankId_(rId),
+          axisId_(axisId),
+          op_(op),
+          tempVTopo_(tempVTopo)
+    {}
     CcuCtxSignature GetCtxSignature() const override
     {
         CcuCtxSignature signature;
@@ -42,10 +48,17 @@ public:
 
 class CcuTaskArgAllGatherMesh2D : public CcuTaskArg {
 public:
-    explicit CcuTaskArgAllGatherMesh2D(uint64_t inputAddr, uint64_t outputAddr, uint64_t xAxisSize,
-        uint64_t yAxisSize, uint64_t sliceSize, uint64_t offset, uint64_t token) :
-        inputAddr_(inputAddr), outputAddr_(outputAddr), xAxisSize_(xAxisSize), yAxisSize_(yAxisSize),
-        sliceSize_(sliceSize), offset_(offset), token_(token) {}
+    explicit CcuTaskArgAllGatherMesh2D(
+        uint64_t inputAddr, uint64_t outputAddr, uint64_t xAxisSize, uint64_t yAxisSize, uint64_t sliceSize,
+        uint64_t offset, uint64_t token)
+        : inputAddr_(inputAddr),
+          outputAddr_(outputAddr),
+          xAxisSize_(xAxisSize),
+          yAxisSize_(yAxisSize),
+          sliceSize_(sliceSize),
+          offset_(offset),
+          token_(token)
+    {}
 
     uint64_t inputAddr_;
     uint64_t outputAddr_;
@@ -58,17 +71,17 @@ public:
 
 class CcuInstructionAllGatherMesh2D : public CcuInstruction {
 public:
-    CcuInstructionAllGatherMesh2D() : CcuInstruction()
-    {
-    }
+    CcuInstructionAllGatherMesh2D() : CcuInstruction() {}
 
-    void Init(uint32_t rankId, uint32_t axisId, uint64_t inputAddr, uint64_t outputAddr, uint64_t xAxisArgs, uint64_t yAxisArgs,
-        uint64_t sliceSize, uint64_t offset, uint64_t token, CollAlgOperator &op, std::vector<std::vector<RankId>> &tempVTopo)
+    void Init(
+        uint32_t rankId, uint32_t axisId, uint64_t inputAddr, uint64_t outputAddr, uint64_t xAxisArgs,
+        uint64_t yAxisArgs, uint64_t sliceSize, uint64_t offset, uint64_t token, CollAlgOperator& op,
+        std::vector<std::vector<RankId>>& tempVTopo)
     {
         u32 maxDimNum = 2;
         if (tempVTopo.size() != maxDimNum) {
-            THROW<InvalidParamsException>(StringFormat("[CcuTempAllGatherMesh2D] tempVTopo size is not 2, size is [%u].",
-                tempVTopo.size()));
+            THROW<InvalidParamsException>(
+                StringFormat("[CcuTempAllGatherMesh2D] tempVTopo size is not 2, size is [%u].", tempVTopo.size()));
         }
         for (uint32_t i = 0; i < tempVTopo.size(); i++) {
             dimSize_.push_back(tempVTopo[i].size());
@@ -96,7 +109,8 @@ public:
 
     std::string Describe() const override
     {
-        return StringFormat("CcuInstructionAllGatherMesh2D rankId [%u], instType[%s]", rankId_, instType_.Describe().c_str());
+        return StringFormat(
+            "CcuInstructionAllGatherMesh2D rankId [%u], instType[%s]", rankId_, instType_.Describe().c_str());
     }
 
     std::unique_ptr<CcuCtxArg> GetCtxArg() const override
@@ -104,15 +118,12 @@ public:
         return std::make_unique<CcuCtxArgAllGatherMesh2D>(dimSize_, rankId_, axisId_, op_, tempVTopo_);
     }
 
-    void SetInstType(CcuInstType instType) 
-    { 
-        instType_ = instType; 
-    }
+    void SetInstType(CcuInstType instType) { instType_ = instType; }
 
     std::unique_ptr<CcuTaskArg> GetTaskArg() const override
     {
-        return std::make_unique<CcuTaskArgAllGatherMesh2D>(inputAddr_, outputAddr_, xAxisArgs_, yAxisArgs_,
-            sliceSize_, offset_, token_);
+        return std::make_unique<CcuTaskArgAllGatherMesh2D>(
+            inputAddr_, outputAddr_, xAxisArgs_, yAxisArgs_, sliceSize_, offset_, token_);
     }
 
 private:
@@ -131,5 +142,5 @@ private:
     std::vector<std::vector<RankId>> tempVTopo_;
 };
 
-}
+} // namespace Hccl
 #endif // HCCLV2_CCU_INSTRUCTION_ALL_GATHER_MESH_2D_H_

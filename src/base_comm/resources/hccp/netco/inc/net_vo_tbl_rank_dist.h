@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef NET_VO_TBL_RANK_DIST_H
 #define NET_VO_TBL_RANK_DIST_H
 
@@ -128,4 +127,3 @@ char *NetTblRankDistributeInfoValGetStr(NetTblRankDistributeInfoVal *val, uint8_
 #endif
 
 #endif
-

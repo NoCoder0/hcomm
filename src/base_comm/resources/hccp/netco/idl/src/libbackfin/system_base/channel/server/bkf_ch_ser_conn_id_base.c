@@ -43,7 +43,7 @@ void BkfChSerConnIdBaseUninit(BkfChSerConnIdBase *base)
 
 BkfChSerConnIdBase *BkfChSerConnIdGetBase(BkfChSerConnId *connId)
 {
-    BkfChSerConnIdBase *base = (BkfChSerConnIdBase*)connId;
+    BkfChSerConnIdBase *base = (BkfChSerConnIdBase *)connId;
 
     if ((base == VOS_NULL) || !BKF_SIGN_IS_VALID(base->sign, BKF_CH_SER_CONN_ID_SIGN) ||
         !BKF_URL_TYPE_IS_VALID(base->urlType)) {
@@ -58,4 +58,3 @@ BkfChSerConnIdBase *BkfChSerConnIdGetBase(BkfChSerConnId *connId)
 }
 #endif
 #endif
-

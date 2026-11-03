@@ -21,30 +21,30 @@
 namespace HcclSim {
 namespace TaskGraphGeneratorV3 {
 
-struct AivGraphsGenerateInputV3 {
-    TaskGraphGeneratorV3 *graph{nullptr};
-    std::vector<TaskAivGraph *> aivGraphs;
-    StorageManager *storage{nullptr};
-};
+    struct AivGraphsGenerateInputV3 {
+        TaskGraphGeneratorV3* graph{nullptr};
+        std::vector<TaskAivGraph*> aivGraphs;
+        StorageManager* storage{nullptr};
+    };
 
-struct AivGraphGenerateOutputV3 {
-    size_t internalNodeCount{0};
-    size_t setWaitEdgeCount{0};
-    size_t pipeBarrierMergeCount{0};
-    size_t syncAllMergeCount{0};
-    size_t sendRecvEdgeCount{0};
-    size_t taskJsonTotalTaskCount{0};
-    size_t dagNodeCountBeforeCpGmMerge{0};
-    size_t dagNodeCountAfterCpGmMerge{0};
-    size_t cpGmLoopMergeCount{0};
-    size_t cpGmMergedIterationCount{0};
-    size_t cpGmMergedOriginalNodeCount{0};
-    size_t cpGmGeneratedNodeCount{0};
-    size_t cpGmInactiveNodeCount{0};
-    uint64_t expandNs{0};
-};
+    struct AivGraphGenerateOutputV3 {
+        size_t internalNodeCount{0};
+        size_t setWaitEdgeCount{0};
+        size_t pipeBarrierMergeCount{0};
+        size_t syncAllMergeCount{0};
+        size_t sendRecvEdgeCount{0};
+        size_t taskJsonTotalTaskCount{0};
+        size_t dagNodeCountBeforeCpGmMerge{0};
+        size_t dagNodeCountAfterCpGmMerge{0};
+        size_t cpGmLoopMergeCount{0};
+        size_t cpGmMergedIterationCount{0};
+        size_t cpGmMergedOriginalNodeCount{0};
+        size_t cpGmGeneratedNodeCount{0};
+        size_t cpGmInactiveNodeCount{0};
+        uint64_t expandNs{0};
+    };
 
-HcclResult ExpandAivGraphsV3(const AivGraphsGenerateInputV3 &input, AivGraphGenerateOutputV3 &output);
+    HcclResult ExpandAivGraphsV3(const AivGraphsGenerateInputV3& input, AivGraphGenerateOutputV3& output);
 
 } // namespace TaskGraphGeneratorV3
 } // namespace HcclSim

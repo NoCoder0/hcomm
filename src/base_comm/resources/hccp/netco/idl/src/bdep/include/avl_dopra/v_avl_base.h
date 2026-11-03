@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 /**
  * @defgroup util Util
  */
@@ -24,7 +23,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif /* --cplusplus */
-
 
 /* compare function */
 /**
@@ -47,7 +45,8 @@ typedef int (*AVL_V2_COMPARE_FUNC)(const void *, const void *);
  */
 #pragma pack(4)
 typedef struct avl_node {
-    struct avl_node *pstParent; /**< 指向本节点在树中的父节点的指针。如果本节点是树的根节点或者本节点不在树中，则指针为空。 */
+    struct avl_node
+        *pstParent; /**< 指向本节点在树中的父节点的指针。如果本节点是树的根节点或者本节点不在树中，则指针为空。 */
     struct avl_node *pstLeft;
     struct avl_node *pstRight;
     short int sLHeight;
@@ -224,42 +223,40 @@ extern void *VOS_AVL_Prev(AVL_NODE *pstNode);
  * @ingroup  v_avl
  * 初始化AVL树
  */
-#define VOS_AVL_INIT_TREE(TREE, COMPARE) \
-    do { \
-        (TREE).pfnCompare = (COMPARE); \
-        (TREE).pstFirst   = (AVL_NODE *)AVL_NULL_PTR; \
-        (TREE).pstLast    = (AVL_NODE *)AVL_NULL_PTR; \
-        (TREE).pstRoot    = (AVL_NODE *)AVL_NULL_PTR; \
+#define VOS_AVL_INIT_TREE(TREE, COMPARE)                                                                               \
+    do {                                                                                                               \
+        (TREE).pfnCompare = (COMPARE);                                                                                 \
+        (TREE).pstFirst = (AVL_NODE *)AVL_NULL_PTR;                                                                    \
+        (TREE).pstLast = (AVL_NODE *)AVL_NULL_PTR;                                                                     \
+        (TREE).pstRoot = (AVL_NODE *)AVL_NULL_PTR;                                                                     \
     } while (0)
 
 /**
  * @ingroup  v_avl
  * 初始化AVL树的结点
  */
-#define VOS_AVL_INIT_NODE(NODE, SELF, KEY) \
-    do { \
-        (NODE).pstParent = (AVL_NODE *)AVL_NULL_PTR; \
-        (NODE).pstLeft   = (AVL_NODE *)AVL_NULL_PTR; \
-        (NODE).pstRight  = (AVL_NODE *)AVL_NULL_PTR; \
-        (NODE).pSelf     = (SELF); \
-        (NODE).pKey      = (KEY); \
-        (NODE).sLHeight  = -1; \
-        (NODE).sRHeight  = -1; \
+#define VOS_AVL_INIT_NODE(NODE, SELF, KEY)                                                                             \
+    do {                                                                                                               \
+        (NODE).pstParent = (AVL_NODE *)AVL_NULL_PTR;                                                                   \
+        (NODE).pstLeft = (AVL_NODE *)AVL_NULL_PTR;                                                                     \
+        (NODE).pstRight = (AVL_NODE *)AVL_NULL_PTR;                                                                    \
+        (NODE).pSelf = (SELF);                                                                                         \
+        (NODE).pKey = (KEY);                                                                                           \
+        (NODE).sLHeight = -1;                                                                                          \
+        (NODE).sRHeight = -1;                                                                                          \
     } while (0)
 
-/* V2 AVL EXPOSED MACRO DEFINATIONS */
+/* V2 AVL EXPOSED MACRO DEFINITIONS */
 /**
  * @ingroup  v_avl
- * 尝试插入一个节点到AVL树中，返回值为[VOS_TURE, VOS_FALSE]，详细说明可以参考接口#VOS_AVL_Insert_Or_Find.
+ * 尝试插入一个节点到AVL树中，返回值为[VOS_TRUE, VOS_FALSE]，详细说明可以参考接口#VOS_AVL_Insert_Or_Find.
  */
-#define VOS_AVL_INSERT(TREE, NODE) \
-    (VOS_AVL_Insert_Or_Find(&(TREE), &(NODE)) == AVL_NULL_PTR)
+#define VOS_AVL_INSERT(TREE, NODE) (VOS_AVL_Insert_Or_Find(&(TREE), &(NODE)) == AVL_NULL_PTR)
 /**
  * @ingroup  v_avl
  * 尝试插入一个节点到AVL树中，返回值以及详细说明可以参考接口#VOS_AVL_Insert_Or_Find.
  */
-#define VOS_AVL_INSERT_OR_FIND(TREE, NODE) \
-    VOS_AVL_Insert_Or_Find(&(TREE), &(NODE))
+#define VOS_AVL_INSERT_OR_FIND(TREE, NODE) VOS_AVL_Insert_Or_Find(&(TREE), &(NODE))
 /**
  * @ingroup  v_avl
  * 删除指定的节点，详细说明可以参考接口#VOS_AVL_Delete.
@@ -284,7 +281,7 @@ extern void *VOS_AVL_Prev(AVL_NODE *pstNode);
  * @ingroup  v_avl
  * 返回树中首个节点的指针。
  */
-#define VOS_AVL_FIRST(TREE) \
+#define VOS_AVL_FIRST(TREE)                                                                                            \
     (((&(TREE))->pstFirst != (AVL_NODE *)AVL_NULL_PTR) ? (&(TREE))->pstFirst->pSelf : AVL_NULL_PTR)
 /**
  * @ingroup  v_avl
@@ -300,14 +297,12 @@ extern void *VOS_AVL_Prev(AVL_NODE *pstNode);
  * @ingroup  v_avl
  * 查找大于关键字KEY的节点，详细说明参考接口#VOS_AVL_Find_Or_Find_Next.
  */
-#define VOS_AVL_FIND_NEXT(TREE, KEY) \
-    VOS_AVL_Find_Or_Find_Next(&(TREE), (KEY), AVL_TRUE)
+#define VOS_AVL_FIND_NEXT(TREE, KEY) VOS_AVL_Find_Or_Find_Next(&(TREE), (KEY), AVL_TRUE)
 /**
  * @ingroup  v_avl
  * 查找大于等于关键字KEY的节点，详细说明参考接口#VOS_AVL_Find_Or_Find_Next.
  */
-#define VOS_AVL_FIND_OR_FIND_NEXT(TREE, KEY) \
-    VOS_AVL_Find_Or_Find_Next(&(TREE), (KEY), AVL_FALSE)
+#define VOS_AVL_FIND_OR_FIND_NEXT(TREE, KEY) VOS_AVL_Find_Or_Find_Next(&(TREE), (KEY), AVL_FALSE)
 
 #ifdef __cplusplus
 }

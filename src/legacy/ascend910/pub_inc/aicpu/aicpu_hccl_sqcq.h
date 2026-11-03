@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef __AICPU_HCCL_SQCQ_H__
 #define __AICPU_HCCL_SQCQ_H__
@@ -29,17 +29,17 @@ enum class CqeStatus : int64_t {
 };
 
 const uint64_t kCreditTimeInvalid = 255U;
-const uint64_t kCreditTimeDefault = 240U;  // 240对应到rts的credit字段就代表960s, 硬件同步时间
+const uint64_t kCreditTimeDefault = 240U; // 240对应到rts的credit字段就代表960s, 硬件同步时间
 const uint64_t kTimeOutTimeInvalid = 0U;
-const uint64_t kKfcTimeOut = 960U;         // 960s
-const uint64_t kSqFullWaitTimeOut = 60U;   // 60s, rtsq full等待时间要大于超时代答时间
-const uint64_t kPrintSqInterval = 30U;      // 算子执行阶段打印sqe状态的间隔，单位s
+const uint64_t kKfcTimeOut = 960U;       // 960s
+const uint64_t kSqFullWaitTimeOut = 60U; // 60s, rtsq full等待时间要大于超时代答时间
+const uint64_t kPrintSqInterval = 30U;   // 算子执行阶段打印sqe状态的间隔，单位s
 
 struct DfxTimeOutConfig {
     uint64_t sqeTimeOutTimeOut; // 软件同步
-    uint64_t sqeCreditTimeOut; // 硬件同步
-    bool useCredit; // 是否使用硬件同步
-    uint64_t sqeWaitTimeOut; // kfc自己的超时
+    uint64_t sqeCreditTimeOut;  // 硬件同步
+    bool useCredit;             // 是否使用硬件同步
+    uint64_t sqeWaitTimeOut;    // kfc自己的超时
     uint64_t sqFullWaitTimeOut; // sq满的时候等待的超时
     std::string ToString() const
     {
@@ -59,7 +59,7 @@ struct CqeQueryInput {
     uint32_t sqId;
     uint32_t cqId;
     uint32_t type;
-    uint8_t *cqeAddr;
+    uint8_t* cqeAddr;
     std::string ToString() const
     {
         std::stringstream ss;
@@ -71,10 +71,10 @@ struct CqeQueryInput {
         return ss.str();
     }
 };
-}
+} // namespace dfx
 namespace ts {
 enum ts_app_abort_status {
-    APP_ABORT_TERMINATE_FAIL  = 0x0U,
+    APP_ABORT_TERMINATE_FAIL = 0x0U,
     APP_ABORT_INIT,
     APP_ABORT_KILL_FINISH,
     APP_ABORT_TERMINATE_FINISH,
@@ -119,11 +119,11 @@ constexpr u64 STARS_EVENT_TABLE_OFFSET = 0x10000ULL;
 
 constexpr u32 RT_SDMA_COMPERR = 0x9; // A3 sdma error类型为0x9时，表示写拷贝发生超时代答，或者数据搬移时地址译码错误
 constexpr u32 RT_SDMA_COMPDATAERR = 0xa; // A3 sdma error类型为0xa时，表示读拷贝发生超时代答，或者读HBM返回ERROR
-constexpr u32 RT_SDMA_DATAERR = 0x8; // A3 sdma error类型为0x8时，表示读HBM返回ERROR
+constexpr u32 RT_SDMA_DATAERR = 0x8;                 // A3 sdma error类型为0x8时，表示读HBM返回ERROR
 constexpr uint16_t TS_ERROR_RETRY_CONSTRAINT = 1000; // 重执行失败，约束是算子不一致或者inplace算子不支持
 constexpr uint16_t TS_ERROR_AICPU_SDMA = 1001; // AICPU算子失败，sqe类型为SDMA是，上报给aicpu的框架错误码
 
-constexpr u32 AC_SQE_REV_MAX_CNT = 32U;  // 910B平台下调用halCqReportRecv接口最大能够接收的个数
+constexpr u32 AC_SQE_REV_MAX_CNT = 32U; // 910B平台下调用halCqReportRecv接口最大能够接收的个数
 constexpr uint32_t MAX_REPORT_CNT = 256U;
 
 enum SqeType : uint8_t {
@@ -185,35 +185,35 @@ enum rtStarsWriteValueSubType {
 };
 
 enum rtStarsSqeType {
-    RT_STARS_SQE_TYPE_FFTS = 0,           // FFTS
-    RT_STARS_SQE_TYPE_AICPU = 1,          // AICPU
-    RT_STARS_SQE_TYPE_PLACE_HOLDER = 3,   // PLACE_HOLDER
-    RT_STARS_SQE_TYPE_EVENT_RECORD = 4,   // EVENT_RECORD
-    RT_STARS_SQE_TYPE_EVENT_WAIT = 5,     // EVENT_WAIT
-    RT_STARS_SQE_TYPE_NOTIFY_RECORD = 6,  // NOTIFY_RECORD
-    RT_STARS_SQE_TYPE_NOTIFY_WAIT = 7,    // NOTIFY_WAIT
-    RT_STARS_SQE_TYPE_WRITE_VALUE = 8,    // for EVENT_RESET task
-    RT_STARS_SQE_TYPE_SDMA = 11,          // SDMA
-    RT_STARS_SQE_TYPE_VPC = 12,           // VPC
-    RT_STARS_SQE_TYPE_JPEGE = 13,         // JPEGE
-    RT_STARS_SQE_TYPE_JPEGD = 14,         // JPEGD
+    RT_STARS_SQE_TYPE_FFTS = 0,          // FFTS
+    RT_STARS_SQE_TYPE_AICPU = 1,         // AICPU
+    RT_STARS_SQE_TYPE_PLACE_HOLDER = 3,  // PLACE_HOLDER
+    RT_STARS_SQE_TYPE_EVENT_RECORD = 4,  // EVENT_RECORD
+    RT_STARS_SQE_TYPE_EVENT_WAIT = 5,    // EVENT_WAIT
+    RT_STARS_SQE_TYPE_NOTIFY_RECORD = 6, // NOTIFY_RECORD
+    RT_STARS_SQE_TYPE_NOTIFY_WAIT = 7,   // NOTIFY_WAIT
+    RT_STARS_SQE_TYPE_WRITE_VALUE = 8,   // for EVENT_RESET task
+    RT_STARS_SQE_TYPE_SDMA = 11,         // SDMA
+    RT_STARS_SQE_TYPE_VPC = 12,          // VPC
+    RT_STARS_SQE_TYPE_JPEGE = 13,        // JPEGE
+    RT_STARS_SQE_TYPE_JPEGD = 14,        // JPEGD
     RT_STARS_SQE_TYPE_DSA = 15,
-    RT_STARS_SQE_TYPE_ROCCE = 16,     // RoCCE
-    RT_STARS_SQE_TYPE_PCIE_DMA = 17,  // PCIE_DMA
-    RT_STARS_SQE_TYPE_RESV = 18,      // reserve
-    RT_STARS_SQE_TYPE_CDQM = 19,      // CDQM
-    RT_STARS_SQE_TYPE_COND = 20,      // condition
+    RT_STARS_SQE_TYPE_ROCCE = 16,    // RoCCE
+    RT_STARS_SQE_TYPE_PCIE_DMA = 17, // PCIE_DMA
+    RT_STARS_SQE_TYPE_RESV = 18,     // reserve
+    RT_STARS_SQE_TYPE_CDQM = 19,     // CDQM
+    RT_STARS_SQE_TYPE_COND = 20,     // condition
     RT_STARS_SQE_TYPE_END = 21,
     RT_STARS_SQE_TYPE_INVALID = 63,   // STARS_SQE_TYPE_INVALID
-    RT_STARS_SQE_TYPE_VIR_TYPE = 0xFF  // DVPP virtual SQE TYPE
+    RT_STARS_SQE_TYPE_VIR_TYPE = 0xFF // DVPP virtual SQE TYPE
 };
 
 /* stars send interrupt direction */
 enum rtStarsSqeIntDirType {
-    RT_STARS_SQE_INT_DIR_NO = 0,          // send no interrupt
-    RT_STARS_SQE_INT_DIR_TO_TSCPU = 1,    // to tscpu
-    RT_STARS_SQE_INT_DIR_TO_CTRLCPU = 2,  // to ctrlcpu
-    RT_STARS_SQE_INT_DIR_TO_HOST = 3,     // to host
+    RT_STARS_SQE_INT_DIR_NO = 0,         // send no interrupt
+    RT_STARS_SQE_INT_DIR_TO_TSCPU = 1,   // to tscpu
+    RT_STARS_SQE_INT_DIR_TO_CTRLCPU = 2, // to ctrlcpu
+    RT_STARS_SQE_INT_DIR_TO_HOST = 3,    // to host
     RT_STARS_SQE_INT_DIR_END = 4
 };
 
@@ -248,7 +248,7 @@ enum rtStarsWriteValueSizeType {
 };
 
 enum rtStarsCondIsaRegister_t {
-    RT_STARS_COND_ISA_REGISTER_R0 = 0,  // R0 is always zero, can't be destination register
+    RT_STARS_COND_ISA_REGISTER_R0 = 0, // R0 is always zero, can't be destination register
     RT_STARS_COND_ISA_REGISTER_R1 = 1,
     RT_STARS_COND_ISA_REGISTER_R2 = 2,
     RT_STARS_COND_ISA_REGISTER_R3 = 3,
@@ -273,24 +273,24 @@ enum rtStarsCondIsaBranchFunc3_t {
 };
 
 enum rtStarsCondIsaOpCode_t {
-    RT_STARS_COND_ISA_OP_CODE_OP_IMM = 0B0010011,                      // Integer Register-immd Instructions
-    RT_STARS_COND_ISA_OP_CODE_NOP = RT_STARS_COND_ISA_OP_CODE_OP_IMM,  // NOP is using OP_IMM ADDI R0,R0,0
-    RT_STARS_COND_ISA_OP_CODE_OP = 0B0110011,                          // Integer Register-Register Operations
-    RT_STARS_COND_ISA_OP_CODE_LWI = 0B1011011,                         // load immd
-    RT_STARS_COND_ISA_OP_CODE_BRANCH = 0B1100011,                      // Conditional stream-jump
-    RT_STARS_COND_ISA_OP_CODE_LOOP = 0B1111011,                        // LOOP
-    RT_STARS_COND_ISA_OP_CODE_STREAM = 0B0101011,                      // STREAM
-    RT_STARS_COND_ISA_OP_CODE_LOAD_IMM = 0B0000111,                    // LOAD immd
-    RT_STARS_COND_ISA_OP_CODE_LOAD = 0B0000011,                        // Load
-    RT_STARS_COND_ISA_OP_CODE_STORE = 0B0100111,                       // Store
-    RT_STARS_COND_ISA_OP_CODE_FUNC_CALL = 0B1101011,                   // FUNC_CALL
-    RT_STARS_COND_ISA_OP_CODE_SYSTEM = 0B1110011                       // CSR
+    RT_STARS_COND_ISA_OP_CODE_OP_IMM = 0B0010011,                     // Integer Register-immd Instructions
+    RT_STARS_COND_ISA_OP_CODE_NOP = RT_STARS_COND_ISA_OP_CODE_OP_IMM, // NOP is using OP_IMM ADDI R0,R0,0
+    RT_STARS_COND_ISA_OP_CODE_OP = 0B0110011,                         // Integer Register-Register Operations
+    RT_STARS_COND_ISA_OP_CODE_LWI = 0B1011011,                        // load immd
+    RT_STARS_COND_ISA_OP_CODE_BRANCH = 0B1100011,                     // Conditional stream-jump
+    RT_STARS_COND_ISA_OP_CODE_LOOP = 0B1111011,                       // LOOP
+    RT_STARS_COND_ISA_OP_CODE_STREAM = 0B0101011,                     // STREAM
+    RT_STARS_COND_ISA_OP_CODE_LOAD_IMM = 0B0000111,                   // LOAD immd
+    RT_STARS_COND_ISA_OP_CODE_LOAD = 0B0000011,                       // Load
+    RT_STARS_COND_ISA_OP_CODE_STORE = 0B0100111,                      // Store
+    RT_STARS_COND_ISA_OP_CODE_FUNC_CALL = 0B1101011,                  // FUNC_CALL
+    RT_STARS_COND_ISA_OP_CODE_SYSTEM = 0B1110011                      // CSR
 };
 
 // enum for isa op Op Imm func3
 enum rtStarsCondIsaOpImmFunc3_t {
     RT_STARS_COND_ISA_OP_IMM_FUNC3_ADDI = 0B000,
-    RT_STARS_COND_ISA_OP_IMM_FUNC3_NOP = RT_STARS_COND_ISA_OP_IMM_FUNC3_ADDI,  // NOP is using OP_IMM ADDI R0,R0,0
+    RT_STARS_COND_ISA_OP_IMM_FUNC3_NOP = RT_STARS_COND_ISA_OP_IMM_FUNC3_ADDI, // NOP is using OP_IMM ADDI R0,R0,0
     RT_STARS_COND_ISA_OP_IMM_FUNC3_SLLI = 0B001,
     RT_STARS_COND_ISA_OP_IMM_FUNC3_SLTI = 0B010,
     RT_STARS_COND_ISA_OP_IMM_FUNC3_SLTIU = 0B011,
@@ -298,7 +298,7 @@ enum rtStarsCondIsaOpImmFunc3_t {
     RT_STARS_COND_ISA_OP_IMM_FUNC3_SRLI = 0B101,
     RT_STARS_COND_ISA_OP_IMM_FUNC3_ORI = 0B110,
     RT_STARS_COND_ISA_OP_IMM_FUNC3_ANDI = 0B111,
-    RT_STARS_COND_ISA_OP_IMM_FUNC3_SRAI = 0B101  // diff with SRLI by func7
+    RT_STARS_COND_ISA_OP_IMM_FUNC3_SRAI = 0B101 // diff with SRLI by func7
 };
 
 // enum for isa op store func3
@@ -335,15 +335,15 @@ struct rtStarsWriteValueSqe_t {
     uint32_t snoop : 1;
     uint32_t awcache : 4;
     uint32_t awprot : 3;
-    uint32_t va : 1;  // 1 /* 1: virtual address; 0: phy addr */
+    uint32_t va : 1; // 1 /* 1: virtual address; 0: phy addr */
 
-    uint32_t res7;  // eventId for event reset task
+    uint32_t res7; // eventId for event reset task
     uint32_t sub_type;
 
     uint32_t write_value_part0;
     uint32_t write_value_part1;
     uint32_t rdmaWrLenth; // rdmaWr len
-    uint32_t rdmaType; // notify / payload
+    uint32_t rdmaType;    // notify / payload
     uint32_t write_value_part4;
     uint32_t write_value_part5;
     uint32_t write_value_part6;
@@ -475,7 +475,7 @@ struct rtCacheMemcpyRecordTaskTag_t {
 
 struct rtStarsPlaceHolderSqe_t {
     rtStarsSqeHeader_t header;
-    
+
     uint32_t res1;
     uint16_t res2;
     uint8_t kernel_credit;
@@ -495,9 +495,9 @@ struct rtStarsPlaceHolderSqe_t {
 struct rtStarsCondOpLHWI_t {
     uint32_t opCode : 7;
     uint32_t rd : 3;
-    uint32_t reserved0 : 2;  // reserved
+    uint32_t reserved0 : 2; // reserved
     uint32_t func3 : 3;
-    uint32_t reserved1 : 2;  // reserved
+    uint32_t reserved1 : 2; // reserved
     uint32_t immd : 15;
 };
 
@@ -505,7 +505,7 @@ struct rtStarsCondOpLHWI_t {
 struct rtStarsCondOpLLWI_t {
     uint32_t opCode : 7;
     uint32_t rd : 3;
-    uint32_t reserved0 : 2;  // reserved
+    uint32_t reserved0 : 2; // reserved
     uint32_t func3 : 3;
     uint32_t immdHigh : 17;
     uint32_t immdLow : 32;
@@ -557,10 +557,10 @@ struct rtStarsCondOpLoadImm_t {
 struct rtStarsCondOpImm_t {
     uint32_t opCode : 7;
     uint32_t rd : 3;
-    uint32_t reserved0 : 2;  // reserved
+    uint32_t reserved0 : 2; // reserved
     uint32_t func3 : 3;
     uint32_t rs1 : 3;
-    uint32_t reserved1 : 2;  // reserved
+    uint32_t reserved1 : 2; // reserved
     uint32_t immd : 12;
 };
 
@@ -580,8 +580,8 @@ struct rtStarsCondOpStore_t {
 using rtStarsCondOpNop_t = rtStarsCondOpImm_t;
 struct rtStarsCondOpClear_t {
     rtStarsCondOpLLWI_t llwi1;
-    rtStarsCondOpLHWI_t lhwi1;  // load wait address as the immediate to R1
-    rtStarsCondOpStore_t sw;    // the last turn clear write_value
+    rtStarsCondOpLHWI_t lhwi1; // load wait address as the immediate to R1
+    rtStarsCondOpStore_t sw;   // the last turn clear write_value
     rtStarsCondOpNop_t nop[3];
 };
 struct rtStarsCcoreWaitStartSqe_t {
@@ -593,9 +593,9 @@ struct rtStarsCcoreWaitStartSqe_t {
     uint8_t reserved2 : 7;
     uint8_t csc : 1;
 
-    rtStarsCondOpLoadImm_t ldrImm1;  // load current turn as the immediate to R3
-    rtStarsCondOpLoadImm_t ldrImm2;    // load wait value, to R2
-    rtStarsCondOpBranch_t beq;  // if waitvalue == 0, goto read R2
+    rtStarsCondOpLoadImm_t ldrImm1; // load current turn as the immediate to R3
+    rtStarsCondOpLoadImm_t ldrImm2; // load wait value, to R2
+    rtStarsCondOpBranch_t beq;      // if waitvalue == 0, goto read R2
     union {
         rtStarsCondOpClear_t clear;
         rtStarsCondOpNop_t nop[7];
@@ -621,7 +621,7 @@ struct rtLogicCqReport_t {
     volatile uint16_t streamId;
     volatile uint16_t taskId;
     volatile uint32_t errorCode; // cqe acc_status/sq_sw_status
-    volatile uint8_t errorType; // bit0 ~ bit5 cqe stars_defined_err_code, bit 6 cqe warning bit
+    volatile uint8_t errorType;  // bit0 ~ bit5 cqe stars_defined_err_code, bit 6 cqe warning bit
     volatile uint8_t sqeType;
     volatile uint16_t sqId;
     volatile uint16_t sqHead;
@@ -634,29 +634,23 @@ struct rtLogicCqReport_t {
         volatile uint64_t timeStamp;
         volatile uint16_t sqeIndex;
     } u1;
-/* Union description:
-* Internal: enque_timestamp temporarily used as dfx
-* External: reserved1
-*/
+    /* Union description:
+     * Internal: enque_timestamp temporarily used as dfx
+     * External: reserved1
+     */
     union {
         volatile uint64_t enqueTimeStamp;
         volatile uint64_t reserved1;
     } u2;
 };
 
-const std::vector<std::string> StarsCqeErrorDesc = {
-    "task exception",
-    "task trap",
-    "task timeout",
-    "sqe error",
-    "resource conflict error",
-    "sq sw status error",
-    "warning"
-};
+const std::vector<std::string> StarsCqeErrorDesc
+    = {"task exception",          "task trap",          "task timeout", "sqe error",
+       "resource conflict error", "sq sw status error", "warning"};
 #pragma pack(pop)
 
-inline void AddOneWriteValueRecordSqe(uint16_t streamId, uint16_t taskId, u64 notifyWRAddr,
-                                      rtStarsWriteValueSqe_t *const sqe)
+inline void
+AddOneWriteValueRecordSqe(uint16_t streamId, uint16_t taskId, u64 notifyWRAddr, rtStarsWriteValueSqe_t* const sqe)
 {
     sqe->header.type = RT_STARS_SQE_TYPE_WRITE_VALUE;
     sqe->header.rtStreamId = streamId;
@@ -670,10 +664,10 @@ inline void AddOneWriteValueRecordSqe(uint16_t streamId, uint16_t taskId, u64 no
     HCCL_DEBUG("[SQE] write value: writePtr=0x%lx, streamId=%u, taskId=%u.", notifyWRAddr, streamId, taskId);
 }
 
-inline void AddOneEventRecordSqe(uint16_t streamId, int32_t eventId, uint16_t taskId, rtStarsEventSqe_t *const ev_sqe)
+inline void AddOneEventRecordSqe(uint16_t streamId, int32_t eventId, uint16_t taskId, rtStarsEventSqe_t* const ev_sqe)
 {
     ev_sqe->header.type = RT_STARS_SQE_TYPE_EVENT_RECORD;
-    ev_sqe->header.wrCqe = 1U;  // 1: set wrCqe
+    ev_sqe->header.wrCqe = 1U; // 1: set wrCqe
     ev_sqe->kernel_credit = RT_STARS_DEFAULT_KERNEL_CREDIT;
 
     // eventRecordTaskInfo->waitCqflag  是否为同步task
@@ -687,7 +681,7 @@ inline void AddOneEventRecordSqe(uint16_t streamId, int32_t eventId, uint16_t ta
     HCCL_DEBUG("[SQE] event record: eventId=%d, streamId=%u, taskId=%u.", eventId, streamId, taskId);
 }
 
-inline void AddOneEventWaitSqe(uint16_t streamId, int32_t eventId, uint16_t taskId, rtStarsEventSqe_t *const ev_sqe)
+inline void AddOneEventWaitSqe(uint16_t streamId, int32_t eventId, uint16_t taskId, rtStarsEventSqe_t* const ev_sqe)
 {
     ev_sqe->header.type = RT_STARS_SQE_TYPE_EVENT_WAIT;
     ev_sqe->kernel_credit = RT_STARS_NEVER_TIMEOUT_KERNEL_CREDIT;
@@ -698,23 +692,25 @@ inline void AddOneEventWaitSqe(uint16_t streamId, int32_t eventId, uint16_t task
     HCCL_DEBUG("[SQE] event wait: eventId=%d, streamId=%u, taskId=%u", eventId, streamId, taskId);
 }
 
-extern void AddOneWaitStartSqe(uint16_t streamId, uint16_t taskId, u64 waitAddr, u64 curTurnCntAddr,
-    bool last, rtStarsCcoreWaitStartSqe_t * const sqe, uint8_t *sqeType);
-extern void AddOneWriteValueStartSqe(uint16_t streamId, uint16_t taskId, u64 writeAddr, u64 valueAddr,
-                                     rtStarsCcoreWriteValueSqe_t *const sqe, uint8_t *sqeType);
- 
-extern HcclResult QuerySqStatus(uint32_t devId, uint32_t sqId, uint32_t &sqHead, uint32_t &sqTail);
-extern HcclResult QuerySqStatusByType(uint32_t devId, uint32_t sqId, drvSqCqPropType_t type, uint32_t &outVal);
+extern void AddOneWaitStartSqe(
+    uint16_t streamId, uint16_t taskId, u64 waitAddr, u64 curTurnCntAddr, bool last,
+    rtStarsCcoreWaitStartSqe_t* const sqe, uint8_t* sqeType);
+extern void AddOneWriteValueStartSqe(
+    uint16_t streamId, uint16_t taskId, u64 writeAddr, u64 valueAddr, rtStarsCcoreWriteValueSqe_t* const sqe,
+    uint8_t* sqeType);
+
+extern HcclResult QuerySqStatus(uint32_t devId, uint32_t sqId, uint32_t& sqHead, uint32_t& sqTail);
+extern HcclResult QuerySqStatusByType(uint32_t devId, uint32_t sqId, drvSqCqPropType_t type, uint32_t& outVal);
 extern HcclResult ConfigSqStatusByType(uint32_t devId, uint32_t sqId, drvSqCqPropType_t type, uint32_t value);
-extern HcclResult QuerySqBaseAddr(uint32_t devId, uint32_t sqId, u64 &outVal);
+extern HcclResult QuerySqBaseAddr(uint32_t devId, uint32_t sqId, u64& outVal);
 using CqeStatus = dfx::CqeStatus;
 using CqeQueryInput = dfx::CqeQueryInput;
-extern CqeStatus CqReportRecv(const CqeQueryInput& cqeQueryInput, rtLogicCqReport_t &cqeException);
-extern void PrintTaskException(const rtLogicCqReport_t &reportOfOne);
+extern CqeStatus CqReportRecv(const CqeQueryInput& cqeQueryInput, rtLogicCqReport_t& cqeException);
+extern void PrintTaskException(const rtLogicCqReport_t& reportOfOne);
 extern HcclResult StreamsKill(const uint32_t devId);
 extern HcclResult DeviceQuery(const uint32_t devId, const uint32_t step, const uint32_t timeout);
 namespace hccl_plf {
-    HcclResult SendTaskExceptionByMBox(const u32 localDeviceId, const u32 notifyId, const u32 tsId,
-        const s32 userStreamId, const u32 cqeErrCode);
+HcclResult SendTaskExceptionByMBox(
+    const u32 localDeviceId, const u32 notifyId, const u32 tsId, const s32 userStreamId, const u32 cqeErrCode);
 }
-#endif  // __AICPU_HCCL_SQCQ_H__
+#endif // __AICPU_HCCL_SQCQ_H__

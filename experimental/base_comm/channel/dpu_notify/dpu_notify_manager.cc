@@ -12,9 +12,9 @@
 #include "log.h"
 namespace hcomm_experimental {
 
-constexpr uint32_t BYTE_SIZE = 8;  // 一个字节占8位，用于比较赋值等，避免使用魔法数字
+constexpr uint32_t BYTE_SIZE = 8; // 一个字节占8位，用于比较赋值等，避免使用魔法数字
 
-DpuNotifyManager &DpuNotifyManager::GetInstance()
+DpuNotifyManager& DpuNotifyManager::GetInstance()
 {
     int numNotify = 8192;
     static DpuNotifyManager instance{numNotify};
@@ -36,29 +36,30 @@ DpuNotifyManager::~DpuNotifyManager() = default;
 void DpuNotifyManager::UpdateFreeBit(uint32_t index)
 {
     for (uint32_t j = 0; j < BYTE_SIZE; ++j) {
-        if (!(notifyIdBitMap[index] & (1 << j))) {  // 检查第j位是否为0
+        if (!(notifyIdBitMap[index] & (1 << j))) { // 检查第j位是否为0
             freeBit[index] = j;
             return;
         }
     }
-    freeBit[index] = BYTE_SIZE;  // 都检查完了，已满
+    freeBit[index] = BYTE_SIZE; // 都检查完了，已满
 }
 
 int DpuNotifyManager::AllocSingleNotifyId()
 {
     for (uint32_t i = 0; i < byteSize; ++i) {
-        if (notifyIdBitMap[i] != 0xFF) {             // 当前字节未满
-            notifyIdBitMap[i] |= (1 << freeBit[i]);  // 设置为1
-            size_t tmp = freeBit[i];                 // 后续update会覆盖，所以先存起来。
+        if (notifyIdBitMap[i] != 0xFF) {            // 当前字节未满
+            notifyIdBitMap[i] |= (1 << freeBit[i]); // 设置为1
+            size_t tmp = freeBit[i];                // 后续update会覆盖，所以先存起来。
             UpdateFreeBit(i);
             return i * BYTE_SIZE + tmp;
         }
     }
-    return -1;  // 无可用资源
+    return -1; // 无可用资源
 }
 
-HcclResult DpuNotifyManager::AllocNotifyIds(uint32_t notifyNum,
-    std::vector<uint32_t> &notifyIds)  // std::unique_ptr<uint64_t[]>& handles)
+HcclResult DpuNotifyManager::AllocNotifyIds(
+    uint32_t notifyNum,
+    std::vector<uint32_t>& notifyIds) // std::unique_ptr<uint64_t[]>& handles)
 {
     if (notifyNum == 0) {
         HCCL_INFO("[DpuNotifyManager::%s] notifyNum == 0, no need to alloc.", __func__);
@@ -66,9 +67,8 @@ HcclResult DpuNotifyManager::AllocNotifyIds(uint32_t notifyNum,
     }
 
     if (notifyNum > byteSize * BYTE_SIZE) {
-        HCCL_ERROR("[DpuNotifyManager::%s] notifyNum[%u] is too large. Maximum: %u.",
-            __func__,
-            notifyNum,
+        HCCL_ERROR(
+            "[DpuNotifyManager::%s] notifyNum[%u] is too large. Maximum: %u.", __func__, notifyNum,
             byteSize * BYTE_SIZE);
         return HCCL_E_PARA;
     }
@@ -85,7 +85,7 @@ HcclResult DpuNotifyManager::AllocNotifyIds(uint32_t notifyNum,
             HCCL_ERROR("[DpuNotifyManager::%s] no free notify to alloc.", __func__);
             return HCCL_E_MEMORY;
         }
-        notifyIds[i] = notifyId;  // 存起来
+        notifyIds[i] = notifyId; // 存起来
     }
     return HCCL_SUCCESS;
 }
@@ -104,18 +104,16 @@ void DpuNotifyManager::FreeSingleNotifyId(uint32_t notifyId)
     return;
 }
 
-HcclResult DpuNotifyManager::FreeNotifyIds(uint32_t notifyNum, std::vector<uint32_t> &notifyIds)
+HcclResult DpuNotifyManager::FreeNotifyIds(uint32_t notifyNum, std::vector<uint32_t>& notifyIds)
 {
-    if (notifyNum == 0) {  // 没有需要回收的notify
+    if (notifyNum == 0) { // 没有需要回收的notify
         HCCL_INFO("[DpuNotifyManager::%s] notifyNum == 0, no need to free.", __func__);
         return HCCL_SUCCESS;
     }
 
     if (notifyNum > notifyIds.size()) {
-        HCCL_ERROR("[DpuNotifyManager::%s] notifyNum[%u] > notifyIds length[%zu].",
-            __func__,
-            notifyNum,
-            notifyIds.size());
+        HCCL_ERROR(
+            "[DpuNotifyManager::%s] notifyNum[%u] > notifyIds length[%zu].", __func__, notifyNum, notifyIds.size());
         return HCCL_E_PARA;
     }
 
@@ -127,4 +125,4 @@ HcclResult DpuNotifyManager::FreeNotifyIds(uint32_t notifyNum, std::vector<uint3
     return HCCL_SUCCESS;
 }
 
-}  // namespace Hccl
+} // namespace hcomm_experimental

@@ -27,8 +27,9 @@ extern "C" {
 #define LOG_INNER_ERR printf
 #define LOG_INNER_WARN printf
 #define UDF_CMD_OUTPUT printf
-#define UDF_CMD_SPLIT_LINE \
-"----------------------------------------------------------------------------------------------------------------------"
+#define UDF_CMD_SPLIT_LINE                                                                                             \
+    "----------------------------------------------------------------------------------------------------------------" \
+    "------"
 
 void DbgGetFuncName(void *funcAddr, char *funcName, size_t size);
 uint32_t SystimeGetMilliSec(uint64_t *milliSec);
@@ -40,4 +41,3 @@ void UdfTimeStrGet(char *timeStr, size_t targetimeStrSize);
 #endif
 
 #endif
-

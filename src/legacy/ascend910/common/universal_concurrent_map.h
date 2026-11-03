@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef UNIVERSAL_CONCURRENT_MAP_H
 #define UNIVERSAL_CONCURRENT_MAP_H
@@ -35,10 +35,10 @@ public:
         std::shared_lock<std::shared_timed_mutex> lock(mapMtx_);
         Iterator it = map_.find(k);
         if (it != map_.end()) {
-            return { it, true };
+            return {it, true};
         }
 
-        return { map_.end(), false };
+        return {map_.end(), false};
     }
 
     // true -> valid
@@ -47,10 +47,10 @@ public:
         std::shared_lock<std::shared_timed_mutex> lock(mapMtx_);
         ConstIterator it = map_.find(k);
         if (it != map_.end()) {
-            return { it, true };
+            return {it, true};
         }
 
-        return { map_.end(), false };
+        return {map_.end(), false};
     }
 
     // true -> 新插入
@@ -63,7 +63,7 @@ public:
     }
 
     // true -> 新插入，可能抛异常
-    template<typename Func, typename... Args>
+    template <typename Func, typename... Args>
     inline std::pair<Iterator, bool> EmplaceIfNotExist(const K& k, Func func, Args&&... args)
     {
         std::lock_guard<std::shared_timed_mutex> lock(mapMtx_);
@@ -72,11 +72,11 @@ public:
             return map_.emplace(k, func(std::forward<Args>(args)...));
         }
 
-        return { it, false };
+        return {it, false};
     }
 
     // 可能抛异常
-    template<typename Func, typename... Args>
+    template <typename Func, typename... Args>
     inline std::pair<Iterator, bool> EmplaceAndUpdate(const K& k, Func func, Args&&... args)
     {
         std::lock_guard<std::shared_timed_mutex> lock(mapMtx_);
@@ -87,13 +87,13 @@ public:
         return it;
     }
 
-    inline V& operator[] (K&& k)
+    inline V& operator[](K&& k)
     {
         std::lock_guard<std::shared_timed_mutex> lock(mapMtx_);
         return map_[std::forward<K>(k)];
     }
 
-    inline V& operator[] (const K& k)
+    inline V& operator[](const K& k)
     {
         std::lock_guard<std::shared_timed_mutex> lock(mapMtx_);
         return map_[k];
@@ -112,7 +112,7 @@ public:
     }
 
     // 可能抛异常
-    template<typename Func, typename... Args>
+    template <typename Func, typename... Args>
     inline void EraseAll(Func func, Args&&... args)
     {
         std::lock_guard<std::shared_timed_mutex> lock(mapMtx_);
@@ -141,25 +141,13 @@ public:
     }
 
     // 尽量少使用LockFree结尾的函数
-    inline SizeType EraseLockFree(const K& k)
-    {
-        return map_.erase(k);
-    }
+    inline SizeType EraseLockFree(const K& k) { return map_.erase(k); }
 
-    inline std::shared_timed_mutex &GetMtx()
-    {
-        return mapMtx_;
-    }
+    inline std::shared_timed_mutex& GetMtx() { return mapMtx_; }
 
-    inline Iterator FindLockFree(const K& k)
-    {
-        return map_.find(k);
-    }
+    inline Iterator FindLockFree(const K& k) { return map_.find(k); }
 
-    inline Iterator EndLockFree()
-    {
-        return map_.end();
-    }
+    inline Iterator EndLockFree() { return map_.end(); }
 
     template <class... Args>
     inline std::pair<Iterator, bool> EmplaceLockFree(Args&&... args)
@@ -171,12 +159,12 @@ private:
     mutable std::shared_timed_mutex mapMtx_{};
     MapType map_{};
 };
-}
+} // namespace hccl
 
 // 兼容旧版本，后续可以直接使用hccl::UniversalConcurrentMap替换原来的ConcurrentMap
 namespace Hccl {
-    template <typename K, typename V, template <typename...> class M = std::unordered_map, typename... MapArgs>
-    using UniversalConcurrentMap = hccl::UniversalConcurrentMap<K, V, M, MapArgs...>;
+template <typename K, typename V, template <typename...> class M = std::unordered_map, typename... MapArgs>
+using UniversalConcurrentMap = hccl::UniversalConcurrentMap<K, V, M, MapArgs...>;
 }
 
 #endif

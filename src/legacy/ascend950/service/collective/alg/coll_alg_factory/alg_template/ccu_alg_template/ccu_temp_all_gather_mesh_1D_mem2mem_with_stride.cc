@@ -25,73 +25,68 @@ static CcuInstRegister<CcuContextAllGatherMesh1DMem2MemWithStride>
     g_registrarAllGather(CcuInstType::CCU_ALLGATHER_MESH_1D_MEM2MEM_WITH_STRIDE_DIRECT);
 
 CcuTempAllGatherMesh1DMem2MemWithStride::CcuTempAllGatherMesh1DMem2MemWithStride(
-    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>> &tempVTopo,
-    const std::map<RankId, u32> &tempVirtRankMap)
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
     : CcuAlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap)
-{
-}
+{}
 
-CcuTempAllGatherMesh1DMem2MemWithStride::~CcuTempAllGatherMesh1DMem2MemWithStride()
-{
-}
+CcuTempAllGatherMesh1DMem2MemWithStride::~CcuTempAllGatherMesh1DMem2MemWithStride() {}
 
-HcclResult CcuTempAllGatherMesh1DMem2MemWithStride::CalcRes(AlgTempResReq &tempResReq)
+HcclResult CcuTempAllGatherMesh1DMem2MemWithStride::CalcRes(AlgTempResReq& tempResReq)
 {
-    tempResReq.queNum    = 1;
+    tempResReq.queNum = 1;
     tempResReq.streamNum = tempResReq.queNum;
     HCCL_DEBUG("[CalcRes] tempResReq.queNum[%u]", tempResReq.queNum);
     CHK_RET(CalcResLinksMesh(myRank_, tempRankSize_, tempVTopo_, linkNumBtwPeers_, tempResReq));
     return HcclResult::HCCL_SUCCESS;
 }
 
-uint64_t CcuTempAllGatherMesh1DMem2MemWithStride::GetMaxSliceSize() const
-{
-    return UB_MAX_DATA_SIZE;
-}
+uint64_t CcuTempAllGatherMesh1DMem2MemWithStride::GetMaxSliceSize() const { return UB_MAX_DATA_SIZE; }
 
-HcclResult CcuTempAllGatherMesh1DMem2MemWithStride::GenExtIns(const TempFuncs          &tempFuncs,
-                                                              const TemplateDataParams &templateDataParams,
-                                                              const ResLinks           &tempLinks,
-                                                              std::vector<InsQuePtr>   &tempInsQues)
+HcclResult CcuTempAllGatherMesh1DMem2MemWithStride::GenExtIns(
+    const TempFuncs& tempFuncs, const TemplateDataParams& templateDataParams, const ResLinks& tempLinks,
+    std::vector<InsQuePtr>& tempInsQues)
 {
-    CHK_PRT_RET(tempInsQues.empty(),
-        HCCL_ERROR("[CcuTempAllGatherMesh1DMem2MemWithStride] empty queue"), HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        tempInsQues.empty(), HCCL_ERROR("[CcuTempAllGatherMesh1DMem2MemWithStride] empty queue"),
+        HcclResult::HCCL_E_INTERNAL);
     CHK_PTR_NULL(tempInsQues[0]);
 
-    opMode_   = tempFuncs.opMode;
+    opMode_ = tempFuncs.opMode;
     buffInfo_ = templateDataParams.buffInfo;
     CcuInstructionAllGatherMesh1DMem2MemWithStride ccuIns;
     std::vector<uint64_t> dimSize;
     dimSize.push_back(tempRankSize_);
 
-    uint32_t                                rankId    = myRank_;
-    uint32_t                                repeatNum = templateDataParams.repeatNum;
-    const CollAlgOperator                  &op        = op_;
-    const std::vector<std::vector<RankId>> &tempVTopo = tempVTopo_;
-    uint64_t inputAddr  = BufferTypeToAddr(buffInfo_.inBuffType) + buffInfo_.inBuffBaseOff;
+    uint32_t rankId = myRank_;
+    uint32_t repeatNum = templateDataParams.repeatNum;
+    const CollAlgOperator& op = op_;
+    const std::vector<std::vector<RankId>>& tempVTopo = tempVTopo_;
+    uint64_t inputAddr = BufferTypeToAddr(buffInfo_.inBuffType) + buffInfo_.inBuffBaseOff;
     uint64_t outputAddr = BufferTypeToAddr(buffInfo_.outBuffType) + buffInfo_.outBuffBaseOff;
     uint64_t token;
     CHK_RET(GetToken(op_, token));
-    uint64_t inputSliceStride   = templateDataParams.inputSliceStride;
-    uint64_t outputSliceStride  = templateDataParams.outputSliceStride;
-    uint64_t inputRepeatStride  = templateDataParams.inputRepeatStride;
+    uint64_t inputSliceStride = templateDataParams.inputSliceStride;
+    uint64_t outputSliceStride = templateDataParams.outputSliceStride;
+    uint64_t inputRepeatStride = templateDataParams.inputRepeatStride;
     uint64_t outputRepeatStride = templateDataParams.outputRepeatStride;
-    uint64_t normalSliceSize    = templateDataParams.sliceSize;
-    uint64_t lastSliceSize      = templateDataParams.tailSize;
+    uint64_t normalSliceSize = templateDataParams.sliceSize;
+    uint64_t lastSliceSize = templateDataParams.tailSize;
     uint64_t isInputOutputEqual = (inputAddr == outputAddr) ? 1 : 0;
 
-    ccuIns.Init(tempVirtRankMap_[rankId], repeatNum, op, tempVTopo, inputAddr, outputAddr, token, inputSliceStride,
-                outputSliceStride, inputRepeatStride, outputRepeatStride, normalSliceSize, lastSliceSize,
-                isInputOutputEqual);
+    ccuIns.Init(
+        tempVirtRankMap_[rankId], repeatNum, op, tempVTopo, inputAddr, outputAddr, token, inputSliceStride,
+        outputSliceStride, inputRepeatStride, outputRepeatStride, normalSliceSize, lastSliceSize, isInputOutputEqual);
 
-    HCCL_DEBUG("[CcuTempAllGatherMesh1DMem2MemWithStride] Run Init: rankId[%u], repeatNum[%u], inputAddr[%llu], "
-               "outputAddr[%llu], inputSliceStride[%llu], outputSliceStride[%llu], "
-               "inputRepeatStride[%llu], outputRepeatStride[%llu], normalSliceSize[%llu], lastSliceSize[%llu]",
-               rankId, repeatNum, inputAddr, outputAddr, inputSliceStride, outputSliceStride, inputRepeatStride,
-               outputRepeatStride, normalSliceSize, lastSliceSize);
+    HCCL_DEBUG(
+        "[CcuTempAllGatherMesh1DMem2MemWithStride] Run Init: rankId[%u], repeatNum[%u], inputAddr[%llu], "
+        "outputAddr[%llu], inputSliceStride[%llu], outputSliceStride[%llu], "
+        "inputRepeatStride[%llu], outputRepeatStride[%llu], normalSliceSize[%llu], lastSliceSize[%llu]",
+        rankId, repeatNum, inputAddr, outputAddr, inputSliceStride, outputSliceStride, inputRepeatStride,
+        outputRepeatStride, normalSliceSize, lastSliceSize);
 
     std::vector<LinkData> links;
-    for (auto &pair : tempLinks) {
+    for (auto& pair : tempLinks) {
         if (pair.second.empty()) {
             continue;
         }
@@ -101,7 +96,7 @@ HcclResult CcuTempAllGatherMesh1DMem2MemWithStride::GenExtIns(const TempFuncs   
     ccuIns.SetLinks(links);
 
     RankGroup rankGroup;
-    for (auto &peer : tempVTopo_[0]) {
+    for (auto& peer : tempVTopo_[0]) {
         rankGroup.AddRank(peer);
     }
     u32 cntCkeNum = 3;
@@ -114,8 +109,8 @@ HcclResult CcuTempAllGatherMesh1DMem2MemWithStride::GenExtIns(const TempFuncs   
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CcuTempAllGatherMesh1DMem2MemWithStride::GenExtIns(const RankGraph *rankGraph, const TemplateInfo &tmpInfo,
-                                                              const std::vector<InsQuePtr> &tempInsQues) const
+HcclResult CcuTempAllGatherMesh1DMem2MemWithStride::GenExtIns(
+    const RankGraph* rankGraph, const TemplateInfo& tmpInfo, const std::vector<InsQuePtr>& tempInsQues) const
 {
     (void)rankGraph;
     (void)tmpInfo;

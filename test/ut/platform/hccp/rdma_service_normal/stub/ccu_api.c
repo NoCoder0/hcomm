@@ -12,17 +12,11 @@
 #include <errno.h>
 #include "ccu_u_api.h"
 
-int ccu_init(void)
-{
-    return 0;
-}
+int ccu_init(void) { return 0; }
 
-int ccu_uninit(void)
-{
-    return 0;
-}
+int ccu_uninit(void) { return 0; }
 
-int ccu_custom_channel(const struct channel_info_in *in, struct channel_info_out *out)
+int ccu_custom_channel(const struct channel_info_in* in, struct channel_info_out* out)
 {
     if (in == NULL || out == NULL) {
         return -EINVAL;
@@ -30,16 +24,8 @@ int ccu_custom_channel(const struct channel_info_in *in, struct channel_info_out
     return 0;
 }
 
-unsigned long long ccu_get_cqe_base_addr(unsigned int die_id)
-{
-    return 0;
-}
+unsigned long long ccu_get_cqe_base_addr(unsigned int die_id) { return 0; }
 
-int ccu_get_mem_info(unsigned int die_id, unsigned long long mem_type_bitmap, struct ccu_mem_rsp *rsp)
-{
-    return 0;
-}
+int ccu_get_mem_info(unsigned int die_id, unsigned long long mem_type_bitmap, struct ccu_mem_rsp* rsp) { return 0; }
 
-int ccu_tlv_request(struct ccu_tlv_request_info *tlvRequestInfo) {
-    return 0;
-}
+int ccu_tlv_request(struct ccu_tlv_request_info* tlvRequestInfo) { return 0; }

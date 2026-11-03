@@ -69,8 +69,9 @@ std::vector<u64> GenerateSendCountMatrix(u64 count, u32 rankSize)
     return sendCountMatrix;
 }
 
-void GenAllToAllVParams(u32 rankSize, u64 count, std::vector<u64>& sendCounts, std::vector<u64>& sdispls,
-                        std::vector<u64>& recvCounts, std::vector<u64>& rdispls)
+void GenAllToAllVParams(
+    u32 rankSize, u64 count, std::vector<u64>& sendCounts, std::vector<u64>& sdispls, std::vector<u64>& recvCounts,
+    std::vector<u64>& rdispls)
 {
     u64 sendDisplacement = 0;
     u64 recvDisplacement = 0;
@@ -95,8 +96,8 @@ HcclResult GenTestOpParams(u32 rankSize, const SimpleParam& uiParam, CheckerOpPa
     testOpParam.devtype = uiParam.devtype;
     testOpParam.is310P3V = uiParam.is310P3V;
 
-    if (uiParam.opType == CheckerOpType::BROADCAST || uiParam.opType == CheckerOpType::REDUCE ||
-        uiParam.opType == CheckerOpType::GATHER || uiParam.opType == CheckerOpType::SCATTER) {
+    if (uiParam.opType == CheckerOpType::BROADCAST || uiParam.opType == CheckerOpType::REDUCE
+        || uiParam.opType == CheckerOpType::GATHER || uiParam.opType == CheckerOpType::SCATTER) {
         testOpParam.root = uiParam.root;
     }
 
@@ -117,13 +118,13 @@ HcclResult GenTestOpParams(u32 rankSize, const SimpleParam& uiParam, CheckerOpPa
         testOpParam.All2AllDataDes.recvType = uiParam.dataType;
     } else if (testOpParam.opType == CheckerOpType::ALLTOALLV) {
         u64 count = uiParam.count / rankSize;
-        GenAllToAllVParams(rankSize, count, testOpParam.All2AllDataDes.sendCounts,
-            testOpParam.All2AllDataDes.sdispls,
+        GenAllToAllVParams(
+            rankSize, count, testOpParam.All2AllDataDes.sendCounts, testOpParam.All2AllDataDes.sdispls,
             testOpParam.All2AllDataDes.recvCounts, testOpParam.All2AllDataDes.rdispls);
         testOpParam.All2AllDataDes.sendType = uiParam.dataType;
         testOpParam.All2AllDataDes.recvType = uiParam.dataType;
-    } else if (testOpParam.opType == CheckerOpType::ALLGATHER_V ||
-               testOpParam.opType == CheckerOpType::REDUCE_SCATTER_V) {
+    } else if (
+        testOpParam.opType == CheckerOpType::ALLGATHER_V || testOpParam.opType == CheckerOpType::REDUCE_SCATTER_V) {
         u64 displacement = 0;
         for (u32 i = 0; i < rankSize; i++) {
             testOpParam.VDataDes.counts.push_back(uiParam.count);
@@ -143,4 +144,4 @@ HcclResult GenTestOpParams(u32 rankSize, const SimpleParam& uiParam, CheckerOpPa
     return HCCL_SUCCESS;
 }
 
-} // namespace hccl
+} // namespace checker

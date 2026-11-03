@@ -19,37 +19,29 @@ using namespace Hccl;
 // Test suite class
 class InnerNetDevManagerTest : public ::testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "InnerNetDevTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "InnerNetDevTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "InnerNetDevTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "InnerNetDevTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in InnerNetDevTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in InnerNetDevTest SetUP" << std::endl; }
 
     virtual void TearDown()
-    {    
+    {
         GlobalMockObject::verify();
         std::cout << "A Test case in InnerNetDevTest TearDown" << std::endl;
     }
 };
 
 /**
-* @tc.name  : AddDevice_ShouldReturnSuccess_WhenDeviceCreated
-* @tc.number: InnerNetDevManager_Test_001
-* @tc.desc  : 测试 AddDevice 成功创建设备并添加到管理器
-*/
+ * @tc.name  : AddDevice_ShouldReturnSuccess_WhenDeviceCreated
+ * @tc.number: InnerNetDevManager_Test_001
+ * @tc.desc  : 测试 AddDevice 成功创建设备并添加到管理器
+ */
 TEST_F(InnerNetDevManagerTest, AddDevice_ShouldReturnSuccess_WhenDeviceCreated)
 {
     MOCKER(Hccl::HrtRaRdmaInit).stubs().will(returnValue(Hccl::RdmaHandle()));
-    Hccl::NetDevInfo info = {0, Hccl::PortDeploymentType::DEV_NET, Hccl::LinkProtoType::RDMA, 0, Hccl::IpAddress("1.0.0.0")};
+    Hccl::NetDevInfo info
+        = {0, Hccl::PortDeploymentType::DEV_NET, Hccl::LinkProtoType::RDMA, 0, Hccl::IpAddress("1.0.0.0")};
 
     Hccl::HcclNetDevice* hcclNetDev = nullptr;
     HcclResult result = Hccl::InnerNetDevManager::GetInstance().AddDevice(info, hcclNetDev);
@@ -60,10 +52,10 @@ TEST_F(InnerNetDevManagerTest, AddDevice_ShouldReturnSuccess_WhenDeviceCreated)
 }
 
 /**
-* @tc.name  : AddDevice_ShouldReturnError_WhenDeviceCreationFails
-* @tc.number: InnerNetDevManager_Test_002
-* @tc.desc  : 测试 AddDevice 创建设备失败时返回错误
-*/
+ * @tc.name  : AddDevice_ShouldReturnError_WhenDeviceCreationFails
+ * @tc.number: InnerNetDevManager_Test_002
+ * @tc.desc  : 测试 AddDevice 创建设备失败时返回错误
+ */
 TEST_F(InnerNetDevManagerTest, AddDevice_ShouldReturnError_WhenDeviceCreationFails)
 {
     // 模拟 new HcclNetDev 返回 nullptr
@@ -74,15 +66,16 @@ TEST_F(InnerNetDevManagerTest, AddDevice_ShouldReturnError_WhenDeviceCreationFai
 }
 
 /**
-* @tc.name  : RemoveDevice_ShouldReturnSuccess_WhenDeviceExists
-* @tc.number: InnerNetDevManager_Test_003
-* @tc.desc  : 测试 RemoveDevice 成功移除设备
-*/
+ * @tc.name  : RemoveDevice_ShouldReturnSuccess_WhenDeviceExists
+ * @tc.number: InnerNetDevManager_Test_003
+ * @tc.desc  : 测试 RemoveDevice 成功移除设备
+ */
 TEST_F(InnerNetDevManagerTest, RemoveDevice_ShouldReturnSuccess_WhenDeviceExists)
 {
     MOCKER(Hccl::HrtRaRdmaInit).stubs().will(returnValue(Hccl::RdmaHandle()));
-    Hccl::NetDevInfo info = {0, Hccl::PortDeploymentType::DEV_NET, Hccl::LinkProtoType::RDMA, 0, Hccl::IpAddress("1.0.0.0")};
-    
+    Hccl::NetDevInfo info
+        = {0, Hccl::PortDeploymentType::DEV_NET, Hccl::LinkProtoType::RDMA, 0, Hccl::IpAddress("1.0.0.0")};
+
     Hccl::HcclNetDevice* hcclNetDev = nullptr;
     Hccl::InnerNetDevManager::GetInstance().AddDevice(info, hcclNetDev);
     HcclResult result = Hccl::InnerNetDevManager::GetInstance().DeleteDevice(hcclNetDev);
@@ -91,14 +84,15 @@ TEST_F(InnerNetDevManagerTest, RemoveDevice_ShouldReturnSuccess_WhenDeviceExists
 }
 
 /**
-* @tc.name  : RemoveDevice_ShouldReturnError_WhenDeviceDoesNotExist
-* @tc.number: InnerNetDevManager_Test_004
-* @tc.desc  : 测试 RemoveDevice 设备不存在时返回错误
-*/
+ * @tc.name  : RemoveDevice_ShouldReturnError_WhenDeviceDoesNotExist
+ * @tc.number: InnerNetDevManager_Test_004
+ * @tc.desc  : 测试 RemoveDevice 设备不存在时返回错误
+ */
 TEST_F(InnerNetDevManagerTest, RemoveDevice_ShouldReturnError_WhenDeviceDoesNotExist)
 {
     MOCKER(Hccl::HrtRaRdmaInit).stubs().will(returnValue(Hccl::RdmaHandle()));
-    Hccl::NetDevInfo info = {0, Hccl::PortDeploymentType::DEV_NET, Hccl::LinkProtoType::RDMA, 0, Hccl::IpAddress("1.0.0.0")};
+    Hccl::NetDevInfo info
+        = {0, Hccl::PortDeploymentType::DEV_NET, Hccl::LinkProtoType::RDMA, 0, Hccl::IpAddress("1.0.0.0")};
     HcclResult result = Hccl::InnerNetDevManager::GetInstance().RemoveDevice(info);
 
     EXPECT_EQ(result, HCCL_SUCCESS);

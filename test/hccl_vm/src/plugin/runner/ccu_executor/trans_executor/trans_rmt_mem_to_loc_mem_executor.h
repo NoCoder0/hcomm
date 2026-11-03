@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: ccu executor -- trans rmt mem to loc mem
  * Author: caiyifan
  */
@@ -22,7 +25,8 @@
 
 class TransRmtMemToLocMemExecutor : public CcuExecutorBase {
 public:
-    explicit TransRmtMemToLocMemExecutor(int streamId, int rankId, int dieId, const hcomm::CcuRep::CcuInstr &instr, CcuSimulator *ccuSimulator)
+    explicit TransRmtMemToLocMemExecutor(
+        int streamId, int rankId, int dieId, const hcomm::CcuRep::CcuInstr& instr, CcuSimulator* ccuSimulator)
         : CcuExecutorBase(streamId, rankId, dieId, instr, ccuSimulator)
     {}
     TransRmtMemToLocMemExecutor() = default;
@@ -31,9 +35,10 @@ public:
     void Parser() override;
     void Run() override;
     std::string Describe() override;
+    CcuTrace::CcuInstrTraceDetail CollectTraceDetail() override;
 
 private:
-    void Process(CcuResourceManager &ccuResMgr);
+    void Process(CcuResourceManager& ccuResMgr);
 
 private:
     uint16_t locGSAId_{0};

@@ -12,8 +12,7 @@
 
 namespace Hccl {
 
-RmaConnection::RmaConnection(Socket *socket, const RmaConnType rmaConnType)
-    : socket(socket), rmaConnType(rmaConnType)
+RmaConnection::RmaConnection(Socket* socket, const RmaConnType rmaConnType) : socket(socket), rmaConnType(rmaConnType)
 {
     status = RmaConnStatus::INIT;
 }
@@ -32,19 +31,17 @@ void RmaConnection::Close()
     status = RmaConnStatus::CLOSE;
 }
 
-RmaConnStatus RmaConnection::GetStatus()
-{
-    return status;
-}
+RmaConnStatus RmaConnection::GetStatus() { return status; }
 
-void RmaConnection::Bind(RemoteRmaBuffer *remoteRmaBuf, BufferType bufType)
+void RmaConnection::Bind(RemoteRmaBuffer* remoteRmaBuf, BufferType bufType)
 {
-    HCCL_INFO("[RmaConnection][%s] bind bufType[%s] Buffer[%s].", Describe().c_str(), bufType.Describe().c_str(),
-               remoteRmaBuf->Describe().c_str());
+    HCCL_INFO(
+        "[RmaConnection][%s] bind bufType[%s] Buffer[%s].", Describe().c_str(), bufType.Describe().c_str(),
+        remoteRmaBuf->Describe().c_str());
     remoteBufs[bufType] = remoteRmaBuf;
 }
 
-RemoteRmaBuffer *RmaConnection::GetRemoteRmaBuffer(const BufferType &bufType)
+RemoteRmaBuffer* RmaConnection::GetRemoteRmaBuffer(const BufferType& bufType)
 {
     auto iter = remoteBufs.find(bufType);
     if (iter != remoteBufs.end()) {
@@ -54,50 +51,53 @@ RemoteRmaBuffer *RmaConnection::GetRemoteRmaBuffer(const BufferType &bufType)
     }
 }
 
-unique_ptr<BaseTask> RmaConnection::PrepareRead(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                                const SqeConfig &config)
+unique_ptr<BaseTask> RmaConnection::PrepareRead(
+    [[maybe_unused]] const MemoryBuffer& remoteMemBuf, [[maybe_unused]] const MemoryBuffer& localMemBuf,
+    [[maybe_unused]] const SqeConfig& config)
 {
     MACRO_THROW(NotSupportException, StringFormat("RmaConnection not support this function."));
 }
 
-unique_ptr<BaseTask> RmaConnection::PrepareReadReduce(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                                      DataType datatype, ReduceOp reduceOp, const SqeConfig &config)
+unique_ptr<BaseTask> RmaConnection::PrepareReadReduce(
+    [[maybe_unused]] const MemoryBuffer& remoteMemBuf, [[maybe_unused]] const MemoryBuffer& localMemBuf,
+    [[maybe_unused]] DataType datatype, [[maybe_unused]] ReduceOp reduceOp, [[maybe_unused]] const SqeConfig& config)
 {
     MACRO_THROW(NotSupportException, StringFormat("RmaConnection not support this function."));
 }
 
-unique_ptr<BaseTask> RmaConnection::PrepareWrite(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                                 const SqeConfig &config)
+unique_ptr<BaseTask> RmaConnection::PrepareWrite(
+    [[maybe_unused]] const MemoryBuffer& remoteMemBuf, [[maybe_unused]] const MemoryBuffer& localMemBuf,
+    [[maybe_unused]] const SqeConfig& config)
 {
     MACRO_THROW(NotSupportException, StringFormat("RmaConnection not support this function."));
 }
 
-unique_ptr<BaseTask> RmaConnection::PrepareWriteReduce(const MemoryBuffer &remoteMemBuf,
-                                                       const MemoryBuffer &localMemBuf, DataType datatype,
-                                                       ReduceOp reduceOp, const SqeConfig &config)
+unique_ptr<BaseTask> RmaConnection::PrepareWriteReduce(
+    [[maybe_unused]] const MemoryBuffer& remoteMemBuf, [[maybe_unused]] const MemoryBuffer& localMemBuf,
+    [[maybe_unused]] DataType datatype, [[maybe_unused]] ReduceOp reduceOp, [[maybe_unused]] const SqeConfig& config)
 {
     MACRO_THROW(NotSupportException, StringFormat("RmaConnection not support this function."));
 }
 
-unique_ptr<BaseTask> RmaConnection::PrepareInlineWrite(const MemoryBuffer &remoteMemBuf, u64 data,
-                                                       const SqeConfig &config)
+unique_ptr<BaseTask> RmaConnection::PrepareInlineWrite(
+    [[maybe_unused]] const MemoryBuffer& remoteMemBuf, [[maybe_unused]] u64 data,
+    [[maybe_unused]] const SqeConfig& config)
 {
     MACRO_THROW(NotSupportException, StringFormat("RmaConnection not support this function."));
 }
 
-unique_ptr<BaseTask> RmaConnection::PrepareWriteWithNotify(const MemoryBuffer &remoteMemBuf,
-                                                           const MemoryBuffer &localMemBuf, u64 data,
-                                                           const MemoryBuffer &remoteNotifyMemBuf,
-                                                           const SqeConfig    &config)
+unique_ptr<BaseTask> RmaConnection::PrepareWriteWithNotify(
+    [[maybe_unused]] const MemoryBuffer& remoteMemBuf, [[maybe_unused]] const MemoryBuffer& localMemBuf,
+    [[maybe_unused]] u64 data, [[maybe_unused]] const MemoryBuffer& remoteNotifyMemBuf,
+    [[maybe_unused]] const SqeConfig& config)
 {
     MACRO_THROW(NotSupportException, StringFormat("RmaConnection not support this function."));
 }
 
-unique_ptr<BaseTask> RmaConnection::PrepareWriteReduceWithNotify(const MemoryBuffer &remoteMemBuf,
-                                                                 const MemoryBuffer &localMemBuf, DataType datatype,
-                                                                 ReduceOp reduceOp, u64 data,
-                                                                 const MemoryBuffer &remoteNotifyMemBuf,
-                                                                 const SqeConfig    &config)
+unique_ptr<BaseTask> RmaConnection::PrepareWriteReduceWithNotify(
+    [[maybe_unused]] const MemoryBuffer& remoteMemBuf, [[maybe_unused]] const MemoryBuffer& localMemBuf,
+    [[maybe_unused]] DataType datatype, [[maybe_unused]] ReduceOp reduceOp, [[maybe_unused]] u64 data,
+    [[maybe_unused]] const MemoryBuffer& remoteNotifyMemBuf, [[maybe_unused]] const SqeConfig& config)
 {
     MACRO_THROW(NotSupportException, StringFormat("RmaConnection not support this function."));
 }

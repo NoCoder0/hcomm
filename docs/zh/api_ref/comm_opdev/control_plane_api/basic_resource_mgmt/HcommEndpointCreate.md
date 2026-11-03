@@ -2,9 +2,21 @@
 
 ## 产品支持情况
 
-- Ascend 950PR/Ascend 950DT：支持
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：不支持
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：不支持
+<!-- npu="950" id1 -->
+- Ascend 950PR&950DT系列产品：支持
+<!-- end id1 -->
+<!-- npu="A3" id2 -->
+- Atlas A3 训练系列产品/Atlas A3 推理系列产品：支持
+<!-- end id2 -->
+<!-- npu="910b" id3 -->
+- Atlas A2 训练系列产品/Atlas A2 推理系列产品：支持
+<!-- end id3 -->
+<!-- npu="910" id4 -->
+- Atlas训练系列产品：不支持
+<!-- end id4 -->
+<!-- npu="310p" id5 -->
+- Atlas推理系列产品：不支持
+<!-- end id5 -->
 
 ## 功能说明
 
@@ -29,8 +41,31 @@ HcommResult：接口返回0表示成功，其他失败。
 
 ## 约束说明
 
- - 当Endpoint位于HOST侧时，支持的protocol为RoCE、UBC_TP、UBC_CTP。
- - 当Endpoint位于DEVICE侧时，支持的protocol为RoCE、UBC_TP、UBC_CTP、UB_MEM、PCIe、UBoE、HCCS、UBG。其中UBG仅Ascend 950PR/Ascend 950DT支持。
+支持的protocol与Endpoint位置（loc）、芯片型号有关，具体如下。协议与芯片类型不匹配时，接口返回失败。
+
+<!-- npu="950" id6 -->
+针对Ascend 950PR/Ascend 950DT：
+
+- 支持的protocol为RoCE、UB_CTP、UB_MEM、PCIe、UBoe、UB_RTP。
+<!-- end id6 -->
+
+<!-- npu="A3" id7 -->
+针对Atlas A3 训练系列产品/Atlas A3 推理系列产品：
+
+- 仅支持Endpoint位于DEVICE侧。
+- DEVICE侧支持的protocol为RoCE、HCCS。
+
+不支持HOST侧创建Endpoint；不支持UB_CTP、UB_MEM、PCIe、UBoe、UB_RTP等协议。
+<!-- end id7 -->
+
+<!-- npu="910b" id8 -->
+针对Atlas A2 训练系列产品/Atlas A2 推理系列产品：
+
+- 仅支持Endpoint位于DEVICE侧。
+- DEVICE侧支持的protocol为RoCE、HCCS。
+
+不支持HOST侧创建Endpoint；不支持UB_CTP、UB_MEM、PCIe、UBoe、UB_RTP等协议。
+<!-- end id8 -->
 
 ## 调用示例
 
@@ -38,7 +73,7 @@ HcommResult：接口返回0表示成功，其他失败。
 struct in_addr ipAddr;
 inet_pton(AF_INET, "192.168.1.100", &ipAddr);
 const EndpointDesc endpointDesc = {
-    .protocol = COMM_PROTOCOL_UBC_TP,
+    .protocol = COMM_PROTOCOL_UB_RTP,
     .commAddr = {
         .type = COMM_ADDR_TYPE_IP_V4,
         .addr = ipAddr

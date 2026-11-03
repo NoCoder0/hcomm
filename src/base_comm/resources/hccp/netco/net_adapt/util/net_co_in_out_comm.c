@@ -8,17 +8,15 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #include "net_co_in_out_comm.h"
 #include "bifrost_cncoi_reader.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-const BifrostCncoiSliceKeyT g_NetCoDftSliceKey_ = { 0 };
-BifrostCncoiSliceKeyT *g_NetCoDftSliceKey = (BifrostCncoiSliceKeyT*)&g_NetCoDftSliceKey_;
+const BifrostCncoiSliceKeyT g_NetCoDftSliceKey_ = {0};
+BifrostCncoiSliceKeyT *g_NetCoDftSliceKey = (BifrostCncoiSliceKeyT *)&g_NetCoDftSliceKey_;
 
 #ifdef __cplusplus
 }
 #endif
-

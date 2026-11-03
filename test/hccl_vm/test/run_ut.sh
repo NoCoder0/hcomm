@@ -1,4 +1,5 @@
 #!/bin/bash
+# -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2026 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
@@ -6,6 +7,7 @@
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
 
 # HCCL_VM UT 测试执行脚本
 # 流程: 第一步-CMake配置+编译 -> 第二步-生成可执行文件 -> 第三步-执行用例 -> 第四步-生成lcov覆盖率报告
@@ -30,6 +32,7 @@ COV_DIR="$CODE_DIR/coverage_report"
 ENABLE_COVERAGE=0
 CMAKE_BUILD_TYPE="Debug"
 MAKE_JOBS=8
+G_TEST_STATUS=0
 
 # ==================== 测试执行优化配置 ====================
 # 默认超时(秒)
@@ -256,6 +259,25 @@ get_binary_name() {
         echo "$(basename "$bin")" | grep -q "$filepart" && echo "$(basename "$bin")" && return 0
     done
 
+    # 目标名与文件名推导约定不一致时（如 relational_engine_base_test.cc 的
+    # 目标是 test_relational_engine），先从测试文件所在目录的 CMakeLists.txt
+    # 反查 add_executable 声明的真实目标名，再退回命名约定——避免目录模式
+    # 推导出不存在的目标使 make 中止（clean build 下 BIN_DIR 无二进制，
+    # 前面的约定匹配与子串匹配均未命中，直达此处）。实现不依赖 grep -P
+    # （部分环境的 grep 在多字节 locale 下拒绝 -P）：先把整份 CMakeLists
+    # 拍平、按 add_executable( 与 ) 切行，再按"独立 <测试文件>.cc 词元"定位
+    # 所在语句行，取该行首词即目标名。
+    local cmake_lists="$(dirname "$test_file")/CMakeLists.txt"
+    if [ -f "$cmake_lists" ]; then
+        local target
+        target=$(tr '\n' ' ' < "$cmake_lists" \
+            | sed -e 's/add_executable(/\n/g' -e 's/)/)\n/g' \
+            | grep -E "(^|[[:space:]])${base}\.cc([^[:alnum:]_.]|$)" \
+            | head -1 \
+            | awk '{print $1}')
+        [ -n "$target" ] && echo "$target" && return 0
+    fi
+
     # Clean build directory may not have produced the binary yet. Fall back to
     # the repository convention so directory mode can still build only the
     # targets that belong to that directory.
@@ -281,7 +303,7 @@ run_one_binary() {
     if [ ! -x "$BIN_DIR/$bin_name" ]; then
         echo -e "${RED}✗ 二进制不存在: $bin_name${NC}"
         log_run "二进制不存在: $bin_name"
-        echo "STATUS_LINE:NOBIN:0:0"
+        echo "STATUS_LINE,NOBIN:0:0"
         return 1
     fi
 
@@ -291,7 +313,7 @@ run_one_binary() {
     echo -e "${BLUE}--- 执行: $bin_name${filter_info} ---${NC}"
     log_run "执行: $bin_name${filter_info}"
 
-    rm -f /dev/shm/HcclAicpuData /dev/shm/Hccl* 2>/dev/null
+    rm -f /dev/shm/Hccl* 2>/dev/null
 
     local start=$(date +%s)
     local output
@@ -367,6 +389,7 @@ step_run_single() {
     local stype=$(echo "$status_line" | cut -d: -f1)
     local sp=$(echo "$status_line" | cut -d: -f2)
     local sf=$(echo "$status_line" | cut -d: -f3)
+    [ "$stype" != "PASS" ] && G_TEST_STATUS=1
     echo -e "状态: ${GREEN}$stype${NC}, PASSED: ${GREEN}${sp}${NC}, FAILED: ${RED}${sf}${NC}"
 }
 
@@ -401,6 +424,7 @@ step_run_directory() {
         [ -n "$sf" ] && total_fail=$((total_fail + sf))
         [ "$stype" = "CRASH" ] && total_crash=$((total_crash + 1))
         [ "$stype" = "TIMEOUT" ] && total_timeout=$((total_timeout + 1))
+        [ "$stype" != "PASS" ] && G_TEST_STATUS=1
         echo ""
     done
 
@@ -477,6 +501,7 @@ step_run_all() {
                 [ -n "$sf" ] && total_fail=$((total_fail + sf))
                 [ "$stype" = "CRASH" ] && total_crash=$((total_crash + 1))
                 [ "$stype" = "TIMEOUT" ] && total_timeout=$((total_timeout + 1))
+                [ "$stype" != "PASS" ] && G_TEST_STATUS=1
             fi
         done
         rm -rf "$tmpdir"
@@ -494,6 +519,7 @@ step_run_all() {
             [ -n "$sf" ] && total_fail=$((total_fail + sf))
             [ "$stype" = "CRASH" ] && total_crash=$((total_crash + 1))
             [ "$stype" = "TIMEOUT" ] && total_timeout=$((total_timeout + 1))
+            [ "$stype" != "PASS" ] && G_TEST_STATUS=1
             echo ""
         done
     fi
@@ -514,6 +540,7 @@ step_run_all() {
     G_TEST_FAIL=$total_fail
     G_TEST_CRASH=$total_crash
     G_TEST_TIMEOUT=$total_timeout
+    [ "$count" -eq 0 ] && G_TEST_STATUS=1
 }
 
 # ==================== 第四步: 生成覆盖率报告 ====================
@@ -702,7 +729,7 @@ main() {
             do_build || exit 1
             step_run_all
             if [ "$ENABLE_COVERAGE" -eq 1 ]; then
-                step_gen_coverage
+                step_gen_coverage || G_TEST_STATUS=1
                 show_final_summary
             fi
             ;;
@@ -751,7 +778,7 @@ main() {
                 fi
             fi
             if [ "$ENABLE_COVERAGE" -eq 1 ]; then
-                step_gen_coverage
+                step_gen_coverage || G_TEST_STATUS=1
                 show_final_summary
             fi
             ;;
@@ -774,6 +801,7 @@ main() {
     if [ "$ENABLE_COVERAGE" -eq 1 ]; then
         echo -e "  覆盖率报告:  ${YELLOW}$COV_DIR/html/index.html${NC}"
     fi
+    return "$G_TEST_STATUS"
 }
 
 main "$@"

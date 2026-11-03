@@ -12,7 +12,8 @@
 #define HCCLV2_STL_UTIL_H
 
 namespace Hccl {
-template <typename CONTAINER, typename E> bool Contain(CONTAINER &c, E e)
+template <typename CONTAINER, typename E>
+bool Contain(CONTAINER& c, E e)
 {
     return c.find(e) != c.end();
 }

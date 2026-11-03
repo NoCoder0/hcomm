@@ -15,7 +15,7 @@
 
 namespace Hccl {
 
-constexpr uint16_t RANK_NUM_PER_CKE = 16;  // 本rank给远端置位时应当写的CKE，16个对端一个CKE
+constexpr uint16_t RANK_NUM_PER_CKE = 16; // 本rank给远端置位时应当写的CKE，16个对端一个CKE
 
 void CcuContextHalfAllToAllVMesh1D::ExchangeCtxResource()
 {
@@ -39,10 +39,10 @@ void CcuContextHalfAllToAllVMesh1D::ExchangeCtxResource()
 }
 
 CcuContextHalfAllToAllVMesh1D::CcuContextHalfAllToAllVMesh1D(
-    const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports, const CcuTransportGroup &group)
+    const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group)
     : CcuContextAlgBase(arg, transports, group)
 {
-    const CcuCtxArgHalfAllToAllVMesh1D *ctxArg = dynamic_cast<const CcuCtxArgHalfAllToAllVMesh1D *>(&arg);
+    const CcuCtxArgHalfAllToAllVMesh1D* ctxArg = dynamic_cast<const CcuCtxArgHalfAllToAllVMesh1D*>(&arg);
     if (ctxArg == nullptr) {
         THROW<NullPtrException>(StringFormat("CcuContextHalfAllToAllVMesh1D::ctxArg ptr is null"));
     }
@@ -52,7 +52,7 @@ CcuContextHalfAllToAllVMesh1D::CcuContextHalfAllToAllVMesh1D(
         rankSize_ = ctxArg->dimSize[0];
     }
     missionId_ = ctxArg->missionId;
-    signalNum_ = (rankSize_ + RANK_NUM_PER_CKE - 1) / RANK_NUM_PER_CKE;  // 每个CKE有16个bit
+    signalNum_ = (rankSize_ + RANK_NUM_PER_CKE - 1) / RANK_NUM_PER_CKE; // 每个CKE有16个bit
     myCclBufferAddr_ = ctxArg->cclBufferAddr;
 
     userInAddr_ = CreateVariable();
@@ -62,7 +62,7 @@ CcuContextHalfAllToAllVMesh1D::CcuContextHalfAllToAllVMesh1D(
     goSize_ = CreateGroupOpSize();
 
     curSrc_ = CreateMemory();
-    if (transports.size() == 0 || transports.size() < rankSize_ -1) {
+    if (transports.size() == 0 || transports.size() < rankSize_ - 1) {
         THROW<NullPtrException>(StringFormat("CcuContextHalfAllToAllVMesh1D transports is empty or size is less"));
     }
     for (uint32_t i = 0; i < rankSize_; i++) {
@@ -104,12 +104,12 @@ void CcuContextHalfAllToAllVMesh1D::LoadArgs()
         Load(recvOffset_);
 
         // Mi0将参数同步给Mi1
-        LocalCtxPostVar(userInAddr_, anoUserInAddr_, anoMiSignal0_, 1 << 0);  // 用第1个bit标记
-        LocalCtxPostVar(sendSizeAddr_, anoSendSizeAddr_, anoMiSignal0_, 1 << 1);  // 用第2个
-        LocalCtxPostVar(sendOffsetAddr_, anoSendOffsetAddr_, anoMiSignal0_, 1 << 2);  // 用第3个
-        LocalCtxPostVar(recvOffset_, anoRecvOffset_, anoMiSignal0_, 1 << 3);  // 用第4个
+        LocalCtxPostVar(userInAddr_, anoUserInAddr_, anoMiSignal0_, 1 << 0);         // 用第1个bit标记
+        LocalCtxPostVar(sendSizeAddr_, anoSendSizeAddr_, anoMiSignal0_, 1 << 1);     // 用第2个
+        LocalCtxPostVar(sendOffsetAddr_, anoSendOffsetAddr_, anoMiSignal0_, 1 << 2); // 用第3个
+        LocalCtxPostVar(recvOffset_, anoRecvOffset_, anoMiSignal0_, 1 << 3);         // 用第4个
     } else {
-        LocalWait(locMiSignal0_, (1 << 4) - 1);  // 共同步4个参数
+        LocalWait(locMiSignal0_, (1 << 4) - 1); // 共同步4个参数
     }
     return;
 }
@@ -125,7 +125,7 @@ void CcuContextHalfAllToAllVMesh1D::LoadArgsFromMem()
     curDst_[rankId_].addr = myCclBufferAddr_;
 
     // 连续加载rankSize * 2个sendSize
-    dataLength = 8;  // 每个Xn占8个byte
+    dataLength = 8; // 每个Xn占8个byte
 
     u32 argsCount = sendSizeA_.size() + sendSizeB_.size() + sendOffsetA_.size() + sendOffsetB_.size();
     std::vector<CcuRep::Variable> tempArgs(argsCount);
@@ -160,8 +160,8 @@ void CcuContextHalfAllToAllVMesh1D::MissionSync(uint32_t signalIndex)
 {
     const uint32_t MISSION_NUM = 2;
     if (signalIndex > 1) {
-        THROW<InvalidParamsException>(StringFormat(
-            "[CcuContextHalfAllToAllVMesh1D] Unexpected SignalInex[%u]", signalIndex));
+        THROW<InvalidParamsException>(
+            StringFormat("[CcuContextHalfAllToAllVMesh1D] Unexpected SignalIndex[%u]", signalIndex));
     }
     LocalCtxPost(anoMiSignal1_, 1 << (missionId_ + signalIndex * MISSION_NUM));
     LocalWait(locMiSignal1_, 1 << (1 - missionId_ + signalIndex * MISSION_NUM));
@@ -183,12 +183,12 @@ void CcuContextHalfAllToAllVMesh1D::PostSync()
         for (uint16_t sId = 0; sId < signalNum_; sId++) {
             uint32_t waitBit;
             if (sId != signalNum_ - 1) {
-                waitBit = (1 << RANK_NUM_PER_CKE) - 1;  // 等待全部16个peer
+                waitBit = (1 << RANK_NUM_PER_CKE) - 1; // 等待全部16个peer
             } else {
                 waitBit = ((1 << (rankSize_ - (signalNum_ - 1) * RANK_NUM_PER_CKE)) - 1);
             }
             if (sId == signalId) {
-                waitBit &= ~selfBit;  // 如果这个CKE上有自己对应的bit，设为0
+                waitBit &= ~selfBit; // 如果这个CKE上有自己对应的bit，设为0
             }
             GroupWait(*transportGroup, sId, waitBit);
         }
@@ -210,8 +210,8 @@ void CcuContextHalfAllToAllVMesh1D::Algorithm()
     curSrc_.token = token_[rankId_];
 
     for (uint32_t peerId = 0; peerId < rankSize_; peerId++) {
-        CcuRep::Variable &curCount = missionId_ == 0 ? sendSizeA_[peerId] : sendSizeB_[peerId];
-        CcuRep::Variable &curOffset = missionId_ == 0 ? sendOffsetA_[peerId] : sendOffsetB_[peerId];
+        CcuRep::Variable& curCount = missionId_ == 0 ? sendSizeA_[peerId] : sendSizeB_[peerId];
+        CcuRep::Variable& curOffset = missionId_ == 0 ? sendOffsetA_[peerId] : sendOffsetB_[peerId];
         uint16_t peerSignalId = peerId / RANK_NUM_PER_CKE;
         uint16_t peerBit = 1 << (peerId % RANK_NUM_PER_CKE);
 
@@ -220,7 +220,7 @@ void CcuContextHalfAllToAllVMesh1D::Algorithm()
         curSrc_.addr += curOffset;
         curDst_[peerId].addr += recvOffset_;
         if (missionId_ == 1) {
-            curDst_[peerId].addr += sendSizeA_[peerId];  // Mi1的dst需要加chunkOffset
+            curDst_[peerId].addr += sendSizeA_[peerId]; // Mi1的dst需要加chunkOffset
         }
         if (peerId == rankId_) {
             lgSrc.addr = curSrc_.addr;
@@ -228,13 +228,13 @@ void CcuContextHalfAllToAllVMesh1D::Algorithm()
             LocalPost(writeDoneSignal_[peerSignalId], peerBit);
         } else {
             uint16_t transIdx = (peerId < rankId_) ? peerId : peerId - 1;
-            CCU_IF(tempCount != 0) {
-                Write(*(transports[transIdx]), curDst_[peerId], curSrc_, tempCount,
-                    writeDoneSignal_[peerSignalId], peerBit);
+            CCU_IF(tempCount != 0)
+            {
+                Write(
+                    *(transports[transIdx]), curDst_[peerId], curSrc_, tempCount, writeDoneSignal_[peerSignalId],
+                    peerBit);
             }
-            CCU_IF(tempCount == 0) {
-                LocalPost(writeDoneSignal_[peerSignalId], peerBit);
-            }
+            CCU_IF(tempCount == 0) { LocalPost(writeDoneSignal_[peerSignalId], peerBit); }
         }
     }
 
@@ -244,7 +244,7 @@ void CcuContextHalfAllToAllVMesh1D::Algorithm()
     for (uint16_t sId = 0; sId < signalNum_; sId++) {
         uint32_t waitBit;
         if (sId != signalNum_ - 1) {
-            waitBit = (1 << RANK_NUM_PER_CKE) - 1;  // 等待全部16个peer
+            waitBit = (1 << RANK_NUM_PER_CKE) - 1; // 等待全部16个peer
         } else {
             waitBit = ((1 << (rankSize_ - (signalNum_ - 1) * RANK_NUM_PER_CKE)) - 1);
         }
@@ -257,14 +257,14 @@ void CcuContextHalfAllToAllVMesh1D::Algorithm()
     return;
 }
 
-std::vector<uint64_t> CcuContextHalfAllToAllVMesh1D::GeneArgs(const CcuTaskArg &arg)
+std::vector<uint64_t> CcuContextHalfAllToAllVMesh1D::GeneArgs(const CcuTaskArg& arg)
 {
     (void)arg;
     std::vector<uint64_t> args = {};
-    uint64_t argNum = missionId_ == 0 ? 9 : 0;  // Mi0有9个Load，Mi1不做Load
+    uint64_t argNum = missionId_ == 0 ? 9 : 0; // Mi0有9个Load，Mi1不做Load
     for (uint32_t i = 0; i < argNum; i++) {
         args.emplace_back(0);
     }
     return args;
 }
-}
+} // namespace Hccl

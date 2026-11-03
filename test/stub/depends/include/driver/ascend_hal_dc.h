@@ -11,5 +11,4 @@
 #ifndef ASCEND_HAL_DC_H
 #define ASCEND_HAL_DC_H
 
-
 #endif

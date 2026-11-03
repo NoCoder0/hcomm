@@ -13,44 +13,43 @@
 #include "topo_match_base.h"
 
 namespace Hccl {
-TopoMatchBase::TopoMatchBase(const RankId vRank, const u32 rankSize, const RankGraph *rankGraph,
-                             const DevType devType)
-    : myRank_(vRank), rankSize_(rankSize), rankGraph_(rankGraph), devType_(devType)
-{
-}
+TopoMatchBase::TopoMatchBase(const RankId vRank, const u32 rankSize, const RankGraph* rankGraph, const DevType devType)
+    : myRank_(vRank),
+      rankSize_(rankSize),
+      rankGraph_(rankGraph),
+      devType_(devType)
+{}
 
-TopoMatchBase::~TopoMatchBase()
-{
-}
+TopoMatchBase::~TopoMatchBase() {}
 
-HcclResult TopoMatchBase::MatchTopo(std::vector<std::vector<RankId>> &vTopo, std::vector<RankId> &virtRanks,
-                                    std::map<RankId, u32> &virtRankMap)
-{
-    (void)vTopo;
-    (void)virtRanks;
-    (void)virtRankMap;
-    HCCL_ERROR("[CollAlgFactory] Rank [%d], use proper multi-level interfacce to match topo.", myRank_);
-    return HcclResult::HCCL_E_INTERNAL;
-}
-
-HcclResult TopoMatchBase::MatchTopo(std::vector<std::vector<std::vector<RankId>>> &vTopo,
-                                    std::vector<std::vector<RankId>>              &virtRanks,
-                                    std::vector<std::map<RankId, u32>>            &virtRankMap)
+HcclResult TopoMatchBase::MatchTopo(
+    std::vector<std::vector<RankId>>& vTopo, std::vector<RankId>& virtRanks, std::map<RankId, u32>& virtRankMap)
 {
     (void)vTopo;
     (void)virtRanks;
     (void)virtRankMap;
-    HCCL_ERROR("[CollAlgFactory] Rank [%d], use proper 1-level interfacce to match topo.", myRank_);
+    HCCL_ERROR("[CollAlgFactory] Rank [%d], use proper multi-level interface to match topo.", myRank_);
     return HcclResult::HCCL_E_INTERNAL;
 }
 
-HcclResult TopoMatchBase:: SetTargetRanks(std::set<u32>& targetRanks)
+HcclResult TopoMatchBase::MatchTopo(
+    std::vector<std::vector<std::vector<RankId>>>& vTopo, std::vector<std::vector<RankId>>& virtRanks,
+    std::vector<std::map<RankId, u32>>& virtRankMap)
+{
+    (void)vTopo;
+    (void)virtRanks;
+    (void)virtRankMap;
+    HCCL_ERROR("[CollAlgFactory] Rank [%d], use proper 1-level interface to match topo.", myRank_);
+    return HcclResult::HCCL_E_INTERNAL;
+}
+
+HcclResult TopoMatchBase::SetTargetRanks(std::set<u32>& targetRanks)
 {
     (void)targetRanks;
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TopoMatchBase::GenVirtRankMapping(std::vector<RankId> &virtRanks, std::map<RankId, u32> &virtRankMap) const
+HcclResult TopoMatchBase::GenVirtRankMapping(std::vector<RankId>& virtRanks, std::map<RankId, u32>& virtRankMap) const
 {
     std::sort(virtRanks.begin(), virtRanks.end());
     for (u64 idx = 0; idx < virtRanks.size(); idx++) {
@@ -60,8 +59,8 @@ HcclResult TopoMatchBase::GenVirtRankMapping(std::vector<RankId> &virtRanks, std
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TopoMatchBase::GenVirtRankMappingMultiLevel(std::vector<std::vector<RankId>>   &virtRanks,
-                                                       std::vector<std::map<RankId, u32>> &virtRankMap) const
+HcclResult TopoMatchBase::GenVirtRankMappingMultiLevel(
+    std::vector<std::vector<RankId>>& virtRanks, std::vector<std::map<RankId, u32>>& virtRankMap) const
 {
     for (auto vRankIter = virtRanks.begin(); vRankIter != virtRanks.end(); vRankIter++) {
         std::map<RankId, u32> tmpVirtRankMap;
@@ -75,24 +74,28 @@ HcclResult TopoMatchBase::GenVirtRankMappingMultiLevel(std::vector<std::vector<R
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TopoMatchBase::CalcRankOnSamePlaneOfR0(std::vector<std::vector<RankId>> &rankOnSameBoardVector,
-        std::vector<std::vector<RankId>> &rankOnSameSlotVector, std::vector<u32> &numRanksPerBoard) const
+HcclResult TopoMatchBase::CalcRankOnSamePlaneOfR0(
+    std::vector<std::vector<RankId>>& rankOnSameBoardVector, std::vector<std::vector<RankId>>& rankOnSameSlotVector,
+    std::vector<u32>& numRanksPerBoard) const
 {
     rankOnSameBoardVector.resize(RANK_SIZE_EIGHT, {});
     rankOnSameSlotVector.resize(RANK_SIZE_EIGHT, {});
     const NetInstance* netInstance = rankGraph_->GetNetInstanceByRankId(0, myRank_);
-    if(netInstance == nullptr) {
+    if (netInstance == nullptr) {
         HCCL_ERROR("TopoMatchBase::CalcRankOnSamePlaneOfR0 netInstance is nullptr");
         return HcclResult::HCCL_E_PTR;
     }
     std::set<RankId> rankSet = netInstance->GetRankIds();
-    CHK_PRT_RET((rankSet.size() == 0),
-                HCCL_ERROR("[CollAlgFactory] Rank [%d], Invalid virtual topo.", myRank_),
-                HcclResult::HCCL_E_PARA);
+    CHK_PRT_RET(
+        (rankSet.size() == 0), HCCL_ERROR("[CollAlgFactory] Rank [%d], Invalid virtual topo.", myRank_),
+        HcclResult::HCCL_E_PARA);
 
     for (RankId rankId : rankSet) {
         u32 localId = rankGraph_->GetReplacedLocalId(rankId);
-        CHK_PRT_RET(localId >= RANK_SIZE_EIGHT * RANK_SIZE_EIGHT, HCCL_ERROR("localId is bigger than 63."), HcclResult::HCCL_E_PARA);
+        CHK_PRT_RET(
+            localId >= RANK_SIZE_EIGHT * RANK_SIZE_EIGHT,
+            HCCL_ERROR("localId[%u] is bigger than 63 (RANK_SIZE_EIGHT * RANK_SIZE_EIGHT - 1).", localId),
+            HcclResult::HCCL_E_PARA);
         rankOnSameBoardVector[localId / RANK_SIZE_EIGHT].push_back(rankId);
         rankOnSameSlotVector[localId % RANK_SIZE_EIGHT].push_back(rankId);
     }
@@ -143,36 +146,39 @@ u32 TopoMatchBase::GcdTwo(u32 a, u32 b) const
     return a;
 }
 
-u32 TopoMatchBase::GcdMultiple(const std::vector<u32>& numbers) const
+HcclResult TopoMatchBase::GcdMultiple(const std::vector<u32>& numbers, u32& result) const
 {
     if (numbers.empty()) {
-        THROW<InvalidParamsException>(StringFormat("Input vector cannot be empty."));
+        HCCL_ERROR("[%s] Input vector cannot be empty.", __func__);
+        return HcclResult::HCCL_E_PARA;
     }
-    uint32_t result = numbers[0];
+    result = numbers[0];
     for (const auto num : numbers) {
         result = GcdTwo(result, num);
         if (result == 1) {
-            return 1;
+            result = 1;
+            return HcclResult::HCCL_SUCCESS;
         }
     }
-    return result;
+    return HcclResult::HCCL_SUCCESS;
 }
 
 HcclResult TopoMatchBase::GenerateLevel1(
-    const std::set<RankId> &rankSetLevel1, u32 gcdInstSize, RankId rankId,
-    std::vector<std::vector<std::vector<RankId>>> &vTopo,
-    std::vector<std::vector<RankId>> &virtRanks) const
+    const std::set<RankId>& rankSetLevel1, u32 gcdInstSize, RankId rankId,
+    std::vector<std::vector<std::vector<RankId>>>& vTopo, std::vector<std::vector<RankId>>& virtRanks) const
 {
-    CHK_PRT_RET((gcdInstSize == 0),
-                HCCL_ERROR("[CollAlgFactory] [TopoMatchBase] Rank [%d], gcdInstSize = 0", myRank_),
-                HcclResult::HCCL_E_PARA);
+    CHK_PRT_RET(
+        (gcdInstSize == 0), HCCL_ERROR("[CollAlgFactory] [TopoMatchBase] Rank [%d], gcdInstSize = 0", myRank_),
+        HcclResult::HCCL_E_PARA);
 
     auto rankIter = rankSetLevel1.find(rankId);
-    CHK_PRT_RET((rankIter == rankSetLevel1.end()),
-                HCCL_ERROR("[CollAlgFactory] [TopoMatchBase] Rank [%d], "
-                           "failed to find this rank in rankSetLevel1[%s].",
-                           myRank_, PrintSet<RankId>(rankSetLevel1).c_str()),
-                HcclResult::HCCL_E_PARA);
+    CHK_PRT_RET(
+        (rankIter == rankSetLevel1.end()),
+        HCCL_ERROR(
+            "[CollAlgFactory] [TopoMatchBase] Rank [%d], "
+            "failed to find this rank in rankSetLevel1[%s].",
+            myRank_, PrintSet<RankId>(rankSetLevel1).c_str()),
+        HcclResult::HCCL_E_PARA);
     u64 globalIdx = static_cast<u64>(std::distance(rankSetLevel1.begin(), rankIter));
     u64 relativeIdx = globalIdx % gcdInstSize;
 

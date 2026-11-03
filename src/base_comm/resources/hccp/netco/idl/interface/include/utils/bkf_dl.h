@@ -38,10 +38,11 @@ typedef VOS_LIST_HEAD_S BkfDlNode;
  * @param[in] node 链表节点
  * @return none
  */
-#define BKF_DL_NODE_INIT(node) do { \
-    (node)->next = VOS_NULL; \
-    (node)->prev = VOS_NULL; \
-} while (0)
+#define BKF_DL_NODE_INIT(node)                                                                                         \
+    do {                                                                                                               \
+        (node)->next = VOS_NULL;                                                                                       \
+        (node)->prev = VOS_NULL;                                                                                       \
+    } while (0)
 
 /**
  * @brief 在指定链表节点前面插入节点
@@ -85,10 +86,11 @@ typedef VOS_LIST_HEAD_S BkfDlNode;
  * @param[in] node 待移除的链表节点
  * @return none
  */
-#define BKF_DL_REMOVE(node) do { \
-    VOS_ListRemove(node);    \
-    BKF_DL_NODE_INIT(node);  \
-} while (0)
+#define BKF_DL_REMOVE(node)                                                                                            \
+    do {                                                                                                               \
+        VOS_ListRemove(node);                                                                                          \
+        BKF_DL_NODE_INIT(node);                                                                                        \
+    } while (0)
 
 /**
  * @brief 获取指定链表节点的前继节点
@@ -150,9 +152,9 @@ typedef VOS_LIST_HEAD_S BkfDlNode;
  *   @retval true 在链表
  *   @retval false 不在链表
  */
-#define BKF_DL_NODE_IS_IN(node) \
-    (((node)->prev != VOS_NULL) && (((node)->prev->next) == (node)) && ((node)->next != VOS_NULL) && \
-     (((node)->next->prev) == (node)))
+#define BKF_DL_NODE_IS_IN(node)                                                                                        \
+    (((node)->prev != VOS_NULL) && (((node)->prev->next) == (node)) && ((node)->next != VOS_NULL) &&                   \
+        (((node)->next->prev) == (node)))
 
 /**
  * @brief 将链表中所有节点移到另一个链表的尾部，并且节点的相对位置不变
@@ -161,15 +163,16 @@ typedef VOS_LIST_HEAD_S BkfDlNode;
  * @param[in] dlTo 移动到的链表
  * @return none
  */
-#define BKF_DL_MOVE_ALL_2TAIL(dlFrom, dlTo) do {            \
-    if (((dlFrom) != (dlTo)) && !BKF_DL_IS_EMPTY(dlFrom)) { \
-        (dlFrom)->prev->next = (dlTo);                      \
-        (dlFrom)->next->prev = (dlTo)->prev;                \
-        (dlTo)->prev->next = (dlFrom)->next;                \
-        (dlTo)->prev = (dlFrom)->prev;                      \
-        BKF_DL_INIT(dlFrom);                                \
-    }                                                       \
-} while (0)
+#define BKF_DL_MOVE_ALL_2TAIL(dlFrom, dlTo)                                                                            \
+    do {                                                                                                               \
+        if (((dlFrom) != (dlTo)) && !BKF_DL_IS_EMPTY(dlFrom)) {                                                        \
+            (dlFrom)->prev->next = (dlTo);                                                                             \
+            (dlFrom)->next->prev = (dlTo)->prev;                                                                       \
+            (dlTo)->prev->next = (dlFrom)->next;                                                                       \
+            (dlTo)->prev = (dlFrom)->prev;                                                                             \
+            BKF_DL_INIT(dlFrom);                                                                                       \
+        }                                                                                                              \
+    } while (0)
 
 /**
  * @brief 将链表中所有节点移到另一个链表的头部，并且节点的相对位置不变
@@ -178,15 +181,16 @@ typedef VOS_LIST_HEAD_S BkfDlNode;
  * @param[in] dlTo 移动到的链表
  * @return none
  */
-#define BKF_DL_MOVE_ALL_2HEAD(dlFrom, dlTo) do {            \
-    if (((dlFrom) != (dlTo)) && !BKF_DL_IS_EMPTY(dlFrom)) { \
-        (dlFrom)->next->prev = (dlTo);                      \
-        (dlFrom)->prev->next = (dlTo)->next;                \
-        (dlTo)->next->prev = (dlFrom)->prev;                \
-        (dlTo)->next = (dlFrom)->next;                      \
-        BKF_DL_INIT(dlFrom);                                \
-    }                                                       \
-} while (0)
+#define BKF_DL_MOVE_ALL_2HEAD(dlFrom, dlTo)                                                                            \
+    do {                                                                                                               \
+        if (((dlFrom) != (dlTo)) && !BKF_DL_IS_EMPTY(dlFrom)) {                                                        \
+            (dlFrom)->next->prev = (dlTo);                                                                             \
+            (dlFrom)->prev->next = (dlTo)->next;                                                                       \
+            (dlTo)->next->prev = (dlFrom)->prev;                                                                       \
+            (dlTo)->next = (dlFrom)->next;                                                                             \
+            BKF_DL_INIT(dlFrom);                                                                                       \
+        }                                                                                                              \
+    } while (0)
 
 /**
  * @brief 获取内嵌链表节点结构的起始地址
@@ -195,7 +199,7 @@ typedef VOS_LIST_HEAD_S BkfDlNode;
  * @param[in] strucType 包含链表节点的结构定义
  * @param[in] nodeMember 结构中链表节点成员变量名
  * @return 结构的起始地址
-  *   @retval 地址 结构的起始地址
+ *   @retval 地址 结构的起始地址
  */
 #define BKF_DL_GET_ENTRY(node, strucType, nodeMember) VOS_LIST_ENTRY((node), strucType, nodeMember)
 
@@ -208,4 +212,3 @@ typedef VOS_LIST_HEAD_S BkfDlNode;
 #endif
 
 #endif
-

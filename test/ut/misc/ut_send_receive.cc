@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -39,28 +39,21 @@
 #include "env_config.h"
 using namespace std;
 using namespace hccl;
-class ST_Send_Receive_Test : public testing::Test
-{
+class ST_Send_Receive_Test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "ST_Send_Receive_Test SetUP" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "ST_Send_Receive_Test TearDown" << std::endl;
-    }
-    
+    static void SetUpTestCase() { std::cout << "ST_Send_Receive_Test SetUP" << std::endl; }
+    static void TearDownTestCase() { std::cout << "ST_Send_Receive_Test TearDown" << std::endl; }
+
     // Some expensive resource shared by all tests.
     virtual void SetUp()
     {
-        static s32  call_cnt = 0;
+        static s32 call_cnt = 0;
         DlTdtFunction::GetInstance().DlTdtFunctionInit();
         TsdOpen(1, 2);
         std::cout << "tsd open" << std::endl;
 
-        string name =std::to_string(call_cnt++) +"_" + __PRETTY_FUNCTION__;
-        ra_set_shm_name(name .c_str());
+        string name = std::to_string(call_cnt++) + "_" + __PRETTY_FUNCTION__;
+        ra_set_shm_name(name.c_str());
         setenv("HCCL_DFS_CONFIG", "connection_fault_detection_time:0", 1);
         InitEnvParam();
         std::cout << "A Test SetUP" << std::endl;
@@ -74,10 +67,9 @@ protected:
 
 #define P2P_DATA_SIZE_LIGHT 20
 #define P2P_DATA_SIZE_HEAVY 1200000
-#define P2P_DATA_SIZE_S_HEAVY 3000000   /* 超大数据，约10M */
+#define P2P_DATA_SIZE_S_HEAVY 3000000 /* 超大数据，约10M */
 
-typedef struct p2p_para_struct
-{
+typedef struct p2p_para_struct {
     HcclRootInfo rootInfo;
     std::string identify;
     s32 device_id;
@@ -92,23 +84,20 @@ typedef struct p2p_para_struct
     const char* tag;
     char* groupName;
     u32 groupRanksNum;
-    u32 *pGroupRanks;
+    u32* pGroupRanks;
     s32 ranks_local;
 } p2p_para_t;
 
 void* intra_send_receive_task(void* parg)
 {
     s32 portNum = 7;
-    MOCKER(hrtGetHccsPortNum)
-        .stubs()
-        .with(mockcpp::any(), outBound(portNum))
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
     HcclResult ret = HCCL_SUCCESS;
     p2p_para_t* para_info = (p2p_para_t*)parg;
 
     hrtSetDevice(para_info->device_id);
 
-    HcomInfo  hcom_info;
+    HcomInfo hcom_info;
     std::string ranktable_file = para_info->file_name;
     std::string rankTableM;
     std::string realFilePath;
@@ -126,13 +115,11 @@ void* intra_send_receive_task(void* parg)
 
     sal_memcpy(hcom_info.params.id.internal, sizeof(HcclRootInfo), &para_info->rootInfo, sizeof(HcclRootInfo));
 
-    hcom_info.pComm.reset(new(std::nothrow) hccl::hcclComm());
-    
+    hcom_info.pComm.reset(new (std::nothrow) hccl::hcclComm());
 
-    CommConfig commConfig("hccl_world_group"); 
+    CommConfig commConfig("hccl_world_group");
     ret = hcom_info.pComm->init(hcom_info.params, commConfig, hcom_info.rankTable);
-    if (ret != HCCL_SUCCESS)
-    {
+    if (ret != HCCL_SUCCESS) {
         HCCL_ERROR("dev[%d] task send_receive fails", para_info->device_id);
     }
 
@@ -146,12 +133,11 @@ void* intra_send_receive_task(void* parg)
     vector<HcclRtStream> streamList(stream_list_size);
 
     rtError_t rt_ret;
-    //生成从stream
-    for (s32 i = 0; i < stream_list_size; i++)
-    {
+    // 生成从stream
+    for (s32 i = 0; i < stream_list_size; i++) {
         rt_ret = aclrtCreateStreamWithConfig(&streamList[i], 0, ACL_STREAM_PERSISTENT);
         EXPECT_EQ(rt_ret, RT_ERROR_NONE);
-        //从流bind到model
+        // 从流bind到model
         rt_ret = rtModelBindStream(model, streamList[i], RT_MODEL_WAIT_ACTIVE_STREAM);
         EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     }
@@ -164,7 +150,7 @@ void* intra_send_receive_task(void* parg)
     ret = hcom_info.pComm->GetWorkspaceMemSize("HcomSend", para_info->count, para_info->datatype, rankSize, memSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    void *memptr = nullptr;
+    void* memptr = nullptr;
     ret = hrtMalloc(&memptr, memSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
@@ -174,47 +160,35 @@ void* intra_send_receive_task(void* parg)
 
     s32 rank_num_tmp = *(para_info->sync_addr) - 1;
 
-    do
-    {
+    do {
         rank_num_tmp += 1;
 
         swapped = __sync_bool_compare_and_swap(para_info->sync_addr /** &rank_num */, rank_num_tmp, rank_num_tmp + 1);
-    }
-    while (!swapped);
+    } while (!swapped);
 
-    while (*(para_info->sync_addr) < para_info->ranks_local)
-    {
+    while (*(para_info->sync_addr) < para_info->ranks_local) {
         sched_yield(); // linux提供一个系统调用运行进程主动让出执行权
     }
 
-    if (para_info->sender_flag)
-    {
+    if (para_info->sender_flag) {
         ret = hcom_info.pComm->send(
-            para_info->tag,
-            para_info->buffer,
-            para_info->count,
-            para_info->datatype,
-            para_info->peer_rank,
+            para_info->tag, para_info->buffer, para_info->count, para_info->datatype, para_info->peer_rank,
             para_info->stream);
-        HCCL_INFO("rank[%s] device[%d] send to rank[%d]", para_info->identify.c_str(), para_info->device_id, para_info->peer_rank);
-        if (ret != HCCL_SUCCESS)
-        {
+        HCCL_INFO(
+            "rank[%s] device[%d] send to rank[%d]", para_info->identify.c_str(), para_info->device_id,
+            para_info->peer_rank);
+        if (ret != HCCL_SUCCESS) {
             HCCL_ERROR("dev[%d] task send fails", para_info->device_id);
         }
 
-    }
-    else
-    {
+    } else {
         ret = hcom_info.pComm->receive(
-            para_info->tag,
-            para_info->buffer,
-            para_info->count,
-            para_info->datatype,
-            para_info->peer_rank,
+            para_info->tag, para_info->buffer, para_info->count, para_info->datatype, para_info->peer_rank,
             para_info->stream);
-        HCCL_INFO("rank[%s] device[%d] recv from rank[%d]", para_info->identify.c_str(), para_info->device_id, para_info->peer_rank);
-        if (ret != HCCL_SUCCESS)
-        {
+        HCCL_INFO(
+            "rank[%s] device[%d] recv from rank[%d]", para_info->identify.c_str(), para_info->device_id,
+            para_info->peer_rank);
+        if (ret != HCCL_SUCCESS) {
             HCCL_ERROR("dev[%d] task receive fails", para_info->device_id);
         }
     }
@@ -222,17 +196,14 @@ void* intra_send_receive_task(void* parg)
     rt_ret = RT_ERROR_NONE;
     rt_ret = aclrtSynchronizeStream(para_info->stream);
 
-    if ( rt_ret != RT_ERROR_NONE)
-    {
+    if (rt_ret != RT_ERROR_NONE) {
         HCCL_ERROR("task sync fails");
     }
-    for (s32 i = 0; i < stream_list_size; i++)
-    {
+    for (s32 i = 0; i < stream_list_size; i++) {
         rt_ret = rtModelUnbindStream(model, streamList[i]);
         EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     }
-    for (int i = 0; i < stream_list_size; i++)
-    {
+    for (int i = 0; i < stream_list_size; i++) {
         rt_ret = aclrtDestroyStream(streamList[i]);
         EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     }
@@ -242,7 +213,7 @@ void* intra_send_receive_task(void* parg)
     return (NULL);
 }
 #define SEND_DEV_NUM 2
-#if 0 //执行失败 aclrtNotifyImportByKey
+#if 0 // 执行失败 aclrtNotifyImportByKey
 TEST_F(ST_Send_Receive_Test, ut_send_receive_8ranks_1server_float)
 {
     char file_name_t[] = "./st_send_receive_2ranks_1server_float.json";
@@ -548,4 +519,4 @@ TEST_F(ST_Send_Receive_Test, ut_send_receive_8ranks_1server_float_1)
     GlobalMockObject::verify();
     EXPECT_EQ(errors, 0);
 }
-#endif 
+#endif

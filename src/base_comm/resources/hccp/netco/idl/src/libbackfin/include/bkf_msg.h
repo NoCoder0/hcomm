@@ -178,7 +178,7 @@ typedef struct tagBkfTlvTransNum {
 #define BKF_TRANS_NUM_INVALID ((uint64_t)0xffffffffffffffff)
 
 typedef struct tagBkfTlvName {
-    BkfTL tl; /* len 长度包括字串结束'\0'字符  */
+    BkfTL tl;     /* len 长度包括字串结束'\0'字符  */
     char name[0]; /* 占位符 */
 } BkfTlvName;
 
@@ -225,12 +225,7 @@ typedef struct tagBkfTlvTableType {
     uint8_t reserved[2];
 } BkfTlvTableType;
 
-enum {
-    BKF_RPC_OPER_REQUEST = 0,
-    BKF_RPC_OPER_RESPONSE = 1,
-    BKF_RPC_OPER_CANCEL = 2,
-    BKF_RPC_OPER_MAX
-};
+enum { BKF_RPC_OPER_REQUEST = 0, BKF_RPC_OPER_RESPONSE = 1, BKF_RPC_OPER_CANCEL = 2, BKF_RPC_OPER_MAX };
 typedef struct {
     BkfTL tl;
     uint16_t type;
@@ -240,7 +235,7 @@ typedef struct {
 } BkfTlvRpc;
 
 /* [0, 65525)的表类型都有效 */
-#define BKF_TABLE_TYPE_ID_INVALID ((uint16_t)-1)
+#define BKF_TABLE_TYPE_ID_INVALID ((uint16_t) - 1)
 
 typedef struct tagBkfTlvTupleIdlData {
     BkfTL tl;
@@ -263,7 +258,7 @@ typedef struct tagBkfTlvResultIdlData {
 // 条件update,无此标记即为delete
 #define BKF_FLAG_COND_UPDATE ((uint8_t)1 << 0)
 // 一次性订阅
-#define BKF_FLAG_COND_ONCE  ((uint8_t)1 << 1)
+#define BKF_FLAG_COND_ONCE ((uint8_t)1 << 1)
 
 #pragma pack()
 #ifdef __cplusplus
@@ -273,4 +268,3 @@ typedef struct tagBkfTlvResultIdlData {
 #endif
 
 #endif
-

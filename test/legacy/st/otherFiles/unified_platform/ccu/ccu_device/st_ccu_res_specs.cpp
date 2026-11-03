@@ -16,170 +16,21 @@
 #include <mockcpp/mockcpp.hpp>
 #include <chrono>
 
-#include "ccu_res_specs.h"
+#include "ccu_res_specs_legacy.h"
 #include "hccl_common_v2.h"
 
 #undef private
 #undef protected
 
+#include "ccu_res_specs_test_common.h"
+
 using namespace Hccl;
-
-class CcuResSpecsTest: public testing::Test {
-protected:
-    static void SetUpTestCase()
-    {
-        GlobalMockObject::verify();
-        GlobalMockObject::reset();
-        std::cout << "CcuResSpecsTest tests set up." << std::endl;
-    }
- 
-    static void TearDownTestCase()
-    {
-        GlobalMockObject::verify();
-        GlobalMockObject::reset();
-        std::cout << "CcuResSpecsTest tests tear down." << std::endl;
-    }
- 
-    virtual void SetUp()
-    {
-        GlobalMockObject::verify();
-        GlobalMockObject::reset();
-        std::cout << "A Test case in CcuResSpecsTest SetUP" << std::endl;
-    }
- 
-    virtual void TearDown()
-    {
-        GlobalMockObject::verify();
-        GlobalMockObject::reset();
-        std::cout << "A Test case in CcuResSpecsTest TearDown" << std::endl;
-    }
-};
-
-HcclResult AllocCkeStub(
-    const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo> &ckeInfos)
-{
-    ckeInfos.clear();
-    ResInfo ckeInfo(0, num);
-    ckeInfos.push_back(ckeInfo);
-    return HcclResult::HCCL_SUCCESS;
-}
-
-HcclResult AllocXnStub(
-    const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo> &xnInfos)
-{
-    xnInfos.clear();
-    ResInfo xnInfo(0, num);
-    xnInfos.push_back(xnInfo);
-    return HcclResult::HCCL_SUCCESS;
-}
-
-void MockDoOnce() // 提供给其他用例使用的ccu资源打桩，使用后会导致单例存在内存中，本用例不需要
-{
-    CustomChannelInfoIn  inBuff{};
-    inBuff.data.dataInfo.dataLen = 512;
-    inBuff.data.dataInfo.dataArraySize = 64;
-
-    MOCKER(HrtRaTlvRequestForCustomChannel)
-        .stubs()
-        .with(mockcpp::any(), mockcpp::any(), outBoundP(reinterpret_cast<void *>(&inBuff), sizeof(inBuff)),
-            outBoundP(reinterpret_cast<void *>(&inBuff), sizeof(inBuff)));
-    MOCKER(HrtGetDeviceCount).stubs().with().will(returnValue(8));
-    MOCKER(HrtGetSocVer).stubs().with().will(returnValue(0));
-    MOCKER(HrtGetDevicePhyIdByIndex)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(0));
-    DevType deviceType = DevType::DevType::DEV_TYPE_910A3;
-    MOCKER(HrtGetDeviceType)
-        .stubs()
-        .will(returnValue(deviceType));
-
-    std::unique_ptr<RdmaHandle> handle = std::make_unique<RdmaHandle>();
-    RdmaHandle handlePtr = handle.get();
-    MOCKER(HrtRaUbCtxInit)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(handlePtr));
-    // 避免RdmaHandle空指针
-    
-    vector<HrtDevEidInfo> eidInfoListStbu;
-    HrtDevEidInfo         eidInfo;
-    eidInfo.name    = "udma0";
-    eidInfo.dieId    = 0;
-    eidInfo.funcId    = 3;
-
-    eidInfoListStbu.push_back(eidInfo);
-
-    MOCKER(HrtRaGetDevEidInfoList)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(eidInfoListStbu));
-    MOCKER(GetUbToken).stubs().will(returnValue(1));
-
-    for (int i = 0; i < 2; i++) {
-        CcuResSpecifications::GetInstance(0).dieEnableFlags[i] = true;
-        CcuResSpecifications::GetInstance(0).resSpecs[i].loopEngineNum = 200;
-        CcuResSpecifications::GetInstance(0).resSpecs[i].msNum = 1536;
-        CcuResSpecifications::GetInstance(0).resSpecs[i].ckeNum = 1024;
-        CcuResSpecifications::GetInstance(0).resSpecs[i].xnNum = 3072;
-        CcuResSpecifications::GetInstance(0).resSpecs[i].gsaNum = 3072;
-        CcuResSpecifications::GetInstance(0).resSpecs[i].instructionNum = 32768;
-        CcuResSpecifications::GetInstance(0).resSpecs[i].missionNum = 16;
-        CcuResSpecifications::GetInstance(0).resSpecs[i].channelNum = 128;
-        CcuResSpecifications::GetInstance(0).resSpecs[i].jettyNum = 128;
-        CcuResSpecifications::GetInstance(0).resSpecs[i].wqeBBNum = 4096;
-        CcuResSpecifications::GetInstance(0).resSpecs[i].resourceAddr = 0xE7FFBF800000;
-    }
-}
-
-void MockCcuDriverInterfaceReturnDieEnableStub(void* tlvHandle, u32 msgType, void *customIn, void *customOut)
-{
-    CustomChannelInfoOut* mockOutBuff = (CustomChannelInfoOut*)customOut;
-    CcuDieInfo dieInfo;
-    dieInfo.enableFlag = true;
-    memcpy_s(mockOutBuff->data.dataInfo.dataArray, sizeof(CcuDieInfo), &dieInfo, sizeof(CcuDieInfo));
-}
-
-void MockCcuOneDieResource(CcuResSpecifications &ccuResSpecs,
-    const int32_t devLogicId, const uint8_t dieId,
-    const CcuVersion ccuVersion)
-{
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().with(mockcpp::any()).will(returnValue(MAX_MODULE_DEVICE_NUM));
-
-    ccuResSpecs.Init(devLogicId);
-    ccuResSpecs.ccuVersion = ccuVersion;
-    ccuResSpecs.dieEnableFlags[dieId] = true;
-
-    ccuResSpecs.resSpecs[dieId].loopEngineNum = 200;
-    
-    ccuResSpecs.resSpecs[dieId].msNum = 1536;
-    ccuResSpecs.resSpecs[dieId].ckeNum = 1024;
-
-    ccuResSpecs.resSpecs[dieId].xnNum = 3072;
-
-    ccuResSpecs.resSpecs[dieId].gsaNum = 3072;
-
-    ccuResSpecs.resSpecs[dieId].instructionNum = 32768;
-    ccuResSpecs.resSpecs[dieId].missionNum = 16;
-
-    ccuResSpecs.resSpecs[dieId].channelNum = 128;
-
-    ccuResSpecs.resSpecs[dieId].jettyNum = 128;
-    ccuResSpecs.resSpecs[dieId].wqeBBNum = 4096;
-
-    ccuResSpecs.resSpecs[dieId].pfeNum = 10;
-
-    ccuResSpecs.resSpecs[dieId].resourceAddr = 0xE7FFBF800000;
-
-    ccuResSpecs.resSpecs[dieId].msId = 1; // 非0即可
-    ccuResSpecs.resSpecs[dieId].missionKey = 1; // 非0即可
-}
 
 TEST_F(CcuResSpecsTest, St_Init_When_CcuDriverOk_Expect_Return_Ok)
 {
     MOCKER(HrtRaTlvRequestForCustomChannel).stubs().will(invoke(MockCcuDriverInterfaceReturnDieEnableStub));
 
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().with(mockcpp::any()).will(returnValue(MAX_MODULE_DEVICE_NUM));
+    MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().with(mockcpp::any()).will(returnValue(MAX_MODULE_DEVICE_NUM));
     CcuResSpecifications ccuResSpecs;
     const int32_t devLogicId = MAX_MODULE_DEVICE_NUM; // 避免影响其他用例
     ccuResSpecs.Init(devLogicId);
@@ -293,22 +144,14 @@ TEST_F(CcuResSpecsTest, St_GetResourceAddr_When_DieIsValidAndCcuV1_Expect_Return
 TEST_F(CcuResSpecsTest, St_GetResSpec_When_InitOk_Expect_Return_Ok)
 {
     using GetResSpecFunc = HcclResult (CcuResSpecifications::*)(const uint8_t, uint32_t&) const;
-    constexpr GetResSpecFunc GET_RES_SPEC_FUNC_ARRAY[] = {
-        &CcuResSpecifications::GetLoopEngineNum,
-        &CcuResSpecifications::GetMsNum,
-        &CcuResSpecifications::GetCkeNum,
-        &CcuResSpecifications::GetXnNum,
-        &CcuResSpecifications::GetGsaNum,
-        &CcuResSpecifications::GetInstructionNum,
-        &CcuResSpecifications::GetMissionNum,
-        &CcuResSpecifications::GetMsId,
-        &CcuResSpecifications::GetMissionKey,
-        &CcuResSpecifications::GetChannelNum,
-        &CcuResSpecifications::GetJettyNum,
-        &CcuResSpecifications::GetPfeReservedNum,
-        &CcuResSpecifications::GetPfeNum,
-        &CcuResSpecifications::GetWqeBBNum
-    };
+    constexpr GetResSpecFunc GET_RES_SPEC_FUNC_ARRAY[]
+        = {&CcuResSpecifications::GetLoopEngineNum, &CcuResSpecifications::GetMsNum,
+           &CcuResSpecifications::GetCkeNum,        &CcuResSpecifications::GetXnNum,
+           &CcuResSpecifications::GetGsaNum,        &CcuResSpecifications::GetInstructionNum,
+           &CcuResSpecifications::GetMissionNum,    &CcuResSpecifications::GetMsId,
+           &CcuResSpecifications::GetMissionKey,    &CcuResSpecifications::GetChannelNum,
+           &CcuResSpecifications::GetJettyNum,      &CcuResSpecifications::GetPfeReservedNum,
+           &CcuResSpecifications::GetPfeNum,        &CcuResSpecifications::GetWqeBBNum};
 
     CcuResSpecifications ccuResSpecs;
     const int32_t devLogicId = MAX_MODULE_DEVICE_NUM; // 避免影响其他用例
@@ -317,7 +160,7 @@ TEST_F(CcuResSpecsTest, St_GetResSpec_When_InitOk_Expect_Return_Ok)
     MockCcuOneDieResource(ccuResSpecs, devLogicId, dieId, ccuVersion);
     ccuResSpecs.ccuVersion = CcuVersion::CCU_V1;
 
-    for (const auto &getFunc : GET_RES_SPEC_FUNC_ARRAY) {
+    for (const auto& getFunc : GET_RES_SPEC_FUNC_ARRAY) {
         uint32_t capacity = 0;
         std::cout << "Test GetResSpecFunc: " << getFunc << std::endl;
         EXPECT_EQ((ccuResSpecs.*getFunc)(dieId, capacity), HcclResult::HCCL_SUCCESS);

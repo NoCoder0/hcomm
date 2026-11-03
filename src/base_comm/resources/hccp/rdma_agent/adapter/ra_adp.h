@@ -16,9 +16,9 @@
 #include "ra_adp_async.h"
 #include "rs.h"
 
-#define BUCKET_DEPTH    (1024 * 2)
-#define MAX_CFG_OP_NUM  (1024 * 64)
-#define TOKEN_RATE      400 /* 400 tokens per 1ms */
+#define BUCKET_DEPTH (1024 * 2)
+#define MAX_CFG_OP_NUM (1024 * 64)
+#define TOKEN_RATE 400            /* 400 tokens per 1ms */
 #define HDC_ACCEPT_SLEEP_TIME 100 /* 100us */
 #define HCCP_MAX_CHIP_ID 63U
 #define HAVE_OP_RIGHT 1
@@ -40,7 +40,7 @@ struct RaHdcInitPara {
     pthread_mutex_t mutex;
     unsigned int hdcFlag;
     unsigned int connectStatus;
-    unsigned int threadStatus;  /* 0: sleep or init; 1: running; 2: destroying */
+    unsigned int threadStatus; /* 0: sleep or init; 1: running; 2: destroying */
     char pidSign[PROCESS_RA_SIGN_LENGTH];
 };
 
@@ -50,39 +50,42 @@ struct RaOpHandle {
     unsigned int dataSize;
 };
 
-#define RA_ADP_ATTRI_VISI_DEF __attribute__ ((visibility ("default")))
+#define RA_ADP_ATTRI_VISI_DEF __attribute__((visibility("default")))
 RA_ADP_ATTRI_VISI_DEF int HccpInit(unsigned int chipId, pid_t pid, int hdcType, unsigned int whiteListStatus);
 RA_ADP_ATTRI_VISI_DEF int HccpDeinit(unsigned int chipId);
 
-#define HCCP_CHECK_PARAM_LEN(data_size, head_size, rcv_buf_len) do { \
-    if ((size_t)(data_size) + (size_t)(head_size) != (size_t)(rcv_buf_len)) {         \
-        hccp_err("op data size is invalid. data size:[%zu] head size:[%zu] recv buff len:[%zu]",     \
-                 (size_t)(data_size), (size_t)(head_size), (size_t)(rcv_buf_len));            \
-        return (-EINVAL);         \
-    }           \
-} while (0)
+#define HCCP_CHECK_PARAM_LEN(data_size, head_size, rcv_buf_len)                                                        \
+    do {                                                                                                               \
+        if ((size_t)(data_size) + (size_t)(head_size) != (size_t)(rcv_buf_len)) {                                      \
+            hccp_err("op data size is invalid. data size:[%zu] head size:[%zu] recv buff len:[%zu]",                   \
+                (size_t)(data_size), (size_t)(head_size), (size_t)(rcv_buf_len));                                      \
+            return (-EINVAL);                                                                                          \
+        }                                                                                                              \
+    } while (0)
 
 #if defined(HNS_ROCE_LLT) || defined(DEFINE_HNS_LLT)
-#define HCCP_CHECK_PARAM_LEN_RET_HOST(data_size, head_size, rcv_buf_len, pResult) do { \
-       \
-} while (0)
+#define HCCP_CHECK_PARAM_LEN_RET_HOST(data_size, head_size, rcv_buf_len, pResult)                                      \
+    do {                                                                                                               \
+    } while (0)
 #else
-#define HCCP_CHECK_PARAM_LEN_RET_HOST(data_size, head_size, rcv_buf_len, pResult) do { \
-    if ((size_t)(data_size) + (size_t)(head_size) > (size_t)(rcv_buf_len)) {         \
-        hccp_err("op data size is invalid. data size:[%zu] head size:[%zu] recv buff len:[%zu]",     \
-                 (size_t)(data_size), (size_t)(head_size), (size_t)(rcv_buf_len));            \
-        *pResult = -EINVAL;                                       \
-        return 0;         \
-    }           \
-} while (0)
+#define HCCP_CHECK_PARAM_LEN_RET_HOST(data_size, head_size, rcv_buf_len, pResult)                                      \
+    do {                                                                                                               \
+        if ((size_t)(data_size) + (size_t)(head_size) > (size_t)(rcv_buf_len)) {                                       \
+            hccp_err("op data size is invalid. data size:[%zu] head size:[%zu] recv buff len:[%zu]",                   \
+                (size_t)(data_size), (size_t)(head_size), (size_t)(rcv_buf_len));                                      \
+            *pResult = -EINVAL;                                                                                        \
+            return 0;                                                                                                  \
+        }                                                                                                              \
+    } while (0)
 #endif
 
-#define HCCP_CHECK_PARAM_NUM(num, max_num) do { \
-    if ((num) > (max_num)) {            \
-        hccp_err("conn number is invalid");            \
-        return (-EINVAL);         \
-    }           \
-} while (0)
+#define HCCP_CHECK_PARAM_NUM(num, max_num)                                                                             \
+    do {                                                                                                               \
+        if ((num) > (max_num)) {                                                                                       \
+            hccp_err("conn number is invalid");                                                                        \
+            return (-EINVAL);                                                                                          \
+        }                                                                                                              \
+    } while (0)
 
 static inline bool RaIsOpcodeLogSuppressed(unsigned int opcode)
 {
@@ -94,11 +97,9 @@ static inline bool RaIsOpcodeLogSuppressed(unsigned int opcode)
 
 void RaHdcInitOpSec(struct RaHdcOpSec *opSec, unsigned long long tokenNum, bool isAsyncOp);
 int RaHdcSessionAccept(unsigned int chipId, HDC_SESSION *session, int initHostTgid);
-int RaHdcAsyncRecvPkt(struct RaHdcAsyncInfo *asyncInfo, unsigned int chipId, void **recvBuf,
-    unsigned int *recvLen);
+int RaHdcAsyncRecvPkt(struct RaHdcAsyncInfo *asyncInfo, unsigned int chipId, void **recvBuf, unsigned int *recvLen);
 int RaHandle(struct RaHdcOpSec *opSec, char *recvBuf, int rcvBufLen, char **sendBuf, int *sndBufLen,
     unsigned int *closeSession);
-int RaHdcAsyncSendPkt(struct RaHdcAsyncInfo *asyncInfo, unsigned int chipId, void *sendBuf,
-    unsigned int sendLen);
+int RaHdcAsyncSendPkt(struct RaHdcAsyncInfo *asyncInfo, unsigned int chipId, void *sendBuf, unsigned int sendLen);
 void RaHdcCloseSession(HDC_SESSION *session);
 #endif // RA_ADP_HW_H

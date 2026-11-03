@@ -1,17 +1,17 @@
 /**
-  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
-  * This program is free software, you can redistribute it and/or modify it under the terms and contiditions of
-  * CANN Open Software License Agreement Version 2.0 (the "License").
-  * Please refer to the License for details. You may not use this file except in compliance with the License.
-  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
-  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
-  * See LICENSE in the root of the software repository for the full text of the License.
-  */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 /*!
  * \file adump_pub.h
  * \brief 算子dump接口头文件
-*/
+ */
 
 /* * @defgroup dump dump接口 */
 #ifndef ADUMP_PUB_H
@@ -34,9 +34,9 @@ constexpr int32_t ADUMP_FAILED = -1;
 constexpr uint32_t ADUMP_ARGS_EXCEPTION_HEAD = 2;
 
 // AdumpGetDFXInfoAddr chunk size parameter
-extern uint64_t *g_dynamicChunk;
-extern uint64_t *g_staticChunk;
-constexpr uint32_t DYNAMIC_RING_CHUNK_SIZE = 393216;  // 393216 * 8 = 3M
+extern uint64_t* g_dynamicChunk;
+extern uint64_t* g_staticChunk;
+constexpr uint32_t DYNAMIC_RING_CHUNK_SIZE = 393216; // 393216 * 8 = 3M
 constexpr uint32_t STATIC_RING_CHUNK_SIZE = 131072;  // 131072 * 8 = 1M
 constexpr uint32_t DFX_MAX_TENSOR_NUM = 4000;
 constexpr uint16_t RESERVE_SPACE = 2;
@@ -79,7 +79,7 @@ ADX_API uint64_t AdumpGetDumpSwitch(const DumpType dumpType);
  * @see        无
  * @since
  */
-ADX_API int32_t AdumpSetDump(const char *configPath);
+ADX_API int32_t AdumpSetDump(const char* configPath);
 
 /**
  * @ingroup dump
@@ -94,20 +94,12 @@ ADX_API int32_t AdumpSetDump(const char *configPath);
  */
 ADX_API int32_t AdumpUnSetDump();
 
-enum class TensorType : int32_t {
-    INPUT,
-    OUTPUT,
-    WORKSPACE
-};
+enum class TensorType : int32_t { INPUT, OUTPUT, WORKSPACE };
 
-enum class AddressType : int32_t {
-    TRADITIONAL,
-    NOTILING,
-    RAW
-};
+enum class AddressType : int32_t { TRADITIONAL, NOTILING, RAW };
 
 struct TensorInfo {
-    gert::Tensor *tensor;
+    gert::Tensor* tensor;
     TensorType type;
     AddressType addrType;
     uint32_t argsOffSet;
@@ -127,8 +119,8 @@ struct TensorInfo {
  * @see        无
  * @since
  */
-ADX_API int32_t AdumpDumpTensor(const std::string &opType, const std::string &opName,
-    const std::vector<TensorInfo> &tensors, aclrtStream stream);
+ADX_API int32_t AdumpDumpTensor(
+    const std::string& opType, const std::string& opName, const std::vector<TensorInfo>& tensors, aclrtStream stream);
 
 constexpr char DUMP_ADDITIONAL_NUM_BLOCKS[] = "num_blocks";
 constexpr char DUMP_ADDITIONAL_TILING_KEY[] = "tiling_key";
@@ -149,16 +141,16 @@ constexpr char DEVICE_INFO_NAME_ARGS[] = "args before execute";
 
 struct DeviceInfo {
     std::string name;
-    void *addr;
+    void* addr;
     uint64_t length;
 };
 
 struct OperatorInfo {
-    bool agingFlag{ true };
-    uint32_t taskId{ 0U };
-    uint32_t streamId{ 0U };
-    uint32_t deviceId{ 0U };
-    uint32_t contextId{ UINT32_MAX };
+    bool agingFlag{true};
+    uint32_t taskId{0U};
+    uint32_t streamId{0U};
+    uint32_t deviceId{0U};
+    uint32_t contextId{UINT32_MAX};
     std::string opType;
     std::string opName;
     std::vector<TensorInfo> tensorInfos;
@@ -177,7 +169,7 @@ struct OperatorInfo {
  * @see 无
  * @since
  */
-extern "C" ADX_API int32_t AdumpAddExceptionOperatorInfo(const OperatorInfo &opInfo);
+extern "C" ADX_API int32_t AdumpAddExceptionOperatorInfo(const OperatorInfo& opInfo);
 
 /**
  * @ingroup dump
@@ -205,7 +197,7 @@ extern "C" ADX_API int32_t AdumpDelExceptionOperatorInfo(uint32_t deviceId, uint
  * @see         无
  * @since
  */
-extern "C" ADX_API void *AdumpGetDFXInfoAddrForDynamic(uint32_t space, uint64_t &atomicIndex);
+extern "C" ADX_API void* AdumpGetDFXInfoAddrForDynamic(uint32_t space, uint64_t& atomicIndex);
 
 /**
  * @ingroup dump
@@ -219,6 +211,6 @@ extern "C" ADX_API void *AdumpGetDFXInfoAddrForDynamic(uint32_t space, uint64_t 
  * @see         无
  * @since
  */
-extern "C" ADX_API void *AdumpGetDFXInfoAddrForStatic(uint32_t space, uint64_t &atomicIndex);
+extern "C" ADX_API void* AdumpGetDFXInfoAddrForStatic(uint32_t space, uint64_t& atomicIndex);
 } // namespace Adx
 #endif

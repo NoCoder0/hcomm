@@ -25,6 +25,7 @@
 #include "ascend_hal.h"
 #include "drv_api_exception.h"
 #include "ub_conn_lite_mgr.h"
+#include "ub_conn_lite.h"
 #include "ins_to_sqe_rule.h"
 #include "stream_lite.h"
 #include "mem_transport_callback.h"
@@ -32,7 +33,7 @@
 
 using namespace Hccl;
 
-static int memcpy_stub(void *dest, int dest_max, const void *src, int count)
+static int memcpy_stub(void* dest, int dest_max, const void* src, int count)
 {
     memcpy(dest, src, count);
     return 0;
@@ -40,21 +41,21 @@ static int memcpy_stub(void *dest, int dest_max, const void *src, int count)
 
 class UbTransportLiteImplTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "UbTransportLiteImplTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "UbTransportLiteImplTest tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "UbTransportLiteImplTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "UbTransportLiteImplTest tests tear down." << std::endl; }
 
     virtual void SetUp()
     {
         MOCKER(HrtGetDeviceType).stubs().will(returnValue((DevType)DevType::DEV_TYPE_910A2));
-        MOCKER_CPP(&RtsqBase::QuerySqBaseAddr).stubs().with(mockcpp::any()).will(returnValue(reinterpret_cast<u64>(&mockSq)));
-        MOCKER_CPP(&RtsqBase::QuerySqDepth).stubs().with(mockcpp::any()).will(returnValue(static_cast<u32>(AC_SQE_MAX_CNT)));
+        MOCKER_CPP(&RtsqBase::QuerySqBaseAddr)
+            .stubs()
+            .with(mockcpp::any())
+            .will(returnValue(reinterpret_cast<u64>(&mockSq)));
+        MOCKER_CPP(&RtsqBase::QuerySqDepth)
+            .stubs()
+            .with(mockcpp::any())
+            .will(returnValue(static_cast<u32>(AC_SQE_MAX_CNT)));
         MOCKER_CPP(&RtsqBase::QuerySqStatusByType).stubs().with(mockcpp::any()).will(returnValue(static_cast<u32>(0)));
         MOCKER_CPP(&RtsqBase::ConfigSqStatusByType).stubs();
         std::cout << "A Test case in UbTransportLiteImplTest SetUP" << std::endl;
@@ -91,22 +92,21 @@ protected:
 
     std::vector<char> GetConnUniqueId()
     {
-        u32  dieId           = 0;
-        u32  funcId          = 0;
-        u32  jettyId         = 0;
-        u32  jfcPollMode     = 0;     // 待修改，0代表STARS POLL，1代表software Poll
+        u32 dieId = 0;
+        u32 funcId = 0;
+        u32 jettyId = 0;
+        u32 jfcPollMode = 0;          // 待修改，0代表STARS POLL，1代表software Poll
         bool dwqeCacheLocked = false; // 待修改，该jetty是否支持dwqeCachedLocked，默认不支持
-        u64  dbAddr          = 0x100;
-        u64  sqVa            = 0x100;
-        u32  sqDepth         = 100;
-        u32  tpn             = 100;
-        Eid  rmtEid;
+        u64 dbAddr = 0x100;
+        u64 sqVa = 0x100;
+        u32 sqDepth = 100;
+        u32 tpn = 100;
+        Eid rmtEid;
 
         BinaryStream binaryStream;
         binaryStream << dieId;
         binaryStream << funcId;
         binaryStream << jettyId;
-
 
         binaryStream << jfcPollMode;
         binaryStream << dwqeCacheLocked;
@@ -135,7 +135,7 @@ protected:
         u32 rmtbufferNum = 2;
 
         auto conn0 = GetConnUniqueId();
-        u32  connNum = 1;
+        u32 connNum = 1;
 
         BinaryStream binaryStream;
 
@@ -172,23 +172,24 @@ protected:
         binaryStream.Dump(liteData);
         return liteData;
     }
-    u8  mockSq[AC_SQE_SIZE * AC_SQE_MAX_CNT]{0};
+    u8 mockSq[AC_SQE_SIZE * AC_SQE_MAX_CNT]{0};
 };
-
 
 TEST_F(UbTransportLiteImplTest, construct_test)
 {
     std::vector<char> liteData = BuildUbTransportLiteUniqueId();
 
     RmaConnLite rmaConnLite;
-    RmaConnLite *connLite =  &rmaConnLite;
+    RmaConnLite* connLite = &rmaConnLite;
     MOCKER_CPP(&UbConnLiteMgr::Get).stubs().will(returnValue(connLite));
-    MOCKER_CPP(static_cast<void (MirrorTaskManager::*)(std::unique_ptr<TaskInfo>&&)>(&MirrorTaskManager::AddTaskInfo)).stubs().with(mockcpp::any());
+    MOCKER_CPP(static_cast<void (MirrorTaskManager::*)(std::unique_ptr<TaskInfo>&&)>(&MirrorTaskManager::AddTaskInfo))
+        .stubs()
+        .with(mockcpp::any());
     LinkData linkData(BasePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB), 0, 1, 0, 1);
     MirrorTaskManager mirrorTaskMgr(0, &GlobalMirrorTasks::Instance(), true);
     auto transportCallback = MemTransportCallback(linkData, mirrorTaskMgr);
     MemTransportLite transportLite(liteData, transportCallback);
-    auto &ubTransportLite = *(dynamic_cast<UbTransportLiteImpl *>(transportLite.impl.get()));
+    auto& ubTransportLite = *(dynamic_cast<UbTransportLiteImpl*>(transportLite.impl.get()));
     transportLite.Describe();
 
     std::cout << ubTransportLite.Describe() << std::endl;
@@ -203,7 +204,7 @@ TEST_F(UbTransportLiteImplTest, construct_test)
     std::cout << ubTransportLite.rmtBufferVec[1].Describe() << std::endl;
 
     u32 fakeStreamId = 1;
-    u32 fakeSqId     = 1;
+    u32 fakeSqId = 1;
     u32 fakedevPhyId = 1;
     BinaryStream liteBinaryStream;
     liteBinaryStream << fakeStreamId;
@@ -213,12 +214,16 @@ TEST_F(UbTransportLiteImplTest, construct_test)
     liteBinaryStream.Dump(uniqueId);
 
     StreamLite stream(uniqueId);
-    RtsqA5     rtsq(fakedevPhyId, fakeStreamId, fakeSqId);
-    stream.rtsq = std::make_unique<RtsqA5>(rtsq);
-    MOCKER_CPP_VIRTUAL(rtsq, &RtsqA5::SdmaCopy).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any());
+    stream.rtsq = std::make_unique<RtsqA5>(fakedevPhyId, fakeStreamId, fakeSqId);
+    RtsqA5& rtsq = *static_cast<RtsqA5*>(stream.rtsq.get());
+    MOCKER_CPP_VIRTUAL(rtsq, &RtsqA5::SdmaCopy)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any());
 
     MOCKER_CPP(&UbTransportLiteImpl::BuildNotifyWaitTask).stubs();
     MOCKER_CPP(&UbTransportLiteImpl::BuildUbDbSendTask).stubs();
+    MOCKER_CPP(&UbTransportLiteImpl::PreLaunchWqe).stubs();
+    MOCKER_CPP(&UbTransportLiteImpl::PostLaunchWqe).stubs();
 
     transportLite.Post(0, stream);
     transportLite.Wait(0, stream);
@@ -239,7 +244,7 @@ TEST_F(UbTransportLiteImplTest, construct_test)
     localRmaBufferVec.push_back(locBuffer);
     vector<Buffer> rmtBufferVec;
     rmtBufferVec.push_back(rmtBuffer);
-    vector<BaseTransportLiteImpl::TransferOp>  transferOpVec;
+    vector<BaseTransportLiteImpl::TransferOp> transferOpVec;
     transferOpVec.push_back({TransferType::READ, {DataType::INVALID, ReduceOp::INVALID}});
     transferOpVec.push_back({TransferType::READ, {DataType::INT8, ReduceOp::MAX}});
     transferOpVec.push_back({TransferType::WRITE, {DataType::INVALID, ReduceOp::INVALID}});
@@ -250,4 +255,39 @@ TEST_F(UbTransportLiteImplTest, construct_test)
     RmtRmaBufSliceLite rmtRmaBufferLite(100, 200, 300, 400, 500, UINT32_MAX);
     transportLite.BatchOneSidedRead({locRmaBufferLite}, {rmtRmaBufferLite}, stream);
     transportLite.BatchOneSidedWrite({locRmaBufferLite}, {rmtRmaBufferLite}, stream);
+}
+
+/* ---------- UbConnLiteMgr AppendCompletedCis ---------- */
+
+TEST_F(UbTransportLiteImplTest, UbConnLiteMgr_AppendCompletedCis_ExpectCiUpdated)
+{
+    UbJettyLiteId id(1, 1, 1);
+    UbJettyLiteAttr attr(1, 1, 8, 1, false);
+    Eid rmtEid;
+    auto ubConn = std::make_unique<UbConnLite>(id, attr, rmtEid);
+
+    UbTransportLiteImpl* fakeKey = reinterpret_cast<UbTransportLiteImpl*>(0x500);
+    {
+        std::unique_lock<std::shared_mutex> lock(UbConnLiteMgr::GetInstance().mtx_);
+        UbConnLiteMgr::GetInstance().ciTrackerMap_[fakeKey] = ubConn.get();
+    }
+
+    std::vector<std::pair<u16, u16>> slots = {{0, 10}, {1, 20}};
+    UbConnLiteMgr::GetInstance().AppendCompletedCis(fakeKey, slots.data(), slots.size());
+    EXPECT_EQ(20u, ubConn->ci);
+
+    {
+        std::unique_lock<std::shared_mutex> lock(UbConnLiteMgr::GetInstance().mtx_);
+        UbConnLiteMgr::GetInstance().ciTrackerMap_.erase(fakeKey);
+    }
+}
+
+TEST_F(UbTransportLiteImplTest, UbConnLiteMgr_AppendCompletedCis_InvalidInput_ExpectNoCrash)
+{
+    // transport未注册（已销毁场景）
+    UbTransportLiteImpl* fakeKey = reinterpret_cast<UbTransportLiteImpl*>(0x900);
+    std::vector<std::pair<u16, u16>> slots = {{0, 10}};
+    EXPECT_NO_THROW(UbConnLiteMgr::GetInstance().AppendCompletedCis(fakeKey, slots.data(), slots.size()));
+    // slots为空
+    EXPECT_NO_THROW(UbConnLiteMgr::GetInstance().AppendCompletedCis(fakeKey, nullptr, 0));
 }

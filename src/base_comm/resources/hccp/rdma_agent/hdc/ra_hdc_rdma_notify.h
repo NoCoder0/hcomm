@@ -14,9 +14,9 @@
 #include "ra.h"
 #include "ra_hdc.h"
 
-#define RA_NOTIFY_TYPE_TOTAL_SIZE   1
-#define RA_MEM_PHY_BIT              14
-#define RA_MEM_TYPE_HBM             (0x1 << RA_MEM_PHY_BIT)
+#define RA_NOTIFY_TYPE_TOTAL_SIZE 1
+#define RA_MEM_PHY_BIT 14
+#define RA_MEM_TYPE_HBM (0x1 << RA_MEM_PHY_BIT)
 
 union OpGetNotifyBaData {
     struct {

@@ -9,7 +9,7 @@ HCOMM Experimental NIC Plugin 用于在通用服务器场景下扩展 host 侧�
 | 插件 | 产物 | 注册协议 |
 | --- | --- | --- |
 | HOST RoCE 插件 | `libhcomm_cpu_roce_plugin.so` | `COMM_PROTOCOL_ROCE` |
-| HOST UB 插件 | `libhcomm_cpu_ub_plugin.so` | `COMM_PROTOCOL_UBC_TP`、`COMM_PROTOCOL_UBC_CTP` |
+| HOST UB 插件 | `libhcomm_cpu_ub_plugin.so` | `COMM_PROTOCOL_UB_CTP` |
 
 ## 编译打包
 

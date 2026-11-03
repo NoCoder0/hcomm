@@ -25,16 +25,9 @@
 #define RS_PING_PAYLOAD_HEADER_MASK_SIZE 104U
 #define RS_PING_PAYLOAD_HEADER_RESV_CUSTOM sizeof(struct RsPingPayloadHeader)
 
-enum RsPingThreadStatus {
-    RS_PING_THREAD_RESET = 0,
-    RS_PING_THREAD_RUNNING = 1,
-    RS_PING_THREAD_FINISH = 2
-};
+enum RsPingThreadStatus { RS_PING_THREAD_RESET = 0, RS_PING_THREAD_RUNNING = 1, RS_PING_THREAD_FINISH = 2 };
 
-enum RsPingTaskStatus {
-    RS_PING_TASK_RESET = 0,
-    RS_PING_TASK_RUNNING = 1
-};
+enum RsPingTaskStatus { RS_PING_TASK_RESET = 0, RS_PING_TASK_RUNNING = 1 };
 
 struct RsPingMrCb {
     uint32_t payloadOffset;
@@ -237,10 +230,9 @@ struct RsPingCtxCb {
 struct RsPingPongOps {
     bool (*checkPingFd)(struct RsPingCtxCb *pingCb, int fd);
     bool (*checkPongFd)(struct RsPingCtxCb *pingCb, int fd);
-    int (*initPingCb)(unsigned int phyId, struct PingInitAttr *attr, struct PingInitInfo *info,
-        unsigned int *devIndex, struct RsPingCtxCb *pingCb);
-    int (*pingFindTargetNode)(struct RsPingCtxCb *pingCb, struct PingQpInfo *target,
-        struct RsPingTargetInfo **node);
+    int (*initPingCb)(unsigned int phyId, struct PingInitAttr *attr, struct PingInitInfo *info, unsigned int *devIndex,
+        struct RsPingCtxCb *pingCb);
+    int (*pingFindTargetNode)(struct RsPingCtxCb *pingCb, struct PingQpInfo *target, struct RsPingTargetInfo **node);
     int (*pingAllocTargetNode)(struct RsPingCtxCb *pingCb, struct PingTargetInfo *target,
         struct RsPingTargetInfo **node);
     void (*resetRecvBuffer)(struct RsPingCtxCb *pingCb);
@@ -258,10 +250,10 @@ struct RsPingPongOps {
 struct RsPingPongDfx {
     void (*addTargetSuccess)(struct PingTargetInfo *target, struct RsPingTargetInfo *targetInfo);
     void (*initPingCbSuccess)(unsigned int phyId, struct PingInitAttr *attr, unsigned int devIndex);
-    void (*pingCannotFindTargetNode)(unsigned int i, int ret, struct PingTargetCommInfo target,
-        unsigned int phyId);
+    void (*pingCannotFindTargetNode)(unsigned int i, int ret, struct PingTargetCommInfo target, unsigned int phyId);
 };
 
 uint32_t RsPingGetTripTime(struct RsPingTimestamp *timestamp);
+void RsPingUpdateResultSummary(struct RsPingTargetInfo *targetInfo, uint32_t rtt, uint32_t taskId);
 
 #endif // RS_PING_INNER_H

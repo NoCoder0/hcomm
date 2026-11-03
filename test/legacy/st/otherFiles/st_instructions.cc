@@ -23,26 +23,20 @@ using namespace Hccl;
 using namespace std;
 class InstructionTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "InstructionTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "InstructionTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "InstructionTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "InstructionTest TearDown" << std::endl; }
 
     virtual void SetUp()
     {
-        localRank  = 0;
+        localRank = 0;
         remoteRank = 1;
-        dataType   = DataType::FP32;
-        reduceOp   = ReduceOp::SUM;
-        u64          size = 100;
-        DataBuffer    srcBuffer(0x1234560, size);
-        DataBuffer    dstBuffer(0x1321000, size);
- 
+        dataType = DataType::FP32;
+        reduceOp = ReduceOp::SUM;
+        u64 size = 100;
+        DataBuffer srcBuffer(0x1234560, size);
+        DataBuffer dstBuffer(0x1321000, size);
+
         NotifyType notifyType = NotifyType::NORMAL;
         u32 bitValue = 0;
         u32 topicId = 0;
@@ -50,7 +44,7 @@ protected:
         BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
         linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
         u64 sliceSize = 0x1000;
-        localSlice  = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
+        localSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
         remoteSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
         srcSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
         dstSlice = new DataSlice(BufferType::SCRATCH, sliceSize, sliceSize);
@@ -64,13 +58,16 @@ protected:
         insBatchWrite = new InsBatchWrite(remoteRank, *linkData);
         insWriteWithFin = new InsWriteWithFin(remoteRank, *linkData, *localSlice, *remoteSlice, NotifyType::NORMAL);
         insWriteReduce = new InsWriteReduce(remoteRank, *linkData, *localSlice, *remoteSlice, dataType, reduceOp);
-        insWriteReduceWithFin = new InsWriteReduceWithFin(remoteRank, *linkData, *localSlice, *remoteSlice, dataType, reduceOp, NotifyType::NORMAL);
+        insWriteReduceWithFin = new InsWriteReduceWithFin(
+            remoteRank, *linkData, *localSlice, *remoteSlice, dataType, reduceOp, NotifyType::NORMAL);
         insReadExtend = new InsReadExtend(remoteRank, *linkData, srcBuffer, dstBuffer);
         insReadReduceExtend = new InsReadReduceExtend(remoteRank, *linkData, srcBuffer, dstBuffer, dataType, reduceOp);
         insWriteWithFinExtend = new InsWriteWithFinExtend(remoteRank, *linkData, srcBuffer, dstBuffer);
-        insWriteReduceExtend = new InsWriteReduceExtend(remoteRank, *linkData, srcBuffer, dstBuffer, dataType, reduceOp);
+        insWriteReduceExtend
+            = new InsWriteReduceExtend(remoteRank, *linkData, srcBuffer, dstBuffer, dataType, reduceOp);
         insWriteExtend = new InsWriteExtend(remoteRank, *linkData, srcBuffer, dstBuffer);
-        insWriteReduceWithFinExtend = new InsWriteReduceWithFinExtend(remoteRank, *linkData, srcBuffer, dstBuffer, dataType, reduceOp, NotifyType::NORMAL);
+        insWriteReduceWithFinExtend = new InsWriteReduceWithFinExtend(
+            remoteRank, *linkData, srcBuffer, dstBuffer, dataType, reduceOp, NotifyType::NORMAL);
         std::cout << "A Test case in InstructionTest SetUP" << std::endl;
     }
 
@@ -108,50 +105,53 @@ protected:
     RankId localRank;
     RankId remoteRank;
 
-    LinkData *linkData;
+    LinkData* linkData;
 
-    DataSlice *localSlice;
-    DataSlice *remoteSlice;
-    DataSlice *srcSlice;
-    DataSlice *dstSlice;
+    DataSlice* localSlice;
+    DataSlice* remoteSlice;
+    DataSlice* srcSlice;
+    DataSlice* dstSlice;
 
-    RmaBufSliceLite *localRmaSlice;
-    RmtRmaBufSliceLite *remoteRmaSlice;
+    RmaBufSliceLite* localRmaSlice;
+    RmtRmaBufSliceLite* remoteRmaSlice;
 
-    InsAicpuReduce *insAicpuReduce;
-    InsStreamSync *insStreamSync;
-    InsBatchRead  *insBatchRead;
-    InsBatchWrite *insBatchWrite;
-    InsWriteReduce *insWriteReduce;
-    InsWriteWithFin       *insWriteWithFin;
-    InsWriteReduceWithFin *insWriteReduceWithFin;
-    InsReadExtend *insReadExtend;
-    InsReadReduceExtend *insReadReduceExtend;
-    InsWriteWithFinExtend *insWriteWithFinExtend;
-    InsWriteReduceExtend *insWriteReduceExtend;
-    InsWriteExtend *insWriteExtend;
-    InsWriteReduceWithFinExtend *insWriteReduceWithFinExtend;
+    InsAicpuReduce* insAicpuReduce;
+    InsStreamSync* insStreamSync;
+    InsBatchRead* insBatchRead;
+    InsBatchWrite* insBatchWrite;
+    InsWriteReduce* insWriteReduce;
+    InsWriteWithFin* insWriteWithFin;
+    InsWriteReduceWithFin* insWriteReduceWithFin;
+    InsReadExtend* insReadExtend;
+    InsReadReduceExtend* insReadReduceExtend;
+    InsWriteWithFinExtend* insWriteWithFinExtend;
+    InsWriteReduceExtend* insWriteReduceExtend;
+    InsWriteExtend* insWriteExtend;
+    InsWriteReduceWithFinExtend* insWriteReduceWithFinExtend;
     DataType dataType;
     ReduceOp reduceOp;
 };
 
 TEST(InstructionTest, test_print_all_ins)
 {
-    RankId localRank  = 0;
+    RankId localRank = 0;
     RankId remoteRank = 1;
-    DataType dataType   = DataType::FP32;
-    ReduceOp reduceOp   = ReduceOp::SUM;
+    DataType dataType = DataType::FP32;
+    ReduceOp reduceOp = ReduceOp::SUM;
 
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData *linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
+    LinkData* linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
     u64 sliceSize = 0x1000;
-    DataSlice *localSlice  = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
-    DataSlice *remoteSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
+    DataSlice* localSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
+    DataSlice* remoteSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
 
-    InsWriteReduce *insWriteReduce = new InsWriteReduce(remoteRank, *linkData, *localSlice, *remoteSlice, dataType, reduceOp);
-    InsWriteWithFin *insWriteWithFin = new InsWriteWithFin(remoteRank, *linkData, *localSlice, *remoteSlice, NotifyType::NORMAL);
-    InsWriteReduceWithFin *insWriteReduceWithFin = new InsWriteReduceWithFin(remoteRank, *linkData, *localSlice, *remoteSlice, dataType, reduceOp, NotifyType::NORMAL);
-    InsStreamSync *insStreamSync = new InsStreamSync();
+    InsWriteReduce* insWriteReduce
+        = new InsWriteReduce(remoteRank, *linkData, *localSlice, *remoteSlice, dataType, reduceOp);
+    InsWriteWithFin* insWriteWithFin
+        = new InsWriteWithFin(remoteRank, *linkData, *localSlice, *remoteSlice, NotifyType::NORMAL);
+    InsWriteReduceWithFin* insWriteReduceWithFin = new InsWriteReduceWithFin(
+        remoteRank, *linkData, *localSlice, *remoteSlice, dataType, reduceOp, NotifyType::NORMAL);
+    InsStreamSync* insStreamSync = new InsStreamSync();
 
     cout << insWriteReduce->Describe() << endl;
     cout << insWriteWithFin->Describe() << endl;
@@ -169,13 +169,13 @@ TEST(InstructionTest, test_print_all_ins)
 }
 
 TEST(InstructionTest, test_ins_aicpu_reduce)
-{   
+{
     u64 sliceSize = 0x1000;
-    DataType dataType   = DataType::FP32;
-    ReduceOp reduceOp   = ReduceOp::SUM;
-    DataSlice *srcSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
-    DataSlice *dstSlice = new DataSlice(BufferType::SCRATCH, sliceSize, sliceSize);
-    InsAicpuReduce *insAicpuReduce = new InsAicpuReduce(*srcSlice, *dstSlice, dataType, reduceOp);
+    DataType dataType = DataType::FP32;
+    ReduceOp reduceOp = ReduceOp::SUM;
+    DataSlice* srcSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
+    DataSlice* dstSlice = new DataSlice(BufferType::SCRATCH, sliceSize, sliceSize);
+    InsAicpuReduce* insAicpuReduce = new InsAicpuReduce(*srcSlice, *dstSlice, dataType, reduceOp);
     cout << insAicpuReduce->Describe() << endl;
     DataSlice testDstSlice = insAicpuReduce->GetDstSlice();
     DataSlice testSrcSlice = insAicpuReduce->GetSrcSlice();
@@ -191,18 +191,19 @@ TEST(InstructionTest, test_ins_aicpu_reduce)
 
 TEST(InstructionTest, test_ins_write_reduce)
 {
-    RankId localRank  = 0;
+    RankId localRank = 0;
     RankId remoteRank = 1;
-    DataType dataType   = DataType::FP32;
-    ReduceOp reduceOp   = ReduceOp::SUM;
+    DataType dataType = DataType::FP32;
+    ReduceOp reduceOp = ReduceOp::SUM;
 
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData *linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
+    LinkData* linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
     u64 sliceSize = 0x1000;
-    DataSlice *localSlice  = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
-    DataSlice *remoteSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
+    DataSlice* localSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
+    DataSlice* remoteSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
 
-    InsWriteReduce *insWriteReduce = new InsWriteReduce(remoteRank, *linkData, *localSlice, *remoteSlice, dataType, reduceOp);
+    InsWriteReduce* insWriteReduce
+        = new InsWriteReduce(remoteRank, *linkData, *localSlice, *remoteSlice, dataType, reduceOp);
     cout << insWriteReduce->Describe() << endl;
 
     EXPECT_EQ(true, dataType == insWriteReduce->GetDataType());
@@ -223,16 +224,17 @@ TEST(InstructionTest, test_ins_write_reduce)
 
 TEST(InstructionTest, test_ins_write_with_fin)
 {
-    RankId localRank  = 0;
+    RankId localRank = 0;
     RankId remoteRank = 1;
 
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData *linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
+    LinkData* linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
     u64 sliceSize = 0x1000;
-    DataSlice *localSlice  = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
-    DataSlice *remoteSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
+    DataSlice* localSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
+    DataSlice* remoteSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
 
-    InsWriteWithFin *insWriteWithFin = new InsWriteWithFin(remoteRank, *linkData, *localSlice, *remoteSlice, NotifyType::NORMAL);
+    InsWriteWithFin* insWriteWithFin
+        = new InsWriteWithFin(remoteRank, *linkData, *localSlice, *remoteSlice, NotifyType::NORMAL);
     cout << insWriteWithFin->Describe() << endl;
 
     EXPECT_EQ(remoteRank, insWriteWithFin->GetRemoteRank());
@@ -253,18 +255,19 @@ TEST(InstructionTest, test_ins_write_with_fin)
 
 TEST(InstructionTest, test_ins_write_reduce_with_fin)
 {
-    RankId localRank  = 0;
+    RankId localRank = 0;
     RankId remoteRank = 1;
-    DataType dataType   = DataType::FP32;
-    ReduceOp reduceOp   = ReduceOp::SUM;
+    DataType dataType = DataType::FP32;
+    ReduceOp reduceOp = ReduceOp::SUM;
 
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData *linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
+    LinkData* linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
     u64 sliceSize = 0x1000;
-    DataSlice *localSlice  = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
-    DataSlice *remoteSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
+    DataSlice* localSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
+    DataSlice* remoteSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
 
-    InsWriteReduceWithFin *insWriteReduceWithFin = new InsWriteReduceWithFin(remoteRank, *linkData, *localSlice, *remoteSlice, dataType, reduceOp, NotifyType::NORMAL);
+    InsWriteReduceWithFin* insWriteReduceWithFin = new InsWriteReduceWithFin(
+        remoteRank, *linkData, *localSlice, *remoteSlice, dataType, reduceOp, NotifyType::NORMAL);
     cout << insWriteReduceWithFin->Describe() << endl;
 
     EXPECT_EQ(true, dataType == insWriteReduceWithFin->GetDataType());
@@ -281,14 +284,14 @@ TEST(InstructionTest, test_ins_write_reduce_with_fin)
 
     delete localSlice;
     delete remoteSlice;
-    
+
     delete insWriteReduceWithFin;
 }
 
 TEST(InstructionTest, test_ins_wait_group_fin)
 {
-    u32      topicId = 100;
-    u32      value   = 200;
+    u32 topicId = 100;
+    u32 value = 200;
     LinkData link(BasePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB), 0, 1, 0, 1);
 
     InsWaitGroupFin insWaitGroupFin(topicId);
@@ -303,17 +306,17 @@ TEST(InstructionTest, test_ins_wait_group_fin)
 
 TEST(InstructionTest, test_ins_ReadExtend)
 {
-    RankId localRank  = 0;
+    RankId localRank = 0;
     RankId remoteRank = 1;
     DataType dataType = DataType::FP32;
     ReduceOp reduceOp = ReduceOp::SUM;
-    u64          size = 100;
-    DataBuffer    srcBuffer(0x1234560, size);
-    DataBuffer    dstBuffer(0x1321000, size);
+    u64 size = 100;
+    DataBuffer srcBuffer(0x1234560, size);
+    DataBuffer dstBuffer(0x1321000, size);
 
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData *linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
-    InsReadExtend *insReadExtend = new InsReadExtend(remoteRank, *linkData, srcBuffer, dstBuffer);
+    LinkData* linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
+    InsReadExtend* insReadExtend = new InsReadExtend(remoteRank, *linkData, srcBuffer, dstBuffer);
     cout << insReadExtend->Describe() << endl;
     EXPECT_EQ(remoteRank, insReadExtend->GetRemoteRank());
     EXPECT_EQ(true, *(insReadExtend->GetLink()) == *linkData);
@@ -323,20 +326,21 @@ TEST(InstructionTest, test_ins_ReadExtend)
     delete linkData;
     delete insReadExtend;
 }
- 
+
 TEST(InstructionTest, test_ins_ReadReduceExtend)
 {
-    RankId localRank  = 0;
+    RankId localRank = 0;
     RankId remoteRank = 1;
     DataType dataType = DataType::FP32;
     ReduceOp reduceOp = ReduceOp::SUM;
-    u64          size = 100;
-    DataBuffer    srcBuffer(0x1234560, size);
-    DataBuffer    dstBuffer(0x1321000, size);
+    u64 size = 100;
+    DataBuffer srcBuffer(0x1234560, size);
+    DataBuffer dstBuffer(0x1321000, size);
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData *linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
+    LinkData* linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
 
-    InsReadReduceExtend *insReadReduceExtend = new InsReadReduceExtend(remoteRank, *linkData, srcBuffer, dstBuffer, dataType, reduceOp);
+    InsReadReduceExtend* insReadReduceExtend
+        = new InsReadReduceExtend(remoteRank, *linkData, srcBuffer, dstBuffer, dataType, reduceOp);
     cout << insReadReduceExtend->Describe() << endl;
     EXPECT_EQ(remoteRank, insReadReduceExtend->GetRemoteRank());
     EXPECT_EQ(true, *(insReadReduceExtend->GetLink()) == *linkData);
@@ -348,21 +352,22 @@ TEST(InstructionTest, test_ins_ReadReduceExtend)
     delete linkData;
     delete insReadReduceExtend;
 }
- 
+
 TEST(InstructionTest, test_ins_WriteExtend)
 {
-    RankId localRank  = 0;
+    RankId localRank = 0;
     RankId remoteRank = 1;
     DataType dataType = DataType::FP32;
     ReduceOp reduceOp = ReduceOp::SUM;
-    u64          size = 100;
-    DataBuffer    srcBuffer(0x1234560, size);
-    DataBuffer    dstBuffer(0x1321000, size);
+    u64 size = 100;
+    DataBuffer srcBuffer(0x1234560, size);
+    DataBuffer dstBuffer(0x1321000, size);
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData *linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
+    LinkData* linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
 
-    InsWriteExtend *insWriteExtend = new InsWriteExtend(remoteRank, *linkData, srcBuffer, dstBuffer);
-    InsWriteWithFinExtend *insWriteWithFinExtend = new InsWriteWithFinExtend(remoteRank, *linkData, srcBuffer, dstBuffer);
+    InsWriteExtend* insWriteExtend = new InsWriteExtend(remoteRank, *linkData, srcBuffer, dstBuffer);
+    InsWriteWithFinExtend* insWriteWithFinExtend
+        = new InsWriteWithFinExtend(remoteRank, *linkData, srcBuffer, dstBuffer);
     EXPECT_EQ(remoteRank, insWriteExtend->GetRemoteRank());
     EXPECT_EQ(remoteRank, insWriteWithFinExtend->GetRemoteRank());
 
@@ -370,19 +375,20 @@ TEST(InstructionTest, test_ins_WriteExtend)
     delete insWriteExtend;
     delete insWriteWithFinExtend;
 }
- 
+
 TEST(InstructionTest, test_ins_WriteReduceExtend)
 {
-    RankId localRank  = 0;
+    RankId localRank = 0;
     RankId remoteRank = 1;
     DataType dataType = DataType::FP32;
     ReduceOp reduceOp = ReduceOp::SUM;
-    u64          size = 100;
-    DataBuffer    srcBuffer(0x1234560, size);
-    DataBuffer    dstBuffer(0x1321000, size);
+    u64 size = 100;
+    DataBuffer srcBuffer(0x1234560, size);
+    DataBuffer dstBuffer(0x1321000, size);
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData *linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
-    InsWriteReduceExtend *insWriteReduceExtend = new InsWriteReduceExtend(remoteRank, *linkData, srcBuffer, dstBuffer, dataType, reduceOp);
+    LinkData* linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
+    InsWriteReduceExtend* insWriteReduceExtend
+        = new InsWriteReduceExtend(remoteRank, *linkData, srcBuffer, dstBuffer, dataType, reduceOp);
     cout << insWriteReduceExtend->Describe() << endl;
     EXPECT_EQ(remoteRank, insWriteReduceExtend->GetRemoteRank());
     EXPECT_EQ(true, *(insWriteReduceExtend->GetLink()) == *linkData);
@@ -394,20 +400,21 @@ TEST(InstructionTest, test_ins_WriteReduceExtend)
     delete linkData;
     delete insWriteReduceExtend;
 }
- 
+
 TEST(InstructionTest, test_ins_WriteReduceWithFinExtend)
 {
-    RankId localRank  = 0;
+    RankId localRank = 0;
     RankId remoteRank = 1;
     DataType dataType = DataType::FP32;
     ReduceOp reduceOp = ReduceOp::SUM;
-    u64          size = 100;
-    DataBuffer    srcBuffer(0x1234560, size);
-    DataBuffer    dstBuffer(0x1321000, size);
+    u64 size = 100;
+    DataBuffer srcBuffer(0x1234560, size);
+    DataBuffer dstBuffer(0x1321000, size);
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData *linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
+    LinkData* linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
 
-    InsWriteReduceWithFinExtend *insWriteReduceWithFinExtend = new InsWriteReduceWithFinExtend(remoteRank, *linkData, srcBuffer, dstBuffer, dataType, reduceOp, NotifyType::NORMAL);
+    InsWriteReduceWithFinExtend* insWriteReduceWithFinExtend = new InsWriteReduceWithFinExtend(
+        remoteRank, *linkData, srcBuffer, dstBuffer, dataType, reduceOp, NotifyType::NORMAL);
     cout << insWriteReduceWithFinExtend->Describe() << endl;
     EXPECT_EQ(remoteRank, insWriteReduceWithFinExtend->GetRemoteRank());
     EXPECT_EQ(true, *(insWriteReduceWithFinExtend->GetLink()) == *linkData);
@@ -425,10 +432,11 @@ TEST(InstructionTest, test_ins_BatchOneSidedRead)
     RankId localRank = 0;
     RankId remoteRank = 1;
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData *linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
-    RmaBufSliceLite * localRmaSlice = new RmaBufSliceLite(100, 200, 300, 400);
-    RmtRmaBufSliceLite * remoteRmaSlice = new RmtRmaBufSliceLite(100, 200, 300, 400, 500, UINT32_MAX);
-    InsBatchOneSidedRead * insBatchOneSidedRead = new InsBatchOneSidedRead(remoteRank, *linkData, {*localRmaSlice}, {*remoteRmaSlice});
+    LinkData* linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
+    RmaBufSliceLite* localRmaSlice = new RmaBufSliceLite(100, 200, 300, 400);
+    RmtRmaBufSliceLite* remoteRmaSlice = new RmtRmaBufSliceLite(100, 200, 300, 400, 500, UINT32_MAX);
+    InsBatchOneSidedRead* insBatchOneSidedRead
+        = new InsBatchOneSidedRead(remoteRank, *linkData, {*localRmaSlice}, {*remoteRmaSlice});
     cout << insBatchOneSidedRead->Describe() << endl;
     EXPECT_EQ(remoteRank, insBatchOneSidedRead->GetRemoteRank());
     EXPECT_EQ(true, *(insBatchOneSidedRead->GetLink()) == *linkData);
@@ -439,16 +447,17 @@ TEST(InstructionTest, test_ins_BatchOneSidedRead)
     delete localRmaSlice;
     delete remoteRmaSlice;
 }
- 
+
 TEST(InstructionTest, test_ins_BatchOneSidedWrite)
 {
     RankId localRank = 0;
     RankId remoteRank = 1;
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData *linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
-    RmaBufSliceLite * localRmaSlice = new RmaBufSliceLite(100, 200, 300, 400);
-    RmtRmaBufSliceLite * remoteRmaSlice = new RmtRmaBufSliceLite(100, 200, 300, 400, 500, UINT32_MAX);
-    InsBatchOneSidedWrite *insBatchOneSidedWrite = new InsBatchOneSidedWrite(remoteRank, *linkData, {*localRmaSlice}, {*remoteRmaSlice});
+    LinkData* linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
+    RmaBufSliceLite* localRmaSlice = new RmaBufSliceLite(100, 200, 300, 400);
+    RmtRmaBufSliceLite* remoteRmaSlice = new RmtRmaBufSliceLite(100, 200, 300, 400, 500, UINT32_MAX);
+    InsBatchOneSidedWrite* insBatchOneSidedWrite
+        = new InsBatchOneSidedWrite(remoteRank, *linkData, {*localRmaSlice}, {*remoteRmaSlice});
     cout << insBatchOneSidedWrite->Describe() << endl;
     EXPECT_EQ(remoteRank, insBatchOneSidedWrite->GetRemoteRank());
     EXPECT_EQ(true, *(insBatchOneSidedWrite->GetLink()) == *linkData);
@@ -462,24 +471,24 @@ TEST(InstructionTest, test_ins_BatchOneSidedWrite)
 
 TEST(InstructionTest, test_ins_BatchRead)
 {
-    RankId localRank  = 0;
+    RankId localRank = 0;
     RankId remoteRank = 1;
-    DataType dataType   = DataType::FP32;
-    ReduceOp reduceOp   = ReduceOp::SUM;
+    DataType dataType = DataType::FP32;
+    ReduceOp reduceOp = ReduceOp::SUM;
 
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData *linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
+    LinkData* linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
     u64 sliceSize = 0x1000;
-    DataSlice *localSlice  = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
-    DataSlice *remoteSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
+    DataSlice* localSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
+    DataSlice* remoteSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
 
-    InsBatchRead *insBatchRead = new InsBatchRead(remoteRank, *linkData);
+    InsBatchRead* insBatchRead = new InsBatchRead(remoteRank, *linkData);
     cout << insBatchRead->Describe() << endl;
     unique_ptr<Instruction> readIns = make_unique<InsRead>(remoteRank, *linkData, *localSlice, *remoteSlice);
-    unique_ptr<Instruction> readReduceIns = make_unique<InsReadReduce>(remoteRank, *linkData, *localSlice,
-                                                                        *remoteSlice, dataType, reduceOp);
-    insBatchRead->PushReadIns(move(readIns));
-    insBatchRead->PushReadIns(move(readReduceIns));
+    unique_ptr<Instruction> readReduceIns
+        = make_unique<InsReadReduce>(remoteRank, *linkData, *localSlice, *remoteSlice, dataType, reduceOp);
+    EXPECT_EQ(insBatchRead->PushReadIns(move(readIns)), HcclResult::HCCL_SUCCESS);
+    EXPECT_EQ(insBatchRead->PushReadIns(move(readReduceIns)), HcclResult::HCCL_SUCCESS);
 
     EXPECT_EQ(remoteRank, insBatchRead->GetRemoteRank());
     EXPECT_EQ(true, *(insBatchRead->GetLink()) == *linkData);
@@ -495,17 +504,17 @@ TEST(InstructionTest, test_ins_BatchRead)
 
 TEST(InstructionTest, test_ins_batch_read_PushReadIns_fail)
 {
-    RankId localRank  = 0;
+    RankId localRank = 0;
     RankId remoteRank = 1;
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData *linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
+    LinkData* linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
     u64 sliceSize = 0x1000;
-    DataSlice *localSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
-    DataSlice *remoteSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
+    DataSlice* localSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
+    DataSlice* remoteSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
     unique_ptr<Instruction> writeIns = make_unique<InsWrite>(remoteRank, *linkData, *localSlice, *remoteSlice);
-    InsBatchRead *insBatchRead = new InsBatchRead(remoteRank, *linkData);
+    InsBatchRead* insBatchRead = new InsBatchRead(remoteRank, *linkData);
 
-    EXPECT_THROW(insBatchRead->PushReadIns(move(writeIns)), NotSupportException);
+    EXPECT_EQ(insBatchRead->PushReadIns(move(writeIns)), HcclResult::HCCL_E_RUNTIME);
 
     delete linkData;
     delete localSlice;
@@ -515,24 +524,24 @@ TEST(InstructionTest, test_ins_batch_read_PushReadIns_fail)
 
 TEST(InstructionTest, test_ins_BatchWrite)
 {
-    RankId localRank  = 0;
+    RankId localRank = 0;
     RankId remoteRank = 1;
-    DataType dataType   = DataType::FP32;
-    ReduceOp reduceOp   = ReduceOp::SUM;
+    DataType dataType = DataType::FP32;
+    ReduceOp reduceOp = ReduceOp::SUM;
 
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData *linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
+    LinkData* linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
     u64 sliceSize = 0x1000;
-    DataSlice *localSlice  = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
-    DataSlice *remoteSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
+    DataSlice* localSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
+    DataSlice* remoteSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
 
-    InsBatchWrite *insBatchWrite = new InsBatchWrite(remoteRank, *linkData);
+    InsBatchWrite* insBatchWrite = new InsBatchWrite(remoteRank, *linkData);
     cout << insBatchWrite->Describe() << endl;
     unique_ptr<Instruction> writeIns = make_unique<InsWrite>(remoteRank, *linkData, *localSlice, *remoteSlice);
-    unique_ptr<Instruction> writeReduceIns = make_unique<InsWriteReduce>(remoteRank, *linkData, *localSlice,
-                                                                        *remoteSlice, dataType, reduceOp);
-    insBatchWrite->PushWriteIns(move(writeIns));
-    insBatchWrite->PushWriteIns(move(writeReduceIns));
+    unique_ptr<Instruction> writeReduceIns
+        = make_unique<InsWriteReduce>(remoteRank, *linkData, *localSlice, *remoteSlice, dataType, reduceOp);
+    EXPECT_EQ(insBatchWrite->PushWriteIns(move(writeIns)), HcclResult::HCCL_SUCCESS);
+    EXPECT_EQ(insBatchWrite->PushWriteIns(move(writeReduceIns)), HcclResult::HCCL_SUCCESS);
 
     EXPECT_EQ(remoteRank, insBatchWrite->GetRemoteRank());
     EXPECT_EQ(true, *(insBatchWrite->GetLink()) == *linkData);
@@ -548,17 +557,17 @@ TEST(InstructionTest, test_ins_BatchWrite)
 
 TEST(InstructionTest, test_ins_batch_write_PushWriteIns_fail)
 {
-    RankId localRank  = 0;
+    RankId localRank = 0;
     RankId remoteRank = 1;
     BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData *linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
+    LinkData* linkData = new LinkData(portType, localRank, remoteRank, 0, 1);
     u64 sliceSize = 0x1000;
-    DataSlice *localSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
-    DataSlice *remoteSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
+    DataSlice* localSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
+    DataSlice* remoteSlice = new DataSlice(BufferType::SCRATCH, 0, sliceSize);
     unique_ptr<Instruction> readIns = make_unique<InsRead>(remoteRank, *linkData, *localSlice, *remoteSlice);
-    InsBatchWrite *insBatchWrite = new InsBatchWrite(remoteRank, *linkData);
+    InsBatchWrite* insBatchWrite = new InsBatchWrite(remoteRank, *linkData);
 
-    EXPECT_THROW(insBatchWrite->PushWriteIns(move(readIns)), NotSupportException);
+    EXPECT_EQ(insBatchWrite->PushWriteIns(move(readIns)), HcclResult::HCCL_E_RUNTIME);
     delete linkData;
     delete localSlice;
     delete remoteSlice;

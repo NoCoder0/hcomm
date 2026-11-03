@@ -1,28 +1,25 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "alg_template_register.h"
 #include "all_reduce_chunk_mesh.h"
 
 namespace hccl {
-AllReduceChunkMesh::AllReduceChunkMesh(const HcclDispatcher dispatcher) : AlgTemplateBase(dispatcher)
-{
-}
+AllReduceChunkMesh::AllReduceChunkMesh(const HcclDispatcher dispatcher) : AlgTemplateBase(dispatcher) {}
 
-AllReduceChunkMesh::~AllReduceChunkMesh()
-{
-}
+AllReduceChunkMesh::~AllReduceChunkMesh() {}
 
-HcclResult AllReduceChunkMesh::Prepare(u64 reduceAttrBitMap, std::vector<Stream> &meshStreams,
-    std::vector<std::shared_ptr<LocalNotify>> &meshSignal, std::vector<std::shared_ptr<LocalNotify>> &meshSignalAux,
-    u32 interRank, u32 interRankSize, u32 userRank, HcomCollOpInfo *opInfo)
+HcclResult AllReduceChunkMesh::Prepare(
+    u64 reduceAttrBitMap, std::vector<Stream>& meshStreams, std::vector<std::shared_ptr<LocalNotify>>& meshSignal,
+    std::vector<std::shared_ptr<LocalNotify>>& meshSignalAux, u32 interRank, u32 interRankSize, u32 userRank,
+    HcomCollOpInfo* opInfo)
 {
     reduceAttr_ = reduceAttrBitMap;
     localRank_ = interRank;
@@ -37,8 +34,7 @@ HcclResult AllReduceChunkMesh::Prepare(u64 reduceAttrBitMap, std::vector<Stream>
 HcclResult AllReduceChunkMesh::MainRecordSub()
 {
     for (u32 signalIndex = 0; signalIndex < meshSignalAux_->size(); signalIndex++) {
-        CHK_RET(LocalNotify::Post(stream_, dispatcher_, (*meshSignalAux_)[signalIndex],
-            profilerInput_.stage));
+        CHK_RET(LocalNotify::Post(stream_, dispatcher_, (*meshSignalAux_)[signalIndex], profilerInput_.stage));
     }
     return HCCL_SUCCESS;
 }
@@ -46,8 +42,8 @@ HcclResult AllReduceChunkMesh::MainRecordSub()
 HcclResult AllReduceChunkMesh::SubWaitMain()
 {
     for (u32 streamIndex = 0; streamIndex < meshSignalAux_->size(); streamIndex++) {
-        CHK_RET(LocalNotify::Wait(meshStreams_[streamIndex], dispatcher_, (*meshSignalAux_)[streamIndex],
-            profilerInput_.stage));
+        CHK_RET(LocalNotify::Wait(
+            meshStreams_[streamIndex], dispatcher_, (*meshSignalAux_)[streamIndex], profilerInput_.stage));
     }
     return HCCL_SUCCESS;
 }
@@ -63,15 +59,15 @@ HcclResult AllReduceChunkMesh::MainWaitSub()
 HcclResult AllReduceChunkMesh::SubRecordMain()
 {
     for (u32 streamIndex = 0; streamIndex < meshSignal_->size(); streamIndex++) {
-        CHK_RET(LocalNotify::Post(meshStreams_[streamIndex], dispatcher_, (*meshSignal_)[streamIndex],
-            profilerInput_.stage));
+        CHK_RET(LocalNotify::Post(
+            meshStreams_[streamIndex], dispatcher_, (*meshSignal_)[streamIndex], profilerInput_.stage));
     }
     return HCCL_SUCCESS;
 }
 
 // 将数据均分，最小单位是128
-HcclResult AllReduceChunkMesh::PrepareSlice(
-    u64 dataCount, u32 unitSize, u32 sliceNum, std::vector<Slice> &dataSlice)
+HcclResult
+AllReduceChunkMesh::PrepareSlice(u64 dataCount, u32 unitSize, u32 sliceNum, std::vector<Slice>& dataSlice) const
 {
     u64 totalSize = dataCount * unitSize;
     Slice temp;
@@ -115,28 +111,23 @@ HcclResult AllReduceChunkMesh::PrepareAllreduceSliceData()
         std::vector<Slice> dataSegsSlice;
         ret = PrepareSlice(slices_[rank].size / unitSize, unitSize, localRankSize_ - 1, dataSegsSlice);
         sliceMap[rank] = dataSegsSlice;
-        CHK_PRT_RET(
-            ret != HCCL_SUCCESS, HCCL_ERROR("[AllReduceChunkMesh][PrepareSlice]rank[%u] failed", rank), ret);
+        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[AllReduceChunkMesh][PrepareSlice]rank[%u] failed", rank), ret);
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult AllReduceChunkMesh::RunAsync(const u32 rank, const u32 rankSize, const std::vector<LINK> &links)
+HcclResult AllReduceChunkMesh::RunAsync(const u32 rank, const u32 rankSize, const std::vector<LINK>& links)
 {
     HcclResult ret = HCCL_SUCCESS;
     CHK_SMART_PTR_NULL(dispatcher_);
     CHK_PTR_NULL(stream_.ptr());
-    HCCL_INFO("AllReduceChunkMesh run: rank[%u] ranksize[%u] inputMem[%p] outputMem[%p] count[%llu]",
-        rank,
-        rankSize,
-        inputMem_.ptr(),
-        outputMem_.ptr(),
-        count_);
+    HCCL_INFO(
+        "AllReduceChunkMesh run: rank[%u] ranksize[%u] inputMem[%p] outputMem[%p] count[%llu]", rank, rankSize,
+        inputMem_.ptr(), outputMem_.ptr(), count_);
 
     if (links.size() < rankSize) {
-        HCCL_ERROR("[AllReduceChunkMesh][RunAsync]rank[%u] linksize[%llu] is less than rankSize[%u]",
-            rank,
-            links.size(),
+        HCCL_ERROR(
+            "[AllReduceChunkMesh][RunAsync]rank[%u] linksize[%llu] is less than rankSize[%u]", rank, links.size(),
             rankSize);
         return HCCL_E_INTERNAL;
     }
@@ -154,40 +145,37 @@ HcclResult AllReduceChunkMesh::RunAsync(const u32 rank, const u32 rankSize, cons
     }
 
     ret = PrepareAllreduceSliceData();
-    CHK_PRT_RET(ret != HCCL_SUCCESS,
-        HCCL_ERROR("[AllReduceRing][RunAsync]rank[%u] count[%llu] failed in PrepareSliceData step",
-            rank,
-            count_),
-        ret);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR("[AllReduceRing][RunAsync]rank[%u] count[%llu] failed in PrepareSliceData step", rank, count_), ret);
 
     ret = RunReduceScatter(rank, rankSize, links);
-    CHK_PRT_RET(ret != HCCL_SUCCESS,
-        HCCL_ERROR("[AllReduceRing][RunAsync]rank[%u] count[%llu] failed in reducescater "
-                   "step",
-            rank,
-            count_),
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[AllReduceRing][RunAsync]rank[%u] count[%llu] failed in ReduceScatter "
+            "step",
+            rank, count_),
         ret);
 
     ret = RunAllGather(rank, rankSize, links);
-    CHK_PRT_RET(ret != HCCL_SUCCESS,
-        HCCL_ERROR("[AllReduceRing][RunAsync]rank[%u] count[%llu] failed in AllGather "
-                "step",
-            rank,
-            count_),
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[AllReduceRing][RunAsync]rank[%u] count[%llu] failed in AllGather "
+            "step",
+            rank, count_),
         ret);
 
     HCCL_INFO("AllReduceChunkMesh finished: rank[%u] ranksize[%u]", rank, rankSize);
     return HCCL_SUCCESS;
 }
 
-HcclResult AllReduceChunkMesh::RunReduceScatter(u32 rank, u32 rankSize, const std::vector<LINK> &links)
+HcclResult AllReduceChunkMesh::RunReduceScatter(u32 rank, u32 rankSize, const std::vector<LINK>& links)
 {
-    HCCL_INFO("ReduceScatterMeshAtomicOpbase run: rank[%u] totalrank[%u] inputMem[%p] outputMem[%p] count[%llu]",
-        rank,
-        rankSize,
-        inputMem_.ptr(),
-        outputMem_.ptr(),
-        count_);
+    HCCL_INFO(
+        "ReduceScatterMeshAtomicOpbase run: rank[%u] totalrank[%u] inputMem[%p] outputMem[%p] count[%llu]", rank,
+        rankSize, inputMem_.ptr(), outputMem_.ptr(), count_);
 
     // 数据准备
     u32 unitSize = DataUnitSize(dataType_);
@@ -197,9 +185,9 @@ HcclResult AllReduceChunkMesh::RunReduceScatter(u32 rank, u32 rankSize, const st
     DeviceMem src;
     DeviceMem dst;
 
-    src = DeviceMem::create(static_cast<char *>(opInfo_->inputAddr), count_ * unitSize);
+    src = DeviceMem::create(static_cast<char*>(opInfo_->inputAddr), count_ * unitSize);
 
-    if (commMemOut.ptr() == opInfo_-> outputAddr) {
+    if (commMemOut.ptr() == opInfo_->outputAddr) {
         // 图模式
         src = src.range(slices_[rank].offset, slices_[rank].size);
         dst = commMemOut.range(slices_[rank].offset, slices_[rank].size);
@@ -221,7 +209,7 @@ HcclResult AllReduceChunkMesh::RunReduceScatter(u32 rank, u32 rankSize, const st
 
     for (u32 round = 1; round < rankSize; round++) {
         u32 dstRank = (round + rank) % rankSize;
-        Stream &subStream = (round == localRankSize_ - 1) ? stream_ : meshStreams_[round - 1];
+        Stream& subStream = (round == localRankSize_ - 1) ? stream_ : meshStreams_[round - 1];
         CHK_RET(links[dstRank]->TxAck(subStream));
         CHK_RET(links[dstRank]->RxAck(subStream));
     }
@@ -243,32 +231,28 @@ HcclResult AllReduceChunkMesh::RunReduceScatter(u32 rank, u32 rankSize, const st
 
         CHK_RET(HcclD2DMemcpyAsync(dispatcher_, emptyDst, emptySrc, stream_));
 
-        // 跨片reduceinline写
+        // 跨片reduce inline写
         for (u32 peer = 1; peer < rankSize; peer++) {
-            u32 gap = (peer + round) > rankSize ? (peer + round - 1)%(rankSize -1):(peer + round - 1);
+            u32 gap = (peer + round) > rankSize ? (peer + round - 1) % (rankSize - 1) : (peer + round - 1);
             u32 dstRank = (gap + rank) % rankSize;
-            Stream &subStream = (peer == localRankSize_ - 1) ? stream_ : meshStreams_[peer - 1];
+            Stream& subStream = (peer == localRankSize_ - 1) ? stream_ : meshStreams_[peer - 1];
             u32 dstSlice = peer - 1;
-            void *remMemPtr = nullptr;
+            void* remMemPtr = nullptr;
 
-            if (commMemOut.ptr() == opInfo_-> outputAddr) {
+            if (commMemOut.ptr() == opInfo_->outputAddr) {
                 CHK_RET(links[dstRank]->GetRemoteMem(UserMemType::INPUT_MEM, &remMemPtr));
             } else {
                 CHK_RET(links[dstRank]->GetRemoteMem(UserMemType::OUTPUT_MEM, &remMemPtr));
             }
 
             src = DeviceMem::create(
-                static_cast<char *>(remMemPtr) + slices_[rank].offset + sliceMap[rank][dstSlice].offset,
+                static_cast<char*>(remMemPtr) + slices_[rank].offset + sliceMap[rank][dstSlice].offset,
                 sliceMap[rank][dstSlice].size);
             dst = commMemOut.range(
                 slices_[rank].offset + sliceMap[rank][dstSlice].offset, sliceMap[rank][dstSlice].size);
-            CHK_RET(HcclReduceAsync(dispatcher_, static_cast<void *>(src.ptr()),
-                sliceMap[rank][dstSlice].size / unitSize,
-                dataType_,
-                reductionOp_,
-                subStream,
-                static_cast<void *>(dst.ptr()),
-                links[dstRank]->GetRemoteRank(),
+            CHK_RET(HcclReduceAsync(
+                dispatcher_, static_cast<void*>(src.ptr()), sliceMap[rank][dstSlice].size / unitSize, dataType_,
+                reductionOp_, subStream, static_cast<void*>(dst.ptr()), links[dstRank]->GetRemoteRank(),
                 links[dstRank]->GetLinkType(), INLINE_REDUCE_BIT));
         }
     }
@@ -276,7 +260,7 @@ HcclResult AllReduceChunkMesh::RunReduceScatter(u32 rank, u32 rankSize, const st
     for (u32 round = 1; round < rankSize; round++) {
         u32 gap = (round - 1) == 0 ? (rankSize - 1) : (round - 1);
         u32 dstRank = (rank + gap) % rankSize;
-        Stream &subStream = (round == localRankSize_ - 1) ? stream_ : meshStreams_[round - 1];
+        Stream& subStream = (round == localRankSize_ - 1) ? stream_ : meshStreams_[round - 1];
         CHK_RET(links[dstRank]->TxDataSignal(subStream));
         CHK_RET(links[dstRank]->RxDataSignal(subStream));
     }
@@ -290,14 +274,11 @@ HcclResult AllReduceChunkMesh::RunReduceScatter(u32 rank, u32 rankSize, const st
     return HCCL_SUCCESS;
 }
 
-HcclResult AllReduceChunkMesh::RunAllGather(u32 rank, u32 rankSize, const std::vector<LINK> &links)
+HcclResult AllReduceChunkMesh::RunAllGather(u32 rank, u32 rankSize, const std::vector<LINK>& links)
 {
-    HCCL_INFO("AllGatherMesh run: rank[%u] totalrank[%u] inputMem[%p] outputMem[%p] count[%llu]",
-        rank,
-        rankSize,
-        inputMem_.ptr(),
-        outputMem_.ptr(),
-        count_);
+    HCCL_INFO(
+        "AllGatherMesh run: rank[%u] totalrank[%u] inputMem[%p] outputMem[%p] count[%llu]", rank, rankSize,
+        inputMem_.ptr(), outputMem_.ptr(), count_);
     u32 unitSize = DataUnitSize(dataType_);
 
     DeviceMem userMemOut = DeviceMem::create(opInfo_->outputAddr, count_ * unitSize);
@@ -313,7 +294,7 @@ HcclResult AllReduceChunkMesh::RunAllGather(u32 rank, u32 rankSize, const std::v
 
     for (u32 round = 1; round < rankSize; round++) {
         u32 dstRank = BackwardRank(rank, rankSize, round);
-        Stream &subStream = (round == localRankSize_ - 1) ? stream_ : meshStreams_[round - 1];
+        Stream& subStream = (round == localRankSize_ - 1) ? stream_ : meshStreams_[round - 1];
         CHK_RET(links[dstRank]->TxAck(subStream));
         CHK_RET(links[dstRank]->RxAck(subStream));
     }
@@ -335,22 +316,22 @@ HcclResult AllReduceChunkMesh::RunAllGather(u32 rank, u32 rankSize, const std::v
     if (opInfo_->outputAddr != outputMem_.ptr()) {
         dst = userMemOut.range(slices_[rank].offset, slices_[rank].size);
         src = commMemOut.range(slices_[rank].offset, slices_[rank].size);
-        CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dst, src, meshStreams_[meshStreams_.size()-1]));
+        CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dst, src, meshStreams_[meshStreams_.size() - 1]));
     }
 
     for (u32 round = 1; round < rankSize; round++) {
         u32 dstRank = BackwardRank(rank, rankSize, round);
-        Stream &subStream = (round == localRankSize_ - 1) ? stream_ : meshStreams_[round - 1];
-        void *remMemPtr = nullptr;
+        Stream& subStream = (round == localRankSize_ - 1) ? stream_ : meshStreams_[round - 1];
+        void* remMemPtr = nullptr;
         CHK_RET(links[dstRank]->GetRemoteMem(UserMemType::OUTPUT_MEM, &remMemPtr));
-        src = DeviceMem::create(static_cast<char *>(remMemPtr) + slices_[dstRank].offset, slices_[dstRank].size);
+        src = DeviceMem::create(static_cast<char*>(remMemPtr) + slices_[dstRank].offset, slices_[dstRank].size);
         dst = userMemOut.range(slices_[dstRank].offset, slices_[dstRank].size);
-        CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dst, src, subStream,
-            links[dstRank]->GetRemoteRank(), links[dstRank]->GetLinkType()));
+        CHK_RET(HcclD2DMemcpyAsync(
+            dispatcher_, dst, src, subStream, links[dstRank]->GetRemoteRank(), links[dstRank]->GetLinkType()));
 
         CHK_RET(links[dstRank]->TxDataSignal(subStream));
         CHK_RET(links[dstRank]->RxDataSignal(subStream));
-        HCCL_DEBUG("[AllReduceChunkMesh]round %u success");
+        HCCL_DEBUG("[AllReduceChunkMesh]round %u success", round);
     }
 
     CHK_RET(HcclD2DMemcpyAsync(dispatcher_, emptyDst, emptySrc, stream_));
@@ -364,4 +345,4 @@ HcclResult AllReduceChunkMesh::RunAllGather(u32 rank, u32 rankSize, const std::v
     return HCCL_SUCCESS;
 }
 REGISTER_TEMPLATE(TemplateType::TEMPLATE_ALL_REDUCE_CHUNK_MESH, AllReduceChunkMesh);
-}  // namespace hccl
+} // namespace hccl

@@ -125,8 +125,8 @@ uint32_t BkfTableAdd(BkfTableMng *tableMng, void *key, void *val, BkfTableInfo *
         }
     }
 
-    if (memcpy_s(entry->keyValue + tableMng->initArg.keyLen, tableMng->initArg.valLen, val,
-        tableMng->initArg.valLen) != 0) {
+    if (memcpy_s(entry->keyValue + tableMng->initArg.keyLen, tableMng->initArg.valLen, val, tableMng->initArg.valLen) !=
+        0) {
         goto error;
     }
 
@@ -221,7 +221,7 @@ uint32_t BkfTableGetNext(BkfTableMng *tableMng, BkfTableInfo *infoOut, void **it
         return BKF_ERR;
     }
 
-    BkfTableEntry *entry = *(BkfTableEntry**)itorInOut;
+    BkfTableEntry *entry = *(BkfTableEntry **)itorInOut;
     if (entry != VOS_NULL) {
         infoOut->key = entry->keyValue;
         infoOut->val = entry->keyValue + tableMng->initArg.keyLen;

@@ -1,12 +1,13 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "gtest/gtest.h"
 
 #include <vector>
@@ -25,10 +26,7 @@ using namespace checker;
 
 class AllReduceMeshOpbasePipelineExecutorSingleTests : public testing::Test {
 public:
-    static void SetUpTestCase()
-    {
-        std::cout << "AllReduceMeshOpbasePipelineExecutor_single set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AllReduceMeshOpbasePipelineExecutor_single set up." << std::endl; }
 
     static void TearDownTestCase()
     {
@@ -38,7 +36,8 @@ public:
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -51,12 +50,11 @@ public:
     }
 };
 
-std::vector<CheckerReduceOp> reduceopList = {
-    {CheckerReduceOp::REDUCE_SUM},
-    {CheckerReduceOp::REDUCE_PROD},
-    {CheckerReduceOp::REDUCE_MAX},
-    {CheckerReduceOp::REDUCE_MIN}
-};
+std::vector<CheckerReduceOp> reduceopList
+    = {{CheckerReduceOp::REDUCE_SUM},
+       {CheckerReduceOp::REDUCE_PROD},
+       {CheckerReduceOp::REDUCE_MAX},
+       {CheckerReduceOp::REDUCE_MIN}};
 
 TEST_F(AllReduceMeshOpbasePipelineExecutorSingleTests, all_reduce_algo_server_test)
 {
@@ -73,7 +71,7 @@ TEST_F(AllReduceMeshOpbasePipelineExecutorSingleTests, all_reduce_algo_server_te
     checkerOpParam.DataDes.dataType = CheckerDataType::DATA_TYPE_INT32;
     checkerOpParam.algName = "AllReduceMeshOpbasePipelineExecutor";
     HcclResult ret;
-    for (auto &reduceop : reduceopList){
+    for (auto& reduceop : reduceopList) {
         Checker checker;
         checkerOpParam.reduceType = reduceop;
         checker.CloseRankMemCheck();

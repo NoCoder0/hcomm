@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 /**
  * @defgroup v_stringlib 字符及字符串操作接口
  * @ingroup v_syslib
@@ -24,10 +23,10 @@
 extern "C" {
 #endif
 
-#define VOS_StrLen      strlen
-#define VOS_StrNCmp     strncmp
-#define VOS_StrCmp      strcmp
-#define VOS_MemCmp      memcmp
+#define VOS_StrLen strlen
+#define VOS_StrNCmp strncmp
+#define VOS_StrCmp strcmp
+#define VOS_MemCmp memcmp
 
 char *VOS_StrStr(const char *pscStr1, const char *pscStr2);
 char *VOS_IpAddrToStrEx(uint32_t uiAddr, char *pscStr, int32_t iBufSize);
@@ -45,4 +44,3 @@ void VOS_StrToLower(char *pscStr);
 #endif
 
 #endif /* __V_STRINGLIB_H__ */
-

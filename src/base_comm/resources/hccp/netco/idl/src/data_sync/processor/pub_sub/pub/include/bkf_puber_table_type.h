@@ -24,8 +24,8 @@ typedef struct TagBkfPuberTableTypeMng BkfPuberTableTypeMng;
 
 BkfPuberTableTypeMng *BkfPuberTableTypeInit(BkfPuberInitArg *arg);
 void BkfPuberTableTypeUninit(BkfPuberTableTypeMng *tableTypeMng);
-uint32_t BkfPuberTableTypeAttachEx(BkfPuberTableTypeMng *tableTypeMng, BkfPuberTableTypeVTbl *vTbl,
-                                  void *userData, uint16_t userDataLen);
+uint32_t BkfPuberTableTypeAttachEx(BkfPuberTableTypeMng *tableTypeMng, BkfPuberTableTypeVTbl *vTbl, void *userData,
+    uint16_t userDataLen);
 BkfPuberTableTypeVTbl *BkfPuberTableTypeGetVTbl(BkfPuberTableTypeMng *tableTypeMng, uint16_t tableTypeId);
 void *BkfPuberTableTypeGetUserData(BkfPuberTableTypeMng *tableTypeMng, uint16_t tableTypeId);
 void BkfPuberTableTypeDispSummary(BkfPuberTableTypeMng *tableTypeMng, BkfDisp *disp);
@@ -36,4 +36,3 @@ void BkfPuberTableTypeDeattach(BkfPuberTableTypeMng *tableTypeMng, uint16_t tabT
 #endif
 
 #endif
-

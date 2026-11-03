@@ -1,4 +1,3 @@
-
 /**
  * Copyright (c) 2025 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
@@ -16,11 +15,12 @@
 
 using namespace std;
 
-bool fake_socket::Send(int *fdHanlde, const void *data, unsigned long long int size) {
+bool fake_socket::Send(int* fdHanlde, const void* data, unsigned long long int size)
+{
     std::lock_guard<std::mutex> lock(mutex);
 
     auto iter = fdBuffer.find(*fdHanlde);
-    if(iter == fdBuffer.end()) {
+    if (iter == fdBuffer.end()) {
         return false;
     }
 
@@ -29,30 +29,32 @@ bool fake_socket::Send(int *fdHanlde, const void *data, unsigned long long int s
     return true;
 }
 
-bool fake_socket::Recv(int *fdHandle, void *data, unsigned long long int size) {
+bool fake_socket::Recv(int* fdHandle, void* data, unsigned long long int size)
+{
     std::lock_guard<std::mutex> lock(mutex);
 
     auto iter = fdBuffer.find(*fdHandle);
 
-    if(iter == fdBuffer.end()) {
+    if (iter == fdBuffer.end()) {
         return false;
     }
 
-    if(iter->second.second->size() < size) {
+    if (iter->second.second->size() < size) {
         return false;
     }
     memcpy(data, iter->second.second->data(), size);
-    iter->second.second->erase(iter->second.second->begin(), iter->second.second->begin() + size );
+    iter->second.second->erase(iter->second.second->begin(), iter->second.second->begin() + size);
     return true;
 }
 
-void fake_socket::internalConnect(std::pair<int, int> myDirection) {
+void fake_socket::internalConnect(std::pair<int, int> myDirection)
+{
     int fdHandle = fdHandleGenerator++;
     ranksAndFdMap.emplace(myDirection, fdHandle);
 
     auto oppositeDirection = make_pair(myDirection.second, myDirection.first);
 
-    if(ranksAndFdMap.find(oppositeDirection) != ranksAndFdMap.end()) {
+    if (ranksAndFdMap.find(oppositeDirection) != ranksAndFdMap.end()) {
         auto it = ranksAndFdMap.find(oppositeDirection);
         auto buffers = fdBuffer.find(it->second);
         fdBuffer[fdHandle] = make_pair((buffers->second.second), (buffers->second.first));
@@ -63,13 +65,14 @@ void fake_socket::internalConnect(std::pair<int, int> myDirection) {
     }
 }
 
-bool fake_socket::Connect(struct SocketConnectInfoT& conn) {
+bool fake_socket::Connect(struct SocketConnectInfoT& conn)
+{
     std::lock_guard<std::mutex> lock(mutex);
     auto remoteRank = conn.remoteIp.addr.s_addr;
     auto ctx = GetCurrentThreadContext();
     std::pair<int, int> myDirection = std::make_pair(ctx->myRank, remoteRank);
 
-    if(ranksAndFdMap.find(myDirection) != ranksAndFdMap.end()) {
+    if (ranksAndFdMap.find(myDirection) != ranksAndFdMap.end()) {
         return true;
     }
 
@@ -78,14 +81,15 @@ bool fake_socket::Connect(struct SocketConnectInfoT& conn) {
     return true;
 }
 
-bool fake_socket::Get(int role, struct SocketInfoT& conn) {
+bool fake_socket::Get(int role, struct SocketInfoT& conn)
+{
     std::lock_guard<std::mutex> lock(mutex);
 
     auto remoteRank = conn.remoteIp.addr.s_addr;
     auto ctx = GetCurrentThreadContext();
     std::pair<int, int> myDirection = std::make_pair(ctx->myRank, remoteRank);
 
-    if(ranksAndFdMap.find(myDirection) == ranksAndFdMap.end()) {
+    if (ranksAndFdMap.find(myDirection) == ranksAndFdMap.end()) {
         if (role == 1) {
             return false;
         } else {
@@ -100,15 +104,16 @@ bool fake_socket::Get(int role, struct SocketInfoT& conn) {
 
     auto it = ranksAndFdMap.find(myDirection);
 
-    if(it != ranksAndFdMap.end()) {
+    if (it != ranksAndFdMap.end()) {
         conn.fdHandle = &(it->second);
     }
 
     return true;
 }
 
-fake_socket::~fake_socket() {
-    std::set<vector<char> *> waitingDel;
+fake_socket::~fake_socket()
+{
+    std::set<vector<char>*> waitingDel;
     for (auto item : fdBuffer) {
         waitingDel.insert(item.second.first);
         waitingDel.insert(item.second.second);
@@ -118,17 +123,17 @@ fake_socket::~fake_socket() {
         delete item;
     }
 
-    for(auto item : socketHandleStore) {
-        if(item != nullptr) {
+    for (auto item : socketHandleStore) {
+        if (item != nullptr) {
             delete item;
         }
     }
-
 }
 
-int *fake_socket::GetSocketHandle() {
+int* fake_socket::GetSocketHandle()
+{
     int dev = GetCurrentThreadContext()->myRank;
-    if(socketHandleStore[dev] != nullptr) {
+    if (socketHandleStore[dev] != nullptr) {
         return socketHandleStore[dev];
     }
     socketHandleStore[dev] = new int(dev);

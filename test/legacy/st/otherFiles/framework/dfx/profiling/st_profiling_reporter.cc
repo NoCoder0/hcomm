@@ -25,20 +25,11 @@ using namespace Hccl;
 
 class ProfilingReporterTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "ProfilingReporterTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "ProfilingReporterTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "ProfilingReporterTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "ProfilingReporterTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in ProfilingReporterTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in ProfilingReporterTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -50,22 +41,23 @@ protected:
 // 测试ProfilingReporter类接口
 TEST_F(ProfilingReporterTest, Call_profilingReporter_api_test)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
     MirrorTaskManager mirrorTaskManager(0, &globalMirrorTasks, 0);
-    for (auto &taskMap : globalMirrorTasks.taskMaps_) {
+    for (auto& taskMap : globalMirrorTasks.taskMaps_) {
         taskMap.clear();
     }
     // 初始化TaskParam
-    TaskParam taskParam = {.taskType = TaskParamType::TASK_NOTIFY_RECORD,
-        .beginTime = 0,
-        .endTime = 0,
-        .taskPara = {.Notify = {.notifyID = 123, .value = 456}}};
+    TaskParam taskParam
+        = {.taskType = TaskParamType::TASK_NOTIFY_RECORD,
+           .beginTime = 0,
+           .endTime = 0,
+           .taskPara = {.Notify = {.notifyID = 123, .value = 456}}};
 
     std::shared_ptr<std::vector<CcuProfilingInfo>> ccuDetailInfo = std::make_shared<std::vector<CcuProfilingInfo>>();
     for (int i = 0; i < 3; ++i) {
         CcuProfilingInfo info;
         info.name = "StubTask" + std::to_string(i);
-        info.type = i % 2;  // 循环使用不同的类型
+        info.type = i % 2; // 循环使用不同的类型
         info.dieId = i;
         info.missionId = i + 1;
         info.instrId = i + 2;
@@ -82,7 +74,7 @@ TEST_F(ProfilingReporterTest, Call_profilingReporter_api_test)
         ccuDetailInfo->push_back(info);
     }
     taskParam.ccuDetailInfo = std::move(ccuDetailInfo);
-    // 初始化dfxOpInfo 
+    // 初始化dfxOpInfo
     std::shared_ptr<DfxOpInfo> dfxOpInfo = std::make_shared<DfxOpInfo>();
     CollOperator op;
     CommunicatorImpl comm;

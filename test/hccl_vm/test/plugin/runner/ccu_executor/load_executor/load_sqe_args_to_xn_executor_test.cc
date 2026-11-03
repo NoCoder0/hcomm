@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: unit test for LoadSqeArgsToXnExecutor
  * Author: xx
  */
@@ -23,19 +26,19 @@ using namespace hcomm::CcuRep;
 
 class LoadSqeArgsToXnExecutorTest : public testing::Test {
 protected:
-    void SetUp() override {
+    void SetUp() override
+    {
         CcuResourceManager::GetInstance().Init(0, 1, RunnerCcuVersion::CCU_V1, std::vector<uint64_t>{});
     }
     void TearDown() override {}
 };
 
 // Test: LoadSqeArgsToXnExecutor struct size check
-TEST_F(LoadSqeArgsToXnExecutorTest, StructSize) {
-    EXPECT_GT(sizeof(LoadSqeArgsToXnExecutor), 0);
-}
+TEST_F(LoadSqeArgsToXnExecutorTest, StructSize) { EXPECT_GT(sizeof(LoadSqeArgsToXnExecutor), 0); }
 
 // Test: LoadSqeArgsToXnExecutor default constructor
-TEST_F(LoadSqeArgsToXnExecutorTest, DefaultConstructor) {
+TEST_F(LoadSqeArgsToXnExecutorTest, DefaultConstructor)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
     LoadSqeArgsToXnExecutor executor(0, 0, 0, instr, nullptr);
@@ -43,42 +46,46 @@ TEST_F(LoadSqeArgsToXnExecutorTest, DefaultConstructor) {
 }
 
 // Test: LoadSqeArgsToXnExecutor parameterized constructor
-TEST_F(LoadSqeArgsToXnExecutorTest, ParameterizedConstructor) {
+TEST_F(LoadSqeArgsToXnExecutorTest, ParameterizedConstructor)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     LoadSqeArgsToXnExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Describe());
 }
 
 // Test: LoadSqeArgsToXnExecutor Parser with zero values
-TEST_F(LoadSqeArgsToXnExecutorTest, ParserZeroValues) {
+TEST_F(LoadSqeArgsToXnExecutorTest, ParserZeroValues)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     LoadSqeArgsToXnExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Parser());
     EXPECT_NO_THROW(executor.Describe());
 }
 
 // Test: LoadSqeArgsToXnExecutor Parser with max values
-TEST_F(LoadSqeArgsToXnExecutorTest, ParserMaxValues) {
+TEST_F(LoadSqeArgsToXnExecutorTest, ParserMaxValues)
+{
     CcuInstr instr;
     memset(&instr, 0xFF, sizeof(instr));
-    
+
     LoadSqeArgsToXnExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Parser());
     EXPECT_NO_THROW(executor.Describe());
 }
 
 // Test: LoadSqeArgsToXnExecutor Parser with specific parameters
-TEST_F(LoadSqeArgsToXnExecutorTest, ParserSpecificParameters) {
+TEST_F(LoadSqeArgsToXnExecutorTest, ParserSpecificParameters)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     instr.v1.loadSqeArgsToXn.xnId = 100;
     instr.v1.loadSqeArgsToXn.sqeArgsId = 50;
-    
+
     LoadSqeArgsToXnExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Parser());
     std::string desc = executor.Describe();
@@ -86,12 +93,13 @@ TEST_F(LoadSqeArgsToXnExecutorTest, ParserSpecificParameters) {
 }
 
 // Test: LoadSqeArgsToXnExecutor with different Xn and SQE Arg IDs
-TEST_F(LoadSqeArgsToXnExecutorTest, DifferentIdCombinations) {
+TEST_F(LoadSqeArgsToXnExecutorTest, DifferentIdCombinations)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     uint16_t ids[] = {0, 1, 100, 0x7FFF, 0xFFFF};
-    
+
     for (auto xnId : ids) {
         for (auto sqeArgId : ids) {
             instr.v1.loadSqeArgsToXn.xnId = xnId;
@@ -104,12 +112,13 @@ TEST_F(LoadSqeArgsToXnExecutorTest, DifferentIdCombinations) {
 }
 
 // Test: LoadSqeArgsToXnExecutor Describe contains expected keywords
-TEST_F(LoadSqeArgsToXnExecutorTest, DescribeContent) {
+TEST_F(LoadSqeArgsToXnExecutorTest, DescribeContent)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
     instr.v1.loadSqeArgsToXn.xnId = 10;
     instr.v1.loadSqeArgsToXn.sqeArgsId = 5;
-    
+
     LoadSqeArgsToXnExecutor executor(0, 0, 0, instr, nullptr);
     executor.Parser();
     std::string desc = executor.Describe();
@@ -119,10 +128,11 @@ TEST_F(LoadSqeArgsToXnExecutorTest, DescribeContent) {
 }
 
 // Test: LoadSqeArgsToXnExecutor inheritance check
-TEST_F(LoadSqeArgsToXnExecutorTest, InheritanceCheck) {
+TEST_F(LoadSqeArgsToXnExecutorTest, InheritanceCheck)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     LoadSqeArgsToXnExecutor executor(0, 0, 0, instr, nullptr);
     CcuExecutorBase* base = &executor;
     EXPECT_NE(base, nullptr);

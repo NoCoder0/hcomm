@@ -99,6 +99,7 @@ function(hcomm_experimental_plugin_common target_name output_name)
         ${HCOMM_SOURCE_DIR}/src/framework/communicator/impl/resource_manager
         ${HCOMM_SOURCE_DIR}/src/framework/communicator/impl/one_sided_service
         ${HCOMM_SOURCE_DIR}/src/framework/op_base/src
+        ${HCOMM_SOURCE_DIR}/src/base_comm
         ${HCOMM_SOURCE_DIR}/src/base_comm/common
         ${HCOMM_SOURCE_DIR}/src/base_comm/common/device
         ${HCOMM_SOURCE_DIR}/src/base_comm/primitives/api_c_adpt
@@ -120,11 +121,11 @@ function(hcomm_experimental_plugin_common target_name output_name)
         ${HCOMM_SOURCE_DIR}/src/base_comm/resources/southbound_adpt
         ${HCOMM_SOURCE_DIR}/src/coll_communicator_mgr
         ${HCOMM_SOURCE_DIR}/src/coll_communicator_mgr/communicator
+        ${HCOMM_SOURCE_DIR}/src/coll_communicator_mgr/communicator/group_schedule_mgr
         ${HCOMM_SOURCE_DIR}/src/coll_communicator_mgr/resource_mgr/local/my_rank
         ${HCOMM_SOURCE_DIR}/src/coll_communicator_mgr/resource_mgr/local/my_rank/endpoints
-        ${HCOMM_SOURCE_DIR}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_engine_reses/engine_ctxs
+        ${HCOMM_SOURCE_DIR}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_engine/engine_ctxs
         ${HCOMM_SOURCE_DIR}/src/coll_communicator_mgr/resource_mgr/remote/rank_pairs
-        ${HCOMM_SOURCE_DIR}/src/coll_communicator_mgr/dfx/profiling/aicpu
         ${HCOMM_SOURCE_DIR}/src/framework/common/src/h2d_tlv
         ${HCOMM_SOURCE_DIR}/src/common/debug/profiling/inc
         ${HCOMM_SOURCE_DIR}/src/common/debug/profiling/inc/host
@@ -289,6 +290,14 @@ hcomm_experimental_plugin_common(hcomm_cpu_ub_plugin hcomm_cpu_ub_plugin)
 hcomm_experimental_plugin_link_dependencies(hcomm_cpu_ub_plugin hcomm hccl_v2 ra)
 if(TARGET json)
     add_dependencies(hcomm_cpu_ub_plugin json)
+endif()
+
+# 符号隐藏: 仅导出 nic_plugin.map 的 3 个 dlsym 入口; 非 release 模式依赖动态符号, 不挂载
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_link_options(hcomm_cpu_roce_plugin PRIVATE "-Wl,--version-script=${CMAKE_CURRENT_LIST_DIR}/nic_plugin.map")
+    set_property(TARGET hcomm_cpu_roce_plugin APPEND PROPERTY LINK_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/nic_plugin.map")
+    target_link_options(hcomm_cpu_ub_plugin PRIVATE "-Wl,--version-script=${CMAKE_CURRENT_LIST_DIR}/nic_plugin.map")
+    set_property(TARGET hcomm_cpu_ub_plugin APPEND PROPERTY LINK_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/nic_plugin.map")
 endif()
 
 install(TARGETS hcomm_cpu_roce_plugin hcomm_cpu_ub_plugin

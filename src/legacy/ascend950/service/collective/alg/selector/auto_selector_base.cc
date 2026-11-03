@@ -14,8 +14,7 @@
 
 namespace Hccl {
 
-SelectorStatus AutoSelectorBase::Select(const CollAlgOperator &op, CollAlgParams &params,
-                                   std::string &primQueueGenName)
+SelectorStatus AutoSelectorBase::Select(const CollAlgOperator& op, CollAlgParams& params, std::string& primQueueGenName)
 {
     HCCL_DEBUG("[AutoSelectorBase][%s] start", __func__);
     TopoInfo topoInfo;
@@ -24,8 +23,11 @@ SelectorStatus AutoSelectorBase::Select(const CollAlgOperator &op, CollAlgParams
     HCCL_DEBUG("[AutoSelectorBase][%s] end, levelNum[%u]", __func__, topoInfo.levelNum);
     std::map<OpType, std::vector<HcclAlgoType>> configAlgMap = EnvConfig::GetInstance().GetAlgoConfig().GetAlgoConfig();
     SelectorStatus ret = SelectorStatus::NOT_MATCH;
-    HCCL_DEBUG("[AutoSelectorBase][%s] params.opExecuteConfig.accelerator[%s]", __func__, params.opExecuteConfig.accState.Describe().c_str());
-    dataSize_ = op.dataCount * DataTypeSizeGet(op.dataType);;
+    HCCL_DEBUG(
+        "[AutoSelectorBase][%s] params.opExecuteConfig.accelerator[%s]", __func__,
+        params.opExecuteConfig.accState.Describe().c_str());
+    dataSize_ = op.dataCount * DataTypeSizeGet(op.dataType);
+    ;
     if (params.opExecuteConfig.accState == AcceleratorState::CCU_MS) {
         ret = SelectCcuMsAlgo(topoInfo, op, configAlgMap, primQueueGenName);
         if (ret == SelectorStatus::NOT_MATCH) {
@@ -54,17 +56,17 @@ SelectorStatus AutoSelectorBase::Select(const CollAlgOperator &op, CollAlgParams
 
     if (params.opExecuteConfig.accState == AcceleratorState::AIV_ONLY) {
         return (op.opType == OpType::BARRIER) ? SelectorStatus::NOT_MATCH :
-               SelectAivAlgo(topoInfo, op, configAlgMap, primQueueGenName);
+                                                SelectAivAlgo(topoInfo, op, configAlgMap, primQueueGenName);
     }
     if (IsStarsState(params.opExecuteConfig)) {
         // level0是PCIE混合的场景，且CLOS规模大于8，选择AIV_ONLY算法
         if (topoInfo.level0PcieMix && topoInfo.level0BigClosRange) {
             params.opExecuteConfig.accState = AcceleratorState::AIV_ONLY;
             return (op.opType == OpType::BARRIER) ? SelectorStatus::NOT_MATCH :
-                SelectAivAlgo(topoInfo, op, configAlgMap, primQueueGenName);
+                                                    SelectAivAlgo(topoInfo, op, configAlgMap, primQueueGenName);
         }
         ret = SelectAicpuAlgo(topoInfo, op, configAlgMap, primQueueGenName);
-        if ((ret == SelectorStatus::MATCH)&&(params.opExecuteConfig.accState == AcceleratorState::CCU_FALLBACK)) {
+        if ((ret == SelectorStatus::MATCH) && (params.opExecuteConfig.accState == AcceleratorState::CCU_FALLBACK)) {
             params.opExecuteConfig.accState = AcceleratorState::AICPU_TS;
         }
         return ret;
@@ -72,19 +74,21 @@ SelectorStatus AutoSelectorBase::Select(const CollAlgOperator &op, CollAlgParams
     return SelectorStatus::NOT_MATCH;
 }
 
-bool AutoSelectorBase::IsStarsState(const OpExecuteConfig &opExecuteConfig) const
+bool AutoSelectorBase::IsStarsState(const OpExecuteConfig& opExecuteConfig) const
 {
-    return (opExecuteConfig.accState == AcceleratorState::AICPU_TS ||
-            opExecuteConfig.accState == AcceleratorState::HOSTCPU_TS ||
-            opExecuteConfig.accState == AcceleratorState::CCU_FALLBACK);
+    return (
+        opExecuteConfig.accState == AcceleratorState::AICPU_TS
+        || opExecuteConfig.accState == AcceleratorState::HOSTCPU_TS
+        || opExecuteConfig.accState == AcceleratorState::CCU_FALLBACK);
 }
 
 bool AutoSelectorBase::IsDefaultAlg(const HcclAlgoType algoType) const
 {
-    return (algoType ==  HcclAlgoType::HCCL_ALGO_TYPE_DEFAULT) || (algoType ==  HcclAlgoType::HCCL_ALGO_TYPE_NA);
+    return (algoType == HcclAlgoType::HCCL_ALGO_TYPE_DEFAULT) || (algoType == HcclAlgoType::HCCL_ALGO_TYPE_NA);
 }
 
-HcclAlgoType AutoSelectorBase::GetLevel0AlgoType(const CollAlgOperator &op, const std::map<OpType, std::vector<HcclAlgoType>> &configAlgMap) const
+HcclAlgoType AutoSelectorBase::GetLevel0AlgoType(
+    const CollAlgOperator& op, const std::map<OpType, std::vector<HcclAlgoType>>& configAlgMap) const
 {
     HcclAlgoType levle0Algo = HcclAlgoType::HCCL_ALGO_TYPE_DEFAULT;
     auto it = configAlgMap.find(op.opType);
@@ -94,28 +98,21 @@ HcclAlgoType AutoSelectorBase::GetLevel0AlgoType(const CollAlgOperator &op, cons
     return levle0Algo;
 }
 
-bool AutoSelectorBase::IsSmallData(const u64 dataSize) const
-{
-    return dataSize < SMALL_COUNT_512KB;
-}
+bool AutoSelectorBase::IsSmallData(const u64 dataSize) const { return dataSize < SMALL_COUNT_512KB; }
 
-bool AutoSelectorBase::IsLargeData(const u64 dataSize) const
-{
-    return dataSize >= LARGE_COUNT_1024KB;
-}
+bool AutoSelectorBase::IsLargeData(const u64 dataSize) const { return dataSize >= LARGE_COUNT_1024KB; }
 
 bool AutoSelectorBase::IsSmallDataCCU(const u64 dataSize, const u64 rankSize) const
 {
     if (rankSize == 0) {
         HCCL_WARNING("the selector is not set RankSize");
-    } 
+    }
     return (dataSize <= CCU_PARALLEL_MAX_DATA_SIZE) ? true : false;
 }
 
-SelectorStatus AutoSelectorBase::SelectCcuMsAlgo(const TopoInfo &topoInfo,
-                                                    const CollAlgOperator &op,
-                                                    const std::map<OpType, std::vector<HcclAlgoType>> &configAlgMap,
-                                                    std::string &primQueueGenName) const
+SelectorStatus AutoSelectorBase::SelectCcuMsAlgo(
+    const TopoInfo& topoInfo, const CollAlgOperator& op,
+    const std::map<OpType, std::vector<HcclAlgoType>>& configAlgMap, std::string& primQueueGenName) const
 {
     (void)topoInfo;
     (void)op;
@@ -124,10 +121,9 @@ SelectorStatus AutoSelectorBase::SelectCcuMsAlgo(const TopoInfo &topoInfo,
     return SelectorStatus::NOT_MATCH;
 }
 
-SelectorStatus AutoSelectorBase::SelectCcuScheduleAlgo(const TopoInfo &topoInfo,
-                                                    const CollAlgOperator &op,
-                                                    const std::map<OpType, std::vector<HcclAlgoType>> &configAlgMap,
-                                                    std::string &primQueueGenName) const
+SelectorStatus AutoSelectorBase::SelectCcuScheduleAlgo(
+    const TopoInfo& topoInfo, const CollAlgOperator& op,
+    const std::map<OpType, std::vector<HcclAlgoType>>& configAlgMap, std::string& primQueueGenName) const
 {
     (void)topoInfo;
     (void)op;
@@ -136,10 +132,9 @@ SelectorStatus AutoSelectorBase::SelectCcuScheduleAlgo(const TopoInfo &topoInfo,
     return SelectorStatus::NOT_MATCH;
 }
 
-SelectorStatus AutoSelectorBase::SelectAicpuAlgo(const TopoInfo &topoInfo,
-                                                      const CollAlgOperator &op,
-                                                      const std::map<OpType, std::vector<HcclAlgoType>> &configAlgMap,
-                                                      std::string &primQueueGenName) const
+SelectorStatus AutoSelectorBase::SelectAicpuAlgo(
+    const TopoInfo& topoInfo, const CollAlgOperator& op,
+    const std::map<OpType, std::vector<HcclAlgoType>>& configAlgMap, std::string& primQueueGenName) const
 {
     (void)topoInfo;
     (void)op;
@@ -148,10 +143,9 @@ SelectorStatus AutoSelectorBase::SelectAicpuAlgo(const TopoInfo &topoInfo,
     return SelectorStatus::NOT_MATCH;
 }
 
-SelectorStatus AutoSelectorBase::SelectAivAlgo(const TopoInfo &topoInfo,
-                                                      const CollAlgOperator &op,
-                                                      const std::map<OpType, std::vector<HcclAlgoType>> &configAlgMap,
-                                                      std::string &primQueueGenName) const
+SelectorStatus AutoSelectorBase::SelectAivAlgo(
+    const TopoInfo& topoInfo, const CollAlgOperator& op,
+    const std::map<OpType, std::vector<HcclAlgoType>>& configAlgMap, std::string& primQueueGenName) const
 {
     (void)topoInfo;
     (void)op;
@@ -160,4 +154,4 @@ SelectorStatus AutoSelectorBase::SelectAivAlgo(const TopoInfo &topoInfo,
     return SelectorStatus::NOT_MATCH;
 }
 
-}
+} // namespace Hccl

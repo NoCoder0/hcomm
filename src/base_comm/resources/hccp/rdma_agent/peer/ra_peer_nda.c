@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include "securec.h"
+#include "config_log.h"
 #include "ra_comm.h"
 #include "rs_nda.h"
 #include "ra_peer.h"
@@ -26,7 +27,7 @@ int RaPeerNdaGetDirectFlag(struct RaRdmaHandle *rdmaHandle, int *directFlag)
     ret = RsNdaGetDirectFlag(phyId, rdmaHandle->rdevIndex, directFlag);
     RaPeerMutexUnlock(phyId);
     if (ret != 0) {
-        hccp_err("[get][directFlag]RsNdaGetDirectFlag failed ret:%d phyId:%d", ret, phyId);
+        hccp_err("[get][directFlag]RsNdaGetDirectFlag failed ret:%d phyId:%u", ret, phyId);
     }
     return ret;
 }
@@ -40,18 +41,17 @@ int RaPeerNdaCqCreate(struct RaRdmaHandle *rdmaHandle, struct NdaCqInitAttr *att
     int ret = 0;
 
     cqPeer = (struct RaCqHandleExt *)calloc(1, sizeof(struct RaCqHandleExt));
-    CHK_PRT_RETURN(cqPeer == NULL, hccp_err("[create][RaNdaCq]cqPeer calloc failed phyId:%d", phyId), -ENOMEM);
+    CHK_PRT_RETURN(cqPeer == NULL, hccp_err("[create][RaNdaCq]cqPeer calloc failed phyId:%u", phyId), -ENOMEM);
 
     RaPeerMutexLock(phyId);
     RsSetCtx(phyId);
     ret = RsNdaCqCreate(phyId, rdmaHandle->rdevIndex, attr, info, &ibvCqExt);
     RaPeerMutexUnlock(phyId);
     if (ret != 0) {
-        hccp_err("[create][RaNdaCq]RsNdaCqCreate failed ret:%d phyId:%d", ret, phyId);
+        hccp_err("[create][RaNdaCq]RsNdaCqCreate failed ret:%d phyId:%u", ret, phyId);
         goto free_cq_handle;
     }
     cqPeer->addr = (unsigned long long)(uintptr_t)ibvCqExt;
-    cqPeer->rdmaHandle = rdmaHandle;
 
     *cqHandle = cqPeer;
     return ret;
@@ -74,8 +74,11 @@ int RaPeerNdaCqDestroy(struct RaRdmaHandle *rdmaHandle, void *cqHandle)
     ibvCqExt = (void *)(uintptr_t)cqPeer->addr;
     ret = RsNdaCqDestroy(phyId, rdmaHandle->rdevIndex, ibvCqExt);
     RaPeerMutexUnlock(phyId);
-    CHK_PRT_RETURN(ret != 0, hccp_err("[destroy][RaNdaCq]RsNdaCqDestroy failed, ret:%d phyId:%d", ret, phyId), ret);
-
+    if (ret != 0) {
+        hccp_err("[destroy][RaNdaCq]RsNdaCqDestroy failed ret:%d phyId:%u", ret, phyId);
+    }
+    free(cqPeer);
+    cqPeer = NULL;
     return ret;
 }
 
@@ -88,14 +91,14 @@ int RaPeerNdaQpCreate(struct RaRdmaHandle *rdmaHandle, struct NdaQpInitAttr *att
     int ret = 0;
 
     qpPeer = (struct RaQpHandle *)calloc(1, sizeof(struct RaQpHandle));
-    CHK_PRT_RETURN(qpPeer == NULL, hccp_err("[create][RaNdaQp]qpPeer calloc failed phyId:%d", phyId), -ENOMEM);
+    CHK_PRT_RETURN(qpPeer == NULL, hccp_err("[create][RaNdaQp]qpPeer calloc failed phyId:%u", phyId), -ENOMEM);
 
     RaPeerMutexLock(phyId);
     RsSetCtx(phyId);
     ret = RsNdaQpCreate(phyId, rdmaHandle->rdevIndex, attr, info, &qpResp);
     RaPeerMutexUnlock(phyId);
     if (ret != 0) {
-        hccp_err("[create][RaNdaQp]RsNdaQpCreate failed ret:%d phyId:%d", ret, phyId);
+        hccp_err("[create][RaNdaQp]RsNdaQpCreate failed ret:%d phyId:%u", ret, phyId);
         goto free_qp_handle;
     }
     qpPeer->phyId = phyId;
@@ -125,9 +128,21 @@ int RaPeerNdaQpDestroy(struct RaQpHandle *qpPeer)
     ret = RsNdaQpDestroy(qpPeer->phyId, qpPeer->rdevIndex, qpPeer->qpn);
     RaPeerMutexUnlock(qpPeer->phyId);
     if (ret != 0) {
-        hccp_err("[destroy][RaNdaQp]RsNdaQpDestroy failed ret:%d phyId:%d", ret, qpPeer->phyId);
+        hccp_err("[destroy][RaNdaQp]RsNdaQpDestroy failed ret:%d phyId:%u", ret, qpPeer->phyId);
     }
     free(qpPeer);
     qpPeer = NULL;
+    return ret;
+}
+
+int RaPeerGetQpHyperFeature(struct RaQpHandle *qpPeer, struct HyperFeature *hyperFeature)
+{
+    int ret = 0;
+
+    RaPeerMutexLock(qpPeer->phyId);
+    RsSetCtx(qpPeer->phyId);
+    ret = RsGetQpHyperFeature(qpPeer->phyId, qpPeer->rdevIndex, qpPeer->qpn, hyperFeature);
+    RaPeerMutexUnlock(qpPeer->phyId);
+    CHK_PRT_RETURN(ret, hccp_warn_rma("RsGetQpHyperFeature unsuccessful ret(%d) phyId(%u)", ret, qpPeer->phyId), ret);
     return ret;
 }

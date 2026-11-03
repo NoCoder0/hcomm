@@ -13,8 +13,9 @@
 #include "coll_operator.h"
 
 namespace Hccl {
-SelectorStatus AllGatherVAutoSelector::SelectCcuMsAlgo(const TopoInfo &topoInfo, const CollAlgOperator &op,
-    const std::map<OpType, std::vector<HcclAlgoType>> &configAlgMap, std::string &primQueueGenName) const
+SelectorStatus AllGatherVAutoSelector::SelectCcuMsAlgo(
+    const TopoInfo& topoInfo, const CollAlgOperator& op,
+    const std::map<OpType, std::vector<HcclAlgoType>>& configAlgMap, std::string& primQueueGenName) const
 {
     (void)op;
     (void)configAlgMap;
@@ -25,15 +26,17 @@ SelectorStatus AllGatherVAutoSelector::SelectCcuMsAlgo(const TopoInfo &topoInfo,
     } else {
         if (topoInfo.level0Shape == Level0Shape::MESH_1D) {
             if (Is2DieFullMesh()) {
-                HCCL_WARNING("[Algo][AllGatherVAutoSelector] 2DieFullMesh[%d] is not supported yet for ccu_ms mode.",
+                HCCL_WARNING(
+                    "[Algo][AllGatherVAutoSelector] 2DieFullMesh[%d] is not supported yet for ccu_ms mode.",
                     topoInfo.level0Shape);
                 return SelectorStatus::NOT_MATCH;
             } else {
                 primQueueGenName = "CcuAllGatherVMesh1D";
             }
         } else if (topoInfo.level0Shape == Level0Shape::MESH_2D) {
-            HCCL_WARNING("[Algo][AllGatherVAutoSelector] level0Shape[%d] is not supported yet for ccu_ms mode.",
-                    topoInfo.level0Shape);
+            HCCL_WARNING(
+                "[Algo][AllGatherVAutoSelector] level0Shape[%d] is not supported yet for ccu_ms mode.",
+                topoInfo.level0Shape);
             return SelectorStatus::NOT_MATCH;
         } else if (topoInfo.level0Shape == Level0Shape::MESH_1D_CLOS) {
             if (IsLayerAllConnetedWithTopo(topoInfo, 0, TopoType::MESH_1D)) {
@@ -43,17 +46,20 @@ SelectorStatus AllGatherVAutoSelector::SelectCcuMsAlgo(const TopoInfo &topoInfo,
                 HCCL_WARNING("[Algo][AllGatherVAutoSelector] level0 PCIE mix is not supported yet for ccu_ms mode.");
                 return SelectorStatus::NOT_MATCH;
             } else { // MS 不支持
-                HCCL_WARNING("[Algo][AllGatherVAutoSelector] level0Shape[%d] is not supported yet for ccu_ms mode.",
+                HCCL_WARNING(
+                    "[Algo][AllGatherVAutoSelector] level0Shape[%d] is not supported yet for ccu_ms mode.",
                     topoInfo.level0Shape);
                 return SelectorStatus::NOT_MATCH;
             }
         } else if (topoInfo.level0Shape == Level0Shape::CLOS) {
-            HCCL_WARNING("[Algo][AllGatherVAutoSelector] level0Shape[%d] is not supported yet for ccu_ms mode.",
-                    topoInfo.level0Shape);
+            HCCL_WARNING(
+                "[Algo][AllGatherVAutoSelector] level0Shape[%d] is not supported yet for ccu_ms mode.",
+                topoInfo.level0Shape);
             return SelectorStatus::NOT_MATCH;
         } else {
-            HCCL_WARNING("[Algo][AllGatherVAutoSelector] level0Shape[%d] is not supported yet for ccu_ms mode.",
-                    topoInfo.level0Shape);
+            HCCL_WARNING(
+                "[Algo][AllGatherVAutoSelector] level0Shape[%d] is not supported yet for ccu_ms mode.",
+                topoInfo.level0Shape);
             return SelectorStatus::NOT_MATCH;
         }
     }
@@ -61,8 +67,9 @@ SelectorStatus AllGatherVAutoSelector::SelectCcuMsAlgo(const TopoInfo &topoInfo,
     return SelectorStatus::MATCH;
 }
 
-SelectorStatus AllGatherVAutoSelector::SelectCcuScheduleAlgo(const TopoInfo &topoInfo, const CollAlgOperator &op,
-    const std::map<OpType, std::vector<HcclAlgoType>> &configAlgMap, std::string &primQueueGenName) const
+SelectorStatus AllGatherVAutoSelector::SelectCcuScheduleAlgo(
+    const TopoInfo& topoInfo, const CollAlgOperator& op,
+    const std::map<OpType, std::vector<HcclAlgoType>>& configAlgMap, std::string& primQueueGenName) const
 {
     (void)op;
     (void)configAlgMap;
@@ -80,7 +87,8 @@ SelectorStatus AllGatherVAutoSelector::SelectCcuScheduleAlgo(const TopoInfo &top
                 primQueueGenName = "CcuAllGatherVMesh1D";
             }
         } else if (topoInfo.level0Shape == Level0Shape::MESH_2D) {
-            HCCL_WARNING("[Algo][AllGatherVAutoSelector] level0Shape[%d] is not supported yet for ccu schedule mode.",
+            HCCL_WARNING(
+                "[Algo][AllGatherVAutoSelector] level0Shape[%d] is not supported yet for ccu schedule mode.",
                 topoInfo.level0Shape);
             return SelectorStatus::NOT_MATCH;
         } else if (topoInfo.level0Shape == Level0Shape::MESH_1D_CLOS) {
@@ -91,16 +99,19 @@ SelectorStatus AllGatherVAutoSelector::SelectCcuScheduleAlgo(const TopoInfo &top
                 HCCL_WARNING("[Algo][AllGatherVAutoSelector] level0 PCIE mix is not supported yet for ccu_ms mode.");
                 return SelectorStatus::NOT_MATCH;
             } else {
-                HCCL_WARNING("[Algo][AllGatherVAutoSelector] level0Shape[%d] is not supported yet for ccu schedule mode.",
-                topoInfo.level0Shape);
+                HCCL_WARNING(
+                    "[Algo][AllGatherVAutoSelector] level0Shape[%d] is not supported yet for ccu schedule mode.",
+                    topoInfo.level0Shape);
                 return SelectorStatus::NOT_MATCH;
             }
         } else if (topoInfo.level0Shape == Level0Shape::CLOS) {
-            HCCL_WARNING("[Algo][AllGatherVAutoSelector] level0Shape[%d] is not supported yet for ccu schedule mode.",
+            HCCL_WARNING(
+                "[Algo][AllGatherVAutoSelector] level0Shape[%d] is not supported yet for ccu schedule mode.",
                 topoInfo.level0Shape);
             return SelectorStatus::NOT_MATCH;
         } else {
-            HCCL_WARNING("[Algo][AllGatherVAutoSelector] level0Shape[%d] is not supported yet for ccu schedule mode.",
+            HCCL_WARNING(
+                "[Algo][AllGatherVAutoSelector] level0Shape[%d] is not supported yet for ccu schedule mode.",
                 topoInfo.level0Shape);
             return SelectorStatus::NOT_MATCH;
         }
@@ -109,8 +120,9 @@ SelectorStatus AllGatherVAutoSelector::SelectCcuScheduleAlgo(const TopoInfo &top
     return SelectorStatus::MATCH;
 }
 
-SelectorStatus AllGatherVAutoSelector::SelectAicpuAlgo(const TopoInfo &topoInfo, const CollAlgOperator &op,
-    const std::map<OpType, std::vector<HcclAlgoType>> &configAlgMap, std::string &primQueueGenName) const
+SelectorStatus AllGatherVAutoSelector::SelectAicpuAlgo(
+    const TopoInfo& topoInfo, const CollAlgOperator& op,
+    const std::map<OpType, std::vector<HcclAlgoType>>& configAlgMap, std::string& primQueueGenName) const
 {
     (void)topoInfo;
     (void)op;
@@ -118,9 +130,9 @@ SelectorStatus AllGatherVAutoSelector::SelectAicpuAlgo(const TopoInfo &topoInfo,
     (void)primQueueGenName;
 
     // 暂时没有 aicpu 算法
-    HCCL_WARNING("[Algo][AllGatherVAutoSelector] No aicpu algorithm for aicpu mode. Auto select failed.");
+    HCCL_WARNING("[Algo][AllGatherVAutoSelector] No aicpu algorithm for aicpu mode. Auto selection is unsuccessful.");
     return SelectorStatus::NOT_MATCH;
 }
 
 REGISTER_SELECTOR_BY_OPTYPE(OpType::ALLGATHERV, 18, AllGatherVAutoSelector);
-}  // namespace Hccl
+} // namespace Hccl

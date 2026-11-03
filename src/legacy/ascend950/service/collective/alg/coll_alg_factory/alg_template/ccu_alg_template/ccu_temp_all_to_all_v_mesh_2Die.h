@@ -12,7 +12,7 @@
 #define HCCLV2_CCU_TEMP_ALLTOALLV_MESH_2DIE_H
 
 #include "string_util.h"
-#include "env_config.h"
+#include "env_config_v2.h"
 #include "ccu_alg_template_base.h"
 #include "ccu_instruction_all_to_all_v_mesh2d.h"
 
@@ -20,9 +20,9 @@ namespace Hccl {
 
 class CcuTempAlltoAllVMesh2Die : public CcuAlgTemplateBase {
 public:
-    explicit CcuTempAlltoAllVMesh2Die(const RankId virtualRank, const u32 tempRankSize,
-                                   const std::vector<std::vector<RankId>> &tempVTopo,
-                                   const std::map<RankId, u32>            &tempVirtRankMap);
+    explicit CcuTempAlltoAllVMesh2Die(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~CcuTempAlltoAllVMesh2Die() override;
 
     std::string Describe() const override
@@ -31,18 +31,19 @@ public:
         return StringFormat("Template of alltoallv ccu mesh 2Die with tempVTopo D0[%u]", tempVTopo_[0].size());
     }
 
-    HcclResult Run(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec, const BuffInfo &buffInfo,
-                   const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues) override;
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
-    void SetA2ASendRecvInfo(const A2ASendRecvInfo &sendRecvInfo);
+    HcclResult
+    Run(const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, const BuffInfo& buffInfo,
+        const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues) override;
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
+    void SetA2ASendRecvInfo(const A2ASendRecvInfo& sendRecvInfo);
 
 private:
-    HcclResult FillLinks(const ResLinks &tempLinks);
+    HcclResult FillLinks(const ResLinks& tempLinks);
 
     A2ASendRecvInfo localSendRecvInfo_;
     uint64_t sliceBias_{0};
     std::vector<uint32_t> dimSize_;
-    std::map<uint32_t, std::vector<LinkData>> links_;  // key is DieId
+    std::map<uint32_t, std::vector<LinkData>> links_; // key is DieId
     std::map<uint32_t, RankGroup> rankGroup_;
 
     std::vector<uint64_t> sendSliceSize_ = {};

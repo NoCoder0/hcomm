@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -33,19 +33,13 @@
 
 using namespace hccl;
 
-extern HcclResult CommTaskPrepare(char *key, uint32_t keyLen);
-extern HcclResult CommTaskLaunch(ThreadHandle *threads, uint32_t threadNum);
+extern HcclResult CommTaskPrepare(const char* key, uint32_t keyLen);
+extern HcclResult CommTaskLaunch(ThreadHandle* threads, uint32_t threadNum);
 
 class DispatcherAiCpu_UT : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "DispatcherAiCpu_UT SetUP" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "DispatcherAiCpu_UT TearDown" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "DispatcherAiCpu_UT SetUP" << std::endl; }
+    static void TearDownTestCase() { std::cout << "DispatcherAiCpu_UT TearDown" << std::endl; }
     // Some expensive resource shared by all tests.
     virtual void SetUp()
     {
@@ -57,13 +51,10 @@ protected:
         streamInfo.actualStreamId = 1;
         streamInfo.sqId = 1;
         streamInfo.sqDepth = 100;
-        streamInfo.sqBaseAddr = static_cast<void *>(sq_addr);
+        streamInfo.sqBaseAddr = static_cast<void*>(sq_addr);
         streamInfo.logicCqId = 1;
         s32 portNum = 7;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
         std::cout << "DispatcherAiCpu_UT Test SetUP" << std::endl;
     }
     virtual void TearDown()
@@ -72,7 +63,8 @@ protected:
         std::cout << "DispatcherAiCpu_UT Test TearDown" << std::endl;
     }
 
-    std::unique_ptr<DispatcherAiCpu> dispatcherAiCpu = std::unique_ptr<DispatcherAiCpu>(new (std::nothrow) DispatcherAiCpu(1));
+    std::unique_ptr<DispatcherAiCpu> dispatcherAiCpu
+        = std::unique_ptr<DispatcherAiCpu>(new (std::nothrow) DispatcherAiCpu(1));
     HcclComStreamInfo streamInfo;
 
     static u8 sq_addr[HCCL_SQE_SIZE * HCCL_SQE_MAX_CNT];
@@ -215,7 +207,7 @@ TEST_F(DispatcherAiCpu_UT, ut_DispatcherAiCpuMemcpy)
 {
     uint32_t sqHead = 0;
     uint32_t sqTail = 100;
-    u64 *ptr = new u64(1);
+    u64* ptr = new u64(1);
     DeviceMem dst(ptr, 0x80, false);
     DeviceMem src(ptr, 0x80, false);
     Stream stream(streamInfo, true);
@@ -241,8 +233,8 @@ TEST_F(DispatcherAiCpu_UT, ut_DispatcherAiCpuInlineReduceAsync)
     stream.InitSqAndCqeContext(sqHead, sqTail, &sqeCqeCtx);
 
     u64 dataCount = 20;
-    auto ret = dispatcherAiCpu->InlineReduceAsync(src.ptr(), dataCount, HcclDataType::HCCL_DATA_TYPE_FP32,
-        HcclReduceOp::HCCL_REDUCE_SUM, stream, dst.ptr());
+    auto ret = dispatcherAiCpu->InlineReduceAsync(
+        src.ptr(), dataCount, HcclDataType::HCCL_DATA_TYPE_FP32, HcclReduceOp::HCCL_REDUCE_SUM, stream, dst.ptr());
     EXPECT_EQ(HCCL_SUCCESS, ret);
     GlobalMockObject::verify();
 }
@@ -261,8 +253,9 @@ TEST_F(DispatcherAiCpu_UT, ut_DispatcherAiCpuReduceAsync)
 
     u64 dataCount = 0x6400000;
 
-    auto ret = dispatcherAiCpu->ReduceAsync(src.ptr(), dst.ptr(), dataCount, HcclDataType::HCCL_DATA_TYPE_INT8,
-        HcclReduceOp::HCCL_REDUCE_SUM, stream, HcclReduceType::HCCL_INLINE_REDUCE);
+    auto ret = dispatcherAiCpu->ReduceAsync(
+        src.ptr(), dst.ptr(), dataCount, HcclDataType::HCCL_DATA_TYPE_INT8, HcclReduceOp::HCCL_REDUCE_SUM, stream,
+        HcclReduceType::HCCL_INLINE_REDUCE);
 
     EXPECT_EQ(HCCL_SUCCESS, ret);
     GlobalMockObject::verify();
@@ -292,8 +285,9 @@ TEST_F(DispatcherAiCpu_UT, ut_DispatcherAiCpuTbeReduce_RdmaSend)
 
     u64 dataCount = 0x6400000;
 
-    auto ret2 = dispatcherAiCpu->TbeReduceAsync(src1.ptr(), src2.ptr(), dataCount, HcclDataType::HCCL_DATA_TYPE_INT8,
-        HcclReduceOp::HCCL_REDUCE_SUM, stream, dst.ptr());
+    auto ret2 = dispatcherAiCpu->TbeReduceAsync(
+        src1.ptr(), src2.ptr(), dataCount, HcclDataType::HCCL_DATA_TYPE_INT8, HcclReduceOp::HCCL_REDUCE_SUM, stream,
+        dst.ptr());
     EXPECT_EQ(HCCL_E_NOT_SUPPORT, ret2);
 
     GlobalMockObject::verify();
@@ -326,15 +320,9 @@ TEST_F(DispatcherAiCpu_UT, ut_DispatcherProfilingRdmaSend)
     GlobalMockObject::verify();
 }
 
-int32_t AdprofReportBatchAdditionalInfo(uint32_t agingFlag, ConstVoidPtr data, uint32_t length)
-{
-    return 0;
-}
+int32_t AdprofReportBatchAdditionalInfo(uint32_t agingFlag, ConstVoidPtr data, uint32_t length) { return 0; }
 
-int32_t MsprofReportBatchAdditionalInfo(uint32_t agingFlag, const VOID_PTR data, uint32_t length)
-{
-    return 0;
-}
+int32_t MsprofReportBatchAdditionalInfo(uint32_t agingFlag, const VOID_PTR data, uint32_t length) { return 0; }
 
 TEST_F(DispatcherAiCpu_UT, ut_AdprofReportBatchAdditionalInfo)
 {
@@ -359,6 +347,31 @@ TEST_F(DispatcherAiCpu_UT, ut_AdprofReportBatchAdditionalInfo)
     EXPECT_EQ(HCCL_SUCCESS, ret);
 
     ret = dfx::ProfilingManager::ReportTaskInfo(stream.id(), stream.GetSqeContextPtr());
+    GlobalMockObject::verify();
+}
+
+// 覆盖 ReportTaskInfo 主循环并命中批量上报后的 memset 清理分支
+TEST_F(DispatcherAiCpu_UT, ut_ReportTaskInfo_MemsetClearBranch)
+{
+    uint32_t sqHead = 0;
+    uint32_t sqTail = 1;
+    Stream stream(streamInfo, true);
+    SqCqeContext sqeCqeCtx;
+    sqeCqeCtx.sqContext.inited = false;
+    stream.InitSqAndCqeContext(sqHead, sqTail, &sqeCqeCtx);
+
+    // 打开L1 profiling开关, 否则 ReportTaskInfo 会在循环前直接返回
+    dfx::ProfilingManager::SetProL1On(true);
+    // 只有1个sqe, 使循环内唯一一次迭代满足 idx == (endIdx - 1), 进入批量上报后的清理分支
+    stream.sqeContext_->buffer.sqeCnt = 1;
+    stream.sqeContext_->buffer.tailSqeIdx = 1;
+
+    auto ret = dfx::ProfilingManager::ReportTaskInfo(stream.id(), stream.GetSqeContextPtr());
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+    EXPECT_EQ(dfx::ProfilingManager::GetProfL1State(), true);
+
+    // 恢复开关, 避免影响其他用例
+    dfx::ProfilingManager::SetProL1On(false);
     GlobalMockObject::verify();
 }
 
@@ -396,14 +409,11 @@ TEST_F(DispatcherAiCpu_UT, ut_DispatcherAiCpuLaunchTask)
     sqeCqeCtx.sqContext.inited = false;
     stream.InitSqAndCqeContext(sqHead, sqTail, &sqeCqeCtx);
 
-    MOCKER(QuerySqStatusByType)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(QuerySqStatusByType).stubs().will(returnValue(HCCL_SUCCESS));
     dispatcherAiCpu->dfxTimeOutConfig_.sqFullWaitTimeOut = 2;
     auto ret = dispatcherAiCpu->LaunchTask(stream, true);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
-
 
 TEST_F(DispatcherAiCpu_UT, ut_aicpu_prof_taskInfoReport)
 {
@@ -414,9 +424,7 @@ TEST_F(DispatcherAiCpu_UT, ut_aicpu_prof_taskInfoReport)
     sqeCqeCtx.sqContext.inited = false;
     stream.InitSqAndCqeContext(sqHead, sqTail, &sqeCqeCtx);
 
-    MOCKER(QuerySqStatusByType)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(QuerySqStatusByType).stubs().will(returnValue(HCCL_SUCCESS));
 
     dispatcherAiCpu->dfxTimeOutConfig_.sqFullWaitTimeOut = 2;
     auto ret = dispatcherAiCpu->LaunchTask(stream, true);
@@ -441,9 +449,7 @@ TEST_F(DispatcherAiCpu_UT, ut_launchTask_rtsqfull)
     sqeCqeCtx.sqContext.inited = false;
     stream.InitSqAndCqeContext(sqHead, sqTail, &sqeCqeCtx);
 
-    MOCKER(QuerySqStatusByType)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(QuerySqStatusByType).stubs().will(returnValue(HCCL_SUCCESS));
 
     stream.sqeContext_->buffer.sqeCnt = 10;
     stream.sqeContext_->buffer.tailSqeIdx = 10;
@@ -493,7 +499,7 @@ TEST_F(DispatcherAiCpu_UT, ut_GetStreamSqeBufferAddr_2048)
     // sqe cnt != 0 && tailSqeIdx == 2048
     uint32_t sqHead = 0;
     uint32_t sqTail = 3;
-    u64 *ptr = new u64(1);
+    u64* ptr = new u64(1);
     DeviceMem dst(ptr, 0x80, false);
     DeviceMem src(ptr, 0x80, false);
     Stream stream(streamInfo, true);
@@ -524,7 +530,7 @@ TEST_F(DispatcherAiCpu_UT, ut_aicpu_fine_granularity)
     stream.InitSqAndCqeContext(sqHead, sqTail, &sqeCqeCtx);
     stream.sqeContext_->buffer.sqeCnt = 3;
     stream.sqeContext_->buffer.tailSqeIdx = 1024;
-    
+
     auto ret = dispatcherAiCpu->WriteValue(stream, addr, valueaddr);
     EXPECT_EQ(HCCL_SUCCESS, ret);
     bool reset = false;
@@ -537,8 +543,8 @@ TEST_F(DispatcherAiCpu_UT, ut_DispatcherAiCpu_SignalRecord)
 {
     uint32_t sqHead = 0;
     uint32_t sqTail = 100;
-    u32 *dstPtr = new u32(0);
-    u32 *srcPtr = new u32(0);
+    u32* dstPtr = new u32(0);
+    u32* srcPtr = new u32(0);
     DeviceMem dst(dstPtr, 4, false);
     DeviceMem src(srcPtr, 4, false);
     Stream stream(streamInfo, true);
@@ -560,7 +566,7 @@ TEST_F(DispatcherAiCpu_UT, ut_SaveStreamInfo_NewStream)
     info.actualStreamId = 10;
     info.sqId = 10;
     info.sqDepth = 100;
-    info.sqBaseAddr = static_cast<void *>(sq_addr);
+    info.sqBaseAddr = static_cast<void*>(sq_addr);
     info.logicCqId = 10;
     Stream stream(info, true);
     SqCqeContext sqeCqeCtx;
@@ -580,7 +586,7 @@ TEST_F(DispatcherAiCpu_UT, ut_SaveStreamInfo_DuplicateStream)
     info.actualStreamId = 10;
     info.sqId = 10;
     info.sqDepth = 100;
-    info.sqBaseAddr = static_cast<void *>(sq_addr);
+    info.sqBaseAddr = static_cast<void*>(sq_addr);
     info.logicCqId = 10;
     Stream stream(info, true);
     SqCqeContext sqeCqeCtx;
@@ -609,7 +615,7 @@ TEST_F(DispatcherAiCpu_UT, ut_LaunchAllTasks_MultipleStreams)
     info1.actualStreamId = 1;
     info1.sqId = 1;
     info1.sqDepth = 100;
-    info1.sqBaseAddr = static_cast<void *>(sq_addr);
+    info1.sqBaseAddr = static_cast<void*>(sq_addr);
     info1.logicCqId = 1;
     Stream stream1(info1, true);
     SqCqeContext sqeCqeCtx1;
@@ -620,7 +626,7 @@ TEST_F(DispatcherAiCpu_UT, ut_LaunchAllTasks_MultipleStreams)
     info2.actualStreamId = 2;
     info2.sqId = 2;
     info2.sqDepth = 100;
-    info2.sqBaseAddr = static_cast<void *>(sq_addr);
+    info2.sqBaseAddr = static_cast<void*>(sq_addr);
     info2.logicCqId = 2;
     Stream stream2(info2, true);
     SqCqeContext sqeCqeCtx2;
@@ -642,7 +648,7 @@ TEST_F(DispatcherAiCpu_UT, ut_LaunchAllTasks_FailedLaunch)
     info1.actualStreamId = 1;
     info1.sqId = 1;
     info1.sqDepth = 100;
-    info1.sqBaseAddr = static_cast<void *>(sq_addr);
+    info1.sqBaseAddr = static_cast<void*>(sq_addr);
     info1.logicCqId = 1;
     Stream stream1(info1, true);
     SqCqeContext sqeCqeCtx1;
@@ -675,7 +681,7 @@ TEST_F(DispatcherAiCpu_UT, ut_LaunchTask_IterateOtherStreams)
     info2.actualStreamId = 2;
     info2.sqId = 2;
     info2.sqDepth = 100;
-    info2.sqBaseAddr = static_cast<void *>(sq_addr);
+    info2.sqBaseAddr = static_cast<void*>(sq_addr);
     info2.logicCqId = 2;
     Stream stream2(info2, true);
     SqCqeContext sqeCqeCtx2;
@@ -690,9 +696,7 @@ TEST_F(DispatcherAiCpu_UT, ut_LaunchTask_IterateOtherStreams)
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), outBound(queryHead))
         .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(ConfigSqStatusByType)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(ConfigSqStatusByType).stubs().will(returnValue(HCCL_SUCCESS));
 
     dispatcherAiCpu->dfxTimeOutConfig_.sqFullWaitTimeOut = 0;
     auto ret = dispatcherAiCpu->LaunchTask(stream, true);
@@ -716,7 +720,7 @@ TEST_F(DispatcherAiCpu_UT, ut_WaitRtsq_IterateOtherStreams)
     info2.actualStreamId = 2;
     info2.sqId = 2;
     info2.sqDepth = 100;
-    info2.sqBaseAddr = static_cast<void *>(sq_addr);
+    info2.sqBaseAddr = static_cast<void*>(sq_addr);
     info2.logicCqId = 2;
     Stream stream2(info2, true);
     SqCqeContext sqeCqeCtx2;
@@ -748,12 +752,29 @@ TEST_F(DispatcherAiCpu_UT, ut_WaitRtsq_NonBlockReturn)
     sqeCqeCtx.sqContext.inited = false;
     stream.InitSqAndCqeContext(sqHead, sqTail, &sqeCqeCtx);
 
-    MOCKER(QuerySqStatusByType)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(QuerySqStatusByType).stubs().will(returnValue(HCCL_SUCCESS));
 
     auto ret = dispatcherAiCpu->WaitRtsq(stream, 10, false);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
+    GlobalMockObject::verify();
+}
+
+TEST_F(DispatcherAiCpu_UT, ut_SetSqeTimeOut_ExceedsMax_Expect_ClampedToMax)
+{
+    u64 largeTimeout = dispatcherAiCpu->notifyMaxWaitTime_ + 1;
+    dispatcherAiCpu->SetSqeTimeOut(largeTimeout);
+    EXPECT_EQ(dispatcherAiCpu->dfxTimeOutConfig_.sqeTimeOutTimeOut, dispatcherAiCpu->notifyMaxWaitTime_);
+    GlobalMockObject::verify();
+}
+
+TEST_F(DispatcherAiCpu_UT, ut_SetSqeTimeOut_WithinMax_Expect_SetToInput)
+{
+    u64 normalTimeout = 100;
+    if (normalTimeout > dispatcherAiCpu->notifyMaxWaitTime_) {
+        normalTimeout = dispatcherAiCpu->notifyMaxWaitTime_ > 0 ? dispatcherAiCpu->notifyMaxWaitTime_ - 1 : 0;
+    }
+    dispatcherAiCpu->SetSqeTimeOut(normalTimeout);
+    EXPECT_EQ(dispatcherAiCpu->dfxTimeOutConfig_.sqeTimeOutTimeOut, normalTimeout);
     GlobalMockObject::verify();
 }

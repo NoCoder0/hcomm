@@ -47,7 +47,7 @@ typedef enum tagGeneralCtrlType {
  * @param [out] needTranslate
  * @return RT_ERROR_NONE for ok, others failed
  */
-RTS_API rtError_t rtNeedDevVA2PA(bool *need);
+RTS_API rtError_t rtNeedDevVA2PA(bool* need);
 
 /**
  * @ingroup rt_stars
@@ -55,7 +55,7 @@ RTS_API rtError_t rtNeedDevVA2PA(bool *need);
  * @param [in] devAddr translate addr
  * @param [in] len addr len
  * @param [in] stm stream
-* @param [in] isAsync async or sync
+ * @param [in] isAsync async or sync
  * @return RT_ERROR_NONE for ok, others failed
  */
 RTS_API rtError_t rtDevVA2PA(uint64_t devAddr, uint64_t len, rtStream_t stm, bool isAsync);
@@ -64,7 +64,7 @@ RTS_API rtError_t rtDevVA2PA(uint64_t devAddr, uint64_t len, rtStream_t stm, boo
  * @ingroup rt_stars
  * @brief dvpp group handle.
  */
-typedef void *rtDvppGrp_t;
+typedef void* rtDvppGrp_t;
 
 /**
  * @ingroup rt_stars
@@ -77,7 +77,7 @@ typedef void *rtDvppGrp_t;
  * @return RT_ERROR_INVALID_VALUE for error input
  * @return RT_ERROR_NONE for ok, others failed
  */
-RTS_API rtError_t rtStreamCreateByGrp(rtStream_t *stm, int32_t priority, uint32_t flags, rtDvppGrp_t grp);
+RTS_API rtError_t rtStreamCreateByGrp(rtStream_t* stm, int32_t priority, uint32_t flags, rtDvppGrp_t grp);
 
 /**
  * @ingroup rt_stars
@@ -86,7 +86,7 @@ RTS_API rtError_t rtStreamCreateByGrp(rtStream_t *stm, int32_t priority, uint32_
  * @param [out] grp      group handle
  * @return RT_ERROR_NONE for ok, others failed
  */
-RTS_API rtError_t rtDvppGroupCreate(rtDvppGrp_t *grp, uint32_t flags);
+RTS_API rtError_t rtDvppGroupCreate(rtDvppGrp_t* grp, uint32_t flags);
 
 /**
  * @ingroup rt_stars
@@ -106,7 +106,7 @@ typedef struct tagDvppGrpRptInfo {
     uint32_t accErrorCode;
 } rtDvppGrpRptInfo_t;
 
-typedef void (*rtDvppGrpCallback)(rtDvppGrpRptInfo_t *rptInfo);
+typedef void (*rtDvppGrpCallback)(rtDvppGrpRptInfo_t* rptInfo);
 
 /**
  * @ingroup rt_stars
@@ -123,14 +123,14 @@ RTS_API rtError_t rtDvppWaitGroupReport(rtDvppGrp_t grp, rtDvppGrpCallback callB
  * @brief op name
  */
 typedef struct rtKernelLaunchNames {
-    const char_t *soName;      // defined for so name
-    const char_t *kernelName;  // defined for kernel type name
-    const char_t *opName;      // defined for operator name
+    const char_t* soName;     // defined for so name
+    const char_t* kernelName; // defined for kernel type name
+    const char_t* opName;     // defined for operator name
 } rtKernelLaunchNames_t;
 
 typedef struct tagRtDvppTaskDesc {
     rtStarsCommonSqe_t sqe;
-    uint16_t aicpuTaskPos ; // rtsq max dep is 1024
+    uint16_t aicpuTaskPos; // rtsq max dep is 1024
     uint16_t reserved;
 } rtDvppTaskDesc_t;
 
@@ -168,7 +168,7 @@ typedef struct tagRtTaskDesc {
 
 typedef struct tagRtMultipleTaskInfo {
     uint32_t taskNum;
-    rtTaskDesc_t *taskDesc; // must memset0 after new obj
+    rtTaskDesc_t* taskDesc; // must memset0 after new obj
 } rtMultipleTaskInfo_t;
 
 /*
@@ -179,14 +179,11 @@ typedef struct tagRtMultipleTaskInfo {
  * @return RT_ERROR_NONE for ok
  * @return RT_ERROR_INVALID_VALUE for error input
  */
-RTS_API rtError_t rtMultipleTaskInfoLaunch(const void *taskInfo, rtStream_t stm);
+RTS_API rtError_t rtMultipleTaskInfoLaunch(const void* taskInfo, rtStream_t stm);
 
 #pragma pack(push)
 #pragma pack(1)
-typedef enum {
-    RT_DVPP_CMDLIST_NOT_FREE = 1U,
-    RT_DVPP_MAX
-} rtDvppAttrId;
+typedef enum { RT_DVPP_CMDLIST_NOT_FREE = 1U, RT_DVPP_MAX } rtDvppAttrId;
 
 typedef union {
     bool isCmdListNotFree;
@@ -199,7 +196,7 @@ typedef struct {
 } rtDvppAttr_t;
 
 typedef struct {
-    rtDvppAttr_t *attrs;
+    rtDvppAttr_t* attrs;
     size_t numAttrs;
 } rtDvppCfg_t;
 #pragma pack(pop)
@@ -213,7 +210,7 @@ typedef struct {
  * @param [in] cfg dvpp option cfg
  * @return RT_ERROR_NONE for ok, others failed
  */
-RTS_API rtError_t rtLaunchDvppTask(const void *sqe, uint32_t sqeLen, rtStream_t stm, rtDvppCfg_t *cfg);
+RTS_API rtError_t rtLaunchDvppTask(const void* sqe, uint32_t sqeLen, rtStream_t stm, rtDvppCfg_t* cfg);
 
 /**
  * @ingroup rt_stars
@@ -223,9 +220,9 @@ RTS_API rtError_t rtLaunchDvppTask(const void *sqe, uint32_t sqeLen, rtStream_t 
  * @param [in] type             ctl type
  * @return RT_ERROR_NONE for ok, others failed
  */
-RTS_API rtError_t rtGeneralCtrl(uintptr_t *ctrl, uint32_t num, uint32_t type);
+RTS_API rtError_t rtGeneralCtrl(uintptr_t* ctrl, uint32_t num, uint32_t type);
 
 #if defined(__cplusplus)
 }
 #endif
-#endif  // CCE_RUNTIME_RT_EXTERNAL_STARS_H
+#endif // CCE_RUNTIME_RT_EXTERNAL_STARS_H

@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef BKF_CER_ARG__H
 #define BKF_CER_ARG__H
 
@@ -62,4 +61,3 @@ uint32_t BkfCeraN2H(BkfCera *ceraN, BkfCera *ceraH);
 #endif
 
 #endif
-

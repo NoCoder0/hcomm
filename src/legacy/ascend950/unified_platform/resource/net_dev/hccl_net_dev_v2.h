@@ -19,13 +19,13 @@
 extern "C" {
 #endif // __cplusplus
 
-HcclResult HcclNetDevOpenV2(const HcclNetDevInfos *info, HcclNetDev *netDev);
+HcclResult HcclNetDevOpenV2(const HcclNetDevInfos* info, HcclNetDev* netDev);
 HcclResult HcclNetDevCloseV2(HcclNetDev netDev);
-HcclResult HcclNetDevGetAddrV2(const HcclNetDev netDev, HcclAddress *addr);
-HcclResult HcclNetDevGetBusAddrV2(HcclDeviceId dstDevId, HcclAddress *busAddr);
-HcclResult HcclNetDevGetNicAddrV2(int32_t devicePhyId, HcclAddress **addr, uint32_t *addrNum);
+HcclResult HcclNetDevGetAddrV2(const HcclNetDev netDev, HcclAddress* addr);
+HcclResult HcclNetDevGetBusAddrV2(HcclDeviceId dstDevId, HcclAddress* busAddr);
+HcclResult HcclNetDevGetNicAddrV2(int32_t devicePhyId, HcclAddress** addr, uint32_t* addrNum);
 
 #ifdef __cplusplus
 }
 #endif // __cplusplus
-#endif  // HCCL_NET_DEV_V2_H 
+#endif // HCCL_NET_DEV_V2_H

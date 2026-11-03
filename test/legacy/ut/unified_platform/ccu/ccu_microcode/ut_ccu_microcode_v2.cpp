@@ -19,20 +19,11 @@ using namespace Hccl::CcuRep;
 using namespace Hccl;
 class CcuMicroCodeV2Test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CcuMicroCodeV2Test tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CcuMicroCodeV2Test tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CcuMicroCodeV2Test tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CcuMicroCodeV2Test tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in CcuMicroCodeV2Test SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in CcuMicroCodeV2Test SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -66,18 +57,10 @@ TEST_F(CcuMicroCodeV2Test, Test)
     Hccl::CcuRep::CcuV2::TransLocMemToLocMS(ccuInstr + index++, 0, 0, 0, 1, 0, 0, 0x1, {1, 0});
     Hccl::CcuRep::CcuV2::TransLocMSToLocMem(ccuInstr + index++, 0, 0, 0, 1, 0, 0, 0xff, {1, 0});
     Hccl::CcuRep::CcuV2::TransLocMemToLocMem(ccuInstr + index++, 0, 0, 0, 0, 1, 0, 0, 0x1, {0, 0xff}, {1, 0});
-    TransMem(ccuInstr + index++,
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-        Hccl::CcuRep::CcuV2::TransMemNotifyInfo{1, 1, 1},
+    TransMem(
+        ccuInstr + index++, 0, 0, 0, 0, 1, 0, Hccl::CcuRep::CcuV2::TransMemNotifyInfo{1, 1, 1},
         Hccl::CcuRep::CcuV2::TransMemReduceInfo{0, 1, 1},
-        Hccl::CcuRep::CcuV2::TransMemConfig{1, 1, 1, 1, 1, 1, 1, 1, 1},
-        0xff,
-        1);
+        Hccl::CcuRep::CcuV2::TransMemConfig{1, 1, 1, 1, 1, 1, 1, 1, 1}, 0xff, 1);
 
     SyncWtX(ccuInstr + index++, 0, 0, 0x1, 0, 0, 0x1);
     SyncWtX(ccuInstr + index++, 0, 0, 0, 0, Hccl::CcuRep::CcuV2::TransMemNotifyInfo{0, 0, 0x2}, 0, 0x1);

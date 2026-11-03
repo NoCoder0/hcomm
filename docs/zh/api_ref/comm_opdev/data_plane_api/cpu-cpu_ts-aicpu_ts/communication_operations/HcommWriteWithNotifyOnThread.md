@@ -2,9 +2,21 @@
 
 ## 产品支持情况
 
-- Ascend 950PR/Ascend 950DT：支持
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：不支持
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：不支持
+<!-- npu="950" id1 -->
+- Ascend 950PR&950DT系列产品：支持
+<!-- end id1 -->
+<!-- npu="A3" id2 -->
+- Atlas A3系列产品：不支持
+<!-- end id2 -->
+<!-- npu="910b" id3 -->
+- Atlas A2系列产品：不支持
+<!-- end id3 -->
+<!-- npu="910" id4 -->
+- Atlas训练系列产品：不支持
+<!-- end id4 -->
+<!-- npu="310p" id5 -->
+- Atlas推理系列产品：不支持
+<!-- end id5 -->
 
 ## 功能说明
 
@@ -33,9 +45,14 @@ int32_t：接口成功返回0，其他失败。
 
 ## 约束说明
 
-该接口需要配合[HcommChannelNotifyWaitOnThread](HcommChannelNotifyWaitOnThread.md)使用。
+- 该接口需要配合[HcommChannelNotifyWaitOnThread](HcommChannelNotifyWaitOnThread.md)使用。
 
-在Ascend 950PR/Ascend 950DT上，仅支持AICPU_TS模式下、在Device侧调用该接口。
+<!-- npu="950" id6 -->
+- 在Ascend 950PR&950DT系列产品上，仅支持AICPU_TS模式下、在Device侧调用该接口。
+<!-- end id6 -->
+
+- 同一个`ThreadHandle`不支持多线程并发访问。
+- 同一个`ChannelHandle`不支持多线程并发访问。
 
 ## 调用示例
 
@@ -66,7 +83,7 @@ uint64_t remoteBufferSize;
 HcclChannelGetHcclBuffer(comm, channel, &remoteBuffer, &remoteBufferSize);
 uint64_t len = std::min(localBufferSize, remoteBufferSize);
 
-// 针对Ascend 950PR/Ascend 950DT，需要在Device侧调用以下接口
+// 针对Ascend 950PR&950DT系列产品，需要在Device侧调用以下接口
 
 // 将本端内存的内容写到对端内存上并通知对端
 uint32_t rmtNotifyIdx = 0;

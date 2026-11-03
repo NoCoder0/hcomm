@@ -30,6 +30,7 @@ int RsCcuUninit(void);
 int RsCcuCustomChannel(const struct channel_info_in *in, struct channel_info_out *out);
 int RsCcuGetCqeBaseAddr(unsigned int dieId, unsigned long long *cqeBaseAddr);
 int RsCcuGetMemInfo(char *dataIn, char *dataOut, unsigned int *bufferSize);
-int RsCcuTlvRequest(unsigned int type, char *dataIn, char *dataOut, unsigned int dataInlength, unsigned int *dataOutLength); 
-bool isCcuTlvReqExist();
+int RsCcuTlvRequest(unsigned int type, char *dataIn, char *dataOut, unsigned int dataInlength,
+    unsigned int *dataOutLength, unsigned int dataOutMaxLength);
+bool isCcuTlvReqExist(void);
 #endif // DL_CCU_FUNCTION_H

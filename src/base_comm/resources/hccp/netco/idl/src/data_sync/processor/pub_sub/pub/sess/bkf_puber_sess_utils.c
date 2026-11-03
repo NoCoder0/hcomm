@@ -89,8 +89,8 @@ int32_t BkfPuberSessNtfAppCode(BkfPuberSess *sess, BkfDcTupleInfo *tupleInfo, vo
     }
 
     if (tupleInfo->isAddUpd) {
-        return vTbl->tupleUpdateCode(vTbl->cookie, sess->key.sliceKey, tupleInfo->key, tupleInfo->valOrNull,
-                                     buf, bufLen);
+        return vTbl->tupleUpdateCode(vTbl->cookie, sess->key.sliceKey, tupleInfo->key, tupleInfo->valOrNull, buf,
+            bufLen);
     }
 
     return vTbl->tupleDeleteCode(vTbl->cookie, sess->key.sliceKey, tupleInfo->key, buf, bufLen);
@@ -104,7 +104,7 @@ BkfTlvTransNum *BkfPuberSessParseTransNum(BkfMsgDecoder *decoder)
         return VOS_NULL;
     }
 
-    BkfTlvTransNum *tlvTransNum = (BkfTlvTransNum*)tl;
+    BkfTlvTransNum *tlvTransNum = (BkfTlvTransNum *)tl;
     if (tlvTransNum->num == BKF_TRANS_NUM_INVALID) {
         return VOS_NULL;
     }
@@ -116,9 +116,9 @@ uint32_t BkfPuberSessPackSubAck(BkfPuberSess *sess, BkfMsgCoder *coder)
 {
     BkfPuberSessMng *sessMng = sess->sessMng;
     BkfDcSliceVTbl *sliceVTbl = BKF_DC_GET_SLICE_VTBL(sessMng->argInit->dc);
-    BkfTlvReasonCode reasonCode = { .reasonCode = BKF_RC_OK };
-    BkfTlvTableType tableType = { .tableTypeId = sess->key.tableTypeId };
-    BkfTlvTransNum transNum = { .num = sess->subTransNum };
+    BkfTlvReasonCode reasonCode = {.reasonCode = BKF_RC_OK};
+    BkfTlvTableType tableType = {.tableTypeId = sess->key.tableTypeId};
+    BkfTlvTransNum transNum = {.num = sess->subTransNum};
 
     uint8_t flag = 0;
     if (sess->subWithVerify) {
@@ -137,8 +137,8 @@ STATIC uint32_t BkfPuberSessPackBatchBeginEnd(BkfPuberSess *sess, BkfMsgCoder *c
 {
     BkfPuberSessMng *sessMng = sess->sessMng;
     BkfDcSliceVTbl *sliceVTbl = BKF_DC_GET_SLICE_VTBL(sessMng->argInit->dc);
-    BkfTlvTableType tableType = { .tableTypeId = sess->key.tableTypeId };
-    BkfTlvTransNum transNum = { .num = sess->subTransNum };
+    BkfTlvTableType tableType = {.tableTypeId = sess->key.tableTypeId};
+    BkfTlvTransNum transNum = {.num = sess->subTransNum};
 
     uint8_t flag = 0;
     if (sess->subWithVerify) {
@@ -166,8 +166,8 @@ uint32_t BkfPuberSessPackSubDelNtf(BkfPuberSess *sess, BkfMsgCoder *coder)
 {
     BkfPuberSessMng *sessMng = sess->sessMng;
     BkfDcSliceVTbl *sliceVTbl = BKF_DC_GET_SLICE_VTBL(sessMng->argInit->dc);
-    BkfTlvTableType tableType = { .tableTypeId = sess->key.tableTypeId };
-    BkfTlvTransNum transNum = { .num = sess->subTransNum };
+    BkfTlvTableType tableType = {.tableTypeId = sess->key.tableTypeId};
+    BkfTlvTransNum transNum = {.num = sess->subTransNum};
 
     uint32_t ret = BkfMsgCodeMsgHead(coder, BKF_MSG_DEL_SUB_NTF, 0);
     ret |= BkfMsgCodeRawTLV(coder, BKF_TLV_SLICE_KEY, 0, sess->key.sliceKey, sliceVTbl->keyLen, VOS_FALSE);
@@ -180,8 +180,8 @@ uint32_t BkfPuberSessPackDataHead(BkfPuberSess *sess, BkfMsgCoder *coder)
 {
     BkfPuberSessMng *sessMng = sess->sessMng;
     BkfDcSliceVTbl *sliceVTbl = BKF_DC_GET_SLICE_VTBL(sessMng->argInit->dc);
-    BkfTlvTableType tableType = { .tableTypeId = sess->key.tableTypeId };
-    BkfTlvTransNum transNum = { .num = sess->subTransNum };
+    BkfTlvTableType tableType = {.tableTypeId = sess->key.tableTypeId};
+    BkfTlvTransNum transNum = {.num = sess->subTransNum};
 
     uint32_t ret = BkfMsgCodeMsgHead(coder, BKF_MSG_DATA, 0);
     ret |= BkfMsgCodeRawTLV(coder, BKF_TLV_SLICE_KEY, 0, sess->key.sliceKey, sliceVTbl->keyLen, VOS_FALSE);
@@ -206,4 +206,3 @@ void BkfPuberSessNtfAppBatchTimeout(BkfPuberSessMng *sessMng, uint8_t *sliceKey,
 #ifdef __cplusplus
 }
 #endif
-

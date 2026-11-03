@@ -18,7 +18,7 @@
 
 using namespace HcclSim;
 
-HcclVmResult DumpData(nlohmann::json &j);
+HcclVmResult DumpData(nlohmann::json& j);
 
 HcclVmResult DumpModel(std::string dataId);
 HcclVmResult DumpMemLayout(std::string dataId);

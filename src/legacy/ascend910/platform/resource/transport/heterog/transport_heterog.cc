@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "transport_heterog.h"
 #include "log.h"
@@ -21,8 +21,9 @@ constexpr u32 WAIT_LINK_BUILD_DELAY_TIME_US = 10;
 constexpr s32 MAX_LINK_NUM = 10;
 
 std::atomic<u32> TransportHeterog::rankTableCrc_ = {0};
-TransportHeterog::TransportHeterog(const string &tag, HcclIpAddress &selfIp, HcclIpAddress &peerIp, u32 peerPort,
-    u32 selfPort, const TransportResourceInfo &transportResourceInfo)
+TransportHeterog::TransportHeterog(
+    const string& tag, HcclIpAddress& selfIp, HcclIpAddress& peerIp, u32 peerPort, u32 selfPort,
+    const TransportResourceInfo& transportResourceInfo)
     : transTag_(tag),
       nicSocketHandle_(nullptr),
       selfIp_(selfIp),
@@ -33,7 +34,7 @@ TransportHeterog::TransportHeterog(const string &tag, HcclIpAddress &selfIp, Hcc
       pReqInfosMem_(transportResourceInfo.pReqInfosMem),
       recvEnvelopNum_(0)
 {}
-TransportHeterog::TransportHeterog(const TransportResourceInfo &transportResourceInfo)
+TransportHeterog::TransportHeterog(const TransportResourceInfo& transportResourceInfo)
     : nicSocketHandle_(nullptr),
       peerPort_(0),
       selfPort_(0),
@@ -44,30 +45,36 @@ TransportHeterog::TransportHeterog(const TransportResourceInfo &transportResourc
 
 TransportHeterog::~TransportHeterog() {}
 
-HcclResult TransportHeterog::Init(u32 localUserRank, u32 remoteUserRank)
+HcclResult TransportHeterog::Init([[maybe_unused]] u32 localUserRank, [[maybe_unused]] u32 remoteUserRank)
 {
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterog::Init(SocketInfoT &socketInfo, RdmaHandle rdmaHandle, MrHandle mrHandle)
+HcclResult TransportHeterog::Init(
+    [[maybe_unused]] SocketInfoT& socketInfo, [[maybe_unused]] RdmaHandle rdmaHandle,
+    [[maybe_unused]] MrHandle mrHandle)
 {
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterog::Improbe(const TransportEndPointParam &epParam, s32 &matched, HcclMessageInfo *&msg,
-    HcclStatus &status, bool &flag)
+HcclResult TransportHeterog::Improbe(
+    [[maybe_unused]] const TransportEndPointParam& epParam, [[maybe_unused]] s32& matched,
+    [[maybe_unused]] HcclMessageInfo*& msg, [[maybe_unused]] HcclStatus& status, [[maybe_unused]] bool& flag)
 {
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterog::Imrecv(const TransData &recvData, HcclMessageInfo &msg, HcclRequestInfo *&request,
-    bool flag, bool needRecordFlag)
+HcclResult TransportHeterog::Imrecv(
+    [[maybe_unused]] const TransData& recvData, [[maybe_unused]] HcclMessageInfo& msg,
+    [[maybe_unused]] HcclRequestInfo*& request, [[maybe_unused]] bool flag, [[maybe_unused]] bool needRecordFlag)
 {
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterog::ImrecvScatter(void *buf[], int count[], int bufCount, HcclDataType datatype,
-    HcclMessageInfo &msg, HcclRequestInfo *&request)
+HcclResult TransportHeterog::ImrecvScatter(
+    [[maybe_unused]] void* buf[], [[maybe_unused]] int count[], [[maybe_unused]] int bufCount,
+    [[maybe_unused]] HcclDataType datatype, [[maybe_unused]] HcclMessageInfo& msg,
+    [[maybe_unused]] HcclRequestInfo*& request)
 {
     return HCCL_SUCCESS;
 }
@@ -79,8 +86,8 @@ HcclResult TransportHeterog::CheckRecvMsgAndRequestBuffer()
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterog::GenerateSendRequest(const TransData &sendData, const TransportEndPointParam &epParam,
-    HcclRequestInfo *&request)
+HcclResult TransportHeterog::GenerateSendRequest(
+    const TransData& sendData, const TransportEndPointParam& epParam, HcclRequestInfo*& request)
 {
     request = pReqInfosMem_->Alloc();
     CHK_PTR_NULL(request);
@@ -97,8 +104,8 @@ HcclResult TransportHeterog::GenerateSendRequest(const TransData &sendData, cons
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterog::GenerateRecvRequest(const TransData &recvData, const HcclMessageInfo &msg,
-    HcclRequestInfo *&request)
+HcclResult
+TransportHeterog::GenerateRecvRequest(const TransData& recvData, const HcclMessageInfo& msg, HcclRequestInfo*& request)
 {
     request = pReqInfosMem_->Alloc();
     CHK_PTR_NULL(request);
@@ -116,7 +123,7 @@ HcclResult TransportHeterog::GenerateRecvRequest(const TransData &recvData, cons
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterog::GenerateRecvScatterRequest(const HcclMessageInfo &msg, HcclRequestInfo *&request)
+HcclResult TransportHeterog::GenerateRecvScatterRequest(const HcclMessageInfo& msg, HcclRequestInfo*& request)
 {
     request = pReqInfosMem_->Alloc();
     CHK_PTR_NULL(request);
@@ -134,7 +141,7 @@ HcclResult TransportHeterog::GenerateRecvScatterRequest(const HcclMessageInfo &m
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterog::FreeRequest(HcclRequestInfo &request) const
+HcclResult TransportHeterog::FreeRequest(HcclRequestInfo& request) const
 {
     request.commHandle = nullptr;
     request.transportHandle = nullptr;
@@ -142,24 +149,26 @@ HcclResult TransportHeterog::FreeRequest(HcclRequestInfo &request) const
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterog::CheckTransportEndPointInfo(const TransportEndPointInfo &epInfo,
-    const TransportEndPointInfo &epInfoCheck) const
+HcclResult TransportHeterog::CheckTransportEndPointInfo(
+    const TransportEndPointInfo& epInfo, const TransportEndPointInfo& epInfoCheck) const
 {
     if (epInfo.commId != epInfoCheck.commId) {
-        HCCL_ERROR("[Check][Tag]errNo[0x%016llx] commId[%u] is invalid, expect:%u", HCCL_ERROR_CODE(HCCL_E_PARA),
+        HCCL_ERROR(
+            "[Check][Tag]errNo[0x%016llx] commId[%u] is invalid, expect:%u", HCCL_ERROR_CODE(HCCL_E_PARA),
             epInfo.commId, epInfoCheck.commId);
         return HCCL_E_PARA;
     }
 
     if (epInfo.tag != epInfoCheck.tag) {
-        HCCL_ERROR("[Check][Tag]errNo[0x%016llx] tag[%u] is invalid, expect:%u", HCCL_ERROR_CODE(HCCL_E_PARA),
-            epInfo.tag, epInfoCheck.tag);
+        HCCL_ERROR(
+            "[Check][Tag]errNo[0x%016llx] tag[%u] is invalid, expect:%u", HCCL_ERROR_CODE(HCCL_E_PARA), epInfo.tag,
+            epInfoCheck.tag);
         return HCCL_E_PARA;
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterog::CheckRecvEnvelope(const TransData &recvDataCheck, const HcclEnvelopeSummary &envelope)
+HcclResult TransportHeterog::CheckRecvEnvelope(const TransData& recvDataCheck, const HcclEnvelopeSummary& envelope)
 {
     if (envelope.status != 0) {
         HCCL_ERROR("[Check][EnvelopeStatus] envelope status:[%u] is invalid", envelope.status);
@@ -169,19 +178,22 @@ HcclResult TransportHeterog::CheckRecvEnvelope(const TransData &recvDataCheck, c
     CHK_RET(CheckTransportEndPointInfo(envelope.envelope.epParam.src, envelope.envelope.epParam.dst));
 
     if (recvDataCheck.count < envelope.envelope.transData.count) {
-        HCCL_ERROR("[Check][RecvEnvelope]Imrecv input count[%llu] should be not less than Isend count[%llu]",
+        HCCL_ERROR(
+            "[Check][RecvEnvelope]Imrecv input count[%llu] should be not less than Isend count[%llu]",
             recvDataCheck.count, envelope.envelope.transData.count);
         return HCCL_E_PARA;
     }
 
     if ((recvDataCheck.dstBuf == 0) && ((recvDataCheck.count != 0) || (envelope.envelope.transData.count != 0))) {
-        HCCL_ERROR("[Check][RecvEnvelope]Imrecv buffer[%p] or count[%llu] is invalid", recvDataCheck.dstBuf,
+        HCCL_ERROR(
+            "[Check][RecvEnvelope]Imrecv buffer[%p] or count[%llu] is invalid", recvDataCheck.dstBuf,
             envelope.envelope.transData.count);
         return HCCL_E_PARA;
     }
 
     if (recvDataCheck.dataType != envelope.envelope.transData.dataType) {
-        HCCL_ERROR("[Check][RecvEnvelope]Imrecv input dataType[%s] should be Isend dataType[%s]",
+        HCCL_ERROR(
+            "[Check][RecvEnvelope]Imrecv input dataType[%s] should be Isend dataType[%s]",
             GetDataTypeEnumStr(recvDataCheck.dataType).c_str(),
             GetDataTypeEnumStr(envelope.envelope.transData.dataType).c_str());
         return HCCL_E_PARA;
@@ -190,8 +202,8 @@ HcclResult TransportHeterog::CheckRecvEnvelope(const TransData &recvDataCheck, c
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterog::CheckRecvScatterEnvelope(void *buf[], int count[], int bufCount, HcclDataType datatype,
-    const HcclEnvelopeSummary &envelope)
+HcclResult TransportHeterog::CheckRecvScatterEnvelope(
+    void* buf[], int count[], int bufCount, HcclDataType datatype, const HcclEnvelopeSummary& envelope)
 {
     if (envelope.status != 0) {
         HCCL_ERROR("[Check][EnvelopeStatus] envelope status:[%u] is invalid", envelope.status);
@@ -204,29 +216,31 @@ HcclResult TransportHeterog::CheckRecvScatterEnvelope(void *buf[], int count[], 
     u32 envelopSize = envelope.envelope.transData.count * SIZE_TABLE[envelope.envelope.transData.dataType];
     for (s32 i = 0; i < bufCount; i++) {
         if ((reinterpret_cast<u64>(buf[i]) == 0) && ((bufCount != 0) || (envelope.envelope.transData.count != 0))) {
-            HCCL_ERROR("[Check][RecvEnvelope]Imrecv buffer[%p] or count[%llu] is invalid",
-                reinterpret_cast<u64>(buf[i]), envelope.envelope.transData.count);
+            HCCL_ERROR(
+                "[Check][RecvEnvelope]Imrecv buffer[%p] or count[%llu] is invalid", reinterpret_cast<u64>(buf[i]),
+                envelope.envelope.transData.count);
             return HCCL_E_PARA;
         }
         recvSize += count[i] * SIZE_TABLE[datatype];
     }
 
     if (recvSize < envelopSize) {
-        HCCL_ERROR("[Check][RecvEnvelope] recvSize[%u Byte] is less than envelop total Size[%u Byte]", recvSize, envelopSize);
+        HCCL_ERROR(
+            "[Check][RecvEnvelope] recvSize[%u Byte] is less than envelop total Size[%u Byte]", recvSize, envelopSize);
         return HCCL_E_PARA;
     }
     if (datatype != envelope.envelope.transData.dataType) {
-        HCCL_ERROR("[Check][RecvEnvelope]Imrecv input dataType[%s] should be Isend dataType[%s]",
-            GetDataTypeEnumStr(datatype).c_str(),
-            GetDataTypeEnumStr(envelope.envelope.transData.dataType).c_str());
+        HCCL_ERROR(
+            "[Check][RecvEnvelope]Imrecv input dataType[%s] should be Isend dataType[%s]",
+            GetDataTypeEnumStr(datatype).c_str(), GetDataTypeEnumStr(envelope.envelope.transData.dataType).c_str());
         return HCCL_E_PARA;
     }
 
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterog::GenerateRecvMessage(HcclEnvelopeSummary &recvEnvelope, HcclMessageInfo *&msg,
-    HcclStatus &status)
+HcclResult
+TransportHeterog::GenerateRecvMessage(HcclEnvelopeSummary& recvEnvelope, HcclMessageInfo*& msg, HcclStatus& status)
 {
     msg = pMsgInfosMem_->Alloc();
     CHK_PTR_NULL(msg);
@@ -240,7 +254,7 @@ HcclResult TransportHeterog::GenerateRecvMessage(HcclEnvelopeSummary &recvEnvelo
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterog::FreeRecvMessage(HcclMessageInfo &msg) const
+HcclResult TransportHeterog::FreeRecvMessage(HcclMessageInfo& msg) const
 {
     msg.commHandle = nullptr;
     msg.transportHandle = nullptr;
@@ -248,7 +262,7 @@ HcclResult TransportHeterog::FreeRecvMessage(HcclMessageInfo &msg) const
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterog::ProbeNothing(s32 &flag, HcclMessageInfo *&msg, HcclStatus &status) const
+HcclResult TransportHeterog::ProbeNothing(s32& flag, HcclMessageInfo*& msg, HcclStatus& status) const
 {
     flag = HCCL_IMPROBE_INCOMPLETED;
     msg = nullptr;
@@ -269,12 +283,12 @@ HcclResult TransportHeterog::AddSocketWhiteList(string& tag)
     CHK_SAFETY_FUNC_RET(memcpy_s(&whiteList[0].tag, sizeof(whiteList[0].tag), tag.c_str(), tag.size() + 1));
 
     CHK_RET(hrtRaSocketWhiteListAdd(nicSocketHandle_, whiteList.data(), SINGLE_WHITE_LIST_NUM));
-    HCCL_INFO("TransportHeterogRoce::AddSocketWhiteList ip[%s], tag[%s]",
-        peerIp_.GetReadableAddress(), whiteList[0].tag);
+    HCCL_INFO(
+        "TransportHeterogRoce::AddSocketWhiteList ip[%s], tag[%s]", peerIp_.GetReadableAddress(), whiteList[0].tag);
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterog::PrepareSocketInfo(s32 type, s32 linkNum, const string &clientTag, const string &serverTag)
+HcclResult TransportHeterog::PrepareSocketInfo(s32 type, s32 linkNum, const string& clientTag, const string& serverTag)
 {
     initSM_.locInitInfo.signal = SYNC_SIGNAL;
     initSM_.locInitInfo.protocolType = type;
@@ -283,11 +297,12 @@ HcclResult TransportHeterog::PrepareSocketInfo(s32 type, s32 linkNum, const stri
         string tag = transTag_ + "_" + to_string(i) + "_";
         if (initSM_.locInitInfo.role == CLIENT_ROLE_SOCKET) {
             tag += clientTag;
-            SocketConnectInfoT tmpConnInfo;
+            SocketConnectInfoT tmpConnInfo{};
             tmpConnInfo.socketHandle = nicSocketHandle_;
             tmpConnInfo.remoteIp.addr = peerAddr.addr;
             tmpConnInfo.remoteIp.addr6 = peerAddr.addr6;
             tmpConnInfo.port = peerPort_;
+            tmpConnInfo.tagChkDis = true;
             CHK_SAFETY_FUNC_RET(strncpy_s(tmpConnInfo.tag, SOCK_CONN_TAG_SIZE, tag.c_str(), tag.length() + 1));
             initSM_.locInitInfo.socketConnInfo.emplace_back(tmpConnInfo);
         } else {
@@ -320,10 +335,10 @@ HcclResult TransportHeterog::InitTransportConnect(s32 type, s32 linkNum)
         initSM_.locInitInfo.role = (selfIp_ < peerIp_) ? SERVER_ROLE_SOCKET : CLIENT_ROLE_SOCKET;
     }
 
-    string clientTag = string(peerIp_.GetReadableIP()) + to_string(peerPort_) +
-        string(selfIp_.GetReadableIP()) + to_string(selfPort_);
-    string serverTag = string(selfIp_.GetReadableIP()) + to_string(selfPort_) +
-        string(peerIp_.GetReadableIP()) + to_string(peerPort_);
+    string clientTag = string(peerIp_.GetReadableIP()) + to_string(peerPort_) + string(selfIp_.GetReadableIP())
+                       + to_string(selfPort_);
+    string serverTag = string(selfIp_.GetReadableIP()) + to_string(selfPort_) + string(peerIp_.GetReadableIP())
+                       + to_string(peerPort_);
     CHK_RET(PrepareSocketInfo(type, linkNum, clientTag, serverTag));
 
     if (initSM_.locInitInfo.role == CLIENT_ROLE_SOCKET) {
@@ -333,15 +348,14 @@ HcclResult TransportHeterog::InitTransportConnect(s32 type, s32 linkNum)
     }
 
     u32 rankTableCrc = TransportHeterog::rankTableCrc_.load();
-    //序列化信息
+    // 序列化信息
     std::ostringstream oss;
-    oss.write(reinterpret_cast<const char_t *>(&rankTableCrc),
-        sizeof(rankTableCrc));
-    oss.write(reinterpret_cast<const char_t *>(&initSM_.locInitInfo.protocolType),
-        sizeof(initSM_.locInitInfo.protocolType));
+    oss.write(reinterpret_cast<const char_t*>(&rankTableCrc), sizeof(rankTableCrc));
+    oss.write(
+        reinterpret_cast<const char_t*>(&initSM_.locInitInfo.protocolType), sizeof(initSM_.locInitInfo.protocolType));
 
-    CHK_SAFETY_FUNC_RET(memcpy_s(&(initSM_.locInitInfo.checkFrame[0]), HETEROG_MAX_FRAME_LEN - 1,
-        oss.str().c_str(), oss.str().size()));
+    CHK_SAFETY_FUNC_RET(
+        memcpy_s(&(initSM_.locInitInfo.checkFrame[0]), HETEROG_MAX_FRAME_LEN - 1, oss.str().c_str(), oss.str().size()));
 
     return HCCL_SUCCESS;
 }
@@ -351,10 +365,10 @@ HcclResult TransportHeterog::InitTransportConnect(s32 type, u32 role, s32 linkNu
     HCCL_DEBUG("TransportHeterog InitTransportConnect start type[%d] role[%u] linkNum[%d]", type, role, linkNum);
     initSM_.locInitInfo.role = role;
 
-    string clientTag = string(selfIp_.GetReadableIP()) + "_" + to_string(0) + "_" +
-        string(peerIp_.GetReadableIP()) + "_" + to_string(peerPort_) + "_" + to_string(tag);
-    string serverTag = string(peerIp_.GetReadableIP()) + "_" + to_string(0) + "_" +
-        string(selfIp_.GetReadableIP()) + "_" + to_string(selfPort_) + "_" + to_string(tag);
+    string clientTag = string(selfIp_.GetReadableIP()) + "_" + to_string(0) + "_" + string(peerIp_.GetReadableIP())
+                       + "_" + to_string(peerPort_) + "_" + to_string(tag);
+    string serverTag = string(peerIp_.GetReadableIP()) + "_" + to_string(0) + "_" + string(selfIp_.GetReadableIP())
+                       + "_" + to_string(selfPort_) + "_" + to_string(tag);
     CHK_RET(PrepareSocketInfo(type, linkNum, clientTag, serverTag));
 
     if (initSM_.locInitInfo.role == CLIENT_ROLE_SOCKET) {
@@ -366,15 +380,14 @@ HcclResult TransportHeterog::InitTransportConnect(s32 type, u32 role, s32 linkNu
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterog::ConnectSocket(SocketConnectInfoT conn[], u32 num, bool &completed)
+HcclResult TransportHeterog::ConnectSocket(SocketConnectInfoT conn[], u32 num, bool& completed)
 {
     HcclResult ret = hrtRaSocketNonBlockBatchConnect(conn, num);
     completed = (ret == HCCL_SUCCESS);
     return ret;
 }
 
-HcclResult TransportHeterog::GetSocket(u32 role, struct SocketInfoT info[], u32 num, u32 &connectedNum,
-    bool &completed)
+HcclResult TransportHeterog::GetSocket(u32 role, struct SocketInfoT info[], u32 num, u32& connectedNum, bool& completed)
 {
     HcclResult ret = HCCL_SUCCESS;
     for (u32 i = 0; i < num; i++) {
@@ -399,18 +412,19 @@ HcclResult TransportHeterog::GetSocket(u32 role, struct SocketInfoT info[], u32 
     return ret;
 }
 
-HcclResult TransportHeterog::SocketSend(const FdHandle fdHandle, void *data, u64 size, u64 &sentSize, bool &completed)
+HcclResult TransportHeterog::SocketSend(const FdHandle fdHandle, void* data, u64 size, u64& sentSize, bool& completed)
 {
     HCCL_DEBUG("TransportHeterog::SocketSend start fdHandle[%p]", fdHandle);
     u64 tmpSize = 0;
-    HcclResult ret =
-        hrtRaSocketNonBlockSendHeterog(fdHandle, reinterpret_cast<char *>(data) + sentSize, size - sentSize, &tmpSize);
+    HcclResult ret
+        = hrtRaSocketNonBlockSendHeterog(fdHandle, reinterpret_cast<char*>(data) + sentSize, size - sentSize, &tmpSize);
     if (ret == HCCL_SUCCESS) {
         sentSize += tmpSize;
         if (size == sentSize) {
             completed = true;
         } else if (sentSize > size) {
-            HCCL_ERROR("SocketSend sentSize[%llu Byte] bigger than size[%llu Byte] completed[%u Byte] tmpSize[%llu Byte]",
+            HCCL_ERROR(
+                "SocketSend sentSize[%llu Byte] bigger than size[%llu Byte] completed[%u Byte] tmpSize[%llu Byte]",
                 sentSize, size, completed, tmpSize);
             return HCCL_E_NETWORK;
         }
@@ -418,24 +432,26 @@ HcclResult TransportHeterog::SocketSend(const FdHandle fdHandle, void *data, u64
         completed = false;
     }
     if (ret != HCCL_SUCCESS && ret != HCCL_E_AGAIN) {
-        HCCL_ERROR("TransportHeterog::SocketSend size[%llu Byte] recvSize[%llu Byte] completed[%u Byte] tmpSize[%llu Byte]",
+        HCCL_ERROR(
+            "TransportHeterog::SocketSend size[%llu Byte] recvSize[%llu Byte] completed[%u Byte] tmpSize[%llu Byte]",
             size, sentSize, completed, tmpSize);
     }
     return ret;
 }
 
-HcclResult TransportHeterog::SocketRecv(const FdHandle fdHandle, void *data, u64 size, u64 &recvSize, bool &completed)
+HcclResult TransportHeterog::SocketRecv(const FdHandle fdHandle, void* data, u64 size, u64& recvSize, bool& completed)
 {
     HCCL_DEBUG("TransportHeterog::SocketRecv start fdHandle[%p]", fdHandle);
     u64 tmpSize = 0;
-    HcclResult ret =
-        hrtRaSocketNonBlockRecvHeterog(fdHandle, reinterpret_cast<char *>(data) + recvSize, size - recvSize, &tmpSize);
+    HcclResult ret
+        = hrtRaSocketNonBlockRecvHeterog(fdHandle, reinterpret_cast<char*>(data) + recvSize, size - recvSize, &tmpSize);
     if (ret == HCCL_SUCCESS) {
         recvSize += tmpSize;
         if (size == recvSize) {
             completed = true;
         } else if (recvSize > size) {
-            HCCL_ERROR("SocketRecv recvSize[%llu Byte] bigger than size[%llu Byte] completed[%u Byte] tmpSize[%llu Byte]",
+            HCCL_ERROR(
+                "SocketRecv recvSize[%llu Byte] bigger than size[%llu Byte] completed[%u Byte] tmpSize[%llu Byte]",
                 recvSize, size, completed, tmpSize);
             return HCCL_E_NETWORK;
         }
@@ -443,7 +459,8 @@ HcclResult TransportHeterog::SocketRecv(const FdHandle fdHandle, void *data, u64
         completed = false;
     }
     if (ret != HCCL_SUCCESS && ret != HCCL_E_AGAIN) {
-        HCCL_ERROR("TransportHeterog::SocketRecv size[%llu Byte] recvSize[%llu Byte] completed[%u Byte] tmpSize[%llu Byte]",
+        HCCL_ERROR(
+            "TransportHeterog::SocketRecv size[%llu Byte] recvSize[%llu Byte] completed[%u Byte] tmpSize[%llu Byte]",
             size, recvSize, completed, tmpSize);
     }
     return ret;
@@ -453,9 +470,11 @@ HcclResult TransportHeterog::SocketClose()
 {
     u32 closeConnCount = 0;
     SocketCloseInfoT conns[MAX_LINK_NUM]{};
-    CHK_PRT_RET(initSM_.locInitInfo.socketInfo.size() > MAX_LINK_NUM,
-        HCCL_ERROR("locInitInfo.socketInfo size can't exceed MAX_LINK_NUM, size[%d]",
-        initSM_.locInitInfo.socketInfo.size()), HCCL_E_PARA);
+    CHK_PRT_RET(
+        initSM_.locInitInfo.socketInfo.size() > MAX_LINK_NUM,
+        HCCL_ERROR(
+            "locInitInfo.socketInfo size can't exceed MAX_LINK_NUM, size[%d]", initSM_.locInitInfo.socketInfo.size()),
+        HCCL_E_PARA);
     for (size_t i = 0; i < initSM_.locInitInfo.socketInfo.size(); i++) {
         if (initSM_.locInitInfo.socketInfo[i].fdHandle != nullptr) {
             conns[i].socketHandle = nicSocketHandle_;
@@ -477,33 +496,33 @@ HcclResult TransportHeterog::CheckConsistentFrame()
 {
     std::string msg;
     msg.resize(sizeof(initSM_.locInitInfo.checkFrame));
-    CHK_SAFETY_FUNC_RET(memcpy_s(reinterpret_cast<void*>(const_cast<char_t*>(msg.data())), HETEROG_MAX_FRAME_LEN - 1,
+    CHK_SAFETY_FUNC_RET(memcpy_s(
+        reinterpret_cast<void*>(const_cast<char_t*>(msg.data())), HETEROG_MAX_FRAME_LEN - 1,
         &(initSM_.remInitInfo.checkFrame[0]), HETEROG_MAX_FRAME_LEN - 1));
 
     std::istringstream iss(msg);
     u32 localRankTableCrc = TransportHeterog::rankTableCrc_.load();
     u32 remoteRankTableCrc = 0;
-    iss.read(reinterpret_cast<char_t *>(&remoteRankTableCrc), sizeof(remoteRankTableCrc));
-    iss.read(reinterpret_cast<char_t *>(&initSM_.remInitInfo.protocolType), sizeof(initSM_.remInitInfo.protocolType));
+    iss.read(reinterpret_cast<char_t*>(&remoteRankTableCrc), sizeof(remoteRankTableCrc));
+    iss.read(reinterpret_cast<char_t*>(&initSM_.remInitInfo.protocolType), sizeof(initSM_.remInitInfo.protocolType));
 
     bool bIsDiff = false;
     if (remoteRankTableCrc != localRankTableCrc) {
-        RPT_INPUT_ERR(true,
-            "EI0005",
-            std::vector<std::string>({"ccl_op", "group", "para_name", "local_para", "remote_para"}),
+        RPT_INPUT_ERR(
+            true, "EI0005", std::vector<std::string>({"ccl_op", "para_name", "local_para", "remote_para"}),
             std::vector<std::string>(
-                {"HcomBatchGet", transTag_, "ranktable CRC", std::to_string(localRankTableCrc), std::to_string(remoteRankTableCrc)}));
-        HCCL_ERROR("[%s][%s]errNo[0x%016llx] ranktable CRC check failed, crcValue[%u], receive crcvalue[%u].",
-            LOG_KEYWORDS_INIT_CHANNEL.c_str(),
-            LOG_KEYWORDS_PARAMETER_CONFLICT.c_str(),
-            HCCL_ERROR_CODE(HCCL_E_INTERNAL),
-            localRankTableCrc,
-            remoteRankTableCrc);
+                {"HcomBatchGet", "ranktable CRC", std::to_string(localRankTableCrc),
+                 std::to_string(remoteRankTableCrc)}));
+        HCCL_ERROR(
+            "[%s][%s]errNo[0x%016llx] ranktable CRC check failed, crcValue[%u], receive crcvalue[%u].",
+            LOG_KEYWORDS_INIT_CHANNEL.c_str(), LOG_KEYWORDS_PARAMETER_CONFLICT.c_str(),
+            HCCL_ERROR_CODE(HCCL_E_INTERNAL), localRankTableCrc, remoteRankTableCrc);
         bIsDiff = true;
     }
 
     if (initSM_.remInitInfo.protocolType != initSM_.locInitInfo.protocolType) {
-        HCCL_ERROR("[CheckConsistentFrame][CompareFrame]errNo[0x%016llx] ProtocolType check fail",
+        HCCL_ERROR(
+            "[CheckConsistentFrame][CompareFrame]errNo[0x%016llx] ProtocolType check fail",
             HCCL_ERROR_CODE(HCCL_E_INTERNAL));
         bIsDiff = true;
     }
@@ -513,23 +532,21 @@ HcclResult TransportHeterog::CheckConsistentFrame()
     return HCCL_SUCCESS;
 }
 
-ConnState TransportHeterog::GetState()
-{
-    return connState_.load();
-}
+ConnState TransportHeterog::GetState() { return connState_.load(); }
 
 HcclResult TransportHeterog::TryTransition(HcclResult ret, bool completed, ConnState nextState)
 {
     if (ret == HCCL_SUCCESS && completed) {
-        HCCL_INFO("link[%s]: state[%d] transfer to state[%d]", initSM_.locInitInfo.socketInfo[0].tag, GetState(),
-            nextState);
+        HCCL_INFO(
+            "link[%s]: state[%d] transfer to state[%d]", initSM_.locInitInfo.socketInfo[0].tag, GetState(), nextState);
         connState_.store(nextState);
         CHK_RET(EnterStateProcess(nextState));
     } else if ((ret == HCCL_SUCCESS && !completed) || ret == HCCL_E_AGAIN) {
         HCCL_DEBUG("link[%s]: state[%d] not complete, hold", initSM_.locInitInfo.socketInfo[0].tag, GetState());
     } else {
-        HCCL_ERROR("link[%s]: State[%d] execute failed errno[%d][%s]", initSM_.locInitInfo.socketInfo[0].tag,
-            nextState, errno, strerror(errno));
+        HCCL_ERROR(
+            "link[%s]: State[%d] execute failed errno[%d][%s]", initSM_.locInitInfo.socketInfo[0].tag, nextState, errno,
+            strerror(errno));
         return HCCL_E_INTERNAL;
     }
 
@@ -565,19 +582,19 @@ void TransportHeterog::SubRecvEnvelopNum()
     return;
 }
 
-u32 TransportHeterog::GetRecvEnvelopNum()
-{
-    return recvEnvelopNum_;
-}
+u32 TransportHeterog::GetRecvEnvelopNum() { return recvEnvelopNum_; }
 
-HcclResult TransportHeterog::BlockSend(const TransData &sendData, const TransportEndPointParam &epParam,
-    HcclRequestInfo *&request, s32 waitTimeOut)
+HcclResult TransportHeterog::BlockSend(
+    [[maybe_unused]] const TransData& sendData, [[maybe_unused]] const TransportEndPointParam& epParam,
+    [[maybe_unused]] HcclRequestInfo*& request, [[maybe_unused]] s32 waitTimeOut)
 {
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterog::BlockRecv(const TransData &recvData, bool matched,
-    TransportHeterog *&transport, s32 waitTimeOut, s32 waitPayloadTimeOut)
+HcclResult TransportHeterog::BlockRecv(
+    [[maybe_unused]] const TransData& recvData, [[maybe_unused]] bool matched,
+    [[maybe_unused]] TransportHeterog*& transport, [[maybe_unused]] s32 waitTimeOut,
+    [[maybe_unused]] s32 waitPayloadTimeOut)
 {
     return HCCL_SUCCESS;
 }
@@ -606,9 +623,11 @@ HcclResult TransportHeterog::WaitBuildLinkComplete()
         }
 
         if (ret == HCCL_SUCCESS) {
-            HCCL_INFO("Transport heterog connect success, localRank[%u], localIp[%s], remoteRank[%u], "
-                "remoteIp[%s], linkTag[%s]!", localRank_, selfIp_.GetReadableAddress(),
-                remoteRank_, peerIp_.GetReadableAddress(), initSM_.locInitInfo.socketInfo[0].tag);
+            HCCL_INFO(
+                "Transport heterog connect success, localRank[%u], localIp[%s], remoteRank[%u], "
+                "remoteIp[%s], linkTag[%s]!",
+                localRank_, selfIp_.GetReadableAddress(), remoteRank_, peerIp_.GetReadableAddress(),
+                initSM_.locInitInfo.socketInfo[0].tag);
         } else {
             HCCL_ERROR("Transport heterog connect failed, ret[%d]!", ret);
         }
@@ -616,42 +635,42 @@ HcclResult TransportHeterog::WaitBuildLinkComplete()
         return ret;
     }
 
-    HCCL_ERROR("WaitBuildLinkComplete timeOut[%d] s, localIp[%s], "
-        "remoteIp[%s], linkTag[%s], State[%d]", GetExternalInputHcclLinkTimeOut(),
-        selfIp_.GetReadableAddress(), peerIp_.GetReadableAddress(), initSM_.locInitInfo.socketInfo[0].tag,
-        GetState());
+    HCCL_ERROR(
+        "WaitBuildLinkComplete timeOut[%d] s, localIp[%s], "
+        "remoteIp[%s], linkTag[%s], State[%d]",
+        GetExternalInputHcclLinkTimeOut(), selfIp_.GetReadableAddress(), peerIp_.GetReadableAddress(),
+        initSM_.locInitInfo.socketInfo[0].tag, GetState());
 
     return HCCL_E_TIMEOUT;
 }
 
-HcclResult TransportHeterog::Iwrite(const TransData &sendData, const HcclEnvelope &envelope, HcclRequestInfo *&request)
+HcclResult TransportHeterog::Iwrite(
+    [[maybe_unused]] const TransData& sendData, [[maybe_unused]] const HcclEnvelope& envelope,
+    [[maybe_unused]] HcclRequestInfo*& request)
 {
     HCCL_WARNING("Empty TransportHeterog::Iwrite is called.");
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterog::GetRemoteIsendDoneSignal(std::shared_ptr<LocalIpcNotify> &signal)
+HcclResult TransportHeterog::GetRemoteIsendDoneSignal([[maybe_unused]] std::shared_ptr<LocalIpcNotify>& signal)
 {
     HCCL_WARNING("Empty TransportHeterog::GetRemoteIsendDoneSignal is called.");
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterog::GetRemoteImrecvDoneSignal(std::shared_ptr<LocalIpcNotify> &signal)
+HcclResult TransportHeterog::GetRemoteImrecvDoneSignal([[maybe_unused]] std::shared_ptr<LocalIpcNotify>& signal)
 {
     HCCL_WARNING("Empty TransportHeterog::GetRemoteImrecvDoneSignal is called.");
     return HCCL_SUCCESS;
 }
 
-void TransportHeterog::GetLinkTag(std::string &tag)
+void TransportHeterog::GetLinkTag([[maybe_unused]] std::string& tag)
 {
     HCCL_WARNING("Empty TransportHeterog::GetLinkTag is called.");
     return;
 }
 
-void TransportHeterog::SetForceClose()
-{
-    forceClose_ = true;
-}
+void TransportHeterog::SetForceClose() { forceClose_ = true; }
 
 void TransportHeterog::RecordRankTableCrc(const u32 crcValue)
 {

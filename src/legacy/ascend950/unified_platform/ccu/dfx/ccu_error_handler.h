@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef CCU_ERROR_HANDLER_H
 #define CCU_ERROR_HANDLER_H
@@ -87,22 +87,22 @@ struct CcuMissionContext {
 
     uint16_t GetStatus() const
     {
-        return (part3.status << 13) | (part2.status);   // part3.status为[15:13]位
+        return (part3.status << 13) | (part2.status); // part3.status为[15:13]位
     }
 
     uint16_t GetCurrentIns() const
     {
-        return (part5.currentIns << 11) | (part4.currentIns);   // part5.currentIns为[15:11]位
+        return (part5.currentIns << 11) | (part4.currentIns); // part5.currentIns为[15:11]位
     }
 
     uint16_t GetStartIns() const
     {
-        return (part7.startIns << 11) | (part6.startIns);    // part7.startIns[15:11]位
+        return (part7.startIns << 11) | (part6.startIns); // part7.startIns[15:11]位
     }
 
     uint16_t GetEndIns() const
     {
-        return (part6.endIns << 11) | (part5.endIns);     // part6.endIns[15:11]位
+        return (part6.endIns << 11) | (part5.endIns); // part6.endIns[15:11]位
     }
 };
 
@@ -170,27 +170,27 @@ struct CcuLoopContext {
         uint16_t value;
         struct {
             uint16_t waitLoopCkbitValue : 10;
-            uint16_t currentIns : 6;    // Current_ins [5:0]
+            uint16_t currentIns : 6; // Current_ins [5:0]
         };
     } part9;
 
     union {
         uint16_t value;
         struct {
-            uint16_t currentIns : 10;   // Current_ins [15:6]
-            uint16_t addrStride : 6;    // Addr_stride [5:0]
+            uint16_t currentIns : 10; // Current_ins [15:6]
+            uint16_t addrStride : 6;  // Addr_stride [5:0]
         };
     } part10;
 
     union {
         uint16_t value;
-        uint16_t addrStride;            // Addr_stride [21:6]
+        uint16_t addrStride; // Addr_stride [21:6]
     } part11;
 
     union {
         uint16_t value;
         struct {
-            uint16_t addrStride : 10;   // Addr_stride [31:22]
+            uint16_t addrStride : 10; // Addr_stride [31:22]
             uint16_t denyCnt : 6;
         };
     } part12;
@@ -199,14 +199,14 @@ struct CcuLoopContext {
         uint16_t value;
         struct {
             uint16_t denyCnt : 4;
-            uint16_t currentCnt : 12;   // Current_cnt [11:0]
+            uint16_t currentCnt : 12; // Current_cnt [11:0]
         };
     } part13;
 
     union {
         uint16_t value;
         struct {
-            uint16_t currentCnt : 1;    // Current_cnt [12]
+            uint16_t currentCnt : 1; // Current_cnt [12]
             uint16_t totalCnt : 13;
             uint16_t endIns : 2;
         };
@@ -240,7 +240,7 @@ struct CcuLoopContext {
 
     uint16_t GetCurrentIns() const
     {
-        return (part10.currentIns << 6) | (part9.currentIns);   // part10.currentIns为[15:6]位
+        return (part10.currentIns << 6) | (part9.currentIns); // part10.currentIns为[15:6]位
     }
 
     uint16_t GetCurrentCnt() const
@@ -251,8 +251,8 @@ struct CcuLoopContext {
     uint32_t GetAddrStride() const
     {
         const uint32_t low = static_cast<uint32_t>(part10.addrStride);
-        const uint32_t mid = static_cast<uint32_t>(part11.addrStride) << 6;     // part11.addrStride为[21:6]位
-        const uint32_t high = static_cast<uint32_t>(part12.addrStride) << 22;   // part12.addrStride为[31:22]位
+        const uint32_t mid = static_cast<uint32_t>(part11.addrStride) << 6;   // part11.addrStride为[21:6]位
+        const uint32_t high = static_cast<uint32_t>(part12.addrStride) << 22; // part12.addrStride为[31:22]位
         return high | mid | low;
     }
 };
@@ -289,9 +289,9 @@ union LoopGroupXm {
 };
 
 struct ErrorInfoBase {
-    int32_t  deviceId;
-    uint8_t  dieId;
-    uint8_t  missionId;
+    int32_t deviceId;
+    uint8_t dieId;
+    uint8_t missionId;
     uint16_t currentInsId;
     uint16_t status;
 };
@@ -302,68 +302,91 @@ public:
     CcuErrorHandler(const CcuErrorHandler&) = delete;
     void operator=(const CcuErrorHandler&) = delete;
 
-     static void GetCcuErrorMsg(int32_t deviceId, uint16_t missionStatus, const ParaCcu &ccuTaskParam, std::vector<CcuErrorInfo> &errorInfo);
-    static void GetCcuJettys(int32_t deviceId, const ParaCcu &ccuTaskParam, std::vector<CcuJetty *> ccuJettys);
+    static void GetCcuErrorMsg(
+        int32_t deviceId, uint16_t missionStatus, const ParaCcu& ccuTaskParam, const std::string& groupRankContent,
+        std::vector<CcuErrorInfo>& errorInfo);
+    static void GetCcuJettys(int32_t deviceId, const ParaCcu& ccuTaskParam, std::vector<CcuJetty*> ccuJettys);
     static CcuMissionContext GetCcuMissionContext(int32_t deviceId, uint32_t dieId, uint32_t missionId);
 
 private:
-    static void GenStatusInfo(const ErrorInfoBase &baseInfo, std::vector<CcuErrorInfo> &errorInfo);
+    static void GenStatusInfo(
+        const ErrorInfoBase& baseInfo, const std::string& groupRankContent, std::vector<CcuErrorInfo>& errorInfo);
 
     // LoopGroup
-    static void GenErrorInfoLoopGroup(const ErrorInfoBase &baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
-                                      CcuRep::CcuRepContext &ctx, std::vector<CcuErrorInfo> &errorInfo);
+    static void GenErrorInfoLoopGroup(
+        const ErrorInfoBase& baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase, CcuRep::CcuRepContext& ctx,
+        std::vector<CcuErrorInfo>& errorInfo);
     // Loop
-    static void GenErrorInfoLoop(const ErrorInfoBase &baseInfo, CcuRep::CcuRepContext &ctx,
-                                 std::vector<CcuErrorInfo> &errorInfo);
+    static void
+    GenErrorInfoLoop(const ErrorInfoBase& baseInfo, CcuRep::CcuRepContext& ctx, std::vector<CcuErrorInfo>& errorInfo);
 
-    static void GenErrorInfoByRepType(const ErrorInfoBase &baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
-                                      std::vector<CcuErrorInfo> &errorInfo);
+    static void GenErrorInfoByRepType(
+        const ErrorInfoBase& baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
+        std::vector<CcuErrorInfo>& errorInfo);
     // Default
-    static void GenErrorInfoDefault(const ErrorInfoBase &baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
-                                    std::vector<CcuErrorInfo> &errorInfo);
+    static void GenErrorInfoDefault(
+        const ErrorInfoBase& baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
+        std::vector<CcuErrorInfo>& errorInfo);
     // WaitSignal
-    static void GenErrorInfoLocPostSem(const ErrorInfoBase &baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
-                                       std::vector<CcuErrorInfo> &errorInfo);
-    static void GenErrorInfoLocWaitSem(const ErrorInfoBase &baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
-                                       std::vector<CcuErrorInfo> &errorInfo);
-    static void GenErrorInfoRemPostSem(const ErrorInfoBase &baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
-                                       std::vector<CcuErrorInfo> &errorInfo);
-    static void GenErrorInfoRemWaitSem(const ErrorInfoBase &baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
-                                       std::vector<CcuErrorInfo> &errorInfo);
-    static void GenErrorInfoRemPostVar(const ErrorInfoBase &baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
-                                       std::vector<CcuErrorInfo> &errorInfo);
-    static void GenErrorInfoRemWaitGroup(const ErrorInfoBase &baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
-                                         std::vector<CcuErrorInfo> &errorInfo);
-    static void GenErrorInfoPostSharedVar(const ErrorInfoBase &baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
-                                          std::vector<CcuErrorInfo> &errorInfo);
-    static void GenErrorInfoPostSharedSem(const ErrorInfoBase &baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
-                                          std::vector<CcuErrorInfo> &errorInfo);
+    static void GenErrorInfoLocPostSem(
+        const ErrorInfoBase& baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
+        std::vector<CcuErrorInfo>& errorInfo);
+    static void GenErrorInfoLocWaitSem(
+        const ErrorInfoBase& baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
+        std::vector<CcuErrorInfo>& errorInfo);
+    static void GenErrorInfoRemPostSem(
+        const ErrorInfoBase& baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
+        std::vector<CcuErrorInfo>& errorInfo);
+    static void GenErrorInfoRemWaitSem(
+        const ErrorInfoBase& baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
+        std::vector<CcuErrorInfo>& errorInfo);
+    static void GenErrorInfoRemPostVar(
+        const ErrorInfoBase& baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
+        std::vector<CcuErrorInfo>& errorInfo);
+    static void GenErrorInfoRemWaitGroup(
+        const ErrorInfoBase& baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
+        std::vector<CcuErrorInfo>& errorInfo);
+    static void GenErrorInfoPostSharedVar(
+        const ErrorInfoBase& baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
+        std::vector<CcuErrorInfo>& errorInfo);
+    static void GenErrorInfoPostSharedSem(
+        const ErrorInfoBase& baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
+        std::vector<CcuErrorInfo>& errorInfo);
     // TransMem
-    static void GenErrorInfoRead(const ErrorInfoBase &baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
-                                 std::vector<CcuErrorInfo> &errorInfo);
-    static void GenErrorInfoWrite(const ErrorInfoBase &baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
-                                  std::vector<CcuErrorInfo> &errorInfo);
-    static void GenErrorInfoLocalCpy(const ErrorInfoBase &baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
-                                     std::vector<CcuErrorInfo> &errorInfo);
-    static void GenErrorInfoLocalReduce(const ErrorInfoBase &baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
-                                        std::vector<CcuErrorInfo> &errorInfo);
+    static void GenErrorInfoRead(
+        const ErrorInfoBase& baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
+        std::vector<CcuErrorInfo>& errorInfo);
+    static void GenErrorInfoWrite(
+        const ErrorInfoBase& baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
+        std::vector<CcuErrorInfo>& errorInfo);
+    static void GenErrorInfoLocalCpy(
+        const ErrorInfoBase& baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
+        std::vector<CcuErrorInfo>& errorInfo);
+    static void GenErrorInfoLocalReduce(
+        const ErrorInfoBase& baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
+        std::vector<CcuErrorInfo>& errorInfo);
     // BufTransMem
-    static void GenErrorInfoBufRead(const ErrorInfoBase &baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
-                                    std::vector<CcuErrorInfo> &errorInfo);
-    static void GenErrorInfoBufWrite(const ErrorInfoBase &baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
-                                     std::vector<CcuErrorInfo> &errorInfo);
-    static void GenErrorInfoBufLocRead(const ErrorInfoBase &baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
-                                       std::vector<CcuErrorInfo> &errorInfo);
-    static void GenErrorInfoBufLocWrite(const ErrorInfoBase &baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
-                                        std::vector<CcuErrorInfo> &errorInfo);
+    static void GenErrorInfoBufRead(
+        const ErrorInfoBase& baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
+        std::vector<CcuErrorInfo>& errorInfo);
+    static void GenErrorInfoBufWrite(
+        const ErrorInfoBase& baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
+        std::vector<CcuErrorInfo>& errorInfo);
+    static void GenErrorInfoBufLocRead(
+        const ErrorInfoBase& baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
+        std::vector<CcuErrorInfo>& errorInfo);
+    static void GenErrorInfoBufLocWrite(
+        const ErrorInfoBase& baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
+        std::vector<CcuErrorInfo>& errorInfo);
     // BufReduce
-    static void GenErrorInfoBufReduce(const ErrorInfoBase &baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
-                                      std::vector<CcuErrorInfo> &errorInfo);
+    static void GenErrorInfoBufReduce(
+        const ErrorInfoBase& baseInfo, std::shared_ptr<CcuRep::CcuRepBase> repBase,
+        std::vector<CcuErrorInfo>& errorInfo);
 
-    static CcuLoopContext    GetCcuLoopContext(int32_t deviceId, uint32_t dieId, uint32_t loopCtxId);
-    static uint64_t          GetCcuXnValue(int32_t deviceId, uint32_t dieId, uint32_t xnId);
-    static uint64_t          GetCcuGSAValue(int32_t deviceId, uint32_t dieId, uint32_t gsaId);
-    static uint16_t          GetCcuCKEValue(int32_t deviceId, uint32_t dieId, uint32_t ckeId);
+    static CcuLoopContext GetCcuLoopContext(int32_t deviceId, uint32_t dieId, uint32_t loopCtxId);
+    static uint64_t GetCcuXnValue(int32_t deviceId, uint32_t dieId, uint32_t xnId);
+    static uint64_t GetCcuGSAValue(int32_t deviceId, uint32_t dieId, uint32_t gsaId);
+    static uint16_t GetCcuCKEValue(int32_t deviceId, uint32_t dieId, uint32_t ckeId);
 };
 
 } // namespace Hccl

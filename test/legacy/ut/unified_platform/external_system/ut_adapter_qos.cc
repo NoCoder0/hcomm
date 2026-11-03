@@ -17,20 +17,11 @@ using namespace Hccl;
 
 class AdapterQosTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AdapterQosTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AdapterQosTest tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AdapterQosTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AdapterQosTest tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in AdapterQosTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in AdapterQosTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -43,8 +34,8 @@ TEST_F(AdapterQosTest, HrtGetQosConfig_return_ok)
 {
     // Given
     QosConfig info;
-    info.qos            = 0xFU;
-    info.mpamId         = 0xFFU;
+    info.qos = 0xFU;
+    info.mpamId = 0xFFU;
 
     MOCKER(QosGetStreamEngineQos)
         .stubs()
@@ -56,4 +47,3 @@ TEST_F(AdapterQosTest, HrtGetQosConfig_return_ok)
     u32 qosCfg = 1;
     DevType devType = hrtGetQosConfig(1, 1, opType, &qosCfg);
 }
-

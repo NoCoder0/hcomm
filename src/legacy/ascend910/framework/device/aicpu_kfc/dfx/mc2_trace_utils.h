@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef __MC2_TRACE_UTILS_H__
 #define __MC2_TRACE_UTILS_H__
@@ -34,11 +34,11 @@ struct AicpuComTraceData {
     uint64_t windowSize;
     uint64_t workSpaceAddr;
     uint64_t kfcNotifyId;
-    uint32_t eventIds[32];  // 32最大rank数
-    uint64_t windowIn[32];  // 32最大rank数
-    uint64_t windowOut[32];  // 32最大rank数
-    int32_t actualStreamId[32];  // 32最大rank数
-    int32_t sqId[32];  // 32最大rank数
+    uint32_t eventIds[32];                  // 32最大rank数
+    uint64_t windowIn[32];                  // 32最大rank数
+    uint64_t windowOut[32];                 // 32最大rank数
+    int32_t actualStreamId[32];             // 32最大rank数
+    int32_t sqId[32];                       // 32最大rank数
     uint64_t aicpuOpNotifyAddress[2];       // 集合通信AICPU展开资源
     int32_t aicpuOpNotifyActualNotifyId[2]; // 集合通信AICPU展开资源
     int32_t clusterId;
@@ -51,11 +51,12 @@ struct SqeBatchInfo {
 class MC2TraceUtils {
 public:
     static HcclResult Init();
-    template <typename T> static HcclResult Submit(const T * const traceData);
-    static HcclResult Submit(AicpuComContext *ctx);
-    static HcclResult Submit(const KFCTask * const task, const HcclKFCTilingData * const tilingData);
-    static HcclResult Submit(const std::string &traceStr);
-    static HcclResult Submit(const char *traceStr);
+    template <typename T>
+    static HcclResult Submit(const T* const traceData);
+    static HcclResult Submit(AicpuComContext* ctx);
+    static HcclResult Submit(const KFCTask* const task, const HcclKFCTilingData* const tilingData);
+    static HcclResult Submit(const std::string& traceStr);
+    static HcclResult Submit(const char* traceStr);
     static HcclResult SubmitBatchSqeInfo();
     static HcclResult Save();
     static HcclResult DestoryHandles();
@@ -73,6 +74,6 @@ private:
     static void SetHcclKFCTilingDataTwo();
     static void SetTraceMsgInfo();
     static void SetTraceSqeBatchInfo();
-    static HcclResult GetTraceFunc(const std::string &traceName);
+    static HcclResult GetTraceFunc(const std::string& traceName);
 };
 #endif // __MC2_TRACE_UTILS_H__

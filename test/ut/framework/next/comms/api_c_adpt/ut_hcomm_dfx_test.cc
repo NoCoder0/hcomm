@@ -12,17 +12,10 @@
 
 class TestHcommDfx : public TestHcommCAdptBase {
 public:
-    void SetUp() override {
-        TestHcommCAdptBase::SetUp();
-    }
-    void TearDown() override {
-        TestHcommCAdptBase::TearDown();
-    }
+    void SetUp() override { TestHcommCAdptBase::SetUp(); }
+    void TearDown() override { TestHcommCAdptBase::TearDown(); }
 };
 
 // DFX相关函数需要大量底层支持，暂时跳过具体实现测试
 // 以下为占位测试用例
-TEST_F(TestHcommDfx, Ut_TestHcommDfx_Dummy_Test)
-{
-    EXPECT_TRUE(true);
-}
+TEST_F(TestHcommDfx, Ut_TestHcommDfx_Dummy_Test) { EXPECT_TRUE(true); }

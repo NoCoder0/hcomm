@@ -4,9 +4,10 @@
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #include "gtest/gtest.h"
 #include <mockcpp/mokc.h>
 #include <mockcpp/mockcpp.hpp>
@@ -43,8 +44,8 @@ constexpr u64 G = 1024 * M;
 
 std::vector<u64> GenerateDataCount()
 {
-    std::set<u64> dataCountSet = {
-        1, 2, 4, 8, 16, 128, 1 * K, 2 * K, 256 * K, 512 * K, 1 * M, 200 * M, /* 256 * M, 500 * M */};
+    std::set<u64> dataCountSet = {1, 2, 4, 8, 16, 128, 1 * K, 2 * K, 256 * K, 512 * K, 1 * M, 200 * M,
+                                  /* 256 * M, 500 * M */};
     for (u64 i = 1; i <= 230 * M; i = (i * 1.3) + 1) {
         dataCountSet.insert(i);
     }
@@ -53,20 +54,15 @@ std::vector<u64> GenerateDataCount()
 
 class AllReduceAICPUMesh2DTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AllReduce AICPU 2D test set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AllReduce AICPU 2D test set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AllReduce AICPU 2D test tear down" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AllReduce AICPU 2D test tear down" << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -82,7 +78,7 @@ protected:
 TEST_F(AllReduceAICPUMesh2DTest, allreduce_aicpu_case_test_2_mul_2_rank_Mesh2DTwoShot)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,8,9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
     // buffersize: 200 * 1024 * 1024
@@ -98,8 +94,8 @@ TEST_F(AllReduceAICPUMesh2DTest, allreduce_aicpu_case_test_2_mul_2_rank_Mesh2DTw
     checkerOpParam.DataDes.dataType = CheckerDataType::DATA_TYPE_INT32;
     checkerOpParam.algName = "InsAllReduceMesh2DTwoShot";
 
-    std::vector<u64> dataCountList= GenerateDataCount();
-    for (auto &dataCount : dataCountList) {
+    std::vector<u64> dataCountList = GenerateDataCount();
+    for (auto& dataCount : dataCountList) {
         checkerOpParam.DataDes.count = dataCount;
         Checker checker;
         auto ret = checker.CheckA5Aicpu(checkerOpParam, topoMeta);
@@ -111,7 +107,7 @@ TEST_F(AllReduceAICPUMesh2DTest, allreduce_aicpu_case_test_2_mul_3_rank_Mesh2DTw
 {
     // 此算法有ERROR级别日志报错
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,8,9,16,17}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9, 16, 17}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
     // buffersize: 200 * 1024 * 1024
@@ -137,7 +133,7 @@ TEST_F(AllReduceAICPUMesh2DTest, allreduce_aicpu_case_test_2_mul_3_rank_Mesh2DTw
 {
     // 此算法有ERROR级别日志报错
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,8,9,16,17}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9, 16, 17}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
     // buffersize: 200 * 1024 * 1024
@@ -159,11 +155,10 @@ TEST_F(AllReduceAICPUMesh2DTest, allreduce_aicpu_case_test_2_mul_3_rank_Mesh2DTw
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 }
 
-
 TEST_F(AllReduceAICPUMesh2DTest, allreduce_aicpu_case_test_3_mul_6_rank_Mesh2DTwoShot)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,8,9,10,16,17,18,24,25,26,32,33,34,40,41,42}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18, 24, 25, 26, 32, 33, 34, 40, 41, 42}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
     // buffersize: 200 * 1024 * 1024
@@ -188,7 +183,7 @@ TEST_F(AllReduceAICPUMesh2DTest, allreduce_aicpu_case_test_3_mul_6_rank_Mesh2DTw
 TEST_F(AllReduceAICPUMesh2DTest, allreduce_aicpu_case_test_3_mul_3_rank_Mesh2DTwoShot)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,8,9,10,16,17,18}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
     // buffersize: 200 * 1024 * 1024
@@ -213,7 +208,7 @@ TEST_F(AllReduceAICPUMesh2DTest, allreduce_aicpu_case_test_3_mul_3_rank_Mesh2DTw
 TEST_F(AllReduceAICPUMesh2DTest, allreduce_aicpu_case_test_3_mul_3_rank_Mesh2DTwoShot_0)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,8,9,10,16,17,18}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
     // buffersize: 200 * 1024 * 1024
@@ -239,7 +234,7 @@ TEST_F(AllReduceAICPUMesh2DTest, allreduce_aicpu_case_test_2_mul_3_rank_Mesh2DTw
 {
     // 此算法有ERROR级别日志报错
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,8,9,16,17}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9, 16, 17}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
     // buffersize: 200 * 1024 * 1024
@@ -265,7 +260,7 @@ TEST_F(AllReduceAICPUMesh2DTest, allreduce_aicpu_case_test_2_mul_3_rank_Mesh2DTw
 {
     // 此算法有ERROR级别日志报错
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,8,9,16,17}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9, 16, 17}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
     // buffersize: 200 * 1024 * 1024
@@ -292,16 +287,13 @@ TEST_F(AllReduceAICPUMesh2DTest, allreduce_aicpu_reduce_2d_test)
     Hccl::ResLinks resLinks;
     vector<InsQuePtr> queues;
     for (u32 rank = 0; rank < 4; rank++) {
-       LinkData link(BasePortType(PortDeploymentType::P2P), 0, rank, 0, 1); 
-       resLinks[rank] = {link};
+        LinkData link(BasePortType(PortDeploymentType::P2P), 0, rank, 0, 1);
+        resLinks[rank] = {link};
     }
     u32 tempRanksize = 4;
     std::shared_ptr<InsTempAllReduceAicpuReduceMesh2D> temp = std::make_shared<InsTempAllReduceAicpuReduceMesh2D>(
-    0, 
-    tempRanksize, 
-    std::vector<std::vector<RankId>>{{0, 1} , {0, 2}}, 
-    std::map<RankId, u32>{{0, 0}, {1, 1}, {2, 2}, {3, 3}}
-    );
+        0, tempRanksize, std::vector<std::vector<RankId>>{{0, 1}, {0, 2}},
+        std::map<RankId, u32>{{0, 0}, {1, 1}, {2, 2}, {3, 3}});
 
     InsQuePtr que = std::make_shared<InsQueue>();
     for (u32 i = 0; i < tempRanksize - 2; i++) {
@@ -313,4 +305,4 @@ TEST_F(AllReduceAICPUMesh2DTest, allreduce_aicpu_reduce_2d_test)
     temp->GenExtIns(tempFuncs, templateData, resLinks, queues);
 }
 
-}
+} // namespace checker

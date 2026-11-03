@@ -14,26 +14,24 @@
 #include "hcomm_primitives.h"
 #include "host_cpu_roce_channel.h"
 #include "hcclCommOp.h"
+#include "endpoint_pair/channel/dfx/channel_dfx_pub.h"
 
 using namespace hccl;
 
-class UtCpuHcommDpuChannelRegisterDfx : public testing::Test
-{
+class UtCpuHcommDpuChannelRegisterDfx : public testing::Test {
 protected:
     virtual void SetUp() override {}
 
-    virtual void TearDown() override
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() override { GlobalMockObject::verify(); }
 
-    EndpointHandle epHandle = reinterpret_cast<void *>(0x01);
+    EndpointHandle epHandle = reinterpret_cast<void*>(0x01);
     HcommChannelDesc channelDesc{};
     hcomm::HostCpuRoceChannel channelOnHost{epHandle, channelDesc};
     ChannelHandle channel = reinterpret_cast<ChannelHandle>(&channelOnHost);
     int32_t res{HCCL_E_RESERVED};
-    std::function<HcclResult(const Hccl::TaskParam&, u64)> callback =
-        [](const Hccl::TaskParam&, u64) -> HcclResult { return HCCL_SUCCESS; };
+    std::function<HcclResult(const Hccl::TaskParam&, u64)> callback = [](const Hccl::TaskParam&, u64) -> HcclResult {
+        return HCCL_SUCCESS;
+    };
 };
 
 TEST_F(UtCpuHcommDpuChannelRegisterDfx, Ut_HcommDpuChannelRegisterDfx_When_ChannelIsNull_Expect_ReturnIsHCCL_E_PTR)
@@ -57,7 +55,8 @@ TEST_F(UtCpuHcommDpuChannelRegisterDfx, Ut_HcommDpuChannelRegisterDfx_When_Norma
     EXPECT_EQ(res, HCCL_SUCCESS);
 }
 
-TEST_F(UtCpuHcommDpuChannelRegisterDfx, Ut_HcommDpuChannelRegisterDfx_When_SetDfxCallbackFails_Expect_ErrorCodePropagated)
+TEST_F(
+    UtCpuHcommDpuChannelRegisterDfx, Ut_HcommDpuChannelRegisterDfx_When_SetDfxCallbackFails_Expect_ErrorCodePropagated)
 {
     MOCKER(&hcomm::HostCpuRoceChannel::SetDfxCallback).stubs().will(returnValue(HCCL_E_INTERNAL));
     res = HcommDpuChannelRegisterDfx(channel, callback);

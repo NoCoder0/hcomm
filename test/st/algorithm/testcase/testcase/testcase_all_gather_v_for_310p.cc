@@ -1,12 +1,13 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "gtest/gtest.h"
 
 #include <vector>
@@ -24,19 +25,14 @@ using namespace checker;
 
 class AllGatherVTestFor310P : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AllGatherVTestFor310P set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AllGatherVTestFor310P set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AllGatherVTestFor310P tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AllGatherVTestFor310P tear down." << std::endl; }
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -55,8 +51,8 @@ TEST_F(AllGatherVTestFor310P, all_gather_v_310P3_opbase_varying_size_1)
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 4);
 
-    vector<u64> counts {1000000, 2000000, 3000000, 4000000};
-    vector<u64> displs {0, 1000000, 3000000, 6000000};
+    vector<u64> counts{1000000, 2000000, 3000000, 4000000};
+    vector<u64> displs{0, 1000000, 3000000, 6000000};
 
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLGATHER_V;
@@ -80,8 +76,8 @@ TEST_F(AllGatherVTestFor310P, all_gather_v_310P3_opbase_varying_size_2)
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 4);
 
-    vector<u64> counts {400000, 300000, 200000, 100000};
-    vector<u64> displs {0, 400000, 700000, 900000};
+    vector<u64> counts{400000, 300000, 200000, 100000};
+    vector<u64> displs{0, 400000, 700000, 900000};
 
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLGATHER_V;
@@ -105,8 +101,8 @@ TEST_F(AllGatherVTestFor310P, allgather_v_test)
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 2);
 
-    vector<u64> counts {40000, 30000, 20000, 10000};
-    vector<u64> displs {0, 40000, 70000, 90000};
+    vector<u64> counts{40000, 30000, 20000, 10000};
+    vector<u64> displs{0, 40000, 70000, 90000};
 
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLGATHER_V;
@@ -129,8 +125,8 @@ TEST_F(AllGatherVTestFor310P, allgather_v_AllGatherVFor310PExecutor_test)
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 4);
 
-    vector<u64> counts {400000, 300000, 200000, 100000};
-    vector<u64> displs {0, 400000, 700000, 900000};
+    vector<u64> counts{400000, 300000, 200000, 100000};
+    vector<u64> displs{0, 400000, 700000, 900000};
 
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLGATHER_V;
@@ -154,8 +150,8 @@ TEST_F(AllGatherVTestFor310P, all_gather_v_310P3_opbase_varying_size_3)
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 4);
 
-    vector<u64> counts {200000, 400000, 600000, 800000};
-    vector<u64> displs {0, 200000, 600000, 1200000};
+    vector<u64> counts{200000, 400000, 600000, 800000};
+    vector<u64> displs{0, 200000, 600000, 1200000};
 
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLGATHER_V;
@@ -179,8 +175,8 @@ TEST_F(AllGatherVTestFor310P, all_gather_v_310P3_opbase_varying_size_4)
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 4);
 
-    vector<u64> counts {100000, 300000, 600000, 1200000};
-    vector<u64> displs {0, 100000, 400000, 1000000};
+    vector<u64> counts{100000, 300000, 600000, 1200000};
+    vector<u64> displs{0, 100000, 400000, 1000000};
 
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLGATHER_V;
@@ -204,10 +200,10 @@ TEST_F(AllGatherVTestFor310P, all_gather_v_310P3_opbase_varying_size_5)
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 5);
 
-    vector<u64> counts {10000, 20000, 30000, 20000, 10000};
-    vector<u64> displs {0};
+    vector<u64> counts{10000, 20000, 30000, 20000, 10000};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -232,10 +228,10 @@ TEST_F(AllGatherVTestFor310P, all_gather_v_310P3_opbase_varying_size_6)
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 6);
 
-    vector<u64> counts {10000, 20000, 30000, 30000, 20000, 10000};
-    vector<u64> displs {0};
+    vector<u64> counts{10000, 20000, 30000, 30000, 20000, 10000};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -260,10 +256,10 @@ TEST_F(AllGatherVTestFor310P, all_gather_v_310P3_opbase_varying_size_7)
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 7);
 
-    vector<u64> counts {10000, 20000, 30000, 40000, 30000, 20000, 10000};
-    vector<u64> displs {0};
+    vector<u64> counts{10000, 20000, 30000, 40000, 30000, 20000, 10000};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;

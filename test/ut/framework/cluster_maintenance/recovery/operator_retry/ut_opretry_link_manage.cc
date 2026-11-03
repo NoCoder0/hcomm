@@ -15,21 +15,11 @@
 
 using namespace hccl;
 
-class OpretryLinkManageTest : public testing::Test
-{
+class OpretryLinkManageTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "OpretryLinkManageTest SetUP" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "OpretryLinkManageTest TearDown" << std::endl;
-    }
-    virtual void SetUp()
-    {
-        std::cout << "A Test SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "OpretryLinkManageTest SetUP" << std::endl; }
+    static void TearDownTestCase() { std::cout << "OpretryLinkManageTest TearDown" << std::endl; }
+    virtual void SetUp() { std::cout << "A Test SetUP" << std::endl; }
     virtual void TearDown()
     {
         GlobalMockObject::verify();
@@ -39,21 +29,21 @@ protected:
 
 TEST_F(OpretryLinkManageTest, Ut_GetInstance_When_ValidDeviceId_Expect_ReturnInstance)
 {
-    OpretryLinkManage &instance1 = OpretryLinkManage::GetInstance(0);
-    OpretryLinkManage &instance2 = OpretryLinkManage::GetInstance(0);
+    OpretryLinkManage& instance1 = OpretryLinkManage::GetInstance(0);
+    OpretryLinkManage& instance2 = OpretryLinkManage::GetInstance(0);
     EXPECT_EQ(&instance1, &instance2);
 }
 
 TEST_F(OpretryLinkManageTest, Ut_GetInstance_When_InvalidDeviceId_Expect_ReturnFirstInstance)
 {
-    OpretryLinkManage &defaultInstance = OpretryLinkManage::GetInstance(0);
-    OpretryLinkManage &invalidInstance = OpretryLinkManage::GetInstance(100); // 超过MAX_DEV_NUM
+    OpretryLinkManage& defaultInstance = OpretryLinkManage::GetInstance(0);
+    OpretryLinkManage& invalidInstance = OpretryLinkManage::GetInstance(100); // 超过MAX_DEV_NUM
     EXPECT_EQ(&defaultInstance, &invalidInstance);
 }
 
 TEST_F(OpretryLinkManageTest, Ut_AddLinkInfoByIdentifier_When_NewIdentifier_Expect_Success)
 {
-    OpretryLinkManage &manager = OpretryLinkManage::GetInstance(0);
+    OpretryLinkManage& manager = OpretryLinkManage::GetInstance(0);
     std::string identifier = "test_identifier";
     std::string newTag = "test_tag";
     std::vector<u32> remoteRankList = {1, 2, 3};
@@ -64,7 +54,7 @@ TEST_F(OpretryLinkManageTest, Ut_AddLinkInfoByIdentifier_When_NewIdentifier_Expe
 
 TEST_F(OpretryLinkManageTest, Ut_AddLinkInfoByIdentifier_When_ExistingTag_Expect_Success)
 {
-    OpretryLinkManage &manager = OpretryLinkManage::GetInstance(0);
+    OpretryLinkManage& manager = OpretryLinkManage::GetInstance(0);
     std::string identifier = "test_identifier_2";
     std::string newTag = "test_tag_2";
     std::vector<u32> remoteRankList = {1, 2, 3};
@@ -79,7 +69,7 @@ TEST_F(OpretryLinkManageTest, Ut_AddLinkInfoByIdentifier_When_ExistingTag_Expect
 
 TEST_F(OpretryLinkManageTest, Ut_AddLinkInfoByIdentifier_When_Incremental_Expect_Success)
 {
-    OpretryLinkManage &manager = OpretryLinkManage::GetInstance(0);
+    OpretryLinkManage& manager = OpretryLinkManage::GetInstance(0);
     std::string identifier = "test_identifier_3";
     std::string newTag = "test_tag_3";
     std::vector<u32> remoteRankList1 = {1, 2, 3};
@@ -101,7 +91,7 @@ TEST_F(OpretryLinkManageTest, Ut_AddLinkInfoByIdentifier_When_Incremental_Expect
 
 TEST_F(OpretryLinkManageTest, Ut_GetLinkInfoByIdentifier_When_WithoutTag_Expect_Success)
 {
-    OpretryLinkManage &manager = OpretryLinkManage::GetInstance(0);
+    OpretryLinkManage& manager = OpretryLinkManage::GetInstance(0);
     std::string identifier = "test_identifier_4";
     std::string newTag1 = "test_tag_4_1";
     std::string newTag2 = "test_tag_4_2";
@@ -121,7 +111,7 @@ TEST_F(OpretryLinkManageTest, Ut_GetLinkInfoByIdentifier_When_WithoutTag_Expect_
 
 TEST_F(OpretryLinkManageTest, Ut_GetLinkInfoByIdentifier_When_WithoutTagAndNotExist_Expect_HCCL_E_PARA)
 {
-    OpretryLinkManage &manager = OpretryLinkManage::GetInstance(0);
+    OpretryLinkManage& manager = OpretryLinkManage::GetInstance(0);
     std::string identifier = "non_existent_identifier";
 
     std::vector<u32> resultList;
@@ -131,7 +121,7 @@ TEST_F(OpretryLinkManageTest, Ut_GetLinkInfoByIdentifier_When_WithoutTagAndNotEx
 
 TEST_F(OpretryLinkManageTest, Ut_DeleteLinkInfoByIdentifier_When_NonExistingIdentifier_Expect_Success)
 {
-    OpretryLinkManage &manager = OpretryLinkManage::GetInstance(0);
+    OpretryLinkManage& manager = OpretryLinkManage::GetInstance(0);
     std::string identifier = "non_existent_identifier";
 
     HcclResult ret = manager.DeleteLinkInfoByIdentifier(identifier);
@@ -140,7 +130,7 @@ TEST_F(OpretryLinkManageTest, Ut_DeleteLinkInfoByIdentifier_When_NonExistingIden
 
 TEST_F(OpretryLinkManageTest, Ut_DeleteLinkInfoByIdentifier_When_ExistingIdentifier_Expect_Success)
 {
-    OpretryLinkManage &manager = OpretryLinkManage::GetInstance(0);
+    OpretryLinkManage& manager = OpretryLinkManage::GetInstance(0);
     std::string identifier = "test_identifier_5";
     std::string newTag = "test_tag_5";
     std::vector<u32> remoteRankList = {1, 2, 3};
@@ -159,7 +149,7 @@ TEST_F(OpretryLinkManageTest, Ut_DeleteLinkInfoByIdentifier_When_ExistingIdentif
 
 TEST_F(OpretryLinkManageTest, Ut_DeleteLinkInfoByIdentifier_When_DeInit_Expect_Success)
 {
-    OpretryLinkManage &manager = OpretryLinkManage::GetInstance(0);
+    OpretryLinkManage& manager = OpretryLinkManage::GetInstance(0);
     std::string identifier = "test_identifier_6";
 
     // 模拟已销毁状态（通过修改isDeInit_）

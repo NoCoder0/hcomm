@@ -22,77 +22,77 @@
 #include "ra_comm.h"
 #include "ra_rs_err.h"
 
-#define RA_QP_TX_DEPTH         32767
-#define TC_TLV_HDC_MSG_SIZE    (32 * 1024)
+#define RA_QP_TX_DEPTH 32767
+#define TC_TLV_HDC_MSG_SIZE (32 * 1024)
 typedef uint32_t u32;
 typedef uint16_t u16;
 typedef unsigned long long u64;
 typedef signed int s32;
 
-extern int RaHdcInitApart(unsigned int phyId, unsigned int *logicId);
+extern int RaHdcInitApart(unsigned int phyId, unsigned int* logicId);
 extern int RaHdcSessionClose(unsigned int phyId);
-extern int RaHdcProcessMsg(unsigned int opcode, unsigned int deviceId, char *data, unsigned int dataSize);
+extern int RaHdcProcessMsg(unsigned int opcode, unsigned int deviceId, char* data, unsigned int dataSize);
 extern int RaHdcNotifyCfgSet(unsigned int phyId, unsigned long long va, unsigned long long size);
-extern int RaHdcNotifyCfgGet(unsigned int phyId, unsigned long long *va, unsigned long long *size);
-extern STATIC int RaHdcNotifyBaseAddrInit(unsigned int notifyType, unsigned int phyId, unsigned long long **notifyVa);
-extern void RaHdcLiteSaveCqeErrInfo(struct RaQpHandle *qpHdc, unsigned int status);
-extern struct rdma_lite_context *RaRdmaLiteAllocCtx(u8 phyId, struct dev_cap_info *cap);
-extern struct rdma_lite_cq *RaRdmaLiteCreateCq(struct rdma_lite_context *liteCtx, struct rdma_lite_cq_attr *liteCqAttr);
-extern struct rdma_lite_qp *RaRdmaLiteCreateQp(struct rdma_lite_context *liteCtx, struct rdma_lite_qp_attr *liteQpAttr);
-extern int RaHdcGetLiteSupport(struct RaRdmaHandle *rdmaHandle, unsigned int phyId);
-extern int RaHdcGetDrvLiteSupport(unsigned int phyId, bool enabled910aLite, unsigned int *support);
-extern int DlDrvDeviceGetIndexByPhyId(uint32_t phyId, uint32_t *devIndex);
-extern int DlHalMemCtl(int type, void *paramValue, size_t paramValueSize, void *outValue, size_t *outSizeRet);
-extern int RaRdmaLiteSetQpSl(struct rdma_lite_qp *liteQp, unsigned char sl);
-extern int RaHdcLitePostSend(struct RaQpHandle *qpHdc, struct LiteMrInfo *localMr,
-    struct LiteMrInfo *remMr, struct LiteSendWr *wr, struct SendWrRsp *wrRsp);
-extern void RaHdcGetOpcodeLiteSupport(unsigned int phyId, unsigned int supportFeature, int *support);
-extern int RaHdcGetOpcodeVersion(unsigned int phyId, unsigned int interfaceOpcode,
-    unsigned int *interfaceVersion);
-extern void RaHdcLiteMutexDeinit(struct RaRdmaHandle *rdmaHandle);
-extern void RaRdmaLiteFreeCtx(struct rdma_lite_context *liteCtx);
+extern int RaHdcNotifyCfgGet(unsigned int phyId, unsigned long long* va, unsigned long long* size);
+extern STATIC int RaHdcNotifyBaseAddrInit(unsigned int notifyType, unsigned int phyId, unsigned long long** notifyVa);
+extern void RaHdcLiteSaveCqeErrInfo(struct RaQpHandle* qpHdc, unsigned int status);
+extern struct rdma_lite_context* RaRdmaLiteAllocCtx(u8 phyId, struct dev_cap_info* cap);
+extern struct rdma_lite_cq* RaRdmaLiteCreateCq(struct rdma_lite_context* liteCtx, struct rdma_lite_cq_attr* liteCqAttr);
+extern struct rdma_lite_qp* RaRdmaLiteCreateQp(struct rdma_lite_context* liteCtx, struct rdma_lite_qp_attr* liteQpAttr);
+extern int RaHdcGetLiteSupport(struct RaRdmaHandle* rdmaHandle, unsigned int phyId);
+extern int RaHdcGetDrvLiteSupport(unsigned int phyId, bool enabled910aLite, unsigned int* support);
+extern int DlDrvDeviceGetIndexByPhyId(uint32_t phyId, uint32_t* devIndex);
+extern int DlHalMemCtl(int type, void* paramValue, size_t paramValueSize, void* outValue, size_t* outSizeRet);
+extern int RaRdmaLiteSetQpSl(struct rdma_lite_qp* liteQp, unsigned char sl);
+extern int RaHdcLitePostSend(
+    struct RaQpHandle* qpHdc, struct LiteMrInfo* localMr, struct LiteMrInfo* remMr, struct LiteSendWr* wr,
+    struct SendWrRsp* wrRsp);
+extern void RaHdcGetOpcodeLiteSupport(unsigned int phyId, unsigned int supportFeature, int* support);
+extern int RaHdcGetOpcodeVersion(unsigned int phyId, unsigned int interfaceOpcode, unsigned int* interfaceVersion);
+extern void RaHdcLiteMutexDeinit(struct RaRdmaHandle* rdmaHandle);
+extern void RaRdmaLiteFreeCtx(struct rdma_lite_context* liteCtx);
 extern int DlHalSensorNodeUnregister(uint32_t devid, uint64_t handle);
-extern int RaSensorNodeRegister(unsigned int phyId, struct RaRdmaHandle *rdmaHandle);
-extern int RaHdcLiteMutexInit(struct RaRdmaHandle *rdmaHandle, unsigned int phyId);
-extern int RaHdcLiteGetCqQpAttr(struct RaQpHandle *qpHdc, struct rdma_lite_cq_attr *liteSendCqAttr,
-    struct rdma_lite_cq_attr *liteRecvCqAttr, struct rdma_lite_qp_attr *liteQpAttr);
-extern int RaHdcLiteInitMemPool(struct RaRdmaHandle *rdmaHandle, struct RaQpHandle *qpHdc,
-    struct rdma_lite_cq_attr *liteSendCqAttr, struct rdma_lite_cq_attr *liteRecvCqAttr,
-    struct rdma_lite_qp_attr *liteQpAttr);
-extern int RaRdmaLiteDestroyCq(struct rdma_lite_cq *liteCq);
-extern void RaHdcLiteDeinitMemPool(struct RaRdmaHandle *rdmaHandle, struct RaQpHandle *qpHdc);
-extern void RaHdcLiteQpAttrInit(struct RaQpHandle *qpHdc, struct rdma_lite_qp_attr *liteQpAttr,
-    struct rdma_lite_qp_cap *cap);
-extern int RaRdmaLiteInitMemPool(struct rdma_lite_context *liteCtx, struct rdma_lite_mem_attr *liteMemAttr);
-extern int RaRdmaLiteDeinitMemPool(struct rdma_lite_context *liteCtx, u32 memIdx);
-extern int RaHdcGetCqeErrInfoNum(struct RaRdmaHandle *rdmaHandle, unsigned int *num);
-extern int RaRdmaLiteDestroyQp(struct rdma_lite_qp *liteQp);
+extern int RaSensorNodeRegister(unsigned int phyId, struct RaRdmaHandle* rdmaHandle);
+extern int RaHdcLiteMutexInit(struct RaRdmaHandle* rdmaHandle, unsigned int phyId);
+extern int RaHdcLiteGetCqQpAttr(
+    struct RaQpHandle* qpHdc, struct rdma_lite_cq_attr* liteSendCqAttr, struct rdma_lite_cq_attr* liteRecvCqAttr,
+    struct rdma_lite_qp_attr* liteQpAttr);
+extern int RaHdcLiteInitMemPool(
+    struct RaRdmaHandle* rdmaHandle, struct RaQpHandle* qpHdc, struct rdma_lite_cq_attr* liteSendCqAttr,
+    struct rdma_lite_cq_attr* liteRecvCqAttr, struct rdma_lite_qp_attr* liteQpAttr);
+extern int RaRdmaLiteDestroyCq(struct rdma_lite_cq* liteCq);
+extern void RaHdcLiteDeinitMemPool(struct RaRdmaHandle* rdmaHandle, struct RaQpHandle* qpHdc);
+extern void
+RaHdcLiteQpAttrInit(struct RaQpHandle* qpHdc, struct rdma_lite_qp_attr* liteQpAttr, struct rdma_lite_qp_cap* cap);
+extern int RaRdmaLiteInitMemPool(struct rdma_lite_context* liteCtx, struct rdma_lite_mem_attr* liteMemAttr);
+extern int RaRdmaLiteDeinitMemPool(struct rdma_lite_context* liteCtx, u32 memIdx);
+extern int RaHdcGetCqeErrInfoNum(struct RaRdmaHandle* rdmaHandle, unsigned int* num);
+extern int RaRdmaLiteDestroyQp(struct rdma_lite_qp* liteQp);
 extern int RaHdcSendPid(unsigned int phyId, struct ProcessRaSign pRaSign);
-extern int RaHdcGetTlvRecvMsg(struct TlvMsg *recvMsg, char *recvData);
-extern int RaRdmaLiteRestoreSnapshot(struct rdma_lite_context *liteCtx);
+extern int RaHdcGetTlvRecvMsg(struct TlvMsg* recvMsg, char* recvData);
+extern int RaRdmaLiteRestoreSnapshot(struct rdma_lite_context* liteCtx);
 extern unsigned int RaRdmaLiteGetApiVersion(void);
-extern void RaHdcLitePeriodPollCqe(struct RaRdmaHandle *rdmaHandle);
-extern int RaHdcLiteCtxInit(struct RaRdmaHandle *rdmaHandle, unsigned int phyId, unsigned int rdevIndex);
+extern void RaHdcLitePeriodPollCqe(struct RaRdmaHandle* rdmaHandle);
+extern int RaHdcLiteCtxInit(struct RaRdmaHandle* rdmaHandle, unsigned int phyId, unsigned int rdevIndex);
 extern int RaIsFirstUsed(int insId);
 extern int RaIsLastUsed(int insId);
 
 struct MsgHead gMsgTmp;
-DLLEXPORT hdcError_t stub_drvHdcGetMsgBuffer_pid_error(struct drvHdcMsg *msg, int index,
-                                             char **pBuf, int *pLen)
+DLLEXPORT hdcError_t stub_drvHdcGetMsgBuffer_pid_error(struct drvHdcMsg* msg, int index, char** pBuf, int* pLen)
 {
     gMsgTmp.ret = -EPERM;
-    *pBuf = (char *)&gMsgTmp;
-    *pLen = ((struct drvHdcMsgBuf *)(msg + 1))->len;
+    *pBuf = (char*)&gMsgTmp;
+    *pLen = ((struct drvHdcMsgBuf*)(msg + 1))->len;
     return DRV_ERROR_NONE;
 }
 
 static unsigned int gDevid = 0;
 static struct RaInitConfig gConfig = {
-        .phyId = 0,
-        .nicPosition = NETWORK_OFFLINE,
-        .hdcType = HDC_SERVICE_TYPE_RDMA,
+    .phyId = 0,
+    .nicPosition = NETWORK_OFFLINE,
+    .hdcType = HDC_SERVICE_TYPE_RDMA,
 };
-DLLEXPORT drvError_t StubSessionConnect(int peerNode, int peerDevid, HDC_CLIENT client, HDC_SESSION *session)
+DLLEXPORT drvError_t StubSessionConnect(int peerNode, int peerDevid, HDC_CLIENT client, HDC_SESSION* session)
 {
     static HDC_SESSION gHdcSession = (HDC_SESSION)1;
     *session = gHdcSession;
@@ -100,16 +100,16 @@ DLLEXPORT drvError_t StubSessionConnect(int peerNode, int peerDevid, HDC_CLIENT 
 }
 static char gDrvRecvMsg[4096];
 static int gDrvRecvMsgLen = 0;
-static DLLEXPORT drvError_t stub_drvHdcGetMsgBuffer(struct drvHdcMsg *msg, int index, char **pBuf, int *pLen)
+static DLLEXPORT drvError_t stub_drvHdcGetMsgBuffer(struct drvHdcMsg* msg, int index, char** pBuf, int* pLen)
 {
     *pBuf = gDrvRecvMsg;
     *pLen = gDrvRecvMsgLen;
     return 0;
 }
 
-DLLEXPORT drvError_t drvGetDevNum(unsigned int *numDev);
+DLLEXPORT drvError_t drvGetDevNum(unsigned int* numDev);
 
-int RaHdcGetAllVnic(unsigned int *vnicIp, unsigned int num);
+int RaHdcGetAllVnic(unsigned int* vnicIp, unsigned int num);
 
 unsigned int gInterfaceVersion = 0;
 
@@ -164,7 +164,7 @@ void TcHdcTestEnvDeinit()
     mocker((stub_fn_t)drvHdcClientDestroy, 1, 0);
     int ret = RaHdcDeinit(&gConfig);
     EXPECT_INT_EQ(ret, 0);
-	mocker_clean();
+    mocker_clean();
 }
 
 void TcHdcInitFail()
@@ -261,8 +261,8 @@ void TcHdcSocketBatchClose()
 {
     struct SocketCloseInfoT conn[1] = {0};
     conn[0].fdHandle = calloc(sizeof(struct SocketHdcInfo), 1);
-    ((struct SocketHdcInfo *)conn[0].fdHandle)->fd = 0;
-    ((struct SocketHdcInfo *)conn[0].fdHandle)->phyId = 0;
+    ((struct SocketHdcInfo*)conn[0].fdHandle)->fd = 0;
+    ((struct SocketHdcInfo*)conn[0].fdHandle)->phyId = 0;
     mocker_clean();
     TcHdcTestEnvInit();
     int ret = RaHdcSocketBatchClose(gDevid, conn, 1);
@@ -271,8 +271,8 @@ void TcHdcSocketBatchClose()
     TcHdcTestEnvDeinit();
 
     conn[0].fdHandle = calloc(sizeof(struct SocketHdcInfo), 1);
-    ((struct SocketHdcInfo *)conn[0].fdHandle)->fd = 0;
-    ((struct SocketHdcInfo *)conn[0].fdHandle)->phyId = 0;
+    ((struct SocketHdcInfo*)conn[0].fdHandle)->fd = 0;
+    ((struct SocketHdcInfo*)conn[0].fdHandle)->phyId = 0;
     mocker_clean();
     mocker((stub_fn_t)calloc, 10, NULL);
     ret = RaHdcSocketBatchClose(gDevid, conn, 1);
@@ -280,8 +280,8 @@ void TcHdcSocketBatchClose()
     mocker_clean();
 
     conn[0].fdHandle = calloc(sizeof(struct SocketHdcInfo), 1);
-    ((struct SocketHdcInfo *)conn[0].fdHandle)->fd = 0;
-    ((struct SocketHdcInfo *)conn[0].fdHandle)->phyId = 0;
+    ((struct SocketHdcInfo*)conn[0].fdHandle)->fd = 0;
+    ((struct SocketHdcInfo*)conn[0].fdHandle)->phyId = 0;
     mocker((stub_fn_t)RaHdcProcessMsg, 10, -1);
     ret = RaHdcSocketBatchClose(gDevid, conn, 1);
     EXPECT_INT_EQ(ret, -1);
@@ -413,11 +413,10 @@ void TcHdcGetSockets()
     mocker_clean();
 
     free(conn[0].socketHandle);
-    if(conn[0].fdHandle != NULL) {
+    if (conn[0].fdHandle != NULL) {
         free(conn[0].fdHandle);
         conn[0].fdHandle = NULL;
     }
-
 }
 
 void TcHdcSocketSend()
@@ -447,7 +446,7 @@ void TcHdcSocketSend()
     mocker((stub_fn_t)drvHdcAddMsgBuffer, 10, 10);
     ret = RaHdcSocketSend(gDevid, &socketInfo, sendBuf, sizeof(sendBuf));
     EXPECT_INT_EQ(ret, -10);
-	mocker((stub_fn_t)RaHdcSessionClose, 10, 0);
+    mocker((stub_fn_t)RaHdcSessionClose, 10, 0);
     TcHdcTestEnvDeinit();
 
     char maxSendBuf[SOCKET_SEND_MAXLEN + 1] = {0};
@@ -460,7 +459,6 @@ void TcHdcSocketSend()
     mocker((stub_fn_t)memcpy_s, 1, -1);
     ret = RaHdcSocketSend(gDevid, &socketInfo, maxSendBuf, sizeof(maxSendBuf));
     EXPECT_INT_EQ(ret, -ESAFEFUNC);
-
 }
 
 void TcHdcSocketRecv()
@@ -498,7 +496,7 @@ void TcHdcQpCreateDestroy()
     struct RaRdmaHandle rdmaHandle = {0};
     void* qpHandle = NULL;
     rdmaHandle.supportLite = 1;
-	int ret = RaHdcQpCreate(&rdmaHandle, 0, 0, &qpHandle);
+    int ret = RaHdcQpCreate(&rdmaHandle, 0, 0, &qpHandle);
     ASSERT_ADDR_NE(qpHandle, NULL);
     ret = RaHdcQpDestroy(qpHandle);
     EXPECT_INT_EQ(ret, 0);
@@ -506,7 +504,7 @@ void TcHdcQpCreateDestroy()
 
     mocker_clean();
     mocker((stub_fn_t)calloc, 1, NULL);
-	ret = RaHdcQpCreate(&rdmaHandle, 0, 0, &qpHandle);
+    ret = RaHdcQpCreate(&rdmaHandle, 0, 0, &qpHandle);
     EXPECT_INT_EQ(ret, -ENOMEM);
     mocker_clean();
 
@@ -522,7 +520,7 @@ void TcHdcGetQpStatus()
     struct RaRdmaHandle rdmaHandle = {0};
     void* qpHandle = NULL;
     rdmaHandle.supportLite = 1;
-	int ret = RaHdcQpCreate(&rdmaHandle, 0, 0, &qpHandle);
+    int ret = RaHdcQpCreate(&rdmaHandle, 0, 0, &qpHandle);
     ASSERT_ADDR_NE(qpHandle, NULL);
     int status = 0;
     ret = RaHdcGetQpStatus(qpHandle, &status);
@@ -545,7 +543,7 @@ void TcHdcQpConnectAsync()
     TcHdcTestEnvInit();
     struct RaRdmaHandle rdmaHandle = {0};
     void* qpHandle = NULL;
-	int ret = RaHdcQpCreate(&rdmaHandle, 0, 0, &qpHandle);
+    int ret = RaHdcQpCreate(&rdmaHandle, 0, 0, &qpHandle);
     struct SocketHdcInfo socketHandle = {0};
     ASSERT_ADDR_NE(qpHandle, NULL);
 
@@ -568,11 +566,11 @@ void TcHdcMrDereg()
     TcHdcTestEnvInit();
     struct RaRdmaHandle rdmaHandle = {0};
     void* qpHandle = NULL;
-	int ret = RaHdcQpCreate(&rdmaHandle, 0, 0, &qpHandle);
+    int ret = RaHdcQpCreate(&rdmaHandle, 0, 0, &qpHandle);
     char qpReg[16] = {0};
     ASSERT_ADDR_NE(qpHandle, NULL);
 
-    ret = RaHdcMrDereg(qpHandle, (struct MrInfoT *)qpReg);
+    ret = RaHdcMrDereg(qpHandle, (struct MrInfoT*)qpReg);
     EXPECT_INT_EQ(ret, 0);
     ret = RaHdcQpDestroy(qpHandle);
     EXPECT_INT_EQ(ret, 0);
@@ -581,34 +579,34 @@ void TcHdcMrDereg()
     mocker_clean();
     mocker((stub_fn_t)calloc, 1, NULL);
     struct RaQpHandle testQpHandle = {0};
-    ret = RaHdcMrDereg(&testQpHandle, (struct MrInfoT *)qpReg);
+    ret = RaHdcMrDereg(&testQpHandle, (struct MrInfoT*)qpReg);
     EXPECT_INT_NE(ret, 0);
 }
 
-int StubRaHdcProcessMsgWrlist(unsigned int opcode, int deviceId, char *data, unsigned int dataSize)
+int StubRaHdcProcessMsgWrlist(unsigned int opcode, int deviceId, char* data, unsigned int dataSize)
 {
-    union OpSendWrlistData *sendWrlist = (union OpSendWrlistData *)data;
+    union OpSendWrlistData* sendWrlist = (union OpSendWrlistData*)data;
     sendWrlist->rxData.completeNum = 1;
     return 0;
 }
 
-int StubRaHdcProcessMsgWrlist1(unsigned int opcode, int deviceId, char *data, unsigned int dataSize)
+int StubRaHdcProcessMsgWrlist1(unsigned int opcode, int deviceId, char* data, unsigned int dataSize)
 {
-    union OpSendWrlistData *sendWrlist = (union OpSendWrlistData *)data;
+    union OpSendWrlistData* sendWrlist = (union OpSendWrlistData*)data;
     sendWrlist->rxData.completeNum = 1;
     return -ENOENT;
 }
 
-int StubRaHdcProcessMsgWrlist2(unsigned int opcode, int deviceId, char *data, unsigned int dataSize)
+int StubRaHdcProcessMsgWrlist2(unsigned int opcode, int deviceId, char* data, unsigned int dataSize)
 {
-    union OpSendWrlistData *sendWrlist = (union OpSendWrlistData *)data;
+    union OpSendWrlistData* sendWrlist = (union OpSendWrlistData*)data;
     sendWrlist->rxData.completeNum = 1;
     return -3;
 }
 
-int StubRaHdcProcessMsgWrlist3(unsigned int opcode, int deviceId, char *data, unsigned int dataSize)
+int StubRaHdcProcessMsgWrlist3(unsigned int opcode, int deviceId, char* data, unsigned int dataSize)
 {
-    union OpSendWrlistData *sendWrlist = (union OpSendWrlistData *)data;
+    union OpSendWrlistData* sendWrlist = (union OpSendWrlistData*)data;
     sendWrlist->rxData.completeNum = 5;
     return 0;
 }
@@ -761,13 +759,91 @@ void TcHdcSendWrlist()
     TcHdcSendWrlistV2();
 }
 
+extern void RaHdcGetAllOpcodeVersion(unsigned int phyId);
+extern struct OpcodeInterfaceInfo gRaInterfaceInfoList[];
+int StubRaHdcProcessMsgAllVersionFail(unsigned int opcode, unsigned int deviceId, char* data, unsigned int dataSize)
+{
+    (void)opcode;
+    (void)deviceId;
+    (void)data;
+    (void)dataSize;
+    return -1;
+}
+int StubRaHdcGetOpcodeVersionOk(unsigned int phyId, unsigned int interfaceOpcode, unsigned int* interfaceVersion)
+{
+    (void)phyId;
+    (void)interfaceOpcode;
+    *interfaceVersion = 1;
+    return 0;
+}
+int StubRaHdcProcessMsgBatchOk(unsigned int opcode, unsigned int deviceId, char* data, unsigned int dataSize)
+{
+    (void)deviceId;
+    (void)dataSize;
+    if (opcode == RA_RS_GET_INTERFACE_VERSION) {
+        union OpGetVersionData* verInfo = (union OpGetVersionData*)data;
+        verInfo->rxData.version = 1;
+    } else if (opcode == RA_RS_BATCH_GET_INTERFACE_VERSION) {
+        union OpBatchGetVersionData* verInfo = (union OpBatchGetVersionData*)data;
+        verInfo->rxData.opcodeNum = verInfo->txData.opcodeNum;
+        for (unsigned int i = 0; i < verInfo->rxData.opcodeNum; i++) {
+            verInfo->rxData.version[i] = 2;
+        }
+    }
+    return 0;
+}
+int StubRaHdcProcessMsgBatchMismatch(unsigned int opcode, unsigned int deviceId, char* data, unsigned int dataSize)
+{
+    (void)deviceId;
+    (void)dataSize;
+    if (opcode == RA_RS_GET_INTERFACE_VERSION) {
+        union OpGetVersionData* verInfo = (union OpGetVersionData*)data;
+        verInfo->rxData.version = 1;
+    } else if (opcode == RA_RS_BATCH_GET_INTERFACE_VERSION) {
+        union OpBatchGetVersionData* verInfo = (union OpBatchGetVersionData*)data;
+        verInfo->rxData.opcodeNum = verInfo->txData.opcodeNum + 1;
+    }
+    return 0;
+}
+void TcRaHdcGetAllOpcodeVersionFallback()
+{
+    mocker_clean();
+    mocker_invoke((stub_fn_t)RaHdcProcessMsg, (stub_fn_t)StubRaHdcProcessMsgAllVersionFail, 1);
+    mocker_invoke((stub_fn_t)RaHdcGetOpcodeVersion, (stub_fn_t)StubRaHdcGetOpcodeVersionOk, 200);
+
+    RaHdcGetAllOpcodeVersion(0);
+
+    EXPECT_INT_EQ(gRaInterfaceInfoList[0].version, 1);
+    mocker_clean();
+}
+void TcRaHdcGetAllOpcodeVersionBatchSuccess()
+{
+    mocker_clean();
+    mocker_invoke((stub_fn_t)RaHdcProcessMsg, (stub_fn_t)StubRaHdcProcessMsgBatchOk, 10);
+
+    RaHdcGetAllOpcodeVersion(0);
+
+    EXPECT_INT_EQ(gRaInterfaceInfoList[0].version, 2);
+    mocker_clean();
+}
+void TcRaHdcGetAllOpcodeVersionBatchMismatch()
+{
+    mocker_clean();
+    mocker_invoke((stub_fn_t)RaHdcProcessMsg, (stub_fn_t)StubRaHdcProcessMsgBatchMismatch, 200);
+
+    RaHdcGetAllOpcodeVersion(0);
+
+    EXPECT_INT_EQ(gRaInterfaceInfoList[0].version, 1);
+    mocker_clean();
+}
+
 void TcHdcSendWr()
 {
     mocker_clean();
     TcHdcTestEnvInit();
     struct RaRdmaHandle rdmaHandle = {0};
     void* qpHandle = NULL;
-	int ret = RaHdcQpCreate(&rdmaHandle, 0, 0, &qpHandle);
+    int ret = RaHdcQpCreate(&rdmaHandle, 0, 0, &qpHandle);
     struct SendWr wr = {0};
     struct SendWrRsp rsp = {0};
 
@@ -817,7 +893,7 @@ void TcHdcGetNotifyBaseAddr()
     TcHdcTestEnvInit();
     struct RaRdmaHandle rdmaHandle = {0};
     void* qpHandle = NULL;
-	int ret = RaHdcQpCreate(&rdmaHandle, 0, 0, &qpHandle);
+    int ret = RaHdcQpCreate(&rdmaHandle, 0, 0, &qpHandle);
     unsigned long long va;
     unsigned long long size;
     ASSERT_ADDR_NE(qpHandle, NULL);
@@ -832,7 +908,7 @@ void TcHdcGetNotifyBaseAddr()
     struct RaQpHandle testQpHandle = {0};
     mocker_clean();
     mocker((stub_fn_t)calloc, 1, NULL);
-    ret = RaHdcGetNotifyBaseAddr((struct RaRdmaHandle *)&testQpHandle, &va, &size);
+    ret = RaHdcGetNotifyBaseAddr((struct RaRdmaHandle*)&testQpHandle, &va, &size);
     EXPECT_INT_NE(ret, 0);
 }
 
@@ -899,22 +975,22 @@ void TcHdcSocketDeinit()
     EXPECT_INT_EQ(ret, -EINVAL);
 }
 
-int StubRaHdcProcessRdevInit(unsigned int opcode, int deviceId, char *data, unsigned int dataSize)
+int StubRaHdcProcessRdevInit(unsigned int opcode, int deviceId, char* data, unsigned int dataSize)
 {
-    union OpRdevInitData *rdevInitData;
-    union OpLiteSupportData *liteSupportData;
+    union OpRdevInitData* rdevInitData;
+    union OpLiteSupportData* liteSupportData;
 
     if (opcode == RA_RS_RDEV_INIT) {
-        rdevInitData = (union OpRdevInitData *)data;
+        rdevInitData = (union OpRdevInitData*)data;
         rdevInitData->rxData.rdevIndex = 0;
     } else if (opcode == RA_RS_GET_LITE_SUPPORT) {
-        liteSupportData = (union OpLiteSupportData *)data;
+        liteSupportData = (union OpLiteSupportData*)data;
         liteSupportData->rxData.supportLite = 1;
     }
     return 0;
 }
 
-void StubRaHdcGetOpcodeLiteSupport(unsigned int phyId, unsigned int supportFeature, int *support)
+void StubRaHdcGetOpcodeLiteSupport(unsigned int phyId, unsigned int supportFeature, int* support)
 {
     if (supportFeature == 1) {
         *support = 1;
@@ -922,12 +998,12 @@ void StubRaHdcGetOpcodeLiteSupport(unsigned int phyId, unsigned int supportFeatu
     }
 }
 
-int StubRaHdcProcessRdevInitError(unsigned int opcode, int deviceId, char *data, unsigned int dataSize)
+int StubRaHdcProcessRdevInitError(unsigned int opcode, int deviceId, char* data, unsigned int dataSize)
 {
-    union OpRdevInitData *rdevInitData;
+    union OpRdevInitData* rdevInitData;
 
     if (opcode == RA_RS_RDEV_INIT) {
-        rdevInitData = (union OpRdevInitData *)data;
+        rdevInitData = (union OpRdevInitData*)data;
         rdevInitData->rxData.rdevIndex = 0;
     } else if (opcode == RA_RS_GET_LITE_SUPPORT) {
         return -EPROTONOSUPPORT;
@@ -936,8 +1012,8 @@ int StubRaHdcProcessRdevInitError(unsigned int opcode, int deviceId, char *data,
     return 0;
 }
 
-extern int DlHalGetDeviceInfo(uint32_t devId, int32_t moduleType, int32_t infoType, int64_t *value);
-int StubDlHalGetDeviceInfo(uint32_t devId, int32_t moduleType, int32_t infoType, int64_t *value)
+extern int DlHalGetDeviceInfo(uint32_t devId, int32_t moduleType, int32_t infoType, int64_t* value);
+int StubDlHalGetDeviceInfo(uint32_t devId, int32_t moduleType, int32_t infoType, int64_t* value)
 {
     *value = (1 << 8);
     return 0;
@@ -949,7 +1025,7 @@ void TcHdcRdevInit()
     TcHdcTestEnvInit();
     struct rdev rdevInfo = {0};
     unsigned int rdevIndex = 0;
-    struct RaRdmaHandle rdmaHandle = { 0 };
+    struct RaRdmaHandle rdmaHandle = {0};
     mocker_invoke((stub_fn_t)RaHdcGetOpcodeLiteSupport, (stub_fn_t)StubRaHdcGetOpcodeLiteSupport, 100);
     mocker_invoke((stub_fn_t)RaHdcProcessMsg, (stub_fn_t)StubRaHdcProcessRdevInit, 100);
     int ret = RaHdcRdevInit(&rdmaHandle, NOTIFY, rdevInfo, &rdevIndex);
@@ -958,29 +1034,29 @@ void TcHdcRdevInit()
     TcHdcTestEnvDeinit();
 
     mocker_clean();
-	mocker((stub_fn_t)RaHdcNotifyBaseAddrInit, 1, 0);
+    mocker((stub_fn_t)RaHdcNotifyBaseAddrInit, 1, 0);
     mocker((stub_fn_t)memcpy_s, 10, -10);
     ret = RaHdcRdevInit(&rdmaHandle, NOTIFY, rdevInfo, &rdevIndex);
     EXPECT_INT_EQ(ret, -ESAFEFUNC);
 
     mocker_clean();
-	mocker((stub_fn_t)RaHdcNotifyBaseAddrInit, 1, 0);
+    mocker((stub_fn_t)RaHdcNotifyBaseAddrInit, 1, 0);
     ret = RaHdcRdevInit(&rdmaHandle, NOTIFY, rdevInfo, &rdevIndex);
     EXPECT_INT_NE(ret, 0);
 
     mocker_clean();
-	mocker((stub_fn_t)RaHdcNotifyBaseAddrInit, 1, 0);
+    mocker((stub_fn_t)RaHdcNotifyBaseAddrInit, 1, 0);
     mocker((stub_fn_t)drvHdcAllocMsg, 1, -10);
     ret = RaHdcRdevInit(&rdmaHandle, NOTIFY, rdevInfo, &rdevIndex);
     EXPECT_INT_EQ(ret, -EINVAL);
 
-	mocker_clean();
-	mocker((stub_fn_t)RaHdcNotifyBaseAddrInit, 1, 0);
+    mocker_clean();
+    mocker((stub_fn_t)RaHdcNotifyBaseAddrInit, 1, 0);
     mocker((stub_fn_t)RaHdcProcessMsg, 1, -1);
-	mocker((stub_fn_t)halMemFree, 1, -1);
+    mocker((stub_fn_t)halMemFree, 1, -1);
     ret = RaHdcRdevInit(&rdmaHandle, NOTIFY, rdevInfo, &rdevIndex);
     EXPECT_INT_EQ(ret, -1);
-	mocker_clean();
+    mocker_clean();
 
     mocker_invoke((stub_fn_t)RaHdcGetOpcodeLiteSupport, (stub_fn_t)StubRaHdcGetOpcodeLiteSupport, 100);
     mocker_invoke((stub_fn_t)RaHdcProcessMsg, (stub_fn_t)StubRaHdcProcessRdevInitError, 10);
@@ -1041,18 +1117,18 @@ void TcHdcRdevDeinit()
     EXPECT_INT_EQ(ret, 0);
     TcHdcTestEnvDeinit();
 
-	mocker((stub_fn_t)RaHdcProcessMsg, 1, 0);
-	mocker((stub_fn_t)RaHdcNotifyCfgGet, 1, -1);
-	ret = RaHdcRdevDeinit(&rdmaHandle, NOTIFY);
-	EXPECT_INT_EQ(ret, -1);
-	mocker_clean();
+    mocker((stub_fn_t)RaHdcProcessMsg, 1, 0);
+    mocker((stub_fn_t)RaHdcNotifyCfgGet, 1, -1);
+    ret = RaHdcRdevDeinit(&rdmaHandle, NOTIFY);
+    EXPECT_INT_EQ(ret, -1);
+    mocker_clean();
 
-	mocker((stub_fn_t)RaHdcProcessMsg, 1, 0);
-	mocker((stub_fn_t)RaHdcNotifyCfgGet, 1, 0);
+    mocker((stub_fn_t)RaHdcProcessMsg, 1, 0);
+    mocker((stub_fn_t)RaHdcNotifyCfgGet, 1, 0);
     mocker((stub_fn_t)halMemFree, 1, 2);
     ret = RaHdcRdevDeinit(&rdmaHandle, NOTIFY);
     EXPECT_INT_EQ(ret, -2);
-	mocker_clean();
+    mocker_clean();
 }
 
 void TcHdcSocketWhiteListAddV2()
@@ -1252,7 +1328,7 @@ void TcHdcMessageProcessFail()
 
     mocker_clean();
     mocker((stub_fn_t)halHdcRecv, 1, 0);
-	TcHdcTestEnvDeinit();
+    TcHdcTestEnvDeinit();
 }
 
 void TcHdcSocketRecvFail()
@@ -1278,14 +1354,16 @@ void TcHdcSocketRecvFail()
     mocker((stub_fn_t)drvHdcAddMsgBuffer, 10, 10);
     ret = RaHdcSocketRecv(gDevid, &socketInfo, sendBuf, sizeof(sendBuf));
     EXPECT_INT_EQ(ret, -10);
-	mocker((stub_fn_t)RaHdcSessionClose, 10, 0);
+    mocker((stub_fn_t)RaHdcSessionClose, 10, 0);
     TcHdcTestEnvDeinit();
 }
 
-extern void RaHdcSendWrlistExtInitV2(union OpSendWrlistDataExtV2 *sendWrlist, struct RaQpHandle *qpHdc,
-    unsigned int completeCnt, struct WrlistSendCompleteNum wrlistNum);
-extern void RaHdcSendWrlistExtInit(union OpSendWrlistDataExt *sendWrlist, struct RaQpHandle *qpHdc,
-    unsigned int completeCnt, struct WrlistSendCompleteNum wrlistNum);
+extern void RaHdcSendWrlistExtInitV2(
+    union OpSendWrlistDataExtV2* sendWrlist, struct RaQpHandle* qpHdc, unsigned int completeCnt,
+    struct WrlistSendCompleteNum wrlistNum);
+extern void RaHdcSendWrlistExtInit(
+    union OpSendWrlistDataExt* sendWrlist, struct RaQpHandle* qpHdc, unsigned int completeCnt,
+    struct WrlistSendCompleteNum wrlistNum);
 void TcRaHdcSendWrlistExtInitV2()
 {
     union OpSendWrlistDataExtV2 sendWrlist;
@@ -1379,7 +1457,7 @@ void TcRaHdcSendNormalWrlist()
     struct RaQpHandle qpHandle = {0};
     struct WrInfo wr[1] = {{0}};
     struct SendWrRsp opRsp[1] = {{0}};
-    struct WrlistSendCompleteNum wrlistNum = { 0 };
+    struct WrlistSendCompleteNum wrlistNum = {0};
     unsigned int completeNum = 0;
     wrlistNum.sendNum = 1;
     wrlistNum.completeNum = &completeNum;
@@ -1409,7 +1487,7 @@ void TcRaHdcSetQpAttrQos()
     TcHdcTestEnvInit();
     struct RaRdmaHandle rdmaHandle = {0};
     void* qpHandle = NULL;
-	int ret = RaHdcQpCreate(&rdmaHandle, 0, 0, &qpHandle);
+    int ret = RaHdcQpCreate(&rdmaHandle, 0, 0, &qpHandle);
     char qpReg[16] = {0};
     ASSERT_ADDR_NE(qpHandle, NULL);
 
@@ -1435,7 +1513,7 @@ void TcRaHdcSetQpAttrTimeout()
     TcHdcTestEnvInit();
     struct RaRdmaHandle rdmaHandle = {0};
     void* qpHandle = NULL;
-	int ret = RaHdcQpCreate(&rdmaHandle, 0, 0, &qpHandle);
+    int ret = RaHdcQpCreate(&rdmaHandle, 0, 0, &qpHandle);
     char qpReg[16] = {0};
     ASSERT_ADDR_NE(qpHandle, NULL);
 
@@ -1461,7 +1539,7 @@ void TcRaHdcSetQpAttrRetryCnt()
     TcHdcTestEnvInit();
     struct RaRdmaHandle rdmaHandle = {0};
     void* qpHandle = NULL;
-	int ret = RaHdcQpCreate(&rdmaHandle, 0, 0, &qpHandle);
+    int ret = RaHdcQpCreate(&rdmaHandle, 0, 0, &qpHandle);
     char qpReg[16] = {0};
     ASSERT_ADDR_NE(qpHandle, NULL);
 
@@ -1505,40 +1583,38 @@ void TcRaHdcGetCqeErrInfo()
     mocker_clean();
 }
 
-int StubRaHdcGetCqeErrNum(unsigned int opcode, int deviceId, char *data, unsigned int dataSize)
+int StubRaHdcGetCqeErrNum(unsigned int opcode, int deviceId, char* data, unsigned int dataSize)
 {
     if (dataSize == sizeof(union OpGetCqeErrInfoNumData)) {
-        union OpGetCqeErrInfoNumData *cqeErrInfoNumData = (union OpGetCqeErrInfoNumData *)data;
+        union OpGetCqeErrInfoNumData* cqeErrInfoNumData = (union OpGetCqeErrInfoNumData*)data;
         cqeErrInfoNumData->rxData.num = 10;
     } else if (dataSize == sizeof(union OpGetCqeErrInfoListData)) {
-        union OpGetCqeErrInfoListData *cqeErrInfoList =
-            (union OpGetCqeErrInfoListData *)data;
+        union OpGetCqeErrInfoListData* cqeErrInfoList = (union OpGetCqeErrInfoListData*)data;
         cqeErrInfoList->rxData.num = 1;
     }
     return 0;
 }
 
-int StubRaHdcGetCqeErrNumV2(unsigned int opcode, int deviceId, char *data, unsigned int dataSize)
+int StubRaHdcGetCqeErrNumV2(unsigned int opcode, int deviceId, char* data, unsigned int dataSize)
 {
     StubRaHdcGetCqeErrNum(opcode, deviceId, data, dataSize);
-    ((union OpGetCqeErrInfoListData *)data)->rxData.infoList[0].qpn = 12345;
+    ((union OpGetCqeErrInfoListData*)data)->rxData.infoList[0].qpn = 12345;
     return 0;
 }
 
-int StubRaHdcGetCqeErrInfoNum(struct RaRdmaHandle *rdmaHandle, unsigned int *num)
+int StubRaHdcGetCqeErrInfoNum(struct RaRdmaHandle* rdmaHandle, unsigned int* num)
 {
     *num = 10;
     return 0;
 }
 
-int StubRaHdcGetInterfaceVersion(unsigned int phyId, unsigned int interfaceOpcode, unsigned int *interfaceVersion)
+int StubRaHdcGetInterfaceVersion(unsigned int phyId, unsigned int interfaceOpcode, unsigned int* interfaceVersion)
 {
     *interfaceVersion = 1;
     return 0;
 }
 
-int StubRaHdcLiteGetCqeErrInfoList(struct RaRdmaHandle *rdmaHandle, struct CqeErrInfo *infoList,
-    unsigned int *num)
+int StubRaHdcLiteGetCqeErrInfoList(struct RaRdmaHandle* rdmaHandle, struct CqeErrInfo* infoList, unsigned int* num)
 {
     *num = 10;
     return 0;
@@ -1625,7 +1701,7 @@ void TcRaHdcQpCreateOp()
     void* qpHandle = NULL;
     rdmaHandle.supportLite = 1;
     RA_INIT_LIST_HEAD(&rdmaHandle.qpList);
-	int ret = RaHdcQpCreate(&rdmaHandle, 0, 2, (void **)&qpHandle);
+    int ret = RaHdcQpCreate(&rdmaHandle, 0, 2, (void**)&qpHandle);
     EXPECT_INT_EQ(ret, 0);
     ASSERT_ADDR_NE(qpHandle, NULL);
     struct rdma_lite_qp_cap cap;
@@ -1638,19 +1714,19 @@ void TcRaHdcQpCreateOp()
 
     mocker((stub_fn_t)RaHdcProcessMsg, 10, 0);
     mocker((stub_fn_t)RaRdmaLiteCreateCq, 1, 0);
-    ret = RaHdcQpCreate(&rdmaHandle, 0, 2, (void **)&qpHandle);
+    ret = RaHdcQpCreate(&rdmaHandle, 0, 2, (void**)&qpHandle);
     EXPECT_INT_EQ(ret, -EFAULT);
     mocker_clean();
 
     mocker((stub_fn_t)RaHdcProcessMsg, 10, 0);
     mocker((stub_fn_t)RaRdmaLiteCreateQp, 1, 0);
-    ret = RaHdcQpCreate(&rdmaHandle, 0, 2, (void **)&qpHandle);
+    ret = RaHdcQpCreate(&rdmaHandle, 0, 2, (void**)&qpHandle);
     EXPECT_INT_EQ(ret, -EFAULT);
     mocker_clean();
 
     mocker((stub_fn_t)RaHdcProcessMsg, 10, 0);
     mocker((stub_fn_t)pthread_mutex_init, 1, -1);
-    ret = RaHdcQpCreate(&rdmaHandle, 0, 2, (void **)&qpHandle);
+    ret = RaHdcQpCreate(&rdmaHandle, 0, 2, (void**)&qpHandle);
     EXPECT_INT_EQ(ret, -1);
     mocker_clean();
 
@@ -1678,7 +1754,7 @@ void TcRaHdcGetQpStatusOp()
     void* qpHandle = NULL;
     rdmaHandle.supportLite = 1;
     RA_INIT_LIST_HEAD(&rdmaHandle.qpList);
-	int ret = RaHdcQpCreate(&rdmaHandle, 0, 2, (void **)&qpHandle);
+    int ret = RaHdcQpCreate(&rdmaHandle, 0, 2, (void**)&qpHandle);
     EXPECT_INT_EQ(ret, 0);
     ASSERT_ADDR_NE(qpHandle, NULL);
 
@@ -1714,8 +1790,8 @@ void TcRaHdcGetQpStatusOp()
     mocker_clean();
 }
 
-extern int RaRdmaLitePollCq(struct rdma_lite_cq *liteCq, int numEntries, struct rdma_lite_wc *liteWc);
-int stub_RaRdmaLitePollCq(struct rdma_lite_cq *liteCq, int numEntries, struct rdma_lite_wc *liteWc)
+extern int RaRdmaLitePollCq(struct rdma_lite_cq* liteCq, int numEntries, struct rdma_lite_wc* liteWc);
+int stub_RaRdmaLitePollCq(struct rdma_lite_cq* liteCq, int numEntries, struct rdma_lite_wc* liteWc)
 {
     int i = 0;
     for (i = 0; i < numEntries; i++) {
@@ -1739,7 +1815,7 @@ void TcHdcSendWrOp()
     int ret = RaHdcRdevInit(&rdmaHandle, NOTIFY, rdevInfo, &rdevIndex);
     EXPECT_INT_EQ(ret, 0);
 
-	ret = RaHdcQpCreate(&rdmaHandle, 0, 2, (void **)&qpHandle);
+    ret = RaHdcQpCreate(&rdmaHandle, 0, 2, (void**)&qpHandle);
     EXPECT_INT_EQ(ret, 0);
 
     struct SendWr wr = {0};
@@ -1748,15 +1824,15 @@ void TcHdcSendWrOp()
 
     ASSERT_ADDR_NE(qpHandle, NULL);
 
-    void *addr = malloc(10);
+    void* addr = malloc(10);
     struct SgList mem;
     mem.addr = (uint64_t)(uintptr_t)addr;
-	mem.len = 10;
-	wr.bufList = &mem;
-	wr.dstAddr = 0x111;
-	wr.bufNum = 1;
-	wr.op = 0;
-	wr.sendFlag = 0;
+    mem.len = 10;
+    wr.bufList = &mem;
+    wr.dstAddr = 0x111;
+    wr.bufNum = 1;
+    wr.op = 0;
+    wr.sendFlag = 0;
     qpHandle->localMr[0].addr = wr.bufList[0].addr;
     qpHandle->localMr[0].len = 0x10000;
     qpHandle->remMr[0].addr = wr.dstAddr;
@@ -1771,15 +1847,15 @@ void TcHdcSendWrOp()
     wrlistNum.sendNum = 2;
     wrlistNum.completeNum = &completeNum;
     struct SendWrlistData wrlist[wrlistNum.sendNum];
-	struct SendWrRsp opRspList[wrlistNum.sendNum];
-	wrlist[0].memList = mem;
-	wrlist[0].dstAddr = 0x111;
-	wrlist[0].op = 0;
-	wrlist[0].sendFlags = 0;
-	wrlist[1].memList = mem;
-	wrlist[1].dstAddr = 0x111;
-	wrlist[1].op = 0;
-	wrlist[1].sendFlags = 0;
+    struct SendWrRsp opRspList[wrlistNum.sendNum];
+    wrlist[0].memList = mem;
+    wrlist[0].dstAddr = 0x111;
+    wrlist[0].op = 0;
+    wrlist[0].sendFlags = 0;
+    wrlist[1].memList = mem;
+    wrlist[1].dstAddr = 0x111;
+    wrlist[1].op = 0;
+    wrlist[1].sendFlags = 0;
     qpHandle->rdmaOps = rdmaHandle.rdmaOps;
     gInterfaceVersion = RA_RS_SEND_WRLIST_V2_VERSION;
     mocker_invoke((stub_fn_t)RaGetInterfaceVersion, (stub_fn_t)StubRaGetInterfaceVersion, 1);
@@ -1789,13 +1865,13 @@ void TcHdcSendWrOp()
 
     struct SendWrlistDataExt dataExt[wrlistNum.sendNum];
     dataExt[0].memList = mem;
-	dataExt[0].dstAddr = 0x111;
-	dataExt[0].op = 0;
-	dataExt[0].sendFlags = 0;
-	dataExt[1].memList = mem;
-	dataExt[1].dstAddr = 0x111;
-	dataExt[1].op = 0;
-	dataExt[1].sendFlags = 0;
+    dataExt[0].dstAddr = 0x111;
+    dataExt[0].op = 0;
+    dataExt[0].sendFlags = 0;
+    dataExt[1].memList = mem;
+    dataExt[1].dstAddr = 0x111;
+    dataExt[1].op = 0;
+    dataExt[1].sendFlags = 0;
     gInterfaceVersion = RA_RS_SEND_WRLIST_EXT_V2_VERSION;
     mocker_invoke((stub_fn_t)RaGetInterfaceVersion, (stub_fn_t)StubRaGetInterfaceVersion, 1);
     ret = RaHdcSendWrlistExt(qpHandle, dataExt, opRspList, wrlistNum);
@@ -1843,7 +1919,7 @@ void TcHdcLiteSendWrOp()
     int ret = RaHdcRdevInit(&rdmaHandle, NOTIFY, rdevInfo, &rdevIndex);
     EXPECT_INT_EQ(ret, 0);
 
-    ret = RaHdcQpCreate(&rdmaHandle, 0, 2, (void **)&qpHandle);
+    ret = RaHdcQpCreate(&rdmaHandle, 0, 2, (void**)&qpHandle);
     EXPECT_INT_EQ(ret, 0);
 
     struct SendWr wr = {0};
@@ -1853,7 +1929,7 @@ void TcHdcLiteSendWrOp()
 
     ASSERT_ADDR_NE(qpHandle, NULL);
 
-    void *addr = malloc(10);
+    void* addr = malloc(10);
     struct SgList mem;
     mem.addr = (uint64_t)(uintptr_t)addr;
     mem.len = 10;
@@ -1946,7 +2022,7 @@ void TcHdcLiteSendWrOp()
 void TcHdcRecvWrlist()
 {
     mocker_clean();
-    void *addr = NULL;
+    void* addr = NULL;
     int size = 0;
     int ret = 0;
     struct RecvWrlistData revWr = {0};
@@ -1957,7 +2033,7 @@ void TcHdcRecvWrlist()
     unsigned int rdevIndex = 0;
     struct RaRdmaHandle rdmaHandle = {0};
     struct RaQpHandle* qpHandle = NULL;
-    struct RaQpHandle qpHandleTmp = { 0 };
+    struct RaQpHandle qpHandleTmp = {0};
 
     revWr.wrId = 100;
     revWr.memList.lkey = 0xff;
@@ -1972,7 +2048,7 @@ void TcHdcRecvWrlist()
     mocker_invoke((stub_fn_t)RaHdcProcessMsg, (stub_fn_t)StubRaHdcProcessRdevInit, 100);
     ret = RaHdcRdevInit(&rdmaHandle, NOTIFY, rdevInfo, &rdevIndex);
     EXPECT_INT_EQ(ret, 0);
-    ret = RaHdcQpCreate(&rdmaHandle, 0, 2, (void **)&qpHandle);
+    ret = RaHdcQpCreate(&rdmaHandle, 0, 2, (void**)&qpHandle);
     EXPECT_INT_EQ(ret, 0);
     ASSERT_ADDR_NE(qpHandle, NULL);
     qpHandle->supportLite = 1;
@@ -1998,7 +2074,7 @@ void TcHdcPollCq()
     unsigned int rdevIndex = 0;
     struct RaRdmaHandle rdmaHandle = {0};
     struct RaQpHandle* qpHandle = NULL;
-    struct RaQpHandle qpHandleTmp = { 0 };
+    struct RaQpHandle qpHandleTmp = {0};
 
     qpHandleTmp.qpMode = 0;
     ret = RaHdcPollCq(&qpHandleTmp, true, numEntries, &liteWc);
@@ -2009,7 +2085,7 @@ void TcHdcPollCq()
     rdmaHandle.disabledLiteThread = true;
     ret = RaHdcRdevInit(&rdmaHandle, NOTIFY, rdevInfo, &rdevIndex);
     EXPECT_INT_EQ(ret, 0);
-    ret = RaHdcQpCreate(&rdmaHandle, 0, 2, (void **)&qpHandle);
+    ret = RaHdcQpCreate(&rdmaHandle, 0, 2, (void**)&qpHandle);
     EXPECT_INT_EQ(ret, 0);
     ASSERT_ADDR_NE(qpHandle, NULL);
     qpHandle->supportLite = 1;
@@ -2070,7 +2146,7 @@ void TcRaRdevGetSupportLite()
 
 void TcRaRdevGetHandle()
 {
-    void *rdmaHandle = NULL;
+    void* rdmaHandle = NULL;
     int ret;
 
     ret = RaRdevGetHandle(1024, 0);
@@ -2189,8 +2265,7 @@ void TcRaHdcLiteCtxInit()
     EXPECT_INT_EQ(ret, -258);
 }
 
-struct rdma_lite_cq *stub_RaRdmaLiteCreateCq(struct rdma_lite_context *liteCtx,
-    struct rdma_lite_cq_attr *liteCqAttr)
+struct rdma_lite_cq* stub_RaRdmaLiteCreateCq(struct rdma_lite_context* liteCtx, struct rdma_lite_cq_attr* liteCqAttr)
 {
     static int cnt = 0;
     static struct rdma_lite_cq liteCq = {0};
@@ -2198,8 +2273,7 @@ struct rdma_lite_cq *stub_RaRdmaLiteCreateCq(struct rdma_lite_context *liteCtx,
     cnt++;
     if (cnt == 1) {
         return NULL;
-    }
-    else {
+    } else {
         return &liteCq;
     }
 }
@@ -2331,7 +2405,7 @@ void TcRaHdcTlvRequest()
     moduleType = TLV_MODULE_TYPE_NSLB;
     sendMsg.length = TC_TLV_HDC_MSG_SIZE;
     sendMsg.type = 0;
-    sendMsg.data = (char *)malloc(TC_TLV_HDC_MSG_SIZE);
+    sendMsg.data = (char*)malloc(TC_TLV_HDC_MSG_SIZE);
     int i = 0;
     for (i = 0; i < TC_TLV_HDC_MSG_SIZE; i++) {
         sendMsg.data[i] = (char)(i % 256);
@@ -2353,7 +2427,7 @@ void TcRaHdcQpCreateWithAttrs()
     struct RaRdmaHandle rdmaHandle = {0};
     struct QpExtAttrs extAttrs = {0};
     struct AiQpInfo info = {0};
-    void *qpHandle = NULL;
+    void* qpHandle = NULL;
     int ret = 0;
 
     mocker(memcpy_s, 1, -1);

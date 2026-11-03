@@ -18,10 +18,17 @@ project(hcomm_device)
 # 初始化 CANN 项目配置
 init_cann_project(PREPEND_MODULE_PATH)
 add_cann_target_options()
+# base_comm/inc/ 是 base_comm 对外的边界头文件目录(架构整改新增)
+# coll_communicator_mgr / legacy / test 等模块通过 #include "common/foo_pub.h" 等相对路径访问
+# 此处作为 device 侧全局 include path,使 device target 也可解析边界头(独立子工程需显式声明;
+# 与顶层 CMakeLists.txt 一致,均不在白名单 ledger 内,边界头当前为“全仓可见”,退出计划见顶层注释)。
+include_directories(${HCOMM_DIR}/src/base_comm/inc)
+
 
 message(STATUS "BUILD_OPEN_PROJECT=${BUILD_OPEN_PROJECT}")
 message(STATUS "ASCEND_INSTALL_PATH=${ASCEND_INSTALL_PATH}")
 message(STATUS "CANN_3RD_LIB_PATH=${CANN_3RD_LIB_PATH}")
+message(STATUS "LAUNCH_COMPILE_TOOL=${LAUNCH_COMPILE_TOOL}")
 
 # cmake 配置
 include(${HCOMM_DIR}/cmake/config.cmake)
@@ -45,6 +52,7 @@ find_cann_package(unified_dlog MODULE REQUIRED)
 # third_party
 include(${HCOMM_DIR}/cmake/hcomm_utils.cmake)
 include(${HCOMM_DIR}/cmake/third_party/ubengine.cmake)
+include(${HCOMM_DIR}/cmake/third_party/ibv_extend.cmake)
 add_cann_third_party(json)
 add_cann_third_party(openssl)
 add_cann_third_party(rdma-core)
@@ -55,19 +63,25 @@ add_cann_subdirectories_relative(${HCOMM_DIR}
 )
 
 # 打包并签名：cann-hcomm-compat.tar.gz
+if(LAUNCH_COMPILE_TOOL STREQUAL "hitestwrapper")
+    set(TAR_SIZE_LIMIT 7558) # hitest出包场景，放宽文件大小限制（即当前发布包 3779 KB 的 200%）
+else()
+    set(TAR_SIZE_LIMIT 4508) # 文件大小限制为 4508 KB（即当前发布包 4293 KB 的 105%）
+endif()
 cann_pack_targets_and_files(
     OUTPUT_TARGET "pack_cann_hcomm_compat"
     OUTPUT "cann-hcomm-compat.tar.gz"
     TARGETS rs_device ra_adp net_co hccp_service.bin tls_adp ascend_kms
     MANIFEST "hccp_compat_bin_hash.cfg"
-    SIZE_LIMIT 3968 # 文件大小限制为 3968 KB（即当前发布包 3779 KB 的 105%），超出则会报错
-    GEN_INI         # 生成版本号文件
+    SIZE_LIMIT ${TAR_SIZE_LIMIT} # 文件大小限制，超出则会报错
+    GEN_INI                      # 生成版本号文件
 )
-sign_file(
+add_cann_sign_file(
     OUTPUT_TARGET sign_cann_hcomm_compat
     INPUT "cann-hcomm-compat.tar.gz"
-    CONFIG "${HCOMM_DIR}/scripts/sign/hcomm_check_cfg.xml"
+    CONFIG "${HCOMM_DIR}/scripts/package/sign.xml"
     RESULT_VAR "cann_hcomm_compat_signed_file"
+    VERSION "${CANN_VERSION_hcomm_VERSION}"
     DEPENDS pack_cann_hcomm_compat
 )
 
@@ -79,27 +93,29 @@ cann_pack_targets_and_files(
     MANIFEST "bin_hash.cfg"
     TAR_ROOT_DIR "lib64"
 )
-sign_file(
+add_cann_sign_file(
     OUTPUT_TARGET sign_cann_hccd_compat
     INPUT "cann-hccd-compat.tar.gz"
-    CONFIG "${HCOMM_DIR}/scripts/sign/hcomm_check_cfg.xml"
+    CONFIG "${HCOMM_DIR}/scripts/package/sign.xml"
     RESULT_VAR "cann_hccd_compat_signed_file"
+    VERSION "${CANN_VERSION_hcomm_VERSION}"
     DEPENDS pack_cann_hccd_compat sign_cann_hcomm_compat
 )
 
 # 打包并签名：aicpu_hcomm.tar.gz
-pack_targets_and_files(
+cann_pack_targets_and_files(
     OUTPUT_TARGET "pack_aicpu_hcomm"
     OUTPUT "aicpu_hcomm.tar.gz"
     TARGETS ccl_kernel ccl_kernel_plf
     MANIFEST "bin_hash.cfg"
     TAR_ROOT_DIR "aicpu_kernels_device"
 )
-sign_file(
+add_cann_sign_file(
     OUTPUT_TARGET sign_aicpu_hcomm
     INPUT "aicpu_hcomm.tar.gz"
-    CONFIG "${HCOMM_DIR}/scripts/sign/hcomm_check_cfg.xml"
+    CONFIG "${HCOMM_DIR}/scripts/package/sign.xml"
     RESULT_VAR "aicpu_hcomm_signed_file"
+    VERSION "${CANN_VERSION_hcomm_VERSION}"
     DEPENDS pack_aicpu_hcomm sign_cann_hccd_compat
 )
 

@@ -15,21 +15,21 @@ namespace Hccl {
 
 constexpr int INPUT_XN_ID = 1;
 constexpr int TOKEN_XN_ID = 2;
-constexpr int CKE_IDX_0   = 0;
-constexpr int CKE_IDX_1   = 1;
-constexpr int CKE_IDX_2   = 2;
-constexpr int CKE_IDX_3   = 3;
-constexpr int CKE_IDX_4   = 4;
-constexpr int X_AXIS_ID   = 0;
-constexpr int Y_AXIS_ID   = 1;
+constexpr int CKE_IDX_0 = 0;
+constexpr int CKE_IDX_1 = 1;
+constexpr int CKE_IDX_2 = 2;
+constexpr int CKE_IDX_3 = 3;
+constexpr int CKE_IDX_4 = 4;
+constexpr int X_AXIS_ID = 0;
+constexpr int Y_AXIS_ID = 1;
 constexpr int FST_AXIS_ID = 0;
 constexpr int SEC_AXIS_ID = 1;
 
-CcuContextBroadcastMesh2D::CcuContextBroadcastMesh2D(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                                                     const CcuTransportGroup &group)
+CcuContextBroadcastMesh2D::CcuContextBroadcastMesh2D(
+    const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group)
     : CcuContextAlgBase(arg, transports, group)
 {
-    const CcuCtxArgBroadcastMesh2D *ctxArg = dynamic_cast<const CcuCtxArgBroadcastMesh2D *>(&arg);
+    const CcuCtxArgBroadcastMesh2D* ctxArg = dynamic_cast<const CcuCtxArgBroadcastMesh2D*>(&arg);
     if (ctxArg == nullptr) {
         THROW<NullPtrException>(StringFormat("CcuContextBroadcastMesh2D::ctxArg ptr is null"));
     }
@@ -37,14 +37,16 @@ CcuContextBroadcastMesh2D::CcuContextBroadcastMesh2D(const CcuCtxArg &arg, const
     dimSize_ = ctxArg->dimSize_;
     axisId_ = ctxArg->axisId_;
     if (dimSize_.size() != 2 || axisId_ > 1 || dimSize_[0] == 0) { // 2D 拓扑校验
-        THROW<NullPtrException>(StringFormat("[CcuContextBroadcastMesh2D] dimSize[%zu] or axisId[%u] or dimSize[0] [%u] is invalid.",
-            dimSize_.size(), axisId_, dimSize_[0]));
+        THROW<NullPtrException>(StringFormat(
+            "[CcuContextBroadcastMesh2D] dimSize[%zu] or axisId[%u] or dimSize[0] [%u] is invalid.", dimSize_.size(),
+            axisId_, dimSize_[0]));
     }
     dimId_.emplace_back(rankId_ % dimSize_[0]);
     dimId_.emplace_back(rankId_ / dimSize_[0]);
     localId_ = dimId_[axisId_];
     localSize_ = dimSize_[axisId_];
-    HCCL_INFO("[CcuContextBroadcastMesh2D] RankId[%u], DimSize0[%u], DimSize1[%u], localId[%u], lcoalSize[%u].",
+    HCCL_INFO(
+        "[CcuContextBroadcastMesh2D] RankId[%u], DimSize0[%llu], DimSize1[%llu], localId[%llu], localSize[%llu].",
         rankId_, dimSize_[0], dimSize_[1], localId_, localSize_);
     rootId_ = ctxArg->op_.root;
     dataType_ = ctxArg->op_.dataType;
@@ -77,11 +79,14 @@ void CcuContextBroadcastMesh2D::InitResources()
             input_.push_back(CreateVariable());
             token_.push_back(CreateVariable());
         } else {
-            HCCL_INFO("[CcuContextBroadcastMesh2D] MyRank[%u], PeerId[%u], TransportId[%u]",
-                localId_, peerId, transportIdx);
-            CHK_PRT_RET(transports[transportIdx] == nullptr || transportIdx >= transports.size(),
-                    HCCL_ERROR("[CcuContextBroadcastMesh2D] Algorithm transport ptr is null or transportIdx is out of bounds"),);
-            input_.push_back(CreateVariable((*transports[transportIdx]), INPUT_XN_ID));  // 获取transport中id=1的Var来传递output
+            HCCL_INFO(
+                "[CcuContextBroadcastMesh2D] MyRank[%u], PeerId[%u], TransportId[%u]", localId_, peerId, transportIdx);
+            CHK_PRT_RET(
+                transports[transportIdx] == nullptr || transportIdx >= transports.size(),
+                HCCL_ERROR(
+                    "[CcuContextBroadcastMesh2D] Algorithm transport ptr is null or transportIdx is out of bounds"), );
+            input_.push_back(
+                CreateVariable((*transports[transportIdx]), INPUT_XN_ID)); // 获取transport中id=1的Var来传递output
             token_.push_back(CreateVariable((*transports[transportIdx]), TOKEN_XN_ID));
             transportIdx++;
         }
@@ -92,11 +97,11 @@ void CcuContextBroadcastMesh2D::InitResources()
 void CcuContextBroadcastMesh2D::PreSync()
 {
     uint16_t selfBit = 1 << localId_;
-    uint16_t allBit  = ((1 << localSize_) - 1) & (~(1 << localId_));
+    uint16_t allBit = ((1 << localSize_) - 1) & (~(1 << localId_));
 
     for (auto t : transports) {
         WriteVariableWithSignal(*t, input_[localId_], INPUT_XN_ID, CKE_IDX_1, selfBit); // index = 1，传递output信息
-        WriteVariableWithSignal(*t, token_[localId_], TOKEN_XN_ID, CKE_IDX_2, selfBit);  // index = 2，传递token信息
+        WriteVariableWithSignal(*t, token_[localId_], TOKEN_XN_ID, CKE_IDX_2, selfBit); // index = 2，传递token信息
     }
     GroupWait(*transportGroup, CKE_IDX_1, allBit); // index = 1，传递output信息
     GroupWait(*transportGroup, CKE_IDX_2, allBit); // index = 2，传递token信息
@@ -106,7 +111,7 @@ void CcuContextBroadcastMesh2D::PreSync()
 void CcuContextBroadcastMesh2D::PostSync(uint32_t signalIndex)
 {
     uint16_t selfBit = 1 << localId_;
-    uint16_t allBit  = ((1 << localSize_) - 1) & (~(1 << localId_));
+    uint16_t allBit = ((1 << localSize_) - 1) & (~(1 << localId_));
 
     for (auto t : transports) {
         RemotePost(*t, signalIndex, selfBit);
@@ -119,8 +124,8 @@ void CcuContextBroadcastMesh2D::AxisSync(uint32_t signalIndex)
 {
     const uint32_t DIE_NUM = 2;
     if (signalIndex > 1) {
-        THROW<InvalidParamsException>(StringFormat(
-            "[CcuContextBroadcastMesh2D] Unexpected SignalInex[%u]", signalIndex));
+        THROW<InvalidParamsException>(
+            StringFormat("[CcuContextBroadcastMesh2D] Unexpected SignalIndex[%u]", signalIndex));
     }
     LocalCtxPost(anotherAxisSignal_, 1 << (axisId_ + signalIndex * DIE_NUM));
     LocalWait(localAxisSignal_, 1 << (1 - axisId_ + signalIndex * DIE_NUM));
@@ -146,7 +151,7 @@ void CcuContextBroadcastMesh2D::Step1BroadcastForRoot()
     }
     CcuRep::Memory src = CreateMemory();
     src.token = token_[localId_];
-    src.addr  = input_[localId_];
+    src.addr = input_[localId_];
     uint32_t dstId = 0;
     uint32_t curId = 0;
     for (uint32_t rankIdx = 0; rankIdx < localSize_; rankIdx++) {
@@ -178,7 +183,7 @@ void CcuContextBroadcastMesh2D::Step2BroadcastForRoot()
         dst.push_back(CreateMemory());
     }
     CcuRep::Memory src = CreateMemory();
-    src.addr  = input_[localId_];
+    src.addr = input_[localId_];
     src.token = token_[localId_];
     uint32_t dstId = 0;
     uint32_t curId = 0;
@@ -211,7 +216,7 @@ void CcuContextBroadcastMesh2D::Step2Broadcast()
     for (uint32_t rankIdx = 0; rankIdx < localSize_; rankIdx++) {
         dst.push_back(CreateMemory());
     }
-    src.addr  = input_[localId_];
+    src.addr = input_[localId_];
     src.token = token_[localId_];
     uint32_t dstId = 0;
     uint32_t curId = 0;
@@ -266,7 +271,7 @@ void CcuContextBroadcastMesh2D::Algorithm()
         HCCL_INFO("[CcuContextBroadcastMesh2D] Algorithm second step begins.");
         PostSync(CKE_IDX_4);
         Step2BroadcastForRoot();
-    } else if (dimId_[0] == rootDimId_[0] || dimId_[1] == rootDimId_[1]) {// 当前rank和root在同一行或同一列
+    } else if (dimId_[0] == rootDimId_[0] || dimId_[1] == rootDimId_[1]) { // 当前rank和root在同一行或同一列
         if (dimId_[axisId_] != rootDimId_[axisId_]) {
             PostSync(CKE_IDX_3);
         }
@@ -285,9 +290,9 @@ void CcuContextBroadcastMesh2D::Algorithm()
     return;
 }
 
-std::vector<uint64_t> CcuContextBroadcastMesh2D::GeneArgs(const CcuTaskArg &arg)
+std::vector<uint64_t> CcuContextBroadcastMesh2D::GeneArgs(const CcuTaskArg& arg)
 {
-    const CcuTaskArgBroadcastMesh2D *taskArg = dynamic_cast<const CcuTaskArgBroadcastMesh2D *>(&arg);
+    const CcuTaskArgBroadcastMesh2D* taskArg = dynamic_cast<const CcuTaskArgBroadcastMesh2D*>(&arg);
     if (taskArg == nullptr) {
         THROW<NullPtrException>(StringFormat("CcuContextBroadcastMesh2D::taskArg ptr is null"));
     }
@@ -296,10 +301,9 @@ std::vector<uint64_t> CcuContextBroadcastMesh2D::GeneArgs(const CcuTaskArg &arg)
     uint64_t tokenInfo = taskArg->token_;
     uint64_t xAxisSize = taskArg->xAxisSize_;
     uint64_t yAxisSize = taskArg->yAxisSize_;
-    auto     xAxisGoSize = CalGoSize(xAxisSize);
-    auto     yAxisGoSize = CalGoSize(yAxisSize);
-    return {inputAddr, yAxisOffset, tokenInfo,
-        xAxisGoSize[0], xAxisGoSize[1], xAxisGoSize[2], xAxisGoSize[3],
-        yAxisGoSize[0], yAxisGoSize[1], yAxisGoSize[2], yAxisGoSize[3]};
+    auto xAxisGoSize = CalGoSize(xAxisSize);
+    auto yAxisGoSize = CalGoSize(yAxisSize);
+    return {inputAddr,      yAxisOffset,    tokenInfo,      xAxisGoSize[0], xAxisGoSize[1], xAxisGoSize[2],
+            xAxisGoSize[3], yAxisGoSize[0], yAxisGoSize[1], yAxisGoSize[2], yAxisGoSize[3]};
 }
-}
+} // namespace Hccl

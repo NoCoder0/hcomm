@@ -13,35 +13,37 @@
 
 namespace Hccl {
 
-
 constexpr int CKE_IDX_0 = 0;
 constexpr int CKE_IDX_1 = 1;
 constexpr int CKE_IDX_2 = 2;
 
-CcuContextBroadcastMesh1D::CcuContextBroadcastMesh1D(const CcuCtxArg &arg, const std::vector<CcuTransport *> &transports,
-                                                             const CcuTransportGroup &group)
+CcuContextBroadcastMesh1D::CcuContextBroadcastMesh1D(
+    const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group)
     : CcuContextAlgBase(arg, transports, group)
 {
-    const CcuCtxArgBroadcastMesh1D *ctxArg = dynamic_cast<const CcuCtxArgBroadcastMesh1D *>(&arg);
+    const CcuCtxArgBroadcastMesh1D* ctxArg = dynamic_cast<const CcuCtxArgBroadcastMesh1D*>(&arg);
     if (ctxArg == nullptr) {
         THROW<NullPtrException>(StringFormat("CcuContextBroadcastMesh1D::ctxArg ptr is null"));
     }
-    rankId_         = ctxArg->rankId_;
-    rootId_         = ctxArg->rootId_;
-    rankSize_       = ctxArg->dimSize_[0];
-    dataType_       = ctxArg->op_.dataType;
+    rankId_ = ctxArg->rankId_;
+    rootId_ = ctxArg->rootId_;
+    rankSize_ = ctxArg->dimSize_[0];
+    dataType_ = ctxArg->op_.dataType;
     outputDataType_ = ctxArg->op_.outputDataType;
     if (outputDataType_ == DataType::INVALID) {
         outputDataType_ = dataType_;
-        HCCL_INFO("[CcuContextBroadcastMesh1D] outputDataType is [INVALID], set outputDataType to[%s]",
+        HCCL_INFO(
+            "[CcuContextBroadcastMesh1D] outputDataType is [INVALID], set outputDataType to[%s]",
             outputDataType_.Describe().c_str());
     }
-    HCCL_INFO("[CcuContextBroadcastMesh1D] init end, ctxArg->dimSize size[%zu] rankSize[%llu]", ctxArg->dimSize_.size(), rankSize_);
+    HCCL_INFO(
+        "[CcuContextBroadcastMesh1D] init end, ctxArg->dimSize size[%zu] rankSize[%llu]", ctxArg->dimSize_.size(),
+        rankSize_);
 }
 
 void CcuContextBroadcastMesh1D::CreateAllVariables()
 {
-    HCCL_INFO("[CcuContextBroadcastMesh1D]transports.size: [%u]", transports.size());
+    HCCL_INFO("[CcuContextBroadcastMesh1D]transports.size: [%zu]", transports.size());
     uint16_t transportIdx = 0;
     input_ = CreateVariable();
     if (transports.size() == 0) {
@@ -53,17 +55,21 @@ void CcuContextBroadcastMesh1D::CreateAllVariables()
             output_.push_back(CreateVariable());
             token_.push_back(CreateVariable());
         } else {
-            HCCL_INFO("[CcuContextBroadcastMesh1D] MyRank[%u], PeerId[%llu], TransportId[%hu]",
-                rankId_, peerId, transportIdx);
-            CHK_PRT_RET(transports[transportIdx] == nullptr || transportIdx >= transports.size(),
-                    HCCL_ERROR("[CcuContextBroadcastMesh1D] Algorithm transport ptr is null or transportIdx is out of bounds"),);
-            output_.push_back(CreateVariable((*transports[transportIdx]), CKE_IDX_1));  // 获取transport中id=2的Var来传递output
+            HCCL_INFO(
+                "[CcuContextBroadcastMesh1D] MyRank[%u], PeerId[%llu], TransportId[%hu]", rankId_, peerId,
+                transportIdx);
+            CHK_PRT_RET(
+                transports[transportIdx] == nullptr || transportIdx >= transports.size(),
+                HCCL_ERROR(
+                    "[CcuContextBroadcastMesh1D] Algorithm transport ptr is null or transportIdx is out of bounds"), );
+            output_.push_back(
+                CreateVariable((*transports[transportIdx]), CKE_IDX_1)); // 获取transport中id=2的Var来传递output
             token_.push_back(CreateVariable((*transports[transportIdx]), CKE_IDX_2));
             transportIdx++;
         }
     }
-    offset_      = CreateVariable();
-    slicesize_   = CreateVariable();
+    offset_ = CreateVariable();
+    slicesize_ = CreateVariable();
     groupOpSize_ = CreateGroupOpSize();
     return;
 }
@@ -71,8 +77,8 @@ void CcuContextBroadcastMesh1D::CreateAllVariables()
 void CcuContextBroadcastMesh1D::LoadAndExchangeData()
 {
     uint16_t selfBit = 1 << rankId_;
-    uint16_t allBit  = ((1 << rankSize_) - 1) & (~(1 << rankId_));
-    HCCL_DEBUG("[CcuContextBroadcastMesh1D] BroadcastMesh1D LoadAndExchanageData: rankId[%u]", rankId_);
+    uint16_t allBit = ((1 << rankSize_) - 1) & (~(1 << rankId_));
+    HCCL_DEBUG("[CcuContextBroadcastMesh1D] BroadcastMesh1D LoadAndExchangeData: rankId[%u]", rankId_);
     Load(input_);
     Load(output_[rankId_]);
     Load(token_[rankId_]);
@@ -100,7 +106,7 @@ void CcuContextBroadcastMesh1D::BroadcastFromRootToAll()
     uint32_t curId = 0;
     for (uint32_t rankIdx = 0; rankIdx < rankSize_; rankIdx++) {
         if (rankIdx != rootId_) {
-            dst[curId].addr  = output_[rankIdx];
+            dst[curId].addr = output_[rankIdx];
             dst[curId].token = token_[rankIdx];
             curId++;
         }
@@ -116,7 +122,7 @@ void CcuContextBroadcastMesh1D::Algorithm()
 {
     HCCL_INFO("[CcuContextBroadcastMesh1D] BroadcastMesh1D run");
     uint16_t selfBit = 1 << rankId_;
-    uint16_t allBit  = ((1 << rankSize_) - 1) & (~(1 << rankId_));
+    uint16_t allBit = ((1 << rankSize_) - 1) & (~(1 << rankId_));
 
     CreateAllVariables();
 
@@ -135,19 +141,19 @@ void CcuContextBroadcastMesh1D::Algorithm()
     return;
 }
 
-std::vector<uint64_t> CcuContextBroadcastMesh1D::GeneArgs(const CcuTaskArg &arg)
+std::vector<uint64_t> CcuContextBroadcastMesh1D::GeneArgs(const CcuTaskArg& arg)
 {
-    const CcuTaskArgBroadcastMesh1D *taskArg = dynamic_cast<const CcuTaskArgBroadcastMesh1D *>(&arg);
+    const CcuTaskArgBroadcastMesh1D* taskArg = dynamic_cast<const CcuTaskArgBroadcastMesh1D*>(&arg);
     if (taskArg == nullptr) {
         THROW<NullPtrException>(StringFormat("CcuContextBroadcastMesh1D::taskArg ptr is null"));
     }
-    uint64_t inputAddr  = taskArg->inputAddr_;
+    uint64_t inputAddr = taskArg->inputAddr_;
     uint64_t outputAddr = taskArg->outputAddr_;
-    uint64_t tokenInfo  = taskArg->token_;
-    uint64_t offset     = taskArg->offset_;
-    uint64_t sliceSize  = taskArg->sliceSize_;
-    auto     goSize     = CalGoSize(sliceSize);
+    uint64_t tokenInfo = taskArg->token_;
+    uint64_t offset = taskArg->offset_;
+    uint64_t sliceSize = taskArg->sliceSize_;
+    auto goSize = CalGoSize(sliceSize);
 
     return {inputAddr, outputAddr, tokenInfo, offset, sliceSize, goSize[0], goSize[1], goSize[2], goSize[3]};
 }
-}
+} // namespace Hccl

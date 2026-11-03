@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -44,7 +44,7 @@
 #include "hccl_one_sided_service.h"
 #include <hccl/hccl_one_sided_services.h>
 #include "hccl_one_sided_conn.h"
-#include "rma_buffer_mgr.h"
+#include "common/rma_buffer_mgr_pub.h"
 #include "local_rdma_rma_buffer.h"
 #include "local_ipc_rma_buffer.h"
 #include "remote_rdma_rma_buffer.h"
@@ -70,8 +70,7 @@ using namespace hccl;
 using LocalIpcRmaBufferMgr = hccl::NetDevContext::LocalIpcRmaBufferMgr;
 using LocalRdmaRmaBufferMgr = hccl::NetDevContext::LocalRdmaRmaBufferMgr;
 
-class OneSidedSt : public testing::Test
-{
+class OneSidedSt : public testing::Test {
 protected:
     static void SetUpTestCase()
     {
@@ -87,16 +86,10 @@ protected:
     virtual void SetUp()
     {
         s32 portNum = -1;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
         std::cout << "A Test SetUP" << std::endl;
     }
-    virtual void TearDown()
-    {
-        std::cout << "A Test TearDown" << std::endl;
-    }
+    virtual void TearDown() { std::cout << "A Test TearDown" << std::endl; }
 };
 
 HcclResult ExceptionRuntimeTest()
@@ -186,7 +179,7 @@ HcclResult st_rma_buffer_mgr_test()
     using SType = u64;
     using BufferType = string;
 
-    RmaBufferMgr<BufferKey<AType, SType>, BufferType> bufferMgr;
+    hcomm::RmaBufferMgr<BufferKey<AType, SType>, BufferType> bufferMgr;
 
     // 1. Add接口
     // 1.1 添加
@@ -367,26 +360,22 @@ HcclResult st_rma_buffer_mgr_test()
     return HCCL_SUCCESS;
 }
 
-TEST_F(OneSidedSt, ut_rma_buffer_mgr)
-{
-    EXPECT_EQ(st_rma_buffer_mgr_test(), HCCL_SUCCESS);
-}
+TEST_F(OneSidedSt, ut_rma_buffer_mgr) { EXPECT_EQ(st_rma_buffer_mgr_test(), HCCL_SUCCESS); }
 
 TEST_F(OneSidedSt, ut_one_sided_service_mem_regDereg_enable_disable_roce)
 {
-    typedef HcclResult (*HcclOneSideServiceCallBack)(std::unique_ptr<hccl::IHcclOneSidedService> &,
-    std::unique_ptr<hccl::HcclSocketManager> &, std::unique_ptr<hccl::NotifyPool> &);
+    typedef HcclResult (*HcclOneSideServiceCallBack)(
+        std::unique_ptr<hccl::IHcclOneSidedService>&, std::unique_ptr<hccl::HcclSocketManager>&,
+        std::unique_ptr<hccl::NotifyPool>&);
     nlohmann::json rank_table = rank_table_910_1server_4rank;
 
     char file_name_t[] = "./ut_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -399,9 +388,9 @@ TEST_F(OneSidedSt, ut_one_sided_service_mem_regDereg_enable_disable_roce)
     void* comm;
     const char* rank_table_file = "./ut_opbase_test.json";
 
-    localbuf= (s8*)sal_malloc(count * sizeof(s8));
+    localbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(localbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    remotebuf= (s8*)sal_malloc(count * sizeof(s8));
+    remotebuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(remotebuf, count * sizeof(s8), 0, count * sizeof(s8));
     ret = HcclCommInitClusterInfo(rank_table_file, 0, &comm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -411,40 +400,34 @@ TEST_F(OneSidedSt, ut_one_sided_service_mem_regDereg_enable_disable_roce)
     devContext.localIpcRmaBufferMgr_ = std::make_shared<LocalIpcRmaBufferMgr>();
     devContext.localRdmaRmaBufferMgr_ = std::make_shared<LocalRdmaRmaBufferMgr>();
     HcclNetDevCtx devCtx = &devContext;
-    HcclRankLinkInfo localLinkInfo {};
-    HcclRankLinkInfo remoteLinkInfo {};
+    HcclRankLinkInfo localLinkInfo{};
+    HcclRankLinkInfo remoteLinkInfo{};
     remoteLinkInfo.userRank = 1;
     std::unique_ptr<HcclSocketManager> socketManager = nullptr;
     socketManager.reset(new (std::nothrow) HcclSocketManager(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0));
     std::unique_ptr<NotifyPool> notifyPool;
     HcclDispatcher dispatcher;
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
 
-    IHcclOneSidedService *iService = nullptr;
+    IHcclOneSidedService* iService = nullptr;
     hcclComm->GetOneSidedService(&iService);
     EXPECT_NE(iService, nullptr);
     iService->netDevRdmaCtx_ = devCtx;
     HcclOneSidedService* service = dynamic_cast<HcclOneSidedService*>(iService);
 
-    std::shared_ptr<HcclOneSidedConn> connPtr = make_shared<HcclOneSidedConn>(devCtx, localLinkInfo,
-    remoteLinkInfo, socketManager, notifyPool, dispatcher, true, 0U, 0U);
+    std::shared_ptr<HcclOneSidedConn> connPtr = make_shared<HcclOneSidedConn>(
+        devCtx, localLinkInfo, remoteLinkInfo, socketManager, notifyPool, dispatcher, true, 0U, 0U);
     service->oneSidedConns_.insert({1, connPtr});
-    MOCKER_CPP(&HcclOneSidedConn::GetMemType)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclOneSidedConn::GetMemType).stubs().will(returnValue(HCCL_SUCCESS));
     std::string localdesc = "ld";
-    MOCKER_CPP(&LocalRdmaRmaBuffer::Serialize)
-    .stubs()
-    .will(returnValue(localdesc));
-    MOCKER_CPP(&LocalRdmaRmaBuffer::Init)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&LocalRdmaRmaBuffer::Serialize).stubs().will(returnValue(localdesc));
+    MOCKER_CPP(&LocalRdmaRmaBuffer::Init).stubs().will(returnValue(HCCL_SUCCESS));
     u32 remoteRankId = 1;
     bool useRdma = true;
     MOCKER_CPP(&HcclOneSidedService::IsUsedRdma)
-    .stubs()
-    .with(eq(remoteRankId), outBound(useRdma))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(eq(remoteRankId), outBound(useRdma))
+        .will(returnValue(HCCL_SUCCESS));
 
     HcclMemDesc localMemDesc, remoteMemDesc;
 
@@ -452,9 +435,7 @@ TEST_F(OneSidedSt, ut_one_sided_service_mem_regDereg_enable_disable_roce)
     EXPECT_EQ(ret, HCCL_SUCCESS);
     memcpy_s(&(remoteMemDesc.desc[0]), sizeof(remoteMemDesc.desc), &remoteRankId, sizeof(u32));
     remoteMemDesc.desc[8] = static_cast<int>(RmaType::RDMA_RMA);
-    MOCKER_CPP(&RemoteRdmaRmaBuffer::Deserialize)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&RemoteRdmaRmaBuffer::Deserialize).stubs().will(returnValue(HCCL_SUCCESS));
     CommMem remoteMem{};
     ret = HcclEnableMemAccess(comm, &remoteMemDesc, &remoteMem);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -496,9 +477,10 @@ TEST_F(OneSidedSt, ut_test_rma_buffer_impl)
     HcclIpAddress ipAddr{};
     remoteNetDevCtx.Init(NicType::HOST_NIC_TYPE, 1, 1, ipAddr);
 
-    std::shared_ptr<RemoteIpcRmaBufferImpl> remoteImplPtr = make_shared<RemoteIpcRmaBufferImpl>(reinterpret_cast<void *>(&remoteNetDevCtx));
+    std::shared_ptr<RemoteIpcRmaBufferImpl> remoteImplPtr
+        = make_shared<RemoteIpcRmaBufferImpl>(reinterpret_cast<void*>(&remoteNetDevCtx));
     std::shared_ptr<LocalIpcRmaBufferImpl> localImplPtr = make_shared<LocalIpcRmaBufferImpl>(
-        reinterpret_cast<void *>(&remoteNetDevCtx), localbuf, count * sizeof(s8), RmaMemType::DEVICE);
+        reinterpret_cast<void*>(&remoteNetDevCtx), localbuf, count * sizeof(s8), RmaMemType::DEVICE);
 
     char name[21] = "aaaaabbbbbcccccddddd";
     memcpy_s(remoteImplPtr->memName.ipcName, HCCL_IPC_MEM_NAME_LEN, name, sizeof(name));
@@ -540,7 +522,7 @@ TEST_F(OneSidedSt, ut_test_rma_buffer_impl)
 
 TEST_F(OneSidedSt, ut_test_rma_buffer_SetIpcMem_noOffset)
 {
-   int ret = HCCL_SUCCESS;
+    int ret = HCCL_SUCCESS;
     s8* localbuf;
     s8* remotebuf;
     s32 count = 1024;
@@ -554,9 +536,10 @@ TEST_F(OneSidedSt, ut_test_rma_buffer_SetIpcMem_noOffset)
     HcclIpAddress ipAddr{};
     remoteNetDevCtx.Init(NicType::HOST_NIC_TYPE, 1, 1, ipAddr);
 
-    std::shared_ptr<RemoteIpcRmaBufferImpl> remoteImplPtr = make_shared<RemoteIpcRmaBufferImpl>(reinterpret_cast<void *>(&remoteNetDevCtx));
+    std::shared_ptr<RemoteIpcRmaBufferImpl> remoteImplPtr
+        = make_shared<RemoteIpcRmaBufferImpl>(reinterpret_cast<void*>(&remoteNetDevCtx));
     std::shared_ptr<LocalIpcRmaBufferImpl> localImplPtr = make_shared<LocalIpcRmaBufferImpl>(
-        reinterpret_cast<void *>(&remoteNetDevCtx), localbuf, count * sizeof(s8), RmaMemType::DEVICE);
+        reinterpret_cast<void*>(&remoteNetDevCtx), localbuf, count * sizeof(s8), RmaMemType::DEVICE);
 
     char name[21] = "aaaaabbbbbcccccddddd";
     memcpy_s(remoteImplPtr->memName.ipcName, HCCL_IPC_MEM_NAME_LEN, name, sizeof(name));
@@ -573,7 +556,7 @@ TEST_F(OneSidedSt, ut_test_rma_buffer_SetIpcMem_noOffset)
     IpcMemInfo ipcMemInfo = {nullptr};
     ipcMemInfo.ptr = localImplPtr->addr;
     ipcMemInfo.size = localImplPtr->size;
-    MemNameRepository::GetInstance(1)->setNameMap_.insert(std::make_pair(ipcMemInfo,localImplPtr->memName));
+    MemNameRepository::GetInstance(1)->setNameMap_.insert(std::make_pair(ipcMemInfo, localImplPtr->memName));
 
     ret = localImplPtr->Init();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -859,19 +842,18 @@ TEST_F(OneSidedSt, ut_HcclBatchGetPut_When_SdmaAicpuUnflod_Expect_Success)
 #endif
 TEST_F(OneSidedSt, ut_one_sided_service_mem_regDereg_enable_disable_a3_rdma)
 {
-    typedef HcclResult (*HcclOneSideServiceCallBack)(std::unique_ptr<hccl::IHcclOneSidedService> &,
-    std::unique_ptr<hccl::HcclSocketManager> &, std::unique_ptr<hccl::NotifyPool> &);
+    typedef HcclResult (*HcclOneSideServiceCallBack)(
+        std::unique_ptr<hccl::IHcclOneSidedService>&, std::unique_ptr<hccl::HcclSocketManager>&,
+        std::unique_ptr<hccl::NotifyPool>&);
     nlohmann::json rank_table = rank_table_910_1server_4rank;
 
     char file_name_t[] = "./ut_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -884,9 +866,9 @@ TEST_F(OneSidedSt, ut_one_sided_service_mem_regDereg_enable_disable_a3_rdma)
     void* comm;
     const char* rank_table_file = "./ut_opbase_test.json";
 
-    localbuf= (s8*)sal_malloc(count * sizeof(s8));
+    localbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(localbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    remotebuf= (s8*)sal_malloc(count * sizeof(s8));
+    remotebuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(remotebuf, count * sizeof(s8), 0, count * sizeof(s8));
     ret = HcclCommInitClusterInfo(rank_table_file, 0, &comm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -896,46 +878,33 @@ TEST_F(OneSidedSt, ut_one_sided_service_mem_regDereg_enable_disable_a3_rdma)
     devContext.localIpcRmaBufferMgr_ = std::make_shared<LocalIpcRmaBufferMgr>();
     devContext.localRdmaRmaBufferMgr_ = std::make_shared<LocalRdmaRmaBufferMgr>();
     HcclNetDevCtx devCtx = &devContext;
-    HcclRankLinkInfo localLinkInfo {};
-    HcclRankLinkInfo remoteLinkInfo {};
+    HcclRankLinkInfo localLinkInfo{};
+    HcclRankLinkInfo remoteLinkInfo{};
     remoteLinkInfo.userRank = 1;
     std::unique_ptr<HcclSocketManager> socketManager = nullptr;
     socketManager.reset(new (std::nothrow) HcclSocketManager(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0));
     std::unique_ptr<NotifyPool> notifyPool;
     HcclDispatcher dispatcher;
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
 
-    IHcclOneSidedService *iService = nullptr;
+    IHcclOneSidedService* iService = nullptr;
     hcclComm->GetOneSidedService(&iService);
     EXPECT_NE(iService, nullptr);
     iService->netDevRdmaCtx_ = devCtx;
     HcclOneSidedService* service = dynamic_cast<HcclOneSidedService*>(iService);
 
-    std::shared_ptr<HcclOneSidedConn> connPtr = make_shared<HcclOneSidedConn>(devCtx, localLinkInfo,
-        remoteLinkInfo, socketManager, notifyPool, dispatcher, false, 0U, 0U);
+    std::shared_ptr<HcclOneSidedConn> connPtr = make_shared<HcclOneSidedConn>(
+        devCtx, localLinkInfo, remoteLinkInfo, socketManager, notifyPool, dispatcher, false, 0U, 0U);
     service->oneSidedConns_.insert({1, connPtr});
-    MOCKER_CPP(&HcclOneSidedConn::GetMemType)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclOneSidedConn::GetMemType).stubs().will(returnValue(HCCL_SUCCESS));
     std::string localdesc = "ld";
-    MOCKER_CPP(&LocalIpcRmaBuffer::Serialize)
-        .stubs()
-        .will(returnValue(localdesc));
-    MOCKER_CPP(&LocalIpcRmaBuffer::Init)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&LocalRdmaRmaBuffer::Init)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&LocalIpcRmaBuffer::Serialize).stubs().will(returnValue(localdesc));
+    MOCKER_CPP(&LocalIpcRmaBuffer::Init).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&LocalRdmaRmaBuffer::Init).stubs().will(returnValue(HCCL_SUCCESS));
     DevType deviceType = DevType::DEV_TYPE_910_93;
-    MOCKER(hrtGetDeviceType)
-        .stubs()
-        .with(outBound(deviceType))
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
     u32 intraRoceSwitch = 1;
-    MOCKER(GetExternalInputIntraRoceSwitch)
-        .stubs()
-        .will(returnValue(intraRoceSwitch));
+    MOCKER(GetExternalInputIntraRoceSwitch).stubs().will(returnValue(intraRoceSwitch));
     u32 remoteRankId = 1;
 
     HcclMemDesc localMemDesc, remoteMemDesc;
@@ -944,19 +913,13 @@ TEST_F(OneSidedSt, ut_one_sided_service_mem_regDereg_enable_disable_a3_rdma)
     memcpy_s(&(remoteMemDesc.desc[0]), sizeof(remoteMemDesc.desc), &remoteRankId, sizeof(u32));
     remoteMemDesc.desc[8] = static_cast<int>(RmaType::IPC_RMA);
 
-    MOCKER_CPP(&RemoteIpcRmaBuffer::Deserialize)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&RemoteIpcRmaBuffer::Open)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&RemoteIpcRmaBuffer::Deserialize).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&RemoteIpcRmaBuffer::Open).stubs().will(returnValue(HCCL_SUCCESS));
     CommMem remoteMem{};
     ret = HcclEnableMemAccess(comm, &remoteMemDesc, &remoteMem);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    MOCKER_CPP(&RemoteIpcRmaBuffer::Close)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&RemoteIpcRmaBuffer::Close).stubs().will(returnValue(HCCL_SUCCESS));
     ret = HcclDisableMemAccess(comm, &remoteMemDesc);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
@@ -979,12 +942,10 @@ TEST_F(OneSidedSt, ut_one_sided_service_mem_exchange)
     char file_name_t[] = "./ut_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -1008,8 +969,8 @@ TEST_F(OneSidedSt, ut_one_sided_service_mem_exchange)
     remote.arrayLength = 1;
     remote.array = &remoteDesc;
     u32 actualNum;
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
-    IHcclOneSidedService *iService = nullptr;
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
+    IHcclOneSidedService* iService = nullptr;
     hcclComm->GetOneSidedService(&iService);
 
     NetDevContext devContext;
@@ -1022,40 +983,39 @@ TEST_F(OneSidedSt, ut_one_sided_service_mem_exchange)
     HcclOneSidedService* service = dynamic_cast<HcclOneSidedService*>(iService);
     service->isUsedRdmaMap_.insert({1, false});
 
-    MOCKER(hrtRaGetSingleSocketVnicIpInfo)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtRaGetSingleSocketVnicIpInfo).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    HcclRankLinkInfo localLinkInfo {};
-    HcclRankLinkInfo remoteLinkInfo {};
+    HcclRankLinkInfo localLinkInfo{};
+    HcclRankLinkInfo remoteLinkInfo{};
     remoteLinkInfo.userRank = 1;
     std::unique_ptr<HcclSocketManager> socketManager = nullptr;
     socketManager.reset(new (std::nothrow) HcclSocketManager(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0));
     std::unique_ptr<NotifyPool> notifyPool;
     HcclDispatcher dispatcher;
-    std::shared_ptr<HcclOneSidedConn> connPtr = make_shared<HcclOneSidedConn>(devCtx, localLinkInfo,
-        remoteLinkInfo, socketManager, notifyPool, dispatcher, false, 0U, 0U);
+    std::shared_ptr<HcclOneSidedConn> connPtr = make_shared<HcclOneSidedConn>(
+        devCtx, localLinkInfo, remoteLinkInfo, socketManager, notifyPool, dispatcher, false, 0U, 0U);
     service->oneSidedConns_.insert({1, connPtr});
     HcclIpAddress ipAddr;
-    std::shared_ptr<HcclSocket> socketPtr1 = make_shared<HcclSocket>("tag", devCtx, ipAddr, 16666, HcclSocketRole::SOCKET_ROLE_CLIENT);
+    std::shared_ptr<HcclSocket> socketPtr1
+        = make_shared<HcclSocket>("tag", devCtx, ipAddr, 16666, HcclSocketRole::SOCKET_ROLE_CLIENT);
     connPtr->socket_ = socketPtr1;
     connPtr->transportMemPtr_->SetDataSocket(socketPtr1);
 
-    MOCKER_CPP(&HcclSocket::Send, HcclResult(HcclSocket::*)(const void *, u64))
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclSocket::Send, HcclResult(HcclSocket::*)(const void*, u64))
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclSocket::Recv, HcclResult(HcclSocket::*)(void *, u32))
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclSocket::Recv, HcclResult(HcclSocket::*)(void*, u32))
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
     ret = HcclExchangeMemDesc(comm, 1, &local, 120, &remote, &actualNum);
     EXPECT_EQ(ret, HCCL_E_INTERNAL);
 
-    std::shared_ptr<HcclSocket> socketPtr2 = make_shared<HcclSocket>("tag", devCtx, ipAddr, 16666, HcclSocketRole::SOCKET_ROLE_SERVER);
+    std::shared_ptr<HcclSocket> socketPtr2
+        = make_shared<HcclSocket>("tag", devCtx, ipAddr, 16666, HcclSocketRole::SOCKET_ROLE_SERVER);
     connPtr->socket_ = socketPtr2;
     connPtr->transportMemPtr_->SetDataSocket(socketPtr2);
     ret = HcclExchangeMemDesc(comm, 1, &local, 120, &remote, &actualNum);
@@ -1075,12 +1035,10 @@ TEST_F(OneSidedSt, ut_one_sided_service_mem_exchange_create_socket_failed)
     char file_name_t[] = "./ut_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -1093,8 +1051,8 @@ TEST_F(OneSidedSt, ut_one_sided_service_mem_exchange_create_socket_failed)
     ret = HcclCommInitClusterInfo(rank_table_file, 0, &comm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
-    IHcclOneSidedService *iService = nullptr;
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
+    IHcclOneSidedService* iService = nullptr;
     hcclComm->GetOneSidedService(&iService);
     EXPECT_NE(iService, nullptr);
 
@@ -1107,9 +1065,7 @@ TEST_F(OneSidedSt, ut_one_sided_service_mem_exchange_create_socket_failed)
     HcclOneSidedService* service = dynamic_cast<HcclOneSidedService*>(iService);
     service->isUsedRdmaMap_.insert({1, false});
 
-    MOCKER_CPP(&HcclSocketManager::CreateSingleLinkSocket)
-    .stubs()
-    .will(returnValue(HCCL_E_PTR));
+    MOCKER_CPP(&HcclSocketManager::CreateSingleLinkSocket).stubs().will(returnValue(HCCL_E_PTR));
 
     HcclMemDescs local;
     HcclMemDescs remote;
@@ -1131,12 +1087,10 @@ TEST_F(OneSidedSt, ut_one_sided_service_mem_exchange_sendReceive_roce_0)
     char file_name_t[] = "./ut_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -1153,29 +1107,27 @@ TEST_F(OneSidedSt, ut_one_sided_service_mem_exchange_sendReceive_roce_0)
     devContext.localRdmaRmaBufferMgr_ = std::make_shared<LocalRdmaRmaBufferMgr>();
     HcclNetDevCtx devCtx = &devContext;
 
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
-    IHcclOneSidedService *iService = nullptr;
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
+    IHcclOneSidedService* iService = nullptr;
     hcclComm->GetOneSidedService(&iService);
     EXPECT_NE(iService, nullptr);
     iService->netDevRdmaCtx_ = devCtx;
     HcclOneSidedService* service = dynamic_cast<HcclOneSidedService*>(iService);
 
-    HcclRankLinkInfo localLinkInfo {};
-    HcclRankLinkInfo remoteLinkInfo {};
+    HcclRankLinkInfo localLinkInfo{};
+    HcclRankLinkInfo remoteLinkInfo{};
     remoteLinkInfo.userRank = 1;
     std::unique_ptr<HcclSocketManager> socketManager = nullptr;
     socketManager.reset(new (std::nothrow) HcclSocketManager(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0));
     std::unique_ptr<NotifyPool> notifyPool;
     HcclDispatcher dispatcher;
-    std::shared_ptr<HcclOneSidedConn> connPtr = make_shared<HcclOneSidedConn>(devCtx, localLinkInfo,
-        remoteLinkInfo, socketManager, notifyPool, dispatcher, true, 0U, 0U);
+    std::shared_ptr<HcclOneSidedConn> connPtr = make_shared<HcclOneSidedConn>(
+        devCtx, localLinkInfo, remoteLinkInfo, socketManager, notifyPool, dispatcher, true, 0U, 0U);
     service->oneSidedConns_.insert({1, connPtr});
     service->isUsedRdmaMap_.insert({1, true});
 
-    TransportRoceMem *transport = dynamic_cast<TransportRoceMem *>(connPtr->transportMemPtr_.get());
-    MOCKER_CPP_VIRTUAL(*transport, &TransportRoceMem::ExchangeMemDesc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    TransportRoceMem* transport = dynamic_cast<TransportRoceMem*>(connPtr->transportMemPtr_.get());
+    MOCKER_CPP_VIRTUAL(*transport, &TransportRoceMem::ExchangeMemDesc).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclMemDesc localMemDesc;
     HcclMemDesc remoteMemDesc;
@@ -1183,7 +1135,7 @@ TEST_F(OneSidedSt, ut_one_sided_service_mem_exchange_sendReceive_roce_0)
     HcclMemDescs remote = {&remoteMemDesc, 1};
     u32 actualNum = 0;
     std::string commIdentifier = "hccl_world_group";
-    ret =  service->ExchangeMemDesc(1, local, remote, actualNum, commIdentifier, 10);
+    ret = service->ExchangeMemDesc(1, local, remote, actualNum, commIdentifier, 10);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     ret = HcclCommDestroy(comm);
@@ -1199,12 +1151,10 @@ TEST_F(OneSidedSt, ut_one_sided_service_BatchPut_BatchPut_error_param)
     char file_name_t[] = "./ut_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -1228,15 +1178,14 @@ TEST_F(OneSidedSt, ut_one_sided_service_BatchPut_BatchPut_error_param)
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    localbuf= (s8*)sal_malloc(count * sizeof(s8));
+    localbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(localbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    remotebuf= (s8*)sal_malloc(count * sizeof(s8));
+    remotebuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(remotebuf, count * sizeof(s8), 0, count * sizeof(s8));
     ret = HcclCommInitClusterInfo(rank_table_file, 0, &comm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         localbuf[j] = 2;
     }
     u32 itemNum = 1;
@@ -1291,12 +1240,10 @@ TEST_F(OneSidedSt, one_sided_service_HcclBatchPut_HcclBatchGet_success_roce)
     char file_name_t[] = "./ut_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -1320,15 +1267,14 @@ TEST_F(OneSidedSt, one_sided_service_HcclBatchPut_HcclBatchGet_success_roce)
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    localbuf= (s8*)sal_malloc(count * sizeof(s8));
+    localbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(localbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    remotebuf= (s8*)sal_malloc(count * sizeof(s8));
+    remotebuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(remotebuf, count * sizeof(s8), 0, count * sizeof(s8));
     ret = HcclCommInitClusterInfo(rank_table_file, 0, &comm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         localbuf[j] = 2;
     }
     u32 itemNum = 1;
@@ -1343,8 +1289,8 @@ TEST_F(OneSidedSt, one_sided_service_HcclBatchPut_HcclBatchGet_success_roce)
     devContext.localIpcRmaBufferMgr_ = std::make_shared<LocalIpcRmaBufferMgr>();
     devContext.localRdmaRmaBufferMgr_ = std::make_shared<LocalRdmaRmaBufferMgr>();
     HcclNetDevCtx devCtx = &devContext;
-    HcclRankLinkInfo localLinkInfo {};
-    HcclRankLinkInfo remoteLinkInfo {};
+    HcclRankLinkInfo localLinkInfo{};
+    HcclRankLinkInfo remoteLinkInfo{};
     remoteLinkInfo.userRank = 1;
     std::unique_ptr<HcclSocketManager> socketManager = nullptr;
     socketManager.reset(new (std::nothrow) HcclSocketManager(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0));
@@ -1352,21 +1298,22 @@ TEST_F(OneSidedSt, one_sided_service_HcclBatchPut_HcclBatchGet_success_roce)
     DispatcherPub dispatcherPub(0);
     HcclDispatcher dispatcher = &dispatcherPub;
 
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
 
-    IHcclOneSidedService *iService = nullptr;
+    IHcclOneSidedService* iService = nullptr;
     hcclComm->GetOneSidedService(&iService);
     EXPECT_NE(iService, nullptr);
     std::string commIdentifier = hcclComm->GetIdentifier();
     HcclOneSidedService* service = dynamic_cast<HcclOneSidedService*>(iService);
     std::shared_ptr<hccl::HcclOneSidedConn> connPtr = nullptr;
-    connPtr.reset(new hccl::HcclOneSidedConn(devCtx, localLinkInfo,
-        remoteLinkInfo, socketManager, notifyPool, dispatcher, true, 0U, 0U));
+    connPtr.reset(new hccl::HcclOneSidedConn(
+        devCtx, localLinkInfo, remoteLinkInfo, socketManager, notifyPool, dispatcher, true, 0U, 0U));
     service->oneSidedConns_.insert({1, connPtr});
-    TransportRoceMem *transport = dynamic_cast<TransportRoceMem *>(connPtr->transportMemPtr_.get());
+    TransportRoceMem* transport = dynamic_cast<TransportRoceMem*>(connPtr->transportMemPtr_.get());
 
     BufferKey<uintptr_t, u64> tempLocalKey(reinterpret_cast<uintptr_t>(localbuf), count * sizeof(s8));
-    std::shared_ptr<LocalRdmaRmaBuffer> tempLocalBufferPtr = make_shared<LocalRdmaRmaBuffer>(devCtx, localbuf, count * sizeof(s8));
+    std::shared_ptr<LocalRdmaRmaBuffer> tempLocalBufferPtr
+        = make_shared<LocalRdmaRmaBuffer>(devCtx, localbuf, count * sizeof(s8));
     tempLocalBufferPtr->devAddr = localbuf;
     devContext.localRdmaRmaBufferMgr_->Add(tempLocalKey, tempLocalBufferPtr);
 
@@ -1375,21 +1322,18 @@ TEST_F(OneSidedSt, one_sided_service_HcclBatchPut_HcclBatchGet_success_roce)
     tempRemoteBufferPtr.addr = remotebuf;
     tempRemoteBufferPtr.size = count * sizeof(s8);
     tempRemoteBufferPtr.devAddr = remotebuf;
-    connPtr->remoteRmaBufferMgr_.Add(tempRemoteKey, reinterpret_cast<void *>(&tempRemoteBufferPtr));
+    connPtr->remoteRmaBufferMgr_.Add(tempRemoteKey, reinterpret_cast<void*>(&tempRemoteBufferPtr));
 
-    MOCKER(HrtRaSendWrV2)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&DispatcherPub::RdmaSend, HcclResult(DispatcherPub::*)(u32, u64, const struct send_wr&, HcclRtStream, hccl::RdmaType, u64, u64, bool))
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP_VIRTUAL(*transport, &TransportRoceMem::AddOpFence, HcclResult(TransportRoceMem::*)(const rtStream_t &))
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(GetExternalInputHcclEnableEntryLog)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(true));
+    MOCKER(HrtRaSendWrV2).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(
+        &DispatcherPub::RdmaSend,
+        HcclResult(DispatcherPub::*)(u32, u64, const struct send_wr&, HcclRtStream, hccl::RdmaType, u64, u64, bool))
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP_VIRTUAL(*transport, &TransportRoceMem::AddOpFence, HcclResult(TransportRoceMem::*)(const rtStream_t&))
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(GetExternalInputHcclEnableEntryLog).stubs().with(mockcpp::any()).will(returnValue(true));
 
     ret = HcclBatchPut(comm, 1, desc, itemNum, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -1419,12 +1363,10 @@ TEST_F(OneSidedSt, ut_one_sided_service_HcclBatchPut_HcclBatchGet_success_ipc)
     char file_name_t[] = "./ut_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -1450,13 +1392,12 @@ TEST_F(OneSidedSt, ut_one_sided_service_HcclBatchPut_HcclBatchGet_success_ipc)
 
     localbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(localbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    remotebuf= (s8*)sal_malloc(count * sizeof(s8));
+    remotebuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(remotebuf, count * sizeof(s8), 0, count * sizeof(s8));
     ret = HcclCommInitClusterInfo(rank_table_file, 0, &comm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         localbuf[j] = 2;
     }
     u32 itemNum = 1;
@@ -1471,8 +1412,8 @@ TEST_F(OneSidedSt, ut_one_sided_service_HcclBatchPut_HcclBatchGet_success_ipc)
     devContext.localIpcRmaBufferMgr_ = std::make_shared<LocalIpcRmaBufferMgr>();
     devContext.localRdmaRmaBufferMgr_ = std::make_shared<LocalRdmaRmaBufferMgr>();
     HcclNetDevCtx devCtx = &devContext;
-    HcclRankLinkInfo localLinkInfo {};
-    HcclRankLinkInfo remoteLinkInfo {};
+    HcclRankLinkInfo localLinkInfo{};
+    HcclRankLinkInfo remoteLinkInfo{};
     remoteLinkInfo.userRank = 1;
     std::unique_ptr<HcclSocketManager> socketManager = nullptr;
     socketManager.reset(new (std::nothrow) HcclSocketManager(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0));
@@ -1480,20 +1421,21 @@ TEST_F(OneSidedSt, ut_one_sided_service_HcclBatchPut_HcclBatchGet_success_ipc)
     DispatcherPub dispatcherPub(0);
     HcclDispatcher dispatcher = &dispatcherPub;
 
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
 
-    IHcclOneSidedService *iService = nullptr;
+    IHcclOneSidedService* iService = nullptr;
     hcclComm->GetOneSidedService(&iService);
     EXPECT_NE(iService, nullptr);
     HcclOneSidedService* service = dynamic_cast<HcclOneSidedService*>(iService);
     std::shared_ptr<hccl::HcclOneSidedConn> connPtr = nullptr;
-    connPtr.reset(new hccl::HcclOneSidedConn(devCtx, localLinkInfo,
-        remoteLinkInfo, socketManager, notifyPool, dispatcher, false, 0U, 0U));
+    connPtr.reset(new hccl::HcclOneSidedConn(
+        devCtx, localLinkInfo, remoteLinkInfo, socketManager, notifyPool, dispatcher, false, 0U, 0U));
     service->oneSidedConns_.insert({1, connPtr});
 
-    TransportIpcMem *transport = dynamic_cast<TransportIpcMem *>(connPtr->transportMemPtr_.get());
+    TransportIpcMem* transport = dynamic_cast<TransportIpcMem*>(connPtr->transportMemPtr_.get());
     BufferKey<uintptr_t, u64> tempLocalKey(reinterpret_cast<uintptr_t>(localbuf), count * sizeof(s8));
-    std::shared_ptr<LocalIpcRmaBuffer> tempLocalBufferPtr = make_shared<LocalIpcRmaBuffer>(devCtx, localbuf, count * sizeof(s8));
+    std::shared_ptr<LocalIpcRmaBuffer> tempLocalBufferPtr
+        = make_shared<LocalIpcRmaBuffer>(devCtx, localbuf, count * sizeof(s8));
     tempLocalBufferPtr->devAddr = localbuf;
     devContext.localIpcRmaBufferMgr_->Add(tempLocalKey, tempLocalBufferPtr);
 
@@ -1502,12 +1444,15 @@ TEST_F(OneSidedSt, ut_one_sided_service_HcclBatchPut_HcclBatchGet_success_ipc)
     tempRemoteBufferPtr.addr = remotebuf;
     tempRemoteBufferPtr.size = count * sizeof(s8);
     tempRemoteBufferPtr.devAddr = remotebuf;
-    tempRemoteBufferPtr.memType =  RmaMemType::DEVICE;
-    connPtr->remoteRmaBufferMgr_.Add(tempRemoteKey, reinterpret_cast<void *>(&tempRemoteBufferPtr));
+    tempRemoteBufferPtr.memType = RmaMemType::DEVICE;
+    connPtr->remoteRmaBufferMgr_.Add(tempRemoteKey, reinterpret_cast<void*>(&tempRemoteBufferPtr));
 
-    MOCKER_CPP(&DispatcherPub::MemcpyAsync, HcclResult(DispatcherPub::*)(void*, uint64_t, const void*, u64, HcclRtMemcpyKind, hccl::Stream&, u32, hccl::LinkType))
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(
+        &DispatcherPub::MemcpyAsync,
+        HcclResult(DispatcherPub::*)(
+            void*, uint64_t, const void*, u64, HcclRtMemcpyKind, hccl::Stream&, u32, hccl::LinkType))
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
 
     ret = HcclBatchPut(comm, 1, desc, itemNum, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -1537,12 +1482,10 @@ TEST_F(OneSidedSt, ut_one_sided_service_HcclBatchPut_HcclBatchGet_mem_not_found)
     char file_name_t[] = "./ut_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -1566,15 +1509,14 @@ TEST_F(OneSidedSt, ut_one_sided_service_HcclBatchPut_HcclBatchGet_mem_not_found)
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    localbuf= (s8*)sal_malloc(count * sizeof(s8));
+    localbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(localbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    remotebuf= (s8*)sal_malloc(count * sizeof(s8));
+    remotebuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(remotebuf, count * sizeof(s8), 0, count * sizeof(s8));
     ret = HcclCommInitClusterInfo(rank_table_file, 0, &comm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         localbuf[j] = 2;
     }
     u32 itemNum = 1;
@@ -1589,33 +1531,31 @@ TEST_F(OneSidedSt, ut_one_sided_service_HcclBatchPut_HcclBatchGet_mem_not_found)
     devContext.localIpcRmaBufferMgr_ = std::make_shared<LocalIpcRmaBufferMgr>();
     devContext.localRdmaRmaBufferMgr_ = std::make_shared<LocalRdmaRmaBufferMgr>();
     HcclNetDevCtx devCtx = &devContext;
-    HcclRankLinkInfo localLinkInfo {};
-    HcclRankLinkInfo remoteLinkInfo {};
+    HcclRankLinkInfo localLinkInfo{};
+    HcclRankLinkInfo remoteLinkInfo{};
     remoteLinkInfo.userRank = 1;
     std::unique_ptr<HcclSocketManager> socketManager = nullptr;
     socketManager.reset(new (std::nothrow) HcclSocketManager(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0));
     std::unique_ptr<NotifyPool> notifyPool;
     HcclDispatcher dispatcher;
 
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
 
-    IHcclOneSidedService *iService = nullptr;
+    IHcclOneSidedService* iService = nullptr;
     hcclComm->GetOneSidedService(&iService);
     EXPECT_NE(iService, nullptr);
     HcclOneSidedService* service = dynamic_cast<HcclOneSidedService*>(iService);
     std::shared_ptr<hccl::HcclOneSidedConn> connPtr = nullptr;
-    connPtr.reset(new hccl::HcclOneSidedConn(devCtx, localLinkInfo,
-        remoteLinkInfo, socketManager, notifyPool, dispatcher, true, 0U, 0U));
+    connPtr.reset(new hccl::HcclOneSidedConn(
+        devCtx, localLinkInfo, remoteLinkInfo, socketManager, notifyPool, dispatcher, true, 0U, 0U));
     service->oneSidedConns_.insert({1, connPtr});
 
-    TransportRoceMem *transport = dynamic_cast<TransportRoceMem *>(connPtr->transportMemPtr_.get());
-    MOCKER_CPP_VIRTUAL(*transport, &TransportRoceMem::AddOpFence, HcclResult(TransportRoceMem::*)(const rtStream_t &))
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    TransportRoceMem* transport = dynamic_cast<TransportRoceMem*>(connPtr->transportMemPtr_.get());
+    MOCKER_CPP_VIRTUAL(*transport, &TransportRoceMem::AddOpFence, HcclResult(TransportRoceMem::*)(const rtStream_t&))
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&TransportRoceMem::TransportRdmaWithType)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportRoceMem::TransportRdmaWithType).stubs().will(returnValue(HCCL_SUCCESS));
 
     ret = HcclBatchPut(comm, 1, desc, itemNum, stream);
 
@@ -1639,7 +1579,7 @@ TEST_F(OneSidedSt, ut_one_sided_service_HcclBatchPut_HcclBatchGet_mem_not_found)
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     GlobalMockObject::verify();
 }
-#if 0 //执行失败内存泄漏
+#if 0 // 执行失败内存泄漏
 TEST_F(OneSidedSt, ut_one_sided_service_DeinitOneSidedCtx)
 {
     typedef HcclResult (*HcclOneSideServiceCallBack)(std::unique_ptr<hccl::IHcclOneSidedService> &,
@@ -1705,19 +1645,18 @@ TEST_F(OneSidedSt, ut_one_sided_service_DeinitOneSidedCtx)
 #endif
 TEST_F(OneSidedSt, ut_one_sided_service_RegHostMemMax)
 {
-    typedef HcclResult (*HcclOneSideServiceCallBack)(std::unique_ptr<hccl::IHcclOneSidedService> &,
-    std::unique_ptr<hccl::HcclSocketManager> &, std::unique_ptr<hccl::NotifyPool> &);
+    typedef HcclResult (*HcclOneSideServiceCallBack)(
+        std::unique_ptr<hccl::IHcclOneSidedService>&, std::unique_ptr<hccl::HcclSocketManager>&,
+        std::unique_ptr<hccl::NotifyPool>&);
     nlohmann::json rank_table = rank_table_910_1server_4rank;
 
     char file_name_t[] = "./ut_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -1729,7 +1668,7 @@ TEST_F(OneSidedSt, ut_one_sided_service_RegHostMemMax)
     void* comm;
     const char* rank_table_file = "./ut_opbase_test.json";
 
-    localbuf= (s8*)sal_malloc(count * sizeof(s8));
+    localbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(localbuf, count * sizeof(s8), 0, count * sizeof(s8));
     ret = HcclCommInitClusterInfo(rank_table_file, 0, &comm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -1739,22 +1678,18 @@ TEST_F(OneSidedSt, ut_one_sided_service_RegHostMemMax)
     devContext.localIpcRmaBufferMgr_ = std::make_shared<LocalIpcRmaBufferMgr>();
     devContext.localRdmaRmaBufferMgr_ = std::make_shared<LocalRdmaRmaBufferMgr>();
 
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
-    IHcclOneSidedService *iService = nullptr;
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
+    IHcclOneSidedService* iService = nullptr;
     hcclComm->GetOneSidedService(&iService);
     iService->netDevRdmaCtx_ = &devContext;
     EXPECT_NE(iService, nullptr);
     HcclOneSidedService* service = dynamic_cast<HcclOneSidedService*>(iService);
 
     std::string localdesc = "ld";
-    MOCKER_CPP(&LocalRdmaRmaBuffer::Serialize)
-    .stubs()
-    .will(returnValue(localdesc));
-    MOCKER_CPP(&LocalRdmaRmaBuffer::Init)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&LocalRdmaRmaBuffer::Serialize).stubs().will(returnValue(localdesc));
+    MOCKER_CPP(&LocalRdmaRmaBuffer::Init).stubs().will(returnValue(HCCL_SUCCESS));
 
-    constexpr u64 ONE_SIDE_HOST_MEM_MAX_SIZE = 1024llu * 1024 * 1024 * 1024;  // host侧支持内存注册大小上限为1TB
+    constexpr u64 ONE_SIDE_HOST_MEM_MAX_SIZE = 1024llu * 1024 * 1024 * 1024; // host侧支持内存注册大小上限为1TB
     HcclMemDesc regMemDesc;
     HcclMemDesc regMemDesc1;
     ret = HcclRegisterMem(comm, 1, 1, localbuf, ONE_SIDE_HOST_MEM_MAX_SIZE, &regMemDesc);
@@ -1779,19 +1714,18 @@ TEST_F(OneSidedSt, ut_one_sided_service_RegHostMemMax)
 
 TEST_F(OneSidedSt, ut_one_sided_service_RegDevMemMax)
 {
-    typedef HcclResult (*HcclOneSideServiceCallBack)(std::unique_ptr<hccl::IHcclOneSidedService> &,
-    std::unique_ptr<hccl::HcclSocketManager> &, std::unique_ptr<hccl::NotifyPool> &);
+    typedef HcclResult (*HcclOneSideServiceCallBack)(
+        std::unique_ptr<hccl::IHcclOneSidedService>&, std::unique_ptr<hccl::HcclSocketManager>&,
+        std::unique_ptr<hccl::NotifyPool>&);
     nlohmann::json rank_table = rank_table_910_1server_4rank;
 
     char file_name_t[] = "./ut_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -1803,7 +1737,7 @@ TEST_F(OneSidedSt, ut_one_sided_service_RegDevMemMax)
     void* comm;
     const char* rank_table_file = "./ut_opbase_test.json";
 
-    localbuf= (s8*)sal_malloc(count * sizeof(s8));
+    localbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(localbuf, count * sizeof(s8), 0, count * sizeof(s8));
     ret = HcclCommInitClusterInfo(rank_table_file, 0, &comm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -1813,22 +1747,18 @@ TEST_F(OneSidedSt, ut_one_sided_service_RegDevMemMax)
     devContext.localIpcRmaBufferMgr_ = std::make_shared<LocalIpcRmaBufferMgr>();
     devContext.localRdmaRmaBufferMgr_ = std::make_shared<LocalRdmaRmaBufferMgr>();
 
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
-    IHcclOneSidedService *iService = nullptr;
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
+    IHcclOneSidedService* iService = nullptr;
     hcclComm->GetOneSidedService(&iService);
     iService->netDevRdmaCtx_ = &devContext;
     EXPECT_NE(iService, nullptr);
     HcclOneSidedService* service = dynamic_cast<HcclOneSidedService*>(iService);
 
     std::string localdesc = "ld";
-    MOCKER_CPP(&LocalRdmaRmaBuffer::Serialize)
-    .stubs()
-    .will(returnValue(localdesc));
-    MOCKER_CPP(&LocalRdmaRmaBuffer::Init)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&LocalRdmaRmaBuffer::Serialize).stubs().will(returnValue(localdesc));
+    MOCKER_CPP(&LocalRdmaRmaBuffer::Init).stubs().will(returnValue(HCCL_SUCCESS));
 
-    constexpr u64 ONE_SIDE_DEVICE_MEM_MAX_SIZE = 64llu * 1024 * 1024 * 1024;  // device侧支持内存注册大小上限为64GB
+    constexpr u64 ONE_SIDE_DEVICE_MEM_MAX_SIZE = 64llu * 1024 * 1024 * 1024; // device侧支持内存注册大小上限为64GB
     HcclMemDesc regMemDesc;
     HcclMemDesc regMemDesc1;
 
@@ -1852,19 +1782,18 @@ TEST_F(OneSidedSt, ut_one_sided_service_RegDevMemMax)
 
 TEST_F(OneSidedSt, ut_one_sided_service_RegUnRegDevMemMaxCnt)
 {
-    typedef HcclResult (*HcclOneSideServiceCallBack)(std::unique_ptr<hccl::IHcclOneSidedService> &,
-    std::unique_ptr<hccl::HcclSocketManager> &, std::unique_ptr<hccl::NotifyPool> &);
+    typedef HcclResult (*HcclOneSideServiceCallBack)(
+        std::unique_ptr<hccl::IHcclOneSidedService>&, std::unique_ptr<hccl::HcclSocketManager>&,
+        std::unique_ptr<hccl::NotifyPool>&);
     nlohmann::json rank_table = rank_table_910_1server_4rank;
 
     char file_name_t[] = "./ut_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -1876,7 +1805,7 @@ TEST_F(OneSidedSt, ut_one_sided_service_RegUnRegDevMemMaxCnt)
     void* comm;
     const char* rank_table_file = "./ut_opbase_test.json";
 
-    localbuf= (s8*)sal_malloc(count * sizeof(s8));
+    localbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(localbuf, count * sizeof(s8), 0, count * sizeof(s8));
     ret = HcclCommInitClusterInfo(rank_table_file, 0, &comm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -1886,17 +1815,15 @@ TEST_F(OneSidedSt, ut_one_sided_service_RegUnRegDevMemMaxCnt)
     devContext.localIpcRmaBufferMgr_ = std::make_shared<LocalIpcRmaBufferMgr>();
     devContext.localRdmaRmaBufferMgr_ = std::make_shared<LocalRdmaRmaBufferMgr>();
 
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
-    IHcclOneSidedService *iService = nullptr;
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
+    IHcclOneSidedService* iService = nullptr;
     hcclComm->GetOneSidedService(&iService);
     iService->netDevRdmaCtx_ = &devContext;
     EXPECT_NE(iService, nullptr);
     HcclOneSidedService* service = dynamic_cast<HcclOneSidedService*>(iService);
     service->isUsedRdmaMap_.insert({1, true});
 
-    MOCKER_CPP(&LocalRdmaRmaBuffer::Init)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&LocalRdmaRmaBuffer::Init).stubs().will(returnValue(HCCL_SUCCESS));
 
     constexpr u64 ONE_SIDE_DEVICE_MEM_SIZE = 1024 * 1024 * 1024;
     constexpr u64 ONE_SIDE_DEVICE_MEM_SIZE_1 = 1024 * 1024;
@@ -1925,7 +1852,8 @@ TEST_F(OneSidedSt, ut_one_sided_service_RegUnRegDevMemMaxCnt)
         ret = HcclRegisterMem(comm, 1, 0, subBuffers[i], ONE_SIDE_DEVICE_MEM_SIZE_1, &subRegMemDesc[i]);
         EXPECT_EQ(ret, HCCL_SUCCESS);
     }
-    ret = HcclRegisterMem(comm, 1, 0, subBuffers[regCntMax] + ONE_SIDE_DEVICE_MEM_SIZE_1, ONE_SIDE_DEVICE_MEM_SIZE_1, &regMemDesc1);
+    ret = HcclRegisterMem(
+        comm, 1, 0, subBuffers[regCntMax] + ONE_SIDE_DEVICE_MEM_SIZE_1, ONE_SIDE_DEVICE_MEM_SIZE_1, &regMemDesc1);
     EXPECT_EQ(ret, HCCL_E_UNAVAIL);
 
     for (int i = 0; i < regCntMax; i++) {
@@ -1941,19 +1869,18 @@ TEST_F(OneSidedSt, ut_one_sided_service_RegUnRegDevMemMaxCnt)
 
 TEST_F(OneSidedSt, ut_one_sided_service_RegUnRegDevMemMaxCnt_multi_remoteRank)
 {
-    typedef HcclResult (*HcclOneSideServiceCallBack)(std::unique_ptr<hccl::IHcclOneSidedService> &,
-    std::unique_ptr<hccl::HcclSocketManager> &, std::unique_ptr<hccl::NotifyPool> &);
+    typedef HcclResult (*HcclOneSideServiceCallBack)(
+        std::unique_ptr<hccl::IHcclOneSidedService>&, std::unique_ptr<hccl::HcclSocketManager>&,
+        std::unique_ptr<hccl::NotifyPool>&);
     nlohmann::json rank_table = rank_table_910_1server_4rank;
 
     char file_name_t[] = "./ut_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -1965,7 +1892,7 @@ TEST_F(OneSidedSt, ut_one_sided_service_RegUnRegDevMemMaxCnt_multi_remoteRank)
     void* comm;
     const char* rank_table_file = "./ut_opbase_test.json";
 
-    localbuf= (s8*)sal_malloc(count * sizeof(s8));
+    localbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(localbuf, count * sizeof(s8), 0, count * sizeof(s8));
     ret = HcclCommInitClusterInfo(rank_table_file, 0, &comm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -1976,21 +1903,19 @@ TEST_F(OneSidedSt, ut_one_sided_service_RegUnRegDevMemMaxCnt_multi_remoteRank)
     devContext.localRdmaRmaBufferMgr_ = std::make_shared<LocalRdmaRmaBufferMgr>();
     HcclNetDevCtx devCtx = &devContext;
 
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
-    IHcclOneSidedService *iService = nullptr;
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
+    IHcclOneSidedService* iService = nullptr;
     hcclComm->GetOneSidedService(&iService);
     iService->netDevRdmaCtx_ = devCtx;
     EXPECT_NE(iService, nullptr);
     HcclOneSidedService* service = dynamic_cast<HcclOneSidedService*>(iService);
     bool useRdma = true;
     MOCKER_CPP(&HcclOneSidedService::IsUsedRdma)
-    .stubs()
-    .with(mockcpp::any(), outBound(useRdma))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(useRdma))
+        .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&LocalRdmaRmaBuffer::Init)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&LocalRdmaRmaBuffer::Init).stubs().will(returnValue(HCCL_SUCCESS));
 
     constexpr u64 ONE_SIDE_DEVICE_MEM_SIZE = 1024 * 1024 * 1024;
     constexpr u64 ONE_SIDE_DEVICE_MEM_SIZE_1 = 1024 * 1024;
@@ -2001,7 +1926,7 @@ TEST_F(OneSidedSt, ut_one_sided_service_RegUnRegDevMemMaxCnt_multi_remoteRank)
     u32 regCntMax = 256;
     s8* subBuffers[regCntMax];
     HcclMemDesc subRegMemDesc[regCntMax];
-	HcclMemDesc subRegMemDesc2[regCntMax];
+    HcclMemDesc subRegMemDesc2[regCntMax];
     for (int i = 0; i < 255; i++) {
         subBuffers[i] = localbuf + i * ONE_SIDE_DEVICE_MEM_SIZE_1; // 每块内存1M
         ret = service->RegMem(subBuffers[i], ONE_SIDE_DEVICE_MEM_SIZE_1, HCCL_MEM_TYPE_DEVICE, 1, subRegMemDesc[i]);
@@ -2015,21 +1940,21 @@ TEST_F(OneSidedSt, ut_one_sided_service_RegUnRegDevMemMaxCnt_multi_remoteRank)
     EXPECT_EQ(ret, HCCL_E_UNAVAIL);
 
     for (int i = 0; i < 255; i++) {
-		ret = service->DeregMem(subRegMemDesc[i]);
-		EXPECT_EQ(ret, HCCL_SUCCESS);
+        ret = service->DeregMem(subRegMemDesc[i]);
+        EXPECT_EQ(ret, HCCL_SUCCESS);
 
         ret = service->DeregMem(subRegMemDesc2[i]);
-		EXPECT_EQ(ret, HCCL_SUCCESS);
+        EXPECT_EQ(ret, HCCL_SUCCESS);
     }
-	ret = service->DeregMem(subRegMemDesc[255]);
-	EXPECT_EQ(ret, HCCL_SUCCESS);
+    ret = service->DeregMem(subRegMemDesc[255]);
+    EXPECT_EQ(ret, HCCL_SUCCESS);
 
     ret = HcclCommDestroy(comm);
     sal_free(localbuf);
     remove(file_name_t);
     GlobalMockObject::verify();
 }
-#if 0 //执行失败
+#if 0 // 执行失败
 TEST_F(OneSidedSt, ut_one_sided_service_InitNetDevCtx_Fail)
 {
     typedef HcclResult (*HcclOneSideServiceCallBack)(std::unique_ptr<hccl::IHcclOneSidedService> &,
@@ -2156,19 +2081,18 @@ TEST_F(OneSidedSt, ut_one_sided_service_InitNetDevCtx_HostDeployment)
 #endif
 TEST_F(OneSidedSt, ut_one_sided_service_setNetDevCtx)
 {
-    typedef HcclResult (*HcclOneSideServiceCallBack)(std::unique_ptr<hccl::IHcclOneSidedService> &,
-    std::unique_ptr<hccl::HcclSocketManager> &, std::unique_ptr<hccl::NotifyPool> &);
+    typedef HcclResult (*HcclOneSideServiceCallBack)(
+        std::unique_ptr<hccl::IHcclOneSidedService>&, std::unique_ptr<hccl::HcclSocketManager>&,
+        std::unique_ptr<hccl::NotifyPool>&);
     nlohmann::json rank_table = rank_table_910_1server_4rank;
 
     char file_name_t[] = "./ut_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -2181,15 +2105,15 @@ TEST_F(OneSidedSt, ut_one_sided_service_setNetDevCtx)
     const char* rank_table_file = "./ut_opbase_test.json";
     ret = HcclCommInitClusterInfo(rank_table_file, 0, &comm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
 
-    IHcclOneSidedService *iService = nullptr;
+    IHcclOneSidedService* iService = nullptr;
     hcclComm->GetOneSidedService(&iService);
     EXPECT_NE(iService, nullptr);
 
-    HcclNetDevCtx *devCtx;
+    HcclNetDevCtx* devCtx;
     bool useRdma = false;
-    devCtx= (HcclNetDevCtx *)sal_malloc(sizeof(HcclNetDevCtx));
+    devCtx = (HcclNetDevCtx*)sal_malloc(sizeof(HcclNetDevCtx));
     sal_memset(devCtx, sizeof(HcclNetDevCtx), 0, sizeof(HcclNetDevCtx));
     ret = iService->SetNetDevCtx(devCtx, useRdma);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -2201,7 +2125,7 @@ TEST_F(OneSidedSt, ut_one_sided_service_setNetDevCtx)
     remove(file_name_t);
     GlobalMockObject::verify();
 }
-#if 0  //执行失败内存泄漏
+#if 0 // 执行失败内存泄漏
 TEST_F(OneSidedSt, ut_one_sided_service_init_devIpAddrEmpty)
 {
     typedef HcclResult (*HcclOneSideServiceCallBack)(std::unique_ptr<hccl::IHcclOneSidedService> &,
@@ -2249,12 +2173,10 @@ TEST_F(OneSidedSt, ut_one_sided_service_BatchPut_Rma_Buffer_test)
     char file_name_t[] = "./ut_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -2278,15 +2200,14 @@ TEST_F(OneSidedSt, ut_one_sided_service_BatchPut_Rma_Buffer_test)
     rt_ret = aclrtCreateStream(&stream);
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
 
-    localbuf= (s8*)sal_malloc(count * sizeof(s8));
+    localbuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(localbuf, count * sizeof(s8), 0, count * sizeof(s8));
-    remotebuf= (s8*)sal_malloc(count * sizeof(s8));
+    remotebuf = (s8*)sal_malloc(count * sizeof(s8));
     sal_memset(remotebuf, count * sizeof(s8), 0, count * sizeof(s8));
     ret = HcclCommInitClusterInfo(rank_table_file, 0, &comm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    for (int j = 0; j < count; j++)
-    {
+    for (int j = 0; j < count; j++) {
         localbuf[j] = 2;
     }
     u32 itemNum = 1;
@@ -2301,8 +2222,8 @@ TEST_F(OneSidedSt, ut_one_sided_service_BatchPut_Rma_Buffer_test)
     devContext.localIpcRmaBufferMgr_ = std::make_shared<LocalIpcRmaBufferMgr>();
     devContext.localRdmaRmaBufferMgr_ = std::make_shared<LocalRdmaRmaBufferMgr>();
     HcclNetDevCtx devCtx = &devContext;
-    HcclRankLinkInfo localLinkInfo {};
-    HcclRankLinkInfo remoteLinkInfo {};
+    HcclRankLinkInfo localLinkInfo{};
+    HcclRankLinkInfo remoteLinkInfo{};
     remoteLinkInfo.userRank = 1;
     std::unique_ptr<HcclSocketManager> socketManager = nullptr;
     socketManager.reset(new (std::nothrow) HcclSocketManager(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0));
@@ -2313,18 +2234,19 @@ TEST_F(OneSidedSt, ut_one_sided_service_BatchPut_Rma_Buffer_test)
     std::shared_ptr<LocalRdmaRmaBuffer> tempLocalBufferPtr;
     tempLocalBufferPtr.reset(new LocalRdmaRmaBuffer(devCtx, localbuf, count * sizeof(s8)));
     tempLocalBufferPtr->devAddr = localbuf;
-    tempLocalBufferPtr->pimpl_.reset(new LocalRdmaRmaBufferImpl(devCtx, localbuf, count * sizeof(s8), RmaMemType::DEVICE));
+    tempLocalBufferPtr->pimpl_.reset(
+        new LocalRdmaRmaBufferImpl(devCtx, localbuf, count * sizeof(s8), RmaMemType::DEVICE));
 
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
 
-    IHcclOneSidedService *iService = nullptr;
+    IHcclOneSidedService* iService = nullptr;
     hcclComm->GetOneSidedService(&iService);
     EXPECT_NE(iService, nullptr);
     std::string commIdentifier = hcclComm->GetIdentifier();
     HcclOneSidedService* service = reinterpret_cast<HcclOneSidedService*>(iService);
     std::shared_ptr<hccl::HcclOneSidedConn> connPtr = nullptr;
-    connPtr.reset(new hccl::HcclOneSidedConn(devCtx, localLinkInfo,
-        remoteLinkInfo, socketManager, notifyPool, dispatcher, true, 0U, 0U));
+    connPtr.reset(new hccl::HcclOneSidedConn(
+        devCtx, localLinkInfo, remoteLinkInfo, socketManager, notifyPool, dispatcher, true, 0U, 0U));
 
     BufferKey<uintptr_t, u64> tempRemoteKey(reinterpret_cast<uintptr_t>(remotebuf), count * sizeof(s8));
     RemoteRdmaRmaBuffer tempRemoteBufferPtr{};
@@ -2333,26 +2255,21 @@ TEST_F(OneSidedSt, ut_one_sided_service_BatchPut_Rma_Buffer_test)
     tempRemoteBufferPtr.size = count * sizeof(s8);
     tempRemoteBufferPtr.devAddr = remotebuf;
     service->oneSidedConns_.insert({1, connPtr});
-    TransportRoceMem *transport = dynamic_cast<TransportRoceMem *>(connPtr->transportMemPtr_.get());
-    connPtr->remoteRmaBufferMgr_.Add(tempRemoteKey, reinterpret_cast<void *>(&tempRemoteBufferPtr));
+    TransportRoceMem* transport = dynamic_cast<TransportRoceMem*>(connPtr->transportMemPtr_.get());
+    connPtr->remoteRmaBufferMgr_.Add(tempRemoteKey, reinterpret_cast<void*>(&tempRemoteBufferPtr));
     devContext.localRdmaRmaBufferMgr_->Add(tempLocalKey, tempLocalBufferPtr);
 
-    MOCKER_CPP_VIRTUAL(*transport, &TransportRoceMem::AddOpFence, HcclResult(TransportRoceMem::*)(const rtStream_t &))
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP_VIRTUAL(*transport, &TransportRoceMem::AddOpFence, HcclResult(TransportRoceMem::*)(const rtStream_t&))
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&TransportRoceMem::TransportRdmaWithType)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportRoceMem::TransportRdmaWithType).stubs().will(returnValue(HCCL_SUCCESS));
 
     ret = HcclBatchPut(comm, 1, desc, itemNum, stream);
 
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    MOCKER(GetExternalInputHcclEnableEntryLog)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(true));
+    MOCKER(GetExternalInputHcclEnableEntryLog).stubs().with(mockcpp::any()).will(returnValue(true));
     ret = HcclBatchGet(comm, 1, desc, itemNum, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
@@ -2370,7 +2287,7 @@ TEST_F(OneSidedSt, ut_one_sided_service_BatchPut_Rma_Buffer_test)
     EXPECT_EQ(rt_ret, RT_ERROR_NONE);
     GlobalMockObject::verify();
 }
-#if 0 //执行失败ut_opbase_test.json
+#if 0 // 执行失败ut_opbase_test.json
 TEST_F(OneSidedSt, ut_one_sided_service_mem_RemapRegistedMemory_roce_01)
 {
     typedef HcclResult (*HcclOneSideServiceCallBack)(std::unique_ptr<hccl::IHcclOneSidedService> &,
@@ -2611,25 +2528,28 @@ TEST_F(OneSidedSt, ut_one_sided_service_conn_conect)
     devContext.localIpcRmaBufferMgr_ = std::make_shared<LocalIpcRmaBufferMgr>();
     devContext.localRdmaRmaBufferMgr_ = std::make_shared<LocalRdmaRmaBufferMgr>();
     HcclNetDevCtx devCtx = &devContext;
-    HcclRankLinkInfo localLinkInfo {};
-    HcclRankLinkInfo remoteLinkInfo {};
+    HcclRankLinkInfo localLinkInfo{};
+    HcclRankLinkInfo remoteLinkInfo{};
     localLinkInfo.userRank = 0;
     remoteLinkInfo.userRank = 1;
-    std::unique_ptr<HcclSocketManager> socketManager = make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
+    std::unique_ptr<HcclSocketManager> socketManager
+        = make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
     std::unique_ptr<NotifyPool> notifyPool;
     HcclDispatcher dispatcher;
-    std::shared_ptr<HcclOneSidedConn> connPtr = make_shared<HcclOneSidedConn>(devCtx, localLinkInfo,
-        remoteLinkInfo, socketManager, notifyPool, dispatcher, true, 0U, 0U);
+    std::shared_ptr<HcclOneSidedConn> connPtr = make_shared<HcclOneSidedConn>(
+        devCtx, localLinkInfo, remoteLinkInfo, socketManager, notifyPool, dispatcher, true, 0U, 0U);
 
     HcclIpAddress ipAddr;
-    std::shared_ptr<HcclSocket> socketPtr = make_shared<HcclSocket>("tag", devCtx, ipAddr, 16666, HcclSocketRole::SOCKET_ROLE_CLIENT);
+    std::shared_ptr<HcclSocket> socketPtr
+        = make_shared<HcclSocket>("tag", devCtx, ipAddr, 16666, HcclSocketRole::SOCKET_ROLE_CLIENT);
     std::vector<std::shared_ptr<HcclSocket>> connectSockets;
     connectSockets.push_back(socketPtr);
-    MOCKER_CPP(&HcclSocketManager::CreateSingleLinkSocket).stubs()
-    .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), outBound(connectSockets), mockcpp::any(), mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclSocketManager::CreateSingleLinkSocket)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), outBound(connectSockets), mockcpp::any(), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
-    TransportRoceMem *transport = dynamic_cast<TransportRoceMem *>(connPtr->transportMemPtr_.get());
+    TransportRoceMem* transport = dynamic_cast<TransportRoceMem*>(connPtr->transportMemPtr_.get());
     MOCKER_CPP_VIRTUAL(*transport, &TransportRoceMem::ExchangeMemDesc).stubs().will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP_VIRTUAL(*transport, &TransportRoceMem::Connect).stubs().will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP_VIRTUAL(*transport, &TransportRoceMem::SetSocket).stubs().will(returnValue(HCCL_SUCCESS));
@@ -2645,7 +2565,8 @@ TEST_F(OneSidedSt, regmem_without_deregmem)
 {
     int ret = HCCL_SUCCESS;
 
-    NetDevContext netDevCtx;;
+    NetDevContext netDevCtx;
+    ;
     netDevCtx.nicType_ = NicType::DEVICE_NIC_TYPE;
     netDevCtx.localRdmaRmaBufferMgr_ = std::make_shared<LocalRdmaRmaBufferMgr>();
     HcclNetDevCtx devCtx = &netDevCtx;
@@ -2654,11 +2575,13 @@ TEST_F(OneSidedSt, regmem_without_deregmem)
     vNetDevCtx.nicType_ = NicType::VNIC_TYPE;
     vNetDevCtx.localIpcRmaBufferMgr_ = std::make_shared<LocalIpcRmaBufferMgr>();
     HcclNetDevCtx vDevCtx = &vNetDevCtx;
-    
-    unique_ptr<HcclSocketManager> socketManager = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
+
+    unique_ptr<HcclSocketManager> socketManager
+        = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
     unique_ptr<NotifyPool> notifyPool = std::make_unique<NotifyPool>();
     HcclCommConfig commConfig("hccl_world_group");
-    unique_ptr<HcclOneSidedService> service = std::make_unique<HcclOneSidedService>(socketManager, notifyPool, commConfig);
+    unique_ptr<HcclOneSidedService> service
+        = std::make_unique<HcclOneSidedService>(socketManager, notifyPool, commConfig);
     service->SetNetDevCtx(devCtx, true);
     service->SetNetDevCtx(vDevCtx, false);
 
@@ -2667,41 +2590,21 @@ TEST_F(OneSidedSt, regmem_without_deregmem)
     s8* localbuf = (s8*)sal_malloc(bufSize);
     sal_memset(localbuf, bufSize, 0, bufSize);
 
-    MOCKER_CPP(&LocalIpcRmaBuffer::Init)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&LocalIpcRmaBuffer::Init).stubs().will(returnValue(HCCL_SUCCESS));
     std::string localdesc = "ipc_desc";
-    MOCKER_CPP(&LocalIpcRmaBuffer::Serialize)
-    .stubs()
-    .will(returnValue(localdesc));
+    MOCKER_CPP(&LocalIpcRmaBuffer::Serialize).stubs().will(returnValue(localdesc));
 
-    MOCKER_CPP(&LocalRdmaRmaBuffer::Init)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&LocalRdmaRmaBuffer::Init).stubs().will(returnValue(HCCL_SUCCESS));
     std::string localdesc2 = "roce_desc";
-    MOCKER_CPP(&LocalRdmaRmaBuffer::Serialize)
-    .stubs()
-    .will(returnValue(localdesc2));
+    MOCKER_CPP(&LocalRdmaRmaBuffer::Serialize).stubs().will(returnValue(localdesc2));
 
-    MOCKER_CPP(&HcclOneSidedService::IsUsedRdma)
-    .stubs()
-    .with(eq(1U), outBound(false))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclOneSidedService::IsUsedRdma).stubs().with(eq(1U), outBound(false)).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclOneSidedService::IsUsedRdma)
-    .stubs()
-    .with(eq(2U), outBound(false))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclOneSidedService::IsUsedRdma).stubs().with(eq(2U), outBound(false)).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclOneSidedService::IsUsedRdma)
-    .stubs()
-    .with(eq(3U), outBound(true))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclOneSidedService::IsUsedRdma).stubs().with(eq(3U), outBound(true)).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclOneSidedService::IsUsedRdma)
-    .stubs()
-    .with(eq(4U), outBound(true))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclOneSidedService::IsUsedRdma).stubs().with(eq(4U), outBound(true)).will(returnValue(HCCL_SUCCESS));
 
     HcclMemDesc localMemDesc1;
     ret = service->RegMem(localbuf, bufSize, HCCL_MEM_TYPE_DEVICE, 1, localMemDesc1);
@@ -2733,10 +2636,12 @@ TEST_F(OneSidedSt, remap_ipc_mem)
     vNetDevCtx.localIpcRmaBufferMgr_ = std::make_shared<LocalIpcRmaBufferMgr>();
     HcclNetDevCtx vDevCtx = &vNetDevCtx;
 
-    unique_ptr<HcclSocketManager> socketManager = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
+    unique_ptr<HcclSocketManager> socketManager
+        = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
     unique_ptr<NotifyPool> notifyPool = std::make_unique<NotifyPool>();
     HcclCommConfig commConfig("hccl_world_group");
-    unique_ptr<HcclOneSidedService> service = std::make_unique<HcclOneSidedService>(socketManager, notifyPool, commConfig);
+    unique_ptr<HcclOneSidedService> service
+        = std::make_unique<HcclOneSidedService>(socketManager, notifyPool, commConfig);
     service->SetNetDevCtx(vDevCtx, false);
 
     u64 count = 1024;
@@ -2744,18 +2649,11 @@ TEST_F(OneSidedSt, remap_ipc_mem)
     s8* localbuf = (s8*)sal_malloc(bufSize);
     sal_memset(localbuf, bufSize, 0, bufSize);
 
-    MOCKER_CPP(&LocalIpcRmaBuffer::Init)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&LocalIpcRmaBuffer::Init).stubs().will(returnValue(HCCL_SUCCESS));
     std::string localdesc = "ipc_desc";
-    MOCKER_CPP(&LocalIpcRmaBuffer::Serialize)
-    .stubs()
-    .will(returnValue(localdesc));
+    MOCKER_CPP(&LocalIpcRmaBuffer::Serialize).stubs().will(returnValue(localdesc));
 
-    MOCKER_CPP(&HcclOneSidedService::IsUsedRdma)
-    .stubs()
-    .with(eq(1U), outBound(false))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclOneSidedService::IsUsedRdma).stubs().with(eq(1U), outBound(false)).will(returnValue(HCCL_SUCCESS));
 
     HcclMemDesc localMemDesc1;
     ret = service->RegMem(localbuf, bufSize, HCCL_MEM_TYPE_DEVICE, 1, localMemDesc1);
@@ -2954,8 +2852,9 @@ TEST_F(OneSidedSt, roce_mem_regmem_deregmem)
 #endif
 TEST_F(OneSidedSt, ut_one_sided_service_batchput_batchget_err)
 {
-    typedef HcclResult (*HcclOneSideServiceCallBack)(std::unique_ptr<hccl::IHcclOneSidedService> &,
-    std::unique_ptr<hccl::HcclSocketManager> &, std::unique_ptr<hccl::NotifyPool> &);
+    typedef HcclResult (*HcclOneSideServiceCallBack)(
+        std::unique_ptr<hccl::IHcclOneSidedService>&, std::unique_ptr<hccl::HcclSocketManager>&,
+        std::unique_ptr<hccl::NotifyPool>&);
     nlohmann::json rank_table = rank_table_910_1server_4rank;
     char file_name_t[] = "./ut_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
@@ -2975,27 +2874,25 @@ TEST_F(OneSidedSt, ut_one_sided_service_batchput_batchget_err)
     HcclComm comm;
     ret = HcclCommInitClusterInfo(rank_table_file, 0, &comm);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
 
-    IHcclOneSidedService *iService = nullptr;
+    IHcclOneSidedService* iService = nullptr;
     hcclComm->GetOneSidedService(&iService);
     EXPECT_NE(iService, nullptr);
     iService->netDevIpcCtx_ = nullptr;
     HcclOneSidedService* service = dynamic_cast<HcclOneSidedService*>(iService);
 
     RankId remoteRankId = 10; // invalid value
-    HcclOneSideOpDesc desc ;
-    u32 descNum ;
+    HcclOneSideOpDesc desc;
+    u32 descNum;
     rtStream_t stream;
     try {
         service->BatchPut(remoteRankId, &desc, descNum, stream);
     } catch (const std::out_of_range& e) {
-
     }
     try {
         service->BatchGet(remoteRankId, &desc, descNum, stream);
     } catch (const std::out_of_range& e) {
-
     }
 
     ret = HcclCommDestroy(comm);
@@ -3004,7 +2901,7 @@ TEST_F(OneSidedSt, ut_one_sided_service_batchput_batchget_err)
     remove(file_name_t);
     GlobalMockObject::verify();
 }
-#if 0 //路径失效launch_aicpu168
+#if 0 // 路径失效launch_aicpu168
 TEST_F(OneSidedSt, ut_one_sided_service_batchput_aicpu_rdma)
 {
     nlohmann::json rank_table = rank_table_910_1server_4rank;
@@ -3867,12 +3764,10 @@ TEST_F(OneSidedSt, regmem_without_memExport)
     char file_name_t[] = "./ut_opbase_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -3893,8 +3788,8 @@ TEST_F(OneSidedSt, regmem_without_memExport)
     s8* localbuf = (s8*)sal_malloc(bufSize);
     sal_memset(localbuf, bufSize, 0, bufSize);
 
-    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm *>(comm);
-    IHcclOneSidedService *iService = nullptr;
+    hccl::hcclComm* hcclComm = static_cast<hccl::hcclComm*>(comm);
+    IHcclOneSidedService* iService = nullptr;
     hcclComm->GetOneSidedService(&iService);
     iService->netDevRdmaCtx_ = devCtx;
     EXPECT_NE(iService, nullptr);
@@ -3905,18 +3800,14 @@ TEST_F(OneSidedSt, regmem_without_memExport)
     s8* subBuffers[regCntMax];
     HcclMemDesc subRegMemDesc[regCntMax];
 
-    MOCKER(HcclMemReg)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcclMemReg).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(HcclMemExport)
-    .stubs()
-    .will(returnValue(HCCL_E_UNAVAIL));
+    MOCKER(HcclMemExport).stubs().will(returnValue(HCCL_E_UNAVAIL));
     HcclMemDesc localMemDesc1;
     try {
         ret = service->RegMem(localbuf, bufSize, HCCL_MEM_TYPE_DEVICE, 1, localMemDesc1);
     } catch (...) {
-         HCCL_ERROR("[HcclOneSidedService][RegMem] get mem desc failed");
+        HCCL_ERROR("[HcclOneSidedService][RegMem] get mem desc failed");
     }
 
     ret = HcclCommDestroy(comm);
@@ -3926,32 +3817,31 @@ TEST_F(OneSidedSt, regmem_without_memExport)
     sal_free(localbuf);
 }
 
-
-HcclResult hrtGetPairDevicePhyIdForTest(u32 localDevPhyId, u32 &pairDevPhyId)
+HcclResult hrtGetPairDevicePhyIdForTest(u32 localDevPhyId, u32& pairDevPhyId)
 {
     pairDevPhyId = 1;
     return HCCL_SUCCESS;
 }
 
-HcclResult hrtGetDeviceTypeForTest(DevType &devType)
+HcclResult hrtGetDeviceTypeForTest(DevType& devType)
 {
     devType = DevType::DEV_TYPE_910_93;
     return HCCL_SUCCESS;
 }
 
-HcclResult hrtGetDeviceIndexByPhyIdForTest(u32 devicePhyId, u32 &deviceLogicId)
+HcclResult hrtGetDeviceIndexByPhyIdForTest(u32 devicePhyId, u32& deviceLogicId)
 {
     deviceLogicId = 1;
     return HCCL_SUCCESS;
 }
 
-HcclResult hrtRaGetDeviceAllNicIPForTest(std::vector<std::vector<HcclIpAddress>> &ipAddr)
+HcclResult hrtRaGetDeviceAllNicIPForTest(std::vector<std::vector<HcclIpAddress>>& ipAddr)
 {
     ipAddr.clear();
-    HcclIpAddress testIp1{ "10.10.10.11"};
+    HcclIpAddress testIp1{"10.10.10.11"};
     std::vector<HcclIpAddress> vec1;
     vec1.push_back(testIp1);
-    HcclIpAddress testIp2{ "10.10.10.12"};
+    HcclIpAddress testIp2{"10.10.10.12"};
     std::vector<HcclIpAddress> vec2;
     vec2.push_back(testIp2);
     ipAddr.push_back(vec1);
@@ -3961,10 +3851,10 @@ HcclResult hrtRaGetDeviceAllNicIPForTest(std::vector<std::vector<HcclIpAddress>>
     return HCCL_SUCCESS;
 }
 
-HcclResult hrtRaGetDeviceIPForTest(u32 devicePhyId, std::vector<hccl::HcclIpAddress> &ipAddr)
+HcclResult hrtRaGetDeviceIPForTest(u32 devicePhyId, std::vector<hccl::HcclIpAddress>& ipAddr)
 {
     ipAddr.clear();
-    hccl::HcclIpAddress testIp1{ "10.10.10.11"};
+    hccl::HcclIpAddress testIp1{"10.10.10.11"};
     ipAddr.push_back(testIp1);
     return HCCL_SUCCESS;
 }
@@ -3981,23 +3871,25 @@ TEST_F(OneSidedSt, ut_hcclComm_InitNic_IsOneSidedBackupInit)
     MOCKER_CPP(&HcclSocketManager::ServerInit).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     MOCKER(HcclNetInit).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     MOCKER(HcclNetOpenDev).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&HcclSocketManager::ServerDeInit, HcclResult(HcclSocketManager::*)(const HcclNetDevCtx, u32)).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclSocketManager::ServerDeInit, HcclResult(HcclSocketManager::*)(const HcclNetDevCtx, u32))
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&HcclCommunicatorAttrs::SetNeedInitNicFlag).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     MOCKER(Is310PDevice).stubs().with(mockcpp::any()).will(returnValue(false));
     MOCKER_CPP(&HcclCommunicator::ReleasePreemptSocket).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclIpAddress remoteIp{"10.10.10.11"};
-    std::shared_ptr<HcclSocket> listenSocket(new (std::nothrow)HcclSocket("my tag2", nullptr, remoteIp, 0,
-        HcclSocketRole::SOCKET_ROLE_SERVER));
+    std::shared_ptr<HcclSocket> listenSocket(
+        new (std::nothrow) HcclSocket("my tag2", nullptr, remoteIp, 0, HcclSocketRole::SOCKET_ROLE_SERVER));
 
     HcclNetDevCtx ctx1;
-    HcclResult ret = HcclNetOpenDev(&ctx1, NicType::DEVICE_NIC_TYPE, 0, 0,
-        HcclIpAddress("1.1.1.1"));
+    HcclResult ret = HcclNetOpenDev(&ctx1, NicType::DEVICE_NIC_TYPE, 0, 0, HcclIpAddress("1.1.1.1"));
 
     HcclIpAddress remoteIp2{"10.10.10.12"};
-    std::shared_ptr<HcclSocket> listenSocket2(new (std::nothrow)HcclSocket("my tag2", nullptr, remoteIp2, 0,
-        HcclSocketRole::SOCKET_ROLE_SERVER));
-    HcclNetDevCtx  ctx2;
+    std::shared_ptr<HcclSocket> listenSocket2(
+        new (std::nothrow) HcclSocket("my tag2", nullptr, remoteIp2, 0, HcclSocketRole::SOCKET_ROLE_SERVER));
+    HcclNetDevCtx ctx2;
 
     HcclCommunicator hcclCommunicator;
     hcclCommunicator.nicDeployment_ = NICDeployment::NIC_DEPLOYMENT_DEVICE;
@@ -4008,7 +3900,8 @@ TEST_F(OneSidedSt, ut_hcclComm_InitNic_IsOneSidedBackupInit)
     hcclCommunicator.devBackupIpAddr_.push_back(remoteIp2);
     hcclCommunicator.commPortConfig_.devNicListen = std::make_pair(listenSocket, ctx1);
     HcclCommConfig commConfig("hccl_world_group");
-    hcclCommunicator.oneSideService_ = std::make_unique<HcclOneSidedService>(hcclCommunicator.socketManager_, hcclCommunicator.notifyPool_, commConfig);
+    hcclCommunicator.oneSideService_ = std::make_unique<HcclOneSidedService>(
+        hcclCommunicator.socketManager_, hcclCommunicator.notifyPool_, commConfig);
 
     ret = hcclCommunicator.InitNic();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -4032,7 +3925,8 @@ TEST_F(OneSidedSt, ut_one_sided_service_prepare_fail)
 {
     int ret = HCCL_SUCCESS;
 
-    NetDevContext netDevCtx;;
+    NetDevContext netDevCtx;
+    ;
     netDevCtx.nicType_ = NicType::DEVICE_NIC_TYPE;
     netDevCtx.localRdmaRmaBufferMgr_ = std::make_shared<LocalRdmaRmaBufferMgr>();
     HcclNetDevCtx devCtx = &netDevCtx;
@@ -4042,15 +3936,14 @@ TEST_F(OneSidedSt, ut_one_sided_service_prepare_fail)
     vNetDevCtx.localIpcRmaBufferMgr_ = std::make_shared<LocalIpcRmaBufferMgr>();
     HcclNetDevCtx vDevCtx = &vNetDevCtx;
 
-    unique_ptr<HcclSocketManager> socketManager = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
+    unique_ptr<HcclSocketManager> socketManager
+        = std::make_unique<HcclSocketManager>(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0);
     unique_ptr<NotifyPool> notifyPool = std::make_unique<NotifyPool>();
     HcclCommConfig commConfig("hccl_world_group");
-    unique_ptr<HcclOneSidedService> service = std::make_unique<HcclOneSidedService>(socketManager, notifyPool, commConfig);
+    unique_ptr<HcclOneSidedService> service
+        = std::make_unique<HcclOneSidedService>(socketManager, notifyPool, commConfig);
 
-    MOCKER_CPP(&HcclOneSidedService::PrepareFullMesh)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_E_TIMEOUT));
+    MOCKER_CPP(&HcclOneSidedService::PrepareFullMesh).stubs().with(mockcpp::any()).will(returnValue(HCCL_E_TIMEOUT));
 
     HcclDispatcher dispatcher = &notifyPool;
     HcclRankLinkInfo localRankInfo{};

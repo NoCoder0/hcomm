@@ -7,10 +7,10 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
+
 target_sources(hccl_v2_utest
     PUBLIC
         ut_buffer.cc
-        ut_notify_fixed_value.cc
         ut_local_rma_buffer.cc
         ut_local_rdma_rma_buffer.cc
         ut_remote_rma_buffer.cc

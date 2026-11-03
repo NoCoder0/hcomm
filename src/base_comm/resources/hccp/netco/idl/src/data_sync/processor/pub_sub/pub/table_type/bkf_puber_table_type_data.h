@@ -43,8 +43,8 @@ struct TagBkfPuberTableTypeMng {
 
 BkfPuberTableTypeMng *BkfPuberTableTypeDataInit(BkfPuberInitArg *arg);
 void BkfPuberTableTypeDataUninit(BkfPuberTableTypeMng *tableTypeMng);
-BkfPuberTableType *BkfPuberTableTypeAdd(BkfPuberTableTypeMng *tableTypeMng, BkfPuberTableTypeVTbl *vTbl,
-                                         void *userData, uint16_t dataLen);
+BkfPuberTableType *BkfPuberTableTypeAdd(BkfPuberTableTypeMng *tableTypeMng, BkfPuberTableTypeVTbl *vTbl, void *userData,
+    uint16_t dataLen);
 void BkfPuberTableTypeDelete(BkfPuberTableType *tableType);
 void BkfPuberTableTypeDeleteAll(BkfPuberTableTypeMng *tableTypeMng);
 BkfPuberTableType *BkfPuberTableTypeFind(BkfPuberTableTypeMng *tableTypeMng, uint16_t tableTypeId);
@@ -62,4 +62,3 @@ static inline uint8_t BkfPuberTableTypeGetHashIdx(uint16_t tableTypeId)
 #endif
 
 #endif
-

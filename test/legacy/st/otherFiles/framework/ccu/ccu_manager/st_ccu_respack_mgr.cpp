@@ -34,20 +34,11 @@ using namespace std;
 
 class CcuResPackMgrTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CommunicatorImplTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CommunicatorImplTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CommunicatorImplTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CommunicatorImplTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in CommunicatorImplTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in CommunicatorImplTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -76,7 +67,7 @@ TEST(CcuResPackMgrTest, should_return_success_when_calling_getrespack)
     EXPECT_EQ(expectSize, ccuResPackMgr.resPacks.size());
     EXPECT_EQ(expectSize, ccuResPackMgr.unConfirmedNum);
 
-    CcuResPack &ccuResPack = ccuResPackMgr.GetCcuResPack(0);
+    CcuResPack& ccuResPack = ccuResPackMgr.GetCcuResPack(0);
     EXPECT_EQ(0, ccuResPack.handles.size());
 }
 

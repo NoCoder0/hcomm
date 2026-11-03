@@ -1,4 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+-->
+
 <block name="CommLib" copy_type="delivery" src_path="" dst_path="" install_path="" install_own="$username:$usergroup" install_mod="550" install_type="run;devel">
     <dir_info install_mod="550">
         <path value="$(TARGET_ENV)/lib64"/>
@@ -27,13 +37,17 @@
         <file value="hccl_rank_graph.h"/>
         <file value="hccl_ccu_res.h"/>
         <file value="hccl_res.h"/>
+        <file value="hccl_channel.h"/>
         <file value="hccl_sym_win.h"/>
         <file value="hccl_launch.h"/>
+        <file value="hccl_team.h"/>
     </file_info>
     <file_info value="include" copy_type="source" src_path="hcomm/include" dst_path="$(TARGET_ENV)/include/hcomm" install_path="$(TARGET_ENV)/include/hcomm" install_type="devel" install_mod="440">
         <file value="hcomm_primitives.h" install_softlink="$(TARGET_ENV)/include/hccl/hcomm_primitives.h"/>
         <file value="hcomm_res_defs.h" install_softlink="$(TARGET_ENV)/include/hccl/hcomm_res_defs.h"/>
         <file value="hcomm_res.h"/>
+        <file value="hcomm_team_defs.h" install_softlink="$(TARGET_ENV)/include/hccl/hcomm_team_defs.h"/>
+        <file value="hcomm_channel.h" install_softlink="$(TARGET_ENV)/include/hccl/hcomm_channel.h"/>
     </file_info>
     <file_info value="include" copy_type="source" src_path="hcomm/src/legacy/ascend910/pub_inc" dst_path="$(TARGET_ENV)/include/hccl" install_path="$(TARGET_ENV)/include/hccl" install_type="devel" install_mod="440">
         <file value="hccn_rping.h"/>
@@ -64,16 +78,21 @@
         <file value="ccu_primitives.hpp"/>
         <file value="ccu_remote_addr.hpp"/>
         <file value="ccu_res.h"/>
+        <file value="ccu_res_defs.h"/>
         <file value="ccu_types.h"/>
         <file value="ccu_utils.hpp"/>
         <file value="ccu_variable.hpp"/>
     </file_info>
     <file_info value="include" copy_type="source" src_path="hcomm/pkg_inc/hcomm/ccu" dst_path="$(TARGET_ENV)/pkg_inc/hcomm/ccu" install_path="$(TARGET_ENV)/pkg_inc/hcomm/ccu" install_type="devel" install_mod="440">
+        <file value="hcomm_res_ccu_entity_defs.h"/>
         <file value="ccu_primitives_impl.h"/>
     </file_info>
     <file_info value="include" copy_type="source" src_path="hcomm/pkg_inc/hcomm" dst_path="$(TARGET_ENV)/pkg_inc/hcomm" install_path="$(TARGET_ENV)/pkg_inc/hcomm" install_type="devel" install_mod="440">
         <file value="hcomm_primitives_expt.h"/>
+        <file value="hcomm_res_expt.h"/>
         <file value="hcomm_res_entity_defs.h"/>
+        <file value="hcomm_team_entity_defs.h"/>
+        <file value="hcomm_exception.h"/>
     </file_info>
     <file_info value="device" copy_type="delivery" src_path="build" dst_path="opp/built-in/op_impl/aicpu/kernel" install_path="opp/built-in/op_impl/aicpu/kernel" install_type="all" install_mod="440" optional="true">
         <file value="aicpu_hcomm.tar.gz"/>

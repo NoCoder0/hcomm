@@ -7,32 +7,36 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #include "alg_template_multi_deter_pipeline.h"
 namespace hccl {
-MultiDeterPipeline::MultiDeterPipeline(const HcclDispatcher dispatcher)
-    : AlgTemplateBase(dispatcher) {}
+MultiDeterPipeline::MultiDeterPipeline(const HcclDispatcher dispatcher) : AlgTemplateBase(dispatcher) {}
 
 MultiDeterPipeline::~MultiDeterPipeline() {}
 
-HcclResult MultiDeterPipeline::RunAsync()
-{
-    return HCCL_SUCCESS;
-}
+HcclResult MultiDeterPipeline::RunAsync() { return HCCL_SUCCESS; }
 
 // ReduceScatterDeterPipeline
-HcclResult MultiDeterPipeline::Prepare(HcomCollOpInfo *opInfo, DeviceMem &buffer, const u64 count,
-        const u64 offset, const std::vector<Slice> &slices, const SubCommInfo &level0CommInfo,
-        const SubCommInfo &level1CommInfo, Stream &mainStream, std::vector<Stream> &subStream,
-        std::vector<std::shared_ptr<LocalNotify>> &notifyMain, std::vector<std::shared_ptr<LocalNotify>> &notifySub)
+HcclResult MultiDeterPipeline::Prepare(
+    [[maybe_unused]] HcomCollOpInfo* opInfo, [[maybe_unused]] DeviceMem& buffer, [[maybe_unused]] const u64 count,
+    [[maybe_unused]] const u64 offset, [[maybe_unused]] const std::vector<Slice>& slices,
+    [[maybe_unused]] const SubCommInfo& level0CommInfo, [[maybe_unused]] const SubCommInfo& level1CommInfo,
+    [[maybe_unused]] Stream& mainStream, [[maybe_unused]] std::vector<Stream>& subStream,
+    [[maybe_unused]] std::vector<std::shared_ptr<LocalNotify>>& notifyMain,
+    [[maybe_unused]] std::vector<std::shared_ptr<LocalNotify>>& notifySub)
 {
     return HCCL_SUCCESS;
 }
 
 // AllReduceDeterPipeline
-HcclResult MultiDeterPipeline::Prepare(HcomCollOpInfo *opInfo, DeviceMem &inBuffer, DeviceMem &outBuffer, const u64 count,
-        const std::vector<Slice> &slices, const SubCommInfo &level0CommInfo,
-        const SubCommInfo &level1CommInfo, Stream &mainStream, std::vector<Stream> &subStream,
-        std::vector<std::shared_ptr<LocalNotify>> &notifyMain, std::vector<std::shared_ptr<LocalNotify>> &notifySub)
+HcclResult MultiDeterPipeline::Prepare(
+    [[maybe_unused]] HcomCollOpInfo* opInfo, [[maybe_unused]] DeviceMem& inBuffer,
+    [[maybe_unused]] DeviceMem& outBuffer, [[maybe_unused]] const u64 count,
+    [[maybe_unused]] const std::vector<Slice>& slices, [[maybe_unused]] const SubCommInfo& level0CommInfo,
+    [[maybe_unused]] const SubCommInfo& level1CommInfo, [[maybe_unused]] Stream& mainStream,
+    [[maybe_unused]] std::vector<Stream>& subStream,
+    [[maybe_unused]] std::vector<std::shared_ptr<LocalNotify>>& notifyMain,
+    [[maybe_unused]] std::vector<std::shared_ptr<LocalNotify>>& notifySub)
 {
     return HCCL_SUCCESS;
 }
@@ -65,51 +69,50 @@ HcclResult MultiDeterPipeline::MainRecordSub(u32 begin, u32 end)
 HcclResult MultiDeterPipeline::SubWaitMain(u32 begin, u32 end)
 {
     for (u32 streamIndex = begin; streamIndex < end; streamIndex++) {
-        CHK_RET(LocalNotify::Wait(subStreams_[streamIndex], dispatcher_, streamNotifySub_[streamIndex],
-            INVALID_VALUE_STAGE));
+        CHK_RET(LocalNotify::Wait(
+            subStreams_[streamIndex], dispatcher_, streamNotifySub_[streamIndex], INVALID_VALUE_STAGE));
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult MultiDeterPipeline::GetRemoteCclbufferDeviceMem(u32 inputSliceIndex, LINK link,
-        u32 outputSliceIndex, DeviceMem &remoteMem)
+HcclResult MultiDeterPipeline::GetRemoteCclbufferDeviceMem(
+    [[maybe_unused]] u32 inputSliceIndex, [[maybe_unused]] LINK link, [[maybe_unused]] u32 outputSliceIndex,
+    [[maybe_unused]] DeviceMem& remoteMem)
 {
     return HCCL_SUCCESS;
 }
 
-HcclResult MultiDeterPipeline::GetLocalUserInDeviceMem(u32 rankIdInAllRanks, DeviceMem &locaMem)
+HcclResult
+MultiDeterPipeline::GetLocalUserInDeviceMem([[maybe_unused]] u32 rankIdInAllRanks, [[maybe_unused]] DeviceMem& locaMem)
 {
     return HCCL_SUCCESS;
 }
 
-HcclResult MultiDeterPipeline::GetLocalUserOutDeviceMem(u32 rankIdInAllRanks, DeviceMem &localMem)
+HcclResult MultiDeterPipeline::GetLocalUserOutDeviceMem(
+    [[maybe_unused]] u32 rankIdInAllRanks, [[maybe_unused]] DeviceMem& localMem)
 {
     return HCCL_SUCCESS;
 }
 
-HcclResult MultiDeterPipeline::GetLocalInCclbufferDeviceMem(u32 rankIdInAllRanks, DeviceMem &localMem, bool ifUseLastSize)
+HcclResult MultiDeterPipeline::GetLocalInCclbufferDeviceMem(
+    [[maybe_unused]] u32 rankIdInAllRanks, [[maybe_unused]] DeviceMem& localMem, [[maybe_unused]] bool ifUseLastSize)
 {
     return HCCL_SUCCESS;
 }
 
-HcclResult MultiDeterPipeline::GetLocalOutCclbufferDeviceMem(u32 rankIdInAllRanks, DeviceMem &localMem, bool ifUseLastSize)
+HcclResult MultiDeterPipeline::GetLocalOutCclbufferDeviceMem(
+    [[maybe_unused]] u32 rankIdInAllRanks, [[maybe_unused]] DeviceMem& localMem, [[maybe_unused]] bool ifUseLastSize)
 {
     return HCCL_SUCCESS;
 }
 
-HcclResult MultiDeterPipeline::RunLocalCopy()
-{
-    return HCCL_SUCCESS;
-}
+HcclResult MultiDeterPipeline::RunLocalCopy() { return HCCL_SUCCESS; }
 
-HcclResult MultiDeterPipeline::RunIntraAlltoallPreSync(u32 step)
-{
-    return HCCL_SUCCESS;
-}
+HcclResult MultiDeterPipeline::RunIntraAlltoallPreSync([[maybe_unused]] u32 step) { return HCCL_SUCCESS; }
 
 HcclResult MultiDeterPipeline::RunIntraAlltoall(u32 step)
 {
-    u32 recvServerId = GetPreServerIdByStep(step); // 从上一个收 2
+    u32 recvServerId = GetPreServerIdByStep(step);  // 从上一个收 2
     u32 sendServerId = GetNextServerIdByStep(step); // 发给发下一个 1
     // 机内alltoall full mesh收集数据，是为了收集机内第sendServerId整块的内存（包含intraRankId_块）
     // 该索引是为了计算第sendServerId整块内的内存序号块（0~intraRankId_-1）
@@ -122,9 +125,9 @@ HcclResult MultiDeterPipeline::RunIntraAlltoall(u32 step)
         LINK sendIntraLink = intraLinks_[sendIntraRankId];
         DeviceMem srcMem;
         DeviceMem dstMem;
-        // 从usrin收集发给下一个cclbufer的数据, 收集的所有数据需要发送给机间序号为sendServerId的server
+        // 从usrin收集发给下一个cclbuffer的数据, 收集的所有数据需要发送给机间序号为sendServerId的server
         u32 needSendInputndex = GetRankIdx(sendServerId, localUsrInIndex[i]);
-        // 发送数据到cclbufer 索引为[intraRankId_, localUsrInIndex[i]]
+        // 发送数据到cclbuffer 索引为[intraRankId_, localUsrInIndex[i]]
         u32 recvIntraRankIdx = alltoallRecvBlockIdxMap_[intraRankId_][localUsrInIndex[i]];
         u32 recvCclbufferIndex = GetRankIdx(recvServerId, recvIntraRankIdx);
         CHK_RET(GetLocalUserInDeviceMem(needSendInputndex, srcMem));
@@ -132,21 +135,24 @@ HcclResult MultiDeterPipeline::RunIntraAlltoall(u32 step)
         // 发送给机内rank索引 [serverId_, sendIntraRankId]
         u32 remoteUserRank = GetRankIdx(serverId_, sendIntraRankId);
         // SDMA copy write语义，因为只能写到cclbuffer
-        CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dstMem, srcMem, subStreams_[i], remoteUserRank, sendIntraLink->GetLinkType()));
+        CHK_RET(HcclD2DMemcpyAsync(
+            dispatcher_, dstMem, srcMem, subStreams_[i], remoteUserRank, sendIntraLink->GetLinkType()));
         CHK_RET(sendIntraLink->TxDataSignal(subStreams_[i]));
         CHK_RET(sendIntraLink->RxDataSignal(subStreams_[i]));
-        HCCL_DEBUG("[%s] intra-server SDMA send, intraRank: [%u] -> [%u]",
-            __func__, intraRankId_, sendIntraRankId);
-        HCCL_DEBUG("[%s] intra-server SDMA send, mem: inputMem[%u, %u] -> cclbuffer[%u, %u]; cclbufferNo[%u] -> [%u]",
-            __func__, sendServerId, localUsrInIndex[i], recvServerId, recvIntraRankIdx, needSendInputndex, recvCclbufferIndex);
+        HCCL_DEBUG("[%s] intra-server SDMA send, intraRank: [%u] -> [%u]", __func__, intraRankId_, sendIntraRankId);
+        HCCL_DEBUG(
+            "[%s] intra-server SDMA send, mem: inputMem[%u, %u] -> cclbuffer[%u, %u]; cclbufferNo[%u] -> [%u]",
+            __func__, sendServerId, localUsrInIndex[i], recvServerId, recvIntraRankIdx, needSendInputndex,
+            recvCclbufferIndex);
     }
-    HCCL_INFO("[%s] intra-server step[%u] run alltoall success" , __func__, step);
+    HCCL_INFO("[%s] intra-server step[%u] run alltoall success", __func__, step);
     return HCCL_SUCCESS;
 }
 
-HcclResult MultiDeterPipeline::GroupTasksByStream(u32 activeCount, const std::vector<bool>& isReduceBlock,
-    u32 retIndex, std::vector<std::vector<std::vector<std::pair<u32, u32>>>>& batchStreamTasks, // 输出：批次→流→任务
-    std::vector<bool>& processed, std::vector<u32>& origIdxMap, u32& newActiveCount)
+HcclResult MultiDeterPipeline::GroupTasksByStream(
+    u32 activeCount, const std::vector<bool>& isReduceBlock, u32 retIndex,
+    std::vector<std::vector<std::vector<std::pair<u32, u32>>>>& batchStreamTasks, // 输出：批次→流→任务
+    std::vector<bool>& processed, std::vector<u32>& origIdxMap, u32& newActiveCount) const
 {
     batchStreamTasks.clear(); // 清空批次任务
     processed.assign(activeCount, false);
@@ -200,8 +206,9 @@ HcclResult MultiDeterPipeline::GroupTasksByStream(u32 activeCount, const std::ve
             processed[srcIdx] = true;
             processed[dstIdx] = false;
 
-            HCCL_DEBUG("[%s] batch[%u] group[%u] merge src[%u] -> dst[%u] on stream[%u]", __func__,
-                batch, group, srcIdx, dstIdx, streamId + reduceStreamBegin_);
+            HCCL_DEBUG(
+                "[%s] batch[%u] group[%u] merge src[%u] -> dst[%u] on stream[%u]", __func__, batch, group, srcIdx,
+                dstIdx, streamId + reduceStreamBegin_);
         }
 
         // 将当前批次的流任务加入总批次列表
@@ -213,16 +220,19 @@ HcclResult MultiDeterPipeline::GroupTasksByStream(u32 activeCount, const std::ve
 }
 
 HcclResult MultiDeterPipeline::BatchPostNotifyForStreams(
-    const std::vector<std::vector<std::pair<u32, u32>>>& streamTasks, bool isStartPhase, bool useMainStream)
+    [[maybe_unused]] const std::vector<std::vector<std::pair<u32, u32>>>& streamTasks,
+    [[maybe_unused]] bool isStartPhase, [[maybe_unused]] bool useMainStream)
 {
     return HCCL_SUCCESS;
 }
 
-HcclResult MultiDeterPipeline::ExecuteStreamTasks(const std::vector<std::vector<std::pair<u32, u32>>>& streamTasks,
-    const std::vector<DeviceMem>& validMem, std::vector<u32>& origIdxMap, bool useMainStream)
+HcclResult MultiDeterPipeline::ExecuteStreamTasks(
+    const std::vector<std::vector<std::pair<u32, u32>>>& streamTasks, const std::vector<DeviceMem>& validMem,
+    std::vector<u32>& origIdxMap, bool useMainStream)
 {
     for (u32 s = 0; s < MAX_REDUCE_STREAM_NUM; s++) {
-        if (streamTasks[s].empty()) continue;
+        if (streamTasks[s].empty())
+            continue;
 
         u32 streamIdx = reduceStreamBegin_ + s;
         Stream& subStream = subStreams_[streamIdx];
@@ -235,19 +245,19 @@ HcclResult MultiDeterPipeline::ExecuteStreamTasks(const std::vector<std::vector<
             const DeviceMem& srcMem = validMem[srcIdx];
             u64 count = srcMem.size() / unitSize_;
             CHK_RET(HcclReduceAsync(
-                dispatcher_, srcMem.ptr(), count, dataType_, reductionOp_,
-                stream, dstMem.ptr(), INVALID_VALUE_RANKID, LinkType::LINK_ONCHIP, INLINE_REDUCE_BIT
-            ));
-            HCCL_DEBUG("[%s] stream[%u] execute task: merge src[%u] -> dst[%u], origSrc[%u] -> origDst[%u]",
-                __func__, useMainStream ? 0 : streamIdx, srcIdx, dstIdx, origIdxMap[srcIdx], origIdxMap[dstIdx]);
+                dispatcher_, srcMem.ptr(), count, dataType_, reductionOp_, stream, dstMem.ptr(), INVALID_VALUE_RANKID,
+                LinkType::LINK_ONCHIP, INLINE_REDUCE_BIT));
+            HCCL_DEBUG(
+                "[%s] stream[%u] execute task: merge src[%u] -> dst[%u], origSrc[%u] -> origDst[%u]", __func__,
+                useMainStream ? 0 : streamIdx, srcIdx, dstIdx, origIdxMap[srcIdx], origIdxMap[dstIdx]);
         }
     }
     return HCCL_SUCCESS;
 }
 
-void MultiDeterPipeline::CompressActiveSet(std::vector<DeviceMem> &validMem,
-    std::vector<bool> &isReduceBlock, std::vector<u32> &origIdxMap, const std::vector<bool> &processed,
-    u32 &trackedTargetIdx, const u32 origRetIndex)
+void MultiDeterPipeline::CompressActiveSet(
+    std::vector<DeviceMem>& validMem, std::vector<bool>& isReduceBlock, std::vector<u32>& origIdxMap,
+    const std::vector<bool>& processed, u32& trackedTargetIdx, const u32 origRetIndex) const
 {
     std::vector<DeviceMem> newValidMem;
     std::vector<bool> newIsReduceBlock;
@@ -275,25 +285,28 @@ void MultiDeterPipeline::CompressActiveSet(std::vector<DeviceMem> &validMem,
     origIdxMap.swap(newOrigIdxMap);
     // 未找到目标块时，默认指向最后一个块
     trackedTargetIdx = foundTarget ? newTrackedTargetIdx : (validMem.empty() ? 0 : validMem.size() - 1);
-    HCCL_DEBUG("[%s] compressed: old size[%llu], new size[%llu], trackedTargetIdx[%u]", __func__,
-        processed.size(), validMem.size(), trackedTargetIdx);
+    HCCL_DEBUG(
+        "[%s] compressed: old size[%llu], new size[%llu], trackedTargetIdx[%u]", __func__, processed.size(),
+        validMem.size(), trackedTargetIdx);
 }
 
-HcclResult MultiDeterPipeline::LocalReduce(std::vector<DeviceMem> &reduceMem,
-    std::vector<bool> &isReduceBlock, u32 retIndex, bool useMainStream)
+HcclResult MultiDeterPipeline::LocalReduce(
+    std::vector<DeviceMem>& reduceMem, std::vector<bool>& isReduceBlock, u32 retIndex, bool useMainStream)
 {
     const u32 totalBlockCount = reduceMem.size();
     // 校验1：容器大小匹配 + retIndex越界
     if (reduceMem.size() != isReduceBlock.size() || retIndex >= totalBlockCount) {
-        HCCL_ERROR("[%s] Invalid param (size mismatch: %llu vs %llu, retIndex: %u >= %u)",
-            __func__, reduceMem.size(), isReduceBlock.size(), retIndex, totalBlockCount);
+        HCCL_ERROR(
+            "[%s] Invalid param (size mismatch: %llu vs %llu, retIndex: %u >= %u)", __func__, reduceMem.size(),
+            isReduceBlock.size(), retIndex, totalBlockCount);
         return HCCL_E_PARA;
     }
     // 校验2：目标内存块有效
     const DeviceMem& targetCCLBuffer = reduceMem[retIndex];
     if (targetCCLBuffer.ptr() == nullptr || targetCCLBuffer.size() == 0) {
-        HCCL_ERROR("[%s] Target CCLBuffer invalid (ptr: %p, size: %llu)",
-            __func__, targetCCLBuffer.ptr(), targetCCLBuffer.size());
+        HCCL_ERROR(
+            "[%s] Target CCLBuffer invalid (ptr: %p, size: %llu)", __func__, targetCCLBuffer.ptr(),
+            targetCCLBuffer.size());
         return HCCL_E_MEMORY;
     }
 
@@ -320,8 +333,8 @@ HcclResult MultiDeterPipeline::LocalReduce(std::vector<DeviceMem> &reduceMem,
         u32 newActiveCount = 0;
 
         // 2.1 生成按批次组织的流任务
-        CHK_RET(GroupTasksByStream(activeCount, validIsReduceBlock, origRetIndex,
-            batchStreamTasks, processed, origIdxMap, newActiveCount));
+        CHK_RET(GroupTasksByStream(
+            activeCount, validIsReduceBlock, origRetIndex, batchStreamTasks, processed, origIdxMap, newActiveCount));
 
         // 2.2 逐批执行流任务（串行处理每批）
         for (const auto& streamTasks : batchStreamTasks) {
@@ -337,32 +350,24 @@ HcclResult MultiDeterPipeline::LocalReduce(std::vector<DeviceMem> &reduceMem,
         activeCount = validMem.size();
         HCCL_DEBUG("[LocalReduce] round done: activeCount=%u -> %u", newActiveCount, activeCount);
     }
-    HCCL_DEBUG("[%s] Local reduce success (merge to retIndex[%u] CCLBuffer, final tracked idx[%u])",
-        __func__, retIndex, trackedTargetIdx);
+    HCCL_DEBUG(
+        "[%s] Local reduce success (merge to retIndex[%u] CCLBuffer, final tracked idx[%u])", __func__, retIndex,
+        trackedTargetIdx);
     return HCCL_SUCCESS;
 }
 
-HcclResult MultiDeterPipeline::RunIntraLocalReduce(u32 step)
+HcclResult MultiDeterPipeline::RunIntraLocalReduce([[maybe_unused]] u32 step) { return HCCL_SUCCESS; }
+
+HcclResult MultiDeterPipeline::RunInterSend([[maybe_unused]] u32 step) { return HCCL_SUCCESS; }
+
+HcclResult MultiDeterPipeline::RunFinalReduce() { return HCCL_SUCCESS; }
+
+HcclResult MultiDeterPipeline::AlltoallSync([[maybe_unused]] u32 step, [[maybe_unused]] bool isStartPhase)
 {
     return HCCL_SUCCESS;
 }
 
-HcclResult MultiDeterPipeline::RunInterSend(u32 step)
-{
-    return HCCL_SUCCESS;
-}
-
-HcclResult MultiDeterPipeline::RunFinalReduce()
-{
-    return HCCL_SUCCESS;
-}
-
-HcclResult MultiDeterPipeline::AlltoallSync(u32 step, bool isStartPhase)
-{
-    return HCCL_SUCCESS;
-}
-
-HcclResult MultiDeterPipeline::LocalReduceSync(u32 step, bool isStartPhase)
+HcclResult MultiDeterPipeline::LocalReduceSync([[maybe_unused]] u32 step, [[maybe_unused]] bool isStartPhase)
 {
     return HCCL_SUCCESS;
 }
@@ -382,22 +387,24 @@ HcclResult MultiDeterPipeline::AlltoallLocalReduceSync(u32 step, bool isStartPha
 
 HcclResult MultiDeterPipeline::RunAsyncLocalReduceSerial()
 {
-    HCCL_INFO("[MultiDeterPipeline] run begin: rank[%u] ranksize[%u] inputMem[%p] outputMem[%p]",
-        userRank_, userRankSize_, usrInMemPtr_, usrOutMemPtr_);
+    HCCL_INFO(
+        "[MultiDeterPipeline] run begin: rank[%u] ranksize[%u] inputMem[%p] outputMem[%p]", userRank_, userRankSize_,
+        usrInMemPtr_, usrOutMemPtr_);
     CHK_SMART_PTR_NULL(dispatcher_);
     // 以机内8卡为例主流 + 从流 = 1 + 7 + 4 = 12
     allSteps_ = serverSize_;
     // #1 机间发送，#2 local reduce，#3 机内alltoall
     // 以机间的pairwise来分步，#n表示pairwise的第n步
     for (u32 step = 1; step < allSteps_ + 1; step++) {
-        HCCL_DEBUG("[%s] userRank[%u], intraRankId[%u], serverId[%u], step[%u/%u] begin", __func__,
-            userRank_, intraRankId_, serverId_, step, allSteps_);
+        HCCL_DEBUG(
+            "[%s] userRank[%u], intraRankId[%u], serverId[%u], step[%u/%u] begin", __func__, userRank_, intraRankId_,
+            serverId_, step, allSteps_);
         // alltoall 主从流同步+前同步+拉齐
         CHK_RET(AlltoallSync(step, true));
-        if (step < allSteps_ - 1) {
+        if (step < allSteps_) {
             CHK_RET(RunIntraAlltoallPreSync(step));
-        } 
-        if (step == allSteps_ - 1) {
+        }
+        if (step == allSteps_) {
             CHK_RET(RunIntraAlltoallPreSync(0));
         }
         if (step == 1) {
@@ -444,15 +451,16 @@ HcclResult MultiDeterPipeline::RunAsyncReduceScatterPipeline()
     // #1 机间发送，#2 local reduce，#3 机内alltoall
     // 以机间的pairwise来分步，#n表示pairwise的第n步
     for (u32 step = 1; step < allSteps_ + 1; step++) {
-        HCCL_DEBUG("[%s] userRank[%u], intraRankId[%u], serverId[%u], step[%u/%u] begin", __func__,
-            userRank_, intraRankId_, serverId_, step, allSteps_);
+        HCCL_DEBUG(
+            "[%s] userRank[%u], intraRankId[%u], serverId[%u], step[%u/%u] begin", __func__, userRank_, intraRankId_,
+            serverId_, step, allSteps_);
         CHK_RET(AlltoallLocalReduceSync(step, true));
         if (step == 1) {
             CHK_RET(RunLocalCopy());
         }
         if (step < allSteps_ - 1) {
             CHK_RET(RunIntraAlltoallPreSync(step));
-        } 
+        }
         if (step == allSteps_ - 1) {
             CHK_RET(RunIntraAlltoallPreSync(0));
         }
@@ -497,7 +505,7 @@ void MultiDeterPipeline::InitAlltoallRecvBlockIdxMap()
     if (rankSize <= 1) {
         return;
     }
-     // 规则一：接收端的块索引 = 发送方 rank 在「接收端非自身 rank 列表」中的索引
+    // 规则一：接收端的块索引 = 发送方 rank 在「接收端非自身 rank 列表」中的索引
     std::vector<std::vector<u32>> dstRankToRankIndex(rankSize, std::vector<u32>(rankSize, UINT32_MAX));
     for (u32 dstRank = 0; dstRank < rankSize; ++dstRank) {
         for (u32 srcRank = 0; srcRank < rankSize; ++srcRank) {
@@ -520,37 +528,40 @@ void MultiDeterPipeline::InitAlltoallRecvBlockIdxMap()
             // 查找发送方rank在列表中的索引，存入映射表
             const u32 dstBlockIdx = dstRankToRankIndex[dstRank][srcRank];
             alltoallRecvBlockIdxMap_[srcRank][srcBlockIdx] = dstBlockIdx;
-            HCCL_DEBUG("[%s] srcRank[%u], srcBlockIdx[%u] -> dstRank[%u], dstBlockIdx[%u]", __func__,
-                srcRank, srcBlockIdx, dstRank, dstBlockIdx);
+            HCCL_DEBUG(
+                "[%s] srcRank[%u], srcBlockIdx[%u] -> dstRank[%u], dstBlockIdx[%u]", __func__, srcRank, srcBlockIdx,
+                dstRank, dstBlockIdx);
         }
     }
 }
 
-HcclResult MultiDeterPipeline::PrepareTopoInfo(const SubCommInfo &level0CommInfo,
-    const SubCommInfo &level1CommInfo)
+HcclResult MultiDeterPipeline::PrepareTopoInfo(const SubCommInfo& level0CommInfo, const SubCommInfo& level1CommInfo)
 {
     serverSize_ = level1CommInfo.localRankSize;
-    CHK_PRT_RET(serverSize_ < MIN_SERVER_NUM,
-        HCCL_ERROR("[%s] Unexpected inter rank size[%u], which should >= 2.", __func__, serverSize_),
-        HCCL_E_PARA);
+    CHK_PRT_RET(
+        serverSize_ < MIN_SERVER_NUM,
+        HCCL_ERROR("[%s] Unexpected inter rank size[%u], which should >= 2.", __func__, serverSize_), HCCL_E_PARA);
 
     intraRankSize_ = level0CommInfo.localRankSize;
-    CHK_PRT_RET(intraRankSize_ < MIN_INTRA_RANK_NUM,
-        HCCL_ERROR("[%s] Unexpected intra rank size[%u], which should >= 3.", __func__, intraRankSize_),
-        HCCL_E_PARA);
+    CHK_PRT_RET(
+        intraRankSize_ < MIN_INTRA_RANK_NUM,
+        HCCL_ERROR("[%s] Unexpected intra rank size[%u], which should >= 3.", __func__, intraRankSize_), HCCL_E_PARA);
     intraRankId_ = level0CommInfo.localRank;
     serverId_ = level1CommInfo.localRank;
     userRankSize_ = intraRankSize_ * serverSize_;
     userRank_ = intraRankId_ + serverId_ * intraRankSize_;
 
-    intraLinks_ = level0CommInfo.links; // 节点内
+    intraLinks_ = level0CommInfo.links;  // 节点内
     serverLinks_ = level1CommInfo.links; // 节点间
-    HCCL_INFO("[%s] opInfo: dataType[%u], unitSize[%u], memSliceSize[%u], usrInMem[%p], usrOutMem[%p], reductionOp[%u]",
+    HCCL_INFO(
+        "[%s] opInfo: dataType[%u], unitSize[%u], memSliceSize[%u], usrInMem[%p], usrOutMem[%p], reductionOp[%u]",
         __func__, dataType_, unitSize_, memSliceSize_, usrInMemPtr_, usrOutMemPtr_, reductionOp_);
-    HCCL_INFO("[%s] topoInfo: userRank[%u], intraRankId[%u], intraRankSize[%u], serverId[%u], interRankSize[%u]",
-        __func__, userRank_, intraRankId_, intraRankSize_, serverId_, serverSize_);
-    HCCL_INFO("[%s] topoInfo: severLinksNum[%zu], intraLinksNum[%zu]", __func__, serverLinks_.size(), intraLinks_.size());
+    HCCL_INFO(
+        "[%s] topoInfo: userRank[%u], intraRankId[%u], intraRankSize[%u], serverId[%u], interRankSize[%u]", __func__,
+        userRank_, intraRankId_, intraRankSize_, serverId_, serverSize_);
+    HCCL_INFO(
+        "[%s] topoInfo: serverLinksNum[%zu], intraLinksNum[%zu]", __func__, serverLinks_.size(), intraLinks_.size());
     InitAlltoallRecvBlockIdxMap();
     return HCCL_SUCCESS;
 }
-}
+} // namespace hccl

@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -29,28 +29,19 @@
 using namespace std;
 using namespace hccl;
 
-class CollAlgOperatorTest : public testing::Test
-{
+class CollAlgOperatorTest : public testing::Test {
 protected:
     static void SetUpTestCase()
     {
         DlRaFunction::GetInstance().DlRaFunctionInit();
         std::cout << "\033[36m--CollAlgOperatorTest SetUP--\033[0m" << std::endl;
     }
-    static void TearDownTestCase()
-    {
-        std::cout << "\033[36m--CollAlgOperatorTest TearDown--\033[0m" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "\033[36m--CollAlgOperatorTest TearDown--\033[0m" << std::endl; }
     virtual void SetUp()
     {
         s32 portNum = 7;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
-        MOCKER(hrtProfRegisterCtrlCallback)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtProfRegisterCtrlCallback).stubs().will(returnValue(HCCL_SUCCESS));
         std::cout << "A Test SetUP" << std::endl;
     }
     virtual void TearDown()
@@ -60,7 +51,7 @@ protected:
     }
 };
 
-static void TestConstructParam(HcclCommParams &params, RankTable_t &rankTable)
+static void TestConstructParam(HcclCommParams& params, RankTable_t& rankTable)
 {
     string commId = "comm ";
     memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
@@ -99,48 +90,41 @@ TEST_F(CollAlgOperatorTest, is_2u2p_infer)
     TestConstructParam(params, rankTable);
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
 
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
-    std::unique_ptr<CollAlgOperator> algOperator(new (std::nothrow)
-        CollAlgOperator(algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLREDUCE));
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<CollAlgOperator> algOperator(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLREDUCE));
     algOperator->Is2U2PInfer();
     GlobalMockObject::verify();
 }
 
 TEST_F(CollAlgOperatorTest, need_create_single_mesh_plane)
 {
-
     HcclResult ret = HCCL_SUCCESS;
     HcclCommParams params;
     RankTable_t rankTable;
     TestConstructParam(params, rankTable);
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
-    std::unique_ptr<CollAlgOperator> algOperator(new (std::nothrow)
-        CollAlgOperator(algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLREDUCE));
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<CollAlgOperator> algOperator(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLREDUCE));
     algOperator->NeedCreateSingleMeshPlane(true);
     GlobalMockObject::verify();
 }
@@ -153,20 +137,17 @@ TEST_F(CollAlgOperatorTest, ut_SupportRetryWithInplaceCheck_ptr_check)
     TestConstructParam(params, rankTable);
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
-    std::unique_ptr<CollAlgOperator> algOperator(new (std::nothrow)
-        CollAlgOperator(algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLREDUCE));
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<CollAlgOperator> algOperator(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLREDUCE));
 
     DeviceMem inputMem = DeviceMem::alloc(4096);
     DeviceMem outputMem = DeviceMem::alloc(4096);
@@ -205,20 +186,17 @@ TEST_F(CollAlgOperatorTest, ut_SupportRetryWithInplaceCheck_opType_check)
     TestConstructParam(params, rankTable);
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
-    std::unique_ptr<CollAlgOperator> algOperator(new (std::nothrow)
-        CollAlgOperator(algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLREDUCE));
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<CollAlgOperator> algOperator(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLREDUCE));
 
     DeviceMem inputMem = DeviceMem::alloc(4096);
     DeviceMem outputMem = DeviceMem::alloc(4096);
@@ -235,16 +213,16 @@ TEST_F(CollAlgOperatorTest, ut_SupportRetryWithInplaceCheck_opType_check)
     InplaceSupportRetryStatus inPlaceSupportRetryStatus = InplaceSupportRetryStatus::INPLACE_STATUS_END;
     std::string algName = "dummyExecutor";
     bool inplaceSupportRetry = false;
-    std::cout <<  "HCCL_CMD_SEND test" << std::endl;
+    std::cout << "HCCL_CMD_SEND test" << std::endl;
     inplaceSupportRetry = algOperator->SupportRetryWithInplaceCheck(
         HcclCMDType::HCCL_CMD_SEND, opParam, algName, isInplaceStatus, inPlaceSupportRetryStatus);
     EXPECT_EQ(inplaceSupportRetry, true);
-    std::cout <<  "HCCL_CMD_RECEIVE test" << std::endl;
+    std::cout << "HCCL_CMD_RECEIVE test" << std::endl;
     inplaceSupportRetry = algOperator->SupportRetryWithInplaceCheck(
         HcclCMDType::HCCL_CMD_RECEIVE, opParam, algName, isInplaceStatus, inPlaceSupportRetryStatus);
     EXPECT_EQ(inplaceSupportRetry, true);
 
-    std::cout <<  "HCCL_CMD_ALLREDUCE test" << std::endl;
+    std::cout << "HCCL_CMD_ALLREDUCE test" << std::endl;
     inplaceSupportRetry = algOperator->SupportRetryWithInplaceCheck(
         HcclCMDType::HCCL_CMD_ALLREDUCE, opParam, algName, isInplaceStatus, inPlaceSupportRetryStatus);
     EXPECT_EQ(inplaceSupportRetry, true);
@@ -257,40 +235,42 @@ TEST_F(CollAlgOperatorTest, ut_SupportRetryWithInplaceCheck_opType_check)
     opParam.inputPtr = inputMem.ptr();
     opParam.outputPtr = outputMem.ptr();
 
-    std::cout <<  "HCCL_CMD_REDUCE test" << std::endl;
-    std::cout <<  "algConfigurator->GetTopoAttr().userRank: " << algConfigurator->GetTopoAttr().userRank << std::endl;
-    std::cout <<  "opParam.root: " << opParam.root << std::endl;
+    std::cout << "HCCL_CMD_REDUCE test" << std::endl;
+    std::cout << "algConfigurator->GetTopoAttr().userRank: " << algConfigurator->GetTopoAttr().userRank << std::endl;
+    std::cout << "opParam.root: " << opParam.root << std::endl;
     inplaceSupportRetry = algOperator->SupportRetryWithInplaceCheck(
         HcclCMDType::HCCL_CMD_REDUCE, opParam, algName, isInplaceStatus, inPlaceSupportRetryStatus);
     EXPECT_EQ(inplaceSupportRetry, true);
 
     opParam.root = 1;
-    std::cout <<  "algConfigurator->GetTopoAttr().userRank: " << algConfigurator->GetTopoAttr().userRank << std::endl;
-    std::cout <<  "opParam.root: " << opParam.root << std::endl;
+    std::cout << "algConfigurator->GetTopoAttr().userRank: " << algConfigurator->GetTopoAttr().userRank << std::endl;
+    std::cout << "opParam.root: " << opParam.root << std::endl;
     inplaceSupportRetry = algOperator->SupportRetryWithInplaceCheck(
         HcclCMDType::HCCL_CMD_REDUCE, opParam, algName, isInplaceStatus, inPlaceSupportRetryStatus);
     EXPECT_EQ(inplaceSupportRetry, true);
     opParam.root = 0;
 
-    std::cout <<  "HCCL_CMD_ALLGATHER test" << std::endl;
+    std::cout << "HCCL_CMD_ALLGATHER test" << std::endl;
     opParam.DataDes.count = 256;
-    std::cout <<  "algConfigurator->GetTopoAttr().userRankSize: " << algConfigurator->GetTopoAttr().userRankSize << std::endl;
+    std::cout << "algConfigurator->GetTopoAttr().userRankSize: " << algConfigurator->GetTopoAttr().userRankSize
+              << std::endl;
     inplaceSupportRetry = algOperator->SupportRetryWithInplaceCheck(
         HcclCMDType::HCCL_CMD_ALLGATHER, opParam, algName, isInplaceStatus, inPlaceSupportRetryStatus);
     EXPECT_EQ(inplaceSupportRetry, true);
     opParam.DataDes.count = 1024;
 
-    std::cout <<  "HCCL_CMD_REDUCE_SCATTER test" << std::endl;
+    std::cout << "HCCL_CMD_REDUCE_SCATTER test" << std::endl;
     opParam.DataDes.count = 256;
-    std::cout <<  "algConfigurator->GetTopoAttr().userRankSize: " << algConfigurator->GetTopoAttr().userRankSize << std::endl;
+    std::cout << "algConfigurator->GetTopoAttr().userRankSize: " << algConfigurator->GetTopoAttr().userRankSize
+              << std::endl;
     inplaceSupportRetry = algOperator->SupportRetryWithInplaceCheck(
         HcclCMDType::HCCL_CMD_REDUCE_SCATTER, opParam, algName, isInplaceStatus, inPlaceSupportRetryStatus);
     EXPECT_EQ(inplaceSupportRetry, true);
     opParam.DataDes.count = 1024;
 
-    std::cout <<  "HCCL_CMD_GATHER test" << std::endl;
-    std::cout <<  "algConfigurator->GetTopoAttr().userRank: " << algConfigurator->GetTopoAttr().userRank << std::endl;
-    std::cout <<  "opParam.root: " << opParam.root << std::endl;
+    std::cout << "HCCL_CMD_GATHER test" << std::endl;
+    std::cout << "algConfigurator->GetTopoAttr().userRank: " << algConfigurator->GetTopoAttr().userRank << std::endl;
+    std::cout << "opParam.root: " << opParam.root << std::endl;
     opParam.DataDes.count = 256;
     inplaceSupportRetry = algOperator->SupportRetryWithInplaceCheck(
         HcclCMDType::HCCL_CMD_GATHER, opParam, algName, isInplaceStatus, inPlaceSupportRetryStatus);
@@ -298,16 +278,16 @@ TEST_F(CollAlgOperatorTest, ut_SupportRetryWithInplaceCheck_opType_check)
     opParam.DataDes.count = 1024;
 
     opParam.root = 1;
-    std::cout <<  "algConfigurator->GetTopoAttr().userRank: " << algConfigurator->GetTopoAttr().userRank << std::endl;
-    std::cout <<  "opParam.root: " << opParam.root << std::endl;
+    std::cout << "algConfigurator->GetTopoAttr().userRank: " << algConfigurator->GetTopoAttr().userRank << std::endl;
+    std::cout << "opParam.root: " << opParam.root << std::endl;
     inplaceSupportRetry = algOperator->SupportRetryWithInplaceCheck(
         HcclCMDType::HCCL_CMD_GATHER, opParam, algName, isInplaceStatus, inPlaceSupportRetryStatus);
     EXPECT_EQ(inplaceSupportRetry, true);
     opParam.root = 0;
 
-    std::cout <<  "HCCL_CMD_SCATTER test" << std::endl;
-    std::cout <<  "algConfigurator->GetTopoAttr().userRank: " << algConfigurator->GetTopoAttr().userRank << std::endl;
-    std::cout <<  "opParam.root: " << opParam.root << std::endl;
+    std::cout << "HCCL_CMD_SCATTER test" << std::endl;
+    std::cout << "algConfigurator->GetTopoAttr().userRank: " << algConfigurator->GetTopoAttr().userRank << std::endl;
+    std::cout << "opParam.root: " << opParam.root << std::endl;
     opParam.DataDes.count = 256;
     inplaceSupportRetry = algOperator->SupportRetryWithInplaceCheck(
         HcclCMDType::HCCL_CMD_SCATTER, opParam, algName, isInplaceStatus, inPlaceSupportRetryStatus);
@@ -315,15 +295,14 @@ TEST_F(CollAlgOperatorTest, ut_SupportRetryWithInplaceCheck_opType_check)
     opParam.DataDes.count = 1024;
 
     opParam.root = 1;
-    std::cout <<  "algConfigurator->GetTopoAttr().userRank: " << algConfigurator->GetTopoAttr().userRank << std::endl;
-    std::cout <<  "opParam.root: " << opParam.root << std::endl;
+    std::cout << "algConfigurator->GetTopoAttr().userRank: " << algConfigurator->GetTopoAttr().userRank << std::endl;
+    std::cout << "opParam.root: " << opParam.root << std::endl;
     inplaceSupportRetry = algOperator->SupportRetryWithInplaceCheck(
         HcclCMDType::HCCL_CMD_SCATTER, opParam, algName, isInplaceStatus, inPlaceSupportRetryStatus);
     EXPECT_EQ(inplaceSupportRetry, true);
     opParam.root = 0;
 
-
-    std::cout <<  "HCCL_CMD_ALLTOALLV like test" << std::endl;
+    std::cout << "HCCL_CMD_ALLTOALLV like test" << std::endl;
     inplaceSupportRetry = algOperator->SupportRetryWithInplaceCheck(
         HcclCMDType::HCCL_CMD_ALLTOALLV, opParam, algName, isInplaceStatus, inPlaceSupportRetryStatus);
     EXPECT_EQ(inplaceSupportRetry, true);
@@ -358,28 +337,24 @@ TEST_F(CollAlgOperatorTest, ut_SupportRetryWithInplaceCheck_retry_condition_chec
     TestConstructParam(params, rankTable);
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ret = implBase->CreateCommCCLbuffer();
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
-    std::unique_ptr<CollAlgOperator> algOperator(new (std::nothrow)
-        CollAlgOperator(algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLREDUCE));
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<CollAlgOperator> algOperator(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLREDUCE));
 
-
-    void *commInputPtr = nullptr;
+    void* commInputPtr = nullptr;
     u64 commInputSize = 0;
     cclBufferManager.GetInCCLbuffer(commInputPtr, commInputSize);
-    std::cout <<  "InCCLbuffer: " << commInputSize << std::endl;
+    std::cout << "InCCLbuffer: " << commInputSize << std::endl;
     DeviceMem inputMem = DeviceMem::alloc(4096);
     DeviceMem outputMem = DeviceMem::alloc(4096);
     DeviceMem scratchMem = DeviceMem::alloc(8192);
@@ -396,24 +371,27 @@ TEST_F(CollAlgOperatorTest, ut_SupportRetryWithInplaceCheck_retry_condition_chec
     std::string algName = "dummyExecutor";
     bool inplaceSupportRetry = false;
 
-    std::cout <<  "HCCL_CMD_ALLGATHER test" << std::endl;
-    std::cout <<  "algConfigurator->GetTopoAttr().userRankSize: " << algConfigurator->GetTopoAttr().userRankSize << std::endl;
+    std::cout << "HCCL_CMD_ALLGATHER test" << std::endl;
+    std::cout << "algConfigurator->GetTopoAttr().userRankSize: " << algConfigurator->GetTopoAttr().userRankSize
+              << std::endl;
     inplaceSupportRetry = algOperator->SupportRetryWithInplaceCheck(
         HcclCMDType::HCCL_CMD_ALLGATHER, opParam, algName, isInplaceStatus, inPlaceSupportRetryStatus);
     EXPECT_EQ(inplaceSupportRetry, true);
-    std::cout <<  "HCCL_CMD_BROADCAST test" << std::endl;
-    std::cout <<  "algConfigurator->GetTopoAttr().userRankSize: " << algConfigurator->GetTopoAttr().userRankSize << std::endl;
+    std::cout << "HCCL_CMD_BROADCAST test" << std::endl;
+    std::cout << "algConfigurator->GetTopoAttr().userRankSize: " << algConfigurator->GetTopoAttr().userRankSize
+              << std::endl;
     inplaceSupportRetry = algOperator->SupportRetryWithInplaceCheck(
         HcclCMDType::HCCL_CMD_BROADCAST, opParam, algName, isInplaceStatus, inPlaceSupportRetryStatus);
     EXPECT_EQ(inplaceSupportRetry, true);
 
-    std::cout <<  "HCCL_CMD_ALLREDUCE test" << std::endl;
+    std::cout << "HCCL_CMD_ALLREDUCE test" << std::endl;
     inplaceSupportRetry = algOperator->SupportRetryWithInplaceCheck(
         HcclCMDType::HCCL_CMD_ALLREDUCE, opParam, algName, isInplaceStatus, inPlaceSupportRetryStatus);
     EXPECT_EQ(inplaceSupportRetry, false);
 
-    std::cout <<  "HCCL_CMD_ALLREDUCE test" << std::endl;
-    std::cout <<  "algConfigurator->GetTopoAttr().userRankSize: " << algConfigurator->GetTopoAttr().userRankSize << std::endl;
+    std::cout << "HCCL_CMD_ALLREDUCE test" << std::endl;
+    std::cout << "algConfigurator->GetTopoAttr().userRankSize: " << algConfigurator->GetTopoAttr().userRankSize
+              << std::endl;
     algName = "AllReduceMeshSmallCountExecutor";
     algOperator->SetRetryEnable(true);
     ret = InitEnvVarParam();
@@ -441,7 +419,6 @@ TEST_F(CollAlgOperatorTest, ut_SupportRetryWithInplaceCheck_retry_condition_chec
     std::cout << "inPlaceSupportRetryStatus: " << static_cast<u32>(inPlaceSupportRetryStatus) << std::endl;
     EXPECT_EQ(inplaceSupportRetry, true);
     EXPECT_EQ(static_cast<u32>(inPlaceSupportRetryStatus), 3);
-
 
     algName = "AllReduceRingFor91093Executor";
     algOperator->SetRetryEnable(true);
@@ -471,9 +448,8 @@ TEST_F(CollAlgOperatorTest, ut_SupportRetryWithInplaceCheck_retry_condition_chec
     EXPECT_EQ(inplaceSupportRetry, false);
     EXPECT_EQ(static_cast<u32>(inPlaceSupportRetryStatus), 6);
 
-
     opParam.DataDes.count = 209715200; // 200M count
-    std::cout <<  "InCCLbuffer2: " << commInputSize << std::endl;
+    std::cout << "InCCLbuffer2: " << commInputSize << std::endl;
     inplaceSupportRetry = algOperator->SupportRetryWithInplaceCheck(
         HcclCMDType::HCCL_CMD_ALLREDUCE, opParam, algName, isInplaceStatus, inPlaceSupportRetryStatus);
     std::cout << "isInplaceStatus: " << static_cast<u32>(isInplaceStatus) << std::endl;
@@ -507,28 +483,24 @@ TEST_F(CollAlgOperatorTest, ut_HcclCommunicator_IsHcclOpInplace)
     TestConstructParam(params, rankTable);
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ret = implBase->CreateCommCCLbuffer();
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
-    std::unique_ptr<CollAlgOperator> algOperator(new (std::nothrow)
-        CollAlgOperator(algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLREDUCE));
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<CollAlgOperator> algOperator(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLREDUCE));
 
-
-    void *commInputPtr = nullptr;
+    void* commInputPtr = nullptr;
     u64 commInputSize = 0;
     cclBufferManager.GetInCCLbuffer(commInputPtr, commInputSize);
-    std::cout <<  "InCCLbuffer: " << commInputSize << std::endl;
+    std::cout << "InCCLbuffer: " << commInputSize << std::endl;
     DeviceMem inputMem = DeviceMem::alloc(4096);
     DeviceMem outputMem = DeviceMem::alloc(4096);
     DeviceMem scratchMem = DeviceMem::alloc(8192);
@@ -541,14 +513,72 @@ TEST_F(CollAlgOperatorTest, ut_HcclCommunicator_IsHcclOpInplace)
     opParam.root = 0;
     u8 isInplaceStatus = 0;
 
-    bool isHcclOpInplace = IsHcclOpInplace(HcclCMDType::HCCL_CMD_ALLREDUCE,
-        opParam, 0, 8, isInplaceStatus);
+    bool isHcclOpInplace = IsHcclOpInplace(HcclCMDType::HCCL_CMD_ALLREDUCE, opParam, 0, 8, isInplaceStatus);
     EXPECT_EQ(isHcclOpInplace, true);
     // inputDataSize == 0 || outputDataSize == 0
     opParam.DataDes.count = 0;
-    isHcclOpInplace = IsHcclOpInplace(HcclCMDType::HCCL_CMD_ALLREDUCE,
-        opParam, 0, 8, isInplaceStatus);
+    isHcclOpInplace = IsHcclOpInplace(HcclCMDType::HCCL_CMD_ALLREDUCE, opParam, 0, 8, isInplaceStatus);
     EXPECT_EQ(isHcclOpInplace, false);
+    GlobalMockObject::verify();
+}
+
+TEST_F(CollAlgOperatorTest, ut_AHCAlgOptionSelect_When_SubGroupSizeSmall_Expect_SelectRing)
+{
+    HcclResult ret = HCCL_SUCCESS;
+    HcclCommParams params;
+    RankTable_t rankTable;
+    TestConstructParam(params, rankTable);
+    std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
+
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    ret = implBase->Init(params, rankTable);
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+
+    std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<CollAlgOperator> algOperator(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLREDUCE));
+
+    AlgTypeLevel1 algType{};
+    std::vector<std::vector<std::vector<u32>>> globalSubGroups;
+    globalSubGroups.resize(1);
+    globalSubGroups[0].resize(1);
+    std::map<AHCConcOpType, TemplateType> ahcAlgOption;
+    AHCAlgSelectParam ahcAlgSelectParam{};
+    ret = algOperator->AHCAlgOptionSelect(algType, globalSubGroups, ahcAlgOption, ahcAlgSelectParam);
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+    GlobalMockObject::verify();
+}
+
+TEST_F(CollAlgOperatorTest, ut_AHCAlgOptionSelect_When_SubGroupSizeLarge_Expect_SelectNhr)
+{
+    HcclResult ret = HCCL_SUCCESS;
+    HcclCommParams params;
+    RankTable_t rankTable;
+    TestConstructParam(params, rankTable);
+    std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
+
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    ret = implBase->Init(params, rankTable);
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+
+    std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<CollAlgOperator> algOperator(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLREDUCE));
+
+    AlgTypeLevel1 algType{};
+    std::vector<std::vector<std::vector<u32>>> globalSubGroups;
+    globalSubGroups.resize(1);
+    globalSubGroups[0].resize(4);
+    std::map<AHCConcOpType, TemplateType> ahcAlgOption;
+    AHCAlgSelectParam ahcAlgSelectParam{};
+    ret = algOperator->AHCAlgOptionSelect(algType, globalSubGroups, ahcAlgOption, ahcAlgSelectParam);
+    EXPECT_EQ(ret, HCCL_SUCCESS);
     GlobalMockObject::verify();
 }
 
@@ -564,28 +594,24 @@ TEST_F(CollAlgOperatorTest, ut_HcclCommunicator_IsHcclOpInplace_alltoall)
     TestConstructParam(params, rankTable);
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ret = implBase->CreateCommCCLbuffer();
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
-    std::unique_ptr<CollAlgOperator> algOperator(new (std::nothrow)
-        CollAlgOperator(algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLTOALL));
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<CollAlgOperator> algOperator(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLTOALL));
 
-
-    void *commInputPtr = nullptr;
+    void* commInputPtr = nullptr;
     u64 commInputSize = 0;
     cclBufferManager.GetInCCLbuffer(commInputPtr, commInputSize);
-    std::cout <<  "InCCLbuffer: " << commInputSize << std::endl;
+    std::cout << "InCCLbuffer: " << commInputSize << std::endl;
     DeviceMem inputMem = DeviceMem::alloc(4096);
     DeviceMem outputMem = DeviceMem::alloc(4096);
     DeviceMem scratchMem = DeviceMem::alloc(8192);
@@ -598,13 +624,11 @@ TEST_F(CollAlgOperatorTest, ut_HcclCommunicator_IsHcclOpInplace_alltoall)
     opParam.root = 0;
     u8 isInplaceStatus = 0;
     // inputPtr == outputPtr
-    bool isHcclOpInplace = IsHcclOpInplace(HcclCMDType::HCCL_CMD_ALLTOALL,
-        opParam, 0, 8, isInplaceStatus);
+    bool isHcclOpInplace = IsHcclOpInplace(HcclCMDType::HCCL_CMD_ALLTOALL, opParam, 0, 8, isInplaceStatus);
     EXPECT_EQ(isHcclOpInplace, true);
     // inputPtr != outputPtr
     opParam.outputPtr = outputMem.ptr();
-    isHcclOpInplace = IsHcclOpInplace(HcclCMDType::HCCL_CMD_ALLTOALL,
-        opParam, 0, 8, isInplaceStatus);
+    isHcclOpInplace = IsHcclOpInplace(HcclCMDType::HCCL_CMD_ALLTOALL, opParam, 0, 8, isInplaceStatus);
     EXPECT_EQ(isHcclOpInplace, false);
     GlobalMockObject::verify();
 }

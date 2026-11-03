@@ -9,13 +9,13 @@
 # -----------------------------------------------------------------------------------------------------------
 
 set(src_list
-    aicpu_indop_process.cc
     coll_comm_aicpu_mgr.cc
     coll_comm_aicpu.cc
     hccl_aicpu_hdc_handler.cc
     coll_comm_aicpu_destroy_func.cc
-    independent_op_aicpu_interface.cc
 )
+
+add_subdirectory(c_adpt)
 
 if(TARGET ccl_kernel)
     target_sources(ccl_kernel PRIVATE
@@ -23,12 +23,17 @@ if(TARGET ccl_kernel)
     )
     target_include_directories(ccl_kernel PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/c_adpt
+        ${CMAKE_CURRENT_SOURCE_DIR}/resource_mgr/local/my_rank/comm_engine_reses
         ${HCOMM_DIR}/src/coll_communicator_mgr/dfx/ns_recovery/aicpu
     )
 endif()
 
-if(TARGET hcomm)
-    target_include_directories(hcomm PRIVATE
+if(TARGET hcomm_coll_comm_obj)
+    target_include_directories(hcomm_coll_comm_obj PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/c_adpt
     )
 endif()
+
+add_subdirectory(resource_mgr)

@@ -18,30 +18,34 @@
 
 class MemoryManagerTest : public testing::Test {
 protected:
-    void SetUp() override {
-    }
-    void TearDown() override {
+    void SetUp() override {}
+    void TearDown() override
+    {
         sim::MemoryManager::GetInstance().FreeMemByName("test_mem");
         sim::MemoryManager::GetInstance().FreeMemByName("test_mem_null");
     }
 };
 
-TEST_F(MemoryManagerTest, AllocMemByName_Normal_Success) {
+TEST_F(MemoryManagerTest, AllocMemByName_Normal_Success)
+{
     void* ptr = sim::MemoryManager::GetInstance().AllocMemByName("test_mem", 1024);
     EXPECT_NE(ptr, nullptr);
 }
 
-TEST_F(MemoryManagerTest, AllocMemByName_NullName_Fail) {
+TEST_F(MemoryManagerTest, AllocMemByName_NullName_Fail)
+{
     void* ptr = sim::MemoryManager::GetInstance().AllocMemByName(nullptr, 1024);
     EXPECT_EQ(ptr, nullptr);
 }
 
-TEST_F(MemoryManagerTest, AllocMemByName_ZeroSize_Fail) {
+TEST_F(MemoryManagerTest, AllocMemByName_ZeroSize_Fail)
+{
     void* ptr = sim::MemoryManager::GetInstance().AllocMemByName("test_mem_zero", 0);
     EXPECT_EQ(ptr, nullptr);
 }
 
-TEST_F(MemoryManagerTest, AllocMemByName_DuplicateName_Fail) {
+TEST_F(MemoryManagerTest, AllocMemByName_DuplicateName_Fail)
+{
     void* ptr1 = sim::MemoryManager::GetInstance().AllocMemByName("test_mem_dup", 1024);
     EXPECT_NE(ptr1, nullptr);
     void* ptr2 = sim::MemoryManager::GetInstance().AllocMemByName("test_mem_dup", 1024);
@@ -49,21 +53,25 @@ TEST_F(MemoryManagerTest, AllocMemByName_DuplicateName_Fail) {
     sim::MemoryManager::GetInstance().FreeMemByName("test_mem_dup");
 }
 
-TEST_F(MemoryManagerTest, FreeMemByName_Normal_Success) {
+TEST_F(MemoryManagerTest, FreeMemByName_Normal_Success)
+{
     void* ptr = sim::MemoryManager::GetInstance().AllocMemByName("test_mem_free", 1024);
     EXPECT_NE(ptr, nullptr);
     sim::MemoryManager::GetInstance().FreeMemByName("test_mem_free");
 }
 
-TEST_F(MemoryManagerTest, FreeMemByName_NullName_DoNothing) {
+TEST_F(MemoryManagerTest, FreeMemByName_NullName_DoNothing)
+{
     EXPECT_NO_THROW(sim::MemoryManager::GetInstance().FreeMemByName(nullptr));
 }
 
-TEST_F(MemoryManagerTest, FreeMemByName_NotExist_DoNothing) {
+TEST_F(MemoryManagerTest, FreeMemByName_NotExist_DoNothing)
+{
     EXPECT_NO_THROW(sim::MemoryManager::GetInstance().FreeMemByName("not_exist_mem"));
 }
 
-TEST_F(MemoryManagerTest, LockUnlockMemByName_Normal_Success) {
+TEST_F(MemoryManagerTest, LockUnlockMemByName_Normal_Success)
+{
     void* ptr = sim::MemoryManager::GetInstance().AllocMemByName("test_mem_lock", 1024);
     EXPECT_NE(ptr, nullptr);
     EXPECT_NO_THROW(sim::MemoryManager::GetInstance().LockMemByName("test_mem_lock"));
@@ -71,27 +79,32 @@ TEST_F(MemoryManagerTest, LockUnlockMemByName_Normal_Success) {
     sim::MemoryManager::GetInstance().FreeMemByName("test_mem_lock");
 }
 
-TEST_F(MemoryManagerTest, LockUnlockMemByName_NullName_DoNothing) {
+TEST_F(MemoryManagerTest, LockUnlockMemByName_NullName_DoNothing)
+{
     EXPECT_NO_THROW(sim::MemoryManager::GetInstance().LockMemByName(nullptr));
     EXPECT_NO_THROW(sim::MemoryManager::GetInstance().UnlockMemByName(nullptr));
 }
 
-TEST_F(MemoryManagerTest, LockUnlockMemByName_NotExist_DoNothing) {
+TEST_F(MemoryManagerTest, LockUnlockMemByName_NotExist_DoNothing)
+{
     EXPECT_NO_THROW(sim::MemoryManager::GetInstance().LockMemByName("not_exist"));
     EXPECT_NO_THROW(sim::MemoryManager::GetInstance().UnlockMemByName("not_exist"));
 }
 
-TEST_F(MemoryManagerTest, AcquireMemByName_NotExist_Fail) {
+TEST_F(MemoryManagerTest, AcquireMemByName_NotExist_Fail)
+{
     void* ptr = sim::MemoryManager::GetInstance().AcquireMemByName("not_exist_acquire");
     EXPECT_EQ(ptr, nullptr);
 }
 
-TEST_F(MemoryManagerTest, AcquireMemByName_NullName_Fail) {
+TEST_F(MemoryManagerTest, AcquireMemByName_NullName_Fail)
+{
     void* ptr = sim::MemoryManager::GetInstance().AcquireMemByName(nullptr);
     EXPECT_EQ(ptr, nullptr);
 }
 
-TEST_F(MemoryManagerTest, AcquireMemByName_AfterAlloc_Success) {
+TEST_F(MemoryManagerTest, AcquireMemByName_AfterAlloc_Success)
+{
     void* ptr1 = sim::MemoryManager::GetInstance().AllocMemByName("test_acquire", 1024);
     EXPECT_NE(ptr1, nullptr);
     void* ptr2 = sim::MemoryManager::GetInstance().AcquireMemByName("test_acquire");
@@ -100,21 +113,25 @@ TEST_F(MemoryManagerTest, AcquireMemByName_AfterAlloc_Success) {
     sim::MemoryManager::GetInstance().FreeMemByName("test_acquire");
 }
 
-TEST_F(MemoryManagerTest, ReleaseMemByName_Normal_Success) {
+TEST_F(MemoryManagerTest, ReleaseMemByName_Normal_Success)
+{
     void* ptr = sim::MemoryManager::GetInstance().AllocMemByName("test_release", 1024);
     EXPECT_NE(ptr, nullptr);
     EXPECT_NO_THROW(sim::MemoryManager::GetInstance().ReleaseMemByName("test_release"));
 }
 
-TEST_F(MemoryManagerTest, ReleaseMemByName_NullName_DoNothing) {
+TEST_F(MemoryManagerTest, ReleaseMemByName_NullName_DoNothing)
+{
     EXPECT_NO_THROW(sim::MemoryManager::GetInstance().ReleaseMemByName(nullptr));
 }
 
-TEST_F(MemoryManagerTest, ReleaseMemByName_NotExist_DoNothing) {
+TEST_F(MemoryManagerTest, ReleaseMemByName_NotExist_DoNothing)
+{
     EXPECT_NO_THROW(sim::MemoryManager::GetInstance().ReleaseMemByName("not_exist_release"));
 }
 
-TEST_F(MemoryManagerTest, GetInstance_Singleton_SameInstance) {
+TEST_F(MemoryManagerTest, GetInstance_Singleton_SameInstance)
+{
     sim::MemoryManager& inst1 = sim::MemoryManager::GetInstance();
     sim::MemoryManager& inst2 = sim::MemoryManager::GetInstance();
     EXPECT_EQ(&inst1, &inst2);

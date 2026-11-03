@@ -19,9 +19,9 @@ namespace Hccl {
 
 class TempAllGatherRing : public AlgTemplateBase {
 public:
-    explicit TempAllGatherRing(const RankId virtualRank, const u32 tempRankSize,
-                               const std::vector<std::vector<RankId>> &tempVTopo,
-                               const std::map<RankId, u32>            &tempVirtRankMap);
+    explicit TempAllGatherRing(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~TempAllGatherRing() override;
 
     std::string Describe() const override
@@ -29,18 +29,19 @@ public:
         return StringFormat("Template of all gather ring with tempRankSize [%u].", tempRankSize_);
     }
 
-    HcclResult GenPrimQue(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec, const BuffInfo &buffInfo,
-                          const ResLinks &tempLinks, std::vector<PrimQuePtr> &tempPrimQues) override;
+    HcclResult GenPrimQue(
+        const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, const BuffInfo& buffInfo,
+        const ResLinks& tempLinks, std::vector<PrimQuePtr>& tempPrimQues) override;
     using AlgTemplateBase::CalcSliceInfo;
-    HcclResult CalcSliceInfo(const AllignInfo &allignInfo, const u64 dataSize, RankSliceInfo &sliceInfoVec) override;
+    HcclResult CalcSliceInfo(const AllignInfo& allignInfo, const u64 dataSize, RankSliceInfo& sliceInfoVec) override;
     using AlgTemplateBase::CalcRes;
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
 
 private:
-    HcclResult PreCopyOffload(const RankSliceInfo &sliceInfoVec, const bool forAllReduce,
-                              std::vector<PrimQuePtr> &tempPrimQues);
-    HcclResult RunIndividualRing(const u32 queIdx, const RankSliceInfo &sliceInfoVec, const ResLinks &tempLinks,
-                                 PrimQuePtr currPrimQue);
+    HcclResult
+    PreCopyOffload(const RankSliceInfo& sliceInfoVec, const bool forAllReduce, std::vector<PrimQuePtr>& tempPrimQues);
+    HcclResult RunIndividualRing(
+        const u32 queIdx, const RankSliceInfo& sliceInfoVec, const ResLinks& tempLinks, PrimQuePtr currPrimQue);
 
     u32 stepNum_ = 0;
 };

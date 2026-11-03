@@ -2,9 +2,21 @@
 
 ## 产品支持情况
 
-- Ascend 950PR/Ascend 950DT：支持
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：不支持
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：不支持
+<!-- npu="950" id1 -->
+- Ascend 950PR&950DT系列产品：支持
+<!-- end id1 -->
+<!-- npu="A3" id2 -->
+- Atlas A3系列产品：不支持
+<!-- end id2 -->
+<!-- npu="910b" id3 -->
+- Atlas A2系列产品：不支持
+<!-- end id3 -->
+<!-- npu="910" id4 -->
+- Atlas训练系列产品：不支持
+<!-- end id4 -->
+<!-- npu="310p" id5 -->
+- Atlas推理系列产品：不支持
+<!-- end id5 -->
 
 ## 功能说明
 
@@ -33,19 +45,30 @@ HcclResult HcclRankGraphGetEndpointInfo(HcclComm comm, uint32_t rankId, const En
 
 ## 约束说明
 
-无
+- comm必须为有效的通信域句柄（由通信域创建接口获得，调用期间保持有效）。禁止传入空指针、野指针或已销毁的句柄。
+- 线程安全：在Ascend 950PR&950DT系列产品上，同一通信域多线程并发调用本接口是安全的；Atlas A2系列与Atlas A3系列产品不支持多线程并发调用。
+- 通信域销毁（HcclCommDestroy）不得与本接口并发。
 
 ## 调用示例
 
 ```c
+// 通信域句柄
 HcclComm comm;
-uint32_t netLayer = 0;
+
+// 获取EndPoint数量
+uint32_t layer = 0;
 uint32_t topoInstId = 0;
 uint32_t num = 0;
-HcclRankGraphGetEndpointNum(comm, netLayer, topoInstId, &num);
+HcclRankGraphGetEndpointNum(comm, layer, topoInstId, &num);
+
+// 获取EndPoint描述列表
 uint32_t descNum = num;
-HcclRankGraphGetEndpointDesc(comm, netLayer, topoInstId, &descNum, endpointDesc);
-EndpointAttrBwCoeff bwCoeff{};
-uint32_t size = sizeof(EndpointAttrBwCoeff); //必须等于目标类型大小
+EndpointDesc endpointDesc[descNum];
+HcclRankGraphGetEndpointDesc(comm, layer, topoInstId, &descNum, endpointDesc);
+
+// 获取拓扑属性信息
+uint32_t rankId = 0; // 需要查询的端点所属的rank ID
+EndpointAttrBwCoeff bwCoeff = {0};
+uint32_t size = sizeof(EndpointAttrBwCoeff); // 必须等于目标类型大小
 HcclRankGraphGetEndpointInfo(comm, rankId, endpointDesc, ENDPOINT_ATTR_BW_COEFF, size, &bwCoeff);
 ```

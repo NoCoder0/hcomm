@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: ccu executor -- clear cke
  * Author: caiyifan
  */
@@ -22,7 +25,8 @@
 
 class ClearCkeExecutor : public CcuExecutorBase {
 public:
-    explicit ClearCkeExecutor(int streamId, int rankId, int dieId, const hcomm::CcuRep::CcuInstr &instr, CcuSimulator *ccuSimulator)
+    explicit ClearCkeExecutor(
+        int streamId, int rankId, int dieId, const hcomm::CcuRep::CcuInstr& instr, CcuSimulator* ccuSimulator)
         : CcuExecutorBase(streamId, rankId, dieId, instr, ccuSimulator)
     {}
     ClearCkeExecutor() = default;
@@ -30,8 +34,10 @@ public:
 
     void Parser() override;
     void Run() override;
-    void Process(CcuResourceManager &ccuResMgr) override;
+    void RunV2();
+    void Process(CcuResourceManager& ccuResMgr) override;
     std::string Describe() override;
+    CcuTrace::CcuInstrTraceDetail CollectTraceDetail() override;
 
 private:
     uint16_t clearType_;

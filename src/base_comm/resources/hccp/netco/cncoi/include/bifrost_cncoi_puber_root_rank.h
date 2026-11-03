@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef BIFROST_CNCOI_PUBER_ROOT_RANK_H
 
 #define BIFROST_CNCOI_PUBER_ROOT_RANK_H
@@ -23,11 +22,10 @@ extern "C" {
 #pragma pack(4)
 
 typedef int32_t (*F_BIFROST_CNCOI_PUBER_ON_FILL_ROOT_RANK_UPDATE_DATA)(void *cookieOfReg, void *builder,
-    BifrostCncoiSliceKeyT *sliceKey, BifrostCncoiRootRankKeyT *tupleKey, void *tupleVal, void *codeBuf,
-    int32_t bufLen);
+    BifrostCncoiSliceKeyT *sliceKey, BifrostCncoiRootRankKeyT *tupleKey, void *tupleVal, void *codeBuf, int32_t bufLen);
 typedef void (*F_BIFROST_CNCOI_PUBER_ON_ROOT_RANK_TABLE)(void *cookieOfReg, BifrostCncoiSliceKeyT *sliceKey);
-typedef char* (*F_BIFROST_CNCOI_PUBER_ON_GET_ROOT_RANK_TUPLE_VAL_STR)(void *cookieOfReg, void* tupleVal,
-    uint8_t *buf, int32_t bufLen);
+typedef char *(*F_BIFROST_CNCOI_PUBER_ON_GET_ROOT_RANK_TUPLE_VAL_STR)(void *cookieOfReg, void *tupleVal, uint8_t *buf,
+    int32_t bufLen);
 typedef uint32_t (*F_BIFROST_CNCOI_PUBER_ROOT_RANK_GETTUPLE_FIRST)(void *cookie, uint32_t type, void *outputKey,
     void *outputTupleVal);
 typedef uint32_t (*F_BIFROST_CNCOI_PUBER_ROOT_RANK_GETTUPLE_NEXT)(void *cookie, uint32_t type, void *lastKey,
@@ -46,19 +44,15 @@ typedef struct tagBifrostCncoiPuberRootRankVTbl {
     F_BIFROST_CNCOI_PUBER_ROOT_RANK_GETTUPLE_NEXT getNextTuple;
 } BifrostCncoiPuberRootRankVTbl;
 
-uint32_t BifrostCncoiPuberRootRankReg(BifrostCncoiPuber *bifrostCncoiPuber,
-    BifrostCncoiPuberRootRankVTbl *appVTbl);
+uint32_t BifrostCncoiPuberRootRankReg(BifrostCncoiPuber *bifrostCncoiPuber, BifrostCncoiPuberRootRankVTbl *appVTbl);
 uint32_t BifrostCncoiPuberRootRankNotifyTableComplete(BifrostCncoiPuber *bifrostCncoiPuber);
-uint32_t BifrostCncoiPuberRootRankCreateTable(BifrostCncoiPuber *bifrostCncoiPuber,
-    BifrostCncoiSliceKeyT *sliceKey);
-void BifrostCncoiPuberRootRankDeleteTable(BifrostCncoiPuber *bifrostCncoiPuber,
-    BifrostCncoiSliceKeyT *sliceKey);
-void BifrostCncoiPuberRootRankReleaseTable(BifrostCncoiPuber *bifrostCncoiPuber,
-    BifrostCncoiSliceKeyT *sliceKey);
-uint32_t BifrostCncoiPuberRootRankUpdate(BifrostCncoiPuber *bifrostCncoiPuber,
-    BifrostCncoiSliceKeyT *sliceKey, BifrostCncoiRootRankKeyT *tupleKey, void *val);
-void BifrostCncoiPuberRootRankDelete(BifrostCncoiPuber *bifrostCncoiPuber,
-    BifrostCncoiSliceKeyT *sliceKey, BifrostCncoiRootRankKeyT *tupleKey);
+uint32_t BifrostCncoiPuberRootRankCreateTable(BifrostCncoiPuber *bifrostCncoiPuber, BifrostCncoiSliceKeyT *sliceKey);
+void BifrostCncoiPuberRootRankDeleteTable(BifrostCncoiPuber *bifrostCncoiPuber, BifrostCncoiSliceKeyT *sliceKey);
+void BifrostCncoiPuberRootRankReleaseTable(BifrostCncoiPuber *bifrostCncoiPuber, BifrostCncoiSliceKeyT *sliceKey);
+uint32_t BifrostCncoiPuberRootRankUpdate(BifrostCncoiPuber *bifrostCncoiPuber, BifrostCncoiSliceKeyT *sliceKey,
+    BifrostCncoiRootRankKeyT *tupleKey, void *val);
+void BifrostCncoiPuberRootRankDelete(BifrostCncoiPuber *bifrostCncoiPuber, BifrostCncoiSliceKeyT *sliceKey,
+    BifrostCncoiRootRankKeyT *tupleKey);
 
 #pragma pack()
 

@@ -14,5 +14,5 @@
 namespace Hccl {
 // 在 device 和 host 目录下分别实现
 bool IsAicpuMode();
-}
+} // namespace Hccl
 #endif // HCCLV2_UTILS_COMMON_INTERFACE_H

@@ -16,20 +16,17 @@
 #include <iostream>
 #include <sys/stat.h>
 #include "sim_log.h"
-#include "sim_models.h"
+#include "runtime_state/sim_models.h"
 
 namespace HcclSim {
-static int WriteExact(FILE *fp, const void *ptr, size_t size, size_t n)
+static int WriteExact(FILE* fp, const void* ptr, size_t size, size_t n)
 {
     return fwrite(ptr, size, n, fp) == n ? 0 : -1;
 }
 
-static int ReadExact(FILE *fp, void *ptr, size_t size, size_t n)
-{
-    return fread(ptr, size, n, fp) == n ? 0 : -1;
-}
+static int ReadExact(FILE* fp, void* ptr, size_t size, size_t n) { return fread(ptr, size, n, fp) == n ? 0 : -1; }
 
-HcclVmResult FileHeaderWrite(FILE *fp, const FileHeader &header)
+HcclVmResult FileHeaderWrite(FILE* fp, const FileHeader& header)
 {
     if (WriteExact(fp, &header, sizeof(header), 1)) {
         HCCL_VM_ERROR("Write file header failed. ");
@@ -39,7 +36,7 @@ HcclVmResult FileHeaderWrite(FILE *fp, const FileHeader &header)
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult FileHeaderRead(FILE *fp, FileHeader &header, uint32_t magic)
+HcclVmResult FileHeaderRead(FILE* fp, FileHeader& header, uint32_t magic)
 {
     if (ReadExact(fp, &header, sizeof(header), 1)) {
         HCCL_VM_ERROR("Read file header failed. ");
@@ -53,7 +50,7 @@ HcclVmResult FileHeaderRead(FILE *fp, FileHeader &header, uint32_t magic)
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult HcclVmSynDataRead(FILE *fp, HcclVmSynData &synData, uint32_t magic)
+HcclVmResult HcclVmSynDataRead(FILE* fp, HcclVmSynData& synData, uint32_t magic)
 {
     auto ret = FileHeaderRead(fp, synData.header, magic);
     if (ret != HcclVmResult::HCCL_SIM_SUCCESS) {
@@ -67,11 +64,13 @@ HcclVmResult HcclVmSynDataRead(FILE *fp, HcclVmSynData &synData, uint32_t magic)
         return HcclVmResult::HCCL_SIM_E_INTERNAL;
     }
 
-    bool isCcuMode = synData.model_info.comm.op_expansion_mode == sim::SimOpExpansionMode::SIM_OP_EXPANSION_MODE_CCU;
-    bool isAivMode = synData.model_info.comm.op_expansion_mode == sim::SimOpExpansionMode::SIM_OP_EXPANSION_MODE_AIV;
+    bool isCcuMode
+        = synData.model_info.comm.op_expansion_mode == sim::runtime::SimOpExpansionMode::SIM_OP_EXPANSION_MODE_CCU;
+    bool isAivMode
+        = synData.model_info.comm.op_expansion_mode == sim::runtime::SimOpExpansionMode::SIM_OP_EXPANSION_MODE_AIV;
     if (isCcuMode) {
         ret = ChannelInfoRead(fp, synData.channel_info);
-    } else if(isAivMode) {
+    } else if (isAivMode) {
         HCCL_VM_ERROR("AIV mode do not read channel or jetty. ");
     } else {
         ret = ChannelInfoRead(fp, synData.channel_info);
@@ -81,7 +80,7 @@ HcclVmResult HcclVmSynDataRead(FILE *fp, HcclVmSynData &synData, uint32_t magic)
         HCCL_VM_ERROR("Read file channel info failed. ");
         return HcclVmResult::HCCL_SIM_E_INTERNAL;
     }
-        
+
     ret = MemLayoutRead(fp, synData.memory_info);
     if (ret != HcclVmResult::HCCL_SIM_SUCCESS) {
         HCCL_VM_ERROR("Read file memory layout info failed. ");
@@ -91,7 +90,7 @@ HcclVmResult HcclVmSynDataRead(FILE *fp, HcclVmSynData &synData, uint32_t magic)
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult HcclVmSynDataWrite(FILE *fp, const HcclVmSynData &synData)
+HcclVmResult HcclVmSynDataWrite(FILE* fp, const HcclVmSynData& synData)
 {
     auto ret = FileHeaderWrite(fp, synData.header);
     if (ret != HcclVmResult::HCCL_SIM_SUCCESS) {
@@ -105,11 +104,13 @@ HcclVmResult HcclVmSynDataWrite(FILE *fp, const HcclVmSynData &synData)
         return HcclVmResult::HCCL_SIM_E_INTERNAL;
     }
 
-    bool isCcuMode = synData.model_info.comm.op_expansion_mode == sim::SimOpExpansionMode::SIM_OP_EXPANSION_MODE_CCU;
-    bool isAivMode = synData.model_info.comm.op_expansion_mode == sim::SimOpExpansionMode::SIM_OP_EXPANSION_MODE_AIV;
+    bool isCcuMode
+        = synData.model_info.comm.op_expansion_mode == sim::runtime::SimOpExpansionMode::SIM_OP_EXPANSION_MODE_CCU;
+    bool isAivMode
+        = synData.model_info.comm.op_expansion_mode == sim::runtime::SimOpExpansionMode::SIM_OP_EXPANSION_MODE_AIV;
     if (isCcuMode) {
         ret = ChannelInfoWrite(fp, synData.channel_info);
-    } else if(isAivMode) {
+    } else if (isAivMode) {
         HCCL_VM_WARN("AIV mode do not write channel or jetty. ");
     } else {
         ret = ChannelInfoWrite(fp, synData.channel_info);
@@ -129,7 +130,7 @@ HcclVmResult HcclVmSynDataWrite(FILE *fp, const HcclVmSynData &synData)
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult HcclVmInstrDataRead(FILE *fp, HcclVmInstrData &instrData, uint32_t magic)
+HcclVmResult HcclVmInstrDataRead(FILE* fp, HcclVmInstrData& instrData, uint32_t magic)
 {
     auto ret = FileHeaderRead(fp, instrData.header, magic);
     if (ret != HcclVmResult::HCCL_SIM_SUCCESS) {
@@ -149,7 +150,7 @@ HcclVmResult HcclVmInstrDataRead(FILE *fp, HcclVmInstrData &instrData, uint32_t 
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult HcclVmInstrDataWrite(FILE *fp, const HcclVmInstrData &instrData)
+HcclVmResult HcclVmInstrDataWrite(FILE* fp, const HcclVmInstrData& instrData)
 {
     auto ret = FileHeaderWrite(fp, instrData.header);
     if (ret != HcclVmResult::HCCL_SIM_SUCCESS) {
@@ -168,7 +169,7 @@ HcclVmResult HcclVmInstrDataWrite(FILE *fp, const HcclVmInstrData &instrData)
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult ModelInfoCommWrite(FILE *fp, const ModelInfoCommInner &comm)
+HcclVmResult ModelInfoCommWrite(FILE* fp, const ModelInfoCommInner& comm)
 {
     if (WriteExact(fp, &comm, sizeof(comm), 1)) {
         HCCL_VM_ERROR("Write file model info failed. ");
@@ -178,7 +179,7 @@ HcclVmResult ModelInfoCommWrite(FILE *fp, const ModelInfoCommInner &comm)
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult ModelInfoCommRead(FILE *fp, ModelInfoCommInner &comm)
+HcclVmResult ModelInfoCommRead(FILE* fp, ModelInfoCommInner& comm)
 {
     if (ReadExact(fp, &comm, sizeof(comm), 1)) {
         HCCL_VM_ERROR("Read file model info failed. ");
@@ -188,7 +189,7 @@ HcclVmResult ModelInfoCommRead(FILE *fp, ModelInfoCommInner &comm)
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult VDataDesTagWrite(FILE *fp, const VDataDesTagInner &vDataDes)
+HcclVmResult VDataDesTagWrite(FILE* fp, const VDataDesTagInner& vDataDes)
 {
     if (WriteExact(fp, &vDataDes.dataType, sizeof(vDataDes.dataType), 1)) {
         HCCL_VM_ERROR("Write file vDataDes dataType failed. ");
@@ -213,7 +214,7 @@ HcclVmResult VDataDesTagWrite(FILE *fp, const VDataDesTagInner &vDataDes)
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult VDataDesTagRead(FILE *fp, VDataDesTagInner &vDataDes)
+HcclVmResult VDataDesTagRead(FILE* fp, VDataDesTagInner& vDataDes)
 {
     if (ReadExact(fp, &vDataDes.dataType, sizeof(vDataDes.dataType), 1)) {
         HCCL_VM_ERROR("Read file vDataDes dataType failed. ");
@@ -240,7 +241,7 @@ HcclVmResult VDataDesTagRead(FILE *fp, VDataDesTagInner &vDataDes)
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult All2AllDataDesTagWrite(FILE *fp, const All2AllDataDesTagInner &all2AllDataDes)
+HcclVmResult All2AllDataDesTagWrite(FILE* fp, const All2AllDataDesTagInner& all2AllDataDes)
 {
     if (WriteExact(fp, &all2AllDataDes.sendType, sizeof(all2AllDataDes.sendType), 1)) {
         HCCL_VM_ERROR("Write file all2allDataDes sendType failed. ");
@@ -275,7 +276,7 @@ HcclVmResult All2AllDataDesTagWrite(FILE *fp, const All2AllDataDesTagInner &all2
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult All2AllDataDesTagRead(FILE *fp, All2AllDataDesTagInner &all2AllDataDes)
+HcclVmResult All2AllDataDesTagRead(FILE* fp, All2AllDataDesTagInner& all2AllDataDes)
 {
     if (ReadExact(fp, &all2AllDataDes.sendType, sizeof(all2AllDataDes.sendType), 1)) {
         HCCL_VM_ERROR("Read file all2allDataDes sendType failed. ");
@@ -312,7 +313,7 @@ HcclVmResult All2AllDataDesTagRead(FILE *fp, All2AllDataDesTagInner &all2AllData
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult ModelInfoWrite(FILE *fp, const ModelInfoInner &modelInfo)
+HcclVmResult ModelInfoWrite(FILE* fp, const ModelInfoInner& modelInfo)
 {
     auto ret = ModelInfoCommWrite(fp, modelInfo.comm);
     if (ret != HcclVmResult::HCCL_SIM_SUCCESS) {
@@ -335,7 +336,7 @@ HcclVmResult ModelInfoWrite(FILE *fp, const ModelInfoInner &modelInfo)
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult ModelInfoRead(FILE *fp, ModelInfoInner &modelInfo)
+HcclVmResult ModelInfoRead(FILE* fp, ModelInfoInner& modelInfo)
 {
     auto ret = ModelInfoCommRead(fp, modelInfo.comm);
     if (ret != HcclVmResult::HCCL_SIM_SUCCESS) {
@@ -358,7 +359,7 @@ HcclVmResult ModelInfoRead(FILE *fp, ModelInfoInner &modelInfo)
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult ChannelInfoWrite(FILE *fp, const ChannelInfoInner &chInfo)
+HcclVmResult ChannelInfoWrite(FILE* fp, const ChannelInfoInner& chInfo)
 {
     if (WriteExact(fp, &chInfo.count, sizeof(chInfo.count), 1)) {
         HCCL_VM_ERROR("Write channel info count failed. ");
@@ -373,7 +374,7 @@ HcclVmResult ChannelInfoWrite(FILE *fp, const ChannelInfoInner &chInfo)
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult ChannelInfoRead(FILE *fp, ChannelInfoInner &chInfo)
+HcclVmResult ChannelInfoRead(FILE* fp, ChannelInfoInner& chInfo)
 {
     if (ReadExact(fp, &chInfo.count, sizeof(chInfo.count), 1)) {
         HCCL_VM_ERROR("Read channel info count failed. ");
@@ -389,7 +390,7 @@ HcclVmResult ChannelInfoRead(FILE *fp, ChannelInfoInner &chInfo)
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult JettyInfoWrite(FILE *fp, const JettyInfoInner &jettyInfo)
+HcclVmResult JettyInfoWrite(FILE* fp, const JettyInfoInner& jettyInfo)
 {
     if (WriteExact(fp, &jettyInfo.count, sizeof(jettyInfo.count), 1)) {
         HCCL_VM_ERROR("Write jetty info count failed. ");
@@ -404,7 +405,7 @@ HcclVmResult JettyInfoWrite(FILE *fp, const JettyInfoInner &jettyInfo)
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult JettyInfoRead(FILE *fp, JettyInfoInner &jettyInfo)
+HcclVmResult JettyInfoRead(FILE* fp, JettyInfoInner& jettyInfo)
 {
     if (ReadExact(fp, &jettyInfo.count, sizeof(jettyInfo.count), 1)) {
         HCCL_VM_ERROR("Read jetty info count failed. ");
@@ -420,7 +421,7 @@ HcclVmResult JettyInfoRead(FILE *fp, JettyInfoInner &jettyInfo)
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult MemLayoutWrite(FILE *fp, const MemLayoutInfoInner &memLayoutInfo)
+HcclVmResult MemLayoutWrite(FILE* fp, const MemLayoutInfoInner& memLayoutInfo)
 {
     if (WriteExact(fp, &memLayoutInfo.count, sizeof(memLayoutInfo.count), 1)) {
         HCCL_VM_ERROR("Write mem layout info count failed. ");
@@ -435,7 +436,7 @@ HcclVmResult MemLayoutWrite(FILE *fp, const MemLayoutInfoInner &memLayoutInfo)
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult MemLayoutRead(FILE *fp, MemLayoutInfoInner &memLayoutInfo)
+HcclVmResult MemLayoutRead(FILE* fp, MemLayoutInfoInner& memLayoutInfo)
 {
     if (ReadExact(fp, &memLayoutInfo.count, sizeof(memLayoutInfo.count), 1)) {
         HCCL_VM_ERROR("Read mem layout info count failed. ");
@@ -451,7 +452,7 @@ HcclVmResult MemLayoutRead(FILE *fp, MemLayoutInfoInner &memLayoutInfo)
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult MicrocodeInstrWrite(FILE *fp, const MicrocodeInstrInner &mcInstrInfo)
+HcclVmResult MicrocodeInstrWrite(FILE* fp, const MicrocodeInstrInner& mcInstrInfo)
 {
     if (WriteExact(fp, &mcInstrInfo.desc, sizeof(mcInstrInfo.desc), 1)) {
         HCCL_VM_ERROR("Write microcode instr desc failed. ");
@@ -466,7 +467,7 @@ HcclVmResult MicrocodeInstrWrite(FILE *fp, const MicrocodeInstrInner &mcInstrInf
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult MicrocodeInstrRead(FILE *fp, MicrocodeInstrInner &mcInstrInfo)
+HcclVmResult MicrocodeInstrRead(FILE* fp, MicrocodeInstrInner& mcInstrInfo)
 {
     if (ReadExact(fp, &mcInstrInfo.desc, sizeof(mcInstrInfo.desc), 1)) {
         HCCL_VM_ERROR("Read microcode instr desc failed. ");
@@ -482,7 +483,7 @@ HcclVmResult MicrocodeInstrRead(FILE *fp, MicrocodeInstrInner &mcInstrInfo)
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult TaskMetaWrite(FILE *fp, const HcclTaskMetaData &taskData)
+HcclVmResult TaskMetaWrite(FILE* fp, const HcclTaskMetaData& taskData)
 {
     if (WriteExact(fp, &taskData, sizeof(HcclTaskMetaData), 1)) {
         HCCL_VM_ERROR("Write task meta failed. ");
@@ -492,7 +493,7 @@ HcclVmResult TaskMetaWrite(FILE *fp, const HcclTaskMetaData &taskData)
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult TaskMetaRead(FILE *fp, HcclTaskMetaData &taskData)
+HcclVmResult TaskMetaRead(FILE* fp, HcclTaskMetaData& taskData)
 {
     if (ReadExact(fp, &taskData, sizeof(HcclTaskMetaData), 1)) {
         HCCL_VM_ERROR("Read task meta failed. ");
@@ -503,7 +504,7 @@ HcclVmResult TaskMetaRead(FILE *fp, HcclTaskMetaData &taskData)
 }
 
 // task读写
-HcclVmResult HcclVmTaskMetaDataWrite(FILE *fp, const HcclVmTaskMetaData &taskMeta)
+HcclVmResult HcclVmTaskMetaDataWrite(FILE* fp, const HcclVmTaskMetaData& taskMeta)
 {
     auto ret = FileHeaderWrite(fp, taskMeta.header);
     if (ret != HcclVmResult::HCCL_SIM_SUCCESS) {
@@ -519,7 +520,7 @@ HcclVmResult HcclVmTaskMetaDataWrite(FILE *fp, const HcclVmTaskMetaData &taskMet
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult HcclVmTaskMetaDataRead(FILE *fp, HcclVmTaskMetaData &taskMeta, uint32_t magic)
+HcclVmResult HcclVmTaskMetaDataRead(FILE* fp, HcclVmTaskMetaData& taskMeta, uint32_t magic)
 {
     auto ret = FileHeaderRead(fp, taskMeta.header, magic);
     if (ret != HcclVmResult::HCCL_SIM_SUCCESS) {
@@ -536,7 +537,7 @@ HcclVmResult HcclVmTaskMetaDataRead(FILE *fp, HcclVmTaskMetaData &taskMeta, uint
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-HcclVmResult HcclVmFlagDataWrite(FILE *fp, const HcclVmFlagData &flagData)
+HcclVmResult HcclVmFlagDataWrite(FILE* fp, const HcclVmFlagData& flagData)
 {
     auto ret = FileHeaderWrite(fp, flagData.header);
     if (ret != HcclVmResult::HCCL_SIM_SUCCESS) {
@@ -552,7 +553,7 @@ HcclVmResult HcclVmFlagDataWrite(FILE *fp, const HcclVmFlagData &flagData)
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-bool CheckVmFlagDataFileSize(FILE *fp)
+bool CheckVmFlagDataFileSize(FILE* fp)
 {
     struct stat st;
     if (fstat(fileno(fp), &st) != 0) {
@@ -568,7 +569,7 @@ bool CheckVmFlagDataFileSize(FILE *fp)
     return true;
 }
 
-HcclVmResult HcclVmFlagDataRead(FILE *fp, HcclVmFlagData &flagData, uint32_t magic)
+HcclVmResult HcclVmFlagDataRead(FILE* fp, HcclVmFlagData& flagData, uint32_t magic)
 {
     if (!CheckVmFlagDataFileSize(fp)) {
         flagData.runner_status = 0;
@@ -588,4 +589,4 @@ HcclVmResult HcclVmFlagDataRead(FILE *fp, HcclVmFlagData &flagData, uint32_t mag
 
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
-}
+} // namespace HcclSim

@@ -35,20 +35,11 @@ using namespace std;
 
 class CcuInsGroupTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CommunicatorImplTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CommunicatorImplTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CommunicatorImplTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CommunicatorImplTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in CommunicatorImplTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in CommunicatorImplTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -73,7 +64,7 @@ TEST_F(CcuInsGroupTest, should_return_success_when_calling_append)
     CcuInsGroup insGroup;
     std::unique_ptr<CcuInstruction> ins = std::make_unique<CcuInstructionAllGatherMesh1D>();
     insGroup.Append(std::move(ins));
-    EXPECT_EQ(insGroup.GetCcuInstructions().size() , 1);
+    EXPECT_EQ(insGroup.GetCcuInstructions().size(), 1);
 }
 
 TEST_F(CcuInsGroupTest, should_return_success_when_calling_describe)
@@ -86,7 +77,7 @@ TEST_F(CcuInsGroupTest, should_return_success_when_calling_describe)
     // check2
     std::unique_ptr<CcuInstruction> ins = std::make_unique<CcuInstructionAllGatherMesh1D>();
     insGroup.Append(std::move(ins));
-    EXPECT_EQ(insGroup.ccuInstructions.size() , 1);
+    EXPECT_EQ(insGroup.ccuInstructions.size(), 1);
     EXPECT_EQ(insGroup.Describe(), "CcuInsGroup[ccuInstructions_size=1, execId=0]");
 }
 

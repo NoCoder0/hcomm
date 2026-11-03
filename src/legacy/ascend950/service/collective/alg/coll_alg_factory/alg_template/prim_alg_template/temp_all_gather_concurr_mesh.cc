@@ -13,18 +13,15 @@
 #include "temp_all_gather_concurr_mesh.h"
 
 namespace Hccl {
-TempAllGatherConcurrMesh::TempAllGatherConcurrMesh(const RankId virtualRank, const u32 tempRankSize,
-                                                   const std::vector<std::vector<RankId>> &tempVTopo,
-                                                   const std::map<RankId, u32>            &tempVirtRankMap)
+TempAllGatherConcurrMesh::TempAllGatherConcurrMesh(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
     : AlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap)
-{
-}
+{}
 
-TempAllGatherConcurrMesh::~TempAllGatherConcurrMesh()
-{
-}
+TempAllGatherConcurrMesh::~TempAllGatherConcurrMesh() {}
 
-HcclResult TempAllGatherConcurrMesh::CalcRes(AlgTempResReq &tempResReq)
+HcclResult TempAllGatherConcurrMesh::CalcRes(AlgTempResReq& tempResReq)
 {
     for (u32 dim = 0; dim < tempVTopo_.size(); dim++) {
         tempResReq.queNum += tempVTopo_[dim].size() - 1;
@@ -35,10 +32,11 @@ HcclResult TempAllGatherConcurrMesh::CalcRes(AlgTempResReq &tempResReq)
         CHK_RET(GetAlgRank(myRank_, tempVTopo_[dim], myAlgRank));
         for (u32 queIdx = 0; queIdx < tempVTopo_[dim].size() - 1; queIdx++) {
             // find neighbors -> virtualRank
-            u32    neighborAlgRank = (myAlgRank + 1 + queIdx) % (tempVTopo_[dim].size());
-            RankId neighborRank    = tempVTopo_[dim][neighborAlgRank];
-            HCCL_INFO("[CollAlgFactory] [TempAllGatherConcurrMesh] Rank [%d], Dim [%u], NeighborRank [%d].", myRank_,
-                       dim, neighborRank);
+            u32 neighborAlgRank = (myAlgRank + 1 + queIdx) % (tempVTopo_[dim].size());
+            RankId neighborRank = tempVTopo_[dim][neighborAlgRank];
+            HCCL_INFO(
+                "[CollAlgFactory] [TempAllGatherConcurrMesh] Rank [%d], Dim [%u], NeighborRank [%d].", myRank_, dim,
+                neighborRank);
 
             // LinkNum
             tempResReq.links[neighborRank] = 1;
@@ -53,8 +51,8 @@ dataSize / (rankSize * dimNum) --> sliceSize
 
 SliceInfoVecforConcurrMesh: [1st chunk: [1st Slice, 2nd Slice], 2nd chunk: [1st Slice, 2nd Slice], ...]
 */
-HcclResult TempAllGatherConcurrMesh::CalcSliceInfo(const AllignInfo &allignInfo, const u64 dataSize,
-                                                   RankSliceInfo &sliceInfoVec)
+HcclResult
+TempAllGatherConcurrMesh::CalcSliceInfo(const AllignInfo& allignInfo, const u64 dataSize, RankSliceInfo& sliceInfoVec)
 {
     u32 dimSize = 0;
     for (u32 dimIdx = 0; dimIdx < tempVTopo_.size(); dimIdx++) {
@@ -76,23 +74,25 @@ HcclResult TempAllGatherConcurrMesh::CalcSliceInfo(const AllignInfo &allignInfo,
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TempAllGatherConcurrMesh::GenPrimQue(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec,
-                                                const BuffInfo &buffInfo, const ResLinks &tempLinks,
-                                                std::vector<PrimQuePtr> &tempPrimQues)
+HcclResult TempAllGatherConcurrMesh::GenPrimQue(
+    const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, const BuffInfo& buffInfo, const ResLinks& tempLinks,
+    std::vector<PrimQuePtr>& tempPrimQues)
 {
-    opMode_              = tempFuncs.opMode;
+    opMode_ = tempFuncs.opMode;
     enableCounterNotify_ = tempFuncs.enableCounterNotify;
-    buffInfo_            = buffInfo;
-    HCCL_INFO("[CollAlgFactory] [TempAllGatherConcurrMesh] Rank [%d], EnableCounterNotify [%d].", myRank_,
-               enableCounterNotify_);
+    buffInfo_ = buffInfo;
+    HCCL_INFO(
+        "[CollAlgFactory] [TempAllGatherConcurrMesh] Rank [%d], EnableCounterNotify [%d].", myRank_,
+        enableCounterNotify_);
 
     queNum_ = 0;
     for (u32 dim = 0; dim < tempVTopo_.size(); dim++) {
         queNum_ += tempVTopo_[dim].size() - 1;
     }
-    CHK_PRT_RET(queNum_ != tempPrimQues.size(),
-                HCCL_ERROR("[CollAlgFactory] [TempAllGatherConcurrMesh] Rank [%d], requiredQue Error.", myRank_),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        queNum_ != tempPrimQues.size(),
+        HCCL_ERROR("[CollAlgFactory] [TempAllGatherConcurrMesh] Rank [%d], requiredQue Error.", myRank_),
+        HcclResult::HCCL_E_INTERNAL);
 
     // Local Copy from Input to Scratch Buffer for OPBASE
     if ((opMode_ == OpMode::OPBASE) && tempFuncs.isForepart && !tempFuncs.forAllReduce) {
@@ -118,8 +118,8 @@ HcclResult TempAllGatherConcurrMesh::GenPrimQue(const TempFuncs &tempFuncs, cons
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TempAllGatherConcurrMesh::RunOneDimMesh(const RankSliceInfo &sliceInfoVec, const ResLinks &tempLinks,
-                                                   std::vector<PrimQuePtr> &tempPrimQues)
+HcclResult TempAllGatherConcurrMesh::RunOneDimMesh(
+    const RankSliceInfo& sliceInfoVec, const ResLinks& tempLinks, std::vector<PrimQuePtr>& tempPrimQues)
 {
     // semaphore sync
     if (queNum_ > 1) {
@@ -146,10 +146,10 @@ HcclResult TempAllGatherConcurrMesh::RunOneDimMesh(const RankSliceInfo &sliceInf
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TempAllGatherConcurrMesh::RunConcurrMesh(const RankSliceInfo &sliceInfoVec, const ResLinks &tempLinks,
-                                                    std::vector<PrimQuePtr> &tempPrimQues)
+HcclResult TempAllGatherConcurrMesh::RunConcurrMesh(
+    const RankSliceInfo& sliceInfoVec, const ResLinks& tempLinks, std::vector<PrimQuePtr>& tempPrimQues)
 {
-    std::vector<u32>                     myAlgRank;
+    std::vector<u32> myAlgRank;
     std::vector<std::vector<PrimQuePtr>> dimQues;
     for (u32 dim = 0; dim < tempVTopo_.size(); dim++) {
         // locate myRank in tempVTopo -> algRank
@@ -198,8 +198,8 @@ HcclResult TempAllGatherConcurrMesh::RunConcurrMesh(const RankSliceInfo &sliceIn
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TempAllGatherConcurrMesh::PreCopyOffload(const RankSliceInfo &sliceInfoVec, const bool forAllReduce,
-                                                    std::vector<PrimQuePtr> &tempPrimQues)
+HcclResult TempAllGatherConcurrMesh::PreCopyOffload(
+    const RankSliceInfo& sliceInfoVec, const bool forAllReduce, std::vector<PrimQuePtr>& tempPrimQues)
 {
     u64 srcOffset = 0;
     if (forAllReduce) {
@@ -221,9 +221,9 @@ HcclResult TempAllGatherConcurrMesh::PreCopyOffload(const RankSliceInfo &sliceIn
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TempAllGatherConcurrMesh::RunMesh(const u32 myAlgRank, const std::vector<RankId> &vTopo,
-                                             const RankSliceInfo &sliceInfoVec, const ResLinks &tempLinks,
-                                             std::vector<PrimQuePtr> &tempPrimQues)
+HcclResult TempAllGatherConcurrMesh::RunMesh(
+    const u32 myAlgRank, const std::vector<RankId>& vTopo, const RankSliceInfo& sliceInfoVec, const ResLinks& tempLinks,
+    std::vector<PrimQuePtr>& tempPrimQues)
 {
     for (u32 queIdx = 0; queIdx < tempPrimQues.size(); queIdx++) {
         // find neighbors -> virtualRank
@@ -232,11 +232,11 @@ HcclResult TempAllGatherConcurrMesh::RunMesh(const u32 myAlgRank, const std::vec
         LinkData neighborLinkData = tempLinks.at(neighborRank)[0];
 
         u32 sendChunkIdx = tempVirtRankMap_[myRank_];
-        u64 sendOffset   = sliceInfoVec[sendChunkIdx][0].offset;
-        u64 sendSize     = sliceInfoVec[sendChunkIdx][0].size;
+        u64 sendOffset = sliceInfoVec[sendChunkIdx][0].offset;
+        u64 sendSize = sliceInfoVec[sendChunkIdx][0].size;
         u32 recvChunkIdx = tempVirtRankMap_[neighborRank];
-        u64 recvOffset   = sliceInfoVec[recvChunkIdx][0].offset;
-        u64 recvSize     = sliceInfoVec[recvChunkIdx][0].size;
+        u64 recvOffset = sliceInfoVec[recvChunkIdx][0].offset;
+        u64 recvSize = sliceInfoVec[recvChunkIdx][0].size;
 
         // PrimGroup
         std::unique_ptr<PrimGroup> primGroup = std::make_unique<PrimGroup>();
@@ -262,13 +262,13 @@ HcclResult TempAllGatherConcurrMesh::RunMesh(const u32 myAlgRank, const std::vec
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TempAllGatherConcurrMesh::RunSingleDimension(const u32 &step, const u32 &dim,
-                                                        const RankSliceInfo &sliceInfoVec, const ResLinks &tempLinks,
-                                                        std::vector<PrimQuePtr> &dimPrimQues)
+HcclResult TempAllGatherConcurrMesh::RunSingleDimension(
+    const u32& step, const u32& dim, const RankSliceInfo& sliceInfoVec, const ResLinks& tempLinks,
+    std::vector<PrimQuePtr>& dimPrimQues)
 {
-    CHK_PRT_RET(dim > 1,
-                HCCL_ERROR("[CollAlgFactory] [TempAllGatherConcurrMesh] Rank [%d], invalid dim [%u].", myRank_, dim),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        dim > 1, HCCL_ERROR("[CollAlgFactory] [TempAllGatherConcurrMesh] Rank [%d], invalid dim [%u].", myRank_, dim),
+        HcclResult::HCCL_E_INTERNAL);
 
     // locate myRank in tempVTopo -> algRank
     u32 myAlgRank;
@@ -277,16 +277,18 @@ HcclResult TempAllGatherConcurrMesh::RunSingleDimension(const u32 &step, const u
     for (u32 queIdx = 0; queIdx < dimPrimQues.size(); queIdx++) {
         // semaphore sync
         if (dimPrimQues.size() > 1) {
-            CHK_PRT_RET(PreSync(queIdx, dimPrimQues) != HcclResult::HCCL_SUCCESS,
-                        HCCL_ERROR("[CollAlgFactory] [TempAllGatherConcurrMesh] Rank [%d], Que [%u], Semaphore "
-                                   "Synchronization Failed.",
-                                   myRank_, dimPrimQues[queIdx]->GetId()),
-                        HcclResult::HCCL_E_INTERNAL);
+            CHK_PRT_RET(
+                PreSync(queIdx, dimPrimQues) != HcclResult::HCCL_SUCCESS,
+                HCCL_ERROR(
+                    "[CollAlgFactory] [TempAllGatherConcurrMesh] Rank [%d], Que [%u], Semaphore "
+                    "Synchronization Failed.",
+                    myRank_, dimPrimQues[queIdx]->GetId()),
+                HcclResult::HCCL_E_INTERNAL);
         }
 
         // find neighbors -> virtualRank
-        u32    neighborAlgRank = (myAlgRank + 1 + queIdx) % (tempVTopo_[dim].size());
-        RankId neighborRank    = tempVTopo_[dim][neighborAlgRank];
+        u32 neighborAlgRank = (myAlgRank + 1 + queIdx) % (tempVTopo_[dim].size());
+        RankId neighborRank = tempVTopo_[dim][neighborAlgRank];
 
         // link
         LinkData neighborLinkData = tempLinks.at(neighborRank)[0];
@@ -302,17 +304,17 @@ HcclResult TempAllGatherConcurrMesh::RunSingleDimension(const u32 &step, const u
             recvChunkIdxs.push_back(tempVirtRankMap_[neighborRank]);
         } else {
             for (u32 chunkIdx = 0; chunkIdx < tempVTopo_[1 - dim].size(); chunkIdx++) {
-                u32 sendChunkIdx = (dim == 0) ? (myAlgRank + chunkIdx * tempVTopo_[0].size())
-                                              : (myAlgRank * tempVTopo_[0].size() + chunkIdx);
+                u32 sendChunkIdx = (dim == 0) ? (myAlgRank + chunkIdx * tempVTopo_[0].size()) :
+                                                (myAlgRank * tempVTopo_[0].size() + chunkIdx);
                 sendChunkIdxs.push_back(sendChunkIdx);
-                u32 recvChunkIdx = (dim == 0) ? (neighborAlgRank + chunkIdx * tempVTopo_[0].size())
-                                              : (neighborAlgRank * tempVTopo_[0].size() + chunkIdx);
+                u32 recvChunkIdx = (dim == 0) ? (neighborAlgRank + chunkIdx * tempVTopo_[0].size()) :
+                                                (neighborAlgRank * tempVTopo_[0].size() + chunkIdx);
                 recvChunkIdxs.push_back(recvChunkIdx);
             }
         }
 
         // Send
-        u32                       sliceIdx = (step == 0) ? (1 - dim) : dim;
+        u32 sliceIdx = (step == 0) ? (1 - dim) : dim;
         std::unique_ptr<PrimSend> primSend
             = RunSend(sliceInfoVec, sendChunkIdxs, sliceIdx, neighborRank, neighborLinkData);
         primGroup->Append(std::move(primSend));
@@ -326,28 +328,30 @@ HcclResult TempAllGatherConcurrMesh::RunSingleDimension(const u32 &step, const u
 
         // semaphore sync
         if (dimPrimQues.size() > 1) {
-            CHK_PRT_RET(PostSync(queIdx, dimPrimQues) != HcclResult::HCCL_SUCCESS,
-                        HCCL_ERROR("[CollAlgFactory] [TempAllGatherConcurrMesh] Rank [%d], Que [%u], Semaphore "
-                                   "Synchronization Failed.",
-                                   myRank_, dimPrimQues[queIdx]->GetId()),
-                        HcclResult::HCCL_E_INTERNAL);
+            CHK_PRT_RET(
+                PostSync(queIdx, dimPrimQues) != HcclResult::HCCL_SUCCESS,
+                HCCL_ERROR(
+                    "[CollAlgFactory] [TempAllGatherConcurrMesh] Rank [%d], Que [%u], Semaphore "
+                    "Synchronization Failed.",
+                    myRank_, dimPrimQues[queIdx]->GetId()),
+                HcclResult::HCCL_E_INTERNAL);
         }
     }
 
     return HcclResult::HCCL_SUCCESS;
 }
 
-std::unique_ptr<PrimSend> TempAllGatherConcurrMesh::RunSend(const RankSliceInfo    &sliceInfoVec,
-                                                            const std::vector<u32> &sendChunkIdxs, const u32 &sliceIdx,
-                                                            const RankId &neighborRank, const LinkData &priorLinkData)
+std::unique_ptr<PrimSend> TempAllGatherConcurrMesh::RunSend(
+    const RankSliceInfo& sliceInfoVec, const std::vector<u32>& sendChunkIdxs, const u32& sliceIdx,
+    const RankId& neighborRank, const LinkData& priorLinkData)
 {
     std::unique_ptr<PrimSend> primSend;
-    u64                       tmpSendOff;
-    u64                       tmpSendSize;
+    u64 tmpSendOff;
+    u64 tmpSendSize;
     for (u32 chunkIdx = 0; chunkIdx < sendChunkIdxs.size(); chunkIdx++) {
         if (chunkIdx == 0) {
             // first slice
-            tmpSendOff  = sliceInfoVec[sendChunkIdxs[chunkIdx]][sliceIdx].offset;
+            tmpSendOff = sliceInfoVec[sendChunkIdxs[chunkIdx]][sliceIdx].offset;
             tmpSendSize = sliceInfoVec[sendChunkIdxs[chunkIdx]][sliceIdx].size;
         } else if (tmpSendOff + tmpSendSize == sliceInfoVec[sendChunkIdxs[chunkIdx]][sliceIdx].offset) {
             // consequent slice
@@ -362,7 +366,7 @@ std::unique_ptr<PrimSend> TempAllGatherConcurrMesh::RunSend(const RankSliceInfo 
             } else {
                 primSend->Append(sendLocSlice, sendRemSlice);
             }
-            tmpSendOff  = sliceInfoVec[sendChunkIdxs[chunkIdx]][sliceIdx].offset;
+            tmpSendOff = sliceInfoVec[sendChunkIdxs[chunkIdx]][sliceIdx].offset;
             tmpSendSize = sliceInfoVec[sendChunkIdxs[chunkIdx]][sliceIdx].size;
         }
 
@@ -383,17 +387,17 @@ std::unique_ptr<PrimSend> TempAllGatherConcurrMesh::RunSend(const RankSliceInfo 
     return primSend;
 }
 
-std::unique_ptr<PrimRecv> TempAllGatherConcurrMesh::RunRecv(const RankSliceInfo    &sliceInfoVec,
-                                                            const std::vector<u32> &recvChunkIdxs, const u32 &sliceIdx,
-                                                            const RankId &neighborRank, const LinkData &priorLinkData)
+std::unique_ptr<PrimRecv> TempAllGatherConcurrMesh::RunRecv(
+    const RankSliceInfo& sliceInfoVec, const std::vector<u32>& recvChunkIdxs, const u32& sliceIdx,
+    const RankId& neighborRank, const LinkData& priorLinkData)
 {
     std::unique_ptr<PrimRecv> primRecv;
-    u64                       tmpRecvOff;
-    u64                       tmpRecvSize;
+    u64 tmpRecvOff;
+    u64 tmpRecvSize;
     for (u32 chunkIdx = 0; chunkIdx < recvChunkIdxs.size(); chunkIdx++) {
         if (chunkIdx == 0) {
             // first slice
-            tmpRecvOff  = sliceInfoVec[recvChunkIdxs[chunkIdx]][sliceIdx].offset;
+            tmpRecvOff = sliceInfoVec[recvChunkIdxs[chunkIdx]][sliceIdx].offset;
             tmpRecvSize = sliceInfoVec[recvChunkIdxs[chunkIdx]][sliceIdx].size;
         } else if (tmpRecvOff + tmpRecvSize == sliceInfoVec[recvChunkIdxs[chunkIdx]][sliceIdx].offset) {
             // consequent slice
@@ -408,7 +412,7 @@ std::unique_ptr<PrimRecv> TempAllGatherConcurrMesh::RunRecv(const RankSliceInfo 
             } else {
                 primRecv->Append(recvLocSlice, recvRemSlice);
             }
-            tmpRecvOff  = sliceInfoVec[recvChunkIdxs[chunkIdx]][sliceIdx].offset;
+            tmpRecvOff = sliceInfoVec[recvChunkIdxs[chunkIdx]][sliceIdx].offset;
             tmpRecvSize = sliceInfoVec[recvChunkIdxs[chunkIdx]][sliceIdx].size;
         }
 

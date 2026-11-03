@@ -27,37 +27,36 @@
 #include "rs_ping_roce.h"
 #include "tc_ut_rs_ping.h"
 
-extern int RsPingRocePingCbInit(unsigned int phyId, struct PingInitAttr *attr, struct PingInitInfo *info,
-    struct RsPingCtxCb *pingCb);
-extern int RsGetPingCb(struct RaRsDevInfo *rdev, struct RsPingCtxCb **pingCb);
-extern int RsPingRoceFindTargetNode(struct RsPingCtxCb *pingCb, struct PingQpInfo *target,
-    struct RsPingTargetInfo  **node);
-extern int RsPingRoceAllocTargetNode(struct RsPingCtxCb *pingCb, struct PingTargetInfo  *target,
-    struct RsPingTargetInfo  **node);
-extern int RsPingRoceGetTargetResult(struct RsPingCtxCb *pingCb, struct PingTargetCommInfo *target,
-    struct PingResultInfo *result);
-extern void RsPingCommonDeinitLocalQp(struct rs_cb *rscb, struct RsPingCtxCb *pingCb,
-    struct RsPingLocalQpCb *qpCb);
-extern int RsPingCbGetIbCtxAndIndex(struct rdev *rdevInfo, struct RsPingCtxCb *pingCb);
-extern int RsPingCbGetDevRdevIndex(struct RsPingCtxCb *pingCb, int index);
-extern int RsPingUrmaCheckFd(struct RsPingCtxCb *pingCb, int fd);
-extern int RsPongUrmaCheckFd(struct RsPingCtxCb *pingCb, int fd);
+extern int RsPingRocePingCbInit(
+    unsigned int phyId, struct PingInitAttr* attr, struct PingInitInfo* info, struct RsPingCtxCb* pingCb);
+extern int RsGetPingCb(struct RaRsDevInfo* rdev, struct RsPingCtxCb** pingCb);
+extern int
+RsPingRoceFindTargetNode(struct RsPingCtxCb* pingCb, struct PingQpInfo* target, struct RsPingTargetInfo** node);
+extern int
+RsPingRoceAllocTargetNode(struct RsPingCtxCb* pingCb, struct PingTargetInfo* target, struct RsPingTargetInfo** node);
+extern int
+RsPingRoceGetTargetResult(struct RsPingCtxCb* pingCb, struct PingTargetCommInfo* target, struct PingResultInfo* result);
+extern void RsPingCommonDeinitLocalQp(struct rs_cb* rscb, struct RsPingCtxCb* pingCb, struct RsPingLocalQpCb* qpCb);
+extern int RsPingCbGetIbCtxAndIndex(struct rdev* rdevInfo, struct RsPingCtxCb* pingCb);
+extern int RsPingCbGetDevRdevIndex(struct RsPingCtxCb* pingCb, int index);
+extern int RsPingUrmaCheckFd(struct RsPingCtxCb* pingCb, int fd);
+extern int RsPongUrmaCheckFd(struct RsPingCtxCb* pingCb, int fd);
 
 static struct rs_cb gTmpRsCb0;
 static struct rs_cb gTmpRsCb1;
 static struct rs_cb gPingRsCb;
 static struct RsPingCtxCb gTmpPingCb;
-static struct RsPingTargetInfo  gPingTargetNode;
-static struct RsPingTargetInfo  gPingTargetNode1;
+static struct RsPingTargetInfo gPingTargetNode;
+static struct RsPingTargetInfo gPingTargetNode1;
 
-int RsDev2rscb_stub0(uint32_t devId, struct rs_cb **rsCb, bool initFlag)
+int RsDev2rscb_stub0(uint32_t devId, struct rs_cb** rsCb, bool initFlag)
 {
     *rsCb = &gTmpRsCb0;
 
     return 0;
 }
 
-int RsDev2rscb_stub1(uint32_t devId, struct rs_cb **rsCb, bool initFlag)
+int RsDev2rscb_stub1(uint32_t devId, struct rs_cb** rsCb, bool initFlag)
 {
     pthread_mutex_init(&gTmpRsCb1.pingCb.pingMutex, NULL);
     gTmpRsCb1.pingCb.threadStatus = RS_PING_THREAD_RUNNING;
@@ -67,7 +66,7 @@ int RsDev2rscb_stub1(uint32_t devId, struct rs_cb **rsCb, bool initFlag)
     return 0;
 }
 
-int RsGetPingCbStub(struct RaRsDevInfo *rdev, struct RsPingCtxCb **pingCb)
+int RsGetPingCbStub(struct RaRsDevInfo* rdev, struct RsPingCtxCb** pingCb)
 {
     *pingCb = &gTmpPingCb;
     (*pingCb)->pingPongOps = RsPingRoceGetOps();
@@ -76,7 +75,7 @@ int RsGetPingCbStub(struct RaRsDevInfo *rdev, struct RsPingCtxCb **pingCb)
     return 0;
 }
 
-int RsGetRsCbStub(unsigned int phyId, struct rs_cb **rsCb)
+int RsGetRsCbStub(unsigned int phyId, struct rs_cb** rsCb)
 {
     *rsCb = &gPingRsCb;
     (*rsCb)->pingCb.pingPongOps = RsPingRoceGetOps();
@@ -85,16 +84,14 @@ int RsGetRsCbStub(unsigned int phyId, struct rs_cb **rsCb)
     return 0;
 }
 
-int RsPingRoceFindTargetNodeStub(struct RsPingCtxCb *pingCb, struct PingQpInfo *target,
-    struct RsPingTargetInfo  **node)
+int RsPingRoceFindTargetNodeStub(struct RsPingCtxCb* pingCb, struct PingQpInfo* target, struct RsPingTargetInfo** node)
 {
     *node = &gPingTargetNode;
 
     return 0;
 }
 
-int RsPingRoceFindTargetNodeStub1(struct RsPingCtxCb *pingCb, struct PingQpInfo *target,
-    struct RsPingTargetInfo  **node)
+int RsPingRoceFindTargetNodeStub1(struct RsPingCtxCb* pingCb, struct PingQpInfo* target, struct RsPingTargetInfo** node)
 {
     *node = &gPingTargetNode1;
 
@@ -151,8 +148,8 @@ void TcRsPingHandleDeinit()
 
 void TcRsPingInit()
 {
-    struct PingInitAttr attr = { 0 };
-    struct PingInitInfo info = { 0 };
+    struct PingInitAttr attr = {0};
+    struct PingInitInfo info = {0};
     unsigned int rdevIndex = 0;
     int ret = 0;
 
@@ -195,8 +192,8 @@ void TcRsPingInit()
 
 void TcRsPingTargetAdd()
 {
-    struct PingTargetInfo  target = { 0 };
-    struct RaRsDevInfo rdev = { 0 };
+    struct PingTargetInfo target = {0};
+    struct RaRsDevInfo rdev = {0};
     int ret = 0;
 
     ret = RsPingTargetAdd(&rdev, NULL);
@@ -235,9 +232,9 @@ void TcRsPingTargetAdd()
 
 void TcRsPingTaskStart()
 {
-    struct RsPingTargetInfo  tmpTarget = {0};
-    struct RaRsDevInfo rdev = { 0 };
-    struct PingTaskAttr attr = { 0 };
+    struct RsPingTargetInfo tmpTarget = {0};
+    struct RaRsDevInfo rdev = {0};
+    struct PingTaskAttr attr = {0};
     int ret = 0;
 
     ret = RsPingTaskStart(&rdev, NULL);
@@ -275,9 +272,9 @@ void TcRsPingTaskStart()
 
 void TcRsPingGetResults()
 {
-    struct PingTargetCommInfo target= { 0 };
-    struct PingResultInfo result = { 0 };
-    struct RaRsDevInfo rdev = { 0 };
+    struct PingTargetCommInfo target = {0};
+    struct PingResultInfo result = {0};
+    struct RaRsDevInfo rdev = {0};
     unsigned int num = 1;
     int ret = 0;
 
@@ -308,7 +305,7 @@ void TcRsPingGetResults()
 
 void TcRsPingTaskStop()
 {
-    struct RaRsDevInfo rdev = { 0 };
+    struct RaRsDevInfo rdev = {0};
     int ret = 0;
 
     ret = RsPingTaskStop(NULL);
@@ -322,8 +319,8 @@ void TcRsPingTaskStop()
 
 void TcRsPingTargetDel()
 {
-    struct PingTargetCommInfo target = { 0 };
-    struct RaRsDevInfo rdev = { 0 };
+    struct PingTargetCommInfo target = {0};
+    struct RaRsDevInfo rdev = {0};
     unsigned int num = 1;
     int ret = 0;
 
@@ -351,7 +348,7 @@ void TcRsPingTargetDel()
 
 void TcRsPingDeinit()
 {
-    struct RaRsDevInfo rdev = { 0 };
+    struct RaRsDevInfo rdev = {0};
     int ret = 0;
 
     ret = RsPingDeinit(NULL);
@@ -395,7 +392,7 @@ void TcRsPingUrmaCheckFd()
 void TcRsPingCbGetIbCtxAndIndex()
 {
     struct RsPingCtxCb pingCb = {0};
-    struct ibv_device *devList[1] = {0};
+    struct ibv_device* devList[1] = {0};
     struct ibv_device devNode = {0};
     struct rdev rdevInfo = {0};
     int ret = 0;

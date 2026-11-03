@@ -16,7 +16,8 @@ class SimShmOpsTest : public testing::Test {
 protected:
 };
 
-TEST_F(SimShmOpsTest, ShmConstants_Exist) {
+TEST_F(SimShmOpsTest, ShmConstants_Exist)
+{
     EXPECT_EQ(SHM_MAGIC, 0x53484D50);
     EXPECT_EQ(SHM_VERSION, 1);
 }

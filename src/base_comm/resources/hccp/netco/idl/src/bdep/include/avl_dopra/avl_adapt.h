@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 /**
  * @defgroup util Util
  */
@@ -18,7 +17,6 @@
  */
 #ifndef AVL_ADAPT_H
 #define AVL_ADAPT_H
-
 
 #ifdef __cplusplus
 extern "C" {

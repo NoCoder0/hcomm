@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef NET_CO_MAIN_DATA_H
 #define NET_CO_MAIN_DATA_H
 
@@ -28,10 +27,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define NET_CO_LOG_MOD_DO(log, fmt, ...) do {                                        \
-    int depth_ = WfwGetFuncCallStackDepth();                                        \
-    BKF_LOG_DEBUG((log), "[modDo_@_%03d][%s]" fmt, depth_, __func__, ##__VA_ARGS__); \
-} while (0)
+#define NET_CO_LOG_MOD_DO(log, fmt, ...)                                                                               \
+    do {                                                                                                               \
+        int depth_ = WfwGetFuncCallStackDepth();                                                                       \
+        BKF_LOG_DEBUG((log), "[modDo_@_%03d][%s]" fmt, depth_, __func__, ##__VA_ARGS__);                               \
+    } while (0)
 
 #define NET_CO_JOB_PRIO_DFT 6
 enum {
@@ -78,4 +78,3 @@ struct TagNetCo {
 #endif
 
 #endif
-

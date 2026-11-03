@@ -22,38 +22,36 @@ namespace Hccl {
 
 class CcuContextAllReduceMeshTwoShotMem2Mem2D : public CcuContextAlgBase {
 public:
-    CcuContextAllReduceMeshTwoShotMem2Mem2D(const CcuCtxArg &arg, const std::vector<CcuTransport *> &transports,
-                                            const CcuTransportGroup &group);
-    ~CcuContextAllReduceMeshTwoShotMem2Mem2D() override
-    {
-    }
+    CcuContextAllReduceMeshTwoShotMem2Mem2D(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
+    ~CcuContextAllReduceMeshTwoShotMem2Mem2D() override {}
 
-    void                  Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    void Algorithm() override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
 
 private:
-    void                  InitVariables();
-    void                  LoadArgs();
-    void                  SyncAll(int ckeIdx);
-    void                  PreSync();
-    void                  GetSliceOffsetAndGoSize(uint64_t currentSliceRankIdx, uint64_t currStepSliceType);
-    void                  DoAxisSync(uint32_t signalIdx);
-    void                  DoGroupSync(int ckeIdx, uint16_t selfBit, uint16_t allBit);
-    void                  DoGroupReduce(std::vector<CcuRep::Variable> &srcAddr, CcuRep::Variable &dstAddr);
-    void                  AllGatherStep(CcuRep::Variable &srcAddr, std::vector<CcuRep::Variable> &dstAddr);
-    void                  CalMeshChunkSlices(uint64_t totalSize, uint64_t sliceNum, std::vector<uint64_t> &slices,
-                                             std::vector<uint64_t> &offsets);
+    void InitVariables();
+    void LoadArgs();
+    void SyncAll(int ckeIdx);
+    void PreSync();
+    void GetSliceOffsetAndGoSize(uint64_t currentSliceRankIdx, uint64_t currStepSliceType);
+    void DoAxisSync(uint32_t signalIdx);
+    void DoGroupSync(int ckeIdx, uint16_t selfBit, uint16_t allBit);
+    void DoGroupReduce(std::vector<CcuRep::Variable>& srcAddr, CcuRep::Variable& dstAddr);
+    void AllGatherStep(CcuRep::Variable& srcAddr, std::vector<CcuRep::Variable>& dstAddr);
+    void CalMeshChunkSlices(
+        uint64_t totalSize, uint64_t sliceNum, std::vector<uint64_t>& slices, std::vector<uint64_t>& offsets);
     std::vector<uint64_t> dimSize_;
-    uint32_t              axisId_{0};
-    DataType              dataType_;
-    DataType              outputDataType_;
+    uint32_t axisId_{0};
+    DataType dataType_;
+    DataType outputDataType_;
 
-    uint32_t              otherAxisId_{0};
+    uint32_t otherAxisId_{0};
     std::vector<uint64_t> myRankIdxInAxis_;
-    uint64_t              myRankIdxInCurrentAxis_{0};
-    uint64_t              currentAxisRankSize_{0};
-    uint64_t              myRankIdxInOtherAxis_{0};
-    uint64_t              otherAxisRankSize_{0};
+    uint64_t myRankIdxInCurrentAxis_{0};
+    uint64_t currentAxisRankSize_{0};
+    uint64_t myRankIdxInOtherAxis_{0};
+    uint64_t otherAxisRankSize_{0};
 
     uint16_t selfBit_{0};
     uint16_t allBit_{0};
@@ -87,14 +85,14 @@ private:
     GroupOpSize lastRankYGoSize_;
     GroupOpSize currGoSize_;
 
-    std::string        currAxisSignalName_;
-    std::string        otherAxisSignalName_;
+    std::string currAxisSignalName_;
+    std::string otherAxisSignalName_;
     CcuRep::MaskSignal currAxisSignal_;
     CcuRep::MaskSignal otherAxisSignal_;
 
     // 算法模板运行时的参数
     std::vector<CcuRep::Memory> tmpAddrList_;
-    CcuRep::Memory              tmpAddr_;
+    CcuRep::Memory tmpAddr_;
 };
 } // namespace Hccl
 

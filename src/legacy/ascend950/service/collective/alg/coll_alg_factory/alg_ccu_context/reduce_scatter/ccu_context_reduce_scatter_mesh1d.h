@@ -21,12 +21,13 @@ namespace Hccl {
 
 class CcuContextReduceScatterMesh1D : public CcuContextAlgBase {
 public:
-    CcuContextReduceScatterMesh1D(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                              const CcuTransportGroup &group);
+    CcuContextReduceScatterMesh1D(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
     ~CcuContextReduceScatterMesh1D() override {}
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
+
 private:
     DataType dataType;
     DataType outputDataType;

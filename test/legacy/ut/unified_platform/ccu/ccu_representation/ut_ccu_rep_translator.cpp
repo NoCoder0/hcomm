@@ -23,15 +23,9 @@ using namespace CcuRep;
 
 class CcuRepTranslatorTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CcuRepTranslatorTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CcuRepTranslatorTest tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CcuRepTranslatorTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CcuRepTranslatorTest tests tear down." << std::endl; }
 
     virtual void SetUp()
     {
@@ -65,7 +59,7 @@ TEST_F(CcuRepTranslatorTest, get_translator_require_physical_resources_num)
     CcuResReq translatorResReq = CcuRepTranslator::GetResReq(dieId);
     CcuResReq refMgrResReq = CcuRepReferenceManager::GetResReq(dieId);
 
-    EXPECT_EQ(refMgrResReq.xnReq[dieId], FUNC_ARG_MAX + FUNC_ARG_MAX + FUNC_NEST_MAX + 2);
+    EXPECT_EQ(refMgrResReq.xnReq[dieId], FUNC_IN_MAX + FUNC_OUT_MAX + FUNC_NEST_MAX + 2);
     EXPECT_EQ(translatorResReq.xnReq[dieId], 4);
     EXPECT_EQ(translatorResReq.gsaReq[dieId], 3);
     EXPECT_EQ(translatorResReq.ckeReq[dieId], 2);
@@ -83,19 +77,18 @@ CcuRepTranslator InitCcuRepResource(CcuRepResource& res)
     return translator;
 }
 
-
 TEST_F(CcuRepTranslatorTest, translator_bind_phy_resource_success)
 {
     CcuRepResource res;
     auto translator = InitCcuRepResource(res);
 
-    EXPECT_EQ(res.variable[0].size(), FUNC_ARG_MAX + FUNC_ARG_MAX + FUNC_NEST_MAX + 1 + 1 + 4);
+    EXPECT_EQ(res.variable[0].size(), FUNC_IN_MAX + FUNC_OUT_MAX + FUNC_NEST_MAX + 1 + 1 + 4);
     EXPECT_EQ(res.address[0].size(), 3);
     EXPECT_EQ(res.maskSignal[0].size(), 2);
 
     // 绑定物理资源
     uint16_t id = 10;
-    for (auto &var : res.variable[0]) {
+    for (auto& var : res.variable[0]) {
         var.Reset(id);
         id++;
     }
@@ -103,7 +96,7 @@ TEST_F(CcuRepTranslatorTest, translator_bind_phy_resource_success)
     res.address[0][0].Reset(2);
 
     // 检验translator中资源id
-    EXPECT_EQ(translator.var[0].Id(), 84);
+    EXPECT_EQ(translator.var[0].Id(), 10 + FUNC_IN_MAX + FUNC_OUT_MAX + FUNC_NEST_MAX + 2);
     EXPECT_EQ(translator.addr[0].Id(), 2);
     EXPECT_EQ(translator.signal[0].Id(), 5);
 
@@ -117,7 +110,7 @@ TEST_F(CcuRepTranslatorTest, translator_bind_phy_resource_success)
     // 检验translator中transDep的值是否符合预期
     EXPECT_EQ(translator.transDep.logicalId, 0);
     EXPECT_EQ(translator.transDep.dieId, 0);
-    EXPECT_EQ(translator.transDep.reserveXnId, 84);
+    EXPECT_EQ(translator.transDep.reserveXnId, 10 + FUNC_IN_MAX + FUNC_OUT_MAX + FUNC_NEST_MAX + 2);
     EXPECT_EQ(translator.transDep.reserveGsaId, 2);
     EXPECT_EQ(translator.transDep.reserveCkeId, 5);
 };

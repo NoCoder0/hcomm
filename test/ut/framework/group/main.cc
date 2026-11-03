@@ -13,7 +13,8 @@
 #include "comm.h"
 #include "llt_hccl_stub_pub.h"
 
-GTEST_API_ int main(int argc, char **argv) {
+GTEST_API_ int main(int argc, char** argv)
+{
     printf("Running hccl_group_test\n");
 
     setTargetPort(27743, 31123);

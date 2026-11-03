@@ -7,10 +7,11 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #ifndef HCCLV2_IPC_LOCAL_NOTIFY_H
 #define HCCLV2_IPC_LOCAL_NOTIFY_H
 
-#include "local_notify.h"
+#include "local_notify_v2.h"
 
 namespace Hccl {
 
@@ -18,13 +19,13 @@ class IpcLocalNotify : public BaseLocalNotify {
 public:
     explicit IpcLocalNotify(bool devUsed = false);
 
-    IpcLocalNotify(const IpcLocalNotify &that) = delete;
+    IpcLocalNotify(const IpcLocalNotify& that) = delete;
 
-    IpcLocalNotify &operator=(const IpcLocalNotify &that) = delete;
+    IpcLocalNotify& operator=(const IpcLocalNotify& that) = delete;
 
-    void Wait(const Stream &stream, u32 timeout) const override;
+    void Wait(const Stream& stream, u32 timeout) const override;
 
-    void Post(const Stream &stream) const override;
+    void Post(const Stream& stream) const override;
 
     std::unique_ptr<Serializable> GetExchangeDto() override;
 

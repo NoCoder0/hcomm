@@ -32,76 +32,72 @@ constexpr u32 LOCAL_REDUCE_SERIIAL_ALG_SERVER_NUM = 2;
 constexpr u32 PARITY_BASE = 2;
 class MultiDeterPipeline : public AlgTemplateBase {
 public:
-    explicit MultiDeterPipeline (const HcclDispatcher dispatcher);
+    explicit MultiDeterPipeline(const HcclDispatcher dispatcher);
     ~MultiDeterPipeline() override;
     HcclResult RunAsync() override;
     HcclResult RunAsyncReduceScatterPipeline();
     // ReduceScatterDeterPipeline
-    HcclResult Prepare(HcomCollOpInfo *opInfo, DeviceMem &buffer, const u64 count,
-        const u64 offset, const std::vector<Slice> &slices, const SubCommInfo &level0CommInfo,
-        const SubCommInfo &level1CommInfo, Stream &mainStream, std::vector<Stream> &subStream,
-        std::vector<std::shared_ptr<LocalNotify>> &notifyMain, std::vector<std::shared_ptr<LocalNotify>> &notifySub) override;
+    HcclResult Prepare(
+        HcomCollOpInfo* opInfo, DeviceMem& buffer, const u64 count, const u64 offset, const std::vector<Slice>& slices,
+        const SubCommInfo& level0CommInfo, const SubCommInfo& level1CommInfo, Stream& mainStream,
+        std::vector<Stream>& subStream, std::vector<std::shared_ptr<LocalNotify>>& notifyMain,
+        std::vector<std::shared_ptr<LocalNotify>>& notifySub) override;
 
     // AllReduceDeterPipeline
-    HcclResult Prepare(HcomCollOpInfo *opInfo, DeviceMem &inBuffer, DeviceMem &outBuffer, const u64 count,
-        const std::vector<Slice> &slices, const SubCommInfo &level0CommInfo,
-        const SubCommInfo &level1CommInfo, Stream &mainStream, std::vector<Stream> &subStream,
-        std::vector<std::shared_ptr<LocalNotify>> &notifyMain, std::vector<std::shared_ptr<LocalNotify>> &notifySub) override;
+    HcclResult Prepare(
+        HcomCollOpInfo* opInfo, DeviceMem& inBuffer, DeviceMem& outBuffer, const u64 count,
+        const std::vector<Slice>& slices, const SubCommInfo& level0CommInfo, const SubCommInfo& level1CommInfo,
+        Stream& mainStream, std::vector<Stream>& subStream, std::vector<std::shared_ptr<LocalNotify>>& notifyMain,
+        std::vector<std::shared_ptr<LocalNotify>>& notifySub) override;
+
 protected:
     HcclResult MainWaitSub(u32 begin, u32 end);
     HcclResult SubRecordMain(u32 begin, u32 end);
     HcclResult MainRecordSub(u32 begin, u32 end);
     HcclResult SubWaitMain(u32 begin, u32 end);
     // 根据step获取 机间或机内的rankId
-    constexpr u32 GetPreRankIdByStep(u32 rankId, u32 rankSize, u32 step) {
+    constexpr u32 GetPreRankIdByStep(u32 rankId, u32 rankSize, u32 step) const
+    {
         return (rankId + rankSize - step) % rankSize;
     }
 
-    constexpr u32 GetNextRankIdByStep(u32 rankId, u32 rankSize, u32 step) {
-        return (rankId + step) % rankSize;
-    }
+    constexpr u32 GetNextRankIdByStep(u32 rankId, u32 rankSize, u32 step) const { return (rankId + step) % rankSize; }
 
-    inline u32 GetPreServerIdByStep(u32 step) {
-        return GetPreRankIdByStep(serverId_, serverSize_, step);
-    }
+    inline u32 GetPreServerIdByStep(u32 step) { return GetPreRankIdByStep(serverId_, serverSize_, step); }
 
-    inline u32 GetNextServerIdByStep(u32 step) {
-        return GetNextRankIdByStep(serverId_, serverSize_, step);
-    }
+    inline u32 GetNextServerIdByStep(u32 step) { return GetNextRankIdByStep(serverId_, serverSize_, step); }
 
-    inline u32 GetPreIntraRankIdByStep(u32 step) {
-        return GetPreRankIdByStep(intraRankId_, intraRankSize_, step);
-    }
+    inline u32 GetPreIntraRankIdByStep(u32 step) { return GetPreRankIdByStep(intraRankId_, intraRankSize_, step); }
 
-    inline u32 GetNextIntraRankIdByStep(u32 step) {
-        return GetNextRankIdByStep(intraRankId_, intraRankSize_, step);
-    }
+    inline u32 GetNextIntraRankIdByStep(u32 step) { return GetNextRankIdByStep(intraRankId_, intraRankSize_, step); }
 
-    inline u32 GetRankIdx(u32 serverId, u32 intraRankId) {
-        return serverId * intraRankSize_ + intraRankId;
-    }
+    inline u32 GetRankIdx(u32 serverId, u32 intraRankId) const { return serverId * intraRankSize_ + intraRankId; }
     // 获取device内存部分
-    virtual HcclResult GetRemoteCclbufferDeviceMem(u32 inputSliceIndex, LINK link,
-        u32 outputSliceIndex, DeviceMem &remoteMem);
-    virtual HcclResult GetLocalUserInDeviceMem(u32 rankIdInAllRanks, DeviceMem &locaMem);
-    virtual HcclResult GetLocalUserOutDeviceMem(u32 rankIdInAllRanks, DeviceMem &localMem);
-    virtual HcclResult GetLocalInCclbufferDeviceMem(u32 rankIdInAllRanks, DeviceMem &localMem, bool ifUseLastSize);
-    virtual HcclResult GetLocalOutCclbufferDeviceMem(u32 rankIdInAllRanks, DeviceMem &localMem, bool ifUseLastSize);
+    virtual HcclResult
+    GetRemoteCclbufferDeviceMem(u32 inputSliceIndex, LINK link, u32 outputSliceIndex, DeviceMem& remoteMem);
+    virtual HcclResult GetLocalUserInDeviceMem(u32 rankIdInAllRanks, DeviceMem& locaMem);
+    virtual HcclResult GetLocalUserOutDeviceMem(u32 rankIdInAllRanks, DeviceMem& localMem);
+    virtual HcclResult GetLocalInCclbufferDeviceMem(u32 rankIdInAllRanks, DeviceMem& localMem, bool ifUseLastSize);
+    virtual HcclResult GetLocalOutCclbufferDeviceMem(u32 rankIdInAllRanks, DeviceMem& localMem, bool ifUseLastSize);
 
     virtual HcclResult RunLocalCopy();
     virtual HcclResult RunIntraAlltoallPreSync(u32 step);
     HcclResult RunIntraAlltoall(u32 step);
     // LocalReduce内部函数
-    HcclResult GroupTasksByStream(u32 activeCount, const std::vector<bool>& isReduceBlock,
-        u32 retIndex, std::vector<std::vector<std::vector<std::pair<u32, u32>>>>& batchStreamTasks,
-        std::vector<bool>& processed, std::vector<u32>& origIdxMap, u32& newActiveCount);
-    HcclResult ExecuteStreamTasks(const std::vector<std::vector<std::pair<u32, u32>>>& streamTasks,
-        const std::vector<DeviceMem>& validMem, std::vector<u32>& origIdxMap, bool useMainStream);
-    virtual HcclResult BatchPostNotifyForStreams(const std::vector<std::vector<std::pair<u32, u32>>>& streamTasks,
-        bool isStartPhase, bool useMainStream);
-    void CompressActiveSet(std::vector<DeviceMem> &validMem, std::vector<bool> &isReduceBlock, std::vector<u32> &origIdxMap,
-        const std::vector<bool> &processed, u32 &trackedTargetIdx, const u32 origRetIndex);
-    HcclResult LocalReduce(std::vector<DeviceMem> &reduceMem, std::vector<bool> &isReduceBlock, u32 retIndex, bool useMainStream);
+    HcclResult GroupTasksByStream(
+        u32 activeCount, const std::vector<bool>& isReduceBlock, u32 retIndex,
+        std::vector<std::vector<std::vector<std::pair<u32, u32>>>>& batchStreamTasks, std::vector<bool>& processed,
+        std::vector<u32>& origIdxMap, u32& newActiveCount) const;
+    HcclResult ExecuteStreamTasks(
+        const std::vector<std::vector<std::pair<u32, u32>>>& streamTasks, const std::vector<DeviceMem>& validMem,
+        std::vector<u32>& origIdxMap, bool useMainStream);
+    virtual HcclResult BatchPostNotifyForStreams(
+        const std::vector<std::vector<std::pair<u32, u32>>>& streamTasks, bool isStartPhase, bool useMainStream);
+    void CompressActiveSet(
+        std::vector<DeviceMem>& validMem, std::vector<bool>& isReduceBlock, std::vector<u32>& origIdxMap,
+        const std::vector<bool>& processed, u32& trackedTargetIdx, const u32 origRetIndex) const;
+    HcclResult
+    LocalReduce(std::vector<DeviceMem>& reduceMem, std::vector<bool>& isReduceBlock, u32 retIndex, bool useMainStream);
     virtual HcclResult RunIntraLocalReduce(u32 step);
     virtual HcclResult RunFinalReduce();
     // RDAM send部分
@@ -114,10 +110,10 @@ protected:
     HcclResult RunAsyncLocalReduceSerial();
     // 初始化部分
     void InitAlltoallRecvBlockIdxMap();
-    HcclResult PrepareTopoInfo(const SubCommInfo &level0CommInfo, const SubCommInfo &level1CommInfo);
+    HcclResult PrepareTopoInfo(const SubCommInfo& level0CommInfo, const SubCommInfo& level1CommInfo);
     virtual u64 GetLocalReduceSerialThresh() = 0;
 
-    HcomCollOpInfo *opInfo_{nullptr};
+    HcomCollOpInfo* opInfo_{nullptr};
 
     void* usrInMemPtr_ = nullptr;
     void* usrOutMemPtr_ = nullptr;
@@ -143,9 +139,9 @@ protected:
     u32 reduceStreamBegin_ = 0; // local reduce专用
     u32 reduceStreamSize_ = 0;
     u32 intraRankSize_ = 0; // 机内
-    u32 serverSize_ = 0; // 机间
-    u32 intraRankId_ = 0; // 机内
-    u32 serverId_ = 0; // 机间
+    u32 serverSize_ = 0;    // 机间
+    u32 intraRankId_ = 0;   // 机内
+    u32 serverId_ = 0;      // 机间
     u64 offset_ = 0;
     u32 allSteps_ = 0;
     u64 eachRankCclbufferSize_ = 0;
@@ -161,5 +157,5 @@ protected:
     std::vector<LINK> intraLinks_;
     std::vector<LINK> serverLinks_;
 };
-}
+} // namespace hccl
 #endif

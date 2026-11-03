@@ -25,16 +25,13 @@ namespace Hccl {
 static CcuInstRegister<CcuContextReduceScatterMesh1D2Die>
     g_registrarReduceScatter(CcuInstType::CCU_REDUCE_SCATTER_MESH_1D_2DIE);
 
-CcuTempReduceScatterMesh1D2Die::CcuTempReduceScatterMesh1D2Die(const RankId virtualRank, const u32 tempRankSize,
-                                                               const std::vector<std::vector<RankId>> &tempVTopo,
-                                                               const std::map<RankId, u32>            &tempVirtRankMap)
+CcuTempReduceScatterMesh1D2Die::CcuTempReduceScatterMesh1D2Die(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
     : CcuAlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap)
-{
-}
+{}
 
-CcuTempReduceScatterMesh1D2Die::~CcuTempReduceScatterMesh1D2Die()
-{
-}
+CcuTempReduceScatterMesh1D2Die::~CcuTempReduceScatterMesh1D2Die() {}
 
 u32 CcuTempReduceScatterMesh1D2Die::CalcScratchMultiple(BufferType inBuffType, BufferType outBuffType)
 {
@@ -43,15 +40,15 @@ u32 CcuTempReduceScatterMesh1D2Die::CalcScratchMultiple(BufferType inBuffType, B
     return 2;
 }
 
-void CcuTempReduceScatterMesh1D2Die::InitReduceInfo(const ReduceOp &reduceOp, const DataType &dataType)
+void CcuTempReduceScatterMesh1D2Die::InitReduceInfo(const ReduceOp& reduceOp, const DataType& dataType)
 {
     reduceOp_ = reduceOp;
     dataType_ = dataType;
 }
 
-HcclResult CcuTempReduceScatterMesh1D2Die::CalcRes(AlgTempResReq &tempResReq)
+HcclResult CcuTempReduceScatterMesh1D2Die::CalcRes(AlgTempResReq& tempResReq)
 {
-    tempResReq.queNum    = 1;
+    tempResReq.queNum = 1;
     tempResReq.streamNum = tempResReq.queNum + 1;
     HCCL_INFO("[CcuTempReduceScatterMesh1D2Die][CalcRes] tempResReq.queNum[%u]", tempResReq.queNum);
     CHK_RET(CalcResLinksMesh(myRank_, tempRankSize_, tempVTopo_, linkNumBtwPeers_, tempResReq));
@@ -60,61 +57,65 @@ HcclResult CcuTempReduceScatterMesh1D2Die::CalcRes(AlgTempResReq &tempResReq)
 
 uint64_t CcuTempReduceScatterMesh1D2Die::GetMaxSliceSize() const
 {
-    u64 msSize     = 4 * 1024;
-    u64 loopNum    = 64;
+    u64 msSize = 4 * 1024;
+    u64 loopNum = 64;
     u64 maxIterNum = 8192;
     return msSize * loopNum * maxIterNum; // 2G
 }
 
-HcclResult CcuTempReduceScatterMesh1D2Die::GenExtIns(const TempFuncs &tempFuncs, TemplateDataParams &tempAlgParams,
-                                                     const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues)
+HcclResult CcuTempReduceScatterMesh1D2Die::GenExtIns(
+    const TempFuncs& tempFuncs, TemplateDataParams& tempAlgParams, const ResLinks& tempLinks,
+    std::vector<InsQuePtr>& tempInsQues)
 {
-    (void) tempFuncs;
-    HCCL_INFO("[CcuTempReduceScatterMesh1D2Die] sliceSize[%llu], inputSliceStride[%llu], outputSliceStride[%llu], "
-              "repeatNum[%llu], inputRepeatStride[%llu], outputRepeatStride[%llu], tailSize[%llu]",
-              tempAlgParams.sliceSize, tempAlgParams.inputSliceStride, tempAlgParams.outputSliceStride,
-              tempAlgParams.repeatNum, tempAlgParams.inputRepeatStride, tempAlgParams.outputRepeatStride,
-              tempAlgParams.tailSize);
-    CHK_PRT_RET(tempInsQues.empty(),
-        HCCL_ERROR("[CcuTempReduceScatterMesh1D2Die] empty queue"), HcclResult::HCCL_E_INTERNAL);
+    (void)tempFuncs;
+    HCCL_INFO(
+        "[CcuTempReduceScatterMesh1D2Die] sliceSize[%llu], inputSliceStride[%llu], outputSliceStride[%llu], "
+        "repeatNum[%llu], inputRepeatStride[%llu], outputRepeatStride[%llu], tailSize[%llu]",
+        tempAlgParams.sliceSize, tempAlgParams.inputSliceStride, tempAlgParams.outputSliceStride,
+        tempAlgParams.repeatNum, tempAlgParams.inputRepeatStride, tempAlgParams.outputRepeatStride,
+        tempAlgParams.tailSize);
+    CHK_PRT_RET(
+        tempInsQues.empty(), HCCL_ERROR("[CcuTempReduceScatterMesh1D2Die] empty queue"), HcclResult::HCCL_E_INTERNAL);
     CHK_PTR_NULL(tempInsQues[0]);
-    uint64_t inputAddr  = BufferTypeToAddr(tempAlgParams.buffInfo.inBuffType) + tempAlgParams.buffInfo.inBuffBaseOff;
+    uint64_t inputAddr = BufferTypeToAddr(tempAlgParams.buffInfo.inBuffType) + tempAlgParams.buffInfo.inBuffBaseOff;
     uint64_t outputAddr = BufferTypeToAddr(tempAlgParams.buffInfo.outBuffType) + tempAlgParams.buffInfo.outBuffBaseOff;
     uint64_t scratchAddr
         = BufferTypeToAddr(tempAlgParams.buffInfo.scratBuffType) + tempAlgParams.buffInfo.scratchBuffBaseOff;
-    uint64_t inputSliceStride      = tempAlgParams.inputSliceStride;
-    uint64_t outputSliceStride     = tempAlgParams.outputSliceStride;
-    u64      sliceSize             = tempAlgParams.sliceSize;
+    uint64_t inputSliceStride = tempAlgParams.inputSliceStride;
+    uint64_t outputSliceStride = tempAlgParams.outputSliceStride;
+    u64 sliceSize = tempAlgParams.sliceSize;
 
     uint64_t token;
     CHK_RET(GetToken(op_, token));
-    HCCL_INFO("[CcuTempReduceScatterMesh1D2Die] inputAddr[%llu], outputAddr[%llu], scratchAddr0[%llu], "
-              "inputSliceStride[%llu], outputSliceStride[%llu]",
-              inputAddr, outputAddr, scratchAddr, inputSliceStride, outputSliceStride);
+    HCCL_INFO(
+        "[CcuTempReduceScatterMesh1D2Die] inputAddr[%llu], outputAddr[%llu], scratchAddr0[%llu], "
+        "inputSliceStride[%llu], outputSliceStride[%llu]",
+        inputAddr, outputAddr, scratchAddr, inputSliceStride, outputSliceStride);
 
-    u32                                dieNum = 2;
+    u32 dieNum = 2;
     std::vector<std::vector<LinkData>> linksForDie(dieNum);
-    std::vector<RankGroup>             rankGroupForDie(dieNum);
-    for (auto &pair : tempLinks) {
-        const RankId                 rank  = pair.first;
-        const std::vector<LinkData> &links = pair.second;
+    std::vector<RankGroup> rankGroupForDie(dieNum);
+    for (auto& pair : tempLinks) {
+        const RankId rank = pair.first;
+        const std::vector<LinkData>& links = pair.second;
         if (links.size() == 0) {
             continue;
         }
-        const LinkData &link   = links[0];
+        const LinkData& link = links[0];
         u32 dieIdx = link.GetLocalDieId();
         linksForDie[dieIdx].push_back(link);
         rankGroupForDie[dieIdx].AddRank(rank);
     }
-    for (auto &rankGroup : rankGroupForDie) {
+    for (auto& rankGroup : rankGroupForDie) {
         rankGroup.AddRank(myRank_);
     }
     std::unique_ptr<CcuInsGroup> insGroupPtr = std::make_unique<CcuInsGroup>();
     for (u32 die = 0; die < dieNum; die++) {
         bool rmtReduceWithMyRank = linksForDie[die].size() > linksForDie[1 - die].size() ? false : true;
         CcuInstructionReduceScatterMesh1D2Die ccuInstruction;
-        ccuInstruction.Init(tempVirtRankMap_[myRank_], op_, rmtReduceWithMyRank, tempVTopo_, inputAddr, outputAddr,
-                            scratchAddr, sliceSize, token);
+        ccuInstruction.Init(
+            tempVirtRankMap_[myRank_], op_, rmtReduceWithMyRank, tempVTopo_, inputAddr, outputAddr, scratchAddr,
+            sliceSize, token);
         ccuInstruction.SetLinks(linksForDie[die]);
         ccuInstruction.SetRankGroup(rankGroupForDie[die]);
         ccuInstruction.SetCntCkeNum(3);

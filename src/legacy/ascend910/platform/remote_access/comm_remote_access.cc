@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "comm_remote_access.h"
 #include "externalinput_pub.h"
@@ -14,31 +14,42 @@
 namespace hccl {
 using namespace std;
 
-CommRemoteAccess::CommRemoteAccess(u32 rank, u32 devicePhyId, const std::map<u32, std::vector<HcclIpAddress>>& rankInfo,
+CommRemoteAccess::CommRemoteAccess(
+    u32 rank, u32 devicePhyId, const std::map<u32, std::vector<HcclIpAddress>>& rankInfo,
     const std::vector<MemRegisterAddr>& addrInfos)
-    : remoteTransportMap_(), rank_(rank), deviceLogicId_(0), devicePhyId_(devicePhyId), rankSize_(0),
-      nicDeployment_(NICDeployment::NIC_DEPLOYMENT_DEVICE), rankInfo_(rankInfo), addrInfos_(addrInfos),
-      dstInterServerMap_(), dstInterClientMap_(), nicSocketHandle_(), tag_("RemoteAccess"), threadsApplyNum_(0),
-      dispatcher_(nullptr), notifyPool_(nullptr)
-{
-}
+    : remoteTransportMap_(),
+      rank_(rank),
+      deviceLogicId_(0),
+      devicePhyId_(devicePhyId),
+      rankSize_(0),
+      nicDeployment_(NICDeployment::NIC_DEPLOYMENT_DEVICE),
+      rankInfo_(rankInfo),
+      addrInfos_(addrInfos),
+      dstInterServerMap_(),
+      dstInterClientMap_(),
+      nicSocketHandle_(),
+      tag_("RemoteAccess"),
+      threadsApplyNum_(0),
+      dispatcher_(nullptr),
+      notifyPool_(nullptr)
+{}
 
 CommRemoteAccess::~CommRemoteAccess()
 {
-    HcclResult ret;
+    HcclResult ret = HCCL_SUCCESS;
     for (u32 index = 0; index < linkThreads_.size(); index++) {
         if (linkThreads_[index]) {
             if (linkThreads_[index]->joinable()) {
                 HCCL_DEBUG("Joining Link Thread[%u]", index);
-                linkThreads_[index]->join();  // 等待线程执行后释放资源
+                linkThreads_[index]->join(); // 等待线程执行后释放资源
             }
-            ret = hrtResetDevice(deviceLogicId_);  // 防止线程里面异常退出，在进程中reset
+            ret = hrtResetDevice(deviceLogicId_); // 防止线程里面异常退出，在进程中reset
             if (ret != HCCL_SUCCESS) {
                 HCCL_ERROR("[Comm][RemoteAccess]CommRemoteAccess reset device[%d] failed", deviceLogicId_);
             }
         }
     }
-    struct SocketCloseInfoT socketCloseInfo = {0};
+    struct SocketCloseInfoT socketCloseInfo = {};
     for (u32 i = 0; i < raSockets_.size(); i++) {
         socketCloseInfo.socketHandle = raSockets_[i].socketHandle; // 带入设备ID为物理ID
         socketCloseInfo.fdHandle = raSockets_[i].fdHandle;
@@ -101,12 +112,13 @@ HcclResult CommRemoteAccess::DeleteSocketWhiteList()
     return HCCL_SUCCESS;
 }
 
-std::shared_ptr<TransportRemoteAccess> &CommRemoteAccess::GetTransportByRank(const u32 dstRank)
+std::shared_ptr<TransportRemoteAccess>& CommRemoteAccess::GetTransportByRank(const u32 dstRank)
 {
     if (remoteTransportMap_.find(dstRank) == remoteTransportMap_.end()) {
-        HCCL_ERROR("[Get][TransportByRank]can not find dstRank[%u] in remoteTransportMap_,"
+        HCCL_ERROR(
+            "[Get][TransportByRank]can not find dstRank[%u] in remoteTransportMap_,"
             "remoteTransportMap_ size is [%llu]",
-                   dstRank, remoteTransportMap_.size());
+            dstRank, remoteTransportMap_.size());
         return transportDummy_;
     }
 
@@ -139,7 +151,8 @@ HcclResult CommRemoteAccess::CommRemoteInitRa()
         }
         u32 port = HETEROG_CCL_PORT;
         HcclResult ret = NetworkManager::GetInstance(deviceLogicId_).StartNic(iter->second[ipIdex], port, true);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
             HCCL_ERROR("[InitRa][CommRemote]start nic ipaddr[%s] failed", iter->second[ipIdex].GetReadableAddress()),
             ret);
     }
@@ -206,8 +219,9 @@ HcclResult CommRemoteAccess::CalcRemoteLink()
 HcclResult CommRemoteAccess::PrepareSocket()
 {
     // socket handle 是一一对应关系
-    if (dstInterServerMap_.size() * raResourceInfo_.nicSocketMap.size() +
-        dstInterClientMap_.size() * raResourceInfo_.nicSocketMap.size() > 0) {
+    if (dstInterServerMap_.size() * raResourceInfo_.nicSocketMap.size()
+            + dstInterClientMap_.size() * raResourceInfo_.nicSocketMap.size()
+        > 0) {
         for (u32 idx = 0; idx < rankInfo_[rank_].size(); idx++) {
             if (rankInfo_[rank_][idx].IsInvalid()) {
                 HCCL_ERROR("[Prepare][Socket]rank_[%u] nicIp[%u] is 0", rank_, idx);
@@ -215,18 +229,21 @@ HcclResult CommRemoteAccess::PrepareSocket()
             }
             auto it = raResourceInfo_.nicSocketMap.find(rankInfo_[rank_][idx]);
             if (it == raResourceInfo_.nicSocketMap.end()) {
-                HCCL_ERROR("[Prepare][Socket]can not find nicSocketHandle, ip[%s]",
+                HCCL_ERROR(
+                    "[Prepare][Socket]can not find nicSocketHandle, ip[%s]",
                     rankInfo_[rank_][idx].GetReadableAddress());
                 return HCCL_E_PARA;
             } else {
                 if (it->second.nicSocketHandle == nullptr) {
-                    HCCL_ERROR("[Prepare][Socket]CommRemoteAccess prepare socket failed! rank[%u] IP addr[%s]", rank_,
+                    HCCL_ERROR(
+                        "[Prepare][Socket]CommRemoteAccess prepare socket failed! rank[%u] IP addr[%s]", rank_,
                         rankInfo_[rank_][idx].GetReadableAddress());
                     return HCCL_E_PARA;
                 }
                 nicSocketHandle_.push_back(it->second.nicSocketHandle);
             }
-            HCCL_INFO("rank[%u], nicSocketMap[%u] nicIp.size[%u]", rank_, raResourceInfo_.nicSocketMap.size(),
+            HCCL_INFO(
+                "rank[%u], nicSocketMap[%u] nicIp.size[%u]", rank_, raResourceInfo_.nicSocketMap.size(),
                 rankInfo_[rank_].size());
         }
     }
@@ -239,13 +256,18 @@ HcclResult CommRemoteAccess::PrepareSocket()
     HCCL_INFO("socket batch connect dstInterServerNum[%u]", dstInterServerNum);
     if (dstInterServerNum > 0) {
         std::vector<struct SocketConnectInfoT> conns(dstInterServerNum);
-        struct SocketConnectInfoT *conn = conns.data();
-        s32 sRet = memset_s(conn, sizeof(struct SocketConnectInfoT) * dstInterServerNum, 0,
-                            sizeof(struct SocketConnectInfoT) * dstInterServerNum);
-        CHK_PRT_RET(sRet != EOK, HCCL_ERROR("[Prepare][Socket]memory set failed, return[%d]. params:"
-            "destMaxSize[%zu], c[%d], count[%zu]", sRet,
-            sizeof(struct SocketConnectInfoT) * dstInterServerNum, 0,
-            sizeof(struct SocketConnectInfoT) * dstInterServerNum), HCCL_E_MEMORY);
+        struct SocketConnectInfoT* conn = conns.data();
+        s32 sRet = memset_s(
+            conn, sizeof(struct SocketConnectInfoT) * dstInterServerNum, 0,
+            sizeof(struct SocketConnectInfoT) * dstInterServerNum);
+        CHK_PRT_RET(
+            sRet != EOK,
+            HCCL_ERROR(
+                "[Prepare][Socket]memory set failed, return[%d]. params:"
+                "destMaxSize[%zu], c[%d], count[%zu]",
+                sRet, sizeof(struct SocketConnectInfoT) * dstInterServerNum, 0,
+                sizeof(struct SocketConnectInfoT) * dstInterServerNum),
+            HCCL_E_MEMORY);
 
         u32 loop = 0;
         for (auto iter = dstInterServerMap_.begin(); iter != dstInterServerMap_.end(); iter++) {
@@ -259,17 +281,24 @@ HcclResult CommRemoteAccess::PrepareSocket()
                     return HCCL_E_INTERNAL;
                 }
                 sRet = memcpy_s(&conn[loop].tag[0], sizeof(conn[loop].tag) - 1, tag_.c_str(), tag_.size());
-                CHK_PRT_RET(sRet != EOK, HCCL_ERROR("[Prepare][Socket]memcpy failed. errorno[%d]:"
-                    "destMaxSize[%zu], count[%zu]", sRet, sizeof(conn[loop].tag),
-                    tag_.size()), HCCL_E_MEMORY);
+                CHK_PRT_RET(
+                    sRet != EOK,
+                    HCCL_ERROR(
+                        "[Prepare][Socket]memcpy failed. errorno[%d]:"
+                        "destMaxSize[%zu], count[%zu]",
+                        sRet, sizeof(conn[loop].tag), tag_.size()),
+                    HCCL_E_MEMORY);
             }
             loop++;
         }
         HcclResult ret = hrtRaSocketBatchConnect(conn, dstInterServerNum);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[Prepare][Socket]socket batch failed, batch size[%u], loop[%u], "\
-            "dst_inter_server_map_size[%u], handle size[%u]",
-            dstInterServerNum, loop, dstInterServerMap_.size(), nicSocketHandle_.size()), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[Prepare][Socket]socket batch failed, batch size[%u], loop[%u], "
+                "dst_inter_server_map_size[%u], handle size[%u]",
+                dstInterServerNum, loop, dstInterServerMap_.size(), nicSocketHandle_.size()),
+            ret);
     }
 
     return HCCL_SUCCESS;
@@ -278,13 +307,15 @@ HcclResult CommRemoteAccess::PrepareSocket()
 HcclResult CommRemoteAccess::AddSocketWhiteList()
 {
     // 当前rank作为server端socket白名单下发动作
-    struct SocketWlistInfoT wlistInfo = {0};
+    struct SocketWlistInfoT wlistInfo = {};
     for (auto iter = dstInterClientMap_.begin(); iter != dstInterClientMap_.end(); iter++) {
         wlistInfo.connLimit = NIC_SOCKET_CONN_LIMIT;
         s32 sRet = memcpy_s(&wlistInfo.tag[0], sizeof(wlistInfo.tag) - 1, tag_.c_str(), tag_.size());
         if (sRet != EOK) {
-            HCCL_ERROR("[Add][Socket]memory copy failed. errorno[%d]: dest size[%zu], src[%s],"
-                "count[%zu]", sRet, sizeof(wlistInfo.tag), tag_.c_str(), tag_.size());
+            HCCL_ERROR(
+                "[Add][Socket]memory copy failed. errorno[%d]: dest size[%zu], src[%s],"
+                "count[%zu]",
+                sRet, sizeof(wlistInfo.tag), tag_.c_str(), tag_.size());
             wlistInfosVec_.clear();
             return HCCL_E_MEMORY;
         }
@@ -310,16 +341,22 @@ HcclResult CommRemoteAccess::CreateLinks()
     u32 nicNum = raResourceInfo_.nicSocketMap.size();
     u32 threadsNum = dstInterClientMap_.size() * nicNum + dstInterServerMap_.size() * nicNum;
     HCCL_INFO("threadsNum[%u]", threadsNum);
-    HCCL_INFO("CommRemoteAccess CreateLinks rank_[%u] dstInterClientMapSize[%u], nicNum[%u], dstInterServerMapSize[%u]",
+    HCCL_INFO(
+        "CommRemoteAccess CreateLinks rank_[%u] dstInterClientMapSize[%u], nicNum[%u], dstInterServerMapSize[%u]",
         rank_, dstInterClientMap_.size(), nicNum, dstInterServerMap_.size());
-    CHK_PRT_RET((threadsNum == 0), HCCL_ERROR("[Create][Links]no link to create, please check ranktable to see if"
-        "device_ip is configured. nicNum[%u]", nicNum), HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        (threadsNum == 0),
+        HCCL_ERROR(
+            "[Create][Links]no link to create, please check ranktable to see if"
+            "device_ip is configured. nicNum[%u]",
+            nicNum),
+        HCCL_E_INTERNAL);
     linkThreads_.resize(threadsNum);
     threadsStatus_.resize(threadsNum);
     HCCL_INFO(
-        "comm base threads info:link threads size[%llu], dst inter client map size[%llu], " \
-        "dst inter server map size[%llu]", linkThreads_.size(), dstInterClientMap_.size() * nicNum,
-        dstInterServerMap_.size() * nicNum);
+        "comm base threads info:link threads size[%llu], dst inter client map size[%llu], "
+        "dst inter server map size[%llu]",
+        linkThreads_.size(), dstInterClientMap_.size() * nicNum, dstInterServerMap_.size() * nicNum);
     HcclUs startut = TIME_NOW();
     // 获取当前rank作为client端时，获取所有server端的socket
     CHK_RET(CreateInterServerLinks());
@@ -327,18 +364,23 @@ HcclResult CommRemoteAccess::CreateLinks()
     CHK_RET(CreateInterClientLinks());
 
     bool check = (threadsApplyNum_ != linkThreads_.size());
-    CHK_PRT_RET(check, HCCL_ERROR("[Create][Links]comm apply num[%u] is not equal to link threads[%llu]",
-        threadsApplyNum_, linkThreads_.size()), HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        check,
+        HCCL_ERROR(
+            "[Create][Links]comm apply num[%u] is not equal to link threads[%llu]", threadsApplyNum_,
+            linkThreads_.size()),
+        HCCL_E_INTERNAL);
 
     HCCL_INFO("CommRemoteAccess CreateLinks threadsApplyNum_[%u]", threadsApplyNum_);
 
     for (u32 index = 0; index < linkThreads_.size(); index++) {
-        linkThreads_[index]->join();  // 等待线程执行完毕
-        CHK_RET(hrtResetDevice(deviceLogicId_));  // 防止线程里面异常退出，在进程中reset
+        linkThreads_[index]->join();             // 等待线程执行完毕
+        CHK_RET(hrtResetDevice(deviceLogicId_)); // 防止线程里面异常退出，在进程中reset
     }
     for (u32 index = 0; index < threadsStatus_.size(); index++) {
-        CHK_PRT_RET(threadsStatus_[index] != 0, HCCL_ERROR("[Create][Links]execute the thread[%u] function failed",
-            index), HCCL_E_PARA);
+        CHK_PRT_RET(
+            threadsStatus_[index] != 0, HCCL_ERROR("[Create][Links]execute the thread[%u] function failed", index),
+            HCCL_E_PARA);
     }
     linkThreads_.clear();
     HCCL_DEBUG("rdma_rasocket Time:%lld us", DURATION_US(TIME_NOW() - startut));
@@ -351,19 +393,27 @@ HcclResult CommRemoteAccess::CreateInterServerLinks()
     u32 dstInterServerNum = dstInterServerMap_.size() * nicSocketHandle_.size();
     if (dstInterServerNum > 0) {
         std::vector<struct SocketInfoT> cliConns(dstInterServerNum);
-        struct SocketInfoT *cliConn = cliConns.data();
-        s32 sRet = memset_s(cliConn, sizeof(struct SocketInfoT) * dstInterServerNum, 0,
-                            sizeof(struct SocketInfoT) * dstInterServerNum);
-        CHK_PRT_RET(sRet != EOK, HCCL_ERROR("[Create][InterServerLinks]memory set failed. return[%d]."
-            "params: destMaxSize[%zu], c[%d], count[%zu]", sRet,
-            sizeof(struct SocketInfoT) * dstInterServerNum, 0, \
-            sizeof(struct SocketInfoT) * dstInterServerNum), HCCL_E_MEMORY);
+        struct SocketInfoT* cliConn = cliConns.data();
+        s32 sRet = memset_s(
+            cliConn, sizeof(struct SocketInfoT) * dstInterServerNum, 0, sizeof(struct SocketInfoT) * dstInterServerNum);
+        CHK_PRT_RET(
+            sRet != EOK,
+            HCCL_ERROR(
+                "[Create][InterServerLinks]memory set failed. return[%d]."
+                "params: destMaxSize[%zu], c[%d], count[%zu]",
+                sRet, sizeof(struct SocketInfoT) * dstInterServerNum, 0,
+                sizeof(struct SocketInfoT) * dstInterServerNum),
+            HCCL_E_MEMORY);
         // 构建socket_info_t信息，用于获取fd_socket_handle
         u32 connLoop = 0;
         for (auto iter = dstInterServerMap_.begin(); iter != dstInterServerMap_.end(); iter++) {
             sRet = memcpy_s(&cliConn[connLoop].tag[0], sizeof(cliConn[connLoop].tag) - 1, tag_.c_str(), tag_.size());
-            CHK_PRT_RET(sRet != EOK, HCCL_ERROR("[Create][InterServerLinks]memcpy failed. errorno[%d],"
-                "params:destMaxSize[%zu], count[%zu]", sRet, sizeof(cliConn[connLoop].tag), tag_.size()),
+            CHK_PRT_RET(
+                sRet != EOK,
+                HCCL_ERROR(
+                    "[Create][InterServerLinks]memcpy failed. errorno[%d],"
+                    "params:destMaxSize[%zu], count[%zu]",
+                    sRet, sizeof(cliConn[connLoop].tag), tag_.size()),
                 HCCL_E_MEMORY);
             for (u32 idx = 0; idx < nicSocketHandle_.size(); idx++) {
                 cliConn[connLoop].socketHandle = nicSocketHandle_[idx];
@@ -376,8 +426,9 @@ HcclResult CommRemoteAccess::CreateInterServerLinks()
                 linkInfo.isLinked = false;
                 linkInfo.remoteIp = (iter->second)[idx];
                 linkInfo.localIp = rankInfo_[rank_][idx];
-                HCCL_DEBUG("CLIENT rank[%u]  LocalIp[%s]  RemoteIp[%s]",
-                    rank_, linkInfo.localIp.GetReadableAddress(), linkInfo.remoteIp.GetReadableAddress());
+                HCCL_DEBUG(
+                    "CLIENT rank[%u] LocalIp[%s] RemoteIp[%s]", rank_, linkInfo.localIp.GetReadableAddress(),
+                    linkInfo.remoteIp.GetReadableAddress());
                 serverLinkStatus_.insert(std::make_pair(iter->second[idx], linkInfo));
                 connLoop++;
             }
@@ -392,41 +443,51 @@ HcclResult CommRemoteAccess::GetRaSocket(const u32 role, const struct SocketInfo
     HCCL_INFO("get sockets para: socket role[%u], socket num[%u]", role, num);
     auto startTime = std::chrono::steady_clock::now();
     auto timeout = std::chrono::seconds(GetExternalInputHcclLinkTimeOut());
-    s32 sockRet;
+    s32 sockRet = 0;
     u32 gotSocketsCnt = 0;
     HCCL_INFO("In GetRaSocket, waiting for all rasockets link up...");
     u32 left = num;
     while (true) {
         if ((std::chrono::steady_clock::now() - startTime) >= timeout) {
             PrintErrorConnection(role, left);
-            HCCL_ERROR("[Get][RaSocket]in GetRaSocket, get rasocket error role[%u], rank[%u]num[%u], timeout[%lld s]",
-                role, rank_, left, timeout);
+            HCCL_ERROR(
+                "[Get][RaSocket]in GetRaSocket, get rasocket error role[%u], rank[%u]num[%u], timeout[%lld s]", role,
+                rank_, left, timeout);
             return HCCL_E_TIMEOUT;
         }
         std::vector<struct SocketInfoT> conns(left);
-        struct SocketInfoT *tmpConn = conns.data();
-        s32 sret = memcpy_s(tmpConn, sizeof(struct SocketInfoT) * left,
-                            conn + (num - left), sizeof(struct SocketInfoT) * left);
-        CHK_PRT_RET(sret != EOK, HCCL_ERROR("[Get][RaSocket]memcpy failed. errorno[%d], params:"
-            "destMaxSize[%zu], count[%zu]", sret, sizeof(struct SocketInfoT) * left,
-            sizeof(struct SocketInfoT) * left), HCCL_E_MEMORY);
+        struct SocketInfoT* tmpConn = conns.data();
+        s32 sret = memcpy_s(
+            tmpConn, sizeof(struct SocketInfoT) * left, conn + (num - left), sizeof(struct SocketInfoT) * left);
+        CHK_PRT_RET(
+            sret != EOK,
+            HCCL_ERROR(
+                "[Get][RaSocket]memcpy failed. errorno[%d], params:"
+                "destMaxSize[%zu], count[%zu]",
+                sret, sizeof(struct SocketInfoT) * left, sizeof(struct SocketInfoT) * left),
+            HCCL_E_MEMORY);
         u32 connectedNum = 0;
         sockRet = hrtRaGetSockets(role, tmpConn, left, &connectedNum);
         if ((connectedNum == 0 && sockRet == 0) || (sockRet == SOCK_EAGAIN)) {
             SaluSleep(ONE_MILLISECOND_OF_USLEEP);
         } else if (sockRet != 0) {
             PrintErrorConnection(role, num);
-            HCCL_ERROR("[Get][RaSocket]in GetRaSocket, get rasocket error. role[%u], rank[%u],num[%u] sockRet[%d] > 0",
-                role, rank_, num, sockRet);
+            HCCL_ERROR(
+                "[Get][RaSocket]in GetRaSocket, get rasocket error. role[%u], rank[%u],num[%u] sockRet[%d] > 0", role,
+                rank_, num, sockRet);
             return HCCL_E_TCP_CONNECT;
         } else if (connectedNum > 0) {
             u32 sockNum = abs(static_cast<s32>(connectedNum));
             left = left - sockNum;
             // 保存建链成功的socket
             HcclResult ret = DealSuccRasocket(connectedNum, role, tmpConn, sockNum);
-            CHK_PRT_RET(ret != HCCL_SUCCESS,
-                HCCL_ERROR("[Get][RaSocket]in GetRaSocket, save rasocket failed. role[%u], rank[%u]"\
-                "num[%u] ret[%d] connectednum[%u]", role, rank_, num, ret, connectedNum), ret);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR(
+                    "[Get][RaSocket]in GetRaSocket, save rasocket failed. role[%u], rank[%u]"
+                    "num[%u] ret[%d] connectednum[%u]",
+                    role, rank_, num, ret, connectedNum),
+                ret);
             gotSocketsCnt += sockNum;
 
             if (gotSocketsCnt == num) {
@@ -450,21 +511,27 @@ HcclResult CommRemoteAccess::CreateInterClientLinks()
     HCCL_INFO("dstInterClientNum[%u]", dstInterClientNum);
     if (dstInterClientNum > 0) {
         std::vector<struct SocketInfoT> srvConns(dstInterClientNum);
-        struct SocketInfoT *srvConn = srvConns.data();
-        s32 sRet = memset_s(srvConn, sizeof(struct SocketInfoT) * dstInterClientNum, 0,
-                            sizeof(struct SocketInfoT) * dstInterClientNum);
-        CHK_PRT_RET(sRet != EOK, HCCL_ERROR("[Create][InterClientLinks]memory set failed. return[%d]."
-            "params: destMaxSize[%zu], c[%d], count[%zu]", sRet,
-            sizeof(struct SocketInfoT) * dstInterClientNum, 0, \
-            sizeof(struct SocketInfoT) * dstInterClientNum), HCCL_E_MEMORY);
+        struct SocketInfoT* srvConn = srvConns.data();
+        s32 sRet = memset_s(
+            srvConn, sizeof(struct SocketInfoT) * dstInterClientNum, 0, sizeof(struct SocketInfoT) * dstInterClientNum);
+        CHK_PRT_RET(
+            sRet != EOK,
+            HCCL_ERROR(
+                "[Create][InterClientLinks]memory set failed. return[%d]."
+                "params: destMaxSize[%zu], c[%d], count[%zu]",
+                sRet, sizeof(struct SocketInfoT) * dstInterClientNum, 0,
+                sizeof(struct SocketInfoT) * dstInterClientNum),
+            HCCL_E_MEMORY);
         u32 loop = 0;
         for (u32 interIndex = 0; interIndex < dstInterClientMap_.size(); interIndex++) {
             sRet = memcpy_s(&srvConn[loop].tag[0], sizeof(srvConn[loop].tag) - 1, tag_.c_str(), tag_.size());
-            CHK_PRT_RET(sRet != EOK,\
-                HCCL_ERROR("[Create][InterClientLinks]memcpy failed. errorno[%d], params:"
-                    "destMaxSize[%zu],count[%zu]",\
-                    sRet, sizeof(srvConn[loop].tag),\
-                    tag_.size()), HCCL_E_MEMORY);
+            CHK_PRT_RET(
+                sRet != EOK,
+                HCCL_ERROR(
+                    "[Create][InterClientLinks]memcpy failed. errorno[%d], params:"
+                    "destMaxSize[%zu],count[%zu]",
+                    sRet, sizeof(srvConn[loop].tag), tag_.size()),
+                HCCL_E_MEMORY);
             for (u32 idx = 0; idx < nicSocketHandle_.size(); idx++) {
                 srvConn[loop].socketHandle = nicSocketHandle_[idx];
                 loop++;
@@ -479,8 +546,9 @@ HcclResult CommRemoteAccess::CreateInterClientLinks()
             for (u32 idx = 0; idx < (iter->second).size(); idx++) {
                 linkInfo.remoteIp = (iter->second)[idx];
                 linkInfo.localIp = rankInfo_[rank_][idx];
-                HCCL_DEBUG("CreateInterClientLinks SERVER rank[%u]  LocalIp[%s]  RemoteIp[%s]",
-                    rank_, linkInfo.localIp.GetReadableAddress(), linkInfo.remoteIp.GetReadableAddress());
+                HCCL_DEBUG(
+                    "CreateInterClientLinks SERVER rank[%u] LocalIp[%s] RemoteIp[%s]", rank_,
+                    linkInfo.localIp.GetReadableAddress(), linkInfo.remoteIp.GetReadableAddress());
                 clientLinkStatus_.insert(std::make_pair((iter->second)[idx], linkInfo));
             }
         }
@@ -491,16 +559,16 @@ HcclResult CommRemoteAccess::CreateInterClientLinks()
 
 void CommRemoteAccess::PrintErrorConnection(const u32 role, const u32 num)
 {
-    RPT_INNER_ERR_PRT("remote op nic connect failed, please ensure that collective communication execution status "\
-        "of each device is consistent(include network TLS configuration)");
+    RPT_INNER_ERR_PRT("remote op nic connect failed, please ensure that collective communication execution status "
+                      "of each device is consistent(include network TLS configuration)");
 
     HCCL_ERROR("Some NPUs get socket timeout, the details are as follows:");
     HCCL_ERROR("   _________________________LINK_ERROR_INFO___________________________");
-    HCCL_ERROR("   |  comm error, device[%d] num[%u] ", deviceLogicId_, num);
+    HCCL_ERROR("   | comm error, device[%d] num[%u] ", deviceLogicId_, num);
     HCCL_ERROR("   |  dest_ip(user_rank)  |   dest_port   |  src_ip(user_rank)   |   src_port   |   MyRole   "
-        "|   Status   |");
+               "|   Status   |");
     HCCL_ERROR("   |--------------------|--------------------|----------|------------|-----------------"
-        "|-----------------|");
+               "|-----------------|");
 
     /* 第一行打印deviceIds */
     HcclResult ret = HCCL_SUCCESS;
@@ -517,32 +585,33 @@ void CommRemoteAccess::PrintErrorConnection(const u32 role, const u32 num)
     HCCL_ERROR("the connection failure between this device and target device may be due to the following reasons:");
     HCCL_ERROR("1. the connection between this device and the target device is abnormal.");
     HCCL_ERROR("2. an exception occurred at the target devices.");
-    HCCL_ERROR("3. the time difference between the execution of hcom on this device and the target device exceeds the "\
-        "timeout threshold, make sure this by keyword [Entry-].");
-    HCCL_ERROR("4. the behavior of executing the calculation graph on this device and the target device is " \
-        "inconsistent. ");
+    HCCL_ERROR("3. the time difference between the execution of hcom on this device and the target device exceeds the "
+               "timeout threshold, make sure this by keyword [Entry-].");
+    HCCL_ERROR("4. the behavior of executing the calculation graph on this device and the target device is "
+               "inconsistent. ");
     HCCL_ERROR("5. Now you can freely specify a port for listening and connecting. If an invalid port is chosen, "
-        "it may result in failed listening and connection timeouts");
+               "it may result in failed listening and connection timeouts");
     return;
 }
 
-#define TRANSFORM_RASOCKET_STATUS(status, stringStatus) do {                   \
-    switch (status) {                                                          \
-        default:                                                               \
-        case SOCKET_CONNECT_NO_CONNECTION:                                     \
-            stringStatus = "no connect";                                       \
-            break;                                                             \
-        case SOCKET_CONNECT_OK:                                                \
-            stringStatus = "connected";                                        \
-            break;                                                             \
-        case SOCKET_CONNECT_TIMEOUT:                                           \
-            stringStatus = "connecting";                                       \
-            break;                                                             \
-    }                                                                          \
-} while (0)
+#define TRANSFORM_RASOCKET_STATUS(status, stringStatus) \
+    do {                                                \
+        switch (status) {                               \
+            default:                                    \
+            case SOCKET_CONNECT_NO_CONNECTION:          \
+                stringStatus = "no connect";            \
+                break;                                  \
+            case SOCKET_CONNECT_OK:                     \
+                stringStatus = "connected";             \
+                break;                                  \
+            case SOCKET_CONNECT_TIMEOUT:                \
+                stringStatus = "connecting";            \
+                break;                                  \
+        }                                               \
+    } while (0)
 
-HcclResult CommRemoteAccess::PrintErrorConnectionInfo(const std::map<HcclIpAddress, LinkStatus_t> &linkStatusMap,
-    u32 role)
+HcclResult
+CommRemoteAccess::PrintErrorConnectionInfo(const std::map<HcclIpAddress, LinkStatus_t>& linkStatusMap, u32 role)
 {
     std::string sRole;
     switch (role) {
@@ -560,18 +629,18 @@ HcclResult CommRemoteAccess::PrintErrorConnectionInfo(const std::map<HcclIpAddre
         if (!iter->second.isLinked) {
             std::string connectStatus = "";
             TRANSFORM_RASOCKET_STATUS(iter->second.status, connectStatus);
-            HCCL_ERROR("   |  %s(%u)   |  %u  |   %s(%u)   |  %u  | %s | %s |  ",
-                iter->second.remoteIp.GetReadableAddress(), iter->second.userRank, HETEROG_CCL_PORT,
-                iter->second.localIp.GetReadableAddress(), rank_, HETEROG_CCL_PORT,
-                sRole.c_str(), connectStatus.c_str());
+            HCCL_ERROR(
+                "   |  %s(%u)   |  %u  |   %s(%u)   |  %u  | %s | %s |  ", iter->second.remoteIp.GetReadableAddress(),
+                iter->second.userRank, HETEROG_CCL_PORT, iter->second.localIp.GetReadableAddress(), rank_,
+                HETEROG_CCL_PORT, sRole.c_str(), connectStatus.c_str());
         }
     }
     return HCCL_SUCCESS;
 }
 
 // 根据IP信息，获得RANK信息
-HcclResult CommRemoteAccess::GetDstRank(std::map<u32, std::vector<HcclIpAddress>> &dstMap, const HcclIpAddress &dstIp,
-    u32 &dstRank)
+HcclResult CommRemoteAccess::GetDstRank(
+    std::map<u32, std::vector<HcclIpAddress>>& dstMap, const HcclIpAddress& dstIp, u32& dstRank)
 {
     for (auto it = dstMap.begin(); it != dstMap.end(); it++) {
         for (u32 idx = 0; idx < it->second.size(); idx++) {
@@ -586,7 +655,7 @@ HcclResult CommRemoteAccess::GetDstRank(std::map<u32, std::vector<HcclIpAddress>
     return HCCL_E_NOT_FOUND;
 }
 
-HcclResult CommRemoteAccess::CreateInterThread(const u32 role, const SocketInfoT &socketInfo)
+HcclResult CommRemoteAccess::CreateInterThread(const u32 role, const SocketInfoT& socketInfo)
 {
     // 线程命名，CommRemoteTerL代表CommRemote Inter Link
     std::string threadStr = "RemoteThrd_" + std::to_string(threadsApplyNum_);
@@ -602,26 +671,26 @@ HcclResult CommRemoteAccess::CreateInterThread(const u32 role, const SocketInfoT
     workflowMode_ = GetWorkflowMode();
     if (role == SERVER_ROLE_SOCKET) {
         CHK_RET(GetDstRank(dstInterClientMap_, remoteIP, dstRank));
-        linkThreads_[threadsApplyNum_].reset(
-            new (std::nothrow) std::thread(&CommRemoteAccess::InitDestTransport, this, hrtErrMGetErrorContext(), role,
-                                nicIp, dstRank, threadStr, socketInfo.fdHandle, &threadsStatus_[threadsApplyNum_]));
+        linkThreads_[threadsApplyNum_].reset(new (std::nothrow) std::thread(
+            &CommRemoteAccess::InitDestTransport, this, hrtErrMGetErrorContext(), role, nicIp, dstRank, threadStr,
+            socketInfo.fdHandle, &threadsStatus_[threadsApplyNum_]));
     }
 
     if (role == CLIENT_ROLE_SOCKET) {
         CHK_RET(GetDstRank(dstInterServerMap_, remoteIP, dstRank));
-        linkThreads_[threadsApplyNum_].reset(
-            new (std::nothrow) std::thread(&CommRemoteAccess::InitDestTransport, this, hrtErrMGetErrorContext(), role,
-                                nicIp, dstRank, threadStr, socketInfo.fdHandle, &threadsStatus_[threadsApplyNum_]));
+        linkThreads_[threadsApplyNum_].reset(new (std::nothrow) std::thread(
+            &CommRemoteAccess::InitDestTransport, this, hrtErrMGetErrorContext(), role, nicIp, dstRank, threadStr,
+            socketInfo.fdHandle, &threadsStatus_[threadsApplyNum_]));
     }
     bool check = !linkThreads_[threadsApplyNum_];
-    CHK_PRT_RET(check, HCCL_ERROR("[Create][InterThread]link threads[%u] reset failed.", threadsApplyNum_),
-        HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        check, HCCL_ERROR("[Create][InterThread]link threads[%u] reset failed.", threadsApplyNum_), HCCL_E_INTERNAL);
     threadsApplyNum_++;
     return HCCL_SUCCESS;
 }
 
-HcclResult CommRemoteAccess::DealSuccRasocket(s32 sockRet, const u32 role,
-    const struct SocketInfoT tmpConn[], const u32 num)
+HcclResult
+CommRemoteAccess::DealSuccRasocket(s32 sockRet, const u32 role, const struct SocketInfoT tmpConn[], const u32 num)
 {
     HCCL_DEBUG("CommRemoteAccess DealSuccRasocketNum[%u]", num);
     u32 socketsCnt = static_cast<u32>(sockRet);
@@ -645,15 +714,16 @@ HcclResult CommRemoteAccess::DealSuccRasocket(s32 sockRet, const u32 role,
     }
 
     if (socketsCnt != loop) {
-        HCCL_ERROR("[Deal][SuccRasocket]current socketsCnt[%u], not equal to actual connect number[%u]!",
-            socketsCnt, loop);
+        HCCL_ERROR(
+            "[Deal][SuccRasocket]current socketsCnt[%u], not equal to actual connect number[%u]!", socketsCnt, loop);
         return HCCL_E_TCP_CONNECT;
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult CommRemoteAccess::InitDestTransport(const ErrContext &error_context, u32 role, const HcclIpAddress &nicIp,
-    const u32 dstRank, const std::string &threadStr, FdHandle socketFdHandle, u32 *getThreadStatus)
+HcclResult CommRemoteAccess::InitDestTransport(
+    const ErrContext& error_context, u32 role, const HcclIpAddress& nicIp, const u32 dstRank,
+    const std::string& threadStr, FdHandle socketFdHandle, u32* getThreadStatus)
 {
     hrtErrMSetErrorContext(error_context);
 
@@ -664,14 +734,15 @@ HcclResult CommRemoteAccess::InitDestTransport(const ErrContext &error_context, 
 
     RemoteAccessPara accessPara;
     CHK_RET(SetAccessPara(role, nicIp, dstRank, socketFdHandle, accessPara));
-    HCCL_INFO("[InitDestTransport para]local_rank[%u]-localIpAddr[%s],dst rank[%u]-remote_rank[%u]-remote_ip_addr[%s], "
-              "role[%u]",
+    HCCL_INFO(
+        "[InitDestTransport para]local_rank[%u]-localIpAddr[%s],dst rank[%u]-remote_rank[%u]-remote_ip_addr[%s], "
+        "role[%u]",
         rank_, rankInfo_[rank_][0].GetReadableAddress(), dstRank, dstRank, rankInfo_[dstRank][0].GetReadableAddress(),
         role);
 
     std::shared_ptr<TransportRemoteAccess> transportPtr;
-    transportPtr.reset(new (std::nothrow) TransportRemoteAccess(tag_, dispatcher_, notifyPool_, accessPara, addrInfos_,
-        deviceLogicId_));
+    transportPtr.reset(new (std::nothrow) TransportRemoteAccess(
+        tag_, dispatcher_, notifyPool_, accessPara, addrInfos_, deviceLogicId_));
     CHK_PRT_RET(!transportPtr, HCCL_ERROR("[Init][DestTransport]InitDestTransport failed"), HCCL_E_PTR);
 
     std::unique_lock<std::mutex> remoteTransportMapLock(remoteTransportMapLock_);
@@ -684,7 +755,7 @@ HcclResult CommRemoteAccess::InitDestTransport(const ErrContext &error_context, 
 }
 
 // 根据socket handle，获取本device所使用的网口IP
-HcclResult CommRemoteAccess::GetNicByHandle(const SocketHandle socketHandle, HcclIpAddress &nicIp)
+HcclResult CommRemoteAccess::GetNicByHandle(const SocketHandle socketHandle, HcclIpAddress& nicIp)
 {
     for (auto it = raResourceInfo_.nicSocketMap.begin(); it != raResourceInfo_.nicSocketMap.end(); it++) {
         if (it->second.nicSocketHandle == socketHandle) {
@@ -697,8 +768,8 @@ HcclResult CommRemoteAccess::GetNicByHandle(const SocketHandle socketHandle, Hcc
     return HCCL_E_NOT_FOUND;
 }
 
-HcclResult CommRemoteAccess::SetAccessPara(u32 role, const HcclIpAddress &nicIp, u32 dstRank, FdHandle socketFdhandle,
-    RemoteAccessPara &accessPara)
+HcclResult CommRemoteAccess::SetAccessPara(
+    u32 role, const HcclIpAddress& nicIp, u32 dstRank, FdHandle socketFdhandle, RemoteAccessPara& accessPara)
 {
     accessPara.role = role;
     accessPara.localIp = nicIp;
@@ -710,7 +781,8 @@ HcclResult CommRemoteAccess::SetAccessPara(u32 role, const HcclIpAddress &nicIp,
     // 获取 nicSocketHandle
     auto itSocket = raResourceInfo_.nicSocketMap.find(nicIp);
     if (itSocket == raResourceInfo_.nicSocketMap.end()) {
-        HCCL_ERROR("[Set][AccessPara]In get nic handle, can not find socket handle, handle size[%u], local ip[%s]",
+        HCCL_ERROR(
+            "[Set][AccessPara]In get nic handle, can not find socket handle, handle size[%u], local ip[%s]",
             raResourceInfo_.nicSocketMap.size(), nicIp.GetReadableAddress());
         return HCCL_E_PARA;
     }
@@ -721,4 +793,4 @@ HcclResult CommRemoteAccess::SetAccessPara(u32 role, const HcclIpAddress &nicIp,
     CHK_PTR_NULL(accessPara.nicRdmaHandle);
     return HCCL_SUCCESS;
 }
-}
+} // namespace hccl

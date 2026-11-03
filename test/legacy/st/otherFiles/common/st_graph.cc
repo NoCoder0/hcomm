@@ -17,12 +17,9 @@ using namespace Hccl;
 
 class GraphTest : public ::testing::Test {
 protected:
-    Graph<PhyTopo::Node, PhyTopo::Link> *graph;
+    Graph<PhyTopo::Node, PhyTopo::Link>* graph;
 
-    void SetUp() override
-    {
-        graph = new Graph<PhyTopo::Node, PhyTopo::Link>();
-    }
+    void SetUp() override { graph = new Graph<PhyTopo::Node, PhyTopo::Link>(); }
 
     void TearDown() override
     {
@@ -30,7 +27,6 @@ protected:
         graph = nullptr;
     }
 };
-
 
 TEST_F(GraphTest, St_HasNode_When_NodeAlreadyExist_Expect_ReturnTrue)
 {
@@ -68,13 +64,11 @@ TEST_F(GraphTest, St_AddNode_When_NodeIsNotExist_Expect_Success)
     int peerNodeNum = 0;
     int nodeNum = 0;
 
-    graph->TraverseNode([&](const std::shared_ptr<PhyTopo::Node> &node) {
+    graph->TraverseNode([&](const std::shared_ptr<PhyTopo::Node>& node) {
         ++nodeNum;
         if (node->GetType() == PhyTopo::Node::NodeType::FABRIC) {
             ++fabricNodeNum;
-        } 
-        else
-        {
+        } else {
             ++peerNodeNum;
         }
     });
@@ -101,12 +95,12 @@ TEST_F(GraphTest, St_AddEdge_When_BothNodesExistAndEdgeIsNotNull_Expect_Success)
     TopoType topoType = TopoType::CLOS;
     u32 topoInstId = 0;
 
-    std::shared_ptr<PhyTopo::Link> edge1 =
-        std::make_shared<PhyTopo::Link>(node1, node2, linkAttrs, topoType, topoInstId);
-    std::shared_ptr<PhyTopo::Link> edge2 =
-        std::make_shared<PhyTopo::Link>(node1, node3, linkAttrs, topoType, topoInstId);
-    std::shared_ptr<PhyTopo::Link> edge3 =
-        std::make_shared<PhyTopo::Link>(node2, node3, linkAttrs, topoType, topoInstId);
+    std::shared_ptr<PhyTopo::Link> edge1
+        = std::make_shared<PhyTopo::Link>(node1, node2, linkAttrs, topoType, topoInstId);
+    std::shared_ptr<PhyTopo::Link> edge2
+        = std::make_shared<PhyTopo::Link>(node1, node3, linkAttrs, topoType, topoInstId);
+    std::shared_ptr<PhyTopo::Link> edge3
+        = std::make_shared<PhyTopo::Link>(node2, node3, linkAttrs, topoType, topoInstId);
 
     graph->AddNode(nodeId1, node1);
     graph->AddNode(nodeId2, node2);
@@ -119,8 +113,7 @@ TEST_F(GraphTest, St_AddEdge_When_BothNodesExistAndEdgeIsNotNull_Expect_Success)
     int peerNodeNum = 0;
     int edgeNum = 0;
 
-    graph->TraverseEdge(nodeId1, [&](const std::shared_ptr<PhyTopo::Link> &edge)
-    {
+    graph->TraverseEdge(nodeId1, [&](const std::shared_ptr<PhyTopo::Link>& edge) {
         ++edgeNum;
         if (edge->GetTargetNode()->GetType() == PhyTopo::Node::NodeType::FABRIC) {
             ++fabricNodeNum;
@@ -141,8 +134,7 @@ TEST_F(GraphTest, St_AddEdge_When_BothNodesExistAndEdgeIsNotNull_Expect_Success)
     peerNodeNum = 0;
     edgeNum = 0;
 
-    graph->TraverseEdge(nodeId1, nodeId2, [&](const std::shared_ptr<PhyTopo::Link> &edge)
-    {
+    graph->TraverseEdge(nodeId1, nodeId2, [&](const std::shared_ptr<PhyTopo::Link>& edge) {
         ++edgeNum;
         if (edge->GetTargetNode()->GetType() == PhyTopo::Node::NodeType::FABRIC) {
             ++fabricNodeNum;
@@ -163,8 +155,7 @@ TEST_F(GraphTest, St_AddEdge_When_BothNodesExistAndEdgeIsNotNull_Expect_Success)
     peerNodeNum = 0;
     edgeNum = 0;
 
-    graph->TraverseEdge(nodeId1, nodeId3, [&](const std::shared_ptr<PhyTopo::Link> &edge)
-    {
+    graph->TraverseEdge(nodeId1, nodeId3, [&](const std::shared_ptr<PhyTopo::Link>& edge) {
         ++edgeNum;
         if (edge->GetTargetNode()->GetType() == PhyTopo::Node::NodeType::FABRIC) {
             ++fabricNodeNum;
@@ -200,13 +191,11 @@ TEST_F(GraphTest, St_TraverseNode_When_NodeExist_Expect_Success)
     int peerNodeNum = 0;
     int nodeNum = 0;
 
-    graph->TraverseNode([&](const std::shared_ptr<PhyTopo::Node> &node) {
+    graph->TraverseNode([&](const std::shared_ptr<PhyTopo::Node>& node) {
         ++nodeNum;
         if (node->GetType() == PhyTopo::Node::NodeType::FABRIC) {
             ++fabricNodeNum;
-        } 
-        else
-        {
+        } else {
             ++peerNodeNum;
         }
     });
@@ -231,12 +220,12 @@ TEST_F(GraphTest, St_TraverseEdge_When_EdgeExist_Expect_Success)
     TopoType topoType = TopoType::CLOS;
     u32 topoInstId = 0;
 
-    std::shared_ptr<PhyTopo::Link> edge1 =
-        std::make_shared<PhyTopo::Link>(node1, node2, linkAttrs, topoType, topoInstId);
-    std::shared_ptr<PhyTopo::Link> edge2 =
-        std::make_shared<PhyTopo::Link>(node1, node3, linkAttrs, topoType, topoInstId);
-    std::shared_ptr<PhyTopo::Link> edge3 =
-        std::make_shared<PhyTopo::Link>(node2, node3, linkAttrs, topoType, topoInstId);
+    std::shared_ptr<PhyTopo::Link> edge1
+        = std::make_shared<PhyTopo::Link>(node1, node2, linkAttrs, topoType, topoInstId);
+    std::shared_ptr<PhyTopo::Link> edge2
+        = std::make_shared<PhyTopo::Link>(node1, node3, linkAttrs, topoType, topoInstId);
+    std::shared_ptr<PhyTopo::Link> edge3
+        = std::make_shared<PhyTopo::Link>(node2, node3, linkAttrs, topoType, topoInstId);
 
     graph->AddNode(nodeId1, node1);
     graph->AddNode(nodeId2, node2);
@@ -249,8 +238,7 @@ TEST_F(GraphTest, St_TraverseEdge_When_EdgeExist_Expect_Success)
     int peerNodeNum = 0;
     int edgeNum = 0;
 
-    graph->TraverseEdge(nodeId1, [&](const std::shared_ptr<PhyTopo::Link> &edge)
-    {
+    graph->TraverseEdge(nodeId1, [&](const std::shared_ptr<PhyTopo::Link>& edge) {
         ++edgeNum;
         if (edge->GetTargetNode()->GetType() == PhyTopo::Node::NodeType::FABRIC) {
             ++fabricNodeNum;
@@ -271,8 +259,7 @@ TEST_F(GraphTest, St_TraverseEdge_When_EdgeExist_Expect_Success)
     peerNodeNum = 0;
     edgeNum = 0;
 
-    graph->TraverseEdge(nodeId1, nodeId2, [&](const std::shared_ptr<PhyTopo::Link> &edge)
-    {
+    graph->TraverseEdge(nodeId1, nodeId2, [&](const std::shared_ptr<PhyTopo::Link>& edge) {
         ++edgeNum;
         if (edge->GetTargetNode()->GetType() == PhyTopo::Node::NodeType::FABRIC) {
             ++fabricNodeNum;
@@ -293,8 +280,7 @@ TEST_F(GraphTest, St_TraverseEdge_When_EdgeExist_Expect_Success)
     peerNodeNum = 0;
     edgeNum = 0;
 
-    graph->TraverseEdge(nodeId1, nodeId3, [&](const std::shared_ptr<PhyTopo::Link> &edge)
-    {
+    graph->TraverseEdge(nodeId1, nodeId3, [&](const std::shared_ptr<PhyTopo::Link>& edge) {
         ++edgeNum;
         if (edge->GetTargetNode()->GetType() == PhyTopo::Node::NodeType::FABRIC) {
             ++fabricNodeNum;

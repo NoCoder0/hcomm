@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #include "net_co_log_cnt.h"
 #include "net_co_main_data.h"
 #include "securec.h"
@@ -44,4 +43,3 @@ void NetCoLogCntUninit(NetCo *co)
 #ifdef __cplusplus
 }
 #endif
-

@@ -12,13 +12,9 @@
 #include "hccl/hccl_types.h"
 
 extern "C" {
-HcclResult HcclCommInitClusterInfo(const char *clusterInfo, uint32_t rank, HcclComm *comm)
-{
-    return HCCL_SUCCESS;
-}
+HcclResult HcclCommInitClusterInfo(const char* clusterInfo, uint32_t rank, HcclComm* comm) { return HCCL_SUCCESS; }
 
-HcclResult HcclCommInitClusterInfoConfig(const char *clusterInfo, uint32_t rank,
-    HcclCommConfig *config, HcclComm *comm)
+HcclResult HcclCommInitClusterInfoConfig(const char* clusterInfo, uint32_t rank, HcclCommConfig* config, HcclComm* comm)
 {
     return HCCL_SUCCESS;
 }

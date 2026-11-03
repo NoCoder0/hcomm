@@ -67,22 +67,21 @@ void BkfPuberSessDispPrintfSummary(BkfDisp *disp, BkfDispTempCtx *ctx)
 
     uint8_t state;
     for (state = 0; state < BKF_GET_ARY_COUNT(sessctx->eachStateCnt); state++) {
-        BKF_DISP_PRINTF(disp, "sessCnt[%-3d, %-50s]      : %d\n",
-                        state, BkfFsmTmplGetStateStr(sessctx->fsmTmpl, state), sessctx->eachStateCnt[state]);
+        BKF_DISP_PRINTF(disp, "sessCnt[%-3d, %-50s]      : %d\n", state, BkfFsmTmplGetStateStr(sessctx->fsmTmpl, state),
+            sessctx->eachStateCnt[state]);
     }
-    BKF_DISP_PRINTF(disp, "sessCnt[%-3d, %-50s]      : %d\n",
-                    BKF_FSM_STATE_INVALID, "state_invalid", sessctx->invalidStateCnt);
+    BKF_DISP_PRINTF(disp, "sessCnt[%-3d, %-50s]      : %d\n", BKF_FSM_STATE_INVALID, "state_invalid",
+        sessctx->invalidStateCnt);
 }
 
-STATIC BkfPuberSess *BkfPuberSessDispSessGetSessAndCtx(BkfPuberSessMng *sessMng, BkfDisp *disp,
-                                                         BkfDispTempCtx *lastCtx, BkfDispTempCtx *curCtx,
-                                                         BkfPuberDispSessCtx **curSessCtx)
+STATIC BkfPuberSess *BkfPuberSessDispSessGetSessAndCtx(BkfPuberSessMng *sessMng, BkfDisp *disp, BkfDispTempCtx *lastCtx,
+    BkfDispTempCtx *curCtx, BkfPuberDispSessCtx **curSessCtx)
 {
     BkfPuberDispSessCtx *tempLastSessCtx = BKF_DISP_TMEP_CTX_2X(lastCtx, BkfPuberDispSessCtx);
     BkfPuberDispSessCtx *tempCurSessCtx = BKF_DISP_TMEP_CTX_2X(curCtx, BkfPuberDispSessCtx);
     BkfPuberSess *sess = VOS_NULL;
     if (tempLastSessCtx == VOS_NULL) {
-        BkfPuberSessDispCtx cnt = { 0 };
+        BkfPuberSessDispCtx cnt = {0};
         BkfPuberSessDispGetSummaryCtx(sessMng, &cnt);
         BKF_DISP_PRINTF(disp, "totalSessCnt(%d)\n", cnt.totalCnt);
         BKF_DISP_PRINTF(disp, "--------\n");
@@ -97,18 +96,17 @@ STATIC BkfPuberSess *BkfPuberSessDispSessGetSessAndCtx(BkfPuberSessMng *sessMng,
 }
 
 STATIC int32_t BkfPuberSessDispOneSess(BkfPuberSessMng *sessMng, BkfDisp *disp, BkfPuberSess *sess,
-                                       BkfPuberDispSessCtx *curSessCtx)
+    BkfPuberDispSessCtx *curSessCtx)
 {
-    uint8_t buf[BKF_LOG_LEN] = { 0 };
-    BKF_DISP_PRINTF(disp, "++sess[%d], slice(%s)/tableTypeId(%u, %s), state(%u, %s), "
-                    "subTransNum(%"VOS_PRIu64")/verify(%u)/needTblCplt(%u), "
-                    "itorB_R(%#x, %#x)\n",
-                    curSessCtx->sessCnt,
-                    BkfDcGetSliceKeyStr(sessMng->argInit->dc, sess->key.sliceKey, buf, sizeof(buf)),
-                    sess->key.tableTypeId, BkfDcGetTableTypeIdStr(sessMng->argInit->dc, sess->key.tableTypeId),
-                    BKF_FSM_GET_STATE(&sess->fsm), BkfFsmGetStateStr(&sess->fsm),
-                    sess->subTransNum, sess->subWithVerify, sess->subWithNeedTblCplt,
-                    BKF_MASK_ADDR(sess->itorBatchData), BKF_MASK_ADDR(sess->itorRealData));
+    uint8_t buf[BKF_LOG_LEN] = {0};
+    BKF_DISP_PRINTF(disp,
+        "++sess[%d], slice(%s)/tableTypeId(%u, %s), state(%u, %s), "
+        "subTransNum(%" VOS_PRIu64 ")/verify(%u)/needTblCplt(%u), "
+        "itorB_R(%#x, %#x)\n",
+        curSessCtx->sessCnt, BkfDcGetSliceKeyStr(sessMng->argInit->dc, sess->key.sliceKey, buf, sizeof(buf)),
+        sess->key.tableTypeId, BkfDcGetTableTypeIdStr(sessMng->argInit->dc, sess->key.tableTypeId),
+        BKF_FSM_GET_STATE(&sess->fsm), BkfFsmGetStateStr(&sess->fsm), sess->subTransNum, sess->subWithVerify,
+        sess->subWithNeedTblCplt, BKF_MASK_ADDR(sess->itorBatchData), BKF_MASK_ADDR(sess->itorRealData));
 
     curSessCtx->sessCnt++;
     curSessCtx->tableTypeId = sess->key.tableTypeId;
@@ -121,8 +119,7 @@ STATIC int32_t BkfPuberSessDispOneSess(BkfPuberSessMng *sessMng, BkfDisp *disp, 
     return sizeof(*curSessCtx) - sizeof(curSessCtx->sliceKey) + sliceVTbl->keyLen;
 }
 
-int32_t BkfPuberSessDispSess(BkfPuberSessMng *sessMng, BkfDisp *disp, BkfDispTempCtx *lastCtx,
-    BkfDispTempCtx *curCtx)
+int32_t BkfPuberSessDispSess(BkfPuberSessMng *sessMng, BkfDisp *disp, BkfDispTempCtx *lastCtx, BkfDispTempCtx *curCtx)
 {
     BkfPuberDispSessCtx *curSessCtx = VOS_NULL;
     BkfPuberSess *sess = BkfPuberSessDispSessGetSessAndCtx(sessMng, disp, lastCtx, curCtx, &curSessCtx);
@@ -134,13 +131,12 @@ int32_t BkfPuberSessDispSess(BkfPuberSessMng *sessMng, BkfDisp *disp, BkfDispTem
 }
 
 STATIC int32_t BkfPuberSessDispOneSessFsm(BkfPuberSessMng *sessMng, BkfDisp *disp, BkfPuberSess *sess,
-                                          BkfPuberDispSessCtx *curSessCtx)
+    BkfPuberDispSessCtx *curSessCtx)
 {
     uint8_t buf[BKF_DISP_PRINTF_BUF_LEN_MAX];
-    BKF_DISP_PRINTF(disp, "++sess[%d], key_slice(%s)/tableTypeId(%u, %s), fsmInfo:\n",
-                    curSessCtx->sessCnt,
-                    BkfDcGetSliceKeyStr(sessMng->argInit->dc, sess->key.sliceKey, buf, sizeof(buf)),
-                    sess->key.tableTypeId, BkfDcGetTableTypeIdStr(sessMng->argInit->dc, sess->key.tableTypeId));
+    BKF_DISP_PRINTF(disp, "++sess[%d], key_slice(%s)/tableTypeId(%u, %s), fsmInfo:\n", curSessCtx->sessCnt,
+        BkfDcGetSliceKeyStr(sessMng->argInit->dc, sess->key.sliceKey, buf, sizeof(buf)), sess->key.tableTypeId,
+        BkfDcGetTableTypeIdStr(sessMng->argInit->dc, sess->key.tableTypeId));
     BKF_DISP_PRINTF(disp, "%s\n", BkfFsmGetStr(&sess->fsm, buf, sizeof(buf)));
     BKF_DISP_PRINTF(disp, "--------\n");
 
@@ -155,7 +151,8 @@ STATIC int32_t BkfPuberSessDispOneSessFsm(BkfPuberSessMng *sessMng, BkfDisp *dis
     return sizeof(*curSessCtx) - sizeof(curSessCtx->sliceKey) + sliceVTbl->keyLen;
 }
 
-int32_t BkfPuberSessDispSessFsm(BkfPuberSessMng *sessMng, BkfDisp *disp, BkfDispTempCtx *lastCtx, BkfDispTempCtx *curCtx)
+int32_t BkfPuberSessDispSessFsm(BkfPuberSessMng *sessMng, BkfDisp *disp, BkfDispTempCtx *lastCtx,
+    BkfDispTempCtx *curCtx)
 {
     BkfPuberDispSessCtx *curSessCtx = VOS_NULL;
     BkfPuberSess *sess = BkfPuberSessDispSessGetSessAndCtx(sessMng, disp, lastCtx, curCtx, &curSessCtx);
@@ -199,4 +196,3 @@ uint32_t BkfPuberSessDispBatchTimeoutTest(BkfPuberSessMng *sessMng, BkfDisp *dis
 #ifdef __cplusplus
 }
 #endif
-

@@ -15,38 +15,38 @@ namespace Hccl {
 
 constexpr int INPUT_XN_ID = 1;
 constexpr int TOKEN_XN_ID = 2;
-constexpr int CKE_IDX_0   = 0;
-constexpr int CKE_IDX_1   = 1;
-constexpr int CKE_IDX_2   = 2;
-constexpr int CKE_IDX_3   = 3;
-constexpr int CKE_IDX_4   = 4;
+constexpr int CKE_IDX_0 = 0;
+constexpr int CKE_IDX_1 = 1;
+constexpr int CKE_IDX_2 = 2;
+constexpr int CKE_IDX_3 = 3;
+constexpr int CKE_IDX_4 = 4;
 constexpr int FST_AXIS_ID = 0;
 constexpr int SEC_AXIS_ID = 1;
-constexpr int X_AXIS_ID   = 0;
-constexpr int Y_AXIS_ID   = 1;
+constexpr int X_AXIS_ID = 0;
+constexpr int Y_AXIS_ID = 1;
 
-CcuContextBroadcastMeshMem2Mem2D::CcuContextBroadcastMeshMem2Mem2D(const CcuCtxArg                   &arg,
-                                                                   const std::vector<CcuTransport *> &transports,
-                                                                   const CcuTransportGroup           &group)
+CcuContextBroadcastMeshMem2Mem2D::CcuContextBroadcastMeshMem2Mem2D(
+    const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group)
     : CcuContextAlgBase(arg, transports, group)
 {
-    const CcuCtxArgBroadcastMeshMem2mem2D *ctxArg = dynamic_cast<const CcuCtxArgBroadcastMeshMem2mem2D *>(&arg);
+    const CcuCtxArgBroadcastMeshMem2mem2D* ctxArg = dynamic_cast<const CcuCtxArgBroadcastMeshMem2mem2D*>(&arg);
     if (ctxArg == nullptr) {
         THROW<NullPtrException>(StringFormat("CcuContextBroadcastMeshMem2Mem2D::ctxArg ptr is null"));
     }
-    rankId_  = ctxArg->rankId_;
+    rankId_ = ctxArg->rankId_;
     dimSize_ = ctxArg->dimSize_;
-    axisId_  = ctxArg->axisId_;
+    axisId_ = ctxArg->axisId_;
     if (dimSize_.size() != 2 || axisId_ > 1 || dimSize_[0] == 0) { // 2D 拓扑校验
-        THROW<NullPtrException>(
-            StringFormat("[CcuContextBroadcastMeshMem2Mem2D] dimSize[%zu] or axisId[%u] or dimSize[0] [%u] is invalid",
-                         dimSize_.size(), axisId_, dimSize_[0]));
+        THROW<NullPtrException>(StringFormat(
+            "[CcuContextBroadcastMeshMem2Mem2D] dimSize[%zu] or axisId[%u] or dimSize[0] [%u] is invalid",
+            dimSize_.size(), axisId_, dimSize_[0]));
     }
     dimId_.emplace_back(rankId_ % dimSize_[0]);
     dimId_.emplace_back(rankId_ / dimSize_[0]);
-    localId_   = dimId_[axisId_];
+    localId_ = dimId_[axisId_];
     localSize_ = dimSize_[axisId_];
-    HCCL_INFO("[CcuContextBroadcastMeshMem2Mem2D] RankId[%u], DimSize0[%u], DimSize1[%u], localId[%u], lcoalSize[%u]",
+    HCCL_INFO(
+        "[CcuContextBroadcastMeshMem2Mem2D] RankId[%u], DimSize0[%llu], DimSize1[%llu], localId[%llu], localSize[%llu]",
         rankId_, dimSize_[0], dimSize_[1], localId_, localSize_);
     dataType_ = ctxArg->op_.dataType;
 
@@ -56,18 +56,18 @@ CcuContextBroadcastMeshMem2Mem2D::CcuContextBroadcastMeshMem2Mem2D(const CcuCtxA
 
     rootLocalId_ = rootDimId_[axisId_];
 
-    localAxisSignalName_   = "CcuContextBroadcastMeshMem2Mem2DAxisSync_" + std::to_string(axisId_);
+    localAxisSignalName_ = "CcuContextBroadcastMeshMem2Mem2DAxisSync_" + std::to_string(axisId_);
     anotherAxisSignalName_ = "CcuContextBroadcastMeshMem2Mem2DAxisSync_" + std::to_string(1 - axisId_);
 }
 
 void CcuContextBroadcastMeshMem2Mem2D::InitResources()
 {
-    localAxisSignal_   = CreateMaskSignal();
+    localAxisSignal_ = CreateMaskSignal();
     anotherAxisSignal_ = CreateMaskSignal();
-    xAxisSize_         = CreateVariable();
-    yAxisSize_         = CreateVariable();
-    yAxisOffset_       = CreateVariable();
-    dataSize_          = CreateVariable();
+    xAxisSize_ = CreateVariable();
+    yAxisSize_ = CreateVariable();
+    yAxisOffset_ = CreateVariable();
+    dataSize_ = CreateVariable();
     ExportMaskSignal(localAxisSignal_, localAxisSignalName_);
     anotherAxisSignal_ = ImportMaskSignal(anotherAxisSignalName_);
 
@@ -80,10 +80,12 @@ void CcuContextBroadcastMeshMem2Mem2D::InitResources()
             input_.push_back(CreateVariable());
             token_.push_back(CreateVariable());
         } else {
-            HCCL_INFO("[CcuContextBroadcastMeshMem2Mem2D] MyRank[%u], PeerId[%u], TransportId[%u]", localId_, peerId,
-                      transportIdx);
-            CHK_PRT_RET(transports[transportIdx] == nullptr,
-                        HCCL_ERROR("[CcuContextBroadcastMeshMem2Mem2D] Algorithm transport ptr is null"), );
+            HCCL_INFO(
+                "[CcuContextBroadcastMeshMem2Mem2D] MyRank[%u], PeerId[%u], TransportId[%u]", localId_, peerId,
+                transportIdx);
+            CHK_PRT_RET(
+                transports[transportIdx] == nullptr,
+                HCCL_ERROR("[CcuContextBroadcastMeshMem2Mem2D] Algorithm transport ptr is null"), );
             input_.push_back(
                 CreateVariable((*transports[transportIdx]), INPUT_XN_ID)); // 获取transport中id=1的Var来传递output
             token_.push_back(CreateVariable((*transports[transportIdx]), TOKEN_XN_ID));
@@ -96,7 +98,7 @@ void CcuContextBroadcastMeshMem2Mem2D::InitResources()
 void CcuContextBroadcastMeshMem2Mem2D::PreSync()
 {
     uint16_t selfBit = 1 << localId_;
-    uint16_t allBit  = ((1 << localSize_) - 1) & (~(1 << localId_));
+    uint16_t allBit = ((1 << localSize_) - 1) & (~(1 << localId_));
 
     for (auto t : transports) {
         WriteVariableWithSignal(*t, input_[localId_], INPUT_XN_ID, CKE_IDX_1, selfBit); // index = 1，传递output信息
@@ -110,7 +112,7 @@ void CcuContextBroadcastMeshMem2Mem2D::PreSync()
 void CcuContextBroadcastMeshMem2Mem2D::PostSync(uint32_t signalIndex)
 {
     uint16_t selfBit = 1 << localId_;
-    uint16_t allBit  = ((1 << localSize_) - 1) & (~(1 << localId_));
+    uint16_t allBit = ((1 << localSize_) - 1) & (~(1 << localId_));
 
     for (auto t : transports) {
         RemotePost(*t, signalIndex, selfBit);
@@ -124,7 +126,7 @@ void CcuContextBroadcastMeshMem2Mem2D::AxisSync(uint32_t signalIndex)
     const uint32_t DIE_NUM = 2;
     if (signalIndex > 1) {
         THROW<InvalidParamsException>(
-            StringFormat("[CcuContextBroadcastMeshMem2Mem2D] Unexpected SignalInex[%u]", signalIndex));
+            StringFormat("[CcuContextBroadcastMeshMem2Mem2D] Unexpected SignalIndex[%u]", signalIndex));
     }
     LocalCtxPost(anotherAxisSignal_, 1 << (axisId_ + signalIndex * DIE_NUM));
     LocalWait(localAxisSignal_, 1 << (1 - axisId_ + signalIndex * DIE_NUM));
@@ -149,14 +151,14 @@ void CcuContextBroadcastMeshMem2Mem2D::Step1BroadcastForRoot()
         dst.push_back(CreateMemory());
     }
     CcuRep::Memory src = CreateMemory();
-    src.addr           = input_[localId_];
-    src.token          = token_[localId_];
+    src.addr = input_[localId_];
+    src.token = token_[localId_];
 
     dataSize_ = (axisId_ == X_AXIS_ID) ? xAxisSize_ : yAxisSize_;
     CCU_IF(dataSize_ != 0)
     {
-        uint32_t           transportId = 0;
-        CcuRep::MaskSignal localMask   = CreateMaskSignal();
+        uint32_t transportId = 0;
+        CcuRep::MaskSignal localMask = CreateMaskSignal();
 
         if (axisId_ == Y_AXIS_ID) {
             src.addr += yAxisOffset_;
@@ -167,7 +169,7 @@ void CcuContextBroadcastMeshMem2Mem2D::Step1BroadcastForRoot()
                 LocalPost(localMask, 1 << rankIdx);
                 continue;
             }
-            dst[rankIdx].addr  = input_[rankIdx];
+            dst[rankIdx].addr = input_[rankIdx];
             dst[rankIdx].token = token_[rankIdx];
             if (axisId_ == Y_AXIS_ID) {
                 dst[rankIdx].addr += yAxisOffset_;
@@ -188,14 +190,14 @@ void CcuContextBroadcastMeshMem2Mem2D::Step2BroadcastForRoot()
         dst.push_back(CreateMemory());
     }
     CcuRep::Memory src = CreateMemory();
-    src.addr           = input_[localId_];
-    src.token          = token_[localId_];
+    src.addr = input_[localId_];
+    src.token = token_[localId_];
 
     dataSize_ = (axisId_ == Y_AXIS_ID) ? xAxisSize_ : yAxisSize_;
     CCU_IF(dataSize_ != 0)
     {
-        uint32_t           transportId = 0;
-        CcuRep::MaskSignal localMask   = CreateMaskSignal();
+        uint32_t transportId = 0;
+        CcuRep::MaskSignal localMask = CreateMaskSignal();
         if (axisId_ == X_AXIS_ID) {
             src.addr += yAxisOffset_;
         }
@@ -206,7 +208,7 @@ void CcuContextBroadcastMeshMem2Mem2D::Step2BroadcastForRoot()
                 continue;
             }
 
-            dst[rankIdx].addr  = input_[rankIdx];
+            dst[rankIdx].addr = input_[rankIdx];
             dst[rankIdx].token = token_[rankIdx];
 
             if (axisId_ == X_AXIS_ID) {
@@ -228,21 +230,21 @@ void CcuContextBroadcastMeshMem2Mem2D::Step2Broadcast()
         dst.push_back(CreateMemory());
     }
     CcuRep::Memory src = CreateMemory();
-    src.addr           = input_[localId_];
-    src.token          = token_[localId_];
+    src.addr = input_[localId_];
+    src.token = token_[localId_];
     // 当前rank和root在同一行, 只有y轴需要再执行一次bcast; 当前rank和root在同列, 只有x轴需要再执行一次bcast
     if (dimId_[1] == rootDimId_[1] && axisId_ == Y_AXIS_ID) {
         HCCL_INFO("[CcuContextBroadcastMeshMem2Mem2D] rankId[%u] is on the same row as rootId[%u]", rankId_, rootId_);
         CCU_IF(xAxisSize_ != 0)
         {
-            u32                transportId = 0;
-            CcuRep::MaskSignal localMask   = CreateMaskSignal();
+            u32 transportId = 0;
+            CcuRep::MaskSignal localMask = CreateMaskSignal();
             for (uint32_t rankIdx = 0; rankIdx < localSize_; rankIdx++) {
                 if (rankIdx == localId_) {
                     LocalPost(localMask, 1 << rankIdx);
                     continue;
                 }
-                dst[rankIdx].addr  = input_[rankIdx];
+                dst[rankIdx].addr = input_[rankIdx];
                 dst[rankIdx].token = token_[rankIdx];
                 Write(*transports[transportId], dst[rankIdx], src, xAxisSize_, localMask, 1 << rankIdx);
                 transportId++;
@@ -250,12 +252,13 @@ void CcuContextBroadcastMeshMem2Mem2D::Step2Broadcast()
             LocalWait(localMask, (1 << localSize_) - 1);
         }
     } else if (dimId_[0] == rootDimId_[0] && axisId_ == X_AXIS_ID) {
-        HCCL_INFO("[CcuContextBroadcastMeshMem2Mem2D] rankId[%u] is on the same column as rootId[%u]", rankId_, rootId_);
+        HCCL_INFO(
+            "[CcuContextBroadcastMeshMem2Mem2D] rankId[%u] is on the same column as rootId[%u]", rankId_, rootId_);
         CCU_IF(yAxisSize_ != 0)
         {
             src.addr += yAxisOffset_;
-            u32                transportId = 0;
-            CcuRep::MaskSignal localMask   = CreateMaskSignal();
+            u32 transportId = 0;
+            CcuRep::MaskSignal localMask = CreateMaskSignal();
             for (uint32_t rankIdx = 0; rankIdx < localSize_; rankIdx++) {
                 if (rankIdx == localId_) {
                     LocalPost(localMask, 1 << rankIdx);
@@ -308,22 +311,23 @@ void CcuContextBroadcastMeshMem2Mem2D::Algorithm()
     return;
 }
 
-std::vector<uint64_t> CcuContextBroadcastMeshMem2Mem2D::GeneArgs(const CcuTaskArg &arg)
+std::vector<uint64_t> CcuContextBroadcastMeshMem2Mem2D::GeneArgs(const CcuTaskArg& arg)
 {
-    const CcuTaskArgBroadcastMeshMem2mem2D *taskArg = dynamic_cast<const CcuTaskArgBroadcastMeshMem2mem2D *>(&arg);
+    const CcuTaskArgBroadcastMeshMem2mem2D* taskArg = dynamic_cast<const CcuTaskArgBroadcastMeshMem2mem2D*>(&arg);
     if (taskArg == nullptr) {
         THROW<NullPtrException>(StringFormat("CcuContextBroadcastMeshMem2Mem2D::taskArg ptr is null"));
     }
-    uint64_t inputAddr   = taskArg->inputAddr_;
-    uint64_t tokenInfo   = taskArg->token_;
+    uint64_t inputAddr = taskArg->inputAddr_;
+    uint64_t tokenInfo = taskArg->token_;
     uint64_t yAxisOffset = taskArg->xAxisSize_;
-    uint64_t xAxisSize   = taskArg->xAxisSize_;
-    uint64_t yAxisSize   = taskArg->yAxisSize_;
-    auto     xAxisGoSize = CalGoSize(xAxisSize);
-    auto     yAxisGoSize = CalGoSize(yAxisSize);
-    HCCL_INFO("[CcuContextBroadcastMeshMem2Mem2D][GeneArgs] RankId[%u]--AxisId[%u], inputAddr[%llu],xAxisSize[%llu], "
-              "yAxisSize[%llu],yAxisOffset[%llu]",
-              rankId_, axisId_, inputAddr, xAxisSize, yAxisSize, yAxisOffset);
+    uint64_t xAxisSize = taskArg->xAxisSize_;
+    uint64_t yAxisSize = taskArg->yAxisSize_;
+    auto xAxisGoSize = CalGoSize(xAxisSize);
+    auto yAxisGoSize = CalGoSize(yAxisSize);
+    HCCL_INFO(
+        "[CcuContextBroadcastMeshMem2Mem2D][GeneArgs] RankId[%u]--AxisId[%u], inputAddr[%llu],xAxisSize[%llu], "
+        "yAxisSize[%llu],yAxisOffset[%llu]",
+        rankId_, axisId_, inputAddr, xAxisSize, yAxisSize, yAxisOffset);
     return {inputAddr, yAxisOffset, tokenInfo, xAxisSize, yAxisSize};
 }
 } // namespace Hccl

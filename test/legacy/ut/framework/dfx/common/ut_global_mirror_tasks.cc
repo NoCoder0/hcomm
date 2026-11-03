@@ -21,28 +21,20 @@ using namespace Hccl;
 
 class GlobalMirrorTasksTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "GlobalMirrorTasks tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "GlobalMirrorTasks tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "GlobalMirrorTasks tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "GlobalMirrorTasks tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in GlobalMirrorTasks SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in GlobalMirrorTasks SetUP" << std::endl; }
 
     virtual void TearDown()
     {
         std::cout << "A Test case in GlobalMirrorTasks TearDown" << std::endl;
         GlobalMockObject::verify();
     }
+
 private:
-    void CreateTaskAndAddTask(u32 devId, u32 streamId, u32 taskId, QueueType type, GlobalMirrorTasks &globalMirrorTasks)
+    void CreateTaskAndAddTask(u32 devId, u32 streamId, u32 taskId, QueueType type, GlobalMirrorTasks& globalMirrorTasks)
     {
         TaskParam taskParam{};
         std::shared_ptr<DfxOpInfo> dfxOpInfo = std::make_shared<DfxOpInfo>();
@@ -51,7 +43,8 @@ private:
         globalMirrorTasks.GetQueue(devId, streamId)->Append(std::move(taskInfo));
     }
 
-    void CheckFindTaskInfoSuccess(u32 devId, u32 streamId, u32 taskId, QueueType type, GlobalMirrorTasks &globalMirrorTasks)
+    void
+    CheckFindTaskInfoSuccess(u32 devId, u32 streamId, u32 taskId, QueueType type, GlobalMirrorTasks& globalMirrorTasks)
     {
         TaskInfo* curTask = nullptr;
         CreateTaskAndAddTask(devId, streamId, taskId, type, globalMirrorTasks);
@@ -62,7 +55,8 @@ private:
         EXPECT_EQ(curTask->taskId_, taskId);
     }
 
-    void CheckFindTaskInfoTaskIdNotFound(u32 devId, u32 streamId, u32 taskId, QueueType type, GlobalMirrorTasks &globalMirrorTasks)
+    void CheckFindTaskInfoTaskIdNotFound(
+        u32 devId, u32 streamId, u32 taskId, QueueType type, GlobalMirrorTasks& globalMirrorTasks)
     {
         TaskInfo* curTask = nullptr;
         CreateTaskAndAddTask(devId, streamId, taskId, type, globalMirrorTasks);
@@ -75,28 +69,28 @@ private:
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_GetQueue_1)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     EXPECT_THROW(globalMirrorTasks.GetQueue(60, 60), InternalException);
 }
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_GetQueue_2)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     EXPECT_THROW(globalMirrorTasks.GetQueue(30, 60), InternalException);
 }
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_CreateQueue_1)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     EXPECT_THROW(globalMirrorTasks.CreateQueue(60, 60, QueueType::Circular_Queue), InternalException);
 }
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_CreateQueue_2)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     globalMirrorTasks.CreateQueue(30, 0, QueueType::Circular_Queue);
 
@@ -109,21 +103,21 @@ TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_CreateQueue_2)
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_DestroyQueue_1)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     EXPECT_THROW(globalMirrorTasks.DestroyQueue(60, 0), InternalException);
 }
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_DestroyQueue_2)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     globalMirrorTasks.DestroyQueue(30, 0);
 }
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_Begin)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     globalMirrorTasks.Begin(30);
 
@@ -132,7 +126,7 @@ TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_Begin)
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_End)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     globalMirrorTasks.End(30);
 
@@ -141,7 +135,7 @@ TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_End)
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_GetTaskInfo)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     globalMirrorTasks.CreateQueue(30, 0, QueueType::Circular_Queue);
 
@@ -150,15 +144,15 @@ TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_GetTaskInfo)
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_DevSize)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     globalMirrorTasks.DevSize();
 }
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_GetAllTaskInfo)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
-    for (auto &taskMap : globalMirrorTasks.taskMaps_) {
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
+    for (auto& taskMap : globalMirrorTasks.taskMaps_) {
         taskMap.clear();
     }
     // 枚举所有devId
@@ -167,7 +161,7 @@ TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_GetAllTaskInfo)
         for (auto iter = globalMirrorTasks.Begin(devId); iter != globalMirrorTasks.End(devId); iter++) {
             // 获取对应streamId和任务队列的unique_ptr指针
             auto streamId = iter->first;
-            auto &taskInfoQueue = iter->second;
+            auto& taskInfoQueue = iter->second;
             // 枚举所有任务信息
             for (auto taskInfoIter = taskInfoQueue->Begin(); *taskInfoIter != *taskInfoQueue->End();
                  (*taskInfoIter)++) {
@@ -179,14 +173,14 @@ TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_GetAllTaskInfo)
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_GetTaskInfo_out_of_range)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
     // 枚举所有devId
     globalMirrorTasks.GetTaskInfo(60, 30, 30);
 }
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_GetTailEmpty)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     globalMirrorTasks.CreateQueue(30, 12, QueueType::Circular_Queue);
 
@@ -195,14 +189,14 @@ TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_GetTailEmpty)
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_GetBeginEmpty)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     globalMirrorTasks.GetQueue(30, 12)->Begin();
 }
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_FindTaskInfo_devId_out_of_range)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
     TaskInfo* curTask = nullptr;
 
     HcclResult ret = globalMirrorTasks.FindTaskInfo(60, 0, 0, curTask);
@@ -211,7 +205,7 @@ TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_FindTaskInfo_devId_out_of_range)
 
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_FindTaskInfo_streamId_not_found)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
     TaskInfo* curTask = nullptr;
 
     globalMirrorTasks.CreateQueue(0, 0, QueueType::Circular_Queue);
@@ -223,14 +217,14 @@ TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_FindTaskInfo_streamId_not_found)
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_FindTaskInfo_taskId_not_found)
 {
     // when
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
     u32 devId = 0;
     u32 cirStmId = 0;
     u32 cirTaskId = 5;
     u32 vecStmId = 1;
     u32 vecTaskId = 6;
-    
-    //Then
+
+    // Then
     CheckFindTaskInfoTaskIdNotFound(devId, cirStmId, cirTaskId, QueueType::Circular_Queue, globalMirrorTasks);
     CheckFindTaskInfoTaskIdNotFound(devId, vecStmId, vecTaskId, QueueType::Vector_Queue, globalMirrorTasks);
 }
@@ -238,14 +232,14 @@ TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_FindTaskInfo_taskId_not_found)
 TEST_F(GlobalMirrorTasksTest, GlobalMirrorTasks_FindTaskInfo_success)
 {
     // when
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
     u32 devId = 0;
     u32 cirStmId = 0;
     u32 cirTaskId = 5;
     u32 vecStmId = 1;
     u32 vecTaskId = 6;
 
-    //Then
+    // Then
     CheckFindTaskInfoSuccess(devId, cirStmId, cirTaskId, QueueType::Circular_Queue, globalMirrorTasks);
     CheckFindTaskInfoSuccess(devId, vecStmId, vecTaskId, QueueType::Vector_Queue, globalMirrorTasks);
 }

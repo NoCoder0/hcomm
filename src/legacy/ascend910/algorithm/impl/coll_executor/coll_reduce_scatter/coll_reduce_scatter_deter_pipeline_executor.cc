@@ -1,20 +1,19 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "coll_reduce_scatter_deter_pipeline_executor.h"
 
 namespace hccl {
 
 CollReduceScatterDeterPipelineExecutor::CollReduceScatterDeterPipelineExecutor(
-    const HcclDispatcher dispatcher,
-    std::unique_ptr<TopoMatcher> &topoMatcher)
+    const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher>& topoMatcher)
     : CollReduceScatterExecutor(dispatcher, topoMatcher)
 {
     scratchMemFlag_ = (workflowMode_ != HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
@@ -31,17 +30,16 @@ void CollReduceScatterDeterPipelineExecutor::ParseParam(const OpParam& param)
 HcclResult CollReduceScatterDeterPipelineExecutor::CalcScratchMemSize(u64& scratchMemSize)
 {
     scratchMemSize = scratchMemFlag_ ? totalSize_ + topoAttr_.userRankSize * HCCL_MIN_SLICE_ALIGN_910B : 0U;
-    HCCL_INFO("[CollReduceScatterDeterPipelineExecutor][CalcScratchMemSize]tag[%s] scratchMemSize[%llu]",
-        tag_.c_str(), scratchMemSize);
+    HCCL_INFO(
+        "[CollReduceScatterDeterPipelineExecutor][CalcScratchMemSize]tag[%s] scratchMemSize[%llu]", tag_.c_str(),
+        scratchMemSize);
     return HCCL_SUCCESS;
 }
-
 
 HcclResult CollReduceScatterDeterPipelineExecutor::CalcStreamNum(u32& streamNum)
 {
     streamNum = topoAttr_.deviceNumPerAggregation + 3U; // (deviceNum - 1)机内 + 4Reduce + 1机间 - 1主流
-    HCCL_INFO("[CollReduceScatterDeterPipelineExecutor][CalcStreamNum] tag[%s] streamNum[%u]",
-        tag_.c_str(), streamNum);
+    HCCL_INFO("[CollReduceScatterDeterPipelineExecutor][CalcStreamNum] tag[%s] streamNum[%u]", tag_.c_str(), streamNum);
     return HCCL_SUCCESS;
 }
 
@@ -55,9 +53,8 @@ HcclResult CollReduceScatterDeterPipelineExecutor::CalcCommInfo(std::vector<Leve
     return HCCL_SUCCESS;
 }
 
-HcclResult CollReduceScatterDeterPipelineExecutor::CalcLevel0CommInfo(TransportMemType inputType,
-    TransportMemType outputType,
-    std::vector<LevelNSubCommTransport>& opTransport)
+HcclResult CollReduceScatterDeterPipelineExecutor::CalcLevel0CommInfo(
+    TransportMemType inputType, TransportMemType outputType, std::vector<LevelNSubCommTransport>& opTransport)
 {
     CommParaInfo commParaInfo(COMM_LEVEL0, CommType::COMM_TAG_MESH);
     commParaInfo.meshSinglePlane = true;
@@ -65,17 +62,16 @@ HcclResult CollReduceScatterDeterPipelineExecutor::CalcLevel0CommInfo(TransportM
     return HCCL_SUCCESS;
 }
 
-HcclResult CollReduceScatterDeterPipelineExecutor::CalcLevel1CommInfo(TransportMemType inputType,
-    TransportMemType outputType,
-    std::vector<LevelNSubCommTransport>& opTransport)
+HcclResult CollReduceScatterDeterPipelineExecutor::CalcLevel1CommInfo(
+    TransportMemType inputType, TransportMemType outputType, std::vector<LevelNSubCommTransport>& opTransport)
 {
     CommParaInfo commParaInfo(COMM_LEVEL1, CommType::COMM_TAG_MESH);
     CHK_RET(CalcCommPlaneInfo(tag_, commParaInfo, opTransport[COMM_LEVEL1], inputType, outputType));
     return HCCL_SUCCESS;
 }
 
-HcclResult CollReduceScatterDeterPipelineExecutor::CalcTransportMemType(TransportMemType &inputType,
-    TransportMemType &outputType)
+HcclResult CollReduceScatterDeterPipelineExecutor::CalcTransportMemType(
+    TransportMemType& inputType, TransportMemType& outputType) const
 {
     if (workflowMode_ == HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE) {
         inputType = TransportMemType::CCL_INPUT;
@@ -84,8 +80,10 @@ HcclResult CollReduceScatterDeterPipelineExecutor::CalcTransportMemType(Transpor
         inputType = TransportMemType::PARAM_INPUT;
         outputType = TransportMemType::SCRATCH;
     }
-    HCCL_INFO("[CollReduceScatterDeterPipelineExecutor][CalcTransportMemType] tag[%s] inputType[%d], "
-        "outputType[%d]", tag_.c_str(), inputType, outputType);
+    HCCL_INFO(
+        "[CollReduceScatterDeterPipelineExecutor][CalcTransportMemType] tag[%s] inputType[%d], "
+        "outputType[%d]",
+        tag_.c_str(), inputType, outputType);
     return HCCL_SUCCESS;
 }
 
@@ -97,46 +95,54 @@ u64 CollReduceScatterDeterPipelineExecutor::CalcLoopMaxCount(const u32 unitSize)
     return maxCountPerLoop;
 }
 
-HcclResult CollReduceScatterDeterPipelineExecutor::RunLoop(OpParam &param, AlgResourceResponse &algRes)
+HcclResult CollReduceScatterDeterPipelineExecutor::RunLoop(OpParam& param, AlgResourceResponse& algRes)
 {
-    HCCL_CONFIG_INFO(HCCL_ALG, "[CollReduceScatterDeterPipelineExecutor][RunLoop] tag[%s], userRank[%u] begins.",
-        tag_.c_str(), topoAttr_.userRank);
+    HCCL_CONFIG_INFO(
+        HCCL_ALG, "[CollReduceScatterDeterPipelineExecutor][RunLoop] tag[%s], userRank[%u] begins.", tag_.c_str(),
+        topoAttr_.userRank);
 
-    CHK_PRT_RET((param.reduceType == HCCL_REDUCE_PROD) || (param.DataDes.dataType == HCCL_DATA_TYPE_INT64),
-        HCCL_ERROR("[CollReduceScatterDeterPipelineExecutor] unsupported reduceType[%u] or unsupported dataType[%u]",
-        param.reduceType, param.DataDes.dataType), HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        (param.reduceType == HCCL_REDUCE_PROD) || (param.DataDes.dataType == HCCL_DATA_TYPE_INT64),
+        HCCL_ERROR(
+            "[CollReduceScatterDeterPipelineExecutor] unsupported reduceType[%u] or unsupported dataType[%u]",
+            param.reduceType, param.DataDes.dataType),
+        HCCL_E_INTERNAL);
 
     u32 unitSize = SIZE_TABLE[param.DataDes.dataType];
 
-    u8 *curInputPtr = static_cast<u8 *>(param.inputPtr);
-    u8 *curOutputPtr = static_cast<u8 *>(param.outputPtr);
+    u8* curInputPtr = static_cast<u8*>(param.inputPtr);
+    u8* curOutputPtr = static_cast<u8*>(param.outputPtr);
     CHK_PTR_NULL(curInputPtr);
     CHK_PTR_NULL(curOutputPtr);
 
     u64 maxCountPerLoop = CalcLoopMaxCount(unitSize);
-    HCCL_INFO("[CollReduceScatterDeterPipelineExecutor][RunLoop]tag[%s], userRankSize is [%u], maxCountPerLoop "
-        "is [%llu].", tag_.c_str(), topoAttr_.userRankSize, maxCountPerLoop);
+    HCCL_INFO(
+        "[CollReduceScatterDeterPipelineExecutor][RunLoop]tag[%s], userRankSize is [%u], maxCountPerLoop "
+        "is [%llu].",
+        tag_.c_str(), topoAttr_.userRankSize, maxCountPerLoop);
 
     auto autoSelectedAlgTypeLevel1 = static_cast<u32>(algType_.algoLevel1);
     u8 deterministic = topoMatcher_->GetExternalInputHcclDeterministic();
 
-    for (u64 countLeft = param.DataDes.count, curCount = 0, curSize = 0; countLeft > 0;
-        countLeft -= curCount) {
+    for (u64 countLeft = param.DataDes.count, curCount = 0, curSize = 0; countLeft > 0; countLeft -= curCount) {
         curInputPtr += curSize;
         curOutputPtr += curSize;
 
         curCount = (countLeft > maxCountPerLoop) ? maxCountPerLoop : countLeft;
         curSize = curCount * unitSize;
 
-        HCCL_CONFIG_DEBUG(HCCL_ALG, "[CollReduceScatterDeterPipelineExecutor][RunLoop]tag[%s], curOffset[%llu]," \
+        HCCL_CONFIG_DEBUG(
+            HCCL_ALG,
+            "[CollReduceScatterDeterPipelineExecutor][RunLoop]tag[%s], curOffset[%llu],"
             "curInputPtr[%p], curOutputPtr[%p], curCount[%llu], dataType[%d].",
             tag_.c_str(), curOffset_, curInputPtr, curOutputPtr, curCount, param.DataDes.dataType);
 
         constexpr s64 HCCL_MEDIUM_COUNT_2_MB = 2 * 1024 * 1024;
         bool smallData = curSize < HCCL_MEDIUM_COUNT_2_MB ? 1 : 0;
         bool hugeData = IsHugeData(curSize);
-        auto meta = HcclOpMetaInfo::GetOneForReduceScatter(autoSelectedAlgTypeLevel1, param.DataDes.dataType,
-            ReduceType::INLINE_REDUCE, hugeData, smallData, CopyPattern::ZCOPY, false, deterministic, false);
+        auto meta = HcclOpMetaInfo::GetOneForReduceScatter(
+            autoSelectedAlgTypeLevel1, param.DataDes.dataType, ReduceType::INLINE_REDUCE, hugeData, smallData,
+            CopyPattern::ZCOPY, false, deterministic, false);
         CHK_RET(InitTask(dispatcher_, const_cast<Stream&>(param.stream), meta.isEnableCache, meta.GetCacheKey(), true));
         ExecMem execMem;
         execMem.count = curCount;
@@ -149,19 +155,22 @@ HcclResult CollReduceScatterDeterPipelineExecutor::RunLoop(OpParam &param, AlgRe
 
         CHK_RET(KernelRun(param, execMem));
 
-        CHK_RET(LaunchTaskExtend(dispatcher_, const_cast<Stream&>(param.stream),
-            const_cast<std::vector<Stream> &>(algResResp_->slaveStreams)));
+        CHK_RET(LaunchTaskExtend(
+            dispatcher_, const_cast<Stream&>(param.stream),
+            const_cast<std::vector<Stream>&>(algResResp_->slaveStreams)));
 
         curOffset_ += curSize;
     }
-    HCCL_INFO("[CollReduceScatterDeterPipelineExecutor][RunLoop] tag[%s], userRank[%u] run loop success.",
-        tag_.c_str(), topoAttr_.userRank);
+    HCCL_INFO(
+        "[CollReduceScatterDeterPipelineExecutor][RunLoop] tag[%s], userRank[%u] run loop success.", tag_.c_str(),
+        topoAttr_.userRank);
 
     return HCCL_SUCCESS;
 }
 
-HcclResult CollReduceScatterDeterPipelineExecutor::PrepareDataSlice(const OpParam &param, const ExecMem &execMem,
-    const SubCommInfo &level0CommInfo, const SubCommInfo &level1CommInfo, std::vector<Slice> &bufferSlices)
+HcclResult CollReduceScatterDeterPipelineExecutor::PrepareDataSlice(
+    const OpParam& param, const ExecMem& execMem, const SubCommInfo& level0CommInfo, const SubCommInfo& level1CommInfo,
+    std::vector<Slice>& bufferSlices) const
 {
     u32 unitSize = SIZE_TABLE[param.DataDes.dataType];
     bufferSlices.resize(topoAttr_.userRankSize);
@@ -179,13 +188,17 @@ HcclResult CollReduceScatterDeterPipelineExecutor::PrepareDataSlice(const OpPara
         for (u32 j = 0; j < rankSizeLevel0; j++) {
             u32 outputSliceIndex = outputBlockIndex * rankSizeLevel0 + j;
             bufferSlices[outputSliceIndex].size = execMem.count * unitSize;
-            u64 outputSliceOffset = (bufferSlices[outputSliceIndex].size + HCCL_MIN_SLICE_ALIGN_910B) * outputSliceIndex;
-            u64 outputInSliceOffset = (HCCL_MIN_SLICE_ALIGN_910B + (inputSliceOffset % HCCL_MIN_SLICE_ALIGN_910B) -
-                (outputSliceOffset % HCCL_MIN_SLICE_ALIGN_910B)) % HCCL_MIN_SLICE_ALIGN_910B;
+            u64 outputSliceOffset
+                = (bufferSlices[outputSliceIndex].size + HCCL_MIN_SLICE_ALIGN_910B) * outputSliceIndex;
+            u64 outputInSliceOffset = (HCCL_MIN_SLICE_ALIGN_910B + (inputSliceOffset % HCCL_MIN_SLICE_ALIGN_910B)
+                                       - (outputSliceOffset % HCCL_MIN_SLICE_ALIGN_910B))
+                                      % HCCL_MIN_SLICE_ALIGN_910B;
             bufferSlices[outputSliceIndex].offset = outputSliceOffset + outputInSliceOffset;
-            HCCL_DEBUG("[CollReduceScatterDeterPipelineExecutor][PrepareDataSlice]tag[%s], buffer slice i[%u], "
+            HCCL_DEBUG(
+                "[CollReduceScatterDeterPipelineExecutor][PrepareDataSlice]tag[%s], buffer slice i[%u], "
                 "size[%llu], offset[%llu], outputInSliceOffset[%llu], inputSliceIndex[%u], inputSliceOffset[%llu], "
-                "curOffset[%llu]", tag_.c_str(), outputSliceIndex, bufferSlices[outputSliceIndex].size,
+                "curOffset[%llu]",
+                tag_.c_str(), outputSliceIndex, bufferSlices[outputSliceIndex].size,
                 bufferSlices[outputSliceIndex].offset, outputInSliceOffset, inputSliceIndex, inputSliceOffset,
                 curOffset_);
         }
@@ -193,10 +206,11 @@ HcclResult CollReduceScatterDeterPipelineExecutor::PrepareDataSlice(const OpPara
     return HCCL_SUCCESS;
 }
 
-HcclResult CollReduceScatterDeterPipelineExecutor::KernelRun(const OpParam &param, ExecMem &execMem)
+HcclResult CollReduceScatterDeterPipelineExecutor::KernelRun(const OpParam& param, ExecMem& execMem)
 {
-    HCCL_CONFIG_INFO(HCCL_ALG, "[CollReduceScatterDeterPipelineExecutor][KernelRun] tag[%s], userRank[%u] starts.",
-        tag_.c_str(), topoAttr_.userRank);
+    HCCL_CONFIG_INFO(
+        HCCL_ALG, "[CollReduceScatterDeterPipelineExecutor][KernelRun] tag[%s], userRank[%u] starts.", tag_.c_str(),
+        topoAttr_.userRank);
 
     CHK_RET(CheckCommSize(COMM_LEVEL0, COMM_INDEX_0 + 1));
     SubCommInfo level0CommInfo = GetSubCommInfo(COMM_LEVEL0, COMM_INDEX_0);
@@ -214,21 +228,27 @@ HcclResult CollReduceScatterDeterPipelineExecutor::KernelRun(const OpParam &para
         TemplateType::TEMPLATE_REDUCESCATTER_MULTI_DETERMINISTIC_PIPELINE, dispatcher_);
     CHK_SMART_PTR_NULL(tempAlg);
 
-    HcomCollOpInfo opInfo = {"", execMem.inputPtr, execMem.outputPtr, param.DataDes.count, param.DataDes.dataType,
-        param.root, param.reduceType};
+    HcomCollOpInfo opInfo = {"",
+                             execMem.inputPtr,
+                             execMem.outputPtr,
+                             param.DataDes.count,
+                             param.DataDes.dataType,
+                             param.root,
+                             param.reduceType,
+                             0};
 
-    CHK_RET(tempAlg->Prepare(&opInfo, execMem.scratchMem, execMem.count, curOffset_, bufferSlices, level0CommInfo,
-        level1CommInfo, const_cast<Stream&>(param.stream), algResResp_->slaveStreams, algResResp_->notifiesMain,
+    CHK_RET(tempAlg->Prepare(
+        &opInfo, execMem.scratchMem, execMem.count, curOffset_, bufferSlices, level0CommInfo, level1CommInfo,
+        const_cast<Stream&>(param.stream), algResResp_->slaveStreams, algResResp_->notifiesMain,
         algResResp_->notifiesAux));
     CHK_RET(tempAlg->RunAsync());
 
-    HCCL_INFO("[CollReduceScatterDeterPipelineExecutor][KernelRun] tag[%s], userRank[%u] run success.",
-        tag_.c_str(), topoAttr_.userRank);
+    HCCL_INFO(
+        "[CollReduceScatterDeterPipelineExecutor][KernelRun] tag[%s], userRank[%u] run success.", tag_.c_str(),
+        topoAttr_.userRank);
     return HCCL_SUCCESS;
 }
 
-REGISTER_EXEC("ReduceScatterDeterPipelineExecutor", ReduceScatterDeterPipeline,
-    CollReduceScatterDeterPipelineExecutor);
+REGISTER_EXEC("ReduceScatterDeterPipelineExecutor", ReduceScatterDeterPipeline, CollReduceScatterDeterPipelineExecutor);
 
-}
-
+} // namespace hccl

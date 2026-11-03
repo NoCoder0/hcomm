@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef HCCL_MEM_H
 #define HCCL_MEM_H
@@ -20,8 +20,8 @@ extern "C" {
 #endif // __cplusplus
 
 /* 网络设备句柄 */
-typedef void *HcclNetDev;
-using HcclNetDevCtx = void *;
+typedef void* HcclNetDev;
+using HcclNetDevCtx = void*;
 
 /**
  * @brief 注册设备可访问内存
@@ -30,14 +30,14 @@ using HcclNetDevCtx = void *;
  * @param[out] buf 返回的缓冲区描述符
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclMemReg(HcclNetDev netDev, const HcclMem *mem, HcclBuf *buf);
+extern HcclResult HcclMemReg(HcclNetDev netDev, const HcclMem* mem, HcclBuf* buf);
 
 /**
  * @brief 注销已注册的内存区域
  * @param[in] buf 要注销的缓冲区描述符
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclMemDereg(const HcclBuf *buf);
+extern HcclResult HcclMemDereg(const HcclBuf* buf);
 
 /**
  * @brief 获取内存描述信息
@@ -46,7 +46,7 @@ extern HcclResult HcclMemDereg(const HcclBuf *buf);
  * @param[out] outDescLen 返回描述信息长度
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclMemExport(HcclBuf *buf, char **outDesc, uint64_t *outDescLen);
+extern HcclResult HcclMemExport(HcclBuf* buf, char** outDesc, uint64_t* outDescLen);
 
 /**
  * @brief 通过描述信息重建内存缓冲区
@@ -56,14 +56,15 @@ extern HcclResult HcclMemExport(HcclBuf *buf, char **outDesc, uint64_t *outDescL
  * @param[out] outBuf 返回的缓冲区描述符
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclMemImport(const char *description, uint32_t descLen, bool isRemote, HcclBuf *outBuf, HcclNetDevCtx netDevCtx);
+extern HcclResult
+HcclMemImport(const char* description, uint32_t descLen, bool isRemote, HcclBuf* outBuf, HcclNetDevCtx netDevCtx);
 
 /**
  * @brief 关闭已打开的内存缓冲区
  * @param[in] buf 要关闭的缓冲区描述符
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclMemClose(HcclBuf *buf);
+extern HcclResult HcclMemClose(HcclBuf* buf);
 
 /**
  * @struct HcclMemGrantInfo
@@ -82,7 +83,7 @@ typedef struct {
  * @param[in] remoteGrantInfo 远端授权目标信息
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclMemGrant(HcclBuf *localBuf, const HcclMemGrantInfo *remoteGrantInfo);
+extern HcclResult HcclMemGrant(HcclBuf* localBuf, const HcclMemGrantInfo* remoteGrantInfo);
 
 /**
  * @brief 内存重映射接口
@@ -92,7 +93,7 @@ extern HcclResult HcclMemGrant(HcclBuf *localBuf, const HcclMemGrantInfo *remote
  * @return 执行状态码 HcclResult
  * @attention 需确保内存段已经在目标网络设备注册
  */
-extern HcclResult HcclMemRemap(HcclNetDev netDev, const HcclMem *memArray, uint64_t arraySize);
+extern HcclResult HcclMemRemap(HcclNetDev netDev, const HcclMem* memArray, uint64_t arraySize);
 
 #ifdef __cplusplus
 }

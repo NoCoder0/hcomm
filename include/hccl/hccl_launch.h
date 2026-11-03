@@ -27,13 +27,13 @@ typedef struct {
 } HcclP2pKernelParam;
 
 typedef struct {
-    void *buffer;
+    void* buffer;
     uint8_t reserved[8];
     HcclCMDType cmdType;
     HcclDataType dataType;
     uint64_t count;
     uint32_t remoteRank;
-    void *unfoldStream;
+    void* unfoldStream;
 } HcclOpP2pDesc;
 
 const uint32_t HCCL_OP_DESC_OP_NAME_MAX_LEN = 256;
@@ -58,7 +58,7 @@ const uint32_t HCCL_OPDESC_VERSION = 1;
  * @param[in] descNum 描述数量
  * @return HcclResult 执行结果状态码
  */
-static inline HcclResult HcclOpDescInit(HcclOpDesc *opDesc)
+static inline HcclResult HcclOpDescInit(HcclOpDesc* opDesc)
 {
     if (opDesc != nullptr) {
         // 先用0xFF填充整个结构体
@@ -81,7 +81,7 @@ const uint32_t HCCL_KERNEL_FUNC_NAME_MAX_LEN = 256;
 typedef struct {
     char kernelSoName[HCCL_KERNEL_SO_NAME_MAX_LEN];
     char kernelFuncName[HCCL_KERNEL_FUNC_NAME_MAX_LEN];
-    void *args;
+    void* args;
     uint32_t argSize;
 } HcclKernelFuncInfo;
 
@@ -100,7 +100,7 @@ typedef struct {
  * @param[inout] HcclKernelLaunchCfg 返回的KernelLaunch配置参数
  * @return HcclResult 执行结果状态码
  */
-static inline HcclResult HcclKernelLaunchCfgInit(HcclKernelLaunchCfg *kernelLaunchCfg)
+static inline HcclResult HcclKernelLaunchCfgInit(HcclKernelLaunchCfg* kernelLaunchCfg)
 {
     if (kernelLaunchCfg != nullptr) {
         // 先用0xFF填充整个结构体
@@ -132,8 +132,9 @@ static inline HcclResult HcclKernelLaunchCfgInit(HcclKernelLaunchCfg *kernelLaun
  *   HCCL_E_INTERNAL: internal error (async task failure, communication task failure)
  */
 
-extern HcclResult HcclAicpuKernelLaunch(HcclComm comm, const HcclOpDesc *opInfo, const HcclKernelFuncInfo *funcInfo,
-    ThreadHandle aicpuThreadHandle, aclrtStream userStream, const HcclKernelLaunchCfg *kernelLaunchCfg);
+extern HcclResult HcclAicpuKernelLaunch(
+    HcclComm comm, const HcclOpDesc* opInfo, const HcclKernelFuncInfo* funcInfo, ThreadHandle aicpuThreadHandle,
+    aclrtStream userStream, const HcclKernelLaunchCfg* kernelLaunchCfg);
 
 #ifdef __cplusplus
 }

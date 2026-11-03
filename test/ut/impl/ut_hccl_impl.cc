@@ -77,8 +77,10 @@ protected:
     static void SetUpTestCase()
     {
         s32 ret = HcclDispatcherInit(DispatcherType::DISPATCHER_NORMAL, 0, &dispatcherPtr);
-        if (ret != HCCL_SUCCESS) return;
-        if (dispatcherPtr == nullptr) return;
+        if (ret != HCCL_SUCCESS)
+            return;
+        if (dispatcherPtr == nullptr)
+            return;
         dispatcher = reinterpret_cast<DispatcherPub*>(dispatcherPtr);
         DlRaFunction::GetInstance().DlRaFunctionInit();
         std::cout << "HcclImplTest SetUP" << std::endl;
@@ -98,10 +100,7 @@ protected:
     virtual void SetUp()
     {
         s32 portNum = 7;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
         std::cout << "A Test SetUP" << std::endl;
     }
     virtual void TearDown()
@@ -110,7 +109,7 @@ protected:
         std::cout << "A Test TearDown" << std::endl;
         unsetenv("HCCL_ALGO");
     }
-    static void TestConstructParam(HcclCommParams &params, RankTable_t &rankTable)
+    static void TestConstructParam(HcclCommParams& params, RankTable_t& rankTable)
     {
         string commId = "comm ";
         memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
@@ -140,7 +139,7 @@ protected:
         rankTable.deviceNum = 2;
         rankTable.serverNum = 2;
     }
-    static void TestConstructParamForOneServer(HcclCommParams &params, RankTable_t &rankTable)
+    static void TestConstructParamForOneServer(HcclCommParams& params, RankTable_t& rankTable)
     {
         string commId = "comm ";
         memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
@@ -171,51 +170,51 @@ protected:
         rankTable.serverNum = 1;
     }
 
-static void TestConstructParam_2Server(HcclCommParams &params, RankTable_t &rankTable)
-{
-    string commId = "comm ";
-    memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
-    params.rank = 0;
-    params.userRank = 0;
-    params.totalRanks = 4;
-    params.isHeterogComm = false;
-    params.logicDevId = 0;
-    params.commWorkMode = WorkMode::HCCL_MODE_NORMAL;
-    params.deviceType = DevType::DEV_TYPE_910_93;
+    static void TestConstructParam_2Server(HcclCommParams& params, RankTable_t& rankTable)
+    {
+        string commId = "comm ";
+        memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
+        params.rank = 0;
+        params.userRank = 0;
+        params.totalRanks = 4;
+        params.isHeterogComm = false;
+        params.logicDevId = 0;
+        params.commWorkMode = WorkMode::HCCL_MODE_NORMAL;
+        params.deviceType = DevType::DEV_TYPE_910_93;
 
-    rankTable.collectiveId = "192.168.0.101-8000-8001";
-    vector<RankInfo_t> rankVec(4);
-    rankVec[0].rankId = 0;
-    rankVec[0].deviceInfo.devicePhyId = 0;
-    HcclIpAddress ipAddr1(1694542016);
-    rankVec[0].deviceInfo.deviceIp.push_back(ipAddr1); // 101.0.168.192
-    rankVec[0].serverIdx = 0;
-    rankVec[0].serverId = "192.168.0.101";
-    rankVec[1].rankId = 1;
-    rankVec[1].deviceInfo.devicePhyId = 1;
-    HcclIpAddress ipAddr2(1694542017);
-    rankVec[1].deviceInfo.deviceIp.push_back(ipAddr2); // 101.0.168.192
-    rankVec[1].serverIdx = 0;
-    rankVec[1].serverId = "192.168.0.101";
-    rankVec[2].rankId = 2;
-    rankVec[2].deviceInfo.devicePhyId = 0;
-    HcclIpAddress ipAddr3(1711319232);
-    rankVec[2].deviceInfo.deviceIp.push_back(ipAddr3); // 101.0.168.192
-    rankVec[2].serverIdx = 1;
-    rankVec[2].serverId = "192.168.0.102";
-    rankVec[3].rankId = 3;
-    rankVec[3].deviceInfo.devicePhyId = 1;
-    HcclIpAddress ipAddr4(1711319233);
-    rankVec[3].deviceInfo.deviceIp.push_back(ipAddr4); // 101.0.168.192
-    rankVec[3].serverIdx = 1;
-    rankVec[3].serverId = "192.168.0.102";
-    rankTable.rankList.assign(rankVec.begin(), rankVec.end());
-    rankTable.rankNum = 4;
-    rankTable.deviceNum = 4;
-    rankTable.serverNum = 2;
-}
+        rankTable.collectiveId = "192.168.0.101-8000-8001";
+        vector<RankInfo_t> rankVec(4);
+        rankVec[0].rankId = 0;
+        rankVec[0].deviceInfo.devicePhyId = 0;
+        HcclIpAddress ipAddr1(1694542016);
+        rankVec[0].deviceInfo.deviceIp.push_back(ipAddr1); // 101.0.168.192
+        rankVec[0].serverIdx = 0;
+        rankVec[0].serverId = "192.168.0.101";
+        rankVec[1].rankId = 1;
+        rankVec[1].deviceInfo.devicePhyId = 1;
+        HcclIpAddress ipAddr2(1694542017);
+        rankVec[1].deviceInfo.deviceIp.push_back(ipAddr2); // 101.0.168.192
+        rankVec[1].serverIdx = 0;
+        rankVec[1].serverId = "192.168.0.101";
+        rankVec[2].rankId = 2;
+        rankVec[2].deviceInfo.devicePhyId = 0;
+        HcclIpAddress ipAddr3(1711319232);
+        rankVec[2].deviceInfo.deviceIp.push_back(ipAddr3); // 101.0.168.192
+        rankVec[2].serverIdx = 1;
+        rankVec[2].serverId = "192.168.0.102";
+        rankVec[3].rankId = 3;
+        rankVec[3].deviceInfo.devicePhyId = 1;
+        HcclIpAddress ipAddr4(1711319233);
+        rankVec[3].deviceInfo.deviceIp.push_back(ipAddr4); // 101.0.168.192
+        rankVec[3].serverIdx = 1;
+        rankVec[3].serverId = "192.168.0.102";
+        rankTable.rankList.assign(rankVec.begin(), rankVec.end());
+        rankTable.rankNum = 4;
+        rankTable.deviceNum = 4;
+        rankTable.serverNum = 2;
+    }
 
-    static void TestConstructParam_1server_4p(HcclCommParams &params, RankTable_t &rankTable)
+    static void TestConstructParam_1server_4p(HcclCommParams& params, RankTable_t& rankTable)
     {
         string commId = "comm ";
         memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
@@ -262,14 +261,13 @@ static void TestConstructParam_2Server(HcclCommParams &params, RankTable_t &rank
     static RankTable_t rankTable;
 
     static HcclDispatcher dispatcherPtr;
-    static DispatcherPub *dispatcher;
+    static DispatcherPub* dispatcher;
 };
 HcclDispatcher HcclImplTest::dispatcherPtr = nullptr;
-DispatcherPub *HcclImplTest::dispatcher = nullptr;
+DispatcherPub* HcclImplTest::dispatcher = nullptr;
 
 HcclCommParams HcclImplTest::params;
 RankTable_t HcclImplTest::rankTable;
-
 
 TEST_F(HcclImplTest, ut_hcclimpl_GetInnerServerAverageDevice)
 {
@@ -319,32 +317,23 @@ TEST_F(HcclImplTest, hcclComm_test_algo)
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&OpRetryManager::SetRetryStateToWaitResume)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&OpRetryManager::SetRetryStateToWaitResume).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&OpRetryManager::ExitWaitResumeState)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&OpRetryManager::ExitWaitResumeState).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
 
-    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow) CollAlgOperator(algConfigurator.get(),  cclBufferManager, dispatcher, topoMatcher,
-                                                                                  HcclCMDType::HCCL_CMD_ALL));
+    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALL));
 
     NetworkManager::GetInstance(15).Destroy();
 
@@ -358,22 +347,19 @@ TEST_F(HcclImplTest, hcclComm_test_ring_algo)
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
 
-    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow) CollAlgOperator(algConfigurator.get(),  cclBufferManager, dispatcher, topoMatcher,
-                                                                                  HcclCMDType::HCCL_CMD_ALL));
+    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALL));
 
     NetworkManager::GetInstance(15).Destroy();
     GlobalMockObject::verify();
@@ -383,22 +369,19 @@ TEST_F(HcclImplTest, hcclComm_test_nhr_algo)
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
 
-    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow) CollAlgOperator(algConfigurator.get(),  cclBufferManager, dispatcher, topoMatcher,
-                                                                                  HcclCMDType::HCCL_CMD_ALL));
+    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALL));
 
     NetworkManager::GetInstance(15).Destroy();
     GlobalMockObject::verify();
@@ -408,21 +391,18 @@ TEST_F(HcclImplTest, ut_hcclimpl_AutoSelectAlgTypeLevel1_REDUCE_SCATTER)
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
     u64 curCount = 100; // 单位：字节(B)
     HcclCMDType hcclCMDType = HcclCMDType::HCCL_CMD_REDUCE_SCATTER;
     HcclDataType dataType = HcclDataType::HCCL_DATA_TYPE_UINT64;
     u32 unitSize = SIZE_TABLE[dataType];
-    u64 curSize = curCount*unitSize;
+    u64 curSize = curCount * unitSize;
     std::string algTypeLevel1Tag;
     impl->moduleNum_ = 2;
     impl->deviceNumPerAggregation_ = 8;
@@ -430,15 +410,15 @@ TEST_F(HcclImplTest, ut_hcclimpl_AutoSelectAlgTypeLevel1_REDUCE_SCATTER)
     impl->deviceType_ = DevType::DEV_TYPE_910;
     algConfigurator->isAlgoLevel1Default_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER] = true;
 
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
 
     topoMatcher->topoInfo_.deviceNumPerAggregation = impl->deviceNumPerAggregation_;
     topoMatcher->topoInfo_.userRankSize = impl->userRankSize_;
     topoMatcher->topoInfo_.deviceType = impl->deviceType_;
-    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow) CollAlgOperator(algConfigurator.get(),  cclBufferManager, dispatcher, topoMatcher,
-        HcclCMDType::HCCL_CMD_REDUCE_SCATTER));
+    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_REDUCE_SCATTER));
     ret = operation->AutoSelectAlgTypeLevel1(hcclCMDType, curSize, curSize, algTypeLevel1Tag);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(algTypeLevel1Tag, "ALG_LEVEL1_RING");
@@ -449,37 +429,35 @@ TEST_F(HcclImplTest, ut_hcclimpl_AutoSelectAlgTypeLevel1_REDUCE_SCATTER_15SEVER)
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
 
     u64 curCount = 21000; // 单位：字节(B) 0.126MB
     HcclCMDType hcclCMDType = HcclCMDType::HCCL_CMD_REDUCE_SCATTER;
     HcclDataType dataType = HcclDataType::HCCL_DATA_TYPE_UINT64;
     u32 unitSize = SIZE_TABLE[dataType];
-    u64 curSize = curCount*unitSize;
+    u64 curSize = curCount * unitSize;
     std::string algTypeLevel1Tag;
     implBase->implAlg_->topoAttr_.moduleNum = 15;
     implBase->implAlg_->topoAttr_.deviceNumPerAggregation = 8;
-    implBase->implAlg_->topoAttr_.userRankSize = implBase->implAlg_->topoAttr_.moduleNum * implBase->implAlg_->topoAttr_.deviceNumPerAggregation;
+    implBase->implAlg_->topoAttr_.userRankSize
+        = implBase->implAlg_->topoAttr_.moduleNum * implBase->implAlg_->topoAttr_.deviceNumPerAggregation;
     implBase->implAlg_->topoAttr_.deviceType = DevType::DEV_TYPE_910B;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.moduleNum = implBase->implAlg_->topoAttr_.moduleNum;
     topoMatcher->topoInfo_.deviceNumPerAggregation = implBase->implAlg_->topoAttr_.deviceNumPerAggregation;
     topoMatcher->topoInfo_.userRankSize = implBase->implAlg_->topoAttr_.userRankSize;
     topoMatcher->topoInfo_.deviceType = implBase->implAlg_->topoAttr_.deviceType;
     algConfigurator->isAlgoLevel1Default_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER] = true;
-    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow) CollAlgOperator(algConfigurator.get(),  cclBufferManager, dispatcher, topoMatcher,
-        HcclCMDType::HCCL_CMD_REDUCE_SCATTER));
+    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_REDUCE_SCATTER));
     ret = operation->AutoSelectAlgTypeLevel1(hcclCMDType, curSize, curSize, algTypeLevel1Tag);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(algTypeLevel1Tag, "ALG_LEVEL1_NHR");
@@ -490,37 +468,35 @@ TEST_F(HcclImplTest, ut_hcclimpl_AutoSelectAlgTypeLevel1_REDUCE_SCATTER_11SEVER_
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
 
     u64 curCount = 21000; // 单位：字节(B) 0.126MB
     HcclCMDType hcclCMDType = HcclCMDType::HCCL_CMD_REDUCE_SCATTER;
     HcclDataType dataType = HcclDataType::HCCL_DATA_TYPE_UINT64;
     u32 unitSize = SIZE_TABLE[dataType];
-    u64 curSize = curCount*unitSize;
+    u64 curSize = curCount * unitSize;
     std::string algTypeLevel1Tag;
     implBase->implAlg_->topoAttr_.moduleNum = 11;
     implBase->implAlg_->topoAttr_.deviceNumPerAggregation = 8;
-    implBase->implAlg_->topoAttr_.userRankSize = implBase->implAlg_->topoAttr_.moduleNum * implBase->implAlg_->topoAttr_.deviceNumPerAggregation;
+    implBase->implAlg_->topoAttr_.userRankSize
+        = implBase->implAlg_->topoAttr_.moduleNum * implBase->implAlg_->topoAttr_.deviceNumPerAggregation;
     implBase->implAlg_->topoAttr_.deviceType = DevType::DEV_TYPE_910B;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.moduleNum = implBase->implAlg_->topoAttr_.moduleNum;
     topoMatcher->topoInfo_.deviceNumPerAggregation = implBase->implAlg_->topoAttr_.deviceNumPerAggregation;
     topoMatcher->topoInfo_.userRankSize = implBase->implAlg_->topoAttr_.userRankSize;
     topoMatcher->topoInfo_.deviceType = implBase->implAlg_->topoAttr_.deviceType;
     algConfigurator->isAlgoLevel1Default_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER] = true;
-    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow)
-        CollAlgOperator(algConfigurator.get(),  cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_REDUCE_SCATTER));
+    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_REDUCE_SCATTER));
     ret = operation->AutoSelectAlgTypeLevel1(hcclCMDType, curSize, curSize, algTypeLevel1Tag);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(algTypeLevel1Tag, "ALG_LEVEL1_NHR");
@@ -531,37 +507,35 @@ TEST_F(HcclImplTest, ut_hcclimpl_AutoSelectAlgTypeLevel1_REDUCE_SCATTER_11SEVER_
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
 
     u64 curCount = 3900; // 单位：字节(B) 0.0312MB
     HcclCMDType hcclCMDType = HcclCMDType::HCCL_CMD_REDUCE_SCATTER;
     HcclDataType dataType = HcclDataType::HCCL_DATA_TYPE_UINT64;
     u32 unitSize = SIZE_TABLE[dataType];
-    u64 curSize = curCount*unitSize;
+    u64 curSize = curCount * unitSize;
     std::string algTypeLevel1Tag;
     implBase->implAlg_->topoAttr_.moduleNum = 11;
     implBase->implAlg_->topoAttr_.deviceNumPerAggregation = 8;
-    implBase->implAlg_->topoAttr_.userRankSize = implBase->implAlg_->topoAttr_.moduleNum * implBase->implAlg_->topoAttr_.deviceNumPerAggregation;
+    implBase->implAlg_->topoAttr_.userRankSize
+        = implBase->implAlg_->topoAttr_.moduleNum * implBase->implAlg_->topoAttr_.deviceNumPerAggregation;
     implBase->implAlg_->topoAttr_.deviceType = DevType::DEV_TYPE_910B;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.moduleNum = implBase->implAlg_->topoAttr_.moduleNum;
     topoMatcher->topoInfo_.deviceNumPerAggregation = implBase->implAlg_->topoAttr_.deviceNumPerAggregation;
     topoMatcher->topoInfo_.userRankSize = implBase->implAlg_->topoAttr_.userRankSize;
     topoMatcher->topoInfo_.deviceType = implBase->implAlg_->topoAttr_.deviceType;
     algConfigurator->isAlgoLevel1Default_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER] = true;
-    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow)
-        CollAlgOperator(algConfigurator.get(),  cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_REDUCE_SCATTER));
+    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_REDUCE_SCATTER));
     ret = operation->AutoSelectAlgTypeLevel1(hcclCMDType, curSize, curSize, algTypeLevel1Tag);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(algTypeLevel1Tag, "ALG_LEVEL1_NHR");
@@ -572,36 +546,34 @@ TEST_F(HcclImplTest, ut_hcclimpl_AutoSelectAlgTypeLevel1_ALLGATHER)
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
 
     u64 curCount = 100; // 单位：字节(B)
     HcclCMDType hcclCMDType = HcclCMDType::HCCL_CMD_ALLGATHER;
     HcclDataType dataType = HcclDataType::HCCL_DATA_TYPE_UINT64;
     u32 unitSize = SIZE_TABLE[dataType];
-    u64 curSize = curCount*unitSize;
+    u64 curSize = curCount * unitSize;
     std::string algTypeLevel1Tag;
     implBase->implAlg_->topoAttr_.moduleNum = 2;
     implBase->implAlg_->topoAttr_.deviceNumPerAggregation = 8;
-    implBase->implAlg_->topoAttr_.userRankSize = implBase->implAlg_->topoAttr_.moduleNum * implBase->implAlg_->topoAttr_.deviceNumPerAggregation;
+    implBase->implAlg_->topoAttr_.userRankSize
+        = implBase->implAlg_->topoAttr_.moduleNum * implBase->implAlg_->topoAttr_.deviceNumPerAggregation;
     implBase->implAlg_->topoAttr_.deviceType = DevType::DEV_TYPE_910;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.deviceNumPerAggregation = implBase->implAlg_->topoAttr_.deviceNumPerAggregation;
     topoMatcher->topoInfo_.userRankSize = implBase->implAlg_->topoAttr_.userRankSize;
     topoMatcher->topoInfo_.deviceType = implBase->implAlg_->topoAttr_.deviceType;
     algConfigurator->isAlgoLevel1Default_[HcclCMDType::HCCL_CMD_ALLGATHER] = true;
-    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow)
-        CollAlgOperator(algConfigurator.get(),  cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLGATHER));
+    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLGATHER));
     ret = operation->AutoSelectAlgTypeLevel1(hcclCMDType, curSize, curSize, algTypeLevel1Tag);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(algTypeLevel1Tag, "ALG_LEVEL1_RING");
@@ -612,43 +584,38 @@ TEST_F(HcclImplTest, ut_hcclimpl_AutoSelectAlgTypeLevel1_ALLGATHER_15SEVER)
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     DevType deviceType = DevType::DEV_TYPE_910B;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
 
     u64 curCount = 21000; // 单位：字节(B) 0.126MB
     HcclCMDType hcclCMDType = HcclCMDType::HCCL_CMD_ALLGATHER;
     HcclDataType dataType = HcclDataType::HCCL_DATA_TYPE_UINT64;
     u32 unitSize = SIZE_TABLE[dataType];
-    u64 curSize = curCount*unitSize;
+    u64 curSize = curCount * unitSize;
     std::string algTypeLevel1Tag;
     implBase->implAlg_->topoAttr_.moduleNum = 15;
     implBase->implAlg_->topoAttr_.deviceNumPerAggregation = 8;
-    implBase->implAlg_->topoAttr_.userRankSize = implBase->implAlg_->topoAttr_.moduleNum * implBase->implAlg_->topoAttr_.deviceNumPerAggregation;
+    implBase->implAlg_->topoAttr_.userRankSize
+        = implBase->implAlg_->topoAttr_.moduleNum * implBase->implAlg_->topoAttr_.deviceNumPerAggregation;
     implBase->implAlg_->topoAttr_.deviceType = DevType::DEV_TYPE_910B;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.moduleNum = implBase->implAlg_->topoAttr_.moduleNum;
     topoMatcher->topoInfo_.deviceNumPerAggregation = implBase->implAlg_->topoAttr_.deviceNumPerAggregation;
     topoMatcher->topoInfo_.userRankSize = implBase->implAlg_->topoAttr_.userRankSize;
     topoMatcher->topoInfo_.deviceType = implBase->implAlg_->topoAttr_.deviceType;
     algConfigurator->isAlgoLevel1Default_[HcclCMDType::HCCL_CMD_ALLGATHER] = true;
-    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow)
-        CollAlgOperator(algConfigurator.get(),  cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLGATHER));
+    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLGATHER));
     ret = operation->AutoSelectAlgTypeLevel1(hcclCMDType, curSize, curSize, algTypeLevel1Tag);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(algTypeLevel1Tag, "ALG_LEVEL1_NHR");
@@ -659,38 +626,35 @@ TEST_F(HcclImplTest, ut_hcclimpl_AutoSelectAlgTypeLevel1_ALLGATHER_11SEVER_1)
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
 
     u64 curCount = 21000; // 单位：字节(B) 0.126MB
     HcclCMDType hcclCMDType = HcclCMDType::HCCL_CMD_ALLGATHER;
     HcclDataType dataType = HcclDataType::HCCL_DATA_TYPE_UINT64;
     u32 unitSize = SIZE_TABLE[dataType];
-    u64 curSize = curCount*unitSize;
+    u64 curSize = curCount * unitSize;
     std::string algTypeLevel1Tag;
     implBase->implAlg_->topoAttr_.moduleNum = 11;
     implBase->implAlg_->topoAttr_.deviceNumPerAggregation = 8;
-    implBase->implAlg_->topoAttr_.userRankSize = implBase->implAlg_->topoAttr_.moduleNum *
-        implBase->implAlg_->topoAttr_.deviceNumPerAggregation;
+    implBase->implAlg_->topoAttr_.userRankSize
+        = implBase->implAlg_->topoAttr_.moduleNum * implBase->implAlg_->topoAttr_.deviceNumPerAggregation;
     implBase->implAlg_->topoAttr_.deviceType = DevType::DEV_TYPE_910B;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.moduleNum = implBase->implAlg_->topoAttr_.moduleNum;
     topoMatcher->topoInfo_.deviceNumPerAggregation = implBase->implAlg_->topoAttr_.deviceNumPerAggregation;
     topoMatcher->topoInfo_.userRankSize = implBase->implAlg_->topoAttr_.userRankSize;
     topoMatcher->topoInfo_.deviceType = implBase->implAlg_->topoAttr_.deviceType;
     algConfigurator->isAlgoLevel1Default_[HcclCMDType::HCCL_CMD_ALLGATHER] = true;
-    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow)
-        CollAlgOperator(algConfigurator.get(),  cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLGATHER));
+    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLGATHER));
     ret = operation->AutoSelectAlgTypeLevel1(hcclCMDType, curSize, curSize, algTypeLevel1Tag);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(algTypeLevel1Tag, "ALG_LEVEL1_NHR");
@@ -701,27 +665,24 @@ TEST_F(HcclImplTest, ut_hcclimpl_AutoSelectAlgTypeLevel1_ALLGATHER_11SEVER_2)
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
 
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
-    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow)
-        CollAlgOperator(algConfigurator.get(),  cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLGATHER));
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLGATHER));
     u64 curCount = 3900; // 单位：字节(B) 0.0312MB
     HcclCMDType hcclCMDType = HcclCMDType::HCCL_CMD_ALLGATHER;
     HcclDataType dataType = HcclDataType::HCCL_DATA_TYPE_UINT64;
     u32 unitSize = SIZE_TABLE[dataType];
-    u64 curSize = curCount*unitSize;
+    u64 curSize = curCount * unitSize;
     std::string algTypeLevel1Tag;
     operation->moduleNum_ = 11;
     operation->deviceNumPerAggregation_ = 8;
@@ -738,27 +699,24 @@ TEST_F(HcclImplTest, ut_hcclimpl_AutoSelectAlgTypeLevel1_ALLREDUCE)
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
 
-    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow)
-        CollAlgOperator(algConfigurator.get(),  cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLREDUCE));
+    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLREDUCE));
     u64 curCount = 100; // 单位：字节(B)
     HcclCMDType hcclCMDType = HcclCMDType::HCCL_CMD_ALLREDUCE;
     HcclDataType dataType = HcclDataType::HCCL_DATA_TYPE_UINT64;
     u32 unitSize = SIZE_TABLE[dataType];
-    u64 curSize = curCount*unitSize;
+    u64 curSize = curCount * unitSize;
     std::string algTypeLevel1Tag;
     operation->moduleNum_ = 2;
     operation->deviceNumPerAggregation_ = 8;
@@ -775,33 +733,27 @@ TEST_F(HcclImplTest, ut_hcclimpl_AutoSelectAlgTypeLevel1_ALLREDUCE_15SEVER)
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     DevType deviceType = DevType::DEV_TYPE_910B;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
 
-    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow)
-        CollAlgOperator(algConfigurator.get(),  cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLREDUCE));
+    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLREDUCE));
     u64 curCount = 21000000; // 单位：字节(B) 126MB
     HcclCMDType hcclCMDType = HcclCMDType::HCCL_CMD_ALLREDUCE;
     HcclDataType dataType = HcclDataType::HCCL_DATA_TYPE_UINT64;
     u32 unitSize = SIZE_TABLE[dataType];
-    u64 curSize = curCount*unitSize;
+    u64 curSize = curCount * unitSize;
     std::string algTypeLevel1Tag;
     operation->moduleNum_ = 15;
     operation->deviceNumPerAggregation_ = 8;
@@ -818,27 +770,24 @@ TEST_F(HcclImplTest, ut_hcclimpl_AutoSelectAlgTypeLevel1_ALLREDUCE_11SEVER_1)
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
 
-    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow)
-        CollAlgOperator(algConfigurator.get(),  cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLREDUCE));
+    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLREDUCE));
     u64 curCount = 21000000; // 单位：字节(B) 126MB
     HcclCMDType hcclCMDType = HcclCMDType::HCCL_CMD_ALLREDUCE;
     HcclDataType dataType = HcclDataType::HCCL_DATA_TYPE_UINT64;
     u32 unitSize = SIZE_TABLE[dataType];
-    u64 curSize = curCount*unitSize;
+    u64 curSize = curCount * unitSize;
     std::string algTypeLevel1Tag;
     operation->moduleNum_ = 11;
     operation->deviceNumPerAggregation_ = 8;
@@ -855,27 +804,24 @@ TEST_F(HcclImplTest, ut_hcclimpl_AutoSelectAlgTypeLevel1_ALLREDUCE_11SEVER_2)
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
 
-    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow)
-        CollAlgOperator(algConfigurator.get(),  cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLREDUCE));
+    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLREDUCE));
     u64 curCount = 2000000; // 单位：字节(B) 16MB
     HcclCMDType hcclCMDType = HcclCMDType::HCCL_CMD_ALLREDUCE;
     HcclDataType dataType = HcclDataType::HCCL_DATA_TYPE_UINT64;
     u32 unitSize = SIZE_TABLE[dataType];
-    u64 curSize = curCount*unitSize;
+    u64 curSize = curCount * unitSize;
     std::string algTypeLevel1Tag;
     operation->moduleNum_ = 11;
     operation->deviceNumPerAggregation_ = 8;
@@ -892,22 +838,19 @@ TEST_F(HcclImplTest, ut_hcclimpl_SelectAlgoTypeForReduceScatter)
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
 
-    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow)
-        CollAlgOperator(algConfigurator.get(),  cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_REDUCE_SCATTER));
+    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_REDUCE_SCATTER));
     float delay = 60;
     u64 curSize = 100; // 单位：字节(B)
     u32 deviceNumPerAggregation = 8;
@@ -962,22 +905,19 @@ TEST_F(HcclImplTest, ut_hcclimpl_SelectAlgoTypeForAllGather)
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
 
-    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow)
-        CollAlgOperator(algConfigurator.get(),  cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLGATHER));
+    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLGATHER));
     float delay = 60;
     u64 curSize = 100; // 单位：字节(B)
     u32 deviceNumPerAggregation = 8;
@@ -1032,22 +972,19 @@ TEST_F(HcclImplTest, ut_hcclimpl_SelectAlgoTypeForGather)
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
 
-    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow)
-        CollAlgOperator(algConfigurator.get(),  cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_GATHER));
+    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_GATHER));
     float delay = 60;
     u64 curSize = 100; // 单位：字节(B)
     u32 deviceNumPerAggregation = 8;
@@ -1102,22 +1039,19 @@ TEST_F(HcclImplTest, ut_hcclimpl_SelectAlgoTypeForAllReduce)
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
 
-    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow)
-        CollAlgOperator(algConfigurator.get(),  cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLREDUCE));
+    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_ALLREDUCE));
     float delay = 60;
     u64 curSize = 100; // 单位：字节(B)
     u32 deviceNumPerAggregation = 8;
@@ -1172,22 +1106,19 @@ TEST_F(HcclImplTest, ut_hcclimpl_SelectAlgoTypeForBroadcast)
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
 
-    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow)
-        CollAlgOperator(algConfigurator.get(),  cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_BROADCAST));
+    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_BROADCAST));
     float delay = 60;
     u64 curSize = 100; // 单位：字节(B)
     u32 deviceNumPerAggregation = 8;
@@ -1242,22 +1173,19 @@ TEST_F(HcclImplTest, ut_hcclimpl_SelectAlgoTypeForReduce)
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
 
-    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow)
-        CollAlgOperator(algConfigurator.get(),  cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_REDUCE));
+    std::unique_ptr<CollAlgOperator> operation(new (std::nothrow) CollAlgOperator(
+        algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher, HcclCMDType::HCCL_CMD_REDUCE));
     float delay = 60;
     u64 curSize = 100; // 单位：字节(B)
     u32 deviceNumPerAggregation = 8;
@@ -1322,8 +1250,7 @@ RankTable_t get_rank_table_rank_2server_3p_2_1()
     int server1rankNum = 2;
     int server2rankNum = 1;
 
-    for(int i = 0; i < server1rankNum; ++i)
-    {
+    for (int i = 0; i < server1rankNum; ++i) {
         RankInfo_t rank;
         rank.rankId = i;
         rank.serverIdx = 0;
@@ -1333,8 +1260,7 @@ RankTable_t get_rank_table_rank_2server_3p_2_1()
         rankTable.rankList.push_back(rank);
     }
 
-    for(int i = 0; i < server2rankNum; ++i)
-    {
+    for (int i = 0; i < server2rankNum; ++i) {
         RankInfo_t rank;
         rank.rankId = i + server1rankNum;
         rank.serverIdx = 1;
@@ -1350,15 +1276,12 @@ TEST_F(HcclImplTest, ut_multiModuleDiffDeviceNumMode_SetAlgType)
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     std::map<HcclCMDType, AlgType> algType;
@@ -1375,15 +1298,12 @@ TEST_F(HcclImplTest, ut_hcclImpl_get_double_ring_topo_type_1)
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     TopoType topoType;
@@ -1401,15 +1321,12 @@ TEST_F(HcclImplTest, ut_hcclImpl_get_double_ring_topo_type_2)
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     TopoType topoType;
@@ -1427,15 +1344,12 @@ TEST_F(HcclImplTest, ut_hcclImpl_is_double_ring_topo_pattern_1)
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult tmpRet = implBase->Init(params, rankTable);
     EXPECT_EQ(tmpRet, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
     algConfigurator->topoAttr_.deviceNumPerAggregation = 8;
     algConfigurator->topoAttr_.pairLinkCounter.clear();
@@ -1451,15 +1365,12 @@ TEST_F(HcclImplTest, ut_hcclImpl_is_double_ring_topo_pattern_2)
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult tmpRet = implBase->Init(params, rankTable);
     EXPECT_EQ(tmpRet, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
     algConfigurator->topoAttr_.deviceNumPerAggregation = 8;
     algConfigurator->topoAttr_.pairLinkCounter.clear();
@@ -1475,15 +1386,12 @@ TEST_F(HcclImplTest, ut_hcclImpl_is_double_ring_topo_pattern_3)
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult tmpRet = implBase->Init(params, rankTable);
     EXPECT_EQ(tmpRet, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
     algConfigurator->topoAttr_.deviceNumPerAggregation = 8;
     algConfigurator->topoAttr_.pairLinkCounter.clear();
@@ -1499,10 +1407,7 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_double_ring_executer_by_all_gather)
 {
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclCommParams localParams;
     RankTable_t localRankTable;
@@ -1512,14 +1417,15 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_double_ring_executer_by_all_gather)
     HcclResult ret = implBase->Init(localParams, localRankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
 
     topoMatcher->topoInfo_.topoType = TopoType::TOPO_TYPE_NP_DOUBLE_RING;
-    std::unique_ptr<AllGatherOperator> operation(new (std::nothrow) AllGatherOperator(algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher));
+    std::unique_ptr<AllGatherOperator> operation(
+        new (std::nothrow) AllGatherOperator(algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher));
     operation->topoType_ = TopoType::TOPO_TYPE_NP_DOUBLE_RING;
     std::string tag = "test";
     DeviceMem inputMem = DeviceMem::alloc(4096);
@@ -1574,14 +1480,9 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_double_ring_executer_by_all_reduce)
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&AlgConfigurator::IsHCCSSWNumEqualToTwiceSIONum)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER_CPP(&AlgConfigurator::IsHCCSSWNumEqualToTwiceSIONum).stubs().will(returnValue(true));
 
     ret = implBase->AtomicInitSet();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -1589,7 +1490,7 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_double_ring_executer_by_all_reduce)
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     impl->topoAttr_.deviceLogicId = 0;
@@ -1599,23 +1500,12 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_double_ring_executer_by_all_reduce)
     impl->topoType_ = TopoType::TOPO_TYPE_NP_DOUBLE_RING;
     algConfigurator->topoType_ = TopoType::TOPO_TYPE_NP_DOUBLE_RING;
 
-    const std::vector<std::vector<u32>> tmpRingNics = {
-        { 0, 1, 2, 3, 4, 5, 6, 7 },
-        { 0, 1, 2, 3, 4, 5, 6, 7 }
-    };
+    const std::vector<std::vector<u32>> tmpRingNics = {{0, 1, 2, 3, 4, 5, 6, 7}, {0, 1, 2, 3, 4, 5, 6, 7}};
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&CollCommExecutor::MultiRingReduceScatter)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&CollCommExecutor::MultiRingAllGather)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&CollCommExecutor::MultiRingReduceScatter).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&CollCommExecutor::MultiRingAllGather).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
     std::printf("[st_CollAllReduceRingFor91093Executor_Ring]");
 
@@ -1642,14 +1532,9 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_double_ring_executer_for_91093_by_broadcast
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&AlgConfigurator::IsHCCSSWNumEqualToTwiceSIONum)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER_CPP(&AlgConfigurator::IsHCCSSWNumEqualToTwiceSIONum).stubs().will(returnValue(true));
 
     ret = implBase->AtomicInitSet();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -1657,9 +1542,9 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_double_ring_executer_for_91093_by_broadcast
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.deviceLogicId = 0;
     topoMatcher->topoInfo_.deviceType = DevType::DEV_TYPE_910_93;
     topoMatcher->topoInfo_.devicePhyId = 0;
@@ -1673,25 +1558,13 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_double_ring_executer_for_91093_by_broadcast
     impl->topoType_ = TopoType::TOPO_TYPE_NP_DOUBLE_RING;
     algConfigurator->topoType_ = TopoType::TOPO_TYPE_NP_DOUBLE_RING;
 
-    const std::vector<std::vector<u32>> tmpRingNics = {
-        { 0, 1, 2, 3, 4, 5, 6, 7 },
-        { 0, 1, 2, 3, 4, 5, 6, 7 },
-        { 0, 1, 2, 3, 4, 5, 6, 7 },
-        { 0, 1, 2, 3, 4, 5, 6, 7 }
-    };
+    const std::vector<std::vector<u32>> tmpRingNics
+        = {{0, 1, 2, 3, 4, 5, 6, 7}, {0, 1, 2, 3, 4, 5, 6, 7}, {0, 1, 2, 3, 4, 5, 6, 7}, {0, 1, 2, 3, 4, 5, 6, 7}};
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&CollCommExecutor::MultiRingScatter)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&CollCommExecutor::MultiRingAllGather)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&CollCommExecutor::MultiRingScatter).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&CollCommExecutor::MultiRingAllGather).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
     std::printf("[st_CollBroadcastFor91093Level2Executor_Ring]");
 
@@ -1719,14 +1592,9 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_double_ring_executer_for_91093_by_all_reduc
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&AlgConfigurator::IsHCCSSWNumEqualToTwiceSIONum)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER_CPP(&AlgConfigurator::IsHCCSSWNumEqualToTwiceSIONum).stubs().will(returnValue(true));
 
     ret = implBase->AtomicInitSet();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -1734,9 +1602,9 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_double_ring_executer_for_91093_by_all_reduc
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.deviceLogicId = 0;
     topoMatcher->topoInfo_.deviceType = DevType::DEV_TYPE_910_93;
     topoMatcher->topoInfo_.devicePhyId = 0;
@@ -1750,25 +1618,13 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_double_ring_executer_for_91093_by_all_reduc
     impl->topoType_ = TopoType::TOPO_TYPE_NP_DOUBLE_RING;
     algConfigurator->topoType_ = TopoType::TOPO_TYPE_NP_DOUBLE_RING;
 
-    const std::vector<std::vector<u32>> tmpRingNics = {
-        { 0, 1, 2, 3, 4, 5, 6, 7 },
-        { 0, 1, 2, 3, 4, 5, 6, 7 },
-        { 0, 1, 2, 3, 4, 5, 6, 7 },
-        { 0, 1, 2, 3, 4, 5, 6, 7 }
-    };
+    const std::vector<std::vector<u32>> tmpRingNics
+        = {{0, 1, 2, 3, 4, 5, 6, 7}, {0, 1, 2, 3, 4, 5, 6, 7}, {0, 1, 2, 3, 4, 5, 6, 7}, {0, 1, 2, 3, 4, 5, 6, 7}};
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&CollCommExecutor::MultiRingReduceScatter)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&CollCommExecutor::MultiRingAllGather)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&CollCommExecutor::MultiRingReduceScatter).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&CollCommExecutor::MultiRingAllGather).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
     std::printf("[st_CollAllReduceRingFor91093Level2Executor_Ring]");
 
@@ -1777,7 +1633,6 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_double_ring_executer_for_91093_by_all_reduc
 
     GlobalMockObject::verify();
 }
-
 
 TEST_F(HcclImplTest, ut_hcclImpl_run_fast_double_ring_for_910_93_executer_by_all_reduce)
 {
@@ -1799,14 +1654,9 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_fast_double_ring_for_910_93_executer_by_all
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&AlgConfigurator::IsHCCSSWNumEqualToTwiceSIONum)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER_CPP(&AlgConfigurator::IsHCCSSWNumEqualToTwiceSIONum).stubs().will(returnValue(true));
 
     ret = implBase->AtomicInitSet();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -1814,7 +1664,7 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_fast_double_ring_for_910_93_executer_by_all
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     impl->topoAttr_.deviceLogicId = 0;
@@ -1824,23 +1674,12 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_fast_double_ring_for_910_93_executer_by_all
     impl->topoType_ = TopoType::TOPO_TYPE_NP_DOUBLE_RING;
     algConfigurator->topoType_ = TopoType::TOPO_TYPE_NP_DOUBLE_RING;
 
-    const std::vector<std::vector<u32>> tmpRingNics = {
-        { 0, 1, 2, 3, 4, 5, 6, 7 },
-        { 0, 1, 2, 3, 4, 5, 6, 7 }
-    };
+    const std::vector<std::vector<u32>> tmpRingNics = {{0, 1, 2, 3, 4, 5, 6, 7}, {0, 1, 2, 3, 4, 5, 6, 7}};
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&CollCommExecutor::MultiRingReduceScatter)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&CollCommExecutor::MultiRingAllGather)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&CollCommExecutor::MultiRingReduceScatter).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&CollCommExecutor::MultiRingAllGather).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
     std::printf("[st_CollAllReduceFastDoubleRingFor91093Executor_Ring]");
     ret = implBase->AllReduce(tag, inputMem.ptr(), outputMem.ptr(), count, dataType, op, stream.ptr());
@@ -1849,7 +1688,7 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_fast_double_ring_for_910_93_executer_by_all
     GlobalMockObject::verify();
 }
 
-void get_rank_table_rank_1server_2module_7p_4_3(HcclCommParams &params, RankTable_t &rankTable)
+void get_rank_table_rank_1server_2module_7p_4_3(HcclCommParams& params, RankTable_t& rankTable)
 {
     string commId = "comm ";
     memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
@@ -1871,8 +1710,7 @@ void get_rank_table_rank_1server_2module_7p_4_3(HcclCommParams &params, RankTabl
     int server1rankNum = 4;
     int server2rankNum = 3;
 
-    for(int i = 0; i < server1rankNum; ++i)
-    {
+    for (int i = 0; i < server1rankNum; ++i) {
         RankInfo_t rank;
         rank.rankId = i;
         rank.serverIdx = 0;
@@ -1882,8 +1720,7 @@ void get_rank_table_rank_1server_2module_7p_4_3(HcclCommParams &params, RankTabl
         rankTable.rankList.push_back(rank);
     }
 
-    for(int i = 0; i < server2rankNum; ++i)
-    {
+    for (int i = 0; i < server2rankNum; ++i) {
         RankInfo_t rank;
         rank.rankId = i + server1rankNum;
         rank.serverIdx = 0;
@@ -1931,10 +1768,7 @@ TEST_F(HcclImplTest, ut_multiModuleDiffDeviceNumMode_1s7p_enableRDMA)
     s32 ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = impl->Init(params, rankTable);
 
     EXPECT_EQ(impl->isDiffDeviceModule_, true);
@@ -2005,10 +1839,7 @@ TEST_F(HcclImplTest, ut_multiModuleDiffDeviceNumMode_1s8p_enableRDMA)
     s32 ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = impl->Init(params, rankTable);
 
@@ -2033,7 +1864,7 @@ TEST_F(HcclImplTest, ut_HcclCommunicator_AicpuUnfold)
     HcclDataType dataType = HCCL_DATA_TYPE_FP32;
     HcclRtStream stream = NULL;
     HcclReduceOp op = HCCL_REDUCE_SUM;
-    HcclCMDType cmdType =  HcclCMDType::HCCL_CMD_ALLREDUCE;
+    HcclCMDType cmdType = HcclCMDType::HCCL_CMD_ALLREDUCE;
     s32 device_id = 0;
     // 申请device memory
     DeviceMem mem_dev_input = DeviceMem::alloc(1024);
@@ -2047,31 +1878,20 @@ TEST_F(HcclImplTest, ut_HcclCommunicator_AicpuUnfold)
     params.deviceType = DevType::DEV_TYPE_910B;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::InitPara)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitPara).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::InitOneSidedService)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitOneSidedService).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    MOCKER(hrtStreamGetMode)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB);
-    ret = implBase->AicpuUnfold("tag_test", const_cast<void*>(mem_dev_input.ptr()),
-        const_cast<void*>(mem_dev_output.ptr()), count, dataType, HCCL_REDUCE_SUM, stream, cmdType);
+    MOCKER(hrtStreamGetMode).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB);
+    ret = implBase->AicpuUnfold(
+        "tag_test", const_cast<void*>(mem_dev_input.ptr()), const_cast<void*>(mem_dev_output.ptr()), count, dataType,
+        HCCL_REDUCE_SUM, stream, cmdType);
     EXPECT_EQ(ret, HCCL_E_NOT_SUPPORT);
 
     unsetenv("HCCL_OP_EXPANSION_MODE");
@@ -2092,29 +1912,17 @@ TEST_F(HcclImplTest, ut_HcclCommunicator_CheckReduceDataType)
     params.deviceType = DevType::DEV_TYPE_910B;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::InitPara)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitPara).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::InitOneSidedService)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitOneSidedService).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     DevType deviceType = DevType::DEV_TYPE_910B;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
     ret = implBase->CheckReduceDataType(dataType, op);
     EXPECT_EQ(ret, HCCL_E_NOT_SUPPORT);
 
@@ -2133,13 +1941,13 @@ TEST_F(HcclImplTest, ut_HcclCommunicator_CheckReduceDataType)
 
 TEST_F(HcclImplTest, ut_hrtRaGetSocketVnicIpInfos)
 {
-    HcclResult ret =  HCCL_SUCCESS;
+    HcclResult ret = HCCL_SUCCESS;
     u32 phy_id = 2;
     vector<u32> ids;
     std::vector<HcclIpAddress> vnicIp;
     vnicIp.push_back(HcclIpAddress("1.0.0.0"));
     vnicIp.push_back(HcclIpAddress("2.0.0.0"));
-    DeviceIdType deviceIdType =  DeviceIdType::DEVICE_ID_TYPE_PHY_ID;
+    DeviceIdType deviceIdType = DeviceIdType::DEVICE_ID_TYPE_PHY_ID;
     id_type idType = static_cast<id_type>(deviceIdType);
     ret = hrtRaGetSocketVnicIpInfos(phy_id, idType, ids, vnicIp);
     EXPECT_EQ(ret, HCCL_E_PARA);
@@ -2153,52 +1961,46 @@ TEST_F(HcclImplTest, ut_hrtRaGetSocketVnicIpInfos)
 
 TEST_F(HcclImplTest, ut_H2DTlvInit)
 {
-    HcclResult ret =  HCCL_SUCCESS;
-    struct tlv_init_info  init_info;
+    HcclResult ret = HCCL_SUCCESS;
+    struct tlv_init_info init_info;
     uint32_t tlv_handle_id = 0;
     uint32_t buffer_size = 0;
-    void *tlv_handle = nullptr;
+    void* tlv_handle = nullptr;
 
     ret = DlRaFunction::GetInstance().DlRaFunctionInit();
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ret = H2DTlvInit(&init_info, tlv_handle_id, &buffer_size, &tlv_handle);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     DlRaFunction::GetInstance().dlH2DTlvInit = nullptr;
-    MOCKER(hrtRaGetInterfaceVersion)
-    .expects(atMost(1))
-    .will(returnValue(HCCL_E_NOT_SUPPORT));
+    MOCKER(hrtRaGetInterfaceVersion).expects(atMost(1)).will(returnValue(HCCL_E_NOT_SUPPORT));
     ret = H2DTlvInit(&init_info, tlv_handle_id, &buffer_size, &tlv_handle);
     EXPECT_EQ(ret, HCCL_E_NOT_SUPPORT);
 }
 
 TEST_F(HcclImplTest, ut_H2DTlvRequest)
 {
-    HcclResult ret =  HCCL_SUCCESS;
+    HcclResult ret = HCCL_SUCCESS;
     struct tlv_msg send_msg;
     struct tlv_msg recv_msg;
-    void *tlv_handle = nullptr;
+    void* tlv_handle = nullptr;
     ret = DlRaFunction::GetInstance().DlRaFunctionInit();
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ret = H2DTlvRequest(tlv_handle, &send_msg, &send_msg);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     DlRaFunction::GetInstance().dlH2DTlvRequest = nullptr;
-    MOCKER(hrtRaGetInterfaceVersion)
-    .expects(atMost(1))
-    .will(returnValue(HCCL_E_NOT_SUPPORT));
+    MOCKER(hrtRaGetInterfaceVersion).expects(atMost(1)).will(returnValue(HCCL_E_NOT_SUPPORT));
     ret = H2DTlvRequest(tlv_handle, &send_msg, &send_msg);
     EXPECT_EQ(ret, HCCL_E_NOT_SUPPORT);
 }
 
 TEST_F(HcclImplTest, ut_H2DTlvDeinit)
 {
-    HcclResult ret =  HCCL_SUCCESS;
-    void *tlv_handle = nullptr;
+    HcclResult ret = HCCL_SUCCESS;
+    void* tlv_handle = nullptr;
 
     ret = DlRaFunction::GetInstance().DlRaFunctionInit();
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    MOCKER(hrtRaGetInterfaceVersion)
-    .expects(atMost(10))
-    .will(returnValue(HCCL_E_NOT_SUPPORT));
+    MOCKER(hrtRaGetInterfaceVersion).expects(atMost(10)).will(returnValue(HCCL_E_NOT_SUPPORT));
     ret = H2DTlvDeinit(&tlv_handle);
     EXPECT_EQ(ret, HCCL_E_NOT_SUPPORT);
 }
@@ -2247,7 +2049,8 @@ TEST_F(HcclImplTest, ut_hccl_Communicator_SetRetryEnable_Inter_Super_Pod_true)
     impl.deviceNumPerAggregation_ = 8;
     HcclIpAddress serverIp("172.17.10.1");
     HcclIpAddress localIp("172.17.10.1");
-    SetRetryEnable(DevType::DEV_TYPE_910_93, impl.superPodNum_, impl.serverNum_, impl.deviceNumPerAggregation_,
+    SetRetryEnable(
+        DevType::DEV_TYPE_910_93, impl.superPodNum_, impl.serverNum_, impl.deviceNumPerAggregation_,
         impl.isDiffDeviceType_, impl.GetAivModeConfig(), serverIp, localIp, impl.retryEnable_);
     std::cout << "superPodNum_ is " << unsigned(impl.superPodNum_) << std::endl;
     std::cout << "serverNum_ is " << unsigned(impl.serverNum_) << std::endl;
@@ -2306,7 +2109,8 @@ TEST_F(HcclImplTest, ut_hccl_Communicator_SetRetryEnable_Inter_2Sever_true)
     impl.deviceNumPerAggregation_ = 8;
     HcclIpAddress serverIp("172.17.10.1");
     HcclIpAddress localIp("172.17.10.1");
-    SetRetryEnable(DevType::DEV_TYPE_910_93, impl.superPodNum_, impl.serverNum_, impl.deviceNumPerAggregation_,
+    SetRetryEnable(
+        DevType::DEV_TYPE_910_93, impl.superPodNum_, impl.serverNum_, impl.deviceNumPerAggregation_,
         impl.isDiffDeviceType_, impl.GetAivModeConfig(), serverIp, localIp, impl.retryEnable_);
     std::cout << "superPodNum_ is " << unsigned(impl.superPodNum_) << std::endl;
     std::cout << "serverNum_ is " << unsigned(impl.serverNum_) << std::endl;
@@ -2355,7 +2159,8 @@ TEST_F(HcclImplTest, ut_hccl_Communicator_SetRetryEnable_Inter_1Sever_true)
     impl.deviceNumPerAggregation_ = 8;
     HcclIpAddress serverIp("172.17.10.1");
     HcclIpAddress localIp("172.17.10.1");
-    SetRetryEnable(DevType::DEV_TYPE_910_93, impl.superPodNum_, impl.serverNum_, impl.deviceNumPerAggregation_,
+    SetRetryEnable(
+        DevType::DEV_TYPE_910_93, impl.superPodNum_, impl.serverNum_, impl.deviceNumPerAggregation_,
         impl.isDiffDeviceType_, impl.GetAivModeConfig(), serverIp, localIp, impl.retryEnable_);
     std::cout << "superPodNum_ is " << unsigned(impl.superPodNum_) << std::endl;
     std::cout << "serverNum_ is " << unsigned(impl.serverNum_) << std::endl;
@@ -2369,7 +2174,7 @@ TEST_F(HcclImplTest, ut_hccl_Communicator_SetRetryEnable_Inter_1Sever_true)
     unsetenv("HCCL_OP_RETRY_ENABLE");
     GlobalMockObject::verify();
 }
-#if 0 //执行失败
+#if 0 // 执行失败
 TEST_F(HcclImplTest, ut_hccl_Communicator_SetRetryEnable_Intra_Sever_true)
 {
     HcclResult ret;
@@ -2463,7 +2268,8 @@ TEST_F(HcclImplTest, ut_hccl_Communicator_SetRetryEnable_All_False)
     impl.deviceNumPerAggregation_ = 8;
     HcclIpAddress serverIp("172.17.10.1");
     HcclIpAddress localIp("172.17.10.1");
-    SetRetryEnable(DevType::DEV_TYPE_910_93, impl.superPodNum_, impl.serverNum_, impl.deviceNumPerAggregation_,
+    SetRetryEnable(
+        DevType::DEV_TYPE_910_93, impl.superPodNum_, impl.serverNum_, impl.deviceNumPerAggregation_,
         impl.isDiffDeviceType_, impl.GetAivModeConfig(), serverIp, localIp, impl.retryEnable_);
     std::cout << "superPodNum_ is " << unsigned(impl.superPodNum_) << std::endl;
     std::cout << "serverNum_ is " << unsigned(impl.serverNum_) << std::endl;
@@ -2522,7 +2328,8 @@ TEST_F(HcclImplTest, ut_hccl_Communicator_SetRetryEnable_deviceNumPerAggregation
     impl.deviceNumPerAggregation_ = 1;
     HcclIpAddress serverIp("172.17.10.1");
     HcclIpAddress localIp("172.17.10.1");
-    SetRetryEnable(DevType::DEV_TYPE_910_93, impl.superPodNum_, impl.serverNum_, impl.deviceNumPerAggregation_,
+    SetRetryEnable(
+        DevType::DEV_TYPE_910_93, impl.superPodNum_, impl.serverNum_, impl.deviceNumPerAggregation_,
         impl.isDiffDeviceType_, impl.GetAivModeConfig(), serverIp, localIp, impl.retryEnable_);
     std::cout << "superPodNum_ is " << unsigned(impl.superPodNum_) << std::endl;
     std::cout << "serverNum_ is " << unsigned(impl.serverNum_) << std::endl;
@@ -2565,8 +2372,8 @@ TEST_F(HcclImplTest, ut_hccl_Communicator_SetRetryEnable_illegal_config)
 
 TEST_F(HcclImplTest, ut_transport_base_stop_test)
 {
-    HcclResult ret =  HCCL_SUCCESS;
-    DispatcherPub *dispatcher;
+    HcclResult ret = HCCL_SUCCESS;
+    DispatcherPub* dispatcher;
     const std::unique_ptr<NotifyPool> notifyPool;
     std::chrono::milliseconds timeout;
     MachinePara machinePara;
@@ -2577,8 +2384,8 @@ TEST_F(HcclImplTest, ut_transport_base_stop_test)
 
 TEST_F(HcclImplTest, ut_transport_base_Resume_test)
 {
-    HcclResult ret =  HCCL_SUCCESS;
-    DispatcherPub *dispatcher;
+    HcclResult ret = HCCL_SUCCESS;
+    DispatcherPub* dispatcher;
     const std::unique_ptr<NotifyPool> notifyPool;
     std::chrono::milliseconds timeout;
     MachinePara machinePara;
@@ -2592,15 +2399,11 @@ TEST_F(HcclImplTest, ut_migrate_link_to_stop_or_Resume)
     HcclResult ret = HCCL_SUCCESS;
     HcclCommunicator hcclCommunicator;
 
-    std::shared_ptr<Transport> link = std::make_shared<Transport>((TransportBase *)nullptr);
+    std::shared_ptr<Transport> link = std::make_shared<Transport>((TransportBase*)nullptr);
 
-    MOCKER_CPP(&Transport::Stop)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&Transport::Stop).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&Transport::Resume)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&Transport::Resume).stubs().will(returnValue(HCCL_SUCCESS));
 
     ret = hcclCommunicator.MigrateLinkToStopOrResume(link, true);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -2612,13 +2415,13 @@ TEST_F(HcclImplTest, ut_migrate_link_to_stop_or_Resume)
 
 TEST_F(HcclImplTest, ut_transport_base_fence_test)
 {
-    HcclResult ret =  HCCL_SUCCESS;
-    DispatcherPub *dispatcher;
+    HcclResult ret = HCCL_SUCCESS;
+    DispatcherPub* dispatcher;
     const std::unique_ptr<NotifyPool> notifyPool;
     std::chrono::milliseconds timeout;
     MachinePara machinePara;
-    std::shared_ptr<Transport> link_base(new Transport(new (std::nothrow) TransportBase(
-        dispatcher, notifyPool, machinePara, timeout)));
+    std::shared_ptr<Transport> link_base(
+        new Transport(new (std::nothrow) TransportBase(dispatcher, notifyPool, machinePara, timeout)));
     ret = link_base->Fence();
     EXPECT_EQ(ret, HCCL_E_NOT_SUPPORT);
 
@@ -2633,9 +2436,7 @@ TEST_F(HcclImplTest, ut_migrate_link_vector_to_stop_or_Resume_test)
     HcclCommunicator hcclCommunicator;
     const std::vector<LINK> links = {nullptr};
 
-    MOCKER_CPP(&HcclCommunicator::MigrateLinkToStopOrResume)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::MigrateLinkToStopOrResume).stubs().will(returnValue(HCCL_SUCCESS));
 
     ret = hcclCommunicator.MigrateLinkVectorToStopOrResume(links, true);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -2648,12 +2449,10 @@ TEST_F(HcclImplTest, ut_traverse_link_vector_test)
 {
     HcclResult ret = HCCL_SUCCESS;
     HcclCommunicator hcclCommunicator;
-    std::vector<std::shared_ptr<Transport> > links;
-    std::vector<std::unique_ptr<CommBase> > commBaseVector;
+    std::vector<std::shared_ptr<Transport>> links;
+    std::vector<std::unique_ptr<CommBase>> commBaseVector;
 
-    MOCKER_CPP(&HcclCommunicator::MigrateLinkVectorToStopOrResume)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::MigrateLinkVectorToStopOrResume).stubs().will(returnValue(HCCL_SUCCESS));
 
     ret = hcclCommunicator.TraverseLinkVector(commBaseVector, true);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -2672,7 +2471,9 @@ TEST_F(HcclImplTest, ut_hccl_communicator_stop_test)
     IntraExchanger exchanger;
     DeviceMem inputMem;
     DeviceMem outputMem;
-    auto commBase = std::make_unique<CommBase>(str, 0, 0, 0, 0, paraVector, TopoType::TOPO_TYPE_COMMON, nullptr, std::move(notifypool), netDevCtxMap, exchanger,inputMem, outputMem, true);
+    auto commBase = std::make_unique<CommBase>(
+        str, 0, 0, 0, 0, paraVector, TopoType::TOPO_TYPE_COMMON, nullptr, std::move(notifypool), netDevCtxMap,
+        exchanger, inputMem, outputMem, true);
     HcclCommunicator hcclCommunicator;
     std::string tag = "test";
     CommInfo tmpComm;
@@ -2683,12 +2484,8 @@ TEST_F(HcclImplTest, ut_hccl_communicator_stop_test)
     tmpComm.commIntraServer = std::move(commBase);
     hcclCommunicator.tagCommInfo_.insert(std::pair<std::string, CommInfo>(tag, std::move(tmpComm)));
 
-    MOCKER_CPP(&HcclCommunicator::MigrateLinkVectorToStopOrResume)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&HcclCommunicator::TraverseLinkVector)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::MigrateLinkVectorToStopOrResume).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::TraverseLinkVector).stubs().will(returnValue(HCCL_SUCCESS));
 
     ret = hcclCommunicator.Stop();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -2705,7 +2502,9 @@ TEST_F(HcclImplTest, ut_hccl_communicator_Resume_test)
     IntraExchanger exchanger;
     DeviceMem inputMem;
     DeviceMem outputMem;
-    auto commBase = std::make_unique<CommBase>(str, 0, 0, 0, 0, paraVector, TopoType::TOPO_TYPE_COMMON, nullptr, std::move(notifypool), netDevCtxMap, exchanger, inputMem, outputMem, true);
+    auto commBase = std::make_unique<CommBase>(
+        str, 0, 0, 0, 0, paraVector, TopoType::TOPO_TYPE_COMMON, nullptr, std::move(notifypool), netDevCtxMap,
+        exchanger, inputMem, outputMem, true);
     HcclCommunicator hcclCommunicator;
     std::string tag = "test";
     CommInfo tmpComm;
@@ -2715,34 +2514,20 @@ TEST_F(HcclImplTest, ut_hccl_communicator_Resume_test)
     tmpComm.commP2P.push_back(std::move(commBase));
     tmpComm.commIntraServer = std::move(commBase);
     hcclCommunicator.tagCommInfo_.insert(std::pair<std::string, CommInfo>(tag, std::move(tmpComm)));
-    MOCKER_CPP(&HcclCommunicator::MigrateLinkVectorToStopOrResume)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&HcclCommunicator::TraverseLinkVector)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::MigrateLinkVectorToStopOrResume).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::TraverseLinkVector).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(hrtResourceClean)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtResourceClean).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&OpRetryManager::SetRetryStateToWaitResume)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&OpRetryManager::SetRetryStateToWaitResume).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&OpRetryManager::ExitWaitResumeState)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&OpRetryManager::ExitWaitResumeState).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = hcclCommunicator.Resume();
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     GlobalMockObject::verify();
 }
-
 
 TEST_F(HcclImplTest, ut_regist_tast_abort_handler_test)
 {
@@ -2754,13 +2539,9 @@ TEST_F(HcclImplTest, ut_regist_tast_abort_handler_test)
 
 TEST_F(HcclImplTest, ut_un_regist_tast_abort_handler_test)
 {
-
     hcclComm hcclcomm;
     hcclcomm.communicator_ = std::make_unique<HcclCommunicator>();
-    MOCKER(hrtTaskAbortHandleCallback)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtTaskAbortHandleCallback).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     auto ret = hcclcomm.UnRegistTaskAbortHandler();
     EXPECT_EQ(HCCL_SUCCESS, ret);
 }
@@ -2769,15 +2550,12 @@ TEST_F(HcclImplTest, ut_hccl_comm_suspend_test)
 {
     hcclComm hcclcomm;
     hcclcomm.communicator_ = std::make_unique<HcclCommunicator>();
-    MOCKER(hrtTaskAbortHandleCallback)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtTaskAbortHandleCallback).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::Suspend, HcclResult(HcclCommunicator:: *)())
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::Suspend, HcclResult(HcclCommunicator::*)())
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
     auto ret = hcclcomm.Suspend();
     EXPECT_EQ(HCCL_SUCCESS, ret);
@@ -2789,7 +2567,7 @@ TEST_F(HcclImplTest, ut_TraverseSingleSubCommTransport_first_test)
     TransportPara para;
     const std::unique_ptr<NotifyPool> notifyPool;
     MachinePara machinePara;
-    const TransportDeviceP2pData &transDevP2pData = TransportDeviceP2pData();
+    const TransportDeviceP2pData& transDevP2pData = TransportDeviceP2pData();
     HcclCommunicator hcclCommunicator;
     SingleSubCommTransport singleSubCommTransport;
     TransportRequest req;
@@ -2798,13 +2576,9 @@ TEST_F(HcclImplTest, ut_TraverseSingleSubCommTransport_first_test)
     auto ptr = std::make_shared<Transport>(type, para, dispatcherPtr, notifyPool, machinePara, transDevP2pData);
     singleSubCommTransport.links.push_back(ptr);
 
-    MOCKER_CPP(&Transport::Stop)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&Transport::Stop).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&Transport::Resume)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&Transport::Resume).stubs().will(returnValue(HCCL_SUCCESS));
 
     auto ret = hcclCommunicator.TraverseSingleSubCommTransport(singleSubCommTransport, true);
     EXPECT_EQ(HCCL_SUCCESS, ret);
@@ -2816,7 +2590,7 @@ TEST_F(HcclImplTest, ut_TraverseSingleSubCommTransport_second_test)
     TransportPara para;
     const std::unique_ptr<NotifyPool> notifyPool;
     MachinePara machinePara;
-    const TransportDeviceP2pData &transDevP2pData = TransportDeviceP2pData();
+    const TransportDeviceP2pData& transDevP2pData = TransportDeviceP2pData();
     HcclCommunicator hcclCommunicator;
     SingleSubCommTransport singleSubCommTransport;
     TransportRequest req;
@@ -2825,13 +2599,9 @@ TEST_F(HcclImplTest, ut_TraverseSingleSubCommTransport_second_test)
     auto ptr = std::make_shared<Transport>(type, para, dispatcherPtr, notifyPool, machinePara, transDevP2pData);
     singleSubCommTransport.links.push_back(ptr);
 
-    MOCKER_CPP(&Transport::Stop)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&Transport::Stop).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&Transport::Resume)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&Transport::Resume).stubs().will(returnValue(HCCL_SUCCESS));
 
     singleSubCommTransport.transportRequests[0].isValid = true;
     auto ret = hcclCommunicator.TraverseSingleSubCommTransport(singleSubCommTransport, true);
@@ -2844,7 +2614,7 @@ TEST_F(HcclImplTest, ut_TraverseSingleSubCommTransport_third_test)
     TransportPara para;
     const std::unique_ptr<NotifyPool> notifyPool;
     MachinePara machinePara;
-    const TransportDeviceP2pData &transDevP2pData = TransportDeviceP2pData();
+    const TransportDeviceP2pData& transDevP2pData = TransportDeviceP2pData();
     HcclCommunicator hcclCommunicator;
     SingleSubCommTransport singleSubCommTransport;
     TransportRequest req;
@@ -2853,13 +2623,9 @@ TEST_F(HcclImplTest, ut_TraverseSingleSubCommTransport_third_test)
     auto ptr = std::make_shared<Transport>(type, para, dispatcherPtr, notifyPool, machinePara, transDevP2pData);
     singleSubCommTransport.links.push_back(ptr);
 
-    MOCKER_CPP(&Transport::Stop)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&Transport::Stop).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&Transport::Resume)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&Transport::Resume).stubs().will(returnValue(HCCL_SUCCESS));
 
     singleSubCommTransport.transportRequests[0].isValid = true;
     auto ret = hcclCommunicator.TraverseSingleSubCommTransport(singleSubCommTransport, false);
@@ -2870,9 +2636,7 @@ TEST_F(HcclImplTest, ut_TraverseLevelNSubCommTransport_test)
 {
     LevelNSubCommTransport lev;
     lev.resize(1);
-    MOCKER_CPP(&HcclCommunicator::TraverseSingleSubCommTransport)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::TraverseSingleSubCommTransport).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclCommunicator hcclCommunicator;
 
@@ -2888,9 +2652,7 @@ TEST_F(HcclImplTest, ut_TraverseOpCommTransport_test)
     op.resize(1);
     HcclCommunicator hcclCommunicator;
 
-    MOCKER_CPP(&HcclCommunicator::TraverseLevelNSubCommTransport)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::TraverseLevelNSubCommTransport).stubs().will(returnValue(HCCL_SUCCESS));
 
     auto ret = hcclCommunicator.TraverseOpCommTransport(op, true);
     EXPECT_EQ(HCCL_SUCCESS, ret);
@@ -2903,9 +2665,7 @@ TEST_F(HcclImplTest, ut_TraverseAlgResourceResponse_test)
     HcclCommunicator hcclCommunicator;
     AlgResourceResponse alg;
     hcclCommunicator.resMap_.insert(std::pair<std::string, AlgResourceResponse>(std::make_pair("test", alg)));
-    MOCKER_CPP(&HcclCommunicator::TraverseOpCommTransport)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::TraverseOpCommTransport).stubs().will(returnValue(HCCL_SUCCESS));
 
     auto ret = hcclCommunicator.TraverseAlgResourceResponse(true);
     EXPECT_EQ(HCCL_SUCCESS, ret);
@@ -2913,69 +2673,65 @@ TEST_F(HcclImplTest, ut_TraverseAlgResourceResponse_test)
     EXPECT_EQ(HCCL_SUCCESS, ret);
 }
 
-HcclResult GetCmd2(hccl::HDCommunicate*This,unsigned int offset, unsigned int length, unsigned char* value){
-    KfcExecStatus* op = reinterpret_cast<KfcExecStatus*> (value);
+HcclResult GetCmd2(hccl::HDCommunicate* This, unsigned int offset, unsigned int length, unsigned char* value)
+{
+    KfcExecStatus* op = reinterpret_cast<KfcExecStatus*>(value);
     op->execStatus.kfcStatus = KfcStatus::kRuning;
     return HCCL_SUCCESS;
 }
 
-HcclResult GetCmd3(hccl::HDCommunicate*This,unsigned int offset, unsigned int length, unsigned char* value){
-    KfcExecStatus* op = reinterpret_cast<KfcExecStatus*> (value);
+HcclResult GetCmd3(hccl::HDCommunicate* This, unsigned int offset, unsigned int length, unsigned char* value)
+{
+    KfcExecStatus* op = reinterpret_cast<KfcExecStatus*>(value);
     op->execStatus.kfcStatus = KfcStatus::kStoplaunch;
     return HCCL_SUCCESS;
 }
 
-HcclResult GetCmd4(hccl::HDCommunicate*This,unsigned int offset, unsigned int length, unsigned char* value){
-    KfcExecStatus* op = reinterpret_cast<KfcExecStatus*> (value);
+HcclResult GetCmd4(hccl::HDCommunicate* This, unsigned int offset, unsigned int length, unsigned char* value)
+{
+    KfcExecStatus* op = reinterpret_cast<KfcExecStatus*>(value);
     op->execStatus.kfcStatus = KfcStatus::kError;
     return HCCL_SUCCESS;
 }
 
-
-
-HcclResult GetCmd1(hccl::HDCommunicate*This,unsigned int offset, unsigned int length, unsigned char* value){
-    KfcExecStatus* op = reinterpret_cast<KfcExecStatus*> (value);
+HcclResult GetCmd1(hccl::HDCommunicate* This, unsigned int offset, unsigned int length, unsigned char* value)
+{
+    KfcExecStatus* op = reinterpret_cast<KfcExecStatus*>(value);
     op->execStatus.kfcStatus = KfcStatus::kEnd;
     return HCCL_SUCCESS;
 }
 
-TEST_F(HcclImplTest,ut_stopExec_not_in){
-
+TEST_F(HcclImplTest, ut_stopExec_not_in)
+{
     HcclCommunicator hcclCommunicator;
     auto ret = hcclCommunicator.StopExec();
     EXPECT_EQ(HCCL_SUCCESS, ret);
     GlobalMockObject::verify();
 
     hcclCommunicator.SetAicpuCommEngine(true);
-    MOCKER_CPP(&HDCommunicate::Get)
-    .stubs()
-    .will(invoke(GetCmd1));
+    MOCKER_CPP(&HDCommunicate::Get).stubs().will(invoke(GetCmd1));
     ret = hcclCommunicator.StopExec();
     EXPECT_EQ(HCCL_SUCCESS, ret);
-    hcclCommunicator.isAicpuCommEngine_ = false; //保证析构的时候不会调用到相关命令
+    hcclCommunicator.isAicpuCommEngine_ = false; // 保证析构的时候不会调用到相关命令
     GlobalMockObject::verify();
-
 }
 
-TEST_F(HcclImplTest,ut_Clean_not_in){
-
+TEST_F(HcclImplTest, ut_Clean_not_in)
+{
     HcclCommunicator hcclCommunicator;
     auto ret = hcclCommunicator.Clean();
     EXPECT_EQ(HCCL_SUCCESS, ret);
     GlobalMockObject::verify();
 
-   hcclCommunicator.SetAicpuCommEngine(true);
-    MOCKER_CPP(&HDCommunicate::Get)
-    .stubs()
-    .will(invoke(GetCmd2));
+    hcclCommunicator.SetAicpuCommEngine(true);
+    MOCKER_CPP(&HDCommunicate::Get).stubs().will(invoke(GetCmd2));
     ret = hcclCommunicator.Clean();
     EXPECT_EQ(HCCL_SUCCESS, ret);
-    hcclCommunicator.isAicpuCommEngine_ = false; //保证析构的时候不会调用到相关命令
+    hcclCommunicator.isAicpuCommEngine_ = false; // 保证析构的时候不会调用到相关命令
     GlobalMockObject::verify();
-
 }
 
-static void TestConstructParam_1server_8p(HcclCommParams &params, RankTable_t &rankTable)
+static void TestConstructParam_1server_8p(HcclCommParams& params, RankTable_t& rankTable)
 {
     string commId = "comm ";
     memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
@@ -3051,7 +2807,7 @@ static void TestConstructParam_1server_8p(HcclCommParams &params, RankTable_t &r
     rankTable.serverNum = 1;
 }
 
-static void TestConstructParam_1server_8p_910_93(HcclCommParams &params, RankTable_t &rankTable)
+static void TestConstructParam_1server_8p_910_93(HcclCommParams& params, RankTable_t& rankTable)
 {
     string commId = "comm ";
     memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
@@ -3130,31 +2886,17 @@ static void TestConstructParam_1server_8p_910_93(HcclCommParams &params, RankTab
 TEST_F(HcclImplTest, ut_hcclImpl_run_ring_executer_by_all_reduce_stars)
 {
     HcclResult ret = HCCL_SUCCESS;
-    MOCKER(GetWorkflowMode)
-    .stubs()
-    .will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE));
+    MOCKER(GetWorkflowMode).stubs().will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE));
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&StreamActiveManager::StreamActive)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&StreamActiveManager::StreamActive).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(GetExternalInputHcclEnableFfts)
-    .stubs()
-    .will(returnValue(false));
+    MOCKER(GetExternalInputHcclEnableFfts).stubs().will(returnValue(false));
 
     HcclCommParams params;
     RankTable_t rankTable;
@@ -3168,8 +2910,8 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_ring_executer_by_all_reduce_stars)
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     impl->topoAttr_.deviceLogicId = 0;
@@ -3191,10 +2933,7 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_ring_executer_by_all_reduce_stars)
     opParam.DataDes.dataType = HCCL_DATA_TYPE_FP32;
     opParam.reduceType = HCCL_REDUCE_SUM;
     opParam.stream = Stream(StreamType::STREAM_TYPE_ONLINE);
-    const std::vector<std::vector<u32>> tmpRingNics = {
-        { 0, 1, 2, 3, 4, 5, 6, 7 },
-        { 0, 1, 2, 3, 4, 5, 6, 7 }
-    };
+    const std::vector<std::vector<u32>> tmpRingNics = {{0, 1, 2, 3, 4, 5, 6, 7}, {0, 1, 2, 3, 4, 5, 6, 7}};
 
     std::printf("[st_CollAllReduceRingFor91093Executor_Ring]");
 
@@ -3202,7 +2941,8 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_ring_executer_by_all_reduce_stars)
     AlgResourceResponse resourceResponse;
     ret = executor->CalcResRequest(opParam, resourceRequest);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    implBase->AllocAlgResource(opParam.tag, HcclCMDType::HCCL_CMD_ALLREDUCE, opParam, resourceRequest, resourceResponse);
+    implBase->AllocAlgResource(
+        opParam.tag, HcclCMDType::HCCL_CMD_ALLREDUCE, opParam, resourceRequest, resourceResponse);
     resourceResponse.cclInputMem = inputMem;
     resourceResponse.cclOutputMem = outputMem;
     resourceResponse.slaveStreams.resize(3);
@@ -3212,8 +2952,9 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_ring_executer_by_all_reduce_stars)
     resourceResponse.notifiesDevAux.resize(3);
 
     resourceResponse.threadManage.resize(3);
-    for (u32 ringIndex = 0; ringIndex < 3; ringIndex ++) {
-        resourceResponse.threadManage[ringIndex].reset(new (std::nothrow) ThreadManage(ringIndex, ringIndex, impl->dispatcher_));
+    for (u32 ringIndex = 0; ringIndex < 3; ringIndex++) {
+        resourceResponse.threadManage[ringIndex].reset(new (std::nothrow)
+                                                           ThreadManage(ringIndex, ringIndex, impl->dispatcher_));
     }
     ret = executor->Orchestrate(opParam, resourceResponse);
     delete executor;
@@ -3224,31 +2965,17 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_ring_executer_by_all_reduce_stars)
 TEST_F(HcclImplTest, ut_hcclImpl_run_ring_executer_by_all_gather_stars)
 {
     HcclResult ret = HCCL_SUCCESS;
-    MOCKER(GetWorkflowMode)
-    .stubs()
-    .will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE));
+    MOCKER(GetWorkflowMode).stubs().will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE));
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&StreamActiveManager::StreamActive)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&StreamActiveManager::StreamActive).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(GetExternalInputHcclEnableFfts)
-    .stubs()
-    .will(returnValue(false));
+    MOCKER(GetExternalInputHcclEnableFfts).stubs().will(returnValue(false));
 
     HcclCommParams params;
     RankTable_t rankTable;
@@ -3262,8 +2989,8 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_ring_executer_by_all_gather_stars)
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     impl->topoAttr_.deviceLogicId = 0;
@@ -3284,16 +3011,14 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_ring_executer_by_all_gather_stars)
     opParam.DataDes.count = 1024;
     opParam.DataDes.dataType = HCCL_DATA_TYPE_FP32;
     opParam.stream = Stream(StreamType::STREAM_TYPE_ONLINE);
-    const std::vector<std::vector<u32>> tmpRingNics = {
-        { 0, 1, 2, 3, 4, 5, 6, 7 },
-        { 0, 1, 2, 3, 4, 5, 6, 7 }
-    };
+    const std::vector<std::vector<u32>> tmpRingNics = {{0, 1, 2, 3, 4, 5, 6, 7}, {0, 1, 2, 3, 4, 5, 6, 7}};
 
     AlgResourceRequest resourceRequest;
     AlgResourceResponse resourceResponse;
     ret = executor->CalcResRequest(opParam, resourceRequest);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    implBase->AllocAlgResource(opParam.tag, HcclCMDType::HCCL_CMD_ALLGATHER, opParam, resourceRequest, resourceResponse);
+    implBase->AllocAlgResource(
+        opParam.tag, HcclCMDType::HCCL_CMD_ALLGATHER, opParam, resourceRequest, resourceResponse);
     resourceResponse.cclInputMem = inputMem;
     resourceResponse.cclOutputMem = outputMem;
     resourceResponse.slaveStreams.resize(3);
@@ -3303,8 +3028,9 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_ring_executer_by_all_gather_stars)
     resourceResponse.notifiesDevAux.resize(3);
 
     resourceResponse.threadManage.resize(3);
-    for (u32 ringIndex = 0; ringIndex < 3; ringIndex ++) {
-        resourceResponse.threadManage[ringIndex].reset(new (std::nothrow) ThreadManage(ringIndex, ringIndex, impl->dispatcher_));
+    for (u32 ringIndex = 0; ringIndex < 3; ringIndex++) {
+        resourceResponse.threadManage[ringIndex].reset(new (std::nothrow)
+                                                           ThreadManage(ringIndex, ringIndex, impl->dispatcher_));
     }
     ret = executor->Orchestrate(opParam, resourceResponse);
     delete executor;
@@ -3315,36 +3041,18 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_ring_executer_by_all_gather_stars)
 TEST_F(HcclImplTest, ut_hcclImpl_run_double_ring_executer_by_all_reduce_stars_2)
 {
     HcclResult ret = HCCL_SUCCESS;
-    MOCKER(GetWorkflowMode)
-    .stubs()
-    .will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE));
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&Heartbeat::Init)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(GetWorkflowMode).stubs().will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&Heartbeat::Init).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&StreamActiveManager::StreamActive)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&StreamActiveManager::StreamActive).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(GetExternalInputHcclEnableFfts)
-    .stubs()
-    .will(returnValue(false));
+    MOCKER(GetExternalInputHcclEnableFfts).stubs().will(returnValue(false));
 
-    MOCKER_CPP(&ThreadManage::WaitDone)
-    .stubs()
-    .with(mockcpp::any());
+    MOCKER_CPP(&ThreadManage::WaitDone).stubs().with(mockcpp::any());
 
     HcclCommParams params;
     RankTable_t rankTable;
@@ -3358,8 +3066,8 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_double_ring_executer_by_all_reduce_stars_2)
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     impl->topoAttr_.deviceLogicId = 0;
@@ -3387,16 +3095,14 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_double_ring_executer_by_all_reduce_stars_2)
     opParam.DataDes.dataType = HCCL_DATA_TYPE_FP32;
     opParam.reduceType = HCCL_REDUCE_SUM;
     opParam.stream = Stream(StreamType::STREAM_TYPE_ONLINE);
-    const std::vector<std::vector<u32>> tmpRingNics = {
-        { 0, 1, 2, 3, 4, 5, 6, 7 },
-        { 0, 1, 2, 3, 4, 5, 6, 7 }
-    };
+    const std::vector<std::vector<u32>> tmpRingNics = {{0, 1, 2, 3, 4, 5, 6, 7}, {0, 1, 2, 3, 4, 5, 6, 7}};
 
     AlgResourceRequest resourceRequest;
     AlgResourceResponse resourceResponse;
     ret = executor->CalcResRequest(opParam, resourceRequest);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    implBase->AllocAlgResource(opParam.tag, HcclCMDType::HCCL_CMD_ALLREDUCE, opParam, resourceRequest, resourceResponse);
+    implBase->AllocAlgResource(
+        opParam.tag, HcclCMDType::HCCL_CMD_ALLREDUCE, opParam, resourceRequest, resourceResponse);
     resourceResponse.cclInputMem = inputMem;
     resourceResponse.cclOutputMem = outputMem;
     resourceResponse.slaveStreams.resize(3);
@@ -3410,8 +3116,9 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_double_ring_executer_by_all_reduce_stars_2)
     resourceResponse.opTransportResponse[COMM_LEVEL0][1].links.resize(8);
 
     resourceResponse.threadManage.resize(3);
-    for (u32 ringIndex = 0; ringIndex < 3; ringIndex ++) {
-        resourceResponse.threadManage[ringIndex].reset(new (std::nothrow) ThreadManage(ringIndex, ringIndex, impl->dispatcher_));
+    for (u32 ringIndex = 0; ringIndex < 3; ringIndex++) {
+        resourceResponse.threadManage[ringIndex].reset(new (std::nothrow)
+                                                           ThreadManage(ringIndex, ringIndex, impl->dispatcher_));
     }
     ret = executor->Orchestrate(opParam, resourceResponse);
     delete executor;
@@ -3436,15 +3143,12 @@ TEST_F(HcclImplTest, ut_ReduceScatterVFor910BMesh)
     params.deviceType = DevType::DEV_TYPE_910B;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     impl->deviceLogicId_ = 0;
@@ -3453,23 +3157,24 @@ TEST_F(HcclImplTest, ut_ReduceScatterVFor910BMesh)
     algConfigurator->algType_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER].algoLevel1 = AlgTypeLevel1::ALG_LEVEL1_RING;
     impl->topoType_ = TopoType::TOPO_TYPE_NP_MESH;
 
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
 
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.deviceLogicId = 0;
     topoMatcher->topoInfo_.deviceType = DevType::DEV_TYPE_910B;
     topoMatcher->topoInfo_.topoType = TopoType::TOPO_TYPE_NP_MESH;
     std::unique_ptr<ReduceScatterVOperator> operation(
         new (std::nothrow) ReduceScatterVOperator(algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher));
 
-    CollReduceScatterVMeshOpbaseExecutor *executor = new CollReduceScatterVMeshOpbaseExecutor(impl->dispatcher_, topoMatcher);
+    CollReduceScatterVMeshOpbaseExecutor* executor
+        = new CollReduceScatterVMeshOpbaseExecutor(impl->dispatcher_, topoMatcher);
 
-    std::vector<u64> counts {1, 2, 3, 4};
-    std::vector<u64> displs {0};
+    std::vector<u64> counts{1, 2, 3, 4};
+    std::vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     OpParam opParam;
@@ -3489,22 +3194,17 @@ TEST_F(HcclImplTest, ut_ReduceScatterVFor910BMesh)
     ret = operation->SelectAlg(tag, opParam, algName, newTag);
     opParam.tag = newTag;
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    SubCommInfo mockCommInfo {0, 1, std::vector<LINK>()};
-    MOCKER_CPP(&CollNativeExecutorBase::GetSubCommInfo)
-    .stubs()
-    .will(returnValue(mockCommInfo));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
+    SubCommInfo mockCommInfo{0, 1, std::vector<LINK>()};
+    MOCKER_CPP(&CollNativeExecutorBase::GetSubCommInfo).stubs().will(returnValue(mockCommInfo));
 
     AlgResourceRequest resourceRequest;
     AlgResourceResponse resourceResponse;
     ret = executor->CalcResRequest(opParam, resourceRequest);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    implBase->AllocAlgResource(newTag, HcclCMDType::HCCL_CMD_REDUCE_SCATTER_V, opParam, resourceRequest, resourceResponse);
+    implBase->AllocAlgResource(
+        newTag, HcclCMDType::HCCL_CMD_REDUCE_SCATTER_V, opParam, resourceRequest, resourceResponse);
     resourceResponse.cclInputMem = inputMem;
     resourceResponse.cclOutputMem = outputMem;
     DeviceMem scratchMem = DeviceMem::alloc(4096);
@@ -3541,15 +3241,12 @@ TEST_F(HcclImplTest, ut_ReduceScatterVAivSmallCount)
     params.deviceType = DevType::DEV_TYPE_910B;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     impl->deviceLogicId_ = 0;
@@ -3558,24 +3255,24 @@ TEST_F(HcclImplTest, ut_ReduceScatterVAivSmallCount)
     algConfigurator->algType_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER_V].algoLevel1 = AlgTypeLevel1::ALG_LEVEL1_RING;
     impl->topoType_ = TopoType::TOPO_TYPE_2P_MESH;
 
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
 
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.deviceLogicId = 0;
     topoMatcher->topoInfo_.deviceType = DevType::DEV_TYPE_910B;
     topoMatcher->topoInfo_.topoType = TopoType::TOPO_TYPE_2P_MESH;
     std::unique_ptr<ReduceScatterVOperator> operation(
         new (std::nothrow) ReduceScatterVOperator(algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher));
 
-    CollReduceScatterVMeshAivSmallCountExecutor *executor =
-        new CollReduceScatterVMeshAivSmallCountExecutor(dispatcher, topoMatcher);
+    CollReduceScatterVMeshAivSmallCountExecutor* executor
+        = new CollReduceScatterVMeshAivSmallCountExecutor(dispatcher, topoMatcher);
 
-    std::vector<u64> counts {1, 2, 3, 4};
-    std::vector<u64> displs {0};
+    std::vector<u64> counts{1, 2, 3, 4};
+    std::vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     OpParam opParam;
@@ -3590,13 +3287,9 @@ TEST_F(HcclImplTest, ut_ReduceScatterVAivSmallCount)
     opParam.reduceType = HCCL_REDUCE_SUM;
     opParam.stream = Stream(StreamType::STREAM_TYPE_ONLINE);
 
-    MOCKER(GetExternalInputHcclAivMode)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER(GetExternalInputHcclAivMode).stubs().will(returnValue(true));
 
-    MOCKER(IsSupportAIVReduce)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER(IsSupportAIVReduce).stubs().will(returnValue(true));
 
     std::string algName = "";
     std::string newTag = opParam.tag;
@@ -3605,21 +3298,17 @@ TEST_F(HcclImplTest, ut_ReduceScatterVAivSmallCount)
     ret = operation->SelectAlg(tag, opParam, algName, newTag);
     opParam.tag = newTag;
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
 
-    SubCommInfo mockCommInfo {0, 1, std::vector<LINK>()};
-    MOCKER_CPP(&CollNativeExecutorBase::GetSubCommInfo)
-    .stubs()
-    .will(returnValue(mockCommInfo));
+    SubCommInfo mockCommInfo{0, 1, std::vector<LINK>()};
+    MOCKER_CPP(&CollNativeExecutorBase::GetSubCommInfo).stubs().will(returnValue(mockCommInfo));
 
     AlgResourceRequest resourceRequest;
     AlgResourceResponse resourceResponse;
     ret = executor->CalcResRequest(opParam, resourceRequest);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    implBase->AllocAlgResource(newTag, HcclCMDType::HCCL_CMD_REDUCE_SCATTER_V, opParam,
-        resourceRequest, resourceResponse);
+    implBase->AllocAlgResource(
+        newTag, HcclCMDType::HCCL_CMD_REDUCE_SCATTER_V, opParam, resourceRequest, resourceResponse);
     resourceResponse.cclInputMem = inputMem;
     resourceResponse.cclOutputMem = outputMem;
     DeviceMem scratchMem = DeviceMem::alloc(4096);
@@ -3643,30 +3332,16 @@ TEST_F(HcclImplTest, ut_ReduceScatterVAivSmallCount)
 TEST_F(HcclImplTest, ut_hcclImpl_run_a3_aiv_coressnode_opbase)
 {
     HcclResult ret = HCCL_SUCCESS;
-    MOCKER(GetWorkflowMode)
-    .stubs()
-    .will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE));
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(GetWorkflowMode).stubs().will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&StreamActiveManager::StreamActive)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&StreamActiveManager::StreamActive).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(GetExternalInputHcclEnableFfts)
-    .stubs()
-    .will(returnValue(false));
+    MOCKER(GetExternalInputHcclEnableFfts).stubs().will(returnValue(false));
     HcclCommParams params;
     RankTable_t rankTable;
     TestConstructParam_1server_8p(params, rankTable);
@@ -3679,8 +3354,8 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_a3_aiv_coressnode_opbase)
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     impl->topoAttr_.deviceLogicId = 0;
@@ -3690,7 +3365,8 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_a3_aiv_coressnode_opbase)
 
     impl->topoType_ = TopoType::TOPO_TYPE_8P_RING;
     algConfigurator->topoType_ = TopoType::TOPO_TYPE_8P_RING;
-    CollAllGatherMeshAivFor91093Executor* executor = new CollAllGatherMeshAivFor91093Executor(impl->dispatcher_, topoMatcher);
+    CollAllGatherMeshAivFor91093Executor* executor
+        = new CollAllGatherMeshAivFor91093Executor(impl->dispatcher_, topoMatcher);
     DeviceMem inputMem = DeviceMem::alloc(4096);
     DeviceMem outputMem = DeviceMem::alloc(4096);
     OpParam opParam;
@@ -3703,17 +3379,15 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_a3_aiv_coressnode_opbase)
     opParam.DataDes.dataType = HCCL_DATA_TYPE_FP32;
     opParam.reduceType = HCCL_REDUCE_SUM;
     opParam.stream = Stream(StreamType::STREAM_TYPE_ONLINE);
-    const std::vector<std::vector<u32>> tmpRingNics = {
-        { 0, 1, 2, 3, 4, 5, 6, 7 },
-        { 0, 1, 2, 3, 4, 5, 6, 7 }
-    };
+    const std::vector<std::vector<u32>> tmpRingNics = {{0, 1, 2, 3, 4, 5, 6, 7}, {0, 1, 2, 3, 4, 5, 6, 7}};
 
     AlgResourceRequest resourceRequest;
     AlgResourceResponse resourceResponse;
     ret = executor->CalcResRequest(opParam, resourceRequest);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     resourceRequest.aivBufferRequest = 3U;
-    implBase->AllocAlgResource(opParam.tag, HcclCMDType::HCCL_CMD_ALLGATHER, opParam, resourceRequest, resourceResponse);
+    implBase->AllocAlgResource(
+        opParam.tag, HcclCMDType::HCCL_CMD_ALLGATHER, opParam, resourceRequest, resourceResponse);
     delete executor;
 
     GlobalMockObject::verify();
@@ -3722,30 +3396,16 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_a3_aiv_coressnode_opbase)
 TEST_F(HcclImplTest, ut_hcclImpl_run_a3_aiv_coressnode_offload)
 {
     HcclResult ret = HCCL_SUCCESS;
-    MOCKER(GetWorkflowMode)
-    .stubs()
-    .will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB));
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(GetWorkflowMode).stubs().will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&StreamActiveManager::StreamActive)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&StreamActiveManager::StreamActive).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(GetExternalInputHcclEnableFfts)
-    .stubs()
-    .will(returnValue(false));
+    MOCKER(GetExternalInputHcclEnableFfts).stubs().will(returnValue(false));
     HcclCommParams params;
     RankTable_t rankTable;
     TestConstructParam_1server_8p(params, rankTable);
@@ -3758,8 +3418,8 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_a3_aiv_coressnode_offload)
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     impl->topoAttr_.deviceLogicId = 0;
@@ -3769,7 +3429,8 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_a3_aiv_coressnode_offload)
 
     impl->topoType_ = TopoType::TOPO_TYPE_8P_RING;
     algConfigurator->topoType_ = TopoType::TOPO_TYPE_8P_RING;
-    CollAllGatherMeshAivFor91093Executor* executor = new CollAllGatherMeshAivFor91093Executor(impl->dispatcher_, topoMatcher);
+    CollAllGatherMeshAivFor91093Executor* executor
+        = new CollAllGatherMeshAivFor91093Executor(impl->dispatcher_, topoMatcher);
     DeviceMem inputMem = DeviceMem::alloc(4096);
     DeviceMem outputMem = DeviceMem::alloc(4096);
     OpParam opParam;
@@ -3782,17 +3443,15 @@ TEST_F(HcclImplTest, ut_hcclImpl_run_a3_aiv_coressnode_offload)
     opParam.DataDes.dataType = HCCL_DATA_TYPE_FP32;
     opParam.reduceType = HCCL_REDUCE_SUM;
     opParam.stream = Stream(StreamType::STREAM_TYPE_ONLINE);
-    const std::vector<std::vector<u32>> tmpRingNics = {
-        { 0, 1, 2, 3, 4, 5, 6, 7 },
-        { 0, 1, 2, 3, 4, 5, 6, 7 }
-    };
+    const std::vector<std::vector<u32>> tmpRingNics = {{0, 1, 2, 3, 4, 5, 6, 7}, {0, 1, 2, 3, 4, 5, 6, 7}};
 
     AlgResourceRequest resourceRequest;
     AlgResourceResponse resourceResponse;
     ret = executor->CalcResRequest(opParam, resourceRequest);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     resourceRequest.aivBufferRequest = 3U;
-    implBase->AllocAlgResource(opParam.tag, HcclCMDType::HCCL_CMD_ALLGATHER, opParam, resourceRequest, resourceResponse);
+    implBase->AllocAlgResource(
+        opParam.tag, HcclCMDType::HCCL_CMD_ALLGATHER, opParam, resourceRequest, resourceResponse);
     delete executor;
 
     GlobalMockObject::verify();
@@ -3815,15 +3474,12 @@ TEST_F(HcclImplTest, ut_ReduceScatterVFor310PRing)
     params.deviceType = DevType::DEV_TYPE_310P3;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     impl->deviceLogicId_ = 0;
@@ -3832,23 +3488,24 @@ TEST_F(HcclImplTest, ut_ReduceScatterVFor310PRing)
     algConfigurator->algType_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER].algoLevel1 = AlgTypeLevel1::ALG_LEVEL1_RING;
     impl->topoType_ = TopoType::TOPO_TYPE_4P_RING;
 
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
 
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.deviceLogicId = 0;
     topoMatcher->topoInfo_.deviceType = DevType::DEV_TYPE_310P3;
     topoMatcher->topoInfo_.topoType = TopoType::TOPO_TYPE_4P_RING;
     std::unique_ptr<ReduceScatterVOperator> operation(
         new (std::nothrow) ReduceScatterVOperator(algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher));
 
-    CollReduceScatterVFor310PRingExecutor *executor = new CollReduceScatterVFor310PRingExecutor(impl->dispatcher_, topoMatcher);
+    CollReduceScatterVFor310PRingExecutor* executor
+        = new CollReduceScatterVFor310PRingExecutor(impl->dispatcher_, topoMatcher);
 
-    std::vector<u64> counts {1, 2, 3, 4};
-    std::vector<u64> displs {0};
+    std::vector<u64> counts{1, 2, 3, 4};
+    std::vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     OpParam opParam;
@@ -3868,22 +3525,17 @@ TEST_F(HcclImplTest, ut_ReduceScatterVFor310PRing)
     ret = operation->SelectAlg(tag, opParam, algName, newTag);
     opParam.tag = newTag;
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    SubCommInfo mockCommInfo {0, 1, std::vector<LINK>()};
-    MOCKER_CPP(&CollNativeExecutorBase::GetSubCommInfo)
-    .stubs()
-    .will(returnValue(mockCommInfo));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
+    SubCommInfo mockCommInfo{0, 1, std::vector<LINK>()};
+    MOCKER_CPP(&CollNativeExecutorBase::GetSubCommInfo).stubs().will(returnValue(mockCommInfo));
 
     AlgResourceRequest resourceRequest;
     AlgResourceResponse resourceResponse;
     ret = executor->CalcResRequest(opParam, resourceRequest);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    implBase->AllocAlgResource(newTag, HcclCMDType::HCCL_CMD_REDUCE_SCATTER_V, opParam, resourceRequest, resourceResponse);
+    implBase->AllocAlgResource(
+        newTag, HcclCMDType::HCCL_CMD_REDUCE_SCATTER_V, opParam, resourceRequest, resourceResponse);
     resourceResponse.cclInputMem = inputMem;
     resourceResponse.cclOutputMem = outputMem;
     DeviceMem scratchMem = DeviceMem::alloc(4096);
@@ -3921,15 +3573,12 @@ TEST_F(HcclImplTest, ut_ReduceScatterVFor310PRingNosupportIineReduce)
     params.deviceType = DevType::DEV_TYPE_310P3;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     impl->deviceLogicId_ = 0;
@@ -3938,23 +3587,24 @@ TEST_F(HcclImplTest, ut_ReduceScatterVFor310PRingNosupportIineReduce)
     algConfigurator->algType_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER].algoLevel1 = AlgTypeLevel1::ALG_LEVEL1_RING;
     impl->topoType_ = TopoType::TOPO_TYPE_4P_RING;
 
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
 
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.deviceLogicId = 0;
     topoMatcher->topoInfo_.deviceType = DevType::DEV_TYPE_310P3;
     topoMatcher->topoInfo_.topoType = TopoType::TOPO_TYPE_4P_RING;
     std::unique_ptr<ReduceScatterVOperator> operation(
         new (std::nothrow) ReduceScatterVOperator(algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher));
 
-    CollReduceScatterVFor310PRingExecutor *executor = new CollReduceScatterVFor310PRingExecutor(impl->dispatcher_, topoMatcher);
+    CollReduceScatterVFor310PRingExecutor* executor
+        = new CollReduceScatterVFor310PRingExecutor(impl->dispatcher_, topoMatcher);
 
-    std::vector<u64> counts {1, 2, 3, 4};
-    std::vector<u64> displs {0};
+    std::vector<u64> counts{1, 2, 3, 4};
+    std::vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     OpParam opParam;
@@ -3974,22 +3624,17 @@ TEST_F(HcclImplTest, ut_ReduceScatterVFor310PRingNosupportIineReduce)
     ret = operation->SelectAlg(tag, opParam, algName, newTag);
     opParam.tag = newTag;
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    SubCommInfo mockCommInfo {0, 1, std::vector<LINK>()};
-    MOCKER_CPP(&CollNativeExecutorBase::GetSubCommInfo)
-    .stubs()
-    .will(returnValue(mockCommInfo));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
+    SubCommInfo mockCommInfo{0, 1, std::vector<LINK>()};
+    MOCKER_CPP(&CollNativeExecutorBase::GetSubCommInfo).stubs().will(returnValue(mockCommInfo));
 
     AlgResourceRequest resourceRequest;
     AlgResourceResponse resourceResponse;
     ret = executor->CalcResRequest(opParam, resourceRequest);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    implBase->AllocAlgResource(newTag, HcclCMDType::HCCL_CMD_REDUCE_SCATTER_V, opParam, resourceRequest, resourceResponse);
+    implBase->AllocAlgResource(
+        newTag, HcclCMDType::HCCL_CMD_REDUCE_SCATTER_V, opParam, resourceRequest, resourceResponse);
     resourceResponse.cclInputMem = inputMem;
     resourceResponse.cclOutputMem = outputMem;
     DeviceMem scratchMem = DeviceMem::alloc(4096);
@@ -4027,15 +3672,12 @@ TEST_F(HcclImplTest, ut_AllGatherVFor310PExecutor_Ring)
     params.deviceType = DevType::DEV_TYPE_310P3;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     impl->deviceLogicId_ = 0;
@@ -4044,24 +3686,23 @@ TEST_F(HcclImplTest, ut_AllGatherVFor310PExecutor_Ring)
     algConfigurator->algType_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER].algoLevel1 = AlgTypeLevel1::ALG_LEVEL1_RING;
     impl->topoType_ = TopoType::TOPO_TYPE_4P_RING;
 
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
 
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.deviceLogicId = 0;
     topoMatcher->topoInfo_.deviceType = DevType::DEV_TYPE_310P3;
     topoMatcher->topoInfo_.topoType = TopoType::TOPO_TYPE_4P_RING;
     std::unique_ptr<AllGatherVOperator> operation(
         new (std::nothrow) AllGatherVOperator(algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher));
 
+    CollAllGatherVFor310PExecutor* executor = new CollAllGatherVFor310PExecutor(impl->dispatcher_, topoMatcher);
 
-    CollAllGatherVFor310PExecutor *executor = new CollAllGatherVFor310PExecutor(impl->dispatcher_, topoMatcher);
-
-    std::vector<u64> counts {1, 2, 3, 4};
-    std::vector<u64> displs {0};
+    std::vector<u64> counts{1, 2, 3, 4};
+    std::vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     OpParam opParam;
@@ -4080,16 +3721,10 @@ TEST_F(HcclImplTest, ut_AllGatherVFor310PExecutor_Ring)
     ret = operation->SelectAlg(tag, opParam, algName, newTag);
     opParam.tag = newTag;
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    SubCommInfo mockCommInfo {0, 1, std::vector<LINK>()};
-    MOCKER_CPP(&CollNativeExecutorBase::GetSubCommInfo)
-    .stubs()
-    .will(returnValue(mockCommInfo));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
+    SubCommInfo mockCommInfo{0, 1, std::vector<LINK>()};
+    MOCKER_CPP(&CollNativeExecutorBase::GetSubCommInfo).stubs().will(returnValue(mockCommInfo));
 
     AlgResourceRequest resourceRequest;
     AlgResourceResponse resourceResponse;
@@ -4132,15 +3767,12 @@ TEST_F(HcclImplTest, ut_AllGatherVFor910BExecutor_Mesh)
     params.deviceType = DevType::DEV_TYPE_910B;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     impl->deviceLogicId_ = 0;
@@ -4149,24 +3781,23 @@ TEST_F(HcclImplTest, ut_AllGatherVFor910BExecutor_Mesh)
     algConfigurator->algType_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER].algoLevel1 = AlgTypeLevel1::ALG_LEVEL1_RING;
     impl->topoType_ = TopoType::TOPO_TYPE_8P_MESH;
 
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
 
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.deviceLogicId = 0;
     topoMatcher->topoInfo_.deviceType = DevType::DEV_TYPE_910B;
     topoMatcher->topoInfo_.topoType = TopoType::TOPO_TYPE_8P_MESH;
     std::unique_ptr<AllGatherVOperator> operation(
         new (std::nothrow) AllGatherVOperator(algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher));
 
+    CollAllGatherVMeshOpbaseExecutor* executor = new CollAllGatherVMeshOpbaseExecutor(impl->dispatcher_, topoMatcher);
 
-    CollAllGatherVMeshOpbaseExecutor *executor = new CollAllGatherVMeshOpbaseExecutor(impl->dispatcher_, topoMatcher);
-
-    std::vector<u64> counts {1, 2, 3, 4};
-    std::vector<u64> displs {0};
+    std::vector<u64> counts{1, 2, 3, 4};
+    std::vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     OpParam opParam;
@@ -4185,16 +3816,10 @@ TEST_F(HcclImplTest, ut_AllGatherVFor910BExecutor_Mesh)
     ret = operation->SelectAlg(tag, opParam, algName, newTag);
     opParam.tag = newTag;
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    SubCommInfo mockCommInfo {0, 1, std::vector<LINK>()};
-    MOCKER_CPP(&CollNativeExecutorBase::GetSubCommInfo)
-    .stubs()
-    .will(returnValue(mockCommInfo));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
+    SubCommInfo mockCommInfo{0, 1, std::vector<LINK>()};
+    MOCKER_CPP(&CollNativeExecutorBase::GetSubCommInfo).stubs().will(returnValue(mockCommInfo));
 
     AlgResourceRequest resourceRequest;
     AlgResourceResponse resourceResponse;
@@ -4239,41 +3864,39 @@ TEST_F(HcclImplTest, ut_AllGatherVFor91093Executor_ZeroCount)
     params.deviceType = DevType::DEV_TYPE_910_93;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     impl->deviceLogicId_ = 0;
     impl->deviceType_ = DevType::DEV_TYPE_910_93;
-    algConfigurator->algType_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER].algoLevel0 = AlgTypeLevel0::ALG_LEVEL0_NP_DOUBLE_RING;
+    algConfigurator->algType_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER].algoLevel0
+        = AlgTypeLevel0::ALG_LEVEL0_NP_DOUBLE_RING;
     algConfigurator->algType_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER].algoLevel1 = AlgTypeLevel1::ALG_LEVEL1_RING;
     impl->topoType_ = TopoType::ALG_LEVEL0_NP_DOUBLE_RING;
 
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
 
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.deviceLogicId = 0;
     topoMatcher->topoInfo_.deviceType = DevType::DEV_TYPE_910_93;
     topoMatcher->topoInfo_.topoType = TopoType::ALG_LEVEL0_NP_DOUBLE_RING;
     std::unique_ptr<AllGatherVOperator> operation(
         new (std::nothrow) AllGatherVOperator(algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher));
 
+    CollAlignedAllGatherVDoubleRingFor91093Executor* executor
+        = new CollAlignedAllGatherVDoubleRingFor91093Executor(impl->dispatcher_, topoMatcher);
 
-    CollAlignedAllGatherVDoubleRingFor91093Executor *executor = new CollAlignedAllGatherVDoubleRingFor91093Executor(impl->dispatcher_, topoMatcher);
-
-    std::vector<u64> counts {0, 1, 0, 0};
-    std::vector<u64> displs {0};
+    std::vector<u64> counts{0, 1, 0, 0};
+    std::vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     OpParam opParam;
@@ -4292,16 +3915,10 @@ TEST_F(HcclImplTest, ut_AllGatherVFor91093Executor_ZeroCount)
     ret = operation->SelectAlg(tag, opParam, algName, newTag);
     opParam.tag = newTag;
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    SubCommInfo mockCommInfo {0, 1, std::vector<LINK>()};
-    MOCKER_CPP(&CollNativeExecutorBase::GetSubCommInfo)
-    .stubs()
-    .will(returnValue(mockCommInfo));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
+    SubCommInfo mockCommInfo{0, 1, std::vector<LINK>()};
+    MOCKER_CPP(&CollNativeExecutorBase::GetSubCommInfo).stubs().will(returnValue(mockCommInfo));
 
     AlgResourceRequest resourceRequest;
     AlgResourceResponse resourceResponse;
@@ -4345,15 +3962,12 @@ TEST_F(HcclImplTest, ut_AllGatherVAivBigCount)
     params.deviceType = DevType::DEV_TYPE_910B;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     impl->deviceLogicId_ = 0;
@@ -4362,24 +3976,23 @@ TEST_F(HcclImplTest, ut_AllGatherVAivBigCount)
     algConfigurator->algType_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER].algoLevel1 = AlgTypeLevel1::ALG_LEVEL1_RING;
     impl->topoType_ = TopoType::TOPO_TYPE_2P_MESH;
 
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
 
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.deviceLogicId = 0;
     topoMatcher->topoInfo_.deviceType = DevType::DEV_TYPE_910B;
     topoMatcher->topoInfo_.topoType = TopoType::TOPO_TYPE_2P_MESH;
     std::unique_ptr<AllGatherVOperator> operation(
         new (std::nothrow) AllGatherVOperator(algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher));
 
-    AllGatherVMeshAivExecutor *executor =
-        new AllGatherVMeshAivExecutor(dispatcher, topoMatcher);
+    AllGatherVMeshAivExecutor* executor = new AllGatherVMeshAivExecutor(dispatcher, topoMatcher);
 
-    std::vector<u64> counts {4194304, 2, 3, 4};
-    std::vector<u64> displs {0};
+    std::vector<u64> counts{4194304, 2, 3, 4};
+    std::vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     OpParam opParam;
@@ -4394,13 +4007,9 @@ TEST_F(HcclImplTest, ut_AllGatherVAivBigCount)
     opParam.reduceType = HCCL_REDUCE_SUM;
     opParam.stream = Stream(StreamType::STREAM_TYPE_ONLINE);
 
-    MOCKER(GetExternalInputHcclAivMode)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER(GetExternalInputHcclAivMode).stubs().will(returnValue(true));
 
-    MOCKER(IsSupportAIVCopy)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER(IsSupportAIVCopy).stubs().will(returnValue(true));
 
     std::string algName = "";
     std::string newTag = opParam.tag;
@@ -4409,14 +4018,10 @@ TEST_F(HcclImplTest, ut_AllGatherVAivBigCount)
     ret = operation->SelectAlg(tag, opParam, algName, newTag);
     opParam.tag = newTag;
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
 
-    SubCommInfo mockCommInfo {0, 1, std::vector<LINK>()};
-    MOCKER_CPP(&CollNativeExecutorBase::GetSubCommInfo)
-    .stubs()
-    .will(returnValue(mockCommInfo));
+    SubCommInfo mockCommInfo{0, 1, std::vector<LINK>()};
+    MOCKER_CPP(&CollNativeExecutorBase::GetSubCommInfo).stubs().will(returnValue(mockCommInfo));
 
     AlgResourceRequest resourceRequest;
     AlgResourceResponse resourceResponse;
@@ -4460,15 +4065,12 @@ TEST_F(HcclImplTest, ut_AllGatherVAivSmallCount)
     params.deviceType = DevType::DEV_TYPE_910B;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     impl->deviceLogicId_ = 0;
@@ -4477,24 +4079,24 @@ TEST_F(HcclImplTest, ut_AllGatherVAivSmallCount)
     algConfigurator->algType_[HcclCMDType::HCCL_CMD_ALLGATHER_V].algoLevel1 = AlgTypeLevel1::ALG_LEVEL1_RING;
     impl->topoType_ = TopoType::TOPO_TYPE_2P_MESH;
 
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
 
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.deviceLogicId = 0;
     topoMatcher->topoInfo_.deviceType = DevType::DEV_TYPE_910B;
     topoMatcher->topoInfo_.topoType = TopoType::TOPO_TYPE_2P_MESH;
     std::unique_ptr<AllGatherVOperator> operation(
         new (std::nothrow) AllGatherVOperator(algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher));
 
-    CollAllGatherVMeshAivSmallCountExecutor *executor =
-        new CollAllGatherVMeshAivSmallCountExecutor(dispatcher, topoMatcher);
+    CollAllGatherVMeshAivSmallCountExecutor* executor
+        = new CollAllGatherVMeshAivSmallCountExecutor(dispatcher, topoMatcher);
 
-    std::vector<u64> counts {1, 2, 3, 4};
-    std::vector<u64> displs {0};
+    std::vector<u64> counts{1, 2, 3, 4};
+    std::vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     OpParam opParam;
@@ -4509,17 +4111,11 @@ TEST_F(HcclImplTest, ut_AllGatherVAivSmallCount)
     opParam.reduceType = HCCL_REDUCE_SUM;
     opParam.stream = Stream(StreamType::STREAM_TYPE_ONLINE);
 
-    MOCKER(GetExternalInputHcclAivMode)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER(GetExternalInputHcclAivMode).stubs().will(returnValue(true));
 
-    MOCKER(IsSupportAIVCopy)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER(IsSupportAIVCopy).stubs().will(returnValue(true));
 
-    MOCKER(GetExternalInputProfilingMode)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER(GetExternalInputProfilingMode).stubs().will(returnValue(true));
 
     std::string algName = "";
     std::string newTag = opParam.tag;
@@ -4528,14 +4124,10 @@ TEST_F(HcclImplTest, ut_AllGatherVAivSmallCount)
     ret = operation->SelectAlg(tag, opParam, algName, newTag);
     opParam.tag = newTag;
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
 
-    SubCommInfo mockCommInfo {0, 1, std::vector<LINK>()};
-    MOCKER_CPP(&CollNativeExecutorBase::GetSubCommInfo)
-    .stubs()
-    .will(returnValue(mockCommInfo));
+    SubCommInfo mockCommInfo{0, 1, std::vector<LINK>()};
+    MOCKER_CPP(&CollNativeExecutorBase::GetSubCommInfo).stubs().will(returnValue(mockCommInfo));
 
     AlgResourceRequest resourceRequest;
     AlgResourceResponse resourceResponse;
@@ -4578,15 +4170,12 @@ TEST_F(HcclImplTest, ut_AllGatherV_offload_For910B_Executor_Mesh_v1)
     params.deviceType = DevType::DEV_TYPE_910B;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     impl->deviceLogicId_ = 0;
@@ -4595,23 +4184,22 @@ TEST_F(HcclImplTest, ut_AllGatherV_offload_For910B_Executor_Mesh_v1)
     algConfigurator->algType_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER].algoLevel1 = AlgTypeLevel1::ALG_LEVEL1_RING;
     impl->topoType_ = TopoType::TOPO_TYPE_4P_MESH;
 
-
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB);
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB);
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.deviceLogicId = 0;
     topoMatcher->topoInfo_.deviceType = DevType::DEV_TYPE_910B;
     topoMatcher->topoInfo_.topoType = TopoType::TOPO_TYPE_4P_MESH;
     std::unique_ptr<AllGatherVOperator> operation(
         new (std::nothrow) AllGatherVOperator(algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher));
 
-    CollAllGatherVMeshExecutor *executor = new CollAllGatherVMeshExecutor(impl->dispatcher_, topoMatcher);
+    CollAllGatherVMeshExecutor* executor = new CollAllGatherVMeshExecutor(impl->dispatcher_, topoMatcher);
 
-    std::vector<u64> counts {1, 2, 3, 4};
-    std::vector<u64> displs {0};
+    std::vector<u64> counts{1, 2, 3, 4};
+    std::vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     OpParam opParam;
@@ -4630,16 +4218,10 @@ TEST_F(HcclImplTest, ut_AllGatherV_offload_For910B_Executor_Mesh_v1)
     ret = operation->SelectAlg(tag, opParam, algName, newTag);
     opParam.tag = newTag;
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    SubCommInfo mockCommInfo {0, 1, std::vector<LINK>()};
-    MOCKER_CPP(&CollNativeExecutorBase::GetSubCommInfo)
-    .stubs()
-    .will(returnValue(mockCommInfo));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
+    SubCommInfo mockCommInfo{0, 1, std::vector<LINK>()};
+    MOCKER_CPP(&CollNativeExecutorBase::GetSubCommInfo).stubs().will(returnValue(mockCommInfo));
 
     AlgResourceRequest resourceRequest;
     AlgResourceResponse resourceResponse;
@@ -4678,15 +4260,12 @@ TEST_F(HcclImplTest, ut_AllGatherV_offload_For910B_Executor_Mesh_v2)
     params.deviceType = DevType::DEV_TYPE_910B;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     impl->deviceLogicId_ = 0;
@@ -4695,23 +4274,22 @@ TEST_F(HcclImplTest, ut_AllGatherV_offload_For910B_Executor_Mesh_v2)
     algConfigurator->algType_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER].algoLevel1 = AlgTypeLevel1::ALG_LEVEL1_RING;
     impl->topoType_ = TopoType::TOPO_TYPE_4P_MESH;
 
-
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB);
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB);
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.deviceLogicId = 0;
     topoMatcher->topoInfo_.deviceType = DevType::DEV_TYPE_910B;
     topoMatcher->topoInfo_.topoType = TopoType::TOPO_TYPE_4P_MESH;
     std::unique_ptr<AllGatherVOperator> operation(
         new (std::nothrow) AllGatherVOperator(algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher));
 
-    CollAllGatherVMeshExecutor *executor = new CollAllGatherVMeshExecutor(impl->dispatcher_, topoMatcher);
+    CollAllGatherVMeshExecutor* executor = new CollAllGatherVMeshExecutor(impl->dispatcher_, topoMatcher);
 
-    std::vector<u64> counts {1, 2, 3, 4};
-    std::vector<u64> displs {0};
+    std::vector<u64> counts{1, 2, 3, 4};
+    std::vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     OpParam opParam;
@@ -4753,15 +4331,12 @@ TEST_F(HcclImplTest, ut_ReduceScatterVAivBigCount)
     params.deviceType = DevType::DEV_TYPE_910B;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     impl->deviceLogicId_ = 0;
@@ -4770,24 +4345,24 @@ TEST_F(HcclImplTest, ut_ReduceScatterVAivBigCount)
     algConfigurator->algType_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER_V].algoLevel1 = AlgTypeLevel1::ALG_LEVEL1_RING;
     impl->topoType_ = TopoType::TOPO_TYPE_2P_MESH;
 
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
 
-    CCLBufferManager &cclBufferManager = implBase->implAlg_->cclBufferManager_;
+    CCLBufferManager& cclBufferManager = implBase->implAlg_->cclBufferManager_;
     const HcclDispatcher dispatcher = implBase->implAlg_->dispatcher_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.deviceLogicId = 0;
     topoMatcher->topoInfo_.deviceType = DevType::DEV_TYPE_910B;
     topoMatcher->topoInfo_.topoType = TopoType::TOPO_TYPE_2P_MESH;
     std::unique_ptr<ReduceScatterVOperator> operation(
         new (std::nothrow) ReduceScatterVOperator(algConfigurator.get(), cclBufferManager, dispatcher, topoMatcher));
 
-    CollReduceScatterVAIVBigCountExecutor *executor =
-        new CollReduceScatterVAIVBigCountExecutor(dispatcher, topoMatcher);
+    CollReduceScatterVAIVBigCountExecutor* executor
+        = new CollReduceScatterVAIVBigCountExecutor(dispatcher, topoMatcher);
 
-    std::vector<u64> counts {4194304, 8388608, 12582912, 16777216};
-    std::vector<u64> displs {0};
+    std::vector<u64> counts{4194304, 8388608, 12582912, 16777216};
+    std::vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     OpParam opParam;
@@ -4802,13 +4377,9 @@ TEST_F(HcclImplTest, ut_ReduceScatterVAivBigCount)
     opParam.reduceType = HCCL_REDUCE_SUM;
     opParam.stream = Stream(StreamType::STREAM_TYPE_ONLINE);
 
-    MOCKER(GetExternalInputHcclAivMode)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER(GetExternalInputHcclAivMode).stubs().will(returnValue(true));
 
-    MOCKER(IsSupportAIVReduce)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER(IsSupportAIVReduce).stubs().will(returnValue(true));
 
     std::string algName = "";
     std::string newTag = opParam.tag;
@@ -4817,20 +4388,17 @@ TEST_F(HcclImplTest, ut_ReduceScatterVAivBigCount)
     ret = operation->SelectAlg(tag, opParam, algName, newTag);
     opParam.tag = newTag;
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
 
-    SubCommInfo mockCommInfo {0, 1, std::vector<LINK>()};
-    MOCKER_CPP(&CollNativeExecutorBase::GetSubCommInfo)
-    .stubs()
-    .will(returnValue(mockCommInfo));
+    SubCommInfo mockCommInfo{0, 1, std::vector<LINK>()};
+    MOCKER_CPP(&CollNativeExecutorBase::GetSubCommInfo).stubs().will(returnValue(mockCommInfo));
 
     AlgResourceRequest resourceRequest;
     AlgResourceResponse resourceResponse;
     ret = executor->CalcResRequest(opParam, resourceRequest);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    implBase->AllocAlgResource(newTag, HcclCMDType::HCCL_CMD_REDUCE_SCATTER_V, opParam, resourceRequest, resourceResponse);
+    implBase->AllocAlgResource(
+        newTag, HcclCMDType::HCCL_CMD_REDUCE_SCATTER_V, opParam, resourceRequest, resourceResponse);
     resourceResponse.cclInputMem = inputMem;
     resourceResponse.cclOutputMem = outputMem;
     DeviceMem scratchMem = DeviceMem::alloc(4096);
@@ -4858,19 +4426,23 @@ TEST_F(HcclImplTest, invalid_valid__reserve_release_IpcMemory)
     MOCKER_CPP(&HcclCommunicator::DeactivateCommMemory).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&HcclCommunicator::UnsetMemoryRange).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&HcclCommunicator::InitZeroCopyMemoryAgent).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&HcclCommunicator::DeinitZeroCopyMemoryAgent).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::DeinitZeroCopyMemoryAgent)
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
     hcclComm hcclcomm;
     hcclcomm.communicator_ = std::make_unique<HcclCommunicator>();
     char dummyReserveMem[10];
-    void *vir_ptr = dummyReserveMem;
+    void* vir_ptr = dummyReserveMem;
     auto devID = 0;
     auto reserve_mem = 10;
-    EXPECT_EQ(
-        HCCL_SUCCESS, HcclCommSetMemoryRange(reinterpret_cast<HcclComm>(&hcclcomm), vir_ptr, reserve_mem, 0, 0));
+    EXPECT_EQ(HCCL_SUCCESS, HcclCommSetMemoryRange(reinterpret_cast<HcclComm>(&hcclcomm), vir_ptr, reserve_mem, 0, 0));
     int dummyHandle = 0;
     aclrtDrvMemHandle mem_handle = &dummyHandle;
-    EXPECT_EQ(HCCL_SUCCESS, HcclCommActivateCommMemory(reinterpret_cast<HcclComm>(&hcclcomm), vir_ptr, reserve_mem, 0, mem_handle, 0));
+    EXPECT_EQ(
+        HCCL_SUCCESS,
+        HcclCommActivateCommMemory(reinterpret_cast<HcclComm>(&hcclcomm), vir_ptr, reserve_mem, 0, mem_handle, 0));
     EXPECT_EQ(HCCL_SUCCESS, HcclCommDeactivateCommMemory(reinterpret_cast<HcclComm>(&hcclcomm), vir_ptr));
     EXPECT_EQ(HCCL_SUCCESS, HcclCommUnsetMemoryRange(reinterpret_cast<HcclComm>(&hcclcomm), vir_ptr));
 }
@@ -4879,13 +4451,13 @@ TEST_F(HcclImplTest, ut_hcclimpl_AiCpuSetCommResource_MultiServer)
 {
     u32 ifnumVersion = 3;
     MOCKER(hrtRaGetInterfaceVersion)
-    .stubs()
-    .with(mockcpp::any(), mockcpp::any(), outBoundP(&ifnumVersion))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), outBoundP(&ifnumVersion))
+        .will(returnValue(HCCL_SUCCESS));
 
-    void *commInputPtr = nullptr;
+    void* commInputPtr = nullptr;
     u64 commInputSize;
-    void *commOutputPtr = nullptr;
+    void* commOutputPtr = nullptr;
     u64 commOutputSize = 0;
     HcclResult ret;
     DeviceMem inputMem = DeviceMem::alloc(4096);
@@ -4902,14 +4474,11 @@ TEST_F(HcclImplTest, ut_hcclimpl_AiCpuSetCommResource_MultiServer)
     TestConstructParam(params, rankTable);
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
 
     ret = implBase->GetInCCLbuffer(commInputPtr, commInputSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -4925,16 +4494,16 @@ TEST_F(HcclImplTest, ut_hcclimpl_AiCpuSetCommResource_MultiServer)
     tmpComm.commLevel0.resize(4);
     std::map<HcclIpAddress, HcclNetDevCtx> netDevCtxMap;
     for (int i = 0; i < 4; i++) {
-        tmpComm.commLevel0[i].reset(new (std::nothrow) CommRing(tag, 0, 8, curRankId, rankSize,
-            TopoType::TOPO_TYPE_8P_RING, implBase->dispatcher_, implBase->notifyPool_, netDevCtxMap, exchanger, paraVector,
-            inputMem, outputMem, false));
+        tmpComm.commLevel0[i].reset(new (std::nothrow) CommRing(
+            tag, 0, 8, curRankId, rankSize, TopoType::TOPO_TYPE_8P_RING, implBase->dispatcher_, implBase->notifyPool_,
+            netDevCtxMap, exchanger, paraVector, inputMem, outputMem, false));
     }
     EXPECT_EQ(tmpComm.commLevel0[0]->transportInfo_.size(), rankSize);
     tmpComm.commLevel0[0]->transportInfo_.clear();
     std::chrono::milliseconds kdefaultTimeout = std::chrono::seconds(120);
     MachinePara linkPara;
-    std::shared_ptr<Transport> link(new Transport(new (std::nothrow) TransportBase(
-        nullptr, nullptr, linkPara, kdefaultTimeout)));
+    std::shared_ptr<Transport> link(
+        new Transport(new (std::nothrow) TransportBase(nullptr, nullptr, linkPara, kdefaultTimeout)));
     ret = implBase->notifyPool_->RegisterOp(tag);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     std::shared_ptr<LocalIpcNotify> localNotify = nullptr;
@@ -4979,37 +4548,29 @@ TEST_F(HcclImplTest, ut_hcclimpl_AiCpuSetCommResource_MultiServer)
     }
 
     MOCKER_CPP(&Transport::GetRemoteMem, HcclResult(Transport::*)(hccl::UserMemType, void**))
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
     MOCKER_CPP(&Transport::GetRemoteMem, HcclResult(Transport::*)(std::vector<void*>*))
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
+    MOCKER_CPP(&Transport::GetRemoteMemKey, HcclResult(Transport::*)(hccl::UserMemType, uint32_t*))
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&Transport::GetRemoteMemKey, HcclResult(Transport::*)(hccl::UserMemType, uint32_t *))
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
-
-    MOCKER_CPP(&Transport::GetLocalMemDetails)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&Transport::GetLocalMemDetails).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     std::vector<HcclQpInfoV2> qpInfos(1);
     MOCKER_CPP(&Transport::GetAiQpInfo).stubs().with(outBound(qpInfos)).will(returnValue(HCCL_SUCCESS));
 
-
-    MOCKER_CPP(&Transport::GetChipId)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&Transport::GetChipId).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     // 配置profiling开关
-    auto &profilingManager = hccl::ProfilingManager::Instance();
+    auto& profilingManager = hccl::ProfilingManager::Instance();
     profilingManager.StartAdditionInfoSubscribe();
 
     MachinePara machinePara;
@@ -5039,16 +4600,17 @@ TEST_F(HcclImplTest, ut_hcclimpl_AiCpuSetCommResource_MultiServer)
     implBase->isA2MC2MultiServer_ = true;
     implBase->tagStreamInfo_.insert(std::pair<std::string, Level1StreamInfo>(tag, std::move(tmpInnerStreamInfo)));
 
-    ret = implBase->SetCommResource(commBufferSize, commInputPtr, commOutputPtr, expMem.ptr(),
-        implBase->tagCommInfo_[tag].commLevel0[0].get(), implBase->tagStreamInfo_[tag], stream);
+    ret = implBase->SetCommResource(
+        commBufferSize, commInputPtr, commOutputPtr, expMem.ptr(), implBase->tagCommInfo_[tag].commLevel0[0].get(),
+        implBase->tagStreamInfo_[tag], stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u64 profConfigL0 = 0x84000985;
     profilingManager.StopSubscribe(profConfigL0);
 
     HCCL_INFO("check if HcclCombinOpParam is match with aicpu struct HccCommResParamTask");
-    HcclCombinOpParam *combinOparaPtr = reinterpret_cast<HcclCombinOpParam *>(implBase->combinOparaMem_->ptr());
-    HcclCombinOpParam &combinOpara = *combinOparaPtr;
+    HcclCombinOpParam* combinOparaPtr = reinterpret_cast<HcclCombinOpParam*>(implBase->combinOparaMem_->ptr());
+    HcclCombinOpParam& combinOpara = *combinOparaPtr;
     EXPECT_EQ(implBase->combinOparaMem_->size(), 8928); // 请确认HccCommResParamTask同步修改
     EXPECT_EQ(combinOpara.rankId, curRankId);
     EXPECT_EQ(combinOpara.signalInfo.aicpuNotify.rankId, curRankId);
@@ -5056,37 +4618,36 @@ TEST_F(HcclImplTest, ut_hcclimpl_AiCpuSetCommResource_MultiServer)
     EXPECT_EQ(combinOpara.winSize, commBufferSize);
 
     EXPECT_EQ(implBase->transDevIbverbsDataMem_->size() / sizeof(TransportDeviceNormalData), rankSize);
-    TransportDeviceNormalData *transDevIbverbsData =
-        reinterpret_cast<TransportDeviceNormalData *>(implBase->transDevIbverbsDataMem_->ptr());
+    TransportDeviceNormalData* transDevIbverbsData
+        = reinterpret_cast<TransportDeviceNormalData*>(implBase->transDevIbverbsDataMem_->ptr());
     for (u32 i = 0; i < rankSize; i++) {
-            if (i != curRankId) {
-                void* bufferIn = nullptr;
-                void* bufferOut = nullptr;
-                uint32_t remoteInMemKey = 0;
-                uint32_t remoteOutMemKey = 0;
-                EXPECT_EQ(transDevIbverbsData[i].remoteInputMem.addr, reinterpret_cast<uint64_t>(commInputPtr));
-                EXPECT_EQ(transDevIbverbsData[i].remoteInputMem.size, commBufferSize);
-                EXPECT_EQ(transDevIbverbsData[i].remoteOutputMem.addr, reinterpret_cast<uint64_t>(commOutputPtr));
-                EXPECT_EQ(transDevIbverbsData[i].remoteOutputMem.size, commBufferSize);
-            } else {
-                // 本rank的信息
-                EXPECT_EQ(transDevIbverbsData[i].localInputMem.addr, reinterpret_cast<uint64_t>(commInputPtr));
-                EXPECT_EQ(transDevIbverbsData[i].localInputMem.size, commBufferSize);
-                EXPECT_EQ(transDevIbverbsData[i].localOutputMem.addr, reinterpret_cast<uint64_t>(commOutputPtr));
-                EXPECT_EQ(transDevIbverbsData[i].localOutputMem.size, commBufferSize);
-            }
+        if (i != curRankId) {
+            void* bufferIn = nullptr;
+            void* bufferOut = nullptr;
+            uint32_t remoteInMemKey = 0;
+            uint32_t remoteOutMemKey = 0;
+            EXPECT_EQ(transDevIbverbsData[i].remoteInputMem.addr, reinterpret_cast<uint64_t>(commInputPtr));
+            EXPECT_EQ(transDevIbverbsData[i].remoteInputMem.size, commBufferSize);
+            EXPECT_EQ(transDevIbverbsData[i].remoteOutputMem.addr, reinterpret_cast<uint64_t>(commOutputPtr));
+            EXPECT_EQ(transDevIbverbsData[i].remoteOutputMem.size, commBufferSize);
+        } else {
+            // 本rank的信息
+            EXPECT_EQ(transDevIbverbsData[i].localInputMem.addr, reinterpret_cast<uint64_t>(commInputPtr));
+            EXPECT_EQ(transDevIbverbsData[i].localInputMem.size, commBufferSize);
+            EXPECT_EQ(transDevIbverbsData[i].localOutputMem.addr, reinterpret_cast<uint64_t>(commOutputPtr));
+            EXPECT_EQ(transDevIbverbsData[i].localOutputMem.size, commBufferSize);
+        }
     }
 
     implBase = nullptr;
     GlobalMockObject::verify();
-
 }
 
 TEST_F(HcclImplTest, ut_hcclimpl_AiCpuSetCommResource_AIVHierarchy)
 {
-    void *commInputPtr = nullptr;
+    void* commInputPtr = nullptr;
     u64 commInputSize;
-    void *commOutputPtr = nullptr;
+    void* commOutputPtr = nullptr;
     u64 commOutputSize = 0;
     HcclResult ret;
     DeviceMem inputMem = DeviceMem::alloc(4096);
@@ -5103,14 +4664,11 @@ TEST_F(HcclImplTest, ut_hcclimpl_AiCpuSetCommResource_AIVHierarchy)
     TestConstructParam(params, rankTable);
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
 
     ret = implBase->GetInCCLbuffer(commInputPtr, commInputSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -5126,9 +4684,9 @@ TEST_F(HcclImplTest, ut_hcclimpl_AiCpuSetCommResource_AIVHierarchy)
     tmpComm.commLevel0.resize(4);
     std::map<HcclIpAddress, HcclNetDevCtx> netDevCtxMap;
     for (int i = 0; i < 4; i++) {
-        tmpComm.commLevel0[i].reset(new (std::nothrow) CommMesh(tag, 0, 4, curRankId, rankSize,
-            TopoType::TOPO_TYPE_8P_MESH, implBase->dispatcher_, implBase->notifyPool_, netDevCtxMap, exchanger,
-            paraVector, inputMem, outputMem, true, ""));
+        tmpComm.commLevel0[i].reset(new (std::nothrow) CommMesh(
+            tag, 0, 4, curRankId, rankSize, TopoType::TOPO_TYPE_8P_MESH, implBase->dispatcher_, implBase->notifyPool_,
+            netDevCtxMap, exchanger, paraVector, inputMem, outputMem, true, ""));
     }
     EXPECT_EQ(tmpComm.commLevel0[0]->transportInfo_.size(), rankSize);
     tmpComm.commLevel0[0]->transportInfo_.clear();
@@ -5190,37 +4748,29 @@ TEST_F(HcclImplTest, ut_hcclimpl_AiCpuSetCommResource_AIVHierarchy)
     }
 
     MOCKER_CPP(&Transport::GetRemoteMem, HcclResult(Transport::*)(hccl::UserMemType, void**))
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
-
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
     MOCKER_CPP(&Transport::GetRemoteMem, HcclResult(Transport::*)(std::vector<void*>*))
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&Transport::GetRemoteMemKey, HcclResult(Transport::*)(hccl::UserMemType, uint32_t *))
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&Transport::GetRemoteMemKey, HcclResult(Transport::*)(hccl::UserMemType, uint32_t*))
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&Transport::GetLocalMemDetails)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&Transport::GetLocalMemDetails).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     std::vector<HcclQpInfoV2> qpInfos(1);
     MOCKER_CPP(&Transport::GetAiQpInfo).stubs().with(outBound(qpInfos)).will(returnValue(HCCL_SUCCESS));
 
-
-    MOCKER_CPP(&Transport::GetChipId)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&Transport::GetChipId).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     // 配置profiling开关
-    auto &profilingManager = hccl::ProfilingManager::Instance();
+    auto& profilingManager = hccl::ProfilingManager::Instance();
     profilingManager.StartAdditionInfoSubscribe();
 
     machine_para.localDeviceId = 0;
@@ -5248,15 +4798,14 @@ TEST_F(HcclImplTest, ut_hcclimpl_AiCpuSetCommResource_AIVHierarchy)
     Stream stream(aiCpuStream);
     implBase->isA2MC2MultiServer_ = true;
     implBase->tagStreamInfo_.insert(std::pair<std::string, Level1StreamInfo>(tag, std::move(tmpInnerStreamInfo)));
-    ret = implBase->SetDevIbverbsData(implBase->tagCommInfo_[tag].commLevel0[0].get(), false,
-                      commBufferSize, commInputPtr, commOutputPtr);
+    ret = implBase->SetDevIbverbsData(
+        implBase->tagCommInfo_[tag].commLevel0[0].get(), false, commBufferSize, commInputPtr, commOutputPtr);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u64 profConfigL0 = 0x84000985;
     profilingManager.StopSubscribe(profConfigL0);
 
     HCCL_INFO("check if HcclCombinOpParam is match with aicpu struct HccCommResParamTask");
-
 
     implBase = nullptr;
     GlobalMockObject::verify();
@@ -5266,13 +4815,13 @@ TEST_F(HcclImplTest, ut_hcclimpl_AiCpuSetCommResource_AIVRoce)
 {
     u32 ifnumVersion = 3;
     MOCKER(hrtRaGetInterfaceVersion)
-    .stubs()
-    .with(mockcpp::any(), mockcpp::any(), outBoundP(&ifnumVersion))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), outBoundP(&ifnumVersion))
+        .will(returnValue(HCCL_SUCCESS));
 
-    void *commInputPtr = nullptr;
+    void* commInputPtr = nullptr;
     u64 commInputSize;
-    void *commOutputPtr = nullptr;
+    void* commOutputPtr = nullptr;
     u64 commOutputSize = 0;
     HcclResult ret;
     DeviceMem inputMem = DeviceMem::alloc(4096);
@@ -5289,14 +4838,11 @@ TEST_F(HcclImplTest, ut_hcclimpl_AiCpuSetCommResource_AIVRoce)
     TestConstructParam(params, rankTable);
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
 
     ret = implBase->GetInCCLbuffer(commInputPtr, commInputSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -5312,9 +4858,9 @@ TEST_F(HcclImplTest, ut_hcclimpl_AiCpuSetCommResource_AIVRoce)
     tmpComm.commLevel0.resize(4);
     std::map<HcclIpAddress, HcclNetDevCtx> netDevCtxMap;
     for (int i = 0; i < 4; i++) {
-        tmpComm.commLevel0[i].reset(new (std::nothrow) CommMesh(tag, 0, 4, curRankId, rankSize,
-            TopoType::TOPO_TYPE_8P_MESH, implBase->dispatcher_, implBase->notifyPool_, netDevCtxMap, exchanger,
-            paraVector, inputMem, outputMem, true, ""));
+        tmpComm.commLevel0[i].reset(new (std::nothrow) CommMesh(
+            tag, 0, 4, curRankId, rankSize, TopoType::TOPO_TYPE_8P_MESH, implBase->dispatcher_, implBase->notifyPool_,
+            netDevCtxMap, exchanger, paraVector, inputMem, outputMem, true, ""));
     }
     EXPECT_EQ(tmpComm.commLevel0[0]->transportInfo_.size(), rankSize);
     tmpComm.commLevel0[0]->transportInfo_.clear();
@@ -5376,37 +4922,29 @@ TEST_F(HcclImplTest, ut_hcclimpl_AiCpuSetCommResource_AIVRoce)
     }
 
     MOCKER_CPP(&Transport::GetRemoteMem, HcclResult(Transport::*)(hccl::UserMemType, void**))
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
-
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
     MOCKER_CPP(&Transport::GetRemoteMem, HcclResult(Transport::*)(std::vector<void*>*))
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&Transport::GetRemoteMemKey, HcclResult(Transport::*)(hccl::UserMemType, uint32_t *))
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&Transport::GetRemoteMemKey, HcclResult(Transport::*)(hccl::UserMemType, uint32_t*))
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&Transport::GetLocalMemDetails)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&Transport::GetLocalMemDetails).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     std::vector<HcclQpInfoV2> qpInfos(1);
     MOCKER_CPP(&Transport::GetAiQpInfo).stubs().with(outBound(qpInfos)).will(returnValue(HCCL_SUCCESS));
 
-
-    MOCKER_CPP(&Transport::GetChipId)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&Transport::GetChipId).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     // 配置profiling开关
-    auto &profilingManager = hccl::ProfilingManager::Instance();
+    auto& profilingManager = hccl::ProfilingManager::Instance();
     profilingManager.StartAdditionInfoSubscribe();
 
     machine_para.localDeviceId = 0;
@@ -5430,9 +4968,7 @@ TEST_F(HcclImplTest, ut_hcclimpl_AiCpuSetCommResource_AIVRoce)
         .with(mockcpp::any(), outBound(commBufferSize))
         .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(hrtMemAsyncCopy)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtMemAsyncCopy).stubs().will(returnValue(HCCL_SUCCESS));
 
     rtStream_t aiCpuStream;
     Stream stream(aiCpuStream);
@@ -5442,7 +4978,7 @@ TEST_F(HcclImplTest, ut_hcclimpl_AiCpuSetCommResource_AIVRoce)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     ret = implBase->H2DAiRMAInfo(tag, aiCpuStream);
-    HcclCombinOpParam *combinOparaPtr = reinterpret_cast<HcclCombinOpParam *>(implBase->combinOparaMem_->ptr());
+    HcclCombinOpParam* combinOparaPtr = reinterpret_cast<HcclCombinOpParam*>(implBase->combinOparaMem_->ptr());
     EXPECT_NE(combinOparaPtr->aiRMAInfo, nullptr);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
@@ -5462,10 +4998,7 @@ TEST_F(HcclImplTest, ut_clean_ccl_buffer)
     TestConstructParam(params, rankTable);
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     HcclResult ret;
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -5475,7 +5008,7 @@ TEST_F(HcclImplTest, ut_clean_ccl_buffer)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
 
-TEST_F(HcclImplTest,st_AivResume)
+TEST_F(HcclImplTest, st_AivResume)
 {
     HcclCommParams params;
     RankTable_t rankTable;
@@ -5483,18 +5016,13 @@ TEST_F(HcclImplTest,st_AivResume)
     HcclResult ret;
     std::unique_ptr<HcclCommunicator> hcclCommunicator(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = hcclCommunicator->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ret = hcclCommunicator->cclBufferManager_.CreateCommAIVbuffer(true);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    MOCKER(GetExternalInputHcclAivMode)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER(GetExternalInputHcclAivMode).stubs().will(returnValue(true));
 
     hcclCommunicator->AivResume();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -5509,9 +5037,7 @@ TEST_F(HcclImplTest, ut_AllocTransport910B)
     HcclResult ret = HCCL_SUCCESS;
 
     TransportType transportType = TransportType::TRANS_TYPE_ROCE;
-    MOCKER_CPP(&TransportManager::GetTransportType)
-    .stubs()
-    .will(returnValue(transportType));
+    MOCKER_CPP(&TransportManager::GetTransportType).stubs().will(returnValue(transportType));
 
     HcclCommParams params;
     RankTable_t rankTable;
@@ -5535,7 +5061,7 @@ TEST_F(HcclImplTest, ut_AllocTransport910B)
     SingleSubCommTransport singleTrans;
     singleTrans.transportRequests.emplace_back(transportReq1);
     singleTrans.transportRequests.emplace_back(transportReq2);
-    singleTrans.links.resize(2,nullptr);
+    singleTrans.links.resize(2, nullptr);
     singleTrans.status.resize(2, TransportStatus::INIT);
     LevelNSubCommTransport levelTrans;
     levelTrans.emplace_back(singleTrans);
@@ -5547,18 +5073,23 @@ TEST_F(HcclImplTest, ut_AllocTransport910B)
     MOCKER_CPP(&NotifyPool::UnregisterOp).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     MOCKER(hrtGetDeviceType).stubs().with(outBound(DevType::DEV_TYPE_910B)).will(returnValue(HCCL_SUCCESS));
 
-   // stubs in CreateDestSockets
-    MOCKER_CPP(&TransportManager::UpdateIsInterRdma).stubs().with(mockcpp::any(), outBound(false), mockcpp::any()).will(ignoreReturnValue());
+    // stubs in CreateDestSockets
+    MOCKER_CPP(&TransportManager::UpdateIsInterRdma)
+        .stubs()
+        .with(mockcpp::any(), outBound(false), mockcpp::any())
+        .will(ignoreReturnValue());
     MOCKER_CPP(&TransportManager::MakeRemoteLinkInfo).stubs().will(returnValue(HCCL_SUCCESS));
 
-   // stubs in CreateLink
+    // stubs in CreateLink
     MOCKER(hrtErrMSetErrorContextPub).stubs().with(mockcpp::any()).will(ignoreReturnValue());
     MOCKER(hrtSetDevice).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&TransportManager::TransportInit).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     MOCKER(hrtResetDevice).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&HcclSocketManager::DestroySockets, void(HcclSocketManager::*)(const std::string&))
-    .stubs().with(mockcpp::any()).will(ignoreReturnValue());
+        .stubs()
+        .with(mockcpp::any())
+        .will(ignoreReturnValue());
 
     std::string tag = "test";
     ret = communicator->transportManager_->Alloc(tag, transMem, opTrans, true, true);
@@ -5601,25 +5132,36 @@ TEST_F(HcclImplTest, ut_AllocTransport910C)
 
     MOCKER_CPP(&TransportManager::GetIOMem).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-   // stubs in CreateDestSockets
-    MOCKER_CPP(&TransportManager::UpdateIsInterRdma).stubs().with(mockcpp::any(), outBound(false), mockcpp::any()).will(ignoreReturnValue());
+    // stubs in CreateDestSockets
+    MOCKER_CPP(&TransportManager::UpdateIsInterRdma)
+        .stubs()
+        .with(mockcpp::any(), outBound(false), mockcpp::any())
+        .will(ignoreReturnValue());
     MOCKER_CPP(&TransportManager::MakeRemoteLinkInfo).stubs().will(returnValue(HCCL_SUCCESS));
 
     // stubs in IsHccsTransport
-    MOCKER(hrtGetPairDeviceLinkType).stubs().with(mockcpp::any(), mockcpp::any(), outBound(LinkTypeInServer::HCCS_SW_TYPE)).will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetPairDeviceLinkType)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), outBound(LinkTypeInServer::HCCS_SW_TYPE))
+        .will(returnValue(HCCL_SUCCESS));
 
     MOCKER(Is310PDevice).stubs().will(returnValue(false));
     MOCKER_CPP(&HcclSocketManager::CreateSingleLinkSocket).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-   // stubs in CreateLink
+    // stubs in CreateLink
     MOCKER(hrtErrMSetErrorContextPub).stubs().with(mockcpp::any()).will(ignoreReturnValue());
     MOCKER(hrtSetDevice).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&TransportManager::TransportInit).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     MOCKER(hrtResetDevice).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&TransportManager::checkSubCommLinkThreadsStatus).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::checkSubCommLinkThreadsStatus)
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&HcclSocketManager::DestroySockets, void(HcclSocketManager::*)(const std::string&))
-    .stubs().with(mockcpp::any()).will(ignoreReturnValue());
+        .stubs()
+        .with(mockcpp::any())
+        .will(ignoreReturnValue());
 
     std::string tag = "test";
     ret = communicator->transportManager_->AllocSubCommLinks(tag, transMem, singleTrans, false, false, 0);
@@ -5703,9 +5245,10 @@ TEST_F(HcclImplTest, ut_TransportMgrConstructTransTag)
     ret1 = communicator->transportManager_->IsHccsTransport(0, TransportLinkType::SIO);
     EXPECT_EQ(ret1, false);
 
-    MOCKER(hrtGetPairDeviceLinkType).stubs()
-    .with(mockcpp::any(), mockcpp::any(), outBound(LinkTypeInServer::SIO_TYPE))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetPairDeviceLinkType)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), outBound(LinkTypeInServer::SIO_TYPE))
+        .will(returnValue(HCCL_SUCCESS));
     ret1 = communicator->transportManager_->IsHccsTransport(0, TransportLinkType::RESERVED);
     EXPECT_EQ(ret1, false);
     GlobalMockObject::verify();
@@ -5730,22 +5273,32 @@ TEST_F(HcclImplTest, ut_TransportMgrExceptionHandle)
 
     SingleSubCommTransport singleTrans;
     singleTrans.transportRequests.emplace_back(transportReq1);
-    singleTrans.links.resize(2,nullptr);
+    singleTrans.links.resize(2, nullptr);
     singleTrans.status.resize(2, TransportStatus::INIT);
     LevelNSubCommTransport levelTrans;
     levelTrans.emplace_back(singleTrans);
     OpCommTransport opTrans;
     opTrans.emplace_back(levelTrans);
 
-    MOCKER_CPP(&TransportManager::UpdateIsInterRdma).stubs().with(mockcpp::any(), outBound(false), mockcpp::any()).will(ignoreReturnValue());
+    MOCKER_CPP(&TransportManager::UpdateIsInterRdma)
+        .stubs()
+        .with(mockcpp::any(), outBound(false), mockcpp::any())
+        .will(ignoreReturnValue());
     MOCKER_CPP(&TransportManager::MakeRemoteLinkInfo).stubs().will(returnValue(HCCL_SUCCESS));
 
     // stubs in IsHccsTransport
-    MOCKER(hrtGetPairDeviceLinkType).stubs().with(mockcpp::any(), mockcpp::any(), outBound(LinkTypeInServer::HCCS_SW_TYPE)).will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetPairDeviceLinkType)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), outBound(LinkTypeInServer::HCCS_SW_TYPE))
+        .will(returnValue(HCCL_SUCCESS));
 
     MOCKER(Is310PDevice).stubs().will(returnValue(false));
-    MOCKER_CPP(&HcclSocketManager::AddWhiteList, HcclResult(HcclSocketManager::*)(const std::string&, const HcclNetDevCtx, HcclRankLinkInfo))
-    .stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(
+        &HcclSocketManager::AddWhiteList,
+        HcclResult(HcclSocketManager::*)(const std::string&, const HcclNetDevCtx, HcclRankLinkInfo))
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
     std::string tag("test");
     ret = communicator->transportManager_->ExceptionHandle(tag, opTrans);
@@ -5775,21 +5328,21 @@ TEST_F(HcclImplTest, ut_TransportMgrSetMachinePara)
     RankInfo loaclRankInfo;
     RankInfo remoteRankInfo;
 
-    ret = communicator->transportManager_->SetMachinePara(tag, machineType, serverId, 1, true, LinkMode::LINK_DUPLEX_MODE,
-        socketList, inputMem, outputMem, expMem, false, false, false, 1, 0, 1, machinePara, loaclRankInfo, remoteRankInfo,
-        TransportLinkType::RESERVED);
+    ret = communicator->transportManager_->SetMachinePara(
+        tag, machineType, serverId, 1, true, LinkMode::LINK_DUPLEX_MODE, socketList, inputMem, outputMem, expMem, false,
+        false, false, 1, 0, 1, machinePara, loaclRankInfo, remoteRankInfo, TransportLinkType::RESERVED);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(machinePara.specifyLink, LinkTypeInServer::RESERVED_LINK_TYPE);
 
-    ret = communicator->transportManager_->SetMachinePara(tag, machineType, serverId, 1, true, LinkMode::LINK_DUPLEX_MODE,
-        socketList, inputMem, outputMem, expMem, false, false, false, 1, 0, 1, machinePara, loaclRankInfo, remoteRankInfo,
-        TransportLinkType::HCCS);
+    ret = communicator->transportManager_->SetMachinePara(
+        tag, machineType, serverId, 1, true, LinkMode::LINK_DUPLEX_MODE, socketList, inputMem, outputMem, expMem, false,
+        false, false, 1, 0, 1, machinePara, loaclRankInfo, remoteRankInfo, TransportLinkType::HCCS);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(machinePara.specifyLink, LinkTypeInServer::HCCS_SW_TYPE);
 
-    ret = communicator->transportManager_->SetMachinePara(tag, machineType, serverId, 1, true, LinkMode::LINK_DUPLEX_MODE,
-        socketList, inputMem, outputMem, expMem, false, false, false, 1, 0, 1, machinePara, loaclRankInfo, remoteRankInfo,
-        TransportLinkType::SIO);
+    ret = communicator->transportManager_->SetMachinePara(
+        tag, machineType, serverId, 1, true, LinkMode::LINK_DUPLEX_MODE, socketList, inputMem, outputMem, expMem, false,
+        false, false, 1, 0, 1, machinePara, loaclRankInfo, remoteRankInfo, TransportLinkType::SIO);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(machinePara.specifyLink, LinkTypeInServer::SIO_TYPE);
     GlobalMockObject::verify();
@@ -5798,30 +5351,16 @@ TEST_F(HcclImplTest, ut_TransportMgrSetMachinePara)
 TEST_F(HcclImplTest, ut_update_zerocopy)
 {
     HcclResult ret = HCCL_SUCCESS;
-    MOCKER(GetWorkflowMode)
-    .stubs()
-    .will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE));
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(GetWorkflowMode).stubs().will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&StreamActiveManager::StreamActive)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&StreamActiveManager::StreamActive).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(GetExternalInputHcclEnableFfts)
-    .stubs()
-    .will(returnValue(false));
+    MOCKER(GetExternalInputHcclEnableFfts).stubs().will(returnValue(false));
     HcclCommParams params;
     RankTable_t rankTable;
     TestConstructParam_1server_8p(params, rankTable);
@@ -5834,13 +5373,14 @@ TEST_F(HcclImplTest, ut_update_zerocopy)
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     HcclIpAddress serverIp("172.17.10.1");
     HcclIpAddress localIp("172.17.10.1");
-    SetRetryEnable(DevType::DEV_TYPE_910, 1, 1, 2, true, implBase->GetAivModeConfig(), serverIp, localIp, implBase->retryEnable_);
+    SetRetryEnable(
+        DevType::DEV_TYPE_910, 1, 1, 2, true, implBase->GetAivModeConfig(), serverIp, localIp, implBase->retryEnable_);
     SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
 
     impl->topoAttr_.deviceLogicId = 0;
@@ -5863,15 +5403,13 @@ TEST_F(HcclImplTest, ut_update_zerocopy)
     opParam.stream = Stream(StreamType::STREAM_TYPE_ONLINE);
     opParam.aicpuUnfoldMode = true;
     opParam.isZeroCopy = true;
-    const std::vector<std::vector<u32>> tmpRingNics = {
-        { 0, 1, 2, 3, 4, 5, 6, 7 },
-        { 0, 1, 2, 3, 4, 5, 6, 7 }
-    };
+    const std::vector<std::vector<u32>> tmpRingNics = {{0, 1, 2, 3, 4, 5, 6, 7}, {0, 1, 2, 3, 4, 5, 6, 7}};
     AlgResourceRequest resourceRequest;
     AlgResourceResponse resourceResponse;
     ret = executor->CalcResRequest(opParam, resourceRequest);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    implBase->AllocAlgResource(opParam.tag, HcclCMDType::HCCL_CMD_ALLGATHER, opParam, resourceRequest, resourceResponse);
+    implBase->AllocAlgResource(
+        opParam.tag, HcclCMDType::HCCL_CMD_ALLGATHER, opParam, resourceRequest, resourceResponse);
     resourceResponse.cclInputMem = inputMem;
     resourceResponse.cclOutputMem = outputMem;
     resourceResponse.slaveStreams.resize(3);
@@ -5881,17 +5419,18 @@ TEST_F(HcclImplTest, ut_update_zerocopy)
     resourceResponse.notifiesDevAux.resize(3);
 
     resourceResponse.threadManage.resize(3);
-    for (u32 ringIndex = 0; ringIndex < 3; ringIndex ++) {
-        resourceResponse.threadManage[ringIndex].reset(new (std::nothrow) ThreadManage(ringIndex, ringIndex, impl->dispatcher_));
+    for (u32 ringIndex = 0; ringIndex < 3; ringIndex++) {
+        resourceResponse.threadManage[ringIndex].reset(new (std::nothrow)
+                                                           ThreadManage(ringIndex, ringIndex, impl->dispatcher_));
     }
 
-    for (auto &singleSubCommTransport : resourceResponse.opTransportResponse[COMM_LEVEL0]) {
+    for (auto& singleSubCommTransport : resourceResponse.opTransportResponse[COMM_LEVEL0]) {
         for (u64 i = 0; i < singleSubCommTransport.links.size(); ++i) {
             singleSubCommTransport.transportRequests[i].isValid = true;
             MachinePara linkPara;
             std::chrono::milliseconds kdefaultTimeout = std::chrono::seconds(120);
-            std::shared_ptr<Transport> link(new Transport(new (std::nothrow) TransportBase(
-                    nullptr, nullptr, linkPara, kdefaultTimeout)));
+            std::shared_ptr<Transport> link(
+                new Transport(new (std::nothrow) TransportBase(nullptr, nullptr, linkPara, kdefaultTimeout)));
             singleSubCommTransport.links[i] = link;
         }
     }
@@ -5906,30 +5445,16 @@ TEST_F(HcclImplTest, ut_update_zerocopy)
 TEST_F(HcclImplTest, ut_prepare_zerocopy_algname)
 {
     HcclResult ret = HCCL_SUCCESS;
-    MOCKER(GetWorkflowMode)
-    .stubs()
-    .will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE));
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(GetWorkflowMode).stubs().will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&StreamActiveManager::StreamActive)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&StreamActiveManager::StreamActive).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(GetExternalInputHcclEnableFfts)
-    .stubs()
-    .will(returnValue(false));
+    MOCKER(GetExternalInputHcclEnableFfts).stubs().will(returnValue(false));
     HcclCommParams params;
     RankTable_t rankTable;
     TestConstructParam_1server_8p(params, rankTable);
@@ -5942,13 +5467,14 @@ TEST_F(HcclImplTest, ut_prepare_zerocopy_algname)
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     HcclIpAddress serverIp("172.17.10.1");
     HcclIpAddress localIp("172.17.10.1");
-    SetRetryEnable(DevType::DEV_TYPE_910, 1, 1, 2, true, implBase->GetAivModeConfig(), serverIp, localIp, implBase->retryEnable_);
+    SetRetryEnable(
+        DevType::DEV_TYPE_910, 1, 1, 2, true, implBase->GetAivModeConfig(), serverIp, localIp, implBase->retryEnable_);
     SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
 
     impl->topoAttr_.deviceLogicId = 0;
@@ -5969,10 +5495,7 @@ TEST_F(HcclImplTest, ut_prepare_zerocopy_algname)
     opParam.DataDes.dataType = HCCL_DATA_TYPE_FP32;
     opParam.stream = Stream(StreamType::STREAM_TYPE_ONLINE);
     opParam.aicpuUnfoldMode = true;
-    const std::vector<std::vector<u32>> tmpRingNics = {
-        { 0, 1, 2, 3, 4, 5, 6, 7 },
-        { 0, 1, 2, 3, 4, 5, 6, 7 }
-    };
+    const std::vector<std::vector<u32>> tmpRingNics = {{0, 1, 2, 3, 4, 5, 6, 7}, {0, 1, 2, 3, 4, 5, 6, 7}};
 
     bool isSupportZeroCopy = implBase->IsSupportZeroCopy(opParam);
     AlgDesc algDesc;
@@ -5985,30 +5508,16 @@ TEST_F(HcclImplTest, ut_prepare_zerocopy_algname)
 TEST_F(HcclImplTest, ut_prepare_zerocopy_op)
 {
     HcclResult ret = HCCL_SUCCESS;
-    MOCKER(GetWorkflowMode)
-    .stubs()
-    .will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE));
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(GetWorkflowMode).stubs().will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&StreamActiveManager::StreamActive)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&StreamActiveManager::StreamActive).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(GetExternalInputHcclEnableFfts)
-    .stubs()
-    .will(returnValue(false));
+    MOCKER(GetExternalInputHcclEnableFfts).stubs().will(returnValue(false));
     HcclCommParams params;
     RankTable_t rankTable;
     TestConstructParam_1server_8p(params, rankTable);
@@ -6021,13 +5530,14 @@ TEST_F(HcclImplTest, ut_prepare_zerocopy_op)
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
 
     HcclIpAddress serverIp("172.17.10.1");
     HcclIpAddress localIp("172.17.10.1");
-    SetRetryEnable(DevType::DEV_TYPE_910, 1, 1, 2, true, implBase->GetAivModeConfig(), serverIp, localIp, implBase->retryEnable_);
+    SetRetryEnable(
+        DevType::DEV_TYPE_910, 1, 1, 2, true, implBase->GetAivModeConfig(), serverIp, localIp, implBase->retryEnable_);
     SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
 
     impl->topoAttr_.deviceLogicId = 0;
@@ -6048,10 +5558,7 @@ TEST_F(HcclImplTest, ut_prepare_zerocopy_op)
     opParam.DataDes.dataType = HCCL_DATA_TYPE_INT64;
     opParam.stream = Stream(StreamType::STREAM_TYPE_ONLINE);
     opParam.aicpuUnfoldMode = true;
-    const std::vector<std::vector<u32>> tmpRingNics = {
-        { 0, 1, 2, 3, 4, 5, 6, 7 },
-        { 0, 1, 2, 3, 4, 5, 6, 7 }
-    };
+    const std::vector<std::vector<u32>> tmpRingNics = {{0, 1, 2, 3, 4, 5, 6, 7}, {0, 1, 2, 3, 4, 5, 6, 7}};
 
     bool isSupportZeroCopy = implBase->IsSupportZeroCopy(opParam);
     AlgDesc algDesc;
@@ -6066,9 +5573,7 @@ TEST_F(HcclImplTest, ut_AllocTransportZeroCopy)
     HcclResult ret = HCCL_SUCCESS;
 
     TransportType transportType = TransportType::TRANS_TYPE_ROCE;
-    MOCKER_CPP(&TransportManager::GetTransportType)
-    .stubs()
-    .will(returnValue(transportType));
+    MOCKER_CPP(&TransportManager::GetTransportType).stubs().will(returnValue(transportType));
 
     HcclCommParams params;
     RankTable_t rankTable;
@@ -6097,7 +5602,7 @@ TEST_F(HcclImplTest, ut_AllocTransportZeroCopy)
     SingleSubCommTransport singleTrans;
     singleTrans.transportRequests.emplace_back(transportReq1);
     singleTrans.transportRequests.emplace_back(transportReq2);
-    singleTrans.links.resize(2,nullptr);
+    singleTrans.links.resize(2, nullptr);
     singleTrans.status.resize(2, TransportStatus::INIT);
     LevelNSubCommTransport levelTrans;
     levelTrans.emplace_back(singleTrans);
@@ -6109,21 +5614,27 @@ TEST_F(HcclImplTest, ut_AllocTransportZeroCopy)
     MOCKER_CPP(&NotifyPool::UnregisterOp).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     MOCKER(hrtGetDeviceType).stubs().with(outBound(DevType::DEV_TYPE_910_93)).will(returnValue(HCCL_SUCCESS));
 
-   // stubs in CreateDestSockets
-    MOCKER_CPP(&TransportManager::UpdateIsInterRdma).stubs().with(mockcpp::any(), outBound(false), mockcpp::any()).will(ignoreReturnValue());
+    // stubs in CreateDestSockets
+    MOCKER_CPP(&TransportManager::UpdateIsInterRdma)
+        .stubs()
+        .with(mockcpp::any(), outBound(false), mockcpp::any())
+        .will(ignoreReturnValue());
     MOCKER_CPP(&TransportManager::MakeRemoteLinkInfo).stubs().will(returnValue(HCCL_SUCCESS));
 
-   // stubs in CreateLink
+    // stubs in CreateLink
     MOCKER(hrtErrMSetErrorContextPub).stubs().with(mockcpp::any()).will(ignoreReturnValue());
     MOCKER(hrtSetDevice).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&TransportManager::TransportInit).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     MOCKER(hrtResetDevice).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&HcclSocketManager::DestroySockets, void(HcclSocketManager::*)(const std::string&))
-    .stubs().with(mockcpp::any()).will(ignoreReturnValue());
+        .stubs()
+        .with(mockcpp::any())
+        .will(ignoreReturnValue());
 
     std::string tag = "test";
-    ret = communicator->transportManager_->Alloc(tag, transMem, opTrans, true, true, true, HcclCMDType::HCCL_CMD_ALLGATHER);
+    ret = communicator->transportManager_->Alloc(
+        tag, transMem, opTrans, true, true, true, HcclCMDType::HCCL_CMD_ALLGATHER);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     GlobalMockObject::verify();
 }
@@ -6141,25 +5652,16 @@ TEST_F(HcclImplTest, ut_zerocopy_alloc_slave_empty)
     rankTable.serverNum = 1;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER(GetWorkflowMode)
-    .stubs()
-    .will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB));
-    MOCKER_CPP(&HcclCommunicator::IsForceAicpuOpBaseMode)
-    .stubs()
-    .will(returnValue(false));
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&OpBaseStreamManager::AllocSlaves)
-    .stubs()
-    .will(returnValue(std::vector<Stream>()));
+    MOCKER(GetWorkflowMode).stubs().will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB));
+    MOCKER_CPP(&HcclCommunicator::IsForceAicpuOpBaseMode).stubs().will(returnValue(false));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&OpBaseStreamManager::AllocSlaves).stubs().will(returnValue(std::vector<Stream>()));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     CollAllGatherRingExecutor* executor = new CollAllGatherRingExecutor(impl->dispatcher_, topoMatcher);
     executor->workflowMode_ = HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB;
     executor->SetAlgType(AlgType());
@@ -6186,7 +5688,8 @@ TEST_F(HcclImplTest, ut_zerocopy_alloc_slave_empty)
     resourceRequest.scratchMemSize = 4096;
     resourceRequest.isInGraphCaptureZeroCopy = true;
     resourceRequest.streamNum = 2;
-    implBase->AllocAlgResource(opParam.tag, HcclCMDType::HCCL_CMD_ALLGATHER, opParam, resourceRequest, resourceResponse);
+    implBase->AllocAlgResource(
+        opParam.tag, HcclCMDType::HCCL_CMD_ALLGATHER, opParam, resourceRequest, resourceResponse);
 
     delete executor;
     GlobalMockObject::verify();
@@ -6274,13 +5777,13 @@ TEST_F(HcclImplTest, ut_hcclimpl_AiCpuSetCommResource_EnvTest)
 {
     u32 ifnumVersion = 3;
     MOCKER(hrtRaGetInterfaceVersion)
-    .stubs()
-    .with(mockcpp::any(), mockcpp::any(), outBoundP(&ifnumVersion))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), outBoundP(&ifnumVersion))
+        .will(returnValue(HCCL_SUCCESS));
 
-    void *commInputPtr = nullptr;
+    void* commInputPtr = nullptr;
     u64 commInputSize;
-    void *commOutputPtr = nullptr;
+    void* commOutputPtr = nullptr;
     u64 commOutputSize = 0;
     HcclResult ret;
     DeviceMem inputMem = DeviceMem::alloc(4096);
@@ -6297,14 +5800,11 @@ TEST_F(HcclImplTest, ut_hcclimpl_AiCpuSetCommResource_EnvTest)
     TestConstructParam(params, rankTable);
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    hcclImpl *impl = implBase->implAlg_->pimpl_.get();
+    hcclImpl* impl = implBase->implAlg_->pimpl_.get();
 
     ret = implBase->GetInCCLbuffer(commInputPtr, commInputSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -6320,9 +5820,9 @@ TEST_F(HcclImplTest, ut_hcclimpl_AiCpuSetCommResource_EnvTest)
     tmpComm.commLevel0.resize(4);
     std::map<HcclIpAddress, HcclNetDevCtx> netDevCtxMap;
     for (int i = 0; i < 4; i++) {
-        tmpComm.commLevel0[i].reset(new (std::nothrow) CommMesh(tag, 0, 4, curRankId, rankSize,
-            TopoType::TOPO_TYPE_8P_MESH, implBase->dispatcher_, implBase->notifyPool_, netDevCtxMap, exchanger,
-            paraVector, inputMem, outputMem, true, ""));
+        tmpComm.commLevel0[i].reset(new (std::nothrow) CommMesh(
+            tag, 0, 4, curRankId, rankSize, TopoType::TOPO_TYPE_8P_MESH, implBase->dispatcher_, implBase->notifyPool_,
+            netDevCtxMap, exchanger, paraVector, inputMem, outputMem, true, ""));
     }
     EXPECT_EQ(tmpComm.commLevel0[0]->transportInfo_.size(), rankSize);
     tmpComm.commLevel0[0]->transportInfo_.clear();
@@ -6384,37 +5884,29 @@ TEST_F(HcclImplTest, ut_hcclimpl_AiCpuSetCommResource_EnvTest)
     }
 
     MOCKER_CPP(&Transport::GetRemoteMem, HcclResult(Transport::*)(hccl::UserMemType, void**))
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
-
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
     MOCKER_CPP(&Transport::GetRemoteMem, HcclResult(Transport::*)(std::vector<void*>*))
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&Transport::GetRemoteMemKey, HcclResult(Transport::*)(hccl::UserMemType, uint32_t *))
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&Transport::GetRemoteMemKey, HcclResult(Transport::*)(hccl::UserMemType, uint32_t*))
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&Transport::GetLocalMemDetails)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&Transport::GetLocalMemDetails).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     std::vector<HcclQpInfoV2> qpInfos(1);
     MOCKER_CPP(&Transport::GetAiQpInfo).stubs().with(outBound(qpInfos)).will(returnValue(HCCL_SUCCESS));
 
-
-    MOCKER_CPP(&Transport::GetChipId)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&Transport::GetChipId).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     // 配置profiling开关
-    auto &profilingManager = hccl::ProfilingManager::Instance();
+    auto& profilingManager = hccl::ProfilingManager::Instance();
     profilingManager.StartAdditionInfoSubscribe();
 
     // MachinePara machinePara;
@@ -6445,19 +5937,11 @@ TEST_F(HcclImplTest, ut_hcclimpl_AiCpuSetCommResource_EnvTest)
     implBase->tagStreamInfo_.insert(std::pair<std::string, Level1StreamInfo>(tag, std::move(tmpInnerStreamInfo)));
 
     u32 intraRoceSwitch = 0;
-    MOCKER(GetExternalInputIntraRoceSwitch)
-        .stubs()
-        .will(returnValue(intraRoceSwitch));
+    MOCKER(GetExternalInputIntraRoceSwitch).stubs().will(returnValue(intraRoceSwitch));
 
-    MOCKER_CPP(&HcclCommunicator::InitNic)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitNic).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::CreateCommAndStreamRes)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::CreateCommAndStreamRes).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     MOCKER_CPP(&HcclCommunicator::Mc2CreateAndLaunchContext)
         .stubs()

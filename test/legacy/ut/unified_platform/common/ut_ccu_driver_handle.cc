@@ -19,27 +19,18 @@
 #include "hccp_tlv.h"
 #include "ccu_component.h"
 #include "ccu_context_mgr_imp.h"
-#include "ccu_res_batch_allocator.h"
+#include "ccu_res_batch_allocator_legacy.h"
 
 using namespace testing;
 using namespace Hccl;
 // Test suite class
 class CcuDriverHandleTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CcuDriverHandle SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CcuDriverHandle SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CcuDriverHandle TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CcuDriverHandle TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in CcuDriverHandle SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in CcuDriverHandle SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -48,7 +39,8 @@ protected:
     }
 };
 
-TEST_F(CcuDriverHandleTest, should_successfully_init_CcuDriverHandle) {
+TEST_F(CcuDriverHandleTest, should_successfully_init_CcuDriverHandle)
+{
     u32 deviceLogicId = 0;
     MOCKER(RaTlvRequest).stubs().will(returnValue(0));
     void* mockTlvHandle = reinterpret_cast<void*>(0x1234);
@@ -58,4 +50,3 @@ TEST_F(CcuDriverHandleTest, should_successfully_init_CcuDriverHandle) {
     MOCKER_CPP(&CtxMgrImp::Init).stubs();
     CcuDriverHandle manager(deviceLogicId);
 }
-

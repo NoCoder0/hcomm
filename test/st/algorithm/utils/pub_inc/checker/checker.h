@@ -29,13 +29,13 @@ class Checker {
 public:
     Checker();
     virtual ~Checker();
-    HcclResult Check(CheckerOpParam &checkerOpParam, TopoMeta &topoMeta);
+    HcclResult Check(CheckerOpParam& checkerOpParam, TopoMeta& topoMeta);
 
     void EnableTaskPrint();
     void EnableGraphicDump();
     void EnableGraphPrint();
     void CloseRankMemCheck();
-    static void SetDumpFileName(const string &fileName);
+    static void SetDumpFileName(const string& fileName);
     void setCheckerLogWarn();
 
 private:
@@ -46,8 +46,9 @@ private:
     void CopyTaskGraph(TaskNodePtr originNode, TaskNodePtr copyNode);
     void CopyAivTaskGraph(TaskNodePtr originNode, TaskNodePtr copyNode);
     HcclResult CopyCcuTaskGraph(TaskNodePtr originNode, TaskNodePtr copyNode);
-    HcclResult RankMemCheck(TaskNode &dummyStart, TaskNode &dummyStartCopy, CheckerOpParam &checkerOpParam, u32 rankNum);
-    HcclResult CheckPrimGraphs(CheckerOpParam &checkerOpParam, u32 rankNum);
+    HcclResult
+    RankMemCheck(TaskNode& dummyStart, TaskNode& dummyStartCopy, CheckerOpParam& checkerOpParam, u32 rankNum);
+    HcclResult CheckPrimGraphs(CheckerOpParam& checkerOpParam, u32 rankNum);
 
     vector<TaskStub*> toDeleteCopyTaskResource_;
     vector<TaskNodePtr> toDeleteCopyTaskNodeResource_;
@@ -57,11 +58,11 @@ private:
     bool enableGraphPrint_ = false;
     bool closeRankMemCheck_ = false;
 
-    u64  allignSize_   = 128; // 128 bytes by default
+    u64 allignSize_ = 128; // 128 bytes by default
 };
 
 void CheckerReset();
 
-} // namespace hccl
+} // namespace checker
 
 #endif

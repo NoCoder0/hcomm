@@ -26,51 +26,51 @@ struct rdma_lite_device_cq_init_attr {
 };
 
 struct rdma_lite_device_buf {
-    unsigned long long  va;
-    unsigned int        len;
+    unsigned long long va;
+    unsigned int len;
 };
 
 struct rdma_lite_device_cq_attr {
-    unsigned int                depth;      // 创建的CQ深度
-    unsigned int                flags;      // 是否支持Record DB，1:支持，0:不支持
-    unsigned int                cqe_size;   // CQE大小
-    unsigned int                cqn;        // CQ编号
-    struct rdma_lite_device_buf    cq_buf;     // CQ buf的Device侧VA和 len
-    struct rdma_lite_device_buf    swdb_buf;   // CQ软件DB的Device侧VA 和 len
+    unsigned int depth;                   // 创建的CQ深度
+    unsigned int flags;                   // 是否支持Record DB，1:支持，0:不支持
+    unsigned int cqe_size;                // CQE大小
+    unsigned int cqn;                     // CQ编号
+    struct rdma_lite_device_buf cq_buf;   // CQ buf的Device侧VA和 len
+    struct rdma_lite_device_buf swdb_buf; // CQ软件DB的Device侧VA 和 len
 };
 
 struct rdma_lite_device_mem_attr {
-    unsigned long long  va;
-    unsigned int        mem_size;
-    unsigned int        mem_idx;
+    unsigned long long va;
+    unsigned int mem_size;
+    unsigned int mem_idx;
 };
 
 struct rdma_lite_device_wqe {
-    int                     max_post;
-    unsigned int            max_gs;
-    unsigned int            wqe_cnt;
-    unsigned int            wqe_shift;
-    int                     offset;
-    unsigned int            wrid_len;
-    unsigned int            shift; /* wq size is 2^shift */
-    struct rdma_lite_device_buf     db_buf;
+    int max_post;
+    unsigned int max_gs;
+    unsigned int wqe_cnt;
+    unsigned int wqe_shift;
+    int offset;
+    unsigned int wrid_len;
+    unsigned int shift; /* wq size is 2^shift */
+    struct rdma_lite_device_buf db_buf;
 };
 
 struct rdma_lite_device_sge {
-    int             offset;
-    unsigned int            sge_cnt;
-    int             sge_shift;
+    int offset;
+    unsigned int sge_cnt;
+    int sge_shift;
 };
 
 struct rdma_lite_device_qp_attr {
-    unsigned int                        max_inline_data;
-    unsigned int                        next_sge;
-    int                                 qp_info;
-    unsigned int                        qpn;
-    struct rdma_lite_device_buf     qp_buf;
-    struct rdma_lite_device_wqe                 sq;
-    struct rdma_lite_device_wqe                 rq;
-    struct rdma_lite_device_sge                 sge;
+    unsigned int max_inline_data;
+    unsigned int next_sge;
+    int qp_info;
+    unsigned int qpn;
+    struct rdma_lite_device_buf qp_buf;
+    struct rdma_lite_device_wqe sq;
+    struct rdma_lite_device_wqe rq;
+    struct rdma_lite_device_sge sge;
 };
 
 struct roce_mem_cq_qp_attr {
@@ -89,10 +89,10 @@ struct roce_mem_cq_qp_attr {
 };
 
 struct dev_cap_info {
-    unsigned int num_qps;            // 设备可以使用的QP数量
-    unsigned int port_num;           // 设备有几个物理端口
-    int          qp_table_shift;
-    int          qp_table_mask;
+    unsigned int num_qps;  // 设备可以使用的QP数量
+    unsigned int port_num; // 设备有几个物理端口
+    int qp_table_shift;
+    int qp_table_mask;
     unsigned int max_qp_wr;
     unsigned int max_sge;
     unsigned int page_size;

@@ -18,6 +18,7 @@ set(ra_peer_list
     ${BASE_DIR}/ctx/ra_ctx_comm.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/dl_hal_function.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/ascend_hal_dl.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../inc/private/network/log/config_log.c
 )
 
 #编译目标
@@ -30,11 +31,12 @@ target_include_directories(ra_peer PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../../rdma_service
     ${CMAKE_CURRENT_SOURCE_DIR}/../../inc/network
     ${CMAKE_CURRENT_SOURCE_DIR}/../../inc/private/network
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../inc/private/network/log
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/
 
     # rdma头文件
     ${CMAKE_CURRENT_SOURCE_DIR}/../../external_depends/host_lite
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../external_depends/nda
+    ${IBV_EXTEND_INCLUDE_DIR}
 
     # HCCP Legacy
     ${CMAKE_CURRENT_SOURCE_DIR}/../../rdma_agent/comm/ctx
@@ -45,17 +47,22 @@ if(NOT BUILD_OPEN_PROJECT)
     target_include_directories(ra_peer PRIVATE
         ${TOP_DIR}/runtime/pkg_inc/base
         ${TOP_DIR}/driver/driver/pkg_inc/
+        ${TOP_DIR}/driver/driver/src/custom/nda/ibv_extend/
     )
 endif()
 
 target_compile_options(ra_peer PRIVATE
     -Werror
-    -Wno-unused-parameter
-    -Wno-missing-field-initializers
     -fno-common
     -std=gnu11
     $<$<CONFIG:Debug>:-Og -g>
 )
+
+# 符号隐藏: 仅导出白名单符号; 非 release 模式依赖动态符号, 不挂载
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_link_options(ra_peer PRIVATE "-Wl,--version-script=${CMAKE_CURRENT_LIST_DIR}/ra_peer.map")
+    set_property(TARGET ra_peer APPEND PROPERTY LINK_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/ra_peer.map")
+endif()
 
 target_link_libraries(ra_peer PRIVATE
     $<BUILD_INTERFACE:intf_pub>

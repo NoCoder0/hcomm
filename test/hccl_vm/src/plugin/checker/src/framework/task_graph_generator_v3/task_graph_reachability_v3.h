@@ -21,37 +21,37 @@
 
 namespace HcclSim {
 namespace TaskGraphGeneratorV3 {
-using BitRow = std::vector<uint64_t>;
-using ReachMatrix = std::vector<BitRow>;
-// using RoaringReachMatrix = std::vector<roaring::Roaring>;
+    using BitRow = std::vector<uint64_t>;
+    using ReachMatrix = std::vector<BitRow>;
+    // using RoaringReachMatrix = std::vector<roaring::Roaring>;
 
-// The closure matrix only stores reachability between data-move task nodes.
-// Public callers should keep using raw nodeId through IsReachable().
-struct ReachabilityClosure {
-    ReachMatrix matrix;
-    std::map<NodeId, size_t> dataIndexByNodeId;
-    std::vector<NodeId> dataNodeIdByIndex;
-};
+    // The closure matrix only stores reachability between data-move task nodes.
+    // Public callers should keep using raw nodeId through IsReachable().
+    struct ReachabilityClosure {
+        ReachMatrix matrix;
+        std::map<NodeId, size_t> dataIndexByNodeId;
+        std::vector<NodeId> dataNodeIdByIndex;
+    };
 
-// struct RoaringReachabilityClosure {
-//     RoaringReachMatrix matrix;
-//     std::map<NodeId, size_t> dataIndexByNodeId;
-//     std::vector<NodeId> dataNodeIdByIndex;
-// };
+    // struct RoaringReachabilityClosure {
+    //     RoaringReachMatrix matrix;
+    //     std::map<NodeId, size_t> dataIndexByNodeId;
+    //     std::vector<NodeId> dataNodeIdByIndex;
+    // };
 
-struct DataTaskReachabilityStats {
-    size_t nodeCount{0};
-    size_t edgeCount{0};
-    size_t dataTaskNodeCount{0};
-    size_t dataTaskPairCount{0};
-    size_t reachablePairCount{0};
-    size_t unreachablePairCount{0};
-};
+    struct DataTaskReachabilityStats {
+        size_t nodeCount{0};
+        size_t edgeCount{0};
+        size_t dataTaskNodeCount{0};
+        size_t dataTaskPairCount{0};
+        size_t reachablePairCount{0};
+        size_t unreachablePairCount{0};
+    };
 
-// topoOrder is the full graph topo order: mainStart(-1) first, followed by normal task nodes.
-HcclResult GenReachabilityClosure(const TaskNode *start, ReachabilityClosure &closure,
-    std::vector<NodeId> *topoOrder = nullptr);
-HcclResult IsReachable(const ReachabilityClosure &closure, NodeId fromNodeId, NodeId toNodeId, bool &isReachable);
+    // topoOrder is the full graph topo order: mainStart(-1) first, followed by normal task nodes.
+    HcclResult GenReachabilityClosure(
+        const TaskNode* start, ReachabilityClosure& closure, std::vector<NodeId>* topoOrder = nullptr);
+    HcclResult IsReachable(const ReachabilityClosure& closure, NodeId fromNodeId, NodeId toNodeId, bool& isReachable);
 
 } // namespace TaskGraphGeneratorV3
 } // namespace HcclSim

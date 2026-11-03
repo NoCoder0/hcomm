@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -34,8 +34,10 @@ protected:
     static void SetUpTestCase()
     {
         s32 ret = HcclDispatcherInit(DispatcherType::DISPATCHER_NORMAL, 0, &dispatcherPtr);
-        if (ret != HCCL_SUCCESS) return;
-        if (dispatcherPtr == nullptr) return;
+        if (ret != HCCL_SUCCESS)
+            return;
+        if (dispatcherPtr == nullptr)
+            return;
         dispatcher = reinterpret_cast<DispatcherPub*>(dispatcherPtr);
         DlRaFunction::GetInstance().DlRaFunctionInit();
         std::cout << "HcclImplAlltoAllAIVTest SetUP" << std::endl;
@@ -55,13 +57,8 @@ protected:
     virtual void SetUp()
     {
         s32 portNum = 7;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
-        MOCKER(hrtProfRegisterCtrlCallback)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtProfRegisterCtrlCallback).stubs().will(returnValue(HCCL_SUCCESS));
         std::cout << "A Test SetUP" << std::endl;
     }
     virtual void TearDown()
@@ -69,7 +66,7 @@ protected:
         GlobalMockObject::verify();
         std::cout << "A Test TearDown" << std::endl;
     }
-    static void TestConstructParam(HcclCommParams &params, RankTable_t &rankTable)
+    static void TestConstructParam(HcclCommParams& params, RankTable_t& rankTable)
     {
         string commId = "comm ";
         memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
@@ -79,7 +76,7 @@ protected:
         params.logicDevId = 0;
         params.commWorkMode = WorkMode::HCCL_MODE_NORMAL;
         params.deviceType = DevType::DEV_TYPE_910B;
-    
+
         rankTable.collectiveId = "192.168.0.101-8000-8001";
         vector<RankInfo_t> rankVec(2);
         rankVec[0].rankId = 0;
@@ -102,10 +99,10 @@ protected:
     static RankTable_t rankTable;
 
     static HcclDispatcher dispatcherPtr;
-    static DispatcherPub *dispatcher;
+    static DispatcherPub* dispatcher;
 };
 HcclDispatcher HcclImplAlltoAllAIVTest::dispatcherPtr = nullptr;
-DispatcherPub *HcclImplAlltoAllAIVTest::dispatcher = nullptr;
+DispatcherPub* HcclImplAlltoAllAIVTest::dispatcher = nullptr;
 
 HcclCommParams HcclImplAlltoAllAIVTest::params;
 RankTable_t HcclImplAlltoAllAIVTest::rankTable;
@@ -129,23 +126,14 @@ TEST_F(HcclImplAlltoAllAIVTest, ut_alltoallv_8p_mesh_aiv)
     params.deviceType = DevType::DEV_TYPE_910B;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER(GetExternalInputHcclAivMode)
-    .stubs()
-    .will(returnValue(true));
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&HcclCommunicator::InitNic)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(GetExternalInputHcclAivMode).stubs().will(returnValue(true));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitNic).stubs().will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&HcclCommunicator::RegisterToHeartBeat, HcclResult(HcclCommunicator::*)())
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&AlltoAllOperator::IsSatisfyAlltoAllAivCondition)
-    .stubs()
-    .will(returnValue(true));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&AlltoAllOperator::IsSatisfyAlltoAllAivCondition).stubs().will(returnValue(true));
 
     ret = implBase->AtomicInitSet();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -153,7 +141,7 @@ TEST_F(HcclImplAlltoAllAIVTest, ut_alltoallv_8p_mesh_aiv)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
 
     impl->deviceLogicId_ = 0;
     impl->deviceType_ = DevType::DEV_TYPE_910B;
@@ -166,9 +154,9 @@ TEST_F(HcclImplAlltoAllAIVTest, ut_alltoallv_8p_mesh_aiv)
     impl->isSingleMeshAggregation_ = true;
     algConfigurator->topoAttr_.isSingleMeshAggregation = true;
 
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
 
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.deviceLogicId = 0;
     topoMatcher->topoInfo_.deviceType = DevType::DEV_TYPE_910B;
     topoMatcher->topoInfo_.topoType = TopoType::TOPO_TYPE_NP_MESH;
@@ -185,8 +173,8 @@ TEST_F(HcclImplAlltoAllAIVTest, ut_alltoallv_8p_mesh_aiv)
     HcclDataType recvDataType = HCCL_DATA_TYPE_INT8;
 
     /** 初始化输入输出缓存 */
-    
-    for (u32 i = 0; i < DEV_NUM_8; i++ ) {
+
+    for (u32 i = 0; i < DEV_NUM_8; i++) {
         for (u32 j = 0; j < DEV_NUM_8; j++) {
             sendCountMatrix[i * DEV_NUM_8 + j] = count;
         }
@@ -196,26 +184,23 @@ TEST_F(HcclImplAlltoAllAIVTest, ut_alltoallv_8p_mesh_aiv)
         rdispls[i] = i * count;
     }
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
     u64 memSize = 0;
-    ret = implBase->GetAlltoAllStagedWorkSpaceMemSize(sendCounts, sdispls, sendDataType, recvCounts, rdispls,
-        recvDataType, memSize);
+    ret = implBase->GetAlltoAllStagedWorkSpaceMemSize(
+        sendCounts, sdispls, sendDataType, recvCounts, rdispls, recvDataType, memSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(memSize, 0);
 
     MOCKER_CPP(&HcclSocket::Listen, HcclResult(HcclSocket::*)())
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
-    ret = implBase->AlltoAllV(inputMem.ptr(), (void *)sendCounts, (void *)sdispls, sendDataType, outputMem.ptr(),
-        (void *)recvCounts, (void *)rdispls, recvDataType, stream.ptr(), tag);
-        
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    ret = implBase->AlltoAllV(
+        inputMem.ptr(), (void*)sendCounts, (void*)sdispls, sendDataType, outputMem.ptr(), (void*)recvCounts,
+        (void*)rdispls, recvDataType, stream.ptr(), tag);
+
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     implBase = nullptr;
@@ -243,30 +228,23 @@ TEST_F(HcclImplAlltoAllAIVTest, ut_alltoallv_8p_mesh_aiv_capture)
     params.deviceType = DevType::DEV_TYPE_910B;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER(GetExternalInputHcclAivMode)
-    .stubs()
-    .will(returnValue(true));
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&HcclCommunicator::InitNic)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(GetExternalInputHcclAivMode).stubs().will(returnValue(true));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitNic).stubs().will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&HcclCommunicator::RegisterToHeartBeat, HcclResult(HcclCommunicator::*)())
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&AlltoAllOperator::IsSatisfyAlltoAllAivCondition)
-    .stubs()
-    .will(returnValue(true));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&AlltoAllOperator::IsSatisfyAlltoAllAivCondition).stubs().will(returnValue(true));
     aclmdlRICaptureStatus captureStatus = aclmdlRICaptureStatus::ACL_MODEL_RI_CAPTURE_STATUS_ACTIVE;
     int mockModel = 0;
-    void *pmockModel = &mockModel;    
+    void* pmockModel = &mockModel;
     MOCKER(aclmdlRICaptureGetInfo)
-    .stubs()
-    .with(mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)), outBoundP(&pmockModel, sizeof(pmockModel)))
-    .will(returnValue(0));
+        .stubs()
+        .with(
+            mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)),
+            outBoundP(&pmockModel, sizeof(pmockModel)))
+        .will(returnValue(0));
 
     ret = implBase->AtomicInitSet();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -274,7 +252,7 @@ TEST_F(HcclImplAlltoAllAIVTest, ut_alltoallv_8p_mesh_aiv_capture)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
 
     impl->deviceLogicId_ = 0;
     impl->deviceType_ = DevType::DEV_TYPE_910B;
@@ -287,9 +265,9 @@ TEST_F(HcclImplAlltoAllAIVTest, ut_alltoallv_8p_mesh_aiv_capture)
     impl->isSingleMeshAggregation_ = true;
     algConfigurator->topoAttr_.isSingleMeshAggregation = true;
 
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
 
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.deviceLogicId = 0;
     topoMatcher->topoInfo_.deviceType = DevType::DEV_TYPE_910B;
     topoMatcher->topoInfo_.topoType = TopoType::TOPO_TYPE_NP_MESH;
@@ -306,8 +284,8 @@ TEST_F(HcclImplAlltoAllAIVTest, ut_alltoallv_8p_mesh_aiv_capture)
     HcclDataType recvDataType = HCCL_DATA_TYPE_INT8;
 
     /** 初始化输入输出缓存 */
-    
-    for (u32 i = 0; i < DEV_NUM_8; i++ ) {
+
+    for (u32 i = 0; i < DEV_NUM_8; i++) {
         for (u32 j = 0; j < DEV_NUM_8; j++) {
             sendCountMatrix[i * DEV_NUM_8 + j] = count;
         }
@@ -317,22 +295,19 @@ TEST_F(HcclImplAlltoAllAIVTest, ut_alltoallv_8p_mesh_aiv_capture)
         rdispls[i] = i * count;
     }
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
     u64 memSize = 0;
-    ret = implBase->GetAlltoAllStagedWorkSpaceMemSize(sendCounts, sdispls, sendDataType, recvCounts, rdispls,
-        recvDataType, memSize);
+    ret = implBase->GetAlltoAllStagedWorkSpaceMemSize(
+        sendCounts, sdispls, sendDataType, recvCounts, rdispls, recvDataType, memSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(memSize, 0);
 
-    ret = implBase->AlltoAllV(inputMem.ptr(), (void *)sendCounts, (void *)sdispls, sendDataType, outputMem.ptr(),
-        (void *)recvCounts, (void *)rdispls, recvDataType, stream.ptr(), tag);
-        
+    ret = implBase->AlltoAllV(
+        inputMem.ptr(), (void*)sendCounts, (void*)sdispls, sendDataType, outputMem.ptr(), (void*)recvCounts,
+        (void*)rdispls, recvDataType, stream.ptr(), tag);
+
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     implBase = nullptr;
@@ -360,30 +335,23 @@ TEST_F(HcclImplAlltoAllAIVTest, ut_alltoallv_8p_mesh_aiv_capture_multi_op)
     params.deviceType = DevType::DEV_TYPE_910B;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER(GetExternalInputHcclAivMode)
-    .stubs()
-    .will(returnValue(true));
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&HcclCommunicator::InitNic)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(GetExternalInputHcclAivMode).stubs().will(returnValue(true));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitNic).stubs().will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&HcclCommunicator::RegisterToHeartBeat, HcclResult(HcclCommunicator::*)())
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&AlltoAllOperator::IsSatisfyAlltoAllAivCondition)
-    .stubs()
-    .will(returnValue(true));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&AlltoAllOperator::IsSatisfyAlltoAllAivCondition).stubs().will(returnValue(true));
     aclmdlRICaptureStatus captureStatus = aclmdlRICaptureStatus::ACL_MODEL_RI_CAPTURE_STATUS_ACTIVE;
     int mockModel = 0;
-    void *pmockModel = &mockModel;    
+    void* pmockModel = &mockModel;
     MOCKER(aclmdlRICaptureGetInfo)
-    .stubs()
-    .with(mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)), outBoundP(&pmockModel, sizeof(pmockModel)))
-    .will(returnValue(0));
+        .stubs()
+        .with(
+            mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)),
+            outBoundP(&pmockModel, sizeof(pmockModel)))
+        .will(returnValue(0));
 
     ret = implBase->AtomicInitSet();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -391,7 +359,7 @@ TEST_F(HcclImplAlltoAllAIVTest, ut_alltoallv_8p_mesh_aiv_capture_multi_op)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
 
     impl->deviceLogicId_ = 0;
     impl->deviceType_ = DevType::DEV_TYPE_910B;
@@ -404,9 +372,9 @@ TEST_F(HcclImplAlltoAllAIVTest, ut_alltoallv_8p_mesh_aiv_capture_multi_op)
     impl->isSingleMeshAggregation_ = true;
     algConfigurator->topoAttr_.isSingleMeshAggregation = true;
 
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
 
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.deviceLogicId = 0;
     topoMatcher->topoInfo_.deviceType = DevType::DEV_TYPE_910B;
     topoMatcher->topoInfo_.topoType = TopoType::TOPO_TYPE_NP_MESH;
@@ -423,8 +391,8 @@ TEST_F(HcclImplAlltoAllAIVTest, ut_alltoallv_8p_mesh_aiv_capture_multi_op)
     HcclDataType recvDataType = HCCL_DATA_TYPE_INT8;
 
     /** 初始化输入输出缓存 */
-    
-    for (u32 i = 0; i < DEV_NUM_8; i++ ) {
+
+    for (u32 i = 0; i < DEV_NUM_8; i++) {
         for (u32 j = 0; j < DEV_NUM_8; j++) {
             sendCountMatrix[i * DEV_NUM_8 + j] = count;
         }
@@ -434,31 +402,27 @@ TEST_F(HcclImplAlltoAllAIVTest, ut_alltoallv_8p_mesh_aiv_capture_multi_op)
         rdispls[i] = i * count;
     }
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::IsEnableBackupLink)
-    .stubs()
-    .will(returnValue(false));
+    MOCKER_CPP(&HcclCommunicator::IsEnableBackupLink).stubs().will(returnValue(false));
 
     u64 memSize = 0;
-    ret = implBase->GetAlltoAllStagedWorkSpaceMemSize(sendCounts, sdispls, sendDataType, recvCounts, rdispls,
-        recvDataType, memSize);
+    ret = implBase->GetAlltoAllStagedWorkSpaceMemSize(
+        sendCounts, sdispls, sendDataType, recvCounts, rdispls, recvDataType, memSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(memSize, 0);
 
-    ret = implBase->AlltoAllV(inputMem.ptr(), (void *)sendCounts, (void *)sdispls, sendDataType, outputMem.ptr(),
-        (void *)recvCounts, (void *)rdispls, recvDataType, stream.ptr(), tag);
-    
+    ret = implBase->AlltoAllV(
+        inputMem.ptr(), (void*)sendCounts, (void*)sdispls, sendDataType, outputMem.ptr(), (void*)recvCounts,
+        (void*)rdispls, recvDataType, stream.ptr(), tag);
+
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    
-    ret = implBase->AlltoAllV(inputMem.ptr(), (void *)sendCounts, (void *)sdispls, sendDataType, outputMem.ptr(),
-        (void *)recvCounts, (void *)rdispls, recvDataType, stream.ptr(), tag);
-        
+
+    ret = implBase->AlltoAllV(
+        inputMem.ptr(), (void*)sendCounts, (void*)sdispls, sendDataType, outputMem.ptr(), (void*)recvCounts,
+        (void*)rdispls, recvDataType, stream.ptr(), tag);
+
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     implBase = nullptr;
@@ -487,23 +451,14 @@ TEST_F(HcclImplAlltoAllAIVTest, ut_alltoallvc_8p_mesh_aiv)
     params.deviceType = DevType::DEV_TYPE_910B;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER(GetExternalInputHcclAivMode)
-    .stubs()
-    .will(returnValue(true));
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&HcclCommunicator::InitNic)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(GetExternalInputHcclAivMode).stubs().will(returnValue(true));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitNic).stubs().will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&HcclCommunicator::RegisterToHeartBeat, HcclResult(HcclCommunicator::*)())
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&AlltoAllOperator::IsSatisfyAlltoAllAivCondition)
-    .stubs()
-    .will(returnValue(true));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&AlltoAllOperator::IsSatisfyAlltoAllAivCondition).stubs().will(returnValue(true));
 
     ret = implBase->AtomicInitSet();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -511,7 +466,7 @@ TEST_F(HcclImplAlltoAllAIVTest, ut_alltoallvc_8p_mesh_aiv)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
 
     impl->deviceLogicId_ = 0;
     impl->deviceType_ = DevType::DEV_TYPE_910B;
@@ -524,9 +479,9 @@ TEST_F(HcclImplAlltoAllAIVTest, ut_alltoallvc_8p_mesh_aiv)
     impl->isSingleMeshAggregation_ = true;
     algConfigurator->topoAttr_.isSingleMeshAggregation = true;
 
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
 
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.deviceLogicId = 0;
     topoMatcher->topoInfo_.deviceType = DevType::DEV_TYPE_910B;
     topoMatcher->topoInfo_.topoType = TopoType::TOPO_TYPE_NP_MESH;
@@ -543,8 +498,8 @@ TEST_F(HcclImplAlltoAllAIVTest, ut_alltoallvc_8p_mesh_aiv)
     HcclDataType recvDataType = HCCL_DATA_TYPE_INT8;
 
     /** 初始化输入输出缓存 */
-    
-    for (u32 i = 0; i < DEV_NUM_8; i++ ) {
+
+    for (u32 i = 0; i < DEV_NUM_8; i++) {
         for (u32 j = 0; j < DEV_NUM_8; j++) {
             sendCountMatrix[i * DEV_NUM_8 + j] = count;
         }
@@ -554,15 +509,11 @@ TEST_F(HcclImplAlltoAllAIVTest, ut_alltoallvc_8p_mesh_aiv)
         rdispls[i] = i * count;
     }
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
-    ret = implBase->AlltoAllVC(inputMem.ptr(), (void *)sendCountMatrix, sendDataType, outputMem.ptr(),
-        recvDataType, stream.ptr(), tag);
+    ret = implBase->AlltoAllVC(
+        inputMem.ptr(), (void*)sendCountMatrix, sendDataType, outputMem.ptr(), recvDataType, stream.ptr(), tag);
 
     EXPECT_EQ(ret, HCCL_SUCCESS);
 

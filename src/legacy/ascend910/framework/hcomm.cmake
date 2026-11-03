@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
@@ -14,12 +14,15 @@ add_library(hcomm SHARED)
 # 编译选项
 target_compile_options(hcomm PRIVATE
     -Werror
-    -Wno-unused-parameter
-    -Wno-missing-field-initializers
     -fno-common
     -fno-strict-aliasing
     $<$<CONFIG:Debug>:-Og -g>
     $<$<CONFIG:Release>:-O3>
+)
+
+# 链接选项
+target_link_options(hcomm PRIVATE
+    $<$<BOOL:${BUILD_OPEN_PROJECT}>:-Wl,--no-undefined>
 )
 
 target_include_directories(hcomm PRIVATE
@@ -29,7 +32,6 @@ target_include_directories(hcomm PRIVATE
     ${HCOMM_DIR}/pkg_inc/hccl
     ${HCOMM_DIR}/pkg_inc/legacy
     ${HCOMM_DIR}/pkg_inc/legacy/hccl
-    ${HCOMM_DIR}/pkg_inc/hcomm/ccu
     ${HCOMM_DIR}/src/legacy/ascend910/common/error_manager 
     ${HCOMM_DIR}/include/ccu
 
@@ -43,22 +45,23 @@ target_include_directories(hcomm PRIVATE
     ${HCOMM_DIR}/src/legacy/ascend910/framework/inc
     ${HCOMM_DIR}/src/legacy/ascend910/framework/common/src
     ${HCOMM_DIR}/src/legacy/ascend910/framework/common/src/config
-    ${HCOMM_DIR}/src/legacy/ascend910/framework/common/src/mgr
-    ${HCOMM_DIR}/src/legacy/ascend910/framework/common/src/hashtable
     ${HCOMM_DIR}/src/legacy/ascend910/framework/communicator/impl
     ${HCOMM_DIR}/src/legacy/ascend910/framework/communicator/impl/resource_manager
     ${HCOMM_DIR}/src/legacy/ascend910/framework/communicator/impl/one_sided_service
     ${HCOMM_DIR}/src/legacy/ascend910/framework/op_base/src
 
-    # src/framework/next 头文件 (已拆分到 base_comm 和 coll_communicator_mgr)
+    # src/base_comm 头文件 (hcomm 对 base_comm 的依赖)
     ${HCOMM_DIR}/src/base_comm/common
+    ${HCOMM_DIR}/src/base_comm/common/debug
+    ${HCOMM_DIR}/src/base_comm/primitives/api_c_adpt
+    ${HCOMM_DIR}/src/base_comm/primitives/api_c_adpt/nic_plugin
     ${HCOMM_DIR}/src/base_comm/resources/ccu/pub_inc
-    ${HCOMM_DIR}/src/base_comm/resources/ccu/ccu_device
-    ${HCOMM_DIR}/src/base_comm/resources/ccu/ccu_device/ccu_comp
-    ${HCOMM_DIR}/src/base_comm/resources/ccu/ccu_device/ccu_comp/ccu_channel
-    ${HCOMM_DIR}/src/base_comm/resources/ccu/ccu_device/ccu_comp/ccu_channel/ccu_pfe
-    ${HCOMM_DIR}/src/base_comm/resources/ccu/ccu_device/ccu_comp/ccu_channel/ccu_channel_ctx_v1
+    ${HCOMM_DIR}/src/base_comm/resources/comm_engine_res/threads
+    ${HCOMM_DIR}/src/base_comm/resources/endpoint_pairs
     ${HCOMM_DIR}/src/base_comm/resources/endpoint_pairs/channels/host
+    ${HCOMM_DIR}/src/base_comm/resources/endpoint_pairs/sockets
+    ${HCOMM_DIR}/src/base_comm/resources/hccp/inc
+    ${HCOMM_DIR}/src/base_comm/resources/hccp/inc/network
 
     # src/common 头文件 (legacy/ascend910)
     ${HCOMM_DIR}/src/legacy/ascend910/common/debug/profiling/inc
@@ -86,22 +89,97 @@ target_include_directories(hcomm PRIVATE
     ${HCOMM_DIR}/src/legacy/ascend910/platform/inc
     ${HCOMM_DIR}/src/legacy/ascend910/platform/inc/adapter
     ${HCOMM_DIR}/src/legacy/ascend910/platform/common
-    ${HCOMM_DIR}/src/legacy/ascend910/platform/resource/transport
-    ${HCOMM_DIR}/src/legacy/ascend910/platform/resource/transport/heterog
-    ${HCOMM_DIR}/src/legacy/ascend910/platform/resource/notify
     ${HCOMM_DIR}/src/legacy/ascend910/platform/resource/dispatcher_ctx
-    ${HCOMM_DIR}/src/legacy/ascend910/platform/resource/socket
 
     # base_comm/resources 头文件 (原 platform/hccp)
+    ${HCOMM_DIR}/src/base_comm/inc
     ${HCOMM_DIR}/src/base_comm/resources/hccp/inc
     ${HCOMM_DIR}/src/base_comm/resources/hccp/inc/network
+    ${HCOMM_DIR}/src/base_comm/resources/southbound_adpt
     ${HCOMM_DIR}/src/base_comm/resources/hccp/external_depends/ubengine
 
-    ${HCOMM_DIR}/src/
-    ${HCOMM_DIR}
-
     # src/legacy 头文件 (legacy/ascend950)
-    ${LEGACY_ASCEND950_INCLUDE_LIST}
+    ${HCOMM_DIR}/src/legacy/ascend950
+    ${HCOMM_DIR}/src/legacy/ascend950/common
+    ${HCOMM_DIR}/src/legacy/ascend950/common/exception
+    ${HCOMM_DIR}/src/legacy/ascend950/common/types
+    ${HCOMM_DIR}/src/legacy/ascend950/common/utils
+    ${HCOMM_DIR}/src/legacy/ascend950/framework
+    ${HCOMM_DIR}/src/legacy/ascend950/framework/ccu
+    ${HCOMM_DIR}/src/legacy/ascend950/framework/communicator
+    ${HCOMM_DIR}/src/legacy/ascend950/framework/communicator/aicpu
+    ${HCOMM_DIR}/src/legacy/ascend950/framework/communicator/aicpu/one_sided_component
+    ${HCOMM_DIR}/src/base_comm/resources/comm_engine_res/threads/cpu_thread/legacy_dpu_thread
+    ${HCOMM_DIR}/src/legacy/ascend950/framework/communicator/hostdpu
+    ${HCOMM_DIR}/src/legacy/ascend950/framework/dfx/aicpu/common
+    ${HCOMM_DIR}/src/legacy/ascend950/framework/dfx/aicpu/profiling
+    ${HCOMM_DIR}/src/legacy/ascend950/framework/dfx/common
+    ${HCOMM_DIR}/src/legacy/ascend950/framework/entrance
+    ${HCOMM_DIR}/src/legacy/ascend950/framework/env_config
+    ${HCOMM_DIR}/src/legacy/ascend950/framework/resource_manager/buffer/aicpu
+    ${HCOMM_DIR}/src/legacy/ascend950/framework/resource_manager/notify/aicpu
+    ${HCOMM_DIR}/src/legacy/ascend950/framework/resource_manager/socket
+    ${HCOMM_DIR}/src/legacy/ascend950/framework/resource_manager/stream
+    ${HCOMM_DIR}/src/legacy/ascend950/framework/resource_manager/stream/aicpu
+    ${HCOMM_DIR}/src/legacy/ascend950/framework/resource_manager/transport/aicpu
+    ${HCOMM_DIR}/src/legacy/ascend950/framework/service/aicpu
+    ${HCOMM_DIR}/src/legacy/ascend950/framework/topo
+    ${HCOMM_DIR}/src/legacy/ascend950/framework/topo/new_topo_builder/common
+    ${HCOMM_DIR}/src/legacy/ascend950/framework/topo/new_topo_builder/rank_table_info
+    ${HCOMM_DIR}/src/legacy/ascend950/include
+    ${HCOMM_DIR}/src/legacy/ascend950/interface
+    ${HCOMM_DIR}/src/legacy/ascend950/service/collective
+    ${HCOMM_DIR}/src/legacy/ascend950/service/collective/alg/alg_registry
+    ${HCOMM_DIR}/src/legacy/ascend950/service/collective/alg/coll_alg_factory/alg_executor
+    ${HCOMM_DIR}/src/legacy/ascend950/service/collective/alg/coll_alg_factory/alg_executor/ins_alg_executor
+    ${HCOMM_DIR}/src/legacy/ascend950/service/collective/alg/coll_alg_factory/alg_executor/prim_alg_executor
+    ${HCOMM_DIR}/src/legacy/ascend950/service/collective/alg/coll_alg_factory/alg_template
+    ${HCOMM_DIR}/src/legacy/ascend950/service/collective/alg/coll_alg_factory/alg_template/ccu_alg_template
+    ${HCOMM_DIR}/src/legacy/ascend950/service/collective/alg/coll_alg_factory/alg_template/ins_alg_template
+    ${HCOMM_DIR}/src/legacy/ascend950/service/collective/alg/coll_alg_factory/alg_template/prim_alg_template
+    ${HCOMM_DIR}/src/legacy/ascend950/service/collective/alg/interface
+    ${HCOMM_DIR}/src/legacy/ascend950/service/collective/alg/interface/device
+    ${HCOMM_DIR}/src/legacy/ascend950/service/collective/alg/interface/host
+    ${HCOMM_DIR}/src/legacy/ascend950/service/collective/alg/selector
+    ${HCOMM_DIR}/src/legacy/ascend950/service/collective/instruction
+    ${HCOMM_DIR}/src/legacy/ascend950/service/collective/primitive
+    ${HCOMM_DIR}/src/legacy/ascend950/unified_platform/common
+    ${HCOMM_DIR}/src/legacy/ascend950/unified_platform/external_system
+    ${HCOMM_DIR}/src/legacy/ascend950/unified_platform/pub_inc
+    ${HCOMM_DIR}/src/legacy/ascend950/unified_platform/pub_inc/ccu
+    ${HCOMM_DIR}/src/legacy/ascend950/unified_platform/pub_inc/resource
+    ${HCOMM_DIR}/src/legacy/ascend950/unified_platform/pub_inc/resource/transport
+    ${HCOMM_DIR}/src/legacy/ascend950/unified_platform/resource
+    ${HCOMM_DIR}/src/legacy/ascend950/unified_platform/resource/buffer
+    ${HCOMM_DIR}/src/legacy/ascend950/unified_platform/resource/buffer/aicpu
+    ${HCOMM_DIR}/src/legacy/ascend950/unified_platform/resource/connection/aicpu
+    ${HCOMM_DIR}/src/legacy/ascend950/unified_platform/resource/notify/aicpu
+    ${HCOMM_DIR}/src/legacy/ascend950/unified_platform/resource/stream
+    ${HCOMM_DIR}/src/legacy/ascend950/unified_platform/resource/stream/aicpu
+    ${HCOMM_DIR}/src/legacy/ascend950/unified_platform/resource/transport
+    ${HCOMM_DIR}/src/legacy/ascend950/unified_platform/resource/transport/aicpu
+
+    # coll_communicator_mgr headers needed transitively by legacy compile units (centralized here;
+    # coll_comm sources now compile in hcomm_coll_comm_obj with their own -I whitelist)
+    ${HCOMM_DIR}/src/coll_communicator_mgr/api_c_adpt
+    ${HCOMM_DIR}/src/coll_communicator_mgr/common
+    ${HCOMM_DIR}/src/coll_communicator_mgr/communicator
+    ${HCOMM_DIR}/src/coll_communicator_mgr/communicator/group_schedule_mgr
+    ${HCOMM_DIR}/src/coll_communicator_mgr/communicator/op_group_queue_mgr
+    ${HCOMM_DIR}/src/coll_communicator_mgr/config_mgr
+    ${HCOMM_DIR}/src/coll_communicator_mgr/dfx
+    ${HCOMM_DIR}/src/coll_communicator_mgr/dfx/cluster_monitor
+    ${HCOMM_DIR}/src/coll_communicator_mgr/dfx/inconsistentCheck
+    ${HCOMM_DIR}/src/coll_communicator_mgr/dfx/profiling/host
+    ${HCOMM_DIR}/src/coll_communicator_mgr/rank_graph
+    ${HCOMM_DIR}/src/coll_communicator_mgr/rank_graph/rank_graph
+    ${HCOMM_DIR}/src/coll_communicator_mgr/resource_mgr/local/my_rank
+    ${HCOMM_DIR}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_engine
+    ${HCOMM_DIR}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_engine/engine_ctxs
+    ${HCOMM_DIR}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_engine/threads
+    ${HCOMM_DIR}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_engine/threads/order_launch_thread_mgr
+    ${HCOMM_DIR}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_mems
+    ${HCOMM_DIR}/src/coll_communicator_mgr/resource_mgr/remote/rank_pairs
 
     # 三方件头文件
     ${URMA_INCLUDE_DIR}
@@ -130,9 +208,13 @@ if(BUILD_OPEN_PROJECT)
         c_sec
         unified_dlog
         acl_rt
+        ra
+        hccl_legacy
+        ascend_hal
         hccl_alg
         hccl_plf
         hccl_v2
+        ccl_dpu
         -Wl,--as-needed
         -lrt
         -ldl
@@ -160,11 +242,18 @@ else()
         hccl_alg
         hccl_plf
         hccl_v2
+        ccl_dpu
         -Wl,--as-needed
         -lrt
         -ldl
         -lpthread
     )
+endif()
+
+# 符号隐藏: 仅导出白名单符号; 非 release 模式依赖动态符号, 不挂载
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_link_options(hcomm PRIVATE "-Wl,--version-script=${CMAKE_CURRENT_LIST_DIR}/hcomm.map")
+    set_property(TARGET hcomm APPEND PROPERTY LINK_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/hcomm.map")
 endif()
 
 # 安装 hcomm 库

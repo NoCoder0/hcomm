@@ -77,23 +77,25 @@ typedef struct tagWfwMuxBaseEv {
     WfwMuxBaseFd *baseFd;
 } WfwMuxBaseEv;
 
-#define WFW_MUX_DISPATCH_DOBEFORE(muxBase) do { \
-    if ((muxBase)->argInit.beforeProc) { \
-        (muxBase)->argInit.beforeProc((muxBase)->argInit.cookie); \
-    } \
-} while (0)
+#define WFW_MUX_DISPATCH_DOBEFORE(muxBase)                                                                             \
+    do {                                                                                                               \
+        if ((muxBase)->argInit.beforeProc) {                                                                           \
+            (muxBase)->argInit.beforeProc((muxBase)->argInit.cookie);                                                  \
+        }                                                                                                              \
+    } while (0)
 
-#define WFW_MUX_DISPATCH_DOAFTER(muxBase) do { \
-    if ((muxBase)->argInit.afterProc) { \
-        (muxBase)->argInit.afterProc((muxBase)->argInit.cookie); \
-    } \
-} while (0)
+#define WFW_MUX_DISPATCH_DOAFTER(muxBase)                                                                              \
+    do {                                                                                                               \
+        if ((muxBase)->argInit.afterProc) {                                                                            \
+            (muxBase)->argInit.afterProc((muxBase)->argInit.cookie);                                                   \
+        }                                                                                                              \
+    } while (0)
 
 uint32_t WfwMuxBaseInit(WfwMuxBase *muxBase, WfwMuxBaseInitArg *arg);
 void WfwMuxBaseUninit(WfwMuxBase *muxBase);
 
 uint32_t WfwMuxBaseInitFd(WfwMuxBase *muxBase, WfwMuxBaseFd *baseFd, int fd, uint32_t interestedEvents,
-                         F_WFW_MUX_FD_PROC proc, void *cookie, BOOL notLogEvt);
+    F_WFW_MUX_FD_PROC proc, void *cookie, BOOL notLogEvt);
 void WfwMuxBaseUninitFd(WfwMuxBaseFd *baseFd);
 WfwMuxBaseFd *WfwMuxBaseFindFd(WfwMuxBase *muxBase, int fd);
 WfwMuxBaseFd *WfwMuxBaseGetFirstFd(WfwMuxBase *muxBase, void **itorOutOrNull);
@@ -112,4 +114,3 @@ void WfwMuxBaseProcTrigFdEvent(int fd);
 #endif
 
 #endif
-

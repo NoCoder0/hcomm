@@ -12,22 +12,23 @@
 #define LOCAL_UB_RMA_BUFFER_MANAGER_H
 
 #include "local_ub_rma_buffer.h"
-#include "../../pub_inc/rma_buffer_mgr.h"
+#include "common/rma_buffer_mgr_pub.h"
 
 namespace Hccl {
 
-using LocalUbRmaBufferMgr = RmaBufferMgr<BufferKey<uintptr_t, u64>, std::shared_ptr<LocalUbRmaBuffer>>;
+using LocalUbRmaBufferMgr = hcomm::RmaBufferMgr<BufferKey<uintptr_t, u64>, std::shared_ptr<LocalUbRmaBuffer>>;
 
 class LocalUbRmaBufferManager {
 public:
-    static LocalUbRmaBufferMgr *GetInstance();
+    static LocalUbRmaBufferMgr* GetInstance();
+
 private:
     LocalUbRmaBufferManager() = default;
     ~LocalUbRmaBufferManager() = default;
-    LocalUbRmaBufferManager(const LocalUbRmaBufferManager &)            = delete;
-    LocalUbRmaBufferManager &operator=(const LocalUbRmaBufferManager &) = delete;
+    LocalUbRmaBufferManager(const LocalUbRmaBufferManager&) = delete;
+    LocalUbRmaBufferManager& operator=(const LocalUbRmaBufferManager&) = delete;
 };
 
-}   // namespace Hccl
+} // namespace Hccl
 
-#endif //LOCAL_UB_RMA_BUFFER_MANAGER_H
+#endif // LOCAL_UB_RMA_BUFFER_MANAGER_H

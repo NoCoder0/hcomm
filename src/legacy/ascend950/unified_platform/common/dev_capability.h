@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef HCCLV2_DEV_CAPABILITY_H
 #define HCCLV2_DEV_CAPABILITY_H
@@ -21,60 +21,33 @@ namespace Hccl {
 
 class DevCapability {
 public:
-    DevCapability(const DevCapability &that) = delete;
+    DevCapability(const DevCapability& that) = delete;
 
-    DevCapability &operator=(const DevCapability &that) = delete;
+    DevCapability& operator=(const DevCapability& that) = delete;
 
-    static DevCapability &GetInstance();
+    static DevCapability& GetInstance();
 
     void Init(DevType givenDevType);
 
     void Reset(); // LLT 使用
 
-    const std::map<DataType, bool> &GetInlineReduceDataTypeMap() const
-    {
-        return inlineReduceDataTypeMap;
-    }
+    const std::map<DataType, bool>& GetInlineReduceDataTypeMap() const { return inlineReduceDataTypeMap; }
 
-    const std::map<ReduceOp, bool> &GetInlineReduceOpMap() const
-    {
-        return inlineReduceOpMap;
-    }
+    const std::map<ReduceOp, bool>& GetInlineReduceOpMap() const { return inlineReduceOpMap; }
 
-    u32 GetSdmaInlineReduceAlignBytes() const
-    {
-        return sdmaInlineReduceAlignBytes;
-    }
+    u32 GetSdmaInlineReduceAlignBytes() const { return sdmaInlineReduceAlignBytes; }
 
-    u32 GetNotifySize() const
-    {
-        return notifySize;
-    }
+    u32 GetNotifySize() const { return notifySize; }
 
-    u64 GetSdmaSendMaxSize() const
-    {
-        return sdmaSendMaxSize;
-    }
+    u64 GetSdmaSendMaxSize() const { return sdmaSendMaxSize; }
 
-    u64 GetRdmaSendMaxSize() const
-    {
-        return rdmaSendMaxSize;
-    }
+    u64 GetRdmaSendMaxSize() const { return rdmaSendMaxSize; }
 
-    bool IsSupportDevNetInlineReduce() const
-    {
-        return isSupportDevNetInlineReduce;
-    }
+    bool IsSupportDevNetInlineReduce() const { return isSupportDevNetInlineReduce; }
 
-    bool IsSupportWriteWithNotify() const
-    {
-        return isSupportWriteWithNotify;
-    }
+    bool IsSupportWriteWithNotify() const { return isSupportWriteWithNotify; }
 
-    bool IsSupportStarsPollNetCq() const
-    {
-        return isSupportStarsPollNetCq;
-    }
+    bool IsSupportStarsPollNetCq() const { return isSupportStarsPollNetCq; }
 
 private:
     DevCapability();
@@ -86,7 +59,7 @@ private:
     void Load910A910A3CommonCap();
 
     DevType devType;
-    bool    isInit{false};
+    bool isInit{false};
 
     std::map<DataType, bool> inlineReduceDataTypeMap;
     std::map<ReduceOp, bool> inlineReduceOpMap;

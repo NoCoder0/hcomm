@@ -40,7 +40,7 @@ InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::~InsV2ReduceSoleExecutor(
 {}
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::InitCommInfo(const RankGraph *rankGraph)
+HcclResult InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::InitCommInfo(const RankGraph* rankGraph)
 {
     AlgTopoMatch topoMatch(myRank_, rankSize_, rankGraph, devType_);
     CHK_RET(topoMatch.MatchTopo(vTopo_, virtRanks_, virtRankMap_));
@@ -48,26 +48,29 @@ HcclResult InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::InitCommInfo(c
 }
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::InitCommInfo(const AlgTopoInfo &topoInfo)
+HcclResult InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::InitCommInfo(const AlgTopoInfo& topoInfo)
 {
-    CHK_PRT_RET(topoInfo.vTopo.empty(),
-        HCCL_ERROR("[InsV2ReduceSoleExecutor][InitCommInfo] vTopo size is invalid"), HCCL_E_PARA);
-    CHK_PRT_RET(topoInfo.virtRankMap.empty(),
-        HCCL_ERROR("[InsV2ReduceSoleExecutor][InitCommInfo] virtRankMap size is invalid"), HCCL_E_PARA);
-    CHK_PRT_RET(topoInfo.virtRanks.empty(),
-        HCCL_ERROR("[InsV2ReduceSoleExecutor][InitCommInfo] virtRanks size is invalid"), HCCL_E_PARA);
-    vTopo_ = topoInfo.vTopo[0];              // 本通信域内的通信平面
-    virtRankMap_ = topoInfo.virtRankMap[0];  // 本通信域内的 rank 映射表
-    virtRanks_ = topoInfo.virtRanks[0];      // 本通信域内的 rank 集合
+    CHK_PRT_RET(
+        topoInfo.vTopo.empty(), HCCL_ERROR("[InsV2ReduceSoleExecutor][InitCommInfo] vTopo size is invalid"),
+        HCCL_E_PARA);
+    CHK_PRT_RET(
+        topoInfo.virtRankMap.empty(), HCCL_ERROR("[InsV2ReduceSoleExecutor][InitCommInfo] virtRankMap size is invalid"),
+        HCCL_E_PARA);
+    CHK_PRT_RET(
+        topoInfo.virtRanks.empty(), HCCL_ERROR("[InsV2ReduceSoleExecutor][InitCommInfo] virtRanks size is invalid"),
+        HCCL_E_PARA);
+    vTopo_ = topoInfo.vTopo[0];             // 本通信域内的通信平面
+    virtRankMap_ = topoInfo.virtRankMap[0]; // 本通信域内的 rank 映射表
+    virtRanks_ = topoInfo.virtRanks[0];     // 本通信域内的 rank 集合
     return HcclResult::HCCL_SUCCESS;
 }
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CreateTemplates(
-    std::shared_ptr<InsAlgTemplate> &algTemplatePtr)
+HcclResult
+InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CreateTemplates(std::shared_ptr<InsAlgTemplate>& algTemplatePtr)
 {
     algTemplatePtr = std::make_shared<InsAlgTemplate>(myRank_, rankSize_, vTopo_, virtRankMap_);
-    CHK_PTR_NULL(algTemplatePtr);  // 检查是否成功分配内存
+    CHK_PTR_NULL(algTemplatePtr); // 检查是否成功分配内存
     algTemplatePtr->SetDmaMode(dmaMode_);
     algTemplatePtr->InitReduceInfo(redOp_, dataType_);
     algTemplatePtr->SetCollOp(op_);
@@ -77,7 +80,7 @@ HcclResult InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CreateTemplate
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
 HcclResult InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::GetTemplateResRequest(
-    const RankGraph *rankGraph, std::shared_ptr<InsAlgTemplate> &algTemplate, AlgTempResReq &tempResReq) const
+    const RankGraph* rankGraph, std::shared_ptr<InsAlgTemplate>& algTemplate, AlgTempResReq& tempResReq) const
 {
     if (enableDetour_) {
         HCCL_DEBUG("[InsV2ReduceSoleExecutor] [%s] Rank[%d], CalcRes with detouring enabled.", __func__, myRank_);
@@ -91,7 +94,7 @@ HcclResult InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::GetTemplateRes
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
 HcclResult InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::GetTemplateResRequest(
-    ConnectedLinkMgr *linkMgr, std::shared_ptr<InsAlgTemplate> &algTemplate, AlgTempResReq &tempResReq) const
+    ConnectedLinkMgr* linkMgr, std::shared_ptr<InsAlgTemplate>& algTemplate, AlgTempResReq& tempResReq) const
 {
     if (enableDetour_) {
         HCCL_DEBUG("[%s] Rank[%d], CalcRes with detouring enabled.", __func__, myRank_);
@@ -106,7 +109,7 @@ HcclResult InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::GetTemplateRes
 // HOST 侧算法入口
 template <typename AlgTopoMatch, typename InsAlgTemplate>
 HcclResult InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(
-    const RankGraph *rankGraph, const CollAlgOperator &op, const CollAlgParams &params, InsQuePtr insQue)
+    const RankGraph* rankGraph, const CollAlgOperator& op, const CollAlgParams& params, InsQuePtr insQue)
 {
     CHK_RET(Init(op, params, insQue));
     CHK_RET(InitCommInfo(rankGraph));
@@ -124,8 +127,9 @@ HcclResult InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(
 
 // AICPU 侧算法入口
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(const AlgTopoInfo &topoInfo,
-    const CollAlgOperator &op, const CollAlgParams &params, ConnectedLinkMgr *linkMgr, InsQuePtr insQue)
+HcclResult InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(
+    const AlgTopoInfo& topoInfo, const CollAlgOperator& op, const CollAlgParams& params, ConnectedLinkMgr* linkMgr,
+    InsQuePtr insQue)
 {
     CHK_RET(Init(op, params, insQue));
     CHK_RET(InitCommInfo(topoInfo));
@@ -143,8 +147,8 @@ HcclResult InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(co
 
 // 切分数据并调用 template
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateLoop(
-    std::shared_ptr<InsAlgTemplate> algTemplate)
+HcclResult
+InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateLoop(std::shared_ptr<InsAlgTemplate> algTemplate)
 {
     HCCL_INFO("[InsReduceSoleExecutor][OrchestrateLoop] Start, template[%s]", algTemplate->Describe().c_str());
     u32 dataSizePerVolume = DataTypeSizeGet(dataType_);
@@ -154,7 +158,7 @@ HcclResult InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateLoo
     tempAlgParams.buffInfo.inBuffType = BufferType::INPUT;
     tempAlgParams.buffInfo.outBuffType = BufferType::OUTPUT;
     tempAlgParams.buffInfo.scratBuffType = BufferType::SCRATCH;
-    tempAlgParams.repeatNum = 1;  // 不需要重复
+    tempAlgParams.repeatNum = 1; // 不需要重复
     tempAlgParams.outputRepeatStride = 0;
     tempAlgParams.inputRepeatStride = 0;
 
@@ -165,7 +169,7 @@ HcclResult InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateLoo
     tempFuncs.isBottom = true;
 
     u64 maxDataSizePerLoop = 0;
-    u64 transportBoundDataSize = UB_MAX_DATA_SIZE;  // algTemplate->CalcLoopMaxCount();
+    u64 transportBoundDataSize = UB_MAX_DATA_SIZE; // algTemplate->CalcLoopMaxCount();
     u32 templateScratchMultiplier = algTemplate->CalcScratchMultiple(BufferType::INPUT, BufferType::OUTPUT);
     if (templateScratchMultiplier != 0) {
         u64 scratchBoundDataSize = maxTmpMemSize_ / templateScratchMultiplier;
@@ -174,19 +178,17 @@ HcclResult InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateLoo
         maxDataSizePerLoop = transportBoundDataSize;
     }
     u64 maxDataCountPerLoop = maxDataSizePerLoop / dataTypeSize_;
-    HCCL_INFO("[InsReduceSoleExecutor][OrchestrateLoop] maxDataCountPerLoop[%llu], maxDataSizePerLoop[%llu], "
-              "transportBoundDataSize[%llu], templateScratchMultiplier[%llu]",
-        maxDataCountPerLoop,
-        maxDataSizePerLoop,
-        transportBoundDataSize,
-        templateScratchMultiplier);
-    CHK_PRT_RET(maxDataCountPerLoop == 0,
-        HCCL_ERROR("[InsReduceSoleExecutor][OrchestrateLoop] maxDataCountPerLoop is 0"),
+    HCCL_INFO(
+        "[InsReduceSoleExecutor][OrchestrateLoop] maxDataCountPerLoop[%llu], maxDataSizePerLoop[%llu], "
+        "transportBoundDataSize[%llu], templateScratchMultiplier[%llu]",
+        maxDataCountPerLoop, maxDataSizePerLoop, transportBoundDataSize, templateScratchMultiplier);
+    CHK_PRT_RET(
+        maxDataCountPerLoop == 0, HCCL_ERROR("[InsReduceSoleExecutor][OrchestrateLoop] maxDataCountPerLoop is 0"),
         HCCL_E_INTERNAL);
 
     tempAlgParams.buffInfo.scratchBuffBaseOff = 0;
-    tempAlgParams.inputSliceStride = 0;           // 输入数据仅有 1 个 slice, 不需要 stride
-    tempAlgParams.outputSliceStride = dataSize_;  // 每张卡的数据间隔为算子输入大小
+    tempAlgParams.inputSliceStride = 0;          // 输入数据仅有 1 个 slice, 不需要 stride
+    tempAlgParams.outputSliceStride = dataSize_; // 每张卡的数据间隔为算子输入大小
 
     u64 processedDataCount = 0;
     u64 loopTimes = dataCount_ / maxDataCountPerLoop + static_cast<u64>(dataCount_ % maxDataCountPerLoop != 0);
@@ -205,8 +207,8 @@ HcclResult InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateLoo
 }
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcRes(
-    const RankGraph *rankGraph, CollAlgResReq &algResReq)
+HcclResult
+InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcRes(const RankGraph* rankGraph, CollAlgResReq& algResReq)
 {
     // Topo Match
     CHK_RET(InitCommInfo(rankGraph));
@@ -221,7 +223,7 @@ HcclResult InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcRes(
     CHK_RET(GetTemplateResRequest(rankGraph, algTemplate, tempResReq));
 
     CHK_RET(CalcLinkInfo(myRank_, rankGraph, tempResReq.links, algResReq.levelRankPairs));
-    algResReq.topoInfo.UpdateSingleLevelTopo(virtRanks_, virtRankMap_, vTopo_);   
+    algResReq.topoInfo.UpdateSingleLevelTopo(virtRanks_, virtRankMap_, vTopo_);
     algResReq.queueNotifys = tempResReq.queNotifys;
     algResReq.localWaitGroupCntNotify = tempResReq.localWaitGroupCntNotify;
     algResReq.primQueueNum = tempResReq.streamNum;
@@ -233,7 +235,7 @@ HcclResult InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcRes(
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
 HcclResult InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcResOffload(
-    const RankGraph *rankGraph, const u64 &dataSize, CollOffloadOpResReq &resReq)
+    const RankGraph* rankGraph, const u64& dataSize, CollOffloadOpResReq& resReq)
 {
     // Topo Match
     CHK_RET(InitCommInfo(rankGraph));
@@ -245,37 +247,34 @@ HcclResult InsV2ReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcResOffload
     CHK_RET(GetTemplateResRequest(rankGraph, algTemplate, tempResReq));
     u32 templateScratchMultiplier = algTemplate->CalcScratchMultiple(BufferType::INPUT, BufferType::OUTPUT);
     u64 transportBoundDataSize = UB_MAX_DATA_SIZE;
-    resReq.requiredScratchMemSize =
-        std::min(dataSize * templateScratchMultiplier, transportBoundDataSize);
+    resReq.requiredScratchMemSize = std::min(dataSize * templateScratchMultiplier, transportBoundDataSize);
     resReq.requiredSubQueNum = tempResReq.streamNum - 1;
 
     return HcclResult::HCCL_SUCCESS;
 }
 
-INS_REGISTER_IMPL_BY_TEMP(OpType::REDUCE, InsReduceMesh1D, InsV2ReduceSoleExecutor,
-    TopoMatchMesh, InsTempReduceMesh1D);
-INS_REGISTER_IMPL_BY_TEMP(OpType::REDUCE, InsReduceMesh1DTwoShot, InsV2ReduceSoleExecutor,
-    TopoMatchMesh, InsTempReduceMesh1DTwoShot);
-INS_REGISTER_IMPL_BY_TEMP(OpType::REDUCE, InsReduceMesh2D, InsV2ReduceSoleExecutor,
-    TopoMatchConcurrMesh, InsTempReduceMesh2D);
-INS_REGISTER_IMPL_BY_TEMP(OpType::REDUCE, InsReduceAicpuReduce, InsV2ReduceSoleExecutor,
-    TopoMatchMesh, InsTempReduceAicpuReduce);
-INS_REGISTER_IMPL_BY_TEMP(OpType::REDUCE, InsReduceAicpuReduceMesh2D, InsV2ReduceSoleExecutor,
-    TopoMatchConcurrMesh, InsTempReduceAicpuReduceMesh2D);
-INS_REGISTER_IMPL_BY_TEMP(OpType::REDUCE, InsReduceNHR, InsV2ReduceSoleExecutor, TopoMatchNHR,
-                          InsTempReduceNHR);
+INS_REGISTER_IMPL_BY_TEMP(OpType::REDUCE, InsReduceMesh1D, InsV2ReduceSoleExecutor, TopoMatchMesh, InsTempReduceMesh1D);
+INS_REGISTER_IMPL_BY_TEMP(
+    OpType::REDUCE, InsReduceMesh1DTwoShot, InsV2ReduceSoleExecutor, TopoMatchMesh, InsTempReduceMesh1DTwoShot);
+INS_REGISTER_IMPL_BY_TEMP(
+    OpType::REDUCE, InsReduceMesh2D, InsV2ReduceSoleExecutor, TopoMatchConcurrMesh, InsTempReduceMesh2D);
+INS_REGISTER_IMPL_BY_TEMP(
+    OpType::REDUCE, InsReduceAicpuReduce, InsV2ReduceSoleExecutor, TopoMatchMesh, InsTempReduceAicpuReduce);
+INS_REGISTER_IMPL_BY_TEMP(
+    OpType::REDUCE, InsReduceAicpuReduceMesh2D, InsV2ReduceSoleExecutor, TopoMatchConcurrMesh,
+    InsTempReduceAicpuReduceMesh2D);
+INS_REGISTER_IMPL_BY_TEMP(OpType::REDUCE, InsReduceNHR, InsV2ReduceSoleExecutor, TopoMatchNHR, InsTempReduceNHR);
 #ifndef CCL_KERNEL_AICPU
-INS_REGISTER_IMPL_BY_TEMP(OpType::REDUCE, CcuReduceMesh1D, InsV2ReduceSoleExecutor,
-                          TopoMatchMesh, CcuTempReduceMesh1D);
-INS_REGISTER_IMPL_BY_TEMP(OpType::REDUCE, CcuReduceNHR1D, InsV2ReduceSoleExecutor,
-                          TopoMatchMesh, CcuTempReduceNHRMem2Mem1D);
+INS_REGISTER_IMPL_BY_TEMP(OpType::REDUCE, CcuReduceMesh1D, InsV2ReduceSoleExecutor, TopoMatchMesh, CcuTempReduceMesh1D);
+INS_REGISTER_IMPL_BY_TEMP(
+    OpType::REDUCE, CcuReduceNHR1D, InsV2ReduceSoleExecutor, TopoMatchMesh, CcuTempReduceNHRMem2Mem1D);
 INS_REGISTER_IMPL_BY_TEMP(
     OpType::REDUCE, CcuReduceMeshMem2Mem1D, InsV2ReduceSoleExecutor, TopoMatchMesh, CcuTempReduceMeshMem2Mem1D);
-INS_REGISTER_IMPL_BY_TEMP(OpType::REDUCE, AivReduceMesh1D, InsV2ReduceSoleExecutor,
-    TopoMatchMesh, AivTempReduceMesh1D);
+INS_REGISTER_IMPL_BY_TEMP(OpType::REDUCE, AivReduceMesh1D, InsV2ReduceSoleExecutor, TopoMatchMesh, AivTempReduceMesh1D);
 INS_REGISTER_IMPL_BY_TEMP(
     OpType::REDUCE, CcuReduceMeshMem2Mem2D, InsV2ReduceSoleExecutor, TopoMatchConcurrMesh, CcuTempReduceMeshMem2Mem2D);
-INS_REGISTER_IMPL_BY_TEMP(OpType::REDUCE, CcuReduceMeshTwoShotMem2Mem1D, InsV2ReduceSoleExecutor,
-                          TopoMatchMesh, CcuTempReduceMeshTwoShotMem2Mem1D);
+INS_REGISTER_IMPL_BY_TEMP(
+    OpType::REDUCE, CcuReduceMeshTwoShotMem2Mem1D, InsV2ReduceSoleExecutor, TopoMatchMesh,
+    CcuTempReduceMeshTwoShotMem2Mem1D);
 #endif
 } // namespace Hccl

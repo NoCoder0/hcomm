@@ -34,7 +34,7 @@ struct tagBkfDcTupleKeyItor {
     BkfDcTableType *tableType;
     void *tupleKey;
     void *tupleVal;
-    uint8_t *sliceKey; /* 指向后面buf缓冲的数据key部分 */
+    uint8_t *sliceKey;        /* 指向后面buf缓冲的数据key部分 */
     uint8_t *lastGetTupleKey; /* 指向后面buf缓冲的数据val部分 */
     uint8_t buf[0];
 };
@@ -77,4 +77,3 @@ void BkfDcNtfTableAllSeqItor(BkfDc *dc, BkfDcTable *table, F_DC_TUPLE_SEQ_ITOR_P
 #endif
 
 #endif
-

@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2026 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef STORAGE_MANAGER_H
 #define STORAGE_MANAGER_H
@@ -22,7 +22,7 @@
 #include "dtype_common.h"
 #include "sim_common_defs.h"
 #include "sim_loader.h"
-#include "sim_op_db_types.h"
+#include "operation_data/operation_data_types.h"
 #include "store_sim_shm_memory_common.h"
 
 namespace HcclSim {
@@ -42,7 +42,7 @@ struct CheckerParam {
     uint32_t rankSize = 0;
     HcclDataType dataType = static_cast<HcclDataType>(0);
     uint64_t dataCount = 0;
-    
+
     // 以下是可能缺失的字段，初始化为安全值
     HcclReduceOp reduceType = static_cast<HcclReduceOp>(0);
     uint32_t srcRank = 0;
@@ -59,7 +59,8 @@ using AllRankTaskQueues = std::vector<SingleTaskQueue>;
 
 class StorageManager {
 public:
-    static StorageManager& GetInstance() {
+    static StorageManager& GetInstance()
+    {
         static StorageManager instance;
         return instance;
     }
@@ -67,39 +68,43 @@ public:
     StorageManager(const StorageManager&) = delete;
     StorageManager& operator=(const StorageManager&) = delete;
 
-    void SetDataId(const std::string& data_id) {
+    void SetDataId(const std::string& data_id)
+    {
         std::lock_guard<std::mutex> lock(m_mutex);
         m_data_id = data_id;
     }
 
-    std::string GetDataId() const {
+    std::string GetDataId() const
+    {
         std::lock_guard<std::mutex> lock(m_mutex);
         return m_data_id;
     }
 
-    CheckerParam GetCheckerParam() const {
+    CheckerParam GetCheckerParam() const
+    {
         std::lock_guard<std::mutex> lock(m_mutex);
         return m_checker_param;
     }
 
-    HcclVmResult InitCcuResource(std::vector<sim::CcuInstrResTab>& instrRes);
-    HcclVmResult InitAivResourceFromCompositeOpDetail(const sim::CompositeOpDetail &opDetail);
-    void ResetAivResource();
+    std::string FindRootPath();
+
+    HcclVmResult InitCcuResource(std::vector<sim::operation::CcuInstrResTab>& instrRes);
     void ReleasePhyMem();
 
-    HcclVmResult LoadHcclVmSynthesisData(sim::OpDetailTab& detail, std::vector<sim::CcuChannelTab>& channels);
-    HcclVmResult LoadHcclVmInstrData(std::vector<sim::CcuInstrResTab>& instrRes);
-    HcclVmResult LoadHcclVmTaskMetaData(std::vector<sim::OpTaskTab>& tasks);
-    HcclVmResult ConvertTaskQueue(const HcclVmTaskMetaData &taskMeataData);
+    HcclVmResult
+    LoadHcclVmSynthesisData(sim::operation::OpDetailTab& detail, std::vector<sim::operation::CcuChannelTab>& channels);
+    HcclVmResult LoadHcclVmInstrData(std::vector<sim::operation::CcuInstrResTab>& instrRes);
+    HcclVmResult LoadHcclVmTaskMetaData(std::vector<sim::operation::OpTaskTab>& tasks);
+    HcclVmResult ConvertTaskQueue(const HcclVmTaskMetaData& taskMeataData);
     uint32_t GetRankSize() const;
 
     HcclVmInstrData GetHvmInstrData() const;
-    HcclVmResult Trans2CheckerParam(sim::OpDetailTab& detailTab, ::OpDetails& detail);
+    HcclVmResult Trans2CheckerParam(sim::operation::OpDetailTab& detailTab, ::OpDetails& detail);
     HcclVmTaskMetaData GetHvmTaskMetaData() const;
-    AllRankTaskQueues &GetAllRankTaskQueues();
-    void DumpAllRankInputOutput(std::vector<std::map<uint32_t, sim::CompositeOpDetail>>& compositeDataMap);
+    AllRankTaskQueues& GetAllRankTaskQueues();
+    void DumpAllRankInputOutput(std::vector<std::map<uint32_t, sim::operation::CompositeOpDetail>>& compositeDataMap);
     HcclVmResult DumpHcclVmFlagData(uint16_t finishFlag);
-    HcclVmResult GetHcclVmFlagData(HcclSim::HcclVmFlagData &flagData);
+    HcclVmResult GetHcclVmFlagData(HcclSim::HcclVmFlagData& flagData);
     void Reset()
     {
         m_allRankTaskQueues.clear();
@@ -110,17 +115,16 @@ public:
         m_checker_param = {};
         devType_ = DevType::DEV_TYPE_COUNT;
     }
+    std::vector<RankChannelInfo>& GetAllRankChannelInfo();
+
 private:
     StorageManager() = default;
     HcclVmResult PrintAllRankInputBuffer();
-    void FlexiblePrintData(std::ofstream &ofs, const BufferInfo &buffer);
-    void PrintOpData1(std::ofstream &ofs, const std::vector<BufferInfo> &allRankInput);
-    void PrintOpData2(std::ofstream &ofs,
-                      const std::vector<BufferInfo> &allRankInput,
-                      const std::vector<BufferInfo> &allRankOutput,
-                      const std::vector<BufferInfo> &allRankCCL);
+    void FlexiblePrintData(std::ofstream& ofs, const BufferInfo& buffer);
+    void PrintOpData1(std::ofstream& ofs, const std::vector<BufferInfo>& allRankInput);
+    void PrintOpData2(
+        std::ofstream& ofs, const std::vector<BufferInfo>& allRankInput, const std::vector<BufferInfo>& allRankOutput);
 
-    std::string FindRootPath();
     bool IsDirExists(const std::string& path);
 
     std::string m_data_id;
@@ -132,9 +136,9 @@ private:
     HcclVmSynData m_synData;
     HcclVmInstrData m_instrData;
     AllRankTaskQueues m_allRankTaskQueues;
-    std::vector<sim::PhyMemBlock> m_allPhyMem;
+    std::vector<sim::runtime::PhyMemBlock> m_allPhyMem;
     DevType devType_{DevType::DEV_TYPE_COUNT}; // 初始化无效值
 };
-}
+} // namespace HcclSim
 
 #endif

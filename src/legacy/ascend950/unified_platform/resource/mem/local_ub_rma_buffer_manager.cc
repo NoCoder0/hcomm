@@ -14,7 +14,7 @@ namespace Hccl {
 
 using namespace std;
 
-LocalUbRmaBufferMgr *LocalUbRmaBufferManager::GetInstance()
+LocalUbRmaBufferMgr* LocalUbRmaBufferManager::GetInstance()
 {
     static LocalUbRmaBufferMgr instance;
     return &instance;

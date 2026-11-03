@@ -33,37 +33,37 @@ GraphRevampBase::~GraphRevampBase()
     rank2QueSize_.clear();
 }
 
-HcclResult GraphRevampBase::GetPeerRankByTaskNode(TaskNodePtr currNode, RankId &peerRank)
+HcclResult GraphRevampBase::GetPeerRankByTaskNode(TaskNodePtr currNode, RankId& peerRank)
 {
     if (currNode->task->GetType() == TaskTypeStub::READ) {
-        TaskStubRead *read = dynamic_cast<TaskStubRead *>(currNode->task);
+        TaskStubRead* read = dynamic_cast<TaskStubRead*>(currNode->task);
         peerRank = read->GetRemoteRank();
     } else if (currNode->task->GetType() == TaskTypeStub::READ_REDUCE) {
-        TaskStubReadReduce *read = dynamic_cast<TaskStubReadReduce *>(currNode->task);
+        TaskStubReadReduce* read = dynamic_cast<TaskStubReadReduce*>(currNode->task);
         peerRank = read->GetRemoteRank();
     } else if (currNode->task->GetType() == TaskTypeStub::WRITE) {
-        TaskStubWrite *write = dynamic_cast<TaskStubWrite *>(currNode->task);
+        TaskStubWrite* write = dynamic_cast<TaskStubWrite*>(currNode->task);
         peerRank = write->GetRemoteRank();
     } else if (currNode->task->GetType() == TaskTypeStub::WRITE_REDUCE) {
-        TaskStubWriteReduce *write = dynamic_cast<TaskStubWriteReduce *>(currNode->task);
+        TaskStubWriteReduce* write = dynamic_cast<TaskStubWriteReduce*>(currNode->task);
         peerRank = write->GetRemoteRank();
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult GraphRevampBase::GetLinkProtoStubByTaskNode(TaskNodePtr currNode, LinkProtoStub &link)
+HcclResult GraphRevampBase::GetLinkProtoStubByTaskNode(TaskNodePtr currNode, LinkProtoStub& link)
 {
     if (currNode->task->GetType() == TaskTypeStub::READ) {
-        TaskStubRead *read = dynamic_cast<TaskStubRead *>(currNode->task);
+        TaskStubRead* read = dynamic_cast<TaskStubRead*>(currNode->task);
         link = read->GetLinkType();
     } else if (currNode->task->GetType() == TaskTypeStub::READ_REDUCE) {
-        TaskStubReadReduce *read = dynamic_cast<TaskStubReadReduce *>(currNode->task);
+        TaskStubReadReduce* read = dynamic_cast<TaskStubReadReduce*>(currNode->task);
         link = read->GetLinkType();
     } else if (currNode->task->GetType() == TaskTypeStub::WRITE) {
-        TaskStubWrite *write = dynamic_cast<TaskStubWrite *>(currNode->task);
+        TaskStubWrite* write = dynamic_cast<TaskStubWrite*>(currNode->task);
         link = write->GetLinkType();
     } else if (currNode->task->GetType() == TaskTypeStub::WRITE_REDUCE) {
-        TaskStubWriteReduce *write = dynamic_cast<TaskStubWriteReduce *>(currNode->task);
+        TaskStubWriteReduce* write = dynamic_cast<TaskStubWriteReduce*>(currNode->task);
         link = write->GetLinkType();
     }
     return HCCL_SUCCESS;
@@ -71,24 +71,26 @@ HcclResult GraphRevampBase::GetLinkProtoStubByTaskNode(TaskNodePtr currNode, Lin
 
 TaskStub* GraphRevampBase::GenTaskStubBeingReadOrWrittern(TaskNodePtr currNode)
 {
-    TaskStub *res = nullptr;
+    TaskStub* res = nullptr;
     if (currNode->task->GetType() == TaskTypeStub::READ) {
-        TaskStubRead *read = dynamic_cast<TaskStubRead *>(currNode->task);
-        res = new TaskStubBeingRead
-            (currNode->rankIdx, read->GetLinkInfo(), read->GetRemoteSlice(), read->GetLocalSlice(), read->IsGenFromSync());
+        TaskStubRead* read = dynamic_cast<TaskStubRead*>(currNode->task);
+        res = new TaskStubBeingRead(
+            currNode->rankIdx, read->GetLinkInfo(), read->GetRemoteSlice(), read->GetLocalSlice(),
+            read->IsGenFromSync());
     } else if (currNode->task->GetType() == TaskTypeStub::WRITE) {
-        TaskStubWrite *write = dynamic_cast<TaskStubWrite *>(currNode->task);
-        res = new TaskStubBeingWritten
-            (currNode->rankIdx, write->GetLinkInfo(), write->GetRemoteSlice(), write->GetLocalSlice(), write->IsGenFromSync());
+        TaskStubWrite* write = dynamic_cast<TaskStubWrite*>(currNode->task);
+        res = new TaskStubBeingWritten(
+            currNode->rankIdx, write->GetLinkInfo(), write->GetRemoteSlice(), write->GetLocalSlice(),
+            write->IsGenFromSync());
     } else if (currNode->task->GetType() == TaskTypeStub::READ_REDUCE) {
-        TaskStubReadReduce *readReduce = dynamic_cast<TaskStubReadReduce *>(currNode->task);
-        res = new TaskStubBeingReadReduce
-            (currNode->rankIdx, readReduce->GetLinkInfo(), readReduce->GetRemoteSlice(), readReduce->GetLocalSlice(),
+        TaskStubReadReduce* readReduce = dynamic_cast<TaskStubReadReduce*>(currNode->task);
+        res = new TaskStubBeingReadReduce(
+            currNode->rankIdx, readReduce->GetLinkInfo(), readReduce->GetRemoteSlice(), readReduce->GetLocalSlice(),
             readReduce->GetDataType(), readReduce->GetReduceOp(), readReduce->IsGenFromSync());
     } else if (currNode->task->GetType() == TaskTypeStub::WRITE_REDUCE) {
-        TaskStubWriteReduce *writeReduce = dynamic_cast<TaskStubWriteReduce *>(currNode->task);
-        res = new TaskStubBeingWrittenReduce
-            (currNode->rankIdx, writeReduce->GetLinkInfo(), writeReduce->GetRemoteSlice(), writeReduce->GetLocalSlice(),
+        TaskStubWriteReduce* writeReduce = dynamic_cast<TaskStubWriteReduce*>(currNode->task);
+        res = new TaskStubBeingWrittenReduce(
+            currNode->rankIdx, writeReduce->GetLinkInfo(), writeReduce->GetRemoteSlice(), writeReduce->GetLocalSlice(),
             writeReduce->GetDataType(), writeReduce->GetReduceOp(), writeReduce->IsGenFromSync());
     }
     toDeleteTaskResource_.push_back(res);
@@ -110,7 +112,7 @@ void GraphRevampBase::AddNodeRelation(TaskNodePtr parent, TaskNodePtr child)
 }
 
 void GraphRevampBase::SearchGraphByRank(
-    TaskNodePtr currNode, std::queue<TaskNodePtr> &graphNodeQue, std::set<TaskNodePtr> &isVisited, RankId rankId)
+    TaskNodePtr currNode, std::queue<TaskNodePtr>& graphNodeQue, std::set<TaskNodePtr>& isVisited, RankId rankId)
 {
     for (auto childIter = currNode->children.begin(); childIter != currNode->children.end(); childIter++) {
         if ((*childIter)->rankIdx != rankId) {
@@ -124,7 +126,7 @@ void GraphRevampBase::SearchGraphByRank(
 }
 
 void GraphRevampBase::SearchGraphByQueueId(
-    TaskNodePtr currNode, std::queue<TaskNodePtr> &graphNodeQue, std::set<TaskNodePtr> &isVisited, uint32_t queIdx)
+    TaskNodePtr currNode, std::queue<TaskNodePtr>& graphNodeQue, std::set<TaskNodePtr>& isVisited, uint32_t queIdx)
 {
     for (auto childIter = currNode->children.begin(); childIter != currNode->children.end(); childIter++) {
         if ((*childIter)->queIdx != queIdx) {
@@ -137,10 +139,7 @@ void GraphRevampBase::SearchGraphByQueueId(
     }
 }
 
-HcclResult GraphRevampBase::RevampGraph4Rank(TaskNodePtr ccuHead, RankId rankId)
-{
-    return HcclResult::HCCL_SUCCESS;
-}
+HcclResult GraphRevampBase::RevampGraph4Rank(TaskNodePtr ccuHead, RankId rankId) { return HcclResult::HCCL_SUCCESS; }
 
 HcclResult GraphRevampBase::RevampGraph(TaskNodePtr dummyStart)
 {

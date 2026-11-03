@@ -22,7 +22,8 @@
 namespace HcclSim {
 class DumpManager {
 public:
-    static DumpManager& GetInstance() {
+    static DumpManager& GetInstance()
+    {
         static DumpManager instance;
         return instance;
     }
@@ -40,19 +41,20 @@ public:
 
     HcclResult Write(const std::string& relativePath, const nlohmann::json& document) const;
     HcclResult WriteJson(const std::string& relativePath, const nlohmann::json& document) const;
-    HcclResult WriteMsgpackStream(const std::string& relativePath,
-        const std::function<HcclResult(std::ostream&)> &writer) const;
+    HcclResult
+    WriteMsgpackStream(const std::string& relativePath, const std::function<HcclResult(std::ostream&)>& writer) const;
 
 private:
     DumpManager() = default;
 
     HcclResult PrepareDumpDirs() const;
-    HcclResult WriteMsgpackFile(const std::string& dumpRootDir, const std::string& relativePath,
-        const nlohmann::json& document) const;
-    HcclResult WriteJsonFile(const std::string& dumpRootDir, const std::string& relativePath,
-        const nlohmann::json& document) const;
-    HcclResult WriteMsgpackStreamFile(const std::string& dumpRootDir, const std::string& relativePath,
-        const std::function<HcclResult(std::ostream&)> &writer) const;
+    HcclResult WriteMsgpackFile(
+        const std::string& dumpRootDir, const std::string& relativePath, const nlohmann::json& document) const;
+    HcclResult WriteJsonFile(
+        const std::string& dumpRootDir, const std::string& relativePath, const nlohmann::json& document) const;
+    HcclResult WriteMsgpackStreamFile(
+        const std::string& dumpRootDir, const std::string& relativePath,
+        const std::function<HcclResult(std::ostream&)>& writer) const;
 
     mutable std::mutex m_mutex;
     std::string m_dataId;
@@ -60,6 +62,6 @@ private:
     std::string m_dataDir;
     std::string m_dumpRootDir;
 };
-}  // namespace HcclSim
+} // namespace HcclSim
 
-#endif  // HCCL_VM_DUMP_MANAGER_H
+#endif // HCCL_VM_DUMP_MANAGER_H

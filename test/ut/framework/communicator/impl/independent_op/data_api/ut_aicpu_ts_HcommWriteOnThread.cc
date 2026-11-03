@@ -17,15 +17,9 @@ using namespace hccl;
 
 class UtAicpuTsHcommWriteOnThread : public UtAicpuTsBase {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "UtAicpuTsHcommWriteOnThread tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "UtAicpuTsHcommWriteOnThread tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "UtAicpuTsHcommWriteOnThread tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "UtAicpuTsHcommWriteOnThread tests tear down." << std::endl; }
 
     virtual void SetUp() override
     {
@@ -41,8 +35,8 @@ protected:
 
     uint64_t tempDst[6] = {0};
     uint64_t tempSrc[6] = {1, 1, 4, 5, 1, 4};
-    void *dst = reinterpret_cast<void *>(tempDst);
-    void *src = reinterpret_cast<void *>(tempSrc);
+    void* dst = reinterpret_cast<void*>(tempDst);
+    void* src = reinterpret_cast<void*>(tempSrc);
     uint64_t len = sizeof(tempDst);
     std::vector<char> uniqueId;
     Hccl::UbTransportLiteImpl transportDev{uniqueId};
@@ -62,11 +56,12 @@ TEST_F(UtAicpuTsHcommWriteOnThread, Ut_HcommWriteOnThread_When_Thread_IsNull_Exp
     EXPECT_EQ(res, HCCL_E_PTR);
 }
 
-TEST_F(UtAicpuTsHcommWriteOnThread, Ut_HcommWriteOnThread_When_BuildLocRmaBufferLite_Fail_Expect_ReturnIsHCCL_E_INTERNAL)
+TEST_F(
+    UtAicpuTsHcommWriteOnThread, Ut_HcommWriteOnThread_When_BuildLocRmaBufferLite_Fail_Expect_ReturnIsHCCL_E_INTERNAL)
 {
-    GlobalMockObject::verify();
-    auto *const transportLitePtr = reinterpret_cast<Hccl::UbTransportLiteImpl *>(devHandle);
- 	MOCKER_CPP_VIRTUAL(transportLitePtr, &Hccl::UbTransportLiteImpl::BuildLocRmaBufferLite)
+    VerifyMocksAndRestubDevType();
+    auto* const transportLitePtr = reinterpret_cast<Hccl::UbTransportLiteImpl*>(devHandle);
+    MOCKER_CPP_VIRTUAL(transportLitePtr, &Hccl::UbTransportLiteImpl::BuildLocRmaBufferLite)
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
         .will(returnValue(HCCL_E_INTERNAL));
@@ -75,7 +70,8 @@ TEST_F(UtAicpuTsHcommWriteOnThread, Ut_HcommWriteOnThread_When_BuildLocRmaBuffer
     EXPECT_EQ(res, HCCL_E_INTERNAL);
 }
 
-TEST_F(UtAicpuTsHcommWriteOnThread, Ut_HcommWriteOnThread_When_GetRmtRmaBufSliceLite_Throw_Expect_ReturnIsHCCL_E_INTERNAL)
+TEST_F(
+    UtAicpuTsHcommWriteOnThread, Ut_HcommWriteOnThread_When_GetRmtRmaBufSliceLite_Throw_Expect_ReturnIsHCCL_E_INTERNAL)
 {
     MOCKER_CPP_VIRTUAL(transportDev, &Hccl::UbTransportLiteImpl::Write)
         .stubs()

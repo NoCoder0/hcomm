@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #define BKF_LOG_HND ((co)->log)
 #define BKF_MOD_NAME ((co)->name)
 
@@ -40,57 +39,51 @@ STATIC uint32_t NetCoOutAddUpdTbl(NetCo *co, uint16_t tblTypeId, void *key, void
 STATIC void NetCoOutDelTbl(NetCo *co, uint16_t tblTypeId, void *key);
 
 STATIC uint32_t NetCoOutBuildCommInfoTupleKey(NetTblCommInfoKey *from, BifrostCncoiComminfoKeyT *to);
-STATIC uint32_t NetCoOutBuildCommInfoTblKey(BifrostCncoiComminfoKeyT *from,  NetTblCommInfoKey *to);
+STATIC uint32_t NetCoOutBuildCommInfoTblKey(BifrostCncoiComminfoKeyT *from, NetTblCommInfoKey *to);
 STATIC uint32_t NetCoOutInitCommInfo(NetCo *co);
-STATIC int32_t NetCoOutOnCommInfoTupleUpdCode(NetCo *co, SimpoBuilderT *builder,
-                                              BifrostCncoiSliceKeyT *sliceKey, BifrostCncoiComminfoKeyT *tupleKey,
-                                              void *notUse, void *codeBuf, int32_t bufLen);
+STATIC int32_t NetCoOutOnCommInfoTupleUpdCode(NetCo *co, SimpoBuilderT *builder, BifrostCncoiSliceKeyT *sliceKey,
+    BifrostCncoiComminfoKeyT *tupleKey, void *notUse, void *codeBuf, int32_t bufLen);
 
 STATIC uint32_t NetCoOutBuildOperTupleKey(NetTblOperatorKey *from, BifrostCncoiOperatorKeyT *to);
-STATIC uint32_t NetCoOutBuildOperTblKey(BifrostCncoiOperatorKeyT *from,  NetTblOperatorKey *to);
+STATIC uint32_t NetCoOutBuildOperTblKey(BifrostCncoiOperatorKeyT *from, NetTblOperatorKey *to);
 STATIC uint32_t NetCoOutInitOper(NetCo *co);
 STATIC int32_t NetCoOutOnOperTupleUpdCode(NetCo *co, void *builder, BifrostCncoiSliceKeyT *sliceKey,
-                                          BifrostCncoiOperatorKeyT *tupleKey, void *notUse,
-                                          void *codeBuf, int32_t bufLen);
+    BifrostCncoiOperatorKeyT *tupleKey, void *notUse, void *codeBuf, int32_t bufLen);
 
 STATIC uint32_t NetCoOutBuildAdjTupleKey(NetTblAdjacencyKey *from, BifrostCncoiAdjacencyKeyT *to);
-STATIC uint32_t NetCoOutBuildAdjTblKey(BifrostCncoiAdjacencyKeyT *from,  NetTblAdjacencyKey *to);
+STATIC uint32_t NetCoOutBuildAdjTblKey(BifrostCncoiAdjacencyKeyT *from, NetTblAdjacencyKey *to);
 STATIC uint32_t NetCoOutInitAdj(NetCo *co);
 STATIC int32_t NetCoOutOnAdjTupleUpdCode(NetCo *co, void *builder, BifrostCncoiSliceKeyT *sliceKey,
-                                         BifrostCncoiAdjacencyKeyT *tupleKey, void *notUse,
-                                         void *codeBuf, int32_t bufLen);
+    BifrostCncoiAdjacencyKeyT *tupleKey, void *notUse, void *codeBuf, int32_t bufLen);
 
 STATIC uint32_t NetCoOutBuildRankTupleKey(NetTblGlobalRankKey *from, BifrostCncoiRankKeyT *to);
-STATIC uint32_t NetCoOutBuildRankTblKey(BifrostCncoiRankKeyT *from,  NetTblGlobalRankKey *to);
+STATIC uint32_t NetCoOutBuildRankTblKey(BifrostCncoiRankKeyT *from, NetTblGlobalRankKey *to);
 STATIC uint32_t NetCoOutInitRank(NetCo *co);
 STATIC int32_t NetCoOutOnRankTupleUpdCode(NetCo *co, void *builder, BifrostCncoiSliceKeyT *sliceKey,
-                                          BifrostCncoiRankKeyT *tupleKey, void *notUse,
-                                          void *codeBuf, int32_t bufLen);
+    BifrostCncoiRankKeyT *tupleKey, void *notUse, void *codeBuf, int32_t bufLen);
 
 STATIC uint32_t NetCoOutBuildRankDistTupleKey(NetTblRankDistributeInfoKey *from, BifrostCncoiRankDistributeKeyT *to);
-STATIC uint32_t NetCoOutBuildRankDistTblKey(BifrostCncoiRankDistributeKeyT *from,  NetTblRankDistributeInfoKey *to);
+STATIC uint32_t NetCoOutBuildRankDistTblKey(BifrostCncoiRankDistributeKeyT *from, NetTblRankDistributeInfoKey *to);
 STATIC uint32_t NetCoOutInitRankDist(NetCo *co);
 STATIC int32_t NetCoOutOnRankDistTupleUpdCode(NetCo *co, void *builder, BifrostCncoiSliceKeyT *sliceKey,
-                                              BifrostCncoiRankDistributeKeyT *tupleKey, void *notUse,
-                                              void *codeBuf, int32_t bufLen);
+    BifrostCncoiRankDistributeKeyT *tupleKey, void *notUse, void *codeBuf, int32_t bufLen);
 
 STATIC uint32_t NetCoOutBuildRootRankTupleKey(NetTblRootRankKey *from, BifrostCncoiRootRankKeyT *to);
-STATIC uint32_t NetCoOutBuildRootRankTblKey(BifrostCncoiRootRankKeyT *from,  NetTblRootRankKey *to);
+STATIC uint32_t NetCoOutBuildRootRankTblKey(BifrostCncoiRootRankKeyT *from, NetTblRootRankKey *to);
 STATIC uint32_t NetCoOutInitRootRank(NetCo *co);
 STATIC int32_t NetCoOutOnRootRankTupleUpdCode(NetCo *co, void *builder, BifrostCncoiSliceKeyT *sliceKey,
-                                              BifrostCncoiRootRankKeyT *tupleKey, void *notUse,
-                                              void *codeBuf, int32_t bufLen);
+    BifrostCncoiRootRankKeyT *tupleKey, void *notUse, void *codeBuf, int32_t bufLen);
 
 #endif
 
 #if BKF_BLOCK("公有函数定义")
 STATIC const BkfModVTbl g_NetCoOutTblModVTbl[] = {
-    { (F_BKF_DO)NetCoOutInitCommInfo,  (F_BKF_DOV)VOS_NULL },
-    { (F_BKF_DO)NetCoOutInitOper,      (F_BKF_DOV)VOS_NULL },
-    { (F_BKF_DO)NetCoOutInitAdj,       (F_BKF_DOV)VOS_NULL },
-    { (F_BKF_DO)NetCoOutInitRank,      (F_BKF_DOV)VOS_NULL },
-    { (F_BKF_DO)NetCoOutInitRankDist,  (F_BKF_DOV)VOS_NULL },
-    { (F_BKF_DO)NetCoOutInitRootRank,  (F_BKF_DOV)VOS_NULL },
+    {(F_BKF_DO)NetCoOutInitCommInfo, (F_BKF_DOV)VOS_NULL},
+    {(F_BKF_DO)NetCoOutInitOper, (F_BKF_DOV)VOS_NULL},
+    {(F_BKF_DO)NetCoOutInitAdj, (F_BKF_DOV)VOS_NULL},
+    {(F_BKF_DO)NetCoOutInitRank, (F_BKF_DOV)VOS_NULL},
+    {(F_BKF_DO)NetCoOutInitRankDist, (F_BKF_DOV)VOS_NULL},
+    {(F_BKF_DO)NetCoOutInitRootRank, (F_BKF_DOV)VOS_NULL},
 };
 uint32_t NetCoOutTblInit(NetCo *co)
 {
@@ -114,12 +107,16 @@ void NetCoOutTblUninit(NetCo *co)
 
 uint32_t NetCoTblDemoAddUpd(NetCo *co, NetTblDemo *kv)
 {
+    (void)co;
+    (void)kv;
     VOS_ASSERT(0);
     return BKF_ERR;
 }
 
 void NetCoTblDemoDel(NetCo *co, NetTblDemoKey *key)
 {
+    (void)co;
+    (void)key;
     VOS_ASSERT(0);
 }
 
@@ -154,7 +151,7 @@ uint32_t NetCoTblCommInfoAddUpd(NetCo *co, NetTblCommInfo *kv, uint32_t dataLen)
         BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u)\n", ret);
         return ret;
     }
-    ret= BifrostCncoiPuberComminfoNotifyTableComplete(co->out->puber);
+    ret = BifrostCncoiPuberComminfoNotifyTableComplete(co->out->puber);
     if (ret != BKF_OK) {
         BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u)\n", ret);
         return ret;
@@ -188,7 +185,7 @@ uint32_t NetCoTblOperAddUpd(NetCo *co, NetTblOperator *kv, uint32_t dataLen)
         return BKF_ERR;
     }
     BKF_LOG_DEBUG(BKF_LOG_HND, "dataLen %u\n", dataLen);
-    if (sizeof(NetTblOperator)  > dataLen) {
+    if (sizeof(NetTblOperator) > dataLen) {
         BKF_LOG_ERROR(BKF_LOG_HND, "input data error\n");
         return BKF_ERR;
     }
@@ -212,7 +209,7 @@ uint32_t NetCoTblOperAddUpd(NetCo *co, NetTblOperator *kv, uint32_t dataLen)
         BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u)\n", ret);
         return ret;
     }
-    ret= BifrostCncoiPuberOperatorNotifyTableComplete(co->out->puber);
+    ret = BifrostCncoiPuberOperatorNotifyTableComplete(co->out->puber);
     if (ret != BKF_OK) {
         BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u)\n", ret);
         return ret;
@@ -270,7 +267,7 @@ uint32_t NetCoTblAdjAddUpd(NetCo *co, NetTblAdjacency *kv, uint32_t dataLen)
         BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u)\n", ret);
         return ret;
     }
-    ret= BifrostCncoiPuberAdjacencyNotifyTableComplete(co->out->puber);
+    ret = BifrostCncoiPuberAdjacencyNotifyTableComplete(co->out->puber);
     if (ret != BKF_OK) {
         BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u)\n", ret);
         return ret;
@@ -329,7 +326,7 @@ uint32_t NetCoTblRankAddUpd(NetCo *co, NetTblGlobalRank *kv, uint32_t dataLen)
         BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u)\n", ret);
         return ret;
     }
-    ret= BifrostCncoiPuberRankNotifyTableComplete(co->out->puber);
+    ret = BifrostCncoiPuberRankNotifyTableComplete(co->out->puber);
     if (ret != BKF_OK) {
         BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u)\n", ret);
         return ret;
@@ -363,7 +360,7 @@ uint32_t NetCoTblRankDistAddUpd(NetCo *co, NetTblRankDistributeInfo *kv, uint32_
         return BKF_ERR;
     }
     BKF_LOG_DEBUG(BKF_LOG_HND, "dataLen %u\n", dataLen);
-    if (sizeof(NetTblRankDistributeInfo)  > dataLen) {
+    if (sizeof(NetTblRankDistributeInfo) > dataLen) {
         BKF_LOG_ERROR(BKF_LOG_HND, "input data error\n");
         return BKF_ERR;
     }
@@ -387,7 +384,7 @@ uint32_t NetCoTblRankDistAddUpd(NetCo *co, NetTblRankDistributeInfo *kv, uint32_
         BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u)\n", ret);
         return ret;
     }
-    ret= BifrostCncoiPuberRankDistributeNotifyTableComplete(co->out->puber);
+    ret = BifrostCncoiPuberRankDistributeNotifyTableComplete(co->out->puber);
     if (ret != BKF_OK) {
         BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u)\n", ret);
         return ret;
@@ -414,7 +411,6 @@ void NetCoTblRankDistDel(NetCo *co, NetTblRankDistributeInfoKey *key)
     }
     BifrostCncoiPuberRankDistributeDelete(co->out->puber, g_NetCoDftSliceKey, &tupleKey);
 }
-
 
 uint32_t NetCoTblRootRankAddUpd(NetCo *co, NetTblRootRank *kv, uint32_t dataLen)
 {
@@ -446,7 +442,7 @@ uint32_t NetCoTblRootRankAddUpd(NetCo *co, NetTblRootRank *kv, uint32_t dataLen)
         BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u)\n", ret);
         return ret;
     }
-    ret= BifrostCncoiPuberRootRankNotifyTableComplete(co->out->puber);
+    ret = BifrostCncoiPuberRootRankNotifyTableComplete(co->out->puber);
     if (ret != BKF_OK) {
         BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u)\n", ret);
         return ret;
@@ -528,7 +524,7 @@ STATIC uint32_t NetCoOutBuildCommInfoTupleKey(NetTblCommInfoKey *from, BifrostCn
     return BKF_OK;
 }
 
-STATIC uint32_t NetCoOutBuildCommInfoTblKey(BifrostCncoiComminfoKeyT *from,  NetTblCommInfoKey *to)
+STATIC uint32_t NetCoOutBuildCommInfoTblKey(BifrostCncoiComminfoKeyT *from, NetTblCommInfoKey *to)
 {
     (void)memset_s(to, sizeof(NetTblCommInfoKey), 0, sizeof(NetTblCommInfoKey));
     to->taskId = from->taskId;
@@ -543,27 +539,28 @@ STATIC uint32_t NetCoOutBuildCommInfoTblKey(BifrostCncoiComminfoKeyT *from,  Net
 
 STATIC uint32_t NetCoOutInitCommInfo(NetCo *co)
 {
-    NetCoOutTblTypeVTbl vTbl = { .typeId = NET_TBL_TYPE_COMM_INFO, .name = "NET_TBL_TYPE_COMM_INFO",
-                                 .keyLen = sizeof(NetTblCommInfoKey), .keyCmp = (F_BKF_CMP)NetTblCommInfoKeyCmp,
-                                 .keyGetStr = (F_BKF_GET_STR)NetTblCommInfoKeyGetStr,
-                                 .valGetStr = (F_BKF_GET_STR)NetTblCommInfoValGetStr };
+    NetCoOutTblTypeVTbl vTbl = {.typeId = NET_TBL_TYPE_COMM_INFO,
+        .name = "NET_TBL_TYPE_COMM_INFO",
+        .keyLen = sizeof(NetTblCommInfoKey),
+        .keyCmp = (F_BKF_CMP)NetTblCommInfoKeyCmp,
+        .keyGetStr = (F_BKF_GET_STR)NetTblCommInfoKeyGetStr,
+        .valGetStr = (F_BKF_GET_STR)NetTblCommInfoValGetStr};
     NetCoOutTblType *tblType = NetCoOutAddTblType(co, &vTbl);
     if (tblType == VOS_NULL) {
         BKF_LOG_ERROR(BKF_LOG_HND, "tblType(%#x)\n", BKF_MASK_ADDR(tblType));
         return BKF_ERR;
     }
 
-    BifrostCncoiPuberComminfoVTbl dcVTbl = { .tupleValLen = 0, .tupleCntMax = NET_CO_OUT_TBL_CNT_MAX,
-                                             .cookie = co };
+    BifrostCncoiPuberComminfoVTbl dcVTbl = {.tupleValLen = 0, .tupleCntMax = NET_CO_OUT_TBL_CNT_MAX, .cookie = co};
     dcVTbl.onFillUpdateData = (F_BIFROST_CNCOI_PUBER_ON_FILL_COMMINFO_UPDATE_DATA)NetCoOutOnCommInfoTupleUpdCode;
     uint32_t ret = BifrostCncoiPuberComminfoReg(co->out->puber, &dcVTbl);
     if (ret != BKF_OK) {
-        BKF_LOG_ERROR(BKF_LOG_HND, "ret(u%)\n", ret);
+        BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u)\n", ret);
         return BKF_ERR;
     }
     ret = BifrostCncoiPuberComminfoCreateTable(co->out->puber, g_NetCoDftSliceKey);
     if (ret != BKF_OK) {
-        BKF_LOG_ERROR(BKF_LOG_HND, "ret(u%)\n", ret);
+        BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u)\n", ret);
         return BKF_ERR;
     }
 
@@ -571,9 +568,9 @@ STATIC uint32_t NetCoOutInitCommInfo(NetCo *co)
 }
 
 STATIC NetCoOutTbl *NetCoOutOnCommInfoTupleUpdCodeChkAndGetTbl(NetCo *co, SimpoBuilderT *builder,
-                                                                  BifrostCncoiComminfoKeyT *tupleKey,
-                                                                  void *codeBuf, int32_t bufLen)
+    BifrostCncoiComminfoKeyT *tupleKey, void *codeBuf, int32_t bufLen)
 {
+    (void)builder;
     BOOL argIsInvalid = (co == VOS_NULL) || (tupleKey == VOS_NULL) || (codeBuf == VOS_NULL) || (bufLen <= 0);
     if (argIsInvalid) {
         return VOS_NULL;
@@ -600,18 +597,19 @@ STATIC NetCoOutTbl *NetCoOutOnCommInfoTupleUpdCodeChkAndGetTbl(NetCo *co, SimpoB
 
     return tbl;
 }
-STATIC int32_t NetCoOutOnCommInfoTupleUpdCode(NetCo *co, SimpoBuilderT *builder,
-                                              BifrostCncoiSliceKeyT *sliceKey, BifrostCncoiComminfoKeyT *tupleKey,
-                                              void *notUse, void *codeBuf, int32_t bufLen)
+STATIC int32_t NetCoOutOnCommInfoTupleUpdCode(NetCo *co, SimpoBuilderT *builder, BifrostCncoiSliceKeyT *sliceKey,
+    BifrostCncoiComminfoKeyT *tupleKey, void *notUse, void *codeBuf, int32_t bufLen)
 {
+    (void)sliceKey;
+    (void)notUse;
     NetCoOutTbl *tbl = NetCoOutOnCommInfoTupleUpdCodeChkAndGetTbl(co, builder, tupleKey, codeBuf, bufLen);
     if (tbl == VOS_NULL) {
         return 0;
     }
 
-    NetTblCommInfoVal *val = (NetTblCommInfoVal*)tbl->val;
+    NetTblCommInfoVal *val = (NetTblCommInfoVal *)tbl->val;
     uint32_t i;
-    (void)BifrostCncoiComminfoUpdateStartAsRoot(builder, (uint8_t*)codeBuf, (uint32_t)bufLen);
+    (void)BifrostCncoiComminfoUpdateStartAsRoot(builder, (uint8_t *)codeBuf, (uint32_t)bufLen);
     (void)BifrostCncoiComminfoUpdateKeyCreate(builder, tupleKey);
 
     (void)BifrostCncoiComminfoUpdateEntryStart(builder);
@@ -622,14 +620,14 @@ STATIC int32_t NetCoOutOnCommInfoTupleUpdCode(NetCo *co, SimpoBuilderT *builder,
     } else {
         (void)BifrostCncoiComminfoEntrySendRankInfoStart(builder);
         for (i = 0; i < val->packetNum; i++) {
-            BifrostCncoiSendRankInfoT input = { 0 };
+            BifrostCncoiSendRankInfoT input = {0};
             input.sendRankInfo = val->sendRankInfo[i];
             (void)BifrostCncoiComminfoEntrySendRankInfoPush(builder, &input);
         }
         (void)BifrostCncoiComminfoEntrySendRankInfoEnd(builder);
     }
     BifrostCncoiCommMd5sumT md5Value;
-    (void) memcpy_s(&md5Value, sizeof(BifrostCncoiCommMd5sumT), val->commMd5Sum, sizeof(val->commMd5Sum));
+    (void)memcpy_s(&md5Value, sizeof(BifrostCncoiCommMd5sumT), val->commMd5Sum, sizeof(val->commMd5Sum));
     (void)BifrostCncoiComminfoEntryMd5sumCreate(builder, &md5Value);
     (void)BifrostCncoiComminfoEntryRankTotalNumAdd(builder, val->rankTotalNum);
     (void)BifrostCncoiComminfoEntryResv2Add(builder, 0);
@@ -638,8 +636,8 @@ STATIC int32_t NetCoOutOnCommInfoTupleUpdCode(NetCo *co, SimpoBuilderT *builder,
         (void)BifrostCncoiComminfoEntryRankInfoIgnored(builder);
     } else {
         (void)BifrostCncoiComminfoEntryRankInfoStart(builder);
-        for (i = 0; i < val->rankNum ; i++) {
-            BifrostCncoiCommInfoRankInfoT input = { 0 };
+        for (i = 0; i < val->rankNum; i++) {
+            BifrostCncoiCommInfoRankInfoT input = {0};
             input.deviceIp = val->rankInfo[i].deviceIp;
             input.serverIp = val->rankInfo[i].serverIp;
             input.podId = val->rankInfo[i].podId;
@@ -661,13 +659,13 @@ STATIC uint32_t NetCoOutBuildOperTupleKey(NetTblOperatorKey *from, BifrostCncoiO
         return BKF_ERR;
     }
     to->commInitTime = from->commInitTime;
-    to->operator = from->op;
+    to->operator= from->op;
     to->algorithm = from->algorithm;
     to->rootRank = from->rootRank;
     return BKF_OK;
 }
 
-STATIC uint32_t NetCoOutBuildOperTblKey(BifrostCncoiOperatorKeyT *from,  NetTblOperatorKey *to)
+STATIC uint32_t NetCoOutBuildOperTblKey(BifrostCncoiOperatorKeyT *from, NetTblOperatorKey *to)
 {
     (void)memset_s(to, sizeof(NetTblOperatorKey), 0, sizeof(NetTblOperatorKey));
     to->taskId = from->taskId;
@@ -684,27 +682,28 @@ STATIC uint32_t NetCoOutBuildOperTblKey(BifrostCncoiOperatorKeyT *from,  NetTblO
 
 STATIC uint32_t NetCoOutInitOper(NetCo *co)
 {
-    NetCoOutTblTypeVTbl vTbl = { .typeId = NET_TBL_TYPE_OPER, .name = "NET_TBL_TYPE_OPER",
-                                 .keyLen = sizeof(NetTblOperatorKey), .keyCmp = (F_BKF_CMP)NetTblOperatorKeyCmp,
-                                 .keyGetStr = (F_BKF_GET_STR)NetTblOperatorKeyGetStr,
-                                 .valGetStr = (F_BKF_GET_STR)NetTblOperatorValGetStr };
+    NetCoOutTblTypeVTbl vTbl = {.typeId = NET_TBL_TYPE_OPER,
+        .name = "NET_TBL_TYPE_OPER",
+        .keyLen = sizeof(NetTblOperatorKey),
+        .keyCmp = (F_BKF_CMP)NetTblOperatorKeyCmp,
+        .keyGetStr = (F_BKF_GET_STR)NetTblOperatorKeyGetStr,
+        .valGetStr = (F_BKF_GET_STR)NetTblOperatorValGetStr};
     NetCoOutTblType *tblType = NetCoOutAddTblType(co, &vTbl);
     if (tblType == VOS_NULL) {
         BKF_LOG_ERROR(BKF_LOG_HND, "tblType(%#x)\n", BKF_MASK_ADDR(tblType));
         return BKF_ERR;
     }
 
-    BifrostCncoiPuberOperatorVTbl dcVTbl = { .tupleValLen = 0, .tupleCntMax = NET_CO_OUT_TBL_CNT_MAX,
-                                             .cookie = co };
+    BifrostCncoiPuberOperatorVTbl dcVTbl = {.tupleValLen = 0, .tupleCntMax = NET_CO_OUT_TBL_CNT_MAX, .cookie = co};
     dcVTbl.onFillUpdateData = (F_BIFROST_CNCOI_PUBER_ON_FILL_OPERATOR_UPDATE_DATA)NetCoOutOnOperTupleUpdCode;
     uint32_t ret = BifrostCncoiPuberOperatorReg(co->out->puber, &dcVTbl);
     if (ret != BKF_OK) {
-        BKF_LOG_ERROR(BKF_LOG_HND, "ret(u%)\n", ret);
+        BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u)\n", ret);
         return BKF_ERR;
     }
     ret = BifrostCncoiPuberOperatorCreateTable(co->out->puber, g_NetCoDftSliceKey);
     if (ret != BKF_OK) {
-        BKF_LOG_ERROR(BKF_LOG_HND, "ret(u%)\n", ret);
+        BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u)\n", ret);
         return BKF_ERR;
     }
 
@@ -712,9 +711,9 @@ STATIC uint32_t NetCoOutInitOper(NetCo *co)
 }
 
 STATIC NetCoOutTbl *NetCoOutOnOperTupleUpdCodeChkAndGetTbl(NetCo *co, SimpoBuilderT *builder,
-                                                              BifrostCncoiOperatorKeyT *tupleKey,
-                                                              void *codeBuf, int32_t bufLen)
+    BifrostCncoiOperatorKeyT *tupleKey, void *codeBuf, int32_t bufLen)
 {
+    (void)builder;
     BOOL argIsInvalid = (co == VOS_NULL) || (tupleKey == VOS_NULL) || (codeBuf == VOS_NULL) || (bufLen <= 0);
     if (argIsInvalid) {
         return VOS_NULL;
@@ -742,16 +741,17 @@ STATIC NetCoOutTbl *NetCoOutOnOperTupleUpdCodeChkAndGetTbl(NetCo *co, SimpoBuild
     return tbl;
 }
 STATIC int32_t NetCoOutOnOperTupleUpdCode(NetCo *co, void *builder, BifrostCncoiSliceKeyT *sliceKey,
-                                          BifrostCncoiOperatorKeyT *tupleKey, void *notUse,
-                                          void *codeBuf, int32_t bufLen)
+    BifrostCncoiOperatorKeyT *tupleKey, void *notUse, void *codeBuf, int32_t bufLen)
 {
+    (void)sliceKey;
+    (void)notUse;
     NetCoOutTbl *tbl = NetCoOutOnOperTupleUpdCodeChkAndGetTbl(co, builder, tupleKey, codeBuf, bufLen);
     if (tbl == VOS_NULL) {
         return 0;
     }
 
-    NetTblOperatorVal *val = (NetTblOperatorVal*)tbl->val;
-    (void)BifrostCncoiOperatorUpdateStartAsRoot(builder, (uint8_t*)codeBuf, (uint32_t)bufLen);
+    NetTblOperatorVal *val = (NetTblOperatorVal *)tbl->val;
+    (void)BifrostCncoiOperatorUpdateStartAsRoot(builder, (uint8_t *)codeBuf, (uint32_t)bufLen);
     (void)BifrostCncoiOperatorUpdateKeyCreate(builder, tupleKey);
     (void)BifrostCncoiOperatorUpdateEntryStart(builder);
     (void)BifrostCncoiOperatorEntryTrafficCntAdd(builder, val->trafficCnt);
@@ -761,7 +761,6 @@ STATIC int32_t NetCoOutOnOperTupleUpdCode(NetCo *co, void *builder, BifrostCncoi
     (void)BifrostCncoiOperatorUpdateEntryEnd(builder);
     return BifrostCncoiOperatorUpdateEndAsRoot(builder);
 }
-
 
 STATIC uint32_t NetCoOutBuildAdjTupleKey(NetTblAdjacencyKey *from, BifrostCncoiAdjacencyKeyT *to)
 {
@@ -776,13 +775,13 @@ STATIC uint32_t NetCoOutBuildAdjTupleKey(NetTblAdjacencyKey *from, BifrostCncoiA
         return BKF_ERR;
     }
     to->srcLocalRankId = from->srcLocalRankId;
-    to->operator = from->op;
+    to->operator= from->op;
     to->algorithm = from->algorithm;
     to->rootRank = from->rootRank;
     return BKF_OK;
 }
 
-STATIC uint32_t NetCoOutBuildAdjTblKey(BifrostCncoiAdjacencyKeyT *from,  NetTblAdjacencyKey *to)
+STATIC uint32_t NetCoOutBuildAdjTblKey(BifrostCncoiAdjacencyKeyT *from, NetTblAdjacencyKey *to)
 {
     (void)memset_s(to, sizeof(NetTblAdjacencyKey), 0, sizeof(NetTblAdjacencyKey));
     to->taskId = from->taskId;
@@ -803,27 +802,28 @@ STATIC uint32_t NetCoOutBuildAdjTblKey(BifrostCncoiAdjacencyKeyT *from,  NetTblA
 
 STATIC uint32_t NetCoOutInitAdj(NetCo *co)
 {
-    NetCoOutTblTypeVTbl vTbl = { .typeId = NET_TBL_TYPE_ADJ, .name = "NET_TBL_TYPE_ADJ",
-                                 .keyLen = sizeof(NetTblAdjacencyKey), .keyCmp = (F_BKF_CMP)NetTblAdjacencyKeyCmp,
-                                 .keyGetStr = (F_BKF_GET_STR)NetTblAdjacencyKeyGetStr,
-                                 .valGetStr = (F_BKF_GET_STR)NetTblAdjacencyValGetStr };
+    NetCoOutTblTypeVTbl vTbl = {.typeId = NET_TBL_TYPE_ADJ,
+        .name = "NET_TBL_TYPE_ADJ",
+        .keyLen = sizeof(NetTblAdjacencyKey),
+        .keyCmp = (F_BKF_CMP)NetTblAdjacencyKeyCmp,
+        .keyGetStr = (F_BKF_GET_STR)NetTblAdjacencyKeyGetStr,
+        .valGetStr = (F_BKF_GET_STR)NetTblAdjacencyValGetStr};
     NetCoOutTblType *tblType = NetCoOutAddTblType(co, &vTbl);
     if (tblType == VOS_NULL) {
         BKF_LOG_ERROR(BKF_LOG_HND, "tblType(%#x)\n", BKF_MASK_ADDR(tblType));
         return BKF_ERR;
     }
 
-    BifrostCncoiPuberAdjacencyVTbl dcVTbl = { .tupleValLen = 0, .tupleCntMax = NET_CO_OUT_TBL_CNT_MAX,
-                                              .cookie = co };
+    BifrostCncoiPuberAdjacencyVTbl dcVTbl = {.tupleValLen = 0, .tupleCntMax = NET_CO_OUT_TBL_CNT_MAX, .cookie = co};
     dcVTbl.onFillUpdateData = (F_BIFROST_CNCOI_PUBER_ON_FILL_ADJACENCY_UPDATE_DATA)NetCoOutOnAdjTupleUpdCode;
     uint32_t ret = BifrostCncoiPuberAdjacencyReg(co->out->puber, &dcVTbl);
     if (ret != BKF_OK) {
-        BKF_LOG_ERROR(BKF_LOG_HND, "ret(u%)\n", ret);
+        BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u)\n", ret);
         return BKF_ERR;
     }
     ret = BifrostCncoiPuberAdjacencyCreateTable(co->out->puber, g_NetCoDftSliceKey);
     if (ret != BKF_OK) {
-        BKF_LOG_ERROR(BKF_LOG_HND, "ret(u%)\n", ret);
+        BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u)\n", ret);
         return BKF_ERR;
     }
 
@@ -831,9 +831,9 @@ STATIC uint32_t NetCoOutInitAdj(NetCo *co)
 }
 
 STATIC NetCoOutTbl *NetCoOutOnAdjTupleUpdCodeChkAndGetTbl(NetCo *co, SimpoBuilderT *builder,
-                                                             BifrostCncoiAdjacencyKeyT *tupleKey,
-                                                             void *codeBuf, int32_t bufLen)
+    BifrostCncoiAdjacencyKeyT *tupleKey, void *codeBuf, int32_t bufLen)
 {
+    (void)builder;
     BOOL argIsInvalid = (co == VOS_NULL) || (tupleKey == VOS_NULL) || (codeBuf == VOS_NULL) || (bufLen <= 0);
     if (argIsInvalid) {
         return VOS_NULL;
@@ -861,17 +861,18 @@ STATIC NetCoOutTbl *NetCoOutOnAdjTupleUpdCodeChkAndGetTbl(NetCo *co, SimpoBuilde
     return tbl;
 }
 STATIC int32_t NetCoOutOnAdjTupleUpdCode(NetCo *co, void *builder, BifrostCncoiSliceKeyT *sliceKey,
-                                         BifrostCncoiAdjacencyKeyT *tupleKey, void *notUse,
-                                         void *codeBuf, int32_t bufLen)
+    BifrostCncoiAdjacencyKeyT *tupleKey, void *notUse, void *codeBuf, int32_t bufLen)
 {
+    (void)sliceKey;
+    (void)notUse;
     NetCoOutTbl *tbl = NetCoOutOnAdjTupleUpdCodeChkAndGetTbl(co, builder, tupleKey, codeBuf, bufLen);
     if (tbl == VOS_NULL) {
         return 0;
     }
 
-    NetTblAdjacencyVal *val = (NetTblAdjacencyVal*)tbl->val;
+    NetTblAdjacencyVal *val = (NetTblAdjacencyVal *)tbl->val;
     uint32_t i;
-    (void)BifrostCncoiAdjacencyUpdateStartAsRoot(builder, (uint8_t*)codeBuf, (uint32_t)bufLen);
+    (void)BifrostCncoiAdjacencyUpdateStartAsRoot(builder, (uint8_t *)codeBuf, (uint32_t)bufLen);
     (void)BifrostCncoiAdjacencyUpdateKeyCreate(builder, tupleKey);
     (void)BifrostCncoiAdjacencyUpdateEntryStart(builder);
     if (val->dstRankNum == 0) {
@@ -879,7 +880,7 @@ STATIC int32_t NetCoOutOnAdjTupleUpdCode(NetCo *co, void *builder, BifrostCncoiS
     } else {
         (void)BifrostCncoiAdjacencyEntryAdjInfoStart(builder);
         for (i = 0; i < val->dstRankNum; i++) {
-            BifrostCncoiAdjInfoT input = { 0 };
+            BifrostCncoiAdjInfoT input = {0};
             input.dstLocalRankId = val->adjinfo[i].dstLocalRankId;
             input.phaseId = val->adjinfo[i].phaseId;
             (void)BifrostCncoiAdjacencyEntryAdjInfoPush(builder, &input);
@@ -904,7 +905,7 @@ STATIC uint32_t NetCoOutBuildRankTupleKey(NetTblGlobalRankKey *from, BifrostCnco
     return BKF_OK;
 }
 
-STATIC uint32_t NetCoOutBuildRankTblKey(BifrostCncoiRankKeyT *from,  NetTblGlobalRankKey *to)
+STATIC uint32_t NetCoOutBuildRankTblKey(BifrostCncoiRankKeyT *from, NetTblGlobalRankKey *to)
 {
     (void)memset_s(to, sizeof(NetTblGlobalRankKey), 0, sizeof(NetTblGlobalRankKey));
     to->taskId = from->taskId;
@@ -919,27 +920,28 @@ STATIC uint32_t NetCoOutBuildRankTblKey(BifrostCncoiRankKeyT *from,  NetTblGloba
 
 STATIC uint32_t NetCoOutInitRank(NetCo *co)
 {
-    NetCoOutTblTypeVTbl vTbl = { .typeId = NET_TBL_TYPE_RANK, .name = "NET_TBL_TYPE_RANK",
-                                 .keyLen = sizeof(NetTblGlobalRankKey), .keyCmp = (F_BKF_CMP)NetTblGlobalRankKeyCmp,
-                                 .keyGetStr = (F_BKF_GET_STR)NetTblGlobalRankKeyGetStr,
-                                 .valGetStr = (F_BKF_GET_STR)NetTblGlobalRankValGetStr };
+    NetCoOutTblTypeVTbl vTbl = {.typeId = NET_TBL_TYPE_RANK,
+        .name = "NET_TBL_TYPE_RANK",
+        .keyLen = sizeof(NetTblGlobalRankKey),
+        .keyCmp = (F_BKF_CMP)NetTblGlobalRankKeyCmp,
+        .keyGetStr = (F_BKF_GET_STR)NetTblGlobalRankKeyGetStr,
+        .valGetStr = (F_BKF_GET_STR)NetTblGlobalRankValGetStr};
     NetCoOutTblType *tblType = NetCoOutAddTblType(co, &vTbl);
     if (tblType == VOS_NULL) {
         BKF_LOG_ERROR(BKF_LOG_HND, "tblType(%#x)\n", BKF_MASK_ADDR(tblType));
         return BKF_ERR;
     }
 
-    BifrostCncoiPuberRankVTbl dcVTbl = { .tupleValLen = 0, .tupleCntMax = NET_CO_OUT_TBL_CNT_MAX,
-                                         .cookie = co };
+    BifrostCncoiPuberRankVTbl dcVTbl = {.tupleValLen = 0, .tupleCntMax = NET_CO_OUT_TBL_CNT_MAX, .cookie = co};
     dcVTbl.onFillUpdateData = (F_BIFROST_CNCOI_PUBER_ON_FILL_RANK_UPDATE_DATA)NetCoOutOnRankTupleUpdCode;
     uint32_t ret = BifrostCncoiPuberRankReg(co->out->puber, &dcVTbl);
     if (ret != BKF_OK) {
-        BKF_LOG_ERROR(BKF_LOG_HND, "ret(u%)\n", ret);
+        BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u)\n", ret);
         return BKF_ERR;
     }
     ret = BifrostCncoiPuberRankCreateTable(co->out->puber, g_NetCoDftSliceKey);
     if (ret != BKF_OK) {
-        BKF_LOG_ERROR(BKF_LOG_HND, "ret(u%)\n", ret);
+        BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u)\n", ret);
         return BKF_ERR;
     }
 
@@ -947,9 +949,9 @@ STATIC uint32_t NetCoOutInitRank(NetCo *co)
 }
 
 STATIC NetCoOutTbl *NetCoOutOnRankTupleUpdCodeChkAndGetTbl(NetCo *co, SimpoBuilderT *builder,
-                                                              BifrostCncoiRankKeyT *tupleKey,
-                                                              void *codeBuf, int32_t bufLen)
+    BifrostCncoiRankKeyT *tupleKey, void *codeBuf, int32_t bufLen)
 {
+    (void)builder;
     BOOL argIsInvalid = (co == VOS_NULL) || (tupleKey == VOS_NULL) || (codeBuf == VOS_NULL) || (bufLen <= 0);
     if (argIsInvalid) {
         return VOS_NULL;
@@ -977,17 +979,18 @@ STATIC NetCoOutTbl *NetCoOutOnRankTupleUpdCodeChkAndGetTbl(NetCo *co, SimpoBuild
     return tbl;
 }
 STATIC int32_t NetCoOutOnRankTupleUpdCode(NetCo *co, void *builder, BifrostCncoiSliceKeyT *sliceKey,
-                                          BifrostCncoiRankKeyT *tupleKey, void *notUse,
-                                          void *codeBuf, int32_t bufLen)
+    BifrostCncoiRankKeyT *tupleKey, void *notUse, void *codeBuf, int32_t bufLen)
 {
+    (void)sliceKey;
+    (void)notUse;
     NetCoOutTbl *tbl = NetCoOutOnRankTupleUpdCodeChkAndGetTbl(co, builder, tupleKey, codeBuf, bufLen);
     if (tbl == VOS_NULL) {
         return 0;
     }
 
-    NetTblGlobalRankVal *val = (NetTblGlobalRankVal*)tbl->val;
+    NetTblGlobalRankVal *val = (NetTblGlobalRankVal *)tbl->val;
     uint32_t i;
-    (void)BifrostCncoiRankUpdateStartAsRoot(builder, (uint8_t*)codeBuf, (uint32_t)bufLen);
+    (void)BifrostCncoiRankUpdateStartAsRoot(builder, (uint8_t *)codeBuf, (uint32_t)bufLen);
     (void)BifrostCncoiRankUpdateKeyCreate(builder, tupleKey);
     (void)BifrostCncoiRankUpdateEntryStart(builder);
 
@@ -999,14 +1002,14 @@ STATIC int32_t NetCoOutOnRankTupleUpdCode(NetCo *co, void *builder, BifrostCncoi
         (void)BifrostCncoiRankEntrySendRankInfoStart(builder);
 
         for (i = 0; i < val->packetNum; i++) {
-            BifrostCncoiSendRankInfoT input = { 0 };
+            BifrostCncoiSendRankInfoT input = {0};
             input.sendRankInfo = val->sendRankInfo[i];
             (void)BifrostCncoiRankEntrySendRankInfoPush(builder, &input);
         }
         (void)BifrostCncoiRankEntrySendRankInfoEnd(builder);
     }
     BifrostCncoiCommMd5sumT md5Value;
-    (void) memcpy_s(&md5Value, sizeof(BifrostCncoiCommMd5sumT), val->commMd5Sum, sizeof(val->commMd5Sum));
+    (void)memcpy_s(&md5Value, sizeof(BifrostCncoiCommMd5sumT), val->commMd5Sum, sizeof(val->commMd5Sum));
     (void)BifrostCncoiRankEntryMd5sumCreate(builder, &md5Value);
     (void)BifrostCncoiRankEntryRankTotalNumAdd(builder, val->rankTotalNum);
 
@@ -1015,7 +1018,7 @@ STATIC int32_t NetCoOutOnRankTupleUpdCode(NetCo *co, void *builder, BifrostCncoi
     } else {
         (void)BifrostCncoiRankEntryRankInfoStart(builder);
         for (i = 0; i < val->rankNum; i++) {
-            BifrostCncoiRankInfoT input = { 0 };
+            BifrostCncoiRankInfoT input = {0};
             input.deviceIp = val->rankInfo[i].deviceIp;
             input.serverIp = val->rankInfo[i].serverIp;
             (void)BifrostCncoiRankEntryRankInfoPush(builder, &input);
@@ -1028,7 +1031,6 @@ STATIC int32_t NetCoOutOnRankTupleUpdCode(NetCo *co, void *builder, BifrostCncoi
     return BifrostCncoiRankUpdateEndAsRoot(builder);
 }
 
-
 STATIC uint32_t NetCoOutBuildRankDistTupleKey(NetTblRankDistributeInfoKey *from, BifrostCncoiRankDistributeKeyT *to)
 {
     (void)memset_s(to, sizeof(BifrostCncoiRankDistributeKeyT), 0, sizeof(BifrostCncoiRankDistributeKeyT));
@@ -1037,7 +1039,7 @@ STATIC uint32_t NetCoOutBuildRankDistTupleKey(NetTblRankDistributeInfoKey *from,
     return BKF_OK;
 }
 
-STATIC uint32_t NetCoOutBuildRankDistTblKey(BifrostCncoiRankDistributeKeyT *from,  NetTblRankDistributeInfoKey *to)
+STATIC uint32_t NetCoOutBuildRankDistTblKey(BifrostCncoiRankDistributeKeyT *from, NetTblRankDistributeInfoKey *to)
 {
     (void)memset_s(to, sizeof(NetTblRankDistributeInfoKey), 0, sizeof(NetTblRankDistributeInfoKey));
     to->taskId = from->taskId;
@@ -1047,29 +1049,29 @@ STATIC uint32_t NetCoOutBuildRankDistTblKey(BifrostCncoiRankDistributeKeyT *from
 
 STATIC uint32_t NetCoOutInitRankDist(NetCo *co)
 {
-    NetCoOutTblTypeVTbl vTbl = { .typeId = NET_TBL_TYPE_RANK_DIST, .name = "NET_TBL_TYPE_RANK_DIST",
-                                 .keyLen = sizeof(NetTblRankDistributeInfoKey),
-                                 .keyCmp = (F_BKF_CMP)NetTblRankDistributeInfoKeyCmp,
-                                 .keyGetStr = (F_BKF_GET_STR)NetTblRankDistributeInfoKeyGetStr,
-                                 .valGetStr = (F_BKF_GET_STR)NetTblRankDistributeInfoValGetStr };
+    NetCoOutTblTypeVTbl vTbl = {.typeId = NET_TBL_TYPE_RANK_DIST,
+        .name = "NET_TBL_TYPE_RANK_DIST",
+        .keyLen = sizeof(NetTblRankDistributeInfoKey),
+        .keyCmp = (F_BKF_CMP)NetTblRankDistributeInfoKeyCmp,
+        .keyGetStr = (F_BKF_GET_STR)NetTblRankDistributeInfoKeyGetStr,
+        .valGetStr = (F_BKF_GET_STR)NetTblRankDistributeInfoValGetStr};
     NetCoOutTblType *tblType = NetCoOutAddTblType(co, &vTbl);
     if (tblType == VOS_NULL) {
         BKF_LOG_ERROR(BKF_LOG_HND, "tblType(%#x)\n", BKF_MASK_ADDR(tblType));
         return BKF_ERR;
     }
 
-    BifrostCncoiPuberRankDistributeVTbl dcVTbl = { .tupleValLen = 0, .tupleCntMax = NET_CO_OUT_TBL_CNT_MAX,
-                                                   .cookie = co };
-    dcVTbl.onFillUpdateData = (F_BIFROST_CNCOI_PUBER_ON_FILL_RANK_DISTRIBUTE_UPDATE_DATA)
-        NetCoOutOnRankDistTupleUpdCode;
+    BifrostCncoiPuberRankDistributeVTbl dcVTbl = {
+        .tupleValLen = 0, .tupleCntMax = NET_CO_OUT_TBL_CNT_MAX, .cookie = co};
+    dcVTbl.onFillUpdateData = (F_BIFROST_CNCOI_PUBER_ON_FILL_RANK_DISTRIBUTE_UPDATE_DATA)NetCoOutOnRankDistTupleUpdCode;
     uint32_t ret = BifrostCncoiPuberRankDistributeReg(co->out->puber, &dcVTbl);
     if (ret != BKF_OK) {
-        BKF_LOG_ERROR(BKF_LOG_HND, "ret(u%)\n", ret);
+        BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u)\n", ret);
         return BKF_ERR;
     }
     ret = BifrostCncoiPuberRankDistributeCreateTable(co->out->puber, g_NetCoDftSliceKey);
     if (ret != BKF_OK) {
-        BKF_LOG_ERROR(BKF_LOG_HND, "ret(u%)\n", ret);
+        BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u)\n", ret);
         return BKF_ERR;
     }
 
@@ -1077,9 +1079,9 @@ STATIC uint32_t NetCoOutInitRankDist(NetCo *co)
 }
 
 STATIC NetCoOutTbl *NetCoOutOnRankDistTupleUpdCodeChkAndGetTbl(NetCo *co, SimpoBuilderT *builder,
-                                                                  BifrostCncoiRankDistributeKeyT *tupleKey,
-                                                                  void *codeBuf, int32_t bufLen)
+    BifrostCncoiRankDistributeKeyT *tupleKey, void *codeBuf, int32_t bufLen)
 {
+    (void)builder;
     BOOL argIsInvalid = (co == VOS_NULL) || (tupleKey == VOS_NULL) || (codeBuf == VOS_NULL) || (bufLen <= 0);
     if (argIsInvalid) {
         return VOS_NULL;
@@ -1107,16 +1109,17 @@ STATIC NetCoOutTbl *NetCoOutOnRankDistTupleUpdCodeChkAndGetTbl(NetCo *co, SimpoB
     return tbl;
 }
 STATIC int32_t NetCoOutOnRankDistTupleUpdCode(NetCo *co, void *builder, BifrostCncoiSliceKeyT *sliceKey,
-                                              BifrostCncoiRankDistributeKeyT *tupleKey, void *notUse,
-                                              void *codeBuf, int32_t bufLen)
+    BifrostCncoiRankDistributeKeyT *tupleKey, void *notUse, void *codeBuf, int32_t bufLen)
 {
+    (void)sliceKey;
+    (void)notUse;
     NetCoOutTbl *tbl = NetCoOutOnRankDistTupleUpdCodeChkAndGetTbl(co, builder, tupleKey, codeBuf, bufLen);
     if (tbl == VOS_NULL) {
         return 0;
     }
 
-    NetTblRankDistributeInfoVal *val = (NetTblRankDistributeInfoVal*)tbl->val;
-    (void)BifrostCncoiRankDistributeUpdateStartAsRoot(builder, (uint8_t*)codeBuf, (uint32_t)bufLen);
+    NetTblRankDistributeInfoVal *val = (NetTblRankDistributeInfoVal *)tbl->val;
+    (void)BifrostCncoiRankDistributeUpdateStartAsRoot(builder, (uint8_t *)codeBuf, (uint32_t)bufLen);
     (void)BifrostCncoiRankDistributeUpdateKeyCreate(builder, tupleKey);
     (void)BifrostCncoiRankDistributeUpdateEntryStart(builder);
 
@@ -1131,7 +1134,6 @@ STATIC int32_t NetCoOutOnRankDistTupleUpdCode(NetCo *co, void *builder, BifrostC
     return BifrostCncoiRankDistributeUpdateEndAsRoot(builder);
 }
 
-
 STATIC uint32_t NetCoOutBuildRootRankTupleKey(NetTblRootRankKey *from, BifrostCncoiRootRankKeyT *to)
 {
     (void)memset_s(to, sizeof(BifrostCncoiRootRankKeyT), 0, sizeof(BifrostCncoiRootRankKeyT));
@@ -1141,12 +1143,12 @@ STATIC uint32_t NetCoOutBuildRootRankTupleKey(NetTblRootRankKey *from, BifrostCn
         return BKF_ERR;
     }
     to->commInitTime = from->commInitTime;
-    to->operator = from->op;
+    to->operator= from->op;
     to->algorithm = from->algorithm;
     return BKF_OK;
 }
 
-STATIC uint32_t NetCoOutBuildRootRankTblKey(BifrostCncoiRootRankKeyT *from,  NetTblRootRankKey *to)
+STATIC uint32_t NetCoOutBuildRootRankTblKey(BifrostCncoiRootRankKeyT *from, NetTblRootRankKey *to)
 {
     (void)memset_s(to, sizeof(NetTblRootRankKey), 0, sizeof(NetTblRootRankKey));
     to->taskId = from->taskId;
@@ -1162,27 +1164,28 @@ STATIC uint32_t NetCoOutBuildRootRankTblKey(BifrostCncoiRootRankKeyT *from,  Net
 
 STATIC uint32_t NetCoOutInitRootRank(NetCo *co)
 {
-    NetCoOutTblTypeVTbl vTbl = { .typeId = NET_TBL_TYPE_ROOT_RANK, .name = "NET_TBL_TYPE_ROOT_RANK",
-                                 .keyLen = sizeof(NetTblRootRankKey), .keyCmp = (F_BKF_CMP)NetTblRootRankKeyCmp,
-                                 .keyGetStr = (F_BKF_GET_STR)NetTblRootRankKeyGetStr,
-                                 .valGetStr = (F_BKF_GET_STR)NetTblRootRankValGetStr };
+    NetCoOutTblTypeVTbl vTbl = {.typeId = NET_TBL_TYPE_ROOT_RANK,
+        .name = "NET_TBL_TYPE_ROOT_RANK",
+        .keyLen = sizeof(NetTblRootRankKey),
+        .keyCmp = (F_BKF_CMP)NetTblRootRankKeyCmp,
+        .keyGetStr = (F_BKF_GET_STR)NetTblRootRankKeyGetStr,
+        .valGetStr = (F_BKF_GET_STR)NetTblRootRankValGetStr};
     NetCoOutTblType *tblType = NetCoOutAddTblType(co, &vTbl);
     if (tblType == VOS_NULL) {
         BKF_LOG_ERROR(BKF_LOG_HND, "tblType(%#x)\n", BKF_MASK_ADDR(tblType));
         return BKF_ERR;
     }
 
-    BifrostCncoiPuberRootRankVTbl dcVTbl = { .tupleValLen = 0, .tupleCntMax = NET_CO_OUT_TBL_CNT_MAX,
-                                             .cookie = co };
+    BifrostCncoiPuberRootRankVTbl dcVTbl = {.tupleValLen = 0, .tupleCntMax = NET_CO_OUT_TBL_CNT_MAX, .cookie = co};
     dcVTbl.onFillUpdateData = (F_BIFROST_CNCOI_PUBER_ON_FILL_ROOT_RANK_UPDATE_DATA)NetCoOutOnRootRankTupleUpdCode;
     uint32_t ret = BifrostCncoiPuberRootRankReg(co->out->puber, &dcVTbl);
     if (ret != BKF_OK) {
-        BKF_LOG_ERROR(BKF_LOG_HND, "ret(u%)\n", ret);
+        BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u)\n", ret);
         return BKF_ERR;
     }
     ret = BifrostCncoiPuberRootRankCreateTable(co->out->puber, g_NetCoDftSliceKey);
     if (ret != BKF_OK) {
-        BKF_LOG_ERROR(BKF_LOG_HND, "ret(u%)\n", ret);
+        BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u)\n", ret);
         return BKF_ERR;
     }
 
@@ -1190,9 +1193,9 @@ STATIC uint32_t NetCoOutInitRootRank(NetCo *co)
 }
 
 STATIC NetCoOutTbl *NetCoOutOnRootRankTupleUpdCodeChkAndGetTbl(NetCo *co, SimpoBuilderT *builder,
-                                                                  BifrostCncoiRootRankKeyT *tupleKey,
-                                                                  void *codeBuf, int32_t bufLen)
+    BifrostCncoiRootRankKeyT *tupleKey, void *codeBuf, int32_t bufLen)
 {
+    (void)builder;
     BOOL argIsInvalid = (co == VOS_NULL) || (tupleKey == VOS_NULL) || (codeBuf == VOS_NULL) || (bufLen <= 0);
     if (argIsInvalid) {
         return VOS_NULL;
@@ -1220,16 +1223,17 @@ STATIC NetCoOutTbl *NetCoOutOnRootRankTupleUpdCodeChkAndGetTbl(NetCo *co, SimpoB
     return tbl;
 }
 STATIC int32_t NetCoOutOnRootRankTupleUpdCode(NetCo *co, void *builder, BifrostCncoiSliceKeyT *sliceKey,
-                                              BifrostCncoiRootRankKeyT *tupleKey, void *notUse,
-                                              void *codeBuf, int32_t bufLen)
+    BifrostCncoiRootRankKeyT *tupleKey, void *notUse, void *codeBuf, int32_t bufLen)
 {
+    (void)sliceKey;
+    (void)notUse;
     NetCoOutTbl *tbl = NetCoOutOnRootRankTupleUpdCodeChkAndGetTbl(co, builder, tupleKey, codeBuf, bufLen);
     if (tbl == VOS_NULL) {
         return 0;
     }
 
-    NetTblRootRankVal *val = (NetTblRootRankVal*)tbl->val;
-    (void)BifrostCncoiRootRankUpdateStartAsRoot(builder, (uint8_t*)codeBuf, (uint32_t)bufLen);
+    NetTblRootRankVal *val = (NetTblRootRankVal *)tbl->val;
+    (void)BifrostCncoiRootRankUpdateStartAsRoot(builder, (uint8_t *)codeBuf, (uint32_t)bufLen);
     (void)BifrostCncoiRootRankUpdateKeyCreate(builder, tupleKey);
     (void)BifrostCncoiRootRankUpdateEntryStart(builder);
     if (val->rootRankNum == 0) {
@@ -1238,7 +1242,7 @@ STATIC int32_t NetCoOutOnRootRankTupleUpdCode(NetCo *co, void *builder, BifrostC
         (void)BifrostCncoiRootRankEntryRootRankInfoStart(builder);
         uint32_t i;
         for (i = 0; i < val->rootRankNum; i++) {
-            BifrostCncoiRootRankInfoT input = { 0 };
+            BifrostCncoiRootRankInfoT input = {0};
             input.rootRankInfo = val->rootRankInfo[i];
             (void)BifrostCncoiRootRankEntryRootRankInfoPush(builder, &input);
         }
@@ -1252,4 +1256,3 @@ STATIC int32_t NetCoOutOnRootRankTupleUpdCode(NetCo *co, void *builder, BifrostC
 #ifdef __cplusplus
 }
 #endif
-

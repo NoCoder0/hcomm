@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "aicpu_kfc_retry_process.h"
 
@@ -16,7 +16,7 @@
 using namespace hccl;
 
 ANONYMOUS_NAMESPACE_BEGIN
-HcclResult MC2OpExecFsmStoppingProcess(HcclCommAicpu &comm, HcclOpExecFSM &state, KfcError &errorCode)
+HcclResult MC2OpExecFsmStoppingProcess(HcclCommAicpu& comm, HcclOpExecFSM& state, KfcError& errorCode)
 {
     KfcCommand cmd = KfcCommand::kNone;
     auto ret = comm.BackGroundGetCmd(cmd);
@@ -46,7 +46,7 @@ HcclResult MC2OpExecFsmStoppingProcess(HcclCommAicpu &comm, HcclOpExecFSM &state
     return HCCL_SUCCESS;
 }
 
-HcclResult MC2OpExecFsmStoppedProcess(HcclCommAicpu &comm, HcclOpExecFSM &state, KfcError &errorCode)
+HcclResult MC2OpExecFsmStoppedProcess(HcclCommAicpu& comm, HcclOpExecFSM& state, KfcError& errorCode)
 {
     KfcCommand cmd = KfcCommand::kNone;
     auto ret = comm.BackGroundGetCmd(cmd);
@@ -68,8 +68,8 @@ HcclResult MC2OpExecFsmStoppedProcess(HcclCommAicpu &comm, HcclOpExecFSM &state,
     return HCCL_SUCCESS;
 }
 
-HcclResult MC2OpExecFsmWaitRetryProcess(HcclCommAicpu &comm, HcclOpExecFSM &state, KfcError &errorCode,
-                                        bool linkChanged)
+HcclResult
+MC2OpExecFsmWaitRetryProcess(HcclCommAicpu& comm, HcclOpExecFSM& state, KfcError& errorCode, bool linkChanged)
 {
     KfcCommand cmd = KfcCommand::kNone;
     auto ret = comm.BackGroundGetCmd(cmd);
@@ -98,7 +98,7 @@ HcclResult MC2OpExecFsmWaitRetryProcess(HcclCommAicpu &comm, HcclOpExecFSM &stat
 }
 ANONYMOUS_NAMESPACE_END
 
-HcclResult AicpuKfcRetryProcess::RetryProcess(HcclCommAicpu &comm, RestartParam &restartParam, uint32_t idx)
+HcclResult AicpuKfcRetryProcess::RetryProcess(HcclCommAicpu& comm, RestartParam& restartParam, uint32_t idx)
 {
     HcclResult ret = HCCL_SUCCESS;
     auto waitStopExecCmdTimeoutMs = comm.HcclGetWaitStopExecCmdTimeout();
@@ -111,16 +111,16 @@ HcclResult AicpuKfcRetryProcess::RetryProcess(HcclCommAicpu &comm, RestartParam 
             HCCL_INFO("MC2 restart state HCCL_OP_EXEC_FSM_WAIT_END");
             restartParam.errorCode[idx] = KfcError::kSdma;
             restartParam.fsmState[idx] = HcclOpExecFSM::HCCL_OP_EXEC_FSM_STOPPING;
-            ret = comm.UpdateOpExecStatus(restartParam.fsmState[idx], KfcStatus::kStoplaunch,
-                                          restartParam.errorCode[idx], restartParam.restartCnt);  // 上报sdma异常
+            ret = comm.UpdateOpExecStatus(
+                restartParam.fsmState[idx], KfcStatus::kStoplaunch, restartParam.errorCode[idx],
+                restartParam.restartCnt); // 上报sdma异常
             if (restartParam.fsmState[idx] == HcclOpExecFSM::HCCL_OP_EXEC_FSM_STOPPING) {
                 restartParam.startTime[idx] = std::chrono::steady_clock::now();
             }
             break;
         case HcclOpExecFSM::HCCL_OP_EXEC_FSM_STOPPING:
             if ((std::chrono::steady_clock::now() - restartParam.startTime[idx]) >= waitStopExecCmdTimeout) {
-                HCCL_ERROR("MC2 restart aicpu wait stop exec timeout[%u ms].",
-                           comm.HcclGetWaitStopExecCmdTimeout());
+                HCCL_ERROR("MC2 restart aicpu wait stop exec timeout[%u ms].", comm.HcclGetWaitStopExecCmdTimeout());
                 restartParam.errorCode[idx] = KfcError::kTimeout;
                 restartParam.fsmState[idx] = HcclOpExecFSM::HCCL_OP_EXEC_FSM_ERROR;
             } else {
@@ -131,8 +131,9 @@ HcclResult AicpuKfcRetryProcess::RetryProcess(HcclCommAicpu &comm, RestartParam 
             HCCL_INFO("MC2 restart state HCCL_OP_EXEC_FSM_STOPPED");
             ret = MC2OpExecFsmStoppedProcess(comm, restartParam.fsmState[idx], restartParam.errorCode[idx]);
             if (restartParam.fsmState[idx] == HcclOpExecFSM::HCCL_OP_EXEC_FSM_WAIT_RETRY) {
-                CHK_RET(comm.UpdateOpExecStatus(restartParam.fsmState[idx], KfcStatus::kStopExec,
-                                                restartParam.errorCode[idx], restartParam.restartCnt));
+                CHK_RET(comm.UpdateOpExecStatus(
+                    restartParam.fsmState[idx], KfcStatus::kStopExec, restartParam.errorCode[idx],
+                    restartParam.restartCnt));
                 restartParam.startTime[idx] = std::chrono::steady_clock::now();
             }
             break;
@@ -141,8 +142,8 @@ HcclResult AicpuKfcRetryProcess::RetryProcess(HcclCommAicpu &comm, RestartParam 
             // MC2重执行，清空所有rdma链接
             comm.CleanAllRoceResource();
             restartParam.errorCode[idx] = KfcError::kNone;
-            ret = comm.UpdateOpExecStatus(restartParam.fsmState[idx], KfcStatus::kChanged, restartParam.errorCode[idx],
-                                          restartParam.restartCnt);
+            ret = comm.UpdateOpExecStatus(
+                restartParam.fsmState[idx], KfcStatus::kChanged, restartParam.errorCode[idx], restartParam.restartCnt);
             restartParam.linkChanged[idx] = true;
             restartParam.fsmState[idx] = HcclOpExecFSM::HCCL_OP_EXEC_FSM_WAIT_RETRY;
             break;
@@ -152,22 +153,22 @@ HcclResult AicpuKfcRetryProcess::RetryProcess(HcclCommAicpu &comm, RestartParam 
                 restartParam.errorCode[idx] = KfcError::kTimeout;
                 restartParam.fsmState[idx] = HcclOpExecFSM::HCCL_OP_EXEC_FSM_ERROR;
             } else {
-                ret = MC2OpExecFsmWaitRetryProcess(comm, restartParam.fsmState[idx], restartParam.errorCode[idx],
-                                                   restartParam.linkChanged[idx]);
+                ret = MC2OpExecFsmWaitRetryProcess(
+                    comm, restartParam.fsmState[idx], restartParam.errorCode[idx], restartParam.linkChanged[idx]);
             }
             break;
         case HcclOpExecFSM::HCCL_OP_EXEC_FSM_RETRY:
             HCCL_INFO("MC2 restart state HCCL_OP_EXEC_FSM_RETRY");
             restartParam.consultationResult[idx] = true;
             restartParam.errorCode[idx] = KfcError::kNone;
-            comm.UpdateOpExecStatus(restartParam.fsmState[idx], KfcStatus::kEnd, restartParam.errorCode[idx],
-                                    restartParam.restartCnt);
+            comm.UpdateOpExecStatus(
+                restartParam.fsmState[idx], KfcStatus::kEnd, restartParam.errorCode[idx], restartParam.restartCnt);
             return HCCL_SUCCESS;
         case HcclOpExecFSM::HCCL_OP_EXEC_FSM_ERROR:
         default: {
             HCCL_ERROR("MC2 restart aicpu restart process error.");
-            comm.UpdateOpExecStatus(restartParam.fsmState[idx], KfcStatus::kError, restartParam.errorCode[idx],
-                                    restartParam.restartCnt);
+            comm.UpdateOpExecStatus(
+                restartParam.fsmState[idx], KfcStatus::kError, restartParam.errorCode[idx], restartParam.restartCnt);
             comm.GetDfxExtendInfo()->kfcStatus = DfxKfcStatus::kOneFinished;
             return (ret == HCCL_SUCCESS) ? HCCL_E_INTERNAL : ret;
         }

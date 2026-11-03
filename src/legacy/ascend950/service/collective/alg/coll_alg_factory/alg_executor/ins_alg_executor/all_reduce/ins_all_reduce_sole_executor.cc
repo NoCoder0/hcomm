@@ -25,21 +25,18 @@
 namespace Hccl {
 template <typename AlgTopoMatch, typename InsAlgTemplate>
 InsAllReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::InsAllReduceSoleExecutor() : InsCollAlgBase()
-{
-}
+{}
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
 InsAllReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::~InsAllReduceSoleExecutor()
-{
-}
+{}
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsAllReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcResOffload(const RankGraph *rankGraph,
-                                                                                  const u64            &dataSize,
-                                                                                  CollOffloadOpResReq  &resReq)
+HcclResult InsAllReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcResOffload(
+    const RankGraph* rankGraph, const u64& dataSize, CollOffloadOpResReq& resReq)
 {
     (void)dataSize;
-    constexpr u64 needScratchSize = 200 * 1024 * 1024;  // 需要申请200MB临时内存
+    constexpr u64 needScratchSize = 200 * 1024 * 1024; // 需要申请200MB临时内存
     resReq.requiredScratchMemSize = needScratchSize;
 
     // Topo Match
@@ -67,33 +64,33 @@ HcclResult InsAllReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcResOffloa
 
 // 算子执行aicpu接口
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsAllReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(const AlgTopoInfo     &topoInfo,
-                                                                                   const CollAlgOperator &op,
-                                                                                   const CollAlgParams   &params,
-                                                                                   ConnectedLinkMgr      *linkMgr,
-                                                                                   InsQuePtr              insQue)
+HcclResult InsAllReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(
+    const AlgTopoInfo& topoInfo, const CollAlgOperator& op, const CollAlgParams& params, ConnectedLinkMgr* linkMgr,
+    InsQuePtr insQue)
 {
     HCCL_INFO("[InsCollAlgFactory] [InsAllReduceSoleExecutor] Host Orchestrate begins.");
     // init and check params
     CHK_RET(Init(op, params, insQue));
 
     // soleEsecutor 只支持单层拓扑, 所以只取第 0 级通信域的信息
-    vTopo_ = topoInfo.vTopo[0];               // 本通信域内的通信平面
-    virtRankMap_ = topoInfo.virtRankMap[0];   // 本通信域内的 rank 映射表
-    virtRanks_ = topoInfo.virtRanks[0];       // 本通信域内的 rank 集合
+    vTopo_ = topoInfo.vTopo[0];             // 本通信域内的通信平面
+    virtRankMap_ = topoInfo.virtRankMap[0]; // 本通信域内的 rank 映射表
+    virtRanks_ = topoInfo.virtRanks[0];     // 本通信域内的 rank 集合
     dataTypeSize_ = DataTypeSizeGet(dataType_);
     dataSize_ = dataCount_ * dataTypeSize_;
-    CHK_PRT_RET(dataTypeSize_ == 0,
-                HCCL_ERROR("[CollAlgFactory] Rank [%d], Invalid dataTypeSize_ [%u] for AICPU.", myRank_, dataTypeSize_),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        dataTypeSize_ == 0,
+        HCCL_ERROR("[CollAlgFactory] Rank [%d], Invalid dataTypeSize_ [%u] for AICPU.", myRank_, dataTypeSize_),
+        HcclResult::HCCL_E_INTERNAL);
 
     // 实例化算法模板类
-    HCCL_DEBUG("[InsAllReduceSoleExecutor] Rank[%d], Init insAlgTemplate with rankSize [%u] and dmaMode [%s] for AICPU.",
-            myRank_, rankSize_, dmaMode_.Describe().c_str());
+    HCCL_DEBUG(
+        "[InsAllReduceSoleExecutor] Rank[%d], Init insAlgTemplate with rankSize [%u] and dmaMode [%s] for AICPU.",
+        myRank_, rankSize_, dmaMode_.Describe().c_str());
     InsAlgTemplate tempAlg(myRank_, rankSize_, vTopo_, virtRankMap_);
     tempAlg.SetDmaMode(dmaMode_);
     tempAlg.InitReduceInfo(redOp_, dataType_);
-    tempAlg.SetCollOp(op);  // CCU template需要传递op信息
+    tempAlg.SetCollOp(op); // CCU template需要传递op信息
 
     // 计算算法模板所需资源
     AlgTempResReq tempResReq;
@@ -101,7 +98,8 @@ HcclResult InsAllReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(c
         HCCL_DEBUG("[InsCollAlgFactory] [InsAllReduceSoleExecutor] Rank[%d], CalcRes with detouring enabled.", myRank_);
         CHK_RET(tempAlg.CalcResDetour(linkMgr, tempResReq));
     } else {
-        HCCL_DEBUG("[InsCollAlgFactory] [InsAllReduceSoleExecutor] Rank[%d], CalcRes with detouring disabled.", myRank_);
+        HCCL_DEBUG(
+            "[InsCollAlgFactory] [InsAllReduceSoleExecutor] Rank[%d], CalcRes with detouring disabled.", myRank_);
         CHK_RET(tempAlg.CalcRes(tempResReq));
     }
 
@@ -110,16 +108,15 @@ HcclResult InsAllReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(c
     CHK_RET(PrepResLinks(myRank_, tempResReq.links, linkMgr, tempResLinks_));
 
     ParamPool paramPool = {op, params};
-    HCCL_DEBUG("[InsAllReduceSoleExecutor] Rank[%d], Generating Instruction Queues for AICPU.",
-                   myRank_);
+    HCCL_DEBUG("[InsAllReduceSoleExecutor] Rank[%d], Generating Instruction Queues for AICPU.", myRank_);
     CHK_RET(OrchestrateCommon(tempAlg, paramPool));
 
     return HcclResult::HCCL_SUCCESS;
 }
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsAllReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcRes(const RankGraph *rankGraph,
-                                                                               CollAlgResReq        &algResReq)
+HcclResult
+InsAllReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcRes(const RankGraph* rankGraph, CollAlgResReq& algResReq)
 {
     // Topo Match
     AlgTopoMatch topoMatch(myRank_, rankSize_, rankGraph, devType_);
@@ -140,7 +137,7 @@ HcclResult InsAllReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcRes(const
         CHK_RET(tempAlg.CalcRes(tempResReq));
     }
     CHK_RET(CalcLinkInfo(myRank_, rankGraph, tempResReq.links, algResReq.levelRankPairs));
-    algResReq.primQueueNum= tempResReq.streamNum;
+    algResReq.primQueueNum = tempResReq.streamNum;
     algResReq.queueNotifys = tempResReq.queNotifys;
     algResReq.localWaitGroupCntNotify = tempResReq.localWaitGroupCntNotify;
     algResReq.localBcastPostCntNotify = tempResReq.localBcastPostCntNotify;
@@ -152,10 +149,8 @@ HcclResult InsAllReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcRes(const
 
 // dataSize_ as input
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsAllReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(const RankGraph  *rankGraph,
-                                                                                   const CollAlgOperator &op,
-                                                                                   const CollAlgParams   &params,
-                                                                                   InsQuePtr              insQue)
+HcclResult InsAllReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(
+    const RankGraph* rankGraph, const CollAlgOperator& op, const CollAlgParams& params, InsQuePtr insQue)
 {
     HCCL_INFO("[InsCollAlgFactory] [InsAllReduceSoleExecutor] Host Orchestrate begins.");
     // init and check params
@@ -167,17 +162,19 @@ HcclResult InsAllReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(c
     HCCL_DEBUG("[InsCollAlgFactory] Rank[%d], [%s].", myRank_, topoMatch.Describe().c_str());
     dataTypeSize_ = DataTypeSizeGet(dataType_);
     dataSize_ = dataCount_ * dataTypeSize_;
-    CHK_PRT_RET(dataTypeSize_ == 0,
-            HCCL_ERROR("Allreduce_[CollAlgFactory] Rank [%d], Invalid dataTypeSize_ [%u].", myRank_, dataTypeSize_),
-            HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        dataTypeSize_ == 0,
+        HCCL_ERROR("Allreduce_[CollAlgFactory] Rank [%d], Invalid dataTypeSize_ [%u].", myRank_, dataTypeSize_),
+        HcclResult::HCCL_E_INTERNAL);
 
     // 实例化算法模板类
-    HCCL_DEBUG("[InsAllReduceSoleExecutor] Rank[%d], Init insAlgTemplate with rankSize [%u] and dmaMode [%s].",
-            myRank_, rankSize_, dmaMode_.Describe().c_str());
+    HCCL_DEBUG(
+        "[InsAllReduceSoleExecutor] Rank[%d], Init insAlgTemplate with rankSize [%u] and dmaMode [%s].", myRank_,
+        rankSize_, dmaMode_.Describe().c_str());
     InsAlgTemplate tempAlg(myRank_, rankSize_, vTopo_, virtRankMap_);
     tempAlg.SetDmaMode(dmaMode_);
     tempAlg.InitReduceInfo(redOp_, dataType_);
-    tempAlg.SetCollOp(op);  // CCU template需要传递op信息
+    tempAlg.SetCollOp(op); // CCU template需要传递op信息
 
     // 计算算法模板所需资源
     AlgTempResReq tempResReq;
@@ -185,7 +182,8 @@ HcclResult InsAllReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(c
         HCCL_DEBUG("[InsCollAlgFactory] [InsAllReduceSoleExecutor] Rank[%d], CalcRes with detouring enabled.", myRank_);
         CHK_RET(tempAlg.CalcResDetour(rankGraph, tempResReq));
     } else {
-        HCCL_DEBUG("[InsCollAlgFactory] [InsAllReduceSoleExecutor] Rank[%d], CalcRes with detouring disabled.", myRank_);
+        HCCL_DEBUG(
+            "[InsCollAlgFactory] [InsAllReduceSoleExecutor] Rank[%d], CalcRes with detouring disabled.", myRank_);
         CHK_RET(tempAlg.CalcRes(tempResReq));
     }
     // 申请算法模板所需资源
@@ -201,30 +199,30 @@ HcclResult InsAllReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(c
 }
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsAllReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateCommon(InsAlgTemplate &tempAlg,
-    const ParamPool &paramPool)
+HcclResult InsAllReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateCommon(
+    InsAlgTemplate& tempAlg, const ParamPool& paramPool)
 {
     (void)paramPool;
     BuffInfo buffInfo;
-    buffInfo.scratBuffType      = BufferType::SCRATCH;
-    buffInfo.inBuffBaseOff      = 0;
-    buffInfo.outBuffBaseOff     = 0;
+    buffInfo.scratBuffType = BufferType::SCRATCH;
+    buffInfo.inBuffBaseOff = 0;
+    buffInfo.outBuffBaseOff = 0;
     buffInfo.scratchBuffBaseOff = 0;
     // 基本参数配置
     AllignInfo allignInfo = {enableAllign_, allignSize_, dataType_};
-    TempFuncs  tempFuncs;
-    tempFuncs.opMode              = opMode_;
+    TempFuncs tempFuncs;
+    tempFuncs.opMode = opMode_;
     tempFuncs.enableCounterNotify = IsEnableCounterNotify();
     if (opMode_ == OpMode::OFFLOAD) {
-        buffInfo.inBuffType         = BufferType::INPUT;
-        buffInfo.outBuffType        = BufferType::OUTPUT;
+        buffInfo.inBuffType = BufferType::INPUT;
+        buffInfo.outBuffType = BufferType::OUTPUT;
     } else {
-        tempFuncs.isForepart          = true; // Usr Buff to CCL Buff required
-        tempFuncs.isBottom            = true; // CCL Buff to Usr Buff required   
-        buffInfo.inBuffType         = BufferType::SCRATCH;
-        buffInfo.outBuffType        = BufferType::SCRATCH;        
+        tempFuncs.isForepart = true; // Usr Buff to CCL Buff required
+        tempFuncs.isBottom = true;   // CCL Buff to Usr Buff required
+        buffInfo.inBuffType = BufferType::SCRATCH;
+        buffInfo.outBuffType = BufferType::SCRATCH;
     }
-    
+
     u64 outputCount = dataCount_;
     // 计算出一轮中最多能输出多少数据
     u64 maxLoopOutputCount = 0;
@@ -233,7 +231,8 @@ HcclResult InsAllReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateCo
     } else {
         maxLoopOutputCount = maxTmpMemSize_ / (rankSize_ * dataTypeSize_);
     }
-    CHK_PRT_RET(maxLoopOutputCount == 0,
+    CHK_PRT_RET(
+        maxLoopOutputCount == 0,
         HCCL_ERROR("[OrchestrateCommon] maxLoopOutputCount is zero, dataType[%s]", dataType_.Describe().c_str()),
         HcclResult::HCCL_E_PARA);
     u64 loopTimes = outputCount / maxLoopOutputCount + static_cast<u64>(outputCount % maxLoopOutputCount != 0);
@@ -244,7 +243,7 @@ HcclResult InsAllReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateCo
         u64 loopOffsetSize = loopOffsetCount * dataTypeSize_;
 
         // 本轮需要处理的数据量
-        u64 currOutputCount = (loop == (loopTimes - 1)) ?  outputCount - loopOffsetCount : maxLoopOutputCount;
+        u64 currOutputCount = (loop == (loopTimes - 1)) ? outputCount - loopOffsetCount : maxLoopOutputCount;
         u64 currDataSize = currOutputCount * dataTypeSize_;
 
         UsrData usrData;
@@ -269,16 +268,20 @@ HcclResult InsAllReduceSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateCo
 #ifndef CCL_KERNEL_AICPU
 INS_REGISTER_IMPL_BY_TEMP(
     OpType::ALLREDUCE, CcuAllReduceMesh1D, InsAllReduceSoleExecutor, TopoMatchMesh, CcuTempAllReduceMesh1D);
-INS_REGISTER_IMPL_BY_TEMP(OpType::ALLREDUCE, CcuAllReduceMesh1DOneShot, InsAllReduceSoleExecutor, TopoMatchMesh,
+INS_REGISTER_IMPL_BY_TEMP(
+    OpType::ALLREDUCE, CcuAllReduceMesh1DOneShot, InsAllReduceSoleExecutor, TopoMatchMesh,
     CcuTempAllReduceMesh1DOneShot);
-INS_REGISTER_IMPL_BY_TEMP(OpType::ALLREDUCE, CcuAllReduceMesh2DOneShot, InsAllReduceSoleExecutor, TopoMatchConcurrMesh,
+INS_REGISTER_IMPL_BY_TEMP(
+    OpType::ALLREDUCE, CcuAllReduceMesh2DOneShot, InsAllReduceSoleExecutor, TopoMatchConcurrMesh,
     CcuTempAllReduceMesh2DOneShot);
-INS_REGISTER_IMPL_BY_TEMP(OpType::ALLREDUCE, CcuAllReduceMesh2DTwoShot, InsAllReduceSoleExecutor, TopoMatchConcurrMesh,
+INS_REGISTER_IMPL_BY_TEMP(
+    OpType::ALLREDUCE, CcuAllReduceMesh2DTwoShot, InsAllReduceSoleExecutor, TopoMatchConcurrMesh,
     CcuTempAllReduceMesh2DTwoShot);
 INS_REGISTER_IMPL_BY_TEMP(
     OpType::ALLREDUCE, CcuAllReduceMeshDetour1D, InsAllReduceSoleExecutor, TopoMatchMesh, CcuTempAllReduceMeshDetour1D);
-INS_REGISTER_IMPL_BY_TEMP(OpType::ALLREDUCE, CcuAllReduceMeshTwoShotMem2Mem2D, InsAllReduceSoleExecutor,
-    TopoMatchConcurrMesh, CcuTempAllReduceMeshTwoShotMem2Mem2D);
+INS_REGISTER_IMPL_BY_TEMP(
+    OpType::ALLREDUCE, CcuAllReduceMeshTwoShotMem2Mem2D, InsAllReduceSoleExecutor, TopoMatchConcurrMesh,
+    CcuTempAllReduceMeshTwoShotMem2Mem2D);
 #endif
 
 } // namespace Hccl

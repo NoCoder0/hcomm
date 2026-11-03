@@ -32,7 +32,7 @@ using namespace hcomm;
 namespace hcomm {
 extern std::mutex g_channelMapMutex;
 extern std::unordered_map<uint16_t, uint64_t> g_channelIdToHandle;
-}
+} // namespace hcomm
 
 class InitChannelMapTest : public BaseInit {
 public:
@@ -60,7 +60,7 @@ TEST_F(InitChannelMapTest, Ut_GetChannels_When_ChannelsEmpty_Expect_ReturnEmptyS
     hcomm::CcuKernel kernel;
     kernel.channels_.clear();
 
-    const auto &channels = kernel.GetChannels();
+    const auto& channels = kernel.GetChannels();
     EXPECT_TRUE(channels.empty());
 }
 
@@ -69,7 +69,7 @@ TEST_F(InitChannelMapTest, Ut_GetChannels_When_ChannelsHasElements_Expect_Return
     hcomm::CcuKernel kernel;
     kernel.channels_ = {100, 200, 300};
 
-    const auto &channels = kernel.GetChannels();
+    const auto& channels = kernel.GetChannels();
     EXPECT_EQ(channels.size(), 3u);
     EXPECT_NE(channels.find(100), channels.end());
     EXPECT_NE(channels.find(200), channels.end());
@@ -82,15 +82,13 @@ TEST_F(InitChannelMapTest, Ut_GetChannels_When_AddDuplicateChannel_Expect_SetSiz
     kernel.channels_ = {100, 200};
     kernel.channels_.insert(100);
 
-    const auto &channels = kernel.GetChannels();
+    const auto& channels = kernel.GetChannels();
     EXPECT_EQ(channels.size(), 2u);
 }
 
 TEST_F(InitChannelMapTest, Ut_InitChannelMap_When_KernelNullptr_Expect_ReturnParaError)
 {
-    MOCKER_CPP(&hcomm::CcuKernelMgr::GetKernel)
-        .stubs()
-        .will(returnValue(static_cast<hcomm::CcuKernel *>(nullptr)));
+    MOCKER_CPP(&hcomm::CcuKernelMgr::GetKernel).stubs().will(returnValue(static_cast<hcomm::CcuKernel*>(nullptr)));
 
     HcclResult ret = CcuTaskException::InitChannelMap(0, 0x1234);
     EXPECT_EQ(ret, HCCL_E_PARA);
@@ -101,9 +99,7 @@ TEST_F(InitChannelMapTest, Ut_InitChannelMap_When_ChannelsEmpty_Expect_SuccessAn
     hcomm::CcuKernel kernel;
     kernel.channels_.clear();
 
-    MOCKER_CPP(&hcomm::CcuKernelMgr::GetKernel)
-        .stubs()
-        .will(returnValue(&kernel));
+    MOCKER_CPP(&hcomm::CcuKernelMgr::GetKernel).stubs().will(returnValue(&kernel));
 
     HcclResult ret = CcuTaskException::InitChannelMap(0, 0x1234);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -117,9 +113,7 @@ TEST_F(InitChannelMapTest, Ut_InitChannelMap_When_HcommChannelGetFail_Expect_Ret
     hcomm::CcuKernel kernel;
     kernel.channels_ = {0xABCD};
 
-    MOCKER_CPP(&hcomm::CcuKernelMgr::GetKernel)
-        .stubs()
-        .will(returnValue(&kernel));
+    MOCKER_CPP(&hcomm::CcuKernelMgr::GetKernel).stubs().will(returnValue(&kernel));
 
     MOCKER(HcommChannelGet)
         .stubs()
@@ -135,11 +129,9 @@ TEST_F(InitChannelMapTest, Ut_InitChannelMap_When_ChannelPtrNull_Expect_ReturnPt
     hcomm::CcuKernel kernel;
     kernel.channels_ = {0xABCD};
 
-    void *nullPtr = nullptr;
+    void* nullPtr = nullptr;
 
-    MOCKER_CPP(&hcomm::CcuKernelMgr::GetKernel)
-        .stubs()
-        .will(returnValue(&kernel));
+    MOCKER_CPP(&hcomm::CcuKernelMgr::GetKernel).stubs().will(returnValue(&kernel));
 
     MOCKER(HcommChannelGet)
         .stubs()
@@ -158,11 +150,9 @@ TEST_F(InitChannelMapTest, Ut_InitChannelMap_When_NormalSingleChannel_Expect_Cha
 
     HcommChannelDesc desc{};
     CcuUrmaChannel channel(nullptr, desc);
-    void *channelPtr = static_cast<Channel *>(&channel);
+    void* channelPtr = static_cast<Channel*>(&channel);
 
-    MOCKER_CPP(&hcomm::CcuKernelMgr::GetKernel)
-        .stubs()
-        .will(returnValue(&kernel));
+    MOCKER_CPP(&hcomm::CcuKernelMgr::GetKernel).stubs().will(returnValue(&kernel));
 
     MOCKER(HcommChannelGet)
         .stubs()
@@ -190,12 +180,10 @@ TEST_F(InitChannelMapTest, Ut_InitChannelMap_When_MultipleChannels_Expect_Channe
     CcuUrmaChannel channel1(nullptr, desc1);
     CcuUrmaChannel channel2(nullptr, desc2);
 
-    void *channelPtr1 = static_cast<Channel *>(&channel1);
-    void *channelPtr2 = static_cast<Channel *>(&channel2);
+    void* channelPtr1 = static_cast<Channel*>(&channel1);
+    void* channelPtr2 = static_cast<Channel*>(&channel2);
 
-    MOCKER_CPP(&hcomm::CcuKernelMgr::GetKernel)
-        .stubs()
-        .will(returnValue(&kernel));
+    MOCKER_CPP(&hcomm::CcuKernelMgr::GetKernel).stubs().will(returnValue(&kernel));
 
     MOCKER(HcommChannelGet)
         .stubs()
@@ -206,10 +194,7 @@ TEST_F(InitChannelMapTest, Ut_InitChannelMap_When_MultipleChannels_Expect_Channe
         .with(eq(handle2), outBoundP(&channelPtr2))
         .will(returnValue(static_cast<HcommResult>(0)));
 
-    MOCKER_CPP(&CcuUrmaChannel::GetChannelId)
-        .stubs()
-        .will(returnValue(10u))
-        .then(returnValue(20u));
+    MOCKER_CPP(&CcuUrmaChannel::GetChannelId).stubs().will(returnValue(10u)).then(returnValue(20u));
 
     HcclResult ret = CcuTaskException::InitChannelMap(0, 0x1234);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -217,7 +202,7 @@ TEST_F(InitChannelMapTest, Ut_InitChannelMap_When_MultipleChannels_Expect_Channe
     std::lock_guard<std::mutex> lock(g_channelMapMutex);
     EXPECT_EQ(g_channelIdToHandle.size(), 2u);
     std::set<uint64_t> values;
-    for (auto &kv : g_channelIdToHandle) {
+    for (auto& kv : g_channelIdToHandle) {
         values.insert(kv.second);
     }
     EXPECT_NE(values.find(handle1), values.end());

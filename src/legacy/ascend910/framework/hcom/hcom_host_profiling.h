@@ -20,7 +20,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif  // __cplusplus
+#endif // __cplusplus
 constexpr u32 MAX_LENGTH = 128;
 
 typedef struct HcomProInfo {
@@ -41,24 +41,21 @@ typedef struct HcomProInfo {
     bool isCapture = false;
     bool isAiv = false;
     uint8_t reserved[MAX_LENGTH];
-}HcomProInfo;
-
+} HcomProInfo;
 
 // 注册host侧的threads
-extern HcclResult HcommProfilingRegThread(HcomProInfo profInfo, ThreadHandle *threads);
+extern HcclResult HcommProfilingRegThread(HcomProInfo profInfo, ThreadHandle* threads);
 
 // 注销host侧的stream
-extern HcclResult HcommProfilingUnRegThread(HcomProInfo profInfo, ThreadHandle *threads);
+extern HcclResult HcommProfilingUnRegThread(HcomProInfo profInfo, ThreadHandle* threads);
 
 // host 上报kernel的时间
-extern HcclResult HcommProfilingReportKernel(uint64_t beginTime, const char *profName);
+extern HcclResult HcommProfilingReportKernel(uint64_t beginTime, const char* profName);
 
-// 上报acl host 
+// 上报acl host
 extern HcclResult HcommProfilingReportOp(HcomProInfo profInfo);
-
-extern uint64_t HcommGetProfilingSysCycleTime();
 
 #ifdef __cplusplus
 }
-#endif  // __cplusplus
+#endif // __cplusplus
 #endif

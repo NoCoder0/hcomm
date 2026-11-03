@@ -23,10 +23,7 @@ public:
     explicit InsBroadcastParallelAiCpuExecutor() = default;
     ~InsBroadcastParallelAiCpuExecutor() override = default;
 
-    std::string Describe() const override
-    {
-        return "Instruction based BroadCast Parallel AICPU Executor.";
-    }
+    std::string Describe() const override { return "Instruction based BroadCast Parallel AICPU Executor."; }
 
     HcclResult CalcRes(const RankGraph* rankGraph, CollAlgResReq& algResReq) override;
 
@@ -131,74 +128,76 @@ private:
     }
     void InitDataParameters(SliceConfig& slice, ScratchMultiple& scratchMultiple, DataParameters& dataParameters) const
     {
-        dataParameters.sliceSize.at(0) = {
-            slice.sliceCountPart0 * dataTypeSize_ / interLocalRankSize_,
-            slice.sliceCountPart0 * dataTypeSize_ / interLocalRankSize_ / intraLocalRankSize_,
-            slice.sliceCountPart0 * dataTypeSize_ / interLocalRankSize_ / intraLocalRankSize_,
-            slice.sliceCountPart0 * dataTypeSize_ / interLocalRankSize_};
-        dataParameters.sliceSize.at(1) = {
-            slice.sliceCountPart1 * dataTypeSize_ / intraLocalRankSize_,
-            slice.sliceCountPart1 * dataTypeSize_ / intraLocalRankSize_ / interLocalRankSize_,
-            slice.sliceCountPart1 * dataTypeSize_ / intraLocalRankSize_ / interLocalRankSize_,
-            slice.sliceCountPart1 * dataTypeSize_ / intraLocalRankSize_};
-        dataParameters.inputStride.at(0) = {
-            slice.sliceCountPart0 * dataTypeSize_ / interLocalRankSize_,
-            slice.sliceCountPart0 * dataTypeSize_ / interLocalRankSize_ / intraLocalRankSize_, 0, 0};
-        dataParameters.inputStride.at(1) = {
-            slice.sliceCountPart1 * dataTypeSize_ / intraLocalRankSize_,
-            slice.sliceCountPart1 * dataTypeSize_ / intraLocalRankSize_ / interLocalRankSize_, 0, 0};
+        dataParameters.sliceSize.at(0)
+            = {slice.sliceCountPart0 * dataTypeSize_ / interLocalRankSize_,
+               slice.sliceCountPart0 * dataTypeSize_ / interLocalRankSize_ / intraLocalRankSize_,
+               slice.sliceCountPart0 * dataTypeSize_ / interLocalRankSize_ / intraLocalRankSize_,
+               slice.sliceCountPart0 * dataTypeSize_ / interLocalRankSize_};
+        dataParameters.sliceSize.at(1)
+            = {slice.sliceCountPart1 * dataTypeSize_ / intraLocalRankSize_,
+               slice.sliceCountPart1 * dataTypeSize_ / intraLocalRankSize_ / interLocalRankSize_,
+               slice.sliceCountPart1 * dataTypeSize_ / intraLocalRankSize_ / interLocalRankSize_,
+               slice.sliceCountPart1 * dataTypeSize_ / intraLocalRankSize_};
+        dataParameters.inputStride.at(0)
+            = {slice.sliceCountPart0 * dataTypeSize_ / interLocalRankSize_,
+               slice.sliceCountPart0 * dataTypeSize_ / interLocalRankSize_ / intraLocalRankSize_, 0, 0};
+        dataParameters.inputStride.at(1)
+            = {slice.sliceCountPart1 * dataTypeSize_ / intraLocalRankSize_,
+               slice.sliceCountPart1 * dataTypeSize_ / intraLocalRankSize_ / interLocalRankSize_, 0, 0};
         // 计算Scratch偏移，数据尾块必然小于常规块，不用额外计算尾块时的Scratch偏移
         dataParameters.scratchOffset.at(0) = {0, 0, 0, 0};
-        dataParameters.scratchOffset.at(1) = {
-            slice.sliceCountPart0 * scratchMultiple.interScatter * dataTypeSize_,
-            (slice.sliceCountPart0 / interLocalRankSize_) * scratchMultiple.intraScatter * dataTypeSize_,
-            (slice.sliceCountPart0 / interLocalRankSize_ / intraLocalRankSize_) * scratchMultiple.intraAllGather *
-                dataTypeSize_,
-            (slice.sliceCountPart0 / interLocalRankSize_) * scratchMultiple.interAllGather * dataTypeSize_};
+        dataParameters.scratchOffset.at(1)
+            = {slice.sliceCountPart0 * scratchMultiple.interScatter * dataTypeSize_,
+               (slice.sliceCountPart0 / interLocalRankSize_) * scratchMultiple.intraScatter * dataTypeSize_,
+               (slice.sliceCountPart0 / interLocalRankSize_ / intraLocalRankSize_) * scratchMultiple.intraAllGather
+                   * dataTypeSize_,
+               (slice.sliceCountPart0 / interLocalRankSize_) * scratchMultiple.interAllGather * dataTypeSize_};
         dataParameters.tailSize = dataParameters.sliceSize;
         return;
     }
     void InitFinalSliceDataParameters(
         SliceConfig& slice, ScratchMultiple& scratchMultiple, DataParameters& dataParameters) const
     {
-        dataParameters.sliceSize.at(0) = {
-            slice.finalSliceCountPart0 * dataTypeSize_ / interLocalRankSize_,
-            slice.finalSliceCountPart0 * dataTypeSize_ / interLocalRankSize_ / intraLocalRankSize_,
-            slice.finalSliceCountPart0 * dataTypeSize_ / interLocalRankSize_ / intraLocalRankSize_,
-            slice.finalSliceCountPart0 * dataTypeSize_ / interLocalRankSize_};
-        dataParameters.sliceSize.at(1) = {
-            slice.finalSliceCountPart1 * dataTypeSize_ / intraLocalRankSize_,
-            slice.finalSliceCountPart1 * dataTypeSize_ / intraLocalRankSize_ / interLocalRankSize_,
-            slice.finalSliceCountPart1 * dataTypeSize_ / intraLocalRankSize_ / interLocalRankSize_,
-            slice.finalSliceCountPart1 * dataTypeSize_ / intraLocalRankSize_};
-        dataParameters.inputStride.at(0) = {
-            slice.finalSliceCountPart0 * dataTypeSize_ / interLocalRankSize_,
-            slice.finalSliceCountPart0 * dataTypeSize_ / interLocalRankSize_ / intraLocalRankSize_, 0, 0};
-        dataParameters.inputStride.at(1) = {
-            slice.finalSliceCountPart1 * dataTypeSize_ / intraLocalRankSize_,
-            slice.finalSliceCountPart1 * dataTypeSize_ / intraLocalRankSize_ / interLocalRankSize_, 0, 0};
+        dataParameters.sliceSize.at(0)
+            = {slice.finalSliceCountPart0 * dataTypeSize_ / interLocalRankSize_,
+               slice.finalSliceCountPart0 * dataTypeSize_ / interLocalRankSize_ / intraLocalRankSize_,
+               slice.finalSliceCountPart0 * dataTypeSize_ / interLocalRankSize_ / intraLocalRankSize_,
+               slice.finalSliceCountPart0 * dataTypeSize_ / interLocalRankSize_};
+        dataParameters.sliceSize.at(1)
+            = {slice.finalSliceCountPart1 * dataTypeSize_ / intraLocalRankSize_,
+               slice.finalSliceCountPart1 * dataTypeSize_ / intraLocalRankSize_ / interLocalRankSize_,
+               slice.finalSliceCountPart1 * dataTypeSize_ / intraLocalRankSize_ / interLocalRankSize_,
+               slice.finalSliceCountPart1 * dataTypeSize_ / intraLocalRankSize_};
+        dataParameters.inputStride.at(0)
+            = {slice.finalSliceCountPart0 * dataTypeSize_ / interLocalRankSize_,
+               slice.finalSliceCountPart0 * dataTypeSize_ / interLocalRankSize_ / intraLocalRankSize_, 0, 0};
+        dataParameters.inputStride.at(1)
+            = {slice.finalSliceCountPart1 * dataTypeSize_ / intraLocalRankSize_,
+               slice.finalSliceCountPart1 * dataTypeSize_ / intraLocalRankSize_ / interLocalRankSize_, 0, 0};
         dataParameters.scratchOffset.at(0) = {0, 0, 0, 0};
-        dataParameters.scratchOffset.at(1) = {
-            slice.finalSliceCountPart0 * scratchMultiple.interScatter * dataTypeSize_,
-            (slice.finalSliceCountPart0 / interLocalRankSize_) * scratchMultiple.intraScatter * dataTypeSize_,
-            (slice.finalSliceCountPart0 / interLocalRankSize_ / intraLocalRankSize_) * scratchMultiple.intraAllGather *
-                dataTypeSize_,
-            (slice.finalSliceCountPart0 / interLocalRankSize_) * scratchMultiple.interAllGather * dataTypeSize_};
+        dataParameters.scratchOffset.at(1)
+            = {slice.finalSliceCountPart0 * scratchMultiple.interScatter * dataTypeSize_,
+               (slice.finalSliceCountPart0 / interLocalRankSize_) * scratchMultiple.intraScatter * dataTypeSize_,
+               (slice.finalSliceCountPart0 / interLocalRankSize_ / intraLocalRankSize_) * scratchMultiple.intraAllGather
+                   * dataTypeSize_,
+               (slice.finalSliceCountPart0 / interLocalRankSize_) * scratchMultiple.interAllGather * dataTypeSize_};
         // 只有最后一片数据的part1部分存在尾片数据，scatter算子和allgather算子都需要支持该数据收集
         for (size_t i = 0; i < dataParameters.sliceSize.at(0).size(); i++) {
-            dataParameters.tailSize.at(0).at(i) =
-                dataParameters.sliceSize.at(0).at(i) + slice.finalTailCountPart0 * dataTypeSize_;
+            dataParameters.tailSize.at(0).at(i)
+                = dataParameters.sliceSize.at(0).at(i) + slice.finalTailCountPart0 * dataTypeSize_;
         }
         for (size_t i = 0; i < dataParameters.sliceSize.at(1).size(); i++) {
-            dataParameters.tailSize.at(1).at(i) =
-                dataParameters.sliceSize.at(1).at(i) + slice.finalTailCountPart1 * dataTypeSize_;
+            dataParameters.tailSize.at(1).at(i)
+                = dataParameters.sliceSize.at(1).at(i) + slice.finalTailCountPart1 * dataTypeSize_;
         }
         return;
     }
     HcclResult CalcLocalRoot()
     {
         CHK_PRT_RET(
-            root_ >= rankSize_, HCCL_ERROR("[CalcLocalRoot] root[%u] is out of rankSize[%u]", root_, rankSize_),
+            root_ >= rankSize_,
+            HCCL_ERROR(
+                "[BroadcastParallelAicpuExecutor][CalcLocalRoot] root[%u] is out of rankSize[%u]", root_, rankSize_),
             HcclResult::HCCL_E_INTERNAL);
 
         u32 intraLocalRootIdx = root_ % intraLocalRankSize_;
@@ -207,8 +206,9 @@ private:
         interLocalRoot_ = static_cast<u32>(vTopo_.at(1).at(0).at(interLocalRootIdx));
 
         HCCL_INFO(
-            "[CalcLocalRoot] localRoot: myRank[%d] intraLocalRoot[%u] interLocalRoot[%u]", myRank_, intraLocalRoot_,
-            interLocalRoot_);
+            "[BroadcastParallelAicpuExecutor][CalcLocalRoot] localRoot: myRank[%d] intraLocalRoot[%u] "
+            "interLocalRoot[%u]",
+            myRank_, intraLocalRoot_, interLocalRoot_);
         return HcclResult::HCCL_SUCCESS;
     }
 
@@ -219,15 +219,15 @@ private:
     {
         scratchMultiple.intraScatter = intraScatterTempAlg.CalcScratchMultiple(BufferType::INPUT, BufferType::INPUT);
         scratchMultiple.interScatter = interScatterTempAlg.CalcScratchMultiple(BufferType::INPUT, BufferType::INPUT);
-        scratchMultiple.intraAllGather =
-            intraAllGatherTempAlg.CalcScratchMultiple(BufferType::INPUT, BufferType::INPUT);
-        scratchMultiple.interAllGather =
-            interAllGatherTempAlg.CalcScratchMultiple(BufferType::INPUT, BufferType::INPUT);
+        scratchMultiple.intraAllGather
+            = intraAllGatherTempAlg.CalcScratchMultiple(BufferType::INPUT, BufferType::INPUT);
+        scratchMultiple.interAllGather
+            = interAllGatherTempAlg.CalcScratchMultiple(BufferType::INPUT, BufferType::INPUT);
         // 计算第一步需要的倍数和最后一步所需要的数据缓存倍数，取multiple最大需求
-        float multiple0 = splitDataSize.at(0) * float(scratchMultiple.interScatter) +
-                          splitDataSize.at(1) * float(scratchMultiple.intraScatter);
-        float multiple1 = splitDataSize.at(0) * float(scratchMultiple.interAllGather / interLocalRankSize_) +
-                          splitDataSize.at(1) * float(scratchMultiple.intraAllGather / intraLocalRankSize_);
+        float multiple0 = splitDataSize.at(0) * float(scratchMultiple.interScatter)
+                          + splitDataSize.at(1) * float(scratchMultiple.intraScatter);
+        float multiple1 = splitDataSize.at(0) * float(scratchMultiple.interAllGather / interLocalRankSize_)
+                          + splitDataSize.at(1) * float(scratchMultiple.intraAllGather / intraLocalRankSize_);
         scratchMultiple.maxMultiple = std::max(multiple0, multiple1);
         return;
     }
@@ -302,22 +302,42 @@ private:
     {
         // 以此输入第1个阶段的part0 GenExtIns, scratchOffset, links,que以及 part1部分对应信息
         stageProcAlgParaVec = {
-            {[&](auto&... args) { return interScatterTempAlg.GenExtIns(args...); }, scatterInterLinks_,
+            {[&](auto&... args) {
+                 return interScatterTempAlg.GenExtIns(args...);
+             },
+             scatterInterLinks_,
              interQue_, // stage0 part0
-             [&](auto&... args) { return intraScatterTempAlg.GenExtIns(args...); }, scatterIntraLinks_,
-             intraQue_}, // stage0 part1
-            {[&](auto&... args) { return intraScatterTempAlg.GenExtIns(args...); }, scatterIntraLinks_,
+             [&](auto&... args) {
+                 return intraScatterTempAlg.GenExtIns(args...);
+             },
+             scatterIntraLinks_, intraQue_}, // stage0 part1
+            {[&](auto&... args) {
+                 return intraScatterTempAlg.GenExtIns(args...);
+             },
+             scatterIntraLinks_,
              intraQue_, // stage1 part0
-             [&](auto&... args) { return interScatterTempAlg.GenExtIns(args...); }, scatterInterLinks_,
-             interQue_}, // stage1 part1
-            {[&](auto&... args) { return intraAllGatherTempAlg.GenExtIns(args...); }, allGatherIntraLinks_,
+             [&](auto&... args) {
+                 return interScatterTempAlg.GenExtIns(args...);
+             },
+             scatterInterLinks_, interQue_}, // stage1 part1
+            {[&](auto&... args) {
+                 return intraAllGatherTempAlg.GenExtIns(args...);
+             },
+             allGatherIntraLinks_,
              intraQue_, // stage2 part0
-             [&](auto&... args) { return interAllGatherTempAlg.GenExtIns(args...); }, allGatherInterLinks_,
-             interQue_}, // stage2 part1
-            {[&](auto&... args) { return interAllGatherTempAlg.GenExtIns(args...); }, allGatherInterLinks_,
+             [&](auto&... args) {
+                 return interAllGatherTempAlg.GenExtIns(args...);
+             },
+             allGatherInterLinks_, interQue_}, // stage2 part1
+            {[&](auto&... args) {
+                 return interAllGatherTempAlg.GenExtIns(args...);
+             },
+             allGatherInterLinks_,
              interQue_, // stage3 part0
-             [&](auto&... args) { return intraAllGatherTempAlg.GenExtIns(args...); }, allGatherIntraLinks_,
-             intraQue_}, // stage3 part1
+             [&](auto&... args) {
+                 return intraAllGatherTempAlg.GenExtIns(args...);
+             },
+             allGatherIntraLinks_, intraQue_}, // stage3 part1
         };
     }
     HcclResult GenInsQues(

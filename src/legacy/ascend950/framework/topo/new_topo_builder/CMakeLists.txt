@@ -1,7 +1,0 @@
-add_subdirectory(common)
-add_subdirectory(phy_topo)
-add_subdirectory(phy_topo_builder)
-add_subdirectory(rank_graph)
-add_subdirectory(rank_graph_builder)
-add_subdirectory(rank_table_info)
-add_subdirectory(topo_info)

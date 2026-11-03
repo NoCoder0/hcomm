@@ -25,18 +25,18 @@ extern "C" {
 #pragma pack(4)
 /* common */
 /**
-* @brief logCnt库句柄
-*/
+ * @brief logCnt库句柄
+ */
 typedef struct tagBkfLogCnt BkfLogCnt;
 
 /* init */
 /**
-* @brief logCnt库初始化参数
-*/
+ * @brief logCnt库初始化参数
+ */
 typedef struct tagBkfLogCntInitArg {
-    char *name; /**< 名称 */
+    char *name;        /**< 名称 */
     BkfMemMng *memMng; /**< 内存库句柄,见bkf_mem.h,同一app内可复用 */
-    BkfDisp *disp; /**< 诊断显示库句柄,见bkf_disp.h,同一app内可复用 */
+    BkfDisp *disp;     /**< 诊断显示库句柄,见bkf_disp.h,同一app内可复用 */
     int32_t modCntMax; /**< 最大记录模块数量 */
     uint8_t rsv[0x10];
 } BkfLogCntInitArg;
@@ -77,9 +77,10 @@ void BkfLogCntFunc(BkfLogCnt *logCnt, char *modName, uint16_t line);
  * @param[in] logCnt logCnt库句柄
  * @return none
  */
-#define BKF_LOG_CNT(logCnt) do {                                  \
-    BkfLogCntFunc((logCnt), (char*)(BKF_MOD_NAME_), (BKF_LINE_)); \
-} while (0)
+#define BKF_LOG_CNT(logCnt)                                                                                            \
+    do {                                                                                                               \
+        BkfLogCntFunc((logCnt), (char *)(BKF_MOD_NAME_), (BKF_LINE_));                                                 \
+    } while (0)
 
 #pragma pack()
 #pragma GCC visibility pop
@@ -90,4 +91,3 @@ void BkfLogCntFunc(BkfLogCnt *logCnt, char *modName, uint16_t line);
 #endif
 
 #endif
-

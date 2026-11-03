@@ -55,14 +55,15 @@
 using namespace std;
 using namespace hccl;
 
-class MPI_TCP_SENDRECV_TEST : public testing::Test
-{
+class MPI_TCP_SENDRECV_TEST : public testing::Test {
 protected:
     static void SetUpTestCase()
     {
         s32 ret = HcclDispatcherInit(DispatcherType::DISPATCHER_NORMAL, 0, &dispatcherPtr);
-        if (ret != HCCL_SUCCESS) return;
-        if (dispatcherPtr == nullptr) return;
+        if (ret != HCCL_SUCCESS)
+            return;
+        if (dispatcherPtr == nullptr)
+            return;
         dispatcher = reinterpret_cast<DispatcherPub*>(dispatcherPtr);
         std::cout << "MPI_TCP_SENDRECV_TEST SetUP" << std::endl;
     }
@@ -80,16 +81,13 @@ protected:
     virtual void SetUp()
     {
         MPI_Barrier(MPI_COMM_WORLD);
-        static s32  call_cnt = 0;
+        static s32 call_cnt = 0;
         string name = std::to_string(call_cnt++) + "_" + __PRETTY_FUNCTION__;
-         DlRaFunction::GetInstance().DlRaFunctionInit();
-        ra_set_shm_name(name .c_str());
+        DlRaFunction::GetInstance().DlRaFunctionInit();
+        ra_set_shm_name(name.c_str());
         ra_set_test_type(1, "MPI_TCP_SENDRECV_TEST");
         s32 portNum = -1;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
         std::cout << "A TestCase SetUP" << std::endl;
     }
     virtual void TearDown()
@@ -98,31 +96,28 @@ protected:
         std::cout << "A TestCase TearDown" << std::endl;
     }
     static HcclDispatcher dispatcherPtr;
-    static DispatcherPub *dispatcher;
+    static DispatcherPub* dispatcher;
 };
 HcclDispatcher MPI_TCP_SENDRECV_TEST::dispatcherPtr = nullptr;
-DispatcherPub *MPI_TCP_SENDRECV_TEST::dispatcher = nullptr;
+DispatcherPub* MPI_TCP_SENDRECV_TEST::dispatcher = nullptr;
 
 TEST_F(MPI_TCP_SENDRECV_TEST, ut_mpi_tcp_send_link)
 {
     SetTcpMode(true);
     HcclResult ret;
     string data = "MPI_TCP_SENDRECV_TEST";
-    string *buffer = &data;
+    string* buffer = &data;
     u32 peerRank = 0;
     u32 tag = 0;
-    void *request;
+    void* request;
     string collectiveId = "192.168.3.3-9527-0001";
 
-    MOCKER_CPP(&TcpSendThreadPool::AddSendTask)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TcpSendThreadPool::AddSendTask).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     MOCKER_CPP(&TransportHeterogIbv::GetState)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(ConnState::CONN_STATE_COMPLETE));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(ConnState::CONN_STATE_COMPLETE));
 
     hcclImpl impl;
     impl.commFactory_.reset(new (std::nothrow) CommFactory(collectiveId, 0, 2, dispatcher));
@@ -134,8 +129,8 @@ TEST_F(MPI_TCP_SENDRECV_TEST, ut_mpi_tcp_send_link)
     impl.pReqInfosMem_->Init();
 
     std::string commPair = std::to_string(peerRank) + "_" + std::to_string(impl.userRank_);
-    unique_ptr<TransportHeterogIbv> link(new (nothrow) TransportHeterogIbv("192.168.3.3-9527-0001",
-        0, 0, 0, nullptr, nullptr, &impl));
+    unique_ptr<TransportHeterogIbv> link(
+        new (nothrow) TransportHeterogIbv("192.168.3.3-9527-0001", 0, 0, 0, nullptr, nullptr, &impl));
 
     CommRankTagKey commRankTagInfo(0, peerRank, tag);
     std::unique_lock<std::mutex> lock(g_transportStorageMutex);
@@ -144,7 +139,7 @@ TEST_F(MPI_TCP_SENDRECV_TEST, ut_mpi_tcp_send_link)
 
     ret = impl.Isend(buffer, sizeof(data), HCCL_DATA_TYPE_INT8, peerRank, tag, request);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    impl.pReqInfosMem_->Free(reinterpret_cast<HcclRequestInfo *>(request));
+    impl.pReqInfosMem_->Free(reinterpret_cast<HcclRequestInfo*>(request));
     std::unique_lock<std::mutex> lockend(g_transportStorageMutex);
     g_commRankTagMap.erase(g_commRankTagMap.begin(), g_commRankTagMap.end());
     SetTcpMode(false);
@@ -164,9 +159,9 @@ TEST_F(MPI_TCP_SENDRECV_TEST, ut_mpi_tcp_improbe)
     HcclStatus* status;
 
     MOCKER_CPP(&TransportHeterogIbv::GetState)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(ConnState::CONN_STATE_COMPLETE));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(ConnState::CONN_STATE_COMPLETE));
 
     hcclImpl impl;
     impl.commFactory_.reset(new (std::nothrow) CommFactory(collectiveId, 0, 2, dispatcher));
@@ -174,8 +169,8 @@ TEST_F(MPI_TCP_SENDRECV_TEST, ut_mpi_tcp_improbe)
     impl.userRank_ = 0;
     impl.userRankSize_ = 1;
     impl.collectiveId_ = collectiveId;
-    unique_ptr<TransportHeterogIbv> link(new (nothrow) TransportHeterogIbv("192.168.3.3-9527-0001",
-        0, 0, 0, nullptr, nullptr, &impl));
+    unique_ptr<TransportHeterogIbv> link(
+        new (nothrow) TransportHeterogIbv("192.168.3.3-9527-0001", 0, 0, 0, nullptr, nullptr, &impl));
     std::string commPair = std::to_string(peerRank) + "_" + std::to_string(impl.userRank_);
     CommRankTagKey commRankTagInfo(0, peerRank, tag);
     std::unique_lock<std::mutex> lock(g_transportStorageMutex);
@@ -197,9 +192,9 @@ TEST_F(MPI_TCP_SENDRECV_TEST, ut_mpi_tcp_imrecv)
     u32 peerRank = 0;
     u32 tag = 0;
     string data = "MPI_TCP_SENDRECV_TEST";
-    string *buffer = &data;
-    void *request = nullptr;
-    void **requestPtr = &request;
+    string* buffer = &data;
+    void* request = nullptr;
+    void** requestPtr = &request;
 
     hcclImpl impl;
     impl.pReqInfosMem_.reset(new (std::nothrow) LocklessRingMemoryAllocate<HcclRequestInfo>(4096));
@@ -216,8 +211,8 @@ TEST_F(MPI_TCP_SENDRECV_TEST, ut_mpi_tcp_imrecv)
     msgInfo->envelope = envelope;
     void* msg = msgInfo;
 
-    unique_ptr<TransportHeterogIbv> link(new (nothrow) TransportHeterogIbv("192.168.3.3-9527-0001",
-        0, 0, 0, nullptr, nullptr, nullptr, nullptr, true, &impl));
+    unique_ptr<TransportHeterogIbv> link(new (nothrow) TransportHeterogIbv(
+        "192.168.3.3-9527-0001", 0, 0, 0, nullptr, nullptr, nullptr, nullptr, true, &impl));
     CommRankTagKey commRankTagInfo(commId, peerRank, tag);
     CommRankTagHash channel;
     channel.commId = commId;
@@ -228,18 +223,12 @@ TEST_F(MPI_TCP_SENDRECV_TEST, ut_mpi_tcp_imrecv)
     g_commRankTagMap[commRankTagInfo].hcclHandle = link.get();
     lock.unlock();
 
-    MOCKER_CPP(&TcpRecvTask::SetRecvEntry)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TcpRecvTask::SetRecvEntry).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(hrtEpollCtlMod)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtEpollCtlMod).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     impl.Imrecv(buffer, sizeof(data), HCCL_DATA_TYPE_INT8, msg, requestPtr);
-    impl.pReqInfosMem_->Free(reinterpret_cast<HcclRequestInfo *>(request));
+    impl.pReqInfosMem_->Free(reinterpret_cast<HcclRequestInfo*>(request));
     GlobalMockObject::verify();
     std::unique_lock<std::mutex> endlock(g_transportStorageMutex);
     g_commRankTagMap.erase(g_commRankTagMap.begin(), g_commRankTagMap.end());
@@ -248,17 +237,14 @@ TEST_F(MPI_TCP_SENDRECV_TEST, ut_mpi_tcp_imrecv)
 
 TEST_F(MPI_TCP_SENDRECV_TEST, ut_mpi_tcp_TcpfdHandleCheck)
 {
-   SetTcpMode(true);
+    SetTcpMode(true);
 
-    MOCKER(halEschedSubmitEvent)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(1));
+    MOCKER(halEschedSubmitEvent).stubs().with(mockcpp::any()).will(returnValue(1));
 
     MOCKER_CPP(&TransportHeterogIbv::GetState)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(ConnState::CONN_STATE_COMPLETE));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(ConnState::CONN_STATE_COMPLETE));
 
     unsigned int devId = 0;
     unsigned int grpId = 0;
@@ -274,17 +260,14 @@ TEST_F(MPI_TCP_SENDRECV_TEST, ut_mpi_tcp_TcpfdHandleCheck)
 
 TEST_F(MPI_TCP_SENDRECV_TEST, ut_mpi_tcp_tcpEschedFinishProcess)
 {
-     SetTcpMode(true);
+    SetTcpMode(true);
 
-    MOCKER(halEschedSubmitEvent)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(1));
+    MOCKER(halEschedSubmitEvent).stubs().with(mockcpp::any()).will(returnValue(1));
 
     MOCKER_CPP(&TransportHeterogIbv::GetState)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(ConnState::CONN_STATE_COMPLETE));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(ConnState::CONN_STATE_COMPLETE));
 
     unsigned int devId = 0;
     unsigned int grpId = 0;
@@ -300,10 +283,7 @@ TEST_F(MPI_TCP_SENDRECV_TEST, ut_mpi_tcp_tcpEschedFinishProcess)
 
 TEST_F(MPI_TCP_SENDRECV_TEST, ut_mpi_tcp_sendWork)
 {
-      MOCKER_CPP(&TransportHeterogIbv::TcpSendImm)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportHeterogIbv::TcpSendImm).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret;
     hcclImpl impl;
@@ -319,14 +299,11 @@ TEST_F(MPI_TCP_SENDRECV_TEST, ut_mpi_tcp_sendWork)
     gCompCounterEvent[HCCL_EVENT_SEND_COMPLETION_MSG].flag.clear();
 
     MOCKER_CPP(&TransportHeterogIbv::GetState)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(ConnState::CONN_STATE_COMPLETE));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(ConnState::CONN_STATE_COMPLETE));
 
-    MOCKER(halEschedSubmitEvent)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(1));
+    MOCKER(halEschedSubmitEvent).stubs().with(mockcpp::any()).will(returnValue(1));
 
     ret = tcpThreadPool.SendWork(entry);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -337,9 +314,9 @@ TEST_F(MPI_TCP_SENDRECV_TEST, ut_mpi_tcp_sendWork)
 TEST_F(MPI_TCP_SENDRECV_TEST, ut_mpi_tcp_TcpSearchRequestStatus)
 {
     MOCKER_CPP(&TransportHeterogIbv::GetState)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(ConnState::CONN_STATE_COMPLETE));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(ConnState::CONN_STATE_COMPLETE));
 
     HcclResult ret;
     uint32_t compCount = 0;
@@ -352,7 +329,7 @@ TEST_F(MPI_TCP_SENDRECV_TEST, ut_mpi_tcp_TcpSearchRequestStatus)
 
     TransportHeterogIbv link("192.168.3.3-9527-0001", 0, 0, 0, nullptr, nullptr, nullptr, nullptr, true, &impl);
 
-    HcclRequestInfo *request = impl.pReqInfosMem_->Alloc();
+    HcclRequestInfo* request = impl.pReqInfosMem_->Alloc();
     request->requestType = HcclRequestType::HCCL_REQUEST_SEND;
     request->status = 0;
     request->hcclHandle = &link;

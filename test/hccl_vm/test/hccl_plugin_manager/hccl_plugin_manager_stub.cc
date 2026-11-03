@@ -49,11 +49,10 @@ void HcclPluginManager::MonitorThread()
     }
 }
 
-HcclVmResult ExitRunnerPlugin() {
-    return HcclVmResult::HCCL_SIM_SUCCESS;
-}
+HcclVmResult ExitRunnerPlugin() { return HcclVmResult::HCCL_SIM_SUCCESS; }
 
-std::vector<HcclVmResult> HcclPluginManager::StopPlugins(const std::vector<std::string>& tags) {
+std::vector<HcclVmResult> HcclPluginManager::StopPlugins(const std::vector<std::string>& tags)
+{
     std::vector<HcclVmResult> results;
     std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -76,7 +75,8 @@ std::vector<HcclVmResult> HcclPluginManager::StopPlugins(const std::vector<std::
     return results;
 }
 
-HcclVmResult HcclPluginManager::StopAllPlugins() {
+HcclVmResult HcclPluginManager::StopAllPlugins()
+{
     std::vector<std::string> allTags;
     {
         std::lock_guard<std::mutex> lock(m_mutex);
@@ -93,7 +93,8 @@ HcclVmResult HcclPluginManager::StopAllPlugins() {
     return HcclVmResult::HCCL_SIM_SUCCESS;
 }
 
-std::vector<std::string> HcclPluginManager::GetPluginStatus() const {
+std::vector<std::string> HcclPluginManager::GetPluginStatus() const
+{
     std::vector<std::string> result;
     std::lock_guard<std::mutex> lock(m_mutex);
     return result;
@@ -104,7 +105,8 @@ HcclVmResult HcclPluginManager::RegisterPlugin(const std::string& pluginTag)
     return HcclVmResult::HCCL_SIM_E_NOT_FOUND;
 }
 
-std::vector<HcclVmResult> HcclPluginManager::StartPlugins(const std::vector<std::string>& tags) {
+std::vector<HcclVmResult> HcclPluginManager::StartPlugins(const std::vector<std::string>& tags)
+{
     std::vector<HcclVmResult> results;
     for (const auto& tag : tags) {
         results.push_back(HcclVmResult::HCCL_SIM_E_NOT_FOUND);

@@ -30,4 +30,3 @@ void BkfDcDispUninit(BkfDc *dc);
 #endif
 
 #endif
-

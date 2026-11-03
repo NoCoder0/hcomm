@@ -19,45 +19,49 @@ namespace Hccl {
 
 class TempReduceScatterConcurrMesh : public AlgTemplateBase {
 public:
-    explicit TempReduceScatterConcurrMesh(const RankId virtualRank, const u32 tempRankSize,
-                                          const std::vector<std::vector<RankId>> &tempVTopo,
-                                          const std::map<RankId, u32>            &tempVirtRankMap);
+    explicit TempReduceScatterConcurrMesh(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~TempReduceScatterConcurrMesh() override;
 
     std::string Describe() const override
     {
-        return StringFormat("Template of reduce scatter multi-dimensional concurrent mesh with tempRankSize [%u].",
-                            tempRankSize_);
+        return StringFormat(
+            "Template of reduce scatter multi-dimensional concurrent mesh with tempRankSize [%u].", tempRankSize_);
     }
 
-    HcclResult GenPrimQue(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec, const BuffInfo &buffInfo,
-                          const ResLinks &tempLinks, std::vector<PrimQuePtr> &tempPrimQues) override;
+    HcclResult GenPrimQue(
+        const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, const BuffInfo& buffInfo,
+        const ResLinks& tempLinks, std::vector<PrimQuePtr>& tempPrimQues) override;
     using AlgTemplateBase::CalcSliceInfo;
-    HcclResult CalcSliceInfo(const AllignInfo &allignInfo, const bool forAllReduce, const u64 dataSize,
-                             RankSliceInfo &sliceInfoVec) override;
+    HcclResult CalcSliceInfo(
+        const AllignInfo& allignInfo, const bool forAllReduce, const u64 dataSize,
+        RankSliceInfo& sliceInfoVec) override;
     using AlgTemplateBase::CalcRes;
-    HcclResult CalcRes(const bool forAllReduce, AlgTempResReq &tempResReq, u32 &requiredScratchMultiplier) override;
+    HcclResult CalcRes(const bool forAllReduce, AlgTempResReq& tempResReq, u32& requiredScratchMultiplier) override;
 
 private:
-    HcclResult CalcSliceInfoAllReduce(const AllignInfo &allignInfo, const u64 dataSize, RankSliceInfo &sliceInfoVec);
+    HcclResult CalcSliceInfoAllReduce(const AllignInfo& allignInfo, const u64 dataSize, RankSliceInfo& sliceInfoVec);
 
-    HcclResult PostCopyOffload(const RankSliceInfo &sliceInfoVec, std::vector<PrimQuePtr> &tempPrimQues);
+    HcclResult PostCopyOffload(const RankSliceInfo& sliceInfoVec, std::vector<PrimQuePtr>& tempPrimQues);
 
-    HcclResult RunOneDimMesh(const RankSliceInfo &sliceInfoVec, const ResLinks &tempLinks,
-                             std::vector<PrimQuePtr> &tempPrimQues);
-    HcclResult RunMesh(const u32 myAlgRank, const std::vector<RankId> &vTopo, const RankSliceInfo &sliceInfoVec,
-                       const ResLinks &tempLinks, std::vector<PrimQuePtr> &tempPrimQues);
-    HcclResult RunConcurrMesh(const RankSliceInfo &sliceInfoVec, const ResLinks &tempLinks,
-                              std::vector<PrimQuePtr> &tempPrimQues);
-    HcclResult RunSingleDimension(const u32 &step, const u32 &dim, const RankSliceInfo &sliceInfoVec,
-                                  const ResLinks &tempLinks, std::vector<PrimQuePtr> &dimPrimQues);
+    HcclResult
+    RunOneDimMesh(const RankSliceInfo& sliceInfoVec, const ResLinks& tempLinks, std::vector<PrimQuePtr>& tempPrimQues);
+    HcclResult RunMesh(
+        const u32 myAlgRank, const std::vector<RankId>& vTopo, const RankSliceInfo& sliceInfoVec,
+        const ResLinks& tempLinks, std::vector<PrimQuePtr>& tempPrimQues);
+    HcclResult
+    RunConcurrMesh(const RankSliceInfo& sliceInfoVec, const ResLinks& tempLinks, std::vector<PrimQuePtr>& tempPrimQues);
+    HcclResult RunSingleDimension(
+        const u32& step, const u32& dim, const RankSliceInfo& sliceInfoVec, const ResLinks& tempLinks,
+        std::vector<PrimQuePtr>& dimPrimQues);
 
-    std::unique_ptr<PrimSendReduce> RunSendReduce(const RankSliceInfo    &sliceInfoVec,
-                                                  const std::vector<u32> &sendChunkIdxs, const u32 &sliceIdx,
-                                                  const RankId &neighborRank, const LinkData &priorLinkData);
-    std::unique_ptr<PrimRecvReduce> RunRecvReduce(const RankSliceInfo    &sliceInfoVec,
-                                                  const std::vector<u32> &recvChunkIdxs, const u32 &sliceIdx,
-                                                  const RankId &neighborRank, const LinkData &priorLinkData);
+    std::unique_ptr<PrimSendReduce> RunSendReduce(
+        const RankSliceInfo& sliceInfoVec, const std::vector<u32>& sendChunkIdxs, const u32& sliceIdx,
+        const RankId& neighborRank, const LinkData& priorLinkData);
+    std::unique_ptr<PrimRecvReduce> RunRecvReduce(
+        const RankSliceInfo& sliceInfoVec, const std::vector<u32>& recvChunkIdxs, const u32& sliceIdx,
+        const RankId& neighborRank, const LinkData& priorLinkData);
 };
 
 } // namespace Hccl

@@ -44,10 +44,7 @@ RTS_API rtError_t rtSetStreamSqUnlock(rtStream_t stm);
  */
 RTS_API rtError_t rtNanoModelDestroy(uint32_t phyMdlId);
 
-typedef enum tagModelQueueFlag {
-    RT_MODEL_INPUT_QUEUE = 0,
-    RT_MODEL_OUTPUT_QUEUE = 1
-} rtModelQueueFlag_t;
+typedef enum tagModelQueueFlag { RT_MODEL_INPUT_QUEUE = 0, RT_MODEL_OUTPUT_QUEUE = 1 } rtModelQueueFlag_t;
 
 /**
  * @ingroup rt_model
@@ -63,10 +60,10 @@ RTS_API rtError_t rtModelBindQueue(rtModel_t mdl, uint32_t queueId, rtModelQueue
 typedef struct tagMdlLoad {
     uint8_t overflow_en;
     uint16_t totalTaskNum;
-    void *taskDescBaseAddr;
-    void *pcBaseAddr;
-    void *paramBaseAddr;
-    void *weightBaseAddr;
+    void* taskDescBaseAddr;
+    void* pcBaseAddr;
+    void* paramBaseAddr;
+    void* weightBaseAddr;
     uint8_t weightPrefetch;
 } rtMdlLoad_t;
 
@@ -78,12 +75,12 @@ typedef struct tagMdlLoad {
  * @return RT_ERROR_NONE for ok
  * @return RT_ERROR_INVALID_VALUE for error input
  */
-RTS_API rtError_t rtNanoModelLoad(rtMdlLoad_t *modelLoad, uint32_t *phyModelId);
+RTS_API rtError_t rtNanoModelLoad(rtMdlLoad_t* modelLoad, uint32_t* phyModelId);
 
 typedef struct tagMdlExecute {
-    void *ioaSrcAddr;
-    void *dynamicTaskPtr;
-    void *workPtr;
+    void* ioaSrcAddr;
+    void* dynamicTaskPtr;
+    void* workPtr;
     bool sync;
     uint16_t vld;
     uint16_t taskProf;
@@ -92,7 +89,7 @@ typedef struct tagMdlExecute {
     uint32_t sqid;
     uint8_t meType;
     uintptr_t cbFn;
-    void *cbData;
+    void* cbData;
     size_t mpamId;
     size_t aicQos;
     size_t aicOst;
@@ -106,7 +103,7 @@ typedef struct tagMdlExecute {
  * @return RT_ERROR_NONE for ok
  * @return RT_ERROR_INVALID_VALUE for error input
  */
-RTS_API rtError_t rtNanoModelExecute(rtMdlExecute_t *modelExec);
+RTS_API rtError_t rtNanoModelExecute(rtMdlExecute_t* modelExec);
 
 /**
  * @ingroup rtMsgSend
@@ -119,7 +116,7 @@ RTS_API rtError_t rtNanoModelExecute(rtMdlExecute_t *modelExec);
  * @return RT_ERROR_NONE for ok
  * @return RT_ERROR_INVALID_VALUE for error input
  */
-RTS_API rtError_t rtMsgSend(uint32_t tId, uint32_t sendTid, int32_t timeout, void *sendInfo, uint32_t size);
+RTS_API rtError_t rtMsgSend(uint32_t tId, uint32_t sendTid, int32_t timeout, void* sendInfo, uint32_t size);
 
 /**
  * @ingroup rtSetTaskDescDumpFlag
@@ -130,7 +127,7 @@ RTS_API rtError_t rtMsgSend(uint32_t tId, uint32_t sendTid, int32_t timeout, voi
  * @return RT_ERROR_NONE for ok
  * @return RT_ERROR_INVALID_VALUE for error input
  */
-RTS_API rtError_t rtSetTaskDescDumpFlag(void *taskDescBaseAddr, size_t taskDescSize, uint32_t taskId);
+RTS_API rtError_t rtSetTaskDescDumpFlag(void* taskDescBaseAddr, size_t taskDescSize, uint32_t taskId);
 
 /**
  * @ingroup rt_dump_Init
@@ -148,7 +145,7 @@ RTS_API rtError_t rtDumpDeInit(void);
 
 /**
  * @ingroup rt_model
- * @brief add stream task to model 
+ * @brief add stream task to model
  * @param [in] stm
  * @param [in] captureMdl
  * @return RT_ERROR_NONE for ok
@@ -165,8 +162,7 @@ RTS_API rtError_t rtStreamAddToModel(rtStream_t stm, rtModel_t captureMdl);
  * @return RT_ERROR_NONE for ok
  * @return RT_ERROR_INVALID_VALUE for error input
  */
-RTS_API rtError_t rtDebugRegister(rtModel_t mdl, uint32_t flag, const void *addr,
-                                  uint32_t *streamId, uint32_t *taskId);
+RTS_API rtError_t rtDebugRegister(rtModel_t mdl, uint32_t flag, const void* addr, uint32_t* streamId, uint32_t* taskId);
 
 /*
  * @ingroup rt_model
@@ -194,19 +190,16 @@ RTS_API rtError_t rtDebugUnRegisterForStream(rtStream_t stm);
  * @return RT_ERROR_NONE for ok
  * @return RT_ERROR_INVALID_VALUE for error input
  */
-RTS_API rtError_t rtModelGetId(rtModel_t mdl, uint32_t *modelId);
+RTS_API rtError_t rtModelGetId(rtModel_t mdl, uint32_t* modelId);
 
-typedef enum tagModelStreamType {
-    RT_MODEL_HEAD_STREAM = 0,
-    RT_MODEL_WAIT_ACTIVE_STREAM = 1
-} rtModelStreamType_t;
+typedef enum tagModelStreamType { RT_MODEL_HEAD_STREAM = 0, RT_MODEL_WAIT_ACTIVE_STREAM = 1 } rtModelStreamType_t;
 
 /**
  * @ingroup rt_model
  * @brief bind model and stream instance
  * @param [in] mdl  binded model
  * @param [in] stm   binded stream
- * @param [in] flag  reserved 
+ * @param [in] flag  reserved
  * @return RT_ERROR_NONE for ok
  * @return RT_ERROR_INVALID_VALUE for error input
  */
@@ -216,4 +209,4 @@ RTS_API rtError_t rtModelBindStream(rtModel_t mdl, rtStream_t stm, uint32_t flag
 }
 #endif
 
-#endif  // CCE_RUNTIME_RT_EXTERNAL_MODEL_H
+#endif // CCE_RUNTIME_RT_EXTERNAL_MODEL_H

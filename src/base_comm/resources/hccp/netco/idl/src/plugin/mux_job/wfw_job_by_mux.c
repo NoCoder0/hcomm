@@ -33,8 +33,8 @@ extern "C" {
 #endif
 #if BKF_BLOCK("私有宏结构函数")
 #pragma pack(4)
-#define WFW_JOBX_SCHED_BY_EVT    1
-#define WFW_JOBX_SCHED_BY_PIPE   2
+#define WFW_JOBX_SCHED_BY_EVT 1
+#define WFW_JOBX_SCHED_BY_PIPE 2
 #define WFW_JOBX_SCHED_MODE WFW_JOBX_SCHED_BY_EVT
 
 #define WFW_JOBX_SIGN (0xaf98)
@@ -60,10 +60,11 @@ typedef struct tagBkfJobxTypePrioKey {
     uint32_t prio;
     uint64_t diffNum;
 } BkfJobxTypePrioKey;
-#define WFW_JOBX_INIT_PRIO_KEY(prioKey) do { \
-    (prioKey)->prio = 0;                     \
-    (prioKey)->diffNum = 0xffffffffffffffff; \
-} while (0)
+#define WFW_JOBX_INIT_PRIO_KEY(prioKey)                                                                                \
+    do {                                                                                                               \
+        (prioKey)->prio = 0;                                                                                           \
+        (prioKey)->diffNum = 0xffffffffffffffff;                                                                       \
+    } while (0)
 
 typedef struct tagBkfJobxType {
     AVLL_NODE avlNode;
@@ -158,10 +159,10 @@ WfwJobxMng *WfwJobxInit(WfwJobxInitArg *arg)
     jobxMng->argInit.name = jobxMng->name;
     jobxMng->log = arg->log;
 
-    VOS_AVLL_INIT_TREE(jobxMng->jobxTypeSet, (AVLL_COMPARE)Bkfuint32_tCmp,
-                       BKF_OFFSET(BkfJobxType, typeId), BKF_OFFSET(BkfJobxType, avlNode));
+    VOS_AVLL_INIT_TREE(jobxMng->jobxTypeSet, (AVLL_COMPARE)Bkfuint32_tCmp, BKF_OFFSET(BkfJobxType, typeId),
+        BKF_OFFSET(BkfJobxType, avlNode));
     VOS_AVLL_INIT_TREE(jobxMng->jobxTypeNeedSchedSetByPrio, (AVLL_COMPARE)WfwJobxCmpJobTypePrioKey,
-                       BKF_OFFSET(BkfJobxType, prioKey), BKF_OFFSET(BkfJobxType, avlNodePrio));
+        BKF_OFFSET(BkfJobxType, prioKey), BKF_OFFSET(BkfJobxType, avlNodePrio));
     ret = WfwJobxInitTrig(jobxMng);
     if (ret != BKF_OK) {
         goto error;
@@ -221,6 +222,7 @@ BkfIJob *WfwJobxBuildIJob(WfwJobxMng *jobxMng, BkfIJob *temp)
 /* proc & on msg */
 STATIC void WfwJobxOnTrigTmrFd(int fd, uint32_t curEvents, WfwJobxMng *jobxMng)
 {
+    (void)curEvents;
     ssize_t rlen;
     uint64_t temp;
     int ret;
@@ -245,7 +247,7 @@ STATIC uint32_t WfwJobxInitTrigTmr(WfwJobxMng *jobxMng)
 {
     int ret;
     struct itimerspec newValue;
-    WfwArgForMux argForMux = { .selfCid = jobxMng->argInit.selfCid, .isMeshFd = VOS_FALSE };
+    WfwArgForMux argForMux = {.selfCid = jobxMng->argInit.selfCid, .isMeshFd = VOS_FALSE};
 
     jobxMng->fdTrigTmr = timerfd_create(CLOCK_MONOTONIC, 0);
     if (jobxMng->fdTrigTmr == -1) {
@@ -257,8 +259,8 @@ STATIC uint32_t WfwJobxInitTrigTmr(WfwJobxMng *jobxMng)
         BKF_LOG_ERROR(BKF_LOG_HND, "trigTmrFd(%d), ret(%d)/errno(%d)\n", jobxMng->fdTrigTmr, ret, errno);
         return BKF_ERR;
     }
-    ret = WfwMuxAttachFd(jobxMng->argInit.mux, jobxMng->fdTrigTmr, EPOLLIN,
-                          (F_WFW_MUX_FD_PROC)WfwJobxOnTrigTmrFd, jobxMng, &argForMux);
+    ret = WfwMuxAttachFd(jobxMng->argInit.mux, jobxMng->fdTrigTmr, EPOLLIN, (F_WFW_MUX_FD_PROC)WfwJobxOnTrigTmrFd,
+        jobxMng, &argForMux);
     if (ret == -1) {
         BKF_LOG_ERROR(BKF_LOG_HND, "ret(%d)/errno(%d)\n", ret, errno);
         return BKF_ERR;
@@ -276,6 +278,7 @@ STATIC uint32_t WfwJobxInitTrigTmr(WfwJobxMng *jobxMng)
 #if (WFW_JOBX_SCHED_MODE == WFW_JOBX_SCHED_BY_EVT)
 STATIC void WfwJobxOnTrigEvtFd(int fd, uint32_t curEvents, WfwJobxMng *jobxMng)
 {
+    (void)curEvents;
     int ret;
     eventfd_t value;
 
@@ -291,7 +294,7 @@ STATIC void WfwJobxOnTrigEvtFd(int fd, uint32_t curEvents, WfwJobxMng *jobxMng)
 STATIC uint32_t WfwJobxInitTrig(WfwJobxMng *jobxMng)
 {
     int ret;
-    WfwArgForMux argForMux = { .selfCid = jobxMng->argInit.selfCid, .isMeshFd = VOS_FALSE };
+    WfwArgForMux argForMux = {.selfCid = jobxMng->argInit.selfCid, .isMeshFd = VOS_FALSE};
 
     if (WfwJobxInitTrigTmr(jobxMng) != BKF_OK) {
         return BKF_ERR;
@@ -307,8 +310,8 @@ STATIC uint32_t WfwJobxInitTrig(WfwJobxMng *jobxMng)
         BKF_LOG_ERROR(BKF_LOG_HND, "fdEvtTrig(%d), ret(%d)/errno(%d)\n", jobxMng->fdTrigEvt, ret, errno);
         return BKF_ERR;
     }
-    ret = WfwMuxAttachFd(jobxMng->argInit.mux, jobxMng->fdTrigEvt, EPOLLIN,
-                          (F_WFW_MUX_FD_PROC)WfwJobxOnTrigEvtFd, jobxMng, &argForMux);
+    ret = WfwMuxAttachFd(jobxMng->argInit.mux, jobxMng->fdTrigEvt, EPOLLIN, (F_WFW_MUX_FD_PROC)WfwJobxOnTrigEvtFd,
+        jobxMng, &argForMux);
     if (ret == -1) {
         BKF_LOG_ERROR(BKF_LOG_HND, "ret(%d)/errno(%d)\n", ret, errno);
         return BKF_ERR;
@@ -364,7 +367,7 @@ STATIC void WfwJobxOnTrigPipeFdRead(int fd, uint32_t curEvents, WfwJobxMng *jobx
 STATIC uint32_t WfwJobxInitTrig(WfwJobxMng *jobxMng)
 {
     int ret;
-    WfwArgForMux argForMux = { .selfCid = jobxMng->argInit.selfCid, .isMeshFd = VOS_FALSE };
+    WfwArgForMux argForMux = {.selfCid = jobxMng->argInit.selfCid, .isMeshFd = VOS_FALSE};
 
     if (WfwJobxInitTrigTmr(jobxMng) != BKF_OK) {
         return BKF_ERR;
@@ -376,7 +379,7 @@ STATIC uint32_t WfwJobxInitTrig(WfwJobxMng *jobxMng)
         return BKF_ERR;
     }
     ret = WfwMuxAttachFd(jobxMng->argInit.mux, jobxMng->fdTrigPipe[WFW_PIPE_FDR_IDX], EPOLLIN,
-                          (F_WFW_MUX_FD_PROC)WfwJobxOnTrigPipeFdRead, jobxMng, &argForMux);
+        (F_WFW_MUX_FD_PROC)WfwJobxOnTrigPipeFdRead, jobxMng, &argForMux);
     if (ret == -1) {
         BKF_LOG_ERROR(BKF_LOG_HND, "ret(%d)/errno(%d)\n", ret, errno);
         return BKF_ERR;
@@ -536,7 +539,7 @@ STATIC void WfwJobxSchedOneJobType(WfwJobxMng *jobxMng, BkfJobxType *jobxType, B
 STATIC void WfwJobxSched(WfwJobxMng *jobxMng)
 {
     BkfJobxType *jobxType = VOS_NULL;
-    BkfJobxSchedCtx ctx = { 0 };
+    BkfJobxSchedCtx ctx = {0};
     if (jobxMng == VOS_NULL) {
         return;
     }
@@ -563,8 +566,8 @@ STATIC uint32_t WfwJobxOnRegType(WfwJobxMng *jobxMng, uint32_t typeId, F_BKF_JOB
         BKF_ASSERT(0);
         return BKF_ERR;
     }
-    BKF_LOG_INFO(BKF_LOG_HND, "jobxMng(%#x), typeId(%d)/proc(%#x)/prio(%#x)\n",
-                 BKF_MASK_ADDR(jobxMng), typeId, BKF_MASK_ADDR(proc), prio);
+    BKF_LOG_INFO(BKF_LOG_HND, "jobxMng(%#x), typeId(%d)/proc(%#x)/prio(%#x)\n", BKF_MASK_ADDR(jobxMng), typeId,
+        BKF_MASK_ADDR(proc), prio);
 
     jobxType = WfwJobxAddType(jobxMng, typeId, proc, prio);
     if (jobxType == VOS_NULL) {
@@ -584,8 +587,8 @@ STATIC BkfJobId *WfwJobxOnCreateJobId(WfwJobxMng *jobxMng, uint32_t typeId, char
         BKF_ASSERT(0);
         return VOS_NULL;
     }
-    BKF_LOG_INFO(BKF_LOG_HND, "jobxMng(%#x), typeId(%d)/name(%s)/param(%#x)\n",
-                 BKF_MASK_ADDR(jobxMng), typeId, name, BKF_MASK_ADDR(param));
+    BKF_LOG_INFO(BKF_LOG_HND, "jobxMng(%#x), typeId(%d)/name(%s)/param(%#x)\n", BKF_MASK_ADDR(jobxMng), typeId, name,
+        BKF_MASK_ADDR(param));
 
     jobxType = WfwJobxFindType(jobxMng, typeId);
     if (jobxType == VOS_NULL) {
@@ -613,8 +616,7 @@ STATIC void WfwJobxOnDeleteJobId(WfwJobxMng *jobxMng, BkfJobId *jobId)
         BKF_ASSERT(0);
         return;
     }
-    BKF_LOG_INFO(BKF_LOG_HND, "jobxMng(%#x), jobId(%#x)\n",
-                 BKF_MASK_ADDR(jobxMng), BKF_MASK_ADDR(jobId));
+    BKF_LOG_INFO(BKF_LOG_HND, "jobxMng(%#x), jobId(%#x)\n", BKF_MASK_ADDR(jobxMng), BKF_MASK_ADDR(jobId));
 
     WfwJobxDelId(jobxMng, jobId);
     return;
@@ -691,8 +693,7 @@ STATIC BkfJobxType *WfwJobxGetFirstType(WfwJobxMng *jobxMng, void **itorOutOrNul
 
     jobxType = VOS_AVLL_FIRST(jobxMng->jobxTypeSet);
     if (itorOutOrNull != VOS_NULL) {
-        *itorOutOrNull = (jobxType != VOS_NULL) ?
-                         VOS_AVLL_NEXT(jobxMng->jobxTypeSet, jobxType->avlNode) : VOS_NULL;
+        *itorOutOrNull = (jobxType != VOS_NULL) ? VOS_AVLL_NEXT(jobxMng->jobxTypeSet, jobxType->avlNode) : VOS_NULL;
     }
 
     return jobxType;
@@ -706,7 +707,6 @@ STATIC BkfJobxType *WfwJobxGetNextType(WfwJobxMng *jobxMng, void **itorInOut)
     *itorInOut = (jobxType != VOS_NULL) ? VOS_AVLL_NEXT(jobxMng->jobxTypeSet, jobxType->avlNode) : VOS_NULL;
     return jobxType;
 }
-
 
 STATIC int32_t WfwJobxCmpJobTypePrioKey(BkfJobxTypePrioKey *key1, BkfJobxTypePrioKey *key2)
 {
@@ -813,6 +813,7 @@ STATIC void WfwJobxDelTypeAllId(WfwJobxMng *jobxMng, BkfJobxType *jobxType)
 
 STATIC void WfwJobxMoveId2Tail(WfwJobxMng *jobxMng, BkfJobId *jobId)
 {
+    (void)jobxMng;
     if (BKF_DL_NODE_IS_IN(&jobId->dlNode)) {
         BKF_DL_REMOVE(&jobId->dlNode);
     }
@@ -822,6 +823,7 @@ STATIC void WfwJobxMoveId2Tail(WfwJobxMng *jobxMng, BkfJobId *jobId)
 
 STATIC BkfJobId *WfwJobxGetFirstId(WfwJobxMng *jobxMng, BkfJobxType *jobxType, void **itorOutOrNull)
 {
+    (void)jobxMng;
     BkfDlNode *tempNode = VOS_NULL;
     BkfJobId *jobId = VOS_NULL;
 
@@ -843,6 +845,7 @@ STATIC BkfJobId *WfwJobxGetFirstId(WfwJobxMng *jobxMng, BkfJobxType *jobxType, v
 
 STATIC BkfJobId *WfwJobxGetNextId(WfwJobxMng *jobxMng, BkfJobxType *jobxType, void **itorInOut)
 {
+    (void)jobxMng;
     BkfDlNode *tempNode = VOS_NULL;
     BkfJobId *jobId = VOS_NULL;
 
@@ -864,4 +867,3 @@ STATIC BkfJobId *WfwJobxGetNextId(WfwJobxMng *jobxMng, BkfJobxType *jobxType, vo
 }
 #endif
 #endif
-

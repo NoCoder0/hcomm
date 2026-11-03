@@ -22,4 +22,4 @@ typedef UINT32 KernelStatus;
 }
 #endif
 
-#endif  // METADEF_CXX_INC_EXE_GRAPH_RUNTIME_BASE_TYPE_H_
+#endif // METADEF_CXX_INC_EXE_GRAPH_RUNTIME_BASE_TYPE_H_

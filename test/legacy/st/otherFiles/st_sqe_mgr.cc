@@ -22,7 +22,7 @@ protected:
     static void SetUpTestCase()
     {
         sqeManager = new SqeMgr(1);
-        sqId       = 1;
+        sqId = 1;
         std::cout << "SqeMgrTest SetUP" << std::endl;
     }
 
@@ -32,10 +32,7 @@ protected:
         std::cout << "SqeMgrTest TearDown" << std::endl;
     }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in SqeMgrTest SetUp" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in SqeMgrTest SetUp" << std::endl; }
 
     virtual void TearDown()
     {
@@ -43,19 +40,16 @@ protected:
         std::cout << "A Test case in SqeMgrTest TearDown" << std::endl;
     }
 
-    static SqeMgr *sqeManager;
-    static u32     sqId;
-    static u8      mockSq[AC_SQE_SIZE * AC_SQE_MAX_CNT];
+    static SqeMgr* sqeManager;
+    static u32 sqId;
+    static u8 mockSq[AC_SQE_SIZE * AC_SQE_MAX_CNT];
 };
 
-SqeMgr *SqeMgrTest::sqeManager                           = nullptr;
-u32     SqeMgrTest::sqId                                 = 1;
-u8      SqeMgrTest::mockSq[AC_SQE_SIZE * AC_SQE_MAX_CNT] = {0};
+SqeMgr* SqeMgrTest::sqeManager = nullptr;
+u32 SqeMgrTest::sqId = 1;
+u8 SqeMgrTest::mockSq[AC_SQE_SIZE * AC_SQE_MAX_CNT] = {0};
 
-drvError_t halSqCqQuery(uint32_t devId, halSqCqQueryInfo *info)
-{
-    return DRV_ERROR_NOT_SUPPORT;
-}
+drvError_t halSqCqQuery(uint32_t devId, halSqCqQueryInfo* info) { return DRV_ERROR_NOT_SUPPORT; }
 
 TEST_F(SqeMgrTest, sqe_mgr_begin)
 {
@@ -67,7 +61,7 @@ TEST_F(SqeMgrTest, sqe_mgr_begin)
 
     // when
     sqeManager->Begin(sqId);
-    SqInfo *sqInfo = sqeManager->sqInfos[sqId].get();
+    SqInfo* sqInfo = sqeManager->sqInfos[sqId].get();
 
     // then
     EXPECT_EQ(sqInfo->sqeCnt, 0);
@@ -80,19 +74,19 @@ TEST_F(SqeMgrTest, sqe_mgr_begin)
 TEST_F(SqeMgrTest, sqe_mgr_add)
 {
     // given
-    HcclNotifyWaitSqe *notifyWaitSqe = new HcclNotifyWaitSqe();
-    u16                streamId      = 1;
-    u16                taskId        = 0;
-    u64                notifyId      = 1;
+    HcclNotifyWaitSqe* notifyWaitSqe = new HcclNotifyWaitSqe();
+    u16 streamId = 1;
+    u16 taskId = 0;
+    u64 notifyId = 1;
     notifyWaitSqe->Config(streamId, taskId, notifyId);
 
     // when
     sqeManager->Add(sqId, notifyWaitSqe);
-    SqInfo *sqInfo = sqeManager->sqInfos[sqId].get();
+    SqInfo* sqInfo = sqeManager->sqInfos[sqId].get();
 
     // then
     EXPECT_EQ(sqInfo->sqeCnt, 1);
-    RtStarsNotifySqe *rtSqe = reinterpret_cast<RtStarsNotifySqe *>(sqInfo->sqeBuffer);
+    RtStarsNotifySqe* rtSqe = reinterpret_cast<RtStarsNotifySqe*>(sqInfo->sqeBuffer);
     EXPECT_EQ(rtSqe->header.type, static_cast<u8>(RtStarsSqeType::RT_STARS_SQE_TYPE_NOTIFY_WAIT));
     EXPECT_EQ(rtSqe->kernelCredit, RT_STARS_NEVER_TIMEOUT_KERNEL_CREDIT);
     EXPECT_EQ(rtSqe->header.rtStreamId, streamId);
@@ -106,18 +100,18 @@ TEST_F(SqeMgrTest, sqe_mgr_commit_no_loop_back)
     // given
     MOCKER_CPP(&SqeMgr::QuerySqHead).stubs().with(mockcpp::any()).will(returnValue(0));
     MOCKER_CPP(&SqeMgr::ConfigSqTail).stubs().with(mockcpp::any(), mockcpp::any());
-    u16     streamId = 1;
-    u16     taskId   = 0;
-    u64     notifyId = 1;
-    SqInfo *sqInfo   = sqeManager->sqInfos[sqId].get();
-    u32     newTail  = (sqInfo->sqTail + sqInfo->sqeCnt) % sqInfo->sqDepth;
+    u16 streamId = 1;
+    u16 taskId = 0;
+    u64 notifyId = 1;
+    SqInfo* sqInfo = sqeManager->sqInfos[sqId].get();
+    u32 newTail = (sqInfo->sqTail + sqInfo->sqeCnt) % sqInfo->sqDepth;
 
     // when
     sqeManager->Commit(sqId);
 
     // then
     EXPECT_EQ(sqInfo->sqTail, newTail);
-    RtStarsNotifySqe *rtSqe = reinterpret_cast<RtStarsNotifySqe *>(mockSq);
+    RtStarsNotifySqe* rtSqe = reinterpret_cast<RtStarsNotifySqe*>(mockSq);
     EXPECT_EQ(rtSqe->header.type, static_cast<u8>(RtStarsSqeType::RT_STARS_SQE_TYPE_NOTIFY_WAIT));
     EXPECT_EQ(rtSqe->kernelCredit, RT_STARS_NEVER_TIMEOUT_KERNEL_CREDIT);
     EXPECT_EQ(rtSqe->header.rtStreamId, streamId);
@@ -136,18 +130,18 @@ TEST_F(SqeMgrTest, sqe_mgr_commit_with_loop_back)
     sqeManager->Begin(sqId);
 
     // manually reset sqtail and sqhead to create loopback condition
-    SqInfo *sqInfo  = sqeManager->sqInfos[sqId].get();
-    u32     oldTail = AC_SQE_MAX_CNT - 1;
-    u32     oldHead = AC_SQE_MAX_CNT - 2;
-    sqInfo->sqTail  = oldTail;
-    sqInfo->sqHead  = oldHead;
+    SqInfo* sqInfo = sqeManager->sqInfos[sqId].get();
+    u32 oldTail = AC_SQE_MAX_CNT - 1;
+    u32 oldHead = AC_SQE_MAX_CNT - 2;
+    sqInfo->sqTail = oldTail;
+    sqInfo->sqHead = oldHead;
 
-    u16                streamId       = 1;
-    u16                taskId         = 0;
-    u64                notifyId       = 1;
-    HcclNotifyWaitSqe *notifyWaitSqe1 = new HcclNotifyWaitSqe();
+    u16 streamId = 1;
+    u16 taskId = 0;
+    u64 notifyId = 1;
+    HcclNotifyWaitSqe* notifyWaitSqe1 = new HcclNotifyWaitSqe();
     notifyWaitSqe1->Config(streamId, taskId, notifyId);
-    HcclNotifyWaitSqe *notifyWaitSqe2 = new HcclNotifyWaitSqe();
+    HcclNotifyWaitSqe* notifyWaitSqe2 = new HcclNotifyWaitSqe();
     notifyWaitSqe2->Config(streamId, taskId, notifyId);
 
     // when
@@ -163,9 +157,9 @@ TEST_F(SqeMgrTest, sqe_mgr_commit_with_loop_back)
 
     // then
     EXPECT_EQ(sqInfo->sqTail, newTail);
-    RtStarsNotifySqe *rtSqe1
-        = reinterpret_cast<RtStarsNotifySqe *>(reinterpret_cast<u8 *>(mockSq) + oldTail * AC_SQE_SIZE);
-    RtStarsNotifySqe *rtSqe2 = reinterpret_cast<RtStarsNotifySqe *>(mockSq);
+    RtStarsNotifySqe* rtSqe1
+        = reinterpret_cast<RtStarsNotifySqe*>(reinterpret_cast<u8*>(mockSq) + oldTail * AC_SQE_SIZE);
+    RtStarsNotifySqe* rtSqe2 = reinterpret_cast<RtStarsNotifySqe*>(mockSq);
     EXPECT_EQ(rtSqe1->header.type, static_cast<u8>(RtStarsSqeType::RT_STARS_SQE_TYPE_NOTIFY_WAIT));
     EXPECT_EQ(rtSqe1->kernelCredit, RT_STARS_NEVER_TIMEOUT_KERNEL_CREDIT);
     EXPECT_EQ(rtSqe1->header.rtStreamId, streamId);
@@ -186,10 +180,10 @@ TEST_F(SqeMgrTest, calling_multiple_begin_in_one_round_should_return_error)
 {
     // given
     sqeManager->Begin(sqId);
-    HcclNotifyWaitSqe *notifyWaitSqe = new HcclNotifyWaitSqe();
-    u16                streamId      = 1;
-    u16                taskId        = 0;
-    u64                notifyId      = 1;
+    HcclNotifyWaitSqe* notifyWaitSqe = new HcclNotifyWaitSqe();
+    u16 streamId = 1;
+    u16 taskId = 0;
+    u64 notifyId = 1;
     notifyWaitSqe->Config(streamId, taskId, notifyId);
 
     // when
@@ -204,19 +198,19 @@ TEST_F(SqeMgrTest, calling_multiple_begin_in_one_round_should_return_error)
 TEST_F(SqeMgrTest, test_query_functions)
 {
     halSqCqQueryInfo queryInfo;
-    queryInfo.tsId     = 0;
-    queryInfo.sqId     = 0;
-    queryInfo.cqId     = 0;
-    queryInfo.type     = DRV_NORMAL_TYPE;
-    queryInfo.prop     = DRV_SQCQ_PROP_SQ_BASE;
+    queryInfo.tsId = 0;
+    queryInfo.sqId = 0;
+    queryInfo.cqId = 0;
+    queryInfo.type = DRV_NORMAL_TYPE;
+    queryInfo.prop = DRV_SQCQ_PROP_SQ_BASE;
     queryInfo.value[0] = 0;
     queryInfo.value[1] = 0;
 
     MOCKER(halSqCqQuery).stubs().with(mockcpp::any(), outBoundP(&queryInfo, sizeof(queryInfo))).will(returnValue(0));
-    auto head  = sqeManager->QuerySqHead(0);
-    auto tail  = sqeManager->QuerySqTail(0);
+    auto head = sqeManager->QuerySqHead(0);
+    auto tail = sqeManager->QuerySqTail(0);
     auto depth = sqeManager->QuerySqDepth(0);
-    auto addr  = sqeManager->QuerySqBaseAddr(0);
+    auto addr = sqeManager->QuerySqBaseAddr(0);
 
     EXPECT_EQ(head, 0);
     EXPECT_EQ(tail, 0);
@@ -224,7 +218,4 @@ TEST_F(SqeMgrTest, test_query_functions)
     EXPECT_EQ(addr, 0);
 }
 
-TEST_F(SqeMgrTest, test_config_functions)
-{
-    EXPECT_NO_THROW(sqeManager->ConfigSqTail(0, 1));
-}
+TEST_F(SqeMgrTest, test_config_functions) { EXPECT_NO_THROW(sqeManager->ConfigSqTail(0, 1)); }

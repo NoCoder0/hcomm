@@ -15,14 +15,14 @@
 
 namespace HcclSim {
 namespace TaskGraphGeneratorV3 {
-struct SingleTaskCheckStats {
-    size_t nodeCount{0};
-    size_t dataTaskNodeCount{0};
-};
+    struct SingleTaskCheckStats {
+        size_t nodeCount{0};
+        size_t dataTaskNodeCount{0};
+    };
 
-HcclResult CheckSlaveTaskQueue(const std::vector<std::unique_ptr<TaskNode>> &nodes,
-    const AllRankNodeQueues &allRankTaskQueues);
-HcclResult CheckTaskMem(const TaskNode *dummyStart, SingleTaskCheckStats *stats = nullptr);
+    HcclResult CheckSlaveTaskQueue(
+        const std::vector<std::unique_ptr<TaskNode>>& nodes, const AllRankNodeQueues& allRankTaskQueues);
+    HcclResult CheckTaskMem(const TaskNode* dummyStart, SingleTaskCheckStats* stats = nullptr);
 } // namespace TaskGraphGeneratorV3
 } // namespace HcclSim
 

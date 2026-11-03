@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef HCCL_INC_SAL_PUB_H
 #define HCCL_INC_SAL_PUB_H
@@ -22,9 +22,9 @@ void SaluSleep(u32 usec);
 
 void SalSleep(u32 sec);
 
-std::string SalGetEnv(const char *name);
+std::string SalGetEnv(const char* name);
 
-HcclResult SalStrToULong(const std::string str, int base, u32 &val);
+HcclResult SalStrToULong(const std::string str, int base, u32& val);
 
 s32 SalGetTid();
 
@@ -32,10 +32,10 @@ u64 SalGetCurrentTimestamp();
 
 u64 GetCurAicpuTimestamp();
 
-void SetThreadName(const std::string &threadStr);
+void SetThreadName(const std::string& threadStr);
 
 #ifndef CCL_LLT
-inline void AsmCntvc(uint64_t &cntvct)
+inline void AsmCntvc(uint64_t& cntvct)
 {
 #if defined __aarch64__
     asm volatile("mrs %0, cntvct_el0" : "=r"(cntvct));

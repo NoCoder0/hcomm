@@ -28,8 +28,8 @@
 #include "communicator_impl.h"
 #include "stream_manager.h"
 #include "coll_alg_component.h"
-#include "base_config.h"
-#include "env_config.h"
+#include "base_config_legacy.h"
+#include "env_config_v2.h"
 #include "mc2_compont.h"
 #include "not_support_exception.h"
 #include "port.h"
@@ -43,24 +43,19 @@ using namespace std;
 
 class NewCollServiceCcuImplTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CommunicatorImplTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CommunicatorImplTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CommunicatorImplTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CommunicatorImplTest TearDown" << std::endl; }
 
     virtual void SetUp()
     {
         fakeSocket = new Socket(nullptr, localIp, 100, remoteIp, "test", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
         BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
-        LinkData     linkData(portType, 0, 1, 0, 1);
+        LinkData linkData(portType, 0, 1, 0, 1);
         CcuChannelInfo channelInfo;
-        vector<CcuJetty *> ccuJettys;
-        auto connection = std::make_unique<CcuConnection>(linkData.GetLocalAddr(), linkData.GetRemoteAddr(), channelInfo, ccuJettys);
+        vector<CcuJetty*> ccuJettys;
+        auto connection = std::make_unique<CcuConnection>(
+            linkData.GetLocalAddr(), linkData.GetRemoteAddr(), channelInfo, ccuJettys);
         ccuTransport = new CcuTransport(fakeSocket, connection);
         std::cout << "A Test case in CommunicatorImplTest SetUP" << std::endl;
     }
@@ -69,17 +64,17 @@ protected:
     {
         GlobalMockObject::verify();
         delete fakeSocket;
-        
+
         delete ccuTransport;
         std::cout << "A Test case in CommunicatorImplTest TearDown" << std::endl;
     }
 
-    Socket *fakeSocket;
+    Socket* fakeSocket;
     IpAddress localIp;
     IpAddress remoteIp;
 
     RdmaHandle rdmaHandle;
-    CcuTransport *ccuTransport;
+    CcuTransport* ccuTransport;
 };
 
 TEST_F(NewCollServiceCcuImplTest, should_return_success_when_calling_init)
@@ -88,7 +83,7 @@ TEST_F(NewCollServiceCcuImplTest, should_return_success_when_calling_init)
     MOCKER_CPP(&NewCollServiceCcuImpl::CollAlgComponentInit).stubs().will(ignoreReturnValue());
 
     // then
-    CommunicatorImpl *comm;
+    CommunicatorImpl* comm;
     NewCollServiceCcuImpl collServiceCcuImpl(comm);
 
     // check
@@ -123,14 +118,13 @@ TEST_F(NewCollServiceCcuImplTest, should_return_success_when_calling_LoadWithOpB
 
 class FakeCollAlgComponent : public CollAlgComponent {
 public:
-    FakeCollAlgComponent() : CollAlgComponent(nullptr, DevType::DEV_TYPE_950, 0, 1){};
-    HcclResult Orchestrate(const CollAlgOperator &op, const CollAlgParams &params,
-                                   InsQuePtr queue, string &algName)
+    FakeCollAlgComponent() : CollAlgComponent(nullptr, DevType::DEV_TYPE_950, 0, 1) {};
+    HcclResult Orchestrate(const CollAlgOperator& op, const CollAlgParams& params, InsQuePtr queue, string& algName)
     {
-    return HCCL_SUCCESS;
+        return HCCL_SUCCESS;
     }
 
-    HcclResult Orchestrate(const CollAlgOperator &op, const CollAlgParams &params, PrimQuePtr queue, string &algName)
+    HcclResult Orchestrate(const CollAlgOperator& op, const CollAlgParams& params, PrimQuePtr queue, string& algName)
     {
         return HCCL_SUCCESS;
     }
@@ -138,7 +132,7 @@ public:
 
 TEST_F(NewCollServiceCcuImplTest, should_return_success_when_calling_Orchestrate)
 {
-    CommunicatorImpl *comm;
+    CommunicatorImpl* comm;
     NewCollServiceCcuImpl collServiceCcuImpl(comm);
     CollAlgOperator op;
     // collServiceCcuImpl.collAlgComponent = std::make_unique<FakeCollAlgComponent>();
@@ -157,12 +151,13 @@ TEST_F(NewCollServiceCcuImplTest, should_return_success_when_calling_CollAlgComp
 TEST_F(NewCollServiceCcuImplTest, should_return_fail_when_calling_CollAlgComponentInit)
 {
     EnvTestConfig envTestConfig;
-    EnvTestConfig &fakeEnvTestConfig = envTestConfig;
-    fakeEnvTestConfig.testCase = CfgField<HcclDebugTestCase>("CHIP_VERIFY_HCCL_TEST_CASE", HcclDebugTestCase::HCCL_INTRA_RANK_NOTIFY, CastTestCase);
+    EnvTestConfig& fakeEnvTestConfig = envTestConfig;
+    fakeEnvTestConfig.testCase = CfgField<HcclDebugTestCase>(
+        "CHIP_VERIFY_HCCL_TEST_CASE", HcclDebugTestCase::HCCL_INTRA_RANK_NOTIFY, CastTestCase);
     fakeEnvTestConfig.testCase.isParsed = true;
     MOCKER_CPP(&EnvConfig::GetTestConfig).stubs().will(returnValue(fakeEnvTestConfig));
 
-    CommunicatorImpl *comm;
+    CommunicatorImpl* comm;
     NewCollServiceCcuImpl collServiceCcuImpl(comm);
 
     EXPECT_THROW(collServiceCcuImpl.CollAlgComponentInit(), NullPtrException);
@@ -192,7 +187,7 @@ TEST_F(NewCollServiceCcuImplTest, should_return_success_when_calling_getCcuTaskI
     NewCollServiceCcuImpl collServiceCcuImpl(comm.get());
     rtCcuTaskGroup_t group;
 
-    EXPECT_NO_THROW(collServiceCcuImpl.GetCcuTaskInfo(nullptr, (void *)&group));
+    EXPECT_NO_THROW(collServiceCcuImpl.GetCcuTaskInfo(nullptr, (void*)&group));
     EXPECT_EQ(1, group.taskNum);
 }
 
@@ -201,8 +196,8 @@ TEST_F(NewCollServiceCcuImplTest, Test_RecoverTransport)
     std::unique_ptr<CommunicatorImpl> comm = std::make_unique<CommunicatorImpl>();
     NewCollServiceCcuImpl collServiceCcuImpl(comm.get());
 
-    BasePortType                   portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData                       linkData(portType, 0, 1, 0, 1);
+    BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
+    LinkData linkData(portType, 0, 1, 0, 1);
     std::vector<LinkData> links;
     links.push_back(linkData);
 

@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: unit test for LoadXnXnExecutor
  * Author: xx
  */
@@ -27,12 +30,11 @@ protected:
 };
 
 // Test: LoadXnXnExecutor struct size check
-TEST_F(LoadXnXnExecutorTest, StructSize) {
-    EXPECT_GT(sizeof(LoadXnXnExecutor), 0);
-}
+TEST_F(LoadXnXnExecutorTest, StructSize) { EXPECT_GT(sizeof(LoadXnXnExecutor), 0); }
 
 // Test: LoadXnXnExecutor default constructor
-TEST_F(LoadXnXnExecutorTest, DefaultConstructor) {
+TEST_F(LoadXnXnExecutorTest, DefaultConstructor)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
     LoadXnXnExecutor executor(0, 0, 0, instr, nullptr);
@@ -40,43 +42,47 @@ TEST_F(LoadXnXnExecutorTest, DefaultConstructor) {
 }
 
 // Test: LoadXnXnExecutor parameterized constructor
-TEST_F(LoadXnXnExecutorTest, ParameterizedConstructor) {
+TEST_F(LoadXnXnExecutorTest, ParameterizedConstructor)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     LoadXnXnExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Describe());
 }
 
 // Test: LoadXnXnExecutor Parser with zero values
-TEST_F(LoadXnXnExecutorTest, ParserZeroValues) {
+TEST_F(LoadXnXnExecutorTest, ParserZeroValues)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     LoadXnXnExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Parser());
     EXPECT_NO_THROW(executor.Describe());
 }
 
 // Test: LoadXnXnExecutor Parser with max values
-TEST_F(LoadXnXnExecutorTest, ParserMaxValues) {
+TEST_F(LoadXnXnExecutorTest, ParserMaxValues)
+{
     CcuInstr instr;
     memset(&instr, 0xFF, sizeof(instr));
-    
+
     LoadXnXnExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Parser());
     EXPECT_NO_THROW(executor.Describe());
 }
 
 // Test: LoadXnXnExecutor Parser with specific parameters
-TEST_F(LoadXnXnExecutorTest, ParserSpecificParameters) {
+TEST_F(LoadXnXnExecutorTest, ParserSpecificParameters)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     instr.v1.loadXX.xdId = 100;
     instr.v1.loadXX.xmId = 50;
     instr.v1.loadXX.xnId = 25;
-    
+
     LoadXnXnExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Parser());
     std::string desc = executor.Describe();
@@ -84,12 +90,13 @@ TEST_F(LoadXnXnExecutorTest, ParserSpecificParameters) {
 }
 
 // Test: LoadXnXnExecutor with different Xn ID combinations
-TEST_F(LoadXnXnExecutorTest, DifferentXnIdCombinations) {
+TEST_F(LoadXnXnExecutorTest, DifferentXnIdCombinations)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     uint16_t xnIds[] = {0, 1, SimCcuV1::CCU_RESOURCE_XN_NUM / 2, SimCcuV1::CCU_RESOURCE_XN_NUM - 1};
-    
+
     for (auto xdId : xnIds) {
         for (auto xmId : xnIds) {
             for (auto xnId : xnIds) {
@@ -105,13 +112,14 @@ TEST_F(LoadXnXnExecutorTest, DifferentXnIdCombinations) {
 }
 
 // Test: LoadXnXnExecutor Describe contains expected keywords
-TEST_F(LoadXnXnExecutorTest, DescribeContent) {
+TEST_F(LoadXnXnExecutorTest, DescribeContent)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
     instr.v1.loadXX.xdId = 10;
     instr.v1.loadXX.xmId = 20;
     instr.v1.loadXX.xnId = 30;
-    
+
     LoadXnXnExecutor executor(0, 0, 0, instr, nullptr);
     executor.Parser();
     std::string desc = executor.Describe();
@@ -120,24 +128,26 @@ TEST_F(LoadXnXnExecutorTest, DescribeContent) {
 }
 
 // Test: LoadXnXnExecutor inheritance check
-TEST_F(LoadXnXnExecutorTest, InheritanceCheck) {
+TEST_F(LoadXnXnExecutorTest, InheritanceCheck)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     LoadXnXnExecutor executor(0, 0, 0, instr, nullptr);
     CcuExecutorBase* base = &executor;
     EXPECT_NE(base, nullptr);
 }
 
 // Test: LoadXnXnExecutor with same source IDs
-TEST_F(LoadXnXnExecutorTest, SameSourceIds) {
+TEST_F(LoadXnXnExecutorTest, SameSourceIds)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     instr.v1.loadXX.xdId = 100;
     instr.v1.loadXX.xmId = 50;
     instr.v1.loadXX.xnId = 50;
-    
+
     LoadXnXnExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Parser());
     EXPECT_NO_THROW(executor.Describe());

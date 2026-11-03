@@ -13,18 +13,15 @@
 #include "alg_data_trans_wrapper.h"
 
 namespace Hccl {
-InsTempReduceScatterMesh1DMeshChunk::InsTempReduceScatterMesh1DMeshChunk(const RankId virtualRank, const u32 tempRankSize,
-                                             const std::vector<std::vector<RankId>> &tempVTopo,
-                                             const std::map<RankId, u32>            &tempVirtRankMap)
+InsTempReduceScatterMesh1DMeshChunk::InsTempReduceScatterMesh1DMeshChunk(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
     : InsAlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap)
-{
-}
+{}
 
-InsTempReduceScatterMesh1DMeshChunk::~InsTempReduceScatterMesh1DMeshChunk()
-{
-}
+InsTempReduceScatterMesh1DMeshChunk::~InsTempReduceScatterMesh1DMeshChunk() {}
 
-HcclResult InsTempReduceScatterMesh1DMeshChunk::CalcRes(AlgTempResReq &tempResReq)
+HcclResult InsTempReduceScatterMesh1DMeshChunk::CalcRes(AlgTempResReq& tempResReq)
 {
     // Mesh 需要的 que Num 为 tempVTopo_[0].size()-1
     tempResReq.queNum = (tempVTopo_[0].size() > 1) ? tempVTopo_[0].size() - 1 : 1;
@@ -34,14 +31,17 @@ HcclResult InsTempReduceScatterMesh1DMeshChunk::CalcRes(AlgTempResReq &tempResRe
     tempResReq.localWaitGroupCntNotify.emplace_back(centerQ, 0);
     tempResReq.localBcastPostCntNotify.emplace_back(centerQ, 0);
     // linkNumBtwPeers_这个在没有绕路的情况下，是设置成1
-    CHK_PRT_RET(CalcResLinksMesh(myRank_, tempRankSize_, tempVTopo_, linkNumBtwPeers_, tempResReq) != HcclResult::HCCL_SUCCESS,
-                HCCL_ERROR("[CollAlgFactory] [InsTempReduceScatterMesh1DMeshChunk] Rank [%d], resLinks calculation error!", myRank_),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        CalcResLinksMesh(myRank_, tempRankSize_, tempVTopo_, linkNumBtwPeers_, tempResReq) != HcclResult::HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[CollAlgFactory] [InsTempReduceScatterMesh1DMeshChunk] Rank [%d], resLinks calculation error!", myRank_),
+        HcclResult::HCCL_E_INTERNAL);
 
     return HcclResult::HCCL_SUCCESS;
 }
 
-u64 InsTempReduceScatterMesh1DMeshChunk::CalcScratchMultiple(const BufferType &inBuffType, const BufferType &outBuffType) const
+u64 InsTempReduceScatterMesh1DMeshChunk::CalcScratchMultiple(
+    const BufferType& inBuffType, const BufferType& outBuffType) const
 {
     (void)inBuffType;
     (void)outBuffType;
@@ -49,27 +49,29 @@ u64 InsTempReduceScatterMesh1DMeshChunk::CalcScratchMultiple(const BufferType &i
     return scratchMultiple;
 }
 
-HcclResult InsTempReduceScatterMesh1DMeshChunk::CalcSliceInfoVec(const u64 &dataSize, RankSliceInfo &sliceInfoVec)
+HcclResult InsTempReduceScatterMesh1DMeshChunk::CalcSliceInfoVec(const u64& dataSize, RankSliceInfo& sliceInfoVec)
 {
     std::vector<SliceInfo> tmp(tempVTopo_.size());
     sliceInfoVec.resize(tempRankSize_, tmp);
     u64 accumOff = 0;
     for (u32 rankIdx = 0; rankIdx < sliceInfoVec.size(); rankIdx++) {
-        SliceInfo slice          = {accumOff, dataSize};
+        SliceInfo slice = {accumOff, dataSize};
         sliceInfoVec[rankIdx][0] = slice;
         accumOff += dataSize;
     }
     CHK_PRT_RET(
-        (sliceInfoVec[tempRankSize_ - 1][0].offset + sliceInfoVec[tempRankSize_ - 1][0].size != dataSize * tempRankSize_),
+        (sliceInfoVec[tempRankSize_ - 1][0].offset + sliceInfoVec[tempRankSize_ - 1][0].size
+         != dataSize * tempRankSize_),
         HCCL_ERROR("[CollAlgFactory] Rank [%d], SliceInfo calculation error!", myRank_), HcclResult::HCCL_E_INTERNAL);
 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempReduceScatterMesh1DMeshChunk::GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &tempAlgParams,
-                                                 const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues)
+HcclResult InsTempReduceScatterMesh1DMeshChunk::GenExtIns(
+    const TempFuncs& tempFuncs, const TemplateDataParams& tempAlgParams, const ResLinks& tempLinks,
+    std::vector<InsQuePtr>& tempInsQues)
 {
-    opMode_              = tempFuncs.opMode;
+    opMode_ = tempFuncs.opMode;
     enableCounterNotify_ = tempFuncs.enableCounterNotify;
     queNum_ = tempVTopo_[0].size() - 1;
     processSize_ = tempAlgParams.sliceSize;
@@ -78,9 +80,10 @@ HcclResult InsTempReduceScatterMesh1DMeshChunk::GenExtIns(const TempFuncs &tempF
     CHK_RET(CalcSliceInfoVec(tempAlgParams.sliceSize, sliceInfoVec));
     HCCL_INFO("[InsTempReduceScatterMesh1DMeshChunk] Run Start");
     // 这里不支持绕路的时候，应该就用原始的tempInsQues就行
-    CHK_PRT_RET(queNum_ != tempInsQues.size(),
-                HCCL_ERROR("[CollAlgFactory] [InsTempReduceScatterMesh1DMeshChunk] Rank [%d], requiredQue Error.", myRank_),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        queNum_ != tempInsQues.size(),
+        HCCL_ERROR("[CollAlgFactory] [InsTempReduceScatterMesh1DMeshChunk] Rank [%d], requiredQue Error.", myRank_),
+        HcclResult::HCCL_E_INTERNAL);
     PreCopy(tempAlgParams, tempInsQues);
     if (queNum_ > 1) {
         CHK_RET(PreSyncInterQueues(tempInsQues));
@@ -95,27 +98,33 @@ HcclResult InsTempReduceScatterMesh1DMeshChunk::GenExtIns(const TempFuncs &tempF
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempReduceScatterMesh1DMeshChunk::PreCopy(const TemplateDataParams &tempAlgParams, std::vector<InsQuePtr> &tempInsQues) const
+HcclResult InsTempReduceScatterMesh1DMeshChunk::PreCopy(
+    const TemplateDataParams& tempAlgParams, std::vector<InsQuePtr>& tempInsQues) const
 {
     HCCL_INFO("[InsTempReduceScatterMesh1DMeshChunk][PreCopy], copy from userIn to scratch");
     for (u32 repeatIdx = 0; repeatIdx < tempAlgParams.repeatNum; repeatIdx++) {
-        DataSlice srcSlice = DataSlice(tempAlgParams.buffInfo.inBuffType, tempAlgParams.buffInfo.inBuffBaseOff +
-            repeatIdx * tempAlgParams.inputRepeatStride + rankIdx_ * tempAlgParams.inputSliceStride, processSize_);
-        DataSlice dstSlice = DataSlice(tempAlgParams.buffInfo.scratBuffType, tempAlgParams.buffInfo.scratchBuffBaseOff, processSize_);
+        DataSlice srcSlice = DataSlice(
+            tempAlgParams.buffInfo.inBuffType,
+            tempAlgParams.buffInfo.inBuffBaseOff + repeatIdx * tempAlgParams.inputRepeatStride
+                + rankIdx_ * tempAlgParams.inputSliceStride,
+            processSize_);
+        DataSlice dstSlice
+            = DataSlice(tempAlgParams.buffInfo.scratBuffType, tempAlgParams.buffInfo.scratchBuffBaseOff, processSize_);
         CHK_RET(LocalCopy(tempInsQues[0], srcSlice, dstSlice));
     }
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempReduceScatterMesh1DMeshChunk::RunReduceScatter(const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues, 
-                                                        const TemplateDataParams &tempAlgParams, RankSliceInfo &sliceInfoVec)
+HcclResult InsTempReduceScatterMesh1DMeshChunk::RunReduceScatter(
+    const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues, const TemplateDataParams& tempAlgParams,
+    RankSliceInfo& sliceInfoVec)
 {
     HCCL_INFO("[InsTempReduceScatterMesh1DMeshChunk][RunReduceScatter] myRank[%d]", myRank_);
     u32 myAlgRank;
     CHK_RET(GetAlgRank(myRank_, tempVTopo_[0], myAlgRank));
 
     uint64_t sliceNum = tempRankSize_ - 1;
-    uint64_t mySliceSize = sliceInfoVec[myAlgRank][0].size;  // 获取本rank需要处理的数据量
+    uint64_t mySliceSize = sliceInfoVec[myAlgRank][0].size; // 获取本rank需要处理的数据量
     uint64_t mySliceCount = mySliceSize / DataTypeSizeGet(op_.dataType);
     // 数据切分为sliceNum块，当数据量不能均匀切分时，后面smallDataSliceNum个数据块比前面bigDataSliceNum个数据块每块少1个数据
     uint64_t bigDataSliceNum = mySliceCount % sliceNum;
@@ -135,18 +144,20 @@ HcclResult InsTempReduceScatterMesh1DMeshChunk::RunReduceScatter(const ResLinks 
     for (uint16_t i = 0; i < (tempRankSize_ - rankNum); i++) {
         sliceRecvBaseOffset += sliceSize[i];
     }
-    for (u32 repeatIdx = 0; repeatIdx < tempAlgParams.repeatNum; repeatIdx++) {       
+    for (u32 repeatIdx = 0; repeatIdx < tempAlgParams.repeatNum; repeatIdx++) {
         uint64_t sliceSendOffset_;
         uint64_t sliceRecvOffset_;
-        DoMeshChunk(tempLinks, tempInsQues, tempAlgParams, sliceSize, repeatIdx, myAlgRank, sliceSendOffset_, sliceRecvOffset_,
-                    sliceRecvBaseOffset);
+        DoMeshChunk(
+            tempLinks, tempInsQues, tempAlgParams, sliceSize, repeatIdx, myAlgRank, sliceSendOffset_, sliceRecvOffset_,
+            sliceRecvBaseOffset);
     }
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempReduceScatterMesh1DMeshChunk::DoMeshChunk(const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues, 
-    const TemplateDataParams &tempAlgParams, const std::vector<uint64_t> &sliceSize, const u32 &repeatIdx,
-    const u32 &myAlgRank, uint64_t &sliceSendOffset_, uint64_t &sliceRecvOffset_, const uint64_t &sliceRecvBaseOffset)
+HcclResult InsTempReduceScatterMesh1DMeshChunk::DoMeshChunk(
+    const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues, const TemplateDataParams& tempAlgParams,
+    const std::vector<uint64_t>& sliceSize, const u32& repeatIdx, const u32& myAlgRank, uint64_t& sliceSendOffset_,
+    uint64_t& sliceRecvOffset_, const uint64_t& sliceRecvBaseOffset)
 {
     for (uint16_t stepIdx = 0; stepIdx < (tempRankSize_ - 1); stepIdx++) {
         sliceSendOffset_ = 0;
@@ -168,23 +179,31 @@ HcclResult InsTempReduceScatterMesh1DMeshChunk::DoMeshChunk(const ResLinks &temp
             } else {
                 queIdx = frontRank - 1;
             }
-            DataSlice rxSrcSlice = DataSlice(tempAlgParams.buffInfo.inBuffType, tempAlgParams.buffInfo.inBuffBaseOff + 
-                repeatIdx * tempAlgParams.inputRepeatStride + myAlgRank * tempAlgParams.inputSliceStride + sliceRecvOffset_, sliceSize[i]); // 接收源
-            DataSlice rxDstSlice = DataSlice(tempAlgParams.buffInfo.scratBuffType, tempAlgParams.buffInfo.scratchBuffBaseOff + 
-                sliceRecvOffset_, sliceSize[i]); // 接收目标
-            DataSlice txSrcSlice = DataSlice(tempAlgParams.buffInfo.inBuffType, tempAlgParams.buffInfo.inBuffBaseOff + 
-                repeatIdx * tempAlgParams.inputRepeatStride + frontRank * tempAlgParams.inputSliceStride + sliceSendOffset_, sliceSize[i]); // 发送源
-            DataSlice txDstSlice = DataSlice(tempAlgParams.buffInfo.scratBuffType, tempAlgParams.buffInfo.scratchBuffBaseOff + 
-                sliceSendOffset_, sliceSize[i]);  // 发送目标
-            
+            DataSlice rxSrcSlice = DataSlice(
+                tempAlgParams.buffInfo.inBuffType,
+                tempAlgParams.buffInfo.inBuffBaseOff + repeatIdx * tempAlgParams.inputRepeatStride
+                    + myAlgRank * tempAlgParams.inputSliceStride + sliceRecvOffset_,
+                sliceSize[i]); // 接收源
+            DataSlice rxDstSlice = DataSlice(
+                tempAlgParams.buffInfo.scratBuffType, tempAlgParams.buffInfo.scratchBuffBaseOff + sliceRecvOffset_,
+                sliceSize[i]); // 接收目标
+            DataSlice txSrcSlice = DataSlice(
+                tempAlgParams.buffInfo.inBuffType,
+                tempAlgParams.buffInfo.inBuffBaseOff + repeatIdx * tempAlgParams.inputRepeatStride
+                    + frontRank * tempAlgParams.inputSliceStride + sliceSendOffset_,
+                sliceSize[i]); // 发送源
+            DataSlice txDstSlice = DataSlice(
+                tempAlgParams.buffInfo.scratBuffType, tempAlgParams.buffInfo.scratchBuffBaseOff + sliceSendOffset_,
+                sliceSize[i]); // 发送目标
+
             u32 rankFromRank = GetRankFromMap(toRank);
-            auto it =  tempLinks.find(rankFromRank);
+            auto it = tempLinks.find(rankFromRank);
             if (it == tempLinks.end()) {
                 HCCL_ERROR("rankFromRank [%u] not in tempLinks.", rankFromRank);
                 return HcclResult::HCCL_E_PARA;
             }
-            const std::vector<LinkData> &linkRecv = tempLinks.at(GetRankFromMap(toRank));
-            const std::vector<LinkData> &linkSend = tempLinks.at(GetRankFromMap(toRank));
+            const std::vector<LinkData>& linkRecv = tempLinks.at(GetRankFromMap(toRank));
+            const std::vector<LinkData>& linkSend = tempLinks.at(GetRankFromMap(toRank));
             std::vector<DataSlice> txSrcSlices;
             std::vector<DataSlice> txDstSlices;
             std::vector<DataSlice> rxSrcSlices;
@@ -195,11 +214,13 @@ HcclResult InsTempReduceScatterMesh1DMeshChunk::DoMeshChunk(const ResLinks &temp
             txDstSlices.push_back(txDstSlice);
 
             SendRecvReduceInfo sendRecvReduceInfo{
-                {linkSend[0],linkRecv[0]},
-                {{txSrcSlices, txDstSlices},{rxSrcSlices, rxDstSlices}}, dataType_, redOp_
-            };
+                {linkSend[0], linkRecv[0]},
+                {{txSrcSlices, txDstSlices}, {rxSrcSlices, rxDstSlices}},
+                dataType_,
+                redOp_};
 
-            CHK_PRT_RET(SendRecvReduce(sendRecvReduceInfo, tempInsQues[queIdx], 0, true, DmaMode::PUT),
+            CHK_PRT_RET(
+                SendRecvReduce(sendRecvReduceInfo, tempInsQues[queIdx], 0, true, DmaMode::PUT),
                 HCCL_ERROR("[InsTempReduceScatterMesh1DMeshChunk] RunReduceScatter SendRecvReduce failed"),
                 HcclResult::HCCL_E_INTERNAL);
 
@@ -216,7 +237,8 @@ HcclResult InsTempReduceScatterMesh1DMeshChunk::DoMeshChunk(const ResLinks &temp
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempReduceScatterMesh1DMeshChunk::PostCopy(const TemplateDataParams &tempAlgParams, std::vector<InsQuePtr> &tempInsQues)
+HcclResult InsTempReduceScatterMesh1DMeshChunk::PostCopy(
+    const TemplateDataParams& tempAlgParams, std::vector<InsQuePtr>& tempInsQues)
 {
     // 如果是单算子模式, 并且是最后一步算子，需要将数据从 scratch 拷贝到 userOut
     HCCL_INFO("[InsTempReduceScatterMesh1DMeshChunk][PostCopy], copy from scratch to userOut");
@@ -224,10 +246,10 @@ HcclResult InsTempReduceScatterMesh1DMeshChunk::PostCopy(const TemplateDataParam
     CHK_RET(GetAlgRank(myRank_, tempVTopo_[0], myAlgRank));
     // 先把本卡的数据从input搬运到output
     for (u32 repeatIdx = 0; repeatIdx < tempAlgParams.repeatNum; repeatIdx++) {
-        DataSlice myRankSlice = DataSlice(tempAlgParams.buffInfo.scratBuffType,
-            tempAlgParams.buffInfo.scratchBuffBaseOff, processSize_);
-        DataSlice outputSlice = DataSlice(tempAlgParams.buffInfo.outBuffType,
-            tempAlgParams.buffInfo.outBuffBaseOff, processSize_);
+        DataSlice myRankSlice
+            = DataSlice(tempAlgParams.buffInfo.scratBuffType, tempAlgParams.buffInfo.scratchBuffBaseOff, processSize_);
+        DataSlice outputSlice
+            = DataSlice(tempAlgParams.buffInfo.outBuffType, tempAlgParams.buffInfo.outBuffBaseOff, processSize_);
         CHK_RET(LocalCopy(tempInsQues[0], myRankSlice, outputSlice));
     }
     return HcclResult::HCCL_SUCCESS;
@@ -236,7 +258,7 @@ HcclResult InsTempReduceScatterMesh1DMeshChunk::PostCopy(const TemplateDataParam
 RankId InsTempReduceScatterMesh1DMeshChunk::GetRankFromMap(const u32 rankIdx)
 {
     RankId rank = -1;
-    for (auto &pair : tempVirtRankMap_) {
+    for (auto& pair : tempVirtRankMap_) {
         if (pair.second == rankIdx) {
             rank = pair.first;
             break;

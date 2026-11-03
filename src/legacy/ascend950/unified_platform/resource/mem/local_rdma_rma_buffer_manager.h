@@ -15,23 +15,24 @@
 
 #include "hccl/base.h"
 #include "buffer_key.h"
-#include "../buffer/local_rdma_rma_buffer.h"
-#include "../../pub_inc/rma_buffer_mgr.h"
+#include "../buffer/local_rdma_rma_buffer_v2.h"
+#include "common/rma_buffer_mgr_pub.h"
 
 namespace Hccl {
 
-using LocalRdmaRmaBufferMgr = RmaBufferMgr<BufferKey<uintptr_t, u64>, std::shared_ptr<LocalRdmaRmaBuffer>>;
+using LocalRdmaRmaBufferMgr = hcomm::RmaBufferMgr<BufferKey<uintptr_t, u64>, std::shared_ptr<LocalRdmaRmaBuffer>>;
 
 class LocalRdmaRmaBufferManager {
 public:
-    static LocalRdmaRmaBufferMgr *GetInstance();
+    static LocalRdmaRmaBufferMgr* GetInstance();
+
 private:
     LocalRdmaRmaBufferManager() = default;
     ~LocalRdmaRmaBufferManager() = default;
-    LocalRdmaRmaBufferManager(const LocalRdmaRmaBufferManager &)            = delete;
-    LocalRdmaRmaBufferManager &operator=(const LocalRdmaRmaBufferManager &) = delete;
+    LocalRdmaRmaBufferManager(const LocalRdmaRmaBufferManager&) = delete;
+    LocalRdmaRmaBufferManager& operator=(const LocalRdmaRmaBufferManager&) = delete;
 };
 
-}   // namespace Hccl
+} // namespace Hccl
 
-#endif //LOCAL_RDMA_RMA_BUFFER_MANAGER_H
+#endif // LOCAL_RDMA_RMA_BUFFER_MANAGER_H

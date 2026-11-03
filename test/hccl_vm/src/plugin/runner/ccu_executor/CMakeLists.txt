@@ -1,3 +1,4 @@
+# -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2026 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
@@ -5,23 +6,17 @@
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
 
-file(GLOB_RECURSE HCCL_SOURCES "*.cc")
+file(GLOB_RECURSE HCCL_SOURCES CONFIGURE_DEPENDS "*.cc")
 
 # 添加静态库
 add_library(ccu_executor STATIC ${HCCL_SOURCES})
 
-target_compile_options(ccu_executor PRIVATE
-    -fPIC
-    -g
-    -O0
-    -D_GLIBCXX_USE_CXX11_ABI=0
-)
+hcclvm_apply_common_flags(ccu_executor)
 
 # 设置头文件包含路径（改为绝对路径，基于项目根目录）
 target_include_directories(ccu_executor PRIVATE
-    ${ASCEND_CANN_PACKAGE_PATH}/x86_64-linux/pkg_inc/hcomm/ccu
-    ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc/asc/hccl/internal/hcomm/pkg_inc/hcomm/ccu
     ${HCCL_VM_INCLUDE}
     ${HCCL_VM_SRC}
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -29,13 +24,15 @@ target_include_directories(ccu_executor PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/load_executor
     ${CMAKE_CURRENT_SOURCE_DIR}/reduce_executor
     ${CMAKE_CURRENT_SOURCE_DIR}/trans_executor
+    ${CMAKE_CURRENT_SOURCE_DIR}/trace
     ${PROJECT_SOURCE_DIR}/include
-    ${PROJECT_SOURCE_DIR}/include/runnerdb
     ${PROJECT_SOURCE_DIR}/include/store
     ${ASCEND_CANN_PACKAGE_PATH}/include
     ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc
     ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc/runtime
     ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc/profiling
+
+    ${HCCLVM_CCU_MICROCODE_DIR}
 )
 
 target_link_libraries(ccu_executor PRIVATE

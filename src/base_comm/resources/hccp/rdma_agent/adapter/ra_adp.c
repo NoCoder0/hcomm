@@ -14,6 +14,7 @@
 #include <sys/prctl.h>
 #include "securec.h"
 #include "user_log.h"
+#include "config_log.h"
 #include "dl_hal_function.h"
 #include "ra_comm.h"
 #include "ra_hdc.h"
@@ -28,9 +29,7 @@
 #include "ra_rs_err.h"
 #include "rs.h"
 #include "rs_ping.h"
-#ifdef CONFIG_TLV
 #include "ra_adp_tlv.h"
-#endif
 #include "ra_adp_ping.h"
 #include "ra_adp_socket.h"
 #include "ra_hdc_ctx.h"
@@ -46,34 +45,30 @@ struct RsPthreadInfo gRaThreadInfo = {0};
 
 struct RsOps {
     int (*rdevInit)(struct rdev rdevInfo, unsigned int notifyType, unsigned int *rdevIndex);
-    int (*rdevInitWithBackup)(struct rdev rdevInfo, struct rdev backupRdevInfo,
-        unsigned int notifyType, unsigned int *rdevIndex);
+    int (*rdevInitWithBackup)(struct rdev rdevInfo, struct rdev backupRdevInfo, unsigned int notifyType,
+        unsigned int *rdevIndex);
     int (*rdevGetPortStatus)(unsigned int phyId, unsigned int rdevIndex, enum PortStatus *status);
     int (*rdevDeinit)(unsigned int phyId, unsigned int notifyType, unsigned int rdevIndex);
-    int (*qpCreate)(unsigned int phyId, unsigned int rdevIndex, struct RsQpNorm qpNorm,
-        struct RsQpResp *qpResp);
-    int (*qpCreateWithAttrs)(unsigned int phyId, unsigned int rdevIndex,
-        struct RsQpNormWithAttrs *qpNorm, struct RsQpRespWithAttrs *qpResp);
+    int (*qpCreate)(unsigned int phyId, unsigned int rdevIndex, struct RsQpNorm qpNorm, struct RsQpResp *qpResp);
+    int (*qpCreateWithAttrs)(unsigned int phyId, unsigned int rdevIndex, struct RsQpNormWithAttrs *qpNorm,
+        struct RsQpRespWithAttrs *qpResp);
     int (*qpDestroy)(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn);
     int (*typicalQpModify)(unsigned int phyId, unsigned int rdevIndex, struct TypicalQp localQpInfo,
         struct TypicalQp remoteQpInfo, struct TypicalQpAttr *qpAttr);
     int (*qpBatchModify)(unsigned int phyId, unsigned int rdevIndex, int status, int qpn[], int qpnNum);
     int (*qpConnectAsync)(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn, int fd);
-    int (*getQpStatus)(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn,
-        struct RsQpStatusInfo *qpInfo);
+    int (*getQpStatus)(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn, struct RsQpStatusInfo *qpInfo);
     int (*mrReg)(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn, struct RdmaMrRegInfo *mrRegInfo);
     int (*mrDereg)(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn, char *addr);
-    int (*registerMr)(unsigned int phyId, unsigned int rdevIndex, struct RdmaMrRegInfo *mrRegInfo,
-        void **mrHandle);
+    int (*registerMr)(unsigned int phyId, unsigned int rdevIndex, struct RdmaMrRegInfo *mrRegInfo, void **mrHandle);
     int (*typicalRegisterMr)(unsigned int phyId, unsigned int rdevIndex, struct RdmaMrRegInfo *mrRegInfo,
         void **mrHandle);
-    int (*remapMr)(unsigned int phyId, unsigned int rdevIndex, struct MemRemapInfo memList[],
-        unsigned int memNum);
+    int (*remapMr)(unsigned int phyId, unsigned int rdevIndex, struct MemRemapInfo memList[], unsigned int memNum);
     int (*typicalDeregisterMr)(unsigned int phyId, unsigned int devIndex, unsigned long long addr);
     int (*sendWr)(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn, struct SendWr *wr,
         struct SendWrRsp *wrRsp);
-    int (*sendWrList)(struct RsWrlistBaseInfo baseInfo, struct WrInfo *wrList,
-        unsigned int sendNum, struct SendWrRsp *wrRsp, unsigned int *completeNum);
+    int (*sendWrList)(struct RsWrlistBaseInfo baseInfo, struct WrInfo *wrList, unsigned int sendNum,
+        struct SendWrRsp *wrRsp, unsigned int *completeNum);
     int (*getNotifyMrInfo)(unsigned int phyId, unsigned int rdevIndex, struct MrInfoT *info);
     int (*notifyCfgSet)(unsigned int phyId, unsigned long long va, unsigned long long size);
     int (*notifyCfgGet)(unsigned int phyId, unsigned long long *va, unsigned long long *size);
@@ -83,23 +78,19 @@ struct RsOps {
     int (*getTsqpDepth)(unsigned int phyId, unsigned int rdevIndex, unsigned int *tempDepth, unsigned int *qpNum);
     int (*setQpAttrQos)(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn, struct QosAttr *attr);
     int (*setQpAttrTimeout)(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn, unsigned int *timeout);
-    int (*setQpAttrRetryCnt)(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn,
-        unsigned int *retryCnt);
+    int (*setQpAttrRetryCnt)(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn, unsigned int *retryCnt);
     int (*getCqeErrInfo)(struct CqeErrInfo *info);
     int (*getLiteSupport)(unsigned int phyId, unsigned int rdevIndex, int *supportLite);
     int (*getLiteRdevCap)(unsigned int phyId, unsigned int rdevIndex, struct LiteRdevCapResp *resp);
-    int (*getLiteQpCqAttr)(
-        unsigned int phyId, unsigned int rdevIndex, unsigned int qpn, struct LiteQpCqAttrResp *resp);
-    int (*getLiteMemAttr)(
-        unsigned int phyId, unsigned int rdevIndex, unsigned int qpn, struct LiteMemAttrResp *resp);
-    int (*getLiteConnectedInfo)(
-        unsigned int phyId, unsigned int rdevIndex, unsigned int qpn, struct LiteConnectedInfoResp *resp);
+    int (*getLiteQpCqAttr)(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn, struct LiteQpCqAttrResp *resp);
+    int (*getLiteMemAttr)(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn, struct LiteMemAttrResp *resp);
+    int (*getLiteConnectedInfo)(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn,
+        struct LiteConnectedInfoResp *resp);
     int (*getCqeErrInfoNum)(unsigned int phyId, unsigned int rdevIdx, unsigned int *num);
-    int (*getCqeErrInfoList)(unsigned int phyId, unsigned int rdevIdx, struct CqeErrInfo *info,
-        unsigned int *num);
+    int (*getCqeErrInfoList)(unsigned int phyId, unsigned int rdevIdx, struct CqeErrInfo *info, unsigned int *num);
     int (*getTlsEnable)(unsigned int phyId, bool *tlsEnable);
     int (*getSecRandom)(int *value);
-    int (*getHccnCfg)(unsigned int phyId, enum HccnCfgKey key, char *value, unsigned int *valueLen);
+    int (*getHccnCfg)(struct RaInfo *info, enum HccnCfgKey key, char *value, unsigned int *valueLen);
 };
 
 struct RsOps gRaRsOps = {
@@ -167,8 +158,7 @@ struct HdcOps gRaHdcOps = {
 
 #define RA_HDC_OPS gRaHdcOps
 
-STATIC void MsgHeadBuildUpHw(char *pSendRcvBuf, struct MsgHead *recvMsgHead, int ret,
-    unsigned int msgDataLen)
+STATIC void MsgHeadBuildUpHw(char *pSendRcvBuf, struct MsgHead *recvMsgHead, int ret, unsigned int msgDataLen)
 {
     struct MsgHead *pSendRcvHead = NULL;
 
@@ -212,6 +202,7 @@ STATIC int OpMsgErr(char **outBuf, struct MsgHead *recvMsgHead, int *outBufLen, 
 
 STATIC int RaRsRdevInit(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     unsigned int rdevIndex = 0;
     union OpRdevInitData *rdevInitData = (union OpRdevInitData *)(inBuf + sizeof(struct MsgHead));
 
@@ -231,15 +222,14 @@ STATIC int RaRsRdevInit(char *inBuf, char *outBuf, int *outLen, int *opResult, i
 
 STATIC int RaRsRdevInitWithBackup(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
-    union OpRdevInitWithBackupData *rdevInitData = (union OpRdevInitWithBackupData *)(inBuf +
-        sizeof(struct MsgHead));
+    (void)outLen;
+    union OpRdevInitWithBackupData *rdevInitData = (union OpRdevInitWithBackupData *)(inBuf + sizeof(struct MsgHead));
     unsigned int rdevIndex = 0;
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpRdevInitWithBackupData), sizeof(struct MsgHead),
-        rcvBufLen, opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpRdevInitWithBackupData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
-    *opResult = gRaRsOps.rdevInitWithBackup(rdevInitData->txData.rdevInfo,
-        rdevInitData->txData.backupRdevInfo, NOTIFY, &rdevIndex);
+    *opResult = gRaRsOps.rdevInitWithBackup(rdevInitData->txData.rdevInfo, rdevInitData->txData.backupRdevInfo, NOTIFY,
+        &rdevIndex);
     if (*opResult != 0) {
         hccp_err("rdev_init_with_backup failed ret[%d].", *opResult);
         return 0;
@@ -253,15 +243,14 @@ STATIC int RaRsRdevInitWithBackup(char *inBuf, char *outBuf, int *outLen, int *o
 
 STATIC int RaRsRdevGetPortStatus(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     union OpRdevGetPortStatusData *statusData = NULL;
     enum PortStatus status = PORT_STATUS_DOWN;
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpRdevGetPortStatusData), sizeof(struct MsgHead), rcvBufLen,
-        opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpRdevGetPortStatusData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
     statusData = (union OpRdevGetPortStatusData *)(inBuf + sizeof(struct MsgHead));
-    *opResult = gRaRsOps.rdevGetPortStatus(statusData->txData.phyId,
-        statusData->txData.rdevIndex, &status);
+    *opResult = gRaRsOps.rdevGetPortStatus(statusData->txData.phyId, statusData->txData.rdevIndex, &status);
     if (*opResult != 0) {
         hccp_err("rdev_get_port_status failed ret[%d].", *opResult);
         return 0;
@@ -275,12 +264,13 @@ STATIC int RaRsRdevGetPortStatus(char *inBuf, char *outBuf, int *outLen, int *op
 
 STATIC int RaRsRdevDeinit(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outBuf;
+    (void)outLen;
     union OpRdevDeinitData *rdevDeinitData = (union OpRdevDeinitData *)(inBuf + sizeof(struct MsgHead));
 
     HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpRdevDeinitData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
-    *opResult = gRaRsOps.rdevDeinit(rdevDeinitData->txData.phyId, NOTIFY,
-        rdevDeinitData->txData.rdevIndex);
+    *opResult = gRaRsOps.rdevDeinit(rdevDeinitData->txData.phyId, NOTIFY, rdevDeinitData->txData.rdevIndex);
     if (*opResult != 0) {
         hccp_err("rdev_deinit failed ret[%d].", *opResult);
     }
@@ -290,16 +280,15 @@ STATIC int RaRsRdevDeinit(char *inBuf, char *outBuf, int *outLen, int *opResult,
 
 STATIC int RaRsGetTsqpDepth(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     unsigned int tempDepth = 0;
     unsigned int qpNum = 0;
-    union OpGetTsqpDepthData *getTsqpDepthData = (union OpGetTsqpDepthData *)(inBuf +
-        sizeof(struct MsgHead));
+    union OpGetTsqpDepthData *getTsqpDepthData = (union OpGetTsqpDepthData *)(inBuf + sizeof(struct MsgHead));
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpGetTsqpDepthData), sizeof(struct MsgHead), rcvBufLen,
-        opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpGetTsqpDepthData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
-    *opResult = gRaRsOps.getTsqpDepth(getTsqpDepthData->txData.phyId,
-        getTsqpDepthData->txData.rdevIndex, &tempDepth, &qpNum);
+    *opResult = gRaRsOps.getTsqpDepth(getTsqpDepthData->txData.phyId, getTsqpDepthData->txData.rdevIndex, &tempDepth,
+        &qpNum);
     if (*opResult != 0) {
         hccp_err("set_tsqp_depth failed ret[%d].", *opResult);
         return 0;
@@ -314,15 +303,14 @@ STATIC int RaRsGetTsqpDepth(char *inBuf, char *outBuf, int *outLen, int *opResul
 
 STATIC int RaRsSetTsqpDepth(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     unsigned int qpNum = 0;
-    union OpSetTsqpDepthData *setTsqpDepthData = (union OpSetTsqpDepthData *)(inBuf +
-        sizeof(struct MsgHead));
+    union OpSetTsqpDepthData *setTsqpDepthData = (union OpSetTsqpDepthData *)(inBuf + sizeof(struct MsgHead));
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpSetTsqpDepthData), sizeof(struct MsgHead), rcvBufLen,
-        opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpSetTsqpDepthData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
-    *opResult = gRaRsOps.setTsqpDepth(setTsqpDepthData->txData.phyId,
-        setTsqpDepthData->txData.rdevIndex, setTsqpDepthData->txData.tempDepth, &qpNum);
+    *opResult = gRaRsOps.setTsqpDepth(setTsqpDepthData->txData.phyId, setTsqpDepthData->txData.rdevIndex,
+        setTsqpDepthData->txData.tempDepth, &qpNum);
     if (*opResult != 0) {
         hccp_err("set_tsqp_depth failed ret[%d].", *opResult);
         return 0;
@@ -336,8 +324,9 @@ STATIC int RaRsSetTsqpDepth(char *inBuf, char *outBuf, int *outLen, int *opResul
 
 STATIC int RaRsQpCreate(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     struct RsQpNorm qpNorm;
-    struct RsQpResp qpResp = { 0 };
+    struct RsQpResp qpResp = {0};
     union OpQpCreateData *createData = (union OpQpCreateData *)(inBuf + sizeof(struct MsgHead));
 
     HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpQpCreateData), sizeof(struct MsgHead), rcvBufLen, opResult);
@@ -369,12 +358,12 @@ STATIC int RaRsQpCreate(char *inBuf, char *outBuf, int *outLen, int *opResult, i
 
 STATIC int RaRsQpCreateWithAttrs(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     union OpQpCreateWithAttrsData *createData = NULL;
-    struct RsQpNormWithAttrs qpNorm = { 0 };
-    struct RsQpRespWithAttrs qpResp = { 0 };
+    struct RsQpNormWithAttrs qpNorm = {0};
+    struct RsQpRespWithAttrs qpResp = {0};
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpQpCreateWithAttrsData), sizeof(struct MsgHead), rcvBufLen,
-        opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpQpCreateWithAttrsData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
     createData = (union OpQpCreateWithAttrsData *)(inBuf + sizeof(struct MsgHead));
 
@@ -382,8 +371,7 @@ STATIC int RaRsQpCreateWithAttrs(char *inBuf, char *outBuf, int *outLen, int *op
     qpNorm.isExt = 1;
     qpNorm.extAttrs = createData->txData.extAttrs;
 
-    *opResult = gRaRsOps.qpCreateWithAttrs(createData->txData.phyId, createData->txData.rdevIndex,
-        &qpNorm, &qpResp);
+    *opResult = gRaRsOps.qpCreateWithAttrs(createData->txData.phyId, createData->txData.rdevIndex, &qpNorm, &qpResp);
     if (*opResult != 0) {
         hccp_err("qp create failed ret[%d].", *opResult);
         return 0;
@@ -399,12 +387,12 @@ STATIC int RaRsQpCreateWithAttrs(char *inBuf, char *outBuf, int *outLen, int *op
 
 STATIC int RaRsAiQpCreate(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     union OpAiQpCreateData *createData = NULL;
-    struct RsQpNormWithAttrs qpNorm = { 0 };
-    struct RsQpRespWithAttrs qpResp = { 0 };
+    struct RsQpNormWithAttrs qpNorm = {0};
+    struct RsQpRespWithAttrs qpResp = {0};
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpAiQpCreateData), sizeof(struct MsgHead), rcvBufLen,
-        opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpAiQpCreateData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
     createData = (union OpAiQpCreateData *)(inBuf + sizeof(struct MsgHead));
 
@@ -413,8 +401,7 @@ STATIC int RaRsAiQpCreate(char *inBuf, char *outBuf, int *outLen, int *opResult,
     qpNorm.extAttrs = createData->txData.extAttrs;
     qpNorm.aiOpSupport = 1;
 
-    *opResult = gRaRsOps.qpCreateWithAttrs(createData->txData.phyId, createData->txData.rdevIndex,
-        &qpNorm, &qpResp);
+    *opResult = gRaRsOps.qpCreateWithAttrs(createData->txData.phyId, createData->txData.rdevIndex, &qpNorm, &qpResp);
     if (*opResult != 0) {
         hccp_err("qp create failed ret[%d].", *opResult);
         return 0;
@@ -432,12 +419,12 @@ STATIC int RaRsAiQpCreate(char *inBuf, char *outBuf, int *outLen, int *opResult,
 
 STATIC int RaRsAiQpCreateWithData(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     union OpAiQpCreateWithAttrsData *createData = NULL;
-    struct RsQpNormWithAttrs qpNorm = { 0 };
-    struct RsQpRespWithAttrs qpResp = { 0 };
+    struct RsQpNormWithAttrs qpNorm = {0};
+    struct RsQpRespWithAttrs qpResp = {0};
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpAiQpCreateWithAttrsData), sizeof(struct MsgHead), rcvBufLen,
-        opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpAiQpCreateWithAttrsData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
     createData = (union OpAiQpCreateWithAttrsData *)(inBuf + sizeof(struct MsgHead));
 
@@ -446,8 +433,7 @@ STATIC int RaRsAiQpCreateWithData(char *inBuf, char *outBuf, int *outLen, int *o
     qpNorm.extAttrs = createData->txData.extAttrs;
     qpNorm.aiOpSupport = 1;
 
-    *opResult = gRaRsOps.qpCreateWithAttrs(createData->txData.phyId, createData->txData.rdevIndex,
-        &qpNorm, &qpResp);
+    *opResult = gRaRsOps.qpCreateWithAttrs(createData->txData.phyId, createData->txData.rdevIndex, &qpNorm, &qpResp);
     if (*opResult != 0) {
         hccp_err("qp create failed ret[%d].", *opResult);
         return 0;
@@ -470,14 +456,13 @@ STATIC int RaRsAiQpCreateWithData(char *inBuf, char *outBuf, int *outLen, int *o
 
 STATIC int RaRsTypicalQpCreate(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
-    union OpTypicalQpCreateData *createData = (union OpTypicalQpCreateData *)(inBuf +
-        sizeof(struct MsgHead));
+    (void)outLen;
+    union OpTypicalQpCreateData *createData = (union OpTypicalQpCreateData *)(inBuf + sizeof(struct MsgHead));
     struct RsQpResp qpResp = {0};
     struct RsQpNorm qpNorm;
     int qpMode;
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpTypicalQpCreateData), sizeof(struct MsgHead), rcvBufLen,
-        opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpTypicalQpCreateData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
     qpMode = createData->txData.qpMode;
     qpNorm.flag = createData->txData.flag;
@@ -507,6 +492,8 @@ STATIC int RaRsTypicalQpCreate(char *inBuf, char *outBuf, int *outLen, int *opRe
 
 STATIC int RaRsQpDestroy(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outBuf;
+    (void)outLen;
     union OpQpDestroyData *qpDestroyData = (union OpQpDestroyData *)(inBuf + sizeof(struct MsgHead));
 
     HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpQpDestroyData), sizeof(struct MsgHead), rcvBufLen, opResult);
@@ -522,12 +509,11 @@ STATIC int RaRsQpDestroy(char *inBuf, char *outBuf, int *outLen, int *opResult, 
 
 STATIC int RaRsTypicalQpModify(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
-    union OpTypicalQpModifyData *qpModifyData = (union OpTypicalQpModifyData *)(inBuf +
-        sizeof(struct MsgHead));
+    (void)outLen;
+    union OpTypicalQpModifyData *qpModifyData = (union OpTypicalQpModifyData *)(inBuf + sizeof(struct MsgHead));
     struct TypicalQpAttr qpAttr = {0};
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpTypicalQpModifyData), sizeof(struct MsgHead), rcvBufLen,
-        opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpTypicalQpModifyData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
     *opResult = gRaRsOps.typicalQpModify(qpModifyData->txData.phyId, qpModifyData->txData.rdevIndex,
         qpModifyData->txData.localQpInfo, qpModifyData->txData.remoteQpInfo, &qpAttr);
@@ -545,16 +531,15 @@ STATIC int RaRsTypicalQpModify(char *inBuf, char *outBuf, int *outLen, int *opRe
 
 STATIC int RaRsQpBatchModify(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
-    union OpQpBatchModifyData *qpBatchModifyData = (union OpQpBatchModifyData *)(inBuf +
-        sizeof(struct MsgHead));
+    (void)outBuf;
+    (void)outLen;
+    union OpQpBatchModifyData *qpBatchModifyData = (union OpQpBatchModifyData *)(inBuf + sizeof(struct MsgHead));
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpQpBatchModifyData), sizeof(struct MsgHead), rcvBufLen,
-        opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpQpBatchModifyData), sizeof(struct MsgHead), rcvBufLen, opResult);
     HCCP_CHECK_PARAM_LEN_RET_HOST(qpBatchModifyData->txData.qpnNum, 0, RA_MAX_BATCH_QP_MODIFY_NUM, opResult);
 
-    *opResult = gRaRsOps.qpBatchModify(qpBatchModifyData->txData.phyId,
-        qpBatchModifyData->txData.rdevIndex, qpBatchModifyData->txData.status,
-        qpBatchModifyData->txData.qpn, qpBatchModifyData->txData.qpnNum);
+    *opResult = gRaRsOps.qpBatchModify(qpBatchModifyData->txData.phyId, qpBatchModifyData->txData.rdevIndex,
+        qpBatchModifyData->txData.status, qpBatchModifyData->txData.qpn, qpBatchModifyData->txData.qpnNum);
     if (*opResult != 0) {
         hccp_err("qp info modify failed ret[%d].", *opResult);
     }
@@ -564,6 +549,8 @@ STATIC int RaRsQpBatchModify(char *inBuf, char *outBuf, int *outLen, int *opResu
 
 STATIC int RaRsQpConnectAsync(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outBuf;
+    (void)outLen;
     union OpQpConnectData *qpConnectData = (union OpQpConnectData *)(inBuf + sizeof(struct MsgHead));
 
     HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpQpConnectData), sizeof(struct MsgHead), rcvBufLen, opResult);
@@ -579,8 +566,9 @@ STATIC int RaRsQpConnectAsync(char *inBuf, char *outBuf, int *outLen, int *opRes
 
 STATIC int RaRsGetQpStatus(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     union OpQpStatusData *qpStatusData = (union OpQpStatusData *)(inBuf + sizeof(struct MsgHead));
-    struct RsQpStatusInfo qpInfo = { 0 };
+    struct RsQpStatusInfo qpInfo = {0};
 
     HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpQpStatusData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
@@ -599,13 +587,14 @@ STATIC int RaRsGetQpStatus(char *inBuf, char *outBuf, int *outLen, int *opResult
 
 STATIC int RaRsGetQpInfo(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     union OpQpInfoData *qpInfoData = (union OpQpInfoData *)(inBuf + sizeof(struct MsgHead));
-    struct RsQpStatusInfo qpInfo = { 0 };
+    struct RsQpStatusInfo qpInfo = {0};
 
     HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpQpInfoData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
-    *opResult = gRaRsOps.getQpStatus(qpInfoData->txData.phyId, qpInfoData->txData.rdevIndex,
-        qpInfoData->txData.qpn, &qpInfo);
+    *opResult = gRaRsOps.getQpStatus(qpInfoData->txData.phyId, qpInfoData->txData.rdevIndex, qpInfoData->txData.qpn,
+        &qpInfo);
     if (*opResult != 0) {
         hccp_err("query qp status async failed ret[%d].", *opResult);
         return 0;
@@ -620,16 +609,16 @@ STATIC int RaRsGetQpInfo(char *inBuf, char *outBuf, int *outLen, int *opResult, 
 
 STATIC int RaRsMrReg(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     union OpMrRegData *regMrData = (union OpMrRegData *)(inBuf + sizeof(struct MsgHead));
-    struct RdmaMrRegInfo mrRegInfo = { 0 };
+    struct RdmaMrRegInfo mrRegInfo = {0};
 
     HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpMrRegData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
     mrRegInfo.addr = regMrData->txData.mrRegAttr.addr;
     mrRegInfo.len = regMrData->txData.mrRegAttr.len;
     mrRegInfo.access = regMrData->txData.mrRegAttr.access;
-    *opResult = gRaRsOps.mrReg(regMrData->txData.phyId, regMrData->txData.rdevIndex,
-        regMrData->txData.qpn, &mrRegInfo);
+    *opResult = gRaRsOps.mrReg(regMrData->txData.phyId, regMrData->txData.rdevIndex, regMrData->txData.qpn, &mrRegInfo);
     if (*opResult != 0) {
         hccp_err("reg_mr failed ret[%d].", *opResult);
         return 0;
@@ -644,12 +633,14 @@ STATIC int RaRsMrReg(char *inBuf, char *outBuf, int *outLen, int *opResult, int 
 
 STATIC int RaRsMrDereg(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outBuf;
+    (void)outLen;
     union OpMrDeregData *mrDeregData = (union OpMrDeregData *)(inBuf + sizeof(struct MsgHead));
 
     HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpMrDeregData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
-    *opResult = gRaRsOps.mrDereg(mrDeregData->txData.phyId, mrDeregData->txData.rdevIndex,
-        mrDeregData->txData.qpn, mrDeregData->txData.addr);
+    *opResult = gRaRsOps.mrDereg(mrDeregData->txData.phyId, mrDeregData->txData.rdevIndex, mrDeregData->txData.qpn,
+        mrDeregData->txData.addr);
     if (*opResult != 0) {
         hccp_err("dereg_mr failed ret[%d].", *opResult);
     }
@@ -659,18 +650,18 @@ STATIC int RaRsMrDereg(char *inBuf, char *outBuf, int *outLen, int *opResult, in
 
 STATIC int RaRsTypicalMrRegV1(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     union OpTypicalMrRegData *regMrData = (union OpTypicalMrRegData *)(inBuf + sizeof(struct MsgHead));
-    struct RdmaMrRegInfo mrRegInfo = { 0 };
+    struct RdmaMrRegInfo mrRegInfo = {0};
     struct ibv_mr *raRsMrHandle = NULL;
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpTypicalMrRegData), sizeof(struct MsgHead),
-        rcvBufLen, opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpTypicalMrRegData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
     mrRegInfo.addr = regMrData->txData.mrRegAttr.addr;
     mrRegInfo.len = regMrData->txData.mrRegAttr.len;
     mrRegInfo.access = regMrData->txData.mrRegAttr.access;
-    *opResult = gRaRsOps.registerMr(regMrData->txData.phyId, regMrData->txData.rdevIndex,
-        &mrRegInfo, (void **)&raRsMrHandle);
+    *opResult = gRaRsOps.registerMr(regMrData->txData.phyId, regMrData->txData.rdevIndex, &mrRegInfo,
+        (void **)&raRsMrHandle);
     if (*opResult != 0) {
         hccp_err("reg_mr failed ret[%d].", *opResult);
         return 0;
@@ -685,18 +676,18 @@ STATIC int RaRsTypicalMrRegV1(char *inBuf, char *outBuf, int *outLen, int *opRes
 
 STATIC int RaRsTypicalMrReg(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     union OpTypicalMrRegData *regMrData = (union OpTypicalMrRegData *)(inBuf + sizeof(struct MsgHead));
-    struct RdmaMrRegInfo mrRegInfo = { 0 };
+    struct RdmaMrRegInfo mrRegInfo = {0};
     struct ibv_mr *raRsMrHandle = NULL;
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpTypicalMrRegData), sizeof(struct MsgHead),
-        rcvBufLen, opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpTypicalMrRegData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
     mrRegInfo.addr = regMrData->txData.mrRegAttr.addr;
     mrRegInfo.len = regMrData->txData.mrRegAttr.len;
     mrRegInfo.access = regMrData->txData.mrRegAttr.access;
-    *opResult = gRaRsOps.typicalRegisterMr(regMrData->txData.phyId, regMrData->txData.rdevIndex,
-        &mrRegInfo, (void **)&raRsMrHandle);
+    *opResult = gRaRsOps.typicalRegisterMr(regMrData->txData.phyId, regMrData->txData.rdevIndex, &mrRegInfo,
+        (void **)&raRsMrHandle);
     if (*opResult != 0) {
         hccp_err("reg_mr failed ret[%d].", *opResult);
         return 0;
@@ -712,6 +703,8 @@ STATIC int RaRsTypicalMrReg(char *inBuf, char *outBuf, int *outLen, int *opResul
 
 STATIC int RaRsRemapMr(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outBuf;
+    (void)outLen;
     union OpRemapMrData *opData = (union OpRemapMrData *)(inBuf + sizeof(struct MsgHead));
 
     HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpRemapMrData), sizeof(struct MsgHead), rcvBufLen, opResult);
@@ -727,11 +720,11 @@ STATIC int RaRsRemapMr(char *inBuf, char *outBuf, int *outLen, int *opResult, in
 
 STATIC int RaRsTypicalMrDereg(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
-    union OpTypicalMrDeregData *mrDeregData =
-        (union OpTypicalMrDeregData *)(inBuf + sizeof(struct MsgHead));
+    (void)outBuf;
+    (void)outLen;
+    union OpTypicalMrDeregData *mrDeregData = (union OpTypicalMrDeregData *)(inBuf + sizeof(struct MsgHead));
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpTypicalMrDeregData), sizeof(struct MsgHead),
-        rcvBufLen, opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpTypicalMrDeregData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
     *opResult = gRaRsOps.typicalDeregisterMr(mrDeregData->txData.phyId, mrDeregData->txData.rdevIndex,
         mrDeregData->txData.addr);
@@ -744,11 +737,12 @@ STATIC int RaRsTypicalMrDereg(char *inBuf, char *outBuf, int *outLen, int *opRes
 
 STATIC int RaRsSendWr(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     int ret;
 
-    struct SendWrRsp wrRsp = { 0 };
+    struct SendWrRsp wrRsp = {0};
     union OpSendWrData *sendWrData = (union OpSendWrData *)(inBuf + sizeof(struct MsgHead));
-    struct SendWr sWr = { 0 };
+    struct SendWr sWr = {0};
 
     HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpSendWrData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
@@ -758,12 +752,11 @@ STATIC int RaRsSendWr(char *inBuf, char *outBuf, int *outLen, int *opResult, int
     sWr.op = sendWrData->txData.op;
     sWr.sendFlag = sendWrData->txData.sendFlags;
 
-    ret = gRaRsOps.sendWr(sendWrData->txData.phyId, sendWrData->txData.rdevIndex, sendWrData->txData.qpn,
-        &sWr, &wrRsp);
+    ret = gRaRsOps.sendWr(sendWrData->txData.phyId, sendWrData->txData.rdevIndex, sendWrData->txData.qpn, &sWr, &wrRsp);
     *opResult = ret;
     if (ret) {
         if (ret == -ENOENT) {
-            hccp_warn("not found remote mr_info, need try again");
+            hccp_warn_rma("not found remote mr_info, need try again");
         } else {
             hccp_err("send wr failed ret[%d].", ret);
         }
@@ -777,6 +770,7 @@ STATIC int RaRsSendWr(char *inBuf, char *outBuf, int *outLen, int *opResult, int
 
 STATIC int RaRsSendWrList(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     int ret;
     uint32_t i;
     unsigned int completeNum = 0;
@@ -786,7 +780,7 @@ STATIC int RaRsSendWrList(char *inBuf, char *outBuf, int *outLen, int *opResult,
     union OpSendWrlistData *sendWrlist = (union OpSendWrlistData *)(inBuf + sizeof(struct MsgHead));
 
     HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpSendWrlistData), sizeof(struct MsgHead), rcvBufLen, opResult);
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sendWrlist->txData.sendNum, 0,  MAX_WR_NUM, opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sendWrlist->txData.sendNum, 0, MAX_WR_NUM, opResult);
 
     wrRsp = calloc(sendWrlist->txData.sendNum, sizeof(struct SendWrRsp));
     CHK_PRT_RETURN(wrRsp == NULL, hccp_err("wr_rsp calloc failed."), -ENOMEM);
@@ -815,7 +809,7 @@ STATIC int RaRsSendWrList(char *inBuf, char *outBuf, int *outLen, int *opResult,
     *opResult = ret;
     if (ret) {
         if (ret == -ENOENT) {
-            hccp_warn("not found remote mr_info, need try again");
+            hccp_warn_rma("not found remote mr_info, need try again");
         } else {
             hccp_err("send wr failed ret[%d].", ret);
         }
@@ -856,6 +850,7 @@ STATIC void GetWrListV2(struct WrInfo *wrList, union OpSendWrlistDataV2 *sendWrl
 
 STATIC int RaRsSendWrListV2(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     int ret;
     unsigned int completeNum = 0;
     struct WrInfo *wrList = NULL;
@@ -863,8 +858,7 @@ STATIC int RaRsSendWrListV2(char *inBuf, char *outBuf, int *outLen, int *opResul
     struct RsWrlistBaseInfo baseInfo = {0};
     union OpSendWrlistDataV2 *sendWrlist = (union OpSendWrlistDataV2 *)(inBuf + sizeof(struct MsgHead));
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpSendWrlistDataV2), sizeof(struct MsgHead), rcvBufLen,
-        opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpSendWrlistDataV2), sizeof(struct MsgHead), rcvBufLen, opResult);
     HCCP_CHECK_PARAM_LEN_RET_HOST(sendWrlist->txData.sendNum, 0, MAX_WR_NUM, opResult);
 
     wrRsp = calloc(sendWrlist->txData.sendNum, sizeof(struct SendWrRsp));
@@ -887,7 +881,7 @@ STATIC int RaRsSendWrListV2(char *inBuf, char *outBuf, int *outLen, int *opResul
     *opResult = ret;
     if (ret) {
         if (ret == -ENOENT) {
-            hccp_warn("not found remote mr_info, need try again");
+            hccp_warn_rma("not found remote mr_info, need try again");
         } else {
             hccp_err("send wr failed ret[%d].", ret);
         }
@@ -932,6 +926,7 @@ STATIC void GetWrList(struct WrInfo *wrList, union OpSendWrlistDataExt *sendWrli
 
 STATIC int RaRsSendWrListExt(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     int ret;
     unsigned int completeNum = 0;
     struct SendWrRsp *wrRsp = NULL;
@@ -939,8 +934,7 @@ STATIC int RaRsSendWrListExt(char *inBuf, char *outBuf, int *outLen, int *opResu
     struct RsWrlistBaseInfo baseInfo = {0};
     union OpSendWrlistDataExt *sendWrlist = (union OpSendWrlistDataExt *)(inBuf + sizeof(struct MsgHead));
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpSendWrlistDataExt), sizeof(struct MsgHead), rcvBufLen,
-        opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpSendWrlistDataExt), sizeof(struct MsgHead), rcvBufLen, opResult);
     HCCP_CHECK_PARAM_LEN_RET_HOST(sendWrlist->txData.sendNum, 0, MAX_WR_NUM, opResult);
 
     wrRsp = calloc(sendWrlist->txData.sendNum, sizeof(struct SendWrRsp));
@@ -962,7 +956,7 @@ STATIC int RaRsSendWrListExt(char *inBuf, char *outBuf, int *outLen, int *opResu
     *opResult = ret;
     if (ret) {
         if (ret == -ENOENT) {
-            hccp_warn("not found remote mr_info, need try again");
+            hccp_warn_rma("not found remote mr_info, need try again");
         } else {
             hccp_err("send wr failed ret[%d].", ret);
         }
@@ -1007,16 +1001,15 @@ STATIC void GetWrListExtV2(struct WrInfo *wrList, union OpSendWrlistDataExtV2 *s
 
 STATIC int RaRsSendWrListExtV2(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     int ret;
     unsigned int completeNum = 0;
     struct WrInfo *wrList = NULL;
     struct SendWrRsp *wrRsp = NULL;
     struct RsWrlistBaseInfo baseInfo = {0};
-    union OpSendWrlistDataExtV2 *sendWrlist = (union OpSendWrlistDataExtV2 *)(inBuf +
-        sizeof(struct MsgHead));
+    union OpSendWrlistDataExtV2 *sendWrlist = (union OpSendWrlistDataExtV2 *)(inBuf + sizeof(struct MsgHead));
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpSendWrlistDataExtV2), sizeof(struct MsgHead), rcvBufLen,
-        opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpSendWrlistDataExtV2), sizeof(struct MsgHead), rcvBufLen, opResult);
     HCCP_CHECK_PARAM_LEN_RET_HOST(sendWrlist->txData.sendNum, 0, MAX_WR_NUM, opResult);
 
     wrRsp = calloc(sendWrlist->txData.sendNum, sizeof(struct SendWrRsp));
@@ -1038,7 +1031,7 @@ STATIC int RaRsSendWrListExtV2(char *inBuf, char *outBuf, int *outLen, int *opRe
     *opResult = ret;
     if (ret) {
         if (ret == -ENOENT) {
-            hccp_warn("not found remote mr_info, need try again");
+            hccp_warn_rma("not found remote mr_info, need try again");
         } else {
             hccp_err("send wr failed ret[%d].", ret);
         }
@@ -1065,14 +1058,12 @@ alloc_wr_list_fail:
 
 STATIC int RaRsSendNormalWrlist(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
-    union OpSendNormalWrlistData *sendWrlistOut = (union OpSendNormalWrlistData *)(outBuf +
-        sizeof(struct MsgHead));
-    union OpSendNormalWrlistData *sendWrlist = (union OpSendNormalWrlistData *)(inBuf +
-        sizeof(struct MsgHead));
+    (void)outLen;
+    union OpSendNormalWrlistData *sendWrlistOut = (union OpSendNormalWrlistData *)(outBuf + sizeof(struct MsgHead));
+    union OpSendNormalWrlistData *sendWrlist = (union OpSendNormalWrlistData *)(inBuf + sizeof(struct MsgHead));
     struct RsWrlistBaseInfo baseInfo = {0};
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpSendNormalWrlistData), sizeof(struct MsgHead), rcvBufLen,
-        opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpSendNormalWrlistData), sizeof(struct MsgHead), rcvBufLen, opResult);
     HCCP_CHECK_PARAM_LEN_RET_HOST(sendWrlist->txData.sendNum, 0, MAX_WR_NUM, opResult);
 
     baseInfo.phyId = sendWrlist->txData.phyId;
@@ -1090,13 +1081,13 @@ STATIC int RaRsSendNormalWrlist(char *inBuf, char *outBuf, int *outLen, int *opR
 
 STATIC int RaRsGetNotifyBa(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     union OpGetNotifyBaData *getNotifyBaData = (union OpGetNotifyBaData *)(inBuf + sizeof(struct MsgHead));
-    struct MrInfoT info = { 0 };
+    struct MrInfoT info = {0};
 
     HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpGetNotifyBaData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
-    *opResult = gRaRsOps.getNotifyMrInfo(getNotifyBaData->txData.phyId,
-        getNotifyBaData->txData.rdevIndex, &info);
+    *opResult = gRaRsOps.getNotifyMrInfo(getNotifyBaData->txData.phyId, getNotifyBaData->txData.rdevIndex, &info);
     if (*opResult != 0) {
         hccp_err("reg_notify_mr failed ret[%d].", *opResult);
         return 0;
@@ -1113,11 +1104,11 @@ STATIC int RaRsGetNotifyBa(char *inBuf, char *outBuf, int *outLen, int *opResult
 
 STATIC int RaRsNotifyCfgSet(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
-    union OpNotifyCfgSetData *setNotifyBaData =
-        (union OpNotifyCfgSetData *)(inBuf + sizeof(struct MsgHead));
+    (void)outBuf;
+    (void)outLen;
+    union OpNotifyCfgSetData *setNotifyBaData = (union OpNotifyCfgSetData *)(inBuf + sizeof(struct MsgHead));
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpNotifyCfgSetData), sizeof(struct MsgHead), rcvBufLen,
-        opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpNotifyCfgSetData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
     *opResult = gRaRsOps.notifyCfgSet(setNotifyBaData->txData.phyId, setNotifyBaData->txData.va,
         setNotifyBaData->txData.size);
@@ -1130,13 +1121,12 @@ STATIC int RaRsNotifyCfgSet(char *inBuf, char *outBuf, int *outLen, int *opResul
 
 STATIC int RaRsNotifyCfgGet(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     unsigned long long va = 0;
     unsigned long long size = 0;
-    union OpNotifyCfgGetData *getNotifyBaData =
-        (union OpNotifyCfgGetData *)(inBuf + sizeof(struct MsgHead));
+    union OpNotifyCfgGetData *getNotifyBaData = (union OpNotifyCfgGetData *)(inBuf + sizeof(struct MsgHead));
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpNotifyCfgGetData), sizeof(struct MsgHead), rcvBufLen,
-        opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpNotifyCfgGetData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
     *opResult = gRaRsOps.notifyCfgGet(getNotifyBaData->txData.phyId, &va, &size);
     if (*opResult != 0) {
@@ -1152,28 +1142,34 @@ STATIC int RaRsNotifyCfgGet(char *inBuf, char *outBuf, int *outLen, int *opResul
 
 STATIC int RaSetPid(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outBuf;
+    (void)outLen;
     union OpSetPidData *setPidData = (union OpSetPidData *)(inBuf + sizeof(struct MsgHead));
 
     HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpSetPidData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
-    hccp_info("ra get pid is [%d]", setPidData->txData.pid);
+    hccp_info_others("ra get pid is [%d]", setPidData->txData.pid);
 
-    *opResult = gRaRsOps.setHostPid(setPidData->txData.phyId, setPidData->txData.pid,
-        setPidData->txData.pidSign);
+    *opResult = gRaRsOps.setHostPid(setPidData->txData.phyId, setPidData->txData.pid, setPidData->txData.pidSign);
 
-    hccp_info("ra_set_pid finish");
+    hccp_info_others("ra_set_pid finish");
     return 0;
 }
 
 STATIC int RaRsCloseHdcSession(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)inBuf;
+    (void)outBuf;
+    (void)outLen;
+    (void)rcvBufLen;
     *opResult = 0;
-    hccp_info("ra_rs_close_hdc_session finish");
+    hccp_info_socket("ra_rs_close_hdc_session finish");
     return 0;
 }
 
 STATIC int RaRsGetInterfaceVersion(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     unsigned int version = 0;
     union OpGetVersionData *versionInfoRet = NULL;
     union OpGetVersionData *versionInfo = (union OpGetVersionData *)(inBuf + sizeof(struct MsgHead));
@@ -1182,7 +1178,8 @@ STATIC int RaRsGetInterfaceVersion(char *inBuf, char *outBuf, int *outLen, int *
 
     *opResult = gRaRsOps.getInterfaceVersion(versionInfo->txData.opcode, &version);
     if (*opResult != 0) {
-        hccp_err("get_interface_version failed, opcode %d, ret %d", versionInfo->txData.opcode, *opResult);
+        hccp_err("[get][ra_rs_interface_version]get interface version failed, opcode %u, ret %d",
+            versionInfo->txData.opcode, *opResult);
         return 0;
     }
 
@@ -1191,15 +1188,43 @@ STATIC int RaRsGetInterfaceVersion(char *inBuf, char *outBuf, int *outLen, int *
     return 0;
 }
 
+STATIC int RaRsBatchGetInterfaceVersion(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
+{
+    (void)outLen;
+
+    union OpBatchGetVersionData *rsp = (union OpBatchGetVersionData *)(outBuf + sizeof(struct MsgHead));
+    union OpBatchGetVersionData *req = (union OpBatchGetVersionData *)(inBuf + sizeof(struct MsgHead));
+    unsigned int i;
+    int ret;
+
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpBatchGetVersionData), sizeof(struct MsgHead), rcvBufLen, opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(req->txData.opcodeNum, 0, MAX_BATCH_OPCODE_NUM, opResult);
+
+    rsp->rxData.opcodeNum = 0;
+    for (i = 0; i < req->txData.opcodeNum; i++) {
+        rsp->rxData.version[i] = 0;
+        ret = gRaRsOps.getInterfaceVersion(req->txData.opcode[i], &rsp->rxData.version[i]);
+        if (ret != 0) {
+            hccp_err("[get][ra_rs_batch_interface_version]get interface version failed, opcode %u, ret %d",
+                req->txData.opcode[i], ret);
+        }
+        rsp->rxData.opcodeNum++;
+    }
+
+    *opResult = 0;
+    return 0;
+}
+
 STATIC int RaRsSetQpAttrQos(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outBuf;
+    (void)outLen;
     union OpSetQpAttrQosData *attrQosData = (union OpSetQpAttrQosData *)(inBuf + sizeof(struct MsgHead));
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpSetQpAttrQosData), sizeof(struct MsgHead), rcvBufLen,
-        opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpSetQpAttrQosData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
-    *opResult = gRaRsOps.setQpAttrQos(attrQosData->txData.phyId, attrQosData->txData.rdevIndex,
-        attrQosData->txData.qpn, &(attrQosData->txData.qosAttr));
+    *opResult = gRaRsOps.setQpAttrQos(attrQosData->txData.phyId, attrQosData->txData.rdevIndex, attrQosData->txData.qpn,
+        &(attrQosData->txData.qosAttr));
     if (*opResult != 0) {
         hccp_err("set_qp_attr_qos failed ret[%d].", *opResult);
     }
@@ -1209,11 +1234,11 @@ STATIC int RaRsSetQpAttrQos(char *inBuf, char *outBuf, int *outLen, int *opResul
 
 STATIC int RaRsSetQpAttrTimeout(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
-    union OpSetQpAttrTimeoutData *attrTimeData =
-        (union OpSetQpAttrTimeoutData *)(inBuf + sizeof(struct MsgHead));
+    (void)outBuf;
+    (void)outLen;
+    union OpSetQpAttrTimeoutData *attrTimeData = (union OpSetQpAttrTimeoutData *)(inBuf + sizeof(struct MsgHead));
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpSetQpAttrTimeoutData), sizeof(struct MsgHead), rcvBufLen,
-        opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpSetQpAttrTimeoutData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
     *opResult = gRaRsOps.setQpAttrTimeout(attrTimeData->txData.phyId, attrTimeData->txData.rdevIndex,
         attrTimeData->txData.qpn, &(attrTimeData->txData.timeout));
@@ -1226,14 +1251,13 @@ STATIC int RaRsSetQpAttrTimeout(char *inBuf, char *outBuf, int *outLen, int *opR
 
 STATIC int RaRsSetQpAttrRetryCnt(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
-    union OpSetQpAttrRetryCntData *attrRetryCntData =
-        (union OpSetQpAttrRetryCntData *)(inBuf + sizeof(struct MsgHead));
+    (void)outBuf;
+    (void)outLen;
+    union OpSetQpAttrRetryCntData *attrRetryCntData = (union OpSetQpAttrRetryCntData *)(inBuf + sizeof(struct MsgHead));
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpSetQpAttrRetryCntData), sizeof(struct MsgHead), rcvBufLen,
-        opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpSetQpAttrRetryCntData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
-    *opResult =
-        gRaRsOps.setQpAttrRetryCnt(attrRetryCntData->txData.phyId, attrRetryCntData->txData.rdevIndex,
+    *opResult = gRaRsOps.setQpAttrRetryCnt(attrRetryCntData->txData.phyId, attrRetryCntData->txData.rdevIndex,
         attrRetryCntData->txData.qpn, &(attrRetryCntData->txData.retryCnt));
     if (*opResult != 0) {
         hccp_err("set_qp_attr_retry_cnt failed ret[%d].", *opResult);
@@ -1244,12 +1268,13 @@ STATIC int RaRsSetQpAttrRetryCnt(char *inBuf, char *outBuf, int *outLen, int *op
 
 STATIC int RaRsGetCqeErrInfo(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)inBuf;
+    (void)outLen;
     int ret;
-    struct CqeErrInfo info = { 0 };
+    struct CqeErrInfo info = {0};
     union OpGetCqeErrInfoData *cqeErrInfoRet = NULL;
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpGetCqeErrInfoData), sizeof(struct MsgHead), rcvBufLen,
-        opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpGetCqeErrInfoData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
     *opResult = gRaRsOps.getCqeErrInfo(&info);
     if (*opResult != 0) {
@@ -1265,13 +1290,13 @@ STATIC int RaRsGetCqeErrInfo(char *inBuf, char *outBuf, int *outLen, int *opResu
 
 STATIC int RaRsGetLiteSupport(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     union OpLiteSupportData *liteSupportData = (union OpLiteSupportData *)(inBuf + sizeof(struct MsgHead));
     union OpLiteSupportData *liteSupportOut = (union OpLiteSupportData *)(outBuf + sizeof(struct MsgHead));
 
     HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpLiteSupportData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
-    *opResult = gRaRsOps.getLiteSupport(liteSupportData->txData.phyId,
-        liteSupportData->txData.rdevIndex,
+    *opResult = gRaRsOps.getLiteSupport(liteSupportData->txData.phyId, liteSupportData->txData.rdevIndex,
         &liteSupportOut->rxData.supportLite);
     if (*opResult != 0) {
         hccp_err("get_lite_support failed ret[%d].", *opResult);
@@ -1282,13 +1307,13 @@ STATIC int RaRsGetLiteSupport(char *inBuf, char *outBuf, int *outLen, int *opRes
 
 STATIC int RaRsGetLiteRdevCap(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     union OpLiteRdevCapData *liteRdevCapData = (union OpLiteRdevCapData *)(inBuf + sizeof(struct MsgHead));
     union OpLiteRdevCapData *liteRdevCapOut = (union OpLiteRdevCapData *)(outBuf + sizeof(struct MsgHead));
 
     HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpLiteRdevCapData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
-    *opResult = gRaRsOps.getLiteRdevCap(liteRdevCapData->txData.phyId,
-        liteRdevCapData->txData.rdevIndex,
+    *opResult = gRaRsOps.getLiteRdevCap(liteRdevCapData->txData.phyId, liteRdevCapData->txData.rdevIndex,
         (void *)&liteRdevCapOut->rxData.resp);
     if (*opResult != 0) {
         hccp_err("get_lite_rdev_cap failed ret[%d].", *opResult);
@@ -1299,18 +1324,14 @@ STATIC int RaRsGetLiteRdevCap(char *inBuf, char *outBuf, int *outLen, int *opRes
 
 STATIC int RaRsGetLiteQpCqAttr(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
-    union OpLiteQpCqAttrData *liteQpCqAttrData =
-        (union OpLiteQpCqAttrData *)(inBuf + sizeof(struct MsgHead));
-    union OpLiteQpCqAttrData *liteQpCqAttrOut =
-        (union OpLiteQpCqAttrData *)(outBuf + sizeof(struct MsgHead));
+    (void)outLen;
+    union OpLiteQpCqAttrData *liteQpCqAttrData = (union OpLiteQpCqAttrData *)(inBuf + sizeof(struct MsgHead));
+    union OpLiteQpCqAttrData *liteQpCqAttrOut = (union OpLiteQpCqAttrData *)(outBuf + sizeof(struct MsgHead));
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(
-        sizeof(union OpLiteQpCqAttrData), sizeof(struct MsgHead), rcvBufLen, opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpLiteQpCqAttrData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
-    *opResult = gRaRsOps.getLiteQpCqAttr(liteQpCqAttrData->txData.phyId,
-        liteQpCqAttrData->txData.rdevIndex,
-        liteQpCqAttrData->txData.qpn,
-        (void *)&liteQpCqAttrOut->rxData.resp);
+    *opResult = gRaRsOps.getLiteQpCqAttr(liteQpCqAttrData->txData.phyId, liteQpCqAttrData->txData.rdevIndex,
+        liteQpCqAttrData->txData.qpn, (void *)&liteQpCqAttrOut->rxData.resp);
     if (*opResult != 0) {
         hccp_err("get_lite_qp_cq_attr failed ret[%d].", *opResult);
     }
@@ -1318,20 +1339,18 @@ STATIC int RaRsGetLiteQpCqAttr(char *inBuf, char *outBuf, int *outLen, int *opRe
     return 0;
 }
 
-STATIC int RaRsGetLiteConnectedInfo(
-    char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
+STATIC int RaRsGetLiteConnectedInfo(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
-    union OpLiteConnectedInfoData *liteConnectedInfoData =
-        (union OpLiteConnectedInfoData *)(inBuf + sizeof(struct MsgHead));
-    union OpLiteConnectedInfoData *liteConnectedInfoOut =
-        (union OpLiteConnectedInfoData *)(outBuf + sizeof(struct MsgHead));
+    (void)outLen;
+    union OpLiteConnectedInfoData *liteConnectedInfoData = (union OpLiteConnectedInfoData *)(inBuf +
+                                                                                             sizeof(struct MsgHead));
+    union OpLiteConnectedInfoData *liteConnectedInfoOut = (union OpLiteConnectedInfoData *)(outBuf +
+                                                                                            sizeof(struct MsgHead));
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(
-        sizeof(union OpLiteConnectedInfoData), sizeof(struct MsgHead), rcvBufLen, opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpLiteConnectedInfoData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
     *opResult = gRaRsOps.getLiteConnectedInfo(liteConnectedInfoData->txData.phyId,
-        liteConnectedInfoData->txData.rdevIndex,
-        liteConnectedInfoData->txData.qpn,
+        liteConnectedInfoData->txData.rdevIndex, liteConnectedInfoData->txData.qpn,
         (void *)&liteConnectedInfoOut->rxData.resp);
     if (*opResult != 0) {
         hccp_err("get_lite_connected_info failed ret[%d].", *opResult);
@@ -1342,18 +1361,14 @@ STATIC int RaRsGetLiteConnectedInfo(
 
 STATIC int RaRsGetLiteMemAttr(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
-    union OpLiteMemAttrData *liteMemAttrData =
-        (union OpLiteMemAttrData *)(inBuf + sizeof(struct MsgHead));
-    union OpLiteMemAttrData *liteMemAttrOut =
-        (union OpLiteMemAttrData *)(outBuf + sizeof(struct MsgHead));
+    (void)outLen;
+    union OpLiteMemAttrData *liteMemAttrData = (union OpLiteMemAttrData *)(inBuf + sizeof(struct MsgHead));
+    union OpLiteMemAttrData *liteMemAttrOut = (union OpLiteMemAttrData *)(outBuf + sizeof(struct MsgHead));
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(
-        sizeof(union OpLiteMemAttrData), sizeof(struct MsgHead), rcvBufLen, opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpLiteMemAttrData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
-    *opResult = gRaRsOps.getLiteMemAttr(liteMemAttrData->txData.phyId,
-        liteMemAttrData->txData.rdevIndex,
-        liteMemAttrData->txData.qpn,
-        (void *)&liteMemAttrOut->rxData.resp);
+    *opResult = gRaRsOps.getLiteMemAttr(liteMemAttrData->txData.phyId, liteMemAttrData->txData.rdevIndex,
+        liteMemAttrData->txData.qpn, (void *)&liteMemAttrOut->rxData.resp);
     if (*opResult != 0) {
         hccp_err("get_lite_mem_attr failed ret[%d].", *opResult);
     }
@@ -1363,15 +1378,13 @@ STATIC int RaRsGetLiteMemAttr(char *inBuf, char *outBuf, int *outLen, int *opRes
 
 STATIC int RaRsGetCqeErrInfoNum(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
-    union OpGetCqeErrInfoNumData *cqeErrInfoNum =
-        (union OpGetCqeErrInfoNumData *)(inBuf + sizeof(struct MsgHead));
+    (void)outLen;
+    union OpGetCqeErrInfoNumData *cqeErrInfoNum = (union OpGetCqeErrInfoNumData *)(inBuf + sizeof(struct MsgHead));
     unsigned int num;
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpGetCqeErrInfoNumData), sizeof(struct MsgHead), rcvBufLen,
-        opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpGetCqeErrInfoNumData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
-    *opResult = gRaRsOps.getCqeErrInfoNum(cqeErrInfoNum->txData.phyId,
-        cqeErrInfoNum->txData.rdevIndex, &num);
+    *opResult = gRaRsOps.getCqeErrInfoNum(cqeErrInfoNum->txData.phyId, cqeErrInfoNum->txData.rdevIndex, &num);
     if (*opResult != 0) {
         hccp_err("get_cqe_err_info_num failed, ret %d", *opResult);
         return 0;
@@ -1385,19 +1398,18 @@ STATIC int RaRsGetCqeErrInfoNum(char *inBuf, char *outBuf, int *outLen, int *opR
 
 STATIC int RaRsGetCqeErrInfoList(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
-    union OpGetCqeErrInfoListData *cqeErrInfoList =
-        (union OpGetCqeErrInfoListData *)(inBuf + sizeof(struct MsgHead));
-    union OpGetCqeErrInfoListData *cqeErrInfoListRet =
-        (union OpGetCqeErrInfoListData *)(outBuf + sizeof(struct MsgHead));
+    (void)outLen;
+    union OpGetCqeErrInfoListData *cqeErrInfoList = (union OpGetCqeErrInfoListData *)(inBuf + sizeof(struct MsgHead));
+    union OpGetCqeErrInfoListData *cqeErrInfoListRet = (union OpGetCqeErrInfoListData *)(outBuf +
+                                                                                         sizeof(struct MsgHead));
     unsigned int num;
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpGetCqeErrInfoListData), sizeof(struct MsgHead), rcvBufLen,
-        opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpGetCqeErrInfoListData), sizeof(struct MsgHead), rcvBufLen, opResult);
     HCCP_CHECK_PARAM_LEN_RET_HOST(cqeErrInfoList->txData.num, 0, CQE_ERR_INFO_MAX_NUM, opResult);
 
     num = cqeErrInfoList->txData.num;
-    *opResult = gRaRsOps.getCqeErrInfoList(cqeErrInfoList->txData.phyId,
-        cqeErrInfoList->txData.rdevIndex, cqeErrInfoListRet->rxData.infoList, &num);
+    *opResult = gRaRsOps.getCqeErrInfoList(cqeErrInfoList->txData.phyId, cqeErrInfoList->txData.rdevIndex,
+        cqeErrInfoListRet->rxData.infoList, &num);
     if (*opResult != 0) {
         hccp_err("get_cqe_err_info_list failed, ret %d", *opResult);
         return 0;
@@ -1410,11 +1422,11 @@ STATIC int RaRsGetCqeErrInfoList(char *inBuf, char *outBuf, int *outLen, int *op
 
 STATIC int RaRsGetTlsEnable(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     union OpGetTlsEnableData *opDataRet = (union OpGetTlsEnableData *)(outBuf + sizeof(struct MsgHead));
     union OpGetTlsEnableData *opData = (union OpGetTlsEnableData *)(inBuf + sizeof(struct MsgHead));
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpGetTlsEnableData), sizeof(struct MsgHead), rcvBufLen,
-        opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpGetTlsEnableData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
     *opResult = gRaRsOps.getTlsEnable(opData->txData.phyId, &opDataRet->rxData.tlsEnable);
     if (*opResult != 0) {
@@ -1425,10 +1437,11 @@ STATIC int RaRsGetTlsEnable(char *inBuf, char *outBuf, int *outLen, int *opResul
 
 STATIC int RaRsGetSecRandom(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)inBuf;
+    (void)outLen;
     union OpGetSecRandomData *opDataRet = (union OpGetSecRandomData *)(outBuf + sizeof(struct MsgHead));
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpGetSecRandomData), sizeof(struct MsgHead), rcvBufLen,
-        opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpGetSecRandomData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
     *opResult = gRaRsOps.getSecRandom((int *)&opDataRet->rxData.value);
     if (*opResult != 0) {
@@ -1439,18 +1452,35 @@ STATIC int RaRsGetSecRandom(char *inBuf, char *outBuf, int *outLen, int *opResul
 
 STATIC int RaRsGetHccnCfg(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     union OpGetHccnCfgData *opDataRet = (union OpGetHccnCfgData *)(outBuf + sizeof(struct MsgHead));
     union OpGetHccnCfgData *opData = (union OpGetHccnCfgData *)(inBuf + sizeof(struct MsgHead));
 
-    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpGetHccnCfgData), sizeof(struct MsgHead), rcvBufLen,
-        opResult);
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpGetHccnCfgData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
+    struct RaInfo raInfo = {
+        .mode = NETWORK_OFFLINE,
+        .phyId = opData->txData.phyId,
+    };
     opDataRet->rxData.valueLen = HCCN_CFG_MSG_DATA_LEN;
-    *opResult = gRaRsOps.getHccnCfg(opData->txData.phyId, opData->txData.key, opDataRet->rxData.value,
-        &opDataRet->rxData.valueLen);
+    *opResult = gRaRsOps.getHccnCfg(&raInfo, opData->txData.key, opDataRet->rxData.value, &opDataRet->rxData.valueLen);
     if (*opResult != 0) {
         hccp_err("get hccn cfg failed, ret %d", *opResult);
     }
+    return 0;
+}
+
+STATIC int RaRsSetDebugConfig(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
+{
+    union OpSetDebugConfigData *opData = (union OpSetDebugConfigData *)(inBuf + sizeof(struct MsgHead));
+
+    (void)outBuf;
+    (void)outLen;
+    HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpSetDebugConfigData), sizeof(struct MsgHead), rcvBufLen, opResult);
+
+    RsSetDebugConfig(opData->txData.debugConfig);
+    HccpSetDebugConfig(opData->txData.debugConfig);
+    *opResult = 0;
     return 0;
 }
 
@@ -1467,7 +1497,7 @@ STATIC void RaTimeInterval(struct timeval *endTime, struct timeval *startTime, l
     }
 
     *msec = (endTime->tv_sec - startTime->tv_sec) * MS_PRE_SECOND +
-        (endTime->tv_usec - startTime->tv_usec) / US_PRE_MSECOND;
+            (endTime->tv_usec - startTime->tv_usec) / US_PRE_MSECOND;
 }
 
 #define OP_TYPE_CFG 0
@@ -1504,23 +1534,23 @@ STATIC void RaGetOpRight(struct RaHdcOpSec *opSec, unsigned int opcode, unsigned
     opSec->tokenNum = opSec->tokenNum - 1;
     opSec->tokenNum = (opSec->tokenNum > BUCKET_DEPTH) ? BUCKET_DEPTH : opSec->tokenNum;
     if (RaIsOpcodeLogSuppressed(opSec->lastOpcode) && opSec->lastOpcode != opcode) {
-        hccp_dbg("lastOpcode[%u], exeRight[%d], tokenNum[%llu], cfgOpNum[%u], lastOpcodeCnt[%u]",
-            opSec->lastOpcode, exeRight, opSec->tokenNum, opSec->cfgOpNum, opSec->lastOpcodeCnt);
+        hccp_dbg("lastOpcode[%u], exeRight[%d], tokenNum[%llu], cfgOpNum[%u], lastOpcodeCnt[%u]", opSec->lastOpcode,
+            exeRight, opSec->tokenNum, opSec->cfgOpNum, opSec->lastOpcodeCnt);
     } else if (RaIsOpcodeLogSuppressed(opcode)) {
         goto out;
     }
 
     if (opSec->isAsyncOp) {
-        hccp_dbg("opcode[%u], reqId[%u], exeRight[%d], tokenNum[%llu], cfgOpNum[%u]",
-            opcode, asyncReqId, exeRight, opSec->tokenNum, opSec->cfgOpNum);
+        hccp_dbg("opcode[%u], reqId[%u], exeRight[%d], tokenNum[%llu], cfgOpNum[%u]", opcode, asyncReqId, exeRight,
+            opSec->tokenNum, opSec->cfgOpNum);
     } else {
-        hccp_dbg("opcode[%u], exeRight[%d], tokenNum[%llu], cfgOpNum[%u]",
-            opcode, exeRight, opSec->tokenNum, opSec->cfgOpNum);
+        hccp_dbg("opcode[%u], exeRight[%d], tokenNum[%llu], cfgOpNum[%u]", opcode, exeRight, opSec->tokenNum,
+            opSec->cfgOpNum);
     }
 
 out:
-    opSec->lastOpcodeCnt = (opcode == opSec->lastOpcode) ? (opSec->lastOpcodeCnt + 1) :
-        (RaIsOpcodeLogSuppressed(opcode) ? 1 : 0);
+    opSec->lastOpcodeCnt = (opcode == opSec->lastOpcode) ? (opSec->lastOpcodeCnt + 1)
+                                                         : (RaIsOpcodeLogSuppressed(opcode) ? 1 : 0);
     opSec->lastOpcode = opcode;
     *right = exeRight;
     return;
@@ -1528,17 +1558,18 @@ out:
 
 struct RaOpHandle gRaOpHandle[] = {
     {RA_RS_SOCKET_CONN, RaRsSocketBatchConnect, sizeof(union OpSocketConnectData)},
+    {RA_RS_SOCKET_CONN_V2, RaRsSocketBatchConnectV2, sizeof(union OpSocketConnectDataV2)},
     {RA_RS_SOCKET_CLOSE, RaRsSocketBatchClose, sizeof(union OpSocketCloseData)},
     {RA_RS_SOCKET_ABORT, RaRsSocketBatchAbort, sizeof(union OpSocketConnectData)},
     {RA_RS_SOCKET_LISTEN_START, RaRsSocketListenStart, sizeof(union OpSocketListenData)},
+    {RA_RS_SOCKET_LISTEN_START_V2, RaRsSocketListenStartV2, sizeof(union OpSocketListenDataV2)},
     {RA_RS_SOCKET_LISTEN_STOP, RaRsSocketListenStop, sizeof(union OpSocketListenData)},
     {RA_RS_GET_SOCKET, RaRsGetSockets, sizeof(union OpSocketInfoData)},
     {RA_RS_SOCKET_SEND, RaRsSocketSend, sizeof(union OpSocketSendData)},
     {RA_RS_SOCKET_RECV, RaRsSocketRecv, sizeof(union OpSocketRecvData)},
     {RA_RS_QP_CREATE, RaRsQpCreate, sizeof(union OpQpCreateData)},
     {RA_RS_QP_CREATE_WITH_ATTRS, RaRsQpCreateWithAttrs, sizeof(union OpQpCreateWithAttrsData)},
-    {RA_RS_QP_CREATE_WITH_CQ_WITH_ATTRS, RaRsQpCreateWithCQWithAttrs,
-        sizeof(union OpQpCreateWithCQWithAttrsData)},
+    {RA_RS_QP_CREATE_WITH_CQ_WITH_ATTRS, RaRsQpCreateWithCQWithAttrs, sizeof(union OpQpCreateWithCQWithAttrsData)},
     {RA_RS_AI_QP_CREATE, RaRsAiQpCreate, sizeof(union OpAiQpCreateData)},
     {RA_RS_AI_QP_CREATE_WITH_ATTRS, RaRsAiQpCreateWithData, sizeof(union OpAiQpCreateWithAttrsData)},
     {RA_RS_TYPICAL_QP_CREATE, RaRsTypicalQpCreate, sizeof(union OpTypicalQpCreateData)},
@@ -1574,6 +1605,7 @@ struct RaOpHandle gRaOpHandle[] = {
     {RA_RS_GET_IFADDRS, RaRsGetIfaddrs, sizeof(union OpIfaddrData)},
     {RA_RS_GET_IFADDRS_V2, RaRsGetIfaddrsV2, sizeof(union OpIfaddrDataV2)},
     {RA_RS_GET_INTERFACE_VERSION, RaRsGetInterfaceVersion, sizeof(union OpGetVersionData)},
+    {RA_RS_BATCH_GET_INTERFACE_VERSION, RaRsBatchGetInterfaceVersion, sizeof(union OpBatchGetVersionData)},
     {RA_RS_SEND_WRLIST, RaRsSendWrList, sizeof(union OpSendWrlistData)},
     {RA_RS_SEND_WRLIST_V2, RaRsSendWrListV2, sizeof(union OpSendWrlistDataV2)},
     {RA_RS_SEND_WRLIST_EXT, RaRsSendWrListExt, sizeof(union OpSendWrlistDataExt)},
@@ -1608,16 +1640,16 @@ struct RaOpHandle gRaOpHandle[] = {
     {RA_RS_PING_STOP, RaRsPingTaskStop, sizeof(union OpPingStopData)},
     {RA_RS_PING_DEL, RaRsPingTargetDel, sizeof(union OpPingDelData)},
     {RA_RS_PING_DEINIT, RaRsPingDeinit, sizeof(union OpPingDeinitData)},
-#ifdef CONFIG_TLV
     {RA_RS_TLV_INIT_V1, RaRsTlvInitV1, sizeof(union OpTlvInitDataV1)},
     {RA_RS_TLV_INIT, RaRsTlvInit, sizeof(union OpTlvInitData)},
     {RA_RS_TLV_DEINIT, RaRsTlvDeinit, sizeof(union OpTlvDeinitData)},
     {RA_RS_TLV_REQUEST, RaRsTlvRequest, sizeof(union OpTlvRequestData)},
     {RA_RS_TLV_REQUEST_V2, RaRsTlvRequestV2, sizeof(union OpTlvRequestDataV2)},
-#endif
+    {RA_RS_CUSTOM_CHANNEL_DEPRECATED, RaRsCustomChannel, sizeof(union OpCustomChannelData)},
     {RA_RS_GET_TLS_ENABLE, RaRsGetTlsEnable, sizeof(union OpGetTlsEnableData)},
     {RA_RS_GET_SEC_RANDOM, RaRsGetSecRandom, sizeof(union OpGetSecRandomData)},
     {RA_RS_GET_HCCN_CFG, RaRsGetHccnCfg, sizeof(union OpGetHccnCfgData)},
+    {RA_RS_SET_DEBUG_CONFIG, RaRsSetDebugConfig, sizeof(union OpSetDebugConfigData)},
     {RA_RS_ASYNC_HDC_SESSION_CONNECT, RaRsAsyncHdcSessionConnect, sizeof(union OpAsyncHdcConnectData)},
     {RA_RS_ASYNC_HDC_SESSION_CLOSE, RaRsAsyncHdcSessionClose, sizeof(union OpAsyncHdcCloseData)},
     {RA_RS_GET_DEV_EID_INFO_NUM, RaRsGetDevEidInfoNum, sizeof(union OpGetDevEidInfoNumData)},
@@ -1626,6 +1658,7 @@ struct RaOpHandle gRaOpHandle[] = {
     {RA_RS_CTX_GET_ASYNC_EVENTS, RaRsCtxGetAsyncEvents, sizeof(union OpCtxGetAsyncEventsData)},
     {RA_RS_CTX_DEINIT, RaRsCtxDeinit, sizeof(union OpCtxDeinitData)},
     {RA_RS_GET_EID_BY_IP, RaRsGetEidByIp, sizeof(union OpGetEidByIpData)},
+    {RA_RS_GET_IP_BY_EID, RaRsGetIpByEid, sizeof(union OpGetIpByEidData)},
     {RA_RS_GET_TP_INFO_LIST, RaRsGetTpInfoList, sizeof(union OpGetTpInfoListData)},
     {RA_RS_GET_TP_ATTR, RaRsGetTpAttr, sizeof(union OpGetTpAttrData)},
     {RA_RS_SET_TP_ATTR, RaRsSetTpAttr, sizeof(union OpSetTpAttrData)},
@@ -1645,12 +1678,14 @@ struct RaOpHandle gRaOpHandle[] = {
     {RA_RS_CTX_QP_DESTROY_BATCH, RaRsCtxQpDestroyBatch, sizeof(union OpCtxQpDestroyBatchData)},
     {RA_RS_CTX_QP_IMPORT, RaRsCtxQpImport, sizeof(union OpCtxQpImportData)},
     {RA_RS_CTX_QP_UNIMPORT, RaRsCtxQpUnimport, sizeof(union OpCtxQpUnimportData)},
+    {RA_RS_CTX_QP_UNIMPORT_DEPRECATED, RaRsCtxQpUnimportDeprecated, sizeof(union OpCtxQpUnimportData)},
     {RA_RS_CTX_QP_BIND, RaRsCtxQpBind, sizeof(union OpCtxQpBindData)},
     {RA_RS_CTX_QP_UNBIND, RaRsCtxQpUnbind, sizeof(union OpCtxQpUnbindData)},
     {RA_RS_CTX_BATCH_SEND_WR, RaRsCtxBatchSendWr, sizeof(union OpCtxBatchSendWrData)},
     {RA_RS_CTX_UPDATE_CI, RaRsCtxUpdateCi, sizeof(union OpCtxUpdateCiData)},
     {RA_RS_CTX_GET_AUX_INFO, RaRsCtxGetAuxInfo, sizeof(union OpCtxGetAuxInfoData)},
     {RA_RS_CTX_GET_CR_ERR_INFO_LIST, RaRsCtxGetCrErrInfoList, sizeof(union OpCtxGetCrErrInfoListData)},
+    {RA_RS_CTX_NOTIFY_EVENT, RaRsCtxNotifyEvent, sizeof(union OpCtxNotifyEventData)},
     {RA_RS_CTX_GET_UB_CONTEXT, RaRsCtxGetUbContext, sizeof(union OpCtxGetContextData)},
 };
 
@@ -1664,18 +1699,18 @@ STATIC int RaCheckParam(char *recvBuf, int rcvBufLen, char **sendBuf, int *sndBu
 
     *paramCheckResult = 1;
     if (rcvBufLen < (int)sizeof(struct MsgHead)) { // check rcv_buf_len
-        hccp_err("rcv_buf_len[%d] form ra is invalid", rcvBufLen);
+        hccp_err("rcv_buf_len[%d] from ra is invalid", rcvBufLen);
         ret = OpMsgErr(sendBuf, recvMsgHead, sndBufLen, RECV_BUF_LEN_INVALID);
         return ret;
     }
 
     if (((recvMsgHead->msgDataLen + sizeof(struct MsgHead)) != (unsigned int)rcvBufLen) ||
         (recvMsgHead->opcode >= RA_RS_OP_MAX_NUM ||
-        ((recvMsgHead->opcode < RA_RS_HDC_SESSION_CLOSE) && (recvMsgHead->opcode >= RA_RS_EXTER_OP_MAX_NUM)))) {
-        hccp_err("rcv data incomplete, because rcvBufLen[%d] != msg_head_len[%u] + msgDataLen[%u] \
-            or opcode[%u] is wrong, RA_RS_OP_MAX_NUM:[%d], RA_RS_EXTER_OP_MAX_NUM:[%d]",
-            rcvBufLen, sizeof(struct MsgHead), recvMsgHead->msgDataLen, recvMsgHead->opcode,
-            RA_RS_OP_MAX_NUM, RA_RS_EXTER_OP_MAX_NUM);
+            ((recvMsgHead->opcode < RA_RS_HDC_SESSION_CLOSE) && (recvMsgHead->opcode >= RA_RS_EXTER_OP_MAX_NUM)))) {
+        hccp_err("rcv data incomplete, because rcvBufLen[%d] != msg_head_len[%u] + msgDataLen[%u] "
+                 "or opcode[%u] is wrong, RA_RS_OP_MAX_NUM:[%d], RA_RS_EXTER_OP_MAX_NUM:[%d]",
+            rcvBufLen, sizeof(struct MsgHead), recvMsgHead->msgDataLen, recvMsgHead->opcode, RA_RS_OP_MAX_NUM,
+            RA_RS_EXTER_OP_MAX_NUM);
         ret = OpMsgErr(sendBuf, recvMsgHead, sndBufLen, HAVE_OP_RIGHT);
         return ret;
     }
@@ -1686,8 +1721,7 @@ STATIC int RaCheckParam(char *recvBuf, int rcvBufLen, char **sendBuf, int *sndBu
         }
     }
     if (recvMsgHead->opcode != RA_RS_SOCKET_RECV && recvMsgHead->msgDataLen != dataSize) {
-        hccp_err("rcv data incomplete. because msg_data_len[%d] != op_data_len[%u]",
-            recvMsgHead->msgDataLen, dataSize);
+        hccp_err("rcv data incomplete. because msg_data_len[%d] != op_data_len[%u]", recvMsgHead->msgDataLen, dataSize);
         ret = OpMsgErr(sendBuf, recvMsgHead, sndBufLen, RECV_BUF_LEN_INVALID);
         return ret;
     }
@@ -1707,13 +1741,16 @@ int RaHandle(struct RaHdcOpSec *opSec, char *recvBuf, int rcvBufLen, char **send
     int num = sizeof(gRaOpHandle) / sizeof(gRaOpHandle[0]);
 
     ret = RaCheckParam(recvBuf, rcvBufLen, sendBuf, sndBufLen, &paramCheckRet);
-    CHK_PRT_RETURN(paramCheckRet != 0 || ret != 0, hccp_err("ra param check failed. param check ret:[%d]"
-        "function call ret:[%d]", paramCheckRet, ret), ret);
+    CHK_PRT_RETURN(paramCheckRet != 0 || ret != 0,
+        hccp_err("ra param check failed. param check ret:[%d] "
+                 "function call ret:[%d]",
+            paramCheckRet, ret),
+        ret);
 
     RaGetOpRight(opSec, recvMsgHead->opcode, recvMsgHead->asyncReqId, &opRight);
     CHK_PRT_RETURN(opRight != HAVE_OP_RIGHT, ret = OpMsgErr(sendBuf, recvMsgHead, sndBufLen, opRight), ret);
 
-    *sendBuf = (char *)calloc(sizeof(char), recvMsgHead->msgDataLen + sizeof(struct MsgHead));
+    *sendBuf = (char *)calloc(recvMsgHead->msgDataLen + sizeof(struct MsgHead), sizeof(char));
     CHK_PRT_RETURN(*sendBuf == NULL, hccp_err("calloc failed."), -ENOMEM);
 
     for (i = 0; i < num; i++) {
@@ -1730,7 +1767,7 @@ int RaHandle(struct RaHdcOpSec *opSec, char *recvBuf, int rcvBufLen, char **send
         }
     }
 
-    hccp_warn("not support opcode:%d", recvMsgHead->opcode);
+    hccp_warn_others("not support opcode:%d", recvMsgHead->opcode);
     ret = -EPROTONOSUPPORT;
 out:
     free(*sendBuf);
@@ -1770,25 +1807,24 @@ STATIC int RecvHandleSendPkt(HDC_SESSION session, unsigned int *closeSession, un
 
     ret = RA_HDC_OPS.recv(session, msgRcv, MAX_HDC_DATA, 0, &recvBufCnt, RA_HDC_RECV_SEND_TIMEOUT);
     if (ret) {
-        hccp_warn("recv hdc msg unsuccessful, ret %d", ret);
+        hccp_warn_others("recv hdc msg unsuccessful, ret %d", ret);
         goto out;
     }
 
     RA_HDC_OPS.getMsgBuffer(msgRcv, 0, (char **)&recvBuf, &rcvBufLen);
     if (recvBuf == NULL) {
-        hccp_warn("rcv_buf_len is NULL, Session disconnect.");
+        hccp_warn_others("rcv_buf_len is NULL, Session disconnect.");
         goto out;
     }
 
     if (rcvBufLen == 0) {
         *closeSession = 1;
-        hccp_warn("rcv_buf_len is 0, Session disconnect.");
+        hccp_warn_others("rcv_buf_len is 0, Session disconnect.");
         RA_HDC_OPS.freeMsg(msgRcv);
         return 0;
     }
 
-    ret = RaHandle(&gHdcServer[chipId].opSec, recvBuf, rcvBufLen, (char **)&sendBuf, &sndBufLen,
-        closeSession);
+    ret = RaHandle(&gHdcServer[chipId].opSec, recvBuf, rcvBufLen, (char **)&sendBuf, &sndBufLen, closeSession);
     if (ret) {
         hccp_err("ra_handle failed.");
         goto out;
@@ -1815,7 +1851,7 @@ STATIC void RaHdcRecvHandleSendPkt(const unsigned int chipId)
 
     ret = RecvHandleSendPkt(gHdcServer[chipId].hdcSession, &closeSession, chipId);
     if (closeSession != 0 || ret != 0) {
-        hccp_warn("recv_handle_send_pkt close_session[%u] ret[%d]", closeSession, ret);
+        hccp_warn_socket("recv_handle_send_pkt close_session[%u] ret[%d]", closeSession, ret);
         RA_PTHREAD_MUTEX_LOCK(&gHdcInitPara.mutex);
         gHdcInitPara.connectStatus = HDC_UNCONNECTED;
         RA_PTHREAD_MUTEX_UNLOCK(&gHdcInitPara.mutex);
@@ -1835,7 +1871,7 @@ STATIC void RaHwHdcCloseSession(HDC_SESSION *session)
 
     ret = RA_HDC_OPS.sessionClose(*session);
     if (ret != 0) {
-        hccp_warn("RA_HDC_OPS.sessionClose unsuccessful, ret:%d", ret);
+        hccp_warn_socket("RA_HDC_OPS.sessionClose unsuccessful, ret:%d", ret);
     }
     *session = NULL;
 
@@ -1846,21 +1882,22 @@ out:
 
 STATIC void *RaPthread(void *arg)
 {
+    (void)arg;
     unsigned int chipId = gHdcInitPara.chipId;
     int ret;
 
     ret = pthread_detach(pthread_self());
     CHK_PRT_RETURN(ret, hccp_err("pthread detach failed ret %d", ret), NULL);
 
-    (void)prctl(PR_SET_NAME, (unsigned long)"hccp_ra");
+    (void)prctl(PR_SET_NAME, (uintptr_t) "hccp_ra", 0, 0, 0);
 
     RA_PTHREAD_MUTEX_LOCK(&gHdcInitPara.mutex);
     gHdcInitPara.threadStatus = THREAD_RUNNING;
     RA_PTHREAD_MUTEX_UNLOCK(&gHdcInitPara.mutex);
 
     RsGetCurTime(&gRaThreadInfo.lastCheckTime);
-    ret = strncpy_s((char *)gRaThreadInfo.pthreadName, sizeof(gRaThreadInfo.pthreadName),
-        "ra_thread", strlen("ra_thread"));
+    ret = strncpy_s((char *)gRaThreadInfo.pthreadName, sizeof(gRaThreadInfo.pthreadName), "ra_thread",
+        strlen("ra_thread"));
     CHK_PRT_RETURN(ret, hccp_err("strncpy_s pthread name failed, ret[%d]", ret), NULL);
 
     hccp_run_info("pthread[%s] is alive!", gRaThreadInfo.pthreadName);
@@ -1877,7 +1914,7 @@ STATIC void *RaPthread(void *arg)
         RaHdcRecvHandleSendPkt(chipId);
     }
 
-    hccp_info("thread [%d] is out", getpid());
+    hccp_info_others("thread [%d] is out", getpid());
     RaHwHdcCloseSession(&gHdcServer[chipId].hdcSession);
     RA_PTHREAD_MUTEX_LOCK(&gHdcInitPara.mutex);
     gHdcInitPara.threadStatus = THREAD_HALT;
@@ -1889,10 +1926,16 @@ STATIC int RaHdcServerInit(unsigned int chipId, int hdcType)
 {
     int ret;
 
-    CHK_PRT_RETURN(chipId > HCCP_MAX_CHIP_ID || gHdcServer[chipId].hdcSession != NULL, hccp_err("invalid "
-        "chip id %u, or hdcSession is not NULL", chipId), -EINVAL);
-    CHK_PRT_RETURN(hdcType != HDC_SERVICE_TYPE_RDMA && hdcType != HDC_SERVICE_TYPE_RDMA_V2, hccp_err("invalid "
-        "hdc_type %d", hdcType), -EINVAL);
+    CHK_PRT_RETURN(chipId > HCCP_MAX_CHIP_ID || gHdcServer[chipId].hdcSession != NULL,
+        hccp_err("invalid "
+                 "chip id %u, or hdcSession is not NULL",
+            chipId),
+        -EINVAL);
+    CHK_PRT_RETURN(hdcType != HDC_SERVICE_TYPE_RDMA && hdcType != HDC_SERVICE_TYPE_RDMA_V2,
+        hccp_err("invalid "
+                 "hdc_type %d",
+            hdcType),
+        -EINVAL);
 
     RaHdcInitOpSec(&gHdcServer[chipId].opSec, BUCKET_DEPTH, false);
 
@@ -1918,7 +1961,7 @@ int RaHdcSessionAccept(unsigned int chipId, HDC_SESSION *session, int initHostTg
 
     ret = RA_HDC_OPS.sessionAccept(gHdcServer[chipId].hdcServer, session);
     if (ret != 0) {
-        hccp_warn("Session accept failed, chipId(%u), ret(%d) ", chipId, ret);
+        hccp_warn_socket("Session accept failed, chipId(%u), ret(%d) ", chipId, ret);
         return ret;
     }
 
@@ -1930,7 +1973,8 @@ int RaHdcSessionAccept(unsigned int chipId, HDC_SESSION *session, int initHostTg
     }
 
     if (hostTgid != initHostTgid) {
-        hccp_warn("host_tgid[%d] from ra not equal to the tgid[%d] from hccp_init, invalid", hostTgid, initHostTgid);
+        hccp_warn_others("host_tgid[%d] from ra not equal to the tgid[%d] from hccp_init, invalid", hostTgid,
+            initHostTgid);
         goto out;
     }
 
@@ -1941,9 +1985,9 @@ out:
     return ret;
 }
 
-int RaHdcAsyncRecvPkt(struct RaHdcAsyncInfo *asyncInfo, unsigned int chipId, void **recvBuf,
-    unsigned int *recvLen)
+int RaHdcAsyncRecvPkt(struct RaHdcAsyncInfo *asyncInfo, unsigned int chipId, void **recvBuf, unsigned int *recvLen)
 {
+    (void)chipId;
     struct drvHdcMsg *msgRcv = NULL;
     void *rcvBuf = NULL;
     int rcvLen = 0;
@@ -1954,13 +1998,13 @@ int RaHdcAsyncRecvPkt(struct RaHdcAsyncInfo *asyncInfo, unsigned int chipId, voi
 
     ret = RA_HDC_OPS.recv(asyncInfo->hdcSession, msgRcv, MAX_HDC_DATA, 0, &rcvLen, RA_HDC_RECV_SEND_TIMEOUT);
     if (ret != 0) {
-        hccp_warn("recv hdc msg unsuccessful ret %d", ret);
+        hccp_warn_socket("recv hdc msg unsuccessful ret %d", ret);
         goto out;
     }
 
     RA_HDC_OPS.getMsgBuffer(msgRcv, 0, (char **)&rcvBuf, &rcvLen);
     if (rcvBuf == NULL || rcvLen == 0) {
-        hccp_warn("get_msg_buffer unsuccessful, rcvBuf is NULL or rcvLen:%d is 0", rcvLen);
+        hccp_warn_others("get_msg_buffer unsuccessful, rcvBuf is NULL or rcvLen:%d is 0", rcvLen);
         goto out;
     }
 
@@ -1979,8 +2023,7 @@ out:
     return ret;
 }
 
-int RaHdcAsyncSendPkt(struct RaHdcAsyncInfo *asyncInfo, unsigned int chipId, void *sendBuf,
-    unsigned int sendLen)
+int RaHdcAsyncSendPkt(struct RaHdcAsyncInfo *asyncInfo, unsigned int chipId, void *sendBuf, unsigned int sendLen)
 {
     struct drvHdcMsg *msgSnd = NULL;
     int ret = -EINVAL;
@@ -1988,7 +2031,7 @@ int RaHdcAsyncSendPkt(struct RaHdcAsyncInfo *asyncInfo, unsigned int chipId, voi
     RA_PTHREAD_MUTEX_LOCK(&asyncInfo->sendMutex);
     // degrade log level because session will be closed by recv thread and request will be abort
     if (asyncInfo->hdcSession == NULL) {
-        hccp_warn("[async][send_pkt]hdc_session is NULL, chipId(%u)", chipId);
+        hccp_warn_socket("[async][send_pkt]hdc_session is NULL, chipId(%u)", chipId);
         goto alloc_msg_err;
     }
 
@@ -2026,6 +2069,7 @@ void RaHdcCloseSession(HDC_SESSION *session)
 
 STATIC void RaHwHdcInit(void *arg)
 {
+    (void)arg;
     unsigned int chipId = gHdcInitPara.chipId;
     pthread_t tidp;
     int ret;
@@ -2036,9 +2080,9 @@ STATIC void RaHwHdcInit(void *arg)
         return;
     }
 
-    (void)prctl(PR_SET_NAME, (unsigned long)"hccp_hw_hdc");
+    (void)prctl(PR_SET_NAME, (uintptr_t) "hccp_hw_hdc", 0, 0, 0);
 
-    hccp_info("chip_id(%u)", chipId);
+    hccp_info_others("chip_id(%u)", chipId);
     gHdcInitPara.hdcFlag = 1;
 
     ret = pthread_create(&tidp, NULL, (void *)RaPthread, NULL);
@@ -2055,7 +2099,7 @@ STATIC void RaHwHdcInit(void *arg)
         RaHwHdcCloseSession(&gHdcServer[chipId].hdcSession);
         ret = RaHdcSessionAccept(chipId, &gHdcServer[chipId].hdcSession, (int)gHdcInitPara.hostTgid);
         if (ret != 0) {
-            hccp_warn("Session Accept unsuccessful, chipId(%u), ret(%d) ", chipId, ret);
+            hccp_warn_socket("Session Accept unsuccessful, chipId(%u), ret(%d) ", chipId, ret);
             gHdcInitPara.hdcFlag = 0;
             return;
         }
@@ -2084,17 +2128,17 @@ STATIC void RaHwHdcDeinit(void)
         tryAgain--;
     }
     if (tryAgain == 0) {
-        hccp_warn("hdc message thread quit timeout, chipId:%u", chipId);
+        hccp_warn_others("hdc message thread quit timeout, chipId:%u", chipId);
     }
 
     if (gHdcServer[chipId].hdcServer != NULL) {
         ret = RA_HDC_OPS.serverDestroy(gHdcServer[chipId].hdcServer);
         if (ret != 0) {
-            hccp_warn("RA_HDC_OPS.server_destroy unsuccessful, ret:%d, chipId:%u", ret, chipId);
+            hccp_warn_socket("RA_HDC_OPS.server_destroy unsuccessful, ret:%d, chipId:%u", ret, chipId);
         }
         gHdcServer[chipId].hdcServer = NULL;
     } else {
-        hccp_warn("hdc_server is NULL, chipId:%u", chipId);
+        hccp_warn_socket("hdc_server is NULL, chipId:%u", chipId);
     }
     pthread_mutex_destroy(&gHdcInitPara.mutex);
 }
@@ -2125,13 +2169,14 @@ STATIC int HccpSetAffinity(unsigned int chipId)
     CPU_ZERO(&mask);
     cpuId = cpuCoreNum * phyDevid + HCCP_RUN_CPU_CORE;
     /*lint -e574*/
-    CPU_SET((size_t)cpuId, &mask);  //lint !e573
+    CPU_SET((size_t)cpuId, &mask); // lint !e573
     /*lint +e574*/
-    hccp_run_info("chipId:%u phyDevid:%u ccpuNum:%lld, dcpuNum:%lld, acpuNum:%lld, cpuId:%lld",
-        chipId, phyDevid, ccpuNum, dcpuNum, acpuNum, cpuId);
-    ret = sched_setaffinity(getpid(), sizeof(mask), &mask); /* hccp use core0 of each chip to setaffinity */
-    CHK_PRT_RETURN(ret == -1, hccp_err("sched_setaffinity failed: ret %d, errno %d chipId:%u phyDevid:%u",
-        ret, errno, chipId, phyDevid), -ESYSFUNC);
+    hccp_run_info("chipId:%u phyDevid:%u ccpuNum:%lld, dcpuNum:%lld, acpuNum:%lld, cpuId:%lld", chipId, phyDevid,
+        ccpuNum, dcpuNum, acpuNum, cpuId);
+    ret = sched_setaffinity(getpid(), sizeof(mask), &mask); /* hccp use core0 of each chip to set affinity */
+    CHK_PRT_RETURN(ret == -1,
+        hccp_err("sched_setaffinity failed: ret %d, errno %d chipId:%u phyDevid:%u", ret, errno, chipId, phyDevid),
+        -ESYSFUNC);
 
     return 0;
 }
@@ -2153,8 +2198,11 @@ STATIC int RaHwInit(unsigned int chipId, pid_t pid)
         timeout--;
     }
 
-    CHK_PRT_RETURN(gHdcInitPara.hdcFlag == 0 || timeout == 0, hccp_err("HDC server thread create timeout,"
-        "flag %d, timeout %d", gHdcInitPara.hdcFlag, timeout), -ESRCH);
+    CHK_PRT_RETURN(gHdcInitPara.hdcFlag == 0 || timeout == 0,
+        hccp_err("HDC server thread create timeout,"
+                 "flag %d, timeout %d",
+            gHdcInitPara.hdcFlag, timeout),
+        -ESRCH);
 
     return 0;
 }
@@ -2165,7 +2213,7 @@ RA_ADP_ATTRI_VISI_DEF int HccpInit(unsigned int chipId, pid_t pid, int hdcType, 
     float timeCost = 0.0;
     int ret, retTmp;
 
-    hccp_info("hccp[%u] hdc_type[%d] white_list_status[%u] init start", chipId, hdcType, whiteListStatus);
+    hccp_info_init("hccp[%u] hdc_type[%d] white_list_status[%u] init start", chipId, hdcType, whiteListStatus);
 
     ret = DlHalInit();
     if (ret != 0) {
@@ -2207,7 +2255,7 @@ RA_ADP_ATTRI_VISI_DEF int HccpInit(unsigned int chipId, pid_t pid, int hdcType, 
 
     RsGetCurTime(&end);
     HccpTimeInterval(&end, &start, &timeCost);
-    hccp_info("ra_hw_init ok cost [%f] ms", timeCost);
+    hccp_info_init("ra_hw_init ok cost [%f] ms", timeCost);
 
     struct RsInitConfig offlineConfig = {
         .chipId = chipId,
@@ -2223,7 +2271,7 @@ RA_ADP_ATTRI_VISI_DEF int HccpInit(unsigned int chipId, pid_t pid, int hdcType, 
     }
     RsGetCurTime(&end);
     HccpTimeInterval(&end, &start, &timeCost);
-    hccp_info("rs_init ok cost [%f] ms", timeCost);
+    hccp_info_init("rs_init ok cost [%f] ms", timeCost);
 
     RsGetCurTime(&start);
     ret = RsBindHostpid(chipId, pid);
@@ -2233,7 +2281,7 @@ RA_ADP_ATTRI_VISI_DEF int HccpInit(unsigned int chipId, pid_t pid, int hdcType, 
     }
     RsGetCurTime(&end);
     HccpTimeInterval(&end, &start, &timeCost);
-    hccp_info("rs_bind_hostpid ok cost [%f] ms", timeCost);
+    hccp_info_init("rs_bind_hostpid ok cost [%f] ms", timeCost);
 
     RsGetCurTime(&start);
     ret = RsPingHandleInit(chipId, hdcType, whiteListStatus);
@@ -2243,7 +2291,7 @@ RA_ADP_ATTRI_VISI_DEF int HccpInit(unsigned int chipId, pid_t pid, int hdcType, 
     }
     RsGetCurTime(&end);
     HccpTimeInterval(&end, &start, &timeCost);
-    hccp_info("rs_ping_handle_init ok cost [%f] ms", timeCost);
+    hccp_info_init("rs_ping_handle_init ok cost [%f] ms", timeCost);
 
     return 0;
 bind_hostpid_err:
@@ -2269,7 +2317,7 @@ RA_ADP_ATTRI_VISI_DEF int HccpDeinit(unsigned int chipId)
     };
     int ret;
 
-    hccp_info("hccp[%u] deinit start", chipId);
+    hccp_info_init("hccp[%u] deinit start", chipId);
 
     ret = RsPingHandleDeinit(chipId);
     CHK_PRT_RETURN(ret, hccp_err("rs_ping_handle_deinit failed %d ", ret), ret);
@@ -2281,7 +2329,7 @@ RA_ADP_ATTRI_VISI_DEF int HccpDeinit(unsigned int chipId)
 
     RaHwAsyncDeinit();
     DlHalDeinit();
-    hccp_info("hccp [%u] deinit success", chipId);
+    hccp_info_init("hccp [%u] deinit success", chipId);
 
     return ret;
 }

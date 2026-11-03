@@ -79,7 +79,6 @@ BkfSuberSess *BkfSuberSessDataGetFirst(BkfSuberSessMng *sessMng, void **itorOutO
 BkfSuberSess *BkfSuberSessDataGetNext(BkfSuberSessMng *sessMng, void **itorInOut);
 void BkfSuberSessDataDelAll(BkfSuberSessMng *sessMng);
 
-
 #define BKF_SUBER_SESS_RESUB_TIMER_INTERVAL (5000)
 uint32_t BkfSuberSessCreateReSubTmr(BkfSuberSessMng *sessMng);
 void BkfSuberSessDeleteReSubTmr(BkfSuberSessMng *sessMng);

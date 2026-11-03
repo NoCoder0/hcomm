@@ -23,13 +23,13 @@ namespace Hccl {
 
 class CcuContextAllToAllVMesh1D : public CcuContextAlgBase {
 public:
-    CcuContextAllToAllVMesh1D(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                              const CcuTransportGroup &group);
+    CcuContextAllToAllVMesh1D(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
     ~CcuContextAllToAllVMesh1D() override {}
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
-    static void RefreshArgs(CollOpParams opParams, u32 rankSize, std::vector<uint64_t> &args, const u32 myRank);
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
+    static void RefreshArgs(CollOpParams opParams, u32 rankSize, std::vector<uint64_t>& args, const u32 myRank);
 
 protected:
     // a2a 对每个对端的发送接收信息
@@ -38,10 +38,10 @@ protected:
         CcuRep::Variable loopNum;
         CcuRep::Variable sendOffset;
         CcuRep::Variable recvOffset;
-        GroupOpSize      tailGoSize;
+        GroupOpSize tailGoSize;
     };
     void CreateVariables();
-    void LoadAll2allSendRecvInfo(std::vector<A2AsingleSendRecvInfo> &sendRecvInfo);
+    void LoadAll2allSendRecvInfo(std::vector<A2AsingleSendRecvInfo>& sendRecvInfo);
     void LoadArgs();
     void PreSync();
     void PostSync();

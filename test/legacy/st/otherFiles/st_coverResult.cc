@@ -14,9 +14,10 @@
 #include "gtest/gtest.h"
 #include <mockcpp/mokc.h>
 #include <mockcpp/mockcpp.hpp>
-#include "base_config.h"
+#include "test_mock_setup.h"
+#include "base_config_legacy.h"
 #include "cfg_field.h"
-#include "env_config.h"
+#include "env_config_v2.h"
 #include "env_func.h"
 #include "dev_capability.h"
 #include "orion_adapter_hccp.h"
@@ -49,7 +50,7 @@
 #include "sal.h"
 #include "coll_alg_component.h"
 #include "virtual_topo_stub.h"
-#include "local_notify.h"
+#include "local_notify_v2.h"
 #include "remote_notify.h"
 #include "dev_ub_connection.h"
 #include "rma_conn_manager.h"
@@ -57,7 +58,6 @@
 #include "socket_manager.h"
 #include "rma_connection.h"
 #include "conn_local_notify_manager.h"
-#include "notify_fixed_value.h"
 #include "exchange_ub_buffer_dto.h"
 #include "exchange_ipc_buffer_dto.h"
 #include "exchange_ipc_notify_dto.h"
@@ -66,8 +66,8 @@
 #include "hccp_ctx.h"
 #include "hccp_common.h"
 #include "hccp_async.h"
-#include "local_rdma_rma_buffer.h"
-#include "local_ipc_rma_buffer.h"
+#include "local_rdma_rma_buffer_v2.h"
+#include "local_ipc_rma_buffer_v2.h"
 #include "local_ub_rma_buffer.h"
 #include "topo_common_types.h"
 #include "ccu_ins_preprocessor.h"
@@ -83,18 +83,13 @@ using namespace Hccl;
 
 class CoverageResult : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CoverageResult set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CoverageResult set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CoverageResult tear down" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CoverageResult tear down" << std::endl; }
 
-    static std::unique_ptr<Socket> mockProducer(IpAddress &localIpAddress, IpAddress &remoteIpAddress, u32 listenPort,
-        SocketHandle socketHandle, const std::string &tag, SocketRole socketRole, NicType nicType)
+    static std::unique_ptr<Socket> mockProducer(
+        IpAddress& localIpAddress, IpAddress& remoteIpAddress, u32 listenPort, SocketHandle socketHandle,
+        const std::string& tag, SocketRole socketRole, NicType nicType)
     {
         return std::make_unique<Socket>(
             socketHandle, localIpAddress, listenPort, remoteIpAddress, "stub", socketRole, nicType);
@@ -116,10 +111,7 @@ TEST(ST_SocketListenStop, st_HrtRaUbCtxInit_ok)
     RdmaHandle rdmaHandle = HrtRaUbCtxInit(initParam);
 }
 
-TEST(ST_SocketListenStop, st_HrtRaUbCtxDestroy_ok)
-{
-    HrtRaUbCtxDestroy(nullptr);
-}
+TEST(ST_SocketListenStop, st_HrtRaUbCtxDestroy_ok) { HrtRaUbCtxDestroy(nullptr); }
 
 TEST(ST_SocketListenStop, st_HrtRaUbLocalMemReg_ok)
 {
@@ -159,14 +151,12 @@ TEST(ST_SocketListenStop, st_HrtRaUbRemoteMemUnimport_ok)
 
 TEST(ST_SocketListenStop, st_HrtRaUbCreateCq_ok)
 {
-    auto result = HrtRaUbCreateJfc(nullptr, HrtUbJfcMode::NORMAL);
+    CqCreateInfo cqInfo{};
+    auto result = HrtRaUbCreateJfc(nullptr, cqInfo, HrtUbJfcMode::NORMAL);
     EXPECT_EQ(0, result);
 }
 
-TEST(ST_SocketListenStop, st_HrtRaUbDestroyCq_ok)
-{
-    HrtRaUbDestroyJfc(nullptr, 0);
-}
+TEST(ST_SocketListenStop, st_HrtRaUbDestroyCq_ok) { HrtRaUbDestroyJfc(nullptr, 0); }
 
 TEST(ST_SocketListenStop, st_HrtRaUbCreateJetty_ok)
 {
@@ -177,10 +167,7 @@ TEST(ST_SocketListenStop, st_HrtRaUbCreateJetty_ok)
     EXPECT_EQ(0, result.jettyVa);
 }
 
-TEST(ST_SocketListenStop, st_HrtRaUbDestroyJetty_ok)
-{
-    HrtRaUbDestroyJetty(0);
-}
+TEST(ST_SocketListenStop, st_HrtRaUbDestroyJetty_ok) { HrtRaUbDestroyJetty(0); }
 
 TEST(ST_SocketListenStop, st_RaUbImportJetty_ok)
 {
@@ -190,20 +177,11 @@ TEST(ST_SocketListenStop, st_RaUbImportJetty_ok)
     EXPECT_EQ(0, result.targetJettyVa);
 }
 
-TEST(ST_SocketListenStop, st_HrtRaUbUnimportJetty_ok)
-{
-    HrtRaUbUnimportJetty(nullptr, 0);
-}
+TEST(ST_SocketListenStop, st_HrtRaUbUnimportJetty_ok) { HrtRaUbUnimportJetty(nullptr, 0); }
 
-TEST(ST_SocketListenStop, st_HrtRaUbJettyBind_ok)
-{
-    HrtRaUbJettyBind(0, 0);
-}
+TEST(ST_SocketListenStop, st_HrtRaUbJettyBind_ok) { HrtRaUbJettyBind(0, 0); }
 
-TEST(ST_SocketListenStop, st_HrtRaUbJettyUnbind_ok)
-{
-    HrtRaUbJettyUnbind(0);
-}
+TEST(ST_SocketListenStop, st_HrtRaUbJettyUnbind_ok) { HrtRaUbJettyUnbind(0); }
 
 TEST(ST_SocketListenStop, st_HrtRaUbPostSend_ok)
 {
@@ -215,7 +193,7 @@ TEST(ST_SocketListenStop, st_HrtRaUbPostSend_ok)
 
 TEST(LogTest, st_sal_log_printf_log2)
 {
-    MODULE_DEBUG("\r\r\r\r \r\r\r\r  log 2.0  test"); /*提高覆盖率*/
+    MODULE_DEBUG("\r\r\r\r \r\r\r\r log 2.0 test"); /*提高覆盖率*/
     MODULE_INFO("log 2.0 test");
     MODULE_WARNING("log 2.0 test");
     MODULE_ERROR("log 2.0 test");
@@ -264,14 +242,14 @@ TEST(ST_WhiteListTest, st_get_host_whitelist)
 TEST(ST_WhiteListTest, st_whitelist_load_config_file)
 {
     std::string name;
-    EXPECT_THROW(Whitelist::GetInstance().LoadConfigFile(name), InvalidParamsException);
+    EXPECT_EQ(Whitelist::GetInstance().LoadConfigFile(name), HcclResult::HCCL_E_PARA);
 
     name = "whitelist";
-    EXPECT_THROW(Whitelist::GetInstance().LoadConfigFile(name), InternalException);
+    EXPECT_EQ(Whitelist::GetInstance().LoadConfigFile(name), HcclResult::HCCL_E_INTERNAL);
 
     name = "whitelist.json";
     GenWhiteListFile();
-    Whitelist::GetInstance().LoadConfigFile(name);
+    EXPECT_EQ(Whitelist::GetInstance().LoadConfigFile(name), HcclResult::HCCL_SUCCESS);
 
     IpAddress ipAddress("1.0.0.0");
     std::vector<IpAddress> whiteList;
@@ -283,15 +261,7 @@ TEST(ST_WhiteListTest, st_whitelist_load_config_file)
 TEST(ST_HccpPeerManagerTest, st_hccp_peer_manager_getInstance)
 {
     // Given
-    DevId fakedevPhyId = 3;
-	DevId fakedevPhyId1 = 4;
-    MOCKER(HrtGetDevicePhyIdByIndex)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(fakedevPhyId))
-        .then(returnValue(fakedevPhyId1));
-    MOCKER(HrtRaInit).stubs().with();
-    MOCKER(HrtRaDeInit).stubs().with();
+    SETUP_HCCP_PEER_MGR_MOCKS(3, 4);
     // when
     s32 deviceLogicId = 0;
     HccpPeerManager::GetInstance().Init(deviceLogicId);
@@ -310,7 +280,10 @@ TEST(ST_HccpPeerManagerTest, st_hccp_peer_manager_init)
     s32 deviceLogicId1 = 1;
     s32 deviceLogicId2 = 2;
     s32 fakedevPhyId = 3;
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().with(mockcpp::any()).will(returnValue(static_cast<DevId>(fakedevPhyId)));
+    MOCKER(HrtGetDevicePhyIdByUserDevId)
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(static_cast<DevId>(fakedevPhyId)));
     MOCKER(HrtRaDeInit).stubs().with();
     // when
     HccpPeerManager::GetInstance().Init(deviceLogicId);
@@ -369,8 +342,8 @@ TEST(AdapterHccpTest, HrtRaMrReg_deReg_NOK)
 TEST(AdapterHccpTest, HrtHrtRaRdmaInit_NOK)
 {
     // Given
-    u32 *num = new u32[1];
-    RdmaHandle rdmaHandle = static_cast<void *>(num);
+    u32* num = new u32[1];
+    RdmaHandle rdmaHandle = static_cast<void*>(num);
     MOCKER(RaRdevInit)
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), outBoundP(&rdmaHandle, sizeof(rdmaHandle)))
@@ -386,8 +359,8 @@ TEST(AdapterHccpTest, HrtHrtRaRdmaInit_NOK)
 TEST_F(AdapterHccpTest, HrtHrtRaRdmaInit_return_HCCP_ELINKDOWN_NOK)
 {
     // Given
-    u32       *num        = new u32[1];
-    RdmaHandle rdmaHandle = static_cast<void *>(num);
+    u32* num = new u32[1];
+    RdmaHandle rdmaHandle = static_cast<void*>(num);
     MOCKER(RaRdevInit)
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), outBoundP(&rdmaHandle, sizeof(rdmaHandle)))
@@ -405,7 +378,7 @@ TEST(AdapterHccpTest, HrtGetHosIf_nok_ra_get_ifaddrs_error)
     unsigned int fakeNum = 1;
     MOCKER(RaGetIfnum).stubs().with(mockcpp::any(), outBoundP(&fakeNum, sizeof(fakeNum))).will(returnValue(0));
     MOCKER(RaGetIfaddrs).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(1));
- 
+
     EXPECT_THROW(HrtGetHostIf(0), NetworkApiException);
 }
 
@@ -416,10 +389,7 @@ TEST(ST_AdapterHccpTest, st_HrtGetDeviceIp_nok)
     EXPECT_THROW(HrtGetDeviceIp(devPhyId), NetworkApiException);
 }
 
-TEST(ST_AdapterHccpTest, st_HrtRaUbPostNops_ok)
-{
-    HrtRaUbPostNops(0, 0, 1);
-}
+TEST(ST_AdapterHccpTest, st_HrtRaUbPostNops_ok) { HrtRaUbPostNops(0, 0, 1); }
 
 TEST(ST_AdapterHccpTest, st_HrtRaUbPostNops_exception)
 {
@@ -485,7 +455,7 @@ TEST(CountNotifyTest, test_rts_cnt_notify)
 
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(DevType(DevType::DEV_TYPE_910A2)));
     MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtCntNotifyCreate).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
+    MOCKER(HrtCntNotifyCreate).stubs().will(returnValue((void*)(fakeNotifyHandleAddr)));
     MOCKER(HrtGetCntNotifyId).stubs().will(returnValue(fakeNotifyId));
 
     RtsCntNotify rtsCntNotify;
@@ -510,7 +480,7 @@ TEST(CountNotifyTest, test_rts_1ton_cnt_notify)
 
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(DevType(DevType::DEV_TYPE_910A2)));
     MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtCntNotifyCreate).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
+    MOCKER(HrtCntNotifyCreate).stubs().will(returnValue((void*)(fakeNotifyHandleAddr)));
     MOCKER(HrtGetCntNotifyId).stubs().will(returnValue(fakeNotifyId));
 
     Rts1ToNCntNotify rts1ToNCntNotify;
@@ -539,12 +509,12 @@ TEST(LocalNotifyTest, ipc_local_notify_test)
 
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(DevType(DevType::DEV_TYPE_910A2)));
     MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtNotifyCreate).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
+    MOCKER(HrtNotifyCreate).stubs().will(returnValue((void*)(fakeNotifyHandleAddr)));
     MOCKER(HrtIpcSetNotifyName).stubs().with(mockcpp::any(), outBoundP(fakeName, sizeof(fakeName)), mockcpp::any());
     MOCKER(HrtGetNotifyID).stubs().will(returnValue(fakeNotifyId));
     MOCKER(HrtNotifyGetAddr).stubs().with(mockcpp::any()).will(returnValue(fakeAddress));
     MOCKER(HrtNotifyGetOffset).stubs().will(returnValue(fakeOffset));
-    MOCKER(HrtDeviceGetBareTgid).stubs().will(returnValue(fakePid));
+    MOCKER(HrtDeviceGetBareTgid).stubs().will(returnValue(static_cast<s32>(fakePid)));
 };
 
 TEST(LocalRmaBufferTest, localubrmabuffer_construct_error)
@@ -556,12 +526,14 @@ TEST(LocalRmaBufferTest, getExchangeDto_test)
 {
     MOCKER(GetUbToken).stubs().will(returnValue(1));
     std::shared_ptr<DevBuffer> devBuf = DevBuffer::Create(0x100, 0x100);
-    RdmaHandle rdmaHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
     LocalUbRmaBuffer localUbRmaBuffer(devBuf, rdmaHandle);
     localUbRmaBuffer.GetExchangeDto();
 
     MOCKER(HrtIpcSetMemoryName).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any());
-    MOCKER(HrtDevMemAlignWithPage).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any());
+    MOCKER(HrtDevMemAlignWithPage)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any());
     MOCKER(HrtIpcDestroyMemoryName).stubs().with(mockcpp::any());
 };
 
@@ -583,7 +555,7 @@ TEST(LocalRmaBufferTest, localubrmabuffer_serialize)
 
     vector<char_t> out;
     out.resize(sizeof(struct MrRegInfoT));
-    struct MrRegInfoT *info = reinterpret_cast<struct MrRegInfoT *>(out.data());
+    struct MrRegInfoT* info = reinterpret_cast<struct MrRegInfoT*>(out.data());
     memcpy_s(info->out.key.value, HRT_UB_MEM_KEY_MAX_LEN, fakeKey, HRT_UB_MEM_KEY_MAX_LEN);
     info->out.key.size = 4;
     info->out.ub.tokenId = fakeTokenId;
@@ -591,19 +563,19 @@ TEST(LocalRmaBufferTest, localubrmabuffer_serialize)
 
     MOCKER(RaUbLocalMemRegAsync)
         .stubs()
-        .with(mockcpp::any(), mockcpp::any(), outBound(out), outBound(reinterpret_cast<void *>(fakeMemHandle)))
+        .with(mockcpp::any(), mockcpp::any(), outBound(out), outBound(reinterpret_cast<void*>(fakeMemHandle)))
         .will(returnValue(fakeReqHandle));
 
     MOCKER(HrtRaUbLocalMemUnreg).stubs();
     MOCKER(GetUbToken).stubs().will(returnValue(1));
     BufferType type = BufferType::INPUT;
     u32 a = 0;
-    void *ptr = static_cast<void *>(&a);
+    void* ptr = static_cast<void*>(&a);
     u64 size = 0;
     bool remoteAccess = true;
 
     std::shared_ptr<DevBuffer> buf = DevBuffer::Create(0x100, 0x100);
-    RdmaHandle rdmaHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
     LocalUbRmaBuffer localUbRmaBuffer(buf, rdmaHandle);
     localUbRmaBuffer.Describe();
 
@@ -622,7 +594,7 @@ TEST(LocalRmaBufferTest, localubrmabuffer_serialize)
 TEST(LocalRmaBufferTest, generate_safe_random_number)
 {
     MOCKER(HrtGetDevice).stubs().will(returnValue(1));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(1)));
+    MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().will(returnValue(static_cast<DevId>(1)));
     MOCKER(HrtRaGetSecRandom).stubs().with(mockcpp::any(), mockcpp::any());
     u32 token = GetUbToken();
 };
@@ -636,12 +608,12 @@ TEST(RemoteRmaBufferTest, remoteubrmabuffer_deserialize_success)
 {
     // construct buffer
     BufferType type = BufferType::INPUT;
-    void *ptr = nullptr;
+    void* ptr = nullptr;
     u64 size = 0;
     bool remoteAccess = true;
 
     std::shared_ptr<DevBuffer> devBuf = DevBuffer::Create(0x100, 0x100);
-    Buffer *buf = devBuf.get();
+    Buffer* buf = devBuf.get();
 
     u32 tokenValue = 1;
     u32 tokenId = 0;
@@ -654,7 +626,7 @@ TEST(RemoteRmaBufferTest, remoteubrmabuffer_deserialize_success)
     ExchangeUbBufferDto dto;
     dto.Deserialize(binaryStream);
 
-    RdmaHandle rdmaHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
     RemoteUbRmaBuffer remoteUbRmaBuffer(rdmaHandle, dto);
     remoteUbRmaBuffer.Describe();
 
@@ -674,7 +646,7 @@ TEST(RemoteRmaBufferTest, remoteubrmabuffer_deserialize_success)
 
 TEST(RemoteRmaBufferTest, remoterdmarmabuffer_describe_size)
 {
-    RdmaHandle rdmaHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
     RemoteRdmaRmaBuffer remoteRdmaRmaBuffer(rdmaHandle);
 
     std::string fakeKeyDesc = "fakeKeyDesc";
@@ -684,7 +656,7 @@ TEST(RemoteRmaBufferTest, remoterdmarmabuffer_describe_size)
 
 TEST(DevUbConnectionTest, rma_ub_connection_get_status_return_exchanging_and_ok)
 {
-    Socket *fakeSocket;
+    Socket* fakeSocket;
     IpAddress localIp;
     IpAddress remoteIp;
     u32 listenPort = 100;
@@ -693,7 +665,7 @@ TEST(DevUbConnectionTest, rma_ub_connection_get_status_return_exchanging_and_ok)
     // Given
     MOCKER_CPP(&Socket::GetAsyncStatus).stubs().will(returnValue((SocketStatus)SocketStatus::OK));
 
-    RdmaHandle rdmaHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
     BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     LinkData linkData(portType, 0, 1, 0, 1);
@@ -705,10 +677,10 @@ TEST(DevUbConnectionTest, rma_ub_connection_get_status_return_exchanging_and_ok)
     //  When:
     u32 tokenValue = 1;
     MOCKER_CPP(&Socket::SendAsync).stubs().will(returnValue(true));
-    char *responseMsg = "connect ready!";
+    char* responseMsg = "connect ready!";
     MOCKER_CPP(&Socket::RecvAsync)
         .stubs()
-        .with(outBoundP(reinterpret_cast<u8 *>(responseMsg), (u32)15), mockcpp::any())
+        .with(outBoundP(reinterpret_cast<u8*>(responseMsg), (u32)15), mockcpp::any())
         .will(returnValue(true));
     // Then
     auto res = devUbConnection.GetStatus();
@@ -736,15 +708,15 @@ TEST(DevUbConnectionTest, rma_ub_connection_get_status_return_exchanging_and_ok)
 
 TEST(DevUbConnectionTest, rma_net_connection_prepare_write_task)
 {
-    Socket *fakeSocket;
+    Socket* fakeSocket;
     IpAddress localIp;
     IpAddress remoteIp;
     u32 listenPort = 100;
     string tag = "SENDRECV";
     fakeSocket = new Socket(nullptr, localIp, listenPort, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
     MOCKER_CPP(&Socket::GetStatus).stubs().will(returnValue((SocketStatus)SocketStatus::OK));
-    RdmaHandle rdmaHandle = (void *)0x1000000;
-    QpHandle fakeQpHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
+    QpHandle fakeQpHandle = (void*)0x1000000;
 
     BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
@@ -776,15 +748,15 @@ TEST(DevUbConnectionTest, rma_net_connection_prepare_write_task)
 
 TEST(DevUbConnectionTest, rma_net_connection_prepare_write_task_with_dwqe)
 {
-    Socket *fakeSocket;
+    Socket* fakeSocket;
     IpAddress localIp;
     IpAddress remoteIp;
     u32 listenPort = 100;
     string tag = "SENDRECV";
     fakeSocket = new Socket(nullptr, localIp, listenPort, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
     MOCKER_CPP(&Socket::GetStatus).stubs().will(returnValue((SocketStatus)SocketStatus::OK));
-    RdmaHandle rdmaHandle = (void *)0x1000000;
-    QpHandle fakeQpHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
+    QpHandle fakeQpHandle = (void*)0x1000000;
 
     BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
@@ -821,7 +793,7 @@ TEST(DevUbConnectionTest, rma_net_connection_prepare_write_task_with_dwqe)
 
 TEST(DevUbConnectionTest, rma_net_connection_prepare_read_task)
 {
-    Socket *fakeSocket;
+    Socket* fakeSocket;
     IpAddress localIp;
     IpAddress remoteIp;
     u32 listenPort = 100;
@@ -829,8 +801,8 @@ TEST(DevUbConnectionTest, rma_net_connection_prepare_read_task)
     fakeSocket = new Socket(nullptr, localIp, listenPort, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
     // Given
     MOCKER_CPP(&Socket::GetStatus).stubs().will(returnValue((SocketStatus)SocketStatus::OK));
-    RdmaHandle rdmaHandle = (void *)0x1000000;
-    QpHandle fakeQpHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
+    QpHandle fakeQpHandle = (void*)0x1000000;
 
     BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
@@ -849,7 +821,7 @@ TEST(DevUbConnectionTest, rma_net_connection_prepare_read_task)
 
 TEST(DevUbConnectionTest, rma_net_connection_prepare_read_task_with_dwqe)
 {
-    Socket *fakeSocket;
+    Socket* fakeSocket;
     IpAddress localIp;
     IpAddress remoteIp;
     u32 listenPort = 100;
@@ -857,8 +829,8 @@ TEST(DevUbConnectionTest, rma_net_connection_prepare_read_task_with_dwqe)
     fakeSocket = new Socket(nullptr, localIp, listenPort, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
     // Given
     MOCKER_CPP(&Socket::GetStatus).stubs().will(returnValue((SocketStatus)SocketStatus::OK));
-    RdmaHandle rdmaHandle = (void *)0x1000000;
-    QpHandle fakeQpHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
+    QpHandle fakeQpHandle = (void*)0x1000000;
 
     BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
@@ -882,7 +854,7 @@ TEST(DevUbConnectionTest, rma_net_connection_prepare_read_task_with_dwqe)
 
 TEST(DevUbConnectionTest, rma_net_connection_prepare_read_reduce_task)
 {
-    Socket *fakeSocket;
+    Socket* fakeSocket;
     IpAddress localIp;
     IpAddress remoteIp;
     u32 listenPort = 100;
@@ -890,9 +862,9 @@ TEST(DevUbConnectionTest, rma_net_connection_prepare_read_reduce_task)
     fakeSocket = new Socket(nullptr, localIp, listenPort, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
     // Given
     MOCKER_CPP(&Socket::GetStatus).stubs().will(returnValue((SocketStatus)SocketStatus::OK));
-    RdmaHandle rdmaHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
 
-    QpHandle fakeQpHandle = (void *)0x1000000;
+    QpHandle fakeQpHandle = (void*)0x1000000;
 
     BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
@@ -904,15 +876,15 @@ TEST(DevUbConnectionTest, rma_net_connection_prepare_read_reduce_task)
     MemoryBuffer localMemBuffer(0, 1000, 0);
     MemoryBuffer remoteMemBuffer(2000, 1000, 0);
     SqeConfig config{};
-    auto task =
-        devUbConnection.PrepareReadReduce(remoteMemBuffer, localMemBuffer, DataType::INT8, ReduceOp::SUM, config);
+    auto task
+        = devUbConnection.PrepareReadReduce(remoteMemBuffer, localMemBuffer, DataType::INT8, ReduceOp::SUM, config);
     EXPECT_NE(nullptr, task);
     delete fakeSocket;
 }
 
 TEST(DevUbConnectionTest, rma_net_connection_prepare_read_reduce_task_with_dwqe)
 {
-    Socket *fakeSocket;
+    Socket* fakeSocket;
     IpAddress localIp;
     IpAddress remoteIp;
     u32 listenPort = 100;
@@ -920,9 +892,9 @@ TEST(DevUbConnectionTest, rma_net_connection_prepare_read_reduce_task_with_dwqe)
     fakeSocket = new Socket(nullptr, localIp, listenPort, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
     // Given
     MOCKER_CPP(&Socket::GetStatus).stubs().will(returnValue((SocketStatus)SocketStatus::OK));
-    RdmaHandle rdmaHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
 
-    QpHandle fakeQpHandle = (void *)0x1000000;
+    QpHandle fakeQpHandle = (void*)0x1000000;
 
     BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
@@ -938,8 +910,8 @@ TEST(DevUbConnectionTest, rma_net_connection_prepare_read_reduce_task_with_dwqe)
     MemoryBuffer remoteMemBuffer(2000, 1000, 0);
     SqeConfig config{};
     config.wqeMode = WqeMode::DWQE;
-    auto task =
-        devUbConnection.PrepareReadReduce(remoteMemBuffer, localMemBuffer, DataType::INT8, ReduceOp::SUM, config);
+    auto task
+        = devUbConnection.PrepareReadReduce(remoteMemBuffer, localMemBuffer, DataType::INT8, ReduceOp::SUM, config);
     EXPECT_NE(nullptr, task);
     delete fakeSocket;
     GlobalMockObject::verify();
@@ -947,15 +919,15 @@ TEST(DevUbConnectionTest, rma_net_connection_prepare_read_reduce_task_with_dwqe)
 
 TEST(DevUbConnectionTest, rma_ub_connection_prepare_write_reduce_task)
 {
-    Socket *fakeSocket;
+    Socket* fakeSocket;
     IpAddress localIp;
     IpAddress remoteIp;
     u32 listenPort = 100;
     string tag = "SENDRECV";
     fakeSocket = new Socket(nullptr, localIp, listenPort, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
     // Given
-    RdmaHandle rdmaHandle = (void *)0x1000000;
-    QpHandle fakeQpHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
+    QpHandle fakeQpHandle = (void*)0x1000000;
 
     BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
@@ -968,8 +940,8 @@ TEST(DevUbConnectionTest, rma_ub_connection_prepare_write_reduce_task)
     MemoryBuffer remoteMemBuffer(2000, 1000, 0);
     SqeConfig config{};
 
-    auto task =
-        devUbConnection.PrepareWriteReduce(remoteMemBuffer, localMemBuffer, DataType::INT8, ReduceOp::SUM, config);
+    auto task
+        = devUbConnection.PrepareWriteReduce(remoteMemBuffer, localMemBuffer, DataType::INT8, ReduceOp::SUM, config);
     EXPECT_NE(nullptr, task);
 
     delete fakeSocket;
@@ -977,15 +949,15 @@ TEST(DevUbConnectionTest, rma_ub_connection_prepare_write_reduce_task)
 
 TEST(DevUbConnectionTest, rma_ub_connection_prepare_write_reduce_task_with_dwqe)
 {
-    Socket *fakeSocket;
+    Socket* fakeSocket;
     IpAddress localIp;
     IpAddress remoteIp;
     u32 listenPort = 100;
     string tag = "SENDRECV";
     fakeSocket = new Socket(nullptr, localIp, listenPort, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
     // Given
-    RdmaHandle rdmaHandle = (void *)0x1000000;
-    QpHandle fakeQpHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
+    QpHandle fakeQpHandle = (void*)0x1000000;
 
     BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
@@ -1002,8 +974,8 @@ TEST(DevUbConnectionTest, rma_ub_connection_prepare_write_reduce_task_with_dwqe)
     SqeConfig config{};
     config.wqeMode = WqeMode::DWQE;
 
-    auto task =
-        devUbConnection.PrepareWriteReduce(remoteMemBuffer, localMemBuffer, DataType::INT8, ReduceOp::SUM, config);
+    auto task
+        = devUbConnection.PrepareWriteReduce(remoteMemBuffer, localMemBuffer, DataType::INT8, ReduceOp::SUM, config);
     EXPECT_NE(nullptr, task);
 
     delete fakeSocket;
@@ -1012,7 +984,7 @@ TEST(DevUbConnectionTest, rma_ub_connection_prepare_write_reduce_task_with_dwqe)
 
 TEST(DevUbConnectionTest, rma_net_connection_prepare_write_with_notify_task)
 {
-    Socket *fakeSocket;
+    Socket* fakeSocket;
     IpAddress localIp;
     IpAddress remoteIp;
     u32 listenPort = 100;
@@ -1020,8 +992,8 @@ TEST(DevUbConnectionTest, rma_net_connection_prepare_write_with_notify_task)
     fakeSocket = new Socket(nullptr, localIp, listenPort, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
 
     MOCKER_CPP(&Socket::GetStatus).stubs().will(returnValue((SocketStatus)SocketStatus::OK));
-    RdmaHandle rdmaHandle = (void *)0x1000000;
-    QpHandle fakeQpHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
+    QpHandle fakeQpHandle = (void*)0x1000000;
 
     BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
@@ -1037,8 +1009,8 @@ TEST(DevUbConnectionTest, rma_net_connection_prepare_write_with_notify_task)
     MemoryBuffer remoteNotifyMemBuffer(8000, 100, 0);
     SqeConfig config{};
 
-    auto task =
-        devUbConnection.PrepareWriteWithNotify(remoteMemBuffer, localMemBuffer, 1, remoteNotifyMemBuffer, config);
+    auto task
+        = devUbConnection.PrepareWriteWithNotify(remoteMemBuffer, localMemBuffer, 1, remoteNotifyMemBuffer, config);
     EXPECT_NE(nullptr, task);
 
     delete fakeSocket;
@@ -1046,7 +1018,7 @@ TEST(DevUbConnectionTest, rma_net_connection_prepare_write_with_notify_task)
 
 TEST(DevUbConnectionTest, rma_net_connection_prepare_write_with_notify_task_with_dwqe)
 {
-    Socket *fakeSocket;
+    Socket* fakeSocket;
     IpAddress localIp;
     IpAddress remoteIp;
     u32 listenPort = 100;
@@ -1054,8 +1026,8 @@ TEST(DevUbConnectionTest, rma_net_connection_prepare_write_with_notify_task_with
     fakeSocket = new Socket(nullptr, localIp, listenPort, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
 
     MOCKER_CPP(&Socket::GetStatus).stubs().will(returnValue((SocketStatus)SocketStatus::OK));
-    RdmaHandle rdmaHandle = (void *)0x1000000;
-    QpHandle fakeQpHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
+    QpHandle fakeQpHandle = (void*)0x1000000;
 
     BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
@@ -1075,8 +1047,8 @@ TEST(DevUbConnectionTest, rma_net_connection_prepare_write_with_notify_task_with
     SqeConfig config{};
     config.wqeMode = WqeMode::DWQE;
 
-    auto task =
-        devUbConnection.PrepareWriteWithNotify(remoteMemBuffer, localMemBuffer, 1, remoteNotifyMemBuffer, config);
+    auto task
+        = devUbConnection.PrepareWriteWithNotify(remoteMemBuffer, localMemBuffer, 1, remoteNotifyMemBuffer, config);
     EXPECT_NE(nullptr, task);
 
     delete fakeSocket;
@@ -1085,15 +1057,15 @@ TEST(DevUbConnectionTest, rma_net_connection_prepare_write_with_notify_task_with
 
 TEST(DevUbConnectionTest, rma_ub_connection_prepare_write_reduce_with_notify_task)
 {
-    Socket *fakeSocket;
+    Socket* fakeSocket;
     IpAddress localIp;
     IpAddress remoteIp;
     u32 listenPort = 100;
     string tag = "SENDRECV";
     fakeSocket = new Socket(nullptr, localIp, listenPort, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
     // Given
-    RdmaHandle rdmaHandle = (void *)0x1000000;
-    QpHandle fakeQpHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
+    QpHandle fakeQpHandle = (void*)0x1000000;
 
     BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
@@ -1107,8 +1079,8 @@ TEST(DevUbConnectionTest, rma_ub_connection_prepare_write_reduce_with_notify_tas
     MemoryBuffer remoteNotifyMemBuffer(8000, 100, 0);
     SqeConfig config{};
 
-    auto task = devUbConnection.PrepareWriteReduceWithNotify(remoteMemBuffer, localMemBuffer, DataType::INT8,
-                                                             ReduceOp::SUM, 1, remoteNotifyMemBuffer, config);
+    auto task = devUbConnection.PrepareWriteReduceWithNotify(
+        remoteMemBuffer, localMemBuffer, DataType::INT8, ReduceOp::SUM, 1, remoteNotifyMemBuffer, config);
     EXPECT_NE(nullptr, task);
 
     delete fakeSocket;
@@ -1116,15 +1088,15 @@ TEST(DevUbConnectionTest, rma_ub_connection_prepare_write_reduce_with_notify_tas
 
 TEST(DevUbConnectionTest, rma_ub_connection_prepare_write_reduce_with_notify_task_with_dwqe)
 {
-    Socket *fakeSocket;
+    Socket* fakeSocket;
     IpAddress localIp;
     IpAddress remoteIp;
     u32 listenPort = 100;
     string tag = "SENDRECV";
     fakeSocket = new Socket(nullptr, localIp, listenPort, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
     // Given
-    RdmaHandle rdmaHandle = (void *)0x1000000;
-    QpHandle fakeQpHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
+    QpHandle fakeQpHandle = (void*)0x1000000;
 
     BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
@@ -1142,8 +1114,8 @@ TEST(DevUbConnectionTest, rma_ub_connection_prepare_write_reduce_with_notify_tas
     SqeConfig config{};
     config.wqeMode = WqeMode::DWQE;
 
-    auto task = devUbConnection.PrepareWriteReduceWithNotify(remoteMemBuffer, localMemBuffer, DataType::INT8,
-                                                             ReduceOp::SUM, 1, remoteNotifyMemBuffer, config);
+    auto task = devUbConnection.PrepareWriteReduceWithNotify(
+        remoteMemBuffer, localMemBuffer, DataType::INT8, ReduceOp::SUM, 1, remoteNotifyMemBuffer, config);
     EXPECT_NE(nullptr, task);
 
     delete fakeSocket;
@@ -1152,7 +1124,7 @@ TEST(DevUbConnectionTest, rma_ub_connection_prepare_write_reduce_with_notify_tas
 
 TEST(DevUbConnectionTest, rma_ub_connection_prepare_inline_write_task)
 {
-    Socket *fakeSocket;
+    Socket* fakeSocket;
     IpAddress localIp;
     IpAddress remoteIp;
     u32 listenPort = 100;
@@ -1160,8 +1132,8 @@ TEST(DevUbConnectionTest, rma_ub_connection_prepare_inline_write_task)
     fakeSocket = new Socket(nullptr, localIp, listenPort, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
 
     // Given
-    RdmaHandle rdmaHandle = (void *)0x1000000;
-    QpHandle fakeQpHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
+    QpHandle fakeQpHandle = (void*)0x1000000;
 
     BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
@@ -1183,9 +1155,9 @@ TEST(ConnLocalNotifyManagerTest, apply_for_ub_notify_ok)
 {
     CommunicatorImpl comm;
     ConnLocalNotifyManager connLocalNotifyManager(&comm);
-    //Given
+    // Given
     MOCKER(HrtGetDevice).stubs().will(returnValue(1));
-    MOCKER(HrtNotifyCreate).stubs().will(returnValue((void *)(0)));
+    MOCKER(HrtNotifyCreate).stubs().will(returnValue((void*)(0)));
     MOCKER(HrtIpcSetNotifyName).stubs();
     MOCKER(HrtGetNotifyID).stubs().will(returnValue(1));
     MOCKER(HrtNotifyGetAddr).stubs().will(returnValue((u64)0));
@@ -1236,26 +1208,26 @@ TEST(TaskTest, test_task_ub_direct_send_exception)
 
 class StubRmaConnectionSync : public RmaConnection {
 public:
-    StubRmaConnectionSync(const LinkData &linkData, const RmaConnType rmaConnType)
+    StubRmaConnectionSync(const LinkData& linkData, const RmaConnType rmaConnType)
         : link(linkData),
           RmaConnection(nullptr, rmaConnType)
-    {
-    }
+    {}
 
-    unique_ptr<BaseTask> PrepareRead(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                     const SqeConfig &config) override
-    {
-        return nullptr;
-    }
-
-    unique_ptr<BaseTask> PrepareReadReduce(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                           DataType datatype, ReduceOp reduceOp, const SqeConfig &config) override
+    unique_ptr<BaseTask>
+    PrepareRead(const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, const SqeConfig& config) override
     {
         return nullptr;
     }
 
-    unique_ptr<BaseTask> PrepareWrite(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                      const SqeConfig &config) override
+    unique_ptr<BaseTask> PrepareReadReduce(
+        const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, DataType datatype, ReduceOp reduceOp,
+        const SqeConfig& config) override
+    {
+        return nullptr;
+    }
+
+    unique_ptr<BaseTask>
+    PrepareWrite(const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, const SqeConfig& config) override
     {
         if (link.GetType() == PortDeploymentType::P2P) {
             return make_unique<TaskP2pMemcpy>(remoteMemBuf.addr, localMemBuf.addr, localMemBuf.size, MemcpyKind::D2D);
@@ -1267,8 +1239,8 @@ public:
             return make_unique<TaskRdmaSend>(dbIndex, dbInfo);
         }
 
-        if (link.GetType() == PortDeploymentType::DEV_NET &&
-            (link.GetLinkProtocol() == LinkProtocol::UB_TP|| link.GetLinkProtocol() == LinkProtocol::UB_CTP)) {
+        if (link.GetType() == PortDeploymentType::DEV_NET
+            && (link.GetLinkProtocol() == LinkProtocol::UB_TP || link.GetLinkProtocol() == LinkProtocol::UB_CTP)) {
             u32 dieId = 1;
             u32 funcId = 1;
             u32 jettyId = 1;
@@ -1278,17 +1250,18 @@ public:
         return nullptr;
     }
 
-    unique_ptr<BaseTask> PrepareWriteReduce(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                            DataType datatype, ReduceOp reduceOp, const SqeConfig &config) override
+    unique_ptr<BaseTask> PrepareWriteReduce(
+        const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, DataType datatype, ReduceOp reduceOp,
+        const SqeConfig& config) override
     {
         return nullptr;
     }
 
-    unique_ptr<BaseTask> PrepareInlineWrite(const MemoryBuffer &remoteMemBuf, u64 data,
-                                            const SqeConfig &config) override
+    unique_ptr<BaseTask>
+    PrepareInlineWrite(const MemoryBuffer& remoteMemBuf, u64 data, const SqeConfig& config) override
     {
-        if (link.GetType() == PortDeploymentType::DEV_NET &&
-            (link.GetLinkProtocol() == LinkProtocol::UB_TP|| link.GetLinkProtocol() == LinkProtocol::UB_CTP)) {
+        if (link.GetType() == PortDeploymentType::DEV_NET
+            && (link.GetLinkProtocol() == LinkProtocol::UB_TP || link.GetLinkProtocol() == LinkProtocol::UB_CTP)) {
             u32 dieId = 1;
             u32 funcId = 1;
             u32 jettyId = 1;
@@ -1298,10 +1271,7 @@ public:
         return nullptr;
     }
 
-    string Describe() const override
-    {
-        return "StubRmaConnectionSync";
-    }
+    string Describe() const override { return "StubRmaConnectionSync"; }
 
     void Connect() override {}
 
@@ -1309,11 +1279,12 @@ private:
     LinkData link;
 };
 
-const map<ReduceOp, bool> CAP_INLINE_REDUCE_OP_V82 = {{ReduceOp::SUM, true},
-                                                      {ReduceOp::PROD, false},
-                                                      {ReduceOp::MAX, true},
-                                                      {ReduceOp::MIN, true},
-                                                      {ReduceOp::EQUAL, true}};
+const map<ReduceOp, bool> CAP_INLINE_REDUCE_OP_V82
+    = {{ReduceOp::SUM, true},
+       {ReduceOp::PROD, false},
+       {ReduceOp::MAX, true},
+       {ReduceOp::MIN, true},
+       {ReduceOp::EQUAL, true}};
 
 const map<DataType, bool> CAP_INLINE_REDUCE_DATATYPE_V82 = {
     {DataType::INT8, true},    {DataType::INT16, true},    {DataType::INT32, true},   {DataType::FP16, true},
@@ -1325,20 +1296,21 @@ const map<DataType, bool> CAP_INLINE_REDUCE_DATATYPE_V82 = {
 const u32 CAP_NOTIFY_SIZE_V82 = 8;
 const u32 CAP_SDMA_INLINE_REDUCE_ALIGN_BYTES_V82 = 32;
 
-const u64 RDMA_SEND_MAX_SIZE = 0x80000000;   // 节点间RDMA发送数据单个WQE支持的最大数据量
-const u64 SDMA_SEND_MAX_SIZE = 0x100000000;  // 节点内单个SDMA任务发送数据支持的最大数据量
+const u64 RDMA_SEND_MAX_SIZE = 0x80000000;  // 节点间RDMA发送数据单个WQE支持的最大数据量
+const u64 SDMA_SEND_MAX_SIZE = 0x100000000; // 节点内单个SDMA任务发送数据支持的最大数据量
 
 TEST(DevCapabilityTest, test_dev_cap_v82)
 {
     const u32 CAP_NOTIFY_SIZE_V82 = 8;
     const u32 CAP_SDMA_INLINE_REDUCE_ALIGN_BYTES_V82 = 32;
-    const u64 RDMA_SEND_MAX_SIZE = 0x80000000;   // 节点间RDMA发送数据单个WQE支持的最大数据量
-    const u64 SDMA_SEND_MAX_SIZE = 0x100000000;  // 节点内单个SDMA任务发送数据支持的最大数据量
-    const map<ReduceOp, bool> CAP_INLINE_REDUCE_OP_V82 = {{ReduceOp::SUM, true},
-                                                          {ReduceOp::PROD, false},
-                                                          {ReduceOp::MAX, true},
-                                                          {ReduceOp::MIN, true},
-                                                          {ReduceOp::EQUAL, true}};
+    const u64 RDMA_SEND_MAX_SIZE = 0x80000000;  // 节点间RDMA发送数据单个WQE支持的最大数据量
+    const u64 SDMA_SEND_MAX_SIZE = 0x100000000; // 节点内单个SDMA任务发送数据支持的最大数据量
+    const map<ReduceOp, bool> CAP_INLINE_REDUCE_OP_V82
+        = {{ReduceOp::SUM, true},
+           {ReduceOp::PROD, false},
+           {ReduceOp::MAX, true},
+           {ReduceOp::MIN, true},
+           {ReduceOp::EQUAL, true}};
     const map<DataType, bool> CAP_INLINE_REDUCE_DATATYPE_V82 = {
         {DataType::INT8, true},    {DataType::INT16, true},    {DataType::INT32, true},   {DataType::FP16, true},
         {DataType::FP32, true},    {DataType::INT64, false},   {DataType::UINT64, false}, {DataType::UINT8, true},
@@ -1348,7 +1320,7 @@ TEST(DevCapabilityTest, test_dev_cap_v82)
     DevType devType = DevType::DEV_TYPE_950;
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(devType));
 
-    DevCapability &devCap = DevCapability::GetInstance();
+    DevCapability& devCap = DevCapability::GetInstance();
     devCap.LoadV82Cap();
     EXPECT_EQ(CAP_NOTIFY_SIZE_V82, devCap.GetNotifySize());
     EXPECT_EQ(SDMA_SEND_MAX_SIZE, devCap.GetSdmaSendMaxSize());
@@ -1360,41 +1332,6 @@ TEST(DevCapabilityTest, test_dev_cap_v82)
     EXPECT_EQ(true, devCap.IsSupportDevNetInlineReduce());
     devCap.Load910A3Cap();
     devCap.Load910ACap();
-}
-
-TEST(NotifyFixedValueTest, notify_fixed_value_get_addr_and_size)
-{
-    // Given
-    MOCKER(HrtGetDeviceType).stubs().will(returnValue((DevType)DevType::DEV_TYPE_950));
-
-    void *fakeAddr = new int[1];
-    MOCKER(HrtMalloc).stubs().with(mockcpp::any(),mockcpp::any()).will(returnValue(fakeAddr));
-
-    MOCKER(HrtMemcpy).stubs();
-
-    NotifyFixedValue notifyFixedValue;
-    // when
-    u64 addrRes = notifyFixedValue.GetAddr();
-    u32 sizeRes = notifyFixedValue.GetSize();
-
-    // then
-    EXPECT_EQ(reinterpret_cast<uintptr_t>(fakeAddr), addrRes);
-    EXPECT_EQ(8, sizeRes);
-
-    void *fakeRdmaHandle = new int(0);
-    RdmaHandleManager::GetInstance().tokenInfoMap[fakeRdmaHandle] = make_unique<TokenInfoManager>(0, fakeRdmaHandle);
-
-    HrtRaUbLocalMemRegOutParam localMemRegInfo;
-    localMemRegInfo.targetSegVa = 0;
-    localMemRegInfo.keySize = 100;
-    localMemRegInfo.tokenId = 0;
-    localMemRegInfo.handle = 0;
-    MOCKER(HrtRaUbLocalMemReg).stubs().will(returnValue(localMemRegInfo));
-
-    notifyFixedValue.RegisterMem(fakeRdmaHandle);
-
-    delete fakeRdmaHandle;
-    GlobalMockObject::verify();
 }
 
 TEST(CommunicatorImplTest, should_return_success_when_calling_suspend)
@@ -1416,7 +1353,7 @@ TEST(CommunicatorImplTest, should_return_success_when_calling_suspend)
 TEST(LocalRmaBufferTest, Serialize_test)
 {
     std::shared_ptr<DevBuffer> devBuf = DevBuffer::Create(0x100, 0x100);
-    RdmaHandle rdmaHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
     LocalRdmaRmaBuffer localRdmaRmaBuffer(devBuf, rdmaHandle);
 
     localRdmaRmaBuffer.Describe();
@@ -1431,14 +1368,17 @@ TEST(LocalRmaBufferTest, getExchangeDto_ipc_test)
     localIpcRmaBuffer.GetExchangeDto();
 
     u32 pid = 1;
-    MOCKER(HrtDeviceGetBareTgid).stubs().will(returnValue(pid));
+    MOCKER(HrtDeviceGetBareTgid).stubs().will(returnValue(static_cast<s32>(pid)));
     localIpcRmaBuffer.Grant(pid);
 };
 
 TEST(AdapterHccpTest, RaGetOneSocket_return_err_2)
 {
     u32 connectedNum = 2;
-    MOCKER(RaGetSockets).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any(), outBoundP(&connectedNum)).will(returnValue(0));
+    MOCKER(RaGetSockets)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), outBoundP(&connectedNum))
+        .will(returnValue(0));
 
     SocketHandle socketHandle = nullptr;
     IpAddress ipAddr = IpAddress();
@@ -1507,25 +1447,22 @@ TEST(CommunicatorImplTest, should_success_when_comm_LoadOpbasedCollOp_ccu)
     u32 fakeNotifyId = 1;
     u64 fakeOffset = 200;
     char fakeName[65] = "testRtsNotify";
-    MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtNotifyCreate).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
-    MOCKER(HrtNotifyCreateWithFlag).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
-    MOCKER(HrtGetNotifyID).stubs().will(returnValue(fakeNotifyId));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(fakeDevPhyId)));
-    MOCKER(HrtIpcSetNotifyName).stubs().with(mockcpp::any(), outBoundP(fakeName, sizeof(fakeName)), mockcpp::any());
-    MOCKER(HrtNotifyGetOffset).stubs().will(returnValue(fakeOffset));
-    MOCKER(HrtGetDeviceType).stubs().will(returnValue(DevType(DevType::DEV_TYPE_950)));
+    SETUP_COMM_NOTIFY_MOCKS();
 
     // 资源初始化
     MOCKER_CPP(&CcuInsPreprocessor::Preprocess).stubs().with().will(ignoreReturnValue());
     MOCKER_CPP(&AicpuInsPreprocessor::Preprocess).stubs().with().will(ignoreReturnValue());
 
-    Buffer *buf = nullptr;
-    LocalRmaBuffer *rmaBuf = nullptr;
-    MOCKER_CPP(&DataBufManager::Get).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(buf));
+    Buffer* buf = nullptr;
+    LocalRmaBuffer* rmaBuf = nullptr;
+    MOCKER_CPP(&DataBufManager::Get)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(returnValue(buf));
     MOCKER_CPP(
-        &LocalRmaBufManager::Reg,
-        LocalRmaBuffer * (LocalRmaBufManager::*)(const string &, BufferType, std::shared_ptr<Buffer>, const PortData &, LinkProtocol))
+        &LocalRmaBufManager::Reg, LocalRmaBuffer
+                                      * (LocalRmaBufManager::*)(const string&, BufferType, std::shared_ptr<Buffer>,
+                                                                const PortData&, LinkProtocol))
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
         .will(returnValue(rmaBuf));
@@ -1537,7 +1474,7 @@ TEST(CommunicatorImplTest, should_success_when_comm_LoadOpbasedCollOp_ccu)
         .stubs()
         .with(mockcpp::any(), mockcpp::any())
         .will(returnValue(std::vector<char>{'1', '2'}));
-    void *ptr1 = (void*)1;
+    void* ptr1 = (void*)1;
     MOCKER(HrtStreamCreateWithFlags).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(ptr1));
     MOCKER(HrtGetStreamId).stubs().with(mockcpp::any()).will(returnValue(0));
 
@@ -1588,22 +1525,28 @@ TEST(CommunicatorImplTest, should_success_when_comm_LoadOpbasedCollOp_ccu)
 
     fakeComm.InitCollService();
     fakeComm.CollAlgComponentInit();
-    MOCKER_CPP(&CollAlgComponent::ExecAlgSelect).stubs().with(mockcpp::any()).will(returnValue(HcclResult::HCCL_SUCCESS));
+    MOCKER_CPP(&CollAlgComponent::ExecAlgSelect)
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HcclResult::HCCL_SUCCESS));
 
     // 算法组件初始化
     CollAlgOpReq collAlgOpReq;
     collAlgOpReq.algName = "testAlg";
     collAlgOpReq.resReq.primQueueNum = 1;
     CollAlgComponent collAlgComponent(nullptr, DevType::DEV_TYPE_950, 0, 1);
-    MOCKER_CPP_VIRTUAL(collAlgComponent, &CollAlgComponent::Orchestrate,
-                       HcclResult(CollAlgComponent::*)(const CollAlgOperator &op, const CollAlgParams &params,
-                                                       const string &algName, InsQuePtr queue))
+    MOCKER_CPP_VIRTUAL(
+        collAlgComponent, &CollAlgComponent::Orchestrate,
+        HcclResult(CollAlgComponent::*)(
+            const CollAlgOperator& op, const CollAlgParams& params, const string& algName, InsQuePtr queue))
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
         .will(returnValue(HcclResult::HCCL_SUCCESS));
-    MOCKER_CPP_VIRTUAL(collAlgComponent, &CollAlgComponent::CalcResOffload,
-                       HcclResult(CollAlgComponent::*)(const OpType &opType, const u64 &dataSize, const HcclDataType &dataType,
-                                                       const OpExecuteConfig &opConfig, CollOffloadOpResReq &resReq))
+    MOCKER_CPP_VIRTUAL(
+        collAlgComponent, &CollAlgComponent::CalcResOffload,
+        HcclResult(CollAlgComponent::*)(
+            const OpType& opType, const u64& dataSize, const HcclDataType& dataType, const OpExecuteConfig& opConfig,
+            CollOffloadOpResReq& resReq))
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
         .will(returnValue(HcclResult::HCCL_SUCCESS));
@@ -1634,25 +1577,22 @@ TEST(CommunicatorImplTest, should_success_when_comm_LoadOpbasedCollOp_aicpu)
     u32 fakeNotifyId = 1;
     u64 fakeOffset = 200;
     char fakeName[65] = "testRtsNotify";
-    MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtNotifyCreate).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
-    MOCKER(HrtNotifyCreateWithFlag).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
-    MOCKER(HrtGetNotifyID).stubs().will(returnValue(fakeNotifyId));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(fakeDevPhyId)));
-    MOCKER(HrtIpcSetNotifyName).stubs().with(mockcpp::any(), outBoundP(fakeName, sizeof(fakeName)), mockcpp::any());
-    MOCKER(HrtNotifyGetOffset).stubs().will(returnValue(fakeOffset));
-    MOCKER(HrtGetDeviceType).stubs().will(returnValue(DevType(DevType::DEV_TYPE_950)));
+    SETUP_COMM_NOTIFY_MOCKS();
 
     // 资源初始化
     MOCKER_CPP(&CcuInsPreprocessor::Preprocess).stubs().with().will(ignoreReturnValue());
     MOCKER_CPP(&AicpuInsPreprocessor::Preprocess).stubs().with().will(ignoreReturnValue());
 
-    Buffer *buf = nullptr;
-    LocalRmaBuffer *rmaBuf = nullptr;
-    MOCKER_CPP(&DataBufManager::Get).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(buf));
+    Buffer* buf = nullptr;
+    LocalRmaBuffer* rmaBuf = nullptr;
+    MOCKER_CPP(&DataBufManager::Get)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(returnValue(buf));
     MOCKER_CPP(
-        &LocalRmaBufManager::Reg,
-        LocalRmaBuffer * (LocalRmaBufManager::*)(const string &, BufferType, std::shared_ptr<Buffer>, const PortData &, LinkProtocol))
+        &LocalRmaBufManager::Reg, LocalRmaBuffer
+                                      * (LocalRmaBufManager::*)(const string&, BufferType, std::shared_ptr<Buffer>,
+                                                                const PortData&, LinkProtocol))
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
         .will(returnValue(rmaBuf));
@@ -1664,7 +1604,7 @@ TEST(CommunicatorImplTest, should_success_when_comm_LoadOpbasedCollOp_aicpu)
         .stubs()
         .with(mockcpp::any(), mockcpp::any())
         .will(returnValue(std::vector<char>{'1', '2'}));
-    void *ptr1 = (void*)1;
+    void* ptr1 = (void*)1;
     MOCKER(HrtStreamCreateWithFlags).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(ptr1));
     MOCKER(HrtGetStreamId).stubs().with(mockcpp::any()).will(returnValue(0));
     fakeComm.rankSize = 2;
@@ -1715,22 +1655,28 @@ TEST(CommunicatorImplTest, should_success_when_comm_LoadOpbasedCollOp_aicpu)
 
     fakeComm.InitCollService();
     fakeComm.CollAlgComponentInit();
-    MOCKER_CPP(&CollAlgComponent::ExecAlgSelect).stubs().with(mockcpp::any()).will(returnValue(HcclResult::HCCL_SUCCESS));
+    MOCKER_CPP(&CollAlgComponent::ExecAlgSelect)
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HcclResult::HCCL_SUCCESS));
 
     // 算法组件初始化
     CollAlgOpReq collAlgOpReq;
     collAlgOpReq.algName = "testAlg";
     collAlgOpReq.resReq.primQueueNum = 1;
     CollAlgComponent collAlgComponent(nullptr, DevType::DEV_TYPE_950, 0, 1);
-    MOCKER_CPP_VIRTUAL(collAlgComponent, &CollAlgComponent::Orchestrate,
-                       HcclResult(CollAlgComponent::*)(const CollAlgOperator &op, const CollAlgParams &params,
-                                                       const string &algName, InsQuePtr queue))
+    MOCKER_CPP_VIRTUAL(
+        collAlgComponent, &CollAlgComponent::Orchestrate,
+        HcclResult(CollAlgComponent::*)(
+            const CollAlgOperator& op, const CollAlgParams& params, const string& algName, InsQuePtr queue))
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
         .will(returnValue(HcclResult::HCCL_SUCCESS));
-    MOCKER_CPP_VIRTUAL(collAlgComponent, &CollAlgComponent::CalcResOffload,
-                       HcclResult(CollAlgComponent::*)(const OpType &opType, const u64 &dataSize, const HcclDataType &dataType,
-                                                       const OpExecuteConfig &opConfig, CollOffloadOpResReq &resReq))
+    MOCKER_CPP_VIRTUAL(
+        collAlgComponent, &CollAlgComponent::CalcResOffload,
+        HcclResult(CollAlgComponent::*)(
+            const OpType& opType, const u64& dataSize, const HcclDataType& dataType, const OpExecuteConfig& opConfig,
+            CollOffloadOpResReq& resReq))
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
         .will(returnValue(HcclResult::HCCL_SUCCESS));
@@ -1810,14 +1756,15 @@ TEST(ST_AdapterRtsTest, DevCapabilityT_Init)
 {
     DevType devType = DevType::DEV_TYPE_V51_310_P3;
 
-    DevCapability &devCap = DevCapability::GetInstance();
+    DevCapability& devCap = DevCapability::GetInstance();
     devCap.Reset();
     EXPECT_THROW(devCap.Init(devType), NotSupportException);
 }
 
 void MockRaSocketRecv(int ret, unsigned long long recvSize)
 {
-    MOCKER(RaSocketRecv).stubs()
+    MOCKER(RaSocketRecv)
+        .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), outBoundP(&recvSize, sizeof(recvSize)))
         .will(returnValue(ret));
 }
@@ -1831,7 +1778,7 @@ void MockEnvLinkTimeoutGet(int timeout)
 TEST(AdapterHccpTest, St_HrtRaSocketBlockRecv_When_SockClosed_Expect_ThrowException)
 {
     FdHandle fakeFdHandle = nullptr;
-    void *fakeData = (void *)0x100;
+    void* fakeData = (void*)0x100;
     MockRaSocketRecv(SOCK_ESOCKCLOSED, 0);
     MockEnvLinkTimeoutGet(1);
     EXPECT_THROW(HrtRaSocketBlockRecv(fakeFdHandle, fakeData, 100), NetworkApiException);
@@ -1840,7 +1787,7 @@ TEST(AdapterHccpTest, St_HrtRaSocketBlockRecv_When_SockClosed_Expect_ThrowExcept
 TEST(AdapterHccpTest, St_HrtRaSocketBlockRecv_When_SockClose_Expect_ThrowException)
 {
     FdHandle fakeFdHandle = nullptr;
-    void *fakeData = (void *)0x100;
+    void* fakeData = (void*)0x100;
     MockRaSocketRecv(SOCK_CLOSE, 0);
     MockEnvLinkTimeoutGet(1);
     EXPECT_THROW(HrtRaSocketBlockRecv(fakeFdHandle, fakeData, 100), NetworkApiException);

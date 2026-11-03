@@ -14,6 +14,7 @@
 #include <string.h>
 #include "securec.h"
 #include "user_log.h"
+#include "config_log.h"
 #include "dl_netco_function.h"
 #include "file_opt.h"
 #include "ra_rs_err.h"
@@ -79,7 +80,7 @@ STATIC int RsNslbNetcoInit(unsigned int phyId, struct RsNslbCb *nslbCb)
     int ret = 0;
 
     ret = RsNetcoInitArg(phyId, &netcoArg);
-    CHK_PRT_RETURN(ret == -ENOTSUPP, hccp_warn("get netco init arg unsuccessful, ret(%d)", ret), ret);
+    CHK_PRT_RETURN(ret == -ENOTSUPP, hccp_warn_others("get netco init arg unsuccessful, ret(%d)", ret), ret);
     CHK_PRT_RETURN(ret != 0, hccp_err("get netco init arg failed, ret(%d)", ret), -EINVAL);
 
     ret = RsNslbApiInit();
@@ -112,8 +113,7 @@ STATIC void RsNslbNetcoDeinit(struct RsNslbCb *nslbCb)
     return;
 }
 
-STATIC int RsNslbNetcoTblRequest(struct RsNslbCb *nslbCb, unsigned int type,
-    char *data, unsigned int dataLen)
+STATIC int RsNslbNetcoTblRequest(struct RsNslbCb *nslbCb, unsigned int type, char *data, unsigned int dataLen)
 {
     int ret = 0;
 
@@ -124,15 +124,14 @@ STATIC int RsNslbNetcoTblRequest(struct RsNslbCb *nslbCb, unsigned int type,
     return ret;
 }
 
-int RsNslbNetcoRequest(unsigned int phyId, struct RsNslbCb *nslbCb, unsigned int type,
-    char *data, unsigned int dataLen)
+int RsNslbNetcoRequest(unsigned int phyId, struct RsNslbCb *nslbCb, unsigned int type, char *data, unsigned int dataLen)
 {
     int ret = 0;
 
-    switch(type) {
+    switch (type) {
         case NETCO_REQ_TYPE_INIT:
             ret = RsNslbNetcoInit(phyId, nslbCb);
-            CHK_PRT_RETURN(ret == -ENOTSUPP, hccp_warn("netco init unsuccessful ret(%d)", ret), -ENOTSUPP);
+            CHK_PRT_RETURN(ret == -ENOTSUPP, hccp_warn_others("netco init unsuccessful ret(%d)", ret), -ENOTSUPP);
             break;
         case NETCO_REQ_TYPE_DEINIT:
             RsNslbNetcoDeinit(nslbCb);
@@ -142,7 +141,7 @@ int RsNslbNetcoRequest(unsigned int phyId, struct RsNslbCb *nslbCb, unsigned int
             break;
     }
 
-    ret = (ret > 0) ? -ret: ret;
+    ret = (ret > 0) ? -ret : ret;
     CHK_PRT_RETURN(ret != 0, hccp_err("netco request failed, type(%u) ret(%d)", type, ret), ret);
 
     return 0;

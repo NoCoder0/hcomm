@@ -24,11 +24,17 @@ namespace Hccl {
 // 为AllToAllVMesh2Die实现的CCUIns、CCUCtxArg与CCUTaskArg
 class CcuCtxArgAllToAllVMesh2Die : public CcuCtxArg {
 public:
-    CcuCtxArgAllToAllVMesh2Die(const std::vector<uint32_t> &dSize, uint32_t rId, bool withMyRank,
-        const CollAlgOperator &op, const std::vector<std::vector<RankId>> &tempVTopo,
-        const std::vector<RankId> &rankGroup) :
-            CcuCtxArg(), dimSize(dSize), rankId(rId), withMyRank(withMyRank), op(op), tempVTopo(tempVTopo),
-            rankGroup(rankGroup) {}
+    CcuCtxArgAllToAllVMesh2Die(
+        const std::vector<uint32_t>& dSize, uint32_t rId, bool withMyRank, const CollAlgOperator& op,
+        const std::vector<std::vector<RankId>>& tempVTopo, const std::vector<RankId>& rankGroup)
+        : CcuCtxArg(),
+          dimSize(dSize),
+          rankId(rId),
+          withMyRank(withMyRank),
+          op(op),
+          tempVTopo(tempVTopo),
+          rankGroup(rankGroup)
+    {}
 
     ~CcuCtxArgAllToAllVMesh2Die() override {}
 
@@ -49,10 +55,15 @@ public:
 
 class CcuTaskArgAllToAllVMesh2Die : public CcuTaskArg {
 public:
-    explicit CcuTaskArgAllToAllVMesh2Die(uint64_t inputAddr, uint64_t outputAddr, uint64_t scratchAddr,
-        uint64_t token, const A2ASendRecvInfo& localSendRecvInfo) :
-        inputAddr(inputAddr), outputAddr(outputAddr), scratchAddr(scratchAddr), token(token),
-        localSendRecvInfo(localSendRecvInfo) {}
+    explicit CcuTaskArgAllToAllVMesh2Die(
+        uint64_t inputAddr, uint64_t outputAddr, uint64_t scratchAddr, uint64_t token,
+        const A2ASendRecvInfo& localSendRecvInfo)
+        : inputAddr(inputAddr),
+          outputAddr(outputAddr),
+          scratchAddr(scratchAddr),
+          token(token),
+          localSendRecvInfo(localSendRecvInfo)
+    {}
 
     uint64_t inputAddr;
     uint64_t outputAddr;
@@ -63,12 +74,18 @@ public:
 
 class CcuInstructionAllToAllVMesh2Die : public CcuInstruction {
 public:
-    CcuInstructionAllToAllVMesh2Die(const CollAlgOperator &op, const std::vector<uint32_t> &dimSize,
-        const std::vector<std::vector<RankId>> &tempVTopo) :
-        CcuInstruction(), op_(op), dimSize_(dimSize), tempVTopo_(tempVTopo) {}
+    CcuInstructionAllToAllVMesh2Die(
+        const CollAlgOperator& op, const std::vector<uint32_t>& dimSize,
+        const std::vector<std::vector<RankId>>& tempVTopo)
+        : CcuInstruction(),
+          op_(op),
+          dimSize_(dimSize),
+          tempVTopo_(tempVTopo)
+    {}
 
-    void Init(uint32_t rankId, bool withMyRank, uint64_t inputAddr, uint64_t outputAddr, uint64_t scratchAddr,
-        uint64_t token, const A2ASendRecvInfo& localSendRecvInfo)
+    void Init(
+        uint32_t rankId, bool withMyRank, uint64_t inputAddr, uint64_t outputAddr, uint64_t scratchAddr, uint64_t token,
+        const A2ASendRecvInfo& localSendRecvInfo)
     {
         rankId_ = rankId;
         withMyRank_ = withMyRank;
@@ -88,28 +105,27 @@ public:
 
     std::string Describe() const override
     {
-        return StringFormat("CcuInstructionAllToAllVMesh2Die rankId [%u], instType[%s]", rankId_,
-            instType_.Describe().c_str());
+        return StringFormat(
+            "CcuInstructionAllToAllVMesh2Die rankId [%u], instType[%s]", rankId_, instType_.Describe().c_str());
     }
 
-    void SetInstType(CcuInstType instType) 
-    { 
-        instType_ = instType; 
-    }
+    void SetInstType(CcuInstType instType) { instType_ = instType; }
 
     std::unique_ptr<CcuCtxArg> GetCtxArg() const override
     {
-        HCCL_INFO("[CcuInstructionAllToAllVMesh2Die][GetCtxArg] dimSize.size[%u], rankId[%u], withMyRank[%u], "
-            "tempVTopo.size[%u]", dimSize_.size(), rankId_, withMyRank_, tempVTopo_.size());
-        return std::make_unique<CcuCtxArgAllToAllVMesh2Die>(dimSize_, rankId_, withMyRank_, op_, tempVTopo_,
-            rankGroup_.GetRanks());
+        HCCL_INFO(
+            "[CcuInstructionAllToAllVMesh2Die][GetCtxArg] dimSize.size[%u], rankId[%u], withMyRank[%u], "
+            "tempVTopo.size[%u]",
+            dimSize_.size(), rankId_, withMyRank_, tempVTopo_.size());
+        return std::make_unique<CcuCtxArgAllToAllVMesh2Die>(
+            dimSize_, rankId_, withMyRank_, op_, tempVTopo_, rankGroup_.GetRanks());
     }
 
     std::unique_ptr<CcuTaskArg> GetTaskArg() const override
     {
         // 2个Die依赖的TaskArg要一样，因为当前ccu_ins_group只会用第一个Instruction获取TaskArg
-        return std::make_unique<CcuTaskArgAllToAllVMesh2Die>(inputAddr_, outputAddr_, scratchAddr_, token_,
-            localSendRecvInfo_);
+        return std::make_unique<CcuTaskArgAllToAllVMesh2Die>(
+            inputAddr_, outputAddr_, scratchAddr_, token_, localSendRecvInfo_);
     }
 
 private:
@@ -127,5 +143,5 @@ private:
     A2ASendRecvInfo localSendRecvInfo_;
 };
 
-}
+} // namespace Hccl
 #endif // HCCLV2_CCU_INSTRUCTION_ALL_TO_ALL_V_MESH_2DIE_H_

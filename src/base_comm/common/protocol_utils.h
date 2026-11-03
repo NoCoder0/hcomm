@@ -14,18 +14,15 @@
 #include <string>
 #include <unordered_map>
 #include "hcomm_res_defs.h"
-#include "comm_engine_utils.h"
+#include "common/comm_engine_utils_pub.h"
 
 inline const std::unordered_map<CommProtocol, std::string>& GetCommProtocolStrMap()
 {
-    static const std::unordered_map<CommProtocol, std::string> COMM_PROTOCOL_STR_MAP {
-        {COMM_PROTOCOL_RESERVED, "RESERVED"}, {COMM_PROTOCOL_HCCS, "HCCS"},
-        {COMM_PROTOCOL_ROCE, "ROCE"},         {COMM_PROTOCOL_PCIE, "PCIE"},
-        {COMM_PROTOCOL_SIO, "SIO"},           {COMM_PROTOCOL_UBC_CTP, "UBC_CTP"},
-        {COMM_PROTOCOL_UBC_TP, "UBC_TP"},     {COMM_PROTOCOL_UB_MEM, "UB_MEM"},
-        {COMM_PROTOCOL_UBOE, "UBOE"},         {COMM_PROTOCOL_HCCS_ONLY, "HCCS_ONLY"},
-        {COMM_PROTOCOL_UBG, "UBG"}
-    };
+    static const std::unordered_map<CommProtocol, std::string> COMM_PROTOCOL_STR_MAP{
+        {COMM_PROTOCOL_RESERVED, "RESERVED"},   {COMM_PROTOCOL_HCCS, "HCCS"},     {COMM_PROTOCOL_ROCE, "ROCE"},
+        {COMM_PROTOCOL_PCIE, "PCIE"},           {COMM_PROTOCOL_SIO, "SIO"},       {COMM_PROTOCOL_UB_CTP, "UB_CTP"},
+        {COMM_PROTOCOL_UBC_TP, "UBC_TP"},       {COMM_PROTOCOL_UB_MEM, "UB_MEM"}, {COMM_PROTOCOL_UBOE, "UBOE"},
+        {COMM_PROTOCOL_HCCS_ONLY, "HCCS_ONLY"}, {COMM_PROTOCOL_UB_RTP, "UB_RTP"}};
     return COMM_PROTOCOL_STR_MAP;
 }
 

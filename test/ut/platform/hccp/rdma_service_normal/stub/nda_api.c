@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include "ibv_extend.h"
 
-const char *ibv_extend_get_version(uint32_t *major, uint32_t *minor, uint32_t *patch)
+const char* ibv_extend_get_version(uint32_t* major, uint32_t* minor, uint32_t* patch)
 {
     if (major != NULL) {
         *major = IBV_EXTEND_VERSION_MAJOR;
@@ -25,25 +25,22 @@ const char *ibv_extend_get_version(uint32_t *major, uint32_t *minor, uint32_t *p
     return IBV_EXTEND_VERSION_STRING;
 }
 
-int ibv_extend_check_version(uint32_t driver_major, uint32_t driver_minor, uint32_t driver_patch)
-{
-    return 0;
-}
+int ibv_extend_check_version(uint32_t driver_major, uint32_t driver_minor, uint32_t driver_patch) { return 0; }
 
-struct ibv_context_extend *ibv_open_extend(struct ibv_context *context)
+struct ibv_context_extend* ibv_open_extend(struct ibv_context* context)
 {
-    struct ibv_context_extend *ctx_extend = NULL;
+    struct ibv_context_extend* ctx_extend = NULL;
 
     ctx_extend = malloc(sizeof(struct ibv_context_extend));
     if (NULL == ctx_extend) {
         return NULL;
     }
-    memset(ctx_extend, 0, sizeof(struct ibv_context_extend)); 
+    memset(ctx_extend, 0, sizeof(struct ibv_context_extend));
 
     return ctx_extend;
 }
 
-int ibv_close_extend(struct ibv_context_extend *context)
+int ibv_close_extend(struct ibv_context_extend* context)
 {
     if (context != NULL) {
         free(context);
@@ -52,33 +49,33 @@ int ibv_close_extend(struct ibv_context_extend *context)
     return 0;
 }
 
-int ibv_query_device_extend(struct ibv_context_extend *context, struct ibv_device_attr_extend *ext_dev_attr)
+int ibv_query_device_extend(struct ibv_context_extend* context, struct ibv_device_attr_extend* ext_dev_attr)
 {
     return 0;
 }
 
-struct ibv_qp_extend *ibv_create_qp_extend(struct ibv_context_extend *context,
-    struct ibv_qp_init_attr_extend *qp_init_attr)
+struct ibv_qp_extend*
+ibv_create_qp_extend(struct ibv_context_extend* context, struct ibv_qp_init_attr_extend* qp_init_attr)
 {
-    struct ibv_qp_extend *qp_extend = NULL;
-	static unsigned int qpn = 0;
-	struct ibv_qp *qp = NULL;
+    struct ibv_qp_extend* qp_extend = NULL;
+    static unsigned int qpn = 0;
+    struct ibv_qp* qp = NULL;
 
-	qp = malloc(sizeof(struct ibv_qp));
-	if (NULL == qp) {
-		return NULL;
-	}
-	memset(qp, 0, sizeof(struct ibv_qp));
+    qp = malloc(sizeof(struct ibv_qp));
+    if (NULL == qp) {
+        return NULL;
+    }
+    memset(qp, 0, sizeof(struct ibv_qp));
 
-	qp->pd = qp_init_attr->pd;
-	qp->state = IBV_QPS_RESET;
-	qp->qp_type = qp_init_attr->attr.qp_type;
-	qp->send_cq = qp_init_attr->attr.send_cq;
-	qp->recv_cq = qp_init_attr->attr.recv_cq;
-	qp->context = qp_init_attr->pd->context;
+    qp->pd = qp_init_attr->pd;
+    qp->state = IBV_QPS_RESET;
+    qp->qp_type = qp_init_attr->attr.qp_type;
+    qp->send_cq = qp_init_attr->attr.send_cq;
+    qp->recv_cq = qp_init_attr->attr.recv_cq;
+    qp->context = qp_init_attr->pd->context;
 
-	qp->qp_num = qpn;
-	qpn++;
+    qp->qp_num = qpn;
+    qpn++;
 
     qp_extend = malloc(sizeof(struct ibv_qp_extend));
     if (NULL == qp_extend) {
@@ -92,17 +89,17 @@ struct ibv_qp_extend *ibv_create_qp_extend(struct ibv_context_extend *context,
     return qp_extend;
 }
 
-struct ibv_cq_extend *ibv_create_cq_extend(struct ibv_context_extend *context,
-    struct ibv_cq_init_attr_extend *cq_init_attr)
+struct ibv_cq_extend*
+ibv_create_cq_extend(struct ibv_context_extend* context, struct ibv_cq_init_attr_extend* cq_init_attr)
 {
-    struct ibv_cq_extend *cq_extend = NULL;
-	struct ibv_cq *cq = NULL;
+    struct ibv_cq_extend* cq_extend = NULL;
+    struct ibv_cq* cq = NULL;
 
-	cq = malloc(sizeof(struct ibv_cq));
-	if (NULL == cq) {
-		return NULL;
-	}
-	memset(cq, 0, sizeof(struct ibv_cq));
+    cq = malloc(sizeof(struct ibv_cq));
+    if (NULL == cq) {
+        return NULL;
+    }
+    memset(cq, 0, sizeof(struct ibv_cq));
 
     cq_extend = malloc(sizeof(struct ibv_cq_extend));
     if (NULL == cq_extend) {
@@ -116,10 +113,10 @@ struct ibv_cq_extend *ibv_create_cq_extend(struct ibv_context_extend *context,
     return cq_extend;
 }
 
-struct ibv_srq_extend *ibv_create_srq_extend(struct ibv_context_extend *context,
-    struct ibv_srq_init_attr_extend *srq_init_attr)
+struct ibv_srq_extend*
+ibv_create_srq_extend(struct ibv_context_extend* context, struct ibv_srq_init_attr_extend* srq_init_attr)
 {
-    struct ibv_srq_extend *srq_extend = NULL;
+    struct ibv_srq_extend* srq_extend = NULL;
 
     srq_extend = malloc(sizeof(struct ibv_srq_extend));
     if (NULL == srq_extend) {
@@ -130,7 +127,7 @@ struct ibv_srq_extend *ibv_create_srq_extend(struct ibv_context_extend *context,
     return srq_extend;
 }
 
-int ibv_destroy_qp_extend(struct ibv_context_extend *context, struct ibv_qp_extend *qp_extend)
+int ibv_destroy_qp_extend(struct ibv_context_extend* context, struct ibv_qp_extend* qp_extend)
 {
     if (qp_extend != NULL) {
         if (qp_extend->qp != NULL) {
@@ -144,7 +141,7 @@ int ibv_destroy_qp_extend(struct ibv_context_extend *context, struct ibv_qp_exte
     return 0;
 }
 
-int ibv_destroy_cq_extend(struct ibv_context_extend *context, struct ibv_cq_extend *cq_extend)
+int ibv_destroy_cq_extend(struct ibv_context_extend* context, struct ibv_cq_extend* cq_extend)
 {
     if (cq_extend != NULL) {
         if (cq_extend->cq != NULL) {
@@ -157,7 +154,7 @@ int ibv_destroy_cq_extend(struct ibv_context_extend *context, struct ibv_cq_exte
     return 0;
 }
 
-int ibv_destroy_srq_extend(struct ibv_context_extend *context, struct ibv_srq_extend *srq_extend)
+int ibv_destroy_srq_extend(struct ibv_context_extend* context, struct ibv_srq_extend* srq_extend)
 {
     if (srq_extend != NULL) {
         free(srq_extend);
@@ -166,7 +163,22 @@ int ibv_destroy_srq_extend(struct ibv_context_extend *context, struct ibv_srq_ex
     return 0;
 }
 
-void verbs_register_driver_extend(const struct verbs_device_extend_ops *ops)
+void verbs_register_driver_extend(const struct verbs_device_extend_ops* ops) { return; }
+
+int ibv_modify_qp_extend(struct ibv_context_extend* context, struct ibv_qp_attr_extend* attr, int attr_mask)
 {
-    return;
+    return 0;
+}
+
+int ibv_query_qp_supported_hyroce_feature(
+    struct ibv_context_extend* context, struct ibv_qp* qp, uint32_t sl, uint32_t tc, struct ibv_hyroce_feature* feature)
+{
+    return 0;
+}
+
+int ibv_nego_qp_hyroce_feature(
+    struct ibv_context_extend* context, struct ibv_qp* qp, const struct ibv_hyroce_feature* input,
+    struct ibv_hyroce_feature* output, uint32_t* needMoreNego)
+{
+    return 0;
 }

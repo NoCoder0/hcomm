@@ -20,7 +20,7 @@
 #include "orion_adapter_hccp.h"
 #include "ccu_component.h"
 #include "ccu_context_mgr_imp.h"
-#include "ccu_res_batch_allocator.h"
+#include "ccu_res_batch_allocator_legacy.h"
 
 #undef private
 #undef protected
@@ -30,20 +30,11 @@ using namespace Hccl;
 // Test suite class
 class CcuDriverHandleStTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CcuDriverHandleStTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CcuDriverHandleStTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CcuDriverHandleStTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CcuDriverHandleStTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in CcuDriverHandleStTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in CcuDriverHandleStTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -52,7 +43,8 @@ protected:
     }
 };
 
-TEST_F(CcuDriverHandleStTest, should_successfully_init_CcuDriverHandle) {
+TEST_F(CcuDriverHandleStTest, should_successfully_init_CcuDriverHandle)
+{
     u32 deviceLogicId = 0;
     MOCKER(RaTlvRequest).stubs().will(returnValue(0));
     void* mockTlvHandle = reinterpret_cast<void*>(0x1234);

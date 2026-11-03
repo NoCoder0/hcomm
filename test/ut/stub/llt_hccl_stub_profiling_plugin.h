@@ -11,14 +11,13 @@
 #ifndef __LLT_HCCL_STUB_PROFILING_PLUGIN_H__
 #define __LLT_HCCL_STUB_PROFILING_PLUGIN_H__
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include <semaphore.h>
-#include <assert.h>         /* for assert  */
+#include <assert.h> /* for assert  */
 #include <errno.h>
-#include <sys/time.h>       /* 获取时间 */
+#include <sys/time.h> /* 获取时间 */
 
 #include <hccl/base.h>
 #include <hccl/hccl_types.h>
@@ -29,8 +28,8 @@
 #include <sys/prctl.h>
 #include <syslog.h>
 #include <sys/mman.h>
-#include <sys/stat.h>       /* For mode constants */
-#include <fcntl.h>          /* For O_* constants */
+#include <sys/stat.h> /* For mode constants */
+#include <fcntl.h>    /* For O_* constants */
 
 #include <string>
 #include <list>
@@ -43,4 +42,3 @@
 #include "task_profiling_pub.h"
 
 #endif /* __LLT_HCCL_STUB_PROFILING_PLUGIN_H__ */
-

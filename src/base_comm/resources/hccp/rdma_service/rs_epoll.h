@@ -11,7 +11,6 @@
 #ifndef RS_EPOLL_H
 #define RS_EPOLL_H
 
-
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <unistd.h>
@@ -31,7 +30,7 @@
 
 #define RS_CONN_USLEEP_TIME 200000
 #define RS_PROMOTE_CONN_USLEEP_TIME 5000
-#define RS_EPOLL_EVENT      64
+#define RS_EPOLL_EVENT 64
 
 int RsEpollConnectHandleInit(struct rs_cb *rscb);
 int RsEpollCtl(int epollfd, int op, int fd, unsigned int state);

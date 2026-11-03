@@ -42,9 +42,8 @@ BkfChCli *BkfChCliLetcpDataInit(BkfChCliInitArg *arg)
         ch->log = arg->base->log;
     }
 
-    VOS_AVLL_INIT_TREE(ch->connSet, (AVLL_COMPARE)BkfChCliLeTcpConnCmp,
-                       BKF_OFFSET(BkfChCliConnId, keyUrlSer),
-                       BKF_OFFSET(BkfChCliConnId, avlNode));
+    VOS_AVLL_INIT_TREE(ch->connSet, (AVLL_COMPARE)BkfChCliLeTcpConnCmp, BKF_OFFSET(BkfChCliConnId, keyUrlSer),
+        BKF_OFFSET(BkfChCliConnId, avlNode));
 
     ch->name = BkfStrNew(arg->base->memMng, "cli_letcp_%s", arg->name);
     if (ch->name == VOS_NULL) {
@@ -126,7 +125,7 @@ BkfChCliConnId *BkfChCliLetcpFindConnId(BkfChCli *ch, BkfUrl *urlServer, BkfUrl 
 {
     BkfChCliConnId *connId = ch->connIdCache;
     BOOL hit = (connId != VOS_NULL) && BKF_URL_IS_EQUAL(urlServer, &connId->keyUrlSer) &&
-        BKF_URL_IS_EQUAL(urlself, &connId->keyUrlCli);
+               BKF_URL_IS_EQUAL(urlself, &connId->keyUrlCli);
     if (hit) {
         return connId;
     }

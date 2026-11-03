@@ -30,8 +30,8 @@ typedef struct tagBkfSysLogMng BkfSysLogMng;
 /* init */
 typedef uint32_t (*F_BKF_SYS_LOG_PRINTF)(uint32_t sysLogParam1, uint32_t infoId, const char *fmt, ...);
 
-typedef uint32_t (*F_BKF_SYS_LOG_OUT)(void *cookieReg, void *key, void *val,
-                                    F_BKF_SYS_LOG_PRINTF logPrintf, uint32_t logPrintfParam1);
+typedef uint32_t (*F_BKF_SYS_LOG_OUT)(void *cookieReg, void *key, void *val, F_BKF_SYS_LOG_PRINTF logPrintf,
+    uint32_t logPrintfParam1);
 
 typedef struct tagBkfSysLogInitArg {
     char *name;
@@ -76,4 +76,3 @@ uint32_t BkfSysLogFunc(BkfSysLogMng *sysLogMng, uint32_t typeId, void *key, void
 #endif
 
 #endif
-

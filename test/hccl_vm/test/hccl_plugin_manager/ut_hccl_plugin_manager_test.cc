@@ -36,13 +36,9 @@ const std::string kPluginRoot = kTestBase + "/plugin";
 
 std::string g_binLocation = kTestBase;
 
-void CleanAll()
-{
-    std::system(("rm -rf " + kTestBase + "*").c_str());
-}
+void CleanAll() { std::system(("rm -rf " + kTestBase + "*").c_str()); }
 
-void MakeManifest(const std::string& dir, const std::string& name,
-                  const std::string& entry)
+void MakeManifest(const std::string& dir, const std::string& name, const std::string& entry)
 {
     std::system(("mkdir -p " + dir).c_str());
     std::ofstream f(dir + "/manifest.json");
@@ -80,24 +76,25 @@ void ClearPlugins()
     std::lock_guard<std::mutex> lock(m.m_mutex);
     m.m_plugins.clear();
 }
-}
+} // namespace
 
 std::string GetBinLocation() { return g_binLocation; }
 
 namespace HcclSim {
-HcclVmResult DumpHcclVmFlagData(HcclVmFlagData&) {
-    return HcclVmResult::HCCL_SIM_SUCCESS;
-}
-}
+HcclVmResult DumpHcclVmFlagData(HcclVmFlagData&) { return HcclVmResult::HCCL_SIM_SUCCESS; }
+} // namespace HcclSim
 
 class HcclPluginManagerTest : public testing::Test {
 protected:
-    void SetUp() override {
+    void SetUp() override
+    {
         CleanAll();
         ClearPlugins();
         g_binLocation = kTestBase;
+        setenv("HCCL_VM_INSTALL_ROOT", kTestBase.c_str(), 1);
     }
-    void TearDown() override {
+    void TearDown() override
+    {
         ClearPlugins();
         CleanAll();
     }
@@ -115,7 +112,10 @@ TEST_F(HcclPluginManagerTest, IsMatching_InvalidJson_ReturnsFalse)
 {
     std::string d = kTestBase + "_badjson";
     std::system(("mkdir -p " + d).c_str());
-    { std::ofstream f(d + "/manifest.json"); f << "{bad}"; }
+    {
+        std::ofstream f(d + "/manifest.json");
+        f << "{bad}";
+    }
     auto& m = HcclPluginManager::GetInstance();
     EXPECT_FALSE(m.IsMatchingPlugin(d + "/manifest.json", "any"));
 }
@@ -140,7 +140,10 @@ TEST_F(HcclPluginManagerTest, IsMatching_CorrectNameNoEntry_ReturnsFalse)
 {
     std::string d = kTestBase + "_noent";
     std::system(("mkdir -p " + d).c_str());
-    { std::ofstream f(d + "/manifest.json"); f << "{\"name\":\"myplugin\"}"; }
+    {
+        std::ofstream f(d + "/manifest.json");
+        f << "{\"name\":\"myplugin\"}";
+    }
     auto& m = HcclPluginManager::GetInstance();
     EXPECT_FALSE(m.IsMatchingPlugin(d + "/manifest.json", "myplugin"));
 }
@@ -253,8 +256,7 @@ TEST_F(HcclPluginManagerTest, StopPlugins_MultipleTags_StopsAll)
 
 TEST_F(HcclPluginManagerTest, StopAllPlugins_Empty_ReturnsSuccess)
 {
-    EXPECT_EQ(HcclPluginManager::GetInstance().StopAllPlugins(),
-              HcclSim::HcclVmResult::HCCL_SIM_SUCCESS);
+    EXPECT_EQ(HcclPluginManager::GetInstance().StopAllPlugins(), HcclSim::HcclVmResult::HCCL_SIM_SUCCESS);
 }
 
 TEST_F(HcclPluginManagerTest, StopAllPlugins_WithPlugins_StopsAll)
@@ -310,8 +312,9 @@ TEST_F(HcclPluginManagerTest, StartPlugins_NotFound_ReturnsNotFound)
 
 TEST_F(HcclPluginManagerTest, SendMessageToPlugin_NotFound_ReturnsNotFound)
 {
-    EXPECT_EQ(HcclPluginManager::GetInstance().SendMessageToPlugin("ghost", "act"),
-              HcclSim::HcclVmResult::HCCL_SIM_E_NOT_FOUND);
+    EXPECT_EQ(
+        HcclPluginManager::GetInstance().SendMessageToPlugin("ghost", "act"),
+        HcclSim::HcclVmResult::HCCL_SIM_E_NOT_FOUND);
 }
 
 TEST_F(HcclPluginManagerTest, SendMessageToPlugin_Found_SendsMessage)
@@ -329,8 +332,7 @@ TEST_F(HcclPluginManagerTest, SendMessageToPlugin_Found_SendsMessage)
 
 TEST_F(HcclPluginManagerTest, BroadcastToAll_Empty_ReturnsSuccess)
 {
-    EXPECT_EQ(HcclPluginManager::GetInstance().BroadcastToAllPlugin("bc"),
-              HcclSim::HcclVmResult::HCCL_SIM_SUCCESS);
+    EXPECT_EQ(HcclPluginManager::GetInstance().BroadcastToAllPlugin("bc"), HcclSim::HcclVmResult::HCCL_SIM_SUCCESS);
 }
 
 TEST_F(HcclPluginManagerTest, BroadcastToAll_ToPlugins_ReturnsSuccess)

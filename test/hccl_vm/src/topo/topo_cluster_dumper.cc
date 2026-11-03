@@ -14,11 +14,10 @@
 #include "topo_cluster_dumper.h"
 #include "sim_log.h"
 
-std::string ClusterTopoDumper::Indent(int level) {
-    return std::string(level * 2, ' ');
-}
+std::string ClusterTopoDumper::Indent(int level) { return std::string(level * 2, ' '); }
 
-void ClusterTopoDumper::DumpToFile(const Network& network, const std::string& filePath) {
+void ClusterTopoDumper::DumpToFile(const Network& network, const std::string& filePath)
+{
     std::ofstream ofs(filePath);
     if (!ofs.is_open()) {
         HCCL_VM_ERROR("cannot open file for writing: {}", filePath.c_str());
@@ -29,11 +28,10 @@ void ClusterTopoDumper::DumpToFile(const Network& network, const std::string& fi
     HCCL_VM_INFO("IR data dumped to: {}", filePath.c_str());
 }
 
-void ClusterTopoDumper::DumpToStream(const Network& network, std::ostream& os) {
-    DumpNetwork(network, os, 0);
-}
+void ClusterTopoDumper::DumpToStream(const Network& network, std::ostream& os) { DumpNetwork(network, os, 0); }
 
-void ClusterTopoDumper::DumpNetwork(const Network& network, std::ostream& os, int indent) {
+void ClusterTopoDumper::DumpNetwork(const Network& network, std::ostream& os, int indent)
+{
     os << Indent(indent) << "Network {\n";
     os << Indent(indent + 1) << "version: \"" << network.version << "\"\n";
     os << Indent(indent + 1) << "serverCount: " << network.serverCount << "\n";
@@ -53,7 +51,8 @@ void ClusterTopoDumper::DumpNetwork(const Network& network, std::ostream& os, in
     os << Indent(indent) << "}\n";
 }
 
-void ClusterTopoDumper::DumpSuperPod(const SuperPod& superpod, std::ostream& os, int indent) {
+void ClusterTopoDumper::DumpSuperPod(const SuperPod& superpod, std::ostream& os, int indent)
+{
     os << Indent(indent) << "SuperPod {\n";
     os << Indent(indent + 1) << "superPodId: " << superpod.superPodId << "\n";
     os << Indent(indent + 1) << "serverCount: " << superpod.GetServerCount() << "\n";
@@ -71,7 +70,8 @@ void ClusterTopoDumper::DumpSuperPod(const SuperPod& superpod, std::ostream& os,
     os << Indent(indent) << "}\n";
 }
 
-void ClusterTopoDumper::DumpServer(const Server& server, std::ostream& os, int indent) {
+void ClusterTopoDumper::DumpServer(const Server& server, std::ostream& os, int indent)
+{
     os << Indent(indent) << "Server {\n";
     os << Indent(indent + 1) << "serverId: " << server.serverId << "\n";
     os << Indent(indent + 1) << "hardwareType: \"" << server.hardwareType << "\"\n";
@@ -97,7 +97,8 @@ void ClusterTopoDumper::DumpServer(const Server& server, std::ostream& os, int i
     os << Indent(indent) << "}\n";
 }
 
-void ClusterTopoDumper::DumpDevice(const Device& device, std::ostream& os, int indent) {
+void ClusterTopoDumper::DumpDevice(const Device& device, std::ostream& os, int indent)
+{
     os << Indent(indent) << "Device {\n";
     os << Indent(indent + 1) << "localId: " << device.localId << "\n";
     os << Indent(indent + 1) << "deviceId: " << device.deviceId << "\n";
@@ -113,7 +114,8 @@ void ClusterTopoDumper::DumpDevice(const Device& device, std::ostream& os, int i
     os << Indent(indent) << "}\n";
 }
 
-void ClusterTopoDumper::DumpPort(const Port& port, std::ostream& os, int indent) {
+void ClusterTopoDumper::DumpPort(const Port& port, std::ostream& os, int indent)
+{
     os << Indent(indent) << "Port {\n";
     os << Indent(indent + 1) << "portId: \"" << port.portId << "\"\n";
     os << Indent(indent + 1) << "dieId: " << port.dieId << "\n";
@@ -134,10 +136,12 @@ void ClusterTopoDumper::DumpPort(const Port& port, std::ostream& os, int indent)
     os << Indent(indent + 1) << "topoType: " << TopoTypeToString(port.topoType) << "\n";
     os << Indent(indent + 1) << "topoInstanceId: " << port.topoInstanceId << "\n";
     os << Indent(indent + 1) << "position: " << PositionToString(port.position) << "\n";
+    os << Indent(indent + 1) << "netInstanceId: \"" << port.netInstanceId << "\"\n";
     os << Indent(indent) << "}\n";
 }
 
-void ClusterTopoDumper::DumpLink(const Link& link, std::ostream& os, int indent) {
+void ClusterTopoDumper::DumpLink(const Link& link, std::ostream& os, int indent)
+{
     os << Indent(indent) << "Link {\n";
     os << Indent(indent + 1) << "linkId: \"" << link.linkId << "\"\n";
     os << Indent(indent + 1) << "netLayer: " << link.netLayer << "\n";
@@ -165,7 +169,8 @@ void ClusterTopoDumper::DumpLink(const Link& link, std::ostream& os, int indent)
     os << Indent(indent) << "}\n";
 }
 
-void ClusterTopoDumper::DumpLinkPortRef(const LinkPortRef& ref, std::ostream& os, int indent) {
+void ClusterTopoDumper::DumpLinkPortRef(const LinkPortRef& ref, std::ostream& os, int indent)
+{
     os << Indent(indent) << "LinkPortRef {\n";
     os << Indent(indent + 1) << "localId: " << ref.localId << "\n";
     os << Indent(indent + 1) << "eid: \"" << ref.eid << "\"\n";

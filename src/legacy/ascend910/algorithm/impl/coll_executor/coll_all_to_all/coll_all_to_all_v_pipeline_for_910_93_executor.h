@@ -15,24 +15,26 @@ namespace hccl {
 class CollAlltoAllVPipelineFor91093 : public CollAlltoAllExecutor { // A3 背靠背机型算法
 
 public:
-    CollAlltoAllVPipelineFor91093(const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher> &topoMatcher);
+    CollAlltoAllVPipelineFor91093(const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher>& topoMatcher);
     ~CollAlltoAllVPipelineFor91093() override = default;
     HcclResult Orchestrate(OpParam& param, AlgResourceResponse& algRes) override;
 
 private:
     HcclResult CalcStreamNum(u32& streamNum) override;
-    HcclResult CalcTransportMemType(TransportMemType &inputType, TransportMemType &outputType);
-    HcclResult CalcLevel1CommInfo(TransportMemType inputType, TransportMemType outputType,
+    HcclResult CalcTransportMemType(TransportMemType& inputType, TransportMemType& outputType) const;
+    HcclResult CalcLevel1CommInfo(
+        TransportMemType inputType, TransportMemType outputType,
         std::vector<LevelNSubCommTransport>& opTransport) override;
-    HcclResult CalcLevel2CommInfo(TransportMemType inputType, TransportMemType outputType,
+    HcclResult CalcLevel2CommInfo(
+        TransportMemType inputType, TransportMemType outputType,
         std::vector<LevelNSubCommTransport>& opTransport) override;
     HcclResult CalcCommInfo(std::vector<LevelNSubCommTransport>& opTransport) override;
-    HcclResult KernelRun(const OpParam &param, ExecMem &execMem) override;
-    HcclResult CalLocalSendRecvInfo(const OpParam &param, SendRecvInfo &info);
-    HcclResult CalcA2ASendRecvInfo(const OpParam &param, SendRecvInfo &info);
-    HcclResult CalcA2AvSendRecvInfo(const OpParam &param, SendRecvInfo &info);
-    HcclResult CalcA2AvcSendRecvInfo(const OpParam& param, SendRecvInfo &info);
+    HcclResult KernelRun(const OpParam& param, ExecMem& execMem) override;
+    HcclResult CalLocalSendRecvInfo(const OpParam& param, SendRecvInfo& info);
+    HcclResult CalcA2ASendRecvInfo(const OpParam& param, SendRecvInfo& info);
+    HcclResult CalcA2AvSendRecvInfo(const OpParam& param, SendRecvInfo& info);
+    HcclResult CalcA2AvcSendRecvInfo(const OpParam& param, SendRecvInfo& info);
 };
 
 } // namespace hccl
-#endif
+#endif

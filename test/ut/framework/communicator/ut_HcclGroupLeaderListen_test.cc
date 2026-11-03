@@ -22,34 +22,24 @@ using namespace std;
 using namespace hccl;
 
 // mockcpp 的 invoke 只接受函数指针,不能传 lambda,所以抽成静态函数
-static HcclResult StubHcclNetOpenDev(HcclNetDevCtx *netDevCtx, NicType /*nicType*/,
-    s32 /*devicePhyId*/, s32 /*deviceLogicId*/, HcclIpAddress /*localIp*/,
-    HcclIpAddress /*backupIp*/)
+static HcclResult StubHcclNetOpenDev(
+    HcclNetDevCtx* netDevCtx, NicType /*nicType*/, s32 /*devicePhyId*/, s32 /*deviceLogicId*/,
+    HcclIpAddress /*localIp*/, HcclIpAddress /*backupIp*/)
 {
     // 必须回填 ctx,否则后续 HcclSocket 拿着空指针 segfault
     *netDevCtx = reinterpret_cast<HcclNetDevCtx>(0x1);
     return HCCL_SUCCESS;
 }
 
-class HcclGroupLeaderListenTest : public BaseInit
-{
+class HcclGroupLeaderListenTest : public BaseInit {
 public:
-    static void SetUpTestCase()
-    {
-        std::cout << "HcclGroupLeaderListenTest SetUpTestCase" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "HcclGroupLeaderListenTest TearDownTestCase" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "HcclGroupLeaderListenTest SetUpTestCase" << std::endl; }
+    static void TearDownTestCase() { std::cout << "HcclGroupLeaderListenTest TearDownTestCase" << std::endl; }
     virtual void SetUp()
     {
         BaseInit::SetUp();
 
-        MOCKER(HcclNetOpenDev)
-            .stubs()
-            .with(mockcpp::any())
-            .will(invoke(&StubHcclNetOpenDev));
+        MOCKER(HcclNetOpenDev).stubs().with(mockcpp::any()).will(invoke(&StubHcclNetOpenDev));
         MOCKER(HcclNetInit).stubs().will(returnValue(HCCL_SUCCESS));
         MOCKER_CPP(&TopoInfoDetect::GetRootHostIP).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
         MOCKER_CPP(&HcclSocket::Init).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));

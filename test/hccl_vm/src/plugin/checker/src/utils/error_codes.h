@@ -50,20 +50,20 @@ enum class ErrorCode {
 
     DUMP_FAILED = 501,
 
+    SYNC_DAG_INVALID = 601,
+    SYNC_RESOURCE_CONFLICT = 602,
+
     CHECKER_RUNTIME_ERROR = 901,
     SETTING_WARNING = 902
 };
 
-constexpr uint32_t ToErrorCodeValue(ErrorCode code)
-{
-    return static_cast<uint32_t>(code);
-}
+constexpr uint32_t ToErrorCodeValue(ErrorCode code) { return static_cast<uint32_t>(code); }
 
 inline std::string MakeErrorCodeText(ErrorCode code)
 {
     return "[ErrorCode: " + std::to_string(ToErrorCodeValue(code)) + "]";
 }
 
-}  // namespace HcclSim
+} // namespace HcclSim
 
 #endif

@@ -14,10 +14,10 @@
 #include "aiv_communication_base_v2.h"
 #include "aiv_all_gather_mesh_1d.h"
 
-extern "C"
-__aicore__ void sk_allgather_mesh_1d(SUPERKERNEL_LITE_ARGS_DEF) {
+extern "C" __aicore__ void sk_allgather_mesh_1d(SUPERKERNEL_LITE_ARGS_DEF)
+{
     SUPERKERNEL_LITE_ARGS_EXTRACT;
     return sk_ag_mesh_1d(SUPERKERNEL_ARGS_CALL);
 }
 
-#endif  /* AIV_AG_SUPERKERNEL_H */
+#endif /* AIV_AG_SUPERKERNEL_H */

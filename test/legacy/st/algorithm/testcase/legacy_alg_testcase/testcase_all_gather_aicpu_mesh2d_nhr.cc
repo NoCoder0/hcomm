@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mokc.h>
@@ -46,21 +46,15 @@ using namespace Hccl;
 namespace checker {
 class AllGatherAICPUMesh2dNHRTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AllGather AICPU ParrallelMesh2DNHR test set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AllGather AICPU ParrallelMesh2DNHR test set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AllGather AICPU ParrallelMesh2DNHR test tear down" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AllGather AICPU ParrallelMesh2DNHR test tear down" << std::endl; }
 
     virtual void SetUp()
     {
-        const ::testing::TestInfo *const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName =
-            "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -72,7 +66,7 @@ protected:
         ClearHcclEnv();
     }
 };
-}  // namespace checker
+} // namespace checker
 
 TEST_F(AllGatherAICPUMesh2dNHRTest, Aicpu_AllGather_Mesh_template)
 {
@@ -83,8 +77,8 @@ TEST_F(AllGatherAICPUMesh2dNHRTest, Aicpu_AllGather_Mesh_template)
     std::map<RankId, u32> tempVirtRankMap = {{{0, 0}, {1, 1}, {2, 2}, {3, 3}}};
     u32 rankLevel0Size = tempVirtRankMap.size();
     // 开始执行
-    std::shared_ptr<InsTempAllGatherMesh2D> algoTemplate =
-        std::make_shared<InsTempAllGatherMesh2D>(myRank, rankLevel0Size, tempVTopo, tempVirtRankMap);
+    std::shared_ptr<InsTempAllGatherMesh2D> algoTemplate
+        = std::make_shared<InsTempAllGatherMesh2D>(myRank, rankLevel0Size, tempVTopo, tempVirtRankMap);
 
     // 结果验证
     EXPECT_NE(algoTemplate, nullptr);

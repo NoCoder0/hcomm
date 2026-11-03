@@ -11,17 +11,4 @@
 #include "ascend_hal.h"
 #include "dl_hal_function.h"
 
-int dev_read_flash(unsigned int dev_id, const char *name, unsigned char *buf, unsigned int *buf_len)
-{
-   return 0;
-}
-
-int halSetUserConfig(unsigned int dev_id, const char *name, unsigned char *buf, unsigned int buf_size)
-{
-    return 0;
-}
-
-int halClearUserConfig(unsigned int devid, const char *name)
-{
-    return 0;
-}
+int dev_read_flash(unsigned int dev_id, const char* name, unsigned char* buf, unsigned int* buf_len) { return 0; }

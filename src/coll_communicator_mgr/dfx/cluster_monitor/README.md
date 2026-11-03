@@ -13,7 +13,7 @@
 3. **异步建链**：每个远端UID启动独立线程 `CreateLinkWithRemotePonit` 进行 `SocketCreate` + 状态轮询，受 `HCCL_CONNECT_TIMEOUT` 控制超时。
 4. **周期心跳收发**：后台 `MonitorThread` 以 `BROADCAST_INTERVAL` 周期遍历所有socket，先 `SocketSendNb` 发心跳再 `SocketRecvNb` 收心跳；每 `HEARTBEAT_COUNT` 个周期累加 `lostNum`，达到 `HCCL_LOST_THRESHOLD`（30s）即判定 `LOST`。
 5. **异常状态传播**：节点 `LOST` 或 `CQE_ERR` 状态通过Ring链路向其他邻居广播（`SetStatus` → `errRankQueue_` → `ProcessExceptionEvent` → `SendFrame`）。
-6. **错误信息上抛**：通过 `__attribute__((constructor))` 注册的 `GetCqeErrInfoFromTaskException` 回调，将AICPU/CCU任务的CQE错误归集到 `cqeErrInfo_`，并以 `SetStatus(..., CLUSTER_MONITOR_CQE_ERR, true)` 触发广播；查询接口 `GetErrStatusVecFromCluserMonitor` 按优先级（CQE_ERR > LOST）格式化错误描述返回给上层。
+6. **错误信息上抛**：通过 `__attribute__((constructor))` 注册的 `GetCqeErrInfoFromTaskException` 回调，将AICPU/CCU任务的CQE错误信息记录为局部变量并格式化日志，并以 `SetStatus(..., CLUSTER_MONITOR_CQE_ERR, true)` 触发广播；查询接口 `GetErrStatusVecFromCluserMonitor` 先经 `IsKeyEvent` 按事件到达时间过滤非关键事件，再按优先级（CQE_ERR > LOST）格式化错误描述返回给上层。
 
 模块整体属于DFX（Design For X）范畴，是HCCL在集群级提供"网络断连 / 对端CoreDump"可观测性的关键组件。
 
@@ -31,7 +31,7 @@ cluster_monitor/
 **目录特征**：
 
 - 位于 `coll_communicator_mgr/dfx/`，隶属DFX监控类功能；
-- 模块自治：单例（`GetInstance(u32 deviceId)`），不依赖目录内其它文件；
+- 模块实例由 `CollCommMgr` 经 `clusterMonitor_` 数组持有，按 `GetClusterMonitor(deviceId)` 访问；不依赖目录内其它文件；
 - 依赖外部：`ring_buffer`、`reference_map`、`hcclCommSocket`、`hccl_communicator`、`hcclCommDfx`、`coll_comm`、`log`、`comm_addr_logger` 等。
 
 ---
@@ -55,7 +55,7 @@ sequenceDiagram
     rect rgb(230, 245, 255)
     Note over Caller, CM: 注册阶段
     Caller->>Mgr: RegisterToClusterMonitor(comm)
-    Mgr->>CM: GetInstance(deviceId)
+    Mgr->>CM: GetClusterMonitor(deviceId)
     CM->>CM: GetRemEndpointDescs<br/>(遍历 netLayer,收集 UID 上下文)
     CM->>CM: GetConnectRank<br/>(排序 + 双Ring)
     CM->>CM: clusterLinkContext_[commId].push(...)
@@ -86,7 +86,9 @@ sequenceDiagram
         Sock-->>MT: compSize / frame
         alt 收包且非 OK
             MT->>CM: ParseFrame → SetStatus(crimer, informer, status)
-            CM->>CM: errRankQueue_.push(crimer)
+            alt AllowEventForward()
+                CM->>CM: errRankQueue_.push(crimer)
+            end
         end
         alt lostNum >= threshold
             MT->>CM: SetStatus(rem, myRank, LOST)
@@ -127,9 +129,12 @@ sequenceDiagram
     rect rgb(255, 245, 230)
     Note over Cb, CM: CQE 异常入口
     Cb->>CM: GetCqeErrInfoFromTaskException(remoteLocalId, status, eid, insId)
-    CM->>CM: cqeErrInfo_ 赋值
+    CM->>CM: 记录CQE错误信息(局部变量)
     CM->>CM: SetStatus(myUID, remoteUID, CQE_ERR, true)
-    CM->>CM: errRankQueue_.push(myUID)<br/>errStatusQueue_.push(frame)
+    alt AllowEventForward()
+        CM->>CM: errRankQueue_.push(myUID)
+    end
+    CM->>CM: errStatusQueue_.push(frame)
     end
 
     rect rgb(230, 255, 230)
@@ -142,7 +147,7 @@ sequenceDiagram
 
     rect rgb(245, 245, 245)
     Note over CM: 上层查询错误
-    Note right of CM: GetErrStatusVecFromCluserMonitor()<br/>按 CQE_ERR > LOST 优先级格式化字符串
+    Note right of CM: GetErrStatusVecFromCluserMonitor()<br/>先经 IsKeyEvent 过滤非关键事件<br/>再按 CQE_ERR > LOST 优先级格式化字符串
     end
 ```
 
@@ -245,6 +250,8 @@ classDiagram
         +GetConnectRank(comm, needConnectRank, uidCtxs, netLayersVector)
         +CreateHBLinksAsync()
         +SetStatus(crimer, informer, status, needBroadcast)
+        -AllowEventForward()
+        -IsKeyEvent(event, curTime)
         +MonitorThread()
         +RunMonitorThread()
         +SendFrame(dst, crimer, informer, status)
@@ -253,7 +260,6 @@ classDiagram
         +DelErrorSocket()
         +ProcessExceptionEvent()
         +DeInit()
-        +GetInstance(deviceId)$ static
         +GetCqeErrInfoFromTaskException(remoteLocalId, status, localEid, remoteEid, remoteInsId)
         +GetErrStatusVecFromCluserMonitor()
         +PrintEvents(keyEvents)
@@ -270,7 +276,9 @@ classDiagram
         -linkThreadMap_ map~ClusterUIDType, thread~
         -errRankQueue_ queue~ClusterUIDType~
         -errStatusQueue_ queue~ClusterMonitorFrame~
-        -cqeErrInfo_ ErrorCqeInfo
+        -eventTimeWindow_ deque~time_point~
+        -stormSuppressedFlag_ bool
+        -stormResumeTime_ HcclUs
     }
 
     %% ===== 关系 =====
@@ -286,7 +294,7 @@ classDiagram
     ClusterMonitor "1" o-- "*" MonitorLinkStatus : monitorLinkStatusMap_
     ClusterMonitor "1" o-- "*" HcclClusterMonitorUID : commIdMap_/clusterLinkContext_/linkThreadMap_
     ClusterMonitor "1" o-- "*" ClusterMonitorFrame : errStatusQueue_
-    ClusterMonitor "1" *-- "1" ErrorCqeInfo : cqeErrInfo_
+    ClusterMonitor ..> ErrorCqeInfo : 局部变量使用
     ClusterMonitor ..> MonitorLinkStatus : 嵌套枚举
     ClusterMonitor ..> FrameStatus : 嵌套结构
 ```
@@ -299,14 +307,13 @@ classDiagram
 
 | 接口 | 说明 |
 |------|------|
-| `static ClusterMonitor& GetInstance(u32 deviceId)` | 按device取模块单例（通过 `CollCommMgr` 间接持有）。 |
 | `HcclResult RegisterToClusterMonitor(HcclComm comm)` | 注册一个通信域：建立UID上下文、计算Ring待连接集合、推入 `clusterLinkContext_` 等待后台建链；首次注册会启动 `MonitorThread`。 |
 | `HcclResult UnRegisterToClusterMonitor(hccl::CollComm* collComm)` | 注销一个通信域：清空该commId在 `clusterLinkContext_`、`commIdMap_`、`monitorLinkStatusMap_`、`uid2SocketRefMap_` 中的引用计数；最后一个commId注销时触发 `DeInit`。 |
 | `void GetCqeErrInfoFromTaskException(u32 remoteLocalId, uint16_t status, std::string localEid, std::string remoteEid, std::string remoteInsId)` | 由AICPU/CCU CQE错误回调调用，记录CQE错误并以广播形式扩散。 |
-| `std::vector<std::string> GetErrStatusVecFromCluserMonitor()` | 排空 `errStatusQueue_`，按优先级（CQE_ERR > LOST）格式化错误描述，供上层查询。 |
+| `std::vector<std::string> GetErrStatusVecFromCluserMonitor()` | 排空 `errStatusQueue_`，先经 `IsKeyEvent` 按事件到达时间过滤非关键事件，再按优先级（CQE_ERR > LOST）格式化错误描述，供上层查询。 |
 | `HcclResult RunMonitorThread()` | 显式启动后台心跳线程（`MonitorThread`）。 |
 | `HcclResult DeInit()` | 停止心跳线程、销毁socket、清理所有内部容器；幂等。 |
-| `void SetStatus(crimer, informer, status, needBroadcast=true)` | 设置 / 更新某节点的状态，必要时压入 `errRankQueue_` 触发广播。 |
+| `void SetStatus(crimer, informer, status, needBroadcast=true)` | 设置 / 更新某节点的状态；去重后经 `AllowEventForward` 防风暴门控决定是否压入 `errRankQueue_` 触发广播。 |
 | `ClusterUIDType FormatUID(ClusterUIDCxt cxt)` | 用 `netInstId/localId` 拼装UID。 |
 | `std::string FormatConnTag(role, uidPair)` | 生成形如 `HeartBeat_<src>_to_<dst>` 的socket tag。 |
 
@@ -325,6 +332,8 @@ classDiagram
 | `MonitorThread` | 后台主循环：`CreateHBLinksAsync` → 每 `HEARTBEAT_COUNT` 周期发心跳 + 累加 `lostNum` → 收心跳 → 处理 `lostNum` 超阈 → `ProcessExceptionEvent`。 |
 | `DelErrorSocket` | 销毁 `errorSocket_` 中标记为异常的socket。 |
 | `ProcessExceptionEvent` | 消费 `errRankQueue_`，对所有"非informer且状态OK"的邻居广播异常帧。 |
+| `AllowEventForward` | 事件防风暴抑制：以 `EVENT_STORM_WINDOW`（10s）滑窗统计去重后待广播事件总量，超过 `EVENT_STORM_THRESHOLD`（50次）则置抑制标志并拒绝入队，抑制时长 `EVENT_STORM_COOLDOWN`（60s）；抑制期间事件仅记录（`errStatusQueue_`）与打印，期满后下一个事件到达时自动恢复正常转发。 |
+| `IsKeyEvent` | 关键事件判定：事件到达时间落在 `(Notify超时时间 - HCCL_EXEC_TIMEOUT + detectionTime - JITTER_TIME(5min), Notify超时时间 - HCCL_EXEC_TIMEOUT + detectionTime + JITTER_TIME)` 区间内视为关键事件，`detectionTime` 用于补偿事件到达晚于异常发生的偏移（LOST 为 `lostThreshold_ * HEARTBEAT_INTERVAL`（30s）、CQE_ERR 为 0）；供 `GetErrStatusVecFromCluserMonitor` 过滤非关键历史事件。 |
 | `PrintEvents / MakeErrMsg` | 把 `ClusterMonitorFrame` 队列格式化为可读字符串向量。 |
 
 ### 跨模块回调注册（`__attribute__((constructor))`）
@@ -358,7 +367,7 @@ ClusterMonitorCallBackInit() {
 
 | 类别 | 约束 |
 |------|------|
-| **线程模型** | 1个 `MonitorThread`（Hccl_HeartBeat）+ N个 `LinkThread`（hb<UID>）；`threadLock_` 保护 `commIdMap_ / uid2SocketRefMap_ / uid2FrameStatusMap_ / monitorLinkStatusMap_ / errRankQueue_ / errStatusQueue_`；`clusertMonitorLinkMtx_` 保护 `clusterLinkContext_`。 |
+| **线程模型** | 1个 `MonitorThread`（Hccl_HeartBeat）+ N个 `LinkThread`（`hb<UID>`）；`threadLock_` 保护 `commIdMap_ / uid2SocketRefMap_ / uid2FrameStatusMap_ / monitorLinkStatusMap_ / errRankQueue_ / errStatusQueue_ / eventTimeWindow_ / stormSuppressedFlag_ / stormResumeTime_`；`clusertMonitorLinkMtx_` 保护 `clusterLinkContext_`。 |
 | **生命周期** | 模块单例随 `CollCommMgr` 持有；`DeInit` 由最后一个commId注销或 `~ClusterMonitor` 触发，幂等（`isDeInit_` 守护）。 |
 | **超时控制** | 建链超时取自 `EnvConfig::GetSocketConfig().GetLinkTimeOut()`（即 `HCCL_CONNECT_TIMEOUT`）；心跳丢失阈值 `lostThreshold_ = HCCL_LOST_THRESHOLD`（30s）。 |
 | **端口合法性** | `devicePort` / `rmtPort` 必须 `<= Hccl::MAX_VALUE_TCPPORT`，否则返回 `HCCL_E_PARA`。 |

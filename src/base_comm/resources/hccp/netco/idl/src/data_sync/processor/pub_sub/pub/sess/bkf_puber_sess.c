@@ -29,19 +29,19 @@ STATIC void BkfPuberSessOnTableCptl(BkfPuberSess *sess);
 
 /* proc */
 STATIC void BkfPuberSessProcRcvDataParseLeftTlv(BkfMsgDecoder *decoder, BkfTlvSliceKey **tlvSliceKey,
-                                                  BkfTlvTableType **tlvTableType);
+    BkfTlvTableType **tlvTableType);
 STATIC BOOL BkfPuberSessProcRcvDataMayProc(BkfPuberSessMng *sessMng, BkfTlvSliceKey *tlvSliceKey,
-                                             BkfTlvTableType *tlvTableType);
+    BkfTlvTableType *tlvTableType);
 STATIC uint32_t BkfPuberSessProcRcvDataDo(BkfPuberSess *sess, BkfMsgHead *msgHead, BkfMsgDecoder *decoder);
 STATIC uint32_t BkfPuberSessSchedOneSess(BkfPuberSess *sess, BkfMsgCoder *coder, BOOL isSlowSched, void *ctx,
-                                         uint8_t state);
+    uint8_t state);
 
 #endif
 
 #if BKF_BLOCK("公有函数定义")
 BkfPuberSessMng *BkfPuberSessInit(BkfPuberInitArg *arg, BkfPuberTableTypeMng *tableTypeMng,
-                                   F_BKF_PUBER_SESS_TRIG_SCHED_SELF trigSchedSess,
-                                   F_BKF_PUBER_SESS_TRIG_SLOW_SCHED_SELF trigSlowSchedSess, void *cookie)
+    F_BKF_PUBER_SESS_TRIG_SCHED_SELF trigSchedSess, F_BKF_PUBER_SESS_TRIG_SLOW_SCHED_SELF trigSlowSchedSess,
+    void *cookie)
 {
     BkfPuberSessMng *sessMng = BkfPuberSessDataInit(arg, tableTypeMng, trigSchedSess, trigSlowSchedSess, cookie);
     if (sessMng == VOS_NULL) {
@@ -95,9 +95,9 @@ uint32_t BkfPuberSessProcRcvData(BkfPuberSessMng *sessMng, BkfMsgHead *msgHead, 
 
     BkfPuberSess *sess = BkfPuberSessFind(sessMng, tlvSliceKey->sliceKey, tlvTableType->tableTypeId);
     if (sess == VOS_NULL) {
-        BkfDcTupleItorVTbl vTbl = { .afterTupleChangeOrNull = (F_BKF_DC_NTF_BY_ITOR)BkfPuberSessOnTupleChg,
-                                    .afterTableReleaseOrNull = (F_BKF_DC_NTF_BY_ITOR)BkfPuberSessOnTableRel,
-                                    .afterTableCompleteOrNull = (F_BKF_DC_NTF_BY_ITOR)BkfPuberSessOnTableCptl };
+        BkfDcTupleItorVTbl vTbl = {.afterTupleChangeOrNull = (F_BKF_DC_NTF_BY_ITOR)BkfPuberSessOnTupleChg,
+            .afterTableReleaseOrNull = (F_BKF_DC_NTF_BY_ITOR)BkfPuberSessOnTableRel,
+            .afterTableCompleteOrNull = (F_BKF_DC_NTF_BY_ITOR)BkfPuberSessOnTableCptl};
         sess = BkfPuberSessAdd(sessMng, tlvSliceKey->sliceKey, tlvTableType->tableTypeId, &vTbl);
         if (sess == VOS_NULL) {
             BkfPuberSessNtfAppUnsub(sessMng, tlvSliceKey->sliceKey, tlvTableType->tableTypeId);
@@ -122,10 +122,8 @@ uint32_t BkfPuberSessProcRcvData(BkfPuberSessMng *sessMng, BkfMsgHead *msgHead, 
 
 static inline BOOL BkfPuberSessStateMaySched(uint8_t state)
 {
-    return (state != BKF_PUBER_SESS_STATE_WAIT_SUB) &&
-           (state != BKF_PUBER_SESS_STATE_WAIT_MAY_SEND_BATCH_BEGIN) &&
-           (state != BKF_PUBER_SESS_STATE_IDLE) &&
-           (state != BKF_PUBER_SESS_STATE_SLOW_BATCH_DATA);
+    return (state != BKF_PUBER_SESS_STATE_WAIT_SUB) && (state != BKF_PUBER_SESS_STATE_WAIT_MAY_SEND_BATCH_BEGIN) &&
+           (state != BKF_PUBER_SESS_STATE_IDLE) && (state != BKF_PUBER_SESS_STATE_SLOW_BATCH_DATA);
 }
 
 static inline BOOL BkfPuberSessStateMaySlowSched(uint8_t state)
@@ -171,7 +169,7 @@ STATIC void BkfPuberSessOnTableCptl(BkfPuberSess *sess)
 }
 
 STATIC void BkfPuberSessProcRcvDataParseLeftTlv(BkfMsgDecoder *decoder, BkfTlvSliceKey **tlvSliceKey,
-                                                  BkfTlvTableType **tlvTableType)
+    BkfTlvTableType **tlvTableType)
 {
     uint32_t errCode = BKF_OK;
     BkfTL *tl = BkfMsgDecodeTLV(decoder, &errCode);
@@ -180,22 +178,22 @@ STATIC void BkfPuberSessProcRcvDataParseLeftTlv(BkfMsgDecoder *decoder, BkfTlvSl
         return;
     }
 
-    *tlvSliceKey = (BkfTlvSliceKey*)tl;
+    *tlvSliceKey = (BkfTlvSliceKey *)tl;
     tl = BkfMsgDecodeTLV(decoder, &errCode);
     tlvIsOk = (tl != VOS_NULL) && (tl->typeId == BKF_TLV_TABLE_TYPE);
     if (!tlvIsOk) {
         return;
     }
 
-    *tlvTableType = (BkfTlvTableType*)tl;
+    *tlvTableType = (BkfTlvTableType *)tl;
 }
 
 STATIC BOOL BkfPuberSessProcRcvDataMayProc(BkfPuberSessMng *sessMng, BkfTlvSliceKey *tlvSliceKey,
-                                             BkfTlvTableType *tlvTableType)
+    BkfTlvTableType *tlvTableType)
 {
     BOOL isTableRelease = VOS_FALSE;
     BOOL isTableExist = BkfDcIsTableExist(sessMng->argInit->dc, tlvSliceKey->sliceKey, tlvTableType->tableTypeId,
-                                           &isTableRelease);
+        &isTableRelease);
     return (isTableExist && !isTableRelease);
 }
 
@@ -217,7 +215,7 @@ STATIC uint32_t BkfPuberSessProcRcvDataDo(BkfPuberSess *sess, BkfMsgHead *msgHea
 }
 
 STATIC uint32_t BkfPuberSessSchedOneSess(BkfPuberSess *sess, BkfMsgCoder *coder, BOOL isSlowSched, void *ctx,
-                                         uint8_t state)
+    uint8_t state)
 {
     BkfPuberSessMng *sessMng = sess->sessMng;
     uint8_t evtId = isSlowSched ? BKF_PUBER_SESS_EVT_SLOW_SCHED : BKF_PUBER_SESS_EVT_SCHED;
@@ -247,4 +245,3 @@ STATIC uint32_t BkfPuberSessSchedOneSess(BkfPuberSess *sess, BkfMsgCoder *coder,
 #ifdef __cplusplus
 }
 #endif
-

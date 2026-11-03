@@ -38,15 +38,15 @@ STATIC uint32_t BkfPuberSessProcTableRel(BkfPuberSess *sess, void *unused1, void
 STATIC uint32_t BkfPuberSessBatchProcSched(BkfPuberSess *sess, BkfMsgCoder *coder, void *unused2);
 STATIC uint32_t BkfPuberSessRealProcSched(BkfPuberSess *sess, BkfMsgCoder *coder, void *unused2);
 STATIC uint32_t BkfPuberSessSlowBatchProcSlowSched(BkfPuberSess *sess, BkfMsgCoder *coder,
-                                                   BkfPuberSessSlowSchedCtx *ctx);
+    BkfPuberSessSlowSchedCtx *ctx);
 STATIC uint32_t BkfPuberSessRealSlowBatchProcSched(BkfPuberSess *sess, BkfMsgCoder *coder, void *unused2);
 STATIC void BkfPuberSessBatchChkTmrStart(BkfPuberSess *sess);
 /* other proc */
 STATIC BOOL BkfPuberSessProcSubMayProc(BkfPuberSess *sess, BkfMsgHead *msgHead, BkfTlvTransNum *tlvTransNum,
-                                         BOOL inBatchState);
+    BOOL inBatchState);
 STATIC uint32_t BkfPuberSessProcSubDo(BkfPuberSess *sess, BkfMsgHead *msgHead, BkfTlvTransNum *tlvTransNum);
 STATIC BOOL BkfPuberSessProcUnsubMayProc(BkfPuberSess *sess, BkfMsgHead *msgHead, BkfTlvTransNum *tlvTransNum,
-                                           BOOL inBatchState);
+    BOOL inBatchState);
 STATIC uint32_t BkfPuberSessProcUnsubDo(BkfPuberSess *sess, BkfMsgHead *msgHead, BkfTlvTransNum *tlvTransNum);
 STATIC uint32_t BkfPuberSessTry2SendBatchData(BkfPuberSess *sess, BkfMsgCoder *coder, BkfPuberSessSlowSchedCtx *ctx);
 STATIC uint32_t BkfPuberSessTry2SendRealData(BkfPuberSess *sess, BkfMsgCoder *coder);
@@ -83,113 +83,113 @@ BKF_STATIC_ASSERT(BKF_GET_ARY_COUNT(g_BkfPuberSessFsmEvtStrTbl) == BKF_PUBER_SES
 const BkfFsmProcItem g_BkfPuberSessFsm[][BKF_PUBER_SESS_EVT_CNT] = {
     /* BKF_PUBER_SESS_STATE_WAIT_SUB */
     {
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcSub) },   /* BKF_PUBER_SESS_EVT_SUB */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE) },      /* BKF_PUBER_SESS_EVT_UNSUB */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE) },      /* BKF_PUBER_SESS_EVT_TUPLE_CHG */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE) },      /* BKF_PUBER_SESS_EVT_TABLE_CPLT */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE) },      /* BKF_PUBER_SESS_EVT_TABLE_REL */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE) },      /* BKF_PUBER_SESS_EVT_SCHED */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE) },      /* BKF_PUBER_SESS_EVT_SLOW_SCHED */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcSub)}, /* BKF_PUBER_SESS_EVT_SUB */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE)},  /* BKF_PUBER_SESS_EVT_UNSUB */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE)},  /* BKF_PUBER_SESS_EVT_TUPLE_CHG */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE)},  /* BKF_PUBER_SESS_EVT_TABLE_CPLT */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE)},  /* BKF_PUBER_SESS_EVT_TABLE_REL */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE)},  /* BKF_PUBER_SESS_EVT_SCHED */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE)},  /* BKF_PUBER_SESS_EVT_SLOW_SCHED */
     },
     /* BKF_PUBER_SESS_STATE_WAIT_SEND_SUB_ACK */
     {
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcSub) },   /* BKF_PUBER_SESS_EVT_SUB */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcUnsub) }, /* BKF_PUBER_SESS_EVT_UNSUB */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE) },          /* BKF_PUBER_SESS_EVT_TUPLE_CHG */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE) },          /* BKF_PUBER_SESS_EVT_TABLE_CPLT */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessProcTableRel) },   /* BKF_PUBER_SESS_EVT_TABLE_REL */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessTry2SendSubAck) }, /* BKF_PUBER_SESS_EVT_SCHED */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE) },      /* BKF_PUBER_SESS_EVT_SLOW_SCHED */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcSub)},   /* BKF_PUBER_SESS_EVT_SUB */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcUnsub)}, /* BKF_PUBER_SESS_EVT_UNSUB */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},        /* BKF_PUBER_SESS_EVT_TUPLE_CHG */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},        /* BKF_PUBER_SESS_EVT_TABLE_CPLT */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessProcTableRel)},   /* BKF_PUBER_SESS_EVT_TABLE_REL */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessTry2SendSubAck)}, /* BKF_PUBER_SESS_EVT_SCHED */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE)},    /* BKF_PUBER_SESS_EVT_SLOW_SCHED */
     },
     /* BKF_PUBER_SESS_STATE_WAIT_MAY_SEND_BATCH_BEGIN */
     {
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcSub) },                /* BKF_PUBER_SESS_EVT_SUB */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcUnsub) },              /* BKF_PUBER_SESS_EVT_UNSUB */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE) },                       /* BKF_PUBER_SESS_EVT_TUPLE_CHG */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessChgState2WaitSendBatchBegin) }, /* BKF_PUBER_SESS_EVT_TABLE_CPLT */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessProcTableRel) },                /* BKF_PUBER_SESS_EVT_TABLE_REL */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE) },                   /* BKF_PUBER_SESS_EVT_SCHED */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE) },                   /* BKF_PUBER_SESS_EVT_SLOW_SCHED */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcSub)},                /* BKF_PUBER_SESS_EVT_SUB */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcUnsub)},              /* BKF_PUBER_SESS_EVT_UNSUB */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},                     /* BKF_PUBER_SESS_EVT_TUPLE_CHG */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessChgState2WaitSendBatchBegin)}, /* BKF_PUBER_SESS_EVT_TABLE_CPLT */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessProcTableRel)},                /* BKF_PUBER_SESS_EVT_TABLE_REL */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE)},                 /* BKF_PUBER_SESS_EVT_SCHED */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE)},                 /* BKF_PUBER_SESS_EVT_SLOW_SCHED */
     },
     /* BKF_PUBER_SESS_STATE_WAIT_SEND_BATCH_BEGIN */
     {
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcSub) },       /* BKF_PUBER_SESS_EVT_SUB */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcUnsub) },     /* BKF_PUBER_SESS_EVT_UNSUB */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE) },              /* BKF_PUBER_SESS_EVT_TUPLE_CHG */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE) },              /* BKF_PUBER_SESS_EVT_TABLE_CPLT */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessProcTableRel) },       /* BKF_PUBER_SESS_EVT_TABLE_REL */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessTry2SendBatchBegin) }, /* BKF_PUBER_SESS_EVT_SCHED */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE) },          /* BKF_PUBER_SESS_EVT_SLOW_SCHED */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcSub)},       /* BKF_PUBER_SESS_EVT_SUB */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcUnsub)},     /* BKF_PUBER_SESS_EVT_UNSUB */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},            /* BKF_PUBER_SESS_EVT_TUPLE_CHG */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},            /* BKF_PUBER_SESS_EVT_TABLE_CPLT */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessProcTableRel)},       /* BKF_PUBER_SESS_EVT_TABLE_REL */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessTry2SendBatchBegin)}, /* BKF_PUBER_SESS_EVT_SCHED */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE)},        /* BKF_PUBER_SESS_EVT_SLOW_SCHED */
     },
     /* BKF_PUBER_SESS_STATE_WAIT_SEND_BATCH_END */
     {
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcSub) },       /* BKF_PUBER_SESS_EVT_SUB */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcUnsub) },     /* BKF_PUBER_SESS_EVT_UNSUB */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE) },              /* BKF_PUBER_SESS_EVT_TUPLE_CHG */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE) },              /* BKF_PUBER_SESS_EVT_TABLE_CPLT */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessProcTableRel) },       /* BKF_PUBER_SESS_EVT_TABLE_REL */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessTry2SendBatchEnd) },   /* BKF_PUBER_SESS_EVT_SCHED */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE) },          /* BKF_PUBER_SESS_EVT_SLOW_SCHED */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcSub)},     /* BKF_PUBER_SESS_EVT_SUB */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcUnsub)},   /* BKF_PUBER_SESS_EVT_UNSUB */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},          /* BKF_PUBER_SESS_EVT_TUPLE_CHG */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},          /* BKF_PUBER_SESS_EVT_TABLE_CPLT */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessProcTableRel)},     /* BKF_PUBER_SESS_EVT_TABLE_REL */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessTry2SendBatchEnd)}, /* BKF_PUBER_SESS_EVT_SCHED */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE)},      /* BKF_PUBER_SESS_EVT_SLOW_SCHED */
     },
     /* BKF_PUBER_SESS_STATE_WAIT_SEND_DEL_SUB_NTF */
     {
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE) },              /* BKF_PUBER_SESS_EVT_SUB */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE) },              /* BKF_PUBER_SESS_EVT_UNSUB */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE) },              /* BKF_PUBER_SESS_EVT_TUPLE_CHG */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE) },              /* BKF_PUBER_SESS_EVT_TABLE_CPLT */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE) },              /* BKF_PUBER_SESS_EVT_TABLE_REL */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessTry2SendSubDelNtf) },  /* BKF_PUBER_SESS_EVT_SCHED */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE) },          /* BKF_PUBER_SESS_EVT_SLOW_SCHED */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},           /* BKF_PUBER_SESS_EVT_SUB */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},           /* BKF_PUBER_SESS_EVT_UNSUB */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},           /* BKF_PUBER_SESS_EVT_TUPLE_CHG */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},           /* BKF_PUBER_SESS_EVT_TABLE_CPLT */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},           /* BKF_PUBER_SESS_EVT_TABLE_REL */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessTry2SendSubDelNtf)}, /* BKF_PUBER_SESS_EVT_SCHED */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE)},       /* BKF_PUBER_SESS_EVT_SLOW_SCHED */
     },
     /* BKF_PUBER_SESS_STATE_BATCH_DATA */
     {
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcSub) },       /* BKF_PUBER_SESS_EVT_SUB */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcUnsub) },     /* BKF_PUBER_SESS_EVT_UNSUB */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE) },              /* BKF_PUBER_SESS_EVT_TUPLE_CHG */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE) },              /* BKF_PUBER_SESS_EVT_TABLE_CPLT */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessProcTableRel) },       /* BKF_PUBER_SESS_EVT_TABLE_REL */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcSched) },     /* BKF_PUBER_SESS_EVT_SCHED */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE) },          /* BKF_PUBER_SESS_EVT_SLOW_SCHED */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcSub)},   /* BKF_PUBER_SESS_EVT_SUB */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcUnsub)}, /* BKF_PUBER_SESS_EVT_UNSUB */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},        /* BKF_PUBER_SESS_EVT_TUPLE_CHG */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},        /* BKF_PUBER_SESS_EVT_TABLE_CPLT */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessProcTableRel)},   /* BKF_PUBER_SESS_EVT_TABLE_REL */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcSched)}, /* BKF_PUBER_SESS_EVT_SCHED */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE)},    /* BKF_PUBER_SESS_EVT_SLOW_SCHED */
     },
     /* BKF_PUBER_SESS_STATE_REAL_DATA */
     {
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessProcSub) },            /* BKF_PUBER_SESS_EVT_SUB */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessProcUnsub) },          /* BKF_PUBER_SESS_EVT_UNSUB */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE) },              /* BKF_PUBER_SESS_EVT_TUPLE_CHG */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE) },              /* BKF_PUBER_SESS_EVT_TABLE_CPLT */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessProcTableRel) },       /* BKF_PUBER_EVT_TABLE_DEL */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessRealProcSched) },      /* BKF_PUBER_SESS_EVT_SCHED */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE) },          /* BKF_PUBER_SESS_EVT_SLOW_SCHED */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessProcSub)},       /* BKF_PUBER_SESS_EVT_SUB */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessProcUnsub)},     /* BKF_PUBER_SESS_EVT_UNSUB */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},       /* BKF_PUBER_SESS_EVT_TUPLE_CHG */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},       /* BKF_PUBER_SESS_EVT_TABLE_CPLT */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessProcTableRel)},  /* BKF_PUBER_EVT_TABLE_DEL */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessRealProcSched)}, /* BKF_PUBER_SESS_EVT_SCHED */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE)},   /* BKF_PUBER_SESS_EVT_SLOW_SCHED */
     },
     /* BKF_PUBER_SESS_STATE_IDLE */
     {
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessProcSub) },            /* BKF_PUBER_SESS_EVT_SUB */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessProcUnsub) },          /* BKF_PUBER_SESS_EVT_UNSUB */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessIdleProcTupleChg) },   /* BKF_PUBER_SESS_EVT_TUPLE_CHG */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE) },              /* BKF_PUBER_SESS_EVT_TABLE_CPLT */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessProcTableRel) },       /* BKF_PUBER_SESS_EVT_TABLE_REL */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE) },          /* BKF_PUBER_SESS_EVT_SCHED */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE) },          /* BKF_PUBER_SESS_EVT_SLOW_SCHED */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessProcSub)},          /* BKF_PUBER_SESS_EVT_SUB */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessProcUnsub)},        /* BKF_PUBER_SESS_EVT_UNSUB */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessIdleProcTupleChg)}, /* BKF_PUBER_SESS_EVT_TUPLE_CHG */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},          /* BKF_PUBER_SESS_EVT_TABLE_CPLT */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessProcTableRel)},     /* BKF_PUBER_SESS_EVT_TABLE_REL */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE)},      /* BKF_PUBER_SESS_EVT_SCHED */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE)},      /* BKF_PUBER_SESS_EVT_SLOW_SCHED */
     },
     /* BKF_PUBER_SESS_STATE_SLOW_BATCH_DATA */
     {
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcSub) },           /* BKF_PUBER_SESS_EVT_SUB */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcUnsub) },         /* BKF_PUBER_SESS_EVT_UNSUB */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessSlowBatchProcTupleChg) },  /* BKF_PUBER_SESS_EVT_TUPLE_CHG */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE) },                  /* BKF_PUBER_SESS_EVT_TABLE_CPLT */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessProcTableRel) },           /* BKF_PUBER_SESS_EVT_TABLE_REL */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE) },              /* BKF_PUBER_SESS_EVT_SCHED */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessSlowBatchProcSlowSched) }, /* BKF_PUBER_SESS_EVT_SLOW_SCHED */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcSub)},           /* BKF_PUBER_SESS_EVT_SUB */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcUnsub)},         /* BKF_PUBER_SESS_EVT_UNSUB */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessSlowBatchProcTupleChg)},  /* BKF_PUBER_SESS_EVT_TUPLE_CHG */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},                /* BKF_PUBER_SESS_EVT_TABLE_CPLT */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessProcTableRel)},           /* BKF_PUBER_SESS_EVT_TABLE_REL */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE)},            /* BKF_PUBER_SESS_EVT_SCHED */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessSlowBatchProcSlowSched)}, /* BKF_PUBER_SESS_EVT_SLOW_SCHED */
     },
     /* BKF_PUBER_SESS_STATE_REAL_SLOW_BATCH_DATA */
     {
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcSub) },           /* BKF_PUBER_SESS_EVT_SUB */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcUnsub) },         /* BKF_PUBER_SESS_EVT_UNSUB */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE) },                  /* BKF_PUBER_SESS_EVT_TUPLE_CHG */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE) },                  /* BKF_PUBER_SESS_EVT_TABLE_CPLT */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessProcTableRel) },           /* BKF_PUBER_SESS_EVT_TABLE_REL */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessRealSlowBatchProcSched) }, /* BKF_PUBER_SESS_EVT_SCHED */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE) },              /* BKF_PUBER_SESS_EVT_SLOW_SCHED */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcSub)},           /* BKF_PUBER_SESS_EVT_SUB */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessBatchProcUnsub)},         /* BKF_PUBER_SESS_EVT_UNSUB */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},                /* BKF_PUBER_SESS_EVT_TUPLE_CHG */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},                /* BKF_PUBER_SESS_EVT_TABLE_CPLT */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessProcTableRel)},           /* BKF_PUBER_SESS_EVT_TABLE_REL */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberSessRealSlowBatchProcSched)}, /* BKF_PUBER_SESS_EVT_SCHED */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE)},            /* BKF_PUBER_SESS_EVT_SLOW_SCHED */
     },
 };
 BKF_STATIC_ASSERT(BKF_GET_ARY_COUNT(g_BkfPuberSessFsm) == BKF_PUBER_SESS_STATE_CNT);
@@ -199,14 +199,14 @@ BKF_STATIC_ASSERT(BKF_GET_ARY_COUNT(g_BkfPuberSessFsm) == BKF_PUBER_SESS_STATE_C
 #if BKF_BLOCK("公有函数定义")
 BkfFsmTmpl *BkfPuberSessFsmTmplInit(BkfPuberSessMng *sessMng)
 {
-    char tempName[BKF_NAME_LEN_MAX + 1] = { 0 };
-    int32_t err = snprintf_truncated_s(tempName, sizeof(tempName), "%s_sessFsmTmpl_%"VOS_PRIu64"", sessMng->argInit->name,
-                                     BKF_GET_NEXT_VAL(sessMng->argInit->xSeed));
+    char tempName[BKF_NAME_LEN_MAX + 1] = {0};
+    int32_t err = snprintf_truncated_s(tempName, sizeof(tempName), "%s_sessFsmTmpl_%" VOS_PRIu64 "",
+        sessMng->argInit->name, BKF_GET_NEXT_VAL(sessMng->argInit->xSeed));
     if (err <= 0) {
         return VOS_NULL;
     }
 
-    BkfFsmTmplInitArg arg = { 0 };
+    BkfFsmTmplInitArg arg = {0};
     arg.name = tempName;
     arg.dbgOn = sessMng->argInit->dbgOn;
     arg.memMng = sessMng->argInit->memMng;
@@ -217,7 +217,7 @@ BkfFsmTmpl *BkfPuberSessFsmTmplInit(BkfPuberSessMng *sessMng)
     arg.evtCnt = BKF_PUBER_SESS_EVT_CNT;
     arg.stateStrTbl = g_BkfPuberSessFsmStateStrTbl;
     arg.evtStrTbl = g_BkfPuberSessFsmEvtStrTbl;
-    arg.stateEvtProcItemMtrx = (const BkfFsmProcItem*)g_BkfPuberSessFsm;
+    arg.stateEvtProcItemMtrx = (const BkfFsmProcItem *)g_BkfPuberSessFsm;
     arg.getAppDataStrOrNull = VOS_NULL;
     return BkfFsmTmplInit(&arg);
 }
@@ -227,18 +227,18 @@ uint32_t BkfPuberSessFsmProc(BkfPuberSess *sess, uint8_t evtId, void *param1, vo
     BkfPuberSessMng *sessMng = sess->sessMng;
     uint32_t ret = BKF_FSM_DISPATCH(&sess->fsm, evtId, sess, param1, param2);
     if (evtId != BKF_PUBER_SESS_EVT_TUPLE_CHG) {
-        BKF_BLACKBOX_LOG(sessMng->argInit->log, BKF_BLACKBOX_TYPE_SESS, (void *)sess, 0, "E %u S %u R %u",
-            evtId, sess->fsm.state, ret);
+        BKF_BLACKBOX_LOG(sessMng->argInit->log, BKF_BLACKBOX_TYPE_SESS, (void *)sess, 0, "E %u S %u R %u", evtId,
+            sess->fsm.state, ret);
     }
 
     if ((ret == BKF_PUBER_SESS_FATAL_ERR) || (ret == BKF_FSM_DISPATCH_RET_IMPOSSIBLE)) {
-        BKF_LOG_WARN(BKF_LOG_HND, "sess(%#x)/evtId(%u, %s), ret(%u), 2del conn\n", BKF_MASK_ADDR(sess),
-                     evtId, BkfFsmTmplGetEvtStr(sessMng->sessFsmTmpl, evtId), ret);
+        BKF_LOG_WARN(BKF_LOG_HND, "sess(%#x)/evtId(%u, %s), ret(%u), 2del conn\n", BKF_MASK_ADDR(sess), evtId,
+            BkfFsmTmplGetEvtStr(sessMng->sessFsmTmpl, evtId), ret);
         return BKF_PUBER_SESS_FATAL_ERR;
     }
 
-    BKF_LOG_DEBUG(BKF_LOG_HND, "sess(%#x)/evtId(%u, %s), ret(%u)\n", BKF_MASK_ADDR(sess),
-                  evtId, BkfFsmTmplGetEvtStr(sessMng->sessFsmTmpl, evtId), ret);
+    BKF_LOG_DEBUG(BKF_LOG_HND, "sess(%#x)/evtId(%u, %s), ret(%u)\n", BKF_MASK_ADDR(sess), evtId,
+        BkfFsmTmplGetEvtStr(sessMng->sessFsmTmpl, evtId), ret);
     return ret;
 }
 
@@ -247,6 +247,7 @@ uint32_t BkfPuberSessFsmProc(BkfPuberSess *sess, uint8_t evtId, void *param1, vo
 #if BKF_BLOCK("私有函数定义")
 STATIC uint32_t BkfPuberSessBatchProcSub(BkfPuberSess *sess, BkfMsgDecoder *decoder, void *unused2)
 {
+    (void)unused2;
     BkfPuberSessBatchChkTmrStop(sess);
     BkfTlvTransNum *tlvTransNum = BkfPuberSessParseTransNum(decoder);
     if (tlvTransNum == VOS_NULL) {
@@ -263,6 +264,7 @@ STATIC uint32_t BkfPuberSessBatchProcSub(BkfPuberSess *sess, BkfMsgDecoder *deco
 
 STATIC uint32_t BkfPuberSessProcSub(BkfPuberSess *sess, BkfMsgDecoder *decoder, void *unused2)
 {
+    (void)unused2;
     BkfTlvTransNum *tlvTransNum = BkfPuberSessParseTransNum(decoder);
     if (tlvTransNum == VOS_NULL) {
         return BKF_PUBER_SESS_FATAL_ERR;
@@ -278,6 +280,7 @@ STATIC uint32_t BkfPuberSessProcSub(BkfPuberSess *sess, BkfMsgDecoder *decoder, 
 
 STATIC uint32_t BkfPuberSessBatchProcUnsub(BkfPuberSess *sess, BkfMsgDecoder *decoder, void *unused2)
 {
+    (void)unused2;
     BkfPuberSessBatchChkTmrStop(sess);
     BkfTlvTransNum *tlvTransNum = BkfPuberSessParseTransNum(decoder);
     if (tlvTransNum == VOS_NULL) {
@@ -294,6 +297,7 @@ STATIC uint32_t BkfPuberSessBatchProcUnsub(BkfPuberSess *sess, BkfMsgDecoder *de
 
 STATIC uint32_t BkfPuberSessProcUnsub(BkfPuberSess *sess, BkfMsgDecoder *decoder, void *unused2)
 {
+    (void)unused2;
     BkfTlvTransNum *tlvTransNum = BkfPuberSessParseTransNum(decoder);
     if (tlvTransNum == VOS_NULL) {
         return BKF_PUBER_SESS_FATAL_ERR;
@@ -309,6 +313,7 @@ STATIC uint32_t BkfPuberSessProcUnsub(BkfPuberSess *sess, BkfMsgDecoder *decoder
 
 STATIC uint32_t BkfPuberSessTry2SendSubAck(BkfPuberSess *sess, BkfMsgCoder *coder, void *unused2)
 {
+    (void)unused2;
     uint32_t ret = BkfPuberSessPackSubAck(sess, coder);
     if (ret != BKF_OK) {
         return BKF_PUBER_SESS_SEND_BUF_NOT_ENOUGH;
@@ -318,20 +323,23 @@ STATIC uint32_t BkfPuberSessTry2SendSubAck(BkfPuberSess *sess, BkfMsgCoder *code
 
     BOOL needWaitTblCmpt = sess->subWithNeedTblCplt &&
                            !BkfDcIsTableTypeComplete(sessMng->argInit->dc, sess->key.tableTypeId);
-    uint8_t newState = needWaitTblCmpt ? BKF_PUBER_SESS_STATE_WAIT_MAY_SEND_BATCH_BEGIN :
-                                       BKF_PUBER_SESS_STATE_WAIT_SEND_BATCH_BEGIN;
+    uint8_t newState = needWaitTblCmpt ? BKF_PUBER_SESS_STATE_WAIT_MAY_SEND_BATCH_BEGIN
+                                       : BKF_PUBER_SESS_STATE_WAIT_SEND_BATCH_BEGIN;
     BkfPuberSessChgStateAndTrigSched(sess, newState);
     return BKF_OK;
 }
 
 STATIC uint32_t BkfPuberSessChgState2WaitSendBatchBegin(BkfPuberSess *sess, void *unused1, void *unused2)
 {
+    (void)unused1;
+    (void)unused2;
     BkfPuberSessChgStateAndTrigSched(sess, BKF_PUBER_SESS_STATE_WAIT_SEND_BATCH_BEGIN);
     return BKF_OK;
 }
 
 STATIC uint32_t BkfPuberSessTry2SendBatchBegin(BkfPuberSess *sess, BkfMsgCoder *coder, void *unused2)
 {
+    (void)unused2;
     uint32_t ret = BkfPuberSessPackBatchBegin(sess, coder);
     if (ret != BKF_OK) {
         return BKF_PUBER_SESS_SEND_BUF_NOT_ENOUGH;
@@ -340,7 +348,7 @@ STATIC uint32_t BkfPuberSessTry2SendBatchBegin(BkfPuberSess *sess, BkfMsgCoder *
     if (sess->subWithVerify) {
         /* 有实时变化数据，优先调度 */
         BkfPuberSessMng *sessMng = sess->sessMng;
-        BkfDcTupleInfo tupleInfo = { 0 };
+        BkfDcTupleInfo tupleInfo = {0};
         BOOL schedReal = (sess->itorRealData != VOS_NULL) &&
                          (BkfDcGetTupleBySeqItor(sessMng->argInit->dc, sess->itorRealData, &tupleInfo) != VOS_FALSE);
         if (schedReal) {
@@ -358,6 +366,7 @@ STATIC uint32_t BkfPuberSessTry2SendBatchBegin(BkfPuberSess *sess, BkfMsgCoder *
 
 STATIC uint32_t BkfPuberSessTry2SendBatchEnd(BkfPuberSess *sess, BkfMsgCoder *coder, void *unused2)
 {
+    (void)unused2;
     uint32_t ret = BkfPuberSessPackBatchEnd(sess, coder);
     if (ret != BKF_OK) {
         return BKF_PUBER_SESS_SEND_BUF_NOT_ENOUGH;
@@ -371,24 +380,31 @@ STATIC uint32_t BkfPuberSessTry2SendBatchEnd(BkfPuberSess *sess, BkfMsgCoder *co
 
 STATIC uint32_t BkfPuberSessTry2SendSubDelNtf(BkfPuberSess *sess, BkfMsgCoder *coder, void *unused2)
 {
+    (void)unused2;
     uint32_t ret = BkfPuberSessPackSubDelNtf(sess, coder);
     return (ret == BKF_OK) ? BKF_PUBER_SESS_NEED_DELETE : BKF_PUBER_SESS_SEND_BUF_NOT_ENOUGH;
 }
 
 STATIC uint32_t BkfPuberSessIdleProcTupleChg(BkfPuberSess *sess, void *unused1, void *unused2)
 {
+    (void)unused1;
+    (void)unused2;
     BkfPuberSessChgStateAndTrigSched(sess, BKF_PUBER_SESS_STATE_REAL_DATA);
     return BKF_OK;
 }
 
 STATIC uint32_t BkfPuberSessSlowBatchProcTupleChg(BkfPuberSess *sess, void *unused1, void *unused2)
 {
+    (void)unused1;
+    (void)unused2;
     BkfPuberSessChgStateAndTrigSched(sess, BKF_PUBER_SESS_STATE_REAL_SLOW_BATCH_DATA);
     return BKF_OK;
 }
 
 STATIC uint32_t BkfPuberSessProcTableRel(BkfPuberSess *sess, void *unused1, void *unused2)
 {
+    (void)unused1;
+    (void)unused2;
     BkfPuberSessMng *sessMng = sess->sessMng;
     if (sess->itorBatchData != VOS_NULL) {
         BkfDcDeleteTupleKeyItor(sessMng->argInit->dc, sess->itorBatchData);
@@ -407,6 +423,7 @@ STATIC uint32_t BkfPuberSessProcTableRel(BkfPuberSess *sess, void *unused1, void
 
 STATIC uint32_t BkfPuberSessBatchProcSched(BkfPuberSess *sess, BkfMsgCoder *coder, void *unused2)
 {
+    (void)unused2;
     uint32_t ret = BkfPuberSessTry2SendBatchData(sess, coder, VOS_NULL);
     if (ret == BKF_PUBER_SESS_SCHED_YIELD) {
         BKF_ASSERT(0);
@@ -423,6 +440,7 @@ STATIC uint32_t BkfPuberSessBatchProcSched(BkfPuberSess *sess, BkfMsgCoder *code
 
 STATIC uint32_t BkfPuberSessRealProcSched(BkfPuberSess *sess, BkfMsgCoder *coder, void *unused2)
 {
+    (void)unused2;
     uint32_t ret = BkfPuberSessTry2SendRealData(sess, coder);
     if (ret != BKF_OK) {
         return ret;
@@ -434,6 +452,7 @@ STATIC uint32_t BkfPuberSessRealProcSched(BkfPuberSess *sess, BkfMsgCoder *coder
 
 STATIC uint32_t BkfPuberSessRealSlowBatchProcSched(BkfPuberSess *sess, BkfMsgCoder *coder, void *unused2)
 {
+    (void)unused2;
     uint32_t ret = BkfPuberSessTry2SendRealData(sess, coder);
     if (ret != BKF_OK) {
         return ret;
@@ -444,7 +463,7 @@ STATIC uint32_t BkfPuberSessRealSlowBatchProcSched(BkfPuberSess *sess, BkfMsgCod
 }
 
 STATIC uint32_t BkfPuberSessSlowBatchProcSlowSched(BkfPuberSess *sess, BkfMsgCoder *coder,
-                                                   BkfPuberSessSlowSchedCtx *ctx)
+    BkfPuberSessSlowSchedCtx *ctx)
 {
     uint32_t ret = BkfPuberSessTry2SendBatchData(sess, coder, ctx);
     if (ret != BKF_OK) {
@@ -464,23 +483,22 @@ STATIC uint32_t BkfPuberSessSlowBatchProcSlowSched(BkfPuberSess *sess, BkfMsgCod
     3-3) 事务号不一样, 对账 中断 对账
 */
 STATIC BOOL BkfPuberSessProcSubMayProc(BkfPuberSess *sess, BkfMsgHead *msgHead, BkfTlvTransNum *tlvTransNum,
-                                         BOOL inBatchState)
+    BOOL inBatchState)
 {
     BOOL isInit = (sess->subTransNum == BKF_TRANS_NUM_INVALID);
     BOOL transNumIsDiff = (sess->subTransNum != tlvTransNum->num);
     BOOL curIsVerify = BKF_BIT_TEST(msgHead->flag, BKF_FLAG_VERIFY);
-    BOOL mayProc = isInit ||
-                   (!inBatchState && transNumIsDiff) ||
-                   (inBatchState && transNumIsDiff && !curIsVerify) ||
+    BOOL mayProc = isInit || (!inBatchState && transNumIsDiff) || (inBatchState && transNumIsDiff && !curIsVerify) ||
                    (inBatchState && transNumIsDiff && curIsVerify && sess->subWithVerify);
     if (mayProc) {
         return VOS_TRUE;
     }
 
     BkfPuberSessMng *sessMng = sess->sessMng;
-    BKF_LOG_DEBUG(BKF_LOG_HND, "sess(%#x), inBatchState(%u)/isInit(%u)/transNumIsDiff(%u)/"
-                  "curIsVerify(%u)/subWithVerify(%u), can not proc & ret\n", BKF_MASK_ADDR(sess),
-                  inBatchState, isInit, transNumIsDiff, curIsVerify, sess->subWithVerify);
+    BKF_LOG_DEBUG(BKF_LOG_HND,
+        "sess(%#x), inBatchState(%u)/isInit(%u)/transNumIsDiff(%u)/"
+        "curIsVerify(%u)/subWithVerify(%u), can not proc & ret\n",
+        BKF_MASK_ADDR(sess), inBatchState, isInit, transNumIsDiff, curIsVerify, sess->subWithVerify);
     return VOS_FALSE;
 }
 
@@ -514,26 +532,27 @@ STATIC uint32_t BkfPuberSessProcSubDo(BkfPuberSess *sess, BkfMsgHead *msgHead, B
     2-3) 事务号一样, 去对账 中断 对账
 */
 STATIC BOOL BkfPuberSessProcUnsubMayProc(BkfPuberSess *sess, BkfMsgHead *msgHead, BkfTlvTransNum *tlvTransNum,
-                                           BOOL inBatchState)
+    BOOL inBatchState)
 {
     BOOL transNumIsSame = (sess->subTransNum == tlvTransNum->num);
     BOOL curIsVerify = BKF_BIT_TEST(msgHead->flag, BKF_FLAG_VERIFY);
-    BOOL mayProc = (!inBatchState && transNumIsSame) ||
-                   (inBatchState && transNumIsSame && !curIsVerify) ||
+    BOOL mayProc = (!inBatchState && transNumIsSame) || (inBatchState && transNumIsSame && !curIsVerify) ||
                    (inBatchState && transNumIsSame && curIsVerify && sess->subWithVerify);
     if (mayProc) {
         return VOS_TRUE;
     }
 
     BkfPuberSessMng *sessMng = sess->sessMng;
-    BKF_LOG_DEBUG(BKF_LOG_HND, "sess(%#x), inBatchState(%u)/transNumIsSame(%u)/curIsVerify(%u)/"
-                  "subWithVerify(%u), can not proc & ret\n", BKF_MASK_ADDR(sess),
-                  inBatchState, transNumIsSame, curIsVerify, sess->subWithVerify);
+    BKF_LOG_DEBUG(BKF_LOG_HND,
+        "sess(%#x), inBatchState(%u)/transNumIsSame(%u)/curIsVerify(%u)/"
+        "subWithVerify(%u), can not proc & ret\n",
+        BKF_MASK_ADDR(sess), inBatchState, transNumIsSame, curIsVerify, sess->subWithVerify);
     return VOS_FALSE;
 }
 
 STATIC uint32_t BkfPuberSessProcUnsubDo(BkfPuberSess *sess, BkfMsgHead *msgHead, BkfTlvTransNum *tlvTransNum)
 {
+    (void)tlvTransNum;
     sess->subWithVerify = BKF_COND_2BIT_FIELD(BKF_BIT_TEST(msgHead->flag, BKF_FLAG_VERIFY));
     if (sess->subWithVerify) {
         BkfPuberSessChgStateAndTrigSched(sess, BKF_PUBER_SESS_STATE_REAL_DATA);
@@ -599,7 +618,7 @@ STATIC uint32_t BkfPuberSessTry2SendBatchData(BkfPuberSess *sess, BkfMsgCoder *c
 {
     BkfPuberSessMng *sessMng = sess->sessMng;
     BOOL msgHeadHasAdd = VOS_FALSE;
-    BkfDcTupleInfo tupleInfo = { 0 };
+    BkfDcTupleInfo tupleInfo = {0};
 
     while (BkfDcGetTupleByKeyItorFromDcOrApp(sessMng->argInit->dc, sess->itorBatchData, &tupleInfo)) {
         uint32_t ret = BkfPuberSessPackDataHeadIfNeed(sess, coder, &msgHeadHasAdd);
@@ -629,7 +648,7 @@ STATIC uint32_t BkfPuberSessTry2SendRealData(BkfPuberSess *sess, BkfMsgCoder *co
 {
     BkfPuberSessMng *sessMng = sess->sessMng;
     BOOL msgHeadHasAdd = VOS_FALSE;
-    BkfDcTupleInfo tupleInfo = { 0 };
+    BkfDcTupleInfo tupleInfo = {0};
 
     while (BkfDcGetTupleBySeqItor(sessMng->argInit->dc, sess->itorRealData, &tupleInfo)) {
         uint32_t ret = BkfPuberSessPackDataHeadIfNeed(sess, coder, &msgHeadHasAdd);
@@ -652,6 +671,7 @@ STATIC uint32_t BkfPuberSessTry2SendRealData(BkfPuberSess *sess, BkfMsgCoder *co
 /* 平滑超时检查 */
 STATIC uint32_t BkfPuberSessBatchChkTimeout(BkfPuberSess *sess, void *noUse)
 {
+    (void)noUse;
     if (sess->batchChkTmr == VOS_NULL) {
         BKF_ASSERT(0);
         return BKF_OK;
@@ -692,8 +712,8 @@ void BkfPuberSessBatchChkTmrStart(BkfPuberSess *sess)
         BkfTmrStop(sessMng->argInit->tmrMng, sess->batchChkTmr);
     }
 
-    sess->batchChkTmr = BkfTmrStartOnce(sessMng->argInit->tmrMng,
-        (F_BKF_TMR_TIMEOUT_PROC)BkfPuberSessBatchChkTimeout, vTbl->batchTimeout * BKF_MS_PER_S, (void*)sess);
+    sess->batchChkTmr = BkfTmrStartOnce(sessMng->argInit->tmrMng, (F_BKF_TMR_TIMEOUT_PROC)BkfPuberSessBatchChkTimeout,
+        vTbl->batchTimeout * BKF_MS_PER_S, (void *)sess);
 }
 
 void BkfPuberSessBatchChkTmrStop(BkfPuberSess *sess)
@@ -711,4 +731,3 @@ void BkfPuberSessBatchChkTmrStop(BkfPuberSess *sess)
 #ifdef __cplusplus
 }
 #endif
-

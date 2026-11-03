@@ -37,23 +37,13 @@
 using namespace Hccl;
 using namespace CcuRep;
 
-
 class CcuContextTrackerTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CcuContextTrackerTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CcuContextTrackerTest tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CcuContextTrackerTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CcuContextTrackerTest tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in CcuContextTrackerTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in CcuContextTrackerTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -79,7 +69,9 @@ public:
 class CcuTaskArgTest : public CcuTaskArg {
 public:
     explicit CcuTaskArgTest(uint64_t inputAddr, uint64_t outputAddr, uint64_t size)
-        : inputAddr(inputAddr), outputAddr(outputAddr), size(size)
+        : inputAddr(inputAddr),
+          outputAddr(outputAddr),
+          size(size)
     {}
     uint64_t inputAddr;
     uint64_t outputAddr;
@@ -88,41 +80,61 @@ public:
 
 class CcuContextTrackerTestTracker : public CcuContext {
 public:
-    CcuContextTrackerTestTracker(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports, const CcuTransportGroup &transportGroup)
-        : CcuContext(arg, transports, transportGroup), var(CreateVariable())
+    CcuContextTrackerTestTracker(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& transportGroup)
+        : CcuContext(arg, transports, transportGroup),
+          var(CreateVariable())
     {}
 
 protected:
     void Algorithm() override
     {
         var = 1;
-        {auto t = CreateVariable();}
-        {auto t = CreateAddress();}
-        {auto t = CreateMemory();}
+        {
+            auto t = CreateVariable();
+        }
+        {
+            auto t = CreateAddress();
+        }
+        {
+            auto t = CreateMemory();
+        }
         {
             auto token = CreateVariable();
             auto t = CreateMemory(token);
         }
-        {auto t = CreateMaskSignal();}
-        {auto t = CreateCcuBuffer();}
-        {auto t = CreateExecutor();}
-        {auto t = CreateBlockCcuBuffer(12);}
-        {auto t = CreateBlockExecutor(24);}
-        {auto t = CreateBlockMaskSignal(36);}
-        {auto t = CreateGroupOpSize();}
+        {
+            auto t = CreateMaskSignal();
+        }
+        {
+            auto t = CreateCcuBuffer();
+        }
+        {
+            auto t = CreateExecutor();
+        }
+        {
+            auto t = CreateBlockCcuBuffer(12);
+        }
+        {
+            auto t = CreateBlockExecutor(24);
+        }
+        {
+            auto t = CreateBlockMaskSignal(36);
+        }
+        {
+            auto t = CreateGroupOpSize();
+        }
     }
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg)
-    {
-        return {};
-    }
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) { return {}; }
+
 private:
     Variable var;
 };
 
-HcclResult CtxAllocCkeStub(
-    const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo> &ckeInfos);
-HcclResult CtxAllocXnStub(
-    const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo> &xnInfos);
+HcclResult
+CtxAllocCkeStub(const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo>& ckeInfos);
+HcclResult
+CtxAllocXnStub(const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo>& xnInfos);
 
 TEST_F(CcuContextTrackerTest, TrackerTest)
 {
@@ -132,7 +144,8 @@ TEST_F(CcuContextTrackerTest, TrackerTest)
     MOCKER_CPP(&CcuTransportGroup::CheckTransportCntCke).stubs().will(returnValue(HcclResult::HCCL_SUCCESS));
     MOCKER_CPP(&CcuTransportGroup::Destroy).stubs();
     MOCKER_CPP(&CcuTransport::ReleaseTransRes).stubs();
-    MOCKER_CPP(&CcuConnection::ReleaseConnRes).stubs().will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));;
+    MOCKER_CPP(&CcuConnection::ReleaseConnRes).stubs().will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
+    ;
     MOCKER(CcuDeviceManager::AllocCke).stubs().will(invoke(CtxAllocCkeStub));
     MOCKER(CcuDeviceManager::AllocXn).stubs().will(invoke(CtxAllocXnStub));
     MOCKER(&CcuDeviceManager::GetLoopChannelId)
@@ -145,7 +158,7 @@ TEST_F(CcuContextTrackerTest, TrackerTest)
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     LinkData linkData(portType, 0, 1, 0, 1);
     CcuChannelInfo channelInfo;
-    vector<CcuJetty *> ccuJettys;
+    vector<CcuJetty*> ccuJettys;
     std::vector<uint32_t> cntCke = {0, 1, 2};
 
     uint32_t rankId = 0;
@@ -155,10 +168,11 @@ TEST_F(CcuContextTrackerTest, TrackerTest)
     std::vector<CcuTransport*> transports;
     for (int i = 0; i < rankSize; i++) {
         if (i != rankId) {
-            auto c = std::make_unique<CcuConnection>(linkData.GetLocalAddr(), linkData.GetRemoteAddr(), channelInfo, ccuJettys);
+            auto c = std::make_unique<CcuConnection>(
+                linkData.GetLocalAddr(), linkData.GetRemoteAddr(), channelInfo, ccuJettys);
             CcuTransport::CclBufferInfo locCclBufInfo;
             std::shared_ptr<CcuTransport> t = std::make_shared<CcuTransport>(nullptr, std::move(c), locCclBufInfo);
-            t->AppendRes(3,3);
+            t->AppendRes(3, 3);
             t->SetCntCke(cntCke);
             t->rmtRes.cntCkes = {128, 129, 130};
             t->rmtRes.xns = {1024 + rankId, 1024 + rankSize + rankId, 1024 + rankSize * 2 + rankId};
@@ -170,9 +184,9 @@ TEST_F(CcuContextTrackerTest, TrackerTest)
     transportGroup.cntCkesGroup = {128, 129, 130};
 
     std::vector<std::function<std::unique_ptr<CcuContext>(
-        CcuCtxArg &, const std::vector<CcuTransport *> &, const CcuTransportGroup &)>>
+        CcuCtxArg&, const std::vector<CcuTransport*>&, const CcuTransportGroup&)>>
         contextConstructors = {
-            [](CcuCtxArg &arg, const std::vector<CcuTransport *> &transports, const CcuTransportGroup &transportGroup) {
+            [](CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& transportGroup) {
                 return std::make_unique<CcuContextTrackerTestTracker>(arg, transports, transportGroup);
             },
         };

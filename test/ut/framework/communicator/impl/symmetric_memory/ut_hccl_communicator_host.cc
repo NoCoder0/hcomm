@@ -1,15 +1,18 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
+#include <securec.h>
+#include "common.h"
+#include "mem_host_pub.h"
 
 #ifndef private
 #define private public
@@ -26,18 +29,9 @@ using namespace hccl;
 
 class HcclCommunicatorHostTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "HcclCommunicatorHostTest SetUP" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "HcclCommunicatorHostTest TearDown" << std::endl;
-    }
-    virtual void SetUp()
-    {
-        std::cout << "HcclCommunicatorHostTest Test SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "HcclCommunicatorHostTest SetUP" << std::endl; }
+    static void TearDownTestCase() { std::cout << "HcclCommunicatorHostTest TearDown" << std::endl; }
+    virtual void SetUp() { std::cout << "HcclCommunicatorHostTest Test SetUP" << std::endl; }
     virtual void TearDown()
     {
         GlobalMockObject::verify();
@@ -47,6 +41,8 @@ protected:
 
 TEST_F(HcclCommunicatorHostTest, Ut_InitSymmetricMemory_When_Normal_Expect_ReturnIsHCCL_SUCCESS)
 {
+    MOCKER_CPP(hrtRaGetSingleSocketVnicIpInfo).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclSocketManager::WaitLinkEstablish).stubs().will(returnValue(HCCL_SUCCESS));
     std::unique_ptr<HcclCommunicator> hcclCommunicator(new (std::nothrow) HcclCommunicator());
     hcclCommunicator->rankInfoList_.resize(2);
     hcclCommunicator->realUserRank_ = 0;
@@ -59,6 +55,8 @@ TEST_F(HcclCommunicatorHostTest, Ut_InitSymmetricMemory_When_Normal_Expect_Retur
 
 TEST_F(HcclCommunicatorHostTest, Ut_InitSymmetricMemory_When_StrideIsValid_Expect_ReturnsIsHCCL_SUCCESS)
 {
+    MOCKER_CPP(hrtRaGetSingleSocketVnicIpInfo).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclSocketManager::WaitLinkEstablish).stubs().will(returnValue(HCCL_SUCCESS));
     HcclCommConfig config;
     HcclCommConfigInit(&config);
     config.hcclSymWinMaxMemSizePerRank = 8;
@@ -87,6 +85,8 @@ TEST_F(HcclCommunicatorHostTest, Ut_InitSymmetricMemory_When_SuperPodNumGreaterT
 
 TEST_F(HcclCommunicatorHostTest, Ut_IsSupportSymmetricMemory_When_Normal_Expect_ReturnIsTrue)
 {
+    MOCKER_CPP(hrtRaGetSingleSocketVnicIpInfo).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclSocketManager::WaitLinkEstablish).stubs().will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&SymmetricMemory::FindSymmetricWindow).stubs().will(returnValue(HCCL_SUCCESS));
     std::unique_ptr<HcclCommunicator> hcclCommunicator(new (std::nothrow) HcclCommunicator());
     hcclCommunicator->rankInfoList_.resize(2);
@@ -102,8 +102,8 @@ TEST_F(HcclCommunicatorHostTest, Ut_IsSupportSymmetricMemory_When_Normal_Expect_
     hcclCommunicator->multiModuleDiffDeviceNumMode_ = false;
 
     OpParam opParam;
-    opParam.inputSymWindow = reinterpret_cast<void *>(0x1000);
-    opParam.outputSymWindow = reinterpret_cast<void *>(0x2000);
+    opParam.inputSymWindow = reinterpret_cast<void*>(0x1000);
+    opParam.outputSymWindow = reinterpret_cast<void*>(0x2000);
     opParam.aicpuUnfoldMode = true;
 
     bool retBool = hcclCommunicator->IsSupportSymmetricMemory(HcclCMDType::HCCL_CMD_ALLGATHER, opParam);
@@ -113,6 +113,8 @@ TEST_F(HcclCommunicatorHostTest, Ut_IsSupportSymmetricMemory_When_Normal_Expect_
 
 TEST_F(HcclCommunicatorHostTest, Ut_IsSupportSymmetricMemory_When_AicpuUnfoldIsFalse_Expect_ReturnIsFalse)
 {
+    MOCKER_CPP(hrtRaGetSingleSocketVnicIpInfo).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclSocketManager::WaitLinkEstablish).stubs().will(returnValue(HCCL_SUCCESS));
     std::unique_ptr<HcclCommunicator> hcclCommunicator(new (std::nothrow) HcclCommunicator());
     hcclCommunicator->rankInfoList_.resize(2);
     hcclCommunicator->realUserRank_ = 0;
@@ -129,6 +131,8 @@ TEST_F(HcclCommunicatorHostTest, Ut_IsSupportSymmetricMemory_When_AicpuUnfoldIsF
 
 TEST_F(HcclCommunicatorHostTest, Ut_IsSupportSymmetricMemory_When_WorkFlowModeIsNotOpBase_Expect_ReturnIsFalse)
 {
+    MOCKER_CPP(hrtRaGetSingleSocketVnicIpInfo).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclSocketManager::WaitLinkEstablish).stubs().will(returnValue(HCCL_SUCCESS));
     std::unique_ptr<HcclCommunicator> hcclCommunicator(new (std::nothrow) HcclCommunicator());
     hcclCommunicator->rankInfoList_.resize(2);
     hcclCommunicator->realUserRank_ = 0;
@@ -163,6 +167,8 @@ TEST_F(HcclCommunicatorHostTest, Ut_IsSupportSymmetricMemory_When_deviceTypeIsNo
 TEST_F(
     HcclCommunicatorHostTest, Ut_IsSupportSymmetricMemory_When_multiModuleDiffDeviceNumModeIsTrue_Expect_ReturnIsFalse)
 {
+    MOCKER_CPP(hrtRaGetSingleSocketVnicIpInfo).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclSocketManager::WaitLinkEstablish).stubs().will(returnValue(HCCL_SUCCESS));
     std::unique_ptr<HcclCommunicator> hcclCommunicator(new (std::nothrow) HcclCommunicator());
     hcclCommunicator->rankInfoList_.resize(2);
     hcclCommunicator->realUserRank_ = 0;
@@ -179,7 +185,8 @@ TEST_F(
     EXPECT_EQ(retBool, false);
 }
 
-TEST_F(HcclCommunicatorHostTest,
+TEST_F(
+    HcclCommunicatorHostTest,
     Ut_IsSupportSymmetricMemory_When_FindSymmetricWindowReturnIsHCCL_E_NOT_FOUND_Expect_ReturnIsFalse)
 {
     MOCKER_CPP(&SymmetricMemory::FindSymmetricWindow).stubs().will(returnValue(HCCL_E_NOT_FOUND));
@@ -203,19 +210,20 @@ TEST_F(HcclCommunicatorHostTest,
 
 class TestHcclCommunicator {
 public:
-    HcclResult AicpuInitOpTilingDataBuf(const OpParam &opParam, const HcclCMDType &opType,
-        const std::string &kernelName, const AicpuOpTiling opTilingInfo, u64 dynamicDataSize)
+    HcclResult AicpuInitOpTilingDataBuf(
+        const OpParam& opParam, const HcclCMDType& opType, const std::string& kernelName,
+        const AicpuOpTiling opTilingInfo, u64 dynamicDataSize)
     {
         MOCKER_CPP(&HcclCommunicator::InitAndCheckAicpuOrderNotify).stubs().will(returnValue(HCCL_SUCCESS));
         MOCKER_CPP(&HcclCommunicator::BuildHierarchicalAlgOption).stubs().will(returnValue(HCCL_SUCCESS));
-        MOCKER_CPP(&HcclCommunicator::UpdateOpIndex).stubs().will(returnValue(0));
+        MOCKER_CPP(&HcclCommunicator::UpdateOpIndex).stubs().will(returnValue((u32)0));
         MOCKER_CPP(&HcclCommunicator::GetOrderLaunchMode).stubs().will(returnValue(0));
         MOCKER_CPP(&HcclCommunicator::AicpuInitOpTilingDataFromOpParam).stubs().will(returnValue(HCCL_SUCCESS));
 
         return hcclCommunicator->AicpuInitOpTilingDataBuf(opParam, opType, kernelName, opTilingInfo, dynamicDataSize);
     }
 
-    HcclCommunicator *hcclCommunicator;
+    HcclCommunicator* hcclCommunicator;
 };
 
 TEST_F(HcclCommunicatorHostTest, Ut_SetDynamicTilingData_When_A2GroupSendRecv_Expect_SkipIsDirectRemoteRank)
@@ -259,7 +267,7 @@ TEST_F(HcclCommunicatorHostTest, Ut_SetDynamicTilingData_When_A2GroupSendRecv_Ex
     EXPECT_EQ(hcclCommunicator->userRankSize_, 2);
 }
 
-static void TestConstructParam(HcclCommParams &params, RankTable_t &rankTable)
+static void TestConstructParam(HcclCommParams& params, RankTable_t& rankTable)
 {
     string commId = "comm ";
     memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
@@ -314,23 +322,24 @@ TEST_F(HcclCommunicatorHostTest, Ut_HcclGetAlgExecParam_When_Normal_Expect_Retur
 
     MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&HcclCommunicator::AllocAlgResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitProfiler).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->AtomicInitSet();
-    EXPECT_EQ(ret, HCCL_SUCCESS);
+    ASSERT_EQ(ret, HCCL_SUCCESS);
     ret = implBase->Init(params, rankTable);
-    EXPECT_EQ(ret, HCCL_SUCCESS);
+    ASSERT_EQ(ret, HCCL_SUCCESS);
 
     std::string tag = "test";
     HcclCMDType opType = HcclCMDType::HCCL_CMD_ALLREDUCE;
     u64 count = 1024;
 
-    void *inputPtr = malloc(count * sizeof(int8_t));
-    void *outputPtr = malloc(count * sizeof(int8_t));
+    void* inputPtr = malloc(count * sizeof(int8_t));
+    void* outputPtr = malloc(count * sizeof(int8_t));
 
     bool clearEnable = true;
     HcclDataType dataType = HCCL_DATA_TYPE_INT8;
     HcclReduceOp op = HCCL_REDUCE_SUM;
-    void *commContext = nullptr;
+    void* commContext = nullptr;
     u64 len = 0;
     u32 aivCoreLimit = 2;
 
@@ -472,7 +481,8 @@ TEST_F(HcclCommunicatorHostTest, Ut_CopyHostListResToDeviceParam_RefreshSingleNo
     GlobalMockObject::verify();
 }
 
-TEST_F(HcclCommunicatorHostTest, Ut_CopyHostListResToDeviceParam_RefreshSingleNode_RemoteRes_TagFound_Expect_CopyOneOnly)
+TEST_F(
+    HcclCommunicatorHostTest, Ut_CopyHostListResToDeviceParam_RefreshSingleNode_RemoteRes_TagFound_Expect_CopyOneOnly)
 {
     std::unique_ptr<HcclCommunicator> hcclCommunicator(new (std::nothrow) HcclCommunicator());
 
@@ -499,10 +509,203 @@ TEST_F(HcclCommunicatorHostTest, Ut_CopyHostListResToDeviceParam_RefreshSingleNo
     // HccltagRemoteResV2 路径，匹配到第二个节点后 break
     MOCKER(hrtMemSyncCopy).expects(atMost(1)).will(returnValue(HCCL_SUCCESS));
 
-    HcclResult ret = hcclCommunicator->CopyHostListResToDeviceParam(
-        targetTag, &sentinel, sizeof(HccltagRemoteResV2));
+    HcclResult ret = hcclCommunicator->CopyHostListResToDeviceParam(targetTag, &sentinel, sizeof(HccltagRemoteResV2));
 
     EXPECT_EQ(ret, HCCL_SUCCESS);
     GlobalMockObject::verify();
 }
 
+TEST_F(
+    HcclCommunicatorHostTest,
+    Ut_AicpuInitOpTilingDataFromOpParam_When_AicpuUnfoldModeEnabled_Expect_PropagatedToTilingData)
+{
+    std::unique_ptr<HcclCommunicator> hcclCommunicator(new (std::nothrow) HcclCommunicator());
+    ASSERT_NE(hcclCommunicator, nullptr);
+
+    OpParam opParam;
+    opParam.aicpuUnfoldMode = true;
+    struct OpTilingData tilingData;
+    memset_s(&tilingData, sizeof(tilingData), 0, sizeof(tilingData));
+
+    HcclResult ret = hcclCommunicator->AicpuInitOpTilingDataFromOpParam(
+        opParam, HcclCMDType::HCCL_CMD_BATCH_SEND_RECV, &tilingData);
+
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+    EXPECT_EQ(tilingData.aicpuUnfoldMode, static_cast<u8>(opParam.aicpuUnfoldMode));
+    EXPECT_EQ(tilingData.aicpuUnfoldMode, 1U);
+}
+
+TEST_F(
+    HcclCommunicatorHostTest,
+    Ut_AicpuInitOpTilingDataFromOpParam_When_AicpuUnfoldModeDisabled_Expect_PropagatedToTilingData)
+{
+    std::unique_ptr<HcclCommunicator> hcclCommunicator(new (std::nothrow) HcclCommunicator());
+    ASSERT_NE(hcclCommunicator, nullptr);
+
+    OpParam opParam;
+    opParam.aicpuUnfoldMode = false;
+    struct OpTilingData tilingData;
+    memset_s(&tilingData, sizeof(tilingData), 0, sizeof(tilingData));
+
+    HcclResult ret = hcclCommunicator->AicpuInitOpTilingDataFromOpParam(
+        opParam, HcclCMDType::HCCL_CMD_BATCH_SEND_RECV, &tilingData);
+
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+    EXPECT_EQ(tilingData.aicpuUnfoldMode, static_cast<u8>(opParam.aicpuUnfoldMode));
+    EXPECT_EQ(tilingData.aicpuUnfoldMode, 0U);
+}
+
+namespace {
+// 与 hccl_communicator.cc 匿名命名空间中的 ALLTOALL_INFO_MATRIX_SIZE 保持一致
+constexpr u32 ALLTOALLV_INFO_MATRIX_SIZE = 4;
+constexpr u64 SENDRECV_SENTINEL = 0xDEADBEEF;
+
+// SendRecvInfo 在 tiling buffer 中的起始下标：8 字节头(sendType/recvType) + 4 组 counts/displs
+constexpr u32 TILING_SENDRECV_START_IDX = 1 + ALLTOALLV_INFO_MATRIX_SIZE * HCCL_ALLTOALLV_P2P_SIZE;
+} // namespace
+
+/* FullMesh + unfold + rankSize == HCCL_ALLTOALLV_P2P_SIZE：tiling 预留 index4+ 存放全量 SendRecvInfo */
+TEST_F(
+    HcclCommunicatorHostTest, Ut_CalcOpTilingDynamicDataSize_When_FullMeshUnfoldSmallRank_Expect_IncludeCollectBuffer)
+{
+    std::unique_ptr<HcclCommunicator> hcclCommunicator(new (std::nothrow) HcclCommunicator());
+    ASSERT_NE(hcclCommunicator, nullptr);
+    u64 collectBuffer[2] = {0};
+    hcclCommunicator->hostCollectBuffer_ = HostMem::create(collectBuffer, sizeof(collectBuffer));
+
+    OpParam opParam;
+    opParam.aicpuUnfoldMode = true;
+    const u32 rankSize = HCCL_ALLTOALLV_P2P_SIZE;
+    u64 dynamicDataSize = hcclCommunicator->CalcOpTilingDynamicDataSize(
+        opParam, HcclCMDType::HCCL_CMD_ALLTOALLV, rankSize, "RunAlltoAllVFullMesh");
+
+    u64 baseSize = sizeof(struct OpTilingAlltoallvDataDes) + rankSize * ALLTOALLV_INFO_MATRIX_SIZE * sizeof(u64);
+    EXPECT_EQ(dynamicDataSize, baseSize + sizeof(collectBuffer));
+}
+
+/* FullMesh + unfold + rankSize > HCCL_ALLTOALLV_P2P_SIZE：不预留 index4+ 空间，与 device 侧门控对齐 */
+TEST_F(
+    HcclCommunicatorHostTest, Ut_CalcOpTilingDynamicDataSize_When_FullMeshUnfoldLargeRank_Expect_ExcludeCollectBuffer)
+{
+    std::unique_ptr<HcclCommunicator> hcclCommunicator(new (std::nothrow) HcclCommunicator());
+    ASSERT_NE(hcclCommunicator, nullptr);
+    u64 collectBuffer[2] = {0};
+    hcclCommunicator->hostCollectBuffer_ = HostMem::create(collectBuffer, sizeof(collectBuffer));
+
+    OpParam opParam;
+    opParam.aicpuUnfoldMode = true;
+    const u32 rankSize = HCCL_ALLTOALLV_P2P_SIZE + 1; // 大规模场景
+    u64 dynamicDataSize = hcclCommunicator->CalcOpTilingDynamicDataSize(
+        opParam, HcclCMDType::HCCL_CMD_ALLTOALLV, rankSize, "RunAlltoAllVFullMesh");
+
+    u64 baseSize = sizeof(struct OpTilingAlltoallvDataDes) + rankSize * ALLTOALLV_INFO_MATRIX_SIZE * sizeof(u64);
+    EXPECT_EQ(dynamicDataSize, baseSize);
+}
+
+/* FullMesh + 非 unfold：不预留 index4+ 空间 */
+TEST_F(HcclCommunicatorHostTest, Ut_CalcOpTilingDynamicDataSize_When_FullMeshFold_Expect_ExcludeCollectBuffer)
+{
+    std::unique_ptr<HcclCommunicator> hcclCommunicator(new (std::nothrow) HcclCommunicator());
+    ASSERT_NE(hcclCommunicator, nullptr);
+    u64 collectBuffer[2] = {0};
+    hcclCommunicator->hostCollectBuffer_ = HostMem::create(collectBuffer, sizeof(collectBuffer));
+
+    OpParam opParam;
+    opParam.aicpuUnfoldMode = false;
+    const u32 rankSize = HCCL_ALLTOALLV_P2P_SIZE;
+    u64 dynamicDataSize = hcclCommunicator->CalcOpTilingDynamicDataSize(
+        opParam, HcclCMDType::HCCL_CMD_ALLTOALLV, rankSize, "RunAlltoAllVFullMesh");
+
+    u64 baseSize = sizeof(struct OpTilingAlltoallvDataDes) + rankSize * ALLTOALLV_INFO_MATRIX_SIZE * sizeof(u64);
+    EXPECT_EQ(dynamicDataSize, baseSize);
+}
+
+/* TwoLevelPipeline：不受 unfold 与 rankSize 门控限制，始终预留 index4+ 空间 */
+TEST_F(HcclCommunicatorHostTest, Ut_CalcOpTilingDynamicDataSize_When_TwoLevelPipeline_Expect_IncludeCollectBuffer)
+{
+    std::unique_ptr<HcclCommunicator> hcclCommunicator(new (std::nothrow) HcclCommunicator());
+    ASSERT_NE(hcclCommunicator, nullptr);
+    u64 collectBuffer[2] = {0};
+    hcclCommunicator->hostCollectBuffer_ = HostMem::create(collectBuffer, sizeof(collectBuffer));
+
+    OpParam opParam;
+    opParam.aicpuUnfoldMode = false;
+    const u32 rankSize = HCCL_ALLTOALLV_P2P_SIZE + 1;
+    u64 dynamicDataSize = hcclCommunicator->CalcOpTilingDynamicDataSize(
+        opParam, HcclCMDType::HCCL_CMD_ALLTOALLV, rankSize, "RunAlltoAllVTwoLevelPipeline");
+
+    u64 baseSize = sizeof(struct OpTilingAlltoallvDataDes) + rankSize * ALLTOALLV_INFO_MATRIX_SIZE * sizeof(u64);
+    EXPECT_EQ(dynamicDataSize, baseSize + sizeof(collectBuffer));
+}
+
+/* FullMesh + unfold + 小规模：SetDynamicTilingDataAlltoallv 将 hostCollectBuffer_ 全量拷入 index4+ */
+TEST_F(HcclCommunicatorHostTest, Ut_SetDynamicTilingDataAlltoallv_When_FullMeshUnfoldSmallRank_Expect_CollectCopied)
+{
+    std::unique_ptr<HcclCommunicator> hcclCommunicator(new (std::nothrow) HcclCommunicator());
+    ASSERT_NE(hcclCommunicator, nullptr);
+    hcclCommunicator->userRankSize_ = HCCL_ALLTOALLV_P2P_SIZE;
+    u64 collectBuffer[2] = {0x1111, 0x2222};
+    hcclCommunicator->hostCollectBuffer_ = HostMem::create(collectBuffer, sizeof(collectBuffer));
+
+    OpParam opParam;
+    opParam.aicpuUnfoldMode = true;
+    opParam.All2AllDataDes.sendType = HcclDataType::HCCL_DATA_TYPE_INT8;
+    opParam.All2AllDataDes.recvType = HcclDataType::HCCL_DATA_TYPE_INT8;
+    u64 sendCounts[HCCL_ALLTOALLV_P2P_SIZE] = {1, 2};
+    u64 sdispls[HCCL_ALLTOALLV_P2P_SIZE] = {0, 1};
+    u64 recvCounts[HCCL_ALLTOALLV_P2P_SIZE] = {2, 1};
+    u64 rdispls[HCCL_ALLTOALLV_P2P_SIZE] = {1, 0};
+    opParam.All2AllDataDes.sendCounts = sendCounts;
+    opParam.All2AllDataDes.sdispls = sdispls;
+    opParam.All2AllDataDes.recvCounts = recvCounts;
+    opParam.All2AllDataDes.rdispls = rdispls;
+
+    u64 tilingBuffer[16] = {0};
+    HostMem dynamicDataMem = HostMem::create(tilingBuffer, sizeof(tilingBuffer));
+
+    HcclResult ret = hcclCommunicator->SetDynamicTilingDataAlltoallv(opParam, dynamicDataMem, "RunAlltoAllVFullMesh");
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+
+    EXPECT_EQ(tilingBuffer[1], 1);                                  // sendCounts[0]
+    EXPECT_EQ(tilingBuffer[7], 1);                                  // rdispls[0]
+    EXPECT_EQ(tilingBuffer[TILING_SENDRECV_START_IDX], 0x1111);     // SendRecvInfo[0]
+    EXPECT_EQ(tilingBuffer[TILING_SENDRECV_START_IDX + 1], 0x2222); // SendRecvInfo[1]
+}
+
+/* FullMesh + unfold + rankSize > HCCL_ALLTOALLV_P2P_SIZE：不拷贝全量 SendRecvInfo，index4+ 保持原值 */
+TEST_F(HcclCommunicatorHostTest, Ut_SetDynamicTilingDataAlltoallv_When_FullMeshUnfoldLargeRank_Expect_CollectSkipped)
+{
+    std::unique_ptr<HcclCommunicator> hcclCommunicator(new (std::nothrow) HcclCommunicator());
+    ASSERT_NE(hcclCommunicator, nullptr);
+    hcclCommunicator->userRankSize_ = 8;
+    u64 collectBuffer[2] = {0x1111, 0x2222};
+    hcclCommunicator->hostCollectBuffer_ = HostMem::create(collectBuffer, sizeof(collectBuffer));
+
+    OpParam opParam;
+    opParam.aicpuUnfoldMode = true;
+    opParam.All2AllDataDes.sendType = HcclDataType::HCCL_DATA_TYPE_INT8;
+    opParam.All2AllDataDes.recvType = HcclDataType::HCCL_DATA_TYPE_INT8;
+    u64 sendCounts[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    u64 sdispls[8] = {0, 1, 2, 3, 4, 5, 6, 7};
+    u64 recvCounts[8] = {8, 7, 6, 5, 4, 3, 2, 1};
+    u64 rdispls[8] = {7, 6, 5, 4, 3, 2, 1, 0};
+    opParam.All2AllDataDes.sendCounts = sendCounts;
+    opParam.All2AllDataDes.sdispls = sdispls;
+    opParam.All2AllDataDes.recvCounts = recvCounts;
+    opParam.All2AllDataDes.rdispls = rdispls;
+
+    // index4+ 起始下标：8 字节头 + 4 * 8 组 counts/displs
+    const u32 sendRecvStartIdx = 1 + ALLTOALLV_INFO_MATRIX_SIZE * 8;
+    u64 tilingBuffer[64];
+    for (u64& val : tilingBuffer) {
+        val = SENDRECV_SENTINEL;
+    }
+    HostMem dynamicDataMem = HostMem::create(tilingBuffer, sizeof(tilingBuffer));
+
+    HcclResult ret = hcclCommunicator->SetDynamicTilingDataAlltoallv(opParam, dynamicDataMem, "RunAlltoAllVFullMesh");
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+
+    EXPECT_EQ(tilingBuffer[1], 1);                                    // sendCounts[0] 正常填充
+    EXPECT_EQ(tilingBuffer[sendRecvStartIdx], SENDRECV_SENTINEL);     // SendRecvInfo 区域未被覆盖
+    EXPECT_EQ(tilingBuffer[sendRecvStartIdx + 1], SENDRECV_SENTINEL); // SendRecvInfo 区域未被覆盖
+}

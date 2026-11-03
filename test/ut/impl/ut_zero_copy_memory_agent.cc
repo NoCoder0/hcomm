@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -58,14 +58,14 @@ using namespace std;
 using namespace hccl;
 
 s32 stub_SocketManagerTest_hrtRaSocketNonBlockSendHB(
-    const FdHandle fdHandle, const void *data, u64 size, u64 *sent_size)
+    const FdHandle fdHandle, const void* data, u64 size, u64* sent_size)
 {
     *sent_size = size;
     return 0;
 }
 
 template <typename T>
-HcclResult ConstructData(u8 *&exchangeDataPtr, u32 &exchangeDataBlankSize, T &value)
+HcclResult ConstructData(u8*& exchangeDataPtr, u32& exchangeDataBlankSize, T& value)
 {
     CHK_SAFETY_FUNC_RET(memcpy_s(exchangeDataPtr, exchangeDataBlankSize, &value, sizeof(T)));
     exchangeDataPtr += sizeof(T);
@@ -82,7 +82,7 @@ size_t lenth = 1;
 size_t alignment = 2 * 1024 * 1024;
 uint64_t flags = 1;
 std::mutex stub_ZeroCopyMemoryAgentUt_mutex;
-HcclResult stub_ZeroCopyMemoryAgentSt_Send(hccl::HcclSocket * socket, const void *data, u64 size)
+HcclResult stub_ZeroCopyMemoryAgentSt_Send(hccl::HcclSocket* socket, const void* data, u64 size)
 {
     std::unique_lock<std::mutex> lock(stub_ZeroCopyMemoryAgentUt_mutex);
     std::vector<u8> temp;
@@ -93,15 +93,14 @@ HcclResult stub_ZeroCopyMemoryAgentSt_Send(hccl::HcclSocket * socket, const void
     return HCCL_SUCCESS;
 }
 
-HcclResult ZeroCopyMemoryAgentRecv(hccl::HcclSocket *socket, void *recvBuf, u32 recvBufLen, u64 &compSize)
+HcclResult ZeroCopyMemoryAgentRecv(hccl::HcclSocket* socket, void* recvBuf, u32 recvBufLen, u64& compSize)
 {
     RequestType requestType = RequestType::RESERVED;
     std::vector<u8> temp = exchangeDataForAck_.front();
     exchangeDataForAck_.pop();
     memcpy_s(&requestType, sizeof(RequestType), temp.data(), sizeof(RequestType));
     switch (requestType) {
-        case RequestType::SET_MEMORY_RANGE:
-        {
+        case RequestType::SET_MEMORY_RANGE: {
             static std::vector<u8> exchangeDataForAck_reserve_ipc_memory;
             exchangeDataForAck_reserve_ipc_memory.resize(recvBufLen);
             RequestType requestType = RequestType::SET_MEMORY_RANGE;
@@ -119,14 +118,12 @@ HcclResult ZeroCopyMemoryAgentRecv(hccl::HcclSocket *socket, void *recvBuf, u32 
             CHK_RET(ConstructData(data, buf_len, alignment));
 
             CHK_RET(ConstructData(data, buf_len, flags));
-            memcpy_s(recvBuf,
-                recvBufLen,
-                exchangeDataForAck_reserve_ipc_memory.data(),
+            memcpy_s(
+                recvBuf, recvBufLen, exchangeDataForAck_reserve_ipc_memory.data(),
                 exchangeDataForAck_reserve_ipc_memory.size());
             compSize = recvBufLen;
         } break;
-        case RequestType::UNSET_MEMORY_RANGE:
-        {
+        case RequestType::UNSET_MEMORY_RANGE: {
             static std::vector<u8> exchangeDataForAck_reserve_ipc_memory;
             exchangeDataForAck_reserve_ipc_memory.resize(recvBufLen);
             RequestType requestType = RequestType::UNSET_MEMORY_RANGE;
@@ -138,9 +135,8 @@ HcclResult ZeroCopyMemoryAgentRecv(hccl::HcclSocket *socket, void *recvBuf, u32 
             vir_ptr_map[devicePhyId_];
             u64 addr = reinterpret_cast<u64>(vir_ptr_map[devicePhyId_].data());
             CHK_RET(ConstructData(data, buf_len, addr));
-            memcpy_s(recvBuf,
-                recvBufLen,
-                exchangeDataForAck_reserve_ipc_memory.data(),
+            memcpy_s(
+                recvBuf, recvBufLen, exchangeDataForAck_reserve_ipc_memory.data(),
                 exchangeDataForAck_reserve_ipc_memory.size());
             compSize = recvBufLen;
         } break;
@@ -156,17 +152,15 @@ HcclResult ZeroCopyMemoryAgentRecv(hccl::HcclSocket *socket, void *recvBuf, u32 
             vir_ptr_map[devicePhyId_];
             u64 addr = reinterpret_cast<u64>(vir_ptr_map[devicePhyId_].data());
             CHK_RET(ConstructData(data, buf_len, addr));
-            memcpy_s(recvBuf,
-                recvBufLen,
-                exchangeDataForAck_release_ipc_memory.data(),
+            memcpy_s(
+                recvBuf, recvBufLen, exchangeDataForAck_release_ipc_memory.data(),
                 exchangeDataForAck_release_ipc_memory.size());
             compSize = recvBufLen;
         } break;
-        case RequestType::SET_REMOTE_BARE_TGID:
-        {
+        case RequestType::SET_REMOTE_BARE_TGID: {
             static std::vector<u8> exchangeDataForAck_bare_tgid;
             exchangeDataForAck_bare_tgid.resize(recvBufLen);
-            u8 *exchangeDataPtr = exchangeDataForAck_bare_tgid.data();
+            u8* exchangeDataPtr = exchangeDataForAck_bare_tgid.data();
             u32 exchangeDataBlankSize = recvBufLen;
             RequestType requestType = RequestType::SET_REMOTE_BARE_TGID;
             CHK_RET(ConstructData(exchangeDataPtr, exchangeDataBlankSize, requestType));
@@ -174,11 +168,10 @@ HcclResult ZeroCopyMemoryAgentRecv(hccl::HcclSocket *socket, void *recvBuf, u32 
             memcpy_s(recvBuf, recvBufLen, exchangeDataForAck_bare_tgid.data(), exchangeDataForAck_bare_tgid.size());
             compSize = recvBufLen;
         } break;
-        case RequestType::SET_REMOTE_BARE_TGID_ACK:
-        {
+        case RequestType::SET_REMOTE_BARE_TGID_ACK: {
             static std::vector<u8> exchangeDataForAck_bare_tgid;
             exchangeDataForAck_bare_tgid.resize(recvBufLen);
-            u8 *exchangeDataPtr = exchangeDataForAck_bare_tgid.data();
+            u8* exchangeDataPtr = exchangeDataForAck_bare_tgid.data();
             u32 exchangeDataBlankSize = recvBufLen;
             RequestType requestType = RequestType::SET_REMOTE_BARE_TGID_ACK;
             CHK_RET(ConstructData(exchangeDataPtr, exchangeDataBlankSize, requestType));
@@ -191,7 +184,7 @@ HcclResult ZeroCopyMemoryAgentRecv(hccl::HcclSocket *socket, void *recvBuf, u32 
         case RequestType::ACTIVATE_COMM_MEMORY: {
             static std::vector<u8> exchangeDataForAck_validate_ipc_memory;
             exchangeDataForAck_validate_ipc_memory.resize(recvBufLen);
-            u8 *exchangeDataPtr = exchangeDataForAck_validate_ipc_memory.data();
+            u8* exchangeDataPtr = exchangeDataForAck_validate_ipc_memory.data();
             u32 exchangeDataBlankSize = recvBufLen;
 
             RequestType requestType = RequestType::ACTIVATE_COMM_MEMORY;
@@ -208,16 +201,15 @@ HcclResult ZeroCopyMemoryAgentRecv(hccl::HcclSocket *socket, void *recvBuf, u32 
             uint64_t shareableHandle = 0x01;
             CHK_RET(ConstructData(exchangeDataPtr, exchangeDataBlankSize, shareableHandle));
             CHK_RET(ConstructData(exchangeDataPtr, exchangeDataBlankSize, flags));
-            memcpy_s(recvBuf,
-                recvBufLen,
-                exchangeDataForAck_validate_ipc_memory.data(),
+            memcpy_s(
+                recvBuf, recvBufLen, exchangeDataForAck_validate_ipc_memory.data(),
                 exchangeDataForAck_validate_ipc_memory.size());
             compSize = recvBufLen;
         } break;
         case RequestType::DEACTIVATE_COMM_MEMORY: {
             static std::vector<u8> exchangeDataForAck_invalidate_ipc_memory;
             exchangeDataForAck_invalidate_ipc_memory.resize(recvBufLen);
-            u8 *exchangeDataPtr = exchangeDataForAck_invalidate_ipc_memory.data();
+            u8* exchangeDataPtr = exchangeDataForAck_invalidate_ipc_memory.data();
             u32 exchangeDataBlankSize = recvBufLen;
 
             RequestType requestType = RequestType::DEACTIVATE_COMM_MEMORY;
@@ -227,16 +219,15 @@ HcclResult ZeroCopyMemoryAgentRecv(hccl::HcclSocket *socket, void *recvBuf, u32 
 
             u64 addr = reinterpret_cast<u64>(vir_ptr_map[devicePhyId_].data());
             CHK_RET(ConstructData(exchangeDataPtr, exchangeDataBlankSize, addr));
-            memcpy_s(recvBuf,
-                recvBufLen,
-                exchangeDataForAck_invalidate_ipc_memory.data(),
+            memcpy_s(
+                recvBuf, recvBufLen, exchangeDataForAck_invalidate_ipc_memory.data(),
                 exchangeDataForAck_invalidate_ipc_memory.size());
             compSize = recvBufLen;
         } break;
         case RequestType::BARRIER_CLOSE: {
             static std::vector<u8> exchangeDataForAck_bare_close;
             exchangeDataForAck_bare_close.resize(recvBufLen);
-            u8 *exchangeDataPtr = exchangeDataForAck_bare_close.data();
+            u8* exchangeDataPtr = exchangeDataForAck_bare_close.data();
             u32 exchangeDataBlankSize = recvBufLen;
 
             RequestType requestType = RequestType::BARRIER_CLOSE;
@@ -246,10 +237,7 @@ HcclResult ZeroCopyMemoryAgentRecv(hccl::HcclSocket *socket, void *recvBuf, u32 
 
             u64 addr = reinterpret_cast<u64>(vir_ptr_map[devicePhyId_].data());
             CHK_RET(ConstructData(exchangeDataPtr, exchangeDataBlankSize, addr));
-            memcpy_s(recvBuf,
-                recvBufLen,
-                exchangeDataForAck_bare_close.data(),
-                exchangeDataForAck_bare_close.size());
+            memcpy_s(recvBuf, recvBufLen, exchangeDataForAck_bare_close.data(), exchangeDataForAck_bare_close.size());
             compSize = recvBufLen;
         } break;
         default: {
@@ -260,7 +248,7 @@ HcclResult ZeroCopyMemoryAgentRecv(hccl::HcclSocket *socket, void *recvBuf, u32 
     return HCCL_SUCCESS;
 }
 
-HcclResult stub_ZeroCopyMemoryAgent_IRecv(hccl::HcclSocket *socket, void *recvBuf, u32 recvBufLen, u64 &compSize)
+HcclResult stub_ZeroCopyMemoryAgent_IRecv(hccl::HcclSocket* socket, void* recvBuf, u32 recvBufLen, u64& compSize)
 {
     std::unique_lock<std::mutex> lock(stub_ZeroCopyMemoryAgentUt_mutex);
     while (exchangeDataForAck_.empty()) {
@@ -270,7 +258,7 @@ HcclResult stub_ZeroCopyMemoryAgent_IRecv(hccl::HcclSocket *socket, void *recvBu
     return ZeroCopyMemoryAgentRecv(socket, recvBuf, recvBufLen, compSize);
 }
 
-s32 stub_SocketManagerTest_hrtRaGetSockets(u32 role, struct SocketInfoT conn[], u32 num, u32 *connectedNum)
+s32 stub_SocketManagerTest_hrtRaGetSockets(u32 role, struct SocketInfoT conn[], u32 num, u32* connectedNum)
 {
     static std::vector<int> fdHandle;
     for (int i = 0; i < num; i++) {
@@ -282,7 +270,7 @@ s32 stub_SocketManagerTest_hrtRaGetSockets(u32 role, struct SocketInfoT conn[], 
     return 0;
 }
 
-HcclResult stub_SocketManagerTest_GetIsSupSockBatchCloseImmed(u32 phyId, bool &isSupportBatchClose)
+HcclResult stub_SocketManagerTest_GetIsSupSockBatchCloseImmed(u32 phyId, bool& isSupportBatchClose)
 {
     isSupportBatchClose = true;
     return HCCL_SUCCESS;
@@ -299,7 +287,7 @@ HcclResult stub_exchangerSocketTest_hrtRaBlockGetSockets(u32 role, struct Socket
     return HCCL_SUCCESS;
 }
 
-HcclResult stub_GetRaResourceInfo_exchangerSocketTest(NetworkManager *that, RaResourceInfo &raResourceInfo)
+HcclResult stub_GetRaResourceInfo_exchangerSocketTest(NetworkManager* that, RaResourceInfo& raResourceInfo)
 {
     static bool initialized = false;
     static RaResourceInfo fake_raResourceInfo;
@@ -317,7 +305,7 @@ HcclResult stub_GetRaResourceInfo_exchangerSocketTest(NetworkManager *that, RaRe
     return HCCL_SUCCESS;
 }
 
-s32 stub_SocketManagerTest_hrtRaSocketNonBlockRecvHB(const FdHandle fdHandle, void *data, u64 size, u64 *recvSize)
+s32 stub_SocketManagerTest_hrtRaSocketNonBlockRecvHB(const FdHandle fdHandle, void* data, u64 size, u64* recvSize)
 {
     static u32 count = 0;
     if (count++ % 5 != 0) {
@@ -327,14 +315,13 @@ s32 stub_SocketManagerTest_hrtRaSocketNonBlockRecvHB(const FdHandle fdHandle, vo
     return 0;
 }
 
-class ZeroCopyMemoryAgentUt : public testing::Test
-{
+class ZeroCopyMemoryAgentUt : public testing::Test {
 protected:
     static void SetUpTestCase()
     {
         DlTdtFunction::GetInstance().DlTdtFunctionInit();
         DlRaFunction::GetInstance().DlRaFunctionInit();
-        TsdOpen(0,2);
+        TsdOpen(0, 2);
         std::cout << "\033[36m--OneSidedUt SetUP--\033[0m" << std::endl;
     }
     static void TearDownTestCase()
@@ -403,18 +390,18 @@ void get_ranks_1server_2dev(std::vector<RankInfo>& rank_vector)
     return;
 }
 
-aclError aclrtReserveMemAddress_stub(void **virPtr, size_t size, size_t alignment, void *expectPtr, uint64_t flags)
+aclError aclrtReserveMemAddress_stub(void** virPtr, size_t size, size_t alignment, void* expectPtr, uint64_t flags)
 {
     CHK_PTR_NULL(virPtr);
     vir_ptr_map[1];
-    *virPtr = reinterpret_cast<void *>(reinterpret_cast<u64>(vir_ptr_map[1].data()));
-    expectPtr = reinterpret_cast<void *>(reinterpret_cast<u64>(vir_ptr_map[1].data()));
+    *virPtr = reinterpret_cast<void*>(reinterpret_cast<u64>(vir_ptr_map[1].data()));
+    expectPtr = reinterpret_cast<void*>(reinterpret_cast<u64>(vir_ptr_map[1].data()));
     return ACL_SUCCESS;
 }
 
-rtError_t aclrtMemImportFromShareableHandle_stub(uint64_t shareableHandle, int32_t deviceId, aclrtDrvMemHandle *handle)
+rtError_t aclrtMemImportFromShareableHandle_stub(uint64_t shareableHandle, int32_t deviceId, aclrtDrvMemHandle* handle)
 {
-    *handle = reinterpret_cast<void *>(reinterpret_cast<u64>(vir_ptr_map[deviceId].data()));
+    *handle = reinterpret_cast<void*>(reinterpret_cast<u64>(vir_ptr_map[deviceId].data()));
     return ACL_SUCCESS;
 }
 
@@ -429,7 +416,7 @@ TEST_F(ZeroCopyMemoryAgentUt, ut_agent_test)
     HcclResult ret;
     u32 recvBufLen = 64;
     u64 compSize = 64;
-    MOCKER_CPP(&HcclSocket::Send, HcclResult(HcclSocket::*)(const void *, u64))
+    MOCKER_CPP(&HcclSocket::Send, HcclResult(HcclSocket::*)(const void*, u64))
         .stubs()
         .with(mockcpp::any())
         .will(invoke(stub_ZeroCopyMemoryAgentSt_Send));
@@ -448,7 +435,8 @@ TEST_F(ZeroCopyMemoryAgentUt, ut_agent_test)
     EXPECT_EQ(ret, HCCL_SUCCESS);
     std::vector<RankInfo> rank_vector;
     get_ranks_1server_2dev(rank_vector);
-    ZeroCopyMemoryAgent ZeroCopyMemoryAgent(socketManager, 0, 0, localIPs, rank_vector, 0, true,"ZeroCopyMemoryAgentTest");
+    ZeroCopyMemoryAgent ZeroCopyMemoryAgent(
+        socketManager, 0, 0, localIPs, rank_vector, 0, true, "ZeroCopyMemoryAgentTest");
     EXPECT_EQ(ZeroCopyMemoryAgent.Init(), HCCL_SUCCESS);
     MOCKER(aclrtReserveMemAddress).stubs().will(invoke(aclrtReserveMemAddress_stub));
     MOCKER(aclrtMemImportFromShareableHandle).stubs().will(invoke(aclrtMemImportFromShareableHandle_stub));
@@ -456,24 +444,24 @@ TEST_F(ZeroCopyMemoryAgentUt, ut_agent_test)
     MOCKER(aclrtUnmapMem).stubs().will(returnValue(ACL_SUCCESS));
     EXPECT_EQ(
         ZeroCopyMemoryAgent.SetMemoryRange(
-            reinterpret_cast<void *>(reinterpret_cast<u64>(vir_ptr_map[0].data())), lenth, alignment, flags),
+            reinterpret_cast<void*>(reinterpret_cast<u64>(vir_ptr_map[0].data())), lenth, alignment, flags),
         HCCL_SUCCESS);
-    EXPECT_EQ(ZeroCopyMemoryAgent.ActivateCommMemory(reinterpret_cast<void *>(reinterpret_cast<u64>(vir_ptr_map[0].data())),
-                  lenth,
-                  0,
-                  reinterpret_cast<void *>(reinterpret_cast<u64>(vir_ptr_map[3].data())),
-                  flags),
+    EXPECT_EQ(
+        ZeroCopyMemoryAgent.ActivateCommMemory(
+            reinterpret_cast<void*>(reinterpret_cast<u64>(vir_ptr_map[0].data())), lenth, 0,
+            reinterpret_cast<void*>(reinterpret_cast<u64>(vir_ptr_map[3].data())), flags),
         HCCL_SUCCESS);
-    EXPECT_EQ(ZeroCopyMemoryAgent.DeactivateCommMemory(
-                  reinterpret_cast<void *>(reinterpret_cast<u64>(vir_ptr_map[0].data()))),
+    EXPECT_EQ(
+        ZeroCopyMemoryAgent.DeactivateCommMemory(reinterpret_cast<void*>(reinterpret_cast<u64>(vir_ptr_map[0].data()))),
         HCCL_SUCCESS);
-    EXPECT_EQ(ZeroCopyMemoryAgent.UnsetMemoryRange(reinterpret_cast<void *>(reinterpret_cast<u64>(vir_ptr_map[0].data()))),
+    EXPECT_EQ(
+        ZeroCopyMemoryAgent.UnsetMemoryRange(reinterpret_cast<void*>(reinterpret_cast<u64>(vir_ptr_map[0].data()))),
         HCCL_SUCCESS);
 
     u64 baseSetAddr = 0x1000;
     u64 baseSetLen = 2 * 1024 * 1024; // 2MB
     int dummyHandle = 1;
-    void *handle = &dummyHandle;
+    void* handle = &dummyHandle;
 
     EXPECT_EQ(ZeroCopyMemoryAgent.BarrierClose(), HCCL_SUCCESS);
     EXPECT_EQ(ZeroCopyMemoryAgent.DeInit(), HCCL_SUCCESS);
@@ -501,8 +489,8 @@ TEST_F(ZeroCopyMemoryAgentUt, ut_agent_wait_timeout)
     EXPECT_NE(agent.WaitForAllRemoteComplete(RequestType::SET_MEMORY_RANGE), HCCL_SUCCESS);
 }
 
-HcclResult stub_ZeroCopyMemoryAgent_SendAsync(hccl::HcclSocket *socket, const void *data, u64 size,
-    u64 *sentSize, void **reqHandle)
+HcclResult stub_ZeroCopyMemoryAgent_SendAsync(
+    hccl::HcclSocket* socket, const void* data, u64 size, u64* sentSize, void** reqHandle)
 {
     std::unique_lock<std::mutex> lock(stub_ZeroCopyMemoryAgentUt_mutex);
     std::vector<u8> temp;
@@ -514,8 +502,8 @@ HcclResult stub_ZeroCopyMemoryAgent_SendAsync(hccl::HcclSocket *socket, const vo
     return HCCL_SUCCESS;
 }
 
-HcclResult stub_ZeroCopyMemoryAgent_RecvAsync(hccl::HcclSocket *socket, void *recvBuf, u64 recvBufLen,
-    u64 *receivedSize, void **reqHandle)
+HcclResult stub_ZeroCopyMemoryAgent_RecvAsync(
+    hccl::HcclSocket* socket, void* recvBuf, u64 recvBufLen, u64* receivedSize, void** reqHandle)
 {
     *reqHandle = (void*)0x02;
     std::unique_lock<std::mutex> lock(stub_ZeroCopyMemoryAgentUt_mutex);
@@ -529,7 +517,7 @@ HcclResult stub_ZeroCopyMemoryAgent_RecvAsync(hccl::HcclSocket *socket, void *re
     return ret;
 }
 
-HcclResult stub_ZeroCopyMemoryAgent_GetAsyncReqResult(hccl::HcclSocket *socket, void *reqHandle, HcclResult &reqResult)
+HcclResult stub_ZeroCopyMemoryAgent_GetAsyncReqResult(hccl::HcclSocket* socket, void* reqHandle, HcclResult& reqResult)
 {
     reqResult = HCCL_SUCCESS;
     return HCCL_SUCCESS;
@@ -539,10 +527,11 @@ TEST_F(ZeroCopyMemoryAgentUt, Ut_AgentFunc_When_UseAsyncSocketApi_ExpectNorm)
 {
     MOCKER(GetIsSupSockBatchCloseImmed).stubs().will(invoke(stub_SocketManagerTest_GetIsSupSockBatchCloseImmed));
     u32 interfaceVersion = 1;
-    MOCKER(hrtRaGetInterfaceVersion).expects(atMost(2))
-    .with(mockcpp::any(), mockcpp::any(), outBoundP(&interfaceVersion))
-    .will(returnValue(HCCL_SUCCESS));
-    HcclResult ret; 
+    MOCKER(hrtRaGetInterfaceVersion)
+        .expects(atMost(2))
+        .with(mockcpp::any(), mockcpp::any(), outBoundP(&interfaceVersion))
+        .will(returnValue(HCCL_SUCCESS));
+    HcclResult ret;
 
     MOCKER(HcclSocket::IsSupportAsync).stubs().will(returnValue(true));
     MOCKER_CPP(&HcclSocket::SendAsync).stubs().will(invoke(stub_ZeroCopyMemoryAgent_SendAsync));
@@ -563,23 +552,27 @@ TEST_F(ZeroCopyMemoryAgentUt, Ut_AgentFunc_When_UseAsyncSocketApi_ExpectNorm)
     EXPECT_EQ(ret, HCCL_SUCCESS);
     std::vector<RankInfo> rank_vector;
     get_ranks_1server_2dev(rank_vector);
-    ZeroCopyMemoryAgent agent(socketManager, 0, 0, localIPs, rank_vector, 0, true,"ZeroCopyMemoryAgentTest");
+    ZeroCopyMemoryAgent agent(socketManager, 0, 0, localIPs, rank_vector, 0, true, "ZeroCopyMemoryAgentTest");
     EXPECT_EQ(agent.Init(), HCCL_SUCCESS);
     MOCKER(aclrtReserveMemAddress).stubs().will(invoke(aclrtReserveMemAddress_stub));
     MOCKER(aclrtMemImportFromShareableHandle).stubs().will(invoke(aclrtMemImportFromShareableHandle_stub));
     MOCKER(aclrtMapMem).stubs().will(returnValue(ACL_SUCCESS));
     MOCKER(aclrtUnmapMem).stubs().will(returnValue(ACL_SUCCESS));
 
-    EXPECT_EQ(agent.SetMemoryRange(reinterpret_cast<void *>(reinterpret_cast<u64>(vir_ptr_map[0].data())), lenth, alignment, flags),
+    EXPECT_EQ(
+        agent.SetMemoryRange(
+            reinterpret_cast<void*>(reinterpret_cast<u64>(vir_ptr_map[0].data())), lenth, alignment, flags),
         HCCL_SUCCESS);
-    EXPECT_EQ(agent.ActivateCommMemory(reinterpret_cast<void *>(reinterpret_cast<u64>(vir_ptr_map[0].data())),
-                lenth, 0,
-                reinterpret_cast<void *>(reinterpret_cast<u64>(vir_ptr_map[3].data())), flags),
+    EXPECT_EQ(
+        agent.ActivateCommMemory(
+            reinterpret_cast<void*>(reinterpret_cast<u64>(vir_ptr_map[0].data())), lenth, 0,
+            reinterpret_cast<void*>(reinterpret_cast<u64>(vir_ptr_map[3].data())), flags),
         HCCL_SUCCESS);
-    EXPECT_EQ(agent.DeactivateCommMemory(reinterpret_cast<void *>(reinterpret_cast<u64>(vir_ptr_map[0].data()))),
+    EXPECT_EQ(
+        agent.DeactivateCommMemory(reinterpret_cast<void*>(reinterpret_cast<u64>(vir_ptr_map[0].data()))),
         HCCL_SUCCESS);
-    EXPECT_EQ(agent.UnsetMemoryRange(reinterpret_cast<void *>(reinterpret_cast<u64>(vir_ptr_map[0].data()))),
-        HCCL_SUCCESS);
+    EXPECT_EQ(
+        agent.UnsetMemoryRange(reinterpret_cast<void*>(reinterpret_cast<u64>(vir_ptr_map[0].data()))), HCCL_SUCCESS);
 
     EXPECT_EQ(agent.BarrierClose(), HCCL_SUCCESS);
     EXPECT_EQ(agent.DeInit(), HCCL_SUCCESS);
@@ -591,10 +584,11 @@ TEST_F(ZeroCopyMemoryAgentUt, Ut_RequestBatchSendAsync_When_CombineAckAndReq_Exp
 {
     MOCKER(GetIsSupSockBatchCloseImmed).stubs().will(invoke(stub_SocketManagerTest_GetIsSupSockBatchCloseImmed));
     u32 interfaceVersion = 1;
-    MOCKER(hrtRaGetInterfaceVersion).expects(atMost(2))
-    .with(mockcpp::any(), mockcpp::any(), outBoundP(&interfaceVersion))
-    .will(returnValue(HCCL_SUCCESS));
-    HcclResult ret; 
+    MOCKER(hrtRaGetInterfaceVersion)
+        .expects(atMost(2))
+        .with(mockcpp::any(), mockcpp::any(), outBoundP(&interfaceVersion))
+        .will(returnValue(HCCL_SUCCESS));
+    HcclResult ret;
 
     MOCKER(HcclSocket::IsSupportAsync).stubs().will(returnValue(true));
     MOCKER(aclrtMapMem).stubs().will(returnValue(ACL_SUCCESS));
@@ -611,7 +605,7 @@ TEST_F(ZeroCopyMemoryAgentUt, Ut_RequestBatchSendAsync_When_CombineAckAndReq_Exp
     EXPECT_EQ(ret, HCCL_SUCCESS);
     std::vector<RankInfo> rank_vector;
     get_ranks_1server_2dev(rank_vector);
-    ZeroCopyMemoryAgent agent(socketManager, 0, 0, localIPs, rank_vector, 0, true,"ZeroCopyMemoryAgentTest");
+    ZeroCopyMemoryAgent agent(socketManager, 0, 0, localIPs, rank_vector, 0, true, "ZeroCopyMemoryAgentTest");
 
     MOCKER_CPP(&ZeroCopyMemoryAgent::InitInnerThread).stubs().will(returnValue(HCCL_SUCCESS));
     EXPECT_EQ(agent.Init(), HCCL_SUCCESS);
@@ -637,10 +631,11 @@ TEST_F(ZeroCopyMemoryAgentUt, Ut_RequestBatchSendAsync_When_SocketSendFailed_Exp
 {
     MOCKER(GetIsSupSockBatchCloseImmed).stubs().will(invoke(stub_SocketManagerTest_GetIsSupSockBatchCloseImmed));
     u32 interfaceVersion = 1;
-    MOCKER(hrtRaGetInterfaceVersion).expects(atMost(2))
-    .with(mockcpp::any(), mockcpp::any(), outBoundP(&interfaceVersion))
-    .will(returnValue(HCCL_SUCCESS));
-    HcclResult ret; 
+    MOCKER(hrtRaGetInterfaceVersion)
+        .expects(atMost(2))
+        .with(mockcpp::any(), mockcpp::any(), outBoundP(&interfaceVersion))
+        .will(returnValue(HCCL_SUCCESS));
+    HcclResult ret;
 
     MOCKER(HcclSocket::IsSupportAsync).stubs().will(returnValue(true));
     MOCKER(aclrtMapMem).stubs().will(returnValue(ACL_SUCCESS));
@@ -657,7 +652,7 @@ TEST_F(ZeroCopyMemoryAgentUt, Ut_RequestBatchSendAsync_When_SocketSendFailed_Exp
     EXPECT_EQ(ret, HCCL_SUCCESS);
     std::vector<RankInfo> rank_vector;
     get_ranks_1server_2dev(rank_vector);
-    ZeroCopyMemoryAgent agent(socketManager, 0, 0, localIPs, rank_vector, 0, true,"ZeroCopyMemoryAgentTest");
+    ZeroCopyMemoryAgent agent(socketManager, 0, 0, localIPs, rank_vector, 0, true, "ZeroCopyMemoryAgentTest");
 
     MOCKER_CPP(&ZeroCopyMemoryAgent::InitInnerThread).stubs().will(returnValue(HCCL_SUCCESS));
     EXPECT_EQ(agent.Init(), HCCL_SUCCESS);
@@ -679,13 +674,14 @@ TEST_F(ZeroCopyMemoryAgentUt, Ut_RequestBatchSendAsync_When_SocketSendFailed_Exp
 
     // SendAsync后，GetResult表明send失败场景
     HcclResult sendReqRet = HCCL_E_TCP_TRANSFER;
-    MOCKER_CPP(&HcclSocket::GetAsyncReqResult).stubs()
-    .with(mockcpp::any(), outBound(sendReqRet))
-    .will(returnValue(HCCL_E_AGAIN))
-    .then(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclSocket::GetAsyncReqResult)
+        .stubs()
+        .with(mockcpp::any(), outBound(sendReqRet))
+        .will(returnValue(HCCL_E_AGAIN))
+        .then(returnValue(HCCL_SUCCESS));
     agent.sendMgrs_[1].AddRequest(false, agent.exchangeDataForSend_);
     // 构造SendAsync的结果
-    void *handle = (void*)0x01;
+    void* handle = (void*)0x01;
     agent.sendMgrs_[1].lastSendSize_ = 0;
     agent.sendMgrs_[1].sentSize_ = 0;
     agent.sendMgrs_[1].reqDataSize_ = 64;
@@ -710,10 +706,11 @@ TEST_F(ZeroCopyMemoryAgentUt, Ut_RequestBatchRecvAsync_When_SocketRecvFailed_Exp
 {
     MOCKER(GetIsSupSockBatchCloseImmed).stubs().will(invoke(stub_SocketManagerTest_GetIsSupSockBatchCloseImmed));
     u32 interfaceVersion = 1;
-    MOCKER(hrtRaGetInterfaceVersion).expects(atMost(2))
-    .with(mockcpp::any(), mockcpp::any(), outBoundP(&interfaceVersion))
-    .will(returnValue(HCCL_SUCCESS));
-    HcclResult ret; 
+    MOCKER(hrtRaGetInterfaceVersion)
+        .expects(atMost(2))
+        .with(mockcpp::any(), mockcpp::any(), outBoundP(&interfaceVersion))
+        .will(returnValue(HCCL_SUCCESS));
+    HcclResult ret;
 
     MOCKER(HcclSocket::IsSupportAsync).stubs().will(returnValue(true));
     MOCKER(aclrtMapMem).stubs().will(returnValue(ACL_SUCCESS));
@@ -730,7 +727,7 @@ TEST_F(ZeroCopyMemoryAgentUt, Ut_RequestBatchRecvAsync_When_SocketRecvFailed_Exp
     EXPECT_EQ(ret, HCCL_SUCCESS);
     std::vector<RankInfo> rank_vector;
     get_ranks_1server_2dev(rank_vector);
-    ZeroCopyMemoryAgent agent(socketManager, 0, 0, localIPs, rank_vector, 0, true,"ZeroCopyMemoryAgentTest");
+    ZeroCopyMemoryAgent agent(socketManager, 0, 0, localIPs, rank_vector, 0, true, "ZeroCopyMemoryAgentTest");
 
     MOCKER_CPP(&ZeroCopyMemoryAgent::InitInnerThread).stubs().will(returnValue(HCCL_SUCCESS));
     EXPECT_EQ(agent.Init(), HCCL_SUCCESS);
@@ -740,21 +737,23 @@ TEST_F(ZeroCopyMemoryAgentUt, Ut_RequestBatchRecvAsync_When_SocketRecvFailed_Exp
     MOCKER(aclrtUnmapMem).stubs().will(returnValue(ACL_SUCCESS));
 
     // RecvAsync后，GetResult表明Recv失败场景
-    void *handle = (void*)0x02;
-    MOCKER_CPP(&HcclSocket::RecvAsync).stubs()
-    .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), outBoundP(&handle))
-    .will(returnValue(HCCL_SUCCESS));
+    void* handle = (void*)0x02;
+    MOCKER_CPP(&HcclSocket::RecvAsync)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), outBoundP(&handle))
+        .will(returnValue(HCCL_SUCCESS));
     agent.recvMgrs_[1].recvIndex_ = 0;
     agent.recvMgrs_[1].lastRecvSize_ = 0;
     agent.RequestBatchRecvAsync();
     EXPECT_EQ(agent.recvMgrs_[1].lastRecvHandle_, handle);
     EXPECT_EQ(agent.recvMgrs_[1].lastRecvSize_, 0);
-  
+
     HcclResult recvReqRet = HCCL_E_TCP_TRANSFER;
-    MOCKER_CPP(&HcclSocket::GetAsyncReqResult).stubs()
-    .with(mockcpp::any(), outBound(recvReqRet))
-    .will(returnValue(HCCL_E_AGAIN))
-    .then(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclSocket::GetAsyncReqResult)
+        .stubs()
+        .with(mockcpp::any(), outBound(recvReqRet))
+        .will(returnValue(HCCL_E_AGAIN))
+        .then(returnValue(HCCL_SUCCESS));
     agent.CheckBatchRecvAsyncResult();
     EXPECT_EQ(agent.recvMgrs_[1].recvIndex_, 0);
     EXPECT_EQ(agent.recvMgrs_[1].lastRecvHandle_, handle);

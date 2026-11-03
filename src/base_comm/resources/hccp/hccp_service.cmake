@@ -14,6 +14,7 @@ add_executable(hccp_service.bin
     ${CMAKE_CURRENT_SOURCE_DIR}/hccp_service/param.c
     ${CMAKE_CURRENT_SOURCE_DIR}/common/ascend_hal_dl.c
     ${CMAKE_CURRENT_SOURCE_DIR}/common/dl_hal_function.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/inc/private/network/log/config_log.c
 )
 
 target_include_directories(hccp_service.bin PRIVATE
@@ -23,6 +24,7 @@ target_include_directories(hccp_service.bin PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/external_depends/rdma-core/providers/hns
     ${CMAKE_CURRENT_SOURCE_DIR}/inc/network
     ${CMAKE_CURRENT_SOURCE_DIR}/inc/private/network
+    ${CMAKE_CURRENT_SOURCE_DIR}/inc/private/network/log
     ${CMAKE_CURRENT_SOURCE_DIR}/rdma_service
     ${CMAKE_CURRENT_SOURCE_DIR}/rdma_agent/adapter
     ${CMAKE_CURRENT_SOURCE_DIR}/rdma_agent/adapter/async
@@ -38,8 +40,6 @@ target_compile_definitions(hccp_service.bin PRIVATE
 
 target_compile_options(hccp_service.bin PRIVATE
     -Werror
-    -Wno-unused-parameter
-    -Wno-missing-field-initializers
     -fPIE
     -rdynamic
     -fvisibility=hidden
@@ -47,6 +47,8 @@ target_compile_options(hccp_service.bin PRIVATE
     -fno-common
     -fno-strict-aliasing
     -std=gnu11
+    -Wextra
+    -Wfloat-equal
     $<$<CONFIG:Debug>:-Og -g>
 )
 

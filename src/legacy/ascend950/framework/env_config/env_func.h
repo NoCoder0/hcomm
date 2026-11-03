@@ -1,12 +1,13 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #ifndef HCCLV2_ENV_FUNC_H
 #define HCCLV2_ENV_FUNC_H
 
@@ -15,22 +16,22 @@
 #include <functional>
 #include <sstream>
 #include <set>
+#include <unordered_map>
 #include "exception_util.h"
 #include "dma_mode.h"
 #include "ip_address.h"
 #include "op_type.h"
 #include "types.h"
 
-
 namespace Hccl {
 
-constexpr u32 MAX_LEN_OF_DIGIT_ENV     = 10; // 数字环境变量最大长度
+constexpr u32 MAX_LEN_OF_DIGIT_ENV = 10; // 数字环境变量最大长度
 constexpr u32 NPU_NET_PROTOCOL_MAX_LEN = 127;
 
-constexpr u32 HCCL_ALGO_LEVEL_0   = 0; // HCCL 算法层级0
-constexpr u32 HCCL_ALGO_LEVEL_1   = 1; // HCCL 算法层级1
-constexpr u32 HCCL_ALGO_LEVEL_2   = 2; // HCCL 算法层级2
-constexpr u32 HCCL_ALGO_LEVEL_3   = 3; // HCCL 算法层级3
+constexpr u32 HCCL_ALGO_LEVEL_0 = 0;   // HCCL 算法层级0
+constexpr u32 HCCL_ALGO_LEVEL_1 = 1;   // HCCL 算法层级1
+constexpr u32 HCCL_ALGO_LEVEL_2 = 2;   // HCCL 算法层级2
+constexpr u32 HCCL_ALGO_LEVEL_3 = 3;   // HCCL 算法层级3
 constexpr u32 HCCL_ALGO_LEVEL_NUM = 4; // HCCL 算法层级最多4级
 
 constexpr s32 NOTIFY_MAX_WAIT_TIME = 255 * 68; // 非910A2和910A3场景notify wait最大等待时长，由硬件决定
@@ -45,27 +46,51 @@ constexpr u32 HCCL_CCU_CONTINUOUS_MS_ID_CONFIG_DIR_NUM = 2; // HCCL CCU MS ID配
 
 constexpr u32 HCCL_CCU_FLAG_NUM = 2; // HCCL NEW CCU 最大是2
 
+// A5确定性配置值与legacy DeterministicEnableLevel保持一致
+constexpr u8 HCCL_DETERMINISTIC_DISABLE = 0;
+constexpr u8 HCCL_DETERMINISTIC_ENABLE = 1;
+constexpr u8 HCCL_DETERMINISTIC_STRICT = 2;
+
 constexpr char HCCL_AUTO_PORT_CONFIG[] = "auto";
 constexpr u32 HCCL_SOCKET_PORT_RANGE_AUTO = 0;
 constexpr u32 MAX_PORT_NUMBER = 65535;
 
+constexpr int32_t HCCL_MIN_CONNECT_FAULT_DETECTION_TIME = 20;   // DCA 探测窗口默认值/下限（秒）
+constexpr int32_t HCCL_MAX_CONNECT_FAULT_DETECTION_TIME = 7200; // DCA 探测窗口上限（秒）
+
 struct SocketIfName {
-    std::vector<std::string> configIfNames{};  // 用户输入的网卡名列表
-    bool                     searchNot{false}; // 匹配还是不匹配，TRUE：不匹配，FALSE：匹配
+    std::vector<std::string> configIfNames{}; // 用户输入的网卡名列表
+    bool searchNot{false};                    // 匹配还是不匹配，TRUE：不匹配，FALSE：匹配
     bool searchExact{false}; // 精确匹配或前缀匹配，TRUE：精确匹配，FALSE：前缀匹配
-    std::string              configIfNameStr{""};
+    std::string configIfNameStr{""};
     SocketIfName() = default;
-    SocketIfName(const std::vector<std::string> &configIfNames, bool searchNot, bool searchExact)
-        : configIfNames(configIfNames), searchNot(searchNot), searchExact(searchExact){};
+    SocketIfName(const std::vector<std::string>& configIfNames, bool searchNot, bool searchExact)
+        : configIfNames(configIfNames),
+          searchNot(searchNot),
+          searchExact(searchExact) {};
 };
+
+// rankConsistentState 取值域
+constexpr int32_t RANK_CONSISTENT_STATE_OFF = -1;  // 完全不做校验
+constexpr int32_t RANK_CONSISTENT_STATE_FIRST = 0; // 首算子校验
+constexpr int32_t RANK_CONSISTENT_STATE_ON = 1;    // 每次算子校验
 
 struct DfsConfig {
     bool taskExceptionEnable{true};
     bool clusterHeartBeatEnable{true};
-    int32_t rankConsistentState{0}; // -1:off 0:first 1:on
+    int32_t rankConsistentState{RANK_CONSISTENT_STATE_FIRST}; // -1:off 0:first 1:on
+    uint32_t taskMonitorInterval{0};                          // task执行耗时监控阈值，单位ms，0表示关闭
+    // DCA 探测窗口（秒），0=关闭，合法范围 [20,7200]
+    int32_t connectionFaultDetectionTime{HCCL_MIN_CONNECT_FAULT_DETECTION_TIME};
     DfsConfig() = default;
-    DfsConfig(bool taskException, bool clusterHeartBeatEnable, int32_t consistentState)
-        : taskExceptionEnable(taskException), clusterHeartBeatEnable(clusterHeartBeatEnable), rankConsistentState(consistentState){};
+    DfsConfig(
+        bool taskException, bool clusterHeartBeatEnable, int32_t consistentState, uint32_t taskMonitorInterval = 0,
+        int32_t connFaultTime = HCCL_MIN_CONNECT_FAULT_DETECTION_TIME)
+        : taskExceptionEnable(taskException),
+          clusterHeartBeatEnable(clusterHeartBeatEnable),
+          rankConsistentState(consistentState),
+          taskMonitorInterval(taskMonitorInterval),
+          connectionFaultDetectionTime(connFaultTime) {};
 };
 
 enum class NpuProtoType {
@@ -77,33 +102,35 @@ enum class NpuProtoType {
 using SocketPortRange = struct SocketPortRangeDef {
     u32 min;
     u32 max;
-    bool operator==(const SocketPortRangeDef& other) const {
-        return min == other.min && max == other.max;
-    }
+    bool operator==(const SocketPortRangeDef& other) const { return min == other.min && max == other.max; }
 };
 
 // HCCL通信算法类型
-MAKE_ENUM(HcclAlgoType,
-          HCCL_ALGO_TYPE_DEFAULT, // 默认算法，配置为此时，使用HCCL内藏算法选择逻辑
-          HCCL_ALGO_TYPE_RING, HCCL_ALGO_TYPE_PIPELINE, HCCL_ALGO_TYPE_FULLMESH, HCCL_ALGO_TYPE_HDR,
-          HCCL_ALGO_TYPE_PAIRWISE, HCCL_ALGO_TYPE_NHR, HCCL_ALGO_TYPE_NB, HCCL_ALGO_TYPE_NULL, HCCL_ALGO_TYPE_NA,
-          HCCL_ALGO_TYPE_NHR_V1, HCCL_ALGO_TYPE_AHC)
+MAKE_ENUM(
+    HcclAlgoType,
+    HCCL_ALGO_TYPE_DEFAULT, // 默认算法，配置为此时，使用HCCL内藏算法选择逻辑
+    HCCL_ALGO_TYPE_RING, HCCL_ALGO_TYPE_PIPELINE, HCCL_ALGO_TYPE_FULLMESH, HCCL_ALGO_TYPE_HDR, HCCL_ALGO_TYPE_PAIRWISE,
+    HCCL_ALGO_TYPE_NHR, HCCL_ALGO_TYPE_NB, HCCL_ALGO_TYPE_NULL, HCCL_ALGO_TYPE_NA, HCCL_ALGO_TYPE_NHR_V1,
+    HCCL_ALGO_TYPE_AHC)
 
-const std::set<OpType> OP_TYPE_SET = {OpType::ALLREDUCE, OpType::BROADCAST, OpType::ALLGATHER, OpType::REDUCESCATTER, OpType::SEND,
-                               OpType::RECV, OpType::BARRIER, OpType::ALLTOALL, OpType::REDUCE, OpType::GATHER, OpType::SCATTER,
-                               OpType::ALLTOALLV, OpType::ALLTOALLVC, OpType::BATCHSENDRECV, OpType::DEBUGCASE};
+const std::set<OpType> OP_TYPE_SET
+    = {OpType::ALLREDUCE, OpType::BROADCAST, OpType::ALLGATHER,  OpType::REDUCESCATTER, OpType::SEND,
+       OpType::RECV,      OpType::BARRIER,   OpType::ALLTOALL,   OpType::REDUCE,        OpType::GATHER,
+       OpType::SCATTER,   OpType::ALLTOALLV, OpType::ALLTOALLVC, OpType::BATCHSENDRECV, OpType::DEBUGCASE};
 
 MAKE_ENUM(OrchestrateWay, PRIM, INS)
 
 // HCCL绕路类型
-MAKE_ENUM(HcclDetourType,
-          HCCL_DETOUR_DISABLE,          // 绕路不使能，默认为此值
-          HCCL_DETOUR_ENABLE_2P,        // 2P间绕路
-          HCCL_DETOUR_ENABLE_4P,        // 4P间绕路
-          HCCL_DETOUR_ENABLE_2P_AND_4P) // 2P和4P间绕路
+MAKE_ENUM(
+    HcclDetourType,
+    HCCL_DETOUR_DISABLE,          // 绕路不使能，默认为此值
+    HCCL_DETOUR_ENABLE_2P,        // 2P间绕路
+    HCCL_DETOUR_ENABLE_4P,        // 4P间绕路
+    HCCL_DETOUR_ENABLE_2P_AND_4P) // 2P和4P间绕路
 
-MAKE_ENUM(HcclTopoType, HCCL_TOPO_4P4K, HCCL_TOPO_4P4K_2D, HCCL_TOPO_4P1K, HCCL_TOPO_4P1K_2D, HCCL_TOPO_2P2K,
-          HCCL_TOPO_2P1K, HCCL_TOPO_1P1K)
+MAKE_ENUM(
+    HcclTopoType, HCCL_TOPO_4P4K, HCCL_TOPO_4P4K_2D, HCCL_TOPO_4P1K, HCCL_TOPO_4P1K_2D, HCCL_TOPO_2P2K, HCCL_TOPO_2P1K,
+    HCCL_TOPO_1P1K)
 
 MAKE_ENUM(HcclDebugTestCase, HCCL_INTRA_RANK_CNT_NOTIFY, HCCL_INTRA_RANK_NOTIFY, NONE)
 
@@ -113,27 +140,32 @@ MAKE_ENUM(HcclDebugTestCase, HCCL_INTRA_RANK_CNT_NOTIFY, HCCL_INTRA_RANK_NOTIFY,
  *-----------------------------------------------------------------------------------------*/
 
 /*------------- common template cast functions -------------*/
-template <class T> inline T Str2T(const std::string &s)
+template <class T>
+inline T Str2T(const std::string& s)
 {
     // 检查数字长度
     if (s.size() > MAX_LEN_OF_DIGIT_ENV) {
-        THROW<InvalidParamsException>(StringFormat("Invalid env len, len[%zu] should not be bigger than %u.", s.size(), MAX_LEN_OF_DIGIT_ENV));
+        THROW<InvalidParamsException>(
+            StringFormat("Invalid env len, len[%zu] should not be bigger than %u.", s.size(), MAX_LEN_OF_DIGIT_ENV));
     }
     // 检查是否为全数字
     if (!std::all_of(s.begin(), s.end(), ::isdigit)) {
-        THROW<InvalidParamsException>(StringFormat("[Init][EnvVarParam]Invalid env config, [%s] contains non-digit char.", s.c_str()));
+        THROW<InvalidParamsException>(
+            StringFormat("[Init][EnvVarParam]Invalid env config, [%s] contains non-digit char.", s.c_str()));
     }
     return String2T<T>(s);
 }
 
-template <> inline std::string Str2T<std::string>(const std::string &s)
+template <>
+inline std::string Str2T<std::string>(const std::string& s)
 {
     return s;
 }
 
-template <> inline bool Str2T<bool>(const std::string &s)
+template <>
+inline bool Str2T<bool>(const std::string& s)
 {
-    bool        b    = true;
+    bool b = true;
     std::string flag = s;
     std::transform(flag.begin(), flag.end(), flag.begin(), ::toupper);
     if (flag == "FALSE") {
@@ -146,49 +178,55 @@ template <> inline bool Str2T<bool>(const std::string &s)
     return b;
 }
 
-template <> inline IpAddress Str2T<IpAddress>(const std::string &s)
+template <>
+inline IpAddress Str2T<IpAddress>(const std::string& s)
 {
     return IpAddress(s);
 }
 
 /*------------------ customized cast functions ------------------*/
-extern bool CastBin2Bool(const std::string &s);
+extern bool CastBin2Bool(const std::string& s);
 
-extern SocketIfName CastSocketIfName(const std::string &s);
+extern u8 CastDeterministic(const std::string& s);
 
-extern std::vector<HcclAlgoType> CastAlgoTypeVec(const std::string &s);
+extern SocketIfName CastSocketIfName(const std::string& s);
 
-extern std::map<OpType, std::vector<HcclAlgoType>> SetHcclAlgoConfig(const std::string &hcclAlgo);
+extern std::vector<HcclAlgoType> CastAlgoTypeVec(const std::string& s);
 
-extern HcclResult SetSpecificAlgType(std::vector<std::string> &algos, std::map<OpType, std::vector<HcclAlgoType>>& hcclAlgoConfig);
+extern HcclResult
+SetHcclAlgoConfig(const std::string& hcclAlgo, std::map<OpType, std::vector<HcclAlgoType>>& hcclAlgoConfig);
 
-extern HcclResult SetCommonAlgType(std::vector<std::string> &algos, std::map<OpType, std::vector<HcclAlgoType>>& hcclAlgoConfig);
+extern HcclResult
+SetSpecificAlgType(std::vector<std::string>& algos, std::map<OpType, std::vector<HcclAlgoType>>& hcclAlgoConfig);
 
-extern HcclResult SplitHcclAlgoLevel(const std::string &algoConfig, std::vector<std::string> &algos);
+extern HcclResult
+SetCommonAlgType(std::vector<std::string>& algos, std::map<OpType, std::vector<HcclAlgoType>>& hcclAlgoConfig);
 
-extern HcclResult ParserHcclAlgoLevel(const std::string &algoLevel, u32 &level, HcclAlgoType &algoType);
+extern HcclResult SplitHcclAlgoLevel(const std::string& algoConfig, std::vector<std::string>& algos);
 
-extern HcclResult ParseAlgoString(std::string opName, std::string &algoString, std::vector<HcclAlgoType>& algType);
+extern HcclResult ParserHcclAlgoLevel(const std::string& algoLevel, u32& level, HcclAlgoType& algoType);
 
-extern HcclResult CheckAlgoConfigValid(std::vector<std::string> &algos, bool& anyCommonConfig, bool& anySpecificConfig);
+extern HcclResult ParseAlgoString(std::string opName, std::string& algoString, std::vector<HcclAlgoType>& algType);
 
-extern HcclResult SplitHcclOpType(const std::string &algoConfig, std::vector<std::string> &algos);
+extern HcclResult CheckAlgoConfigValid(std::vector<std::string>& algos, bool& anyCommonConfig, bool& anySpecificConfig);
 
-extern HcclDetourType CastDetourType(const std::string &s);
+extern HcclResult SplitHcclOpType(const std::string& algoConfig, std::vector<std::string>& algos);
 
-extern HcclAccelerator CastHcclAccelerator(const std::string &s);
+extern HcclDetourType CastDetourType(const std::string& s);
 
-extern s32 CastSocketFamily(const std::string &s);
+extern HcclAccelerator CastHcclAccelerator(const std::string& s);
 
-extern std::string CastCannVersion(const std::string &cannEnv);
+extern s32 CastSocketFamily(const std::string& s);
 
-extern DfsConfig CastDfsConfig(const std::string &dfsConfigEnv);
+extern std::string CastCannVersion(const std::string& cannEnv);
 
-extern u32 CastBin2UInt(const std::string &s);
+extern DfsConfig CastDfsConfig(const std::string& dfsConfigEnv);
 
-extern void CheckSocketIfName(const SocketIfName &config);
+extern u32 CastBin2UInt(const std::string& s);
 
-extern std::vector<SocketPortRange> CastSocketPortRange(const std::string &s, const std::string &envName);
+extern void CheckSocketIfName(const SocketIfName& config);
+
+extern std::vector<SocketPortRange> CastSocketPortRange(const std::string& s, const std::string& envName);
 
 /*----------------------- env variable validate functions -----------------------------
  *   Several template cast functions are provided.
@@ -196,7 +234,8 @@ extern std::vector<SocketPortRange> CastSocketPortRange(const std::string &s, co
  *--------------------------------------------------------------------------------------*/
 
 /*-------------- common template validate functions ------------*/
-template <class T> void CheckRange(const T &value, const T min, const T max, bool closed = true)
+template <class T>
+void CheckRange(const T& value, const T min, const T max, bool closed = true)
 {
     if (closed) {
         if (value < min || value > max) {
@@ -205,30 +244,50 @@ template <class T> void CheckRange(const T &value, const T min, const T max, boo
     }
 }
 // 为了可读性，用编译期函数封装绑定操作，使用者只需关心 T min max 三个字段
-template <class T> constexpr std::function<void(const T &)> CHK_RANGE_CLOSED(const T min, const T max)
+template <class T>
+constexpr std::function<void(const T&)> CHK_RANGE_CLOSED(const T min, const T max)
 {
     return std::bind(CheckRange<T>, std::placeholders::_1, min, max, true);
 }
 
 /*--------------- customized validate functions ---------------*/
-extern void CheckExecTimeOut(const u32 &timeOut);
+extern void CheckExecTimeOut(const u32& timeOut);
 
-extern void CheckFilePath(const string &filePath);
+extern HcclResult CheckFilePath(const string& filePath);
 
-extern void CheckRdmaTimeout(const u32 &timeout);
+extern void CheckRdmaTimeout(const u32& timeout);
 
 /*----------------------- env variable post process functions --------------------------
  *   Register your customized post process functions here if necessary.
  *--------------------------------------------------------------------------------------*/
-extern void SetRealPath(string &filePath);
+extern void SetRealPath(string& filePath);
 
-extern void ProcExecTimeOut(u32 &timeOut);
+extern void ProcExecTimeOut(u32& timeOut);
 
-extern void ProcRdmaTimeout(u32 &timeout);
+extern void ProcRdmaTimeout(u32& timeout);
 
-extern void CheckRDMATrafficClass(const u32 &rdmaTrafficClass);
+extern void CheckRDMATrafficClass(const u32& rdmaTrafficClass);
 
-extern void ConvertUnitQpThreshold(u32 &multiQpThreshold);
+extern void ConvertUnitQpThreshold(u32& multiQpThreshold);
+
+/*----------------------- multi qp src port config --------------------------*/
+struct MultiQpSrcPortConfig {
+    std::string configDirPath;
+    std::unordered_map<std::string, std::vector<std::uint16_t>> ipPairToPorts;
+
+    bool IsAvailable() const { return !ipPairToPorts.empty(); }
+
+    static constexpr u32 CONFIG_FILE_LINE_MAX = 128 * 1024;
+    static constexpr u32 CONFIG_SRC_PORT_NUM_MAX = 32;
+    static constexpr u32 CONFIG_SRC_PORT_ID_MAX = 65535;
+    static constexpr u32 CONFIG_IP_NUM = 2;
+};
+
+extern u32
+GetMultiQpPortsNumByIpPair(const MultiQpSrcPortConfig& config, const IpAddress& srcIp, const IpAddress& dstIp);
+
+extern std::vector<std::uint16_t>
+GetMultiQpSrcPortsByIpPair(const MultiQpSrcPortConfig& config, const IpAddress& srcIp, const IpAddress& dstIp);
 
 } // namespace Hccl
 

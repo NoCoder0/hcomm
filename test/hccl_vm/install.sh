@@ -1,4 +1,5 @@
 #!/bin/bash
+# -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2026 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
@@ -6,6 +7,7 @@
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
 
 set -e
 
@@ -203,7 +205,7 @@ check_environment() {
     
     # 检查第三方依赖
     info "检查第三方依赖..."
-    local dependencies=("cmake" "libsqlite3-dev" "libboost-all-dev" "rdma-core" "libibverbs-dev" "pkg-config" "gcc-aarch64-linux-gnu" "g++-aarch64-linux-gnu" "qemu-user-static" "binfmt-support")
+    local dependencies=("cmake" "libboost-all-dev" "rdma-core" "libibverbs-dev" "pkg-config" "gcc-aarch64-linux-gnu" "g++-aarch64-linux-gnu" "qemu-user-static" "binfmt-support")
     local missing_deps=()
     
     for dep in "${dependencies[@]}"; do
@@ -263,7 +265,7 @@ build_hccl_test() {
     if ! grep -q '\-lmpi_cxx' Makefile; then
         sed -i 's/-lmpi/-lmpi -lmpi_cxx/g' Makefile
     fi
-    MPI_HOME=/usr/lib/x86_64-linux-gnu/openmpi make ASCEND_DIR=${ASCEND_HOME_PATH}
+    MPI_HOME=/usr/lib/$(uname -m)-linux-gnu/openmpi make ASCEND_DIR=${ASCEND_HOME_PATH}
 }
 
 # 编译HCCL-VM工具

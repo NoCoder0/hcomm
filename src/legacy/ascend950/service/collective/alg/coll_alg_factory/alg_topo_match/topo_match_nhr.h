@@ -23,25 +23,22 @@ namespace Hccl {
 
 class TopoMatchNHR : public TopoMatchBase {
 public:
-    explicit TopoMatchNHR(const RankId vRank, const u32 rankSize, const RankGraph *rankGraph,
-                           const DevType devType);
+    explicit TopoMatchNHR(const RankId vRank, const u32 rankSize, const RankGraph* rankGraph, const DevType devType);
     ~TopoMatchNHR() override;
 
-    std::string Describe() const override
-    {
-        return "Topo Match for NHR Algorithm (CURRENTLY only 950 is supported).";
-    }
+    std::string Describe() const override { return "Topo Match for NHR Algorithm (CURRENTLY only 950 is supported)."; }
     using TopoMatchBase::MatchTopo;
-    HcclResult MatchTopo(std::vector<std::vector<RankId>> &vTopo, std::vector<RankId> &virtRanks,
-                         std::map<RankId, u32> &virtRankMap) override;
+    HcclResult MatchTopo(
+        std::vector<std::vector<RankId>>& vTopo, std::vector<RankId>& virtRanks,
+        std::map<RankId, u32>& virtRankMap) override;
 
 private:
     HcclResult NHRTopoForAllRanks();
     u32 GetNHRStepNum(u32 rankSize) const;
-    std::vector<RankId> rankIds_; // virtualTopoRank
-    std::vector<std::vector<RankId>> rankOnSameBoardVector_;  // ranks vector with same boardIds in rack
+    std::vector<RankId> rankIds_;                            // virtualTopoRank
+    std::vector<std::vector<RankId>> rankOnSameBoardVector_; // ranks vector with same boardIds in rack
     std::vector<std::vector<RankId>> rankOnSameSlotVector_;  // ranks vector with same slotIds in rack
-    std::vector<u32> numRanksPerBoard_;  // ranks num with same boardIds in rack
+    std::vector<u32> numRanksPerBoard_;                      // ranks num with same boardIds in rack
 };
 } // namespace Hccl
 

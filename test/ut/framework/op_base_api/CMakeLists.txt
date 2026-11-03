@@ -7,6 +7,7 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
+
 set(src_to_test_list
     main.cc
     hccl_api_base_test.cc
@@ -27,7 +28,6 @@ set(src_to_test_list
     ut_HcclReduceScatter_API_test.cc
     ut_HcomGetCommHandleByGroup_API_test.cc
     ut_op_base_misc_test.cc
-    # ut_op_base_v2_test.cc
 )
 
 add_executable(hccl_utest_framework_op_base_api ${src_to_test_list})
@@ -59,7 +59,7 @@ target_link_libraries(hccl_utest_framework_op_base_api PRIVATE
     -pthread
     hccl_llt
     -Wl,--whole-archive
-    -Wl,--no-whole-archi
+    -Wl,--no-whole-archive
     -lgcov
     -lrt
     -ldl

@@ -4,9 +4,10 @@
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #include "gtest/gtest.h"
 #include <mockcpp/mokc.h>
 #include <mockcpp/mockcpp.hpp>
@@ -28,20 +29,15 @@ using namespace Hccl;
 
 class AivAlltoAllMesh1D : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AivAlltoAllMesh1D set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AivAlltoAllMesh1D set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AivAlltoAllMesh1D tear down" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AivAlltoAllMesh1D tear down" << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -53,9 +49,10 @@ protected:
         ClearHcclEnv();
     }
 
-    void RunAivAlltoAllMesh1DTest(int supNum, int sevNum, int rankNum, CheckerOpMode opMode, int dataCountPerRank,
-        CheckerDataType dataType, int maxTmpMemSize) {
-
+    void RunAivAlltoAllMesh1DTest(
+        int supNum, int sevNum, int rankNum, CheckerOpMode opMode, int dataCountPerRank, CheckerDataType dataType,
+        int maxTmpMemSize)
+    {
         RankTable_For_LLT gen;
         TopoMeta topoMeta;
         gen.GenTopoMeta(topoMeta, supNum, sevNum, rankNum);
@@ -83,39 +80,39 @@ protected:
 
 TEST_F(AivAlltoAllMesh1D, AivAlltoAllMesh1d_one_two_test)
 {
-    RunAivAlltoAllMesh1DTest(1, 1, 2, CheckerOpMode::OPBASE, 100, CheckerDataType::DATA_TYPE_INT32, 1024*1024*200);
+    RunAivAlltoAllMesh1DTest(1, 1, 2, CheckerOpMode::OPBASE, 100, CheckerDataType::DATA_TYPE_INT32, 1024 * 1024 * 200);
 }
 
 TEST_F(AivAlltoAllMesh1D, AivAlltoAllMesh1d_one_four_test)
 {
-    RunAivAlltoAllMesh1DTest(1, 1, 4, CheckerOpMode::OPBASE, 100, CheckerDataType::DATA_TYPE_INT32, 1024*1024*200);
+    RunAivAlltoAllMesh1DTest(1, 1, 4, CheckerOpMode::OPBASE, 100, CheckerDataType::DATA_TYPE_INT32, 1024 * 1024 * 200);
 }
 
 TEST_F(AivAlltoAllMesh1D, AivAlltoAllMesh1d_one_three_test)
 {
-    RunAivAlltoAllMesh1DTest(1, 1, 3, CheckerOpMode::OPBASE, 100, CheckerDataType::DATA_TYPE_INT32, 1024*1024*200);
+    RunAivAlltoAllMesh1DTest(1, 1, 3, CheckerOpMode::OPBASE, 100, CheckerDataType::DATA_TYPE_INT32, 1024 * 1024 * 200);
 }
 
 TEST_F(AivAlltoAllMesh1D, AivAlltoAllMesh1d_one_eight_test)
 {
-    RunAivAlltoAllMesh1DTest(1, 1, 8, CheckerOpMode::OPBASE, 100, CheckerDataType::DATA_TYPE_INT32, 1024*1024*200);
+    RunAivAlltoAllMesh1DTest(1, 1, 8, CheckerOpMode::OPBASE, 100, CheckerDataType::DATA_TYPE_INT32, 1024 * 1024 * 200);
 }
 
 TEST_F(AivAlltoAllMesh1D, AivAlltoAllMesh1d_one_4G_two_test)
 {
-    RunAivAlltoAllMesh1DTest(1, 1, 2, CheckerOpMode::OPBASE, 4*1024*1024*1024,
-        CheckerDataType::DATA_TYPE_INT32, 1024*1024*200);
+    RunAivAlltoAllMesh1DTest(
+        1, 1, 2, CheckerOpMode::OPBASE, 4 * 1024 * 1024 * 1024, CheckerDataType::DATA_TYPE_INT32, 1024 * 1024 * 200);
 }
 
 TEST_F(AivAlltoAllMesh1D, AivAlltoAllMesh1d_one_eight_4G_test)
 {
-    RunAivAlltoAllMesh1DTest(1, 1, 8, CheckerOpMode::OPBASE, 4*1024*1024*1024,
-        CheckerDataType::DATA_TYPE_INT32, 1024*1024*200);
+    RunAivAlltoAllMesh1DTest(
+        1, 1, 8, CheckerOpMode::OPBASE, 4 * 1024 * 1024 * 1024, CheckerDataType::DATA_TYPE_INT32, 1024 * 1024 * 200);
 }
 
 TEST_F(AivAlltoAllMesh1D, AivAlltoAllMesh1d_one_six_4G_offload)
 {
-    RunAivAlltoAllMesh1DTest(1, 1, 6, CheckerOpMode::OFFLOAD, 100, CheckerDataType::DATA_TYPE_INT32, 1024*1024*200);
+    RunAivAlltoAllMesh1DTest(1, 1, 6, CheckerOpMode::OFFLOAD, 100, CheckerDataType::DATA_TYPE_INT32, 1024 * 1024 * 200);
 }
 
 TEST_F(AivAlltoAllMesh1D, AivAlltoAllMesh1d_calculate_numblocks)

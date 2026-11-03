@@ -1,30 +1,32 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "ccu_pfe_cfg_generator.h"
 
 #include "hccl_common_v2.h"
 
 #include "ccu_eid_info.h"
-#include "ccu_res_specs.h"
+#include "ccu_res_specs_legacy.h"
 #include <unordered_set>
 
 namespace Hccl {
 
-CcuPfeCfgGenerator &CcuPfeCfgGenerator::GetInstance(const int32_t deviceLogicId)
+CcuPfeCfgGenerator& CcuPfeCfgGenerator::GetInstance(const int32_t deviceLogicId)
 {
     static CcuPfeCfgGenerator ccuPfeCfgGenerator[MAX_MODULE_DEVICE_NUM + 1];
 
     if (deviceLogicId < 0 || static_cast<uint32_t>(deviceLogicId) > MAX_MODULE_DEVICE_NUM) {
-        THROW<InvalidParamsException>("[CcuPfeCfgGenerator][%s] failed to get instance, devLogicId[%d] "
-            "should be less than %u.", __func__, deviceLogicId, MAX_MODULE_DEVICE_NUM);
+        THROW<InvalidParamsException>(
+            "[CcuPfeCfgGenerator][%s] failed to get instance, devLogicId[%d] "
+            "should be less than %u.",
+            __func__, deviceLogicId, MAX_MODULE_DEVICE_NUM);
     }
 
     ccuPfeCfgGenerator[deviceLogicId].Init(deviceLogicId);
@@ -43,15 +45,14 @@ void CcuPfeCfgGenerator::Init(const int32_t deviceLogicId)
     std::vector<HrtDevEidInfo> eidInfoList;
     (void)CcuEidInfo::GetInstance(devLogicId).GetEidInfo(devLogicId, eidInfoList);
     if (eidInfoList.empty()) {
-        HCCL_RUN_INFO("[CcuPfeCfgGenerator][%s] eid infos are empty, devLogicId[%d]",
-            __func__, devLogicId);
+        HCCL_RUN_INFO("[CcuPfeCfgGenerator][%s] eid infos are empty, devLogicId[%d]", __func__, devLogicId);
         initFlag = true;
         return;
     }
 
     bool dieEnableFlags[MAX_CCU_IODIE_NUM] = {false, false};
     for (uint8_t i = 0; i < MAX_CCU_IODIE_NUM; i++) {
-        const auto &ccuResSpecs = CcuResSpecifications::GetInstance(devLogicId);
+        const auto& ccuResSpecs = CcuResSpecifications::GetInstance(devLogicId);
         (void)ccuResSpecs.GetDieEnableFlag(i, dieEnableFlags[i]);
     }
 
@@ -80,9 +81,10 @@ void CcuPfeCfgGenerator::Init(const int32_t deviceLogicId)
         pfeJettyCtxCfgs[dieId].emplace_back(std::move(cfg));
         dieFuncIdSet[dieId].insert(feId);
 
-        HCCL_RUN_INFO("[CcuPfeCfgGenerator] new pfe cfg set: dieId[%u] feId[%u] startJettyCtxId[%u] "
-            "startTaJettyId[%u] pfeJettyNum[%u].", dieId, feId, startJettyCtxId, startTaJettyId,
-            pfeJettyNum);
+        HCCL_RUN_INFO(
+            "[CcuPfeCfgGenerator] new pfe cfg set: dieId[%u] feId[%u] startJettyCtxId[%u] "
+            "startTaJettyId[%u] pfeJettyNum[%u].",
+            dieId, feId, startJettyCtxId, startTaJettyId, pfeJettyNum);
     }
 
     initFlag = true;
@@ -91,7 +93,7 @@ void CcuPfeCfgGenerator::Init(const int32_t deviceLogicId)
 std::vector<PfeJettyCtxCfg> CcuPfeCfgGenerator::GetPfeJettyCtxCfg(const uint8_t dieId)
 {
     if (dieId >= MAX_CCU_IODIE_NUM) {
-        HCCL_WARNING("[CcuPfeCfgGenerator][PfeJettyCtxCfg] invaild dieId[%u]", dieId);
+        HCCL_WARNING("[CcuPfeCfgGenerator][PfeJettyCtxCfg] invalid dieId[%u]", dieId);
         return std::vector<PfeJettyCtxCfg>();
     }
 
@@ -103,4 +105,4 @@ std::vector<PfeJettyCtxCfg> CcuPfeCfgGenerator::GetPfeJettyCtxCfg(const uint8_t 
     return pfeJettyCtxCfgs[dieId];
 }
 
-}; // Hccl
+}; // namespace Hccl

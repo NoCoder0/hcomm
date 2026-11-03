@@ -1,13 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
-
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "ccu_pfe_cfg_mgr.h"
 
@@ -15,24 +14,27 @@
 
 #include "hccl_common.h"
 #include "eid_info_mgr.h"
-#include "../../../ccu_res_specs.h"
+#include "base_comm_node_accessors.h"
+#include "ccu_res_specs.h"
 
 namespace hcomm {
 
-CcuPfeCfgMgr &CcuPfeCfgMgr::GetInstance(const int32_t deviceLogicId)
+CcuPfeCfgMgr& CcuPfeCfgMgr::GetInstance(const int32_t userDevId)
 {
     static CcuPfeCfgMgr ccuPfeCfgMgr[MAX_MODULE_DEVICE_NUM + 1];
 
-    int32_t devLogicId = deviceLogicId;
-    if (devLogicId < 0 || static_cast<uint32_t>(devLogicId) >= MAX_MODULE_DEVICE_NUM) {
-        HCCL_WARNING("[CcuPfeCfgMgr][%s] use the backup device, devLogicId[%d] should be "
-            "less than %u.", __func__, devLogicId, MAX_MODULE_DEVICE_NUM);
-        devLogicId = MAX_MODULE_DEVICE_NUM; // 使用备份设备
+    int32_t validUserDevId = userDevId;
+    if (validUserDevId < 0 || static_cast<uint32_t>(validUserDevId) >= MAX_MODULE_DEVICE_NUM) {
+        HCCL_WARNING(
+            "[CcuPfeCfgMgr][%s] use the backup device, userDevId[%d] should be "
+            "less than %u.",
+            __func__, validUserDevId, MAX_MODULE_DEVICE_NUM);
+        validUserDevId = MAX_MODULE_DEVICE_NUM; // 使用备份设备
     }
 
-    ccuPfeCfgMgr[devLogicId].devLogicId_ = deviceLogicId;
+    ccuPfeCfgMgr[validUserDevId].userDevId_ = userDevId;
 
-    return ccuPfeCfgMgr[devLogicId];
+    return ccuPfeCfgMgr[validUserDevId];
 }
 
 HcclResult CcuPfeCfgMgr::Init()
@@ -41,14 +43,14 @@ HcclResult CcuPfeCfgMgr::Init()
         return HcclResult::HCCL_SUCCESS;
     }
 
-    CHK_RET(hrtGetDevicePhyIdByIndex(static_cast<uint32_t>(devLogicId_), devPhyId_));
+    CHK_RET(hrtGetDevicePhyIdByIndex(static_cast<uint32_t>(userDevId_), devPhyId_));
 
     std::vector<DevEidInfo> eidInfos;
-    CHK_RET(EidInfoMgr::GetInstance(devPhyId_).GetEidInfos(eidInfos));
+    CHK_RET(GetEidInfoMgr(devPhyId_).GetEidInfos(eidInfos));
 
     bool dieEnableFlags[CCU_MAX_IODIE_NUM] = {false, false};
     for (uint8_t i = 0; i < CCU_MAX_IODIE_NUM; i++) {
-        const auto &ccuResSpecs = CcuResSpecifications::GetInstance(devLogicId_);
+        const auto& ccuResSpecs = CcuResSpecifications::GetInstance(userDevId_);
         (void)ccuResSpecs.GetDieEnableFlag(i, dieEnableFlags[i]);
     }
 
@@ -77,9 +79,10 @@ HcclResult CcuPfeCfgMgr::Init()
         pfeJettyCtxCfgs_[dieId].emplace_back(std::move(cfg));
         dieFuncIdSet[dieId].insert(feId);
 
-        HCCL_RUN_INFO("[CcuPfeCfgMgr] new pfe cfg set: dieId[%u] feId[%u] startJettyCtxId[%u] "
-            "startTaJettyId[%u] pfeJettyNum[%u].", dieId, feId, startJettyCtxId, startTaJettyId,
-            pfeJettyNum);
+        HCCL_RUN_INFO(
+            "[CcuPfeCfgMgr] new pfe cfg set: dieId[%u] feId[%u] startJettyCtxId[%u] "
+            "startTaJettyId[%u] pfeJettyNum[%u].",
+            dieId, feId, startJettyCtxId, startTaJettyId, pfeJettyNum);
     }
 
     initFlag_ = true;
@@ -88,7 +91,7 @@ HcclResult CcuPfeCfgMgr::Init()
 
 HcclResult CcuPfeCfgMgr::Deinit()
 {
-    for (auto &cfg : pfeJettyCtxCfgs_) {
+    for (auto& cfg : pfeJettyCtxCfgs_) {
         cfg.clear();
     }
     initFlag_ = false;

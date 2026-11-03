@@ -30,8 +30,7 @@ struct RaPingHandle {
 };
 
 struct RaPingOps {
-    int (*raPingInit)(struct RaPingHandle *pingHandle, struct PingInitAttr *initAttr,
-        struct PingInitInfo *initInfo);
+    int (*raPingInit)(struct RaPingHandle *pingHandle, struct PingInitAttr *initAttr, struct PingInitInfo *initInfo);
     int (*raPingTargetAdd)(struct RaPingHandle *pingHandle, struct PingTargetInfo target[], uint32_t num);
     int (*raPingTaskStart)(struct RaPingHandle *pingHandle, struct PingTaskAttr *attr);
     int (*raPingGetResults)(struct RaPingHandle *pingHandle, struct PingTargetResult target[], uint32_t *num);

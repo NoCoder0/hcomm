@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "ccl_buffer_manager.h"
 #include "log.h"
@@ -16,11 +16,15 @@
 
 namespace hccl {
 CCLBufferManager::CCLBufferManager()
-    :inCCLbuffer_(DeviceMem()), outCCLbuffer_(DeviceMem()), winExpBuffer_(DeviceMem()),
-    inCCLbufferSize_(0), outCCLbufferSize_(0), winExpBufferSize_(0),
-    inAlltoAllvParaBuffer_(DeviceMem()), outAlltoAllvParaBuffer_(DeviceMem())
-{
-}
+    : inCCLbuffer_(DeviceMem()),
+      outCCLbuffer_(DeviceMem()),
+      winExpBuffer_(DeviceMem()),
+      inCCLbufferSize_(0),
+      outCCLbufferSize_(0),
+      winExpBufferSize_(0),
+      inAlltoAllvParaBuffer_(DeviceMem()),
+      outAlltoAllvParaBuffer_(DeviceMem())
+{}
 
 CCLBufferManager::~CCLBufferManager()
 {
@@ -31,24 +35,32 @@ CCLBufferManager::~CCLBufferManager()
     ReleaseCommAIVbuffer();
 }
 
-HcclResult CCLBufferManager::CreateCCLbuffer(u64 size, DeviceMem &buffer)
+HcclResult CCLBufferManager::CreateCCLbuffer(u64 size, DeviceMem& buffer)
 {
-    CHK_PRT_RET(!size, HCCL_INFO("[CCLBufferManager][CreateCCLbuffer]buffer size is zero. not need to malloc memory"),
+    CHK_PRT_RET(
+        !size, HCCL_INFO("[CCLBufferManager][CreateCCLbuffer]buffer size is zero. not need to malloc memory"),
         HCCL_SUCCESS);
 
-    CHK_PRT_RET((size > ULONG_MAX),
+    CHK_PRT_RET(
+        (size > ULONG_MAX),
         HCCL_ERROR("[CCLBufferManager][CreateCCLbuffer]buffer size is greater than %llu", ULONG_MAX), HCCL_E_PARA);
 
     CHK_RET(DeviceMem::alloc(buffer, size));
     HCCL_INFO("[CreateCCLbuffer] buffer ptr[%p], size[%llu]", buffer.ptr(), buffer.size());
-    CHK_PRT_RET(size && !buffer, HCCL_ERROR("[CCLBufferManager][CreateCCLbuffer]Create ccl buffer size[%llu] fail,"
-        "please check environmental variable HCCL_BUFFSIZE.", size), HCCL_E_PTR);
-    HCCL_RUN_INFO("[HCCL_TRACE][CreateCCLbuffer]Create ccl buffer success. buffer ptr[%p], size[%llu]",
-        buffer.ptr(), buffer.size());
+    CHK_PRT_RET(
+        size && !buffer,
+        HCCL_ERROR(
+            "[CCLBufferManager][CreateCCLbuffer]Create ccl buffer size[%llu] fail,"
+            "please check environmental variable HCCL_BUFFSIZE.",
+            size),
+        HCCL_E_PTR);
+    HCCL_RUN_INFO(
+        "[HCCL_TRACE][CreateCCLbuffer]Create ccl buffer success. buffer ptr[%p], size[%llu]", buffer.ptr(),
+        buffer.size());
     return HCCL_SUCCESS;
 }
 
-HcclResult CCLBufferManager::CreateCommCCLbuffer(const std::string &bufferName)
+HcclResult CCLBufferManager::CreateCommCCLbuffer(const std::string& bufferName)
 {
     if (inCCLbufferSize_ == 0) {
         inCCLbufferSize_ = GetExternalInputCCLBuffSize();
@@ -59,7 +71,7 @@ HcclResult CCLBufferManager::CreateCommCCLbuffer(const std::string &bufferName)
     if (winExpBufferSize_ == 0) {
         winExpBufferSize_ = EXP_BUFFER_SIZE;
     }
- 
+
     if (cclBuffer_.ptr() == nullptr) {
         u64 totalSize = inCCLbufferSize_ + outCCLbufferSize_ + winExpBufferSize_;
         // buffername非空则申请共享cclbuffer
@@ -71,20 +83,21 @@ HcclResult CCLBufferManager::CreateCommCCLbuffer(const std::string &bufferName)
             CHK_RET(hrtMemSet(cclBuffer_.ptr(), totalSize, totalSize));
         }
     }
- 
+
     if (inCCLbuffer_.ptr() == nullptr) {
         inCCLbuffer_ = DeviceMem::create(cclBuffer_.ptr(), inCCLbufferSize_);
     }
- 
+
     if (outCCLbuffer_.ptr() == nullptr) {
-        outCCLbuffer_ = DeviceMem::create(static_cast<u8 *>(cclBuffer_.ptr()) + inCCLbufferSize_, outCCLbufferSize_);
+        outCCLbuffer_ = DeviceMem::create(static_cast<u8*>(cclBuffer_.ptr()) + inCCLbufferSize_, outCCLbufferSize_);
     }
-    
+
     if (winExpBuffer_.ptr() == nullptr) {
-        winExpBuffer_ = DeviceMem::create(static_cast<u8 *>(cclBuffer_.ptr()) + inCCLbufferSize_ + outCCLbufferSize_, 
-            winExpBufferSize_);
+        winExpBuffer_ = DeviceMem::create(
+            static_cast<u8*>(cclBuffer_.ptr()) + inCCLbufferSize_ + outCCLbufferSize_, winExpBufferSize_);
     }
-    HCCL_INFO("[CreateCommCCLbuffer] create cclbuffer, inPtr[%p], outPtr[%p], winExpPtr[%p], isSharebuffer[%d]",
+    HCCL_INFO(
+        "[CreateCommCCLbuffer] create cclbuffer, inPtr[%p], outPtr[%p], winExpPtr[%p], isSharebuffer[%d]",
         inCCLbuffer_.ptr(), outCCLbuffer_.ptr(), winExpBuffer_.ptr(), isShareCCLbuffer_);
     return HCCL_SUCCESS;
 }
@@ -98,13 +111,13 @@ HcclResult CCLBufferManager::CleanCCLbuffer()
 
     if (outCCLbuffer_.ptr() != nullptr) {
         CHK_RET(hrtMemSet(outCCLbuffer_.ptr(), outCCLbuffer_.size(), outCCLbuffer_.size()));
-        HCCL_INFO("[CleanCCLbuffer] clean output buffer, ptr[%p], size[%llu]",
-            outCCLbuffer_.ptr(), outCCLbuffer_.size());
+        HCCL_INFO(
+            "[CleanCCLbuffer] clean output buffer, ptr[%p], size[%llu]", outCCLbuffer_.ptr(), outCCLbuffer_.size());
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult CCLBufferManager::CleanAIVbuffer(void *bufferPtr)
+HcclResult CCLBufferManager::CleanAIVbuffer(void* bufferPtr)
 {
     // 将aiv的bufferPtr空间置于0
     if (bufferPtr != nullptr) {
@@ -119,7 +132,7 @@ HcclResult CCLBufferManager::CreateCommAIVbuffer(bool useOpbaseFlag)
     if (useOpbaseFlag) {
         if (inAivOpbaseBuffer_.ptr() == nullptr) {
             CHK_RET(CreateCCLbuffer(AIV_DATA_SIZE, inAivOpbaseBuffer_));
-            CHK_RET(CleanAIVbuffer(static_cast<u8 *>(inAivOpbaseBuffer_.ptr()) + (AIV_DATA_SIZE - AIV_FLAG_SIZE)));
+            CHK_RET(CleanAIVbuffer(static_cast<u8*>(inAivOpbaseBuffer_.ptr()) + (AIV_DATA_SIZE - AIV_FLAG_SIZE)));
         }
         if (outAivOpbaseBuffer_.ptr() == nullptr) {
             CHK_RET(CreateCCLbuffer(AIV_FLAG_SIZE, outAivOpbaseBuffer_));
@@ -129,7 +142,7 @@ HcclResult CCLBufferManager::CreateCommAIVbuffer(bool useOpbaseFlag)
     } else {
         if (inAivOffloadbuffer_.ptr() == nullptr) {
             CHK_RET(CreateCCLbuffer(AIV_DATA_SIZE, inAivOffloadbuffer_));
-            CHK_RET(CleanAIVbuffer(static_cast<u8 *>(inAivOffloadbuffer_.ptr()) + (AIV_DATA_SIZE - AIV_FLAG_SIZE)));
+            CHK_RET(CleanAIVbuffer(static_cast<u8*>(inAivOffloadbuffer_.ptr()) + (AIV_DATA_SIZE - AIV_FLAG_SIZE)));
         }
         if (outAivOffloadbuffer_.ptr() == nullptr) {
             CHK_RET(CreateCCLbuffer(AIV_FLAG_SIZE, outAivOffloadbuffer_));
@@ -150,38 +163,42 @@ HcclResult CCLBufferManager::CreateCommInfoAIVbuffer()
 
 HcclResult CCLBufferManager::ReleaseCommCCLbuffer()
 {
-    if ((cclBuffer_.ptr() == nullptr) && (inCCLbuffer_.ptr() == nullptr) && (outCCLbuffer_.ptr() == nullptr) &&
-        (winExpBuffer_.ptr() == nullptr)) {
+    if ((cclBuffer_.ptr() == nullptr) && (inCCLbuffer_.ptr() == nullptr) && (outCCLbuffer_.ptr() == nullptr)
+        && (winExpBuffer_.ptr() == nullptr)) {
         HCCL_RUN_INFO("[HCCL_TRACE][ReleaseCCLbuffer]CCLBuffer is null, no need to release.");
         return HCCL_SUCCESS;
     }
- 
-    if (cclBuffer_.ptr() != nullptr){
-        HCCL_RUN_INFO("[HCCL_TRACE][ReleaseCCLbuffer]Release cclBuffer. buffer ptr[%p], size[%llu]",
-            cclBuffer_.ptr(), cclBuffer_.size());
+
+    if (cclBuffer_.ptr() != nullptr) {
+        HCCL_RUN_INFO(
+            "[HCCL_TRACE][ReleaseCCLbuffer]Release cclBuffer. buffer ptr[%p], size[%llu]", cclBuffer_.ptr(),
+            cclBuffer_.size());
         cclBuffer_.free();
     }
- 
-    if (inCCLbuffer_.ptr() != nullptr){
-        HCCL_RUN_INFO("[HCCL_TRACE][ReleaseCCLbuffer]Release incclBuffer. buffer ptr[%p], size[%llu]",
-        inCCLbuffer_.ptr(), inCCLbuffer_.size());
+
+    if (inCCLbuffer_.ptr() != nullptr) {
+        HCCL_RUN_INFO(
+            "[HCCL_TRACE][ReleaseCCLbuffer]Release incclBuffer. buffer ptr[%p], size[%llu]", inCCLbuffer_.ptr(),
+            inCCLbuffer_.size());
         inCCLbuffer_.free();
     }
- 
-    if (outCCLbuffer_.ptr() != nullptr ){
-        HCCL_RUN_INFO("[HCCL_TRACE][ReleaseCCLbuffer]Release outcclBuffer. buffer ptr[%p], size[%llu]",
-        outCCLbuffer_.ptr(), outCCLbuffer_.size());
+
+    if (outCCLbuffer_.ptr() != nullptr) {
+        HCCL_RUN_INFO(
+            "[HCCL_TRACE][ReleaseCCLbuffer]Release outcclBuffer. buffer ptr[%p], size[%llu]", outCCLbuffer_.ptr(),
+            outCCLbuffer_.size());
         outCCLbuffer_.free();
     }
 
-    if (winExpBuffer_.ptr() != nullptr ){
-        HCCL_RUN_INFO("[HCCL_TRACE][ReleaseCCLbuffer]Release expcclBuffer. buffer ptr[%p], size[%llu]",
-        winExpBuffer_.ptr(), winExpBuffer_.size());
+    if (winExpBuffer_.ptr() != nullptr) {
+        HCCL_RUN_INFO(
+            "[HCCL_TRACE][ReleaseCCLbuffer]Release expcclBuffer. buffer ptr[%p], size[%llu]", winExpBuffer_.ptr(),
+            winExpBuffer_.size());
         winExpBuffer_.free();
     }
- 
-    if ((cclBuffer_.ptr() == nullptr) && (inCCLbuffer_.ptr() == nullptr) && (outCCLbuffer_.ptr() == nullptr) &&
-        (winExpBuffer_.ptr() == nullptr)) {
+
+    if ((cclBuffer_.ptr() == nullptr) && (inCCLbuffer_.ptr() == nullptr) && (outCCLbuffer_.ptr() == nullptr)
+        && (winExpBuffer_.ptr() == nullptr)) {
         HCCL_RUN_INFO("[HCCL_TRACE][ReleaseCCLbuffer]Release CCLbuffer success.");
     }
     return HCCL_SUCCESS;
@@ -189,24 +206,29 @@ HcclResult CCLBufferManager::ReleaseCommCCLbuffer()
 
 HcclResult CCLBufferManager::ReleaseCommAIVbuffer()
 {
-    HCCL_RUN_INFO("[HCCL_TRACE][ReleaseAIVbuffer]Release inAivOpbaseBuffer. buffer ptr[%p], size[%llu]",
-        inAivOpbaseBuffer_.ptr(), inAivOpbaseBuffer_.size());
+    HCCL_RUN_INFO(
+        "[HCCL_TRACE][ReleaseAIVbuffer]Release inAivOpbaseBuffer. buffer ptr[%p], size[%llu]", inAivOpbaseBuffer_.ptr(),
+        inAivOpbaseBuffer_.size());
     inAivOpbaseBuffer_.free();
-    HCCL_RUN_INFO("[HCCL_TRACE][ReleaseAIVbuffer]Release outAivOpbaseBuffer. buffer ptr[%p], size[%llu]",
+    HCCL_RUN_INFO(
+        "[HCCL_TRACE][ReleaseAIVbuffer]Release outAivOpbaseBuffer. buffer ptr[%p], size[%llu]",
         outAivOpbaseBuffer_.ptr(), outAivOpbaseBuffer_.size());
     outAivOpbaseBuffer_.free();
-    HCCL_RUN_INFO("[HCCL_TRACE][ReleaseAIVbuffer]Release inAivOffloadbuffer. buffer ptr[%p], size[%llu]",
+    HCCL_RUN_INFO(
+        "[HCCL_TRACE][ReleaseAIVbuffer]Release inAivOffloadbuffer. buffer ptr[%p], size[%llu]",
         inAivOffloadbuffer_.ptr(), inAivOffloadbuffer_.size());
     inAivOffloadbuffer_.free();
-    HCCL_RUN_INFO("[HCCL_TRACE][ReleaseAIVbuffer]Release outAivOffloadbuffer. buffer ptr[%p], size[%llu]",
+    HCCL_RUN_INFO(
+        "[HCCL_TRACE][ReleaseAIVbuffer]Release outAivOffloadbuffer. buffer ptr[%p], size[%llu]",
         outAivOffloadbuffer_.ptr(), outAivOffloadbuffer_.size());
     outAivOffloadbuffer_.free();
-    HCCL_RUN_INFO("[HCCL_TRACE][ReleaseAIVbuffer]Release aivCommInfoBuffer. buffer ptr[%p], size[%llu]",
-        aivCommInfoBuffer_.ptr(), aivCommInfoBuffer_.size());
+    HCCL_RUN_INFO(
+        "[HCCL_TRACE][ReleaseAIVbuffer]Release aivCommInfoBuffer. buffer ptr[%p], size[%llu]", aivCommInfoBuffer_.ptr(),
+        aivCommInfoBuffer_.size());
     aivCommInfoBuffer_.free();
-    if (inAivOpbaseBuffer_.ptr() == nullptr && outAivOpbaseBuffer_.ptr() == nullptr &&
-        inAivOffloadbuffer_.ptr() == nullptr && outAivOffloadbuffer_.ptr() == nullptr &&
-        aivCommInfoBuffer_.ptr() == nullptr) {
+    if (inAivOpbaseBuffer_.ptr() == nullptr && outAivOpbaseBuffer_.ptr() == nullptr
+        && inAivOffloadbuffer_.ptr() == nullptr && outAivOffloadbuffer_.ptr() == nullptr
+        && aivCommInfoBuffer_.ptr() == nullptr) {
         HCCL_RUN_INFO("[HCCL_TRACE][ReleaseAIVbuffer]Release AIV buffer success.");
     }
     return HCCL_SUCCESS;
@@ -215,13 +237,13 @@ HcclResult CCLBufferManager::ReleaseCommAIVbuffer()
 HcclResult CCLBufferManager::ClearCommAIVbuffer()
 {
     if (inAivOpbaseBuffer_.ptr() != nullptr) {
-        CHK_RET(CleanAIVbuffer(static_cast<u8 *>(inAivOpbaseBuffer_.ptr()) + (AIV_DATA_SIZE - AIV_FLAG_SIZE)));
+        CHK_RET(CleanAIVbuffer(static_cast<u8*>(inAivOpbaseBuffer_.ptr()) + (AIV_DATA_SIZE - AIV_FLAG_SIZE)));
     }
     if (outAivOpbaseBuffer_.ptr() != nullptr) {
         CHK_RET(CleanAIVbuffer(outAivOpbaseBuffer_.ptr()));
     }
     if (inAivOffloadbuffer_.ptr() != nullptr) {
-        CHK_RET(CleanAIVbuffer(static_cast<u8 *>(inAivOffloadbuffer_.ptr()) + (AIV_DATA_SIZE - AIV_FLAG_SIZE)));
+        CHK_RET(CleanAIVbuffer(static_cast<u8*>(inAivOffloadbuffer_.ptr()) + (AIV_DATA_SIZE - AIV_FLAG_SIZE)));
     }
     if (outAivOffloadbuffer_.ptr() != nullptr) {
         CHK_RET(CleanAIVbuffer(outAivOffloadbuffer_.ptr()));
@@ -229,30 +251,15 @@ HcclResult CCLBufferManager::ClearCommAIVbuffer()
     return HCCL_SUCCESS;
 }
 
-DeviceMem& CCLBufferManager::GetInAivOpbaseBuffer()
-{
-    return inAivOpbaseBuffer_;
-}
+DeviceMem& CCLBufferManager::GetInAivOpbaseBuffer() { return inAivOpbaseBuffer_; }
 
-DeviceMem& CCLBufferManager::GetOutAivOpbaseBuffer()
-{
-    return outAivOpbaseBuffer_;
-}
+DeviceMem& CCLBufferManager::GetOutAivOpbaseBuffer() { return outAivOpbaseBuffer_; }
 
-DeviceMem& CCLBufferManager::GetInAivOffloadbuffer()
-{
-    return inAivOffloadbuffer_;
-}
+DeviceMem& CCLBufferManager::GetInAivOffloadbuffer() { return inAivOffloadbuffer_; }
 
-DeviceMem& CCLBufferManager::GetOutAivOffloadbuffer()
-{
-    return outAivOffloadbuffer_;
-}
+DeviceMem& CCLBufferManager::GetOutAivOffloadbuffer() { return outAivOffloadbuffer_; }
 
-DeviceMem& CCLBufferManager::GetCommCCLBuffer()
-{
-    return cclBuffer_;
-}
+DeviceMem& CCLBufferManager::GetCommCCLBuffer() { return cclBuffer_; }
 
 HcclResult CCLBufferManager::InitCCLbuffer(u64 inCCLbufferSize, u64 outCCLbufferSize)
 {
@@ -261,65 +268,44 @@ HcclResult CCLBufferManager::InitCCLbuffer(u64 inCCLbufferSize, u64 outCCLbuffer
     return HCCL_SUCCESS;
 }
 
-void* CCLBufferManager::GetCCLbufferAddr(const DeviceMem &buffer)
+void* CCLBufferManager::GetCCLbufferAddr(const DeviceMem& buffer)
 {
     if (buffer.ptr() == nullptr) {
         return nullptr;
     } else {
-        return static_cast<void *>(reinterpret_cast<u8 *>(buffer.ptr()));
+        return static_cast<void*>(reinterpret_cast<u8*>(buffer.ptr()));
     }
 }
 
-DeviceMem& CCLBufferManager::GetInCCLbuffer()
-{
-    return inCCLbuffer_;
-}
+DeviceMem& CCLBufferManager::GetInCCLbuffer() { return inCCLbuffer_; }
 
-DeviceMem& CCLBufferManager::GetCommExpBuffer()
-{
-    return winExpBuffer_;
-}
+DeviceMem& CCLBufferManager::GetCommExpBuffer() { return winExpBuffer_; }
 
-DeviceMem& CCLBufferManager::GetAivCommInfoBuffer()
-{
-    return aivCommInfoBuffer_;
-}
+DeviceMem& CCLBufferManager::GetAivCommInfoBuffer() { return aivCommInfoBuffer_; }
 
-HcclResult CCLBufferManager::GetInCCLbuffer(void* &buffer, u64 &size)
+HcclResult CCLBufferManager::GetInCCLbuffer(void*& buffer, u64& size)
 {
     buffer = GetCCLbufferAddr(inCCLbuffer_);
     size = inCCLbufferSize_;
     return HCCL_SUCCESS;
 }
 
-u64 CCLBufferManager::GetInCCLbufferSize()
-{
-    return inCCLbufferSize_;
-}
+u64 CCLBufferManager::GetInCCLbufferSize() const { return inCCLbufferSize_; }
 
-DeviceMem& CCLBufferManager::GetOutCCLbuffer()
-{
-    return outCCLbuffer_;
-}
+DeviceMem& CCLBufferManager::GetOutCCLbuffer() { return outCCLbuffer_; }
 
-HcclResult CCLBufferManager::GetOutCCLbuffer(void* &buffer, u64 &size)
+HcclResult CCLBufferManager::GetOutCCLbuffer(void*& buffer, u64& size)
 {
     buffer = GetCCLbufferAddr(outCCLbuffer_);
     size = outCCLbufferSize_;
     return HCCL_SUCCESS;
 }
 
-u64 CCLBufferManager::GetOutCCLbufferSize()
-{
-    return outCCLbufferSize_;
-}
+u64 CCLBufferManager::GetOutCCLbufferSize() const { return outCCLbufferSize_; }
 
-u64 CCLBufferManager::GetExpBufferSize()
-{
-    return winExpBufferSize_;
-}
+u64 CCLBufferManager::GetExpBufferSize() const { return winExpBufferSize_; }
 
-DeviceMem CCLBufferManager::GetCommRegMem(const DeviceMem &mem, MemAttr memAttr, bool aivMode)
+DeviceMem CCLBufferManager::GetCommRegMem(const DeviceMem& mem, MemAttr memAttr, bool aivMode)
 {
     u64 commMemSize = 0;
     if ((GetWorkflowMode() == HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE) && (!aivMode)) {
@@ -343,15 +329,9 @@ HcclResult CCLBufferManager::InitAlltoAllvParaBuffer(u64 inBufferSize, u64 outBu
     return HCCL_SUCCESS;
 }
 
-DeviceMem& CCLBufferManager::GetInAlltoAllvParaBuffer()
-{
-    return inAlltoAllvParaBuffer_;
-}
+DeviceMem& CCLBufferManager::GetInAlltoAllvParaBuffer() { return inAlltoAllvParaBuffer_; }
 
-DeviceMem& CCLBufferManager::GetOutAlltoAllvParaBuffer()
-{
-    return outAlltoAllvParaBuffer_;
-}
+DeviceMem& CCLBufferManager::GetOutAlltoAllvParaBuffer() { return outAlltoAllvParaBuffer_; }
 
 void CCLBufferManager::ReleaseAlltoAllvParaBuffer()
 {
@@ -359,7 +339,7 @@ void CCLBufferManager::ReleaseAlltoAllvParaBuffer()
     outAlltoAllvParaBuffer_.free();
 }
 
-HcclResult CCLBufferManager::GetIndependentOpCCLbuffer(void* &buffer, uint64_t &size)
+HcclResult CCLBufferManager::GetIndependentOpCCLbuffer(void*& buffer, uint64_t& size)
 {
     HCCL_INFO("[GetIndependentOpCCLbuffer] cclBuffer_[%p]", cclBuffer_.ptr());
     buffer = GetCCLbufferAddr(cclBuffer_);

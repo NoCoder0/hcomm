@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "transport_heterog_roce.h"
 #include "log.h"
@@ -37,14 +37,11 @@ constexpr u32 SMALL_PAGE_SIZE = 4096;
 constexpr u32 EIGHE_BIT = 8;
 constexpr u32 WAIT_SLEEP_TIME_US = 50;
 
-enum class RdmaOp {
-    OP_WRITE = 0,
-    OP_SEND = 2,
-    OP_READ = 4
-};
+enum class RdmaOp { OP_WRITE = 0, OP_SEND = 2, OP_READ = 4 };
 
-TransportHeterogRoce::TransportHeterogRoce(const std::string &transTag, HcclIpAddress &selfIp, HcclIpAddress &peerIp,
-    u32 peerPort, u32 selfPort, const TransportResourceInfo &transportResourceInfo)
+TransportHeterogRoce::TransportHeterogRoce(
+    const std::string& transTag, HcclIpAddress& selfIp, HcclIpAddress& peerIp, u32 peerPort, u32 selfPort,
+    const TransportResourceInfo& transportResourceInfo)
     : TransportHeterog(transTag, selfIp, peerIp, peerPort, selfPort, transportResourceInfo),
       nicRdmaHandle_(nullptr),
       mrManager_(transportResourceInfo.mrManager.get()),
@@ -66,33 +63,31 @@ TransportHeterogRoce::TransportHeterogRoce(const std::string &transTag, HcclIpAd
     GetTransportResourceInfo(transportResourceInfo);
 }
 
-TransportHeterogRoce::TransportHeterogRoce(const TransportResourceInfo &transportResourceInfo)
+TransportHeterogRoce::TransportHeterogRoce(const TransportResourceInfo& transportResourceInfo)
     : TransportHeterog(transportResourceInfo),
-    nicRdmaHandle_(nullptr),
-    mrManager_(transportResourceInfo.mrManager.get()),
-    blockMemLkey_(transportResourceInfo.lkey),
-    recvWqeBatchNum_(RECV_WQE_BATCH_NUM),
-    recvWqeBatchThreshold_(RECV_WQE_NUM_THRESHOLD),
-    recvWqeBatchSupplement_(RECV_WQE_BATCH_SUPPLEMENT),
-    access_(RA_ACCESS_LOCAL_WRITE | RA_ACCESS_REMOTE_WRITE),
-    tagRecvWqeNum_(0),
-    dataRecvWqeNum_(0),
-    dataRecvWqeExpNum_(0),
-    memBlocksManager_(transportResourceInfo.memBlocksManager),
-    pRecvWrInfosMem_(transportResourceInfo.pRecvWrInfosMem),
-    deviceEvePtr_(nullptr),
-    deviceEveLkey_(0),
-    useDevMem_(true),
-    isRawConn_(transportResourceInfo.isRawConn)
+      nicRdmaHandle_(nullptr),
+      mrManager_(transportResourceInfo.mrManager.get()),
+      blockMemLkey_(transportResourceInfo.lkey),
+      recvWqeBatchNum_(RECV_WQE_BATCH_NUM),
+      recvWqeBatchThreshold_(RECV_WQE_NUM_THRESHOLD),
+      recvWqeBatchSupplement_(RECV_WQE_BATCH_SUPPLEMENT),
+      access_(RA_ACCESS_LOCAL_WRITE | RA_ACCESS_REMOTE_WRITE),
+      tagRecvWqeNum_(0),
+      dataRecvWqeNum_(0),
+      dataRecvWqeExpNum_(0),
+      memBlocksManager_(transportResourceInfo.memBlocksManager),
+      pRecvWrInfosMem_(transportResourceInfo.pRecvWrInfosMem),
+      deviceEvePtr_(nullptr),
+      deviceEveLkey_(0),
+      useDevMem_(true),
+      isRawConn_(transportResourceInfo.isRawConn)
 {
     GetTransportResourceInfo(transportResourceInfo);
 }
 
-TransportHeterogRoce::~TransportHeterogRoce()
-{
-}
+TransportHeterogRoce::~TransportHeterogRoce() {}
 
-u64 HostAddrToDev(const u64 &hostAddr, u64 hostAddrBegin, u64 devAddrBegin)
+u64 HostAddrToDev(const u64& hostAddr, u64 hostAddrBegin, u64 devAddrBegin)
 {
     u64 devAddr = hostAddr - hostAddrBegin + devAddrBegin;
     return devAddr;
@@ -131,7 +126,7 @@ HcclResult TransportHeterogRoce::Deinit()
         CHK_PRT(MrManagerDeInit());
         if (deviceEvePtr_ != nullptr) {
 #ifndef CCL_KERNEL
-        CHK_RET(HrtDevFree(deviceEvePtr_));
+            CHK_RET(HrtDevFree(deviceEvePtr_));
 #endif
         }
     }
@@ -146,19 +141,22 @@ HcclResult TransportHeterogRoce::Deinit()
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::Isend(const TransData &sendData, const TransportEndPointParam &epParam,
-    HcclRequestInfo *&request)
+HcclResult
+TransportHeterogRoce::Isend(const TransData& sendData, const TransportEndPointParam& epParam, HcclRequestInfo*& request)
 {
     CHK_RET(GenerateSendRequest(sendData, epParam, request));
 
     u32 lkey = 0;
-    CHK_RET(RegMr(reinterpret_cast<void *>(sendData.srcBuf),
-        static_cast<u64>(sendData.count * SIZE_TABLE[sendData.dataType]), lkey));
-    HCCL_DEBUG("addr[%llu] count[%d] datatype[%s]", sendData.srcBuf, sendData.count,
+    CHK_RET(RegMr(
+        reinterpret_cast<void*>(sendData.srcBuf), static_cast<u64>(sendData.count * SIZE_TABLE[sendData.dataType]),
+        lkey));
+    HCCL_DEBUG(
+        "addr[%llu] count[%d] datatype[%s]", sendData.srcBuf, sendData.count,
         GetDataTypeEnumStr(sendData.dataType).c_str());
 
-    HcclEnvelope envelope(request->transportRequest.protocol, request->transportRequest.transData,
-        request->transportRequest.epParam, lkey, request->transportRequest.msn);
+    HcclEnvelope envelope(
+        request->transportRequest.protocol, request->transportRequest.transData, request->transportRequest.epParam,
+        lkey, request->transportRequest.msn);
 
     // 如果建链未完成，或者积压的信封未发送完成，则Isend不进行信封发送。
     // Test接口中推动积压信封发送完成后，Isend接口才启动信封发送。
@@ -171,20 +169,22 @@ HcclResult TransportHeterogRoce::Isend(const TransData &sendData, const Transpor
     return SendEnvelope(envelope);
 }
 
-HcclResult TransportHeterogRoce::Send(const TransData &sendData, const TransportEndPointParam &epParam)
+HcclResult TransportHeterogRoce::Send(
+    [[maybe_unused]] const TransData& sendData, [[maybe_unused]] const TransportEndPointParam& epParam)
 {
     HCCL_ERROR("TransportHeterogRoce::Send is not supported.");
     return HCCL_E_NOT_SUPPORT;
 }
 
-HcclResult TransportHeterogRoce::Improbe(const TransportEndPointParam &epParam, s32 &matched, HcclMessageInfo *&msg,
-    HcclStatus &status, bool &flag)
+HcclResult TransportHeterogRoce::Improbe(
+    const TransportEndPointParam& epParam, s32& matched, HcclMessageInfo*& msg, HcclStatus& status,
+    [[maybe_unused]] bool& flag)
 {
     return Improbe(epParam, matched, msg, status);
 }
 
-HcclResult TransportHeterogRoce::Improbe(const TransportEndPointParam &epParam, s32 &matched, HcclMessageInfo *&msg,
-    HcclStatus &status)
+HcclResult TransportHeterogRoce::Improbe(
+    [[maybe_unused]] const TransportEndPointParam& epParam, s32& matched, HcclMessageInfo*& msg, HcclStatus& status)
 {
     // 建链未完成时，返回未匹配到
     if (GetState() != ConnState::CONN_STATE_COMPLETE) {
@@ -216,8 +216,8 @@ HcclResult TransportHeterogRoce::Improbe(const TransportEndPointParam &epParam, 
     }
 }
 
-HcclResult TransportHeterogRoce::Iwrite(const TransData &sendData, const HcclEnvelope &envelope,
-    HcclRequestInfo *&request)
+HcclResult
+TransportHeterogRoce::Iwrite(const TransData& sendData, const HcclEnvelope& envelope, HcclRequestInfo*& request)
 {
     if (isHdcMode_ && dataQpInfo_.qpMode != NORMAL_QP_MODE) {
         CHK_RET(TransportHeterog::WaitBuildLinkComplete());
@@ -228,8 +228,9 @@ HcclResult TransportHeterogRoce::Iwrite(const TransData &sendData, const HcclEnv
     request->transportRequest.requestType = HcclRequestType::HCCL_REQUEST_RECV;
 
     u32 lkey = 0;
-    CHK_RET(RegMr(reinterpret_cast<void *>(sendData.srcBuf),
-        static_cast<u64>(sendData.count * SIZE_TABLE[sendData.dataType]), lkey, false));
+    CHK_RET(RegMr(
+        reinterpret_cast<void*>(sendData.srcBuf), static_cast<u64>(sendData.count * SIZE_TABLE[sendData.dataType]),
+        lkey, false));
 
     bool tmp = true;
     CHK_RET(GetQpStatus(tmp));
@@ -242,8 +243,9 @@ HcclResult TransportHeterogRoce::Iwrite(const TransData &sendData, const HcclEnv
         dataWriteWr_.wr.rdma.remote_addr = static_cast<uint64_t>(envelope.transData.dstBuf);
         dataWriteWr_.wr.rdma.rkey = envelope.key;
 
-        struct ibv_send_wr *badWr = nullptr;
-        HCCL_INFO("rdma write: remote addr[%llu] count[%d] datatype[%s] wrId[%llu]",
+        struct ibv_send_wr* badWr = nullptr;
+        HCCL_INFO(
+            "rdma write: remote addr[%llu] count[%d] datatype[%s] wrId[%llu]",
             reinterpret_cast<u64>(envelope.transData.dstBuf), envelope.transData.count,
             GetDataTypeEnumStr(envelope.transData.dataType).c_str(), dataWriteWr_.wr_id);
         CHK_RET(hrtIbvPostSend(dataQpInfo_.qp, &dataWriteWr_, &badWr));
@@ -255,14 +257,15 @@ HcclResult TransportHeterogRoce::Iwrite(const TransData &sendData, const HcclEnv
     } else {
         struct SgList list = {};
         u64 srcBufDevAddr = 0;
-        CHK_RET(dataQpMrManager_->GetDevVirAddr(reinterpret_cast<void *>(sendData.srcBuf),
+        CHK_RET(dataQpMrManager_->GetDevVirAddr(
+            reinterpret_cast<void*>(sendData.srcBuf),
             static_cast<u64>(envelope.transData.count * SIZE_TABLE[envelope.transData.dataType]), srcBufDevAddr));
 
         list.addr = srcBufDevAddr;
         list.len = envelope.transData.count * SIZE_TABLE[envelope.transData.dataType];
         list.lkey = lkey;
 
-        struct SendWrV2 wr{};
+        struct SendWrV2 wr {};
         wr.wrId = reinterpret_cast<uint64_t>(request);
         HCCL_INFO("iwrite wr.wrId[%llu]", wr.wrId);
         wr.bufList = &list;
@@ -271,7 +274,7 @@ HcclResult TransportHeterogRoce::Iwrite(const TransData &sendData, const HcclEnv
         wr.rkey = envelope.key;
         wr.op = static_cast<u32>(RdmaOp::OP_WRITE);
         wr.sendFlag = RA_SEND_FENCE;
-        struct SendWrRsp opRsp = {0};
+        struct SendWrRsp opRsp = {};
         CHK_RET(HrtRaSendWrV2(dataQpInfo_.qpHandle, &wr, &opRsp, GetWorkflowMode()));
         CHK_RET(DoorBellSend(dataQpInfo_.qpMode, opRsp));
 
@@ -288,22 +291,24 @@ HcclResult TransportHeterogRoce::Iwrite(const TransData &sendData, const HcclEnv
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::Imrecv(const TransData &recvData, HcclMessageInfo &msg, HcclRequestInfo *&request,
-    bool flag, bool needRecordFlag)
+HcclResult TransportHeterogRoce::Imrecv(
+    const TransData& recvData, HcclMessageInfo& msg, HcclRequestInfo*& request, [[maybe_unused]] bool flag,
+    [[maybe_unused]] bool needRecordFlag)
 {
     HcclResult ret = Imrecv(recvData, msg, request);
     return ret;
 }
 
-HcclResult TransportHeterogRoce::Imrecv(const TransData &recvData, HcclMessageInfo &msg, HcclRequestInfo *&request)
+HcclResult TransportHeterogRoce::Imrecv(const TransData& recvData, HcclMessageInfo& msg, HcclRequestInfo*& request)
 {
     CHK_RET(GenerateRecvRequest(recvData, msg, request));
 
     u32 lkey = 0;
-    CHK_RET(RegMr(reinterpret_cast<void *>(recvData.dstBuf),
-        static_cast<u64>(recvData.count * SIZE_TABLE[recvData.dataType]), lkey, false));
+    CHK_RET(RegMr(
+        reinterpret_cast<void*>(recvData.dstBuf), static_cast<u64>(recvData.count * SIZE_TABLE[recvData.dataType]),
+        lkey, false));
 
-    HcclEnvelope &envelope = msg.envelope.envelope;
+    HcclEnvelope& envelope = msg.envelope.envelope;
 
     if (!isHdcMode_ || dataQpInfo_.qpMode == NORMAL_QP_MODE) {
         dataReadSge_.addr = static_cast<uint64_t>(recvData.dstBuf);
@@ -323,8 +328,9 @@ HcclResult TransportHeterogRoce::Imrecv(const TransData &recvData, HcclMessageIn
             dataAckWr_.wr_id = 0;
         }
 
-        struct ibv_send_wr *badWr = nullptr;
-        HCCL_INFO("rdma read: remote addr[%llx] count[%d] datatype[%s] wrId[%llu]",
+        struct ibv_send_wr* badWr = nullptr;
+        HCCL_INFO(
+            "rdma read: remote addr[%llx] count[%d] datatype[%s] wrId[%llu]",
             reinterpret_cast<u64>(envelope.transData.srcBuf), envelope.transData.count,
             GetDataTypeEnumStr(envelope.transData.dataType).c_str(), dataReadWr_.wr_id);
         CHK_RET(hrtIbvPostSend(dataQpInfo_.qp, &dataReadWr_, &badWr));
@@ -337,8 +343,9 @@ HcclResult TransportHeterogRoce::Imrecv(const TransData &recvData, HcclMessageIn
 
         struct SgList list = {};
         u64 devAddr = 0;
-        CHK_RET(dataQpMrManager_->GetDevVirAddr(reinterpret_cast<void *>(recvData.dstBuf),
-            static_cast<u64>(recvData.count * SIZE_TABLE[recvData.dataType]), devAddr));
+        CHK_RET(dataQpMrManager_->GetDevVirAddr(
+            reinterpret_cast<void*>(recvData.dstBuf), static_cast<u64>(recvData.count * SIZE_TABLE[recvData.dataType]),
+            devAddr));
         list.addr = static_cast<uint64_t>(devAddr);
         list.len = envelope.transData.count * SIZE_TABLE[envelope.transData.dataType];
         list.lkey = lkey;
@@ -366,7 +373,7 @@ HcclResult TransportHeterogRoce::Imrecv(const TransData &recvData, HcclMessageIn
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::Test(HcclRequestInfo &request, s32 &flag, HcclStatus &compState)
+HcclResult TransportHeterogRoce::Test(HcclRequestInfo& request, s32& flag, HcclStatus& compState)
 {
     if (isHdcMode_ && dataQpInfo_.qpMode != NORMAL_QP_MODE) {
         flag = HCCL_TEST_COMPLETED;
@@ -386,7 +393,7 @@ HcclResult TransportHeterogRoce::Test(HcclRequestInfo &request, s32 &flag, HcclS
     return QueryRequestStatus(request, flag, compState);
 }
 
-HcclResult TransportHeterogRoce::PullSendOrRecvStatus(const HcclRequestInfo &request)
+HcclResult TransportHeterogRoce::PullSendOrRecvStatus(const HcclRequestInfo& request)
 {
     if ((GetState() != ConnState::CONN_STATE_COMPLETE) && (GetState() != ConnState::CONN_STATE_FLUSH_QUEUE)) {
         return HCCL_SUCCESS;
@@ -404,7 +411,7 @@ HcclResult TransportHeterogRoce::PullSendOrRecvStatus(const HcclRequestInfo &req
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::Wait(HcclRequestInfo &request, s32 &flag)
+HcclResult TransportHeterogRoce::Wait(HcclRequestInfo& request, s32& flag)
 {
     // 建链未完成时，继续推进建链流程；
     if (GetState() != ConnState::CONN_STATE_COMPLETE) {
@@ -431,7 +438,7 @@ HcclResult TransportHeterogRoce::Wait(HcclRequestInfo &request, s32 &flag)
     return HCCL_E_TIMEOUT;
 }
 
-HcclResult TransportHeterogRoce::QueryRequestStatus(HcclRequestInfo &request, s32 &flag, HcclStatus &compState)
+HcclResult TransportHeterogRoce::QueryRequestStatus(HcclRequestInfo& request, s32& flag, HcclStatus& compState)
 {
     if (request.transportRequest.status >= 0) {
         // 该request已完成
@@ -503,43 +510,47 @@ HcclResult TransportHeterogRoce::PullRecvStatus(bool allowNotify)
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::ParseTagRqes(const struct ibv_wc *wc, int num)
+HcclResult TransportHeterogRoce::ParseTagRqes(const struct ibv_wc* wc, int num)
 {
     for (int i = 0; i < num; i++) {
         HCCL_INFO("rq cqe info: wrId[%llu] status[%u] opcode[%u]", wc[i].wr_id, wc[i].status, wc[i].opcode);
-        CHK_PRT_RET(wc[i].status != 0, HCCL_ERROR("rdma send failed, cqe status[%u] wrId[%llu] opcode[%u]",\
-            wc[i].status, wc[i].wr_id, wc[i].opcode), HCCL_E_INTERNAL);
-        RecvWrInfo *info = reinterpret_cast<RecvWrInfo *>(wc[i].wr_id);
+        CHK_PRT_RET(
+            wc[i].status != 0,
+            HCCL_ERROR(
+                "rdma send failed, cqe status[%u] wrId[%llu] opcode[%u]", wc[i].status, wc[i].wr_id, wc[i].opcode),
+            HCCL_E_INTERNAL);
+        RecvWrInfo* info = reinterpret_cast<RecvWrInfo*>(wc[i].wr_id);
         CHK_PTR_NULL(info);
 
-        TransportHeterogRoce *transportPtr = reinterpret_cast<TransportHeterogRoce *>(info->transportHandle);
+        TransportHeterogRoce* transportPtr = reinterpret_cast<TransportHeterogRoce*>(info->transportHandle);
         CHK_PTR_NULL(transportPtr);
         CHK_RET(transportPtr->SupplyTagRecvWqe());
-        HcclEnvelope *envelope = nullptr;
+        HcclEnvelope* envelope = nullptr;
         if (useDevMem_ && (deviceLogicId_ == HOST_DEVICE_ID)) {
 #ifndef CCL_KERNEL
             // 根据device内存求host内存
             CHK_RET(hrtSetDevice(index_));
             u64 uDevPtr = reinterpret_cast<u64>(info->buf);
-            void *devPtr = reinterpret_cast<void *>(uDevPtr);
+            void* devPtr = reinterpret_cast<void*>(uDevPtr);
             u64 uHostPtr = uDevPtr - reinterpret_cast<uint64_t>(deviceEvePtr_) + hostAddrBegin_;
-            void *hostPtr = reinterpret_cast<void *>(uHostPtr);
+            void* hostPtr = reinterpret_cast<void*>(uHostPtr);
             HCCL_DEBUG("ParseTagRqes devPtr[%p][%llu] hostPtr[%p][%llu]", devPtr, uDevPtr, hostPtr, uHostPtr);
-            CHK_RET(hrtMemcpy(hostPtr, MEM_BLOCK_SIZE, devPtr, MEM_BLOCK_SIZE,
-                HcclRtMemcpyKind::HCCL_RT_MEMCPY_KIND_DEVICE_TO_HOST));
-            envelope = reinterpret_cast<HcclEnvelope *>(hostPtr);
+            CHK_RET(hrtMemcpy(
+                hostPtr, MEM_BLOCK_SIZE, devPtr, MEM_BLOCK_SIZE, HcclRtMemcpyKind::HCCL_RT_MEMCPY_KIND_DEVICE_TO_HOST));
+            envelope = reinterpret_cast<HcclEnvelope*>(hostPtr);
             // ps侧DbSend对当前线程SetDevice后，改变了原GE通信域初始化时setdevice 0
             // 若后面使用本线程save会导致getctx失败获取不到通信域句柄，所以需要在此处重新set回默认
             CHK_RET(hrtSetDevice(0));
 #endif
         } else {
-            envelope = reinterpret_cast<HcclEnvelope *>(info->buf);
+            envelope = reinterpret_cast<HcclEnvelope*>(info->buf);
         }
         CHK_PTR_NULL(envelope);
 
-        HCCL_INFO("recv request: tag:%d srcRank:%u dstRank:%u status:%u msn:0x%016llx count:%d",
-            envelope->epParam.src.tag, envelope->epParam.src.rank, envelope->epParam.dst.rank, wc[i].status,
-            envelope->msn, envelope->transData.count);
+        HCCL_INFO(
+            "recv request: tag:%d srcRank:%u dstRank:%u status:%u msn:0x%016llx count:%d", envelope->epParam.src.tag,
+            envelope->epParam.src.rank, envelope->epParam.dst.rank, wc[i].status, envelope->msn,
+            envelope->transData.count);
         HcclEnvelopeSummary envelopSummary(*envelope, wc[i].status);
         transportPtr->SaveEnvelope(envelopSummary);
         CHK_RET(transportPtr->FreeMemBlock(envelope));
@@ -548,13 +559,13 @@ HcclResult TransportHeterogRoce::ParseTagRqes(const struct ibv_wc *wc, int num)
     return HCCL_SUCCESS;
 }
 
-void TransportHeterogRoce::SaveEnvelope(HcclEnvelopeSummary &envelope)
+void TransportHeterogRoce::SaveEnvelope(HcclEnvelopeSummary& envelope)
 {
     unique_lock<mutex> lock(envelopeQueMutex_);
     envelopeQue_.push(envelope);
 }
 
-bool TransportHeterogRoce::GetSavedEnvelope(HcclEnvelopeSummary &envelope)
+bool TransportHeterogRoce::GetSavedEnvelope(HcclEnvelopeSummary& envelope)
 {
     unique_lock<mutex> lock(envelopeQueMutex_);
     if (envelopeQue_.empty()) {
@@ -565,88 +576,109 @@ bool TransportHeterogRoce::GetSavedEnvelope(HcclEnvelopeSummary &envelope)
     return true;
 }
 
-HcclResult TransportHeterogRoce::ParseErrorTagSqe(const struct ibv_wc *wc, int index)
+HcclResult TransportHeterogRoce::ParseErrorTagSqe(const struct ibv_wc* wc, int index)
 {
     // wr_id内容即信封中的msn
-    HcclRequestInfo *wrPtr = reinterpret_cast<HcclRequestInfo *>(wc[index].wr_id);
+    HcclRequestInfo* wrPtr = reinterpret_cast<HcclRequestInfo*>(wc[index].wr_id);
     CHK_PTR_NULL(wrPtr);
     wrPtr->transportRequest.status = wc[index].status;
-    TransportHeterogRoce *transportPtr = reinterpret_cast<TransportHeterogRoce *>(wrPtr->transportHandle);
+    TransportHeterogRoce* transportPtr = reinterpret_cast<TransportHeterogRoce*>(wrPtr->transportHandle);
     CHK_PTR_NULL(transportPtr);
 
-    HCCL_INFO("exception send msg: tag:%d srcRank:%u dstRank:%u status:%d msn:0x%016llx request:%p",
+    HCCL_INFO(
+        "exception send msg: tag:%d srcRank:%u dstRank:%u status:%d msn:0x%016llx request:%p",
         wrPtr->transportRequest.epParam.src.tag, wrPtr->transportRequest.epParam.src.rank,
         wrPtr->transportRequest.epParam.dst.rank, wrPtr->transportRequest.status, wrPtr->transportRequest.msn, wrPtr);
 
-    CHK_RET(transportPtr->DeregMr(reinterpret_cast<void *>(wrPtr->transportRequest.transData.srcBuf),
-        static_cast<u64>(wrPtr->transportRequest.transData.count *
-        SIZE_TABLE[wrPtr->transportRequest.transData.dataType])));
+    CHK_RET(transportPtr->DeregMr(
+        reinterpret_cast<void*>(wrPtr->transportRequest.transData.srcBuf),
+        static_cast<u64>(
+            wrPtr->transportRequest.transData.count * SIZE_TABLE[wrPtr->transportRequest.transData.dataType])));
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::ParseDataRqes(const struct ibv_wc *wc, int num)
+HcclResult TransportHeterogRoce::ParseDataRqes(const struct ibv_wc* wc, int num)
 {
     for (int i = 0; i < num; i++) {
         HCCL_INFO("rq cqe info: wrId[%llu] status[%u] opcode[%u]", wc[i].wr_id, wc[i].status, wc[i].opcode);
-        CHK_PRT_RET(wc[i].status != 0, HCCL_ERROR("rdma poll data rq failed, cqe status[%u] wrId[%llu] opcode[%u]",
-            wc[i].status, wc[i].wr_id, wc[i].opcode), HCCL_E_NETWORK);
-        RecvWrInfo *info = reinterpret_cast<RecvWrInfo *>(wc[i].wr_id);
+        CHK_PRT_RET(
+            wc[i].status != 0,
+            HCCL_ERROR(
+                "rdma poll data rq failed, cqe status[%u] wrId[%llu] opcode[%u]", wc[i].status, wc[i].wr_id,
+                wc[i].opcode),
+            HCCL_E_NETWORK);
+        RecvWrInfo* info = reinterpret_cast<RecvWrInfo*>(wc[i].wr_id);
         CHK_PTR_NULL(info);
-        HcclRequestInfo *wrPtr = reinterpret_cast<HcclRequestInfo *>(*reinterpret_cast<u64 *>(info->buf));
-        CHK_PRT_RET(wrPtr == nullptr, HCCL_ERROR("wrId[%llu] status[%u] opcode[%u]",
-            wc[i].wr_id, wc[i].status, wc[i].opcode), HCCL_E_PTR);
-        TransportHeterogRoce *transportPtr = reinterpret_cast<TransportHeterogRoce *>(wrPtr->transportHandle);
-        CHK_PRT_RET(transportPtr == nullptr,
-            HCCL_ERROR("wrId[%llu] opcode[%u] tag:%d peerRank:%u status:%d msn:0x%016llx request:%p",
-            wc[i].wr_id, wc[i].opcode, wrPtr->transportRequest.epParam.src.tag,
-            wrPtr->transportRequest.epParam.src.rank, wrPtr->transportRequest.status,
-            wrPtr->transportRequest.msn, wrPtr), HCCL_E_PTR);
+        HcclRequestInfo* wrPtr = reinterpret_cast<HcclRequestInfo*>(*reinterpret_cast<u64*>(info->buf));
+        CHK_PRT_RET(
+            wrPtr == nullptr, HCCL_ERROR("wrId[%llu] status[%u] opcode[%u]", wc[i].wr_id, wc[i].status, wc[i].opcode),
+            HCCL_E_PTR);
+        TransportHeterogRoce* transportPtr = reinterpret_cast<TransportHeterogRoce*>(wrPtr->transportHandle);
+        CHK_PRT_RET(
+            transportPtr == nullptr,
+            HCCL_ERROR(
+                "wrId[%llu] opcode[%u] tag:%d peerRank:%u status:%d msn:0x%016llx request:%p", wc[i].wr_id,
+                wc[i].opcode, wrPtr->transportRequest.epParam.src.tag, wrPtr->transportRequest.epParam.src.rank,
+                wrPtr->transportRequest.status, wrPtr->transportRequest.msn, wrPtr),
+            HCCL_E_PTR);
         CHK_RET(transportPtr->SupplyDataRecvWqe());
         wrPtr->transportRequest.status = wc[i].status;
 
-        CHK_RET(transportPtr->DeregMr(reinterpret_cast<void *>(wrPtr->transportRequest.transData.srcBuf),
-            static_cast<u64>(wrPtr->transportRequest.transData.count *
-            SIZE_TABLE[wrPtr->transportRequest.transData.dataType]), false));
+        CHK_RET(transportPtr->DeregMr(
+            reinterpret_cast<void*>(wrPtr->transportRequest.transData.srcBuf),
+            static_cast<u64>(
+                wrPtr->transportRequest.transData.count * SIZE_TABLE[wrPtr->transportRequest.transData.dataType]),
+            false));
         CHK_RET(transportPtr->FreeMemBlock(info->buf));
         CHK_RET(transportPtr->FreeRecvWrId(wc[i].wr_id));
-        HCCL_INFO("send completion: tag:%d peerRank:%u status:%d msn:0x%016llx request:%p",
+        HCCL_INFO(
+            "send completion: tag:%d peerRank:%u status:%d msn:0x%016llx request:%p",
             wrPtr->transportRequest.epParam.src.tag, wrPtr->transportRequest.epParam.src.rank,
             wrPtr->transportRequest.status, wrPtr->transportRequest.msn, wrPtr);
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::ParseDataSqes(const struct ibv_wc *wc, int num)
+HcclResult TransportHeterogRoce::ParseDataSqes(const struct ibv_wc* wc, int num)
 {
     for (int i = 0; i < num; i++) {
         HCCL_INFO("sq cqe info: wrId[%llu] status[%u] opcode[%u]", wc[i].wr_id, wc[i].status, wc[i].opcode);
-        CHK_PRT_RET(wc[i].status != 0, HCCL_ERROR("rdma poll data sq failed, cqe status[%u] wrId[%llu] opcode[%u]",
-            wc[i].status, wc[i].wr_id, wc[i].opcode), HCCL_E_NETWORK);
-        HcclRequestInfo *wrPtr = reinterpret_cast<HcclRequestInfo *>(wc[i].wr_id);
+        CHK_PRT_RET(
+            wc[i].status != 0,
+            HCCL_ERROR(
+                "rdma poll data sq failed, cqe status[%u] wrId[%llu] opcode[%u]", wc[i].status, wc[i].wr_id,
+                wc[i].opcode),
+            HCCL_E_NETWORK);
+        HcclRequestInfo* wrPtr = reinterpret_cast<HcclRequestInfo*>(wc[i].wr_id);
 
-        CHK_PRT_RET(wrPtr == nullptr, HCCL_ERROR("wrId[%llu] status[%u] opcode[%u]",
-            wc[i].wr_id, wc[i].status, wc[i].opcode), HCCL_E_PTR);
-        TransportHeterogRoce *transportPtr = reinterpret_cast<TransportHeterogRoce *>(wrPtr->transportHandle);
-        CHK_PRT_RET(transportPtr == nullptr,
-            HCCL_ERROR("wrId[%llu] opcode[%u] tag:%d peerRank:%u status:%d msn:0x%016llx request:%p",
-            wc[i].wr_id, wc[i].opcode, wrPtr->transportRequest.epParam.src.tag,
-            wrPtr->transportRequest.epParam.src.rank, wrPtr->transportRequest.status,
-            wrPtr->transportRequest.msn, wrPtr), HCCL_E_PTR);
+        CHK_PRT_RET(
+            wrPtr == nullptr, HCCL_ERROR("wrId[%llu] status[%u] opcode[%u]", wc[i].wr_id, wc[i].status, wc[i].opcode),
+            HCCL_E_PTR);
+        TransportHeterogRoce* transportPtr = reinterpret_cast<TransportHeterogRoce*>(wrPtr->transportHandle);
+        CHK_PRT_RET(
+            transportPtr == nullptr,
+            HCCL_ERROR(
+                "wrId[%llu] opcode[%u] tag:%d peerRank:%u status:%d msn:0x%016llx request:%p", wc[i].wr_id,
+                wc[i].opcode, wrPtr->transportRequest.epParam.src.tag, wrPtr->transportRequest.epParam.src.rank,
+                wrPtr->transportRequest.status, wrPtr->transportRequest.msn, wrPtr),
+            HCCL_E_PTR);
         wrPtr->transportRequest.status = wc[i].status;
 
         if (!isHdcMode_ && !(remoteIsHdc_ && (deviceLogicId_ == HOST_DEVICE_ID))) {
-            CHK_RET(transportPtr->DeregMr(reinterpret_cast<void *>(wrPtr->transportRequest.transData.dstBuf),
-            static_cast<u64>(wrPtr->transportRequest.transData.count *
-            SIZE_TABLE[wrPtr->transportRequest.transData.dataType]), false));
+            CHK_RET(transportPtr->DeregMr(
+                reinterpret_cast<void*>(wrPtr->transportRequest.transData.dstBuf),
+                static_cast<u64>(
+                    wrPtr->transportRequest.transData.count * SIZE_TABLE[wrPtr->transportRequest.transData.dataType]),
+                false));
         }
-        HCCL_INFO("recv completion: tag:%d peerRank:%u status:%d msn:0x%016llx",
-            wrPtr->transportRequest.epParam.src.tag, wrPtr->transportRequest.epParam.src.rank,
-            wrPtr->transportRequest.status, wrPtr->transportRequest.msn);
+        HCCL_INFO(
+            "recv completion: tag:%d peerRank:%u status:%d msn:0x%016llx", wrPtr->transportRequest.epParam.src.tag,
+            wrPtr->transportRequest.epParam.src.rank, wrPtr->transportRequest.status, wrPtr->transportRequest.msn);
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::SendEnvelope(HcclEnvelope &envelopInfo, void *stream)
+HcclResult TransportHeterogRoce::SendEnvelope(HcclEnvelope& envelopInfo, void* stream)
 {
     if (isHdcMode_ && tagQpInfo_.qpMode != NORMAL_QP_MODE) {
         CHK_RET(TransportHeterog::WaitBuildLinkComplete());
@@ -662,8 +694,9 @@ HcclResult TransportHeterogRoce::SendEnvelope(HcclEnvelope &envelopInfo, void *s
         envelopeSge_.lkey = 0;
         envelopeWr_.wr_id = envelopInfo.msn;
 
-        struct ibv_send_wr *badWr = nullptr;
-        HCCL_INFO("rdma send: srcRank[%u] dstRank[%u] tag[%d]: addr[%llu] count[%d] dtype[%s] msn[%llu]",
+        struct ibv_send_wr* badWr = nullptr;
+        HCCL_INFO(
+            "rdma send: srcRank[%u] dstRank[%u] tag[%d]: addr[%llu] count[%d] dtype[%s] msn[%llu]",
             envelopInfo.epParam.src.rank, envelopInfo.epParam.dst.rank, envelopInfo.epParam.src.tag,
             reinterpret_cast<u64>(envelopInfo.transData.srcBuf), envelopInfo.transData.count,
             GetDataTypeEnumStr(envelopInfo.transData.dataType).c_str(), envelopInfo.msn);
@@ -714,8 +747,10 @@ HcclResult TransportHeterogRoce::SendFlowControl()
     u32 dataRecvWqeExpNum = dataRecvWqeExpNum_.load();
     if (dataRecvWqeNum - dataRecvWqeExpNum >= recvWqeBatchSupplement_) {
         CHK_RET(PullSendStatus());
-        HCCL_RUN_INFO("Flow control is activated, because dataRecvWqeNum[%u] - dataRecvWqeExpNum[%u] >="
-            " recvWqeBatchSupplement[%u]", dataRecvWqeNum, dataRecvWqeExpNum, recvWqeBatchSupplement_);
+        HCCL_RUN_INFO(
+            "Flow control is activated, because dataRecvWqeNum[%u] - dataRecvWqeExpNum[%u] >="
+            " recvWqeBatchSupplement[%u]",
+            dataRecvWqeNum, dataRecvWqeExpNum, recvWqeBatchSupplement_);
 
         return HCCL_E_AGAIN;
     }
@@ -746,22 +781,22 @@ HcclResult TransportHeterogRoce::SupplyDataRecvWqe()
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::IssueRecvWqe(struct ibv_qp *qp, u32 num)
+HcclResult TransportHeterogRoce::IssueRecvWqe(struct ibv_qp* qp, u32 num)
 {
     if (isHdcMode_ && (tagQpInfo_.qpMode == OFFLINE_QP_MODE || tagQpInfo_.qpMode == OFFLINE_QP_MODE_EXT)) {
         return HCCL_SUCCESS;
     }
 
-    list<void *> blockList(num, nullptr);
+    list<void*> blockList(num, nullptr);
     CHK_RET(AllocMemBlocks(blockList));
 
     auto iter = blockList.begin();
-    struct ibv_recv_wr *nextRqWr = nullptr;
+    struct ibv_recv_wr* nextRqWr = nullptr;
     struct ibv_recv_wr rqWr[num];
     struct ibv_sge sgeList[num];
 
     std::vector<struct RecvWrlistData> recvWrVec(num);
-    struct RecvWrlistData *recvWr = recvWrVec.data();
+    struct RecvWrlistData* recvWr = recvWrVec.data();
 
     if (!isHdcMode_ || tagQpInfo_.qpMode == NORMAL_QP_MODE) {
         for (int i = num - 1; i >= 0; i--) {
@@ -779,7 +814,7 @@ HcclResult TransportHeterogRoce::IssueRecvWqe(struct ibv_qp *qp, u32 num)
             iter++;
         }
 
-        struct ibv_recv_wr *badRqWr = nullptr;
+        struct ibv_recv_wr* badRqWr = nullptr;
         CHK_RET(hrtIbvPostRecv(qp, &rqWr[0], &badRqWr));
         return HCCL_SUCCESS;
     } else {
@@ -788,15 +823,15 @@ HcclResult TransportHeterogRoce::IssueRecvWqe(struct ibv_qp *qp, u32 num)
             u64 wrId = 0;
             if (useDevMem_) {
                 // 根据host内存地址计算出device内存地址
-                u64 uDevPtr = reinterpret_cast<uint64_t>(*iter) - hostAddrBegin_ +
-                    reinterpret_cast<uint64_t>(deviceEvePtr_);
-                CHK_RET(GenerateRecvWrId(reinterpret_cast<void *>(uDevPtr), wrId));
+                u64 uDevPtr
+                    = reinterpret_cast<uint64_t>(*iter) - hostAddrBegin_ + reinterpret_cast<uint64_t>(deviceEvePtr_);
+                CHK_RET(GenerateRecvWrId(reinterpret_cast<void*>(uDevPtr), wrId));
                 recvWr[i].memList.addr = uDevPtr;
                 recvWr[i].memList.lkey = deviceEveLkey_;
             } else {
                 CHK_RET(GenerateRecvWrId(*iter, wrId));
-                recvWr[i].memList.addr = HostAddrToDev(reinterpret_cast<uint64_t>(*iter),
-                    hostAddrBegin_, devAddrBegin_);
+                recvWr[i].memList.addr
+                    = HostAddrToDev(reinterpret_cast<uint64_t>(*iter), hostAddrBegin_, devAddrBegin_);
                 recvWr[i].memList.lkey = blockMemLkey_;
             }
             recvWr[i].wrId = wrId;
@@ -818,7 +853,7 @@ HcclResult TransportHeterogRoce::IssueRecvWqe(struct ibv_qp *qp, u32 num)
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::GetQpStatus(bool &completed)
+HcclResult TransportHeterogRoce::GetQpStatus(bool& completed)
 {
     int qpStatus = 0;
     s32 ret = 0;
@@ -843,10 +878,10 @@ HcclResult TransportHeterogRoce::GetQpStatus(bool &completed)
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::AllocMemBlocks(list<void *> &blockList)
+HcclResult TransportHeterogRoce::AllocMemBlocks(list<void*>& blockList)
 {
-    const std::unique_ptr<HeterogMemBlocksManager> &memBlocksManagerPtr =
-        (IsRamdHandleLevelMr()) ? memBlocksManager_ : tagMemBlocksManager_;
+    const std::unique_ptr<HeterogMemBlocksManager>& memBlocksManagerPtr
+        = (IsRamdHandleLevelMr()) ? memBlocksManager_ : tagMemBlocksManager_;
     CHK_PTR_NULL(memBlocksManagerPtr);
     CHK_RET(memBlocksManagerPtr->Alloc(blockList));
     if (isHdcMode_) {
@@ -857,10 +892,10 @@ HcclResult TransportHeterogRoce::AllocMemBlocks(list<void *> &blockList)
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::FreeMemBlock(void *block)
+HcclResult TransportHeterogRoce::FreeMemBlock(void* block)
 {
-    const std::unique_ptr<HeterogMemBlocksManager> &memBlocksManagerPtr =
-        ((IsRamdHandleLevelMr())) ? memBlocksManager_ : tagMemBlocksManager_;
+    const std::unique_ptr<HeterogMemBlocksManager>& memBlocksManagerPtr
+        = ((IsRamdHandleLevelMr())) ? memBlocksManager_ : tagMemBlocksManager_;
     CHK_PTR_NULL(memBlocksManagerPtr);
     CHK_RET(memBlocksManagerPtr->Free(block));
     if (isHdcMode_) {
@@ -874,16 +909,16 @@ HcclResult TransportHeterogRoce::FreeMemBlock(void *block)
 
 HcclResult TransportHeterogRoce::FreeRecvWrId(u64 wrId)
 {
-    pRecvWrInfosMem_->Free(reinterpret_cast<RecvWrInfo *>(wrId));
+    pRecvWrInfosMem_->Free(reinterpret_cast<RecvWrInfo*>(wrId));
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::GenerateRecvWrId(void *recvBuf, u64 &wrId)
+HcclResult TransportHeterogRoce::GenerateRecvWrId(void* recvBuf, u64& wrId)
 {
-    RecvWrInfo *data = pRecvWrInfosMem_->Alloc();
+    RecvWrInfo* data = pRecvWrInfosMem_->Alloc();
     CHK_PTR_NULL(data);
     data->buf = recvBuf;
-    data->transportHandle = reinterpret_cast<void *>(this);
+    data->transportHandle = reinterpret_cast<void*>(this);
     CHK_PTR_NULL(data->transportHandle);
     wrId = reinterpret_cast<uint64_t>(data);
     return HCCL_SUCCESS;
@@ -895,15 +930,16 @@ HcclResult TransportHeterogRoce::GetNetworkResource()
     CHK_RET(NetworkManager::GetInstance(index_).GetRaResourceInfo(raResourceInfo));
     auto it = raResourceInfo.nicSocketMap.find(selfIp_);
     if (it == raResourceInfo.nicSocketMap.end()) {
-        HCCL_ERROR("[TransportHeterogRoce][Init]nic socket handle did not found");
+        HCCL_ERROR("[TransportHeterogRoce][Init]nic socket handle was not found");
         return HCCL_E_PARA;
     }
     nicSocketHandle_ = it->second.nicSocketHandle;
     CHK_PTR_NULL(nicSocketHandle_);
     nicRdmaHandle_ = it->second.nicRdmaHandle;
     CHK_PTR_NULL(nicRdmaHandle_);
-    HCCL_INFO("TransportHeterogRoce GetNetworkResource index_[%d] nicSocketHandle_[%p] nicRdmaHandle_[%p]",
-        index_, nicSocketHandle_, nicRdmaHandle_);
+    HCCL_INFO(
+        "TransportHeterogRoce GetNetworkResource index_[%d] nicSocketHandle_[%p] nicRdmaHandle_[%p]", index_,
+        nicSocketHandle_, nicRdmaHandle_);
     return HCCL_SUCCESS;
 }
 
@@ -979,7 +1015,7 @@ HcclResult TransportHeterogRoce::DestroyCqAndQp()
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::QpConnect(bool &completed)
+HcclResult TransportHeterogRoce::QpConnect(bool& completed)
 {
     CHK_RET(HrtRaQpNonBlockConnectAsync(tagQpInfo_.qpHandle, initSM_.locInitInfo.socketInfo[0].fdHandle));
     CHK_RET(HrtRaQpNonBlockConnectAsync(dataQpInfo_.qpHandle, initSM_.locInitInfo.socketInfo[1].fdHandle));
@@ -988,7 +1024,7 @@ HcclResult TransportHeterogRoce::QpConnect(bool &completed)
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::RegMr(void *mem, u64 size, u32 &lkey, bool isTagQpHandle)
+HcclResult TransportHeterogRoce::RegMr(void* mem, u64 size, u32& lkey, bool isTagQpHandle)
 {
     HCCL_DEBUG("reg mr mem[%p] size[%llu Byte]", mem, size);
     if (size == 0) {
@@ -1005,7 +1041,7 @@ HcclResult TransportHeterogRoce::RegMr(void *mem, u64 size, u32 &lkey, bool isTa
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::DeregMr(void *mem, u64 size, bool isTagQpHandle)
+HcclResult TransportHeterogRoce::DeregMr(void* mem, u64 size, bool isTagQpHandle)
 {
     HCCL_DEBUG("dereg mr mem[%p] size[%llu Byte]", mem, size);
     if (size == 0) {
@@ -1020,7 +1056,7 @@ HcclResult TransportHeterogRoce::DeregMr(void *mem, u64 size, bool isTagQpHandle
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::RoceConnectSocket(SocketConnectInfoT conn[], u32 num, bool &completed)
+HcclResult TransportHeterogRoce::RoceConnectSocket(SocketConnectInfoT conn[], u32 num, bool& completed)
 {
     if (initSM_.locInitInfo.role == CLIENT_ROLE_SOCKET) {
         return ConnectSocket(conn, num, completed);
@@ -1030,7 +1066,7 @@ HcclResult TransportHeterogRoce::RoceConnectSocket(SocketConnectInfoT conn[], u3
     }
 }
 
-HcclResult TransportHeterogRoce::FlushSendQueue(bool &completed)
+HcclResult TransportHeterogRoce::FlushSendQueue(bool& completed)
 {
     if (envelopeBacklogQueue_.size() > 0) {
         HcclEnvelope tmpEnvelopeInfo;
@@ -1098,30 +1134,34 @@ HcclResult TransportHeterogRoce::LoopStateProcess()
             CHK_RET(TryTransition(testRet, completed, ConnState::CONN_STATE_GET_CHECK_SOCKET));
             break;
         case ConnState::CONN_STATE_GET_CHECK_SOCKET:
-            testRet = GetSocket(initSM_.locInitInfo.role, initSM_.locInitInfo.socketInfo.data(), initSM_.socketNum,
-                initSM_.completeNum, completed);
+            testRet = GetSocket(
+                initSM_.locInitInfo.role, initSM_.locInitInfo.socketInfo.data(), initSM_.socketNum, initSM_.completeNum,
+                completed);
             CHK_RET(TryTransition(testRet, completed, ConnState::CONN_STATE_SEND_CF));
             break;
         case ConnState::CONN_STATE_SEND_CF:
-            testRet = SocketSend(initSM_.locInitInfo.socketInfo[0].fdHandle, initSM_.locInitInfo.checkFrame,
-                initSM_.size, initSM_.completeSize, completed);
+            testRet = SocketSend(
+                initSM_.locInitInfo.socketInfo[0].fdHandle, initSM_.locInitInfo.checkFrame, initSM_.size,
+                initSM_.completeSize, completed);
             CHK_RET(TryTransition(testRet, completed, ConnState::CONN_STATE_RECV_CF));
             break;
         case ConnState::CONN_STATE_RECV_CF:
-            testRet = SocketRecv(initSM_.locInitInfo.socketInfo[0].fdHandle, initSM_.remInitInfo.checkFrame,
-                initSM_.size, initSM_.completeSize, completed);
+            testRet = SocketRecv(
+                initSM_.locInitInfo.socketInfo[0].fdHandle, initSM_.remInitInfo.checkFrame, initSM_.size,
+                initSM_.completeSize, completed);
             CHK_RET(TryTransition(testRet, completed, ConnState::CONN_STATE_CHECK_CF));
             break;
         case ConnState::CONN_STATE_CONNECT_ALL_SOCKET:
-            testRet =
-                RoceConnectSocket(reinterpret_cast<SocketConnectInfoT*>(initSM_.locInitInfo.socketConnInfo.data())
-                + 1, initSM_.socketNum, completed);
+            testRet = RoceConnectSocket(
+                reinterpret_cast<SocketConnectInfoT*>(initSM_.locInitInfo.socketConnInfo.data()) + 1, initSM_.socketNum,
+                completed);
             CHK_RET(TryTransition(testRet, completed, ConnState::CONN_STATE_GET_ALL_SOCKET));
             break;
         case ConnState::CONN_STATE_GET_ALL_SOCKET:
-            testRet = GetSocket(initSM_.locInitInfo.role,
-            reinterpret_cast<struct SocketInfoT*>(initSM_.locInitInfo.socketInfo.data()) + 1,
-            initSM_.socketNum, initSM_.completeNum, completed);
+            testRet = GetSocket(
+                initSM_.locInitInfo.role,
+                reinterpret_cast<struct SocketInfoT*>(initSM_.locInitInfo.socketInfo.data()) + 1, initSM_.socketNum,
+                initSM_.completeNum, completed);
             testRet = ((testRet == HCCL_SUCCESS) && completed) ? CreatSignalMesg() : testRet;
             CHK_RET(TryTransition(testRet, completed, ConnState::CONN_STATE_CONNECT_QP));
             break;
@@ -1134,35 +1174,37 @@ HcclResult TransportHeterogRoce::LoopStateProcess()
             CHK_RET(TryTransition(testRet, completed, ConnState::CONN_STATE_SEND_STATUS));
             break;
         case ConnState::CONN_STATE_SEND_STATUS:
-            testRet = SocketSend(initSM_.locInitInfo.socketInfo[SOCKET_FOR_SENDRECV_QP].fdHandle,
-                &(initSM_.locInitInfo.signal), initSM_.size, initSM_.completeSize, completed);
+            testRet = SocketSend(
+                initSM_.locInitInfo.socketInfo[SOCKET_FOR_SENDRECV_QP].fdHandle, &(initSM_.locInitInfo.signal),
+                initSM_.size, initSM_.completeSize, completed);
             CHK_RET(TryTransition(testRet, completed, ConnState::CONN_STATE_RECV_STATUS));
             break;
         case ConnState::CONN_STATE_RECV_STATUS:
-            testRet = SocketRecv(initSM_.locInitInfo.socketInfo[SOCKET_FOR_SENDRECV_QP].fdHandle,
-                &(initSM_.remInitInfo.signal), initSM_.size, initSM_.completeSize, completed);
+            testRet = SocketRecv(
+                initSM_.locInitInfo.socketInfo[SOCKET_FOR_SENDRECV_QP].fdHandle, &(initSM_.remInitInfo.signal),
+                initSM_.size, initSM_.completeSize, completed);
             fdHandle_ = initSM_.locInitInfo.socketInfo[SOCKET_FOR_SENDRECV_QP].fdHandle;
             testRet = ((testRet == HCCL_SUCCESS) && completed && !isRawConn_) ? ExchangeSignalMesg() : testRet;
             CHK_RET(TryTransition(testRet, completed, ConnState::CONN_STATE_FLUSH_QUEUE));
             break;
-        case ConnState::CONN_STATE_FLUSH_QUEUE:
-            {
-                // 为防止Isend中积压信封入队和TestSome中flush积压信封队列并发问题，
-                // 该处flush积压信封队列并状态迁移完成后，再解锁。
-                std::unique_lock<std::mutex> lock(envelopeBacklogQueueLock_);
-                testRet = FlushSendQueue(completed);
-                CHK_RET(TryTransition(testRet, completed, ConnState::CONN_STATE_COMPLETE));
-                break;
-            }
+        case ConnState::CONN_STATE_FLUSH_QUEUE: {
+            // 为防止Isend中积压信封入队和TestSome中flush积压信封队列并发问题，
+            // 该处flush积压信封队列并状态迁移完成后，再解锁。
+            std::unique_lock<std::mutex> lock(envelopeBacklogQueueLock_);
+            testRet = FlushSendQueue(completed);
+            CHK_RET(TryTransition(testRet, completed, ConnState::CONN_STATE_COMPLETE));
+            break;
+        }
         default:
-            HCCL_ERROR("Establish communication connection failed[%s]: state[%u]",
-                initSM_.locInitInfo.socketInfo[0].tag, GetState());
+            HCCL_ERROR(
+                "Establish communication connection failed[%s]: state[%u]", initSM_.locInitInfo.socketInfo[0].tag,
+                GetState());
             return HCCL_E_INTERNAL;
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::GetSocketInfos(std::vector<std::vector<HcclSocketInfo>> &socketInfos)
+HcclResult TransportHeterogRoce::GetSocketInfos(std::vector<std::vector<HcclSocketInfo>>& socketInfos)
 {
     std::vector<HcclSocketInfo> hcclSocketInfo;
     for (SocketInfoT raSocketInfo : initSM_.locInitInfo.socketInfo) {
@@ -1172,7 +1214,7 @@ HcclResult TransportHeterogRoce::GetSocketInfos(std::vector<std::vector<HcclSock
     return HCCL_SUCCESS;
 }
 
-void TransportHeterogRoce::GetTransportResourceInfo(const TransportResourceInfo &transportResourceInfo)
+void TransportHeterogRoce::GetTransportResourceInfo(const TransportResourceInfo& transportResourceInfo)
 {
     tagQpInfo_.flag = transportResourceInfo.flag;
     tagQpInfo_.qpMode = transportResourceInfo.qpMode;
@@ -1185,14 +1227,15 @@ void TransportHeterogRoce::GetTransportResourceInfo(const TransportResourceInfo 
     isESMode_ = transportResourceInfo.isESMode;
     isGlobalMrmanagerInit_ = transportResourceInfo.isGlobalMrmanagerInit;
     hdcHostWqeBatchNum_ = transportResourceInfo.hdcHostWqeBatchNum;
-    HCCL_INFO("tagQpInfo_.flag[%d] tagQpInfo_.qpMode[%d] dataQpInfo_.flag[%d] dataQpInfo_.qpMode[%d] isHdcMode_[%d] "
+    HCCL_INFO(
+        "tagQpInfo_.flag[%d] tagQpInfo_.qpMode[%d] dataQpInfo_.flag[%d] dataQpInfo_.qpMode[%d] isHdcMode_[%d] "
         "deviceLogicId_[%d] memBlockNum_[%u] remoteIsHdc_[%d] isESMode_[%d] isGlobalMrmanagerInit_[%d] "
         "hdcHostWqeBatchNum_[%u]",
         tagQpInfo_.flag, tagQpInfo_.qpMode, dataQpInfo_.flag, dataQpInfo_.qpMode, isHdcMode_, deviceLogicId_,
         memBlockNum_, remoteIsHdc_, isESMode_, isGlobalMrmanagerInit_, hdcHostWqeBatchNum_);
 }
 
-HcclResult TransportHeterogRoce::PollCq(QpInfo &qpInfo, bool isSend, s32 &num, struct ibv_wc *wc)
+HcclResult TransportHeterogRoce::PollCq(QpInfo& qpInfo, bool isSend, s32& num, struct ibv_wc* wc)
 {
     if (!isHdcMode_ || tagQpInfo_.qpMode == NORMAL_QP_MODE) {
         if (isSend) {
@@ -1212,14 +1255,14 @@ HcclResult TransportHeterogRoce::PollCq(QpInfo &qpInfo, bool isSend, s32 &num, s
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::GetRemoteIsendDoneSignal(std::shared_ptr<LocalIpcNotify> &signal)
+HcclResult TransportHeterogRoce::GetRemoteIsendDoneSignal(std::shared_ptr<LocalIpcNotify>& signal)
 {
     signal = remoteIsendDoneSignal_;
     CHK_SMART_PTR_NULL(signal);
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::GetRemoteImrecvDoneSignal(std::shared_ptr<LocalIpcNotify> &signal)
+HcclResult TransportHeterogRoce::GetRemoteImrecvDoneSignal(std::shared_ptr<LocalIpcNotify>& signal)
 {
     signal = remoteImrecvDoneSignal_;
     CHK_SMART_PTR_NULL(signal);
@@ -1232,18 +1275,18 @@ HcclResult TransportHeterogRoce::GetNotifySize()
     CHK_RET(hrtHalGetDeviceType(index_, devType));
 
     if (devType == DevType::DEV_TYPE_910) {
-        notifySize_ = 8;  // 910A 每个notify占8个字节
+        notifySize_ = NOTIFY_SIZE_BYTES_910A;
     } else if ((devType == DevType::DEV_TYPE_910B) || (devType == DevType::DEV_TYPE_910_93)) {
-        notifySize_ = 4;  // 910B/910_93 每个notify占4个字节
+        notifySize_ = NOTIFY_SIZE_BYTES_910B;
     } else {
-        notifySize_ = 8;  // 其余芯片类型每个notify占8个字节
+        notifySize_ = NOTIFY_SIZE_BYTES_910A;
     }
     HCCL_INFO("devType[%d] notifySize[%d]", devType, notifySize_);
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::CreateRdmaSignal(std::shared_ptr<LocalIpcNotify> &localNotify,
-    HcclRdmaSignalInfo &rdmaSignalInfo, MemType notifyType)
+HcclResult TransportHeterogRoce::CreateRdmaSignal(
+    std::shared_ptr<LocalIpcNotify>& localNotify, HcclRdmaSignalInfo& rdmaSignalInfo, MemType notifyType)
 {
     EXCEPTION_CATCH((localNotify = std::make_shared<LocalIpcNotify>()), return HCCL_E_PTR);
     CHK_SMART_PTR_NULL(localNotify);
@@ -1254,14 +1297,14 @@ HcclResult TransportHeterogRoce::CreateRdmaSignal(std::shared_ptr<LocalIpcNotify
     CHK_RET(localNotify->Grant(recvId));
 
     u64 notifyOffset = 0;
-    u64 notifyBaseVa = 0;  // notify寄存器虚拟地址
+    u64 notifyBaseVa = 0; // notify寄存器虚拟地址
     u64 notifyTotalSize = 0;
     CHK_RET(HrtRaGetNotifyBaseAddr(nicRdmaHandle_, &notifyBaseVa, &notifyTotalSize));
     CHK_RET(localNotify->GetNotifyOffset(notifyOffset));
     u64 notifyVa = notifyBaseVa + notifyOffset;
 
     rdmaSignalInfo.mrRegFlag = 0;
-    rdmaSignalInfo.notifyAddr = reinterpret_cast<void *>(notifyVa);
+    rdmaSignalInfo.notifyAddr = reinterpret_cast<void*>(notifyVa);
     rdmaSignalInfo.len = notifySize_;
     rdmaSignalInfo.type = notifyType;
 
@@ -1278,9 +1321,13 @@ HcclResult TransportHeterogRoce::PsRdmaDbSend(uint32_t dbindex, uint64_t dbinfo,
 {
     CHK_RET(hrtSetDevice(index_));
     s32 ret = hrtRDMADBSend(dbindex, dbinfo, stream);
-    CHK_PRT_RET(ret != RT_ERROR_NONE, HCCL_ERROR("[rtRDMADBSend]errNo[0x%016llx] rt rdma send fail, "
-        "return[%d]. para: dbindex[%u]dbinfo[%llu].", HCCL_ERROR_CODE(HCCL_E_RUNTIME), ret, dbindex,
-        dbinfo), HCCL_E_RUNTIME);
+    CHK_PRT_RET(
+        ret != RT_ERROR_NONE,
+        HCCL_ERROR(
+            "[rtRDMADBSend]errNo[0x%016llx] rt rdma send fail, "
+            "return[%d]. para: dbindex[%u] dbinfo[%llu].",
+            HCCL_ERROR_CODE(HCCL_E_RUNTIME), ret, dbindex, dbinfo),
+        HCCL_E_RUNTIME);
     if (deviceLogicId_ == HOST_DEVICE_ID) {
         // ps侧DbSend对当前线程SetDevice后，改变了原GE通信域初始化时setdevice 0
         // 若后面使用本线程save会导致getctx失败获取不到通信域句柄，所以需要在此处重新set回默认
@@ -1289,10 +1336,10 @@ HcclResult TransportHeterogRoce::PsRdmaDbSend(uint32_t dbindex, uint64_t dbinfo,
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::CreateDevMemForNotify(DeviceMem &devMem, u64 size, u32 value)
+HcclResult TransportHeterogRoce::CreateDevMemForNotify(DeviceMem& devMem, u64 size, u32 value)
 {
     HCCL_INFO("Use dev mem for notify value");
-    void *devMemAddr{ nullptr };
+    void* devMemAddr{nullptr};
     CHK_RET(hrtSetDevice(index_));
     CHK_RET(HrtDevMalloc(&devMemAddr, size));
 
@@ -1304,16 +1351,16 @@ HcclResult TransportHeterogRoce::CreateDevMemForNotify(DeviceMem &devMem, u64 si
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::CreateHostMemForNotify(DeviceMem &devMem, u64 size, u32 value, bool needMap)
+HcclResult TransportHeterogRoce::CreateHostMemForNotify(DeviceMem& devMem, u64 size, u32 value, bool needMap)
 {
     HCCL_INFO("PS use host mem for notify value");
     u64 memLen = size + SMALL_PAGE_SIZE;
-    s8 *ptr = new (std::nothrow) s8[memLen];
+    s8* ptr = new (std::nothrow) s8[memLen];
     CHK_PTR_NULL(ptr);
     hostMemPtr_.emplace_back(ptr);
     u64 pageSizeNum = reinterpret_cast<u64>(ptr) / SMALL_PAGE_SIZE;
-    void *ptrVoid = reinterpret_cast<void*>((pageSizeNum + 1) * SMALL_PAGE_SIZE);
-    void *devVirAddr = ptrVoid;
+    void* ptrVoid = reinterpret_cast<void*>((pageSizeNum + 1) * SMALL_PAGE_SIZE);
+    void* devVirAddr = ptrVoid;
     if (needMap) {
         s32 ret = dataQpMrManager_->MapMem(ptrVoid, size, devVirAddr);
         if (ret != 0 || devVirAddr == nullptr) {
@@ -1322,8 +1369,8 @@ HcclResult TransportHeterogRoce::CreateHostMemForNotify(DeviceMem &devMem, u64 s
         }
 
         devMem = DeviceMem::create(devVirAddr, size);
-        CHK_RET(hrtMemcpy(ptrVoid, notifyMem_.size(), &value, sizeof(u32),
-            HcclRtMemcpyKind::HCCL_RT_MEMCPY_KIND_HOST_TO_HOST));
+        CHK_RET(hrtMemcpy(
+            ptrVoid, notifyMem_.size(), &value, sizeof(u32), HcclRtMemcpyKind::HCCL_RT_MEMCPY_KIND_HOST_TO_HOST));
         return HCCL_SUCCESS;
     }
 
@@ -1349,8 +1396,7 @@ HcclResult TransportHeterogRoce::CreateNotifyValueBuffer()
             CHK_RET(CreateHostMemForNotify(notifyMem_, notifyValueSize_, notifyVaule, isHdcMode_));
         }
 
-        CHK_PRT_RET(!notifyMem_.ptr(), HCCL_ERROR("CreateNotifyValueBuffer malloc failed."),
-            HCCL_E_MEMORY);
+        CHK_PRT_RET(!notifyMem_.ptr(), HCCL_ERROR("CreateNotifyValueBuffer malloc failed."), HCCL_E_MEMORY);
     }
 
     struct MrInfoT mrInfo = {};
@@ -1390,7 +1436,7 @@ HcclResult TransportHeterogRoce::DeleteNotifyValueBuffer()
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::RecoverNotifyMsg(HcclRdmaSignalInfo *remoteRdmaSignal, u64 signalNum)
+HcclResult TransportHeterogRoce::RecoverNotifyMsg(HcclRdmaSignalInfo* remoteRdmaSignal, u64 signalNum)
 {
     if (signalNum <= 0) {
         return HCCL_E_NOT_FOUND;
@@ -1442,19 +1488,18 @@ HcclResult TransportHeterogRoce::ExchangeSignalMesg()
         // ps
         // Notify start
         HcclRdmaSignalInfo remoteRdmaSignal[REMOTE_RDMA_SIGNAL_SIZE];
-        CHK_RET(hrtRaSocketBlockRecv(fdHandle_, remoteRdmaSignal,
-            sizeof(HcclRdmaSignalInfo) * REMOTE_RDMA_SIGNAL_SIZE));
+        CHK_RET(
+            hrtRaSocketBlockRecv(fdHandle_, remoteRdmaSignal, sizeof(HcclRdmaSignalInfo) * REMOTE_RDMA_SIGNAL_SIZE));
         CHK_RET(RecoverNotifyMsg(remoteRdmaSignal, REMOTE_RDMA_SIGNAL_SIZE));
     } else {
         // worker
         // Notify start
-        CHK_RET(hrtRaSocketBlockSend(fdHandle_, rdmaSignal_,
-            sizeof(HcclRdmaSignalInfo) * REMOTE_RDMA_SIGNAL_SIZE));
+        CHK_RET(hrtRaSocketBlockSend(fdHandle_, rdmaSignal_, sizeof(HcclRdmaSignalInfo) * REMOTE_RDMA_SIGNAL_SIZE));
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::RecordNotifyWithReq(Stream &stream, RdmaNotifyOp type, HcclRequestInfo *&request)
+HcclResult TransportHeterogRoce::RecordNotifyWithReq(Stream& stream, RdmaNotifyOp type, HcclRequestInfo*& request)
 {
     TransData sendData{};
     TransportEndPointParam epParam{};
@@ -1470,10 +1515,11 @@ HcclResult TransportHeterogRoce::RecordNotifyWithReq(Stream &stream, RdmaNotifyO
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::RecordNotify(Stream &stream, RdmaNotifyOp type, u64 wrId)
+HcclResult TransportHeterogRoce::RecordNotify([[maybe_unused]] Stream& stream, RdmaNotifyOp type, u64 wrId)
 {
-    HCCL_INFO("RecordNotify notifyType[%u], wrId[%llu] isHdcMode_[%d] qpMode[%d]",
-        type, wrId, isHdcMode_, dataQpInfo_.qpMode);
+    HCCL_INFO(
+        "RecordNotify notifyType[%u], wrId[%llu] isHdcMode_[%d] qpMode[%d]", type, wrId, isHdcMode_,
+        dataQpInfo_.qpMode);
     MemType opType = MemType::MEM_TYPE_RESERVED;
     if (type == RdmaNotifyOp::SEND_NOTIFY) {
         opType = MemType::SEND_NOTIFY_MEM;
@@ -1490,14 +1536,14 @@ HcclResult TransportHeterogRoce::RecordNotify(Stream &stream, RdmaNotifyOp type,
         notifyWriteSge_.lkey = notifyMemMsg_[static_cast<u32>(MemType::NOTIFY_VALUE_MEM)].lkey;
 
         notifyWriteWr_.wr_id = wrId;
-        notifyWriteWr_.wr.rdma.remote_addr =
-            static_cast<u64>(reinterpret_cast<uintptr_t>(notifyMemMsg_[static_cast<u32>(opType)].addr));
+        notifyWriteWr_.wr.rdma.remote_addr
+            = static_cast<u64>(reinterpret_cast<uintptr_t>(notifyMemMsg_[static_cast<u32>(opType)].addr));
         notifyWriteWr_.wr.rdma.rkey = notifyMemMsg_[static_cast<u32>(opType)].rkey;
 
-        struct ibv_send_wr *badWr = nullptr;
-        HCCL_INFO("notify write: remote addr[%llu] length[%d] wrId[%llu]",
-            notifyWriteWr_.wr.rdma.remote_addr, notifyWriteSge_.length,
-            notifyWriteWr_.wr_id);
+        struct ibv_send_wr* badWr = nullptr;
+        HCCL_INFO(
+            "notify write: remote addr[%llu] length[%d] wrId[%llu]", notifyWriteWr_.wr.rdma.remote_addr,
+            notifyWriteSge_.length, notifyWriteWr_.wr_id);
         CHK_RET(hrtIbvPostSend(dataQpInfo_.qp, &notifyWriteWr_, &badWr));
     } else {
         struct SgList list = {};
@@ -1505,7 +1551,7 @@ HcclResult TransportHeterogRoce::RecordNotify(Stream &stream, RdmaNotifyOp type,
         list.len = notifyMemMsg_[static_cast<u32>(opType)].len;
         list.lkey = notifyMemMsg_[static_cast<u32>(MemType::NOTIFY_VALUE_MEM)].lkey;
 
-        struct SendWrV2 wr{};
+        struct SendWrV2 wr {};
         wr.wrId = wrId;
         wr.bufList = &list;
         wr.bufNum = 1; /* 此处list只有一个，设置为1 */
@@ -1521,7 +1567,7 @@ HcclResult TransportHeterogRoce::RecordNotify(Stream &stream, RdmaNotifyOp type,
     return HCCL_SUCCESS;
 }
 
-HcclResult TransportHeterogRoce::DoorBellSend(const s32 qpMode, const SendWrRsp &opRsp, void *stream)
+HcclResult TransportHeterogRoce::DoorBellSend(const s32 qpMode, const SendWrRsp& opRsp, void* stream)
 {
     if (qpMode == OPBASE_QP_MODE || qpMode == OPBASE_QP_MODE_EXT || qpMode == OFFLINE_QP_MODE_EXT) {
         HCCL_DEBUG("entry PsRdmaDbSend");
@@ -1550,13 +1596,13 @@ HcclResult TransportHeterogRoce::MrManagerInit()
         dataQpMrManager_ = mrManager_;
         return HCCL_SUCCESS;
     }
-    mrManager_ = new(nothrow) MrManager();
+    mrManager_ = new (nothrow) MrManager();
     CHK_PTR_NULL(mrManager_);
     std::map<MrMapKey, MrInfo> unRegMrMap = MrManager::GetInstance().GetUnregMap();
     CHK_PRT(mrManager_->Init(tagQpInfo_.qpHandle, index_, deviceLogicId_ == HOST_DEVICE_ID, unRegMrMap));
 
     // dataQpManager_管理数据收发内存
-    dataQpMrManager_ = new(nothrow) MrManager();
+    dataQpMrManager_ = new (nothrow) MrManager();
     CHK_PTR_NULL(dataQpMrManager_);
     unRegMrMap = MrManager::GetInstance().GetUnregMap();
     CHK_PRT(dataQpMrManager_->Init(dataQpInfo_.qpHandle, index_, deviceLogicId_ == HOST_DEVICE_ID, unRegMrMap));
@@ -1591,12 +1637,12 @@ HcclResult TransportHeterogRoce::PreHdcResource()
     if (deviceLogicId_ == HOST_DEVICE_ID) {
         if (!IsRamdHandleLevelMr()) {
             CHK_PRT(MemBlocksManagerInit());
-            CHK_RET(mrManager_->GetKey(tagMemBlocksManager_->GetMemAddr(), tagMemBlocksManager_->GetMemSize(),
-                blockMemLkey_));
+            CHK_RET(mrManager_->GetKey(
+                tagMemBlocksManager_->GetMemAddr(), tagMemBlocksManager_->GetMemSize(), blockMemLkey_));
         }
 
-        const std::unique_ptr<HeterogMemBlocksManager> &memBlocksManagerPtr =
-            (IsRamdHandleLevelMr()) ? memBlocksManager_ : tagMemBlocksManager_;
+        const std::unique_ptr<HeterogMemBlocksManager>& memBlocksManagerPtr
+            = (IsRamdHandleLevelMr()) ? memBlocksManager_ : tagMemBlocksManager_;
         // mrmanager是全局的时使用的信封内存管理类也是外部传入的全局的管理类
         hostAddrBegin_ = (u64)memBlocksManagerPtr->GetMemAddr();
 
@@ -1604,7 +1650,8 @@ HcclResult TransportHeterogRoce::PreHdcResource()
         recvWqeBatchNum_ = hdcHostWqeBatchNum_;
         recvWqeBatchThreshold_ = hdcHostWqeBatchNum_;
         recvWqeBatchSupplement_ = RECV_WQE_HDC_BATCH_SUPPLEMENT;
-        HCCL_INFO("PreHdcResource IsRamdHandleLevelMr[%d] recvWqeBatchNum_[%u] recvWqeBatchThreshold_[%u]",
+        HCCL_INFO(
+            "PreHdcResource IsRamdHandleLevelMr[%d] recvWqeBatchNum_[%u] recvWqeBatchThreshold_[%u]",
             IsRamdHandleLevelMr(), recvWqeBatchNum_, recvWqeBatchThreshold_);
         if (useDevMem_) {
 #ifndef CCL_KERNEL
@@ -1617,14 +1664,13 @@ HcclResult TransportHeterogRoce::PreHdcResource()
                 return HCCL_E_MEMORY;
             }
 
-            struct MrInfoT mrInfo = {nullptr};
+            struct MrInfoT mrInfo = {};
             mrInfo.addr = deviceEvePtr_;
             mrInfo.size = memSize;
             mrInfo.access = RA_ACCESS_LOCAL_WRITE | RA_ACCESS_REMOTE_WRITE | RA_ACCESS_REMOTE_READ;
             CHK_RET(HrtRaMrReg(dataQpInfo_.qpHandle, &mrInfo));
             deviceEveLkey_ = mrInfo.lkey;
-            HCCL_INFO("index_[%u] deviceEvePtr_[%p] memSize[%llu]",
-                index_, deviceEvePtr_, memSize);
+            HCCL_INFO("index_[%u] deviceEvePtr_[%p] memSize[%llu]", index_, deviceEvePtr_, memSize);
 #endif
         }
         CHK_RET(InitTagRecvWqe());
@@ -1662,7 +1708,7 @@ HcclResult TransportHeterogRoce::MemBlocksManagerDeInit()
     return HCCL_SUCCESS;
 }
 
-void TransportHeterogRoce::GetLinkTag(std::string &tag)
+void TransportHeterogRoce::GetLinkTag(std::string& tag)
 {
     tag = initSM_.locInitInfo.socketInfo[0].tag;
     return;

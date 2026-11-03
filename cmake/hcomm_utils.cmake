@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
@@ -27,9 +27,9 @@ else()
     set(HCOMM_UTILS_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
 endif()
 
-set(HCOMM_UTILS_VERSION "9.1.0")
+set(HCOMM_UTILS_VERSION "9.2.0")
 set(HCOMM_UTILS_FILE "cann-hcomm-utils_${HCOMM_UTILS_VERSION}_linux-${HCOMM_UTILS_ARCH}.tar.gz")
-set(HCOMM_UTILS_URL "https://ascend-cann.obs.cn-north-4.myhuaweicloud.com/CANN/20260527_newest/${HCOMM_UTILS_FILE}")
+set(HCOMM_UTILS_URL "https://ascend-cann.obs.cn-north-4.myhuaweicloud.com/CANN/20260729_newest/${HCOMM_UTILS_FILE}")
 
 find_library(TLS_ADP_LIBRARY
     NAMES libtls_adp.so
@@ -72,9 +72,9 @@ else()
     if(EXISTS ${HCOMM_UTILS_GLOB_PKG})
         set(HCOMM_UTILS_URL_HASH "")    # 忽略版本号，不校验哈希值
     elseif(HCOMM_UTILS_ARCH MATCHES "aarch64|ARM64|arm64")
-        set(HCOMM_UTILS_URL_HASH "SHA256=bbd7b3c3c78c9ad12ba5109ce7b0d4cf37c73c9a3844f3abd601cd4b0db9eeb5")
+        set(HCOMM_UTILS_URL_HASH "SHA256=f33f9bc5b6f6e2c74c8ac461a1f0e368219500ab9361cf63b73d1ac99567b3f3")
     else()
-        set(HCOMM_UTILS_URL_HASH "SHA256=0bcfc92635af8066224374686050a72d83e52b6c882be3c62ba415123f3f3afd")
+        set(HCOMM_UTILS_URL_HASH "SHA256=f2c6f5e8f4ba3561e39625f0773abb98b94923e31a7c20010959566aaacc29df")
     endif()
 
     include(ExternalProject)

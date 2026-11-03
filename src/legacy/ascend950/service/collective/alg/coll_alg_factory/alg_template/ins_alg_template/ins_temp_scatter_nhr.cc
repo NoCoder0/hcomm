@@ -15,22 +15,21 @@
 #include "log.h"
 
 namespace Hccl {
-InsTempScatterNHR::InsTempScatterNHR(const RankId virtualRank, const u32 tempRankSize,
-    const std::vector<std::vector<RankId>> &tempVTopo, const std::map<RankId, u32> &tempVirtRankMap)
+InsTempScatterNHR::InsTempScatterNHR(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
     : InsAlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap)
-{
-}
+{}
 
-InsTempScatterNHR::~InsTempScatterNHR()
-{
-}
+InsTempScatterNHR::~InsTempScatterNHR() {}
 
-HcclResult InsTempScatterNHR::CalcRes(AlgTempResReq &tempResReq)
+HcclResult InsTempScatterNHR::CalcRes(AlgTempResReq& tempResReq)
 {
-    CHK_PRT_RET(CalcResLinksNHR(myRank_, tempRankSize_, tempVTopo_, tempResReq) != HcclResult::HCCL_SUCCESS,
+    CHK_PRT_RET(
+        CalcResLinksNHR(myRank_, tempRankSize_, tempVTopo_, tempResReq) != HcclResult::HCCL_SUCCESS,
         HCCL_ERROR("[CollAlgFactory] [InsTempScatterNHR] Rank [%d], resLinks calculation error!", myRank_),
         HcclResult::HCCL_E_INTERNAL);
-    auto &linkReq = tempResReq.links;
+    auto& linkReq = tempResReq.links;
     u32 pathNum = 0;
     for (auto resReqIter = linkReq.begin(); resReqIter != linkReq.end(); resReqIter++) {
         auto remoteRank = resReqIter->first;
@@ -41,9 +40,10 @@ HcclResult InsTempScatterNHR::CalcRes(AlgTempResReq &tempResReq)
         if (pathNum == 0) {
             pathNum = rank2PathNumMap_[remoteRank];
         } else if (rank2PathNumMap_[remoteRank] != pathNum) {
-            HCCL_ERROR("[InsTempScatterNHR] Inconsistency pathNum to remoteRanks, Previous consistent pathNum=[%u], "
-                       "mismatched "
-                       "remoteRank=[%d], pathNum=[%u]",
+            HCCL_ERROR(
+                "[InsTempScatterNHR] Inconsistency pathNum to remoteRanks, Previous consistent pathNum=[%u], "
+                "mismatched "
+                "remoteRank=[%d], pathNum=[%u]",
                 pathNum, remoteRank, rank2PathNumMap_[remoteRank]);
             return HcclResult::HCCL_E_INTERNAL;
         }
@@ -59,12 +59,9 @@ HcclResult InsTempScatterNHR::CalcRes(AlgTempResReq &tempResReq)
     return HcclResult::HCCL_SUCCESS;
 }
 
-uint64_t InsTempScatterNHR::GetExpandedMode() const
-{
-    return DeviceMode::AICPU;
-}
+uint64_t InsTempScatterNHR::GetExpandedMode() const { return DeviceMode::AICPU; }
 
-HcclResult InsTempScatterNHR::PreCopy(const TemplateDataParams &templateDataParams, std::vector<InsQuePtr> &tempInsQues)
+HcclResult InsTempScatterNHR::PreCopy(const TemplateDataParams& templateDataParams, std::vector<InsQuePtr>& tempInsQues)
 {
     if (u32(myRank_) != root_ || buffInfo_.inBuffType == BufferType::SCRATCH) {
         return HCCL_SUCCESS;
@@ -86,7 +83,8 @@ HcclResult InsTempScatterNHR::PreCopy(const TemplateDataParams &templateDataPara
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempScatterNHR::PostCopy(const TemplateDataParams &templateDataParams, std::vector<InsQuePtr> &tempInsQues)
+HcclResult
+InsTempScatterNHR::PostCopy(const TemplateDataParams& templateDataParams, std::vector<InsQuePtr>& tempInsQues)
 {
     u32 myAlgRank;
     GetAlgRank(myRank_, tempVTopo_[0], myAlgRank);
@@ -110,7 +108,7 @@ HcclResult InsTempScatterNHR::PostCopy(const TemplateDataParams &templateDataPar
 }
 
 HcclResult InsTempScatterNHR::RunNHR(
-    TemplateDataParams &templateDataParams, ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues) const
+    TemplateDataParams& templateDataParams, ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues) const
 {
     u32 mainQueIdx = 0;
     // 流间前同步，主流通知从流，只有一个流则不做任何事
@@ -143,8 +141,9 @@ HcclResult InsTempScatterNHR::RunNHR(
 }
 
 // 需要支持input->scratch, scratch->output, input->output
-HcclResult InsTempScatterNHR::GenExtIns(TempFuncs &tempFuncs, TemplateDataParams &templateDataParams,
-    ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues)
+HcclResult InsTempScatterNHR::GenExtIns(
+    TempFuncs& tempFuncs, TemplateDataParams& templateDataParams, ResLinks& tempLinks,
+    std::vector<InsQuePtr>& tempInsQues)
 {
     if (IsPcieLink(tempLinks)) {
         dmaMode_ = DmaMode::GET;
@@ -158,11 +157,13 @@ HcclResult InsTempScatterNHR::GenExtIns(TempFuncs &tempFuncs, TemplateDataParams
     HCCL_INFO("[InsTempScatterNHR] Run start");
     uint32_t linkNum = tempLinks.begin()->second.size();
     // 流的数量不能少于linkNum
-    CHK_PRT_RET(linkNum < tempInsQues.size(),
+    CHK_PRT_RET(
+        linkNum < tempInsQues.size(),
         HCCL_ERROR("[CollAlgFactory] [InsTempScatterNHR] Rank [%d], requiredQue Error.", myRank_),
         HcclResult::HCCL_E_INTERNAL);
 
-    HCCL_INFO("[InsTempScatterNHR Run]RankID:[%d], root:[%u], isForepart:[%d], isBottom:[%d]", myRank_, root_,
+    HCCL_INFO(
+        "[InsTempScatterNHR Run]RankID:[%d], root:[%u], isForepart:[%d], isBottom:[%d]", myRank_, root_,
         tempFuncs.isForepart, tempFuncs.isBottom);
     CHK_RET(PreCopy(templateDataParams, tempInsQues));
     CHK_RET(RunNHR(templateDataParams, tempLinks, tempInsQues));
@@ -177,10 +178,11 @@ u32 InsTempScatterNHR::CalcScratchMultiple(BufferType inBuffType, BufferType out
     return tempRankSize_;
 }
 
-HcclResult InsTempScatterNHR::BatchSend(AicpuNHRStepInfo &stepInfo, const ResLinks &tempLinks,
-    std::vector<InsQuePtr> &tempInsQues, TemplateDataParams &templateDataParams, u32 repeat) const
+HcclResult InsTempScatterNHR::BatchSend(
+    AicpuNHRStepInfo& stepInfo, const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues,
+    TemplateDataParams& templateDataParams, u32 repeat) const
 {
-    const std::vector<LinkData> &linkSend = tempLinks.at(stepInfo.toRank);
+    const std::vector<LinkData>& linkSend = tempLinks.at(stepInfo.toRank);
     u32 linkNum = rank2PathNumMap_.at(stepInfo.toRank);
     std::vector<float> dataSplitRate(linkNum);
     CHK_RET(CalcDataSplitRateForLinks(linkSend, dataSplitRate));
@@ -188,8 +190,8 @@ HcclResult InsTempScatterNHR::BatchSend(AicpuNHRStepInfo &stepInfo, const ResLin
     u64 tailSize = templateDataParams.tailSize == 0 ? templateDataParams.sliceSize : templateDataParams.tailSize;
 
     const u32 sliceCount = stepInfo.txSliceIdxs.size();
-    const u64 baseOffset = repeat * ((tempRankSize_ - 1) * templateDataParams.sliceSize + tailSize)
-                           + buffInfo_.scratchBuffBaseOff;
+    const u64 baseOffset
+        = repeat * ((tempRankSize_ - 1) * templateDataParams.sliceSize + tailSize) + buffInfo_.scratchBuffBaseOff;
     std::vector<DataSlice> srcDstSlices;
     srcDstSlices.reserve(sliceCount);
     for (u32 j = 0; j < linkNum; j++) {
@@ -202,15 +204,17 @@ HcclResult InsTempScatterNHR::BatchSend(AicpuNHRStepInfo &stepInfo, const ResLin
         }
         SlicesList txSlicesList(srcDstSlices, srcDstSlices);
         DataInfo sendData(linkSend[j], std::move(txSlicesList));
-        CHK_PRT_RET(Send(sendData, tempInsQues[j], 0, true, dmaMode_),
-            HCCL_ERROR("[InsTempScatterNHR] BatchSend failed"), HcclResult::HCCL_E_INTERNAL);
+        CHK_PRT_RET(
+            Send(sendData, tempInsQues[j], 0, true, dmaMode_), HCCL_ERROR("[InsTempScatterNHR] BatchSend failed"),
+            HcclResult::HCCL_E_INTERNAL);
     }
 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempScatterNHR::BatchRecv(AicpuNHRStepInfo &stepInfo, const ResLinks &tempLinks,
-    std::vector<InsQuePtr> &tempInsQues, TemplateDataParams &templateDataParams, u32 repeat) const
+HcclResult InsTempScatterNHR::BatchRecv(
+    AicpuNHRStepInfo& stepInfo, const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues,
+    TemplateDataParams& templateDataParams, u32 repeat) const
 {
     u32 myAlgRank;
     GetAlgRank(myRank_, tempVTopo_[0], myAlgRank);
@@ -218,7 +222,7 @@ HcclResult InsTempScatterNHR::BatchRecv(AicpuNHRStepInfo &stepInfo, const ResLin
     u64 tailSize = templateDataParams.tailSize == 0 ? templateDataParams.sliceSize : templateDataParams.tailSize;
     // 支持不均匀切分的情况下需要把尾部数据放到最后一张卡上
     u64 sliceSize = myAlgRank == tempVTopo_[0].size() - 1 ? tailSize : templateDataParams.sliceSize;
-    const std::vector<LinkData> &linkRecv = tempLinks.at(stepInfo.fromRank);
+    const std::vector<LinkData>& linkRecv = tempLinks.at(stepInfo.fromRank);
     u32 linkNum = rank2PathNumMap_.at(stepInfo.fromRank);
     std::vector<float> dataSplitRate(linkNum);
     CHK_RET(CalcDataSplitRateForLinks(linkRecv, dataSplitRate));
@@ -237,18 +241,20 @@ HcclResult InsTempScatterNHR::BatchRecv(AicpuNHRStepInfo &stepInfo, const ResLin
         }
         SlicesList rxSlicesList(srcDstSlices, srcDstSlices);
         DataInfo recvData(linkRecv[j], std::move(rxSlicesList));
-        CHK_PRT_RET(Recv(recvData, tempInsQues[j], 0, true, dmaMode_),
-            HCCL_ERROR("[InsTempScatterNHR] BatchTxRx Recv failed"), HcclResult::HCCL_E_INTERNAL);
+        CHK_PRT_RET(
+            Recv(recvData, tempInsQues[j], 0, true, dmaMode_), HCCL_ERROR("[InsTempScatterNHR] BatchTxRx Recv failed"),
+            HcclResult::HCCL_E_INTERNAL);
     }
 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InsTempScatterNHR::BatchSR(AicpuNHRStepInfo &stepInfo, const ResLinks &tempLinks,
-    std::vector<InsQuePtr> &tempInsQues, TemplateDataParams &templateDataParams, u32 repeat) const
+HcclResult InsTempScatterNHR::BatchSR(
+    AicpuNHRStepInfo& stepInfo, const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues,
+    TemplateDataParams& templateDataParams, u32 repeat) const
 {
-    const std::vector<LinkData> &linkRecv = tempLinks.at(stepInfo.fromRank);
-    const std::vector<LinkData> &linkSend = tempLinks.at(stepInfo.toRank);
+    const std::vector<LinkData>& linkRecv = tempLinks.at(stepInfo.fromRank);
+    const std::vector<LinkData>& linkSend = tempLinks.at(stepInfo.toRank);
 
     HCCL_INFO("BatchSR(stepInfo.fromRank)=%u", stepInfo.fromRank);
     u32 linkNum = rank2PathNumMap_.at(stepInfo.fromRank);
@@ -271,8 +277,8 @@ HcclResult InsTempScatterNHR::BatchSR(AicpuNHRStepInfo &stepInfo, const ResLinks
     u64 tailSize = templateDataParams.tailSize == 0 ? templateDataParams.sliceSize : templateDataParams.tailSize;
     // 支持不均匀切分的情况下需要把尾部数据放到最后一张卡上
     u64 sliceSize = myAlgRank == tempVTopo_[0].size() - 1 ? tailSize : templateDataParams.sliceSize;
-    const u64 baseOffset = repeat * ((tempRankSize_ - 1) * templateDataParams.sliceSize + tailSize)
-                           + buffInfo_.scratchBuffBaseOff;
+    const u64 baseOffset
+        = repeat * ((tempRankSize_ - 1) * templateDataParams.sliceSize + tailSize) + buffInfo_.scratchBuffBaseOff;
 
     for (u32 j = 0; j < linkNum; j++) {
         txSrcDstSlices.clear();
@@ -293,14 +299,15 @@ HcclResult InsTempScatterNHR::BatchSR(AicpuNHRStepInfo &stepInfo, const ResLinks
         TxRxSlicesList txRxSlicesList(std::move(txSlicesList), std::move(rxSlicesList));
         TxRxLinks sendRecvLinks(linkSend[j], linkRecv[j]);
         SendRecvInfo sendRecvInfo(sendRecvLinks, std::move(txRxSlicesList));
-        CHK_PRT_RET(SendRecv(sendRecvInfo, tempInsQues[j], 0, true, dmaMode_),
+        CHK_PRT_RET(
+            SendRecv(sendRecvInfo, tempInsQues[j], 0, true, dmaMode_),
             HCCL_ERROR("[InsTempScatterNHR] sendrecv failed (j=%u)", j), HcclResult::HCCL_E_INTERNAL);
     }
     return HcclResult::HCCL_SUCCESS;
 }
 
 // NHR每步的算法描述原理函数
-HcclResult InsTempScatterNHR::GetStepInfo(u32 step, u32 nSteps, AicpuNHRStepInfo &stepInfo) const
+HcclResult InsTempScatterNHR::GetStepInfo(u32 step, u32 nSteps, AicpuNHRStepInfo& stepInfo) const
 {
     u32 rankSize = tempRankSize_;
     u32 myAlgRank;

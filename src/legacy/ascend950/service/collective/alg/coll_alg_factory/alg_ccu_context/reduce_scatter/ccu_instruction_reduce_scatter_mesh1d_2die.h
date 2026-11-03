@@ -24,33 +24,38 @@ namespace Hccl {
 // 为ReduceScatterMesh1D实现的CCUIns、CCUCtxArg与CCUTaskArg
 class CcuCtxArgReduceScatterMesh1D2Die : public CcuCtxArg {
 public:
-    explicit CcuCtxArgReduceScatterMesh1D2Die(const std::vector<uint64_t> &dSize, uint32_t rId,
-                                              const CollAlgOperator &op, bool rmtReduceWithMyRank,
-                                              const std::vector<std::vector<RankId>> &tempVTopo)
-        : dimSize_(dSize), rankId_(rId), rmtReduceWithMyRank_(rmtReduceWithMyRank), op_(op), tempVTopo_(tempVTopo)
-    {
-    }
+    explicit CcuCtxArgReduceScatterMesh1D2Die(
+        const std::vector<uint64_t>& dSize, uint32_t rId, const CollAlgOperator& op, bool rmtReduceWithMyRank,
+        const std::vector<std::vector<RankId>>& tempVTopo)
+        : dimSize_(dSize),
+          rankId_(rId),
+          rmtReduceWithMyRank_(rmtReduceWithMyRank),
+          op_(op),
+          tempVTopo_(tempVTopo)
+    {}
     CcuCtxSignature GetCtxSignature() const override
     {
         CcuCtxSignature signature;
         GenerateCcuCtxSignature(signature, CcuInstType::CCU_REDUCE_SCATTER_MESH_1D_DIRECT, op_, tempVTopo_);
         return signature;
     }
-    std::vector<uint64_t>            dimSize_;
-    u32                              rankId_;
-    bool                             rmtReduceWithMyRank_;
-    CollAlgOperator                  op_;
+    std::vector<uint64_t> dimSize_;
+    u32 rankId_;
+    bool rmtReduceWithMyRank_;
+    CollAlgOperator op_;
     std::vector<std::vector<RankId>> tempVTopo_;
 };
 
 class CcuTaskArgReduceScatterMesh1D2Die : public CcuTaskArg {
 public:
-    explicit CcuTaskArgReduceScatterMesh1D2Die(uint64_t inputAddr, uint64_t outputAddr, uint64_t scratchAddr,
-                                               uint64_t sliceSize, uint64_t token)
-        : inputAddr_(inputAddr), outputAddr_(outputAddr), scratchAddr_(scratchAddr), sliceSize_(sliceSize),
+    explicit CcuTaskArgReduceScatterMesh1D2Die(
+        uint64_t inputAddr, uint64_t outputAddr, uint64_t scratchAddr, uint64_t sliceSize, uint64_t token)
+        : inputAddr_(inputAddr),
+          outputAddr_(outputAddr),
+          scratchAddr_(scratchAddr),
+          sliceSize_(sliceSize),
           token_(token)
-    {
-    }
+    {}
 
     uint64_t inputAddr_{0};
     uint64_t outputAddr_{0};
@@ -61,13 +66,11 @@ public:
 
 class CcuInstructionReduceScatterMesh1D2Die : public CcuInstruction {
 public:
-    CcuInstructionReduceScatterMesh1D2Die() : CcuInstruction()
-    {
-    }
+    CcuInstructionReduceScatterMesh1D2Die() : CcuInstruction() {}
 
-    void Init(uint32_t rankId, CollAlgOperator &op, bool rmtReduceWithMyRank,
-              std::vector<std::vector<RankId>> &tempVTopo, uint64_t inputAddr, uint64_t outputAddr,
-              uint64_t scratchAddr, uint64_t sliceSize, uint64_t token)
+    void Init(
+        uint32_t rankId, CollAlgOperator& op, bool rmtReduceWithMyRank, std::vector<std::vector<RankId>>& tempVTopo,
+        uint64_t inputAddr, uint64_t outputAddr, uint64_t scratchAddr, uint64_t sliceSize, uint64_t token)
     {
         u32 maxDimNum = 1;
         if (tempVTopo.size() != maxDimNum) {
@@ -76,15 +79,15 @@ public:
         }
 
         dimSize_.push_back(tempVTopo[0].size());
-        rankId_              = rankId;
-        op_                  = op;
+        rankId_ = rankId;
+        op_ = op;
         rmtReduceWithMyRank_ = rmtReduceWithMyRank;
-        tempVTopo_           = tempVTopo;
-        inputAddr_   = inputAddr;
-        outputAddr_  = outputAddr;
+        tempVTopo_ = tempVTopo;
+        inputAddr_ = inputAddr;
+        outputAddr_ = outputAddr;
         scratchAddr_ = scratchAddr;
-        sliceSize_   = sliceSize;
-        token_       = token;
+        sliceSize_ = sliceSize;
+        token_ = token;
     }
 
     CcuInstType GetInstType() const override
@@ -95,34 +98,31 @@ public:
 
     std::string Describe() const override
     {
-        return StringFormat("CcuInstructionReduceScatterMesh1D2Die rankId [%u], instType[%s]", rankId_,
-                            instType_.Describe().c_str());
+        return StringFormat(
+            "CcuInstructionReduceScatterMesh1D2Die rankId [%u], instType[%s]", rankId_, instType_.Describe().c_str());
     }
 
-    void SetInstType(CcuInstType instType) 
-    { 
-        instType_ = instType; 
-    }
+    void SetInstType(CcuInstType instType) { instType_ = instType; }
 
     std::unique_ptr<CcuCtxArg> GetCtxArg() const override
     {
-        return std::make_unique<CcuCtxArgReduceScatterMesh1D2Die>(dimSize_, rankId_, op_, rmtReduceWithMyRank_,
-                                                                  tempVTopo_);
+        return std::make_unique<CcuCtxArgReduceScatterMesh1D2Die>(
+            dimSize_, rankId_, op_, rmtReduceWithMyRank_, tempVTopo_);
     }
 
     std::unique_ptr<CcuTaskArg> GetTaskArg() const override
     {
-        return std::make_unique<CcuTaskArgReduceScatterMesh1D2Die>(inputAddr_, outputAddr_, scratchAddr_, sliceSize_,
-                                                                   token_);
+        return std::make_unique<CcuTaskArgReduceScatterMesh1D2Die>(
+            inputAddr_, outputAddr_, scratchAddr_, sliceSize_, token_);
     }
 
 private:
     CcuInstType instType_ = CcuInstType::CCU_REDUCE_SCATTER_MESH_1D_2DIE;
 
-    std::vector<uint64_t>            dimSize_;
-    u32                              rankId_{0};
-    CollAlgOperator                  op_;
-    bool                             rmtReduceWithMyRank_{true};
+    std::vector<uint64_t> dimSize_;
+    u32 rankId_{0};
+    CollAlgOperator op_;
+    bool rmtReduceWithMyRank_{true};
     std::vector<std::vector<RankId>> tempVTopo_;
     uint64_t inputAddr_{0};
     uint64_t outputAddr_{0};

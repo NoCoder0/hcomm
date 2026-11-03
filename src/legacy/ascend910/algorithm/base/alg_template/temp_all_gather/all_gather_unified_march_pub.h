@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef ALL_GATHER_UNIFIED_MARCH_PUB_H
 #define ALL_GATHER_UNIFIED_MARCH_PUB_H
@@ -18,13 +18,12 @@ public:
     using AlgTemplateBase::Prepare;
     explicit AllGatherUnifiedMarch(const HcclDispatcher dispatcher);
     ~AllGatherUnifiedMarch() override;
-    HcclResult Prepare(const Stream &mainStream,
-        SubCommInfo &level0CommInfo, DeviceMem &userInput, DeviceMem &userOutput,
-        DeviceMem &usrInMem, DeviceMem &usrOutMem, u64 blockDataByte,
-        std::vector<Stream> &subStreams,
-        const std::vector<std::shared_ptr<LocalNotify>> &meshSignalMainToSub,
-        const std::vector<std::shared_ptr<LocalNotify>> &meshSignalSubToMain,
-        const std::vector<std::vector<Slice>> &multRingsUserMemSlice, const u64 baseOffset = 0) override;
+    HcclResult Prepare(
+        const Stream& mainStream, SubCommInfo& level0CommInfo, DeviceMem& userInput, DeviceMem& userOutput,
+        DeviceMem& usrInMem, DeviceMem& usrOutMem, u64 blockDataByte, std::vector<Stream>& subStreams,
+        const std::vector<std::shared_ptr<LocalNotify>>& meshSignalMainToSub,
+        const std::vector<std::shared_ptr<LocalNotify>>& meshSignalSubToMain,
+        const std::vector<std::vector<Slice>>& multRingsUserMemSlice, const u64 baseOffset = 0) override;
     HcclResult RunAsync() override;
 
 protected:
@@ -34,8 +33,9 @@ private:
     HcclResult WaitSubStreamFinish(u32 streamSize);
     HcclResult NotifyNeighborsStart(LINK& prevIntraLink, LINK& nextIntralLink, u32 neighbors);
     HcclResult NotifyNeighborsEnd(LINK& prevIntraLink, LINK& nextIntralLink, u32 neighbors);
-    HcclResult DoSerialSDMA(void* remoteSrcAddr, u64 remoteOffsetByte, void* dstAddr,
-        Stream &temStream, LINK& tmpLink, u64 memSize, u32 step = INVALID_UINT);
+    HcclResult DoSerialSDMA(
+        void* remoteSrcAddr, u64 remoteOffsetByte, void* dstAddr, Stream& temStream, LINK& tmpLink, u64 memSize,
+        u32 step = INVALID_UINT);
     HcclResult RunSingleStep(u32 ringPrevRank, u32 ringNextRank, u32 step, u32 totalStep);
     HcclResult RunLastStep(u32 ringPrevRank, u32 ringNextRank, u32 totalStep);
 

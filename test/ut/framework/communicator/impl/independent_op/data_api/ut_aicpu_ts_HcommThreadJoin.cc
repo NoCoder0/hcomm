@@ -41,8 +41,7 @@ using namespace hccl;
  * - timeout：等待超时时间
  * - res：用于存储接口返回值的成员变量
  */
-class UtAicpuTsHcommThreadJoin : public testing::Test
-{
+class UtAicpuTsHcommThreadJoin : public testing::Test {
 protected:
     virtual void SetUp() override
     {
@@ -50,10 +49,7 @@ protected:
         threadOnDevice.pImpl_ = std::make_unique<Hccl::IAicpuTsThread>();
     }
 
-    virtual void TearDown() override
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() override { GlobalMockObject::verify(); }
 
     AicpuTsThread threadOnDevice{StreamType::STREAM_TYPE_DEVICE, 0, NotifyLoadType::DEVICE_NOTIFY};
     ThreadHandle thread = reinterpret_cast<ThreadHandle>(&threadOnDevice);

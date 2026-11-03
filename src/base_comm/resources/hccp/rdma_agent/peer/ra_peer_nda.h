@@ -21,5 +21,6 @@ int RaPeerNdaCqDestroy(struct RaRdmaHandle *rdmaHandle, void *cqHandle);
 int RaPeerNdaQpCreate(struct RaRdmaHandle *rdmaHandle, struct NdaQpInitAttr *attr, struct NdaQpInfo *info,
     void **qpHandle);
 int RaPeerNdaQpDestroy(struct RaQpHandle *qpPeer);
+int RaPeerGetQpHyperFeature(struct RaQpHandle *qpPeer, struct HyperFeature *hyperFeature);
 
 #endif // RA_PEER_NDA_H

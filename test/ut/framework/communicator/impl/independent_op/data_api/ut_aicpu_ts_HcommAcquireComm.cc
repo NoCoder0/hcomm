@@ -37,13 +37,9 @@ using namespace hccl;
  * - TearDown：每个测试用例执行后的清理操作，验证mock对象是否被正确调用
  * - res：用于存储接口返回值的成员变量
  */
-class UtAicpuTsHcommAcquireComm : public testing::Test
-{
+class UtAicpuTsHcommAcquireComm : public testing::Test {
 protected:
-    virtual void TearDown() override
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() override { GlobalMockObject::verify(); }
 
     int32_t res{HCCL_E_RESERVED};
 };

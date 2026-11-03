@@ -1,34 +1,36 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include <securec.h>
 #include "adapter_rts_common.h"
 #include "peterson_lock.h"
 
 namespace hccl {
 PetersonLock::PetersonLock(u64 timeoutSec)
-    : size_(MIN_SHM_LEN), type_(Type::HOST), typeName_("Host"), timeout_(timeoutSec),
-    myTurn_(TURN_FOR_HOST)
-{
-}
+    : size_(MIN_SHM_LEN),
+      type_(Type::HOST),
+      typeName_("Host"),
+      timeout_(timeoutSec),
+      myTurn_(TURN_FOR_HOST)
+{}
 
-PetersonLock::PetersonLock(void *devPtr, u64 timeoutSec)
-    : size_(MIN_SHM_LEN), type_(Type::DEVICE), typeName_("Device"), timeout_(timeoutSec),
-    devMem_(devPtr, size_, false), myTurn_(TURN_FOR_DEVICE)
-{
-}
+PetersonLock::PetersonLock(void* devPtr, u64 timeoutSec)
+    : size_(MIN_SHM_LEN),
+      type_(Type::DEVICE),
+      typeName_("Device"),
+      timeout_(timeoutSec),
+      devMem_(devPtr, size_, false),
+      myTurn_(TURN_FOR_DEVICE)
+{}
 
-
-PetersonLock::~PetersonLock()
-{
-    DeInit();
-}
+PetersonLock::~PetersonLock() { DeInit(); }
 
 HcclResult PetersonLock::Init()
 {
@@ -38,18 +40,19 @@ HcclResult PetersonLock::Init()
         }
     }
 
-    auto buffer = reinterpret_cast<u8 *>(devMem_.ptr());
+    auto buffer = reinterpret_cast<u8*>(devMem_.ptr());
     size_t offset = 0;
-    turn_ = reinterpret_cast<volatile u32 *>(buffer + offset);
+    turn_ = reinterpret_cast<volatile u32*>(buffer + offset);
     offset += sizeof(u32);
 
-    hostFlag_ = reinterpret_cast<volatile u32 *>(buffer + offset);
+    hostFlag_ = reinterpret_cast<volatile u32*>(buffer + offset);
     offset += sizeof(u32);
 
-    deviceFlag_ = reinterpret_cast<volatile u32 *>(buffer + offset);
+    deviceFlag_ = reinterpret_cast<volatile u32*>(buffer + offset);
     offset += sizeof(u32);
 
-    HCCL_INFO("[PetersonLock][Init] type [%s] init success, memSize [%lu Byte] timeout[%lu s]", typeName_.c_str(),
+    HCCL_INFO(
+        "[PetersonLock][Init] type [%s] init success, memSize [%lu Byte] timeout[%lu s]", typeName_.c_str(),
         devMem_.size(), timeout_);
     return HCCL_SUCCESS;
 }
@@ -82,10 +85,7 @@ HcclResult PetersonLock::DeInit()
     return HCCL_SUCCESS;
 }
 
-u64 PetersonLock::GetDevMemAddr() const
-{
-    return reinterpret_cast<u64>(devMem_.ptr());
-}
+u64 PetersonLock::GetDevMemAddr() const { return reinterpret_cast<u64>(devMem_.ptr()); }
 
 HcclResult PetersonLock::Lock()
 {
@@ -177,8 +177,10 @@ HcclResult PetersonLock::WriteSelfFlag(u32 selfFlag)
         *deviceFlag_ = selfFlag;
     } else {
         u32 hostFlag = selfFlag;
-        if (hrtMemSyncCopy(const_cast<u32 *>(hostFlag_), sizeof(u32), &hostFlag,
-            sizeof(u32), HcclRtMemcpyKind::HCCL_RT_MEMCPY_KIND_HOST_TO_DEVICE) != HCCL_SUCCESS) {
+        if (hrtMemSyncCopy(
+                const_cast<u32*>(hostFlag_), sizeof(u32), &hostFlag, sizeof(u32),
+                HcclRtMemcpyKind::HCCL_RT_MEMCPY_KIND_HOST_TO_DEVICE)
+            != HCCL_SUCCESS) {
             HCCL_INFO("[PetersonLock][WriteSelfFlag] H2D write hostFlag not correct");
             return HCCL_E_INTERNAL;
         }
@@ -194,8 +196,10 @@ HcclResult PetersonLock::WriteTurn()
         *turn_ = TURN_FOR_DEVICE;
     } else {
         u32 turn = TURN_FOR_HOST;
-        if (hrtMemSyncCopy(const_cast<u32 *>(turn_), sizeof(u32), &turn,
-            sizeof(u32), HcclRtMemcpyKind::HCCL_RT_MEMCPY_KIND_HOST_TO_DEVICE) != HCCL_SUCCESS) {
+        if (hrtMemSyncCopy(
+                const_cast<u32*>(turn_), sizeof(u32), &turn, sizeof(u32),
+                HcclRtMemcpyKind::HCCL_RT_MEMCPY_KIND_HOST_TO_DEVICE)
+            != HCCL_SUCCESS) {
             HCCL_INFO("[PetersonLock][WriteSelfFlag] H2D write turn not correct");
             return HCCL_E_INTERNAL;
         }
@@ -205,13 +209,15 @@ HcclResult PetersonLock::WriteTurn()
     return HCCL_SUCCESS;
 }
 
-HcclResult PetersonLock::ReadPeerFlag(u32 &peerFlag)
+HcclResult PetersonLock::ReadPeerFlag(u32& peerFlag)
 {
     if (type_ == Type::DEVICE) {
         peerFlag = *hostFlag_;
     } else {
-        if (hrtMemSyncCopy(&peerFlag, sizeof(u32), const_cast<u32 *>(deviceFlag_),
-            sizeof(u32), HcclRtMemcpyKind::HCCL_RT_MEMCPY_KIND_DEVICE_TO_HOST) != HCCL_SUCCESS) {
+        if (hrtMemSyncCopy(
+                &peerFlag, sizeof(u32), const_cast<u32*>(deviceFlag_), sizeof(u32),
+                HcclRtMemcpyKind::HCCL_RT_MEMCPY_KIND_DEVICE_TO_HOST)
+            != HCCL_SUCCESS) {
             HCCL_INFO("[PetersonLock][ReadPeerFlag] D2H read device flag not correct");
             return HCCL_E_INTERNAL;
         }
@@ -219,13 +225,15 @@ HcclResult PetersonLock::ReadPeerFlag(u32 &peerFlag)
     return HCCL_SUCCESS;
 }
 
-HcclResult PetersonLock::ReadTurn(u32 &turn)
+HcclResult PetersonLock::ReadTurn(u32& turn)
 {
     if (type_ == Type::DEVICE) {
         turn = *turn_;
     } else {
-        if (hrtMemSyncCopy(&turn, sizeof(u32), const_cast<u32 *>(turn_),
-            sizeof(u32), HcclRtMemcpyKind::HCCL_RT_MEMCPY_KIND_DEVICE_TO_HOST) != HCCL_SUCCESS) {
+        if (hrtMemSyncCopy(
+                &turn, sizeof(u32), const_cast<u32*>(turn_), sizeof(u32),
+                HcclRtMemcpyKind::HCCL_RT_MEMCPY_KIND_DEVICE_TO_HOST)
+            != HCCL_SUCCESS) {
             HCCL_INFO("[PetersonLock][ReadPeerFlag] D2H read turn not correct");
             return HCCL_E_INTERNAL;
         }
@@ -233,7 +241,7 @@ HcclResult PetersonLock::ReadTurn(u32 &turn)
     return HCCL_SUCCESS;
 }
 
-PetersonLockGuard::PetersonLockGuard(PetersonLock *lock) : lock_(lock), lockFailed_(false)
+PetersonLockGuard::PetersonLockGuard(PetersonLock* lock) : lock_(lock), lockFailed_(false)
 {
     if (lock_ == nullptr) {
         HCCL_ERROR("[PetersonLockGuard] invalid lock");
@@ -254,4 +262,4 @@ PetersonLockGuard::~PetersonLockGuard()
         lock_->Unlock();
     }
 }
-}
+} // namespace hccl

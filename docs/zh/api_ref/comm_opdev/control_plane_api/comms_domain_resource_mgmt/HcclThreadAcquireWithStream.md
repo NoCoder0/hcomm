@@ -2,15 +2,25 @@
 
 ## 产品支持情况
 
-- Ascend 950PR/Ascend 950DT：支持
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：支持
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：支持
+<!-- npu="950" id1 -->
+- Ascend 950PR&950DT系列产品：支持
+<!-- end id1 -->
+<!-- npu="A3" id2 -->
+- Atlas A3系列产品：支持
+<!-- end id2 -->
+<!-- npu="910b" id3 -->
+- Atlas A2系列产品：支持
+<!-- end id3 -->
+<!-- npu="910" id4 -->
+- Atlas训练系列产品：不支持
+<!-- end id4 -->
+<!-- npu="310p" id5 -->
+- Atlas推理系列产品：不支持
+<!-- end id5 -->
 
 ## 功能说明
 
-基于已有runtime stream获取指定notifyNum的通信线程资源。
-
-当前适用于通信引擎为HOST CPU+TS的场景。
+基于通信域和Runtime Stream句柄获取通信线程，并为该通信线程分配指定数量的同步资源（Notify）。相关概念可参见[通信算子开发指南-并发模型](../../../../comm_op_dev_guide/prog_models_concepts/concurrency_model.md)章节。
 
 ## 函数原型
 
@@ -22,7 +32,7 @@ HcclResult HcclThreadAcquireWithStream(HcclComm comm, CommEngine engine, aclrtSt
 
 | 参数名 | 输入/输出 | 描述 |
 | --- | --- | --- |
-| comm | 输入 | 通信域句柄。<br>HcclComm类型的定义如下：<br>typedef void *HcclComm; |
+| comm | 输入 | 通信域句柄。<br>HcclComm类型的定义可参见[HcclComm](../../../comm_mgr_c/data_type_definition/HcclComm.md)。 |
 | engine | 输入 | 通信引擎类型。<br>CommEngine类型的定义可参见[CommEngine](../../datatype_definition/CommEngine.md)。 |
 | stream | 输入 | stream句柄。 |
 | notifyNum | 输入 | 同步信号数量。 |
@@ -34,20 +44,27 @@ HcclResult HcclThreadAcquireWithStream(HcclComm comm, CommEngine engine, aclrtSt
 
 ## 约束说明
 
-1. 该接口不支持COMM_ENGINE_AIV和COMM_ENGINE_CCU两种通信引擎。
-2. comm、stream、thread不能为NULL，否则返回HCCL_E_PTR。
+- 该接口只支持COMM_ENGINE_CPU、COMM_ENGINE_CPU_TS、COMM_ENGINE_CCU通信引擎。
+- comm必须为有效的通信域句柄（由通信域创建接口获得，调用期间保持有效）。禁止传入空指针、野指针或已销毁的句柄。
 
 ## 调用示例
 
 ```c
+// 通信域句柄
 HcclComm comm;
-CommEngine engine = COMM_ENGINE_CPU_TS ;
+// 创建runtime stream
 aclrtStream stream;
 aclrtCreateStream(&stream);
+// 创建thread，并申请2个thread上的notify资源
 ThreadHandle thread;
-HcclResult result = HcclThreadAcquireWithStream(comm, engine, stream, 2, &thread);
+HcclResult ret = HcclThreadAcquireWithStream(comm, COMM_ENGINE_CPU_TS, stream, 2, &thread);
+if (ret != HCCL_SUCCESS) {
+    // 错误处理
+}
+
 // 数据面操作
 // ...
+
 // 流同步
 aclrtSynchronizeStream(stream);
 ```

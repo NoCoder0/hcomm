@@ -17,104 +17,111 @@
 #include <vector>
 
 #include "store_sim_shm_ops.h"
+#include "store_sim_resource_root.h"
 
 class SimShmOpsTest : public testing::Test {
 protected:
-    void SetUp() override {
-        // Clean up any existing shared memory
-        shm_unlink("/test_shm_create");
-        shm_unlink("/test_shm_open");
-        shm_unlink("/test_shm_lock");
-        shm_unlink("/test_shm_multi");
-        shm_unlink("/test_shm_refcount");
+    void SetUp() override
+    {
+        // 初始化 pid 目录（强清重建），保证 shm_open 中间目录存在
+        sim::SimResourceRoot::GetInstance().Init();
     }
 
-    void TearDown() override {
-        // Clean up shared memory after tests
-        shm_unlink("/test_shm_create");
-        shm_unlink("/test_shm_open");
-        shm_unlink("/test_shm_lock");
-        shm_unlink("/test_shm_multi");
-        shm_unlink("/test_shm_refcount");
+    void TearDown() override
+    {
+        // 清理 pid 目录，隔离残留
+        sim::SimResourceRoot::GetInstance().Cleanup();
     }
+
+    static std::string FullName(const char* name) { return sim::SimResourceRoot::BuildName(name); }
 };
 
 // ==================== Constants Tests ====================
 
-TEST_F(SimShmOpsTest, ShmConstants_ValidValues) {
-    EXPECT_EQ(SHM_MAGIC, 0x53484D50);  // 'SHMP'
+TEST_F(SimShmOpsTest, ShmConstants_ValidValues)
+{
+    EXPECT_EQ(SHM_MAGIC, 0x53484D50); // 'SHMP'
     EXPECT_EQ(SHM_VERSION, 1);
 }
 
-TEST_F(SimShmOpsTest, ShmHead_SizeValid) {
+TEST_F(SimShmOpsTest, ShmHead_SizeValid)
+{
     EXPECT_GT(sizeof(ShmHead), 0u);
-    EXPECT_LE(sizeof(ShmHead), 128u);  // Should be reasonably small
+    EXPECT_LE(sizeof(ShmHead), 512u); // name[256] 主导, 保持可校验上限
 }
 
 // ==================== ShmCreate Tests ====================
 
-TEST_F(SimShmOpsTest, ShmCreate_Normal_Success) {
+TEST_F(SimShmOpsTest, ShmCreate_Normal_Success)
+{
     void* shm = ShmCreate("/test_shm_create", 4096);
     EXPECT_NE(shm, nullptr);
-    
+
     if (shm) {
         ShmClose(shm);
     }
 }
 
-TEST_F(SimShmOpsTest, ShmCreate_NullName_ReturnsNull) {
+TEST_F(SimShmOpsTest, ShmCreate_NullName_ReturnsNull)
+{
     void* shm = ShmCreate(nullptr, 4096);
     EXPECT_EQ(shm, nullptr);
 }
 
-TEST_F(SimShmOpsTest, ShmCreate_ZeroSize_ReturnsNull) {
+TEST_F(SimShmOpsTest, ShmCreate_ZeroSize_ReturnsNull)
+{
     void* shm = ShmCreate("/test_shm_create", 0);
     EXPECT_EQ(shm, nullptr);
 }
 
-TEST_F(SimShmOpsTest, ShmCreate_SmallSize_Success) {
+TEST_F(SimShmOpsTest, ShmCreate_SmallSize_Success)
+{
     void* shm = ShmCreate("/test_shm_create", 1);
     EXPECT_NE(shm, nullptr);
-    
+
     if (shm) {
         ShmClose(shm);
     }
 }
 
-TEST_F(SimShmOpsTest, ShmCreate_LargeSize_Success) {
+TEST_F(SimShmOpsTest, ShmCreate_LargeSize_Success)
+{
     void* shm = ShmCreate("/test_shm_create", 1024 * 1024);
     EXPECT_NE(shm, nullptr);
-    
+
     if (shm) {
         ShmClose(shm);
     }
 }
 
-TEST_F(SimShmOpsTest, ShmCreate_DuplicateName_ReturnsNull) {
+TEST_F(SimShmOpsTest, ShmCreate_DuplicateName_ReturnsNull)
+{
     void* shm1 = ShmCreate("/test_shm_create", 4096);
     ASSERT_NE(shm1, nullptr);
-    
+
     void* shm2 = ShmCreate("/test_shm_create", 4096);
     EXPECT_EQ(shm2, nullptr);
-    
+
     ShmClose(shm1);
 }
 
-TEST_F(SimShmOpsTest, ShmCreate_MemoryAccessible) {
+TEST_F(SimShmOpsTest, ShmCreate_MemoryAccessible)
+{
     void* shm = ShmCreate("/test_shm_create", 4096);
     ASSERT_NE(shm, nullptr);
-    
+
     // Try to write and read
     int* data = static_cast<int*>(shm);
     *data = 12345;
     EXPECT_EQ(*data, 12345);
-    
+
     ShmClose(shm);
 }
 
 // ==================== ShmOpen Tests ====================
 
-TEST_F(SimShmOpsTest, ShmOpen_AfterCreate_Success) {
+TEST_F(SimShmOpsTest, ShmOpen_AfterCreate_Success)
+{
     // ShmCreate + ShmClose will shm_unlink (refCount drops to 0),
     // so ShmOpen must be called while shm is still alive
     void* shm1 = ShmCreate("/test_shm_open", 4096);
@@ -131,19 +138,22 @@ TEST_F(SimShmOpsTest, ShmOpen_AfterCreate_Success) {
     ShmClose(shm1);
 }
 
-TEST_F(SimShmOpsTest, ShmOpen_NullName_ReturnsNull) {
+TEST_F(SimShmOpsTest, ShmOpen_NullName_ReturnsNull)
+{
     size_t size = 0;
     void* shm = ShmOpen(nullptr, &size);
     EXPECT_EQ(shm, nullptr);
 }
 
-TEST_F(SimShmOpsTest, ShmOpen_NonExisting_ReturnsNull) {
+TEST_F(SimShmOpsTest, ShmOpen_NonExisting_ReturnsNull)
+{
     size_t size = 0;
     void* shm = ShmOpen("/non_existing_shm", &size);
     EXPECT_EQ(shm, nullptr);
 }
 
-TEST_F(SimShmOpsTest, ShmOpen_SizeParameterUpdated) {
+TEST_F(SimShmOpsTest, ShmOpen_SizeParameterUpdated)
+{
     void* shm1 = ShmCreate("/test_shm_open", 8192);
     ASSERT_NE(shm1, nullptr);
 
@@ -158,18 +168,18 @@ TEST_F(SimShmOpsTest, ShmOpen_SizeParameterUpdated) {
 
 // ==================== ShmClose Tests ====================
 
-TEST_F(SimShmOpsTest, ShmClose_Normal_NoThrow) {
+TEST_F(SimShmOpsTest, ShmClose_Normal_NoThrow)
+{
     void* shm = ShmCreate("/test_shm_create", 4096);
     ASSERT_NE(shm, nullptr);
-    
+
     EXPECT_NO_THROW(ShmClose(shm));
 }
 
-TEST_F(SimShmOpsTest, ShmClose_NullPointer_NoThrow) {
-    EXPECT_NO_THROW(ShmClose(nullptr));
-}
+TEST_F(SimShmOpsTest, ShmClose_NullPointer_NoThrow) { EXPECT_NO_THROW(ShmClose(nullptr)); }
 
-TEST_F(SimShmOpsTest, ShmClose_MultipleTimes_Success) {
+TEST_F(SimShmOpsTest, ShmClose_MultipleTimes_Success)
+{
     // Keep shm1 alive so shm_unlink doesn't happen on first close
     void* shm1 = ShmCreate("/test_shm_create", 4096);
     ASSERT_NE(shm1, nullptr);
@@ -189,53 +199,59 @@ TEST_F(SimShmOpsTest, ShmClose_MultipleTimes_Success) {
 
 // ==================== ShmLock/ShmUnlock Tests ====================
 
-TEST_F(SimShmOpsTest, ShmLock_Normal_Success) {
+TEST_F(SimShmOpsTest, ShmLock_Normal_Success)
+{
     void* shm = ShmCreate("/test_shm_lock", 4096);
     ASSERT_NE(shm, nullptr);
-    
+
     int result = ShmLock(shm);
     EXPECT_EQ(result, 0);
-    
+
     ShmUnlock(shm);
     ShmClose(shm);
 }
 
-TEST_F(SimShmOpsTest, ShmLock_NullPointer_ReturnsError) {
+TEST_F(SimShmOpsTest, ShmLock_NullPointer_ReturnsError)
+{
     int result = ShmLock(nullptr);
     EXPECT_EQ(result, -1);
 }
 
-TEST_F(SimShmOpsTest, ShmUnlock_Normal_Success) {
+TEST_F(SimShmOpsTest, ShmUnlock_Normal_Success)
+{
     void* shm = ShmCreate("/test_shm_lock", 4096);
     ASSERT_NE(shm, nullptr);
-    
+
     ShmLock(shm);
     int result = ShmUnlock(shm);
     EXPECT_EQ(result, 0);
-    
+
     ShmClose(shm);
 }
 
-TEST_F(SimShmOpsTest, ShmUnlock_NullPointer_ReturnsError) {
+TEST_F(SimShmOpsTest, ShmUnlock_NullPointer_ReturnsError)
+{
     int result = ShmUnlock(nullptr);
     EXPECT_EQ(result, -1);
 }
 
-TEST_F(SimShmOpsTest, ShmLockUnlock_MultipleTimes_Success) {
+TEST_F(SimShmOpsTest, ShmLockUnlock_MultipleTimes_Success)
+{
     void* shm = ShmCreate("/test_shm_lock", 4096);
     ASSERT_NE(shm, nullptr);
-    
+
     for (int i = 0; i < 10; ++i) {
         EXPECT_EQ(ShmLock(shm), 0);
         EXPECT_EQ(ShmUnlock(shm), 0);
     }
-    
+
     ShmClose(shm);
 }
 
 // ==================== Reference Count Tests ====================
 
-TEST_F(SimShmOpsTest, RefCount_IncrementOnOpen) {
+TEST_F(SimShmOpsTest, RefCount_IncrementOnOpen)
+{
     // Keep shm1 alive to prevent shm_unlink
     void* shm1 = ShmCreate("/test_shm_refcount", 4096);
     ASSERT_NE(shm1, nullptr);
@@ -262,25 +278,27 @@ TEST_F(SimShmOpsTest, RefCount_IncrementOnOpen) {
 
 // ==================== Data Integrity Tests ====================
 
-TEST_F(SimShmOpsTest, DataPersistence_WriteRead_Success) {
+TEST_F(SimShmOpsTest, DataPersistence_WriteRead_Success)
+{
     void* shm = ShmCreate("/test_shm_create", 4096);
     ASSERT_NE(shm, nullptr);
-    
+
     // Write data
     int* data = static_cast<int*>(shm);
     for (int i = 0; i < 100; ++i) {
         data[i] = i * 2;
     }
-    
+
     // Read and verify
     for (int i = 0; i < 100; ++i) {
         EXPECT_EQ(data[i], i * 2);
     }
-    
+
     ShmClose(shm);
 }
 
-TEST_F(SimShmOpsTest, DataPersistence_AfterReopen_Success) {
+TEST_F(SimShmOpsTest, DataPersistence_AfterReopen_Success)
+{
     // Create and write
     void* shm1 = ShmCreate("/test_shm_create", 4096);
     ASSERT_NE(shm1, nullptr);
@@ -304,30 +322,33 @@ TEST_F(SimShmOpsTest, DataPersistence_AfterReopen_Success) {
 
 // ==================== Boundary Tests ====================
 
-TEST_F(SimShmOpsTest, ShmCreate_PageSize_Success) {
+TEST_F(SimShmOpsTest, ShmCreate_PageSize_Success)
+{
     long page_size = sysconf(_SC_PAGESIZE);
     void* shm = ShmCreate("/test_shm_create", page_size);
     EXPECT_NE(shm, nullptr);
-    
+
     if (shm) {
         ShmClose(shm);
     }
 }
 
-TEST_F(SimShmOpsTest, ShmCreate_MultiplePages_Success) {
+TEST_F(SimShmOpsTest, ShmCreate_MultiplePages_Success)
+{
     long page_size = sysconf(_SC_PAGESIZE);
     void* shm = ShmCreate("/test_shm_create", page_size * 4);
     EXPECT_NE(shm, nullptr);
-    
+
     if (shm) {
         ShmClose(shm);
     }
 }
 
-TEST_F(SimShmOpsTest, ShmCreate_VerySmallSize_Success) {
+TEST_F(SimShmOpsTest, ShmCreate_VerySmallSize_Success)
+{
     void* shm = ShmCreate("/test_shm_create", 1);
     EXPECT_NE(shm, nullptr);
-    
+
     if (shm) {
         // Should still be able to access
         char* data = static_cast<char*>(shm);
@@ -339,13 +360,14 @@ TEST_F(SimShmOpsTest, ShmCreate_VerySmallSize_Success) {
 
 // ==================== Concurrency Tests ====================
 
-TEST_F(SimShmOpsTest, ShmLock_MultiThreaded_Exclusion) {
+TEST_F(SimShmOpsTest, ShmLock_MultiThreaded_Exclusion)
+{
     void* shm = ShmCreate("/test_shm_lock", 4096);
     ASSERT_NE(shm, nullptr);
-    
+
     std::atomic<int> counter{0};
     std::vector<std::thread> threads;
-    
+
     for (int i = 0; i < 4; ++i) {
         threads.emplace_back([&counter, shm]() {
             for (int j = 0; j < 100; ++j) {
@@ -356,34 +378,36 @@ TEST_F(SimShmOpsTest, ShmLock_MultiThreaded_Exclusion) {
             }
         });
     }
-    
+
     for (auto& t : threads) {
         t.join();
     }
-    
+
     EXPECT_EQ(counter.load(), 400);
     ShmClose(shm);
 }
 
 // ==================== Error Recovery Tests ====================
 
-TEST_F(SimShmOpsTest, ShmCreate_AfterClose_CanRecreate) {
+TEST_F(SimShmOpsTest, ShmCreate_AfterClose_CanRecreate)
+{
     void* shm1 = ShmCreate("/test_shm_create", 4096);
     ASSERT_NE(shm1, nullptr);
     ShmClose(shm1);
-    
+
     // After close, the shm should be deleted (ref count = 0)
     // So we should be able to create again
     void* shm2 = ShmCreate("/test_shm_create", 4096);
     EXPECT_NE(shm2, nullptr);
-    
+
     if (shm2) {
         ShmClose(shm2);
     }
 }
 
-TEST_F(SimShmOpsTest, ShmOpen_InvalidMagic_ReturnsNull) {
-    int shmFd = shm_open("/test_shm_create", O_CREAT | O_RDWR, 0666);
+TEST_F(SimShmOpsTest, ShmOpen_InvalidMagic_ReturnsNull)
+{
+    int shmFd = open(FullName("/test_shm_create").c_str(), O_CREAT | O_RDWR, 0666);
     ASSERT_GE(shmFd, 0);
 
     size_t totalSize = sizeof(ShmHead) + 1024;
@@ -406,11 +430,12 @@ TEST_F(SimShmOpsTest, ShmOpen_InvalidMagic_ReturnsNull) {
     void* shm = ShmOpen("/test_shm_create", &size);
     EXPECT_EQ(shm, nullptr);
 
-    shm_unlink("/test_shm_create");
+    unlink(FullName("/test_shm_create").c_str());
 }
 
-TEST_F(SimShmOpsTest, ShmOpen_ZeroMagic_ReturnsNull) {
-    int shmFd = shm_open("/test_shm_create", O_CREAT | O_RDWR, 0666);
+TEST_F(SimShmOpsTest, ShmOpen_ZeroMagic_ReturnsNull)
+{
+    int shmFd = open(FullName("/test_shm_create").c_str(), O_CREAT | O_RDWR, 0666);
     ASSERT_GE(shmFd, 0);
 
     size_t totalSize = sizeof(ShmHead) + 1024;
@@ -433,34 +458,36 @@ TEST_F(SimShmOpsTest, ShmOpen_ZeroMagic_ReturnsNull) {
     void* shm = ShmOpen("/test_shm_create", &size);
     EXPECT_EQ(shm, nullptr);
 
-    shm_unlink("/test_shm_create");
+    unlink(FullName("/test_shm_create").c_str());
 }
 
-TEST_F(SimShmOpsTest, ShmOpen_AfterLastClose_ReturnsNull) {
+TEST_F(SimShmOpsTest, ShmOpen_AfterLastClose_ReturnsNull)
+{
     void* shm1 = ShmCreate("/test_shm_create", 4096);
     ASSERT_NE(shm1, nullptr);
-    ShmClose(shm1);  // This should delete the shm
-    
+    ShmClose(shm1); // This should delete the shm
+
     size_t size = 0;
     void* shm2 = ShmOpen("/test_shm_create", &size);
     EXPECT_EQ(shm2, nullptr);
 }
 
-TEST_F(SimShmOpsTest, ShmOpen_Concurrent_MultipleThreads) {
+TEST_F(SimShmOpsTest, ShmOpen_Concurrent_MultipleThreads)
+{
     void* shm1 = ShmCreate("/test_shm_create", 4096);
     ASSERT_NE(shm1, nullptr);
 
     std::atomic<int> successCount{0};
     std::vector<std::thread> threads;
-    std::vector<void*> openedShms;
+    std::vector<void*> openedShms(4, nullptr);
 
     for (int i = 0; i < 4; ++i) {
-        threads.emplace_back([this, &successCount, &openedShms]() {
+        threads.emplace_back([i, &successCount, &openedShms]() {
             size_t size = 0;
             void* shm = ShmOpen("/test_shm_create", &size);
             if (shm) {
                 successCount.fetch_add(1);
-                openedShms.push_back(shm);
+                openedShms[i] = shm;
             }
         });
     }
@@ -472,12 +499,15 @@ TEST_F(SimShmOpsTest, ShmOpen_Concurrent_MultipleThreads) {
     EXPECT_GE(successCount.load(), 1);
 
     for (void* shm : openedShms) {
-        ShmClose(shm);
+        if (shm != nullptr) {
+            ShmClose(shm);
+        }
     }
     ShmClose(shm1);
 }
 
-TEST_F(SimShmOpsTest, ShmLock_LongTimeHold_Released) {
+TEST_F(SimShmOpsTest, ShmLock_LongTimeHold_Released)
+{
     void* shm = ShmCreate("/test_shm_lock", 4096);
     ASSERT_NE(shm, nullptr);
 
@@ -487,7 +517,8 @@ TEST_F(SimShmOpsTest, ShmLock_LongTimeHold_Released) {
     ShmClose(shm);
 }
 
-TEST_F(SimShmOpsTest, ShmCreate_VariousSizes_AllSucceed) {
+TEST_F(SimShmOpsTest, ShmCreate_VariousSizes_AllSucceed)
+{
     const size_t sizes[] = {1, 100, 1024, 4096, 65536, 1048576};
     for (size_t sz : sizes) {
         void* p = nullptr;
@@ -499,8 +530,8 @@ TEST_F(SimShmOpsTest, ShmCreate_VariousSizes_AllSucceed) {
         }
         // Give OS time to clean up
         if (p) {
-            while (shm_open("/test_shm_create", O_RDWR, 0666) != -1) {
-                shm_unlink("/test_shm_create");
+            while (open(FullName("/test_shm_create").c_str(), O_RDWR, 0666) != -1) {
+                unlink(FullName("/test_shm_create").c_str());
                 usleep(1000);
             }
         }

@@ -25,7 +25,9 @@ target_include_directories(hccl_utest_comms_ccu_rep_data PRIVATE
     ${HCCL_CODE_ROOT}/src/base_comm/resources/ccu/ccu_representation/reps/common
     ${HCCL_CODE_ROOT}/src/base_comm/resources/ccu/ccu_representation/reps/control
     ${HCCL_CODE_ROOT}/src/base_comm/resources/ccu/ccu_representation/reps/data
+    ${HCCL_CODE_ROOT}/src/base_comm/resources/ccu/ccu_representation/reps/logical
     ${HCCL_CODE_ROOT}/src/base_comm/resources/ccu/ccu_representation/reps/loop
+    ${HCCL_CODE_ROOT}/src/base_comm/resources/ccu/ccu_representation/reps/shift
     ${HCCL_CODE_ROOT}/src/base_comm/resources/ccu/ccu_representation/reps/sync
     ${HCCL_CODE_ROOT}/src/base_comm/resources/ccu/ccu_representation/reps/translator
 )
@@ -52,7 +54,7 @@ target_link_libraries(hccl_utest_comms_ccu_rep_data PRIVATE
     -pthread
     hccl_llt
     -Wl,--whole-archive
-    -Wl,--no-whole-archi
+    -Wl,--no-whole-archive
     -lgcov
     -lrt
     -ldl

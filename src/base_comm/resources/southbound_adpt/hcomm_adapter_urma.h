@@ -7,17 +7,17 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
- 
+
 #ifndef HCCL_INC_ADAPTER_URMA_H
 #define HCCL_INC_ADAPTER_URMA_H
- 
+
 #include "dlurma_function.h"
 #include "hccl/base.h"
- 
+
 namespace hcomm {
- 
-HcclResult HrtUrmaPostJettySendWr(urma_jetty_t *jetty, urma_jfs_wr_t *wr, urma_jfs_wr_t **bad_wr);
-int HrtUrmaPollJfc(urma_jfc_t *jfc, int cr_cnt, urma_cr_t *cr);
- 
-}
+
+HcclResult HrtUrmaPostJettySendWr(urma_jetty_t* jetty, urma_jfs_wr_t* wr, urma_jfs_wr_t** bad_wr);
+int HrtUrmaPollJfc(urma_jfc_t* jfc, int cr_cnt, urma_cr_t* cr);
+
+} // namespace hcomm
 #endif

@@ -32,15 +32,15 @@ extern "C" {
 #pragma pack(4)
 /* common */
 /**
-* @brief 订阅者句柄
-*/
+ * @brief 订阅者句柄
+ */
 typedef struct tagBkfSuber BkfSuber;
 
 /**
  * @brief  0默认模式，回调APP只有cookie和slice，1 增强模式，回调APP除了原有参数再增加两端url
  */
 #define BKF_SUBER_MODE_DEFAULT 0
-#define BKF_SUBER_MODE_EX      1
+#define BKF_SUBER_MODE_EX 1
 
 /* suber会话断连原因枚举 */
 enum {
@@ -57,35 +57,36 @@ typedef void (*F_SUBER_ON_DISCONNECT)(void *cookie, BkfUrl *connDestUrl, BkfUrl 
 
 /* init */
 /**
-* @brief 订阅者初始化参数
-*/
+ * @brief 订阅者初始化参数
+ */
 typedef struct tagBkfSuberInitArg {
-    char *name; /**< 模块名。不要有空格 */
-    char *svcName; /**< 服务名 */
+    char *name;               /**< 模块名。不要有空格 */
+    char *svcName;            /**< 服务名 */
     uint16_t idlVersionMajor; /**< 主版本号 */
     uint16_t idlVersionMinor; /**< 次要版本号 */
-    BOOL dbgOn; /**< 诊断开关 */
-    BkfMemMng *memMng; /**< 内存库句柄,见bkf_mem.h,同一app内可复用 */
-    BkfDisp *disp; /**< 诊断显示库句柄,见bkf_disp.h,同一app内可复用 */
-    BkfLog *log; /**< log库句柄,见bkf_log.h,同一app内可复用 */
-    BkfPfm *pfm; /**< 性能测量库句柄,见bkf_pfm.h,同一app内可复用 */
-    BkfXMap *xMap; /**< 消息分发xmap句柄,见bkf_xmap.h,用于app将dms消息分发给bkf,配合BKF_MSG_DISPATCH使用,同一app内可复用 */
+    BOOL dbgOn;               /**< 诊断开关 */
+    BkfMemMng *memMng;        /**< 内存库句柄,见bkf_mem.h,同一app内可复用 */
+    BkfDisp *disp;            /**< 诊断显示库句柄,见bkf_disp.h,同一app内可复用 */
+    BkfLog *log;              /**< log库句柄,见bkf_log.h,同一app内可复用 */
+    BkfPfm *pfm;              /**< 性能测量库句柄,见bkf_pfm.h,同一app内可复用 */
+    BkfXMap
+        *xMap; /**< 消息分发xmap句柄,见bkf_xmap.h,用于app将dms消息分发给bkf,配合BKF_MSG_DISPATCH使用,同一app内可复用 */
     BkfTmrMng *tmrMng; /**< 定时器管理句柄,见bkf_tmr.h,同一app内可复用 */
     BkfJobMng *jobMng; /**< job管理句柄,同一app内可复用,可能要配合xmap句柄使用,详见见bkf_job.h */
-    BkfChCliMng *chCliMng; /**< 传输层客户端句柄，见bkf_ch_ser.h,suber实例独有，一般不可复用 */
-    uint32_t jobTypeId1; /**< 发布者库使用的job类型id,不能与其他库复用 */
-    uint32_t jobPrioH; /**< 发布者库使用的job优先级:高优先级 */
-    uint32_t jobPrioL; /**< 发布者库使用的job优先级:低优先级 */
+    BkfChCliMng *chCliMng;   /**< 传输层客户端句柄，见bkf_ch_ser.h,suber实例独有，一般不可复用 */
+    uint32_t jobTypeId1;     /**< 发布者库使用的job类型id,不能与其他库复用 */
+    uint32_t jobPrioH;       /**< 发布者库使用的job优先级:高优先级 */
+    uint32_t jobPrioL;       /**< 发布者库使用的job优先级:低优先级 */
     BkfSysLogMng *sysLogMng; /**< 系统日志句柄，见bkf_sys_log.h,同一app内可复用 */
 
     uint16_t sliceKeyLen; /**< 切片key长度 */
-    uint8_t subMod;    /**< 默认值0,默认模式，回调APP只有cookie和slice，1 增强模式，回调APP除了原有参数再增加两端url */
+    uint8_t subMod; /**< 默认值0,默认模式，回调APP只有cookie和slice，1 增强模式，回调APP除了原有参数再增加两端url */
     uint8_t hasLsnUrl : 1;
     uint8_t subConnState : 1;
     uint8_t pad2 : 6;
-    F_BKF_CMP sliceKeyCmp; /**< 切片key比较接口 */
+    F_BKF_CMP sliceKeyCmp;              /**< 切片key比较接口 */
     F_BKF_GET_STR sliceKeyGetStrOrNull; /**< 切片key获取定位诊断字符串接口 */
-    F_BKF_DO sliceKeyCodec; /**< 切片key编码接口 */
+    F_BKF_DO sliceKeyCodec;             /**< 切片key编码接口 */
     BkfUrl lsnUrl;
     uint16_t reconnectDelayTime; /**<连接建立超时时间,单位s,不配置或填0则默认 5s同原先时间            */
     uint16_t pad3;
@@ -96,10 +97,10 @@ typedef struct tagBkfSuberInitArg {
 } BkfSuberInitArg;
 
 /**
-* @brief 发起订阅参数
-*/
+ * @brief 发起订阅参数
+ */
 typedef struct tagBkfSuberSubArg {
-    void *sliceKey; /**< 切片key */
+    void *sliceKey;       /**< 切片key */
     uint16_t tableTypeId; /**< 表类型id */
     uint8_t isVerify : 1; /**< 是否为对账订阅 */
     uint8_t rsv1 : 7;
@@ -107,10 +108,10 @@ typedef struct tagBkfSuberSubArg {
 } BkfSuberSubArg;
 
 /**
-* @brief 发起扩展型订阅参数
-*/
+ * @brief 发起扩展型订阅参数
+ */
 typedef struct tagBkfSuberSubArgEx {
-    void *sliceKey; /**< 切片key */
+    void *sliceKey;       /**< 切片key */
     uint16_t tableTypeId; /**< 表类型id */
     uint8_t isVerify : 1; /**< 是否为对账订阅 */
     uint8_t rsv1 : 7;
@@ -169,8 +170,8 @@ typedef void (*F_SUBER_ON_TABLEEX)(void *cookieOfRegister, void *sliceKey, BkfUr
  * @param[in] 断连原因码
  * @return None
  */
-typedef void (*F_SUBER_ON_TABLEDISCONNECTEX)(void *cookieOfRegister, void *sliceKey, BkfUrl *puberUrl,
-    BkfUrl *localUrl, uint32_t reasonCode);
+typedef void (*F_SUBER_ON_TABLEDISCONNECTEX)(void *cookieOfRegister, void *sliceKey, BkfUrl *puberUrl, BkfUrl *localUrl,
+    uint32_t reasonCode);
 
 /**
  * @brief 基于数据通知app虚函数
@@ -196,47 +197,46 @@ typedef void (*F_SUBER_ON_DATAEX)(void *cookieOfRegister, void *sliceKey, void *
  * @param[in] *本地url
  * @return None
  */
-typedef void (*F_SUBER_ON_BATCH_TIMEOUTEX)(void *cookieOfRegister, void *sliceKey, BkfUrl *puberUrl,
-    BkfUrl *localUrl);
+typedef void (*F_SUBER_ON_BATCH_TIMEOUTEX)(void *cookieOfRegister, void *sliceKey, BkfUrl *puberUrl, BkfUrl *localUrl);
 
 /**
-* @brief 订阅者表类型处理虚表
-*/
+ * @brief 订阅者表类型处理虚表
+ */
 typedef struct tagBkfSuberTableTypeVTbl {
-    char *name; /**< 虚表名称 */
-    uint16_t tableTypeId; /**< 表类型id */
-    uint16_t batchTimeout; /**< 平滑超时时间，设置为0则不生效 */
-    BOOL needTableComplete; /**< 是否需要发布者表完整后才开始批备 */
-    void *cookie; /**< 回调cookie */
-    F_SUBER_ON_TABLE onTableBatchBegin; /**< 表实例批备开始 */
-    F_SUBER_ON_TABLE onTableBatchEnd; /**< 表实例批备结束 */
-    F_SUBER_ON_TABLE onTableVerifyBegin; /**< 表实例对账开始 */
-    F_SUBER_ON_TABLE onTableVerifyEnd; /**< 表实例对账结束 */
-    F_SUBER_ON_TABLE onTableDelete; /**< 表实例删除 */
-    F_SUBER_ON_TABLE onTableDisconn; /**< 表实例连接中断 */
-    F_SUBER_ON_DATA onDataUpdate; /**< 数据元组更新 */
-    F_SUBER_ON_DATA onDataDelete; /**< 数据元组删除 */
-    F_SUBER_ON_BATCH_TIMEOUT onBatchTimeout;  /**< 平滑超时通知 */
+    char *name;                              /**< 虚表名称 */
+    uint16_t tableTypeId;                    /**< 表类型id */
+    uint16_t batchTimeout;                   /**< 平滑超时时间，设置为0则不生效 */
+    BOOL needTableComplete;                  /**< 是否需要发布者表完整后才开始批备 */
+    void *cookie;                            /**< 回调cookie */
+    F_SUBER_ON_TABLE onTableBatchBegin;      /**< 表实例批备开始 */
+    F_SUBER_ON_TABLE onTableBatchEnd;        /**< 表实例批备结束 */
+    F_SUBER_ON_TABLE onTableVerifyBegin;     /**< 表实例对账开始 */
+    F_SUBER_ON_TABLE onTableVerifyEnd;       /**< 表实例对账结束 */
+    F_SUBER_ON_TABLE onTableDelete;          /**< 表实例删除 */
+    F_SUBER_ON_TABLE onTableDisconn;         /**< 表实例连接中断 */
+    F_SUBER_ON_DATA onDataUpdate;            /**< 数据元组更新 */
+    F_SUBER_ON_DATA onDataDelete;            /**< 数据元组删除 */
+    F_SUBER_ON_BATCH_TIMEOUT onBatchTimeout; /**< 平滑超时通知 */
 } BkfSuberTableTypeVTbl;
 
 /**
-* @brief 订阅者表类型处理扩展虚表
-*/
+ * @brief 订阅者表类型处理扩展虚表
+ */
 typedef struct tagBkfSuberTableTypeVTblEx {
-    char *name; /**< 虚表名称 */
-    uint16_t tableTypeId; /**< 表类型id */
-    uint16_t batchTimeout; /**< 平滑超时时间，设置为0则不生效 */
-    BOOL needTableComplete; /**< 是否需要发布者表完整后才开始批备 */
-    void *cookie; /**< 回调cookie */
-    F_SUBER_ON_TABLEEX onTableBatchBeginEx; /**< 表实例批备开始,扩展两端url */
-    F_SUBER_ON_TABLEEX onTableBatchEndEx; /**< 表实例批备结束,扩展两端url */
-    F_SUBER_ON_TABLEEX onTableVerifyBeginEx; /**< 表实例对账开始,扩展两端url */
-    F_SUBER_ON_TABLEEX onTableVerifyEndEx; /**< 表实例对账结束,扩展两端url */
-    F_SUBER_ON_TABLEEX onTableDeleteEx; /**< 表实例删除,扩展两端url */
+    char *name;                                    /**< 虚表名称 */
+    uint16_t tableTypeId;                          /**< 表类型id */
+    uint16_t batchTimeout;                         /**< 平滑超时时间，设置为0则不生效 */
+    BOOL needTableComplete;                        /**< 是否需要发布者表完整后才开始批备 */
+    void *cookie;                                  /**< 回调cookie */
+    F_SUBER_ON_TABLEEX onTableBatchBeginEx;        /**< 表实例批备开始,扩展两端url */
+    F_SUBER_ON_TABLEEX onTableBatchEndEx;          /**< 表实例批备结束,扩展两端url */
+    F_SUBER_ON_TABLEEX onTableVerifyBeginEx;       /**< 表实例对账开始,扩展两端url */
+    F_SUBER_ON_TABLEEX onTableVerifyEndEx;         /**< 表实例对账结束,扩展两端url */
+    F_SUBER_ON_TABLEEX onTableDeleteEx;            /**< 表实例删除,扩展两端url */
     F_SUBER_ON_TABLEDISCONNECTEX onTableDisconnEx; /**< 表实例连接中断,扩展两端url */
-    F_SUBER_ON_DATAEX onDataUpdateEx; /**< 数据元组更新,扩展两端url */
-    F_SUBER_ON_DATAEX onDataDeleteEx; /**< 数据元组删除,扩展两端url */
-    F_SUBER_ON_BATCH_TIMEOUTEX onBatchTimeoutEx;  /**< 平滑超时通知,扩展两端url */
+    F_SUBER_ON_DATAEX onDataUpdateEx;              /**< 数据元组更新,扩展两端url */
+    F_SUBER_ON_DATAEX onDataDeleteEx;              /**< 数据元组删除,扩展两端url */
+    F_SUBER_ON_BATCH_TIMEOUTEX onBatchTimeoutEx;   /**< 平滑超时通知,扩展两端url */
 } BkfSuberTableTypeVTblEx;
 #pragma pack()
 
@@ -327,7 +327,6 @@ BkfSuberTableTypeVTbl *BkfSuberGetTableTypeVTbl(BkfSuber *suber, uint16_t tableT
  */
 uint32_t BkfSuberEnable(BkfSuber *suber);
 
-
 /**
  * @brief 描述：设置本地地址
  *
@@ -411,7 +410,8 @@ uint32_t BkfSuberSetSvcInstUrl(BkfSuber *suber, uint32_t instId, BkfUrl *puberUr
 uint32_t BkfSuberSetSvcInstUrlEx(BkfSuber *suber, uint64_t instId, BkfUrl *puberUrl);
 
 /**
- * @brief 设置发布者服务实例远端url和本地url,本地url必须在puberurl之前配置，puberurl会触发建联,已有puberurl，再修改localurl会先拆后建新连接
+ * @brief
+ * 设置发布者服务实例远端url和本地url,本地url必须在puberurl之前配置，puberurl会触发建联,已有puberurl，再修改localurl会先拆后建新连接
  *
  * @param[in] *suber 订阅者库句柄
  * @param[in] instId 实例id
@@ -479,7 +479,6 @@ uint32_t BkfSuberSetSliceInstId(BkfSuber *suber, void *sliceKey, uint32_t instId
  *   @retval 其他 失败
  */
 uint32_t BkfSuberSetSliceInstIdEx(BkfSuber *suber, void *sliceKey, uint64_t instId);
-
 
 /**
  * @brief 清除切片归属的服务所有inst实例,删除一个inst实例请使用BkfSuberUnsetSliceSpecInstId
@@ -549,6 +548,4 @@ void BkfSuberUnsubEx(BkfSuber *suber, BkfSuberSubArgEx *subArg);
 #endif
 #endif
 
-
 #endif
-

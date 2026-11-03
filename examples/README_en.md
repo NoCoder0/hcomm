@@ -1,5 +1,7 @@
 # HCCL Code Examples
 
+English | [简体中文](./README.md)
+
 This directory provides example code for implementing collective communication using HCCL interfaces in different scenarios.
 
 ## Communicator Management

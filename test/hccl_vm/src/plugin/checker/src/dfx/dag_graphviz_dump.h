@@ -19,8 +19,8 @@
 
 namespace HcclSim {
 
-HcclResult DumpDagGraphvizDot(const TaskGraphGeneratorV3::TaskNode *start, std::string *dumpPath);
+HcclResult DumpDagGraphvizDot(const TaskGraphGeneratorV3::TaskNode* start, std::string* dumpPath);
 
-}  // namespace HcclSim
+} // namespace HcclSim
 
-#endif  // CHECKER_DFX_DAG_GRAPHVIZ_DUMP_H
+#endif // CHECKER_DFX_DAG_GRAPHVIZ_DUMP_H

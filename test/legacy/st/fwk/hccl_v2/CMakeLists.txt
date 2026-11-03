@@ -1,3 +1,13 @@
+# -----------------------------------------------------------------------------------------------------------
+# Copyright (c) 2025 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
+
 # 自动找到项目内所有头文件
 FILE(GLOB_RECURSE sources_list LIST_DIRECTORIES TRUE ${HCCL_V2_CODE_ROOT}/*)
 foreach (dir ${sources_list})
@@ -57,6 +67,7 @@ FILE (GLOB_RECURSE cppfile
 # LIST (FILTER cppfile EXCLUDE REGEX "^${exclude_dir}/.*")
 FILE (GLOB_RECURSE excludecppfile
     ${HCCL_V2_CODE_ROOT}/framework/entrance/*.cc
+    ${HCCL_V2_CODE_ROOT}/framework/communicator/aicpu/dev_capability_aicpu.cc
     ${HCCL_V2_CODE_ROOT}/service/collective/coll_operator.cc
     ${HCCL_V2_CODE_ROOT}/service/collective/coll_operator_check.cc
     ${HCCL_V2_CODE_ROOT}/service/collective/alg/coll_alg_factory/alg_template/template_utils.cc

@@ -8,62 +8,7 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-#include "gtest/gtest.h"
-#include <mockcpp/mokc.h>
-#include <mockcpp/mockcpp.hpp>
-
-#define private public
-#define protected public
-
-#include "ccu_jetty.h"
-
-#include "rdma_handle_manager.h"
-#include "local_ub_rma_buffer.h"
-#include "orion_adapter_rts.h"
-#include "orion_adapter_hccp.h"
-#include "ccu_dev_mgr.h"
-
-#undef private
-#undef protected
-
-using namespace Hccl;
-
-class CcuJettyTest : public testing::Test {
-protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CcuJettyTest tests set up." << std::endl;
-    }
-
-    static void TearDownTestCase()
-    {
-        GlobalMockObject::verify();
-        std::cout << "CcuJettyTest tests tear down." << std::endl;
-    }
-
-    virtual void SetUp()
-    {
-        GlobalMockObject::verify();
-        std::cout << "A Test case in CcuJettyTest SetUP" << std::endl;
-    }
-
-    virtual void TearDown()
-    {
-        GlobalMockObject::verify();
-        std::cout << "A Test case in CcuJettyTest TearDown" << std::endl;
-    }
-};
-
-void MockCcuJetty()
-{
-    MOCKER(HrtGetDevice).stubs().will(returnValue(10));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(10));
-    MOCKER_CPP(&RdmaHandleManager::GetByIp).stubs().will(returnValue((void*)0x12345678));
-    MOCKER_CPP(&RdmaHandleManager::GetJfcHandle).stubs().will(returnValue((JfcHandle)0x12345678));
-    const auto fakeTokenInfo = std::make_pair<TokenIdHandle, uint32_t>(0x1, 0x1);
-    MOCKER_CPP(&RdmaHandleManager::GetTokenIdInfo).stubs().will(returnValue(fakeTokenInfo));
-    MOCKER(GetUbToken).stubs().will(returnValue(0x1));
-}
+#include "ccu_jetty_test_common.h"
 
 TEST_F(CcuJettyTest, St_CreateJetty_When_InterfaceOk_Expect_Return_Ok)
 {

@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: ccu executor -- reduce max
  * Author: caiyifan
  */
@@ -27,18 +30,25 @@ using namespace hcomm::CcuRep;
 
 // 注册ReduceMaxExecutor create Func
 REG_CCU_EXECUTOR_CREATE_FUNC(SimCcuV1::REDUCE_TYPE, SimCcuV1::MAX_CODE, ReduceMaxExecutor);
+REG_CCU_EXECUTOR_CREATE_FUNC_V2(SimCcuV2::REDUCE_TYPE, SimCcuV2::REDUCEMAX_CODE, ReduceMaxExecutor);
 
 void ReduceMaxExecutor::Parser()
 {
     if (version_ == RunnerCcuVersion::CCU_V1) {
-        count_       = instr_.v1.max.count;
-        dataType_    = instr_.v1.max.dataType;
-        clearType_   = instr_.v1.max.clearType;
-        setCKEId_    = instr_.v1.max.setCKEId;
-        setCKEMask_  = instr_.v1.max.setCKEMask;
-        waitCKEId_   = instr_.v1.max.waitCKEId;
+        count_ = instr_.v1.max.count;
+        dataType_ = instr_.v1.max.dataType;
+        clearType_ = instr_.v1.max.clearType;
+        setCKEId_ = instr_.v1.max.setCKEId;
+        setCKEMask_ = instr_.v1.max.setCKEMask;
+        waitCKEId_ = instr_.v1.max.waitCKEId;
         waitCKEMask_ = instr_.v1.max.waitCKEMask;
         (void)memcpy(msId_, instr_.v1.max.msId, sizeof(uint16_t) * CCU_REDUCE_MAX_MS);
+    } else if (version_ == RunnerCcuVersion::CCU_V2) {
+        count_ = instr_.v2.reduce.count;
+        dataType_ = instr_.v2.reduce.dataType;
+        setCKEId_ = instr_.v2.reduce.setCKEId;
+        setCKEMask_ = instr_.v2.reduce.setCKEMask;
+        (void)memcpy(msId_, instr_.v2.reduce.msId, sizeof(uint16_t) * CCU_REDUCE_MAX_MS);
     } else {
         HCCL_VM_ERROR("Invalid ccu version:{}", RunnerCcuVersionToString(version_));
         ccuSimulator_->SetExecState(CcuExecState::EXEC_FAIL);
@@ -47,11 +57,12 @@ void ReduceMaxExecutor::Parser()
 }
 
 // Reduce Max操作
-void ReduceMaxExecutor::Process(CcuResourceManager &ccuResMgr)
+void ReduceMaxExecutor::Process(CcuResourceManager& ccuResMgr)
 {
     HCCL_VM_DEBUG("Reduce Max info, locCcu[{}:{}], count:[{}], dataType:[{}]", rankId_, dieId_, count_, dataType_);
-    if (dataType_ >= ReduceMaxMinDataType::MAX_MIN_RESERVED4 || dataType_ == ReduceMaxMinDataType::MAX_MIN_RESERVED1 ||
-        dataType_ == ReduceMaxMinDataType::MAX_MIN_RESERVED2 || dataType_ == ReduceMaxMinDataType::MAX_MIN_RESERVED3) {
+    if (dataType_ >= ReduceMaxMinDataType::MAX_MIN_RESERVED4 || dataType_ == ReduceMaxMinDataType::MAX_MIN_RESERVED1
+        || dataType_ == ReduceMaxMinDataType::MAX_MIN_RESERVED2
+        || dataType_ == ReduceMaxMinDataType::MAX_MIN_RESERVED3) {
         return;
     }
     for (uint32_t i = 0; i < CCU_REDUCE_MAX_MS; i++) {
@@ -62,7 +73,7 @@ void ReduceMaxExecutor::Process(CcuResourceManager &ccuResMgr)
     if (ccuSimulator_->GetState() == CcuExecState::EXEC_LOOP_INSTR) {
         uint16_t ckeOffset = ccuSimulator_->GetLoopCKEOffset();
         setCKEId_ += ckeOffset;
-        auto msOffset   = ccuSimulator_->GetLoopMsOffset();
+        auto msOffset = ccuSimulator_->GetLoopMsOffset();
         for (uint32_t i = 0; i < hcomm::CcuRep::CCU_REDUCE_MAX_MS; i++) {
             msId_[i] += msOffset;
         }
@@ -71,21 +82,46 @@ void ReduceMaxExecutor::Process(CcuResourceManager &ccuResMgr)
     // 2. reduce操作
     ReduceMaxMinDataType type = static_cast<ReduceMaxMinDataType>(dataType_);
     auto res = reduceMaxFuncMap.find(type);
-    if (res !=  reduceMaxFuncMap.end()) {
+    if (res != reduceMaxFuncMap.end()) {
         res->second(rankId_, dieId_, msId_, count_);
     }
     // 3. 设置本端的cke
     SetCkeSignal(ccuResMgr, setCKEId_, setCKEMask_);
 }
 
-void ReduceMaxExecutor::RunV1() {
-    WaitCkeProcess(waitCKEId_, waitCKEMask_, clearType_, "ReduceMax");
+void ReduceMaxExecutor::RunV1() { WaitCkeProcess(waitCKEId_, waitCKEMask_, clearType_, "ReduceMax"); }
+
+void ReduceMaxExecutor::RunV2()
+{
+    HCCL_VM_DEBUG("Reduce Max info, locCcu[{}:{}], count=[{}], dataType=[{}]", rankId_, dieId_, count_, dataType_);
+    auto& ccuResMgr = CcuResourceManager::GetInstance();
+    for (uint32_t i = 0; i < CCU_REDUCE_MAX_MS; i++) {
+        msId_[i] = UpdateMSId(msId_[i] & 0x7FFF);
+    }
+    // 1. 判断是否在Loop循环内
+    if (dataType_ >= ReduceMaxMinDataType::MAX_MIN_RESERVED4 || dataType_ == ReduceMaxMinDataType::MAX_MIN_RESERVED1
+        || dataType_ == ReduceMaxMinDataType::MAX_MIN_RESERVED2
+        || dataType_ == ReduceMaxMinDataType::MAX_MIN_RESERVED3) {
+        ccuSimulator_->SetExecState(CcuExecState::EXEC_FAIL);
+        return;
+    }
+    // 2. reduce操作
+    ReduceMaxMinDataType type = static_cast<ReduceMaxMinDataType>(dataType_);
+    auto res = reduceMaxFuncMap.find(type);
+    if (res != reduceMaxFuncMap.end()) {
+        res->second(rankId_, dieId_, msId_, count_);
+    }
+    // 3.设置本端的cke
+    uint16_t ckeId = UpdateCkeId(setCKEId_);
+    SetCkeSignal(ccuResMgr, ckeId, setCKEMask_);
 }
 
 void ReduceMaxExecutor::Run()
 {
     if (version_ == RunnerCcuVersion::CCU_V1) {
         RunV1();
+    } else if (version_ == RunnerCcuVersion::CCU_V2) {
+        RunV2();
     } else {
         HCCL_VM_ERROR("Invalid ccu version:{}", RunnerCcuVersionToString(version_));
         ccuSimulator_->SetExecState(CcuExecState::EXEC_FAIL);
@@ -95,14 +131,16 @@ void ReduceMaxExecutor::Run()
 
 std::string ReduceMaxExecutor::Describe()
 {
-    return HcclSim::StringFormat("[Simulation Execute] Wait CKE[%u:%04x], Max %s with Count[%u], DataType[%u] and "
-                              "CastEn[%u], Set CKE[%u:%04x], clearType[%u]\n",
-        waitCKEId_,
-        waitCKEMask_,
-        ParseMSList().c_str(),
-        count_,
-        dataType_,
-        setCKEId_,
-        setCKEMask_,
-        clearType_);
+    return HcclSim::StringFormat(
+        "[Simulation Execute] Wait CKE[%u:%04x], Max %s with Count[%u], DataType[%u] and "
+        "CastEn[%u], Set CKE[%u:%04x], clearType[%u]\n",
+        waitCKEId_, waitCKEMask_, ParseMSList().c_str(), count_, dataType_, setCKEId_, setCKEMask_, clearType_);
+}
+
+CcuTrace::CcuInstrTraceDetail ReduceMaxExecutor::CollectTraceDetail()
+{
+    CcuTrace::CcuInstrTraceDetail detail;
+    detail.typeName = "ReduceMax";
+    detail.args["reduceOp"] = "Max";
+    return detail;
 }

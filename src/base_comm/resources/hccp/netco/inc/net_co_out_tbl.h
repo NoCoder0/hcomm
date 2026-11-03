@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef NET_CO_OUT_TBL_H
 #define NET_CO_OUT_TBL_H
 
@@ -24,8 +23,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-typedef uint32_t(*F_NET_CO_TBL_ADD_UPD)(NetCo *co, void *kv, uint32_t dataLen);
-typedef void(*F_NET_CO_TBL_DEL)(NetCo *co, void *key);
+typedef uint32_t (*F_NET_CO_TBL_ADD_UPD)(NetCo *co, void *kv, uint32_t dataLen);
+typedef void (*F_NET_CO_TBL_DEL)(NetCo *co, void *key);
 
 /**
  * @brief 通知demo表添加更新
@@ -70,4 +69,3 @@ void NetCoTblRootRankDel(NetCo *co, NetTblRootRankKey *key);
 #endif
 
 #endif
-

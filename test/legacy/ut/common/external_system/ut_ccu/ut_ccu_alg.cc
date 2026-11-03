@@ -19,7 +19,7 @@
 #include "rma_buffer.h"
 #include "ccu_alg_mesh_1D.h"
 #include "ccu_alg_mesh_2D.h"
-#include "env_config.h"
+#include "env_config_v2.h"
 #include "rdma_handle_manager.h"
 #include "ccu_mc2.h"
 #include "ccu_mission.h"
@@ -34,20 +34,11 @@ using namespace Ccu;
 
 class CCUAlgorithmTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CCUAlgorithmTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CCUAlgorithmTest tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CCUAlgorithmTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CCUAlgorithmTest tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in CCUAlgorithmTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in CCUAlgorithmTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -74,10 +65,12 @@ protected:
         resource.loopEngineBlockSize = 200;
         return resource;
     }
-    void InitComm(u32 xDimSize, u32 yDimSize, u32 myRank, CommunicatorImpl &comm) {
-        LocalRmaBuffer *rmaBuf = nullptr;
-        MOCKER_CPP(&LocalRmaBufManager::Reg,
-            LocalRmaBuffer * (LocalRmaBufManager::*)(std::shared_ptr<CcuBuffer> ccuBuffer, const PortData &portData))
+    void InitComm(u32 xDimSize, u32 yDimSize, u32 myRank, CommunicatorImpl& comm)
+    {
+        LocalRmaBuffer* rmaBuf = nullptr;
+        MOCKER_CPP(
+            &LocalRmaBufManager::Reg,
+            LocalRmaBuffer * (LocalRmaBufManager::*)(std::shared_ptr<CcuBuffer> ccuBuffer, const PortData& portData))
             .stubs()
             .with(mockcpp::any(), mockcpp::any())
             .will(returnValue(rmaBuf));
@@ -96,9 +89,9 @@ protected:
         comm.connLocalCntNotifyManager = std::make_unique<ConnLocalCntNotifyManager>(&comm);
 
         comm.rankGraph = std::make_unique<RankGraph>(0);
- 
+
         BasePortType hccsPortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
- 
+
         std::vector<shared_ptr<ConnInterface>> xDimConnIfceList;
         std::vector<shared_ptr<ConnInterface>> yDimConnIfceList;
         shared_ptr<NetInstance> fabGroup = make_shared<InnerNetInstance>(0, "id");
@@ -106,9 +99,11 @@ protected:
         for (u32 i = 0; i < comm.rankSize; i++) {
             auto peer = std::make_shared<NetInstance::Peer>(i, i);
             IpAddress xInputAddr(i);
-            IpAddress yInputAddr(i+comm.rankSize);
-            shared_ptr<ConnInterface> xSourceIface = std::make_shared<ConnInterface>(xInputAddr, AddrPosition::DEVICE, LinkType::PEER2PEER, LinkProtocol::UB_CTP);
-            shared_ptr<ConnInterface> ySourceIface = std::make_shared<ConnInterface>(yInputAddr, AddrPosition::DEVICE, LinkType::PEER2PEER, LinkProtocol::UB_CTP);
+            IpAddress yInputAddr(i + comm.rankSize);
+            shared_ptr<ConnInterface> xSourceIface = std::make_shared<ConnInterface>(
+                xInputAddr, AddrPosition::DEVICE, LinkType::PEER2PEER, LinkProtocol::UB_CTP);
+            shared_ptr<ConnInterface> ySourceIface = std::make_shared<ConnInterface>(
+                yInputAddr, AddrPosition::DEVICE, LinkType::PEER2PEER, LinkProtocol::UB_CTP);
             peer->AddConnInterface(xSourceIface);
             peer->AddConnInterface(ySourceIface);
             peer->AddNetInstance(fabGroup);
@@ -118,7 +113,7 @@ protected:
             xDimConnIfceList.push_back(xSourceIface);
             yDimConnIfceList.push_back(ySourceIface);
         }
-        
+
         for (u32 i = 0; i < comm.rankSize; i++) {
             for (u32 j = 0; j < comm.rankSize; j++) {
                 if (i == j) {
@@ -127,14 +122,16 @@ protected:
                 if (i / xDimSize == j / xDimSize) {
                     auto srcPeer = comm.rankGraph->GetPeer(i);
                     auto dstPeer = comm.rankGraph->GetPeer(j);
-                    std::shared_ptr<NetInstance::Link> xLink =
-                        std::make_shared<NetInstance::Link>(srcPeer, dstPeer, xDimConnIfceList[i], xDimConnIfceList[j], LinkType::PEER2PEER, LinkProtocol::UB_CTP);
+                    std::shared_ptr<NetInstance::Link> xLink = std::make_shared<NetInstance::Link>(
+                        srcPeer, dstPeer, xDimConnIfceList[i], xDimConnIfceList[j], LinkType::PEER2PEER,
+                        LinkProtocol::UB_CTP);
                     fabGroup->AddLink(xLink);
                 } else if (i % xDimSize == j % xDimSize) {
                     auto srcPeer = comm.rankGraph->GetPeer(i);
                     auto dstPeer = comm.rankGraph->GetPeer(j);
-                    std::shared_ptr<NetInstance::Link> yLink =
-                        std::make_shared<NetInstance::Link>(srcPeer, dstPeer, yDimConnIfceList[i], yDimConnIfceList[j], LinkType::PEER2PEER, LinkProtocol::UB_CTP);
+                    std::shared_ptr<NetInstance::Link> yLink = std::make_shared<NetInstance::Link>(
+                        srcPeer, dstPeer, yDimConnIfceList[i], yDimConnIfceList[j], LinkType::PEER2PEER,
+                        LinkProtocol::UB_CTP);
                     fabGroup->AddLink(yLink);
                 }
             }
@@ -143,7 +140,7 @@ protected:
     }
 };
 
-static HcclResult DumpCCUInstruction(uint32_t rankId, CCUAlgoMission *mission, uint16_t dieId = 0)
+static HcclResult DumpCCUInstruction(uint32_t rankId, CCUAlgoMission* mission, uint16_t dieId = 0)
 {
     MissionParams sqe = mission->GetMissionParam();
     HCCL_ERROR("==============================Dump Start==============================");
@@ -285,9 +282,10 @@ TEST_F(CCUAlgorithmTest, CCUAllgatherForMC2)
     }
 
     for (uint16_t rankId = 0; rankId < rankSize; rankId++) {
-        static_cast<MC2AllgatherMesh1D *>(mission[rankId].get())->SetTilingData(
-            static_cast<uint64_t>(op.inputMem->GetAddr()), static_cast<uint64_t>(op.outputMem->GetAddr()),
-            turnNum, op.dataCount, tailTurnNum, tailCount);
+        static_cast<MC2AllgatherMesh1D*>(mission[rankId].get())
+            ->SetTilingData(
+                static_cast<uint64_t>(op.inputMem->GetAddr()), static_cast<uint64_t>(op.outputMem->GetAddr()), turnNum,
+                op.dataCount, tailTurnNum, tailCount);
         mission[rankId]->GeneInstruction(op);
         mission[rankId]->GeneArgs(op);
 
@@ -316,7 +314,8 @@ TEST_F(CCUAlgorithmTest, CCUReduceScatter)
     Resource resource = GetResource();
     resource.dieId = 0;
     for (uint16_t rankId = 0; rankId < rankSize; rankId++) {
-        mission.push_back(std::make_unique<ReduceScatterMesh1D>(rankId, dimSizeTmp, resource, std::vector<uint16_t>(0), 0));
+        mission.push_back(
+            std::make_unique<ReduceScatterMesh1D>(rankId, dimSizeTmp, resource, std::vector<uint16_t>(0), 0));
     }
 
     for (uint16_t rankId = 0; rankId < rankSize; rankId++) {
@@ -345,7 +344,7 @@ TEST_F(CCUAlgorithmTest, CCUReduceScatter)
 TEST_F(CCUAlgorithmTest, MC2CCUReduceScatter)
 {
     std::vector<uint32_t> dimSizeTmp = {2};
-    std::vector<uint16_t> inputXnIds(8,2);
+    std::vector<uint16_t> inputXnIds(8, 2);
     uint16_t rankSize = dimSizeTmp[0];
     CollOperator op;
 
@@ -433,9 +432,10 @@ TEST_F(CCUAlgorithmTest, CCUReduceScatterForMC2)
     }
 
     for (uint16_t rankId = 0; rankId < rankSize; rankId++) {
-        static_cast<MC2ReduceScatterMesh1D *>(mission[rankId].get())->SetTilingData(
-            static_cast<uint64_t>(op.inputMem->GetAddr()), static_cast<uint64_t>(op.outputMem->GetAddr()),
-            turnNum, op.dataCount, tailTurnNum, tailCount);
+        static_cast<MC2ReduceScatterMesh1D*>(mission[rankId].get())
+            ->SetTilingData(
+                static_cast<uint64_t>(op.inputMem->GetAddr()), static_cast<uint64_t>(op.outputMem->GetAddr()), turnNum,
+                op.dataCount, tailTurnNum, tailCount);
         mission[rankId]->GeneInstruction(op);
         mission[rankId]->GeneArgs(op);
 
@@ -464,7 +464,8 @@ TEST_F(CCUAlgorithmTest, CCUAllreduce)
     Resource resource = GetResource();
     resource.dieId = 0;
     for (uint16_t rankId = 0; rankId < rankSize; rankId++) {
-        mission.push_back(std::make_unique<AllreduceMesh1D>(rankId, dimSizeTmp, resource, std::vector<uint16_t>(0), 0, 0));
+        mission.push_back(
+            std::make_unique<AllreduceMesh1D>(rankId, dimSizeTmp, resource, std::vector<uint16_t>(0), 0, 0));
     }
 
     for (uint16_t rankId = 0; rankId < rankSize; rankId++) {
@@ -511,8 +512,9 @@ TEST_F(CCUAlgorithmTest, CCUAllreduceOneshot)
     Resource resource = GetResource();
     resource.dieId = 0;
     for (uint16_t rankId = 0; rankId < rankSize; rankId++) {
-        auto AllreduceMesh1DPtr = std::make_unique<AllreduceMesh1D>(rankId, dimSizeTmp, resource, std::vector<uint16_t>(0), 0, 0);
-        AllreduceMesh1DPtr->algoName_ ="one-shot";
+        auto AllreduceMesh1DPtr
+            = std::make_unique<AllreduceMesh1D>(rankId, dimSizeTmp, resource, std::vector<uint16_t>(0), 0, 0);
+        AllreduceMesh1DPtr->algoName_ = "one-shot";
         mission.push_back(std::move(AllreduceMesh1DPtr));
     }
 
@@ -542,7 +544,7 @@ TEST_F(CCUAlgorithmTest, CCUAllreduceOneshot)
 TEST_F(CCUAlgorithmTest, MC2CCUAllreduce)
 {
     std::vector<uint32_t> dimSizeTmp = {2};
-    std::vector<uint16_t> inputXnIds(8,2);
+    std::vector<uint16_t> inputXnIds(8, 2);
     uint16_t rankSize = dimSizeTmp[0];
     CollOperator op;
 
@@ -658,8 +660,10 @@ TEST_F(CCUAlgorithmTest, CCU2DFullMeshReduceScatter)
     std::vector<std::vector<std::unique_ptr<CCUAlgoMission>>> mission;
     for (uint32_t rankId = 0; rankId < rankSize; rankId++) {
         std::vector<std::unique_ptr<CCUAlgoMission>> rankMission;
-        rankMission.push_back(std::make_unique<ReduceScatterMesh2D>(rankId, dimSizeTmp, resource0, std::vector<uint16_t>(0), 0));
-        rankMission.push_back(std::make_unique<ReduceScatterMesh2D>(rankId, dimSizeTmp, resource1, std::vector<uint16_t>(0), 0));
+        rankMission.push_back(
+            std::make_unique<ReduceScatterMesh2D>(rankId, dimSizeTmp, resource0, std::vector<uint16_t>(0), 0));
+        rankMission.push_back(
+            std::make_unique<ReduceScatterMesh2D>(rankId, dimSizeTmp, resource1, std::vector<uint16_t>(0), 0));
         mission.push_back(std::move(rankMission));
     }
     for (uint16_t dieId = 0; dieId < 2; dieId++) {
@@ -673,7 +677,7 @@ TEST_F(CCUAlgorithmTest, CCU2DFullMeshReduceScatter)
             for (uint32_t srcRankId = 0; srcRankId < rankSize; srcRankId++) {
                 uint32_t dimId = dieId == 0 ? rankId % localSize : rankId / localSize;
                 if (dieId == 0 ? (rankId / localSize == srcRankId / localSize) :
-                    (rankId % localSize == srcRankId % localSize)) {
+                                 (rankId % localSize == srcRankId % localSize)) {
                     tmp.push_back(exchangeResource[srcRankId][dimId]);
                 }
             }
@@ -687,7 +691,6 @@ TEST_F(CCUAlgorithmTest, CCU2DFullMeshReduceScatter)
             DumpCCUInstruction(rankId, mission[rankId][dieId].get(), dieId);
         }
     }
-
 }
 
 TEST_F(CCUAlgorithmTest, CCU2DFullMeshAllReduce)
@@ -716,8 +719,10 @@ TEST_F(CCUAlgorithmTest, CCU2DFullMeshAllReduce)
     std::vector<std::vector<std::unique_ptr<CCUAlgoMission>>> mission;
     for (uint32_t rankId = 0; rankId < rankSize; rankId++) {
         std::vector<std::unique_ptr<CCUAlgoMission>> rankMission;
-        rankMission.push_back(std::make_unique<AllreduceMesh2DOneShot>(rankId, dimSizeTmp, resource0, std::vector<uint16_t>(0), 0));
-        rankMission.push_back(std::make_unique<AllreduceMesh2DOneShot>(rankId, dimSizeTmp, resource1, std::vector<uint16_t>(0), 0));
+        rankMission.push_back(
+            std::make_unique<AllreduceMesh2DOneShot>(rankId, dimSizeTmp, resource0, std::vector<uint16_t>(0), 0));
+        rankMission.push_back(
+            std::make_unique<AllreduceMesh2DOneShot>(rankId, dimSizeTmp, resource1, std::vector<uint16_t>(0), 0));
         mission.push_back(std::move(rankMission));
     }
     for (uint16_t dieId = 0; dieId < 2; dieId++) {
@@ -731,7 +736,7 @@ TEST_F(CCUAlgorithmTest, CCU2DFullMeshAllReduce)
             for (uint32_t srcRankId = 0; srcRankId < rankSize; srcRankId++) {
                 uint32_t dimId = dieId == 0 ? rankId % localSize : rankId / localSize;
                 if (dieId == 0 ? (rankId / localSize == srcRankId / localSize) :
-                    (rankId % localSize == srcRankId % localSize)) {
+                                 (rankId % localSize == srcRankId % localSize)) {
                     tmp.push_back(exchangeResource[srcRankId][dimId]);
                 }
             }
@@ -773,8 +778,10 @@ TEST_F(CCUAlgorithmTest, CCU2DFullMeshAllreduceTwoShot)
     std::vector<std::vector<std::unique_ptr<CCUAlgoMission>>> mission;
     for (uint32_t rankId = 0; rankId < rankSize; rankId++) {
         std::vector<std::unique_ptr<CCUAlgoMission>> rankMission;
-        rankMission.push_back(std::make_unique<AllreduceMesh2DTwoShot>(rankId, dimSizeTmp, resource0, std::vector<uint16_t>(0), 0));
-        rankMission.push_back(std::make_unique<AllreduceMesh2DTwoShot>(rankId, dimSizeTmp, resource1, std::vector<uint16_t>(0), 0));
+        rankMission.push_back(
+            std::make_unique<AllreduceMesh2DTwoShot>(rankId, dimSizeTmp, resource0, std::vector<uint16_t>(0), 0));
+        rankMission.push_back(
+            std::make_unique<AllreduceMesh2DTwoShot>(rankId, dimSizeTmp, resource1, std::vector<uint16_t>(0), 0));
         mission.push_back(std::move(rankMission));
     }
     for (uint16_t dieId = 0; dieId < 2; dieId++) {
@@ -788,7 +795,7 @@ TEST_F(CCUAlgorithmTest, CCU2DFullMeshAllreduceTwoShot)
             for (uint32_t srcRankId = 0; srcRankId < rankSize; srcRankId++) {
                 uint32_t dimId = dieId == 0 ? rankId % localSize : rankId / localSize;
                 if (dieId == 0 ? (rankId / localSize == srcRankId / localSize) :
-                    (rankId % localSize == srcRankId % localSize)) {
+                                 (rankId % localSize == srcRankId % localSize)) {
                     tmp.push_back(exchangeResource[srcRankId][dimId]);
                 }
             }
@@ -829,8 +836,10 @@ TEST_F(CCUAlgorithmTest, CCU2DFullMeshAllGather)
     std::vector<std::vector<std::unique_ptr<CCUAlgoMission>>> mission;
     for (uint32_t rankId = 0; rankId < rankSize; rankId++) {
         std::vector<std::unique_ptr<CCUAlgoMission>> rankMission;
-        rankMission.push_back(std::make_unique<AllGatherMesh2D>(rankId, dimSizeTmp, resource0, std::vector<uint16_t>(0), 0));
-        rankMission.push_back(std::make_unique<AllGatherMesh2D>(rankId, dimSizeTmp, resource1, std::vector<uint16_t>(0), 0));
+        rankMission.push_back(
+            std::make_unique<AllGatherMesh2D>(rankId, dimSizeTmp, resource0, std::vector<uint16_t>(0), 0));
+        rankMission.push_back(
+            std::make_unique<AllGatherMesh2D>(rankId, dimSizeTmp, resource1, std::vector<uint16_t>(0), 0));
         mission.push_back(std::move(rankMission));
     }
     for (uint16_t dieId = 0; dieId < 2; dieId++) {
@@ -844,7 +853,7 @@ TEST_F(CCUAlgorithmTest, CCU2DFullMeshAllGather)
             for (uint32_t srcRankId = 0; srcRankId < rankSize; srcRankId++) {
                 uint32_t dimId = dieId == 0 ? rankId % localSize : rankId / localSize;
                 if (dieId == 0 ? (rankId / localSize == srcRankId / localSize) :
-                    (rankId % localSize == srcRankId % localSize)) {
+                                 (rankId % localSize == srcRankId % localSize)) {
                     tmp.push_back(exchangeResource[srcRankId][dimId]);
                 }
             }
@@ -867,13 +876,13 @@ TEST_F(CCUAlgorithmTest, CCUGetMissionParams1D)
     u32 myRank = 0;
     CommunicatorImpl comm;
     InitComm(xDimSize, yDimSize, myRank, comm);
-    void *rdmaHandle = (void *)0x100;
+    void* rdmaHandle = (void*)0x100;
     RdmaHandleManager::GetInstance().tokenInfoMap[rdmaHandle] = make_unique<TokenInfoManager>(0, rdmaHandle);
     MOCKER_CPP(&RdmaHandleManager::Get).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(rdmaHandle));
     MOCKER(HraGetDieAndFuncId).stubs().with(mockcpp::any()).will(returnValue(std::pair<uint32_t, uint32_t>(0, 0)));
     GenTopoFile();
     PhyTopoBuilder phyTopoBuilder;
-    phyTopoBuilder.Build("topo.json");
+    (void)phyTopoBuilder.Build("topo.json");
 
     CcuComponent ccuComponent(&comm);
 
@@ -892,8 +901,8 @@ TEST_F(CCUAlgorithmTest, CCUGetMissionParams1D)
 
 TEST_F(CCUAlgorithmTest, CCUGetMissionParams2D_RS)
 {
-    void * ccuConfigPtr1 = (void *)(&(EnvConfig::GetInstance().GetCcuConfig()));
-    EnvCcuConfig *ccuConfigPtr2 = (EnvCcuConfig*)(ccuConfigPtr1);
+    void* ccuConfigPtr1 = (void*)(&(EnvConfig::GetInstance().GetCcuConfig()));
+    EnvCcuConfig* ccuConfigPtr2 = (EnvCcuConfig*)(ccuConfigPtr1);
     ccuConfigPtr2->ioDieNum.value = 2;
     ResourceManager::GetInstance().InitResourceManager();
     MOCKER_CPP(&CcuComponent::CreateLocalOpChannel).stubs().will(ignoreReturnValue());
@@ -903,7 +912,7 @@ TEST_F(CCUAlgorithmTest, CCUGetMissionParams2D_RS)
     u32 myRank = 0;
     CommunicatorImpl comm;
     InitComm(xDimSize, yDimSize, myRank, comm);
-    void *rdmaHandle = (void *)0x100;
+    void* rdmaHandle = (void*)0x100;
     MOCKER_CPP(&RdmaHandleManager::Get).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(rdmaHandle));
     MOCKER(HraGetDieAndFuncId).stubs().with(mockcpp::any()).will(returnValue(std::pair<uint32_t, uint32_t>(0, 0)));
 
@@ -930,8 +939,8 @@ TEST_F(CCUAlgorithmTest, CCUGetMissionParams2D_RS)
 
 TEST_F(CCUAlgorithmTest, CCUGetMissionParams2D_AG)
 {
-    void * ccuConfigPtr1 = (void *)(&(EnvConfig::GetInstance().GetCcuConfig()));
-    EnvCcuConfig *ccuConfigPtr2 = (EnvCcuConfig*)(ccuConfigPtr1);
+    void* ccuConfigPtr1 = (void*)(&(EnvConfig::GetInstance().GetCcuConfig()));
+    EnvCcuConfig* ccuConfigPtr2 = (EnvCcuConfig*)(ccuConfigPtr1);
     ccuConfigPtr2->ioDieNum.value = 2;
     ResourceManager::GetInstance().InitResourceManager();
     MOCKER_CPP(&CcuComponent::CreateLocalOpChannel).stubs().will(ignoreReturnValue());
@@ -941,7 +950,7 @@ TEST_F(CCUAlgorithmTest, CCUGetMissionParams2D_AG)
     u32 myRank = 0;
     CommunicatorImpl comm;
     InitComm(xDimSize, yDimSize, myRank, comm);
-    void *rdmaHandle = (void *)0x100;
+    void* rdmaHandle = (void*)0x100;
     MOCKER_CPP(&RdmaHandleManager::Get).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(rdmaHandle));
     MOCKER(HraGetDieAndFuncId).stubs().with(mockcpp::any()).will(returnValue(std::pair<uint32_t, uint32_t>(0, 0)));
 
@@ -1003,7 +1012,6 @@ TEST_F(CCUAlgorithmTest, CheckCcuDataType_ShouldNotThrowException_HighPrecisionR
     EXPECT_NO_THROW(CheckCcuDataType(op));
     op.opType = OpType::ALLREDUCE;
     EXPECT_NO_THROW(CheckCcuDataType(op));
-
 
     op.dataType = DataType::INT16;
     op.outputDataType = DataType::INT16;

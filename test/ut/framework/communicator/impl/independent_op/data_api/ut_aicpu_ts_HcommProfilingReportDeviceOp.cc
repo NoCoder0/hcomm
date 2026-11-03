@@ -36,13 +36,9 @@ using namespace hccl;
  * - 测试组名为空时的错误处理
  * - 测试正常情况下上报设备算子性能数据
  */
-class UtAicpuTsHcommProfilingReportDeviceOp : public testing::Test
-{
+class UtAicpuTsHcommProfilingReportDeviceOp : public testing::Test {
 protected:
-    virtual void TearDown() override
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() override { GlobalMockObject::verify(); }
 
     HcclResult res{HCCL_E_RESERVED};
 };
@@ -54,7 +50,9 @@ protected:
  * 测试场景：使用空指针作为组名调用HcommProfilingReportDeviceOp
  * 预期结果：返回HCCL_E_PTR，表示检测到空指针错误
  */
-TEST_F(UtAicpuTsHcommProfilingReportDeviceOp, Ut_HcommProfilingReportDeviceOp_When_GroupName_IsNull_Expect_ReturnHCCL_E_PTR)
+TEST_F(
+    UtAicpuTsHcommProfilingReportDeviceOp,
+    Ut_HcommProfilingReportDeviceOp_When_GroupName_IsNull_Expect_ReturnHCCL_E_PTR)
 {
     res = HcommProfilingReportDeviceOp(nullptr);
     EXPECT_EQ(res, HCCL_E_PTR);

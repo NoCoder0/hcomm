@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef AIV_SYNC_INTERFACE_H
 #define AIV_SYNC_INTERFACE_H
@@ -17,15 +17,17 @@ using namespace AscendC;
 constexpr uint64_t UB_FLAG_PAD_COUNT = 8;
 constexpr uint64_t UB_ADDRESS_PAD_COUNT = 4;
 
-template<HardEvent event>
-__aicore__ inline void SyncFunc() {
+template <HardEvent event>
+__aicore__ inline void SyncFunc()
+{
     int32_t eventID = static_cast<int32_t>(GetTPipePtr()->FetchEventID(event));
     SetFlag<event>(eventID);
     WaitFlag<event>(eventID);
 }
 
 // 在gm上设置同步信号的值
-__aicore__ inline void SetSignalValue(__gm__ int32_t* gmSignalAddr, LocalTensor<int32_t>& localTensor, int32_t value, bool ifSet = true)
+__aicore__ inline void
+SetSignalValue(__gm__ int32_t* gmSignalAddr, LocalTensor<int32_t>& localTensor, int32_t value, bool ifSet = true)
 {
     GlobalTensor<int32_t> globalTensor;
     globalTensor.SetGlobalBuffer(gmSignalAddr, UB_FLAG_PAD_COUNT);
@@ -53,7 +55,8 @@ __aicore__ inline void AddSignalValue(__gm__ int32_t* gmSignalAddr, LocalTensor<
 }
 
 // 等待同步信号变成某个预期的值
-__aicore__ inline void WaitSignalValue(__gm__ int32_t *gmSignalAddr, LocalTensor<int32_t>& localTensor, int32_t expectedValue)
+__aicore__ inline void
+WaitSignalValue(__gm__ int32_t* gmSignalAddr, LocalTensor<int32_t>& localTensor, int32_t expectedValue)
 {
     GlobalTensor<int32_t> globalTensor;
     globalTensor.SetGlobalBuffer(gmSignalAddr, UB_FLAG_PAD_COUNT);
@@ -69,7 +72,7 @@ __aicore__ inline void WaitSignalValue(__gm__ int32_t *gmSignalAddr, LocalTensor
 }
 
 // 等待同步信号大于等于某个预期的值
-__aicore__ inline void WaitSignalGEValue(__gm__ int32_t *gmSignalAddr, LocalTensor<int32_t>& localTensor, int32_t value)
+__aicore__ inline void WaitSignalGEValue(__gm__ int32_t* gmSignalAddr, LocalTensor<int32_t>& localTensor, int32_t value)
 {
     GlobalTensor<int32_t> globalTensor;
     globalTensor.SetGlobalBuffer(gmSignalAddr, UB_FLAG_PAD_COUNT);
@@ -84,7 +87,7 @@ __aicore__ inline void WaitSignalGEValue(__gm__ int32_t *gmSignalAddr, LocalTens
     return;
 }
 
-__aicore__ inline int32_t GetSignalValue(__gm__ int32_t *gmSignalAddr, LocalTensor<int32_t>& localTensor)
+__aicore__ inline int32_t GetSignalValue(__gm__ int32_t* gmSignalAddr, LocalTensor<int32_t>& localTensor)
 {
     GlobalTensor<int32_t> globalTensor;
     globalTensor.SetGlobalBuffer(gmSignalAddr, UB_FLAG_PAD_COUNT);
@@ -94,7 +97,8 @@ __aicore__ inline int32_t GetSignalValue(__gm__ int32_t *gmSignalAddr, LocalTens
     return ret;
 }
 
-__aicore__ inline void SetFlagBatchValue(__gm__ int32_t *ctrlFlagGM, TQue<QuePosition::VECOUT, 1> &batchQue, int32_t setValue, int32_t count)
+__aicore__ inline void
+SetFlagBatchValue(__gm__ int32_t* ctrlFlagGM, TQue<QuePosition::VECOUT, 1>& batchQue, int32_t setValue, int32_t count)
 {
     GlobalTensor<int32_t> globalBatchSet;
     globalBatchSet.SetGlobalBuffer(ctrlFlagGM, UB_FLAG_PAD_COUNT * count);

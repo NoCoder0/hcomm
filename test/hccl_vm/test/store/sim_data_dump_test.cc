@@ -18,17 +18,17 @@
 #include "sim_binary_data_type_pub.h"
 #include "store_dump_shm_data.h"
 #include "sim_data_dump.h"
-#include "sim_op_db_types.h"
+#include "operation_data/operation_data_types.h"
 
 using namespace HcclSim;
 
 namespace {
-std::vector<uint8_t> ToBlob(const HcclTaskMetaData &task)
+std::vector<uint8_t> ToBlob(const HcclTaskMetaData& task)
 {
-    const auto *begin = reinterpret_cast<const uint8_t *>(&task);
+    const auto* begin = reinterpret_cast<const uint8_t*>(&task);
     return std::vector<uint8_t>(begin, begin + sizeof(HcclTaskMetaData));
 }
-}  // namespace
+} // namespace
 
 TEST(HcclDataDumpTest, DumpData_FillsFinishedStatusAndDataId)
 {
@@ -48,7 +48,7 @@ TEST(HcclDataDumpTest, GenDataId_UsesTimestampAndRandomSuffix)
 TEST(HcclDataDumpTest, CreateMemoryInfo_AddsOnlyNonZeroBuffers)
 {
     HcclVmSynData synData{};
-    sim::OpMemInfoTab memInfo{};
+    sim::operation::OpMemInfoTab memInfo{};
     memInfo.inputAddr = 0x1000;
     memInfo.inputSize = 128;
     memInfo.outputAddr = 0x2000;
@@ -81,23 +81,23 @@ TEST(HcclDataDumpTest, CreateSimTaskMetaData_SkipsShortBlobAndDeserializesValidT
     aiv.taskType = HccLTaskMetaType::AIV_GRAPH;
     aiv.taskData.aiv.launchIdx = 99;
 
-    sim::OpTaskTab shortBlob{};
+    sim::operation::OpTaskTab shortBlob{};
     shortBlob.optaskMeta = {0x1, 0x2, 0x3};
 
-    sim::OpTaskTab memCopyBlob{};
+    sim::operation::OpTaskTab memCopyBlob{};
     memCopyBlob.optaskMeta = ToBlob(memCopy);
 
-    sim::OpTaskTab aivBlob{};
+    sim::operation::OpTaskTab aivBlob{};
     aivBlob.optaskMeta = ToBlob(aiv);
 
-    sim::CompositeOpDetail composite{};
+    sim::operation::CompositeOpDetail composite{};
     composite.tasks = {shortBlob, memCopyBlob, aivBlob};
 
-    std::map<uint32_t, std::vector<sim::CompositeOpDetail>> compositeDataMap;
+    std::map<uint32_t, std::vector<sim::operation::CompositeOpDetail>> compositeDataMap;
     compositeDataMap[0].push_back(composite);
 
     HcclVmTaskMetaData taskMeta{};
-    EXPECT_EQ(CreateSimTaskMetaData(taskMeta, compositeDataMap), HcclVmResult::HCCL_SIM_SUCCESS);
+    EXPECT_EQ(CreateSimTaskMetaData(taskMeta, compositeDataMap, {}), HcclVmResult::HCCL_SIM_SUCCESS);
 
     ASSERT_EQ(taskMeta.task_meta.size(), 2U);
     EXPECT_EQ(taskMeta.header.magic, HCCLVM_TASK_FILE_MAGIC);

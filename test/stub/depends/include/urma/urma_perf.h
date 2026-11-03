@@ -1,11 +1,11 @@
-/*
- * SPDX-License-Identifier: MIT
- * Copyright (c) Huawei Technologies Co., Ltd. 2021-2025. All rights reserved.
- * Description: Performance monitoring and profiling for URMA
- * Author: Tang Zhedong
- * Create: 2026-04-08
- * Note:
- * History: 2026-04-08 create file
+/**
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
  */
 
 #ifndef URMA_PERF_H
@@ -14,9 +14,9 @@
 #include <stdint.h>
 #include "urma_opcode.h"
 
-#define URMA_PERF_BUCKET_MAX_NUM        (32u)
-#define URMA_PERF_THREAD_MAX_NUM        (128u)
-#define URMA_PERF_MAX_THRESH_NS         (1000000u)
+#define URMA_PERF_BUCKET_MAX_NUM (32u)
+#define URMA_PERF_THREAD_MAX_NUM (128u)
+#define URMA_PERF_MAX_THRESH_NS (1000000u)
 
 typedef enum urma_perf_type {
     UB_JETTY_POST_SEND,
@@ -72,12 +72,12 @@ urma_status_t urma_stop_perf(void);
  * Configure performance monitoring attributes.
  * @param[in] perf_attr: Pointer to performance attributes structure;
  * Return: 0 on success, other value on error
- * 
+ *
  * Constraints:
  * - This function can only be called after urma_start_perf()
  * - The param perf_attr->thresh_array must use nanosecond granularity
  */
-urma_status_t urma_config_perf_attr(urma_perf_attr_t *perf_attr);
+urma_status_t urma_config_perf_attr(urma_perf_attr_t* perf_attr);
 
 /**
  * Get performance statistics information.
@@ -85,6 +85,6 @@ urma_status_t urma_config_perf_attr(urma_perf_attr_t *perf_attr);
  * @param[in] length: Pointer to buffer length, input as buffer size, output as actual data length;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_get_perf_info(char *perf_buf, uint32_t *length);
+urma_status_t urma_get_perf_info(char* perf_buf, uint32_t* length);
 
 #endif

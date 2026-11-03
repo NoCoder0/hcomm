@@ -1,3 +1,13 @@
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include <iostream>
 #include "gtest/gtest.h"
 #include "mockcpp/mokc.h"
@@ -6,33 +16,21 @@
 #include "acl/acl_rt.h"
 #define private public
 #define protected public
-#include "server_socket/server_socket_manager.h"
 #include "server_socket/server_socket_mgr.h"
 #include "socket_mgr.h"
 #include "hccp_hdc_manager.h"
 #include "rdma_handle_manager.h"
 #include "socket_handle_manager.h"
-#include "hcomm_res_mgr.h"
 #undef protected
 #undef private
+#include "base_comm_node_accessors.h"
 
 class DeviceResetCallbackTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "DeviceResetCallbackTest set up." << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "DeviceResetCallbackTest tear down." << std::endl;
-    }
-    virtual void SetUp()
-    {
-    }
-    virtual void TearDown()
-    {
-        GlobalMockObject::verify();
-    }
+    static void SetUpTestCase() { std::cout << "DeviceResetCallbackTest set up." << std::endl; }
+    static void TearDownTestCase() { std::cout << "DeviceResetCallbackTest tear down." << std::endl; }
+    virtual void SetUp() {}
+    virtual void TearDown() { GlobalMockObject::verify(); }
 };
 
 TEST_F(DeviceResetCallbackTest, Ut_When_RegisterDeviceResetCallback_Expect_AclrtRegDeviceStateCallbackCalled)
@@ -77,69 +75,58 @@ TEST_F(DeviceResetCallbackTest, Ut_When_HccpHdcManagerInitThenDeInit_Expect_Inst
     Hccl::HccpHdcManager::GetInstance().DeInit(0);
 }
 
-TEST_F(DeviceResetCallbackTest, Ut_When_SocketMgrDeInit_Expect_NoCrash)
-{
-    hcomm::SocketMgr::DeInit(0);
-}
+TEST_F(DeviceResetCallbackTest, Ut_When_SocketMgrDeInit_Expect_NoCrash) { hcomm::SocketMgr::DeInit(0); }
 
-TEST_F(DeviceResetCallbackTest, Ut_When_ServerSocketMgrDeInit_Expect_NoCrash)
-{
-    hcomm::ServerSocketMgr::DeInit(0);
-}
+TEST_F(DeviceResetCallbackTest, Ut_When_ServerSocketMgrDeInit_Expect_NoCrash) { hcomm::GetServerSocketMgr().DeInit(0); }
 
-TEST_F(DeviceResetCallbackTest, Ut_When_ServerSocketManagerDeInit_Expect_NoCrash)
-{
-    hcomm::ServerSocketManager::GetInstance().DeInit(0);
-}
-
-TEST_F(DeviceResetCallbackTest, Ut_When_ServerSocketManagerDeInit_WithDeviceSockets_Expect_Clear)
+TEST_F(DeviceResetCallbackTest, Ut_When_ServerSocketMgrDeInit_WithDeviceSockets_Expect_Clear)
 {
     Hccl::IpAddress ipAddr("1.0.0.0");
     Hccl::DevNetPortType type = Hccl::DevNetPortType(Hccl::ConnectProtoType::UB);
     Hccl::PortData localPort = Hccl::PortData(0, type, 0, ipAddr);
     uint32_t port = 43210;
-    HcclResult ret = hcomm::ServerSocketManager::GetInstance().ServerSocketStartListen(
-        localPort, Hccl::NicType::DEVICE_NIC_TYPE, 0, &port);
+    HcclResult ret
+        = hcomm::GetServerSocketMgr().ServerSocketStartListen(localPort, Hccl::NicType::DEVICE_NIC_TYPE, 0, &port);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    hcomm::ServerSocketManager::GetInstance().DeInit(0);
-    EXPECT_EQ(hcomm::ServerSocketManager::GetInstance().deviceServerSocketMap_.size(), 0);
+    hcomm::GetServerSocketMgr().DeInit(0);
+    EXPECT_EQ(hcomm::GetServerSocketMgr().deviceServerSocketMap_.size(), 0);
 }
 
-TEST_F(DeviceResetCallbackTest, Ut_When_ServerSocketManagerDeInit_WithHostSockets_Expect_Clear)
+TEST_F(DeviceResetCallbackTest, Ut_When_ServerSocketMgrDeInit_WithHostSockets_Expect_Clear)
 {
     Hccl::IpAddress ipAddr("1.0.0.0");
     Hccl::DevNetPortType type = Hccl::DevNetPortType(Hccl::ConnectProtoType::RDMA);
     Hccl::PortData localPort = Hccl::PortData(0, type, 0, ipAddr);
     uint32_t port = 0;
-    HcclResult ret = hcomm::ServerSocketManager::GetInstance().ServerSocketStartListen(
-        localPort, Hccl::NicType::HOST_NIC_TYPE, 0, &port);
+    HcclResult ret
+        = hcomm::GetServerSocketMgr().ServerSocketStartListen(localPort, Hccl::NicType::HOST_NIC_TYPE, 0, &port);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_NE(port, 0);
-    hcomm::ServerSocketManager::GetInstance().DeInit(0);
-    EXPECT_EQ(hcomm::ServerSocketManager::GetInstance().hostServerSocketMap_.size(), 0);
+    hcomm::GetServerSocketMgr().DeInit(0);
+    EXPECT_EQ(hcomm::GetServerSocketMgr().hostServerSocketMap_.size(), 0);
 }
 
-TEST_F(DeviceResetCallbackTest, Ut_When_ServerSocketManagerDeInit_WithBothSockets_Expect_Clear)
+TEST_F(DeviceResetCallbackTest, Ut_When_ServerSocketMgrDeInit_WithBothSockets_Expect_Clear)
 {
     Hccl::IpAddress ipAddr("1.0.0.0");
     Hccl::DevNetPortType typeUb = Hccl::DevNetPortType(Hccl::ConnectProtoType::UB);
     Hccl::PortData localPortUb = Hccl::PortData(0, typeUb, 0, ipAddr);
     uint32_t port1 = 43210;
-    HcclResult ret1 = hcomm::ServerSocketManager::GetInstance().ServerSocketStartListen(
-        localPortUb, Hccl::NicType::DEVICE_NIC_TYPE, 0, &port1);
+    HcclResult ret1
+        = hcomm::GetServerSocketMgr().ServerSocketStartListen(localPortUb, Hccl::NicType::DEVICE_NIC_TYPE, 0, &port1);
     EXPECT_EQ(ret1, HCCL_SUCCESS);
 
     Hccl::DevNetPortType typeRdma = Hccl::DevNetPortType(Hccl::ConnectProtoType::RDMA);
     Hccl::PortData localPortRdma = Hccl::PortData(0, typeRdma, 0, ipAddr);
     uint32_t port2 = 0;
-    HcclResult ret2 = hcomm::ServerSocketManager::GetInstance().ServerSocketStartListen(
-        localPortRdma, Hccl::NicType::HOST_NIC_TYPE, 0, &port2);
+    HcclResult ret2
+        = hcomm::GetServerSocketMgr().ServerSocketStartListen(localPortRdma, Hccl::NicType::HOST_NIC_TYPE, 0, &port2);
     EXPECT_EQ(ret2, HCCL_SUCCESS);
     EXPECT_NE(port2, 0);
 
-    hcomm::ServerSocketManager::GetInstance().DeInit(0);
-    EXPECT_EQ(hcomm::ServerSocketManager::GetInstance().deviceServerSocketMap_.size(), 0);
-    EXPECT_EQ(hcomm::ServerSocketManager::GetInstance().hostServerSocketMap_.size(), 0);
+    hcomm::GetServerSocketMgr().DeInit(0);
+    EXPECT_EQ(hcomm::GetServerSocketMgr().deviceServerSocketMap_.size(), 0);
+    EXPECT_EQ(hcomm::GetServerSocketMgr().hostServerSocketMap_.size(), 0);
 }
 
 TEST_F(DeviceResetCallbackTest, Ut_When_AllDeInitCalled_SimulateDeviceResetPre_Expect_NoCrash)
@@ -147,8 +134,7 @@ TEST_F(DeviceResetCallbackTest, Ut_When_AllDeInitCalled_SimulateDeviceResetPre_E
     u32 devPhyId = 0;
     s32 deviceId = 0;
     hcomm::SocketMgr::DeInit(devPhyId);
-    hcomm::ServerSocketMgr::DeInit(devPhyId);
-    hcomm::ServerSocketManager::GetInstance().DeInit(devPhyId);
+    hcomm::GetServerSocketMgr().DeInit(devPhyId);
     Hccl::RdmaHandleManager::GetInstance().DeInit(devPhyId);
     Hccl::SocketHandleManager::GetInstance().DeInit(devPhyId);
     Hccl::HccpHdcManager::GetInstance().DeInit(deviceId);
@@ -159,8 +145,7 @@ TEST_F(DeviceResetCallbackTest, Ut_When_AllDeInitCalled_WithNonZeroDevPhyId_Expe
     u32 devPhyId = 1;
     s32 deviceId = 1;
     hcomm::SocketMgr::DeInit(devPhyId);
-    hcomm::ServerSocketMgr::DeInit(devPhyId);
-    hcomm::ServerSocketManager::GetInstance().DeInit(devPhyId);
+    hcomm::GetServerSocketMgr().DeInit(devPhyId);
     Hccl::RdmaHandleManager::GetInstance().DeInit(devPhyId);
     Hccl::SocketHandleManager::GetInstance().DeInit(devPhyId);
     Hccl::HccpHdcManager::GetInstance().DeInit(deviceId);
@@ -186,26 +171,26 @@ TEST_F(DeviceResetCallbackTest, Ut_When_HccpHdcManagerDeInit_WithDestroyed_Expec
     Hccl::HccpHdcManager::GetInstance().destroyed.store(false);
 }
 
-TEST_F(DeviceResetCallbackTest, Ut_When_ServerSocketManagerDeInit_SelectiveDevPhyId_Expect_OnlyMatchingCleared)
+TEST_F(DeviceResetCallbackTest, Ut_When_ServerSocketMgrDeInit_SelectiveDevPhyId_Expect_OnlyMatchingCleared)
 {
     Hccl::IpAddress ipAddr("1.0.0.0");
     Hccl::DevNetPortType typeUb = Hccl::DevNetPortType(Hccl::ConnectProtoType::UB);
     Hccl::PortData localPort0 = Hccl::PortData(0, typeUb, 0, ipAddr);
     uint32_t port0 = 43210;
-    HcclResult ret0 = hcomm::ServerSocketManager::GetInstance().ServerSocketStartListen(
-        localPort0, Hccl::NicType::DEVICE_NIC_TYPE, 0, &port0);
+    HcclResult ret0
+        = hcomm::GetServerSocketMgr().ServerSocketStartListen(localPort0, Hccl::NicType::DEVICE_NIC_TYPE, 0, &port0);
     EXPECT_EQ(ret0, HCCL_SUCCESS);
 
-    hcomm::ServerSocketManager::GetInstance().DeInit(999);
-    EXPECT_NE(hcomm::ServerSocketManager::GetInstance().deviceServerSocketMap_.size(), 0);
+    hcomm::GetServerSocketMgr().DeInit(999);
+    EXPECT_NE(hcomm::GetServerSocketMgr().deviceServerSocketMap_.size(), 0);
 
-    hcomm::ServerSocketManager::GetInstance().DeInit(0);
-    EXPECT_EQ(hcomm::ServerSocketManager::GetInstance().deviceServerSocketMap_.size(), 0);
+    hcomm::GetServerSocketMgr().DeInit(0);
+    EXPECT_EQ(hcomm::GetServerSocketMgr().deviceServerSocketMap_.size(), 0);
 }
 
 TEST_F(DeviceResetCallbackTest, Ut_When_RdmaHandleManagerDeInit_WithRdmaHandle_Expect_CleanupRdmaEntry)
 {
-    auto &mgr = Hccl::RdmaHandleManager::GetInstance();
+    auto& mgr = Hccl::RdmaHandleManager::GetInstance();
     u32 devPhyId = 0;
     RdmaHandle fakeRdmaHandle = (RdmaHandle)0xAAAA;
     Hccl::IpAddress ipAddr("1.0.0.0");
@@ -223,7 +208,7 @@ TEST_F(DeviceResetCallbackTest, Ut_When_RdmaHandleManagerDeInit_WithRdmaHandle_E
 
 TEST_F(DeviceResetCallbackTest, Ut_When_RdmaHandleManagerDeInit_WithUbHandle_Expect_CleanupUbEntry)
 {
-    auto &mgr = Hccl::RdmaHandleManager::GetInstance();
+    auto& mgr = Hccl::RdmaHandleManager::GetInstance();
     u32 devPhyId = 1;
     RdmaHandle fakeUbHandle = (RdmaHandle)0xBBBB;
     Hccl::IpAddress ipAddr("2.0.0.0");
@@ -237,7 +222,7 @@ TEST_F(DeviceResetCallbackTest, Ut_When_RdmaHandleManagerDeInit_WithUbHandle_Exp
 
 TEST_F(DeviceResetCallbackTest, Ut_When_RdmaHandleManagerDeInit_WithUbHandleAndTokenInfo_Expect_CleanupTokenAndUb)
 {
-    auto &mgr = Hccl::RdmaHandleManager::GetInstance();
+    auto& mgr = Hccl::RdmaHandleManager::GetInstance();
     u32 devPhyId = 2;
     RdmaHandle fakeUbHandle = (RdmaHandle)0xCCCC;
     Hccl::IpAddress ipAddr("3.0.0.0");
@@ -255,7 +240,7 @@ TEST_F(DeviceResetCallbackTest, Ut_When_RdmaHandleManagerDeInit_WithUbHandleAndT
 
 TEST_F(DeviceResetCallbackTest, Ut_When_RdmaHandleManagerDeInit_WithJfcHandle_Expect_CleanupJfcEntry)
 {
-    auto &mgr = Hccl::RdmaHandleManager::GetInstance();
+    auto& mgr = Hccl::RdmaHandleManager::GetInstance();
     u32 devPhyId = 0;
     RdmaHandle fakeRdmaHandle = (RdmaHandle)0xDDDD;
     Hccl::IpAddress ipAddr("4.0.0.0");
@@ -271,7 +256,12 @@ TEST_F(DeviceResetCallbackTest, Ut_When_RdmaHandleManagerDeInit_WithJfcHandle_Ex
 
 TEST_F(DeviceResetCallbackTest, Ut_When_RdmaHandleManagerDeInit_WithMixedHandles_Expect_AllCleaned)
 {
-    auto &mgr = Hccl::RdmaHandleManager::GetInstance();
+    auto& mgr = Hccl::RdmaHandleManager::GetInstance();
+    // 隔离历史残留：前置用例经 mock handle（未登记 rdmaHandleMap，DeInit 收集不到）真实调用
+    // GetJfcHandle/GetDieAndFuncId 会在 per-handle map 留下条目；本用例对这三个 map 做 size 全量断言，先清空
+    mgr.jfcHandleMap.clear();
+    mgr.DieAndFuncIdMap.clear();
+    mgr.RtpEnableMap.clear();
     u32 devPhyId = 0;
     RdmaHandle fakeRdmaHandle = (RdmaHandle)0xEEEE;
     RdmaHandle fakeUbHandle = (RdmaHandle)0xFFFF;
@@ -301,7 +291,7 @@ TEST_F(DeviceResetCallbackTest, Ut_When_RdmaHandleManagerDeInit_WithMixedHandles
 
 TEST_F(DeviceResetCallbackTest, Ut_When_RdmaHandleManagerDestroyAll_WithDestroyed_Expect_NoCrash)
 {
-    auto &mgr = Hccl::RdmaHandleManager::GetInstance();
+    auto& mgr = Hccl::RdmaHandleManager::GetInstance();
     mgr.destroyed.store(true);
     mgr.DestroyAll();
     mgr.destroyed.store(false);
@@ -320,7 +310,7 @@ TEST_F(DeviceResetCallbackTest, Ut_When_IsHandleValid_HandleNotInActiveHandles_E
 
 TEST_F(DeviceResetCallbackTest, Ut_When_IsHandleValid_HandleInActiveHandles_Expect_True)
 {
-    auto &mgr = Hccl::RdmaHandleManager::GetInstance();
+    auto& mgr = Hccl::RdmaHandleManager::GetInstance();
     Hccl::RdmaHandle fakeHandle = (Hccl::RdmaHandle)0x8887;
     mgr.activeHandles_.insert(fakeHandle);
     EXPECT_TRUE(mgr.IsHandleValid(fakeHandle));
@@ -329,7 +319,7 @@ TEST_F(DeviceResetCallbackTest, Ut_When_IsHandleValid_HandleInActiveHandles_Expe
 
 TEST_F(DeviceResetCallbackTest, Ut_When_IsHandleValid_WithDestroyed_Expect_False)
 {
-    auto &mgr = Hccl::RdmaHandleManager::GetInstance();
+    auto& mgr = Hccl::RdmaHandleManager::GetInstance();
     Hccl::RdmaHandle fakeHandle = (Hccl::RdmaHandle)0x8889;
     mgr.activeHandles_.insert(fakeHandle);
     EXPECT_TRUE(mgr.IsHandleValid(fakeHandle));
@@ -341,7 +331,7 @@ TEST_F(DeviceResetCallbackTest, Ut_When_IsHandleValid_WithDestroyed_Expect_False
 
 TEST_F(DeviceResetCallbackTest, Ut_When_RdmaHandleManagerDeInit_Expect_ActiveHandlesRemovedBeforeDestroy)
 {
-    auto &mgr = Hccl::RdmaHandleManager::GetInstance();
+    auto& mgr = Hccl::RdmaHandleManager::GetInstance();
     u32 devPhyId = 0;
     Hccl::RdmaHandle fakeUbHandle = (Hccl::RdmaHandle)0xABCD;
     Hccl::IpAddress ipAddr("7.0.0.0");
@@ -358,7 +348,7 @@ TEST_F(DeviceResetCallbackTest, Ut_When_RdmaHandleManagerDeInit_Expect_ActiveHan
 
 TEST_F(DeviceResetCallbackTest, Ut_When_RdmaHandleManagerDeInit_WithMultipleHandles_Expect_AllRemovedFromActiveHandles)
 {
-    auto &mgr = Hccl::RdmaHandleManager::GetInstance();
+    auto& mgr = Hccl::RdmaHandleManager::GetInstance();
     u32 devPhyId = 3;
     Hccl::RdmaHandle handle1 = (Hccl::RdmaHandle)0x1111;
     Hccl::RdmaHandle handle2 = (Hccl::RdmaHandle)0x2222;
@@ -380,7 +370,7 @@ TEST_F(DeviceResetCallbackTest, Ut_When_RdmaHandleManagerDeInit_WithMultipleHand
 
 TEST_F(DeviceResetCallbackTest, Ut_When_DeInitDifferentDevPhyId_Expect_OnlyTargetedHandlesRemoved)
 {
-    auto &mgr = Hccl::RdmaHandleManager::GetInstance();
+    auto& mgr = Hccl::RdmaHandleManager::GetInstance();
     Hccl::RdmaHandle handleDev0 = (Hccl::RdmaHandle)0xA0A0;
     Hccl::RdmaHandle handleDev1 = (Hccl::RdmaHandle)0xB1B1;
     Hccl::IpAddress ip0("10.0.0.0");

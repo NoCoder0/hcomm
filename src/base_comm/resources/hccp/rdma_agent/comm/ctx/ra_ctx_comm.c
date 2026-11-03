@@ -30,8 +30,7 @@ int RaCtxPrepareLmemRegister(struct MrRegInfoT *lmemInfo, struct MemRegAttrT *me
     return 0;
 }
 
-void RaCtxGetLmemInfo(struct MemRegInfoT *memInfo, struct MrRegInfoT *lmemInfo,
-    struct RaLmemHandle *lmemHandle)
+void RaCtxGetLmemInfo(struct MemRegInfoT *memInfo, struct MrRegInfoT *lmemInfo, struct RaLmemHandle *lmemHandle)
 {
     lmemInfo->out.key = memInfo->key;
     lmemInfo->out.ub.tokenId = memInfo->ub.tokenId;
@@ -102,8 +101,8 @@ int RaCtxPrepareQpCreate(struct QpCreateAttr *qpAttr, struct CtxQpAttr *ctxQpAtt
     return 0;
 }
 
-void RaCtxGetQpCreateInfo(struct RaCtxHandle *ctxHandle, struct QpCreateAttr *qpAttr,
-    struct QpCreateInfo *qpInfo, struct RaCtxQpHandle *qpHandle)
+void RaCtxGetQpCreateInfo(struct RaCtxHandle *ctxHandle, struct QpCreateAttr *qpAttr, struct QpCreateInfo *qpInfo,
+    struct RaCtxQpHandle *qpHandle)
 {
     qpHandle->devIndex = ctxHandle->devIndex;
     qpHandle->phyId = ctxHandle->attr.phyId;
@@ -111,8 +110,7 @@ void RaCtxGetQpCreateInfo(struct RaCtxHandle *ctxHandle, struct QpCreateAttr *qp
     qpHandle->protocol = ctxHandle->protocol;
     qpHandle->id = qpInfo->ub.id;
     (void)memcpy_s(&qpHandle->qpAttr, sizeof(struct QpCreateAttr), qpAttr, sizeof(struct QpCreateAttr));
-    (void)memcpy_s(&qpHandle->qpInfo, sizeof(struct QpCreateInfo), qpInfo,
-        sizeof(struct QpCreateInfo));
+    (void)memcpy_s(&qpHandle->qpInfo, sizeof(struct QpCreateInfo), qpInfo, sizeof(struct QpCreateInfo));
 }
 
 void RaCtxPrepareQpImport(struct QpImportInfoT *qpInfo, struct RaRsJettyImportAttr *importAttr)

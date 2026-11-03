@@ -23,6 +23,6 @@ bool FileExists(const std::string& path);
 HcclResult EnsureDirectory(const std::string& path);
 std::string GetParentPath(const std::string& path);
 std::string JoinPath(const std::string& left, const std::string& right);
-}  // namespace HcclSim
+} // namespace HcclSim
 
 #endif

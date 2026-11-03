@@ -95,37 +95,49 @@ union OpTlvRequestDataCommon {
     } rxData;
 };
 
-#define TLV_SETUP_TX(isV1, tlvData, commonData) \
-    do { \
-        unsigned int headoff = (isV1) ? offsetof(union OpTlvRequestData, txData.head) : \
-                                    offsetof(union OpTlvRequestDataV2, txData.head) ; \
-        unsigned int dataoff = (isV1) ? offsetof(union OpTlvRequestData, txData.data) : \
-                                    offsetof(union OpTlvRequestDataV2, txData.data) ; \
-        (commonData).txData.tlvData =  (tlvData); \
-        (commonData).txData.head = (tlvData) + headoff; \
-        (commonData).txData.data = (tlvData) + dataoff; \
-        (commonData).txData.dataLength = (isV1) ? MAX_TLV_MSG_DATA_LEN : MAX_TLV_MSG_DATA_LEN_V2; \
-        (commonData).txData.size = (isV1) ? sizeof(union OpTlvRequestData) : sizeof(union OpTlvRequestDataV2); \
-        (commonData).txData.opcode = (isV1) ? RA_RS_TLV_REQUEST : RA_RS_TLV_REQUEST_V2; \
+union OpCustomChannelData {
+    struct {
+        unsigned int phyId;
+        struct CustomChanInfoIn info;
+        unsigned int rsvd[64U];
+    } txData;
+
+    struct {
+        struct CustomChanInfoOut info;
+        unsigned int rsvd[64U];
+    } rxData;
+};
+
+#define TLV_SETUP_TX(isV1, tlvData, commonData)                                                                        \
+    do {                                                                                                               \
+        unsigned int headoff = (isV1) ? offsetof(union OpTlvRequestData, txData.head)                                  \
+                                      : offsetof(union OpTlvRequestDataV2, txData.head);                               \
+        unsigned int dataoff = (isV1) ? offsetof(union OpTlvRequestData, txData.data)                                  \
+                                      : offsetof(union OpTlvRequestDataV2, txData.data);                               \
+        (commonData).txData.tlvData = (tlvData);                                                                       \
+        (commonData).txData.head = (tlvData) + headoff;                                                                \
+        (commonData).txData.data = (tlvData) + dataoff;                                                                \
+        (commonData).txData.dataLength = (isV1) ? MAX_TLV_MSG_DATA_LEN : MAX_TLV_MSG_DATA_LEN_V2;                      \
+        (commonData).txData.size = (isV1) ? sizeof(union OpTlvRequestData) : sizeof(union OpTlvRequestDataV2);         \
+        (commonData).txData.opcode = (isV1) ? RA_RS_TLV_REQUEST : RA_RS_TLV_REQUEST_V2;                                \
     } while (0)
 
-#define TLV_SETUP_RX(isV1, tlvData, commonData) \
-    do { \
-        unsigned int recvBytesoff = (isV1) ? offsetof(union OpTlvRequestData, rxData.recvBytes) : \
-                                    offsetof(union OpTlvRequestDataV2, rxData.recvBytes) ; \
-        unsigned int recvDataoff = (isV1) ? offsetof(union OpTlvRequestData, rxData.recvData) : \
-                                    offsetof(union OpTlvRequestDataV2, rxData.recvData) ; \
-        (commonData).rxData.tlvData =  (tlvData); \
-        (commonData).rxData.recvBytes = (tlvData) + recvBytesoff; \
-        (commonData).rxData.recvData = (tlvData) + recvDataoff; \
-        (commonData).rxData.recvDataLength = (isV1) ? MAX_TLV_MSG_DATA_LEN : MAX_TLV_MSG_DATA_LEN_V2; \
-        (commonData).rxData.size = (isV1) ? sizeof(union OpTlvRequestData) : sizeof(union OpTlvRequestDataV2); \
-        (commonData).rxData.opcode = (isV1) ? RA_RS_TLV_REQUEST : RA_RS_TLV_REQUEST_V2; \
+#define TLV_SETUP_RX(isV1, tlvData, commonData)                                                                        \
+    do {                                                                                                               \
+        unsigned int recvBytesoff = (isV1) ? offsetof(union OpTlvRequestData, rxData.recvBytes)                        \
+                                           : offsetof(union OpTlvRequestDataV2, rxData.recvBytes);                     \
+        unsigned int recvDataoff = (isV1) ? offsetof(union OpTlvRequestData, rxData.recvData)                          \
+                                          : offsetof(union OpTlvRequestDataV2, rxData.recvData);                       \
+        (commonData).rxData.tlvData = (tlvData);                                                                       \
+        (commonData).rxData.recvBytes = (tlvData) + recvBytesoff;                                                      \
+        (commonData).rxData.recvData = (tlvData) + recvDataoff;                                                        \
+        (commonData).rxData.recvDataLength = (isV1) ? MAX_TLV_MSG_DATA_LEN : MAX_TLV_MSG_DATA_LEN_V2;                  \
+        (commonData).rxData.size = (isV1) ? sizeof(union OpTlvRequestData) : sizeof(union OpTlvRequestDataV2);         \
+        (commonData).rxData.opcode = (isV1) ? RA_RS_TLV_REQUEST : RA_RS_TLV_REQUEST_V2;                                \
     } while (0)
-
 
 int RaHdcTlvInit(struct RaTlvHandle *tlvHandle);
 int RaHdcTlvDeinit(struct RaTlvHandle *tlvHandle);
-int RaHdcTlvRequest(struct RaTlvHandle *tlvHandle, unsigned int moduleType,
-    struct TlvMsg *sendMsg, struct TlvMsg *recvMsg);
+int RaHdcTlvRequest(struct RaTlvHandle *tlvHandle, unsigned int moduleType, struct TlvMsg *sendMsg,
+    struct TlvMsg *recvMsg);
 #endif // RA_HDC_TLV_H

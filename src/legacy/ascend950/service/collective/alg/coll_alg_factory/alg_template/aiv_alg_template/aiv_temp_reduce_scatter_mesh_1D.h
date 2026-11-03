@@ -22,21 +22,24 @@ constexpr u64 REDUCE_SCATTER_SMALL_COUNT_512KB = 512 * 1024;
 
 class AivTempReduceScatterMesh1D : public AivAlgTemplateBase {
 public:
-    explicit AivTempReduceScatterMesh1D(const RankId virtualRank, const u32 tempRankSize,
-        const std::vector<std::vector<RankId>> &tempVTopo, const std::map<RankId, u32> &tempVirtRankMap);
+    explicit AivTempReduceScatterMesh1D(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~AivTempReduceScatterMesh1D() override;
 
     std::string Describe() const override
     {
-        return StringFormat("Instruction based Template of reducescatter mesh 1D with tempRankSize [%u].", tempRankSize_);
+        return StringFormat(
+            "Instruction based Template of reducescatter mesh 1D with tempRankSize [%u].", tempRankSize_);
     }
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
-    HcclResult GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &templateDataParams,
-        const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues) override;
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
+    HcclResult GenExtIns(
+        const TempFuncs& tempFuncs, const TemplateDataParams& templateDataParams, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues) override;
     HcclResult CalNumBlocks(u32& numBlocks, u64 dataSize, u32 numBlocksLimit) override;
-    u32 CalcScratchMultiple(BufferType inBuffType, BufferType outBuffType) override;    
+    u32 CalcScratchMultiple(BufferType inBuffType, BufferType outBuffType) override;
 };
 
-}  // namespace Hccl
+} // namespace Hccl
 
-#endif  // AIV_TEMP_REDUCE_SCATTER_MESH_1D
+#endif // AIV_TEMP_REDUCE_SCATTER_MESH_1D

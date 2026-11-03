@@ -7,33 +7,32 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #include "dev_rdma_connection.h"
 #include "not_support_exception.h"
 #include "orion_adapter_rts.h"
 namespace Hccl {
 
-DevRdmaConnection::DevRdmaConnection(Socket *socket, RdmaHandle rdmaHandle, OpMode opMode)
+DevRdmaConnection::DevRdmaConnection(Socket* socket, RdmaHandle rdmaHandle, OpMode opMode)
     : RmaConnection(socket, RmaConnType::RDMA)
 {
-    int     qpMode  = 0;
+    int qpMode = 0;
     DevType devType = HrtGetDeviceType();
     if (devType == DevType::DEV_TYPE_910A2 || devType == DevType::DEV_TYPE_910A3) {
         qpMode = (opMode == OpMode::OPBASE) ? OPBASE_QP_MODE_EXT : OFFLINE_QP_MODE_EXT;
     } else if (devType == DevType::DEV_TYPE_910A) {
         qpMode = (opMode == OpMode::OPBASE) ? OPBASE_QP_MODE : OFFLINE_QP_MODE;
     } else {
-        HCCL_ERROR("Cannot support this device type!"
-                   "errNo[0x%016llx], device type[%s]",
-                   HCCL_ERROR_CODE(HcclResult::HCCL_E_NOT_SUPPORT), DevTypeToString(devType).c_str());
+        HCCL_ERROR(
+            "Cannot support this device type! "
+            "errNo[0x%016llx], device type[%s]",
+            HCCL_ERROR_CODE(HcclResult::HCCL_E_NOT_SUPPORT), DevTypeToString(devType).c_str());
         throw NotSupportException(DevTypeToString(devType));
     }
     qpHandle = HrtRaQpCreate(rdmaHandle, QP_FLAG_RC, qpMode);
 }
 
-void DevRdmaConnection::Connect()
-{
-    GetStatus();
-}
+void DevRdmaConnection::Connect() { GetStatus(); }
 
 RmaConnStatus DevRdmaConnection::GetStatus()
 {
@@ -61,18 +60,12 @@ void DevRdmaConnection::CheckQpStatus(QpHandle handle)
     }
 }
 
-QpHandle DevRdmaConnection::GetHandle()
-{
-    return qpHandle;
-}
+QpHandle DevRdmaConnection::GetHandle() { return qpHandle; }
 
-DevRdmaConnection::~DevRdmaConnection()
-{
-    HrtRaQpDestroy(qpHandle);
-}
+DevRdmaConnection::~DevRdmaConnection() { HrtRaQpDestroy(qpHandle); }
 
-unique_ptr<BaseTask> DevRdmaConnection::PrepareWrite(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                                     const SqeConfig &config)
+unique_ptr<BaseTask> DevRdmaConnection::PrepareWrite(
+    const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, [[maybe_unused]] const SqeConfig& config)
 {
     VerifySizeIsEqual(remoteMemBuf, localMemBuf, "DevRdmaConnection::PrepareWrite");
 

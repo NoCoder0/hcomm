@@ -20,37 +20,37 @@ constexpr int CKE_IDX_0 = 0; // 专门给后同步使用
 constexpr int CKE_IDX_1 = 1; // 前同步使用
 constexpr int CKE_IDX_2 = 2; // 前同步使用
 constexpr int CKE_IDX_3 = 3; // 前同步使用
-constexpr int CKE_AXIS  = 4; // 给die间同步使用
-constexpr int DIM_NUM   = 2;
-constexpr int ZERO      = 0;
-constexpr int DIM_X     = 0;
-constexpr int DIM_Y     = 1;
+constexpr int CKE_AXIS = 4;  // 给die间同步使用
+constexpr int DIM_NUM = 2;
+constexpr int ZERO = 0;
+constexpr int DIM_X = 0;
+constexpr int DIM_Y = 1;
 
-CcuContextScatterMesh2D::CcuContextScatterMesh2D(const CcuCtxArg &arg, const std::vector<CcuTransport *> &transports,
-                                                 const CcuTransportGroup &group)
+CcuContextScatterMesh2D::CcuContextScatterMesh2D(
+    const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group)
     : CcuContextAlgBase(arg, transports, group)
 {
-    const CcuCtxArgScatterMesh2D *ctxArg = dynamic_cast<const CcuCtxArgScatterMesh2D *>(&arg);
+    const CcuCtxArgScatterMesh2D* ctxArg = dynamic_cast<const CcuCtxArgScatterMesh2D*>(&arg);
     if (ctxArg == nullptr) {
         THROW<NullPtrException>(StringFormat("CcuContextScatterMesh2D::ctxArg ptr is null"));
     }
     rankId_ = ctxArg->rankId_;
-    dimSize_ = ctxArg->dimSize_;  // vector, dimSize_[0]表示X轴的rank数，dimSize_[1]表示Y轴的rank数
-    axisId_ = ctxArg->axisId_;    // 由外部传入，指明当前在X轴或者Y轴的CCU上
+    dimSize_ = ctxArg->dimSize_; // vector, dimSize_[0]表示X轴的rank数，dimSize_[1]表示Y轴的rank数
+    axisId_ = ctxArg->axisId_;   // 由外部传入，指明当前在X轴或者Y轴的CCU上
     rankSize_ = ctxArg->rankSize_;
     root_ = ctxArg->root_;
     // 参数校验
     if (transports.size() == 0) {
         THROW<NullPtrException>(StringFormat("CcuContextScatterMesh2D transports is empty"));
     }
-    if (dimSize_.size() != DIM_NUM || dimSize_[0] == ZERO || dimSize_[1] == ZERO || rankSize_ == ZERO ||
-        axisId_ >= DIM_NUM) {
+    if (dimSize_.size() != DIM_NUM || dimSize_[0] == ZERO || dimSize_[1] == ZERO || rankSize_ == ZERO
+        || axisId_ >= DIM_NUM) {
         THROW<NullPtrException>(StringFormat("[CcuContextScatterMesh2D]ctxArg params is invalid"));
     }
 
     // 分解出当前Rank的行列坐标
-    dimId_.emplace_back(rankId_ % dimSize_[0]);  // dimId_[0]表示在X轴1Dmesh拓扑中的localId
-    dimId_.emplace_back(rankId_ / dimSize_[0]);  // dimId_[1]表示在Y轴1Dmesh拓扑中的localId
+    dimId_.emplace_back(rankId_ % dimSize_[0]); // dimId_[0]表示在X轴1Dmesh拓扑中的localId
+    dimId_.emplace_back(rankId_ / dimSize_[0]); // dimId_[1]表示在Y轴1Dmesh拓扑中的localId
 
     // 分解出Root的行列坐标
     rootDimId_.emplace_back(root_ % dimSize_[0]);
@@ -64,9 +64,10 @@ CcuContextScatterMesh2D::CcuContextScatterMesh2D(const CcuCtxArg &arg, const std
     localAxisSignalName_ = "CcuContextScatter2DAxisSync_" + std::to_string(axisId_);
     anotherAxisSignalName_ = "CcuContextScatter2DAxisSync_" + std::to_string(1 - axisId_);
 
-    HCCL_INFO("[ContextScatter2DMesh.init] rankId_[%llu], dimSize_[0][%llu], dimSize_[1][%llu], axisId_[%llu], "
-              "root_[%llu], localId_[%llu], localSize_[%llu] ",
-              rankId_, dimSize_[0], dimSize_[1], axisId_, root_, localId_, localSize_);
+    HCCL_INFO(
+        "[ContextScatter2DMesh.init] rankId_[%llu], dimSize_[0][%llu], dimSize_[1][%llu], axisId_[%llu], "
+        "root_[%llu], localId_[%llu], localSize_[%llu] ",
+        rankId_, dimSize_[0], dimSize_[1], axisId_, root_, localId_, localSize_);
 }
 
 bool CcuContextScatterMesh2D::SameRowWithRoot()
@@ -90,8 +91,9 @@ bool CcuContextScatterMesh2D::SameColumnWithRoot()
 void CcuContextScatterMesh2D::PrepareVariables()
 {
     u32 transportId = 0;
-    CHK_PRT_RET(transports.size() < localSize_,
-                HCCL_ERROR("[CcuContextScatterMesh2D] transports size is less than localSize"),);
+    CHK_PRT_RET(
+        transports.size() < localSize_,
+        HCCL_ERROR("[CcuContextScatterMesh2D] transports size is less than localSize"), );
     input_ = CreateVariable();
     sliceSize_ = CreateVariable();
     stride_ = CreateVariable();
@@ -100,9 +102,10 @@ void CcuContextScatterMesh2D::PrepareVariables()
             scratch_.push_back(CreateVariable());
             output_.push_back(CreateVariable());
             token_.push_back(CreateVariable());
-        } else {  // 非本地，使用远端Variable
-            CHK_PRT_RET(transports[transportId] == nullptr,
-                        HCCL_ERROR("[CcuContextScatterMesh2D] Algorithm transport ptr is null"),);
+        } else { // 非本地，使用远端Variable
+            CHK_PRT_RET(
+                transports[transportId] == nullptr,
+                HCCL_ERROR("[CcuContextScatterMesh2D] Algorithm transport ptr is null"), );
             scratch_.push_back(CreateVariable((*transports[transportId]), VAR_IDX_0));
             output_.push_back(CreateVariable((*transports[transportId]), VAR_IDX_1));
             token_.push_back(CreateVariable((*transports[transportId]), VAR_IDX_2));
@@ -112,8 +115,8 @@ void CcuContextScatterMesh2D::PrepareVariables()
     axisSliceSize_.push_back(CreateVariable());
     axisSliceSize_.push_back(CreateVariable());
 
-    ExportMaskSignal(localAxisSignal_, localAxisSignalName_);       // 将本地的信号export出去
-    anotherAxisSignal_ = ImportMaskSignal(anotherAxisSignalName_);  // 导入另一个die的mask信号
+    ExportMaskSignal(localAxisSignal_, localAxisSignalName_);      // 将本地的信号export出去
+    anotherAxisSignal_ = ImportMaskSignal(anotherAxisSignalName_); // 导入另一个die的mask信号
     curGoSize_ = CreateGroupOpSize();
     return;
 }
@@ -138,20 +141,21 @@ void CcuContextScatterMesh2D::LoadArgs()
 
 void CcuContextScatterMesh2D::PreSync()
 {
-    uint16_t selfBit = 1 << localId_;  // 本rank的mask
+    uint16_t selfBit = 1 << localId_; // 本rank的mask
     uint16_t allBit = ((1 << localSize_) - 1) & (~(1 << localId_));
 
     for (auto t : transports) {
         if (t == nullptr) {
             THROW<NullPtrException>(StringFormat("CcuContextScatterMesh2D::PreSync, transport ptr is null"));
         }
-        WriteVariableWithSignal(*t, scratch_[localId_], VAR_IDX_0, CKE_IDX_1,
-                                selfBit);  // 传递CCLBuf信息, 把自己的CCLbuf给所有对端
-        WriteVariableWithSignal(*t, output_[localId_], VAR_IDX_1, CKE_IDX_2, selfBit);  // 传递output信息
-        WriteVariableWithSignal(*t, token_[localId_], VAR_IDX_2, CKE_IDX_3, selfBit);   // 传递token信息
+        WriteVariableWithSignal(
+            *t, scratch_[localId_], VAR_IDX_0, CKE_IDX_1,
+            selfBit); // 传递CCLBuf信息, 把自己的CCLbuf给所有对端
+        WriteVariableWithSignal(*t, output_[localId_], VAR_IDX_1, CKE_IDX_2, selfBit); // 传递output信息
+        WriteVariableWithSignal(*t, token_[localId_], VAR_IDX_2, CKE_IDX_3, selfBit);  // 传递token信息
     }
 
-    GroupWait(*transportGroup, CKE_IDX_1, allBit);  //等齐所有对端的信息
+    GroupWait(*transportGroup, CKE_IDX_1, allBit); // 等齐所有对端的信息
     GroupWait(*transportGroup, CKE_IDX_2, allBit);
     GroupWait(*transportGroup, CKE_IDX_3, allBit);
     return;
@@ -159,7 +163,7 @@ void CcuContextScatterMesh2D::PreSync()
 
 void CcuContextScatterMesh2D::Sync(uint32_t ckeId)
 {
-    uint16_t selfBit = 1 << localId_;  // 本rank的mask
+    uint16_t selfBit = 1 << localId_; // 本rank的mask
     uint16_t allBit = ((1 << localSize_) - 1) & (~(1 << localId_));
 
     for (auto t : transports) {
@@ -176,7 +180,8 @@ void CcuContextScatterMesh2D::Sync(uint32_t ckeId)
 void CcuContextScatterMesh2D::AxisSync(uint32_t signalIndex)
 {
     if (signalIndex > 1) {
-        THROW<InvalidParamsException>(StringFormat("[CcuContextScatterMesh2D] Unexpected SignalInex[%u]", signalIndex));
+        THROW<InvalidParamsException>(
+            StringFormat("[CcuContextScatterMesh2D] Unexpected SignalIndex[%u]", signalIndex));
     }
     LocalCtxPost(anotherAxisSignal_, 1 << (axisId_ + signalIndex * DIM_NUM));
     LocalWait(localAxisSignal_, 1 << (1 - axisId_ + signalIndex * DIM_NUM));
@@ -184,19 +189,15 @@ void CcuContextScatterMesh2D::AxisSync(uint32_t signalIndex)
 }
 
 // 每次调用，准备好1D范围内，所有需要传递的src和dst，size固定为（localSize-1）
-void CcuContextScatterMesh2D::CcuWrite1DMesh(std::vector<CcuRep::Memory> &src, std::vector<CcuRep::Memory> &dst,
-                                             CcuRep::Variable &size)
+void CcuContextScatterMesh2D::CcuWrite1DMesh(
+    std::vector<CcuRep::Memory>& src, std::vector<CcuRep::Memory>& dst, CcuRep::Variable& size)
 {
     CcuRep::MaskSignal locMask = CreateMaskSignal();
     uint16_t allBitWithoutLocal = ((1 << localSize_) - 1) & (~(1 << src.size()));
     uint64_t transportId = 0;
     for (uint16_t r = 0; r < src.size(); r++) {
-        CCU_IF(size == 0) {
-            LocalPost(locMask, 1 << r);
-        }
-        CCU_IF(size != 0) {
-            Write(*transports[transportId], dst[r], src[r], size, locMask, 1 << r);
-        }
+        CCU_IF(size == 0) { LocalPost(locMask, 1 << r); }
+        CCU_IF(size != 0) { Write(*transports[transportId], dst[r], src[r], size, locMask, 1 << r); }
         transportId++;
     }
     // 等写完所有对端
@@ -216,7 +217,7 @@ uint64_t CcuContextScatterMesh2D::CoordinateToGlobalId(uint32_t x, uint32_t y)
 }
 
 // a = a + i * b
-void CcuContextScatterMesh2D::CcuMultiply(CcuRep::Memory &a, CcuRep::Variable &b, uint64_t i) const
+void CcuContextScatterMesh2D::CcuMultiply(CcuRep::Memory& a, CcuRep::Variable& b, uint64_t i) const
 {
     for (uint64_t j = 0; j < i; j++) {
         a.addr += b;
@@ -224,8 +225,8 @@ void CcuContextScatterMesh2D::CcuMultiply(CcuRep::Memory &a, CcuRep::Variable &b
     return;
 }
 
-void CcuContextScatterMesh2D::RelaySendFor1D(std::vector<CcuRep::Memory> &relaySrc,
-                                             std::vector<CcuRep::Memory> &relayDst, uint64_t j)
+void CcuContextScatterMesh2D::RelaySendFor1D(
+    std::vector<CcuRep::Memory>& relaySrc, std::vector<CcuRep::Memory>& relayDst, uint64_t j)
 {
     uint64_t globalId = 0;
     relaySrc.clear();
@@ -239,13 +240,15 @@ void CcuContextScatterMesh2D::RelaySendFor1D(std::vector<CcuRep::Memory> &relayS
             dst.token = token_[i];
             // i,j的顺序为先本轴(axisId), 再另外一个轴(anotherAxisId)
             globalId = CoordinateToGlobalId(i, j);
-            HCCL_INFO("[CcuContextScatterMesh2D][PrepareRootSendInfo] src globalId[%u], curRank[%u], j[%llu], i[%llu] ",
-                      globalId, rankId_, j, i);
+            HCCL_INFO(
+                "[CcuContextScatterMesh2D][PrepareRootSendInfo] src globalId[%llu], curRank[%u], j[%llu], i[%llu] ",
+                globalId, rankId_, j, i);
             src.addr = input_;
-            CcuMultiply(src, stride_, globalId);  // src偏移：src +=  stride_ * globalId
+            CcuMultiply(src, stride_, globalId); // src偏移：src +=  stride_ * globalId
             dst.addr = scratch_[i];
-            CcuMultiply(dst, sliceSize_,
-                        globalId);  // dst偏移, dst为scratch，没有stride相关，dst += sliceSize_ * globalId
+            CcuMultiply(
+                dst, sliceSize_,
+                globalId); // dst偏移, dst为scratch，没有stride相关，dst += sliceSize_ * globalId
             if (axisId_ == DIM_Y) {
                 src.addr += axisSliceSize_[DIM_X];
                 dst.addr += axisSliceSize_[DIM_X];
@@ -254,8 +257,9 @@ void CcuContextScatterMesh2D::RelaySendFor1D(std::vector<CcuRep::Memory> &relayS
             relayDst.emplace_back(dst);
         }
     }
-    HCCL_INFO("[CcuContextScatterMesh2D][PrepareRootSendInfo] relaySrcSize[%llu], relayDstSize_[%zu] ", relaySrc.size(),
-              relayDst.size());
+    HCCL_INFO(
+        "[CcuContextScatterMesh2D][PrepareRootSendInfo] relaySrcSize[%zu], relayDstSize_[%zu] ", relaySrc.size(),
+        relayDst.size());
     CcuWrite1DMesh(relaySrc, relayDst, axisSliceSize_[axisId_]);
     return;
 }
@@ -265,26 +269,26 @@ void CcuContextScatterMesh2D::RelaySendFor1D(std::vector<CcuRep::Memory> &relayS
 // relaySrc: “中转”数据，从Root的inputAddr发送到同轴其他卡的scratchAddr
 // relayDst: 对端的scratchAddr
 // ********************************************
-void CcuContextScatterMesh2D::PrepareAndTransferRootRelayInfo(std::vector<CcuRep::Memory> &relaySrc,
-                                                              std::vector<CcuRep::Memory> &relayDst)
+void CcuContextScatterMesh2D::PrepareAndTransferRootRelayInfo(
+    std::vector<CcuRep::Memory>& relaySrc, std::vector<CcuRep::Memory>& relayDst)
 {
-    HCCL_INFO("[CcuContextScatterMesh2D][PrepareRootSendInfo] start axisId_[%u]", axisId_);
+    HCCL_INFO("[CcuContextScatterMesh2D][PrepareRootSendInfo] start axisId_[%llu]", axisId_);
     // 准备中转数据： i 为所有对端，负责中转数据，所有数据均发至i上； j为中转目的地
-    HCCL_INFO("[CcuContextScatterMesh2D][PrepareRootSendInfo] axisId[%llu], dimSize_[%u] ", axisId_,
-              dimSize_[1 - axisId_]);
+    HCCL_INFO(
+        "[CcuContextScatterMesh2D][PrepareRootSendInfo] axisId[%llu], dimSize_[%llu] ", axisId_, dimSize_[1 - axisId_]);
     for (uint64_t j = 0; j < dimSize_[1 - axisId_]; j++) {
         if (j != dimId_[1 - axisId_]) {
             RelaySendFor1D(relaySrc, relayDst, j);
         }
     }
-    HCCL_INFO("[CcuContextScatterMesh2D][PrepareRootSendInfo] Done axisId_[%u]", axisId_);
+    HCCL_INFO("[CcuContextScatterMesh2D][PrepareRootSendInfo] Done axisId_[%llu]", axisId_);
     return;
 }
 
 // directSrc：“直达”数据，从root的inputAddr发送到同轴其他卡的outputAddr
 // directDst; 对端的outputAddr
-void CcuContextScatterMesh2D::PrepareAndTransferRootDirectInfo(std::vector<CcuRep::Memory> &directSrc,
-                                                               std::vector<CcuRep::Memory> &directDst)
+void CcuContextScatterMesh2D::PrepareAndTransferRootDirectInfo(
+    std::vector<CcuRep::Memory>& directSrc, std::vector<CcuRep::Memory>& directDst)
 {
     uint64_t globalId = 0;
     // 准备直达数据,直达数据只在自己的axisId上做1D的发送
@@ -298,11 +302,11 @@ void CcuContextScatterMesh2D::PrepareAndTransferRootDirectInfo(std::vector<CcuRe
             src.token = token_[i];
             dst.token = token_[i];
             globalId = CoordinateToGlobalId(i, dimId_[1 - axisId_]);
-            HCCL_INFO("[CcuContextScatterMesh2D][PrepareRootSendInfo] src globalId[%u], curRank[%u]", globalId,
-                      rankId_);
+            HCCL_INFO(
+                "[CcuContextScatterMesh2D][PrepareRootSendInfo] src globalId[%u], curRank[%u]", globalId, rankId_);
             src.addr = input_;
             CcuMultiply(src, stride_, globalId);
-            dst.addr = output_[i];  // output只有一片，不需要偏移
+            dst.addr = output_[i]; // output只有一片，不需要偏移
             directSrc.emplace_back(src);
             directDst.emplace_back(dst);
         }
@@ -314,11 +318,11 @@ void CcuContextScatterMesh2D::PrepareAndTransferRootDirectInfo(std::vector<CcuRe
 void CcuContextScatterMesh2D::LocalTransfer()
 {
     CcuRep::MaskSignal locMask = CreateMaskSignal();
-    CcuRep::Memory     src     = CreateMemory();
-    CcuRep::Memory     dst     = CreateMemory();
-    src.token                  = token_[localId_];
-    dst.token                  = token_[localId_];
-    src.addr                   = input_;
+    CcuRep::Memory src = CreateMemory();
+    CcuRep::Memory dst = CreateMemory();
+    src.token = token_[localId_];
+    dst.token = token_[localId_];
+    src.addr = input_;
     if (axisId_ == DIM_Y) {
         src.addr += axisSliceSize_[DIM_X];
     }
@@ -336,7 +340,7 @@ void CcuContextScatterMesh2D::LocalTransfer()
 }
 
 // 准备转发节点，需要的转发数据地址
-void CcuContextScatterMesh2D::RelaySend(std::vector<CcuRep::Memory> &relaySrc, std::vector<CcuRep::Memory> &relayDst)
+void CcuContextScatterMesh2D::RelaySend(std::vector<CcuRep::Memory>& relaySrc, std::vector<CcuRep::Memory>& relayDst)
 {
     uint64_t globalId;
     relaySrc.clear();
@@ -348,12 +352,13 @@ void CcuContextScatterMesh2D::RelaySend(std::vector<CcuRep::Memory> &relaySrc, s
             src.token = token_[i];
             dst.token = token_[i];
             globalId = CoordinateToGlobalId(i, dimId_[1 - axisId_]);
-            HCCL_INFO("[CcuContextScatterMesh2D][PrepareRelaySendInfo] src globalId[%u], curRank[%u], axisId[%u], "
-                      "i:[%u], localId[%u]",
-                      globalId, rankId_, axisId_, i, localId_);
+            HCCL_INFO(
+                "[CcuContextScatterMesh2D][PrepareRelaySendInfo] src globalId[%llu], curRank[%u], axisId[%llu], "
+                "i:[%llu], localId[%llu]",
+                globalId, rankId_, axisId_, i, localId_);
             src.addr = scratch_[localId_];
             CcuMultiply(src, sliceSize_, globalId);
-            dst.addr = output_[i];  // output只有一片，不需要偏移
+            dst.addr = output_[i]; // output只有一片，不需要偏移
             if (axisId_ == DIM_X) {
                 src.addr += axisSliceSize_[DIM_X];
                 dst.addr += axisSliceSize_[DIM_X];
@@ -392,16 +397,16 @@ void CcuContextScatterMesh2D::RootSendAlgorithm()
     std::vector<CcuRep::Memory> relayDst;
     PrepareAndTransferRootRelayInfo(relaySrc, relayDst);
 
-    Sync(CKE_IDX_0);  // 后同步
+    Sync(CKE_IDX_0); // 后同步
     AxisSync(0);
     // step2
-    Sync(CKE_IDX_1);  // 前同步的功能
+    Sync(CKE_IDX_1); // 前同步的功能
 
     PrepareAndTransferRootDirectInfo(directSrc, directDst);
     LocalTransfer();
 
-    Sync(CKE_IDX_0);  // 后同步
-    AxisSync(1);      // 轴同步
+    Sync(CKE_IDX_0); // 后同步
+    AxisSync(1);     // 轴同步
     HCCL_INFO("[CcuContextScatterMesh2D][RootSendAlgorithm] Step2 AxisSync Done");
     return;
 }
@@ -425,32 +430,34 @@ void CcuContextScatterMesh2D::RelaySendAlgorithm()
     LoadArgs();
 
     // step1:
-    PreSync();        // 前同步
-    Sync(CKE_IDX_0);  // 后同步
+    PreSync();       // 前同步
+    Sync(CKE_IDX_0); // 后同步
     AxisSync(0);
 
     // step2:
     // 与Root同行的ccuX，或者 与Root同列的ccuY；才有step2的收直达数据
     if ((SameRowWithRoot() && axisId_ == DIM_X) or (SameColumnWithRoot() && axisId_ == DIM_Y)) {
-        HCCL_INFO("[CcuContextScatterMesh2D][RelaySendAlgorithm][1 actual Relay] into Relay action, axisId[%llu], "
-                  "isSameRowWithRoot[%d], isSameColwithRoot[%d], myRank[%llu], root[%llu]",
-                  axisId_, SameRowWithRoot(), SameColumnWithRoot(), rankId_, root_);
-        Sync(CKE_IDX_1);  // 前同步
-        Sync(CKE_IDX_0);  // 后同步
+        HCCL_INFO(
+            "[CcuContextScatterMesh2D][RelaySendAlgorithm][1 actual Relay] into Relay action, axisId[%llu], "
+            "isSameRowWithRoot[%d], isSameColwithRoot[%d], myRank[%llu], root[%llu]",
+            axisId_, SameRowWithRoot(), SameColumnWithRoot(), rankId_, root_);
+        Sync(CKE_IDX_1); // 前同步
+        Sync(CKE_IDX_0); // 后同步
     }
     // 与Root同行的ccuY，或者 与Root同列的ccuX；才有step2的发中转数据
     if ((SameRowWithRoot() && axisId_ == DIM_Y) or (SameColumnWithRoot() && axisId_ == DIM_X)) {
-        HCCL_INFO("[CcuContextScatterMesh2D][RelaySendAlgorithm][2 actual Relay] into Relay action, axisId[%llu], "
-                  "isSameRowWithRoot[%d], isSameColwithRoot[%d], myRank[%llu], root[%llu]",
-                  axisId_, SameRowWithRoot(), SameColumnWithRoot(), rankId_, root_);
-        Sync(CKE_IDX_1);  // 前同步
+        HCCL_INFO(
+            "[CcuContextScatterMesh2D][RelaySendAlgorithm][2 actual Relay] into Relay action, axisId[%llu], "
+            "isSameRowWithRoot[%d], isSameColwithRoot[%d], myRank[%llu], root[%llu]",
+            axisId_, SameRowWithRoot(), SameColumnWithRoot(), rankId_, root_);
+        Sync(CKE_IDX_1); // 前同步
 
         // 准备"直达"&“中转”传输地址
         std::vector<CcuRep::Memory> relaySrc;
         std::vector<CcuRep::Memory> relayDst;
         RelaySend(relaySrc, relayDst);
 
-        Sync(CKE_IDX_0);  // 后同步
+        Sync(CKE_IDX_0); // 后同步
     }
     AxisSync(1);
     HCCL_INFO("[CcuContextScatterMesh2D][RelaySendAlgorithm] step2 Done");
@@ -459,17 +466,18 @@ void CcuContextScatterMesh2D::RelaySendAlgorithm()
 
 void CcuContextScatterMesh2D::NonDirectRecvAlgorithm()
 {
-    HCCL_INFO("[CcuContextScatterMesh2D][NonDirectRecvAlgorithm] start, dimIdX_[%u], dimIdY_[%u]", dimId_[0],
-              dimId_[1]);
+    HCCL_INFO(
+        "[CcuContextScatterMesh2D][NonDirectRecvAlgorithm] start, dimIdX_[%llu], dimIdY_[%llu]", dimId_[0], dimId_[1]);
     PrepareVariables();
     LoadArgs();
-    PreSync();        // 前同步
-    Sync(CKE_IDX_0);  // 后同步
+    PreSync();       // 前同步
+    Sync(CKE_IDX_0); // 后同步
     AxisSync(0);
-    Sync(CKE_IDX_1);  // 前同步
-    Sync(CKE_IDX_0);  // 后同步
+    Sync(CKE_IDX_1); // 前同步
+    Sync(CKE_IDX_0); // 后同步
     AxisSync(1);
-    HCCL_INFO("[CcuContextScatterMesh2D][NonDirectRecvAlgorithm] Done, dimIdX_[%u], dimIdY_[%u]", dimId_[0], dimId_[1]);
+    HCCL_INFO(
+        "[CcuContextScatterMesh2D][NonDirectRecvAlgorithm] Done, dimIdX_[%llu], dimIdY_[%llu]", dimId_[0], dimId_[1]);
     return;
 }
 
@@ -493,9 +501,9 @@ void CcuContextScatterMesh2D::Algorithm()
     return;
 }
 
-std::vector<uint64_t> CcuContextScatterMesh2D::GeneArgs(const CcuTaskArg &arg)
+std::vector<uint64_t> CcuContextScatterMesh2D::GeneArgs(const CcuTaskArg& arg)
 {
-    const CcuTaskArgScatterMesh2D *taskArg = dynamic_cast<const CcuTaskArgScatterMesh2D *>(&arg);
+    const CcuTaskArgScatterMesh2D* taskArg = dynamic_cast<const CcuTaskArgScatterMesh2D*>(&arg);
     if (taskArg == nullptr) {
         THROW<NullPtrException>(StringFormat("CcuContextScatterMesh2D::taskArg ptr is null"));
     }
@@ -513,12 +521,13 @@ std::vector<uint64_t> CcuContextScatterMesh2D::GeneArgs(const CcuTaskArg &arg)
     auto xSliceGoSize = CalGoSize(xSliceSize);
     auto ySliceGoSize = CalGoSize(ySliceSize);
     auto curGosize = (axisId_ == DIM_X) ? xSliceGoSize : ySliceGoSize;
-    
-    HCCL_INFO("[CcuContextScatterMesh2DAlgo] inputAddr[%llu], outputAddr[%llu], scratchAddr[%llu], sliceSize[%llu], "
-              "stride[%llu], xSliceSize[%llu], ySliceSize[%llu] ",
-              inputAddr, outputAddr, scratchAddr, sliceSize, stride, xSliceSize, ySliceSize);
+
+    HCCL_INFO(
+        "[CcuContextScatterMesh2DAlgo] inputAddr[%llu], outputAddr[%llu], scratchAddr[%llu], sliceSize[%llu], "
+        "stride[%llu], xSliceSize[%llu], ySliceSize[%llu] ",
+        inputAddr, outputAddr, scratchAddr, sliceSize, stride, xSliceSize, ySliceSize);
     // 8个参数
     return {inputAddr,  outputAddr, tokenInfo,    scratchAddr,  sliceSize,    stride,
             xSliceSize, ySliceSize, curGosize[0], curGosize[1], curGosize[2], curGosize[3]};
 }
-}
+} // namespace Hccl

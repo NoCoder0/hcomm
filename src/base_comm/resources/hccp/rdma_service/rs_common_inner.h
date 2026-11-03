@@ -13,9 +13,9 @@
 
 #include "hccp_common.h"
 
-#define RS_MAX_IP_LEN       64          // IP地址(IPv4：点分十进制，IPv6 十六进制字符串)最大长度
-#define IPV6_S6_ADDR_SIZE   16          // IPv6 have 16 u6_addr8
-#define RS_MAX_DEV_NUM         64
+#define RS_MAX_IP_LEN 64     // IP地址(IPv4：点分十进制，IPv6 十六进制字符串)最大长度
+#define IPV6_S6_ADDR_SIZE 16 // IPv6 have 16 u6_addr8
+#define RS_MAX_DEV_NUM 64
 
 struct RsIpAddrInfo {
     uint32_t family;

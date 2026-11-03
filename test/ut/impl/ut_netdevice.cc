@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -63,8 +63,7 @@
 
 #include "hccl_network.h"
 using namespace std;
-class NetDevUt : public testing::Test
-{
+class NetDevUt : public testing::Test {
 protected:
     static void SetUpTestCase()
     {
@@ -72,10 +71,7 @@ protected:
         hrtGetDeviceIndexByPhyId(0, deviceLogicId);
         hccl::NetworkManager::GetInstance(deviceLogicId).Destroy();
     }
-    static void TearDownTestCase()
-    {
-
-    }
+    static void TearDownTestCase() {}
     virtual void SetUp()
     {
         HcclIpAddress localIp(1711319232);
@@ -83,27 +79,22 @@ protected:
         info.addr.type = HcclAddressType::HCCL_ADDR_TYPE_IP_V4;
         info.addr.addr = localIp.GetBinaryAddress().addr;
     }
-    virtual void TearDown()
-    {
-        std::cout << "A Test TearDown" << std::endl;
-    }
+    virtual void TearDown() { std::cout << "A Test TearDown" << std::endl; }
     HcclNetDevInfos info;
     HcclNetDev netDev;
 };
 
-TEST_F(NetDevUt, TestDeviceDeploymentBusAddr1) {
+TEST_F(NetDevUt, TestDeviceDeploymentBusAddr1)
+{
     info.netdevDeployment = HcclNetDevDeployment::HCCL_NETDEV_DEPLOYMENT_DEVICE;
     info.isBackup = false;
     MOCKER(Is310PDevice).stubs().with(mockcpp::any()).will(returnValue(false));
     bool supportGetVincip = true;
-    MOCKER(IsSuppportRaGetSocketVnicIps)
-        .stubs()
-        .with(outBound(supportGetVincip))
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(IsSuppportRaGetSocketVnicIps).stubs().with(outBound(supportGetVincip)).will(returnValue(HCCL_SUCCESS));
 
     // 测试查询地址
 
-    HcclAddress busAddr ;
+    HcclAddress busAddr;
     HcclDeviceId info1;
     info1.devicePhyId = info.devicePhyId;
     HcclNetDevGetBusAddr(info1, &busAddr);
@@ -112,7 +103,8 @@ TEST_F(NetDevUt, TestDeviceDeploymentBusAddr1) {
     GlobalMockObject::verify();
 }
 
-TEST_F(NetDevUt, TestDeviceDeploymentBusAddr2) {
+TEST_F(NetDevUt, TestDeviceDeploymentBusAddr2)
+{
     GlobalMockObject::verify();
     info.netdevDeployment = HcclNetDevDeployment::HCCL_NETDEV_DEPLOYMENT_DEVICE;
     info.isBackup = false;
@@ -120,11 +112,8 @@ TEST_F(NetDevUt, TestDeviceDeploymentBusAddr2) {
     u32 deviceLogicId;
     hrtGetDeviceIndexByPhyId(info.devicePhyId, deviceLogicId);
     bool supportGetVincip = false;
-    MOCKER(IsSuppportRaGetSocketVnicIps)
-        .stubs()
-        .with(outBound(supportGetVincip))
-        .will(returnValue(HCCL_SUCCESS));
-    HcclAddress busAddr ;
+    MOCKER(IsSuppportRaGetSocketVnicIps).stubs().with(outBound(supportGetVincip)).will(returnValue(HCCL_SUCCESS));
+    HcclAddress busAddr;
     HcclDeviceId info1;
     info1.devicePhyId = info.devicePhyId;
     HcclNetDevGetBusAddr(info1, &busAddr);
@@ -133,19 +122,21 @@ TEST_F(NetDevUt, TestDeviceDeploymentBusAddr2) {
     GlobalMockObject::verify();
 }
 
-TEST_F(NetDevUt, TestDeviceDeploymentNicAddr) {
+TEST_F(NetDevUt, TestDeviceDeploymentNicAddr)
+{
     info.netdevDeployment = HcclNetDevDeployment::HCCL_NETDEV_DEPLOYMENT_DEVICE;
     info.isBackup = false;
     MOCKER(Is310PDevice).stubs().with(mockcpp::any()).will(returnValue(true));
     MOCKER(GetExternalInputHcclIsTcpMode).stubs().with(mockcpp::any()).will(returnValue(true));
-    HcclAddress * addr;
+    HcclAddress* addr;
     uint32_t addrNum = 0;
     HcclNetDevGetNicAddr(info.devicePhyId, &addr, &addrNum);
     EXPECT_NE(addr, nullptr);
     GlobalMockObject::verify();
 }
 
-TEST_F(NetDevUt, TestHostDeploymentTcp) {
+TEST_F(NetDevUt, TestHostDeploymentTcp)
+{
     info.netdevDeployment = HcclNetDevDeployment::HCCL_NETDEV_DEPLOYMENT_HOST;
     info.isBackup = false;
     info.addr.protoType = HcclProtoType::HCCL_PROTO_TYPE_TCP;
@@ -154,7 +145,7 @@ TEST_F(NetDevUt, TestHostDeploymentTcp) {
     EXPECT_EQ(HcclNetDevOpen(&info, &netDev), HCCL_SUCCESS);
 
     HcclAddress getaddr;
-    NetDevContext* pNetDevCtx = static_cast<hccl::NetDevContext *>(netDev);
+    NetDevContext* pNetDevCtx = static_cast<hccl::NetDevContext*>(netDev);
     EXPECT_EQ(pNetDevCtx->GetNetDevDeployment(), info.netdevDeployment);
     EXPECT_EQ(pNetDevCtx->GetProtoType(), info.addr.protoType);
 
@@ -166,7 +157,8 @@ TEST_F(NetDevUt, TestHostDeploymentTcp) {
     GlobalMockObject::verify();
 }
 
-TEST_F(NetDevUt, TestHostDeploymentTcpERR) {
+TEST_F(NetDevUt, TestHostDeploymentTcpERR)
+{
     info.netdevDeployment = HcclNetDevDeployment::HCCL_NETDEV_DEPLOYMENT_HOST;
     info.isBackup = false;
     info.addr.protoType = HcclProtoType::HCCL_PROTO_TYPE_TCP;
@@ -175,7 +167,7 @@ TEST_F(NetDevUt, TestHostDeploymentTcpERR) {
     EXPECT_EQ(HcclNetDevOpen(&info, &netDev), HCCL_SUCCESS);
 
     HcclAddress getaddr;
-    NetDevContext* pNetDevCtx = static_cast<hccl::NetDevContext *>(netDev);
+    NetDevContext* pNetDevCtx = static_cast<hccl::NetDevContext*>(netDev);
     EXPECT_EQ(pNetDevCtx->GetNetDevDeployment(), info.netdevDeployment);
     EXPECT_EQ(pNetDevCtx->GetProtoType(), info.addr.protoType);
 
@@ -187,7 +179,8 @@ TEST_F(NetDevUt, TestHostDeploymentTcpERR) {
     GlobalMockObject::verify();
 }
 
-TEST_F(NetDevUt, TestHostDeploymentRoce) {
+TEST_F(NetDevUt, TestHostDeploymentRoce)
+{
     info.netdevDeployment = HcclNetDevDeployment::HCCL_NETDEV_DEPLOYMENT_HOST;
     info.isBackup = false;
     info.addr.protoType = HcclProtoType::HCCL_PROTO_TYPE_ROCE;
@@ -210,7 +203,8 @@ TEST_F(NetDevUt, TestHostDeploymentRoce) {
     GlobalMockObject::verify();
 }
 
-TEST_F(NetDevUt, TestHostDeploymentBus) {
+TEST_F(NetDevUt, TestHostDeploymentBus)
+{
     //
     info.netdevDeployment = HcclNetDevDeployment::HCCL_NETDEV_DEPLOYMENT_HOST;
     info.isBackup = false;
@@ -222,7 +216,8 @@ TEST_F(NetDevUt, TestHostDeploymentBus) {
     GlobalMockObject::verify();
 }
 
-TEST_F(NetDevUt, TestHostDeploymentReserved) {
+TEST_F(NetDevUt, TestHostDeploymentReserved)
+{
     //
     info.netdevDeployment = HcclNetDevDeployment::HCCL_NETDEV_DEPLOYMENT_HOST;
     info.isBackup = false;
@@ -235,7 +230,8 @@ TEST_F(NetDevUt, TestHostDeploymentReserved) {
 }
 
 // 当前桩有问题  只能先初始化 tcp才能初始化rdma
-TEST_F(NetDevUt, TestDeviceDeploymentRoce) {
+TEST_F(NetDevUt, TestDeviceDeploymentRoce)
+{
     info.netdevDeployment = HcclNetDevDeployment::HCCL_NETDEV_DEPLOYMENT_DEVICE;
     info.isBackup = false;
     info.addr.protoType = HcclProtoType::HCCL_PROTO_TYPE_ROCE;
@@ -251,7 +247,6 @@ TEST_F(NetDevUt, TestDeviceDeploymentRoce) {
 
     EXPECT_EQ(HcclNetDevOpen(&info, &netDev), HCCL_SUCCESS);
 
-
     EXPECT_EQ(HcclNetDevClose(netDev), HCCL_SUCCESS);
     GlobalMockObject::verify();
     MOCKER(Is310PDevice).stubs().with(mockcpp::any()).will(returnValue(false));
@@ -261,7 +256,8 @@ TEST_F(NetDevUt, TestDeviceDeploymentRoce) {
 }
 
 // 当前桩有问题  只能先初始化 tcp才能初始化rdma
-TEST_F(NetDevUt, TestDeviceDeploymentRoceBackup) {
+TEST_F(NetDevUt, TestDeviceDeploymentRoceBackup)
+{
     info.netdevDeployment = HcclNetDevDeployment::HCCL_NETDEV_DEPLOYMENT_DEVICE;
     info.isBackup = true;
     info.addr.protoType = HcclProtoType::HCCL_PROTO_TYPE_ROCE;
@@ -275,18 +271,14 @@ TEST_F(NetDevUt, TestDeviceDeploymentRoceBackup) {
     MOCKER(Is310PDevice).stubs().with(mockcpp::any()).will(returnValue(false));
     MOCKER(GetExternalInputHcclIsTcpMode).stubs().with(mockcpp::any()).will(returnValue(false));
     DevType deviceType = DevType::DEV_TYPE_910_93;
-    MOCKER(hrtGetDeviceType)
-        .stubs()
-        .with(outBound(deviceType))
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
 
     LinkTypeInServer linkType = LinkTypeInServer::SIO_TYPE;
     MOCKER(hrtGetPairDeviceLinkType)
-    .stubs()
-    .with(mockcpp::any(), mockcpp::any(), outBound(linkType))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), outBound(linkType))
+        .will(returnValue(HCCL_SUCCESS));
     EXPECT_EQ(HcclNetDevOpen(&info, &netDev), HCCL_SUCCESS);
-
 
     EXPECT_EQ(HcclNetDevClose(netDev), HCCL_SUCCESS);
     GlobalMockObject::verify();
@@ -296,7 +288,8 @@ TEST_F(NetDevUt, TestDeviceDeploymentRoceBackup) {
     GlobalMockObject::verify();
 }
 
-TEST_F(NetDevUt, TestDeviceDeploymentTcp) {
+TEST_F(NetDevUt, TestDeviceDeploymentTcp)
+{
     //
     info.netdevDeployment = HcclNetDevDeployment::HCCL_NETDEV_DEPLOYMENT_DEVICE;
     info.isBackup = false;
@@ -307,7 +300,7 @@ TEST_F(NetDevUt, TestDeviceDeploymentTcp) {
     EXPECT_EQ(HcclNetDevOpen(&info, &netDev), HCCL_SUCCESS);
 
     HcclAddress getaddr;
-    NetDevContext* pNetDevCtx = static_cast<hccl::NetDevContext *>(netDev);
+    NetDevContext* pNetDevCtx = static_cast<hccl::NetDevContext*>(netDev);
     EXPECT_EQ(pNetDevCtx->GetNetDevDeployment(), info.netdevDeployment);
     EXPECT_EQ(pNetDevCtx->GetProtoType(), info.addr.protoType);
     EXPECT_NE(pNetDevCtx->handle_, nullptr);
@@ -319,7 +312,8 @@ TEST_F(NetDevUt, TestDeviceDeploymentTcp) {
     GlobalMockObject::verify();
 }
 
-TEST_F(NetDevUt, TestDeviceDeploymentTcpERR) {
+TEST_F(NetDevUt, TestDeviceDeploymentTcpERR)
+{
     //
     info.netdevDeployment = HcclNetDevDeployment::HCCL_NETDEV_DEPLOYMENT_DEVICE;
     info.isBackup = false;
@@ -330,7 +324,7 @@ TEST_F(NetDevUt, TestDeviceDeploymentTcpERR) {
     EXPECT_EQ(HcclNetDevOpen(&info, &netDev), HCCL_SUCCESS);
 
     HcclAddress getaddr;
-    NetDevContext* pNetDevCtx = static_cast<hccl::NetDevContext *>(netDev);
+    NetDevContext* pNetDevCtx = static_cast<hccl::NetDevContext*>(netDev);
     EXPECT_EQ(pNetDevCtx->GetNetDevDeployment(), info.netdevDeployment);
     EXPECT_EQ(pNetDevCtx->GetProtoType(), info.addr.protoType);
     EXPECT_NE(pNetDevCtx->handle_, nullptr);
@@ -342,19 +336,21 @@ TEST_F(NetDevUt, TestDeviceDeploymentTcpERR) {
     GlobalMockObject::verify();
 }
 
-TEST_F(NetDevUt, TestDeviceDeploymentReserved) {
+TEST_F(NetDevUt, TestDeviceDeploymentReserved)
+{
     //
     info.netdevDeployment = HcclNetDevDeployment::HCCL_NETDEV_DEPLOYMENT_DEVICE;
     info.isBackup = false;
     info.addr.protoType = HcclProtoType::HCCL_PROTO_TYPE_RESERVED;
 
-     EXPECT_EQ(HcclNetDevOpen(&info, &netDev), HCCL_E_NOT_SUPPORT);
-     EXPECT_EQ(netDev, nullptr);
-     EXPECT_EQ(HcclNetDevClose(netDev), HCCL_E_PTR);
-     GlobalMockObject::verify();
+    EXPECT_EQ(HcclNetDevOpen(&info, &netDev), HCCL_E_NOT_SUPPORT);
+    EXPECT_EQ(netDev, nullptr);
+    EXPECT_EQ(HcclNetDevClose(netDev), HCCL_E_PTR);
+    GlobalMockObject::verify();
 }
 
-TEST_F(NetDevUt, TestReservedDeploymentReserved) {
+TEST_F(NetDevUt, TestReservedDeploymentReserved)
+{
     info.netdevDeployment = HcclNetDevDeployment::HCCL_NETDEV_DEPLOYMENT_RESERVED;
     info.isBackup = false;
     info.addr.protoType = HcclProtoType::HCCL_PROTO_TYPE_RESERVED;
@@ -365,7 +361,8 @@ TEST_F(NetDevUt, TestReservedDeploymentReserved) {
     GlobalMockObject::verify();
 }
 
-TEST_F(NetDevUt, TestDeviceDeploymentBus) {
+TEST_F(NetDevUt, TestDeviceDeploymentBus)
+{
     info.netdevDeployment = HcclNetDevDeployment::HCCL_NETDEV_DEPLOYMENT_DEVICE;
     info.isBackup = false;
     info.addr.protoType = HcclProtoType::HCCL_PROTO_TYPE_BUS;
@@ -374,13 +371,10 @@ TEST_F(NetDevUt, TestDeviceDeploymentBus) {
     hrtGetDeviceIndexByPhyId(info.devicePhyId, deviceLogicId);
 
     bool supportGetVincip = true;
-    MOCKER(IsSuppportRaGetSocketVnicIps)
-        .stubs()
-        .with(outBound(supportGetVincip))
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(IsSuppportRaGetSocketVnicIps).stubs().with(outBound(supportGetVincip)).will(returnValue(HCCL_SUCCESS));
 
     EXPECT_EQ(HcclNetDevOpen(&info, &netDev), HCCL_SUCCESS);
-    NetDevContext* pNetDevCtx = static_cast<hccl::NetDevContext *>(netDev);
+    NetDevContext* pNetDevCtx = static_cast<hccl::NetDevContext*>(netDev);
     HcclAddress getaddr;
     EXPECT_EQ(pNetDevCtx->GetNetDevDeployment(), info.netdevDeployment);
     EXPECT_EQ(pNetDevCtx->GetProtoType(), info.addr.protoType);

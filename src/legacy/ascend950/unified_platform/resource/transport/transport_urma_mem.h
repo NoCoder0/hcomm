@@ -17,36 +17,40 @@
 #include "remote_rma_buffer.h"
 #include "ub_mem_transport.h"
 #include "hccl_one_sided_data.h"
-#include "rma_buffer_mgr.h"
-# include "../mem/local_ub_rma_buffer_manager.h"
+#include "common/rma_buffer_mgr_pub.h"
+#include "../mem/local_ub_rma_buffer_manager.h"
 
 namespace Hccl {
 
 struct RmaOpMem {
-    void *addr;
-    u64   size;
+    void* addr;
+    u64 size;
 };
 
 constexpr u64 MAX_DESC_NUM = 64; // 批量操作描述符个数上限
 
 class TransportUrmaMem {
 public:
-    TransportUrmaMem(BaseMemTransport *transport, RmaBufferMgr<BufferKey<uintptr_t, u64>, shared_ptr<HcclBuf>> &remoteHcclBufMgr);
+    TransportUrmaMem(
+        BaseMemTransport* transport,
+        hcomm::RmaBufferMgr<BufferKey<uintptr_t, u64>, shared_ptr<HcclBuf>>& remoteHcclBufMgr);
 
     ~TransportUrmaMem();
 
-    HcclResult BatchBufferSlice(const HcclOneSideOpDesc *oneSideDescs, u32 descNum,
-        RmaBufferSlice *localRmaBufferSlice, RmtRmaBufferSlice *remoteRmaBufferSlice);
+    HcclResult BatchBufferSlice(
+        const HcclOneSideOpDesc* oneSideDescs, u32 descNum, RmaBufferSlice* localRmaBufferSlice,
+        RmtRmaBufferSlice* remoteRmaBufferSlice);
 
 private:
-    BaseMemTransport       *transport_;
+    BaseMemTransport* transport_;
 
-    RmaBufferMgr<BufferKey<uintptr_t, u64>, shared_ptr<HcclBuf>> &remoteHcclBufMgr_;
+    hcomm::RmaBufferMgr<BufferKey<uintptr_t, u64>, shared_ptr<HcclBuf>>& remoteHcclBufMgr_;
     HcclNetDev netDev_;
 
 private:
-    HcclResult FillRmaBufferSlice(const RmaOpMem &localMem, const RmaOpMem &remoteMem,
-                                  RmaBufferSlice &localRmaBufferSlice, RmtRmaBufferSlice &remoteRmaBufferSlice);
+    HcclResult FillRmaBufferSlice(
+        const RmaOpMem& localMem, const RmaOpMem& remoteMem, RmaBufferSlice& localRmaBufferSlice,
+        RmtRmaBufferSlice& remoteRmaBufferSlice);
 };
 
 } // namespace Hccl

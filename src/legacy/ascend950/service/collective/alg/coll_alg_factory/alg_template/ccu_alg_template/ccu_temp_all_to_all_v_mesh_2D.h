@@ -12,39 +12,42 @@
 #define HCCLV2_CCU_TEMP_ALLTOALLV_MESH_2D_H
 
 #include "string_util.h"
-#include "env_config.h"
+#include "env_config_v2.h"
 #include "ccu_alg_template_base.h"
 #include "ccu_instruction_all_to_all_v_mesh2d.h"
 
 namespace Hccl {
 
-
 class CcuTempAlltoAllVMesh2D : public CcuAlgTemplateBase {
 public:
-    explicit CcuTempAlltoAllVMesh2D(const RankId virtualRank, const u32 tempRankSize,
-                                   const std::vector<std::vector<RankId>> &tempVTopo,
-                                   const std::map<RankId, u32>            &tempVirtRankMap);
+    explicit CcuTempAlltoAllVMesh2D(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~CcuTempAlltoAllVMesh2D() override;
 
     std::string Describe() const override
     {
         // 在构造函数中校验tempVTopo的大小
-        return StringFormat("Template of alltoallv ccu mesh 2D with tempVTopo D0[%u]--D1[%u]",
-            tempVTopo_[0].size(), tempVTopo_[1].size());
+        return StringFormat(
+            "Template of alltoallv ccu mesh 2D with tempVTopo D0[%u]--D1[%u]", tempVTopo_[0].size(),
+            tempVTopo_[1].size());
     }
 
-    HcclResult Run(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec, const BuffInfo &buffInfo,
-                   const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues) override;
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
-    void SetA2ASendRecvInfo(const A2ASendRecvInfo &sendRecvInfo);
+    HcclResult
+    Run(const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, const BuffInfo& buffInfo,
+        const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues) override;
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
+    void SetA2ASendRecvInfo(const A2ASendRecvInfo& sendRecvInfo);
     HcclResult GetScratchBufferInfo(const uint64_t scratchBufferSize, DataType dataType) override;
     uint64_t CalcSendRecvNumSubStep(uint64_t sliceSize);
+
 private:
-    HcclResult FillLinks(const ResLinks &tempLinks);
+    HcclResult FillLinks(const ResLinks& tempLinks);
     HcclResult FillRankGroup();
     HcclResult CalcSliceSize(uint32_t sendRecvTime, uint64_t maxTransportSize);
-    HcclResult RunOneStep(uint64_t sendRecvSize, uint64_t maxTransportSize, uint32_t sendRecvTimes, uint32_t step,
-        std::vector<InsQuePtr> &tempInsQues);
+    HcclResult RunOneStep(
+        uint64_t sendRecvSize, uint64_t maxTransportSize, uint32_t sendRecvTimes, uint32_t step,
+        std::vector<InsQuePtr>& tempInsQues);
 
     A2ASendRecvInfo localSendRecvInfo_;
     uint64_t sliceBias_{0};

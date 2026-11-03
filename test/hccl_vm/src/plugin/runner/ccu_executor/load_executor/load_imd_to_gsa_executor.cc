@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: ccu executor -- load imd to gsa
  * Author: caiyifan
  */
@@ -24,17 +27,24 @@ REG_CCU_EXECUTOR_CREATE_FUNC(SimCcuV1::LOAD_TYPE, SimCcuV1::LOADIMDTOGSA_CODE, L
 
 void LoadImdToGSAExecutor::Parser()
 {
-    gsaId_      = instr_.v1.loadImdToGSA.gsaId;
-    immediate_  = instr_.v1.loadImdToGSA.immediate;
+    gsaId_ = instr_.v1.loadImdToGSA.gsaId;
+    immediate_ = instr_.v1.loadImdToGSA.immediate;
 }
 
 void LoadImdToGSAExecutor::Run()
 {
-    auto &ccuResMgr = CcuResourceManager::GetInstance();
+    auto& ccuResMgr = CcuResourceManager::GetInstance();
     ccuResMgr.UpdateGsaValue(rankId_, dieId_, gsaId_, immediate_);
 }
 
 std::string LoadImdToGSAExecutor::Describe()
 {
     return HcclSim::StringFormat("[Simulation Execute] Load immediate[%lu] to GSA[%u]\n", immediate_, gsaId_);
+}
+
+CcuTrace::CcuInstrTraceDetail LoadImdToGSAExecutor::CollectTraceDetail()
+{
+    CcuTrace::CcuInstrTraceDetail detail;
+    detail.typeName = "LoadImdToGSA";
+    return detail;
 }

@@ -3,14 +3,20 @@
 ## 产品支持情况
 
 <!-- npu="950" id1 -->
-- Ascend 950PR/Ascend 950DT：支持
+- Ascend 950PR&950DT系列产品：支持
 <!-- end id1 -->
 <!-- npu="A3" id2 -->
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：不支持
+- Atlas A3系列产品：不支持
 <!-- end id2 -->
 <!-- npu="910b" id3 -->
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：不支持
+- Atlas A2系列产品：不支持
 <!-- end id3 -->
+<!-- npu="910" id4 -->
+- Atlas训练系列产品：不支持
+<!-- end id4 -->
+<!-- npu="310p" id5 -->
+- Atlas推理系列产品：不支持
+<!-- end id5 -->
 
 ## 功能说明
 
@@ -58,7 +64,7 @@ CcuResult EventWait(Event e, uint16_t mask = 1);
 ```cpp
 using namespace AscendC::ccu;
 
-// 场景：等待本端HBM→HBM拷贝完成后再继续
+// 场景：等待本端片上内存→片上内存拷贝完成后再继续
 // CCU kernel函数体内
 CcuResult MyKernel(CcuKernelArg arg) {
     LocalAddr src, dst;

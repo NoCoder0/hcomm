@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -33,28 +33,17 @@
 using namespace std;
 using namespace hccl;
 
-
-class CommP2PTest : public testing::Test
-{
+class CommP2PTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "\033[36m--CommP2PTest SetUP--\033[0m" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "\033[36m--CommP2PTest TearDown--\033[0m" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "\033[36m--CommP2PTest SetUP--\033[0m" << std::endl; }
+    static void TearDownTestCase() { std::cout << "\033[36m--CommP2PTest TearDown--\033[0m" << std::endl; }
     // Some expensive resource shared by all tests.
     virtual void SetUp()
     {
         DlTdtFunction::GetInstance().DlTdtFunctionInit();
         TsdOpen(1, 2);
         s32 portNum = -1;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
         std::cout << "A Test SetUP" << std::endl;
     }
     virtual void TearDown()
@@ -63,8 +52,7 @@ protected:
         std::cout << "A Test TearDown" << std::endl;
     }
 };
-typedef struct innerpara_struct_p2p
-{
+typedef struct innerpara_struct_p2p {
     std::string collectiveId;
     u32 userRank;
     u32 user_rank_size;
@@ -82,13 +70,13 @@ typedef struct innerpara_struct_p2p
     std::shared_ptr<CommP2P> comm_p2p;
 } innerpara_t_p2p;
 
-HcclDispatcher get_p2p_dispatcher(s32 devid, std::shared_ptr<hccl::ProfilerManager> &profilerManager)
+HcclDispatcher get_p2p_dispatcher(s32 devid, std::shared_ptr<hccl::ProfilerManager>& profilerManager)
 {
     HcclResult ret = HCCL_SUCCESS;
-        hrtSetDevice(devid);
-	EXPECT_EQ(ret, HCCL_SUCCESS);
-     // 创建dispatcher
-    void *dispatcher = nullptr;
+    hrtSetDevice(devid);
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+    // 创建dispatcher
+    void* dispatcher = nullptr;
     ret = HcclDispatcherInit(DispatcherType::DISPATCHER_NORMAL, devid, &dispatcher);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_NE(dispatcher, nullptr);
@@ -106,17 +94,18 @@ void* comm_p2p_task_handle(void* para)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     HcclNetDevCtx portCtx;
-    ret = HcclNetOpenDev(&portCtx, NicType::VNIC_TYPE, para_info->devicePhyId, para_info->devicePhyId, HcclIpAddress(para_info->devicePhyId));
+    ret = HcclNetOpenDev(
+        &portCtx, NicType::VNIC_TYPE, para_info->devicePhyId, para_info->devicePhyId,
+        HcclIpAddress(para_info->devicePhyId));
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     std::map<HcclIpAddress, HcclNetDevCtx> netDevCtxMap;
     netDevCtxMap.insert(make_pair(HcclIpAddress(para_info->devicePhyId), portCtx));
 
     IntraExchanger exchanger{};
-    ret = CreateIntraExchanger(para_info->collectiveId, portCtx,
-        para_info->devicePhyId, para_info->devicePhyId, para_info->userRank, para_info->user_rank_size,
-        para_info->device_ids, para_info->user_ranks,
-        true, exchanger);
+    ret = CreateIntraExchanger(
+        para_info->collectiveId, portCtx, para_info->devicePhyId, para_info->devicePhyId, para_info->userRank,
+        para_info->user_rank_size, para_info->device_ids, para_info->user_ranks, true, exchanger);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     std::unique_ptr<NotifyPool> notifyPool = nullptr;
@@ -126,43 +115,20 @@ void* comm_p2p_task_handle(void* para)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     TopoType topoFlag = TopoType::TOPO_TYPE_8P_RING;
-    if (para_info->userRank == 0)
-    {
-        para_info->comm_p2p.reset(new CommP2P(para_info->collectiveId,
-                                    para_info->userRank,
-                                    para_info->user_rank_size,
-                                    para_info->rank,
-                                    para_info->rank_size,
-                                    topoFlag,
-                                    para_info->dispatcher, notifyPool,
-                                    netDevCtxMap,
-                                    exchanger,
-                                    para_info->para_vector,
-                                    para_info->inputMem,
-                                    para_info->outputMem,
-                                    false,
-                                    para_info->tag,
-                                    1));
+    if (para_info->userRank == 0) {
+        para_info->comm_p2p.reset(new CommP2P(
+            para_info->collectiveId, para_info->userRank, para_info->user_rank_size, para_info->rank,
+            para_info->rank_size, topoFlag, para_info->dispatcher, notifyPool, netDevCtxMap, exchanger,
+            para_info->para_vector, para_info->inputMem, para_info->outputMem, false, para_info->tag, 1));
     }
 
-    if (para_info->userRank == 1)
-    {
-        para_info->comm_p2p.reset(new CommP2P(para_info->collectiveId,
-                                    para_info->userRank,
-                                    para_info->user_rank_size,
-                                    para_info->rank,
-                                    para_info->rank_size,
-                                    topoFlag,
-                                    para_info->dispatcher, notifyPool,
-                                    netDevCtxMap,
-                                    exchanger,
-                                    para_info->para_vector,
-                                    para_info->inputMem,
-                                    para_info->outputMem,
-                                    false,
+    if (para_info->userRank == 1) {
+        para_info->comm_p2p.reset(new CommP2P(
+            para_info->collectiveId, para_info->userRank, para_info->user_rank_size, para_info->rank,
+            para_info->rank_size, topoFlag, para_info->dispatcher, notifyPool, netDevCtxMap, exchanger,
+            para_info->para_vector, para_info->inputMem, para_info->outputMem, false,
 
-                                    para_info->tag,
-                                    0));
+            para_info->tag, 0));
     }
 
     ret = notifyPool->RegisterOp(para_info->tag);
@@ -182,42 +148,31 @@ void* comm_p2p_errtask_handle(void* para)
     s32 ret = HCCL_SUCCESS;
     innerpara_t_p2p* para_info = (innerpara_t_p2p*)para;
 
-
     hrtSetDevice(para_info->devicePhyId);
-	EXPECT_EQ(ret, HCCL_SUCCESS);
+    EXPECT_EQ(ret, HCCL_SUCCESS);
     ret = HcclNetInit(NICDeployment::NIC_DEPLOYMENT_DEVICE, para_info->devicePhyId, para_info->devicePhyId, false);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     HcclNetDevCtx portCtx;
-    ret = HcclNetOpenDev(&portCtx, NicType::VNIC_TYPE, para_info->devicePhyId, para_info->devicePhyId, HcclIpAddress(para_info->devicePhyId));
+    ret = HcclNetOpenDev(
+        &portCtx, NicType::VNIC_TYPE, para_info->devicePhyId, para_info->devicePhyId,
+        HcclIpAddress(para_info->devicePhyId));
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     std::map<HcclIpAddress, HcclNetDevCtx> netDevCtxMap;
     netDevCtxMap.insert(make_pair(HcclIpAddress(para_info->devicePhyId), portCtx));
 
     IntraExchanger exchanger{};
-    ret = CreateIntraExchanger(para_info->collectiveId, portCtx,
-        para_info->devicePhyId, para_info->devicePhyId, para_info->userRank, para_info->user_rank_size, 
-        para_info->device_ids, para_info->user_ranks,
-        true, exchanger);
+    ret = CreateIntraExchanger(
+        para_info->collectiveId, portCtx, para_info->devicePhyId, para_info->devicePhyId, para_info->userRank,
+        para_info->user_rank_size, para_info->device_ids, para_info->user_ranks, true, exchanger);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     TopoType topoFlag = TopoType::TOPO_TYPE_8P_RING;
-    para_info->comm_p2p.reset(new CommP2P(para_info->collectiveId,
-                                para_info->userRank,
-                                para_info->user_rank_size,
-                                para_info->rank,
-                                para_info->rank_size,
-                                topoFlag,
-                                para_info->dispatcher, nullptr,
-                                netDevCtxMap,
-                                exchanger,
-                                para_info->para_vector,
-                                para_info->inputMem,
-                                para_info->outputMem,
-                                false,
-                                para_info->tag,
-                                para_info->userRank));
+    para_info->comm_p2p.reset(new CommP2P(
+        para_info->collectiveId, para_info->userRank, para_info->user_rank_size, para_info->rank, para_info->rank_size,
+        topoFlag, para_info->dispatcher, nullptr, netDevCtxMap, exchanger, para_info->para_vector, para_info->inputMem,
+        para_info->outputMem, false, para_info->tag, para_info->userRank));
 
     ret = para_info->comm_p2p->Init();
     EXPECT_NE(ret, HCCL_SUCCESS);
@@ -233,67 +188,45 @@ void* comm_p2p_errtask_handle1(void* para)
     s32 ret = HCCL_SUCCESS;
     innerpara_t_p2p* para_info = (innerpara_t_p2p*)para;
 
-
     SocketListenInfoT sockListen;
     hrtSetDevice(para_info->devicePhyId);
-	EXPECT_EQ(ret, HCCL_SUCCESS);
+    EXPECT_EQ(ret, HCCL_SUCCESS);
     ret = HcclNetInit(NICDeployment::NIC_DEPLOYMENT_DEVICE, para_info->devicePhyId, para_info->devicePhyId, false);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     HcclNetDevCtx portCtx;
-    ret = HcclNetOpenDev(&portCtx, NicType::VNIC_TYPE, para_info->devicePhyId, para_info->devicePhyId, HcclIpAddress(para_info->devicePhyId));
+    ret = HcclNetOpenDev(
+        &portCtx, NicType::VNIC_TYPE, para_info->devicePhyId, para_info->devicePhyId,
+        HcclIpAddress(para_info->devicePhyId));
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     std::map<HcclIpAddress, HcclNetDevCtx> netDevCtxMap;
     netDevCtxMap.insert(make_pair(HcclIpAddress(para_info->devicePhyId), portCtx));
 
     IntraExchanger exchanger{};
-    ret = CreateIntraExchanger(para_info->collectiveId, portCtx,
-        para_info->devicePhyId, para_info->devicePhyId, para_info->userRank, para_info->user_rank_size, 
-        para_info->device_ids, para_info->user_ranks,
-        true, exchanger);
+    ret = CreateIntraExchanger(
+        para_info->collectiveId, portCtx, para_info->devicePhyId, para_info->devicePhyId, para_info->userRank,
+        para_info->user_rank_size, para_info->device_ids, para_info->user_ranks, true, exchanger);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     TopoType topoFlag = TopoType::TOPO_TYPE_8P_RING;
 
-    if (para_info->userRank == 0)
-    {
-        para_info->comm_p2p.reset(new CommP2P(para_info->collectiveId,
-                                    para_info->userRank,
-                                    para_info->user_rank_size,
-                                    para_info->rank,
-                                    para_info->rank_size,
-                                    topoFlag,
-                                    para_info->dispatcher, nullptr,
-                                    netDevCtxMap,
-                                    exchanger,
-                                    para_info->para_vector,
-                                    para_info->inputMem,
-                                    para_info->outputMem,
-                                    false,
+    if (para_info->userRank == 0) {
+        para_info->comm_p2p.reset(new CommP2P(
+            para_info->collectiveId, para_info->userRank, para_info->user_rank_size, para_info->rank,
+            para_info->rank_size, topoFlag, para_info->dispatcher, nullptr, netDevCtxMap, exchanger,
+            para_info->para_vector, para_info->inputMem, para_info->outputMem, false,
 
-                                    para_info->tag,
-                                    1));
+            para_info->tag, 1));
     }
 
-    if (para_info->userRank == 1)
-    {
-        para_info->comm_p2p.reset(new CommP2P(para_info->collectiveId,
-                                    para_info->userRank,
-                                    para_info->user_rank_size,
-                                    para_info->rank,
-                                    para_info->rank_size,
-                                    topoFlag,
-                                    para_info->dispatcher, nullptr,
-                                    netDevCtxMap,
-                                    exchanger,
-                                    para_info->para_vector,
-                                    para_info->inputMem,
-                                    para_info->outputMem,
-                                    false,
+    if (para_info->userRank == 1) {
+        para_info->comm_p2p.reset(new CommP2P(
+            para_info->collectiveId, para_info->userRank, para_info->user_rank_size, para_info->rank,
+            para_info->rank_size, topoFlag, para_info->dispatcher, nullptr, netDevCtxMap, exchanger,
+            para_info->para_vector, para_info->inputMem, para_info->outputMem, false,
 
-                                    para_info->tag,
-                                    0));
+            para_info->tag, 0));
     }
 
     ret = para_info->comm_p2p->Init();
@@ -331,27 +264,28 @@ TEST_F(CommP2PTest, ut_CommP2P_init)
 
     u32 ifnumVersion = 3;
     MOCKER(hrtRaGetInterfaceVersion)
-    .stubs()
-    .with(mockcpp::any(), mockcpp::any(), outBoundP(&ifnumVersion))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), outBoundP(&ifnumVersion))
+        .will(returnValue(HCCL_SUCCESS));
 
     char collectiveId[SAL_UNIQUE_ID_BYTES];
     ret = SalGetUniqueId(collectiveId);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    void *dispatcher = nullptr;
+    void* dispatcher = nullptr;
     ret = HcclDispatcherInit(DispatcherType::DISPATCHER_NORMAL, 0, &dispatcher);
     EXPECT_NE(dispatcher, nullptr);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    RaResourceInfo raResourceInfo;          
+    RaResourceInfo raResourceInfo;
     std::string collective_id_tmp = collectiveId;
 
     IntraExchanger exchanger{};
 
     TopoType topoFlag = TopoType::TOPO_TYPE_8P_RING;
     std::map<HcclIpAddress, HcclNetDevCtx> netDevCtxMap;
-    CommP2P* comm_p2p = new CommP2P(collective_id_tmp, userRank, user_rank_size, 0, 1, topoFlag, dispatcher, nullptr, netDevCtxMap, exchanger,
-        para_vector,inputMem,outputMem, false);
+    CommP2P* comm_p2p = new CommP2P(
+        collective_id_tmp, userRank, user_rank_size, 0, 1, topoFlag, dispatcher, nullptr, netDevCtxMap, exchanger,
+        para_vector, inputMem, outputMem, false);
 
     ret = comm_p2p->Init();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -369,9 +303,9 @@ TEST_F(CommP2PTest, ut_CommP2P_init_err0)
     s32 ret = HCCL_SUCCESS;
     u32 ifnumVersion = 3;
     MOCKER(hrtRaGetInterfaceVersion)
-    .stubs()
-    .with(mockcpp::any(), mockcpp::any(), outBoundP(&ifnumVersion))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), outBoundP(&ifnumVersion))
+        .will(returnValue(HCCL_SUCCESS));
     RankInfo tmp_para_0;
     tmp_para_0.userRank = 0;
     tmp_para_0.devicePhyId = 0;
@@ -403,18 +337,17 @@ TEST_F(CommP2PTest, ut_CommP2P_init_err0)
 
     const s32 dev_num = 2;
     s32 dev_list[dev_num] = {0, 1};
-    std::vector<s32> device_ids(dev_list, dev_list+dev_num);
+    std::vector<s32> device_ids(dev_list, dev_list + dev_num);
 
     std::vector<u32> ip_list;
-    for (int i = 0;i<dev_num;i++ )
-    {
+    for (int i = 0; i < dev_num; i++) {
         u32 ipAddr = 0;
         (void)rt_get_dev_ip(0, i, &ipAddr);
         ip_list.push_back(ipAddr);
     }
 
     const u32 rank_list[dev_num] = {0, 1};
-    std::vector<u32> user_ranks(rank_list, rank_list+dev_num);
+    std::vector<u32> user_ranks(rank_list, rank_list + dev_num);
 
     std::shared_ptr<CommP2P> comm_p2p = nullptr;
 
@@ -423,15 +356,14 @@ TEST_F(CommP2PTest, ut_CommP2P_init_err0)
     s32 ndev = dev_num;
     std::shared_ptr<ProfilerManager> profilerManager[2] = {nullptr};
 
-    for (s32 i = 0; i < ndev; i++)
-    {
+    for (s32 i = 0; i < ndev; i++) {
         para_info[i].collectiveId = collective_id_tmp;
         para_info[i].userRank = i;
         para_info[i].user_rank_size = ndev;
         para_info[i].rank = i;
         para_info[i].rank_size = ndev;
         para_info[i].devicePhyId = dev_list[i];
-        para_info[i].dispatcher= get_p2p_dispatcher(i, profilerManager[i]);
+        para_info[i].dispatcher = get_p2p_dispatcher(i, profilerManager[i]);
         para_info[i].device_ids.assign(device_ids.begin(), device_ids.end());
         para_info[i].device_ips.assign(ip_list.begin(), ip_list.end());
         para_info[i].user_ranks.assign(user_ranks.begin(), user_ranks.end());
@@ -446,20 +378,19 @@ TEST_F(CommP2PTest, ut_CommP2P_init_err0)
 
     tid[1] = sal_thread_create("CommP2P rank1 thread err", comm_p2p_errtask_handle, (void*)&para_info[1]);
 
-    while (sal_thread_is_running(tid[0]) || sal_thread_is_running(tid[1]))
-    {
-        SaluSleep(SAL_MILLISECOND_USEC * 10);;
+    while (sal_thread_is_running(tid[0]) || sal_thread_is_running(tid[1])) {
+        SaluSleep(SAL_MILLISECOND_USEC * 10);
+        ;
     }
 
-    for (s32 j = 0; j < ndev; j++)
-    {
+    for (s32 j = 0; j < ndev; j++) {
         ret = NetworkManager::GetInstance(dev_list[j]).Destroy();
         EXPECT_EQ(ret, HCCL_SUCCESS);
         (void)sal_thread_destroy(tid[j]);
     }
 
-     //显示释放资源
-    for(s32 j=0; j < ndev; j++) {
+    // 显示释放资源
+    for (s32 j = 0; j < ndev; j++) {
         para_info[j].comm_p2p.reset();
         if (para_info[j].dispatcher != nullptr) {
             ret = HcclDispatcherDestroy(para_info[j].dispatcher);
@@ -475,9 +406,9 @@ TEST_F(CommP2PTest, ut_CommP2P_init_err1)
 
     u32 ifnumVersion = 3;
     MOCKER(hrtRaGetInterfaceVersion)
-    .stubs()
-    .with(mockcpp::any(), mockcpp::any(), outBoundP(&ifnumVersion))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), outBoundP(&ifnumVersion))
+        .will(returnValue(HCCL_SUCCESS));
 
     RankInfo tmp_para_0;
     tmp_para_0.userRank = 2;
@@ -510,18 +441,17 @@ TEST_F(CommP2PTest, ut_CommP2P_init_err1)
 
     const s32 dev_num = 2;
     s32 dev_list[dev_num] = {0, 1};
-    std::vector<s32> device_ids(dev_list, dev_list+dev_num);
+    std::vector<s32> device_ids(dev_list, dev_list + dev_num);
 
     std::vector<u32> ip_list;
-    for (int i = 0;i<dev_num;i++ )
-    {
+    for (int i = 0; i < dev_num; i++) {
         u32 ipAddr = 0;
         (void)rt_get_dev_ip(0, i, &ipAddr);
         ip_list.push_back(ipAddr);
     }
 
     const u32 rank_list[dev_num] = {0, 1};
-    std::vector<u32> user_ranks(rank_list, rank_list+dev_num);
+    std::vector<u32> user_ranks(rank_list, rank_list + dev_num);
 
     std::shared_ptr<CommP2P> comm_p2p = nullptr;
 
@@ -529,15 +459,14 @@ TEST_F(CommP2PTest, ut_CommP2P_init_err1)
     innerpara_t_p2p para_info[dev_num];
     s32 ndev = dev_num;
     std::shared_ptr<ProfilerManager> profilerManager[2] = {nullptr};
-    for (s32 i = 0; i < ndev; i++)
-    {
+    for (s32 i = 0; i < ndev; i++) {
         para_info[i].collectiveId = collective_id_tmp;
         para_info[i].userRank = i;
         para_info[i].user_rank_size = ndev;
         para_info[i].rank = i;
         para_info[i].rank_size = ndev;
         para_info[i].devicePhyId = dev_list[i];
-        para_info[i].dispatcher= get_p2p_dispatcher(i, profilerManager[i]);
+        para_info[i].dispatcher = get_p2p_dispatcher(i, profilerManager[i]);
         para_info[i].device_ids.assign(device_ids.begin(), device_ids.end());
         para_info[i].device_ips.assign(ip_list.begin(), ip_list.end());
         para_info[i].user_ranks.assign(user_ranks.begin(), user_ranks.end());
@@ -552,20 +481,19 @@ TEST_F(CommP2PTest, ut_CommP2P_init_err1)
 
     tid[1] = sal_thread_create("CommP2P rank1 thread err1", comm_p2p_errtask_handle, (void*)&para_info[1]);
 
-    while (sal_thread_is_running(tid[0]) || sal_thread_is_running(tid[1]))
-    {
-        SaluSleep(SAL_MILLISECOND_USEC * 10);;
+    while (sal_thread_is_running(tid[0]) || sal_thread_is_running(tid[1])) {
+        SaluSleep(SAL_MILLISECOND_USEC * 10);
+        ;
     }
 
-    for (s32 j = 0; j < ndev; j++)
-    {
+    for (s32 j = 0; j < ndev; j++) {
         ret = NetworkManager::GetInstance(dev_list[j]).Destroy();
         EXPECT_EQ(ret, HCCL_SUCCESS);
         (void)sal_thread_destroy(tid[j]);
     }
 
-     //显示释放资源
-    for(s32 j=0; j < ndev; j++) {
+    // 显示释放资源
+    for (s32 j = 0; j < ndev; j++) {
         para_info[j].comm_p2p.reset();
         if (para_info[j].dispatcher != nullptr) {
             ret = HcclDispatcherDestroy(para_info[j].dispatcher);
@@ -581,9 +509,9 @@ TEST_F(CommP2PTest, ut_CommP2P_init_err2)
 
     u32 ifnumVersion = 3;
     MOCKER(hrtRaGetInterfaceVersion)
-    .stubs()
-    .with(mockcpp::any(), mockcpp::any(), outBoundP(&ifnumVersion))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), outBoundP(&ifnumVersion))
+        .will(returnValue(HCCL_SUCCESS));
 
     RankInfo tmp_para_0;
     tmp_para_0.userRank = 0;
@@ -615,18 +543,17 @@ TEST_F(CommP2PTest, ut_CommP2P_init_err2)
 
     const s32 dev_num = 2;
     s32 dev_list[dev_num] = {0, 1};
-    std::vector<s32> device_ids(dev_list, dev_list+dev_num);
+    std::vector<s32> device_ids(dev_list, dev_list + dev_num);
 
     std::vector<u32> ip_list;
-    for (int i = 0;i<dev_num;i++ )
-    {
+    for (int i = 0; i < dev_num; i++) {
         u32 ipAddr = 0;
         (void)rt_get_dev_ip(0, i, &ipAddr);
         ip_list.push_back(ipAddr);
     }
 
     const u32 rank_list[dev_num] = {0, 1};
-    std::vector<u32> user_ranks(rank_list, rank_list+dev_num);
+    std::vector<u32> user_ranks(rank_list, rank_list + dev_num);
 
     std::shared_ptr<CommP2P> comm_p2p = nullptr;
 
@@ -634,15 +561,14 @@ TEST_F(CommP2PTest, ut_CommP2P_init_err2)
     innerpara_t_p2p para_info[dev_num];
     s32 ndev = dev_num;
     std::shared_ptr<ProfilerManager> profilerManager[2] = {nullptr};
-    for (s32 i = 0; i < ndev; i++)
-    {
+    for (s32 i = 0; i < ndev; i++) {
         para_info[i].collectiveId = collective_id_tmp;
         para_info[i].userRank = i;
         para_info[i].user_rank_size = ndev;
         para_info[i].rank = 3;
         para_info[i].rank_size = ndev;
         para_info[i].devicePhyId = dev_list[i];
-        para_info[i].dispatcher= get_p2p_dispatcher(i, profilerManager[i]);
+        para_info[i].dispatcher = get_p2p_dispatcher(i, profilerManager[i]);
         para_info[i].device_ids.assign(device_ids.begin(), device_ids.end());
         para_info[i].device_ips.assign(ip_list.begin(), ip_list.end());
         para_info[i].user_ranks.assign(user_ranks.begin(), user_ranks.end());
@@ -657,19 +583,18 @@ TEST_F(CommP2PTest, ut_CommP2P_init_err2)
 
     tid[1] = sal_thread_create("CommP2P rank1 thread err1", comm_p2p_errtask_handle, (void*)&para_info[1]);
 
-    while (sal_thread_is_running(tid[0]) || sal_thread_is_running(tid[1]))
-    {
-        SaluSleep(SAL_MILLISECOND_USEC * 10);;
+    while (sal_thread_is_running(tid[0]) || sal_thread_is_running(tid[1])) {
+        SaluSleep(SAL_MILLISECOND_USEC * 10);
+        ;
     }
 
-    for (s32 j = 0; j < ndev; j++)
-    {
+    for (s32 j = 0; j < ndev; j++) {
         ret = NetworkManager::GetInstance(dev_list[j]).Destroy();
         EXPECT_EQ(ret, HCCL_SUCCESS);
         (void)sal_thread_destroy(tid[j]);
     }
-    //显示释放资源
-    for(s32 j=0; j < ndev; j++) {
+    // 显示释放资源
+    for (s32 j = 0; j < ndev; j++) {
         para_info[j].comm_p2p.reset();
         if (para_info[j].dispatcher != nullptr) {
             ret = HcclDispatcherDestroy(para_info[j].dispatcher);
@@ -682,9 +607,7 @@ TEST_F(CommP2PTest, ut_CommP2P_init_err2)
 TEST_F(CommP2PTest, ut_CommP2P_init_err3)
 {
     s32 ret = HCCL_SUCCESS;
-    MOCKER(hrtRaGetInterfaceVersion)
-    .expects(atMost(1))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtRaGetInterfaceVersion).expects(atMost(1)).will(returnValue(HCCL_SUCCESS));
     RankInfo tmp_para_0;
     tmp_para_0.userRank = 0;
     tmp_para_0.devicePhyId = 0;
@@ -716,18 +639,17 @@ TEST_F(CommP2PTest, ut_CommP2P_init_err3)
     EXPECT_EQ(ret, HCCL_SUCCESS);
     const s32 dev_num = 2;
     s32 dev_list[dev_num] = {0, 1};
-    std::vector<s32> device_ids(dev_list, dev_list+dev_num);
+    std::vector<s32> device_ids(dev_list, dev_list + dev_num);
 
     std::vector<u32> ip_list;
-    for (int i = 0;i<dev_num;i++ )
-    {
+    for (int i = 0; i < dev_num; i++) {
         u32 ipAddr = 0;
         (void)rt_get_dev_ip(0, i, &ipAddr);
         ip_list.push_back(ipAddr);
     }
 
     const u32 rank_list[dev_num] = {0, 1};
-    std::vector<u32> user_ranks(rank_list, rank_list+dev_num);
+    std::vector<u32> user_ranks(rank_list, rank_list + dev_num);
 
     std::shared_ptr<CommP2P> comm_p2p = nullptr;
 
@@ -735,15 +657,14 @@ TEST_F(CommP2PTest, ut_CommP2P_init_err3)
     innerpara_t_p2p para_info[dev_num];
     s32 ndev = dev_num;
     std::shared_ptr<ProfilerManager> profilerManager[2] = {nullptr};
-    for (s32 i = 0; i < ndev; i++)
-    {
+    for (s32 i = 0; i < ndev; i++) {
         para_info[i].collectiveId = collective_id_tmp;
         para_info[i].userRank = i;
         para_info[i].user_rank_size = ndev;
         para_info[i].rank = i;
         para_info[i].rank_size = ndev;
         para_info[i].devicePhyId = dev_list[i];
-        para_info[i].dispatcher= get_p2p_dispatcher(i, profilerManager[i]);
+        para_info[i].dispatcher = get_p2p_dispatcher(i, profilerManager[i]);
         para_info[i].device_ids.assign(device_ids.begin(), device_ids.end());
         para_info[i].device_ips.assign(ip_list.begin(), ip_list.end());
         para_info[i].user_ranks.assign(user_ranks.begin(), user_ranks.end());
@@ -758,20 +679,19 @@ TEST_F(CommP2PTest, ut_CommP2P_init_err3)
 
     tid[1] = sal_thread_create("CommP2P rank1 thread err1", comm_p2p_errtask_handle1, (void*)&para_info[1]);
 
-    while (sal_thread_is_running(tid[0]) || sal_thread_is_running(tid[1]))
-    {
-        SaluSleep(SAL_MILLISECOND_USEC * 10);;
+    while (sal_thread_is_running(tid[0]) || sal_thread_is_running(tid[1])) {
+        SaluSleep(SAL_MILLISECOND_USEC * 10);
+        ;
     }
 
-    for (s32 j = 0; j < ndev; j++)
-    {
+    for (s32 j = 0; j < ndev; j++) {
         ret = NetworkManager::GetInstance(dev_list[j]).Destroy();
         EXPECT_EQ(ret, HCCL_SUCCESS);
         (void)sal_thread_destroy(tid[j]);
     }
 
-    //显示释放资源
-    for(s32 j=0; j < ndev; j++) {
+    // 显示释放资源
+    for (s32 j = 0; j < ndev; j++) {
         para_info[j].comm_p2p.reset();
         if (para_info[j].dispatcher != nullptr) {
             ret = HcclDispatcherDestroy(para_info[j].dispatcher);
@@ -780,4 +700,3 @@ TEST_F(CommP2PTest, ut_CommP2P_init_err3)
         }
     }
 }
-

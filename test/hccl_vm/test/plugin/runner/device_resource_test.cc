@@ -18,11 +18,10 @@ protected:
     void TearDown() override {}
 };
 
-TEST_F(DeviceResourceTest, Constructor_WithRankSize) {
-    EXPECT_NO_THROW(DeviceResourceV1 res(4));
-}
+TEST_F(DeviceResourceTest, Constructor_WithRankSize) { EXPECT_NO_THROW(DeviceResourceV1 res(4)); }
 
-TEST_F(DeviceResourceTest, Reset_AfterConstruction) {
+TEST_F(DeviceResourceTest, Reset_AfterConstruction)
+{
     DeviceResourceV1 res(4);
     EXPECT_NO_THROW(res.Reset(4));
 }

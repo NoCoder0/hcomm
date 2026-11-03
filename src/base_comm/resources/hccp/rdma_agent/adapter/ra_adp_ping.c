@@ -12,6 +12,7 @@
 #include "ra_hdc.h"
 #include "ra_adp.h"
 #include "rs_ping.h"
+#include "config_log.h"
 #include "ra_adp_ping.h"
 
 struct RsPingOps gPingOps = {
@@ -26,13 +27,13 @@ struct RsPingOps gPingOps = {
 
 int RaRsPingInit(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     union OpPingInitData *pingDataOut = (union OpPingInitData *)(outBuf + sizeof(struct MsgHead));
     union OpPingInitData *pingData = (union OpPingInitData *)(inBuf + sizeof(struct MsgHead));
 
     HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpPingInitData), sizeof(struct MsgHead), rcvBufLen, opResult);
 
-    *opResult = gPingOps.pingInit(&pingData->txData.attr, &pingDataOut->rxData.info,
-        &pingDataOut->rxData.devIndex);
+    *opResult = gPingOps.pingInit(&pingData->txData.attr, &pingDataOut->rxData.info, &pingDataOut->rxData.devIndex);
     if (*opResult != 0) {
         hccp_err("ping_init failed ret[%d].", *opResult);
     }
@@ -46,6 +47,8 @@ int RaRsPingInit(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvB
 
 int RaRsPingTargetAdd(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outBuf;
+    (void)outLen;
     union OpPingAddData *pingData = (union OpPingAddData *)(inBuf + sizeof(struct MsgHead));
 
     HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpPingAddData), sizeof(struct MsgHead), rcvBufLen, opResult);
@@ -64,6 +67,8 @@ int RaRsPingTargetAdd(char *inBuf, char *outBuf, int *outLen, int *opResult, int
 
 int RaRsPingTaskStart(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outBuf;
+    (void)outLen;
     union OpPingStartData *pingData = (union OpPingStartData *)(inBuf + sizeof(struct MsgHead));
 
     HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpPingStartData), sizeof(struct MsgHead), rcvBufLen, opResult);
@@ -82,17 +87,18 @@ int RaRsPingTaskStart(char *inBuf, char *outBuf, int *outLen, int *opResult, int
 
 int RaRsPingGetResults(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outLen;
     union OpPingResultsData *pingDataOut = (union OpPingResultsData *)(outBuf + sizeof(struct MsgHead));
     union OpPingResultsData *pingData = (union OpPingResultsData *)(inBuf + sizeof(struct MsgHead));
 
     HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpPingResultsData), sizeof(struct MsgHead), rcvBufLen, opResult);
     HCCP_CHECK_PARAM_LEN_RET_HOST(pingData->txData.num, 0, RA_MAX_PING_TARGET_NUM, opResult);
 
-    *opResult = gPingOps.pingGetResults(&pingData->txData.rdev, pingData->txData.target,
-        &pingData->txData.num, pingDataOut->rxData.target);
+    *opResult = gPingOps.pingGetResults(&pingData->txData.rdev, pingData->txData.target, &pingData->txData.num,
+        pingDataOut->rxData.target);
     // caller needs to retry, degrade log level
     if (*opResult == -EAGAIN) {
-        hccp_warn("ping_get_results unsuccessful, ret[%d].", *opResult);
+        hccp_warn_rma("ping_get_results unsuccessful, ret[%d].", *opResult);
     } else if (*opResult != 0) {
         hccp_err("ping_get_results failed, ret[%d].", *opResult);
     }
@@ -108,6 +114,8 @@ int RaRsPingGetResults(char *inBuf, char *outBuf, int *outLen, int *opResult, in
 
 int RaRsPingTaskStop(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outBuf;
+    (void)outLen;
     union OpPingStopData *pingData = (union OpPingStopData *)(inBuf + sizeof(struct MsgHead));
 
     HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpPingStopData), sizeof(struct MsgHead), rcvBufLen, opResult);
@@ -126,13 +134,14 @@ int RaRsPingTaskStop(char *inBuf, char *outBuf, int *outLen, int *opResult, int 
 
 int RaRsPingTargetDel(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outBuf;
+    (void)outLen;
     union OpPingDelData *pingData = (union OpPingDelData *)(inBuf + sizeof(struct MsgHead));
 
     HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpPingDelData), sizeof(struct MsgHead), rcvBufLen, opResult);
     HCCP_CHECK_PARAM_LEN_RET_HOST(pingData->txData.num, 0, RA_MAX_PING_TARGET_NUM, opResult);
 
-    *opResult = gPingOps.pingTargetDel(&pingData->txData.rdev, pingData->txData.target,
-        &pingData->txData.num);
+    *opResult = gPingOps.pingTargetDel(&pingData->txData.rdev, pingData->txData.target, &pingData->txData.num);
     if (*opResult != 0) {
         hccp_err("ping_target_del failed ret[%d].", *opResult);
     }
@@ -146,6 +155,8 @@ int RaRsPingTargetDel(char *inBuf, char *outBuf, int *outLen, int *opResult, int
 
 int RaRsPingDeinit(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen)
 {
+    (void)outBuf;
+    (void)outLen;
     union OpPingDeinitData *pingData = (union OpPingDeinitData *)(inBuf + sizeof(struct MsgHead));
 
     HCCP_CHECK_PARAM_LEN_RET_HOST(sizeof(union OpPingDeinitData), sizeof(struct MsgHead), rcvBufLen, opResult);

@@ -12,14 +12,13 @@
 
 using namespace AscendC;
 
-template<typename T>
+template <typename T>
 class AivBatchSendRecvMesh1D : public AivCommBase {
 public:
+    __aicore__ inline AivBatchSendRecvMesh1D() {}
 
-    __aicore__ inline AivBatchSendRecvMesh1D() {
-    }
-
-    __aicore__ inline void SendData(uint32_t dataSizePerVolume, uint64_t currDataCount, uint64_t offset, HcclSendRecvItemDevice &item)
+    __aicore__ inline void
+    SendData(uint32_t dataSizePerVolume, uint64_t currDataCount, uint64_t offset, HcclSendRecvItemDevice& item)
     {
         coreIndex = block_idx;
         uint64_t actualDataRate = dataSizePerVolume / sizeof(T);
@@ -36,20 +35,20 @@ public:
 
         // send 将数据放到自己的cclBuffer，等对端来读
         sendInputOffset = item.bufAddr + (offset + innerDispls) * dataSizePerVolume;
-        sendOutputOffset = reinterpret_cast<uint64_t>(GM_IN[rank_]) + (innerDispls) * dataSizePerVolume;
+        sendOutputOffset = reinterpret_cast<uint64_t>(GM_IN[rank_]) + (innerDispls)*dataSizePerVolume;
 
         if (sendCurCount > 0) {
             WaitFlag(rank_, item.remoteRank * coreNumPerRank + coreIndex, 0);
-            CpGM2GM((__gm__ T *)sendOutputOffset, (__gm__ T *)sendInputOffset, sendCurCount * actualDataRate);
+            CpGM2GM((__gm__ T*)sendOutputOffset, (__gm__ T*)sendInputOffset, sendCurCount * actualDataRate);
             PipeBarrier<PIPE_ALL>(); // 核内自己的同步
             Record(rank_, item.remoteRank * coreNumPerRank + coreIndex, curTag);
             // 写完之后要设置一个flag，等对应的卡来读，这个flag要能把对端卡区分出来
         }
     }
-    __aicore__ inline void Producer(ExtraArgs &extraArgs)
+    __aicore__ inline void Producer(ExtraArgs& extraArgs)
     {
         for (uint64_t i = selfSendRecvCount; i < extraArgs.itemNum; i++) {
-            auto &item = extraArgs.sendRecvInfo[i];
+            auto& item = extraArgs.sendRecvInfo[i];
             if (item.sendRecvType != HcclSendRecvType::HCCL_SEND) {
                 return;
             }
@@ -57,10 +56,11 @@ public:
             uint32_t dataSizePerVolume = item.dataTypeSize;
             uint64_t cclBufferCountPerRank = cclBufferSizePerRank / dataSizePerVolume;
             uint64_t processedDataCount = 0;
-            uint64_t loopTimes = item.count / cclBufferCountPerRank +
-                static_cast<uint64_t>(item.count % cclBufferCountPerRank != 0);
+            uint64_t loopTimes
+                = item.count / cclBufferCountPerRank + static_cast<uint64_t>(item.count % cclBufferCountPerRank != 0);
             for (uint64_t loop = 0; loop < loopTimes; loop++) {
-                uint64_t currDataCount = (loop == loopTimes - 1) ? item.count - processedDataCount : cclBufferCountPerRank;
+                uint64_t currDataCount
+                    = (loop == loopTimes - 1) ? item.count - processedDataCount : cclBufferCountPerRank;
                 // 开始具体的发送任务
                 SendData(dataSizePerVolume, currDataCount, processedDataCount, extraArgs.sendRecvInfo[i]);
                 processedDataCount += currDataCount;
@@ -68,7 +68,8 @@ public:
         }
     }
 
-    __aicore__ inline void RecvData(uint32_t dataSizePerVolume, uint64_t currDataCount, uint64_t offset, HcclSendRecvItemDevice &item)
+    __aicore__ inline void
+    RecvData(uint32_t dataSizePerVolume, uint64_t currDataCount, uint64_t offset, HcclSendRecvItemDevice& item)
     {
         coreIndex = block_idx - coreNumPerRank;
         uint64_t actualDataRate = dataSizePerVolume / sizeof(T);
@@ -89,16 +90,16 @@ public:
 
         if (recvCurCount > 0) {
             WaitFlag(item.remoteRank, rank_ * coreNumPerRank + coreIndex, curTag);
-            CpGM2GM((__gm__ T *)recvOutputOffset, (__gm__ T *)recvInputOffset, recvCurCount * actualDataRate);
+            CpGM2GM((__gm__ T*)recvOutputOffset, (__gm__ T*)recvInputOffset, recvCurCount * actualDataRate);
             PipeBarrier<PIPE_ALL>(); // 核内自己的同步
             Record(item.remoteRank, rank_ * coreNumPerRank + coreIndex, 0);
         }
     }
 
-    __aicore__ inline void Consumer(ExtraArgs &extraArgs)
+    __aicore__ inline void Consumer(ExtraArgs& extraArgs)
     {
         for (uint64_t i = selfSendRecvCount + firstRecvIdx; i < extraArgs.itemNum; i++) {
-            auto &item = extraArgs.sendRecvInfo[i];
+            auto& item = extraArgs.sendRecvInfo[i];
             if (item.sendRecvType != HcclSendRecvType::HCCL_RECV) {
                 return;
             }
@@ -106,10 +107,11 @@ public:
             uint32_t dataSizePerVolume = item.dataTypeSize;
             uint64_t cclBufferCountPerRank = cclBufferSizePerRank / dataSizePerVolume;
             uint64_t processedDataCount = 0;
-            uint64_t loopTimes = item.count / cclBufferCountPerRank +
-                static_cast<uint64_t>(item.count % cclBufferCountPerRank != 0);
+            uint64_t loopTimes
+                = item.count / cclBufferCountPerRank + static_cast<uint64_t>(item.count % cclBufferCountPerRank != 0);
             for (uint64_t loop = 0; loop < loopTimes; loop++) {
-                uint64_t currDataCount = (loop == loopTimes - 1) ? item.count - processedDataCount : cclBufferCountPerRank;
+                uint64_t currDataCount
+                    = (loop == loopTimes - 1) ? item.count - processedDataCount : cclBufferCountPerRank;
                 // 开始具体的发送任务
                 RecvData(dataSizePerVolume, currDataCount, processedDataCount, extraArgs.sendRecvInfo[i]);
                 processedDataCount += currDataCount;
@@ -117,13 +119,13 @@ public:
         }
     }
 
-    __aicore__ inline void SelfSendRecv(ExtraArgs &extraArgs)
+    __aicore__ inline void SelfSendRecv(ExtraArgs& extraArgs)
     {
         // 自收发应该不用考虑cclBuffer的大小
         // 确定第几个任务开始收
         firstRecvIdx = 0;
         for (uint64_t i = 0; i < extraArgs.itemNum; i++) {
-            auto &item = extraArgs.sendRecvInfo[i];
+            auto& item = extraArgs.sendRecvInfo[i];
             if (item.sendRecvType == HcclSendRecvType::HCCL_RECV) {
                 firstRecvIdx = i;
                 break;
@@ -138,8 +140,8 @@ public:
         coreNumPerRank = numBlocks_;
         coreIndex = block_idx;
 
-        while(extraArgs.sendRecvInfo[selfSendRecvCount].remoteRank == rank_ &&
-            extraArgs.sendRecvInfo[selfSendRecvCount].sendRecvType == HcclSendRecvType::HCCL_SEND) {
+        while (extraArgs.sendRecvInfo[selfSendRecvCount].remoteRank == rank_
+               && extraArgs.sendRecvInfo[selfSendRecvCount].sendRecvType == HcclSendRecvType::HCCL_SEND) {
             // 自收发可以用上自己所有的核
 
             uint64_t actualDataRate = extraArgs.sendRecvInfo[selfSendRecvCount].dataTypeSize / sizeof(T);
@@ -155,10 +157,12 @@ public:
                 sendRecvCurCount = dataPerCore;
             }
 
-            sendInput = extraArgs.sendRecvInfo[selfSendRecvCount].bufAddr + innerDispls * extraArgs.sendRecvInfo[selfSendRecvCount].dataTypeSize;
-            recvOutput = extraArgs.sendRecvInfo[selfSendRecvCount + firstRecvIdx].bufAddr + innerDispls * extraArgs.sendRecvInfo[selfSendRecvCount + firstRecvIdx].dataTypeSize;
+            sendInput = extraArgs.sendRecvInfo[selfSendRecvCount].bufAddr
+                        + innerDispls * extraArgs.sendRecvInfo[selfSendRecvCount].dataTypeSize;
+            recvOutput = extraArgs.sendRecvInfo[selfSendRecvCount + firstRecvIdx].bufAddr
+                         + innerDispls * extraArgs.sendRecvInfo[selfSendRecvCount + firstRecvIdx].dataTypeSize;
             if (sendRecvCurCount > 0) {
-                CpGM2GM((__gm__ T *)recvOutput, (__gm__ T *)sendInput, sendRecvCurCount * actualDataRate);
+                CpGM2GM((__gm__ T*)recvOutput, (__gm__ T*)sendInput, sendRecvCurCount * actualDataRate);
                 PipeBarrier<PIPE_ALL>(); // 核内自己的同步
             }
 
@@ -166,7 +170,7 @@ public:
         }
     }
 
-    __aicore__ inline void Process(uint32_t tag, ExtraArgs &extraArgs)
+    __aicore__ inline void Process(uint32_t tag, ExtraArgs& extraArgs)
     {
         uint32_t rankNum = 2;
         curTag = static_cast<int32_t>(tag);
@@ -184,7 +188,8 @@ public:
             return;
         }
 
-        cclBufferSizePerRank = len_; // 每一次send，recv的dataType都可能不同，所以这里应该把dataSize发过来，这里再自己去拼装
+        cclBufferSizePerRank
+            = len_; // 每一次send，recv的dataType都可能不同，所以这里应该把dataSize发过来，这里再自己去拼装
         if (block_idx < coreNumPerRank) {
             // 先把自己的flag清空
             // 每个核，都可能需要对其他rank发数据，所以要先清理处对应的位置,一共rankSize * coreNumPerRank 个位置
@@ -225,7 +230,7 @@ public:
 // 1.sendDeque元素顺序是:先放remoteRank号小于等于root rank的第一个任务，依次减小(循环索引)直至放完
 // 2.recvDeque元素顺序是:先放remoteRank号大于等于root rank的第一个任务，依次增大(循环索引)直至放完
 // 如果有rank间重复send/recv场景，按照收发数据从大到小排序
-template<typename T>
+template <typename T>
 __aicore__ inline void AivBatchSendRecvV2Mesh1D(EXTERN_KERNEL_ARGS_DEF_V2)
 {
     AivBatchSendRecvMesh1D<T> op;

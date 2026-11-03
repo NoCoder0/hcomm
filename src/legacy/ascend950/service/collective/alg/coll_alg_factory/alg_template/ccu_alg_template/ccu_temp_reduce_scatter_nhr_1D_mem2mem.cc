@@ -21,34 +21,31 @@
 
 namespace Hccl {
 
-static CcuInstRegister<CcuContextReduceScatterNHR1DMem2Mem> g_registrarReduceScatter(
-    CcuInstType::CCU_REDUCE_SCATTER_NHR_1D_MEM2MEM);
+static CcuInstRegister<CcuContextReduceScatterNHR1DMem2Mem>
+    g_registrarReduceScatter(CcuInstType::CCU_REDUCE_SCATTER_NHR_1D_MEM2MEM);
 
-CcuTempReduceScatterNHR1DMem2Mem::CcuTempReduceScatterNHR1DMem2Mem(const RankId virtualRank, const u32 tempRankSize,
-    const std::vector<std::vector<RankId>> &tempVTopo,
-    const std::map<RankId, u32>            &tempVirtRankMap)
+CcuTempReduceScatterNHR1DMem2Mem::CcuTempReduceScatterNHR1DMem2Mem(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
     : CcuAlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap)
-{
-}
+{}
 
-CcuTempReduceScatterNHR1DMem2Mem::~CcuTempReduceScatterNHR1DMem2Mem()
-{
-}
+CcuTempReduceScatterNHR1DMem2Mem::~CcuTempReduceScatterNHR1DMem2Mem() {}
 
 u32 CcuTempReduceScatterNHR1DMem2Mem::CalcScratchMultiple(BufferType inBuffType, BufferType outBuffType)
 {
-    (void) inBuffType;
-    (void) outBuffType;
+    (void)inBuffType;
+    (void)outBuffType;
     return 0;
 }
 
-void CcuTempReduceScatterNHR1DMem2Mem::InitReduceInfo(const ReduceOp &reduceOp, const DataType &dataType)
+void CcuTempReduceScatterNHR1DMem2Mem::InitReduceInfo(const ReduceOp& reduceOp, const DataType& dataType)
 {
     reduceOp_ = reduceOp;
     dataType_ = dataType;
 }
 
-HcclResult CcuTempReduceScatterNHR1DMem2Mem::CalcRes(AlgTempResReq &tempResReq)
+HcclResult CcuTempReduceScatterNHR1DMem2Mem::CalcRes(AlgTempResReq& tempResReq)
 {
     tempResReq.queNum = 1;
     tempResReq.streamNum = tempResReq.queNum;
@@ -65,24 +62,22 @@ HcclResult CcuTempReduceScatterNHR1DMem2Mem::CalcRes(AlgTempResReq &tempResReq)
     return HcclResult::HCCL_SUCCESS;
 }
 
-uint64_t CcuTempReduceScatterNHR1DMem2Mem::GetMaxSliceSize() const
-{
-    return UB_MAX_DATA_SIZE;
-}
+uint64_t CcuTempReduceScatterNHR1DMem2Mem::GetMaxSliceSize() const { return UB_MAX_DATA_SIZE; }
 
-HcclResult CcuTempReduceScatterNHR1DMem2Mem::GenExtIns(const TempFuncs &tempFuncs, TemplateDataParams &tempAlgParams,
-                                                       const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues)
+HcclResult CcuTempReduceScatterNHR1DMem2Mem::GenExtIns(
+    const TempFuncs& tempFuncs, TemplateDataParams& tempAlgParams, const ResLinks& tempLinks,
+    std::vector<InsQuePtr>& tempInsQues)
 {
     HCCL_INFO("[CcuTempReduceScatterNHRMem2Mem1D] Template Run start.");
-    CHK_PRT_RET(tempInsQues.empty(),
-        HCCL_ERROR("[CcuTempReduceScatterNHRMem2Mem1D] empty queue"), HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        tempInsQues.empty(), HCCL_ERROR("[CcuTempReduceScatterNHRMem2Mem1D] empty queue"), HcclResult::HCCL_E_INTERNAL);
     CHK_PTR_NULL(tempInsQues[0]);
     uint64_t isBottom = tempFuncs.isBottom;
     opMode_ = tempFuncs.opMode;
     std::vector<uint64_t> dimSize;
     dimSize.push_back(tempRankSize_);
     if (tempAlgParams.sliceSize == 0) {
-        HCCL_INFO("[CcuTempReduceScatterNHRMem2Mem1D] sliceSize is 0, no need do, just success.");
+        HCCL_INFO("[CcuTempReduceScatterNHRMem2Mem1D] sliceSize is 0, nothing to do, just return success.");
         return HCCL_SUCCESS;
     }
     uint64_t die0Size = 0;
@@ -104,11 +99,12 @@ HcclResult CcuTempReduceScatterNHR1DMem2Mem::GenExtIns(const TempFuncs &tempFunc
     uint64_t token;
     CHK_RET(GetToken(op_, token));
     uint64_t repeatNumVar = UINT64_MAX - repeatNum;
-    HCCL_INFO("[CcuTempReduceScatterNHR1D] dimSize[%llu], die0Size[%llu], die1Size[%llu], inputAddr[%llu],"\
-        "outputAddr[%llu], repeatNum[%llu], inputSliceStride[%llu], outputSliceStride[%llu],"\
+    HCCL_INFO(
+        "[CcuTempReduceScatterNHR1D] dimSize[%llu], die0Size[%llu], die1Size[%llu], inputAddr[%llu],"
+        "outputAddr[%llu], repeatNum[%llu], inputSliceStride[%llu], outputSliceStride[%llu],"
         "inputRepeatStride[%llu], outputRepeatStride[%llu]",
-        dimSize[0], die0Size, die1Size, inputAddr, outputAddr, repeatNum, inputSliceStride,
-        outputSliceStride, inputRepeatStride, outputRepeatStride);
+        dimSize[0], die0Size, die1Size, inputAddr, outputAddr, repeatNum, inputSliceStride, outputSliceStride,
+        inputRepeatStride, outputRepeatStride);
 
     std::vector<LinkData> linksDie0;
     std::vector<LinkData> linksDie1;
@@ -140,22 +136,23 @@ HcclResult CcuTempReduceScatterNHR1DMem2Mem::GenExtIns(const TempFuncs &tempFunc
     rankGroup.AddRank(myRank_);
 
     std::unique_ptr<CcuInsGroup> insGroupPtr = std::make_unique<CcuInsGroup>();
-    for (uint32_t axisId = 0; axisId < linkNum_; axisId++) {  // 2D算法，需要下发2条通信指令
+    for (uint32_t axisId = 0; axisId < linkNum_; axisId++) { // 2D算法，需要下发2条通信指令
         CcuInstructionReduceScatterNHR1D ccuInstruction;
-        ccuInstruction.Init(tempVirtRankMap_[myRank_], inputAddr, outputAddr, axisId, die0Size, die1Size, repeatNumVar,
-            inputSliceStride, outputSliceStride, inputRepeatStride, outputRepeatStride, stepInfoVector,
-            indexMap, token, op_, tempVTopo_, linkNum_, isBottom);
+        ccuInstruction.Init(
+            tempVirtRankMap_[myRank_], inputAddr, outputAddr, axisId, die0Size, die1Size, repeatNumVar,
+            inputSliceStride, outputSliceStride, inputRepeatStride, outputRepeatStride, stepInfoVector, indexMap, token,
+            op_, tempVTopo_, linkNum_, isBottom);
         ccuInstruction.SetLinks(axisId == 0 ? linksDie0 : linksDie1);
         ccuInstruction.SetRankGroup(rankGroup);
-        ccuInstruction.SetCntCkeNum(5);  // 每个transport用5个CKE
+        ccuInstruction.SetCntCkeNum(5); // 每个transport用5个CKE
         insGroupPtr->Append(std::move(std::make_unique<CcuInstructionReduceScatterNHR1D>(ccuInstruction)));
     }
-    tempInsQues[0]->Append(std::move(insGroupPtr));  // 只有一条流
+    tempInsQues[0]->Append(std::move(insGroupPtr)); // 只有一条流
     HCCL_INFO("[CcuTempReduceScatterNHRMem2Mem1D] Template Run for all steps Ends.");
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CcuTempReduceScatterNHR1DMem2Mem::GetStepInfo(u32 step, NHRStepInfo &stepInfo)
+HcclResult CcuTempReduceScatterNHR1DMem2Mem::GetStepInfo(u32 step, NHRStepInfo& stepInfo)
 {
     // 将本rank号转换成算法使用的索引号
     u32 rankIdx = tempVirtRankMap_[myRank_];
@@ -193,7 +190,7 @@ HcclResult CcuTempReduceScatterNHR1DMem2Mem::GetStepInfo(u32 step, NHRStepInfo &
 RankId CcuTempReduceScatterNHR1DMem2Mem::GetRankFromMap(const u32 rankIdx)
 {
     RankId rank = -1;
-    for (auto &pair : tempVirtRankMap_) {
+    for (auto& pair : tempVirtRankMap_) {
         if (pair.second == rankIdx) {
             rank = pair.first;
             break;

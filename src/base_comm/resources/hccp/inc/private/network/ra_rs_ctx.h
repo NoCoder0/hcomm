@@ -14,9 +14,11 @@
 #include "hccp_ctx.h"
 #include "ra_rs_comm.h"
 
-#define MAX_RSGE_NUM    2
-#define MAX_CTX_WR_NUM  4
+#define MAX_RSGE_NUM 2
+#define MAX_CTX_WR_NUM 4
 #define MAX_INLINE_SIZE 64
+#define REM_JETTY_ID_DEPRECATED_SIZE (sizeof(unsigned int))
+#define REM_JETTY_ID_SIZE 24 // refer to urma_jetty_id_t in struct QpKey
 
 struct MemRegAttrT {
     struct HccpMemInfo mem;
@@ -27,7 +29,7 @@ struct MemRegAttrT {
 
         struct {
             union RegSegFlag flags;
-            uint32_t tokenValue; /**< refer to urma_token_t */
+            uint32_t tokenValue;  /**< refer to urma_token_t */
             uint64_t tokenIdAddr; /**< NULL means unspecified, valid if flags.token_id_valid been set */
         } ub;
     };
@@ -55,8 +57,8 @@ struct MemImportAttrT {
     union {
         struct {
             union ImportSegFlag flags; /**< refer to urma_import_seg_flag_t */
-            uint64_t mappingAddr; /**< addr is needed if flag mapping set value */
-            uint32_t tokenValue; /**< refer to urma_token_t */
+            uint64_t mappingAddr;      /**< addr is needed if flag mapping set value */
+            uint32_t tokenValue;       /**< refer to urma_token_t */
         } ub;
     };
     uint32_t resv[4U];
@@ -123,31 +125,32 @@ struct CtxQpAttr {
 
     union {
         struct {
-            uint32_t mode; /**< refer to enum RA_RDMA_NOR_MODE etc. */
-            uint32_t udpSport; /**< UDP source port */
+            uint32_t mode;        /**< refer to enum RA_RDMA_NOR_MODE etc. */
+            uint32_t udpSport;    /**< UDP source port */
             uint8_t trafficClass; /**< traffic class */
-            uint8_t sl; /**< service level */
-            uint8_t timeout; /**< local ack timeout */
-            uint8_t rnrRetry; /**< RNR retry count */
-            uint8_t retryCnt; /**< retry count */
+            uint8_t sl;           /**< service level */
+            uint8_t timeout;      /**< local ack timeout */
+            uint8_t rnrRetry;     /**< RNR retry count */
+            uint8_t retryCnt;     /**< retry count */
         } rdma;
 
         struct {
             enum JettyMode mode;
-            uint32_t jettyId; /**< [optional] user specified jetty id, 0 means not specified */
-            union JettyFlag flag; /**< refer to union urma_jetty_flag */
+            uint32_t jettyId;      /**< [optional] user specified jetty id, 0 means not specified */
+            union JettyFlag flag;  /**< refer to union urma_jetty_flag */
             union JfsFlag jfsFlag; /**< refer to union urma_jfs_flag; jfs_cfg->flag */
-            uint32_t tokenValue; /**< refer to urma_token_t; jfr_cfg->token_value */
-            uint64_t tokenIdAddr; /**< NULL means unspecified */
+            uint32_t tokenValue;   /**< refer to urma_token_t; jfr_cfg->token_value */
+            uint64_t tokenIdAddr;  /**< NULL means unspecified */
             uint8_t priority; /**< the priority of JFS. services with low delay need set high priority. Range:[0-0xf] */
             uint8_t rnrRetry; /**< the RNR retry count when receive RNR response; Range:[0-7] */
             uint8_t errTimeout; /**< the timeout to report error. Range: [0-31] */
             union {
                 struct {
-                    struct JettyQueCfgEx sq; /**< specify sq buffer config, required when cstm_flag.bs.sq_cstm specified */
+                    struct JettyQueCfgEx
+                        sq;      /**< specify sq buffer config, required when cstm_flag.bs.sq_cstm specified */
                     bool piType; /**< false: op mode, true: async mode */
                     union CstmJfsFlag cstmFlag; /**< refer to union udma_jfs_flag */
-                    uint32_t sqebbNum; /**< required when cstm_flag.bs.sq_cstm specified */
+                    uint32_t sqebbNum;          /**< required when cstm_flag.bs.sq_cstm specified */
                 } extMode;
                 struct {
                     bool lockFlag;

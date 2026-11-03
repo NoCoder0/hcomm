@@ -28,6 +28,6 @@ public:
     uint64_t rowId = 0;
     std::string newValue;
 };
-}
+} // namespace HcclSim
 
 #endif

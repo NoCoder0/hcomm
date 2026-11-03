@@ -6,18 +6,22 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: AllGatherV语义校验文件头
  */
 
 #ifndef HCCLV1_ALLGATHER_V_SEMANTICS_CHECKER_H
 #define HCCLV1_ALLGATHER_V_SEMANTICS_CHECKER_H
- 
+
 #include "check_utils.h"
 #include "hccl_types.h"
- 
+
 namespace HcclSim {
-HcclResult TaskCheckAllGatherVSemantics(std::map<RankId, RankMemorySemantics> &allRankMemSemantics,
-                                        VDataDesTagInner &vDataDes);
+HcclResult TaskCheckAllGatherVSemantics(
+    const PhysicalMemorySemantics& memorySemantics, const DeviceBufferAddressLayouts& bufferLayouts,
+    const VDataDesTagInner& vDataDes, const std::vector<DeviceId>& rankToDevice);
 }
- 
+
 #endif

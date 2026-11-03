@@ -1,28 +1,12 @@
- /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- * 
- * The code snippet comes from Mindspore project.
- * 
- * Copyright 2021 Huawei Technologies Co., Ltd
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef AICPU_CONTEXT_H
 #define AICPU_CONTEXT_H
@@ -35,10 +19,10 @@
 
 namespace aicpu {
 typedef struct {
-    uint32_t deviceId;    // device id
-    uint32_t tsId;        // ts id
-    pid_t hostPid;        // host pid
-    uint32_t vfId;        // vf id
+    uint32_t deviceId; // device id
+    uint32_t tsId;     // ts id
+    pid_t hostPid;     // host pid
+    uint32_t vfId;     // vf id
 } aicpuContext_t;
 
 typedef struct {
@@ -49,17 +33,13 @@ typedef struct {
 } aicpuProfContext_t;
 
 enum AicpuRunMode : uint32_t {
-    PROCESS_PCIE_MODE = 0U,    // dc, with host mode
-    PROCESS_SOCKET_MODE = 1U,  // MDC
-    THREAD_MODE = 2U,          // ctrlcpu/minirc/lhisi
+    PROCESS_PCIE_MODE = 0U,   // dc, with host mode
+    PROCESS_SOCKET_MODE = 1U, // MDC
+    THREAD_MODE = 2U,         // ctrlcpu/minirc/lhisi
     INVALID_MODE = 3U,
 };
 
-enum AicpuDvppChlType : uint32_t {
-    AICPU_DVPP_CHL_VPC  = 0U,
-    AICPU_DVPP_CHL_VDEC = 1U,
-    AICPU_DVPP_CHL_BUTT
-};
+enum AicpuDvppChlType : uint32_t { AICPU_DVPP_CHL_VPC = 0U, AICPU_DVPP_CHL_VDEC = 1U, AICPU_DVPP_CHL_BUTT };
 
 typedef struct {
     uint32_t streamId;
@@ -71,11 +51,7 @@ typedef enum {
     AICPU_ERROR_FAILED = 1, // failed
 } status_t;
 
-enum CtxType : int32_t {
-    CTX_DEFAULT = 0,
-    CTX_PROF,
-    CTX_DEBUG
-};
+enum CtxType : int32_t { CTX_DEFAULT = 0, CTX_PROF, CTX_DEBUG };
 
 const std::string CONTEXT_KEY_OP_NAME = "opname";
 const std::string CONTEXT_KEY_PHASE_ONE_FLAG = "phaseOne";
@@ -87,14 +63,14 @@ const std::string CONTEXT_KEY_WAIT_ID = "waitId";
  * @param [in]ctx aicpu context
  * @return status whether this operation success
  */
-status_t aicpuSetContext(aicpuContext_t *ctx);
+status_t aicpuSetContext(aicpuContext_t* ctx);
 
 /**
  * get aicpu context from current thread.
  * @param [out]ctx aicpu context
  * @return status whether this operation success
  */
-status_t __attribute__((weak)) aicpuGetContext(aicpuContext_t *ctx);
+status_t __attribute__((weak)) aicpuGetContext(aicpuContext_t* ctx);
 
 /**
  * Apply sqe id, range is [start, end)
@@ -103,21 +79,21 @@ status_t __attribute__((weak)) aicpuGetContext(aicpuContext_t *ctx);
  * @param [out]end the end of sqe id
  * @return NA
  */
-void __attribute__((weak)) __attribute__((visibility("default"))) GetSqeId(const uint32_t num, uint32_t &start,
-                                                                           uint32_t &end);
+void __attribute__((weak)) __attribute__((visibility("default")))
+GetSqeId(const uint32_t num, uint32_t& start, uint32_t& end);
 
 /**
  * set aicpu prof context for current thread.
  * @param [ctx]ctx aicpu prof context
  * @return status whether this operation success
  */
-status_t __attribute__((weak)) aicpuSetProfContext(const aicpuProfContext_t &ctx);
+status_t __attribute__((weak)) aicpuSetProfContext(const aicpuProfContext_t& ctx);
 
 /**
  * get aicpu context prof from current thread.
  * @return ctx aicpu prof context
  */
-__attribute__((weak)) const aicpuProfContext_t &aicpuGetProfContext();
+__attribute__((weak)) const aicpuProfContext_t& aicpuGetProfContext();
 
 /**
  * init context for task monitor, called in compute process start.
@@ -145,7 +121,7 @@ uint32_t GetAicpuThreadIndex();
  * @param [in]opname op name
  * @return status whether this operation success
  */
-status_t __attribute__((weak)) SetOpname(const std::string &opname);
+status_t __attribute__((weak)) SetOpname(const std::string& opname);
 
 /**
  * get op name for task monitor
@@ -153,7 +129,7 @@ status_t __attribute__((weak)) SetOpname(const std::string &opname);
  * @param [out]opname op name
  * @return status whether this operation success
  */
-status_t GetOpname(uint32_t threadIndex, std::string &opname);
+status_t GetOpname(uint32_t threadIndex, std::string& opname);
 
 /**
  * get task and stream id.
@@ -161,7 +137,7 @@ status_t GetOpname(uint32_t threadIndex, std::string &opname);
  * @param [in]streamId stream id.
  * @return status whether this operation success
  */
-status_t __attribute__((weak)) GetTaskAndStreamId(uint64_t &taskId, uint32_t &streamId);
+status_t __attribute__((weak)) GetTaskAndStreamId(uint64_t& taskId, uint32_t& streamId);
 /**
  * set block id and block num only for kfc op.
  * @param [in]blockIdx block id
@@ -195,8 +171,7 @@ status_t __attribute__((weak)) SetTaskAndStreamId(uint64_t taskId, uint32_t stre
  * @param [in]channelId: dvpp channel id
  * @return return the valid dvpp channel id of stream
  */
-int32_t __attribute__((weak)) InitStreamDvppChannel(uint32_t streamId,
-    AicpuDvppChlType chlType, int32_t channelId);
+int32_t __attribute__((weak)) InitStreamDvppChannel(uint32_t streamId, AicpuDvppChlType chlType, int32_t channelId);
 
 /**
  * Undo set the dvpp channel id of stream
@@ -228,8 +203,8 @@ int32_t __attribute__((weak)) GetCurTaskDvppChannelId(AicpuDvppChlType chlType);
  * @param [in]buff: buff addr
  * @return return NA
  */
-void __attribute__((weak)) SetStreamDvppBuffBychlType(const AicpuDvppChlType chlType,
-                                                      const uint64_t buffLen, uint8_t *buff);
+void __attribute__((weak))
+SetStreamDvppBuffBychlType(const AicpuDvppChlType chlType, const uint64_t buffLen, uint8_t* buff);
 
 /**
  * set the dvpp buff len of current stream
@@ -239,8 +214,8 @@ void __attribute__((weak)) SetStreamDvppBuffBychlType(const AicpuDvppChlType chl
  * @param [in]buff: buff addr
  * @return return NA
  */
-void __attribute__((weak)) SetStreamDvppBuffByStreamId(const AicpuDvppChlType chlType, const uint32_t streamId,
-                                                       const uint64_t buffLen, uint8_t *buff);
+void __attribute__((weak)) SetStreamDvppBuffByStreamId(
+    const AicpuDvppChlType chlType, const uint32_t streamId, const uint64_t buffLen, uint8_t* buff);
 
 /**
  * set the dvpp buff len of current stream
@@ -249,8 +224,7 @@ void __attribute__((weak)) SetStreamDvppBuffByStreamId(const AicpuDvppChlType ch
  * @param [out]buffLen: buff len
  * @return return NA
  */
-void __attribute__((weak)) GetDvppBufAndLenBychlType(const AicpuDvppChlType chlType,
-                                                     uint8_t **buff, uint64_t *buffLen);
+void __attribute__((weak)) GetDvppBufAndLenBychlType(const AicpuDvppChlType chlType, uint8_t** buff, uint64_t* buffLen);
 
 /**
  * set the dvpp buff len of current stream
@@ -259,9 +233,8 @@ void __attribute__((weak)) GetDvppBufAndLenBychlType(const AicpuDvppChlType chlT
  * @param [out]buff: buff addr
  * @return return NA
  */
-void __attribute__((weak)) GetDvppBufAndLenByStreamId(const uint32_t streamId,
-                                                      const AicpuDvppChlType chlType, uint8_t **buff);
-
+void __attribute__((weak))
+GetDvppBufAndLenByStreamId(const uint32_t streamId, const AicpuDvppChlType chlType, uint8_t** buff);
 
 /**
  * set thread local context of key
@@ -270,7 +243,7 @@ void __attribute__((weak)) GetDvppBufAndLenByStreamId(const uint32_t streamId,
  * @return status whether this operation success
  * @note Deprecated from 20201216, Replaced by SetThreadCtxInfo
  */
-status_t __attribute__((weak)) SetThreadLocalCtx(const std::string &key, const std::string &value);
+status_t __attribute__((weak)) SetThreadLocalCtx(const std::string& key, const std::string& value);
 
 /**
  * get thread local context of key
@@ -279,7 +252,7 @@ status_t __attribute__((weak)) SetThreadLocalCtx(const std::string &key, const s
  * @return status whether this operation success
  * @note Deprecated from 20201216, Replaced by GetThreadCtxInfo
  */
-status_t GetThreadLocalCtx(const std::string &key, std::string &value);
+status_t GetThreadLocalCtx(const std::string& key, std::string& value);
 
 /**
  * remove local context of key
@@ -287,7 +260,7 @@ status_t GetThreadLocalCtx(const std::string &key, std::string &value);
  * @return status whether this operation success
  * @note Deprecated from 20201216, Replaced by RemoveThreadCtxInfo
  */
-status_t RemoveThreadLocalCtx(const std::string &key);
+status_t RemoveThreadLocalCtx(const std::string& key);
 
 /**
  * get all thread context info of type
@@ -295,7 +268,7 @@ status_t RemoveThreadLocalCtx(const std::string &key);
  * @param [in]threadIndex: thread index
  * @return const std::map<std::string, std::string> &: all thread context info
  */
-const std::map<std::string, std::string> &GetAllThreadCtxInfo(aicpu::CtxType type, uint32_t threadIndex);
+const std::map<std::string, std::string>& GetAllThreadCtxInfo(aicpu::CtxType type, uint32_t threadIndex);
 
 /**
  * set run mode.
@@ -309,7 +282,7 @@ status_t __attribute__((weak)) SetAicpuRunMode(uint32_t runMode);
  * @param [out]runMode: run mode.
  * @return status whether this operation success
  */
-status_t __attribute__((weak)) GetAicpuRunMode(uint32_t &runMode);
+status_t __attribute__((weak)) GetAicpuRunMode(uint32_t& runMode);
 
 /**
  * Register callback function by eventId and subeventId
@@ -317,9 +290,8 @@ status_t __attribute__((weak)) GetAicpuRunMode(uint32_t &runMode);
  * @param subeventId subevent id
  * @param func call back function
  */
-status_t __attribute__((weak)) RegisterEventCallback(const uint32_t eventId,
-    const uint32_t subeventId, std::function<void (void*)> func,
-    const bool isNeedClear = true);
+status_t __attribute__((weak)) RegisterEventCallback(
+    const uint32_t eventId, const uint32_t subeventId, std::function<void(void*)> func, const bool isNeedClear = true);
 
 /**
  * Do callback function by eventId and subeventId
@@ -327,8 +299,7 @@ status_t __attribute__((weak)) RegisterEventCallback(const uint32_t eventId,
  * @param subeventId subevent id
  * @param param event param
  */
-status_t __attribute__((weak)) DoEventCallback(const uint32_t eventId,
-    const uint32_t subeventId, void * const param);
+status_t __attribute__((weak)) DoEventCallback(const uint32_t eventId, const uint32_t subeventId, void* const param);
 
 /**
  * Unregister callback function by eventId and subeventId
@@ -371,8 +342,8 @@ extern "C" {
  * @param [in]value: value of context info
  * @return status whether this operation success
  */
-__attribute__((visibility("default"))) aicpu::status_t SetThreadCtxInfo(aicpu::CtxType type, const std::string &key,
-    const std::string &value);
+__attribute__((visibility("default"))) aicpu::status_t
+SetThreadCtxInfo(aicpu::CtxType type, const std::string& key, const std::string& value);
 
 /**
  * get thread context info of type
@@ -381,8 +352,8 @@ __attribute__((visibility("default"))) aicpu::status_t SetThreadCtxInfo(aicpu::C
  * @param [out]value: value of context info
  * @return status whether this operation success
  */
-__attribute__((visibility("default"))) aicpu::status_t GetThreadCtxInfo(aicpu::CtxType type, const std::string &key,
-    std::string &value);
+__attribute__((visibility("default"))) aicpu::status_t
+GetThreadCtxInfo(aicpu::CtxType type, const std::string& key, std::string& value);
 
 /**
  * remove thread context info of type
@@ -390,7 +361,7 @@ __attribute__((visibility("default"))) aicpu::status_t GetThreadCtxInfo(aicpu::C
  * @param [in]key: key of context info
  * @return status whether this operation success
  */
-__attribute__((visibility("default"))) aicpu::status_t RemoveThreadCtxInfo(aicpu::CtxType type, const std::string &key);
+__attribute__((visibility("default"))) aicpu::status_t RemoveThreadCtxInfo(aicpu::CtxType type, const std::string& key);
 
 /**
  * get block id only for kfc op.

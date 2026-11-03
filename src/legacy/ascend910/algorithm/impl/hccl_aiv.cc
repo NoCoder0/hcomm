@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include <mutex>
 #include <vector>
@@ -49,11 +49,12 @@ using AivKernelInfo = struct AivKernelInfoDef {
     HcclDataType dataType;
     KernelArgsType argsType;
 
-    AivKernelInfoDef(const char* kernelName, HcclDataType dataType,
-        KernelArgsType argsType = KernelArgsType::ARGS_TYPE_SERVER)
-        : kernelName(kernelName), dataType(dataType), argsType(argsType)
-    {
-    }
+    AivKernelInfoDef(
+        const char* kernelName, HcclDataType dataType, KernelArgsType argsType = KernelArgsType::ARGS_TYPE_SERVER)
+        : kernelName(kernelName),
+          dataType(dataType),
+          argsType(argsType)
+    {}
 };
 
 static bool g_init = false;
@@ -135,6 +136,18 @@ static std::vector<AivKernelInfo> g_broadcastAivKernelInfoList = {
     {"aiv_broadcast_int64_t", HcclDataType::HCCL_DATA_TYPE_INT64},
     {"aiv_broadcast_uint64_t", HcclDataType::HCCL_DATA_TYPE_UINT64},
     {"aiv_broadcast_double", HcclDataType::HCCL_DATA_TYPE_FP64},
+    {"aiv_broadcast_cn_half", HcclDataType::HCCL_DATA_TYPE_FP16, KernelArgsType::ARGS_TYPE_SIMPLE},
+    {"aiv_broadcast_cn_int16_t", HcclDataType::HCCL_DATA_TYPE_INT16, KernelArgsType::ARGS_TYPE_SIMPLE},
+    {"aiv_broadcast_cn_uint16_t", HcclDataType::HCCL_DATA_TYPE_UINT16, KernelArgsType::ARGS_TYPE_SIMPLE},
+    {"aiv_broadcast_cn_float", HcclDataType::HCCL_DATA_TYPE_FP32, KernelArgsType::ARGS_TYPE_SIMPLE},
+    {"aiv_broadcast_cn_int32_t", HcclDataType::HCCL_DATA_TYPE_INT32, KernelArgsType::ARGS_TYPE_SIMPLE},
+    {"aiv_broadcast_cn_uint32_t", HcclDataType::HCCL_DATA_TYPE_UINT32, KernelArgsType::ARGS_TYPE_SIMPLE},
+    {"aiv_broadcast_cn_int8_t", HcclDataType::HCCL_DATA_TYPE_INT8, KernelArgsType::ARGS_TYPE_SIMPLE},
+    {"aiv_broadcast_cn_uint8_t", HcclDataType::HCCL_DATA_TYPE_UINT8, KernelArgsType::ARGS_TYPE_SIMPLE},
+    {"aiv_broadcast_cn_bfloat16_t", HcclDataType::HCCL_DATA_TYPE_BFP16, KernelArgsType::ARGS_TYPE_SIMPLE},
+    {"aiv_broadcast_cn_int64_t", HcclDataType::HCCL_DATA_TYPE_INT64, KernelArgsType::ARGS_TYPE_SIMPLE},
+    {"aiv_broadcast_cn_uint64_t", HcclDataType::HCCL_DATA_TYPE_UINT64, KernelArgsType::ARGS_TYPE_SIMPLE},
+    {"aiv_broadcast_cn_double", HcclDataType::HCCL_DATA_TYPE_FP64, KernelArgsType::ARGS_TYPE_SIMPLE},
 };
 static std::string g_broadcastAivBinaryName = "hccl_aiv_broadcast_op.o";
 
@@ -237,7 +250,7 @@ static std::map<HcclCMDType, std::pair<std::string, std::vector<AivKernelInfo>>>
 };
 
 using AivKernelArgs = struct AivKernelArgsDef {
-    const void* buffersIn[MAX_RANK_SIZE] = {}; // 注册的CCLIN地址，所有卡可访问
+    const void* buffersIn[MAX_RANK_SIZE] = {};  // 注册的CCLIN地址，所有卡可访问
     const void* buffersOut[MAX_RANK_SIZE] = {}; // 注册的CCLOUT地址，所有卡可访问
     const void* input;
     const void* output;
@@ -251,8 +264,8 @@ using AivKernelArgs = struct AivKernelArgsDef {
     u32 numBlocks;
     bool isOpBase;
     u64 bufferSize;
-    s32 aivRdmaStep;  // 用于AIV与rdma组合的场景，在不同step中kernel完成多机通信的不同部分
-    bool useAivRdmaSmall;  // 使用aivRdma小数据量kernel，否则使用中数据量kernel
+    s32 aivRdmaStep;      // 用于AIV与rdma组合的场景，在不同step中kernel完成多机通信的不同部分
+    bool useAivRdmaSmall; // 使用aivRdma小数据量kernel，否则使用中数据量kernel
     u32 serverNum;
     u32 devType;
     const void* headCounterAddr;
@@ -263,26 +276,46 @@ using AivKernelArgs = struct AivKernelArgsDef {
     u32 deterministic;
     u64 rmaInfo;
 
-   AivKernelArgsDef(void** buffIn, void** buffOut, const void* input, const void* output, u32 rank,
-        u32 rankSize, u64 len, u32 dataType, u32 reduceOp, u32 root, s32 tag, u32 numBlocks, bool isOpBase = true,
+    AivKernelArgsDef(
+        void** buffIn, void** buffOut, const void* input, const void* output, u32 rank, u32 rankSize, u64 len,
+        u32 dataType, u32 reduceOp, u32 root, s32 tag, u32 numBlocks, bool isOpBase = true,
         u64 bufferSize = 200 * 1024 * 1024, s32 aivRdmaStep = -1, bool useAivRdmaSmall = false, u32 serverNum = 1,
-        u32 devType = 2, const void* headCounterAddr = nullptr, const void* tailCounterAddr = nullptr, const void* addOneAddr = nullptr,
-        u32 counterMemSize = 0, bool isEnableCounter = false, u32 deterministic = 0, u64 rmaInfo = 0)
-        : input(input), output(output), rank(rank), rankSize(rankSize), len(len), dataType(dataType),
-        reduceOp(reduceOp), root(root), tag(tag), numBlocks(numBlocks), isOpBase(isOpBase), bufferSize(bufferSize), aivRdmaStep(aivRdmaStep),
-        useAivRdmaSmall(useAivRdmaSmall), serverNum(serverNum), devType(devType), headCounterAddr(headCounterAddr),
-        tailCounterAddr(tailCounterAddr), addOneAddr(addOneAddr), counterMemSize(counterMemSize),
-        isEnableCounter(isEnableCounter), deterministic(deterministic), rmaInfo(rmaInfo)
+        u32 devType = 2, const void* headCounterAddr = nullptr, const void* tailCounterAddr = nullptr,
+        const void* addOneAddr = nullptr, u32 counterMemSize = 0, bool isEnableCounter = false, u32 deterministic = 0,
+        u64 rmaInfo = 0)
+        : input(input),
+          output(output),
+          rank(rank),
+          rankSize(rankSize),
+          len(len),
+          dataType(dataType),
+          reduceOp(reduceOp),
+          root(root),
+          tag(tag),
+          numBlocks(numBlocks),
+          isOpBase(isOpBase),
+          bufferSize(bufferSize),
+          aivRdmaStep(aivRdmaStep),
+          useAivRdmaSmall(useAivRdmaSmall),
+          serverNum(serverNum),
+          devType(devType),
+          headCounterAddr(headCounterAddr),
+          tailCounterAddr(tailCounterAddr),
+          addOneAddr(addOneAddr),
+          counterMemSize(counterMemSize),
+          isEnableCounter(isEnableCounter),
+          deterministic(deterministic),
+          rmaInfo(rmaInfo)
     {
         for (u32 i = 0; i < MAX_RANK_SIZE; i++) {
-            buffersIn[i] = (u8 *) buffIn[i];
-            buffersOut[i] = (u8 *) buffOut[i];
+            buffersIn[i] = (u8*)buffIn[i];
+            buffersOut[i] = (u8*)buffOut[i];
         }
     }
 };
 
 using AivExtraKernelArgs = struct AivExtraKernelArgsDef {
-    const void* buffersIn[MAX_RANK_SIZE] = {}; // 注册的CCLIN地址，所有卡可访问
+    const void* buffersIn[MAX_RANK_SIZE] = {};  // 注册的CCLIN地址，所有卡可访问
     const void* buffersOut[MAX_RANK_SIZE] = {}; // 注册的CCLOUT地址，所有卡可访问
     const void* input;
     const void* output;
@@ -296,8 +329,8 @@ using AivExtraKernelArgs = struct AivExtraKernelArgsDef {
     u32 numBlocks;
     bool isOpBase;
     u64 bufferSize;
-    s32 aivRdmaStep;  // 用于AIV与rdma组合的场景，在不同step中kernel完成多机通信的不同部分
-    bool useAivRdmaSmall;  // 使用aivRdma小数据量kernel，否则使用中数据量kernel
+    s32 aivRdmaStep;      // 用于AIV与rdma组合的场景，在不同step中kernel完成多机通信的不同部分
+    bool useAivRdmaSmall; // 使用aivRdma小数据量kernel，否则使用中数据量kernel
     u32 serverNum;
     u32 devType;
     const void* headCounterAddr;
@@ -309,21 +342,40 @@ using AivExtraKernelArgs = struct AivExtraKernelArgsDef {
     u64 rmaInfo;
     ExtraArgs extraArgs; // A2/A3单机
 
-    AivExtraKernelArgsDef(void** buffIn, void** buffOut, const void* input, const void* output, u32 rank,
-        u32 rankSize, u64 len, u32 dataType, u32 reduceOp, u32 root, s32 tag, u32 numBlocks, bool isOpBase = true,
+    AivExtraKernelArgsDef(
+        void** buffIn, void** buffOut, const void* input, const void* output, u32 rank, u32 rankSize, u64 len,
+        u32 dataType, u32 reduceOp, u32 root, s32 tag, u32 numBlocks, bool isOpBase = true,
         u64 bufferSize = 200 * 1024 * 1024, s32 aivRdmaStep = -1, bool useAivRdmaSmall = false, u32 serverNum = 1,
-        u32 devType = 2, const void* headCounterAddr = nullptr, const void* tailCounterAddr = nullptr, const void* addOneAddr = nullptr,
-        u32 counterMemSize = 0, bool isEnableCounter = false, u32 deterministic = 0, u64 rmaInfo = 0,
-        const ExtraArgs* extraArgsPtr = nullptr)
-        : input(input), output(output), rank(rank), rankSize(rankSize), len(len), dataType(dataType),
-        reduceOp(reduceOp), root(root), tag(tag), numBlocks(numBlocks), isOpBase(isOpBase), bufferSize(bufferSize), aivRdmaStep(aivRdmaStep),
-        useAivRdmaSmall(useAivRdmaSmall), serverNum(serverNum), devType(devType), headCounterAddr(headCounterAddr),
-        tailCounterAddr(tailCounterAddr), addOneAddr(addOneAddr), counterMemSize(counterMemSize),
-        isEnableCounter(isEnableCounter), deterministic(deterministic), rmaInfo(rmaInfo)
+        u32 devType = 2, const void* headCounterAddr = nullptr, const void* tailCounterAddr = nullptr,
+        const void* addOneAddr = nullptr, u32 counterMemSize = 0, bool isEnableCounter = false, u32 deterministic = 0,
+        u64 rmaInfo = 0, const ExtraArgs* extraArgsPtr = nullptr)
+        : input(input),
+          output(output),
+          rank(rank),
+          rankSize(rankSize),
+          len(len),
+          dataType(dataType),
+          reduceOp(reduceOp),
+          root(root),
+          tag(tag),
+          numBlocks(numBlocks),
+          isOpBase(isOpBase),
+          bufferSize(bufferSize),
+          aivRdmaStep(aivRdmaStep),
+          useAivRdmaSmall(useAivRdmaSmall),
+          serverNum(serverNum),
+          devType(devType),
+          headCounterAddr(headCounterAddr),
+          tailCounterAddr(tailCounterAddr),
+          addOneAddr(addOneAddr),
+          counterMemSize(counterMemSize),
+          isEnableCounter(isEnableCounter),
+          deterministic(deterministic),
+          rmaInfo(rmaInfo)
     {
         for (u32 i = 0; i < MAX_RANK_SIZE; i++) {
-            buffersOut[i] = (u8 *) buffOut[i];
-            buffersIn[i] = (u8 *) buffIn[i];
+            buffersOut[i] = (u8*)buffOut[i];
+            buffersIn[i] = (u8*)buffIn[i];
         }
         if (extraArgsPtr != nullptr) {
             extraArgs = *extraArgsPtr;
@@ -332,7 +384,7 @@ using AivExtraKernelArgs = struct AivExtraKernelArgsDef {
 };
 
 using AivExtraKernelArgsV2 = struct AivExtraKernelArgsV2Def {
-    const void* buffersIn[MAX_RANK_SIZE] = {}; // 注册的CCLIN地址，所有卡可访问
+    const void* buffersIn[MAX_RANK_SIZE] = {};  // 注册的CCLIN地址，所有卡可访问
     const void* buffersOut[MAX_RANK_SIZE] = {}; // 注册的CCLOUT地址，所有卡可访问
     const void* input;
     const void* output;
@@ -346,8 +398,8 @@ using AivExtraKernelArgsV2 = struct AivExtraKernelArgsV2Def {
     u32 numBlocks;
     bool isOpBase;
     u64 bufferSize;
-    s32 aivRdmaStep;  // 用于AIV与rdma组合的场景，在不同step中kernel完成多机通信的不同部分
-    bool useAivRdmaSmall;  // 使用aivRdma小数据量kernel，否则使用中数据量kernel
+    s32 aivRdmaStep;      // 用于AIV与rdma组合的场景，在不同step中kernel完成多机通信的不同部分
+    bool useAivRdmaSmall; // 使用aivRdma小数据量kernel，否则使用中数据量kernel
     u32 serverNum;
     u32 devType;
     const void* headCounterAddr;
@@ -359,21 +411,40 @@ using AivExtraKernelArgsV2 = struct AivExtraKernelArgsV2Def {
     u64 rmaInfo;
     ExtraArgsV2 extraArgs; // A3超节点内多机
 
-    AivExtraKernelArgsV2Def(void** buffIn, void** buffOut, const void* input, const void* output, u32 rank,
-        u32 rankSize, u64 len, u32 dataType, u32 reduceOp, u32 root, s32 tag, u32 numBlocks, bool isOpBase = true,
+    AivExtraKernelArgsV2Def(
+        void** buffIn, void** buffOut, const void* input, const void* output, u32 rank, u32 rankSize, u64 len,
+        u32 dataType, u32 reduceOp, u32 root, s32 tag, u32 numBlocks, bool isOpBase = true,
         u64 bufferSize = 200 * 1024 * 1024, s32 aivRdmaStep = -1, bool useAivRdmaSmall = false, u32 serverNum = 1,
-        u32 devType = 2, const void* headCounterAddr = nullptr, const void* tailCounterAddr = nullptr, const void* addOneAddr = nullptr,
-        u32 counterMemSize = 0, bool isEnableCounter = false, u32 deterministic = 0, u64 rmaInfo = 0,
-        const ExtraArgsV2* extraArgsPtr = nullptr)
-        : input(input), output(output), rank(rank), rankSize(rankSize), len(len), dataType(dataType),
-        reduceOp(reduceOp), root(root), tag(tag), numBlocks(numBlocks), isOpBase(isOpBase), bufferSize(bufferSize), aivRdmaStep(aivRdmaStep),
-        useAivRdmaSmall(useAivRdmaSmall), serverNum(serverNum), devType(devType), headCounterAddr(headCounterAddr),
-        tailCounterAddr(tailCounterAddr), addOneAddr(addOneAddr), counterMemSize(counterMemSize), isEnableCounter(isEnableCounter),
-        deterministic(deterministic), rmaInfo(rmaInfo)
+        u32 devType = 2, const void* headCounterAddr = nullptr, const void* tailCounterAddr = nullptr,
+        const void* addOneAddr = nullptr, u32 counterMemSize = 0, bool isEnableCounter = false, u32 deterministic = 0,
+        u64 rmaInfo = 0, const ExtraArgsV2* extraArgsPtr = nullptr)
+        : input(input),
+          output(output),
+          rank(rank),
+          rankSize(rankSize),
+          len(len),
+          dataType(dataType),
+          reduceOp(reduceOp),
+          root(root),
+          tag(tag),
+          numBlocks(numBlocks),
+          isOpBase(isOpBase),
+          bufferSize(bufferSize),
+          aivRdmaStep(aivRdmaStep),
+          useAivRdmaSmall(useAivRdmaSmall),
+          serverNum(serverNum),
+          devType(devType),
+          headCounterAddr(headCounterAddr),
+          tailCounterAddr(tailCounterAddr),
+          addOneAddr(addOneAddr),
+          counterMemSize(counterMemSize),
+          isEnableCounter(isEnableCounter),
+          deterministic(deterministic),
+          rmaInfo(rmaInfo)
     {
         for (u32 i = 0; i < MAX_RANK_SIZE; i++) {
-            buffersIn[i] = (u8 *) buffIn[i];
-            buffersOut[i] = (u8 *) buffOut[i];
+            buffersIn[i] = (u8*)buffIn[i];
+            buffersOut[i] = (u8*)buffOut[i];
         }
         if (extraArgsPtr != nullptr) {
             extraArgs = *extraArgsPtr;
@@ -397,14 +468,25 @@ using AivKernelArgsV3 = struct AivKernelArgsV3Def {
     s32 step;
     u32 deterministic;
 
-   AivKernelArgsV3Def(void** buffIn, void** buffOut, const void* input, const void* output, u32 rank,
-        u32 rankSize, u64 len, u32 dataType, u32 reduceOp, u32 root, s32 tag, u32 numBlocks, bool isOpBase = true,
+    AivKernelArgsV3Def(
+        void** buffIn, void** buffOut, const void* input, const void* output, u32 rank, u32 rankSize, u64 len,
+        u32 dataType, u32 reduceOp, u32 root, s32 tag, u32 numBlocks, bool isOpBase = true,
         u64 bufferSize = 200 * 1024 * 1024, s32 step = 0, void* headCounterAddr = nullptr,
-        void* tailCounterAddr = nullptr, void* addOneAddr = nullptr,
-        bool isEnableCounter = false, u32 deterministic = 0)
-        : input(input), output(output), rank(rank), rankSize(rankSize), len(len), dataType(dataType),
-        reduceOp(reduceOp), root(root), tag(tag), numBlocks(numBlocks), isOpBase(isOpBase),
-        step(step), deterministic(deterministic)
+        void* tailCounterAddr = nullptr, void* addOneAddr = nullptr, bool isEnableCounter = false,
+        u32 deterministic = 0)
+        : input(input),
+          output(output),
+          rank(rank),
+          rankSize(rankSize),
+          len(len),
+          dataType(dataType),
+          reduceOp(reduceOp),
+          root(root),
+          tag(tag),
+          numBlocks(numBlocks),
+          isOpBase(isOpBase),
+          step(step),
+          deterministic(deterministic)
     {
         massArgs[0] = reinterpret_cast<u64>(buffIn[0]);
         massArgs[1] = reinterpret_cast<u64>(buffIn[1]);
@@ -418,11 +500,11 @@ using AivKernelArgsV3 = struct AivKernelArgsV3Def {
     }
 };
 
-HcclResult GetAivOpBinaryPath(const std::string &aivBinaryName, std::string &binaryPath)
+HcclResult GetAivOpBinaryPath(const std::string& aivBinaryName, std::string& binaryPath)
 {
     // 获取二进制文件路径
     std::string libPath;
-    char *getPath = nullptr;
+    char* getPath = nullptr;
     MM_SYS_GET_ENV(MM_ENV_ASCEND_HOME_PATH, getPath);
     if (getPath != nullptr) {
         libPath = getPath;
@@ -440,7 +522,7 @@ HcclResult GetAivOpBinaryPath(const std::string &aivBinaryName, std::string &bin
 
 HcclResult ReadBinFile(const string& fileName, string& buffer)
 {
-    char realFile[PATH_MAX] = { 0 };
+    char realFile[PATH_MAX] = {0};
     if (realpath(fileName.c_str(), realFile) == nullptr) {
         HCCL_INFO("[AIV][ReadBinFile] Binfile path %s is not a valid real path.", realFile);
         return HCCL_E_NOT_FOUND;
@@ -471,8 +553,8 @@ HcclResult ReadBinFile(const string& fileName, string& buffer)
 s8* GetStubFunc(HcclCMDType cmdType, HcclDataType dataType, KernelArgsType argsType = KernelArgsType::ARGS_TYPE_SERVER)
 {
     return reinterpret_cast<s8*>(
-        (((static_cast<s64>(cmdType) << SIG_MOVE_LEFT_BITS) + static_cast<s64>(dataType)) << SIG_MOVE_LEFT_BITS) +
-        static_cast<s64>(argsType));
+        (((static_cast<s64>(cmdType) << SIG_MOVE_LEFT_BITS) + static_cast<s64>(dataType)) << SIG_MOVE_LEFT_BITS)
+        + static_cast<s64>(argsType));
 }
 
 HcclResult RegisterBinaryKernel(const char* funcName, const aclrtBinHandle binHandle, s8* stubFunc)
@@ -483,8 +565,9 @@ HcclResult RegisterBinaryKernel(const char* funcName, const aclrtBinHandle binHa
 
     aclrtFuncHandle funcHandle;
     aclError aclRet = aclrtBinaryGetFunction(binHandle, funcName, &funcHandle);
-        CHK_PRT_RET(aclRet != ACL_SUCCESS, HCCL_ERROR("[RegisterBinaryKernel]errNo[0x%016llx] get function from binary error.", aclRet),
-        HCCL_E_NOT_FOUND);
+    CHK_PRT_RET(
+        aclRet != ACL_SUCCESS,
+        HCCL_ERROR("[RegisterBinaryKernel]errNo[0x%016llx] get function from binary error.", aclRet), HCCL_E_NOT_FOUND);
 
     g_aivFuncMap[stubFunc] = funcHandle;
     g_aivNameMap[stubFunc] = funcName;
@@ -502,7 +585,7 @@ HcclResult GetKernelFunc(aclrtFuncHandle& funcHandle, s8* stubFunc)
 }
 
 // Kernel注册入口，全局只需要初始化一次
-HcclResult RegisterKernel(DevType deviceType)
+HcclResult RegisterKernel([[maybe_unused]] DevType deviceType)
 {
     lock_guard<mutex> guard(g_mut);
     if (g_init) {
@@ -512,23 +595,30 @@ HcclResult RegisterKernel(DevType deviceType)
 
     for (auto& aivOpKernelInfo : g_aivKernelInfoMap) {
         HcclCMDType cmdType = aivOpKernelInfo.first;
-        const std::string &aivBinaryName = aivOpKernelInfo.second.first;
-        std::vector<AivKernelInfo> &aivKernelInfoList = aivOpKernelInfo.second.second;
+        const std::string& aivBinaryName = aivOpKernelInfo.second.first;
+        std::vector<AivKernelInfo>& aivKernelInfoList = aivOpKernelInfo.second.second;
 
         string binFilePath;
         ret = GetAivOpBinaryPath(aivBinaryName, binFilePath);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[AIV][RegisterKernel] get aiv op binary path failed"), HCCL_E_RUNTIME);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS, HCCL_ERROR("[AIV][RegisterKernel] get aiv op binary path failed"), HCCL_E_RUNTIME);
 
         ret = LoadBinaryFromFile(binFilePath.c_str(), ACL_RT_BINARY_LOAD_OPT_LAZY_LOAD, 1, g_binHandleMap[cmdType]);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[AIV][RegisterKernel] read aiv kernel bin file failed"),
-            HCCL_E_RUNTIME);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS, HCCL_ERROR("[AIV][RegisterKernel] read aiv kernel bin file failed"), HCCL_E_RUNTIME);
 
-        for (auto &aivKernelInfo: aivKernelInfoList) {
-            ret = RegisterBinaryKernel(aivKernelInfo.kernelName, g_binHandleMap[cmdType],
+        for (auto& aivKernelInfo : aivKernelInfoList) {
+            ret = RegisterBinaryKernel(
+                aivKernelInfo.kernelName, g_binHandleMap[cmdType],
                 GetStubFunc(cmdType, aivKernelInfo.dataType, aivKernelInfo.argsType));
-            CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[AIV][RegisterKernel] register binary kernel for kernelName[%s] "
-                "cmdType[%d] dataType[%s] argsType[%d] failed", aivKernelInfo.kernelName, cmdType,
-                GetDataTypeEnumStr(aivKernelInfo.dataType).c_str(), aivKernelInfo.argsType), HCCL_E_RUNTIME);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR(
+                    "[AIV][RegisterKernel] register binary kernel for kernelName[%s] "
+                    "cmdType[%d] dataType[%s] argsType[%d] failed",
+                    aivKernelInfo.kernelName, cmdType, GetDataTypeEnumStr(aivKernelInfo.dataType).c_str(),
+                    aivKernelInfo.argsType),
+                HCCL_E_RUNTIME);
         }
     }
 
@@ -552,23 +642,26 @@ HcclResult UnRegisterAivKernel()
     return HCCL_SUCCESS;
 }
 
-HcclResult GetMinAndMaxNpuSchedTimeOut(u64 &minNpuSchedTimeout, u64 &maxNpuSchedTimeout)
+HcclResult GetMinAndMaxNpuSchedTimeOut(u64& minNpuSchedTimeout, u64& maxNpuSchedTimeout)
 {
     uint64_t interval = 0;
     aclError aclRet = aclrtGetOpTimeOutInterval(&interval);
-    CHK_PRT_RET(aclRet != ACL_SUCCESS, HCCL_ERROR("aclrtGetOpTimeOutInterval get timeout interval failed, ret[%d]",
-        aclRet), HCCL_E_RUNTIME);
+    CHK_PRT_RET(
+        aclRet != ACL_SUCCESS, HCCL_ERROR("aclrtGetOpTimeOutInterval get timeout interval failed, ret[%d]", aclRet),
+        HCCL_E_RUNTIME);
 
     constexpr u64 MAX_INTERVAL = 254;
     // NPU超时范围(1, 254) * interval
     minNpuSchedTimeout = 1 * interval;
     maxNpuSchedTimeout = MAX_INTERVAL * interval;
-    HCCL_INFO("GetMinAndMaxNpuSchedTimeOut minNpuSchedTimeout[%llu]us, maxNpuSchedTimeout[%llu]us.",
-        minNpuSchedTimeout, maxNpuSchedTimeout);
+    HCCL_INFO(
+        "GetMinAndMaxNpuSchedTimeOut minNpuSchedTimeout[%llu]us, maxNpuSchedTimeout[%llu]us.", minNpuSchedTimeout,
+        maxNpuSchedTimeout);
     return HCCL_SUCCESS;
 }
 
-u32 GetAivTimeout(s32 execTimeOut, bool isSetByConfig) {
+u32 GetAivTimeout(s32 execTimeOut, bool isSetByConfig)
+{
     u32 timeout = AIV_TIMEOUT_DEFAULT_US;
     if (GetExternalInputHcclExecTimeoutSet() != HcclExecTimeoutSet::HCCL_EXEC_TIMEOUT_NOT_SET || isSetByConfig) {
         // 配0时，使用最大超时时间
@@ -577,33 +670,35 @@ u32 GetAivTimeout(s32 execTimeOut, bool isSetByConfig) {
         }
         double timeoutUs = execTimeOut * TIME_S_TO_US;
         if (timeoutUs > static_cast<double>(std::numeric_limits<u32>::max())) {
-            HCCL_INFO("[GetAivTimeout]Get input timeout[%.2f] is out of valid range.", timeoutUs);
+            HCCL_INFO("[GetAivTimeout]Get input timeout[%.2f us] is out of valid range.", timeoutUs);
             return AIV_TIMEOUT_MAX_US;
         }
         u32 timeoutUsInt = static_cast<u32>(timeoutUs);
         u64 minNpuSchedTimeout = 0;
         u64 maxNpuSchedTimeout = 0;
         CHK_RET(GetMinAndMaxNpuSchedTimeOut(minNpuSchedTimeout, maxNpuSchedTimeout));
-        timeout = (timeoutUsInt < minNpuSchedTimeout) ? minNpuSchedTimeout
-                    : (timeoutUsInt > maxNpuSchedTimeout) ? maxNpuSchedTimeout
-                    : timeoutUsInt;
-        HCCL_INFO("[GetAivTimeout]timeout[%u]us, minNpuSchedTimeout[%llu]us, maxNpuSchedTimeout[%llu]us.",
-            timeout, minNpuSchedTimeout, maxNpuSchedTimeout);
+        timeout = (timeoutUsInt < minNpuSchedTimeout) ? minNpuSchedTimeout :
+                  (timeoutUsInt > maxNpuSchedTimeout) ? maxNpuSchedTimeout :
+                                                        timeoutUsInt;
+        HCCL_INFO(
+            "[GetAivTimeout]timeout[%u]us, minNpuSchedTimeout[%llu]us, maxNpuSchedTimeout[%llu]us.", timeout,
+            minNpuSchedTimeout, maxNpuSchedTimeout);
     }
 
     return timeout < AIV_TIMEOUT_MAX_US ? timeout : AIV_TIMEOUT_MAX_US;
 }
 
-void TaskAivProfilerWrap(const AivOpArgs& opArgs, const AivTopoArgs& topoArgs,
-    const AivResourceArgs& resourceArgs, const AivAlgArgs& algArgs, const AivProfilingInfo& aivProfilingInfo,
-    void* flagMem)
+void TaskAivProfilerWrap(
+    const AivOpArgs& opArgs, const AivTopoArgs& topoArgs, const AivResourceArgs& resourceArgs,
+    const AivAlgArgs& algArgs, const AivProfilingInfo& aivProfilingInfo, void* flagMem)
 {
     struct TaskParaGeneral taskParaGeneral;
 
-    TaskParaAiv taskParaAiv(opArgs.cmdType, resourceArgs.aivTag, opArgs.count*SIZE_TABLE[opArgs.dataType],
-                resourceArgs.numBlocks, topoArgs.rankSize, algArgs.step, flagMem, topoArgs.rank, opArgs.isOpBase);
+    TaskParaAiv taskParaAiv(
+        opArgs.cmdType, resourceArgs.aivTag, opArgs.count * SIZE_TABLE[opArgs.dataType], resourceArgs.numBlocks,
+        topoArgs.rankSize, algArgs.step, flagMem, topoArgs.rank, opArgs.isOpBase);
 
-    if(taskParaAiv.flagMem == nullptr){
+    if (taskParaAiv.flagMem == nullptr) {
         taskParaAiv.flagMem = resourceArgs.buffersOut[topoArgs.rank];
     }
 
@@ -615,7 +710,7 @@ void TaskAivProfilerWrap(const AivOpArgs& opArgs, const AivTopoArgs& topoArgs,
     AlgWrap::GetInstance().TaskAivProfiler(topoArgs.identify, taskParaGeneral);
 }
 
-HcclResult CacheTaskOpInfo(rtStream_t stream, const std::string &identify)
+HcclResult CacheTaskOpInfo(rtStream_t stream, const std::string& identify)
 {
     aclmdlRI rtModel = nullptr;
     aclmdlRICaptureStatus captureStatus = aclmdlRICaptureStatus::ACL_MODEL_RI_CAPTURE_STATUS_NONE;
@@ -624,48 +719,55 @@ HcclResult CacheTaskOpInfo(rtStream_t stream, const std::string &identify)
         HCCL_WARNING("[%s]Stream capture does not support!", __func__);
         return HCCL_SUCCESS;
     }
-    CHK_PRT_RET(aclRet != ACL_SUCCESS,
-                HCCL_ERROR("[%s]rtGet stream get capture status fail. return[%d]", __func__, aclRet), HCCL_E_RUNTIME);
+    CHK_PRT_RET(
+        aclRet != ACL_SUCCESS, HCCL_ERROR("[%s]rtGet stream get capture status fail. return[%d]", __func__, aclRet),
+        HCCL_E_RUNTIME);
 
     aclrtStreamAttrValue value;
     aclRet = aclrtGetStreamAttribute(stream, ACL_STREAM_ATTR_CACHE_OP_INFO, &value);
-    CHK_PRT_RET(aclRet != ACL_SUCCESS, HCCL_ERROR("[%s]stream get attribute fail. return[%d]", __func__, aclRet),
-                HCCL_E_RUNTIME);
+    CHK_PRT_RET(
+        aclRet != ACL_SUCCESS, HCCL_ERROR("[%s]stream get attribute fail. return[%d]", __func__, aclRet),
+        HCCL_E_RUNTIME);
 
-    HCCL_INFO("[CacheTaskOpInfo] cacheOpInfoSwitch[%u] captureStatus[%d] identify[%s]", value.cacheOpInfoSwitch, captureStatus, identify.c_str());
+    HCCL_INFO(
+        "[CacheTaskOpInfo] cacheOpInfoSwitch[%u] captureStatus[%d] identify[%s]", value.cacheOpInfoSwitch,
+        captureStatus, identify.c_str());
     if (value.cacheOpInfoSwitch == 1 && captureStatus == ACL_MODEL_RI_CAPTURE_STATUS_ACTIVE) {
         HcclResult cacheRet = hrtCacheLastTaskExtendInfo(identify.c_str(), strlen(identify.c_str()));
         if (cacheRet == HCCL_E_NOT_SUPPORT) {
             HCCL_INFO("[%s] aclrtCacheLastTaskExtendInfo not supported", __func__);
         } else {
-            CHK_PRT_RET(cacheRet != HCCL_SUCCESS,
-                        HCCL_ERROR("[%s] stream cache task op info fail. return[%d]", __func__, cacheRet),
-                        HCCL_E_RUNTIME);
+            CHK_PRT_RET(
+                cacheRet != HCCL_SUCCESS,
+                HCCL_ERROR("[%s] stream cache task op info fail. return[%d]", __func__, cacheRet), HCCL_E_RUNTIME);
         }
     }
     return HCCL_SUCCESS;
 }
 
 // KernelLaunch内部接口
-HcclResult ExecuteKernelLaunchInner(const AivOpArgs &opArgs, const AivTopoArgs &topoArgs,
-    const AivResourceArgs &resourceArgs, const AivAlgArgs &algArgs, void* args, u32 argsSize, 
-    AivProfilingInfo& aivProfilingInfo)
+HcclResult ExecuteKernelLaunchInner(
+    const AivOpArgs& opArgs, const AivTopoArgs& topoArgs, const AivResourceArgs& resourceArgs,
+    const AivAlgArgs& algArgs, void* args, u32 argsSize, AivProfilingInfo& aivProfilingInfo)
 {
-    HCCL_INFO("[AIV][ExecuteKernelLaunchInner] sendbuff [%p] recvbuff [%p] rank [%d] rankSize [%d] count [%llu] "
+    HCCL_INFO(
+        "[AIV][ExecuteKernelLaunchInner] sendbuff [%p] recvbuff [%p] rank [%d] rankSize [%d] count [%llu] "
         "dataType [%s] reduceOp [%s] root [%d] tag [%d] isOpBase [%d] bufferSize [%llu] step [%d] "
-        "isSmallCount [%d] serverNum [%d] devType[%d] extraArgsPtr [%p] argsSize [%d], deterministic [%d].", opArgs.input,
-        opArgs.output, topoArgs.rank, topoArgs.rankSize, opArgs.count,
+        "isSmallCount [%d] serverNum [%d] devType[%d] extraArgsPtr [%p] argsSize [%d], deterministic [%d].",
+        opArgs.input, opArgs.output, topoArgs.rank, topoArgs.rankSize, opArgs.count,
         GetDataTypeEnumStr(opArgs.dataType).c_str(), GetReduceOpEnumStr(opArgs.op).c_str(), opArgs.root,
         resourceArgs.aivTag, opArgs.isOpBase, resourceArgs.bufferSize, algArgs.step, algArgs.isSmallCount,
         topoArgs.serverNum, topoArgs.devType, args, argsSize, algArgs.deterministic);
 
-    HCCL_DEBUG("[AIV][ExecuteKernelLaunchInner] buffersIn [%p] [%p] [%p] [%p] [%p] [%p] [%p] [%p] "\
-        "buffersOut [%p] [%p] [%p] [%p] [%p] [%p] [%p] [%p].", resourceArgs.buffersIn[RANK_ZERO],
-        resourceArgs.buffersIn[RANK_ONE], resourceArgs.buffersIn[RANK_TWO], resourceArgs.buffersIn[RANK_THREE],
-        resourceArgs.buffersIn[RANK_FOUR], resourceArgs.buffersIn[RANK_FIVE], resourceArgs.buffersIn[RANK_SIX],
-        resourceArgs.buffersIn[RANK_SEVEN], resourceArgs.buffersOut[RANK_ZERO], resourceArgs.buffersOut[RANK_ONE],
-        resourceArgs.buffersOut[RANK_TWO], resourceArgs.buffersOut[RANK_THREE], resourceArgs.buffersOut[RANK_FOUR],
-        resourceArgs.buffersOut[RANK_FIVE], resourceArgs.buffersOut[RANK_SIX], resourceArgs.buffersOut[RANK_SEVEN]);
+    HCCL_DEBUG(
+        "[AIV][ExecuteKernelLaunchInner] buffersIn [%p] [%p] [%p] [%p] [%p] [%p] [%p] [%p] "
+        "buffersOut [%p] [%p] [%p] [%p] [%p] [%p] [%p] [%p].",
+        resourceArgs.buffersIn[RANK_ZERO], resourceArgs.buffersIn[RANK_ONE], resourceArgs.buffersIn[RANK_TWO],
+        resourceArgs.buffersIn[RANK_THREE], resourceArgs.buffersIn[RANK_FOUR], resourceArgs.buffersIn[RANK_FIVE],
+        resourceArgs.buffersIn[RANK_SIX], resourceArgs.buffersIn[RANK_SEVEN], resourceArgs.buffersOut[RANK_ZERO],
+        resourceArgs.buffersOut[RANK_ONE], resourceArgs.buffersOut[RANK_TWO], resourceArgs.buffersOut[RANK_THREE],
+        resourceArgs.buffersOut[RANK_FOUR], resourceArgs.buffersOut[RANK_FIVE], resourceArgs.buffersOut[RANK_SIX],
+        resourceArgs.buffersOut[RANK_SEVEN]);
 
     KernelArgsType argsType = algArgs.argsType;
 
@@ -684,108 +786,200 @@ HcclResult ExecuteKernelLaunchInner(const AivOpArgs &opArgs, const AivTopoArgs &
 
     aclrtFuncHandle funcHandle;
     s8* stubFunc = GetStubFunc(opArgs.cmdType, opArgs.dataType, argsType);
- 	ret = GetKernelFunc(funcHandle, stubFunc);
-    CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[ExecuteKernelLaunchInner] errNo[0x%016llx] GetKernelFunc failed, "
-        "return[%d]", HCCL_ERROR_CODE(HCCL_E_RUNTIME), ret), HCCL_E_RUNTIME);
+    ret = GetKernelFunc(funcHandle, stubFunc);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[ExecuteKernelLaunchInner] errNo[0x%016llx] GetKernelFunc failed, "
+            "return[%d]",
+            HCCL_ERROR_CODE(HCCL_E_RUNTIME), ret),
+        HCCL_E_RUNTIME);
 
-    aclError aclRet = aclrtLaunchKernelWithHostArgs(funcHandle, resourceArgs.numBlocks, resourceArgs.stream,
-        &cfg, args, argsSize, nullptr, 0);
+    aclError aclRet = aclrtLaunchKernelWithHostArgs(
+        funcHandle, resourceArgs.numBlocks, resourceArgs.stream, &cfg, args, argsSize, nullptr, 0);
     if (aclRet == ACL_ERROR_RT_INVALID_HANDLE) {
-        aclError aclGetRet = aclrtBinaryGetFunction(g_binHandleMap[opArgs.cmdType], g_aivNameMap[stubFunc].c_str(), &funcHandle);
-        CHK_PRT_RET(aclGetRet != ACL_SUCCESS, HCCL_ERROR("[RegisterBinaryKernel]errNo[0x%016llx] get function from binary error.", aclRet),
+        aclError aclGetRet
+            = aclrtBinaryGetFunction(g_binHandleMap[opArgs.cmdType], g_aivNameMap[stubFunc].c_str(), &funcHandle);
+        CHK_PRT_RET(
+            aclGetRet != ACL_SUCCESS,
+            HCCL_ERROR("[RegisterBinaryKernel]errNo[0x%016llx] get function from binary error.", aclRet),
             HCCL_E_NOT_FOUND);
-        aclRet = aclrtLaunchKernelWithHostArgs(funcHandle, resourceArgs.numBlocks, resourceArgs.stream,
-            &cfg, args, argsSize, nullptr, 0);
+        aclRet = aclrtLaunchKernelWithHostArgs(
+            funcHandle, resourceArgs.numBlocks, resourceArgs.stream, &cfg, args, argsSize, nullptr, 0);
     }
-    CHK_PRT_RET(aclRet != ACL_SUCCESS, HCCL_ERROR("[ExecuteKernelLaunchInner]errNo[0x%016llx] aclrtLaunchKernelWithHostArgs error[%d].",
-        HCCL_ERROR_CODE(HCCL_E_RUNTIME), aclRet), HCCL_E_RUNTIME);
+    CHK_PRT_RET(
+        aclRet != ACL_SUCCESS,
+        HCCL_ERROR(
+            "[ExecuteKernelLaunchInner]errNo[0x%016llx] aclrtLaunchKernelWithHostArgs error[%d].",
+            HCCL_ERROR_CODE(HCCL_E_RUNTIME), aclRet),
+        HCCL_E_RUNTIME);
 
     CHK_RET(CacheTaskOpInfo(resourceArgs.stream, topoArgs.identify));
 
-    TaskAivProfilerWrap(opArgs, topoArgs, resourceArgs, algArgs, aivProfilingInfo,
-        (algArgs.argsType != KernelArgsType::ARGS_TYPE_SERVER) ? resourceArgs.buffersOut[0]: resourceArgs.buffersOut[topoArgs.rank]);
+    TaskAivProfilerWrap(
+        opArgs, topoArgs, resourceArgs, algArgs, aivProfilingInfo,
+        (algArgs.argsType != KernelArgsType::ARGS_TYPE_SERVER) ? resourceArgs.buffersOut[0] :
+                                                                 resourceArgs.buffersOut[topoArgs.rank]);
 
-    CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[AIV][ExecuteKernelLaunchInner] errNo[0x%016llx] rtKernelLaunch aiv fail, "
-        "return[%d]", HCCL_ERROR_CODE(HCCL_E_RUNTIME), ret), HCCL_E_RUNTIME);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[AIV][ExecuteKernelLaunchInner] errNo[0x%016llx] rtKernelLaunch aiv fail, "
+            "return[%d]",
+            HCCL_ERROR_CODE(HCCL_E_RUNTIME), ret),
+        HCCL_E_RUNTIME);
     return HCCL_SUCCESS;
 }
 
 // Kernel单次调用Launch外部接口
-HcclResult ExecuteKernelLaunch(const AivOpArgs &opArgs, const AivTopoArgs &topoArgs,
-    const AivResourceArgs &resourceArgs, const AivAlgArgs &algArgs, AivProfilingInfo& aivProfilingInfo)
+HcclResult ExecuteKernelLaunch(
+    const AivOpArgs& opArgs, const AivTopoArgs& topoArgs, const AivResourceArgs& resourceArgs,
+    const AivAlgArgs& algArgs, AivProfilingInfo& aivProfilingInfo)
 {
     SetAivProfilingInfoBeginTime(aivProfilingInfo);
     CHK_PTR_NULL(resourceArgs.buffersIn);
     CHK_PTR_NULL(resourceArgs.buffersOut);
 
     if (algArgs.argsType == KernelArgsType::ARGS_TYPE_SIMPLE) {
-        AivKernelArgsV3 aivKernelArgs {
-            resourceArgs.buffersIn, resourceArgs.buffersOut, opArgs.input, opArgs.output,
-            topoArgs.rank, topoArgs.rankSize, opArgs.count, opArgs.dataType, opArgs.op, opArgs.root, resourceArgs.aivTag, resourceArgs.numBlocks,
-            opArgs.isOpBase, resourceArgs.bufferSize, algArgs.step, reinterpret_cast<void*>(aivProfilingInfo.counter.headCountMem),
-            reinterpret_cast<void*>(aivProfilingInfo.counter.tailCountMem), reinterpret_cast<void*>(aivProfilingInfo.counter.addOneMem),
-            aivProfilingInfo.counter.isEnableCounter, algArgs.deterministic
-        };
-        CHK_RET(ExecuteKernelLaunchInner(opArgs, topoArgs, resourceArgs, algArgs, &aivKernelArgs, sizeof(aivKernelArgs), aivProfilingInfo));
+        AivKernelArgsV3 aivKernelArgs{
+            resourceArgs.buffersIn,
+            resourceArgs.buffersOut,
+            opArgs.input,
+            opArgs.output,
+            topoArgs.rank,
+            topoArgs.rankSize,
+            opArgs.count,
+            opArgs.dataType,
+            opArgs.op,
+            opArgs.root,
+            resourceArgs.aivTag,
+            resourceArgs.numBlocks,
+            opArgs.isOpBase,
+            resourceArgs.bufferSize,
+            algArgs.step,
+            reinterpret_cast<void*>(aivProfilingInfo.counter.headCountMem),
+            reinterpret_cast<void*>(aivProfilingInfo.counter.tailCountMem),
+            reinterpret_cast<void*>(aivProfilingInfo.counter.addOneMem),
+            aivProfilingInfo.counter.isEnableCounter,
+            algArgs.deterministic};
+        CHK_RET(ExecuteKernelLaunchInner(
+            opArgs, topoArgs, resourceArgs, algArgs, &aivKernelArgs, sizeof(aivKernelArgs), aivProfilingInfo));
     } else {
-        AivKernelArgs aivKernelArgs {
-            resourceArgs.buffersIn, resourceArgs.buffersOut, opArgs.input, opArgs.output,
-            topoArgs.rank, topoArgs.rankSize, opArgs.count, opArgs.dataType, opArgs.op, opArgs.root, resourceArgs.aivTag, resourceArgs.numBlocks,
-            opArgs.isOpBase, resourceArgs.bufferSize, algArgs.step, algArgs.isSmallCount, topoArgs.serverNum,
-            static_cast<u32>(topoArgs.devType), reinterpret_cast<void*>(aivProfilingInfo.counter.headCountMem),
-            reinterpret_cast<void*>(aivProfilingInfo.counter.tailCountMem), reinterpret_cast<void*>(aivProfilingInfo.counter.addOneMem),
-            aivProfilingInfo.counter.memSize, aivProfilingInfo.counter.isEnableCounter, algArgs.deterministic, algArgs.rmaInfo
-        };
-        CHK_RET(ExecuteKernelLaunchInner(opArgs, topoArgs, resourceArgs, algArgs, &aivKernelArgs, sizeof(aivKernelArgs), aivProfilingInfo));
+        AivKernelArgs aivKernelArgs{
+            resourceArgs.buffersIn,
+            resourceArgs.buffersOut,
+            opArgs.input,
+            opArgs.output,
+            topoArgs.rank,
+            topoArgs.rankSize,
+            opArgs.count,
+            opArgs.dataType,
+            opArgs.op,
+            opArgs.root,
+            resourceArgs.aivTag,
+            resourceArgs.numBlocks,
+            opArgs.isOpBase,
+            resourceArgs.bufferSize,
+            algArgs.step,
+            algArgs.isSmallCount,
+            topoArgs.serverNum,
+            static_cast<u32>(topoArgs.devType),
+            reinterpret_cast<void*>(aivProfilingInfo.counter.headCountMem),
+            reinterpret_cast<void*>(aivProfilingInfo.counter.tailCountMem),
+            reinterpret_cast<void*>(aivProfilingInfo.counter.addOneMem),
+            aivProfilingInfo.counter.memSize,
+            aivProfilingInfo.counter.isEnableCounter,
+            algArgs.deterministic,
+            algArgs.rmaInfo};
+        CHK_RET(ExecuteKernelLaunchInner(
+            opArgs, topoArgs, resourceArgs, algArgs, &aivKernelArgs, sizeof(aivKernelArgs), aivProfilingInfo));
     }
 
     return HCCL_SUCCESS;
 }
 
 // Kernel单次调用Launch外部接口
-HcclResult ExecuteKernelLaunch(const AivOpArgs &opArgs, const AivTopoArgs &topoArgs,
-    const AivResourceArgs &resourceArgs, const AivAlgArgs &algArgs, const ExtraArgs &extraArgs, 
-    AivProfilingInfo& aivProfilingInfo)
+HcclResult ExecuteKernelLaunch(
+    const AivOpArgs& opArgs, const AivTopoArgs& topoArgs, const AivResourceArgs& resourceArgs,
+    const AivAlgArgs& algArgs, const ExtraArgs& extraArgs, AivProfilingInfo& aivProfilingInfo)
 {
     SetAivProfilingInfoBeginTime(aivProfilingInfo);
     CHK_PTR_NULL(resourceArgs.buffersIn);
     CHK_PTR_NULL(resourceArgs.buffersOut);
 
-    AivExtraKernelArgs aivExtraKernelArgs {
-        resourceArgs.buffersIn, resourceArgs.buffersOut, opArgs.input, opArgs.output,
-        topoArgs.rank, topoArgs.rankSize, opArgs.count, opArgs.dataType, opArgs.op, opArgs.root, resourceArgs.aivTag,
-        resourceArgs.numBlocks, opArgs.isOpBase, resourceArgs.bufferSize, algArgs.step, algArgs.isSmallCount, topoArgs.serverNum,
-        static_cast<u32>(topoArgs.devType), reinterpret_cast<void*>(aivProfilingInfo.counter.headCountMem),
-        reinterpret_cast<void*>(aivProfilingInfo.counter.tailCountMem), reinterpret_cast<void*>(aivProfilingInfo.counter.addOneMem),
-        aivProfilingInfo.counter.memSize, aivProfilingInfo.counter.isEnableCounter, algArgs.deterministic, algArgs.rmaInfo, &extraArgs
-    };
-    CHK_RET(ExecuteKernelLaunchInner(opArgs, topoArgs, resourceArgs, algArgs, 
-        &aivExtraKernelArgs, sizeof(aivExtraKernelArgs), aivProfilingInfo));
+    AivExtraKernelArgs aivExtraKernelArgs{
+        resourceArgs.buffersIn,
+        resourceArgs.buffersOut,
+        opArgs.input,
+        opArgs.output,
+        topoArgs.rank,
+        topoArgs.rankSize,
+        opArgs.count,
+        opArgs.dataType,
+        opArgs.op,
+        opArgs.root,
+        resourceArgs.aivTag,
+        resourceArgs.numBlocks,
+        opArgs.isOpBase,
+        resourceArgs.bufferSize,
+        algArgs.step,
+        algArgs.isSmallCount,
+        topoArgs.serverNum,
+        static_cast<u32>(topoArgs.devType),
+        reinterpret_cast<void*>(aivProfilingInfo.counter.headCountMem),
+        reinterpret_cast<void*>(aivProfilingInfo.counter.tailCountMem),
+        reinterpret_cast<void*>(aivProfilingInfo.counter.addOneMem),
+        aivProfilingInfo.counter.memSize,
+        aivProfilingInfo.counter.isEnableCounter,
+        algArgs.deterministic,
+        algArgs.rmaInfo,
+        &extraArgs};
+    CHK_RET(ExecuteKernelLaunchInner(
+        opArgs, topoArgs, resourceArgs, algArgs, &aivExtraKernelArgs, sizeof(aivExtraKernelArgs), aivProfilingInfo));
 
     return HCCL_SUCCESS;
 }
 
 // Kernel单次调用Launch外部接口
-HcclResult ExecuteKernelLaunch(const AivOpArgs &opArgs, const AivTopoArgs &topoArgs,
-    const AivResourceArgs &resourceArgs, const AivAlgArgs &algArgs, const ExtraArgsV2 &extraArgs, 
-    AivProfilingInfo& aivProfilingInfo)
+HcclResult ExecuteKernelLaunch(
+    const AivOpArgs& opArgs, const AivTopoArgs& topoArgs, const AivResourceArgs& resourceArgs,
+    const AivAlgArgs& algArgs, const ExtraArgsV2& extraArgs, AivProfilingInfo& aivProfilingInfo)
 {
     SetAivProfilingInfoBeginTime(aivProfilingInfo);
     CHK_PTR_NULL(resourceArgs.buffersIn);
     CHK_PTR_NULL(resourceArgs.buffersOut);
 
-    AivExtraKernelArgsV2 aivExtraKernelArgs {
-        resourceArgs.buffersIn, resourceArgs.buffersOut, opArgs.input, opArgs.output,
-        topoArgs.rank, topoArgs.rankSize, opArgs.count, opArgs.dataType, opArgs.op, opArgs.root, resourceArgs.aivTag,
-        resourceArgs.numBlocks, opArgs.isOpBase, resourceArgs.bufferSize, algArgs.step, algArgs.isSmallCount, topoArgs.serverNum,
-        static_cast<u32>(topoArgs.devType), reinterpret_cast<void*>(aivProfilingInfo.counter.headCountMem),
-        reinterpret_cast<void*>(aivProfilingInfo.counter.tailCountMem), reinterpret_cast<void*>(aivProfilingInfo.counter.addOneMem),
-        aivProfilingInfo.counter.memSize, aivProfilingInfo.counter.isEnableCounter, algArgs.deterministic, algArgs.rmaInfo, &extraArgs
-    };
-    CHK_RET(ExecuteKernelLaunchInner(opArgs, topoArgs, resourceArgs, algArgs, &aivExtraKernelArgs,
-        sizeof(aivExtraKernelArgs), aivProfilingInfo));
+    AivExtraKernelArgsV2 aivExtraKernelArgs{
+        resourceArgs.buffersIn,
+        resourceArgs.buffersOut,
+        opArgs.input,
+        opArgs.output,
+        topoArgs.rank,
+        topoArgs.rankSize,
+        opArgs.count,
+        opArgs.dataType,
+        opArgs.op,
+        opArgs.root,
+        resourceArgs.aivTag,
+        resourceArgs.numBlocks,
+        opArgs.isOpBase,
+        resourceArgs.bufferSize,
+        algArgs.step,
+        algArgs.isSmallCount,
+        topoArgs.serverNum,
+        static_cast<u32>(topoArgs.devType),
+        reinterpret_cast<void*>(aivProfilingInfo.counter.headCountMem),
+        reinterpret_cast<void*>(aivProfilingInfo.counter.tailCountMem),
+        reinterpret_cast<void*>(aivProfilingInfo.counter.addOneMem),
+        aivProfilingInfo.counter.memSize,
+        aivProfilingInfo.counter.isEnableCounter,
+        algArgs.deterministic,
+        algArgs.rmaInfo,
+        &extraArgs};
+    CHK_RET(ExecuteKernelLaunchInner(
+        opArgs, topoArgs, resourceArgs, algArgs, &aivExtraKernelArgs, sizeof(aivExtraKernelArgs), aivProfilingInfo));
 
     return HCCL_SUCCESS;
 }
 
-}   // ~~ namespace hccl
+} // namespace hccl

@@ -30,13 +30,14 @@ extern std::unordered_map<RankId, std::vector<std::shared_ptr<TransportCompared>
 extern std::unordered_map<Transport*, std::shared_ptr<TransportCompared>> links2TransportCompare_;
 extern map<TransportType, unordered_map<RankId, unordered_map<RankId, std::shared_ptr<Transport>>>> CreatedLinksDict_;
 HcclResult CheckTransportLink();
-HcclResult InitCommParams(HcclCommParams &params, RankTable_t& rankTable, RankId myRank);
-void InitOpParam(OpParam &opParam, CheckerOpParam &checkerOpParam, RankId myRank,
-    u32 rankSize, bool initStream, bool isIOSameAddr);
-HcclResult GenRankTable(hccl::RankTable_t &rankTable, TopoMeta topoMate);
-HcclResult OrchestraTask(CheckerOpParam &checkerOpParam, RankTable_t &rankTable, u32 rankNum, bool isRunning,
-    std::vector<std::shared_ptr<hccl::HcclCommunicator>> &communicators, bool isIOSameAddr);
+HcclResult InitCommParams(HcclCommParams& params, RankTable_t& rankTable, RankId myRank);
+void InitOpParam(
+    OpParam& opParam, CheckerOpParam& checkerOpParam, RankId myRank, u32 rankSize, bool initStream, bool isIOSameAddr);
+HcclResult GenRankTable(hccl::RankTable_t& rankTable, TopoMeta topoMate);
+HcclResult OrchestraTask(
+    CheckerOpParam& checkerOpParam, RankTable_t& rankTable, u32 rankNum, bool isRunning,
+    std::vector<std::shared_ptr<hccl::HcclCommunicator>>& communicators, bool isIOSameAddr);
 
-} // namespace checker
+} // namespace hccl
 
 #endif

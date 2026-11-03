@@ -26,56 +26,61 @@
 #include "hccp_ping.h"
 #include "rs_ping.h"
 #include "rs_ping_roce.h"
+#include "ra_rs_err.h"
 #include "tc_ut_rs_ping.h"
 
-extern int RsPingCbGetIbCtxAndIndex(struct rdev *rdevInfo, struct RsPingCtxCb *pingCb);
+extern int RsPingCbGetIbCtxAndIndex(struct rdev* rdevInfo, struct RsPingCtxCb* pingCb);
 extern void RsEpollCtl(int epollfd, int op, int fd, int state);
-extern int RsGetPingCb(struct RaRsDevInfo *rdev, struct RsPingCtxCb **pingCb);
-extern int RsPingCommonPostRecv(struct RsPingLocalQpCb *qpCb);
-extern int RsPingCommonInitPostRecvAll(struct RsPingLocalQpCb *qpCb);
-extern void RsPingCommonDeinitLocalBuffer(struct RsPingCtxCb *pingCb);
-extern int RsPingCbInitMutex(struct RsPingCtxCb *pingCb);
-extern void *RsPingHandle(void *arg);
-extern int RsPingPongInitLocalBuffer(struct rs_cb *rscb, struct PingInitAttr *attr, struct PingInitInfo *info,
-    struct RsPingCtxCb *pingCb);
-extern int RsPingCommonInitLocalQp(struct rs_cb *rscb, struct RsPingCtxCb *pingCb, union PingQpAttr*attr,
-    struct RsPingLocalQpCb *qpCb);
-extern int RsPingRoceFindTargetNode(struct RsPingCtxCb *pingCb, struct PingQpInfo *target,
-    struct RsPingTargetInfo  **node);
-extern int RsPingRocePostSend(struct RsPingCtxCb *pingCb, struct RsPingTargetInfo  *target);
-extern int RsPingRoceGetTargetResult(struct RsPingCtxCb *pingCb, struct PingTargetCommInfo *target,
-    struct PingResultInfo *result);
-extern int RsPingRoceAllocTargetNode(struct RsPingCtxCb *pingCb, struct PingTargetInfo  *target,
-    struct RsPingTargetInfo  **node);
-extern bool RsPingCommonCompareRdmaInfo(struct PingQpInfo *a, struct PingQpInfo *b);
-extern int RsPongFindTargetNode(struct RsPingCtxCb *pingCb, struct PingQpInfo *target,
-    struct RsPongTargetInfo **node);
-extern int RsPongFindAllocTargetNode(struct RsPingCtxCb *pingCb, struct PingQpInfo *target,
-    struct RsPongTargetInfo **node);
-extern int RsPingCommonCreateAh(struct RsPingCtxCb *pingCb, struct PingLocalCommInfo *localInfo,
-    struct PingQpInfo *remoteInfo, struct ibv_ah **ah);
-extern int RsPingCommonPollScq(struct RsPingLocalQpCb *qpCb);
-extern int RsPongPostSend(struct RsPingCtxCb *pingCb, struct ibv_wc *wc, struct timeval *timestamp2);
-extern int RsPingRocePollRcq(struct RsPingCtxCb *pingCb, int *polledCnt, struct timeval *timestamp2);
-extern void RsPongRoceHandleSend(struct RsPingCtxCb *pingCb, int polledCnt, struct timeval *timestamp2);
-extern int RsPongResolveResponsePacket(struct RsPingCtxCb *pingCb, uint32_t sgeIdx,
-    struct timeval *timestamp4);
-extern void RsPongRocePollRcq(struct RsPingCtxCb *pingCb);
-extern int RsPingCbGetDevRdevIndex(struct RsPingCtxCb *pingCb, int index);
-extern int RsPingCommonInitMrCb(struct rs_cb *rscb, struct RsPingCtxCb *pingCb, struct RsPingMrCb *mrCb);
-extern void RsPingCommonDeinitMrCb(struct RsPingMrCb *mrCb);
-extern struct ibv_mr* RsDrvMrReg(struct ibv_pd *pd, char *addr, size_t length, int access);
-extern int RsDrvMrDereg(struct ibv_mr *ibMr);
-extern int RsPingCommonModifyLocalQp(struct RsPingCtxCb *pingCb, struct RsPingLocalQpCb *qpCb);
-extern void RsPingCommonDeinitLocalQp(struct rs_cb *rscb, struct RsPingCtxCb *pingCb,
-    struct RsPingLocalQpCb *qpCb);
-extern int RsPingPongInitLocalInfo(struct rs_cb *rscb, struct PingInitAttr *attr, struct PingInitInfo *info,
-    struct RsPingCtxCb *pingCb);
-extern int RsPingRocePollScq(struct RsPingCtxCb *pingCb, struct RsPingTargetInfo  *target);
-extern void RsPingPongDelTargetList(struct RsPingCtxCb *pingCb);
-extern void RsPingRocePingCbDeinit(unsigned int phyId, struct RsPingCtxCb *pingCb);
-extern int RsPingRocePingCbInit(unsigned int phyId, struct PingInitAttr *attr, struct PingInitInfo *info,
-    unsigned int *devIndex, struct RsPingCtxCb *pingCb);
+extern int RsGetPingCb(struct RaRsDevInfo* rdev, struct RsPingCtxCb** pingCb);
+extern int RsPingCommonPostRecv(struct RsPingLocalQpCb* qpCb);
+extern int RsPingCommonInitPostRecvAll(struct RsPingLocalQpCb* qpCb);
+extern void RsPingCommonDeinitLocalBuffer(struct RsPingCtxCb* pingCb);
+extern int RsPingCbInitMutex(struct RsPingCtxCb* pingCb);
+extern void* RsPingHandle(void* arg);
+extern int RsPingPongInitLocalBuffer(
+    struct rs_cb* rscb, struct PingInitAttr* attr, struct PingInitInfo* info, struct RsPingCtxCb* pingCb);
+extern int RsPingCommonInitLocalQp(
+    struct rs_cb* rscb, struct RsPingCtxCb* pingCb, union PingQpAttr* attr, struct RsPingLocalQpCb* qpCb);
+extern int
+RsPingRoceFindTargetNode(struct RsPingCtxCb* pingCb, struct PingQpInfo* target, struct RsPingTargetInfo** node);
+extern int RsPingRocePostSend(struct RsPingCtxCb* pingCb, struct RsPingTargetInfo* target);
+extern int
+RsPingRoceGetTargetResult(struct RsPingCtxCb* pingCb, struct PingTargetCommInfo* target, struct PingResultInfo* result);
+extern int
+RsPingRoceAllocTargetNode(struct RsPingCtxCb* pingCb, struct PingTargetInfo* target, struct RsPingTargetInfo** node);
+extern bool RsPingCommonCompareRdmaInfo(struct PingQpInfo* a, struct PingQpInfo* b);
+extern int RsPongFindTargetNode(struct RsPingCtxCb* pingCb, struct PingQpInfo* target, struct RsPongTargetInfo** node);
+extern int
+RsPongFindAllocTargetNode(struct RsPingCtxCb* pingCb, struct PingQpInfo* target, struct RsPongTargetInfo** node);
+extern int RsPingCommonCreateAh(
+    struct RsPingCtxCb* pingCb, struct PingLocalCommInfo* localInfo, struct PingQpInfo* remoteInfo, struct ibv_ah** ah);
+extern int RsPingCommonPollScq(struct RsPingLocalQpCb* qpCb);
+extern int RsPongPostSend(struct RsPingCtxCb* pingCb, struct ibv_wc* wc, struct timeval* timestamp2);
+extern int RsPingRocePollRcq(struct RsPingCtxCb* pingCb, int* polledCnt, struct timeval* timestamp2);
+extern void RsPongRoceHandleSend(struct RsPingCtxCb* pingCb, int polledCnt, struct timeval* timestamp2);
+extern int RsPongResolveResponsePacket(struct RsPingCtxCb* pingCb, uint32_t sgeIdx, struct timeval* timestamp4);
+extern void RsPongRocePollRcq(struct RsPingCtxCb* pingCb);
+extern int RsPingCbGetDevRdevIndex(struct RsPingCtxCb* pingCb, int index);
+extern int RsPingCommonInitMrCb(struct rs_cb* rscb, struct RsPingCtxCb* pingCb, struct RsPingMrCb* mrCb);
+extern void RsPingCommonDeinitMrCb(struct RsPingMrCb* mrCb);
+extern struct ibv_mr* RsDrvMrReg(struct ibv_pd* pd, char* addr, size_t length, int access);
+extern int RsDrvMrDereg(struct ibv_mr* ibMr);
+extern int RsPingCommonModifyLocalQp(struct RsPingCtxCb* pingCb, struct RsPingLocalQpCb* qpCb);
+extern void RsPingCommonDeinitLocalQp(struct rs_cb* rscb, struct RsPingCtxCb* pingCb, struct RsPingLocalQpCb* qpCb);
+extern int RsPingPongInitLocalInfo(
+    struct rs_cb* rscb, struct PingInitAttr* attr, struct PingInitInfo* info, struct RsPingCtxCb* pingCb);
+extern int RsPingRocePollScq(struct RsPingCtxCb* pingCb, struct RsPingTargetInfo* target);
+extern void RsPingPongDelTargetList(struct RsPingCtxCb* pingCb);
+extern void RsPingRocePingCbDeinit(unsigned int phyId, struct RsPingCtxCb* pingCb);
+extern int RsPingRocePingCbInit(
+    unsigned int phyId, struct PingInitAttr* attr, struct PingInitInfo* info, unsigned int* devIndex,
+    struct RsPingCtxCb* pingCb);
+extern int RsPingUrmaPingCbInit(
+    unsigned int phyId, struct PingInitAttr* attr, struct PingInitInfo* info, unsigned int* devIndex,
+    struct RsPingCtxCb* pingCb);
+extern int RsPingCbGetUrmaContextAndIndex(struct RsPingCtxCb* pingCb, struct PingInitAttr* attr);
+extern urma_device_t* RsUrmaGetDeviceByEid(urma_eid_t eid, urma_transport_type_t type);
+extern urma_context_t* RsUrmaCreateContext(urma_device_t* dev, uint32_t eidIndex);
 
 static struct rs_cb gTmpRsCb0;
 static struct rs_cb gTmpRsCb;
@@ -83,18 +88,18 @@ static struct rs_cb gTmpRsCb1;
 static struct rs_cb gTmpRsCbT;
 static struct RsPingCtxCb gTmpPingCb;
 static struct ibv_cq gTmpCq;
-static struct RsPingTargetInfo  gTmpTarget;
-static struct RsPingTargetInfo  gTmpTarget1;
+static struct RsPingTargetInfo gTmpTarget;
+static struct RsPingTargetInfo gTmpTarget1;
 static struct ibv_mr gIbMr;
 
-int RsDev2rscb_stub0(uint32_t devId, struct rs_cb **rsCb, bool initFlag)
+int RsDev2rscb_stub0(uint32_t devId, struct rs_cb** rsCb, bool initFlag)
 {
     *rsCb = &gTmpRsCb0;
 
     return 0;
 }
 
-int RsGetRsCbStub(unsigned int phyId, struct rs_cb **rsCb)
+int RsGetRsCbStub(unsigned int phyId, struct rs_cb** rsCb)
 {
     *rsCb = &gTmpRsCb;
     (*rsCb)->pingCb.pingPongOps = RsPingRoceGetOps();
@@ -102,14 +107,14 @@ int RsGetRsCbStub(unsigned int phyId, struct rs_cb **rsCb)
     return 0;
 }
 
-int RsGetRsCbStubTrue(unsigned int phyId, struct rs_cb **rsCb)
+int RsGetRsCbStubTrue(unsigned int phyId, struct rs_cb** rsCb)
 {
     *rsCb = &gTmpRsCbT;
     (*rsCb)->pingCb.threadStatus = RS_PING_THREAD_RUNNING;
     return 0;
 }
 
-int RsGetRsCbStub1(unsigned int phyId, struct rs_cb **rsCb)
+int RsGetRsCbStub1(unsigned int phyId, struct rs_cb** rsCb)
 {
     gTmpRsCb1.pingCb.threadStatus = RS_PING_THREAD_RUNNING;
 
@@ -119,7 +124,7 @@ int RsGetRsCbStub1(unsigned int phyId, struct rs_cb **rsCb)
     return 0;
 }
 
-int RsGetPingCbStub(struct RaRsDevInfo *rdev, struct RsPingCtxCb **pingCb)
+int RsGetPingCbStub(struct RaRsDevInfo* rdev, struct RsPingCtxCb** pingCb)
 {
     *pingCb = &gTmpPingCb;
     (*pingCb)->pingPongOps = RsPingRoceGetOps();
@@ -127,26 +132,23 @@ int RsGetPingCbStub(struct RaRsDevInfo *rdev, struct RsPingCtxCb **pingCb)
     return 0;
 }
 
-int RsPingRoceFindTargetNodeStub(struct RsPingCtxCb *pingCb, struct PingQpInfo *target,
-    struct RsPingTargetInfo  **node)
+int RsPingRoceFindTargetNodeStub(struct RsPingCtxCb* pingCb, struct PingQpInfo* target, struct RsPingTargetInfo** node)
 {
     *node = &gTmpTarget;
 
     return -ENODEV;
 }
 
-int RsPingRoceFindTargetNodeStub1(struct RsPingCtxCb *pingCb, struct PingQpInfo *target,
-    struct RsPingTargetInfo  **node)
+int RsPingRoceFindTargetNodeStub1(struct RsPingCtxCb* pingCb, struct PingQpInfo* target, struct RsPingTargetInfo** node)
 {
     *node = &gTmpTarget1;
 
     return 0;
 }
 
-int RsPingRoceFindTargetNodeStub2(struct RsPingCtxCb *pingCb, struct PingQpInfo *target,
-    struct RsPingTargetInfo  **node)
+int RsPingRoceFindTargetNodeStub2(struct RsPingCtxCb* pingCb, struct PingQpInfo* target, struct RsPingTargetInfo** node)
 {
-    *node = calloc(1, sizeof(struct RsPingTargetInfo ));
+    *node = calloc(1, sizeof(struct RsPingTargetInfo));
     RS_INIT_LIST_HEAD(&(*node)->list);
     (*node)->payloadSize = 1;
     (*node)->payloadBuffer = malloc(1);
@@ -154,47 +156,38 @@ int RsPingRoceFindTargetNodeStub2(struct RsPingCtxCb *pingCb, struct PingQpInfo 
     return 0;
 }
 
-int RsPongFindTargetNodeStub(struct RsPingCtxCb *pingCb, struct PingQpInfo *target,
-    struct RsPongTargetInfo **node)
+int RsPongFindTargetNodeStub(struct RsPingCtxCb* pingCb, struct PingQpInfo* target, struct RsPongTargetInfo** node)
 {
     *node = NULL;
     return -19;
 }
 
-int RsPongFindTargetNodeStub2(struct RsPingCtxCb *pingCb, struct PingQpInfo *target,
-    struct RsPongTargetInfo **node)
+int RsPongFindTargetNodeStub2(struct RsPingCtxCb* pingCb, struct PingQpInfo* target, struct RsPongTargetInfo** node)
 {
     *node = calloc(1, sizeof(struct RsPongTargetInfo));
     RS_INIT_LIST_HEAD(&(*node)->list);
     return 0;
 }
 
-int RsPongFindAllocTargetNodeStub(struct RsPingCtxCb *pingCb, struct PingQpInfo *target,
-    struct RsPongTargetInfo **node)
+int RsPongFindAllocTargetNodeStub(struct RsPingCtxCb* pingCb, struct PingQpInfo* target, struct RsPongTargetInfo** node)
 {
-    static struct RsPongTargetInfo tmpNode = { 0 };
+    static struct RsPongTargetInfo tmpNode = {0};
 
     *node = &tmpNode;
 
     return 0;
 }
 
-int RsIbvGetCqEvent_stub(struct ibv_comp_channel *channel, struct ibv_cq **cq, void **cqContext)
+int RsIbvGetCqEvent_stub(struct ibv_comp_channel* channel, struct ibv_cq** cq, void** cqContext)
 {
     *cq = &gTmpCq;
 
     return 0;
 }
 
-struct ibv_mr* RsDrvMrRegStub(struct ibv_pd *pd, char *addr, size_t length, int access)
-{
-    return &gIbMr;
-}
+struct ibv_mr* RsDrvMrRegStub(struct ibv_pd* pd, char* addr, size_t length, int access) { return &gIbMr; }
 
-int RsDrvMrDeregStub(struct ibv_mr *ibMr)
-{
-    return 0;
-}
+int RsDrvMrDeregStub(struct ibv_mr* ibMr) { return 0; }
 
 void TcRsPayloadHeaderResvCustomCheck()
 {
@@ -231,18 +224,18 @@ void TcRsPingHandleDeinit()
 
 void TcRsPingInit()
 {
-    struct RsPingLocalQpCb qpCb = { 0 };
-    union PingQpAttr rdmaAttr = { 0 };
-    struct RsPingCtxCb pingCb = { 0 };
-    struct ibv_context context = { 0 };
-    struct PingInitAttr attr = { 0 };
-    struct PingInitInfo info = { 0 };
-    struct RaRsDevInfo rdev = { 0 };
-    struct rs_cb tmpRsCb = { 0 };
-    struct ibv_pd tmpPd = { 0 };
+    struct RsPingLocalQpCb qpCb = {0};
+    union PingQpAttr rdmaAttr = {0};
+    struct RsPingCtxCb pingCb = {0};
+    struct ibv_context context = {0};
+    struct PingInitAttr attr = {0};
+    struct PingInitInfo info = {0};
+    struct RaRsDevInfo rdev = {0};
+    struct rs_cb tmpRsCb = {0};
+    struct ibv_pd tmpPd = {0};
     unsigned int rdevIndex = 0;
-    struct ibv_qp ibQp = { 0 };
-    struct ibv_pd pd = { 0 };
+    struct ibv_qp ibQp = {0};
+    struct ibv_pd pd = {0};
     int ret = 0;
 
     mocker_invoke(RsGetRsCb, RsGetRsCbStub, 20);
@@ -281,16 +274,18 @@ void TcRsPingInit()
     mocker_clean();
 
     mocker((stub_fn_t)RsIbvCreateCq, 10, NULL);
+    errno = EIO;
     ret = RsPingCommonInitLocalQp(&tmpRsCb, &pingCb, &rdmaAttr, &qpCb);
-    EXPECT_INT_NE(ret, 0);
+    EXPECT_INT_EQ(ret, -EIO);
     mocker_clean();
 
     pingCb.rdevCb.ibCtx = &context;
     pingCb.rdevCb.ibPd = &tmpPd;
     mocker(RsEpollCtl, 20, 0);
     mocker(RsIbvExpCreateQp, 10, 0);
+    errno = EIO;
     ret = RsPingCommonInitLocalQp(&tmpRsCb, &pingCb, &rdmaAttr, &qpCb);
-    EXPECT_INT_NE(ret, 0);
+    EXPECT_INT_EQ(ret, -EIO);
     mocker_clean();
 
     mocker(RsPingCommonInitMrCb, 20, -1);
@@ -320,8 +315,8 @@ void TcRsPingInit()
 
 void TcRsPingTargetAdd()
 {
-    struct PingTargetInfo  target = { 0 };
-    struct RaRsDevInfo rdev = { 0 };
+    struct PingTargetInfo target = {0};
+    struct RaRsDevInfo rdev = {0};
     int ret = 0;
 
     target.localInfo.rdma.hopLimit = 64;
@@ -352,8 +347,8 @@ void TcRsPingTargetAdd()
 
 void TcRsGetPingCb()
 {
-    struct RaRsDevInfo rdev = { 0 };
-    struct RsPingCtxCb *pingCb = NULL;
+    struct RaRsDevInfo rdev = {0};
+    struct RsPingCtxCb* pingCb = NULL;
     int ret = 0;
 
     mocker(RsGetRsCb, 1, -1);
@@ -369,12 +364,12 @@ void TcRsGetPingCb()
 
 void TcRsPingClientPostSend()
 {
-    struct RsPingTargetInfo  target = { 0 };
-    struct RsPingCtxCb pingCb = { 0 };
-    struct ibv_qp serverIbQp = { 0 };
-    struct ibv_qp clientIbQp = { 0 };
-    struct ibv_sge sge = { 0 };
-    void *addr = malloc(256);
+    struct RsPingTargetInfo target = {0};
+    struct RsPingCtxCb pingCb = {0};
+    struct ibv_qp serverIbQp = {0};
+    struct ibv_qp clientIbQp = {0};
+    struct ibv_sge sge = {0};
+    void* addr = malloc(256);
     int ret = 0;
 
     target.payloadBuffer = malloc(1);
@@ -403,9 +398,9 @@ void TcRsPingClientPostSend()
 
 void TcRsPingGetResults()
 {
-    struct PingTargetCommInfo target = { 0 };
-    struct PingResultInfo result = { 0 };
-    struct RaRsDevInfo rdev = { 0 };
+    struct PingTargetCommInfo target = {0};
+    struct PingResultInfo result = {0};
+    struct RaRsDevInfo rdev = {0};
     unsigned int num = 1;
     int ret = 0;
 
@@ -427,7 +422,7 @@ void TcRsPingGetResults()
 
 void TcRsPingTaskStop()
 {
-    struct RaRsDevInfo rdev = { 0 };
+    struct RaRsDevInfo rdev = {0};
     int ret = 0;
 
     pthread_mutex_init(&gTmpPingCb.pingMutex, NULL);
@@ -440,8 +435,8 @@ void TcRsPingTaskStop()
 
 void TcRsPingTargetDel()
 {
-    struct PingTargetCommInfo target = { 0 };
-    struct RaRsDevInfo rdev = { 0 };
+    struct PingTargetCommInfo target = {0};
+    struct RaRsDevInfo rdev = {0};
     unsigned int num = 1;
     int ret = 0;
 
@@ -455,11 +450,11 @@ void TcRsPingTargetDel()
 
 void TcRsPingDeinit()
 {
-    struct ibv_comp_channel clientChannel = { 0 };
-    struct ibv_comp_channel serverChannel = { 0 };
-    struct PingTargetInfo  target = { 0 };
-    struct RaRsDevInfo rdev = { 0 };
-    struct rs_cb rsCb = { 0 };
+    struct ibv_comp_channel clientChannel = {0};
+    struct ibv_comp_channel serverChannel = {0};
+    struct PingTargetInfo target = {0};
+    struct RaRsDevInfo rdev = {0};
+    struct rs_cb rsCb = {0};
     int ret = 0;
 
     gTmpPingCb.initCnt = 1;
@@ -481,8 +476,8 @@ void TcRsPingDeinit()
 
 void TcRsPingCompareRdmaInfo()
 {
-    struct PingQpInfo a = { 0 };
-    struct PingQpInfo b = { 0 };
+    struct PingQpInfo a = {0};
+    struct PingQpInfo b = {0};
     int ret = 0;
 
     ret = RsPingCommonCompareRdmaInfo(&a, &b);
@@ -512,10 +507,10 @@ void TcRsPingCompareRdmaInfo()
 
 void TcRsPingRoceFindTargetNode()
 {
-    struct RsPingTargetInfo  stubNode = { 0 };
-    struct RsPingTargetInfo  *node = NULL;
-    struct RsPingCtxCb pingCb = { 0 };
-    struct PingQpInfo target = { 0 };
+    struct RsPingTargetInfo stubNode = {0};
+    struct RsPingTargetInfo* node = NULL;
+    struct RsPingCtxCb pingCb = {0};
+    struct PingQpInfo target = {0};
     int ret = 0;
 
     RS_INIT_LIST_HEAD(&pingCb.pingList);
@@ -529,10 +524,10 @@ void TcRsPingRoceFindTargetNode()
 
 void TcRsPongFindTargetNode()
 {
-    struct RsPongTargetInfo stubNode = { 0 };
-    struct RsPongTargetInfo *node = NULL;
-    struct RsPingCtxCb pingCb = { 0 };
-    struct PingQpInfo target = { 0 };
+    struct RsPongTargetInfo stubNode = {0};
+    struct RsPongTargetInfo* node = NULL;
+    struct RsPingCtxCb pingCb = {0};
+    struct PingQpInfo target = {0};
     int ret = 0;
 
     RS_INIT_LIST_HEAD(&pingCb.pongList);
@@ -546,9 +541,9 @@ void TcRsPongFindTargetNode()
 
 void TcRsPongFindAllocTargetNode()
 {
-    struct RsPongTargetInfo *node = NULL;
-    struct RsPingCtxCb pingCb = { 0 };
-    struct PingQpInfo target = { 0 };
+    struct RsPongTargetInfo* node = NULL;
+    struct RsPingCtxCb pingCb = {0};
+    struct PingQpInfo target = {0};
     int ret = 0;
 
     mocker_invoke(RsPongFindTargetNode, RsPongFindTargetNodeStub2, 1);
@@ -569,7 +564,7 @@ void TcRsPongFindAllocTargetNode()
 
 void TcRsPingPollSendCq()
 {
-    struct RsPingLocalQpCb qpCb = { 0 };
+    struct RsPingLocalQpCb qpCb = {0};
     int ret = 0;
 
     mocker(RsIbvPollCq, 1, -1);
@@ -585,11 +580,11 @@ void TcRsPingPollSendCq()
 
 void TcRsPingServerPostSend()
 {
-    struct RsPingCtxCb pingCb = { 0 };
+    struct RsPingCtxCb pingCb = {0};
     struct timeval timestamp2 = {0};
-    void *sendAddr = malloc(1024);
-    void *recvAddr = malloc(1024);
-    struct ibv_wc wc = { 0};
+    void* sendAddr = malloc(1024);
+    void* recvAddr = malloc(1024);
+    struct ibv_wc wc = {0};
     int ret = 0;
 
     wc.wr_id = 1;
@@ -641,8 +636,8 @@ void TcRsPingServerPostSend()
 
 void TcRsPingPostRecv()
 {
-    struct RsPingLocalQpCb qpCb = { 0 };
-    void *recvAddr = malloc(1024);
+    struct RsPingLocalQpCb qpCb = {0};
+    void* recvAddr = malloc(1024);
     int ret = 0;
 
     qpCb.recvMrCb.sgeList = calloc(1, sizeof(struct ibv_sge));
@@ -667,7 +662,7 @@ void TcRsPingPostRecv()
 
 void TcRsPingClientPollCq()
 {
-    struct RsPingCtxCb pingCb = { 0 };
+    struct RsPingCtxCb pingCb = {0};
     struct timeval timestamp2 = {0};
     int polledCnt = 0;
     int ret = 0;
@@ -722,9 +717,9 @@ void TcRsPingClientPollCq()
 
 void TcRsEpollEventPingHandle()
 {
-    struct ibv_comp_channel pingChannel = { 0 };
-    struct ibv_comp_channel pongChannel = { 0 };
-    struct rs_cb rscb = { 0 };
+    struct ibv_comp_channel pingChannel = {0};
+    struct ibv_comp_channel pongChannel = {0};
+    struct rs_cb rscb = {0};
     int ret = 0;
 
     pongChannel.fd = 1;
@@ -753,14 +748,14 @@ void TcRsEpollEventPingHandle()
 
 void TcRsPingGetTripTime()
 {
-    struct RsPingTimestamp timestamp = { 0 };
+    struct RsPingTimestamp timestamp = {0};
     unsigned int ret = 0;
 
     ret = RsPingGetTripTime(&timestamp);
     EXPECT_INT_EQ(ret, 0);
 }
 
-int PthreadMutexInitStub2(pthread_mutex_t lock,void * ptr)
+int PthreadMutexInitStub2(pthread_mutex_t lock, void* ptr)
 {
     static int cnt = 0;
     cnt++;
@@ -770,7 +765,7 @@ int PthreadMutexInitStub2(pthread_mutex_t lock,void * ptr)
     return 0;
 }
 
-int PthreadMutexInitStub3(pthread_mutex_t lock,void * ptr)
+int PthreadMutexInitStub3(pthread_mutex_t lock, void* ptr)
 {
     static int cnt = 0;
     cnt++;
@@ -782,7 +777,7 @@ int PthreadMutexInitStub3(pthread_mutex_t lock,void * ptr)
 
 void TcRsPingCbInitMutexAb1()
 {
-    struct RsPingCtxCb pingCb = { 0 };
+    struct RsPingCtxCb pingCb = {0};
     int ret = 0;
     mocker(pthread_mutex_init, 10, -5);
     ret = RsPingCbInitMutex(&pingCb);
@@ -792,7 +787,7 @@ void TcRsPingCbInitMutexAb1()
 
 void TcRsPingCbInitMutexAb2()
 {
-    struct RsPingCtxCb pingCb = { 0 };
+    struct RsPingCtxCb pingCb = {0};
     int ret = 0;
     mocker_invoke(pthread_mutex_init, PthreadMutexInitStub2, 10);
     ret = RsPingCbInitMutex(&pingCb);
@@ -802,7 +797,7 @@ void TcRsPingCbInitMutexAb2()
 
 void TcRsPingCbInitMutexAb3()
 {
-    struct RsPingCtxCb pingCb = { 0 };
+    struct RsPingCtxCb pingCb = {0};
     int ret = 0;
     mocker_invoke(pthread_mutex_init, PthreadMutexInitStub3, 10);
     ret = RsPingCbInitMutex(&pingCb);
@@ -819,9 +814,9 @@ void TcRsPingCbInitMutex()
 
 void TcRsPingResolveResponsePacket()
 {
-    struct RsPingCtxCb pingCb = { 0 };
-    struct timeval timestamp4 = { 0 };
-    void *recvAddr = calloc(1, 1024);
+    struct RsPingCtxCb pingCb = {0};
+    struct timeval timestamp4 = {0};
+    void* recvAddr = calloc(1, 1024);
     uint32_t sgeIdx = 0;
     int ret = 0;
 
@@ -858,6 +853,60 @@ void TcRsPingResolveResponsePacket()
     EXPECT_INT_EQ(ret, 0);
     mocker_clean();
 
+    gTmpTarget1.resultSummary.rttMin = 20;
+    gTmpTarget1.resultSummary.rttMax = 4;
+    gTmpTarget1.resultSummary.rttAvg = 0;
+    gTmpTarget1.resultSummary.recvCnt = 0;
+    gTmpTarget1.resultSummary.timeoutCnt = 0;
+    gTmpTarget1.resultSummary.taskId = 0;
+    gTmpTarget1.resultSummary.taskAttr.timeoutInterval = 12;
+    mocker(RsPingGetTripTime, 1, 11);
+    mocker_invoke(RsPingRoceFindTargetNode, RsPingRoceFindTargetNodeStub1, 1);
+    ret = RsPongResolveResponsePacket(&pingCb, sgeIdx, &timestamp4);
+    EXPECT_INT_EQ(ret, 0);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.rttMin, 11);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.rttMax, 11);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.rttAvg, 11);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.recvCnt, 1);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.timeoutCnt, 0);
+    mocker_clean();
+
+    gTmpTarget1.resultSummary.rttMin = 11;
+    gTmpTarget1.resultSummary.rttMax = 11;
+    gTmpTarget1.resultSummary.rttAvg = 11;
+    gTmpTarget1.resultSummary.recvCnt = 1;
+    gTmpTarget1.resultSummary.timeoutCnt = 0;
+    gTmpTarget1.resultSummary.taskId = 0;
+    gTmpTarget1.resultSummary.taskAttr.timeoutInterval = 12;
+    mocker(RsPingGetTripTime, 1, 5);
+    mocker_invoke(RsPingRoceFindTargetNode, RsPingRoceFindTargetNodeStub1, 1);
+    ret = RsPongResolveResponsePacket(&pingCb, sgeIdx, &timestamp4);
+    EXPECT_INT_EQ(ret, 0);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.rttMin, 5);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.rttMax, 11);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.rttAvg, 8);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.recvCnt, 2);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.timeoutCnt, 0);
+    mocker_clean();
+
+    gTmpTarget1.resultSummary.rttMin = 20;
+    gTmpTarget1.resultSummary.rttMax = 4;
+    gTmpTarget1.resultSummary.rttAvg = 0;
+    gTmpTarget1.resultSummary.recvCnt = 0;
+    gTmpTarget1.resultSummary.timeoutCnt = 0;
+    gTmpTarget1.resultSummary.taskId = 0;
+    gTmpTarget1.resultSummary.taskAttr.timeoutInterval = 1;
+    mocker(RsPingGetTripTime, 1, 2000);
+    mocker_invoke(RsPingRoceFindTargetNode, RsPingRoceFindTargetNodeStub1, 1);
+    ret = RsPongResolveResponsePacket(&pingCb, sgeIdx, &timestamp4);
+    EXPECT_INT_EQ(ret, 0);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.rttMin, 20);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.rttMax, 4);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.rttAvg, 0);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.recvCnt, 1);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.timeoutCnt, 1);
+    mocker_clean();
+
     pthread_mutex_destroy(&gTmpTarget1.tripMutex);
     free(pingCb.pongQp.recvMrCb.sgeList);
     pingCb.pongQp.recvMrCb.sgeList = NULL;
@@ -867,7 +916,7 @@ void TcRsPingResolveResponsePacket()
 
 void TcRsPingServerPollCq()
 {
-    struct RsPingCtxCb pingCb = { 0 };
+    struct RsPingCtxCb pingCb = {0};
 
     mocker(RsIbvGetCqEvent, 1, -1);
     RsPongRocePollRcq(&pingCb);
@@ -912,8 +961,8 @@ void TcRsPingCbGetDevRdevIndex()
 #define CUSTOM_INTERFACE
 #endif
 
-    struct ibv_device *devList = calloc(1, sizeof(struct ibv_device));
-    struct RsPingCtxCb pingCb = { 0 };
+    struct ibv_device* devList = calloc(1, sizeof(struct ibv_device));
+    struct RsPingCtxCb pingCb = {0};
     int index = 0;
     int ret = 0;
 
@@ -938,10 +987,10 @@ void TcRsPingCbGetDevRdevIndex()
 
 void TcRsPingInitMrCb()
 {
-    struct RsPingCtxCb pingCb = { 0 };
-    struct RsPingMrCb mrCb = { 0 };
-    struct rs_cb rscb = { 0 };
-    struct ibv_mr mr = { 0 };
+    struct RsPingCtxCb pingCb = {0};
+    struct RsPingMrCb mrCb = {0};
+    struct rs_cb rscb = {0};
+    struct ibv_mr mr = {0};
     int ret = 0;
 
     mocker((stub_fn_t)pthread_mutex_init, 1, -1);
@@ -980,7 +1029,7 @@ void TcRsPingInitMrCb()
 
 void TcRsPingCommonDeinitLocalBuffer()
 {
-    struct RsPingCtxCb pingCb = { 0 };
+    struct RsPingCtxCb pingCb = {0};
     pingCb.pongQp.recvMrCb.sgeList = calloc(1, sizeof(struct ibv_sge));
     pingCb.pongQp.sendMrCb.sgeList = calloc(1, sizeof(struct ibv_sge));
     pingCb.pingQp.recvMrCb.sgeList = calloc(1, sizeof(struct ibv_sge));
@@ -997,10 +1046,10 @@ void TcRsPingCommonDeinitLocalBuffer()
 
 void TcRsPingCommonDeinitLocalQp()
 {
-    struct RsPingLocalQpCb qpCb = { 0 };
-    struct ibv_comp_channel channel = { 0 };
-    struct RsPingCtxCb pingCb = { 0 };
-    struct rs_cb rscb = { 0 };
+    struct RsPingLocalQpCb qpCb = {0};
+    struct ibv_comp_channel channel = {0};
+    struct RsPingCtxCb pingCb = {0};
+    struct rs_cb rscb = {0};
 
     qpCb.channel = &channel;
     mocker(RsIbvDestroyQp, 20, 0);
@@ -1017,11 +1066,11 @@ void TcRsPingCommonDeinitLocalQp()
 
 void TcRsPingPongInitLocalInfo()
 {
-    struct RsPingCtxCb pingCb = { 0 };
-    struct PingInitAttr attr = { 0 };
-    struct PingInitInfo info = { 0 };
-    struct ibv_qp ibQp = { 0 };
-    struct rs_cb rscb = { 0 };
+    struct RsPingCtxCb pingCb = {0};
+    struct PingInitAttr attr = {0};
+    struct PingInitInfo info = {0};
+    struct ibv_qp ibQp = {0};
+    struct rs_cb rscb = {0};
     int ret = 0;
 
     pingCb.pingQp.ibQp = &ibQp;
@@ -1064,18 +1113,15 @@ void TcRsPingPongInitLocalInfo()
     mocker_clean();
 }
 
-int RsIbvPollCq_stub_ping0(struct ibv_cq *cq, int numEntries, struct ibv_wc *wc)
-{
-    return 0;
-}
+int RsIbvPollCq_stub_ping0(struct ibv_cq* cq, int numEntries, struct ibv_wc* wc) { return 0; }
 
-int RsIbvPollCq_stub_ping1(struct ibv_cq *cq, int numEntries, struct ibv_wc *wc)
+int RsIbvPollCq_stub_ping1(struct ibv_cq* cq, int numEntries, struct ibv_wc* wc)
 {
     wc->status = IBV_WC_LOC_LEN_ERR;
     return 1;
 }
 
-int RsIbvPollCq_stub_ping2(struct ibv_cq *cq, int numEntries, struct ibv_wc *wc)
+int RsIbvPollCq_stub_ping2(struct ibv_cq* cq, int numEntries, struct ibv_wc* wc)
 {
     wc->status = IBV_WC_SUCCESS;
     return 1;
@@ -1083,8 +1129,8 @@ int RsIbvPollCq_stub_ping2(struct ibv_cq *cq, int numEntries, struct ibv_wc *wc)
 
 void TcRsPingRocePollScq()
 {
-    struct RsPingTargetInfo  target = { 0 };
-    struct RsPingCtxCb pingCb = { 0 };
+    struct RsPingTargetInfo target = {0};
+    struct RsPingCtxCb pingCb = {0};
     int ret = 0;
 
     mocker_invoke(RsIbvPollCq, RsIbvPollCq_stub_ping0, 10);
@@ -1103,7 +1149,7 @@ void TcRsPingRocePollScq()
     mocker_clean();
 }
 
-int StubRsPingClientPostSend(struct RsPingCtxCb *pingCb, struct RsPingTargetInfo  *target)
+int StubRsPingClientPostSend(struct RsPingCtxCb* pingCb, struct RsPingTargetInfo* target)
 {
     pingCb->threadStatus = 0;
     return 1;
@@ -1112,7 +1158,7 @@ int StubRsPingClientPostSend(struct RsPingCtxCb *pingCb, struct RsPingTargetInfo
 void TcRsPingHandle()
 {
     struct rs_cb rsCb = {0};
-    struct RsPingTargetInfo  targetTmp = {0};
+    struct RsPingTargetInfo targetTmp = {0};
 
     mocker_clean();
     rsCb.pingCb.threadStatus = 1;
@@ -1133,21 +1179,21 @@ void TcRsPingHandle()
     mocker_invoke(RsPingRocePostSend, StubRsPingClientPostSend, 1);
     mocker(pthread_mutex_lock, 1, 0);
     mocker(pthread_mutex_unlock, 1, 0);
-    RsPingHandle((void *)&rsCb);
+    RsPingHandle((void*)&rsCb);
     mocker_clean();
 }
 
 void TcRsPingRocePingCbDeinit()
 {
-    struct RsPingTargetInfo *stubPingNode = NULL;
-    struct RsPongTargetInfo *stubPongNode = NULL;
-    struct RsPingCtxCb pingCb = { 0 };
+    struct RsPingTargetInfo* stubPingNode = NULL;
+    struct RsPongTargetInfo* stubPongNode = NULL;
+    struct RsPingCtxCb pingCb = {0};
 
     mocker(RsGetRsCb, 20, 0);
     mocker(pthread_mutex_lock, 20, 0);
     mocker(pthread_mutex_unlock, 20, 0);
 
-    stubPingNode = calloc(1, sizeof(struct RsPingTargetInfo ));
+    stubPingNode = calloc(1, sizeof(struct RsPingTargetInfo));
     stubPongNode = calloc(1, sizeof(struct RsPongTargetInfo));
     RS_INIT_LIST_HEAD(&pingCb.pingList);
     RsListAddTail(&stubPingNode->list, &pingCb.pingList);
@@ -1162,4 +1208,38 @@ void TcRsPingRocePingCbDeinit()
     mocker(RsIbvFreeDeviceList, 20, 0);
 
     RsPingRocePingCbDeinit(0, &pingCb);
+}
+
+void TcRsPingUrmaPingCbInitDeviceByEidFail()
+{
+    struct RsPingCtxCb pingCb = {0};
+    struct PingInitAttr attr = {0};
+    struct PingInitInfo info = {0};
+    unsigned int devIndex = 0;
+    int ret = 0;
+
+    mocker_clean();
+    mocker_invoke(RsGetRsCb, RsGetRsCbStubTrue, 1);
+    errno = 0;
+    mocker(RsUrmaGetDeviceByEid, 1, NULL);
+    mocker(pthread_mutex_destroy, 2, 0);
+    ret = RsPingUrmaPingCbInit(0, &attr, &info, &devIndex, &pingCb);
+    EXPECT_INT_EQ(-EOPENSRC, ret);
+    mocker_clean();
+}
+
+void TcRsPingCbGetUrmaContextAndIndexCreateFail()
+{
+    struct RsPingCtxCb pingCb = {0};
+    struct PingInitAttr attr = {0};
+    char dummyDev = {0};
+    int ret = 0;
+
+    pingCb.udevCb.urmaDev = (urma_device_t*)&dummyDev;
+    mocker_clean();
+    errno = 0;
+    mocker(RsUrmaCreateContext, 1, NULL);
+    ret = RsPingCbGetUrmaContextAndIndex(&pingCb, &attr);
+    EXPECT_INT_EQ(-EOPENSRC, ret);
+    mocker_clean();
 }

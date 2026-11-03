@@ -16,46 +16,23 @@ const int HcclPlugin::MAX_SCAN_DEPTH = 2;
 const std::string HcclPlugin::PLUGIN_PATH = "/plugin";
 const std::string HcclPlugin::MANIFEST_FILE = "/manifest.json";
 
-const std::string HcclPlugin::Manifest::pluginName    = "name";
+const std::string HcclPlugin::Manifest::pluginName = "name";
 const std::string HcclPlugin::Manifest::pluginVersion = "version";
-const std::string HcclPlugin::Manifest::pluginEntry   = "entry";
+const std::string HcclPlugin::Manifest::pluginEntry = "entry";
 const std::string HcclPlugin::Manifest::pluginDependency::hostVersion = "min_core_version";
 
-HcclPlugin::HcclPlugin(const std::string& pluginPath)
-{
-    m_pluginPath = pluginPath;
-}
+HcclPlugin::HcclPlugin(const std::string& pluginPath) { m_pluginPath = pluginPath; }
 
-HcclPlugin::~HcclPlugin()
-{
-}
+HcclPlugin::~HcclPlugin() {}
 
-HcclSim::HcclVmResult HcclPlugin::Start()
-{
-    return HcclSim::HcclVmResult::HCCL_SIM_SUCCESS;
-}
+HcclSim::HcclVmResult HcclPlugin::Start() { return HcclSim::HcclVmResult::HCCL_SIM_SUCCESS; }
 
-HcclSim::HcclVmResult HcclPlugin::Stop()
-{
-    return HcclSim::HcclVmResult::HCCL_SIM_SUCCESS;
-}
+HcclSim::HcclVmResult HcclPlugin::Stop() { return HcclSim::HcclVmResult::HCCL_SIM_SUCCESS; }
 
-int32_t HcclPlugin::GetPid() const
-{
-    return m_pid;
-}
+int32_t HcclPlugin::GetPid() const { return m_pid; }
 
-int32_t HcclPlugin::GetStdinFd() const
-{
-    return m_stdinFd;
-}
+int32_t HcclPlugin::GetStdinFd() const { return m_stdinFd; }
 
-bool HcclPlugin::IsRunning() const
-{
-    return m_pid > 0;
-}
+bool HcclPlugin::IsRunning() const { return m_pid > 0; }
 
-std::string HcclPlugin::GetTag() const
-{
-    return "stub_plugin";
-}
+std::string HcclPlugin::GetTag() const { return "stub_plugin"; }

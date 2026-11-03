@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: unit test for SyncGsaExecutor
  * Author: xx
  */
@@ -24,8 +27,9 @@ using namespace hcomm::CcuRep;
 
 class SyncGsaExecutorTest : public testing::Test {
 protected:
-    void SetUp() override {
-        auto &mgr = CcuResourceManager::GetInstance();
+    void SetUp() override
+    {
+        auto& mgr = CcuResourceManager::GetInstance();
         mgr.Init(0, 2, RunnerCcuVersion::CCU_V1, {});
         mgr.Init(1, 2, RunnerCcuVersion::CCU_V1, {});
     }
@@ -33,12 +37,11 @@ protected:
 };
 
 // Test: SyncGsaExecutor struct size check
-TEST_F(SyncGsaExecutorTest, StructSize) {
-    EXPECT_GT(sizeof(SyncGsaExecutor), 0);
-}
+TEST_F(SyncGsaExecutorTest, StructSize) { EXPECT_GT(sizeof(SyncGsaExecutor), 0); }
 
 // Test: SyncGsaExecutor default constructor
-TEST_F(SyncGsaExecutorTest, DefaultConstructor) {
+TEST_F(SyncGsaExecutorTest, DefaultConstructor)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
     SyncGsaExecutor executor(0, 0, 0, instr, nullptr);
@@ -46,45 +49,49 @@ TEST_F(SyncGsaExecutorTest, DefaultConstructor) {
 }
 
 // Test: SyncGsaExecutor parameterized constructor
-TEST_F(SyncGsaExecutorTest, ParameterizedConstructor) {
+TEST_F(SyncGsaExecutorTest, ParameterizedConstructor)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     SyncGsaExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Describe());
 }
 
 // Test: SyncGsaExecutor Parser with zero values
-TEST_F(SyncGsaExecutorTest, ParserZeroValues) {
+TEST_F(SyncGsaExecutorTest, ParserZeroValues)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     SyncGsaExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Parser());
     EXPECT_NO_THROW(executor.Describe());
 }
 
 // Test: SyncGsaExecutor Parser with max values
-TEST_F(SyncGsaExecutorTest, ParserMaxValues) {
+TEST_F(SyncGsaExecutorTest, ParserMaxValues)
+{
     CcuInstr instr;
     memset(&instr, 0xFF, sizeof(instr));
-    
+
     SyncGsaExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Parser());
     EXPECT_NO_THROW(executor.Describe());
 }
 
 // Test: SyncGsaExecutor Parser with specific GSA parameters
-TEST_F(SyncGsaExecutorTest, ParserGsaParameters) {
+TEST_F(SyncGsaExecutorTest, ParserGsaParameters)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     instr.v1.syncGSA.rmtGSAId = 100;
     instr.v1.syncGSA.locGSAId = 200;
     instr.v1.syncGSA.channelId = 5;
     instr.v1.syncGSA.setRmtCKEId = 10;
     instr.v1.syncGSA.setRmtCKEMask = 0xFF;
-    
+
     SyncGsaExecutor executor(0, 0, 0, instr, nullptr);
     EXPECT_NO_THROW(executor.Parser());
     std::string desc = executor.Describe();
@@ -92,12 +99,13 @@ TEST_F(SyncGsaExecutorTest, ParserGsaParameters) {
 }
 
 // Test: SyncGsaExecutor with different GSA IDs
-TEST_F(SyncGsaExecutorTest, DifferentGsaIds) {
+TEST_F(SyncGsaExecutorTest, DifferentGsaIds)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     uint16_t gsaIds[] = {0, 1, SimCcuV1::CCU_RESOURCE_GSA_NUM / 2, SimCcuV1::CCU_RESOURCE_GSA_NUM - 1, 0xFFFF};
-    
+
     for (auto gsaId : gsaIds) {
         instr.v1.syncGSA.locGSAId = gsaId;
         instr.v1.syncGSA.rmtGSAId = gsaId;
@@ -108,13 +116,14 @@ TEST_F(SyncGsaExecutorTest, DifferentGsaIds) {
 }
 
 // Test: SyncGsaExecutor Describe contains expected keywords
-TEST_F(SyncGsaExecutorTest, DescribeContent) {
+TEST_F(SyncGsaExecutorTest, DescribeContent)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
     instr.v1.syncGSA.rmtGSAId = 10;
     instr.v1.syncGSA.locGSAId = 20;
     instr.v1.syncGSA.channelId = 5;
-    
+
     SyncGsaExecutor executor(0, 0, 0, instr, nullptr);
     executor.Parser();
     std::string desc = executor.Describe();
@@ -123,20 +132,22 @@ TEST_F(SyncGsaExecutorTest, DescribeContent) {
 }
 
 // Test: SyncGsaExecutor inheritance check
-TEST_F(SyncGsaExecutorTest, InheritanceCheck) {
+TEST_F(SyncGsaExecutorTest, InheritanceCheck)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     SyncGsaExecutor executor(0, 0, 0, instr, nullptr);
     CcuExecutorBase* base = &executor;
     EXPECT_NE(base, nullptr);
 }
 
 // Test: SyncGsaExecutor with various channel configurations
-TEST_F(SyncGsaExecutorTest, VariousChannelConfigurations) {
+TEST_F(SyncGsaExecutorTest, VariousChannelConfigurations)
+{
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
-    
+
     for (uint16_t ch = 0; ch < 8; ch++) {
         instr.v1.syncGSA.channelId = ch;
         SyncGsaExecutor executor(0, 0, 0, instr, nullptr);
@@ -145,8 +156,9 @@ TEST_F(SyncGsaExecutorTest, VariousChannelConfigurations) {
     }
 }
 
-TEST_F(SyncGsaExecutorTest, ProcessWithValidChannel) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(SyncGsaExecutorTest, ProcessWithValidChannel)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     mgr.UpdateGsaValue(0, 0, 0, 0x1000);
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
@@ -163,8 +175,9 @@ TEST_F(SyncGsaExecutorTest, ProcessWithValidChannel) {
     EXPECT_NO_THROW(executor.Process(mgr));
 }
 
-TEST_F(SyncGsaExecutorTest, RunWithCkeNotSatisfied) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(SyncGsaExecutorTest, RunWithCkeNotSatisfied)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     CcuInstr instr;
     memset(&instr, 0, sizeof(instr));
     instr.v1.syncGSA.channelId = 0;

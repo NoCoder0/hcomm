@@ -23,21 +23,21 @@ namespace hccl {
 class CommTopoDesc {
 public:
     virtual ~CommTopoDesc();
-    static CommTopoDesc &GetInstance();
-    void SaveRankSize(std::string &str, uint32_t rankSize);
-    void SaveL0TopoType(std::string &str, CommTopo topoType);
-    HcclResult GetRankSize(std::string &str, uint32_t *rankSize);
-    HcclResult GetL0TopoType(std::string &str, CommTopo *topoType);
+    static CommTopoDesc& GetInstance();
+    void SaveRankSize(std::string& str, uint32_t rankSize);
+    void SaveL0TopoType(std::string& str, CommTopo topoType);
+    HcclResult GetRankSize(std::string& str, uint32_t* rankSize);
+    HcclResult GetL0TopoType(std::string& str, CommTopo* topoType);
 
 protected:
 private:
     CommTopoDesc(const CommTopoDesc&) = delete;
-    CommTopoDesc &operator=(const CommTopoDesc&) = delete;
+    CommTopoDesc& operator=(const CommTopoDesc&) = delete;
     CommTopoDesc();
 
     std::mutex lock_;
     std::unordered_map<std::string, uint32_t> rankSizeMap_;
     std::unordered_map<std::string, CommTopo> l0TopoTypeMap_;
 };
-}  // namespace hccl
+} // namespace hccl
 #endif

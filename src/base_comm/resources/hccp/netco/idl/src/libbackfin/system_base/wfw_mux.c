@@ -77,8 +77,8 @@ void WfwMuxUninit(WfwMux *mux)
     return;
 }
 
-int WfwMuxAttachFd(WfwMux *mux, int fd, uint32_t interestedEvents,
-                    F_WFW_MUX_FD_PROC fdProc, void *fdCookie, WfwArgForMux *argForMuxOrNull)
+int WfwMuxAttachFd(WfwMux *mux, int fd, uint32_t interestedEvents, F_WFW_MUX_FD_PROC fdProc, void *fdCookie,
+    WfwArgForMux *argForMuxOrNull)
 {
     if (mux == VOS_NULL) {
         return 0;
@@ -87,8 +87,8 @@ int WfwMuxAttachFd(WfwMux *mux, int fd, uint32_t interestedEvents,
     return mux->argInit.attachFd(mux->argInit.cookie, fd, interestedEvents, fdProc, fdCookie, argForMuxOrNull);
 }
 
-int WfwMuxReattachFd(WfwMux *mux, int fd, uint32_t interestedEvents,
-                      F_WFW_MUX_FD_PROC fdProc, void *fdCookie, WfwArgForMux *argForMuxOrNull)
+int WfwMuxReattachFd(WfwMux *mux, int fd, uint32_t interestedEvents, F_WFW_MUX_FD_PROC fdProc, void *fdCookie,
+    WfwArgForMux *argForMuxOrNull)
 {
     if (mux == VOS_NULL) {
         return 0;
@@ -149,10 +149,8 @@ F_WFW_MUX_FD_PROC WfwMuxGetFdProc(WfwMux *mux, int fd, void **fdCookieOut, uint3
     return mux->argInit.getFdProcOrNull(mux->argInit.cookie, fd, fdCookieOut, interestedEventsOut);
 }
 
-
 #ifdef __cplusplus
 #if __cplusplus
 }
 #endif
 #endif
-

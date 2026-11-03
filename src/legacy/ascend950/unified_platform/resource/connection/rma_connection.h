@@ -7,6 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #ifndef HCCLV2_RMA_CONNECTION_H
 #define HCCLV2_RMA_CONNECTION_H
 #include "task.h"
@@ -14,25 +15,25 @@
 #include "buffer_type.h"
 #include "remote_rma_buffer.h"
 #include "stream.h"
-#include "socket.h"
 #include "serializable.h"
 
 namespace Hccl {
+
+class Socket;
 
 struct MemoryBuffer {
     u64 addr{0};
     u64 size{0};
     u64 memHandle{0};
-    MemoryBuffer(u64 addr, u64 size, u64 memHandle) : addr(addr), size(size), memHandle(memHandle)
-    {
-    }
+    MemoryBuffer(u64 addr, u64 size, u64 memHandle) : addr(addr), size(size), memHandle(memHandle) {}
 };
 
-inline void VerifySizeIsEqual(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf, const string &desc)
+inline void VerifySizeIsEqual(const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, const string& desc)
 {
     if (remoteMemBuf.size != localMemBuf.size) {
-        string msg = StringFormat("Check %s size is error, localMemBufSize[0x%llx], remoteMemBufSize[0x%llx]",
-                                  desc.c_str(), localMemBuf.size, remoteMemBuf.size);
+        string msg = StringFormat(
+            "Check %s size is error, localMemBufSize[0x%llx], remoteMemBufSize[0x%llx]", desc.c_str(), localMemBuf.size,
+            remoteMemBuf.size);
         THROW<InvalidParamsException>(msg);
     }
 }
@@ -49,18 +50,12 @@ public:
 
 class RmaConnection {
 public:
-    explicit RmaConnection(Socket *socket, const RmaConnType rmaConnType);
+    explicit RmaConnection(Socket* socket, const RmaConnType rmaConnType);
     virtual ~RmaConnection();
 
-    RmaConnType GetRmaConnType() const
-    {
-        return rmaConnType;
-    }
+    RmaConnType GetRmaConnType() const { return rmaConnType; }
 
-    virtual std::vector<char> GetUniqueId() const
-    {
-        MACRO_THROW(NotSupportException, StringFormat("not supported."));
-    }
+    virtual std::vector<char> GetUniqueId() const { MACRO_THROW(NotSupportException, StringFormat("not supported.")); }
 
     virtual void Connect() = 0;
 
@@ -70,63 +65,58 @@ public:
 
     virtual string Describe() const = 0;
 
-    virtual void Bind(RemoteRmaBuffer *remoteRmaBuf, BufferType bufType);
+    virtual void Bind(RemoteRmaBuffer* remoteRmaBuf, BufferType bufType);
 
-    virtual RemoteRmaBuffer *GetRemoteRmaBuffer(const BufferType &bufType);
+    virtual RemoteRmaBuffer* GetRemoteRmaBuffer(const BufferType& bufType);
 
-    virtual unique_ptr<BaseTask> PrepareRead(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                             const SqeConfig &config);
+    virtual unique_ptr<BaseTask>
+    PrepareRead(const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, const SqeConfig& config);
 
-    virtual unique_ptr<BaseTask> PrepareReadReduce(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                                   DataType datatype, ReduceOp reduceOp, const SqeConfig &config);
+    virtual unique_ptr<BaseTask> PrepareReadReduce(
+        const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, DataType datatype, ReduceOp reduceOp,
+        const SqeConfig& config);
 
-    virtual unique_ptr<BaseTask> PrepareWrite(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                              const SqeConfig &config);
+    virtual unique_ptr<BaseTask>
+    PrepareWrite(const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, const SqeConfig& config);
 
-    virtual unique_ptr<BaseTask> PrepareWriteReduce(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                                    DataType datatype, ReduceOp reduceOp, const SqeConfig &config);
+    virtual unique_ptr<BaseTask> PrepareWriteReduce(
+        const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, DataType datatype, ReduceOp reduceOp,
+        const SqeConfig& config);
 
-    virtual unique_ptr<BaseTask> PrepareInlineWrite(const MemoryBuffer &remoteMemBuf, u64 data,
-                                                    const SqeConfig &config);
+    virtual unique_ptr<BaseTask>
+    PrepareInlineWrite(const MemoryBuffer& remoteMemBuf, u64 data, const SqeConfig& config);
 
-    virtual unique_ptr<BaseTask> PrepareWriteWithNotify(const MemoryBuffer &remoteMemBuf,
-                                                        const MemoryBuffer &localMemBuf, u64 data,
-                                                        const MemoryBuffer &remoteNotifyMemBuf,
-                                                        const SqeConfig    &config);
+    virtual unique_ptr<BaseTask> PrepareWriteWithNotify(
+        const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, u64 data,
+        const MemoryBuffer& remoteNotifyMemBuf, const SqeConfig& config);
 
-    virtual unique_ptr<BaseTask> PrepareWriteReduceWithNotify(const MemoryBuffer &remoteMemBuf,
-                                                              const MemoryBuffer &localMemBuf, DataType datatype,
-                                                              ReduceOp reduceOp, u64 data,
-                                                              const MemoryBuffer &remoteNotifyMemBuf,
-                                                              const SqeConfig    &config);
+    virtual unique_ptr<BaseTask> PrepareWriteReduceWithNotify(
+        const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, DataType datatype, ReduceOp reduceOp,
+        u64 data, const MemoryBuffer& remoteNotifyMemBuf, const SqeConfig& config);
 
-    virtual void AddNop(const Stream &stream)
-    {
-        (void)stream;
-    }
+    virtual void AddNop(const Stream& stream) { (void)stream; }
 
-    virtual bool Suspend()
-    {
-        MACRO_THROW(NotSupportException, StringFormat("Resume is not supported."));
-    }
+    virtual bool Suspend() { MACRO_THROW(NotSupportException, StringFormat("Resume is not supported.")); }
 
     virtual unique_ptr<Serializable> GetExchangeDto() // 序列化本地数据
     {
         MACRO_THROW(NotSupportException, StringFormat("not support."));
     }
 
-    virtual void ParseRmtExchangeDto(const Serializable &rmtDto) // 解析收到得远端序列化数据
+    virtual HcclResult ParseRmtExchangeDto(const Serializable& rmtDto) // 解析收到得远端序列化数据
     {
         (void)rmtDto;
-        MACRO_THROW(NotSupportException, StringFormat("not support."));
+        HCCL_ERROR("[RmaConnection::%s] not support.", __func__);
+        return HcclResult::HCCL_E_NOT_SUPPORT;
     }
 
-    virtual void ImportRmtDto() // 导入远端的数据
+    virtual HcclResult ImportRmtDto() // 导入远端的数据
     {
-        MACRO_THROW(NotSupportException, StringFormat("not support."));
+        HCCL_ERROR("[RmaConnection::%s] not support.", __func__);
+        return HcclResult::HCCL_E_NOT_SUPPORT;
     }
 
-    virtual HcclResult Describe(std::string &dfxMsg)
+    virtual HcclResult Describe(std::string& dfxMsg)
     {
         (void)dfxMsg;
         HCCL_ERROR("[RmaConnection::%s] not support.", __func__);
@@ -135,10 +125,10 @@ public:
 
 protected:
     RmaConnStatus status;
-    Socket       *socket{nullptr};
-    RmaConnType   rmaConnType;
+    Socket* socket{nullptr};
+    RmaConnType rmaConnType;
 
-    unordered_map<BufferType, RemoteRmaBuffer *, std::EnumClassHash> remoteBufs;
+    unordered_map<BufferType, RemoteRmaBuffer*, std::EnumClassHash> remoteBufs;
 };
 
 } // namespace Hccl

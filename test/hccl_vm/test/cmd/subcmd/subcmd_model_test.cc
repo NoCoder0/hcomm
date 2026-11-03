@@ -19,35 +19,36 @@ using namespace HcclSim;
 
 class ModelCommandTest : public testing::Test {
 protected:
-    void SetUp() override {
+    void SetUp() override
+    {
         app_ = std::make_unique<CLI::App>("test");
         cmd_ = std::make_unique<ModelCommand>();
     }
-    void TearDown() override {
-    }
+    void TearDown() override {}
     std::unique_ptr<CLI::App> app_;
     std::unique_ptr<ModelCommand> cmd_;
 };
 
-TEST_F(ModelCommandTest, StaticName_ShouldReturnModel) {
-    EXPECT_EQ(ModelCommand::StaticName(), "model");
-}
+TEST_F(ModelCommandTest, StaticName_ShouldReturnModel) { EXPECT_EQ(ModelCommand::StaticName(), "model"); }
 
-TEST_F(ModelCommandTest, Setup_RegistersModelSubcommand) {
+TEST_F(ModelCommandTest, Setup_RegistersModelSubcommand)
+{
     cmd_->Setup(*app_);
     auto sub = app_->get_subcommand("model");
     EXPECT_NE(sub, nullptr);
     EXPECT_EQ(sub->get_name(), "model");
 }
 
-TEST_F(ModelCommandTest, Setup_RequiresSubcommand) {
+TEST_F(ModelCommandTest, Setup_RequiresSubcommand)
+{
     cmd_->Setup(*app_);
     auto sub = app_->get_subcommand("model");
     ASSERT_NE(sub, nullptr);
     EXPECT_TRUE(sub->get_require_subcommand_min() > 0);
 }
 
-TEST_F(ModelCommandTest, Setup_RegistersListSubcommand) {
+TEST_F(ModelCommandTest, Setup_RegistersListSubcommand)
+{
     cmd_->Setup(*app_);
     auto model = app_->get_subcommand("model");
     ASSERT_NE(model, nullptr);
@@ -55,7 +56,8 @@ TEST_F(ModelCommandTest, Setup_RegistersListSubcommand) {
     EXPECT_NE(list, nullptr);
 }
 
-TEST_F(ModelCommandTest, ParseModelList_InvokesCallback) {
+TEST_F(ModelCommandTest, ParseModelList_InvokesCallback)
+{
     cmd_->Setup(*app_);
     try {
         app_->parse("test model list", true);
@@ -66,7 +68,8 @@ TEST_F(ModelCommandTest, ParseModelList_InvokesCallback) {
     }
 }
 
-TEST_F(ModelCommandTest, ParseModelList_Help) {
+TEST_F(ModelCommandTest, ParseModelList_Help)
+{
     cmd_->Setup(*app_);
     try {
         app_->parse("test model list --help", true);
@@ -77,7 +80,8 @@ TEST_F(ModelCommandTest, ParseModelList_Help) {
     }
 }
 
-TEST_F(ModelCommandTest, ParseModel_Help) {
+TEST_F(ModelCommandTest, ParseModel_Help)
+{
     cmd_->Setup(*app_);
     try {
         app_->parse("test model --help", true);
@@ -88,19 +92,22 @@ TEST_F(ModelCommandTest, ParseModel_Help) {
     }
 }
 
-TEST_F(ModelCommandTest, ParseModel_NoSubcommand_Throws) {
+TEST_F(ModelCommandTest, ParseModel_NoSubcommand_Throws)
+{
     cmd_->Setup(*app_);
     EXPECT_THROW(app_->parse("test model", true), CLI::RequiredError);
 }
 
-TEST_F(ModelCommandTest, Setup_ModelSubcommandDescription) {
+TEST_F(ModelCommandTest, Setup_ModelSubcommandDescription)
+{
     cmd_->Setup(*app_);
     auto model = app_->get_subcommand("model");
     ASSERT_NE(model, nullptr);
     EXPECT_EQ(std::string(model->get_description()), "管理建模文件");
 }
 
-TEST_F(ModelCommandTest, Setup_ListSubcommandDescription) {
+TEST_F(ModelCommandTest, Setup_ListSubcommandDescription)
+{
     cmd_->Setup(*app_);
     auto model = app_->get_subcommand("model");
     ASSERT_NE(model, nullptr);
@@ -109,7 +116,8 @@ TEST_F(ModelCommandTest, Setup_ListSubcommandDescription) {
     EXPECT_EQ(std::string(list->get_description()), "展示建模文件");
 }
 
-TEST_F(ModelCommandTest, Setup_ModelSubcommandHasCallback) {
+TEST_F(ModelCommandTest, Setup_ModelSubcommandHasCallback)
+{
     cmd_->Setup(*app_);
     auto model = app_->get_subcommand("model");
     ASSERT_NE(model, nullptr);
@@ -125,7 +133,8 @@ TEST_F(ModelCommandTest, Setup_ModelSubcommandHasCallback) {
     }
 }
 
-TEST_F(ModelCommandTest, CommandRegistry_CreateAll_ContainsModelCommand) {
+TEST_F(ModelCommandTest, CommandRegistry_CreateAll_ContainsModelCommand)
+{
     auto commands = CommandRegistry::CreateAll();
     bool found = false;
     for (const auto& cmd : commands) {

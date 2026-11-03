@@ -31,34 +31,33 @@ struct RsNetOps gNetOps = {
 int RsNetAdaptApiInit(void)
 {
 #ifndef CA_CONFIG_LLT
-    gNetOps.rsNetAdaptInit = (int (*)(void)) HccpDlsym(gNetApiHandle, "net_adapt_init");
+    gNetOps.rsNetAdaptInit = (int (*)(void))HccpDlsym(gNetApiHandle, "net_adapt_init");
     DL_API_RET_IS_NULL_CHECK(gNetOps.rsNetAdaptInit, "net_adapt_init");
 
-    gNetOps.rsNetAdaptUninit = (void (*)(void)) HccpDlsym(gNetApiHandle, "net_adapt_uninit");
+    gNetOps.rsNetAdaptUninit = (void (*)(void))HccpDlsym(gNetApiHandle, "net_adapt_uninit");
     DL_API_RET_IS_NULL_CHECK(gNetOps.rsNetAdaptUninit, "net_adapt_uninit");
 
-    gNetOps.rsNetAllocJfcId = (int (*)(const char *udevName, unsigned int jfcMode, unsigned int *jfcId))
-        HccpDlsym(gNetApiHandle, "net_alloc_jfc_id");
+    gNetOps.rsNetAllocJfcId = (int (*)(const char *udevName, unsigned int jfcMode,
+        unsigned int *jfcId))HccpDlsym(gNetApiHandle, "net_alloc_jfc_id");
     DL_API_RET_IS_NULL_CHECK(gNetOps.rsNetAllocJfcId, "net_alloc_jfc_id");
 
-    gNetOps.rsNetFreeJfcId = (int (*)(const char *udevName, unsigned int jfcMode, unsigned int jfcId))
-        HccpDlsym(gNetApiHandle, "net_free_jfc_id");
+    gNetOps.rsNetFreeJfcId = (int (*)(const char *udevName, unsigned int jfcMode,
+        unsigned int jfcId))HccpDlsym(gNetApiHandle, "net_free_jfc_id");
     DL_API_RET_IS_NULL_CHECK(gNetOps.rsNetFreeJfcId, "net_free_jfc_id");
 
-    gNetOps.rsNetAllocJettyId =
-        (int (*)(const char *udevName, unsigned int jettyMode, unsigned int *jettyId))
-        HccpDlsym(gNetApiHandle, "net_alloc_jetty_id");
+    gNetOps.rsNetAllocJettyId = (int (*)(const char *udevName, unsigned int jettyMode,
+        unsigned int *jettyId))HccpDlsym(gNetApiHandle, "net_alloc_jetty_id");
     DL_API_RET_IS_NULL_CHECK(gNetOps.rsNetAllocJettyId, "net_alloc_jetty_id");
 
-    gNetOps.rsNetFreeJettyId = (int (*)(const char *udevName, unsigned int jettyMode, unsigned int jettyId))
-        HccpDlsym(gNetApiHandle, "net_free_jetty_id");
+    gNetOps.rsNetFreeJettyId = (int (*)(const char *udevName, unsigned int jettyMode,
+        unsigned int jettyId))HccpDlsym(gNetApiHandle, "net_free_jetty_id");
     DL_API_RET_IS_NULL_CHECK(gNetOps.rsNetFreeJettyId, "net_free_jetty_id");
 
-    gNetOps.rsNetGetCqeBaseAddr = (unsigned long long (*)(unsigned int dieId))
-        HccpDlsym(gNetApiHandle, "net_get_cqe_base_addr");
+    gNetOps.rsNetGetCqeBaseAddr = (unsigned long long (*)(unsigned int dieId))HccpDlsym(gNetApiHandle,
+        "net_get_cqe_base_addr");
     DL_API_RET_IS_NULL_CHECK(gNetOps.rsNetGetCqeBaseAddr, "net_get_cqe_base_addr");
 
-    gNetOps.rsNetGetApiVersion = (unsigned int (*)(void)) HccpDlsym(gNetApiHandle, "net_get_api_version");
+    gNetOps.rsNetGetApiVersion = (unsigned int (*)(void))HccpDlsym(gNetApiHandle, "net_get_api_version");
 #endif
     return 0;
 }
@@ -91,8 +90,11 @@ int RsNetApiInit(void)
     int ret;
 
     ret = RsOpenNetSo();
-    CHK_PRT_RETURN(ret != 0, hccp_err("rs_open_net_so[libnet_adapt.so] failed! ret=[%d],"
-        "please check network adapter driver has been installed", ret), ret);
+    CHK_PRT_RETURN(ret != 0,
+        hccp_err("rs_open_net_so[libnet_adapt.so] failed! ret=[%d],"
+                 "please check network adapter driver has been installed",
+            ret),
+        ret);
 
     ret = RsNetAdaptApiInit();
     if (ret != 0) {

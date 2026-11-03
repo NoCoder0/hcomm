@@ -17,10 +17,10 @@
 
 #include "hccp_ctx.h"
 #include "orion_adapter_hccp.h"
-#include "ccu_res_specs.h"
+#include "ccu_res_specs_legacy.h"
 #include "ccu_eid_info.h"
 #include "ccu_pfe_cfg_generator.h"
-#include "ccu_pfe_mgr.h"
+#include "ccu_pfe_mgr_legacy.h"
 #include "network_api_exception.h"
 #include "internal_exception.h"
 #include "ccu_device_manager.h"
@@ -32,43 +32,43 @@ using namespace Hccl;
 
 class CcuPfeTest : public testing::Test {
 protected:
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         GlobalMockObject::reset();
         std::cout << "CcuPfeTest SetUP" << std::endl;
     }
 
-    static void TearDownTestCase() {
+    static void TearDownTestCase()
+    {
         GlobalMockObject::verify();
         std::cout << "CcuPfeTest TearDown" << std::endl;
     }
 
-    virtual void SetUp() {
+    virtual void SetUp()
+    {
         GlobalMockObject::reset();
         std::cout << "A Test case in CcuPfeTest SetUP" << std::endl;
     }
 
-    virtual void TearDown() {
+    virtual void TearDown()
+    {
         GlobalMockObject::verify();
         std::cout << "A Test case in CcuPfeTest TearDown" << std::endl;
     }
 };
 
-
 TEST_F(CcuPfeTest, GetDevEidInfoListPass)
 {
     u32 num = 2;
 
-    MOCKER(RaGetDevEidInfoNum)
-        .stubs()
-        .with(mockcpp::any(), outBoundP(&num, sizeof(num)))
-        .will(returnValue(0));
+    MOCKER(RaGetDevEidInfoNum).stubs().with(mockcpp::any(), outBoundP(&num, sizeof(num))).will(returnValue(0));
 
     MOCKER(RaGetDevEidInfoList)
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), outBoundP(&num, sizeof(num)))
         .will(returnValue(0));
 
-    HRaInfo                      info(HrtNetworkMode::HDC, 0);
+    HRaInfo info(HrtNetworkMode::HDC, 0);
     vector<HrtDevEidInfo> eidInfoList = {};
     EXPECT_EQ(0, eidInfoList.size());
     eidInfoList = HrtRaGetDevEidInfoList(info);
@@ -79,17 +79,14 @@ TEST_F(CcuPfeTest, GetDevEidInfoListFail)
 {
     u32 num = 2;
 
-    MOCKER(RaGetDevEidInfoNum)
-        .stubs()
-        .with(mockcpp::any(), outBoundP(&num, sizeof(num)))
-        .will(returnValue(1));
+    MOCKER(RaGetDevEidInfoNum).stubs().with(mockcpp::any(), outBoundP(&num, sizeof(num))).will(returnValue(1));
 
     MOCKER(RaGetDevEidInfoList)
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), outBoundP(&num, sizeof(num)))
         .will(returnValue(0));
 
-    HRaInfo                      info(HrtNetworkMode::HDC, 0);
+    HRaInfo info(HrtNetworkMode::HDC, 0);
     EXPECT_THROW(HrtRaGetDevEidInfoList(info), NetworkApiException);
 }
 
@@ -97,17 +94,14 @@ TEST_F(CcuPfeTest, GetDevEidInfoListFail1)
 {
     u32 num = 2;
 
-    MOCKER(RaGetDevEidInfoNum)
-        .stubs()
-        .with(mockcpp::any(), outBoundP(&num, sizeof(num)))
-        .will(returnValue(0));
+    MOCKER(RaGetDevEidInfoNum).stubs().with(mockcpp::any(), outBoundP(&num, sizeof(num))).will(returnValue(0));
 
     MOCKER(RaGetDevEidInfoList)
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), outBoundP(&num, sizeof(num)))
         .will(returnValue(1));
 
-    HRaInfo                      info(HrtNetworkMode::HDC, 0);
+    HRaInfo info(HrtNetworkMode::HDC, 0);
     EXPECT_THROW(HrtRaGetDevEidInfoList(info), NetworkApiException);
 }
 
@@ -116,21 +110,15 @@ TEST_F(CcuPfeTest, HcclEidInfoPass)
     s32 phyDeviceId = 8;
 
     vector<HrtDevEidInfo> eidInfoListStbu;
-    HrtDevEidInfo         eidInfo;
-    eidInfo.name    = "udma0";
-    eidInfo.dieId    = 0;
-    eidInfo.funcId    = 3;
+    HrtDevEidInfo eidInfo;
+    eidInfo.name = "udma0";
+    eidInfo.dieId = 0;
+    eidInfo.funcId = 3;
 
     eidInfoListStbu.push_back(eidInfo);
 
-    MOCKER(HrtRaGetDevEidInfoList)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(eidInfoListStbu));
-    MOCKER(HrtGetDevicePhyIdByIndex)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(0));
+    MOCKER(HrtRaGetDevEidInfoList).stubs().with(mockcpp::any()).will(returnValue(eidInfoListStbu));
+    MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().with(mockcpp::any()).will(returnValue(0));
 
     vector<HrtDevEidInfo> eidInfoList = {};
     EXPECT_EQ(0, eidInfoList.size());
@@ -147,26 +135,20 @@ TEST_F(CcuPfeTest, GetPfeJettyCtxCfg)
     u8 die_id = 0;
 
     vector<HrtDevEidInfo> eidInfoListStbu = {};
-    HrtDevEidInfo         eidInfo;
-    eidInfo.name    = "udma0";
-    eidInfo.dieId    = 0;
-    eidInfo.funcId    = 3;
+    HrtDevEidInfo eidInfo;
+    eidInfo.name = "udma0";
+    eidInfo.dieId = 0;
+    eidInfo.funcId = 3;
 
     eidInfoListStbu.push_back(eidInfo);
 
-    MOCKER(HrtRaGetDevEidInfoList)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(eidInfoListStbu));
-    MOCKER(HrtGetDevicePhyIdByIndex)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(0));
+    MOCKER(HrtRaGetDevEidInfoList).stubs().with(mockcpp::any()).will(returnValue(eidInfoListStbu));
+    MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().with(mockcpp::any()).will(returnValue(0));
 
     CcuResSpecifications::GetInstance(phyDeviceId).dieEnableFlags[die_id] = true;
     CcuResSpecifications::GetInstance(phyDeviceId).resSpecs[die_id].jettyNum = 128;
 
-    vector<PfeJettyCtxCfg>  pfeJettyCtxCfg = {};
+    vector<PfeJettyCtxCfg> pfeJettyCtxCfg = {};
     EXPECT_EQ(0, pfeJettyCtxCfg.size());
     pfeJettyCtxCfg = CcuPfeCfgGenerator::GetInstance(phyDeviceId).GetPfeJettyCtxCfg(die_id);
     EXPECT_NE(0, pfeJettyCtxCfg.size());
@@ -188,20 +170,19 @@ TEST_F(CcuPfeTest, GetPfeJettyStrategy)
 
     pfeJettyCtxCfgListStub.push_back(pfeJettyCtxCfg);
 
-    CustomChannelInfoIn  inBuff;
+    CustomChannelInfoIn inBuff;
     inBuff.data.dataInfo.dataLen = 512;
     inBuff.data.dataInfo.dataArraySize = 64;
 
     MOCKER(HrtRaTlvRequestForCustomChannel)
         .stubs()
-        .with(mockcpp::any(), mockcpp::any(), outBoundP(reinterpret_cast<void *>(&inBuff), sizeof(inBuff)), outBoundP(reinterpret_cast<void *>(&inBuff), sizeof(inBuff)));
-    MOCKER(HrtGetDevicePhyIdByIndex)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(0));
+        .with(
+            mockcpp::any(), mockcpp::any(), outBoundP(reinterpret_cast<void*>(&inBuff), sizeof(inBuff)),
+            outBoundP(reinterpret_cast<void*>(&inBuff), sizeof(inBuff)));
+    MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().with(mockcpp::any()).will(returnValue(0));
 
     MOCKER_CPP(&CcuPfeCfgGenerator::GetPfeJettyCtxCfg).stubs().will(returnValue(pfeJettyCtxCfgListStub));
-    auto &ccuResSpecs = CcuResSpecifications::GetInstance(logicDevId);
+    auto& ccuResSpecs = CcuResSpecifications::GetInstance(logicDevId);
     ccuResSpecs.dieEnableFlags[dieId] = true;
 
     CcuPfeMgr ccuPfeManager(logicDevId, dieId, phyDeviceId);

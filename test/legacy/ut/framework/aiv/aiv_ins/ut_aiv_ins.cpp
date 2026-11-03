@@ -25,20 +25,11 @@ using namespace std;
 
 class AivInsTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AivInsTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AivInsTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AivInsTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AivInsTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in AivInsTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in AivInsTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -52,7 +43,7 @@ TEST_F(AivInsTest, should_return_success_when_calling_other)
     std::vector<LinkData> links;
     LinkData link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
     links.push_back(link);
-    AivOpArgs aivOpArgs {};
+    AivOpArgs aivOpArgs{};
     std::unique_ptr<AivInstruction> ins = std::make_unique<AivInstruction>(links, aivOpArgs);
 
     EXPECT_EQ(ins->GetLinks().size(), 1);

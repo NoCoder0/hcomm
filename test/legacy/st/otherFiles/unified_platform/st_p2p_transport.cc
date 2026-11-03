@@ -25,11 +25,11 @@
 #include "internal_exception.h"
 #include "timeout_exception.h"
 #include "socket_exception.h"
-#include "local_ipc_rma_buffer.h"
+#include "local_ipc_rma_buffer_v2.h"
 #include "ipc_local_notify.h"
 using namespace Hccl;
 
-static int memcpy_stub(void *dest, int dest_max, const void *src, int count)
+static int memcpy_stub(void* dest, int dest_max, const void* src, int count)
 {
     memcpy(dest, src, count);
     return 0;
@@ -37,42 +37,37 @@ static int memcpy_stub(void *dest, int dest_max, const void *src, int count)
 
 class StubP2PRmaConnection : public P2PConnection {
 public:
-    StubP2PRmaConnection(const LinkData &linkData) : link(linkData), P2PConnection(nullptr, "tag")
-    {
-    }
+    StubP2PRmaConnection(const LinkData& linkData) : link(linkData), P2PConnection(nullptr, "tag") {}
 
-    unique_ptr<BaseTask> PrepareRead(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                     const SqeConfig &config) override
+    unique_ptr<BaseTask>
+    PrepareRead(const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, const SqeConfig& config) override
     {
         return make_unique<TaskP2pMemcpy>(localMemBuf.addr, remoteMemBuf.addr, localMemBuf.size, MemcpyKind::D2D);
     }
 
-    unique_ptr<BaseTask> PrepareReadReduce(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                           DataType datatype, ReduceOp reduceOp, const SqeConfig &config) override
+    unique_ptr<BaseTask> PrepareReadReduce(
+        const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, DataType datatype, ReduceOp reduceOp,
+        const SqeConfig& config) override
     {
         return make_unique<TaskSdmaReduce>(localMemBuf.addr, remoteMemBuf.addr, localMemBuf.size, datatype, reduceOp);
     }
 
-    unique_ptr<BaseTask> PrepareWrite(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                      const SqeConfig &config) override
+    unique_ptr<BaseTask>
+    PrepareWrite(const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, const SqeConfig& config) override
     {
         return make_unique<TaskP2pMemcpy>(remoteMemBuf.addr, localMemBuf.addr, localMemBuf.size, MemcpyKind::D2D);
     }
 
-    unique_ptr<BaseTask> PrepareWriteReduce(const MemoryBuffer &remoteMemBuf, const MemoryBuffer &localMemBuf,
-                                            DataType datatype, ReduceOp reduceOp, const SqeConfig &config) override
+    unique_ptr<BaseTask> PrepareWriteReduce(
+        const MemoryBuffer& remoteMemBuf, const MemoryBuffer& localMemBuf, DataType datatype, ReduceOp reduceOp,
+        const SqeConfig& config) override
     {
         return nullptr;
     }
 
-    string Describe() const override
-    {
-        return "StubP2PRmaConnection";
-    }
+    string Describe() const override { return "StubP2PRmaConnection"; }
 
-    void Connect() override
-    {
-    }
+    void Connect() override {}
 
 private:
     LinkData link;
@@ -80,11 +75,13 @@ private:
 
 class StubSocket : public Socket {
 public:
-    StubSocket() : Socket(nullptr, IpAddress("1.0.0.0"), 0, IpAddress("1.0.0.0"), "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE)
-    {
-    }
+    StubSocket()
+        : Socket(
+              nullptr, IpAddress("1.0.0.0"), 0, IpAddress("1.0.0.0"), "tag", SocketRole::SERVER,
+              NicType::DEVICE_NIC_TYPE)
+    {}
 
-    bool Send(Socket *This, const u8 *sendBuf, u32 size) const
+    bool Send(Socket* This, const u8* sendBuf, u32 size) const
     {
         buf.resize(size);
         memcpy(buf.data(), sendBuf, size);
@@ -92,9 +89,9 @@ public:
         return true;
     }
 
-    bool Recv(Socket *This, u8 *recvBuf, u32 size) const
+    bool Recv(Socket* This, u8* recvBuf, u32 size) const
     {
-        if(buf.size() < size) {
+        if (buf.size() < size) {
             return false;
         }
         memcpy(recvBuf, buf.data(), size);
@@ -109,15 +106,15 @@ std::vector<char> StubSocket::buf;
 
 std::shared_ptr<DevBuffer> devBuf = DevBuffer::Create(0x100, 0x100);
 
-static RmaBufferSlice    locSlice;
+static RmaBufferSlice locSlice;
 static RmtRmaBufferSlice rmtSlice;
 
-static u64               fakeNotifyHandleAddr = 100;
-static u32               fakeNotifyId         = 1;
-static u64               fakeOffset           = 200;
-static u64               fakeAddress          = 300;
-static u32               fakePid              = 100;
-static char              fakeName[65]         = "testRtsNotify";
+static u64 fakeNotifyHandleAddr = 100;
+static u32 fakeNotifyId = 1;
+static u64 fakeOffset = 200;
+static u64 fakeAddress = 300;
+static u32 fakePid = 100;
+static char fakeName[65] = "testRtsNotify";
 
 static void Mock()
 {
@@ -126,10 +123,10 @@ static void Mock()
     MOCKER(HrtGetStreamId).stubs().with(mockcpp::any()).will(returnValue(0));
     MOCKER(HrtStreamDestroy).stubs();
     MOCKER(HrtGetDeviceType).stubs().will(returnValue((DevType)DevType::DEV_TYPE_910A2));
-    MOCKER(HrtIpcOpenNotify).stubs().with(mockcpp::any()).will(returnValue((void *)fakeNotifyHandleAddr));
+    MOCKER(HrtIpcOpenNotify).stubs().with(mockcpp::any()).will(returnValue((void*)fakeNotifyHandleAddr));
     MOCKER(HrtDeviceGetBareTgid).stubs().will(returnValue(fakePid));
     MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-    MOCKER(HrtNotifyCreate).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
+    MOCKER(HrtNotifyCreate).stubs().will(returnValue((void*)(fakeNotifyHandleAddr)));
     MOCKER(HrtIpcSetNotifyName).stubs().with(mockcpp::any(), outBoundP(fakeName, sizeof(fakeName)), mockcpp::any());
     MOCKER(HrtGetNotifyID).stubs().will(returnValue(fakeNotifyId));
     MOCKER(HrtNotifyGetAddr).stubs().with(mockcpp::any()).will(returnValue(fakeAddress));
@@ -141,20 +138,11 @@ static void Mock()
 
 class P2PTransportTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "P2PTransport tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "P2PTransport tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "P2PTransport tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "P2PTransport tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in P2PTransport SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in P2PTransport SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -169,10 +157,10 @@ TEST(P2PTransportTest, P2PTransport_describe)
     Mock();
 
     BaseMemTransport::CommonLocRes locRes;
-    BaseMemTransport::Attribution  attr;
-    LinkData                       link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
-    IpAddress                      ipAddress("1.0.0.0");
-    Socket                         fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    BaseMemTransport::Attribution attr;
+    LinkData link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
+    IpAddress ipAddress("1.0.0.0");
+    Socket fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
 
     P2PTransport transport(locRes, attr, link, fakeSocket);
     transport.Describe();
@@ -184,10 +172,10 @@ TEST(P2PTransportTest, P2PTransport_establish)
     Mock();
 
     BaseMemTransport::CommonLocRes locRes;
-    BaseMemTransport::Attribution  attr;
-    LinkData                       link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
-    IpAddress                      ipAddress("1.0.0.0");
-    Socket                         fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    BaseMemTransport::Attribution attr;
+    LinkData link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
+    IpAddress ipAddress("1.0.0.0");
+    Socket fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
 
     P2PTransport transport(locRes, attr, link, fakeSocket);
 
@@ -201,15 +189,15 @@ TEST(P2PTransportTest, P2PTransport_is_socket_ready)
     Mock();
 
     BaseMemTransport::CommonLocRes locRes;
-    BaseMemTransport::Attribution  attr;
-    LinkData                       link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
-    IpAddress                      ipAddress("1.0.0.0");
-    Socket                         fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    BaseMemTransport::Attribution attr;
+    LinkData link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
+    IpAddress ipAddress("1.0.0.0");
+    Socket fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
 
     P2PTransport transport(locRes, attr, link, fakeSocket);
 
-    SocketStatus socketStatusInit    = SocketStatus::INIT;
-    SocketStatus socketStatusOK      = SocketStatus::OK;
+    SocketStatus socketStatusInit = SocketStatus::INIT;
+    SocketStatus socketStatusOK = SocketStatus::OK;
     SocketStatus socketStatusTimeout = SocketStatus::TIMEOUT;
     MOCKER_CPP(&Socket::GetAsyncStatus)
         .stubs()
@@ -234,10 +222,10 @@ TEST(P2PTransportTest, P2PTransport_get_status)
     Mock();
 
     BaseMemTransport::CommonLocRes locRes;
-    BaseMemTransport::Attribution  attr;
-    LinkData                       link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
-    IpAddress                      ipAddress("1.0.0.0");
-    Socket                         fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    BaseMemTransport::Attribution attr;
+    LinkData link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
+    IpAddress ipAddress("1.0.0.0");
+    Socket fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
 
     P2PTransport transport(locRes, attr, link, fakeSocket);
 
@@ -248,7 +236,7 @@ TEST(P2PTransportTest, P2PTransport_get_status)
     MOCKER_CPP(&P2PTransport::RecvExchangeData).stubs().will(ignoreReturnValue());
 
     SocketStatus socketStatusInit = SocketStatus::INIT;
-    SocketStatus socketStatusOK   = SocketStatus::OK;
+    SocketStatus socketStatusOK = SocketStatus::OK;
     MOCKER_CPP(&Socket::GetAsyncStatus).stubs().will(returnValue(socketStatusInit)).then(returnValue(socketStatusOK));
 
     StubSocket stubSocket;
@@ -324,19 +312,19 @@ TEST(P2PTransportTest, P2PTransport_send_recv_pid_and_grant)
     Mock();
 
     BaseMemTransport::CommonLocRes locRes;
-    BaseMemTransport::Attribution  attr;
-    LinkData                       link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
-    IpAddress                      ipAddress("1.0.0.0");
-    Socket                         fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    BaseMemTransport::Attribution attr;
+    LinkData link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
+    IpAddress ipAddress("1.0.0.0");
+    Socket fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
 
     StubP2PRmaConnection stubRmaConnection(link);
-    RmaConnection       *rmaConnection    = &stubRmaConnection;
+    RmaConnection* rmaConnection = &stubRmaConnection;
     locRes.connVec.push_back(rmaConnection);
-    IpcLocalNotify       ipcLocalNotify;
-    BaseLocalNotify     *validLocalNotify = &ipcLocalNotify;
+    IpcLocalNotify ipcLocalNotify;
+    BaseLocalNotify* validLocalNotify = &ipcLocalNotify;
     locRes.notifyVec.push_back(validLocalNotify);
-    LocalIpcRmaBuffer    ipcLocalRmaBuffer(devBuf);
-    LocalRmaBuffer      *validLocalRmaBuffer = &ipcLocalRmaBuffer;
+    LocalIpcRmaBuffer ipcLocalRmaBuffer(devBuf);
+    LocalRmaBuffer* validLocalRmaBuffer = &ipcLocalRmaBuffer;
     locRes.bufferVec.push_back(validLocalRmaBuffer);
 
     P2PTransport transport(locRes, attr, link, fakeSocket);
@@ -356,19 +344,19 @@ TEST(P2PTransportTest, P2PTransport_send_recv_exchange_data)
     Mock();
 
     BaseMemTransport::CommonLocRes locRes;
-    BaseMemTransport::Attribution  attr;
-    LinkData                       link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
-    IpAddress                      ipAddress("1.0.0.0");
-    Socket                         fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    BaseMemTransport::Attribution attr;
+    LinkData link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
+    IpAddress ipAddress("1.0.0.0");
+    Socket fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
 
     StubP2PRmaConnection stubRmaConnection(link);
-    RmaConnection       *rmaConnection    = &stubRmaConnection;
+    RmaConnection* rmaConnection = &stubRmaConnection;
     locRes.connVec.push_back(rmaConnection);
-    IpcLocalNotify       ipcLocalNotify;
-    BaseLocalNotify     *validLocalNotify = &ipcLocalNotify;
+    IpcLocalNotify ipcLocalNotify;
+    BaseLocalNotify* validLocalNotify = &ipcLocalNotify;
     locRes.notifyVec.push_back(validLocalNotify);
-    LocalIpcRmaBuffer    ipcLocalRmaBuffer(devBuf);
-    LocalRmaBuffer      *validLocalRmaBuffer = &ipcLocalRmaBuffer;
+    LocalIpcRmaBuffer ipcLocalRmaBuffer(devBuf);
+    LocalRmaBuffer* validLocalRmaBuffer = &ipcLocalRmaBuffer;
     locRes.bufferVec.push_back(validLocalRmaBuffer);
 
     P2PTransport transport(locRes, attr, link, fakeSocket);
@@ -386,13 +374,13 @@ TEST(P2PTransportTest, P2PTransport_read_write_read_reduce_write_reduce)
     Mock();
 
     BaseMemTransport::CommonLocRes locRes;
-    BaseMemTransport::Attribution  attr;
-    LinkData                       link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
-    IpAddress                      ipAddress("1.0.0.0");
-    Socket                         fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    BaseMemTransport::Attribution attr;
+    LinkData link(BasePortType(PortDeploymentType::P2P), 0, 1, 0, 1);
+    IpAddress ipAddress("1.0.0.0");
+    Socket fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
 
     StubP2PRmaConnection stubRmaConnection(link);
-    RmaConnection      *rmaConnection = &stubRmaConnection;
+    RmaConnection* rmaConnection = &stubRmaConnection;
     locRes.connVec.push_back(rmaConnection);
 
     Stream stream;

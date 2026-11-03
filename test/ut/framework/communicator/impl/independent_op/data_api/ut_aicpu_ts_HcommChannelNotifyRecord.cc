@@ -38,13 +38,9 @@ using namespace hccl;
  * 该测试类用于验证HcommChannelNotifyRecord接口的基本功能。
  * 测试场景验证该接口在当前平台上的支持状态。
  */
-class UtAicpuTsHcommChannelNotifyRecord : public testing::Test
-{
+class UtAicpuTsHcommChannelNotifyRecord : public testing::Test {
 protected:
-    virtual void TearDown() override
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() override { GlobalMockObject::verify(); }
 
     std::vector<char> uniqueId;
     Hccl::UbTransportLiteImpl transportOnDevice{uniqueId};

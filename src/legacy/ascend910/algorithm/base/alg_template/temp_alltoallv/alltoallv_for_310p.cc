@@ -1,46 +1,43 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "alltoallv_for_310p.h"
 #include "alg_template_register.h"
 
 namespace hccl {
-AlltoAllVFor310P::AlltoAllVFor310P(const HcclDispatcher dispatcher)
-    : AlgTemplateBase(dispatcher)
-{
-}
+AlltoAllVFor310P::AlltoAllVFor310P(const HcclDispatcher dispatcher) : AlgTemplateBase(dispatcher) {}
 
 AlltoAllVFor310P::~AlltoAllVFor310P() {}
 
-HcclResult AlltoAllVFor310P::Prepare(DeviceMem &userInput, DeviceMem &userOutput, DeviceMem &cclInMem,
-    DeviceMem &cclOutMem, const std::vector<std::shared_ptr<LocalNotify>> &signalMainToSub,
-    const std::vector<std::shared_ptr<LocalNotify>> &signalSubToMain, Stream &mainStream,
-    std::vector<Stream> &subStreams, const std::vector<LINK> &links, u32 userRank, u32 userRankSize,
-    std::vector<SendRecvInfo> &allMeshAggregationSendRecvInfo)
+HcclResult AlltoAllVFor310P::Prepare(
+    DeviceMem& userInput, DeviceMem& userOutput, DeviceMem& cclInMem, DeviceMem& cclOutMem,
+    const std::vector<std::shared_ptr<LocalNotify>>& signalMainToSub,
+    const std::vector<std::shared_ptr<LocalNotify>>& signalSubToMain, Stream& mainStream,
+    std::vector<Stream>& subStreams, const std::vector<LINK>& links, u32 userRank, u32 userRankSize,
+    std::vector<SendRecvInfo>& allMeshAggregationSendRecvInfo)
 {
     mainStream_ = mainStream;
     subStream_ = subStreams;
     links_ = links;
     userRank_ = userRank;
     userRankSize_ = userRankSize;
-    CHK_PRT_RET(userRankSize_ == 0, HCCL_ERROR("[AlltoAllVFor310P][Prepare]userRankSize_ is zero."),
-        HCCL_E_PARA);
+    CHK_PRT_RET(userRankSize_ == 0, HCCL_ERROR("[AlltoAllVFor310P][Prepare]userRankSize_ is zero."), HCCL_E_PARA);
     allMeshAggregationSendRecvInfoPtr_ = &allMeshAggregationSendRecvInfo;
 
     userInput_ = userInput;
     userOutput_ = userOutput;
     cclInMem_ = cclInMem;
     cclOutMem_ = cclOutMem;
-    memList_.push_back(cclInMem_); // Id 0
-    memList_.push_back(cclOutMem_); // Id 1
-    memList_.push_back(userOutput_);  // Id 2
+    memList_.push_back(cclInMem_);   // Id 0
+    memList_.push_back(cclOutMem_);  // Id 1
+    memList_.push_back(userOutput_); // Id 2
 
     if (userRank_ % COMPUTE_CONST == 0) {
         mainRank_ = true;
@@ -58,13 +55,17 @@ HcclResult AlltoAllVFor310P::Prepare(DeviceMem &userInput, DeviceMem &userOutput
         }
     }
 
-    CHK_PRT_RET(signalMainToSub.size() != subStream_.size() || signalSubToMain.size() != subStream_.size(), 
-        HCCL_ERROR("[AlltoAllVFor310P][Prepare] Signal size not equal to subStream size, signalMainToSub.size[%llu]," 
-        "signalSubToMain.size[%llu], subStream_.size[%llu]", signalMainToSub.size(), signalSubToMain.size(), subStream_.size()),
+    CHK_PRT_RET(
+        signalMainToSub.size() != subStream_.size() || signalSubToMain.size() != subStream_.size(),
+        HCCL_ERROR(
+            "[AlltoAllVFor310P][Prepare] Signal size not equal to subStream size, signalMainToSub.size[%llu],"
+            "signalSubToMain.size[%llu], subStream_.size[%llu]",
+            signalMainToSub.size(), signalSubToMain.size(), subStream_.size()),
         HCCL_E_INTERNAL);
 
-    HCCL_DEBUG("userRank[%u], subStream.size[%zu], signalMainToSub.size[%zu], signalSubToMain.size[%zu]",
-        userRank_, subStream_.size(), signalMainToSub.size(), signalSubToMain.size());
+    HCCL_DEBUG(
+        "userRank[%u], subStream.size[%zu], signalMainToSub.size[%zu], signalSubToMain.size[%zu]", userRank_,
+        subStream_.size(), signalMainToSub.size(), signalSubToMain.size());
 
     for (u32 index = 0; index < signalMainToSub.size(); index++) {
         CHK_PTR_NULL(signalMainToSub[index]);
@@ -76,11 +77,10 @@ HcclResult AlltoAllVFor310P::Prepare(DeviceMem &userInput, DeviceMem &userOutput
         signalSubToMain_.push_back(signalSubToMain[index]);
     }
 
-    cclBlockSize_ = ((cclInMem.size() / COMPUTE_CONST) / ALIGN_CONST ) * ALIGN_CONST; // 除以128取整
+    cclBlockSize_ = ((cclInMem.size() / COMPUTE_CONST) / ALIGN_CONST) * ALIGN_CONST; // 除以128取整
     maxSizePerLoop_ = cclBlockSize_ - ALIGN_CONST;
 
-    CHK_PRT_RET(cclBlockSize_ == 0,
-        HCCL_ERROR("[AlltoAllVFor310P][Prepare]DataBlockSize_is zero."), HCCL_E_INTERNAL);
+    CHK_PRT_RET(cclBlockSize_ == 0, HCCL_ERROR("[AlltoAllVFor310P][Prepare]DataBlockSize_is zero."), HCCL_E_INTERNAL);
 
     return HCCL_SUCCESS;
 }
@@ -98,13 +98,13 @@ HcclResult AlltoAllVFor310P::WaitSubStreamFinish()
 {
     // 从流通知主流做完
     for (u32 streamIndex = 0; streamIndex < subStream_.size(); streamIndex++) {
-        CHK_RET(LocalNotify::Post(subStream_[streamIndex], dispatcher_, signalMainToSub_[streamIndex],
-            INVALID_VALUE_STAGE));
-        CHK_RET(LocalNotify::Wait(mainStream_, dispatcher_, signalMainToSub_[streamIndex],
-            INVALID_VALUE_STAGE));
+        CHK_RET(LocalNotify::Post(
+            subStream_[streamIndex], dispatcher_, signalMainToSub_[streamIndex], INVALID_VALUE_STAGE));
+        CHK_RET(LocalNotify::Wait(mainStream_, dispatcher_, signalMainToSub_[streamIndex], INVALID_VALUE_STAGE));
     }
-    HCCL_DEBUG("[AlltoAllVFor310P][WaitSubStreamFinish] userRank [%u] main stream wait stream [%s]",
-        userRank_, GetStreamIndexString().c_str());
+    HCCL_DEBUG(
+        "[AlltoAllVFor310P][WaitSubStreamFinish] userRank [%u] main stream wait stream [%s]", userRank_,
+        GetStreamIndexString().c_str());
     return HCCL_SUCCESS;
 }
 
@@ -112,15 +112,17 @@ HcclResult AlltoAllVFor310P::NotifySubStreamStart()
 {
     for (u32 streamIndex = 0; streamIndex < subStream_.size(); streamIndex++) {
         CHK_RET(LocalNotify::Post(mainStream_, dispatcher_, signalSubToMain_[streamIndex], INVALID_VALUE_STAGE));
-        CHK_RET(LocalNotify::Wait(subStream_[streamIndex], dispatcher_, signalSubToMain_[streamIndex],
-            INVALID_VALUE_STAGE));
+        CHK_RET(LocalNotify::Wait(
+            subStream_[streamIndex], dispatcher_, signalSubToMain_[streamIndex], INVALID_VALUE_STAGE));
     }
-    HCCL_DEBUG("[AlltoAllVFor310P][NotifySubStreamStart] userRank [%u] main stream notify sdma stream [%s]",
-        userRank_, GetStreamIndexString().c_str());
+    HCCL_DEBUG(
+        "[AlltoAllVFor310P][NotifySubStreamStart] userRank [%u] main stream notify sdma stream [%s]", userRank_,
+        GetStreamIndexString().c_str());
     return HCCL_SUCCESS;
 }
 
-HcclResult AlltoAllVFor310P::CalcSendInfo(const u32 srcDataRank, const u32 dstDataRank, const u32 times, const u64 subStepLen, SendMemBlock &sendInfo)
+HcclResult AlltoAllVFor310P::CalcSendInfo(
+    const u32 srcDataRank, const u32 dstDataRank, const u32 times, const u64 subStepLen, SendMemBlock& sendInfo) const
 {
     const std::vector<u64>& sendLength = (*allMeshAggregationSendRecvInfoPtr_)[srcDataRank].sendLength;
     const std::vector<u64>& sendOffset = (*allMeshAggregationSendRecvInfoPtr_)[srcDataRank].sendOffset;
@@ -132,18 +134,22 @@ HcclResult AlltoAllVFor310P::CalcSendInfo(const u32 srcDataRank, const u32 dstDa
         sendLen = leftLen > subStepLen ? subStepLen : leftLen;
         sendInfo.userInOffset = sendOffset[dstDataRank] + times * maxSizePerLoop_;
     } else {
-        sendInfo.userInOffset = sendOffset[dstDataRank] + sendLength[dstDataRank]; // 已经发完了，offset变成最大值，sendLen为0
+        sendInfo.userInOffset
+            = sendOffset[dstDataRank] + sendLength[dstDataRank]; // 已经发完了，offset变成最大值，sendLen为0
     }
     sendInfo.dstRank = dstDataRank;
     sendInfo.sendLen = sendLen;
     sendInfo.cclDstOffset = (recvOffset[srcDataRank] + times * maxSizePerLoop_) % ALIGN_CONST;
-    HCCL_DEBUG("[AlltoAllVFor310P] [CalcSendInfo]srcDataRank[%u], dstDataRank[%u], times[%u], subStepLen[%llu], sendLen[%llu], userInOffset[%llu], cclDstOffset[%llu]",
+    HCCL_DEBUG(
+        "[AlltoAllVFor310P] [CalcSendInfo]srcDataRank[%u], dstDataRank[%u], times[%u], subStepLen[%llu], "
+        "sendLen[%llu], userInOffset[%llu], cclDstOffset[%llu]",
         srcDataRank, dstDataRank, times, subStepLen, sendInfo.sendLen, sendInfo.userInOffset, sendInfo.cclDstOffset);
 
     return HCCL_SUCCESS;
 }
 
-HcclResult AlltoAllVFor310P::CalcRecvInfo(const u32 srcDataRank, const u32 dstDataRank, const u32 times, const u64 subStepLen, RecvMemBlock &recvInfo)
+HcclResult AlltoAllVFor310P::CalcRecvInfo(
+    const u32 srcDataRank, const u32 dstDataRank, const u32 times, const u64 subStepLen, RecvMemBlock& recvInfo) const
 {
     const std::vector<u64>& recvLength = (*allMeshAggregationSendRecvInfoPtr_)[dstDataRank].recvLength;
     const std::vector<u64>& recvOffset = (*allMeshAggregationSendRecvInfoPtr_)[dstDataRank].recvOffset;
@@ -154,12 +160,15 @@ HcclResult AlltoAllVFor310P::CalcRecvInfo(const u32 srcDataRank, const u32 dstDa
         recvLen = leftLen > subStepLen ? subStepLen : leftLen;
         recvInfo.userOutOffset = recvOffset[srcDataRank] + times * maxSizePerLoop_;
     } else {
-        recvInfo.userOutOffset = recvOffset[srcDataRank] + recvLength[srcDataRank]; // 已经收完了，offset变成最大值，recvLen为0
+        recvInfo.userOutOffset
+            = recvOffset[srcDataRank] + recvLength[srcDataRank]; // 已经收完了，offset变成最大值，recvLen为0
     }
     recvInfo.srcRank = srcDataRank;
     recvInfo.recvLen = recvLen;
-    recvInfo.cclSrcOffset = (recvOffset[srcDataRank]  + times * maxSizePerLoop_) % ALIGN_CONST;
-    HCCL_DEBUG("[AlltoAllVFor310P] [CalcRecvInfo]dstDataRank[%u], srcDataRank[%u], times[%u], subStepLen[%llu], recvLen[%llu], userOutOffset[%llu], cclSrcOffset[%llu]",
+    recvInfo.cclSrcOffset = (recvOffset[srcDataRank] + times * maxSizePerLoop_) % ALIGN_CONST;
+    HCCL_DEBUG(
+        "[AlltoAllVFor310P] [CalcRecvInfo]dstDataRank[%u], srcDataRank[%u], times[%u], subStepLen[%llu], "
+        "recvLen[%llu], userOutOffset[%llu], cclSrcOffset[%llu]",
         dstDataRank, srcDataRank, times, subStepLen, recvInfo.recvLen, recvInfo.userOutOffset, recvInfo.cclSrcOffset);
 
     return HCCL_SUCCESS;
@@ -173,8 +182,9 @@ HcclResult AlltoAllVFor310P::MainFirstLocalCopy(const u32 times, const u32 round
         CHK_RET(CalcSendInfo(userRank_, myMinor_, times, subStepLen, sendData0));
         DeviceMem src0 = userInput_.range(sendData0.userInOffset, sendData0.sendLen);
         DeviceMem dst0 = cclInMem_.range(sendData0.cclDstOffset, sendData0.sendLen);
-        HCCL_DEBUG("[AlltoAllVFor310P] rank[%u] localCopy to cclIn, src.Offset [%llu], dst.Offset[%llu], len[%llu]",
-            userRank_, sendData0.userInOffset, sendData0.cclDstOffset, sendData0.sendLen);
+        HCCL_DEBUG(
+            "[AlltoAllVFor310P] rank[%u] localCopy to cclIn, src.Offset [%llu], dst.Offset[%llu], len[%llu]", userRank_,
+            sendData0.userInOffset, sendData0.cclDstOffset, sendData0.sendLen);
         CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dst0, src0, mainStream_));
     }
 
@@ -183,8 +193,9 @@ HcclResult AlltoAllVFor310P::MainFirstLocalCopy(const u32 times, const u32 round
     CHK_RET(CalcSendInfo(userRank_, rightMinor_, times, subStepLen, sendData1));
     DeviceMem src1 = userInput_.range(sendData1.userInOffset, sendData1.sendLen);
     DeviceMem dst1 = cclInMem_.range(cclBlockSize_ + sendData1.cclDstOffset, sendData1.sendLen);
-    HCCL_DEBUG("[AlltoAllVFor310P] rank[%u] localCopy to cclIn, src.Offset [%llu], dst.Offset[%llu], len[%llu]",
-        userRank_, sendData1.userInOffset, cclBlockSize_ + sendData1.cclDstOffset, sendData1.sendLen);
+    HCCL_DEBUG(
+        "[AlltoAllVFor310P] rank[%u] localCopy to cclIn, src.Offset [%llu], dst.Offset[%llu], len[%llu]", userRank_,
+        sendData1.userInOffset, cclBlockSize_ + sendData1.cclDstOffset, sendData1.sendLen);
     CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dst1, src1, mainStream_));
 
     HCCL_DEBUG("[AlltoAllVFor310P] MainFirstLocalCopy finish.");
@@ -193,14 +204,15 @@ HcclResult AlltoAllVFor310P::MainFirstLocalCopy(const u32 times, const u32 round
 
 HcclResult AlltoAllVFor310P::MinorFirstLocalCopy(const u32 times, const u32 roundIdx, const u64 subStepLen)
 {
-    (void) roundIdx;
+    (void)roundIdx;
     // 给右次卡的数据
     SendMemBlock sendData;
     CHK_RET(CalcSendInfo(userRank_, rightMinor_, times, subStepLen, sendData));
     DeviceMem src = userInput_.range(sendData.userInOffset, sendData.sendLen);
     DeviceMem dst = cclInMem_.range(sendData.cclDstOffset, sendData.sendLen);
-    HCCL_DEBUG("[AlltoAllVFor310P] rank[%u] localCopy to cclIn, src.Offset [%llu], dst.Offset[%llu], len[%llu]",
-        userRank_, sendData.userInOffset, sendData.cclDstOffset, sendData.sendLen);
+    HCCL_DEBUG(
+        "[AlltoAllVFor310P] rank[%u] localCopy to cclIn, src.Offset [%llu], dst.Offset[%llu], len[%llu]", userRank_,
+        sendData.userInOffset, sendData.cclDstOffset, sendData.sendLen);
     CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dst, src, mainStream_));
 
     return HCCL_SUCCESS;
@@ -208,12 +220,13 @@ HcclResult AlltoAllVFor310P::MinorFirstLocalCopy(const u32 times, const u32 roun
 
 HcclResult AlltoAllVFor310P::RunAlltoAllVFor310P()
 {
-    u32 roundNum = userRankSize_ == DUO_RANK_NUM ? 1 : DUO_RANK_NUM -1;
+    u32 roundNum = userRankSize_ == DUO_RANK_NUM ? 1 : DUO_RANK_NUM - 1;
     u64 remainLen = CalcMaxSendLength();
     u64 subStepLen = std::min(remainLen, maxSizePerLoop_);
-    u32 totalTimes =  (remainLen + subStepLen - 1 ) / subStepLen;
-    HCCL_INFO("[AlltoAllVFor310P] roundNum[%u], maxLength[%llu], subStepLen[%llu], totalTimes[%u]",
-        roundNum, remainLen, subStepLen, totalTimes);
+    u32 totalTimes = (remainLen + subStepLen - 1) / subStepLen;
+    HCCL_INFO(
+        "[AlltoAllVFor310P] roundNum[%u], maxLength[%llu], subStepLen[%llu], totalTimes[%u]", roundNum, remainLen,
+        subStepLen, totalTimes);
     for (u32 times = 0; times < totalTimes && remainLen > 0; times++) {
         subStepLen = std::min(remainLen, maxSizePerLoop_);
         for (u32 roundIdx = 0; roundIdx < roundNum; roundIdx++) {
@@ -257,12 +270,14 @@ HcclResult AlltoAllVFor310P::UpdateSendRecvRankInfo(const u32 roundIdx, const u3
     } else if (stepIdx > THIRD_STEP && mainRank_) {
         sendRecvRankInfo_.push_back(std::make_pair(rightMain_, leftMain_));
     }
-    HCCL_DEBUG("[AlltoAllVFor310P][UpdateSendRecvRankInfo] update send/recv rank finished, roundIdx[%u], stepIdx[%u]"
-        , roundIdx, stepIdx);
+    HCCL_DEBUG(
+        "[AlltoAllVFor310P][UpdateSendRecvRankInfo] update send/recv rank finished, roundIdx[%u], stepIdx[%u]",
+        roundIdx, stepIdx);
     return HCCL_SUCCESS;
 }
 
-HcclResult AlltoAllVFor310P::RunMainCommonSteps(const u32 times, const u32 roundIdx, const u32 stepIdx, const u64 subStepLen)
+HcclResult
+AlltoAllVFor310P::RunMainCommonSteps(const u32 times, const u32 roundIdx, const u32 stepIdx, const u64 subStepLen)
 {
     UpdateMainStepMemInfo(roundIdx, stepIdx);
     if (stepIdx == THIRD_STEP) {
@@ -271,7 +286,8 @@ HcclResult AlltoAllVFor310P::RunMainCommonSteps(const u32 times, const u32 round
         CHK_RET(CalcSendInfo(userRank_, rightMain_, times, subStepLen, sendData));
         DeviceMem src = userInput_.range(sendData.userInOffset, sendData.sendLen);
         DeviceMem dst = cclOutMem_.range(sendData.cclDstOffset, sendData.sendLen);
-        HCCL_DEBUG("[AlltoAllVFor310P] rank[%u] localCopy to cclOut, src.Offset [%llu], dst.Offset[%llu], len[%llu]",
+        HCCL_DEBUG(
+            "[AlltoAllVFor310P] rank[%u] localCopy to cclOut, src.Offset [%llu], dst.Offset[%llu], len[%llu]",
             userRank_, sendData.userInOffset, sendData.cclDstOffset, sendData.sendLen);
         CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dst, src, mainStream_));
     }
@@ -288,14 +304,15 @@ HcclResult AlltoAllVFor310P::RunMainCommonSteps(const u32 times, const u32 round
     CHK_PTR_NULL(readMinorTransport);
     void* remMemPtr0 = nullptr;
     CHK_RET(readMinorTransport->GetRemoteMem(mainStepInfo_.srcMemType, &remMemPtr0));
-    DeviceMem remoteMem0 = DeviceMem::create(static_cast<u8 *>(remMemPtr0), memList_[mainStepInfo_.srcBuffId].size());
+    DeviceMem remoteMem0 = DeviceMem::create(static_cast<u8*>(remMemPtr0), memList_[mainStepInfo_.srcBuffId].size());
     DeviceMem src0 = remoteMem0.range(recvData0.cclSrcOffset, recvData0.recvLen);
     DeviceMem dst0 = memList_[mainStepInfo_.dstBuffId].range(dstOffset, recvData0.recvLen);
-    HCCL_DEBUG("[AlltoAllVFor310P] rank[%u] Memcpy to rank[%u], src.Offset [%llu], dst.Offset[%llu], len[%llu]",
-            sendRecvRankInfo_[1].second, userRank_, recvData0.cclSrcOffset, dstOffset,
-            recvData0.recvLen);
-    CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dst0, src0, subStream_[1],
-            readMinorTransport->GetRemoteRank(), readMinorTransport->GetLinkType()));
+    HCCL_DEBUG(
+        "[AlltoAllVFor310P] rank[%u] Memcpy to rank[%u], src.Offset [%llu], dst.Offset[%llu], len[%llu]",
+        sendRecvRankInfo_[1].second, userRank_, recvData0.cclSrcOffset, dstOffset, recvData0.recvLen);
+    CHK_RET(HcclD2DMemcpyAsync(
+        dispatcher_, dst0, src0, subStream_[1], readMinorTransport->GetRemoteRank(),
+        readMinorTransport->GetLinkType()));
 
     RecvMemBlock recvData1;
     CHK_RET(CalcRecvInfo(mainStepInfo_.readMain.first, mainStepInfo_.readMain.second, times, subStepLen, recvData1));
@@ -308,21 +325,21 @@ HcclResult AlltoAllVFor310P::RunMainCommonSteps(const u32 times, const u32 round
     CHK_PTR_NULL(readMainTransport);
     void* remMemPtr1 = nullptr;
     CHK_RET(readMainTransport->GetRemoteMem(mainStepInfo_.srcMemType, &remMemPtr1));
-    DeviceMem remoteMem1 = DeviceMem::create(static_cast<u8 *>(remMemPtr1), memList_[mainStepInfo_.srcBuffId].size());
+    DeviceMem remoteMem1 = DeviceMem::create(static_cast<u8*>(remMemPtr1), memList_[mainStepInfo_.srcBuffId].size());
     DeviceMem src1 = remoteMem1.range(cclBlockSize_ + recvData1.cclSrcOffset, recvData1.recvLen);
     DeviceMem dst1 = memList_[mainStepInfo_.dstBuffId].range(dstOffset, recvData1.recvLen);
-    HCCL_DEBUG("[AlltoAllVFor310P] rank[%u] Memcpy to rank[%u], src.Offset [%llu], dst.Offset[%llu], len[%llu]",
-        sendRecvRankInfo_[0].second, userRank_, cclBlockSize_ + recvData1.cclSrcOffset, dstOffset,
-        recvData1.recvLen);
-    CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dst1, src1, subStream_[0],
-                readMainTransport->GetRemoteRank(), readMainTransport->GetLinkType()));
+    HCCL_DEBUG(
+        "[AlltoAllVFor310P] rank[%u] Memcpy to rank[%u], src.Offset [%llu], dst.Offset[%llu], len[%llu]",
+        sendRecvRankInfo_[0].second, userRank_, cclBlockSize_ + recvData1.cclSrcOffset, dstOffset, recvData1.recvLen);
+    CHK_RET(HcclD2DMemcpyAsync(
+        dispatcher_, dst1, src1, subStream_[0], readMainTransport->GetRemoteRank(), readMainTransport->GetLinkType()));
     HCCL_DEBUG("[AlltoAllVFor310P] RunMainStep %u finish.", stepIdx);
     return HCCL_SUCCESS;
 }
 
 void AlltoAllVFor310P::UpdateMainStepMemInfo(const u32 roundIdx, const u32 stepIdx)
 {
-    (void) roundIdx;
+    (void)roundIdx;
     if (stepIdx % COMPUTE_CONST == 1) {
         mainStepInfo_.srcBuffId = 0;
         mainStepInfo_.srcMemType = UserMemType::INPUT_MEM;
@@ -352,11 +369,12 @@ HcclResult AlltoAllVFor310P::RunMainStep4(const u32 times, const u64 subStepLen)
     CHK_RET(CalcSendInfo(userRank_, userRank_, times, subStepLen, sendDataLocal));
     RecvMemBlock recvDataLocal;
     CHK_RET(CalcRecvInfo(userRank_, userRank_, times, subStepLen, recvDataLocal));
-    
+
     DeviceMem src0 = userInput_.range(sendDataLocal.userInOffset, sendDataLocal.sendLen);
     DeviceMem dst0 = userOutput_.range(recvDataLocal.userOutOffset, recvDataLocal.recvLen);
-    HCCL_DEBUG("[AlltoAllVFor310P] rank[%u] localCopy to userOut, src.Offset [%llu], dst.Offset[%llu], len[%llu]",
-        userRank_, sendDataLocal.userInOffset, recvDataLocal.userOutOffset, recvDataLocal.recvLen);
+    HCCL_DEBUG(
+        "[AlltoAllVFor310P] rank[%u] localCopy to userOut, src.Offset [%llu], dst.Offset[%llu], len[%llu]", userRank_,
+        sendDataLocal.userInOffset, recvDataLocal.userOutOffset, recvDataLocal.recvLen);
     CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dst0, src0, mainStream_));
 
     // 读其他主卡的数据到usrOut
@@ -366,13 +384,14 @@ HcclResult AlltoAllVFor310P::RunMainStep4(const u32 times, const u64 subStepLen)
     CHK_PTR_NULL(readMainTransport);
     void* remMemPtr = nullptr;
     CHK_RET(readMainTransport->GetRemoteMem(UserMemType::OUTPUT_MEM, &remMemPtr));
-    DeviceMem remoteCCLInMem = DeviceMem::create(static_cast<u8 *>(remMemPtr), cclOutMem_.size());
+    DeviceMem remoteCCLInMem = DeviceMem::create(static_cast<u8*>(remMemPtr), cclOutMem_.size());
     DeviceMem src1 = remoteCCLInMem.range(recvData.cclSrcOffset, recvData.recvLen);
     DeviceMem dst1 = userOutput_.range(recvData.userOutOffset, recvData.recvLen);
-    HCCL_DEBUG("[AlltoAllVFor310P] rank[%u] Memcpy to rank[%u] userOut, src.Offset [%llu], dst.Offset[%llu], len[%llu]",
+    HCCL_DEBUG(
+        "[AlltoAllVFor310P] rank[%u] Memcpy to rank[%u] userOut, src.Offset [%llu], dst.Offset[%llu], len[%llu]",
         sendRecvRankInfo_[0].second, userRank_, recvData.cclSrcOffset, recvData.userOutOffset, recvData.recvLen);
-    CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dst1, src1, subStream_[0],
-                readMainTransport->GetRemoteRank(), readMainTransport->GetLinkType()));
+    CHK_RET(HcclD2DMemcpyAsync(
+        dispatcher_, dst1, src1, subStream_[0], readMainTransport->GetRemoteRank(), readMainTransport->GetLinkType()));
     HCCL_DEBUG("[AlltoAllVFor310P] RunMainStep 4 finish.");
     return HCCL_SUCCESS;
 }
@@ -390,7 +409,8 @@ u64 AlltoAllVFor310P::CalcMaxSendLength()
     return maxSendDataLen;
 }
 
-HcclResult AlltoAllVFor310P::RunMainSendRecvBuffer(const u32 times, const u32 roundIdx, const u32 stepIdx, const u64 subStepLen)
+HcclResult
+AlltoAllVFor310P::RunMainSendRecvBuffer(const u32 times, const u32 roundIdx, const u32 stepIdx, const u64 subStepLen)
 {
     // 读次卡的都用从流1，读主卡的都用从流0
     if (stepIdx == 0) {
@@ -424,7 +444,8 @@ HcclResult AlltoAllVFor310P::RunMainSendRecvBuffer(const u32 times, const u32 ro
     return HCCL_SUCCESS;
 }
 
-HcclResult AlltoAllVFor310P::RunMinorSendRecvBuffer(const u32 times, const u32 roundIdx, const u32 stepIdx, const u64 subStepLen)
+HcclResult
+AlltoAllVFor310P::RunMinorSendRecvBuffer(const u32 times, const u32 roundIdx, const u32 stepIdx, const u64 subStepLen)
 {
     if (stepIdx == 0) {
         CHK_RET(MinorFirstLocalCopy(times, roundIdx, subStepLen));
@@ -448,7 +469,7 @@ HcclResult AlltoAllVFor310P::RunMinorSendRecvBuffer(const u32 times, const u32 r
 
 void AlltoAllVFor310P::UpdateMinorStepMemInfo(const u32 roundIdx, const u32 stepIdx)
 {
-    (void) roundIdx;
+    (void)roundIdx;
     if (stepIdx % COMPUTE_CONST == 1) {
         minorStepInfo_.srcBuffId = 0; // 读主卡的src buffer
         minorStepInfo_.srcMemType = UserMemType::INPUT_MEM;
@@ -469,34 +490,36 @@ void AlltoAllVFor310P::UpdateMinorStepMemInfo(const u32 roundIdx, const u32 step
     }
 }
 
-HcclResult AlltoAllVFor310P::RunMinorCommonSteps(const u32 times, const u32 roundIdx, const u32 stepIdx, const u64 subStepLen)
+HcclResult
+AlltoAllVFor310P::RunMinorCommonSteps(const u32 times, const u32 roundIdx, const u32 stepIdx, const u64 subStepLen)
 {
     UpdateMinorStepMemInfo(roundIdx, stepIdx);
     if (stepIdx != THIRD_STEP) {
         SendMemBlock sendData;
-        CHK_RET(CalcSendInfo(minorStepInfo_.readMinor.first, minorStepInfo_.readMinor.second,
-            times, subStepLen, sendData));
+        CHK_RET(
+            CalcSendInfo(minorStepInfo_.readMinor.first, minorStepInfo_.readMinor.second, times, subStepLen, sendData));
         DeviceMem src = userInput_.range(sendData.userInOffset, sendData.sendLen);
         DeviceMem dst = memList_[minorStepInfo_.dstBuffId].range(sendData.cclDstOffset, sendData.sendLen);
-        HCCL_DEBUG("[AlltoAllVFor310P] rank[%u] localcopy, src.Offset [%llu], dst.Offset[%llu], len[%llu]",
-                userRank_, sendData.userInOffset, sendData.cclDstOffset, sendData.sendLen);
+        HCCL_DEBUG(
+            "[AlltoAllVFor310P] rank[%u] localcopy, src.Offset [%llu], dst.Offset[%llu], len[%llu]", userRank_,
+            sendData.userInOffset, sendData.cclDstOffset, sendData.sendLen);
         CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dst, src, mainStream_));
     }
 
     RecvMemBlock recvData;
-    CHK_RET(CalcRecvInfo(minorStepInfo_.readMain.first, minorStepInfo_.readMain.second,
-        times, subStepLen, recvData));
+    CHK_RET(CalcRecvInfo(minorStepInfo_.readMain.first, minorStepInfo_.readMain.second, times, subStepLen, recvData));
     const LINK& readMainTransport = links_[sendRecvRankInfo_[0].second];
     CHK_PTR_NULL(readMainTransport);
     void* remMemPtr = nullptr;
     CHK_RET(readMainTransport->GetRemoteMem(minorStepInfo_.srcMemType, &remMemPtr));
-    DeviceMem remoteMem = DeviceMem::create(static_cast<u8 *>(remMemPtr), memList_[minorStepInfo_.srcBuffId].size());
+    DeviceMem remoteMem = DeviceMem::create(static_cast<u8*>(remMemPtr), memList_[minorStepInfo_.srcBuffId].size());
     DeviceMem src0 = remoteMem.range(recvData.cclSrcOffset, recvData.recvLen);
     DeviceMem dst0 = userOutput_.range(recvData.userOutOffset, recvData.recvLen);
-    HCCL_DEBUG("[AlltoAllVFor310P] rank[%u] Memcpy to rank[%u] userOut, src.Offset [%llu], dst.Offset[%llu], len[%llu]",
+    HCCL_DEBUG(
+        "[AlltoAllVFor310P] rank[%u] Memcpy to rank[%u] userOut, src.Offset [%llu], dst.Offset[%llu], len[%llu]",
         sendRecvRankInfo_[0].second, userRank_, recvData.cclSrcOffset, recvData.userOutOffset, recvData.recvLen);
-    CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dst0, src0, subStream_[0],
-                readMainTransport->GetRemoteRank(), readMainTransport->GetLinkType()));
+    CHK_RET(HcclD2DMemcpyAsync(
+        dispatcher_, dst0, src0, subStream_[0], readMainTransport->GetRemoteRank(), readMainTransport->GetLinkType()));
     HCCL_DEBUG("[AlltoAllVFor310P] RunMinorStep %u finish.", stepIdx);
 
     return HCCL_SUCCESS;
@@ -508,21 +531,23 @@ HcclResult AlltoAllVFor310P::RunMinorStep4(const u32 times, const u64 subStepLen
     CHK_RET(CalcSendInfo(userRank_, userRank_, times, subStepLen, sendDataLocal));
     RecvMemBlock recvDataLocal;
     CHK_RET(CalcRecvInfo(userRank_, userRank_, times, subStepLen, recvDataLocal));
-    
+
     DeviceMem src = userInput_.range(sendDataLocal.userInOffset, sendDataLocal.sendLen);
     DeviceMem dst = userOutput_.range(recvDataLocal.userOutOffset, recvDataLocal.recvLen);
-    HCCL_DEBUG("[AlltoAllVFor310P] rank[%u] localCopy to userOut, src.Offset [%llu], dst.Offset[%llu], len[%llu]",
-        userRank_, sendDataLocal.userInOffset, recvDataLocal.userOutOffset, recvDataLocal.recvLen);
+    HCCL_DEBUG(
+        "[AlltoAllVFor310P] rank[%u] localCopy to userOut, src.Offset [%llu], dst.Offset[%llu], len[%llu]", userRank_,
+        sendDataLocal.userInOffset, recvDataLocal.userOutOffset, recvDataLocal.recvLen);
     CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dst, src, mainStream_));
     HCCL_DEBUG("[AlltoAllVFor310P] RunMinorStep 4 finish.");
     return HCCL_SUCCESS;
 }
 
-HcclResult AlltoAllVFor310P::RunSendRecvBuffer(const u32 times, const u32 roundIdx, const u32 stepIdx, const u64 subStepLen)
+HcclResult
+AlltoAllVFor310P::RunSendRecvBuffer(const u32 times, const u32 roundIdx, const u32 stepIdx, const u64 subStepLen)
 {
     // 读次卡的都用从流0，读主卡的都用从流1
-    HCCL_INFO("[AlltoAllVFor310P] RunSendRecvBuffer start, times[%u], roundIdx[%u], stepIdx[%u]",
-        times, roundIdx, stepIdx);
+    HCCL_INFO(
+        "[AlltoAllVFor310P] RunSendRecvBuffer start, times[%u], roundIdx[%u], stepIdx[%u]", times, roundIdx, stepIdx);
     if (mainRank_) {
         CHK_RET(RunMainSendRecvBuffer(times, roundIdx, stepIdx, subStepLen));
     } else {
@@ -541,5 +566,5 @@ HcclResult AlltoAllVFor310P::RunAsync()
     return HCCL_SUCCESS;
 }
 REGISTER_TEMPLATE(TemplateType::TEMPLATE_ALL_2_ALL_V_FOR310P, AlltoAllVFor310P);
-    // namespace hccl
-}
+// namespace hccl
+} // namespace hccl

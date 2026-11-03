@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef BKF_TABLE_H
 #define BKF_TABLE_H
 
@@ -25,23 +24,23 @@ extern "C" {
 #pragma pack(4)
 
 /**
-* @brief table初始化参数
-*/
+ * @brief table初始化参数
+ */
 typedef struct tagBkfTableInitArg {
     BkfMemMng *memMng; /**< 内存库句柄,@see bkf_mem.h,同一app内可复用 */
-    uint32_t keyLen; /**< 业务数据key长度 */
-    uint32_t valLen; /**< 业务数据val长度 */
-    F_BKF_CMP keyCmp; /**< 业务key比较接口 */
+    uint32_t keyLen;   /**< 业务数据key长度 */
+    uint32_t valLen;   /**< 业务数据val长度 */
+    F_BKF_CMP keyCmp;  /**< 业务key比较接口 */
 } BkfTableInitArg;
 
 /**
-* @brief table句柄，具体实现后续放到到c文件中
-*/
+ * @brief table句柄，具体实现后续放到到c文件中
+ */
 typedef struct tagBkfTableMng BkfTableMng;
 
 /**
-* @brief 获取table存放信息
-*/
+ * @brief 获取table存放信息
+ */
 typedef struct tagBkfTableInfo {
     void *key; /**< 业务数据key指针 */
     void *val; /**< 业务数据val指针 */
@@ -72,7 +71,6 @@ void BkfTableUnInit(BkfTableMng *tableMng);
  * @return 无
  */
 void BkfTableDelAll(BkfTableMng *tableMng);
-
 
 /**
  * @brief 获取业务数据的个数

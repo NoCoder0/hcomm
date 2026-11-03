@@ -33,10 +33,7 @@ using namespace Hccl;
 
 class UbTransportLiteImplWaitWithTimeoutTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "UbTransportLiteImplWaitWithTimeoutTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "UbTransportLiteImplWaitWithTimeoutTest tests set up." << std::endl; }
 
     static void TearDownTestCase()
     {
@@ -46,8 +43,14 @@ protected:
     virtual void SetUp()
     {
         MOCKER(HrtGetDeviceType).stubs().will(returnValue((DevType)DevType::DEV_TYPE_910A2));
-        MOCKER_CPP(&RtsqBase::QuerySqBaseAddr).stubs().with(mockcpp::any()).will(returnValue(reinterpret_cast<u64>(&mockSq)));
-        MOCKER_CPP(&RtsqBase::QuerySqDepth).stubs().with(mockcpp::any()).will(returnValue(static_cast<u32>(AC_SQE_MAX_CNT)));
+        MOCKER_CPP(&RtsqBase::QuerySqBaseAddr)
+            .stubs()
+            .with(mockcpp::any())
+            .will(returnValue(reinterpret_cast<u64>(&mockSq)));
+        MOCKER_CPP(&RtsqBase::QuerySqDepth)
+            .stubs()
+            .with(mockcpp::any())
+            .will(returnValue(static_cast<u32>(AC_SQE_MAX_CNT)));
         MOCKER_CPP(&RtsqBase::QuerySqStatusByType).stubs().with(mockcpp::any()).will(returnValue(static_cast<u32>(0)));
         MOCKER_CPP(&RtsqBase::ConfigSqStatusByType).stubs();
         std::cout << "A Test case in UbTransportLiteImplWaitWithTimeoutTest SetUp" << std::endl;
@@ -87,18 +90,18 @@ protected:
         // 数据格式需与 UbConnLiteParam 构造函数保持一致:
         // dieId(u32), funcId(u32), jettyId(u32), jfcPollMode(u32), dwqeCacheLocked(bool),
         // dbAddr(u64), sqCiAddr(u64), sqVa(u64), sqDepth(u32), tpn(u32), rmtEid.raw, locEid.raw
-        u32  dieId           = 0;
-        u32  funcId          = 0;
-        u32  jettyId         = 0;
-        u32  jfcPollMode     = 0;
+        u32 dieId = 0;
+        u32 funcId = 0;
+        u32 jettyId = 0;
+        u32 jfcPollMode = 0;
         bool dwqeCacheLocked = false;
-        u64  dbAddr          = 0x100;
-        u64  sqCiAddr        = 0x200;
-        u64  sqVa            = 0x100;
-        u32  sqDepth         = 100;
-        u32  tpn             = 100;
-        Eid  rmtEid;
-        Eid  locEid;
+        u64 dbAddr = 0x100;
+        u64 sqCiAddr = 0x200;
+        u64 sqVa = 0x100;
+        u32 sqDepth = 100;
+        u32 tpn = 100;
+        Eid rmtEid;
+        Eid locEid;
 
         BinaryStream binaryStream;
         binaryStream << dieId;
@@ -133,7 +136,7 @@ protected:
         u32 rmtbufferNum = 2;
 
         auto conn0 = GetConnUniqueId();
-        u32  connNum = 1;
+        u32 connNum = 1;
 
         BinaryStream binaryStream;
 
@@ -154,6 +157,9 @@ protected:
         data1.insert(data1.end(), rmtNotify1.begin(), rmtNotify1.end());
         binaryStream << data1;
 
+        std::vector<char> emptyData;
+        binaryStream << emptyData; // locBufferUniqueIds
+
         std::vector<char> data2;
         data2.insert(data2.end(), rmtBuffer0.begin(), rmtBuffer0.end());
         data2.insert(data2.end(), rmtBuffer1.begin(), rmtBuffer1.end());
@@ -168,7 +174,7 @@ protected:
         return liteData;
     }
 
-    u8  mockSq[64];
+    u8 mockSq[64];
 };
 
 TEST_F(UbTransportLiteImplWaitWithTimeoutTest, UbTransportLiteImpl_WaitWithTimeout_Normal_Success)
@@ -176,19 +182,19 @@ TEST_F(UbTransportLiteImplWaitWithTimeoutTest, UbTransportLiteImpl_WaitWithTimeo
     std::vector<char> liteData = BuildUbTransportLiteUniqueId();
 
     RmaConnLite rmaConnLite;
-    RmaConnLite *connLite =  &rmaConnLite;
+    RmaConnLite* connLite = &rmaConnLite;
     MOCKER_CPP(&UbConnLiteMgr::Get).stubs().will(returnValue(connLite));
 
-    auto callback = [](u32 streamId, u32 taskId, const Hccl::TaskParam &taskParam) {
+    auto callback = [](u32 streamId, u32 taskId, const Hccl::TaskParam& taskParam) {
         (void)streamId;
         (void)taskId;
         (void)taskParam;
     };
     MemTransportLite transportLite(liteData, callback);
-    auto &ubTransportLite = *(dynamic_cast<UbTransportLiteImpl *>(transportLite.impl.get()));
+    auto& ubTransportLite = *(dynamic_cast<UbTransportLiteImpl*>(transportLite.impl.get()));
 
     u32 fakeStreamId = 1;
-    u32 fakeSqId     = 1;
+    u32 fakeSqId = 1;
     u32 fakedevPhyId = 1;
     BinaryStream liteBinaryStream;
     liteBinaryStream << fakeStreamId;
@@ -198,8 +204,8 @@ TEST_F(UbTransportLiteImplWaitWithTimeoutTest, UbTransportLiteImpl_WaitWithTimeo
     liteBinaryStream.Dump(uniqueId);
 
     StreamLite stream(uniqueId);
-    RtsqA5     rtsq(fakedevPhyId, fakeStreamId, fakeSqId);
-    stream.rtsq = std::make_unique<RtsqA5>(rtsq);
+    stream.rtsq = std::make_unique<RtsqA5>(fakedevPhyId, fakeStreamId, fakeSqId);
+    RtsqA5& rtsq = *static_cast<RtsqA5*>(stream.rtsq.get());
 
     u32 timeout = 1800;
     EXPECT_NO_THROW(ubTransportLite.WaitWithTimeout(0, stream, timeout));
@@ -210,19 +216,19 @@ TEST_F(UbTransportLiteImplWaitWithTimeoutTest, UbTransportLiteImpl_WaitWithTimeo
     std::vector<char> liteData = BuildUbTransportLiteUniqueId();
 
     RmaConnLite rmaConnLite;
-    RmaConnLite *connLite =  &rmaConnLite;
+    RmaConnLite* connLite = &rmaConnLite;
     MOCKER_CPP(&UbConnLiteMgr::Get).stubs().will(returnValue(connLite));
 
-    auto callback = [](u32 streamId, u32 taskId, const Hccl::TaskParam &taskParam) {
+    auto callback = [](u32 streamId, u32 taskId, const Hccl::TaskParam& taskParam) {
         (void)streamId;
         (void)taskId;
         (void)taskParam;
     };
     MemTransportLite transportLite(liteData, callback);
-    auto &ubTransportLite = *(dynamic_cast<UbTransportLiteImpl *>(transportLite.impl.get()));
+    auto& ubTransportLite = *(dynamic_cast<UbTransportLiteImpl*>(transportLite.impl.get()));
 
     u32 fakeStreamId = 1;
-    u32 fakeSqId     = 1;
+    u32 fakeSqId = 1;
     u32 fakedevPhyId = 1;
     BinaryStream liteBinaryStream;
     liteBinaryStream << fakeStreamId;
@@ -232,8 +238,8 @@ TEST_F(UbTransportLiteImplWaitWithTimeoutTest, UbTransportLiteImpl_WaitWithTimeo
     liteBinaryStream.Dump(uniqueId);
 
     StreamLite stream(uniqueId);
-    RtsqA5     rtsq(fakedevPhyId, fakeStreamId, fakeSqId);
-    stream.rtsq = std::make_unique<RtsqA5>(rtsq);
+    stream.rtsq = std::make_unique<RtsqA5>(fakedevPhyId, fakeStreamId, fakeSqId);
+    RtsqA5& rtsq = *static_cast<RtsqA5*>(stream.rtsq.get());
 
     u32 timeout = 0;
     EXPECT_NO_THROW(ubTransportLite.WaitWithTimeout(0, stream, timeout));
@@ -244,19 +250,19 @@ TEST_F(UbTransportLiteImplWaitWithTimeoutTest, UbTransportLiteImpl_WaitWithTimeo
     std::vector<char> liteData = BuildUbTransportLiteUniqueId();
 
     RmaConnLite rmaConnLite;
-    RmaConnLite *connLite =  &rmaConnLite;
+    RmaConnLite* connLite = &rmaConnLite;
     MOCKER_CPP(&UbConnLiteMgr::Get).stubs().will(returnValue(connLite));
 
-    auto callback = [](u32 streamId, u32 taskId, const Hccl::TaskParam &taskParam) {
+    auto callback = [](u32 streamId, u32 taskId, const Hccl::TaskParam& taskParam) {
         (void)streamId;
         (void)taskId;
         (void)taskParam;
     };
     MemTransportLite transportLite(liteData, callback);
-    auto &ubTransportLite = *(dynamic_cast<UbTransportLiteImpl *>(transportLite.impl.get()));
+    auto& ubTransportLite = *(dynamic_cast<UbTransportLiteImpl*>(transportLite.impl.get()));
 
     u32 fakeStreamId = 1;
-    u32 fakeSqId     = 1;
+    u32 fakeSqId = 1;
     u32 fakedevPhyId = 1;
     BinaryStream liteBinaryStream;
     liteBinaryStream << fakeStreamId;
@@ -266,8 +272,8 @@ TEST_F(UbTransportLiteImplWaitWithTimeoutTest, UbTransportLiteImpl_WaitWithTimeo
     liteBinaryStream.Dump(uniqueId);
 
     StreamLite stream(uniqueId);
-    RtsqA5     rtsq(fakedevPhyId, fakeStreamId, fakeSqId);
-    stream.rtsq = std::make_unique<RtsqA5>(rtsq);
+    stream.rtsq = std::make_unique<RtsqA5>(fakedevPhyId, fakeStreamId, fakeSqId);
+    RtsqA5& rtsq = *static_cast<RtsqA5*>(stream.rtsq.get());
 
     u32 timeout = 0xFFFFFFFF;
     EXPECT_NO_THROW(ubTransportLite.WaitWithTimeout(0, stream, timeout));

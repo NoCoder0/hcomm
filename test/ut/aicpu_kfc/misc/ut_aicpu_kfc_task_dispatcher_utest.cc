@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -28,28 +28,16 @@ using namespace hccl;
 
 class MC2TaskDispatcher_UT : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "MC2TaskDispatcher_UT SetUP" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "MC2TaskDispatcher_UT TearDown" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "MC2TaskDispatcher_UT SetUP" << std::endl; }
+    static void TearDownTestCase() { std::cout << "MC2TaskDispatcher_UT TearDown" << std::endl; }
     // Some expensive resource shared by all tests.
     virtual void SetUp()
     {
         s32 portNum = 7;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
         g_stubDevType = DevType::DEV_TYPE_910B;
         MockGetSendRecvCnt();
-        MOCKER(halGetDeviceInfo)
-        .stubs()
-        .with(mockcpp::any())
-        .will(invoke(StubhalGetDeviceInfo));
+        MOCKER(halGetDeviceInfo).stubs().with(mockcpp::any()).will(invoke(StubhalGetDeviceInfo));
         std::cout << "MC2TaskDispatcher_UT Test SetUP" << std::endl;
     }
     virtual void TearDown()
@@ -67,20 +55,20 @@ TEST_F(MC2TaskDispatcher_UT, ipcCpyWin2WinEx_errPara)
 
 TEST_F(MC2TaskDispatcher_UT, selfCpySnd2WinEx_errPara)
 {
-    EXPECT_EQ(TaskOrchestrator::SelfCpySnd2WinEx(0, nullptr, 10, 0, 0, HCCL_REDUCE_SUM, HCCL_DATA_TYPE_FP16, 0),
-        HCCL_E_PARA);
+    EXPECT_EQ(
+        TaskOrchestrator::SelfCpySnd2WinEx(0, nullptr, 10, 0, 0, HCCL_REDUCE_SUM, HCCL_DATA_TYPE_FP16, 0), HCCL_E_PARA);
 }
 
 TEST_F(MC2TaskDispatcher_UT, selfCpySnd2WinEx1_errPara)
 {
-    EXPECT_EQ(TaskOrchestrator::SelfCpySnd2WinEx1(nullptr, 10, 0, 0, HCCL_REDUCE_SUM, HCCL_DATA_TYPE_FP16, 0),
-        HCCL_E_PARA);
+    EXPECT_EQ(
+        TaskOrchestrator::SelfCpySnd2WinEx1(nullptr, 10, 0, 0, HCCL_REDUCE_SUM, HCCL_DATA_TYPE_FP16, 0), HCCL_E_PARA);
 }
 
 TEST_F(MC2TaskDispatcher_UT, selfCpyWin2RcvEx_errPara)
 {
-    EXPECT_EQ(TaskOrchestrator::SelfCpyWin2RcvEx(0, nullptr, 10, 0, 0, HCCL_REDUCE_SUM, HCCL_DATA_TYPE_FP16, 0),
-        HCCL_E_PARA);
+    EXPECT_EQ(
+        TaskOrchestrator::SelfCpyWin2RcvEx(0, nullptr, 10, 0, 0, HCCL_REDUCE_SUM, HCCL_DATA_TYPE_FP16, 0), HCCL_E_PARA);
 }
 
 TEST_F(MC2TaskDispatcher_UT, selfCpySnd2Rcv)
@@ -97,8 +85,8 @@ TEST_F(MC2TaskDispatcher_UT, selfCpySnd2Rcv)
     StubSqeBuffer sqeBufferStub;
 
     int snd, rcv;
-    EXPECT_EQ(TaskOrchestrator::SelfCpySnd2Rcv(&snd, &rcv, 0, 0, 10, HCCL_REDUCE_SUM, HCCL_DATA_TYPE_FP16),
-        HCCL_SUCCESS);
+    EXPECT_EQ(
+        TaskOrchestrator::SelfCpySnd2Rcv(&snd, &rcv, 0, 0, 10, HCCL_REDUCE_SUM, HCCL_DATA_TYPE_FP16), HCCL_SUCCESS);
 }
 
 TEST_F(MC2TaskDispatcher_UT, ipcCpySnd2Win)
@@ -115,8 +103,8 @@ TEST_F(MC2TaskDispatcher_UT, ipcCpySnd2Win)
     StubSqeBuffer sqeBufferStub;
     uint64_t offset = 0;
     int snd, rcv;
-    EXPECT_EQ(TaskOrchestrator::IpcCpySnd2Win(&snd, 10, offset, offset, HCCL_REDUCE_SUM, HCCL_DATA_TYPE_FP16),
-        HCCL_SUCCESS);
+    EXPECT_EQ(
+        TaskOrchestrator::IpcCpySnd2Win(&snd, 10, offset, offset, HCCL_REDUCE_SUM, HCCL_DATA_TYPE_FP16), HCCL_SUCCESS);
 }
 
 TEST_F(MC2TaskDispatcher_UT, ipcCpySnd2Win_vector)
@@ -134,8 +122,9 @@ TEST_F(MC2TaskDispatcher_UT, ipcCpySnd2Win_vector)
     std::vector<u64> dataSizes(8, 10);
     std::vector<u64> sndOffsets(8, 0);
     int snd, rcv;
-    EXPECT_EQ(TaskOrchestrator::IpcCpySnd2Win(&snd, dataSizes, sndOffsets, nullptr, HCCL_REDUCE_SUM,
-        HCCL_DATA_TYPE_FP16), HCCL_SUCCESS);
+    EXPECT_EQ(
+        TaskOrchestrator::IpcCpySnd2Win(&snd, dataSizes, sndOffsets, nullptr, HCCL_REDUCE_SUM, HCCL_DATA_TYPE_FP16),
+        HCCL_SUCCESS);
 }
 
 TEST_F(MC2TaskDispatcher_UT, ipcCpyWin2RcvEx)
@@ -151,8 +140,8 @@ TEST_F(MC2TaskDispatcher_UT, ipcCpyWin2RcvEx)
 
     StubSqeBuffer sqeBufferStub;
     int snd, rcv;
-    EXPECT_EQ(TaskOrchestrator::IpcCpyWin2RcvEx(&rcv, 10, nullptr, 0, HCCL_REDUCE_SUM, HCCL_DATA_TYPE_FP16),
-        HCCL_SUCCESS);
+    EXPECT_EQ(
+        TaskOrchestrator::IpcCpyWin2RcvEx(&rcv, 10, nullptr, 0, HCCL_REDUCE_SUM, HCCL_DATA_TYPE_FP16), HCCL_SUCCESS);
 }
 
 TEST_F(MC2TaskDispatcher_UT, ipcCpyWin2Rcv_vector)
@@ -170,8 +159,9 @@ TEST_F(MC2TaskDispatcher_UT, ipcCpyWin2Rcv_vector)
     std::vector<u64> dataSizes(8, 10);
     std::vector<u64> rcvOffsets(8, 0);
     int snd, rcv;
-    EXPECT_EQ(TaskOrchestrator::IpcCpyWin2Rcv(&rcv, dataSizes, nullptr, rcvOffsets, HCCL_REDUCE_SUM,
-        HCCL_DATA_TYPE_FP16), HCCL_SUCCESS);
+    EXPECT_EQ(
+        TaskOrchestrator::IpcCpyWin2Rcv(&rcv, dataSizes, nullptr, rcvOffsets, HCCL_REDUCE_SUM, HCCL_DATA_TYPE_FP16),
+        HCCL_SUCCESS);
 }
 
 TEST_F(MC2TaskDispatcher_UT, ipcCpyWin2Rcv)
@@ -188,37 +178,45 @@ TEST_F(MC2TaskDispatcher_UT, ipcCpyWin2Rcv)
     StubSqeBuffer sqeBufferStub;
     uint64_t offset = 0;
     int snd, rcv;
-    EXPECT_EQ(TaskOrchestrator::IpcCpyWin2Rcv(&rcv, 10, offset, nullptr, HCCL_REDUCE_SUM, HCCL_DATA_TYPE_FP16),
-        HCCL_SUCCESS);
+    EXPECT_EQ(
+        TaskOrchestrator::IpcCpyWin2Rcv(&rcv, 10, offset, nullptr, HCCL_REDUCE_SUM, HCCL_DATA_TYPE_FP16), HCCL_SUCCESS);
 }
 
 TEST_F(MC2TaskDispatcher_UT, ipcCpySnd2WinEx_errPara)
 {
     int snd, rcv;
-    EXPECT_EQ(TaskOrchestrator::IpcCpySnd2WinEx(&snd, 10, nullptr, nullptr, HCCL_REDUCE_SUM, HCCL_DATA_TYPE_FP16,
-        0, 7, 0, true), HCCL_E_PARA);
+    EXPECT_EQ(
+        TaskOrchestrator::IpcCpySnd2WinEx(
+            &snd, 10, nullptr, nullptr, HCCL_REDUCE_SUM, HCCL_DATA_TYPE_FP16, 0, 7, 0, true),
+        HCCL_E_PARA);
 }
 
 TEST_F(MC2TaskDispatcher_UT, ipcCpyWin2RcvEx_errPara)
 {
     int snd, rcv;
-    EXPECT_EQ(TaskOrchestrator::IpcCpyWin2RcvEx(&rcv, 10, nullptr, nullptr, HCCL_REDUCE_SUM, HCCL_DATA_TYPE_FP16,
-        0, 7, 0, true), HCCL_E_PARA);
+    EXPECT_EQ(
+        TaskOrchestrator::IpcCpyWin2RcvEx(
+            &rcv, 10, nullptr, nullptr, HCCL_REDUCE_SUM, HCCL_DATA_TYPE_FP16, 0, 7, 0, true),
+        HCCL_E_PARA);
 }
 
 TEST_F(MC2TaskDispatcher_UT, ipcCpySnd2WinSliceEx_errPara)
 {
     std::vector<Slice> dataSlice;
     int snd, rcv;
-    EXPECT_EQ(TaskOrchestrator::IpcCpySnd2WinSliceEx(&snd, dataSlice, nullptr, HCCL_REDUCE_SUM, HCCL_DATA_TYPE_FP16,
-        0, 7, 0, true), HCCL_E_PARA);
+    EXPECT_EQ(
+        TaskOrchestrator::IpcCpySnd2WinSliceEx(
+            &snd, dataSlice, nullptr, HCCL_REDUCE_SUM, HCCL_DATA_TYPE_FP16, 0, 7, 0, true),
+        HCCL_E_PARA);
 }
 
 TEST_F(MC2TaskDispatcher_UT, ipcCpyWin2RcvSliceEx_errPara)
 {
     std::vector<Slice> dataSlice;
-    EXPECT_EQ(TaskOrchestrator::IpcCpyWin2RcvSliceEx(nullptr, dataSlice, nullptr, HCCL_REDUCE_SUM, HCCL_DATA_TYPE_FP16,
-        0, 7, 0, true), HCCL_E_PARA);
+    EXPECT_EQ(
+        TaskOrchestrator::IpcCpyWin2RcvSliceEx(
+            nullptr, dataSlice, nullptr, HCCL_REDUCE_SUM, HCCL_DATA_TYPE_FP16, 0, 7, 0, true),
+        HCCL_E_PARA);
 }
 
 TEST_F(MC2TaskDispatcher_UT, launchTasksEx_errPara)
@@ -274,7 +272,7 @@ TEST_F(MC2TaskDispatcher_UT, ipcPostSyncEx_errPara)
 
 TEST_F(MC2TaskDispatcher_UT, ut_CheckTaskTimeout)
 {
-    AicpuComContext *ctx = AicpuGetComContext();
+    AicpuComContext* ctx = AicpuGetComContext();
 
     ctx->rankNum = 2; // 设置rank数量为2
     ctx->devId = 0;
@@ -291,7 +289,7 @@ TEST_F(MC2TaskDispatcher_UT, ut_CheckTaskTimeout)
 
 TEST_F(MC2TaskDispatcher_UT, ut_OverflowAddrCheck)
 {
-    AicpuComContext *ctx = AicpuGetComContext();
+    AicpuComContext* ctx = AicpuGetComContext();
     uint32_t overflowFlag = 0;
     ctx->devType = DevType::DEV_TYPE_310P1;
 
@@ -315,11 +313,10 @@ TEST_F(MC2TaskDispatcher_UT, ut_RdmaSend)
     EXPECT_EQ(AicpuDispatcher::RdmaSend(streamId, dbInfo, dbAddr, userRank), HCCL_SUCCESS);
 }
 
-
 // 补充覆盖率
 TEST_F(MC2TaskDispatcher_UT, ut_AicpuUnfoldSignalWait)
 {
-    AicpuComContext *ctx = AicpuGetComContext();
+    AicpuComContext* ctx = AicpuGetComContext();
     ctx->devType = DevType::DEV_TYPE_910B;
 
     u16 streamId = 0;
@@ -344,8 +341,8 @@ TEST_F(MC2TaskDispatcher_UT, ut_AicpuUnfoldSignalWait)
 // 补充覆盖率
 TEST_F(MC2TaskDispatcher_UT, ut_dispatcher_cpy)
 {
-    AicpuComContext *ctx = AicpuGetComContext();
-    void *buff = nullptr;
+    AicpuComContext* ctx = AicpuGetComContext();
+    void* buff = nullptr;
     u64 dataSize = 0;
     u64 offset = 0;
     u64 winOffset = 0;

@@ -40,13 +40,9 @@ using namespace hccl;
  * 该测试类用于验证CommWriteReduceWithNotify接口的参数校验和基本功能。
  * 测试场景包括源地址空指针、目的地址空指针和不支持的归约操作类型校验。
  */
-class UtAicpuTsCommWriteReduceWithNotify : public testing::Test
-{
+class UtAicpuTsCommWriteReduceWithNotify : public testing::Test {
 protected:
-    virtual void TearDown() override
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() override { GlobalMockObject::verify(); }
 
     AicpuTsThread threadOnDevice{StreamType::STREAM_TYPE_DEVICE, 0, NotifyLoadType::DEVICE_NOTIFY};
     ThreadHandle thread = reinterpret_cast<ThreadHandle>(&threadOnDevice);
@@ -55,8 +51,8 @@ protected:
     ChannelHandle channel = reinterpret_cast<ChannelHandle>(&transportOnDevice);
     uint64_t tempDst[6] = {0};
     uint64_t tempSrc[6] = {1, 1, 4, 5, 1, 4};
-    void *dst = reinterpret_cast<void *>(tempDst);
-    void *src = reinterpret_cast<void *>(tempSrc);
+    void* dst = reinterpret_cast<void*>(tempDst);
+    void* src = reinterpret_cast<void*>(tempSrc);
     uint64_t count = 6;
     HcommDataType dataType = HcommDataType::HCOMM_DATA_TYPE_FP32;
     HcommReduceOp reduceOp = HcommReduceOp::HCOMM_REDUCE_SUM;

@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef __VOS_ASSERT_H
 #define __VOS_ASSERT_H
 
@@ -31,4 +30,3 @@ extern "C" {
 #endif
 
 #endif /* __VOS_ASSERT_H */
-

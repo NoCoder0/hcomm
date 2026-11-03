@@ -7,20 +7,16 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #include "ub_conn_lite_mgr.h"
 
 namespace Hccl {
 
-UbConnLiteMgr::UbConnLiteMgr()
-{
-}
+UbConnLiteMgr::UbConnLiteMgr() {}
 
-UbConnLiteMgr::~UbConnLiteMgr()
-{
-    ubConnLiteMap.clear();
-}
+UbConnLiteMgr::~UbConnLiteMgr() { ubConnLiteMap.clear(); }
 
-std::string UbConnLiteMgr::GetKey(const UbConnLiteParam &liteParam) const
+std::string UbConnLiteMgr::GetKey(const UbConnLiteParam& liteParam) const
 {
     // dieId + funcId + jettyId + tp + eid 可唯一确定一个connection
     std::string result;
@@ -30,24 +26,19 @@ std::string UbConnLiteMgr::GetKey(const UbConnLiteParam &liteParam) const
     return result;
 }
 
-bool UbConnLiteMgr::IsExist(const std::string &key)
-{
-    if (ubConnLiteMap.find(key) == ubConnLiteMap.end()) {
-        return false;
-    }
-    return true;
-}
+bool UbConnLiteMgr::IsExist(const std::string& key) { return ubConnLiteMap.find(key) != ubConnLiteMap.end(); }
 
-UbConnLiteMgr &UbConnLiteMgr::GetInstance()
+UbConnLiteMgr& UbConnLiteMgr::GetInstance()
 {
     static UbConnLiteMgr ubConnLiteMgr;
     return ubConnLiteMgr;
 }
 
-RmaConnLite *UbConnLiteMgr::Get(std::vector<char> &uniqueId)
+RmaConnLite* UbConnLiteMgr::Get(std::vector<char>& uniqueId)
 {
     UbConnLiteParam liteParam(uniqueId);
-    auto            key = GetKey(liteParam);
+    auto key = GetKey(liteParam);
+    std::unique_lock<std::shared_mutex> lock(mtx_);
     if (IsExist(key)) {
         return ubConnLiteMap[key].get();
     }
@@ -56,15 +47,38 @@ RmaConnLite *UbConnLiteMgr::Get(std::vector<char> &uniqueId)
     return ubConnLiteMap[key].get();
 }
 
-void UbConnLiteMgr::Clear(std::vector<char> &uniqueId)
+void UbConnLiteMgr::Clear(std::vector<char>& uniqueId)
 {
     UbConnLiteParam liteParam(uniqueId);
-    auto            key = GetKey(liteParam);
+    auto key = GetKey(liteParam);
+    std::unique_lock<std::shared_mutex> lock(mtx_);
     if (!IsExist(key)) {
         return;
     }
 
     ubConnLiteMap.erase(key);
+}
+
+void UbConnLiteMgr::RegisterCiTracker(const UbTransportLiteImpl* transport, RmaConnLite* conn)
+{
+    std::unique_lock<std::shared_mutex> lock(mtx_);
+    ciTrackerMap_[transport] = conn;
+}
+
+void UbConnLiteMgr::UnRegisterCiTracker(const UbTransportLiteImpl* transport)
+{
+    std::unique_lock<std::shared_mutex> lock(mtx_);
+    ciTrackerMap_.erase(transport);
+}
+
+void UbConnLiteMgr::AppendCompletedCis(
+    const UbTransportLiteImpl* transport, const std::pair<u16, u16>* slots, size_t count)
+{
+    std::shared_lock<std::shared_mutex> lock(mtx_);
+    auto it = ciTrackerMap_.find(transport);
+    if (it != ciTrackerMap_.end() && it->second != nullptr) {
+        it->second->UpdateCi(slots, count);
+    }
 }
 
 } // namespace Hccl

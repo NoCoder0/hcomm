@@ -3,14 +3,20 @@
 ## 产品支持情况
 
 <!-- npu="950" id1 -->
-- Ascend 950PR/Ascend 950DT：支持
+- Ascend 950PR&950DT系列产品：支持
 <!-- end id1 -->
 <!-- npu="A3" id2 -->
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：不支持
+- Atlas A3系列产品：不支持
 <!-- end id2 -->
 <!-- npu="910b" id3 -->
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：不支持
+- Atlas A2系列产品：不支持
 <!-- end id3 -->
+<!-- npu="910" id4 -->
+- Atlas训练系列产品：不支持
+<!-- end id4 -->
+<!-- npu="310p" id5 -->
+- Atlas推理系列产品：不支持
+<!-- end id5 -->
 
 ## 功能说明
 
@@ -18,10 +24,8 @@
 
 ## 函数原型
 
-//ccu_launch.h
-
 ```c
-CcuResult HcommCcuKernelRegisterEnd(CcuInsHandle insHandle);
+CcuResult HcommCcuKernelRegisterEnd(CcuInsHandle insHandle)
 ```
 
 ## 参数说明
@@ -49,7 +53,7 @@ CcuResult HcommCcuKernelRegisterEnd(CcuInsHandle insHandle);
 > 须按 [HcommCcuKernelRegisterStart](HcommCcuKernelRegisterStart.md) → [HcommCcuKernelRegister](HcommCcuKernelRegister.md) → 本接口的顺序调用。未先调用[HcommCcuKernelRegisterStart](HcommCcuKernelRegisterStart.md)就调用本接口会返回`CCU_E_INTERNAL`。
 
 - 本接口调用成功后，本轮注册的Kernel即可独立启动。若需注册新一轮Kernel，须重新调用[HcommCcuKernelRegisterStart](HcommCcuKernelRegisterStart.md)开始新一轮流程。
-- 本接口只能在主机侧调用，不能在Kernel函数体内调用。
+- 本接口只能在Host侧调用，不能在Kernel函数体内调用。
 
 ## 调用示例
 

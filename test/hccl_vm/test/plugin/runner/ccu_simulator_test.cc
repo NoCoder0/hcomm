@@ -23,36 +23,39 @@
 
 class CcuSimulatorTest : public testing::Test {
 protected:
-    void SetUp() override {
-        simulator_ = std::make_unique<CcuSimulator>(0, 0, 0, 10, 10, RunnerCcuVersion::CCU_V1);
-    }
+    void SetUp() override { simulator_ = std::make_unique<CcuSimulator>(0, 0, 0, 10, 10, RunnerCcuVersion::CCU_V1); }
 
     std::unique_ptr<CcuSimulator> simulator_;
 };
 
-TEST_F(CcuSimulatorTest, DefaultConstructor) {
+TEST_F(CcuSimulatorTest, DefaultConstructor)
+{
     CcuSimulator sim;
     EXPECT_EQ(sim.GetState(), CcuExecState::EXEC_NORMAL_INSTR);
     EXPECT_EQ(sim.GetCurInstrId(), 0);
 }
 
-TEST_F(CcuSimulatorTest, ParamConstructor) {
+TEST_F(CcuSimulatorTest, ParamConstructor)
+{
     CcuSimulator sim(1, 2, 5, 15, 10, RunnerCcuVersion::CCU_V1);
     EXPECT_EQ(sim.GetState(), CcuExecState::EXEC_NORMAL_INSTR);
     EXPECT_EQ(sim.GetCurInstrId(), 5);
 }
 
-TEST_F(CcuSimulatorTest, SetExecState) {
+TEST_F(CcuSimulatorTest, SetExecState)
+{
     simulator_->SetExecState(CcuExecState::EXEC_LOOP_INSTR);
     EXPECT_EQ(simulator_->GetState(), CcuExecState::EXEC_LOOP_INSTR);
 }
 
-TEST_F(CcuSimulatorTest, SetWaitCKEFlag) {
+TEST_F(CcuSimulatorTest, SetWaitCKEFlag)
+{
     simulator_->SetWaitCKEFlag(true);
     simulator_->SetWaitCKEFlag(false);
 }
 
-TEST_F(CcuSimulatorTest, InitLoopGroupInfo_WithParams) {
+TEST_F(CcuSimulatorTest, InitLoopGroupInfo_WithParams)
+{
     uint16_t startLoopId = 5;
     uint64_t offsetCfg = 0x12345;
     uint64_t repeatCfg = 0x123456789ABCULL;
@@ -61,26 +64,28 @@ TEST_F(CcuSimulatorTest, InitLoopGroupInfo_WithParams) {
     EXPECT_EQ(simulator_->GetState(), CcuExecState::EXEC_LOOPGROUP_INSTR);
 }
 
-TEST_F(CcuSimulatorTest, InitLoopInfo) {
-    simulator_->InitLoopInfo(2, 8, 5, 100);
-}
+TEST_F(CcuSimulatorTest, InitLoopInfo) { simulator_->InitLoopInfo(2, 8, 5, 100); }
 
-TEST_F(CcuSimulatorTest, GetLoopGsaAddrOffset_NotInLoopState) {
+TEST_F(CcuSimulatorTest, GetLoopGsaAddrOffset_NotInLoopState)
+{
     uint64_t offset = simulator_->GetLoopGsaAddrOffset();
     EXPECT_EQ(offset, 0);
 }
 
-TEST_F(CcuSimulatorTest, GetLoopMsOffset_NotInLoopState) {
+TEST_F(CcuSimulatorTest, GetLoopMsOffset_NotInLoopState)
+{
     uint16_t offset = simulator_->GetLoopMsOffset();
     EXPECT_EQ(offset, 0);
 }
 
-TEST_F(CcuSimulatorTest, GetLoopCKEOffset_NotInLoopState) {
+TEST_F(CcuSimulatorTest, GetLoopCKEOffset_NotInLoopState)
+{
     uint16_t offset = simulator_->GetLoopCKEOffset();
     EXPECT_EQ(offset, 0);
 }
 
-TEST_F(CcuSimulatorTest, GetLoopGsaAddrOffset_InLoopState) {
+TEST_F(CcuSimulatorTest, GetLoopGsaAddrOffset_InLoopState)
+{
     simulator_->SetExecState(CcuExecState::EXEC_LOOP_INSTR);
     LoopGroupInfo loopGroupInfo;
     loopGroupInfo.gsaOffset_ = 100;
@@ -93,7 +98,8 @@ TEST_F(CcuSimulatorTest, GetLoopGsaAddrOffset_InLoopState) {
     EXPECT_EQ(offset, 200 + 150);
 }
 
-TEST_F(CcuSimulatorTest, GetLoopMsOffset_InLoopState) {
+TEST_F(CcuSimulatorTest, GetLoopMsOffset_InLoopState)
+{
     simulator_->SetExecState(CcuExecState::EXEC_LOOP_INSTR);
     LoopGroupInfo loopGroupInfo;
     loopGroupInfo.msOffset_ = 10;
@@ -104,7 +110,8 @@ TEST_F(CcuSimulatorTest, GetLoopMsOffset_InLoopState) {
     EXPECT_EQ(offset, 30);
 }
 
-TEST_F(CcuSimulatorTest, GetLoopCKEOffset_InLoopState) {
+TEST_F(CcuSimulatorTest, GetLoopCKEOffset_InLoopState)
+{
     simulator_->SetExecState(CcuExecState::EXEC_LOOP_INSTR);
     LoopGroupInfo loopGroupInfo;
     loopGroupInfo.ckeOffset_ = 5;
@@ -115,39 +122,43 @@ TEST_F(CcuSimulatorTest, GetLoopCKEOffset_InLoopState) {
     EXPECT_EQ(offset, 20);
 }
 
-TEST_F(CcuSimulatorTest, InitJumpStatus) {
+TEST_F(CcuSimulatorTest, InitJumpStatus)
+{
     simulator_->InitJumpStatus(7);
     EXPECT_EQ(simulator_->GetState(), CcuExecState::EXEC_JUMP_INSTR);
 }
 
-TEST_F(CcuSimulatorTest, Init_NotFinished) {
-    simulator_->SetExecState(CcuExecState::EXEC_SUCCESS);
-}
+TEST_F(CcuSimulatorTest, Init_NotFinished) { simulator_->SetExecState(CcuExecState::EXEC_SUCCESS); }
 
-TEST_F(CcuSimulatorTest, Init_Normal) {
+TEST_F(CcuSimulatorTest, Init_Normal)
+{
     simulator_->finished_ = true;
     simulator_->Init(3, 8, 5, RunnerCcuVersion::CCU_V1);
     EXPECT_EQ(simulator_->GetState(), CcuExecState::EXEC_NORMAL_INSTR);
 }
 
-TEST_F(CcuSimulatorTest, Init_AlreadyFinished) {
+TEST_F(CcuSimulatorTest, Init_AlreadyFinished)
+{
     simulator_->finished_ = true;
     simulator_->Init(0, 5, 5, RunnerCcuVersion::CCU_V1);
 }
 
-TEST_F(CcuSimulatorTest, UpdateLoopStatus_WaitCKE) {
+TEST_F(CcuSimulatorTest, UpdateLoopStatus_WaitCKE)
+{
     simulator_->SetWaitCKEFlag(true);
     bool result = simulator_->UpdateLoopStatus();
     EXPECT_EQ(result, false);
 }
 
-TEST_F(CcuSimulatorTest, UpdateLoopStatus_LoopGroupState) {
+TEST_F(CcuSimulatorTest, UpdateLoopStatus_LoopGroupState)
+{
     simulator_->SetExecState(CcuExecState::EXEC_LOOPGROUP_INSTR);
     bool result = simulator_->UpdateLoopStatus();
     EXPECT_EQ(result, true);
 }
 
-TEST_F(CcuSimulatorTest, UpdateLoopStatus_NormalState) {
+TEST_F(CcuSimulatorTest, UpdateLoopStatus_NormalState)
+{
     simulator_->finished_ = true;
     simulator_->Init(0, 5, 5, RunnerCcuVersion::CCU_V1);
     simulator_->SetExecState(CcuExecState::EXEC_NORMAL_INSTR);
@@ -156,7 +167,8 @@ TEST_F(CcuSimulatorTest, UpdateLoopStatus_NormalState) {
     EXPECT_EQ(simulator_->GetCurInstrId(), 1);
 }
 
-TEST_F(CcuSimulatorTest, UpdateLoopStatus_NormalState_ReachEnd) {
+TEST_F(CcuSimulatorTest, UpdateLoopStatus_NormalState_ReachEnd)
+{
     simulator_->finished_ = true;
     simulator_->Init(0, 5, 5, RunnerCcuVersion::CCU_V1);
     simulator_->SetExecState(CcuExecState::EXEC_NORMAL_INSTR);
@@ -166,13 +178,15 @@ TEST_F(CcuSimulatorTest, UpdateLoopStatus_NormalState_ReachEnd) {
     EXPECT_EQ(simulator_->GetState(), CcuExecState::EXEC_SUCCESS);
 }
 
-TEST_F(CcuSimulatorTest, UpdateLoopStatus_JumpState) {
+TEST_F(CcuSimulatorTest, UpdateLoopStatus_JumpState)
+{
     simulator_->InitJumpStatus(10);
     simulator_->UpdateLoopStatus();
     EXPECT_EQ(simulator_->GetState(), CcuExecState::EXEC_NORMAL_INSTR);
 }
 
-TEST_F(CcuSimulatorTest, InitLoopGroupInfo_WithStruct) {
+TEST_F(CcuSimulatorTest, InitLoopGroupInfo_WithStruct)
+{
     LoopGroupInfo loopGroupInfo;
     loopGroupInfo.startLoopId_ = 5;
     loopGroupInfo.loopNum_ = 3;
@@ -186,7 +200,8 @@ TEST_F(CcuSimulatorTest, InitLoopGroupInfo_WithStruct) {
     EXPECT_EQ(simulator_->GetState(), CcuExecState::EXEC_NORMAL_INSTR);
 }
 
-TEST_F(CcuSimulatorTest, GetState) {
+TEST_F(CcuSimulatorTest, GetState)
+{
     EXPECT_EQ(simulator_->GetState(), CcuExecState::EXEC_NORMAL_INSTR);
 
     simulator_->SetExecState(CcuExecState::EXEC_LOOPGROUP_INSTR);
@@ -205,17 +220,17 @@ TEST_F(CcuSimulatorTest, GetState) {
     EXPECT_EQ(simulator_->GetState(), CcuExecState::EXEC_FAIL);
 }
 
-TEST_F(CcuSimulatorTest, GetCurInstrId) {
-    EXPECT_EQ(simulator_->GetCurInstrId(), 0);
-}
+TEST_F(CcuSimulatorTest, GetCurInstrId) { EXPECT_EQ(simulator_->GetCurInstrId(), 0); }
 
-TEST_F(CcuSimulatorTest, UpdateLoopStatus_FailState) {
+TEST_F(CcuSimulatorTest, UpdateLoopStatus_FailState)
+{
     simulator_->SetExecState(CcuExecState::EXEC_FAIL);
     bool result = simulator_->UpdateLoopStatus();
     EXPECT_EQ(result, false);
 }
 
-TEST_F(CcuSimulatorTest, Init_NotFinished_ReturnsEarly) {
+TEST_F(CcuSimulatorTest, Init_NotFinished_ReturnsEarly)
+{
     simulator_->finished_ = true;
     simulator_->Init(0, 5, 5, RunnerCcuVersion::CCU_V1);
     EXPECT_EQ(simulator_->finished_, false);
@@ -224,7 +239,8 @@ TEST_F(CcuSimulatorTest, Init_NotFinished_ReturnsEarly) {
     EXPECT_EQ(simulator_->startInstrId_, prevStart);
 }
 
-TEST_F(CcuSimulatorTest, UpdateLoopStatus_LoopState) {
+TEST_F(CcuSimulatorTest, UpdateLoopStatus_LoopState)
+{
     simulator_->SetExecState(CcuExecState::EXEC_LOOP_INSTR);
     simulator_->finished_ = true;
     simulator_->Init(0, 5, 5, RunnerCcuVersion::CCU_V1);
@@ -234,8 +250,9 @@ TEST_F(CcuSimulatorTest, UpdateLoopStatus_LoopState) {
     EXPECT_EQ(simulator_->GetCurInstrId(), 1);
 }
 
-TEST_F(CcuSimulatorTest, ExecuteInstr_InvalidCurInstrId) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(CcuSimulatorTest, ExecuteInstr_InvalidCurInstrId)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     mgr.Init(0, 4, RunnerCcuVersion::CCU_V1, {});
     CcuInstrData instrData;
     instrData.instrCnt = 0;
@@ -248,8 +265,9 @@ TEST_F(CcuSimulatorTest, ExecuteInstr_InvalidCurInstrId) {
     EXPECT_EQ(simulator_->GetState(), CcuExecState::EXEC_FAIL);
 }
 
-TEST_F(CcuSimulatorTest, ExecuteInstr_NullExecutor) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(CcuSimulatorTest, ExecuteInstr_NullExecutor)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     mgr.Init(0, 4, RunnerCcuVersion::CCU_V1, {});
     CcuInstrData instrData;
     instrData.instrCnt = 1;
@@ -263,7 +281,8 @@ TEST_F(CcuSimulatorTest, ExecuteInstr_NullExecutor) {
     EXPECT_EQ(result, true);
 }
 
-TEST_F(CcuSimulatorTest, ExecuteLoopGroup_LoopNumZero) {
+TEST_F(CcuSimulatorTest, ExecuteLoopGroup_LoopNumZero)
+{
     LoopGroupInfo loopGroupInfo;
     loopGroupInfo.loopNum_ = 0;
     simulator_->InitLoopGroupInfo(loopGroupInfo);
@@ -271,7 +290,8 @@ TEST_F(CcuSimulatorTest, ExecuteLoopGroup_LoopNumZero) {
     EXPECT_EQ(result, true);
 }
 
-TEST_F(CcuSimulatorTest, ExecuteLoopGroup_LoopNumTooLarge) {
+TEST_F(CcuSimulatorTest, ExecuteLoopGroup_LoopNumTooLarge)
+{
     LoopGroupInfo loopGroupInfo;
     loopGroupInfo.loopNum_ = 3;
     simulator_->InitLoopGroupInfo(loopGroupInfo);
@@ -279,8 +299,9 @@ TEST_F(CcuSimulatorTest, ExecuteLoopGroup_LoopNumTooLarge) {
     EXPECT_EQ(result, false);
 }
 
-TEST_F(CcuSimulatorTest, ExecuteLoopGroup_SingleLoop) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(CcuSimulatorTest, ExecuteLoopGroup_SingleLoop)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     mgr.Init(0, 4, RunnerCcuVersion::CCU_V1, {});
     CcuInstrData instrData;
     instrData.instrCnt = 2;
@@ -299,8 +320,9 @@ TEST_F(CcuSimulatorTest, ExecuteLoopGroup_SingleLoop) {
     EXPECT_EQ(result, true);
 }
 
-TEST_F(CcuSimulatorTest, Execute_Success) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(CcuSimulatorTest, Execute_Success)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     mgr.Init(0, 4, RunnerCcuVersion::CCU_V1, {});
     CcuInstrData instrData;
     instrData.instrCnt = 1;
@@ -314,8 +336,9 @@ TEST_F(CcuSimulatorTest, Execute_Success) {
     EXPECT_EQ(result, true);
 }
 
-TEST_F(CcuSimulatorTest, Execute_Fail) {
-    auto &mgr = CcuResourceManager::GetInstance();
+TEST_F(CcuSimulatorTest, Execute_Fail)
+{
+    auto& mgr = CcuResourceManager::GetInstance();
     mgr.Init(0, 4, RunnerCcuVersion::CCU_V1, {});
     CcuInstrData instrData;
     instrData.instrCnt = 1;
@@ -329,7 +352,8 @@ TEST_F(CcuSimulatorTest, Execute_Fail) {
     EXPECT_EQ(result, true);
 }
 
-TEST_F(CcuSimulatorTest, ExecuteLoop_ZeroExecCount) {
+TEST_F(CcuSimulatorTest, ExecuteLoop_ZeroExecCount)
+{
     LoopGroupInfo loopGroupInfo;
     loopGroupInfo.loopStatus_.loopStartInstrId = 0;
     loopGroupInfo.loopStatus_.loopEndInstrId = 0;

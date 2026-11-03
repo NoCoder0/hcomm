@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -26,7 +26,6 @@
 
 #include "sal.h"
 
-
 #include "llt_hccl_stub_pub.h"
 #include "remote_notify.h"
 
@@ -34,12 +33,10 @@
 #include "transport.h"
 #include "mem_name_repository.h"
 
-
 using namespace std;
 using namespace hccl;
 
-class LinkPcieTest : public testing::Test
-{
+class LinkPcieTest : public testing::Test {
 protected:
     static void SetUpTestCase()
     {
@@ -60,7 +57,7 @@ protected:
 
         userLocalNotify.resize(8);
         userRemoteNotify.resize(8);
-        for(u32 i = 0; i < 8; i++) {
+        for (u32 i = 0; i < 8; i++) {
             userLocalNotify[i].reset(new (std::nothrow) LocalIpcNotify());
             HcclResult ret = userLocalNotify[i]->Init(0, 0);
             EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -76,8 +73,10 @@ protected:
         }
 
         ret = HcclDispatcherInit(DispatcherType::DISPATCHER_NORMAL, 0, &dispatcherPtr);
-        if (ret != HCCL_SUCCESS) return;
-        if (dispatcherPtr == nullptr) return;
+        if (ret != HCCL_SUCCESS)
+            return;
+        if (dispatcherPtr == nullptr)
+            return;
         dispatcher = reinterpret_cast<DispatcherPub*>(dispatcherPtr);
     }
     static void TearDownTestCase()
@@ -94,42 +93,32 @@ protected:
     virtual void SetUp()
     {
         s32 portNum = 7;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
         std::cout << "A Test SetUP" << std::endl;
     }
-    virtual void TearDown()
-    {
-        std::cout << "A Test TearDown" << std::endl;
-    }
+    virtual void TearDown() { std::cout << "A Test TearDown" << std::endl; }
 
     static std::shared_ptr<LocalIpcNotify> localNotify;
     static std::shared_ptr<RemoteNotify> remoteNotify;
     static std::vector<std::shared_ptr<LocalIpcNotify>> userLocalNotify;
     static std::vector<std::shared_ptr<RemoteNotify>> userRemoteNotify;
     static HcclDispatcher dispatcherPtr;
-    static DispatcherPub *dispatcher;
-
-
+    static DispatcherPub* dispatcher;
 };
 std::shared_ptr<LocalIpcNotify> LinkPcieTest::localNotify = nullptr;
 std::shared_ptr<RemoteNotify> LinkPcieTest::remoteNotify = nullptr;
 std::vector<std::shared_ptr<LocalIpcNotify>> LinkPcieTest::userLocalNotify;
 std::vector<std::shared_ptr<RemoteNotify>> LinkPcieTest::userRemoteNotify;
 HcclDispatcher LinkPcieTest::dispatcherPtr = nullptr;
-DispatcherPub *LinkPcieTest::dispatcher = nullptr;
+DispatcherPub* LinkPcieTest::dispatcher = nullptr;
 
-class LinkPcieTmp : public TransportP2p
-{
+class LinkPcieTmp : public TransportP2p {
 public:
-    explicit LinkPcieTmp(HcclDispatcher dispatcher,
-                      MachinePara& machine_para, std::chrono::milliseconds timeout);
+    explicit LinkPcieTmp(HcclDispatcher dispatcher, MachinePara& machine_para, std::chrono::milliseconds timeout);
 
     virtual ~LinkPcieTmp();
 
-    HcclResult get_remote_mem_tmp(UserMemType mem_type, void **remote_ptr)
+    HcclResult get_remote_mem_tmp(UserMemType mem_type, void** remote_ptr)
     {
         return get_remote_mem_tmp(mem_type, remote_ptr);
     }
@@ -140,17 +129,11 @@ public:
     }
 };
 
-LinkPcieTmp::LinkPcieTmp(HcclDispatcher dispatcher,
-                      MachinePara& machine_para, std::chrono::milliseconds timeout)
+LinkPcieTmp::LinkPcieTmp(HcclDispatcher dispatcher, MachinePara& machine_para, std::chrono::milliseconds timeout)
     : TransportP2p(reinterpret_cast<DispatcherPub*>(dispatcher), nullptr, machine_para, timeout)
-{
+{}
 
-}
-
-LinkPcieTmp::~LinkPcieTmp()
-{
-
-}
+LinkPcieTmp::~LinkPcieTmp() {}
 
 TEST_F(LinkPcieTest, ut_wait_peer_config_timeout)
 {
@@ -190,10 +173,16 @@ TEST_F(LinkPcieTest, ut_RxAsync)
     machine_para.deviceLogicId = device_id;
     machine_para.supportDataReceivedAck = true;
 
-    MOCKER_CPP_VIRTUAL(*dispatcher, &DispatcherPub::SignalRecord, HcclResult(DispatcherPub::*)(HcclRtNotify, hccl::Stream &, u32, u64,
-        s32, bool, u64, u32)).stubs().will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP_VIRTUAL(*dispatcher, &DispatcherPub::SignalWait, HcclResult(DispatcherPub::*)(HcclRtNotify, hccl::Stream &, u32, u32,
-        s32, bool, u32, u32)).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP_VIRTUAL(
+        *dispatcher, &DispatcherPub::SignalRecord,
+        HcclResult(DispatcherPub::*)(HcclRtNotify, hccl::Stream&, u32, u64, s32, bool, u64, u32))
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP_VIRTUAL(
+        *dispatcher, &DispatcherPub::SignalWait,
+        HcclResult(DispatcherPub::*)(HcclRtNotify, hccl::Stream&, u32, u32, s32, bool, u32, u32))
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
 
     std::shared_ptr<LinkPcieTmp> linktmp = nullptr;
     std::chrono::milliseconds timeout = std::chrono::milliseconds(10);
@@ -213,10 +202,7 @@ TEST_F(LinkPcieTest, ut_RxAsync)
     u32 addr = 123;
     txMems.emplace_back(TxMemoryInfo{UserMemType::INPUT_MEM, 0, &addr, msg_len});
 
-    MOCKER(&HcclD2DMemcpyAsync)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(&HcclD2DMemcpyAsync).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = linktmp->TxAsync(txMems, streamObj);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -239,10 +225,7 @@ TEST_F(LinkPcieTest, ut_createNotifyRecordBuff)
     linktmp->useSdmaToSignalRecord_ = true;
 
     u32 notifySize = 4;
-    MOCKER(hrtGetNotifySize)
-    .stubs()
-    .with(outBound(notifySize))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetNotifySize).stubs().with(outBound(notifySize)).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = linktmp->CreateNotifyValueBuffer();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -250,7 +233,6 @@ TEST_F(LinkPcieTest, ut_createNotifyRecordBuff)
     EXPECT_NE(linktmp->transportAttr_.signalRecordBuff.address, 0);
     GlobalMockObject::verify();
 }
-
 
 TEST_F(LinkPcieTest, ut_function_for_sendrecv_p2p)
 {
@@ -265,13 +247,19 @@ TEST_F(LinkPcieTest, ut_function_for_sendrecv_p2p)
     machine_para.linkAttribute = 0x1;
     machine_para.notifyNum = notifyNum;
 
-    MOCKER_CPP_VIRTUAL(*dispatcher, &DispatcherPub::SignalRecord, HcclResult(DispatcherPub::*)(HcclRtNotify, hccl::Stream &, u32, u64,
-        s32, bool, u64, u32)).stubs().will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP_VIRTUAL(*dispatcher, &DispatcherPub::SignalWait, HcclResult(DispatcherPub::*)(HcclRtNotify, hccl::Stream &, u32, u32,
-        s32, bool, u32, u32)).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP_VIRTUAL(
+        *dispatcher, &DispatcherPub::SignalRecord,
+        HcclResult(DispatcherPub::*)(HcclRtNotify, hccl::Stream&, u32, u64, s32, bool, u64, u32))
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP_VIRTUAL(
+        *dispatcher, &DispatcherPub::SignalWait,
+        HcclResult(DispatcherPub::*)(HcclRtNotify, hccl::Stream&, u32, u32, s32, bool, u32, u32))
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
 
-    DeviceMem input =  DeviceMem::alloc(1);
-    DeviceMem output =  DeviceMem::alloc(1);
+    DeviceMem input = DeviceMem::alloc(1);
+    DeviceMem output = DeviceMem::alloc(1);
 
     std::shared_ptr<LinkPcieTmp> linktmp = nullptr;
     std::chrono::milliseconds timeout = std::chrono::milliseconds(10);
@@ -282,11 +270,11 @@ TEST_F(LinkPcieTest, ut_function_for_sendrecv_p2p)
     linktmp->remoteSendReadyNotify_ = remoteNotify;
     linktmp->remoteSendDoneNotify_ = remoteNotify;
 
-    std::cout << "userLocalNotify_.size()"<<linktmp->userLocalNotify_.size() << std::endl;
-    std::cout << "userRemoteNotify_.size()"<<linktmp->userRemoteNotify_.size() << std::endl;
-    std::cout << "userLocalNotify.size()"<<userLocalNotify.size() << std::endl;
-    std::cout << "userRemoteNotify.size()"<<userLocalNotify.size() << std::endl;
-    for(u32 i = 0; i < 8; i++) {
+    std::cout << "userLocalNotify_.size()" << linktmp->userLocalNotify_.size() << std::endl;
+    std::cout << "userRemoteNotify_.size()" << linktmp->userRemoteNotify_.size() << std::endl;
+    std::cout << "userLocalNotify.size()" << userLocalNotify.size() << std::endl;
+    std::cout << "userRemoteNotify.size()" << userLocalNotify.size() << std::endl;
+    for (u32 i = 0; i < 8; i++) {
         linktmp->userLocalNotify_[i] = userLocalNotify[i];
         linktmp->userRemoteNotify_[i] = userRemoteNotify[i];
     }
@@ -309,7 +297,7 @@ TEST_F(LinkPcieTest, ut_function_for_sendrecv_p2p)
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ret = linktmp->WaitReady(streamObj);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    void *remoteAddr = nullptr;
+    void* remoteAddr = nullptr;
     ret = linktmp->GetRemoteMem(hccl::UserMemType::OUTPUT_MEM, &remoteAddr);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     struct Transport::Buffer remoteBuf(remoteAddr, 0);
@@ -320,8 +308,8 @@ TEST_F(LinkPcieTest, ut_function_for_sendrecv_p2p)
 
     ret = linktmp->ReadSync(localBuf, remoteBuf, streamObj);
     EXPECT_NE(ret, HCCL_SUCCESS);
-    ret = linktmp->ReadReduceSync(localBuf, remoteBuf,
-        HcclDataType::HCCL_DATA_TYPE_INT8, HcclReduceOp::HCCL_REDUCE_SUM, streamObj);
+    ret = linktmp->ReadReduceSync(
+        localBuf, remoteBuf, HcclDataType::HCCL_DATA_TYPE_INT8, HcclReduceOp::HCCL_REDUCE_SUM, streamObj);
     ret = linktmp->ReadAsync(localBuf, remoteBuf, streamObj);
 
     ret = linktmp->PostFin(streamObj);
@@ -359,18 +347,17 @@ TEST_F(LinkPcieTest, ut_function_for_sendrecv_p2p)
     GlobalMockObject::verify();
 }
 
-
 TEST_F(LinkPcieTest, ut_function_for_device)
 {
     std::string collectiveId = "test_collective";
- 
+
     s32 device_id = 0;
- 
+
     MachinePara machine_para;
     machine_para.deviceLogicId = device_id;
     machine_para.supportDataReceivedAck = true;
     machine_para.linkAttribute = 0x1;
- 
+
     TransportDeviceIbverbsData transDevIbverbsData;
     HcclSignalInfo notifyInfo;
     notifyInfo.addr = 100;
@@ -411,31 +398,31 @@ TEST_F(LinkPcieTest, ut_function_for_device)
     transDevIbverbsData.userRemoteNotifyDetails.resize(1);
     transDevIbverbsData.userLocalNotify.resize(1);
 
-    MOCKER_CPP_VIRTUAL(*dispatcher,
-            &DispatcherPub::SignalRecord,
-            HcclResult(DispatcherPub::*)(HcclRtNotify, hccl::Stream &, u32, u64, s32, bool, u64, u32))
+    MOCKER_CPP_VIRTUAL(
+        *dispatcher, &DispatcherPub::SignalRecord,
+        HcclResult(DispatcherPub::*)(HcclRtNotify, hccl::Stream&, u32, u64, s32, bool, u64, u32))
         .stubs()
         .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP_VIRTUAL(*dispatcher, &DispatcherPub::SignalWait, HcclResult(DispatcherPub::*)(HcclRtNotify, hccl::Stream &, u32, u32,
-        s32, bool, u32, u32)).stubs().will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP_VIRTUAL(*dispatcher, &DispatcherPub::RdmaSend, HcclResult(DispatcherPub::*)(u32, u64, hccl::Stream &,
-        RdmaTaskInfo &)).stubs().will(returnValue(HCCL_SUCCESS));
- 
-    MOCKER_CPP(&DlHnsFunction::DlHnsFunctionRoceInit)
-              .stubs()
-              .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP_VIRTUAL(
+        *dispatcher, &DispatcherPub::SignalWait,
+        HcclResult(DispatcherPub::*)(HcclRtNotify, hccl::Stream&, u32, u32, s32, bool, u32, u32))
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP_VIRTUAL(
+        *dispatcher, &DispatcherPub::RdmaSend, HcclResult(DispatcherPub::*)(u32, u64, hccl::Stream&, RdmaTaskInfo&))
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
+
+    MOCKER_CPP(&DlHnsFunction::DlHnsFunctionRoceInit).stubs().will(returnValue(HCCL_SUCCESS));
     unsigned int temp = 1;
     MOCKER_CPP(&TransportDeviceIbverbs::TxSendWrlistExt)
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), outBoundP(&temp))
         .will(returnValue(HCCL_SUCCESS));
-    MOCKER(hrtRDMADBSend)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
-    DeviceMem input =  DeviceMem::alloc(1);
-    DeviceMem output =  DeviceMem::alloc(1);
- 
+    MOCKER(hrtRDMADBSend).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+    DeviceMem input = DeviceMem::alloc(1);
+    DeviceMem output = DeviceMem::alloc(1);
+
     std::shared_ptr<TransportDeviceIbverbs> linktmp = nullptr;
     std::chrono::milliseconds timeout = std::chrono::milliseconds(10);
     linktmp.reset(new TransportDeviceIbverbs(dispatcher, nullptr, machine_para, timeout, transDevIbverbsData));
@@ -444,14 +431,14 @@ TEST_F(LinkPcieTest, ut_function_for_device)
     linktmp->localSendDoneNotify_ = localNotify;
     linktmp->remoteSendReadyNotify_ = remoteNotify;
     linktmp->remoteSendDoneNotify_ = remoteNotify;
- 
+
     Stream streamObj(StreamType::STREAM_TYPE_OFFLINE);
     HcclResult ret = linktmp->TxPrepare(streamObj);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ret = linktmp->RxPrepare(streamObj);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ret = linktmp->TxData(UserMemType::OUTPUT_MEM, 0, input.ptr(), 0, streamObj);
- 
+
     ret = linktmp->RxData(UserMemType::OUTPUT_MEM, 0, output.ptr(), 0, streamObj);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ret = linktmp->TxDone(streamObj);
@@ -466,11 +453,11 @@ TEST_F(LinkPcieTest, ut_function_for_device)
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ret = linktmp->WaitReady(streamObj);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    void *remoteAddr = nullptr;
+    void* remoteAddr = nullptr;
     ret = linktmp->GetRemoteMem(hccl::UserMemType::OUTPUT_MEM, &remoteAddr);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     struct Transport::Buffer remoteBuf(remoteAddr, 0);
-    struct Transport::Buffer localBuf((void *)(transDevIbverbsData.localInputMem.addr), 0);
+    struct Transport::Buffer localBuf((void*)(transDevIbverbsData.localInputMem.addr), 0);
     ret = linktmp->WriteAsync(remoteBuf, localBuf, streamObj);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ret = linktmp->PostFin(streamObj);
@@ -494,12 +481,12 @@ TEST_F(LinkPcieTest, ut_function_for_device)
     sal_memset(inputMem.ptr(), sizeof(host_mem_size), 0, sizeof(host_mem_size));
     sal_memset(outputMem.ptr(), sizeof(host_mem_size), 0, sizeof(host_mem_size));
     HostMem host_mem = HostMem::alloc(host_mem_size);
-    sal_memset(host_mem.ptr(), host_mem_size, 0 , host_mem_size);
- 
+    sal_memset(host_mem.ptr(), host_mem_size, 0, host_mem_size);
+
     const char* msg = "hello client from server";
     s32 msg_len = SalStrLen(msg) + 1;
     DeviceMem tx_buf = inputMem.range(1, msg_len);
-    ret = sal_memcpy(host_mem.ptr(), msg_len, msg , msg_len);
+    ret = sal_memcpy(host_mem.ptr(), msg_len, msg, msg_len);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ret = dispatcher->MemcpyAsync(host_mem, tx_buf, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -507,19 +494,22 @@ TEST_F(LinkPcieTest, ut_function_for_device)
     txMems.emplace_back(TxMemoryInfo{UserMemType::INPUT_MEM, 0, tx_buf.ptr(), msg_len});
     HcclDataType datatype = HcclDataType::HCCL_DATA_TYPE_INT32;
     HcclReduceOp redOp = HcclReduceOp::HCCL_REDUCE_SUM;
- 
-    MOCKER_CPP(&TransportDeviceIbverbs::TxPayLoad)
-              .stubs()
-              .will(returnValue(HCCL_SUCCESS));
-              
+
+    MOCKER_CPP(
+        &TransportDeviceIbverbs::TxPayLoad,
+        HcclResult(TransportDeviceIbverbs::*)(
+            UserMemType, u64, const void*, u64, WqeType, WrAuxInfo&, std::vector<WrInformation>&))
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
+
     ret = linktmp->TxWithReduce(txMems, datatype, redOp, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     u64 dstOffset = 1000;
-    void *src = &dstOffset;
+    void* src = &dstOffset;
     ret = linktmp->TxAsync(UserMemType::INPUT_MEM, dstOffset, nullptr, dstOffset, stream);
     EXPECT_EQ(ret, HCCL_E_PTR);
- 
+
     ret = linktmp->TxAsync(txMems, stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
@@ -528,7 +518,7 @@ TEST_F(LinkPcieTest, ut_function_for_device)
 
     std::vector<WrInfo> wrInfoVec;
     bool useOneDoorbell;
- 
+
     ret = linktmp->TxSendDataAndNotifyWithSingleQP(wrInfoVec, stream, true);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
@@ -547,14 +537,14 @@ TEST_F(LinkPcieTest, ut_function_for_device)
     wr_info_ptr.imm_data = 0;
     wr_info_ptr.wr_id = 67890;
     wr_info_ptr.dst_addr = 0xabcdef;
-    u32 sendNum = 0; 
+    u32 sendNum = 0;
     struct send_wr_rsp my_send_wr_rsp;
     my_send_wr_rsp.wqe_tmp.sq_index = 1;
     my_send_wr_rsp.wqe_tmp.wqe_index = 2;
     my_send_wr_rsp.db.db_index = 3;
     my_send_wr_rsp.db.db_info = 0x12345678;
-    unsigned int *completeNum = &sendNum;
- 
+    unsigned int* completeNum = &sendNum;
+
     struct AiQpInfo qpInfo;
     qpInfo.ai_qp_addr = 0x12345678;
     qpInfo.sq_index = 0;
@@ -579,7 +569,10 @@ TEST_F(LinkPcieTest, ut_SpecifyLink)
     // 设置成功
     linktmp->recvPid_ = INVALID_INT;
     LinkTypeInServer linkType = LinkTypeInServer::SIO_TYPE;
-    MOCKER(hrtGetPairDeviceLinkType).stubs().with(mockcpp::any(), mockcpp::any(), outBound(linkType)).will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetPairDeviceLinkType)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), outBound(linkType))
+        .will(returnValue(HCCL_SUCCESS));
     HcclResult ret = linktmp->SetLinkType();
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
@@ -591,7 +584,10 @@ TEST_F(LinkPcieTest, ut_SpecifyLink)
     GlobalMockObject::verify();
 
     linkType = LinkTypeInServer::HCCS_TYPE;
-    MOCKER(hrtGetPairDeviceLinkType).stubs().with(mockcpp::any(), mockcpp::any(), outBound(linkType)).will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetPairDeviceLinkType)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), outBound(linkType))
+        .will(returnValue(HCCL_SUCCESS));
     ret = linktmp->SetLinkType();
     EXPECT_EQ(ret, HCCL_E_NOT_SUPPORT);
 

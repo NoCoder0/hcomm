@@ -24,23 +24,23 @@ using namespace Ccu;
 
 class DevCcuConnectionTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "DevCcuConnection tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "DevCcuConnection tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "DevCcuConnection tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "DevCcuConnection tests tear down." << std::endl; }
 
     virtual void SetUp()
     {
         MOCKER(HrtGetDeviceType).stubs().will(returnValue(DevType::DEV_TYPE_950));
-        MOCKER(HrtGetDevicePhyIdByIndex).stubs().with(mockcpp::any()).will(returnValue(static_cast<s32>(0)));
-        MOCKER(HrtRaUbCreateJetty).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(HrtRaUbJettyCreatedOutParam()));
+        MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().with(mockcpp::any()).will(returnValue(static_cast<s32>(0)));
+        MOCKER(HrtRaUbCreateJetty)
+            .stubs()
+            .with(mockcpp::any(), mockcpp::any())
+            .will(returnValue(HrtRaUbJettyCreatedOutParam()));
         MOCKER(HraGetDieAndFuncId).stubs().with(mockcpp::any()).will(returnValue(std::pair<uint32_t, uint32_t>(0, 0)));
-        MOCKER(HrtRaUbCreateJfc).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(jfcHandle));
+        MOCKER(HrtRaUbCreateJfc)
+            .stubs()
+            .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
+            .will(returnValue(jfcHandle));
         MOCKER(RaUbImportJetty)
             .stubs()
             .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
@@ -49,8 +49,8 @@ protected:
         MOCKER_CPP(&Socket::GetStatus).stubs().will(returnValue((SocketStatus)SocketStatus::OK));
         MOCKER(HrtRaSocketBlockSend).stubs().will(returnValue(true));
 
-
-        fakeSocket = new Socket(nullptr, localIp, listenPort, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+        fakeSocket
+            = new Socket(nullptr, localIp, listenPort, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
 
         std::cout << "A Test case in DevCcuConnection SetUP" << std::endl;
     }
@@ -62,7 +62,7 @@ protected:
         std::cout << "A Test case in DevCcuConnection TearDown" << std::endl;
     }
 
-    Socket *fakeSocket;
+    Socket* fakeSocket;
     IpAddress localIp;
     IpAddress remoteIp;
     u32 listenPort = 100;
@@ -72,10 +72,10 @@ protected:
 
 TEST_F(DevCcuConnectionTest, dev_ccu_connection_get_status_return_ok)
 {
-    RdmaHandle rdmaHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
     BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
-    LinkData     linkData(portType, 0, 1, 0, 1);
+    LinkData linkData(portType, 0, 1, 0, 1);
 
     ChannelInfo channelInfo;
     channelInfo.channelId = 0;
@@ -94,10 +94,10 @@ TEST_F(DevCcuConnectionTest, dev_ccu_connection_get_status_return_ok)
 
 TEST_F(DevCcuConnectionTest, dev_ccu_connection_bind_success)
 {
-    RdmaHandle rdmaHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
     BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
-    LinkData     linkData(portType, 0, 1, 0, 1);
+    LinkData linkData(portType, 0, 1, 0, 1);
 
     ChannelInfo channelInfo;
     channelInfo.channelId = 0;
@@ -112,18 +112,19 @@ TEST_F(DevCcuConnectionTest, dev_ccu_connection_bind_success)
     RmaConnStatus status = devCcuConnection.GetStatus();
 
     MOCKER_CPP(&ChannelManager::ChannelConfig).stubs().with(mockcpp::any()).will(returnValue(HcclResult::HCCL_SUCCESS));
-    RdmaHandle remoteRdmaHandle = (void *)0x2000000;
+    RdmaHandle remoteRdmaHandle = (void*)0x2000000;
 
-    EXPECT_NO_THROW(devCcuConnection.Bind(std::make_unique<RemoteUbRmaBuffer>(remoteRdmaHandle).get(), BufferType::INPUT));
+    EXPECT_NO_THROW(
+        devCcuConnection.Bind(std::make_unique<RemoteUbRmaBuffer>(remoteRdmaHandle).get(), BufferType::INPUT));
     EXPECT_EQ(true, devCcuConnection.updateChannelFlag);
 }
 
-std::unique_ptr<DevCcuConnection> CounctorDevCcuCon(Socket *fakeSocket)
+std::unique_ptr<DevCcuConnection> CounctorDevCcuCon(Socket* fakeSocket)
 {
-    RdmaHandle rdmaHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
     BasePortType basePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
     BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
-    LinkData     linkData(portType, 0, 1, 0, 1);
+    LinkData linkData(portType, 0, 1, 0, 1);
 
     ChannelInfo channelInfo;
     channelInfo.channelId = 0;
@@ -134,8 +135,8 @@ std::unique_ptr<DevCcuConnection> CounctorDevCcuCon(Socket *fakeSocket)
     CommunicatorImpl comm;
     CcuComponent ccuComponent(&comm);
 
-    std::unique_ptr<DevCcuConnection> ccuConn =
-        std::make_unique<DevCcuConnection>(fakeSocket, rdmaHandle, linkData, ccuComponent);
+    std::unique_ptr<DevCcuConnection> ccuConn
+        = std::make_unique<DevCcuConnection>(fakeSocket, rdmaHandle, linkData, ccuComponent);
     return std::move(ccuConn);
 }
 
@@ -146,7 +147,7 @@ TEST_F(DevCcuConnectionTest, dev_ccu_connection_prepare_read_throw_exception)
     MemoryBuffer remoteMemBuf(0, 0, 0);
     MemoryBuffer localMemBuf(0, 0, 0);
     SqeConfig config;
-    EXPECT_THROW(devCcuConnection->PrepareRead(remoteMemBuf, localMemBuf, config),NotSupportException);
+    EXPECT_THROW(devCcuConnection->PrepareRead(remoteMemBuf, localMemBuf, config), NotSupportException);
 }
 
 TEST_F(DevCcuConnectionTest, dev_ccu_connection_prepare_read_reduce_throw_exception)
@@ -159,7 +160,8 @@ TEST_F(DevCcuConnectionTest, dev_ccu_connection_prepare_read_reduce_throw_except
 
     auto devCcuConnection = CounctorDevCcuCon(fakeSocket);
     EXPECT_THROW(
-        devCcuConnection->PrepareReadReduce(remoteMemBuf, localMemBuf, datatype, reduceOp, config),NotSupportException);
+        devCcuConnection->PrepareReadReduce(remoteMemBuf, localMemBuf, datatype, reduceOp, config),
+        NotSupportException);
 }
 
 TEST_F(DevCcuConnectionTest, dev_ccu_connection_prepare_write_throw_exception)
@@ -168,7 +170,7 @@ TEST_F(DevCcuConnectionTest, dev_ccu_connection_prepare_write_throw_exception)
     MemoryBuffer localMemBuf(0, 0, 0);
     SqeConfig config;
     auto devCcuConnection = CounctorDevCcuCon(fakeSocket);
-    EXPECT_THROW(devCcuConnection->PrepareWrite(remoteMemBuf, localMemBuf, config),NotSupportException);
+    EXPECT_THROW(devCcuConnection->PrepareWrite(remoteMemBuf, localMemBuf, config), NotSupportException);
 }
 
 TEST_F(DevCcuConnectionTest, dev_ccu_connection_prepare_write_reduce_throw_exception)
@@ -180,7 +182,9 @@ TEST_F(DevCcuConnectionTest, dev_ccu_connection_prepare_write_reduce_throw_excep
     ReduceOp reduceOp = ReduceOp::SUM;
 
     auto devCcuConnection = CounctorDevCcuCon(fakeSocket);
-    EXPECT_THROW(devCcuConnection->PrepareWriteReduce(remoteMemBuf, localMemBuf, datatype, reduceOp, config),NotSupportException);
+    EXPECT_THROW(
+        devCcuConnection->PrepareWriteReduce(remoteMemBuf, localMemBuf, datatype, reduceOp, config),
+        NotSupportException);
 }
 
 TEST_F(DevCcuConnectionTest, dev_ccu_connection_suspend_change_status_suspend)

@@ -14,41 +14,30 @@
 #include "orion_adapter_trace.h"
 #include "atrace_api.h"
 
- 
 using namespace Hccl;
- 
+
 class AdapterTraceTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AdapterTraceTest tests set up." << std::endl;
-    }
- 
-    static void TearDownTestCase()
-    {
-        std::cout << "AdapterTraceTest tests tear down." << std::endl;
-    }
- 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in AdapterTraceTest SetUP" << std::endl;
-    }
- 
+    static void SetUpTestCase() { std::cout << "AdapterTraceTest tests set up." << std::endl; }
+
+    static void TearDownTestCase() { std::cout << "AdapterTraceTest tests tear down." << std::endl; }
+
+    virtual void SetUp() { std::cout << "A Test case in AdapterTraceTest SetUP" << std::endl; }
+
     virtual void TearDown()
     {
         GlobalMockObject::verify();
         std::cout << "A Test case in AdapterTraceTest TearDown" << std::endl;
     }
 };
- 
+
 TEST(AdapterTraceTest, tracecreate_test)
 {
     MOCKER(AtraceCreateWithAttr).stubs().will(returnValue(0));
     TraHandle handle;
     TraceCreate("HCCL");
- 
 }
- 
+
 TEST(AdapterTraceTest, St_TraceCreate_Fail_When_AtraceCreateWithAttr_Return_TRACE_INVALID_HANDLE)
 {
     GlobalMockObject::verify();
@@ -63,11 +52,8 @@ TEST(AdapterTraceTest, traceSubmit)
     TraHandle handle = 0;
     std::string buffer = "HCCL_TEST";
     u32 size = sizeof(buffer);
-    const unsigned char *startPos = (const unsigned char *)(buffer.c_str());
+    const unsigned char* startPos = (const unsigned char*)(buffer.c_str());
     TraceSubmit(handle, startPos, size);
 }
- 
-TEST(AdapterTraceTest, traceDestroy_test)
-{
-    MOCKER(AtraceDestroy).stubs();
-}
+
+TEST(AdapterTraceTest, traceDestroy_test) { MOCKER(AtraceDestroy).stubs(); }

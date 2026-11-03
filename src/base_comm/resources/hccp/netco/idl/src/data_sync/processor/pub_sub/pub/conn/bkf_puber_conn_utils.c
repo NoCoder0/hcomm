@@ -27,27 +27,27 @@ uint32_t BkfPuberConnParseHello(BkfPuberConn *conn, BkfMsgDecoder *decoder, BkfW
     while ((tl = BkfMsgDecodeTLV(decoder, &errCode)) != VOS_NULL) {
         switch (tl->typeId) {
             case BKF_TLV_PROJECT_NAME: {
-                hello->projectName = (BkfTlvProjectName*)tl;
+                hello->projectName = (BkfTlvProjectName *)tl;
                 break;
             }
             case BKF_TLV_PROJECT_VERSION: {
-                hello->projectVersion = (BkfTlvProjectVersion*)tl;
+                hello->projectVersion = (BkfTlvProjectVersion *)tl;
                 break;
             }
             case BKF_TLV_SERVICE_NAME: {
-                hello->serviceName = (BkfTlvServiceName*)tl;
+                hello->serviceName = (BkfTlvServiceName *)tl;
                 break;
             }
             case BKF_TLV_SUBER_NAME: {
-                hello->suberName = (BkfTlvSuberName*)tl;
+                hello->suberName = (BkfTlvSuberName *)tl;
                 break;
             }
             case BKF_TLV_IDL_VERSION: {
-                hello->idlVersion = (BkfTlvIdlVersion*)tl;
+                hello->idlVersion = (BkfTlvIdlVersion *)tl;
                 break;
             }
             case BKF_TLV_SUBER_LSNURL: {
-                hello->suberLsnUrl = (BkfTlvSuberLsnUrl*)tl;
+                hello->suberLsnUrl = (BkfTlvSuberLsnUrl *)tl;
                 break;
             }
             default: {
@@ -99,14 +99,14 @@ uint32_t BkfPuberConnChkHello(BkfPuberConn *conn, BkfWrapMsgHello *hello)
 uint32_t BkfPuberConnPackHelloAck(BkfPuberConn *conn, BkfMsgCoder *coder)
 {
     BkfPuberConnMng *connMng = conn->connMng;
-    BkfTlvReasonCode reasonCode = { .reasonCode = BKF_RC_OK };
-    BkfTlvIdlVersion idlVersion = { .major = connMng->argInit->idlVersionMajor,
-                                    .minor = connMng->argInit->idlVersionMinor };
+    BkfTlvReasonCode reasonCode = {.reasonCode = BKF_RC_OK};
+    BkfTlvIdlVersion idlVersion = {
+        .major = connMng->argInit->idlVersionMajor, .minor = connMng->argInit->idlVersionMinor};
 
     uint32_t ret = BkfMsgCodeMsgHead(coder, BKF_MSG_HELLO_ACK, 0);
     ret |= BkfMsgCodeTLV(coder, BKF_TLV_REASON_CODE, 0, &reasonCode.tl + 1, VOS_FALSE);
-    ret |= BkfMsgCodeRawTLV(coder, BKF_TLV_PUBER_NAME, 0,
-                             (void*)connMng->argInit->name, VOS_StrLen(connMng->argInit->name) + 1, VOS_FALSE);
+    ret |= BkfMsgCodeRawTLV(coder, BKF_TLV_PUBER_NAME, 0, (void *)connMng->argInit->name,
+        VOS_StrLen(connMng->argInit->name) + 1, VOS_FALSE);
     ret |= BkfMsgCodeTLV(coder, BKF_TLV_IDL_VERSION, 0, &idlVersion.tl + 1, VOS_TRUE);
     return ret;
 }
@@ -114,4 +114,3 @@ uint32_t BkfPuberConnPackHelloAck(BkfPuberConn *conn, BkfMsgCoder *coder)
 #ifdef __cplusplus
 }
 #endif
-

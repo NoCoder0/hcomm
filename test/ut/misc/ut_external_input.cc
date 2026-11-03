@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -26,35 +26,21 @@
 #include "config_log.h"
 #include "config_plf_log.h"
 
-
 using namespace std;
 using namespace hccl;
 
-class ExternalInputTest : public testing::Test
-{
+class ExternalInputTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "ExternalInputTest SetUP" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "ExternalInputTest TearDown" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "ExternalInputTest SetUP" << std::endl; }
+    static void TearDownTestCase() { std::cout << "ExternalInputTest TearDown" << std::endl; }
     // Some expensive resource shared by all tests.
     virtual void SetUp()
     {
         s32 portNum = -1;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
         std::cout << "A Test SetUP" << std::endl;
     }
-    virtual void TearDown()
-    {
-        std::cout << "A Test TearDown" << std::endl;
-    }
+    virtual void TearDown() { std::cout << "A Test TearDown" << std::endl; }
 };
 
 TEST_F(ExternalInputTest, ut_external_input_env_variables_params_intra_comm_type)
@@ -233,27 +219,27 @@ TEST_F(ExternalInputTest, ut_external_input_env_variables_taskExceptionSwitch)
     setenv("HCCL_DIAGNOSE_ENABLE", "abc", 1);
     ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_E_PARA);
-    unsetenv("HCCL_DIAGNOSE_ENABLE"); 
+    unsetenv("HCCL_DIAGNOSE_ENABLE");
 }
 
-//自定义端口hcclIfBasePort的st测试
+// 自定义端口hcclIfBasePort的st测试
 TEST_F(ExternalInputTest, ut_external_input_env_variables_port)
 {
     u32 baseport;
     HcclResult ret;
 
-    //eg1：不初始化环境变量，为默认值，port=HCCL_INVALIED_IF_BASE_PORT
+    // eg1：不初始化环境变量，为默认值，port=HCCL_INVALID_IF_BASE_PORT
     baseport = GetExternalInputHcclIfBasePort();
     HCCL_INFO("the base port is %u", baseport);
     ret = ((baseport == HCCL_INVALID_PORT) ? HCCL_SUCCESS : HCCL_E_PARA);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    //eg2：初始化port=0，异常值，走port=HOST_CONTROL_BASE_PORT
+    // eg2：初始化port=0，异常值，走port=HOST_CONTROL_BASE_PORT
     setenv("HCCL_IF_BASE_PORT", "0", 1);
     ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_E_PARA);
 
-    //eg3：初始化port=10000，走port=10000
+    // eg3：初始化port=10000，走port=10000
     setenv("HCCL_IF_BASE_PORT", "10000", 1);
     ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -263,7 +249,7 @@ TEST_F(ExternalInputTest, ut_external_input_env_variables_port)
     ret = ((baseport == 10000) ? HCCL_SUCCESS : HCCL_E_PARA);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    //eg4：初始化port=30000，走port=30000
+    // eg4：初始化port=30000，走port=30000
     setenv("HCCL_IF_BASE_PORT", "30000", 1);
     ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -273,7 +259,7 @@ TEST_F(ExternalInputTest, ut_external_input_env_variables_port)
     ret = ((baseport == 30000) ? HCCL_SUCCESS : HCCL_E_PARA);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    //eg5：初始化port=65520，走port=65520
+    // eg5：初始化port=65520，走port=65520
     setenv("HCCL_IF_BASE_PORT", "65520", 1);
     ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -283,42 +269,42 @@ TEST_F(ExternalInputTest, ut_external_input_env_variables_port)
     ret = ((baseport == 65520) ? HCCL_SUCCESS : HCCL_E_PARA);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    //eg6：初始化port=65535，异常值，走port=HOST_CONTROL_BASE_PORT
+    // eg6：初始化port=65535，异常值，走port=HOST_CONTROL_BASE_PORT
     setenv("HCCL_IF_BASE_PORT", "65535", 1);
     ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_E_PARA);
 
-    //eg7：初始化port=-1，异常值，报错，走port=HOST_CONTROL_BASE_PORT
+    // eg7：初始化port=-1，异常值，报错，走port=HOST_CONTROL_BASE_PORT
     setenv("HCCL_IF_BASE_PORT", "-1", 1);
     ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_E_PARA);
 
-    //eg8：初始化port=0xfffffff，异常值，走port=HOST_CONTROL_BASE_PORT
+    // eg8：初始化port=0xfffffff，异常值，走port=HOST_CONTROL_BASE_PORT
     setenv("HCCL_IF_BASE_PORT", "0xfffffff", 1);
     ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_E_PARA);
 
-    //eg9：初始化port="test"，异常值，报错，走port=HOST_CONTROL_BASE_PORT
+    // eg9：初始化port="test"，异常值，报错，走port=HOST_CONTROL_BASE_PORT
     setenv("HCCL_IF_BASE_PORT", "test", 1);
     ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_E_PARA);
 
-    //eg10：初始化port=0xfff，走port=65520
+    // eg10：初始化port=0xfff，走port=65520
     setenv("HCCL_IF_BASE_PORT", "0xfff", 1);
     ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_E_PARA);
 
-    //eg11：初始化port=4294967295，走port=60000
+    // eg11：初始化port=4294967295，走port=60000
     setenv("HCCL_IF_BASE_PORT", "4294967295", 1);
     ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_E_PARA);
 
-    //eg12：初始化port=1023，异常值，报错，走port=HOST_CONTROL_BASE_PORT
+    // eg12：初始化port=1023，异常值，报错，走port=HOST_CONTROL_BASE_PORT
     setenv("HCCL_IF_BASE_PORT", "1023", 1);
     ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_E_PARA);
 
-    //eg13：取消环境变量，则默认走port=HCCL_INVALIED_IF_BASE_PORT
+    // eg13：取消环境变量，则默认走port=HCCL_INVALID_IF_BASE_PORT
     unsetenv("HCCL_IF_BASE_PORT");
     ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -335,7 +321,7 @@ TEST_F(ExternalInputTest, ut_external_input_env_variables_params_exec_timeout)
     HcclResult ret;
 
     timeout = GetExternalInputHcclExecTimeOut();
-    HCCL_INFO("the timeout is %d", timeout);
+    HCCL_INFO("the timeout is [%d s]", timeout);
     timeout == NOTIFY_DEFAULT_WAIT_TIME ? ret = HCCL_SUCCESS : ret = HCCL_E_PARA;
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
@@ -364,7 +350,7 @@ TEST_F(ExternalInputTest, ut_external_input_env_variables_params_exec_timeout)
     EXPECT_EQ(ret, HCCL_E_PARA);
 
     timeout = GetExternalInputHcclExecTimeOut();
-    HCCL_INFO("the timeout is %d", timeout);
+    HCCL_INFO("the timeout is [%d s]", timeout);
     timeout == HCCL_EXEC_TIME_OUT_S ? ret = HCCL_SUCCESS : ret = HCCL_E_PARA;
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
@@ -373,7 +359,7 @@ TEST_F(ExternalInputTest, ut_external_input_env_variables_params_exec_timeout)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     timeout = GetExternalInputHcclExecTimeOut();
-    HCCL_INFO("the timeout is %d", timeout);
+    HCCL_INFO("the timeout is [%d s]", timeout);
     timeout == 68 ? ret = HCCL_SUCCESS : ret = HCCL_E_PARA;
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
@@ -382,7 +368,7 @@ TEST_F(ExternalInputTest, ut_external_input_env_variables_params_exec_timeout)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     timeout = GetExternalInputHcclExecTimeOut();
-    HCCL_INFO("the timeout is %d", timeout);
+    HCCL_INFO("the timeout is [%d s]", timeout);
     timeout == 9996 ? ret = HCCL_SUCCESS : ret = HCCL_E_PARA;
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
@@ -392,7 +378,7 @@ TEST_F(ExternalInputTest, ut_external_input_env_variables_params_exec_timeout)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     timeout = GetExternalInputHcclExecTimeOut();
-    HCCL_INFO("the timeout is %d", timeout);
+    HCCL_INFO("the timeout is [%d s]", timeout);
     timeout == HCCL_EXEC_TIME_OUT_S ? ret = HCCL_SUCCESS : ret = HCCL_E_PARA;
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
@@ -601,10 +587,7 @@ TEST_F(ExternalInputTest, ut_external_input_env_variables_RdmaTimeOut)
 
     DevType deviceType;
     deviceType = DevType::DEV_TYPE_910;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
     setenv("HCCL_RDMA_TIMEOUT", "21", 1);
     ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -612,17 +595,14 @@ TEST_F(ExternalInputTest, ut_external_input_env_variables_RdmaTimeOut)
     rdmaTimeOut = GetExternalInputRdmaTimeOut();
     HCCL_INFO("the rdmaTimeOut is %d", rdmaTimeOut);
     rdmaTimeOut == 21 ? ret = HCCL_SUCCESS : ret = HCCL_E_PARA;
-    EXPECT_EQ(ret, HCCL_SUCCESS); 
+    EXPECT_EQ(ret, HCCL_SUCCESS);
 
     GlobalMockObject::verify();
     deviceType = DevType::DEV_TYPE_910_93;
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
     setenv("HCCL_RDMA_TIMEOUT", "22", 1);
     ret = InitEnvVarParam();
-    EXPECT_EQ(ret, HCCL_E_PARA); 
+    EXPECT_EQ(ret, HCCL_E_PARA);
 
     // 设回默认值，并取消环境变量，just for ut
     setenv("HCCL_RDMA_TIMEOUT", "20", 1);
@@ -714,8 +694,8 @@ TEST_F(ExternalInputTest, ut_external_input_env_variables_masterinfo)
     string masterPort = "6000";
     string masterDeviceId = "0";
     string rankSize = "8";
-    string rankIp="192.168.1.1";
-    ret = SetMasterInfo(masterIp, masterPort,  masterDeviceId, rankSize, rankIp);
+    string rankIp = "192.168.1.1";
+    ret = SetMasterInfo(masterIp, masterPort, masterDeviceId, rankSize, rankIp);
     EXPECT_EQ(ret, HCCL_E_PARA);
 
     // masterPort error
@@ -724,40 +704,39 @@ TEST_F(ExternalInputTest, ut_external_input_env_variables_masterinfo)
     masterDeviceId = "0";
     rankSize = "8";
     rankIp = "192.168.1.1";
-    ret = SetMasterInfo(masterIp, masterPort,  masterDeviceId, rankSize, rankIp);
+    ret = SetMasterInfo(masterIp, masterPort, masterDeviceId, rankSize, rankIp);
     EXPECT_EQ(ret, HCCL_E_PARA);
-        // masterDeviceId error
+    // masterDeviceId error
     masterIp = "192.168.1.1";
     masterPort = "0";
     masterDeviceId = "abs";
     rankSize = "8";
     rankIp = "192.168.1.1";
-    ret = SetMasterInfo(masterIp, masterPort,  masterDeviceId, rankSize, rankIp);
+    ret = SetMasterInfo(masterIp, masterPort, masterDeviceId, rankSize, rankIp);
     EXPECT_EQ(ret, HCCL_E_PARA);
-            // rankSize error
+    // rankSize error
     masterIp = "192.168.1.1";
     masterPort = "6000";
     masterDeviceId = "0";
     rankSize = "a";
     rankIp = "192.168.1.1";
-    ret = SetMasterInfo(masterIp, masterPort,  masterDeviceId, rankSize, rankIp);
+    ret = SetMasterInfo(masterIp, masterPort, masterDeviceId, rankSize, rankIp);
     EXPECT_EQ(ret, HCCL_E_PARA);
-        // rankIp error
+    // rankIp error
     masterIp = "192.168.1.1";
     masterPort = "6000";
     masterDeviceId = "0";
     rankSize = "8";
     rankIp = "123";
-    ret = SetMasterInfo(masterIp, masterPort,  masterDeviceId, rankSize, rankIp);
+    ret = SetMasterInfo(masterIp, masterPort, masterDeviceId, rankSize, rankIp);
     EXPECT_EQ(ret, HCCL_E_PARA);
-
 
     masterIp = "192.168.1.1";
     masterPort = "6000";
     masterDeviceId = "0";
     rankSize = "8";
     rankIp = "192.168.1.1";
-    ret = SetMasterInfo(masterIp, masterPort,  masterDeviceId, rankSize, rankIp);
+    ret = SetMasterInfo(masterIp, masterPort, masterDeviceId, rankSize, rankIp);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ResetInitState();
 }
@@ -781,7 +760,7 @@ TEST_F(ExternalInputTest, ut_external_input_env_variables_HcclSocketIfName)
     ret = (configIfNames.empty() && !searchNot && !searchExact) ? HCCL_SUCCESS : HCCL_E_PARA;
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-     // 环境变量格式错误，初始化环境变量失败
+    // 环境变量格式错误，初始化环境变量失败
     setenv("HCCL_SOCKET_IFNAME", ",eth0", 1);
     ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_E_PARA);
@@ -796,7 +775,7 @@ TEST_F(ExternalInputTest, ut_external_input_env_variables_HcclSocketIfName)
     ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_SUCCESS);
     configIfNames = GetExternalInputHcclSocketIfName().configIfNames;
-    ifNameList = {"eth","enp"};
+    ifNameList = {"eth", "enp"};
     socketNameMatch = (configIfNames.size() == ifNameList.size());
     for (u32 innerIndex = 0; socketNameMatch && innerIndex < configIfNames.size(); innerIndex++) {
         if (configIfNames[innerIndex] != ifNameList[innerIndex]) {
@@ -814,7 +793,7 @@ TEST_F(ExternalInputTest, ut_external_input_env_variables_HcclSocketIfName)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     configIfNames = GetExternalInputHcclSocketIfName().configIfNames;
-    ifNameList = {"eth","enp"};
+    ifNameList = {"eth", "enp"};
     socketNameMatch = (configIfNames.size() == ifNameList.size());
     for (u32 innerIndex = 0; socketNameMatch && innerIndex < configIfNames.size(); innerIndex++) {
         if (configIfNames[innerIndex] != ifNameList[innerIndex]) {
@@ -832,7 +811,7 @@ TEST_F(ExternalInputTest, ut_external_input_env_variables_HcclSocketIfName)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     configIfNames = GetExternalInputHcclSocketIfName().configIfNames;
-    ifNameList = {"eth","enp"};
+    ifNameList = {"eth", "enp"};
     socketNameMatch = (configIfNames.size() == ifNameList.size());
     for (u32 innerIndex = 0; socketNameMatch && innerIndex < configIfNames.size(); innerIndex++) {
         if (configIfNames[innerIndex] != ifNameList[innerIndex]) {
@@ -849,7 +828,7 @@ TEST_F(ExternalInputTest, ut_external_input_env_variables_HcclSocketIfName)
     ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_SUCCESS);
     configIfNames = GetExternalInputHcclSocketIfName().configIfNames;
-    ifNameList = {"eth","enp"};
+    ifNameList = {"eth", "enp"};
     socketNameMatch = (configIfNames.size() == ifNameList.size());
     for (u32 innerIndex = 0; innerIndex < configIfNames.size(); innerIndex++) {
         if (configIfNames[innerIndex] != ifNameList[innerIndex]) {
@@ -871,18 +850,14 @@ TEST_F(ExternalInputTest, st_ParseCannVersion)
 
     std::string temp_filename = "version.info";
 
-    std::vector<std::string> file_lines = {
-        "Version=111",
-        "hccl_running_version=[222",
-        "timestamp=333"
-    };
+    std::vector<std::string> file_lines = {"Version=111", "hccl_running_version=[222", "timestamp=333"};
 
     {
         std::ofstream file(temp_filename);
         for (const auto& line : file_lines) {
             file << line << "\n";
         }
-    } 
+    }
     ret = LoadCannVersionInfoFile(temp_filename, "Version=");
     ret = LoadCannVersionInfoFile(temp_filename, "timestamp=");
     ret = LoadCannVersionInfoFile(temp_filename, "hccl_running_version=[2");
@@ -890,10 +865,8 @@ TEST_F(ExternalInputTest, st_ParseCannVersion)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     std::remove(temp_filename.c_str());
-    
-    MOCKER(LoadCannVersionInfoFile)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+
+    MOCKER(LoadCannVersionInfoFile).stubs().will(returnValue(HCCL_SUCCESS));
 
     char* path = getenv("LD_LIBRARY_PATH");
 
@@ -917,12 +890,11 @@ TEST_F(ExternalInputTest, st_ParseCannVersion)
 }
 #endif
 
-//测试cclbufsize
+// 测试cclbufsize
 TEST_F(ExternalInputTest, ut_external_input_env_cclbufsize)
 {
     u64 cclbufsize;
-    HcclResult ret; 
-
+    HcclResult ret;
 
     cclbufsize = GetExternalInputCCLBuffSize();
     HCCL_INFO("the cclBufferSize is %llu", cclbufsize);
@@ -970,7 +942,7 @@ TEST_F(ExternalInputTest, ut_external_input_env_cclbufsize)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
 
-//测试HCCL_INTER_HCCS_DISABLE
+// 测试HCCL_INTER_HCCS_DISABLE
 TEST_F(ExternalInputTest, ut_external_input_env_interHccs)
 {
     bool interHccsDisable = false;
@@ -999,7 +971,7 @@ TEST_F(ExternalInputTest, ut_external_input_env_interHccs)
     ResetInitState();
 }
 
-//测试HCCL_LOG_CONFIG
+// 测试HCCL_LOG_CONFIG
 TEST_F(ExternalInputTest, ut_external_hccl_log_config)
 {
     u32 logConfigValue = 0;
@@ -1022,7 +994,7 @@ TEST_F(ExternalInputTest, ut_external_input_env_retryparams)
     u32 holdtime = 0;
     u32 intervaltime = 0;
     HcclResult ret = HCCL_E_PARA;
- 
+
     /* 测试默认配置 */
     ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -1032,7 +1004,7 @@ TEST_F(ExternalInputTest, ut_external_input_env_retryparams)
     EXPECT_EQ(maxcnt, HCCL_RETRY_MAXCNT_DEFAULT);
     EXPECT_EQ(holdtime, HCCL_RETRY_HOLD_TIME_DEFAULT);
     EXPECT_EQ(intervaltime, HCCL_RETRY_INTERVAL_DEFAULT);
- 
+
     /* 测试正常配置MaxCnt:2, HoldTime:100, IntervalTime:100 */
     setenv("HCCL_OP_RETRY_PARAMS", "MaxCnt:2, HoldTime:100, IntervalTime:100", 1);
     ret = InitEnvVarParam();
@@ -1050,37 +1022,37 @@ TEST_F(ExternalInputTest, ut_external_input_env_retryparams)
     ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_E_PARA);
     unsetenv("HCCL_OP_RETRY_PARAMS");
- 
+
     /* 测试异常配置配置2 */
     setenv("HCCL_OP_RETRY_PARAMS", "MaxCnt:2, HoldTime:3600001, IntervalTime:100", 1);
     ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_E_PARA);
     unsetenv("HCCL_OP_RETRY_PARAMS");
- 
+
     /* 测试异常配置配置3 */
     setenv("HCCL_OP_RETRY_PARAMS", "MaxCnt:2, HoldTime:100, IntervalTime:3600001", 1);
     ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_E_PARA);
     unsetenv("HCCL_OP_RETRY_PARAMS");
- 
+
     /* 测试异常配置配置4 */
     setenv("HCCL_OP_RETRY_PARAMS", "MaxCnt:1.0, HoldTime:200.1, IntervalTime:300.3", 1);
     ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_E_PARA);
     unsetenv("HCCL_OP_RETRY_PARAMS");
- 
+
     /* 测试异常配置配置5 */
     setenv("HCCL_OP_RETRY_PARAMS", "MaxCnt:1s, HoldTime:2ms, IntervalTime:3us", 1);
     ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_E_PARA);
     unsetenv("HCCL_OP_RETRY_PARAMS");
- 
+
     /* 测试异常配置配置6 */
     setenv("HCCL_OP_RETRY_PARAMS", "Max:1s, HoldTime:200, IntervalTime:200", 1);
     ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_E_PARA);
     unsetenv("HCCL_OP_RETRY_PARAMS");
- 
+
     /* 测试异常配置配置7 */
     setenv("HCCL_OP_RETRY_PARAMS", "MaxCnt1s, HoldTime:200, IntervalTime:200", 1);
     ret = InitEnvVarParam();
@@ -1206,7 +1178,7 @@ TEST_F(ExternalInputTest, ut_external_input_env_expansion_mode_hostts)
     ResetInitState();
 }
 
-TEST_F(ExternalInputTest, ut_external_input_env_expansion_mode_host )
+TEST_F(ExternalInputTest, ut_external_input_env_expansion_mode_host)
 {
     HcclResult ret;
     ret = InitEnvVarParam();
@@ -1224,7 +1196,7 @@ TEST_F(ExternalInputTest, ut_external_input_env_rdma_high_perf_enable)
     HcclResult ret;
     ret = InitEnvVarParam();
     EXPECT_EQ(ret, HCCL_SUCCESS);
- 
+
     ResetInitState();
     setenv("HCCL_RDMA_PCIE_DIRECT_POST_NOSTRICT", "TRUE", 1);
     ret = InitEnvVarParam();

@@ -17,7 +17,7 @@
 #endif
 
 namespace Hccl {
-constexpr u64 MAX_OFFLOAD_SCRATCH_SIZE = 200 * 1024 * 1024;  // 200M
+constexpr u64 MAX_OFFLOAD_SCRATCH_SIZE = 200 * 1024 * 1024; // 200M
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
 InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::InsV2AlltoAllVSoleExecutor() : InsCollAlgBase()
@@ -28,44 +28,42 @@ InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::~InsV2AlltoAllVSoleExe
 {}
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::InitParams(const CollAlgOperator &op,
-    const CollAlgParams &params)
+HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::InitParams(
+    const CollAlgOperator& op, const CollAlgParams& params)
 {
     op_ = op;
     opMode_ = params.opMode;
     maxTmpMemSize_ = params.maxTmpMemSize;
-    CHK_PRT_RET((maxTmpMemSize_ == 0),
-        HCCL_ERROR("[InitParams] maxTmpMemSize equals to zero."),
-        HcclResult::HCCL_E_PARA);
+    CHK_PRT_RET(
+        (maxTmpMemSize_ == 0), HCCL_ERROR("[InitParams] maxTmpMemSize equals to zero."), HcclResult::HCCL_E_PARA);
 
-    CHK_PRT_RET((op.opType != OpType::ALLTOALLV),
-        HCCL_ERROR("[InitParams] opType is invalid."),
-        HcclResult::HCCL_E_PARA);
+    CHK_PRT_RET(
+        (op.opType != OpType::ALLTOALLV), HCCL_ERROR("[InitParams] opType is invalid."), HcclResult::HCCL_E_PARA);
 
-    CHK_PRT_RET(op.all2AllVDataDes.sendCounts == nullptr || op.all2AllVDataDes.sdispls == nullptr,
-        HCCL_ERROR("[InsV2AlltoAllVSoleExecutor][InitParams] sendCounts or sdispls is nullptr"),
-        HCCL_E_PTR);
+    CHK_PRT_RET(
+        op.all2AllVDataDes.sendCounts == nullptr || op.all2AllVDataDes.sdispls == nullptr,
+        HCCL_ERROR("[InsV2AlltoAllVSoleExecutor][InitParams] sendCounts or sdispls is nullptr"), HCCL_E_PTR);
 
     dataType_ = op.all2AllVDataDes.sendType;
-    dataCount_ = static_cast<u64 *>(op.all2AllVDataDes.sendCounts)[myRank_]; // send留给本卡的那一片数据
+    dataCount_ = static_cast<u64*>(op.all2AllVDataDes.sendCounts)[myRank_]; // send留给本卡的那一片数据
     outputDataType_ = op.all2AllVDataDes.recvType;
-    CHK_PRT_RET(dataType_ != outputDataType_,
-        HCCL_ERROR("[InsV2AlltoAllVSoleExecutor][InitParams] dataType_ != outputDataType_"),
-        HCCL_E_PTR);
+    CHK_PRT_RET(
+        dataType_ != outputDataType_,
+        HCCL_ERROR("[InsV2AlltoAllVSoleExecutor][InitParams] dataType_ != outputDataType_"), HCCL_E_PTR);
 
     dataTypeSize_ = DataTypeSizeGet(dataType_);
     dataSize_ = dataCount_ * dataTypeSize_;
 
     HCCL_DEBUG("dataType_ is [%u], dataCount_ is [%u]", dataType_, dataCount_);
 
-    CHK_PRT_RET(InitOpInfo(op, opType_, redOp_, root_),
-        HCCL_ERROR("[InitParams] unable to init OpInfo."),
+    CHK_PRT_RET(
+        InitOpInfo(op, opType_, redOp_, root_), HCCL_ERROR("[InitParams] unable to init OpInfo."),
         HcclResult::HCCL_E_PARA);
     return HcclResult::HCCL_SUCCESS;
 }
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::InitCommInfo(const RankGraph *rankGraph)
+HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::InitCommInfo(const RankGraph* rankGraph)
 {
     AlgTopoMatch topoMatch(myRank_, rankSize_, rankGraph, devType_);
     CHK_RET(topoMatch.MatchTopo(vTopo_, virtRanks_, virtRankMap_));
@@ -73,28 +71,32 @@ HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::InitCommInf
 }
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::InitCommInfo(const AlgTopoInfo &topoInfo)
+HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::InitCommInfo(const AlgTopoInfo& topoInfo)
 {
-    CHK_PRT_RET((topoInfo.vTopo.empty()),
-        HCCL_ERROR("[InsV2AlltoAllVSoleExecutor][InitCommInfo], topoInfo.vTopo is empty"), HcclResult::HCCL_E_PARA);
-    CHK_PRT_RET((topoInfo.virtRankMap.empty()),
-        HCCL_ERROR("[InsV2AlltoAllVSoleExecutor][InitCommInfo], topoInfo.virtRankMap is empty"), HcclResult::HCCL_E_PARA);
-    CHK_PRT_RET((topoInfo.virtRanks.empty()),
+    CHK_PRT_RET(
+        (topoInfo.vTopo.empty()), HCCL_ERROR("[InsV2AlltoAllVSoleExecutor][InitCommInfo], topoInfo.vTopo is empty"),
+        HcclResult::HCCL_E_PARA);
+    CHK_PRT_RET(
+        (topoInfo.virtRankMap.empty()),
+        HCCL_ERROR("[InsV2AlltoAllVSoleExecutor][InitCommInfo], topoInfo.virtRankMap is empty"),
+        HcclResult::HCCL_E_PARA);
+    CHK_PRT_RET(
+        (topoInfo.virtRanks.empty()),
         HCCL_ERROR("[InsV2AlltoAllVSoleExecutor][InitCommInfo], topoInfo.virtRanks is empty"), HcclResult::HCCL_E_PARA);
 
-    vTopo_ = topoInfo.vTopo[0];              // 本通信域内的通信平面
-    virtRankMap_ = topoInfo.virtRankMap[0];  // 本通信域内的 rank 映射表
-    virtRanks_ = topoInfo.virtRanks[0];      // 本通信域内的 rank 集合
+    vTopo_ = topoInfo.vTopo[0];             // 本通信域内的通信平面
+    virtRankMap_ = topoInfo.virtRankMap[0]; // 本通信域内的 rank 映射表
+    virtRanks_ = topoInfo.virtRanks[0];     // 本通信域内的 rank 集合
     return HcclResult::HCCL_SUCCESS;
 }
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
 HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CreateTemplates(
-    std::shared_ptr<InsAlgTemplate> &algTemplatePtr)
+    std::shared_ptr<InsAlgTemplate>& algTemplatePtr)
 {
     HCCL_DEBUG("[InsV2AlltoAllVSoleExecutor][CreateTemplates]");
     algTemplatePtr = std::make_shared<InsAlgTemplate>(myRank_, rankSize_, vTopo_, virtRankMap_);
-    CHK_PTR_NULL(algTemplatePtr);  // 检查是否成功分配内存
+    CHK_PTR_NULL(algTemplatePtr); // 检查是否成功分配内存
     algTemplatePtr->SetDmaMode(dmaMode_);
     algTemplatePtr->SetDataType(dataType_);
     algTemplatePtr->SetCollOp(op_);
@@ -103,7 +105,7 @@ HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CreateTempl
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
 HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::GetTemplateResRequest(
-    const RankGraph *rankGraph, std::shared_ptr<InsAlgTemplate> &algTemplate, AlgTempResReq &tempResReq) const
+    const RankGraph* rankGraph, std::shared_ptr<InsAlgTemplate>& algTemplate, AlgTempResReq& tempResReq) const
 {
     if (enableDetour_) {
         HCCL_DEBUG("[InsV2AlltoAllVSoleExecutor] Rank[%d], CalcRes with detouring enabled.", myRank_);
@@ -118,7 +120,7 @@ HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::GetTemplate
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
 HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::GetTemplateResRequest(
-    ConnectedLinkMgr *linkMgr, std::shared_ptr<InsAlgTemplate> &algTemplate, AlgTempResReq &tempResReq) const
+    ConnectedLinkMgr* linkMgr, std::shared_ptr<InsAlgTemplate>& algTemplate, AlgTempResReq& tempResReq) const
 {
     if (enableDetour_) {
         HCCL_INFO("[InsV2AlltoAllVSoleExecutor] Rank[%d], CalcRes with detouring enabled.", myRank_);
@@ -133,7 +135,7 @@ HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::GetTemplate
 // HOST 侧算法入口
 template <typename AlgTopoMatch, typename InsAlgTemplate>
 HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(
-    const RankGraph *rankGraph, const CollAlgOperator &op, const CollAlgParams &params, InsQuePtr insQue)
+    const RankGraph* rankGraph, const CollAlgOperator& op, const CollAlgParams& params, InsQuePtr insQue)
 {
     HCCL_INFO("[InsV2AlltoAllVSoleExecutor][Orchestrate] Orchestrate HOST Start");
     CHK_RET(Init(op, params, insQue));
@@ -145,10 +147,9 @@ HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate
     AlgTempResReq tempResReq;
     CHK_RET(GetTemplateResRequest(rankGraph, algTemplate, tempResReq));
 
-    HCCL_DEBUG("[InsV2AlltoAllVSoleExecutor][Orchestrate] Rank[%d], template [%s], requiredQue Num [%u].",
-        myRank_,
-        algTemplate->Describe().c_str(),
-        tempResReq.queNum);
+    HCCL_DEBUG(
+        "[InsV2AlltoAllVSoleExecutor][Orchestrate] Rank[%d], template [%s], requiredQue Num [%u].", myRank_,
+        algTemplate->Describe().c_str(), tempResReq.queNum);
     CHK_RET(InitQueue(tempResReq.queNum, tempInsQue_));
     CHK_RET(PrepResLinks(myRank_, rankGraph, linkPriority_, tempResReq.links, tempResLinks_));
 
@@ -159,8 +160,9 @@ HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate
 
 // AICPU 侧算法入口
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(const AlgTopoInfo &topoInfo,
-    const CollAlgOperator &op, const CollAlgParams &params, ConnectedLinkMgr *linkMgr, InsQuePtr insQue)
+HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate(
+    const AlgTopoInfo& topoInfo, const CollAlgOperator& op, const CollAlgParams& params, ConnectedLinkMgr* linkMgr,
+    InsQuePtr insQue)
 {
     HCCL_INFO("[InsV2AlltoAllVSoleExecutor][Orchestrate] Orchestrate AICPU Start");
     CHK_RET(Init(op, params, insQue));
@@ -182,22 +184,22 @@ HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate
 
 // 切分数据并调用 template
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateLoop(
-    std::shared_ptr<InsAlgTemplate> algTemplate)
+HcclResult
+InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::OrchestrateLoop(std::shared_ptr<InsAlgTemplate> algTemplate)
 {
     HCCL_INFO("[InsV2AlltoAllVSoleExecutor][Orchestrate] Start, template[%s]", algTemplate->Describe().c_str());
     u32 dataSizePerVolume = DataTypeSizeGet(dataType_);
     dataSize_ = dataCount_ * dataSizePerVolume;
 
-    TemplateDataParams tempAlgParams; 
+    TemplateDataParams tempAlgParams;
     tempAlgParams.buffInfo.outBuffType = BufferType::OUTPUT;
     tempAlgParams.buffInfo.scratBuffType = BufferType::SCRATCH;
     tempAlgParams.buffInfo.inBuffType = BufferType::INPUT;
-    tempAlgParams.repeatNum = 1;  // 不需要重复
+    tempAlgParams.repeatNum = 1; // 不需要重复
     tempAlgParams.inputRepeatStride = 0;
     tempAlgParams.outputRepeatStride = 0;
 
-    TempFuncs tempFuncs;  
+    TempFuncs tempFuncs;
     tempFuncs.enableCounterNotify = IsEnableCounterNotify();
     tempFuncs.isForepart = true;
     tempFuncs.isBottom = true;
@@ -215,19 +217,20 @@ HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate
 
     // 先将cclBuffer切块，看每一块大小
     u64 scratchDataCountPerLoopPerRank = maxDataSizePerLoop / dataTypeSize_ / rankSize_;
-    HCCL_INFO("[InsV2AlltoAllVSoleExecutor][OrchestrateLoop] scratchDataCountPerLoopPerRank[%llu], maxDataSizePerLoop[%llu], "
-              "transportBoundDataSize[%llu], templateScratchMultiplier[%llu]",
-        scratchDataCountPerLoopPerRank,
-        maxDataSizePerLoop,
-        transportBoundDataSize,
-        templateScratchMultiplier);
-    CHK_PRT_RET(scratchDataCountPerLoopPerRank == 0,
+    HCCL_INFO(
+        "[InsV2AlltoAllVSoleExecutor][OrchestrateLoop] scratchDataCountPerLoopPerRank[%llu], maxDataSizePerLoop[%llu], "
+        "transportBoundDataSize[%llu], templateScratchMultiplier[%llu]",
+        scratchDataCountPerLoopPerRank, maxDataSizePerLoop, transportBoundDataSize, templateScratchMultiplier);
+    CHK_PRT_RET(
+        scratchDataCountPerLoopPerRank == 0,
         HCCL_ERROR("[InsV2AlltoAllVSoleExecutor][OrchestrateLoop] scratchDataCountPerLoopPerRank is 0"),
         HCCL_E_INTERNAL);
 
-    CHK_PRT_RET(op_.all2AllVDataDes.sendCounts == nullptr || op_.all2AllVDataDes.sdispls == nullptr ||
-         op_.all2AllVDataDes.recvCounts == nullptr || op_.all2AllVDataDes.rdispls == nullptr,
-        HCCL_ERROR("[InsV2AlltoAllVSoleExecutor][OrchestrateLoop] sendCounts or sdispls or recvCounts or rdispls is nullptr"),
+    CHK_PRT_RET(
+        op_.all2AllVDataDes.sendCounts == nullptr || op_.all2AllVDataDes.sdispls == nullptr
+            || op_.all2AllVDataDes.recvCounts == nullptr || op_.all2AllVDataDes.rdispls == nullptr,
+        HCCL_ERROR(
+            "[InsV2AlltoAllVSoleExecutor][OrchestrateLoop] sendCounts or sdispls or recvCounts or rdispls is nullptr"),
         HCCL_E_PTR);
 
 #ifndef CCL_KERNEL_AICPU
@@ -235,7 +238,8 @@ HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate
     tempAlgParams.buffInfo.inBuffBaseOff = 0;
     tempAlgParams.buffInfo.outBuffBaseOff = 0;
     tempAlgParams.buffInfo.scratchBuffBaseOff = 0;
-    tempAlgParams.sliceSize = scratchDataCountPerLoopPerRank * dataTypeSize_; // 这里就是每个rank可以用的ccl buffer的大小;
+    tempAlgParams.sliceSize
+        = scratchDataCountPerLoopPerRank * dataTypeSize_; // 这里就是每个rank可以用的ccl buffer的大小;
     tempAlgParams.inputSliceStride = 0;
     tempAlgParams.outputSliceStride = 0;
 
@@ -247,8 +251,8 @@ HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::Orchestrate
 }
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
-HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcRes(
-    const RankGraph *rankGraph, CollAlgResReq &algResReq)
+HcclResult
+InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcRes(const RankGraph* rankGraph, CollAlgResReq& algResReq)
 {
     // Topo Match
     CHK_RET(InitCommInfo(rankGraph));
@@ -263,7 +267,7 @@ HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcRes(
     CHK_RET(GetTemplateResRequest(rankGraph, algTemplate, tempResReq));
 
     CHK_RET(CalcLinkInfo(myRank_, rankGraph, tempResReq.links, algResReq.levelRankPairs));
-    algResReq.topoInfo.UpdateSingleLevelTopo(virtRanks_, virtRankMap_, vTopo_);   
+    algResReq.topoInfo.UpdateSingleLevelTopo(virtRanks_, virtRankMap_, vTopo_);
     algResReq.queueNotifys = tempResReq.queNotifys;
     algResReq.primQueueNum = tempResReq.streamNum;
     algResReq.localWaitGroupCntNotify = tempResReq.localWaitGroupCntNotify;
@@ -275,7 +279,7 @@ HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcRes(
 
 template <typename AlgTopoMatch, typename InsAlgTemplate>
 HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcResOffload(
-    const RankGraph *rankGraph, const u64 &dataSize, CollOffloadOpResReq &resReq)
+    const RankGraph* rankGraph, const u64& dataSize, CollOffloadOpResReq& resReq)
 {
     HCCL_INFO("[InsV2AlltoAllVSoleExecutor][CalcResOffload] dataSize is [%u]", dataSize);
     // Topo Match
@@ -293,7 +297,7 @@ HcclResult InsV2AlltoAllVSoleExecutor<AlgTopoMatch, InsAlgTemplate>::CalcResOffl
 }
 
 #ifndef CCL_KERNEL_AICPU
-INS_REGISTER_IMPL_BY_TEMP(OpType::ALLTOALLV, AivAlltoAllVMesh1D, InsV2AlltoAllVSoleExecutor, TopoMatchMesh,
-                          AivTempAlltoAllVMesh1D);
+INS_REGISTER_IMPL_BY_TEMP(
+    OpType::ALLTOALLV, AivAlltoAllVMesh1D, InsV2AlltoAllVSoleExecutor, TopoMatchMesh, AivTempAlltoAllVMesh1D);
 #endif
-}  // namespace Hccl
+} // namespace Hccl

@@ -18,7 +18,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif  // __cplusplus
+#endif // __cplusplus
 const u32 HCOMM_ALG_TAG_LENGTH = 288;
 /**
  * @brief 算子上报性能数据（开始时间戳）
@@ -36,7 +36,7 @@ extern HcclResult HcclProfilingReportOp(HcclComm comm, uint64_t beginTime);
  * @return HcclResult 执行结果状态码
  * @note host侧
  */
-extern HcclResult HcclReportAicpuKernel(HcclComm comm, uint64_t beginTime, char *kernelName);
+extern HcclResult HcclReportAicpuKernel(HcclComm comm, uint64_t beginTime, char* kernelName);
 extern HcclResult HcclReportAivKernel(HcclComm comm, uint64_t beginTime);
 
 extern uint64_t HcommGetProfilingSysCycleTime();
@@ -51,34 +51,34 @@ extern uint64_t HcommGetProfilingSysCycleTime();
 extern HcclResult HcclDfxRegOpInfoByCommId(char* commId, void* hcclDfxOpInfo);
 
 struct HcclDfxOpInfo {
-    CommAbiHeader       header;
-    //DfxOpInfo_base
-    uint64_t            beginTime = 0;
-    uint64_t            endTime = 0;
-    //baseCollOperator
-    uint32_t            opMode = 0; // 单算子和图模式
-    uint32_t            opType = 0; // 算子名称类型
-    uint32_t            reduceOp = 0;
-    uint32_t            dataType = 0;
-    uint32_t            outputType = 0; //暂不删除，考虑后续算子使用
-    uint64_t            dataCount = 0;
-    uint32_t            root = ~0U;
-    char                algTag[HCOMM_ALG_TAG_LENGTH]; // 算法名 = "算子类型 + 通信域id + 选择的算法"
-    CommEngine          engine = COMM_ENGINE_RESERVED;
-    //task_exception
-    uint64_t            cpuTsThread = 0; // host侧算子主流的threadhandle
-    uint32_t            cpuWaitAicpuNotifyIdx = ~0U; // host wait device notifyIdx
-    uint32_t            cpuWaitAicpuNotifyId = ~0U; // host wait device notifyId
+    CommAbiHeader header;
+    // DfxOpInfo_base
+    uint64_t beginTime = 0;
+    uint64_t endTime = 0;
+    // baseCollOperator
+    uint32_t opMode = 0; // 单算子和图模式
+    uint32_t opType = 0; // 算子名称类型
+    uint32_t reduceOp = 0;
+    uint32_t dataType = 0;
+    uint32_t outputType = 0; // 暂不删除，考虑后续算子使用
+    uint64_t dataCount = 0;
+    uint32_t root = ~0U;
+    char algTag[HCOMM_ALG_TAG_LENGTH]; // 算法名 = "算子类型 + 通信域id + 选择的算法"
+    CommEngine engine = COMM_ENGINE_RESERVED;
+    // task_exception
+    uint64_t cpuTsThread = 0;             // host侧算子主流的threadhandle
+    uint32_t cpuWaitAicpuNotifyIdx = ~0U; // host wait device notifyIdx
+    uint32_t cpuWaitAicpuNotifyId = ~0U;  // host wait device notifyId
     // 算子内存信息
-    uint64_t            inputMemAddr = 0;
-    uint64_t            inputMemSize = 0;
-    uint64_t            outputMemAddr = 0;
-    uint64_t            outputMemSize = 0;
-    int8_t              reserve[96]; // 预留扩展字段
+    uint64_t inputMemAddr = 0;
+    uint64_t inputMemSize = 0;
+    uint64_t outputMemAddr = 0;
+    uint64_t outputMemSize = 0;
+    int8_t reserve[96]; // 预留扩展字段
 };
 
 #ifdef __cplusplus
 }
-#endif  // __cplusplus
+#endif // __cplusplus
 
 #endif

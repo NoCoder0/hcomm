@@ -19,16 +19,16 @@
 
 class DevAicpuTsChannelMgr {
 public:
-    static DevAicpuTsChannelMgr &Instance();
+    static DevAicpuTsChannelMgr& Instance();
 
-    DevAicpuTsChannel *GetOrCreateAicpuTsChannel(hcomm::HcommChannelKind kind);
+    DevAicpuTsChannel* GetOrCreateAicpuTsChannel(hcomm::HcommChannelKind kind);
     bool DestroyChannel(ChannelHandle handle);
 
 private:
     DevAicpuTsChannelMgr() = default;
     ~DevAicpuTsChannelMgr() = default;
-    DevAicpuTsChannelMgr(const DevAicpuTsChannelMgr &) = delete;
-    DevAicpuTsChannelMgr &operator=(const DevAicpuTsChannelMgr &) = delete;
+    DevAicpuTsChannelMgr(const DevAicpuTsChannelMgr&) = delete;
+    DevAicpuTsChannelMgr& operator=(const DevAicpuTsChannelMgr&) = delete;
 
     std::unordered_map<hcomm::HcommChannelKind, std::unique_ptr<DevAicpuTsChannel>> channelMap_;
     std::mutex mutex_;

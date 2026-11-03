@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gradient_segment.h"
 #include <math.h>
@@ -16,16 +16,15 @@ namespace hccl {
 
 GradientSegment::GradientSegment() : shapeType_(OriginalGraphShapeType::KNOWN_SHAPE) {}
 
-GradientSegment::~GradientSegment()
-{
-}
+GradientSegment::~GradientSegment() {}
 
-HcclResult GradientSegment::GetGradientSegmentExecutor(const std::string &group,
-    const struct model_feature *feature, std::vector<u32> &segment_index, bool &isUseFusionLib,
-    GradSplitForceMode force, OriginalGraphShapeType shapeType)
+HcclResult GradientSegment::GetGradientSegmentExecutor(
+    const std::string& group, const struct model_feature* feature, std::vector<u32>& segment_index,
+    bool& isUseFusionLib, GradSplitForceMode force, OriginalGraphShapeType shapeType)
 {
-    CHK_PRT_RET(group.empty(),
-        HCCL_ERROR("[GradientSegment][GetGradientSegmentExecutor]params invalid, group is empty"), HCCL_E_PARA);
+    CHK_PRT_RET(
+        group.empty(), HCCL_ERROR("[GradientSegment][GetGradientSegmentExecutor]params invalid, group is empty"),
+        HCCL_E_PARA);
     CHK_PTR_NULL(feature);
     isUseFusionLib = false;
     std::vector<u32> segList;
@@ -55,7 +54,7 @@ HcclResult GradientSegment::GetGradientSegmentExecutor(const std::string &group,
                 CHK_RET(GetSegmentByDefaultRatio(accumGradList, featGradNum, segList));
             }
         } else {
-                return HCCL_E_PARA;
+            return HCCL_E_PARA;
         }
     }
     if (segList.size() > 0) {
@@ -67,8 +66,8 @@ HcclResult GradientSegment::GetGradientSegmentExecutor(const std::string &group,
     return HCCL_SUCCESS;
 }
 
-HcclResult GradientSegment::GetSegmentByDefaultRatio(const std::vector<float> &accumGradList,
-    u32 featGradNum, std::vector<u32> &segList)
+HcclResult GradientSegment::GetSegmentByDefaultRatio(
+    const std::vector<float>& accumGradList, u32 featGradNum, std::vector<u32>& segList)
 {
     if (shapeType_ == OriginalGraphShapeType::UNKNOWN_SHAPE) {
         CHK_RET(GetFixedSizeSegmentByDefaultRatio(accumGradList, featGradNum, segList));
@@ -79,33 +78,38 @@ HcclResult GradientSegment::GetSegmentByDefaultRatio(const std::vector<float> &a
     return HCCL_SUCCESS;
 }
 
-HcclResult GradientSegment::GetTwoSegmentByDefaultRatio(const std::vector<float> &accumGradList, u32 featGradNum,
-    std::vector<u32> &segList)
+HcclResult GradientSegment::GetTwoSegmentByDefaultRatio(
+    const std::vector<float>& accumGradList, u32 featGradNum, std::vector<u32>& segList)
 {
     std::vector<u32> segTempList;
     float gradSize = (GRADIENT_SEGMENT_SIZE_RATIO / GRADIENT_TOTAL_SIZE_RATIO) * accumGradList[featGradNum - 1];
     float allocGradSize = 0;
     float preSizeLeft = 0;
     HcclResult ret = GetSplitResInEachSegment(accumGradList, gradSize, segTempList, allocGradSize, preSizeLeft);
-    CHK_PRT_RET(ret != HCCL_SUCCESS,
-        HCCL_ERROR("[Get][TwoSegmentByDefaultRatio]errNo[0x%016llx] get gradIdx with [%f]%% datasize "\
-            "fail", HCCL_ERROR_CODE(HCCL_E_PARA), GRADIENT_SEGMENT_SIZE_RATIO), HCCL_E_PARA);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[Get][TwoSegmentByDefaultRatio]errNo[0x%016llx] get gradIdx with [%f]%% datasize "
+            "fail",
+            HCCL_ERROR_CODE(HCCL_E_PARA), GRADIENT_SEGMENT_SIZE_RATIO),
+        HCCL_E_PARA);
 
     segList.push_back(segTempList[0]);
     if (featGradNum >= (segList[0] + 2)) { // 将得到梯度索引值加2与总梯度长比较，判断能否切第二段
-        segList.push_back(featGradNum - 1);  // 通过减1得到最后一层索引将第二段放入切分策略list
+        segList.push_back(featGradNum - 1); // 通过减1得到最后一层索引将第二段放入切分策略list
     }
     HCCL_DEBUG("<gradient segment size default result>");
     return HCCL_SUCCESS;
 }
 
-HcclResult GradientSegment::GetFixedSizeSegmentByDefaultRatio(const std::vector<float> &accumGradList,
-    u32 featGradNum, std::vector<u32> &segList)
+HcclResult GradientSegment::GetFixedSizeSegmentByDefaultRatio(
+    const std::vector<float>& accumGradList, u32 featGradNum, std::vector<u32>& segList)
 {
-    std::vector<float> segmentSizeRatio = { GRADIENT_SEGMENT_SIZE_RATIO,
-                                            (GRADIENT_TOTAL_SIZE_RATIO - GRADIENT_SEGMENT_SIZE_RATIO) };
+    std::vector<float> segmentSizeRatio
+        = {GRADIENT_SEGMENT_SIZE_RATIO, (GRADIENT_TOTAL_SIZE_RATIO - GRADIENT_SEGMENT_SIZE_RATIO)};
     std::vector<float> segmentSize;
-    CHK_PRT_RET(accumGradList.empty(), HCCL_ERROR("[Get][FixedSizeSegmentByDefaultRatio]accumGradList empty, fail"),
+    CHK_PRT_RET(
+        accumGradList.empty(), HCCL_ERROR("[Get][FixedSizeSegmentByDefaultRatio]accumGradList empty, fail"),
         HCCL_E_PARA);
     // 按默认切分方式切分两段，计算每段的数据量大小
     CHK_RET(CheckAndConfigSegment(segmentSizeRatio, accumGradList[featGradNum - 1], segmentSize));
@@ -115,11 +119,15 @@ HcclResult GradientSegment::GetFixedSizeSegmentByDefaultRatio(const std::vector<
     for (u32 inputIdx = 0; inputIdx < segmentSize.size(); inputIdx++) {
         // 根据比例不一定能完整切分，将前一段中剩余未切分的梯度数据量累加到下一段中
         segmentSize[inputIdx] += preSizeLeft;
-        HcclResult ret = GetSplitResInEachSegment(accumGradList, segmentSize[inputIdx], segList, \
-            allocGradSize, preSizeLeft);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[Get][FixedSizeSegmentByDefaultRatio]errNo[0x%016llx] get gradIdx with [%u] "\
-                "segment fail", HCCL_ERROR_CODE(HCCL_E_PARA), inputIdx), HCCL_E_PARA);
+        HcclResult ret
+            = GetSplitResInEachSegment(accumGradList, segmentSize[inputIdx], segList, allocGradSize, preSizeLeft);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[Get][FixedSizeSegmentByDefaultRatio]errNo[0x%016llx] get gradIdx with [%u] "
+                "segment fail",
+                HCCL_ERROR_CODE(HCCL_E_PARA), inputIdx),
+            HCCL_E_PARA);
         if (segList.back() == (featGradNum - 1)) {
             break;
         }
@@ -135,8 +143,8 @@ HcclResult GradientSegment::GetFixedSizeSegmentByDefaultRatio(const std::vector<
     return HCCL_SUCCESS;
 }
 
-HcclResult GradientSegment::GetSegmentByIndex(const std::string &group,
-    u32 featGradNum, std::vector<u32> &segList) const
+HcclResult
+GradientSegment::GetSegmentByIndex(const std::string& group, u32 featGradNum, std::vector<u32>& segList) const
 {
     (void)featGradNum;
     std::unique_lock<std::mutex> segmentIdxMapLock(g_segmentIdxMapLock);
@@ -151,8 +159,8 @@ HcclResult GradientSegment::GetSegmentByIndex(const std::string &group,
     return HCCL_SUCCESS;
 }
 
-HcclResult GradientSegment::GetSegmentBySize(const std::string &group,
-    u32 featGradNum, std::vector<u32> &segList, const std::vector<float> &accumGradList)
+HcclResult GradientSegment::GetSegmentBySize(
+    const std::string& group, u32 featGradNum, std::vector<u32>& segList, const std::vector<float>& accumGradList)
 {
     HcclResult ret;
     CHK_PRT_RET(accumGradList.empty(), HCCL_ERROR("[Get][SegmentBySize]accumGradList empty, fail"), HCCL_E_PARA);
@@ -168,11 +176,14 @@ HcclResult GradientSegment::GetSegmentBySize(const std::string &group,
             for (u32 inputIdx = 0; inputIdx < segmentSize.size(); inputIdx++) {
                 // 根据比例不一定能完整切分，将前一段中剩余未切分的梯度数据量累加到下一段中
                 segmentSize[inputIdx] += preSizeLeft;
-                ret = GetSplitResInEachSegment(accumGradList, segmentSize[inputIdx], segList, \
-                                               allocGradSize, preSizeLeft);
-                CHK_PRT_RET(ret != HCCL_SUCCESS,
-                    HCCL_ERROR("[Get][SegmentBySize]errNo[0x%016llx] get gradIdx with segment [%u] fail",
-                        HCCL_ERROR_CODE(HCCL_E_PARA), inputIdx), HCCL_E_PARA);
+                ret = GetSplitResInEachSegment(
+                    accumGradList, segmentSize[inputIdx], segList, allocGradSize, preSizeLeft);
+                CHK_PRT_RET(
+                    ret != HCCL_SUCCESS,
+                    HCCL_ERROR(
+                        "[Get][SegmentBySize]errNo[0x%016llx] get gradIdx with segment [%u] fail",
+                        HCCL_ERROR_CODE(HCCL_E_PARA), inputIdx),
+                    HCCL_E_PARA);
                 if (segList.back() == (featGradNum - 1)) {
                     break;
                 }
@@ -189,8 +200,8 @@ HcclResult GradientSegment::GetSegmentBySize(const std::string &group,
     return HCCL_E_NOT_FOUND;
 }
 
-HcclResult GradientSegment::CheckAndConfigSegment(std::vector<float> &segmentSizeProportion,   \
-    float totalSize, std::vector<float> &segmentSize) const
+HcclResult GradientSegment::CheckAndConfigSegment(
+    std::vector<float>& segmentSizeProportion, float totalSize, std::vector<float>& segmentSize) const
 {
     float proportion = 0;
     float gradSize = 0;
@@ -203,12 +214,16 @@ HcclResult GradientSegment::CheckAndConfigSegment(std::vector<float> &segmentSiz
     return HCCL_SUCCESS;
 }
 
-HcclResult GradientSegment::GetSplitResInEachSegment(const std::vector<float> &accumGradList, float gradSize,
-    std::vector<u32> &segList, float &allocGradSize, float &preSizeLeft)
+HcclResult GradientSegment::GetSplitResInEachSegment(
+    const std::vector<float>& accumGradList, float gradSize, std::vector<u32>& segList, float& allocGradSize,
+    float& preSizeLeft)
 {
     bool bRet = accumGradList.size() == 0;
-    CHK_PRT_RET(bRet, HCCL_ERROR("[Get][SplitResInEachSegment]errNo[0x%016llx] accumGradList is empty!",
-        HCCL_ERROR_CODE(HCCL_E_PARA)), HCCL_E_PARA);
+    CHK_PRT_RET(
+        bRet,
+        HCCL_ERROR(
+            "[Get][SplitResInEachSegment]errNo[0x%016llx] accumGradList is empty!", HCCL_ERROR_CODE(HCCL_E_PARA)),
+        HCCL_E_PARA);
     u64 cclBufferSize = GetExternalInputCCLBuffSize() - CCL_COMM_INBUFFER_UNALIGNED_RESERVE_SIZE;
     float commInputSize = static_cast<float>(cclBufferSize);
     float curSize = 0;
@@ -253,15 +268,15 @@ HcclResult GradientSegment::GetSplitResInEachSegment(const std::vector<float> &a
     return HCCL_SUCCESS;
 }
 
-HcclResult GradientSegment::GetIdxByBinarySearch(const std::vector<float> &accumGradList, \
-                                                 const float &curSize, u32 &segGradIdx)
+HcclResult GradientSegment::GetIdxByBinarySearch(
+    const std::vector<float>& accumGradList, const float& curSize, u32& segGradIdx) const
 {
     s32 lowIdx = 0;
     s32 midIdx = 0;
     s32 highIdx = accumGradList.size() - 1;
     // 二分法找到有序数据量list中第一个大于等于curSize大小的索引
     while (lowIdx <= highIdx) {
-        midIdx = (lowIdx + highIdx) / 2; // 通过除2得到前后索引的中间值
+        midIdx = (lowIdx + highIdx) / 2;                         // 通过除2得到前后索引的中间值
         if (std::fabs(accumGradList[midIdx] - curSize) < 1e-6) { // 中间值等于curSize则直接返回当前索引
             segGradIdx = static_cast<u32>(midIdx);
             return HCCL_SUCCESS;
@@ -278,14 +293,17 @@ HcclResult GradientSegment::GetIdxByBinarySearch(const std::vector<float> &accum
     }
     /* 没找到对应数据量的index，找接近此数据量的index */
     HcclResult ret = GetNearIdxByDataSize(accumGradList, segGradIdx, curSize, midIdx);
-    CHK_PRT_RET(ret != HCCL_SUCCESS,
-        HCCL_ERROR("[Get][IdxByBinarySearch]errNo[0x%016llx] get near Idx with [%f]%% datasize fail",
-            HCCL_ERROR_CODE(HCCL_E_PARA), curSize), HCCL_E_PARA);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[Get][IdxByBinarySearch]errNo[0x%016llx] get near Idx with [%f]%% datasize fail",
+            HCCL_ERROR_CODE(HCCL_E_PARA), curSize),
+        HCCL_E_PARA);
     return HCCL_SUCCESS;
 }
 
-HcclResult GradientSegment::GetNearIdxByDataSize(const std::vector<float> &accumGradList,
-    u32 &segGradIdx, float gradSize, s32 midIdx) const
+HcclResult GradientSegment::GetNearIdxByDataSize(
+    const std::vector<float>& accumGradList, u32& segGradIdx, float gradSize, s32 midIdx) const
 {
     if (midIdx == 0) { // 如果当前索引在最开始则直接返回
         segGradIdx = static_cast<u32>(midIdx);
@@ -296,14 +314,13 @@ HcclResult GradientSegment::GetNearIdxByDataSize(const std::vector<float> &accum
         segGradIdx = static_cast<u32>(midIdx) - 1;
     } else {
         // 判断前一个index和当前midIdx哪个位置的数据量与需要百分比数据量更为接近, 返回更接近的那个索引
-        CHK_PRT_RET(accumGradList.empty(), HCCL_ERROR("[Get][NearIdxByDataSize]accumGradList empty, fail"),
-            HCCL_E_PARA);
+        CHK_PRT_RET(
+            accumGradList.empty(), HCCL_ERROR("[Get][NearIdxByDataSize]accumGradList empty, fail"), HCCL_E_PARA);
         float prevIdxGradDiff = gradSize - accumGradList[midIdx - 1];
         float idxGradDiff = accumGradList[midIdx] - gradSize;
         segGradIdx = (prevIdxGradDiff <= idxGradDiff) ? static_cast<u32>(midIdx) - 1 : static_cast<u32>(midIdx);
-        HCCL_DEBUG("datasize: getIndex[%d] prevDiff[%.1f] curDiff[%.1f]", midIdx,
-                   prevIdxGradDiff, idxGradDiff);
+        HCCL_DEBUG("datasize: getIndex[%d] prevDiff[%.1f] curDiff[%.1f]", midIdx, prevIdxGradDiff, idxGradDiff);
     }
     return HCCL_SUCCESS;
 }
-}  // namespace hccl
+} // namespace hccl

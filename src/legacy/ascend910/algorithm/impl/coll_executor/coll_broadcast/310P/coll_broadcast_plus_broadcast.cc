@@ -1,21 +1,20 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "coll_broadcast_plus_broadcast.h"
 
 namespace hccl {
-CollBroadcastPlusBroadcast::CollBroadcastPlusBroadcast(const HcclDispatcher dispatcher,
-    std::unique_ptr<TopoMatcher> &topoMatcher)
+CollBroadcastPlusBroadcast::CollBroadcastPlusBroadcast(
+    const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher>& topoMatcher)
     : CollBroadcastExecutor(dispatcher, topoMatcher)
-{
-}
+{}
 
 HcclResult CollBroadcastPlusBroadcast::CalcCommInfo(std::vector<LevelNSubCommTransport>& opTransport)
 {
@@ -26,9 +25,8 @@ HcclResult CollBroadcastPlusBroadcast::CalcCommInfo(std::vector<LevelNSubCommTra
     return HCCL_SUCCESS;
 }
 
-
-HcclResult CollBroadcastPlusBroadcast::CalcLevel0CommInfo(TransportMemType inputType,
-    TransportMemType outputType, std::vector<LevelNSubCommTransport>& opTransport)
+HcclResult CollBroadcastPlusBroadcast::CalcLevel0CommInfo(
+    TransportMemType inputType, TransportMemType outputType, std::vector<LevelNSubCommTransport>& opTransport)
 {
     HCCL_INFO("[CollBroadcastPlusBroadcast][CalcLevel0CommInfo]tag[%s] start", tag_.c_str());
     CommParaInfo commParaLevel0(COMM_LEVEL0, CommType::COMM_TAG_MESH);
@@ -37,7 +35,7 @@ HcclResult CollBroadcastPlusBroadcast::CalcLevel0CommInfo(TransportMemType input
     return HCCL_SUCCESS;
 }
 
-HcclResult CollBroadcastPlusBroadcast::KernelRun(const OpParam &param, ExecMem &execMem)
+HcclResult CollBroadcastPlusBroadcast::KernelRun(const OpParam& param, ExecMem& execMem)
 {
     HCCL_CONFIG_INFO(HCCL_ALG, "[CollBroadcastPlusBroadcast]310p userRank[%u] starts.", topoAttr_.userRank);
     CHK_RET(CheckCommSize(COMM_LEVEL0, COMM_INDEX_0 + 1));
@@ -51,11 +49,12 @@ HcclResult CollBroadcastPlusBroadcast::KernelRun(const OpParam &param, ExecMem &
     if (!rootIsDevPhyZero) {
         u32 rootRank = 0;
         CHK_RET(GetRankByUserRank(COMM_LEVEL0, COMM_INDEX_0, param.root, rootRank));
-        std::unique_ptr<AlgTemplateBase> bCastRingInNode = AlgTemplateRegistry::Instance().GetAlgTemplate(
-            TemplateType::TEMPLATE_BROADCAST_RING, dispatcher_);
+        std::unique_ptr<AlgTemplateBase> bCastRingInNode
+            = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_BROADCAST_RING, dispatcher_);
         CHK_SMART_PTR_NULL(bCastRingInNode);
-        CHK_RET(bCastRingInNode->Prepare(execMem.inputMem, execMem.outputMem, execMem.inputMem, execMem.count,
-                                         param.DataDes.dataType, param.stream, HCCL_REDUCE_RESERVED, rootRank));
+        CHK_RET(bCastRingInNode->Prepare(
+            execMem.inputMem, execMem.outputMem, execMem.inputMem, execMem.count, param.DataDes.dataType, param.stream,
+            HCCL_REDUCE_RESERVED, rootRank));
         CHK_RET(RunTemplate(bCastRingInNode, level0CommInfo));
     }
     // 第二步，进行server间bcast
@@ -65,34 +64,36 @@ HcclResult CollBroadcastPlusBroadcast::KernelRun(const OpParam &param, ExecMem &
         SubCommInfo level1CommInfo = GetSubCommInfo(COMM_LEVEL1, COMM_INDEX_0);
         u64 curSize = execMem.count * SIZE_TABLE[param.DataDes.dataType];
         if (algType_.algoLevel1 == AlgTypeLevel1::ALG_LEVEL1_RING) {
-            broadcastTempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(
-                TemplateType::TEMPLATE_BROADCAST_RING, dispatcher_);
+            broadcastTempAlg
+                = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_BROADCAST_RING, dispatcher_);
             HCCL_INFO("broadcast ring: using ring algo inter-server.");
         } else if (algType_.algoLevel1 == AlgTypeLevel1::ALG_LEVEL1_NHR) {
-            HCCL_DEBUG("broadcast ring: curSize[%llu] deviceNumPerAggregation[%u] commLevel0Size[%u]",
-                curSize, topoAttr_.deviceNumPerAggregation, level0CommInfo.localRankSize);
+            HCCL_DEBUG(
+                "broadcast ring: curSize[%llu] deviceNumPerAggregation[%u] commLevel0Size[%u]", curSize,
+                topoAttr_.deviceNumPerAggregation, level0CommInfo.localRankSize);
             if (curSize / topoAttr_.deviceNumPerAggregation <= NHR_BCAST_SMALL_SIZE) {
                 broadcastTempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(
                     TemplateType::TEMPLATE_BROADCAST_NHR_ONESHOT, dispatcher_);
             } else {
-                broadcastTempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(
-                    TemplateType::TEMPLATE_BROADCAST_NHR, dispatcher_);
+                broadcastTempAlg
+                    = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_BROADCAST_NHR, dispatcher_);
             }
             HCCL_INFO("broadcast ring: using nhr algo inter-server.");
         } else if (algType_.algoLevel1 == AlgTypeLevel1::ALG_LEVEL1_NHR_V1) {
             isUsedRegister = true;
-            broadcastTempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_BROADCAST_NHR_V1,
-                dispatcher_);
+            broadcastTempAlg
+                = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_BROADCAST_NHR_V1, dispatcher_);
             HCCL_INFO("broadcast ring: using nhr_v1 algo inter-server.");
         } else if (algType_.algoLevel1 == AlgTypeLevel1::ALG_LEVEL1_NB) {
             const u32 level1RankSize = level1CommInfo.localRankSize;
-            if (ShouldUseBinaryBroadcastOfNB(curSize / topoAttr_.deviceNumPerAggregation, level1RankSize,
-                                             topoAttr_.userRankSize, topoAttr_.deviceNumPerAggregation)) {
+            if (ShouldUseBinaryBroadcastOfNB(
+                    curSize / topoAttr_.deviceNumPerAggregation, level1RankSize, topoAttr_.userRankSize,
+                    topoAttr_.deviceNumPerAggregation)) {
                 broadcastTempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(
                     TemplateType::TEMPLATE_BROADCAST_NB_BINARY, dispatcher_);
             } else {
-                broadcastTempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(
-                    TemplateType::TEMPLATE_BROADCAST_NB, dispatcher_);
+                broadcastTempAlg
+                    = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_BROADCAST_NB, dispatcher_);
             }
             HCCL_INFO("broadcast ring: using nonuniform-bruck algo inter-server.");
         } else {
@@ -120,22 +121,24 @@ HcclResult CollBroadcastPlusBroadcast::KernelRun(const OpParam &param, ExecMem &
             prepareData.baseOffset = 0;
             CHK_RET(broadcastTempAlg->Prepare(prepareData));
         } else {
-            CHK_RET(broadcastTempAlg->Prepare(execMem.inputMem, execMem.outputMem, execMem.outputMem, execMem.count,
-                param.DataDes.dataType, param.stream, HCCL_REDUCE_RESERVED, planeRoot));
+            CHK_RET(broadcastTempAlg->Prepare(
+                execMem.inputMem, execMem.outputMem, execMem.outputMem, execMem.count, param.DataDes.dataType,
+                param.stream, HCCL_REDUCE_RESERVED, planeRoot));
         }
 
         CHK_RET(RunTemplate(broadcastTempAlg, level1CommInfo));
     }
     // 第三步，执行server内broadcast（从设备0到设备1）
-    std::unique_ptr<AlgTemplateBase> bcastTempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(
-        TemplateType::TEMPLATE_BROADCAST_RING, dispatcher_);
+    std::unique_ptr<AlgTemplateBase> bcastTempAlg
+        = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_BROADCAST_RING, dispatcher_);
     CHK_SMART_PTR_NULL(bcastTempAlg);
     // 获取本rank所在server上device0的UserRank
     u32 level0RootUserRank = level0CommInfo.localRank;
     u32 rootRank = 0;
     CHK_RET(GetRankByUserRank(COMM_LEVEL0, COMM_INDEX_0, level0RootUserRank, rootRank));
-    CHK_RET(bcastTempAlg->Prepare(execMem.outputMem, execMem.outputMem, execMem.inputMem, execMem.count,
-                                   param.DataDes.dataType, param.stream, HCCL_REDUCE_RESERVED, rootRank));
+    CHK_RET(bcastTempAlg->Prepare(
+        execMem.outputMem, execMem.outputMem, execMem.inputMem, execMem.count, param.DataDes.dataType, param.stream,
+        HCCL_REDUCE_RESERVED, rootRank));
     CHK_RET(RunTemplate(bcastTempAlg, level0CommInfo));
 
     return HCCL_SUCCESS;

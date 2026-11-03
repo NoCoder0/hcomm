@@ -1,3 +1,13 @@
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "gtest/gtest.h"
 #include "mockcpp/mokc.h"
 #include <mockcpp/mockcpp.hpp>
@@ -8,6 +18,7 @@
 
 #include "cpu_urma_endpoint.h"
 #include "host_cpu_urma_channel.h"
+#include "sockets/socket_mgr.h"
 #include "buffer/local_ub_rma_buffer.h"
 #include "host_ub_connection.h"
 #include "ip_address.h"
@@ -18,11 +29,13 @@
 #include "socket.h"
 #include "urma_api.h"
 #include "dlurma_function.h"
+#include "hcomm_adapter_urma.h"
+#include "env_config/env_config_v2.h"
 
 using namespace hcomm;
 
 namespace {
-std::shared_ptr<Hccl::LocalUbRmaBuffer> MakeHostLocalBuffer(uintptr_t addr, u64 size, const char *tag)
+std::shared_ptr<Hccl::LocalUbRmaBuffer> MakeHostLocalBuffer(uintptr_t addr, u64 size, const char* tag)
 {
     auto buffer = std::make_shared<Hccl::Buffer>(addr, size, HCCL_MEM_TYPE_DEVICE, tag);
     return std::make_shared<Hccl::LocalUbRmaBuffer>(buffer);
@@ -30,23 +43,16 @@ std::shared_ptr<Hccl::LocalUbRmaBuffer> MakeHostLocalBuffer(uintptr_t addr, u64 
 
 class NonUbRmaBuffer : public Hccl::LocalRmaBuffer {
 public:
-    explicit NonUbRmaBuffer(std::shared_ptr<Hccl::Buffer> buffer)
-        : Hccl::LocalRmaBuffer(buffer, Hccl::RmaType::RDMA)
-    {
-    }
+    explicit NonUbRmaBuffer(std::shared_ptr<Hccl::Buffer> buffer) : Hccl::LocalRmaBuffer(buffer, Hccl::RmaType::RDMA) {}
 
-    std::string Describe() const override
-    {
-        return "NonUbRmaBuffer";
-    }
+    std::string Describe() const override { return "NonUbRmaBuffer"; }
 };
 
-HcommResult StubHostGetAllMemHandlesOne(EndpointHandle, void **memHandles, uint32_t *memHandleNum)
+HcommResult StubHostGetAllMemHandlesOne(EndpointHandle, void** memHandles, uint32_t* memHandleNum)
 {
-    static std::shared_ptr<Hccl::Buffer> buffer =
-        std::make_shared<Hccl::Buffer>(0x730000U, 0x1000U, HCCL_MEM_TYPE_DEVICE, "host_all");
-    static std::shared_ptr<Hccl::LocalUbRmaBuffer> localBuffer =
-        std::make_shared<Hccl::LocalUbRmaBuffer>(buffer);
+    static std::shared_ptr<Hccl::Buffer> buffer
+        = std::make_shared<Hccl::Buffer>(0x730000U, 0x1000U, HCCL_MEM_TYPE_DEVICE, "host_all");
+    static std::shared_ptr<Hccl::LocalUbRmaBuffer> localBuffer = std::make_shared<Hccl::LocalUbRmaBuffer>(buffer);
     static std::shared_ptr<Hccl::LocalUbRmaBuffer> localBuffers[1] = {localBuffer};
     *memHandles = localBuffers;
     *memHandleNum = 1;
@@ -56,15 +62,9 @@ HcommResult StubHostGetAllMemHandlesOne(EndpointHandle, void **memHandles, uint3
 
 class HostCpuUrmaChannelTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "HostCpuUrmaChannelTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "HostCpuUrmaChannelTest tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "HostCpuUrmaChannelTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "HostCpuUrmaChannelTest tests tear down." << std::endl; }
 
     virtual void SetUp()
     {
@@ -73,14 +73,24 @@ protected:
         Hccl::IpAddress remoteIp("2.0.0.0");
 
         MOCKER(hrtGetDevice).stubs().will(returnValue(HCCL_SUCCESS));
-        MOCKER(hrtGetDevicePhyIdByIndex).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
+        // Endpoint Init 校验芯片，mock 为 950 以通过 CheckDevTypeSupport
+        MOCKER(hrtGetDeviceType).stubs().will(invoke(+[](DevType& t) -> HcclResult {
+            t = DevType::DEV_TYPE_950;
+            return HCCL_SUCCESS;
+        }));
+        // 出参 devPhyId 需赋合法值：作为 GetEndpointCtxMgr 的设备子树键
+        unsigned int devicePhyId = 0U;
+        MOCKER(hrtGetDevicePhyIdByIndex)
+            .stubs()
+            .with(mockcpp::any(), outBound(devicePhyId))
+            .will(returnValue(HCCL_SUCCESS));
 
         RdmaHandle rdmaHandle = (void*)0x1000000;
         MOCKER(&Hccl::RdmaHandleManager::GetByAddr).stubs().will(returnValue(rdmaHandle));
         MOCKER(RaSocketSetWhiteListStatus).stubs().will(returnValue(0));
 
         EndpointDesc epDesc{};
-        epDesc.protocol = COMM_PROTOCOL_UBC_CTP;
+        epDesc.protocol = COMM_PROTOCOL_UB_CTP;
         epDesc.commAddr.type = COMM_ADDR_TYPE_IP_V4;
         epDesc.commAddr.addr = localIp.GetBinaryAddress().addr;
         epDesc.loc.locType = ENDPOINT_LOC_TYPE_HOST;
@@ -92,8 +102,8 @@ protected:
         channelDesc.exchangeAllMems = false;
         channelDesc.port = 60001;
 
-        fakeSocket = new Hccl::Socket(nullptr, localIp, 60001, remoteIp, "_0_1_",
-                                      Hccl::SocketRole::SERVER, Hccl::NicType::HOST_NIC_TYPE);
+        fakeSocket = new Hccl::Socket(
+            nullptr, localIp, 60001, remoteIp, "_0_1_", Hccl::SocketRole::SERVER, Hccl::NicType::HOST_NIC_TYPE);
         channelDesc.socket = static_cast<void*>(fakeSocket);
 
         localBufferPtr = std::make_shared<Hccl::Buffer>(666);
@@ -102,6 +112,7 @@ protected:
 
     virtual void TearDown()
     {
+        unsetenv("HCCL_DFS_CONFIG");
         GlobalMockObject::verify();
         std::cout << "A Test case in HostCpuUrmaChannelTest TearDown" << std::endl;
         delete fakeSocket;
@@ -192,7 +203,7 @@ TEST_F(HostCpuUrmaChannelTest, Ut_When_BuildSocket_WithSocket_Expect_Success)
     MOCKER(RaSocketSetWhiteListStatus).stubs().will(returnValue(0));
 
     auto impl = std::make_unique<HostCpuUrmaChannel>(endpointHandle, channelDesc);
-    // socket_ is already set in SetUp, BuildSocket should return success
+    // local_.socket is already set in SetUp, BuildSocket should return success
     EXPECT_EQ(impl->Init(), HCCL_SUCCESS);
 }
 
@@ -202,7 +213,10 @@ TEST_F(HostCpuUrmaChannelTest, Ut_When_ParseInputParam_NullSocket_Expect_Success
     MOCKER(HcommEndpointStartListen).stubs().will(returnValue(static_cast<HcommResult>(HCCL_SUCCESS)));
     MOCKER(&Hccl::RdmaHandleManager::GetByAddr).stubs().will(returnValue(rdmaHandle_));
     MOCKER(RaSocketSetWhiteListStatus).stubs().will(returnValue(0));
-    MOCKER_CPP(&hcomm::SocketMgr::GetSocket).stubs().with(mockcpp::any(), outBound(fakeSocket)).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&hcomm::SocketMgr::GetSocket)
+        .stubs()
+        .with(mockcpp::any(), outBound(fakeSocket))
+        .will(returnValue(HCCL_SUCCESS));
 
     auto impl = std::make_unique<HostCpuUrmaChannel>(endpointHandle, channelDesc);
     // ParseInputParam should succeed, BuildSocket will create a new socket
@@ -229,7 +243,7 @@ TEST_F(HostCpuUrmaChannelTest, Ut_When_GetLocSeg_EmptyBuffers_Expect_Error)
     auto impl = std::make_unique<HostCpuUrmaChannel>(endpointHandle, channelDesc);
     ASSERT_EQ(impl->Init(), HCCL_SUCCESS);
 
-    // commonRes_.bufferVec is empty after Init with exchangeAllMems = false
+    // local_.commonRes.bufferVec is empty after Init with exchangeAllMems = false
     u64 seg = 0;
     void* addr = reinterpret_cast<void*>(0x1000);
     EXPECT_EQ(impl->GetLocSeg(addr, 1024, &seg), HCCL_E_INTERNAL);
@@ -239,7 +253,7 @@ TEST_F(HostCpuUrmaChannelTest, UT_GetLocSeg_When_BufferMatches_Expect_ReturnHCCL
 {
     auto impl = std::make_unique<HostCpuUrmaChannel>(endpointHandle, channelDesc);
     auto localBuffer = MakeHostLocalBuffer(0x710000U, 0x2000U, "host_match");
-    impl->commonRes_.bufferVec.push_back(localBuffer.get());
+    impl->local_.commonRes.bufferVec.push_back(localBuffer.get());
 
     u64 seg = 0;
     void* addr = reinterpret_cast<void*>(0x710100U);
@@ -251,7 +265,7 @@ TEST_F(HostCpuUrmaChannelTest, UT_GetLocSeg_When_BufferDoesNotMatch_Expect_Retur
 {
     auto impl = std::make_unique<HostCpuUrmaChannel>(endpointHandle, channelDesc);
     auto localBuffer = MakeHostLocalBuffer(0x720000U, 0x1000U, "host_not_match");
-    impl->commonRes_.bufferVec.push_back(localBuffer.get());
+    impl->local_.commonRes.bufferVec.push_back(localBuffer.get());
 
     u64 seg = 0xFF;
     void* addr = reinterpret_cast<void*>(0x721100U);
@@ -264,7 +278,7 @@ TEST_F(HostCpuUrmaChannelTest, UT_GetLocSeg_When_MatchedBufferIsNotUb_Expect_Ret
     auto impl = std::make_unique<HostCpuUrmaChannel>(endpointHandle, channelDesc);
     auto buffer = std::make_shared<Hccl::Buffer>(0x725000U, 0x1000U, HCCL_MEM_TYPE_DEVICE, "host_non_ub");
     NonUbRmaBuffer nonUbBuffer(buffer);
-    impl->commonRes_.bufferVec.push_back(&nonUbBuffer);
+    impl->local_.commonRes.bufferVec.push_back(&nonUbBuffer);
 
     u64 seg = 0xFF;
     void* addr = reinterpret_cast<void*>(0x725100U);
@@ -291,12 +305,219 @@ TEST_F(HostCpuUrmaChannelTest, Ut_When_Init_WithExchangeAllMems_Expect_Success)
     MOCKER(HcommEndpointStartListen).stubs().will(returnValue(static_cast<HcommResult>(HCCL_SUCCESS)));
     MOCKER(&Hccl::RdmaHandleManager::GetByAddr).stubs().will(returnValue(rdmaHandle_));
     MOCKER(RaSocketSetWhiteListStatus).stubs().will(returnValue(0));
-    MOCKER(HcommMemGetAllMemHandles)
-        .stubs()
-        .will(invoke(StubHostGetAllMemHandlesOne));
+    MOCKER(HcommMemGetAllMemHandles).stubs().will(invoke(StubHostGetAllMemHandlesOne));
 
     auto impl = std::make_unique<HostCpuUrmaChannel>(endpointHandle, channelDesc);
     ASSERT_EQ(impl->Init(), HCCL_SUCCESS);
-    ASSERT_EQ(impl->commonRes_.bufferVec.size(), 1U);
-    EXPECT_EQ(impl->commonRes_.bufferVec[0]->GetAddr(), 0x730000U);
+    ASSERT_EQ(impl->local_.commonRes.bufferVec.size(), 1U);
+    EXPECT_EQ(impl->local_.commonRes.bufferVec[0]->GetAddr(), 0x730000U);
+}
+
+TEST_F(HostCpuUrmaChannelTest, Ut_When_ChannelFence_HasWqe_PollFails_Expect_NetworkError)
+{
+    MOCKER(HcommEndpointStartListen).stubs().will(returnValue(static_cast<HcommResult>(HCCL_SUCCESS)));
+    MOCKER(&Hccl::RdmaHandleManager::GetByAddr).stubs().will(returnValue(rdmaHandle_));
+    MOCKER(RaSocketSetWhiteListStatus).stubs().will(returnValue(0));
+
+    auto impl = std::make_unique<HostCpuUrmaChannel>(endpointHandle, channelDesc);
+    ASSERT_EQ(impl->Init(), HCCL_SUCCESS);
+
+    // wqeNum_ > 0 跳过 line 354 的提前返回，使 line 358 的超时时间计算得以执行
+    impl->wqeNum_ = 1;
+    // Mock HrtUrmaPollJfc 返回负数（错误），触发 line 362-365 快速返回 HCCL_E_NETWORK
+    MOCKER(HrtUrmaPollJfc).stubs().will(returnValue(-1));
+
+    HcclResult ret = impl->ChannelFence();
+    EXPECT_EQ(ret, HCCL_E_NETWORK);
+}
+
+TEST_F(HostCpuUrmaChannelTest, Ut_When_ChannelDrain_NoWqe_Expect_SuccessWithoutFenceFlag)
+{
+    MOCKER(HcommEndpointStartListen).stubs().will(returnValue(static_cast<HcommResult>(HCCL_SUCCESS)));
+    MOCKER(&Hccl::RdmaHandleManager::GetByAddr).stubs().will(returnValue(rdmaHandle_));
+    MOCKER(RaSocketSetWhiteListStatus).stubs().will(returnValue(0));
+
+    auto impl = std::make_unique<HostCpuUrmaChannel>(endpointHandle, channelDesc);
+    ASSERT_EQ(impl->Init(), HCCL_SUCCESS);
+
+    EXPECT_EQ(impl->ChannelDrain(), HCCL_SUCCESS);
+    EXPECT_EQ(impl->wqeNum_, 0U);
+    EXPECT_FALSE(impl->fenceFlag_);
+}
+
+TEST_F(HostCpuUrmaChannelTest, Ut_When_ChannelDrain_HasWqe_Expect_PollAllWithoutFenceFlag)
+{
+    MOCKER(HcommEndpointStartListen).stubs().will(returnValue(static_cast<HcommResult>(HCCL_SUCCESS)));
+    MOCKER(&Hccl::RdmaHandleManager::GetByAddr).stubs().will(returnValue(rdmaHandle_));
+    MOCKER(RaSocketSetWhiteListStatus).stubs().will(returnValue(0));
+
+    auto impl = std::make_unique<HostCpuUrmaChannel>(endpointHandle, channelDesc);
+    ASSERT_EQ(impl->Init(), HCCL_SUCCESS);
+
+    impl->wqeNum_ = 2;
+    setenv("HCCL_DFS_CONFIG", "task_exception:on", 1);
+    MOCKER_CPP(&Hccl::EnvRtsConfig::GetExecTimeOut).stubs().will(returnValue(static_cast<uint32_t>(1)));
+    MOCKER(HrtUrmaPollJfc).stubs().will(returnValue(1)).then(returnValue(1));
+
+    EXPECT_EQ(impl->ChannelDrain(), HCCL_SUCCESS);
+    EXPECT_EQ(impl->wqeNum_, 0U);
+    EXPECT_FALSE(impl->fenceFlag_);
+}
+
+TEST_F(HostCpuUrmaChannelTest, Ut_When_ChannelFence_HasWqe_Expect_PollAllAndSetFenceFlag)
+{
+    MOCKER(HcommEndpointStartListen).stubs().will(returnValue(static_cast<HcommResult>(HCCL_SUCCESS)));
+    MOCKER(&Hccl::RdmaHandleManager::GetByAddr).stubs().will(returnValue(rdmaHandle_));
+    MOCKER(RaSocketSetWhiteListStatus).stubs().will(returnValue(0));
+
+    auto impl = std::make_unique<HostCpuUrmaChannel>(endpointHandle, channelDesc);
+    ASSERT_EQ(impl->Init(), HCCL_SUCCESS);
+
+    impl->wqeNum_ = 1;
+    setenv("HCCL_DFS_CONFIG", "task_exception:on", 1);
+    MOCKER_CPP(&Hccl::EnvRtsConfig::GetExecTimeOut).stubs().will(returnValue(static_cast<uint32_t>(1)));
+    MOCKER(HrtUrmaPollJfc).stubs().will(returnValue(1));
+
+    EXPECT_EQ(impl->ChannelFence(), HCCL_SUCCESS);
+    EXPECT_EQ(impl->wqeNum_, 0U);
+    EXPECT_TRUE(impl->fenceFlag_);
+}
+
+TEST_F(HostCpuUrmaChannelTest, Ut_When_ChannelDrain_PollFails_Expect_NetworkError)
+{
+    MOCKER(HcommEndpointStartListen).stubs().will(returnValue(static_cast<HcommResult>(HCCL_SUCCESS)));
+    MOCKER(&Hccl::RdmaHandleManager::GetByAddr).stubs().will(returnValue(rdmaHandle_));
+    MOCKER(RaSocketSetWhiteListStatus).stubs().will(returnValue(0));
+
+    auto impl = std::make_unique<HostCpuUrmaChannel>(endpointHandle, channelDesc);
+    ASSERT_EQ(impl->Init(), HCCL_SUCCESS);
+
+    impl->wqeNum_ = 1;
+    setenv("HCCL_DFS_CONFIG", "task_exception:on", 1);
+    MOCKER_CPP(&Hccl::EnvRtsConfig::GetExecTimeOut).stubs().will(returnValue(static_cast<uint32_t>(1)));
+    MOCKER(HrtUrmaPollJfc).stubs().will(returnValue(-1));
+
+    EXPECT_EQ(impl->ChannelDrain(), HCCL_E_NETWORK);
+    EXPECT_EQ(impl->wqeNum_, 1U);
+    EXPECT_FALSE(impl->fenceFlag_);
+}
+
+TEST_F(HostCpuUrmaChannelTest, Ut_When_ChannelDrain_PollExcessCqe_Expect_InternalError)
+{
+    MOCKER(HcommEndpointStartListen).stubs().will(returnValue(static_cast<HcommResult>(HCCL_SUCCESS)));
+    MOCKER(&Hccl::RdmaHandleManager::GetByAddr).stubs().will(returnValue(rdmaHandle_));
+    MOCKER(RaSocketSetWhiteListStatus).stubs().will(returnValue(0));
+
+    auto impl = std::make_unique<HostCpuUrmaChannel>(endpointHandle, channelDesc);
+    ASSERT_EQ(impl->Init(), HCCL_SUCCESS);
+
+    impl->wqeNum_ = 1;
+    setenv("HCCL_DFS_CONFIG", "task_exception:on", 1);
+    MOCKER_CPP(&Hccl::EnvRtsConfig::GetExecTimeOut).stubs().will(returnValue(static_cast<uint32_t>(1)));
+    MOCKER(HrtUrmaPollJfc).stubs().will(returnValue(2));
+
+    EXPECT_EQ(impl->ChannelDrain(), HCCL_E_INTERNAL);
+}
+
+TEST_F(HostCpuUrmaChannelTest, Ut_When_ChannelDrain_NoCqeUntilTimeout_Expect_Timeout)
+{
+    MOCKER(HcommEndpointStartListen).stubs().will(returnValue(static_cast<HcommResult>(HCCL_SUCCESS)));
+    MOCKER(&Hccl::RdmaHandleManager::GetByAddr).stubs().will(returnValue(rdmaHandle_));
+    MOCKER(RaSocketSetWhiteListStatus).stubs().will(returnValue(0));
+
+    auto impl = std::make_unique<HostCpuUrmaChannel>(endpointHandle, channelDesc);
+    ASSERT_EQ(impl->Init(), HCCL_SUCCESS);
+
+    impl->wqeNum_ = 1;
+    MOCKER(HrtUrmaPollJfc).stubs().will(returnValue(0));
+    setenv("HCCL_DFS_CONFIG", "task_exception:on", 1);
+    MOCKER_CPP(&Hccl::EnvRtsConfig::GetExecTimeOut).stubs().will(returnValue(static_cast<uint32_t>(0)));
+
+    EXPECT_EQ(impl->ChannelDrain(), HCCL_E_TIMEOUT);
+}
+
+// ===================== StartListen 收敛基类后的钉住用例 =====================
+// 全局 reset 后重打本用例所需依赖桩（先例：ut_aicpu_ts_urma_channel.cc 的 GlobalMockObject::reset()），
+// 确保 HcommEndpointStartListen 的计数断言不被前序用例残留桩干扰（mockcpp 按函数名单例累积桩）。
+
+static uint32_t g_hostUrmaListenCount = 0;
+static uint32_t g_hostUrmaListenPort = 0;
+static HcommResult StubHostUrmaStartListenCount(EndpointHandle, uint32_t port, const HcommEndpointListenConfig*)
+{
+    ++g_hostUrmaListenCount;
+    g_hostUrmaListenPort = port;
+    return static_cast<HcommResult>(HCCL_SUCCESS);
+}
+
+static void RestubHostUrmaParseDeps()
+{
+    MOCKER(hrtGetDevice).stubs().will(returnValue(HCCL_SUCCESS));
+    unsigned int devicePhyId = 0U;
+    MOCKER(hrtGetDevicePhyIdByIndex)
+        .stubs()
+        .with(mockcpp::any(), outBound(devicePhyId))
+        .will(returnValue(HCCL_SUCCESS));
+    RdmaHandle rdmaHandle = (void*)0x1000000;
+    MOCKER(&Hccl::RdmaHandleManager::GetByAddr).stubs().will(returnValue(rdmaHandle));
+    MOCKER(RaSocketSetWhiteListStatus).stubs().will(returnValue(0));
+}
+
+TEST_F(HostCpuUrmaChannelTest, Ut_StartListen_WhenRoleReserved_Expect_ListenOnce)
+{
+    GlobalMockObject::reset();
+    RestubHostUrmaParseDeps();
+    channelDesc.role = HCOMM_SOCKET_ROLE_RESERVED;
+    channelDesc.port = 61001;
+    g_hostUrmaListenCount = 0;
+    g_hostUrmaListenPort = 0;
+    MOCKER(HcommEndpointStartListen).expects(once()).will(invoke(StubHostUrmaStartListenCount));
+
+    auto impl = std::make_unique<HostCpuUrmaChannel>(endpointHandle, channelDesc);
+    EXPECT_EQ(impl->ParseInputParam(), HCCL_SUCCESS);
+    EXPECT_TRUE(impl->local_.isSocketServer);
+    EXPECT_EQ(impl->StartListen(), HCCL_SUCCESS);
+    EXPECT_EQ(g_hostUrmaListenCount, 1U);
+    EXPECT_EQ(g_hostUrmaListenPort, 61001U);
+}
+
+TEST_F(HostCpuUrmaChannelTest, Ut_StartListen_WhenRoleClient_Expect_NoListen)
+{
+    GlobalMockObject::reset();
+    RestubHostUrmaParseDeps();
+    channelDesc.role = HCOMM_SOCKET_ROLE_CLIENT;
+    channelDesc.port = 61001;
+    g_hostUrmaListenCount = 0;
+    MOCKER(HcommEndpointStartListen).expects(never());
+
+    auto impl = std::make_unique<HostCpuUrmaChannel>(endpointHandle, channelDesc);
+    EXPECT_EQ(impl->ParseInputParam(), HCCL_SUCCESS);
+    EXPECT_FALSE(impl->local_.isSocketServer);
+    EXPECT_EQ(impl->StartListen(), HCCL_SUCCESS);
+    EXPECT_EQ(g_hostUrmaListenCount, 0U);
+}
+
+// ===================== BuildSocket 收敛基类后的钉住用例 =====================
+// RESERVED 借用形态归一：原 host_urma 为三参（端口不进 config），统一为「带端口 + noRankId」
+TEST_F(HostCpuUrmaChannelTest, Ut_When_BuildSocket_RoleReserved_Expect_PortInConfigAndNoRankId)
+{
+    channelDesc.socket = nullptr;                  // 不注入，走真实 BuildSocket 借用
+    channelDesc.role = HCOMM_SOCKET_ROLE_RESERVED; // 显式 RESERVED（desc{} 默认为 CLIENT=0）
+    MOCKER(&Hccl::RdmaHandleManager::GetByAddr).stubs().will(returnValue(rdmaHandle_));
+    MOCKER(RaSocketSetWhiteListStatus).stubs().will(returnValue(0));
+    MOCKER_CPP(&hcomm::SocketMgr::GetSocket)
+        .stubs()
+        .with(mockcpp::any(), outBound(fakeSocket))
+        .will(returnValue(HCCL_SUCCESS));
+
+    auto impl = std::make_unique<HostCpuUrmaChannel>(endpointHandle, channelDesc);
+    ASSERT_EQ(impl->ParseInputParam(), HCCL_SUCCESS);
+    EXPECT_EQ(impl->traits_.socketBuildMode, SocketBuildMode::BORROW);
+
+    EXPECT_EQ(impl->BuildSocket(), HCCL_SUCCESS);
+    ASSERT_NE(impl->local_.socketConfig, nullptr);
+    EXPECT_TRUE(impl->local_.socketConfig->noRankId); // 归一：rank 不进匹配键
+    EXPECT_EQ(
+        impl->local_.socketConfig->listeningPort, 60001U); // 归一：端口进 config（原三参形态不进；SetUp 置 port=60001）
+    EXPECT_EQ(impl->local_.socket, fakeSocket);
+    impl->local_.socket = nullptr; // 防止析构归还打到真实 SocketMgr
 }

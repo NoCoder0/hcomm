@@ -15,7 +15,7 @@
 
 int RsSensorNodeRegister(unsigned int phyId, struct rs_cb *rsCb)
 {
-    struct halSensorNodeCfg cfg = { 0 };
+    struct halSensorNodeCfg cfg = {0};
     int ret;
 
     if (rsCb->sensorNode.sensorHandle != 0) {
@@ -45,8 +45,8 @@ int RsSensorNodeRegister(unsigned int phyId, struct rs_cb *rsCb)
     cfg.DeassertEventMask = RDMA_CQE_ERR_RETRY_TIMEOUT_EVENT_TYPE_MASK;
     ret = DlHalSensorNodeRegister(rsCb->sensorNode.logicDevid, &cfg, &rsCb->sensorNode.sensorHandle);
     if (ret != 0) {
-        hccp_err("[init][rs_rdev]dl_hal_sensor_node_register failed, phyId(%u), logicDevid(%u), ret(%d)",
-            phyId, rsCb->sensorNode.logicDevid, ret);
+        hccp_err("[init][rs_rdev]dl_hal_sensor_node_register failed, phyId(%u), logicDevid(%u), ret(%d)", phyId,
+            rsCb->sensorNode.logicDevid, ret);
         return ret;
     }
 

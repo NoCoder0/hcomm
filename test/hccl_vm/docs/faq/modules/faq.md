@@ -6,6 +6,8 @@
 
 ## 模块：CANN包安装和WSL环境配置
 
+### 子模块：环境配置
+
 ---
 
 #### FAQ-C001
@@ -445,7 +447,7 @@ store_sim_comm_memory_manager.cc
 
 **错误码:** `NA`
 
-**错误函数:** `CommunicationMemoryManager::WriteCommMem`
+**错误函数:** `CommunicationMemoryManager::Send`
 
 **关键日志:**
 ```
@@ -901,12 +903,12 @@ graph TD
 
 **关键日志:**
 ```
-[RASOCKET_STUB] alloc sock name ra_sock_1_c2s mem failed
+[RASOCKET_STUB] AllocSlot failed for tag:xxx
 ```
 
-**问题现象:** socket申请链路缓冲区内存失败。
+**问题现象:** socket申请链路slot内存失败。
 
-**可能原因:** 可能存在残留的socket缓冲区未清除，执行`ls /dev/shm/`查看。
+**可能原因:** 可能存在残留的SHM页未清除，执行`ls /dev/shm/`查看。
 
 ---
 
@@ -1015,19 +1017,19 @@ hccp_ra_socket_stub.cc::RaSocketBatchConnect()
 [RASOCKET_STUB] can not get break dev:<N> sock:<N> connect dev:<N> ip addr:<IP> tag:<tag>
 ```
 
-**问题现象:** `RaSocketBatchConnect`轮询等待对端在RaSocket表中出现对应记录，循环600次×100ms=60s后仍未找到，超时`break`。该条连接未建立RaSocketPair，后续`RaGetSockets`将取不到socket并报FAQ-PX012。
+**问题现象:** `RaGetSockets`（Server侧）轮询等待对端Client在DB中创建RaSocketPair记录，循环180次×500ms=90s后仍未找到，超时报错。`RaSocket` 表已废弃，不再使用。
 
 **定位指导:**
 ```
 【可能原因】
-1. 对端rank进程未启动，或尚未调用`RaSocketInit`/`RaSocketListenStart`
-2. 多rank启动顺序错乱——发起BatchConnect时对端还未完成socket初始化
-3. 对端的device_id/endpoint_id与本端查询条件不匹配（ranktable端点配置不一致）
-4. 对端进程异常退出，RaSocket记录未写入DB
+1. 对端Client进程未启动，或尚未调用`RaSocketBatchConnect`
+2. 多rank启动顺序错乱——Server在Client创建RaSocketPair之前就开始GetSockets
+3. tag匹配不一致——Client和Server使用的tag_hash不匹配
+4. 对端进程异常退出，RaSocketPair记录未写入DB
 
 【排查步骤】
-# 查看RaSocket表，确认对端是否已创建socket记录
-hccl-vm table show RaSocket
+# 查看RaSocketPair表，确认tag对应的记录是否已创建及slot_idx
+hccl-vm table show RaSocketPair
 # 确认所有rank进程均已启动
 ps -ef | grep <业务进程名>
 # 确认通信域内rank数量与进程数一致
@@ -1081,12 +1083,10 @@ hccp_ra_socket_stub.cc::RaGetSockets()
 【可能原因】
 1. 该socketHandle已被`RaSocketDeinit`删除（先Deinit后使用）
 2. socketHandle值非法——来自未初始化内存、或其他进程的句柄
-3. 跨进程传递了句柄——仿真器RaSocket表为进程内DB，句柄不跨进程共享，若业务层在进程间传递fd会导致对端进程查不到
+3. 跨进程传递了句柄——仿真器socketHandle为进程内本地分配，句柄不跨进程共享，若业务层在进程间传递fd会导致对端进程查不到
 4. RaSocketInit返回失败（如FAQ-PX015），调用方未检查返回值仍使用空句柄
 
 【排查步骤】
-# 确认handle是否存在于RaSocket表
-hccl-vm table show RaSocket
 # 确认调用顺序——是否在Deinit之后仍使用该handle
 # 确认handle来源——是否由RaSocketInit成功返回
 
@@ -1117,22 +1117,22 @@ hccp_ra_socket_stub.cc::RaSocketRecvAsync()
 [RASOCKET_STUB] socket pair:<N> role:<N>, key=<key> read try again
 ```
 
-**问题现象:** `RaSocketSend`调用`WriteCommMem`写入c2s/s2c共享内存失败返回-1；或`RaSocketRecv`/`RaSocketRecvAsync`调用`ReadCommMem`返回-1。链路数据收发中断。其中`read try again`为WARN，表示暂无数据可读（对端尚未发送），会sleep后重试返回0，非本FAQ范畴。
+**问题现象:** `RaSocketSend`调用`Send`写入slot共享内存失败返回-1；或`RaSocketRecv`/`RaSocketRecvAsync`调用`Recv`返回-1。链路数据收发中断。其中`SOCK_EAGAIN`表示暂无数据可读，调用方会重试，非本FAQ范畴。
 
 **定位指导:**
 ```
 【可能原因】
-1. pair的c2s/s2c共享内存已被`RaSocketBatchClose`释放——ref_cnt归零后`DestoryRaSocketBufKeyByPairId`删除了buffer，但仍有线程在Send/Recv
-2. /dev/shm空间不足或存在残留的ra_sock_*旧buffer导致内存段冲突
-3. key对应的共享内存段不存在（pair创建时`GenRaSocketBufKeyByPairId`失败但pair记录已存在）
-4. 调用方传入了错误的fdHandle——pairId解析错误，对应的key从未创建
+1. pair的slot共享内存已被`RaSocketBatchClose`释放——`mgr.CloseSlot`清空了slot header，但仍有线程在Send/Recv
+2. /dev/shm空间不足或存在残留的ra_sock_pool_*旧页导致内存段冲突
+3. slot分配失败（`AllocSlot`返回UINT32_MAX，池已耗尽）
+4. 调用方传入了错误的fdHandle——slotIdx解析错误，对应的slot从未分配
 
 【排查步骤】
-# 检查/dev/shm是否残留ra_sock_* buffer
-ls /dev/shm/ | grep ra_sock
+# 检查/dev/shm是否残留ra_sock_pool_* 页
+ls /dev/shm/ | grep ra_sock_pool
 # 检查/dev/shm空间
 df -h /dev/shm
-# 查看RaSocketPair状态及buf_status
+# 查看RaSocketPair状态及slot_idx
 hccl-vm table show RaSocketPair
 
 ```

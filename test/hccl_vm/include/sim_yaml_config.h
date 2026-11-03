@@ -15,8 +15,7 @@
 #include <string>
 
 // 解析yaml文件
-bool LoadYamlStringMap(const std::string& yamlPath,
-                       const std::string& nodeName,
-                       std::map<std::string, std::string>& out);
+bool LoadYamlStringMap(
+    const std::string& yamlPath, const std::string& nodeName, std::map<std::string, std::string>& out);
 
 #endif // SIM_YAML_CONFIG_H

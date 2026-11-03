@@ -8,13 +8,18 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
+#include "config_log.h"
 #include <pthread.h>
 #include "ra_rs_err.h"
-#include "dl_nda_function.h"
+#include "dl_ibv_extend_function.h"
 #include "dl_ibverbs_function.h"
 
+static pthread_mutex_t gIbverbsApiLock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t gRoceUserApiLock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t gHrnApiLock = PTHREAD_MUTEX_INITIALIZER;
+static int gIbverbsApiRefcnt = 0;
 static int gRoceUserApiRefcnt = 0;
+static int gHrnApiRefcnt = 0;
 void *gIbverbsApiHandle = NULL;
 void *gRoceUserApiHandle = NULL;
 void *gHrnApiHandle = NULL;
@@ -87,62 +92,55 @@ struct RsHrnOps gHrnOps = {
 STATIC int RsContextOpsApiInit(void)
 {
 #ifndef CA_CONFIG_LLT
-    gIbverbsOps.rsIbvQueryDevice = (int (*)(struct ibv_context*, struct ibv_device_attr *))
-        HccpDlsym(gIbverbsApiHandle, "ibv_query_device");
+    gIbverbsOps.rsIbvQueryDevice = (int (*)(struct ibv_context *, struct ibv_device_attr *))HccpDlsym(gIbverbsApiHandle,
+        "ibv_query_device");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvQueryDevice, "ibv_query_device");
 
-    gIbverbsOps.rsIbvQueryPort = (int (*)(struct ibv_context*, uint8_t, struct ibv_port_attr*))
-        HccpDlsym(gIbverbsApiHandle, "ibv_query_port");
+    gIbverbsOps.rsIbvQueryPort = (int (*)(struct ibv_context *, uint8_t,
+        struct ibv_port_attr *))HccpDlsym(gIbverbsApiHandle, "ibv_query_port");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvQueryPort, "ibv_query_port");
 
-    gIbverbsOps.rsIbvQueryGid = (int (*)(struct ibv_context*, uint8_t, int, union ibv_gid*))
-        HccpDlsym(gIbverbsApiHandle, "ibv_query_gid");
+    gIbverbsOps.rsIbvQueryGid = (int (*)(struct ibv_context *, uint8_t, int,
+        union ibv_gid *))HccpDlsym(gIbverbsApiHandle, "ibv_query_gid");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvQueryGid, "ibv_query_gid");
 
-    gIbverbsOps.rsIbvAllocPd = (struct ibv_pd* (*)(struct ibv_context*))
-        HccpDlsym(gIbverbsApiHandle, "ibv_alloc_pd");
+    gIbverbsOps.rsIbvAllocPd = (struct ibv_pd * (*)(struct ibv_context *)) HccpDlsym(gIbverbsApiHandle, "ibv_alloc_pd");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvAllocPd, "ibv_alloc_pd");
 
-    gIbverbsOps.rsIbvDeallocPd = (int (*)(struct ibv_pd*))
-        HccpDlsym(gIbverbsApiHandle, "ibv_dealloc_pd");
+    gIbverbsOps.rsIbvDeallocPd = (int (*)(struct ibv_pd *))HccpDlsym(gIbverbsApiHandle, "ibv_dealloc_pd");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvDeallocPd, "ibv_dealloc_pd");
 
-    gIbverbsOps.rsIbvCreateCq = (struct ibv_cq* (*)(struct ibv_context*, int, void*,
-        struct ibv_comp_channel*, int))
+    gIbverbsOps.rsIbvCreateCq = (struct ibv_cq * (*)(struct ibv_context *, int, void *, struct ibv_comp_channel *, int))
         HccpDlsym(gIbverbsApiHandle, "ibv_create_cq");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvCreateCq, "ibv_create_cq");
 
-    gIbverbsOps.rsIbvDestroyCq = (int (*)(struct ibv_cq*))
-        HccpDlsym(gIbverbsApiHandle, "ibv_destroy_cq");
+    gIbverbsOps.rsIbvDestroyCq = (int (*)(struct ibv_cq *))HccpDlsym(gIbverbsApiHandle, "ibv_destroy_cq");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvDestroyCq, "ibv_destroy_cq");
 
-    gIbverbsOps.rsIbvCreateCompChannel = (struct ibv_comp_channel* (*)(struct ibv_context *))
+    gIbverbsOps.rsIbvCreateCompChannel = (struct ibv_comp_channel * (*)(struct ibv_context *))
         HccpDlsym(gIbverbsApiHandle, "ibv_create_comp_channel");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvCreateCompChannel, "ibv_create_comp_channel");
 
-    gIbverbsOps.rsIbvDestroyCompChannel = (int (*)(struct ibv_comp_channel *))
-        HccpDlsym(gIbverbsApiHandle, "ibv_destroy_comp_channel");
+    gIbverbsOps.rsIbvDestroyCompChannel = (int (*)(struct ibv_comp_channel *))HccpDlsym(gIbverbsApiHandle,
+        "ibv_destroy_comp_channel");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvDestroyCompChannel, "ibv_destroy_comp_channel");
 
-    gIbverbsOps.rsIbvCreateSrq = (struct ibv_srq* (*)(struct ibv_pd *pd, struct ibv_srq_init_attr *srqInitAttr))
+    gIbverbsOps.rsIbvCreateSrq = (struct ibv_srq * (*)(struct ibv_pd * pd, struct ibv_srq_init_attr * srqInitAttr))
         HccpDlsym(gIbverbsApiHandle, "ibv_create_srq");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvCreateSrq, "ibv_create_srq");
 
-    gIbverbsOps.rsIbvDestroySrq = (int (*)(struct ibv_srq*))
-        HccpDlsym(gIbverbsApiHandle, "ibv_destroy_srq");
+    gIbverbsOps.rsIbvDestroySrq = (int (*)(struct ibv_srq *))HccpDlsym(gIbverbsApiHandle, "ibv_destroy_srq");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvDestroySrq, "ibv_destroy_srq");
 
-    gIbverbsOps.rsIbvQueryGidType = (int (*)(struct ibv_context*, uint8_t, unsigned int,
-        enum ibv_gid_type_sysfs*))
-        HccpDlsym(gIbverbsApiHandle, "ibv_query_gid_type");
+    gIbverbsOps.rsIbvQueryGidType = (int (*)(struct ibv_context *, uint8_t, unsigned int,
+        enum ibv_gid_type_sysfs *))HccpDlsym(gIbverbsApiHandle, "ibv_query_gid_type");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvQueryGidType, "ibv_query_gid_type");
 
-    gIbverbsOps.rsIbvCreateAh = (struct ibv_ah* (*)(struct ibv_pd *, struct ibv_ah_attr *))
+    gIbverbsOps.rsIbvCreateAh = (struct ibv_ah * (*)(struct ibv_pd *, struct ibv_ah_attr *))
         HccpDlsym(gIbverbsApiHandle, "ibv_create_ah");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvCreateAh, "ibv_create_ah");
 
-    gIbverbsOps.rsIbvDestroyAh = (int (*)(struct ibv_ah *))
-        HccpDlsym(gIbverbsApiHandle, "ibv_destroy_ah");
+    gIbverbsOps.rsIbvDestroyAh = (int (*)(struct ibv_ah *))HccpDlsym(gIbverbsApiHandle, "ibv_destroy_ah");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvDestroyAh, "ibv_destroy_ah");
 #endif
     return 0;
@@ -151,20 +149,20 @@ STATIC int RsContextOpsApiInit(void)
 STATIC int RsQpOpsApiInit(void)
 {
 #ifndef CA_CONFIG_LLT
-    gIbverbsOps.rsIbvQueryQp = (int (*)(struct ibv_qp*, struct ibv_qp_attr*, int, struct ibv_qp_init_attr*))
-        HccpDlsym(gIbverbsApiHandle, "ibv_query_qp");
+    gIbverbsOps.rsIbvQueryQp = (int (*)(struct ibv_qp *, struct ibv_qp_attr *, int,
+        struct ibv_qp_init_attr *))HccpDlsym(gIbverbsApiHandle, "ibv_query_qp");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvQueryQp, "ibv_query_qp");
 
-    gIbverbsOps.rsIbvGetCqEvent = (int (*)(struct ibv_comp_channel*, struct ibv_cq**, void**))
-        HccpDlsym(gIbverbsApiHandle, "ibv_get_cq_event");
+    gIbverbsOps.rsIbvGetCqEvent = (int (*)(struct ibv_comp_channel *, struct ibv_cq **,
+        void **))HccpDlsym(gIbverbsApiHandle, "ibv_get_cq_event");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvGetCqEvent, "ibv_get_cq_event");
 
-    gIbverbsOps.rsIbvAckCqEvents = (void (*)(struct ibv_cq*, unsigned int))
-        HccpDlsym(gIbverbsApiHandle, "ibv_ack_cq_events");
+    gIbverbsOps.rsIbvAckCqEvents = (void (*)(struct ibv_cq *, unsigned int))HccpDlsym(gIbverbsApiHandle,
+        "ibv_ack_cq_events");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvAckCqEvents, "ibv_ack_cq_events");
 
-    gIbverbsOps.rsIbvModifyQp = (int (*)(struct ibv_qp*, struct ibv_qp_attr*, int))
-        HccpDlsym(gIbverbsApiHandle, "ibv_modify_qp");
+    gIbverbsOps.rsIbvModifyQp = (int (*)(struct ibv_qp *, struct ibv_qp_attr *, int))HccpDlsym(gIbverbsApiHandle,
+        "ibv_modify_qp");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvModifyQp, "ibv_modify_qp");
 #endif
     return 0;
@@ -173,20 +171,18 @@ STATIC int RsQpOpsApiInit(void)
 STATIC int RsPdOpsApiInit(void)
 {
 #ifndef CA_CONFIG_LLT
-    gIbverbsOps.rsIbvRegMr = (struct ibv_mr* (*)(struct ibv_pd*, void*, size_t, int))
+    gIbverbsOps.rsIbvRegMr = (struct ibv_mr * (*)(struct ibv_pd *, void *, size_t, int))
         HccpDlsym(gIbverbsApiHandle, "ibv_reg_mr");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvRegMr, "ibv_reg_mr");
 
-    gIbverbsOps.rsIbvDeregMr = (int (*)(struct ibv_mr*))
-        HccpDlsym(gIbverbsApiHandle, "ibv_dereg_mr");
+    gIbverbsOps.rsIbvDeregMr = (int (*)(struct ibv_mr *))HccpDlsym(gIbverbsApiHandle, "ibv_dereg_mr");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvDeregMr, "ibv_dereg_mr");
 
-    gIbverbsOps.rsIbvCreateQp = (struct ibv_qp* (*)(struct ibv_pd*, struct ibv_qp_init_attr*))
+    gIbverbsOps.rsIbvCreateQp = (struct ibv_qp * (*)(struct ibv_pd *, struct ibv_qp_init_attr *))
         HccpDlsym(gIbverbsApiHandle, "ibv_create_qp");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvCreateQp, "ibv_create_qp");
 
-    gIbverbsOps.rsIbvDestroyQp = (int (*)(struct ibv_qp*))
-        HccpDlsym(gIbverbsApiHandle, "ibv_destroy_qp");
+    gIbverbsOps.rsIbvDestroyQp = (int (*)(struct ibv_qp *))HccpDlsym(gIbverbsApiHandle, "ibv_destroy_qp");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvDestroyQp, "ibv_destroy_qp");
 #endif
     return 0;
@@ -195,28 +191,27 @@ STATIC int RsPdOpsApiInit(void)
 STATIC int RsDeviceOpsApiInit(void)
 {
 #ifndef CA_CONFIG_LLT
-    gIbverbsOps.rsIbvGetDeviceList = (struct ibv_device** (*)(int *))
+    gIbverbsOps.rsIbvGetDeviceList = (struct ibv_device * *(*)(int *))
         HccpDlsym(gIbverbsApiHandle, "ibv_get_device_list");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvGetDeviceList, "ibv_get_device_list");
 
-    gIbverbsOps.rsIbvFreeDeviceList = (void (*)(struct ibv_device**))
-        HccpDlsym(gIbverbsApiHandle, "ibv_free_device_list");
+    gIbverbsOps.rsIbvFreeDeviceList = (void (*)(struct ibv_device **))HccpDlsym(gIbverbsApiHandle,
+        "ibv_free_device_list");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvFreeDeviceList, "ibv_free_device_list");
 
-    gIbverbsOps.rsIbvGetDeviceName = (const char* (*)(struct ibv_device*))
-        HccpDlsym(gIbverbsApiHandle, "ibv_get_device_name");
+    gIbverbsOps.rsIbvGetDeviceName = (const char *(*)(struct ibv_device *))HccpDlsym(gIbverbsApiHandle,
+        "ibv_get_device_name");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvGetDeviceName, "ibv_get_device_name");
 
-    gIbverbsOps.rsIbvCloseDevice = (int (*)(struct ibv_context*))
-        HccpDlsym(gIbverbsApiHandle, "ibv_close_device");
+    gIbverbsOps.rsIbvCloseDevice = (int (*)(struct ibv_context *))HccpDlsym(gIbverbsApiHandle, "ibv_close_device");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvCloseDevice, "ibv_close_device");
 
-    gIbverbsOps.rsIbvOpenDevice = (struct ibv_context* (*)(struct ibv_device*))
+    gIbverbsOps.rsIbvOpenDevice = (struct ibv_context * (*)(struct ibv_device *))
         HccpDlsym(gIbverbsApiHandle, "ibv_open_device");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvOpenDevice, "ibv_open_device");
 
-    gIbverbsOps.rsIbvWcStatusStr = (const char* (*)(enum ibv_wc_status))
-        HccpDlsym(gIbverbsApiHandle, "ibv_wc_status_str");
+    gIbverbsOps.rsIbvWcStatusStr = (const char *(*)(enum ibv_wc_status))HccpDlsym(gIbverbsApiHandle,
+        "ibv_wc_status_str");
     DL_API_RET_IS_NULL_CHECK(gIbverbsOps.rsIbvWcStatusStr, "ibv_wc_status_str");
 #endif
     return 0;
@@ -224,31 +219,48 @@ STATIC int RsDeviceOpsApiInit(void)
 
 STATIC int RsOpenIbverbsSo(void)
 {
+    pthread_mutex_lock(&gIbverbsApiLock);
 #ifndef CA_CONFIG_LLT
     if (gIbverbsApiHandle == NULL) {
         gIbverbsApiHandle = HccpDlopen("libibverbs.so", RTLD_NOW);
         if (gIbverbsApiHandle != NULL) {
-            return 0;
+            goto out;
         }
 
         gIbverbsApiHandle = HccpDlopen("libibverbs.so.1", RTLD_NOW);
-        if (gIbverbsApiHandle != 0) {
-            return 0;
+        if (gIbverbsApiHandle != NULL) {
+            goto out;
         }
+
+        pthread_mutex_unlock(&gIbverbsApiLock);
         return -EINVAL;
     } else {
-            hccp_run_info("ibverbs_api dlopen again!");
-        }
+        hccp_run_info("ibverbs_api dlopen again, gIbverbsApiRefcnt:%d", gIbverbsApiRefcnt + 1);
+    }
+
+out:
 #endif
+    gIbverbsApiRefcnt++;
+    pthread_mutex_unlock(&gIbverbsApiLock);
     return 0;
 }
 
 STATIC void RsCloseIbverbsSo(void)
 {
+    pthread_mutex_lock(&gIbverbsApiLock);
     if (gIbverbsApiHandle != NULL) {
+        gIbverbsApiRefcnt--;
+        if (gIbverbsApiRefcnt > 0) {
+            goto out;
+        }
+
+        hccp_run_info("dlclose IbverbsApi, gIbverbsApiRefcnt:%d", gIbverbsApiRefcnt);
         (void)HccpDlclose(gIbverbsApiHandle);
         gIbverbsApiHandle = NULL;
+        gIbverbsApiRefcnt = 0;
     }
+out:
+    pthread_mutex_unlock(&gIbverbsApiLock);
     return;
 }
 
@@ -258,8 +270,11 @@ STATIC int RsIbverbsApiInit(void)
     int ret;
 
     ret = RsOpenIbverbsSo();
-    CHK_PRT_RETURN(ret, hccp_err("HccpDlopen[libibverbs.so or libibverbs.so.1] failed! ret=[%d],"\
-    "Please check network adapter driver has been installed", ret), ret);
+    CHK_PRT_RETURN(ret,
+        hccp_err("HccpDlopen[libibverbs.so or libibverbs.so.1] failed! ret=[%d], "
+                 "Please check network adapter driver has been installed",
+            ret),
+        ret);
 
     ret = RsContextOpsApiInit();
     if (ret) {
@@ -355,30 +370,29 @@ out:
 STATIC int RsRoceUserIbvApiInit(void)
 {
 #ifndef CA_CONFIG_LLT
-    gRoceUserOps.rsIbvExpCreateQp = (struct ibv_qp* (*)(struct ibv_pd *pd,
-        struct ibv_exp_qp_init_attr *qpInitAttr, struct rdma_lite_device_qp_attr *qpResp))
+    gRoceUserOps.rsIbvExpCreateQp = (struct ibv_qp * (*)(struct ibv_pd * pd, struct ibv_exp_qp_init_attr * qpInitAttr,
+                                                         struct rdma_lite_device_qp_attr * qpResp))
         HccpDlsym(gRoceUserApiHandle, "ibv_exp_create_qp");
     DL_API_RET_IS_NULL_CHECK(gRoceUserOps.rsIbvExpCreateQp, "ibv_exp_create_qp");
-    gRoceUserOps.rsIbvExpRegMr = (struct ibv_mr* (*)(struct ibv_pd *pd, void *addr, size_t length,
-        int access, struct roce_process_sign roceSign))
+    gRoceUserOps.rsIbvExpRegMr = (struct ibv_mr * (*)(struct ibv_pd * pd, void *addr, size_t length, int access,
+                                                      struct roce_process_sign roceSign))
         HccpDlsym(gRoceUserApiHandle, "ibv_exp_reg_mr");
     DL_API_RET_IS_NULL_CHECK(gRoceUserOps.rsIbvExpRegMr, "ibv_exp_reg_mr");
-    gRoceUserOps.rsIbvExpQueryNotify = (int (*)(struct ibv_context *context,
-        unsigned long long *notifyVa, unsigned long long *size))
-        HccpDlsym(gRoceUserApiHandle, "ibv_exp_query_notify");
+    gRoceUserOps.rsIbvExpQueryNotify = (int (*)(struct ibv_context *context, unsigned long long *notifyVa,
+        unsigned long long *size))HccpDlsym(gRoceUserApiHandle, "ibv_exp_query_notify");
     DL_API_RET_IS_NULL_CHECK(gRoceUserOps.rsIbvExpQueryNotify, "ibv_exp_query_notify");
-    gRoceUserOps.rsIbvExpPostSend = (int (*)(struct ibv_qp *qp, struct ibv_send_wr *wr,
-        struct ibv_send_wr **badWr, struct wr_exp_rsp *expRsp))
-        HccpDlsym(gRoceUserApiHandle, "ibv_exp_post_send");
+    gRoceUserOps.rsIbvExpPostSend = (int (*)(struct ibv_qp *qp, struct ibv_send_wr *wr, struct ibv_send_wr **badWr,
+        struct wr_exp_rsp *expRsp))HccpDlsym(gRoceUserApiHandle, "ibv_exp_post_send");
     DL_API_RET_IS_NULL_CHECK(gRoceUserOps.rsIbvExpPostSend, "ibv_exp_post_send");
-    gRoceUserOps.rsIbvExpCreateCq = (struct ibv_cq* (*)(struct ibv_context*, int, void*,
-        struct ibv_comp_channel*, int, struct rdma_lite_device_cq_init_attr*, struct rdma_lite_device_cq_attr*))
+    gRoceUserOps.rsIbvExpCreateCq = (struct ibv_cq * (*)(struct ibv_context *, int, void *, struct ibv_comp_channel *,
+                                                         int, struct rdma_lite_device_cq_init_attr *,
+                                                         struct rdma_lite_device_cq_attr *))
         HccpDlsym(gRoceUserApiHandle, "ibv_exp_create_cq");
     DL_API_RET_IS_NULL_CHECK(gRoceUserOps.rsIbvExpCreateCq, "ibv_exp_create_cq");
-    gRoceUserOps.rsIbvExpQueryDevice = (int (*)(struct ibv_context*, struct dev_cap_info*))
-        HccpDlsym(gRoceUserApiHandle, "ibv_exp_query_device");
+    gRoceUserOps.rsIbvExpQueryDevice = (int (*)(struct ibv_context *,
+        struct dev_cap_info *))HccpDlsym(gRoceUserApiHandle, "ibv_exp_query_device");
     DL_API_RET_IS_NULL_CHECK(gRoceUserOps.rsIbvExpQueryDevice, "ibv_exp_query_device");
-    gRoceUserOps.rsIbvExpCreateAh = (struct ibv_ah* (*)(struct ibv_pd *pd, struct ibv_exp_ah_attr *attrx))
+    gRoceUserOps.rsIbvExpCreateAh = (struct ibv_ah * (*)(struct ibv_pd * pd, struct ibv_exp_ah_attr * attrx))
         HccpDlsym(gRoceUserApiHandle, "ibv_exp_create_ah");
     DL_API_RET_IS_NULL_CHECK(gRoceUserOps.rsIbvExpCreateAh, "ibv_exp_create_ah");
 #endif
@@ -390,43 +404,39 @@ STATIC int RsRoceUserIbvApiInit(void)
 STATIC int RsRoceUserDrvApiInit(void)
 {
 #ifndef CA_CONFIG_LLT
-    gRoceUserOps.rsRoceGetRoceDevData = (int (*)(const char *devName, struct roce_dev_data *rdevData))
-        HccpDlsym(gRoceUserApiHandle, "roce_get_roce_dev_data");
+    gRoceUserOps.rsRoceGetRoceDevData = (int (*)(const char *devName,
+        struct roce_dev_data *rdevData))HccpDlsym(gRoceUserApiHandle, "roce_get_roce_dev_data");
     DL_API_RET_IS_NULL_CHECK(gRoceUserOps.rsRoceGetRoceDevData, "roce_get_roce_dev_data");
-    gRoceUserOps.rsRoceGetTsqpDepth = (int (*)(const char *devName, unsigned int rdevIndex,
-        unsigned int *tempDepth, unsigned int *qpNum, unsigned int *sqDepth))
-        HccpDlsym(gRoceUserApiHandle, "roce_get_tsqp_depth");
+    gRoceUserOps.rsRoceGetTsqpDepth = (int (*)(const char *devName, unsigned int rdevIndex, unsigned int *tempDepth,
+        unsigned int *qpNum, unsigned int *sqDepth))HccpDlsym(gRoceUserApiHandle, "roce_get_tsqp_depth");
     DL_API_RET_IS_NULL_CHECK(gRoceUserOps.rsRoceGetTsqpDepth, "roce_get_tsqp_depth");
-    gRoceUserOps.rsRoceSetTsqpDepth = (int (*)(const char *devName, unsigned int rdevIndex,
-        unsigned int tempDepth, unsigned int *qpNum, unsigned int *sqDepth))
-        HccpDlsym(gRoceUserApiHandle, "roce_set_tsqp_depth");
+    gRoceUserOps.rsRoceSetTsqpDepth = (int (*)(const char *devName, unsigned int rdevIndex, unsigned int tempDepth,
+        unsigned int *qpNum, unsigned int *sqDepth))HccpDlsym(gRoceUserApiHandle, "roce_set_tsqp_depth");
     DL_API_RET_IS_NULL_CHECK(gRoceUserOps.rsRoceSetTsqpDepth, "roce_set_tsqp_depth");
-    gRoceUserOps.rsRoceInitMemPool = (int (*)(const struct roce_mem_cq_qp_attr *,
-        struct rdma_lite_device_mem_attr *, unsigned int)) HccpDlsym(gRoceUserApiHandle, "roce_init_mem_pool");
+    gRoceUserOps.rsRoceInitMemPool = (int (*)(const struct roce_mem_cq_qp_attr *, struct rdma_lite_device_mem_attr *,
+        unsigned int))HccpDlsym(gRoceUserApiHandle, "roce_init_mem_pool");
     DL_API_RET_IS_NULL_CHECK(gRoceUserOps.rsRoceInitMemPool, "roce_init_mem_pool");
-    gRoceUserOps.rsRoceDeinitMemPool = (int (*)(unsigned int))
-        HccpDlsym(gRoceUserApiHandle, "roce_deinit_mem_pool");
+    gRoceUserOps.rsRoceDeinitMemPool = (int (*)(unsigned int))HccpDlsym(gRoceUserApiHandle, "roce_deinit_mem_pool");
     DL_API_RET_IS_NULL_CHECK(gRoceUserOps.rsRoceDeinitMemPool, "roce_deinit_mem_pool");
     gRoceUserOps.rsRoceQueryQpc = (int (*)(struct ibv_qp *qp, struct hns_roce_qpc_attr_val *attrVal,
-        unsigned int attrMask)) HccpDlsym(gRoceUserApiHandle, "roce_query_qpc");
+        unsigned int attrMask))HccpDlsym(gRoceUserApiHandle, "roce_query_qpc");
     DL_API_RET_IS_NULL_CHECK(gRoceUserOps.rsRoceQueryQpc, "roce_query_qpc");
-    gRoceUserOps.rsRoceMmapAiDbReg = (int (*)(struct ibv_context *context, unsigned int tgid))
-        HccpDlsym(gRoceUserApiHandle, "roce_mmap_ai_db_reg");
+    gRoceUserOps.rsRoceMmapAiDbReg = (int (*)(struct ibv_context *context,
+        unsigned int tgid))HccpDlsym(gRoceUserApiHandle, "roce_mmap_ai_db_reg");
     DL_API_RET_IS_NULL_CHECK(gRoceUserOps.rsRoceMmapAiDbReg, "roce_mmap_ai_db_reg");
-    gRoceUserOps.rsRoceUnmmapAiDbReg = (int (*)(struct ibv_context *context))
-        HccpDlsym(gRoceUserApiHandle, "roce_unmmap_ai_db_reg");
+    gRoceUserOps.rsRoceUnmmapAiDbReg = (int (*)(struct ibv_context *context))HccpDlsym(gRoceUserApiHandle,
+        "roce_unmmap_ai_db_reg");
     DL_API_RET_IS_NULL_CHECK(gRoceUserOps.rsRoceUnmmapAiDbReg, "roce_unmmap_ai_db_reg");
     gRoceUserOps.rsRoceGetCqDataPlaneInfo = (int (*)(struct ibv_cq *cq,
-        struct hns_roce_cq_data_plane_info *info)) HccpDlsym(gRoceUserApiHandle, "roce_get_cq_data_plane_info");
+        struct hns_roce_cq_data_plane_info *info))HccpDlsym(gRoceUserApiHandle, "roce_get_cq_data_plane_info");
     DL_API_RET_IS_NULL_CHECK(gRoceUserOps.rsRoceGetCqDataPlaneInfo, "roce_get_cq_data_plane_info");
     gRoceUserOps.rsRoceGetQpDataPlaneInfo = (int (*)(struct ibv_qp *qp,
-        struct hns_roce_qp_data_plane_info *info)) HccpDlsym(gRoceUserApiHandle, "roce_get_qp_data_plane_info");
+        struct hns_roce_qp_data_plane_info *info))HccpDlsym(gRoceUserApiHandle, "roce_get_qp_data_plane_info");
     DL_API_RET_IS_NULL_CHECK(gRoceUserOps.rsRoceGetQpDataPlaneInfo, "roce_get_qp_data_plane_info");
     gRoceUserOps.rsRoceRemapMr = (int (*)(struct ibv_mr *mr, struct hns_roce_mr_remap_info info[],
-        unsigned int num)) HccpDlsym(gRoceUserApiHandle, "roce_remap_mr");
+        unsigned int num))HccpDlsym(gRoceUserApiHandle, "roce_remap_mr");
     DL_API_RET_IS_NULL_CHECK(gRoceUserOps.rsRoceRemapMr, "roce_remap_mr");
-    gRoceUserOps.rsRoceGetApiVersion = (unsigned int (*)(void))
-        HccpDlsym(gRoceUserApiHandle, "roce_get_api_version");
+    gRoceUserOps.rsRoceGetApiVersion = (unsigned int (*)(void))HccpDlsym(gRoceUserApiHandle, "roce_get_api_version");
     DL_API_RET_IS_NULL_CHECK(gRoceUserOps.rsRoceGetApiVersion, "roce_get_api_version");
 #endif
     return 0;
@@ -440,8 +450,11 @@ STATIC int RsRoceUserApiInit(void)
     int ret = 0;
 
     ret = RsOpenRoceUserSo(&type);
-    CHK_PRT_RETURN(ret != 0, hccp_err("HccpDlopen[libhns-rdmav17.so or libhns-rdmav25.so or libhrn0-rdmav17.so]"
-        "failed! ret=[%d]. Please check network adapter driver has been installed.", ret), ret);
+    CHK_PRT_RETURN(ret != 0,
+        hccp_err("HccpDlopen[libhns-rdmav17.so or libhns-rdmav25.so or libhrn0-rdmav17.so] "
+                 "failed! ret=[%d]. Please check network adapter driver has been installed.",
+            ret),
+        ret);
 
 #ifndef CA_CONFIG_LLT
     ret = RsRoceUserIbvApiInit();
@@ -457,10 +470,9 @@ STATIC int RsRoceUserApiInit(void)
     }
 
     if (type == SO_TYPE_EXT) {
-        gRoceUserOps.rsIbvExtPostSend = (int (*)(struct ibv_qp *qp, struct ibv_send_wr *wr,
-            struct ibv_send_wr **badWr, struct ibv_post_send_ext_attr *extAttr,
-            struct ibv_post_send_ext_resp *extResp))
-            HccpDlsym(gRoceUserApiHandle, "ibv_ext_post_send");
+        gRoceUserOps.rsIbvExtPostSend = (int (*)(struct ibv_qp *qp, struct ibv_send_wr *wr, struct ibv_send_wr **badWr,
+            struct ibv_post_send_ext_attr *extAttr,
+            struct ibv_post_send_ext_resp *extResp))HccpDlsym(gRoceUserApiHandle, "ibv_ext_post_send");
         if (gRoceUserOps.rsIbvExtPostSend == NULL) {
             ret = -EINVAL;
             hccp_err("ibv_ext_post_send is null");
@@ -479,40 +491,61 @@ close_roce_user_so:
 STATIC int RsHrnIbvApiInit(void)
 {
 #ifndef CA_CONFIG_LLT
-    gHrnOps.rsRoceSetQpLbValue = (int (*)(struct ibv_qp *qp, int lbValue))
-        HccpDlsym(gHrnApiHandle, "roce_set_qp_lb_value");
-    gHrnOps.rsRoceGetQpLbValue = (int (*)(struct ibv_qp *qp, int *lbValue))
-        HccpDlsym(gHrnApiHandle, "roce_get_qp_lb_value");
-    gHrnOps.rsRoceGetQpNum = (int (*)(struct ibv_context *context, int *qpNum))
-        HccpDlsym(gHrnApiHandle, "roce_get_qp_num");
+    gHrnOps.rsRoceSetQpLbValue = (int (*)(struct ibv_qp *qp, int lbValue))HccpDlsym(gHrnApiHandle,
+        "roce_set_qp_lb_value");
+    gHrnOps.rsRoceGetQpLbValue = (int (*)(struct ibv_qp *qp, int *lbValue))HccpDlsym(gHrnApiHandle,
+        "roce_get_qp_lb_value");
+    gHrnOps.rsRoceGetQpNum = (int (*)(struct ibv_context *context, int *qpNum))HccpDlsym(gHrnApiHandle,
+        "roce_get_qp_num");
 #endif
     return 0;
 }
 
 STATIC int RsOpenHrnSo(void)
 {
+    pthread_mutex_lock(&gHrnApiLock);
 #ifndef CA_CONFIG_LLT
     if (gHrnApiHandle == NULL) {
         gHrnApiHandle = HccpDlopen("libhrn5-rdmav34.so", RTLD_NOW);
         if (gHrnApiHandle != NULL) {
-            return 0;
+            goto out;
         }
+        gHrnApiHandle = HccpDlopen("libhrn5.so.1", RTLD_NOW);
+        if (gHrnApiHandle != NULL) {
+            goto out;
+        }
+
+        pthread_mutex_unlock(&gHrnApiLock);
         return -EINVAL;
     } else {
-        hccp_run_info("HrnApi dlopen again!");
+        hccp_run_info("HrnApi dlopen again, gHrnApiRefcnt:%d", gHrnApiRefcnt + 1);
     }
+
+out:
 #endif
+    gHrnApiRefcnt++;
+    pthread_mutex_unlock(&gHrnApiLock);
     return 0;
 }
 
 STATIC void RsCloseHrnSo(void)
 {
+    pthread_mutex_lock(&gHrnApiLock);
 #ifndef CA_CONFIG_LLT
     if (gHrnApiHandle != NULL) {
+        gHrnApiRefcnt--;
+        if (gHrnApiRefcnt > 0) {
+            goto out;
+        }
+
+        hccp_run_info("dlclose hrn api, gHrnApiRefcnt:%d", gHrnApiRefcnt);
         (void)HccpDlclose(gHrnApiHandle);
         gHrnApiHandle = NULL;
+        gHrnApiRefcnt = 0;
     }
+out:
 #endif
+    pthread_mutex_unlock(&gHrnApiLock);
     return;
 }
 
@@ -523,7 +556,7 @@ int RsHrnApiInit(void)
 
     ret = RsOpenHrnSo();
     if (ret != 0) {
-        hccp_warn("HccpDlopen[libhrn3-rdmav34.so] doesn't exist!");
+        hccp_warn_others("HccpDlopen[libhrn5-rdmav34.so or libhrn5.so.1] doesn't exist!");
         return 0;
     }
 
@@ -549,9 +582,9 @@ DL_ATTRI_VISI_DEF int RsApiInit(void)
         RsCloseIbverbsSo();
         return ret;
     }
-    ret = RsNdaApiInit();
+    ret = RsIbvExtendApiInit();
     if (ret != 0) {
-        hccp_err("RsHrnApiInit failed! ret=[%d]", ret);
+        hccp_err("RsIbvExtendApiInit failed! ret=[%d]", ret);
         RsCloseHrnSo();
         RsCloseIbverbsSo();
         return ret;
@@ -562,7 +595,7 @@ DL_ATTRI_VISI_DEF int RsApiInit(void)
         hccp_err("rs_roce_user_api_init failed! ret=[%d]", ret);
         RsCloseHrnSo();
         RsCloseIbverbsSo();
-        RsNdaApiDeinit();
+        RsIbvExtendApiDeinit();
         return ret;
     }
 #endif
@@ -574,7 +607,7 @@ DL_ATTRI_VISI_DEF void RsApiDeinit(void)
 {
     RsCloseIbverbsSo();
     RsCloseHrnSo();
-    RsNdaApiDeinit();
+    RsIbvExtendApiDeinit();
     RsCloseRoceUserSo();
     return;
 }
@@ -591,8 +624,8 @@ struct ibv_mr *RsIbvExpRegMr(struct ibv_pd *pd, void *addr, size_t length, int a
     return gRoceUserOps.rsIbvExpRegMr(pd, addr, length, access, roceSign);
 }
 
-struct ibv_qp *RsIbvExpCreateQp(
-    struct ibv_pd *pd, struct ibv_exp_qp_init_attr *qpInitAttr, struct rdma_lite_device_qp_attr *qpResp)
+struct ibv_qp *RsIbvExpCreateQp(struct ibv_pd *pd, struct ibv_exp_qp_init_attr *qpInitAttr,
+    struct rdma_lite_device_qp_attr *qpResp)
 {
     if (gRoceUserOps.rsIbvExpCreateQp == NULL) {
 #ifndef CA_CONFIG_LLT
@@ -603,8 +636,8 @@ struct ibv_qp *RsIbvExpCreateQp(
     return gRoceUserOps.rsIbvExpCreateQp(pd, qpInitAttr, qpResp);
 }
 
-int RsRoceSetTsqpDepth(const char *devName, unsigned int rdevIndex, unsigned int tempDepth,
-    unsigned int *qpNum, unsigned int *sqDepth)
+int RsRoceSetTsqpDepth(const char *devName, unsigned int rdevIndex, unsigned int tempDepth, unsigned int *qpNum,
+    unsigned int *sqDepth)
 {
     if (gRoceUserOps.rsRoceSetTsqpDepth == NULL) {
 #ifndef CA_CONFIG_LLT
@@ -615,8 +648,8 @@ int RsRoceSetTsqpDepth(const char *devName, unsigned int rdevIndex, unsigned int
     return gRoceUserOps.rsRoceSetTsqpDepth(devName, rdevIndex, tempDepth, qpNum, sqDepth);
 }
 
-int RsRoceGetTsqpDepth(const char *devName, unsigned int rdevIndex, unsigned int *tempDepth,
-    unsigned int *qpNum, unsigned int *sqDepth)
+int RsRoceGetTsqpDepth(const char *devName, unsigned int rdevIndex, unsigned int *tempDepth, unsigned int *qpNum,
+    unsigned int *sqDepth)
 {
     if (gRoceUserOps.rsRoceGetTsqpDepth == NULL) {
 #ifndef CA_CONFIG_LLT
@@ -638,8 +671,7 @@ int RsRoceGetRoceDevData(const char *devName, struct roce_dev_data *rdevData)
     return gRoceUserOps.rsRoceGetRoceDevData(devName, rdevData);
 }
 
-int RsIbvExpQueryNotify(struct ibv_context *context, unsigned long long *notifyVa,
-    unsigned long long *size)
+int RsIbvExpQueryNotify(struct ibv_context *context, unsigned long long *notifyVa, unsigned long long *size)
 {
     if (gRoceUserOps.rsIbvExpQueryNotify == NULL) {
 #ifndef CA_CONFIG_LLT
@@ -649,8 +681,7 @@ int RsIbvExpQueryNotify(struct ibv_context *context, unsigned long long *notifyV
     }
     return gRoceUserOps.rsIbvExpQueryNotify(context, notifyVa, size);
 }
-int RsIbvExpPostSend(struct ibv_qp *qp, struct ibv_send_wr *wr, struct ibv_send_wr **badWr,
-    struct wr_exp_rsp *expRsp)
+int RsIbvExpPostSend(struct ibv_qp *qp, struct ibv_send_wr *wr, struct ibv_send_wr **badWr, struct wr_exp_rsp *expRsp)
 {
     if (gRoceUserOps.rsIbvExpPostSend == NULL) {
 #ifndef CA_CONFIG_LLT
@@ -717,8 +748,7 @@ const char *RsIbvWcStatusStr(enum ibv_wc_status status)
     return gIbverbsOps.rsIbvWcStatusStr(status);
 }
 
-int RsIbvQueryGidType(struct ibv_context *context, uint8_t portNum, unsigned int index,
-    enum ibv_gid_type_sysfs *type)
+int RsIbvQueryGidType(struct ibv_context *context, uint8_t portNum, unsigned int index, enum ibv_gid_type_sysfs *type)
 {
     if (gIbverbsOps.rsIbvQueryGidType == NULL) {
 #ifndef CA_CONFIG_LLT
@@ -914,8 +944,8 @@ struct ibv_device **RsIbvGetDeviceList(int *numDevices)
     return gIbverbsOps.rsIbvGetDeviceList(numDevices);
 }
 
-struct ibv_cq *RsIbvCreateCq(struct ibv_context *context, int cqe, void *cqContext,
-    struct ibv_comp_channel *channel, int compVector)
+struct ibv_cq *RsIbvCreateCq(struct ibv_context *context, int cqe, void *cqContext, struct ibv_comp_channel *channel,
+    int compVector)
 {
     if (gIbverbsOps.rsIbvCreateCq == NULL) {
 #ifndef CA_CONFIG_LLT
@@ -1003,9 +1033,8 @@ int RsIbvDestroyAh(struct ibv_ah *ah)
     return gIbverbsOps.rsIbvDestroyAh(ah);
 }
 
-struct ibv_cq *RsIbvExpCreateCq(struct ibv_context *context, int cqe, void *cqContext,
-    struct ibv_comp_channel *channel, int compVector, struct rdma_lite_device_cq_init_attr *attr,
-    struct rdma_lite_device_cq_attr *cqResp)
+struct ibv_cq *RsIbvExpCreateCq(struct ibv_context *context, int cqe, void *cqContext, struct ibv_comp_channel *channel,
+    int compVector, struct rdma_lite_device_cq_init_attr *attr, struct rdma_lite_device_cq_attr *cqResp)
 {
     if (gRoceUserOps.rsIbvExpCreateCq == NULL) {
 #ifndef CA_CONFIG_LLT

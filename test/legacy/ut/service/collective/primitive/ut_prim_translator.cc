@@ -18,22 +18,16 @@ using namespace Hccl;
 using namespace std;
 class PrimTranslatorTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "PrimTranslatorTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "PrimTranslatorTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "PrimTranslatorTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "PrimTranslatorTest TearDown" << std::endl; }
 
     virtual void SetUp()
     {
-        communicator  = new CommunicatorImpl();
+        communicator = new CommunicatorImpl();
         masterPrimQue = make_shared<PrimQueue>();
-        DataSlice                 srcSlice(BufferType::INPUT, 0, 100);
-        DataSlice                 dstSlice(BufferType::SCRATCH, 0, 100);
+        DataSlice srcSlice(BufferType::INPUT, 0, 100);
+        DataSlice dstSlice(BufferType::SCRATCH, 0, 100);
         unique_ptr<PrimLocalCopy> localCopy = make_unique<PrimLocalCopy>(srcSlice, dstSlice);
 
         masterPrimQue->Append(std::move(localCopy));
@@ -48,7 +42,7 @@ protected:
     }
 
     shared_ptr<PrimQueue> masterPrimQue;
-    CommunicatorImpl     *communicator;
+    CommunicatorImpl* communicator;
 };
 
 TEST_F(PrimTranslatorTest, test_Translate_one_queue)
@@ -85,17 +79,17 @@ TEST_F(PrimTranslatorTest, test_Translate_many_queue)
 TEST_F(PrimTranslatorTest, test_translate_multiple_prim_queue)
 {
     // Given master, slave
-    PrimTranslator            primTranslator;
-    u32                       notifyIdx = 0;
-    DataSlice                 slaveSrcSlice(BufferType::OUTPUT, 0, 100);
-    DataSlice                 slaveDstSlice(BufferType::OUTPUT, 100, 100);
+    PrimTranslator primTranslator;
+    u32 notifyIdx = 0;
+    DataSlice slaveSrcSlice(BufferType::OUTPUT, 0, 100);
+    DataSlice slaveDstSlice(BufferType::OUTPUT, 100, 100);
     unique_ptr<PrimLocalCopy> localCopySlave = make_unique<PrimLocalCopy>(slaveSrcSlice, slaveDstSlice);
-    shared_ptr<PrimQueue>     slavePrimQue   = masterPrimQue->Fork();
+    shared_ptr<PrimQueue> slavePrimQue = masterPrimQue->Fork();
     slavePrimQue->Append(std::move(localCopySlave));
 
     // When
     shared_ptr<InsQueue> masterInsQue = primTranslator.Translate(*masterPrimQue.get());
-    string               slaveRes;
+    string slaveRes;
     for (auto iter = masterInsQue->IterSlaves(); iter.HasNext(); ++iter) {
         slaveRes = iter->First()->Describe();
     }
@@ -103,9 +97,9 @@ TEST_F(PrimTranslatorTest, test_translate_multiple_prim_queue)
 
     // Then
     vector<string> insStringVec(2);
-    DataSlice      srcSlice(BufferType::INPUT, 0, 100);
-    DataSlice      dstSlice(BufferType::SCRATCH, 0, 100);
-    InsLocalCopy   insLocalCopy(srcSlice, dstSlice);
+    DataSlice srcSlice(BufferType::INPUT, 0, 100);
+    DataSlice dstSlice(BufferType::SCRATCH, 0, 100);
+    InsLocalCopy insLocalCopy(srcSlice, dstSlice);
     insStringVec[0] = insLocalCopy.Describe();
     EXPECT_EQ(insStringVec[0], masterRes);
 

@@ -21,25 +21,21 @@ using namespace Hccl;
 
 class AddressInfoParserTest : public testing::Test {
 protected:
-    static void SetUpTestCase() {
-        std::cout << "AddressInfoParserTest SetUP" << std::endl;
-    }
- 
-    static void TearDownTestCase() {
-        std::cout << "AddressInfoParserTest TearDown" << std::endl;
-    }
- 
-    virtual void SetUp() {
-        std::cout << "A Test case in AddressInfoParserTest SetUP" << std::endl;
-    }
- 
-    virtual void TearDown() {
+    static void SetUpTestCase() { std::cout << "AddressInfoParserTest SetUP" << std::endl; }
+
+    static void TearDownTestCase() { std::cout << "AddressInfoParserTest TearDown" << std::endl; }
+
+    virtual void SetUp() { std::cout << "A Test case in AddressInfoParserTest SetUP" << std::endl; }
+
+    virtual void TearDown()
+    {
         GlobalMockObject::verify();
         std::cout << "A Test case in AddressInfoParserTest TearDown" << std::endl;
     }
 };
 
-TEST_F(AddressInfoParserTest, St_Deserialize_When_Normal_Expect_Success) {
+TEST_F(AddressInfoParserTest, St_Deserialize_When_Normal_Expect_Success)
+{
     DevType devType = DevType::DEV_TYPE_910A;
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(devType));
 
@@ -53,25 +49,23 @@ TEST_F(AddressInfoParserTest, St_Deserialize_When_Normal_Expect_Success) {
     )";
     JsonParser addressInfoParser;
     AddressInfo addressInfo;
-    addressInfoParser.ParseString(addressInfoString, addressInfo);
-    
+    EXPECT_EQ(addressInfoParser.ParseString(addressInfoString, addressInfo), HCCL_SUCCESS);
     AddressInfo addressInfo0;
-    addressInfo0.addrType=AddrType::IPV4;
+    addressInfo0.addrType = AddrType::IPV4;
     IpAddress ipAddress0("192.168.100.100", AF_INET);
-    addressInfo0.addr=ipAddress0;
-    addressInfo0.planeId="planeB";
-    addressInfo0.ports={"1/1", "1/2"};
+    addressInfo0.addr = ipAddress0;
+    addressInfo0.planeId = "planeB";
+    addressInfo0.ports = {"1/1", "1/2"};
     addressInfo.Describe();
 
     EXPECT_EQ(addressInfo0.addrType, addressInfo.addrType);
-    EXPECT_EQ(addressInfo0.addr , addressInfo.addr);
+    EXPECT_EQ(addressInfo0.addr, addressInfo.addr);
     EXPECT_EQ(addressInfo0.planeId, addressInfo.planeId);
     EXPECT_EQ(addressInfo0.ports, addressInfo.ports);
-
-        
 }
 
-TEST_F(AddressInfoParserTest, St_Deserialize_When_EID_Expect_Success) {
+TEST_F(AddressInfoParserTest, St_Deserialize_When_EID_Expect_Success)
+{
     DevType devType = DevType::DEV_TYPE_910A;
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(devType));
 
@@ -85,31 +79,31 @@ TEST_F(AddressInfoParserTest, St_Deserialize_When_EID_Expect_Success) {
     )";
     JsonParser addressInfoParser;
     AddressInfo addressInfo;
-    addressInfoParser.ParseString(addressInfoString, addressInfo);
-    
+    EXPECT_EQ(addressInfoParser.ParseString(addressInfoString, addressInfo), HCCL_SUCCESS);
     AddressInfo addressInfo0;
-    addressInfo0.addrType=AddrType::EID;
-    addressInfo0.planeId="plane0";
-    addressInfo0.ports={"0/6"};
-    Eid eid0=IpAddress::StrToEID("000000000000002000100000df001007");
+    addressInfo0.addrType = AddrType::EID;
+    addressInfo0.planeId = "plane0";
+    addressInfo0.ports = {"0/6"};
+    Eid eid0 = IpAddress::StrToEID("000000000000002000100000df001007");
     IpAddress ipAddress0(eid0);
-    addressInfo0.addr=ipAddress0;
-    
+    addressInfo0.addr = ipAddress0;
+
     EXPECT_EQ(addressInfo0.addr, addressInfo.addr);
     EXPECT_EQ(addressInfo0.addrType, addressInfo.addrType);
     EXPECT_EQ(addressInfo0.planeId, addressInfo.planeId);
     EXPECT_EQ(addressInfo0.ports, addressInfo.ports);
-    
+
     BinaryStream binStream;
-    addressInfo.GetBinStream(binStream);
+    EXPECT_EQ(addressInfo.GetBinStream(binStream), HCCL_SUCCESS);
     AddressInfo addressInfo1(binStream);
     EXPECT_EQ(addressInfo1.addr, addressInfo.addr);
     EXPECT_EQ(addressInfo1.addrType, addressInfo.addrType);
     EXPECT_EQ(addressInfo1.planeId, addressInfo.planeId);
-    EXPECT_EQ(addressInfo1.ports, addressInfo.ports);    
+    EXPECT_EQ(addressInfo1.ports, addressInfo.ports);
 }
 
-TEST_F(AddressInfoParserTest, St_Deserialize_When_IPV6_Expect_Success) {
+TEST_F(AddressInfoParserTest, St_Deserialize_When_IPV6_Expect_Success)
+{
     DevType devType = DevType::DEV_TYPE_910A;
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(devType));
 
@@ -123,22 +117,22 @@ TEST_F(AddressInfoParserTest, St_Deserialize_When_IPV6_Expect_Success) {
     )";
     JsonParser addressInfoParser;
     AddressInfo addressInfo;
-    addressInfoParser.ParseString(addressInfoString, addressInfo);
-    
+    EXPECT_EQ(addressInfoParser.ParseString(addressInfoString, addressInfo), HCCL_SUCCESS);
     AddressInfo addressInfo0;
-    addressInfo0.addrType=AddrType::IPV6;
-    addressInfo0.planeId="plane0";
-    addressInfo0.ports={"0/6"};
+    addressInfo0.addrType = AddrType::IPV6;
+    addressInfo0.planeId = "plane0";
+    addressInfo0.ports = {"0/6"};
     IpAddress ipAddress0("fe80:0000:0001:0000:0440:44ff:1233:5678", AF_INET6);
-    addressInfo0.addr=ipAddress0;
-    
+    addressInfo0.addr = ipAddress0;
+
     EXPECT_EQ(addressInfo0.addr, addressInfo.addr);
     EXPECT_EQ(addressInfo0.addrType, addressInfo.addrType);
     EXPECT_EQ(addressInfo0.planeId, addressInfo.planeId);
-    EXPECT_EQ(addressInfo0.ports, addressInfo.ports); 
+    EXPECT_EQ(addressInfo0.ports, addressInfo.ports);
 }
 
-TEST_F(AddressInfoParserTest, St_Deserialize_When_InvalidAddrType_Expect_Exception) {
+TEST_F(AddressInfoParserTest, St_Deserialize_When_InvalidAddrType_Expect_Exception)
+{
     DevType devType = DevType::DEV_TYPE_910A;
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(devType));
 
@@ -154,10 +148,11 @@ TEST_F(AddressInfoParserTest, St_Deserialize_When_InvalidAddrType_Expect_Excepti
     JsonParser addressInfoParser;
     AddressInfo addressInfo;
 
-    EXPECT_THROW(addressInfoParser.ParseString(addressInfoString, addressInfo), InvalidParamsException);
+    EXPECT_EQ(addressInfoParser.ParseString(addressInfoString, addressInfo), HCCL_E_PARA);
 }
 
-TEST_F(AddressInfoParserTest, St_Deserialize_When_InvalidAddr_Expect_Exception) {
+TEST_F(AddressInfoParserTest, St_Deserialize_When_InvalidAddr_Expect_Exception)
+{
     DevType devType = DevType::DEV_TYPE_910A;
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(devType));
 
@@ -173,10 +168,11 @@ TEST_F(AddressInfoParserTest, St_Deserialize_When_InvalidAddr_Expect_Exception) 
     JsonParser addressInfoParser;
     AddressInfo addressInfo;
 
-    EXPECT_THROW(addressInfoParser.ParseString(addressInfoString, addressInfo), InvalidParamsException);
+    EXPECT_EQ(addressInfoParser.ParseString(addressInfoString, addressInfo), HCCL_E_PARA);
 }
 
-TEST_F(AddressInfoParserTest, St_Deserialize_When_InvalidPort_Expect_Exception) {
+TEST_F(AddressInfoParserTest, St_Deserialize_When_InvalidPort_Expect_Exception)
+{
     DevType devType = DevType::DEV_TYPE_910A;
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(devType));
 
@@ -192,10 +188,11 @@ TEST_F(AddressInfoParserTest, St_Deserialize_When_InvalidPort_Expect_Exception) 
     JsonParser addressInfoParser;
     AddressInfo addressInfo;
 
-    EXPECT_THROW(addressInfoParser.ParseString(addressInfoString, addressInfo), InvalidParamsException);
+    EXPECT_EQ(addressInfoParser.ParseString(addressInfoString, addressInfo), HCCL_E_PARA);
 }
 
-TEST_F(AddressInfoParserTest, St_Deserialize_When_InvalidPorts_Expect_Exception) {
+TEST_F(AddressInfoParserTest, St_Deserialize_When_InvalidPorts_Expect_Exception)
+{
     DevType devType = DevType::DEV_TYPE_910A;
     MOCKER(HrtGetDeviceType).stubs().will(returnValue(devType));
 
@@ -211,5 +208,5 @@ TEST_F(AddressInfoParserTest, St_Deserialize_When_InvalidPorts_Expect_Exception)
     JsonParser addressInfoParser;
     AddressInfo addressInfo;
 
-    EXPECT_THROW(addressInfoParser.ParseString(addressInfoString, addressInfo), InvalidParamsException);
+    EXPECT_EQ(addressInfoParser.ParseString(addressInfoString, addressInfo), HCCL_E_PARA);
 }

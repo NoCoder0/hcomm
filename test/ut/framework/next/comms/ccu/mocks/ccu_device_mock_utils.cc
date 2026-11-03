@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2026 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "ccu_device_mock_utils.h"
 
@@ -32,20 +32,17 @@
 #undef protected
 #undef private
 
-HcclResult MockCcuResourcesDefault(int32_t devLogicId, hcomm::CcuVersion ccuVersion)
+HcclResult InitMockCcuResourcesForDevice(int32_t devLogicId, hcomm::CcuVersion ccuVersion)
 {
-    MockCcuDrvHandle();
-    MockCcuDevMgr();
-
-    auto &ccuResSpecs = hcomm::CcuResSpecifications::GetInstance(devLogicId);
+    auto& ccuResSpecs = hcomm::CcuResSpecifications::GetInstance(devLogicId);
     ccuResSpecs.initFlag_ = true;
     ccuResSpecs.ccuVersion_ = ccuVersion;
-    ccuResSpecs.armX86Flag_ = false;
+    ccuResSpecs.serveMode_ = hcomm::ServeMode::NORMAL;
     for (uint8_t dieId = 0; dieId < hcomm::CCU_MAX_IODIE_NUM; dieId++) {
         ccuResSpecs.dieEnableFlags_[dieId] = true;
 
         ccuResSpecs.resSpecs_[dieId].loopEngineNum = 200;
-        
+
         ccuResSpecs.resSpecs_[dieId].msNum = 1536;
         ccuResSpecs.resSpecs_[dieId].ckeNum = 1024;
 
@@ -73,8 +70,20 @@ HcclResult MockCcuResourcesDefault(int32_t devLogicId, hcomm::CcuVersion ccuVers
     return HcclResult::HCCL_SUCCESS;
 }
 
-static int RaGetDevEidInfoListStub(struct RaInfo info, struct HccpDevEidInfo info_list[],
-    unsigned int *num)
+HcclResult MockCcuResourcesDefault(int32_t devLogicId, hcomm::CcuVersion ccuVersion)
+{
+    MockCcuDrvHandle();
+    MockCcuDevMgr();
+    return InitMockCcuResourcesForDevice(devLogicId, ccuVersion);
+}
+
+static int RaGetDevEidInfoNumStub(struct RaInfo info, unsigned int* num)
+{
+    *num = 3;
+    return 0;
+}
+
+static int RaGetDevEidInfoListStub(struct RaInfo info, struct HccpDevEidInfo info_list[], unsigned int* num)
 {
     strcpy(info_list[0].name, "udma2");
     info_list[0].dieId = 0;
@@ -97,37 +106,41 @@ static int RaGetDevEidInfoListStub(struct RaInfo info, struct HccpDevEidInfo inf
     return 0;
 }
 
+static HcclResult MockGetRtpEnableTrue(Hccl::RdmaHandleManager* mgr, Hccl::RdmaHandle rdmaHandle, bool& rtpEnable)
+{
+    (void)mgr;
+    (void)rdmaHandle;
+    rtpEnable = true;
+    return HcclResult::HCCL_SUCCESS;
+}
+
 // 为 ccu 两个die添加网络通信设备
 void MockCcuNetworkDeviceDefault(int32_t devPhyId)
 {
     // 从驱动查询的网络设备用于：
     // 1. ccu 创建环回jetty，对于期望启用ccu功能的die，至少需要1个rtp 启用的eid
     // 2. ccu 建链申请channel资源，通过eid查询所属的die，匹配不到时将会失败
-    constexpr unsigned int fakeEidNum = 3;
-    unsigned int eidNum = fakeEidNum;
-    MOCKER(RaGetDevEidInfoNum)
-        .stubs()
-        .with(mockcpp::any(), outBoundP(&eidNum))
-        .will(returnValue(0));
+    MOCKER(RaGetDevEidInfoNum).stubs().will(invoke(RaGetDevEidInfoNumStub));
 
-    MOCKER(RaGetDevEidInfoList)
-        .stubs()
-        .will(invoke(RaGetDevEidInfoListStub));
+    MOCKER(RaGetDevEidInfoList).stubs().will(invoke(RaGetDevEidInfoListStub));
 
     MOCKER(hcomm::HccpGetUboeFlagEnable).stubs().will(returnValue(HcclResult::HCCL_SUCCESS));
     MOCKER(hcomm::HccpCheckUboeSupported).stubs().will(returnValue(false));
 
-    MOCKER_CPP(&Hccl::RdmaHandleManager::GetByIp).stubs()
+    MOCKER_CPP(&Hccl::RdmaHandleManager::GetByIp)
+        .stubs()
         .will(returnValue((void*)0x12345678)); // 大部分场景ctxHandle非空即可
 
-    MOCKER_CPP(&Hccl::RdmaHandleManager::IsHandleValid).stubs()
-        .will(returnValue(true));
+    MOCKER_CPP(&Hccl::RdmaHandleManager::IsHandleValid).stubs().will(returnValue(true));
 
     std::pair<Hccl::TokenIdHandle, uint32_t> fakeTokenInfo = std::make_pair(0x12345678, 1);
-    MOCKER_CPP(&Hccl::RdmaHandleManager::GetTokenIdInfo).stubs()
+    MOCKER_CPP(&Hccl::RdmaHandleManager::GetTokenIdInfo)
+        .stubs()
         .will(returnValue(fakeTokenInfo)); // 打桩保证内存注册成功
 
-    MOCKER_CPP(&Hccl::RdmaHandleManager::GetRtpEnable).stubs()
-        .will(returnValue(false)) // 打桩覆盖环回选择不同端口
-        .then(returnValue(true));
+    // 打桩覆盖环回选择端口：所有eid rtp=true选中
+    MOCKER_CPP(&Hccl::RdmaHandleManager::GetRtpEnable)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any())
+        .will(invoke(MockGetRtpEnableTrue));
 }

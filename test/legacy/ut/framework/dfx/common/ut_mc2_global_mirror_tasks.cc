@@ -20,20 +20,11 @@ using namespace Hccl;
 
 class MC2GlobalMirrorTasksTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "MC2GlobalMirrorTasksTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "MC2GlobalMirrorTasksTest tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "MC2GlobalMirrorTasksTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "MC2GlobalMirrorTasksTest tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in MC2GlobalMirrorTasksTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in MC2GlobalMirrorTasksTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {

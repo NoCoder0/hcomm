@@ -24,19 +24,10 @@ using namespace hccl;
 
 class UT_Hccl_Aicpu_Utils : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "UT_Hccl_Aicpu_Utils SetUP" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "UT_Hccl_Aicpu_Utils TearDown" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "UT_Hccl_Aicpu_Utils SetUP" << std::endl; }
+    static void TearDownTestCase() { std::cout << "UT_Hccl_Aicpu_Utils TearDown" << std::endl; }
     // Some expensive resource shared by all tests.
-    virtual void SetUp()
-    {
-        std::cout << "A Test SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test SetUP" << std::endl; }
     virtual void TearDown()
     {
         GlobalMockObject::verify();
@@ -53,7 +44,7 @@ TEST_F(UT_Hccl_Aicpu_Utils, ut_Getkey_When_userAddrNull_Expect_HCCL_E_PTR)
 {
     AicpuComContext ctx;
     u32 remoteRankId;
-    void *userAddr = nullptr;
+    void* userAddr = nullptr;
     u64 length;
     u32 outKey;
     int32_t keyType;

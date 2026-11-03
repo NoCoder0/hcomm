@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "topoinfo_parse.h"
 #include <string>
@@ -29,27 +29,15 @@ struct HcclAiServerValid4PRanksVectorHashFuc {
 };
 
 // aiserver内连接信息rank合法选择
-const std::unordered_set<std::vector<s32>, HcclAiServerValid4PRanksVectorHashFuc> HCCL_AISERVER_VAILD_4P_RANKS = {
-    {0, 1, 4, 5},
-    {0, 2, 4, 6},
-    {0, 3, 4, 7},
-    {1, 2, 5, 6},
-    {1, 3, 5, 7},
-    {2, 3, 6, 7},
-    {0, 1, 2, 3},
-    {4, 5, 6, 7}
-};
+const std::unordered_set<std::vector<s32>, HcclAiServerValid4PRanksVectorHashFuc> HCCL_AISERVER_VAILD_4P_RANKS
+    = {{0, 1, 4, 5}, {0, 2, 4, 6}, {0, 3, 4, 7}, {1, 2, 5, 6}, {1, 3, 5, 7}, {2, 3, 6, 7}, {0, 1, 2, 3}, {4, 5, 6, 7}};
 
 namespace hccl {
-TopoInfoParse::TopoInfoParse()
-{
-}
+TopoInfoParse::TopoInfoParse() {}
 
-TopoInfoParse::~TopoInfoParse()
-{
-}
+TopoInfoParse::~TopoInfoParse() {}
 
-HcclResult TopoInfoParse::Init(const RankTable_t &rankTable, const std::string &serverId, const u32 deviceNumPerServer)
+HcclResult TopoInfoParse::Init(const RankTable_t& rankTable, const std::string& serverId, const u32 deviceNumPerServer)
 {
     CHK_PRT_RET(deviceNumPerServer == 0, HCCL_ERROR("cur device num per server is 0"), HCCL_E_PARA);
     deviceNum_ = rankTable.deviceNum;
@@ -80,8 +68,8 @@ HcclResult TopoInfoParse::Init(const RankTable_t &rankTable, const std::string &
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoInfoParse::Init(const std::vector<RankInfo> &rankList, const std::string &serverId,
-    const u32 deviceNumPerServer)
+HcclResult
+TopoInfoParse::Init(const std::vector<RankInfo>& rankList, const std::string& serverId, const u32 deviceNumPerServer)
 {
     CHK_PRT_RET(deviceNumPerServer == 0, HCCL_ERROR("cur device num per server is 0"), HCCL_E_PARA);
     rankList_ = rankList;
@@ -102,26 +90,29 @@ HcclResult TopoInfoParse::Init(const std::vector<RankInfo> &rankList, const std:
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoInfoParse::GetServerInnerLinkInfo(std::unordered_map<u32, u32> &pairLinkCounter,
-    std::unordered_map<u32, std::unordered_map<int, std::vector<int>>> &pairLinkInfo)
+HcclResult TopoInfoParse::GetServerInnerLinkInfo(
+    std::unordered_map<u32, u32>& pairLinkCounter,
+    std::unordered_map<u32, std::unordered_map<int, std::vector<int>>>& pairLinkInfo)
 {
     std::vector<RankInfo> serverInnerInfo;
     CHK_RET(TransformRankInfoByServerId(serverInnerInfo));
 
-    CHK_PRT_RET(serverInnerInfo.size() == 0,
-        HCCL_ERROR("[Get][ServerInnerLinkInfo]server info input is empty, "
-        "serverid[%s]",
-        serverId_.c_str()),
+    CHK_PRT_RET(
+        serverInnerInfo.size() == 0,
+        HCCL_ERROR(
+            "[Get][ServerInnerLinkInfo]server info input is empty, "
+            "serverid[%s]",
+            serverId_.c_str()),
         HCCL_E_PARA);
     pairLinkInfo.clear();
     pairLinkCounter[static_cast<u32>(LinkTypeInServer::HCCS_TYPE)] = 0;
     pairLinkCounter[static_cast<u32>(LinkTypeInServer::PXI_TYPE)] = 0;
     pairLinkCounter[static_cast<u32>(LinkTypeInServer::SIO_TYPE)] = 0;
     pairLinkCounter[static_cast<u32>(LinkTypeInServer::HCCS_SW_TYPE)] = 0;
-    for (auto &it_local : serverInnerInfo) {
-        for (auto &it_dest : serverInnerInfo) {
-            if (it_local.devicePhyId == it_dest.devicePhyId || it_local.devicePhyId == HOST_DEVICE_ID ||
-                it_dest.devicePhyId == HOST_DEVICE_ID) {
+    for (auto& it_local : serverInnerInfo) {
+        for (auto& it_dest : serverInnerInfo) {
+            if (it_local.devicePhyId == it_dest.devicePhyId || it_local.devicePhyId == HOST_DEVICE_ID
+                || it_dest.devicePhyId == HOST_DEVICE_ID) {
                 continue;
             }
             LinkTypeInServer linkType;
@@ -139,7 +130,7 @@ HcclResult TopoInfoParse::GetServerInnerLinkInfo(std::unordered_map<u32, u32> &p
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoInfoParse::TransformRankInfoByServerId(std::vector<hccl::RankInfo> &serverInnerInfo)
+HcclResult TopoInfoParse::TransformRankInfoByServerId(std::vector<hccl::RankInfo>& serverInnerInfo)
 {
     // 按server重新组织rank信息，便于后续校验及信息填写
     for (auto tmpRankInfo : rankList_) {
@@ -148,13 +139,14 @@ HcclResult TopoInfoParse::TransformRankInfoByServerId(std::vector<hccl::RankInfo
         }
     }
     // 按设备Id从小到大的顺序排序
-    std::sort(serverInnerInfo.begin(), serverInnerInfo.end(),
-        [](const RankInfo &left, const RankInfo &right) { return left.devicePhyId < right.devicePhyId; });
+    std::sort(serverInnerInfo.begin(), serverInnerInfo.end(), [](const RankInfo& left, const RankInfo& right) {
+        return left.devicePhyId < right.devicePhyId;
+    });
     return HCCL_SUCCESS;
 }
 
 // nicIdx不只是校验，还有修改
-HcclResult TopoInfoParse::ParseAndCheck(std::vector<u32> &nicIdx)
+HcclResult TopoInfoParse::ParseAndCheck(std::vector<u32>& nicIdx)
 {
     CHK_RET(CheckInterServerDeviceId());
     CHK_RET(CheckRankTableNicInfo(nicIdx));
@@ -186,11 +178,15 @@ HcclResult TopoInfoParse::CheckInterServerDeviceId()
                 continue;
             }
             if (!rs.second) {
-                RPT_INPUT_ERR(true, "EI0014", std::vector<std::string>({ "value", "variable" ,"expect" }),
-                    std::vector<std::string>({ std::to_string(it->devicePhyId),
-                    " \"Device Id of server Id " + it->serverId + " \" ", "is unique" }));
-                HCCL_ERROR("[%s][%s]errNo[0x%016llx] check ranklist[%u], device id repeat for one server",
-                    LOG_KEYWORDS_INIT_GROUP.c_str(), LOG_KEYWORDS_RANKTABLE_CHECK.c_str(), HCOM_ERROR_CODE(HCCL_E_PARA), it->userRank);
+                RPT_INPUT_ERR(
+                    true, "EI0014", std::vector<std::string>({"value", "variable", "expect"}),
+                    std::vector<std::string>(
+                        {std::to_string(it->devicePhyId), " \"Device Id of server Id " + it->serverId + " \" ",
+                         "is unique"}));
+                HCCL_ERROR(
+                    "[%s][%s]errNo[0x%016llx] check ranklist[%u], device id repeat for one server",
+                    LOG_KEYWORDS_INIT_GROUP.c_str(), LOG_KEYWORDS_RANKTABLE_CHECK.c_str(), HCOM_ERROR_CODE(HCCL_E_PARA),
+                    it->userRank);
                 return HCCL_E_PARA;
             }
         } else {
@@ -200,14 +196,14 @@ HcclResult TopoInfoParse::CheckInterServerDeviceId()
         }
     }
     if (serverDeviceMapList.size() == 0) {
-        HCCL_ERROR("[Check][DeviceId]errNo[0x%016llx] for all ranklist, server num is zero",
-            HCOM_ERROR_CODE(HCCL_E_PARA));
+        HCCL_ERROR(
+            "[Check][DeviceId]errNo[0x%016llx] for all ranklist, server num is zero", HCOM_ERROR_CODE(HCCL_E_PARA));
         return HCCL_E_PARA;
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoInfoParse::CheckAndAssignNicInfo(std::vector<u32> &nicIdx)
+HcclResult TopoInfoParse::CheckAndAssignNicInfo(std::vector<u32>& nicIdx)
 {
     if (isDiffDeviceType_) {
         // 混合组网
@@ -230,7 +226,7 @@ HcclResult TopoInfoParse::CheckAndAssignNicInfo(std::vector<u32> &nicIdx)
         if (nicIdx.size() != deviceNumPerServer_) {
             // 网口裁剪
             // 按server重新组织rank信息
-            std::map<std::string, std::vector<u32> > severNicsMap;
+            std::map<std::string, std::vector<u32>> severNicsMap;
             for (size_t index = 0; index < rankList_.size(); ++index) {
                 std::string serverId = rankList_[index].serverId;
 
@@ -250,7 +246,7 @@ HcclResult TopoInfoParse::CheckAndAssignNicInfo(std::vector<u32> &nicIdx)
             }
 
             // 每个server下的nicList按设备Id从小到大的顺序排序
-            for (auto &iter : severNicsMap) {
+            for (auto& iter : severNicsMap) {
                 std::sort(iter.second.begin(), iter.second.end());
                 if (nicIdx != iter.second) {
                     HCCL_ERROR("nic list should be the same between servers");
@@ -266,19 +262,19 @@ HcclResult TopoInfoParse::CheckAndAssignNicInfo(std::vector<u32> &nicIdx)
 }
 
 // nicIdx做填充，nicIdx也是deviceId，deviceId做过的校验这里不再重复
-HcclResult TopoInfoParse::CheckRankTableNicInfo(std::vector<u32> &nicIdx)
+HcclResult TopoInfoParse::CheckRankTableNicInfo(std::vector<u32>& nicIdx)
 {
     // 在8P均使用的情况下校验nic的选择信息是否正确
     if (nicDeploy_ == NICDeployment::NIC_DEPLOYMENT_DEVICE) {
         CHK_RET(CheckAndAssignNicInfo(nicIdx));
-    } else if (nicDeploy_ == NICDeployment::NIC_DEPLOYMENT_HOST &&
-        serverNum_ == deviceNum_ / HCCL_AISERVER_DEVICE_NUM) {
-        nicIdx.assign({ 0, 1, 2, 3, 4, 5, 6, 7 }); // 如果每个server8个rank且为host nic，则网口为满配
+    } else if (
+        nicDeploy_ == NICDeployment::NIC_DEPLOYMENT_HOST && serverNum_ == deviceNum_ / HCCL_AISERVER_DEVICE_NUM) {
+        nicIdx.assign({0, 1, 2, 3, 4, 5, 6, 7}); // 如果每个server8个rank且为host nic，则网口为满配
     }
     return HCCL_SUCCESS;
 }
 
-// 校验server内4p场景下deivce选取是否合法，2p与标卡场景重合
+// 校验server内4p场景下device选取是否合法，2p与标卡场景重合
 HcclResult TopoInfoParse::CheckServerInnerRankInfo()
 {
     // 校验server内device选取
@@ -301,21 +297,27 @@ HcclResult TopoInfoParse::CheckServerInnerRankInfo()
             selectedDevice += " ";
         }
         if (HCCL_AISERVER_VAILD_4P_RANKS.find(serverInnerDeviceInfo) == HCCL_AISERVER_VAILD_4P_RANKS.end()) {
-            std::string errormessage = "Value " + selectedDevice + " for rankTable "\
-                "variable \"Device Id of server Id " + serverId_ + " \" is invalid, expected value is unique.";
+            std::string errormessage = "Value " + selectedDevice
+                                       + " for rankTable "
+                                         "variable \"Device Id of server Id "
+                                       + serverId_ + " \" is invalid, expected value is unique.";
             errormessage += selectedDevice;
-            RPT_INPUT_ERR(true, "EI0014", std::vector<std::string>({ "value", "variable" ,"expect" }),
-                std::vector<std::string>({ selectedDevice, " \"Device Id of server Id " + serverId_ + " \" ", "is unique" }));
-            HCCL_ERROR("[%s][%s] %s", LOG_KEYWORDS_INIT_GROUP.c_str(), LOG_KEYWORDS_RANKTABLE_CHECK.c_str(), errormessage.c_str());
+            RPT_INPUT_ERR(
+                true, "EI0014", std::vector<std::string>({"value", "variable", "expect"}),
+                std::vector<std::string>(
+                    {selectedDevice, " \"Device Id of server Id " + serverId_ + " \" ", "is unique"}));
+            HCCL_ERROR(
+                "[%s][%s] %s", LOG_KEYWORDS_INIT_GROUP.c_str(), LOG_KEYWORDS_RANKTABLE_CHECK.c_str(),
+                errormessage.c_str());
             return HCCL_E_PARA;
         }
         HCCL_DEBUG("%s", selectedDevice.c_str());
-    } 
+    }
 
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoInfoParse::IsAllRankSamePlane(bool &isAllRankSamePlane)
+HcclResult TopoInfoParse::IsAllRankSamePlane(bool& isAllRankSamePlane)
 {
     // 只有1个rank，不考虑
     if (rankList_.size() == 1) {
@@ -323,7 +325,7 @@ HcclResult TopoInfoParse::IsAllRankSamePlane(bool &isAllRankSamePlane)
         return HCCL_SUCCESS;
     }
 
-    auto isSameDevId = [&]()-> bool {
+    auto isSameDevId = [&]() -> bool {
         s32 maxModuleDevNum = deviceType_ == DevType::DEV_TYPE_910B ? HCCL_DEVICE_NUM_EIGHT : MAX_MODULE_DEVICE_NUM;
         for (size_t index = 0; index < rankList_.size() - 1; ++index) {
             if (rankList_[index].devicePhyId % maxModuleDevNum != rankList_[index + 1].devicePhyId % maxModuleDevNum) {
@@ -338,7 +340,7 @@ HcclResult TopoInfoParse::IsAllRankSamePlane(bool &isAllRankSamePlane)
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoInfoParse::IsSingleMeshAggregation(bool &isSingleMeshAggregation)
+HcclResult TopoInfoParse::IsSingleMeshAggregation(bool& isSingleMeshAggregation)
 {
     if (deviceNumPerServer_ == deviceNum_) {
         // rank间都是hccs链接，则表明在同一个mesh cube中
@@ -350,7 +352,7 @@ HcclResult TopoInfoParse::IsSingleMeshAggregation(bool &isSingleMeshAggregation)
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoInfoParse::IsAllRankConnectedWithHCCS(bool &isAllRankConnectedWithHCCS)
+HcclResult TopoInfoParse::IsAllRankConnectedWithHCCS(bool& isAllRankConnectedWithHCCS)
 {
     for (u32 i = 0; i < rankList_.size(); i++) {
         for (u32 j = i + 1; j < rankList_.size(); j++) {
@@ -368,7 +370,7 @@ HcclResult TopoInfoParse::IsAllRankConnectedWithHCCS(bool &isAllRankConnectedWit
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoInfoParse::GetDeviceNumInPerMeshAggregation(u32 devicePhyId, u32 &perAggregationNum)
+HcclResult TopoInfoParse::GetDeviceNumInPerMeshAggregation(u32 devicePhyId, u32& perAggregationNum)
 {
     // 每个rank本身加上和他通过hccs互联的rank表示当前server Aggregation中的rank数量
     perAggregationNum = 1;
@@ -381,9 +383,10 @@ HcclResult TopoInfoParse::GetDeviceNumInPerMeshAggregation(u32 devicePhyId, u32 
             }
         }
     }
-    HCCL_DEBUG("[TopoInfoParse][GetDeviceNumInPerMeshAggregation]serverId[%s] devicePhyId[%u] perAggregationNum[%u]",
+    HCCL_DEBUG(
+        "[TopoInfoParse][GetDeviceNumInPerMeshAggregation]serverId[%s] devicePhyId[%u] perAggregationNum[%u]",
         serverId_.c_str(), devicePhyId, perAggregationNum);
 
     return HCCL_SUCCESS;
 }
-}
+} // namespace hccl

@@ -28,13 +28,13 @@ struct tagBkfBlkq {
     BkfMemMng *memMng;
     int32_t blkMaxCnt;
     int32_t blkUsedCnt;
-    int32_t blkFrontIdx; /* blkq可能为空，需要加上 usedCnt 一起判断此值是否真正有效 */
+    int32_t blkFrontIdx;       /* blkq可能为空，需要加上 usedCnt 一起判断此值是否真正有效 */
     BkfBlk blkLastNotRealFree; /* 重用内存 */
     BkfBlk blk[0];
 };
-#define BKF_BLKQ_CNT_AND_IDX_IS_INVALID(blkq) \
-    (((blkq)->blkMaxCnt <= 0) || ((blkq)->blkUsedCnt > (blkq)->blkMaxCnt) || \
-     ((blkq)->blkFrontIdx < 0) || ((blkq)->blkFrontIdx >= (blkq)->blkMaxCnt))
+#define BKF_BLKQ_CNT_AND_IDX_IS_INVALID(blkq)                                                                          \
+    (((blkq)->blkMaxCnt <= 0) || ((blkq)->blkUsedCnt > (blkq)->blkMaxCnt) || ((blkq)->blkFrontIdx < 0) ||              \
+        ((blkq)->blkFrontIdx >= (blkq)->blkMaxCnt))
 
 #pragma pack()
 
@@ -281,4 +281,3 @@ BOOL BkfBlkqIsEmpty(BkfBlkq *blkq)
 }
 #endif
 #endif
-

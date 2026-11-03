@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: ccu executor resource manager
  * Author: caiyifan
  */
@@ -33,14 +36,14 @@ public:
 private:
     int rankId_{0};
     int rankSize_{0};
-    friend CcuResourceManager;                      // 声明资源管理类为友元类
+    friend CcuResourceManager; // 声明资源管理类为友元类
     std::array<CcuTask, HcclSim::DIE_NUM> ccuTaskInfos_;
 
-    std::array<uint64_t, SimCcuV1::CCU_RESOURCE_XN_MAX>  xn_[HcclSim::DIE_NUM];
+    std::array<uint64_t, SimCcuV1::CCU_RESOURCE_XN_MAX> xn_[HcclSim::DIE_NUM];
     std::array<uint64_t, SimCcuV1::CCU_RESOURCE_GSA_MAX> gsa_[HcclSim::DIE_NUM];
     std::array<uint64_t, SimCcuV1::CCU_RESOURCE_CKE_MAX> cke_[HcclSim::DIE_NUM];
     std::array<std::vector<char>, HcclSim::DIE_NUM> ms_;
-    std::array<CcuInstrData, HcclSim::DIE_NUM>                    instrSpace_;
+    std::array<CcuInstrData, HcclSim::DIE_NUM> instrSpace_;
 
     // channelId映射表：rank进程独立
     RankChannelInfo channelId2RmtRankMap_;

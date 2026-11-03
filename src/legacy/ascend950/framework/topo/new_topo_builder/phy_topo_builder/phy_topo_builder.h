@@ -21,30 +21,29 @@
 #include "topo_common_types.h"
 
 namespace Hccl {
-constexpr u32 SUPPORT_MAX_TOPOFILE_SIZE = 512 * 1024; // 512k 
+constexpr u32 SUPPORT_MAX_TOPOFILE_SIZE = 512 * 1024; // 512k
 
 struct LinkParams {
     std::shared_ptr<PhyTopo::Node> srcNode;
     std::shared_ptr<PhyTopo::Node> dstNode;
-    std::set<std::string>       localAPorts;
-    std::set<std::string>       localBPorts;
-    AddrPosition                   position;
-    TopoType                       topoType;
-    u32                            topoInstanceId;
-    std::set<LinkProtocol>      protocols;
+    std::set<std::string> localAPorts;
+    std::set<std::string> localBPorts;
+    AddrPosition position;
+    TopoType topoType;
+    u32 topoInstanceId;
+    std::set<LinkProtocol> protocols;
 };
-
 
 class PhyTopoBuilder {
 public:
-    static PhyTopoBuilder &GetInstance();
-    void Build(const std::string &topoPath);
+    static PhyTopoBuilder& GetInstance();
+    void Build(const std::string& topoPath);
     std::shared_ptr<TopoInfo> GetTopoInfo() const;
-    void RecoverBuild(const TopoInfo &topoInfo);
+    void RecoverBuild(const TopoInfo& topoInfo);
 
 private:
-    std::shared_ptr<TopoInfo>          LoadTopoInfo(const std::string &topoPath);
-    std::shared_ptr<Graph<PhyTopo::Node, PhyTopo::Link>> CreateGraph(const std::vector<EdgeInfo> &edges) const;
+    std::shared_ptr<TopoInfo> LoadTopoInfo(const std::string& topoPath);
+    std::shared_ptr<Graph<PhyTopo::Node, PhyTopo::Link>> CreateGraph(const std::vector<EdgeInfo>& edges) const;
     std::shared_ptr<TopoInfo> topoInfo_;
     std::mutex phyTopoMutex;
 };

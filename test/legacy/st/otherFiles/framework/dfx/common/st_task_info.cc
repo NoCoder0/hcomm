@@ -20,26 +20,16 @@
 #undef private
 #undef protected
 
-
 using namespace std;
 using namespace Hccl;
 
 class TaskInfoTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "TaskInfoTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "TaskInfoTest tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "TaskInfoTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "TaskInfoTest tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in TaskInfoTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in TaskInfoTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -185,7 +175,7 @@ TEST_F(TaskInfoTest, test_get_para_dma)
     TaskInfo taskInfo = InitTaskInfo();
     taskInfo.taskParam_.taskType = TaskParamType::TASK_RDMA;
     taskInfo.remoteRank_ = 3;
-    ParaDMA paraDMA {(void*)0xaaaa, (void*)0xbbbb, 0xa, 0xaaaabbbbcccc, DfxLinkType::ONCHIP};
+    ParaDMA paraDMA{(void*)0xaaaa, (void*)0xbbbb, 0xa, 0xaaaabbbbcccc, DfxLinkType::ONCHIP};
     taskInfo.taskParam_.taskPara.DMA = paraDMA;
     EXPECT_NO_THROW(taskInfo.GetParaInfo());
 }
@@ -195,7 +185,14 @@ TEST_F(TaskInfoTest, test_get_para_reduce)
     TaskInfo taskInfo = InitTaskInfo();
     taskInfo.taskParam_.taskType = TaskParamType::TASK_REDUCE_TBE;
     taskInfo.remoteRank_ = UINT32_MAX;
-    ParaReduce paraReduce {(void*)0xaaaa, (void*)0xbbbb, 0xa, 0xaaaabbbbcccc, DfxLinkType::HCCS, HcclReduceOp::HCCL_REDUCE_SUM, HcclDataType::HCCL_DATA_TYPE_INT32};
+    ParaReduce paraReduce{
+        (void*)0xaaaa,
+        (void*)0xbbbb,
+        0xa,
+        0xaaaabbbbcccc,
+        DfxLinkType::HCCS,
+        HcclReduceOp::HCCL_REDUCE_SUM,
+        HcclDataType::HCCL_DATA_TYPE_INT32};
     taskInfo.taskParam_.taskPara.Reduce = paraReduce;
     EXPECT_NO_THROW(taskInfo.GetParaInfo());
 }

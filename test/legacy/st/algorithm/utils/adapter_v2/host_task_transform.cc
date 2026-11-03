@@ -1,7 +1,11 @@
-/*
- * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
- * Description: hccL 2.0 transform function 实现
- * Create: 2025-04-11
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
  */
 
 #include "host_task_transform.h"
@@ -12,16 +16,16 @@
 
 namespace Hccl {
 
-using InstructionFunc = HcclResult (*)(const Instruction &ins, RankId rankId, QId qId);
+using InstructionFunc = HcclResult (*)(const Instruction& ins, RankId rankId, QId qId);
 extern std::unordered_map<uint16_t, InstructionFunc> g_transformInstrTypeMap;
 
-HcclResult GenCollAlgOperator(CollAlgOperator &op, CheckerOpParam &checkerOpParam)
+HcclResult GenCollAlgOperator(CollAlgOperator& op, CheckerOpParam& checkerOpParam)
 {
     // ReduceOp
     if (g_CheckerReduceOp2ReduceOp_aicpu.count(checkerOpParam.reduceType) != 0) {
         op.reduceOp = g_CheckerReduceOp2ReduceOp_aicpu[checkerOpParam.reduceType];
     }
-    //opType
+    // opType
     if (g_CheckerOpType2OpType_aicpu.count(checkerOpParam.opType) != 0) {
         op.opType = g_CheckerOpType2OpType_aicpu[checkerOpParam.opType];
     }
@@ -33,16 +37,16 @@ HcclResult GenCollAlgOperator(CollAlgOperator &op, CheckerOpParam &checkerOpPara
     } else if (checkerOpParam.opType == CheckerOpType::ALLTOALLV) {
         op.all2AllVDataDes.sendType = g_CheckerDataType2DataType_aicpu[checkerOpParam.All2AllDataDes.sendType];
         op.all2AllVDataDes.recvType = g_CheckerDataType2DataType_aicpu[checkerOpParam.All2AllDataDes.recvType];
-        op.all2AllVDataDes.sendCounts = static_cast<void *>(checkerOpParam.All2AllDataDes.sendCounts.data());
-        op.all2AllVDataDes.recvCounts = static_cast<void *>(checkerOpParam.All2AllDataDes.recvCounts.data());
-        op.all2AllVDataDes.sdispls = static_cast<void *>(checkerOpParam.All2AllDataDes.sdispls.data());
-        op.all2AllVDataDes.rdispls = static_cast<void *>(checkerOpParam.All2AllDataDes.rdispls.data());
+        op.all2AllVDataDes.sendCounts = static_cast<void*>(checkerOpParam.All2AllDataDes.sendCounts.data());
+        op.all2AllVDataDes.recvCounts = static_cast<void*>(checkerOpParam.All2AllDataDes.recvCounts.data());
+        op.all2AllVDataDes.sdispls = static_cast<void*>(checkerOpParam.All2AllDataDes.sdispls.data());
+        op.all2AllVDataDes.rdispls = static_cast<void*>(checkerOpParam.All2AllDataDes.rdispls.data());
     } else if (checkerOpParam.opType == CheckerOpType::ALLTOALLVC) {
         op.all2AllVCDataDes.sendType = g_CheckerDataType2DataType_aicpu[checkerOpParam.All2AllDataDes.sendType];
         op.all2AllVCDataDes.recvType = g_CheckerDataType2DataType_aicpu[checkerOpParam.All2AllDataDes.recvType];
-        op.all2AllVCDataDes.sendCountMatrix = static_cast<void *>(checkerOpParam.All2AllDataDes.sendCountMatrix.data());
+        op.all2AllVCDataDes.sendCountMatrix = static_cast<void*>(checkerOpParam.All2AllDataDes.sendCountMatrix.data());
     } else {
-        //datacount datatype
+        // datacount datatype
         op.dataCount = checkerOpParam.DataDes.count;
         op.dataType = g_CheckerDataType2DataType_aicpu[checkerOpParam.DataDes.dataType];
     }
@@ -53,14 +57,14 @@ HcclResult GenCollAlgOperator(CollAlgOperator &op, CheckerOpParam &checkerOpPara
     return HCCL_SUCCESS;
 }
 
-HcclResult GenCollAlgParams(CollAlgParams &params, CheckerOpParam &checkerOpParam, DavidAlgConfig &config)
+HcclResult GenCollAlgParams(CollAlgParams& params, CheckerOpParam& checkerOpParam, DavidAlgConfig& config)
 {
     params.opMode = g_CheckerOpMode2OpMode_aicpu[checkerOpParam.opMode];
     params.maxTmpMemSize = config.maxTmpMemSize;
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclDataSlice2CheckerDataSlice(const Hccl::DataSlice &dataSlice, checker::DataSlice &checkerDataSlice)
+HcclResult HcclDataSlice2CheckerDataSlice(const Hccl::DataSlice& dataSlice, checker::DataSlice& checkerDataSlice)
 {
     checkerDataSlice.SetSize(dataSlice.GetSize());
     checkerDataSlice.SetOffset(dataSlice.GetOffset());
@@ -69,9 +73,9 @@ HcclResult HcclDataSlice2CheckerDataSlice(const Hccl::DataSlice &dataSlice, chec
     return HCCL_SUCCESS;
 }
 
-HcclResult TransformInsLocalCopy (const Instruction &ins, RankId rankId, QId qId)
+HcclResult TransformInsLocalCopy(const Instruction& ins, RankId rankId, QId qId)
 {
-    const auto &insLocalCopy = static_cast<const InsLocalCopy &>(ins);
+    const auto& insLocalCopy = static_cast<const InsLocalCopy&>(ins);
     checker::DataSlice srcSlice;
     checker::DataSlice dstSlice;
     HcclDataSlice2CheckerDataSlice(insLocalCopy.GetSrcSlice(), srcSlice);
@@ -81,9 +85,9 @@ HcclResult TransformInsLocalCopy (const Instruction &ins, RankId rankId, QId qId
     return HCCL_SUCCESS;
 }
 
-HcclResult TransformInsLocalReduce (const Instruction &ins, RankId rankId, QId qId)
+HcclResult TransformInsLocalReduce(const Instruction& ins, RankId rankId, QId qId)
 {
-    const auto &insLocalReduce = static_cast<const InsLocalReduce &>(ins);
+    const auto& insLocalReduce = static_cast<const InsLocalReduce&>(ins);
     checker::DataSlice srcSlice;
     checker::DataSlice dstSlice;
     HcclDataSlice2CheckerDataSlice(insLocalReduce.GetSrcSlice(), srcSlice);
@@ -93,58 +97,59 @@ HcclResult TransformInsLocalReduce (const Instruction &ins, RankId rankId, QId q
     dataType = g_DataType2CheckerDataType_aicpu[insLocalReduce.GetDataType()];
     CheckerReduceOp reduceOp;
     reduceOp = g_ReduceOp2CheckerReduceOp_aicpu[insLocalReduce.GetReduceOp()];
-    std::shared_ptr<TaskStubLocalReduce> taskLocalReduce(new TaskStubLocalReduce(srcSlice, dstSlice, dataType, reduceOp));
+    std::shared_ptr<TaskStubLocalReduce> taskLocalReduce(
+        new TaskStubLocalReduce(srcSlice, dstSlice, dataType, reduceOp));
     TaskQueueStub::AppendTask(rankId, qId, taskLocalReduce);
     return HCCL_SUCCESS;
 }
 
-HcclResult TransformInsLocalPostTo (const Instruction &ins, RankId rankId, QId qId)
+HcclResult TransformInsLocalPostTo(const Instruction& ins, RankId rankId, QId qId)
 {
-    const auto &insLocalPostTo = static_cast<const InsLocalPostTo &>(ins);
+    const auto& insLocalPostTo = static_cast<const InsLocalPostTo&>(ins);
     u32 topicID = insLocalPostTo.GetTopicId();
-    std::shared_ptr<TaskStub> taskLocalPostTo(new TaskStubLocalPostTo(
-        topicID, insLocalPostTo.GetPostQid(), insLocalPostTo.GetWaitQid()));
+    std::shared_ptr<TaskStub> taskLocalPostTo(
+        new TaskStubLocalPostTo(topicID, insLocalPostTo.GetPostQid(), insLocalPostTo.GetWaitQid()));
     TaskQueueStub::AppendTask(rankId, qId, taskLocalPostTo);
     return HCCL_SUCCESS;
 }
 
-HcclResult TransformInsLocalWaitFrom (const Instruction &ins, RankId rankId, QId qId)
+HcclResult TransformInsLocalWaitFrom(const Instruction& ins, RankId rankId, QId qId)
 {
-    const auto &insLocalWaitFrom = static_cast<const InsLocalWaitFrom &>(ins);
+    const auto& insLocalWaitFrom = static_cast<const InsLocalWaitFrom&>(ins);
     u32 topicId = insLocalWaitFrom.GetTopicId();
-    std::shared_ptr<TaskStub> taskLocalWaitFrom(new TaskStubLocalWaitFrom(
-        topicId, insLocalWaitFrom.GetPostQid(), insLocalWaitFrom.GetWaitQid()));
+    std::shared_ptr<TaskStub> taskLocalWaitFrom(
+        new TaskStubLocalWaitFrom(topicId, insLocalWaitFrom.GetPostQid(), insLocalWaitFrom.GetWaitQid()));
     TaskQueueStub::AppendTask(rankId, qId, taskLocalWaitFrom);
     return HCCL_SUCCESS;
 }
 
-HcclResult TransformInsLocalWaitGroup (const Instruction &ins, RankId rankId, QId qId)
+HcclResult TransformInsLocalWaitGroup(const Instruction& ins, RankId rankId, QId qId)
 {
-    const auto &insLocalWaitGroup = static_cast<const InsLocalWaitGroup &>(ins);
+    const auto& insLocalWaitGroup = static_cast<const InsLocalWaitGroup&>(ins);
     u32 topicId = insLocalWaitGroup.GetTopicId();
     for (auto insIter = insLocalWaitGroup.Iter(); insIter.HasNext(); ++insIter) {
-        std::shared_ptr<TaskStub> taskLocalWaitGroup(new TaskStubLocalWaitFrom(
-            topicId, (*insIter), insLocalWaitGroup.GetWaitQid()));
+        std::shared_ptr<TaskStub> taskLocalWaitGroup(
+            new TaskStubLocalWaitFrom(topicId, (*insIter), insLocalWaitGroup.GetWaitQid()));
         TaskQueueStub::AppendTask(rankId, qId, taskLocalWaitGroup);
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult TransformInsLocalBcastPost (const Instruction &ins, RankId rankId, QId qId)
+HcclResult TransformInsLocalBcastPost(const Instruction& ins, RankId rankId, QId qId)
 {
-    const auto &insLocalBcastPost = static_cast<const InsLocalBcastPost &>(ins);
+    const auto& insLocalBcastPost = static_cast<const InsLocalBcastPost&>(ins);
     u32 topicId = insLocalBcastPost.GetTopicId();
     for (auto insIter = insLocalBcastPost.Iter(); insIter.HasNext(); ++insIter) {
-        std::shared_ptr<TaskStub> taskLocalBcastPost(new TaskStubLocalPostTo(
-            topicId, insLocalBcastPost.GetPostQid(), (*insIter)));
+        std::shared_ptr<TaskStub> taskLocalBcastPost(
+            new TaskStubLocalPostTo(topicId, insLocalBcastPost.GetPostQid(), (*insIter)));
         TaskQueueStub::AppendTask(rankId, qId, taskLocalBcastPost);
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult TransformInsPostReady (const Instruction &ins, RankId rankId, QId qId)
+HcclResult TransformInsPostReady(const Instruction& ins, RankId rankId, QId qId)
 {
-    const auto &insPostReady = static_cast<const InsPostReady &>(ins);
+    const auto& insPostReady = static_cast<const InsPostReady&>(ins);
     RankId remoteRank;
     remoteRank = insPostReady.GetRemoteRank();
     LinkProtoType linkType;
@@ -159,13 +164,13 @@ HcclResult TransformInsPostReady (const Instruction &ins, RankId rankId, QId qId
     return HCCL_SUCCESS;
 }
 
-HcclResult TransformInsWaitReady (const Instruction &ins, RankId rankId, QId qId)
+HcclResult TransformInsWaitReady(const Instruction& ins, RankId rankId, QId qId)
 {
-    const auto &insWaitReady = static_cast<const InsWaitReady &>(ins);
+    const auto& insWaitReady = static_cast<const InsWaitReady&>(ins);
     RankId remoteRank;
     remoteRank = insWaitReady.GetRemoteRank();
     LinkProtoType linkType;
-    linkType =  LinkProtocol2LinkProtoType(insWaitReady.GetLink()->GetLinkProtocol());
+    linkType = LinkProtocol2LinkProtoType(insWaitReady.GetLink()->GetLinkProtocol());
     LinkInfoStub link(g_LinkProtoType2LinkProtoStub_aicpu[linkType]);
     u32 topicId = 0;
     NotifyTypeStub notifyType;
@@ -176,9 +181,9 @@ HcclResult TransformInsWaitReady (const Instruction &ins, RankId rankId, QId qId
     return HCCL_SUCCESS;
 }
 
-HcclResult TransformInsPostFin (const Instruction &ins, RankId rankId, QId qId)
+HcclResult TransformInsPostFin(const Instruction& ins, RankId rankId, QId qId)
 {
-    const auto &insPostFin = static_cast<const InsPostFin &>(ins);
+    const auto& insPostFin = static_cast<const InsPostFin&>(ins);
     RankId remoteRank;
     remoteRank = insPostFin.GetRemoteRank();
     LinkProtoType linkType;
@@ -193,9 +198,9 @@ HcclResult TransformInsPostFin (const Instruction &ins, RankId rankId, QId qId)
     return HCCL_SUCCESS;
 }
 
-HcclResult TransformInsWaitFin (const Instruction &ins, RankId rankId, QId qId)
+HcclResult TransformInsWaitFin(const Instruction& ins, RankId rankId, QId qId)
 {
-    const auto &insWaitFin = static_cast<const InsWaitFin &>(ins);
+    const auto& insWaitFin = static_cast<const InsWaitFin&>(ins);
     RankId remoteRank;
     remoteRank = insWaitFin.GetRemoteRank();
     LinkProtoType linkType;
@@ -210,9 +215,9 @@ HcclResult TransformInsWaitFin (const Instruction &ins, RankId rankId, QId qId)
     return HCCL_SUCCESS;
 }
 
-HcclResult TransformInsWaitGroupFin (const Instruction &ins, RankId rankId, QId qId)
+HcclResult TransformInsWaitGroupFin(const Instruction& ins, RankId rankId, QId qId)
 {
-    const auto &insWaitGroupFin = static_cast<const InsWaitGroupFin &>(ins);
+    const auto& insWaitGroupFin = static_cast<const InsWaitGroupFin&>(ins);
     for (auto insIter = insWaitGroupFin.Iter(); insIter.HasNext(); ++insIter) {
         RankId remoteRank;
         remoteRank = (*insIter).GetRemoteRankId();
@@ -229,9 +234,9 @@ HcclResult TransformInsWaitGroupFin (const Instruction &ins, RankId rankId, QId 
     return HCCL_SUCCESS;
 }
 
-HcclResult TransformInsPostFinAck (const Instruction &ins, RankId rankId, QId qId)
+HcclResult TransformInsPostFinAck(const Instruction& ins, RankId rankId, QId qId)
 {
-    const auto &insPostFinAck = static_cast<const InsPostFinAck &>(ins);
+    const auto& insPostFinAck = static_cast<const InsPostFinAck&>(ins);
     RankId remoteRank;
     remoteRank = insPostFinAck.GetRemoteRank();
     LinkProtoType linkType;
@@ -246,9 +251,9 @@ HcclResult TransformInsPostFinAck (const Instruction &ins, RankId rankId, QId qI
     return HCCL_SUCCESS;
 }
 
-HcclResult TransformInsWaitFinAck (const Instruction &ins, RankId rankId, QId qId)
+HcclResult TransformInsWaitFinAck(const Instruction& ins, RankId rankId, QId qId)
 {
-    const auto &insWaitFinAck = static_cast<const InsWaitFinAck &>(ins);
+    const auto& insWaitFinAck = static_cast<const InsWaitFinAck&>(ins);
     RankId remoteRank;
     remoteRank = insWaitFinAck.GetRemoteRank();
     LinkProtoType linkType;
@@ -263,9 +268,9 @@ HcclResult TransformInsWaitFinAck (const Instruction &ins, RankId rankId, QId qI
     return HCCL_SUCCESS;
 }
 
-HcclResult TransformInsRead (const Instruction &ins, RankId rankId, QId qId)
+HcclResult TransformInsRead(const Instruction& ins, RankId rankId, QId qId)
 {
-    const auto &insRead = static_cast<const InsRead &>(ins);
+    const auto& insRead = static_cast<const InsRead&>(ins);
     RankId remoteRank;
     remoteRank = insRead.GetRemoteRank();
     LinkProtoType linkType;
@@ -282,9 +287,9 @@ HcclResult TransformInsRead (const Instruction &ins, RankId rankId, QId qId)
     return HCCL_SUCCESS;
 }
 
-HcclResult TransformInsReadReduce (const Instruction &ins, RankId rankId, QId qId)
+HcclResult TransformInsReadReduce(const Instruction& ins, RankId rankId, QId qId)
 {
-    const auto &insReadReduce = static_cast<const InsReadReduce &>(ins);
+    const auto& insReadReduce = static_cast<const InsReadReduce&>(ins);
     RankId remoteRank;
     remoteRank = insReadReduce.GetRemoteRank();
     LinkProtoType linkType;
@@ -300,14 +305,15 @@ HcclResult TransformInsReadReduce (const Instruction &ins, RankId rankId, QId qI
     dataType = g_DataType2CheckerDataType_aicpu[insReadReduce.GetDataType()];
     CheckerReduceOp reduceOp;
     reduceOp = g_ReduceOp2CheckerReduceOp_aicpu[insReadReduce.GetReduceOp()];
-    std::shared_ptr<TaskStub> taskReadReduce(new TaskStubReadReduce(remoteRank, link, localSlice, remoteSlice, dataType, reduceOp));
+    std::shared_ptr<TaskStub> taskReadReduce(
+        new TaskStubReadReduce(remoteRank, link, localSlice, remoteSlice, dataType, reduceOp));
     TaskQueueStub::AppendTask(rankId, qId, taskReadReduce);
     return HCCL_SUCCESS;
 }
 
-HcclResult TransformInsWrite (const Instruction &ins, RankId rankId, QId qId)
+HcclResult TransformInsWrite(const Instruction& ins, RankId rankId, QId qId)
 {
-    const auto &insWrite = static_cast<const InsWrite &>(ins);
+    const auto& insWrite = static_cast<const InsWrite&>(ins);
     RankId remoteRank;
     remoteRank = insWrite.GetRemoteRank();
     LinkProtoType linkType;
@@ -323,9 +329,9 @@ HcclResult TransformInsWrite (const Instruction &ins, RankId rankId, QId qId)
     return HCCL_SUCCESS;
 }
 
-HcclResult TransformInsWriteReduce (const Instruction &ins, RankId rankId, QId qId)
+HcclResult TransformInsWriteReduce(const Instruction& ins, RankId rankId, QId qId)
 {
-    const auto &insWriteReaduce = static_cast<const InsWriteReduce &>(ins);
+    const auto& insWriteReaduce = static_cast<const InsWriteReduce&>(ins);
     RankId remoteRank;
     remoteRank = insWriteReaduce.GetRemoteRank();
     LinkProtoType linkType;
@@ -341,15 +347,16 @@ HcclResult TransformInsWriteReduce (const Instruction &ins, RankId rankId, QId q
     dataType = g_DataType2CheckerDataType_aicpu[insWriteReaduce.GetDataType()];
     CheckerReduceOp reduceOp;
     reduceOp = g_ReduceOp2CheckerReduceOp_aicpu[insWriteReaduce.GetReduceOp()];
-    std::shared_ptr<TaskStub> taskWriteReaduce(new TaskStubWriteReduce(remoteRank, link, localSlice, remoteSlice, dataType, reduceOp));
+    std::shared_ptr<TaskStub> taskWriteReaduce(
+        new TaskStubWriteReduce(remoteRank, link, localSlice, remoteSlice, dataType, reduceOp));
     TaskQueueStub::AppendTask(rankId, qId, taskWriteReaduce);
     return HCCL_SUCCESS;
 }
 
-HcclResult TransformInsWriteReduceWithFin (const Instruction &ins, RankId rankId, QId qId)
+HcclResult TransformInsWriteReduceWithFin(const Instruction& ins, RankId rankId, QId qId)
 {
-    const auto &insWriteReaduceWithFin = static_cast<const InsWriteReduceWithFin &>(ins);
-    //获取参数writereduce
+    const auto& insWriteReaduceWithFin = static_cast<const InsWriteReduceWithFin&>(ins);
+    // 获取参数writereduce
     RankId remoteRank;
     remoteRank = insWriteReaduceWithFin.GetRemoteRank();
     LinkProtoType linkType;
@@ -365,7 +372,8 @@ HcclResult TransformInsWriteReduceWithFin (const Instruction &ins, RankId rankId
     dataType = g_DataType2CheckerDataType_aicpu[insWriteReaduceWithFin.GetDataType()];
     CheckerReduceOp reduceOp;
     reduceOp = g_ReduceOp2CheckerReduceOp_aicpu[insWriteReaduceWithFin.GetReduceOp()];
-    std::shared_ptr<TaskStub> taskWriteReaduce(new TaskStubWriteReduce(remoteRank, link, localSlice, remoteSlice, dataType, reduceOp));
+    std::shared_ptr<TaskStub> taskWriteReaduce(
+        new TaskStubWriteReduce(remoteRank, link, localSlice, remoteSlice, dataType, reduceOp));
     TaskQueueStub::AppendTask(rankId, qId, taskWriteReaduce);
     // 生成postFin task
     u32 topicId = 0;
@@ -377,9 +385,9 @@ HcclResult TransformInsWriteReduceWithFin (const Instruction &ins, RankId rankId
     return HCCL_SUCCESS;
 }
 
-HcclResult TransformInsWriteWithFin (const Instruction &ins, RankId rankId, QId qId)
+HcclResult TransformInsWriteWithFin(const Instruction& ins, RankId rankId, QId qId)
 {
-    const auto &insWriteWithFin = static_cast<const InsWriteWithFin &>(ins);
+    const auto& insWriteWithFin = static_cast<const InsWriteWithFin&>(ins);
     RankId remoteRank;
     remoteRank = insWriteWithFin.GetRemoteRank();
     LinkProtoType linkType;
@@ -402,35 +410,32 @@ HcclResult TransformInsWriteWithFin (const Instruction &ins, RankId rankId, QId 
     return HCCL_SUCCESS;
 }
 
-HcclResult TransformInsBatchWith (const Instruction &ins, RankId rankId, QId qId)
+HcclResult TransformInsBatchWith(const Instruction& ins, RankId rankId, QId qId)
 {
-    const auto &batchIns = static_cast<const InsBatchWrite &>(ins);
+    const auto& batchIns = static_cast<const InsBatchWrite&>(ins);
     for (auto iter = batchIns.Iter(); iter.HasNext(); ++iter) {
         TransformIns2Task(*iter, rankId, qId);
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult TransformInsBatchRead (const Instruction &ins, RankId rankId, QId qId)
+HcclResult TransformInsBatchRead(const Instruction& ins, RankId rankId, QId qId)
 {
-    const auto &batchIns = static_cast<const InsBatchRead &>(ins);
+    const auto& batchIns = static_cast<const InsBatchRead&>(ins);
     for (auto iter = batchIns.Iter(); iter.HasNext(); ++iter) {
         TransformIns2Task(*iter, rankId, qId);
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult TransformInsCcuIns (const Instruction &ins, RankId rankId, QId qId)
+HcclResult TransformInsCcuIns(const Instruction& ins, RankId rankId, QId qId)
 {
     std::shared_ptr<TaskStub> taskCCU(new TaskStubCcuGraph(ins, rankId));
     TaskQueueStub::AppendTask(rankId, qId, taskCCU);
     return HCCL_SUCCESS;
 }
 
-HcclResult TransformInsAivIns (const Instruction &ins, RankId rankId, QId qId)
-{
-    return HCCL_SUCCESS;
-}
+HcclResult TransformInsAivIns(const Instruction& ins, RankId rankId, QId qId) { return HCCL_SUCCESS; }
 
 std::unordered_map<uint16_t, InstructionFunc> g_transformInstrTypeMap = {
     {InstructionType::LOCAL_COPY, &TransformInsLocalCopy},
@@ -458,7 +463,7 @@ std::unordered_map<uint16_t, InstructionFunc> g_transformInstrTypeMap = {
     {InstructionType::AIV_INS, &TransformInsAivIns},
 };
 
-HcclResult TransformIns2Task(const Instruction &ins, RankId rankId, QId qId)
+HcclResult TransformIns2Task(const Instruction& ins, RankId rankId, QId qId)
 {
     auto insTypeId = g_transformInstrTypeMap.find(ins.GetType());
     if (insTypeId == g_transformInstrTypeMap.end()) {
@@ -468,4 +473,4 @@ HcclResult TransformIns2Task(const Instruction &ins, RankId rankId, QId qId)
     return insTypeId->second(ins, rankId, qId);
 }
 
-} // namespace hccl
+} // namespace Hccl

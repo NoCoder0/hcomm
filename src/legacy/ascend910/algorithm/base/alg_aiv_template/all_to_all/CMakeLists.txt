@@ -1,12 +1,13 @@
 # -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
+
 set_source_files_properties(
     aiv_all_to_all_op.h
     aiv_all_to_all_v_op.h
@@ -39,7 +40,7 @@ if(BUILD_OPEN_PROJECT)
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all -DONE_CORE_DUMP_SIZE=1024
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/hccl_aiv_all_to_all_op_sk1.o
@@ -55,7 +56,7 @@ if(BUILD_OPEN_PROJECT)
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all -DONE_CORE_DUMP_SIZE=1024
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/hccl_aiv_all_to_all_op_sk2.o
@@ -71,7 +72,7 @@ if(BUILD_OPEN_PROJECT)
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all -DONE_CORE_DUMP_SIZE=1024
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/hccl_aiv_all_to_all_op_sk3.o
@@ -87,7 +88,7 @@ if(BUILD_OPEN_PROJECT)
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all -DONE_CORE_DUMP_SIZE=1024
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/hccl_aiv_all_to_all_op_sk4.o
@@ -103,7 +104,7 @@ if(BUILD_OPEN_PROJECT)
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all -DONE_CORE_DUMP_SIZE=1024
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_target(hccl_aiv_all_to_all_v_op ALL
@@ -122,7 +123,7 @@ if(BUILD_OPEN_PROJECT)
             COMMAND ${CCE_DIR}/ld.lld -m aicorelinux -Ttext=0 ${CMAKE_CURRENT_BINARY_DIR}/hccl_aiv_all_to_all_v_op_tmp.o -static -o ${CMAKE_CURRENT_BINARY_DIR}/hccl_aiv_all_to_all_v_op.o
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_target(hccl_aiv_all_to_all_vc_op ALL
@@ -141,7 +142,7 @@ if(BUILD_OPEN_PROJECT)
             COMMAND ${CCE_DIR}/ld.lld -m aicorelinux -Ttext=0 ${CMAKE_CURRENT_BINARY_DIR}/hccl_aiv_all_to_all_vc_op_tmp.o -static -o ${CMAKE_CURRENT_BINARY_DIR}/hccl_aiv_all_to_all_vc_op.o
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_target(hccl_a2a_superkernel_int8 ALL
@@ -158,7 +159,7 @@ if(BUILD_OPEN_PROJECT)
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_target(hccl_a2a_superkernel_int16 ALL
@@ -175,7 +176,7 @@ if(BUILD_OPEN_PROJECT)
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_target(hccl_a2a_superkernel_int32 ALL
@@ -192,7 +193,7 @@ if(BUILD_OPEN_PROJECT)
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_target(hccl_a2a_superkernel_float16 ALL
@@ -209,7 +210,7 @@ if(BUILD_OPEN_PROJECT)
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_target(hccl_a2a_superkernel_float32 ALL
@@ -226,7 +227,7 @@ if(BUILD_OPEN_PROJECT)
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_target(hccl_a2a_superkernel_bfloat16 ALL
@@ -243,7 +244,7 @@ if(BUILD_OPEN_PROJECT)
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_target(hccl_a2a_superkernel_uint8 ALL
@@ -260,7 +261,7 @@ if(BUILD_OPEN_PROJECT)
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
     
     add_custom_target(hccl_a2a_superkernel_uint16 ALL
@@ -277,7 +278,7 @@ if(BUILD_OPEN_PROJECT)
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_target(hccl_a2a_superkernel_uint32 ALL
@@ -294,7 +295,7 @@ if(BUILD_OPEN_PROJECT)
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_target(hccl_a2a_superkernel_int64 ALL
@@ -311,7 +312,7 @@ if(BUILD_OPEN_PROJECT)
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_target(hccl_a2a_superkernel_uint64 ALL
@@ -328,7 +329,7 @@ if(BUILD_OPEN_PROJECT)
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_target(hccl_a2a_superkernel_float64 ALL
@@ -345,7 +346,7 @@ if(BUILD_OPEN_PROJECT)
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_target(hccl_sk_a2a_crossnode ALL
@@ -362,7 +363,7 @@ if(BUILD_OPEN_PROJECT)
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 else()
     get_filename_component(CCE_DIR "${CMAKE_LINKER}" PATH)
@@ -390,7 +391,7 @@ else()
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all -DONE_CORE_DUMP_SIZE=1024
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/hccl_aiv_all_to_all_op_sk1.o
@@ -408,7 +409,7 @@ else()
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all -DONE_CORE_DUMP_SIZE=1024
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/hccl_aiv_all_to_all_op_sk2.o
@@ -426,7 +427,7 @@ else()
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all -DONE_CORE_DUMP_SIZE=1024
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/hccl_aiv_all_to_all_op_sk3.o
@@ -444,7 +445,7 @@ else()
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all -DONE_CORE_DUMP_SIZE=1024
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/hccl_aiv_all_to_all_op_sk4.o
@@ -462,7 +463,7 @@ else()
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all -DONE_CORE_DUMP_SIZE=1024
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_target(hccl_aiv_all_to_all_v_op
@@ -481,7 +482,7 @@ else()
             COMMAND ${CCE_DIR}/ld.lld -m aicorelinux -Ttext=0 ${CMAKE_CURRENT_BINARY_DIR}/hccl_aiv_all_to_all_v_op_tmp.o -static -o ${CMAKE_CURRENT_BINARY_DIR}/hccl_aiv_all_to_all_v_op.o
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_target(hccl_aiv_all_to_all_vc_op
@@ -500,7 +501,7 @@ else()
             COMMAND ${CCE_DIR}/ld.lld -m aicorelinux -Ttext=0 ${CMAKE_CURRENT_BINARY_DIR}/hccl_aiv_all_to_all_vc_op_tmp.o -static -o ${CMAKE_CURRENT_BINARY_DIR}/hccl_aiv_all_to_all_vc_op.o
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_target(hccl_a2a_superkernel_int8
@@ -517,7 +518,7 @@ else()
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_target(hccl_a2a_superkernel_int16
@@ -534,7 +535,7 @@ else()
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_target(hccl_a2a_superkernel_int32
@@ -551,7 +552,7 @@ else()
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_target(hccl_a2a_superkernel_float16
@@ -568,7 +569,7 @@ else()
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_target(hccl_a2a_superkernel_float32
@@ -585,7 +586,7 @@ else()
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_target(hccl_a2a_superkernel_bfloat16
@@ -602,7 +603,7 @@ else()
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_target(hccl_a2a_superkernel_uint8
@@ -619,7 +620,7 @@ else()
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
     
     add_custom_target(hccl_a2a_superkernel_uint16
@@ -636,7 +637,7 @@ else()
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
     )
 
     add_custom_target(hccl_a2a_superkernel_uint32
@@ -653,7 +654,7 @@ else()
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
    )
 
    add_custom_target(hccl_a2a_superkernel_int64
@@ -670,7 +671,7 @@ else()
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
    )
 
    add_custom_target(hccl_a2a_superkernel_uint64
@@ -687,7 +688,7 @@ else()
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
    )
 
    add_custom_target(hccl_a2a_superkernel_float64
@@ -704,7 +705,7 @@ else()
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
    )
 
    add_custom_target(hccl_sk_a2a_crossnode
@@ -721,7 +722,7 @@ else()
             --cce-aicore-jump-expand=true -std=c++17 -fstack-protector-all
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND_EXPAND_LISTS VERBATIM
-            DEPENDS kernel_tiling_headers
+            DEPENDS asc_kernel_headers kernel_tiling_headers
    )
 endif()
 

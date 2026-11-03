@@ -24,9 +24,16 @@ namespace Hccl {
 // 为AllGatherMesh1D实现的CCUIns、CCUCtxArg与CCUTaskArg
 class CcuCtxArgAlltoAllMesh2D : public CcuCtxArg {
 public:
-    CcuCtxArgAlltoAllMesh2D(const std::vector<uint32_t> &dSize, uint32_t rId, uint32_t aId,
-        const CollAlgOperator &op, const std::vector<std::vector<RankId>> &tempVTopo) :
-            CcuCtxArg(), dimSize(dSize), rankId(rId), axisId(aId), op(op), tempVTopo(tempVTopo) {}
+    CcuCtxArgAlltoAllMesh2D(
+        const std::vector<uint32_t>& dSize, uint32_t rId, uint32_t aId, const CollAlgOperator& op,
+        const std::vector<std::vector<RankId>>& tempVTopo)
+        : CcuCtxArg(),
+          dimSize(dSize),
+          rankId(rId),
+          axisId(aId),
+          op(op),
+          tempVTopo(tempVTopo)
+    {}
 
     ~CcuCtxArgAlltoAllMesh2D() override {}
 
@@ -43,18 +50,27 @@ public:
     uint32_t rankId;
     uint32_t axisId;
 
-    const CollAlgOperator &op;
-    const std::vector<std::vector<RankId>> &tempVTopo;
+    const CollAlgOperator& op;
+    const std::vector<std::vector<RankId>>& tempVTopo;
 };
 
 class CcuTaskArgAlltoAllMesh2D : public CcuTaskArg {
 public:
-    explicit CcuTaskArgAlltoAllMesh2D(uint64_t inputAddr, uint64_t outputAddr, uint64_t scratchAddr,
-        uint64_t sendStride, uint64_t recvStride, uint64_t sendLength, uint64_t aSize, uint64_t bSize,
-        uint64_t baseOffset, uint64_t token) :
-            CcuTaskArg(), inputAddr(inputAddr), outputAddr(outputAddr), scratchAddr(scratchAddr),
-            sendStride(sendStride), recvStride(recvStride), sendLength(sendLength), aSize(aSize), bSize(bSize),
-            baseOffset(baseOffset), token(token) {}
+    explicit CcuTaskArgAlltoAllMesh2D(
+        uint64_t inputAddr, uint64_t outputAddr, uint64_t scratchAddr, uint64_t sendStride, uint64_t recvStride,
+        uint64_t sendLength, uint64_t aSize, uint64_t bSize, uint64_t baseOffset, uint64_t token)
+        : CcuTaskArg(),
+          inputAddr(inputAddr),
+          outputAddr(outputAddr),
+          scratchAddr(scratchAddr),
+          sendStride(sendStride),
+          recvStride(recvStride),
+          sendLength(sendLength),
+          aSize(aSize),
+          bSize(bSize),
+          baseOffset(baseOffset),
+          token(token)
+    {}
 
     uint64_t inputAddr;
     uint64_t outputAddr;
@@ -62,19 +78,25 @@ public:
     uint64_t sendStride;
     uint64_t recvStride;
     uint64_t sendLength;
-    uint64_t aSize;  // X方向第一轮传输的数据量
+    uint64_t aSize; // X方向第一轮传输的数据量
     uint64_t bSize;
-    uint64_t baseOffset;  // 多轮执行时的基础偏移，等于step*(aSize+bSize)
+    uint64_t baseOffset; // 多轮执行时的基础偏移，等于step*(aSize+bSize)
     uint64_t token;
 };
 
 class CcuInstructionAlltoAllMesh2D : public CcuInstruction {
 public:
-    CcuInstructionAlltoAllMesh2D(const CollAlgOperator &op, const std::vector<uint32_t> &dimSize,
-        const std::vector<std::vector<RankId>> &tempVTopo) :
-        CcuInstruction(), op_(op), dimSize_(dimSize), tempVTopo_(tempVTopo) {}
+    CcuInstructionAlltoAllMesh2D(
+        const CollAlgOperator& op, const std::vector<uint32_t>& dimSize,
+        const std::vector<std::vector<RankId>>& tempVTopo)
+        : CcuInstruction(),
+          op_(op),
+          dimSize_(dimSize),
+          tempVTopo_(tempVTopo)
+    {}
 
-    void Init(uint32_t rankId, uint64_t inputAddr, uint64_t outputAddr, uint64_t scratchAddr, uint64_t axisId,
+    void Init(
+        uint32_t rankId, uint64_t inputAddr, uint64_t outputAddr, uint64_t scratchAddr, uint64_t axisId,
         uint64_t sendStride, uint64_t recvStride, uint64_t sendLength, uint64_t aSize, uint64_t bSize,
         uint64_t baseOffset, uint64_t token)
     {
@@ -90,11 +112,12 @@ public:
         bSize_ = bSize;
         baseOffset_ = baseOffset;
         token_ = token;
-        HCCL_INFO("[CcuInstructionAlltoAllMesh2D][Init] rankId[%u] inputAddr[%llu] outputAddr[%llu] scratchAddr[%llu],\
+        HCCL_INFO(
+            "[CcuInstructionAlltoAllMesh2D][Init] rankId[%u] inputAddr[%llu] outputAddr[%llu] scratchAddr[%llu],\
 axisId[%u], sendStride[%llu], recvStride[%llu], sendLength[%llu], aSize[%llu], bSize[%llu], baseOffset[%llu], \
-dimSize.size[%u], tempVTopo.size[%u]", rankId_, inputAddr_, outputAddr_, scratchAddr_, axisId_,
-            sendStride_, recvStride_, sendLength_, aSize_, bSize_, baseOffset_, dimSize_.size(),
-            tempVTopo_.size());
+dimSize.size[%u], tempVTopo.size[%u]",
+            rankId_, inputAddr_, outputAddr_, scratchAddr_, axisId_, sendStride_, recvStride_, sendLength_, aSize_,
+            bSize_, baseOffset_, dimSize_.size(), tempVTopo_.size());
         return;
     }
 
@@ -111,20 +134,19 @@ dimSize.size[%u], tempVTopo.size[%u]", rankId_, inputAddr_, outputAddr_, scratch
 
     std::unique_ptr<CcuCtxArg> GetCtxArg() const override
     {
-        HCCL_INFO("[CcuInstructionAlltoAllMesh2D][GetCtxArg] dimSize.size[%u], rankId[%u], axisId[%u], tempVTopo.size[%u]",
+        HCCL_INFO(
+            "[CcuInstructionAlltoAllMesh2D][GetCtxArg] dimSize.size[%u], rankId[%u], axisId[%u], tempVTopo.size[%u]",
             dimSize_.size(), rankId_, axisId_, tempVTopo_.size());
         return std::make_unique<CcuCtxArgAlltoAllMesh2D>(dimSize_, rankId_, axisId_, op_, tempVTopo_);
     }
 
-    void SetInstType(CcuInstType instType) 
-    { 
-        instType_ = instType; 
-    }
+    void SetInstType(CcuInstType instType) { instType_ = instType; }
 
     std::unique_ptr<CcuTaskArg> GetTaskArg() const override
     {
-        return std::make_unique<CcuTaskArgAlltoAllMesh2D>(inputAddr_, outputAddr_, scratchAddr_, sendStride_,
-                recvStride_, sendLength_, aSize_, bSize_, baseOffset_, token_);
+        return std::make_unique<CcuTaskArgAlltoAllMesh2D>(
+            inputAddr_, outputAddr_, scratchAddr_, sendStride_, recvStride_, sendLength_, aSize_, bSize_, baseOffset_,
+            token_);
     }
 
 private:
@@ -141,12 +163,12 @@ private:
     uint64_t sendStride_{0};
     uint64_t recvStride_{0};
     uint64_t axisId_{0};
-    uint64_t sendLength_{0};  // 多轮时的单个数据块总大小
+    uint64_t sendLength_{0}; // 多轮时的单个数据块总大小
     uint64_t aSize_{0};
     uint64_t bSize_{0};
     uint64_t baseOffset_{0};
     uint64_t token_{0};
 };
 
-}
+} // namespace Hccl
 #endif // HCCLV2_CCU_INSTRUCTION_ALL_TO_ALL_MESH_2D_H

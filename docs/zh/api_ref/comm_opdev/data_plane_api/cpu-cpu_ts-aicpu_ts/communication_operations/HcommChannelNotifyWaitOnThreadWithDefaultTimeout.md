@@ -2,9 +2,21 @@
 
 ## 产品支持情况
 
-- Ascend 950PR/Ascend 950DT：支持
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：支持
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：支持
+<!-- npu="950" id1 -->
+- Ascend 950PR&950DT系列产品：支持
+<!-- end id1 -->
+<!-- npu="A3" id2 -->
+- Atlas A3系列产品：支持
+<!-- end id2 -->
+<!-- npu="910b" id3 -->
+- Atlas A2系列产品：支持
+<!-- end id3 -->
+<!-- npu="910" id4 -->
+- Atlas训练系列产品：不支持
+<!-- end id4 -->
+<!-- npu="310p" id5 -->
+- Atlas推理系列产品：不支持
+<!-- end id5 -->
 
 ## 功能说明
 
@@ -20,9 +32,15 @@ int32_t HcommChannelNotifyWaitOnThreadWithDefaultTimeout(ThreadHandle thread, Ch
 
 | 参数名 | 输入/输出 | 描述 |
 | --- | --- | --- |
-| thread | 输入 | 通信线程句柄。针对Ascend 950PR/Ascend 950DT的CPU引擎RoCE场景，该参数无作用，传入0即可；CPU_TS/AICPU_TS场景下，为通过[HcclThreadAcquire](../../../control_plane_api/comms_domain_resource_mgmt/HcclThreadAcquire.md)接口获取到的threads。<br>ThreadHandle类型的定义可参见[ThreadHandle](../../../datatype_definition/ThreadHandle.md)。 |
-| channel | 输入 | 通信通道句柄，为通过[HcclChannelAcquire](../../../control_plane_api/comms_domain_resource_mgmt/HcclChannelAcquire.md)接口获取到的channels。关于channel的约束参见约束说明。<br>ChannelHandle类型的定义可参见[ChannelHandle](../../../datatype_definition/ChannelHandle.md)。 |
-| localNotifyIdx | 输入 | 本地Notify索引。<br>取值范围：[0, notifyNum)。<br>notifyNum为[HcommChannelCreate](../../../control_plane_api/basic_resource_mgmt/HcommChannelCreate.md)或[HcclChannelAcquire](../../../control_plane_api/comms_domain_resource_mgmt/HcclChannelAcquire.md)接口传入的channelDesc参数中的notifyNum。 |
+| thread | 输入 | 通信线程句柄。<br>ThreadHandle类型的定义可参见[ThreadHandle](../../../datatype_definition/ThreadHandle.md)。 |
+| channel | 输入 | 通信通道句柄，为通过[HcclChannelAcquire](../../../control_plane_api/comms_domain_resource_mgmt/HcclChannelAcquire.md)接口获取到的channels。<br>ChannelHandle类型的定义可参见[ChannelHandle](../../../datatype_definition/ChannelHandle.md)。 |
+| localNotifyIdx | 输入 | 本地Notify索引。<br>取值范围：[0, notifyNum)。<br>notifyNum为[HcommChannelCreate](../../../control_plane_api/basic_resource_mgmt/HcommChannelCreate.md)或[HcclChannelAcquire](../../../control_plane_api/comms_domain_resource_mgmt/HcclChannelAcquire.md)接口传入的channelDescs参数中的notifyNum。 |
+
+<!-- npu="950" id7 -->
+**补充说明**：
+
+**thread参数**：针对Ascend 950PR&950DT系列产品，CPU引擎RoCE场景，“thread”参数无作用，传入0即可；CPU_TS/AICPU_TS场景，“thread”参数为通过[HcclThreadAcquire](../../../control_plane_api/comms_domain_resource_mgmt/HcclThreadAcquire.md)接口获取到的threads。
+<!-- end id7 -->
 
 ## 返回值
 
@@ -38,9 +56,13 @@ int32_t：接口成功返回0，其他失败。
 ## 约束说明
 
 - 该接口需要配合[HcommChannelNotifyRecordOnThread](HcommChannelNotifyRecordOnThread.md)使用。
-- 在Ascend 950PR/Ascend 950DT上，仅支持AICPU_TS模式下、在Device侧调用该接口。
+<!-- npu="950" id6 -->
+- 在Ascend 950PR&950DT系列产品上，仅支持AICPU_TS模式下、在Device侧调用该接口。
 - AICPU_TS模式下，在Device侧调用该接口前，如需设置超时时间，需要调用[HcommSetNotifyWaitTimeOut](./HcommSetNotifyWaitTimeOut.md)设置，不调用设置接口则默认超时时间为1836秒。
-- 针对Ascend 950PR/Ascend 950DT的AICPU_TS模式，`localNotifyIdx`必须小于本端通信通道的Notify数量，且通信通道创建时的`notifyNum`需大于0。
+- 针对Ascend 950PR&950DT系列产品的AICPU_TS模式，`localNotifyIdx`必须小于本端通信通道的Notify数量，且通信通道创建时的`notifyNum`需大于0。
+<!-- end id6 -->
+- 同一个`ThreadHandle`不支持多线程并发访问。
+- 同一个`ChannelHandle`不支持多线程并发访问。
 
 ## 调用示例
 
@@ -50,7 +72,7 @@ uint32_t defaultTimeout = 1800;  // 30分钟
 HcommSetNotifyWaitTimeOut(defaultTimeout);
 
 // 2. 申请通信线程资源
-CommEngine engine = COMM_ENGINE_AICPU_TS;  // Ascend 950PR/Ascend 950DT时配置
+CommEngine engine = COMM_ENGINE_AICPU_TS;  // Ascend 950PR&950DT系列产品时配置
 uint32_t threadNum = 1;
 uint32_t notifyNumPerThread = 1;
 ThreadHandle thread;

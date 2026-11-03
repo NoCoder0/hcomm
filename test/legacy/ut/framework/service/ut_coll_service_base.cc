@@ -18,7 +18,7 @@
 #include "coll_service_ai_cpu_impl.h"
 #include "communicator_impl.h"
 #include "mem_transport_manager.h"
-#include "base_config.h"
+#include "base_config_legacy.h"
 #include "ub_mem_transport.h"
 #include "internal_exception.h"
 
@@ -31,15 +31,9 @@ using namespace Hccl;
 
 class CollServiceBaseTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CollServiceBaseTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CollServiceBaseTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CollServiceBaseTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CollServiceBaseTest TearDown" << std::endl; }
 
     virtual void SetUp()
     {
@@ -47,16 +41,18 @@ protected:
         // 初始化memTransportManager
         comm.InitMemTransportManager();
         // 向transport map添加transport
-        unique_ptr<UbMemTransport> transportOpbase = make_unique<UbMemTransport>(locRes, attr, linkData, fakeSocket, rdmaHandle, locCntRes, isRecvFirst);
+        unique_ptr<UbMemTransport> transportOpbase
+            = make_unique<UbMemTransport>(locRes, attr, linkData, fakeSocket, rdmaHandle, locCntRes, isRecvFirst);
         comm.memTransportManager->opTagOpbasedMap[linkData] = std::move(transportOpbase);
         comm.memTransportManager->newOpbasedTransports[linkData] = 0;
-        unique_ptr<UbMemTransport> transportOffload = make_unique<UbMemTransport>(locRes, attr, linkData, fakeSocket, rdmaHandle, locCntRes, isRecvFirst);
+        unique_ptr<UbMemTransport> transportOffload
+            = make_unique<UbMemTransport>(locRes, attr, linkData, fakeSocket, rdmaHandle, locCntRes, isRecvFirst);
         comm.memTransportManager->opTagOffloadMap[opTag][linkData] = std::move(transportOffload);
         comm.memTransportManager->newOffloadTransports[opTag][linkData] = 0;
 
         // 打桩环境变量超时时间
         EnvSocketConfig envSocketConfig;
-        EnvSocketConfig &fakeEnvSocketConfig = envSocketConfig;
+        EnvSocketConfig& fakeEnvSocketConfig = envSocketConfig;
         fakeEnvSocketConfig.linkTimeOut = CfgField<s32>{"HCCL_CONNECT_TIMEOUT", s32(1), Str2T<s32>};
         fakeEnvSocketConfig.linkTimeOut.isParsed = true;
         MOCKER_CPP(&EnvConfig::GetSocketConfig).stubs().will(returnValue(fakeEnvSocketConfig));
@@ -68,17 +64,17 @@ protected:
         GlobalMockObject::verify();
     }
 
-    CommunicatorImpl                  comm;
-    std::string                       opTag = "test_tag";
-    BasePortType                      portType{PortDeploymentType::DEV_NET, ConnectProtoType::UB};
-    LinkData                          linkData{portType, 0, 1, 0, 1};
-    BaseMemTransport::CommonLocRes    locRes;
-    BaseMemTransport::Attribution     attr;
+    CommunicatorImpl comm;
+    std::string opTag = "test_tag";
+    BasePortType portType{PortDeploymentType::DEV_NET, ConnectProtoType::UB};
+    LinkData linkData{portType, 0, 1, 0, 1};
+    BaseMemTransport::CommonLocRes locRes;
+    BaseMemTransport::Attribution attr;
     BaseMemTransport::LocCntNotifyRes locCntRes;
-    IpAddress                         ipAddress{"1.0.0.0"};
-    Socket                            fakeSocket{nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE};
-    RdmaHandle                        rdmaHandle = (void *)0x100;
-    bool                              isRecvFirst = false;
+    IpAddress ipAddress{"1.0.0.0"};
+    Socket fakeSocket{nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE};
+    RdmaHandle rdmaHandle = (void*)0x100;
+    bool isRecvFirst = false;
 };
 
 TEST_F(CollServiceBaseTest, Ut_WaitOpbasedTransportReady_When_TransportReady_Expect_NoException)

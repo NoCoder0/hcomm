@@ -1,34 +1,31 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "comm_mesh.h"
 
 namespace hccl {
-CommMesh::CommMesh(const std::string &collectiveId,
-    const u32 userRank, const u32 userRankSize, const u32 rank, const u32 rankSize, const TopoType topoFlag,
-    const HcclDispatcher dispatcher, const std::unique_ptr<NotifyPool> &notifyPool,
-    std::map<HcclIpAddress, HcclNetDevCtx> &netDevCtxMap,
-    const IntraExchanger &exchanger, const std::vector<RankInfo> paraVector,
-    const DeviceMem &inputMem, const DeviceMem &outputMem, const bool isUsedRdmaLevel0,
-    const std::string &tag,
-    bool isAlltoAllCommMesh, const NICDeployment nicDeployInner,
+CommMesh::CommMesh(
+    const std::string& collectiveId, const u32 userRank, const u32 userRankSize, const u32 rank, const u32 rankSize,
+    const TopoType topoFlag, const HcclDispatcher dispatcher, const std::unique_ptr<NotifyPool>& notifyPool,
+    std::map<HcclIpAddress, HcclNetDevCtx>& netDevCtxMap, const IntraExchanger& exchanger,
+    const std::vector<RankInfo> paraVector, const DeviceMem& inputMem, const DeviceMem& outputMem,
+    const bool isUsedRdmaLevel0, const std::string& tag, bool isAlltoAllCommMesh, const NICDeployment nicDeployInner,
     const bool useOneDoorbell, const bool isAicpuModeEn, const bool isHaveCpuRank, const bool useSuperPodMode,
-    DeviceMem expMem): CommBase(collectiveId, userRank, userRankSize,
-    rank, rankSize, paraVector, topoFlag, dispatcher, notifyPool, netDevCtxMap, exchanger, inputMem, outputMem,
-    isUsedRdmaLevel0, tag, nicDeployInner,
-    isAlltoAllCommMesh, useOneDoorbell, isAicpuModeEn, INVALID_UINT, isHaveCpuRank, useSuperPodMode, expMem)
+    DeviceMem expMem)
+    : CommBase(
+          collectiveId, userRank, userRankSize, rank, rankSize, paraVector, topoFlag, dispatcher, notifyPool,
+          netDevCtxMap, exchanger, inputMem, outputMem, isUsedRdmaLevel0, tag, nicDeployInner, isAlltoAllCommMesh,
+          useOneDoorbell, isAicpuModeEn, INVALID_UINT, isHaveCpuRank, useSuperPodMode, expMem)
 {}
 
-CommMesh::~CommMesh()
-{
-}
+CommMesh::~CommMesh() {}
 
 HcclResult CommMesh::CalcLink()
 {
@@ -44,9 +41,12 @@ HcclResult CommMesh::CalcLink()
         // rank 作为client
         dstServerRank = rank_ - clientIndex - HCCL_RANK_OFFSET;
         ret = CalcLinksNum(MachineType::MACHINE_CLIENT_TYPE, dstServerRank);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[Calc][Link]comm mesh calc links num failed, type[%d], dstServerRank[%u]",
-            static_cast<int32_t>(MachineType::MACHINE_CLIENT_TYPE), dstServerRank), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[Calc][Link]comm mesh calc links num failed, type[%d], dstServerRank[%u]",
+                static_cast<int32_t>(MachineType::MACHINE_CLIENT_TYPE), dstServerRank),
+            ret);
     }
 
     // 再创建dst_rank > rank_
@@ -54,11 +54,14 @@ HcclResult CommMesh::CalcLink()
         // rank 作为server
         dstClientRank = rank_ + serverIndex + HCCL_RANK_OFFSET;
         ret = CalcLinksNum(MachineType::MACHINE_SERVER_TYPE, dstClientRank);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[Calc][Link]comm mesh calc links num failed, type[%d], dstClientRank[%u]",
-            static_cast<int32_t>(MachineType::MACHINE_SERVER_TYPE), dstClientRank), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[Calc][Link]comm mesh calc links num failed, type[%d], dstClientRank[%u]",
+                static_cast<int32_t>(MachineType::MACHINE_SERVER_TYPE), dstClientRank),
+            ret);
     }
 
     return HCCL_SUCCESS;
 }
-}  // namespace hccl
+} // namespace hccl

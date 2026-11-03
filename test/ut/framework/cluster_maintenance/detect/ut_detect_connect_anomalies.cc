@@ -26,14 +26,8 @@ using namespace hccl;
 
 class DetectConnectAnomaliesTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "DetectConnectAnomaliesTest SetUp" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "DetectConnectAnomaliesTest TearDown" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "DetectConnectAnomaliesTest SetUp" << std::endl; }
+    static void TearDownTestCase() { std::cout << "DetectConnectAnomaliesTest TearDown" << std::endl; }
     virtual void SetUp()
     {
         dca_ = &DetectConnectionAnomalies::GetInstance(0);
@@ -62,7 +56,7 @@ protected:
             dca_->detectNicThread_->join();
             dca_->detectNicThread_ = nullptr;
         }
-        for (auto &t : dca_->linkClientThreads_) {
+        for (auto& t : dca_->linkClientThreads_) {
             if (t != nullptr && t->joinable()) {
                 t->join();
             }
@@ -76,7 +70,7 @@ protected:
         GlobalMockObject::verify();
         std::cout << "A Test TearDown" << std::endl;
     }
-    DetectConnectionAnomalies *dca_ = nullptr;
+    DetectConnectionAnomalies* dca_ = nullptr;
 };
 
 TEST_F(DetectConnectAnomaliesTest, Detect_Success_FirstCall_CreateThread)
@@ -97,7 +91,7 @@ TEST_F(DetectConnectAnomaliesTest, Detect_AlreadyInitialized_NoNewThread)
 {
     dca_->Detect();
     EXPECT_TRUE(dca_->isInitThread_);
-    auto *firstThread = dca_->getIpNictypeQueue_.get();
+    auto* firstThread = dca_->getIpNictypeQueue_.get();
     ASSERT_NE(firstThread, nullptr);
 
     HcclResult ret = dca_->Detect();
@@ -221,10 +215,7 @@ TEST_F(DetectConnectAnomaliesTest, CreateClients_Success)
     ErrInfo errInfo;
     std::vector<std::unique_ptr<std::thread>> linkClientThreads;
 
-    MOCKER_CPP(&DetectConnectionAnomalies::CreateClient)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&DetectConnectionAnomalies::CreateClient).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = dca_->CreateClients(errInfo, linkClientThreads);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -254,27 +245,16 @@ TEST_F(DetectConnectAnomaliesTest, CreateClient_Success_ClientSocketSaved)
     dca_->vnicCtx_ = reinterpret_cast<HcclNetDevCtx>(0x1);
 
     // Mock GetExternalInputDfsConnectionFaultDetectionTime
-    MOCKER(GetExternalInputDfsConnectionFaultDetectionTime)
-        .stubs()
-        .will(returnValue(1));
+    MOCKER(GetExternalInputDfsConnectionFaultDetectionTime).stubs().will(returnValue(1));
 
     // Mock HcclSocket::Init
-    MOCKER_CPP(&HcclSocket::Init)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclSocket::Init).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     // Mock HcclSocket::Connect
-    MOCKER_CPP(&HcclSocket::Connect)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclSocket::Connect).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     // Mock HcclSocket::GetStatus 返回 SOCKET_OK，使 GetStatus 立即返回成功
-    MOCKER_CPP(&HcclSocket::GetStatus)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(HcclSocketStatus::SOCKET_OK));
+    MOCKER_CPP(&HcclSocket::GetStatus).stubs().with(mockcpp::any()).will(returnValue(HcclSocketStatus::SOCKET_OK));
 
     // 记录原始 clientSockets_ 大小
     size_t originalSize = dca_->clientSockets_.size();

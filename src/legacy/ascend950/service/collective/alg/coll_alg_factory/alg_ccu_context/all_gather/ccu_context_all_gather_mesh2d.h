@@ -22,12 +22,13 @@ namespace Hccl {
 
 class CcuContextAllGatherMesh2D : public CcuContextAlgBase {
 public:
-    CcuContextAllGatherMesh2D(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                              const CcuTransportGroup &group);
+    CcuContextAllGatherMesh2D(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
     ~CcuContextAllGatherMesh2D() override {}
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
+
 private:
     void InitResources();
     void LoadArgs();
@@ -38,19 +39,19 @@ private:
     void SecondStep();
 
     std::vector<uint64_t> dimSize_;
-    uint32_t axisId_{0};  // 0 : X轴， 1 : Y轴
+    uint32_t axisId_{0}; // 0 : X轴， 1 : Y轴
     uint32_t rankId_{0};
-    std::vector<uint32_t> dimId_;  // 本rank所在行或列的编号
-    uint32_t localId_{0};  // 本chip所在行或列的编号
-    uint32_t localSize_{0};  // 本rank所在行或列的总rank数
+    std::vector<uint32_t> dimId_; // 本rank所在行或列的编号
+    uint32_t localId_{0};         // 本chip所在行或列的编号
+    uint32_t localSize_{0};       // 本rank所在行或列的总rank数
 
     // 从外部获取的参数
     std::vector<CcuRep::Variable> input_;
     std::vector<CcuRep::Variable> output_;
     std::vector<CcuRep::Variable> token_;
 
-    CcuRep::Variable xAxisSize_;   // 沿X轴搬移的数据量大小
-    CcuRep::Variable yAxisSize_;   // 沿Y轴搬移的数据量大小
+    CcuRep::Variable xAxisSize_; // 沿X轴搬移的数据量大小
+    CcuRep::Variable yAxisSize_; // 沿Y轴搬移的数据量大小
     CcuRep::Variable offset_;    // Rank偏移+loop偏移
     CcuRep::Variable sliceSize_; // aSize + bSize 应该可以去掉
 

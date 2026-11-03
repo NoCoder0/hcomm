@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "opbase_stream_manager.h"
 #include "log.h"
@@ -16,10 +16,7 @@
 
 namespace Hccl {
 
-OpbaseStreamManager::~OpbaseStreamManager()
-{
-    DECTOR_TRY_CATCH("OpbaseStreamManager", Clear());
-}
+OpbaseStreamManager::~OpbaseStreamManager() { DECTOR_TRY_CATCH("OpbaseStreamManager", Clear()); }
 
 void OpbaseStreamManager::ReplaceMaster(std::unique_ptr<Stream> stream)
 {
@@ -45,12 +42,9 @@ void OpbaseStreamManager::RegisterMaster(std::unique_ptr<Stream> stream)
     HCCL_INFO("[OpbaseStreamManager::%s] end.", __func__);
 }
 
-void OpbaseStreamManager::Clear()
-{
-    slaves.clear();
-}
+void OpbaseStreamManager::Clear() { slaves.clear(); }
 
-Stream *OpbaseStreamManager::GetOrCreateSlave()
+Stream* OpbaseStreamManager::GetOrCreateSlave()
 {
     HCCL_INFO("[OpbaseStreamManager::%s] start.", __func__);
 
@@ -59,7 +53,7 @@ Stream *OpbaseStreamManager::GetOrCreateSlave()
     HCCL_INFO("[OpbaseStreamManager::%s] slavesSize[%u] slaveIndex[%u]", __func__, slavesSize, slaveIndex);
     if (slaveIndex >= slavesSize) {
         slaves.emplace_back(std::make_unique<Stream>(comm->GetOpAiCpuTSFeatureFlag(), false)); // 算子粒度
-        if (master != nullptr && !comm->GetOpAiCpuTSFeatureFlag()) {  // 算子粒度
+        if (master != nullptr && !comm->GetOpAiCpuTSFeatureFlag()) {                           // 算子粒度
             slaves[slaveIndex]->SetStmMode(master->GetMode());
         }
     }
@@ -68,7 +62,7 @@ Stream *OpbaseStreamManager::GetOrCreateSlave()
     return slaves[slaveIndex++].get();
 }
 
-Stream *OpbaseStreamManager::GetSlave(u32 index) const
+Stream* OpbaseStreamManager::GetSlave(u32 index) const
 {
     if (index >= slaves.size()) {
         THROW<InvalidParamsException>(StringFormat("[OpbaseStreamManager::%s] index[%u] is invalid.", __func__, index));

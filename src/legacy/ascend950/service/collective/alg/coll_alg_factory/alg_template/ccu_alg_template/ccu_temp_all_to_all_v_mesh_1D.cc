@@ -24,18 +24,15 @@ namespace Hccl {
 
 static CcuInstRegister<CcuContextAllToAllVMesh1D> registrarAllToAllV(CcuInstType::CCU_ALLTOALLV_MESH_1D_DIRECT);
 
-CcuTempAlltoAllVMesh1D::CcuTempAlltoAllVMesh1D(const RankId virtualRank, const u32 tempRankSize,
-                                   const std::vector<std::vector<RankId>> &tempVTopo,
-                                   const std::map<RankId, u32>            &tempVirtRankMap)
+CcuTempAlltoAllVMesh1D::CcuTempAlltoAllVMesh1D(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
     : CcuAlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap)
-{
-}
+{}
 
-CcuTempAlltoAllVMesh1D::~CcuTempAlltoAllVMesh1D()
-{
-}
+CcuTempAlltoAllVMesh1D::~CcuTempAlltoAllVMesh1D() {}
 
-HcclResult CcuTempAlltoAllVMesh1D::CalcRes(AlgTempResReq &tempResReq)
+HcclResult CcuTempAlltoAllVMesh1D::CalcRes(AlgTempResReq& tempResReq)
 {
     tempResReq.queNum = 1;
     tempResReq.streamNum = tempResReq.queNum;
@@ -44,8 +41,8 @@ HcclResult CcuTempAlltoAllVMesh1D::CalcRes(AlgTempResReq &tempResReq)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CcuTempAlltoAllVMesh1D::CalcSliceInfo(const AllignInfo &allignInfo, const u64 dataSize,
-                                            RankSliceInfo &sliceInfoVec)
+HcclResult
+CcuTempAlltoAllVMesh1D::CalcSliceInfo(const AllignInfo& allignInfo, const u64 dataSize, RankSliceInfo& sliceInfoVec)
 {
     std::vector<SliceInfo> tmp(tempVTopo_.size());
     sliceInfoVec.resize(tempRankSize_, tmp);
@@ -62,23 +59,27 @@ HcclResult CcuTempAlltoAllVMesh1D::GetScratchBufferInfo(const uint64_t scratchBu
     return HcclResult::HCCL_SUCCESS;
 }
 
-void CcuTempAlltoAllVMesh1D::SetA2ASendRecvInfo(const A2ASendRecvInfo &sendRecvInfo)
+void CcuTempAlltoAllVMesh1D::SetA2ASendRecvInfo(const A2ASendRecvInfo& sendRecvInfo)
 {
     localSendRecvInfo_ = sendRecvInfo;
 }
 
 HcclResult CcuTempAlltoAllVMesh1D::SetBuffBlockSize(const u64 buffBlockSize)
 {
-    CHK_PRT_RET(buffBlockSize == 0, HCCL_ERROR("[CcuTempAlltoAllVMesh1D][SetBuffBlockSize] buffBlockSize should not be zero"),
-                HcclResult::HCCL_E_PARA);
+    CHK_PRT_RET(
+        buffBlockSize == 0, HCCL_ERROR("[CcuTempAlltoAllVMesh1D][SetBuffBlockSize] buffBlockSize should not be zero"),
+        HcclResult::HCCL_E_PARA);
     buffBlockSize_ = buffBlockSize;
     return HcclResult::HCCL_SUCCESS;
 }
 
 HcclResult CcuTempAlltoAllVMesh1D::SetConcurrentSendRecvNum(const u32 concurrentSendRecvNum)
 {
-    CHK_PRT_RET(concurrentSendRecvNum == 0, HCCL_ERROR("[CcuTempAlltoAllVMesh1D][SetConcurrentSendRecvNum] concurrentSendRecvNum" \
-        "should not be zero"), HcclResult::HCCL_E_PARA);
+    CHK_PRT_RET(
+        concurrentSendRecvNum == 0,
+        HCCL_ERROR("[CcuTempAlltoAllVMesh1D][SetConcurrentSendRecvNum] concurrentSendRecvNum "
+                   "should not be zero"),
+        HcclResult::HCCL_E_PARA);
     concurrentSendRecvNum_ = concurrentSendRecvNum;
     return HcclResult::HCCL_SUCCESS;
 }
@@ -91,25 +92,26 @@ uint64_t CcuTempAlltoAllVMesh1D::CalcSendRecvNumSubStep()
     u32 rankSize = localSendRecvInfo_.sendLength.size();
 
     for (u32 destRank = 0; destRank < rankSize; destRank++) {
-        uint64_t currRankSendSubStep =
-            ((localSendRecvInfo_.sendLength[destRank] + UB_MAX_DATA_SIZE- 1) / UB_MAX_DATA_SIZE);
+        uint64_t currRankSendSubStep
+            = ((localSendRecvInfo_.sendLength[destRank] + UB_MAX_DATA_SIZE - 1) / UB_MAX_DATA_SIZE);
         sendNumSubStep_[destRank] = currRankSendSubStep;
 
-        uint64_t currRankRecvSubStep =
-            ((localSendRecvInfo_.recvLength[destRank] + UB_MAX_DATA_SIZE- 1) / UB_MAX_DATA_SIZE);
+        uint64_t currRankRecvSubStep
+            = ((localSendRecvInfo_.recvLength[destRank] + UB_MAX_DATA_SIZE - 1) / UB_MAX_DATA_SIZE);
         recvNumSubStep_[destRank] = currRankRecvSubStep;
-        HCCL_INFO("[CcuTempAlltoAllVMesh1D][CalcNumSubStep] myRank [%d] currRankSendSubStep[%llu]" \
-        "currRankRecvSubStep[%llu]", myRank_, currRankSendSubStep, currRankRecvSubStep);
+        HCCL_INFO(
+            "[CcuTempAlltoAllVMesh1D][CalcNumSubStep] myRank [%d] currRankSendSubStep[%llu] "
+            "currRankRecvSubStep[%llu]",
+            myRank_, currRankSendSubStep, currRankRecvSubStep);
         numSubStep = std::max(numSubStep, std::max(currRankSendSubStep, currRankRecvSubStep));
     }
-    HCCL_INFO("[CcuTempAlltoAllVMesh1D][CalcNumSubStep] myRank [%d] max communication step[%u]",
-        myRank_, numSubStep);
+    HCCL_INFO("[CcuTempAlltoAllVMesh1D][CalcNumSubStep] myRank [%d] max communication step[%u]", myRank_, numSubStep);
     return numSubStep;
 }
 
-HcclResult CcuTempAlltoAllVMesh1D::Run(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec,
-                                       const BuffInfo &buffInfo, const ResLinks &tempLinks,
-                                       std::vector<InsQuePtr> &tempInsQues)
+HcclResult CcuTempAlltoAllVMesh1D::Run(
+    const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, const BuffInfo& buffInfo, const ResLinks& tempLinks,
+    std::vector<InsQuePtr>& tempInsQues)
 {
     HCCL_INFO("[CcuTempAlltoAllVMesh1D] Run");
     (void)sliceInfoVec;
@@ -118,22 +120,26 @@ HcclResult CcuTempAlltoAllVMesh1D::Run(const TempFuncs &tempFuncs, const RankSli
 
     if (tempRankSize_ == 1) {
         // ccu-alltoall算子的单P场景单独处理
-        CHK_PRT_RET(localSendRecvInfo_.sendLength[myRank_] != localSendRecvInfo_.recvLength[myRank_],
-                    HCCL_ERROR("[CcuTempAlltoAllVMesh1D] rankSize = 1, sendLength[%llu] and recvLength[%llu]"
-                               "should be equal.",
-                               localSendRecvInfo_.sendLength[myRank_], localSendRecvInfo_.recvLength[myRank_]),
-                    HcclResult::HCCL_E_PARA);
-        CHK_PRT_RET(localSendRecvInfo_.sendLength[myRank_] == 0,
-                    HCCL_INFO("[CcuTempAlltoAllVMesh1D] Single Rank and DataSlice size is 0, no need to process."),
-                    HcclResult::HCCL_SUCCESS);
+        CHK_PRT_RET(
+            localSendRecvInfo_.sendLength[myRank_] != localSendRecvInfo_.recvLength[myRank_],
+            HCCL_ERROR(
+                "[CcuTempAlltoAllVMesh1D] rankSize = 1, sendLength[%llu] and recvLength[%llu] "
+                "should be equal.",
+                localSendRecvInfo_.sendLength[myRank_], localSendRecvInfo_.recvLength[myRank_]),
+            HcclResult::HCCL_E_PARA);
+        CHK_PRT_RET(
+            localSendRecvInfo_.sendLength[myRank_] == 0,
+            HCCL_INFO("[CcuTempAlltoAllVMesh1D] Single Rank and DataSlice size is 0, no need to process."),
+            HcclResult::HCCL_SUCCESS);
 
-        DataSlice usrInSlice  = DataSlice(BufferType::INPUT, 0, localSendRecvInfo_.sendLength[myRank_]);
+        DataSlice usrInSlice = DataSlice(BufferType::INPUT, 0, localSendRecvInfo_.sendLength[myRank_]);
         DataSlice usrOutSlice = DataSlice(BufferType::OUTPUT, 0, localSendRecvInfo_.recvLength[myRank_]);
 
         std::unique_ptr<Instruction> insLocalCopy = std::make_unique<InsLocalCopy>(usrInSlice, usrOutSlice);
         tempInsQues[0]->Append(std::move(insLocalCopy));
-        HCCL_INFO("[CcuTempAlltoAllVMesh1D] rankSize = 1, use InsLocalCopy for sliceSize[%llu].",
-                  localSendRecvInfo_.sendLength[myRank_]);
+        HCCL_INFO(
+            "[CcuTempAlltoAllVMesh1D] rankSize = 1, use InsLocalCopy for sliceSize[%llu].",
+            localSendRecvInfo_.sendLength[myRank_]);
         return HcclResult::HCCL_SUCCESS;
     }
 
@@ -144,7 +150,7 @@ HcclResult CcuTempAlltoAllVMesh1D::Run(const TempFuncs &tempFuncs, const RankSli
 
     std::vector<uint64_t> sliceSize;
     sliceSize.reserve(localSendRecvInfo_.sendLength.size());
-    for (auto &slice : localSendRecvInfo_.sendLength) {
+    for (auto& slice : localSendRecvInfo_.sendLength) {
         sliceSize.push_back(slice);
     }
 
@@ -155,14 +161,16 @@ HcclResult CcuTempAlltoAllVMesh1D::Run(const TempFuncs &tempFuncs, const RankSli
     uint64_t token = 0;
     GetToken(op_, token);
 
-    ccuInsAllToAllVMesh1D.Init(static_cast<uint32_t>(myRank_), inputAddr, outputAddr, sliceSize, token, srcOffset, dstOffset,
-        op_, tempVTopo_, localSendRecvInfo_, loadFromMem_);
-    HCCL_INFO("[CcuTempAlltoAllVMesh1D] Run Init: LoadFromMem[%d], myRank_[%d], dimSize[%llu], inputAddr[%llu],"\
+    ccuInsAllToAllVMesh1D.Init(
+        static_cast<uint32_t>(myRank_), inputAddr, outputAddr, sliceSize, token, srcOffset, dstOffset, op_, tempVTopo_,
+        localSendRecvInfo_, loadFromMem_);
+    HCCL_INFO(
+        "[CcuTempAlltoAllVMesh1D] Run Init: LoadFromMem[%d], myRank_[%d], dimSize[%llu], inputAddr[%llu],"
         "outputAddr[%llu], sliceSize size[%llu], srcOffset[%llu], dstOffset[%llu]",
         loadFromMem_, myRank_, dimSize[0], inputAddr, outputAddr, sliceSize.size(), srcOffset, dstOffset);
     //  init links
     std::vector<LinkData> links;
-    for (auto &pair : tempLinks) {
+    for (auto& pair : tempLinks) {
         if (pair.second.empty()) {
             continue;
         }
@@ -172,15 +180,16 @@ HcclResult CcuTempAlltoAllVMesh1D::Run(const TempFuncs &tempFuncs, const RankSli
     ccuInsAllToAllVMesh1D.SetLinks(links);
     RankGroup rankGroup;
     if (tempVTopo_.size() == 0 || tempInsQues.size() == 0 || tempVTopo_[0].size() == 0) {
-        HCCL_ERROR("[CcuTempAlltoAllVMesh1D] invalid tempVTopo size is [%u] or invalid tempInsQues size is [%u] or "
-                    "invalid tempVTopo_[0].size is [%u].",
-                    tempVTopo_.size(), tempInsQues.size(), tempVTopo_[0].size());
+        HCCL_ERROR(
+            "[CcuTempAlltoAllVMesh1D] invalid tempVTopo size is [%u] or invalid tempInsQues size is [%u] or "
+            "invalid tempVTopo_[0].size is [%u].",
+            tempVTopo_.size(), tempInsQues.size(), tempVTopo_[0].size());
         return HcclResult::HCCL_E_PARA;
     }
-    for (auto &peer : tempVTopo_[0]) {
+    for (auto& peer : tempVTopo_[0]) {
         rankGroup.AddRank(peer);
     }
-    u32 cntCkeNum = 3;  // 默认为3，实际alltoallv只需要2个
+    u32 cntCkeNum = 3; // 默认为3，实际alltoallv只需要2个
     ccuInsAllToAllVMesh1D.SetCntCkeNum(cntCkeNum);
     ccuInsAllToAllVMesh1D.SetRankGroup(rankGroup);
     HCCL_INFO("ccuInsAllToAllVMesh1D is [%s]", ccuInsAllToAllVMesh1D.Describe().c_str());

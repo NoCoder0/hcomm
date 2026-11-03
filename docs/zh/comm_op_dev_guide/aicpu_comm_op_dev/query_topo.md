@@ -24,7 +24,7 @@ HCCL控制面接口支持查询的拓扑信息如下表所示。
     ```c
     u32 userRank = INVALID_VALUE_RANKID;
     HcclResult ret = HcclGetRankId(comm, &userRank);
-    if (userRank == root && sendBuf == nullptr) {     // root节点的send_buff不允许为空
+    if (userRank == root && sendBuf == nullptr) {     // root节点的sendBuf不允许为空
         return HCCL_E_PTR;
     }
     ```
@@ -79,7 +79,7 @@ struct TopoInfo {
     uint32_t rankSize; // 参与此次集合通信的rank的数量
     std::vector<u32> rankList; // 参与此次集合通信的rank的rankId集合
     CommTopo topoType; // 链路连接类型：COMM_TOPO_1DMESH/COMM_TOPO_CLOS等
-    std::vector<HcclCHannelDesc> channels; // 本rank和其他卡之间的链路信息
+    std::vector<HcclChannelDesc> channels; // 本rank和其他卡之间的链路信息
 };
 HcclResult FillSimpleTopoInfo(HcclComm comm, TopoInfo &topoInfo){
     HcclResult ret = HcclGetRankId(comm, &topoInfo.rankId);
@@ -94,20 +94,16 @@ HcclResult FillSimpleTopoInfo(HcclComm comm, TopoInfo &topoInfo){
     for (size_t index = 0; index < rankNum; index++) {
         topoInfo.rankList.push_back(ranks[index]);
     }
-    uint32_t topoInstNum = 0;
-    uint32_t *topoInsts;
-    ret = HcclRankGraphGetTopoInstsByLayer(comm, 0, &topoInsts, &topoInstNum);
-    // 校验结果
-    // 因为是单机4卡，所以只会有1个topoInst,因此topoInsts = [0], topoInstNum = 1
-    // 通过topoInst即可获取设备的物理链接类型
-    ret = HcclRankGraphGetTopoTypeByLayer(comm, 0, topoInsts[0], &topoInfo.topoType);
+    ret = HcclRankGraphGetTopoTypeByLayer(comm, 0, &topoInfo.topoType);
     // 校验结果
     // 计算需要的channels
     for (auto remoteRankId : topoInfo.rankList) {
        if (remoteRankId == topoInfo.rankId) {continue;}
        CommLink *linkList = nullptr;
        u32 listSize = 0;
-       ret = HcclRankGraphGetLinks(comm, netLayer, myRank, remoteRankId, &linkList, &listSize);
+       uint32_t netLayer = 0;
+       ret = HcclRankGraphGetLinks(comm, netLayer, topoInfo.rankId, remoteRankId, &linkList, &listSize);
+       // 校验ret结果
        for (uint32_t idx = 0; idx < listSize; idx++) {
            HcclChannelDesc channelDesc;
            HcclChannelDescInit(&channelDesc, 1);

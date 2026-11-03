@@ -3,27 +3,31 @@
 ## 产品支持情况
 
 <!-- npu="950" id1 -->
-- Ascend 950PR/Ascend 950DT：支持
+- Ascend 950PR&950DT系列产品：支持
 <!-- end id1 -->
 <!-- npu="A3" id2 -->
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：不支持
+- Atlas A3系列产品：不支持
 <!-- end id2 -->
 <!-- npu="910b" id3 -->
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：不支持
+- Atlas A2系列产品：不支持
 <!-- end id3 -->
+<!-- npu="910" id4 -->
+- Atlas训练系列产品：不支持
+<!-- end id4 -->
+<!-- npu="310p" id5 -->
+- Atlas推理系列产品：不支持
+<!-- end id5 -->
 
 ## 功能说明
 
-将主机进程的虚拟地址（VA）转换为CCU硬件可访问的内存Token。CCU硬件不直接使用进程虚拟地址访问HBM，须先通过本接口将`(srcVa, size)`对应的内存区域转换为驱动颁发的64位Token，再将Token通过`kernelArg`或`taskArgs`传入Kernel函数，由Kernel内部赋值给`LocalAddr.token`或`RemoteAddr.token`。
+将主机进程的虚拟地址（VA）转换为CCU硬件可访问的内存Token。CCU硬件不直接使用进程虚拟地址访问片上内存，须先通过本接口将`(srcVa, size)`对应的内存区域转换为驱动颁发的64位Token，再将Token通过`kernelArg`或`taskArgs`传入Kernel函数，由Kernel内部赋值给`LocalAddr.token`或`RemoteAddr.token`。
 
 本接口与CCU实例生命周期主流程无依赖关系，可在创建实例后的任意时机调用，通常在调用[HcommCcuKernelRegister](HcommCcuKernelRegister.md)之前获取Token并填充到`kernelArg`中。
 
 ## 函数原型
 
-//ccu_res.h
-
 ```c
-CcuResult HcommCcuGetMemToken(uint64_t srcVa, uint64_t size, uint64_t *tokenInfo);
+CcuResult HcommCcuGetMemToken(uint64_t srcVa, uint64_t size, uint64_t *tokenInfo)
 ```
 
 ## 参数说明
@@ -52,12 +56,12 @@ CcuResult HcommCcuGetMemToken(uint64_t srcVa, uint64_t size, uint64_t *tokenInfo
 - `(srcVa, size)`须落在同一段已注册的连续内存区域内，跨区域或覆盖未注册内存区域会导致驱动返回错误。
 - Token的有效生命周期与对应内存的注册生命周期绑定，内存注销后Token失效。
 - 在跨rank通信场景中，本端Token须通过带外通道（非CCU数据面）传递给对端，由对端组装`RemoteAddr.token`，不能通过CCU数据面明文传输Token值。
-- 本接口只能在主机侧调用，不能在Kernel函数体内调用。
+- 本接口只能在Host侧调用，不能在Kernel函数体内调用。
 
 ## 调用示例
 
 ```c
-// srcVa为已注册的HBM内存起始地址，size为该内存区域的字节大小
+// srcVa为已注册的片上内存起始地址，size为该内存区域的字节大小
 uint64_t srcVa = /* 已注册内存的虚拟地址 */;
 uint64_t size  = /* 内存区域字节大小 */;
 

@@ -1,12 +1,13 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and contiditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 /* * @defgroup dump dump接口 */
 #ifndef ADUMP_API_H
 #define ADUMP_API_H
@@ -34,7 +35,7 @@ struct DumpConfig {
     std::string dumpMode;   // input/output/workspace
     std::string dumpStatus; // on/off
     std::string dumpData;   // tensor/stats
-    uint64_t dumpSwitch{ OPERATOR_OP_DUMP | OPERATOR_KERNEL_DUMP };
+    uint64_t dumpSwitch{OPERATOR_OP_DUMP | OPERATOR_KERNEL_DUMP};
     std::vector<std::string> dumpStatsItem;
 };
 
@@ -63,7 +64,7 @@ ADX_API bool AdumpIsDumpEnable(DumpType dumpType);
  * @see 无
  * @since
  */
-ADX_API bool AdumpIsDumpEnable(DumpType dumpType, uint64_t &dumpSwitch);
+ADX_API bool AdumpIsDumpEnable(DumpType dumpType, uint64_t& dumpSwitch);
 
 /**
  * @ingroup dump
@@ -77,7 +78,7 @@ ADX_API bool AdumpIsDumpEnable(DumpType dumpType, uint64_t &dumpSwitch);
  * @see 无
  * @since
  */
-ADX_API int32_t AdumpSetDumpConfig(DumpType dumpType, const DumpConfig &dumpConfig);
+ADX_API int32_t AdumpSetDumpConfig(DumpType dumpType, const DumpConfig& dumpConfig);
 
 /**
  * @ingroup dump
@@ -91,20 +92,21 @@ ADX_API int32_t AdumpSetDumpConfig(DumpType dumpType, const DumpConfig &dumpConf
  * @see 无
  * @since
  */
-extern "C" ADX_API void *AdumpGetSizeInfoAddr(uint32_t space, uint32_t &atomicIndex);
+extern "C" ADX_API void* AdumpGetSizeInfoAddr(uint32_t space, uint32_t& atomicIndex);
 
-ADX_API void AdumpPrintWorkSpace(const void *workSpaceAddr, const size_t dumpWorkSpaceSize,
-                                 aclrtStream stream, const char *opType);
+ADX_API void
+AdumpPrintWorkSpace(const void* workSpaceAddr, const size_t dumpWorkSpaceSize, aclrtStream stream, const char* opType);
 
-ADX_API void AdumpPrintWorkSpace(const void *workSpaceAddr, const size_t dumpWorkSpaceSize,
-                                 aclrtStream stream, const char *opType, bool enableSync);
+ADX_API void AdumpPrintWorkSpace(
+    const void* workSpaceAddr, const size_t dumpWorkSpaceSize, aclrtStream stream, const char* opType, bool enableSync);
 
-ADX_API void AdumpPrintAndGetTimeStampInfo(const void *workSpaceAddr, const size_t dumpWorkSpaceSize,
-    aclrtStream stream, const char *opType, std::vector<MsprofAicTimeStampInfo> &timeStampInfo);
+ADX_API void AdumpPrintAndGetTimeStampInfo(
+    const void* workSpaceAddr, const size_t dumpWorkSpaceSize, aclrtStream stream, const char* opType,
+    std::vector<MsprofAicTimeStampInfo>& timeStampInfo);
 
-struct AdumpPrintConfig{
-   bool printEnable;
+struct AdumpPrintConfig {
+    bool printEnable;
 };
-ADX_API void AdumpPrintSetConfig(const AdumpPrintConfig &config);
+ADX_API void AdumpPrintSetConfig(const AdumpPrintConfig& config);
 } // namespace Adx
 #endif

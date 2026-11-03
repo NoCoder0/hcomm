@@ -7,7 +7,9 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #include "rtsq_base.h"
+#include "common/cast_utils_pub.h"
 #include "log.h"
 #include "drv_api_exception.h"
 #include "exception_util.h"
@@ -24,9 +26,9 @@ RtsqBase::RtsqBase(u32 devPhyId, u32 streamId, u32 sqId) : devPhyId_(devPhyId), 
         THROW<DrvApiException>(formatStr);
     }
 
-    sqHead_     = QuerySqHead();
-    sqTail_     = QuerySqTail();
-    sqDepth_    = QuerySqDepth();
+    sqHead_ = QuerySqHead();
+    sqTail_ = QuerySqTail();
+    sqDepth_ = QuerySqDepth();
     sqBaseAddr_ = QuerySqBaseAddr();
 
     if (sqDepth_ == 0) {
@@ -35,10 +37,17 @@ RtsqBase::RtsqBase(u32 devPhyId, u32 streamId, u32 sqId) : devPhyId_(devPhyId), 
     HCCL_INFO("%s, %s", __func__, GetHwSqDescribe().c_str());
 }
 
-void RtsqBase::Reset()
+void RtsqBase::Reset(bool reset)
 {
-    sqHead_  = QuerySqHead();
-    sqTail_  = QuerySqTail();
+    sqHead_ = QuerySqHead();
+    sqTail_ = QuerySqTail();
+
+    if (reset) {
+        CHK_PRT_CONT(
+            sqHead_ != 0 || sqTail_ != 0,
+            HCCL_ERROR("RtsqBase::%s, sqHead_=%u, sqTail_=%u", __func__, sqHead_, sqTail_));
+    }
+
     sqDepth_ = QuerySqDepth();
     sqBaseAddr_ = QuerySqBaseAddr();
     SetTaskIdBySqeId();
@@ -47,25 +56,27 @@ void RtsqBase::Reset()
 
 std::string RtsqBase::GetHwSqDescribe() const
 {
-    return StringFormat("devPhyId=%u, localDevId=%u, streamId=%u, sqId=%u, sqDepth=%u, sqBaseAddr=0x%llx, "
-                        "currentHead=%u, currentTail=%u, cqeStatus=%u, taskId=%u",
-                        devPhyId_, localDevId_, streamId_, sqId_, sqDepth_, sqBaseAddr_, QuerySqHead(), QuerySqTail(), QueryCqeStatus(),
-                        taskId_);
+    return StringFormat(
+        "devPhyId=%u, localDevId=%u, streamId=%u, sqId=%u, sqDepth=%u, sqBaseAddr=0x%llx, "
+        "currentHead=%u, currentTail=%u, cqeStatus=%u, taskId=%u",
+        devPhyId_, localDevId_, streamId_, sqId_, sqDepth_, sqBaseAddr_, QuerySqHead(), QuerySqTail(), QueryCqeStatus(),
+        taskId_);
 }
 
 u32 RtsqBase::QuerySqStatusByType(drvSqCqPropType_t givenType) const
 {
-    halSqCqQueryInfo  queryInfo;
+    halSqCqQueryInfo queryInfo;
 
-    queryInfo.tsId         = 0;
-    queryInfo.sqId         = sqId_;
-    queryInfo.cqId         = 0;
-    queryInfo.type         = DRV_NORMAL_TYPE;
-    queryInfo.prop         = givenType;
+    queryInfo.tsId = 0;
+    queryInfo.sqId = sqId_;
+    queryInfo.cqId = 0;
+    queryInfo.type = DRV_NORMAL_TYPE;
+    queryInfo.prop = givenType;
     drvError_t ret = halSqCqQuery(localDevId_, &queryInfo);
     if (ret != 0) {
-        std::string formatStr = StringFormat("RtsqBase::%s call halSqCqQuery failed, localDevId %u, ret %d, givenType=%u",
-                                             __func__, localDevId_, ret, givenType);
+        std::string formatStr = StringFormat(
+            "RtsqBase::%s call halSqCqQuery failed, localDevId %u, ret %d, givenType=%u", __func__, localDevId_, ret,
+            givenType);
         THROW<DrvApiException>(formatStr);
     }
 
@@ -92,31 +103,19 @@ u64 RtsqBase::QuerySqBaseAddr() const
     return ((static_cast<u64>(queryInfo.value[1])) << 32) | queryInfo.value[0];
 }
 
-u32 RtsqBase::QuerySqHead() const
-{
-    return QuerySqStatusByType(drvSqCqPropType_t::DRV_SQCQ_PROP_SQ_HEAD);
-}
-u32 RtsqBase::QuerySqTail() const
-{
-    return QuerySqStatusByType(drvSqCqPropType_t::DRV_SQCQ_PROP_SQ_TAIL);
-}
-u32 RtsqBase::QuerySqDepth() const
-{
-    return QuerySqStatusByType(drvSqCqPropType_t::DRV_SQCQ_PROP_SQ_DEPTH);
-}
-u32 RtsqBase::QueryCqeStatus() const
-{
-    return QuerySqStatusByType(drvSqCqPropType_t::DRV_SQCQ_PROP_SQ_CQE_STATUS);
-}
+u32 RtsqBase::QuerySqHead() const { return QuerySqStatusByType(drvSqCqPropType_t::DRV_SQCQ_PROP_SQ_HEAD); }
+u32 RtsqBase::QuerySqTail() const { return QuerySqStatusByType(drvSqCqPropType_t::DRV_SQCQ_PROP_SQ_TAIL); }
+u32 RtsqBase::QuerySqDepth() const { return QuerySqStatusByType(drvSqCqPropType_t::DRV_SQCQ_PROP_SQ_DEPTH); }
+u32 RtsqBase::QueryCqeStatus() const { return QuerySqStatusByType(drvSqCqPropType_t::DRV_SQCQ_PROP_SQ_CQE_STATUS); }
 
 void RtsqBase::ConfigSqStatusByType(drvSqCqPropType_t givenType, u32 value) const
 {
     halSqCqConfigInfo configInfo;
-    configInfo.tsId     = 0;
-    configInfo.sqId     = sqId_;
-    configInfo.cqId     = 0;
-    configInfo.type     = DRV_NORMAL_TYPE;
-    configInfo.prop     = givenType;
+    configInfo.tsId = 0;
+    configInfo.sqId = sqId_;
+    configInfo.cqId = 0;
+    configInfo.type = DRV_NORMAL_TYPE;
+    configInfo.prop = givenType;
     configInfo.value[0] = value;
 
     drvError_t ret = halSqCqConfig(localDevId_, &configInfo);
@@ -127,29 +126,35 @@ void RtsqBase::ConfigSqStatusByType(drvSqCqPropType_t givenType, u32 value) cons
     }
 }
 
-void RtsqBase::ConfigSqTail(u32 value)
+void RtsqBase::ConfigSqTail(u32 value) const
 {
     HCCL_INFO("RtsqBase::%s, value=%u", __func__, value);
     ConfigSqStatusByType(drvSqCqPropType_t::DRV_SQCQ_PROP_SQ_TAIL, value);
 }
-void RtsqBase::ConfigDisableToEnable(u32 value)
+void RtsqBase::ConfigDisableToEnable(u32 value) const
 {
     HCCL_INFO("RtsqBase::%s, value=%u", __func__, value);
     ConfigSqStatusByType(drvSqCqPropType_t::DRV_SQCQ_PROP_SQ_DISABLE_TO_ENABLE, value);
 }
 
-HcclResult RtsqBase::GetStreamIdAndTaskIdBySqIdx(u32 sqIdx, uint16_t& streamId, uint16_t& taskId) const
+HcclResult
+RtsqBase::GetSqeHeaderFieldsBySqIdx(u32 sqIdx, uint16_t& streamId, uint16_t& taskId, u8& sqeType, u32& notifyId) const
 {
-    const u32 rtsqLength = 2048;
-    if (sqBaseAddr_ == 0 || sqIdx >= rtsqLength) {
+    if (sqBaseAddr_ == 0 || sqIdx >= sqDepth_) {
         HCCL_ERROR("[%s]fail, sqBaseAddr_[0x%llu], sqIdx[%u]", __func__, sqBaseAddr_, sqIdx);
         return HCCL_E_PARA;
     }
-
-    Rt91095StarsNotifySqe* sqe = (Rt91095StarsNotifySqe*)(sqBaseAddr_ + sqIdx * RTSQ_SQE_SIZE);
+    auto* sqe = ReinterpretAs<const Rt91095StarsNotifySqe*>(sqBaseAddr_ + sqIdx * RTSQ_SQE_SIZE);
     streamId = sqe->header.rtStreamId;
     taskId = sqe->header.taskId;
-    HCCL_INFO("[%s]sqId:%u, streamId:%u, taskId:%u", __func__, sqId_, streamId, taskId);
+    sqeType = static_cast<u8>(sqe->header.type);
+    // notifyId 仅 notify 类型 SQE 有效，非 notify 类型不读取避免读到无效字段
+    if (sqeType == static_cast<u8>(Rt91095StarsSqeType::RT_91095_SQE_TYPE_NOTIFY_RECORD)
+        || sqeType == static_cast<u8>(Rt91095StarsSqeType::RT_91095_SQE_TYPE_NOTIFY_WAIT)) {
+        notifyId = sqe->notifyId;
+    } else {
+        notifyId = 0;
+    }
     return HCCL_SUCCESS;
 }
 } // namespace Hccl

@@ -33,7 +33,6 @@ typedef struct tagBkfXMapInitArg {
     uint8_t rsv1[0x10];
 } BkfXMapInitArg;
 
-
 #define BKF_XMAP_DISPATCH_NOT_FIND ((uint32_t)1360202108)
 
 #define BKF_XMAP_REG_PRIO_DFT ((uint8_t)128)
@@ -71,7 +70,8 @@ void BkfXMapUninit(BkfXMap *xMap);
  *   @retval 其他 注册失败
  * @note proc和paramReg构成了注册实例的标识。
  */
-uint32_t BkfXMapRegEx(BkfXMap *xMap, uintptr_t key, const char *keyStr, F_BKF_XMAP_PROC proc, void *cookie, uint8_t prio);
+uint32_t BkfXMapRegEx(BkfXMap *xMap, uintptr_t key, const char *keyStr, F_BKF_XMAP_PROC proc, void *cookie,
+    uint8_t prio);
 
 /**
  * @brief 去注册有cookie的回调
@@ -109,11 +109,11 @@ uint32_t BkfXMapRegExNoCookie(BkfXMap *xMap, uintptr_t key, const char *keyStr, 
  * @param[in] key 派发key
  * @param[in] *paramDispatch 派发参数
  * @return 派发结果
- *   @retval 多种返回 值取决于业务proc回调返回结果。如果有多个回调，是所有回调返回的或。因此，需要协调好所有的回调的返回值。
+ *   @retval 多种返回
+ * 值取决于业务proc回调返回结果。如果有多个回调，是所有回调返回的或。因此，需要协调好所有的回调的返回值。
  *                    一般来说，外部不关注返回值。
  */
 uint32_t BkfXMapDispatch(BkfXMap *xMap, uintptr_t key, void *paramDispatch1, void *paramDispatch2);
-
 
 /* 宏，方便使用 */
 /* msg */
@@ -128,7 +128,7 @@ uint32_t BkfXMapDispatch(BkfXMap *xMap, uintptr_t key, void *paramDispatch1, voi
  *   @retval BKF_OK 注册成功
  *   @retval 其他 注册失败
  */
-#define BKF_MSG_REG(xMap, msgId, proc, cookie) \
+#define BKF_MSG_REG(xMap, msgId, proc, cookie)                                                                         \
     BkfXMapRegEx((xMap), (uintptr_t)(msgId), (#msgId), (F_BKF_XMAP_PROC)(proc), (cookie), BKF_XMAP_REG_PRIO_DFT)
 
 /* 宏，方便使用 */
@@ -142,7 +142,7 @@ uint32_t BkfXMapDispatch(BkfXMap *xMap, uintptr_t key, void *paramDispatch1, voi
  * @param[in] *paramReg 注册参数
  * @return NONE
  */
-#define BKF_MSG_UNREG(xMap, msgId, proc, cookie) \
+#define BKF_MSG_UNREG(xMap, msgId, proc, cookie)                                                                       \
     BkfXMapUnRegEx((xMap), (uintptr_t)(msgId), (F_BKF_XMAP_PROC)(proc), (cookie), BKF_XMAP_REG_PRIO_DFT)
 
 /**
@@ -157,7 +157,7 @@ uint32_t BkfXMapDispatch(BkfXMap *xMap, uintptr_t key, void *paramDispatch1, voi
  *   @retval BKF_OK 注册成功
  *   @retval 其他 注册失败
  */
-#define BKF_MSG_REG_EX(xMap, msgId, proc, cookie, prio) \
+#define BKF_MSG_REG_EX(xMap, msgId, proc, cookie, prio)                                                                \
     BkfXMapRegEx((xMap), (uintptr_t)(msgId), (#msgId), (F_BKF_XMAP_PROC_NO_COOKIE)(proc), (cookie), (prio))
 
 /**
@@ -170,9 +170,8 @@ uint32_t BkfXMapDispatch(BkfXMap *xMap, uintptr_t key, void *paramDispatch1, voi
  *   @retval BKF_OK 派发成功
  *   @retval 其他 派发失败
  */
-#define BKF_MSG_DISPATCH(xMap, msgId, paramDispatch1, paramDispatch2) \
+#define BKF_MSG_DISPATCH(xMap, msgId, paramDispatch1, paramDispatch2)                                                  \
     BkfXMapDispatch((xMap), (uintptr_t)(msgId), (paramDispatch1), (paramDispatch2))
-
 
 /* job */
 /**
@@ -185,8 +184,8 @@ uint32_t BkfXMapDispatch(BkfXMap *xMap, uintptr_t key, void *paramDispatch1, voi
  *   @retval BKF_OK 注册成功
  *   @retval 其他 注册失败
  */
-#define BKF_JOB_REG(xMap, jobTypeId, proc) \
-    BkfXMapRegExNoCookie((xMap), (uintptr_t)(jobTypeId), (#jobTypeId), (F_BKF_XMAP_PROC_NO_COOKIE)(proc), \
+#define BKF_JOB_REG(xMap, jobTypeId, proc)                                                                             \
+    BkfXMapRegExNoCookie((xMap), (uintptr_t)(jobTypeId), (#jobTypeId), (F_BKF_XMAP_PROC_NO_COOKIE)(proc),              \
         BKF_XMAP_REG_PRIO_DFT)
 
 /**
@@ -201,7 +200,7 @@ uint32_t BkfXMapDispatch(BkfXMap *xMap, uintptr_t key, void *paramDispatch1, voi
  *   @retval BKF_OK 注册成功
  *   @retval 其他 注册失败
  */
-#define BKF_JOB_REG_EX(xMap, jobTypeId, proc, prio) \
+#define BKF_JOB_REG_EX(xMap, jobTypeId, proc, prio)                                                                    \
     BkfXMapRegExNoCookie((xMap), (uintptr_t)(jobTypeId), (#jobTypeId), (F_BKF_XMAP_PROC_NO_COOKIE)(proc), (prio))
 
 /**
@@ -214,7 +213,7 @@ uint32_t BkfXMapDispatch(BkfXMap *xMap, uintptr_t key, void *paramDispatch1, voi
  *   @retval BKF_OK 派发成功
  *   @retval 其他 派发失败
  */
-#define BKF_JOB_DISPATCH(xMap, jobTypeId, paramDispatch1, paramDispatch2) \
+#define BKF_JOB_DISPATCH(xMap, jobTypeId, paramDispatch1, paramDispatch2)                                              \
     BkfXMapDispatch((xMap), (uintptr_t)(jobTypeId), (paramDispatch1), (paramDispatch2))
 
 #pragma pack()
@@ -226,4 +225,3 @@ uint32_t BkfXMapDispatch(BkfXMap *xMap, uintptr_t key, void *paramDispatch1, voi
 #endif
 
 #endif
-

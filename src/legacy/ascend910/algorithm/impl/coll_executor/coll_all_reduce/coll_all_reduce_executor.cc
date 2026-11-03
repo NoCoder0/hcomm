@@ -1,22 +1,20 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "coll_all_reduce_executor.h"
 
 namespace hccl {
 
-CollAllReduceExecutor::CollAllReduceExecutor(const HcclDispatcher dispatcher,
-                                             std::unique_ptr<TopoMatcher> &topoMatcher)
+CollAllReduceExecutor::CollAllReduceExecutor(const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher>& topoMatcher)
     : CollCommExecutor(dispatcher, topoMatcher)
-{
-}
+{}
 
 HcclResult CollAllReduceExecutor::Orchestrate(OpParam& param, AlgResourceResponse& algRes)
 {
@@ -56,25 +54,35 @@ HcclResult CollAllReduceExecutor::Orchestrate(OpParam& param, AlgResourceRespons
         execMem.scratchMem = algRes.scratchMem;
         execMem.inputPtr = param.inputPtr;
         execMem.outputPtr = param.outputPtr;
-        
+
         ret = KernelRunIntraServerPre(param, execMem);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[CollAllReduceExecutor][Orchestrate]errNo[0x%016llx]AllReduce executor level0 failed",
-                HCCL_ERROR_CODE(ret)), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[CollAllReduceExecutor][Orchestrate]errNo[0x%016llx]AllReduce executor level0 failed",
+                HCCL_ERROR_CODE(ret)),
+            ret);
 
         // 在Level1和Level2执行RunLoop
         if (topoAttr_.serverNum > 1) {
             ret = RunLoop(param, algRes);
-            CHK_PRT_RET(ret != HCCL_SUCCESS,
-                HCCL_ERROR("[CollAllReduceExecutor][Orchestrate]errNo[0x%016llx]AllReduce executor runloop failed. RunLoop",
-                    HCCL_ERROR_CODE(ret)), ret);
-        } else {        // 单机场景，数据直接从UserInput搬到UserOutput
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR(
+                    "[CollAllReduceExecutor][Orchestrate]errNo[0x%016llx]AllReduce executor runloop failed. RunLoop",
+                    HCCL_ERROR_CODE(ret)),
+                ret);
+        } else { // 单机场景，数据直接从UserInput搬到UserOutput
             std::vector<Slice> level0Datalices;
-            CHK_RET(AlgTemplateBase::PrepareSliceData(param.DataDes.count, SIZE_TABLE[param.DataDes.dataType], topoAttr_.deviceNumPerAggregation, 0, level0Datalices));
+            CHK_RET(AlgTemplateBase::PrepareSliceData(
+                param.DataDes.count, SIZE_TABLE[param.DataDes.dataType], topoAttr_.deviceNumPerAggregation, 0,
+                level0Datalices));
             u32 level0Rank = topoAttr_.userRank % topoAttr_.deviceNumPerAggregation;
-            const Slice &slice = level0Datalices[level0Rank];
-            DeviceMem dstMem = DeviceMem::create(static_cast<u8 *>(algRes.paramOutputMem.ptr()) + slice.offset, slice.size);
-            DeviceMem srcMem = DeviceMem::create(static_cast<u8 *>(algRes.paramInputMem.ptr()) + slice.offset, slice.size);
+            const Slice& slice = level0Datalices[level0Rank];
+            DeviceMem dstMem
+                = DeviceMem::create(static_cast<u8*>(algRes.paramOutputMem.ptr()) + slice.offset, slice.size);
+            DeviceMem srcMem
+                = DeviceMem::create(static_cast<u8*>(algRes.paramInputMem.ptr()) + slice.offset, slice.size);
             CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dstMem, srcMem, param.stream));
             HCCL_DEBUG("[CollAllReduceExecutor][Orchestrate]AllReduce RunLoop success");
         }
@@ -96,21 +104,25 @@ HcclResult CollAllReduceExecutor::Orchestrate(OpParam& param, AlgResourceRespons
             needLaunchAtTheEnd = false;
         }
     }
-    CHK_PRT_RET(ret != HCCL_SUCCESS,
-        HCCL_ERROR("[CollAllReduceExecutor][Orchestrate]errNo[0x%016llx]AllReduce executor kernel run failed",
-            HCCL_ERROR_CODE(ret)), ret);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[CollAllReduceExecutor][Orchestrate]errNo[0x%016llx]AllReduce executor kernel run failed",
+            HCCL_ERROR_CODE(ret)),
+        ret);
 
     // Enforce task launch at the end of Orchestrate
     // 注意: 不要删除这里的强制launch, 否则会导致aicpu cache功能问题
     if (needLaunchAtTheEnd) {
         HCCL_INFO("%s: enforce task launch at the end of Orchestrate", __func__);
-        CHK_RET(LaunchTaskExtend(dispatcher_,
-            const_cast<Stream &>(param.stream),
-            const_cast<std::vector<Stream> &>(algResResp_->slaveStreams)));
+        CHK_RET(LaunchTaskExtend(
+            dispatcher_, const_cast<Stream&>(param.stream),
+            const_cast<std::vector<Stream>&>(algResResp_->slaveStreams)));
     }
 
-    HCCL_INFO("[CollAllReduceExecutor]tag[%s], AllReduce executor orchestrate success, take time [%lld]us",
-        param.tag.c_str(), DURATION_US(TIME_NOW() - startut));
+    HCCL_INFO(
+        "[CollAllReduceExecutor]tag[%s], AllReduce executor orchestrate success, take time [%lld]us", param.tag.c_str(),
+        DURATION_US(TIME_NOW() - startut));
     return HCCL_SUCCESS;
 }
 
@@ -118,18 +130,20 @@ u64 CollAllReduceExecutor::CalcLoopMaxCount(const u64 cclBuffSize, const u32 uni
 {
     // 中转内存单次最多能够接受的output count
     u64 maxCountPerLoop = cclBuffSize / unitSize;
-    HCCL_WARNING("[CollAllReduceExecutor][CalcLoopMaxCount]" \
-        "using default maxCountPerLoop[%llu] as CCLBuffSize / unitSize.", maxCountPerLoop);
+    HCCL_WARNING(
+        "[CollAllReduceExecutor][CalcLoopMaxCount]"
+        "using default maxCountPerLoop[%llu] as CCLBuffSize / unitSize.",
+        maxCountPerLoop);
     return maxCountPerLoop;
 }
 
-bool CollAllReduceExecutor::IsHugeData(const u64 curSize)
+bool CollAllReduceExecutor::IsHugeData([[maybe_unused]] const u64 curSize)
 {
     HCCL_WARNING("[CollAllReduceExecutor][IsHugeData]opMeta is using the default option: not huge data.");
     return false;
 }
 
-bool CollAllReduceExecutor::IsSmallData(const u64 totalSize, const u64 curSize)
+bool CollAllReduceExecutor::IsSmallData([[maybe_unused]] const u64 totalSize, [[maybe_unused]] const u64 curSize)
 {
     HCCL_WARNING("[CollAllReduceExecutor][IsSmallData]opMeta is using the default option: not small data.");
     return false;
@@ -140,8 +154,8 @@ HcclResult CollAllReduceExecutor::GetSliceNum(const u64 totalSize, const bool is
     u64 actualSize = 0;
     u32 actualRankSize = 0;
 
-    if (algType_.algoLevel0 == AlgTypeLevel0::ALG_LEVEL0_RESERVED ||
-            (topoAttr_.deviceType == DevType::DEV_TYPE_910_93 && !DMAReduceFlag_)) {
+    if (algType_.algoLevel0 == AlgTypeLevel0::ALG_LEVEL0_RESERVED
+        || (topoAttr_.deviceType == DevType::DEV_TYPE_910_93 && !DMAReduceFlag_)) {
         // level0算法配null走单层拓扑场景
         actualSize = totalSize;
         actualRankSize = topoAttr_.userRankSize;
@@ -150,8 +164,8 @@ HcclResult CollAllReduceExecutor::GetSliceNum(const u64 totalSize, const bool is
         const u32 localRankSize = topoAttr_.deviceNumPerAggregation;
         const u32 localRank = topoAttr_.userRank % localRankSize;
         const u64 tempPerSlice = (totalSize + localRankSize - 1) / localRankSize;
-        const u64 sizePerSlice =
-            ((tempPerSlice + (HCCL_MIN_SLICE_ALIGN - 1)) / HCCL_MIN_SLICE_ALIGN) * HCCL_MIN_SLICE_ALIGN;
+        const u64 sizePerSlice
+            = ((tempPerSlice + (HCCL_MIN_SLICE_ALIGN - 1)) / HCCL_MIN_SLICE_ALIGN) * HCCL_MIN_SLICE_ALIGN;
 
         if ((localRank + 1) * sizePerSlice < totalSize) {
             actualSize = sizePerSlice;
@@ -163,16 +177,15 @@ HcclResult CollAllReduceExecutor::GetSliceNum(const u64 totalSize, const bool is
     }
 
     if (topoMatcher_->GetDeterministicConfig() == DETERMINISTIC_STRICT) {
-        u64 sizePerBlock = (totalSize / unitSize  + topoAttr_.userRankSize - 1) / topoAttr_.userRankSize * unitSize;
+        u64 sizePerBlock = (totalSize / unitSize + topoAttr_.userRankSize - 1) / topoAttr_.userRankSize * unitSize;
         sizePerBlock = AlgTemplateBase::RoundUpWithDivisor(sizePerBlock, HCCL_MIN_SLICE_ALIGN);
-        sliceNum = isSmallData ? 1 : std::min((totalSize - 1) / sizePerBlock + 1,
-            static_cast<u64>(topoAttr_.userRankSize));
+        sliceNum
+            = isSmallData ? 1 : std::min((totalSize - 1) / sizePerBlock + 1, static_cast<u64>(topoAttr_.userRankSize));
     } else if (algType_.algoLevel1 == AlgTypeLevel1::ALG_LEVEL1_NB) {
         if (totalSize > HCCL_MIN_SLICE_ALIGN) {
             u64 sliceSize = GetSliceSizeOfNB(actualSize, actualRankSize);
-            CHK_PRT_RET(sliceSize == 0,
-                HCCL_ERROR("[CollAllReduceExecutor][GetSliceNum]sliceSize is zero."),
-                HCCL_E_PARA);
+            CHK_PRT_RET(
+                sliceSize == 0, HCCL_ERROR("[CollAllReduceExecutor][GetSliceNum]sliceSize is zero."), HCCL_E_PARA);
             sliceNum = static_cast<u64>(std::ceil(actualSize * 1.0f / sliceSize));
         }
     } else if (algType_.algoLevel1 == AlgTypeLevel1::ALG_LEVEL1_NHR) {
@@ -183,46 +196,51 @@ HcclResult CollAllReduceExecutor::GetSliceNum(const u64 totalSize, const bool is
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllReduceExecutor::RunLoop(OpParam &param, AlgResourceResponse &algRes)
+HcclResult CollAllReduceExecutor::RunLoop(OpParam& param, AlgResourceResponse& algRes)
 {
     u32 unitSize = SIZE_TABLE[param.DataDes.dataType];
-    ReduceType reduceType = ((param.reduceType != HCCL_REDUCE_PROD) &&
-        (param.DataDes.dataType != HCCL_DATA_TYPE_INT64)) ?
-        ReduceType::INLINE_REDUCE : ReduceType::TBE_REDUCE;
+    ReduceType reduceType
+        = ((param.reduceType != HCCL_REDUCE_PROD) && (param.DataDes.dataType != HCCL_DATA_TYPE_INT64)) ?
+              ReduceType::INLINE_REDUCE :
+              ReduceType::TBE_REDUCE;
 
-    u8 *curInputPtr = static_cast<u8 *>(param.inputPtr);
-    u8 *curOutputPtr = static_cast<u8 *>(param.outputPtr);
+    u8* curInputPtr = static_cast<u8*>(param.inputPtr);
+    u8* curOutputPtr = static_cast<u8*>(param.outputPtr);
     CHK_PTR_NULL(curInputPtr);
     CHK_PTR_NULL(curOutputPtr);
 
-    u64 maxCountPerLoop = CalcLoopMaxCount(algRes.cclInputMem.size(), unitSize);   // override
+    u64 maxCountPerLoop = CalcLoopMaxCount(algRes.cclInputMem.size(), unitSize); // override
     if (maxCountPerLoop == 0) {
-        HCCL_ERROR("[CollAllReduceExecutor][RunLoop]tag[%s], userRankSize is [%u], maxCountPerLoop is [%llu].",
+        HCCL_ERROR(
+            "[CollAllReduceExecutor][RunLoop]tag[%s], userRankSize is [%u], maxCountPerLoop is [%llu].",
             param.tag.c_str(), topoAttr_.userRankSize, maxCountPerLoop);
         return HCCL_E_PARA;
     }
-    HCCL_DEBUG("[CollAllReduceExecutor][RunLoop]tag[%s], maxCountPerLoop is [%lu], userRankSize is [%lu].",
-        param.tag.c_str(), maxCountPerLoop, topoAttr_.userRankSize);
+    HCCL_DEBUG(
+        "[CollAllReduceExecutor][RunLoop]tag[%s], maxCountPerLoop is [%lu], userRankSize is [%lu].", param.tag.c_str(),
+        maxCountPerLoop, topoAttr_.userRankSize);
 
     u64 totalCount;
-    if (desc_.isZeroCopy) {     // 对零拷贝场景而言，只在Server间通信切循环
+    if (desc_.isZeroCopy) { // 对零拷贝场景而言，只在Server间通信切循环
         std::vector<Slice> level0Datalices;
-        CHK_RET(AlgTemplateBase::PrepareSliceData(param.DataDes.count, unitSize, topoAttr_.deviceNumPerAggregation, 0, level0Datalices));
+        CHK_RET(AlgTemplateBase::PrepareSliceData(
+            param.DataDes.count, unitSize, topoAttr_.deviceNumPerAggregation, 0, level0Datalices));
         u32 level0Rank = topoAttr_.userRank % topoAttr_.deviceNumPerAggregation;
         totalCount = level0Datalices[level0Rank].size / unitSize;
     } else {
         totalCount = param.DataDes.count;
     }
 
-    for (u64 countLeft = totalCount, curCount = 0, inputOffset = 0, outputOffset = 0;
-            countLeft > 0; countLeft -= curCount) {
+    for (u64 countLeft = totalCount, curCount = 0, inputOffset = 0, outputOffset = 0; countLeft > 0;
+         countLeft -= curCount) {
         curInputPtr += inputOffset;
         curOutputPtr += outputOffset;
         // 判断剩余数据量对应的output size是否大于中转output size
         curCount = (countLeft > maxCountPerLoop) ? maxCountPerLoop : countLeft;
         u64 curSize = curCount * unitSize; // 单位：字节
 
-        HCCL_DEBUG("[CollAllReduceExecutor][RunLoop]tag[%s], inputOffset[%llu], outputOffset[%llu], " \
+        HCCL_DEBUG(
+            "[CollAllReduceExecutor][RunLoop]tag[%s], inputOffset[%llu], outputOffset[%llu], "
             "sendBuf[%p], recvBuf[%p], sendCount[%llu], dataType[%d].",
             param.tag.c_str(), inputOffset, outputOffset, curInputPtr, curOutputPtr, curCount, param.DataDes.dataType);
 
@@ -243,35 +261,36 @@ HcclResult CollAllReduceExecutor::RunLoop(OpParam &param, AlgResourceResponse &a
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllReduceExecutor::RunLoopInner(OpParam &param, const ReduceType &reduceType, ExecMem &execMem)
+HcclResult CollAllReduceExecutor::RunLoopInner(OpParam& param, const ReduceType& reduceType, ExecMem& execMem)
 {
     u32 unitSize = SIZE_TABLE[param.DataDes.dataType];
     u64 curSize = execMem.count * unitSize; // 单位：字节
-    HCCL_DEBUG("[CollAllReduceExecutor][RunLoopInner]inputMem[%p][%llu], outputMem[%p][%llu], " \
-        "intputPtr[%p], outputPtr[%p], curCount[%llu], curSize[%llu]",
+    HCCL_DEBUG(
+        "[CollAllReduceExecutor][RunLoopInner]inputMem[%p][%llu], outputMem[%p][%llu], "
+        "inputPtr[%p], outputPtr[%p], curCount[%llu], curSize[%llu]",
         execMem.inputMem.ptr(), execMem.inputMem.size(), execMem.outputMem.ptr(), execMem.outputMem.size(),
         execMem.inputPtr, execMem.outputPtr, execMem.count, curSize);
-    CHK_PRT_RET((execMem.count == 0),
-        HCCL_ERROR("[CollAllReduceExecutor][RunLoop]In OP_BASE curCount is zero."), HCCL_E_PARA);
+    CHK_PRT_RET(
+        (execMem.count == 0), HCCL_ERROR("[CollAllReduceExecutor][RunLoop]In OP_BASE curCount is zero."), HCCL_E_PARA);
 
     if (!is310P3Common_) {
         /* 设置子图复用标志 */
         auto autoSelectedAlgTypeLevel1 = static_cast<u32>(algType_.algoLevel1);
-        bool hugeData = IsHugeData(curSize);    // override
+        bool hugeData = IsHugeData(curSize); // override
 
         if (reduceType == ReduceType::TBE_REDUCE) {
             /* TBE reduce 当总count数超过INT32_MAX时，不使能子图复用 */
             hugeData = hugeData || param.DataDes.count > INT32_MAX;
         }
 
-        bool smallData = IsSmallData(param.DataDes.count * unitSize, curSize);  // override
+        bool smallData = IsSmallData(param.DataDes.count * unitSize, curSize); // override
         u64 sliceNum = 0;
         CHK_RET(GetSliceNum(execMem.count * unitSize, smallData, sliceNum, unitSize));
         bool dataSplit = false;
         u8 deterministic = topoMatcher_->GetExternalInputHcclDeterministic();
-        CopyPattern copy =  DMAReduceFlag_? CopyPattern::ZCOPY : CopyPattern::BCOPY;
-        auto opMeta = HcclOpMetaInfo::GetOneForAllReduce(autoSelectedAlgTypeLevel1,
-            param.DataDes.dataType, reduceType, smallData, 1, hugeData, copy, sliceNum,
+        CopyPattern copy = DMAReduceFlag_ ? CopyPattern::ZCOPY : CopyPattern::BCOPY;
+        auto opMeta = HcclOpMetaInfo::GetOneForAllReduce(
+            autoSelectedAlgTypeLevel1, param.DataDes.dataType, reduceType, smallData, 1, hugeData, copy, sliceNum,
             false, true, dataSplit, deterministic);
         CHK_RET(InitTask(dispatcher_, param.stream, opMeta.isEnableCache, opMeta.GetCacheKey()));
     }
@@ -295,11 +314,13 @@ HcclResult CollAllReduceExecutor::RunLoopInner(OpParam &param, const ReduceType 
     } else {
         ret = KernelRunInterServer(param, execMem);
     }
-    CHK_PRT_RET(ret != HCCL_SUCCESS,
-        HCCL_ERROR("[CollAllReduceExecutor][RunLoop]errNo[0x%016llx]kernel run error, tag[%s], " \
-        "inputMem ptr[%p], outputMem ptr[%p], count[%llu], dataType[%d], reduce op type[%d]",
-        HCCL_ERROR_CODE(ret), param.tag.c_str(), execMem.inputMem.ptr(), execMem.outputMem.ptr(),
-        execMem.count, param.DataDes.dataType, param.reduceType),
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[CollAllReduceExecutor][RunLoop]errNo[0x%016llx]kernel run error, tag[%s], "
+            "inputMem ptr[%p], outputMem ptr[%p], count[%llu], dataType[%d], reduce op type[%d]",
+            HCCL_ERROR_CODE(ret), param.tag.c_str(), execMem.inputMem.ptr(), execMem.outputMem.ptr(), execMem.count,
+            param.DataDes.dataType, param.reduceType),
         ret);
 
     if (!DMAReduceFlag_) {
@@ -310,30 +331,31 @@ HcclResult CollAllReduceExecutor::RunLoopInner(OpParam &param, const ReduceType 
     }
 
     if (!is310P3Common_) {
-        CHK_RET(LaunchTaskExtend(dispatcher_,
-            const_cast<Stream &>(param.stream),
-            const_cast<std::vector<Stream> &>(algResResp_->slaveStreams)));
+        CHK_RET(LaunchTaskExtend(
+            dispatcher_, const_cast<Stream&>(param.stream),
+            const_cast<std::vector<Stream>&>(algResResp_->slaveStreams)));
     }
     return ret;
 }
 
-HcclResult CollAllReduceExecutor::AvoidSubgraphLoop(OpParam &param, AlgResourceResponse &algRes)
+HcclResult CollAllReduceExecutor::AvoidSubgraphLoop(OpParam& param, AlgResourceResponse& algRes)
 {
     HCCL_DEBUG("[CollAllReduceExecutor][AvoidSubgraphLoop]start.");
 
     u64 unitSize = SIZE_TABLE[param.DataDes.dataType];
-    ReduceType reduceType = ((param.reduceType != HCCL_REDUCE_PROD) &&
-        (param.DataDes.dataType != HCCL_DATA_TYPE_INT64)) ?
-        ReduceType::INLINE_REDUCE : ReduceType::TBE_REDUCE;
+    ReduceType reduceType
+        = ((param.reduceType != HCCL_REDUCE_PROD) && (param.DataDes.dataType != HCCL_DATA_TYPE_INT64)) ?
+              ReduceType::INLINE_REDUCE :
+              ReduceType::TBE_REDUCE;
     auto originalAlgTypeLevel1 = static_cast<u32>(algType_.algoLevel1);
-    bool hugeData =
-        (param.DataDes.count * unitSize) / topoAttr_.deviceNumPerAggregation / HCCL_INTERNODE_MAX_DATA_RATE >
-        RDMA_SEND_MAX_SIZE || (param.DataDes.count * unitSize) > SDMA_SEND_MAX_SIZE;
+    bool hugeData = (param.DataDes.count * unitSize) / topoAttr_.deviceNumPerAggregation / HCCL_INTERNODE_MAX_DATA_RATE
+                        > RDMA_SEND_MAX_SIZE
+                    || (param.DataDes.count * unitSize) > SDMA_SEND_MAX_SIZE;
     u8 deterministic = topoMatcher_->GetExternalInputHcclDeterministic();
-    auto opMeta =
-        HcclOpMetaInfo::GetOneForAllReduce(originalAlgTypeLevel1, param.DataDes.dataType, reduceType,
-            param.DataDes.count * unitSize <= HCCL_SMALL_COUNT_128_KB, 1, hugeData, CopyPattern::ZCOPY, 1,
-            false, true, false, deterministic);
+    auto opMeta = HcclOpMetaInfo::GetOneForAllReduce(
+        originalAlgTypeLevel1, param.DataDes.dataType, reduceType,
+        param.DataDes.count * unitSize <= HCCL_SMALL_COUNT_128_KB, 1, hugeData, CopyPattern::ZCOPY, 1, false, true,
+        false, deterministic);
     CHK_RET(InitTask(dispatcher_, param.stream, opMeta.isEnableCache, opMeta.GetCacheKey()));
 
     DeviceMem src(param.inputPtr, 0);
@@ -346,11 +368,14 @@ HcclResult CollAllReduceExecutor::AvoidSubgraphLoop(OpParam &param, AlgResourceR
     execMem.outputMem = algRes.cclOutputMem;
     execMem.scratchMem = algRes.scratchMem;
     HcclResult ret = KernelRun(param, execMem);
-    CHK_PRT_RET(ret != HCCL_SUCCESS,
-        HCCL_ERROR("[Loop][Allreduce]errNo[0x%016llx] param.reduceTypebase hcclComm AllReduce error, " \
-        "tag[%s], input_ptr[%p], output_ptr[%p], count[%llu], data_type[%d], op[%d]",
-        HCCL_ERROR_CODE(ret), param.tag.c_str(), param.inputPtr, param.outputPtr, param.DataDes.count,
-        param.DataDes.dataType, param.reduceType), ret);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[Loop][Allreduce]errNo[0x%016llx] param.reduceTypebase hcclComm AllReduce error, "
+            "tag[%s], input_ptr[%p], output_ptr[%p], count[%llu], data_type[%d], op[%d]",
+            HCCL_ERROR_CODE(ret), param.tag.c_str(), param.inputPtr, param.outputPtr, param.DataDes.count,
+            param.DataDes.dataType, param.reduceType),
+        ret);
     CHK_RET(LaunchTask(dispatcher_, param.stream));
     return HCCL_SUCCESS;
 }
@@ -358,8 +383,9 @@ HcclResult CollAllReduceExecutor::AvoidSubgraphLoop(OpParam &param, AlgResourceR
 bool CollAllReduceExecutor::IsAllReduceSmallData(u64 size)
 {
     if (algType_.algoLevel1 == AlgTypeLevel1::ALG_LEVEL1_NHR) {
-        if (algType_.algoLevel0 == AlgTypeLevel0::ALG_LEVEL0_RESERVED ||
-            (topoAttr_.deviceType == DevType::DEV_TYPE_910_93 && !DMAReduceFlag_)) { // level0算法配null走单层拓扑场景
+        if (algType_.algoLevel0 == AlgTypeLevel0::ALG_LEVEL0_RESERVED
+            || (topoAttr_.deviceType == DevType::DEV_TYPE_910_93
+                && !DMAReduceFlag_)) { // level0算法配null走单层拓扑场景
             if (size <= NHR_ALLREDUCE_SMALL_SIZE) {
                 return true;
             }
@@ -373,8 +399,8 @@ bool CollAllReduceExecutor::IsAllReduceSmallData(u64 size)
     return false;
 }
 
-HcclResult CollAllReduceExecutor::PrepareSliceDataWithAlignSize(u64 totalSize, u32 sliceNum,
-    u64 piplineOffset, std::vector<Slice>& dataSlice, u64 alignSize)
+HcclResult CollAllReduceExecutor::PrepareSliceDataWithAlignSize(
+    u64 totalSize, u32 sliceNum, u64 pipelineOffset, std::vector<Slice>& dataSlice, u64 alignSize) const
 {
     Slice temp;
     dataSlice.clear();
@@ -382,16 +408,18 @@ HcclResult CollAllReduceExecutor::PrepareSliceDataWithAlignSize(u64 totalSize, u
     CHK_PRT_RET((sliceNum == 0), HCCL_ERROR("[Prepare][SliceData]data slice prepare, sliceNum is 0"), HCCL_E_PARA);
     u64 tempPerSlice = (totalSize + sliceNum - 1) / sliceNum; /* 1是为了向上取整 */
     u64 sizePerSlice = AlgTemplateBase::RoundUpWithDivisor(tempPerSlice, alignSize);
-    HCCL_DEBUG("total_size:%llu sliceNum:%u temp_per_ring:%llu size_per_ring:%llu.", totalSize, sliceNum, tempPerSlice,
+    HCCL_DEBUG(
+        "total_size:%llu sliceNum:%u temp_per_ring:%llu size_per_ring:%llu.", totalSize, sliceNum, tempPerSlice,
         sizePerSlice);
     u64 residueSize = totalSize;
     u32 i = 0;
     while (residueSize > 0) {
         u64 sliceSize = sizePerSlice < residueSize ? sizePerSlice : residueSize;
         temp.size = sliceSize;
-        temp.offset = totalSize - residueSize + piplineOffset;
+        temp.offset = totalSize - residueSize + pipelineOffset;
         i++;
-        CHK_PRT_RET((sliceSize <= 0), HCCL_ERROR("[Prepare][SliceData]data_slice_prepare sliceSize[%llu].", sliceSize),
+        CHK_PRT_RET(
+            (sliceSize <= 0), HCCL_ERROR("[Prepare][SliceData]data_slice_prepare sliceSize[%llu].", sliceSize),
             HCCL_E_PARA);
         residueSize -= sliceSize;
         dataSlice.push_back(temp);
@@ -399,30 +427,31 @@ HcclResult CollAllReduceExecutor::PrepareSliceDataWithAlignSize(u64 totalSize, u
     HCCL_DEBUG("[%s] PrepareSliceDataWithAlignSize for data_slice_prepare", __func__);
     while (i < sliceNum) {
         temp.size = 0;
-        temp.offset = totalSize + piplineOffset;
+        temp.offset = totalSize + pipelineOffset;
         i++;
         dataSlice.push_back(temp);
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllReduceExecutor::PrepareAivBuffers(u32 rankSize, u32 rankId, u32 rankOffset,
-    DeviceMem &inputMem, DeviceMem &outputMem, std::vector<LINK> &links, void **dataBuffers, void **flagBuffers,
-    UserMemType dataMemType, UserMemType flagMemType, u32 dataMemOffset, u32 flagMemOffset)
+HcclResult CollAllReduceExecutor::PrepareAivBuffers(
+    u32 rankSize, u32 rankId, u32 rankOffset, DeviceMem& inputMem, DeviceMem& outputMem, std::vector<LINK>& links,
+    void** dataBuffers, void** flagBuffers, UserMemType dataMemType, UserMemType flagMemType, u32 dataMemOffset,
+    u32 flagMemOffset) const
 {
-    void *tmpCCLBufferData = nullptr;
-    void *tmpCCLBufferFlag = nullptr;
+    void* tmpCCLBufferData = nullptr;
+    void* tmpCCLBufferFlag = nullptr;
     for (u32 i = 0; i < rankSize; i++) {
         if (i != rankId) {
             if (links[i + rankOffset] != nullptr) {
                 CHK_RET(links[i + rankOffset]->GetRemoteMem(dataMemType, &(tmpCCLBufferData)));
                 CHK_RET(links[i + rankOffset]->GetRemoteMem(flagMemType, &(tmpCCLBufferFlag)));
-                dataBuffers[i] = static_cast<u8 *>(tmpCCLBufferData) + dataMemOffset;
-                flagBuffers[i] = static_cast<u8 *>(tmpCCLBufferFlag) + flagMemOffset;
+                dataBuffers[i] = static_cast<u8*>(tmpCCLBufferData) + dataMemOffset;
+                flagBuffers[i] = static_cast<u8*>(tmpCCLBufferFlag) + flagMemOffset;
             }
         } else {
-            dataBuffers[i] = static_cast<u8 *>(inputMem.ptr()) + dataMemOffset;
-            flagBuffers[i] = static_cast<u8 *>(outputMem.ptr()) + flagMemOffset;
+            dataBuffers[i] = static_cast<u8*>(inputMem.ptr()) + dataMemOffset;
+            flagBuffers[i] = static_cast<u8*>(outputMem.ptr()) + flagMemOffset;
         }
     }
     return HCCL_SUCCESS;

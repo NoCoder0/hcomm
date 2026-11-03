@@ -11,23 +11,21 @@
 #include "topo_match_concurr_mesh.h"
 
 namespace Hccl {
-TopoMatchConcurrMesh::TopoMatchConcurrMesh(const RankId vRank, const u32 rankSize, const RankGraph *rankGraph,
-                                           const DevType devType)
+TopoMatchConcurrMesh::TopoMatchConcurrMesh(
+    const RankId vRank, const u32 rankSize, const RankGraph* rankGraph, const DevType devType)
     : TopoMatchBase(vRank, rankSize, rankGraph, devType)
-{
-}
+{}
 
-TopoMatchConcurrMesh::~TopoMatchConcurrMesh()
-{
-}
+TopoMatchConcurrMesh::~TopoMatchConcurrMesh() {}
 
-HcclResult TopoMatchConcurrMesh::MatchTopo(std::vector<std::vector<RankId>> &vTopo,
-                                           std::vector<RankId> &virtRanks, std::map<RankId, u32> &virtRankMap)
+HcclResult TopoMatchConcurrMesh::MatchTopo(
+    std::vector<std::vector<RankId>>& vTopo, std::vector<RankId>& virtRanks, std::map<RankId, u32>& virtRankMap)
 {
     // 获取并校验当前通信层数
     std::set<u32> levelSet = rankGraph_->GetLevels(myRank_);
 
-    CHK_PRT_RET((levelSet.size() == COMM_LEVEL_SIZE_0),
+    CHK_PRT_RET(
+        (levelSet.size() == COMM_LEVEL_SIZE_0),
         HCCL_ERROR("[CollAlgFactory] [TopoMatchConcurrMesh] Rank [%d], Invalid virtual topo.", myRank_),
         HcclResult::HCCL_E_PARA);
     const NetInstance* netInstance = rankGraph_->GetNetInstanceByRankId(0, myRank_);
@@ -38,22 +36,25 @@ HcclResult TopoMatchConcurrMesh::MatchTopo(std::vector<std::vector<RankId>> &vTo
     // 判断level0上的拓扑是否符合 m x n 要求
     CHK_RET(CalcRankOnSamePlaneOfR0(rankOnSameBoardVector_, rankOnSameSlotVector_, numRanksPerBoard_));
 
-    const auto minmxPair =
-        std::minmax_element(numRanksPerBoard_.begin(), numRanksPerBoard_.end());
+    const auto minmxPair = std::minmax_element(numRanksPerBoard_.begin(), numRanksPerBoard_.end());
     u32 minNumRankPerBoard = *minmxPair.first;
     u32 maxNumRankPerBoard = *minmxPair.second;
-    CHK_PRT_RET((minNumRankPerBoard != maxNumRankPerBoard),
-                HCCL_ERROR("[CollAlgFactory] [TopoMatchConcurrMesh] Rank [%d], Invalid virtual topo for "
-                           "multi-dimensional concurrent mesh, min numRanksPerBoard_[%u], max numRanksPerBoard_[%u].",
-                           myRank_, minNumRankPerBoard, maxNumRankPerBoard),
-                HcclResult::HCCL_E_PARA);
+    CHK_PRT_RET(
+        (minNumRankPerBoard != maxNumRankPerBoard),
+        HCCL_ERROR(
+            "[CollAlgFactory] [TopoMatchConcurrMesh] Rank [%d], Invalid virtual topo for "
+            "multi-dimensional concurrent mesh, min numRanksPerBoard_[%u], max numRanksPerBoard_[%u].",
+            myRank_, minNumRankPerBoard, maxNumRankPerBoard),
+        HcclResult::HCCL_E_PARA);
 
-    CHK_PRT_RET(((rankSize_ == 1) || (numRanksPerBoard_[0] * numRanksPerBoard_.size() != rankSize_)),
-                HCCL_ERROR("[CollAlgFactory] [TopoMatchConcurrMesh] Rank [%d], Invalid virtual topo for "
-                           "multi-dimensional concurrent mesh "
-                           "algorithm with rankSize [%u], ranksPerBoard [%u], ranksPerSlot [%u].",
-                           myRank_, rankSize_, numRanksPerBoard_[0], numRanksPerBoard_.size()),
-                HcclResult::HCCL_E_PARA);
+    CHK_PRT_RET(
+        ((rankSize_ == 1) || (numRanksPerBoard_[0] * numRanksPerBoard_.size() != rankSize_)),
+        HCCL_ERROR(
+            "[CollAlgFactory] [TopoMatchConcurrMesh] Rank [%d], Invalid virtual topo for "
+            "multi-dimensional concurrent mesh "
+            "algorithm with rankSize [%u], ranksPerBoard [%u], ranksPerSlot [%u].",
+            myRank_, rankSize_, numRanksPerBoard_[0], numRanksPerBoard_.size()),
+        HcclResult::HCCL_E_PARA);
 
     // 计算当前rankd的virtRanks, vTopo和virtRankMap
     u32 myLocalId = rankGraph_->GetReplacedLocalId(myRank_);
@@ -61,10 +62,11 @@ HcclResult TopoMatchConcurrMesh::MatchTopo(std::vector<std::vector<RankId>> &vTo
     rankOnSameSlot_ = rankOnSameSlotVector_[myLocalId % RANK_SIZE_EIGHT];
 
     if ((rankOnSameBoard_.size() == 1) || (rankOnSameSlot_.size() == 1)) {
-        HCCL_DEBUG("[CollAlgFactory] [TopoMatchConcurrMesh] Rank [%d],Virtual topo with rankSize [%u], ranksPerBoard "
-                   "[%u], ranksPerSlot [%u]. "
-                   "1-D Mesh algorithm is adopted.",
-                   myRank_, rankSize_, rankOnSameBoard_.size(), rankOnSameSlot_.size());
+        HCCL_DEBUG(
+            "[CollAlgFactory] [TopoMatchConcurrMesh] Rank [%d],Virtual topo with rankSize [%u], ranksPerBoard "
+            "[%u], ranksPerSlot [%u]. "
+            "1-D Mesh algorithm is adopted.",
+            myRank_, rankSize_, rankOnSameBoard_.size(), rankOnSameSlot_.size());
     }
     sort(rankOnSameBoard_.begin(), rankOnSameBoard_.end());
     sort(rankOnSameSlot_.begin(), rankOnSameSlot_.end());
@@ -81,6 +83,5 @@ HcclResult TopoMatchConcurrMesh::MatchTopo(std::vector<std::vector<RankId>> &vTo
 
     return HcclResult::HCCL_SUCCESS;
 }
-
 
 } // namespace Hccl

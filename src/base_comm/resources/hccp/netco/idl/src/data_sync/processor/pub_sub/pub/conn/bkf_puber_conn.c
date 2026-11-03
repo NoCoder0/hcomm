@@ -23,7 +23,7 @@ extern "C" {
 #endif
 
 #if BKF_BLOCK("私有宏结构函数")
-#define BKF_PUBER_CONN_TMR_INTERVAL         1002
+#define BKF_PUBER_CONN_TMR_INTERVAL 1002
 
 /* on msg */
 STATIC BOOL BkfPuberConnOnMayAccept(BkfPuberConnMng *connMng, BkfUrl *urlCli);
@@ -40,7 +40,7 @@ STATIC uint32_t BkfPuberConnOnTmrTO(BkfPuberConn *conn, void *paramTmrLibUnknown
 STATIC BkfPuberConn *BkfPuberConnDelIfRetNeedDel(BkfPuberConn *conn, uint32_t ret);
 STATIC uint32_t BkfPuberConnProcRcvData(BkfPuberConn *conn, uint8_t *rcvData, int32_t dataLen);
 STATIC uint32_t BkfPuberConnInitDecoderForRcvData(BkfPuberConn *conn, uint8_t *rcvData, int32_t dataLen,
-                                                  BkfMsgDecoder *decoder);
+    BkfMsgDecoder *decoder);
 STATIC uint32_t BkfPuberConnProcDataInDecoder(BkfPuberConn *conn, BkfMsgDecoder *decoder);
 STATIC uint32_t BkfPuberConnSaveDecoderLeftData(BkfPuberConn *conn, BkfMsgDecoder *decoder, BOOL delBufqIfNoLeftData);
 STATIC uint32_t BkfPuberConnProcRcvDataEvent(BkfPuberConn *conn);
@@ -58,9 +58,9 @@ STATIC BOOL BkfPuberConnOnMayAccept(BkfPuberConnMng *connMng, BkfUrl *urlCli)
     if (connMng->argInit->onConnectOver) {
         connMng->argInit->onConnectOver(connMng->argInit->cookie, urlCli);
     }
-    uint8_t buf[BKF_LOG_LEN] = { 0 };
-    BKF_LOG_WARN(BKF_LOG_HND, "connMng(%#x), %d/%d, urlCli(%s), can not accpet more conn\n", BKF_MASK_ADDR(connMng),
-                 connMng->connCnt, connMng->argInit->connCntMax, BkfUrlGetStr(urlCli, buf, sizeof(buf)));
+    uint8_t buf[BKF_LOG_LEN] = {0};
+    BKF_LOG_WARN(BKF_LOG_HND, "connMng(%#x), %d/%d, urlCli(%s), can not accept more conn\n", BKF_MASK_ADDR(connMng),
+        connMng->connCnt, connMng->argInit->connCntMax, BkfUrlGetStr(urlCli, buf, sizeof(buf)));
     (void)BkfPuberConnLimitSysLog(connMng, urlCli);
     return VOS_FALSE;
 }
@@ -84,8 +84,7 @@ STATIC void BkfPuberConnOnConn(BkfPuberConnMng *connMng, BkfChSerConnId *connId,
     }
 }
 
-STATIC void BkfPuberConnOnConnEx(BkfPuberConnMng *connMng, BkfChSerConnId *connId, BkfUrl *cliUrl,
-    BkfUrl *localUrl)
+STATIC void BkfPuberConnOnConnEx(BkfPuberConnMng *connMng, BkfChSerConnId *connId, BkfUrl *cliUrl, BkfUrl *localUrl)
 {
     BKF_LOG_DEBUG(BKF_LOG_HND, "connEx connMng(%#x), connId(%#x)\n", BKF_MASK_ADDR(connMng), BKF_MASK_ADDR(connId));
 
@@ -108,13 +107,12 @@ STATIC void BkfPuberConnOnConnEx(BkfPuberConnMng *connMng, BkfChSerConnId *connI
     }
 }
 
-
 STATIC void BkfPuberConnOnRcvData(BkfPuberConnMng *connMng, BkfChSerConnId *connId, uint8_t *rcvData, int32_t dataLen)
 {
     BkfPuberConn *conn = BkfPuberConnFind(connMng, connId);
     if (conn == VOS_NULL) {
         BKF_LOG_WARN(BKF_LOG_HND, "connId(%#x)/rcvData(%#x)/dataLen(%u), conn(%#x)\n", BKF_MASK_ADDR(connId),
-                     BKF_MASK_ADDR(rcvData), dataLen, BKF_MASK_ADDR(conn));
+            BKF_MASK_ADDR(rcvData), dataLen, BKF_MASK_ADDR(conn));
         return;
     }
 
@@ -193,6 +191,7 @@ STATIC void BkfPuberConnOnTrigSlowSchedSess(BkfPuberConn *conn)
 
 STATIC uint32_t BkfPuberConnOnTmrTO(BkfPuberConn *conn, void *paramTmrLibUnknown)
 {
+    (void)paramTmrLibUnknown;
     BkfPuberConnLockDel(conn);
     uint32_t ret = BkfPuberConnFsmProc(conn, BKF_PUBER_CONN_EVT_TMR, VOS_NULL);
     BkfPuberConnUnlockDel(conn);
@@ -218,8 +217,8 @@ STATIC BkfPuberConn *BkfPuberConnDelIfRetNeedDel(BkfPuberConn *conn, uint32_t re
 STATIC uint32_t BkfPuberConnProcRcvData(BkfPuberConn *conn, uint8_t *rcvData, int32_t dataLen)
 {
     BkfPuberConnMng *connMng = conn->connMng;
-    BKF_LOG_DEBUG(BKF_LOG_HND, "conn(%#x), rcvData(%#x)/dataLen(%d)\n", BKF_MASK_ADDR(conn),
-                  BKF_MASK_ADDR(rcvData), dataLen);
+    BKF_LOG_DEBUG(BKF_LOG_HND, "conn(%#x), rcvData(%#x)/dataLen(%d)\n", BKF_MASK_ADDR(conn), BKF_MASK_ADDR(rcvData),
+        dataLen);
 
     BkfMsgDecoder decoder;
     uint32_t ret = BkfPuberConnInitDecoderForRcvData(conn, rcvData, dataLen, &decoder);
@@ -244,7 +243,7 @@ STATIC uint32_t BkfPuberConnProcRcvData(BkfPuberConn *conn, uint8_t *rcvData, in
 }
 
 STATIC uint32_t BkfPuberConnInitDecoderForRcvData(BkfPuberConn *conn, uint8_t *rcvData, int32_t dataLen,
-                                                  BkfMsgDecoder *decoder)
+    BkfMsgDecoder *decoder)
 {
     /*
     1. 如果bufq为空，根据rcvData直接初始化decoder
@@ -253,8 +252,8 @@ STATIC uint32_t BkfPuberConnInitDecoderForRcvData(BkfPuberConn *conn, uint8_t *r
     BkfPuberConnMng *connMng = conn->connMng;
     BkfDcSliceVTbl *sliceVTbl = BKF_DC_GET_SLICE_VTBL(connMng->argInit->dc);
     if (conn->rcvDataBuf == VOS_NULL) {
-        return BkfMsgDecodeInit(decoder, connMng->argInit->name, rcvData, dataLen,
-                                 sliceVTbl->keyLen, sliceVTbl->keyCodec, sliceVTbl->keyGetStrOrNull, BKF_LOG_HND);
+        return BkfMsgDecodeInit(decoder, connMng->argInit->name, rcvData, dataLen, sliceVTbl->keyLen,
+            sliceVTbl->keyCodec, sliceVTbl->keyGetStrOrNull, BKF_LOG_HND);
     }
 
     int32_t enqLen = BkfBufqEn(conn->rcvDataBuf, rcvData, dataLen);
@@ -262,9 +261,9 @@ STATIC uint32_t BkfPuberConnInitDecoderForRcvData(BkfPuberConn *conn, uint8_t *r
         return BKF_ERR;
     }
 
-    return BkfMsgDecodeInit(decoder, connMng->argInit->name,
-                             BkfBufqGetUsedBegin(conn->rcvDataBuf), BkfBufqGetUsedLen(conn->rcvDataBuf),
-                             sliceVTbl->keyLen, sliceVTbl->keyCodec, sliceVTbl->keyGetStrOrNull, BKF_LOG_HND);
+    return BkfMsgDecodeInit(decoder, connMng->argInit->name, BkfBufqGetUsedBegin(conn->rcvDataBuf),
+        BkfBufqGetUsedLen(conn->rcvDataBuf), sliceVTbl->keyLen, sliceVTbl->keyCodec, sliceVTbl->keyGetStrOrNull,
+        BKF_LOG_HND);
 }
 
 STATIC uint32_t BkfPuberConnProcOneMsgInDecoder(BkfPuberConn *conn, BkfMsgDecoder *decoder, BkfMsgHead *msgHead)
@@ -299,8 +298,8 @@ STATIC uint32_t BkfPuberConnProcDataInDecoder(BkfPuberConn *conn, BkfMsgDecoder 
     BkfMsgHead *msgHead = VOS_NULL;
     uint32_t errCode = BKF_OK;
     while ((msgHead = BkfMsgDecodeMsgHead(decoder, &errCode)) != VOS_NULL) {
-        BKF_LOG_DEBUG(BKF_LOG_HND, "msgId(%u, %s)/bodyLen(%u), errCode(%u)\n",
-                      msgHead->msgId, BkfMsgGetIdStr(msgHead->msgId), msgHead->bodyLen, errCode);
+        BKF_LOG_DEBUG(BKF_LOG_HND, "msgId(%u, %s)/bodyLen(%u), errCode(%u)\n", msgHead->msgId,
+            BkfMsgGetIdStr(msgHead->msgId), msgHead->bodyLen, errCode);
 
         uint32_t ret = BkfPuberConnProcOneMsgInDecoder(conn, decoder, msgHead);
         BKF_LOG_DEBUG(BKF_LOG_HND, "ret(%u)\n", ret);
@@ -386,9 +385,9 @@ STATIC uint32_t BkfPuberConnInitDecoderForRcvDataEvent(BkfPuberConn *conn, BkfMs
 {
     BkfPuberConnMng *connMng = conn->connMng;
     BkfDcSliceVTbl *sliceVTbl = BKF_DC_GET_SLICE_VTBL(connMng->argInit->dc);
-    uint32_t ret = BkfMsgDecodeInit(decoder, connMng->argInit->name,
-                                   BkfBufqGetUsedBegin(conn->rcvDataBuf), BkfBufqGetUsedLen(conn->rcvDataBuf),
-                                   sliceVTbl->keyLen, sliceVTbl->keyCodec, sliceVTbl->keyGetStrOrNull, BKF_LOG_HND);
+    uint32_t ret = BkfMsgDecodeInit(decoder, connMng->argInit->name, BkfBufqGetUsedBegin(conn->rcvDataBuf),
+        BkfBufqGetUsedLen(conn->rcvDataBuf), sliceVTbl->keyLen, sliceVTbl->keyCodec, sliceVTbl->keyGetStrOrNull,
+        BKF_LOG_HND);
     if (ret != BKF_OK) {
         BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u)\n", ret);
     }
@@ -469,14 +468,14 @@ void BkfPuberConnUninit(BkfPuberConnMng *connMng)
 
 uint32_t BkfPuberConnEnable(BkfPuberConnMng *connMng)
 {
-    BkfChSerEnableArg arg = { .cookie = connMng,
-                              .onMayAccept = (F_BKF_CH_SER_ON_MAY_ACCEPT)BkfPuberConnOnMayAccept,
-                              .onConn = (F_BKF_CH_SER_ON_CONN)BkfPuberConnOnConn,
-                              .onRcvData = (F_BKF_CH_SER_ON_RCV_DATA)BkfPuberConnOnRcvData,
-                              .onRcvDataEvent = (F_BKF_CH_SER_ON_RCV_DATA_EVENT)BkfPuberConnOnRcvDataEvent,
-                              .onUnblock = (F_BKF_CH_SER_ON_UNBLOCK)BkfPuberConnOnUnblock,
-                              .onDisconn = (F_BKF_CH_SER_ON_DISCONN)BkfPuberConnOnDisconn,
-                              .onConnEx =  (F_BKF_CH_SER_ON_CONNEX)BkfPuberConnOnConnEx };
+    BkfChSerEnableArg arg = {.cookie = connMng,
+        .onMayAccept = (F_BKF_CH_SER_ON_MAY_ACCEPT)BkfPuberConnOnMayAccept,
+        .onConn = (F_BKF_CH_SER_ON_CONN)BkfPuberConnOnConn,
+        .onRcvData = (F_BKF_CH_SER_ON_RCV_DATA)BkfPuberConnOnRcvData,
+        .onRcvDataEvent = (F_BKF_CH_SER_ON_RCV_DATA_EVENT)BkfPuberConnOnRcvDataEvent,
+        .onUnblock = (F_BKF_CH_SER_ON_UNBLOCK)BkfPuberConnOnUnblock,
+        .onDisconn = (F_BKF_CH_SER_ON_DISCONN)BkfPuberConnOnDisconn,
+        .onConnEx = (F_BKF_CH_SER_ON_CONNEX)BkfPuberConnOnConnEx};
     return BkfChSerEnable(connMng->argInit->chMng, &arg);
 }
 
@@ -495,4 +494,3 @@ void BkfPuberConnUnsetSelfUrl(BkfPuberConnMng *connMng, BkfUrl *url)
 #ifdef __cplusplus
 }
 #endif
-

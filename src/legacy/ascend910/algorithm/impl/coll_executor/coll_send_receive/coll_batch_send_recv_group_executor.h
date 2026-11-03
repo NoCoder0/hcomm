@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef COLL_BATCH_SEND_RECV_GROUP_EXECUTOR_H
 #define COLL_BATCH_SEND_RECV_GROUP_EXECUTOR_H
@@ -18,11 +18,11 @@
 namespace hccl {
 class CollBatchSendRecvGroupExecutor : public CollBatchSendRecvExecutor {
 public:
-    CollBatchSendRecvGroupExecutor(const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher> &topoMatcher);
+    CollBatchSendRecvGroupExecutor(const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher>& topoMatcher);
     ~CollBatchSendRecvGroupExecutor() override = default;
     HcclResult Orchestrate(OpParam& param, AlgResourceResponse& algResource) override;
-protected:
 
+protected:
     /* *************** 算法编排 *************** */
     u64 CalcSendLoopMaxCount(const u32 unitSize) const;
     u64 CalcRecvLoopMaxCount(const u32 unitSize) const;
@@ -37,7 +37,11 @@ protected:
         u32 remoteRank;
         bool isRdma; // true=RDMA任务(用CCLOut拆半，无ping-pong)；false=SDMA任务(用CCLIn，ping-pong)
         SendRecvSlice(u8* addr, u64 size, u32 remoteRank, bool isRdma = false)
-            : addr(addr), size(size), remoteRank(remoteRank), isRdma(isRdma) {}
+            : addr(addr),
+              size(size),
+              remoteRank(remoteRank),
+              isRdma(isRdma)
+        {}
     };
 
     // SDMA slice按remoteRank % streamNum分发到各SDMA从流(仅SDMA，ping-pong)。
@@ -78,19 +82,20 @@ private:
     HcclResult CalcStreamTaskStatus(u32& nonEmptySendStream, u32& nonEmptyRecvStream);
 
     // 对称场景规则：send前向递增/recv后向递减遍历，跳过本pod。返回当前候选rank并推进游标。
-    u32 GetNextDstRank(u32& curDstRank);
-    u32 GetPreSrcRank(u32& curSrcRank);
+    u32 GetNextDstRank(u32& curDstRank) const;
+    u32 GetPreSrcRank(u32& curSrcRank) const;
+    // 计算是否为非对称超节点场景(参考alltoallv_direct_fullmesh executor中的isSuPodAsym判断)
+    void CalcIsSuPodAsym(bool isA2MultiModule);
     // 按对称场景规则对RDMA slice排序：isSend=true用前向(GetNextDstRank)，false用后向(GetPreSrcRank)。
     // 遍历所有跨pod对端，仅输出存在任务的对端的slice(起点初始化与每次更新均跳过无任务对端)。
-    void OrderRdmaSlices(bool isSend, const std::map<u32, std::deque<SendRecvSlice>>& byRank,
-                         std::deque<SendRecvSlice>& out);
+    void OrderRdmaSlices(
+        bool isSend, const std::map<u32, std::deque<SendRecvSlice>>& byRank, std::deque<SendRecvSlice>& out);
 
     // RDMA专用从流在slaveStreams中的索引。
     u32 RdmaSendStreamIdx() const { return sendStreamNum_ + recvStreamNum_; }
     u32 RdmaRecvStreamIdx() const { return sendStreamNum_ + recvStreamNum_ + 1; }
 
 private:
-
     std::vector<std::deque<HcclSendRecvItem*>> sendQueueBySendstream_;
     std::vector<std::deque<HcclSendRecvItem*>> recvQueueByRecvstream_;
     u32 sendStreamNum_ = 0;
@@ -100,6 +105,7 @@ private:
     u32 podStartRank_ = 0; // pod(rank)范围，用于判定isRdma：[podStartRank_, podEndRank_]内为SDMA，跨pod为RDMA
     u32 podEndRank_ = 0;
     u32 devNumInlocalPod_ = 0; // 本pod内rank数，用于对称场景规则起点的计算
+    bool isSuPodAsym_ = false; // 非对称场景：A2A3卡数不一致或A3多超节点server数不同时为true，send/recv使用相同遍历顺序
     // Ping-pong state
     std::vector<u32> sendCurPhase_;         // which half has loaded data, ready to Record+Send (0=A, 1=B)
     std::vector<u64> sendLoadedSize_;       // size of data loaded in current sendCurPhase_ half (0 = nothing)
@@ -108,10 +114,10 @@ private:
     std::vector<u32> recvCurRemoteRank_;    // current remote rank being received on this stream
 
     // 各从流是否有任务(在RunTasks起始时记录，循环中不更新)，用于头尾同步只唤醒有任务的从流。
-    std::vector<bool> sendStreamHasTask_;   // send从流(共sendStreamNum_条)是否有任务
-    std::vector<bool> recvStreamHasTask_;   // recv从流(共recvStreamNum_条)是否有任务
-    bool rdmaSendHasTask_ = false;          // RDMA专用send从流是否有任务
-    bool rdmaRecvHasTask_ = false;          // RDMA专用recv从流是否有任务
+    std::vector<bool> sendStreamHasTask_; // send从流(共sendStreamNum_条)是否有任务
+    std::vector<bool> recvStreamHasTask_; // recv从流(共recvStreamNum_条)是否有任务
+    bool rdmaSendHasTask_ = false;        // RDMA专用send从流是否有任务
+    bool rdmaRecvHasTask_ = false;        // RDMA专用recv从流是否有任务
 };
 } // namespace hccl
 

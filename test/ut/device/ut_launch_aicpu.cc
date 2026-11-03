@@ -4,7 +4,7 @@
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR OR FITNESS FOR A PARTICULAR PURPOSE.
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -25,26 +25,14 @@
 using namespace std;
 using namespace hccl;
 
-static aclError stubCacheLastTaskExtendInfoSuccess(const char* tag, size_t tagLen)
-{
-    return ACL_SUCCESS;
-}
+static aclError stubCacheLastTaskExtendInfoSuccess(const char* tag, size_t tagLen) { return ACL_SUCCESS; }
 
-static aclError stubCacheLastTaskExtendInfoFail(const char* tag, size_t tagLen)
-{
-    return static_cast<aclError>(2);
-}
+static aclError stubCacheLastTaskExtendInfoFail(const char* tag, size_t tagLen) { return static_cast<aclError>(2); }
 
 class LaunchAicpuUT : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "LaunchAicpuUT SetUP" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "LaunchAicpuUT TearDown" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "LaunchAicpuUT SetUP" << std::endl; }
+    static void TearDownTestCase() { std::cout << "LaunchAicpuUT TearDown" << std::endl; }
 };
 
 TEST_F(LaunchAicpuUT, AicpuAclKernelLaunchV2_When_BinHandleIsNull_Expect_ReturnPtrError)
@@ -77,9 +65,7 @@ TEST_F(LaunchAicpuUT, AicpuAclKernelLaunchV2_When_GetFunctionFail_Expect_ReturnR
     aclrtBinHandle binHandle = reinterpret_cast<aclrtBinHandle>(1);
     u32 addr = 1;
     u32 size = 10;
-    MOCKER(aclrtBinaryGetFunction)
-        .stubs()
-        .will(returnValue(ACL_ERROR_RT_FEATURE_NOT_SUPPORT));
+    MOCKER(aclrtBinaryGetFunction).stubs().will(returnValue(ACL_ERROR_RT_FEATURE_NOT_SUPPORT));
     HcclResult ret = AicpuAclKernelLaunchV2(stm, &addr, size, binHandle, "test", true, 0, nullptr, 0, "tag");
     EXPECT_EQ(ret, HCCL_E_RUNTIME);
     GlobalMockObject::verify();
@@ -91,10 +77,12 @@ TEST_F(LaunchAicpuUT, CacheTaskOpInfo_ExtendInfoNotSupported_Expect_ReturnSucces
 
     aclmdlRICaptureStatus captureStatus = aclmdlRICaptureStatus::ACL_MODEL_RI_CAPTURE_STATUS_ACTIVE;
     int mockModel = 0;
-    void *pmockModel = &mockModel;
+    void* pmockModel = &mockModel;
     MOCKER(aclmdlRICaptureGetInfo)
         .stubs()
-        .with(mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)), outBoundP(&pmockModel, sizeof(pmockModel)))
+        .with(
+            mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)),
+            outBoundP(&pmockModel, sizeof(pmockModel)))
         .will(returnValue(ACL_SUCCESS));
 
     aclrtStreamAttrValue value;
@@ -104,9 +92,7 @@ TEST_F(LaunchAicpuUT, CacheTaskOpInfo_ExtendInfoNotSupported_Expect_ReturnSucces
         .with(mockcpp::any(), mockcpp::any(), outBoundP(&value, sizeof(value)))
         .will(returnValue(ACL_SUCCESS));
 
-    MOCKER(hrtCacheLastTaskExtendInfo)
-        .stubs()
-        .will(returnValue(HCCL_E_NOT_SUPPORT));
+    MOCKER(hrtCacheLastTaskExtendInfo).stubs().will(returnValue(HCCL_E_NOT_SUPPORT));
 
     HcclResult ret = CacheTaskOpInfo(stream, "test_identify");
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -119,10 +105,12 @@ TEST_F(LaunchAicpuUT, CacheTaskOpInfo_ExtendInfoCallSuccess_Expect_ReturnSuccess
 
     aclmdlRICaptureStatus captureStatus = aclmdlRICaptureStatus::ACL_MODEL_RI_CAPTURE_STATUS_ACTIVE;
     int mockModel = 0;
-    void *pmockModel = &mockModel;
+    void* pmockModel = &mockModel;
     MOCKER(aclmdlRICaptureGetInfo)
         .stubs()
-        .with(mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)), outBoundP(&pmockModel, sizeof(pmockModel)))
+        .with(
+            mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)),
+            outBoundP(&pmockModel, sizeof(pmockModel)))
         .will(returnValue(ACL_SUCCESS));
 
     aclrtStreamAttrValue value;
@@ -132,9 +120,7 @@ TEST_F(LaunchAicpuUT, CacheTaskOpInfo_ExtendInfoCallSuccess_Expect_ReturnSuccess
         .with(mockcpp::any(), mockcpp::any(), outBoundP(&value, sizeof(value)))
         .will(returnValue(ACL_SUCCESS));
 
-    MOCKER(hrtCacheLastTaskExtendInfo)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtCacheLastTaskExtendInfo).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = CacheTaskOpInfo(stream, "test_identify");
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -147,10 +133,12 @@ TEST_F(LaunchAicpuUT, CacheTaskOpInfo_ExtendInfoCallFailed_Expect_ReturnRuntimeE
 
     aclmdlRICaptureStatus captureStatus = aclmdlRICaptureStatus::ACL_MODEL_RI_CAPTURE_STATUS_ACTIVE;
     int mockModel = 0;
-    void *pmockModel = &mockModel;
+    void* pmockModel = &mockModel;
     MOCKER(aclmdlRICaptureGetInfo)
         .stubs()
-        .with(mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)), outBoundP(&pmockModel, sizeof(pmockModel)))
+        .with(
+            mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)),
+            outBoundP(&pmockModel, sizeof(pmockModel)))
         .will(returnValue(ACL_SUCCESS));
 
     aclrtStreamAttrValue value;
@@ -160,9 +148,7 @@ TEST_F(LaunchAicpuUT, CacheTaskOpInfo_ExtendInfoCallFailed_Expect_ReturnRuntimeE
         .with(mockcpp::any(), mockcpp::any(), outBoundP(&value, sizeof(value)))
         .will(returnValue(ACL_SUCCESS));
 
-    MOCKER(hrtCacheLastTaskExtendInfo)
-        .stubs()
-        .will(returnValue(HCCL_E_RUNTIME));
+    MOCKER(hrtCacheLastTaskExtendInfo).stubs().will(returnValue(HCCL_E_RUNTIME));
 
     HcclResult ret = CacheTaskOpInfo(stream, "test_identify");
     EXPECT_EQ(ret, HCCL_E_RUNTIME);
@@ -175,12 +161,8 @@ TEST_F(LaunchAicpuUT, AicpuAclKernelLaunchV2_When_LaunchKernelFail_Expect_Return
     aclrtBinHandle binHandle = reinterpret_cast<aclrtBinHandle>(1);
     u32 addr = 1;
     u32 size = 10;
-    MOCKER(aclrtBinaryGetFunction)
-        .stubs()
-        .will(returnValue(ACL_SUCCESS));
-    MOCKER(aclrtLaunchKernelWithHostArgs)
-        .stubs()
-        .will(returnValue(ACL_ERROR_RT_FEATURE_NOT_SUPPORT));
+    MOCKER(aclrtBinaryGetFunction).stubs().will(returnValue(ACL_SUCCESS));
+    MOCKER(aclrtLaunchKernelWithHostArgs).stubs().will(returnValue(ACL_ERROR_RT_FEATURE_NOT_SUPPORT));
     HcclResult ret = AicpuAclKernelLaunchV2(stm, &addr, size, binHandle, "test", true, 0, nullptr, 0, "tag");
     EXPECT_EQ(ret, HCCL_E_RUNTIME);
     GlobalMockObject::verify();
@@ -192,15 +174,9 @@ TEST_F(LaunchAicpuUT, AicpuAclKernelLaunchV2_When_CaptureNotSupport_Expect_Retur
     aclrtBinHandle binHandle = reinterpret_cast<aclrtBinHandle>(1);
     u32 addr = 1;
     u32 size = 10;
-    MOCKER(aclrtBinaryGetFunction)
-        .stubs()
-        .will(returnValue(ACL_SUCCESS));
-    MOCKER(aclrtLaunchKernelWithHostArgs)
-        .stubs()
-        .will(returnValue(ACL_SUCCESS));
-    MOCKER(aclmdlRICaptureGetInfo)
-        .stubs()
-        .will(returnValue(ACL_ERROR_RT_FEATURE_NOT_SUPPORT));
+    MOCKER(aclrtBinaryGetFunction).stubs().will(returnValue(ACL_SUCCESS));
+    MOCKER(aclrtLaunchKernelWithHostArgs).stubs().will(returnValue(ACL_SUCCESS));
+    MOCKER(aclmdlRICaptureGetInfo).stubs().will(returnValue(ACL_ERROR_RT_FEATURE_NOT_SUPPORT));
     HcclResult ret = AicpuAclKernelLaunchV2(stm, &addr, size, binHandle, "test", true, 0, nullptr, 0, "tag");
     EXPECT_EQ(ret, HCCL_SUCCESS);
     GlobalMockObject::verify();
@@ -212,15 +188,9 @@ TEST_F(LaunchAicpuUT, AicpuAclKernelLaunchV2_When_CaptureGetInfoFail_Expect_Retu
     aclrtBinHandle binHandle = reinterpret_cast<aclrtBinHandle>(1);
     u32 addr = 1;
     u32 size = 10;
-    MOCKER(aclrtBinaryGetFunction)
-        .stubs()
-        .will(returnValue(ACL_SUCCESS));
-    MOCKER(aclrtLaunchKernelWithHostArgs)
-        .stubs()
-        .will(returnValue(ACL_SUCCESS));
-    MOCKER(aclmdlRICaptureGetInfo)
-        .stubs()
-        .will(returnValue(static_cast<aclError>(ACL_ERROR_RT_INTERNAL_ERROR)));
+    MOCKER(aclrtBinaryGetFunction).stubs().will(returnValue(ACL_SUCCESS));
+    MOCKER(aclrtLaunchKernelWithHostArgs).stubs().will(returnValue(ACL_SUCCESS));
+    MOCKER(aclmdlRICaptureGetInfo).stubs().will(returnValue(static_cast<aclError>(ACL_ERROR_RT_INTERNAL_ERROR)));
     HcclResult ret = AicpuAclKernelLaunchV2(stm, &addr, size, binHandle, "test", true, 0, nullptr, 0, "tag");
     EXPECT_EQ(ret, HCCL_E_RUNTIME);
     GlobalMockObject::verify();
@@ -232,18 +202,10 @@ TEST_F(LaunchAicpuUT, AicpuAclKernelLaunchV2_When_GetStreamAttrFail_Expect_Retur
     aclrtBinHandle binHandle = reinterpret_cast<aclrtBinHandle>(1);
     u32 addr = 1;
     u32 size = 10;
-    MOCKER(aclrtBinaryGetFunction)
-        .stubs()
-        .will(returnValue(ACL_SUCCESS));
-    MOCKER(aclrtLaunchKernelWithHostArgs)
-        .stubs()
-        .will(returnValue(ACL_SUCCESS));
-    MOCKER(aclmdlRICaptureGetInfo)
-        .stubs()
-        .will(returnValue(ACL_SUCCESS));
-    MOCKER(aclrtGetStreamAttribute)
-        .stubs()
-        .will(returnValue(static_cast<aclError>(ACL_ERROR_RT_INTERNAL_ERROR)));
+    MOCKER(aclrtBinaryGetFunction).stubs().will(returnValue(ACL_SUCCESS));
+    MOCKER(aclrtLaunchKernelWithHostArgs).stubs().will(returnValue(ACL_SUCCESS));
+    MOCKER(aclmdlRICaptureGetInfo).stubs().will(returnValue(ACL_SUCCESS));
+    MOCKER(aclrtGetStreamAttribute).stubs().will(returnValue(static_cast<aclError>(ACL_ERROR_RT_INTERNAL_ERROR)));
     HcclResult ret = AicpuAclKernelLaunchV2(stm, &addr, size, binHandle, "test", true, 0, nullptr, 0, "tag");
     EXPECT_EQ(ret, HCCL_E_RUNTIME);
     GlobalMockObject::verify();
@@ -256,19 +218,17 @@ TEST_F(LaunchAicpuUT, AicpuAclKernelLaunchV2_When_CacheTaskOpInfoSuccess_Expect_
     u32 addr = 1;
     u32 size = 10;
 
-    MOCKER(aclrtBinaryGetFunction)
-        .stubs()
-        .will(returnValue(ACL_SUCCESS));
-    MOCKER(aclrtLaunchKernelWithHostArgs)
-        .stubs()
-        .will(returnValue(ACL_SUCCESS));
+    MOCKER(aclrtBinaryGetFunction).stubs().will(returnValue(ACL_SUCCESS));
+    MOCKER(aclrtLaunchKernelWithHostArgs).stubs().will(returnValue(ACL_SUCCESS));
 
     aclmdlRICaptureStatus captureStatus = aclmdlRICaptureStatus::ACL_MODEL_RI_CAPTURE_STATUS_ACTIVE;
     int mockModel = 0;
-    void *pmockModel = &mockModel;
+    void* pmockModel = &mockModel;
     MOCKER(aclmdlRICaptureGetInfo)
         .stubs()
-        .with(mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)), outBoundP(&pmockModel, sizeof(pmockModel)))
+        .with(
+            mockcpp::any(), outBoundP(&captureStatus, sizeof(captureStatus)),
+            outBoundP(&pmockModel, sizeof(pmockModel)))
         .will(returnValue(ACL_SUCCESS));
 
     aclrtStreamAttrValue value;
@@ -278,9 +238,7 @@ TEST_F(LaunchAicpuUT, AicpuAclKernelLaunchV2_When_CacheTaskOpInfoSuccess_Expect_
         .with(mockcpp::any(), mockcpp::any(), outBoundP(&value, sizeof(value)))
         .will(returnValue(ACL_SUCCESS));
 
-    MOCKER(hrtCacheLastTaskExtendInfo)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtCacheLastTaskExtendInfo).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = AicpuAclKernelLaunchV2(stm, &addr, size, binHandle, "test", true, 0, nullptr, 0, "tag");
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -289,9 +247,7 @@ TEST_F(LaunchAicpuUT, AicpuAclKernelLaunchV2_When_CacheTaskOpInfoSuccess_Expect_
 
 TEST_F(LaunchAicpuUT, hrtCacheLastTaskExtendInfo_DlsymNull_Expect_ReturnNotSupport)
 {
-    MOCKER(HcclDlsym)
-        .stubs()
-        .will(returnValue((void*)nullptr));
+    MOCKER(HcclDlsym).stubs().will(returnValue((void*)nullptr));
 
     HcclResult ret = hrtCacheLastTaskExtendInfo("test_tag", 8);
     EXPECT_EQ(ret, HCCL_E_NOT_SUPPORT);
@@ -300,9 +256,7 @@ TEST_F(LaunchAicpuUT, hrtCacheLastTaskExtendInfo_DlsymNull_Expect_ReturnNotSuppo
 
 TEST_F(LaunchAicpuUT, hrtCacheLastTaskExtendInfo_CallSuccess_Expect_ReturnSuccess)
 {
-    MOCKER(HcclDlsym)
-        .stubs()
-        .will(returnValue((void*)stubCacheLastTaskExtendInfoSuccess));
+    MOCKER(HcclDlsym).stubs().will(returnValue((void*)stubCacheLastTaskExtendInfoSuccess));
 
     HcclResult ret = hrtCacheLastTaskExtendInfo("test_tag", 8);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -311,9 +265,7 @@ TEST_F(LaunchAicpuUT, hrtCacheLastTaskExtendInfo_CallSuccess_Expect_ReturnSucces
 
 TEST_F(LaunchAicpuUT, hrtCacheLastTaskExtendInfo_CallFail_Expect_ReturnRuntimeError)
 {
-    MOCKER(HcclDlsym)
-        .stubs()
-        .will(returnValue((void*)stubCacheLastTaskExtendInfoFail));
+    MOCKER(HcclDlsym).stubs().will(returnValue((void*)stubCacheLastTaskExtendInfoFail));
 
     HcclResult ret = hrtCacheLastTaskExtendInfo("test_tag", 8);
     EXPECT_EQ(ret, HCCL_E_RUNTIME);

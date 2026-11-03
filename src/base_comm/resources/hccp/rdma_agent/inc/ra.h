@@ -29,7 +29,6 @@
 #endif
 
 #define RA_MAX_PHY_ID_NUM 64
-
 #define MAX_SUPPORT_IFNUM 65536
 #define SOCKET_SEND_MAXLEN 2048
 #define MAX_HDC_DATA 65536
@@ -37,10 +36,9 @@
 
 #define MAX_WLIST_NUM 16
 #define MAX_WLIST_NUM_V1 32
-#define MAX_SG_LIST_LEN_MAX     2147483648
+#define MAX_SG_LIST_LEN_MAX 2147483648
 
-#define ra_conn_para_check(conn, num) \
-    ((num) == 0 || (num) > MAX_SOCKET_NUM)
+#define ra_conn_para_check(conn, num) ((num) == 0 || (num) > MAX_SOCKET_NUM)
 
 #define PROCESS_RA_SIGN_LENGTH 49
 #define PROCESS_RA_RESV_LENGTH 4
@@ -54,10 +52,10 @@ struct ProcessRaSign {
     char sign[PROCESS_RA_SIGN_LENGTH];
 };
 
-#define container_of(ptr, type, member)                    \
-    ({                                                     \
-        const typeof(((type *)0)->member) *__mptr = (ptr); \
-        (type *)((char *)__mptr - offsetof(type, member)); \
+#define container_of(ptr, type, member)                                                                                \
+    ({                                                                                                                 \
+        const typeof(((type *)0)->member) *__mptr = (ptr);                                                             \
+        (type *)((char *)__mptr - offsetof(type, member));                                                             \
     })
 
 #define list_entry(n, type, member) container_of(n, type, member)
@@ -72,10 +70,11 @@ static inline void RA_INIT_LIST_HEAD(struct RaListHead *list)
     list->prev = list;
 }
 
-#define RA_LIST_GET_HEAD_ENTRY(pos, n, head, member, type) do { \
-    (pos) = list_entry((head)->next, type, member);       \
-    (n) = list_entry((pos)->member.next, type, member);     \
-} while (0)
+#define RA_LIST_GET_HEAD_ENTRY(pos, n, head, member, type)                                                             \
+    do {                                                                                                               \
+        (pos) = list_entry((head)->next, type, member);                                                                \
+        (n) = list_entry((pos)->member.next, type, member);                                                            \
+    } while (0)
 
 static inline bool RaListEmpty(struct RaListHead *head)
 {
@@ -141,20 +140,22 @@ struct RaRdmaHandle {
     unsigned int logicDevid;
     int sensorUpdateCnt;
     uint64_t sensorHandle;
-    uint64_t qpCnt;  // record the number of ra_qp_create_with_attrs function calls
+    uint64_t qpCnt; // record the number of ra_qp_create_with_attrs function calls
     bool enabled2mbLite;
     uint8_t gid[HCCP_GID_RAW_LEN];
     uint64_t notifyVa;
     uint64_t notifySize;
+    struct RaListHead typicalLiteCqList;
+    pthread_mutex_t typicalLiteCqMutex;
 };
 
 struct RaSocketHandle {
     int scopeId;
     struct rdev rdevInfo;
     struct RaSocketOps *socketOps;
-    uint64_t closeCnt;      // record the number of ra_socket_batch_close function calls
-    uint64_t connectCnt;    // record the number of ra_socket_batch_connect function calls
-    uint64_t abortCnt;      // record the number of ra_socket_batch_abort function calls
+    uint64_t closeCnt;   // record the number of ra_socket_batch_close function calls
+    uint64_t connectCnt; // record the number of ra_socket_batch_connect function calls
+    uint64_t abortCnt;   // record the number of ra_socket_batch_abort function calls
 };
 
 struct RaLoopbackInfo {
@@ -166,7 +167,6 @@ struct RaLoopbackInfo {
 
 struct RaCqHandleExt {
     unsigned long long addr;
-    struct RaRdmaHandle *rdmaHandle;
 };
 
 struct RaTypicalCqHandle {
@@ -208,7 +208,7 @@ struct RaQpHandle {
     unsigned int psn;
     unsigned int gidIdx;
     unsigned int sqDepth; // only valid in RDMA Lite scenario
-    unsigned int bpCnt; // only valid in RDMA Lite scenario
+    unsigned int bpCnt;   // only valid in RDMA Lite scenario
     struct RaLoopbackInfo *loopbackInfo;
     struct RaQpHandle *loopbackQpHandle;
     int directFlag;

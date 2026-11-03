@@ -8,6 +8,7 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
+#include "common/cast_utils_pub.h"
 #include "dev_buffer.h"
 #include "string_util.h"
 #include "internal_exception.h"
@@ -27,8 +28,7 @@ DevBuffer::DevBuffer(std::size_t allocSize) : Buffer(allocSize), selfOwned(true)
         std::string msg = "allocaSize should not be 0!";
         THROW<InternalException>(msg);
     }
-    addr_ = reinterpret_cast<uintptr_t>(HrtMalloc(allocSize,
-												  static_cast<u32>(ACL_MEM_TYPE_HIGH_BAND_WIDTH)));
+    addr_ = ReinterpretAs<uintptr_t>(HrtMalloc(allocSize, static_cast<u32>(ACL_MEM_TYPE_HIGH_BAND_WIDTH)));
 }
 
 std::shared_ptr<DevBuffer> DevBuffer::Create(uintptr_t devAddr, std::size_t devSize)
@@ -38,25 +38,27 @@ std::shared_ptr<DevBuffer> DevBuffer::Create(uintptr_t devAddr, std::size_t devS
     }
     return std::shared_ptr<DevBuffer>(new DevBuffer(devAddr, devSize));
 }
-DevBuffer::DevBuffer(std::size_t allocSize, std::uint32_t policy, PolicyTag /*tag*/) : Buffer(allocSize), selfOwned(true)
+DevBuffer::DevBuffer(std::size_t allocSize, std::uint32_t policy, PolicyTag /*tag*/)
+    : Buffer(allocSize),
+      selfOwned(true)
 {
     if (allocSize == 0) {
         std::string msg = "allocaSize should not be 0!";
         THROW<InternalException>(msg);
     }
-    addr_ = reinterpret_cast<uintptr_t>(HrtMalloc(allocSize,
-                                                  static_cast<int>(ACL_MEM_TYPE_HIGH_BAND_WIDTH) |
-	                                                  static_cast<int>(policy)));
+    addr_ = ReinterpretAs<uintptr_t>(
+        HrtMalloc(allocSize, static_cast<int>(ACL_MEM_TYPE_HIGH_BAND_WIDTH) | static_cast<int>(policy)));
 }
 
-std::shared_ptr<DevBuffer> DevBuffer::CreateHugePageBuf(std::size_t size){
-	return std::make_shared<DevBuffer>(size, static_cast<int>(ACL_MEM_MALLOC_HUGE_ONLY), PolicyTag{});
+std::shared_ptr<DevBuffer> DevBuffer::CreateHugePageBuf(std::size_t size)
+{
+    return std::make_shared<DevBuffer>(size, static_cast<int>(ACL_MEM_MALLOC_HUGE_ONLY), PolicyTag{});
 }
 
 DevBuffer::~DevBuffer()
 {
     if (selfOwned) {
-        DECTOR_TRY_CATCH("Buffer", HrtFree(reinterpret_cast<void *>(addr_)))
+        DECTOR_TRY_CATCH("Buffer", HrtFree(ReinterpretAs<void*>(addr_)))
     }
 }
 
@@ -65,9 +67,6 @@ std::string DevBuffer::Describe() const
     return StringFormat("DevBuffer[addr=0x%llx, size=0x%llx, selfOwned=%d]", addr_, size_, selfOwned);
 }
 
-bool DevBuffer::GetSelfOwned() const
-{
-    return selfOwned;
-}
+bool DevBuffer::GetSelfOwned() const { return selfOwned; }
 
 } // namespace Hccl

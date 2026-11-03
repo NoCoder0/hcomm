@@ -12,7 +12,7 @@
 #include "adapter_hal.h"
 
 namespace hccl {
-HcclResult MemMappingManager::MapMem(s32 deviceLogicID, void *addr, u64 size, void *&devVA)
+HcclResult MemMappingManager::MapMem(s32 deviceLogicID, void* addr, u64 size, void*& devVA)
 {
     if (IsRequireMapping(addr, size, devVA)) {
         DevType devType;
@@ -20,11 +20,13 @@ HcclResult MemMappingManager::MapMem(s32 deviceLogicID, void *addr, u64 size, vo
         drvRegisterTpye registerTpye = HOST_MEM_MAP_DEV;
         if ((devType == DevType::DEV_TYPE_910B) || (devType == DevType::DEV_TYPE_910_93)) {
             // 910B环境传参要特殊处理
-            HCCL_INFO("[MemMappingManager][MapMem]aclrtHostRegister begin, addr[%p], size[%llu], flag[%u]",
-                addr, size, ACL_HOST_REGISTER_MAPPED);
+            HCCL_INFO(
+                "[MemMappingManager][MapMem]aclrtHostRegister begin, addr[%p], size[%llu], flag[%u]", addr, size,
+                ACL_HOST_REGISTER_MAPPED);
             aclError aclRet = aclrtHostRegister(addr, size, ACL_HOST_REGISTER_MAPPED, &devVA);
             HCCL_INFO("[MemMappingManager][MapMem]aclrtHostRegister end, ret[%d]", aclRet);
-            CHK_PRT_RET(aclRet != ACL_SUCCESS,
+            CHK_PRT_RET(
+                aclRet != ACL_SUCCESS,
                 HCCL_ERROR("[MemMappingManager][MapMem]aclrtHostRegister failed, ret[%d]", aclRet), HCCL_E_RUNTIME);
         } else {
             CHK_RET(hrtHalHostRegister(addr, size, HOST_MEM_MAP_DEV, deviceLogicID, devVA));
@@ -38,20 +40,22 @@ HcclResult MemMappingManager::MapMem(s32 deviceLogicID, void *addr, u64 size, vo
 }
 
 // 先去map找内存，找到后引用计数--，减到0后做解映射，从map移除
-HcclResult MemMappingManager::ReleaseDevVA(s32 deviceLogicID, void *addr, u64 size)
+HcclResult MemMappingManager::ReleaseDevVA(s32 deviceLogicID, void* addr, u64 size)
 {
     std::unique_lock<std::mutex> lockMapping(mappedHostToDevMutex_);
     DevType devType;
     CHK_RET(hrtHalGetDeviceType(deviceLogicID, devType));
     u64 userAddr = reinterpret_cast<u64>(addr);
     auto iter = SearchMappingMap(userAddr, size);
-    CHK_PRT_RET((iter == mappedHostToDevMap_.end()),
+    CHK_PRT_RET(
+        (iter == mappedHostToDevMap_.end()),
         HCCL_ERROR("[MemMappingManager][ReleaseDevVA]the memory dereged isn't been reged"), HCCL_E_PARA);
     if (iter->second.ref.Unref() == 0) {
         // 解除内存映射，注册与解注册的 flag 保持一致
         if ((devType == DevType::DEV_TYPE_910B) || (devType == DevType::DEV_TYPE_910_93)) {
             aclError aclRet = aclrtHostUnregister(addr);
-            CHK_PRT_RET(aclRet != ACL_SUCCESS,
+            CHK_PRT_RET(
+                aclRet != ACL_SUCCESS,
                 HCCL_ERROR("[MemMappingManager][ReleaseDevVA]aclrtHostUnregister failed, ret[%d]", aclRet),
                 HCCL_E_RUNTIME);
         } else {
@@ -62,4 +66,4 @@ HcclResult MemMappingManager::ReleaseDevVA(s32 deviceLogicID, void *addr, u64 si
     }
     return HCCL_SUCCESS;
 }
-}
+} // namespace hccl

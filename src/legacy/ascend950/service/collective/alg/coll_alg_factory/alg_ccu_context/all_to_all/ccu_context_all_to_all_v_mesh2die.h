@@ -23,21 +23,21 @@ namespace Hccl {
 
 class CcuContextAllToAllVMesh2Die : public CcuContextAlgBase {
 public:
-    CcuContextAllToAllVMesh2Die(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                              const CcuTransportGroup &group);
+    CcuContextAllToAllVMesh2Die(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
     ~CcuContextAllToAllVMesh2Die() override {}
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
 
 protected:
     // a2a 对每个对端的发送接收信息
     struct A2AVsingleSendRecvInfo {
         CcuRep::Variable sendOffset;
         CcuRep::Variable recvOffset;
-        CcuRep::Variable sendTailSize;  // 本rank给其他所有rank要发的尾块数据
-        GroupOpSize      sendTailGoSize;
-        CcuRep::Variable sendLoopNum;   // 本rank给其他所有rank要发的轮数
+        CcuRep::Variable sendTailSize; // 本rank给其他所有rank要发的尾块数据
+        GroupOpSize sendTailGoSize;
+        CcuRep::Variable sendLoopNum; // 本rank给其他所有rank要发的轮数
     };
 
 private:
@@ -54,7 +54,7 @@ private:
     void GroupCopyToDstOutput(uint32_t peerId);
     void WriteToDstOutput(uint32_t peerId);
 
-    static constexpr uint32_t RANK_EVEN = 2;  // 只支持矩形rank分布
+    static constexpr uint32_t RANK_EVEN = 2; // 只支持矩形rank分布
     static constexpr uint64_t MAX_TRANSPORT_SIZE = UB_MAX_TRANS_SIZE;
 
     static constexpr uint32_t GO_ADDR_OFFSET_IDX = 0;
@@ -75,8 +75,8 @@ private:
     std::vector<A2AVsingleSendRecvInfo> sendRecvInfo_;
 
     bool withMyRank_{false};
-    uint32_t localSize_{0};     // 本rank所在DIE的总rank数
-    uint32_t localId_{0};       // 本rank所在DIE的编号，固定放在末尾
+    uint32_t localSize_{0}; // 本rank所在DIE的总rank数
+    uint32_t localId_{0};   // 本rank所在DIE的编号，固定放在末尾
     uint32_t peerSize_{0};
     uint32_t logicId_{0};
     std::vector<RankId> rankGroup_;

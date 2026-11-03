@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 /*
  * 该特性代码不涉及开源
@@ -28,7 +28,7 @@ using namespace hccl;
 constexpr u32 DEVISOR_VALUE_FOUR = 4;
 constexpr u32 MAX_WQE_PER_DOORBELL = 300;
 constexpr u32 QP_QUEUE_DEPTH_MAX = 32768;
-constexpr u32 QP_QUEUE_DEPTH_MIN = 128;
+constexpr u32 QP_QUEUE_DEPTH_MIN = 64;
 #define HCCN_RESV_MEM_TYPE_PDCCL (0)
 
 struct MrInfoT AscendMrInfo2MrInfo(AscendMrInfo* ascendMrInfo)
@@ -53,8 +53,9 @@ HcclResult hcclCreateAscendQP(AscendQPInfo* ascendQPInfo)
         ascendQPInfo->gid[i] = qpInfo.gid[i];
     }
     ascendQPInfo->psn = qpInfo.psn;
-    HCCL_INFO("hcclCreateAscendQP success! qpn %u, gid index %u, psn %u", ascendQPInfo->qpn,
-        ascendQPInfo->gidIdx, ascendQPInfo->psn);
+    HCCL_INFO(
+        "hcclCreateAscendQP success! qpn %u, gid index %u, psn %u", ascendQPInfo->qpn, ascendQPInfo->gidIdx,
+        ascendQPInfo->psn);
 
     return HCCL_SUCCESS;
 }
@@ -64,8 +65,9 @@ HcclResult CheckDepth(uint32_t depth)
     if (depth >= QP_QUEUE_DEPTH_MIN && ((depth & (depth - 1)) == 0) && depth <= QP_QUEUE_DEPTH_MAX) {
         return HCCL_SUCCESS;
     }
-    HCCL_ERROR("[CheckDepth]depth[%u] is invalid, depth should be power of 2 and in [%u, %u]",
-        depth, QP_QUEUE_DEPTH_MIN, QP_QUEUE_DEPTH_MAX);
+    HCCL_ERROR(
+        "[CheckDepth]depth[%u] is invalid, depth should be power of 2 and in [%u, %u]", depth, QP_QUEUE_DEPTH_MIN,
+        QP_QUEUE_DEPTH_MAX);
     return HCCL_E_PARA;
 }
 
@@ -79,7 +81,8 @@ HcclResult hcclCreateAscendQPWithAttr(AscendQPInfo* ascendQPInfo)
     CHK_RET(CheckDepth(ascendQPInfo->rq_depth));
     CHK_RET(CheckDepth(ascendQPInfo->rcq_depth));
     struct TypicalQp qpInfo;
-    QpConfigInfo qpConfigInfo{ascendQPInfo->sq_depth, ascendQPInfo->rq_depth, ascendQPInfo->scq_depth, ascendQPInfo->rcq_depth, 0, 0};
+    QpConfigInfo qpConfigInfo{
+        ascendQPInfo->sq_depth, ascendQPInfo->rq_depth, ascendQPInfo->scq_depth, ascendQPInfo->rcq_depth, 0, 0};
     u32 poolId;
     if (HCCL_SUCCESS == RdmaResourceManager::GetInstance().GetResvMemPoolIdByType(HCCN_RESV_MEM_TYPE_PDCCL, poolId)) {
         qpConfigInfo.use_resv_mem = 1;
@@ -92,8 +95,11 @@ HcclResult hcclCreateAscendQPWithAttr(AscendQPInfo* ascendQPInfo)
         ascendQPInfo->gid[i] = qpInfo.gid[i];
     }
     ascendQPInfo->psn = qpInfo.psn;
-    HCCL_INFO("hcclCreateAscendQP success! qpn[%u], gid index[%u], psn[%u], sq_depth[%u], rq_depth[%u], scq_depth[%u], rcq_depth[%u] ", ascendQPInfo->qpn,
-        ascendQPInfo->gidIdx, ascendQPInfo->psn, ascendQPInfo->sq_depth, ascendQPInfo->rq_depth, ascendQPInfo->scq_depth, ascendQPInfo->rcq_depth);
+    HCCL_INFO(
+        "hcclCreateAscendQP success! qpn[%u], gid index[%u], psn[%u], sq_depth[%u], rq_depth[%u], scq_depth[%u], "
+        "rcq_depth[%u] ",
+        ascendQPInfo->qpn, ascendQPInfo->gidIdx, ascendQPInfo->psn, ascendQPInfo->sq_depth, ascendQPInfo->rq_depth,
+        ascendQPInfo->scq_depth, ascendQPInfo->rcq_depth);
 
     return HCCL_SUCCESS;
 }
@@ -101,13 +107,15 @@ HcclResult hcclCreateAscendQPWithAttr(AscendQPInfo* ascendQPInfo)
 HcclResult hcclCreateAscendCQWithAttr(AscendCQInfo* ascendCQInfo)
 {
     CHK_PTR_NULL(ascendCQInfo);
+    if (ascendCQInfo->cqDepth == 0) {
+        ascendCQInfo->cqDepth = HOST_SQ_CQ_DEPTH;
+    }
     CHK_RET(CheckDepth(ascendCQInfo->cqDepth));
-    
+
     s32 deviceLogicId = 0;
     CHK_RET(hrtGetDeviceRefresh(&deviceLogicId));
     CHK_RET(TypicalQpManager::GetInstance().CreateCq(*ascendCQInfo));
-    HCCL_INFO("hcclCreateAscendCQWithAttr success! cqn[%u], cqDepth[%u]",
-        ascendCQInfo->cqn, ascendCQInfo->cqDepth);
+    HCCL_INFO("hcclCreateAscendCQWithAttr success! cqn[%u], cqDepth[%u]", ascendCQInfo->cqn, ascendCQInfo->cqDepth);
     return HCCL_SUCCESS;
 }
 
@@ -121,12 +129,12 @@ HcclResult hcclDestroyAscendCQ(AscendCQInfo* ascendCQInfo)
     return HCCL_SUCCESS;
 }
 
-HcclResult hcclPollAscendCQ(AscendCQInfo* cqInfo, uint32_t num, uint32_t *polledNum, struct AscendWc *wc)
+HcclResult hcclPollAscendCQ(AscendCQInfo* cqInfo, uint32_t num, uint32_t* polledNum, struct AscendWc* wc)
 {
     CHK_PTR_NULL(cqInfo);
     CHK_PTR_NULL(polledNum);
     CHK_PTR_NULL(wc);
-    
+
     s32 deviceLogicId = 0;
     CHK_RET(hrtGetDeviceRefresh(&deviceLogicId));
     void* cqHandle = nullptr;
@@ -141,8 +149,8 @@ HcclResult hcclPollAscendCQ(AscendCQInfo* cqInfo, uint32_t num, uint32_t *polled
     return HCCL_SUCCESS;
 }
 
-HcclResult hcclCreateAscendQPWithCQWithAttr(AscendCQInfo* ascendSendCQInfo, AscendCQInfo* ascendRecvCQInfo,
-    AscendVerbsQPInfo* ascendQPInfo)
+HcclResult hcclCreateAscendQPWithCQWithAttr(
+    AscendCQInfo* ascendSendCQInfo, AscendCQInfo* ascendRecvCQInfo, AscendVerbsQPInfo* ascendQPInfo)
 {
     s32 deviceLogicId = 0;
     CHK_RET(hrtGetDeviceRefresh(&deviceLogicId));
@@ -153,19 +161,21 @@ HcclResult hcclCreateAscendQPWithCQWithAttr(AscendCQInfo* ascendSendCQInfo, Asce
     CHK_RET(TypicalQpManager::GetInstance().ValidateCq(ascendSendCQInfo->cqn));
     CHK_RET(TypicalQpManager::GetInstance().ValidateCq(ascendRecvCQInfo->cqn));
 
-    struct TypicalQp qpInfo { 0 };
-    QpConfigWithCQInfo qpConfigInfo { 0 };
+    struct TypicalQp qpInfo {};
+    QpConfigWithCQInfo qpConfigInfo{};
     qpConfigInfo.sendCqn = ascendSendCQInfo->cqn;
     qpConfigInfo.recvCqn = ascendRecvCQInfo->cqn;
 
     if (ascendQPInfo->cap.maxSendWr == 0) {
         qpConfigInfo.sq_depth = DEFAULT_OPBASE_MAX_SEND_WR;
     } else {
+        CHK_RET(CheckDepth(ascendQPInfo->cap.maxSendWr));
         qpConfigInfo.sq_depth = ascendQPInfo->cap.maxSendWr;
     }
     if (ascendQPInfo->cap.maxRecvWr == 0) {
         qpConfigInfo.rq_depth = DEFAULT_MAX_RECV_WR;
     } else {
+        CHK_RET(CheckDepth(ascendQPInfo->cap.maxRecvWr));
         qpConfigInfo.rq_depth = ascendQPInfo->cap.maxRecvWr;
     }
 
@@ -206,7 +216,8 @@ HcclResult hcclCreateAscendQPWithCQWithAttr(AscendCQInfo* ascendSendCQInfo, Asce
         ascendQPInfo->gid[i] = qpInfo.gid[i];
     }
     ascendQPInfo->psn = qpInfo.psn;
-    HCCL_INFO("hcclCreateAscendQPWithCQWithAttr success! qpn[%u], gid index[%u], psn[%u], sendCqn[%u], recvCqn[%u]",
+    HCCL_INFO(
+        "hcclCreateAscendQPWithCQWithAttr success! qpn[%u], gid index[%u], psn[%u], sendCqn[%u], recvCqn[%u]",
         ascendQPInfo->qpn, ascendQPInfo->gidIdx, ascendQPInfo->psn, ascendSendCQInfo->cqn, ascendRecvCQInfo->cqn);
 
     return HCCL_SUCCESS;
@@ -247,17 +258,23 @@ HcclResult hcclModifyAscendQPEx(AscendQPInfo* localQPInfo, AscendQPInfo* remoteQ
     CHK_PTR_NULL(localQPInfo);
     CHK_PTR_NULL(remoteQPInfo);
     CHK_PTR_NULL(qpQos);
-    CHK_PRT_RET((qpQos->sl > HCCL_RDMA_SL_MAX),
-        HCCL_ERROR("[hcclModifyAscendQPEx]The value of sl[%u] is invalid. except: [%u, %u].",
-        qpQos->sl, HCCL_RDMA_SL_MIN, HCCL_RDMA_SL_MAX), HCCL_E_PARA);
-    CHK_PRT_RET((qpQos->tc > HCCL_RDMA_TC_MAX),
-        HCCL_ERROR("[hcclModifyAscendQPEx]The value of tc[%u] is invalid. except: [%u, %u].",
-        qpQos->tc, HCCL_RDMA_TC_MIN, HCCL_RDMA_TC_MAX), HCCL_E_PARA);
+    CHK_PRT_RET(
+        (qpQos->sl > HCCL_RDMA_SL_MAX),
+        HCCL_ERROR(
+            "[hcclModifyAscendQPEx]The value of sl[%u] is invalid. except: [%u, %u].", qpQos->sl, HCCL_RDMA_SL_MIN,
+            HCCL_RDMA_SL_MAX),
+        HCCL_E_PARA);
+    CHK_PRT_RET(
+        (qpQos->tc > HCCL_RDMA_TC_MAX),
+        HCCL_ERROR(
+            "[hcclModifyAscendQPEx]The value of tc[%u] is invalid. except: [%u, %u].", qpQos->tc, HCCL_RDMA_TC_MIN,
+            HCCL_RDMA_TC_MAX),
+        HCCL_E_PARA);
 
     // 设置的RDMATrafficClass需要是4的整数倍, 否则报错
-    CHK_PRT_RET(qpQos->tc % DEVISOR_VALUE_FOUR != 0,
-        HCCL_ERROR("[hcclModifyAscendQPEx]The value of tc[%u] is not a multiple of 4.",
-        qpQos->tc), HCCL_E_PARA);    
+    CHK_PRT_RET(
+        qpQos->tc % DEVISOR_VALUE_FOUR != 0,
+        HCCL_ERROR("[hcclModifyAscendQPEx]The value of tc[%u] is not a multiple of 4.", qpQos->tc), HCCL_E_PARA);
 
     struct TypicalQp localQp;
     localQp.qpn = localQPInfo->qpn;
@@ -291,41 +308,48 @@ HcclResult hcclModifyAscendVerbsQP(AscendVerbsQPInfo* localQPInfo, AscendVerbsQP
     return HCCL_SUCCESS;
 }
 
-HcclResult hcclModifyAscendVerbsQPEx(AscendVerbsQPInfo* localQPVerbsInfo, AscendVerbsQPInfo* remoteQPVerbsInfo, AscendQPQos* qpQos)
+HcclResult
+hcclModifyAscendVerbsQPEx(AscendVerbsQPInfo* localQPInfo, AscendVerbsQPInfo* remoteQPInfo, AscendQPQos* qpQos)
 {
     s32 deviceLogicId = 0;
     CHK_RET(hrtGetDeviceRefresh(&deviceLogicId));
-    CHK_PTR_NULL(localQPVerbsInfo);
-    CHK_PTR_NULL(remoteQPVerbsInfo);
+    CHK_PTR_NULL(localQPInfo);
+    CHK_PTR_NULL(remoteQPInfo);
     CHK_PTR_NULL(qpQos);
-    CHK_PRT_RET((qpQos->sl > HCCL_RDMA_SL_MAX),
-        HCCL_ERROR("[hcclModifyAscendVerbsQPEx]The value of sl[%u] is invalid. except: [%u, %u].",
-        qpQos->sl, HCCL_RDMA_SL_MIN, HCCL_RDMA_SL_MAX), HCCL_E_PARA);
-    CHK_PRT_RET((qpQos->tc > HCCL_RDMA_TC_MAX),
-        HCCL_ERROR("[hcclModifyAscendVerbsQPEx]The value of tc[%u] is invalid. except: [%u, %u].",
-        qpQos->tc, HCCL_RDMA_TC_MIN, HCCL_RDMA_TC_MAX), HCCL_E_PARA);
+    CHK_PRT_RET(
+        (qpQos->sl > HCCL_RDMA_SL_MAX),
+        HCCL_ERROR(
+            "[hcclModifyAscendVerbsQPEx]The value of sl[%u] is invalid. except: [%u, %u].", qpQos->sl, HCCL_RDMA_SL_MIN,
+            HCCL_RDMA_SL_MAX),
+        HCCL_E_PARA);
+    CHK_PRT_RET(
+        (qpQos->tc > HCCL_RDMA_TC_MAX),
+        HCCL_ERROR(
+            "[hcclModifyAscendVerbsQPEx]The value of tc[%u] is invalid. except: [%u, %u].", qpQos->tc, HCCL_RDMA_TC_MIN,
+            HCCL_RDMA_TC_MAX),
+        HCCL_E_PARA);
 
-    CHK_PRT_RET(qpQos->tc % DEVISOR_VALUE_FOUR != 0,
-        HCCL_ERROR("[hcclModifyAscendVerbsQPEx]The value of tc[%u] is not a multiple of 4.",
-        qpQos->tc), HCCL_E_PARA);
+    CHK_PRT_RET(
+        qpQos->tc % DEVISOR_VALUE_FOUR != 0,
+        HCCL_ERROR("[hcclModifyAscendVerbsQPEx]The value of tc[%u] is not a multiple of 4.", qpQos->tc), HCCL_E_PARA);
 
     struct TypicalQp localQp;
-    localQp.qpn = localQPVerbsInfo->qpn;
-    localQp.gidIdx = localQPVerbsInfo->gidIdx;
+    localQp.qpn = localQPInfo->qpn;
+    localQp.gidIdx = localQPInfo->gidIdx;
     for (uint32_t i = 0; i < GID_LENGTH; i++) {
-        localQp.gid[i] = localQPVerbsInfo->gid[i];
+        localQp.gid[i] = localQPInfo->gid[i];
     }
-    localQp.psn = localQPVerbsInfo->psn;
+    localQp.psn = localQPInfo->psn;
     localQp.sl = qpQos->sl;
     localQp.tc = qpQos->tc;
 
     struct TypicalQp remoteQp = {};
-    remoteQp.qpn = remoteQPVerbsInfo->qpn;
-    remoteQp.gidIdx = remoteQPVerbsInfo->gidIdx;
+    remoteQp.qpn = remoteQPInfo->qpn;
+    remoteQp.gidIdx = remoteQPInfo->gidIdx;
     for (uint32_t i = 0; i < GID_LENGTH; i++) {
-        remoteQp.gid[i] = remoteQPVerbsInfo->gid[i];
+        remoteQp.gid[i] = remoteQPInfo->gid[i];
     }
-    remoteQp.psn = remoteQPVerbsInfo->psn;
+    remoteQp.psn = remoteQPInfo->psn;
     CHK_RET(TypicalQpManager::GetInstance().ModifyVerbsQp(localQp, remoteQp));
     return HCCL_SUCCESS;
 }
@@ -346,28 +370,28 @@ HcclResult hcclDestroyAscendQP(AscendQPInfo* ascendQPInfo)
     return HCCL_SUCCESS;
 }
 
-HcclResult hcclAllocWindowMem(void **ptr, size_t len)
+HcclResult hcclAllocWindowMem(void** ptr, size_t len)
 {
     s32 deviceLogicId = 0;
     CHK_RET(hrtGetDeviceRefresh(&deviceLogicId));
     return TypicalWindowMem::GetInstance().AllocWindowMem(ptr, len);
 }
 
-HcclResult hcclFreeWindowMem(void *ptr)
+HcclResult hcclFreeWindowMem(void* ptr)
 {
     s32 deviceLogicId = 0;
     CHK_RET(hrtGetDeviceRefresh(&deviceLogicId));
     return TypicalWindowMem::GetInstance().FreeWindowMem(ptr);
 }
 
-HcclResult hcclAllocSyncMem(int32_t **ptr)
+HcclResult hcclAllocSyncMem(int32_t** ptr)
 {
     s32 deviceLogicId = 0;
     CHK_RET(hrtGetDeviceRefresh(&deviceLogicId));
     return TypicalSyncMem::GetInstance().AllocSyncMem(ptr);
 }
 
-HcclResult hcclFreeSyncMem(int32_t *ptr)
+HcclResult hcclFreeSyncMem(int32_t* ptr)
 {
     s32 deviceLogicId = 0;
     CHK_RET(hrtGetDeviceRefresh(&deviceLogicId));
@@ -380,12 +404,13 @@ HcclResult hcclRegisterMem(AscendMrInfo* memInfo)
     CHK_RET(hrtGetDeviceRefresh(&deviceLogicId));
     CHK_PTR_NULL(memInfo);
     MrInfoT mrInfo = {};
-    mrInfo.addr = reinterpret_cast<void *>(static_cast<uintptr_t>(memInfo->addr));
+    mrInfo.addr = reinterpret_cast<void*>(static_cast<uintptr_t>(memInfo->addr));
     mrInfo.size = memInfo->size;
     mrInfo.access = RA_ACCESS_REMOTE_WRITE | RA_ACCESS_LOCAL_WRITE | RA_ACCESS_REMOTE_READ;
     CHK_RET(TypicalMrManager::GetInstance().RegisterMem(mrInfo));
     memInfo->key = mrInfo.lkey;
-    HCCL_RUN_INFO("[hcclRegisterMem] Register WindowMem addr[%p], size[%llu], key[%u].", mrInfo.addr, mrInfo.size, mrInfo.lkey);
+    HCCL_RUN_INFO(
+        "[hcclRegisterMem] Register WindowMem addr[%p], size[%llu], key[%u].", mrInfo.addr, mrInfo.size, mrInfo.lkey);
     return HCCL_SUCCESS;
 }
 
@@ -395,12 +420,14 @@ HcclResult hcclDeRegisterMem(AscendMrInfo* memInfo)
     CHK_RET(hrtGetDeviceRefresh(&deviceLogicId));
     CHK_PTR_NULL(memInfo);
     MrInfoT mrInfo = {};
-    mrInfo.addr = reinterpret_cast<void *>(static_cast<uintptr_t>(memInfo->addr));
+    mrInfo.addr = reinterpret_cast<void*>(static_cast<uintptr_t>(memInfo->addr));
     mrInfo.size = memInfo->size;
     mrInfo.access = RA_ACCESS_REMOTE_WRITE | RA_ACCESS_LOCAL_WRITE | RA_ACCESS_REMOTE_READ;
     mrInfo.lkey = memInfo->key;
     CHK_RET(TypicalMrManager::GetInstance().DeRegisterMem(mrInfo));
-    HCCL_RUN_INFO("[hcclDeRegisterMem] DeRegister WindowMem addr[%p], size[%llu], key[%u].", mrInfo.addr, mrInfo.size, mrInfo.lkey);
+    HCCL_RUN_INFO(
+        "[hcclDeRegisterMem] DeRegister WindowMem addr[%p], size[%llu], key[%u].", mrInfo.addr, mrInfo.size,
+        mrInfo.lkey);
     return HCCL_SUCCESS;
 }
 
@@ -410,14 +437,15 @@ HcclResult hcclRdmaMemRegister(AscendMrAttr* memInfo)
     CHK_RET(hrtGetDeviceRefresh(&deviceLogicId));
     CHK_PTR_NULL(memInfo);
     MrInfoT mrInfo = {};
-    mrInfo.addr = reinterpret_cast<void *>(static_cast<uintptr_t>(memInfo->addr));
+    mrInfo.addr = reinterpret_cast<void*>(static_cast<uintptr_t>(memInfo->addr));
     mrInfo.size = memInfo->size;
     mrInfo.access = RA_ACCESS_REMOTE_WRITE | RA_ACCESS_LOCAL_WRITE | RA_ACCESS_REMOTE_READ;
     CHK_RET(TypicalMrManager::GetInstance().RegisterMem(mrInfo));
     memInfo->lkey = mrInfo.lkey;
     memInfo->rkey = mrInfo.rkey;
-    HCCL_RUN_INFO("[hcclRdmaMemRegister] Register MR addr[%p], size[%llu], lkey[%u], rkey[%u].",
-        mrInfo.addr, mrInfo.size, mrInfo.lkey, mrInfo.rkey);
+    HCCL_RUN_INFO(
+        "[hcclRdmaMemRegister] Register MR addr[%p], size[%llu], lkey[%u], rkey[%u].", mrInfo.addr, mrInfo.size,
+        mrInfo.lkey, mrInfo.rkey);
     return HCCL_SUCCESS;
 }
 
@@ -427,17 +455,18 @@ HcclResult hcclRdmaMemDeRegister(AscendMrAttr* memInfo)
     CHK_RET(hrtGetDeviceRefresh(&deviceLogicId));
     CHK_PTR_NULL(memInfo);
     MrInfoT mrInfo = {};
-    mrInfo.addr = reinterpret_cast<void *>(static_cast<uintptr_t>(memInfo->addr));
+    mrInfo.addr = reinterpret_cast<void*>(static_cast<uintptr_t>(memInfo->addr));
     mrInfo.size = memInfo->size;
     mrInfo.access = RA_ACCESS_REMOTE_WRITE | RA_ACCESS_LOCAL_WRITE | RA_ACCESS_REMOTE_READ;
     mrInfo.lkey = memInfo->lkey;
     CHK_RET(TypicalMrManager::GetInstance().DeRegisterMem(mrInfo));
-    HCCL_RUN_INFO("[hcclRdmaMemDeRegister] DeRegister MR addr[%p], size[%llu], lkey[%u].",
-        mrInfo.addr, mrInfo.size, mrInfo.lkey);
+    HCCL_RUN_INFO(
+        "[hcclRdmaMemDeRegister] DeRegister MR addr[%p], size[%llu], lkey[%u].", mrInfo.addr, mrInfo.size, mrInfo.lkey);
     return HCCL_SUCCESS;
 }
 
-HcclResult hcclAscendPostSend(AscendVerbsQPInfo* qpInfo, struct AscendSendWr *sendWr, aclrtStream stream, struct AscendSendWr **badWr)
+HcclResult hcclAscendPostSend(
+    AscendVerbsQPInfo* qpInfo, struct AscendSendWr* sendWr, aclrtStream stream, struct AscendSendWr** badWr)
 {
     s32 deviceLogicId = 0;
     CHK_RET(hrtGetDeviceRefresh(&deviceLogicId));
@@ -450,9 +479,10 @@ HcclResult hcclAscendPostSend(AscendVerbsQPInfo* qpInfo, struct AscendSendWr *se
     CHK_RET(TypicalQpManager::GetInstance().GetVerbsQpHandleByQpn(qpInfo->qpn, qpHandle));
 
     constexpr u32 MAX_SGLIST_VERBS = 16;
-    struct AscendSendWr *curWr = sendWr;
+    struct AscendSendWr* curWr = sendWr;
     while (curWr != nullptr) {
-        CHK_PRT_RET(static_cast<u32>(curWr->numSge) > MAX_SGLIST_VERBS,
+        CHK_PRT_RET(
+            static_cast<u32>(curWr->numSge) > MAX_SGLIST_VERBS,
             HCCL_ERROR("[hcclAscendPostSend] numSge[%d] exceeds MAX_SGLIST_VERBS[%u]", curWr->numSge, MAX_SGLIST_VERBS),
             HCCL_E_PARA);
         CHK_PTR_NULL(curWr->sgList);
@@ -488,7 +518,8 @@ HcclResult hcclAscendPostSend(AscendVerbsQPInfo* qpInfo, struct AscendSendWr *se
     return HCCL_SUCCESS;
 }
 
-HcclResult hcclAscendPostRecv(AscendVerbsQPInfo* qpInfo, struct AscendRecvWr *recvWr, aclrtStream stream, struct AscendRecvWr **badWr)
+HcclResult hcclAscendPostRecv(
+    AscendVerbsQPInfo* qpInfo, struct AscendRecvWr* recvWr, aclrtStream stream, struct AscendRecvWr** badWr)
 {
     s32 deviceLogicId = 0;
     CHK_RET(hrtGetDeviceRefresh(&deviceLogicId));
@@ -501,9 +532,10 @@ HcclResult hcclAscendPostRecv(AscendVerbsQPInfo* qpInfo, struct AscendRecvWr *re
     CHK_RET(TypicalQpManager::GetInstance().GetVerbsQpHandleByQpn(qpInfo->qpn, qpHandle));
 
     constexpr u32 MAX_SGLIST_RECV = 16;
-    struct AscendRecvWr *curWr = recvWr;
+    struct AscendRecvWr* curWr = recvWr;
     while (curWr != nullptr) {
-        CHK_PRT_RET(static_cast<u32>(curWr->numSge) > MAX_SGLIST_RECV,
+        CHK_PRT_RET(
+            static_cast<u32>(curWr->numSge) > MAX_SGLIST_RECV,
             HCCL_ERROR("[hcclAscendPostRecv] numSge[%d] exceeds MAX_SGLIST_RECV[%u]", curWr->numSge, MAX_SGLIST_RECV),
             HCCL_E_PARA);
         CHK_PTR_NULL(curWr->sgList);
@@ -529,8 +561,8 @@ HcclResult hcclAscendPostRecv(AscendVerbsQPInfo* qpInfo, struct AscendRecvWr *re
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclSendByAscendQP(void* sendBuf, uint64_t count, HcclDataType dataType,
-    AscendSendRecvInfo* sendRecvInfo, aclrtStream stream)
+HcclResult HcclSendByAscendQP(
+    void* sendBuf, uint64_t count, HcclDataType dataType, AscendSendRecvInfo* sendRecvInfo, aclrtStream stream)
 {
     s32 deviceLogicId = 0;
     CHK_RET(hrtGetDeviceRefresh(&deviceLogicId));
@@ -538,22 +570,19 @@ HcclResult HcclSendByAscendQP(void* sendBuf, uint64_t count, HcclDataType dataTy
     CHK_RET(CheckSendRecvInfo(sendRecvInfo));
     QpHandle qpHandle;
     CHK_RET(TypicalQpManager::GetInstance().GetQpHandleByQpn(sendRecvInfo->localQPinfo->qpn, qpHandle));
-    SendRecvExecutor executor(stream, qpHandle, AscendMrInfo2MrInfo(sendRecvInfo->localWindowMem),
-                                                    AscendMrInfo2MrInfo(sendRecvInfo->remoteWindowMem),
-                                                    AscendMrInfo2MrInfo(sendRecvInfo->localSyncMemPrepare),
-                                                    AscendMrInfo2MrInfo(sendRecvInfo->localSyncMemDone),
-                                                    AscendMrInfo2MrInfo(sendRecvInfo->localSyncMemAck),
-                                                    AscendMrInfo2MrInfo(sendRecvInfo->remoteSyncMemPrepare),
-                                                    AscendMrInfo2MrInfo(sendRecvInfo->remoteSyncMemDone),
-                                                    AscendMrInfo2MrInfo(sendRecvInfo->remoteSyncMemAck),
-                                                    sendRecvInfo->immData);
+    SendRecvExecutor executor(
+        stream, qpHandle, AscendMrInfo2MrInfo(sendRecvInfo->localWindowMem),
+        AscendMrInfo2MrInfo(sendRecvInfo->remoteWindowMem), AscendMrInfo2MrInfo(sendRecvInfo->localSyncMemPrepare),
+        AscendMrInfo2MrInfo(sendRecvInfo->localSyncMemDone), AscendMrInfo2MrInfo(sendRecvInfo->localSyncMemAck),
+        AscendMrInfo2MrInfo(sendRecvInfo->remoteSyncMemPrepare), AscendMrInfo2MrInfo(sendRecvInfo->remoteSyncMemDone),
+        AscendMrInfo2MrInfo(sendRecvInfo->remoteSyncMemAck), sendRecvInfo->immData);
     CHK_RET(executor.Init());
     CHK_RET(executor.Send(sendBuf, count, dataType));
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclRecvByAscendQP(void* recvBuf, uint64_t count, HcclDataType dataType,
-    AscendSendRecvInfo* sendRecvInfo, aclrtStream stream)
+HcclResult HcclRecvByAscendQP(
+    void* recvBuf, uint64_t count, HcclDataType dataType, AscendSendRecvInfo* sendRecvInfo, aclrtStream stream)
 {
     s32 deviceLogicId = 0;
     CHK_RET(hrtGetDeviceRefresh(&deviceLogicId));
@@ -561,20 +590,16 @@ HcclResult HcclRecvByAscendQP(void* recvBuf, uint64_t count, HcclDataType dataTy
     CHK_RET(CheckSendRecvInfo(sendRecvInfo));
     QpHandle qpHandle;
     CHK_RET(TypicalQpManager::GetInstance().GetQpHandleByQpn(sendRecvInfo->localQPinfo->qpn, qpHandle));
-    SendRecvExecutor executor(stream, qpHandle, AscendMrInfo2MrInfo(sendRecvInfo->localWindowMem),
-                                                    AscendMrInfo2MrInfo(sendRecvInfo->remoteWindowMem),
-                                                    AscendMrInfo2MrInfo(sendRecvInfo->localSyncMemPrepare),
-                                                    AscendMrInfo2MrInfo(sendRecvInfo->localSyncMemDone),
-                                                    AscendMrInfo2MrInfo(sendRecvInfo->localSyncMemAck),
-                                                    AscendMrInfo2MrInfo(sendRecvInfo->remoteSyncMemPrepare),
-                                                    AscendMrInfo2MrInfo(sendRecvInfo->remoteSyncMemDone),
-                                                    AscendMrInfo2MrInfo(sendRecvInfo->remoteSyncMemAck),
-                                                    sendRecvInfo->immData);
+    SendRecvExecutor executor(
+        stream, qpHandle, AscendMrInfo2MrInfo(sendRecvInfo->localWindowMem),
+        AscendMrInfo2MrInfo(sendRecvInfo->remoteWindowMem), AscendMrInfo2MrInfo(sendRecvInfo->localSyncMemPrepare),
+        AscendMrInfo2MrInfo(sendRecvInfo->localSyncMemDone), AscendMrInfo2MrInfo(sendRecvInfo->localSyncMemAck),
+        AscendMrInfo2MrInfo(sendRecvInfo->remoteSyncMemPrepare), AscendMrInfo2MrInfo(sendRecvInfo->remoteSyncMemDone),
+        AscendMrInfo2MrInfo(sendRecvInfo->remoteSyncMemAck), sendRecvInfo->immData);
     CHK_RET(executor.Init());
     CHK_RET(executor.Receive(recvBuf, count, dataType));
     return HCCL_SUCCESS;
 }
-
 
 HcclResult hcclAscendRdmaInit()
 {
@@ -599,7 +624,7 @@ HcclResult hcclAscendRdmaDeInit()
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclGetCqeErrInfoList(struct HcclErrCqeInfo *infoList, uint32_t *num)
+HcclResult HcclGetCqeErrInfoList(struct HcclErrCqeInfo* infoList, uint32_t* num)
 {
     s32 deviceLogicId = 0;
     CHK_RET(hrtGetDeviceRefresh(&deviceLogicId));
@@ -609,8 +634,13 @@ HcclResult HcclGetCqeErrInfoList(struct HcclErrCqeInfo *infoList, uint32_t *num)
     struct CqeErrInfo errCqeList[arrLen];
     CHK_RET(RdmaResourceManager::GetInstance().GetCqeErrInfo(errCqeList, num));
 
-    CHK_PRT_RET(*num > arrLen, HCCL_ERROR("[HcclGetCqeErrInfoList] GetCqeErrInfo num[%u] is larger than "
-        "infoList user given[%u].", num, arrLen), HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        *num > arrLen,
+        HCCL_ERROR(
+            "[HcclGetCqeErrInfoList] GetCqeErrInfo num[%u] is larger than "
+            "infoList user given[%u].",
+            num, arrLen),
+        HCCL_E_INTERNAL);
     for (u32 i = 0; i < *num; i++) {
         infoList[i].status = errCqeList[i].status;
         infoList[i].qpn = errCqeList[i].qpn;
@@ -618,19 +648,16 @@ HcclResult HcclGetCqeErrInfoList(struct HcclErrCqeInfo *infoList, uint32_t *num)
         time_t tmpt = static_cast<time_t>(errCqeList[i].time.tv_sec);
         struct tm errTime;
         localtime_r(&tmpt, &errTime);
-        HCCL_INFO("[HcclGetCqeErrInfoList] Err Cqe status[%d], qpn[%d], time[%04u-%02d-%02d %02d:%0d:%02d.%06u]", 
-            errCqeList[i].status, errCqeList[i].qpn, errTime.tm_year + TIME_FROM_1900,
-            errTime.tm_mon + 1,
-            errTime.tm_mday,
-            errTime.tm_hour,
-            errTime.tm_min,
-            errTime.tm_sec,
+        HCCL_INFO(
+            "[HcclGetCqeErrInfoList] Err Cqe status[%d], qpn[%d], time[%04u-%02d-%02d %02d:%0d:%02d.%06u]",
+            errCqeList[i].status, errCqeList[i].qpn, errTime.tm_year + TIME_FROM_1900, errTime.tm_mon + 1,
+            errTime.tm_mday, errTime.tm_hour, errTime.tm_min, errTime.tm_sec,
             static_cast<u32>(errCqeList[i].time.tv_usec));
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclGetCqeErrInfoListByQpn(uint32_t qpn, struct HcclErrCqeInfo *infoList, uint32_t *num)
+HcclResult HcclGetCqeErrInfoListByQpn(uint32_t qpn, struct HcclErrCqeInfo* infoList, uint32_t* num)
 {
     s32 deviceLogicId = 0;
     CHK_RET(hrtGetDeviceRefresh(&deviceLogicId));
@@ -640,8 +667,8 @@ HcclResult HcclGetCqeErrInfoListByQpn(uint32_t qpn, struct HcclErrCqeInfo *infoL
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclPutByAscendQP(void* putBuf, uint64_t count, HcclDataType dataType,
-    AscendSendRecvInfo* sendRecvInfo, aclrtStream stream)
+HcclResult HcclPutByAscendQP(
+    void* putBuf, uint64_t count, HcclDataType dataType, AscendSendRecvInfo* sendRecvInfo, aclrtStream stream)
 {
     CHK_PTR_NULL(stream);
     s32 deviceLogicId = 0;
@@ -649,33 +676,36 @@ HcclResult HcclPutByAscendQP(void* putBuf, uint64_t count, HcclDataType dataType
     CHK_RET(CheckParam(putBuf, count, dataType, stream));
     QpHandle qpHandle;
     CHK_RET(TypicalQpManager::GetInstance().GetQpHandleByQpn(sendRecvInfo->localQPinfo->qpn, qpHandle));
-    SendRecvExecutor executor(stream, qpHandle, AscendMrInfo2MrInfo(sendRecvInfo->localWindowMem),
-                                                    AscendMrInfo2MrInfo(sendRecvInfo->remoteWindowMem),
-                                                    AscendMrInfo2MrInfo(sendRecvInfo->localSyncMemPrepare),
-                                                    AscendMrInfo2MrInfo(sendRecvInfo->localSyncMemDone),
-                                                    AscendMrInfo2MrInfo(sendRecvInfo->localSyncMemAck),
-                                                    AscendMrInfo2MrInfo(sendRecvInfo->remoteSyncMemPrepare),
-                                                    AscendMrInfo2MrInfo(sendRecvInfo->remoteSyncMemDone),
-                                                    AscendMrInfo2MrInfo(sendRecvInfo->remoteSyncMemAck),
-                                                    sendRecvInfo->immData);
+    SendRecvExecutor executor(
+        stream, qpHandle, AscendMrInfo2MrInfo(sendRecvInfo->localWindowMem),
+        AscendMrInfo2MrInfo(sendRecvInfo->remoteWindowMem), AscendMrInfo2MrInfo(sendRecvInfo->localSyncMemPrepare),
+        AscendMrInfo2MrInfo(sendRecvInfo->localSyncMemDone), AscendMrInfo2MrInfo(sendRecvInfo->localSyncMemAck),
+        AscendMrInfo2MrInfo(sendRecvInfo->remoteSyncMemPrepare), AscendMrInfo2MrInfo(sendRecvInfo->remoteSyncMemDone),
+        AscendMrInfo2MrInfo(sendRecvInfo->remoteSyncMemAck), sendRecvInfo->immData);
     CHK_RET(executor.Init());
     CHK_RET(executor.Put(putBuf, count, dataType));
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclBatchPutMRByAscendQP(unsigned int num, AscendMrInfo* putMRList, AscendMrInfo* remoteMRList,
-    AscendSendRecvLinkInfo* sendRecvLinkInfo, aclrtStream stream)
+HcclResult HcclBatchPutMRByAscendQP(
+    unsigned int num, AscendMrInfo* putMRList, AscendMrInfo* remoteMRList, AscendSendRecvLinkInfo* sendRecvLinkInfo,
+    aclrtStream stream)
 {
     s32 deviceLogicId = 0;
     CHK_RET(hrtGetDeviceRefresh(&deviceLogicId));
-    CHK_PRT_RET(num == 0, HCCL_INFO("[HcclBatchPutMRByAscendQP] mr list len is 0. No need to send data."), HCCL_SUCCESS);
+    CHK_PRT_RET(
+        num == 0, HCCL_INFO("[HcclBatchPutMRByAscendQP] mr list len is 0. No need to send data."), HCCL_SUCCESS);
     CHK_PTR_NULL(putMRList);
     CHK_PTR_NULL(remoteMRList);
     CHK_PTR_NULL(sendRecvLinkInfo);
     CHK_PTR_NULL(stream);
     CHK_RET(CheckSendRecvLinkInfo(sendRecvLinkInfo));
-    CHK_PRT_RET(sendRecvLinkInfo->wqePerDoorbell == 0 || sendRecvLinkInfo->wqePerDoorbell > MAX_WQE_PER_DOORBELL,
-        HCCL_ERROR("[HcclBatchPutMRByAscendQP] The value of wqePerDoorbell is exceed 300 or equal to 0."), 
+    CHK_PRT_RET(
+        sendRecvLinkInfo->wqePerDoorbell == 0 || sendRecvLinkInfo->wqePerDoorbell > MAX_WQE_PER_DOORBELL,
+        HCCL_ERROR(
+            "[HcclBatchPutMRByAscendQP] wqePerDoorbell[%u] is invalid, should be greater than 0 and not exceed "
+            "MAX_WQE_PER_DOORBELL[%u].",
+            sendRecvLinkInfo->wqePerDoorbell, MAX_WQE_PER_DOORBELL),
         HCCL_E_PARA);
     QpHandle qpHandle;
     CHK_RET(TypicalQpManager::GetInstance().GetQpHandleByQpn(sendRecvLinkInfo->localQPinfo->qpn, qpHandle));
@@ -687,7 +717,6 @@ HcclResult HcclBatchPutMRByAscendQP(unsigned int num, AscendMrInfo* putMRList, A
     return HCCL_SUCCESS;
 }
 
-
 HcclResult HcclWaitPutMRByAscendQP(AscendSendRecvLinkInfo* sendRecvLinkInfo, aclrtStream stream)
 {
     s32 deviceLogicId = 0;
@@ -698,7 +727,7 @@ HcclResult HcclWaitPutMRByAscendQP(AscendSendRecvLinkInfo* sendRecvLinkInfo, acl
     CHK_PTR_NULL(sendRecvLinkInfo->localSyncMemDone);
     QpHandle qpHandle;
     CHK_RET(TypicalQpManager::GetInstance().GetQpHandleByQpn(sendRecvLinkInfo->localQPinfo->qpn, qpHandle));
-    
+
     SendRecvExecutor executor(stream, qpHandle, sendRecvLinkInfo->localSyncMemDone, sendRecvLinkInfo->remoteSyncMemAck);
     CHK_RET(executor.WaitPutInit());
     CHK_RET(executor.WaitPutMR());
@@ -715,7 +744,7 @@ HcclResult HcclWaitPutMRDoWait(AscendSendRecvLinkInfo* sendRecvLinkInfo, aclrtSt
     CHK_PTR_NULL(sendRecvLinkInfo->localSyncMemDone);
     QpHandle qpHandle;
     CHK_RET(TypicalQpManager::GetInstance().GetQpHandleByQpn(sendRecvLinkInfo->localQPinfo->qpn, qpHandle));
-    
+
     SendRecvExecutor executor(stream, qpHandle, sendRecvLinkInfo->localSyncMemDone, sendRecvLinkInfo->remoteSyncMemAck);
     CHK_RET(executor.WaitPutInit());
     CHK_RET(executor.WaitPutMROnlyWait());
@@ -732,7 +761,7 @@ HcclResult HcclWaitPutMRDoRecord(AscendSendRecvLinkInfo* sendRecvLinkInfo, aclrt
     CHK_PTR_NULL(sendRecvLinkInfo->localSyncMemDone);
     QpHandle qpHandle;
     CHK_RET(TypicalQpManager::GetInstance().GetQpHandleByQpn(sendRecvLinkInfo->localQPinfo->qpn, qpHandle));
-    
+
     SendRecvExecutor executor(stream, qpHandle, sendRecvLinkInfo->localSyncMemDone, sendRecvLinkInfo->remoteSyncMemAck);
     CHK_RET(executor.WaitPutInit());
     CHK_RET(executor.WaitPutMROnlyRecord());
@@ -744,32 +773,39 @@ HcclResult hcclGetSyncMemRegKey(AscendMrInfo* memInfo)
     s32 deviceLogicId = 0;
     CHK_RET(hrtGetDeviceRefresh(&deviceLogicId));
     CHK_PTR_NULL(memInfo);
-    struct MrInfoT mrInfo{};
+    struct MrInfoT mrInfo {};
     CHK_RET(RdmaResourceManager::GetInstance().GetNotifyMrInfo(mrInfo));
     memInfo->key = mrInfo.lkey;
-    HCCL_RUN_INFO("[hcclGetSyncMemRegKey] SyncMem addr[%p], size[%llu], key[%u].", memInfo->addr, memInfo->size, memInfo->key);
+    HCCL_RUN_INFO(
+        "[hcclGetSyncMemRegKey] SyncMem addr[%p], size[%llu], key[%u].", memInfo->addr, memInfo->size, memInfo->key);
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclOneSideBatchPutByAscendQP(unsigned int num, AscendMrInfo* putMRList, AscendMrInfo* remoteMRList,
-    AscendSendLinkInfo* sendlinkInfo, aclrtStream stream)
+HcclResult HcclOneSideBatchPutByAscendQP(
+    unsigned int num, AscendMrInfo* putMRList, AscendMrInfo* remoteMRList, AscendSendLinkInfo* sendlinkInfo,
+    aclrtStream stream)
 {
     s32 deviceLogicId = 0;
     CHK_RET(hrtGetDeviceRefresh(&deviceLogicId));
-    CHK_PRT_RET(num == 0, HCCL_INFO("[HcclOneSideBatchPutByAscendQP] mr list len is 0. No need to send data."), HCCL_SUCCESS);
+    CHK_PRT_RET(
+        num == 0, HCCL_INFO("[HcclOneSideBatchPutByAscendQP] mr list len is 0. No need to send data."), HCCL_SUCCESS);
     CHK_PTR_NULL(putMRList);
     CHK_PTR_NULL(remoteMRList);
     CHK_PTR_NULL(sendlinkInfo);
     CHK_PTR_NULL(stream);
     CHK_RET(CheckSendLinkInfo(sendlinkInfo));
-    CHK_PRT_RET(sendlinkInfo->wqePerDoorbell == 0 || sendlinkInfo->wqePerDoorbell > MAX_WQE_PER_DOORBELL,
-        HCCL_ERROR("[HcclOneSideBatchPutByAscendQP] The value of wqePerDoorbell is exceed 300 or equal to 0."), 
+    CHK_PRT_RET(
+        sendlinkInfo->wqePerDoorbell == 0 || sendlinkInfo->wqePerDoorbell > MAX_WQE_PER_DOORBELL,
+        HCCL_ERROR(
+            "[HcclOneSideBatchPutByAscendQP] wqePerDoorbell[%u] is invalid, should be greater than 0 and not exceed "
+            "MAX_WQE_PER_DOORBELL[%u].",
+            sendlinkInfo->wqePerDoorbell, MAX_WQE_PER_DOORBELL),
         HCCL_E_PARA);
     QpHandle qpHandle;
     CHK_RET(TypicalQpManager::GetInstance().GetQpHandleByQpn(sendlinkInfo->localQPinfo->qpn, qpHandle));
- 
+
     SendRecvExecutor executor(stream, qpHandle, sendlinkInfo);
     CHK_RET(executor.OneSideBatchPutMR(num, putMRList, remoteMRList));
- 
+
     return HCCL_SUCCESS;
 }

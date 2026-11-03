@@ -28,7 +28,7 @@ using namespace std;
 
 MAKE_ENUM(PortDeploymentType, P2P, DEV_NET, HOST_NET)
 
-MAKE_ENUM(ConnectProtoType, HCCS, PCIE, TCP, RDMA, UB, UBOE, UBG)
+MAKE_ENUM(ConnectProtoType, HCCS, PCIE, TCP, RDMA, UB, UBOE, UB_RTP)
 
 MAKE_ENUM(LinkProtoType, HCCS_PCIE, TCP, RDMA, UB)
 
@@ -44,8 +44,8 @@ inline PortDeploymentType AddrPos2PortDeploymentType(AddrPosition addrPosition, 
     } else if (addrPosition == AddrPosition::HOST) {
         portDeploymentType = PortDeploymentType::HOST_NET;
     } else {
-        THROW<NotSupportException>(StringFormat("[AddrPos2PortDeploymentType] addrPosition[%s].",
-            addrPosition.Describe().c_str()));
+        THROW<NotSupportException>(
+            StringFormat("[AddrPos2PortDeploymentType] addrPosition[%s].", addrPosition.Describe().c_str()));
     }
     return portDeploymentType;
 }
@@ -55,15 +55,15 @@ inline LinkProtoType LinkProtocol2LinkProtoType(LinkProtocol linkProtocol)
     LinkProtoType linkType{};
     if (linkProtocol == LinkProtocol::UB_CTP || linkProtocol == LinkProtocol::UB_TP
         || linkProtocol == LinkProtocol::UB_MEM || linkProtocol == LinkProtocol::UBOE
-        || linkProtocol == LinkProtocol::UBG) {
+        || linkProtocol == LinkProtocol::UB_RTP) {
         linkType = LinkProtoType::UB;
     } else if (linkProtocol == LinkProtocol::ROCE) {
         linkType = LinkProtoType::RDMA;
     } else if (linkProtocol == LinkProtocol::PCIE) {
         linkType = LinkProtoType::HCCS_PCIE;
     } else {
-        THROW<NotSupportException>(StringFormat("[LinkProtocol2LinkProtoType] linkProtocol[%s] don't support.",
-            linkProtocol.Describe().c_str()));
+        THROW<NotSupportException>(StringFormat(
+            "[LinkProtocol2LinkProtoType] linkProtocol[%s] don't support.", linkProtocol.Describe().c_str()));
     }
     return linkType;
 }
@@ -77,8 +77,9 @@ inline LinkProtoType ConnProto2LinkProto(ConnectProtoType connType)
         linkType = LinkProtoType::TCP;
     } else if (connType == ConnectProtoType::RDMA) {
         linkType = LinkProtoType::RDMA;
-    } else if (connType == ConnectProtoType::UB || connType == ConnectProtoType::UBOE
-               || connType == ConnectProtoType::UBG) {
+    } else if (
+        connType == ConnectProtoType::UB || connType == ConnectProtoType::UBOE
+        || connType == ConnectProtoType::UB_RTP) {
         linkType = LinkProtoType::UB;
     }
     HCCL_INFO("[ConnProto2LinkProto] linkType is[%s]", linkType.Describe().c_str());
@@ -99,8 +100,8 @@ inline LinkProtocol ConnProto2LinkProtocol(ConnectProtoType connType)
         linkProto = LinkProtocol::UB_CTP;
     } else if (connType == ConnectProtoType::UBOE) {
         linkProto = LinkProtocol::UBOE;
-    } else if (connType == ConnectProtoType::UBG) {
-        linkProto = LinkProtocol::UBG;
+    } else if (connType == ConnectProtoType::UB_RTP) {
+        linkProto = LinkProtocol::UB_RTP;
     }
     HCCL_INFO("[ConnProto2LinkProtocol] linkProto is[%s]", linkProto.Describe().c_str());
     return linkProto;
@@ -108,32 +109,20 @@ inline LinkProtocol ConnProto2LinkProtocol(ConnectProtoType connType)
 
 class BasePortType {
 public:
-    BasePortType(const BasePortType &)            = default;
-    BasePortType &operator=(const BasePortType &) = default;
+    BasePortType(const BasePortType&) = default;
+    BasePortType& operator=(const BasePortType&) = default;
 
-    inline PortDeploymentType GetType() const
-    {
-        return type_;
-    };
+    inline PortDeploymentType GetType() const { return type_; };
 
-    inline ConnectProtoType GetProto() const
-    {
-        return proto_;
-    };
+    inline ConnectProtoType GetProto() const { return proto_; };
 
-    explicit BasePortType(PortDeploymentType type) : type_(type){};
+    explicit BasePortType(PortDeploymentType type) : type_(type) {};
 
-    bool operator==(const BasePortType &rhs) const
-    {
-        return type_ == rhs.type_ && proto_ == rhs.proto_;
-    }
+    bool operator==(const BasePortType& rhs) const { return type_ == rhs.type_ && proto_ == rhs.proto_; }
 
-    bool operator!=(const BasePortType &rhs) const
-    {
-        return !(rhs == *this);
-    }
+    bool operator!=(const BasePortType& rhs) const { return !(rhs == *this); }
 
-    bool operator<(const BasePortType &rhs) const
+    bool operator<(const BasePortType& rhs) const
     {
         if (type_ < rhs.type_)
             return true;
@@ -142,7 +131,7 @@ public:
         return proto_ < rhs.proto_;
     }
 
-    BasePortType(PortDeploymentType type, ConnectProtoType proto) : type_(type), proto_(proto){};
+    BasePortType(PortDeploymentType type, ConnectProtoType proto) : type_(type), proto_(proto) {};
 
     string Describe() const
     {
@@ -151,102 +140,138 @@ public:
 
 protected:
     PortDeploymentType type_;
-    ConnectProtoType   proto_;
+    ConnectProtoType proto_;
 };
 
-class P2PPortType : public BasePortType {
+class P2PPortType {
 public:
-    P2PPortType(ConnectProtoType proto) : BasePortType(PortDeploymentType::P2P)
+    P2PPortType(ConnectProtoType proto) : portType_(PortDeploymentType::P2P, proto)
     {
         if (proto != ConnectProtoType::HCCS && proto != ConnectProtoType::PCIE) {
             THROW<InvalidParamsException>(StringFormat("P2PPortType::P2PPortType proto invalid"));
         }
-        proto_ = proto;
     };
+
+    PortDeploymentType GetType() const { return portType_.GetType(); }
+
+    ConnectProtoType GetProto() const { return portType_.GetProto(); }
+
+    bool operator==(const BasePortType& rhs) const { return portType_ == rhs; }
+
+    bool operator!=(const BasePortType& rhs) const { return portType_ != rhs; }
+
+    bool operator<(const BasePortType& rhs) const { return portType_ < rhs; }
+
+    string Describe() const { return portType_.Describe(); }
+
+    operator BasePortType() const { return portType_; }
+
+private:
+    BasePortType portType_;
 };
 
-class DevNetPortType : public BasePortType {
+class DevNetPortType {
 public:
-    DevNetPortType(ConnectProtoType proto) : BasePortType(PortDeploymentType::DEV_NET)
+    DevNetPortType(ConnectProtoType proto) : portType_(PortDeploymentType::DEV_NET, proto)
     {
         if (proto != ConnectProtoType::TCP && proto != ConnectProtoType::RDMA && proto != ConnectProtoType::UB) {
             THROW<InvalidParamsException>(StringFormat("DevNetPortType::DevNetPortType proto invalid"));
         }
-        proto_ = proto;
     };
+
+    PortDeploymentType GetType() const { return portType_.GetType(); }
+
+    ConnectProtoType GetProto() const { return portType_.GetProto(); }
+
+    bool operator==(const BasePortType& rhs) const { return portType_ == rhs; }
+
+    bool operator!=(const BasePortType& rhs) const { return portType_ != rhs; }
+
+    bool operator<(const BasePortType& rhs) const { return portType_ < rhs; }
+
+    string Describe() const { return portType_.Describe(); }
+
+    operator BasePortType() const { return portType_; }
+
+private:
+    BasePortType portType_;
 };
 
-class HostNetPortType : public BasePortType {
+class HostNetPortType {
 public:
-    HostNetPortType(ConnectProtoType proto) : BasePortType(PortDeploymentType::HOST_NET)
+    HostNetPortType(ConnectProtoType proto) : portType_(PortDeploymentType::HOST_NET, proto)
     {
         if (proto != ConnectProtoType::TCP && proto != ConnectProtoType::RDMA && proto != ConnectProtoType::UB) {
             THROW<InvalidParamsException>(StringFormat("HostNetPortType::HostNetPortType proto invalid"));
         }
-        proto_ = proto;
     };
+
+    PortDeploymentType GetType() const { return portType_.GetType(); }
+
+    ConnectProtoType GetProto() const { return portType_.GetProto(); }
+
+    bool operator==(const BasePortType& rhs) const { return portType_ == rhs; }
+
+    bool operator!=(const BasePortType& rhs) const { return portType_ != rhs; }
+
+    bool operator<(const BasePortType& rhs) const { return portType_ < rhs; }
+
+    string Describe() const { return portType_.Describe(); }
+
+    operator BasePortType() const { return portType_; }
+
+private:
+    BasePortType portType_;
 };
 
 class PortData {
 public:
-    PortData(RankId rankId, BasePortType type, u32 id, const IpAddress &addr)
-        : rankId(rankId), type(type.GetType()), protoType(ConnProto2LinkProto(type.GetProto())), id(id), addr(addr)
-    {
-    }
+    PortData(RankId rankId, const BasePortType& type, u32 id, const IpAddress& addr)
+        : rankId(rankId),
+          type(type.GetType()),
+          protoType(ConnProto2LinkProto(type.GetProto())),
+          id(id),
+          addr(addr)
+    {}
 
-    PortData(RankId rankId, PortDeploymentType type, LinkProtoType protoType, u32 id, const IpAddress &addr)
-        : rankId(rankId), type(type), protoType(protoType), id(id), addr(addr)
-    {
-    }
+    PortData(RankId rankId, PortDeploymentType type, LinkProtoType protoType, u32 id, const IpAddress& addr)
+        : rankId(rankId),
+          type(type),
+          protoType(protoType),
+          id(id),
+          addr(addr)
+    {}
 
-    PortData(RankId rankId, const NetInstance::ConnInterface &connIface)
-        : rankId(rankId), type(AddrPos2PortDeploymentType(connIface.GetPos(), *connIface.GetLinkProtocols().begin())),
-          protoType(LinkProtocol2LinkProtoType(*connIface.GetLinkProtocols().begin())), id(0), addr(connIface.GetAddr())
-    {
-    }
+    PortData(RankId rankId, const NetInstance::ConnInterface& connIface)
+        : rankId(rankId),
+          type(AddrPos2PortDeploymentType(connIface.GetPos(), *connIface.GetLinkProtocols().begin())),
+          protoType(LinkProtocol2LinkProtoType(*connIface.GetLinkProtocols().begin())),
+          id(0),
+          addr(connIface.GetAddr())
+    {}
 
     string Describe() const
     {
-        return StringFormat("PortData[rankId=%d, type=%s, id=%d, addr=%s]", rankId, type.Describe().c_str(), id,
-                            addr.Describe().c_str());
+        return StringFormat(
+            "PortData[rankId=%d, type=%s, id=%d, addr=%s]", rankId, type.Describe().c_str(), id,
+            addr.Describe().c_str());
     }
 
-    RankId GetRankId() const
-    {
-        return rankId;
-    }
+    RankId GetRankId() const { return rankId; }
 
-    const PortDeploymentType &GetType() const
-    {
-        return type;
-    }
+    const PortDeploymentType& GetType() const { return type; }
 
-    const LinkProtoType &GetProto() const
-    {
-        return protoType;
-    }
+    const LinkProtoType& GetProto() const { return protoType; }
 
-    u32 GetId() const
-    {
-        return id;
-    }
+    u32 GetId() const { return id; }
 
-    const IpAddress &GetAddr() const
-    {
-        return addr;
-    }
+    const IpAddress& GetAddr() const { return addr; }
 
-    bool operator==(const PortData &rhs) const
-    {
-        return type == rhs.type && id == rhs.id && addr == rhs.addr; // TODO: rankId后面应该要删，rankId == rhs.rankId && 
-    }
+    bool operator==(const PortData& rhs) const { return type == rhs.type && id == rhs.id && addr == rhs.addr; }
 
-    bool operator!=(const PortData &rhs) const
-    {
-        return !(rhs == *this);
-    }
+    bool operator!=(const PortData& rhs) const { return !(rhs == *this); }
 
-    bool operator<(const PortData &rhs) const
+    bool operator<(const PortData& rhs) const
     {
         if (rankId < rhs.rankId) {
             return true;
@@ -268,50 +293,42 @@ public:
         return id < rhs.id;
     }
 
-    bool operator>(const PortData &rhs) const
-    {
-        return rhs < *this;
-    }
+    bool operator>(const PortData& rhs) const { return rhs < *this; }
 
-    bool operator<=(const PortData &rhs) const
-    {
-        return !(rhs < *this);
-    }
+    bool operator<=(const PortData& rhs) const { return !(rhs < *this); }
 
-    bool operator>=(const PortData &rhs) const
-    {
-        return !(*this < rhs);
-    }
+    bool operator>=(const PortData& rhs) const { return !(*this < rhs); }
 
 private:
-    RankId             rankId;
+    RankId rankId;
     PortDeploymentType type;
-    LinkProtoType      protoType;
-    u32                id;
-    IpAddress          addr;
+    LinkProtoType protoType;
+    u32 id;
+    IpAddress addr;
 };
 } // namespace Hccl
 
 namespace std {
 
-template <> class hash<Hccl::PortData> {
+template <>
+class hash<Hccl::PortData> {
 public:
-    size_t operator()(const Hccl::PortData &portData) const
+    size_t operator()(const Hccl::PortData& portData) const
     {
-        auto typeHash  = hash<uint8_t>{}(portData.GetType());
+        auto typeHash = hash<uint8_t>{}(portData.GetType());
         auto protoHash = hash<uint8_t>{}(portData.GetProto());
-        auto addrHash  = hash<Hccl::IpAddress>{}(portData.GetAddr());
+        auto addrHash = hash<Hccl::IpAddress>{}(portData.GetAddr());
 
         return Hccl::HashCombine({addrHash, typeHash, protoHash});
     }
 };
 
-template <> class equal_to<Hccl::PortData> {
+template <>
+class equal_to<Hccl::PortData> {
 public:
-    bool operator()(const Hccl::PortData &p1, const Hccl::PortData &p2) const
+    bool operator()(const Hccl::PortData& p1, const Hccl::PortData& p2) const
     {
-        return p1.GetAddr() == p2.GetAddr() && p1.GetType() == p2.GetType()
-               && p1.GetProto() == p2.GetProto();
+        return p1.GetAddr() == p2.GetAddr() && p1.GetType() == p2.GetType() && p1.GetProto() == p2.GetProto();
     }
 };
 } // namespace std

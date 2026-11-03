@@ -1,12 +1,13 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "gtest/gtest.h"
 
 #include <vector>
@@ -23,24 +24,18 @@
 #include "checker.h"
 using namespace checker;
 
-class Test_AllGather_Mesh_Opbase_Pipeline : public::testing::TestWithParam
-    <std::tuple<int, CheckerDataType, vector<int>, CheckerOpMode>>
-{
+class Test_AllGather_Mesh_Opbase_Pipeline :
+    public ::testing::TestWithParam<std::tuple<int, CheckerDataType, vector<int>, CheckerOpMode>> {
 public:
-    static void SetUpTestCase()
-    {
-        std::cout << "Test_AllGather_Mesh_Opbase_Pipeline set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "Test_AllGather_Mesh_Opbase_Pipeline set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "Test_AllGather_Mesh_Opbase_Pipeline tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "Test_AllGather_Mesh_Opbase_Pipeline tear down." << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -55,12 +50,13 @@ public:
 
 TEST_P(Test_AllGather_Mesh_Opbase_Pipeline, AllGather_Test)
 {
-    const auto &mytuple = GetParam();
+    const auto& mytuple = GetParam();
 
-    //打印当前参数
+    // 打印当前参数
     std::cout << "DataDes count:" << std::get<0>(mytuple) << std::endl;
     std::cout << "DataDes datatype:" << std::get<1>(mytuple) << std::endl;
-    std::cout << "TopoMeta:" << std::get<2>(mytuple)[0] << "," << std::get<2>(mytuple)[1] << "," << std::get<2>(mytuple)[2] << std::endl;
+    std::cout << "TopoMeta:" << std::get<2>(mytuple)[0] << "," << std::get<2>(mytuple)[1] << ","
+              << std::get<2>(mytuple)[2] << std::endl;
     std::cout << "Opmode:" << std::get<3>(mytuple) << std::endl;
 
     RankTable_For_LLT gen;
@@ -69,7 +65,7 @@ TEST_P(Test_AllGather_Mesh_Opbase_Pipeline, AllGather_Test)
 
     setenv("HCCL_ALGO", "level0:NA;level1:pipeline", 1);
 
-    if (std::get<0>(mytuple) == 5000000008){
+    if (std::get<0>(mytuple) == 5000000008) {
         setenv("HCCL_BUFFSIZE", "4096", 1);
         cout << "set HCCL_BUFFSIZE 128" << std::endl;
     }
@@ -92,12 +88,11 @@ TEST_P(Test_AllGather_Mesh_Opbase_Pipeline, AllGather_Test)
 }
 
 std::vector<std::vector<int>> TopoList = {{1, 2, 7}, {1, 2, 8}, {1, 4, 16}};
-INSTANTIATE_TEST_SUITE_P(TestSanity, Test_AllGather_Mesh_Opbase_Pipeline,
+INSTANTIATE_TEST_SUITE_P(
+    TestSanity, Test_AllGather_Mesh_Opbase_Pipeline,
     testing::Combine(
-        testing::Values(800/* , 1000000008, 5000000008 */),
-        testing::Values(CheckerDataType::DATA_TYPE_INT64, CheckerDataType::DATA_TYPE_FP32,
-            CheckerDataType::DATA_TYPE_INT8, CheckerDataType::DATA_TYPE_BFP16),
-        testing::ValuesIn(TopoList.begin(),TopoList.end()),
-        testing::Values(CheckerOpMode::OPBASE)
-    )
-);
+        testing::Values(800 /* , 1000000008, 5000000008 */),
+        testing::Values(
+            CheckerDataType::DATA_TYPE_INT64, CheckerDataType::DATA_TYPE_FP32, CheckerDataType::DATA_TYPE_INT8,
+            CheckerDataType::DATA_TYPE_BFP16),
+        testing::ValuesIn(TopoList.begin(), TopoList.end()), testing::Values(CheckerOpMode::OPBASE)));

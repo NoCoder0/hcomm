@@ -25,13 +25,13 @@ extern "C" {
 #if BKF_BLOCK("tlv编解码表")
 #pragma pack(4)
 /* 不要访问转出来的tl字段 */
-#define BKF_CODEC_VAL_2TLV(val) ((void*)((uint8_t*)(val) - sizeof(BkfTL)))
+#define BKF_CODEC_VAL_2TLV(val) ((void *)((uint8_t *)(val) - sizeof(BkfTL)))
 
 STATIC uint32_t BkfCodecTlvTransNum(BkfMsgCodecer *codecer, void *val, int32_t inValLen)
 {
     BkfTlvTransNum *temp = BKF_CODEC_VAL_2TLV(val);
-    BKF_LOG_DEBUG(BKF_LOG_HND, "transNum(%"VOS_PRIu64"/%"VOS_PRIu64"), inValLen(%d)\n",
-                  temp->num, VOS_HTONLL(temp->num), inValLen);
+    BKF_LOG_DEBUG(BKF_LOG_HND, "transNum(%" VOS_PRIu64 "/%" VOS_PRIu64 "), inValLen(%d)\n", temp->num,
+        VOS_HTONLL(temp->num), inValLen);
 
     temp->num = VOS_HTONLL(temp->num);
     return BKF_OK;
@@ -69,8 +69,8 @@ STATIC uint32_t BkfCodecTlvSuberName(BkfMsgCodecer *codecer, void *val, int32_t 
 STATIC uint32_t BkfCodecTlvIdlVersion(BkfMsgCodecer *codecer, void *val, int32_t inValLen)
 {
     BkfTlvIdlVersion *temp = BKF_CODEC_VAL_2TLV(val);
-    BKF_LOG_DEBUG(BKF_LOG_HND, "major(%u/%u)/minor(%u/%u), inValLen(%d)\n",
-                  temp->major, VOS_HTONS(temp->major), temp->minor, VOS_HTONS(temp->minor), inValLen);
+    BKF_LOG_DEBUG(BKF_LOG_HND, "major(%u/%u)/minor(%u/%u), inValLen(%d)\n", temp->major, VOS_HTONS(temp->major),
+        temp->minor, VOS_HTONS(temp->minor), inValLen);
 
     temp->major = VOS_HTONS(temp->major);
     temp->minor = VOS_HTONS(temp->minor);
@@ -79,18 +79,18 @@ STATIC uint32_t BkfCodecTlvIdlVersion(BkfMsgCodecer *codecer, void *val, int32_t
 
 STATIC uint32_t BkfCodecTlvSuberLsnUrl(BkfMsgCodecer *codecer, void *val, int32_t inValLen)
 {
+    (void)inValLen;
     BkfTlvSuberLsnUrl *temp = BKF_CODEC_VAL_2TLV(val);
 
     if (temp->lsnUrl.type == BKF_URL_TYPE_DMS) {
-        BKF_LOG_DEBUG(BKF_LOG_HND, "BkfCodecTlvSuberLsnUrl:dmsId %#x\n",
-                      temp->lsnUrl.dmsId);
+        BKF_LOG_DEBUG(BKF_LOG_HND, "BkfCodecTlvSuberLsnUrl:dmsId %#x\n", temp->lsnUrl.dmsId);
 
         temp->lsnUrl.dmsId = VOS_HTONL(temp->lsnUrl.dmsId);
     } else {
         temp->lsnUrl.ip.addrH = VOS_HTONL(temp->lsnUrl.ip.addrH);
         temp->lsnUrl.ip.port = VOS_HTONS(temp->lsnUrl.ip.port);
-        BKF_LOG_DEBUG(BKF_LOG_HND, "BkfCodecTlvSuberLsnUrl:addr %#x, port %u\n",
-                      temp->lsnUrl.ip.addrH, temp->lsnUrl.ip.port);
+        BKF_LOG_DEBUG(BKF_LOG_HND, "BkfCodecTlvSuberLsnUrl:addr %#x, port %u\n", temp->lsnUrl.ip.addrH,
+            temp->lsnUrl.ip.port);
     }
     return BKF_OK;
 }
@@ -98,11 +98,11 @@ STATIC uint32_t BkfCodecTlvSuberLsnUrl(BkfMsgCodecer *codecer, void *val, int32_
 STATIC uint32_t BkfCodecTlvReasonCode(BkfMsgCodecer *codecer, void *val, int32_t inValLen)
 {
     BkfTlvReasonCode *temp = BKF_CODEC_VAL_2TLV(val);
-    BKF_LOG_DEBUG(BKF_LOG_HND, "reasonCode(%u, %s), inValLen(%d)\n",
-                  temp->reasonCode, BkfReasonCodeGetStr(temp->reasonCode), inValLen);
+    BKF_LOG_DEBUG(BKF_LOG_HND, "reasonCode(%u, %s), inValLen(%d)\n", temp->reasonCode,
+        BkfReasonCodeGetStr(temp->reasonCode), inValLen);
     return BKF_OK;
 }
-#define BKF_CODEC_TLV_SLICE_KEY_2STR(codecer, val, buf, bufLen) \
+#define BKF_CODEC_TLV_SLICE_KEY_2STR(codecer, val, buf, bufLen)                                                        \
     (((codecer)->sliceKeyGetStrOrNull != VOS_NULL) ? (codecer)->sliceKeyGetStrOrNull((val), (buf), (bufLen)) : "-")
 STATIC uint32_t BkfCodecTlvSliceKey(BkfMsgCodecer *codecer, void *val, int32_t inValLen)
 {
@@ -110,7 +110,7 @@ STATIC uint32_t BkfCodecTlvSliceKey(BkfMsgCodecer *codecer, void *val, int32_t i
     uint32_t ret;
 
     BKF_LOG_DEBUG(BKF_LOG_HND, "before_codec, inValLen(%d)/keyStr(%s)\n", inValLen,
-                  BKF_CODEC_TLV_SLICE_KEY_2STR(codecer, val, buf, sizeof(buf)));
+        BKF_CODEC_TLV_SLICE_KEY_2STR(codecer, val, buf, sizeof(buf)));
 
     if (inValLen != codecer->sliceKeyLen) {
         return BKF_ERR;
@@ -118,15 +118,15 @@ STATIC uint32_t BkfCodecTlvSliceKey(BkfMsgCodecer *codecer, void *val, int32_t i
     ret = codecer->sliceKeyCodec(val);
     if (ret == BKF_OK) {
         BKF_LOG_DEBUG(BKF_LOG_HND, "after_codec, inValLen(%d)/keyStr(%s)\n", inValLen,
-                      BKF_CODEC_TLV_SLICE_KEY_2STR(codecer, val, buf, sizeof(buf)));
+            BKF_CODEC_TLV_SLICE_KEY_2STR(codecer, val, buf, sizeof(buf)));
     }
     return ret;
 }
 STATIC uint32_t BkfCodecTlvTableType(BkfMsgCodecer *codecer, void *val, int32_t inValLen)
 {
     BkfTlvTableType *temp = BKF_CODEC_VAL_2TLV(val);
-    BKF_LOG_DEBUG(BKF_LOG_HND, "tableTypeId(%u/%u), inValLen(%d)\n",
-                  temp->tableTypeId, VOS_HTONS(temp->tableTypeId), inValLen);
+    BKF_LOG_DEBUG(BKF_LOG_HND, "tableTypeId(%u/%u), inValLen(%d)\n", temp->tableTypeId, VOS_HTONS(temp->tableTypeId),
+        inValLen);
 
     temp->tableTypeId = VOS_HTONS(temp->tableTypeId);
     return BKF_OK;
@@ -135,8 +135,8 @@ STATIC uint32_t BkfCodecTlvTableType(BkfMsgCodecer *codecer, void *val, int32_t 
 STATIC uint32_t BkfCodecTlvTupleIdlData(BkfMsgCodecer *codecer, void *val, int32_t inValLen)
 {
     BkfTlvTupleIdlData *temp = BKF_CODEC_VAL_2TLV(val);
-    BKF_LOG_DEBUG(BKF_LOG_HND, "seq(%"VOS_PRIu64"/%"VOS_PRIu64"), inValLen(%d)\n",
-                  temp->seq, VOS_HTONLL(temp->seq), inValLen);
+    BKF_LOG_DEBUG(BKF_LOG_HND, "seq(%" VOS_PRIu64 "/%" VOS_PRIu64 "), inValLen(%d)\n", temp->seq, VOS_HTONLL(temp->seq),
+        inValLen);
 
     temp->seq = VOS_HTONLL(temp->seq);
     return BKF_OK;
@@ -144,22 +144,26 @@ STATIC uint32_t BkfCodecTlvTupleIdlData(BkfMsgCodecer *codecer, void *val, int32
 
 STATIC uint32_t BkfCodecTlvCondIdlData(BkfMsgCodecer *codecer, void *val, int32_t inValLen)
 {
+    (void)codecer;
+    (void)val;
+    (void)inValLen;
     return BKF_OK;
 }
-
 
 STATIC uint32_t BkfCodecTlvResultIdlData(BkfMsgCodecer *codecer, void *val, int32_t inValLen)
 {
+    (void)codecer;
+    (void)val;
+    (void)inValLen;
     return BKF_OK;
 }
-
 
 STATIC uint32_t BkfCodecTlvRpc(BkfMsgCodecer *codecer, void *val, int32_t inValLen)
 {
     BkfTlvRpc *temp = BKF_CODEC_VAL_2TLV(val);
-    BKF_LOG_DEBUG(BKF_LOG_HND, "type(%u/%u), oper(%u/%u), seq(%"VOS_PRIu64"/%"VOS_PRIu64"), inValLen(%d)\n",
-                  temp->type, VOS_HTONS(temp->type), temp->operCode, VOS_HTONS(temp->operCode),
-                  temp->seq, VOS_HTONLL(temp->seq), inValLen);
+    BKF_LOG_DEBUG(BKF_LOG_HND, "type(%u/%u), oper(%u/%u), seq(%" VOS_PRIu64 "/%" VOS_PRIu64 "), inValLen(%d)\n",
+        temp->type, VOS_HTONS(temp->type), temp->operCode, VOS_HTONS(temp->operCode), temp->seq, VOS_HTONLL(temp->seq),
+        inValLen);
 
     temp->type = VOS_HTONS(temp->type);
     temp->operCode = VOS_HTONS(temp->operCode);
@@ -179,23 +183,29 @@ typedef struct tagBkfTlvCodecVTbl {
 } BkfTlvCodecVTbl;
 
 const BkfTlvCodecVTbl g_BkfTlvCodecVTbl[] = {
-    { BKF_TLV_PART1_LEN_FIXED, VOS_NULL, 0, 0, 0,  },
-    { BKF_TLV_PART1_LEN_FIXED, BkfCodecTlvTransNum,       BKF_MBR_SIZE(BkfTlvTransNum, num), 0, 0 },
-    { BKF_TLV_PART1_LEN_RANGE, BkfCodecTlvProjectName,    0, 2, BKF_TLV_NAME_LEN_MAX + 1 },
-    { BKF_TLV_PART1_LEN_FIXED, BkfCodecTlvProjectVersion, BKF_MBR_SIZE(BkfTlvProjectVersion, version), 0, 0 },
-    { BKF_TLV_PART1_LEN_RANGE, BkfCodecTlvServiceName,    0, 2, BKF_TLV_NAME_LEN_MAX + 1 },
-    { BKF_TLV_PART1_LEN_RANGE, BkfCodecTlvPuberName,      0, 2, BKF_TLV_NAME_LEN_MAX + 1 },
-    { BKF_TLV_PART1_LEN_RANGE, BkfCodecTlvSuberName,      0, 2, BKF_TLV_NAME_LEN_MAX + 1 },
-    { BKF_TLV_PART1_LEN_FIXED, BkfCodecTlvIdlVersion,
-      BKF_MBR_SIZE(BkfTlvIdlVersion, major) + BKF_MBR_SIZE(BkfTlvIdlVersion, minor), 0, 0 },
-    { BKF_TLV_PART1_LEN_FIXED, BkfCodecTlvReasonCode,     BKF_MBR_SIZE(BkfTlvReasonCode, reasonCode), 0, 0 },
-    { BKF_TLV_PART1_LEN_RANGE, BkfCodecTlvSliceKey,       0, 4, BKF_DC_SLICE_KEY_LEN_MAX },
-    { BKF_TLV_PART1_LEN_FIXED, BkfCodecTlvTableType,      BKF_MBR_SIZE(BkfTlvTableType, tableTypeId), 0, 0 },
-    { BKF_TLV_PART1_LEN_FIXED, BkfCodecTlvTupleIdlData,  BKF_MBR_SIZE(BkfTlvTupleIdlData, seq), 0, 0 },
-    { BKF_TLV_PART1_LEN_FIXED, BkfCodecTlvRpc, BKF_OFFSET(BkfTlvRpc, idlData) - BKF_OFFSET(BkfTlvRpc, type), 0, 0 },
-    { BKF_TLV_PART1_LEN_FIXED, BkfCodecTlvCondIdlData,  0, 0, 0 },
-    { BKF_TLV_PART1_LEN_FIXED, BkfCodecTlvResultIdlData, 0, 0, 0 },
-    { BKF_TLV_PART1_LEN_FIXED, BkfCodecTlvSuberLsnUrl, sizeof(BkfUrl), 0, 0 },
+    {
+        BKF_TLV_PART1_LEN_FIXED,
+        VOS_NULL,
+        0,
+        0,
+        0,
+    },
+    {BKF_TLV_PART1_LEN_FIXED, BkfCodecTlvTransNum, BKF_MBR_SIZE(BkfTlvTransNum, num), 0, 0},
+    {BKF_TLV_PART1_LEN_RANGE, BkfCodecTlvProjectName, 0, 2, BKF_TLV_NAME_LEN_MAX + 1},
+    {BKF_TLV_PART1_LEN_FIXED, BkfCodecTlvProjectVersion, BKF_MBR_SIZE(BkfTlvProjectVersion, version), 0, 0},
+    {BKF_TLV_PART1_LEN_RANGE, BkfCodecTlvServiceName, 0, 2, BKF_TLV_NAME_LEN_MAX + 1},
+    {BKF_TLV_PART1_LEN_RANGE, BkfCodecTlvPuberName, 0, 2, BKF_TLV_NAME_LEN_MAX + 1},
+    {BKF_TLV_PART1_LEN_RANGE, BkfCodecTlvSuberName, 0, 2, BKF_TLV_NAME_LEN_MAX + 1},
+    {BKF_TLV_PART1_LEN_FIXED, BkfCodecTlvIdlVersion,
+        BKF_MBR_SIZE(BkfTlvIdlVersion, major) + BKF_MBR_SIZE(BkfTlvIdlVersion, minor), 0, 0},
+    {BKF_TLV_PART1_LEN_FIXED, BkfCodecTlvReasonCode, BKF_MBR_SIZE(BkfTlvReasonCode, reasonCode), 0, 0},
+    {BKF_TLV_PART1_LEN_RANGE, BkfCodecTlvSliceKey, 0, 4, BKF_DC_SLICE_KEY_LEN_MAX},
+    {BKF_TLV_PART1_LEN_FIXED, BkfCodecTlvTableType, BKF_MBR_SIZE(BkfTlvTableType, tableTypeId), 0, 0},
+    {BKF_TLV_PART1_LEN_FIXED, BkfCodecTlvTupleIdlData, BKF_MBR_SIZE(BkfTlvTupleIdlData, seq), 0, 0},
+    {BKF_TLV_PART1_LEN_FIXED, BkfCodecTlvRpc, BKF_OFFSET(BkfTlvRpc, idlData) - BKF_OFFSET(BkfTlvRpc, type), 0, 0},
+    {BKF_TLV_PART1_LEN_FIXED, BkfCodecTlvCondIdlData, 0, 0, 0},
+    {BKF_TLV_PART1_LEN_FIXED, BkfCodecTlvResultIdlData, 0, 0, 0},
+    {BKF_TLV_PART1_LEN_FIXED, BkfCodecTlvSuberLsnUrl, sizeof(BkfUrl), 0, 0},
 };
 
 #pragma pack()
@@ -225,8 +235,7 @@ void BkfMsgCodeResetSliceKeyPara(BkfMsgCoder *coder, uint16_t sliceKeyLen, F_BKF
 
 /* func */
 uint32_t BkfMsgCodeInit(BkfMsgCoder *coder, const char *name, uint8_t *sendBuf, int32_t sendBufLen,
-                       uint16_t sliceKeyLen, F_BKF_DO sliceKeyCodec, F_BKF_GET_STR sliceKeyGetStrOrNull,
-                       BkfLog *logOrNull)
+    uint16_t sliceKeyLen, F_BKF_DO sliceKeyCodec, F_BKF_GET_STR sliceKeyGetStrOrNull, BkfLog *logOrNull)
 {
     if ((coder == VOS_NULL) || (name == VOS_NULL) || (sendBuf == VOS_NULL) || (sendBufLen <= 0)) {
         return BKF_ERR;
@@ -257,9 +266,8 @@ STATIC uint32_t BkfMsgCodeMsgHeadChkParam(BkfMsgCoder *coder, uint16_t msgId)
         return BKF_ERR;
     }
     msgBodyLen = (coder->curMsgHead != VOS_NULL) ? VOS_NTOHL(coder->curMsgHead->bodyLen) : 0;
-    BKF_LOG_DEBUG(BKF_LOG_HND, "msgId(%u, %s), sendBufLen(%d)/validMsgLen(%d)/msgBodyLen(%u)/tempUsedLen(%d)\n",
-                  msgId, BkfMsgGetIdStr(msgId),
-                  coder->sendBufLen, coder->validMsgLen, msgBodyLen, coder->tempUsedLen);
+    BKF_LOG_DEBUG(BKF_LOG_HND, "msgId(%u, %s), sendBufLen(%d)/validMsgLen(%d)/msgBodyLen(%u)/tempUsedLen(%d)\n", msgId,
+        BkfMsgGetIdStr(msgId), coder->sendBufLen, coder->validMsgLen, msgBodyLen, coder->tempUsedLen);
 
     if (coder->codedErr) {
         BKF_LOG_INFO(BKF_LOG_HND, "codedErr(%u)\n", coder->codedErr);
@@ -296,10 +304,10 @@ uint32_t BkfMsgCodeMsgHead(BkfMsgCoder *coder, uint16_t msgId, uint8_t flag)
     leftLen = BKF_MSG_CODE_GET_LEFT_LEN(coder);
     needLen = sizeof(BkfMsgHead);
     if (leftLen < needLen) {
-        BKF_LOG_INFO(BKF_LOG_HND, "leftLen(%d)/needLen(%d), sned buf not enough & OK!\n", leftLen, needLen);
+        BKF_LOG_INFO(BKF_LOG_HND, "leftLen(%d)/needLen(%d), send buf not enough & OK!\n", leftLen, needLen);
         goto error;
     }
-    curMsgHead = (BkfMsgHead*)BKF_MSG_CODE_GET_LEFT_BEGIN(coder);
+    curMsgHead = (BkfMsgHead *)BKF_MSG_CODE_GET_LEFT_BEGIN(coder);
     curMsgHead->sign = VOS_HTONL(BKF_MSG_SIGN);
     curMsgHead->msgId = VOS_HTONS(msgId);
     curMsgHead->flag = flag;
@@ -308,9 +316,11 @@ uint32_t BkfMsgCodeMsgHead(BkfMsgCoder *coder, uint16_t msgId, uint8_t flag)
 
     coder->validMsgLen += needLen;
     coder->curMsgHead = curMsgHead;
-    BKF_LOG_DEBUG(BKF_LOG_HND, "msgId(%u, %s)/flag(%#x), sendBufLen(%d)/validMsgLen(%d)/"
-                  "msgBodyLen(%u)/tempUsedLen(%d)\n", msgId, BkfMsgGetIdStr(msgId), flag,
-                  coder->sendBufLen, coder->validMsgLen, VOS_NTOHL(curMsgHead->bodyLen), coder->tempUsedLen);
+    BKF_LOG_DEBUG(BKF_LOG_HND,
+        "msgId(%u, %s)/flag(%#x), sendBufLen(%d)/validMsgLen(%d)/"
+        "msgBodyLen(%u)/tempUsedLen(%d)\n",
+        msgId, BkfMsgGetIdStr(msgId), flag, coder->sendBufLen, coder->validMsgLen, VOS_NTOHL(curMsgHead->bodyLen),
+        coder->tempUsedLen);
     return BKF_OK;
 
 error:
@@ -321,8 +331,7 @@ error:
     return BKF_ERR;
 }
 
-STATIC uint32_t BkfMsgCodeTLVChkParam(BkfMsgCoder *coder, uint16_t typeId, uint8_t flag, void *val,
-                                      BOOL updMsgBodyLen)
+STATIC uint32_t BkfMsgCodeTLVChkParam(BkfMsgCoder *coder, uint16_t typeId, uint8_t flag, void *val, BOOL updMsgBodyLen)
 {
     BkfMsgHead *curMsgHead = VOS_NULL;
 
@@ -335,8 +344,8 @@ STATIC uint32_t BkfMsgCodeTLVChkParam(BkfMsgCoder *coder, uint16_t typeId, uint8
         return BKF_ERR;
     }
     BKF_LOG_DEBUG(BKF_LOG_HND, "msgId(%u, %s)/typeId(%u, %s), flag(%#x)/val(%#x)/updMsgBodyLen(%u)\n",
-                  VOS_NTOHS(curMsgHead->msgId), BkfMsgGetIdStr(VOS_NTOHS(curMsgHead->msgId)),
-                  typeId, BkfTlvGetTypeStr(typeId), flag, BKF_MASK_ADDR(val), updMsgBodyLen);
+        VOS_NTOHS(curMsgHead->msgId), BkfMsgGetIdStr(VOS_NTOHS(curMsgHead->msgId)), typeId, BkfTlvGetTypeStr(typeId),
+        flag, BKF_MASK_ADDR(val), updMsgBodyLen);
 
     if (coder->codedErr) {
         BKF_LOG_INFO(BKF_LOG_HND, "codedErr(%u)\n", coder->codedErr);
@@ -363,12 +372,12 @@ STATIC void BkfMsgCodeTLVDoAfter(BkfMsgCoder *coder, BOOL updMsgBodyLen, int32_t
         coder->tempUsedLen = 0;
     }
 
-    BKF_LOG_DEBUG(BKF_LOG_HND, "msg(%u, %s)/type(%u, %s)/flag(%#x)/len(%u), "
-                  "sendBufLen(%d)/validMsgLen(%d)/msgBodyLen(%u)/tempUsedLen(%d)\n",
-                  VOS_NTOHS(curMsgHead->msgId), BkfMsgGetIdStr(VOS_NTOHS(curMsgHead->msgId)),
-                  VOS_NTOHS(curTl->typeId), BkfTlvGetTypeStr(VOS_NTOHS(curTl->typeId)),
-                  curTl->flag, VOS_NTOHL(curTl->valLen),
-                  coder->sendBufLen, coder->validMsgLen, VOS_NTOHL(curMsgHead->bodyLen), coder->tempUsedLen);
+    BKF_LOG_DEBUG(BKF_LOG_HND,
+        "msg(%u, %s)/type(%u, %s)/flag(%#x)/len(%u), "
+        "sendBufLen(%d)/validMsgLen(%d)/msgBodyLen(%u)/tempUsedLen(%d)\n",
+        VOS_NTOHS(curMsgHead->msgId), BkfMsgGetIdStr(VOS_NTOHS(curMsgHead->msgId)), VOS_NTOHS(curTl->typeId),
+        BkfTlvGetTypeStr(VOS_NTOHS(curTl->typeId)), curTl->flag, VOS_NTOHL(curTl->valLen), coder->sendBufLen,
+        coder->validMsgLen, VOS_NTOHL(curMsgHead->bodyLen), coder->tempUsedLen);
     return;
 }
 static inline void BkfMsgFillReservedForAlign(void *valBegin, int32_t valRealLen)
@@ -376,7 +385,7 @@ static inline void BkfMsgFillReservedForAlign(void *valBegin, int32_t valRealLen
     int32_t valAlignLen = BKF_GET_ALIGN4_LEN(valRealLen);
     int32_t fillLen = valAlignLen - valRealLen;
     if (fillLen > 0) {
-        (void)memset_s((uint8_t*)valBegin + valRealLen, fillLen, BKF_MSG_RSV_VAL, fillLen);
+        (void)memset_s((uint8_t *)valBegin + valRealLen, fillLen, BKF_MSG_RSV_VAL, fillLen);
     }
 }
 uint32_t BkfMsgCodeTLV(BkfMsgCoder *coder, uint16_t typeId, uint8_t flag, void *val, BOOL updMsgBodyLen)
@@ -390,14 +399,13 @@ uint32_t BkfMsgCodeTLV(BkfMsgCoder *coder, uint16_t typeId, uint8_t flag, void *
     }
     ret = BkfMsgCodeTLVChkParam(coder, typeId, flag, val, updMsgBodyLen);
     if (ret != BKF_OK) {
-        BKF_LOG_INFO(BKF_LOG_HND, "type(%u, %s), check TLV param failed.\n",
-            typeId, BkfTlvGetTypeStr(typeId));
+        BKF_LOG_INFO(BKF_LOG_HND, "type(%u, %s), check TLV param failed.\n", typeId, BkfTlvGetTypeStr(typeId));
         goto error;
     }
     coder->curTl = VOS_NULL;
     coder->curTlvHasAddRaw = VOS_FALSE;
 
-    vTbl = (BkfTlvCodecVTbl*)&g_BkfTlvCodecVTbl[typeId];
+    vTbl = (BkfTlvCodecVTbl *)&g_BkfTlvCodecVTbl[typeId];
     if (!BKF_BIT_TEST(vTbl->flag, BKF_TLV_PART1_LEN_FIXED)) {
         BKF_LOG_INFO(BKF_LOG_HND, "type(%u, %s), part1 not fixed len, ng\n", typeId, BkfTlvGetTypeStr(typeId));
         goto error;
@@ -408,7 +416,7 @@ uint32_t BkfMsgCodeTLV(BkfMsgCoder *coder, uint16_t typeId, uint8_t flag, void *
         BKF_LOG_INFO(BKF_LOG_HND, "leftLen(%d)/needLen(%d), send buf not enough & OK!\n", leftLen, needLen);
         goto error;
     }
-    curTl = (BkfTL*)BKF_MSG_CODE_GET_LEFT_BEGIN(coder);
+    curTl = (BkfTL *)BKF_MSG_CODE_GET_LEFT_BEGIN(coder);
     curTl->typeId = VOS_HTONS(typeId);
     curTl->flag = flag;
     curTl->reserved = BKF_MSG_RSV_VAL;
@@ -434,9 +442,8 @@ error:
     return BKF_ERR;
 }
 
-
-uint32_t BkfMsgCodeRawTLV(BkfMsgCoder *coder, uint16_t typeId, uint8_t flag,
-                         void *val, int32_t valRealLen, BOOL updMsgBodyLen)
+uint32_t BkfMsgCodeRawTLV(BkfMsgCoder *coder, uint16_t typeId, uint8_t flag, void *val, int32_t valRealLen,
+    BOOL updMsgBodyLen)
 {
     uint32_t ret;
     BkfTlvCodecVTbl *vTbl = VOS_NULL;
@@ -451,7 +458,7 @@ uint32_t BkfMsgCodeRawTLV(BkfMsgCoder *coder, uint16_t typeId, uint8_t flag,
     coder->curTl = VOS_NULL;
     coder->curTlvHasAddRaw = VOS_FALSE;
 
-    vTbl = (BkfTlvCodecVTbl*)&g_BkfTlvCodecVTbl[typeId];
+    vTbl = (BkfTlvCodecVTbl *)&g_BkfTlvCodecVTbl[typeId];
     if (!BKF_BIT_TEST(vTbl->flag, BKF_TLV_PART1_LEN_RANGE)) {
         BKF_LOG_INFO(BKF_LOG_HND, "type(%u, %s), not range len, ng\n", typeId, BkfTlvGetTypeStr(typeId));
         goto error;
@@ -466,7 +473,7 @@ uint32_t BkfMsgCodeRawTLV(BkfMsgCoder *coder, uint16_t typeId, uint8_t flag,
         BKF_LOG_INFO(BKF_LOG_HND, "leftLen(%d)/needLen(%d), send buf not enough & OK!\n", leftLen, needLen);
         goto error;
     }
-    curTl = (BkfTL*)BKF_MSG_CODE_GET_LEFT_BEGIN(coder);
+    curTl = (BkfTL *)BKF_MSG_CODE_GET_LEFT_BEGIN(coder);
     curTl->typeId = VOS_HTONS(typeId);
     curTl->flag = flag;
     curTl->reserved = BKF_MSG_RSV_VAL;
@@ -492,8 +499,7 @@ error:
     return BKF_ERR;
 }
 
-STATIC uint32_t BkfMsgCodeAppendValLenChkParam(BkfMsgCoder *coder, uint8_t flag, int32_t valRealLen,
-                                               BOOL updMsgBodyLen)
+STATIC uint32_t BkfMsgCodeAppendValLenChkParam(BkfMsgCoder *coder, uint8_t flag, int32_t valRealLen, BOOL updMsgBodyLen)
 {
     BkfMsgHead *curMsgHead = VOS_NULL;
     BkfTL *curTl = VOS_NULL;
@@ -518,7 +524,7 @@ STATIC uint32_t BkfMsgCodeAppendValLenChkParam(BkfMsgCoder *coder, uint8_t flag,
         BKF_LOG_INFO(BKF_LOG_HND, "typeId(%u), ng\n", typeId);
         return BKF_ERR;
     }
-    vTbl = (BkfTlvCodecVTbl*)&g_BkfTlvCodecVTbl[typeId];
+    vTbl = (BkfTlvCodecVTbl *)&g_BkfTlvCodecVTbl[typeId];
     if (!BKF_BIT_TEST(vTbl->flag, BKF_TLV_PART1_LEN_FIXED)) {
         BKF_LOG_INFO(BKF_LOG_HND, "type(%u, %s), part1 not fixed len, ng\n", typeId, BkfTlvGetTypeStr(typeId));
         return BKF_ERR;
@@ -528,8 +534,8 @@ STATIC uint32_t BkfMsgCodeAppendValLenChkParam(BkfMsgCoder *coder, uint8_t flag,
         return BKF_ERR;
     }
     BKF_LOG_DEBUG(BKF_LOG_HND, "msgId(%u, %s)/typeId(%u, %s), flag(%#x)/valLen(%u)/updMsgBodyLen(%u)\n",
-                  VOS_NTOHS(curMsgHead->msgId), BkfMsgGetIdStr(VOS_NTOHS(curMsgHead->msgId)),
-                  typeId, BkfTlvGetTypeStr(typeId), flag, valRealLen, updMsgBodyLen);
+        VOS_NTOHS(curMsgHead->msgId), BkfMsgGetIdStr(VOS_NTOHS(curMsgHead->msgId)), typeId, BkfTlvGetTypeStr(typeId),
+        flag, valRealLen, updMsgBodyLen);
 
     if (coder->codedErr) {
         BKF_LOG_INFO(BKF_LOG_HND, "codedErr(%u)\n", coder->codedErr);
@@ -562,7 +568,7 @@ uint32_t BkfMsgCodeAppendValLen(BkfMsgCoder *coder, uint8_t flag, int32_t valRea
     leftLen = BKF_MSG_CODE_GET_LEFT_LEN(coder);
     needLen = BKF_GET_ALIGN4_LEN(valRealLen);
     if (leftLen < needLen) {
-        BKF_LOG_DEBUG(BKF_LOG_HND, "leftLen(%d)/needLen(%d), send buf not engouth & OK!\n", leftLen, needLen);
+        BKF_LOG_DEBUG(BKF_LOG_HND, "leftLen(%d)/needLen(%d), send buf not enough & OK!\n", leftLen, needLen);
         goto error;
     }
     curTl = coder->curTl;
@@ -583,7 +589,6 @@ error:
     return BKF_ERR;
 }
 
-
 uint8_t *BkfMsgCodeGetLeft(BkfMsgCoder *coder, int32_t *leftLen)
 {
     if ((coder == VOS_NULL) || coder->codedErr || (leftLen == VOS_NULL)) {
@@ -593,13 +598,13 @@ uint8_t *BkfMsgCodeGetLeft(BkfMsgCoder *coder, int32_t *leftLen)
     *leftLen = BKF_MSG_CODE_GET_LEFT_LEN(coder);
     if (*leftLen < 0) {
         BKF_ASSERT(0);
-        BKF_LOG_ERROR(BKF_LOG_HND, "sendBufLen(%d)/validMsgLen(%d)/tempUsedLen(%d)\n",
-                      coder->sendBufLen, coder->validMsgLen, coder->tempUsedLen);
+        BKF_LOG_ERROR(BKF_LOG_HND, "sendBufLen(%d)/validMsgLen(%d)/tempUsedLen(%d)\n", coder->sendBufLen,
+            coder->validMsgLen, coder->tempUsedLen);
         goto error;
     }
 
-    BKF_LOG_DEBUG(BKF_LOG_HND, "sendBufLen(%d)/validMsgLen(%d)/tempUsedLen(%d)\n",
-                  coder->sendBufLen, coder->validMsgLen, coder->tempUsedLen);
+    BKF_LOG_DEBUG(BKF_LOG_HND, "sendBufLen(%d)/validMsgLen(%d)/tempUsedLen(%d)\n", coder->sendBufLen,
+        coder->validMsgLen, coder->tempUsedLen);
     return (*leftLen > 0) ? BKF_MSG_CODE_GET_LEFT_BEGIN(coder) : VOS_NULL;
 
 error:
@@ -653,8 +658,7 @@ void BkfMsgDeCodeResetSliceKeyPara(BkfMsgDecoder *decoder, uint16_t sliceKeyLen,
 
 /* func */
 uint32_t BkfMsgDecodeInit(BkfMsgDecoder *decoder, const char *name, uint8_t *rcvData, int32_t dataLen,
-                         uint16_t sliceKeyLen, F_BKF_DO sliceKeyCodec, F_BKF_GET_STR sliceKeyGetStrOrNull,
-                         BkfLog *logOrNull)
+    uint16_t sliceKeyLen, F_BKF_DO sliceKeyCodec, F_BKF_GET_STR sliceKeyGetStrOrNull, BkfLog *logOrNull)
 {
     if ((decoder == VOS_NULL) || (name == VOS_NULL) || (rcvData == VOS_NULL) || (dataLen <= 0)) {
         return BKF_ERR;
@@ -685,7 +689,7 @@ STATIC uint32_t BkfMsgDecodeMsgHeadChkParam(BkfMsgDecoder *decoder, uint32_t *er
         return BKF_ERR;
     }
     BKF_LOG_DEBUG(BKF_LOG_HND, "rcvData(%#x), decodedErr(%u), decodedLen(%d)/rcvDataLen(%d)\n",
-                  BKF_MASK_ADDR(decoder->rcvData), decoder->decodedErr, decoder->decodedLen, decoder->rcvDataLen);
+        BKF_MASK_ADDR(decoder->rcvData), decoder->decodedErr, decoder->decodedLen, decoder->rcvDataLen);
 
     if (decoder->decodedErr) {
         BKF_LOG_WARN(BKF_LOG_HND, "decodedErr(%u)\n", decoder->decodedErr);
@@ -700,11 +704,11 @@ STATIC uint32_t BkfMsgDecodeMsgHeadChkParam(BkfMsgDecoder *decoder, uint32_t *er
     if (curMsgHead != VOS_NULL) {
         if (decoder->curMsgDecodedLen > (int32_t)curMsgHead->bodyLen) {
             BKF_LOG_WARN(BKF_LOG_HND, "curMsgDecodedLen(%d)/bodyLen(%d), cur msg decode error, ng\n",
-                         decoder->curMsgDecodedLen, curMsgHead->bodyLen);
+                decoder->curMsgDecodedLen, curMsgHead->bodyLen);
             return BKF_ERR;
         } else if (decoder->curMsgDecodedLen < (int32_t)curMsgHead->bodyLen) {
             BKF_LOG_INFO(BKF_LOG_HND, "curMsgDecodedLen(%d)/bodyLen(%d), not decode some data & maybe error\n",
-                         decoder->curMsgDecodedLen, curMsgHead->bodyLen);
+                decoder->curMsgDecodedLen, curMsgHead->bodyLen);
             /* 跳过msg没有解析过的tlv&继续 */
         }
     }
@@ -721,13 +725,13 @@ STATIC BkfMsgHead *BkfMsgDecodeMsgHeadGetCurMsgHead(BkfMsgDecoder *decoder, uint
     needLen = sizeof(BkfMsgHead);
     leftLen = decoder->rcvDataLen - decoder->decodedLen;
     if (leftLen < needLen) {
-        BKF_LOG_INFO(BKF_LOG_HND, "leftLen(%d)/needLen(%d), rcv data not enough, need more for msgHead\n",
-                     leftLen, needLen);
+        BKF_LOG_INFO(BKF_LOG_HND, "leftLen(%d)/needLen(%d), rcv data not enough, need more for msgHead\n", leftLen,
+            needLen);
         *ret = BKF_OK;
         return VOS_NULL;
     }
 
-    curMsgHead = (BkfMsgHead*)(decoder->rcvData + decoder->decodedLen);
+    curMsgHead = (BkfMsgHead *)(decoder->rcvData + decoder->decodedLen);
     peekCurMsgHead = *curMsgHead;
     peekCurMsgHead.sign = VOS_NTOHL(peekCurMsgHead.sign);
     if (peekCurMsgHead.sign != BKF_MSG_SIGN) {
@@ -740,8 +744,8 @@ STATIC BkfMsgHead *BkfMsgDecodeMsgHeadGetCurMsgHead(BkfMsgDecoder *decoder, uint
     needLen += (int32_t)peekCurMsgHead.bodyLen;
     leftLen = decoder->rcvDataLen - decoder->decodedLen;
     if (leftLen < needLen) {
-        BKF_LOG_INFO(BKF_LOG_HND, "leftLen(%d)/needLen(%d), rcv data not enough, need more for msgBody\n",
-                     leftLen, needLen);
+        BKF_LOG_INFO(BKF_LOG_HND, "leftLen(%d)/needLen(%d), rcv data not enough, need more for msgBody\n", leftLen,
+            needLen);
         *ret = BKF_OK;
         return VOS_NULL;
     }
@@ -780,8 +784,8 @@ BkfMsgHead *BkfMsgDecodeMsgHead(BkfMsgDecoder *decoder, uint32_t *errCode)
     curMsgHead->bodyLen = VOS_NTOHL(curMsgHead->bodyLen);
     decoder->decodedLen += (int32_t)curMsgHead->bodyLen;
 
-    BKF_LOG_DEBUG(BKF_LOG_HND, "msg(%u, %s)/flag(%#x)/bodyLen(%u)\n",
-                  curMsgHead->msgId, BkfMsgGetIdStr(curMsgHead->msgId), curMsgHead->flag, curMsgHead->bodyLen);
+    BKF_LOG_DEBUG(BKF_LOG_HND, "msg(%u, %s)/flag(%#x)/bodyLen(%u)\n", curMsgHead->msgId,
+        BkfMsgGetIdStr(curMsgHead->msgId), curMsgHead->flag, curMsgHead->bodyLen);
     *errCode = BKF_OK;
     return curMsgHead;
 
@@ -801,8 +805,8 @@ uint8_t *BkfMsgDecodeGetLeft(BkfMsgDecoder *decoder, int32_t *leftLen)
     if ((decoder == VOS_NULL) || (leftLen == VOS_NULL)) {
         goto error;
     }
-    BKF_LOG_DEBUG(BKF_LOG_HND, "decodedErr(%u), rcvData(%d)/decodedLen(%d)\n",
-                  decoder->decodedErr, decoder->rcvDataLen, decoder->decodedLen);
+    BKF_LOG_DEBUG(BKF_LOG_HND, "decodedErr(%u), rcvData(%d)/decodedLen(%d)\n", decoder->decodedErr, decoder->rcvDataLen,
+        decoder->decodedLen);
 
     if (decoder->decodedErr) {
         goto error;
@@ -833,7 +837,7 @@ STATIC uint32_t BkfMsgDecodeTLVChkParam(BkfMsgDecoder *decoder, uint32_t *errCod
     }
     curMsgHead = decoder->curMsgHead;
     BKF_LOG_DEBUG(BKF_LOG_HND, "msg(%u, %s)/bodyLen(%u), curMsgDecodedLen(%d)\n", curMsgHead->msgId,
-                  BkfMsgGetIdStr(curMsgHead->msgId), curMsgHead->bodyLen, decoder->curMsgDecodedLen);
+        BkfMsgGetIdStr(curMsgHead->msgId), curMsgHead->bodyLen, decoder->curMsgDecodedLen);
 
     if (decoder->decodedErr) {
         BKF_LOG_WARN(BKF_LOG_HND, "decodedErr(%u)\n", decoder->decodedErr);
@@ -851,7 +855,7 @@ STATIC uint32_t BkfMsgDecodeTLVCurTl(BkfMsgDecoder *decoder, BkfTL *tl)
         return BKF_ERR;
     }
 
-    vTbl = (BkfTlvCodecVTbl*)&g_BkfTlvCodecVTbl[tl->typeId];
+    vTbl = (BkfTlvCodecVTbl *)&g_BkfTlvCodecVTbl[tl->typeId];
     /*
     1. 如果定长后没有append， 那接收长度等于valRealLenFixed。
     2. 否则，接收的长度大于valRealLenFixed。
@@ -893,8 +897,8 @@ BkfTL *BkfMsgDecodeTLV(BkfMsgDecoder *decoder, uint32_t *errCode)
 
     curMsgHead = decoder->curMsgHead;
     if (decoder->curMsgDecodedLen == (int32_t)curMsgHead->bodyLen) {
-        BKF_LOG_DEBUG(BKF_LOG_HND, "curMsgDecodedLen(%d)/bodyLen(%u)\n",
-                      decoder->curMsgDecodedLen, curMsgHead->bodyLen);
+        BKF_LOG_DEBUG(BKF_LOG_HND, "curMsgDecodedLen(%d)/bodyLen(%u)\n", decoder->curMsgDecodedLen,
+            curMsgHead->bodyLen);
         *errCode = BKF_OK;
         return VOS_NULL;
     }
@@ -902,11 +906,11 @@ BkfTL *BkfMsgDecodeTLV(BkfMsgDecoder *decoder, uint32_t *errCode)
     needLen = sizeof(BkfTL);
     leftLen = (int32_t)(curMsgHead->bodyLen) - decoder->curMsgDecodedLen;
     if (leftLen < needLen) {
-        BKF_LOG_INFO(BKF_LOG_HND, "leftLen(%d)/needLen(%d), rcv buf not engouth & ng\n", leftLen, needLen);
+        BKF_LOG_INFO(BKF_LOG_HND, "leftLen(%d)/needLen(%d), rcv buf not enough & ng\n", leftLen, needLen);
         ret = BKF_ERR;
         goto error;
     }
-    curTl = (BkfTL*)((uint8_t*)(curMsgHead + 1) + decoder->curMsgDecodedLen);
+    curTl = (BkfTL *)((uint8_t *)(curMsgHead + 1) + decoder->curMsgDecodedLen);
     decoder->curTl = curTl;
     decoder->curMsgDecodedLen += needLen;
 
@@ -915,7 +919,7 @@ BkfTL *BkfMsgDecodeTLV(BkfMsgDecoder *decoder, uint32_t *errCode)
     needLen = (int32_t)BKF_GET_ALIGN4_LEN(curTl->valLen);
     BKF_LOG_DEBUG(BKF_LOG_HND, "tlvType %u, len %u\n", curTl->typeId, curTl->valLen);
     if (leftLen < needLen) {
-        BKF_LOG_INFO(BKF_LOG_HND, "leftLen(%d)/needLen(%d), rcv buf not engouth & ng\n", leftLen, needLen);
+        BKF_LOG_INFO(BKF_LOG_HND, "leftLen(%d)/needLen(%d), rcv buf not enough & ng\n", leftLen, needLen);
         ret = BKF_ERR;
         goto error;
     }
@@ -941,4 +945,3 @@ error:
 }
 #endif
 #endif
-

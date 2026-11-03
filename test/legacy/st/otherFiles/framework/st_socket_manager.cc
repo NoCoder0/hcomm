@@ -18,18 +18,15 @@
 #undef private
 
 using namespace Hccl;
- 
+
 class SocketManagerTest : public testing::Test {
 protected:
-    static void SetUpTestCase() {
-        std::cout << "SocketManagerTest SetUP" << std::endl;
-    }
- 
-    static void TearDownTestCase() {
-        std::cout << "SocketManagerTest TearDown" << std::endl;
-    }
- 
-    virtual void SetUp() {
+    static void SetUpTestCase() { std::cout << "SocketManagerTest SetUP" << std::endl; }
+
+    static void TearDownTestCase() { std::cout << "SocketManagerTest TearDown" << std::endl; }
+
+    virtual void SetUp()
+    {
         std::cout << "A Test case in SocketManagerTest SetUP" << std::endl;
         hccpSocketHandle = new int(0);
         std::cout << "1";
@@ -47,8 +44,9 @@ protected:
         std::cout << "4";
         std::cout << "A Test case in SocketManagerTest SetUP done" << std::endl;
     }
- 
-    virtual void TearDown() {
+
+    virtual void TearDown()
+    {
         GlobalMockObject::verify();
         delete hccpSocketHandle;
         std::cout << "A Test case in SocketManagerTest TearDown" << std::endl;
@@ -59,7 +57,7 @@ protected:
         IpAddress ipAddress("1.0.0.0");
         return ipAddress;
     }
- 
+
     void SetLinks()
     {
         links.clear();
@@ -70,39 +68,38 @@ protected:
             RankId remoteRankId = 3 - i;
             IpAddress localIp = GetAnIpAddress();
             IpAddress remoteIp = GetAnIpAddress();
-            LinkData tmpLink(portDeploymentType, linkProtocol, localRankId, remoteRankId,
-                localIp, remoteIp);
+            LinkData tmpLink(portDeploymentType, linkProtocol, localRankId, remoteRankId, localIp, remoteIp);
             links.push_back(tmpLink);
         }
     }
- 
-    void *hccpSocketHandle;
-    IpAddress           localIp;
-    IpAddress           remoteIp;
-    vector<LinkData>    links;
+
+    void* hccpSocketHandle;
+    IpAddress localIp;
+    IpAddress remoteIp;
+    vector<LinkData> links;
     CommunicatorImpl impl;
     u32 localRank = 0;
     u32 devicePhyId = 0;
     u32 listenPort = 60001;
 };
- 
- 
-TEST_F(SocketManagerTest, batch_create_sockets_should_ok) {
+
+TEST_F(SocketManagerTest, batch_create_sockets_should_ok)
+{
     // Given
     MOCKER_CPP(&SocketManager::BatchAddWhiteList).stubs();
-    
+
     // when
- 
+
     // then
     SocketManager socketMgr(impl, localRank, devicePhyId, listenPort);
     socketMgr.BatchCreateSockets(links);
 
-    auto &serverSocketMap = SocketManager::GetServerSocketMap();
-    for (const auto& sock: serverSocketMap) {
+    auto& serverSocketMap = SocketManager::GetServerSocketMap();
+    for (const auto& sock : serverSocketMap) {
         EXPECT_EQ(sock.second->socketStatus, SocketStatus::LISTENING);
     }
- 
-    for (const auto& sock: socketMgr.connectedSocketMap) {
+
+    for (const auto& sock : socketMgr.connectedSocketMap) {
         if (sock.first.role == SocketRole::CLIENT) {
             EXPECT_EQ(sock.second->socketStatus, SocketStatus::CONNECT_STARTING);
         }
@@ -110,11 +107,12 @@ TEST_F(SocketManagerTest, batch_create_sockets_should_ok) {
     }
 }
 
-TEST_F(SocketManagerTest, test_ServerDeInit_and_GetServerListenSocket) {
+TEST_F(SocketManagerTest, test_ServerDeInit_and_GetServerListenSocket)
+{
     MOCKER_CPP(&SocketManager::BatchAddWhiteList).stubs();
     SocketManager socketMgr(impl, localRank, devicePhyId, listenPort);
     socketMgr.BatchCreateSockets(links);
-    for(auto& link : links){
+    for (auto& link : links) {
         auto portData = link.GetLocalPort();
         socketMgr.ServerDeInit(portData);
         socketMgr.GetServerListenSocket(portData);

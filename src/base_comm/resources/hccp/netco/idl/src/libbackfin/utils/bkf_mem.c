@@ -70,8 +70,8 @@ typedef struct tagBkfMemHead {
 /* proc */
 STATIC uint32_t BkfMemInitStat(BkfMemMng *memMng);
 STATIC void BkfMemUninitStat(BkfMemMng *memMng);
-STATIC void BkfMemUpdStatAfterMalloc(BkfMemMng *memMng, BkfMemHead *head, uint32_t len,
-                                       const char *str, const uint16_t num);
+STATIC void BkfMemUpdStatAfterMalloc(BkfMemMng *memMng, BkfMemHead *head, uint32_t len, const char *str,
+    const uint16_t num);
 STATIC BOOL BkfMemUpdStatBeforeFree(BkfMemMng *memMng, BkfMemHead *head, const char *str, const uint16_t num);
 
 /* data op */
@@ -179,7 +179,7 @@ void BkfFree(BkfMemMng *memMng, void *ptr, const char *str, const uint16_t num)
         return;
     }
 
-    head = (BkfMemHead*)((uint8_t*)ptr - sizeof(BkfMemHead));
+    head = (BkfMemHead *)((uint8_t *)ptr - sizeof(BkfMemHead));
     if (BkfMemUpdStatBeforeFree(memMng, head, str, num)) {
         BKF_FREE_(&memMng->IMem, head, str, num);
     }
@@ -195,7 +195,7 @@ void BkfFreeNHnd(void *ptr, const char *str, const uint16_t num)
         BKF_ASSERT(0);
         return;
     }
-    head = (BkfMemHead*)((uint8_t*)ptr - sizeof(BkfMemHead));
+    head = (BkfMemHead *)((uint8_t *)ptr - sizeof(BkfMemHead));
     memMng = head->memMng;
     if ((memMng == VOS_NULL) || !BKF_SIGN_IS_VALID(memMng->sign, BKF_MEM_MNG_SIGN) || (memMng->IMem.free == VOS_NULL)) {
         BKF_ASSERT(0);
@@ -222,41 +222,39 @@ void *BkfMemGetAdpeeMemHnd(BkfMemMng *memMng)
 }
 
 #ifdef BKF_MEM_STAT
-STATIC uint32_t BkfMemGetSummaryStrFmt(BkfMemMng *memMng, uint8_t *buf, int32_t bufLen,
-                                      uint32_t statCnt, uint32_t statUseMemLen, int32_t appReqMemLeftCnt,
-                                      int64_t appReqMemLeftLen)
+STATIC uint32_t BkfMemGetSummaryStrFmt(BkfMemMng *memMng, uint8_t *buf, int32_t bufLen, uint32_t statCnt,
+    uint32_t statUseMemLen, int32_t appReqMemLeftCnt, int64_t appReqMemLeftLen)
 {
     int32_t ret;
     int32_t usedLen = 0;
 
     ret = snprintf_truncated_s((char *)buf + usedLen, (uint32_t)(bufLen - usedLen), "\n%-15s: %-12u B,     (%#x, %s)",
-                               "memMng", sizeof(BkfMemMng), BKF_MASK_ADDR(memMng), memMng->name);
-    if (ret < 0) {
-        return BKF_ERR;
-    }
-    usedLen += ret;
-    ret = snprintf_truncated_s((char *)buf + usedLen, (uint32_t)(bufLen - usedLen), "\n%-15s: %-12u B,     ((%u+x) * %u)",
-                               "memStatUse", statUseMemLen, sizeof(BkfMemStat), statCnt);
-    if (ret < 0) {
-        return BKF_ERR;
-    }
-    usedLen += ret;
-    ret = snprintf_truncated_s((char *)buf + usedLen, (uint32_t)(bufLen - usedLen), "\n%-15s: %-12u B,     (%u * %d)",
-                               "memHeadUse", sizeof(BkfMemHead) * appReqMemLeftCnt, sizeof(BkfMemHead),
-                               appReqMemLeftCnt);
+        "memMng", sizeof(BkfMemMng), BKF_MASK_ADDR(memMng), memMng->name);
     if (ret < 0) {
         return BKF_ERR;
     }
     usedLen += ret;
     ret = snprintf_truncated_s((char *)buf + usedLen, (uint32_t)(bufLen - usedLen),
-                               "\n%-15s: %-12" VOS_PRId64 " B,     (%" VOS_PRId64 "/%d)",
-                               "memAppReq", memMng->appReqMemLenLeft, appReqMemLeftLen, appReqMemLeftCnt);
+        "\n%-15s: %-12u B,     ((%u+x) * %u)", "memStatUse", statUseMemLen, sizeof(BkfMemStat), statCnt);
+    if (ret < 0) {
+        return BKF_ERR;
+    }
+    usedLen += ret;
+    ret = snprintf_truncated_s((char *)buf + usedLen, (uint32_t)(bufLen - usedLen), "\n%-15s: %-12u B,     (%u * %d)",
+        "memHeadUse", sizeof(BkfMemHead) * appReqMemLeftCnt, sizeof(BkfMemHead), appReqMemLeftCnt);
+    if (ret < 0) {
+        return BKF_ERR;
+    }
+    usedLen += ret;
+    ret = snprintf_truncated_s((char *)buf + usedLen, (uint32_t)(bufLen - usedLen),
+        "\n%-15s: %-12" VOS_PRId64 " B,     (%" VOS_PRId64 "/%d)", "memAppReq", memMng->appReqMemLenLeft,
+        appReqMemLeftLen, appReqMemLeftCnt);
     if (ret < 0) {
         return BKF_ERR;
     }
     usedLen += ret;
     ret = snprintf_truncated_s((char *)buf + usedLen, (uint32_t)(bufLen - usedLen), "\n%-15s: %-12" VOS_PRId64 " B",
-                               "memAppReqPeak", memMng->appReqMemLenPeak);
+        "memAppReqPeak", memMng->appReqMemLenPeak);
     if (ret < 0) {
         return BKF_ERR;
     }
@@ -280,20 +278,19 @@ char *BkfMemGetSummaryStr(BkfMemMng *memMng, uint8_t *buf, int32_t bufLen)
     }
 
     (void)pthread_mutex_lock(&memMng->mutex);
-    for (stat = BkfMemGetFirstStat(memMng, &itor); stat != VOS_NULL;
-         stat = BkfMemGetNextStat(memMng, &itor)) {
+    for (stat = BkfMemGetFirstStat(memMng, &itor); stat != VOS_NULL; stat = BkfMemGetNextStat(memMng, &itor)) {
         statCnt++;
         statUseMemLen += stat->selfLen;
         appReqMemLeftCnt += stat->appReqMemBlkCntLeft;
         appReqMemLeftLen += stat->appReqMemLenLeft;
     }
-    if (BkfMemGetSummaryStrFmt(memMng, buf, bufLen,
-                                statCnt, statUseMemLen, appReqMemLeftCnt, appReqMemLeftLen) != BKF_OK) {
+    if (BkfMemGetSummaryStrFmt(memMng, buf, bufLen, statCnt, statUseMemLen, appReqMemLeftCnt, appReqMemLeftLen) !=
+        BKF_OK) {
         goto error;
     }
 
     (void)pthread_mutex_unlock(&memMng->mutex);
-    return (char*)buf;
+    return (char *)buf;
 
 error:
 
@@ -303,16 +300,17 @@ error:
 
 STATIC char *BkfMemGetStatStr(BkfMemMng *memMng, BkfMemStat *stat, uint8_t *buf, int32_t bufLen)
 {
+    (void)memMng;
     int32_t ret;
 
-    ret = snprintf_truncated_s((char *)buf, (uint32_t)bufLen, "stat(%06#x), appReqMemLenLeft(%12" VOS_PRId64 ")"
-                               "/appReqMemBlkCntLeft(%10d)/appReqMemLenPeak(%12" VOS_PRId64 ")",
-                               BKF_MASK_ADDR(stat), stat->appReqMemLenLeft,
-                               stat->appReqMemBlkCntLeft, stat->appReqMemLenPeak);
+    ret = snprintf_truncated_s((char *)buf, (uint32_t)bufLen,
+        "stat(%06#x), appReqMemLenLeft(%12" VOS_PRId64 ")"
+        "/appReqMemBlkCntLeft(%10d)/appReqMemLenPeak(%12" VOS_PRId64 ")",
+        BKF_MASK_ADDR(stat), stat->appReqMemLenLeft, stat->appReqMemBlkCntLeft, stat->appReqMemLenPeak);
     if (ret < 0) {
         return VOS_NULL;
     }
-    return (char*)buf;
+    return (char *)buf;
 }
 char *BkfMemGetFirstStatStr(BkfMemMng *memMng, BkfMemStatKey *keyOut, uint8_t *buf, int32_t bufLen)
 {
@@ -328,7 +326,7 @@ char *BkfMemGetFirstStatStr(BkfMemMng *memMng, BkfMemStatKey *keyOut, uint8_t *b
     (void)pthread_mutex_lock(&memMng->mutex);
     stat = BkfMemGetFirstStat(memMng, VOS_NULL);
     if (stat != VOS_NULL) {
-        *keyOut= stat->key;
+        *keyOut = stat->key;
         str = BkfMemGetStatStr(memMng, stat, buf, bufLen);
     }
     (void)pthread_mutex_unlock(&memMng->mutex);
@@ -341,7 +339,7 @@ char *BkfMemGetNextStatStr(BkfMemMng *memMng, BkfMemStatKey *keyInOut, uint8_t *
     BkfMemStat *stat = VOS_NULL;
     char *str = VOS_NULL;
 
-    paramIsInvalid = (memMng == VOS_NULL) || (keyInOut == VOS_NULL)  || (keyInOut->str == VOS_NULL) ||
+    paramIsInvalid = (memMng == VOS_NULL) || (keyInOut == VOS_NULL) || (keyInOut->str == VOS_NULL) ||
                      (buf == VOS_NULL) || (bufLen <= 0);
     if (paramIsInvalid) {
         return VOS_NULL;
@@ -350,7 +348,7 @@ char *BkfMemGetNextStatStr(BkfMemMng *memMng, BkfMemStatKey *keyInOut, uint8_t *
     (void)pthread_mutex_lock(&memMng->mutex);
     stat = BkfMemFindNextStat(memMng, keyInOut->str, keyInOut->num);
     if (stat != VOS_NULL) {
-        *keyInOut= stat->key;
+        *keyInOut = stat->key;
         str = BkfMemGetStatStr(memMng, stat, buf, bufLen);
     }
     (void)pthread_mutex_unlock(&memMng->mutex);
@@ -368,11 +366,11 @@ char *BkfMemGetSummaryStr(BkfMemMng *memMng, uint8_t *buf, int32_t bufLen)
     }
 
     ret = snprintf_truncated_s((char *)buf, (uint32_t)bufLen, "memMng(%#x, %s, %u *), stat off & no more info",
-                               BKF_MASK_ADDR(memMng), memMng->name, sizeof(BkfMemMng));
+        BKF_MASK_ADDR(memMng), memMng->name, sizeof(BkfMemMng));
     if (ret < 0) {
         return "mem_snprintf_ng";
     }
-    return (char*)buf;
+    return (char *)buf;
 }
 
 char *BkfMemGetFirstStatStr(BkfMemMng *memMng, BkfMemStatKey *keyOut, uint8_t *buf, int32_t bufLen)
@@ -389,12 +387,14 @@ char *BkfMemGetNextStatStr(BkfMemMng *memMng, BkfMemStatKey *keyInOut, uint8_t *
 
 void *BkfMemBaseStubInit(char *name)
 {
+    (void)name;
     VOS_NOP();
     return VOS_NULL;
 }
 
 void BkfMemBaseStubUninit(void *cookie)
 {
+    (void)cookie;
     VOS_NOP();
 }
 
@@ -407,8 +407,8 @@ STATIC uint32_t BkfMemInitStat(BkfMemMng *memMng)
 {
     int ret;
 
-    VOS_AVLL_INIT_TREE(memMng->statSet, (AVLL_COMPARE)BkfMemStatKeyCmp,
-                       BKF_OFFSET(BkfMemStat, key), BKF_OFFSET(BkfMemStat, avlNode));
+    VOS_AVLL_INIT_TREE(memMng->statSet, (AVLL_COMPARE)BkfMemStatKeyCmp, BKF_OFFSET(BkfMemStat, key),
+        BKF_OFFSET(BkfMemStat, avlNode));
     ret = pthread_mutex_init(&memMng->mutex, VOS_NULL);
     if (ret != 0) {
         BKF_ASSERT(0);
@@ -432,8 +432,7 @@ STATIC void BkfMemUninitChkLeak(BkfMemMng *memMng)
     char buf[BKF_1K];
     uint32_t bufLen = sizeof(buf);
 
-    for (stat = BkfMemGetFirstStat(memMng, &itor); stat != VOS_NULL;
-         stat = BkfMemGetNextStat(memMng, &itor)) {
+    for (stat = BkfMemGetFirstStat(memMng, &itor); stat != VOS_NULL; stat = BkfMemGetNextStat(memMng, &itor)) {
         leakCnt += stat->appReqMemBlkCntLeft;
         leakLen += stat->appReqMemLenLeft;
     }
@@ -442,9 +441,10 @@ STATIC void BkfMemUninitChkLeak(BkfMemMng *memMng)
         return;
     }
 
-    strLen = snprintf_truncated_s(buf, bufLen, ">>>>>leakCnt(%d)/leakLen(%" VOS_PRId64 "/%" VOS_PRId64 "), "
-                                  "memory leak & ng, top %d list:\n",
-                                  leakCnt, leakLen, memMng->appReqMemLenLeft, BKF_GET_MIN(leakCnt, outCntMax));
+    strLen = snprintf_truncated_s(buf, bufLen,
+        ">>>>>leakCnt(%d)/leakLen(%" VOS_PRId64 "/%" VOS_PRId64 "), "
+        "memory leak & ng, top %d list:\n",
+        leakCnt, leakLen, memMng->appReqMemLenLeft, BKF_GET_MIN(leakCnt, outCntMax));
     if (strLen < 0) {
         BKF_ASSERT(0);
         return;
@@ -458,8 +458,8 @@ STATIC void BkfMemUninitChkLeak(BkfMemMng *memMng)
         }
 
         strLen = snprintf_truncated_s(buf + usedLen, bufLen - usedLen,
-                                      "[%2d]: [%s, %u]/leakCnt(%d)/leakLen(%" VOS_PRId64 ")\n", i, stat->key.str,
-                                      stat->key.num, stat->appReqMemBlkCntLeft, stat->appReqMemLenLeft);
+            "[%2d]: [%s, %u]/leakCnt(%d)/leakLen(%" VOS_PRId64 ")\n", i, stat->key.str, stat->key.num,
+            stat->appReqMemBlkCntLeft, stat->appReqMemLenLeft);
         if (strLen < 0) {
             BKF_ASSERT(0);
             return;
@@ -480,8 +480,8 @@ STATIC void BkfMemUninitStat(BkfMemMng *memMng)
     }
 }
 
-STATIC void BkfMemUpdStatAfterMalloc(BkfMemMng *memMng, BkfMemHead *head, uint32_t len,
-                                       const char *str, const uint16_t num)
+STATIC void BkfMemUpdStatAfterMalloc(BkfMemMng *memMng, BkfMemHead *head, uint32_t len, const char *str,
+    const uint16_t num)
 {
     BkfMemStat *stat = VOS_NULL;
 
@@ -512,6 +512,8 @@ error:
 
 STATIC BOOL BkfMemUpdStatBeforeFree(BkfMemMng *memMng, BkfMemHead *head, const char *str, const uint16_t num)
 {
+    (void)str;
+    (void)num;
     BkfMemStat *stat = VOS_NULL;
     uint32_t len;
 
@@ -593,8 +595,7 @@ STATIC void BkfMemDelAllStat(BkfMemMng *memMng)
     BkfMemStat *stat = VOS_NULL;
     void *itor = VOS_NULL;
 
-    for (stat = BkfMemGetFirstStat(memMng, &itor); stat != VOS_NULL;
-         stat = BkfMemGetNextStat(memMng, &itor)) {
+    for (stat = BkfMemGetFirstStat(memMng, &itor); stat != VOS_NULL; stat = BkfMemGetNextStat(memMng, &itor)) {
         VOS_AVLL_DELETE(memMng->statSet, stat->avlNode);
         BKF_FREE_(&memMng->IMem, stat, "memDelAllStat_", BKF_MEM_NUM);
     }
@@ -604,7 +605,7 @@ STATIC void BkfMemDelAllStat(BkfMemMng *memMng)
 STATIC BkfMemStat *BkfMemFindStat(BkfMemMng *memMng, const char *str, const uint16_t num)
 {
     BkfMemStat *stat = VOS_NULL;
-    BkfMemStatKey key = { (char*)str, num };
+    BkfMemStatKey key = {(char *)str, num, {}};
 
     stat = VOS_AVLL_FIND(memMng->statSet, &key);
     return stat;
@@ -613,7 +614,7 @@ STATIC BkfMemStat *BkfMemFindStat(BkfMemMng *memMng, const char *str, const uint
 STATIC BkfMemStat *BkfMemFindNextStat(BkfMemMng *memMng, const char *str, const uint16_t num)
 {
     BkfMemStat *stat = VOS_NULL;
-    BkfMemStatKey key = { (char*)str, num };
+    BkfMemStatKey key = {(char *)str, num, {}};
 
     stat = VOS_AVLL_FIND_NEXT(memMng->statSet, &key);
     return stat;
@@ -651,8 +652,8 @@ STATIC void BkfMemUninitStat(BkfMemMng *memMng)
     return;
 }
 
-STATIC void BkfMemUpdStatAfterMalloc(BkfMemMng *memMng, BkfMemHead *head, uint32_t len,
-                                       const char *str, const uint16_t num)
+STATIC void BkfMemUpdStatAfterMalloc(BkfMemMng *memMng, BkfMemHead *head, uint32_t len, const char *str,
+    const uint16_t num)
 {
     return;
 }
@@ -670,4 +671,3 @@ STATIC BOOL BkfMemUpdStatBeforeFree(BkfMemMng *memMng, BkfMemHead *head, const c
 }
 #endif
 #endif
-

@@ -33,7 +33,7 @@
 #include "topoinfo_ranktableParser_pub.h"
 
 #include "plugin_manager.h"
-#include "external/ge/ge_api_types.h" // ge对内options
+#include "external/ge/ge_api_types.h"  // ge对内options
 #include "framework/common/ge_types.h" // ge对外options
 #include "hccl/hcom.h"
 #include "hccl/hcom_executor.h"
@@ -49,124 +49,76 @@
 using namespace std;
 using namespace hccl;
 
-static nlohmann::json allreduce_topo_switch_connect =
-{
-    {"topology type", "switch connection"},
-    {
-        "topology desc", {
-            {
-                {"node type", "TOR"},
-                {"node name", "tor0"},
-                {
-                    "link info", {
-                        {
-                            {"link id", "0"},
-                            {"local port name", "port0"},
-                            {"local ip address", "100.100.83.1"},
-                            {"opposite type", "SERVER"},
-                            {"opposite name", "server0"},
-                            {"opposite port name", "eth8"},
-                            {"opposite ip address", "100.100.83.178"}
-                        }
-                    }
-                }
-            }
-        }
-    }
-};
+static nlohmann::json allreduce_topo_switch_connect
+    = {{"topology type", "switch connection"},
+       {"topology desc",
+        {{{"node type", "TOR"},
+          {"node name", "tor0"},
+          {"link info",
+           {{{"link id", "0"},
+             {"local port name", "port0"},
+             {"local ip address", "100.100.83.1"},
+             {"opposite type", "SERVER"},
+             {"opposite name", "server0"},
+             {"opposite port name", "eth8"},
+             {"opposite ip address", "100.100.83.178"}}}}}}}};
 
-class HvdGraphOptimizerTest : public testing::Test
-{
+class HvdGraphOptimizerTest : public testing::Test {
 protected:
     static void SetUpTestCase()
     {
-        nlohmann::json rank_table =
-        {
-            {"status", "completed"},
-            {"deploy_mode", "lab"},
-            {"device_num", "4"},
-            {"server_num", "2"},
-            {"boardType", "0"},
-            {"para_plane_location", "device"},
-            {"para_plane_nic_num", "2"},
-            {"para_plane_nic_name", {"eth0", "eth1"}},
-            {"instance_count", "4"},
-            {"device_count", "4"},
-            {
-                "instance_list",
+        nlohmann::json rank_table
+            = {{"status", "completed"},
+               {"deploy_mode", "lab"},
+               {"device_num", "4"},
+               {"server_num", "2"},
+               {"boardType", "0"},
+               {"para_plane_location", "device"},
+               {"para_plane_nic_num", "2"},
+               {"para_plane_nic_name", {"eth0", "eth1"}},
+               {"instance_count", "4"},
+               {"device_count", "4"},
+               {"instance_list",
+                {{{"pod_name", ""},
+                  {"rank_id", "0"},
+                  {"server_id", "10.0.0.10"},
+                  {"devices", {{{"device_id", "1"}, {"device_ip", "192.168.0.12"}, {"ref_ip", "192.168.10.13"}}}}},
+                 {{"pod_name", ""},
+                  {"rank_id", "1"},
+                  {"server_id", "10.0.0.10"},
+                  {"devices", {{{"device_id", "0"}, {"device_ip", "192.168.1.12"}, {"ref_ip", "192.168.11.13"}}}}},
+                 {{"pod_name", ""},
+                  {"rank_id", "2"},
+                  {"server_id", "10.0.0.11"},
+                  {"devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.14"}, {"ref_ip", "192.168.10.15"}}}}},
+                 {{"pod_name", ""},
+                  {"rank_id", "3"},
+                  {"server_id", "10.0.0.11"},
+                  {"devices", {{{"device_id", "1"}, {"device_ip", "192.168.1.14"}, {"ref_ip", "192.168.11.15"}}}}}}},
+               {"server_list",
                 {
-                    {   {"pod_name", ""}, {"rank_id", "0"}, {"server_id", "10.0.0.10"},
-                        {
-                            "devices", {{{"device_id", "1"}, {"device_ip", "192.168.0.12"}, {"ref_ip", "192.168.10.13"}}}
-                        }
-                    },
-                    {   {"pod_name", ""}, {"rank_id", "1"}, {"server_id", "10.0.0.10"},
-                        {
-                            "devices", {{{"device_id", "0"}, {"device_ip", "192.168.1.12"}, {"ref_ip", "192.168.11.13"}}}
-                        }
-                    },
-                    {   {"pod_name", ""}, {"rank_id", "2"}, {"server_id", "10.0.0.11"},
-                        {
-                            "devices", {{{"device_id", "0"}, {"device_ip", "192.168.0.14"}, {"ref_ip", "192.168.10.15"}}}
-                        }
-                    },
-                    {   {"pod_name", ""}, {"rank_id", "3"}, {"server_id", "10.0.0.11"},
-                        {
-                            "devices", {{{"device_id", "1"}, {"device_ip", "192.168.1.14"}, {"ref_ip", "192.168.11.15"}}}
-                        }
-                    }
-                }
-            },
-            {
-                "server_list",
-                {
-                    {
-                        {"server_id", "192.168.10.2"},
-                        {
-                            "para_plane_info",
-                            {{
-                                    {"eth1", "192.168.210.2"},
-                                    {"ref_ip", "192.168.210.1"}
-                                },
-                                {
-                                    {"eth0", "192.168.200.2"},
-                                    {"ref_ip", "192.168.200.1"}
-                                }
-                            }
-                        }
+                    {{"server_id", "192.168.10.2"},
+                     {"para_plane_info",
+                      {{{"eth1", "192.168.210.2"}, {"ref_ip", "192.168.210.1"}},
+                       {{"eth0", "192.168.200.2"}, {"ref_ip", "192.168.200.1"}}}}
 
                     },
-                    {
-                        {"server_id", "192.168.10.3"},
-                        {
-                            "para_plane_info",
-                            {{
-                                    {"eth0", "192.168.200.3"},
-                                    {"ref_ip", "192.168.200.1"}
-                                },
-                                {
-                                    {"eth1", "192.168.210.3"},
-                                    {"ref_ip", "192.168.210.1"}
-                                }
-                            }
-                        }
+                    {{"server_id", "192.168.10.3"},
+                     {"para_plane_info",
+                      {{{"eth0", "192.168.200.3"}, {"ref_ip", "192.168.200.1"}},
+                       {{"eth1", "192.168.210.3"}, {"ref_ip", "192.168.210.1"}}}}
 
                     },
 
-                }
-            }
-        };
+                }}};
         char file_name[] = "./ut_HvdGraphOptimizerTest.json";
 
         std::ofstream outfile(file_name, std::ios::out | std::ios::trunc | std::ios::binary);
 
-        if (outfile.is_open())
-        {
+        if (outfile.is_open()) {
             HCCL_INFO("open %s success", file_name);
-        }
-        else
-        {
-            HCCL_INFO("open %s failed", file_name);
+        } else {
+            HCCL_ERROR("open %s failed", file_name);
         }
 
         outfile << std::setw(4) << rank_table << std::endl;
@@ -184,22 +136,16 @@ protected:
     virtual void SetUp()
     {
         s32 portNum = 7;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
         std::cout << "A Test SetUP" << std::endl;
     }
-    virtual void TearDown()
-    {
-        std::cout << "A Test TearDown" << std::endl;
-    }
+    virtual void TearDown() { std::cout << "A Test TearDown" << std::endl; }
 };
 
 class NodeTest : public ge::Node {
 public:
-    NodeTest(){;};
-    ~NodeTest(){;};    
+    NodeTest() { ; };
+    ~NodeTest() { ; };
 };
 
 TEST_F(HvdGraphOptimizerTest, ut_Finalize)
@@ -243,7 +189,6 @@ TEST_F(HvdGraphOptimizerTest, ut_OptimizeGraphPrepare)
 
 TEST_F(HvdGraphOptimizerTest, ut_AssignNewStream)
 {
-
     u32 opCount = 0;
     ge::NodePtr nodeptr(new NodeTest);
     std::string waitStream = "";
@@ -345,7 +290,7 @@ TEST_F(HvdGraphOptimizerTest, ut_CalcOpRunningParam)
 TEST_F(HvdGraphOptimizerTest, ut_SetOpOutputMemSize)
 {
     HvdGraphOptimizer optimizer;
-    std::string sCollectiveType ="";
+    std::string sCollectiveType = "";
     ge::Node node;
     ge::AttrUtils::HasAttr(node.GetOpDesc(), "DUMMY_SET_TRUE_MAXNUM");
     ge::AttrUtils::HasAttr(node.GetOpDesc(), "DUMMY_SET_TRUE_EMBEDDINGDIM");
@@ -360,7 +305,7 @@ TEST_F(HvdGraphOptimizerTest, ut_SetOpOutputMemSize)
 TEST_F(HvdGraphOptimizerTest, ut_CalcHCCLOutputMemSize)
 {
     HvdGraphOptimizer optimizer;
-    std::string sCollectiveType ="";
+    std::string sCollectiveType = "";
     int64_t memSize = 2;
     ge ::Status ge_ret = ge::INTERNAL_ERROR;
     ge_ret = optimizer.CalcHCCLOutputMemSize(sCollectiveType, memSize);
@@ -370,7 +315,7 @@ TEST_F(HvdGraphOptimizerTest, ut_CalcHCCLOutputMemSize)
 TEST_F(HvdGraphOptimizerTest, ut_SetOpMemAttr)
 {
     HvdGraphOptimizer optimizer;
-    std::string sCollectiveType ="";
+    std::string sCollectiveType = "";
     ge::Node node;
     ge::AttrUtils::HasAttr(node.GetOpDesc(), "DUMMY_SET_TRUE_MAXNUM");
     ge::AttrUtils::HasAttr(node.GetOpDesc(), "DUMMY_SET_TRUE_EMBEDDINGDIM");
@@ -385,7 +330,7 @@ TEST_F(HvdGraphOptimizerTest, ut_SetOpMemAttr)
 TEST_F(HvdGraphOptimizerTest, ut_SetOpAtomicInputIndex)
 {
     HvdGraphOptimizer optimizer;
-    std::string sCollectiveType ="HorovodAllreduce";
+    std::string sCollectiveType = "HorovodAllreduce";
     ge::Node node;
     ge::AttrUtils::HasAttr(node.GetOpDesc(), "DUMMY_SET_TRUE_MAXNUM");
     ge::AttrUtils::HasAttr(node.GetOpDesc(), "DUMMY_SET_TRUE_EMBEDDINGDIM");

@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #define BKF_LOG_HND ((co)->log)
 #define BKF_MOD_NAME ((co)->name)
 #include "net_co_out.h"
@@ -52,13 +51,13 @@ STATIC uint32_t NetCoOutChSerInit(NetCo *co)
         .jobMng = co->jobMng,
         .mux = co->mux,
     };
-    co->out->chSerMng  = BkfChSerInit(&arg);
+    co->out->chSerMng = BkfChSerInit(&arg);
     if (co->out->chSerMng == VOS_NULL) {
         BKF_LOG_ERROR(BKF_LOG_HND, "chSerMng(%#x), ng\n", BKF_MASK_ADDR(co->out->chSerMng));
         return BKF_ERR;
     }
 
-    BkfChSerTypeVTbl vTbl = { 0 };
+    BkfChSerTypeVTbl vTbl = {0};
     uint32_t ret = BkfChSerLetcpBuildVTbl(name, &vTbl, nameLen);
     if (ret != BKF_OK) {
         BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u), ng\n", ret);
@@ -96,8 +95,7 @@ STATIC uint32_t NetCoOutDcInit(NetCo *co)
     if (err <= 0) {
         return BKF_ERR;
     }
-    BkfDcInitArg arg = {
-        .name = name,
+    BkfDcInitArg arg = {.name = name,
         .dbgOn = co->dbgOn,
         .memMng = co->memMng,
         .disp = co->disp,
@@ -110,8 +108,7 @@ STATIC uint32_t NetCoOutDcInit(NetCo *co)
         .sliceVTbl.keyLen = sizeof(BifrostCncoiSliceKeyT),
         .sliceVTbl.keyCmp = (F_BKF_CMP)BifrostCncoiSliceKeyCmp,
         .sliceVTbl.keyGetStrOrNull = (F_BKF_GET_STR)BifrostCncoiSliceKeyGetStr,
-        .sliceVTbl.keyCodec = (F_BKF_DO)BifrostCncoiSliceKeyCodec
-    };
+        .sliceVTbl.keyCodec = (F_BKF_DO)BifrostCncoiSliceKeyCodec};
     co->out->dc = BkfDcInit(&arg);
     if (co->out->dc == VOS_NULL) {
         BKF_LOG_ERROR(BKF_LOG_HND, "dc(%#x), ng\n", BKF_MASK_ADDR(co->out->dc));
@@ -156,8 +153,7 @@ STATIC void NetCoOutSimpoUninit(NetCo *co)
 STATIC uint32_t NetCoOutPuberInitChkArg(NetCo *co)
 {
     uint8_t buf1[BKF_URL_STR_LEN_MAX];
-    NET_CO_LOG_MOD_DO(BKF_LOG_HND, "outConnLsnUrl(%s)\n",
-                      BkfUrlGetStr(&co->argInit.outConnLsnUrl, buf1, sizeof(buf1)));
+    NET_CO_LOG_MOD_DO(BKF_LOG_HND, "outConnLsnUrl(%s)\n", BkfUrlGetStr(&co->argInit.outConnLsnUrl, buf1, sizeof(buf1)));
     BOOL argIsInvalid = !BkfUrlIsValid(&co->argInit.outConnLsnUrl);
     if (argIsInvalid) {
         BKF_LOG_ERROR(BKF_LOG_HND, "argIsInvalid(%u)\n", argIsInvalid);
@@ -178,15 +174,15 @@ STATIC void NetCoOutOnPuberConnect(NetCo *co, BkfUrl *connDestUrl, BkfUrl *connS
     uint8_t buf2[BKF_URL_STR_LEN_MAX + 1];
     uint8_t buf3[BKF_URL_STR_LEN_MAX + 1];
     BKF_LOG_DEBUG(BKF_LOG_HND, "connDestUrl(%s)/connSrcUrl(%s), peerLsnUrl(%s)\n",
-                  BkfUrlGetStr(connDestUrl, buf1, sizeof(buf1)), BkfUrlGetStr(connSrcUrl, buf2, sizeof(buf2)),
-                  BkfUrlGetStr(peerLsnUrl, buf3, sizeof(buf3)));
+        BkfUrlGetStr(connDestUrl, buf1, sizeof(buf1)), BkfUrlGetStr(connSrcUrl, buf2, sizeof(buf2)),
+        BkfUrlGetStr(peerLsnUrl, buf3, sizeof(buf3)));
 }
 STATIC void NetCoOutOnPuberDisconnect(NetCo *co, BkfUrl *connDestUrl, BkfUrl *connSrcUrl)
 {
     uint8_t buf1[BKF_URL_STR_LEN_MAX + 1];
     uint8_t buf2[BKF_URL_STR_LEN_MAX + 1];
-    BKF_LOG_DEBUG(BKF_LOG_HND, "connDestUrl(%s)/connSrcUrl(%s)\n",
-                  BkfUrlGetStr(connDestUrl, buf1, sizeof(buf1)), BkfUrlGetStr(connSrcUrl, buf2, sizeof(buf2)));
+    BKF_LOG_DEBUG(BKF_LOG_HND, "connDestUrl(%s)/connSrcUrl(%s)\n", BkfUrlGetStr(connDestUrl, buf1, sizeof(buf1)),
+        BkfUrlGetStr(connSrcUrl, buf2, sizeof(buf2)));
 }
 STATIC uint32_t NetCoOutPuberInitPuber(NetCo *co)
 {
@@ -274,13 +270,13 @@ STATIC void NetCoOutPuberUninit(NetCo *co)
 #endif
 
 STATIC const BkfModVTbl g_NetCoOutModVTbl[] = {
-    { (F_BKF_DO)NetCoOutDataNew,              (F_BKF_DOV)NetCoOutDataDelete },
-    { (F_BKF_DO)NetCoOutChSerInit,           (F_BKF_DOV)NetCoOutChSerUninit },
-    { (F_BKF_DO)NetCoOutDcInit,              (F_BKF_DOV)NetCoOutDcUninit },
-    { (F_BKF_DO)NetCoOutSimpoInit,           (F_BKF_DOV)NetCoOutSimpoUninit },
-    { (F_BKF_DO)NetCoOutPuberInit,           (F_BKF_DOV)NetCoOutPuberUninit },
-    { (F_BKF_DO)NetCoOutTblInit,              (F_BKF_DOV)NetCoOutTblUninit },
-    { (F_BKF_DO)NetCoOutDispInit,             (F_BKF_DOV)NetCoOutDispUninit },
+    {(F_BKF_DO)NetCoOutDataNew, (F_BKF_DOV)NetCoOutDataDelete},
+    {(F_BKF_DO)NetCoOutChSerInit, (F_BKF_DOV)NetCoOutChSerUninit},
+    {(F_BKF_DO)NetCoOutDcInit, (F_BKF_DOV)NetCoOutDcUninit},
+    {(F_BKF_DO)NetCoOutSimpoInit, (F_BKF_DOV)NetCoOutSimpoUninit},
+    {(F_BKF_DO)NetCoOutPuberInit, (F_BKF_DOV)NetCoOutPuberUninit},
+    {(F_BKF_DO)NetCoOutTblInit, (F_BKF_DOV)NetCoOutTblUninit},
+    {(F_BKF_DO)NetCoOutDispInit, (F_BKF_DOV)NetCoOutDispUninit},
 };
 uint32_t NetCoOutInit(NetCo *co)
 {
@@ -308,4 +304,3 @@ void NetCoOutUninit(NetCo *co)
 #ifdef __cplusplus
 }
 #endif
-

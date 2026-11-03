@@ -40,8 +40,9 @@ enum {
     BKF_URL_TYPE_CNT
 };
 #define BKF_URL_TYPE_IS_VALID(type) (((type) > BKF_URL_TYPE_INVALID) && ((type) < BKF_URL_TYPE_CNT))
-#define BKF_URL_TYPE_IS_TCP(type) ((type) == BKF_URL_TYPE_TCP || (type) == BKF_URL_TYPE_V8TLS || \
-    (type) == BKF_URL_TYPE_V8TCP || (type) == BKF_URL_TYPE_LETCP)
+#define BKF_URL_TYPE_IS_TCP(type)                                                                                      \
+    ((type) == BKF_URL_TYPE_TCP || (type) == BKF_URL_TYPE_V8TLS || (type) == BKF_URL_TYPE_V8TCP ||                     \
+        (type) == BKF_URL_TYPE_LETCP)
 
 #define BKF_URL_STR_LEN_MAX (255)
 #define BKF_URL_uint32_t_HEX_STR_BUF_LEN_MIN (12)
@@ -94,4 +95,3 @@ uint32_t BkfUrlN2H(BkfUrl *urlN, BkfUrl *urlH);
 #endif
 
 #endif
-

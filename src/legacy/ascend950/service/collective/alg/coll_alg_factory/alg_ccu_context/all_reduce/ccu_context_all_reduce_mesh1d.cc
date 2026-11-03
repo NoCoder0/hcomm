@@ -14,37 +14,39 @@
 
 namespace Hccl {
 
-constexpr int INPUT_XN_ID  = 0;
+constexpr int INPUT_XN_ID = 0;
 constexpr int OUTPUT_XN_ID = 1;
-constexpr int TOKEN_XN_ID  = 2;
-constexpr int CKE_IDX_0    = 0;
-constexpr int CKE_IDX_1    = 1;
-constexpr int CKE_IDX_2    = 2;
-constexpr int CKE_IDX_3    = 3;
+constexpr int TOKEN_XN_ID = 2;
+constexpr int CKE_IDX_0 = 0;
+constexpr int CKE_IDX_1 = 1;
+constexpr int CKE_IDX_2 = 2;
+constexpr int CKE_IDX_3 = 3;
 
-CcuContextAllReduceMesh1D::CcuContextAllReduceMesh1D(const CcuCtxArg                   &arg,
-                                                     const std::vector<CcuTransport *> &transports,
-                                                     const CcuTransportGroup           &group)
+CcuContextAllReduceMesh1D::CcuContextAllReduceMesh1D(
+    const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group)
     : CcuContextAlgBase(arg, transports, group)
 {
-    const CcuCtxArgAllReduceMesh1D *ctxArg = dynamic_cast<const CcuCtxArgAllReduceMesh1D *>(&arg);
+    const CcuCtxArgAllReduceMesh1D* ctxArg = dynamic_cast<const CcuCtxArgAllReduceMesh1D*>(&arg);
     if (ctxArg == nullptr) {
         THROW<NullPtrException>(StringFormat("CcuContextAllReduceMesh1D::ctxArg ptr is null"));
     }
-    rankId_         = ctxArg->rankId_;
-    rankSize_       = ctxArg->dimSize_[0];
-    dataType_       = ctxArg->op_.dataType;
+    rankId_ = ctxArg->rankId_;
+    rankSize_ = ctxArg->dimSize_[0];
+    dataType_ = ctxArg->op_.dataType;
     outputDataType_ = ctxArg->op_.outputDataType;
     if (outputDataType_ == DataType::INVALID) {
         outputDataType_ = dataType_;
-        HCCL_INFO("[CcuContextAllReduceMesh1D] outputDataType is [INVALID], set outputDataType to[%s]",
+        HCCL_INFO(
+            "[CcuContextAllReduceMesh1D] outputDataType is [INVALID], set outputDataType to[%s]",
             outputDataType_.Describe().c_str());
     }
 
     reduceOp_ = ctxArg->op_.reduceOp;
-    HCCL_DEBUG("[CcuContextAllReduceMesh1D] Init, CtxArgs are rankId[%u], rankSize[%u], dataType[%s], "
-        "outputDataType[%s], reduceOp[%s]", rankId_, rankSize_, dataType_.Describe().c_str(),
-        outputDataType_.Describe().c_str(), reduceOp_.Describe().c_str());
+    HCCL_DEBUG(
+        "[CcuContextAllReduceMesh1D] Init, CtxArgs are rankId[%u], rankSize[%u], dataType[%s], "
+        "outputDataType[%s], reduceOp[%s]",
+        rankId_, rankSize_, dataType_.Describe().c_str(), outputDataType_.Describe().c_str(),
+        reduceOp_.Describe().c_str());
 
     // 判断device类型
     int32_t devLogicId = HrtGetDevice();
@@ -53,7 +55,7 @@ CcuContextAllReduceMesh1D::CcuContextAllReduceMesh1D(const CcuCtxArg            
     }
 }
 
-void CcuContextAllReduceMesh1D::RunBroadcast(std::vector<CcuRep::Memory> &dst, CcuRep::Memory &src)
+void CcuContextAllReduceMesh1D::RunBroadcast(std::vector<CcuRep::Memory>& dst, CcuRep::Memory& src)
 {
     if (ccuVersion_ == CcuVersion::CCU_V1) {
         GroupBroadcast(transports, dst, src, groupOpSize_);
@@ -62,7 +64,7 @@ void CcuContextAllReduceMesh1D::RunBroadcast(std::vector<CcuRep::Memory> &dst, C
     }
 }
 
-void CcuContextAllReduceMesh1D::RunReduce(CcuRep::Memory &dst, std::vector<CcuRep::Memory> &src)
+void CcuContextAllReduceMesh1D::RunReduce(CcuRep::Memory& dst, std::vector<CcuRep::Memory>& src)
 {
     if (ccuVersion_ == CcuVersion::CCU_V1) {
         GroupReduce(transports, dst, src, groupOpSize_, dataType_, outputDataType_, reduceOp_);
@@ -75,7 +77,7 @@ void CcuContextAllReduceMesh1D::Algorithm()
 {
     HCCL_INFO("[CcuContextAllReduceMesh1D] AllReduceMesh1D run");
     uint16_t selfBit = 1 << rankId_;
-    uint16_t allBit  = ((1 << rankSize_) - 1) & (~(1 << rankId_));
+    uint16_t allBit = ((1 << rankSize_) - 1) & (~(1 << rankId_));
 
     // 初始化资源
     uint16_t transportIdx = 0;
@@ -89,17 +91,18 @@ void CcuContextAllReduceMesh1D::Algorithm()
             output_.push_back(CreateVariable());
             token_.push_back(CreateVariable());
         } else {
-            HCCL_INFO("[CcuContextAllReduceMesh1D] MyRank[%u], PeerId[%llu], TransportId[%u]",
-                rankId_, peerId, transportIdx);
-            CHK_PRT_RET(transports[transportIdx] == nullptr,
-                HCCL_ERROR("[CcuContextAllReduceMesh1D] Algorithm transport ptr is null"),);
+            HCCL_INFO(
+                "[CcuContextAllReduceMesh1D] MyRank[%u], PeerId[%llu], TransportId[%u]", rankId_, peerId, transportIdx);
+            CHK_PRT_RET(
+                transports[transportIdx] == nullptr,
+                HCCL_ERROR("[CcuContextAllReduceMesh1D] Algorithm transport ptr is null"), );
             input_.push_back(CreateVariable((*transports[transportIdx]), INPUT_XN_ID));
             output_.push_back(CreateVariable((*transports[transportIdx]), OUTPUT_XN_ID));
             token_.push_back(CreateVariable((*transports[transportIdx]), TOKEN_XN_ID));
             transportIdx++;
         }
     }
-    offset_      = CreateVariable();
+    offset_ = CreateVariable();
     groupOpSize_ = CreateGroupOpSize();
 
     Load(input_[rankId_]);
@@ -129,7 +132,7 @@ void CcuContextAllReduceMesh1D::Algorithm()
     }
     CcuRep::Memory reduceScatterDst = CreateMemory();
     // DST
-    reduceScatterDst.addr  = output_[rankId_];
+    reduceScatterDst.addr = output_[rankId_];
     reduceScatterDst.addr += offset_;
     reduceScatterDst.token = token_[rankId_];
 
@@ -155,8 +158,8 @@ void CcuContextAllReduceMesh1D::Algorithm()
         allGatherDst.push_back(CreateMemory());
     }
     // allGather 的输入就是 reduceScatter 的输出
-    allGatherSrc.addr  = output_[rankId_];
-    allGatherSrc.addr  += offset_;
+    allGatherSrc.addr = output_[rankId_];
+    allGatherSrc.addr += offset_;
     allGatherSrc.token = token_[rankId_];
 
     dstId = 0;
@@ -182,23 +185,25 @@ void CcuContextAllReduceMesh1D::Algorithm()
     return;
 }
 
-std::vector<uint64_t> CcuContextAllReduceMesh1D::GeneArgs(const CcuTaskArg &arg)
+std::vector<uint64_t> CcuContextAllReduceMesh1D::GeneArgs(const CcuTaskArg& arg)
 {
-    const CcuTaskArgAllReduceMesh1D *taskArg = dynamic_cast<const CcuTaskArgAllReduceMesh1D *>(&arg);
+    const CcuTaskArgAllReduceMesh1D* taskArg = dynamic_cast<const CcuTaskArgAllReduceMesh1D*>(&arg);
     if (taskArg == nullptr) {
         THROW<NullPtrException>(StringFormat("CcuContextAllReduceMesh1D::taskArg ptr is null"));
     }
-    uint64_t inputAddr  = taskArg->inputAddr_;
+    uint64_t inputAddr = taskArg->inputAddr_;
     uint64_t outputAddr = taskArg->outputAddr_;
-    uint64_t tokenInfo  = taskArg->token_;
-    uint64_t sliceSize  = taskArg->sliceSize_;
-    uint64_t offset     = taskArg->offset_;
+    uint64_t tokenInfo = taskArg->token_;
+    uint64_t sliceSize = taskArg->sliceSize_;
+    uint64_t offset = taskArg->offset_;
 
     if (ccuVersion_ == CcuVersion::CCU_V1) {
         auto goSize = CalGoSize(sliceSize);
 
-        HCCL_INFO("[CcuContextAllReduceMesh1D] GeneArgs, taskArg are inputAddr[%llu], outputAddr[%llu], "
-            "offset[%llu], sliceSize[%llu]", inputAddr, outputAddr, offset, sliceSize);
+        HCCL_INFO(
+            "[CcuContextAllReduceMesh1D] GeneArgs, taskArg are inputAddr[%llu], outputAddr[%llu], "
+            "offset[%llu], sliceSize[%llu]",
+            inputAddr, outputAddr, offset, sliceSize);
         return {inputAddr, outputAddr, tokenInfo, offset, goSize[0], goSize[1], goSize[2], goSize[3]};
     } else {
         THROW<NotSupportException>(StringFormat("CCU version not support, version[%u]", ccuVersion_));
@@ -206,4 +211,4 @@ std::vector<uint64_t> CcuContextAllReduceMesh1D::GeneArgs(const CcuTaskArg &arg)
 
     return {};
 }
-}
+} // namespace Hccl

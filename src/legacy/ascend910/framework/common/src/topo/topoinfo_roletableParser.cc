@@ -1,30 +1,24 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "topoinfo_roletableParser.h"
-
 
 using namespace std;
 using namespace hccl;
 
-TopoinfoRoletable::TopoinfoRoletable(const std::string &rankTableM)
-    : TopoInfoRanktableParser(rankTableM, "0")
-{
-}
+TopoinfoRoletable::TopoinfoRoletable(const std::string& rankTableM) : TopoInfoRanktableParser(rankTableM, "0") {}
 
-TopoinfoRoletable::~TopoinfoRoletable()
-{
-}
+TopoinfoRoletable::~TopoinfoRoletable() {}
 
-HcclResult TopoinfoRoletable::GetSingleNode(const nlohmann::json &NodeListObj, u32 objIndex,
-    std::vector<RoleTableNodeInfo> &nodes)
+HcclResult
+TopoinfoRoletable::GetSingleNode(const nlohmann::json& NodeListObj, u32 objIndex, std::vector<RoleTableNodeInfo>& nodes)
 {
     u32 id;
     std::string ip;
@@ -49,7 +43,7 @@ HcclResult TopoinfoRoletable::GetSingleNode(const nlohmann::json &NodeListObj, u
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoinfoRoletable::GetServersInfo(std::vector<RoleTableNodeInfo> &servers)
+HcclResult TopoinfoRoletable::GetServersInfo(std::vector<RoleTableNodeInfo>& servers)
 {
     nlohmann::json serverList;
     CHK_RET(GetJsonProperty(fileContent_, SERVER_LIST, serverList, false));
@@ -61,7 +55,7 @@ HcclResult TopoinfoRoletable::GetServersInfo(std::vector<RoleTableNodeInfo> &ser
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoinfoRoletable::GetClientsInfo(std::vector<RoleTableNodeInfo> &clients)
+HcclResult TopoinfoRoletable::GetClientsInfo(std::vector<RoleTableNodeInfo>& clients)
 {
     nlohmann::json clientList;
     CHK_RET(GetJsonProperty(fileContent_, CLIENT_LIST, clientList, false));
@@ -73,7 +67,7 @@ HcclResult TopoinfoRoletable::GetClientsInfo(std::vector<RoleTableNodeInfo> &cli
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoinfoRoletable::ParserRoleTable(RoleTableInfo &roleTableInfo)
+HcclResult TopoinfoRoletable::ParserRoleTable(RoleTableInfo& roleTableInfo)
 {
     CHK_RET(LoadConfigString(rankTableFile_));
     HCCL_INFO("ParserRoleTable [%s].", rankTableFile_.c_str());

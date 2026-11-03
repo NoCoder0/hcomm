@@ -17,10 +17,10 @@
 #include "string_util.h"
 #include "binary_stream.h"
 namespace Hccl {
-constexpr u32 MAX_OP_TAG_LEN           = 191; // 最大的tag 长度
+constexpr u32 MAX_OP_TAG_LEN = 191;            // 最大的tag 长度
 constexpr u32 MAX_HANDSHAKEMSGPACK_LEN = 1024; // 最大握手消息长度
 
-std::string MemBufferDesc(const BaseCollOperator &collOp)
+std::string MemBufferDesc(const BaseCollOperator& collOp)
 {
     std::string memDesc = "";
     memDesc += "inputMem=" + (collOp.inputMem ? collOp.inputMem->Describe() : "nullptr") + ", ";
@@ -29,7 +29,7 @@ std::string MemBufferDesc(const BaseCollOperator &collOp)
     return memDesc;
 }
 
-std::string OpDesc(const BaseCollOperator &collOp)
+std::string OpDesc(const BaseCollOperator& collOp)
 {
     std::string opDesc = "";
     opDesc += "opType=" + collOp.opType.Describe() + ", ";
@@ -40,133 +40,104 @@ std::string OpDesc(const BaseCollOperator &collOp)
     return opDesc;
 }
 
-std::string DescReduceScatter(const BaseCollOperator &collOp)
+std::string DescReduceScatter(const BaseCollOperator& collOp)
 {
     return StringFormat(
-        "BaseCollOperator[%s, reduceOp=%s, dataCount=%llu]",
-        OpDesc(collOp).c_str(), collOp.reduceOp.Describe().c_str(), collOp.dataCount
-    );
+        "BaseCollOperator[%s, reduceOp=%s, dataCount=%llu]", OpDesc(collOp).c_str(), collOp.reduceOp.Describe().c_str(),
+        collOp.dataCount);
 }
 
-std::string DescAllreduce(const BaseCollOperator &collOp)
+std::string DescAllreduce(const BaseCollOperator& collOp)
 {
     return StringFormat(
-        "BaseCollOperator[%s, reduceOp=%s, dataCount=%llu]",
-        OpDesc(collOp).c_str(), collOp.reduceOp.Describe().c_str(), collOp.dataCount
-    );
+        "BaseCollOperator[%s, reduceOp=%s, dataCount=%llu]", OpDesc(collOp).c_str(), collOp.reduceOp.Describe().c_str(),
+        collOp.dataCount);
 }
 
-std::string DescAllgather(const BaseCollOperator &collOp)
+std::string DescAllgather(const BaseCollOperator& collOp)
+{
+    return StringFormat("BaseCollOperator[%s, dataCount=%llu]", OpDesc(collOp).c_str(), collOp.dataCount);
+}
+
+std::string DescScatter(const BaseCollOperator& collOp)
 {
     return StringFormat(
-        "BaseCollOperator[%s, dataCount=%llu]",
-        OpDesc(collOp).c_str(), collOp.dataCount
-    );
+        "BaseCollOperator[%s, dataCount=%llu, root=%u]", OpDesc(collOp).c_str(), collOp.dataCount, collOp.root);
 }
 
-std::string DescScatter(const BaseCollOperator &collOp)
-{
-    return StringFormat(
-        "BaseCollOperator[%s, dataCount=%llu, root=%u]",
-        OpDesc(collOp).c_str(), collOp.dataCount, collOp.root
-    );
-}
-
-std::string DescAlltoall(const BaseCollOperator &collOp)
+std::string DescAlltoall(const BaseCollOperator& collOp)
 {
     return StringFormat(
         "BaseCollOperator[opType=%s, opMode=%s, sendCount=%llu, recvCount=%llu, sendType=%s, recvType=%s, "
-            "sendRecvRemoteRank=%u, Buffers=[%s]]",
-        collOp.opType.Describe().c_str(), collOp.opMode.Describe().c_str(),
-        collOp.all2AllDataDes.sendCount, collOp.all2AllDataDes.recvCount,
-        collOp.all2AllDataDes.sendType.Describe().c_str(),
-        collOp.all2AllDataDes.recvType.Describe().c_str(), collOp.sendRecvRemoteRank,
-        MemBufferDesc(collOp).c_str()
-    );
+        "sendRecvRemoteRank=%u, Buffers=[%s]]",
+        collOp.opType.Describe().c_str(), collOp.opMode.Describe().c_str(), collOp.all2AllDataDes.sendCount,
+        collOp.all2AllDataDes.recvCount, collOp.all2AllDataDes.sendType.Describe().c_str(),
+        collOp.all2AllDataDes.recvType.Describe().c_str(), collOp.sendRecvRemoteRank, MemBufferDesc(collOp).c_str());
 }
 
-std::string DescAlltoallV(const BaseCollOperator &collOp)
+std::string DescAlltoallV(const BaseCollOperator& collOp)
 {
     return StringFormat(
         "BaseCollOperator[opType=%s, opMode=%s, sendType=%s, recvType=%s, sendRecvRemoteRank=%u, Buffers=[%s]]",
         collOp.opType.Describe().c_str(), collOp.opMode.Describe().c_str(),
-        collOp.all2AllVDataDes.sendType.Describe().c_str(),
-        collOp.all2AllVDataDes.recvType.Describe().c_str(), collOp.sendRecvRemoteRank,
-        MemBufferDesc(collOp).c_str()
-    );
+        collOp.all2AllVDataDes.sendType.Describe().c_str(), collOp.all2AllVDataDes.recvType.Describe().c_str(),
+        collOp.sendRecvRemoteRank, MemBufferDesc(collOp).c_str());
 }
 
-std::string DescAlltoallVC(const BaseCollOperator &collOp)
+std::string DescAlltoallVC(const BaseCollOperator& collOp)
 {
     return StringFormat(
         "BaseCollOperator[opType=%s, opMode=%s, sendType=%s, recvType=%s, sendRecvRemoteRank=%u, Buffers=[%s]]",
         collOp.opType.Describe().c_str(), collOp.opMode.Describe().c_str(),
-        collOp.all2AllVCDataDes.sendType.Describe().c_str(),
-        collOp.all2AllVCDataDes.recvType.Describe().c_str(), collOp.sendRecvRemoteRank,
-        MemBufferDesc(collOp).c_str()
-    );
+        collOp.all2AllVCDataDes.sendType.Describe().c_str(), collOp.all2AllVCDataDes.recvType.Describe().c_str(),
+        collOp.sendRecvRemoteRank, MemBufferDesc(collOp).c_str());
 }
 
-std::string DescSend(const BaseCollOperator &collOp)
+std::string DescSend(const BaseCollOperator& collOp)
+{
+    return StringFormat("BaseCollOperator[%s]", OpDesc(collOp).c_str());
+}
+
+std::string DescRecv(const BaseCollOperator& collOp)
+{
+    return StringFormat("BaseCollOperator[%s]", OpDesc(collOp).c_str());
+}
+
+std::string DescReduce(const BaseCollOperator& collOp)
 {
     return StringFormat(
-        "BaseCollOperator[%s]", OpDesc(collOp).c_str()
-    );
+        "BaseCollOperator[%s, reduceOp=%s, dataCount=%llu, root=%u]", OpDesc(collOp).c_str(),
+        collOp.reduceOp.Describe().c_str(), collOp.dataCount, collOp.root);
 }
 
-std::string DescRecv(const BaseCollOperator &collOp)
+std::string DescBroadcast(const BaseCollOperator& collOp)
 {
     return StringFormat(
-        "BaseCollOperator[%s]", OpDesc(collOp).c_str()
-    );
+        "BaseCollOperator[%s, dataCount=%llu, root=%u]", OpDesc(collOp).c_str(), collOp.dataCount, collOp.root);
 }
 
-std::string DescReduce(const BaseCollOperator &collOp)
+std::string DescBatchSendRecv(const BaseCollOperator& collOp)
 {
     return StringFormat(
-        "BaseCollOperator[%s, reduceOp=%s, dataCount=%llu, root=%u]",
-        OpDesc(collOp).c_str(), collOp.reduceOp.Describe().c_str(), collOp.dataCount, collOp.root
-    );
+        "BaseCollOperator[%s, dataCount=%llu, root=%u]", OpDesc(collOp).c_str(), collOp.dataCount, collOp.root);
 }
 
-std::string DescBroadcast(const BaseCollOperator &collOp)
+std::string DescHalfAlltoAllV(const BaseCollOperator& collOp)
 {
-    return StringFormat(
-        "BaseCollOperator[%s, dataCount=%llu, root=%u]",
-        OpDesc(collOp).c_str(), collOp.dataCount, collOp.root
-    );
+    return StringFormat("BaseCollOperator[%s]", OpDesc(collOp).c_str());
 }
 
-std::string DescBatchSendRecv(const BaseCollOperator &collOp)
+std::string DescReduceScatterV(const BaseCollOperator& collOp)
 {
-    return StringFormat(
-        "BaseCollOperator[%s, dataCount=%llu, root=%u]",
-        OpDesc(collOp).c_str(), collOp.dataCount, collOp.root
-    );
+    return StringFormat("BaseCollOperator[%s]", OpDesc(collOp).c_str());
 }
 
-std::string DescHalfAlltoAllV(const BaseCollOperator &collOp)
+std::string DescAllGatherV(const BaseCollOperator& collOp)
 {
-    return StringFormat(
-        "BaseCollOperator[%s]", OpDesc(collOp).c_str()
-    );
+    return StringFormat("BaseCollOperator[%s]", OpDesc(collOp).c_str());
 }
 
-std::string DescReduceScatterV(const BaseCollOperator &collOp)
-{
-    return StringFormat(
-        "BaseCollOperator[%s]", OpDesc(collOp).c_str()
-    );
-}
-
-std::string DescAllGatherV(const BaseCollOperator &collOp)
-{
-    return StringFormat(
-        "BaseCollOperator[%s]", OpDesc(collOp).c_str()
-    );
-}
-
-std::unordered_map<OpType, std::function<std::string(const BaseCollOperator &)>, std::EnumClassHash> descOpMap{
+std::unordered_map<OpType, std::function<std::string(const BaseCollOperator&)>, std::EnumClassHash> descOpMap{
     {OpType::REDUCESCATTER, std::bind(&DescReduceScatter, std::placeholders::_1)},
     {OpType::ALLREDUCE, std::bind(&DescAllreduce, std::placeholders::_1)},
     {OpType::ALLGATHER, std::bind(&DescAllgather, std::placeholders::_1)},
@@ -184,7 +155,7 @@ std::unordered_map<OpType, std::function<std::string(const BaseCollOperator &)>,
     {OpType::ALLGATHERV, std::bind(&DescAllGatherV, std::placeholders::_1)},
 };
 
-std::string CollOpToString(const BaseCollOperator &collOp)
+std::string CollOpToString(const BaseCollOperator& collOp)
 {
     auto it = descOpMap.find(collOp.opType);
     if (it != descOpMap.end()) {
@@ -194,7 +165,7 @@ std::string CollOpToString(const BaseCollOperator &collOp)
     }
 }
 
-inline std::vector<char> DumpByteVector(BinaryStream &binaryStream)
+inline std::vector<char> DumpByteVector(BinaryStream& binaryStream)
 {
     std::vector<char> byteVector;
     binaryStream.Dump(byteVector);
@@ -205,16 +176,16 @@ inline std::vector<char> DumpByteVector(BinaryStream &binaryStream)
     return byteVector;
 }
 
-std::vector<char> opTagToVector(const std::string &opTag)
+std::vector<char> opTagToVector(const std::string& opTag)
 {
     std::vector<char> result(MAX_OP_TAG_LEN, '\0');
-    auto copyLen = opTag.size() < MAX_OP_TAG_LEN ? opTag.size() :MAX_OP_TAG_LEN;
+    auto copyLen = opTag.size() < MAX_OP_TAG_LEN ? opTag.size() : MAX_OP_TAG_LEN;
     std::copy_n(opTag.begin(), copyLen, result.begin());
 
     return result;
 }
 
-std::string vectorToOpTag(const std::vector<char> &opTagvector)
+std::string vectorToOpTag(const std::vector<char>& opTagvector)
 {
     auto validSize = opTagvector.size() < MAX_OP_TAG_LEN ? opTagvector.size() : MAX_OP_TAG_LEN;
     auto firstNul = std::find(opTagvector.begin(), opTagvector.begin() + validSize, '\0');
@@ -224,10 +195,12 @@ std::string vectorToOpTag(const std::vector<char> &opTagvector)
 
 std::vector<char> CollOperator::GetUniqueId() const
 {
-    HCCL_INFO("[CollOperator::%s] opMode[%s], opType[%s], reduceOp[%s], dataType[%s], dataCount[%llu], root[%u], "
+    HCCL_INFO(
+        "[CollOperator::%s] opMode[%s], opType[%s], reduceOp[%s], dataType[%s], dataCount[%llu], root[%u], "
         "myRank[%d], sendRecvRemoteRank[%d], opTag[%s], staticAddr[%d], staticShape[%d], outputDataType[%s], ",
-        __func__, opMode.Describe().c_str(), opType.Describe().c_str(), reduceOp.Describe().c_str(), dataType.Describe().c_str(),
-        dataCount, root, myRank, sendRecvRemoteRank, opTag.c_str(), staticAddr, staticShape, outputDataType.Describe().c_str());
+        __func__, opMode.Describe().c_str(), opType.Describe().c_str(), reduceOp.Describe().c_str(),
+        dataType.Describe().c_str(), dataCount, root, myRank, sendRecvRemoteRank, opTag.c_str(), staticAddr,
+        staticShape, outputDataType.Describe().c_str());
     BinaryStream binaryStream;
     binaryStream << opMode;
     binaryStream << opType;
@@ -278,7 +251,7 @@ std::vector<char> CollOperator::GetUniqueId() const
     return DumpByteVector(binaryStream);
 }
 
-CollOperatorDef CollOperator::GetPackedData(std::vector<char> &byteVector)
+CollOperatorDef CollOperator::GetPackedData(std::vector<char>& byteVector)
 {
     CollOperator op;
     BinaryStream binaryStream(byteVector);
@@ -333,4 +306,4 @@ CollOperatorDef CollOperator::GetPackedData(std::vector<char> &byteVector)
 
     return op;
 }
-}
+} // namespace Hccl

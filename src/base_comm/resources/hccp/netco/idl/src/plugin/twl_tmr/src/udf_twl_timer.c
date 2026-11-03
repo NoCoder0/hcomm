@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #include "udf_twl_timer.h"
 #include "udf_twl_timer_inner.h"
 
@@ -21,46 +20,46 @@
 extern "C" {
 #endif
 
-#define UDF_TML_TIMER_PROC_NAME_LEN      32
+#define UDF_TML_TIMER_PROC_NAME_LEN 32
 #define UDF_TWLTMR_INTERVAL_INVALID 0xFFFFFFFF
 
-#define UDF_TWL_TIMER_MAGIC                 0x55574C30
-#define UDF_TWL_TIMER_INST_MAGIC            0x55574C31
-#define UDF_TWL_TIMER_WHEEL_INST_MAGIC      0x55574C32
-#define UDF_TWL_TIMER_ATTR_MAGIC            0x55574C33
-#define UDF_TWL_TIMER_DEFAULT_NAME          "udfTwlTimer"
-#define UDF_TWL_TIMER_INST_DEFAULT_NAME     "udfTwlTimerInst"
-#define UDF_TWL_TIMER_INST_TREATE_NAME      "udfTwlInstDeal"
+#define UDF_TWL_TIMER_MAGIC 0x55574C30
+#define UDF_TWL_TIMER_INST_MAGIC 0x55574C31
+#define UDF_TWL_TIMER_WHEEL_INST_MAGIC 0x55574C32
+#define UDF_TWL_TIMER_ATTR_MAGIC 0x55574C33
+#define UDF_TWL_TIMER_DEFAULT_NAME "udfTwlTimer"
+#define UDF_TWL_TIMER_INST_DEFAULT_NAME "udfTwlTimerInst"
+#define UDF_TWL_TIMER_INST_TREATE_NAME "udfTwlInstDeal"
 
-#define UDF_TWL_TIMER_MSEC_INTERVAL         100
-#define UDF_TWL_TIMER_SEC_INTERVAL          1000
-#define UDF_TWL_TIMER_MINUTE_INTERVAL       (60 * 1000)
-#define UDF_TWL_TIMER_HOUR_INTERVAL         (60 * 60 * 1000)
+#define UDF_TWL_TIMER_MSEC_INTERVAL 100
+#define UDF_TWL_TIMER_SEC_INTERVAL 1000
+#define UDF_TWL_TIMER_MINUTE_INTERVAL (60 * 1000)
+#define UDF_TWL_TIMER_HOUR_INTERVAL (60 * 60 * 1000)
 
-#define UDF_TWL_TIMERMSEC_SLOT_NUM          10   /* time wheel slot num  millsecond timer */
-#define UDF_TWL_TIMERSEC_SLOT_NUM           60   /* time wheel slot num for second timer */
-#define UDF_TWL_TIMERMIN_SLOT_NUM           60   /* time wheel slot num  for min timer */
-#define UDF_TWL_TIMERHOUR_SLOT_NUM          200  /* time wheel slot num  for hour timer */
+#define UDF_TWL_TIMERMSEC_SLOT_NUM 10  /* time wheel slot num  millisecond timer */
+#define UDF_TWL_TIMERSEC_SLOT_NUM 60   /* time wheel slot num for second timer */
+#define UDF_TWL_TIMERMIN_SLOT_NUM 60   /* time wheel slot num  for min timer */
+#define UDF_TWL_TIMERHOUR_SLOT_NUM 200 /* time wheel slot num  for hour timer */
 
-#define UDF_TWL_PRECISE_NUM                 4
-#define UDF_TWL_PRECISE_MSEC                (0x01 << 0)
-#define UDF_TWL_PRECISE_SEC                 (0x01 << 1)
-#define UDF_TWL_PRECISE_MINUTE              (0x01 << 2)
-#define UDF_TWL_PRECISE_HOUR                (0x01 << 3)
-#define UDF_TWL_PRECISE_FACTOR5             (5)
-#define UDF_TWL_OUTSIZE_40                  (40)
-#define UDF_TWL_OUTSIZE_120                 (120)
-#define UDF_TWL_NUM2                        (2)
+#define UDF_TWL_PRECISE_NUM 4
+#define UDF_TWL_PRECISE_MSEC (0x01 << 0)
+#define UDF_TWL_PRECISE_SEC (0x01 << 1)
+#define UDF_TWL_PRECISE_MINUTE (0x01 << 2)
+#define UDF_TWL_PRECISE_HOUR (0x01 << 3)
+#define UDF_TWL_PRECISE_FACTOR5 (5)
+#define UDF_TWL_OUTSIZE_40 (40)
+#define UDF_TWL_OUTSIZE_120 (120)
+#define UDF_TWL_NUM2 (2)
 #pragma pack(4)
 
 /**
  * @brief 时间轮层级状态
  */
 typedef enum {
-    UDF_TWL_TIMER_WHEEL_MSEC,    /* 毫秒级时间轮 */
-    UDF_TWL_TIMER_WHEEL_SEC,     /* 秒级时间轮 */
-    UDF_TWL_TIMER_WHEEL_MINUTE,  /* 分钟级时间轮 */
-    UDF_TWL_TIMER_WHEEL_HOUR,    /* 小时级时间轮 */
+    UDF_TWL_TIMER_WHEEL_MSEC,   /* 毫秒级时间轮 */
+    UDF_TWL_TIMER_WHEEL_SEC,    /* 秒级时间轮 */
+    UDF_TWL_TIMER_WHEEL_MINUTE, /* 分钟级时间轮 */
+    UDF_TWL_TIMER_WHEEL_HOUR,   /* 小时级时间轮 */
     UDF_TWL_TIMER_WHEEL_BUTT
 } UdfTwlTimerWheelType;
 
@@ -68,8 +67,8 @@ typedef enum {
  * @brief 定时器实例状态
  */
 typedef enum {
-    UDF_TWL_TIMER_INST_WAIT_EXECUTE,   /* 定时器实例等待执行 */
-    UDF_TWL_TIMER_INST_LOAD,           /* 定时器实例加载 */
+    UDF_TWL_TIMER_INST_WAIT_EXECUTE, /* 定时器实例等待执行 */
+    UDF_TWL_TIMER_INST_LOAD,         /* 定时器实例加载 */
     UDF_TWL_TIMER_INST_BUTT
 } UdfTwlTimerInstAddStage;
 
@@ -84,14 +83,14 @@ typedef struct {
 
 /* Timer wheel instance */
 typedef struct {
-    uint32_t magic;                                         /* 时间轮定时器魔术字 */
-    uint32_t creatCnt;                                      /* 时间轮创建次数 */
-    BaseTimerHandle timerHd;                                /* 时间轮定时器句柄 */
-    UdfTwlTimerWheel *wheelList[UDF_TWL_TIMER_WHEEL_BUTT];  /* 各级时间轮 */
-    uint8_t precision;                                      /* 时间轮定时器实例精度 */
-    UdfTwlTimerWheelType execLevel;                         /* 时间轮定时器执行层级 */
-    VOS_LIST_HEAD_S timerlist;                              /* 定时器链表(所有的定时器节点) */
-    char name[UDF_TWL_TMR_NAME_LEN];                        /* 定时器名称 */
+    uint32_t magic;                                        /* 时间轮定时器魔术字 */
+    uint32_t creatCnt;                                     /* 时间轮创建次数 */
+    BaseTimerHandle timerHd;                               /* 时间轮定时器句柄 */
+    UdfTwlTimerWheel *wheelList[UDF_TWL_TIMER_WHEEL_BUTT]; /* 各级时间轮 */
+    uint8_t precision;                                     /* 时间轮定时器实例精度 */
+    UdfTwlTimerWheelType execLevel;                        /* 时间轮定时器执行层级 */
+    VOS_LIST_HEAD_S timerlist;                             /* 定时器链表(所有的定时器节点) */
+    char name[UDF_TWL_TMR_NAME_LEN];                       /* 定时器名称 */
     TimerAppInfo appInfo;
 } UdfTwlTimerWheelCtrl;
 
@@ -101,40 +100,40 @@ typedef struct {
     uint32_t maxProcTime;
     uint32_t maxInterval;
     uint32_t minInterval;
-    char     lastTime[BASE_TIMER_LAST_PROC_TIME_LEN];
+    char lastTime[BASE_TIMER_LAST_PROC_TIME_LEN];
 } UdfTwlTimerInstDbgInfo;
 
 /**
  * @brief 时间轮实例运行状态
  */
 typedef enum {
-    UDF_TWLTMR_INST_STATUS_RUN,     /* 运行状态 */
-    UDF_TWLTMR_INST_STATUS_DEL,     /* 销毁状态 */
-    UDF_TWLTMR_INST_STATUS_STOP,    /* 暂停状态 */
+    UDF_TWLTMR_INST_STATUS_RUN,  /* 运行状态 */
+    UDF_TWLTMR_INST_STATUS_DEL,  /* 销毁状态 */
+    UDF_TWLTMR_INST_STATUS_STOP, /* 暂停状态 */
     UDF_TWLTMR_INST_STATUS_BUTT
 } UdfTmrInstStatus;
 
 /* Timer node */
 typedef struct {
     uint32_t magic;
-    VOS_LIST_NODE_S node;                   /* 定时器节点(所属层级时间轮链表) */
-    VOS_LIST_NODE_S nodeForMT;              /* 定时器节点(定时器链表) */
-    char timername[UDF_TWL_TMR_NAME_LEN];   /* 定时器实例名称 */
-    UdfTmrInstStatus status;                /* 定时器实例运行状态 */
-    bool begingSchedule;                    /* 定时器是否正在执行超时回调 */
-    uint32_t resizeInterval;                /* 定时器实例重置超时时间 */
-    uint32_t realInterval;                  /* 定时器实例超时时间 */
-    uint32_t interval;                      /* 定时器实例规范化超时时间 */
-    uint32_t rotation;                      /* 定时器实例运行圈数 */
-    UdfTmrInstCallBack proc;                /* 定时器实例回调函数 */
-    void *usrData;                          /* 定时器实例用户自定义数据 */
-    UdfTimerMode tmrMode;                   /* 定时器实例周期性：单次或周期 */
-    uint32_t index;                         /* 定时器实例在时间轮上的位置 */
-    UdfTwlTimerWheelType precision;         /* 定时器实例精度 */
-    UdfTwlTimerWheel *tmrWheel;             /* 定时器实例部署的时间轮层级 */
-    UdfTwlTimerWheelCtrl *WheelHandle;      /* 定时器实例部署的时间轮 */
-    UdfTwlTimerInstDbgInfo dbgInfo;         /* 定时器实例维测信息 */
-    TimerDestructProc destructProc;         /* 定时器销毁时析构回调 */
+    VOS_LIST_NODE_S node;                 /* 定时器节点(所属层级时间轮链表) */
+    VOS_LIST_NODE_S nodeForMT;            /* 定时器节点(定时器链表) */
+    char timername[UDF_TWL_TMR_NAME_LEN]; /* 定时器实例名称 */
+    UdfTmrInstStatus status;              /* 定时器实例运行状态 */
+    bool begingSchedule;                  /* 定时器是否正在执行超时回调 */
+    uint32_t resizeInterval;              /* 定时器实例重置超时时间 */
+    uint32_t realInterval;                /* 定时器实例超时时间 */
+    uint32_t interval;                    /* 定时器实例规范化超时时间 */
+    uint32_t rotation;                    /* 定时器实例运行圈数 */
+    UdfTmrInstCallBack proc;              /* 定时器实例回调函数 */
+    void *usrData;                        /* 定时器实例用户自定义数据 */
+    UdfTimerMode tmrMode;                 /* 定时器实例周期性：单次或周期 */
+    uint32_t index;                       /* 定时器实例在时间轮上的位置 */
+    UdfTwlTimerWheelType precision;       /* 定时器实例精度 */
+    UdfTwlTimerWheel *tmrWheel;           /* 定时器实例部署的时间轮层级 */
+    UdfTwlTimerWheelCtrl *WheelHandle;    /* 定时器实例部署的时间轮 */
+    UdfTwlTimerInstDbgInfo dbgInfo;       /* 定时器实例维测信息 */
+    TimerDestructProc destructProc;       /* 定时器销毁时析构回调 */
 } UdfTwlTimerInst;
 
 typedef struct {
@@ -143,10 +142,10 @@ typedef struct {
 } UdfTwlTimerParam;
 
 typedef struct {
-    UdfTwlTimerWheelType level;  /* 时间轮级别 */
-    uint8_t precision;           /* 定时器实例精度 */
-    uint32_t slotNum;            /* 时间轮对应的格子数量 */
-    uint32_t interval;           /* 时间轮对应的时间间隔 */
+    UdfTwlTimerWheelType level; /* 时间轮级别 */
+    uint8_t precision;          /* 定时器实例精度 */
+    uint32_t slotNum;           /* 时间轮对应的格子数量 */
+    uint32_t interval;          /* 时间轮对应的时间间隔 */
 } UdfTwlTimerInitTransferMap;
 
 typedef uint32_t (*UdfTwlTimerSetAttrProc)(UdfTwlTimerParam *attr, const void *val, size_t len);
@@ -154,7 +153,7 @@ uint32_t UdfTwlTimerInitWheel(UdfTwlTimerWheelCtrl *wheelCtrl, UdfTwlTimerWheelT
 
 typedef struct {
     VOS_LIST_HEAD_S instList; /* 定时器并发修改保护 */
-    VOS_LIST_HEAD_S tmrList; /* 定时器并发修改保护 */
+    VOS_LIST_HEAD_S tmrList;  /* 定时器并发修改保护 */
 } UdfTwlTimerCtrl;
 
 #pragma pack()
@@ -223,7 +222,8 @@ void UdfTwlTimerDestoryWheelInst(UdfTwlTimerWheelCtrl *wheelCtrl, UdfTwlTimerWhe
     }
 
     for (uiIndex = 0; uiIndex < timerWheel->slot_num; uiIndex++) {
-        VOS_LIST_FOR_EACH_ITEM_SAFE(dllNode, nextDllNode, &(timerWheel->listHead[uiIndex])) {
+        VOS_LIST_FOR_EACH_ITEM_SAFE(dllNode, nextDllNode, &(timerWheel->listHead[uiIndex]))
+        {
             timerInst = VOS_LIST_ENTRY(dllNode, UdfTwlTimerInst, node);
             if (timerInst == NULL) {
                 continue;
@@ -252,13 +252,11 @@ void UdfTwlTimerDestoryWheel(void *param)
     return;
 }
 
-
 uint32_t UdfTwlTimerGetIndex(UdfTwlTimerWheelType type)
 {
     uint32_t i;
-    UdfTwlTimerWheelType wheelList[] = {UDF_TWL_TIMER_WHEEL_MSEC, UDF_TWL_TIMER_WHEEL_SEC,
-                                        UDF_TWL_TIMER_WHEEL_MINUTE, UDF_TWL_TIMER_WHEEL_HOUR,
-                                        UDF_TWL_TIMER_WHEEL_BUTT};
+    UdfTwlTimerWheelType wheelList[] = {UDF_TWL_TIMER_WHEEL_MSEC, UDF_TWL_TIMER_WHEEL_SEC, UDF_TWL_TIMER_WHEEL_MINUTE,
+        UDF_TWL_TIMER_WHEEL_HOUR, UDF_TWL_TIMER_WHEEL_BUTT};
 
     if (type >= UDF_TWL_TIMER_WHEEL_BUTT) {
         return UDF_ERROR;
@@ -311,10 +309,12 @@ uint32_t UdfTwlTimerCorrectWheel(UdfTwlTimerWheelCtrl *wheelCtrl, uint32_t remai
     return UDF_OK;
 }
 
-void UdfTimerInstGetExectueWheel(UdfTwlTimerWheelCtrl *wheelCtrl, UdfTwlTimerInst *timerInst,
-    uint32_t *instIndex, uint32_t *typeEnd)
+void UdfTimerInstGetExectueWheel(UdfTwlTimerWheelCtrl *wheelCtrl, UdfTwlTimerInst *timerInst, uint32_t *instIndex,
+    uint32_t *typeEnd)
 {
-    /* 因为只有获取remainTime的时候，不在业务指定线程上运行。为了节约内存空间，这里使用时间轮wheelCtrl->listLock的锁加强防护 */
+    (void)wheelCtrl;
+    /* 因为只有获取remainTime的时候，不在业务指定线程上运行。为了节约内存空间，这里使用时间轮wheelCtrl->listLock的锁加强防护
+     */
     *instIndex = timerInst->index;
     *typeEnd = UdfTwlTimerGetIndex(timerInst->tmrWheel->type);
 }
@@ -343,7 +343,8 @@ uint32_t UdfTwlTimerCalcRemainTime(UdfTwlTimerWheelCtrl *wheelCtrl, UdfTwlTimerI
         return UDF_OK;
     }
 
-    bool typeInvalid = ((typeBegin == (uint32_t)UDF_ERROR) || (typeEnd == (uint32_t)UDF_ERROR) || (typeEnd > UDF_TWL_TIMER_WHEEL_HOUR));
+    bool typeInvalid = ((typeBegin == (uint32_t)UDF_ERROR) || (typeEnd == (uint32_t)UDF_ERROR) ||
+                        (typeEnd > UDF_TWL_TIMER_WHEEL_HOUR));
     if (typeInvalid) {
         return UDF_ERROR;
     }
@@ -364,7 +365,7 @@ uint32_t UdfTwlTimerCalcRemainTime(UdfTwlTimerWheelCtrl *wheelCtrl, UdfTwlTimerI
         if (curSlot == instIndex) {
             continue;
         } else if (curSlot < instIndex) {
-            timeTmp += (instIndex - curSlot - 1)  * wheelList[i].interval;
+            timeTmp += (instIndex - curSlot - 1) * wheelList[i].interval;
         } else {
             timeTmp += (instIndex + timerWheel->slot_num - curSlot - 1) * wheelList[i].interval;
         }
@@ -412,8 +413,8 @@ uint32_t UdfTwlTimerInitWheelLost(UdfTwlTimerWheelCtrl *wheelCtrl, uint32_t type
 {
     uint32_t i;
     UdfTwlTimerWheel *timerWheel = NULL;
-    UdfTwlTimerWheelType wheelList[] = {UDF_TWL_TIMER_WHEEL_MSEC, UDF_TWL_TIMER_WHEEL_SEC,
-                                        UDF_TWL_TIMER_WHEEL_MINUTE, UDF_TWL_TIMER_WHEEL_HOUR};
+    UdfTwlTimerWheelType wheelList[] = {
+        UDF_TWL_TIMER_WHEEL_MSEC, UDF_TWL_TIMER_WHEEL_SEC, UDF_TWL_TIMER_WHEEL_MINUTE, UDF_TWL_TIMER_WHEEL_HOUR};
 
     for (i = typeBegin + 1; i < typeEnd; i++) {
         timerWheel = UdfTwlTimerGetRunningWheel(wheelCtrl, wheelList[i]);
@@ -431,12 +432,13 @@ uint32_t UdfTwlTimerInitWheelLost(UdfTwlTimerWheelCtrl *wheelCtrl, uint32_t type
 
 uint32_t UdfTwlTimerCheckWheelValid(UdfTwlTimerWheelCtrl *wheelCtrl, UdfTwlTimerWheelType type)
 {
+    (void)type;
     uint32_t i;
     uint32_t ret;
     uint32_t lowLevelWheel = (uint32_t)-1;
     UdfTwlTimerWheel *timerWheel = NULL;
-    UdfTwlTimerWheelType wheelList[] = {UDF_TWL_TIMER_WHEEL_MSEC, UDF_TWL_TIMER_WHEEL_SEC,
-                                        UDF_TWL_TIMER_WHEEL_MINUTE, UDF_TWL_TIMER_WHEEL_HOUR};
+    UdfTwlTimerWheelType wheelList[] = {
+        UDF_TWL_TIMER_WHEEL_MSEC, UDF_TWL_TIMER_WHEEL_SEC, UDF_TWL_TIMER_WHEEL_MINUTE, UDF_TWL_TIMER_WHEEL_HOUR};
 
     for (i = 0; i < sizeof(wheelList) / sizeof(UdfTwlTimerWheelType); i++) {
         timerWheel = UdfTwlTimerGetRunningWheel(wheelCtrl, wheelList[i]);
@@ -457,9 +459,10 @@ uint32_t UdfTwlTimerCheckWheelValid(UdfTwlTimerWheelCtrl *wheelCtrl, UdfTwlTimer
     return UDF_OK;
 }
 
-UdfTwlTimerWheel *UdfTwlTimerInitWheelInst(UdfTwlTimerWheelCtrl *wheelCtrl, uint32_t interval,
-    uint32_t num, UdfTwlTimerWheelType level)
+UdfTwlTimerWheel *UdfTwlTimerInitWheelInst(UdfTwlTimerWheelCtrl *wheelCtrl, uint32_t interval, uint32_t num,
+    UdfTwlTimerWheelType level)
 {
+    (void)interval;
     uint32_t ret;
     uint32_t i = 0;
     UdfTwlTimerWheel *timerWheel = NULL;
@@ -556,8 +559,8 @@ uint32_t UdfTwlTimerInitWheel(UdfTwlTimerWheelCtrl *wheelCtrl, UdfTwlTimerWheelT
     return UDF_OK;
 }
 
-uint32_t UdfTimerInstAddNode(UdfTwlTimerWheelCtrl *wheelCtrl, UdfTwlTimerWheelType level,
-    UdfTwlTimerInst *timerInst, uint32_t adjustNum, UdfTwlTimerInstAddStage stage)
+uint32_t UdfTimerInstAddNode(UdfTwlTimerWheelCtrl *wheelCtrl, UdfTwlTimerWheelType level, UdfTwlTimerInst *timerInst,
+    uint32_t adjustNum, UdfTwlTimerInstAddStage stage)
 {
     uint32_t ret;
     uint32_t slotIndex;
@@ -665,7 +668,7 @@ void UdfTwlTimerReloadInst(UdfTwlTimerWheelCtrl *wheelCtrl, UdfTwlTimerInst *tim
             VOS_ListAdd(&(timerInst->nodeForMT), &(wheelCtrl->timerlist));
             ret = UdfTimerInstCalcPrecision(wheelCtrl, timerInst, timerInst->resizeInterval);
             if (ret != UDF_OK) {
-                LOG_INNER_ERR("Udf timer instance timout interval resize unsuccess. (0x%x).", ret);
+                LOG_INNER_ERR("Udf timer instance timeout interval resize unsuccess. (0x%x).", ret);
             }
         }
         return;
@@ -714,8 +717,8 @@ void UdfTwlTimerUpdateDbgInfo(UdfTwlTimerInst *timerInst, uint64_t startTime, ui
 }
 
 typedef struct {
-    UdfTwlTimerWheelType level;  /* 时间轮级别 */
-    uint32_t interval;           /* 时间轮对应的时间间隔 */
+    UdfTwlTimerWheelType level; /* 时间轮级别 */
+    uint32_t interval;          /* 时间轮对应的时间间隔 */
 } UdfTwlTimerTypeTransferMap;
 
 uint32_t UdfTwlTimerCalcAdjustInterval(UdfTwlTimerInst *timerInst, UdfTwlTimerWheelType level, uint64_t startTime)
@@ -757,15 +760,17 @@ uint32_t UdfTwlTimerCalcAdjustInterval(UdfTwlTimerInst *timerInst, UdfTwlTimerWh
     if (interval >= (timerInst->realInterval + (UDF_TWL_PRECISE_FACTOR5 * precisionInterval))) {
         DbgGetFuncName(timerInst->proc, funcName, UDF_TML_TIMER_PROC_NAME_LEN);
         LOG_INNER_WARN("Timer proc trigger interval warning. (lastTriggerTime = %" PRIu64 ","
-                "triggerTime = %" PRIu64 ", func = %s)", timerInst->dbgInfo.lastSysTime, startTime, funcName);
+                       "triggerTime = %" PRIu64 ", func = %s)",
+            timerInst->dbgInfo.lastSysTime, startTime, funcName);
     }
 
     return 0;
 }
 
-void UdfTwlTimerExecuteProc(UdfTwlTimerWheelCtrl *wheelCtrl, UdfTwlTimerWheel *timerWheel,
-    UdfTwlTimerWheelType level, uint64_t val)
+void UdfTwlTimerExecuteProc(UdfTwlTimerWheelCtrl *wheelCtrl, UdfTwlTimerWheel *timerWheel, UdfTwlTimerWheelType level,
+    uint64_t val)
 {
+    (void)val;
     uint32_t adjustNum = 0;
     UdfTwlTimerInst *dfsTimer = NULL;
     VOS_LIST_HEAD_S *dllNode = NULL;
@@ -775,7 +780,8 @@ void UdfTwlTimerExecuteProc(UdfTwlTimerWheelCtrl *wheelCtrl, UdfTwlTimerWheel *t
     char timeOutTime[BASE_TIMER_LAST_PROC_TIME_LEN] = {0};
     uint32_t curSlot = timerWheel->cur_slot;
 
-    VOS_LIST_FOR_EACH_ITEM_SAFE(dllNode, nextDllNode, &(timerWheel->listHead[curSlot])) {
+    VOS_LIST_FOR_EACH_ITEM_SAFE(dllNode, nextDllNode, &(timerWheel->listHead[curSlot]))
+    {
         dfsTimer = VOS_LIST_ENTRY(dllNode, UdfTwlTimerInst, node);
         if (dfsTimer->rotation != 0) {
             dfsTimer->rotation--;
@@ -792,9 +798,9 @@ void UdfTwlTimerExecuteProc(UdfTwlTimerWheelCtrl *wheelCtrl, UdfTwlTimerWheel *t
                 continue;
             }
 
-            dfsTimer->begingSchedule  = true;
+            dfsTimer->begingSchedule = true;
             (void)dfsTimer->proc(dfsTimer->usrData, NULL);
-            dfsTimer->begingSchedule  = false;
+            dfsTimer->begingSchedule = false;
             (void)SystimeGetMilliSec(&endTime);
         }
 
@@ -806,8 +812,8 @@ void UdfTwlTimerExecuteProc(UdfTwlTimerWheelCtrl *wheelCtrl, UdfTwlTimerWheel *t
 UdfTwlTimerWheelType UdfTwlTimerGetHigherLevel(UdfTwlTimerWheelType level)
 {
     uint32_t i;
-    UdfTwlTimerWheelType wheelList[] = {UDF_TWL_TIMER_WHEEL_MSEC, UDF_TWL_TIMER_WHEEL_SEC,
-                                        UDF_TWL_TIMER_WHEEL_MINUTE, UDF_TWL_TIMER_WHEEL_HOUR};
+    UdfTwlTimerWheelType wheelList[] = {
+        UDF_TWL_TIMER_WHEEL_MSEC, UDF_TWL_TIMER_WHEEL_SEC, UDF_TWL_TIMER_WHEEL_MINUTE, UDF_TWL_TIMER_WHEEL_HOUR};
 
     if (level == UDF_TWL_TIMER_WHEEL_HOUR) {
         return UDF_TWL_TIMER_WHEEL_BUTT;
@@ -825,8 +831,8 @@ UdfTwlTimerWheelType UdfTwlTimerGetHigherLevel(UdfTwlTimerWheelType level)
 UdfTwlTimerWheelType UdfTwlTimerGetLowerLevel(UdfTwlTimerWheelType level)
 {
     uint32_t i;
-    UdfTwlTimerWheelType wheelList[] = {UDF_TWL_TIMER_WHEEL_MSEC, UDF_TWL_TIMER_WHEEL_SEC,
-                                        UDF_TWL_TIMER_WHEEL_MINUTE, UDF_TWL_TIMER_WHEEL_HOUR};
+    UdfTwlTimerWheelType wheelList[] = {
+        UDF_TWL_TIMER_WHEEL_MSEC, UDF_TWL_TIMER_WHEEL_SEC, UDF_TWL_TIMER_WHEEL_MINUTE, UDF_TWL_TIMER_WHEEL_HOUR};
 
     if (level == UDF_TWL_TIMER_WHEEL_MSEC) {
         return UDF_TWL_TIMER_WHEEL_MSEC;
@@ -852,7 +858,8 @@ void UdfTwlTimerHigherLevelProc(UdfTwlTimerWheelCtrl *wheelCtrl, UdfTwlTimerWhee
     UdfTwlTimerWheelType nextLevel;
     uint32_t curSlot = timerWheel->cur_slot;
 
-    VOS_LIST_FOR_EACH_ITEM_SAFE(dllNode, nextDllNode, &(timerWheel->listHead[curSlot])) {
+    VOS_LIST_FOR_EACH_ITEM_SAFE(dllNode, nextDllNode, &(timerWheel->listHead[curSlot]))
+    {
         dfsTimer = VOS_LIST_ENTRY(dllNode, UdfTwlTimerInst, node);
         if (dfsTimer->rotation != 0) {
             dfsTimer->rotation--;
@@ -905,9 +912,10 @@ void UdfTwlTimerProcess(UdfTwlTimerWheelCtrl *wheelCtrl, UdfTwlTimerWheelType le
 
 uint32_t UdfTwlTimerEvtProcess(BaseTimerHandle handle, uint64_t val, void *param)
 {
+    (void)handle;
     UdfTwlTimerWheelCtrl *wheelCtrl = (UdfTwlTimerWheelCtrl *)param;
     if ((wheelCtrl == NULL) || (val == 0)) {
-        LOG_INNER_ERR("Twl timer proc: count:%"PRIu64" not correct", val);
+        LOG_INNER_ERR("Twl timer proc: count:%" PRIu64 " not correct", val);
         return BASE_TIMER_ERRNO_INVAL;
     }
 
@@ -931,8 +939,8 @@ BaseTimerAttr UdfTwlTimerCreateBaseAttr(TimerAppInfo *appInfo, char *name)
         return NULL;
     }
 
-    ret = BASE_TimerSetAttr(attr, BASE_TIMER_ATTR_USRPARAM_DESTRUCTOR,
-        (void *)(uintptr_t)UdfTwlTimerDestoryWheel, sizeof(void *));
+    ret = BASE_TimerSetAttr(attr, BASE_TIMER_ATTR_USRPARAM_DESTRUCTOR, (void *)(uintptr_t)UdfTwlTimerDestoryWheel,
+        sizeof(void *));
     if (ret != BASE_TIMER_ERRNO_OK) {
         BASE_TimerDestroyAttr(appInfo, attr);
         return NULL;
@@ -940,7 +948,6 @@ BaseTimerAttr UdfTwlTimerCreateBaseAttr(TimerAppInfo *appInfo, char *name)
 
     return attr;
 }
-
 
 uint32_t UdfTwlTimerCreateRelTmr(UdfTwlTimerWheelCtrl *wheelCtrl, uint32_t timeOutMs)
 {
@@ -1083,7 +1090,7 @@ void UdfTwlTimerDestroy(UdfTwlTimerHandle handle)
     BaseTimerInfo *tmrInfo = (BaseTimerInfo *)wheelCtrl->timerHd;
     if ((wheelCtrl->creatCnt == 0) && (tmrInfo != NULL) && (tmrInfo->delTag != BASE_TIMER_DEL_TAG_TRUE)) {
         BASE_TimerDestroy(wheelCtrl->timerHd);
-        BaseTimerDestroy(tmrInfo);  // 注意：后面就不能再访问wheelCtrl和tmrInfo了，因为已经释放
+        BaseTimerDestroy(tmrInfo); // 注意：后面就不能再访问wheelCtrl和tmrInfo了，因为已经释放
         wheelCtrl = NULL;
         tmrInfo = NULL;
     }
@@ -1175,8 +1182,8 @@ uint32_t UdfTimerInstCreate(UdfTwlTimerHandle handle, UdfTmrInstParam *timerPara
     return UDF_OK;
 }
 
-uint32_t UdfTimerInstCreateNotStart(UdfTwlTimerHandle handle, TimerDestructProc func,
-    UdfTmrInstParam *timerParam, UdfTmrInstHandle *tmrInstHandle)
+uint32_t UdfTimerInstCreateNotStart(UdfTwlTimerHandle handle, TimerDestructProc func, UdfTmrInstParam *timerParam,
+    UdfTmrInstHandle *tmrInstHandle)
 {
     uint32_t ret;
     UdfTwlTimerWheelCtrl *wheelCtrl = (UdfTwlTimerWheelCtrl *)handle;
@@ -1249,7 +1256,7 @@ uint32_t UdfTimerInstResize(UdfTmrInstHandle tmrInst, uint32_t timeOutMs)
     UdfTimerInstMoveNode(timerInst->tmrWheel, timerInst);
     uint32_t ret = UdfTimerInstCalcPrecision(wheelCtrl, timerInst, timerInst->resizeInterval);
     if (ret != UDF_OK) {
-        LOG_INNER_ERR("Udf timer instance timout interval resize unsuccess. (0x%x).", ret);
+        LOG_INNER_ERR("Udf timer instance timeout interval resize unsuccess. (0x%x).", ret);
         return UDF_ERROR;
     }
 
@@ -1279,7 +1286,8 @@ uint32_t UdfTwlTimerInstDbgDataScan(UdfTwlTimerWheelCtrl *wheelCtrl, UdfTwlTimer
     VOS_LIST_HEAD_S *item = NULL;
     UdfTwlTimerInst *timerInst = NULL;
 
-    VOS_LIST_FOR_EACH_ITEM(item, &wheelCtrl->timerlist) {
+    VOS_LIST_FOR_EACH_ITEM(item, &wheelCtrl->timerlist)
+    {
         timerInst = VOS_LIST_ENTRY(item, UdfTwlTimerInst, nodeForMT);
         ret = trav(paraIn, timerInst);
         if (ret != UDF_OK) {
@@ -1303,10 +1311,9 @@ uint32_t UdfTwlTimerInstDbgDataTrav(void *paraIn, UdfTwlTimerInst *timerInst)
     DbgGetFuncName(timerInst->proc, funcName, UDF_TML_TIMER_PROC_NAME_LEN);
     char *tmrMode = (timerInst->tmrMode == UDF_TIMER_MODE_ONE_SHOT) ? "ONE_SHOT" : "PERIOD";
 
-    UDF_CMD_OUTPUT("%-16s  %-30s  %16u  %-8s %26s  %16u  %16u  %16u    %"PRIu64"\n",
-                   timerInst->timername, funcName, timerInst->realInterval, tmrMode,
-                   timerInst->dbgInfo.lastTime, timerInst->dbgInfo.maxProcTime,
-                   timerInst->dbgInfo.maxInterval, timerInst->dbgInfo.minInterval, timerInst->dbgInfo.timeOutCount);
+    UDF_CMD_OUTPUT("%-16s  %-30s  %16u  %-8s %26s  %16u  %16u  %16u    %" PRIu64 "\n", timerInst->timername, funcName,
+        timerInst->realInterval, tmrMode, timerInst->dbgInfo.lastTime, timerInst->dbgInfo.maxProcTime,
+        timerInst->dbgInfo.maxInterval, timerInst->dbgInfo.minInterval, timerInst->dbgInfo.timeOutCount);
     return UDF_OK;
 }
 
@@ -1334,9 +1341,8 @@ uint32_t UdfTwlTimerGetTimerInfo(UdfTwlTimerWheelCtrl *twlNode)
     UDF_CMD_OUTPUT("%-16s  %-16s\n", "Precision:", UdfTwlTimerGetPrecisionStr(twlNode->execLevel));
 
     UDF_CMD_OUTPUT("%.*s\n", UDF_TWL_OUTSIZE_120, UDF_CMD_SPLIT_LINE);
-    UDF_CMD_OUTPUT("%-16s  %-30s  %16s  %-8s  %26s  %16s  %16s  %16s  %-12s\n",
-                   "Name", "UsrHook", "Interval(ms)", "Mode", "LastTimeOutTime",
-                   "MaxProcTime(ms)", "MaxInterval(ms)", "MinInterval(ms)", "TimeOutCount");
+    UDF_CMD_OUTPUT("%-16s  %-30s  %16s  %-8s  %26s  %16s  %16s  %16s  %-12s\n", "Name", "UsrHook", "Interval(ms)",
+        "Mode", "LastTimeOutTime", "MaxProcTime(ms)", "MaxInterval(ms)", "MinInterval(ms)", "TimeOutCount");
     UDF_CMD_OUTPUT("%.*s\n", UDF_TWL_OUTSIZE_120, UDF_CMD_SPLIT_LINE);
 
     return UdfTwlTimerInstDbgDataScan(twlNode, UdfTwlTimerInstDbgDataTrav, NULL);
@@ -1396,7 +1402,7 @@ uint32_t UdfTwlTimerGetInstInfo(void *paraIn, UdfTwlTimerInst *timerInst)
 
     return UDF_OK;
 }
-void* UdfTwlTimerGetInstUsrData(UdfTmrInstHandle tmrInstHdl)
+void *UdfTwlTimerGetInstUsrData(UdfTmrInstHandle tmrInstHdl)
 {
     if (tmrInstHdl == NULL) {
         return NULL;
@@ -1424,9 +1430,10 @@ uint32_t UdfTwlTimerRunningInstGetCnt(UdfTwlTimerHandle timerHandle)
         return 0;
     }
 
-    VOS_LIST_FOR_EACH_ITEM(item, &wheelCtrl->timerlist) {
+    VOS_LIST_FOR_EACH_ITEM(item, &wheelCtrl->timerlist)
+    {
         UdfTwlTimerInst *timerInst = VOS_LIST_ENTRY(item, UdfTwlTimerInst, nodeForMT);
-        if  ((timerInst != NULL) && (timerInst->status == UDF_TWLTMR_INST_STATUS_RUN)) {
+        if ((timerInst != NULL) && (timerInst->status == UDF_TWLTMR_INST_STATUS_RUN)) {
             cnt++;
         }
     }

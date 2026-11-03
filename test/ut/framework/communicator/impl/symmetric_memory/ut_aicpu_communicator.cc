@@ -27,22 +27,12 @@
 using namespace std;
 using namespace hccl;
 
-
 class AicpuCommunicatorTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AicpuCommunicatorTest SetUP" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "AicpuCommunicatorTest TearDown" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AicpuCommunicatorTest SetUP" << std::endl; }
+    static void TearDownTestCase() { std::cout << "AicpuCommunicatorTest TearDown" << std::endl; }
     // Some expensive resource shared by all tests.
-    virtual void SetUp()
-    {
-        std::cout << "AicpuCommunicatorTest Test SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "AicpuCommunicatorTest Test SetUP" << std::endl; }
     virtual void TearDown()
     {
         GlobalMockObject::verify();
@@ -50,8 +40,9 @@ protected:
     }
 };
 
-TEST_F(AicpuCommunicatorTest, Ut_PrepareSymmetricMemory_When_OpTransportResponseIsEmpty_Expect_ReturnIsHCCL_E_PARA) {
-    HcclCommAicpu * hcclCommAicpu = new HcclCommAicpu;
+TEST_F(AicpuCommunicatorTest, Ut_PrepareSymmetricMemory_When_OpTransportResponseIsEmpty_Expect_ReturnIsHCCL_E_PARA)
+{
+    HcclCommAicpu* hcclCommAicpu = new HcclCommAicpu;
     OpParam opParam;
     OpCommTransport opTransportResponse;
     HcclResult ret = hcclCommAicpu->PrepareSymmetricMemory(opParam, opTransportResponse);
@@ -59,8 +50,9 @@ TEST_F(AicpuCommunicatorTest, Ut_PrepareSymmetricMemory_When_OpTransportResponse
     delete hcclCommAicpu;
 }
 
-TEST_F(AicpuCommunicatorTest, Ut_PrepareSymmetricMemory_When_LinkIsNull_Expect_ReturnIsHCCL_SUCCESS) {
-    HcclCommAicpu * hcclCommAicpu = new HcclCommAicpu;
+TEST_F(AicpuCommunicatorTest, Ut_PrepareSymmetricMemory_When_LinkIsNull_Expect_ReturnIsHCCL_SUCCESS)
+{
+    HcclCommAicpu* hcclCommAicpu = new HcclCommAicpu;
     OpParam opParam;
     OpCommTransport opTransportResponse;
     // 构造一个 level0 单元（遵循代码中使用 COMM_LEVEL0 索引）
@@ -80,7 +72,7 @@ TEST_F(AicpuCommunicatorTest, Ut_PrepareSymmetricMemory_When_LinkIsNull_Expect_R
 
 TEST_F(AicpuCommunicatorTest, Ut_ExecOp_When_SymMemEnabled_Expect_ReturnIsHCCL_SUCCESS)
 {
-    hccl::HcclCommAicpu *hcclCommAicpu = new hccl::HcclCommAicpu;
+    hccl::HcclCommAicpu* hcclCommAicpu = new hccl::HcclCommAicpu;
     uint32_t sqHead = 0;
     uint32_t sqTail = 100;
     HcclComStreamInfo streamInfo;
@@ -97,9 +89,7 @@ TEST_F(AicpuCommunicatorTest, Ut_ExecOp_When_SymMemEnabled_Expect_ReturnIsHCCL_S
     hcclCommAicpu->retryEnable_ = true;
     hcclCommAicpu->printTaskExceptionForErr_ = true;
     hcclCommAicpu->identifier_ = "1";
-    MOCKER(QuerySqStatusByType)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(QuerySqStatusByType).stubs().will(returnValue(HCCL_SUCCESS));
 
     MOCKER_CPP(&HcclCommAicpu::Orchestrate).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     MOCKER_CPP(&HcclCommAicpu::PrepareSymmetricMemory).stubs().with(mockcpp::any()).will(returnValue(HCCL_E_INTERNAL));
@@ -118,11 +108,9 @@ TEST_F(AicpuCommunicatorTest, Ut_ExecOp_When_SymMemEnabled_Expect_ReturnIsHCCL_S
     opParam.outputSymWindow = reinterpret_cast<void*>(&win);
     HcclSymWinGetPeerPointer(opParam.inputSymWindow, opParam.inputOffset, 0, &opParam.inputPtr);
     HcclSymWinGetPeerPointer(opParam.outputSymWindow, opParam.outputOffset, 0, &opParam.outputPtr);
-    
+
     hccl::AlgResourceResponse algResResponse;
-    MOCKER_CPP(&HcclCommAicpu::GetAlgResponseRes)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommAicpu::GetAlgResponseRes).stubs().will(returnValue(HCCL_SUCCESS));
     HcclOpResParam commParam;
     commParam.localUsrRankId = 0;
 
@@ -132,7 +120,7 @@ TEST_F(AicpuCommunicatorTest, Ut_ExecOp_When_SymMemEnabled_Expect_ReturnIsHCCL_S
 
 TEST_F(AicpuCommunicatorTest, Ut_ClearOpResource_AllContainers)
 {
-    HcclCommAicpu *hcclCommAicpu = new HcclCommAicpu;
+    HcclCommAicpu* hcclCommAicpu = new HcclCommAicpu;
     const std::string tag = "test_tag";
     const u32 rankId = 0;
 
@@ -164,8 +152,18 @@ TEST_F(AicpuCommunicatorTest, Ut_ClearOpResource_AllContainers)
 
 TEST_F(AicpuCommunicatorTest, Ut_ClearOpResource_TagNotFound)
 {
-    HcclCommAicpu *hcclCommAicpu = new HcclCommAicpu;
+    HcclCommAicpu* hcclCommAicpu = new HcclCommAicpu;
     HcclResult ret = hcclCommAicpu->ClearOpResource("nonexistent_tag");
     EXPECT_EQ(ret, HCCL_SUCCESS);
+    delete hcclCommAicpu;
+}
+
+TEST_F(AicpuCommunicatorTest, Ut_ParseHierarchicalAlgOption_When_SizeExceedMax_Expect_ReturnHCCL_E_INTERNAL)
+{
+    HcclCommAicpu* hcclCommAicpu = new HcclCommAicpu;
+    u32 ahcConfInfo[TOP_HIERARCHICAL_CONF_SIZE] = {0};
+    ahcConfInfo[TOP_HIERARCHICAL_CONF_lENGTH_INDEX] = TOP_HIERARCHICAL_CONF_SIZE - 1;
+    HcclResult ret = hcclCommAicpu->ParseHierarchicalAlgOption(ahcConfInfo);
+    EXPECT_EQ(ret, HCCL_E_INTERNAL);
     delete hcclCommAicpu;
 }

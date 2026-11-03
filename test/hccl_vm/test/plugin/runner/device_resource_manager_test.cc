@@ -16,31 +16,36 @@ class DeviceResourceManagerTest : public testing::Test {
 protected:
 };
 
-TEST_F(DeviceResourceManagerTest, GetInstance_ReturnsSingleton) {
+TEST_F(DeviceResourceManagerTest, GetInstance_ReturnsSingleton)
+{
     auto& mgr1 = DeviceResourceManager::GetInstance();
     auto& mgr2 = DeviceResourceManager::GetInstance();
     EXPECT_EQ(&mgr1, &mgr2);
 }
 
-TEST_F(DeviceResourceManagerTest, Init_WithValidRankSize) {
+TEST_F(DeviceResourceManagerTest, Init_WithValidRankSize)
+{
     DeviceResourceManager& mgr = DeviceResourceManager::GetInstance();
     EXPECT_NO_THROW(mgr.Init(4));
 }
 
-TEST_F(DeviceResourceManagerTest, InitRankRes_WithValidParams) {
+TEST_F(DeviceResourceManagerTest, InitRankRes_WithValidParams)
+{
     DeviceResourceManager& mgr = DeviceResourceManager::GetInstance();
     mgr.Init(4);
     EXPECT_NO_THROW(mgr.InitRankRes(0, 2));
 }
 
-TEST_F(DeviceResourceManagerTest, NotifyRecord_BasicCall) {
+TEST_F(DeviceResourceManagerTest, NotifyRecord_BasicCall)
+{
     DeviceResourceManager& mgr = DeviceResourceManager::GetInstance();
     mgr.Init(4);
     mgr.InitRankRes(0, 2);
     EXPECT_NO_THROW(mgr.NotifyRecord(0, 0, 0, 1));
 }
 
-TEST_F(DeviceResourceManagerTest, NotifyWait_AfterRecord) {
+TEST_F(DeviceResourceManagerTest, NotifyWait_AfterRecord)
+{
     DeviceResourceManager& mgr = DeviceResourceManager::GetInstance();
     mgr.Init(4);
     mgr.InitRankRes(0, 2);
@@ -48,7 +53,8 @@ TEST_F(DeviceResourceManagerTest, NotifyWait_AfterRecord) {
     EXPECT_TRUE(mgr.NotifyWait(0, 0, 0, 1));
 }
 
-TEST_F(DeviceResourceManagerTest, CheckNotifyWait_BasicCall) {
+TEST_F(DeviceResourceManagerTest, CheckNotifyWait_BasicCall)
+{
     DeviceResourceManager& mgr = DeviceResourceManager::GetInstance();
     mgr.Init(4);
     mgr.InitRankRes(0, 2);

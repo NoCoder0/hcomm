@@ -1,19 +1,20 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "coll_comm_aicpu_destroy_func.h"
-#include "aicpu_indop_process.h"
-#include "read_write_lock.h"
-#include "kernel_entrance.h"
+#include "coll_comm_aicpu_mgr.h"
+#include "stream_task_monitor.h"
+#include <shared_mutex>
 
 namespace hccl {
-CollCommAicpuDestroyFunc &CollCommAicpuDestroyFunc::GetInstance()
+CollCommAicpuDestroyFunc& CollCommAicpuDestroyFunc::GetInstance()
 {
     static CollCommAicpuDestroyFunc func;
     return func;
@@ -34,46 +35,44 @@ void CollCommAicpuDestroyFunc::Call()
 
 HcclResult CollCommAicpuDestroyFunc::Process()
 {
-    ReadWriteLockBase &commAicpuMapMutex = AicpuIndopProcess::AicpuGetCommMutex();
-    ReadWriteLock rwlock(commAicpuMapMutex);
-    rwlock.readLock();
-
-    std::vector<std::pair<std::string, CollCommAicpuMgr *>> aicpuCommInfo;
-    CHK_RET(AicpuIndopProcess::AicpuGetCommAll(aicpuCommInfo));
     std::vector<std::string> destroyComm;
+    {
+        std::shared_lock<std::shared_mutex> rwlock(CollCommAicpuMgr::GetInstance().GetMutex());
 
-    for (auto &commInfo : aicpuCommInfo) {
-        CollCommAicpu *aicpuComm = commInfo.second->GetCollCommAicpu();
-        CHK_PTR_NULL(aicpuComm);
+        std::vector<std::pair<std::string, CollCommAicpu*>> aicpuCommInfo;
+        CHK_RET(CollCommAicpuMgr::GetInstance().GetAllComms(aicpuCommInfo));
 
-        if (aicpuComm->GetCommmStatus() == HcclCommStatus::HCCL_COMM_STATUS_INVALID) {
-            continue;
-        }
+        for (auto& commInfo : aicpuCommInfo) {
+            CollCommAicpu* aicpuComm = commInfo.second;
+            CHK_PTR_NULL(aicpuComm);
 
-        Hccl::KfcCommand cmd = Hccl::KfcCommand::NONE;
-        CHK_RET(aicpuComm->BackGroundGetCmd(cmd));
-        if (cmd != Hccl::KfcCommand::DESTROY_AICPU_COMM) {
-            continue;
-        }
-        destroyComm.push_back(aicpuComm->GetIdentifier());
-        CHK_RET(aicpuComm->BackGroundSetStatus(Hccl::KfcStatus::DESTROY_AICPU_COMM_DONE));
-
-        {
-            std::lock_guard<std::mutex> lock(g_taskExpDevMemMapMutex);
-            auto it = g_taskExpDevMemMap.find(aicpuComm->GetIdentifier());
-            if (it != g_taskExpDevMemMap.end()) {
-                g_taskExpDevMemMap.erase(aicpuComm->GetIdentifier()); // 清理dpu taskexception共享内存
+            if (aicpuComm->GetCommmStatus() == HcclCommStatus::HCCL_COMM_STATUS_INVALID) {
+                continue;
             }
-        }
 
-        HCCL_RUN_INFO("[%s]group[%s] Recv DESTROY_AICPU_COMM cmd and set DESTROY_AICPU_COMM_DONE",
-            __func__, aicpuComm->GetIdentifier().c_str());
+            Hccl::KfcCommand cmd = Hccl::KfcCommand::NONE;
+            CHK_RET(aicpuComm->BackGroundGetCmd(cmd));
+            if (cmd != Hccl::KfcCommand::DESTROY_AICPU_COMM) {
+                continue;
+            }
+            destroyComm.push_back(aicpuComm->GetIdentifier());
+            CHK_RET(aicpuComm->BackGroundSetStatus(Hccl::KfcStatus::DESTROY_AICPU_COMM_DONE));
+
+            // 销毁前清理 StreamTaskMonitor 中该通信域的流监控数据，防止 map 无限增长
+            hcomm::StreamTaskMonitor::GetInstance().OnCommDestroy(aicpuComm);
+
+            // taskexception 登记表条目已收敛到 DestroyComm 内摘除（与 commMap_ 条目同生共死）：
+            // 此处原先提前擦除，但下方 DestroyComm 在通信域 busy 时会跳过销毁，提前擦会抹掉仍存活通信域的登记
+
+            HCCL_RUN_INFO(
+                "[%s]group[%s] Recv DESTROY_AICPU_COMM cmd and set DESTROY_AICPU_COMM_DONE", __func__,
+                aicpuComm->GetIdentifier().c_str());
+        }
     }
-    rwlock.readUnlock();
 
     for (std::string& groupName : destroyComm) {
-        (void)(AicpuIndopProcess::AicpuDestroyCommbyGroup(groupName));
+        (void)(CollCommAicpuMgr::GetInstance().DestroyComm(groupName));
     }
     return HCCL_SUCCESS;
 }
-}  // namespace hccl
+} // namespace hccl

@@ -24,18 +24,13 @@
 
 namespace hccl {
 
-std::map<TransportMemType, BufferType> transportMem2Buffer = {
-    {TransportMemType::CCL_INPUT, BufferType::INPUT_CCL},
-    {TransportMemType::CCL_OUTPUT, BufferType::OUTPUT_CCL},
-    {TransportMemType::SCRATCH, BufferType::SCRATCH},
-    {TransportMemType::PARAM_INPUT, BufferType::INPUT},
-    {TransportMemType::PARAM_OUTPUT, BufferType::OUTPUT},
-    {TransportMemType::AIV_INPUT, BufferType::INPUT_AIV},
-    {TransportMemType::AIV_OUTPUT, BufferType::OUTPUT_AIV},
-    {TransportMemType::RESERVED, BufferType::RESERVED}
-    };
+std::map<TransportMemType, BufferType> transportMem2Buffer
+    = {{TransportMemType::CCL_INPUT, BufferType::INPUT_CCL},   {TransportMemType::CCL_OUTPUT, BufferType::OUTPUT_CCL},
+       {TransportMemType::SCRATCH, BufferType::SCRATCH},       {TransportMemType::PARAM_INPUT, BufferType::INPUT},
+       {TransportMemType::PARAM_OUTPUT, BufferType::OUTPUT},   {TransportMemType::AIV_INPUT, BufferType::INPUT_AIV},
+       {TransportMemType::AIV_OUTPUT, BufferType::OUTPUT_AIV}, {TransportMemType::RESERVED, BufferType::RESERVED}};
 
-HcclResult GenLinkInfo(TransportType transportType, LinkInfo &linkInfo)
+HcclResult GenLinkInfo(TransportType transportType, LinkInfo& linkInfo)
 {
     if (transportType == TransportType::TRANS_TYPE_P2P) {
         linkInfo.linkProto = LinkProtoStub::SDMA;
@@ -48,7 +43,7 @@ HcclResult GenLinkInfo(TransportType transportType, LinkInfo &linkInfo)
     return HCCL_SUCCESS;
 }
 
-HcclResult GetRemoteBufferType(Transport* transport, UserMemType memType, BufferType &bufferType)
+HcclResult GetRemoteBufferType(Transport* transport, UserMemType memType, BufferType& bufferType)
 {
     if (memType == UserMemType::INPUT_MEM) {
         bufferType = transportMem2Buffer[links2TransportCompare_[transport]->remoteinputMemType];
@@ -61,7 +56,7 @@ HcclResult GetRemoteBufferType(Transport* transport, UserMemType memType, Buffer
     return HCCL_SUCCESS;
 }
 
-Transport::Transport(TransportType type, TransportPara& para, MachinePara &machinePara, LinkType linkType)
+Transport::Transport(TransportType type, TransportPara& para, MachinePara& machinePara, LinkType linkType)
 {
     transportType_ = type;
     machinePara_ = machinePara;
@@ -69,30 +64,22 @@ Transport::Transport(TransportType type, TransportPara& para, MachinePara &machi
     return;
 }
 
-Transport::Transport(TransportType type, TransportPara& para,
-              const HcclDispatcher dispatcher,
-              const std::unique_ptr<NotifyPool> &notifyPool,
-              MachinePara &machinePara)
+Transport::Transport(
+    TransportType type, TransportPara& para, const HcclDispatcher dispatcher,
+    const std::unique_ptr<NotifyPool>& notifyPool, MachinePara& machinePara)
 {
     transportType_ = type;
     machinePara_ = machinePara;
     return;
 }
 
-Transport::~Transport()
-{ }
+Transport::~Transport() {}
 
-HcclResult Transport::Init()
-{
-    return HcclResult::HCCL_SUCCESS;
-}
+HcclResult Transport::Init() { return HcclResult::HCCL_SUCCESS; }
 
-HcclResult Transport::DeInit()
-{
-    return HcclResult::HCCL_SUCCESS;
-}
+HcclResult Transport::DeInit() { return HcclResult::HCCL_SUCCESS; }
 
-HcclResult Transport::TxDataSignal(Stream &stream)
+HcclResult Transport::TxDataSignal(Stream& stream)
 {
     // 同步量p2p与TxAck相同，ibverbs与PostFin相同
     RankId curRank = RankInfoRecorder::Global()->GetRankId();
@@ -106,7 +93,7 @@ HcclResult Transport::TxDataSignal(Stream &stream)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::RxDataSignal(Stream &stream)
+HcclResult Transport::RxDataSignal(Stream& stream)
 {
     RankId curRank = RankInfoRecorder::Global()->GetRankId();
     RankId remoteRank = links2TransportCompare_[this]->remoteRank;
@@ -119,7 +106,7 @@ HcclResult Transport::RxDataSignal(Stream &stream)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::TxAsync(UserMemType dstMemType, u64 dstOffset, const void *src, u64 len, Stream &stream)
+HcclResult Transport::TxAsync(UserMemType dstMemType, u64 dstOffset, const void* src, u64 len, Stream& stream)
 {
     RankId curRank = RankInfoRecorder::Global()->GetRankId();
     RankId remoteRank = links2TransportCompare_[this]->remoteRank;
@@ -158,7 +145,7 @@ HcclResult Transport::TxAsync(UserMemType dstMemType, u64 dstOffset, const void 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::TxAsync(std::vector<TxMemoryInfo>& txMems, Stream &stream)
+HcclResult Transport::TxAsync(std::vector<TxMemoryInfo>& txMems, Stream& stream)
 {
     RankId curRank = RankInfoRecorder::Global()->GetRankId();
     RankId remoteRank = links2TransportCompare_[this]->remoteRank;
@@ -171,8 +158,8 @@ HcclResult Transport::TxAsync(std::vector<TxMemoryInfo>& txMems, Stream &stream)
         LinkInfo link(LinkProtoStub::RDMA);
         DataSlice srcSlice;
         DataSlice dstSlice;
-        for(int i = 0; i < txMems.size(); i++) {
-            const void *src = txMems[i].src;
+        for (int i = 0; i < txMems.size(); i++) {
+            const void* src = txMems[i].src;
             if (src == nullptr) {
                 continue;
             }
@@ -203,7 +190,7 @@ HcclResult Transport::TxAsync(std::vector<TxMemoryInfo>& txMems, Stream &stream)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::TxData(UserMemType dstMemType, u64 dstOffset, const void *src, u64 len, Stream &stream)
+HcclResult Transport::TxData(UserMemType dstMemType, u64 dstOffset, const void* src, u64 len, Stream& stream)
 {
     if (src == nullptr) {
         HCCL_ERROR("src is null, do not need to tx");
@@ -235,7 +222,7 @@ HcclResult Transport::TxData(UserMemType dstMemType, u64 dstOffset, const void *
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::RxData(UserMemType srcMemType, u64 srcOffset, void *dst, u64 len, Stream &stream)
+HcclResult Transport::RxData(UserMemType srcMemType, u64 srcOffset, void* dst, u64 len, Stream& stream)
 {
     if (dst == nullptr) {
         HCCL_ERROR("dst is null, do not need to rx");
@@ -267,7 +254,7 @@ HcclResult Transport::RxData(UserMemType srcMemType, u64 srcOffset, void *dst, u
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::TxPrepare(Stream &stream)
+HcclResult Transport::TxPrepare(Stream& stream)
 {
     RankId curRank = RankInfoRecorder::Global()->GetRankId();
     RankId remoteRank = links2TransportCompare_[this]->remoteRank;
@@ -286,7 +273,7 @@ HcclResult Transport::TxPrepare(Stream &stream)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::RxPrepare(Stream &stream)
+HcclResult Transport::RxPrepare(Stream& stream)
 {
     RankId curRank = RankInfoRecorder::Global()->GetRankId();
     RankId remoteRank = links2TransportCompare_[this]->remoteRank;
@@ -305,7 +292,7 @@ HcclResult Transport::RxPrepare(Stream &stream)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::TxDone(Stream &stream)
+HcclResult Transport::TxDone(Stream& stream)
 {
     RankId curRank = RankInfoRecorder::Global()->GetRankId();
     RankId remoteRank = links2TransportCompare_[this]->remoteRank;
@@ -327,7 +314,7 @@ HcclResult Transport::TxDone(Stream &stream)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::RxDone(Stream &stream)
+HcclResult Transport::RxDone(Stream& stream)
 {
     RankId curRank = RankInfoRecorder::Global()->GetRankId();
     RankId remoteRank = links2TransportCompare_[this]->remoteRank;
@@ -362,10 +349,10 @@ bool Transport::IsValid()
     }
 }
 
-
 // 支持RDMA Reduce的场景
-HcclResult Transport::TxWithReduce(UserMemType dstMemType, u64 dstOffset, const void *src, u64 len,
-    const HcclDataType datatype, HcclReduceOp redOp, Stream &stream)
+HcclResult Transport::TxWithReduce(
+    UserMemType dstMemType, u64 dstOffset, const void* src, u64 len, const HcclDataType datatype, HcclReduceOp redOp,
+    Stream& stream)
 {
     if ((this->transportType_ == TransportType::TRANS_TYPE_P2P)) {
         // SDMA场景下实现为空
@@ -387,7 +374,8 @@ HcclResult Transport::TxWithReduce(UserMemType dstMemType, u64 dstOffset, const 
     checker::CheckerDataType checkerDataType = g_HcclDataType2CheckerDataType[datatype];
     checker::CheckerReduceOp checkerReduceOp = g_HcclReduceOp2CheckerReduceOp[redOp];
 
-    std::shared_ptr<TaskStub> taskwritereduce(new TaskStubWriteReduce(remoteRank, link, srcSlice, dstSlice, checkerDataType, checkerReduceOp));
+    std::shared_ptr<TaskStub> taskwritereduce(
+        new TaskStubWriteReduce(remoteRank, link, srcSlice, dstSlice, checkerDataType, checkerReduceOp));
     TaskQueueStub::AppendTask(curRank, &stream, taskwritereduce);
     std::shared_ptr<TaskStub> taskpost(new TaskStubPost(remoteRank, link, 0, NotifyTypeStub::FIN, "TXWITHREDUCE"));
     TaskQueueStub::AppendTask(curRank, &stream, taskpost);
@@ -395,8 +383,8 @@ HcclResult Transport::TxWithReduce(UserMemType dstMemType, u64 dstOffset, const 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::TxWithReduce(const std::vector<TxMemoryInfo> &txWithReduceMems,
-    const HcclDataType datatype, HcclReduceOp redOp, Stream &stream)
+HcclResult Transport::TxWithReduce(
+    const std::vector<TxMemoryInfo>& txWithReduceMems, const HcclDataType datatype, HcclReduceOp redOp, Stream& stream)
 {
     // 只有RDMA场景下有
     if (txWithReduceMems.size() == 0) {
@@ -416,9 +404,9 @@ HcclResult Transport::TxWithReduce(const std::vector<TxMemoryInfo> &txWithReduce
     checker::CheckerDataType checkerDataType = g_HcclDataType2CheckerDataType[datatype];
     checker::CheckerReduceOp checkerReduceOp = g_HcclReduceOp2CheckerReduceOp[redOp];
 
-    for(int i = 0; i < txWithReduceMems.size(); i++) {
+    for (int i = 0; i < txWithReduceMems.size(); i++) {
         u32 unitSize = SIZE_TABLE[datatype];
-        const void *src = txWithReduceMems[i].src;
+        const void* src = txWithReduceMems[i].src;
         u64 dstOffset = txWithReduceMems[i].dstOffset;
         u64 len = txWithReduceMems[i].len;
         u64 dataCount = len / unitSize;
@@ -427,7 +415,8 @@ HcclResult Transport::TxWithReduce(const std::vector<TxMemoryInfo> &txWithReduce
         CHK_RET(GetRemoteBufferType(this, dstMemType, bufferType));
         CHK_RET(MemLayout::Global()->GetSlice((checker::char_t*)src, dataCount, datatype, srcSlice));
         CHK_RET(MemLayout::Global()->GetSlice(bufferType, dstOffset, len, dstSlice));
-        std::shared_ptr<TaskStub> taskwritereduce(new TaskStubWriteReduce(remoteRank, link, srcSlice, dstSlice, checkerDataType, checkerReduceOp));
+        std::shared_ptr<TaskStub> taskwritereduce(
+            new TaskStubWriteReduce(remoteRank, link, srcSlice, dstSlice, checkerDataType, checkerReduceOp));
         TaskQueueStub::AppendTask(curRank, &stream, taskwritereduce);
     }
     std::shared_ptr<TaskStub> taskpost(new TaskStubPost(remoteRank, link, 0, NotifyTypeStub::FIN, "TXWITHREDUCE"));
@@ -438,7 +427,8 @@ HcclResult Transport::TxWithReduce(const std::vector<TxMemoryInfo> &txWithReduce
 
 bool Transport::IsSupportTransportWithReduce()
 {
-    DevType devType = g_CheckerDevType2HcclDevType[DeviceInfoRecorder::Global()->rankId2devType[this->machinePara_.localUserrank]];
+    DevType devType
+        = g_CheckerDevType2HcclDevType[DeviceInfoRecorder::Global()->rankId2devType[this->machinePara_.localUserrank]];
     if (this->linkType_ == LinkType::LINK_ROCE) {
         if (devType == DevType::DEV_TYPE_910B || devType == DevType::DEV_TYPE_910_93) {
             return true;
@@ -449,7 +439,7 @@ bool Transport::IsSupportTransportWithReduce()
     return false;
 }
 
-HcclResult Transport::RxAsync(UserMemType srcMemType, u64 srcOffset, void *dst, u64 len, Stream &stream)
+HcclResult Transport::RxAsync(UserMemType srcMemType, u64 srcOffset, void* dst, u64 len, Stream& stream)
 {
     RankId curRank = RankInfoRecorder::Global()->GetRankId();
     RankId remoteRank = links2TransportCompare_[this]->remoteRank;
@@ -488,7 +478,7 @@ HcclResult Transport::RxAsync(UserMemType srcMemType, u64 srcOffset, void *dst, 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::RxAsync(std::vector<RxMemoryInfo>& rxMems, Stream &stream)
+HcclResult Transport::RxAsync(std::vector<RxMemoryInfo>& rxMems, Stream& stream)
 {
     RankId curRank = RankInfoRecorder::Global()->GetRankId();
     RankId remoteRank = links2TransportCompare_[this]->remoteRank;
@@ -507,8 +497,8 @@ HcclResult Transport::RxAsync(std::vector<RxMemoryInfo>& rxMems, Stream &stream)
         std::shared_ptr<TaskStub> taskwait(new TaskStubWait(remoteRank, link, 0, NotifyTypeStub::FIN, "RXASYNC"));
         TaskQueueStub::AppendTask(curRank, &stream, taskwait);
 
-        for(int i = 0; i < rxMems.size(); i++) {
-            const void *dst = rxMems[i].dst;
+        for (int i = 0; i < rxMems.size(); i++) {
+            const void* dst = rxMems[i].dst;
             if (dst == nullptr) {
                 continue;
             }
@@ -534,7 +524,7 @@ HcclResult Transport::RxAsync(std::vector<RxMemoryInfo>& rxMems, Stream &stream)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::TxAck(Stream &stream)
+HcclResult Transport::TxAck(Stream& stream)
 {
     RankId curRank = RankInfoRecorder::Global()->GetRankId();
     RankId remoteRank = links2TransportCompare_[this]->remoteRank;
@@ -547,7 +537,7 @@ HcclResult Transport::TxAck(Stream &stream)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::RxAck(Stream &stream)
+HcclResult Transport::RxAck(Stream& stream)
 {
     RankId curRank = RankInfoRecorder::Global()->GetRankId();
     RankId remoteRank = links2TransportCompare_[this]->remoteRank;
@@ -560,18 +550,12 @@ HcclResult Transport::RxAck(Stream &stream)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::TxWaitDone(Stream &stream)
-{
-    return HcclResult::HCCL_SUCCESS;
-}
+HcclResult Transport::TxWaitDone(Stream& stream) { return HcclResult::HCCL_SUCCESS; }
 
-HcclResult Transport::RxWaitDone(Stream &stream)
-{
-    return HcclResult::HCCL_SUCCESS;
-}
+HcclResult Transport::RxWaitDone(Stream& stream) { return HcclResult::HCCL_SUCCESS; }
 
 // 可以通过MemLayout来打桩实现
-HcclResult Transport::GetRemoteMem(UserMemType memType, void **remotePtr)
+HcclResult Transport::GetRemoteMem(UserMemType memType, void** remotePtr)
 {
     RankId curRank = RankInfoRecorder::Global()->GetRankId();
     RankId remoteRank = links2TransportCompare_[this]->remoteRank;
@@ -587,21 +571,16 @@ HcclResult Transport::GetRemoteMem(UserMemType memType, void **remotePtr)
     return HcclResult::HCCL_SUCCESS;
 }
 
-hccl::LinkType Transport::GetLinkType() const
-{
-    return linkType_;
-}
+hccl::LinkType Transport::GetLinkType() const { return linkType_; }
 
 bool Transport::IsSpInlineReduce() const
 {
-    bool isSpInlineReduce = linkType_ == LinkType::LINK_HCCS ||
-                            linkType_ == LinkType::LINK_PCIE ||
-                            linkType_ == LinkType::LINK_SIO ||
-                            linkType_ == LinkType::LINK_HCCS_SW;
+    bool isSpInlineReduce = linkType_ == LinkType::LINK_HCCS || linkType_ == LinkType::LINK_PCIE
+                            || linkType_ == LinkType::LINK_SIO || linkType_ == LinkType::LINK_HCCS_SW;
     return isSpInlineReduce;
 }
 
-HcclResult Transport::Write(const void *localAddr, UserMemType remoteMemType, u64 remoteOffset, u64 len, Stream &stream)
+HcclResult Transport::Write(const void* localAddr, UserMemType remoteMemType, u64 remoteOffset, u64 len, Stream& stream)
 {
     RankId curRank = RankInfoRecorder::Global()->GetRankId();
     RankId remoteRank = links2TransportCompare_[this]->remoteRank;
@@ -623,7 +602,7 @@ HcclResult Transport::Write(const void *localAddr, UserMemType remoteMemType, u6
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::Read(const void *localAddr, UserMemType remoteMemType, u64 remoteOffset, u64 len, Stream &stream)
+HcclResult Transport::Read(const void* localAddr, UserMemType remoteMemType, u64 remoteOffset, u64 len, Stream& stream)
 {
     RankId curRank = RankInfoRecorder::Global()->GetRankId();
     RankId remoteRank = links2TransportCompare_[this]->remoteRank;
@@ -643,7 +622,7 @@ HcclResult Transport::Read(const void *localAddr, UserMemType remoteMemType, u64
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::PostReady(Stream &stream)
+HcclResult Transport::PostReady(Stream& stream)
 {
     RankId curRank = RankInfoRecorder::Global()->GetRankId();
     RankId remoteRank = links2TransportCompare_[this]->remoteRank;
@@ -656,7 +635,7 @@ HcclResult Transport::PostReady(Stream &stream)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::WaitReady(Stream &stream)
+HcclResult Transport::WaitReady(Stream& stream)
 {
     RankId curRank = RankInfoRecorder::Global()->GetRankId();
     RankId remoteRank = links2TransportCompare_[this]->remoteRank;
@@ -669,7 +648,7 @@ HcclResult Transport::WaitReady(Stream &stream)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::PostFin(Stream &stream)
+HcclResult Transport::PostFin(Stream& stream)
 {
     RankId curRank = RankInfoRecorder::Global()->GetRankId();
     RankId remoteRank = links2TransportCompare_[this]->remoteRank;
@@ -682,7 +661,7 @@ HcclResult Transport::PostFin(Stream &stream)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::WaitFin(Stream &stream)
+HcclResult Transport::WaitFin(Stream& stream)
 {
     RankId curRank = RankInfoRecorder::Global()->GetRankId();
     RankId remoteRank = links2TransportCompare_[this]->remoteRank;
@@ -695,7 +674,7 @@ HcclResult Transport::WaitFin(Stream &stream)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::PostFinAck(Stream &stream)
+HcclResult Transport::PostFinAck(Stream& stream)
 {
     RankId curRank = RankInfoRecorder::Global()->GetRankId();
     RankId remoteRank = links2TransportCompare_[this]->remoteRank;
@@ -703,7 +682,8 @@ HcclResult Transport::PostFinAck(Stream &stream)
     LinkInfo link(LinkProtoStub::INVALID_A);
     CHK_RET(GenLinkInfo(transportType_, link));
     if (this->transportType_ == TransportType::TRANS_TYPE_IBV_EXP) {
-        std::shared_ptr<TaskStub> taskpost(new TaskStubPost(remoteRank, link, 0, NotifyTypeStub::FIN_ACK, "POSTFINACK"));
+        std::shared_ptr<TaskStub> taskpost(
+            new TaskStubPost(remoteRank, link, 0, NotifyTypeStub::FIN_ACK, "POSTFINACK"));
         TaskQueueStub::AppendTask(curRank, &stream, taskpost);
     } else {
         // 实际代码中SDMA场景下为空实现
@@ -712,7 +692,7 @@ HcclResult Transport::PostFinAck(Stream &stream)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::WaitFinAck(Stream &stream)
+HcclResult Transport::WaitFinAck(Stream& stream)
 {
     RankId curRank = RankInfoRecorder::Global()->GetRankId();
     RankId remoteRank = links2TransportCompare_[this]->remoteRank;
@@ -720,7 +700,8 @@ HcclResult Transport::WaitFinAck(Stream &stream)
     LinkInfo link(LinkProtoStub::INVALID_A);
     CHK_RET(GenLinkInfo(transportType_, link));
     if (this->transportType_ == TransportType::TRANS_TYPE_IBV_EXP) {
-        std::shared_ptr<TaskStub> taskwait(new TaskStubWait(remoteRank, link, 0, NotifyTypeStub::FIN_ACK, "WAITFINACK"));
+        std::shared_ptr<TaskStub> taskwait(
+            new TaskStubWait(remoteRank, link, 0, NotifyTypeStub::FIN_ACK, "WAITFINACK"));
         TaskQueueStub::AppendTask(curRank, &stream, taskwait);
     } else {
         // 实际代码中SDMA场景下为空实现
@@ -729,81 +710,73 @@ HcclResult Transport::WaitFinAck(Stream &stream)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::ConnectAsync(u32& status)
-{
-    return HCCL_SUCCESS;
-}
+HcclResult Transport::ConnectAsync(u32& status) { return HCCL_SUCCESS; }
 
-HcclResult Transport::ConnectQuerry(u32& status)
+HcclResult Transport::ConnectQuerry(u32& status) { return HCCL_SUCCESS; }
+
+HcclResult Transport::RxWithReduce(
+    UserMemType recvSrcMemType, u64 recvSrcOffset, void* recvDst, u64 recvLen, void* reduceSrc, void* reduceDst,
+    u64 reduceDataCount, HcclDataType reduceDatatype, HcclReduceOp reduceOp, Stream& stream, const u64 reduceAttr)
 {
     return HCCL_SUCCESS;
 }
 
 HcclResult Transport::RxWithReduce(
-    UserMemType recvSrcMemType, u64 recvSrcOffset, void *recvDst, u64 recvLen,
-    void *reduceSrc, void *reduceDst, u64 reduceDataCount, HcclDataType reduceDatatype,
-    HcclReduceOp reduceOp, Stream &stream, const u64 reduceAttr)
+    const std::vector<RxWithReduceMemoryInfo>& rxWithReduceMems, HcclDataType reduceDatatype, HcclReduceOp reduceOp,
+    Stream& stream, const u64 reduceAttr)
 {
     return HCCL_SUCCESS;
 }
 
-HcclResult Transport::RxWithReduce(
-    const std::vector<RxWithReduceMemoryInfo> &rxWithReduceMems,
-    HcclDataType reduceDatatype, HcclReduceOp reduceOp, Stream &stream,
-    const u64 reduceAttr)
-{
-    return HCCL_SUCCESS;
-}
+u32 Transport::GetRemoteRank() { return machinePara_.remoteUserrank; }
 
-u32 Transport::GetRemoteRank()
-{
-    return machinePara_.remoteUserrank;
-}
+bool Transport::IsTransportRoce() { return false; }
 
-bool Transport::IsTransportRoce()
-{
-    return false;
-}
-
-HcclResult Transport::TxEnv(const void *ptr, const u64 len, Stream &stream)
+HcclResult Transport::TxEnv(const void* ptr, const u64 len, Stream& stream)
 {
     HCCL_ERROR("This task is not mocked.");
     return HCCL_SUCCESS;
 }
 
-HcclResult Transport::RxEnv(Stream &stream)
+HcclResult Transport::RxEnv(Stream& stream)
 {
     HCCL_ERROR("This task is not mocked.");
     return HCCL_SUCCESS;
 }
 
-HcclResult Transport::DataReceivedAck(Stream &stream)
+HcclResult Transport::DataReceivedAck(Stream& stream)
 {
     if (this->transportType_ == TransportType::TRANS_TYPE_P2P) {
         RankId curRank = RankInfoRecorder::Global()->GetRankId();
         RankId remoteRank = links2TransportCompare_[this]->remoteRank;
         LinkInfo link(LinkProtoStub::SDMA);
 
-        std::shared_ptr<TaskStub> taskpost1(new TaskStubPost(remoteRank, link, 0, NotifyTypeStub::READY, "DATARECEIVEDACK"));
+        std::shared_ptr<TaskStub> taskpost1(
+            new TaskStubPost(remoteRank, link, 0, NotifyTypeStub::READY, "DATARECEIVEDACK"));
         TaskQueueStub::AppendTask(curRank, &stream, taskpost1);
 
-        std::shared_ptr<TaskStub> taskwait1(new TaskStubWait(remoteRank, link, 0, NotifyTypeStub::READY, "DATARECEIVEDACK"));
+        std::shared_ptr<TaskStub> taskwait1(
+            new TaskStubWait(remoteRank, link, 0, NotifyTypeStub::READY, "DATARECEIVEDACK"));
         TaskQueueStub::AppendTask(curRank, &stream, taskwait1);
 
-        std::shared_ptr<TaskStub> taskpost2(new TaskStubPost(remoteRank, link, 0, NotifyTypeStub::FIN, "DATARECEIVEDACK"));
+        std::shared_ptr<TaskStub> taskpost2(
+            new TaskStubPost(remoteRank, link, 0, NotifyTypeStub::FIN, "DATARECEIVEDACK"));
         TaskQueueStub::AppendTask(curRank, &stream, taskpost2);
 
-        std::shared_ptr<TaskStub> taskwait2(new TaskStubWait(remoteRank, link, 0, NotifyTypeStub::FIN, "DATARECEIVEDACK"));
+        std::shared_ptr<TaskStub> taskwait2(
+            new TaskStubWait(remoteRank, link, 0, NotifyTypeStub::FIN, "DATARECEIVEDACK"));
         TaskQueueStub::AppendTask(curRank, &stream, taskwait2);
     } else if (this->transportType_ == TransportType::TRANS_TYPE_IBV_EXP) {
         RankId curRank = RankInfoRecorder::Global()->GetRankId();
         RankId remoteRank = links2TransportCompare_[this]->remoteRank;
         LinkInfo link(LinkProtoStub::RDMA);
 
-        std::shared_ptr<TaskStub> taskpost(new TaskStubPost(remoteRank, link, 0, NotifyTypeStub::FIN_ACK, "DATARECEIVEDACK"));
+        std::shared_ptr<TaskStub> taskpost(
+            new TaskStubPost(remoteRank, link, 0, NotifyTypeStub::FIN_ACK, "DATARECEIVEDACK"));
         TaskQueueStub::AppendTask(curRank, &stream, taskpost);
 
-        std::shared_ptr<TaskStub> taskwait(new TaskStubWait(remoteRank, link, 0, NotifyTypeStub::FIN_ACK, "DATARECEIVEDACK"));
+        std::shared_ptr<TaskStub> taskwait(
+            new TaskStubWait(remoteRank, link, 0, NotifyTypeStub::FIN_ACK, "DATARECEIVEDACK"));
         TaskQueueStub::AppendTask(curRank, &stream, taskwait);
     } else {
         HCCL_ERROR("[GenLinkInfo] this transportType not support");
@@ -812,12 +785,9 @@ HcclResult Transport::DataReceivedAck(Stream &stream)
     return HCCL_SUCCESS;
 }
 
-bool Transport::GetSupportDataReceivedAck() const
-{
-    return machinePara_.supportDataReceivedAck;
-}
+bool Transport::GetSupportDataReceivedAck() const { return machinePara_.supportDataReceivedAck; }
 
-HcclResult Transport::ReadSync(struct Transport::Buffer &localBuf, struct Transport::Buffer &remoteBuf, Stream &stream)
+HcclResult Transport::ReadSync(struct Transport::Buffer& localBuf, struct Transport::Buffer& remoteBuf, Stream& stream)
 {
     RankId curRank = RankInfoRecorder::Global()->GetRankId();
     RankId remoteRank = links2TransportCompare_[this]->remoteRank;
@@ -835,13 +805,13 @@ HcclResult Transport::ReadSync(struct Transport::Buffer &localBuf, struct Transp
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::ReadAsync(struct Transport::Buffer &localBuf, struct Transport::Buffer &remoteBuf, Stream &stream)
+HcclResult Transport::ReadAsync(struct Transport::Buffer& localBuf, struct Transport::Buffer& remoteBuf, Stream& stream)
 {
     CHK_RET(ReadSync(localBuf, remoteBuf, stream));
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::WriteSync(struct Transport::Buffer &remoteBuf, struct Transport::Buffer &localBuf, Stream &stream)
+HcclResult Transport::WriteSync(struct Transport::Buffer& remoteBuf, struct Transport::Buffer& localBuf, Stream& stream)
 {
     RankId curRank = RankInfoRecorder::Global()->GetRankId();
     RankId remoteRank = links2TransportCompare_[this]->remoteRank;
@@ -859,30 +829,28 @@ HcclResult Transport::WriteSync(struct Transport::Buffer &remoteBuf, struct Tran
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::WriteAsync(struct Transport::Buffer &remoteBuf, struct Transport::Buffer &localBuf, Stream &stream)
+HcclResult
+Transport::WriteAsync(struct Transport::Buffer& remoteBuf, struct Transport::Buffer& localBuf, Stream& stream)
 {
     CHK_RET(WriteSync(remoteBuf, localBuf, stream));
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::Fence()
-{
-    return HcclResult::HCCL_SUCCESS;
-}
+HcclResult Transport::Fence() { return HcclResult::HCCL_SUCCESS; }
 
-
-HcclResult Transport::ReadReduceSync(struct Transport::Buffer &localBuf, struct Transport::Buffer &remoteBuf,
-        const HcclDataType datatype, HcclReduceOp redOp, Stream &stream)
+HcclResult Transport::ReadReduceSync(
+    struct Transport::Buffer& localBuf, struct Transport::Buffer& remoteBuf, const HcclDataType datatype,
+    HcclReduceOp redOp, Stream& stream)
 {
     RankId srcRank;
     DataSlice srcSlice;
     RankId dstRank;
     DataSlice dstSlice;
 
-    CHK_RET(MemLayout::Global()->GetSlice((checker::char_t*)remoteBuf.addr,
-        remoteBuf.size / SIZE_TABLE[datatype], datatype, srcSlice, &srcRank));
-    CHK_RET(MemLayout::Global()->GetSlice((checker::char_t*)localBuf.addr,
-        localBuf.size / SIZE_TABLE[datatype], datatype, dstSlice, &dstRank));
+    CHK_RET(MemLayout::Global()->GetSlice(
+        (checker::char_t*)remoteBuf.addr, remoteBuf.size / SIZE_TABLE[datatype], datatype, srcSlice, &srcRank));
+    CHK_RET(MemLayout::Global()->GetSlice(
+        (checker::char_t*)localBuf.addr, localBuf.size / SIZE_TABLE[datatype], datatype, dstSlice, &dstRank));
 
     RankId curRank = RankInfoRecorder::Global()->GetRankId();
     CHK_RET(CheckCurRankId(curRank, srcRank, dstRank));
@@ -899,7 +867,7 @@ HcclResult Transport::ReadReduceSync(struct Transport::Buffer &localBuf, struct 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::Post(u32 notifyIdx, Stream &stream)
+HcclResult Transport::Post(u32 notifyIdx, Stream& stream)
 {
     if (notifyIdx >= this->machinePara_.notifyNum) {
         HCCL_ERROR("[CreatePostNode] the notifyIdx is bigger than notifyNum");
@@ -916,7 +884,7 @@ HcclResult Transport::Post(u32 notifyIdx, Stream &stream)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::Wait(u32 notifyIdx, Stream &stream, const u32 timeout)
+HcclResult Transport::Wait(u32 notifyIdx, Stream& stream, const u32 timeout)
 {
     if (notifyIdx >= this->machinePara_.notifyNum) {
         HCCL_ERROR("[CreateWaitNode] the notifyIdx is bigger than notifyNum");
@@ -933,9 +901,6 @@ HcclResult Transport::Wait(u32 notifyIdx, Stream &stream, const u32 timeout)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Transport::GetRemoteMem(std::vector<void *> *remotePtr)
-{
-    return HCCL_SUCCESS;
-}
+HcclResult Transport::GetRemoteMem(std::vector<void*>* remotePtr) { return HCCL_SUCCESS; }
 
-}
+} // namespace hccl

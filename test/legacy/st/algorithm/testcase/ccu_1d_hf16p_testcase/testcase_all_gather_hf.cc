@@ -25,20 +25,15 @@ namespace checker {
 
 class AllGatherCCUHFTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AllGather CCU test set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AllGather CCU test set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AllGather CCU test tear down" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AllGather CCU test tear down" << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -77,7 +72,7 @@ TEST_F(AllGatherCCUHFTest, CcuAllGatherMesh1D2Die_2_2)
 {
     RankTable_For_LLT gen;
     setenv("HCCL_IODIE_NUM", "2", 1);
-    TopoMeta topoMeta {{{0,1,8,9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLGATHER;
     checkerOpParam.tag = "AllGather";
@@ -93,4 +88,4 @@ TEST_F(AllGatherCCUHFTest, CcuAllGatherMesh1D2Die_2_2)
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS); // TODO
 }
 
-}
+} // namespace checker

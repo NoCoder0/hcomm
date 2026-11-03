@@ -18,21 +18,15 @@
 using namespace Hccl;
 class StreamTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "Stream tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "Stream tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "Stream tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "Stream tests tear down." << std::endl; }
 
     virtual void SetUp()
     {
-        MOCKER(HrtGetStreamId).stubs().will(returnValue(fakeId));
+        MOCKER(HrtGetStreamId).stubs().will(returnValue(static_cast<s32>(fakeId)));
         MOCKER(HrtGetDevice).stubs().will(returnValue(fakeDevLogId));
-        MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(fakeDevPhyId)));
+        MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().will(returnValue(static_cast<DevId>(fakeDevPhyId)));
         MOCKER(HrtStreamCreateWithFlags).stubs().will(returnValue(fakePtr));
         MOCKER(HrtStreamGetSqId).stubs().will(returnValue(fakeSqId));
         MOCKER(HrtStreamDestroy).stubs();
@@ -44,12 +38,12 @@ protected:
         GlobalMockObject::verify();
         std::cout << "A Test case in Stream TearDown" << std::endl;
     }
-    void* fakePtr      = (void *)1;
-    u32        fakeId       = 1;
-    s32        fakeDevLogId = 1;
-    u32        fakeDevPhyId = 1;
-    u32        fakeSqId     = 2;
-    u64        fakeStmMode  = 3;
+    void* fakePtr = (void*)1;
+    u32 fakeId = 1;
+    s32 fakeDevLogId = 1;
+    u32 fakeDevPhyId = 1;
+    u32 fakeSqId = 2;
+    u64 fakeStmMode = 3;
 };
 
 TEST_F(StreamTest, Stream_selfownded_false)

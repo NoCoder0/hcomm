@@ -26,26 +26,23 @@ public:
     ~Rts1ToNCntNotify();
     std::unique_ptr<BaseTask> PostValue(u32 value);
     std::unique_ptr<BaseTask> WaitBits(u32 bitValue);
-    void                      PostValue(u32 value, const aclrtStream &rtStream) const;
-    void                      PostValue(u32 value, const Stream &stream) const;
-    void                      WaitBits(u32 bitValue, u32 timeout, const Stream &stream) const;
+    void PostValue(u32 value, const aclrtStream& rtStream) const;
+    void PostValue(u32 value, const Stream& stream) const;
+    void WaitBits(u32 bitValue, u32 timeout, const Stream& stream) const;
 
     std::string Describe() const;
 
-    u32 GetId() const
-    {
-        return id;
-    }
+    u32 GetId() const { return id; }
 
     std::vector<char> GetUniqueId() const;
 
 private:
-    u32           deviceId;
-    u32           devPhyId;
+    u32 deviceId;
+    u32 devPhyId;
     RtCntNotify_t handle{nullptr};
-    u32           id{0};
+    u32 id{0};
 };
- 
+
 } // namespace Hccl
 
 #endif // HCCLV2_RTS_1TON_CNT_NOTIFY_H

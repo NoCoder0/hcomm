@@ -1,5 +1,7 @@
 # HCOMM
 
+简体中文 | [English](./README_en.md)
+
 ## 🔥 Latest News
 
 - [2025/11/30] HCOMM项目开源。
@@ -37,8 +39,9 @@ HCOMM通信基础库采用分层解耦的设计思路，将通信能力划分为
 │   │   ├── api_c_adpt                   # C接口适配
 │   │   ├── common                       # 集合通信层公共基础功能目录
 │   │   ├── communicator                 # 通信域
+│   │   ├── config_mgr                   # 配置管理
 │   │   ├── dfx                          # 维测
-│   │   ├── rank_graphs                  # 拓扑管理
+│   │   ├── rank_graph                   # 拓扑管理
 │   │   └── resource_mgr                 # 资源管理
 │   └── legacy                           # 历史版本兼容目录
 │       ├── ascend910                    # A2&A3兼容代码
@@ -59,6 +62,7 @@ HCOMM通信基础库采用分层解耦的设计思路，将通信能力划分为
 ├── python                               # Python 包
 ├── include                              # 对外头文件
 ├── pkg_inc                              # 包间接口头文件
+├── experimental                         # 社区贡献的试验性代码目录
 ├── test                                 # 测试代码目录
 │   ├── ut                               # 单元测试代码目录
 │   └── st                               # 系统测试代码目录

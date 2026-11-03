@@ -26,7 +26,7 @@ HCCL控制面接口支持查询的拓扑信息如下表所示。
     ```c
     u32 userRank = INVALID_VALUE_RANKID;
     HcclResult ret = HcclGetRankId(comm, &userRank);
-    if (userRank == root && sendBuf == nullptr) {     // root节点的send_buff不允许为空
+    if (userRank == root && sendBuf == nullptr) {     // root节点的sendBuf不允许为空
         return HCCL_E_PTR;
     }
     ```

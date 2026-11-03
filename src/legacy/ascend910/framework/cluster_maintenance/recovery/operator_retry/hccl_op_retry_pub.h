@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef HCCL_OP_RETRY_PUB_H
 #define HCCL_OP_RETRY_PUB_H
@@ -36,7 +36,7 @@ typedef enum {
     RETRY_STATE_CMD_CHANGE_LINK,
     RETRY_STATE_WAIT_LINK_CHANGED,
     RETRY_STETA_HANDLE_ALL_ERR,
-    RETRY_STATE_CMD_STOP_AICPU, // 发送StopAicpu命令
+    RETRY_STATE_CMD_STOP_AICPU,    // 发送StopAicpu命令
     RETRY_STATE_WAIT_AICPU_STOPED, // 等待Aicpu停止
     RETRY_STATE_CMD_STOP_STREAM,
     RETRY_STATE_WAIT_STREAM_STOPED,
@@ -98,7 +98,7 @@ typedef enum {
     RETRY_STATE_RESERVED,
 } RetryState;
 
-const std::map<RetryState, std::string> RETRY_STATE_STR_MAP {
+const std::map<RetryState, std::string> RETRY_STATE_STR_MAP{
     // server状态
     {RETRY_STATE_SERVER_RUNNING, "RETRY_STATE_SERVER_RUNNING"},
     {RETRY_STATE_CMD_CHECK_LINK, "RETRY_STATE_CMD_CHECK_LINK"},
@@ -130,7 +130,7 @@ const std::map<RetryState, std::string> RETRY_STATE_STR_MAP {
     {RETRY_STATE_SERVER_WAIT_RESUME, "RETRY_STATE_SERVER_WAIT_RESUME"},
     {RETRY_RESUME_STATE_SERVER_CHECK_LINK, "RETRY_RESUME_STATE_SERVER_CHECK_LINK"},
     {RETRY_RESUME_STATE_SERVER_CHANGE_LINK, "RETRY_RESUME_STATE_SERVER_CHANGE_LINK"},
-    
+
     // agent状态
     {RETRY_STATE_AGENT_RUNNING, "RETRY_STATE_AGENT_RUNNING"},
     {RETRY_STATE_RESP_AICPU_ERR, "RETRY_STATE_RESP_AICPU_ERR"},
@@ -166,8 +166,7 @@ const std::map<RetryState, std::string> RETRY_STATE_STR_MAP {
     {RETRY_RESUME_STATE_AGENT_CHECK_LINK, "RETRY_RESUME_STATE_AGENT_CHECK_LINK"},
     {RETRY_RESUME_STATE_AGENT_CHANGE_LINK, "RETRY_RESUME_STATE_AGENT_CHANGE_LINK"},
 
-    {RETRY_STATE_RESERVED, "RETRY_STATE_RESERVED"}
-};
+    {RETRY_STATE_RESERVED, "RETRY_STATE_RESERVED"}};
 
 typedef enum {
     RETRY_CMD_RUNNING = 0, // 正常运行
@@ -189,7 +188,7 @@ typedef enum {
     RESUME_CMD_RUNNING,
 } RetryCommand;
 
-const std::map<RetryCommand, std::string> RETRY_COMMAND_STR_MAP {
+const std::map<RetryCommand, std::string> RETRY_COMMAND_STR_MAP{
     {RETRY_CMD_RUNNING, "RETRY_CMD_RUNNING"},
     {RETRY_CMD_CHECK_LINK, "RETRY_CMD_CHECK_LINK"},
     {RETRY_CMD_STOP_AICPU, "RETRY_CMD_STOP_AICPU"},
@@ -210,7 +209,7 @@ const std::map<RetryCommand, std::string> RETRY_COMMAND_STR_MAP {
 };
 
 // server状态机 WaitResp状态对应的agent状态
-const std::map<RetryState, RetryState> RETRY_SERVER_WAIT_AGENT_STATE_LABEL {
+const std::map<RetryState, RetryState> RETRY_SERVER_WAIT_AGENT_STATE_LABEL{
     {RETRY_STATE_WAIT_LINK_CHECKED, RETRY_STATE_RESP_LINK_CHECKED},
     {RETRY_STATE_WAIT_AICPU_STOPED, RETRY_STATE_RESP_AICPU_STOPED},
     {RETRY_STATE_WAIT_STREAM_STOPED, RETRY_STATE_RESP_STREAM_STOPED},
@@ -223,12 +222,12 @@ const std::map<RetryState, RetryState> RETRY_SERVER_WAIT_AGENT_STATE_LABEL {
     {RETRY_STATE_WAIT_CAN_RETRY, RETRY_STATE_RESP_AICPU_RETRYEND},
 };
 struct OpRetryServerInfo {
-    HcclIpAddress hostIP;   // root节点的hostIP
-    u32 hostPort;           // root节点的hostPort
-    s32 devId;              // devicePhyId
+    HcclIpAddress hostIP; // root节点的hostIP
+    u32 hostPort;         // root节点的hostPort
+    s32 devId;            // devicePhyId
 };
 struct OpRetryAgentInfo {
-    u32 userRank;  // 本group中的userrank
+    u32 userRank; // 本group中的userrank
     s32 deviceLogicId;
     HcclIpAddress hostIP;   // 当前rank对应的hostIP
     HcclIpAddress deviceIP; // 当前rank对应的deviceIP
@@ -247,24 +246,25 @@ struct RetryInfo {
     u32 cmd = RETRY_INFO_CMD;
     u32 rankId = 0;
     RetryState retryState = RETRY_STATE_RESERVED; // 重执行状态机当前状态
-    bool linkState = true; // 预留, link状态
+    bool linkState = true;                        // 预留, link状态
     KfcExecStatus opInfo;
-    bool isChangeLinkFlag = false;  // 当前是否为借轨
-    char dfxIpInfo[OPRETRY_DFX_IPINFO_LENGTH] = {0};  // 重执行状态机维测信息（deviceIP + hostIP）
-    bool isNeedReportOpRetryErr = false; // 针对重执行算子不一致和inplace场景，上报故障
+    bool isChangeLinkFlag = false;                   // 当前是否为借轨
+    char dfxIpInfo[OPRETRY_DFX_IPINFO_LENGTH] = {0}; // 重执行状态机维测信息（deviceIP + hostIP）
+    bool isNeedReportOpRetryErr = false;             // 针对重执行算子不一致和inplace场景，上报故障
 };
-struct RetryCommandInfo{
+struct RetryCommandInfo {
     u32 cmd = RETRY_COMMAND_INFO_CMD;
     RetryCommand command;
     HcclOpIdentifier opId;
 };
 
 /* 重执行agent状态机使用 */
-using HcclOpStreamRes = std::map<std::string, std::vector<Stream> >;
+using HcclOpStreamRes = std::map<std::string, std::vector<Stream>>;
 using OpRetryResetNotifyCallback = std::function<HcclResult(bool, s64)>;
-using OpRetrySetTransportStatusCallback = std::function<HcclResult(const HcclOpIdentifier &, bool,
-    const std::map<u32, bool> &, const std::map<u32, bool> &, bool)>;
-using OpRetryGetSwitchRanksCallback = std::function<HcclResult(u32 *, bool*, u32 &, u8 *, u32 &, bool &, bool &)>;
-using OpRetrySetTransportResumeStatusCallBack = std::function<HcclResult(const std::map<u32, bool> &, const std::map<u32, bool> &, bool, bool)>;
-}
+using OpRetrySetTransportStatusCallback = std::function<HcclResult(
+    const HcclOpIdentifier&, bool, const std::map<u32, bool>&, const std::map<u32, bool>&, bool)>;
+using OpRetryGetSwitchRanksCallback = std::function<HcclResult(u32*, bool*, u32&, u8*, u32&, bool&, bool&)>;
+using OpRetrySetTransportResumeStatusCallBack
+    = std::function<HcclResult(const std::map<u32, bool>&, const std::map<u32, bool>&, bool, bool)>;
+} // namespace hccl
 #endif

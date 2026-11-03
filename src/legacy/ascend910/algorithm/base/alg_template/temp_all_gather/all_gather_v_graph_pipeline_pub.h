@@ -26,10 +26,11 @@ public:
     explicit AllGatherVGraphPipeline(const HcclDispatcher dispatcher);
     ~AllGatherVGraphPipeline() override = default;
     HcclResult RunAsync() override;
+
 private:
     HcclResult ExecInterServer(u32 step);
     HcclResult ExecIntraServer(u32 step);
 };
-}  // namespace hccl
+} // namespace hccl
 
 #endif /* ALL_GATHER_PIPELINE_PUB_H */

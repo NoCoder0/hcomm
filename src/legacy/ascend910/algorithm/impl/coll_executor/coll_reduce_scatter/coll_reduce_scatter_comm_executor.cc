@@ -1,20 +1,20 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "coll_reduce_scatter_comm_executor.h"
 #include "alg_template_register.h"
 
 namespace hccl {
 
-CollReduceScatterCommExecutor::CollReduceScatterCommExecutor(const HcclDispatcher dispatcher,
-    std::unique_ptr<TopoMatcher> &topoMatcher)
+CollReduceScatterCommExecutor::CollReduceScatterCommExecutor(
+    const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher>& topoMatcher)
     : CollReduceScatterExecutor(dispatcher, topoMatcher)
 {
     desc_.deterministic = 1;
@@ -48,12 +48,14 @@ HcclResult CollReduceScatterCommExecutor::CalcScratchMemSize(u64& scratchMemSize
         scratchMemSize = 0U;
     }
 
-    HCCL_INFO("[CollReduceScatterCommExecutor][CalcScratchMemSize] tag[%s] scratchMemSize[%llu]",
-        tag_.c_str(), scratchMemSize);
+    HCCL_INFO(
+        "[CollReduceScatterCommExecutor][CalcScratchMemSize] tag[%s] scratchMemSize[%llu]", tag_.c_str(),
+        scratchMemSize);
     return HCCL_SUCCESS;
 }
 
-bool CollReduceScatterCommExecutor::IsSmallData(const u64 totalSize, const u64 curSize)
+bool CollReduceScatterCommExecutor::IsSmallData(
+    [[maybe_unused]] const u64 totalSize, [[maybe_unused]] const u64 curSize)
 {
     return topoAttr_.deviceType == DevType::DEV_TYPE_910_93;
 }
@@ -67,8 +69,8 @@ HcclResult CollReduceScatterCommExecutor::CalcCommInfo(std::vector<LevelNSubComm
     return HCCL_SUCCESS;
 }
 
-HcclResult CollReduceScatterCommExecutor::CalcTransportMemType(TransportMemType &inputType,
-    TransportMemType &outputType)
+HcclResult
+CollReduceScatterCommExecutor::CalcTransportMemType(TransportMemType& inputType, TransportMemType& outputType) const
 {
     if (workflowMode_ == HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE) {
         inputType = TransportMemType::CCL_INPUT;
@@ -85,14 +87,14 @@ HcclResult CollReduceScatterCommExecutor::CalcTransportMemType(TransportMemType 
             outputType = TransportMemType::PARAM_OUTPUT;
         }
     }
-    HCCL_INFO("[CollReduceScatterCommExecutor][CalcTransportMemType] tag[%s] inputType[%d], outputType[%d]",
-        tag_.c_str(), inputType, outputType);
+    HCCL_INFO(
+        "[CollReduceScatterCommExecutor][CalcTransportMemType] tag[%s] inputType[%d], outputType[%d]", tag_.c_str(),
+        inputType, outputType);
     return HCCL_SUCCESS;
 }
 
-HcclResult CollReduceScatterCommExecutor::CalcCombinedCommInfo(TransportMemType inputType,
-    TransportMemType outputType,
-    std::vector<LevelNSubCommTransport>& opTransport)
+HcclResult CollReduceScatterCommExecutor::CalcCombinedCommInfo(
+    TransportMemType inputType, TransportMemType outputType, std::vector<LevelNSubCommTransport>& opTransport)
 {
     CommPlane commPlane = COMM_COMBINE_ORDER;
 
@@ -117,19 +119,19 @@ HcclResult CollReduceScatterCommExecutor::CalcCombinedCommInfo(TransportMemType 
 u64 CollReduceScatterCommExecutor::CalcLoopMaxCount(const u32 unitSize)
 {
     // 中转内存单次最多能够接受的output count
-    u64 maxCountPerLoop = inCCLbufferSize_ / topoAttr_.userRankSize / HCCL_MIN_SLICE_ALIGN
-        * HCCL_MIN_SLICE_ALIGN / unitSize;
+    u64 maxCountPerLoop
+        = inCCLbufferSize_ / topoAttr_.userRankSize / HCCL_MIN_SLICE_ALIGN * HCCL_MIN_SLICE_ALIGN / unitSize;
     return maxCountPerLoop;
 }
 
-bool CollReduceScatterCommExecutor::IsHugeData(const u64 curSize, OpParam *param)
+bool CollReduceScatterCommExecutor::IsHugeData(const u64 curSize, [[maybe_unused]] OpParam* param)
 {
-    bool hugeData = (curSize * topoAttr_.userRankSize / HCCL_INTERNODE_MAX_DATA_RATE > RDMA_SEND_MAX_SIZE) ||
-                    (curSize > SDMA_SEND_MAX_SIZE);
+    bool hugeData = (curSize * topoAttr_.userRankSize / HCCL_INTERNODE_MAX_DATA_RATE > RDMA_SEND_MAX_SIZE)
+                    || (curSize > SDMA_SEND_MAX_SIZE);
     return hugeData;
 }
 
-HcclResult CollReduceScatterCommExecutor::KernelRun(const OpParam &param, ExecMem &execMem)
+HcclResult CollReduceScatterCommExecutor::KernelRun(const OpParam& param, ExecMem& execMem)
 {
     HCCL_CONFIG_INFO(HCCL_ALG, "[%s] userRank[%u] starts.", __func__, topoAttr_.userRank);
     CommPlane commPlane = COMM_COMBINE_ORDER;
@@ -142,34 +144,35 @@ HcclResult CollReduceScatterCommExecutor::KernelRun(const OpParam &param, ExecMe
     // 构造ring algorithm对应的reduce-scatter实例
     std::unique_ptr<AlgTemplateBase> tempAlg;
     if (algType_.algoLevel1 == AlgTypeLevel1::ALG_LEVEL1_NHR) {
-        tempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(
-            TemplateType::TEMPLATE_REDUCESCATTER_NHR, dispatcher_);
+        tempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_REDUCESCATTER_NHR, dispatcher_);
         HCCL_CONFIG_INFO(HCCL_ALG, "[%s] Run TEMPLATE_REDUCESCATTER_NHR in COMM_COMBINE_ORDER", __func__);
         CHK_SMART_PTR_NULL(tempAlg);
         CHK_RET(tempAlg->Prepare(reduceAttr, false));
-        CHK_RET(tempAlg->Prepare(execMem.inputMem, execMem.outputMem, execMem.scratchMem, execMem.count,
-            param.DataDes.dataType, param.stream, param.reduceType));
+        CHK_RET(tempAlg->Prepare(
+            execMem.inputMem, execMem.outputMem, execMem.scratchMem, execMem.count, param.DataDes.dataType,
+            param.stream, param.reduceType));
         if (topoAttr_.deviceType != DevType::DEV_TYPE_910_93 || algoAttr_.isSupportAtomicWrite) {
             tempAlg->CloseBarrier();
         }
         CHK_RET(RunTemplate(tempAlg, combinedCommInfo));
     } else if (algType_.algoLevel1 == AlgTypeLevel1::ALG_LEVEL1_NHR_V1) {
-        tempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(
-            TemplateType::TEMPLATE_REDUCESCATTER_NHR_V1, dispatcher_);
+        tempAlg
+            = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_REDUCESCATTER_NHR_V1, dispatcher_);
         HCCL_CONFIG_INFO(HCCL_ALG, "[%s] Run TEMPLATE_REDUCESCATTER_NHR_V1 in COMM_COMBINE_ORDER", __func__);
         CHK_SMART_PTR_NULL(tempAlg);
         CHK_RET(tempAlg->Prepare(reduceAttr));
-        CHK_RET(tempAlg->Prepare(execMem.inputMem, execMem.outputMem, execMem.scratchMem, execMem.count,
-            param.DataDes.dataType, param.stream, param.reduceType));
+        CHK_RET(tempAlg->Prepare(
+            execMem.inputMem, execMem.outputMem, execMem.scratchMem, execMem.count, param.DataDes.dataType,
+            param.stream, param.reduceType));
         CHK_RET(RunTemplate(tempAlg, combinedCommInfo));
     } else if (algType_.algoLevel1 == AlgTypeLevel1::ALG_LEVEL1_NB) {
-        tempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(
-            TemplateType::TEMPLATE_REDUCESCATTER_NB, dispatcher_);
+        tempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_REDUCESCATTER_NB, dispatcher_);
         HCCL_CONFIG_INFO(HCCL_ALG, "[%s] Run TEMPLATE_REDUCESCATTER_NB in COMM_COMBINE_ORDER", __func__);
         CHK_SMART_PTR_NULL(tempAlg);
         CHK_RET(tempAlg->Prepare(reduceAttr));
-        CHK_RET(tempAlg->Prepare(execMem.inputMem, execMem.outputMem, execMem.scratchMem, execMem.count,
-            param.DataDes.dataType, param.stream, param.reduceType));
+        CHK_RET(tempAlg->Prepare(
+            execMem.inputMem, execMem.outputMem, execMem.scratchMem, execMem.count, param.DataDes.dataType,
+            param.stream, param.reduceType));
         CHK_RET(RunTemplate(tempAlg, combinedCommInfo));
     } else if (algType_.algoLevel1 == AlgTypeLevel1::ALG_LEVEL1_HD) {
         tempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(
@@ -179,21 +182,23 @@ HcclResult CollReduceScatterCommExecutor::KernelRun(const OpParam &param, ExecMe
         CHK_RET(tempAlg->Prepare(reduceAttr));
         DeviceMem scratchMem = execMem.scratchMem.range(0, execMem.inputMem.size());
         u64 inputDataCount = execMem.inputMem.size() / SIZE_TABLE[param.DataDes.dataType];
-        CHK_RET(tempAlg->Prepare(execMem.inputMem, execMem.inputMem, scratchMem, inputDataCount,
-            param.DataDes.dataType, param.stream, param.reduceType, LEVEL0_BRIDGE_RANK_ID, std::vector<Slice>(0)));
+        CHK_RET(tempAlg->Prepare(
+            execMem.inputMem, execMem.inputMem, scratchMem, inputDataCount, param.DataDes.dataType, param.stream,
+            param.reduceType, LEVEL0_BRIDGE_RANK_ID, std::vector<Slice>(0)));
         CHK_RET(RunTemplate(tempAlg, combinedCommInfo));
         u64 dataSize = execMem.count * SIZE_TABLE[param.DataDes.dataType];
         DeviceMem srcMem = execMem.inputMem.range(dataSize * topoAttr_.userRank, dataSize);
         DeviceMem dstMem = execMem.outputMem.range(0, dataSize);
         CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dstMem, srcMem, const_cast<Stream&>(param.stream)));
     } else {
-        tempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(
-            TemplateType::TEMPLATE_REDUCESCATTER_RING, dispatcher_);
+        tempAlg
+            = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_REDUCESCATTER_RING, dispatcher_);
         HCCL_CONFIG_INFO(HCCL_ALG, "[%s] Run TEMPLATE_REDUCESCATTER_RING in COMM_COMBINE_ORDER", __func__);
         CHK_SMART_PTR_NULL(tempAlg);
         CHK_RET(tempAlg->Prepare(reduceAttr));
-        CHK_RET(tempAlg->Prepare(execMem.inputMem, execMem.inputMem, execMem.scratchMem, execMem.count,
-            param.DataDes.dataType, param.stream, param.reduceType));
+        CHK_RET(tempAlg->Prepare(
+            execMem.inputMem, execMem.inputMem, execMem.scratchMem, execMem.count, param.DataDes.dataType, param.stream,
+            param.reduceType));
         CHK_RET(RunTemplate(tempAlg, combinedCommInfo));
         // 将cclInBuffer中与userRank_对应的部分拷贝至cclOutBuffer
         u64 dataSize = execMem.count * SIZE_TABLE[param.DataDes.dataType];
@@ -205,4 +210,4 @@ HcclResult CollReduceScatterCommExecutor::KernelRun(const OpParam &param, ExecMe
 }
 
 REGISTER_EXEC("ReduceScatterComm", ReduceScatterComm, CollReduceScatterCommExecutor);
-}
+} // namespace hccl

@@ -21,19 +21,21 @@ namespace Hccl {
 
 class CcuContextAllReduceMesh2DOneShot : public CcuContextAlgBase {
 public:
-    CcuContextAllReduceMesh2DOneShot(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                              const CcuTransportGroup &group);
+    CcuContextAllReduceMesh2DOneShot(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
     ~CcuContextAllReduceMesh2DOneShot() override {}
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
+
 private:
     void InitVariables();
     void LoadArgs();
     void DoAxisSync(uint32_t signalIdx);
     void DoGroupSync(int ckeIdx, uint16_t selfBit, uint16_t allBit);
-    void DoGroupReduce(std::vector<CcuRep::Variable> &srcBase, CcuRep::Variable &dstBase,
-        CcuRep::Variable &offset, GroupOpSize &goSize);
+    void DoGroupReduce(
+        std::vector<CcuRep::Variable>& srcBase, CcuRep::Variable& dstBase, CcuRep::Variable& offset,
+        GroupOpSize& goSize);
     std::vector<uint64_t> dimSize_;
     std::vector<uint64_t> myRankIdxInAxis_;
     uint64_t myRankIdxInCurrentAxis_{0};

@@ -1,18 +1,18 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "coll_all_gather_comm_executor.h"
 
 namespace hccl {
-CollAllGatherCommExecutor::CollAllGatherCommExecutor(const HcclDispatcher dispatcher,
-                                                     std::unique_ptr<TopoMatcher> &topoMatcher)
+CollAllGatherCommExecutor::CollAllGatherCommExecutor(
+    const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher>& topoMatcher)
     : CollAllGatherExecutor(dispatcher, topoMatcher)
 {
     DMAReduceFlag_ = false;
@@ -27,7 +27,7 @@ HcclResult CollAllGatherCommExecutor::CalcCommInfo(std::vector<LevelNSubCommTran
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherCommExecutor::CalcTransportMemType(TransportMemType &inputType, TransportMemType &outputType)
+HcclResult CollAllGatherCommExecutor::CalcTransportMemType(TransportMemType& inputType, TransportMemType& outputType)
 {
     if (workflowMode_ == HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE) {
         inputType = TransportMemType::CCL_INPUT;
@@ -36,13 +36,14 @@ HcclResult CollAllGatherCommExecutor::CalcTransportMemType(TransportMemType &inp
         inputType = TransportMemType::PARAM_INPUT;
         outputType = TransportMemType::PARAM_OUTPUT;
     }
-    HCCL_INFO("[CollAllGatherCommExecutor][CalcTransportMemType] tag[%s] inputType[%d], outputType[%d]",
-        tag_.c_str(), inputType, outputType);
+    HCCL_INFO(
+        "[CollAllGatherCommExecutor][CalcTransportMemType] tag[%s] inputType[%d], outputType[%d]", tag_.c_str(),
+        inputType, outputType);
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherCommExecutor::CalcCombinedCommInfo(TransportMemType inputType, TransportMemType outputType,
-    std::vector<LevelNSubCommTransport>& opTransport)
+HcclResult CollAllGatherCommExecutor::CalcCombinedCommInfo(
+    TransportMemType inputType, TransportMemType outputType, std::vector<LevelNSubCommTransport>& opTransport)
 {
     CommPlane commPlane = COMM_COMBINE;
     if (topoAttr_.deviceType == DevType::DEV_TYPE_910_93) {
@@ -66,7 +67,7 @@ HcclResult CollAllGatherCommExecutor::CalcCombinedCommInfo(TransportMemType inpu
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherCommExecutor::KernelRun(const OpParam &param, ExecMem &execMem)
+HcclResult CollAllGatherCommExecutor::KernelRun(const OpParam& param, ExecMem& execMem)
 {
     HCCL_CONFIG_INFO(HCCL_ALG, "[CollAllGatherCommExecutor][KernelRun]AllGather enter");
     CommPlane commPlane = COMM_COMBINE;
@@ -89,20 +90,22 @@ HcclResult CollAllGatherCommExecutor::KernelRun(const OpParam &param, ExecMem &e
         tempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_ALL_GATHER_NB, dispatcher_);
         HCCL_CONFIG_INFO(HCCL_ALG, "[%s] Run TEMPLATE_ALL_GATHER_NB in COMM_COMBINE_ORDER", __func__);
     } else if (algType_.algoLevel1 == AlgTypeLevel1::ALG_LEVEL1_HD) {
-        u8* dstPtr = static_cast<u8 *>(execMem.outputMem.ptr()) + execMem.inputMem.size() * combinedCommInfo.localRank;
+        u8* dstPtr = static_cast<u8*>(execMem.outputMem.ptr()) + execMem.inputMem.size() * combinedCommInfo.localRank;
         DeviceMem dstMem = DeviceMem::create(dstPtr, execMem.inputMem.size());
         CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dstMem, execMem.inputMem, const_cast<Stream&>(param.stream)));
         tempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(
             TemplateType::TEMPLATE_ALL_GATHER_RECURSIVE_HALVING_DOUBLING, dispatcher_);
-        HCCL_CONFIG_INFO(HCCL_ALG, "[%s] Run TEMPLATE_ALL_GATHER_RECURSIVE_HALVING_DOUBLING in COMM_COMBINE_ORDER", __func__);
+        HCCL_CONFIG_INFO(
+            HCCL_ALG, "[%s] Run TEMPLATE_ALL_GATHER_RECURSIVE_HALVING_DOUBLING in COMM_COMBINE_ORDER", __func__);
     } else {
         tempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_ALL_GATHER_RING, dispatcher_);
         HCCL_CONFIG_INFO(HCCL_ALG, "[%s] Run TEMPLATE_ALL_GATHER_RING in COMM_COMBINE_ORDER", __func__);
     }
     CHK_SMART_PTR_NULL(tempAlg);
 
-    CHK_RET(tempAlg->Prepare(execMem.inputMem, execMem.outputMem, execMem.outputMem, execMem.count,
-        param.DataDes.dataType, param.stream, HCCL_REDUCE_RESERVED, INVALID_VALUE_RANKID));
+    CHK_RET(tempAlg->Prepare(
+        execMem.inputMem, execMem.outputMem, execMem.outputMem, execMem.count, param.DataDes.dataType, param.stream,
+        HCCL_REDUCE_RESERVED, INVALID_VALUE_RANKID));
 
     CHK_RET(RunTemplate(tempAlg, combinedCommInfo));
 
@@ -114,7 +117,7 @@ HcclResult CollAllGatherCommExecutor::Getlevel1CommRank(SubCommInfo& level1CommI
     CommPlane commPlane = COMM_COMBINE;
     if (topoAttr_.deviceType == DevType::DEV_TYPE_910_93) {
         commPlane = COMM_COMBINE_ORDER;
-        HCCL_INFO("nslbdp AllGather comm: Getlevel1CommRank.");
+        HCCL_INFO("NSLB-DP AllGather comm: Getlevel1CommRank.");
     }
     CHK_RET(CheckCommSize(commPlane, COMM_INDEX_0 + 1));
     level1CommInfo = GetSubCommInfo(commPlane, COMM_INDEX_0);
@@ -122,25 +125,29 @@ HcclResult CollAllGatherCommExecutor::Getlevel1CommRank(SubCommInfo& level1CommI
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherCommExecutor::SelectTempAlg(std::unique_ptr<AlgTemplateBase> &level1TempAlg, u32 level1RankSize)
+HcclResult CollAllGatherCommExecutor::SelectTempAlg(std::unique_ptr<AlgTemplateBase>& level1TempAlg, u32 level1RankSize)
 {
     HCCL_INFO("[CollAllGatherCommExecutor] Entry SelectTempAlg, algoLevel1 = [%u].", algType_.algoLevel1);
     if (level1RankSize > 1) {
         if (algType_.algoLevel1 == AlgTypeLevel1::ALG_LEVEL1_NHR) {
-            level1TempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_ALL_GATHER_NHR, dispatcher_);
+            level1TempAlg
+                = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_ALL_GATHER_NHR, dispatcher_);
             HCCL_INFO("allgather comm: using nhr algo inter-server.");
         } else if (algType_.algoLevel1 == AlgTypeLevel1::ALG_LEVEL1_NHR_V1) {
-            level1TempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_ALL_GATHER_NHRV1, dispatcher_);
+            level1TempAlg
+                = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_ALL_GATHER_NHRV1, dispatcher_);
             HCCL_INFO("allgather comm: using nhr_v1 algo inter-server.");
         } else if (algType_.algoLevel1 == AlgTypeLevel1::ALG_LEVEL1_NB) {
-            level1TempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_ALL_GATHER_NB, dispatcher_);
+            level1TempAlg
+                = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_ALL_GATHER_NB, dispatcher_);
             HCCL_INFO("allgather comm: using nonuniform-bruck algo inter-server.");
         } else if (algType_.algoLevel1 == AlgTypeLevel1::ALG_LEVEL1_HD) {
             level1TempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(
                 TemplateType::TEMPLATE_ALL_GATHER_RECURSIVE_HALVING_DOUBLING, dispatcher_);
             HCCL_INFO("allgather comm: using halving-doubling algo inter-server.");
         } else {
-            level1TempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_ALL_GATHER_RING, dispatcher_);
+            level1TempAlg
+                = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_ALL_GATHER_RING, dispatcher_);
             HCCL_INFO("allgather comm: ring algo inter-server.");
         }
         CHK_SMART_PTR_NULL(level1TempAlg);

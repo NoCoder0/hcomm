@@ -1,29 +1,26 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "aligned_all_gather_double_ring.h"
 #include "alg_template_register.h"
 
 namespace hccl {
-AlignedAllGatherDoubleRing::AlignedAllGatherDoubleRing(const HcclDispatcher dispatcher) : AlgTemplateBase(dispatcher)
-{
-}
+AlignedAllGatherDoubleRing::AlignedAllGatherDoubleRing(const HcclDispatcher dispatcher) : AlgTemplateBase(dispatcher) {}
 
-AlignedAllGatherDoubleRing::~AlignedAllGatherDoubleRing()
-{
-}
+AlignedAllGatherDoubleRing::~AlignedAllGatherDoubleRing() {}
 
-HcclResult AlignedAllGatherDoubleRing::Prepare(HcomCollOpInfo *opInfo, const u32 userRank,
-    std::vector<Stream> &subStreams, std::vector<std::shared_ptr<LocalNotify>> &mainSignals,
-    std::vector<std::shared_ptr<LocalNotify>> &subSignals, const std::vector<std::vector<u32>> &ringsOrders,
-    const std::vector<std::vector<Slice>> &userMemOutputSlicesOfDoubleRing)
+HcclResult AlignedAllGatherDoubleRing::Prepare(
+    HcomCollOpInfo* opInfo, const u32 userRank, std::vector<Stream>& subStreams,
+    std::vector<std::shared_ptr<LocalNotify>>& mainSignals, std::vector<std::shared_ptr<LocalNotify>>& subSignals,
+    const std::vector<std::vector<u32>>& ringsOrders,
+    const std::vector<std::vector<Slice>>& userMemOutputSlicesOfDoubleRing)
 {
     opInfo_ = opInfo;
     userRank_ = userRank;
@@ -36,7 +33,7 @@ HcclResult AlignedAllGatherDoubleRing::Prepare(HcomCollOpInfo *opInfo, const u32
 }
 
 // 服务器间allgather的入口函数
-HcclResult AlignedAllGatherDoubleRing::RunAsync(const u32 rank, const u32 rankSize, const std::vector<LINK> &links)
+HcclResult AlignedAllGatherDoubleRing::RunAsync(const u32 rank, const u32 rankSize, const std::vector<LINK>& links)
 {
     // 基本的检查
     CHK_RET(CheckParameters(rank, rankSize, links));
@@ -67,43 +64,53 @@ HcclResult AlignedAllGatherDoubleRing::RunAsync(const u32 rank, const u32 rankSi
     return HCCL_SUCCESS;
 }
 
-HcclResult AlignedAllGatherDoubleRing::CheckParameters(const u32 rank, const u32 rankSize,
-                                                          const std::vector<LINK> &links)
+HcclResult
+AlignedAllGatherDoubleRing::CheckParameters(const u32 rank, const u32 rankSize, const std::vector<LINK>& links)
 {
     CHK_PTR_NULL(opInfo_);
     CHK_RET(CheckConcurrentDirectParameters(rank, rankSize, links));
     // 判断subStreams数量是否正确
-    CHK_PRT_RET(subStreams_.size() < 1,
-                HCCL_ERROR("[AlignedAllGatherDoubleRing] subStreams size[%u] is less than 1", subStreams_.size()),
-                HCCL_E_PARA);
-    for (auto &s : subStreams_) {
+    CHK_PRT_RET(
+        subStreams_.size() < 1,
+        HCCL_ERROR("[AlignedAllGatherDoubleRing] subStreams size[%u] is less than 1", subStreams_.size()), HCCL_E_PARA);
+    for (auto& s : subStreams_) {
         CHK_PTR_NULL(s.ptr());
     }
     // 判断mainSignals数量是否正确
-    CHK_PRT_RET(mainSignals_.size() < 1,
-                HCCL_ERROR("[AlignedAllGatherDoubleRing] mainSignals size[%u] is less than 1", mainSignals_.size()),
-                HCCL_E_PARA);
+    CHK_PRT_RET(
+        mainSignals_.size() < 1,
+        HCCL_ERROR("[AlignedAllGatherDoubleRing] mainSignals size[%u] is less than 1", mainSignals_.size()),
+        HCCL_E_PARA);
     // 判断subSignals数量是否正确
-    CHK_PRT_RET(subSignals_.size() < 1,
-                HCCL_ERROR("[AlignedAllGatherDoubleRing] subSignals size[%u] is less than 1", subSignals_.size()),
-                HCCL_E_PARA);
+    CHK_PRT_RET(
+        subSignals_.size() < 1,
+        HCCL_ERROR("[AlignedAllGatherDoubleRing] subSignals size[%u] is less than 1", subSignals_.size()), HCCL_E_PARA);
     // 判断ringsOrder数量是否正确
     for (u32 ringIndex = 0; ringIndex < ringsOrders_.size(); ringIndex++) {
-        CHK_PRT_RET(ringsOrders_[ringIndex].size() % rankSize != 0,
-                    HCCL_ERROR("[AlignedAllGatherDoubleRing] ringsOrders[%u] size[%u] can not be divided by rank size[%u]",
-                        ringIndex, ringsOrders_[ringIndex].size(), rankSize), HCCL_E_PARA);
+        CHK_PRT_RET(
+            ringsOrders_[ringIndex].size() % rankSize != 0,
+            HCCL_ERROR(
+                "[AlignedAllGatherDoubleRing] ringsOrders[%u] size[%u] can not be divided by rank size[%u]", ringIndex,
+                ringsOrders_[ringIndex].size(), rankSize),
+            HCCL_E_PARA);
     }
     // 判断userMemOutputSlices数量是否正确
     for (u32 ringIndex = 0; ringIndex < userMemOutputSlicesOfDoubleRing_.size(); ringIndex++) {
-        CHK_PRT_RET(userMemOutputSlicesOfDoubleRing_[ringIndex].size() % rankSize != 0,
-            HCCL_ERROR("[AlignedAllGatherDoubleRing] userMemOutputSlicesOfDoubleRing[%u] size[%u] can not be divided by rank size[%u]",
-                ringIndex, userMemOutputSlicesOfDoubleRing_[ringIndex].size(), rankSize), HCCL_E_PARA);
+        CHK_PRT_RET(
+            userMemOutputSlicesOfDoubleRing_[ringIndex].size() % rankSize != 0,
+            HCCL_ERROR(
+                "[AlignedAllGatherDoubleRing] userMemOutputSlicesOfDoubleRing[%u] size[%u] can not be divided by rank "
+                "size[%u]",
+                ringIndex, userMemOutputSlicesOfDoubleRing_[ringIndex].size(), rankSize),
+            HCCL_E_PARA);
     }
     u32 mainSliceSize = multRingsSlices_[ALIGNED_MAIN_RING_INDEX].size() / rankSize;
     u32 subSliceSize = multRingsSlices_[ALIGNED_SUB_RING_INDEX].size() / rankSize;
-    CHK_PRT_RET(mainSliceSize != subSliceSize,
-        HCCL_ERROR("[AlignedAllGatherDoubleRing] mainSliceSize[%u] is not equal to subSliceSize[%u].",
-            mainSliceSize, subSliceSize),
+    CHK_PRT_RET(
+        mainSliceSize != subSliceSize,
+        HCCL_ERROR(
+            "[AlignedAllGatherDoubleRing] mainSliceSize[%u] is not equal to subSliceSize[%u].", mainSliceSize,
+            subSliceSize),
         HCCL_E_PARA);
     HCCL_INFO("AlignedAllGatherDoubleRing finished to CheckParameters");
     return HCCL_SUCCESS;
@@ -115,19 +122,21 @@ HcclResult AlignedAllGatherDoubleRing::OneRankMemcpy()
     CHK_RET(SubWaitMain());   // 从流等待主流通知
     for (u32 ringIndex = 0; ringIndex < multRingsSlices_.size(); ringIndex++) {
         for (u32 sliceIdx = 0; sliceIdx < multRingsSlices_[ringIndex].size(); sliceIdx++) {
-            const Slice &srcSlice = multRingsSlices_[ringIndex][sliceIdx];
-            const Slice &dstSlice = userMemOutputSlicesOfDoubleRing_[ringIndex][sliceIdx];
-            DeviceMem    src;
-            DeviceMem    dst = DeviceMem::create(static_cast<u8 *>(opInfo_->outputAddr) + dstSlice.offset, dstSlice.size);
+            const Slice& srcSlice = multRingsSlices_[ringIndex][sliceIdx];
+            const Slice& dstSlice = userMemOutputSlicesOfDoubleRing_[ringIndex][sliceIdx];
+            DeviceMem src;
+            DeviceMem dst = DeviceMem::create(static_cast<u8*>(opInfo_->outputAddr) + dstSlice.offset, dstSlice.size);
             if (opInfo_->inputAddr != nullptr) {
                 // opInfo_->inputAddr != nullptr指示要从user input获取输入
                 u64 stepOffset = multRingsSlices_[ringIndex][ringsOrders_[ringIndex][0]].offset;
-                HCCL_DEBUG("Memcpy operation: stream[main], rank[%u] starts to copy offset[%llu], size[%llu] at userInput",
+                HCCL_DEBUG(
+                    "Memcpy operation: stream[main], rank[%u] starts to copy offset[%llu], size[%llu] at userInput",
                     userRank_, stepOffset, srcSlice.size);
-                src = DeviceMem::create(static_cast<u8 *>(opInfo_->inputAddr) + stepOffset, srcSlice.size);
+                src = DeviceMem::create(static_cast<u8*>(opInfo_->inputAddr) + stepOffset, srcSlice.size);
             } else {
                 // opInfo_->inputAddr == nullptr指示要从CCL buffer获取输入
-                HCCL_DEBUG("Memcpy operation: stream[main], rank[%u] starts to copy offset[%llu], size[%llu] at inputMem_",
+                HCCL_DEBUG(
+                    "Memcpy operation: stream[main], rank[%u] starts to copy offset[%llu], size[%llu] at inputMem_",
                     userRank_, srcSlice.offset, srcSlice.size);
                 src = inputMem_.range(srcSlice.offset, srcSlice.size);
             }
@@ -143,8 +152,8 @@ HcclResult AlignedAllGatherDoubleRing::OneRankMemcpy()
     return HCCL_SUCCESS;
 }
 
-HcclResult AlignedAllGatherDoubleRing::GetInitializedNeighborLinks(const u32 rank, const u32 rankSize,
-                                                                      const std::vector<LINK> &links)
+HcclResult AlignedAllGatherDoubleRing::GetInitializedNeighborLinks(
+    const u32 rank, const u32 rankSize, const std::vector<LINK>& links)
 {
     // 收集左邻居信息
     leftLink_ = links[(rank + rankSize - 1) % rankSize];
@@ -165,16 +174,17 @@ HcclResult AlignedAllGatherDoubleRing::SetSlices(const u32 rank, const u32 rankS
 
             u64 sliceSize = count_ * DataUnitSize(dataType_);
             for (u32 i = 0; i < rankSize; i++) {
-                multRingsSlices_[ringIndex][i].size        = sliceSize;
-                multRingsSlices_[ringIndex][i].offset      = sliceSize * i;
-                HCCL_DEBUG("multRingsSlices_[%u], rank[%u], slices[%u].offset=%llu, slices[%u].size=[%llu]",
-                    ringIndex, rank, i, multRingsSlices_[ringIndex][i].offset, i,
-                        multRingsSlices_[ringIndex][i].size);
+                multRingsSlices_[ringIndex][i].size = sliceSize;
+                multRingsSlices_[ringIndex][i].offset = sliceSize * i;
+                HCCL_DEBUG(
+                    "multRingsSlices_[%u], rank[%u], slices[%u].offset=%llu, slices[%u].size=[%llu]", ringIndex, rank,
+                    i, multRingsSlices_[ringIndex][i].offset, i, multRingsSlices_[ringIndex][i].size);
             }
         }
         for (u32 i = 0; i < multRingsSlices_[ringIndex].size(); i++) {
             HCCL_DEBUG(
-                "[AlignedAllGatherDoubleRing][SetSlices] multRingsSlices_[%u], rank[%u], slices[%u].offset=[%llu], slices[%u].size=[%llu]",
+                "[AlignedAllGatherDoubleRing][SetSlices] multRingsSlices_[%u], rank[%u], slices[%u].offset=[%llu], "
+                "slices[%u].size=[%llu]",
                 ringIndex, rank, i, multRingsSlices_[ringIndex][i].offset, i, multRingsSlices_[ringIndex][i].size);
         }
     }
@@ -190,8 +200,8 @@ HcclResult AlignedAllGatherDoubleRing::RunInitStep(const u32 rank, const u32 ran
         if (ringIndex == 0) {
             firstStepOffset = multRingsSlices_[ringIndex][ringsOrders_[ringIndex][0]].offset;
         } else {
-            const auto &prevRingSlice = multRingsSlices_[ringIndex - 1][ringsOrders_[ringIndex - 1][rank]];
-            const auto &slice = multRingsSlices_[ringIndex][ringsOrders_[ringIndex][rank]];
+            const auto& prevRingSlice = multRingsSlices_[ringIndex - 1][ringsOrders_[ringIndex - 1][rank]];
+            const auto& slice = multRingsSlices_[ringIndex][ringsOrders_[ringIndex][rank]];
             firstStepOffset = slice.offset - prevRingSlice.offset;
         }
         // 第-1步，片内将部分数据从userIn搬到cclIn
@@ -209,13 +219,15 @@ HcclResult AlignedAllGatherDoubleRing::RunInitStep(const u32 rank, const u32 ran
             // 需要+userMemIn_的offset
             if (opInfo_->inputAddr != nullptr) {
                 // AllGather算子调用AlignedAllGatherDoubleRing场景
-                HCCL_DEBUG("Memcpy operation: step[-1] stream[main] src rank[%u] starts to copy(rcv) offset[%llu], "
+                HCCL_DEBUG(
+                    "Memcpy operation: step[-1] stream[main] src rank[%u] starts to copy(rcv) offset[%llu], "
                     "size[%llu] on userMemOutput to offset[%llu], size[%llu] on CCL",
                     userRank_, firstStepOffset, initSlice.size, initSlice.offset, initSlice.size);
-                srcInit = DeviceMem::create(static_cast<u8 *>(opInfo_->inputAddr) + firstStepOffset, initSlice.size);
+                srcInit = DeviceMem::create(static_cast<u8*>(opInfo_->inputAddr) + firstStepOffset, initSlice.size);
             } else {
                 // AllReduce算子调用AlignedAllGatherDoubleRing场景
-                HCCL_DEBUG("Memcpy operation: step[-1] stream[main] src rank[%u] starts to copy(rcv) offset[%llu], "
+                HCCL_DEBUG(
+                    "Memcpy operation: step[-1] stream[main] src rank[%u] starts to copy(rcv) offset[%llu], "
                     "size[%llu] on CCL to offset[%llu], size[%llu] on CCL",
                     userRank_, initSlice.offset, initSlice.size, initSlice.offset, initSlice.size);
                 srcInit = inputMem_.range(initSlice.offset, initSlice.size);
@@ -235,8 +247,8 @@ HcclResult AlignedAllGatherDoubleRing::RunInitStep(const u32 rank, const u32 ran
     return HCCL_SUCCESS;
 }
 
-HcclResult AlignedAllGatherDoubleRing::PrepareRunMainStream(u32 ringIndex, Stream &stream,
-    LINK &preLink, LINK &nextLink)
+HcclResult
+AlignedAllGatherDoubleRing::PrepareRunMainStream(u32 ringIndex, Stream& stream, LINK& preLink, LINK& nextLink)
 {
     HCCL_DEBUG("AlignedAllGatherDoubleRing PrepareRunMainStream start");
     if (ringIndex == 1) {
@@ -252,11 +264,12 @@ HcclResult AlignedAllGatherDoubleRing::PrepareRunMainStream(u32 ringIndex, Strea
     return HCCL_SUCCESS;
 }
 
-HcclResult AlignedAllGatherDoubleRing::RunAllStreams(const u32 step, const u32 rankSize,
-    const std::vector<TxMemoryInfo> &mainTxMems, std::vector<RxMemoryInfo> &mainRxMems,
-    const std::vector<TxMemoryInfo> &subTxMems, std::vector<RxMemoryInfo> &subRxMems,
-    std::vector<DeviceMem> &mainLocalSrcMems, std::vector<DeviceMem> &mainLocalDstMems,
-    std::vector<DeviceMem> &subLocalSrcMems, std::vector<DeviceMem> &subLocalDstMems)
+HcclResult AlignedAllGatherDoubleRing::RunAllStreams(
+    const u32 step, const u32 rankSize, const std::vector<TxMemoryInfo>& mainTxMems,
+    std::vector<RxMemoryInfo>& mainRxMems, const std::vector<TxMemoryInfo>& subTxMems,
+    std::vector<RxMemoryInfo>& subRxMems, std::vector<DeviceMem>& mainLocalSrcMems,
+    std::vector<DeviceMem>& mainLocalDstMems, std::vector<DeviceMem>& subLocalSrcMems,
+    std::vector<DeviceMem>& subLocalDstMems)
 {
     (void)mainTxMems;
     (void)subTxMems;
@@ -289,7 +302,8 @@ HcclResult AlignedAllGatherDoubleRing::RunAllStreams(const u32 step, const u32 r
     return HCCL_SUCCESS;
 }
 
-HcclResult AlignedAllGatherDoubleRing::RxAsyncMemcpy(const u32 step, const u32 ringIndex, RxMemoryInfo& mem, Stream &stream, LINK &link)
+HcclResult AlignedAllGatherDoubleRing::RxAsyncMemcpy(
+    const u32 step, const u32 ringIndex, RxMemoryInfo& mem, Stream& stream, LINK& link)
 {
     (void)step;
     // PreSync
@@ -302,23 +316,23 @@ HcclResult AlignedAllGatherDoubleRing::RxAsyncMemcpy(const u32 step, const u32 r
         CHK_RET(LocalNotify::Wait(subStreams_[0], dispatcher_, subSignals_[0], profilerInput_.stage));
     }
     CHK_PTR_NULL(mem.dst);
-    void *srcMemPtr = nullptr;
+    void* srcMemPtr = nullptr;
     CHK_RET(link->GetRemoteMem(mem.srcMemType, &srcMemPtr));
 
-    DeviceMem srcDevMem(static_cast<s8 *>(srcMemPtr) + mem.srcOffset, mem.len);
-    DeviceMem dstDevMem(static_cast<s8 *>(mem.dst), mem.len);
-    CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dstDevMem, srcDevMem,
-        stream, link->GetRemoteRank(), link->GetLinkType()));
+    DeviceMem srcDevMem(static_cast<s8*>(srcMemPtr) + mem.srcOffset, mem.len);
+    DeviceMem dstDevMem(static_cast<s8*>(mem.dst), mem.len);
+    CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dstDevMem, srcDevMem, stream, link->GetRemoteRank(), link->GetLinkType()));
     return HCCL_SUCCESS;
 }
 
-HcclResult AlignedAllGatherDoubleRing::LocalMemcpy(const u32 ringIndex,
-    DeviceMem &localSrcMem, DeviceMem &localDstMem)
+HcclResult AlignedAllGatherDoubleRing::LocalMemcpy(const u32 ringIndex, DeviceMem& localSrcMem, DeviceMem& localDstMem)
 {
     // 校验流数
     if (GetWorkflowMode() != HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB) {
-        CHK_RET(LocalNotify::Post(subStreams_[ringIndex + 1], dispatcher_, mainSignals_[ringIndex + 1], profilerInput_.stage));
-        CHK_RET(LocalNotify::Wait(subStreams_[ringIndex + 1], dispatcher_, subSignals_[ringIndex + 1], profilerInput_.stage));
+        CHK_RET(LocalNotify::Post(
+            subStreams_[ringIndex + 1], dispatcher_, mainSignals_[ringIndex + 1], profilerInput_.stage));
+        CHK_RET(LocalNotify::Wait(
+            subStreams_[ringIndex + 1], dispatcher_, subSignals_[ringIndex + 1], profilerInput_.stage));
         if (localSrcMem != localDstMem) {
             CHK_RET(HcclD2DMemcpyAsync(dispatcher_, localDstMem, localSrcMem, subStreams_[ringIndex + 1]));
         }
@@ -327,31 +341,28 @@ HcclResult AlignedAllGatherDoubleRing::LocalMemcpy(const u32 ringIndex,
 }
 
 HcclResult AlignedAllGatherDoubleRing::PrepareDeviceMems(
-    const u32 step, const u32 ringIndex, const u32 rankSize,
-    const u32 txSliceIdx, const u32 rxSliceIdx,
-    std::vector<TxMemoryInfo> &txMems, std::vector<RxMemoryInfo> &rxMems,
-    std::vector<DeviceMem> &localSrcMems, std::vector<DeviceMem> &localDstMems)
+    const u32 step, const u32 ringIndex, const u32 rankSize, const u32 txSliceIdx, const u32 rxSliceIdx,
+    std::vector<TxMemoryInfo>& txMems, std::vector<RxMemoryInfo>& rxMems, std::vector<DeviceMem>& localSrcMems,
+    std::vector<DeviceMem>& localDstMems)
 {
     u32 sliceSize = multRingsSlices_[ringIndex].size() / rankSize;
     for (u32 sliceIdx = 0; sliceIdx < sliceSize; sliceIdx++) {
-        const Slice &rxSlice = multRingsSlices_[ringIndex][rxSliceIdx * sliceSize + sliceIdx];
-        const Slice &mainSlice = userMemOutputSlicesOfDoubleRing_[ringIndex][rxSliceIdx * sliceSize + sliceIdx];
-        const Slice &txSlice = multRingsSlices_[ringIndex][txSliceIdx * sliceSize + sliceIdx];
-        const Slice &subSlice = userMemOutputSlicesOfDoubleRing_[ringIndex][txSliceIdx * sliceSize + sliceIdx];
+        const Slice& rxSlice = multRingsSlices_[ringIndex][rxSliceIdx * sliceSize + sliceIdx];
+        const Slice& mainSlice = userMemOutputSlicesOfDoubleRing_[ringIndex][rxSliceIdx * sliceSize + sliceIdx];
+        const Slice& txSlice = multRingsSlices_[ringIndex][txSliceIdx * sliceSize + sliceIdx];
+        const Slice& subSlice = userMemOutputSlicesOfDoubleRing_[ringIndex][txSliceIdx * sliceSize + sliceIdx];
         // PrepareTxRxMems
         DeviceMem src = outputMem_.range(txSlice.offset, txSlice.size);
-        HCCL_DEBUG("tx srcMem[%p] range[%llu] size[%llu] ", src.ptr(),
-            txSlice.offset, txSlice.size);
-        txMems.emplace_back(TxMemoryInfo{UserMemType::OUTPUT_MEM, txSlice.offset + baseOffset_,
-            src.ptr(), txSlice.size});
+        HCCL_DEBUG("tx srcMem[%p] range[%llu] size[%llu] ", src.ptr(), txSlice.offset, txSlice.size);
+        txMems.emplace_back(
+            TxMemoryInfo{UserMemType::OUTPUT_MEM, txSlice.offset + baseOffset_, src.ptr(), txSlice.size});
         DeviceMem dst;
         if (step == rankSize - DMA_REDUCE_TWO_OFFSET) {
             HCCL_DEBUG(
-            "DMAReduce(sdma) MemcpyAsync operation: step[%u] stream[main], dst rank[%u] starts to rcv "
-            "offset[%llu] size[%llu] at userMemOutput_",
-            step, userRank_, mainSlice.offset, mainSlice.size);
-            dst = DeviceMem::create(static_cast<u8 *>(opInfo_->outputAddr) + mainSlice.offset,
-                mainSlice.size);
+                "DMAReduce(sdma) MemcpyAsync operation: step[%u] stream[main], dst rank[%u] starts to rcv "
+                "offset[%llu] size[%llu] at userMemOutput_",
+                step, userRank_, mainSlice.offset, mainSlice.size);
+            dst = DeviceMem::create(static_cast<u8*>(opInfo_->outputAddr) + mainSlice.offset, mainSlice.size);
         } else {
             HCCL_DEBUG(
                 "MemcpyAsync operation: step[%u] stream[main], dst rank[%u] starts to rcv offset[%llu] size[%llu] "
@@ -359,14 +370,14 @@ HcclResult AlignedAllGatherDoubleRing::PrepareDeviceMems(
                 step, userRank_, rxSlice.offset, rxSlice.size);
             dst = outputMem_.range(rxSlice.offset, rxSlice.size);
         }
-        rxMems.emplace_back(RxMemoryInfo{UserMemType::OUTPUT_MEM, rxSlice.offset + baseOffset_,
-            dst.ptr(), rxSlice.size});
+        rxMems.emplace_back(
+            RxMemoryInfo{UserMemType::OUTPUT_MEM, rxSlice.offset + baseOffset_, dst.ptr(), rxSlice.size});
         // PrepareLocalCopyDeviceMems
         // 从流
         src = outputMem_.range(txSlice.offset, txSlice.size);
-        dst = DeviceMem::create(static_cast<u8 *>(opInfo_->outputAddr) + subSlice.offset,
-            subSlice.size);
-        HCCL_DEBUG("Memcpy operation: step[%u] stream[sub], src rank[%u] starts to send offset[%llu] size[%llu], "
+        dst = DeviceMem::create(static_cast<u8*>(opInfo_->outputAddr) + subSlice.offset, subSlice.size);
+        HCCL_DEBUG(
+            "Memcpy operation: step[%u] stream[sub], src rank[%u] starts to send offset[%llu] size[%llu], "
             "dst rank starts to rcv offset[%llu] size[%llu] at userMemOutput_",
             step, userRank_, subSlice.offset, subSlice.size, txSlice.offset, txSlice.size);
         localSrcMems.emplace_back(src);
@@ -409,21 +420,18 @@ HcclResult AlignedAllGatherDoubleRing::RunAllGather(const u32 rank, const u32 ra
         std::vector<DeviceMem> localSrcMemsSub;
         std::vector<DeviceMem> localDstMemsSub;
         CHK_RET(PrepareDeviceMems(
-            step, ALIGNED_SUB_RING_INDEX, rankSize,
-            txSliceIdxSub, rxSliceIdxSub,
-            txMemsSub, rxMemsSub,
-            localSrcMemsSub, localDstMemsSub));
+            step, ALIGNED_SUB_RING_INDEX, rankSize, txSliceIdxSub, rxSliceIdxSub, txMemsSub, rxMemsSub, localSrcMemsSub,
+            localDstMemsSub));
         std::vector<TxMemoryInfo> txMemsMain;
         std::vector<RxMemoryInfo> rxMemsMain;
         std::vector<DeviceMem> localSrcMemsMain;
         std::vector<DeviceMem> localDstMemsMain;
         CHK_RET(PrepareDeviceMems(
-            step, ALIGNED_MAIN_RING_INDEX, rankSize,
-            txSliceIdxMain, rxSliceIdxMain,
-            txMemsMain, rxMemsMain,
+            step, ALIGNED_MAIN_RING_INDEX, rankSize, txSliceIdxMain, rxSliceIdxMain, txMemsMain, rxMemsMain,
             localSrcMemsMain, localDstMemsMain));
-        CHK_RET(RunAllStreams(step, rankSize, txMemsMain, rxMemsMain, txMemsSub, rxMemsSub,
-            localSrcMemsMain, localDstMemsMain, localSrcMemsSub, localDstMemsSub));
+        CHK_RET(RunAllStreams(
+            step, rankSize, txMemsMain, rxMemsMain, txMemsSub, rxMemsSub, localSrcMemsMain, localDstMemsMain,
+            localSrcMemsSub, localDstMemsSub));
 
         // 更新索引
         txSliceIdxSub = (txSliceIdxSub + rankSize - 1) % rankSize;
@@ -452,8 +460,7 @@ HcclResult AlignedAllGatherDoubleRing::ExecEmptyTasks()
 HcclResult AlignedAllGatherDoubleRing::MainRecordSub()
 {
     for (u32 signalIndex = 0; signalIndex < subSignals_.size(); signalIndex++) {
-        CHK_RET(LocalNotify::Post(stream_, dispatcher_, subSignals_[signalIndex],
-            profilerInput_.stage));
+        CHK_RET(LocalNotify::Post(stream_, dispatcher_, subSignals_[signalIndex], profilerInput_.stage));
     }
     return HCCL_SUCCESS;
 }
@@ -461,8 +468,8 @@ HcclResult AlignedAllGatherDoubleRing::MainRecordSub()
 HcclResult AlignedAllGatherDoubleRing::SubWaitMain()
 {
     for (u32 streamIndex = 0; streamIndex < subSignals_.size(); streamIndex++) {
-        CHK_RET(LocalNotify::Wait(subStreams_[streamIndex], dispatcher_, subSignals_[streamIndex],
-            profilerInput_.stage));
+        CHK_RET(
+            LocalNotify::Wait(subStreams_[streamIndex], dispatcher_, subSignals_[streamIndex], profilerInput_.stage));
     }
     return HCCL_SUCCESS;
 }
@@ -478,8 +485,8 @@ HcclResult AlignedAllGatherDoubleRing::MainWaitSub()
 HcclResult AlignedAllGatherDoubleRing::SubRecordMain()
 {
     for (u32 streamIndex = 0; streamIndex < mainSignals_.size(); streamIndex++) {
-        CHK_RET(LocalNotify::Post(subStreams_[streamIndex], dispatcher_, mainSignals_[streamIndex],
-            profilerInput_.stage));
+        CHK_RET(
+            LocalNotify::Post(subStreams_[streamIndex], dispatcher_, mainSignals_[streamIndex], profilerInput_.stage));
     }
     return HCCL_SUCCESS;
 }

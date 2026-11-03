@@ -21,17 +21,18 @@ namespace Hccl {
 
 class CcuContextAllGatherVMesh1D : public CcuContextAlgBase {
 public:
-    CcuContextAllGatherVMesh1D(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                              const CcuTransportGroup &group);
+    CcuContextAllGatherVMesh1D(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
     ~CcuContextAllGatherVMesh1D() override {}
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
     void LoadArgs();
     void InitResources();
     void PreSync();
     void PostSync();
     void DoGroupBroadcast();
+
 private:
     CcuRep::Variable input_;
     std::vector<CcuRep::Variable> output_;
@@ -39,5 +40,5 @@ private:
     CcuRep::Variable mySliceOffset_;
     GroupOpSize groupOpSize_;
 };
-}// namespace Hccl
+} // namespace Hccl
 #endif // HCCLV2_CCU_CONTEXT_ALL_GATHER_V_MESH_1D_H_

@@ -21,25 +21,29 @@ namespace Hccl {
 
 class CcuContextAllReduceMesh2DTwoShot : public CcuContextAlgBase {
 public:
-    CcuContextAllReduceMesh2DTwoShot(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                              const CcuTransportGroup &group);
+    CcuContextAllReduceMesh2DTwoShot(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
     ~CcuContextAllReduceMesh2DTwoShot() override {}
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
+
 private:
     void InitVariables();
     void LoadArgs();
     void SyncAll(int ckeIdx);
     void PreSync();
-    void GetSliceOffsetAndGoSize(uint64_t currentSliceRankIdx, uint64_t currStepSliceType, CcuRep::Variable &currOffset,
-        GroupOpSize &currGoSize);
+    void GetSliceOffsetAndGoSize(
+        uint64_t currentSliceRankIdx, uint64_t currStepSliceType, CcuRep::Variable& currOffset,
+        GroupOpSize& currGoSize);
     void DoAxisSync(uint32_t signalIdx);
     void DoGroupSync(int ckeIdx, uint16_t selfBit, uint16_t allBit);
-    void DoGroupReduce(std::vector<CcuRep::Variable> &srcBase, CcuRep::Variable &dstBase,
-        CcuRep::Variable &offset, GroupOpSize &goSize);
-    void DoGroupBroadcast(CcuRep::Variable &srcBase, std::vector<CcuRep::Variable> &dstBase, CcuRep::Variable &offset,
-        GroupOpSize &goSize);
+    void DoGroupReduce(
+        std::vector<CcuRep::Variable>& srcBase, CcuRep::Variable& dstBase, CcuRep::Variable& offset,
+        GroupOpSize& goSize);
+    void DoGroupBroadcast(
+        CcuRep::Variable& srcBase, std::vector<CcuRep::Variable>& dstBase, CcuRep::Variable& offset,
+        GroupOpSize& goSize);
 
     uint32_t axisId_{0};
     DataType dataType_;

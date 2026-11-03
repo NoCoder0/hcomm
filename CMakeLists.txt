@@ -1,12 +1,13 @@
 # -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
+
 cmake_minimum_required(VERSION 3.16.0)
 option(BUILD_OPEN_PROJECT   "Build open hcomm project."     ON)
 option(ENABLE_BUILD_DEVICE  "Build hcomm device project."   OFF)
@@ -32,12 +33,13 @@ message(STATUS "BUILD_OPEN_PROJECT=${BUILD_OPEN_PROJECT}")
 message(STATUS "ENABLE_BUILD_DEVICE=${ENABLE_BUILD_DEVICE}")
 message(STATUS "ENABLE_BUILD_AARCH=${ENABLE_BUILD_AARCH}")
 message(STATUS "ENABLE_EXPERIMENTAL=${ENABLE_EXPERIMENTAL}")
+message(STATUS "LAUNCH_COMPILE_TOOL=${LAUNCH_COMPILE_TOOL}")
+message(STATUS "LAUNCH_LINK_TOOL=${LAUNCH_LINK_TOOL}")
 
 set(HCOMM_DIR         "${CMAKE_CURRENT_SOURCE_DIR}")
 set(HCC_TOOLCHAIN_DIR "${ASCEND_CANN_PACKAGE_PATH}/toolkit/toolchain/hcc")
 set(HCC_CXX_COMPILER  "${HCC_TOOLCHAIN_DIR}/bin/aarch64-target-linux-gnu-g++")
 set(HCC_C_COMPILER    "${HCC_TOOLCHAIN_DIR}/bin/aarch64-target-linux-gnu-gcc")
-set(HCC_C_AR          "${HCC_TOOLCHAIN_DIR}/bin/aarch64-target-linux-gnu-ar")
 
 # 交叉编译场景（x86机器上编译arm包）
 if(ENABLE_BUILD_AARCH)
@@ -56,6 +58,14 @@ project(hcomm)
 # 初始化 CANN 项目配置
 init_cann_project(PREPEND_MODULE_PATH)
 add_cann_target_options()
+
+# base_comm/inc/ 是 base_comm 对外的边界头文件目录（架构整改新增）
+# coll_communicator_mgr / legacy / test 等通过 #include "common/foo_pub.h" 等相对路径访问。
+# 说明：此处刻意用目录级全局 include，使全仓 target 均可解析边界头（跨 base_comm/coll/legacy/test/device 共享）。
+# 该路径不在 hcomm_coll_comm.cmake 的白名单 ledger 内——边界头当前是“全仓可见”，ledger 只度量 coll 对
+# base_comm 内部目录的依赖。退出计划：改为 target_include_directories 挂到显式消费者（hcomm_coll_comm_obj、
+# hcomm_base_obj、ccl_kernel/hccl_v2、相关 UT/ST），并登记进 ledger，使 ledger 可度量边界消费方。
+include_directories(${HCOMM_DIR}/src/base_comm/inc)
 
 # 采用 C++17 标准
 set(CMAKE_CXX_STANDARD 17)
@@ -93,6 +103,12 @@ message(STATUS "Detected JOBS: ${JOBS}")
 set(CMAKE_JOB_POOL_COMPILE "${JOBS}")
 set(CMAKE_JOB_POOL_LINK "${JOBS}")
 
+if(ENABLE_ASAN)
+    # GCC 13+ 编译器开启 ASAN 时，<regex> 系统库头文件中存在误报，若定义 -Werror 则会导致编译失败
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=maybe-uninitialized")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-error=maybe-uninitialized")
+endif()
+
 if(ENABLE_TEST)
     enable_testing()
     include(cmake/config.cmake)
@@ -113,6 +129,7 @@ elseif(BUILD_OPEN_PROJECT)
     # 三方件
     include(cmake/hcomm_utils.cmake)
     include(cmake/third_party/ubengine.cmake)
+    include(cmake/third_party/ibv_extend.cmake)
     add_cann_third_party(json)
     add_cann_third_party(openssl)
     add_cann_third_party(rdma-core)
@@ -139,35 +156,8 @@ elseif(BUILD_OPEN_PROJECT)
 
     # Device 侧编译构建
     if(ENABLE_DEVICE)
-        include(ExternalProject)
-        ExternalProject_Add(hcomm_device
-            SOURCE_DIR ${HCOMM_DIR}/cmake/device
-            BINARY_DIR ${HCOMM_DEVICE_BUILD_PATH}
-            CMAKE_ARGS
-                -DTOOLCHAIN_DIR=${HCC_TOOLCHAIN_DIR}
-                -DCMAKE_TOOLCHAIN_FILE=${HCOMM_DIR}/cmake/aarch64-hcc-toolchain.cmake
-                -DCMAKE_C_COMPILER=${HCC_C_COMPILER}
-                -DCMAKE_CXX_COMPILER=${HCC_CXX_COMPILER}
-                -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
-                -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
-                -DCMAKE_C_AR=${HCC_C_AR}
-                -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-                -DCMAKE_INSTALL_PREFIX=${HCOMM_DEVICE_INSTALL_PATH}
-                -DASCEND_INSTALL_PATH=${ASCEND_INSTALL_PATH}
-                -DBUILD_OPEN_PROJECT=${BUILD_OPEN_PROJECT}
-                -DCANN_3RD_LIB_PATH=${CANN_3RD_LIB_PATH}
-                -DENABLE_SIGN=${ENABLE_SIGN}
-                -DCUSTOM_SIGN_SCRIPT=${CUSTOM_SIGN_SCRIPT}
-                -DVERSION_INFO=${VERSION_INFO}
-            INSTALL_COMMAND ${CMAKE_CPACK_COMMAND}
-            BUILD_ALWAYS TRUE
-        )
-
-        # 安装 device 侧编译产物
-        install(FILES
-            ${HCOMM_DEVICE_BUILD_PATH}/device-hcomm.tar.gz
-            DESTINATION .
-            COMPONENT hcomm
+        add_cann_device_project(hcomm
+            EXT_ARGS -DLAUNCH_COMPILE_TOOL=${LAUNCH_COMPILE_TOOL}
         )
     endif()
 
@@ -178,8 +168,10 @@ elseif(BUILD_OPEN_PROJECT)
         include/hccl/hccl_rank_graph.h
         include/hccl/hccl_ccu_res.h
         include/hccl/hccl_res.h
+        include/hccl/hccl_channel.h
         include/hccl/hccl_sym_win.h
         include/hccl/hccl_launch.h
+        include/hccl/hccl_team.h
     )
 
     set(HCOMM_HEAD
@@ -206,6 +198,8 @@ elseif(BUILD_OPEN_PROJECT)
     install(FILES
         include/hcomm_res.h
         include/hcomm_res_defs.h
+        include/hcomm_channel.h
+        include/hcomm_team_defs.h
         DESTINATION ${INSTALL_INCLUDE_DIR}/hcomm/ ${INSTALL_OPTIONAL}
         COMPONENT hcomm
     )
@@ -241,6 +235,7 @@ elseif(BUILD_OPEN_PROJECT)
         include/ccu/ccu_primitives.hpp
         include/ccu/ccu_remote_addr.hpp
         include/ccu/ccu_res.h
+        include/ccu/ccu_res_defs.h
         include/ccu/ccu_types.h
         include/ccu/ccu_utils.hpp
         include/ccu/ccu_variable.hpp
@@ -252,6 +247,7 @@ elseif(BUILD_OPEN_PROJECT)
     )
 
     set(HCCL_PKG_INC_CCU_HEAD
+        pkg_inc/hcomm/ccu/hcomm_res_ccu_entity_defs.h
         pkg_inc/hcomm/ccu/ccu_primitives_impl.h
     )
     install(FILES
@@ -262,7 +258,10 @@ elseif(BUILD_OPEN_PROJECT)
 
     set(HCOMM_PKG_HEAD
         pkg_inc/hcomm/hcomm_primitives_expt.h
+        pkg_inc/hcomm/hcomm_res_expt.h
         pkg_inc/hcomm/hcomm_res_entity_defs.h
+        pkg_inc/hcomm/hcomm_team_entity_defs.h
+        pkg_inc/hcomm/hcomm_exception.h
     )
     install(FILES
         ${HCOMM_PKG_HEAD}

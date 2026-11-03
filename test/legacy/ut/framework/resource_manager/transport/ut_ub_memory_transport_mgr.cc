@@ -21,9 +21,9 @@
 #include "network_api_exception.h"
 #include "exchange_ipc_buffer_dto.h"
 #include "orion_adapter_hccp.h"
-#include "env_config.h"
+#include "env_config_v2.h"
 #include "ub_memory_transport.h"
-#include "local_ipc_rma_buffer.h"
+#include "local_ipc_rma_buffer_v2.h"
 #include "remote_rma_buffer.h"
 #include "communicator_impl.h"
 #include "dev_buffer.h"
@@ -35,15 +35,9 @@ using namespace Hccl;
 
 class UbMemoryTransportMgrTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "UbMemoryTransportMgrTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "UbMemoryTransportMgrTest tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "UbMemoryTransportMgrTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "UbMemoryTransportMgrTest tests tear down." << std::endl; }
 
     virtual void SetUp()
     {
@@ -60,11 +54,13 @@ protected:
 
 class StubAivSocket : public Socket {
 public:
-    StubAivSocket() : Socket(nullptr, IpAddress("1.0.0.0"), 0, IpAddress("1.0.0.0"), "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE)
-    {
-    }
+    StubAivSocket()
+        : Socket(
+              nullptr, IpAddress("1.0.0.0"), 0, IpAddress("1.0.0.0"), "tag", SocketRole::SERVER,
+              NicType::DEVICE_NIC_TYPE)
+    {}
 
-    bool Send(Socket *This, const u8 *sendBuf, u32 size) const
+    bool Send(Socket* This, const u8* sendBuf, u32 size) const
     {
         buf.resize(size);
         memcpy(buf.data(), sendBuf, size);
@@ -72,9 +68,9 @@ public:
         return true;
     }
 
-    bool Recv(Socket *This, u8 *recvBuf, u32 size) const
+    bool Recv(Socket* This, u8* recvBuf, u32 size) const
     {
-        if(buf.size() < size) {
+        if (buf.size() < size) {
             return false;
         }
         memcpy(recvBuf, buf.data(), size);
@@ -89,7 +85,7 @@ std::vector<char> StubAivSocket::buf;
 
 TEST_F(UbMemoryTransportMgrTest, should_return_success_when_calling_TransportsConnect)
 {
-    cout<<1<<endl;
+    cout << 1 << endl;
     CommunicatorImpl comm;
     comm.InitSocketManager();
 
@@ -100,25 +96,26 @@ TEST_F(UbMemoryTransportMgrTest, should_return_success_when_calling_TransportsCo
     comm.currentCollOperator->inputMem = DevBuffer::Create(0x100, 10);
     comm.currentCollOperator->outputMem = DevBuffer::Create(0x100, 10);
 
-    UbMemoryTransportMgr          transportManager(comm);
+    UbMemoryTransportMgr transportManager(comm);
 
-    std::string                    opTag = "test_tag";
+    std::string opTag = "test_tag";
     LinkData linkData(BasePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB), 0, 1, 0, 1);
     vector<LinkData> linkDatas;
     linkDatas.push_back(linkData);
-    cout<<1<<endl;
-    IpAddress          ipAddress("1.0.0.0");
-    shared_ptr<Socket> fakeSocket = make_shared<Socket>(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
-    SocketConfig       socketConfig(linkData.GetRemoteRankId(), linkData, comm.GetEstablishLinkSocketTag());
+    cout << 1 << endl;
+    IpAddress ipAddress("1.0.0.0");
+    shared_ptr<Socket> fakeSocket
+        = make_shared<Socket>(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    SocketConfig socketConfig(linkData.GetRemoteRankId(), linkData, comm.GetEstablishLinkSocketTag());
     comm.GetSocketManager().connectedSocketMap[socketConfig] = std::move(fakeSocket);
-    cout<<2<<endl;
+    cout << 2 << endl;
     comm.cclBuffer = DevBuffer::Create(0x100, 10);
     comm.aivTagBuffer = DevBuffer::Create(0x100, 10);
     comm.aivOffloadTagBuffer = DevBuffer::Create(0x100, 10);
-    cout<<3<<endl;
-    char* testStr = "test"; 
+    cout << 3 << endl;
+    char* testStr = "test";
     transportManager.BatchCreateTransport(linkDatas);
-    cout<<4<<endl;
+    cout << 4 << endl;
     MOCKER(HrtRaSocketBlockSend).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(ignoreReturnValue());
     MOCKER_CPP(&Socket::GetAsyncStatus).stubs().will(returnValue((SocketStatus)SocketStatus::OK));
     MOCKER_CPP(&UbMemoryTransport::SendMemInfo).stubs().will(ignoreReturnValue());
@@ -126,10 +123,10 @@ TEST_F(UbMemoryTransportMgrTest, should_return_success_when_calling_TransportsCo
     MOCKER_CPP(&UbMemoryTransport::RecvMemProcess).stubs().will(ignoreReturnValue());
     u64 res = 1;
     MOCKER(&CheckCollOperator).stubs().with().will(ignoreReturnValue());
-    MOCKER(&HrtGetDevicePhyIdByIndex).stubs().with().will(returnValue(1));
+    MOCKER(&HrtGetDevicePhyIdByUserDevId).stubs().with().will(returnValue(1));
     ReqHandleResult result = ReqHandleResult::COMPLETED;
     MOCKER(&HrtRaGetAsyncReqResult).stubs().with().will(returnValue(result));
-    transportManager.ubMemLink2TransportMap[linkData]->rmtHandshakeMsg=comm.GetCurrentCollOperator()->GetUniqueId();
+    transportManager.ubMemLink2TransportMap[linkData]->rmtHandshakeMsg = comm.GetCurrentCollOperator()->GetUniqueId();
     transportManager.TransportsConnect();
 }
 
@@ -138,9 +135,10 @@ TEST_F(UbMemoryTransportMgrTest, should_return_success_when_calling_GetLocMemBuf
     std::shared_ptr<Buffer> cclBuffer = DevBuffer::Create(0x100, 10);
 
     unique_ptr<StubAivSocket> fakeSocket = make_unique<StubAivSocket>();
- 
+
     DevId devLogicId = 0;
-    std::unique_ptr<UbMemoryTransport> transport = make_unique<UbMemoryTransport>(cclBuffer, cclBuffer, cclBuffer, fakeSocket.get(), devLogicId);
+    std::unique_ptr<UbMemoryTransport> transport
+        = make_unique<UbMemoryTransport>(cclBuffer, cclBuffer, cclBuffer, fakeSocket.get(), devLogicId);
 
     transport->localBufferVec.push_back(make_unique<LocalIpcRmaBuffer>(cclBuffer));
 
@@ -154,12 +152,12 @@ TEST_F(UbMemoryTransportMgrTest, should_return_success_when_calling_GetRmtMemBuf
     std::shared_ptr<Buffer> cclBuffer = DevBuffer::Create(0x100, 10);
 
     unique_ptr<StubAivSocket> fakeSocket = make_unique<StubAivSocket>();
- 
-    DevId devLogicId = 0;
-    std::unique_ptr<UbMemoryTransport> transport = make_unique<UbMemoryTransport>(cclBuffer, cclBuffer, cclBuffer, fakeSocket.get(), devLogicId);
 
-    ExchangeIpcBufferDto dto;
-    transport->rmtBufferVec.push_back(make_unique<RemoteIpcRmaBuffer>(dto, "UbMemory"));
+    DevId devLogicId = 0;
+    std::unique_ptr<UbMemoryTransport> transport
+        = make_unique<UbMemoryTransport>(cclBuffer, cclBuffer, cclBuffer, fakeSocket.get(), devLogicId);
+
+    transport->rmtBufferVec.push_back(make_unique<RemoteIpcRmaBuffer>());
 
     EXPECT_NE(transport->GetRmtMemBuffer(0), nullptr);
 
@@ -171,9 +169,10 @@ TEST_F(UbMemoryTransportMgrTest, should_UB_CONNECT_FAILED_when_calling_GetStatus
     std::shared_ptr<Buffer> cclBuffer = DevBuffer::Create(0x100, 10);
 
     unique_ptr<StubAivSocket> fakeSocket = make_unique<StubAivSocket>();
- 
+
     DevId devLogicId = 0;
-    std::unique_ptr<UbMemoryTransport> transport = make_unique<UbMemoryTransport>(cclBuffer, cclBuffer, cclBuffer, fakeSocket.get(), devLogicId);
+    std::unique_ptr<UbMemoryTransport> transport
+        = make_unique<UbMemoryTransport>(cclBuffer, cclBuffer, cclBuffer, fakeSocket.get(), devLogicId);
 
     MOCKER_CPP(&Socket::GetAsyncStatus).stubs().will(returnValue((SocketStatus)SocketStatus::INIT));
     EXPECT_EQ(transport->GetStatus(), UbMemoryTransport::UBTransportStatus::CONNECT_FAILED);
@@ -184,9 +183,10 @@ TEST_F(UbMemoryTransportMgrTest, should_UB_TIMEOUT_when_calling_GetStatus_SOCKET
     std::shared_ptr<Buffer> cclBuffer = DevBuffer::Create(0x100, 10);
 
     unique_ptr<StubAivSocket> fakeSocket = make_unique<StubAivSocket>();
- 
+
     DevId devLogicId = 0;
-    std::unique_ptr<UbMemoryTransport> transport = make_unique<UbMemoryTransport>(cclBuffer, cclBuffer, cclBuffer, fakeSocket.get(), devLogicId);
+    std::unique_ptr<UbMemoryTransport> transport
+        = make_unique<UbMemoryTransport>(cclBuffer, cclBuffer, cclBuffer, fakeSocket.get(), devLogicId);
 
     MOCKER_CPP(&Socket::GetAsyncStatus).stubs().will(returnValue((SocketStatus)SocketStatus::TIMEOUT));
     EXPECT_EQ(transport->GetStatus(), UbMemoryTransport::UBTransportStatus::SOCKET_TIMEOUT);
@@ -197,9 +197,10 @@ TEST_F(UbMemoryTransportMgrTest, should_READY_when_calling_GetStatus_SOCKET_CONN
     std::shared_ptr<Buffer> cclBuffer = DevBuffer::Create(0x100, 10);
 
     unique_ptr<StubAivSocket> fakeSocket = make_unique<StubAivSocket>();
- 
+
     DevId devLogicId = 0;
-    std::unique_ptr<UbMemoryTransport> transport = make_unique<UbMemoryTransport>(cclBuffer, cclBuffer, cclBuffer, fakeSocket.get(), devLogicId);
+    std::unique_ptr<UbMemoryTransport> transport
+        = make_unique<UbMemoryTransport>(cclBuffer, cclBuffer, cclBuffer, fakeSocket.get(), devLogicId);
 
     transport->ubStatus = UbMemoryTransport::UBTransportStatus::READY;
     MOCKER_CPP(&Socket::GetAsyncStatus).stubs().will(returnValue((SocketStatus)SocketStatus::CONNECTING));

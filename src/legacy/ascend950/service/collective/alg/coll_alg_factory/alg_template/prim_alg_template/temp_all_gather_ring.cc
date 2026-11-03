@@ -13,30 +13,28 @@
 #include "temp_all_gather_ring.h"
 
 namespace Hccl {
-TempAllGatherRing::TempAllGatherRing(const RankId virtualRank, const u32 tempRankSize,
-                                     const std::vector<std::vector<RankId>> &tempVTopo,
-                                     const std::map<RankId, u32>            &tempVirtRankMap)
+TempAllGatherRing::TempAllGatherRing(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
     : AlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap)
-{
-}
+{}
 
-TempAllGatherRing::~TempAllGatherRing()
-{
-}
+TempAllGatherRing::~TempAllGatherRing() {}
 
-HcclResult TempAllGatherRing::CalcRes(AlgTempResReq &tempResReq)
+HcclResult TempAllGatherRing::CalcRes(AlgTempResReq& tempResReq)
 {
     tempResReq.queNum = tempVTopo_.size();
 
-    CHK_PRT_RET(CalcResLinksRing(myRank_, tempRankSize_, tempVTopo_, tempResReq) != HcclResult::HCCL_SUCCESS,
-                HCCL_ERROR("[CollAlgFactory] [TempAllGatherRing] Rank [%d], resLinks calculation error!", myRank_),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        CalcResLinksRing(myRank_, tempRankSize_, tempVTopo_, tempResReq) != HcclResult::HCCL_SUCCESS,
+        HCCL_ERROR("[CollAlgFactory] [TempAllGatherRing] Rank [%d], resLinks calculation error!", myRank_),
+        HcclResult::HCCL_E_INTERNAL);
 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TempAllGatherRing::CalcSliceInfo(const AllignInfo &allignInfo, const u64 dataSize,
-                                            RankSliceInfo &sliceInfoVec)
+HcclResult
+TempAllGatherRing::CalcSliceInfo(const AllignInfo& allignInfo, const u64 dataSize, RankSliceInfo& sliceInfoVec)
 {
     std::vector<SliceInfo> tmp(tempVTopo_.size());
     sliceInfoVec.resize(tempRankSize_, tmp);
@@ -46,18 +44,19 @@ HcclResult TempAllGatherRing::CalcSliceInfo(const AllignInfo &allignInfo, const 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TempAllGatherRing::GenPrimQue(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec,
-                                         const BuffInfo &buffInfo, const ResLinks &tempLinks,
-                                         std::vector<PrimQuePtr> &tempPrimQues)
+HcclResult TempAllGatherRing::GenPrimQue(
+    const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, const BuffInfo& buffInfo, const ResLinks& tempLinks,
+    std::vector<PrimQuePtr>& tempPrimQues)
 {
-    opMode_              = tempFuncs.opMode;
+    opMode_ = tempFuncs.opMode;
     enableCounterNotify_ = tempFuncs.enableCounterNotify;
-    buffInfo_            = buffInfo;
+    buffInfo_ = buffInfo;
 
     queNum_ = tempVTopo_.size();
-    CHK_PRT_RET(queNum_ != tempPrimQues.size(),
-                HCCL_ERROR("[CollAlgFactory] [TempAllGatherRing] Rank [%d], requiredQue Error.", myRank_),
-                HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        queNum_ != tempPrimQues.size(),
+        HCCL_ERROR("[CollAlgFactory] [TempAllGatherRing] Rank [%d], requiredQue Error.", myRank_),
+        HcclResult::HCCL_E_INTERNAL);
 
     // Local Copy from Input to Scratch Buffer for OPBASE
     if ((opMode_ == OpMode::OPBASE) && tempFuncs.isForepart && !tempFuncs.forAllReduce) {
@@ -86,10 +85,11 @@ HcclResult TempAllGatherRing::GenPrimQue(const TempFuncs &tempFuncs, const RankS
 
         // semaphore sync
         if (queNum_ > 1) {
-            CHK_PRT_RET(PostSync(queIdx, tempPrimQues) != HcclResult::HCCL_SUCCESS,
-                        HCCL_ERROR("[CollAlgFactory] [TempAllGatherRing] Rank [%d], Unable to synchronize all queues.",
-                                   myRank_),
-                        HcclResult::HCCL_E_INTERNAL);
+            CHK_PRT_RET(
+                PostSync(queIdx, tempPrimQues) != HcclResult::HCCL_SUCCESS,
+                HCCL_ERROR(
+                    "[CollAlgFactory] [TempAllGatherRing] Rank [%d], Unable to synchronize all queues.", myRank_),
+                HcclResult::HCCL_E_INTERNAL);
         }
     }
 
@@ -101,23 +101,23 @@ HcclResult TempAllGatherRing::GenPrimQue(const TempFuncs &tempFuncs, const RankS
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TempAllGatherRing::PreCopyOffload(const RankSliceInfo &sliceInfoVec, const bool forAllReduce,
-                                             std::vector<PrimQuePtr> &tempPrimQues)
+HcclResult TempAllGatherRing::PreCopyOffload(
+    const RankSliceInfo& sliceInfoVec, const bool forAllReduce, std::vector<PrimQuePtr>& tempPrimQues)
 {
     if (!forAllReduce) {
         u64 srcOffset = 0;
-        u64 srcSize   = sliceInfoVec[tempVirtRankMap_[myRank_]][queNum_ - 1].offset
+        u64 srcSize = sliceInfoVec[tempVirtRankMap_[myRank_]][queNum_ - 1].offset
                       - sliceInfoVec[tempVirtRankMap_[myRank_]][0].offset
                       + sliceInfoVec[tempVirtRankMap_[myRank_]][queNum_ - 1].size;
-        u64       dstOffset = sliceInfoVec[tempVirtRankMap_[myRank_]][0].offset;
-        DataSlice srcSlice  = DataSlice(buffInfo_.inBuffType, srcOffset + buffInfo_.inBuffBaseOff, srcSize);
-        DataSlice dstSlice  = DataSlice(buffInfo_.outBuffType, dstOffset + buffInfo_.outBuffBaseOff, srcSize);
+        u64 dstOffset = sliceInfoVec[tempVirtRankMap_[myRank_]][0].offset;
+        DataSlice srcSlice = DataSlice(buffInfo_.inBuffType, srcOffset + buffInfo_.inBuffBaseOff, srcSize);
+        DataSlice dstSlice = DataSlice(buffInfo_.outBuffType, dstOffset + buffInfo_.outBuffBaseOff, srcSize);
         std::unique_ptr<Primitive> primLocalCopy = std::make_unique<PrimLocalCopy>(srcSlice, dstSlice);
         tempPrimQues[0]->Append(std::move(primLocalCopy));
     } else { // allreduce: split local copy per queue to eliminate the notify/wait
         for (u32 qIdx = 0; qIdx < queNum_; qIdx++) {
-            u64       queSliceOff  = sliceInfoVec[tempVirtRankMap_[myRank_]][qIdx].offset;
-            u64       queSliceSize = sliceInfoVec[tempVirtRankMap_[myRank_]][qIdx].size;
+            u64 queSliceOff = sliceInfoVec[tempVirtRankMap_[myRank_]][qIdx].offset;
+            u64 queSliceSize = sliceInfoVec[tempVirtRankMap_[myRank_]][qIdx].size;
             DataSlice srcSlice = DataSlice(buffInfo_.inBuffType, queSliceOff + buffInfo_.inBuffBaseOff, queSliceSize);
             DataSlice dstSlice = DataSlice(buffInfo_.outBuffType, queSliceOff + buffInfo_.outBuffBaseOff, queSliceSize);
             std::unique_ptr<Primitive> primLocalCopy = std::make_unique<PrimLocalCopy>(srcSlice, dstSlice);
@@ -128,15 +128,15 @@ HcclResult TempAllGatherRing::PreCopyOffload(const RankSliceInfo &sliceInfoVec, 
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult TempAllGatherRing::RunIndividualRing(const u32 queIdx, const RankSliceInfo &sliceInfoVec,
-                                                const ResLinks &tempLinks, PrimQuePtr currPrimQue)
+HcclResult TempAllGatherRing::RunIndividualRing(
+    const u32 queIdx, const RankSliceInfo& sliceInfoVec, const ResLinks& tempLinks, PrimQuePtr currPrimQue)
 {
     // locate myRank in tempVTopo -> algRank
     u32 myAlgRank;
     CHK_RET(GetAlgRank(myRank_, tempVTopo_[queIdx], myAlgRank));
 
     // find neighbors -> virtualRank
-    RankId sendToRank   = tempVTopo_[queIdx][(myAlgRank + 1) % tempRankSize_];
+    RankId sendToRank = tempVTopo_[queIdx][(myAlgRank + 1) % tempRankSize_];
     RankId recvFromRank = tempVTopo_[queIdx][(myAlgRank - 1 + tempRankSize_) % tempRankSize_]; // virtualRank
 
     // Link
@@ -146,12 +146,12 @@ HcclResult TempAllGatherRing::RunIndividualRing(const u32 queIdx, const RankSlic
     // run stepNum steps to complete the ring
     for (u32 step = 0; step < stepNum_; step++) {
         u32 sendChunkIdx = tempVirtRankMap_[tempVTopo_[queIdx][(myAlgRank - step + tempRankSize_) % tempRankSize_]];
-        u64 sendOffset   = sliceInfoVec[sendChunkIdx][queIdx].offset;
-        u64 sendSize     = sliceInfoVec[sendChunkIdx][queIdx].size;
+        u64 sendOffset = sliceInfoVec[sendChunkIdx][queIdx].offset;
+        u64 sendSize = sliceInfoVec[sendChunkIdx][queIdx].size;
         u32 recvChunkIdx = tempVirtRankMap_[tempVTopo_[queIdx][(myAlgRank - 1 - step + tempRankSize_) % tempRankSize_]];
 
         u64 recvOffset = sliceInfoVec[recvChunkIdx][queIdx].offset;
-        u64 recvSize   = sliceInfoVec[recvChunkIdx][queIdx].size;
+        u64 recvSize = sliceInfoVec[recvChunkIdx][queIdx].size;
 
         // PrimGroup
         std::unique_ptr<PrimGroup> primGroup = std::make_unique<PrimGroup>();

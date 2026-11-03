@@ -16,23 +16,16 @@
 #include <mockcpp/mockcpp.hpp>
 
 using namespace Hccl;
-class LogTest : public testing::Test
-{
+class LogTest : public testing::Test {
 protected:
-    static void SetUpTestCase() {
-        std::cout << "LogTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "LogTest tests set up." << std::endl; }
 
-    static void TearDownTestCase() {
-        std::cout << "LogTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "LogTest tests tear down." << std::endl; }
 
-    virtual void SetUp() {
-        std::cout << "A Test case in LogTest SetUP" << std::endl;
+    virtual void SetUp() { std::cout << "A Test case in LogTest SetUP" << std::endl; }
 
-    }
-
-    virtual void TearDown() {
+    virtual void TearDown()
+    {
         GlobalMockObject::verify();
         std::cout << "A Test case in LogTest TearDown" << std::endl;
     }
@@ -40,7 +33,7 @@ protected:
 
 TEST_F(LogTest, ut_sal_log_printf_log2)
 {
-    MODULE_DEBUG("\r\r\r\r \r\r\r\r  log 2.0  test");/*提高覆盖率*/
+    MODULE_DEBUG("\r\r\r\r \r\r\r\r log 2.0 test"); /*提高覆盖率*/
     MODULE_INFO("log 2.0 test");
     MODULE_WARNING("log 2.0 test");
     MODULE_ERROR("log 2.0 test");
@@ -70,10 +63,10 @@ TEST_F(LogTest, ut_sal_log_printf_error_0)
     CallDlogNoSzFormat(HCCL_LOG_RUN_INFO, 1, "test", 2);
     CallDlogMemError(HCCL_LOG_RUN_INFO, "test", 2);
     CallDlogPrintError(HCCL_LOG_RUN_INFO, "test", 2);
-    CallDlog(HCCL_LOG_RUN_INFO, 1, "test" ,"test", 2);
+    CallDlog(HCCL_LOG_RUN_INFO, 1, "test", "test", 2);
     CallDlogInvalidType(HCCL_LOG_OPLOG, 1, "test", 2);
     CallDlogNoSzFormat(HCCL_LOG_OPLOG, 1, "test", 2);
     CallDlogMemError(HCCL_LOG_OPLOG, "test", 2);
     CallDlogPrintError(HCCL_LOG_OPLOG, "test", 2);
-    CallDlog(HCCL_LOG_OPLOG, 1, "test","test", 2);
+    CallDlog(HCCL_LOG_OPLOG, 1, "test", "test", 2);
 }

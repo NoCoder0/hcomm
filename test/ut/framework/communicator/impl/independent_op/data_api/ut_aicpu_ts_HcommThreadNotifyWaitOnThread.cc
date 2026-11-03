@@ -12,13 +12,9 @@
 
 using namespace hccl;
 
-class UtAicpuTsHcommThreadNotifyWaitOnThread : public UtAicpuTsBase
-{
+class UtAicpuTsHcommThreadNotifyWaitOnThread : public UtAicpuTsBase {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "UtAicpuTsHcommThreadNotifyWaitOnThread tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "UtAicpuTsHcommThreadNotifyWaitOnThread tests set up." << std::endl; }
 
     static void TearDownTestCase()
     {
@@ -30,7 +26,9 @@ protected:
         std::cout << "A Test case in UtAicpuTsHcommThreadNotifyWaitOnThread SetUp" << std::endl;
         UtAicpuTsBase::SetUp();
 
-        MOCKER_CPP(&Hccl::IAicpuTsThread::NotifyWait, HcclResult (Hccl::IAicpuTsThread::*)(uint32_t, uint32_t) const).stubs().will(returnValue(HCCL_SUCCESS));
+        MOCKER_CPP(&Hccl::IAicpuTsThread::NotifyWait, HcclResult(Hccl::IAicpuTsThread::*)(uint32_t, uint32_t) const)
+            .stubs()
+            .will(returnValue(HCCL_SUCCESS));
     }
 
     virtual void TearDown() override
@@ -50,7 +48,9 @@ TEST_F(UtAicpuTsHcommThreadNotifyWaitOnThread, Ut_HcommThreadNotifyWaitOnThread_
     EXPECT_EQ(res, HCCL_SUCCESS);
 }
 
-TEST_F(UtAicpuTsHcommThreadNotifyWaitOnThread, Ut_HcommThreadNotifyWaitOnThread_When_Thread_IsNull_Expect_ReturnIsHCCL_E_PTR)
+TEST_F(
+    UtAicpuTsHcommThreadNotifyWaitOnThread,
+    Ut_HcommThreadNotifyWaitOnThread_When_Thread_IsNull_Expect_ReturnIsHCCL_E_PTR)
 {
     res = HcommThreadNotifyWaitOnThread(0, notifyIdx, timeOut);
     EXPECT_EQ(res, HCCL_E_PTR);

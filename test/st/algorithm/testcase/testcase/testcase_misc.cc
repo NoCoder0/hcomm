@@ -1,12 +1,13 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "gtest/gtest.h"
 
 #include <vector>
@@ -30,15 +31,9 @@ using namespace hccl;
 
 class MiscTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "MiscTest set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "MiscTest set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "MiscTest tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "MiscTest tear down." << std::endl; }
 
     virtual void SetUp()
     {
@@ -67,10 +62,7 @@ TEST_F(MiscTest, testcase_alg_profiling)
     AlgWrap::GetInstance().UnregisterAlgCallBack("comm2");
 }
 
-TEST_F(MiscTest, testcase_RegisterKernel)
-{
-    RegisterKernel(DevType::DEV_TYPE_910_93);
-}
+TEST_F(MiscTest, testcase_RegisterKernel) { RegisterKernel(DevType::DEV_TYPE_910_93); }
 
 TEST_F(MiscTest, testcase_ClearAivSyncBufAndTag)
 {
@@ -87,19 +79,23 @@ TEST_F(MiscTest, testcase_ExecuteKernelLaunchInner)
 {
     std::string tag = "tmp_test";
 
-    void *buffersIn[MAX_RANK_SIZE];
-    void *buffersOut[MAX_RANK_SIZE];
+    void* buffersIn[MAX_RANK_SIZE];
+    void* buffersOut[MAX_RANK_SIZE];
     u64 count = 1;
     u32 numBlocks = 1;
     s32 aivTag = TAG_RESET_COUNT;
 
-    AivOpArgs opArgs {
-        HcclCMDType::HCCL_CMD_ALLGATHER, nullptr, nullptr, count,
-        HCCL_DATA_TYPE_RESERVED, HCCL_REDUCE_RESERVED, 0, true
-    };
-    AivTopoArgs topoArgs { 0, 1, MAX_RANK_SIZE, 0, 1, DevType::DEV_TYPE_910_93 };
-    AivResourceArgs resourceArgs { tag, nullptr, buffersIn, buffersOut, 200 * 1024 * 1024, numBlocks, aivTag };
-    AivAlgArgs algArgs {};
+    AivOpArgs opArgs{HcclCMDType::HCCL_CMD_ALLGATHER,
+                     nullptr,
+                     nullptr,
+                     count,
+                     HCCL_DATA_TYPE_RESERVED,
+                     HCCL_REDUCE_RESERVED,
+                     0,
+                     true};
+    AivTopoArgs topoArgs{0, 1, MAX_RANK_SIZE, 0, 1, DevType::DEV_TYPE_910_93};
+    AivResourceArgs resourceArgs{tag, nullptr, buffersIn, buffersOut, 200 * 1024 * 1024, numBlocks, aivTag};
+    AivAlgArgs algArgs{};
     struct AivProfilingInfo aivProfilingInfo;
 
     ExecuteKernelLaunchInner(opArgs, topoArgs, resourceArgs, algArgs, nullptr, 1, aivProfilingInfo);
@@ -119,7 +115,7 @@ TEST_F(MiscTest, testcase_CleanAIVbuffer)
     ccLBufferManager.GetInAivOffloadbuffer();
     ccLBufferManager.GetOutAivOffloadbuffer();
     ccLBufferManager.ClearCommAIVbuffer();
-    
+
     ccLBufferManager.CleanAIVbuffer(aIVbuffer.ptr());
 }
 
@@ -131,7 +127,7 @@ TEST_F(MiscTest, testcase_SetDeterministicConfig)
     HcclAlgoInfo algoInfo{};
     HcclExternalEnable externalEnable{};
     std::vector<std::vector<std::vector<u32>>> serverAndsuperPodToRank{};
-    std::unique_ptr<TopoMatcher> topoMatcher = std::make_unique<TopoMatcher>(CommPlaneRanks, isBridgeVector, topoInfo,
-        algoInfo, externalEnable, serverAndsuperPodToRank);
+    std::unique_ptr<TopoMatcher> topoMatcher = std::make_unique<TopoMatcher>(
+        CommPlaneRanks, isBridgeVector, topoInfo, algoInfo, externalEnable, serverAndsuperPodToRank);
     topoMatcher->SetDeterministicConfig(0);
 }

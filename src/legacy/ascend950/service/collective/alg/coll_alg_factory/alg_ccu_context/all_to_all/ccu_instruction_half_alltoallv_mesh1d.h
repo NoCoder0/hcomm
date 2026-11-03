@@ -24,9 +24,16 @@ namespace Hccl {
 // 为AllToAllVMesh1D实现的CCUIns、CCUCtxArg与CCUTaskArg
 class CcuCtxArgHalfAllToAllVMesh1D : public CcuCtxArg {
 public:
-    explicit CcuCtxArgHalfAllToAllVMesh1D(const std::vector<uint64_t> &dSize, uint32_t rId, const CollAlgOperator &op,
-        uint32_t mId, uint64_t cclBufferAddr, const std::vector<std::vector<RankId>> &tempVTopo) :
-            dimSize(dSize), rankId(rId), op(op), missionId(mId), cclBufferAddr(cclBufferAddr), tempVTopo(tempVTopo) {}
+    explicit CcuCtxArgHalfAllToAllVMesh1D(
+        const std::vector<uint64_t>& dSize, uint32_t rId, const CollAlgOperator& op, uint32_t mId,
+        uint64_t cclBufferAddr, const std::vector<std::vector<RankId>>& tempVTopo)
+        : dimSize(dSize),
+          rankId(rId),
+          op(op),
+          missionId(mId),
+          cclBufferAddr(cclBufferAddr),
+          tempVTopo(tempVTopo)
+    {}
     CcuCtxSignature GetCtxSignature() const override
     {
         CcuCtxSignature signature;
@@ -34,10 +41,10 @@ public:
         return signature;
     }
     std::vector<uint64_t> dimSize;
-    uint32_t              rankId;
-    CollAlgOperator       op;
-    uint32_t              missionId;
-    uint64_t              cclBufferAddr;
+    uint32_t rankId;
+    CollAlgOperator op;
+    uint32_t missionId;
+    uint64_t cclBufferAddr;
     std::vector<std::vector<RankId>> tempVTopo;
 };
 
@@ -48,12 +55,11 @@ public:
 
 class CcuInstructionHalfAllToAllVMesh1D : public CcuInstruction {
 public:
-    CcuInstructionHalfAllToAllVMesh1D() : CcuInstruction()
-    {
-    }
+    CcuInstructionHalfAllToAllVMesh1D() : CcuInstruction() {}
 
-    void Init(uint32_t mId, uint32_t rankId, uint64_t scratchAddr, CollAlgOperator &op,
-        std::vector<std::vector<RankId>> &tempVTopo)
+    void Init(
+        uint32_t mId, uint32_t rankId, uint64_t scratchAddr, CollAlgOperator& op,
+        std::vector<std::vector<RankId>>& tempVTopo)
     {
         u32 maxDimNum = 1;
         if (tempVTopo.size() != maxDimNum) {
@@ -61,11 +67,11 @@ public:
                 "[CcuInstructionHalfAllToAllVMesh1D] tempVTopo size is not 1, size is [%zu].", tempVTopo.size()));
         }
         dimSize_.push_back(tempVTopo[0].size());
-        missionId_     = mId;
-        rankId_        = rankId;
+        missionId_ = mId;
+        rankId_ = rankId;
         cclBufferAddr_ = scratchAddr;
-        op_            = op;
-        tempVTopo_     = tempVTopo;
+        op_ = op;
+        tempVTopo_ = tempVTopo;
         return;
     }
 
@@ -77,14 +83,11 @@ public:
 
     std::string Describe() const override
     {
-        return StringFormat("CcuInstructionHalfAllToAllVMesh1D rankId [%u], instType[%s]",
-            rankId_, instType_.Describe().c_str());
+        return StringFormat(
+            "CcuInstructionHalfAllToAllVMesh1D rankId [%u], instType[%s]", rankId_, instType_.Describe().c_str());
     }
 
-        void SetInstType(CcuInstType instType) 
-    { 
-        instType_ = instType; 
-    }
+    void SetInstType(CcuInstType instType) { instType_ = instType; }
 
     std::unique_ptr<CcuCtxArg> GetCtxArg() const override
     {
@@ -107,5 +110,5 @@ private:
     std::vector<std::vector<RankId>> tempVTopo_;
 };
 
-}
+} // namespace Hccl
 #endif // HCCLV2_CCU_INSTRUCTION_HALF_ALL_TO_ALL_V_MESH_1D_H_

@@ -34,17 +34,14 @@ void BkfChCliLetcpDisp(BkfChCli *chCli)
     BKF_DISP_PRINTF(disp, "logCnt(%#x)\n", BKF_MASK_ADDR(chCli->argInit.base->logCnt));
     BKF_DISP_PRINTF(disp, "tmrMng(%#x), jobMng(%#x)\n", BKF_MASK_ADDR(chCli->argInit.base->tmrMng),
         BKF_MASK_ADDR(chCli->argInit.base->jobMng));
-    BKF_DISP_PRINTF(disp, "jobType: %u, JobPri: %u\n", chCli->argInit.base->jobTypeId,
-        chCli->argInit.base->jobPrio);
+    BKF_DISP_PRINTF(disp, "jobType: %u, JobPri: %u\n", chCli->argInit.base->jobTypeId, chCli->argInit.base->jobPrio);
 
     BKF_DISP_PRINTF(disp, "-----------------------------------\n");
     BKF_DISP_PRINTF(disp, "Enable FuncTable:\n");
     BKF_DISP_PRINTF(disp, "Cookies(%#x)\n", BKF_MASK_ADDR(chCli->argEnable.cookie));
-    BKF_DISP_PRINTF(disp, "OnRcvData(%#x), OnRcvDataEvt(%#x)\n",
-        BKF_MASK_ADDR(chCli->argEnable.onRcvData),
+    BKF_DISP_PRINTF(disp, "OnRcvData(%#x), OnRcvDataEvt(%#x)\n", BKF_MASK_ADDR(chCli->argEnable.onRcvData),
         BKF_MASK_ADDR(chCli->argEnable.onRcvDataEvent));
-    BKF_DISP_PRINTF(disp, "onUnblock(%#x), onDisconn(%#x)\n",
-        BKF_MASK_ADDR(chCli->argEnable.onUnblock),
+    BKF_DISP_PRINTF(disp, "onUnblock(%#x), onDisconn(%#x)\n", BKF_MASK_ADDR(chCli->argEnable.onUnblock),
         BKF_MASK_ADDR(chCli->argEnable.onDisconn));
     connId = VOS_AVLL_FIRST(chCli->connSet);
     while (connId != VOS_NULL) {
@@ -69,15 +66,15 @@ void BkfChCliLetcpDispOneConnId(BkfChCli *chCli, BkfChCliConnId *connId, int32_t
 
     disp = chCli->argInit.base->disp;
     BKF_DISP_PRINTF(disp, "++++connId[%d]============\n", idx);
-    BKF_DISP_PRINTF(disp, "sign(%#x)\n",          connId->sign);
-    BKF_DISP_PRINTF(disp, "connFd(%d)\n",      connId->connFd);
-    BKF_DISP_PRINTF(disp, "keyUrlSer(%s)\n",         BkfUrlGetStr(&connId->keyUrlSer, buf, sizeof(buf)));
+    BKF_DISP_PRINTF(disp, "sign(%#x)\n", connId->sign);
+    BKF_DISP_PRINTF(disp, "connFd(%d)\n", connId->connFd);
+    BKF_DISP_PRINTF(disp, "keyUrlSer(%s)\n", BkfUrlGetStr(&connId->keyUrlSer, buf, sizeof(buf)));
     BKF_DISP_PRINTF(disp, "keyUrlCli(%s)\n", BkfUrlGetStr(&connId->keyUrlCli, buf, sizeof(buf)));
     BKF_DISP_PRINTF(disp, "tmrIdWriteErr(%#x)\n", BKF_MASK_ADDR(connId->tmrIdWriteErr));
     BKF_DISP_PRINTF(disp, "connFdAttachOk(%u)\n", connId->connFdAttachOk);
-    BKF_DISP_PRINTF(disp, "lockDel(%u)\n",        connId->lockDel);
-    BKF_DISP_PRINTF(disp, "softDel(%u)\n",        connId->softDel);
-    BKF_DISP_PRINTF(disp, "tcpstate(%u)\n",       connId->tcpState);
+    BKF_DISP_PRINTF(disp, "lockDel(%u)\n", connId->lockDel);
+    BKF_DISP_PRINTF(disp, "softDel(%u)\n", connId->softDel);
+    BKF_DISP_PRINTF(disp, "tcpstate(%u)\n", connId->tcpState);
     return;
 }
 
@@ -101,7 +98,7 @@ void BkfChCliLetcpDispConnId(BkfChCli *chCli)
 {
     BkfDisp *disp = VOS_NULL;
     BkfChCliConnId *connId = VOS_NULL;
-    BkfChDispConnIdCtx curConnCtx = { 0 };
+    BkfChDispConnIdCtx curConnCtx = {0};
 
     BKF_RETURNvoid_IF(chCli == VOS_NULL);
 
@@ -125,7 +122,7 @@ void BkfChCliLetcpDispSocketStat(BkfChCli *chCli)
 {
     BkfDisp *disp = VOS_NULL;
     BkfChCliConnId *connId = VOS_NULL;
-    BkfChDispConnIdCtx curConnCtx = { 0 };
+    BkfChDispConnIdCtx curConnCtx = {0};
 
     BKF_RETURNvoid_IF(chCli == VOS_NULL);
 

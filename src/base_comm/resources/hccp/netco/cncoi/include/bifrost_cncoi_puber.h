@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef BIFROST_CNCOI_PUBER_H
 
 #define BIFROST_CNCOI_PUBER_H
@@ -40,15 +39,16 @@ typedef struct tagBifrostCncoiPuber BifrostCncoiPuber;
  * @brief 发布者初始化参数
  */
 typedef struct tagBifrostCncoiPuberInitArg {
-    char *name; /**< 发布者库名称 */
+    char *name;               /**< 发布者库名称 */
     uint16_t idlVersionMajor; /**< 格式化编码主要版本号 */
     uint16_t idlVersionMinor; /**< 格式化编码次要版本号 */
-    BOOL dbgOn; /**< puber端dbg开关，关闭则无日志输出 */
-    BkfMemMng *memMng; /**< 内存库句柄,@see bkf_mem.h,同一app内可复用 */
-    BkfDisp *disp; /**< 诊断显示库句柄,@see bkf_disp.h,同一app内可复用 */
-    BkfLog *log; /**< log库句柄,@see bkf_log.h,同一app内可复用 */
-    BkfPfm *pfm; /**< 性能测量库句柄,@see bkf_pfm.h,同一app内可复用 */
-    BkfXMap *xMap; /**< 消息分发xmap句柄,见bkf_xmap.h,用于app将dms消息分发给bkf,配合BKF_MSG_DISPATCH使用,同一app内可复用 */
+    BOOL dbgOn;               /**< puber端dbg开关，关闭则无日志输出 */
+    BkfMemMng *memMng;        /**< 内存库句柄,@see bkf_mem.h,同一app内可复用 */
+    BkfDisp *disp;            /**< 诊断显示库句柄,@see bkf_disp.h,同一app内可复用 */
+    BkfLog *log;              /**< log库句柄,@see bkf_log.h,同一app内可复用 */
+    BkfPfm *pfm;              /**< 性能测量库句柄,@see bkf_pfm.h,同一app内可复用 */
+    BkfXMap
+        *xMap; /**< 消息分发xmap句柄,见bkf_xmap.h,用于app将dms消息分发给bkf,配合BKF_MSG_DISPATCH使用,同一app内可复用 */
     BkfTmrMng *tmrMng;
     BkfJobMng *jobMng;
     uint32_t jobTypeId;
@@ -74,7 +74,7 @@ typedef struct tagBifrostCncoiPuberInitArg {
  *   @retval 非空 创建成功
  *   @retval 空 创建失败
  */
-BifrostCncoiPuber* BifrostCncoiPuberInit(BifrostCncoiPuberInitArg *arg);
+BifrostCncoiPuber *BifrostCncoiPuberInit(BifrostCncoiPuberInitArg *arg);
 /**
  * @brief 发布者库销毁
  *
@@ -155,4 +155,3 @@ uint32_t BifrostCncoiPuberSetConnUpLimit(BifrostCncoiPuber *bifrostCncoiPuber, u
 #endif
 
 #endif
-

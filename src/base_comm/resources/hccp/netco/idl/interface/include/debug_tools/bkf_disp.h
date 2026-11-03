@@ -37,7 +37,7 @@
 
           lastKey = getLastCtx(&info); // 获取ctx。ctx分key和info两部分，方便使用
           if (lastKey == NULL) { // 没有获取到ctx，代表首次调用该函数
-              temp = appGetFisrt(); // 获取第一个数据
+              temp = appGetFirst(); // 获取第一个数据
           }
           else {
               temp = appFindNext(lastKey); // 获取下一个数据
@@ -99,93 +99,93 @@ extern "C" {
 /* common */
 
 /**
-* @brief 诊断显示库句柄
-*/
+ * @brief 诊断显示库句柄
+ */
 typedef struct tagBkfDisp BkfDisp;
 
 /* init */
 /**
-* @brief 诊断显示库初始化参数
-*/
+ * @brief 诊断显示库初始化参数
+ */
 typedef struct tagBkfDispInitArg {
-    char *name; /**< 名称 */
-    BkfMemMng *memMng; /**< 内存库句柄,见bkf_mem.h,同一app内可复用 */
+    char *name;             /**< 名称 */
+    BkfMemMng *memMng;      /**< 内存库句柄,见bkf_mem.h,同一app内可复用 */
     uint8_t mayProcFuncLvl; /**< 注册函数lvl如果 >= 此值，才会真实生效 */
     uint8_t aucRsv[0x0f];
 } BkfDispInitArg;
 
 /* reg func */
 /**
-* @brief 测试命令级别，正式版本可关闭测试命令
-*/
+ * @brief 测试命令级别，正式版本可关闭测试命令
+ */
 #define BKF_DISP_FUNC_LVL_TEST ((uint8_t)0x40)
 /**
-* @brief 默认命令级别
-*/
+ * @brief 默认命令级别
+ */
 #define BKF_DISP_FUNC_LVL_DEFAULT ((uint8_t)0x80)
 /* display通用函数原型 */
 typedef void (*F_BKF_DISP_FUNC)();
 
 /* proc */
 /**
-* @brief 命令最大参数个数
-*/
+ * @brief 命令最大参数个数
+ */
 #define BKF_DISP_FUNC_PARAM_CNT_MAX 5
 
 /**
-* @brief 命令行输出缓冲最大长度,单位:字节
-*/
+ * @brief 命令行输出缓冲最大长度,单位:字节
+ */
 #define BKF_DISP_PROC_OUT_BUF_LEN_MIN 1024
 
 /**
-* @brief 打印缓冲最大长度,单位:字节
-*/
+ * @brief 打印缓冲最大长度,单位:字节
+ */
 #define BKF_DISP_PRINTF_BUF_LEN_MAX (BKF_1K * 3)
 
 /**
-* @brief 上下文信息最大长度,单位:字节
-*/
+ * @brief 上下文信息最大长度,单位:字节
+ */
 #define BKF_DISP_CTX_LEN_MAX (1024)
 
 /**
-* @brief 命令行输出上下文信息
-*/
+ * @brief 命令行输出上下文信息
+ */
 typedef struct tagBkfDispProcCtx {
-    int32_t ctx1Len; /**< 上下文1长度 */
-    int32_t ctx2Len; /**< 上下文2长度 */
+    int32_t ctx1Len;                   /**< 上下文1长度 */
+    int32_t ctx2Len;                   /**< 上下文2长度 */
     uint8_t buf[BKF_DISP_CTX_LEN_MAX]; /**< 上下文内容 */
 } BkfDispProcCtx;
 
 /**
-* @brief 有剩余信息未输出完成
-*/
+ * @brief 有剩余信息未输出完成
+ */
 #define BKF_DISP_PROC_HAS_MORE_DATA ((uint32_t)1)
 
-
 /**
-* @brief 临时上下文信息最大长度，单位:字节
-*/
+ * @brief 临时上下文信息最大长度，单位:字节
+ */
 #define BKF_DISP_TEMP_CTX_LEN_MAX (1024)
 
 /**
-* @brief 临时上下文信息，方便app使用
-*/
+ * @brief 临时上下文信息，方便app使用
+ */
 typedef struct tagBkfDispTempCtx {
     uint8_t buf[BKF_DISP_TEMP_CTX_LEN_MAX];
 } BkfDispTempCtx;
 BKF_STATIC_ASSERT(BKF_MBR_IS_FIRST(BkfDispTempCtx, buf[0]));
 
 /**
-* @brief 临时上下文信息初始化宏
-*/
-#define BKF_DISP_TEMP_CTX_INIT(tempCtx) do { \
-    (void)BkfDispInitTempCtx(tempCtx);     \
-} while (0)
+ * @brief 临时上下文信息初始化宏
+ */
+#define BKF_DISP_TEMP_CTX_INIT(tempCtx)                                                                                \
+    do {                                                                                                               \
+        (void)BkfDispInitTempCtx(tempCtx);                                                                             \
+    } while (0)
 
 /**
-* @brief 临时上下文信息转换成对应类型
-*/
-#define BKF_DISP_TMEP_CTX_2X(tempCtx, type) ((type*)(tempCtx))
+ * @brief 临时上下文信息转换成对应类型
+ */
+#define BKF_DISP_TMEP_CTX_2X(tempCtx, type) ((type *)(tempCtx))
 
 /* func */
 /**
@@ -245,7 +245,7 @@ void BkfDispUnregObj(BkfDisp *disp, char *objName);
  * @note 此函数中，所有const的字串，一定要是一个“不能释放”的常量串。后续的...参数是函数的各形参，也需要是常量串。
  */
 uint32_t BkfDispRegFunc(BkfDisp *disp, char *funcName, F_BKF_DISP_FUNC funcAddr, const char *funcHelpInfo,
-                        uint8_t funcLvl, char *funcMayProcObjName, uint8_t funcParamCnt, ...);
+    uint8_t funcLvl, char *funcMayProcObjName, uint8_t funcParamCnt, ...);
 
 /**
  * @brief 诊断显示库处理函数。用户输入若干字串后，引起对应字串函数的调用，输出内部信息。
@@ -260,10 +260,10 @@ uint32_t BkfDispRegFunc(BkfDisp *disp, char *funcName, F_BKF_DISP_FUNC funcAddr,
  *   @retval BKF_DISP_PROC_FUNC_NOT_FIND 没有找到字串对应的函数
  *   @retval BKF_DISP_PROC_FINISH 处理结束
  *   @retval BKF_DISP_PROC_HAS_MORE_DATA 没有处理结束，还有更多的数据需要输出。
-  * @see BkfDispRegFunc
+ * @see BkfDispRegFunc
  */
 uint32_t BkfDispProc(BkfDisp *disp, char **inStr, uint8_t inStrCnt, char *outStrBuf, int32_t outStrBufLen,
-                    BkfDispProcCtx *ctx);
+    BkfDispProcCtx *ctx);
 
 /**
  * @brief 输出字串。一般不直接使用，使用后面的宏封装。@see BKF_DISP_PRINTF
@@ -346,48 +346,50 @@ void BkfDispTestFunc(BkfDisp *disp, char *funcName, char *objName, uint8_t funcP
 /**
  * @brief 注册默认级别的显示函数。易用性封装。@see BkfDispRegFunc
  */
-#define BKF_DISP_REG_FUNC(disp, func, funcHelpInfo, funcProcObjName, funcParamCount, ...)         \
-    BkfDispRegFunc((disp), (char*)(#func), (func), (funcHelpInfo), (BKF_DISP_FUNC_LVL_DEFAULT), \
-                     (funcProcObjName), (funcParamCount), ##__VA_ARGS__)
+#define BKF_DISP_REG_FUNC(disp, func, funcHelpInfo, funcProcObjName, funcParamCount, ...)                              \
+    BkfDispRegFunc((disp), (char *)(#func), (func), (funcHelpInfo), (BKF_DISP_FUNC_LVL_DEFAULT), (funcProcObjName),    \
+        (funcParamCount), ##__VA_ARGS__)
 
 /**
  * @brief 注册默认级别的显示函数。易用性封装。@see BkfDispRegFunc
  */
-#define BKF_DISP_REG_TEST_FUNC(disp, func, funcHelpInfo, funcProcObjName, funcParamCount, ...) \
-    BkfDispRegFunc((disp), (char*)(#func), (func), (funcHelpInfo), (BKF_DISP_FUNC_LVL_TEST), \
-                     (funcProcObjName), (funcParamCount), ##__VA_ARGS__)
+#define BKF_DISP_REG_TEST_FUNC(disp, func, funcHelpInfo, funcProcObjName, funcParamCount, ...)                         \
+    BkfDispRegFunc((disp), (char *)(#func), (func), (funcHelpInfo), (BKF_DISP_FUNC_LVL_TEST), (funcProcObjName),       \
+        (funcParamCount), ##__VA_ARGS__)
 
 /**
  * @brief 输出字串。易用性封装。@see BkfDispPrintf
  */
-#define BKF_DISP_PRINTF(disp, fmt, ...) do {     \
-    BkfDispPrintf((disp), fmt, ##__VA_ARGS__); \
-} while (0)
+#define BKF_DISP_PRINTF(disp, fmt, ...)                                                                                \
+    do {                                                                                                               \
+        BkfDispPrintf((disp), fmt, ##__VA_ARGS__);                                                                     \
+    } while (0)
 
 /**
  * @brief 保存断点信息。简单封装。@see BkfDispSaveCtx
  */
-#define BKF_DISP_SAVE_CTX(disp, ctx1, ctx1Len, ctx2OrNull, ctx2Len) do {  \
-    BkfDispSaveCtx((disp), (ctx1), (ctx1Len), (ctx2OrNull), (ctx2Len)); \
-} while (0)
+#define BKF_DISP_SAVE_CTX(disp, ctx1, ctx1Len, ctx2OrNull, ctx2Len)                                                    \
+    do {                                                                                                               \
+        BkfDispSaveCtx((disp), (ctx1), (ctx1Len), (ctx2OrNull), (ctx2Len));                                            \
+    } while (0)
 
 /**
  * @brief 获取断点信息。简单封装。@see BkfDispGetLastCtx
  */
-#define BKF_DISP_GET_LAST_CTX(disp, ctx2OrNull) \
-    BkfDispGetLastCtx((disp), (ctx2OrNull))
+#define BKF_DISP_GET_LAST_CTX(disp, ctx2OrNull) BkfDispGetLastCtx((disp), (ctx2OrNull))
 
 /**
  * @brief 保存3个数字的断点信息。简单封装。@see BkfDispSave3Num
  */
-#define BKF_DISP_SAVE_3NUM(disp, val1, val2, val3) do { \
-    BkfDispSave3Num((disp), (val1), (val2), (val3));  \
-} while (0)
+#define BKF_DISP_SAVE_3NUM(disp, val1, val2, val3)                                                                     \
+    do {                                                                                                               \
+        BkfDispSave3Num((disp), (val1), (val2), (val3));                                                               \
+    } while (0)
 
 /**
  * @brief 获取3个数字的断点信息。简单封装。@see BkfDispGetLast3Num
  */
-#define BKF_DISP_GET_LAST_3NUM(disp, val1Out, val2OutOrNull, val3OutOrNull) \
+#define BKF_DISP_GET_LAST_3NUM(disp, val1Out, val2OutOrNull, val3OutOrNull)                                            \
     BkfDispGetLast3Num((disp), (val1Out), (val2OutOrNull), (val3OutOrNull))
 
 #pragma pack()
@@ -399,4 +401,3 @@ void BkfDispTestFunc(BkfDisp *disp, char *funcName, char *objName, uint8_t funcP
 #endif
 
 #endif
-

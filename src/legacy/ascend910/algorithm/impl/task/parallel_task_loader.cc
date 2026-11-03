@@ -1,25 +1,26 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "parallel_task_loader.h"
 #include "profiling_manager_pub.h"
 
 namespace hccl {
 ParallelTaskLoader::ParallelTaskLoader(const s32 deviceLogicId, const HcclDispatcher dispatcher)
-    : deviceLogicId_(deviceLogicId), dispatcher_(dispatcher), taskLoaderNum_(0)
+    : deviceLogicId_(deviceLogicId),
+      dispatcher_(dispatcher),
+      taskLoaderNum_(0)
 {}
 
-ParallelTaskLoader::~ParallelTaskLoader()
-{}
+ParallelTaskLoader::~ParallelTaskLoader() {}
 
-HcclResult ParallelTaskLoader::Prepare(std::vector<Stream *> streamsPtr, SubCommInfo level0CommInfo)
+HcclResult ParallelTaskLoader::Prepare(std::vector<Stream*> streamsPtr, SubCommInfo level0CommInfo)
 {
     // 参数保存
     streamsPtr_.resize(streamsPtr.size());
@@ -41,7 +42,8 @@ HcclResult ParallelTaskLoader::Prepare(std::vector<Stream *> streamsPtr, SubComm
         streamTaskLoader_[streamIndex].reset(new (std::nothrow) TaskLoader(deviceLogicId_, dispatcher_));
         CHK_SMART_PTR_NULL(streamTaskLoader_[streamIndex]);
         HcclResult ret = streamTaskLoader_[streamIndex]->Init();
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
             HCCL_ERROR("[ParallelTaskLoader][Init]streamIndex[%u] TaskLoader failed, return[%d]", streamIndex, ret),
             ret);
     }
@@ -62,7 +64,10 @@ HcclResult ParallelTaskLoader::StartTaskLoad()
         tidInfo_[streamIndex] = streamTaskLoader_[streamIndex]->GetTid();
     }
 #ifndef OPEN_HCCL_TEST
-    CHK_RET(hccl::ProfilingManagerPub::CallMsprofReportMultiThreadInfo(tidInfo_));
+    HcclResult profRet = hccl::ProfilingManagerPub::CallMsprofReportMultiThreadInfo(tidInfo_);
+    CHK_PRT_CONT(
+        profRet != HCCL_SUCCESS,
+        HCCL_WARNING("Report multi thread info fail, tidNum[%zu], hcclRet[%d]", tidInfo_.size(), profRet));
 #endif
 
     // 通知流线程执行
@@ -90,4 +95,4 @@ HcclResult ParallelTaskLoader::ClearTagCommInfo()
     }
     return HCCL_SUCCESS;
 }
-}  // namespace hccl
+} // namespace hccl

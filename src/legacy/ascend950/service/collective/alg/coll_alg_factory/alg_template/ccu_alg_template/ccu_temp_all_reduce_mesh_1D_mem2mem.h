@@ -18,7 +18,7 @@
 #include "hccl/base.h"
 #include "types/types.h"
 #include "string_util.h"
-#include "env_config.h"
+#include "env_config_v2.h"
 #include "data_type.h"
 #include "template_utils.h"
 #include "buffer_type.h"
@@ -28,26 +28,26 @@
 namespace Hccl {
 class CcuTempAllReduceMeshMem2Mem1D : public CcuAlgTemplateBase {
 public:
-    explicit CcuTempAllReduceMeshMem2Mem1D(const RankId virtualRank, const u32 tempRankSize,
-                                                     const std::vector<std::vector<RankId>> &tempVTopo,
-                                                     const std::map<RankId, u32>            &tempVirtRankMap);
+    explicit CcuTempAllReduceMeshMem2Mem1D(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~CcuTempAllReduceMeshMem2Mem1D() override;
 
     std::string Describe() const override
     {
-        return StringFormat("Template of All Reduce ccu mesh 1D mem2mem, tempRankSize [%u].",
-                            tempRankSize_);
+        return StringFormat("Template of All Reduce ccu mesh 1D mem2mem, tempRankSize [%u].", tempRankSize_);
     }
 
-    HcclResult GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &templateDataParams,
-                         const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues);
-    HcclResult GenExtIns(const RankGraph *rankGraph, const TemplateInfo &tmpInfo,
-                         const std::vector<InsQuePtr> &tempInsQues) const;
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
-    HcclResult CalcSlice(const u64 dataSize, RankSliceInfo &sliceInfoVec);
-    u32        CalcScratchMultiple(BufferType input, BufferType output) override;
+    HcclResult GenExtIns(
+        const TempFuncs& tempFuncs, const TemplateDataParams& templateDataParams, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues);
+    HcclResult
+    GenExtIns(const RankGraph* rankGraph, const TemplateInfo& tmpInfo, const std::vector<InsQuePtr>& tempInsQues) const;
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
+    HcclResult CalcSlice(const u64 dataSize, RankSliceInfo& sliceInfoVec);
+    u32 CalcScratchMultiple(BufferType input, BufferType output) override;
     // init reduceInfo
-    void InitReduceInfo(const ReduceOp &reduceOp, const DataType &dataType);
+    void InitReduceInfo(const ReduceOp& reduceOp, const DataType& dataType);
 
 private:
     ReduceOp reduceOp_;

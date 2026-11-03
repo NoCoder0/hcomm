@@ -5,5 +5,5 @@
 以自定义通信算子AllGather为例，该类算子接口需要传入源地址、目的地址、源数据量、数据类型，以及通信域和流信息，其接口定义如下：
 
 ```c
-HcclResult HcclAllGather(void *sendBuf, void *recvBuf, uint64_t sendCount, HcclDataType dataType, HcclComm comm, aclrtStream stream);
+HcclResult HcclAllGatherCustom(void *sendBuf, void *recvBuf, uint64_t sendCount, HcclDataType dataType, HcclComm comm, aclrtStream stream);
 ```

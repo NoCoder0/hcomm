@@ -1,34 +1,36 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "hccl_api_base_test.h"
- 
+
 using namespace std;
 using namespace hccl;
- 
+
 constexpr const char* RANKTABLE_FILE_NAME = "./ut_independent_op_test.json";
- 
+
 class HcclCommEngineCtxTest : public BaseInit {
 public:
-    void SetUp() override {
+    void SetUp() override
+    {
         BaseInit::SetUp();
         UT_USE_RANK_TABLE_910_1SERVER_1RANK;
         UT_COMM_CREATE_DEFAULT(comm);
     }
-    void TearDown() override {
+    void TearDown() override
+    {
         Ut_Comm_Destroy(comm);
         BaseInit::TearDown();
         GlobalMockObject::verify();
     }
 };
- 
+
 // HcclMem构造
 static inline HcclMem MakeMem(void* addr, uint64_t size, HcclMemType type)
 {
@@ -52,7 +54,7 @@ TEST_F(HcclCommEngineCtxTest, Ut_CommEngineCtx_When_Error_Input_Expect_Return_ER
 {
     // create: comm null
     uint64_t size = 16;
-    void *ctx = nullptr;
+    void* ctx = nullptr;
     HcclResult ret = HcclEngineCtxCreate(nullptr, "opTag", CommEngine::COMM_ENGINE_CPU, size, &ctx);
     EXPECT_EQ(ret, HCCL_E_PTR);
 
@@ -69,9 +71,9 @@ TEST_F(HcclCommEngineCtxTest, Ut_CommEngineCtx_When_Error_Input_Expect_Return_ER
     EXPECT_EQ(ret, HCCL_E_PARA);
 
     // create: opTag too long
-    char opTag[HCCL_RES_TAG_MAX_LEN+2];
-    memset(opTag, 'A', HCCL_RES_TAG_MAX_LEN+1);
-    opTag[HCCL_RES_TAG_MAX_LEN+1] = '\0';
+    char opTag[HCCL_RES_TAG_MAX_LEN + 2];
+    memset(opTag, 'A', HCCL_RES_TAG_MAX_LEN + 1);
+    opTag[HCCL_RES_TAG_MAX_LEN + 1] = '\0';
     ret = HcclEngineCtxCreate(comm, opTag, CommEngine::COMM_ENGINE_CPU, size, &ctx);
     EXPECT_EQ(ret, HCCL_E_PARA);
 
@@ -88,11 +90,11 @@ TEST_F(HcclCommEngineCtxTest, Ut_CommEngineCtx_When_Error_Input_Expect_Return_ER
     EXPECT_EQ(ret, HCCL_E_PTR);
 }
 
-// 重复创建异常校验 HCCL_E_PARA 
+// 重复创建异常校验 HCCL_E_PARA
 TEST_F(HcclCommEngineCtxTest, Ut_HcclEngineCtxCreate_When_Duplicate_Creation_Expect_Return_EPARA)
 {
     uint64_t size = 16;
-    void *ctx = nullptr;
+    void* ctx = nullptr;
     HcclResult ret = HcclEngineCtxCreate(comm, "opTag", CommEngine::COMM_ENGINE_CPU, size, &ctx);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_NE(ctx, nullptr);
@@ -108,7 +110,7 @@ TEST_F(HcclCommEngineCtxTest, Ut_HcclEngineCtxCreate_When_Duplicate_Creation_Exp
 TEST_F(HcclCommEngineCtxTest, Ut_HcclEngineCtxGet_When_Uncreated_Expect_Return_SUCCESS)
 {
     uint64_t size = 0;
-    void *ctx = nullptr;
+    void* ctx = nullptr;
     HcclResult ret = HcclEngineCtxGet(comm, "opTag", CommEngine::COMM_ENGINE_CPU, &ctx, &size);
     EXPECT_EQ(ret, HCCL_E_PARA);
 }
@@ -117,7 +119,7 @@ TEST_F(HcclCommEngineCtxTest, Ut_HcclEngineCtxGet_When_Uncreated_Expect_Return_S
 TEST_F(HcclCommEngineCtxTest, Ut_HcclEngineCtxGet_When_Error_Engine_Expect_Return_EPARA)
 {
     uint64_t size = 16;
-    void *ctx = nullptr;
+    void* ctx = nullptr;
     HcclResult ret = HcclEngineCtxCreate(comm, "opTag", CommEngine::COMM_ENGINE_CPU, size, &ctx);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_NE(ctx, nullptr);
@@ -139,17 +141,16 @@ TEST_F(HcclCommEngineCtxTest, Ut_HcclEngineCtxDestroy_When_Uncreated_Expect_Retu
     EXPECT_EQ(ret, HCCL_E_PARA);
 }
 
-
 // 正常申请、获取和销毁host侧Context HCCL_SUCCESS
 TEST_F(HcclCommEngineCtxTest, Ut_CommEngineCtx_When_Host_Expect_Return_SUCCESS)
 {
     uint64_t size = 16;
-    void *ctx = nullptr;
+    void* ctx = nullptr;
     HcclResult ret = HcclEngineCtxCreate(comm, "opTag", CommEngine::COMM_ENGINE_CPU, size, &ctx);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_NE(ctx, nullptr);
 
-    void *ctxGet;
+    void* ctxGet;
     uint64_t sizeGet = 0;
     ret = HcclEngineCtxGet(comm, "opTag", CommEngine::COMM_ENGINE_CPU, &ctxGet, &sizeGet);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -166,12 +167,12 @@ TEST_F(HcclCommEngineCtxTest, Ut_CommEngineCtx_When_Host_Expect_Return_SUCCESS)
 TEST_F(HcclCommEngineCtxTest, Ut_CommEngineCtx_When_Device_Expect_Return_SUCCESS)
 {
     uint64_t size = 16;
-    void *ctx = nullptr;
+    void* ctx = nullptr;
     HcclResult ret = HcclEngineCtxCreate(comm, "opTag", CommEngine::COMM_ENGINE_AICPU, size, &ctx);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_NE(ctx, nullptr);
 
-    void *ctxGet;
+    void* ctxGet;
     uint64_t sizeGet = 0;
     ret = HcclEngineCtxGet(comm, "opTag", CommEngine::COMM_ENGINE_AICPU, &ctxGet, &sizeGet);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -183,4 +184,3 @@ TEST_F(HcclCommEngineCtxTest, Ut_CommEngineCtx_When_Device_Expect_Return_SUCCESS
     ret = HcclEngineCtxDestroy(comm, "opTag", CommEngine::COMM_ENGINE_AICPU);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
-

@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef NET_VO_IP_ADDR_H
 #define NET_VO_IP_ADDR_H
 
@@ -25,4 +24,3 @@ char *NetIpAddrGetStr(uint32_t ipAddr, uint8_t *buf, int32_t bufLen);
 #endif
 
 #endif
-

@@ -1,3 +1,13 @@
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include <string.h>
 #include <getopt.h>
 #include <stdlib.h>
@@ -8,23 +18,22 @@
 
 #ifdef HCCL_ALG_ANALYZER_DAVID
 namespace Hccl {
-    extern std::string g_algNamev2;
+extern std::string g_algNamev2;
 }
 #else
 namespace hccl {
-    extern std::string g_algName;
+extern std::string g_algName;
 }
 #endif
 
 namespace checker {
 
-const std::map<std::string, CheckerReduceOp> testReduceOpMap = {
-    {"sum", CheckerReduceOp::REDUCE_SUM},
-    {"prod", CheckerReduceOp::REDUCE_PROD},
-    {"max", CheckerReduceOp::REDUCE_MAX},
-    {"min", CheckerReduceOp::REDUCE_MIN},
-    {"invalid", CheckerReduceOp::REDUCE_RESERVED}
-};
+const std::map<std::string, CheckerReduceOp> testReduceOpMap
+    = {{"sum", CheckerReduceOp::REDUCE_SUM},
+       {"prod", CheckerReduceOp::REDUCE_PROD},
+       {"max", CheckerReduceOp::REDUCE_MAX},
+       {"min", CheckerReduceOp::REDUCE_MIN},
+       {"invalid", CheckerReduceOp::REDUCE_RESERVED}};
 
 CheckerCmd::CheckerCmd()
 {
@@ -80,11 +89,11 @@ int CheckerCmd::ParseOpt(int opt)
             break;
         case 'x':
             stepfactorFlag = true;
-            char *temp;
+            char* temp;
             stepFactor = strtof(optarg, &temp);
             break;
         case 'n':
-            uiParam.dataType =  GetHcclDtype(optarg);
+            uiParam.dataType = GetHcclDtype(optarg);
             break;
         case 'c':
             rankMemCheckFlag = StrTolAlDigit(optarg);
@@ -113,29 +122,19 @@ int CheckerCmd::ParseOpt(int opt)
 }
 
 struct option CheckerCmd::longOpts[] = {
-    {"superPodNum"  , no_argument, NULL, 'p'},
-    {"serverNum"    , no_argument, NULL, 's'},
-    {"rankNum"      , no_argument, NULL, 'r'},
-    {"devType"      , required_argument, NULL, 'd'},
-    {"opType"       , required_argument, NULL, 't'},
-    {"opMode"       , required_argument, NULL, 'm'},
-    {"root"         , no_argument, NULL, 'a'},
-    {"op"           , required_argument, NULL, 'o'},
-    {"minbytes"     , required_argument, NULL, 'b'},
-    {"maxbytes"     , required_argument, NULL, 'e'},
-    {"stepbytes"    , no_argument, NULL, 'j'},
-    {"stepfactor"   , no_argument, NULL, 'x'},
-    {"dataType"     , required_argument, NULL, 'n'},
-    {"checkMem"     , no_argument, NULL, 'c'},
-    {"asyParam"     , no_argument, NULL, 'q'},
-    {"taskPrintFlag", no_argument, NULL, 'u'},
-    {"algname"      , no_argument, NULL, 'g'},
-    {"zeroCopy", no_argument, NULL, 'z'},
-    {"help"         , no_argument,       NULL, 'h'},
-    {NULL, 0, NULL, 0},
+    {"superPodNum", no_argument, NULL, 'p'},    {"serverNum", no_argument, NULL, 's'},
+    {"rankNum", no_argument, NULL, 'r'},        {"devType", required_argument, NULL, 'd'},
+    {"opType", required_argument, NULL, 't'},   {"opMode", required_argument, NULL, 'm'},
+    {"root", no_argument, NULL, 'a'},           {"op", required_argument, NULL, 'o'},
+    {"minbytes", required_argument, NULL, 'b'}, {"maxbytes", required_argument, NULL, 'e'},
+    {"stepbytes", no_argument, NULL, 'j'},      {"stepfactor", no_argument, NULL, 'x'},
+    {"dataType", required_argument, NULL, 'n'}, {"checkMem", no_argument, NULL, 'c'},
+    {"asyParam", no_argument, NULL, 'q'},       {"taskPrintFlag", no_argument, NULL, 'u'},
+    {"algname", no_argument, NULL, 'g'},        {"zeroCopy", no_argument, NULL, 'z'},
+    {"help", no_argument, NULL, 'h'},           {NULL, 0, NULL, 0},
 };
 
-int CheckerCmd::ParseCmdLine(int argc, char *argv[])
+int CheckerCmd::ParseCmdLine(int argc, char* argv[])
 {
     int opt = -1;
     int longindex = 0;
@@ -161,7 +160,6 @@ int CheckerCmd::ParseCmdLine(int argc, char *argv[])
     return EXIT_SUCCESS;
 }
 
-
 int CheckerCmd::CheckCmdLine()
 {
     int ret = 0;
@@ -181,7 +179,7 @@ int CheckerCmd::CheckCmdLine()
     }
 
     if (rankNum < 0) {
-        printf("Error: [-r,--rankNum] is invalid,  Use [-h,--help] to check the correct input parameter.\n");
+        printf("Error: [-r,--rankNum] is invalid, Use [-h,--help] to check the correct input parameter.\n");
         return EXIT_FAILURE;
     }
 
@@ -241,27 +239,27 @@ int CheckerCmd::CheckDataCount()
         data->dataStepBytes = stepBytes;
     } else if (!stepfactorFlag) { // 用户未配置增量步长
         if (data->maxBytes == data->minBytes) {
-            data->dataStepBytes = 1; // 用户配置数据量的起始值和结束值相同，但未配置增量步长，为防止进入死循环，设置增量步长为1
+            data->dataStepBytes
+                = 1; // 用户配置数据量的起始值和结束值相同，但未配置增量步长，为防止进入死循环，设置增量步长为1
             CHECKER_WARNING_LOG("[-j,--stepbytes] is not set, set to 1 as default.\n");
         } else if (data->maxBytes > data->minBytes) {
-            if((data->maxBytes - data->minBytes) % 10 == 0) {
+            if ((data->maxBytes - data->minBytes) % 10 == 0) {
                 data->dataStepBytes = (data->maxBytes - data->minBytes) / 10;
             } else {
                 data->dataStepBytes = (data->maxBytes - data->minBytes) / 10 + 1;
             }
-            CHECKER_WARNING_LOG("[-j,--stepbytes] is not set, set to (maxbytes - minbytes)/10 as default, stepBytes:%llu.\n", data->dataStepBytes);
+            CHECKER_WARNING_LOG(
+                "[-j,--stepbytes] is not set, set to (maxbytes - minbytes)/10 as default, stepBytes:%llu.\n",
+                data->dataStepBytes);
         }
     }
 
     return 0;
 }
 
-u32 SalStrLen(const char *s, u32 maxLen = INT_MAX)
-{
-    return strnlen(s, maxLen);
-}
+u32 SalStrLen(const char* s, u32 maxLen = INT_MAX) { return strnlen(s, maxLen); }
 
-int IsAllDigit(const char *strNum)
+int IsAllDigit(const char* strNum)
 {
     // 参数有效性检查
     if (strNum == NULL) {
@@ -278,7 +276,7 @@ int IsAllDigit(const char *strNum)
     return 0;
 }
 
-long StrTolAlDigit(const char *optarg)
+long StrTolAlDigit(const char* optarg)
 {
     long ret = IsAllDigit(optarg);
     if (ret != 0) {
@@ -288,7 +286,7 @@ long StrTolAlDigit(const char *optarg)
     return strtol(optarg, NULL, 0);
 }
 
-CheckerDevType GetDevType(char *str)
+CheckerDevType GetDevType(char* str)
 {
     if (testDevTypeMap.find(str) != testDevTypeMap.end()) {
         return testDevTypeMap.at(str);
@@ -297,13 +295,12 @@ CheckerDevType GetDevType(char *str)
     return CheckerDevType::DEV_TYPE_NOSOC;
 }
 
-CheckerOpType CheckerCmd::GetCmdType(char *str)
+CheckerOpType CheckerCmd::GetCmdType(char* str)
 {
     if (testCmdTypeMap.find(str) != testCmdTypeMap.end()) {
         if (testCmdTypeMap.at(str) == CheckerOpType::REDUCE_SCATTER_V
             || testCmdTypeMap.at(str) == CheckerOpType::REDUCE_SCATTER
-            || testCmdTypeMap.at(str) == CheckerOpType::REDUCE
-            || testCmdTypeMap.at(str) == CheckerOpType::ALLREDUCE) {
+            || testCmdTypeMap.at(str) == CheckerOpType::REDUCE || testCmdTypeMap.at(str) == CheckerOpType::ALLREDUCE) {
             reduceOpFlag = true;
         }
         return testCmdTypeMap.at(str);
@@ -312,18 +309,19 @@ CheckerOpType CheckerCmd::GetCmdType(char *str)
     return CheckerOpType::INVALID;
 }
 
-CheckerReduceOp CheckerCmd::GetReduceOp(char *str)
+CheckerReduceOp CheckerCmd::GetReduceOp(char* str)
 {
-    if(testReduceOpMap.find(str) != testReduceOpMap.end()) {
+    if (testReduceOpMap.find(str) != testReduceOpMap.end()) {
         return testReduceOpMap.at(str);
     }
-    if(reduceOpFlag = true) {
-        std::cout << "the reduceOp is invalid, set detault sum" << std::endl;
+    if (reduceOpFlag = true) {
+        std::cout << "the reduceOp is invalid, set default sum" << std::endl;
     }
     return CheckerReduceOp::REDUCE_SUM;
 }
 
-CheckerDataType GetHcclDtype(char *str) {
+CheckerDataType GetHcclDtype(char* str)
+{
     if (testDtypeMap.find(str) != testDtypeMap.end()) {
         return testDtypeMap.at(str);
     }
@@ -331,7 +329,8 @@ CheckerDataType GetHcclDtype(char *str) {
     return CheckerDataType::DATA_TYPE_RESERVED;
 }
 
-CheckerOpMode GetOpMode(char *str) {
+CheckerOpMode GetOpMode(char* str)
+{
     if (testOpModeMap.find(str) != testOpModeMap.end()) {
         return testOpModeMap.at(str);
     }
@@ -339,11 +338,11 @@ CheckerOpMode GetOpMode(char *str) {
     return CheckerOpMode::OPBASE;
 }
 
-u64 ParseSize(const char *value)
+u64 ParseSize(const char* value)
 {
     u64 units;
     u64 size;
-    char *size_lit;
+    char* size_lit;
 
     size = strtol(value, &size_lit, 0);
     if (strlen(size_lit) == 1) {
@@ -372,7 +371,7 @@ u64 ParseSize(const char *value)
     return size * units;
 }
 
-int AsyParamTopo(TopoMeta &topoMeta)
+int AsyParamTopo(TopoMeta& topoMeta)
 {
     cmd::CmdExtParam asyParam;
     cmd::Pod* pod;
@@ -389,9 +388,9 @@ int AsyParamTopo(TopoMeta &topoMeta)
     topoMeta.resize(topo->pods_size());
     for (int i = 0; i < topo->pods_size(); i++) {
         topoMeta[i].resize(topo->pods(i).servers_size());
-        for(int j = 0; j < topo->pods(i).servers_size(); j++) {
+        for (int j = 0; j < topo->pods(i).servers_size(); j++) {
             topoMeta[i][j].resize(topo->pods(i).servers(j).phyids_size());
-            for(int k = 0; k < topo->pods(i).servers(j).phyids_size(); k++) {
+            for (int k = 0; k < topo->pods(i).servers(j).phyids_size(); k++) {
                 topoMeta[i][j][k] = topo->pods(i).servers(j).phyids(k);
             }
         }
@@ -401,31 +400,31 @@ int AsyParamTopo(TopoMeta &topoMeta)
     return 0;
 }
 
-void CheckerCmd::PrintArgs(u64 count) {
+void CheckerCmd::PrintArgs(u64 count)
+{
     for (const auto& pair : testCmdTypeMap) {
         if (pair.second == uiParam.opType) {
-            std::cout << "[opType]: " << pair.first <<  ", ";
+            std::cout << "[opType]: " << pair.first << ", ";
         }
     }
     for (const auto& pair : testDtypeMap) {
         if (pair.second == uiParam.dataType) {
-            std::cout << "[dataType]: " << pair.first <<  ", ";
+            std::cout << "[dataType]: " << pair.first << ", ";
         }
     }
     for (const auto& pair : testOpModeMap) {
         if (pair.second == uiParam.opMode) {
-            std::cout << "[OpMode]: " << pair.first <<  ", ";
+            std::cout << "[OpMode]: " << pair.first << ", ";
         }
     }
     for (const auto& pair : testDevTypeMap) {
         if (pair.second == uiParam.devtype) {
-            std::cout << "[devtype]: " << pair.first <<  ", ";
+            std::cout << "[devtype]: " << pair.first << ", ";
         }
     }
-    if (uiParam.opType == CheckerOpType::REDUCE
-        || uiParam.opType == CheckerOpType::SCATTER
+    if (uiParam.opType == CheckerOpType::REDUCE || uiParam.opType == CheckerOpType::SCATTER
         || uiParam.opType == CheckerOpType::BROADCAST) {
-        std::cout << "[root]: " << uiParam.root <<  ", ";
+        std::cout << "[root]: " << uiParam.root << ", ";
     }
 #ifdef HCCL_ALG_ANALYZER_DAVID
     std::cout << "[count]: " << count << ", [algName]: " << Hccl::g_algNamev2 << std::endl;
@@ -434,28 +433,30 @@ void CheckerCmd::PrintArgs(u64 count) {
 #endif
 }
 
-int PrintHelp() {
-    printf("USAGE: ./hccl_alg_analyzer_test \n\t"
-    "[-p,--npus <npus used for superPodNum>] \n\t"
-    "[-s,--npus <npus used for serverNum>] \n\t"
-    "[-r,--npus <npus used for rankNum>] \n\t"
-    "[-d,--deviceType 1.0 : <310p1/310p3/910/910b/910_93> 2.0 : <950>] \n\t"
-    "[-t,--opType <broadcast/allreduce/reduce/send/receive/allgather/reducescatter/alltoallv/alltoallvc/alltoall/"
-    "scatter/batchsendrecv/reducescatterV/allGatherV>] \n\t"
-    "[-m,--opMode <opbase/offload>] \n\t"
-    "[-a,--root <root rank>] \n\t"
-    "[-o,--op <sum/prod/min/max>] \n\t"
-    "[-b,--minbytes <min size in bytes>] \n\t"
-    "[-e,--maxbytes <max size in bytes>] \n\t"
-    "[-j,--stepbytes <increment size>] \n\t"
-    "[-x,--stepfactor <increment factor>] \n\t"
-    "[-n,--datatype <int8/int16/int32/fp16/fp32/int64/uint64/uint8/uint16/uint32/fp64/bfp16>] \n\t"
-    "[-c,--rankMemCheckFlag <0:false/1:true>] \n\t"
-    "[-q,--asyTopoFlag <0:false/1:true>] \n\t"
-    "[-u,--taskPrintFlag <0:false/1:true>] \n\t"
-    "[-g,--algname <algorithm selection> ccu 2d case use <-g> algname] \n\t"
-    "[-z,--zeroCopyFlag <0:false/1:true>] \n\t"
-    "[-h,--help]\n");
+int PrintHelp()
+{
+    printf(
+        "USAGE: ./hccl_alg_analyzer_test \n\t"
+        "[-p,--npus <npus used for superPodNum>] \n\t"
+        "[-s,--npus <npus used for serverNum>] \n\t"
+        "[-r,--npus <npus used for rankNum>] \n\t"
+        "[-d,--deviceType 1.0 : <310p1/310p3/910/910b/910_93> 2.0 : <950>] \n\t"
+        "[-t,--opType <broadcast/allreduce/reduce/send/receive/allgather/reducescatter/alltoallv/alltoallvc/alltoall/"
+        "scatter/batchsendrecv/reducescatterV/allGatherV>] \n\t"
+        "[-m,--opMode <opbase/offload>] \n\t"
+        "[-a,--root <root rank>] \n\t"
+        "[-o,--op <sum/prod/min/max>] \n\t"
+        "[-b,--minbytes <min size in bytes>] \n\t"
+        "[-e,--maxbytes <max size in bytes>] \n\t"
+        "[-j,--stepbytes <increment size>] \n\t"
+        "[-x,--stepfactor <increment factor>] \n\t"
+        "[-n,--datatype <int8/int16/int32/fp16/fp32/int64/uint64/uint8/uint16/uint32/fp64/bfp16>] \n\t"
+        "[-c,--rankMemCheckFlag <0:false/1:true>] \n\t"
+        "[-q,--asyTopoFlag <0:false/1:true>] \n\t"
+        "[-u,--taskPrintFlag <0:false/1:true>] \n\t"
+        "[-g,--algname <algorithm selection> ccu 2d case use <-g> algname] \n\t"
+        "[-z,--zeroCopyFlag <0:false/1:true>] \n\t"
+        "[-h,--help]\n");
     return 0;
 }
-}  // namespace HCCL
+} // namespace checker

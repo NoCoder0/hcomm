@@ -38,13 +38,9 @@ using namespace hccl;
  * 该测试类用于验证HcommChannelFence接口的基本功能。
  * 测试场景验证该接口在当前平台上的支持状态。
  */
-class UtAicpuTsHcommChannelFence : public testing::Test
-{
+class UtAicpuTsHcommChannelFence : public testing::Test {
 protected:
-    virtual void TearDown() override
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() override { GlobalMockObject::verify(); }
 
     std::vector<char> uniqueId;
     Hccl::UbTransportLiteImpl transportOnDevice{uniqueId};

@@ -16,7 +16,6 @@
 #include <hccl/hccl_types.h>
 #include "llt_hccl_stub_pub.h"
 
-
 #define private public
 #define protected public
 #include "hccl_alg.h"
@@ -54,24 +53,14 @@
 using namespace std;
 using namespace hccl;
 
-class CollExecutorMultiQpTest : public testing::Test
-{
+class CollExecutorMultiQpTest : public testing::Test {
 protected:
-     static void SetUpTestCase()
-    {
-        std::cout << "\033[36m--CollExecutorMultiQpTest SetUP--\033[0m" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "\033[36m--CollExecutorMultiQpTest TearDown--\033[0m" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "\033[36m--CollExecutorMultiQpTest SetUP--\033[0m" << std::endl; }
+    static void TearDownTestCase() { std::cout << "\033[36m--CollExecutorMultiQpTest TearDown--\033[0m" << std::endl; }
     virtual void SetUp()
     {
         s32 portNum = 7;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
         std::cout << "A Test SetUP" << std::endl;
     }
     virtual void TearDown()
@@ -81,7 +70,7 @@ protected:
     }
 };
 
-static void TestConstructParam(HcclCommParams &params, RankTable_t &rankTable)
+static void TestConstructParam(HcclCommParams& params, RankTable_t& rankTable)
 {
     string commId = "comm ";
     memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);

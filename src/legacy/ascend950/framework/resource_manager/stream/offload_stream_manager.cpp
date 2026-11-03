@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "offload_stream_manager.h"
 #include "log.h"
@@ -16,7 +16,7 @@
 
 namespace Hccl {
 
-void OffloadStreamManager::RegisterMaster(const std::string &opTag, std::unique_ptr<Stream> stream)
+void OffloadStreamManager::RegisterMaster(const std::string& opTag, std::unique_ptr<Stream> stream)
 {
     HCCL_INFO("[OffloadStreamManager::%s] start.", __func__);
 
@@ -29,8 +29,8 @@ void OffloadStreamManager::RegisterMaster(const std::string &opTag, std::unique_
     rtModel_t rtModel = nullptr;
     auto ret = GetStreamCaptureInfo(stream->GetPtr(), rtModel, isCapture);
     if (ret != HCCL_SUCCESS) {
-        THROW<InvalidParamsException>(StringFormat("[OffloadStreamManager::%s] GetStreamCaptureInfo failed.",
-                                                __func__));
+        THROW<InvalidParamsException>(
+            StringFormat("[OffloadStreamManager::%s] GetStreamCaptureInfo failed.", __func__));
     }
     if (!isCapture) {
         ActivateSlaveStreams(opTag, stream.get()); // 不是acl graph则维持原流程
@@ -42,7 +42,7 @@ void OffloadStreamManager::RegisterMaster(const std::string &opTag, std::unique_
     HCCL_INFO("[OffloadStreamManager::%s] end.", __func__);
 }
 
-void OffloadStreamManager::ActivateSlaveStreams(const std::string &opTag, const Stream *masterStream)
+void OffloadStreamManager::ActivateSlaveStreams(const std::string& opTag, const Stream* masterStream)
 {
     HCCL_INFO("[OffloadStreamManager::%s] start.", __func__);
 
@@ -59,7 +59,7 @@ void OffloadStreamManager::ActivateSlaveStreams(const std::string &opTag, const 
     HCCL_INFO("[OffloadStreamManager::%s] end, slaveNum[%d].", __func__, slaveNum);
 }
 
-void OffloadStreamManager::RegisterSlaves(const std::string &opTag, const std::vector<void *> &slaveStreams)
+void OffloadStreamManager::RegisterSlaves(const std::string& opTag, const std::vector<void*>& slaveStreams)
 {
     HCCL_INFO("[OffloadStreamManager::%s] start.", __func__);
 
@@ -77,14 +77,14 @@ void OffloadStreamManager::RegisterSlaves(const std::string &opTag, const std::v
     HCCL_INFO("[OffloadStreamManager::%s] end, slaveNum[%d].", __func__, slaveNum);
 }
 
-Stream *OffloadStreamManager::GetSlave(const std::string &opTag)
+Stream* OffloadStreamManager::GetSlave(const std::string& opTag)
 {
     HCCL_INFO("[OffloadStreamManager::%s] start, opTag[%s].", __func__, opTag.c_str());
 
     CheckOpTag(opTag);
 
     auto slavesIter = slaves.find(opTag);
-    u32  slavesSize = slavesIter == slaves.end() ? 0 : slavesIter->second.size();
+    u32 slavesSize = slavesIter == slaves.end() ? 0 : slavesIter->second.size();
     HCCL_INFO("[OffloadStreamManager::%s] slavesSize[%u] slaveIndex[%u]", __func__, slavesSize, slaveIndex);
     if (slaveIndex >= slavesSize) {
         THROW<InvalidParamsException>(StringFormat("[OffloadStreamManager::%s] slave streams not enough.", __func__));
@@ -94,7 +94,7 @@ Stream *OffloadStreamManager::GetSlave(const std::string &opTag)
     return slaves[opTag][slaveIndex++].get();
 }
 
-Stream *OffloadStreamManager::GetMaster(const std::string &opTag)
+Stream* OffloadStreamManager::GetMaster(const std::string& opTag)
 {
     HCCL_INFO("[OffloadStreamManager::%s] start, opTag[%s].", __func__, opTag.c_str());
 
@@ -109,36 +109,37 @@ Stream *OffloadStreamManager::GetMaster(const std::string &opTag)
     return masters[opTag].get();
 }
 
-u32 OffloadStreamManager::GetSlaveIndex(const std::string &opTag) const
+u32 OffloadStreamManager::GetSlaveIndex(const std::string& opTag) const
 {
     CheckOpTag(opTag);
     return slaveIndex;
 }
 
-void OffloadStreamManager::ResetIndex(const std::string &opTag, u32 index)
+void OffloadStreamManager::ResetIndex(const std::string& opTag, u32 index)
 {
     CheckOpTag(opTag);
     slaveIndex = index;
 }
 
-void OffloadStreamManager::CheckOpTag(const std::string &opTag) const
+void OffloadStreamManager::CheckOpTag(const std::string& opTag) const
 {
     if (opTag != currOpTag) {
-        THROW<InvalidParamsException>(StringFormat("[OffloadStreamManager::%s] opTag[%s] is not currOpTag[%s].",
-                                                __func__, opTag.c_str(), currOpTag.c_str()));
+        THROW<InvalidParamsException>(StringFormat(
+            "[OffloadStreamManager::%s] opTag[%s] is not currOpTag[%s].", __func__, opTag.c_str(), currOpTag.c_str()));
     }
 }
 
-Stream *OffloadStreamManager::GetSlave(const std::string &opTag, u32 index) const
+Stream* OffloadStreamManager::GetSlave(const std::string& opTag, u32 index) const
 {
     CheckOpTag(opTag);
     if (index >= slaves.at(opTag).size()) {
-        THROW<InvalidParamsException>(StringFormat("[OffloadStreamManager::%s] index[%u] is invalid.", __func__, index));
+        THROW<InvalidParamsException>(
+            StringFormat("[OffloadStreamManager::%s] index[%u] is invalid.", __func__, index));
     }
     return slaves.at(opTag)[index].get();
 }
 
-HcclResult OffloadStreamManager::ClearOpStream(const std::string &opTag)
+HcclResult OffloadStreamManager::ClearOpStream(const std::string& opTag)
 {
     if (masters.find(opTag) == masters.end()) {
         HCCL_WARNING("[OffloadStreamManager::%s] optag[%s] master stream not found.", __func__, opTag.c_str());

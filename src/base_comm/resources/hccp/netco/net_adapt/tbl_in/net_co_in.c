@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #define BKF_LOG_HND ((co)->log)
 #define BKF_MOD_NAME ((co)->name)
 #include "net_co_in.h"
@@ -74,13 +73,13 @@ STATIC uint32_t NetCoInChCliInit(NetCo *co)
         .jobMng = co->jobMng,
         .mux = co->mux,
     };
-    co->in->chCliMng  = BkfChCliInit(&arg);
+    co->in->chCliMng = BkfChCliInit(&arg);
     if (co->in->chCliMng == VOS_NULL) {
         BKF_LOG_ERROR(BKF_LOG_HND, "chCliMng(%#x), ng\n", BKF_MASK_ADDR(co->in->chCliMng));
         return BKF_ERR;
     }
 
-    BkfChCliTypeVTbl vTbl = { 0 };
+    BkfChCliTypeVTbl vTbl = {0};
     uint32_t ret = BkfChCliLetcpBuildVTbl(name, &vTbl, nameLen);
     if (ret != BKF_OK) {
         BKF_LOG_ERROR(BKF_LOG_HND, "ret(%u), ng\n", ret);
@@ -136,8 +135,8 @@ STATIC uint32_t NetCoInSuberInitChkArgs(NetCo *co)
     uint8_t buf1[BKF_URL_STR_LEN_MAX];
     uint8_t buf2[BKF_URL_STR_LEN_MAX];
     NET_CO_LOG_MOD_DO(BKF_LOG_HND, "inConnSelfUrl(%s)/inConnNetUrl(%s)\n",
-                      BkfUrlGetStr(&co->argInit.inConnSelfUrl, buf1, sizeof(buf1)),
-                      BkfUrlGetStr(&co->argInit.inConnNetUrl, buf2, sizeof(buf2)));
+        BkfUrlGetStr(&co->argInit.inConnSelfUrl, buf1, sizeof(buf1)),
+        BkfUrlGetStr(&co->argInit.inConnNetUrl, buf2, sizeof(buf2)));
     BOOL argIsInvalid = !BkfUrlIsValid(&co->argInit.inConnSelfUrl) || !BkfUrlIsValid(&co->argInit.inConnNetUrl);
     if (argIsInvalid) {
         BKF_LOG_ERROR(BKF_LOG_HND, "argIsInvalid(%u)\n", argIsInvalid);
@@ -236,11 +235,11 @@ STATIC void NetCoInSuberUninit(NetCo *co)
 }
 
 STATIC const BkfModVTbl g_NetCoInModVTbl[] = {
-    { (F_BKF_DO)NetCoInDataNew,              (F_BKF_DOV)NetCoInDataDelete },
-    { (F_BKF_DO)NetCoInChCliInit,            (F_BKF_DOV)NetCoInChCliUninit },
-    { (F_BKF_DO)NetCoInSimpoInit,            (F_BKF_DOV)NetCoInSimpoUninit },
-    { (F_BKF_DO)NetCoInSuberInit,            (F_BKF_DOV)NetCoInSuberUninit },
-    { (F_BKF_DO)NetCoInDispInit,              (F_BKF_DOV)NetCoInDispUninit },
+    {(F_BKF_DO)NetCoInDataNew, (F_BKF_DOV)NetCoInDataDelete},
+    {(F_BKF_DO)NetCoInChCliInit, (F_BKF_DOV)NetCoInChCliUninit},
+    {(F_BKF_DO)NetCoInSimpoInit, (F_BKF_DOV)NetCoInSimpoUninit},
+    {(F_BKF_DO)NetCoInSuberInit, (F_BKF_DOV)NetCoInSuberUninit},
+    {(F_BKF_DO)NetCoInDispInit, (F_BKF_DOV)NetCoInDispUninit},
 };
 uint32_t NetCoInInit(NetCo *co)
 {
@@ -268,4 +267,3 @@ void NetCoInUninit(NetCo *co)
 #ifdef __cplusplus
 }
 #endif
-

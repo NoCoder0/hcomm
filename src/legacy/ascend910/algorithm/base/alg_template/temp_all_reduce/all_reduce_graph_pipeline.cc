@@ -1,27 +1,24 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "alg_template_register.h"
 #include "all_reduce_graph_pipeline.h"
 
 constexpr u32 STEP_OFFSET_TWO = 2;
 
-
 namespace hccl {
-AllReduceGraphPipeline::AllReduceGraphPipeline(const HcclDispatcher dispatcher) : AlgTemplateBase(dispatcher)
-{}
+AllReduceGraphPipeline::AllReduceGraphPipeline(const HcclDispatcher dispatcher) : AlgTemplateBase(dispatcher) {}
 
-AllReduceGraphPipeline::~AllReduceGraphPipeline()
-{}
+AllReduceGraphPipeline::~AllReduceGraphPipeline() {}
 
-HcclResult AllReduceGraphPipeline::Prepare(u64 reduceAttrBitMap, HcomCollOpInfo *opInfo)
+HcclResult AllReduceGraphPipeline::Prepare(u64 reduceAttrBitMap, [[maybe_unused]] HcomCollOpInfo* opInfo)
 {
     reduceAttr_ = reduceAttrBitMap;
     return HCCL_SUCCESS;
@@ -58,8 +55,8 @@ HcclResult AllReduceGraphPipeline::SubWaitMain()
 {
     u32 subStreamNum = intraRankSize_ - 1;
     for (u32 streamIndex = 0; streamIndex < subStreamNum; streamIndex++) {
-        CHK_RET(LocalNotify::Wait(subStreams_[streamIndex], dispatcher_, streamNotifySub_[streamIndex],
-            INVALID_VALUE_STAGE));
+        CHK_RET(LocalNotify::Wait(
+            subStreams_[streamIndex], dispatcher_, streamNotifySub_[streamIndex], INVALID_VALUE_STAGE));
     }
     return HCCL_SUCCESS;
 }
@@ -80,12 +77,13 @@ HcclResult AllReduceGraphPipeline::RunReduceScatterIntraServer(u32 step)
             dataSize = lastSliceSize_;
             dataCount = lastSliceCount_;
         }
-        DeviceMem src = DeviceMem::create(static_cast<u8 *>(usrInMem_) + srcOffset, dataSize);
-        DeviceMem dst = DeviceMem::create(static_cast<u8 *>(remoteMemPtr) + srcOffset, dataSize);
+        DeviceMem src = DeviceMem::create(static_cast<u8*>(usrInMem_) + srcOffset, dataSize);
+        DeviceMem dst = DeviceMem::create(static_cast<u8*>(remoteMemPtr) + srcOffset, dataSize);
 
-        CHK_RET(HcclReduceAsync(dispatcher_, src.ptr(), dataCount, dataType_, reductionOp_,
-            subStreams_[i - 1], dst.ptr(), intraLinks_[remIntraRankId]->GetRemoteRank(),
-            intraLinks_[remIntraRankId]->GetLinkType(), INLINE_REDUCE_BIT));
+        CHK_RET(HcclReduceAsync(
+            dispatcher_, src.ptr(), dataCount, dataType_, reductionOp_, subStreams_[i - 1], dst.ptr(),
+            intraLinks_[remIntraRankId]->GetRemoteRank(), intraLinks_[remIntraRankId]->GetLinkType(),
+            INLINE_REDUCE_BIT));
 
         CHK_RET(intraLinks_[remIntraRankId]->TxDataSignal(subStreams_[i - 1]));
         CHK_RET(intraLinks_[remIntraRankId]->RxDataSignal(subStreams_[i - 1]));
@@ -107,11 +105,12 @@ HcclResult AllReduceGraphPipeline::RunAllGatherIntraServer(u32 step)
         if (sliceId == (interRankSize_ * intraRankSize_ - 1)) {
             dataSize = lastSliceSize_;
         }
-        DeviceMem src = DeviceMem::create(static_cast<u8 *>(remoteMemPtr) + dstOffset, dataSize);
-        DeviceMem dst = DeviceMem::create(static_cast<u8 *>(usrOutMem_) + dstOffset, dataSize);
+        DeviceMem src = DeviceMem::create(static_cast<u8*>(remoteMemPtr) + dstOffset, dataSize);
+        DeviceMem dst = DeviceMem::create(static_cast<u8*>(usrOutMem_) + dstOffset, dataSize);
 
-        CHK_RET(HcclD2DMemcpyAsync(dispatcher_, dst, src, subStreams_[i - 1],
-            intraLinks_[remIntraRankId]->GetRemoteRank(), intraLinks_[remIntraRankId]->GetLinkType()));
+        CHK_RET(HcclD2DMemcpyAsync(
+            dispatcher_, dst, src, subStreams_[i - 1], intraLinks_[remIntraRankId]->GetRemoteRank(),
+            intraLinks_[remIntraRankId]->GetLinkType()));
 
         CHK_RET(intraLinks_[remIntraRankId]->TxDataSignal(subStreams_[i - 1]));
         CHK_RET(intraLinks_[remIntraRankId]->RxDataSignal(subStreams_[i - 1]));
@@ -119,9 +118,8 @@ HcclResult AllReduceGraphPipeline::RunAllGatherIntraServer(u32 step)
     return HCCL_SUCCESS;
 }
 
-HcclResult AllReduceGraphPipeline::RunReduceScatterInterServer(u32 step,
-                                                                const LINK &prevInterLink,
-                                                                const LINK &nextInterLink)
+HcclResult
+AllReduceGraphPipeline::RunReduceScatterInterServer(u32 step, const LINK& prevInterLink, const LINK& nextInterLink)
 {
     u32 txSliceId = ((interRankId_ + 1 + step) % interRankSize_) * intraRankSize_ + intraRankId_;
     u64 txSliceOffset = memSliceSize_ * txSliceId;
@@ -129,10 +127,12 @@ HcclResult AllReduceGraphPipeline::RunReduceScatterInterServer(u32 step,
     if (txSliceId == (interRankSize_ * intraRankSize_ - 1)) {
         txDataSize = lastSliceSize_;
     }
-    DeviceMem srcMem = DeviceMem::create(static_cast<u8 *>(usrInMem_) + txSliceOffset, txDataSize);
+    DeviceMem srcMem = DeviceMem::create(static_cast<u8*>(usrInMem_) + txSliceOffset, txDataSize);
     CHK_RET(senderInfo_->run(nextInterLink, txSliceOffset, srcMem, stream_, UserMemType::INPUT_MEM));
-    HCCL_DEBUG("[AllReduceGraphPipeline][RunReduceScatterInterServer] local rank[%u], localOffset[%llu]," \
-               "tx with slice[%llu]", rankId_, txSliceOffset, txDataSize);
+    HCCL_DEBUG(
+        "[AllReduceGraphPipeline][RunReduceScatterInterServer] local rank[%u], localOffset[%llu],"
+        "tx with slice[%llu]",
+        rankId_, txSliceOffset, txDataSize);
 
     u32 rxSliceId = ((interRankId_ + 2 + step) % interRankSize_) * intraRankSize_ + intraRankId_;
     u64 rxSliceOffset = memSliceSize_ * rxSliceId;
@@ -140,15 +140,13 @@ HcclResult AllReduceGraphPipeline::RunReduceScatterInterServer(u32 step,
     if (rxSliceId == (interRankSize_ * intraRankSize_ - 1)) {
         rxDataSize = lastSliceSize_;
     }
-    DeviceMem rxLocalMem = DeviceMem::create(static_cast<u8 *>(usrInMem_) + rxSliceOffset, rxDataSize);
-    CHK_RET(reducerInfo_->run(dispatcher_, prevInterLink, rxSliceOffset, rxLocalMem, rxLocalMem, rxLocalMem,
-        stream_));
+    DeviceMem rxLocalMem = DeviceMem::create(static_cast<u8*>(usrInMem_) + rxSliceOffset, rxDataSize);
+    CHK_RET(reducerInfo_->run(dispatcher_, prevInterLink, rxSliceOffset, rxLocalMem, rxLocalMem, rxLocalMem, stream_));
     return HCCL_SUCCESS;
 }
 
-HcclResult AllReduceGraphPipeline::RunAllGatherInterServer(u32 step,
-                                                            const LINK &prevInterLink,
-                                                            const LINK &nextInterLink)
+HcclResult
+AllReduceGraphPipeline::RunAllGatherInterServer(u32 step, const LINK& prevInterLink, const LINK& nextInterLink)
 {
     u32 txSliceId = ((interRankId_ + step) % interRankSize_) * intraRankSize_ + intraRankId_;
     u64 txSliceOffset = memSliceSize_ * txSliceId;
@@ -156,10 +154,12 @@ HcclResult AllReduceGraphPipeline::RunAllGatherInterServer(u32 step,
     if (txSliceId == (interRankSize_ * intraRankSize_ - 1)) {
         txDataSize = lastSliceSize_;
     }
-    CHK_RET(nextInterLink->TxAsync(UserMemType::OUTPUT_MEM, txSliceOffset,
-        static_cast<u8 *>(usrOutMem_) + txSliceOffset, txDataSize, stream_));
-    HCCL_DEBUG("[AllReduceGraphPipeline][RunAllGatherInterServer] local rank[%u], localOffset[%llu]," \
-               "tx with slice[%llu]", rankId_, txSliceOffset, txDataSize);
+    CHK_RET(nextInterLink->TxAsync(
+        UserMemType::OUTPUT_MEM, txSliceOffset, static_cast<u8*>(usrOutMem_) + txSliceOffset, txDataSize, stream_));
+    HCCL_DEBUG(
+        "[AllReduceGraphPipeline][RunAllGatherInterServer] local rank[%u], localOffset[%llu],"
+        "tx with slice[%llu]",
+        rankId_, txSliceOffset, txDataSize);
 
     u32 rxSliceId = ((interRankId_ + step + 1) % interRankSize_) * intraRankSize_ + intraRankId_;
     u64 rxSliceOffset = memSliceSize_ * rxSliceId;
@@ -167,8 +167,8 @@ HcclResult AllReduceGraphPipeline::RunAllGatherInterServer(u32 step,
     if (rxSliceId == (interRankSize_ * intraRankSize_ - 1)) {
         rxDataSize = lastSliceSize_;
     }
-    CHK_RET(prevInterLink->RxAsync(UserMemType::OUTPUT_MEM, rxSliceOffset,
-        static_cast<u8 *>(usrOutMem_) + rxSliceOffset, rxDataSize, stream_));
+    CHK_RET(prevInterLink->RxAsync(
+        UserMemType::OUTPUT_MEM, rxSliceOffset, static_cast<u8*>(usrOutMem_) + rxSliceOffset, rxDataSize, stream_));
     return HCCL_SUCCESS;
 }
 
@@ -180,7 +180,7 @@ HcclResult AllReduceGraphPipeline::RunAsync()
     LINK prevInterLink = interLinks_[prevInterRankId];
     LINK nextInterLink = interLinks_[nextInterRankId];
     // 在user in执行reducescatter pipeline
-    for (u32 step = 0; step < interRankSize_; step ++) {
+    for (u32 step = 0; step < interRankSize_; step++) {
         if (step == 0) {
             CHK_RET(MainRecordSub());
             CHK_RET(SubWaitMain());
@@ -208,12 +208,12 @@ HcclResult AllReduceGraphPipeline::RunAsync()
     if (rankId_ == (interRankSize_ * intraRankSize_ - 1)) {
         dataSize = lastSliceSize_;
     }
-    DeviceMem locSrc = DeviceMem::create(static_cast<u8 *>(usrInMem_) + localOffsetByte, dataSize);
-    DeviceMem locDst = DeviceMem::create(static_cast<u8 *>(usrOutMem_) + localOffsetByte, dataSize);
+    DeviceMem locSrc = DeviceMem::create(static_cast<u8*>(usrInMem_) + localOffsetByte, dataSize);
+    DeviceMem locDst = DeviceMem::create(static_cast<u8*>(usrOutMem_) + localOffsetByte, dataSize);
     CHK_RET(HcclD2DMemcpyAsync(dispatcher_, locDst, locSrc, stream_));
 
     // 在user out执行allgather pipeline
-    for (u32 step = 0; step < interRankSize_; step ++) {
+    for (u32 step = 0; step < interRankSize_; step++) {
         CHK_RET(MainRecordSub());
         CHK_RET(SubWaitMain());
         if (step < interRankSize_ - 1) {
@@ -236,10 +236,11 @@ HcclResult AllReduceGraphPipeline::RunAsync()
     return HCCL_SUCCESS;
 }
 
-HcclResult AllReduceGraphPipeline::Prepare(const HcomCollOpInfo *opInfo, DeviceMem &cclBufferA, DeviceMem &cclBufferB,
-    const u64 count, const SubCommInfo &level1CommInfo, const SubCommInfo &level0CommInfo,
-    Stream &mainStream, std::vector<Stream> &subStream,
-    std::vector<std::shared_ptr<LocalNotify>> &notifyMain, std::vector<std::shared_ptr<LocalNotify>> &notifySub)
+HcclResult AllReduceGraphPipeline::Prepare(
+    const HcomCollOpInfo* opInfo, [[maybe_unused]] DeviceMem& cclBufferA, [[maybe_unused]] DeviceMem& cclBufferB,
+    const u64 count, const SubCommInfo& level1CommInfo, const SubCommInfo& level0CommInfo, Stream& mainStream,
+    std::vector<Stream>& subStream, std::vector<std::shared_ptr<LocalNotify>>& notifyMain,
+    std::vector<std::shared_ptr<LocalNotify>>& notifySub)
 {
     unitSize_ = SIZE_TABLE[opInfo->dataType];
     sliceCount_ = count / (level0CommInfo.localRankSize * level1CommInfo.localRankSize);
@@ -273,24 +274,30 @@ HcclResult AllReduceGraphPipeline::Prepare(const HcomCollOpInfo *opInfo, DeviceM
     // streamNotify, size: n
     streamNotifyMain_ = notifyMain;
     if (streamNotifyMain_.size() < intraRankSize_ - 1) {
-        HCCL_ERROR("[AllReduceGraphPipeline][Prepare]rank[%u] streamNotifyMain_ size [%u] error, is smaller than," \
-            "intraRankSize_[%u]", rankId_, streamNotifyMain_.size(), intraRankSize_);
+        HCCL_ERROR(
+            "[AllReduceGraphPipeline][Prepare]rank[%u] streamNotifyMain_ size[%u] is smaller than "
+            "intraRankSize_[%u]",
+            rankId_, streamNotifyMain_.size(), intraRankSize_);
         return HCCL_E_INTERNAL;
     }
     streamNotifySub_ = notifySub;
     if (streamNotifySub_.size() < intraRankSize_ - 1) {
-        HCCL_ERROR("[AllReduceGraphPipeline][Prepare]rank[%u] streamNotifySub_ size [%u] error, is smaller than," \
-            "intraRankSize_[%u]", rankId_, streamNotifySub_.size(), intraRankSize_);
+        HCCL_ERROR(
+            "[AllReduceGraphPipeline][Prepare]rank[%u] streamNotifySub_ size[%u] is smaller than "
+            "intraRankSize_[%u]",
+            rankId_, streamNotifySub_.size(), intraRankSize_);
         return HCCL_E_INTERNAL;
     }
 
     intraLinks_ = level0CommInfo.links;
     interLinks_ = level1CommInfo.links;
 
-    HCCL_INFO("[AllReduceGraphPipeline][Prepare]streamNum[%u], streamNotifyMainNum[%u], streamNotifySubNum[%u]",
+    HCCL_INFO(
+        "[AllReduceGraphPipeline][Prepare]streamNum[%u], streamNotifyMainNum[%u], streamNotifySubNum[%u]",
         subStreams_.size(), streamNotifyMain_.size(), streamNotifySub_.size());
-    HCCL_INFO("[AllReduceGraphPipeline][Prepare]interLinksNum[%u], intraLinksNum[%u]",
-        interLinks_.size(), intraLinks_.size());
+    HCCL_INFO(
+        "[AllReduceGraphPipeline][Prepare]interLinksNum[%u], intraLinksNum[%u]", interLinks_.size(),
+        intraLinks_.size());
     senderInfo_.reset(new (std::nothrow) Sender(dataType_, reductionOp_, reduceAttr_));
     CHK_SMART_PTR_NULL(senderInfo_);
     reducerInfo_.reset(new (std::nothrow) Reducer(dataType_, reductionOp_, reduceAttr_));

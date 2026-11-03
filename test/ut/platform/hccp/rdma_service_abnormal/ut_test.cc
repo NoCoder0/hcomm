@@ -15,9 +15,8 @@ extern "C" {
 #include "user_log.h"
 #include <sys/epoll.h>
 
-extern void RsEpollEventHandleOne(struct rs_cb *rs_cb, struct epoll_event *events);
-extern void RsEpollEventInHandle(struct rs_cb *rs_cb, struct epoll_event *events);
-
+extern void RsEpollEventHandleOne(struct rs_cb* rs_cb, struct epoll_event* events);
+extern void RsEpollEventInHandle(struct rs_cb* rs_cb, struct epoll_event* events);
 }
 
 #include "gtest/gtest.h"
@@ -26,14 +25,15 @@ extern void RsEpollEventInHandle(struct rs_cb *rs_cb, struct epoll_event *events
 
 using namespace std;
 
-#define RS_CHECK_POINTER_NULL_RETURN_VOID(ptr) do { \
-        if ((ptr) == NULL) { \
-            hccp_err("pointer is NULL!"); \
-            return; \
-        } \
-} while (0)
+#define RS_CHECK_POINTER_NULL_RETURN_VOID(ptr) \
+    do {                                       \
+        if ((ptr) == NULL) {                   \
+            hccp_err("pointer is NULL!");      \
+            return;                            \
+        }                                      \
+    } while (0)
 
-void rs_epoll_event_handle_one_stub(struct rs_cb *rs_cb, struct epoll_event *events)
+void rs_epoll_event_handle_one_stub(struct rs_cb* rs_cb, struct epoll_event* events)
 {
     RS_CHECK_POINTER_NULL_RETURN_VOID(events);
     RS_CHECK_POINTER_NULL_RETURN_VOID(rs_cb);
@@ -46,27 +46,15 @@ void rs_epoll_event_handle_one_stub(struct rs_cb *rs_cb, struct epoll_event *eve
     return;
 }
 
-class RS : public testing::Test
-{
+class RS : public testing::Test {
 protected:
-   static void SetUpTestCase()
-    {
-        std::cout << "\033[36m--RoCE RS SetUP--\033[0m" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "\033[36m--RoCE RS TearDown--\033[0m" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "\033[36m--RoCE RS SetUP--\033[0m" << std::endl; }
+    static void TearDownTestCase() { std::cout << "\033[36m--RoCE RS TearDown--\033[0m" << std::endl; }
     virtual void SetUp()
     {
-		MOCKER(RsEpollEventHandleOne)
-		.expects(atMost(100000))
-		.will(invoke(rs_epoll_event_handle_one_stub));
+        MOCKER(RsEpollEventHandleOne).expects(atMost(100000)).will(invoke(rs_epoll_event_handle_one_stub));
     }
-    virtual void TearDown()
-    {
-	 GlobalMockObject::verify();
-    }
+    virtual void TearDown() { GlobalMockObject::verify(); }
 };
 
 TEST_M(RS, TcRsInit2);
@@ -83,6 +71,7 @@ TEST_M(RS, TcRsSetTsqpDepthAbnormal);
 
 TEST_M(RS, TcRsSocketListenStart2);
 TEST_M(RS, TcRsQpCreate2);
+TEST_M(RS, TcRsQpCreateWithCQAbnormal);
 
 TEST_M(RS, TcRsAbnormal2);
 

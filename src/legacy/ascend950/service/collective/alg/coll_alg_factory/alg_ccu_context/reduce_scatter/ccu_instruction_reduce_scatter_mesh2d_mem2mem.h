@@ -24,9 +24,15 @@ namespace Hccl {
 // 为ReduceScatterMeshMem2Mem2D实现的CCUIns、CCUCtxArg与CCUTaskArg
 class CcuCtxArgReduceScatterMeshMem2Mem2D : public CcuCtxArg {
 public:
-    explicit CcuCtxArgReduceScatterMeshMem2Mem2D(const std::vector<uint64_t> &dSize, uint32_t rId, uint32_t aId,
-        const CollAlgOperator &op, const std::vector<std::vector<RankId>> &tempVTopo) :
-            dimSize_(dSize), rankId_(rId), axisId_(aId), op_(op), tempVTopo_(tempVTopo) {}
+    explicit CcuCtxArgReduceScatterMeshMem2Mem2D(
+        const std::vector<uint64_t>& dSize, uint32_t rId, uint32_t aId, const CollAlgOperator& op,
+        const std::vector<std::vector<RankId>>& tempVTopo)
+        : dimSize_(dSize),
+          rankId_(rId),
+          axisId_(aId),
+          op_(op),
+          tempVTopo_(tempVTopo)
+    {}
     CcuCtxSignature GetCtxSignature() const override
     {
         CcuCtxSignature signature;
@@ -42,11 +48,17 @@ public:
 
 class CcuTaskArgReduceScatterMeshMem2Mem2D : public CcuTaskArg {
 public:
-
-    explicit CcuTaskArgReduceScatterMeshMem2Mem2D(uint64_t inputAddr, uint64_t outputAddr, uint64_t outputSize,
-        					  uint64_t xAxisSize, uint64_t yAxisSize, uint64_t offset, uint64_t token) :
-        					  inputAddr_(inputAddr), outputAddr_(outputAddr), outputSize_(outputSize), 
-        					  xAxisSize_(xAxisSize), yAxisSize_(yAxisSize), offset_(offset), token_(token) {}
+    explicit CcuTaskArgReduceScatterMeshMem2Mem2D(
+        uint64_t inputAddr, uint64_t outputAddr, uint64_t outputSize, uint64_t xAxisSize, uint64_t yAxisSize,
+        uint64_t offset, uint64_t token)
+        : inputAddr_(inputAddr),
+          outputAddr_(outputAddr),
+          outputSize_(outputSize),
+          xAxisSize_(xAxisSize),
+          yAxisSize_(yAxisSize),
+          offset_(offset),
+          token_(token)
+    {}
 
     uint64_t inputAddr_;
     uint64_t outputAddr_;
@@ -59,27 +71,26 @@ public:
 
 class CcuInstructionReduceScatterMeshMem2Mem2D : public CcuInstruction {
 public:
-    CcuInstructionReduceScatterMeshMem2Mem2D() : CcuInstruction()
-    {
-    }
+    CcuInstructionReduceScatterMeshMem2Mem2D() : CcuInstruction() {}
 
-    void Init(std::vector<uint64_t> dimSize, uint32_t rankId, uint64_t inputAddr, uint64_t outputAddr, uint64_t axisId,
-              uint64_t outputSize, uint64_t xAxisSize, uint64_t yAxisSize, uint64_t offset, uint64_t token,
-	      CollAlgOperator &op, std::vector<std::vector<RankId>> &tempVTopo)
+    void Init(
+        std::vector<uint64_t> dimSize, uint32_t rankId, uint64_t inputAddr, uint64_t outputAddr, uint64_t axisId,
+        uint64_t outputSize, uint64_t xAxisSize, uint64_t yAxisSize, uint64_t offset, uint64_t token,
+        CollAlgOperator& op, std::vector<std::vector<RankId>>& tempVTopo)
     {
-        dimSize_    = dimSize;
-        rankId_     = rankId;
-        axisId_     = axisId;
-        inputAddr_  = inputAddr;
+        dimSize_ = dimSize;
+        rankId_ = rankId;
+        axisId_ = axisId;
+        inputAddr_ = inputAddr;
         outputAddr_ = outputAddr;
         outputSize_ = outputSize;
-        xAxisSize_  = xAxisSize;
-        yAxisSize_  = yAxisSize;
-        offset_     = offset;
-        token_      = token;
+        xAxisSize_ = xAxisSize;
+        yAxisSize_ = yAxisSize;
+        offset_ = offset;
+        token_ = token;
 
-        op_         = op;
-        tempVTopo_  = tempVTopo;
+        op_ = op;
+        tempVTopo_ = tempVTopo;
         return;
     }
 
@@ -91,23 +102,22 @@ public:
 
     std::string Describe() const override
     {
-        return StringFormat("CcuInstructionReduceScatterMeshMem2Mem2D rankId [%u], instType[%s]", rankId_, instType_.Describe().c_str());
+        return StringFormat(
+            "CcuInstructionReduceScatterMeshMem2Mem2D rankId [%u], instType[%s]", rankId_,
+            instType_.Describe().c_str());
     }
 
-    void SetInstType(CcuInstType instType) 
-    { 
-        instType_ = instType; 
-    }
+    void SetInstType(CcuInstType instType) { instType_ = instType; }
 
     std::unique_ptr<CcuCtxArg> GetCtxArg() const override
     {
-         return std::make_unique<CcuCtxArgReduceScatterMeshMem2Mem2D>(dimSize_, rankId_, axisId_, op_, tempVTopo_);
+        return std::make_unique<CcuCtxArgReduceScatterMeshMem2Mem2D>(dimSize_, rankId_, axisId_, op_, tempVTopo_);
     }
 
     std::unique_ptr<CcuTaskArg> GetTaskArg() const override
     {
-        return std::make_unique<CcuTaskArgReduceScatterMeshMem2Mem2D>(inputAddr_, outputAddr_, outputSize_, 
-            							      xAxisSize_, yAxisSize_, offset_, token_);
+        return std::make_unique<CcuTaskArgReduceScatterMeshMem2Mem2D>(
+            inputAddr_, outputAddr_, outputSize_, xAxisSize_, yAxisSize_, offset_, token_);
     }
 
 private:
@@ -126,5 +136,5 @@ private:
     std::vector<std::vector<RankId>> tempVTopo_;
 };
 
-}
+} // namespace Hccl
 #endif // HCCLV2_CCU_INSTRUCTION_REDUCE_SCATTER_MESH_2D_MEM2MEM_H_

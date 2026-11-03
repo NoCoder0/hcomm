@@ -28,50 +28,38 @@ using namespace Hccl;
 
 class FlushHandleTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "FlushHandleTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "FlushHandleTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "FlushHandleTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "FlushHandleTest TearDown" << std::endl; }
 
     virtual void SetUp()
     {
-        fakeRdmaHandle = reinterpret_cast<void *>(0xDEAD0001);
-        fakeQpHandle    = reinterpret_cast<void *>(0xDEAD0002);
-        fakeMrHandle    = reinterpret_cast<void *>(0xDEAD0003);
-        fakeLocalMem    = reinterpret_cast<void *>(0xBEEF0001);
-        fakeDeviceMem   = reinterpret_cast<void *>(0xBEEF0002);
+        fakeRdmaHandle = reinterpret_cast<void*>(0xDEAD0001);
+        fakeQpHandle = reinterpret_cast<void*>(0xDEAD0002);
+        fakeMrHandle = reinterpret_cast<void*>(0xDEAD0003);
+        fakeLocalMem = reinterpret_cast<void*>(0xBEEF0001);
+        fakeDeviceMem = reinterpret_cast<void*>(0xBEEF0002);
     }
 
-    void *fakeRdmaHandle;
-    void *fakeQpHandle;
-    void *fakeMrHandle;
-    void *fakeLocalMem;
-    void *fakeDeviceMem;
+    void* fakeRdmaHandle;
+    void* fakeQpHandle;
+    void* fakeMrHandle;
+    void* fakeLocalMem;
+    void* fakeDeviceMem;
 };
 
 TEST_F(FlushHandleTest, DoubleDestroy_Expect_Idempotent)
 {
     GlobalMockObject::verify();
-    MOCKER(RaDeregisterMr)
-        .stubs()
-        .with(mockcpp::any(), mockcpp::any())
-        .will(returnValue(0));
-    MOCKER(RaQpDestroy)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(0));
+    MOCKER(RaDeregisterMr).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(0));
+    MOCKER(RaQpDestroy).stubs().with(mockcpp::any()).will(returnValue(0));
     MOCKER(HrtFree).stubs();
 
     FlushHandle handle;
-    handle.rdmaHandle    = fakeRdmaHandle;
-    handle.localMem      = fakeLocalMem;
+    handle.rdmaHandle = fakeRdmaHandle;
+    handle.localMem = fakeLocalMem;
     handle.localMrHandle = fakeMrHandle;
-    handle.qpHandle      = fakeQpHandle;
+    handle.qpHandle = fakeQpHandle;
     handle.SetFlushOpcodeSupport();
 
     // 第一次 Destroy — 清理所有资源并置空
@@ -92,18 +80,9 @@ TEST_F(FlushHandleTest, Init_WhenFlushOpcodePath_Expect_SuccessAndFlagSet)
         .will(returnValue(fakeRdmaHandle));
     // lbMax > 0 → 走 flushOpcode 路径
     int lbMax = 1;
-    MOCKER(RaGetLbMax)
-        .stubs()
-        .with(mockcpp::any(), outBoundP(&lbMax, sizeof(lbMax)))
-        .will(returnValue(0));
-    MOCKER(HrtMalloc)
-        .stubs()
-        .with(mockcpp::any(), mockcpp::any())
-        .will(returnValue(fakeLocalMem));
-    MOCKER(RaLoopbackQpCreate)
-        .stubs()
-        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
-        .will(returnValue(0));
+    MOCKER(RaGetLbMax).stubs().with(mockcpp::any(), outBoundP(&lbMax, sizeof(lbMax))).will(returnValue(0));
+    MOCKER(HrtMalloc).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(fakeLocalMem));
+    MOCKER(RaLoopbackQpCreate).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(0));
     MOCKER(RaRegisterMr)
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), outBoundP(&fakeMrHandle, sizeof(fakeMrHandle)))
@@ -128,15 +107,9 @@ TEST_F(FlushHandleTest, Init_WhenAllocateLocalMemoryFails_Expect_MemoryError)
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
         .will(returnValue(fakeRdmaHandle));
-    MOCKER(RaGetLbMax)
-        .stubs()
-        .with(mockcpp::any(), mockcpp::any())
-        .will(returnValue(0));
+    MOCKER(RaGetLbMax).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(0));
     // AllocateLocalMemory（HrtMalloc）失败
-    MOCKER(HrtMalloc)
-        .stubs()
-        .with(mockcpp::any(), mockcpp::any())
-        .will(returnValue((void*)nullptr));
+    MOCKER(HrtMalloc).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue((void*)nullptr));
     MOCKER(RaDeregisterMr).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(0));
     MOCKER(RaQpDestroy).stubs().with(mockcpp::any()).will(returnValue(0));
 
@@ -155,18 +128,9 @@ TEST_F(FlushHandleTest, Init_WhenCreateLoopbackQpFails_Expect_RoceConnectError)
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
         .will(returnValue(fakeRdmaHandle));
-    MOCKER(RaGetLbMax)
-        .stubs()
-        .with(mockcpp::any(), mockcpp::any())
-        .will(returnValue(0));
-    MOCKER(HrtMalloc)
-        .stubs()
-        .with(mockcpp::any(), mockcpp::any())
-        .will(returnValue(fakeLocalMem));
-    MOCKER(RaLoopbackQpCreate)
-        .stubs()
-        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
-        .will(returnValue(-1));
+    MOCKER(RaGetLbMax).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(0));
+    MOCKER(HrtMalloc).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(fakeLocalMem));
+    MOCKER(RaLoopbackQpCreate).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(-1));
     MOCKER(RaDeregisterMr).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(0));
     MOCKER(RaQpDestroy).stubs().with(mockcpp::any()).will(returnValue(0));
     MOCKER(HrtFree).stubs();
@@ -185,23 +149,11 @@ TEST_F(FlushHandleTest, Init_WhenRegisterLocalMrFails_Expect_MemoryError)
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
         .will(returnValue(fakeRdmaHandle));
-    MOCKER(RaGetLbMax)
-        .stubs()
-        .with(mockcpp::any(), mockcpp::any())
-        .will(returnValue(0));
-    MOCKER(HrtMalloc)
-        .stubs()
-        .with(mockcpp::any(), mockcpp::any())
-        .will(returnValue(fakeLocalMem));
-    MOCKER(RaLoopbackQpCreate)
-        .stubs()
-        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
-        .will(returnValue(0));
+    MOCKER(RaGetLbMax).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(0));
+    MOCKER(HrtMalloc).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(fakeLocalMem));
+    MOCKER(RaLoopbackQpCreate).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(0));
     // RaRegisterMr 第一次调用（Local MR）失败
-    MOCKER(RaRegisterMr)
-        .stubs()
-        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
-        .will(returnValue(-1));
+    MOCKER(RaRegisterMr).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(-1));
     MOCKER(RaDeregisterMr).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(0));
     MOCKER(RaQpDestroy).stubs().with(mockcpp::any()).will(returnValue(0));
     MOCKER(HrtFree).stubs();
@@ -221,31 +173,16 @@ TEST_F(FlushHandleTest, Destroy_AfterSuccessfulInit_Expect_AllResourcesCleanedUp
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
         .will(returnValue(fakeRdmaHandle));
     int lbMax = 1;
-    MOCKER(RaGetLbMax)
-        .stubs()
-        .with(mockcpp::any(), outBoundP(&lbMax, sizeof(lbMax)))
-        .will(returnValue(0));
-    MOCKER(HrtMalloc)
-        .stubs()
-        .with(mockcpp::any(), mockcpp::any())
-        .will(returnValue(fakeLocalMem));
-    MOCKER(RaLoopbackQpCreate)
-        .stubs()
-        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
-        .will(returnValue(0));
+    MOCKER(RaGetLbMax).stubs().with(mockcpp::any(), outBoundP(&lbMax, sizeof(lbMax))).will(returnValue(0));
+    MOCKER(HrtMalloc).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(fakeLocalMem));
+    MOCKER(RaLoopbackQpCreate).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(0));
     MOCKER(RaRegisterMr)
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), outBoundP(&fakeMrHandle, sizeof(fakeMrHandle)))
         .will(returnValue(0));
     MOCKER(HrtFree).stubs();
-    MOCKER(RaDeregisterMr)
-        .stubs()
-        .with(mockcpp::any(), mockcpp::any())
-        .will(returnValue(0));
-    MOCKER(RaQpDestroy)
-        .stubs()
-        .with(mockcpp::any())
-        .will(returnValue(0));
+    MOCKER(RaDeregisterMr).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(0));
+    MOCKER(RaQpDestroy).stubs().with(mockcpp::any()).will(returnValue(0));
 
     FlushHandle handle;
     IpAddress ip("192.168.1.1");

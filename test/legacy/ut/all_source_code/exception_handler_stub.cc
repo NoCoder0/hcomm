@@ -33,8 +33,8 @@ HcclResult ExceptionHandler::HandleException(const char* functionName)
     }
 }
 
-void ExceptionHandler::ThrowIfErrorCode(HcclResult errorCode, const std::string &errString, const char* fileName,
-    s32 lineNum, const char* functionName)
+void ExceptionHandler::ThrowIfErrorCode(
+    HcclResult errorCode, const std::string& errString, const char* fileName, s32 lineNum, const char* functionName)
 {
     (void)fileName;
     (void)lineNum;

@@ -20,46 +20,47 @@ public:
     explicit InsReduceParallelExecutor();
     ~InsReduceParallelExecutor() override;
 
-    std::string Describe() const override
-    {
-        return "Instruction based Reduce Parallel Executor.";
-    }
+    std::string Describe() const override { return "Instruction based Reduce Parallel Executor."; }
 
     // HOST 接口
-    HcclResult Orchestrate(const RankGraph *rankGraph, const CollAlgOperator &op, const CollAlgParams &params,
-        InsQuePtr insQue) override;
+    HcclResult Orchestrate(
+        const RankGraph* rankGraph, const CollAlgOperator& op, const CollAlgParams& params, InsQuePtr insQue) override;
     // AICPU 接口
-    HcclResult Orchestrate(const AlgTopoInfo &topoInfo, const CollAlgOperator &op, const CollAlgParams &params,
-        ConnectedLinkMgr *linkMgr, InsQuePtr insQue) override;
-    HcclResult CalcResOffload(const RankGraph *rankGraph, const u64 &dataSize,
-        CollOffloadOpResReq &resReq) override;
-    HcclResult CalcRes(const RankGraph *rankGraph, CollAlgResReq &algResReq) override;
+    HcclResult Orchestrate(
+        const AlgTopoInfo& topoInfo, const CollAlgOperator& op, const CollAlgParams& params, ConnectedLinkMgr* linkMgr,
+        InsQuePtr insQue) override;
+    HcclResult CalcResOffload(const RankGraph* rankGraph, const u64& dataSize, CollOffloadOpResReq& resReq) override;
+    HcclResult CalcRes(const RankGraph* rankGraph, CollAlgResReq& algResReq) override;
 
 private:
-    HcclResult GenInsQues(InsAlgTemplate0 &tempAlgIntra, InsAlgTemplate1 &tempAlgInter);
-    void GenTemplateAlgParams0(const u64 dataOffset, const u64 dataCount, const u64 scratchOffset,TemplateDataParams &tempAlgParams) const;
-    void GenTemplateAlgParams1(const u64 dataOffset, const u64 dataCount, const u64 scratchOffset,TemplateDataParams &tempAlgParams) const;
-    void GetParallelDataSplitRate(std::vector<float> &splitDataSize) const;
-    HcclResult PrepareResForTemplate(const RankGraph *rankGraph, InsAlgTemplate0 &tempAlgIntra, InsAlgTemplate1 &tempAlgInter);
-    HcclResult PrepareResForTemplate(ConnectedLinkMgr *linkMgr, InsAlgTemplate0 &tempAlgIntra, InsAlgTemplate1 &tempAlgInter);
+    HcclResult GenInsQues(InsAlgTemplate0& tempAlgIntra, InsAlgTemplate1& tempAlgInter);
+    void GenTemplateAlgParams0(
+        const u64 dataOffset, const u64 dataCount, const u64 scratchOffset, TemplateDataParams& tempAlgParams) const;
+    void GenTemplateAlgParams1(
+        const u64 dataOffset, const u64 dataCount, const u64 scratchOffset, TemplateDataParams& tempAlgParams) const;
+    void GetParallelDataSplitRate(std::vector<float>& splitDataSize) const;
+    HcclResult
+    PrepareResForTemplate(const RankGraph* rankGraph, InsAlgTemplate0& tempAlgIntra, InsAlgTemplate1& tempAlgInter);
+    HcclResult
+    PrepareResForTemplate(ConnectedLinkMgr* linkMgr, InsAlgTemplate0& tempAlgIntra, InsAlgTemplate1& tempAlgInter);
     HcclResult CalcLocalRoot();
 
-    std::vector<std::vector<RankId>>              virtRanks_;
-    std::vector<std::map<RankId, u32>>            virtRankMap_; // map<virtRank, virtRankOrder>
+    std::vector<std::vector<RankId>> virtRanks_;
+    std::vector<std::map<RankId, u32>> virtRankMap_; // map<virtRank, virtRankOrder>
     std::vector<std::vector<std::vector<RankId>>> vTopo_;
 
     std::vector<InsQuePtr> reqQue_;
     std::vector<InsQuePtr> intraQue_;
     std::vector<InsQuePtr> interQue_;
     std::vector<InsQuePtr> syncQueues_;
-    ResLinks               intraLinks_;
-    ResLinks               interLinks_;
+    ResLinks intraLinks_;
+    ResLinks interLinks_;
 
-    u32 intraLocalRankSize_{0};  // server内算法rankSize
-    u32 interLocalRankSize_{0};  // server间算法rankSize
+    u32 intraLocalRankSize_{0}; // server内算法rankSize
+    u32 interLocalRankSize_{0}; // server间算法rankSize
 
-    u32 intraLocalRoot_{0};  // server内算法root
-    u32 interLocalRoot_{0};  // server间算法root
+    u32 intraLocalRoot_{0}; // server内算法root
+    u32 interLocalRoot_{0}; // server间算法root
 };
 
 } // namespace Hccl

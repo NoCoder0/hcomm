@@ -10,7 +10,6 @@
 
 #include "network_manager_pub.h"
 
-
 namespace hccl {
 
 NetworkManager* NetworkManager::nmInstance[MAX_DEV_NUM] = {nullptr};
@@ -44,14 +43,8 @@ NetworkManager::NetworkManager()
       devicePhyId_(INVALID_UINT),
       isHostUseDevNic_(false),
       notifyType_(NO_USE)
-{
-}
+{}
 
-NetworkManager::~NetworkManager()
-{
-}
+NetworkManager::~NetworkManager() {}
 
-
-}
-
-
+} // namespace hccl

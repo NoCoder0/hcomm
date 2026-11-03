@@ -10,8 +10,8 @@
 
 # 定义 ccl_dpu 动态链接库，在 host 侧使用
 add_library(ccl_dpu SHARED
-    ${CMAKE_CURRENT_SOURCE_DIR}/framework/communicator/hostdpu/dpu_kernel_entrance.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/framework/communicator/hostdpu/task_service.cc
+    ${HCOMM_DIR}/src/base_comm/resources/comm_engine_res/threads/cpu_thread/legacy_dpu_thread/dpu_kernel_entrance.cc
+    ${HCOMM_DIR}/src/base_comm/resources/comm_engine_res/threads/cpu_thread/legacy_dpu_thread/task_service.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/framework/dfx/profiling/dlprof_function.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/common/log.cc
 )
@@ -25,8 +25,6 @@ target_compile_definitions(ccl_dpu PRIVATE
 # 编译选项
 target_compile_options(ccl_dpu PRIVATE
     -Werror
-    -Wno-unused-parameter
-    -Wno-missing-field-initializers
     -fno-common
     -fno-strict-aliasing
     $<$<CONFIG:Debug>:-Og -g>
@@ -36,6 +34,7 @@ target_compile_options(ccl_dpu PRIVATE
 # 链接选项
 target_link_options(ccl_dpu PRIVATE
     -Wl,-Bsymbolic
+    $<$<BOOL:${BUILD_OPEN_PROJECT}>:-Wl,--no-undefined>
     -Wl,--exclude-libs,ALL
 )
 
@@ -47,6 +46,7 @@ target_link_libraries(ccl_dpu
     $<BUILD_INTERFACE:slog_headers>
     -Wl,--no-as-needed
     c_sec
+    unified_dlog
     mmpa
     runtime
     acl_rt
@@ -63,6 +63,10 @@ target_include_directories(ccl_dpu PRIVATE
     ${HCOMM_DIR}/pkg_inc
     ${HCOMM_DIR}/pkg_inc/legacy
     ${HCOMM_DIR}/src/common
+    ${HCOMM_DIR}/src/base_comm/inc
+    ${HCOMM_DIR}/src/base_comm/common
+    # 收编后 kernel 侧复用宿主侧 legacy_dpu_thread 的共享类型定义（DpuKernelLaunchParam/TASK_* 状态机）
+    ${HCOMM_DIR}/src/base_comm/resources/comm_engine_res/threads/cpu_thread/legacy_dpu_thread
 
     ${CMAKE_CURRENT_SOURCE_DIR}/common
     ${CMAKE_CURRENT_SOURCE_DIR}/common/types
@@ -74,7 +78,14 @@ target_include_directories(ccl_dpu PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/unified_platform/external_system
     ${CMAKE_CURRENT_SOURCE_DIR}/framework/dfx
     ${CMAKE_CURRENT_SOURCE_DIR}/framework/dfx/profiling
+    ${HCOMM_DIR}/src/coll_communicator_mgr/dfx/profiling/host
 )
+
+# 符号隐藏: 仅导出白名单符号; 非 release 模式依赖动态符号, 不挂载
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_link_options(ccl_dpu PRIVATE "-Wl,--version-script=${CMAKE_CURRENT_LIST_DIR}/ccl_dpu.map")
+    set_property(TARGET ccl_dpu APPEND PROPERTY LINK_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/ccl_dpu.map")
+endif()
 
 # 指定 ccl_dpu 构建完成后安装到指定的目标位置
 install(TARGETS ccl_dpu
@@ -90,7 +101,7 @@ install(TARGETS ccl_dpu
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/libccl_dpu.json
     COMMAND ${HI_PYTHON} ${HCOMM_DIR}/cmake/scripts/parser_ini.py
-                         ${CMAKE_CURRENT_LIST_DIR}/framework/communicator/hostdpu/ccl_dpu.ini
+                         ${HCOMM_DIR}/src/base_comm/resources/comm_engine_res/threads/cpu_thread/legacy_dpu_thread/ccl_dpu.ini
                          ${CMAKE_CURRENT_BINARY_DIR}/libccl_dpu.json
     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
     COMMENT "Generating libccl_dpu.json"

@@ -11,7 +11,6 @@
 #include "hcomm_diag.h"
 #include "device/framework/aicpu_hccl_process.h"
 
-
 HcclResult HcommRegOpInfo(const char* commId, void* opInfo, size_t size)
 {
     CHK_PTR_NULL(commId);

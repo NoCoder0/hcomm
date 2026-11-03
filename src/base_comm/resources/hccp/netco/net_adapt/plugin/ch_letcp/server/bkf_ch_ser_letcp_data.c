@@ -35,8 +35,8 @@ BkfChSer *BkfChSerLetcpDataInit(BkfChSerInitArg *arg)
     if (arg->base->dbgOn) {
         ch->log = arg->base->log;
     }
-    VOS_AVLL_INIT_TREE(ch->lsnSet, (AVLL_COMPARE)BkfUrlCmp,
-                       BKF_OFFSET(BkfChSerLetcpLsn, keyUrlSelf), BKF_OFFSET(BkfChSerLetcpLsn, avlNode));
+    VOS_AVLL_INIT_TREE(ch->lsnSet, (AVLL_COMPARE)BkfUrlCmp, BKF_OFFSET(BkfChSerLetcpLsn, keyUrlSelf),
+        BKF_OFFSET(BkfChSerLetcpLsn, avlNode));
     ch->name = BkfStrNew(arg->base->memMng, "ser_letcp_%s", arg->name);
     if (ch->name == VOS_NULL) {
         goto error;
@@ -78,8 +78,8 @@ BkfChSerLetcpLsn *BkfChSerLetcpAddLsn(BkfChSer *ch, BkfUrl *urlSelf)
     lsn->ch = ch;
     lsn->keyUrlSelf = *urlSelf;
     lsn->lsnFd = -1;
-    VOS_AVLL_INIT_TREE(lsn->connIdSet, (AVLL_COMPARE)BkfInt32Cmp,
-                       BKF_OFFSET(BkfChSerConnId, keyConnFd), BKF_OFFSET(BkfChSerConnId, avlNode));
+    VOS_AVLL_INIT_TREE(lsn->connIdSet, (AVLL_COMPARE)BkfInt32Cmp, BKF_OFFSET(BkfChSerConnId, keyConnFd),
+        BKF_OFFSET(BkfChSerConnId, avlNode));
     VOS_AVLL_INIT_NODE(lsn->avlNode);
     insOk = VOS_AVLL_INSERT(ch->lsnSet, lsn->avlNode);
     if (!insOk) {
@@ -124,8 +124,7 @@ void BkfChSerLetcpDelAllLsn(BkfChSer *ch)
     BkfChSerLetcpLsn *lsn = VOS_NULL;
     void *itor = VOS_NULL;
 
-    for (lsn = BkfChSerLetcpGetFirstLsn(ch, &itor); lsn != VOS_NULL;
-         lsn = BkfChSerLetcpGetNextLsn(ch, &itor)) {
+    for (lsn = BkfChSerLetcpGetFirstLsn(ch, &itor); lsn != VOS_NULL; lsn = BkfChSerLetcpGetNextLsn(ch, &itor)) {
         BkfChSerLetcpDelLsn(ch, lsn);
     }
     return;
@@ -258,6 +257,7 @@ void BkfChSerLetcpDelAllConnId(BkfChSer *ch, BkfChSerLetcpLsn *lsn)
 
 BkfChSerConnId *BkfChSerLetcpFindConnId(BkfChSer *ch, BkfChSerLetcpLsn *lsn, int32_t connFd)
 {
+    (void)ch;
     BkfChSerConnId *connId = VOS_NULL;
     BOOL hit = VOS_FALSE;
 
@@ -276,6 +276,7 @@ BkfChSerConnId *BkfChSerLetcpFindConnId(BkfChSer *ch, BkfChSerLetcpLsn *lsn, int
 
 BkfChSerConnId *BkfChSerLetcpFindNextConnId(BkfChSer *ch, BkfChSerLetcpLsn *lsn, int32_t connFd)
 {
+    (void)ch;
     BkfChSerConnId *connId = VOS_NULL;
 
     connId = VOS_AVLL_FIND_NEXT(lsn->connIdSet, &connFd);
@@ -284,6 +285,7 @@ BkfChSerConnId *BkfChSerLetcpFindNextConnId(BkfChSer *ch, BkfChSerLetcpLsn *lsn,
 
 BkfChSerConnId *BkfChSerLetcpGetFirstConnId(BkfChSer *ch, BkfChSerLetcpLsn *lsn, void **itorOutOrNull)
 {
+    (void)ch;
     BkfChSerConnId *connId = VOS_NULL;
 
     connId = VOS_AVLL_FIRST(lsn->connIdSet);
@@ -295,6 +297,7 @@ BkfChSerConnId *BkfChSerLetcpGetFirstConnId(BkfChSer *ch, BkfChSerLetcpLsn *lsn,
 
 BkfChSerConnId *BkfChSerLetcpGetNextConnId(BkfChSer *ch, BkfChSerLetcpLsn *lsn, void **itorInOut)
 {
+    (void)ch;
     BkfChSerConnId *connId = VOS_NULL;
 
     connId = (*itorInOut);
@@ -303,7 +306,7 @@ BkfChSerConnId *BkfChSerLetcpGetNextConnId(BkfChSer *ch, BkfChSerLetcpLsn *lsn, 
 }
 
 uint32_t BkfChSerLetcpStartConnOnceTmrWriteErr(BkfChSer *ch, BkfChSerConnId *connId, F_BKF_TMR_TIMEOUT_PROC proc,
-                                              uint32_t intervalMs)
+    uint32_t intervalMs)
 {
     if (connId->tmrIdWriteErr == VOS_NULL) {
         connId->tmrIdWriteErr = BkfTmrStartOnce(ch->argInit.base->tmrMng, proc, intervalMs, connId);
@@ -365,4 +368,3 @@ void BkfChSerLetcpMsgFree(BkfChSer *ch, BkfChSerLetcpMsgHead *chMsgHead)
 #ifdef __cplusplus
 }
 #endif
-

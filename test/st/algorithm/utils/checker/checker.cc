@@ -31,9 +31,7 @@ using namespace hccl;
 
 namespace checker {
 
-Checker::Checker()
-{
-}
+Checker::Checker() {}
 
 Checker::~Checker()
 {
@@ -86,7 +84,7 @@ void Checker::CloseRankMemCheck()
     return;
 }
 
-void Checker::SetDumpFileName(const string &fileName)
+void Checker::SetDumpFileName(const string& fileName)
 {
     DataDumper::Global()->SetFileName(fileName);
     return;
@@ -102,7 +100,7 @@ void Checker::PrintTask()
         for (int j = 0; j < (int)singleRankTaskQues->taskQueues.size(); j++) {
             printf("-------------------------------------------------------\n");
             printf("stream/queue id is %d\n", j);
-            for(int k = 0; k < (*singleRankTaskQues)[j].size(); k++) {
+            for (int k = 0; k < (*singleRankTaskQues)[j].size(); k++) {
                 string tempstr = (*singleRankTaskQues)[j][k]->Describe();
                 printf("[rankId:%d, queueId:%d, index:%d] %s\n", rankId, j, k, tempstr.c_str());
             }
@@ -115,12 +113,12 @@ void Checker::PrintGraphRevamp(TaskNodePtr head)
 {
     std::vector<TaskNodePtr> candTaskNodePtr;
     std::set<TaskNodePtr> printedNode;
-    for(int i = 0; i < head->children.size(); i++) {
+    for (int i = 0; i < head->children.size(); i++) {
         printedNode.insert(head->children[i]);
         candTaskNodePtr.push_back(head->children[i]);
     }
 
-    while(!candTaskNodePtr.empty()) {
+    while (!candTaskNodePtr.empty()) {
         TaskNodePtr curNode = candTaskNodePtr[0];
         candTaskNodePtr.erase(candTaskNodePtr.begin());
 
@@ -140,7 +138,7 @@ void Checker::PrintGraphRevamp(TaskNodePtr head)
         printf("-----------------------\n");
         printf("\n");
         for (int i = 0; i < curNode->children.size(); i++) {
-            std::set<TaskNodePtr> ::iterator it = printedNode.find(curNode->children[i]);
+            std::set<TaskNodePtr>::iterator it = printedNode.find(curNode->children[i]);
             if (it == printedNode.end()) {
                 candTaskNodePtr.push_back(curNode->children[i]);
                 printedNode.insert(curNode->children[i]);
@@ -168,7 +166,7 @@ void Checker::PrintAivGraph(bool isCopy = false)
         }
     }
 
-    while(!bfsQueue.empty()) {
+    while (!bfsQueue.empty()) {
         auto currNode = bfsQueue.front();
         if (parentSet.find(currNode) != parentSet.end()) {
             bfsQueue.pop();
@@ -179,14 +177,19 @@ void Checker::PrintAivGraph(bool isCopy = false)
         printf("\n");
 
         printf("=========================curNode info=============================\n");
-        //如果节点为特殊节点PipeBarrierAll， 此节点会同时存在于三条流上，且每条流上的位置不一定相同，0代表SCALAR， 1代表MET2， 2代表MTE3 
-        if (currNode->task->GetType() == TaskTypeStub::PIPE_BARRIER && ((TaskStubPipeBarrier*)currNode->task)->IsPipeBarrierAll()) {
+        // 如果节点为特殊节点PipeBarrierAll， 此节点会同时存在于三条流上，且每条流上的位置不一定相同，0代表SCALAR，
+        // 1代表MET2， 2代表MTE3
+        if (currNode->task->GetType() == TaskTypeStub::PIPE_BARRIER
+            && ((TaskStubPipeBarrier*)currNode->task)->IsPipeBarrierAll()) {
             auto pipeStub = (TaskStubPipeBarrier*)currNode->task;
-            printf("[%d, %d, %d, [[0, %d], [1, %d], [2, %d]]]%s", currNode->rankIdx, currNode->rankPos, currNode->blockIdx,
-                    pipeStub->GetPos(pipe_t::PIPE_S), pipeStub->GetPos(pipe_t::PIPE_MTE2), pipeStub->GetPos(pipe_t::PIPE_MTE3), currNode->task->Describe().c_str());
+            printf(
+                "[%d, %d, %d, [[0, %d], [1, %d], [2, %d]]]%s", currNode->rankIdx, currNode->rankPos, currNode->blockIdx,
+                pipeStub->GetPos(pipe_t::PIPE_S), pipeStub->GetPos(pipe_t::PIPE_MTE2),
+                pipeStub->GetPos(pipe_t::PIPE_MTE3), currNode->task->Describe().c_str());
         } else {
-            printf("[%d, %d, %d, %d, %d]%s", currNode->rankIdx, currNode->rankPos, currNode->blockIdx,
-                    currNode->pipeIdx, currNode->pipePos, currNode->task->Describe().c_str());
+            printf(
+                "[%d, %d, %d, %d, %d]%s", currNode->rankIdx, currNode->rankPos, currNode->blockIdx, currNode->pipeIdx,
+                currNode->pipePos, currNode->task->Describe().c_str());
         }
         printf("\n\n");
         printf("-------------------------parents info-----------------------------\n");
@@ -194,13 +197,17 @@ void Checker::PrintAivGraph(bool isCopy = false)
             printf("currnode doesn't have parents\n\n");
         } else {
             for (auto parent : currNode->parents) {
-                if (parent->task->GetType() == TaskTypeStub::PIPE_BARRIER && ((TaskStubPipeBarrier*)parent->task)->IsPipeBarrierAll()) {
+                if (parent->task->GetType() == TaskTypeStub::PIPE_BARRIER
+                    && ((TaskStubPipeBarrier*)parent->task)->IsPipeBarrierAll()) {
                     auto pipeStub = (TaskStubPipeBarrier*)parent->task;
-                    printf("[%d, %d, %d, [[0, %d], [1, %d], [2, %d]]]%s", parent->rankIdx, parent->rankPos, parent->blockIdx, pipeStub->GetPos(pipe_t::PIPE_S),
-                           pipeStub->GetPos(pipe_t::PIPE_MTE2), pipeStub->GetPos(pipe_t::PIPE_MTE3), parent->task->Describe().c_str());
+                    printf(
+                        "[%d, %d, %d, [[0, %d], [1, %d], [2, %d]]]%s", parent->rankIdx, parent->rankPos,
+                        parent->blockIdx, pipeStub->GetPos(pipe_t::PIPE_S), pipeStub->GetPos(pipe_t::PIPE_MTE2),
+                        pipeStub->GetPos(pipe_t::PIPE_MTE3), parent->task->Describe().c_str());
                 } else {
-                    printf("[%d, %d, %d, %d, %d]%s", parent->rankIdx, parent->rankPos, parent->blockIdx,
-                            parent->pipeIdx, parent->pipePos, parent->task->Describe().c_str());
+                    printf(
+                        "[%d, %d, %d, %d, %d]%s", parent->rankIdx, parent->rankPos, parent->blockIdx, parent->pipeIdx,
+                        parent->pipePos, parent->task->Describe().c_str());
                 }
                 printf("\n");
             }
@@ -212,16 +219,20 @@ void Checker::PrintAivGraph(bool isCopy = false)
             printf("currnode doesn't have children\n");
         } else {
             for (auto child : currNode->children) {
-                if (child->task->GetType() == TaskTypeStub::PIPE_BARRIER && ((TaskStubPipeBarrier*)child->task)->IsPipeBarrierAll()) {
+                if (child->task->GetType() == TaskTypeStub::PIPE_BARRIER
+                    && ((TaskStubPipeBarrier*)child->task)->IsPipeBarrierAll()) {
                     auto pipeStub = (TaskStubPipeBarrier*)child->task;
-                    printf("[%d, %d, %d, [[0, %d], [1, %d], [2, %d]]]%s", child->rankIdx, child->rankPos, child->blockIdx, pipeStub->GetPos(pipe_t::PIPE_S),
-                           pipeStub->GetPos(pipe_t::PIPE_MTE2), pipeStub->GetPos(pipe_t::PIPE_MTE3), child->task->Describe().c_str());
+                    printf(
+                        "[%d, %d, %d, [[0, %d], [1, %d], [2, %d]]]%s", child->rankIdx, child->rankPos, child->blockIdx,
+                        pipeStub->GetPos(pipe_t::PIPE_S), pipeStub->GetPos(pipe_t::PIPE_MTE2),
+                        pipeStub->GetPos(pipe_t::PIPE_MTE3), child->task->Describe().c_str());
                 } else {
-                    printf("[%d, %d, %d, %d, %d]%s", child->rankIdx, child->rankPos, child->blockIdx,
-                    child->pipeIdx, child->pipePos, child->task->Describe().c_str());
+                    printf(
+                        "[%d, %d, %d, %d, %d]%s", child->rankIdx, child->rankPos, child->blockIdx, child->pipeIdx,
+                        child->pipePos, child->task->Describe().c_str());
                 }
-            bfsQueue.push(child);
-            printf("\n");
+                bfsQueue.push(child);
+                printf("\n");
             }
         }
 
@@ -231,10 +242,7 @@ void Checker::PrintAivGraph(bool isCopy = false)
     }
 }
 
-void Checker::PrintAivTask()
-{
-    AivTaskQueueStub::Global()->PrintAivTask();
-}
+void Checker::PrintAivTask() { AivTaskQueueStub::Global()->PrintAivTask(); }
 
 void Checker::CopyTaskGraph(TaskNodePtr originNode, TaskNodePtr copyNode)
 {
@@ -258,7 +266,7 @@ void Checker::CopyTaskGraph(TaskNodePtr originNode, TaskNodePtr copyNode)
         toDeleteCopyTaskNodeResource_.push_back(newNodePtr);
         originNode2copyNode[curNode] = newNodePtr;
 
-        for (auto &child : curNode->children) {
+        for (auto& child : curNode->children) {
             if (isVisited.find(child) == isVisited.end()) {
                 isVisited.insert(child);
                 candTaskNodePtr.push_back(child);
@@ -272,13 +280,13 @@ void Checker::CopyTaskGraph(TaskNodePtr originNode, TaskNodePtr copyNode)
         isVisited.insert(originNode->children[i]);
         copyNode->children.push_back(originNode2copyNode[originNode->children[i]]);
     }
-    while(!candTaskNodePtr.empty()) {
+    while (!candTaskNodePtr.empty()) {
         TaskNodePtr curNode = candTaskNodePtr[0];
         candTaskNodePtr.erase(candTaskNodePtr.begin());
-        for (auto &parent : curNode->parents) {
+        for (auto& parent : curNode->parents) {
             originNode2copyNode[curNode]->parents.push_back(originNode2copyNode[parent]);
         }
-        for (auto &child : curNode->children) {
+        for (auto& child : curNode->children) {
             originNode2copyNode[curNode]->children.push_back(originNode2copyNode[child]);
             if (isVisited.count(child) == 0) {
                 isVisited.insert(child);
@@ -296,7 +304,7 @@ void Checker::CopyAivTaskGraph(TaskNodePtr originNode, TaskNodePtr copyNode)
     std::vector<TaskNodePtr> aivBlockNodePtr;
 
     originNode2copyNode[originNode] = copyNode;
-    for (const auto &child : originNode->children) {
+    for (const auto& child : originNode->children) {
         candTaskNodePtr.push_back(child);
         isVisited.insert(child);
     }
@@ -305,35 +313,39 @@ void Checker::CopyAivTaskGraph(TaskNodePtr originNode, TaskNodePtr copyNode)
         TaskNodePtr curNode = candTaskNodePtr.front();
         candTaskNodePtr.erase(candTaskNodePtr.begin());
 
-        TaskStub *newNode = curNode->task;
+        TaskStub* newNode = curNode->task;
         if (newNode != nullptr && newNode->GetType() == TaskTypeStub::AIV_TASK) {
-            newNode = new AivTaskStub(curNode->rankIdx, ((AivTaskStub*)(curNode->task))->GetRankPos(), ((AivTaskStub*)(curNode->task))->GetMainStreamPos());
+            newNode = new AivTaskStub(
+                curNode->rankIdx, ((AivTaskStub*)(curNode->task))->GetRankPos(),
+                ((AivTaskStub*)(curNode->task))->GetMainStreamPos());
             toDeleteCopyTaskResource_.push_back(newNode);
 
-            auto aivStart = new TaskNode(((AivTaskStub*)(curNode->task))->GetAivStart()->task, curNode->rankIdx, ((AivTaskStub*)(curNode->task))->GetRankPos(), -1, -1, -2);
+            auto aivStart = new TaskNode(
+                ((AivTaskStub*)(curNode->task))->GetAivStart()->task, curNode->rankIdx,
+                ((AivTaskStub*)(curNode->task))->GetRankPos(), -1, -1, -2);
             AivTaskQueueStub::Global()->SetAllCopyAivStart(curNode->rankIdx, aivStart);
-            ((AivTaskStub *)newNode)->SetAivStart(aivStart);
+            ((AivTaskStub*)newNode)->SetAivStart(aivStart);
             toDeleteCopyTaskNodeResource_.push_back(aivStart);
-            originNode2copyNode[((AivTaskStub *)curNode->task)->GetAivStart()] = aivStart;
-            aivBlockNodePtr.push_back(((AivTaskStub *)curNode->task)->GetAivStart());
+            originNode2copyNode[((AivTaskStub*)curNode->task)->GetAivStart()] = aivStart;
+            aivBlockNodePtr.push_back(((AivTaskStub*)curNode->task)->GetAivStart());
 
             std::vector<TaskNodePtr> aivTaskNodePtr;
-            for (auto &it : ((AivTaskStub *)curNode->task)->GetAivStart()->children) {
+            for (auto& it : ((AivTaskStub*)curNode->task)->GetAivStart()->children) {
                 aivTaskNodePtr.push_back(it);
             }
             while (!aivTaskNodePtr.empty()) {
                 TaskNodePtr aivNode = aivTaskNodePtr.front();
                 aivTaskNodePtr.erase(aivTaskNodePtr.begin());
-                TaskStub *aivTask = aivNode->task;
-                TaskNodePtr aivNodePtr =
-                    new TaskNode(aivTask, aivNode->rankIdx, aivNode->rankPos, aivNode->blockIdx, aivNode->pipeIdx, aivNode->pipePos);
+                TaskStub* aivTask = aivNode->task;
+                TaskNodePtr aivNodePtr = new TaskNode(
+                    aivTask, aivNode->rankIdx, aivNode->rankPos, aivNode->blockIdx, aivNode->pipeIdx, aivNode->pipePos);
                 toDeleteCopyTaskNodeResource_.push_back(aivNodePtr);
                 originNode2copyNode[aivNode] = aivNodePtr;
-                for (const auto &child : aivNode->children) {
-                        if (isVisited.find(child) == isVisited.end()) {
-                            isVisited.insert(child);
-                            aivTaskNodePtr.push_back(child);
-                        }
+                for (const auto& child : aivNode->children) {
+                    if (isVisited.find(child) == isVisited.end()) {
+                        isVisited.insert(child);
+                        aivTaskNodePtr.push_back(child);
+                    }
                 }
             }
         }
@@ -341,10 +353,10 @@ void Checker::CopyAivTaskGraph(TaskNodePtr originNode, TaskNodePtr copyNode)
         toDeleteCopyTaskNodeResource_.push_back(newNodePtr);
         originNode2copyNode[curNode] = newNodePtr;
 
-        for (const auto &child : curNode->children) {
+        for (const auto& child : curNode->children) {
             if (isVisited.find(child) == isVisited.end()) {
-            isVisited.insert(child);
-            candTaskNodePtr.push_back(child);
+                isVisited.insert(child);
+                candTaskNodePtr.push_back(child);
             }
         }
     }
@@ -362,20 +374,20 @@ void Checker::CopyAivTaskGraph(TaskNodePtr originNode, TaskNodePtr copyNode)
     while (!candTaskNodePtr.empty()) {
         TaskNodePtr curNode = candTaskNodePtr.front();
         candTaskNodePtr.erase(candTaskNodePtr.begin());
-        for (const auto &parent : curNode->parents) {
+        for (const auto& parent : curNode->parents) {
             originNode2copyNode[curNode]->parents.push_back(originNode2copyNode[parent]);
         }
-        for (const auto &child : curNode->children) {
+        for (const auto& child : curNode->children) {
             originNode2copyNode[curNode]->children.push_back(originNode2copyNode[child]);
             if (isVisited.find(child) == isVisited.end()) {
-            isVisited.insert(child);
-            candTaskNodePtr.push_back(child);
+                isVisited.insert(child);
+                candTaskNodePtr.push_back(child);
             }
         }
     }
 }
 
-HcclResult Checker::Check(CheckerOpParam &checkerOpParam, TopoMeta &topoMeta)
+HcclResult Checker::Check(CheckerOpParam& checkerOpParam, TopoMeta& topoMeta)
 {
     // 产生Task序列
     TaskQuesGenerator gen;
@@ -411,7 +423,7 @@ HcclResult Checker::Check(CheckerOpParam &checkerOpParam, TopoMeta &topoMeta)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Checker::CheckPrimGraphs(CheckerOpParam &checkerOpParam, u32 rankNum)
+HcclResult Checker::CheckPrimGraphs(CheckerOpParam& checkerOpParam, u32 rankNum)
 {
     TaskNode dummyStart = TaskNode(nullptr, -1, 0, 0);
     TaskNode dummyStartCopy = TaskNode(nullptr, -1, 0, 0);
@@ -438,7 +450,8 @@ HcclResult Checker::CheckPrimGraphs(CheckerOpParam &checkerOpParam, u32 rankNum)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult Checker::RankMemCheck(TaskNode &dummyStart, TaskNode &dummyStartCopy, CheckerOpParam &checkerOpParam, u32 rankNum)
+HcclResult
+Checker::RankMemCheck(TaskNode& dummyStart, TaskNode& dummyStartCopy, CheckerOpParam& checkerOpParam, u32 rankNum)
 {
     GraphRevampBilateralSemantics graphRevamp;
     HcclResult ret = HcclResult::HCCL_SUCCESS;
@@ -463,7 +476,7 @@ HcclResult Checker::RankMemCheck(TaskNode &dummyStart, TaskNode &dummyStartCopy,
         clock_t afterCheckMem = clock();
         double bilateral = double(afterBilateral - revampStart) / CLOCKS_PER_SEC;
         double checkMem = double(afterCheckMem - afterBilateral) / CLOCKS_PER_SEC;
-        std::cout<<"Cost time: bilateral= "<<bilateral<<", checkMem= "<<checkMem<<std::endl;
+        std::cout << "Cost time: bilateral= " << bilateral << ", checkMem= " << checkMem << std::endl;
     }
     // 语义检查
     clock_t semCheckStart = clock();
@@ -475,7 +488,7 @@ HcclResult Checker::RankMemCheck(TaskNode &dummyStart, TaskNode &dummyStartCopy,
     }
     clock_t afterSemCheck = clock();
     double checkSem = double(afterSemCheck - semCheckStart) / CLOCKS_PER_SEC;
-    std::cout<<"Cost time: checkSem= "<<checkSem<<std::endl;
+    std::cout << "Cost time: checkSem= " << checkSem << std::endl;
     if (enableGraphPrint_) {
         PrintGraphRevamp(&dummyStart);
     }
@@ -483,13 +496,8 @@ HcclResult Checker::RankMemCheck(TaskNode &dummyStart, TaskNode &dummyStartCopy,
     return HcclResult::HCCL_SUCCESS;
 }
 
-void Checker::setCheckerLogWarn() {
-    dlog_setlevel(INVLID_MOUDLE_ID, DLOG_WARN, 1);
-}
+void Checker::setCheckerLogWarn() { dlog_setlevel(INVLID_MOUDLE_ID, DLOG_WARN, 1); }
 
-void CheckerReset()
-{
-    TaskQueueStub::Global()->Reset();
-}
+void CheckerReset() { TaskQueueStub::Global()->Reset(); }
 
 } // namespace checker

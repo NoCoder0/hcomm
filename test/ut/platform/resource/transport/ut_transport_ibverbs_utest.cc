@@ -35,17 +35,10 @@
 using namespace std;
 using namespace hccl;
 
-class TransportIbverbs_UT : public testing::Test
-{
+class TransportIbverbs_UT : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "\033[36m--TransportIbverbs_UT SetUP--\033[0m" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "\033[36m--TransportIbverbs_UT TearDown--\033[0m" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "\033[36m--TransportIbverbs_UT SetUP--\033[0m" << std::endl; }
+    static void TearDownTestCase() { std::cout << "\033[36m--TransportIbverbs_UT TearDown--\033[0m" << std::endl; }
     // Some expensive resource shared by all tests.
     virtual void SetUp()
     {
@@ -55,7 +48,7 @@ protected:
         // 初始化notifyPool
         std::unique_ptr<NotifyPool> notifyPool;
         notifyPool.reset(new (std::nothrow) NotifyPool());
-        
+
         // 初始化MachinePara
         machinePara.deviceLogicId = 0;
         if (deviceMem.ptr() == nullptr) {
@@ -67,13 +60,13 @@ protected:
     {
         std::cout << "A Test TearDown" << std::endl;
         delete dispatcher;
-        if (deviceMem.ptr() != nullptr){
+        if (deviceMem.ptr() != nullptr) {
             deviceMem.free();
         }
         GlobalMockObject::verify();
     }
 
-    DispatcherPub *dispatcher;
+    DispatcherPub* dispatcher;
     std::unique_ptr<NotifyPool> notifyPool = nullptr;
     MachinePara machinePara;
     DeviceMem deviceMem;
@@ -87,11 +80,12 @@ TEST_F(TransportIbverbs_UT, RegUserMem)
     HcclUs startut = TIME_NOW();
     s32 ret = HCCL_SUCCESS;
 
-    std::shared_ptr<TransportIbverbs> ibverbs = std::make_shared<TransportIbverbs>(dispatcher, notifyPool, machinePara, timeout);
+    std::shared_ptr<TransportIbverbs> ibverbs
+        = std::make_shared<TransportIbverbs>(dispatcher, notifyPool, machinePara, timeout);
     std::vector<u8> exchangeDataForSend_;
     exchangeDataForSend_.resize(devSize);
     u64 exchangeDataBlankSize = devSize;
-    u8 *exchangeDataPtr = exchangeDataForSend_.data();
+    u8* exchangeDataPtr = exchangeDataForSend_.data();
     ret = ibverbs->RegUserMem(MemType::USER_INPUT_MEM, exchangeDataPtr, exchangeDataBlankSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
@@ -105,8 +99,8 @@ TEST_F(TransportIbverbs_UT, BatchTransferAsync_WriteSuccess)
     transDevIbverbsData.qpsPerConnection = 1;
     transDevIbverbsData.multiQpThreshold = HCCL_MULTI_QP_THRESHOLD_DEFAULT;
 
-    std::shared_ptr<TransportDeviceIbverbs> ibverbs = std::make_shared<TransportDeviceIbverbs>(
-        dispatcher, notifyPool, machinePara, timeout, transDevIbverbsData);
+    std::shared_ptr<TransportDeviceIbverbs> ibverbs
+        = std::make_shared<TransportDeviceIbverbs>(dispatcher, notifyPool, machinePara, timeout, transDevIbverbsData);
 
     Stream stream;
     HcommBatchTransferDesc transferDescs[1];
@@ -128,8 +122,8 @@ TEST_F(TransportIbverbs_UT, BatchTransferAsync_ReadSuccess)
     transDevIbverbsData.qpsPerConnection = 1;
     transDevIbverbsData.multiQpThreshold = HCCL_MULTI_QP_THRESHOLD_DEFAULT;
 
-    std::shared_ptr<TransportDeviceIbverbs> ibverbs = std::make_shared<TransportDeviceIbverbs>(
-        dispatcher, notifyPool, machinePara, timeout, transDevIbverbsData);
+    std::shared_ptr<TransportDeviceIbverbs> ibverbs
+        = std::make_shared<TransportDeviceIbverbs>(dispatcher, notifyPool, machinePara, timeout, transDevIbverbsData);
 
     Stream stream;
     HcommBatchTransferDesc transferDescs[1];
@@ -150,8 +144,8 @@ TEST_F(TransportIbverbs_UT, BatchTransferAsync_NullPtr)
     transDevIbverbsData.qpInfo.resize(1);
     transDevIbverbsData.qpsPerConnection = 1;
 
-    std::shared_ptr<TransportDeviceIbverbs> ibverbs = std::make_shared<TransportDeviceIbverbs>(
-        dispatcher, notifyPool, machinePara, timeout, transDevIbverbsData);
+    std::shared_ptr<TransportDeviceIbverbs> ibverbs
+        = std::make_shared<TransportDeviceIbverbs>(dispatcher, notifyPool, machinePara, timeout, transDevIbverbsData);
 
     Stream stream;
     HcommBatchTransferDesc transferDescs[1];
@@ -167,36 +161,37 @@ TEST_F(TransportIbverbs_UT, BatchTransferAsync_NullPtr)
 
 TEST_F(TransportIbverbs_UT, test_TransportIbverb_Drain_will_return_SUCCESS)
 {
-    MOCKER_CPP(&TransportDeviceIbverbs::SendWrlistExt)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportDeviceIbverbs::SendWrlistExt).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&DispatcherPub::SignalWait,
-        HcclResult(DispatcherPub:: *)(HcclRtNotify, HcclRtStream, u32, u32, s32, u32, bool))
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP_VIRTUAL(*dispatcher, &DispatcherPub::RdmaSend, HcclResult(DispatcherPub::*)(u32, u64, hccl::Stream &,
-    RdmaTaskInfo &)).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(
+        &DispatcherPub::SignalWait, HcclResult(DispatcherPub::*)(HcclRtNotify, HcclRtStream, u32, u32, s32, u32, bool))
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP_VIRTUAL(
+        *dispatcher, &DispatcherPub::RdmaSend, HcclResult(DispatcherPub::*)(u32, u64, hccl::Stream&, RdmaTaskInfo&))
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
     TransportDeviceIbverbsData transDevIbverbsData;
     transDevIbverbsData.qpInfo.resize(1);
     transDevIbverbsData.qpsPerConnection = 1;
 
-    std::shared_ptr<TransportDeviceIbverbs> ibverbsDev = std::make_shared<TransportDeviceIbverbs>(
-        dispatcher, notifyPool, machinePara, timeout, transDevIbverbsData);
-    
+    std::shared_ptr<TransportDeviceIbverbs> ibverbsDev
+        = std::make_shared<TransportDeviceIbverbs>(dispatcher, notifyPool, machinePara, timeout, transDevIbverbsData);
+
     ibverbsDev->dataNotify_ = std::make_shared<LocalIpcNotify>();
-    ibverbsDev->memMsg_[MemType::DATA_NOTIFY_MEM].addr=(void*)(0x9999);
-    ibverbsDev->remoteMemMsg_[MemType::NOTIFY_SRC_MEM].addr=(void*)(0x8899);
+    ibverbsDev->memMsg_[MemType::DATA_NOTIFY_MEM].addr = (void*)(0x9999);
+    ibverbsDev->remoteMemMsg_[MemType::NOTIFY_SRC_MEM].addr = (void*)(0x8899);
 
     Stream stream;
     HcclResult ret = ibverbsDev->Drain(stream);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    
-    std::shared_ptr<TransportIbverbs> ibverbs = std::make_shared<TransportIbverbs>(dispatcher, notifyPool, machinePara, timeout);
+
+    std::shared_ptr<TransportIbverbs> ibverbs
+        = std::make_shared<TransportIbverbs>(dispatcher, notifyPool, machinePara, timeout);
     ibverbs->dataNotify_ = std::make_shared<LocalIpcNotify>();
-    ibverbs->memMsg_[MemType::DATA_NOTIFY_MEM].addr=(void*)(0x9999);
-    ibverbs->remoteMemMsg_[MemType::NOTIFY_SRC_MEM].addr=(void*)(0x8899);
+    ibverbs->memMsg_[MemType::DATA_NOTIFY_MEM].addr = (void*)(0x9999);
+    ibverbs->remoteMemMsg_[MemType::NOTIFY_SRC_MEM].addr = (void*)(0x8899);
 
     ret = ibverbs->Drain(stream);
     EXPECT_EQ(ret, HCCL_E_INTERNAL);

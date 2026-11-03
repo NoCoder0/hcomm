@@ -1,12 +1,13 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include <mockcpp/mokc.h>
 #include <mockcpp/mockcpp.hpp>
 #include <vector>
@@ -23,19 +24,14 @@ using namespace checker;
 
 class ReduceScatterVTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "ReduceScatterVTest set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "ReduceScatterVTest set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "ReduceScatterVTest tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "ReduceScatterVTest tear down." << std::endl; }
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -89,10 +85,10 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_910B_opbase_ReduceScatterRing_varyin
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 4);
 
-    vector<u64> counts {100, 200, 300, 400};
-    vector<u64> displs {0};
+    vector<u64> counts{100, 200, 300, 400};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -119,10 +115,10 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_910B_opbase_ReduceScatterRing_varyin
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 4);
 
-    vector<u64> counts {400, 300, 200, 100};
-    vector<u64> displs {0};
+    vector<u64> counts{400, 300, 200, 100};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -149,10 +145,10 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_910B_opbase_ReduceScatterRing_varyin
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 2);
 
-    vector<u64> counts {400, 300};
-    vector<u64> displs {0};
+    vector<u64> counts{400, 300};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -178,10 +174,10 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_910B_opbase_ReduceScatterRing_varyin
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 5);
 
-    vector<u64> counts {100, 200, 300, 200, 100};
-    vector<u64> displs {0};
+    vector<u64> counts{100, 200, 300, 200, 100};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -208,10 +204,10 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_910B_opbase_ReduceScatterRing_varyin
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 4);
 
-    vector<u64> counts {40000000 , 30000000, 20000000, 100};
-    vector<u64> displs {0};
+    vector<u64> counts{40000000, 30000000, 20000000, 100};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -238,10 +234,10 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_910B_opbase_ReduceScatterRing_varyin
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 4);
 
-    vector<u64> counts {400, 300, 200, 100};
-    vector<u64> displs {0};
+    vector<u64> counts{400, 300, 200, 100};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -268,10 +264,10 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_910B_opbase_ReduceScatterRing_varyin
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 6);
 
-    vector<u64> counts {100, 200, 300, 300, 200, 100};
-    vector<u64> displs {0};
+    vector<u64> counts{100, 200, 300, 300, 200, 100};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -298,10 +294,10 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_910B_opbase_ReduceScatterRing_varyin
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 5);
 
-    vector<u64> counts {100, 200, 300, 400, 300, 200, 100};
-    vector<u64> displs {0};
+    vector<u64> counts{100, 200, 300, 400, 300, 200, 100};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -328,10 +324,10 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_910B_opbase_ReduceScatterRing_varyin
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 5);
 
-    vector<u64> counts {100, 200, 300, 400, 400, 300, 200, 100};
-    vector<u64> displs {0};
+    vector<u64> counts{100, 200, 300, 400, 400, 300, 200, 100};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -358,10 +354,10 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_910B_opbase_ReduceScatterRing_varyin
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 4);
 
-    vector<u64> counts {400, 0, 200, 0};
-    vector<u64> displs {0};
+    vector<u64> counts{400, 0, 200, 0};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -388,10 +384,10 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_910B_offload_ReduceScatterV_varying_
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 8);
 
-    vector<u64> counts {400, 0, 200, 0, 400, 0, 200, 0};
-    vector<u64> displs {0};
+    vector<u64> counts{400, 0, 200, 0, 400, 0, 200, 0};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -418,10 +414,10 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_910B_offload_ReduceScatterRing_varyi
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 8);
 
-    vector<u64> counts {100, 200, 300, 400, 400, 300, 200, 100};
-    vector<u64> displs {0};
+    vector<u64> counts{100, 200, 300, 400, 400, 300, 200, 100};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -448,10 +444,10 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_910B_offload_ReduceScatterRing_varyi
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 7);
 
-    vector<u64> counts {100, 200, 300, 400, 400, 300, 200};
-    vector<u64> displs {0};
+    vector<u64> counts{100, 200, 300, 400, 400, 300, 200};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -478,10 +474,10 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_910B_offload_ReduceScatterRing_varyi
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 7);
 
-    vector<u64> counts {10000000, 20000000, 30000000, 40000000, 40000000, 30000000, 20000000};
-    vector<u64> displs {0};
+    vector<u64> counts{10000000, 20000000, 30000000, 40000000, 40000000, 30000000, 20000000};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -508,10 +504,10 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_910B_offload_ReduceScatterRing_varyi
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 8);
 
-    vector<u64> counts {100, 200, 300, 400, 400, 300, 200, 100};
-    vector<u64> displs {0};
+    vector<u64> counts{100, 200, 300, 400, 400, 300, 200, 100};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -538,10 +534,10 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_910B_offload_ReduceScatterRing_varyi
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 8);
 
-    vector<u64> counts {100, 200, 300, 400, 400, 300, 200, 100};
-    vector<u64> displs {0};
+    vector<u64> counts{100, 200, 300, 400, 400, 300, 200, 100};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -568,10 +564,10 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_910B_offload_ReduceScatterRing_varyi
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 2);
 
-    vector<u64> counts {100, 200};
-    vector<u64> displs {0};
+    vector<u64> counts{100, 200};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -645,10 +641,10 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_910B_ReduceScatterVMeshAivSmallCount
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 5);
 
-    vector<u64> counts {100, 200, 300, 400, 400, 300, 200, 100};
-    vector<u64> displs {0};
+    vector<u64> counts{100, 200, 300, 400, 400, 300, 200, 100};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-            displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -674,10 +670,10 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_910B_ReduceScatterVAIVBigCountExecut
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 5);
 
-    vector<u64> counts {100, 200, 300, 400, 400, 300, 200, 100};
-    vector<u64> displs {0};
+    vector<u64> counts{100, 200, 300, 400, 400, 300, 200, 100};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-        displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -701,7 +697,7 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_91093_CollReduceScatterVFastDoubleRi
 {
     const u32 podNum = 3;
     const u32 serverNum = 1;
-    const u32 rankNum = 4;  // even
+    const u32 rankNum = 4; // even
     const u32 rankSize = podNum * serverNum * rankNum;
     RankTable_For_LLT gen;
     TopoMeta topoMeta;
@@ -715,9 +711,9 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_91093_CollReduceScatterVFastDoubleRi
     for (u32 i = 0; i < rankSize; ++i) {
         counts.emplace_back(BASE_COUNT - i * 1000);
     }
-    vector<u64> displs {0};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-        displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -743,7 +739,7 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_91093_CollReduceScatterVFastDoubleRi
 {
     const u32 podNum = 1;
     const u32 serverNum = 2;
-    const u32 rankNum = 8;  // even
+    const u32 rankNum = 8; // even
     const u32 rankSize = podNum * serverNum * rankNum;
     RankTable_For_LLT gen;
     TopoMeta topoMeta;
@@ -753,9 +749,9 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_91093_CollReduceScatterVFastDoubleRi
     for (u32 i = 0; i < rankSize; ++i) {
         counts.emplace_back((i + 1) * 100);
     }
-    vector<u64> displs {0};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-        displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -789,9 +785,9 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_91093_CollReduceScatterVFastDoubleRi
     for (u32 i = 0; i < rankSize; ++i) {
         counts.emplace_back((i + 1) * 100);
     }
-    vector<u64> displs {0};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-        displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -826,9 +822,9 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_91093_CollReduceScatterVFastDoubleRi
     for (u32 i = 0; i < rankSize; ++i) {
         counts.emplace_back(i + 1); // not CCE_REDUCE_ALIGN_SIZE(32B) aligned, avoid cce rewrite
     }
-    vector<u64> displs {0};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-        displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -864,9 +860,9 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_91093_ReduceScatterVRingFor91093Exec
     for (u32 i = 0; i < rankSize; ++i) {
         counts.emplace_back((i + 1) * 100);
     }
-    vector<u64> displs {0};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-        displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -899,9 +895,9 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_91093_ReduceScatterVRingFor91093Exec
     for (u32 i = 0; i < rankSize; ++i) {
         counts.emplace_back((i + 1) * 101);
     }
-    vector<u64> displs {0};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-        displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -932,17 +928,17 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_91093_ReduceScatterVRingFor91093Exec
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, podNum, serverNum, rankNum);
 
-    constexpr u32 HCCL_BUFFSIZE = 1;    // MB
+    constexpr u32 HCCL_BUFFSIZE = 1; // MB
     setenv("HCCL_BUFFSIZE", std::to_string(HCCL_BUFFSIZE).c_str(), 1);
 
     constexpr u64 BASE_COUNT = HCCL_BUFFSIZE * 1024 * 1024 / rankSize * 2;
     vector<u64> counts;
     for (u32 i = 0; i < rankSize; ++i) {
-        counts.emplace_back(BASE_COUNT + i);    // > HCCL_BUFFSIZE
+        counts.emplace_back(BASE_COUNT + i); // > HCCL_BUFFSIZE
     }
-    vector<u64> displs {0};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-        displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -980,9 +976,9 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_91093_AlignedReduceScatterVDoubleRin
         counts.emplace_back((i + 1) * 100);
     }
 
-    vector<u64> displs {0};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-        displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -1014,11 +1010,11 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_91093_AlignedReduceScatterVDoubleRin
 
     vector<u64> counts;
     for (u32 i = 0; i < rankSize; ++i) {
-        counts.emplace_back(200);   // fix count
+        counts.emplace_back(200); // fix count
     }
-    vector<u64> displs {0};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-        displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;
@@ -1052,9 +1048,9 @@ TEST_F(ReduceScatterVTest, reduce_scatter_v_91093_AlignedReduceScatterVDoubleRin
     for (u32 i = 0; i < rankSize; ++i) {
         counts.emplace_back((i + 1) * 100);
     }
-    vector<u64> displs {0};
+    vector<u64> displs{0};
     for (auto i = 1; i < counts.size(); ++i) {
-        displs.emplace_back(displs[i-1] + counts[i-1]);
+        displs.emplace_back(displs[i - 1] + counts[i - 1]);
     }
 
     CheckerOpParam checkerOpParam;

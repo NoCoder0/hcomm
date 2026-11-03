@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -30,33 +30,22 @@
 using namespace std;
 using namespace hccl;
 
-
-class BackupLinkTest : public testing::Test
-{
+class BackupLinkTest : public testing::Test {
 protected:
     static void SetUpTestCase()
     {
         DlRaFunction::GetInstance().DlRaFunctionInit();
         cout << "\033[36m--BackupLinkTest SetUP--\033[0m" << endl;
     }
-    static void TearDownTestCase()
-    {
-        cout << "\033[36m--BackupLinkTest TearDown--\033[0m" << endl;
-    }
+    static void TearDownTestCase() { cout << "\033[36m--BackupLinkTest TearDown--\033[0m" << endl; }
     virtual void SetUp()
     {
         cout << "A Test SetUP" << endl;
         setenv("HCCL_OP_RETRY_ENABLE", "L0:1,L1:1,L2:1", 1);
         DevType deviceType = DevType::DEV_TYPE_910_93;
-        MOCKER(hrtGetDeviceType)
-        .stubs()
-        .with(outBound(deviceType))
-        .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
         s32 portNum = -1;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
     }
     virtual void TearDown()
     {
@@ -66,7 +55,7 @@ protected:
     }
 };
 
-static void TestConstructParam_SurperPod(HcclCommParams &params, RankTable_t &rankTable)
+static void TestConstructParam_SurperPod(HcclCommParams& params, RankTable_t& rankTable)
 {
     string commId = "comm ";
     memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
@@ -125,20 +114,13 @@ TEST_F(BackupLinkTest, ut_DestroyAlgResource)
     TestConstructParam_SurperPod(params, rankTable);
     std::unique_ptr<HcclCommunicator> communicator(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     communicator->Init(params, rankTable);
 
-    MOCKER_CPP(&HcclCommunicator::DestroyOpTransportResponse)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::DestroyOpTransportResponse).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::IsEnableBackupLink)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER_CPP(&HcclCommunicator::IsEnableBackupLink).stubs().will(returnValue(true));
 
     communicator->DestroyAlgResource(algResRsp);
     GlobalMockObject::verify();
@@ -154,20 +136,13 @@ TEST_F(BackupLinkTest, ut_DestroyNetworkResources)
     TestConstructParam_SurperPod(params, rankTable);
     std::unique_ptr<HcclCommunicator> communicator(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     communicator->Init(params, rankTable);
 
-    MOCKER_CPP(&HcclCommunicator::IsEnableBackupLink)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER_CPP(&HcclCommunicator::IsEnableBackupLink).stubs().will(returnValue(true));
 
-    MOCKER_CPP(&NetworkManager::DeInit)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&NetworkManager::DeInit).stubs().will(returnValue(HCCL_SUCCESS));
 
     ret = communicator->DestroyNetworkResources();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -183,24 +158,18 @@ TEST_F(BackupLinkTest, ut_DeinitNic)
     RankTable_t rankTable;
     TestConstructParam_SurperPod(params, rankTable);
     std::unique_ptr<HcclCommunicator> communicator(new (std::nothrow) HcclCommunicator());
-    std::unique_ptr<HcclSocketManager> socketManager(new (std::nothrow) HcclSocketManager(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0));
+    std::unique_ptr<HcclSocketManager> socketManager(
+        new (std::nothrow) HcclSocketManager(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0));
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommunicator::IsEnableBackupLink)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER_CPP(&HcclCommunicator::IsEnableBackupLink).stubs().will(returnValue(true));
 
     MOCKER_CPP(&HcclSocketManager::ServerDeInit, HcclResult(HcclSocketManager::*)(const HcclNetDevCtx, u32))
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&NetDevContext::Deinit)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&NetDevContext::Deinit).stubs().will(returnValue(HCCL_SUCCESS));
 
     communicator->Init(params, rankTable);
 
@@ -220,16 +189,13 @@ TEST_F(BackupLinkTest, ut_DeinitNic)
 }
 #endif
 
-
 #if 1
 TEST_F(BackupLinkTest, ut_GetRemoteRankList)
 {
     HcclResult ret = HCCL_SUCCESS;
 
     TransportType transportType = TransportType::TRANS_TYPE_ROCE;
-    MOCKER_CPP(&TransportManager::GetTransportType)
-    .stubs()
-    .will(returnValue(transportType));
+    MOCKER_CPP(&TransportManager::GetTransportType).stubs().will(returnValue(transportType));
 
     TransportRequest transportReq1;
     transportReq1.isValid = true;
@@ -255,10 +221,7 @@ TEST_F(BackupLinkTest, ut_GetRemoteRankList)
     TestConstructParam_SurperPod(params, rankTable);
     std::unique_ptr<HcclCommunicator> communicator(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     communicator->Init(params, rankTable);
 
@@ -280,9 +243,7 @@ TEST_F(BackupLinkTest, ut_GetIncreRemoteRankList)
     HcclResult ret = HCCL_SUCCESS;
 
     TransportType transportType = TransportType::TRANS_TYPE_ROCE;
-    MOCKER_CPP(&TransportManager::GetTransportType)
-    .stubs()
-    .will(returnValue(transportType));
+    MOCKER_CPP(&TransportManager::GetTransportType).stubs().will(returnValue(transportType));
 
     TransportRequest transportReq1;
     transportReq1.isValid = true;
@@ -308,16 +269,12 @@ TEST_F(BackupLinkTest, ut_GetIncreRemoteRankList)
     TestConstructParam_SurperPod(params, rankTable);
     std::unique_ptr<HcclCommunicator> communicator(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     communicator->Init(params, rankTable);
 
     std::vector<u32> rankList;
-    ret = communicator->transportManager_->GetIncreRemoteRankList(opTrans, rankList,
-        TransportType::TRANS_TYPE_ROCE);
+    ret = communicator->transportManager_->GetIncreRemoteRankList(opTrans, rankList, TransportType::TRANS_TYPE_ROCE);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     GlobalMockObject::verify();
 }
@@ -333,34 +290,26 @@ TEST_F(BackupLinkTest, ut_SetMachinePara)
     TestConstructParam_SurperPod(params, rankTable);
     std::unique_ptr<HcclCommunicator> communicator(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     communicator->Init(params, rankTable);
 
-    std::vector<std::shared_ptr<HcclSocket> > socketList;
+    std::vector<std::shared_ptr<HcclSocket>> socketList;
     DeviceMem inMem = DeviceMem::alloc(128);
     DeviceMem outMem = DeviceMem::alloc(128);
     DeviceMem expMem = DeviceMem::alloc(128);
     MachinePara machinePara;
 
-    MOCKER(hrtGetPairDevicePhyId)
-    .stubs()
-    .with(mockcpp::any(), mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetPairDevicePhyId).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     RankInfo loaclRankInfo;
     RankInfo remoteRankInfo;
 
-    MOCKER(hrtRaGetInterfaceVersion)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtRaGetInterfaceVersion).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclNetDevCtx netDevCtx;
-    ret = communicator->transportManager_->SetMachinePara("test", MachineType::MACHINE_SERVER_TYPE, "192.0.0.0", 0, 0,
-        LinkMode::LINK_DUPLEX_MODE, socketList, inMem, outMem, expMem, 1, 1, 0, 0, 132, 4, machinePara, loaclRankInfo,
-        remoteRankInfo, netDevCtx);
+    ret = communicator->transportManager_->SetMachinePara(
+        "test", MachineType::MACHINE_SERVER_TYPE, "192.0.0.0", 0, 0, LinkMode::LINK_DUPLEX_MODE, socketList, inMem,
+        outMem, expMem, 1, 1, 0, 0, 132, 4, machinePara, loaclRankInfo, remoteRankInfo, netDevCtx);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     GlobalMockObject::verify();
 }
@@ -371,18 +320,11 @@ TEST_F(BackupLinkTest, ut_RefreshAlgResponseTransportRes)
 {
     HcclResult ret = HCCL_SUCCESS;
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommAicpu::CalcResRequest)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommAicpu::CalcResRequest).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommAicpu::CreateLink)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommAicpu::CreateLink).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclCommParams params;
     RankTable_t rankTable;
@@ -394,7 +336,7 @@ TEST_F(BackupLinkTest, ut_RefreshAlgResponseTransportRes)
     // std::unique_ptr<TopoMatcher> &topoMatcher = communicator->implAlg_->topoMatcher_;
     // std::unique_ptr<CollExecutorBase> executor(new CollAllReduceRingExecutor(impl->dispatcher_, topoMatcher));
 
-    HcclCommAicpu *hcclCommAicpu = new HcclCommAicpu();
+    HcclCommAicpu* hcclCommAicpu = new HcclCommAicpu();
     AlgResourceResponse tempAlgResRep;
     hcclCommAicpu->resMap_["test"] = tempAlgResRep;
     DeviceMem devMem = DeviceMem::alloc(128);
@@ -407,12 +349,12 @@ TEST_F(BackupLinkTest, ut_RefreshAlgResponseTransportRes)
     AlgResourceResponse algResResponse;
     std::map<u32, bool> remoteRankPortMap;
     bool isChangeLinkFlag = true;
-    ret = hcclCommAicpu->RefreshAlgResponseTransportRes("test", algResResponse, remoteRankPortMap, isChangeLinkFlag,
-         &commParam, opParam);
+    ret = hcclCommAicpu->RefreshAlgResponseTransportRes(
+        "test", algResResponse, remoteRankPortMap, isChangeLinkFlag, &commParam, opParam);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     isChangeLinkFlag = false;
-    ret = hcclCommAicpu->RefreshAlgResponseTransportRes("test", algResResponse, remoteRankPortMap, isChangeLinkFlag, 
-        &commParam, opParam);
+    ret = hcclCommAicpu->RefreshAlgResponseTransportRes(
+        "test", algResResponse, remoteRankPortMap, isChangeLinkFlag, &commParam, opParam);
 
     EXPECT_EQ(ret, HCCL_SUCCESS);
     delete hcclCommAicpu;
@@ -425,28 +367,24 @@ TEST_F(BackupLinkTest, ut_HcclOpExecChangeLinkProcess)
 {
     HcclResult ret = HCCL_SUCCESS;
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ChangeLinkInfo changeLinkInfo;
     changeLinkInfo.remoteRankNum = 1;
     changeLinkInfo.remoteRankList[0] = 0;
     changeLinkInfo.isUseDefaultPort[0] = true;
     MOCKER_CPP(&AicpuHdc::GetOpExecChangeLink)
-    .stubs()
-    .with(mockcpp::any(), outBound(changeLinkInfo))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(changeLinkInfo))
+        .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommAicpu::RefreshAlgResponseTransportRes)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommAicpu::RefreshAlgResponseTransportRes).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommAicpu::UpdateOpExecStatus, HcclResult(HcclCommAicpu::*)(HcclOpExecFSM &, KfcStatus, KfcError &,
-        uint32_t))
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(
+        &HcclCommAicpu::UpdateOpExecStatus,
+        HcclResult(HcclCommAicpu::*)(HcclOpExecFSM&, KfcStatus, KfcError&, uint32_t))
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
 
     HcclCommParams params;
     RankTable_t rankTable;
@@ -458,7 +396,7 @@ TEST_F(BackupLinkTest, ut_HcclOpExecChangeLinkProcess)
     // std::unique_ptr<TopoMatcher> &topoMatcher = communicator->implAlg_->topoMatcher_;
     // std::unique_ptr<CollExecutorBase> executor(new CollAllReduceRingExecutor(impl->dispatcher_, topoMatcher));
 
-    HcclCommAicpu *hcclCommAicpu = new HcclCommAicpu();
+    HcclCommAicpu* hcclCommAicpu = new HcclCommAicpu();
     OpParam opParam;
     opParam.opType = HcclCMDType::HCCL_CMD_BATCH_SEND_RECV;
     AlgResourceResponse algResResponse;
@@ -467,8 +405,8 @@ TEST_F(BackupLinkTest, ut_HcclOpExecChangeLinkProcess)
     KfcError errorCode = KfcError::kRdma;
     uint32_t retryCnt = 0;
     hcclCommAicpu->retryEnable_ = true;
-    ret = hcclCommAicpu->HcclOpExecChangeLinkProcess("test", state, errorCode, retryCnt, algResResponse, &commParam,
-        opParam);
+    ret = hcclCommAicpu->HcclOpExecChangeLinkProcess(
+        "test", state, errorCode, retryCnt, algResResponse, &commParam, opParam);
 
     EXPECT_EQ(ret, HCCL_SUCCESS);
     delete hcclCommAicpu;
@@ -480,9 +418,7 @@ TEST_F(BackupLinkTest, ut_HcclOpExecChangeLinkProcess)
 TEST_F(BackupLinkTest, ut_CloseHccpProcess)
 {
     HcclResult ret = HCCL_SUCCESS;
-    MOCKER(hrtCloseNetService)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtCloseNetService).stubs().will(returnValue(HCCL_SUCCESS));
 
     ret = NetworkManager::GetInstance(0).CloseHccpProcess();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -516,21 +452,14 @@ TEST_F(BackupLinkTest, ut_TsdProcessOpen)
 TEST_F(BackupLinkTest, ut_ReAllocTransportResource)
 {
     /*
-    *  借轨重新刷新资源 ReAllocTransportResource 用例
-    */
+     *  借轨重新刷新资源 ReAllocTransportResource 用例
+     */
     HcclResult ret = HCCL_SUCCESS;
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommAicpu::CalcResRequest)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommAicpu::CalcResRequest).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommAicpu::CreateLink)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommAicpu::CreateLink).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclCommParams params;
     RankTable_t rankTable;
@@ -542,7 +471,7 @@ TEST_F(BackupLinkTest, ut_ReAllocTransportResource)
     // std::unique_ptr<TopoMatcher> &topoMatcher = communicator->implAlg_->topoMatcher_;
     // std::unique_ptr<CollExecutorBase> executor(new CollAllReduceRingExecutor(impl->dispatcher_, topoMatcher));
 
-    HcclCommAicpu *hcclCommAicpu = new HcclCommAicpu();
+    HcclCommAicpu* hcclCommAicpu = new HcclCommAicpu();
     AlgResourceResponse tempAlgResRep;
     hcclCommAicpu->resMap_["test"] = tempAlgResRep;
     DeviceMem devMem = DeviceMem::alloc(128);
@@ -578,12 +507,12 @@ TEST_F(BackupLinkTest, ut_ReAllocTransportResource)
 TEST_F(BackupLinkTest, ut_InitRaResource_notSupportChangelink)
 {
     std::unique_ptr<HcclCommunicator> communicator(new (std::nothrow) HcclCommunicator());
-    std::unique_ptr<HcclSocketManager> socketManager(new (std::nothrow) HcclSocketManager(
-        NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0));
+    std::unique_ptr<HcclSocketManager> socketManager(
+        new (std::nothrow) HcclSocketManager(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0));
     u32 devicePhyId = 0;
     HcclNetDevCtx vnicPortCtx;
-    HcclResult ret = HcclNetOpenDev(&vnicPortCtx, NicType::DEVICE_NIC_TYPE, devicePhyId, devicePhyId,
-        HcclIpAddress(devicePhyId));
+    HcclResult ret
+        = HcclNetOpenDev(&vnicPortCtx, NicType::DEVICE_NIC_TYPE, devicePhyId, devicePhyId, HcclIpAddress(devicePhyId));
     EXPECT_EQ(ret, HCCL_SUCCESS);
     communicator->devicePhyId_ = devicePhyId;
     communicator->netDevCtxMap_.insert(make_pair(HcclIpAddress(devicePhyId), vnicPortCtx));
@@ -613,12 +542,12 @@ TEST_F(BackupLinkTest, ut_InitRaResource_notSupportChangelink)
 TEST_F(BackupLinkTest, ut_InitRaResource_SupportChangelink)
 {
     std::unique_ptr<HcclCommunicator> communicator(new (std::nothrow) HcclCommunicator());
-    std::unique_ptr<HcclSocketManager> socketManager(new (std::nothrow) HcclSocketManager(
-        NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0));
+    std::unique_ptr<HcclSocketManager> socketManager(
+        new (std::nothrow) HcclSocketManager(NICDeployment::NIC_DEPLOYMENT_DEVICE, 0, 0, 0));
     u32 devicePhyId = 0;
     HcclNetDevCtx vnicPortCtx;
-    HcclResult ret = HcclNetOpenDev(&vnicPortCtx, NicType::DEVICE_NIC_TYPE, devicePhyId, devicePhyId,
-        HcclIpAddress(devicePhyId));
+    HcclResult ret
+        = HcclNetOpenDev(&vnicPortCtx, NicType::DEVICE_NIC_TYPE, devicePhyId, devicePhyId, HcclIpAddress(devicePhyId));
     EXPECT_EQ(ret, HCCL_SUCCESS);
     communicator->devicePhyId_ = devicePhyId;
     communicator->netDevCtxMap_.insert(make_pair(HcclIpAddress(devicePhyId), vnicPortCtx));
@@ -636,7 +565,8 @@ TEST_F(BackupLinkTest, ut_InitRaResource_SupportChangelink)
     // rts可以访问备用die（默认） -> 支持借轨
     MOCKER(hrtGetDeviceIndexByPhyId).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
     // 网络资源初始化成功（不初始化备用资源）
-    ret = communicator->InitRaResource();;
+    ret = communicator->InitRaResource();
+    ;
     EXPECT_EQ(ret, HCCL_SUCCESS);
     GlobalMockObject::verify();
 }

@@ -4,7 +4,7 @@
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
@@ -25,20 +25,15 @@ namespace checker {
 
 class Scatter2DCCUTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "Scatter2D CCU test set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "Scatter2D CCU test set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "Scatter2D CCU test tear down" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "Scatter2D CCU test tear down" << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -54,7 +49,7 @@ protected:
 TEST_F(Scatter2DCCUTest, scatter2d_ccu_case_test_2_mul_2_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,8,9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -78,7 +73,7 @@ TEST_F(Scatter2DCCUTest, scatter2d_ccu_case_test_2_mul_2_rank)
 TEST_F(Scatter2DCCUTest, scatter2d_ccu_case_test_3_mul_3_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,8,9,10,16,17,18}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -102,7 +97,7 @@ TEST_F(Scatter2DCCUTest, scatter2d_ccu_case_test_3_mul_3_rank)
 TEST_F(Scatter2DCCUTest, scatter2d_ccu_case_test_3_mul_3_rank_512k_count)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,8,9,10,16,17,18}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -126,7 +121,7 @@ TEST_F(Scatter2DCCUTest, scatter2d_ccu_case_test_3_mul_3_rank_512k_count)
 TEST_F(Scatter2DCCUTest, scatter2d_ccu_case_test_3_mul_4_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,8,9,10,16,17,18,24,25,26}}};
+    TopoMeta topoMeta{{{0, 1, 2, 8, 9, 10, 16, 17, 18, 24, 25, 26}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -150,7 +145,7 @@ TEST_F(Scatter2DCCUTest, scatter2d_ccu_case_test_3_mul_4_rank)
 TEST_F(Scatter2DCCUTest, scatter2d_ccu_case_test_4_mul_4_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,8,9,10,11,16,17,18,19,24,25,26,27}}};
+    TopoMeta topoMeta{{{0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19, 24, 25, 26, 27}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -173,7 +168,7 @@ TEST_F(Scatter2DCCUTest, scatter2d_ccu_case_test_4_mul_4_rank)
 TEST_F(Scatter2DCCUTest, scatter2d_ccu_case_test_4_mul_3_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,8,9,10,11,16,17,18,19}}};
+    TopoMeta topoMeta{{{0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -197,7 +192,7 @@ TEST_F(Scatter2DCCUTest, scatter2d_ccu_case_test_4_mul_3_rank)
 TEST_F(Scatter2DCCUTest, scatter2d_ccu_case_test_4_mul_2_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,8,9,10,11}}};
+    TopoMeta topoMeta{{{0, 1, 2, 3, 8, 9, 10, 11}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -221,7 +216,8 @@ TEST_F(Scatter2DCCUTest, scatter2d_ccu_case_test_4_mul_2_rank)
 TEST_F(Scatter2DCCUTest, scatter2d_ccu_case_test_5_mul_7_rank)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,4,8,9,10,11,12,16,17,18,19,20,24,25,26,27,28,32,33,34,35,36,40,41,42,43,44,48,49,50,51,52}}};
+    TopoMeta topoMeta{{{0,  1,  2,  3,  4,  8,  9,  10, 11, 12, 16, 17, 18, 19, 20, 24, 25, 26,
+                        27, 28, 32, 33, 34, 35, 36, 40, 41, 42, 43, 44, 48, 49, 50, 51, 52}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -245,7 +241,7 @@ TEST_F(Scatter2DCCUTest, scatter2d_ccu_case_test_5_mul_7_rank)
 TEST_F(Scatter2DCCUTest, scatter2d_ccu_case_test_2_mul_2_rank_1count)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,8,9}}};
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
 
@@ -268,7 +264,9 @@ TEST_F(Scatter2DCCUTest, scatter2d_ccu_case_test_2_mul_2_rank_1count)
 TEST_F(Scatter2DCCUTest, scatter2d_ccu_case_test_8_mul_8_rank_overBuffSize_count)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63}}};
+    TopoMeta topoMeta{{{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+                        22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43,
+                        44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
     setenv("HCCL_BUFFSIZE", "1", 1);
@@ -293,7 +291,8 @@ TEST_F(Scatter2DCCUTest, scatter2d_ccu_case_test_8_mul_8_rank_overBuffSize_count
 TEST_F(Scatter2DCCUTest, scatter2d_ccu_case_test_5_mul_7_rank_overBuffSize_count)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,4,8,9,10,11,12,16,17,18,19,20,24,25,26,27,28,32,33,34,35,36,40,41,42,43,44,48,49,50,51,52}}};
+    TopoMeta topoMeta{{{0,  1,  2,  3,  4,  8,  9,  10, 11, 12, 16, 17, 18, 19, 20, 24, 25, 26,
+                        27, 28, 32, 33, 34, 35, 36, 40, 41, 42, 43, 44, 48, 49, 50, 51, 52}}};
 
     setenv("HCCL_IODIE_NUM", "2", 1);
     setenv("HCCL_BUFFSIZE", "1", 1);
@@ -315,11 +314,10 @@ TEST_F(Scatter2DCCUTest, scatter2d_ccu_case_test_5_mul_7_rank_overBuffSize_count
     unsetenv("HCCL_BUFFSIZE");
 }
 
-
 TEST_F(Scatter2DCCUTest, scatter_ccu_case_test_4rank_OPBASE_0count_parallel)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1}, {2,3}}};
+    TopoMeta topoMeta{{{0, 1}, {2, 3}}};
     setenv("HCCL_IODIE_NUM", "2", 1);
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::SCATTER;
@@ -339,7 +337,7 @@ TEST_F(Scatter2DCCUTest, scatter_ccu_case_test_4rank_OPBASE_0count_parallel)
 TEST_F(Scatter2DCCUTest, scatter_ccu_case_test_4rank_OPBASE_4count_parallel)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1}, {2,3}}};
+    TopoMeta topoMeta{{{0, 1}, {2, 3}}};
     setenv("HCCL_IODIE_NUM", "2", 1);
 
     CheckerOpParam checkerOpParam;
@@ -351,7 +349,7 @@ TEST_F(Scatter2DCCUTest, scatter_ccu_case_test_4rank_OPBASE_4count_parallel)
     checkerOpParam.DataDes.dataType = CheckerDataType::DATA_TYPE_INT32;
     checkerOpParam.root = 1;
     checkerOpParam.algName = "CcuScatterParallelMesh1DNHR";
- 
+
     Checker checker;
     HcclResult ret;
     ret = checker.CheckA5Aicpu(checkerOpParam, topoMeta);
@@ -361,7 +359,7 @@ TEST_F(Scatter2DCCUTest, scatter_ccu_case_test_4rank_OPBASE_4count_parallel)
 TEST_F(Scatter2DCCUTest, scatter_ccu_case_test_4rank_OPBASE_100count_parallel)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1}, {2,3}}};
+    TopoMeta topoMeta{{{0, 1}, {2, 3}}};
     setenv("HCCL_IODIE_NUM", "2", 1);
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::SCATTER;
@@ -372,7 +370,7 @@ TEST_F(Scatter2DCCUTest, scatter_ccu_case_test_4rank_OPBASE_100count_parallel)
     checkerOpParam.DataDes.dataType = CheckerDataType::DATA_TYPE_FP16;
     checkerOpParam.root = 1;
     checkerOpParam.algName = "CcuScatterParallelMesh1DNHR";
- 
+
     Checker checker;
     HcclResult ret;
     ret = checker.CheckA5Aicpu(checkerOpParam, topoMeta);
@@ -382,7 +380,7 @@ TEST_F(Scatter2DCCUTest, scatter_ccu_case_test_4rank_OPBASE_100count_parallel)
 TEST_F(Scatter2DCCUTest, scatter_ccu_mem2mem_opbase_512_int32_parallel)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1}, {2,3}}};
+    TopoMeta topoMeta{{{0, 1}, {2, 3}}};
     setenv("HCCL_IODIE_NUM", "2", 1);
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::SCATTER;
@@ -393,13 +391,11 @@ TEST_F(Scatter2DCCUTest, scatter_ccu_mem2mem_opbase_512_int32_parallel)
     checkerOpParam.DataDes.dataType = CheckerDataType::DATA_TYPE_UINT64;
     checkerOpParam.root = 1;
     checkerOpParam.algName = "CcuScatterParallelMesh1DNHR";
- 
+
     Checker checker;
     HcclResult ret;
     ret = checker.CheckA5Aicpu(checkerOpParam, topoMeta);
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 }
 
-
-
-}
+} // namespace checker

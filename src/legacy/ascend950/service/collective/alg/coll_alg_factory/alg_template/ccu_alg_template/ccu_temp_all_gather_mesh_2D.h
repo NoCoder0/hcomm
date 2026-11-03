@@ -12,18 +12,17 @@
 #define HCCLV2_CCU_TEMP_ALL_GATHER_MESH_2D_H_
 
 #include "string_util.h"
-#include "env_config.h"
+#include "env_config_v2.h"
 #include "ccu_alg_template_base.h"
 #include "ccu_instruction_all_gather_mesh2d.h"
 
 namespace Hccl {
 
-
 class CcuTempAllGatherMesh2D : public CcuAlgTemplateBase {
 public:
-    explicit CcuTempAllGatherMesh2D(const RankId virtualRank, const u32 tempRankSize,
-                                   const std::vector<std::vector<RankId>> &tempVTopo,
-                                   const std::map<RankId, u32>            &tempVirtRankMap);
+    explicit CcuTempAllGatherMesh2D(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~CcuTempAllGatherMesh2D() override;
 
     std::string Describe() const override
@@ -31,12 +30,14 @@ public:
         return StringFormat("Template of all gather ccu mesh 2D with tempRankSize [%u].", tempRankSize_);
     }
 
-    HcclResult Run(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec, const BuffInfo &buffInfo,
-                         const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues) override;
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
-    HcclResult CalcSliceInfo(const AllignInfo &allignInfo, const u64 dataSize, RankSliceInfo &sliceInfoVec) override;
+    HcclResult
+    Run(const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, const BuffInfo& buffInfo,
+        const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues) override;
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
+    HcclResult CalcSliceInfo(const AllignInfo& allignInfo, const u64 dataSize, RankSliceInfo& sliceInfoVec) override;
+
 private:
-    uint64_t DataSliceToAddr(const DataSlice &dataSlice);
+    uint64_t DataSliceToAddr(const DataSlice& dataSlice);
 
     std::vector<uint32_t> dimSize_;
     std::vector<LinkData> linksX_;

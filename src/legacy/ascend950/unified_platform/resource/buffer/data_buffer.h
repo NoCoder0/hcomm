@@ -7,6 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #ifndef HCCL_Data_DataBuffer_H
 #define HCCL_Data_DataBuffer_H
 
@@ -19,56 +20,41 @@ namespace Hccl {
 
 class DataBuffer {
 public:
-    DataBuffer(uintptr_t addr, std::size_t size): addr(addr), size(size) {};
+    DataBuffer(uintptr_t addr, std::size_t size) : addr(addr), size(size) {};
 
     explicit DataBuffer(std::size_t size) : size(size) {};
 
     virtual ~DataBuffer() = default;
 
-    uintptr_t GetAddr() const
-    {
-        return addr;
-    }
+    uintptr_t GetAddr() const { return addr; }
 
-    size_t GetSize() const
-    {
-        return size;
-    }
+    size_t GetSize() const { return size; }
 
-    virtual std::string Describe() const
-    {
-        return StringFormat("Buffer[addr=0x%llx, size=0x%llx]", addr, size);
-    }
+    virtual std::string Describe() const { return StringFormat("Buffer[addr=0x%llx, size=0x%llx]", addr, size); }
 
     // "=="运算符
-    bool operator==(const DataBuffer &that) const
-    {
-        return (addr == that.GetAddr()) && (size == that.GetSize());
-    }
+    bool operator==(const DataBuffer& that) const { return (addr == that.GetAddr()) && (size == that.GetSize()); }
 
     // "!="运算符
-    bool operator!=(const DataBuffer &that) const
-    {
-        return (addr != that.GetAddr()) || (size != that.GetSize());
-    }
+    bool operator!=(const DataBuffer& that) const { return (addr != that.GetAddr()) || (size != that.GetSize()); }
 
 protected:
-    uintptr_t   addr{0};
+    uintptr_t addr{0};
     std::size_t size{0};
 };
 } // namespace Hccl
 
 namespace std {
 
-template <> class hash<Hccl::DataBuffer> {
+template <>
+class hash<Hccl::DataBuffer> {
 public:
-    size_t operator()(const Hccl::DataBuffer &dataBuffer) const
+    size_t operator()(const Hccl::DataBuffer& dataBuffer) const
     {
-        auto addrHash         = hash<uint8_t>{}(dataBuffer.GetAddr());
-        auto sizeHash        = hash<uint8_t>{}(dataBuffer.GetSize());
+        auto addrHash = hash<uint8_t>{}(dataBuffer.GetAddr());
+        auto sizeHash = hash<uint8_t>{}(dataBuffer.GetSize());
 
-        return Hccl::HashCombine(
-            {addrHash, sizeHash});
+        return Hccl::HashCombine({addrHash, sizeHash});
     }
 };
 } // namespace std

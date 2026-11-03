@@ -44,14 +44,14 @@ extern "C" {
 /* common */
 
 /**
-* @brief WfwJobxMng库句柄，基于mux实现job
-*/
+ * @brief WfwJobxMng库句柄，基于mux实现job
+ */
 typedef struct tagWfwJobxMng WfwJobxMng;
 
 /* init */
 /**
-* @brief WfwJobxMng库句柄，初始化参数
-*/
+ * @brief WfwJobxMng库句柄，初始化参数
+ */
 typedef struct tagWfwJobxInitArg {
     char *name;
     BOOL dbgOn;
@@ -105,4 +105,3 @@ BkfIJob *WfwJobxBuildIJob(WfwJobxMng *jobxMng, BkfIJob *temp);
 #endif
 
 #endif
-

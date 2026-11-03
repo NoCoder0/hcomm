@@ -1,12 +1,13 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #ifndef HCCLV2_RECOVER_INFO_H
 #define HCCLV2_RECOVER_INFO_H
 
@@ -20,7 +21,8 @@ namespace Hccl {
 
 const u32 RECOVER_OP_TAG_MAX_LEN = 191; // 最大的tag长度
 
-template <typename T> inline std::vector<char> ReCoverCustomTypeToCharVector(const T &data)
+template <typename T>
+inline std::vector<char> ReCoverCustomTypeToCharVector(const T& data)
 {
     std::vector<char> v;
     v.resize(sizeof(T));
@@ -31,9 +33,10 @@ template <typename T> inline std::vector<char> ReCoverCustomTypeToCharVector(con
     return v;
 }
 
-template <typename T> inline T RecoverCharVectorToCustomType(const std::vector<char> &v)
+template <typename T>
+inline T RecoverCharVectorToCustomType(const std::vector<char>& v)
 {
-    T   result;
+    T result;
     int ret = memcpy_s(&result, sizeof(result), &v[0], v.size());
     if (ret != 0) {
         THROW<InternalException>(StringFormat("VectorByteToCustomType copy dwqe failed, ret=%d", ret));
@@ -49,12 +52,9 @@ struct RecoverInfoData {
     // 通信步骤
     u32 step{0};
 
-    RecoverInfoData()
-    {
-    }
+    RecoverInfoData() {}
 
-    RecoverInfoData(u32 collOpIndex, u32 crcValue, u32 step) 
-        : collOpIndex(collOpIndex), crcValue(crcValue), step(step)
+    RecoverInfoData(u32 collOpIndex, u32 crcValue, u32 step) : collOpIndex(collOpIndex), crcValue(crcValue), step(step)
     {
         this->collOpIndex = collOpIndex;
         this->crcValue = crcValue;
@@ -68,9 +68,9 @@ struct RecoverInfoData {
 
 class RecoverInfo {
 public:
-    explicit RecoverInfo(const RecoverInfoData &recoverInfoData, RankId myRank);
+    explicit RecoverInfo(const RecoverInfoData& recoverInfoData, RankId myRank);
 
-    explicit RecoverInfo(const std::vector<char> &v);
+    explicit RecoverInfo(const std::vector<char>& v);
 
     std::string Describe() const;
 
@@ -79,13 +79,13 @@ public:
 
     void SetCrcValue(u32 crcValue);
 
-    void Check(const std::vector<char> &rmtUniqueId) const;
+    void Check(const std::vector<char>& rmtUniqueId) const;
 
-    void CompareRecoverInfo(const RecoverInfoData &otherRecoverInfoData) const;
+    void CompareRecoverInfo(const RecoverInfoData& otherRecoverInfoData) const;
 
 private:
     RecoverInfoData recoverInfoData;
-    RankId          myRank{0};
+    RankId myRank{0};
 };
 
 } // namespace Hccl

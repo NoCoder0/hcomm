@@ -1,33 +1,17 @@
- /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- * 
- * The code snippet comes from Cann project.
- * 
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 /*!
  * \file adump_device_pub.h
  * \brief 算子dump接口头文件
-*/
+ */
 
 /** @defgroup dump dump接口 */
 #ifndef ADUMP_DEVICE_PUB_API_H
@@ -46,7 +30,7 @@ extern "C" {
  *
  * dump ip信息缓冲区长度
  */
-typedef void *IDE_SESSION;
+typedef void* IDE_SESSION;
 
 /**
  * @ingroup dump。
@@ -61,9 +45,9 @@ typedef void *IDE_SESSION;
  * dump 连接信息
  */
 typedef struct tagConnInfo {
-    char ip[IDE_DAEMON_IP_LEN];     /**< IP地址 */
-    int port;                       /**< 端口号 */
-    int deviceID;                   /**< 设备ID号 */
+    char ip[IDE_DAEMON_IP_LEN]; /**< IP地址 */
+    int port;                   /**< 端口号 */
+    int deviceID;               /**< 设备ID号 */
 } connInfo_t;
 
 /**
@@ -72,26 +56,26 @@ typedef struct tagConnInfo {
  * dump 错误信息
  */
 typedef enum tagIdeError {
-    IDE_DAEMON_NONE_ERROR = 0,                    /**< 无错误 */
-    IDE_DAEMON_UNKNOW_ERROR = 1,                  /**< 未知错误 */
-    IDE_DAEMON_WRITE_ERROR = 2,                   /**< 写入失败 */
-    IDE_DAEMON_NO_SPACE_ERROR = 3,                /**< 磁盘已满 */
-    IDE_DAEMON_INVALID_PATH_ERROR = 4,            /**< 无效路径 */
-    IDE_DAEMON_INVALID_PARAM_ERROR = 5,           /**< 无效参数 */
-    IDE_DAEMON_TCP_CONNECT_ERROR = 6,             /**< TCP连接失败 */
-    IDE_DAEMON_TCP_CHANNEL_ERROR = 7,             /**< TCP通道异常 */
-    IDE_DAEMON_MALLOC_ERROR = 8,                  /**< 申请堆内存失败 */
-    IDE_DAEMON_HDC_CHANNEL_ERROR = 9,             /**< HDC通路异常 */
-    IDE_DAEMON_CHANNEL_ERROR = 10,                /**< 通路异常 */
-    IDE_DAEMON_MKDIR_ERROR = 11,                  /**< 创建目录失败 */
-    IDE_DAEMON_MEMCPY_ERROR = 12,                 /**< 内存拷贝失败 */
-    IDE_DAEMON_MEMSET_ERROR = 13,                 /**< 内存清零失败 */
-    IDE_DAEMON_INVALID_IP_ERROR = 14,             /**< 无效的IP地址 */
-    IDE_DAEMON_INTERGER_REVERSED_ERROR = 15,      /**< 整形溢出 */
-    IDE_DAEMON_DUMP_QUEUE_FULL = 16,              /**< dump队列已满 */
-    IDE_DAEMON_HDC_TIMEOUT = 17,                  /**< HDC连接超时 */
-    NR_IDE_DAEMON_ERROR,                          /**< 枚举最大值 */
-}ideError_t;
+    IDE_DAEMON_NONE_ERROR = 0,               /**< 无错误 */
+    IDE_DAEMON_UNKNOW_ERROR = 1,             /**< 未知错误 */
+    IDE_DAEMON_WRITE_ERROR = 2,              /**< 写入失败 */
+    IDE_DAEMON_NO_SPACE_ERROR = 3,           /**< 磁盘已满 */
+    IDE_DAEMON_INVALID_PATH_ERROR = 4,       /**< 无效路径 */
+    IDE_DAEMON_INVALID_PARAM_ERROR = 5,      /**< 无效参数 */
+    IDE_DAEMON_TCP_CONNECT_ERROR = 6,        /**< TCP连接失败 */
+    IDE_DAEMON_TCP_CHANNEL_ERROR = 7,        /**< TCP通道异常 */
+    IDE_DAEMON_MALLOC_ERROR = 8,             /**< 申请堆内存失败 */
+    IDE_DAEMON_HDC_CHANNEL_ERROR = 9,        /**< HDC通路异常 */
+    IDE_DAEMON_CHANNEL_ERROR = 10,           /**< 通路异常 */
+    IDE_DAEMON_MKDIR_ERROR = 11,             /**< 创建目录失败 */
+    IDE_DAEMON_MEMCPY_ERROR = 12,            /**< 内存拷贝失败 */
+    IDE_DAEMON_MEMSET_ERROR = 13,            /**< 内存清零失败 */
+    IDE_DAEMON_INVALID_IP_ERROR = 14,        /**< 无效的IP地址 */
+    IDE_DAEMON_INTERGER_REVERSED_ERROR = 15, /**< 整形溢出 */
+    IDE_DAEMON_DUMP_QUEUE_FULL = 16,         /**< dump队列已满 */
+    IDE_DAEMON_HDC_TIMEOUT = 17,             /**< HDC连接超时 */
+    NR_IDE_DAEMON_ERROR,                     /**< 枚举最大值 */
+} ideError_t;
 
 /**
  * @ingroup dump。
@@ -106,7 +90,7 @@ typedef ideError_t IdeErrorT;
  * dump回传数据块标识信息
  */
 enum IdeDumpFlag {
-    IDE_DUMP_NONE_FLAG  = 0,            /**< 无标志位 */
+    IDE_DUMP_NONE_FLAG = 0, /**< 无标志位 */
 };
 
 /**
@@ -115,12 +99,12 @@ enum IdeDumpFlag {
  * dump回传数据块
  */
 struct IdeDumpChunk {
-    char                *fileName;      /**< 文件名，绝对路径 */
-    unsigned char       *dataBuf;       /**< 写入的数据Buffer */
-    unsigned int        bufLen;         /**< 写入的数据Buffer长度 */
-    unsigned int        isLastChunk;    /**< 是否最后一块数据   0:非最后一块数据;1：最后一块数据 */
-    long long           offset;         /**< 文件写入的偏移位   -1为追加形式写入 */
-    enum IdeDumpFlag    flag;           /**< 标志位 */
+    char* fileName;           /**< 文件名，绝对路径 */
+    unsigned char* dataBuf;   /**< 写入的数据Buffer */
+    unsigned int bufLen;      /**< 写入的数据Buffer长度 */
+    unsigned int isLastChunk; /**< 是否最后一块数据   0:非最后一块数据;1：最后一块数据 */
+    long long offset;         /**< 文件写入的偏移位   -1为追加形式写入 */
+    enum IdeDumpFlag flag;    /**< 标志位 */
 };
 
 /**
@@ -136,7 +120,7 @@ struct IdeDumpChunk {
  * @see        无
  * @since
  */
-ADX_API extern IDE_SESSION IdeDumpStart(const char *connectInfo);
+ADX_API extern IDE_SESSION IdeDumpStart(const char* connectInfo);
 
 /**
  * @ingroup dump
@@ -153,7 +137,7 @@ ADX_API extern IDE_SESSION IdeDumpStart(const char *connectInfo);
  * @see        无
  * @since
  */
-ADX_API extern IdeErrorT IdeDumpData(IDE_SESSION session, const struct IdeDumpChunk *dumpChunk);
+ADX_API extern IdeErrorT IdeDumpData(IDE_SESSION session, const struct IdeDumpChunk* dumpChunk);
 
 /**
  * @ingroup dump

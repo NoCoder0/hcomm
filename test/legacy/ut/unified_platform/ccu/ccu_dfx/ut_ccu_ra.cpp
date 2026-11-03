@@ -25,23 +25,13 @@
 using namespace std;
 using namespace Hccl;
 
-
 class CcuRaTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CcuRaTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CcuRaTest tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CcuRaTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CcuRaTest tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in CcuRaTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in CcuRaTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -96,7 +86,7 @@ TEST_F(CcuRaTest, test_loop_xm)
 TEST_F(CcuRaTest, test_loop_group_xn)
 {
     EXPECT_EQ(sizeof(LoopGroupXn), 8);
-    
+
     LoopGroupXn loopGroupXn{};
     loopGroupXn.value = 0xaaaabbbbccccdddd;
 
@@ -108,7 +98,7 @@ TEST_F(CcuRaTest, test_loop_group_xn)
 TEST_F(CcuRaTest, test_loop_group_xm)
 {
     EXPECT_EQ(sizeof(LoopGroupXm), 8);
-    
+
     LoopGroupXm loopGroupXm{};
     loopGroupXm.value = 0xaaaabbbbccccdddd;
 
@@ -117,7 +107,7 @@ TEST_F(CcuRaTest, test_loop_group_xm)
     EXPECT_EQ(loopGroupXm.gsaOffset, 0b01010101110111011101111001100110);
 }
 
-void MockHrtRaTlvRequestForCustomChannelXn(void* tlvHandle, u32 msgType, void *customIn, void *customOut)
+void MockHrtRaTlvRequestForCustomChannelXn(void* tlvHandle, u32 msgType, void* customIn, void* customOut)
 {
     uint64_t mockXnVal = 0xaaaabbbbccccdddd;
     CustomChannelInfoOut* mockOutBuff = (CustomChannelInfoOut*)customOut;
@@ -126,12 +116,15 @@ void MockHrtRaTlvRequestForCustomChannelXn(void* tlvHandle, u32 msgType, void *c
 
 TEST_F(CcuRaTest, test_get_ccu_xn_value)
 {
-    MOCKER(HrtRaTlvRequestForCustomChannel).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any()).will(invoke(MockHrtRaTlvRequestForCustomChannelXn));
+    MOCKER(HrtRaTlvRequestForCustomChannel)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(invoke(MockHrtRaTlvRequestForCustomChannelXn));
 
     EXPECT_EQ(CcuErrorHandler::GetCcuXnValue(0, 0, 0), 0xaaaabbbbccccdddd);
 }
 
-void MockHrtRaTlvRequestForCustomChannelGSA(void* tlvHandle, u32 msgType, void *customIn, void *customOut)
+void MockHrtRaTlvRequestForCustomChannelGSA(void* tlvHandle, u32 msgType, void* customIn, void* customOut)
 {
     uint64_t mockGSAVal = 0x1111222233334444;
     CustomChannelInfoOut* mockOutBuff = (CustomChannelInfoOut*)customOut;
@@ -140,12 +133,15 @@ void MockHrtRaTlvRequestForCustomChannelGSA(void* tlvHandle, u32 msgType, void *
 
 TEST_F(CcuRaTest, test_get_ccu_gsa_value)
 {
-    MOCKER(HrtRaTlvRequestForCustomChannel).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any()).will(invoke(MockHrtRaTlvRequestForCustomChannelGSA));
+    MOCKER(HrtRaTlvRequestForCustomChannel)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(invoke(MockHrtRaTlvRequestForCustomChannelGSA));
 
     EXPECT_EQ(CcuErrorHandler::GetCcuGSAValue(0, 0, 0), 0x1111222233334444);
 }
 
-void MockHrtRaTlvRequestForCustomChannelCKE(void* tlvHandle, u32 msgType, void *customIn, void *customOut)
+void MockHrtRaTlvRequestForCustomChannelCKE(void* tlvHandle, u32 msgType, void* customIn, void* customOut)
 {
     uint64_t mockCKEVal = 0x000000000000ffff;
     CustomChannelInfoOut* mockOutBuff = (CustomChannelInfoOut*)customOut;
@@ -154,12 +150,15 @@ void MockHrtRaTlvRequestForCustomChannelCKE(void* tlvHandle, u32 msgType, void *
 
 TEST_F(CcuRaTest, test_get_ccu_cke_value)
 {
-    MOCKER(HrtRaTlvRequestForCustomChannel).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any()).will(invoke(MockHrtRaTlvRequestForCustomChannelCKE));
+    MOCKER(HrtRaTlvRequestForCustomChannel)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(invoke(MockHrtRaTlvRequestForCustomChannelCKE));
 
     EXPECT_EQ(CcuErrorHandler::GetCcuCKEValue(0, 0, 0), 0xffff);
 }
 
-void MockHrtRaTlvRequestForCustomChannelMissionContext(void* tlvHandle, u32 msgType, void *customIn, void *customOut)
+void MockHrtRaTlvRequestForCustomChannelMissionContext(void* tlvHandle, u32 msgType, void* customIn, void* customOut)
 {
     CcuMissionContext missionCtx{};
     missionCtx.part2.value = 0xaaaa;
@@ -172,14 +171,17 @@ void MockHrtRaTlvRequestForCustomChannelMissionContext(void* tlvHandle, u32 msgT
 
 TEST_F(CcuRaTest, test_get_ccu_mission_context)
 {
-    MOCKER(HrtRaTlvRequestForCustomChannel).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any()).will(invoke(MockHrtRaTlvRequestForCustomChannelMissionContext));
+    MOCKER(HrtRaTlvRequestForCustomChannel)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(invoke(MockHrtRaTlvRequestForCustomChannelMissionContext));
 
     auto missionCtx = CcuErrorHandler::GetCcuMissionContext(0, 0, 0);
     EXPECT_EQ(missionCtx.GetStatus(), 0b0111010101010101);
     EXPECT_EQ(missionCtx.GetCurrentIns(), 0b1110111001100110);
 }
 
-void MockHrtRaTlvRequestForCustomChannelLoopContext(void* tlvHandle, u32 msgType, void *customIn, void *customOut)
+void MockHrtRaTlvRequestForCustomChannelLoopContext(void* tlvHandle, u32 msgType, void* customIn, void* customOut)
 {
     CcuLoopContext loopCtx{};
     loopCtx.part9.value = 0x9999;
@@ -194,7 +196,10 @@ void MockHrtRaTlvRequestForCustomChannelLoopContext(void* tlvHandle, u32 msgType
 
 TEST_F(CcuRaTest, test_get_ccu_loop_context)
 {
-    MOCKER(HrtRaTlvRequestForCustomChannel).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any()).will(invoke(MockHrtRaTlvRequestForCustomChannelLoopContext));
+    MOCKER(HrtRaTlvRequestForCustomChannel)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(invoke(MockHrtRaTlvRequestForCustomChannelLoopContext));
 
     auto loopCtx = CcuErrorHandler::GetCcuLoopContext(0, 0, 0);
     EXPECT_EQ(loopCtx.GetCurrentIns(), 0b1010101010100110);

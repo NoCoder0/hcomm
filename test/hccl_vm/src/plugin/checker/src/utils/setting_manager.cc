@@ -23,9 +23,11 @@ static const std::string MANIFEST_FILE_NAME = "manifest.json";
 static const std::string SETTING_KEY_ENABLE_INSIGHT_DUMP = "enable_insight_dump";
 static const std::string SETTING_KEY_ENABLE_MEMORY_SNAPSHOT_DUMP = "enable_memory_snapshot_dump";
 static const std::string SETTING_KEY_ENABLE_NEW_CHECKER = "enable_new_checker";
-static const std::string SETTING_KEY_ENABLE_OLD_CHECKER = "enable_old_checker";
+static const std::string SETTING_KEY_ENABLE_BIG_GRAPH_CHECKER = "enable_big_graph_checker";
+static const std::string SETTING_KEY_ENABLE_DAG_GRAPHVIZ_DUMP = "enable_dag_graphviz_dump";
+static const std::string SETTING_KEY_ENABLE_CCU_RESOURCE_STATS_DUMP = "enable_ccu_resource_stats_dump";
 
-}  // namespace
+} // namespace
 
 namespace HcclSim {
 
@@ -62,8 +64,10 @@ HcclResult SettingManager::Refresh()
         newSettings.enableInsightDump = settings.value(SETTING_KEY_ENABLE_INSIGHT_DUMP, false);
         newSettings.enableMemorySnapshotDump = settings.value(SETTING_KEY_ENABLE_MEMORY_SNAPSHOT_DUMP, true);
         newSettings.enableNewChecker = settings.value(SETTING_KEY_ENABLE_NEW_CHECKER, true);
-        newSettings.enableOldChecker = settings.value(SETTING_KEY_ENABLE_OLD_CHECKER, true);
-    } catch (const std::exception &ex) {
+        newSettings.enableBigGraphChecker = settings.value(SETTING_KEY_ENABLE_BIG_GRAPH_CHECKER, false);
+        newSettings.enableDagGraphvizDump = settings.value(SETTING_KEY_ENABLE_DAG_GRAPHVIZ_DUMP, false);
+        newSettings.enableCcuResourceStatsDump = settings.value(SETTING_KEY_ENABLE_CCU_RESOURCE_STATS_DUMP, false);
+    } catch (const std::exception& ex) {
         HCCL_VM_ERROR("parse manifest failed: {}", ex.what());
         return HcclResult::HCCL_E_INTERNAL;
     }
@@ -75,16 +79,18 @@ HcclResult SettingManager::Refresh()
         m_manifestPath = manifestPath;
     }
 
-    HCCL_VM_INFO("settings refreshed: insight_dump={}, memory_snapshot_dump={}, "
-        "new_checker={}, old_checker={}", newSettings.enableInsightDump, newSettings.enableMemorySnapshotDump,
-        newSettings.enableNewChecker, newSettings.enableOldChecker);
+    HCCL_VM_INFO(
+        "settings refreshed: insight_dump={}, memory_snapshot_dump={}, "
+        "new_checker={}, big_graph_checker={}, dag_graphviz_dump={}, ccu_resource_stats_dump={}",
+        newSettings.enableInsightDump, newSettings.enableMemorySnapshotDump, newSettings.enableNewChecker,
+        newSettings.enableBigGraphChecker, newSettings.enableDagGraphvizDump, newSettings.enableCcuResourceStatsDump);
     return HcclResult::HCCL_SUCCESS;
 }
 
 void SettingManager::Reset()
 {
     std::lock_guard<std::mutex> lock(m_mutex);
-    m_settings = CheckerSettings {};
+    m_settings = CheckerSettings{};
     m_pluginRootDir.clear();
     m_manifestPath.clear();
 }
@@ -113,10 +119,22 @@ bool SettingManager::IsNewCheckerEnabled() const
     return m_settings.enableNewChecker;
 }
 
-bool SettingManager::IsOldCheckerEnabled() const
+bool SettingManager::IsBigGraphCheckerEnabled() const
 {
     std::lock_guard<std::mutex> lock(m_mutex);
-    return m_settings.enableOldChecker;
+    return m_settings.enableBigGraphChecker;
 }
 
-}  // namespace HcclSim
+bool SettingManager::IsDagGraphvizDumpEnabled() const
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    return m_settings.enableDagGraphvizDump;
+}
+
+bool SettingManager::IsCcuResourceStatsDumpEnabled() const
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    return m_settings.enableCcuResourceStatsDump;
+}
+
+} // namespace HcclSim

@@ -154,4 +154,3 @@ uint32_t BkfTmrGetRemainTime(BkfTmrMng *tmrMng, BkfTmrId *tmrId);
 #endif
 
 #endif
-

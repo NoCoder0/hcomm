@@ -1,12 +1,13 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "gtest/gtest.h"
 #include <vector>
 #include <tuple>
@@ -21,24 +22,19 @@
 
 #include "checker.h"
 using namespace checker;
-class RunBroadCastMeshExecutorA2Test : public::testing::TestWithParam<
-    std::tuple<uint64_t, CheckerDataType, vector<int>,  CheckerOpMode, CheckerDevType, std::string, int>>
-{
+class RunBroadCastMeshExecutorA2Test :
+    public ::testing::TestWithParam<
+        std::tuple<uint64_t, CheckerDataType, vector<int>, CheckerOpMode, CheckerDevType, std::string, int>> {
 public:
-    static void SetUpTestCase()
-    {
-        std::cout << "RunBroadCastMeshExecutorA2Test set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "RunBroadCastMeshExecutorA2Test set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "RunBroadCastMeshExecutorA2Test tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "RunBroadCastMeshExecutorA2Test tear down." << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -48,26 +44,27 @@ public:
         // GlobalMockObject::verify();
         ClearHcclEnv();
     }
+
 protected:
-    int GetRootValue(int rankSize, int rootParam) {
-        switch (rootParam)
-        {
-        case 0:
-            return 0;
-            break;
-        case 1:
-            return rankSize - 1;
-            break;
-        case 2:
-            return rankSize / 2;
-            break;
-        case 3:
-            return std::min(rankSize / 2 + 1, rankSize - 1);
-            break;
-        default:
-            std::cout << "The root node is invalid values." << std::endl;
-            return -1;
-            break;
+    int GetRootValue(int rankSize, int rootParam)
+    {
+        switch (rootParam) {
+            case 0:
+                return 0;
+                break;
+            case 1:
+                return rankSize - 1;
+                break;
+            case 2:
+                return rankSize / 2;
+                break;
+            case 3:
+                return std::min(rankSize / 2 + 1, rankSize - 1);
+                break;
+            default:
+                std::cout << "The root node is invalid values." << std::endl;
+                return -1;
+                break;
         }
     }
 };
@@ -75,20 +72,19 @@ protected:
 TEST_P(RunBroadCastMeshExecutorA2Test, Test_BroadCastMesh_A2)
 {
     const auto& settingTuple = GetParam();
-    uint64_t dataSize =            std::get<0>(settingTuple);
-    CheckerDataType dataType =        std::get<1>(settingTuple);
+    uint64_t dataSize = std::get<0>(settingTuple);
+    CheckerDataType dataType = std::get<1>(settingTuple);
     const std::vector<int>& topo = std::get<2>(settingTuple);
-    CheckerOpMode opMode =                std::get<3>(settingTuple);
-    CheckerDevType devType =              std::get<4>(settingTuple);
-    const std::string& hcclAlgo =  std::get<5>(settingTuple);
-    int rootIndex =                std::get<6>(settingTuple);
+    CheckerOpMode opMode = std::get<3>(settingTuple);
+    CheckerDevType devType = std::get<4>(settingTuple);
+    const std::string& hcclAlgo = std::get<5>(settingTuple);
+    int rootIndex = std::get<6>(settingTuple);
 
     if (dataSize == 5000000008ull) {
         setenv("HCCL_BUFFSIZE", "4096", 1);
     }
 
-    if (!hcclAlgo.empty())
-    {
+    if (!hcclAlgo.empty()) {
         std::string hcclAlgoEnv = "level0:NA;level1:" + hcclAlgo;
         setenv("HCCL_ALGO", hcclAlgoEnv.c_str(), 1);
     }
@@ -99,9 +95,9 @@ TEST_P(RunBroadCastMeshExecutorA2Test, Test_BroadCastMesh_A2)
     u32 rankSize = GetRankNumFormTopoMeta(topoMeta);
     RankId root = GetRootValue(rankSize, rootIndex);
 
-    std::cout << "--- dataSize=" << dataSize << ", dataType=" << dataType << ", opMode=" << opMode <<
-                ", topo={" << topo[0] << ", " << topo[1] << ", " << topo[2] << "}"<<
-                ", hcclAlgo=" << hcclAlgo << ", root = " << root << std::endl;
+    std::cout << "--- dataSize=" << dataSize << ", dataType=" << dataType << ", opMode=" << opMode << ", topo={"
+              << topo[0] << ", " << topo[1] << ", " << topo[2] << "}" << ", hcclAlgo=" << hcclAlgo
+              << ", root = " << root << std::endl;
 
     CheckerOpParam checkerOpParam;
     checkerOpParam.tag = "BroadCast";
@@ -122,39 +118,30 @@ TEST_P(RunBroadCastMeshExecutorA2Test, Test_BroadCastMesh_A2)
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 }
 
-INSTANTIATE_TEST_SUITE_P(BroadCastMeshExecutor_A2, RunBroadCastMeshExecutorA2Test,
+INSTANTIATE_TEST_SUITE_P(
+    BroadCastMeshExecutor_A2, RunBroadCastMeshExecutorA2Test,
     testing::Combine(
-        testing::Values(800ull/*, 1000000008ull, 5000000008ull*/),
-        testing::Values(CheckerDataType::DATA_TYPE_FP32,
-                        CheckerDataType::DATA_TYPE_INT8,
-                        CheckerDataType::DATA_TYPE_BFP16,
-                        CheckerDataType::DATA_TYPE_INT64),
-        testing::ValuesIn(std::vector<std::vector<int>>{{1, 2, 8}, {1, 2, 7}/*, {1, 1, 16}, {1, 4, 16}*/}),
-        testing::Values(CheckerOpMode::OPBASE, CheckerOpMode::OFFLOAD),
-        testing::Values(CheckerDevType::DEV_TYPE_910B),
-        testing::Values("NB"),
-        testing::Values(0, 1, 2, 3)
-    )
-);
+        testing::Values(800ull /*, 1000000008ull, 5000000008ull*/),
+        testing::Values(
+            CheckerDataType::DATA_TYPE_FP32, CheckerDataType::DATA_TYPE_INT8, CheckerDataType::DATA_TYPE_BFP16,
+            CheckerDataType::DATA_TYPE_INT64),
+        testing::ValuesIn(std::vector<std::vector<int>>{{1, 2, 8}, {1, 2, 7} /*, {1, 1, 16}, {1, 4, 16}*/}),
+        testing::Values(CheckerOpMode::OPBASE, CheckerOpMode::OFFLOAD), testing::Values(CheckerDevType::DEV_TYPE_910B),
+        testing::Values("NB"), testing::Values(0, 1, 2, 3)));
 
-class RunBroadCastMeshExecutorAlgoTest : public::testing::TestWithParam<
-    std::tuple<uint64_t, CheckerDataType, vector<int>,  CheckerOpMode, CheckerDevType, std::string, bool>>
-{
+class RunBroadCastMeshExecutorAlgoTest :
+    public ::testing::TestWithParam<
+        std::tuple<uint64_t, CheckerDataType, vector<int>, CheckerOpMode, CheckerDevType, std::string, bool>> {
 public:
-    static void SetUpTestCase()
-    {
-        std::cout << "RunBroadCastMeshExecutorAlgoTest set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "RunBroadCastMeshExecutorAlgoTest set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "RunBroadCastMeshExecutorAlgoTest tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "RunBroadCastMeshExecutorAlgoTest tear down." << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -169,24 +156,23 @@ public:
 TEST_P(RunBroadCastMeshExecutorAlgoTest, Test_BroadCastMesh_Algo_A2)
 {
     const auto& settingTuple = GetParam();
-    uint64_t dataSize =            std::get<0>(settingTuple);
-    CheckerDataType dataType =        std::get<1>(settingTuple);
+    uint64_t dataSize = std::get<0>(settingTuple);
+    CheckerDataType dataType = std::get<1>(settingTuple);
     const std::vector<int>& topo = std::get<2>(settingTuple);
-    CheckerOpMode opMode =                std::get<3>(settingTuple);
-    CheckerDevType devType =              std::get<4>(settingTuple);
-    const std::string& hcclAlgo =  std::get<5>(settingTuple);
-    bool enableAnypath =           std::get<6>(settingTuple);
+    CheckerOpMode opMode = std::get<3>(settingTuple);
+    CheckerDevType devType = std::get<4>(settingTuple);
+    const std::string& hcclAlgo = std::get<5>(settingTuple);
+    bool enableAnypath = std::get<6>(settingTuple);
 
-    std::cout << "--- dataSize=" << dataSize << ", dataType=" << dataType << ", opMode=" << opMode <<
-                ", topo={" << topo[0] << ", " << topo[1] << ", " << topo[2] << "}"<<
-                ", hcclAlgo=" << hcclAlgo << ", root = " << 0 << std::endl;
+    std::cout << "--- dataSize=" << dataSize << ", dataType=" << dataType << ", opMode=" << opMode << ", topo={"
+              << topo[0] << ", " << topo[1] << ", " << topo[2] << "}" << ", hcclAlgo=" << hcclAlgo << ", root = " << 0
+              << std::endl;
 
     if (enableAnypath) {
         setenv("HCCL_CONCURRENT_ENABLE", "1", 1);
     }
 
-    if (!hcclAlgo.empty())
-    {
+    if (!hcclAlgo.empty()) {
         std::string hcclAlgoEnv = "level0:NA;level1:" + hcclAlgo;
         setenv("HCCL_ALGO", hcclAlgoEnv.c_str(), 1);
     }
@@ -218,14 +204,11 @@ TEST_P(RunBroadCastMeshExecutorAlgoTest, Test_BroadCastMesh_Algo_A2)
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 }
 
-INSTANTIATE_TEST_SUITE_P(BroadCastMeshExecutor_Algo_A2, RunBroadCastMeshExecutorAlgoTest,
+INSTANTIATE_TEST_SUITE_P(
+    BroadCastMeshExecutor_Algo_A2, RunBroadCastMeshExecutorAlgoTest,
     testing::Combine(
-        testing::Values(800ull, 1000000008ull),
-        testing::Values(CheckerDataType::DATA_TYPE_FP32),
-        testing::ValuesIn(std::vector<std::vector<int>>{{1, 2, 8}/*, {1, 4, 16}*/}),
-        testing::Values(CheckerOpMode::OPBASE),
-        testing::Values(CheckerDevType::DEV_TYPE_910B),
+        testing::Values(800ull, 1000000008ull), testing::Values(CheckerDataType::DATA_TYPE_FP32),
+        testing::ValuesIn(std::vector<std::vector<int>>{{1, 2, 8} /*, {1, 4, 16}*/}),
+        testing::Values(CheckerOpMode::OPBASE), testing::Values(CheckerDevType::DEV_TYPE_910B),
         testing::Values("NHR", "H-D_R", "NHR_V1"), // Broadcast 仅支持 HD NHR NB NHRV1
-        testing::Values(true)
-    )
-);
+        testing::Values(true)));

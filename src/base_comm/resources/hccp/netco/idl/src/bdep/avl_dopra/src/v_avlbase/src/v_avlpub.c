@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #include "v_avlbase.h"
 #include "v_avl_base.h"
 
@@ -91,7 +90,6 @@ void *VOS_AVL_Insert_Or_Find(AVL_TREE *pstTree, AVL_NODE *pstNode)
 
     return AVL_NULL_PTR;
 }
-
 
 void VOS_AVL_Delete(AVL_TREE *pstTree, AVL_NODE *pstNode)
 {

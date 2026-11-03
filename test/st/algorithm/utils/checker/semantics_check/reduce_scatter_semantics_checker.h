@@ -16,8 +16,8 @@
 
 namespace checker {
 
-HcclResult TaskCheckReduceScatterSemantics(std::map<RankId, RankMemorySemantics> &allRankMemSemantics, u64 dataSize,
-                                           CheckerReduceOp reduceType);
+HcclResult TaskCheckReduceScatterSemantics(
+    std::map<RankId, RankMemorySemantics>& allRankMemSemantics, u64 dataSize, CheckerReduceOp reduceType);
 }
 
 #endif

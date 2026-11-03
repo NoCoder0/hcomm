@@ -14,15 +14,14 @@
 
 namespace Hccl {
 
-Rts1ToNCntNotify::Rts1ToNCntNotify() : deviceId(HrtGetDevice()), devPhyId(HrtGetDevicePhyIdByIndex(HrtGetDevice())),
-                                        handle(HrtCntNotifyCreate(deviceId)), id(HrtGetCntNotifyId(handle))
-{
-}
+Rts1ToNCntNotify::Rts1ToNCntNotify()
+    : deviceId(HrtGetDevice()),
+      devPhyId(HrtGetDevicePhyIdByUserDevId(HrtGetDevice())),
+      handle(HrtCntNotifyCreate(deviceId)),
+      id(HrtGetCntNotifyId(handle))
+{}
 
-Rts1ToNCntNotify::~Rts1ToNCntNotify()
-{
-    DECTOR_TRY_CATCH("Rts1ToNCntNotify", HrtCntNotifyDestroy(handle));
-}
+Rts1ToNCntNotify::~Rts1ToNCntNotify() { DECTOR_TRY_CATCH("Rts1ToNCntNotify", HrtCntNotifyDestroy(handle)); }
 
 std::unique_ptr<BaseTask> Rts1ToNCntNotify::WaitBits(u32 bitValue)
 {
@@ -34,20 +33,17 @@ std::unique_ptr<BaseTask> Rts1ToNCntNotify::PostValue(u32 value)
     return std::make_unique<TaskPostValue>(this, value);
 }
 
-void Rts1ToNCntNotify::WaitBits(u32 bitValue, u32 timeout, const Stream &stream) const
+void Rts1ToNCntNotify::WaitBits(u32 bitValue, u32 timeout, const Stream& stream) const
 {
     HrtCntNotifyWaitWithTimeOut(handle, stream.GetPtr(), HrtCntNotifyWaitMode::BITMAP, bitValue, timeout);
 }
 
-void Rts1ToNCntNotify::PostValue(u32 value, const aclrtStream &rtStream) const
+void Rts1ToNCntNotify::PostValue(u32 value, const aclrtStream& rtStream) const
 {
     HrtCntNotifyRecord(handle, rtStream, HrtCntNotifyRecordMode::STORE, value);
 }
 
-void Rts1ToNCntNotify::PostValue(u32 value, const Stream &stream) const
-{
-    PostValue(value, stream.GetPtr());
-}
+void Rts1ToNCntNotify::PostValue(u32 value, const Stream& stream) const { PostValue(value, stream.GetPtr()); }
 
 std::string Rts1ToNCntNotify::Describe() const
 {

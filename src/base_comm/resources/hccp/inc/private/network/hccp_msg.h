@@ -16,7 +16,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 #pragma pack(push)
-#pragma pack (1)
+#pragma pack(1)
 typedef struct TagTsCcuTaskInfo {
     uint8_t udieId;
     uint8_t rsv;
@@ -45,9 +45,9 @@ typedef struct TagTsUbTaskReport {
 
 typedef struct TagTsHccpMsg {
     // head 32B
-    int32_t hccpPid;  // apm_query_slave_tgid_by_master
+    int32_t hccpPid; // apm_query_slave_tgid_by_master
     uint32_t hostPid;
-    uint8_t cmdType;   // 0:ub force kill; 1:ccu force kill
+    uint8_t cmdType; // 0:ub force kill; 1:ccu force kill
     uint8_t vfId;
     uint16_t sqId;
     uint16_t isAppExit;

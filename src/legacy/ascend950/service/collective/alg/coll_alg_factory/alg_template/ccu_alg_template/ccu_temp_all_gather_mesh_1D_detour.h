@@ -19,9 +19,9 @@ namespace Hccl {
 
 class CcuTempAllGatherMeshDetour1D : public CcuAlgTemplateBase {
 public:
-    explicit CcuTempAllGatherMeshDetour1D(const RankId virtualRank, const u32 tempRankSize,
-                                   const std::vector<std::vector<RankId>> &tempVTopo,
-                                   const std::map<RankId, u32>            &tempVirtRankMap);
+    explicit CcuTempAllGatherMeshDetour1D(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~CcuTempAllGatherMeshDetour1D() override;
 
     std::string Describe() const override
@@ -29,18 +29,21 @@ public:
         return StringFormat("Template of all gather ccu mesh Detour 1D with tempRankSize [%u].", tempRankSize_);
     }
 
-    HcclResult Run(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec, const BuffInfo &buffInfo,
-                         const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues) override;
-    HcclResult CalcResDetour(const RankGraph *rankGraph, AlgTempResReq &tempResReq) override;
-    HcclResult CalcResDetour(ConnectedLinkMgr *linkMgr, AlgTempResReq &tempResReq) override;
-    HcclResult CalcSliceInfo(const AllignInfo &allignInfo, const u64 dataSize, RankSliceInfo &sliceInfoVec) override;
-private:
-    void GetAddrInfo(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec,
-        uint64_t &inputAddr, uint64_t &outputAddr, uint64_t &offset);
-    void CalcDetourOffset(uint64_t sliceSize, uint64_t &tailOffset, uint64_t &tailSize, uint64_t &loopIterNum);
-    void ProcessLinks(std::vector<LinkData> &links, const ResLinks &tempLinks) const;
+    HcclResult
+    Run(const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, const BuffInfo& buffInfo,
+        const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues) override;
+    HcclResult CalcResDetour(const RankGraph* rankGraph, AlgTempResReq& tempResReq) override;
+    HcclResult CalcResDetour(ConnectedLinkMgr* linkMgr, AlgTempResReq& tempResReq) override;
+    HcclResult CalcSliceInfo(const AllignInfo& allignInfo, const u64 dataSize, RankSliceInfo& sliceInfoVec) override;
 
-    uint64_t detourPathNum_{0};  // 到每个对端有几个绕路路径
+private:
+    void GetAddrInfo(
+        const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, uint64_t& inputAddr, uint64_t& outputAddr,
+        uint64_t& offset);
+    void CalcDetourOffset(uint64_t sliceSize, uint64_t& tailOffset, uint64_t& tailSize, uint64_t& loopIterNum);
+    HcclResult ProcessLinks(std::vector<LinkData>& links, const ResLinks& tempLinks) const;
+
+    uint64_t detourPathNum_{0}; // 到每个对端有几个绕路路径
     uint64_t pathNumPerPeer_{0};
     std::vector<uint64_t> lengths_;
     uint64_t singleTransportSize_{0};

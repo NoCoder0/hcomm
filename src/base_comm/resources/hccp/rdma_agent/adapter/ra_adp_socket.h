@@ -16,9 +16,11 @@
 
 struct RsSocketOps {
     int (*socketBatchConnect)(struct SocketConnectInfo conn[], unsigned int num);
+    int (*socketBatchConnectV2)(struct SocketConnectInfoV2 conn[], unsigned int num);
     int (*socketBatchClose)(int disuseLinger, struct RsSocketCloseInfoT conn[], unsigned int num);
     int (*socketBatchAbort)(struct SocketConnectInfo conn[], unsigned int num);
     int (*socketListenStart)(struct SocketListenInfo conn[], unsigned int num);
+    int (*socketListenStartV2)(struct SocketListenInfoV2 conn[], unsigned int num);
     int (*socketListenStop)(struct SocketListenInfo conn[], unsigned int num);
     int (*getSockets)(unsigned int role, struct SocketFdData conn[], unsigned int num);
     int (*socketSend)(int fd, const void *data, uint64_t size);
@@ -30,8 +32,7 @@ struct RsSocketOps {
     int (*acceptCreditAdd)(struct SocketListenInfo conn[], uint32_t num, unsigned int creditLimit);
     int (*getIfnum)(unsigned int phyId, bool isAll, unsigned int *num);
     int (*getIfaddrs)(struct IfaddrInfo ifaddrInfos[], unsigned int *num, unsigned int phyId);
-    int (*getIfaddrsV2)(struct InterfaceInfo interfaceInfos[], unsigned int *num, unsigned int phyId,
-        bool isAll);
+    int (*getIfaddrsV2)(struct InterfaceInfo interfaceInfos[], unsigned int *num, unsigned int phyId, bool isAll);
     int (*getVnicIp)(unsigned int phyId, unsigned int *vnicIp);
     int (*getVnicIpInfos)(unsigned int phyId, enum IdType type, unsigned int ids[], unsigned int num,
         struct IpInfo infos[]);
@@ -42,6 +43,8 @@ int RaRsSocketBatchClose(char *inBuf, char *outBuf, int *outLen, int *opResult, 
 int RaRsSocketBatchAbort(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen);
 int RaRsSocketListenStart(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen);
 int RaRsSocketListenStop(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen);
+int RaRsSocketBatchConnectV2(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen);
+int RaRsSocketListenStartV2(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen);
 int RaRsGetSockets(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen);
 int RaRsSocketRecv(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen);
 int RaRsSocketSend(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen);

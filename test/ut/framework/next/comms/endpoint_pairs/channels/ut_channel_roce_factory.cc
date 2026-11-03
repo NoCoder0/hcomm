@@ -13,74 +13,64 @@
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
 
-#include "aicpu/aicpu_ts_roce_channel.h"
+#include "aicpu/aicpu_ts_roce_dev_loc_channel.h"
 #include "aicpu/aicpu_ts_urma_channel.h"
+#include "aiv/aiv_urma_channel.h"
 #include "aiv/aiv_ub_mem_channel.h"
 #include "ccu_urma_channel.h"
 #include "channel.h"
 #include "host/host_cpu_roce_channel.h"
+#include "hcomm_c_adpt.h"
+#include "orion_adpt_utils.h"
 #include "hcomm_res_defs.h"
+#include "hcomm_channel.h"
 #include "endpoint.h"
+#include "urma_endpoint.h"
+#include "ccu_urma_channel.h"
+#include "tp_manager.h"
+#include "plf_debug_config.h"
 
 using namespace hcomm;
 
 namespace {
-/* Member-function pointer types for MOCKER_CPP_VIRTUAL (vtable hook). MOCKER_CPP on virtual Init is unsafe when
- * Init is invoked through Channel* / unique_ptr<Channel> inside Channel::CreateChannel. */
-using HostCpuRoceChannelInitFp = HcclResult (HostCpuRoceChannel::*)();
-using AicpuTsRoceChannelInitFp = HcclResult (AicpuTsRoceChannel::*)();
 using AicpuTsUrmaChannelInitFp = HcclResult (AicpuTsUrmaChannel::*)();
 using AivUbMemChannelInitFp = HcclResult (AivUbMemChannel::*)();
-using CcuUrmaChannelInitFp = HcclResult (CcuUrmaChannel::*)();
 
 class StubEndpointForChannelFactory : public Endpoint {
 public:
-    explicit StubEndpointForChannelFactory(const EndpointDesc &desc, void *rdma = reinterpret_cast<void *>(0x10U))
-        : Endpoint(desc)
-    {
-        ctxHandle_ = rdma;
-    }
-    HcclResult Init() override
-    {
-        return HCCL_SUCCESS;
-    }
-    HcclResult ServerSocketListen(const uint32_t) override
-    {
-        return HCCL_SUCCESS;
-    }
-    HcclResult RegisterMemory(HcommMem, const char *, void **) override
-    {
-        return HCCL_SUCCESS;
-    }
-    HcclResult UnregisterMemory(void *) override
-    {
-        return HCCL_SUCCESS;
-    }
-    HcclResult MemoryExport(void *, void **, uint32_t *) override
-    {
-        return HCCL_SUCCESS;
-    }
-    HcclResult MemoryImport(const void *, uint32_t, HcommMem *) override
-    {
-        return HCCL_SUCCESS;
-    }
-    HcclResult MemoryUnimport(const void *, uint32_t) override
-    {
-        return HCCL_SUCCESS;
-    }
-    HcclResult GetAllMemHandles(void **, uint32_t *) override
-    {
-        return HCCL_SUCCESS;
-    }
+    explicit StubEndpointForChannelFactory(const EndpointDesc& desc, void* rdma = reinterpret_cast<void*>(0x10U))
+        : Endpoint(desc),
+          ctxHandle_(rdma)
+    {}
+    HcclResult Init() override { return HCCL_SUCCESS; }
+    // 内存方法在 mgr 上，Endpoint 不再承载；stub 不实现
+    LocalRegedMemMgr* GetLocalRegMemMgr() override { return nullptr; }
+    void* GetRdmaHandle() override { return ctxHandle_; }
+    bool IsCtxHandleValid() const override { return ctxHandle_ != nullptr; }
+
+private:
+    void* ctxHandle_{nullptr};
 };
+
+HcclResult StubHrtGetDeviceSuccess(int32_t* devLogicId)
+{
+    *devLogicId = 0;
+    return HCCL_SUCCESS;
+}
+
 } // namespace
 
 class UtChannelRoceFactory : public testing::Test {
 protected:
+    void SetUp() override { savedPlfConfig_ = Hccl::GetPlfDebugConfigValue(); }
+
     void TearDown() override
     {
+        Hccl::SetPlfDebugConfigValue(savedPlfConfig_);
         GlobalMockObject::verify();
     }
+
+    u64 savedPlfConfig_ = 0;
 };
 
 TEST_F(UtChannelRoceFactory, CreateChannel_NullEndpoint_AicpuTs_Roce_Returns_E_PTR)
@@ -88,7 +78,7 @@ TEST_F(UtChannelRoceFactory, CreateChannel_NullEndpoint_AicpuTs_Roce_Returns_E_P
     HcommChannelDesc desc{};
     desc.remoteEndpoint.protocol = COMM_PROTOCOL_ROCE;
     std::shared_ptr<Channel> ch;
-    EXPECT_EQ(Channel::CreateChannel(nullptr, COMM_ENGINE_AICPU_TS, desc, ch), HCCL_E_PTR);
+    EXPECT_EQ(Channel::CreateChannel(nullptr, COMM_ENGINE_AICPU_TS, desc, nullptr, ch), HCCL_E_PTR);
     EXPECT_EQ(ch.get(), nullptr);
 }
 
@@ -97,7 +87,7 @@ TEST_F(UtChannelRoceFactory, CreateChannel_NullEndpoint_Aicpu_Roce_Returns_E_PTR
     HcommChannelDesc desc{};
     desc.remoteEndpoint.protocol = COMM_PROTOCOL_ROCE;
     std::shared_ptr<Channel> ch;
-    EXPECT_EQ(Channel::CreateChannel(nullptr, COMM_ENGINE_AICPU, desc, ch), HCCL_E_PTR);
+    EXPECT_EQ(Channel::CreateChannel(nullptr, COMM_ENGINE_AICPU, desc, nullptr, ch), HCCL_E_PTR);
     EXPECT_EQ(ch.get(), nullptr);
 }
 
@@ -112,7 +102,9 @@ TEST_F(UtChannelRoceFactory, CreateChannel_InvalidEngine_Returns_NOT_FOUND)
     HcommChannelDesc desc{};
     desc.remoteEndpoint.protocol = COMM_PROTOCOL_ROCE;
     std::shared_ptr<Channel> ch;
-    EXPECT_EQ(Channel::CreateChannel(reinterpret_cast<EndpointHandle>(&stub), static_cast<CommEngine>(0x7fff0001), desc, ch),
+    EXPECT_EQ(
+        Channel::CreateChannel(
+            reinterpret_cast<EndpointHandle>(&stub), static_cast<CommEngine>(0x7fff0001), desc, nullptr, ch),
         HCCL_E_NOT_FOUND);
     EXPECT_EQ(ch.get(), nullptr);
 }
@@ -126,7 +118,8 @@ TEST_F(UtChannelRoceFactory, CreateChannel_CpuTs_Returns_NOT_SUPPORT)
     HcommChannelDesc desc{};
     desc.remoteEndpoint.protocol = COMM_PROTOCOL_ROCE;
     std::shared_ptr<Channel> ch;
-    EXPECT_EQ(Channel::CreateChannel(reinterpret_cast<EndpointHandle>(&stub), COMM_ENGINE_CPU_TS, desc, ch),
+    EXPECT_EQ(
+        Channel::CreateChannel(reinterpret_cast<EndpointHandle>(&stub), COMM_ENGINE_CPU_TS, desc, nullptr, ch),
         HCCL_E_NOT_SUPPORT);
     EXPECT_EQ(ch.get(), nullptr);
 }
@@ -140,7 +133,8 @@ TEST_F(UtChannelRoceFactory, CreateChannel_CpuNonRoce_Returns_NOT_SUPPORT)
     HcommChannelDesc desc{};
     desc.remoteEndpoint.protocol = COMM_PROTOCOL_UB_MEM;
     std::shared_ptr<Channel> ch;
-    EXPECT_EQ(Channel::CreateChannel(reinterpret_cast<EndpointHandle>(&stub), COMM_ENGINE_CPU, desc, ch),
+    EXPECT_EQ(
+        Channel::CreateChannel(reinterpret_cast<EndpointHandle>(&stub), COMM_ENGINE_CPU, desc, nullptr, ch),
         HCCL_E_NOT_SUPPORT);
     EXPECT_EQ(ch.get(), nullptr);
 }
@@ -155,11 +149,11 @@ TEST_F(UtChannelRoceFactory, CreateChannel_CpuRoce_MockInit_Returns_SUCCESS)
     StubEndpointForChannelFactory stub(ep);
     HcommChannelDesc desc{};
     desc.remoteEndpoint.protocol = COMM_PROTOCOL_ROCE;
-    auto *raw = new HostCpuRoceChannel(reinterpret_cast<EndpointHandle>(&stub), desc);
+    MOCKER(hrtGetDevice).stubs().will(invoke(StubHrtGetDeviceSuccess));
+    MOCKER(hrtGetDevicePhyIdByIndex).stubs().will(returnValue(HCCL_SUCCESS));
+    auto* raw = new HostCpuRoceChannel(reinterpret_cast<EndpointHandle>(&stub), desc);
     std::unique_ptr<Channel> ch(raw);
-    MOCKER_CPP_VIRTUAL(*raw, &HostCpuRoceChannel::Init, HostCpuRoceChannelInitFp).stubs().will(returnValue(HCCL_SUCCESS));
-    ASSERT_EQ(ch->Init(), HCCL_SUCCESS);
-    ASSERT_NE(ch.get(), nullptr);
+    ASSERT_EQ(ch->Init(), HCCL_E_PTR);
 }
 
 TEST_F(UtChannelRoceFactory, CreateChannel_AicpuTsRoce_MockInit_Returns_SUCCESS)
@@ -172,9 +166,10 @@ TEST_F(UtChannelRoceFactory, CreateChannel_AicpuTsRoce_MockInit_Returns_SUCCESS)
     StubEndpointForChannelFactory stub(ep);
     HcommChannelDesc desc{};
     desc.remoteEndpoint.protocol = COMM_PROTOCOL_ROCE;
-    auto *raw = new AicpuTsRoceChannel(reinterpret_cast<EndpointHandle>(&stub), desc);
+    MOCKER_CPP(&AicpuTsRoceDevLocChannel::BuildDataSocket).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&AicpuTsRoceDevLocChannel::BuildDispatcherAndTransport).stubs().will(returnValue(HCCL_SUCCESS));
+    auto* raw = new AicpuTsRoceDevLocChannel(reinterpret_cast<EndpointHandle>(&stub), desc);
     std::unique_ptr<Channel> ch(raw);
-    MOCKER_CPP_VIRTUAL(*raw, &AicpuTsRoceChannel::Init, AicpuTsRoceChannelInitFp).stubs().will(returnValue(HCCL_SUCCESS));
     ASSERT_EQ(ch->Init(), HCCL_SUCCESS);
     ASSERT_NE(ch.get(), nullptr);
 }
@@ -187,9 +182,11 @@ TEST_F(UtChannelRoceFactory, CreateChannel_AicpuNonRoce_MockUrmaInit_Returns_SUC
     StubEndpointForChannelFactory stub(ep);
     HcommChannelDesc desc{};
     desc.remoteEndpoint.protocol = COMM_PROTOCOL_UB_MEM;
-    auto *raw = new AicpuTsUrmaChannel(reinterpret_cast<EndpointHandle>(&stub), desc);
+    auto* raw = new AicpuTsUrmaChannel(reinterpret_cast<EndpointHandle>(&stub), desc);
     std::unique_ptr<Channel> ch(raw);
-    MOCKER_CPP_VIRTUAL(*raw, &AicpuTsUrmaChannel::Init, AicpuTsUrmaChannelInitFp).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP_VIRTUAL(*raw, &AicpuTsUrmaChannel::Init, AicpuTsUrmaChannelInitFp)
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
     ASSERT_EQ(ch->Init(), HCCL_SUCCESS);
     ASSERT_NE(ch.get(), nullptr);
 }
@@ -202,11 +199,41 @@ TEST_F(UtChannelRoceFactory, CreateChannel_AivUbMem_MockInit_Returns_SUCCESS)
     StubEndpointForChannelFactory stub(ep);
     HcommChannelDesc desc{};
     desc.remoteEndpoint.protocol = COMM_PROTOCOL_UB_MEM;
-    auto *raw = new AivUbMemChannel(reinterpret_cast<EndpointHandle>(&stub), desc);
+    auto* raw = new AivUbMemChannel(reinterpret_cast<EndpointHandle>(&stub), desc);
     std::unique_ptr<Channel> ch(raw);
     MOCKER_CPP_VIRTUAL(*raw, &AivUbMemChannel::Init, AivUbMemChannelInitFp).stubs().will(returnValue(HCCL_SUCCESS));
     ASSERT_EQ(ch->Init(), HCCL_SUCCESS);
     ASSERT_NE(ch.get(), nullptr);
+}
+
+TEST_F(UtChannelRoceFactory, CreateChannel_AivUbRtp_On950_ReturnsAivUrmaChannel)
+{
+    EndpointDesc ep{};
+    ep.protocol = COMM_PROTOCOL_UB_RTP;
+    ep.loc.locType = ENDPOINT_LOC_TYPE_DEVICE;
+    ep.commAddr.type = COMM_ADDR_TYPE_IP_V4;
+    ASSERT_EQ(inet_pton(AF_INET, "10.20.30.43", &ep.commAddr.addr), 1);
+    StubEndpointForChannelFactory stub(ep);
+
+    HcommChannelDesc desc{};
+    desc.remoteEndpoint = ep;
+    desc.ubAttr.sqDepth = UB_SQ_DEPTH_NOT_SET;
+    Hccl::Socket socket(
+        nullptr, Hccl::IpAddress(), 0, Hccl::IpAddress(), "ut", Hccl::SocketRole::CLIENT,
+        Hccl::NicType::DEVICE_NIC_TYPE);
+    desc.socket = &socket;
+
+    DevType deviceType = DevType::DEV_TYPE_950;
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDevice).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&Hccl::TpManager::Init).stubs();
+
+    std::shared_ptr<Channel> channel;
+    EXPECT_EQ(
+        Channel::CreateChannel(reinterpret_cast<EndpointHandle>(&stub), COMM_ENGINE_AIV, desc, nullptr, channel),
+        HCCL_SUCCESS);
+    ASSERT_NE(channel, nullptr);
+    EXPECT_NE(std::dynamic_pointer_cast<AivUrmaChannel>(channel), nullptr);
 }
 
 TEST_F(UtChannelRoceFactory, CreateChannel_CcuUrma_MockInit_Returns_SUCCESS)
@@ -214,68 +241,48 @@ TEST_F(UtChannelRoceFactory, CreateChannel_CcuUrma_MockInit_Returns_SUCCESS)
     EndpointDesc ep{};
     ep.protocol = COMM_PROTOCOL_ROCE;
     ep.loc.locType = ENDPOINT_LOC_TYPE_DEVICE;
-    StubEndpointForChannelFactory stub(ep);
+    UrmaEndpoint stub(ep);
     HcommChannelDesc desc{};
     desc.remoteEndpoint.protocol = COMM_PROTOCOL_UBC_TP;
-    auto *raw = new CcuUrmaChannel(reinterpret_cast<EndpointHandle>(&stub), desc);
+    Hccl::Socket socket(
+        nullptr, Hccl::IpAddress(), 0, Hccl::IpAddress(), "ut", Hccl::SocketRole::CLIENT,
+        Hccl::NicType::DEVICE_NIC_TYPE);
+    desc.socket = &socket;
+    HcommMemHandle memHandle{};
+    desc.memHandles = &memHandle;
+    desc.memHandleNum = 1;
+    auto* raw = new CcuUrmaChannel(reinterpret_cast<EndpointHandle>(&stub), desc);
     std::unique_ptr<Channel> ch(raw);
-    MOCKER_CPP_VIRTUAL(*raw, &CcuUrmaChannel::Init, CcuUrmaChannelInitFp).stubs().will(returnValue(HCCL_SUCCESS));
-    ASSERT_EQ(ch->Init(), HCCL_SUCCESS);
-    ASSERT_NE(ch.get(), nullptr);
+    ASSERT_EQ(ch->Init(), HCCL_E_NOT_FOUND);
 }
 
 namespace {
 class ChannelDefaultsTestDouble : public Channel {
 public:
-    HcclResult Init() override
-    {
-        return HCCL_SUCCESS;
-    }
-    HcclResult GetNotifyNum(uint32_t *notifyNum) const override
+    // 基类 protected 接口经 TestDouble 再暴露,保持基类窄可见性设计
+    using Channel::TransportStatusToChannelStatus;
+    HcclResult GetNotifyNum(uint32_t* notifyNum) const override
     {
         *notifyNum = 0U;
         return HCCL_SUCCESS;
     }
-    HcclResult GetRemoteMems(uint32_t *, CommMem **, char ***) override
+    HcclResult GetRemoteMems(uint32_t*, CommMem**, char***) override { return HCCL_SUCCESS; }
+    ChannelStatus GetStatus() override { return ChannelStatus::INIT; }
+    const HcommChannelDesc& GetChannelDesc() const override
     {
-        return HCCL_SUCCESS;
+        static HcommChannelDesc defaultDesc{};
+        return defaultDesc;
     }
-    ChannelStatus GetStatus() override
-    {
-        return ChannelStatus::INIT;
-    }
-    HcclResult Clean() override
-    {
-        return HCCL_SUCCESS;
-    }
-    HcclResult Resume() override
-    {
-        return HCCL_SUCCESS;
-    }
-        HcclResult NotifyRecord(uint32_t) override
-    {
-        return HCCL_E_NOT_SUPPORT;
-    }
-    HcclResult NotifyWait(uint32_t, uint32_t) override
-    {
-        return HCCL_E_NOT_SUPPORT;
-    }
-    HcclResult WriteWithNotify(void *, const void *, uint64_t, uint32_t) override
-    {
-        return HCCL_E_NOT_SUPPORT;
-    }
-    HcclResult Write(void *, const void *, uint64_t) override
-    {
-        return HCCL_E_NOT_SUPPORT;
-    }
-    HcclResult Read(void *, const void *, uint64_t) override
-    {
-        return HCCL_E_NOT_SUPPORT;
-    }
-    HcclResult ChannelFence() override
-    {
-        return HCCL_E_NOT_SUPPORT;
-    }
+    HcclResult Clean() override { return HCCL_SUCCESS; }
+    HcclResult Resume() override { return HCCL_SUCCESS; }
+    HcclResult NotifyRecord(uint32_t) override { return HCCL_E_NOT_SUPPORT; }
+    HcclResult NotifyWait(uint32_t, uint32_t) override { return HCCL_E_NOT_SUPPORT; }
+    HcclResult WriteWithNotify(void*, const void*, uint64_t, uint32_t) override { return HCCL_E_NOT_SUPPORT; }
+    HcclResult Write(void*, const void*, uint64_t) override { return HCCL_E_NOT_SUPPORT; }
+    HcclResult Read(void*, const void*, uint64_t) override { return HCCL_E_NOT_SUPPORT; }
+    HcclResult ChannelFence() override { return HCCL_E_NOT_SUPPORT; }
+
+    Hccl::TransportStatus GetLastTransportStatus() const { return lastTransportStatus_; }
 };
 } // namespace
 
@@ -291,4 +298,130 @@ TEST_F(UtChannelRoceFactory, Channel_Base_Serialize_Returns_NOT_SUPPORT)
     std::shared_ptr<hccl::DeviceMem> out;
     EXPECT_EQ(ch.Serialize(out), HCCL_E_NOT_SUPPORT);
     EXPECT_EQ(out.get(), nullptr);
+}
+
+TEST_F(UtChannelRoceFactory, TransportStatusToChannelStatus_AllStates_Returns_Mapped)
+{
+    EndpointDesc localEp{};
+    localEp.commAddr.type = COMM_ADDR_TYPE_IP_V4;
+    ASSERT_EQ(inet_pton(AF_INET, "10.20.30.1", &localEp.commAddr.addr), 1);
+
+    HcommChannelDesc channelDesc{};
+    channelDesc.remoteEndpoint.commAddr.type = COMM_ADDR_TYPE_IP_V4;
+    ASSERT_EQ(inet_pton(AF_INET, "10.20.30.2", &channelDesc.remoteEndpoint.commAddr.addr), 1);
+    channelDesc.channelName = "ut-socket-tag";
+
+    ChannelDefaultsTestDouble ch;
+    EXPECT_EQ(
+        ch.TransportStatusToChannelStatus(Hccl::TransportStatus::INIT, localEp, channelDesc), ChannelStatus::INIT);
+    EXPECT_EQ(
+        ch.TransportStatusToChannelStatus(Hccl::TransportStatus::SOCKET_OK, localEp, channelDesc),
+        ChannelStatus::SOCKET_OK);
+    EXPECT_EQ(
+        ch.TransportStatusToChannelStatus(Hccl::TransportStatus::SOCKET_TIMEOUT, localEp, channelDesc),
+        ChannelStatus::SOCKET_TIMEOUT);
+    EXPECT_EQ(
+        ch.TransportStatusToChannelStatus(Hccl::TransportStatus::READY, localEp, channelDesc), ChannelStatus::READY);
+}
+
+TEST_F(UtChannelRoceFactory, TransportStatusToChannelStatus_InvalidStatus_Returns_FAILED)
+{
+    EndpointDesc localEp{};
+    HcommChannelDesc channelDesc{};
+    ChannelDefaultsTestDouble ch;
+    EXPECT_EQ(
+        ch.TransportStatusToChannelStatus(Hccl::TransportStatus::INVALID, localEp, channelDesc), ChannelStatus::FAILED);
+}
+
+TEST_F(UtChannelRoceFactory, TransportStatusToChannelStatus_SameTs_Dedup)
+{
+    EndpointDesc localEp{};
+    localEp.commAddr.type = COMM_ADDR_TYPE_IP_V4;
+    ASSERT_EQ(inet_pton(AF_INET, "10.20.30.1", &localEp.commAddr.addr), 1);
+
+    HcommChannelDesc channelDesc{};
+    channelDesc.remoteEndpoint.commAddr.type = COMM_ADDR_TYPE_IP_V4;
+    ASSERT_EQ(inet_pton(AF_INET, "10.20.30.2", &channelDesc.remoteEndpoint.commAddr.addr), 1);
+    channelDesc.channelName = "ut-socket-tag";
+
+    ChannelDefaultsTestDouble ch;
+
+    // 初始态为 __COUNT__，首个 INIT 会触发更新
+    EXPECT_EQ(
+        ch.TransportStatusToChannelStatus(Hccl::TransportStatus::INIT, localEp, channelDesc), ChannelStatus::INIT);
+    EXPECT_EQ(ch.GetLastTransportStatus(), Hccl::TransportStatus::INIT);
+
+    // 相同 ts 再次调用 → lastTransportStatus_ 不变（去重生效）
+    EXPECT_EQ(
+        ch.TransportStatusToChannelStatus(Hccl::TransportStatus::INIT, localEp, channelDesc), ChannelStatus::INIT);
+    EXPECT_EQ(ch.GetLastTransportStatus(), Hccl::TransportStatus::INIT);
+
+    // ts 变化 → lastTransportStatus_ 更新
+    EXPECT_EQ(
+        ch.TransportStatusToChannelStatus(Hccl::TransportStatus::READY, localEp, channelDesc), ChannelStatus::READY);
+    EXPECT_EQ(ch.GetLastTransportStatus(), Hccl::TransportStatus::READY);
+
+    // 相同 ts 再次调用 → 再次去重
+    EXPECT_EQ(
+        ch.TransportStatusToChannelStatus(Hccl::TransportStatus::READY, localEp, channelDesc), ChannelStatus::READY);
+    EXPECT_EQ(ch.GetLastTransportStatus(), Hccl::TransportStatus::READY);
+}
+
+TEST_F(UtChannelRoceFactory, TransportStatusToChannelStatus_SameTs_Dedup_PlfChannel_Enabled)
+{
+    EndpointDesc localEp{};
+    localEp.commAddr.type = COMM_ADDR_TYPE_IP_V4;
+    ASSERT_EQ(inet_pton(AF_INET, "10.20.30.1", &localEp.commAddr.addr), 1);
+
+    HcommChannelDesc channelDesc{};
+    channelDesc.remoteEndpoint.commAddr.type = COMM_ADDR_TYPE_IP_V4;
+    ASSERT_EQ(inet_pton(AF_INET, "10.20.30.2", &channelDesc.remoteEndpoint.commAddr.addr), 1);
+    channelDesc.channelName = "ut-socket-tag";
+
+    // 开启 PLF_CHANNEL 门控并放开日志级别，使 PLF_CONFIG_INFO 真实输出到 stdout
+    Hccl::SetPlfDebugConfigValue(savedPlfConfig_ | Hccl::PLF_CHANNEL);
+    extern s32 log_level_get_stub();
+    extern void log_level_set_stub(s32 logLevel);
+    const s32 originalLogLevel = log_level_get_stub();
+    log_level_set_stub(DLOG_DEBUG);
+    testing::internal::CaptureStdout();
+
+    ChannelDefaultsTestDouble ch;
+
+    // 初始态为 __COUNT__，首个 INIT 会触发更新（PLF_CHANNEL 门控开启时也打印 PLF 日志）
+    EXPECT_EQ(
+        ch.TransportStatusToChannelStatus(Hccl::TransportStatus::INIT, localEp, channelDesc), ChannelStatus::INIT);
+    EXPECT_EQ(ch.GetLastTransportStatus(), Hccl::TransportStatus::INIT);
+
+    // 相同 ts 再次调用 → lastTransportStatus_ 不变（去重生效，不重复打印 PLF 日志）
+    EXPECT_EQ(
+        ch.TransportStatusToChannelStatus(Hccl::TransportStatus::INIT, localEp, channelDesc), ChannelStatus::INIT);
+    EXPECT_EQ(ch.GetLastTransportStatus(), Hccl::TransportStatus::INIT);
+
+    // ts 变化 → lastTransportStatus_ 更新
+    EXPECT_EQ(
+        ch.TransportStatusToChannelStatus(Hccl::TransportStatus::READY, localEp, channelDesc), ChannelStatus::READY);
+    EXPECT_EQ(ch.GetLastTransportStatus(), Hccl::TransportStatus::READY);
+
+    // 再次相同 ts → 再次去重
+    EXPECT_EQ(
+        ch.TransportStatusToChannelStatus(Hccl::TransportStatus::READY, localEp, channelDesc), ChannelStatus::READY);
+    EXPECT_EQ(ch.GetLastTransportStatus(), Hccl::TransportStatus::READY);
+
+    const std::string output = testing::internal::GetCapturedStdout();
+    log_level_set_stub(originalLogLevel);
+
+    // 4 次调用中仅 INIT/READY 各触发一次 PLF_CONFIG_INFO，共 2 条 PLF 日志
+    const auto countOf = [&output](const std::string& needle) {
+        size_t count = 0;
+        size_t pos = 0;
+        while ((pos = output.find(needle, pos)) != std::string::npos) {
+            ++count;
+            pos += needle.size();
+        }
+        return count;
+    };
+    EXPECT_EQ(countOf("PLF_CHANNEL"), 2U);
+    // PLF_CONFIG_INFO 的 format 包含 "status[%d]", 两条日志分别对应 INIT 和 READY
+    EXPECT_EQ(countOf("status["), 2U);
 }

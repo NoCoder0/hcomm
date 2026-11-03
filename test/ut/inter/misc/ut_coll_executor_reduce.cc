@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -14,7 +14,6 @@
 #include "hccl/base.h"
 #include <hccl/hccl_types.h>
 #include "llt_hccl_stub_pub.h"
-
 
 #define private public
 #define protected public
@@ -35,14 +34,15 @@
 using namespace std;
 using namespace hccl;
 
-class CollReduceInterTest : public testing::Test
-{
+class CollReduceInterTest : public testing::Test {
 protected:
-     static void SetUpTestCase()
+    static void SetUpTestCase()
     {
         s32 ret = HcclDispatcherInit(DispatcherType::DISPATCHER_NORMAL, 0, &dispatcherPtr);
-        if (ret != HCCL_SUCCESS) return;
-        if (dispatcherPtr == nullptr) return;
+        if (ret != HCCL_SUCCESS)
+            return;
+        if (dispatcherPtr == nullptr)
+            return;
         dispatcher = reinterpret_cast<DispatcherPub*>(dispatcherPtr);
         std::cout << "\033[36m--CollReduceInterTest SetUP--\033[0m" << std::endl;
     }
@@ -59,10 +59,7 @@ protected:
     virtual void SetUp()
     {
         s32 portNum = 7;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
         HcclOpMetaInfo meta;
         bool hasMassTasks = true;
         hccl::Stream stream;
@@ -78,15 +75,13 @@ protected:
         std::cout << "A Test TearDown" << std::endl;
     }
     static HcclDispatcher dispatcherPtr;
-    static DispatcherPub *dispatcher;
-
+    static DispatcherPub* dispatcher;
 };
 
-
 HcclDispatcher CollReduceInterTest::dispatcherPtr = nullptr;
-DispatcherPub *CollReduceInterTest::dispatcher = nullptr;
+DispatcherPub* CollReduceInterTest::dispatcher = nullptr;
 
-static void TestConstructParam(HcclCommParams &params, RankTable_t &rankTable)
+static void TestConstructParam(HcclCommParams& params, RankTable_t& rankTable)
 {
     string commId = "comm ";
     memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
@@ -163,4 +158,3 @@ TEST_F(CollReduceInterTest, ut_reduce_test_910B) {
     operation = nullptr;
 }
 #endif
-

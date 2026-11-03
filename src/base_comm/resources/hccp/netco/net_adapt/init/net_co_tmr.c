@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #define BKF_LOG_HND ((co)->log)
 #define BKF_MOD_NAME ((co)->name)
 #include "net_co_tmr.h"
@@ -53,8 +52,8 @@ uint32_t NetCoTmrInit(NetCo *co)
 
 void NetCoTmrUninit(NetCo *co)
 {
-    NET_CO_LOG_MOD_DO(BKF_LOG_HND, "tmrMng(%#x)/tmrMngAdpee(%#x)\n",
-                      BKF_MASK_ADDR(co->tmrMng), BKF_MASK_ADDR(co->tmrMngAdpee));
+    NET_CO_LOG_MOD_DO(BKF_LOG_HND, "tmrMng(%#x)/tmrMngAdpee(%#x)\n", BKF_MASK_ADDR(co->tmrMng),
+        BKF_MASK_ADDR(co->tmrMngAdpee));
 
     if (co->tmrMng != VOS_NULL) {
         BkfAdptBkfTmrMngUnInit(co->tmrMng);
@@ -69,4 +68,3 @@ void NetCoTmrUninit(NetCo *co)
 #ifdef __cplusplus
 }
 #endif
-

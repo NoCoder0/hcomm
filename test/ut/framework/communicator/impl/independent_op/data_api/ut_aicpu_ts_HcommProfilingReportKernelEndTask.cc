@@ -36,8 +36,7 @@ using namespace hccl;
  * - 测试组名为空时的错误处理
  * - 测试线程句柄为空时的错误处理
  */
-class UtAicpuTsHcommProfilingReportKernelEndTask : public testing::Test
-{
+class UtAicpuTsHcommProfilingReportKernelEndTask : public testing::Test {
 protected:
     virtual void SetUp() override
     {
@@ -45,10 +44,7 @@ protected:
         threadOnDevice.pImpl_ = std::make_unique<Hccl::IAicpuTsThread>();
     }
 
-    virtual void TearDown() override
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() override { GlobalMockObject::verify(); }
 
     AicpuTsThread threadOnDevice{StreamType::STREAM_TYPE_DEVICE, 0, NotifyLoadType::DEVICE_NOTIFY};
     ThreadHandle thread = reinterpret_cast<ThreadHandle>(&threadOnDevice);
@@ -62,7 +58,9 @@ protected:
  * 测试场景：使用有效的线程句柄但空组名调用HcommProfilingReportKernelEndTask
  * 预期结果：返回HCCL_E_PTR，表示检测到组名为空指针
  */
-TEST_F(UtAicpuTsHcommProfilingReportKernelEndTask, Ut_HcommProfilingReportKernelEndTask_When_GroupName_IsNull_Expect_ReturnHCCL_E_PTR)
+TEST_F(
+    UtAicpuTsHcommProfilingReportKernelEndTask,
+    Ut_HcommProfilingReportKernelEndTask_When_GroupName_IsNull_Expect_ReturnHCCL_E_PTR)
 {
     uint64_t threadHandle = reinterpret_cast<uint64_t>(thread);
     res = HcommProfilingReportKernelEndTask(threadHandle, nullptr);
@@ -76,7 +74,9 @@ TEST_F(UtAicpuTsHcommProfilingReportKernelEndTask, Ut_HcommProfilingReportKernel
  * 测试场景：使用空线程句柄（0）和有效组名调用HcommProfilingReportKernelEndTask
  * 预期结果：返回HCCL_E_PTR，表示检测到线程句柄为空指针
  */
-TEST_F(UtAicpuTsHcommProfilingReportKernelEndTask, Ut_HcommProfilingReportKernelEndTask_When_ThreadPtr_IsNull_Expect_ReturnHCCL_E_PTR)
+TEST_F(
+    UtAicpuTsHcommProfilingReportKernelEndTask,
+    Ut_HcommProfilingReportKernelEndTask_When_ThreadPtr_IsNull_Expect_ReturnHCCL_E_PTR)
 {
     const char* groupName = "test_group";
     res = HcommProfilingReportKernelEndTask(0, groupName);

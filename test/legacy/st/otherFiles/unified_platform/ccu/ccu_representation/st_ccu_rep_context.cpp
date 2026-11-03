@@ -25,20 +25,11 @@ using namespace CcuRep;
 
 class CcuRepCtxTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CcuRepCtxTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CcuRepCtxTest tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CcuRepCtxTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CcuRepCtxTest tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in CcuRepCtxTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in CcuRepCtxTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {

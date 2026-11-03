@@ -4,10 +4,9 @@
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
 
 #include "gen_ccu_task_node_utils.h"
 #include "ccu_ins.h"
@@ -30,9 +29,11 @@ GenCcuTaskNodeGraphBase::~GenCcuTaskNodeGraphBase()
 
 void GenCcuTaskNodeGraphBase::PrintRankGraph(RankId rankId)
 {
-    std::cout<<"============================Print Rank"<<rankId<<" graph start============================"<<std::endl;
+    std::cout << "============================Print Rank" << rankId
+              << " graph start============================" << std::endl;
     Hccl::PrintGraphRevamp(GetCcuTaskHead(ccuNode[rankId].get()));
-    std::cout<<"============================Print Rank"<<rankId<<" graph end============================"<<std::endl;
+    std::cout << "============================Print Rank" << rankId
+              << " graph end============================" << std::endl;
 }
 
 TaskNodePtr GenCcuTaskNodeGraphBase::GetCcuTaskHead(TaskNodePtr node)
@@ -40,11 +41,11 @@ TaskNodePtr GenCcuTaskNodeGraphBase::GetCcuTaskHead(TaskNodePtr node)
     TaskNode* retNode = node;
     if (node->task != nullptr && node->task->GetType() == TaskTypeStub::CCU_GRAPH) {
         // 首次进入子图
-        TaskStubCcuGraph *curCcuTask = dynamic_cast<TaskStubCcuGraph *>(node->task);
+        TaskStubCcuGraph* curCcuTask = dynamic_cast<TaskStubCcuGraph*>(node->task);
         retNode = curCcuTask->ccuHeadTaskNode;
     } else if (node->task != nullptr && node->task->GetType() == TaskTypeStub::SUB_GRAPH_END) {
         // 走到子图的最后一个子节点了，就回到整图
-        TaskStubSubGraphEnd *subGraphEnd = dynamic_cast<TaskStubSubGraphEnd *>(node->task);
+        TaskStubSubGraphEnd* subGraphEnd = dynamic_cast<TaskStubSubGraphEnd*>(node->task);
         retNode = subGraphEnd->subGraphNode;
     }
     return retNode;
@@ -74,9 +75,10 @@ TaskNodePtr GenCcuTaskNodeGraphBase::CreateCcuHeadNode(RankId rankId, uint32_t q
     return ccuTmp.get();
 }
 
-TaskNodePtr GenCcuTaskNodeGraphBase::AddCcuLocalCopy(RankId rankId, uint32_t queueId, DataSlice srcSlice, DataSlice dstSlice, TaskStubCcuGraph *curCcuTask)
+TaskNodePtr GenCcuTaskNodeGraphBase::AddCcuLocalCopy(
+    RankId rankId, uint32_t queueId, DataSlice srcSlice, DataSlice dstSlice, TaskStubCcuGraph* curCcuTask)
 {
-    TaskStub *localCopyTask = new TaskStubLocalCopy(srcSlice, dstSlice);
+    TaskStub* localCopyTask = new TaskStubLocalCopy(srcSlice, dstSlice);
     auto localCopyNode = new TaskNode(localCopyTask, rankId, queueId, 0);
     curCcuTask->toDeleteTask_.push_back(localCopyTask);
     curCcuTask->toDeleteTaskNode_.push_back(localCopyNode);
@@ -84,10 +86,12 @@ TaskNodePtr GenCcuTaskNodeGraphBase::AddCcuLocalCopy(RankId rankId, uint32_t que
     return localCopyNode;
 }
 
-TaskNodePtr GenCcuTaskNodeGraphBase::AddCcuWrite(RankId rankId, RankId rmtRankId, uint32_t queueId, DataSlice srcSlice, DataSlice dstSlice, TaskStubCcuGraph *curCcuTask)
+TaskNodePtr GenCcuTaskNodeGraphBase::AddCcuWrite(
+    RankId rankId, RankId rmtRankId, uint32_t queueId, DataSlice srcSlice, DataSlice dstSlice,
+    TaskStubCcuGraph* curCcuTask)
 {
     LinkInfoStub link(LinkProtoStub::CCU);
-    TaskStub *writeTask = new TaskStubWrite(rmtRankId, link, srcSlice, dstSlice);
+    TaskStub* writeTask = new TaskStubWrite(rmtRankId, link, srcSlice, dstSlice);
     auto writeNode = new TaskNode(writeTask, rankId, queueId, 0);
     curCcuTask->toDeleteTask_.push_back(writeTask);
     curCcuTask->toDeleteTaskNode_.push_back(writeNode);
@@ -95,10 +99,12 @@ TaskNodePtr GenCcuTaskNodeGraphBase::AddCcuWrite(RankId rankId, RankId rmtRankId
     return writeNode;
 }
 
-TaskNodePtr GenCcuTaskNodeGraphBase::AddCcuRead(RankId rankId, RankId rmtRankId, uint32_t queueId, DataSlice srcSlice, DataSlice dstSlice, TaskStubCcuGraph *curCcuTask)
+TaskNodePtr GenCcuTaskNodeGraphBase::AddCcuRead(
+    RankId rankId, RankId rmtRankId, uint32_t queueId, DataSlice srcSlice, DataSlice dstSlice,
+    TaskStubCcuGraph* curCcuTask)
 {
     LinkInfoStub link(LinkProtoStub::CCU);
-    TaskStub *readTask = new TaskStubRead(rmtRankId, link, dstSlice, srcSlice);
+    TaskStub* readTask = new TaskStubRead(rmtRankId, link, dstSlice, srcSlice);
     auto readNode = new TaskNode(readTask, rankId, queueId, 0);
     curCcuTask->toDeleteTask_.push_back(readTask);
     curCcuTask->toDeleteTaskNode_.push_back(readNode);
@@ -106,9 +112,10 @@ TaskNodePtr GenCcuTaskNodeGraphBase::AddCcuRead(RankId rankId, RankId rmtRankId,
     return readNode;
 }
 
-TaskNodePtr GenCcuTaskNodeGraphBase::AddCcuLocalWait(RankId rankId, uint32_t queueId, uint32_t topicId, TaskStubCcuGraph *curCcuTask)
+TaskNodePtr GenCcuTaskNodeGraphBase::AddCcuLocalWait(
+    RankId rankId, uint32_t queueId, uint32_t topicId, TaskStubCcuGraph* curCcuTask)
 {
-    TaskStub *localWaitTask = new TaskStubLocalWaitFrom(topicId, INVALID_QID, queueId);
+    TaskStub* localWaitTask = new TaskStubLocalWaitFrom(topicId, INVALID_QID, queueId);
     auto localWaitNode = new TaskNode(localWaitTask, rankId, queueId, 0);
     curCcuTask->toDeleteTask_.push_back(localWaitTask);
     curCcuTask->toDeleteTaskNode_.push_back(localWaitNode);
@@ -116,9 +123,10 @@ TaskNodePtr GenCcuTaskNodeGraphBase::AddCcuLocalWait(RankId rankId, uint32_t que
     return localWaitNode;
 }
 
-TaskNodePtr GenCcuTaskNodeGraphBase::AddCcuLocalPost(RankId rankId, uint32_t queueId, uint32_t topicId, TaskStubCcuGraph *curCcuTask)
+TaskNodePtr GenCcuTaskNodeGraphBase::AddCcuLocalPost(
+    RankId rankId, uint32_t queueId, uint32_t topicId, TaskStubCcuGraph* curCcuTask)
 {
-    TaskStub *localPostTo = new TaskStubLocalPostTo(topicId, queueId);
+    TaskStub* localPostTo = new TaskStubLocalPostTo(topicId, queueId);
     auto localPostToNode = new TaskNode(localPostTo, rankId, queueId, 0);
     curCcuTask->toDeleteTask_.push_back(localPostTo);
     curCcuTask->toDeleteTaskNode_.push_back(localPostToNode);
@@ -126,11 +134,12 @@ TaskNodePtr GenCcuTaskNodeGraphBase::AddCcuLocalPost(RankId rankId, uint32_t que
     return localPostToNode;
 }
 
-TaskNodePtr GenCcuTaskNodeGraphBase::AddCcuWait(RankId rankId, RankId rmtRankId, uint32_t queueId, uint32_t topicId, TaskStubCcuGraph *curCcuTask)
+TaskNodePtr GenCcuTaskNodeGraphBase::AddCcuWait(
+    RankId rankId, RankId rmtRankId, uint32_t queueId, uint32_t topicId, TaskStubCcuGraph* curCcuTask)
 {
     LinkInfoStub link(LinkProtoStub::CCU);
     std::string tag = "CCU_TASK";
-    TaskStub *remoteWaitTask = new TaskStubWait(rmtRankId, link, topicId, NotifyTypeStub::CCU, tag, curCcuTask);
+    TaskStub* remoteWaitTask = new TaskStubWait(rmtRankId, link, topicId, NotifyTypeStub::CCU, tag, curCcuTask);
     auto remoteWaitNode = new TaskNode(remoteWaitTask, rankId, queueId, 0);
     curCcuTask->toDeleteTask_.push_back(remoteWaitTask);
     curCcuTask->toDeleteTaskNode_.push_back(remoteWaitNode);
@@ -138,11 +147,12 @@ TaskNodePtr GenCcuTaskNodeGraphBase::AddCcuWait(RankId rankId, RankId rmtRankId,
     return remoteWaitNode;
 }
 
-TaskNodePtr GenCcuTaskNodeGraphBase::AddCcuPost(RankId rankId, RankId rmtRankId, uint32_t queueId, uint32_t topicId, TaskStubCcuGraph *curCcuTask)
+TaskNodePtr GenCcuTaskNodeGraphBase::AddCcuPost(
+    RankId rankId, RankId rmtRankId, uint32_t queueId, uint32_t topicId, TaskStubCcuGraph* curCcuTask)
 {
     LinkInfoStub link(LinkProtoStub::CCU);
     std::string tag = "CCU_TASK";
-    TaskStub *postTo = new TaskStubPost(rmtRankId, link, topicId, NotifyTypeStub::CCU, tag, curCcuTask);
+    TaskStub* postTo = new TaskStubPost(rmtRankId, link, topicId, NotifyTypeStub::CCU, tag, curCcuTask);
     auto postToNode = new TaskNode(postTo, rankId, queueId, 0);
     curCcuTask->toDeleteTask_.push_back(postTo);
     curCcuTask->toDeleteTaskNode_.push_back(postToNode);
@@ -150,9 +160,9 @@ TaskNodePtr GenCcuTaskNodeGraphBase::AddCcuPost(RankId rankId, RankId rmtRankId,
     return postToNode;
 }
 
-void GenCcuTaskNodeGraphBase::CreateCcuEndNode(RankId rankId, TaskNodePtr &node, TaskStubCcuGraph *curCcuTask)
+void GenCcuTaskNodeGraphBase::CreateCcuEndNode(RankId rankId, TaskNodePtr& node, TaskStubCcuGraph* curCcuTask)
 {
-    TaskStubSubGraphEnd *subGraphEndTask = new TaskStubSubGraphEnd(node);
+    TaskStubSubGraphEnd* subGraphEndTask = new TaskStubSubGraphEnd(node);
     TaskNodePtr subGraphEndNode = new TaskNode(subGraphEndTask, curCcuTask->GetRankId(), -1, -1);
     curCcuTask->toDeleteTask_.push_back(subGraphEndTask);
     curCcuTask->toDeleteTaskNode_.push_back(subGraphEndNode);
@@ -163,7 +173,7 @@ void GenCcuTaskNodeGraphBase::CreateCcuEndNode(RankId rankId, TaskNodePtr &node,
     }
 }
 
-void GenCcuTaskNodeGraphBase::Init(TaskStubCcuGraph *curCcuTask, uint32_t rankSize, uint32_t queNum)
+void GenCcuTaskNodeGraphBase::Init(TaskStubCcuGraph* curCcuTask, uint32_t rankSize, uint32_t queNum)
 {
     curCcuTask->tailNodes.resize(queNum);
     curCcuTask->instrInfo.resize(queNum);
@@ -176,4 +186,4 @@ void GenCcuTaskNodeGraphBase::Init(TaskStubCcuGraph *curCcuTask, uint32_t rankSi
     curCcuTask->postInfoTmp_.resize(rankSize);
 }
 
-}
+} // namespace hccl

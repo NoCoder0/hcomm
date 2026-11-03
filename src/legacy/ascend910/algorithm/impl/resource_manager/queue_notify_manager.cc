@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "queue_notify_manager.h"
 #include <algorithm>
@@ -16,9 +16,7 @@
 namespace hccl {
 constexpr u32 NOTIFY_MAX_NUM = 2048;
 const std::string HCCL_ALLTOALL = "ALLTOALL";
-QueueNotifyManager::QueueNotifyManager()
-{
-}
+QueueNotifyManager::QueueNotifyManager() {}
 
 QueueNotifyManager::~QueueNotifyManager()
 {
@@ -36,26 +34,26 @@ HcclResult QueueNotifyManager::Init()
     return HCCL_SUCCESS;
 }
 
-HcclResult QueueNotifyManager::Alloc(const std::string &tag, u32 notifyNum,
-    std::vector<std::shared_ptr<LocalNotify>> &localNotifys, const NotifyLoadType type)
+HcclResult QueueNotifyManager::Alloc(
+    const std::string& tag, u32 notifyNum, std::vector<std::shared_ptr<LocalNotify>>& localNotifys,
+    const NotifyLoadType type)
 {
     if (type == NotifyLoadType::HOST_NOTIFY) {
         std::string upTag = tag;
         std::transform(upTag.begin(), upTag.end(), upTag.begin(), ::toupper);
         bool hasAlltoAll = upTag.find(HCCL_ALLTOALL) != std::string::npos;
         HCCL_INFO("RegisterOp hasAlltoAll[%d]", hasAlltoAll);
-        NotifyPoolNoIPC &notifies = hasAlltoAll ? notifiesForA2A_ : notifies_;
+        NotifyPoolNoIPC& notifies = hasAlltoAll ? notifiesForA2A_ : notifies_;
         CHK_RET(AllocNotifies(type, notifies, notifyNum));
         localNotifys.assign(notifies.begin(), notifies.begin() + notifyNum);
     } else if (type == NotifyLoadType::DEVICE_NOTIFY) { // 申请device上使用的notify资源
         CHK_RET(AllocNotifies(type, deviceNotifies_, notifyNum));
-        localNotifys.assign(deviceNotifies_.begin(),
-            deviceNotifies_.begin() + notifyNum);
+        localNotifys.assign(deviceNotifies_.begin(), deviceNotifies_.begin() + notifyNum);
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult QueueNotifyManager::AllocNotifies(const NotifyLoadType type, NotifyPoolNoIPC &notifies, u32 notifyNum)
+HcclResult QueueNotifyManager::AllocNotifies(const NotifyLoadType type, NotifyPoolNoIPC& notifies, u32 notifyNum)
 {
     if (notifies.size() < notifyNum) {
         for (u32 i = notifies.size(); i < notifyNum; i++) {
@@ -67,7 +65,7 @@ HcclResult QueueNotifyManager::AllocNotifies(const NotifyLoadType type, NotifyPo
     return HCCL_SUCCESS;
 }
 
-HcclResult QueueNotifyManager::CreateNotify(std::shared_ptr<LocalNotify> &localNotify, const NotifyLoadType type)
+HcclResult QueueNotifyManager::CreateNotify(std::shared_ptr<LocalNotify>& localNotify, const NotifyLoadType type)
 {
     EXCEPTION_CATCH((localNotify = std::make_shared<LocalNotify>()), return HCCL_E_PTR);
 
@@ -75,14 +73,24 @@ HcclResult QueueNotifyManager::CreateNotify(std::shared_ptr<LocalNotify> &localN
     bool errorFlag = false;
     do {
         ret = localNotify->Init(type);
-        CHK_PRT_BREAK(ret != HCCL_SUCCESS, HCCL_ERROR("[QueueNotifyManager][CreateNotify]localNotify init failed, "
-            "ret[%d]", ret), errorFlag = true);
+        CHK_PRT_BREAK(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[QueueNotifyManager][CreateNotify]localNotify init failed, "
+                "ret[%d]",
+                ret),
+            errorFlag = true);
 
         HCCL_DEBUG("Is310PDevice[%d]", Is310PDevice());
         if (Is310PDevice()) {
             ret = localNotify->SetIpc();
-            CHK_PRT_BREAK(ret != HCCL_SUCCESS, HCCL_ERROR("[QueueNotifyManager][CreateNotify]localNotify "
-                "set ipc failed, ret[%d]", ret), errorFlag = true);
+            CHK_PRT_BREAK(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR(
+                    "[QueueNotifyManager][CreateNotify]localNotify "
+                    "set ipc failed, ret[%d]",
+                    ret),
+                errorFlag = true);
         }
     } while (0);
 
@@ -107,9 +115,9 @@ HcclResult QueueNotifyManager::Destroy()
     return HCCL_SUCCESS;
 }
 
-HcclResult QueueNotifyManager::DestroyNotifies(NotifyPoolNoIPC &notifies)
+HcclResult QueueNotifyManager::DestroyNotifies(NotifyPoolNoIPC& notifies)
 {
-    for (auto &notify : notifies) {
+    for (auto& notify : notifies) {
         CHK_SMART_PTR_NULL(notify);
         CHK_RET(notify->Destroy());
     }
@@ -119,10 +127,10 @@ HcclResult QueueNotifyManager::DestroyNotifies(NotifyPoolNoIPC &notifies)
 
 HcclResult QueueNotifyManager::ResetNotify()
 {
-    for (auto &localNotify : deviceNotifies_) {
+    for (auto& localNotify : deviceNotifies_) {
         CHK_SMART_PTR_NULL(localNotify);
         CHK_RET(hrtNotifyReset(localNotify->ptr()));
     }
     return HCCL_SUCCESS;
 }
-}  // namespace hccl
+} // namespace hccl

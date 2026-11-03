@@ -202,9 +202,8 @@ struct PingTargetResult {
  * @see ra_ping_deinit
  * @retval #zero Success
  * @retval #non-zero Failure
-*/
-HCCP_ATTRI_VISI_DEF int RaPingInit(struct PingInitAttr *initAttr, struct PingInitInfo *initInfo,
-    void **pingHandle);
+ */
+HCCP_ATTRI_VISI_DEF int RaPingInit(struct PingInitAttr *initAttr, struct PingInitInfo *initInfo, void **pingHandle);
 
 /**
  * @ingroup librdma
@@ -215,7 +214,7 @@ HCCP_ATTRI_VISI_DEF int RaPingInit(struct PingInitAttr *initAttr, struct PingIni
  * @see ra_ping_target_del
  * @retval #zero Success
  * @retval #non-zero Failure
-*/
+ */
 HCCP_ATTRI_VISI_DEF int RaPingTargetAdd(void *pingHandle, struct PingTargetInfo target[], uint32_t num);
 
 /**
@@ -226,7 +225,7 @@ HCCP_ATTRI_VISI_DEF int RaPingTargetAdd(void *pingHandle, struct PingTargetInfo 
  * @see ra_ping_task_stop
  * @retval #zero Success
  * @retval #non-zero Failure
-*/
+ */
 HCCP_ATTRI_VISI_DEF int RaPingTaskStart(void *pingHandle, struct PingTaskAttr *attr);
 
 /**
@@ -238,7 +237,7 @@ HCCP_ATTRI_VISI_DEF int RaPingTaskStart(void *pingHandle, struct PingTaskAttr *a
  * @see ra_ping_target_del
  * @retval #zero Success
  * @retval #non-zero Failure
-*/
+ */
 HCCP_ATTRI_VISI_DEF int RaPingGetResults(void *pingHandle, struct PingTargetResult target[], uint32_t *num);
 
 /**
@@ -250,7 +249,7 @@ HCCP_ATTRI_VISI_DEF int RaPingGetResults(void *pingHandle, struct PingTargetResu
  * @see ra_ping_target_add
  * @retval #zero Success
  * @retval #non-zero Failure
-*/
+ */
 HCCP_ATTRI_VISI_DEF int RaPingTargetDel(void *pingHandle, struct PingTargetCommInfo target[], uint32_t num);
 
 /**
@@ -260,7 +259,7 @@ HCCP_ATTRI_VISI_DEF int RaPingTargetDel(void *pingHandle, struct PingTargetCommI
  * @see ra_ping_task_start
  * @retval #zero Success
  * @retval #non-zero Failure
-*/
+ */
 HCCP_ATTRI_VISI_DEF int RaPingTaskStop(void *pingHandle);
 
 /**
@@ -270,7 +269,7 @@ HCCP_ATTRI_VISI_DEF int RaPingTaskStop(void *pingHandle);
  * @see ra_ping_init
  * @retval #zero Success
  * @retval #non-zero Failure
-*/
+ */
 HCCP_ATTRI_VISI_DEF int RaPingDeinit(void *pingHandle);
 
 #ifdef __cplusplus

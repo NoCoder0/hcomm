@@ -14,6 +14,4 @@
 #include "hccl_st_test_case.h"
 #include "gtest/gtest.h"
 
-
-
 #endif

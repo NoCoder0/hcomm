@@ -28,15 +28,15 @@ public:
     ~AicpuMc2Handler() = default;
     static AicpuMc2Handler& GetInstance();
 
-    HcclResult HcclGetCommHandleByCtx(void *ctx, void **opHandle) const;
-    HcclResult HcclReleaseComm(void *opHandle) const;
-    HcclResult HcclGetTaskStatus(void *opHandle, HcclTaskStatus *status) const;
-    HcclResult HcclCheckFinishByStream(void *opHandle) const;
-    HcclResult HcclPrintTaskExceptionAllComm(void *opHandle) const;
-    HcclResult HcclLaunchCcoreWait(void *opHandle, uint64_t waitAddr, uint32_t turnNum, uint64_t turnNumAddr,
-                                   bool isLast) const;
-    HcclResult HcclLaunchCcorePost(void *opHandle, uint64_t recordAddr, uint32_t turnNum, uint64_t turnNumAddr) const;
-    HcclResult HcclLaunchOp(void *opHandle, HcclOpData *data) const;
+    HcclResult HcclGetCommHandleByCtx(void* ctx, void** opHandle) const;
+    HcclResult HcclReleaseComm(void* opHandle) const;
+    HcclResult HcclGetTaskStatus(void* opHandle, HcclTaskStatus* status) const;
+    HcclResult HcclCheckFinishByStream(void* opHandle) const;
+    HcclResult HcclPrintTaskExceptionAllComm(void* opHandle) const;
+    HcclResult
+    HcclLaunchCcoreWait(void* opHandle, uint64_t waitAddr, uint32_t turnNum, uint64_t turnNumAddr, bool isLast) const;
+    HcclResult HcclLaunchCcorePost(void* opHandle, uint64_t recordAddr, uint32_t turnNum, uint64_t turnNumAddr) const;
+    HcclResult HcclLaunchOp(void* opHandle, HcclOpData* data) const;
 
 private:
     AicpuMc2Handler();

@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef OPERATOR_PARAM_TYPE_H
 #define OPERATOR_PARAM_TYPE_H
@@ -59,49 +59,49 @@ struct EmbeddingServiceParam {
     std::string sTag;
     u32 devId = 0;
     u32 tableId{};
-    void *keys = nullptr;
+    void* keys = nullptr;
     u64 keyMaxNum = 0;
     HcclDataType keyType = HCCL_DATA_TYPE_RESERVED;
-    void *values = nullptr;
-    void *indices{};
-    void *numUniqued{};
-    void *psSeg{};
-    void *psSegNum{};
+    void* values = nullptr;
+    void* indices{};
+    void* numUniqued{};
+    void* psSeg{};
+    void* psSegNum{};
     u64 valueCount = 0;
     HcclDataType valuesType = HCCL_DATA_TYPE_RESERVED;
-    void *tableIdAddr = nullptr;
+    void* tableIdAddr = nullptr;
     std::string groupName;
-    s32 intZerocpyFlag{ INVALID_INT };
-    s32 outZerocpyFlag{ INVALID_INT };
-    void *algPtr = nullptr;
-    void *opExecutorPtr = nullptr;
+    s32 intZerocpyFlag{INVALID_INT};
+    s32 outZerocpyFlag{INVALID_INT};
+    void* algPtr = nullptr;
+    void* opExecutorPtr = nullptr;
     u32 userRank = 0;
-    s64 *keyNumInput{};
-    s32 *uniqueIndices{};
-    s32 *keyCount{};
+    s64* keyNumInput{};
+    s32* uniqueIndices{};
+    s32* keyCount{};
     s32 maxEmbeddingDim{};
     std::string uniqueTag;
-    bool waitAny{ false };
-    void *globalStepAddr { nullptr };
+    bool waitAny{false};
+    void* globalStepAddr{nullptr};
 
     // pairedMode为true，表示采用了Paired接口
-    bool pairedMode{ false };
-    bool disableUnique{ false };
-    bool uniqued{ false };
-    bool haveRdmaConn{ false };
+    bool pairedMode{false};
+    bool disableUnique{false};
+    bool uniqued{false};
+    bool haveRdmaConn{false};
     struct {
         u32 tableId = 0;
-        void *stream = nullptr;
+        void* stream = nullptr;
         s32 insertFlag = 0;
         s32 valueItemSize = 0;
         std::map<u32, u32> psMap; // {psId, rankId}
         std::map<u32, u64> waitLookUpRanks;
-        void *outputTableId = nullptr;
-        void *keyTransferMem = nullptr;
+        void* outputTableId = nullptr;
+        void* keyTransferMem = nullptr;
         u64 keyTransferMemSize = 0;
-        void *valueTransferMem = nullptr;
+        void* valueTransferMem = nullptr;
         u64 valueTransferMemSize = 0;
-        void *rdmaEnveInfosTransferMem{};
+        void* rdmaEnveInfosTransferMem{};
         u64 rdmaEnveInfosTransferMemSize{};
         u64 workerspaceMemSize{};
         HcclComm comm = nullptr;
@@ -109,9 +109,9 @@ struct EmbeddingServiceParam {
         std::vector<MemoryStartAndSize> valuesAddrInfo;
         std::vector<rtStream_t> subStreamInfo;
         std::vector<HcclRtNotify> notifyInfo;
-        s32 cubeIndex{ 0 };
+        s32 cubeIndex{0};
         s32 flags{};
-        bool usePipeline{ false };
+        bool usePipeline{false};
         bool enableKeyCounter{};
     } embeddingParam;
 
@@ -122,14 +122,14 @@ struct EmbeddingServiceParam {
         u32 rankId = 0;
         u32 workerRankId = 0;
 
-        struct RdmaBuffer responseBuffer{};
+        struct RdmaBuffer responseBuffer {};
         // rankId -> rdma < addr, key >
         std::unordered_map<u32, struct RdmaBuffer> rdmaResponseAddrs{};
 
-        ReqStatus *reqStatus = nullptr;
-        UpdateReqStatus *updateReqStatus = nullptr;
-        LookupReqStatus *lookupReqStatus = nullptr;
-        HcclRequest *outRequest = nullptr;
+        ReqStatus* reqStatus = nullptr;
+        UpdateReqStatus* updateReqStatus = nullptr;
+        LookupReqStatus* lookupReqStatus = nullptr;
+        HcclRequest* outRequest = nullptr;
         std::map<u32, std::vector<DeviceMem>> transferMems;
         std::map<u32, std::vector<DeviceMem>> rankValueTransferMems;
         HcclComm commHandle = nullptr;
@@ -142,21 +142,21 @@ struct EmbeddingServiceParam {
         u32 lookupRecvRequestCount = 0;
         bool recvKeyWaitFlag = true;
         bool recvValueWaitFlag = true;
-        u32 actualKeyCount  = 0;
+        u32 actualKeyCount = 0;
         u32 actualValueCount = 0;
     } getRequestParam;
 
     struct {
         s32 requestCount = 0;
-        HcclRequest *requestArray = nullptr;
-        s32 *compCount = nullptr;
-        s32 *compIndices = nullptr;
-        HcclStatus *compStatus = nullptr;
+        HcclRequest* requestArray = nullptr;
+        s32* compCount = nullptr;
+        s32* compIndices = nullptr;
+        HcclStatus* compStatus = nullptr;
     } waitSomeParam;
 
-    EmbeddingServiceParam &operator=(const EmbeddingServiceParam &other) = default;
+    EmbeddingServiceParam& operator=(const EmbeddingServiceParam& other) = default;
 
-    EmbeddingServiceParam &operator=(const HdcsEmbeddingServiceParam &other) noexcept
+    EmbeddingServiceParam& operator=(const HdcsEmbeddingServiceParam& other) noexcept
     {
         tag = other.tag;
         keyMaxNum = other.keyMaxNum;
@@ -187,5 +187,5 @@ struct EmbeddingServiceParam {
     }
 };
 
-}
+} // namespace hccl
 #endif

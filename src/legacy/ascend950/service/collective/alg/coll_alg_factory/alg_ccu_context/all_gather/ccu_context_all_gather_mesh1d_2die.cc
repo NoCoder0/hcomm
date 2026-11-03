@@ -21,13 +21,12 @@ constexpr int CKE_IDX_1 = 1;
 constexpr int CKE_IDX_2 = 2;
 constexpr int CKE_IDX_3 = 3;
 
-CcuContextAllGatherMesh1D2Die::CcuContextAllGatherMesh1D2Die(const CcuCtxArg                   &arg,
-                                                     const std::vector<CcuTransport *> &transports,
-                                                     const CcuTransportGroup           &group)
+CcuContextAllGatherMesh1D2Die::CcuContextAllGatherMesh1D2Die(
+    const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group)
     : CcuContextAlgBase(arg, transports, group)
 {
     HCCL_INFO("[CcuContextAllGatherMesh1D2Die] Enter Constructor.");
-    const CcuCtxArgAllGatherMesh1D2Die *ctxArg = dynamic_cast<const CcuCtxArgAllGatherMesh1D2Die *>(&arg);
+    const CcuCtxArgAllGatherMesh1D2Die* ctxArg = dynamic_cast<const CcuCtxArgAllGatherMesh1D2Die*>(&arg);
     if (ctxArg == nullptr) {
         THROW<NullPtrException>(StringFormat("CcuContextAllGatherMesh1D2Die::ctxArg ptr is null"));
     }
@@ -43,9 +42,9 @@ void CcuContextAllGatherMesh1D2Die::Algorithm()
 {
     HCCL_INFO("[CcuContextAllGatherMesh1D2Die] AllgatherMesh1D run.");
     uint16_t logicRankSize = withMyRank_ ? transports.size() + 1 : transports.size();
-    uint16_t logicId = rankId_ % logicRankSize;  // topo为 2 * n
+    uint16_t logicId = rankId_ % logicRankSize; // topo为 2 * n
     uint16_t selfBit = 1 << logicId;
-    uint16_t allBit  = withMyRank_ ? ((1 << logicRankSize) - 1) & (~(1 << logicId)) : (1 << logicRankSize) - 1;
+    uint16_t allBit = withMyRank_ ? ((1 << logicRankSize) - 1) & (~(1 << logicId)) : (1 << logicRankSize) - 1;
 
     input_.push_back(CreateVariable());
     uint16_t transportIdx = 0;
@@ -56,13 +55,15 @@ void CcuContextAllGatherMesh1D2Die::Algorithm()
     uint16_t virRankSize = transports.size() + 1;
 
     for (uint64_t peerId = 0; peerId < transports.size(); peerId++) {
-        HCCL_INFO("[CcuContextAllGatherMesh1D2Die] MyRank[%u], PeerId[%llu], TransportId[%u]",
-            rankId_, peerId, transportIdx);
-        CHK_PRT_RET(transports[transportIdx] == nullptr,
-            HCCL_ERROR("[CcuContextAllGatherMesh1D2Die] Algorithm transport ptr is null"),);
-        output_.push_back(CreateVariable((*transports[transportIdx]), OUTPUT_XN_ID));  // 获取transport中id=1的Var来传递output
+        HCCL_INFO(
+            "[CcuContextAllGatherMesh1D2Die] MyRank[%u], PeerId[%llu], TransportId[%u]", rankId_, peerId, transportIdx);
+        CHK_PRT_RET(
+            transports[transportIdx] == nullptr,
+            HCCL_ERROR("[CcuContextAllGatherMesh1D2Die] Algorithm transport ptr is null"), );
+        output_.push_back(
+            CreateVariable((*transports[transportIdx]), OUTPUT_XN_ID)); // 获取transport中id=1的Var来传递output
         token_.push_back(CreateVariable((*transports[transportIdx]), TOKEN_XN_ID));
-        transportIdx++;  
+        transportIdx++;
     }
 
     // 最后一个位置放自己地址
@@ -73,25 +74,27 @@ void CcuContextAllGatherMesh1D2Die::Algorithm()
     groupOpSize_ = CreateGroupOpSize();
 
     Load(input_[0]);
-    Load(output_[virRankSize-1]);
-    Load(token_[virRankSize-1]);
+    Load(output_[virRankSize - 1]);
+    Load(token_[virRankSize - 1]);
     Load(offset_);
     Load(groupOpSize_);
 
     for (auto t : transports) {
-        WriteVariableWithSignal(*t, output_[virRankSize-1], OUTPUT_XN_ID, CKE_IDX_1, selfBit); // index = 1，传递output信息
-        WriteVariableWithSignal(*t, token_[virRankSize-1], TOKEN_XN_ID, CKE_IDX_2, selfBit);  // index = 2，传递token信息
+        WriteVariableWithSignal(
+            *t, output_[virRankSize - 1], OUTPUT_XN_ID, CKE_IDX_1, selfBit); // index = 1，传递output信息
+        WriteVariableWithSignal(
+            *t, token_[virRankSize - 1], TOKEN_XN_ID, CKE_IDX_2, selfBit); // index = 2，传递token信息
     }
     GroupWait(*transportGroup, CKE_IDX_1, allBit); // index = 1，传递output信息
     GroupWait(*transportGroup, CKE_IDX_2, allBit); // index = 2，传递token信息
 
-    CcuRep::Memory              src = CreateMemory();
+    CcuRep::Memory src = CreateMemory();
     std::vector<CcuRep::Memory> dst;
     for (uint64_t rankIdx = 0; rankIdx < virRankSize; rankIdx++) {
         dst.push_back(CreateMemory());
     }
-    src.addr  = input_[0];
-    src.token = token_[virRankSize-1];
+    src.addr = input_[0];
+    src.token = token_[virRankSize - 1];
 
     // 最后一个固定为本rank地址
     for (uint64_t rankIdx = 0; rankIdx < virRankSize; rankIdx++) {
@@ -114,20 +117,20 @@ void CcuContextAllGatherMesh1D2Die::Algorithm()
     return;
 }
 
-std::vector<uint64_t> CcuContextAllGatherMesh1D2Die::GeneArgs(const CcuTaskArg &arg)
+std::vector<uint64_t> CcuContextAllGatherMesh1D2Die::GeneArgs(const CcuTaskArg& arg)
 {
-    const CcuTaskArgAllGatherMesh1D2Die *taskArg = dynamic_cast<const CcuTaskArgAllGatherMesh1D2Die *>(&arg);
+    const CcuTaskArgAllGatherMesh1D2Die* taskArg = dynamic_cast<const CcuTaskArgAllGatherMesh1D2Die*>(&arg);
     if (taskArg == nullptr) {
         THROW<NullPtrException>(StringFormat("CcuContextAllGatherMesh1D2Die::taskArg ptr is null"));
     }
-    uint64_t inputAddr  = taskArg->inputAddr_;
+    uint64_t inputAddr = taskArg->inputAddr_;
     uint64_t outputAddr = taskArg->outputAddr_;
-    uint64_t tokenInfo  = taskArg->token_;
+    uint64_t tokenInfo = taskArg->token_;
     uint64_t outputSliceStride_ = taskArg->outputSliceStride_;
-    uint64_t offset = outputSliceStride_ * rankId_;  // output 偏移 outputSliceStride_
-    uint64_t sliceSize  = taskArg->sliceSize_;
-    auto     goSize     = CalGoSize(sliceSize);
+    uint64_t offset = outputSliceStride_ * rankId_; // output 偏移 outputSliceStride_
+    uint64_t sliceSize = taskArg->sliceSize_;
+    auto goSize = CalGoSize(sliceSize);
     return {inputAddr, outputAddr, tokenInfo, offset, goSize[0], goSize[1], goSize[2], goSize[3]};
 }
 
-}
+} // namespace Hccl

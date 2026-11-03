@@ -34,10 +34,7 @@ using namespace Hccl;
 
 class CcuConnectionTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CcuConnectionTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CcuConnectionTest tests set up." << std::endl; }
 
     static void TearDownTestCase()
     {
@@ -56,13 +53,12 @@ protected:
         GlobalMockObject::verify();
         std::cout << "A Test case in CcuConnectionTest TearDown" << std::endl;
     }
-    
 };
 
 pair<unique_ptr<CcuConnection>, vector<unique_ptr<CcuJetty>>> MockMakeCcuConnection(TpProtocol tpProtocol)
 {
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().with(mockcpp::any()).will(returnValue(MAX_MODULE_DEVICE_NUM - 1));
-    
+    MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().with(mockcpp::any()).will(returnValue(MAX_MODULE_DEVICE_NUM - 1));
+
     HcclResult OkResult = HcclResult::HCCL_SUCCESS;
     HcclResult AgainResult = HcclResult::HCCL_E_AGAIN;
     MOCKER(CcuDeviceManager::GetCcuResourceSpaceBufInfo).stubs().will(returnValue(OkResult));
@@ -88,9 +84,9 @@ pair<unique_ptr<CcuConnection>, vector<unique_ptr<CcuJetty>>> MockMakeCcuConnect
     CcuChannelInfo channelInfo;
     channelInfo.channelId = 1;
     channelInfo.dieId = 1;
-    
+
     vector<unique_ptr<CcuJetty>> ccuJettys;
-    vector<CcuJetty *> ccuJettyPtrs;
+    vector<CcuJetty*> ccuJettyPtrs;
     for (uint32_t i = 0; i < 2; i++) {
         CcuJettyInfo jettyInfo;
         jettyInfo.jettyCtxId = 1 + i;
@@ -121,7 +117,7 @@ TEST_F(CcuConnectionTest, St_GetStatus_When_InterfaceOk_Expect_Return_Ok)
 {
     auto resPair = MockMakeCcuConnection(TpProtocol::CTP);
     auto connection = resPair.first.get();
-    
+
     EXPECT_EQ(connection->GetStatus(), CcuConnStatus::INIT); // 创建jetty还未成功，状态不变
     EXPECT_EQ(connection->GetStatus(), CcuConnStatus::INIT); // 查询tp信息还未成功，状态不变
     EXPECT_EQ(connection->GetStatus(), CcuConnStatus::EXCHANGEABLE);
@@ -136,15 +132,13 @@ TEST_F(CcuConnectionTest, St_GetStatus_When_InterfaceOk_Expect_Return_Ok)
 
     EXPECT_EQ(connection->jettyNum, connection->importJettyCtxs.size());
     for (uint32_t i = 0; i < connection->jettyNum; i++) {
-        const auto &jetty = connection->ccuJettys_[i];
-        const auto &rmtJettyInfo = connection->importJettyCtxs[i].inParam;
-        EXPECT_EQ(jetty->GetCreateJettyParam().tokenValue,
-            rmtJettyInfo.tokenValue);
+        const auto& jetty = connection->ccuJettys_[i];
+        const auto& rmtJettyInfo = connection->importJettyCtxs[i].inParam;
+        EXPECT_EQ(jetty->GetCreateJettyParam().tokenValue, rmtJettyInfo.tokenValue);
 
-        EXPECT_EQ(jetty->GetJettyedOutParam().keySize,
-            rmtJettyInfo.keyLen);
+        EXPECT_EQ(jetty->GetJettyedOutParam().keySize, rmtJettyInfo.keyLen);
 
-        EXPECT_EQ(strcmp((const char *)jetty->GetJettyedOutParam().key, (const char *)rmtJettyInfo.key), 0);
+        EXPECT_EQ(strcmp((const char*)jetty->GetJettyedOutParam().key, (const char*)rmtJettyInfo.key), 0);
     }
 
     connection->ImportJetty();
@@ -155,7 +149,7 @@ TEST_F(CcuConnectionTest, St_GetStatus_When_TpInterfaceOk_Expect_Return_Ok)
 {
     auto resPair = MockMakeCcuConnection(TpProtocol::TP);
     auto connection = resPair.first.get();
-    
+
     EXPECT_EQ(connection->GetStatus(), CcuConnStatus::INIT); // 创建jetty还未成功，状态不变
     EXPECT_EQ(connection->GetStatus(), CcuConnStatus::INIT); // 查询tp信息还未成功，状态不变
     EXPECT_EQ(connection->GetStatus(), CcuConnStatus::EXCHANGEABLE);
@@ -170,15 +164,13 @@ TEST_F(CcuConnectionTest, St_GetStatus_When_TpInterfaceOk_Expect_Return_Ok)
 
     EXPECT_EQ(connection->jettyNum, connection->importJettyCtxs.size());
     for (uint32_t i = 0; i < connection->jettyNum; i++) {
-        const auto &jetty = connection->ccuJettys_[i];
-        const auto &rmtJettyInfo = connection->importJettyCtxs[i].inParam;
-        EXPECT_EQ(jetty->GetCreateJettyParam().tokenValue,
-            rmtJettyInfo.tokenValue);
+        const auto& jetty = connection->ccuJettys_[i];
+        const auto& rmtJettyInfo = connection->importJettyCtxs[i].inParam;
+        EXPECT_EQ(jetty->GetCreateJettyParam().tokenValue, rmtJettyInfo.tokenValue);
 
-        EXPECT_EQ(jetty->GetJettyedOutParam().keySize,
-            rmtJettyInfo.keyLen);
+        EXPECT_EQ(jetty->GetJettyedOutParam().keySize, rmtJettyInfo.keyLen);
 
-        EXPECT_EQ(strcmp((const char *)jetty->GetJettyedOutParam().key, (const char *)rmtJettyInfo.key), 0);
+        EXPECT_EQ(strcmp((const char*)jetty->GetJettyedOutParam().key, (const char*)rmtJettyInfo.key), 0);
     }
 
     connection->ImportJetty();
@@ -204,15 +196,13 @@ TEST_F(CcuConnectionTest, St_GetStatus_When_TpInfoAlreadyHaveAndInterfaceOk_Expe
 
     EXPECT_EQ(connection->jettyNum, connection->importJettyCtxs.size());
     for (uint32_t i = 0; i < connection->jettyNum; i++) {
-        const auto &jetty = connection->ccuJettys_[i];
-        const auto &rmtJettyInfo = connection->importJettyCtxs[i].inParam;
-        EXPECT_EQ(jetty->GetCreateJettyParam().tokenValue,
-            rmtJettyInfo.tokenValue);
+        const auto& jetty = connection->ccuJettys_[i];
+        const auto& rmtJettyInfo = connection->importJettyCtxs[i].inParam;
+        EXPECT_EQ(jetty->GetCreateJettyParam().tokenValue, rmtJettyInfo.tokenValue);
 
-        EXPECT_EQ(jetty->GetJettyedOutParam().keySize,
-            rmtJettyInfo.keyLen);
+        EXPECT_EQ(jetty->GetJettyedOutParam().keySize, rmtJettyInfo.keyLen);
 
-        EXPECT_EQ(strcmp((const char *)jetty->GetJettyedOutParam().key, (const char *)rmtJettyInfo.key), 0);
+        EXPECT_EQ(strcmp((const char*)jetty->GetJettyedOutParam().key, (const char*)rmtJettyInfo.key), 0);
     }
 
     connection->ImportJetty();
@@ -260,7 +250,7 @@ TEST_F(CcuConnectionTest, St_GetStatus_When_ImportJettyFailed_Expect_Return_Stat
     MOCKER_CPP(&CcuConnection::StartImportJettyRequest).stubs().will(returnValue(HcclResult::HCCL_E_INTERNAL));
     auto resPair = MockMakeCcuConnection(TpProtocol::CTP);
     auto connection = resPair.first.get();
-    
+
     EXPECT_EQ(connection->GetStatus(), CcuConnStatus::INIT); // 创建jetty还未成功，状态不变
     EXPECT_EQ(connection->GetStatus(), CcuConnStatus::INIT); // 查询tp信息还未成功，状态不变
     EXPECT_EQ(connection->GetStatus(), CcuConnStatus::EXCHANGEABLE);
@@ -275,15 +265,13 @@ TEST_F(CcuConnectionTest, St_GetStatus_When_ImportJettyFailed_Expect_Return_Stat
 
     EXPECT_EQ(connection->jettyNum, connection->importJettyCtxs.size());
     for (uint32_t i = 0; i < connection->jettyNum; i++) {
-        const auto &jetty = connection->ccuJettys_[i];
-        const auto &rmtJettyInfo = connection->importJettyCtxs[i].inParam;
-        EXPECT_EQ(jetty->GetCreateJettyParam().tokenValue,
-            rmtJettyInfo.tokenValue);
+        const auto& jetty = connection->ccuJettys_[i];
+        const auto& rmtJettyInfo = connection->importJettyCtxs[i].inParam;
+        EXPECT_EQ(jetty->GetCreateJettyParam().tokenValue, rmtJettyInfo.tokenValue);
 
-        EXPECT_EQ(jetty->GetJettyedOutParam().keySize,
-            rmtJettyInfo.keyLen);
+        EXPECT_EQ(jetty->GetJettyedOutParam().keySize, rmtJettyInfo.keyLen);
 
-        EXPECT_EQ(strcmp((const char *)jetty->GetJettyedOutParam().key, (const char *)rmtJettyInfo.key), 0);
+        EXPECT_EQ(strcmp((const char*)jetty->GetJettyedOutParam().key, (const char*)rmtJettyInfo.key), 0);
     }
 
     EXPECT_THROW(connection->ImportJetty(), InternalException);
@@ -310,15 +298,13 @@ TEST_F(CcuConnectionTest, St_GetStatus_When_ConfigChannelFailed_Expect_Return_St
 
     EXPECT_EQ(connection->jettyNum, connection->importJettyCtxs.size());
     for (uint32_t i = 0; i < connection->jettyNum; i++) {
-        const auto &jetty = connection->ccuJettys_[i];
-        const auto &rmtJettyInfo = connection->importJettyCtxs[i].inParam;
-        EXPECT_EQ(jetty->GetCreateJettyParam().tokenValue,
-            rmtJettyInfo.tokenValue);
+        const auto& jetty = connection->ccuJettys_[i];
+        const auto& rmtJettyInfo = connection->importJettyCtxs[i].inParam;
+        EXPECT_EQ(jetty->GetCreateJettyParam().tokenValue, rmtJettyInfo.tokenValue);
 
-        EXPECT_EQ(jetty->GetJettyedOutParam().keySize,
-            rmtJettyInfo.keyLen);
+        EXPECT_EQ(jetty->GetJettyedOutParam().keySize, rmtJettyInfo.keyLen);
 
-        EXPECT_EQ(strcmp((const char *)jetty->GetJettyedOutParam().key, (const char *)rmtJettyInfo.key), 0);
+        EXPECT_EQ(strcmp((const char*)jetty->GetJettyedOutParam().key, (const char*)rmtJettyInfo.key), 0);
     }
 
     connection->ImportJetty();
@@ -329,7 +315,7 @@ TEST_F(CcuConnectionTest, Ut_Clean_When_InterfaceOk_Expect_Return_Ok)
 {
     auto resPair = MockMakeCcuConnection(TpProtocol::CTP);
     auto connection = resPair.first.get();
-    
+
     EXPECT_EQ(connection->GetStatus(), CcuConnStatus::INIT); // 创建jetty还未成功，状态不变
     EXPECT_EQ(connection->GetStatus(), CcuConnStatus::INIT); // 查询tp信息还未成功，状态不变
     EXPECT_EQ(connection->GetStatus(), CcuConnStatus::EXCHANGEABLE);
@@ -344,15 +330,13 @@ TEST_F(CcuConnectionTest, Ut_Clean_When_InterfaceOk_Expect_Return_Ok)
 
     EXPECT_EQ(connection->jettyNum, connection->importJettyCtxs.size());
     for (uint32_t i = 0; i < connection->jettyNum; i++) {
-        const auto &jetty = connection->ccuJettys_[i];
-        const auto &rmtJettyInfo = connection->importJettyCtxs[i].inParam;
-        EXPECT_EQ(jetty->GetCreateJettyParam().tokenValue,
-            rmtJettyInfo.tokenValue);
+        const auto& jetty = connection->ccuJettys_[i];
+        const auto& rmtJettyInfo = connection->importJettyCtxs[i].inParam;
+        EXPECT_EQ(jetty->GetCreateJettyParam().tokenValue, rmtJettyInfo.tokenValue);
 
-        EXPECT_EQ(jetty->GetJettyedOutParam().keySize,
-            rmtJettyInfo.keyLen);
+        EXPECT_EQ(jetty->GetJettyedOutParam().keySize, rmtJettyInfo.keyLen);
 
-        EXPECT_EQ(strcmp((const char *)jetty->GetJettyedOutParam().key, (const char *)rmtJettyInfo.key), 0);
+        EXPECT_EQ(strcmp((const char*)jetty->GetJettyedOutParam().key, (const char*)rmtJettyInfo.key), 0);
     }
 
     connection->ImportJetty();

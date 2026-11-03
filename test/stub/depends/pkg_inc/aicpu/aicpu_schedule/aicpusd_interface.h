@@ -30,7 +30,7 @@ enum __attribute__((visibility("default"))) ErrorCode : int32_t {
  * @param [in] ptr : the address of the task and stream info
  * @return AICPU_SCHEDULE_SUCCESS: success  other: error code in ErrorCode
  */
-__attribute__((visibility("default"))) int32_t AICPUModelLoad(void *ptr);
+__attribute__((visibility("default"))) int32_t AICPUModelLoad(void* ptr);
 
 /**
  * @brief it is used to destroy the model.
@@ -53,8 +53,8 @@ __attribute__((visibility("default"))) int32_t AICPUModelExecute(uint32_t modelI
  * @param [in] profilingMode : it used to open or close profiling.
  * @return AICPU_SCHEDULE_SUCCESS: success  other: error code in ErrorCode
  */
-__attribute__((visibility("default"))) int32_t InitAICPUScheduler(uint32_t deviceId, pid_t hostPid,
-                                                                  ProfilingMode profilingMode);
+__attribute__((visibility("default"))) int32_t
+InitAICPUScheduler(uint32_t deviceId, pid_t hostPid, ProfilingMode profilingMode);
 
 /**
  * @brief it is used to update profiling mode for acl.
@@ -80,8 +80,8 @@ __attribute__((visibility("default"))) int32_t StopAICPUScheduler(uint32_t devic
  * @param [out] eventAck : event ack.
  * @return 0: success, other: error code
  */
-__attribute__((visibility("default"))) int32_t AICPUExecuteTask(struct event_info* drvEventInfo,
-                                                                struct event_ack* drvEventAck);
+__attribute__((visibility("default"))) int32_t
+AICPUExecuteTask(struct event_info* drvEventInfo, struct event_ack* drvEventAck);
 
 /**
  * @ingroup AicpuScheduleInterface
@@ -89,7 +89,7 @@ __attribute__((visibility("default"))) int32_t AICPUExecuteTask(struct event_inf
  * @param [in] soName : so name.
  * @return 0: success, other: error code
  */
-__attribute__((visibility("default"))) int32_t AICPUPreOpenKernels(const char *soName);
+__attribute__((visibility("default"))) int32_t AICPUPreOpenKernels(const char* soName);
 
 /**
  * @brief it is used to load op mapping info for data dump.
@@ -97,7 +97,7 @@ __attribute__((visibility("default"))) int32_t AICPUPreOpenKernels(const char *s
  * @param [in] len : The length of info
  * @return AICPU_SCHEDULE_OK: success  other: error code in StatusCode
  */
-__attribute__((visibility("default"))) int32_t LoadOpMappingInfo(const void *infoAddr, uint32_t len);
+__attribute__((visibility("default"))) int32_t LoadOpMappingInfo(const void* infoAddr, uint32_t len);
 
 /**
  * @brief it is used to set report callback function.
@@ -111,36 +111,34 @@ __attribute__((visibility("default"))) int32_t AicpuSetMsprofReporterCallback(Ms
  * @param [in] initParam : init param.
  * @return AICPU_SCHEDULE_SUCCESS: success  other: error code in ErrorCode
  */
-__attribute__((visibility("default"))) int32_t InitCpuScheduler(const CpuSchedInitParam * const initParam);
+__attribute__((visibility("default"))) int32_t InitCpuScheduler(const CpuSchedInitParam* const initParam);
 
 /**
  * @brief it is used to load model with queue.
  * @param [in] ptr : the address of the model info
  * @return AICPU_SCHEDULE_OK: success  other: error code
  */
-__attribute__((visibility("default"))) int32_t AicpuLoadModelWithQ(void *ptr);
+__attribute__((visibility("default"))) int32_t AicpuLoadModelWithQ(void* ptr);
 
 /**
  * @brief it is used to stop aicpu module.
  * @param [in] eventInfo : the message send by tsd
  * @return AICPU_SCHEDULE_OK: success  other: error code
  */
-__attribute__((visibility("default"))) int32_t StopAicpuSchedulerModule(const struct TsdSubEventInfo * const
-                                                                        eventInfo);
+__attribute__((visibility("default"))) int32_t StopAicpuSchedulerModule(const struct TsdSubEventInfo* const eventInfo);
 /**
  * @brief it is used to start aicpu module.
  * @param [in] eventInfo : the message send by tsd
  * @return AICPU_SCHEDULE_OK: success  other: error code
  */
-__attribute__((visibility("default"))) int32_t StartAicpuSchedulerModule(const struct TsdSubEventInfo * const
-                                                                         eventInfo);
+__attribute__((visibility("default"))) int32_t StartAicpuSchedulerModule(const struct TsdSubEventInfo* const eventInfo);
 
 /**
  * @brief it is used to send retcode to ts.
  * @return AICPU_SCHEDULE_OK: success  other: error code
  */
-__attribute__((weak)) __attribute__((visibility("default"))) void AicpuReportNotifyInfo(
-    const aicpu::AsyncNotifyInfo &notifyInfo);
+__attribute__((weak)) __attribute__((visibility("default"))) void
+AicpuReportNotifyInfo(const aicpu::AsyncNotifyInfo& notifyInfo);
 
 /**
  * @brief it is used to get task default timeout, uint is second.
@@ -160,36 +158,36 @@ __attribute__((weak)) __attribute__((visibility("default"))) bool AicpuIsStoped(
  * @param [in] callback : record last word callback.
  * @param [out] cancelDeadline : cancel reg closer.
  */
-__attribute__((weak)) __attribute__((visibility("default"))) void RegLastwordCallback(const std::string mark,
-    std::function<void ()> callback, std::function<void ()> &cancelReg);
+__attribute__((weak)) __attribute__((visibility("default"))) void
+RegLastwordCallback(const std::string mark, std::function<void()> callback, std::function<void()>& cancelReg);
 
 /**
  * @brief it is used to load model with event.
  * @param [in] ptr : the address of the model info
  * @return AICPU_SCHEDULE_OK: success  other: error code
  */
-__attribute__((visibility("default"))) int32_t AicpuLoadModel(void *ptr);
+__attribute__((visibility("default"))) int32_t AicpuLoadModel(void* ptr);
 
 /**
  * @brief it is used to stop model.
  * @param [in] ptr : the address of config
  * @return AICPU_SCHEDULE_OK: success  other: error code
  */
-__attribute__((visibility("default"))) int32_t AICPUModelStop(const ReDeployConfig * const ptr);
+__attribute__((visibility("default"))) int32_t AICPUModelStop(const ReDeployConfig* const ptr);
 
 /**
  * @brief it is used to recover model.
  * @param [in] ptr : the address of the config
  * @return AICPU_SCHEDULE_OK: success  other: error code
  */
-__attribute__((visibility("default"))) int32_t AICPUModelClearInputAndRestart(const ReDeployConfig * const ptr);
+__attribute__((visibility("default"))) int32_t AICPUModelClearInputAndRestart(const ReDeployConfig* const ptr);
 
 /**
  * @brief it is used to check kernel support.
  * @param [in] cfgPtr : cfgPtr which point to CheckKernelSupportedConfig.
  * @return AICPU_SCHEDULE_OK: supported  other: not supported
  */
-__attribute__((visibility("default"))) int32_t CheckKernelSupported(const CheckKernelSupportedConfig * const cfgPtr);
+__attribute__((visibility("default"))) int32_t CheckKernelSupported(const CheckKernelSupportedConfig* const cfgPtr);
 
 /**
  * @brief it is used to stop the aicpu scheduler for helper.
@@ -199,8 +197,7 @@ __attribute__((visibility("default"))) int32_t CheckKernelSupported(const CheckK
  */
 __attribute__((visibility("default"))) int32_t StopCPUScheduler(const uint32_t deviceId, const pid_t hostPid);
 
-
-__attribute__((visibility("default"))) int32_t AICPUModelProcessDataException(
-    const DataFlowExceptionNotify *const exceptionInfo);
+__attribute__((visibility("default"))) int32_t
+AICPUModelProcessDataException(const DataFlowExceptionNotify* const exceptionInfo);
 }
-#endif  // INC_AICPUSD_AICPUSD_INTERFACE_H_
+#endif // INC_AICPUSD_AICPUSD_INTERFACE_H_

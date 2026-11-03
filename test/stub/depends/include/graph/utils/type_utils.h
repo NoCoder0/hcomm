@@ -17,20 +17,20 @@
 
 namespace ge {
 class TypeUtils {
- public:
-  // todo: add ATTRIBUTED_DEPRECATED for std::string interface
-  static std::string DataTypeToSerialString(const DataType data_type);
-  static DataType SerialStringToDataType(const std::string &str);
-  static std::string FormatToSerialString(const Format format);
-  static Format SerialStringToFormat(const std::string &str);
-  static Format DataFormatToFormat(const std::string &str);
-  static bool GetDataTypeLength(const ge::DataType data_type, uint32_t &length);
+public:
+    // todo: add ATTRIBUTED_DEPRECATED for std::string interface
+    static std::string DataTypeToSerialString(const DataType data_type);
+    static DataType SerialStringToDataType(const std::string& str);
+    static std::string FormatToSerialString(const Format format);
+    static Format SerialStringToFormat(const std::string& str);
+    static Format DataFormatToFormat(const std::string& str);
+    static bool GetDataTypeLength(const ge::DataType data_type, uint32_t& length);
 
-  static AscendString DataTypeToAscendString(const DataType &data_type);
-  static DataType AscendStringToDataType(const AscendString &str);
-  static AscendString FormatToAscendString(const Format &format);
-  static Format AscendStringToFormat(const AscendString &str);
-  static Format DataFormatToFormat(const AscendString &str);
+    static AscendString DataTypeToAscendString(const DataType& data_type);
+    static DataType AscendStringToDataType(const AscendString& str);
+    static AscendString FormatToAscendString(const Format& format);
+    static Format AscendStringToFormat(const AscendString& str);
+    static Format DataFormatToFormat(const AscendString& str);
 };
-}  // namespace ge
-#endif  // INC_GRAPH_UTILS_TYPE_UTILS_H_
+} // namespace ge
+#endif // INC_GRAPH_UTILS_TYPE_UTILS_H_

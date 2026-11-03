@@ -4,13 +4,14 @@
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #include "gtest/gtest.h"
 #include <mockcpp/mokc.h>
 #include <mockcpp/mockcpp.hpp>
- 
+
 #include <vector>
 #include <iostream>
 #include <string>
@@ -20,24 +21,19 @@
 #include "testcase_utils.h"
 #include "topo_meta.h"
 
-namespace checker{
+namespace checker {
 
 class BroadcastTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "BroadcastTest set up." << std::endl;
-    }
- 
-    static void TearDownTestCase()
-    {
-        std::cout << "BroadcastTest tear down" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "BroadcastTest set up." << std::endl; }
+
+    static void TearDownTestCase() { std::cout << "BroadcastTest tear down" << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -49,8 +45,9 @@ protected:
         ClearHcclEnv();
     }
 
-    void RunBroadcastTest2D(int root, TopoMeta &topoMeta, CheckerOpMode opMode, int dataCount, string algName, int maxTmpMemSize)
-    {   
+    void RunBroadcastTest2D(
+        int root, TopoMeta& topoMeta, CheckerOpMode opMode, int dataCount, string algName, int maxTmpMemSize)
+    {
         setenv("HCCL_IODIE_NUM", "2", 1);
         CheckerOpParam checkerOpParam;
         checkerOpParam.opType = CheckerOpType::BROADCAST;
@@ -61,7 +58,7 @@ protected:
         checkerOpParam.DataDes.dataType = CheckerDataType::DATA_TYPE_INT32;
         checkerOpParam.root = root;
         checkerOpParam.algName = algName;
- 
+
         Checker checker;
         HcclResult ret;
         ret = checker.CheckA5Aicpu(checkerOpParam, topoMeta);
@@ -70,57 +67,57 @@ protected:
 };
 
 TEST_F(BroadcastTest, BroadcastMesh2D_two_two_test)
-{   
-    TopoMeta topoMeta {{{0,1,8,9}}};
-    RunBroadcastTest2D(0, topoMeta, CheckerOpMode::OPBASE, 100, "InsBroadcastMesh2DTwoShot", 1024*1024*200);
+{
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
+    RunBroadcastTest2D(0, topoMeta, CheckerOpMode::OPBASE, 100, "InsBroadcastMesh2DTwoShot", 1024 * 1024 * 200);
 }
 
 TEST_F(BroadcastTest, BroadcastMesh2D_two_two_test_root_1)
-{   
-    TopoMeta topoMeta {{{0,1,8,9}}};
-    RunBroadcastTest2D(1, topoMeta, CheckerOpMode::OPBASE, 100, "InsBroadcastMesh2DTwoShot", 1024*1024*200);
+{
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
+    RunBroadcastTest2D(1, topoMeta, CheckerOpMode::OPBASE, 100, "InsBroadcastMesh2DTwoShot", 1024 * 1024 * 200);
 }
 
 TEST_F(BroadcastTest, BroadcastMesh2D_three_four_test)
-{   
-    TopoMeta topoMeta {{{0,1,2,3,8,9,10,11,16,17,18,19}}};
-    RunBroadcastTest2D(0, topoMeta, CheckerOpMode::OPBASE, 100, "InsBroadcastMesh2DTwoShot", 1024*1024*200);
+{
+    TopoMeta topoMeta{{{0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19}}};
+    RunBroadcastTest2D(0, topoMeta, CheckerOpMode::OPBASE, 100, "InsBroadcastMesh2DTwoShot", 1024 * 1024 * 200);
 }
 
 TEST_F(BroadcastTest, BroadcastMesh2D_three_four_test_root_6)
-{   
-    TopoMeta topoMeta {{{0,1,2,3,8,9,10,11,16,17,18,19}}};
-    RunBroadcastTest2D(6, topoMeta, CheckerOpMode::OPBASE, 100, "InsBroadcastMesh2DTwoShot", 1024*1024*200);
+{
+    TopoMeta topoMeta{{{0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19}}};
+    RunBroadcastTest2D(6, topoMeta, CheckerOpMode::OPBASE, 100, "InsBroadcastMesh2DTwoShot", 1024 * 1024 * 200);
 }
 
 TEST_F(BroadcastTest, BroadcastMesh2D_two_two_test_count_1)
-{   
-    TopoMeta topoMeta {{{0,1,8,9}}};
-    RunBroadcastTest2D(0, topoMeta, CheckerOpMode::OPBASE, 1, "InsBroadcastMesh2DTwoShot", 1024*1024*200);
+{
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
+    RunBroadcastTest2D(0, topoMeta, CheckerOpMode::OPBASE, 1, "InsBroadcastMesh2DTwoShot", 1024 * 1024 * 200);
 }
 
 TEST_F(BroadcastTest, BroadcastMesh2D_two_two_test_count_0)
-{   
-    TopoMeta topoMeta {{{0,1,8,9}}};
-    RunBroadcastTest2D(0, topoMeta, CheckerOpMode::OPBASE, 1, "InsBroadcastMesh2DTwoShot", 1024*1024*200);
+{
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
+    RunBroadcastTest2D(0, topoMeta, CheckerOpMode::OPBASE, 1, "InsBroadcastMesh2DTwoShot", 1024 * 1024 * 200);
 }
 
 TEST_F(BroadcastTest, BroadcastMesh2D_two_two_test_count_datacount0)
-{   
-    TopoMeta topoMeta {{{0,1,8,9}}};
-    RunBroadcastTest2D(0, topoMeta, CheckerOpMode::OPBASE, 0, "InsBroadcastMesh2DTwoShot", 1024*1024*200);
+{
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
+    RunBroadcastTest2D(0, topoMeta, CheckerOpMode::OPBASE, 0, "InsBroadcastMesh2DTwoShot", 1024 * 1024 * 200);
 }
 
 TEST_F(BroadcastTest, BroadcastMesh2D_two_two_test_count_OFFLOAD_0)
-{   
-    TopoMeta topoMeta {{{0,1,8,9}}};
-    RunBroadcastTest2D(0, topoMeta, CheckerOpMode::OFFLOAD, 1, "InsBroadcastMesh2DTwoShot", 1024*1024*200);
+{
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
+    RunBroadcastTest2D(0, topoMeta, CheckerOpMode::OFFLOAD, 1, "InsBroadcastMesh2DTwoShot", 1024 * 1024 * 200);
 }
 
 TEST_F(BroadcastTest, BroadcastMesh2D_two_two_test_count_OFFLOAD_datacount0)
-{   
-    TopoMeta topoMeta {{{0,1,8,9}}};
-    RunBroadcastTest2D(0, topoMeta, CheckerOpMode::OFFLOAD, 0, "InsBroadcastMesh2DTwoShot", 1024*1024*200);
+{
+    TopoMeta topoMeta{{{0, 1, 8, 9}}};
+    RunBroadcastTest2D(0, topoMeta, CheckerOpMode::OFFLOAD, 0, "InsBroadcastMesh2DTwoShot", 1024 * 1024 * 200);
 }
 
-}
+} // namespace checker

@@ -24,9 +24,15 @@ namespace Hccl {
 // 为BroadcastMesh2D实现的CCUIns、CCUCtxArg与CCUTaskArg
 class CcuCtxArgBroadcastMesh2D : public CcuCtxArg {
 public:
-    explicit CcuCtxArgBroadcastMesh2D(const std::vector<uint64_t> &dSize, uint32_t rId, uint32_t aId,
-        const CollAlgOperator &op, const std::vector<std::vector<RankId>> &tempVTopo) :
-            dimSize_(dSize), rankId_(rId), axisId_(aId), op_(op), tempVTopo_(tempVTopo) {}
+    explicit CcuCtxArgBroadcastMesh2D(
+        const std::vector<uint64_t>& dSize, uint32_t rId, uint32_t aId, const CollAlgOperator& op,
+        const std::vector<std::vector<RankId>>& tempVTopo)
+        : dimSize_(dSize),
+          rankId_(rId),
+          axisId_(aId),
+          op_(op),
+          tempVTopo_(tempVTopo)
+    {}
     CcuCtxSignature GetCtxSignature() const override
     {
         CcuCtxSignature signature;
@@ -42,12 +48,19 @@ public:
 
 class CcuTaskArgBroadcastMesh2D : public CcuTaskArg {
 public:
-    explicit CcuTaskArgBroadcastMesh2D(uint64_t inputAddr, uint64_t sliceSize,
-        uint64_t xAxisSize, uint64_t yAxisSize, uint64_t token) : inputAddr_(inputAddr),
-        sliceSize_(sliceSize), xAxisSize_(xAxisSize), yAxisSize_(yAxisSize), token_(token) {
-        HCCL_INFO("[CcuTaskArgBroadcastMesh2D] inputAddr[%llu], sliceSize[%llu], "\
-            "xAxisSize[%llu], yAxisSize[%llu]", inputAddr_, sliceSize_, xAxisSize_, yAxisSize_);
-        }
+    explicit CcuTaskArgBroadcastMesh2D(
+        uint64_t inputAddr, uint64_t sliceSize, uint64_t xAxisSize, uint64_t yAxisSize, uint64_t token)
+        : inputAddr_(inputAddr),
+          sliceSize_(sliceSize),
+          xAxisSize_(xAxisSize),
+          yAxisSize_(yAxisSize),
+          token_(token)
+    {
+        HCCL_INFO(
+            "[CcuTaskArgBroadcastMesh2D] inputAddr[%llu], sliceSize[%llu], "
+            "xAxisSize[%llu], yAxisSize[%llu]",
+            inputAddr_, sliceSize_, xAxisSize_, yAxisSize_);
+    }
     uint64_t inputAddr_;
     uint64_t sliceSize_;
     uint64_t xAxisSize_;
@@ -57,13 +70,12 @@ public:
 
 class CcuInstructionBroadcastMesh2D : public CcuInstruction {
 public:
-    CcuInstructionBroadcastMesh2D() : CcuInstruction()
-    {
-    }
+    CcuInstructionBroadcastMesh2D() : CcuInstruction() {}
 
-    void Init(std::vector<uint64_t> dimSize, uint32_t rankId, uint64_t inputAddr, uint64_t axisId,
-        uint64_t sliceSize, uint64_t xAxisSize, uint64_t yAxisSize, uint64_t token,
-        CollAlgOperator &op, std::vector<std::vector<RankId>> &tempVTopo)
+    void Init(
+        std::vector<uint64_t> dimSize, uint32_t rankId, uint64_t inputAddr, uint64_t axisId, uint64_t sliceSize,
+        uint64_t xAxisSize, uint64_t yAxisSize, uint64_t token, CollAlgOperator& op,
+        std::vector<std::vector<RankId>>& tempVTopo)
     {
         dimSize_ = dimSize;
         rankId_ = rankId;
@@ -86,13 +98,11 @@ public:
 
     std::string Describe() const override
     {
-        return StringFormat("CcuInstructionBroadcastMesh2D rankId [%u], instType[%s]", rankId_, instType_.Describe().c_str());
+        return StringFormat(
+            "CcuInstructionBroadcastMesh2D rankId [%u], instType[%s]", rankId_, instType_.Describe().c_str());
     }
 
-    void SetInstType(CcuInstType instType) 
-    { 
-        instType_ = instType; 
-    }
+    void SetInstType(CcuInstType instType) { instType_ = instType; }
 
     std::unique_ptr<CcuCtxArg> GetCtxArg() const override
     {
@@ -118,5 +128,5 @@ private:
     std::vector<std::vector<RankId>> tempVTopo_;
 };
 
-}
+} // namespace Hccl
 #endif // HCCLV2_CCU_INSTRUCTION_BROADCAST_MESH_2D_H_

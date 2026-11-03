@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef MEMORY_ALLOC_RING_H
 #define MEMORY_ALLOC_RING_H
@@ -20,17 +20,24 @@ namespace hccl {
 constexpr u32 EXPANSION_MULTIPLES = 2;
 constexpr u32 RING_MEMORY_CAPACITY = 4096;
 
-template <typename T> class LocklessRingMemoryAllocate {
+template <typename T>
+class LocklessRingMemoryAllocate {
 public:
     enum class OperateState {
-        MEMORY_NULL = 0, // 未申请内存
-        MEMORY_PUTTING = 1,  // 正在归还内存块
-        MEMORY_VALID = 2,    // 可用的内存块
-        MEMORY_TAKING = 3    // 正在取出内存块
+        MEMORY_NULL = 0,    // 未申请内存
+        MEMORY_PUTTING = 1, // 正在归还内存块
+        MEMORY_VALID = 2,   // 可用的内存块
+        MEMORY_TAKING = 3   // 正在取出内存块
     };
 
-    explicit LocklessRingMemoryAllocate(size_t maxCapacity) : capacity_(maxCapacity),
-        ringQueue_(nullptr), recordQueue_(nullptr), status_(nullptr), head_(0), tail_(0) {}
+    explicit LocklessRingMemoryAllocate(size_t maxCapacity)
+        : capacity_(maxCapacity),
+          ringQueue_(nullptr),
+          recordQueue_(nullptr),
+          status_(nullptr),
+          head_(0),
+          tail_(0)
+    {}
 
     void ResourseClear()
     {
@@ -39,7 +46,7 @@ public:
         if (recordQueue_ != nullptr) {
             for (size_t i = 0; i < capacity_; i++) {
                 if (recordQueue_[i] != nullptr) {
-                    delete reinterpret_cast<T *>(recordQueue_[i]);
+                    delete reinterpret_cast<T*>(recordQueue_[i]);
                     recordQueue_[i] = nullptr;
                 }
             }
@@ -71,8 +78,8 @@ public:
             return HCCL_SUCCESS;
         }
         if (capacity_ > 0) {
-            ringQueue_ = new (std::nothrow) T *[capacity_];
-            recordQueue_ = new (std::nothrow) T *[capacity_];
+            ringQueue_ = new (std::nothrow) T*[capacity_];
+            recordQueue_ = new (std::nothrow) T*[capacity_];
             CHK_PTR_NULL(ringQueue_);
             CHK_PTR_NULL(recordQueue_);
             status_ = new (std::nothrow) std::atomic<OperateState>[capacity_];
@@ -99,7 +106,7 @@ public:
         return HCCL_SUCCESS;
     }
 
-    T *Alloc()
+    T* Alloc()
     {
         if (Init() != HCCL_SUCCESS) {
             HCCL_ERROR("Init fail.");
@@ -116,8 +123,8 @@ public:
             }
             lock.unlock();
         }
-        T **position = nullptr;
-        std::atomic<OperateState> *state = nullptr;
+        T** position = nullptr;
+        std::atomic<OperateState>* state = nullptr;
         while (true) {
             size_t index = (head_++) % capacity_;
             position = ringQueue_ + index;
@@ -129,14 +136,14 @@ public:
             }
             break;
         }
-        T *memoryBlock = *position;
+        T* memoryBlock = *position;
         *position = nullptr;
         *state = OperateState::MEMORY_NULL;
         sem_post(&freeAvailable_);
         return memoryBlock;
     }
 
-    HcclResult Free(T *memoryBlock)
+    HcclResult Free(T* memoryBlock)
     {
         {
             std::unique_lock<std::mutex> lock(expansionMutex_);
@@ -149,8 +156,8 @@ public:
                 }
             }
         }
-        T **position = nullptr;
-        std::atomic<OperateState> *state = nullptr;
+        T** position = nullptr;
+        std::atomic<OperateState>* state = nullptr;
         while (true) {
             size_t index = (tail_++) % capacity_;
             position = ringQueue_ + index;
@@ -184,20 +191,20 @@ private:
     {
         size_t newCapacity = capacity_ * EXPANSION_MULTIPLES;
         size_t newHead = 0;
-        T **newRingQueue = new (std::nothrow) T *[newCapacity];
+        T** newRingQueue = new (std::nothrow) T*[newCapacity];
         if (newRingQueue == nullptr) {
             ResourseClear();
             return HCCL_E_MEMORY;
         }
 
-        T **newRecordQueue = new (std::nothrow) T *[newCapacity];
+        T** newRecordQueue = new (std::nothrow) T*[newCapacity];
         if (newRecordQueue == nullptr) {
             delete[] newRingQueue;
             ResourseClear();
             return HCCL_E_MEMORY;
         }
 
-        std::atomic<OperateState> *newStatus = new (std::nothrow) std::atomic<OperateState>[newCapacity];
+        std::atomic<OperateState>* newStatus = new (std::nothrow) std::atomic<OperateState>[newCapacity];
         if (newStatus == nullptr) {
             delete[] newRingQueue;
             delete[] newRecordQueue;
@@ -251,16 +258,16 @@ private:
         return HCCL_SUCCESS;
     }
 
-    size_t capacity_ = 0;                              // 容量
-    T **ringQueue_ = nullptr;                          // 内存块数组
-    T **recordQueue_ = nullptr;                        // 内存记录
-    std::atomic<OperateState> *status_ = nullptr;      // 每一个内存块的状态
-    std::atomic<size_t> head_;                         // 逻辑上的头
-    std::atomic<size_t> tail_;                         // 逻辑上的尾
-    sem_t allocAvailable_;                             // 可以申请的内存块个数
-    sem_t freeAvailable_;                              // 可以释放的内存块个数
-    std::mutex expansionMutex_;                        // 扩容锁
-    std::mutex initDesMutex_;                          // 初始化析构锁
+    size_t capacity_ = 0;                         // 容量
+    T** ringQueue_ = nullptr;                     // 内存块数组
+    T** recordQueue_ = nullptr;                   // 内存记录
+    std::atomic<OperateState>* status_ = nullptr; // 每一个内存块的状态
+    std::atomic<size_t> head_;                    // 逻辑上的头
+    std::atomic<size_t> tail_;                    // 逻辑上的尾
+    sem_t allocAvailable_;                        // 可以申请的内存块个数
+    sem_t freeAvailable_;                         // 可以释放的内存块个数
+    std::mutex expansionMutex_;                   // 扩容锁
+    std::mutex initDesMutex_;                     // 初始化析构锁
 };
-}
+} // namespace hccl
 #endif

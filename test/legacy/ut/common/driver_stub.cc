@@ -9,48 +9,40 @@
  */
 
 #include "ascend_hal.h"
+#include "adapter_rts_common.h"
 
-drvError_t halResourceIdCheck(struct drvResIdKey *info)
+drvError_t halResourceIdCheck(struct drvResIdKey* info) { return drvError_t::DRV_ERROR_NONE; }
+
+drvError_t halResourceIdInfoGet(struct drvResIdKey* key, drvResIdProcType type, uint64_t* value)
 {
     return drvError_t::DRV_ERROR_NONE;
 }
 
-drvError_t halResourceIdInfoGet(struct drvResIdKey *key, drvResIdProcType type, uint64_t *value)
+drvError_t halResAddrMap(unsigned int devId, struct res_addr_info* res_info, unsigned long* va, unsigned int* len)
 {
     return drvError_t::DRV_ERROR_NONE;
 }
 
-drvError_t halResAddrMap(unsigned int devId, struct res_addr_info *res_info, unsigned long *va, unsigned int *len)
+drvError_t halResAddrUnmap(unsigned int devId, struct res_addr_info* res_info) { return drvError_t::DRV_ERROR_NONE; }
+
+drvError_t halMemCtl(int type, void* param_value, size_t param_value_size, void* out_value, size_t* out_size_ret)
 {
     return drvError_t::DRV_ERROR_NONE;
 }
 
-drvError_t halResAddrUnmap(unsigned int devId, struct res_addr_info *res_info)
+drvError_t halHostRegister(void* srcPtr, UINT64 size, UINT32 flag, UINT32 devid, void** dstPtr)
 {
     return drvError_t::DRV_ERROR_NONE;
 }
 
-drvError_t halMemCtl(int type, void *param_value, size_t param_value_size, void *out_value, size_t *out_size_ret)
+drvError_t halHostUnregister(void* srcPtr, UINT32 devid) { return drvError_t::DRV_ERROR_NONE; }
+
+drvError_t halTsdrvCtl(uint32_t devId, int cmd, void* param, size_t paramSize, void* out, size_t* outSize)
 {
     return drvError_t::DRV_ERROR_NONE;
 }
 
-drvError_t halHostRegister(void *srcPtr, UINT64 size, UINT32 flag, UINT32 devid, void **dstPtr)
-{
-    return drvError_t::DRV_ERROR_NONE;
-}
-
-drvError_t halHostUnregister(void *srcPtr, UINT32 devid)
-{
-    return drvError_t::DRV_ERROR_NONE;
-}
-
-drvError_t halTsdrvCtl(uint32_t devId, int cmd, void *param, size_t paramSize, void *out, size_t *outSize)
-{
-    return drvError_t::DRV_ERROR_NONE;
-}
-
-drvError_t drvGetLocalDevIDByHostDevID(uint32_t host_dev_id, uint32_t *local_dev_id)
+drvError_t drvGetLocalDevIDByHostDevID(uint32_t host_dev_id, uint32_t* local_dev_id)
 {
     return drvError_t::DRV_ERROR_NONE;
 }
@@ -59,3 +51,17 @@ drvError_t drvMemcpy(DVdeviceptr dst, size_t destMax, DVdeviceptr src, size_t By
 {
     return drvError_t::DRV_ERROR_NONE;
 }
+
+HcclResult hrtGetDeviceType(DevType& devType)
+{
+    devType = DevType::DEV_TYPE_COUNT;
+    return HCCL_SUCCESS;
+}
+
+// UT 链接环境无 ccl_kernel_plf 实现，为 hrtSet* 补链接桩；
+// ut_aicpu_channel_process/ut_coll_comm_aicpu 等以 MOCKER 装桩依赖符号可链接。
+// DevCapability::Init 的 hrtSet* 前置已按 HCCD 宏门控，UT 域不编译，不依赖本桩。
+// （真实实现见 ascend910 adapter_rts.cc，非 HCCD 下为空操作）
+HcclResult hrtSetWorkModeAicpu(bool workModeAicpu) { return HCCL_SUCCESS; }
+
+HcclResult hrtSetlocalDeviceType(DevType devType) { return HCCL_SUCCESS; }

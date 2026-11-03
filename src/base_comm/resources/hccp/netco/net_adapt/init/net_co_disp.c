@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #include "net_co_disp.h"
 #include "net_co_main_data.h"
 #include "securec.h"
@@ -27,7 +26,7 @@ void NetCoDispSummary(NetCo *co)
     BKF_DISP_PRINTF(disp, "inConnNetUrl(%s)\n", BkfUrlGetStr(&co->argInit.inConnNetUrl, buf, sizeof(buf)));
     BKF_DISP_PRINTF(disp, "outConnLsnUrl(%s)\n", BkfUrlGetStr(&co->argInit.outConnLsnUrl, buf, sizeof(buf)));
     BKF_DISP_PRINTF(disp, "===runtime info===\n");
-    BKF_DISP_PRINTF(disp, "name(%s)\n",  co->name);
+    BKF_DISP_PRINTF(disp, "name(%s)\n", co->name);
     BKF_DISP_PRINTF(disp, "dbgOn(%u)\n", co->dbgOn);
     BKF_DISP_PRINTF(disp, "selfCid(%u)\n", co->selfCid);
     BKF_DISP_PRINTF(disp, "memMng(%#x)\n", BKF_MASK_ADDR(co->memMng));
@@ -39,11 +38,9 @@ void NetCoDispSummary(NetCo *co)
     BKF_DISP_PRINTF(disp, "pfmOn(%u)\n", co->pfmOn);
     BKF_DISP_PRINTF(disp, "pfm(%#x)\n", BKF_MASK_ADDR(co->pfm));
     BKF_DISP_PRINTF(disp, "mux(%#x)/muxAdpee(%#x)\n", BKF_MASK_ADDR(co->mux), BKF_MASK_ADDR(co->muxAdpee));
-    BKF_DISP_PRINTF(disp, "tmrMng(%#x)/tmrMngAdpee(%#x)\n",
-                    BKF_MASK_ADDR(co->tmrMng), BKF_MASK_ADDR(co->tmrMngAdpee));
+    BKF_DISP_PRINTF(disp, "tmrMng(%#x)/tmrMngAdpee(%#x)\n", BKF_MASK_ADDR(co->tmrMng), BKF_MASK_ADDR(co->tmrMngAdpee));
     BKF_DISP_PRINTF(disp, "tmrIdDispOut(%#x)\n", BKF_MASK_ADDR(co->tmrIdDispOut));
-    BKF_DISP_PRINTF(disp, "jobMng(%#x)/jobMngAdpee(%#x)\n",
-                    BKF_MASK_ADDR(co->jobMng), BKF_MASK_ADDR(co->jobMngAdpee));
+    BKF_DISP_PRINTF(disp, "jobMng(%#x)/jobMngAdpee(%#x)\n", BKF_MASK_ADDR(co->jobMng), BKF_MASK_ADDR(co->jobMngAdpee));
     BKF_DISP_PRINTF(disp, "sysLogMng(%#x)\n", BKF_MASK_ADDR(co->sysLogMng));
     BKF_DISP_PRINTF(disp, "in(%#x)\n", BKF_MASK_ADDR(co->in));
     BKF_DISP_PRINTF(disp, "out(%#x)\n", BKF_MASK_ADDR(co->out));
@@ -84,4 +81,3 @@ void NetCoDispUninit(NetCo *co)
 #ifdef __cplusplus
 }
 #endif
-

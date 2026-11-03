@@ -14,7 +14,7 @@
 #include "stream_pub.h"
 #include "hccl_common.h"
 #include "common/aicpu_hccl_def.h"
- 
+
 namespace hccl {
 using Prof_Status = uint32_t;
 const Prof_Status PROF_SUCCESS = 0x0;
@@ -22,6 +22,6 @@ const Prof_Status PROF_FAILED = 0xFFFFFFFF;
 #define ADPROF_TASK_TIME_L0 0x00000008ULL
 #define ADPROF_TASK_TIME_L1 0x00000010ULL
 #define ADPROF_TASK_TIME_L2 0x00000020ULL
-int32_t DeviceCommandHandle(uint32_t profType, void *data, uint32_t len);
-}
+int32_t DeviceCommandHandle(uint32_t profType, void* data, uint32_t len);
+} // namespace hccl
 #endif

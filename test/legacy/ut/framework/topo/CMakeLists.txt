@@ -7,7 +7,7 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
-add_subdirectory(new_topo_builder)
+
 add_subdirectory(rank_info_detect)
 add_subdirectory(ranktable)
 add_subdirectory(topoaddrinfo)

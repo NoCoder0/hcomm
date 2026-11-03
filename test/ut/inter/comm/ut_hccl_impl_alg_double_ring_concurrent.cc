@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -43,8 +43,10 @@ protected:
     static void SetUpTestCase()
     {
         s32 ret = HcclDispatcherInit(DispatcherType::DISPATCHER_NORMAL, 0, &dispatcherPtr);
-        if (ret != HCCL_SUCCESS) return;
-        if (dispatcherPtr == nullptr) return;
+        if (ret != HCCL_SUCCESS)
+            return;
+        if (dispatcherPtr == nullptr)
+            return;
         dispatcher = reinterpret_cast<DispatcherPub*>(dispatcherPtr);
         DlRaFunction::GetInstance().DlRaFunctionInit();
         std::cout << "HcclImplAlgTestDoubleRingConcurrent SetUP" << std::endl;
@@ -63,16 +65,9 @@ protected:
     virtual void SetUp()
     {
         s32 portNum = -1;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
-        MOCKER_CPP(&HcclCommunicator::InitPreResource)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
-        MOCKER(hrtProfRegisterCtrlCallback)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
+        MOCKER_CPP(&HcclCommunicator::InitPreResource).stubs().will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtProfRegisterCtrlCallback).stubs().will(returnValue(HCCL_SUCCESS));
         InitEnvParam();
         setenv("HCCL_OP_RETRY_ENABLE", "L0:0, L1:0, L2:0", 1);
         std::cout << "A Test SetUP" << std::endl;
@@ -83,13 +78,13 @@ protected:
         std::cout << "A Test TearDown" << std::endl;
     }
     static HcclDispatcher dispatcherPtr;
-    static DispatcherPub *dispatcher;
+    static DispatcherPub* dispatcher;
 };
 
 HcclDispatcher HcclImplAlgTestDoubleRingConcurrent::dispatcherPtr = nullptr;
-DispatcherPub *HcclImplAlgTestDoubleRingConcurrent::dispatcher = nullptr;
+DispatcherPub* HcclImplAlgTestDoubleRingConcurrent::dispatcher = nullptr;
 
-static void TestConstructParam(HcclCommParams &params, RankTable_t &rankTable)
+static void TestConstructParam(HcclCommParams& params, RankTable_t& rankTable)
 {
     string commId = "comm ";
     memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
@@ -132,7 +127,7 @@ static void TestConstructParam(HcclCommParams &params, RankTable_t &rankTable)
     rankTable.serverNum = 2;
 }
 
-static void TestConstructParam_1(HcclCommParams &params, RankTable_t &rankTable)
+static void TestConstructParam_1(HcclCommParams& params, RankTable_t& rankTable)
 {
     string commId = "comm ";
     memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
@@ -148,13 +143,13 @@ static void TestConstructParam_1(HcclCommParams &params, RankTable_t &rankTable)
     rankVec[0].rankId = 0;
     rankVec[0].deviceInfo.devicePhyId = 0;
     HcclIpAddress ipAddr1(1694542016);
-    rankVec[0].deviceInfo.deviceIp.push_back(ipAddr1);  // 101.0.168.192
+    rankVec[0].deviceInfo.deviceIp.push_back(ipAddr1); // 101.0.168.192
     rankVec[0].serverIdx = 0;
     rankVec[0].serverId = "192.168.0.101";
     rankVec[1].rankId = 1;
     rankVec[1].deviceInfo.devicePhyId = 0;
     HcclIpAddress ipAddr2(1711319232);
-    rankVec[1].deviceInfo.deviceIp.push_back(ipAddr2);  // 101.0.168.192
+    rankVec[1].deviceInfo.deviceIp.push_back(ipAddr2); // 101.0.168.192
     rankVec[1].serverIdx = 1;
     rankVec[1].serverId = "192.168.0.102";
     rankTable.rankList.assign(rankVec.begin(), rankVec.end());
@@ -162,7 +157,7 @@ static void TestConstructParam_1(HcclCommParams &params, RankTable_t &rankTable)
     rankTable.serverNum = 2;
 }
 
-static void TestConstructParam_server_1_rank(HcclCommParams &params, RankTable_t &rankTable)
+static void TestConstructParam_server_1_rank(HcclCommParams& params, RankTable_t& rankTable)
 {
     string commId = "comm ";
     memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
@@ -188,14 +183,14 @@ static void TestConstructParam_server_1_rank(HcclCommParams &params, RankTable_t
     rankVec[1].deviceInfo.deviceIp.push_back(ipAddr2); // 101.0.168.192
     rankVec[1].serverIdx = 1;
     rankVec[1].serverId = "192.168.0.102";
-  
+
     rankTable.rankList.assign(rankVec.begin(), rankVec.end());
     rankTable.rankNum = 2;
     rankTable.deviceNum = 2;
     rankTable.serverNum = 2;
 }
 
-static void TestConstructParam_server(HcclCommParams &params, RankTable_t &rankTable)
+static void TestConstructParam_server(HcclCommParams& params, RankTable_t& rankTable)
 {
     string commId = "comm ";
     memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
@@ -238,7 +233,7 @@ static void TestConstructParam_server(HcclCommParams &params, RankTable_t &rankT
     rankTable.serverNum = 1;
 }
 
-static void TestConstructParam_SurperPod(HcclCommParams &params, RankTable_t &rankTable)
+static void TestConstructParam_SurperPod(HcclCommParams& params, RankTable_t& rankTable)
 {
     string commId = "comm ";
     memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
@@ -272,7 +267,7 @@ static void TestConstructParam_SurperPod(HcclCommParams &params, RankTable_t &ra
     rankTable.serverNum = 2;
 }
 
-static void TestConstructParam_2SurperPod(HcclCommParams &params, RankTable_t &rankTable)
+static void TestConstructParam_2SurperPod(HcclCommParams& params, RankTable_t& rankTable)
 {
     string commId = "comm ";
     memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
@@ -361,12 +356,10 @@ static void TestConstructParam_2SurperPod(HcclCommParams &params, RankTable_t &r
     rankTable.rankNum = 8;
     rankTable.deviceNum = 8;
     rankTable.serverNum = 4;
-
 }
 
 TEST_F(HcclImplAlgTestDoubleRingConcurrent, ut_CollReduceScatterDoubleRingConcurrentExecutor_Ring)
 {
-
     HcclResult ret = HCCL_SUCCESS;
     std::string tag = "test";
     DeviceMem inputMem = DeviceMem::alloc(4096);
@@ -388,16 +381,11 @@ TEST_F(HcclImplAlgTestDoubleRingConcurrent, ut_CollReduceScatterDoubleRingConcur
     params.deviceType = DevType::DEV_TYPE_910_93;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB);
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB);
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&CollNativeExecutorBase::CheckCommSize)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&CollNativeExecutorBase::CheckCommSize).stubs().will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->AtomicInitSet();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -405,42 +393,32 @@ TEST_F(HcclImplAlgTestDoubleRingConcurrent, ut_CollReduceScatterDoubleRingConcur
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
 
     impl->deviceLogicId_ = 0;
     impl->deviceType_ = DevType::DEV_TYPE_910_93;
     impl->devicePhyId_ = 0;
-    algConfigurator->algType_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER].algoLevel0 =
-        AlgTypeLevel0::ALG_LEVEL0_NP_DOUBLE_RING;
+    algConfigurator->algType_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER].algoLevel0
+        = AlgTypeLevel0::ALG_LEVEL0_NP_DOUBLE_RING;
     algConfigurator->algType_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER].algoLevel1 = AlgTypeLevel1::ALG_LEVEL1_RING;
     impl->topoType_ = TopoType::TOPO_TYPE_NP_DOUBLE_RING;
     algConfigurator->topoType_ = TopoType::TOPO_TYPE_NP_DOUBLE_RING;
     CommInfo tmpComm;
 
-    const std::vector<std::vector<u32>> tmpRingNics = {
-        { 0, 1, 2, 3, 4, 5, 6, 7 },
-        { 0, 1, 2, 3, 4, 5, 6, 7 },
-        { 0, 1, 2, 3, 4, 5, 6, 7 },
-        { 0, 1, 2, 3, 4, 5, 6, 7 }
-    };
+    const std::vector<std::vector<u32>> tmpRingNics
+        = {{0, 1, 2, 3, 4, 5, 6, 7}, {0, 1, 2, 3, 4, 5, 6, 7}, {0, 1, 2, 3, 4, 5, 6, 7}, {0, 1, 2, 3, 4, 5, 6, 7}};
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    ret = implBase->ReduceScatter(tag, inputMem.ptr(), outputMem.ptr(), count, dataType, HcclReduceOp::HCCL_REDUCE_SUM, stream.ptr());
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
+    ret = implBase->ReduceScatter(
+        tag, inputMem.ptr(), outputMem.ptr(), count, dataType, HcclReduceOp::HCCL_REDUCE_SUM, stream.ptr());
     implBase = nullptr;
 
     GlobalMockObject::verify();
 }
 
-
-
 TEST_F(HcclImplAlgTestDoubleRingConcurrent, ut_CollAllGatherDoubleRingConcurrentExecutor_Ring)
 {
-
     HcclResult ret = HCCL_SUCCESS;
     std::string tag = "test";
     DeviceMem inputMem = DeviceMem::alloc(4096);
@@ -449,7 +427,6 @@ TEST_F(HcclImplAlgTestDoubleRingConcurrent, ut_CollAllGatherDoubleRingConcurrent
     HcclDataType dataType = HCCL_DATA_TYPE_FP32;
     HcclReduceOp op = HCCL_REDUCE_RESERVED;
     Stream stream(StreamType::STREAM_TYPE_ONLINE);
-
 
     setenv("HCCL_ALGO", "level0:NA;level1:NA;level2:ring", 1);
     ret = InitEnvVarParam();
@@ -460,56 +437,48 @@ TEST_F(HcclImplAlgTestDoubleRingConcurrent, ut_CollAllGatherDoubleRingConcurrent
     params.deviceType = DevType::DEV_TYPE_910_93;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&CollNativeExecutorBase::CheckCommSize)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&CollNativeExecutorBase::CheckCommSize).stubs().will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->AtomicInitSet();
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    implBase->InitCCLbuffer(200*1024*1024, 200*1024*1024);
+    implBase->InitCCLbuffer(200 * 1024 * 1024, 200 * 1024 * 1024);
 
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
 
     impl->topoAttr_.deviceLogicId = 0;
     impl->topoAttr_.devicePhyId = 0;
-    algConfigurator->algType_[HcclCMDType::HCCL_CMD_ALLGATHER].algoLevel0 =
-        AlgTypeLevel0::ALG_LEVEL0_NP_DOUBLE_RING;
+    algConfigurator->algType_[HcclCMDType::HCCL_CMD_ALLGATHER].algoLevel0 = AlgTypeLevel0::ALG_LEVEL0_NP_DOUBLE_RING;
     algConfigurator->algType_[HcclCMDType::HCCL_CMD_ALLGATHER].algoLevel1 = AlgTypeLevel1::ALG_LEVEL1_RING;
     impl->topoType_ = TopoType::TOPO_TYPE_NP_DOUBLE_RING;
     algConfigurator->topoType_ = TopoType::TOPO_TYPE_NP_DOUBLE_RING;
 
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.deviceLogicId = 0;
     topoMatcher->topoInfo_.devicePhyId = 0;
     topoMatcher->topoInfo_.topoType = TopoType::TOPO_TYPE_NP_DOUBLE_RING;
 
-    const std::vector<std::vector<u32>> tmpRingNics = {
-        { 0, 1, 2, 3, 4, 5, 6, 7 },
-        { 0, 1, 2, 3, 4, 5, 6, 7 },
-        { 0, 1, 2, 3, 4, 5, 6, 7 },
-        { 0, 1, 2, 3, 4, 5, 6, 7 }
-    };
+    const std::vector<std::vector<u32>> tmpRingNics
+        = {{0, 1, 2, 3, 4, 5, 6, 7}, {0, 1, 2, 3, 4, 5, 6, 7}, {0, 1, 2, 3, 4, 5, 6, 7}, {0, 1, 2, 3, 4, 5, 6, 7}};
 
-    MOCKER_CPP_VIRTUAL(*dispatcher, &DispatcherPub::SignalRecord, HcclResult(DispatcherPub::*)(HcclRtNotify, hccl::Stream &, u32, u64,
-        s32, bool, u64, u32)).stubs().will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP_VIRTUAL(*dispatcher, &DispatcherPub::SignalWait, HcclResult(DispatcherPub::*)(HcclRtNotify, hccl::Stream &, u32, u32,
-        s32, bool, u32, u32)).stubs().will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP_VIRTUAL(
+        *dispatcher, &DispatcherPub::SignalRecord,
+        HcclResult(DispatcherPub::*)(HcclRtNotify, hccl::Stream&, u32, u64, s32, bool, u64, u32))
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP_VIRTUAL(
+        *dispatcher, &DispatcherPub::SignalWait,
+        HcclResult(DispatcherPub::*)(HcclRtNotify, hccl::Stream&, u32, u32, s32, bool, u32, u32))
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
     std::printf("[ut_CollAllGatherDoubleRingExecutor_Ring]");
     ret = implBase->AllGather(tag, inputMem.ptr(), outputMem.ptr(), count, dataType, stream.ptr());
@@ -539,10 +508,7 @@ TEST_F(HcclImplAlgTestDoubleRingConcurrent, ut_SetInterAlgoToRingIfConcurrentOn)
     params.deviceType = DevType::DEV_TYPE_910_93;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->AtomicInitSet();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -564,14 +530,13 @@ TEST_F(HcclImplAlgTestDoubleRingConcurrent, ut_SetInterAlgoToRingIfConcurrentOn)
     std::string algName;
     std::string newTag;
 
-    std::unique_ptr<CollAlgOperator> allGatherOperator =
-        implBase->implAlg_->GetAlgOperator(HcclCMDType::HCCL_CMD_ALLGATHER);
+    std::unique_ptr<CollAlgOperator> allGatherOperator
+        = implBase->implAlg_->GetAlgOperator(HcclCMDType::HCCL_CMD_ALLGATHER);
     allGatherOperator->SelectAlg(opParam.tag, opParam, algName, newTag);
 
-    std::unique_ptr<CollAlgOperator> reduceScatterOperator =
-        implBase->implAlg_->GetAlgOperator(HcclCMDType::HCCL_CMD_REDUCE_SCATTER);
+    std::unique_ptr<CollAlgOperator> reduceScatterOperator
+        = implBase->implAlg_->GetAlgOperator(HcclCMDType::HCCL_CMD_REDUCE_SCATTER);
     reduceScatterOperator->SelectAlg(opParam.tag, opParam, algName, newTag);
-
 }
 
 TEST_F(HcclImplAlgTestDoubleRingConcurrent, ut_CollReduceScatterDoubleRingConcurrentExecutor_Ring_op)
@@ -585,7 +550,7 @@ TEST_F(HcclImplAlgTestDoubleRingConcurrent, ut_CollReduceScatterDoubleRingConcur
     HcclReduceOp op = HCCL_REDUCE_SUM;
     Stream stream(StreamType::STREAM_TYPE_ONLINE);
 
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
     setenv("HCCL_INTER_HCCS_DISABLE", "FALSE", 1);
     SetFftsSwitch(false);
     ret = InitEnvVarParam();
@@ -596,47 +561,35 @@ TEST_F(HcclImplAlgTestDoubleRingConcurrent, ut_CollReduceScatterDoubleRingConcur
     params.deviceType = DevType::DEV_TYPE_910_93;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->AtomicInitSet();
     EXPECT_EQ(ret, HCCL_SUCCESS);
     implBase->InitCCLbuffer(count, count);
 
-    MOCKER_CPP(&AlgConfigurator::IsHCCSSWNumEqualToTwiceSIONum)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER_CPP(&AlgConfigurator::IsHCCSSWNumEqualToTwiceSIONum).stubs().will(returnValue(true));
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     impl->deviceLogicId_ = 0;
     impl->deviceType_ = DevType::DEV_TYPE_910_93;
     impl->devicePhyId_ = 0;
-    algConfigurator->algType_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER].algoLevel0 =
-        AlgTypeLevel0::ALG_LEVEL0_NP_DOUBLE_RING;
+    algConfigurator->algType_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER].algoLevel0
+        = AlgTypeLevel0::ALG_LEVEL0_NP_DOUBLE_RING;
     algConfigurator->algType_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER].algoLevel1 = AlgTypeLevel1::ALG_LEVEL1_RING;
     impl->topoType_ = TopoType::TOPO_TYPE_NP_DOUBLE_RING;
     algConfigurator->topoType_ = TopoType::TOPO_TYPE_NP_DOUBLE_RING;
     CommInfo tmpComm;
 
-    const std::vector<std::vector<u32>> tmpRingNics = {
-        { 0, 1, 2, 3, 4, 5, 6, 7 },
-        { 0, 1, 2, 3, 4, 5, 6, 7 },
-        { 0, 1, 2, 3, 4, 5, 6, 7 },
-        { 0, 1, 2, 3, 4, 5, 6, 7 }
-    };
+    const std::vector<std::vector<u32>> tmpRingNics
+        = {{0, 1, 2, 3, 4, 5, 6, 7}, {0, 1, 2, 3, 4, 5, 6, 7}, {0, 1, 2, 3, 4, 5, 6, 7}, {0, 1, 2, 3, 4, 5, 6, 7}};
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    ret = implBase->ReduceScatterOutPlace(tag, inputMem.ptr(), outputMem.ptr(), count, dataType, HcclReduceOp::HCCL_REDUCE_SUM, stream.ptr());
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
+    ret = implBase->ReduceScatterOutPlace(
+        tag, inputMem.ptr(), outputMem.ptr(), count, dataType, HcclReduceOp::HCCL_REDUCE_SUM, stream.ptr());
     implBase = nullptr;
 
     InitEnvVarParam();
@@ -654,7 +607,7 @@ TEST_F(HcclImplAlgTestDoubleRingConcurrent, ut_CollAllGatherDoubleRingConcurrent
     HcclReduceOp op = HCCL_REDUCE_SUM;
     Stream stream(StreamType::STREAM_TYPE_ONLINE);
 
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
     SetFftsSwitch(false);
     ret = InitEnvVarParam();
     HcclCommParams params;
@@ -662,57 +615,44 @@ TEST_F(HcclImplAlgTestDoubleRingConcurrent, ut_CollAllGatherDoubleRingConcurrent
     TestConstructParam(params, rankTable);
     params.deviceType = DevType::DEV_TYPE_910_93;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->AtomicInitSet();
     EXPECT_EQ(ret, HCCL_SUCCESS);
     implBase->InitCCLbuffer(count, count);
-    MOCKER_CPP(&AlgConfigurator::IsHCCSSWNumEqualToTwiceSIONum)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER_CPP(&AlgConfigurator::IsHCCSSWNumEqualToTwiceSIONum).stubs().will(returnValue(true));
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
     impl->topoAttr_.deviceLogicId = 0;
     impl->topoAttr_.devicePhyId = 0;
-    algConfigurator->algType_[HcclCMDType::HCCL_CMD_ALLGATHER].algoLevel0 =
-        AlgTypeLevel0::ALG_LEVEL0_NP_DOUBLE_RING;
+    algConfigurator->algType_[HcclCMDType::HCCL_CMD_ALLGATHER].algoLevel0 = AlgTypeLevel0::ALG_LEVEL0_NP_DOUBLE_RING;
     algConfigurator->algType_[HcclCMDType::HCCL_CMD_ALLGATHER].algoLevel1 = AlgTypeLevel1::ALG_LEVEL1_RING;
     impl->topoType_ = TopoType::TOPO_TYPE_NP_DOUBLE_RING;
     algConfigurator->topoType_ = TopoType::TOPO_TYPE_NP_DOUBLE_RING;
 
-    const std::vector<std::vector<u32>> tmpRingNics = {
-        { 0, 1, 2, 3, 4, 5, 6, 7 }
-    };
-    MOCKER_CPP_VIRTUAL(*dispatcher, &DispatcherPub::SignalRecord, HcclResult(DispatcherPub::*)(HcclRtNotify, hccl::Stream &, u32, u64,
-        s32, bool, u64, u32)).stubs().will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP_VIRTUAL(*dispatcher, &DispatcherPub::SignalWait, HcclResult(DispatcherPub::*)(HcclRtNotify, hccl::Stream &, u32, u32,
-        s32, bool, u32, u32)).stubs().will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    const std::vector<std::vector<u32>> tmpRingNics = {{0, 1, 2, 3, 4, 5, 6, 7}};
+    MOCKER_CPP_VIRTUAL(
+        *dispatcher, &DispatcherPub::SignalRecord,
+        HcclResult(DispatcherPub::*)(HcclRtNotify, hccl::Stream&, u32, u64, s32, bool, u64, u32))
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP_VIRTUAL(
+        *dispatcher, &DispatcherPub::SignalWait,
+        HcclResult(DispatcherPub::*)(HcclRtNotify, hccl::Stream&, u32, u32, s32, bool, u32, u32))
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(LocalNotify::Wait)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(LocalNotify::Wait).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(HcclD2DMemcpyAsync)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcclD2DMemcpyAsync).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(AlgTemplateBase::ExecEmptyTask)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(AlgTemplateBase::ExecEmptyTask).stubs().will(returnValue(HCCL_SUCCESS));
 
     std::printf("[ut_collAllGatherDoubleRingConcurrentExecutor_Ring_Largesize]");
 
@@ -730,13 +670,13 @@ TEST_F(HcclImplAlgTestDoubleRingConcurrent, ut_CollReduceScatterSingleRingConcur
     std::string tag = "test";
     u64 count = 8388608;
     HcclDataType dataType = HCCL_DATA_TYPE_FP32;
-    DeviceMem inputMem = DeviceMem::alloc(count*dataType);
-    DeviceMem outputMem = DeviceMem::alloc(count*dataType);
+    DeviceMem inputMem = DeviceMem::alloc(count * dataType);
+    DeviceMem outputMem = DeviceMem::alloc(count * dataType);
 
     HcclReduceOp op = HCCL_REDUCE_SUM;
     Stream stream(StreamType::STREAM_TYPE_ONLINE);
 
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE);
     unsetenv("HCCL_INTER_HCCS_DISABLE");
     SetFftsSwitch(false);
     ret = InitEnvVarParam();
@@ -747,63 +687,51 @@ TEST_F(HcclImplAlgTestDoubleRingConcurrent, ut_CollReduceScatterSingleRingConcur
     params.deviceType = DevType::DEV_TYPE_910_93;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&CollNativeExecutorBase::CheckCommSize)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&CollNativeExecutorBase::CheckCommSize).stubs().will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->AtomicInitSet();
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-
 
     impl->deviceLogicId_ = 0;
     impl->deviceType_ = DevType::DEV_TYPE_910_93;
     impl->devicePhyId_ = 0;
-    algConfigurator->algType_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER].algoLevel0 =
-        AlgTypeLevel0::ALG_LEVEL0_NP_SINGLE_RING;
+    algConfigurator->algType_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER].algoLevel0
+        = AlgTypeLevel0::ALG_LEVEL0_NP_SINGLE_RING;
     algConfigurator->algType_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER].algoLevel1 = AlgTypeLevel1::ALG_LEVEL1_RING;
     impl->topoType_ = TopoType::TOPO_TYPE_NP_SINGLE_RING;
     algConfigurator->topoType_ = TopoType::TOPO_TYPE_NP_SINGLE_RING;
 
-    const std::vector<std::vector<u32>> tmpRingNics = {
-        { 0, 1, 2, 3, 4, 5, 6, 7 }
-    };
+    const std::vector<std::vector<u32>> tmpRingNics = {{0, 1, 2, 3, 4, 5, 6, 7}};
 
-    MOCKER_CPP_VIRTUAL(*dispatcher, &DispatcherPub::SignalRecord, HcclResult(DispatcherPub::*)(HcclRtNotify, hccl::Stream &, u32, u64,
-        s32, bool, u64, u32)).stubs().will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP_VIRTUAL(*dispatcher, &DispatcherPub::SignalWait, HcclResult(DispatcherPub::*)(HcclRtNotify, hccl::Stream &, u32, u32,
-        s32, bool, u32, u32)).stubs().will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP_VIRTUAL(
+        *dispatcher, &DispatcherPub::SignalRecord,
+        HcclResult(DispatcherPub::*)(HcclRtNotify, hccl::Stream&, u32, u64, s32, bool, u64, u32))
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP_VIRTUAL(
+        *dispatcher, &DispatcherPub::SignalWait,
+        HcclResult(DispatcherPub::*)(HcclRtNotify, hccl::Stream&, u32, u32, s32, bool, u32, u32))
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(LocalNotify::Wait)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(LocalNotify::Wait).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(HcclD2DMemcpyAsync)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcclD2DMemcpyAsync).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(AlgTemplateBase::ExecEmptyTask)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(AlgTemplateBase::ExecEmptyTask).stubs().will(returnValue(HCCL_SUCCESS));
 
-    ret = implBase->ReduceScatter(tag, inputMem.ptr(), outputMem.ptr(), count, dataType, HcclReduceOp::HCCL_REDUCE_SUM, stream.ptr());
+    ret = implBase->ReduceScatter(
+        tag, inputMem.ptr(), outputMem.ptr(), count, dataType, HcclReduceOp::HCCL_REDUCE_SUM, stream.ptr());
     implBase = nullptr;
 
     SetFftsSwitch(true);
@@ -934,7 +862,7 @@ TEST_F(HcclImplAlgTestDoubleRingConcurrent, ut_GetRingsOrderByTopoType)
     HcclResult ret = HCCL_SUCCESS;
     ret = InitEnvVarParam();
 
-    std::vector<u32> nicList = { 0, 1, 2, 3, 4, 5, 6, 7 };
+    std::vector<u32> nicList = {0, 1, 2, 3, 4, 5, 6, 7};
     u32 rankSize = 8;
     TopoType topoType = TopoType::TOPO_TYPE_NP_DOUBLE_RING;
     std::vector<std::vector<u32>> res = GetRingsOrderForAnyPath(rankSize, topoType, nicList);

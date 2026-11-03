@@ -17,7 +17,7 @@
 
 namespace hcomm {
 
-HcclResult ResolveRuntimeDevicePhyId(uint32_t &devicePhyId, bool &noDevice);
+HcclResult ResolveRuntimeDevicePhyId(uint32_t& devicePhyId, bool& noDevice);
 
 } // namespace hcomm
 

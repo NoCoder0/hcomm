@@ -18,9 +18,9 @@ namespace Hccl {
 
 class InsTempReduceScatterMesh1D : public InsAlgTemplateBase {
 public:
-    explicit InsTempReduceScatterMesh1D(const RankId virtualRank, const u32 tempRankSize,
-                                     const std::vector<std::vector<RankId>> &tempVTopo,
-                                     const std::map<RankId, u32>            &tempVirtRankMap);
+    explicit InsTempReduceScatterMesh1D(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~InsTempReduceScatterMesh1D() override;
 
     std::string Describe() const override
@@ -28,14 +28,16 @@ public:
         return StringFormat("Template of reduce scatter NHR with tempRankSize [%u].", tempRankSize_);
     }
 
-    HcclResult GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &tempAlgParams,
-                         const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues);
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
-    HcclResult PostCopy(const TemplateDataParams &tempAlgParams, std::vector<InsQuePtr> &tempInsQues);
-    u64 CalcScratchMultiple(const BufferType &inBuffType, const BufferType &outBuffType) const;
+    HcclResult GenExtIns(
+        const TempFuncs& tempFuncs, const TemplateDataParams& tempAlgParams, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues);
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
+    HcclResult PostCopy(const TemplateDataParams& tempAlgParams, std::vector<InsQuePtr>& tempInsQues);
+    u64 CalcScratchMultiple(const BufferType& inBuffType, const BufferType& outBuffType) const;
+
 private:
-    HcclResult RunReduceScatter(const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues,
-                                const TemplateDataParams &tempAlgParams);
+    HcclResult RunReduceScatter(
+        const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues, const TemplateDataParams& tempAlgParams);
     RankId GetRankFromMap(const u32 rankIdx);
     vector<u64> processSize_{0};
     vector<u64> linkSliceOffsetVec_{0};
@@ -43,4 +45,4 @@ private:
 
 } // namespace Hccl
 
-#endif //OPEN_HCCL_INS_TEMP_REDUCE_SCATTER_MESH_H
+#endif // OPEN_HCCL_INS_TEMP_REDUCE_SCATTER_MESH_H

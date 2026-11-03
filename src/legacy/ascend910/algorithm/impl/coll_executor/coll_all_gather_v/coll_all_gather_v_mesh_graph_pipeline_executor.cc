@@ -12,19 +12,20 @@
 
 namespace hccl {
 CollAllGatherVMeshGraphPipelineExecutor::CollAllGatherVMeshGraphPipelineExecutor(
-    const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher> &topoMatcher)
+    const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher>& topoMatcher)
     : CollAllGatherVExecutor(dispatcher, topoMatcher)
 {}
 
-HcclResult CollAllGatherVMeshGraphPipelineExecutor::CalcStreamNum(u32 &streamNum)
+HcclResult CollAllGatherVMeshGraphPipelineExecutor::CalcStreamNum(u32& streamNum)
 {
     u32 totalStreamNum = topoAttr_.deviceNumPerAggregation + 1U;
     streamNum = totalStreamNum - 1U;
-    HCCL_INFO("[CollAllGatherVMeshGraphPipelineExecutor][CalcStreamNum] tag[%s] streamNum[%u]", tag_.c_str(), streamNum);
+    HCCL_INFO(
+        "[CollAllGatherVMeshGraphPipelineExecutor][CalcStreamNum] tag[%s] streamNum[%u]", tag_.c_str(), streamNum);
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherVMeshGraphPipelineExecutor::CalcCommInfo(std::vector<LevelNSubCommTransport> &opTransport)
+HcclResult CollAllGatherVMeshGraphPipelineExecutor::CalcCommInfo(std::vector<LevelNSubCommTransport>& opTransport)
 {
     TransportMemType inputType = TransportMemType::RESERVED;
     TransportMemType outputType = TransportMemType::RESERVED;
@@ -35,17 +36,18 @@ HcclResult CollAllGatherVMeshGraphPipelineExecutor::CalcCommInfo(std::vector<Lev
 }
 
 HcclResult CollAllGatherVMeshGraphPipelineExecutor::CalcTransportMemType(
-    TransportMemType &inputType, TransportMemType &outputType)
+    TransportMemType& inputType, TransportMemType& outputType) const
 {
     inputType = TransportMemType::PARAM_INPUT;
     outputType = TransportMemType::PARAM_OUTPUT;
-    HCCL_INFO("[CollAllGatherVMeshGraphPipelineExecutor][CalcTransportMemType]tag[%s] inputType[%d], outputType[%d]",
+    HCCL_INFO(
+        "[CollAllGatherVMeshGraphPipelineExecutor][CalcTransportMemType]tag[%s] inputType[%d], outputType[%d]",
         tag_.c_str(), inputType, outputType);
     return HCCL_SUCCESS;
 }
 
 HcclResult CollAllGatherVMeshGraphPipelineExecutor::CalcLevel0CommInfo(
-    TransportMemType inputType, TransportMemType outputType, std::vector<LevelNSubCommTransport> &opTransport)
+    TransportMemType inputType, TransportMemType outputType, std::vector<LevelNSubCommTransport>& opTransport)
 {
     CommParaInfo commParaInfo(COMM_LEVEL0, CommType::COMM_TAG_MESH);
     commParaInfo.meshSinglePlane = true;
@@ -55,17 +57,17 @@ HcclResult CollAllGatherVMeshGraphPipelineExecutor::CalcLevel0CommInfo(
 
 // PipeLine模式下使用Ring算法
 HcclResult CollAllGatherVMeshGraphPipelineExecutor::CalcLevel1CommInfo(
-    TransportMemType inputType, TransportMemType outputType, std::vector<LevelNSubCommTransport> &opTransport)
+    TransportMemType inputType, TransportMemType outputType, std::vector<LevelNSubCommTransport>& opTransport)
 {
     CommParaInfo commParaInfo(COMM_LEVEL1, CommType::COMM_TAG_RING_INNER);
     CHK_RET(CalcCommPlaneInfo(tag_, commParaInfo, opTransport[COMM_LEVEL1], inputType, outputType));
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherVMeshGraphPipelineExecutor::KernelRun(const OpParam &param, ExecMem &execMem)
+HcclResult CollAllGatherVMeshGraphPipelineExecutor::KernelRun(const OpParam& param, ExecMem& execMem)
 {
-    HCCL_CONFIG_INFO(HCCL_ALG,
-        "[CollAllGatherVMeshGraphPipelineExecutor][KernelRun]AllGatherMeshGraphPipelineExecutor begins.");
+    HCCL_CONFIG_INFO(
+        HCCL_ALG, "[CollAllGatherVMeshGraphPipelineExecutor][KernelRun]AllGatherMeshGraphPipelineExecutor begins.");
 
     // 先获取 comm level0 和 comm level1 的value
     CHK_RET(CheckCommSize(COMM_LEVEL0, COMM_INDEX_0 + 1));
@@ -89,19 +91,20 @@ HcclResult CollAllGatherVMeshGraphPipelineExecutor::KernelRun(const OpParam &par
     // 激活从流
     CHK_RET(ActiveSlaveStreams(param.stream));
 
-    HcomCollOpInfo opInfo = {
-        "", execMem.inputPtr, execMem.outputPtr, 0, param.VDataDes.dataType, 0, HCCL_REDUCE_RESERVED};
+    HcomCollOpInfo opInfo
+        = {"", execMem.inputPtr, execMem.outputPtr, 0, param.VDataDes.dataType, 0, HCCL_REDUCE_RESERVED, 0};
 
-    std::unique_ptr<AlgTemplateBase> tempAlg =
-        AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_ALL_GATHER_V_GRAPH_PIPELINE, dispatcher_);
+    std::unique_ptr<AlgTemplateBase> tempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(
+        TemplateType::TEMPLATE_ALL_GATHER_V_GRAPH_PIPELINE, dispatcher_);
     CHK_SMART_PTR_NULL(tempAlg);
-    CHK_RET(tempAlg->Prepare(&opInfo, topoAttr_.userRank, execMem.count, execMem.inputMem, execMem.outputMem,
-                             level0CommInfo, level1CommInfo,  const_cast<Stream &>(param.stream),
-                             algResResp_->slaveStreams, algResResp_->notifiesMain, algResResp_->notifiesAux, outputSlices));
+    CHK_RET(tempAlg->Prepare(
+        &opInfo, topoAttr_.userRank, execMem.count, execMem.inputMem, execMem.outputMem, level0CommInfo, level1CommInfo,
+        const_cast<Stream&>(param.stream), algResResp_->slaveStreams, algResResp_->notifiesMain,
+        algResResp_->notifiesAux, outputSlices));
     CHK_RET(tempAlg->RunAsync());
     return HCCL_SUCCESS;
 }
 
 REGISTER_EXEC("AllGatherVMeshGraphPipelineExecutor", AllGatherVGraphPipeline, CollAllGatherVMeshGraphPipelineExecutor);
 
-}  // namespace hccl
+} // namespace hccl

@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -28,36 +28,21 @@
 using namespace std;
 using namespace hccl;
 
-
-class CommInnerTest : public testing::Test
-{
+class CommInnerTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "\033[36m--CommInnerTest SetUP--\033[0m" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "\033[36m--CommInnerTest TearDown--\033[0m" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "\033[36m--CommInnerTest SetUP--\033[0m" << std::endl; }
+    static void TearDownTestCase() { std::cout << "\033[36m--CommInnerTest TearDown--\033[0m" << std::endl; }
     // Some expensive resource shared by all tests.
     virtual void SetUp()
     {
         s32 portNum = -1;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
         std::cout << "A Test SetUP" << std::endl;
     }
-    virtual void TearDown()
-    {
-        std::cout << "A Test TearDown" << std::endl;
-    }
+    virtual void TearDown() { std::cout << "A Test TearDown" << std::endl; }
 };
 
-typedef struct innerpara_struct_inner
-{
+typedef struct innerpara_struct_inner {
     std::string collectiveId;
     u32 userRank;
     u32 user_rank_size;
@@ -69,7 +54,7 @@ typedef struct innerpara_struct_inner
     std::vector<u32> user_ranks;
     std::string tag;
     HcclDispatcher dispatcher;
-    IntraExchanger *exchanger;
+    IntraExchanger* exchanger;
     std::vector<RankInfo> para_vector;
     DeviceMem inputMem;
     DeviceMem outputMem;
@@ -80,10 +65,10 @@ HcclDispatcher get_inner_dispatcher(s32 devid)
 {
     HcclResult ret = HCCL_SUCCESS;
 
-     // 创建dispatcher
+    // 创建dispatcher
     DevType chipType = DevType::DEV_TYPE_910;
 
-    void *dispatcher = nullptr;
+    void* dispatcher = nullptr;
     ret = HcclDispatcherInit(DispatcherType::DISPATCHER_NORMAL, devid, &dispatcher);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_NE(dispatcher, nullptr);
@@ -135,11 +120,11 @@ TEST_F(CommInnerTest, ut_get_rank_by_userrank1)
     std::string collective_id_tmp = collectiveId;
     IntraExchanger exchanger{};
 
-
     TopoType topoFlag = TopoType::TOPO_TYPE_8P_RING;
     std::map<HcclIpAddress, HcclNetDevCtx> netDevCtxMap;
-    CommBase* comm_inner = new CommBase(collective_id_tmp, userRank, user_rank_size, 0, 1, para_vector, topoFlag,
-        nullptr, nullptr, netDevCtxMap, exchanger, inputMem, outputMem, true);
+    CommBase* comm_inner = new CommBase(
+        collective_id_tmp, userRank, user_rank_size, 0, 1, para_vector, topoFlag, nullptr, nullptr, netDevCtxMap,
+        exchanger, inputMem, outputMem, true);
 
     ret = comm_inner->Init();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -156,7 +141,6 @@ TEST_F(CommInnerTest, ut_get_rank_by_userrank1)
 
     delete comm_inner;
 }
-
 
 TEST_F(CommInnerTest, ut_get_socket_timeout_err_msg)
 {
@@ -202,11 +186,11 @@ TEST_F(CommInnerTest, ut_get_socket_timeout_err_msg)
     std::string collective_id_tmp = collectiveId;
     IntraExchanger exchanger{};
 
-
     TopoType topoFlag = TopoType::TOPO_TYPE_8P_RING;
     std::map<HcclIpAddress, HcclNetDevCtx> netDevCtxMap;
-    CommBase* comm_inner = new CommBase(collective_id_tmp, userRank, user_rank_size, 0, 1, para_vector, topoFlag,
-        nullptr, nullptr, netDevCtxMap, exchanger, inputMem, outputMem, true);
+    CommBase* comm_inner = new CommBase(
+        collective_id_tmp, userRank, user_rank_size, 0, 1, para_vector, topoFlag, nullptr, nullptr, netDevCtxMap,
+        exchanger, inputMem, outputMem, true);
 
     delete comm_inner;
 }
@@ -241,13 +225,13 @@ TEST_F(CommInnerTest, ut_get_userrank_by_rank1)
     std::string collective_id_tmp = collectiveId;
     IntraExchanger exchanger{};
 
-
     TopoType topoFlag = TopoType::TOPO_TYPE_8P_RING;
     DeviceMem inputMem = DeviceMem::alloc(128 * 3);
     DeviceMem outputMem = DeviceMem::alloc(128 * 3);
     std::map<HcclIpAddress, HcclNetDevCtx> netDevCtxMap;
-    CommBase* comm_inner = new CommBase(collective_id_tmp, userRank, user_rank_size, userRank, 1,  para_vector, topoFlag,
-        nullptr, nullptr, netDevCtxMap, exchanger, inputMem, outputMem, true);
+    CommBase* comm_inner = new CommBase(
+        collective_id_tmp, userRank, user_rank_size, userRank, 1, para_vector, topoFlag, nullptr, nullptr, netDevCtxMap,
+        exchanger, inputMem, outputMem, true);
 
     ret = comm_inner->Init();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -297,8 +281,9 @@ TEST_F(CommInnerTest, ut_get_userrank_by_rank_with_err1)
     DeviceMem inputMem = DeviceMem::alloc(128 * 3);
     DeviceMem outputMem = DeviceMem::alloc(128 * 3);
     std::map<HcclIpAddress, HcclNetDevCtx> netDevCtxMap;
-    CommBase* comm_inner = new CommBase(collective_id_tmp, userRank, user_rank_size, 0, 1, para_vector, topoFlag,
-        nullptr, nullptr, netDevCtxMap, exchanger, inputMem, outputMem, true);
+    CommBase* comm_inner = new CommBase(
+        collective_id_tmp, userRank, user_rank_size, 0, 1, para_vector, topoFlag, nullptr, nullptr, netDevCtxMap,
+        exchanger, inputMem, outputMem, true);
 
     ret = comm_inner->Init();
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -312,7 +297,7 @@ TEST_F(CommInnerTest, ut_get_userrank_by_rank_with_err1)
 
 TEST_F(CommInnerTest, print_error_connection)
 {
-    HcclResult ret=HCCL_SUCCESS;
+    HcclResult ret = HCCL_SUCCESS;
 
     s32 userRank = 0;
 
@@ -338,8 +323,6 @@ TEST_F(CommInnerTest, print_error_connection)
 
     std::string collective_id_tmp = collectiveId;
 
-    std::map<u32, std::vector<HcclIpAddress> > dstInterServerMap;
-    std::map<u32, std::vector<HcclIpAddress> > dstInterClientMap;
-
-
+    std::map<u32, std::vector<HcclIpAddress>> dstInterServerMap;
+    std::map<u32, std::vector<HcclIpAddress>> dstInterClientMap;
 }

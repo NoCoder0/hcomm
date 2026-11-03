@@ -15,8 +15,8 @@
 #include <string>
 
 namespace HcclSim {
-void CmdTableShow(std::string &tableName);
-bool CmdTableUpdate(const std::string &table, const uint64_t id, const std::string &column, const std::string &value);
-}
+void CmdTableShow(std::string& tableName);
+bool CmdTableUpdate(const std::string& table, const uint64_t id, const std::string& column, const std::string& value);
+} // namespace HcclSim
 
 #endif

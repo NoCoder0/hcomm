@@ -10,7 +10,8 @@
 
 #include "gtest/gtest.h"
 
-GTEST_API_ int main(int argc, char **argv) {
+GTEST_API_ int main(int argc, char** argv)
+{
     // testcase调试代码，只跑特定的用例
     // testing::GTEST_FLAG(filter) = "All2AllCCUHFTest.all2all_ccu_case_test_2Die";
     testing::InitGoogleTest(&argc, argv);

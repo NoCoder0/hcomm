@@ -5,7 +5,7 @@
  * Please refer to the License for details. You may not use this file except in compliance with the License.
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See the License in the root of the software repository for the full text of the License.
+ * See LICENSE in the root of the software repository for the full text of the License.
  */
 
 /*!
@@ -31,15 +31,16 @@
 namespace context_ascendc {
 class ContextBuilderImpl;
 class ValueHolderImpl;
-using TilingFunc =  uint32_t (*)(gert::TilingContext *);
+using TilingFunc = uint32_t (*)(gert::TilingContext*);
 class OpTilingRegistryImpl;
 class ContextBuilder;
 class OpTilingRegistry {
 public:
     OpTilingRegistry() = default;
     ~OpTilingRegistry() = default;
-    TilingFunc GetTilingFunc(const char *opType) const;
-    bool LoadTilingLibrary(const char *tilingSoPath) const;
+    TilingFunc GetTilingFunc(const char* opType) const;
+    bool LoadTilingLibrary(const char* tilingSoPath) const;
+
 private:
     std::shared_ptr<OpTilingRegistryImpl> impl_;
 };
@@ -47,72 +48,78 @@ private:
 struct KernelRunContextHolder {
     KernelRunContextHolder();
     ~KernelRunContextHolder();
-    template<typename T>
-    T *GetContext() const
+    template <typename T>
+    T* GetContext() const
     {
         return reinterpret_cast<T*>(kernelContext);
     }
-    gert::ComputeNodeInfo *MutableComputeNodeInfo();
+    gert::ComputeNodeInfo* MutableComputeNodeInfo();
 
     std::unique_ptr<ValueHolderImpl> valueHolder;
     std::unique_ptr<uint8_t[]> computeNodeExtendHolder;
 
-    KernelRunContext *context {nullptr};
+    KernelRunContext* context{nullptr};
 
 private:
     friend class ContextBuilder;
     friend class ContextBuilderImpl;
-    gert::KernelContext *kernelContext{nullptr};
-    KernelRunContextHolder(gert::ContextHolder<gert::KernelContext> &&ctxHolder, gert::KernelContext *kernelContext,
-        KernelRunContext *context);
-    KernelRunContextHolder(gert::ContextHolder<gert::TilingContext> &&ctxHolder,
-        std::vector<std::unique_ptr<uint8_t[]>> &&inputTensorHolder, gert::KernelContext *kernelContext);
+    gert::KernelContext* kernelContext{nullptr};
+    KernelRunContextHolder(
+        gert::ContextHolder<gert::KernelContext>&& ctxHolder, gert::KernelContext* kernelContext,
+        KernelRunContext* context);
+    KernelRunContextHolder(
+        gert::ContextHolder<gert::TilingContext>&& ctxHolder,
+        std::vector<std::unique_ptr<uint8_t[]>>&& inputTensorHolder, gert::KernelContext* kernelContext);
 };
 
 class ContextBuilder {
 public:
     ContextBuilder();
     ~ContextBuilder();
-    ContextBuilder(ContextBuilder &&kernelRunContextBuilder) = delete;
-    ContextBuilder &operator=(ContextBuilder &&kernelRunContextBuilder) = delete;
+    ContextBuilder(ContextBuilder&& kernelRunContextBuilder) = delete;
+    ContextBuilder& operator=(ContextBuilder&& kernelRunContextBuilder) = delete;
 
     // kernel context builder
-    ContextBuilder &Inputs(std::vector<void *> inputs);
-    ContextBuilder &Outputs(std::vector<void *> outputs);
+    ContextBuilder& Inputs(std::vector<void*> inputs);
+    ContextBuilder& Outputs(std::vector<void*> outputs);
     std::shared_ptr<KernelRunContextHolder> BuildKernelRunContext();
 
     // OpInfo
-    ContextBuilder &NodeIoNum(size_t inputNum, size_t outputNum);
-    ContextBuilder &SetOpNameType(const std::string& opName, const std::string& opType);
-    ContextBuilder &IrInstanceNum(std::vector<uint32_t> instanceNum);
-    ContextBuilder &AddInputTd(int32_t index, ge::DataType dtype, ge::Format originFormat,
-        ge::Format storageFormat, gert::StorageShape storageShape);
-    ContextBuilder &AddOutputTd(int32_t index, ge::DataType dtype, ge::Format originFormat,
-        ge::Format storageFormat, gert::StorageShape storageShape);
-    ContextBuilder &AddInputTd(int32_t index, ge::DataType dtype, ge::Format originFormat,
-        ge::Format storageFormat, gert::StorageShape storageShape, void* constValues);
-    ContextBuilder &AddInputTd(int32_t index, ge::DataType dtype, ge::Format originFormat,
-        ge::Format storageFormat, gert::StorageShape storageShape, const std::string &filePath);
-    ContextBuilder &AddAttr(const std::string& attrName, int64_t attrValue);
-    ContextBuilder &AddAttr(const std::string& attrName, bool attrValue);
-    ContextBuilder &AddAttr(const std::string& attrName, const std::string& attrValue);
-    ContextBuilder &AddAttr(const std::string& attrName, float attrValue);
-    ContextBuilder &AddAttr(const std::string& attrName, const std::vector<float>& attrValue);
-    ContextBuilder &AddAttr(const std::string& attrName, const std::vector<bool>& attrValue);
-    ContextBuilder &AddAttr(const std::string& attrName, const std::vector<int64_t>& attrValue);
-    ContextBuilder &AddAttr(const std::string& attrName, const std::vector<std::string>& attrValue);
-    ContextBuilder &AddAttr(const std::string& attrName, const std::vector<std::vector<int64_t>>& attrValue);
+    ContextBuilder& NodeIoNum(size_t inputNum, size_t outputNum);
+    ContextBuilder& SetOpNameType(const std::string& opName, const std::string& opType);
+    ContextBuilder& IrInstanceNum(std::vector<uint32_t> instanceNum);
+    ContextBuilder& AddInputTd(
+        int32_t index, ge::DataType dtype, ge::Format originFormat, ge::Format storageFormat,
+        gert::StorageShape storageShape);
+    ContextBuilder& AddOutputTd(
+        int32_t index, ge::DataType dtype, ge::Format originFormat, ge::Format storageFormat,
+        gert::StorageShape storageShape);
+    ContextBuilder& AddInputTd(
+        int32_t index, ge::DataType dtype, ge::Format originFormat, ge::Format storageFormat,
+        gert::StorageShape storageShape, void* constValues);
+    ContextBuilder& AddInputTd(
+        int32_t index, ge::DataType dtype, ge::Format originFormat, ge::Format storageFormat,
+        gert::StorageShape storageShape, const std::string& filePath);
+    ContextBuilder& AddAttr(const std::string& attrName, int64_t attrValue);
+    ContextBuilder& AddAttr(const std::string& attrName, bool attrValue);
+    ContextBuilder& AddAttr(const std::string& attrName, const std::string& attrValue);
+    ContextBuilder& AddAttr(const std::string& attrName, float attrValue);
+    ContextBuilder& AddAttr(const std::string& attrName, const std::vector<float>& attrValue);
+    ContextBuilder& AddAttr(const std::string& attrName, const std::vector<bool>& attrValue);
+    ContextBuilder& AddAttr(const std::string& attrName, const std::vector<int64_t>& attrValue);
+    ContextBuilder& AddAttr(const std::string& attrName, const std::vector<std::string>& attrValue);
+    ContextBuilder& AddAttr(const std::string& attrName, const std::vector<std::vector<int64_t>>& attrValue);
 
     // Tiling Context Builder
-    ContextBuilder &CompileInfo(void *compileInfo);
-    ContextBuilder &PlatformInfo(void *platformInfo);
-    ContextBuilder &AddPlatformInfo(const char* customSocVersion);
-    ContextBuilder &TilingData(void *tilingData);
-    ContextBuilder &Workspace(gert::ContinuousVector *workspace);
+    ContextBuilder& CompileInfo(void* compileInfo);
+    ContextBuilder& PlatformInfo(void* platformInfo);
+    ContextBuilder& AddPlatformInfo(const char* customSocVersion);
+    ContextBuilder& TilingData(void* tilingData);
+    ContextBuilder& Workspace(gert::ContinuousVector* workspace);
     std::shared_ptr<KernelRunContextHolder> BuildTilingContext();
 
 private:
     std::unique_ptr<ContextBuilderImpl> impl_;
 };
-}  // namespace context_ascendc
+} // namespace context_ascendc
 #endif

@@ -29,4 +29,3 @@ uint32_t BkfPuberConnPackHelloAck(BkfPuberConn *conn, BkfMsgCoder *coder);
 #endif
 
 #endif
-

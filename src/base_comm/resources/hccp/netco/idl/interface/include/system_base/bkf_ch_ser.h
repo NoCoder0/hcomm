@@ -64,4 +64,3 @@ void BkfChSerClose(BkfChSerMng *chMng, BkfChSerConnId *connId);
 #endif
 
 #endif
-

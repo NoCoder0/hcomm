@@ -16,4 +16,5 @@ int RaRsTlvInit(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBu
 int RaRsTlvDeinit(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen);
 int RaRsTlvRequest(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen);
 int RaRsTlvRequestV2(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen);
+int RaRsCustomChannel(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen);
 #endif // RA_ADP_TLV_H

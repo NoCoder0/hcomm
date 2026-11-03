@@ -7,60 +7,80 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #include "ub_mem_endpoint.h"
 #include "log.h"
-#include "ub_mem.h"
- 
+#include "hccl/hccl_res.h"
+#include "adapter_rts_common.h"
+#include "common/dev_type_utils_pub.h"
+#include "ub_mem_reged_mem_mgr.h"
+#include "proc_reged_mem_mgr_cache.h"
+#include "base_comm_node_accessors.h"
+#include "hccl_mem_defs.h"
+#include "common/orion_adpt_utils_pub.h"
+
 namespace hcomm {
-UbMemEndpoint::UbMemEndpoint(const EndpointDesc &endpointDesc) : Endpoint(endpointDesc){}
+UbMemEndpoint::UbMemEndpoint(const EndpointDesc& endpointDesc) : Endpoint(endpointDesc) {}
+
+UbMemEndpoint::~UbMemEndpoint() noexcept { (void)ReleaseCache(); }
+
+HcclResult
+UbMemEndpoint::AttachCache(const MemMgrCacheKey& key, const std::function<std::shared_ptr<LocalRegedMemMgr>()>& creator)
+{
+    cacheKey_ = key;
+    cacheAlias_ = GetProcRegedMemMgrCacheHolder();
+    // cache key 含 protocol 唯一决定具体 mgr 类型，static_pointer_cast 转换安全
+    localMemMgr_ = std::static_pointer_cast<UbMemRegedMemMgr>(cacheAlias_->GetOrCreate(cacheKey_, creator));
+    if (localMemMgr_ == nullptr) {
+        HCCL_ERROR("[UbMemEndpoint][%s] localMemMgr_ is null", __func__);
+        CHK_RET(ReleaseCache());
+        return HCCL_E_INTERNAL;
+    }
+    return HCCL_SUCCESS;
+}
+
+HcclResult UbMemEndpoint::ReleaseCache()
+{
+    if (cacheAlias_ == nullptr) {
+        HCCL_WARNING("[UbMemEndpoint][%s] cacheAlias_ is null, nothing to release", __func__);
+        return HCCL_E_PTR;
+    }
+    cacheAlias_->Release(cacheKey_);
+    cacheAlias_.reset();
+    return HCCL_SUCCESS;
+}
 
 HcclResult UbMemEndpoint::Init()
 {
-    EXCEPTION_CATCH(regedMemMgr_ = std::make_unique<UbMemRegedMemMgr>(), return HCCL_E_INTERNAL);
+    CHK_RET(CheckDevTypeSupport(
+        {DevType::DEV_TYPE_950, DevType::DEV_TYPE_960}, endpointDesc_.protocol, endpointDesc_.loc.locType));
+
+    Hccl::IpAddress ipAddr{};
+    CHK_RET(CommAddrToIpAddress(endpointDesc_.commAddr, ipAddr));
+
+    s32 devId = 0;
+    CHK_RET(hrtGetDevice(&devId));
+    Hccl::HccpHdcManager::GetInstance().Init(devId);
+    u32 devPhyId = 0;
+    CHK_RET(hrtGetDevicePhyIdByIndex(devId, devPhyId));
+
+    if (endpointDesc_.loc.device.devPhyId != devPhyId) {
+        HCCL_WARNING(
+            "[UbMemEndpoint][%s] endpointDesc.loc.device.devPhyId[%u] incorrect", __func__,
+            endpointDesc_.loc.device.devPhyId);
+        endpointDesc_.loc.device.devPhyId = devPhyId;
+    }
+
+    MemMgrCacheKey key{devPhyId, COMM_PROTOCOL_UB_MEM, ipAddr, LocTypeToPortType(endpointDesc_.loc.locType)};
+    auto createMgr = []() {
+        return std::make_shared<UbMemRegedMemMgr>();
+    };
+    CHK_RET(AttachCache(key, createMgr));
+
+    // ServerSocketContext：参照 UrmaEndpoint，以 devPhyId/locType/commAddr 构造，供 HcommEndpointStartListen 真实监听
+    serverSocketContext_.emplace(
+        Hccl::ConnectProtoType::UB, devPhyId, endpointDesc_.loc.locType, endpointDesc_.commAddr);
 
     return HcclResult::HCCL_SUCCESS;
 }
-
-HcclResult UbMemEndpoint::ServerSocketListen(const uint32_t port)
-{
-    (void)port;
-    HCCL_INFO("UbMemEndpoint ServerSocketListen is not supported");
-    return HCCL_SUCCESS;
-}
-
-HcclResult UbMemEndpoint::RegisterMemory(HcommMem mem, const char *memTag, void **memHandle)
-{
-    CHK_RET(this->regedMemMgr_->RegisterMemory(mem, memTag, memHandle));
-    return HCCL_SUCCESS;
-}
-
-HcclResult UbMemEndpoint::UnregisterMemory(void* memHandle)
-{
-    CHK_RET(this->regedMemMgr_->UnregisterMemory(memHandle));
-    return HCCL_SUCCESS;
-}
-
-HcclResult UbMemEndpoint::MemoryExport(void *memHandle, void **memDesc, uint32_t *memDescLen)
-{
-    HCCL_INFO("UbMemEndpoint MemoryExport is not supported");
-    return HCCL_SUCCESS;
-}
-
-HcclResult UbMemEndpoint::MemoryImport(const void *memDesc, uint32_t descLen, HcommMem *outMem)
-{
-    HCCL_INFO("UbMemEndpoint MemoryImport is not supported");
-    return HCCL_SUCCESS;
-}
-
-HcclResult UbMemEndpoint::MemoryUnimport(const void *memDesc, uint32_t descLen)
-{
-    HCCL_INFO("UbMemEndpoint MemoryUnimport is not supported");
-    return HCCL_SUCCESS;
-}
-
-HcclResult UbMemEndpoint::GetAllMemHandles(void **memHandles, uint32_t *memHandleNum)
-{
-    HCCL_INFO("UbMemEndpoint GetAllMemHandles is not supported");
-    return HCCL_SUCCESS;
-}
-}
+} // namespace hcomm

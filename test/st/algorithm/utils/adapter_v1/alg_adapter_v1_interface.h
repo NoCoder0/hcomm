@@ -22,9 +22,9 @@ class TaskQuesGenerator {
 public:
     TaskQuesGenerator() = default;
     ~TaskQuesGenerator();
-    HcclResult Run(CheckerOpParam &checkerOpParam, TopoMeta &topoMeta);
+    HcclResult Run(CheckerOpParam& checkerOpParam, TopoMeta& topoMeta);
 };
 
-}
+} // namespace hccl
 
 #endif

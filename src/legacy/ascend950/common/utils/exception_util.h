@@ -17,122 +17,125 @@
 #include <string>
 #include <exception>
 
-#define MACRO_THROW(EXCEPTION, MSG)                                                                                    \
-    do {                                                                                                               \
-        HCCL_ERROR("%s", (MSG).c_str());                                                                               \
-        throw EXCEPTION(MSG);                                                                                          \
+#define MACRO_THROW(EXCEPTION, MSG)      \
+    do {                                 \
+        HCCL_ERROR("%s", (MSG).c_str()); \
+        throw EXCEPTION(MSG);            \
     } while (0)
 
-#define DECTOR_TRY_CATCH(classname, expr)                                                                              \
-    try {                                                                                                              \
-        expr;                                                                                                          \
-    } catch (HcclException & e) {                                                                                      \
-        HCCL_ERROR("Exception occurred: %s", e.what());                                                                                          \
-    } catch (std::exception & e) {                                                                                     \
-        HCCL_ERROR("Exception occurred: %s", e.what());                                                                                          \
-    } catch (...) {                                                                                                    \
-        HCCL_ERROR("Unknown error occurs when destructor object of class \"%s\"", classname);                          \
+#define DECTOR_TRY_CATCH(classname, expr)                                                     \
+    try {                                                                                     \
+        expr;                                                                                 \
+    } catch (Hccl::HcclException & e) {                                                       \
+        HCCL_ERROR("Exception occurred: %s", e.what());                                       \
+    } catch (std::exception & e) {                                                            \
+        HCCL_ERROR("Exception occurred: %s", e.what());                                       \
+    } catch (...) {                                                                           \
+        HCCL_ERROR("Unknown error occurs when destructor object of class \"%s\"", classname); \
     }
 
-#define TRY_CATCH_THROW(EXCEPTION, MSG, EXPR)                                                                          \
-    do {                                                                                                               \
-        try {                                                                                                          \
-            EXPR;                                                                                                      \
-        } catch (HcclException & e) {                                                                                  \
-            THROW<EXCEPTION>(StringFormat("%s, %s", e.what(), MSG.c_str()));                                           \
-        } catch (std::exception & e) {                                                                                 \
-            THROW<EXCEPTION>(StringFormat("%s, %s", e.what(), MSG.c_str()));                                           \
-        } catch (...) {                                                                                                \
-            THROW<EXCEPTION>(StringFormat("Unknown error occurs, %s", MSG.c_str()));                                   \
-        }                                                                                                              \
+#define TRY_CATCH_THROW(EXCEPTION, MSG, EXPR)                                              \
+    do {                                                                                   \
+        try {                                                                              \
+            EXPR;                                                                          \
+        } catch (Hccl::HcclException & e) {                                                \
+            Hccl::THROW<EXCEPTION>(StringFormat("%s, %s", e.what(), MSG.c_str()));         \
+        } catch (std::exception & e) {                                                     \
+            Hccl::THROW<EXCEPTION>(StringFormat("%s, %s", e.what(), MSG.c_str()));         \
+        } catch (...) {                                                                    \
+            Hccl::THROW<EXCEPTION>(StringFormat("Unknown error occurs, %s", MSG.c_str())); \
+        }                                                                                  \
     } while (0)
 
-#define TRY_CATCH_RETURN(expr)                                                                                         \
-    do {                                                                                                               \
-        try {                                                                                                          \
-            expr;                                                                                                      \
-        } catch (HcclException & e) {                                                                                  \
-            HCCL_ERROR("Exception occurred: %s", e.what());                                                            \
-            auto backTraces = e.GetBackTraceStrings();                                                                 \
-            std::for_each(backTraces.begin(), backTraces.end(), [](string item) {                                      \
-                HCCL_INFO("backTraces item: %s", item.c_str());                                                        \
-            });                                                                                                        \
-            return e.GetErrorCode();                                                                                   \
-        } catch (exception & e) {                                                                                      \
-            HCCL_ERROR("Exception occurred: %s", e.what());                                                            \
-            return HcclResult::HCCL_E_INTERNAL;                                                                        \
-        } catch (...) {                                                                                                \
-            HCCL_ERROR("Unkown error occurs!");                                                                        \
-            return HcclResult::HCCL_E_INTERNAL;                                                                        \
-        }                                                                                                              \
+#define TRY_CATCH_RETURN(expr)                                                         \
+    do {                                                                               \
+        try {                                                                          \
+            expr;                                                                      \
+        } catch (Hccl::HcclException & e) {                                            \
+            HCCL_ERROR("Exception occurred: %s", e.what());                            \
+            auto backTraces = e.GetBackTraceStrings();                                 \
+            std::for_each(backTraces.begin(), backTraces.end(), [](std::string item) { \
+                HCCL_INFO("backTraces item: %s", item.c_str());                        \
+            });                                                                        \
+            return e.GetErrorCode();                                                   \
+        } catch (std::exception & e) {                                                 \
+            HCCL_ERROR("Exception occurred: %s", e.what());                            \
+            return HcclResult::HCCL_E_INTERNAL;                                        \
+        } catch (...) {                                                                \
+            HCCL_ERROR("Unknown error occurs!");                                       \
+            return HcclResult::HCCL_E_INTERNAL;                                        \
+        }                                                                              \
     } while (0)
 
-#define TRY_CATCH_PROCESS_THROW(EXCEPTION, EXPR, MSG, PROCESS)                                                         \
-   do {                                                                                                                \
-        try {                                                                                                          \
-            EXPR;                                                                                                      \
-        } catch (HcclException & e) {                                                                                  \
-            PROCESS;                                                                                                   \
-            HCCL_ERROR("%s due to %s", MSG, e.what());                                                                 \
-            throw e;                                                                                                   \
-        } catch (std::exception & e) {                                                                                 \
-            PROCESS;                                                                                                   \
-            MACRO_THROW(EXCEPTION, StringFormat("%s due to %s", MSG, e.what()));                                       \
-        } catch (...) {                                                                                                \
-            PROCESS;                                                                                                   \
-            MACRO_THROW(EXCEPTION, StringFormat("%s due to: Unknown error occurs!", MSG));                             \
-        }                                                                                                              \
+#define TRY_CATCH_PROCESS_THROW(EXCEPTION, EXPR, MSG, PROCESS)                             \
+    do {                                                                                   \
+        try {                                                                              \
+            EXPR;                                                                          \
+        } catch (Hccl::HcclException & e) {                                                \
+            PROCESS;                                                                       \
+            HCCL_ERROR("%s due to %s", MSG, e.what());                                     \
+            throw e;                                                                       \
+        } catch (std::exception & e) {                                                     \
+            PROCESS;                                                                       \
+            MACRO_THROW(EXCEPTION, StringFormat("%s due to %s", MSG, e.what()));           \
+        } catch (...) {                                                                    \
+            PROCESS;                                                                       \
+            MACRO_THROW(EXCEPTION, StringFormat("%s due to: Unknown error occurs!", MSG)); \
+        }                                                                                  \
     } while (0)
 
-#define TRY_CATCH_PRINT_ERROR(expr)                                                                                    \
-    do {                                                                                                               \
-        try {                                                                                                          \
-            expr;                                                                                                      \
-        } catch (HcclException & e) {                                                                                  \
-            HCCL_ERROR("Exception occurred: %s", e.what());                                                            \
-            auto backTraces = e.GetBackTraceStrings();                                                                 \
-            std::for_each(backTraces.begin(), backTraces.end(), [](string item) {                                      \
-                HCCL_INFO("backTraces item: %s", item.c_str());                                                        \
-            });                                                                                                        \
-        } catch (exception & e) {                                                                                      \
-            HCCL_ERROR("Exception occurred: %s", e.what());                                                            \
-        } catch (...) {                                                                                                \
-            HCCL_ERROR("Unkown error occurs!");                                                                        \
-        }                                                                                                              \
+#define TRY_CATCH_PRINT_ERROR(expr)                                                    \
+    do {                                                                               \
+        try {                                                                          \
+            expr;                                                                      \
+        } catch (Hccl::HcclException & e) {                                            \
+            HCCL_ERROR("Exception occurred: %s", e.what());                            \
+            auto backTraces = e.GetBackTraceStrings();                                 \
+            std::for_each(backTraces.begin(), backTraces.end(), [](std::string item) { \
+                HCCL_INFO("backTraces item: %s", item.c_str());                        \
+            });                                                                        \
+        } catch (std::exception & e) {                                                 \
+            HCCL_ERROR("Exception occurred: %s", e.what());                            \
+        } catch (...) {                                                                \
+            HCCL_ERROR("Unknown error occurs!");                                       \
+        }                                                                              \
     } while (0)
 
-#define CHK_RET_THROW(EXCEPTION, MSG, expr)                                                                            \
-    do {                                                                                                               \
-        auto ret = (expr);                                                                                             \
-        if (UNLIKELY(ret != HcclResult::HCCL_SUCCESS)) {                                                                         \
-            THROW<EXCEPTION>(MSG);                                                                                     \
-        }                                                                                                              \
+#define CHK_RET_THROW(EXCEPTION, MSG, expr)              \
+    do {                                                 \
+        auto ret = (expr);                               \
+        if (UNLIKELY(ret != HcclResult::HCCL_SUCCESS)) { \
+            Hccl::THROW<EXCEPTION>(MSG);                 \
+        }                                                \
     } while (0)
 
-#define CHK_PRT_THROW(expr, exeLog, EXCEPTION, MSG)                                                                    \
-    do {                                                                                                               \
-        if (UNLIKELY(expr)) {                                                                                          \
-            exeLog;                                                                                                    \
-            throw EXCEPTION(MSG);                                                                                      \
-        }                                                                                                              \
+#define CHK_PRT_THROW(expr, exeLog, EXCEPTION, MSG) \
+    do {                                            \
+        if (UNLIKELY(expr)) {                       \
+            exeLog;                                 \
+            throw EXCEPTION(MSG);                   \
+        }                                           \
     } while (0)
 
 namespace Hccl {
 
-template <typename EXCEPTION> inline void THROW(const std::string &msg)
+template <typename EXCEPTION>
+[[noreturn]] inline void THROW(const std::string& msg)
 {
     HCCL_ERROR("%s", msg.c_str());
     throw EXCEPTION(msg);
 }
 
-template <typename EXCEPTION, typename... Args> inline void THROW(const char *format, Args... args)
+template <typename EXCEPTION, typename... Args>
+[[noreturn]] inline void THROW(const char* format, Args... args)
 {
     auto msg = StringFormat(format, args...);
     HCCL_ERROR("%s", msg.c_str());
     throw EXCEPTION(msg);
 }
 
-template <typename POINTER> inline void CHECK_NULLPTR(const POINTER &p, const std::string &msg)
+template <typename POINTER>
+inline void CHECK_NULLPTR(const POINTER& p, const std::string& msg)
 {
     if (UNLIKELY(p == nullptr)) {
         THROW<NullPtrException>(msg);

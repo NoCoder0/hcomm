@@ -11,7 +11,7 @@
 #include "gtest/gtest.h"
 #include <mockcpp/mokc.h>
 #include <mockcpp/mockcpp.hpp>
-#include "aicpu/launch_device.h"
+#include "aicpu/launch_device_v2.h"
 #define private public
 #define protected public
 #include "hccl_aiv_utils.h"
@@ -24,20 +24,11 @@ using namespace std;
 
 class AivUtilsTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AivUtilsTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AivUtilsTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AivUtilsTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AivUtilsTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in AivUtilsTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in AivUtilsTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -47,44 +38,31 @@ protected:
 };
 
 TEST_F(AivUtilsTest, aiv_utils_test)
-{   
-    char resolvePath[] = "./CMakeList.txt";  
+{
+    char resolvePath[] = "./CMakeList.txt";
     char* path = resolvePath;
-    char  returnValueVec[] = "0";
+    char returnValueVec[] = "0";
     char* returnValueChar = returnValueVec;
-    MOCKER(realpath)
-    .stubs()
-    .with(mockcpp::any(), outBound(path))
-    .will(returnValue(returnValueChar));
+    MOCKER(realpath).stubs().with(mockcpp::any(), outBound(path)).will(returnValue(returnValueChar));
     RegisterKernel();
 
     char libPath[] = "./hcomm/test/llt/stub/workspace/fwkacllib/lib64";
     char* libPathPtr = libPath;
 
-    MOCKER(getenv)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(libPathPtr));
+    MOCKER(getenv).stubs().with(mockcpp::any()).will(returnValue(libPathPtr));
 
-    MOCKER(LoadBinaryFromFile)
-    .stubs()
-    .with(mockcpp::any());
+    MOCKER(LoadBinaryFromFile).stubs().with(mockcpp::any());
 
-    MOCKER(realpath)
-    .stubs()
-    .with(mockcpp::any(), outBound(path))
-    .will(returnValue(nullptr));
+    MOCKER(realpath).stubs().with(mockcpp::any(), outBound(path)).will(returnValue(nullptr));
     RegisterKernel();
 
-    char resolvePath2[] = "./libhccl_v2.so";  
+    char resolvePath2[] = "./libhccl_v2.so";
     path = resolvePath2;
-    MOCKER(realpath)
-    .stubs()
-    .with(mockcpp::any(), outBound(path))
-    .will(returnValue(returnValueChar));
+    MOCKER(realpath).stubs().with(mockcpp::any(), outBound(path)).will(returnValue(returnValueChar));
     RegisterKernel();
 
     aclrtBinHandle g_binHandle;
-    Hccl::LoadBinaryFromFile("./hcomm/test/llt/stub/workspace/fwkacllib/lib64/hccl_aiv_op_91095.o",
-        ACL_RT_BINARY_LOAD_OPT_LAZY_LOAD, 1, g_binHandle);
+    Hccl::LoadBinaryFromFile(
+        "./hcomm/test/llt/stub/workspace/fwkacllib/lib64/hccl_aiv_op_91095.o", ACL_RT_BINARY_LOAD_OPT_LAZY_LOAD, 1,
+        g_binHandle);
 }

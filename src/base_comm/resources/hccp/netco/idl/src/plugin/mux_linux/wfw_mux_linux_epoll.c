@@ -61,8 +61,8 @@ STATIC void WfwMuxLeUninitTrig(WfwMuxLe *muxLe);
 STATIC void WfwMuxLeTrigStopLoopRun(WfwMuxLe *muxLe);
 
 /* data op */
-STATIC WfwMuxLeFd *WfwMuxLeAddFd(WfwMuxLe *muxLe, int fd, uint32_t interestedEvents,
-                                   F_WFW_MUX_FD_PROC proc, void *cookie, BOOL notLogEvt);
+STATIC WfwMuxLeFd *WfwMuxLeAddFd(WfwMuxLe *muxLe, int fd, uint32_t interestedEvents, F_WFW_MUX_FD_PROC proc,
+    void *cookie, BOOL notLogEvt);
 STATIC uint32_t WfwMuxLeUpdFd(WfwMuxLeFd *leFd, uint32_t interestedEvents, F_WFW_MUX_FD_PROC proc, void *cookie);
 STATIC void WfwMuxLeDelFd(WfwMuxLeFd *leFd);
 STATIC void WfwMuxLeDelAllFd(WfwMuxLe *muxLe);
@@ -77,9 +77,13 @@ STATIC WfwMuxLeFd *WfwMuxLeGetNextFd(WfwMuxLe *muxLe, void **itorInOut);
 #if BKF_BLOCK("公有函数定义")
 STATIC uint32_t WfwMuxLeInitMuxBase(WfwMuxLe *muxLe)
 {
-    WfwMuxBaseInitArg arg = { .name = muxLe->name, .memMng = muxLe->argInit.memMng, .disp = muxLe->argInit.disp,
-                              .logCnt = muxLe->argInit.logCnt, .log = muxLe->log, .pfm = muxLe->argInit.pfm,
-                              .eventsAlwaysReport = EPOLLERR | EPOLLHUP };
+    WfwMuxBaseInitArg arg = {.name = muxLe->name,
+        .memMng = muxLe->argInit.memMng,
+        .disp = muxLe->argInit.disp,
+        .logCnt = muxLe->argInit.logCnt,
+        .log = muxLe->log,
+        .pfm = muxLe->argInit.pfm,
+        .eventsAlwaysReport = EPOLLERR | EPOLLHUP};
     uint32_t ret = WfwMuxBaseInit(&muxLe->muxBase, &arg);
     muxLe->muxBaseInitOk = BKF_COND_2BIT_FIELD(ret == BKF_OK);
     return ret;
@@ -109,8 +113,8 @@ WfwMuxLe *WfwMuxLeInit(WfwMuxLeInitArg *arg)
         return VOS_NULL;
     }
 
-    uint32_t len = sizeof(WfwMuxLe) + (sizeof(WfwMuxBaseEv) +
-        sizeof(struct epoll_event)) * ((uint32_t)arg->onceProcEvCntMax);
+    uint32_t len = sizeof(WfwMuxLe) +
+                   (sizeof(WfwMuxBaseEv) + sizeof(struct epoll_event)) * ((uint32_t)arg->onceProcEvCntMax);
     WfwMuxLe *muxLe = BKF_MALLOC(arg->memMng, len);
     if (muxLe == VOS_NULL) {
         return VOS_NULL;
@@ -161,18 +165,18 @@ void WfwMuxLeUninit(WfwMuxLe *muxLe)
     WfwMuxLeDoUninit(muxLe);
 }
 
-static inline void WfwMuxLeOnFdLog(WfwMuxLe *muxLe, int fd, uint32_t interestedEvents,
-                                     F_WFW_MUX_FD_PROC fdProc, void *fdCookie, WfwArgForMux *argForMuxOrNull,
-                                     char *opTxt)
+static inline void WfwMuxLeOnFdLog(WfwMuxLe *muxLe, int fd, uint32_t interestedEvents, F_WFW_MUX_FD_PROC fdProc,
+    void *fdCookie, WfwArgForMux *argForMuxOrNull, char *opTxt)
 {
     uint8_t buf[BKF_1K / 2];
-    BKF_LOG_DEBUG(BKF_LOG_HND, "muxLe(%#x), fd(%d)/op(%s)/interestedEvents(%#x), fdProc(%#x)/fdCookie(%#x), "
-                  "argForMuxOrNull(%#x), %s\n", BKF_MASK_ADDR(muxLe), fd, opTxt, interestedEvents,
-                  BKF_MASK_ADDR(fdProc), BKF_MASK_ADDR(fdCookie), BKF_MASK_ADDR(argForMuxOrNull),
-                  WfwGetBackTraceStr(buf, sizeof(buf)));
+    BKF_LOG_DEBUG(BKF_LOG_HND,
+        "muxLe(%#x), fd(%d)/op(%s)/interestedEvents(%#x), fdProc(%#x)/fdCookie(%#x), "
+        "argForMuxOrNull(%#x), %s\n",
+        BKF_MASK_ADDR(muxLe), fd, opTxt, interestedEvents, BKF_MASK_ADDR(fdProc), BKF_MASK_ADDR(fdCookie),
+        BKF_MASK_ADDR(argForMuxOrNull), WfwGetBackTraceStr(buf, sizeof(buf)));
 }
-STATIC int WfwMuxLeOnAttachFd(WfwMuxLe *muxLe, int fd, uint32_t interestedEvents,
-                                F_WFW_MUX_FD_PROC fdProc, void *fdCookie, WfwArgForMux *argForMuxOrNull)
+STATIC int WfwMuxLeOnAttachFd(WfwMuxLe *muxLe, int fd, uint32_t interestedEvents, F_WFW_MUX_FD_PROC fdProc,
+    void *fdCookie, WfwArgForMux *argForMuxOrNull)
 {
     if (muxLe == VOS_NULL || !BKF_SIGN_IS_VALID(muxLe->sign, WFW_MUX_LE_SIGN) || (fdProc == VOS_NULL)) {
         BKF_ASSERT(0);
@@ -190,8 +194,8 @@ STATIC int WfwMuxLeOnAttachFd(WfwMuxLe *muxLe, int fd, uint32_t interestedEvents
     return (leFd != VOS_NULL) ? 0 : -1;
 }
 
-STATIC int WfwMuxLeOnReattachFd(WfwMuxLe *muxLe, int fd, uint32_t interestedEvents,
-                                  F_WFW_MUX_FD_PROC fdProc, void *fdCookie, WfwArgForMux *argForMuxOrNull)
+STATIC int WfwMuxLeOnReattachFd(WfwMuxLe *muxLe, int fd, uint32_t interestedEvents, F_WFW_MUX_FD_PROC fdProc,
+    void *fdCookie, WfwArgForMux *argForMuxOrNull)
 {
     if (muxLe == VOS_NULL || !BKF_SIGN_IS_VALID(muxLe->sign, WFW_MUX_LE_SIGN) || (fdProc == VOS_NULL)) {
         BKF_ASSERT(0);
@@ -249,7 +253,7 @@ STATIC void *WfwMuxLeOnLoopRun(WfwMuxLe *muxLe)
     }
     BKF_LOG_DEBUG(BKF_LOG_HND, "muxLe(%#x)\n", BKF_MASK_ADDR(muxLe));
 
-    for (; ;) {
+    for (;;) {
         int evCnt = epoll_wait(muxLe->epFd, muxLe->leEvs, muxLe->argInit.onceProcEvCntMax, -1);
         if ((evCnt >= 0) && (evCnt <= muxLe->argInit.onceProcEvCntMax)) {
             WfwMuxLeProcEv(muxLe, evCnt);
@@ -327,6 +331,7 @@ WfwMuxInitArg *WfwMuxLeBuildMuxInitArg(WfwMuxLe *muxLe, WfwMuxInitArg *temp)
 /* on msg  & proc */
 STATIC void WfwMuxLeOnTrigFd(int fd, uint32_t curEvents, WfwMuxLe *muxLe)
 {
+    (void)curEvents;
     WfwMuxBaseProcTrigFdEvent(fd);
     muxLe->stopLoopRun = VOS_TRUE;
 }
@@ -367,8 +372,8 @@ STATIC void WfwMuxLeTrigStopLoopRun(WfwMuxLe *muxLe)
 }
 
 /* data op */
-STATIC WfwMuxLeFd *WfwMuxLeAddFd(WfwMuxLe *muxLe, int fd, uint32_t interestedEvents,
-                                   F_WFW_MUX_FD_PROC proc, void *cookie, BOOL notLogEvt)
+STATIC WfwMuxLeFd *WfwMuxLeAddFd(WfwMuxLe *muxLe, int fd, uint32_t interestedEvents, F_WFW_MUX_FD_PROC proc,
+    void *cookie, BOOL notLogEvt)
 {
     uint32_t len = sizeof(WfwMuxLeFd);
     WfwMuxLeFd *leFd = BKF_MALLOC(muxLe->argInit.memMng, len);
@@ -479,4 +484,3 @@ STATIC WfwMuxLeFd *WfwMuxLeGetNextFd(WfwMuxLe *muxLe, void **itorInOut)
 #ifdef __cplusplus
 }
 #endif
-

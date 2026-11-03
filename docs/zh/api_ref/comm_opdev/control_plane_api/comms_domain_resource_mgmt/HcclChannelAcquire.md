@@ -2,9 +2,21 @@
 
 ## 产品支持情况
 
-- Ascend 950PR/Ascend 950DT：支持
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：支持
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：支持
+<!-- npu="950" id1 -->
+- Ascend 950PR&950DT系列产品：支持
+<!-- end id1 -->
+<!-- npu="A3" id2 -->
+- Atlas A3系列产品：支持
+<!-- end id2 -->
+<!-- npu="910b" id3 -->
+- Atlas A2系列产品：支持
+<!-- end id3 -->
+<!-- npu="910" id4 -->
+- Atlas训练系列产品：不支持
+<!-- end id4 -->
+<!-- npu="310p" id5 -->
+- Atlas推理系列产品：不支持
+<!-- end id5 -->
 
 ## 功能说明
 
@@ -24,7 +36,7 @@ HcclResult HcclChannelAcquire(HcclComm comm, CommEngine engine, const HcclChanne
 | --- | --- | --- |
 | comm | 输入 | 通信域句柄。<br>HcclComm类型的定义如下：<br>typedef void *HcclComm; |
 | engine | 输入 | 通信引擎类型。<br>CommEngine类型的定义可参见[CommEngine](../../datatype_definition/CommEngine.md)。 |
-| channelDescs | 输入 | 通信通道描述列表，列表长度为channelNum。<br>HcclChannelDesc类型的定义可参见[HcclChannelDesc](../../datatype_definition/HcclChannelDesc.md)，通过[HcclRankGraphGetLinks](../topo_info_query/HcclRankGraphGetLinks.md)函数获取。 |
+| channelDescs | 输入 | 通信通道描述列表，列表长度为channelNum。<br>HcclChannelDesc类型的定义可参见[HcclChannelDesc](../../datatype_definition/HcclChannelDesc.md)，可通过[HcclRankGraphGetLinks](../topo_info_query/HcclRankGraphGetLinks.md)获取链路信息后填充。 |
 | channelNum | 输入 | 通信通道数量，channelNum的取值范围为(0, 1024 * 1024]。 |
 | channels | 输出 | 通信通道句柄列表，通信通道句柄列表长度为channelNum。 |
 
@@ -34,43 +46,53 @@ HcclResult HcclChannelAcquire(HcclComm comm, CommEngine engine, const HcclChanne
 
 ## 约束说明
 
-1. 当前CommEngine配置为CCU时，不支持外部配置NotifyNum，默认分配8个CCU Notify。
+1. 当前CommEngine配置为CCU时，不支持外部配置NotifyNum，默认分配4个CCU Notify。
 
 2. 当前CommEngine配置为CCU时，不支持交换额外自定义内存，仅支持交换通信域的HcclBuffer。
 
-3. 当前各CommEngine支持的通信协议与芯片型号有关，具体如下：
+3. AIV直驱URMA场景下，本端与远端参与交换的内存数量必须一致，否则Channel创建失败。
 
-  针对Ascend 950PR/Ascend 950DT，各通信引擎支持的通信协议如下：
+4. 同一个通信域内，本接口不支持并发调用，调用方须保证调用串行执行。
 
-  - COMM_ENGINE_CPU
-    - COMM_PROTOCOL_ROCE
-  - COMM_ENGINE_AICPU_TS
-    - COMM_PROTOCOL_UBOE
-    - COMM_PROTOCOL_UBC_CTP
-    - COMM_PROTOCOL_UBC_TP
-    - COMM_PROTOCOL_ROCE
-  - COMM_ENGINE_AIV
-    - COMM_PROTOCOL_UBC_CTP
-    - COMM_PROTOCOL_UBC_TP
-    - COMM_PROTOCOL_UB_MEM
-    - COMM_PROTOCOL_ROCE
-  - COMM_ENGINE_CCU
-    - COMM_PROTOCOL_UBC_CTP
-    - COMM_PROTOCOL_UBC_TP
+5. 当前各CommEngine支持的通信协议与芯片型号有关，具体如下：
 
-  针对Atlas A3 训练系列产品/Atlas A3 推理系列产品，各通信引擎支持的通信协议如下：
+   <!-- npu="950" id6 -->
+   针对Ascend 950PR&950DT系列产品，各通信引擎支持的通信协议如下：
 
-  - COMM_ENGINE_AICPU_TS
-    - COMM_PROTOCOL_ROCE
-    - COMM_PROTOCOL_HCCS
-    - COMM_PROTOCOL_HCCS_ONLY
+   - COMM_ENGINE_CPU
+     - COMM_PROTOCOL_ROCE
+   - COMM_ENGINE_AICPU_TS
+     - COMM_PROTOCOL_UBOE
+     - COMM_PROTOCOL_UB_CTP
+     - COMM_PROTOCOL_UB_RTP
+     - COMM_PROTOCOL_ROCE
+   - COMM_ENGINE_AIV
+     - COMM_PROTOCOL_UB_CTP
+     - COMM_PROTOCOL_UB_RTP
+     - COMM_PROTOCOL_UB_MEM
+     - COMM_PROTOCOL_ROCE
+   - COMM_ENGINE_CCU（不支持COMM_PROTOCOL_UB_RTP）
+     - COMM_PROTOCOL_UB_CTP
+   <!-- end id6 -->
 
-  针对Atlas A2 训练系列产品/Atlas A2 推理系列产品，各通信引擎支持的通信协议如下：
+   <!-- npu="A3" id7 -->
+   针对Atlas A3系列产品，各通信引擎支持的通信协议如下：
 
-  - COMM_ENGINE_CPU_TS
-    - COMM_PROTOCOL_ROCE
-    - COMM_PROTOCOL_HCCS
-    - COMM_PROTOCOL_HCCS_ONLY
+   - COMM_ENGINE_AICPU_TS
+     - COMM_PROTOCOL_ROCE
+     - COMM_PROTOCOL_HCCS
+     - COMM_PROTOCOL_HCCS_ONLY
+   <!-- end id7 -->
+
+   <!-- npu="910b" id8 -->
+   针对Atlas A2系列产品，各通信引擎支持的通信协议如下：
+
+   - COMM_ENGINE_CPU_TS
+     - COMM_PROTOCOL_ROCE
+     - COMM_PROTOCOL_HCCS
+     - COMM_PROTOCOL_HCCS_ONLY
+   <!-- end id8 -->
+6. comm必须为有效的通信域句柄（由通信域创建接口获得，调用期间保持有效）。禁止传入空指针、野指针或已销毁的句柄。
 
 ## 调用示例
 
@@ -100,7 +122,7 @@ for (uint32_t idx = 0; idx < listSize; idx++) {
   channelDesc.remoteEndpoint.commAddr = link.dstEndpointDesc.commAddr;
   channelDesc.remoteEndpoint.loc   = link.dstEndpointDesc.loc;
   channelDesc.channelProtocol     = link.linkAttr.linkProtocol;
-  channelDesc.notifyNum = 8; // 由用户按需指定Notify数量
+  channelDesc.notifyNum = 4; // 由用户按需指定Notify数量
 
   channelDescVec[idx] = channelDesc;
 }

@@ -1,8 +1,13 @@
-/*
- * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
- * Description: 算法分析器CCU task定义
- * Create: 2025-04-11
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #ifndef ADAPTER_V2_TASK_H
 #define ADAPTER_V2_TASK_H
 
@@ -17,7 +22,7 @@ namespace Hccl {
 extern Hccl::Instruction* g_ccuIns;
 extern std::map<const Hccl::Instruction*, std::vector<Hccl::CcuRep::CcuInstrInfo>> g_ccuIns2MicroCode;
 
-}
+} // namespace Hccl
 
 namespace checker {
 constexpr uint32_t MAX_LOOPGROUP_NUM = 1024;
@@ -39,7 +44,11 @@ struct BilateralPostInfo {
 };
 
 struct BilateralNode {
-    BilateralNode(TaskNodePtr asyncNode, TaskNodePtr wait, TaskNodePtr post) : asyncNode(asyncNode), backwardWait(wait), forwardPost(post) {}
+    BilateralNode(TaskNodePtr asyncNode, TaskNodePtr wait, TaskNodePtr post)
+        : asyncNode(asyncNode),
+          backwardWait(wait),
+          forwardPost(post)
+    {}
     TaskNodePtr backwardWait{nullptr};
     TaskNodePtr forwardPost{nullptr};
     TaskNodePtr asyncNode;
@@ -48,13 +57,14 @@ struct BilateralNode {
 // 定义外层CCU的Task
 class TaskStubCcuGraph : public TaskStub {
 public:
-    TaskStubCcuGraph(const Hccl::Instruction &ins, RankId rank);
+    TaskStubCcuGraph(const Hccl::Instruction& ins, RankId rank);
     // 本构造函数只给UT测试使用
-    TaskStubCcuGraph(RankId rank) : TaskStub(TaskTypeStub::CCU_GRAPH), rankId(rank) {
+    TaskStubCcuGraph(RankId rank) : TaskStub(TaskTypeStub::CCU_GRAPH), rankId(rank)
+    {
         ccuHeadTaskNode = new TaskNode(nullptr, -1, 0, 0);
         toDeleteTaskNode_.push_back(ccuHeadTaskNode);
     }
-    TaskStubCcuGraph(const TaskStubCcuGraph *ccuTask);
+    TaskStubCcuGraph(const TaskStubCcuGraph* ccuTask);
     ~TaskStubCcuGraph();
     std::string Describe() const override;
 
@@ -66,11 +76,11 @@ public:
     std::string des;
     std::vector<Hccl::CcuRep::CcuInstrInfo> instrInfo;
     std::vector<std::vector<Hccl::CcuTaskParam>> ccuParams;
-    std::vector<u32> ccuParamIndexs;     // 记录load加载到哪一组参数
-    std::vector<u32> microCodePosInQue;  // 每条que当前处理到的微码位置
-    std::vector<u32> startInstrIdInQue;  // 每条que的起始ID
-    std::vector<bool> instrQueStatus;    // 一条微码队列成图完成后，其标识位设置为true
-    std::vector<TaskNode*> tailNodes;    // 微码队列成图时，对应的尾部node
+    std::vector<u32> ccuParamIndexs;    // 记录load加载到哪一组参数
+    std::vector<u32> microCodePosInQue; // 每条que当前处理到的微码位置
+    std::vector<u32> startInstrIdInQue; // 每条que的起始ID
+    std::vector<bool> instrQueStatus;   // 一条微码队列成图完成后，其标识位设置为true
+    std::vector<TaskNode*> tailNodes;   // 微码队列成图时，对应的尾部node
     TaskNode* ccuHeadTaskNode = nullptr;
     bool isGenGraphed = false; // 可能不需要了
 
@@ -104,5 +114,5 @@ public:
     TaskNodePtr subGraphNode = nullptr;
 };
 
-} // namespace hccl
+} // namespace checker
 #endif

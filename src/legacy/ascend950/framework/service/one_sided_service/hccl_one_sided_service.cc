@@ -9,14 +9,14 @@
  */
 
 #include <climits>
-#include "hccl_one_sided_service.h"
+#include "hccl_one_sided_service_v2.h"
 #include "communicator_impl.h"
 #include "virtual_topo.h"
 #include "alg_topo_package_helper.h"
 #include "aicpu_res_package_helper.h"
 #include "hccl_mem.h"
 #include "exception_util.h"
-#include "env_config.h"
+#include "env_config_v2.h"
 
 namespace Hccl {
 using namespace std;
@@ -24,7 +24,7 @@ using namespace std;
 // 设置最大注册内存数量为256
 constexpr u32 maxregisteredMem = 256;
 
-static void OneSidedSetModuleDataName(ModuleData &module, const std::string &name)
+static void OneSidedSetModuleDataName(ModuleData& module, const std::string& name)
 {
     int ret = strcpy_s(module.name, sizeof(module.name), name.c_str());
     if (ret != 0) {
@@ -32,26 +32,24 @@ static void OneSidedSetModuleDataName(ModuleData &module, const std::string &nam
     }
 }
 
-template <class T, class U> u16 CalcFieldOffset(T *target, U *base)
+template <class T, class U>
+u16 CalcFieldOffset(T* target, U* base)
 {
-    return static_cast<u16>(static_cast<const char *>(static_cast<void *>(target))
-                            - static_cast<const char *>(static_cast<void *>(base)));
+    return static_cast<u16>(
+        static_cast<const char*>(static_cast<void*>(target)) - static_cast<const char*>(static_cast<void*>(base)));
 }
 
-
-HcclOneSidedService::HcclOneSidedService(CommunicatorImpl &comm) : comm_(&comm)
-{
-    AddOpCounterMems();
-}
+HcclOneSidedService::HcclOneSidedService(CommunicatorImpl& comm) : comm_(&comm) { AddOpCounterMems(); }
 
 HcclOneSidedService::~HcclOneSidedService()
 {
-    for (const auto &pair : desc2netDevMap_) {
-        const HcclNetDev &hcclNetDev = pair.second;
-        HcclResult        ret        = HcclNetDevClose(hcclNetDev);
+    for (const auto& pair : desc2netDevMap_) {
+        const HcclNetDev& hcclNetDev = pair.second;
+        HcclResult ret = HcclNetDevClose(hcclNetDev);
         if (ret != HCCL_SUCCESS) {
-            HCCL_ERROR("[HcclOneSidedService][~HcclOneSidedService]HcclNetDevClose failed, descStr[%s], ret[%d].",
-                       pair.first.c_str(), ret);
+            HCCL_ERROR(
+                "[HcclOneSidedService][~HcclOneSidedService]HcclNetDevClose failed, descStr[%s], ret[%d].",
+                pair.first.c_str(), ret);
         }
     }
 }
@@ -73,32 +71,37 @@ HcclResult HcclOneSidedService::CheckLink(LinkData linkData) const
     CHK_PRT_RET(
         (linkData.GetLinkProtocol() != LinkProtocol::UB_CTP && linkData.GetLinkProtocol() != LinkProtocol::UB_TP),
         HCCL_ERROR("[HcclOneSidedService][CheckLink] Proto is not UB, not support"), HCCL_E_NOT_SUPPORT);
-    CHK_PRT_RET(linkData.GetHop() > 1, HCCL_ERROR("[HcclOneSidedService][CheckLink]Hop is greater than 1, not support"),
-                HCCL_E_NOT_SUPPORT);
+    CHK_PRT_RET(
+        linkData.GetHop() > 1, HCCL_ERROR("[HcclOneSidedService][CheckLink]Hop is greater than 1, not support"),
+        HCCL_E_NOT_SUPPORT);
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclOneSidedService::RegMem(void *addr, u64 size, HcclMemType type, RankId remoteRankId,
-                                       HcclMemDesc &localMemDesc)
+HcclResult
+HcclOneSidedService::RegMem(void* addr, u64 size, HcclMemType type, RankId remoteRankId, HcclMemDesc& localMemDesc)
 {
     CHK_PTR_NULL(addr);
-    CHK_PRT_RET(type == HcclMemType::HCCL_MEM_TYPE_HOST,
-                HCCL_ERROR("[HcclOneSidedService][RegMem]HCCL_MEM_TYPE_HOST is not supported"), HCCL_E_NOT_SUPPORT);
-    HCCL_INFO("[HcclOneSidedService][RegMem]addr[%p], size[%llu], type[%d], remoteRankId[%u]", addr, size, type,
-              remoteRankId);
-    LinkData    linkData        = GetLinkData(remoteRankId);
-    RmaMemDesc *localRmaMemDesc = static_cast<RmaMemDesc *>(static_cast<void *>(localMemDesc.desc));
+    CHK_PRT_RET(
+        type == HcclMemType::HCCL_MEM_TYPE_HOST,
+        HCCL_ERROR("[HcclOneSidedService][RegMem]HCCL_MEM_TYPE_HOST is not supported"), HCCL_E_NOT_SUPPORT);
+    HCCL_INFO(
+        "[HcclOneSidedService][RegMem]addr[%p], size[%llu], type[%d], remoteRankId[%u]", addr, size, type,
+        remoteRankId);
+    LinkData linkData = GetLinkData(remoteRankId);
+    RmaMemDesc* localRmaMemDesc = static_cast<RmaMemDesc*>(static_cast<void*>(localMemDesc.desc));
     CHK_PTR_NULL(localRmaMemDesc);
-    CHK_PRT_RET(registeredMemCnt_ >= maxregisteredMem,
-                HCCL_ERROR("[HcclOneSidedService][RegMem]registered memory counts=[%u] exceeds limit[%u]", registeredMemCnt_,
-                           maxregisteredMem),
-                HCCL_E_UNAVAIL);
+    CHK_PRT_RET(
+        registeredMemCnt_ >= maxregisteredMem,
+        HCCL_ERROR(
+            "[HcclOneSidedService][RegMem]registered memory counts=[%u] exceeds limit[%u]", registeredMemCnt_,
+            maxregisteredMem),
+        HCCL_E_UNAVAIL);
     HcclNetDevInfos info;
-    info.addr.protoType   = HcclNetDevice::ConvertHcclProtoToLinkProto(linkData.GetLocalPort().GetProto());
-    info.addr.type        = HCCL_ADDR_TYPE_IP_V4;
+    info.addr.protoType = HcclNetDevice::ConvertHcclProtoToLinkProto(linkData.GetLocalPort().GetProto());
+    info.addr.type = HCCL_ADDR_TYPE_IP_V4;
     info.netdevDeployment = HcclNetDevice::ConvertDeploymentType(linkData.GetLocalPort().GetType());
-    info.devicePhyId      = comm_->GetDevicePhyId();
-    info.addr.addr        = linkData.GetLocalPort().GetAddr().GetBinaryAddress().addr;
+    info.devicePhyId = comm_->GetDevicePhyId();
+    info.addr.addr = linkData.GetLocalPort().GetAddr().GetBinaryAddress().addr;
     HcclNetDev netDev;
     HcclResult ret = HcclNetDevOpen(&info, &netDev);
     if (ret != HCCL_SUCCESS) {
@@ -113,14 +116,14 @@ HcclResult HcclOneSidedService::RegMem(void *addr, u64 size, HcclMemType type, R
         CHK_RET(HcclNetDevClose(netDev));
         return ret;
     }
-    string logInfo = ret == HCCL_SUCCESS ? "Register memory success!"
-                                         : "Memory is already registered, just increase the reference count.";
+    string logInfo = ret == HCCL_SUCCESS ? "Register memory success!" :
+                                           "Memory is already registered, just increase the reference count.";
     HCCL_INFO("[HcclOneSidedService][RegMem]:%s Add key {%p, %llu}", logInfo.c_str(), addr, size);
-    localRmaMemDesc->localRankId  = comm_->GetMyRank();
+    localRmaMemDesc->localRankId = comm_->GetMyRank();
     localRmaMemDesc->remoteRankId = remoteRankId;
-    char    *desc                 = localRmaMemDesc->memDesc;
-    uint64_t descLen              = 0;
-    ret                           = HcclMemExport(&buf, &desc, &descLen);
+    char* desc = localRmaMemDesc->memDesc;
+    uint64_t descLen = 0;
+    ret = HcclMemExport(&buf, &desc, &descLen);
     if (ret != HCCL_SUCCESS) {
         HCCL_ERROR("[HcclOneSidedService][RegMem]HcclMemExport failed, ret[%d]", ret);
         CHK_RET(HcclNetDevClose(netDev));
@@ -133,20 +136,20 @@ HcclResult HcclOneSidedService::RegMem(void *addr, u64 size, HcclMemType type, R
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclOneSidedService::DeregMem(const HcclMemDesc &localMemDesc)
+HcclResult HcclOneSidedService::DeregMem(const HcclMemDesc& localMemDesc)
 {
     // 若当前内存注册数量为0，则返回找不到内存
     if (registeredMemCnt_ == 0) {
         HCCL_ERROR("[HcclOneSidedService][DeregMem]Registered memory is 0, please register first.");
         return HCCL_E_NOT_FOUND;
     }
-    const RmaMemDesc *localRmaMemDesc = static_cast<const RmaMemDesc *>(static_cast<const void *>(localMemDesc.desc));
-    std::string       descStr(localRmaMemDesc->memDesc, TRANSPORT_EMD_ESC_SIZE);
+    const RmaMemDesc* localRmaMemDesc = static_cast<const RmaMemDesc*>(static_cast<const void*>(localMemDesc.desc));
+    std::string descStr(localRmaMemDesc->memDesc, TRANSPORT_EMD_ESC_SIZE);
     if (desc2HcclBufMapLocalUb_.find(descStr) == desc2HcclBufMapLocalUb_.end()) {
         HCCL_ERROR("[HcclOneSidedService][GetHcclBufByDesc]memory is not registered, please register first.");
         return HCCL_E_NOT_FOUND;
     }
-    HcclBuf    buf = desc2HcclBufMapLocalUb_.at(descStr);
+    HcclBuf buf = desc2HcclBufMapLocalUb_.at(descStr);
     HcclResult ret = HcclMemDereg(&buf);
     if (ret == HCCL_SUCCESS) {
         registeredMemCnt_--;
@@ -159,7 +162,7 @@ HcclResult HcclOneSidedService::DeregMem(const HcclMemDesc &localMemDesc)
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclOneSidedService::CreateConnection(std::shared_ptr<HcclOneSidedConn> &tempConn, LinkData linkData)
+HcclResult HcclOneSidedService::CreateConnection(std::shared_ptr<HcclOneSidedConn>& tempConn, LinkData linkData)
 {
     if (isOpModeReady_ == false) {
         CHK_RET(comm_->RecoverOpMode(1));
@@ -174,12 +177,14 @@ HcclResult HcclOneSidedService::CreateConnection(std::shared_ptr<HcclOneSidedCon
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclOneSidedService::ExchangeMemDesc(RankId remoteRankId, const HcclMemDescs &localMemDescs,
-                                                HcclMemDescs &remoteMemDescs, u32 &actualNumOfRemote)
+HcclResult HcclOneSidedService::ExchangeMemDesc(
+    RankId remoteRankId, const HcclMemDescs& localMemDescs, HcclMemDescs& remoteMemDescs, u32& actualNumOfRemote)
 {
+    HcclUs startut = TIME_NOW();
     if (comm_->GetCommExecuteConfig().accState != AcceleratorState::AICPU_TS) {
-        HCCL_ERROR("[HcclOneSidedService][%s] only support aicpu, current accelerator[%s]", __func__,
-                   comm_->GetCommExecuteConfig().accState.Describe().c_str());
+        HCCL_ERROR(
+            "[HcclOneSidedService][%s] only support aicpu, current accelerator[%s]", __func__,
+            comm_->GetCommExecuteConfig().accState.Describe().c_str());
         return HCCL_E_NOT_SUPPORT;
     }
     comm_->SetOpExecuteConfig(comm_->GetCommExecuteConfig());
@@ -204,15 +209,19 @@ HcclResult HcclOneSidedService::ExchangeMemDesc(RankId remoteRankId, const HcclM
     CHK_PTR_NULL(tempConn);
     HCCL_INFO("[HcclOneSidedService][ExchangeMemDesc] tempConn linkData[%s]", linkData.Describe().c_str());
     HCCL_INFO("[HcclOneSidedService][ExchangeMemDesc] ExchangeMemDesc");
-    return tempConn->ExchangeMemDesc(localMemDescs, remoteMemDescs, actualNumOfRemote);
+    HcclResult ret = tempConn->ExchangeMemDesc(localMemDescs, remoteMemDescs, actualNumOfRemote);
+    HCCL_INFO(
+        "[HcclOneSidedService][ExchangeMemDesc] finished. ret[%d], take time [%lld]us.", ret,
+        DURATION_US(TIME_NOW() - startut).count());
+    return ret;
 }
 
-HcclResult HcclOneSidedService::EnableMemAccess(const HcclMemDesc &remoteMemDesc, HcclMem &remoteMem)
+HcclResult HcclOneSidedService::EnableMemAccess(const HcclMemDesc& remoteMemDesc, HcclMem& remoteMem)
 {
     CHK_PTR_NULL(remoteMemDesc.desc);
     // 将HcclMemDesc转化为RmaMemDesc
-    const RmaMemDesc *remoteRmaMemDesc = static_cast<const RmaMemDesc *>(static_cast<const void *>(remoteMemDesc.desc));
-    RankId            remoteRankId     = remoteRmaMemDesc->localRankId;
+    const RmaMemDesc* remoteRmaMemDesc = static_cast<const RmaMemDesc*>(static_cast<const void*>(remoteMemDesc.desc));
+    RankId remoteRankId = remoteRmaMemDesc->localRankId;
 
     HCCL_INFO("[HcclOneSidedService][EnableMemAccess] Get remoteRankId[%u]", remoteRankId);
     std::shared_lock oneSidedConnslock(oneSidedConnsMutex_);
@@ -226,11 +235,11 @@ HcclResult HcclOneSidedService::EnableMemAccess(const HcclMemDesc &remoteMemDesc
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclOneSidedService::DisableMemAccess(const HcclMemDesc &remoteMemDesc)
+HcclResult HcclOneSidedService::DisableMemAccess(const HcclMemDesc& remoteMemDesc)
 {
     CHK_PTR_NULL(remoteMemDesc.desc);
     // 将HcclMemDesc转化为RmaMemDesc
-    const RmaMemDesc *remoteRmaMemDesc = static_cast<const RmaMemDesc *>(static_cast<const void *>(remoteMemDesc.desc));
+    const RmaMemDesc* remoteRmaMemDesc = static_cast<const RmaMemDesc*>(static_cast<const void*>(remoteMemDesc.desc));
 
     // 获取Conn对象
     RankId remoteRankId = remoteRmaMemDesc->localRankId;
@@ -246,29 +255,31 @@ HcclResult HcclOneSidedService::DisableMemAccess(const HcclMemDesc &remoteMemDes
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclOneSidedService::BatchPutGetDevBufs(const HcclOneSideOpDesc *desc, u32 descNum,
-                                                   std::shared_ptr<HcclOneSidedConn> oneSidedConn)
+HcclResult HcclOneSidedService::BatchPutGetDevBufs(
+    const HcclOneSideOpDesc* desc, u32 descNum, std::shared_ptr<HcclOneSidedConn> oneSidedConn)
 {
     vector<HcclAicpuLocBufLite> hostBatchPutGetLocalBufferSliceBufs(descNum);
     vector<HcclAicpuLocBufLite> hostBatchPutGetRemoteBufferSliceBufs(descNum);
-    CHK_RET(oneSidedConn->BatchBufferSlice(desc, descNum, hostBatchPutGetLocalBufferSliceBufs,
-                                           hostBatchPutGetRemoteBufferSliceBufs));
+    CHK_RET(oneSidedConn->BatchBufferSlice(
+        desc, descNum, hostBatchPutGetLocalBufferSliceBufs, hostBatchPutGetRemoteBufferSliceBufs));
 
-    devBatchPutGetLocalBufs  = make_shared<DevBuffer>(sizeof(HcclAicpuLocBufLite) * descNum);
+    devBatchPutGetLocalBufs = make_shared<DevBuffer>(sizeof(HcclAicpuLocBufLite) * descNum);
     devBatchPutGetRemoteBufs = make_shared<DevBuffer>(sizeof(HcclAicpuLocBufLite) * descNum);
 
-    HrtMemcpy(reinterpret_cast<void *>(devBatchPutGetLocalBufs->GetAddr()), devBatchPutGetLocalBufs->GetSize(),
-              static_cast<void *>(hostBatchPutGetLocalBufferSliceBufs.data()), sizeof(HcclAicpuLocBufLite) * descNum,
-              RT_MEMCPY_HOST_TO_DEVICE);
+    HrtMemcpy(
+        reinterpret_cast<void*>(devBatchPutGetLocalBufs->GetAddr()), devBatchPutGetLocalBufs->GetSize(),
+        static_cast<void*>(hostBatchPutGetLocalBufferSliceBufs.data()), sizeof(HcclAicpuLocBufLite) * descNum,
+        RT_MEMCPY_HOST_TO_DEVICE);
 
-    HrtMemcpy(reinterpret_cast<void *>(devBatchPutGetRemoteBufs->GetAddr()), devBatchPutGetRemoteBufs->GetSize(),
-              static_cast<void *>(hostBatchPutGetRemoteBufferSliceBufs.data()), sizeof(HcclAicpuLocBufLite) * descNum,
-              RT_MEMCPY_HOST_TO_DEVICE);
+    HrtMemcpy(
+        reinterpret_cast<void*>(devBatchPutGetRemoteBufs->GetAddr()), devBatchPutGetRemoteBufs->GetSize(),
+        static_cast<void*>(hostBatchPutGetRemoteBufferSliceBufs.data()), sizeof(HcclAicpuLocBufLite) * descNum,
+        RT_MEMCPY_HOST_TO_DEVICE);
 
     return HCCL_SUCCESS;
 }
 
-std::vector<char> HcclOneSidedService::PackOpData(const CollAlgOpReq &req) const
+std::vector<char> HcclOneSidedService::PackOpData(const CollAlgOpReq& req) const
 {
     std::vector<ModuleData> dataVec;
     dataVec.resize(AicpuResMgrType::__COUNT__);
@@ -324,19 +335,19 @@ std::vector<char> HcclOneSidedService::PackOpData(const CollAlgOpReq &req) const
     return helper.GetPackedData(dataVec);
 }
 
-void HcclOneSidedService::FillOneSidedOperator(OpType type, RankId remoteRankId, const HcclOneSideOpDesc *desc) const
+void HcclOneSidedService::FillOneSidedOperator(OpType type, RankId remoteRankId, const HcclOneSideOpDesc* desc) const
 {
     CollOpParams opParams;
 
     opParams.dataType = HcclDataTypeToDataType(desc->dataType);
-    opParams.count    = desc->count;
+    opParams.count = desc->count;
 
     // sendBuf/recvBuf当前不使用，等待后续扩展
     opParams.sendBuf = desc->localAddr;
     opParams.recvBuf = desc->remoteAddr;
 
-    opParams.opType   = type;
-    opParams.dstRank  = remoteRankId;
+    opParams.opType = type;
+    opParams.dstRank = remoteRankId;
     std::string opTag = comm_->GetId();
 
     HCCL_INFO(
@@ -345,38 +356,38 @@ void HcclOneSidedService::FillOneSidedOperator(OpType type, RankId remoteRankId,
     comm_->CovertToCurrentCollOperator(opTag, opParams, OpMode::OPBASE);
 }
 
-void HcclOneSidedService::AddPostToUserStream(const Stream &stream) const
+void HcclOneSidedService::AddPostToUserStream(const Stream& stream) const
 {
     auto postNotify = comm_->GetHostDeviceSyncNotifyManager().GetDeviceWaitNotify();
 
     postNotify->Post(stream);
 }
 
-void HcclOneSidedService::AddWaitToUserStream(const Stream &stream) const
+void HcclOneSidedService::AddWaitToUserStream(const Stream& stream) const
 {
     auto waitNotify = comm_->GetHostDeviceSyncNotifyManager().GetHostWaitNotify();
 
     waitNotify->Wait(stream, 1000); // host 和 device sync流程，等待1000ms
 }
 
-void HcclOneSidedService::SetOneSidedKernelLaunchParam(HcclKernelLaunchParam &param, const DevBuffer *mem) const
+HcclResult HcclOneSidedService::SetOneSidedKernelLaunchParam(HcclKernelLaunchParam& param, const DevBuffer* mem) const
 {
     CollOperator op = *comm_->GetCurrentCollOperator();
 
     HCCL_INFO("[HcclOneSidedService][SetOneSidedKernelLaunchParam] op.opType[%s]", op.opType.Describe().c_str());
-    param.kernel.comm.idIndex       = comm_->GetIdIndex();
-    param.kernel.comm.myRank        = comm_->GetMyRank();
-    param.kernel.comm.rankSize       = comm_->GetRankSize();
-    param.kernel.comm.devType       = comm_->GetDevType();
-    param.kernel.comm.devPhyId      = comm_->GetDevicePhyId();
+    param.kernel.comm.idIndex = comm_->GetIdIndex();
+    param.kernel.comm.myRank = comm_->GetMyRank();
+    param.kernel.comm.rankSize = comm_->GetRankSize();
+    param.kernel.comm.devType = comm_->GetDevType();
+    param.kernel.comm.devPhyId = comm_->GetDevicePhyId();
     param.kernel.comm.opCounterAddr = static_cast<u64>(counterBuf->GetAddr());
     auto ret = strcpy_s(param.kernel.comm.commId, sizeof(param.kernel.comm.commId), comm_->GetId().data());
     if (ret != EOK) {
-        THROW<InternalException>(
-            StringFormat("HcclOneSidedService::SetOneSidedKernelLaunchParam, strcpy_s commId failed! ret[%d]", ret));
+        HCCL_ERROR("[HcclOneSidedService][%s] strcpy_s commId failed! ret[%d]", __func__, ret);
+        return HcclResult::HCCL_E_INTERNAL;
     }
 
-    param.kernel.oneSidedComm  = true;
+    param.kernel.oneSidedComm = true;
 
     param.kernel.op.algOperator.opMode = op.opMode;
     param.kernel.op.algOperator.opType = op.opType;
@@ -388,33 +399,35 @@ void HcclOneSidedService::SetOneSidedKernelLaunchParam(HcclKernelLaunchParam &pa
 
     param.kernel.kfcControlTransferH2DParams = comm_->GetKfcControlTransferH2D().GetCommunicateParams();
     param.kernel.kfcControlTransferD2HParams = comm_->GetKfcStatusTransferD2H().GetCommunicateParams();
+    return HcclResult::HCCL_SUCCESS;
 }
 
-void HcclOneSidedService::OneSidedAicpuKernelLaunch(HcclKernelLaunchParam &param, Stream &stream) const
+void HcclOneSidedService::OneSidedAicpuKernelLaunch(HcclKernelLaunchParam& param, Stream& stream) const
 {
     const aclrtFuncHandle funcHandle = comm_->GetAicpuKernelFuncHandle(param.kernelName);
     constexpr u32 numBlocks = 1;
     aclrtLaunchKernelCfg cfg;
     aclrtLaunchKernelAttr attr;
     attr.id = ACL_RT_LAUNCH_KERNEL_ATTR_TIMEOUT;
-    auto timeoutCheck         = EnvConfig::GetInstance().GetRtsConfig().GetExecTimeOut();
-    // aicpu kernal超时时间: X+30s
+    auto timeoutCheck = EnvConfig::GetInstance().GetRtsConfig().GetExecTimeOut();
+    // aicpu kernel超时时间: X+30s
     attr.value.timeout = static_cast<u16>((timeoutCheck == 0) ? timeoutCheck : (timeoutCheck + 30));
     cfg.numAttrs = 1;
     cfg.attrs = &attr;
     AddPostToUserStream(stream);
-    HCCL_INFO("[HcclOneSidedService::AicpuKernelLaunch] param.soName: %s, param.kernelName: %s", param.soName,
-              param.kernelName);
+    HCCL_INFO(
+        "[HcclOneSidedService::AicpuKernelLaunch] param.soName: %s, param.kernelName: %s", param.soName,
+        param.kernelName);
     HrtAicpuLaunchKernelWithHostArgs(
-        funcHandle, numBlocks,
-        comm_->GetAicpuStreamManager().GetFreeStream()->GetPtr(), &cfg,
-        &param.kernel, sizeof(HcclKernelParamLite));
-    HCCL_INFO("[HcclOneSidedService][AicpuKernelLaunch] param.kernel.algName: %s HrtAicpuLaunchKernelWithHostArgs end!",
-              param.kernel.algName);
+        funcHandle, numBlocks, comm_->GetAicpuStreamManager().GetFreeStream()->GetPtr(), &cfg, &param.kernel,
+        sizeof(HcclKernelParamLite));
+    HCCL_INFO(
+        "[HcclOneSidedService][AicpuKernelLaunch] param.kernel.algName: %s HrtAicpuLaunchKernelWithHostArgs end!",
+        param.kernel.algName);
     AddWaitToUserStream(stream);
 }
 
-DevBuffer *HcclOneSidedService::PackResToKernelLanuch(CollAlgOpReq &opReq)
+DevBuffer* HcclOneSidedService::PackResToKernelLanuch(CollAlgOpReq& opReq)
 {
     auto it = OneSidedLoadMap.find(opReq.algName);
     if (it != OneSidedLoadMap.end()) { // 已经向Device Mem写过资源
@@ -424,21 +437,22 @@ DevBuffer *HcclOneSidedService::PackResToKernelLanuch(CollAlgOpReq &opReq)
 
     HCCL_INFO("[HcclOneSidedService][PackResToKernelLanuch], PackOpData start");
     // 打包单边通信资源信息到device
-    auto                  buffer = PackOpData(opReq);
+    auto buffer = PackOpData(opReq);
     shared_ptr<DevBuffer> devMem = make_shared<DevBuffer>(buffer.size()); // 申请device内存
 
     HCCL_INFO("[HcclOneSidedService][PackResToKernelLanuch], HrtMemSyncCopy start");
-    HrtMemcpy(reinterpret_cast<void *>(devMem->GetAddr()), devMem->GetSize(), buffer.data(), buffer.size(),
-              RT_MEMCPY_HOST_TO_DEVICE); // H2D拷贝，将资源拷贝到device内存
-    HCCL_INFO("HcclOneSidedService::BatchGet PackOpData: PackedData %s",
-              Bytes2hex(buffer.data(), buffer.size()).c_str());
+    HrtMemcpy(
+        reinterpret_cast<void*>(devMem->GetAddr()), devMem->GetSize(), buffer.data(), buffer.size(),
+        RT_MEMCPY_HOST_TO_DEVICE); // H2D拷贝，将资源拷贝到device内存
+    HCCL_INFO(
+        "HcclOneSidedService::BatchGet PackOpData: PackedData %s", Bytes2hex(buffer.data(), buffer.size()).c_str());
     OneSidedLoadMap.insert(make_pair(opReq.algName, devMem));
 
     return devMem.get();
 }
 
-HcclResult HcclOneSidedService::BatchOpKernelLaunch(OpType opType, RankId remoteRankId, const HcclOneSideOpDesc *desc,
-                                                    u32 descNum, shared_ptr<Stream> stream)
+HcclResult HcclOneSidedService::BatchOpKernelLaunch(
+    OpType opType, RankId remoteRankId, const HcclOneSideOpDesc* desc, u32 descNum, shared_ptr<Stream> stream)
 {
     HCCL_INFO("[HcclOneSidedService][BatchOpKernelLaunch] start");
     comm_->GetAicpuStreamManager().AllocFreeStream();
@@ -458,31 +472,31 @@ HcclResult HcclOneSidedService::BatchOpKernelLaunch(OpType opType, RankId remote
     FillOneSidedOperator(opType, remoteRankId, desc);
     HCCL_INFO("[HcclOneSidedService][BatchOpKernelLaunch] PackResToKernelLanuch start");
     // 打包device展开资源信息
-    DevBuffer *devMem = PackResToKernelLanuch(opReq);
+    DevBuffer* devMem = PackResToKernelLanuch(opReq);
     // 组kernelLaunch参数
     HcclKernelLaunchParam param;
 
     HCCL_INFO("[HcclOneSidedService][BatchOpKernelLaunch] SetOneSidedKernelLaunchParam start");
     // 构造单边通信公共参数
-    SetOneSidedKernelLaunchParam(param, devMem);
+    CHK_RET(SetOneSidedKernelLaunchParam(param, devMem));
 
     std::shared_lock oneSidedConnslock(oneSidedConnsMutex_);
     auto it = oneSidedConns_.find(remoteRankId);
     if (it == oneSidedConns_.end()) {
         HCCL_ERROR("[HcclMemCommunication][BatchGet] Can't find oneSidedConn by remoteRank %u", remoteRankId);
-        throw out_of_range("Can't find oneSidedConn by remoteRank.");
+        return HcclResult::HCCL_E_NOT_FOUND;
     }
     HCCL_INFO("[HcclOneSidedService][BatchOpKernelLaunch] BatchPutGetDevBufs start");
     CHK_RET(BatchPutGetDevBufs(desc, descNum, it->second));
     oneSidedConnslock.unlock();
 
-    param.kernel.op.batchPutGetDescNum    = descNum;
-    param.kernel.op.batchPutGetLocalAddr  = reinterpret_cast<void *>(devBatchPutGetLocalBufs.get()->GetAddr());
-    param.kernel.op.batchPutGetRemoteAddr = reinterpret_cast<void *>(devBatchPutGetRemoteBufs.get()->GetAddr());
+    param.kernel.op.batchPutGetDescNum = descNum;
+    param.kernel.op.batchPutGetLocalAddr = reinterpret_cast<void*>(devBatchPutGetLocalBufs.get()->GetAddr());
+    param.kernel.op.batchPutGetRemoteAddr = reinterpret_cast<void*>(devBatchPutGetRemoteBufs.get()->GetAddr());
     auto ret = strcpy_s(param.kernel.tagKey, sizeof(param.kernel.tagKey), opReq.algName.c_str());
     if (ret != EOK) {
-        THROW<InternalException>(
-            StringFormat("[HcclOneSidedService][BatchOpKernelLaunch], strcpy_s opReq.algName failed! ret[%d]", ret));
+        HCCL_ERROR("[HcclOneSidedService][BatchOpKernelLaunch], strcpy_s opReq.algName failed! ret[%d]", ret);
+        return HcclResult::HCCL_E_INTERNAL;
     }
 
     HCCL_INFO("[HcclOneSidedService][BatchOpKernelLaunch] OneSidedAicpuKernelLaunch start");
@@ -491,15 +505,15 @@ HcclResult HcclOneSidedService::BatchOpKernelLaunch(OpType opType, RankId remote
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclOneSidedService::BatchPut(RankId remoteRankId, const HcclOneSideOpDesc *desc, u32 descNum,
-                                         const rtStream_t stream)
+HcclResult
+HcclOneSidedService::BatchPut(RankId remoteRankId, const HcclOneSideOpDesc* desc, u32 descNum, const rtStream_t stream)
 {
     HCCL_INFO("[HcclOneSidedService][BatchPut] start");
     std::shared_lock oneSidedConnslock(oneSidedConnsMutex_);
     auto it = oneSidedConns_.find(remoteRankId);
     if (it == oneSidedConns_.end()) {
         HCCL_ERROR("[HcclMemCommunication][BatchPut] Can't find oneSidedConn by remoteRank %u", remoteRankId);
-        throw out_of_range("Can't find oneSidedConn by remoteRank.");
+        return HCCL_E_NOT_FOUND;
     }
     oneSidedConnslock.unlock();
 
@@ -510,15 +524,15 @@ HcclResult HcclOneSidedService::BatchPut(RankId remoteRankId, const HcclOneSideO
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclOneSidedService::BatchGet(RankId remoteRankId, const HcclOneSideOpDesc *desc, u32 descNum,
-                                         const rtStream_t stream)
+HcclResult
+HcclOneSidedService::BatchGet(RankId remoteRankId, const HcclOneSideOpDesc* desc, u32 descNum, const rtStream_t stream)
 {
     HCCL_INFO("[HcclOneSidedService][BatchGet] start");
     std::shared_lock oneSidedConnslock(oneSidedConnsMutex_);
     auto it = oneSidedConns_.find(remoteRankId);
     if (it == oneSidedConns_.end()) {
         HCCL_ERROR("[HcclMemCommunication][BatchGet] Can't find oneSidedConn by remoteRank %u", remoteRankId);
-        throw out_of_range("Can't find oneSidedConn by remoteRank.");
+        return HCCL_E_NOT_FOUND;
     }
     oneSidedConnslock.unlock();
 
@@ -538,25 +552,23 @@ void HcclOneSidedService::AddOpCounterMems()
     counterBuf = std::make_shared<DevBuffer>(size);
 
     // 初始化第一个四字节置1, 用于计数加1, reduce task add 1
-    u64   srcSize  = FOUR_BYTES;
+    u64 srcSize = FOUR_BYTES;
     float srcValue = 1;
-    void *srcAddr  = reinterpret_cast<void *>(counterBuf->GetAddr());
+    void* srcAddr = reinterpret_cast<void*>(counterBuf->GetAddr());
     HrtMemcpy(srcAddr, srcSize, &srcValue, srcSize, RT_MEMCPY_HOST_TO_DEVICE);
 
     // 初始化后面两个四字节置0
     u64 countMemSize = srcSize;
- 	float startValue = 0; // value为0表示从0开始计数
- 	void *headCountAddr = reinterpret_cast<void*>(counterBuf->GetAddr() + srcSize);
- 	void *tailCountAddr = reinterpret_cast<void*>(counterBuf->GetAddr() + srcSize * 2);
- 	HrtMemcpy(headCountAddr, countMemSize, &startValue, countMemSize, RT_MEMCPY_HOST_TO_DEVICE);
- 	HrtMemcpy(tailCountAddr, countMemSize, &startValue, countMemSize, RT_MEMCPY_HOST_TO_DEVICE);
- 	 
- 	HCCL_INFO("[HcclOneSidedService::%s] end, counterBuf[%llu] srcAddr[%p] headCountAddr[%p] tailCountAddr[%p].", __func__,
- 	    counterBuf->GetAddr(), srcAddr, headCountAddr, tailCountAddr);
+    float startValue = 0; // value为0表示从0开始计数
+    void* headCountAddr = reinterpret_cast<void*>(counterBuf->GetAddr() + srcSize);
+    void* tailCountAddr = reinterpret_cast<void*>(counterBuf->GetAddr() + srcSize * 2);
+    HrtMemcpy(headCountAddr, countMemSize, &startValue, countMemSize, RT_MEMCPY_HOST_TO_DEVICE);
+    HrtMemcpy(tailCountAddr, countMemSize, &startValue, countMemSize, RT_MEMCPY_HOST_TO_DEVICE);
+
+    HCCL_INFO(
+        "[HcclOneSidedService::%s] end, counterBuf[%llu] srcAddr[%p] headCountAddr[%p] tailCountAddr[%p].", __func__,
+        counterBuf->GetAddr(), srcAddr, headCountAddr, tailCountAddr);
 }
 
-DevBuffer *HcclOneSidedService::GetOpCounterBuf()
-{
-    return counterBuf.get();
-}
+DevBuffer* HcclOneSidedService::GetOpCounterBuf() { return counterBuf.get(); }
 } // namespace Hccl

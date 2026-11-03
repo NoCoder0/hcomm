@@ -1,7 +1,7 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
@@ -12,47 +12,51 @@
 
 namespace hccl {
 
-HcclResult ZeroCopyAddressMgr::SetMemoryRange(u32 devicePhyId, void *baseAddr, u64 length)
+HcclResult ZeroCopyAddressMgr::SetMemoryRange(u32 devicePhyId, void* baseAddr, u64 length)
 {
     if (baseAddr == nullptr || length == 0) {
         HCCL_ERROR("[ZeroCopyAddressMgr][SetMemoryRange] invalid input params addr[%p] len[%lu]", baseAddr, length);
         return HCCL_E_PARA;
     }
 
-    CHK_PRT_RET(AddLocalIpc2RemoteAddr(devicePhyId, baseAddr, baseAddr, length),
+    CHK_PRT_RET(
+        AddLocalIpc2RemoteAddr(devicePhyId, baseAddr, baseAddr, length),
         HCCL_ERROR("[ZeroCopyAddressMgr][SetMemoryRange] dev[%u] set addr [%p] failed", devicePhyId, baseAddr),
         HCCL_E_PARA);
 
     return HCCL_SUCCESS;
 }
 
-HcclResult ZeroCopyAddressMgr::UnsetMemoryRange(u32 devicePhyId, void *baseAddr)
+HcclResult ZeroCopyAddressMgr::UnsetMemoryRange(u32 devicePhyId, void* baseAddr)
 {
     if (baseAddr == nullptr) {
         HCCL_ERROR("[ZeroCopyAddressMgr][UnsetMemoryRange] invalid input params");
         return HCCL_E_PARA;
     }
 
-    CHK_PRT_RET(DelLocalIpc2RemoteAddr(devicePhyId, baseAddr),
+    CHK_PRT_RET(
+        DelLocalIpc2RemoteAddr(devicePhyId, baseAddr),
         HCCL_ERROR("[ZeroCopyAddressMgr][UnsetMemoryRange] dev[%u] unset [%p] addr failed", devicePhyId, baseAddr),
         HCCL_E_PARA);
 
     return HCCL_SUCCESS;
 }
 
-bool ZeroCopyAddressMgr::IsAddressSet(u32 devicePhyId, void *baseAddr)
+bool ZeroCopyAddressMgr::IsAddressSet(u32 devicePhyId, void* baseAddr)
 {
     std::lock_guard<std::mutex> guard(lock_);
-    auto &addrMapping = reserveAddrMappings_[devicePhyId];
+    auto& addrMapping = reserveAddrMappings_[devicePhyId];
     return addrMapping.find(baseAddr) != addrMapping.end();
 }
 
-HcclResult ZeroCopyAddressMgr::AddLocalIpc2RemoteAddr(u32 devicePhyId, void *localIpcBase, void *remoteAddrBase, u64 length)
+HcclResult
+ZeroCopyAddressMgr::AddLocalIpc2RemoteAddr(u32 devicePhyId, void* localIpcBase, void* remoteAddrBase, u64 length)
 {
     u32 maxDeviceNum;
     CHK_RET(GetMaxDevNum(maxDeviceNum));
     if (devicePhyId >= maxDeviceNum || localIpcBase == nullptr || remoteAddrBase == nullptr) {
-        HCCL_ERROR("[ZeroCopyAddressMgr][AddLocalIpc2RemoteAddr] devPhyId [%u] localIpc[%p] remoteAddr[%p] invalid params",
+        HCCL_ERROR(
+            "[ZeroCopyAddressMgr][AddLocalIpc2RemoteAddr] devPhyId [%u] localIpc[%p] remoteAddr[%p] invalid params",
             devicePhyId, localIpcBase, remoteAddrBase);
         return HCCL_E_PARA;
     }
@@ -60,18 +64,25 @@ HcclResult ZeroCopyAddressMgr::AddLocalIpc2RemoteAddr(u32 devicePhyId, void *loc
     ZeroCopyRingBufferItem item;
     {
         std::lock_guard<std::mutex> guard(lock_);
-        auto &addrMapping = reserveAddrMappings_[devicePhyId];
-        auto &addrRange = reserveRanges_[devicePhyId];
+        auto& addrMapping = reserveAddrMappings_[devicePhyId];
+        auto& addrRange = reserveRanges_[devicePhyId];
 
         // 检查地址是否已经reserve过
-        CHK_PRT_RET(addrMapping.find(remoteAddrBase) != addrMapping.end(),
-            HCCL_ERROR("[ZeroCopyAddressMgr][AddLocalIpc2RemoteAddr] dev[%u] remote addr %p had set", devicePhyId, remoteAddrBase), HCCL_E_PARA);
+        CHK_PRT_RET(
+            addrMapping.find(remoteAddrBase) != addrMapping.end(),
+            HCCL_ERROR(
+                "[ZeroCopyAddressMgr][AddLocalIpc2RemoteAddr] dev[%u] remote addr %p had set", devicePhyId,
+                remoteAddrBase),
+            HCCL_E_PARA);
 
         // 检查地址reserve的地址区间是否与之前的有交叠
         AddressRange range(remoteAddrBase, length);
-        CHK_PRT_RET(addrRange.find(range) != addrRange.end(),
-            HCCL_ERROR("[ZeroCopyAddressMgr][AddLocalIpc2RemoteAddr] dev[%u] remote addr %p had set with overlap range",
-            devicePhyId, remoteAddrBase), HCCL_E_PARA);
+        CHK_PRT_RET(
+            addrRange.find(range) != addrRange.end(),
+            HCCL_ERROR(
+                "[ZeroCopyAddressMgr][AddLocalIpc2RemoteAddr] dev[%u] remote addr %p had set with overlap range",
+                devicePhyId, remoteAddrBase),
+            HCCL_E_PARA);
 
         item.type = ZeroCopyItemType::SET_MEMORY;
         item.addr.devicePhyId = devicePhyId;
@@ -82,12 +93,13 @@ HcclResult ZeroCopyAddressMgr::AddLocalIpc2RemoteAddr(u32 devicePhyId, void *loc
         addrRange.insert(range);
     }
     CHK_RET(PushOne(item));
-    HCCL_INFO("[ZeroCopyAddressMgr][AddLocalIpc2RemoteAddr] dev[%u] add set localIpc[%p] remote[%p] length[%lu]",
-        devicePhyId, localIpcBase, remoteAddrBase, length);
+    HCCL_INFO(
+        "[ZeroCopyAddressMgr][AddLocalIpc2RemoteAddr] dev[%u] add set localIpc[%p] remote[%p] length[%lu]", devicePhyId,
+        localIpcBase, remoteAddrBase, length);
     return HCCL_SUCCESS;
 }
 
-HcclResult ZeroCopyAddressMgr::DelLocalIpc2RemoteAddr(u32 devicePhyId, void *remoteAddrBase)
+HcclResult ZeroCopyAddressMgr::DelLocalIpc2RemoteAddr(u32 devicePhyId, void* remoteAddrBase)
 {
     u32 maxDeviceNum;
     CHK_RET(GetMaxDevNum(maxDeviceNum));
@@ -100,26 +112,36 @@ HcclResult ZeroCopyAddressMgr::DelLocalIpc2RemoteAddr(u32 devicePhyId, void *rem
     ZeroCopyRingBufferItem item;
     {
         std::lock_guard<std::mutex> guard(lock_);
-        auto &addrMapping = reserveAddrMappings_[devicePhyId];
-        auto &addrRange = reserveRanges_[devicePhyId];
+        auto& addrMapping = reserveAddrMappings_[devicePhyId];
+        auto& addrRange = reserveRanges_[devicePhyId];
 
         // 检查地址是否已经reserve过
         auto mappingIt = addrMapping.find(remoteAddrBase);
-        CHK_PRT_RET(mappingIt == addrMapping.end(),
-            HCCL_ERROR("[ZeroCopyAddressMgr][DelLocalIpc2RemoteAddr] dev[%u] addr %p not set", devicePhyId, remoteAddrBase), HCCL_E_PARA);
+        CHK_PRT_RET(
+            mappingIt == addrMapping.end(),
+            HCCL_ERROR(
+                "[ZeroCopyAddressMgr][DelLocalIpc2RemoteAddr] dev[%u] addr %p not set", devicePhyId, remoteAddrBase),
+            HCCL_E_PARA);
 
         length = mappingIt->second.length;
         AddressRange range(remoteAddrBase, length);
         auto rangeIt = addrRange.find(range);
-        CHK_PRT_RET(rangeIt == addrRange.end(),
-            HCCL_ERROR("[ZeroCopyAddressMgr][DelLocalIpc2RemoteAddr] dev[%u] addr %p not set", devicePhyId, remoteAddrBase), HCCL_E_PARA);
+        CHK_PRT_RET(
+            rangeIt == addrRange.end(),
+            HCCL_ERROR(
+                "[ZeroCopyAddressMgr][DelLocalIpc2RemoteAddr] dev[%u] addr %p not set", devicePhyId, remoteAddrBase),
+            HCCL_E_PARA);
 
         // 检查是否仍存在Activate的内存
         AddressRange localRange(mappingIt->second.localIpcAddr, length);
         auto activateIt = validAddressRanges_.find(localRange);
-        CHK_PRT_RET(activateIt != validAddressRanges_.end(),
-            HCCL_ERROR("[ZeroCopyAddressMgr][DelLocalIpc2RemoteAddr] dev[%u] remoteAddr %p localAddr 0x%lx still have activate memory [0x%lx, 0x%lx)",
-            devicePhyId, remoteAddrBase, mappingIt->second.localIpcAddr, activateIt->start, activateIt->end), HCCL_E_PARA);
+        CHK_PRT_RET(
+            activateIt != validAddressRanges_.end(),
+            HCCL_ERROR(
+                "[ZeroCopyAddressMgr][DelLocalIpc2RemoteAddr] dev[%u] remoteAddr %p localAddr 0x%lx still have "
+                "activate memory [0x%lx, 0x%lx)",
+                devicePhyId, remoteAddrBase, mappingIt->second.localIpcAddr, activateIt->start, activateIt->end),
+            HCCL_E_PARA);
 
         item.type = ZeroCopyItemType::UNSET_MEMORY;
         item.addr = mappingIt->second;
@@ -127,12 +149,13 @@ HcclResult ZeroCopyAddressMgr::DelLocalIpc2RemoteAddr(u32 devicePhyId, void *rem
         addrRange.erase(rangeIt);
     }
     CHK_RET(PushOne(item));
-    HCCL_INFO("[ZeroCopyAddressMgr][DelLocalIpc2RemoteAddr] dev[%u] del set localIpc[0x%lx] remote[0x%lx] length[%lu]",
+    HCCL_INFO(
+        "[ZeroCopyAddressMgr][DelLocalIpc2RemoteAddr] dev[%u] del set localIpc[0x%lx] remote[0x%lx] length[%lu]",
         devicePhyId, item.addr.localIpcAddr, item.addr.remoteAddr, length);
     return HCCL_SUCCESS;
 }
 
-HcclResult ZeroCopyAddressMgr::GetLocalIpc2RemoteAddr(u32 devicePhyId, void *remoteAddr, LocalIpc2RemoteAddr &addr)
+HcclResult ZeroCopyAddressMgr::GetLocalIpc2RemoteAddr(u32 devicePhyId, void* remoteAddr, LocalIpc2RemoteAddr& addr)
 {
     u32 maxDeviceNum;
     CHK_RET(GetMaxDevNum(maxDeviceNum));
@@ -142,38 +165,48 @@ HcclResult ZeroCopyAddressMgr::GetLocalIpc2RemoteAddr(u32 devicePhyId, void *rem
     }
 
     std::lock_guard<std::mutex> guard(lock_);
-    auto &addrMapping = reserveAddrMappings_[devicePhyId];
-    auto &addrRange = reserveRanges_[devicePhyId];
+    auto& addrMapping = reserveAddrMappings_[devicePhyId];
+    auto& addrRange = reserveRanges_[devicePhyId];
 
     AddressRange range(remoteAddr, 1);
     auto rangeIt = addrRange.find(range);
-    CHK_PRT_RET(rangeIt == addrRange.end(),
-        HCCL_ERROR("[ZeroCopyAddressMgr][GetLocalIpc2RemoteAddr] dev[%u] addr %p not set", devicePhyId, remoteAddr), HCCL_E_PARA);
+    CHK_PRT_RET(
+        rangeIt == addrRange.end(),
+        HCCL_ERROR("[ZeroCopyAddressMgr][GetLocalIpc2RemoteAddr] dev[%u] addr %p not set", devicePhyId, remoteAddr),
+        HCCL_E_PARA);
 
-    void *remoteAddrBase = reinterpret_cast<void *>(rangeIt->start);
+    void* remoteAddrBase = reinterpret_cast<void*>(rangeIt->start);
     auto mapIt = addrMapping.find(remoteAddrBase);
-    CHK_PRT_RET(rangeIt == addrRange.end(),
-        HCCL_ERROR("[ZeroCopyAddressMgr][GetLocalIpc2RemoteAddr] dev[%u] addr %p not set", devicePhyId, remoteAddr), HCCL_E_PARA);
+    CHK_PRT_RET(
+        mapIt == addrMapping.end(),
+        HCCL_ERROR(
+            "[ZeroCopyAddressMgr][GetLocalIpc2RemoteAddr] dev[%u] baseAddr %p not mapped", devicePhyId, remoteAddrBase),
+        HCCL_E_PARA);
 
     addr = mapIt->second;
 
     return HCCL_SUCCESS;
 }
 
-HcclResult ZeroCopyAddressMgr::ActivateCommMemoryAddr(void *startPtr, u64 length)
+HcclResult ZeroCopyAddressMgr::ActivateCommMemoryAddr(void* startPtr, u64 length)
 {
-    CHK_PRT_RET((startPtr == nullptr || length == 0),
-        HCCL_ERROR("[ZeroCopyAddressMgr][ActivateCommMemoryAddr] Invalid params"), HCCL_E_PARA);
-    
+    CHK_PRT_RET(
+        (startPtr == nullptr || length == 0), HCCL_ERROR("[ZeroCopyAddressMgr][ActivateCommMemoryAddr] Invalid params"),
+        HCCL_E_PARA);
+
     AddressRange range(startPtr, length);
 
     {
         std::lock_guard<std::mutex> guard(lock_);
         auto it = validAddressRanges_.find(range);
-        CHK_PRT_RET((it != validAddressRanges_.end()),
-            HCCL_ERROR("[ZeroCopyAddressMgr][ActivateCommMemoryAddr] overlap address exist:[0x%lx, 0x%lx) valid:[0x%lx, 0x%lx)",
-            it->start, it->end, range.start, range.end), HCCL_E_PARA);
-        
+        CHK_PRT_RET(
+            (it != validAddressRanges_.end()),
+            HCCL_ERROR(
+                "[ZeroCopyAddressMgr][ActivateCommMemoryAddr] overlap address exist:[0x%lx, 0x%lx) valid:[0x%lx, "
+                "0x%lx)",
+                it->start, it->end, range.start, range.end),
+            HCCL_E_PARA);
+
         validAddressRanges_.insert(range);
     }
     ZeroCopyRingBufferItem item;
@@ -182,15 +215,17 @@ HcclResult ZeroCopyAddressMgr::ActivateCommMemoryAddr(void *startPtr, u64 length
     item.addr.length = length;
     CHK_RET(PushOne(item));
 
-    HCCL_INFO("[ZeroCopyAddressMgr][ActivateCommMemoryAddr] activate address [0x%lx, 0x%lx) success", range.start, range.end);
+    HCCL_INFO(
+        "[ZeroCopyAddressMgr][ActivateCommMemoryAddr] activate address [0x%lx, 0x%lx) success", range.start, range.end);
     return HCCL_SUCCESS;
 }
 
-HcclResult ZeroCopyAddressMgr::DeactivateCommMemoryAddr(void *startPtr)
+HcclResult ZeroCopyAddressMgr::DeactivateCommMemoryAddr(void* startPtr)
 {
-    CHK_PRT_RET((startPtr == nullptr),
-        HCCL_ERROR("[ZeroCopyAddressMgr][DeactivateCommMemoryAddr] Invalid params"), HCCL_E_PARA);
-    
+    CHK_PRT_RET(
+        (startPtr == nullptr), HCCL_ERROR("[ZeroCopyAddressMgr][DeactivateCommMemoryAddr] Invalid params"),
+        HCCL_E_PARA);
+
     // 我们构造一个最小的交叠区间去做比较
     u64 litteLen = 1;
     AddressRange range(startPtr, litteLen);
@@ -198,10 +233,14 @@ HcclResult ZeroCopyAddressMgr::DeactivateCommMemoryAddr(void *startPtr)
     {
         std::lock_guard<std::mutex> guard(lock_);
         auto it = validAddressRanges_.find(range);
-        CHK_PRT_RET((it == validAddressRanges_.end() || it->start != range.start),
-            HCCL_ERROR("[ZeroCopyAddressMgr][DeactivateCommMemoryAddr] address %p is not activate", startPtr), HCCL_E_PARA);
-        
-        HCCL_INFO("[ZeroCopyAddressMgr][DeactivateCommMemoryAddr] deactivate address [0x%lx, 0x%lx) success", it->start, it->end);
+        CHK_PRT_RET(
+            (it == validAddressRanges_.end() || it->start != range.start),
+            HCCL_ERROR("[ZeroCopyAddressMgr][DeactivateCommMemoryAddr] address %p is not activate", startPtr),
+            HCCL_E_PARA);
+
+        HCCL_INFO(
+            "[ZeroCopyAddressMgr][DeactivateCommMemoryAddr] deactivate address [0x%lx, 0x%lx) success", it->start,
+            it->end);
         validAddressRanges_.erase(it);
     }
 
@@ -213,31 +252,35 @@ HcclResult ZeroCopyAddressMgr::DeactivateCommMemoryAddr(void *startPtr)
     return HCCL_SUCCESS;
 }
 
-HcclResult ZeroCopyAddressMgr::AddRemoteImportAddr(void *devPtr, void *handle)
+HcclResult ZeroCopyAddressMgr::AddRemoteImportAddr(void* devPtr, void* handle)
 {
-    CHK_PRT_RET((devPtr == nullptr || handle == nullptr),
-        HCCL_ERROR("[ZeroCopyAddressMgr][AddRemoteImportAddr] invalid devPtr[%p] handle[%p]",
-        devPtr, handle), HCCL_E_PARA);
+    CHK_PRT_RET(
+        (devPtr == nullptr || handle == nullptr),
+        HCCL_ERROR("[ZeroCopyAddressMgr][AddRemoteImportAddr] invalid devPtr[%p] handle[%p]", devPtr, handle),
+        HCCL_E_PARA);
 
     std::lock_guard<std::mutex> guard(lock_);
     auto it = importAddrs_.find(devPtr);
-    CHK_PRT_RET(it != importAddrs_.end(),
-        HCCL_ERROR("[ZeroCopyAddressMgr][AddRemoteImportAddr] devPtr[%p] has import", devPtr), HCCL_E_PARA);
+    CHK_PRT_RET(
+        it != importAddrs_.end(), HCCL_ERROR("[ZeroCopyAddressMgr][AddRemoteImportAddr] devPtr[%p] has import", devPtr),
+        HCCL_E_PARA);
 
     HCCL_INFO("[ZeroCopyAddressMgr][AddRemoteImportAddr] add devPtr[%p] handle[%p]", devPtr, handle);
     importAddrs_.insert({devPtr, handle});
     return HCCL_SUCCESS;
 }
 
-HcclResult ZeroCopyAddressMgr::GetRemoteImportAddr(void *devPtr, void *&handle)
+HcclResult ZeroCopyAddressMgr::GetRemoteImportAddr(void* devPtr, void*& handle)
 {
-    CHK_PRT_RET((devPtr == nullptr),
-        HCCL_ERROR("[ZeroCopyAddressMgr][GetRemoteImportAddr] invalid devPtr[%p]", devPtr), HCCL_E_PARA);
+    CHK_PRT_RET(
+        (devPtr == nullptr), HCCL_ERROR("[ZeroCopyAddressMgr][GetRemoteImportAddr] invalid devPtr[%p]", devPtr),
+        HCCL_E_PARA);
 
     std::lock_guard<std::mutex> guard(lock_);
     auto it = importAddrs_.find(devPtr);
-    CHK_PRT_RET(it == importAddrs_.end(),
-        HCCL_ERROR("[ZeroCopyAddressMgr][GetRemoteImportAddr] devPtr[%p] not import", devPtr), HCCL_E_PARA);
+    CHK_PRT_RET(
+        it == importAddrs_.end(), HCCL_ERROR("[ZeroCopyAddressMgr][GetRemoteImportAddr] devPtr[%p] not import", devPtr),
+        HCCL_E_PARA);
 
     handle = importAddrs_[devPtr];
     HCCL_INFO("[ZeroCopyAddressMgr][GetRemoteImportAddr] get devPtr[%p] handle[%p]", devPtr, handle);
@@ -245,24 +288,26 @@ HcclResult ZeroCopyAddressMgr::GetRemoteImportAddr(void *devPtr, void *&handle)
     return HCCL_SUCCESS;
 }
 
-HcclResult ZeroCopyAddressMgr::DelRemoteImportAddr(void *devPtr)
+HcclResult ZeroCopyAddressMgr::DelRemoteImportAddr(void* devPtr)
 {
-    CHK_PRT_RET((devPtr == nullptr),
-        HCCL_ERROR("[ZeroCopyAddressMgr][DelRemoteImportAddr] invalid devPtr[%p]", devPtr), HCCL_E_PARA);
+    CHK_PRT_RET(
+        (devPtr == nullptr), HCCL_ERROR("[ZeroCopyAddressMgr][DelRemoteImportAddr] invalid devPtr[%p]", devPtr),
+        HCCL_E_PARA);
 
     std::lock_guard<std::mutex> guard(lock_);
     auto it = importAddrs_.find(devPtr);
-    CHK_PRT_RET(it == importAddrs_.end(),
-        HCCL_ERROR("[ZeroCopyAddressMgr][GetRemoteImportAddr] devPtr[%p] not import", devPtr), HCCL_E_PARA);
+    CHK_PRT_RET(
+        it == importAddrs_.end(), HCCL_ERROR("[ZeroCopyAddressMgr][GetRemoteImportAddr] devPtr[%p] not import", devPtr),
+        HCCL_E_PARA);
 
-    void *handle = importAddrs_[devPtr];
+    void* handle = importAddrs_[devPtr];
     HCCL_INFO("[ZeroCopyAddressMgr][GetRemoteImportAddr] del devPtr[%p] handle[%p]", devPtr, handle);
     importAddrs_.erase(it);
 
     return HCCL_SUCCESS;
 }
 
-bool ZeroCopyAddressMgr::IsActivateCommMemoryAddr(void *startPtr, u64 length)
+bool ZeroCopyAddressMgr::IsActivateCommMemoryAddr(void* startPtr, u64 length)
 {
     if (startPtr == nullptr || length == 0) {
         return false;
@@ -289,7 +334,7 @@ bool ZeroCopyAddressMgr::IsActivateCommMemoryAddr(void *startPtr, u64 length)
     return false;
 }
 
-bool ZeroCopyAddressMgr::IsOverlapWithActivateAddr(void *startPtr, u64 length)
+bool ZeroCopyAddressMgr::IsOverlapWithActivateAddr(void* startPtr, u64 length)
 {
     if (startPtr == nullptr || length == 0) {
         return false;
@@ -300,10 +345,10 @@ bool ZeroCopyAddressMgr::IsOverlapWithActivateAddr(void *startPtr, u64 length)
     return validAddressRanges_.find(range) != validAddressRanges_.end();
 }
 
-bool ZeroCopyAddressMgr::IsInSetAddressRange(u32 devicePhyId, void *startPtr, u64 length)
+bool ZeroCopyAddressMgr::IsInSetAddressRange(u32 devicePhyId, void* startPtr, u64 length)
 {
     std::lock_guard<std::mutex> guard(lock_);
-    auto &addrRange = reserveRanges_[devicePhyId];
+    auto& addrRange = reserveRanges_[devicePhyId];
 
     // 构造最小的数据块去寻找，如果没找到肯定没有交集
     AddressRange range(startPtr, 1);
@@ -318,22 +363,25 @@ bool ZeroCopyAddressMgr::IsInSetAddressRange(u32 devicePhyId, void *startPtr, u6
         HCCL_INFO("[ZeroCopyAddressMgr][IsInSetAddressRange] exceed reserve range");
         return false;
     }
-    
+
     return true;
 }
 
-HcclResult ZeroCopyAddressMgr::ProcessRingBuffer(ZeroCopyRingBufferItem *ringBuffer, u32 *head, u32 *tail)
+HcclResult ZeroCopyAddressMgr::ProcessRingBuffer(ZeroCopyRingBufferItem* ringBuffer, u32* head, u32* tail)
 {
     if (ringBuffer == nullptr || head == nullptr || tail == nullptr) {
-        HCCL_ERROR("[ZeroCopyAddressMgr][ProcessRingBuffer] invalid param ringBuff[%p] head[%p] tail[%p]",
-            ringBuffer, head, tail);
+        HCCL_ERROR(
+            "[ZeroCopyAddressMgr][ProcessRingBuffer] invalid param ringBuff[%p] head[%p] tail[%p]", ringBuffer, head,
+            tail);
         return HCCL_E_PARA;
     }
 
     std::lock_guard<std::mutex> guard(processRingBufferLock_);
     needPushOne = false;
     if (*head == *tail) {
-        HCCL_INFO("[ZeroCopyAddressMgr][ProcessRingBuffer] ring buffer is empty, so do nothing, head[%u] tail[%u]", *head, *tail);
+        HCCL_INFO(
+            "[ZeroCopyAddressMgr][ProcessRingBuffer] ring buffer is empty, so do nothing, head[%u] tail[%u]", *head,
+            *tail);
         return HCCL_SUCCESS;
     }
 
@@ -344,8 +392,9 @@ HcclResult ZeroCopyAddressMgr::ProcessRingBuffer(ZeroCopyRingBufferItem *ringBuf
 
     u32 now = *head;
     while (now != *tail) {
-        HCCL_INFO("[ZeroCopyAddressMgr][ProcessRingBuffer] process ringbuffer now[%u] ptr[%p] tail[%u] type[%d]",
-            now, ringBuffer + now, *tail, ringBuffer[now].type);
+        HCCL_INFO(
+            "[ZeroCopyAddressMgr][ProcessRingBuffer] process ringbuffer now[%u] ptr[%p] tail[%u] type[%d]", now,
+            ringBuffer + now, *tail, ringBuffer[now].type);
         CHK_RET(ProcessOneAddrMap(ringBuffer[now]));
         now = (now + 1) % ZERO_COPY_BUFFER_MAX_MAP_COUNT;
     }
@@ -356,20 +405,22 @@ HcclResult ZeroCopyAddressMgr::ProcessRingBuffer(ZeroCopyRingBufferItem *ringBuf
     return HCCL_SUCCESS;
 }
 
-HcclResult ZeroCopyAddressMgr::ProcessOneAddrMap(const ZeroCopyRingBufferItem &item)
+HcclResult ZeroCopyAddressMgr::ProcessOneAddrMap(const ZeroCopyRingBufferItem& item)
 {
-    HCCL_INFO("[ZeroCopyAddressMgr][ProcessOneAddrMap] Item info: type[%d] dev[%u] local[0x%lx] remote[0x%lx] len[%lu]",
+    HCCL_INFO(
+        "[ZeroCopyAddressMgr][ProcessOneAddrMap] Item info: type[%d] dev[%u] local[0x%lx] remote[0x%lx] len[%lu]",
         item.type, item.addr.devicePhyId, item.addr.localIpcAddr, item.addr.remoteAddr, item.addr.length);
     switch (item.type) {
         case ZeroCopyItemType::SET_MEMORY:
-            return AddLocalIpc2RemoteAddr(item.addr.devicePhyId, reinterpret_cast<void *>(item.addr.localIpcAddr),
-                reinterpret_cast<void *>(item.addr.remoteAddr), item.addr.length);
+            return AddLocalIpc2RemoteAddr(
+                item.addr.devicePhyId, reinterpret_cast<void*>(item.addr.localIpcAddr),
+                reinterpret_cast<void*>(item.addr.remoteAddr), item.addr.length);
         case ZeroCopyItemType::UNSET_MEMORY:
-            return DelLocalIpc2RemoteAddr(item.addr.devicePhyId, reinterpret_cast<void *>(item.addr.remoteAddr));
+            return DelLocalIpc2RemoteAddr(item.addr.devicePhyId, reinterpret_cast<void*>(item.addr.remoteAddr));
         case ZeroCopyItemType::ACTIVATE_MEMORY:
-            return ActivateCommMemoryAddr(reinterpret_cast<void *>(item.addr.localIpcAddr), item.addr.length);
+            return ActivateCommMemoryAddr(reinterpret_cast<void*>(item.addr.localIpcAddr), item.addr.length);
         case ZeroCopyItemType::DEACTIVATE_MEMORY:
-            return DeactivateCommMemoryAddr(reinterpret_cast<void *>(item.addr.localIpcAddr));
+            return DeactivateCommMemoryAddr(reinterpret_cast<void*>(item.addr.localIpcAddr));
         default:
             HCCL_ERROR("[ZeroCopyAddressMgr][ProcessOneAddrMap] invalid type[%d]", item.type);
             return HCCL_E_PARA;
@@ -378,10 +429,7 @@ HcclResult ZeroCopyAddressMgr::ProcessOneAddrMap(const ZeroCopyRingBufferItem &i
     return HCCL_SUCCESS;
 }
 
-u32 ZeroCopyAddressMgr::GetCommRefCnt()
-{
-    return commRefCnt_;
-}
+u32 ZeroCopyAddressMgr::GetCommRefCnt() const { return commRefCnt_; }
 
 HcclResult ZeroCopyAddressMgr::IncreCommRefCnt()
 {
@@ -399,4 +447,4 @@ HcclResult ZeroCopyAddressMgr::DecreCommRefCnt()
     return HCCL_SUCCESS;
 }
 
-}
+} // namespace hccl

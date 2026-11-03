@@ -21,45 +21,39 @@ using namespace hccl;
 
 class SnapshotTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "\033[36m--SnapshotTest SetUP--\033[0m" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "\033[36m--SnapshotTest TearDown--\033[0m" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "\033[36m--SnapshotTest SetUP--\033[0m" << std::endl; }
+    static void TearDownTestCase() { std::cout << "\033[36m--SnapshotTest TearDown--\033[0m" << std::endl; }
     // Some expensive resource shared by all tests.
-    virtual void SetUp()
-    {
-        std::cout << "A Test SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test SetUP" << std::endl; }
     virtual void TearDown()
     {
         std::cout << "A Test TearDown" << std::endl;
         GlobalMockObject::verify();
     }
-
 };
 
 TEST_F(SnapshotTest, ut_Register_and_PreProcess_success)
 {
-    MOCKER(SnapShotSaveAction)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(SnapShotSaveAction).stubs().will(returnValue(HCCL_SUCCESS));
 
     u32 phyId = 0;
     MOCKER(SnapShotSaveAction)
-    .stubs()
-    .with(mockcpp::any(), outBound(phyId), mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(phyId), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
-    SnapshotSetInvalidComm setInvalidCommCallback = [](bool isInvalid) { return HCCL_SUCCESS; };
-    SnapshotCheckPreProcess preProcessCallback = []() { return HCCL_SUCCESS; };
-    SnapshotCheckPostProcess postProcessCallback = []() { return HCCL_SUCCESS; };
+    SnapshotSetInvalidComm setInvalidCommCallback = [](bool isInvalid) {
+        return HCCL_SUCCESS;
+    };
+    SnapshotCheckPreProcess preProcessCallback = []() {
+        return HCCL_SUCCESS;
+    };
+    SnapshotCheckPostProcess postProcessCallback = []() {
+        return HCCL_SUCCESS;
+    };
 
-    HcclResult ret = SnapshotControl::GetInstance(0).RegisterComm("testComm", setInvalidCommCallback, preProcessCallback,
-        postProcessCallback);
+    HcclResult ret = SnapshotControl::GetInstance(0).RegisterComm(
+        "testComm", setInvalidCommCallback, preProcessCallback, postProcessCallback);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ret = SnapshotControl::GetInstance(0).RegisterBackup("testComm", 1);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -70,22 +64,26 @@ TEST_F(SnapshotTest, ut_Register_and_PreProcess_success)
 
 TEST_F(SnapshotTest, ut_Register_and_PostProcess_success)
 {
-    MOCKER(SnapShotSaveAction)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(SnapShotSaveAction).stubs().will(returnValue(HCCL_SUCCESS));
 
     u32 phyId = 0;
     MOCKER(SnapShotSaveAction)
-    .stubs()
-    .with(mockcpp::any(), outBound(phyId), mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(phyId), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
-    SnapshotSetInvalidComm setInvalidCommCallback = [](bool isInvalid) { return HCCL_SUCCESS; };
-    SnapshotCheckPreProcess preProcessCallback = []() { return HCCL_SUCCESS; };
-    SnapshotCheckPostProcess postProcessCallback = []() { return HCCL_SUCCESS; };
+    SnapshotSetInvalidComm setInvalidCommCallback = [](bool isInvalid) {
+        return HCCL_SUCCESS;
+    };
+    SnapshotCheckPreProcess preProcessCallback = []() {
+        return HCCL_SUCCESS;
+    };
+    SnapshotCheckPostProcess postProcessCallback = []() {
+        return HCCL_SUCCESS;
+    };
 
-    HcclResult ret = SnapshotControl::GetInstance(0).RegisterComm("testComm", setInvalidCommCallback, preProcessCallback,
-        postProcessCallback);
+    HcclResult ret = SnapshotControl::GetInstance(0).RegisterComm(
+        "testComm", setInvalidCommCallback, preProcessCallback, postProcessCallback);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ret = SnapshotControl::GetInstance(0).RegisterBackup("testComm", 1);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -96,22 +94,26 @@ TEST_F(SnapshotTest, ut_Register_and_PostProcess_success)
 
 TEST_F(SnapshotTest, ut_Register_and_Restore_success)
 {
-    MOCKER(SnapShotRestoreAction)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(SnapShotRestoreAction).stubs().will(returnValue(HCCL_SUCCESS));
 
     u32 phyId = 0;
     MOCKER(SnapShotSaveAction)
-    .stubs()
-    .with(mockcpp::any(), outBound(phyId), mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(phyId), mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
-    SnapshotSetInvalidComm setInvalidCommCallback = [](bool isInvalid) { return HCCL_SUCCESS; };
-    SnapshotCheckPreProcess preProcessCallback = []() { return HCCL_SUCCESS; };
-    SnapshotCheckPostProcess postProcessCallback = []() { return HCCL_SUCCESS; };
+    SnapshotSetInvalidComm setInvalidCommCallback = [](bool isInvalid) {
+        return HCCL_SUCCESS;
+    };
+    SnapshotCheckPreProcess preProcessCallback = []() {
+        return HCCL_SUCCESS;
+    };
+    SnapshotCheckPostProcess postProcessCallback = []() {
+        return HCCL_SUCCESS;
+    };
 
-    HcclResult ret = SnapshotControl::GetInstance(0).RegisterComm("testComm", setInvalidCommCallback, preProcessCallback,
-        postProcessCallback);
+    HcclResult ret = SnapshotControl::GetInstance(0).RegisterComm(
+        "testComm", setInvalidCommCallback, preProcessCallback, postProcessCallback);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ret = SnapshotControl::GetInstance(0).RegisterBackup("testComm", 1);
     EXPECT_EQ(ret, HCCL_SUCCESS);

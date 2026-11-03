@@ -35,7 +35,7 @@ Mesh算法的硬件拓扑如下图所示，每个rank与其他所有rank直接�
     if (ret != HCCL_SUCCESS) {
        // 即之前没有创建过tag表示的资源
        HcclEngineCtxCreate(comm, tag, engine, size, ctx); 
-    }else {
+    } else {
        // 说明之前创建过资源，直接用ctx就好
     }
     ```

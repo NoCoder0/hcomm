@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef COMM_H
 #define COMM_H
@@ -27,19 +27,25 @@ enum class HcclTopoLevel {
 
 namespace hccl {
 enum class HcclCommState {
-    IDLE = 0,   // 初始化完成，未使用
-    BUILDING,   // 正在使用，且在建链
-    INUSE,      // 正在使用，建链完成或未建链
+    IDLE = 0, // 初始化完成，未使用
+    BUILDING, // 正在使用，且在建链
+    INUSE,    // 正在使用，建链完成或未建链
     RESERVED
 };
 
-inline const char* HcclCommStateToString(HcclCommState state) {
+inline const char* HcclCommStateToString(HcclCommState state)
+{
     switch (state) {
-        case HcclCommState::IDLE: return "IDLE";
-        case HcclCommState::BUILDING: return "BUILDING";
-        case HcclCommState::INUSE: return "INUSE";
-        case HcclCommState::RESERVED: return "RESERVED";
-        default: return "UNKNOWN";
+        case HcclCommState::IDLE:
+            return "IDLE";
+        case HcclCommState::BUILDING:
+            return "BUILDING";
+        case HcclCommState::INUSE:
+            return "INUSE";
+        case HcclCommState::RESERVED:
+            return "RESERVED";
+        default:
+            return "UNKNOWN";
     }
 }
 
@@ -52,10 +58,11 @@ using HcclCommConnections = struct HcclCommConnectionsDef {
 using HcclSocketPortConfig = struct HcclSocketPortConfigDef {
     // devPortSwitchOn 用于判断是否开启了用户配置的端口（通过环境变量配置的端口范围或者通过ranktable指定的端口）。
     // devPortSwitchOn开启时，将启用独立的vnic端口；即nic和vnic使用的端口可能不一致。
-    bool devPortSwitchOn{ false };
-    std::pair<std::shared_ptr<HcclSocket>, HcclNetDevCtx> devNicListen{ nullptr, nullptr }; // 抢占的device nic socket
-    std::pair<std::shared_ptr<HcclSocket>, HcclNetDevCtx> devVnicListen{ nullptr, nullptr }; // 抢占的device vnic socket
-    std::pair<std::shared_ptr<HcclSocket>, HcclNetDevCtx> backupDevNicListen{ nullptr, nullptr }; // 抢占的backup nic socket
+    bool devPortSwitchOn{false};
+    std::pair<std::shared_ptr<HcclSocket>, HcclNetDevCtx> devNicListen{nullptr, nullptr};  // 抢占的device nic socket
+    std::pair<std::shared_ptr<HcclSocket>, HcclNetDevCtx> devVnicListen{nullptr, nullptr}; // 抢占的device vnic socket
+    std::pair<std::shared_ptr<HcclSocket>, HcclNetDevCtx> backupDevNicListen{
+        nullptr, nullptr}; // 抢占的backup nic socket
 };
 
 using HcclCommParams = struct TagHCCLCollectiveParams {
@@ -73,13 +80,13 @@ using HcclCommParams = struct TagHCCLCollectiveParams {
     u32 totalRanks; /* * 用于指示通信域内的节点总数, rank范围[0, totalRanks-1] */
     s32 logicDevId;
     std::string serverId;
-    DevType deviceType;  // 芯片类型信息
+    DevType deviceType; // 芯片类型信息
     HcomProfilingMode profilingMode;
     std::string profilingOption;
     bool profilingInitiated;
     HcclComm commHandle;
     bool isHeterogComm;
-    bool hcomGroupNicInit;  // 在子group中对应world group NIC初始化标识
+    bool hcomGroupNicInit; // 在子group中对应world group NIC初始化标识
     CommAttr attr;
     WorkMode commWorkMode = WorkMode::HCCL_MODE_NORMAL;
     std::string identifier;
@@ -88,12 +95,21 @@ using HcclCommParams = struct TagHCCLCollectiveParams {
     HcclCommConnections commConnections;
     HcclSocketPortConfig commPortConfig;
     TagHCCLCollectiveParams()
-        : id{0}, rank(INVALID_VALUE_RANKID), userRank(INVALID_VALUE_RANKID), totalRanks(0xFFFFFFFF),
-          logicDevId(-1), deviceType(DevType::DEV_TYPE_COUNT), profilingMode(HcomProfilingMode::PROFILING_CLOSE),
-          profilingInitiated(false), commHandle(nullptr), isHeterogComm(false), hcomGroupNicInit(false),
-          identifier(""), cclBuffName(""), ranktableCrc(0)
-    {
-    }
+        : id{0},
+          rank(INVALID_VALUE_RANKID),
+          userRank(INVALID_VALUE_RANKID),
+          totalRanks(0xFFFFFFFF),
+          logicDevId(-1),
+          deviceType(DevType::DEV_TYPE_COUNT),
+          profilingMode(HcomProfilingMode::PROFILING_CLOSE),
+          profilingInitiated(false),
+          commHandle(nullptr),
+          isHeterogComm(false),
+          hcomGroupNicInit(false),
+          identifier(""),
+          cclBuffName(""),
+          ranktableCrc(0)
+    {}
 };
 
 using WorldGroupInfo = struct worldGroupInfo {
@@ -106,13 +122,15 @@ using WorldGroupInfo = struct worldGroupInfo {
     std::vector<RankInfo> worldRankInfoList;
     std::vector<u32> ranksPort;
     std::vector<u32> vnicRanksPort;
-    bool devPortSwitchOn{ false };
+    bool devPortSwitchOn{false};
     bool useSuperPodMode;
     worldGroupInfo()
-        :inlineReduceSwitchOn(true), deviceType(DevType::DEV_TYPE_COUNT), deviceLogicId(-1), profilingInitiated(false),
-        useSuperPodMode(false)
-    {
-    }
+        : inlineReduceSwitchOn(true),
+          deviceType(DevType::DEV_TYPE_COUNT),
+          deviceLogicId(-1),
+          profilingInitiated(false),
+          useSuperPodMode(false)
+    {}
 };
-} // hccl
+} // namespace hccl
 #endif // COMM_H

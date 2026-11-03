@@ -18,7 +18,7 @@
 #define CCU_INIT_OK 1
 #define CCU_INIT_NO 0
 
-#define CCU_ATTRI_VISI_DEF __attribute__ ((visibility ("default")))
+#define CCU_ATTRI_VISI_DEF __attribute__((visibility("default")))
 
 struct ccu_u_op_handle {
     unsigned int opcode;
@@ -33,10 +33,11 @@ struct ccu_mem_rsp {
 
 struct ccu_tlv_request_info {
     unsigned int ccuMsg;
-    char* dataIn;
-    char* dataOut;
+    char *dataIn;
+    char *dataOut;
     unsigned int dataInLength;
     unsigned int dataOutLength;
+    unsigned int dataOutMaxLength;
     unsigned int resv[8];
 };
 

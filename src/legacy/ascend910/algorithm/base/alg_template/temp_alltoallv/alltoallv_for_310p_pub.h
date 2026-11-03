@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef ALLTOALL_V_FOR_310P_PUB_H
 #define ALLTOALL_V_FOR_310P_PUB_H
@@ -32,7 +32,7 @@ struct StepMemInfo {
     u32 srcBuffId;
     u32 dstBuffId;
     UserMemType srcMemType;
-    std::pair<u32, u32> readMain; // 读Main的数据的srcRank和dstRank
+    std::pair<u32, u32> readMain;  // 读Main的数据的srcRank和dstRank
     std::pair<u32, u32> readMinor; // 读Minor的数据的srcRank和dstRank
 };
 
@@ -40,11 +40,12 @@ class AlltoAllVFor310P : public AlgTemplateBase {
 public:
     explicit AlltoAllVFor310P(const HcclDispatcher dispatcher);
     ~AlltoAllVFor310P() override;
-    HcclResult Prepare(DeviceMem &userInput, DeviceMem &userOutput, DeviceMem &cclInMem, DeviceMem &cclOutMem,
-        const std::vector<std::shared_ptr<LocalNotify>> &signalMainToSub,
-        const std::vector<std::shared_ptr<LocalNotify>> &signalSubToMain,
-        Stream &mainStream, std::vector<Stream> &subStreams, const std::vector<LINK> &links, 
-        u32 userRank, u32 userRankSize, std::vector<SendRecvInfo> &allMeshAggregationSendRecvInfo) override;
+    HcclResult Prepare(
+        DeviceMem& userInput, DeviceMem& userOutput, DeviceMem& cclInMem, DeviceMem& cclOutMem,
+        const std::vector<std::shared_ptr<LocalNotify>>& signalMainToSub,
+        const std::vector<std::shared_ptr<LocalNotify>>& signalSubToMain, Stream& mainStream,
+        std::vector<Stream>& subStreams, const std::vector<LINK>& links, u32 userRank, u32 userRankSize,
+        std::vector<SendRecvInfo>& allMeshAggregationSendRecvInfo) override;
     HcclResult RunAsync() override;
 
 protected:
@@ -52,8 +53,12 @@ private:
     std::string GetStreamIndexString();
     HcclResult NotifySubStreamStart();
     HcclResult WaitSubStreamFinish();
-    HcclResult CalcSendInfo(const u32 srcDataRank, const u32 dstDataRank, const u32 times, const u64 subStepLen, SendMemBlock& sendInfo);
-    HcclResult CalcRecvInfo(const u32 srcDataRank, const u32 dstDataRank, const u32 times, const u64 subStepLen, RecvMemBlock& recvInfo);
+    HcclResult CalcSendInfo(
+        const u32 srcDataRank, const u32 dstDataRank, const u32 times, const u64 subStepLen,
+        SendMemBlock& sendInfo) const;
+    HcclResult CalcRecvInfo(
+        const u32 srcDataRank, const u32 dstDataRank, const u32 times, const u64 subStepLen,
+        RecvMemBlock& recvInfo) const;
     HcclResult MainFirstLocalCopy(const u32 times, const u32 roundIdx, const u64 subStepLen);
     HcclResult MinorFirstLocalCopy(const u32 times, const u32 roundIdx, const u64 subStepLen);
     HcclResult RunAlltoAllVFor310P();
@@ -76,7 +81,7 @@ private:
     std::vector<LINK> links_;
     u32 userRank_;
     u32 userRankSize_;
-    const std::vector<SendRecvInfo> *allMeshAggregationSendRecvInfoPtr_{nullptr};
+    const std::vector<SendRecvInfo>* allMeshAggregationSendRecvInfoPtr_{nullptr};
 
     DeviceMem userInput_;
     DeviceMem userOutput_;

@@ -1,12 +1,13 @@
 # -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
+
 cmake_minimum_required(VERSION 3.16.0)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -21,8 +22,6 @@ set(HCOMM_CODE_PLATFORM  ${HCOMM_CODE_ROOT}/src/legacy/ascend910/platform)
 set(HCOMM_CODE_ALGORITHM ${HCOMM_CODE_ROOT}/src/legacy/ascend910/algorithm)
 set(HCOMM_CODE_FRAMEWORK ${HCOMM_CODE_ROOT}/src/legacy/ascend910/framework)
 set(HCOMM_CODE_LEGACY    ${HCOMM_CODE_ROOT}/src/legacy/ascend950)
-
-set(PROTOC_PROGRAM     ${HOST_PROTOC_PATH}/protoc)
 
 # Include List
 set(ASCEND_CANN_INCLUDE_LIST
@@ -65,6 +64,7 @@ set(HCOMM_PUBLIC_INCLUDE_LIST
     ${HCOMM_CODE_ROOT}/pub_inc/hccl
     ${HCOMM_CODE_ROOT}/pkg_inc
     ${HCOMM_CODE_ROOT}/pkg_inc/hccl
+    ${HCOMM_CODE_ROOT}/pkg_inc/hcomm
     ${HCOMM_CODE_ROOT}/pkg_inc/legacy
     ${HCOMM_CODE_ROOT}/pkg_inc/legacy/hccl
     ${HCOMM_DIR}/src/legacy/ascend910/common/error_manager
@@ -145,23 +145,33 @@ set(HCOMM_FRAMEWORK_INCLUDE_LIST
     ${HCOMM_CODE_FRAMEWORK}/communicator/impl/independent_op/channel
 
     ${HCOMM_CODE_ROOT}/src/base_comm/resources/
+    ${HCOMM_CODE_ROOT}/src/base_comm/resources/endpoints/server_socket
     ${HCOMM_CODE_ROOT}/src/base_comm/resources/comm_engine_res/engine_ctxs
     ${HCOMM_CODE_ROOT}/src/base_comm/resources/comm_engine_res/launch
-    ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_engine_reses/threads
-    ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_engine_reses/notify
-    ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_engine_reses
+    ${HCOMM_CODE_ROOT}/src/base_comm/dfx/aicpu
+    ${HCOMM_CODE_ROOT}/src/base_comm/dfx/aicpu/common
+    ${HCOMM_CODE_ROOT}/src/base_comm/dfx
+    ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_engine/threads
+    ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_engine
     ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_mems
     ${HCOMM_CODE_ROOT}/src/base_comm/resources/comm_engine_res/threads
     ${HCOMM_CODE_ROOT}/src/base_comm/resources/comm_engine_res/threads/device/
+    # HostDpu 共享类型头（dpu_types.h 等）已收敛到 base_comm 的 legacy_dpu_thread 目录，ST 侧须显式补该路径
+    ${HCOMM_CODE_ROOT}/src/base_comm/resources/comm_engine_res/threads/cpu_thread/legacy_dpu_thread
     ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr
     ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/common
+    ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/api_c_adpt
     ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/communicator
     ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/communicator/device
+    ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/communicator/group_schedule_mgr
+    ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/communicator/op_group_queue_mgr
+    ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/communicator/device/resource_mgr/local/my_rank/comm_engine_reses
+    ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/communicator/device/c_adpt
     ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/resource_mgr/local/my_rank
     ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/resource_mgr/remote/rank_pairs
     ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/dfx
+    ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/dfx/inconsistentCheck
     ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/dfx/profiling
-    ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/dfx/profiling/aicpu
     ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/dfx/profiling/host
     ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/dfx/taskException
     ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/dfx/taskException/aicpu
@@ -176,12 +186,14 @@ set(HCOMM_FRAMEWORK_INCLUDE_LIST
     ${HCOMM_CODE_ROOT}/src/base_comm/resources/endpoints/
     ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/resource_mgr/local/my_rank/endpoints
     ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_mems
-    ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_engine_reses/engine_ctxs
+    ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_engine/engine_ctxs
     ${HCOMM_CODE_ROOT}/src/base_comm/resources/endpoints/dfx
     ${HCOMM_CODE_ROOT}/src/base_comm/resources/reged_mems/
     ${HCOMM_CODE_ROOT}/src/base_comm/resources/endpoint_pairs/
     ${HCOMM_CODE_ROOT}/src/base_comm/primitives/api_c_adpt/
+    ${HCOMM_CODE_ROOT}/src/base_comm/primitives/api_c_adpt/nic_plugin/
     ${HCOMM_CODE_ROOT}/src/base_comm/common/
+    ${HCOMM_CODE_ROOT}/src/base_comm/resources/southbound_adpt/
     ${HCOMM_CODE_ROOT}/src/base_comm/common/device
     ${HCOMM_CODE_ROOT}/src/legacy/ascend910/common/stream
     ${HCOMM_CODE_ROOT}/src/base_comm/resources/hccp/inc
@@ -192,7 +204,7 @@ set(HCOMM_FRAMEWORK_INCLUDE_LIST
     ${HCOMM_CODE_ROOT}/include/ccu
     ${HCOMM_CODE_ROOT}/src/base_comm/resources/ccu/southbound_adpt/
     ${HCOMM_CODE_ROOT}/src/base_comm/common/
- 
+
     ${HCOMM_CODE_ROOT}/src/base_comm/resources/ccu/pub_inc/
     ${HCOMM_CODE_ROOT}/src/base_comm/resources/ccu/ccu_device/
     ${HCOMM_CODE_ROOT}/src/base_comm/resources/ccu/ccu_device/ccu_comp/
@@ -219,12 +231,12 @@ set(HCOMM_LEGACY_INCLUDE_LIST
     ${HCOMM_CODE_LEGACY}/framework/communicator/aicpu
     ${HCOMM_CODE_LEGACY}/framework/resource_manager/socket
     ${HCOMM_CODE_LEGACY}/framework/topo
-    ${HCOMM_CODE_LEGACY}/framework/topo/new_topo_builder/common
-    ${HCOMM_CODE_LEGACY}/framework/topo/new_topo_builder/rank_graph
-    ${HCOMM_CODE_LEGACY}/framework/topo/new_topo_builder/rank_table_info
-    ${HCOMM_CODE_LEGACY}/framework/topo/new_topo_builder/rank_graph_builder
-    ${HCOMM_CODE_LEGACY}/framework/topo/new_topo_builder/phy_topo
-    ${HCOMM_CODE_LEGACY}/framework/topo/new_topo_builder/topo_info
+    ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/rank_graph/common
+    ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/rank_graph/rank_graph
+    ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/rank_graph/rank_table_info
+    ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/rank_graph/rank_graph_builder
+    ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/rank_graph/phy_topo
+    ${HCOMM_CODE_ROOT}/src/coll_communicator_mgr/rank_graph/topo_info
     ${HCOMM_CODE_LEGACY}/service/collective
     ${HCOMM_CODE_LEGACY}/service/collective/primitive
     ${HCOMM_CODE_LEGACY}/unified_platform
@@ -265,7 +277,7 @@ set(HCOMM_LEGACY_INCLUDE_LIST
     ${HCOMM_CODE_LEGACY}/framework/resource_manager/stream
 
     ${HCCL_CODE_ROOT}/src/common
-    
+
 )
 
 add_subdirectory(testcase)

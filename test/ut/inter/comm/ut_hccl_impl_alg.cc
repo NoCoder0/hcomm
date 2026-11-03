@@ -37,8 +37,10 @@ protected:
     static void SetUpTestCase()
     {
         s32 ret = HcclDispatcherInit(DispatcherType::DISPATCHER_NORMAL, 0, &dispatcherPtr);
-        if (ret != HCCL_SUCCESS) return;
-        if (dispatcherPtr == nullptr) return;
+        if (ret != HCCL_SUCCESS)
+            return;
+        if (dispatcherPtr == nullptr)
+            return;
         dispatcher = reinterpret_cast<DispatcherPub*>(dispatcherPtr);
         DlRaFunction::GetInstance().DlRaFunctionInit();
         std::cout << "HcclImplAlgTest SetUP" << std::endl;
@@ -58,16 +60,9 @@ protected:
     virtual void SetUp()
     {
         s32 portNum = -1;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
-        MOCKER_CPP(&HcclCommunicator::InitPreResource)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
-        MOCKER(hrtProfRegisterCtrlCallback)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
+        MOCKER_CPP(&HcclCommunicator::InitPreResource).stubs().will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtProfRegisterCtrlCallback).stubs().will(returnValue(HCCL_SUCCESS));
         std::cout << "A Test SetUP" << std::endl;
     }
     virtual void TearDown()
@@ -75,7 +70,7 @@ protected:
         GlobalMockObject::verify();
         std::cout << "A Test TearDown" << std::endl;
     }
-    static void TestConstructParam(HcclCommParams &params, RankTable_t &rankTable)
+    static void TestConstructParam(HcclCommParams& params, RankTable_t& rankTable)
     {
         string commId = "comm ";
         memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
@@ -108,10 +103,10 @@ protected:
     static RankTable_t rankTable;
 
     static HcclDispatcher dispatcherPtr;
-    static DispatcherPub *dispatcher;
+    static DispatcherPub* dispatcher;
 };
 HcclDispatcher HcclImplAlgTest::dispatcherPtr = nullptr;
-DispatcherPub *HcclImplAlgTest::dispatcher = nullptr;
+DispatcherPub* HcclImplAlgTest::dispatcher = nullptr;
 
 HcclCommParams HcclImplAlgTest::params;
 RankTable_t HcclImplAlgTest::rankTable;
@@ -129,20 +124,17 @@ TEST_F(HcclImplAlgTest, ut_ReduceComm)
 
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
     impl->deviceLogicId_ = 0;
     impl->deviceType_ = DevType::DEV_TYPE_910;
     impl->topoType_ = TopoType::TOPO_TYPE_8P_RING;
 
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.deviceLogicId = 0;
     topoMatcher->topoInfo_.deviceType = DevType::DEV_TYPE_910;
     topoMatcher->topoInfo_.topoType = TopoType::TOPO_TYPE_8P_RING;
@@ -160,12 +152,8 @@ TEST_F(HcclImplAlgTest, ut_ReduceComm)
     opParam.root = 0;
     opParam.stream = Stream(StreamType::STREAM_TYPE_ONLINE);
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
     AlgResourceRequest resourceRequest;
     AlgResourceResponse resourceResponse;
@@ -202,23 +190,20 @@ TEST_F(HcclImplAlgTest, ut_ReduceScatterComm)
     params.deviceType = DevType::DEV_TYPE_910;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
 
     impl->deviceLogicId_ = 0;
     impl->deviceType_ = DevType::DEV_TYPE_910;
     impl->topoType_ = TopoType::TOPO_TYPE_8P_RING;
 
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB);
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB);
 
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.deviceLogicId = 0;
     topoMatcher->topoInfo_.deviceType = DevType::DEV_TYPE_910;
     topoMatcher->topoInfo_.topoType = TopoType::TOPO_TYPE_8P_RING;
@@ -235,18 +220,15 @@ TEST_F(HcclImplAlgTest, ut_ReduceScatterComm)
     opParam.reduceType = HCCL_REDUCE_SUM;
     opParam.stream = Stream(StreamType::STREAM_TYPE_ONLINE);
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
     AlgResourceRequest resourceRequest;
     AlgResourceResponse resourceResponse;
     ret = executor->CalcResRequest(opParam, resourceRequest);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    implBase->AllocAlgResource(opParam.tag, HcclCMDType::HCCL_CMD_REDUCE_SCATTER, opParam, resourceRequest, resourceResponse);
+    implBase->AllocAlgResource(
+        opParam.tag, HcclCMDType::HCCL_CMD_REDUCE_SCATTER, opParam, resourceRequest, resourceResponse);
     resourceResponse.cclInputMem = inputMem;
     resourceResponse.cclOutputMem = outputMem;
     DeviceMem scratchMem = DeviceMem::alloc(4096);
@@ -277,23 +259,20 @@ TEST_F(HcclImplAlgTest, ut_ReduceScatterMeshExecutor)
     params.deviceType = DevType::DEV_TYPE_910;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
 
     impl->deviceLogicId_ = 0;
     impl->deviceType_ = DevType::DEV_TYPE_910;
     impl->topoType_ = TopoType::TOPO_TYPE_8P_RING;
 
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB);
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB);
 
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.deviceLogicId = 0;
     topoMatcher->topoInfo_.deviceType = DevType::DEV_TYPE_910;
     topoMatcher->topoInfo_.topoType = TopoType::TOPO_TYPE_8P_RING;
@@ -310,21 +289,16 @@ TEST_F(HcclImplAlgTest, ut_ReduceScatterMeshExecutor)
     opParam.reduceType = HCCL_REDUCE_SUM;
     opParam.stream = Stream(StreamType::STREAM_TYPE_ONLINE);
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(AlgTemplateBase::PrepareSliceMeshStreams)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(AlgTemplateBase::PrepareSliceMeshStreams).stubs().will(returnValue(HCCL_SUCCESS));
 
     AlgResourceRequest resourceRequest;
     AlgResourceResponse resourceResponse;
     ret = executor->CalcResRequest(opParam, resourceRequest);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    implBase->AllocAlgResource(opParam.tag, HcclCMDType::HCCL_CMD_REDUCE_SCATTER, opParam, resourceRequest, resourceResponse);
+    implBase->AllocAlgResource(
+        opParam.tag, HcclCMDType::HCCL_CMD_REDUCE_SCATTER, opParam, resourceRequest, resourceResponse);
     resourceResponse.cclInputMem = inputMem;
     resourceResponse.cclOutputMem = outputMem;
     DeviceMem scratchMem = DeviceMem::alloc(4096);
@@ -355,23 +329,20 @@ TEST_F(HcclImplAlgTest, ut_ReduceScatterRingExecutor_HD)
     params.deviceType = DevType::DEV_TYPE_910;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
 
     impl->deviceLogicId_ = 0;
     impl->deviceType_ = DevType::DEV_TYPE_910;
     impl->topoType_ = TopoType::TOPO_TYPE_4P_RING;
 
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB);
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB);
 
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.deviceLogicId = 0;
     topoMatcher->topoInfo_.deviceType = DevType::DEV_TYPE_910;
     topoMatcher->topoInfo_.topoType = TopoType::TOPO_TYPE_4P_RING;
@@ -388,18 +359,15 @@ TEST_F(HcclImplAlgTest, ut_ReduceScatterRingExecutor_HD)
     opParam.reduceType = HCCL_REDUCE_SUM;
     opParam.stream = Stream(StreamType::STREAM_TYPE_ONLINE);
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
     AlgResourceRequest resourceRequest;
     AlgResourceResponse resourceResponse;
     ret = executor->CalcResRequest(opParam, resourceRequest);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    implBase->AllocAlgResource(opParam.tag, HcclCMDType::HCCL_CMD_REDUCE_SCATTER, opParam, resourceRequest, resourceResponse);
+    implBase->AllocAlgResource(
+        opParam.tag, HcclCMDType::HCCL_CMD_REDUCE_SCATTER, opParam, resourceRequest, resourceResponse);
     resourceResponse.cclInputMem = inputMem;
     resourceResponse.cclOutputMem = outputMem;
     DeviceMem scratchMem = DeviceMem::alloc(4096);
@@ -430,16 +398,13 @@ TEST_F(HcclImplAlgTest, ut_ReduceScatterRingExecutor_Ring)
     params.deviceType = DevType::DEV_TYPE_910;
     std::unique_ptr<HcclCommunicator> implBase(new (std::nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ret = implBase->Init(params, rankTable);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     std::shared_ptr<AlgConfigurator> algConfigurator = implBase->implAlg_->algConfigurator_;
-    std::unique_ptr<hcclImpl> &impl = implBase->implAlg_->pimpl_;
+    std::unique_ptr<hcclImpl>& impl = implBase->implAlg_->pimpl_;
 
     impl->deviceLogicId_ = 0;
     impl->deviceType_ = DevType::DEV_TYPE_910;
@@ -447,9 +412,9 @@ TEST_F(HcclImplAlgTest, ut_ReduceScatterRingExecutor_Ring)
     algConfigurator->algType_[HcclCMDType::HCCL_CMD_REDUCE_SCATTER].algoLevel1 = AlgTypeLevel1::ALG_LEVEL1_RING;
     impl->topoType_ = TopoType::TOPO_TYPE_4P_RING;
 
-    (void) SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB);
+    (void)SetWorkflowMode(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OPS_KERNEL_INFO_LIB);
 
-    std::unique_ptr<TopoMatcher> &topoMatcher = implBase->implAlg_->topoMatcher_;
+    std::unique_ptr<TopoMatcher>& topoMatcher = implBase->implAlg_->topoMatcher_;
     topoMatcher->topoInfo_.deviceLogicId = 0;
     topoMatcher->topoInfo_.deviceType = DevType::DEV_TYPE_910;
     topoMatcher->topoInfo_.topoType = TopoType::TOPO_TYPE_4P_RING;
@@ -466,18 +431,15 @@ TEST_F(HcclImplAlgTest, ut_ReduceScatterRingExecutor_Ring)
     opParam.reduceType = HCCL_REDUCE_SUM;
     opParam.stream = Stream(StreamType::STREAM_TYPE_ONLINE);
 
-    MOCKER_CPP(&TransportManager::Alloc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(CollExecutorBase::RunTemplate)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&TransportManager::Alloc).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(CollExecutorBase::RunTemplate).stubs().will(returnValue(HCCL_SUCCESS));
 
     AlgResourceRequest resourceRequest;
     AlgResourceResponse resourceResponse;
     ret = executor->CalcResRequest(opParam, resourceRequest);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-    implBase->AllocAlgResource(opParam.tag, HcclCMDType::HCCL_CMD_REDUCE_SCATTER, opParam, resourceRequest, resourceResponse);
+    implBase->AllocAlgResource(
+        opParam.tag, HcclCMDType::HCCL_CMD_REDUCE_SCATTER, opParam, resourceRequest, resourceResponse);
     resourceResponse.cclInputMem = inputMem;
     resourceResponse.cclOutputMem = outputMem;
     DeviceMem scratchMem = DeviceMem::alloc(4096);

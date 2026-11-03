@@ -12,25 +12,21 @@
 
 using namespace hccl;
 
-class UtAicpuTsHcommLocalCopyOnThread : public UtAicpuTsBase
-{
+class UtAicpuTsHcommLocalCopyOnThread : public UtAicpuTsBase {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "UtAicpuTsHcommLocalCopyOnThread tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "UtAicpuTsHcommLocalCopyOnThread tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "UtAicpuTsHcommLocalCopyOnThread tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "UtAicpuTsHcommLocalCopyOnThread tests tear down." << std::endl; }
 
     virtual void SetUp() override
     {
         std::cout << "A Test case in UtAicpuTsHcommLocalCopyOnThread SetUP" << std::endl;
         UtAicpuTsBase::SetUp();
 
-        MOCKER_CPP(&Hccl::IAicpuTsThread::SdmaCopy, HcclResult (Hccl::IAicpuTsThread::*)(uint64_t, uint64_t, uint64_t) const).stubs().will(returnValue(HCCL_SUCCESS));
+        MOCKER_CPP(
+            &Hccl::IAicpuTsThread::SdmaCopy, HcclResult(Hccl::IAicpuTsThread::*)(uint64_t, uint64_t, uint64_t) const)
+            .stubs()
+            .will(returnValue(HCCL_SUCCESS));
     }
 
     virtual void TearDown() override
@@ -39,8 +35,8 @@ protected:
         std::cout << "A Test case in UtAicpuTsHcommLocalCopyOnThread TearDown" << std::endl;
     }
 
-    void *dst = reinterpret_cast<void *>(0x2345);
-    void *src = reinterpret_cast<void *>(0x2345);
+    void* dst = reinterpret_cast<void*>(0x2345);
+    void* src = reinterpret_cast<void*>(0x2345);
     uint64_t len = 1;
     int32_t res{HCCL_E_RESERVED};
 };
@@ -72,8 +68,8 @@ TEST_F(UtAicpuTsHcommLocalCopyOnThread, Ut_HcommLocalCopyOnThread_When_Src_IsNul
 TEST_F(UtAicpuTsHcommLocalCopyOnThread, Ut_HcommLocalCopyOnThread_When_SizeEquals4GB_Expect_ReturnIsHCCL_SUCCESS)
 {
     uint64_t size4GB = 0x100000000ULL;
-    void *largeDst = reinterpret_cast<void *>(0x100000);
-    void *largeSrc = reinterpret_cast<void *>(0x200000);
+    void* largeDst = reinterpret_cast<void*>(0x100000);
+    void* largeSrc = reinterpret_cast<void*>(0x200000);
 
     res = HcommLocalCopyOnThread(thread, largeDst, largeSrc, size4GB);
     EXPECT_EQ(res, HCCL_SUCCESS);
@@ -82,8 +78,8 @@ TEST_F(UtAicpuTsHcommLocalCopyOnThread, Ut_HcommLocalCopyOnThread_When_SizeEqual
 TEST_F(UtAicpuTsHcommLocalCopyOnThread, Ut_HcommLocalCopyOnThread_When_SizeExceeds4GB_Expect_ReturnIsHCCL_SUCCESS)
 {
     uint64_t sizeExceeds4GB = 0x100000001ULL;
-    void *largeDst = reinterpret_cast<void *>(0x100000);
-    void *largeSrc = reinterpret_cast<void *>(0x200000);
+    void* largeDst = reinterpret_cast<void*>(0x100000);
+    void* largeSrc = reinterpret_cast<void*>(0x200000);
 
     res = HcommLocalCopyOnThread(thread, largeDst, largeSrc, sizeExceeds4GB);
     EXPECT_EQ(res, HCCL_SUCCESS);

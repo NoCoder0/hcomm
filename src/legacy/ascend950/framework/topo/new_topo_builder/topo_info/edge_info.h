@@ -18,51 +18,51 @@
 #include "types.h"
 #include "topo_common_types.h"
 #include "ip_address.h"
- 
+
 namespace Hccl {
 
 constexpr unsigned int MAX_VALUE_LEVEL = 7;
 constexpr u32 PORT_MAX_LENGTH = 32;
 constexpr u32 MAX_PORTS_SIZE = 64;
- 
+
 class EdgeInfo {
 public:
     EdgeInfo() {};
     EdgeInfo(BinaryStream& binaryStream);
     ~EdgeInfo() {};
-    
-    u32          netLayer{0};
-    LinkType     linkType;
-    TopoType     topoType{TopoType::CLOS};
-    u32          topoInstId{0};
+
+    u32 netLayer{0};
+    LinkType linkType;
+    TopoType topoType{TopoType::CLOS};
+    u32 topoInstId{0};
     std::set<LinkProtocol> protocols;
-    
-    u32          localA{0};
+
+    u32 localA{0};
     std::set<std::string> localAPorts;
-    u32          localB{0};
+    u32 localB{0};
     std::set<std::string> localBPorts;
     AddrPosition position;
 
-    bool         operator==(const EdgeInfo &other) const;
-    void         Deserialize(const nlohmann::json &edgeInfoJson);
+    bool operator==(const EdgeInfo& other) const;
+    void Deserialize(const nlohmann::json& edgeInfoJson);
     LinkProtocol GetLinkProtocol(std::string str) const;
-    TopoType     GetTopoType(std::string topoTypeStr) const;
-    LinkType     GetLinkType(std::string linkTypeStr) const;
+    TopoType GetTopoType(std::string topoTypeStr) const;
+    LinkType GetLinkType(std::string linkTypeStr) const;
     AddrPosition GetAddrPosition(std::string str) const;
-    std::string  Describe() const;
+    std::string Describe() const;
     void GetBinStream(BinaryStream& binaryStream) const;
 
 private:
     const static std::unordered_map<std::string, LinkProtocol> strToLinkProtocol;
-    const static std::unordered_map<std::string, TopoType>     strToTopoType;
-    const static std::unordered_map<std::string, LinkType>     strToLinkType;
+    const static std::unordered_map<std::string, TopoType> strToTopoType;
+    const static std::unordered_map<std::string, LinkType> strToLinkType;
     const static std::unordered_map<std::string, AddrPosition> strToAddrPosition;
-    bool                                             CompareEndpoints(const EdgeInfo &other) const;
-    void                                             DeserializeProtocol(const nlohmann::json &edgeInfoJson);
-    void                                             DeserializeEndpoint(const nlohmann::json &edgeInfoJson);
-    void                                             DeserializePort(const nlohmann::json &edgeInfoJson, std::string propName, std::set<std::string> &ports);
-    std::string                                      DescribePorts(std::set<std::string> ports) const;
+    bool CompareEndpoints(const EdgeInfo& other) const;
+    void DeserializeProtocol(const nlohmann::json& edgeInfoJson);
+    void DeserializeEndpoint(const nlohmann::json& edgeInfoJson);
+    void DeserializePort(const nlohmann::json& edgeInfoJson, std::string propName, std::set<std::string>& ports);
+    std::string DescribePorts(std::set<std::string> ports) const;
 };
 } // namespace Hccl
- 
+
 #endif // EDGE_INFO_H

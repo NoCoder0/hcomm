@@ -28,20 +28,11 @@ using namespace Hccl;
 
 class MemTransportManagerTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "MemTransportManager tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "MemTransportManager tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "MemTransportManager tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "MemTransportManager tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in MemTransportManager SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in MemTransportManager SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -53,17 +44,17 @@ protected:
 TEST(MemTransportManagerTest, MemTransportManager_is_all_transport_ready)
 {
     StubCommunicatorImplTransMgr comm;
-    MemTransportManager          transportManager(comm);
+    MemTransportManager transportManager(comm);
 
-    std::string                    opTag = "test_tag";
-    BasePortType                   portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData                       linkData(portType, 0, 1, 0, 1);
+    std::string opTag = "test_tag";
+    BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
+    LinkData linkData(portType, 0, 1, 0, 1);
     BaseMemTransport::CommonLocRes locRes;
-    BaseMemTransport::Attribution  attr;
-    IpAddress                      ipAddress("1.0.0.0");
-    Socket                         fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
-    unique_ptr<P2PTransport>       transport = make_unique<P2PTransport>(locRes, attr, linkData, fakeSocket);
-    P2PTransport                  *transportPtr = transport.get();
+    BaseMemTransport::Attribution attr;
+    IpAddress ipAddress("1.0.0.0");
+    Socket fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    unique_ptr<P2PTransport> transport = make_unique<P2PTransport>(locRes, attr, linkData, fakeSocket);
+    P2PTransport* transportPtr = transport.get();
     transportManager.opTagOffloadMap[opTag][linkData] = std::move(transport);
 
     TransportStatus fakeStatus = TransportStatus::READY;
@@ -85,26 +76,28 @@ TEST(MemTransportManagerTest, MemTransportManager_is_all_transport_ready)
 TEST(MemTransportManagerTest, MemTransportManager_get_transport_success)
 {
     StubCommunicatorImplTransMgr comm;
-    MemTransportManager          transportManager(comm);
+    MemTransportManager transportManager(comm);
 
-    std::string                       opTag = "test_tag";
-    LinkData                          linkData(BasePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB), 0, 1, 0, 1);
-    BaseMemTransport::CommonLocRes    locRes;
-    BaseMemTransport::Attribution     attr;
+    std::string opTag = "test_tag";
+    LinkData linkData(BasePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB), 0, 1, 0, 1);
+    BaseMemTransport::CommonLocRes locRes;
+    BaseMemTransport::Attribution attr;
     BaseMemTransport::LocCntNotifyRes locCntRes;
-    void                             *rdmaHandle = (void *)0x100;
+    void* rdmaHandle = (void*)0x100;
     RdmaHandleManager::GetInstance().tokenInfoMap[rdmaHandle] = make_unique<TokenInfoManager>(0, rdmaHandle);
-    IpAddress                         ipAddress("1.0.0.0");
-    Socket                            fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
-    bool                              isRecvFirst = false;
-    unique_ptr<UbMemTransport>        transportOpbase = make_unique<UbMemTransport>(locRes, attr, linkData, fakeSocket, rdmaHandle, locCntRes, isRecvFirst);
-    BaseMemTransport                 *transportOpbasePtr = transportOpbase.get();
+    IpAddress ipAddress("1.0.0.0");
+    Socket fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    bool isRecvFirst = false;
+    unique_ptr<UbMemTransport> transportOpbase
+        = make_unique<UbMemTransport>(locRes, attr, linkData, fakeSocket, rdmaHandle, locCntRes, isRecvFirst);
+    BaseMemTransport* transportOpbasePtr = transportOpbase.get();
     transportManager.opTagOpbasedMap[linkData] = std::move(transportOpbase);
-    unique_ptr<UbMemTransport>        transportOffload = make_unique<UbMemTransport>(locRes, attr, linkData, fakeSocket, rdmaHandle, locCntRes, isRecvFirst);
-    BaseMemTransport                 *transportOffloadPtr = transportOffload.get();
+    unique_ptr<UbMemTransport> transportOffload
+        = make_unique<UbMemTransport>(locRes, attr, linkData, fakeSocket, rdmaHandle, locCntRes, isRecvFirst);
+    BaseMemTransport* transportOffloadPtr = transportOffload.get();
     transportManager.opTagOffloadMap[opTag][linkData] = std::move(transportOffload);
 
-    BaseMemTransport *transportRes = transportManager.GetOpbasedTransport(linkData);
+    BaseMemTransport* transportRes = transportManager.GetOpbasedTransport(linkData);
     EXPECT_EQ(transportRes, transportOpbasePtr);
 
     transportRes = transportManager.GetOffloadTransport(opTag, linkData);
@@ -115,28 +108,30 @@ TEST(MemTransportManagerTest, MemTransportManager_get_transport_success)
 TEST(MemTransportManagerTest, MemTransportManager_get_transport_nullptr)
 {
     StubCommunicatorImplTransMgr comm;
-    MemTransportManager          transportManager(comm);
+    MemTransportManager transportManager(comm);
 
-    std::string                       opTag = "test_tag";
-    LinkData                          linkData(BasePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB), 0, 1, 0, 1);
-    BaseMemTransport::CommonLocRes    locRes;
-    BaseMemTransport::Attribution     attr;
+    std::string opTag = "test_tag";
+    LinkData linkData(BasePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB), 0, 1, 0, 1);
+    BaseMemTransport::CommonLocRes locRes;
+    BaseMemTransport::Attribution attr;
     BaseMemTransport::LocCntNotifyRes locCntRes;
-    void                             *rdmaHandle = (void *)0x100;
-    IpAddress                         ipAddress("1.0.0.0");
-    Socket                            fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
-    bool                              isRecvFirst = false;
-    transportManager.opTagOpbasedMap[linkData] = make_unique<UbMemTransport>(locRes, attr, linkData, fakeSocket, rdmaHandle, locCntRes, isRecvFirst);
-    transportManager.opTagOffloadMap[opTag][linkData] = make_unique<UbMemTransport>(locRes, attr, linkData, fakeSocket, rdmaHandle, locCntRes, isRecvFirst);
+    void* rdmaHandle = (void*)0x100;
+    IpAddress ipAddress("1.0.0.0");
+    Socket fakeSocket(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    bool isRecvFirst = false;
+    transportManager.opTagOpbasedMap[linkData]
+        = make_unique<UbMemTransport>(locRes, attr, linkData, fakeSocket, rdmaHandle, locCntRes, isRecvFirst);
+    transportManager.opTagOffloadMap[opTag][linkData]
+        = make_unique<UbMemTransport>(locRes, attr, linkData, fakeSocket, rdmaHandle, locCntRes, isRecvFirst);
 
     // opbase
     LinkData linkData1(BasePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB), 0, 2, 0, 2);
-    BaseMemTransport *transport = transportManager.GetOpbasedTransport(linkData1);
+    BaseMemTransport* transport = transportManager.GetOpbasedTransport(linkData1);
     EXPECT_EQ(transport, nullptr);
 
     // offload
     // optag 不存在
-    std::string       opTag1 = "test_tag_1";
+    std::string opTag1 = "test_tag_1";
     transport = transportManager.GetOffloadTransport(opTag1, linkData);
     EXPECT_EQ(transport, nullptr);
 
@@ -164,22 +159,23 @@ TEST(MemTransportManagerTest, MemTransportManager_batch_recover_transports)
     comm.rankGraph->AddNetInstance(fabGroup);
     comm.rankGraph->AddNetInstance(fabGroup1);
     comm.isWorldGroup = true;
-    MemTransportManager          transportManager(comm);
+    MemTransportManager transportManager(comm);
 
     LinkData linkData(BasePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB), 0, 1, 0, 1);
 
     // 打桩 SocketManager::GetConnectedSocket
-    IpAddress          ipAddress("1.0.0.0");
-    shared_ptr<Socket> fakeSocket = make_shared<Socket>(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
-    SocketConfig       socketConfig(linkData.GetRemoteRankId(), linkData, comm.GetEstablishLinkSocketTag());
+    IpAddress ipAddress("1.0.0.0");
+    shared_ptr<Socket> fakeSocket
+        = make_shared<Socket>(nullptr, ipAddress, 100, ipAddress, "tag", SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    SocketConfig socketConfig(linkData.GetRemoteRankId(), linkData, comm.GetEstablishLinkSocketTag());
     comm.GetSocketManager().connectedSocketMap[socketConfig] = std::move(fakeSocket);
 
     // 打桩 RmaConnManager::Get
-    RdmaHandle      rdmaHandle = (void *)0x1000000;
+    RdmaHandle rdmaHandle = (void*)0x1000000;
     MOCKER(GetUbToken).stubs().will(returnValue(1));
     RdmaHandleManager::GetInstance().tokenInfoMap[rdmaHandle] = make_unique<TokenInfoManager>(0, rdmaHandle);
     DevUbConnection devUbConnection(rdmaHandle, linkData.GetLocalAddr(), linkData.GetRemoteAddr(), OpMode::OFFLOAD);
-    MOCKER_CPP(&RmaConnManager::Get).stubs().will(returnValue(dynamic_cast<RmaConnection *>(&devUbConnection)));
+    MOCKER_CPP(&RmaConnManager::Get).stubs().will(returnValue(dynamic_cast<RmaConnection*>(&devUbConnection)));
 
     SocketStatus fakeSocketStatus = SocketStatus::OK;
     MOCKER_CPP(&Socket::GetStatus).stubs().will(returnValue(fakeSocketStatus));

@@ -1,20 +1,21 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "coll_all_gather_ars_for_910_93_executor.h"
 
 namespace hccl {
-CollAllGatherARSFor91093Executor::CollAllGatherARSFor91093Executor(const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher> &topoMatcher)
+CollAllGatherARSFor91093Executor::CollAllGatherARSFor91093Executor(
+    const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher>& topoMatcher)
     : CollAllGatherRingFor91093Executor(dispatcher, topoMatcher)
 {
-    DMAReduceFlag_ = false; //设置成不带削减的非并发流
+    DMAReduceFlag_ = false; // 设置成不带削减的非并发流
 }
 
 HcclResult CollAllGatherARSFor91093Executor::CalcStreamNum(u32& streamNum)
@@ -25,14 +26,12 @@ HcclResult CollAllGatherARSFor91093Executor::CalcStreamNum(u32& streamNum)
     }
 
     streamNum = totalStreamNum - 1;
-    HCCL_INFO("[CollAllGatherARSFor91093Executor][CalcStreamNum] tag[%s] streamNum_[%u]",
-        tag_.c_str(), streamNum);
+    HCCL_INFO("[CollAllGatherARSFor91093Executor][CalcStreamNum] tag[%s] streamNum_[%u]", tag_.c_str(), streamNum);
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherARSFor91093Executor::CalcLevel0CommInfo(TransportMemType inputType,
-    TransportMemType outputType,
-    std::vector<LevelNSubCommTransport>& opTransport)
+HcclResult CollAllGatherARSFor91093Executor::CalcLevel0CommInfo(
+    TransportMemType inputType, TransportMemType outputType, std::vector<LevelNSubCommTransport>& opTransport)
 {
     CHK_RET(SetCommInfoForARS(intraRingSize_));
     CommParaInfo commParaLevel0(COMM_LEVEL0, CommType::COMM_TAG_RING_INNER);
@@ -42,15 +41,14 @@ HcclResult CollAllGatherARSFor91093Executor::CalcLevel0CommInfo(TransportMemType
     return HCCL_SUCCESS;
 }
 
-HcclResult CollAllGatherARSFor91093Executor::CalcLevel1CommInfo(TransportMemType inputType,
-    TransportMemType outputType,
-    std::vector<LevelNSubCommTransport>& opTransport)
+HcclResult CollAllGatherARSFor91093Executor::CalcLevel1CommInfo(
+    TransportMemType inputType, TransportMemType outputType, std::vector<LevelNSubCommTransport>& opTransport)
 {
     if (algType_.algoLevel1 == AlgTypeLevel1::ALG_LEVEL1_RING) {
         HCCL_DEBUG("[CalcARSInterCommInfo] use ring comm type");
         CommParaInfo commARSInter(COMM_LEVEL1_LOGICAL, CommType::COMM_TAG_RING_INNER);
         CHK_RET(CalcCommPlaneInfo(tag_, commARSInter, opTransport[COMM_LEVEL1_LOGICAL], inputType, outputType));
-    } else if(algType_.algoLevel1 == AlgTypeLevel1::ALG_LEVEL1_NB) {
+    } else if (algType_.algoLevel1 == AlgTypeLevel1::ALG_LEVEL1_NB) {
         HCCL_DEBUG("[CalcARSInterCommInfo] use NB comm type");
         CommParaInfo commARSInter(COMM_LEVEL1_LOGICAL, CommType::COMM_TAG_NONUNIFORM_BRUCK);
         CHK_RET(CalcCommPlaneInfo(tag_, commARSInter, opTransport[COMM_LEVEL1_LOGICAL], inputType, outputType));
@@ -75,8 +73,9 @@ HcclResult CollAllGatherARSFor91093Executor::GetLevelCommInfo()
 
 HcclResult CollAllGatherARSFor91093Executor::CalcOptimalIntraRing(const OpParam& param)
 {
-    intraRingSize_ = CalcOptimalIntraRingsize(param.DataDes.count, param.DataDes.dataType, HcclCMDType::HCCL_CMD_ALLGATHER);
-    HCCL_INFO("intraRingSize_[%u]",intraRingSize_);
+    intraRingSize_
+        = CalcOptimalIntraRingsize(param.DataDes.count, param.DataDes.dataType, HcclCMDType::HCCL_CMD_ALLGATHER);
+    HCCL_INFO("intraRingSize_[%u]", intraRingSize_);
     return HCCL_SUCCESS;
 }
 

@@ -37,8 +37,7 @@ STATIC int32_t BkfDcDispGetSliceCnt(BkfDc *dc)
     void *itor = VOS_NULL;
     int32_t cnt = 0;
 
-    for (slice = BkfDcGetFirstSlice(dc, &itor); slice != VOS_NULL;
-         slice = BkfDcGetNextSlice(dc, &itor)) {
+    for (slice = BkfDcGetFirstSlice(dc, &itor); slice != VOS_NULL; slice = BkfDcGetNextSlice(dc, &itor)) {
         cnt++;
     }
     return cnt;
@@ -49,8 +48,7 @@ STATIC int32_t BkfDcDispGetSliceTableCnt(BkfDc *dc, BkfDcSlice *slice)
     void *itor = VOS_NULL;
     int32_t cnt = 0;
 
-    for (table = BkfDcGetFirstTable(dc, slice, &itor); table != VOS_NULL;
-         table = BkfDcGetNextTable(dc, slice, &itor)) {
+    for (table = BkfDcGetFirstTable(dc, slice, &itor); table != VOS_NULL; table = BkfDcGetNextTable(dc, slice, &itor)) {
         cnt++;
     }
     return cnt;
@@ -61,8 +59,7 @@ STATIC int32_t BkfDcDispGetAllTableCnt(BkfDc *dc)
     void *itor = VOS_NULL;
     int32_t cnt = 0;
 
-    for (slice = BkfDcGetFirstSlice(dc, &itor); slice != VOS_NULL;
-         slice = BkfDcGetNextSlice(dc, &itor)) {
+    for (slice = BkfDcGetFirstSlice(dc, &itor); slice != VOS_NULL; slice = BkfDcGetNextSlice(dc, &itor)) {
         cnt += BkfDcDispGetSliceTableCnt(dc, slice);
     }
     return cnt;
@@ -72,8 +69,7 @@ STATIC void BkfDcDispGetTableTupleCnt(BkfDc *dc, BkfDcTable *table, int32_t *tup
     BkfDcTuple *tuple = VOS_NULL;
     void *itor = VOS_NULL;
 
-    for (tuple = BkfDcGetFirstTuple(dc, table, &itor); tuple != VOS_NULL;
-         tuple = BkfDcGetNextTuple(dc, table, &itor)) {
+    for (tuple = BkfDcGetFirstTuple(dc, table, &itor); tuple != VOS_NULL; tuple = BkfDcGetNextTuple(dc, table, &itor)) {
         if (tuple->isAddUpd) {
             (*tupleAddUpdCnt)++;
         } else {
@@ -86,8 +82,7 @@ STATIC void BkfDcDispGetSliceTupleCnt(BkfDc *dc, BkfDcSlice *slice, int32_t *tup
     BkfDcTable *table = VOS_NULL;
     void *itor = VOS_NULL;
 
-    for (table = BkfDcGetFirstTable(dc, slice, &itor); table != VOS_NULL;
-         table = BkfDcGetNextTable(dc, slice, &itor)) {
+    for (table = BkfDcGetFirstTable(dc, slice, &itor); table != VOS_NULL; table = BkfDcGetNextTable(dc, slice, &itor)) {
         BkfDcDispGetTableTupleCnt(dc, table, tupleAddUpdCnt, tupleDelCnt);
     }
 }
@@ -96,13 +91,13 @@ STATIC void BkfDcDispGetAllTupleCnt(BkfDc *dc, int32_t *tupleAddUpdCnt, int32_t 
     BkfDcSlice *slice = VOS_NULL;
     void *itor = VOS_NULL;
 
-    for (slice = BkfDcGetFirstSlice(dc, &itor); slice != VOS_NULL;
-         slice = BkfDcGetNextSlice(dc, &itor)) {
+    for (slice = BkfDcGetFirstSlice(dc, &itor); slice != VOS_NULL; slice = BkfDcGetNextSlice(dc, &itor)) {
         BkfDcDispGetSliceTupleCnt(dc, slice, tupleAddUpdCnt, tupleDelCnt);
     }
 }
 STATIC int32_t BkfDcDispGetTableTupleMem(BkfDc *dc, BkfDcTable *table, int64_t *addUpdTupleMem, int64_t *delTupleMem)
 {
+    (void)delTupleMem;
     int32_t tupleAddUpdCnt = 0;
     int32_t tupleDelCnt = 0;
     BkfDcTableType *tableType = table->tableType;
@@ -118,8 +113,7 @@ STATIC void BkfDcDispGetSliceTupleMem(BkfDc *dc, BkfDcSlice *slice, int64_t *add
     BkfDcTable *table = VOS_NULL;
     void *itor = VOS_NULL;
 
-    for (table = BkfDcGetFirstTable(dc, slice, &itor); table != VOS_NULL;
-         table = BkfDcGetNextTable(dc, slice, &itor)) {
+    for (table = BkfDcGetFirstTable(dc, slice, &itor); table != VOS_NULL; table = BkfDcGetNextTable(dc, slice, &itor)) {
         (void)BkfDcDispGetTableTupleMem(dc, table, addUpdTupleMem, delTupleMem);
     }
 }
@@ -128,8 +122,7 @@ STATIC void BkfDcDispGetAllTupleMem(BkfDc *dc, int64_t *addUpdTupleMem, int64_t 
     BkfDcSlice *slice = VOS_NULL;
     void *itor = VOS_NULL;
 
-    for (slice = BkfDcGetFirstSlice(dc, &itor); slice != VOS_NULL;
-         slice = BkfDcGetNextSlice(dc, &itor)) {
+    for (slice = BkfDcGetFirstSlice(dc, &itor); slice != VOS_NULL; slice = BkfDcGetNextSlice(dc, &itor)) {
         BkfDcDispGetSliceTupleMem(dc, slice, addUpdTupleMem, delTupleMem);
     }
 }
@@ -151,8 +144,7 @@ STATIC int32_t BkfDcDispGetSliceTupleSeqItorCnt(BkfDc *dc, BkfDcSlice *slice)
     void *itor = VOS_NULL;
     int32_t cnt = 0;
 
-    for (table = BkfDcGetFirstTable(dc, slice, &itor); table != VOS_NULL;
-         table = BkfDcGetNextTable(dc, slice, &itor)) {
+    for (table = BkfDcGetFirstTable(dc, slice, &itor); table != VOS_NULL; table = BkfDcGetNextTable(dc, slice, &itor)) {
         cnt += BkfDcDispGetTableTupleSeqItorCnt(dc, table);
     }
     return cnt;
@@ -163,8 +155,7 @@ STATIC int32_t BkfDcDispGetAllTupleSeqItorCnt(BkfDc *dc)
     void *itor = VOS_NULL;
     int32_t cnt = 0;
 
-    for (slice = BkfDcGetFirstSlice(dc, &itor); slice != VOS_NULL;
-         slice = BkfDcGetNextSlice(dc, &itor)) {
+    for (slice = BkfDcGetFirstSlice(dc, &itor); slice != VOS_NULL; slice = BkfDcGetNextSlice(dc, &itor)) {
         cnt += BkfDcDispGetSliceTupleSeqItorCnt(dc, slice);
     }
     return cnt;
@@ -200,18 +191,16 @@ STATIC void BkfDcDispMem(BkfDc *dc)
     BKF_DISP_PRINTF(disp, "tupleDelCnt      : %-10d\n", tupleDelCnt);
     BKF_DISP_PRINTF(disp, "seqItorCnt       : %-10d\n", seqItorCnt);
     BKF_DISP_PRINTF(disp, "===mem===\n");
-    BKF_DISP_PRINTF(disp, "memTotal         : %-10"VOS_PRId64"\n", memTotal);
-    BKF_DISP_PRINTF(disp, "memHnd           : %-10"VOS_PRId64"\n", memHnd);
-    BKF_DISP_PRINTF(disp, "memTableType     : %-10"VOS_PRId64" = %d * %d\n",
-                    memTableType, sizeof(BkfDcTableType), tableTypeCnt);
-    BKF_DISP_PRINTF(disp, "memSlice         : %-10"VOS_PRId64" = %d * %d\n",
-                    memSlice, sizeof(BkfDcSlice), sliceCnt);
-    BKF_DISP_PRINTF(disp, "memTable         : %-10"VOS_PRId64" = %d * %d\n",
-                    memTable, sizeof(BkfDcTable), tableCnt);
-    BKF_DISP_PRINTF(disp, "memAddUpdTuple   : %-10"VOS_PRId64"\n", memAddUpdTuple);
-    BKF_DISP_PRINTF(disp, "memDelTuple      : %-10"VOS_PRId64"\n", memDelTuple);
-    BKF_DISP_PRINTF(disp, "memSeqItor       : %-10"VOS_PRId64" = %d * %d\n",
-                    memSeqItor, sizeof(BkfDcTupleSeqItor), seqItorCnt);
+    BKF_DISP_PRINTF(disp, "memTotal         : %-10" VOS_PRId64 "\n", memTotal);
+    BKF_DISP_PRINTF(disp, "memHnd           : %-10" VOS_PRId64 "\n", memHnd);
+    BKF_DISP_PRINTF(disp, "memTableType     : %-10" VOS_PRId64 " = %d * %d\n", memTableType, sizeof(BkfDcTableType),
+        tableTypeCnt);
+    BKF_DISP_PRINTF(disp, "memSlice         : %-10" VOS_PRId64 " = %d * %d\n", memSlice, sizeof(BkfDcSlice), sliceCnt);
+    BKF_DISP_PRINTF(disp, "memTable         : %-10" VOS_PRId64 " = %d * %d\n", memTable, sizeof(BkfDcTable), tableCnt);
+    BKF_DISP_PRINTF(disp, "memAddUpdTuple   : %-10" VOS_PRId64 "\n", memAddUpdTuple);
+    BKF_DISP_PRINTF(disp, "memDelTuple      : %-10" VOS_PRId64 "\n", memDelTuple);
+    BKF_DISP_PRINTF(disp, "memSeqItor       : %-10" VOS_PRId64 " = %d * %d\n", memSeqItor, sizeof(BkfDcTupleSeqItor),
+        seqItorCnt);
 }
 void BkfDcDisp(BkfDc *dc)
 {
@@ -222,14 +211,13 @@ void BkfDcDisp(BkfDc *dc)
     BKF_DISP_PRINTF(disp, "memMng(%#x)\n", BKF_MASK_ADDR(dc->argInit.memMng));
     BKF_DISP_PRINTF(disp, "disp(%#x)\n", BKF_MASK_ADDR(dc->argInit.disp));
     BKF_DISP_PRINTF(disp, "log(%#x/%#x)\n", BKF_MASK_ADDR(dc->argInit.log), BKF_MASK_ADDR(dc->log));
-    BKF_DISP_PRINTF(disp, "jobMng(%#x)/jobTypeId(%u)/jobPrio(%u)\n",
-                    BKF_MASK_ADDR(dc->argInit.jobMng), dc->argInit.jobTypeId, dc->argInit.jobPrio);
-    BKF_DISP_PRINTF(disp, "slie_keyLen(%u)/keyCmp(%#x)/keyGetStrOrNull(%#x)/keyCodec(%#x)\n",
-                    dc->argInit.sliceVTbl.keyLen, BKF_MASK_ADDR(dc->argInit.sliceVTbl.keyCmp),
-                    BKF_MASK_ADDR(dc->argInit.sliceVTbl.keyGetStrOrNull),
-                    BKF_MASK_ADDR(dc->argInit.sliceVTbl.keyCodec));
+    BKF_DISP_PRINTF(disp, "jobMng(%#x)/jobTypeId(%u)/jobPrio(%u)\n", BKF_MASK_ADDR(dc->argInit.jobMng),
+        dc->argInit.jobTypeId, dc->argInit.jobPrio);
+    BKF_DISP_PRINTF(disp, "slice_keyLen(%u)/keyCmp(%#x)/keyGetStrOrNull(%#x)/keyCodec(%#x)\n",
+        dc->argInit.sliceVTbl.keyLen, BKF_MASK_ADDR(dc->argInit.sliceVTbl.keyCmp),
+        BKF_MASK_ADDR(dc->argInit.sliceVTbl.keyGetStrOrNull), BKF_MASK_ADDR(dc->argInit.sliceVTbl.keyCodec));
     BKF_DISP_PRINTF(disp, "sysLogMng(%#x)\n", BKF_MASK_ADDR(dc->argInit.sysLogMng));
-    BKF_DISP_PRINTF(disp, "seq64Seed(%"VOS_PRIu64")\n", dc->seq64Seed);
+    BKF_DISP_PRINTF(disp, "seq64Seed(%" VOS_PRIu64 ")\n", dc->seq64Seed);
 
     BkfDcDispMem(dc);
 }
@@ -245,19 +233,19 @@ void BkfDcDispTableType(BkfDc *dc)
     for (tableType = BkfDcGetFirstTableType(dc, &itor); tableType != VOS_NULL;
          tableType = BkfDcGetNextTableType(dc, &itor)) {
         memTupleTotal = sizeof(BkfDcTuple) + tableType->vTbl.tupleKeyLen + tableType->vTbl.tupleValLen;
-        BKF_DISP_PRINTF(disp, "tableType[%d]: id(%u)/name(%s)/cookie(%#x), memTupleTotal/key/val(%u, %u, %u), "
-                        "tupleKeyCmp(%#x)/tupleKeyGetStr(%#x)/tupleValGetStr(%#x)\n",
-                        idx, tableType->vTbl.tableTypeId, tableType->name, BKF_MASK_ADDR(tableType->vTbl.cookie),
-                        memTupleTotal, tableType->vTbl.tupleKeyLen, tableType->vTbl.tupleValLen,
-                        BKF_MASK_ADDR(tableType->vTbl.tupleKeyCmp),
-                        BKF_MASK_ADDR(tableType->vTbl.tupleKeyGetStrOrNull),
-                        BKF_MASK_ADDR(tableType->vTbl.tupleValGetStrOrNull));
+        BKF_DISP_PRINTF(disp,
+            "tableType[%d]: id(%u)/name(%s)/cookie(%#x), memTupleTotal/key/val(%u, %u, %u), "
+            "tupleKeyCmp(%#x)/tupleKeyGetStr(%#x)/tupleValGetStr(%#x)\n",
+            idx, tableType->vTbl.tableTypeId, tableType->name, BKF_MASK_ADDR(tableType->vTbl.cookie), memTupleTotal,
+            tableType->vTbl.tupleKeyLen, tableType->vTbl.tupleValLen, BKF_MASK_ADDR(tableType->vTbl.tupleKeyCmp),
+            BKF_MASK_ADDR(tableType->vTbl.tupleKeyGetStrOrNull), BKF_MASK_ADDR(tableType->vTbl.tupleValGetStrOrNull));
         idx++;
     }
 }
 
 STATIC void BkfDcDispTableSummary(BkfDc *dc, BkfDcSlice *slice, uintptr_t dispTable)
 {
+    (void)dispTable;
     BkfDisp *disp = dc->argInit.disp;
     BkfDcTable *table = VOS_NULL;
     void *itor1 = VOS_NULL;
@@ -275,22 +263,22 @@ STATIC void BkfDcDispTableSummary(BkfDc *dc, BkfDcSlice *slice, uintptr_t dispTa
         tupleDelCnt = 0;
         BkfDcDispGetTableTupleCnt(dc, table, &tupleAddUpdCnt, &tupleDelCnt);
         seqItorCnt = BkfDcDispGetTableTupleSeqItorCnt(dc, table);
-        BKF_DISP_PRINTF(disp, "++table[%d]: (%u, %s)/isRelease(%u)/jobIdDelTuple(%#x)/keyItorDelTuple(%#x)\n",
-                        tableIdx, table->tableTypeId, BkfDcGetTableTypeIdStr(dc, table->tableTypeId), table->isRelease,
-                        BKF_MASK_ADDR(table->jobIdDelTuple), BKF_MASK_ADDR(table->keyItorDelTuple));
+        BKF_DISP_PRINTF(disp, "++table[%d]: (%u, %s)/isRelease(%u)/jobIdDelTuple(%#x)/keyItorDelTuple(%#x)\n", tableIdx,
+            table->tableTypeId, BkfDcGetTableTypeIdStr(dc, table->tableTypeId), table->isRelease,
+            BKF_MASK_ADDR(table->jobIdDelTuple), BKF_MASK_ADDR(table->keyItorDelTuple));
         tableIdx++;
 
-        BKF_DISP_PRINTF(disp, "++++tupleAddUpdCnt/tupleDelCnt/seqItorCnt: (%d/%d/%d)\n",
-                        tupleAddUpdCnt, tupleDelCnt, seqItorCnt);
+        BKF_DISP_PRINTF(disp, "++++tupleAddUpdCnt/tupleDelCnt/seqItorCnt: (%d/%d/%d)\n", tupleAddUpdCnt, tupleDelCnt,
+            seqItorCnt);
         seqItorIdx = 0;
         for (seqItor = BkfDcGetFirstTupleSeqItor(dc, table, &itor2); seqItor != VOS_NULL;
              seqItor = BkfDcGetNextTupleSeqItor(dc, table, &itor2)) {
-            BKF_DISP_PRINTF(disp, "++++seqItor[%d]: nextProcTuple(%#x)/nextProcTupleSeq(%"VOS_PRIu64")/"
-                            "name(%s)/cookie(%#x)/afterTupleChange(%#x)/afterTableRelease(%#x)\n",
-                            seqItorIdx, BKF_MASK_ADDR(seqItor->nextProcTuple), seqItor->nextProcTupleSeq,
-                            seqItor->name, BKF_MASK_ADDR(seqItor->vTbl.cookie),
-                            BKF_MASK_ADDR(seqItor->vTbl.afterTupleChangeOrNull),
-                            BKF_MASK_ADDR(seqItor->vTbl.afterTableReleaseOrNull));
+            BKF_DISP_PRINTF(disp,
+                "++++seqItor[%d]: nextProcTuple(%#x)/nextProcTupleSeq(%" VOS_PRIu64 ")/"
+                "name(%s)/cookie(%#x)/afterTupleChange(%#x)/afterTableRelease(%#x)\n",
+                seqItorIdx, BKF_MASK_ADDR(seqItor->nextProcTuple), seqItor->nextProcTupleSeq, seqItor->name,
+                BKF_MASK_ADDR(seqItor->vTbl.cookie), BKF_MASK_ADDR(seqItor->vTbl.afterTupleChangeOrNull),
+                BKF_MASK_ADDR(seqItor->vTbl.afterTableReleaseOrNull));
             seqItorIdx++;
         }
     }
@@ -314,13 +302,14 @@ STATIC void BkfDcDispOneSliceSummary(BkfDc *dc, BkfDcSlice *slice, int32_t idx, 
     BkfDcDispGetSliceTupleMem(dc, slice, &memAddUpdTuple, &memDelTuple);
     memTotal = memSlice + memTable + memAddUpdTuple + memDelTuple + memSeqItor;
 
-    BKF_DISP_PRINTF(disp, "===slice[%d]: [%s]============\n",
-                    idx, BkfDcGetSliceKeyStr(dc, slice->key, buf, sizeof(buf)));
-    BKF_DISP_PRINTF(disp, "memTotal/slice/table/tupleAddUpd/tupleDel/seqItor_"
-                    "(%"VOS_PRId64"/%"VOS_PRId64"/%"VOS_PRId64"/%"VOS_PRId64"/%"VOS_PRId64"/%"VOS_PRId64")\n",
-                    memTotal, memSlice, memTable, memAddUpdTuple, memDelTuple, memSeqItor);
-    BKF_DISP_PRINTF(disp, "tableCnt/tupleAddUpdCnt/tupleDelCnt/seqItorCnt: (%d/%d/%d/%d)\n",
-                    tableCnt, tupleAddUpdCnt, tupleDelCnt, seqItorCnt);
+    BKF_DISP_PRINTF(disp, "===slice[%d]: [%s]============\n", idx,
+        BkfDcGetSliceKeyStr(dc, slice->key, buf, sizeof(buf)));
+    BKF_DISP_PRINTF(disp,
+        "memTotal/slice/table/tupleAddUpd/tupleDel/seqItor_"
+        "(%" VOS_PRId64 "/%" VOS_PRId64 "/%" VOS_PRId64 "/%" VOS_PRId64 "/%" VOS_PRId64 "/%" VOS_PRId64 ")\n",
+        memTotal, memSlice, memTable, memAddUpdTuple, memDelTuple, memSeqItor);
+    BKF_DISP_PRINTF(disp, "tableCnt/tupleAddUpdCnt/tupleDelCnt/seqItorCnt: (%d/%d/%d/%d)\n", tableCnt, tupleAddUpdCnt,
+        tupleDelCnt, seqItorCnt);
     if (dispTable) {
         BkfDcDispTableSummary(dc, slice, dispTable);
     }
@@ -372,6 +361,7 @@ typedef struct tagBkfDcDispTupleTemp {
 } BkfDcDispTupleTemp;
 STATIC void BkfDcDispTupleGetFirstTuple(BkfDc *dc, BkfDcDispTupleCtx2 *ctx2, BkfDcDispTupleTemp *temp)
 {
+    (void)ctx2;
     temp->isNewSlice = VOS_TRUE;
     temp->slice = BkfDcGetFirstSlice(dc, VOS_NULL);
     if (temp->slice != VOS_NULL) {
@@ -383,8 +373,9 @@ STATIC void BkfDcDispTupleGetFirstTuple(BkfDc *dc, BkfDcDispTupleCtx2 *ctx2, Bkf
     }
 }
 STATIC void BkfDcDispTupleGetIfLastSliceNoMoreTable(BkfDc *dc, void *sliceKey, BkfDcDispTupleCtx2 *ctx2,
-                                                      BkfDcDispTupleTemp *temp)
+    BkfDcDispTupleTemp *temp)
 {
+    (void)ctx2;
     temp->isNewSlice = VOS_TRUE;
     temp->slice = BkfDcFindNextSlice(dc, sliceKey);
     temp->isNewTable = VOS_TRUE;
@@ -396,7 +387,7 @@ STATIC void BkfDcDispTupleGetIfLastSliceNoMoreTable(BkfDc *dc, void *sliceKey, B
     }
 }
 STATIC void BkfDcDispTupleGetIfLastTableNoMoreTuple(BkfDc *dc, void *sliceKey, BkfDcDispTupleCtx2 *ctx2,
-                                                      BkfDcDispTupleTemp *temp)
+    BkfDcDispTupleTemp *temp)
 {
     temp->slice = BkfDcFindSlice(dc, sliceKey);
     if (temp->slice == VOS_NULL) {
@@ -427,7 +418,7 @@ STATIC void BkfDcDispTupleGetNextTuple(BkfDc *dc, void *sliceKey, BkfDcDispTuple
     }
 }
 STATIC void BkfDcDispOneTuple(BkfDc *dc, BkfDcDispTupleCtx2 *ctx2, BkfDcSlice *slice, BkfDcTable *table,
-                                BkfDcTuple *tuple)
+    BkfDcTuple *tuple)
 {
     BkfDisp *disp = dc->argInit.disp;
     uint8_t sliceBuf[BKF_1K / 8];
@@ -439,11 +430,10 @@ STATIC void BkfDcDispOneTuple(BkfDc *dc, BkfDcDispTupleCtx2 *ctx2, BkfDcSlice *s
     idx = ctx2->tupleAddUpdCnt + ctx2->tupleDelCnt;
     tupleValOrNull = tuple->isAddUpd ? BKF_DC_TUPLE_GET_VAL(tuple, table->tableType) : VOS_NULL;
     BKF_DISP_PRINTF(disp, "slice(%s)/table(%u, %s), tuple[%d]_addUpd?(%u)/key(%s)/val(%s)\n",
-                    BkfDcGetSliceKeyStr(dc, slice->key, sliceBuf, sizeof(sliceBuf)),
-                    table->tableTypeId, BkfDcGetTableTypeIdStr(dc, table->tableTypeId),
-                    idx, tuple->isAddUpd,
-                    BkfDcGetTupleKeyStr(dc, table->tableTypeId, tuple->keyVal, tupleKeyBuf, sizeof(tupleKeyBuf)),
-                    BkfDcGetTupleValStr(dc, table->tableTypeId, tupleValOrNull, tupleValBuf, sizeof(tupleValBuf)));
+        BkfDcGetSliceKeyStr(dc, slice->key, sliceBuf, sizeof(sliceBuf)), table->tableTypeId,
+        BkfDcGetTableTypeIdStr(dc, table->tableTypeId), idx, tuple->isAddUpd,
+        BkfDcGetTupleKeyStr(dc, table->tableTypeId, tuple->keyVal, tupleKeyBuf, sizeof(tupleKeyBuf)),
+        BkfDcGetTupleValStr(dc, table->tableTypeId, tupleValOrNull, tupleValBuf, sizeof(tupleValBuf)));
 }
 STATIC void BkfDcDispOneDataAndUpdCtx2(BkfDc *dc, BkfDcDispTupleCtx2 *ctx2, BkfDcDispTupleTemp *temp)
 {
@@ -471,8 +461,8 @@ STATIC void BkfDcDispOneDataAndUpdCtx2(BkfDc *dc, BkfDcDispTupleCtx2 *ctx2, BkfD
     } else if (table != VOS_NULL) {
         if (temp->isNewTable) {
             BKF_DISP_PRINTF(disp, "slice(%s)/table(%u, %s), no_tuple\n",
-                            BkfDcGetSliceKeyStr(dc, slice->key, sliceBuf, sizeof(sliceBuf)),
-                            table->tableTypeId, BkfDcGetTableTypeIdStr(dc, table->tableTypeId));
+                BkfDcGetSliceKeyStr(dc, slice->key, sliceBuf, sizeof(sliceBuf)), table->tableTypeId,
+                BkfDcGetTableTypeIdStr(dc, table->tableTypeId));
         }
         ctx2->sliceNoMoreTable = VOS_FALSE;
         ctx2->tableTypeId = table->tableTypeId;
@@ -480,7 +470,7 @@ STATIC void BkfDcDispOneDataAndUpdCtx2(BkfDc *dc, BkfDcDispTupleCtx2 *ctx2, BkfD
     } else if (slice != VOS_NULL) {
         if (temp->isNewSlice) {
             BKF_DISP_PRINTF(disp, "slice(%s)/no_table\n",
-                            BkfDcGetSliceKeyStr(dc, slice->key, sliceBuf, sizeof(sliceBuf)));
+                BkfDcGetSliceKeyStr(dc, slice->key, sliceBuf, sizeof(sliceBuf)));
         }
         ctx2->sliceNoMoreTable = VOS_TRUE;
     }
@@ -489,8 +479,8 @@ void BkfDcDispData(BkfDc *dc)
 {
     BkfDisp *disp = dc->argInit.disp;
     void *sliceKey = VOS_NULL;
-    BkfDcDispTupleCtx2 ctx2 = { 0 };
-    BkfDcDispTupleTemp temp = { 0 };
+    BkfDcDispTupleCtx2 ctx2 = {0};
+    BkfDcDispTupleTemp temp = {0};
 
     sliceKey = BKF_DISP_GET_LAST_CTX(disp, &ctx2);
     if (sliceKey == VOS_NULL) {
@@ -510,11 +500,11 @@ void BkfDcDispData(BkfDc *dc)
 
     if (temp.slice != VOS_NULL) {
         BkfDcDispOneDataAndUpdCtx2(dc, &ctx2, &temp);
-        BKF_DISP_SAVE_CTX(disp, temp.slice->key, dc->argInit.sliceVTbl.keyLen,
-                          &ctx2, sizeof(ctx2) - sizeof(ctx2.tupleKey) + temp.tupleKeyLen);
+        BKF_DISP_SAVE_CTX(disp, temp.slice->key, dc->argInit.sliceVTbl.keyLen, &ctx2,
+            sizeof(ctx2) - sizeof(ctx2.tupleKey) + temp.tupleKeyLen);
     } else {
-        BKF_DISP_PRINTF(disp, " ***total %d addUpdTuple(s), %d delTuple(s) ***\n",
-                        ctx2.tupleAddUpdCnt, ctx2.tupleDelCnt);
+        BKF_DISP_PRINTF(disp, " ***total %d addUpdTuple(s), %d delTuple(s) ***\n", ctx2.tupleAddUpdCnt,
+            ctx2.tupleDelCnt);
     }
 }
 
@@ -540,4 +530,3 @@ void BkfDcDispUninit(BkfDc *dc)
 {
     BkfDispUnregObj(dc->argInit.disp, dc->name);
 }
-

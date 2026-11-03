@@ -1,12 +1,13 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "gtest/gtest.h"
 #include <fstream>
 #include <string>
@@ -33,23 +34,16 @@
 #undef private
 using namespace checker;
 
-
 using namespace hccl;
 constexpr u32 MAX_BIN_FILE_SIZE = 100 * 1024 * 1024;
 
 class AlgAivTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AlgAivTest SetUP" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "AlgAivTest TearDown" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AlgAivTest SetUP" << std::endl; }
+    static void TearDownTestCase() { std::cout << "AlgAivTest TearDown" << std::endl; }
 };
 
-void TestConstructParam(AivOpArgs &opArgs, AivTopoArgs &topoArgs, AivAlgArgs &algArgs, AivResourceArgs &resourceArgs)
+void TestConstructParam(AivOpArgs& opArgs, AivTopoArgs& topoArgs, AivAlgArgs& algArgs, AivResourceArgs& resourceArgs)
 {
     opArgs.cmdType = HcclCMDType::HCCL_CMD_ALLTOALL;
     opArgs.isOpBase = true;
@@ -78,10 +72,10 @@ TEST_F(AlgAivTest, executeKernelLaunch_test)
     std::string commTag = "exampleTag";
     AivResourceArgs resourceArgs{commTag};
     auto v1 = std::vector<u64>(16, 1);
-    resourceArgs.buffersIn = reinterpret_cast<void **>(v1.data());
-    resourceArgs.buffersOut = reinterpret_cast<void **>(v1.data());
+    resourceArgs.buffersIn = reinterpret_cast<void**>(v1.data());
+    resourceArgs.buffersOut = reinterpret_cast<void**>(v1.data());
     s32 tag = 1000;
-    void *args;
+    void* args;
     u32 argsSize = 0;
     AivProfilingInfo aivProInfo;
     ExtraArgs exArgs;

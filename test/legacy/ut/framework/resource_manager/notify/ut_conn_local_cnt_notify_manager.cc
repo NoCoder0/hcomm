@@ -20,19 +20,14 @@ using namespace Hccl;
 
 class ConnLocalCntNotifyManagerTest : public testing::Test {
 protected:
-    static void SetUpTestCase() {
-        std::cout << "ConnLocalCntNotifyManagerTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "ConnLocalCntNotifyManagerTest SetUP" << std::endl; }
 
-    static void TearDownTestCase() {
-        std::cout << "ConnLocalCntNotifyManagerTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "ConnLocalCntNotifyManagerTest TearDown" << std::endl; }
 
-    virtual void SetUp() {
-        std::cout << "A Test case in ConnLocalCntNotifyManagerTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in ConnLocalCntNotifyManagerTest SetUP" << std::endl; }
 
-    virtual void TearDown () {
+    virtual void TearDown()
+    {
         GlobalMockObject::verify();
         std::cout << "A Test case in ConnLocalCntNotifyManagerTest TearDown" << std::endl;
     }

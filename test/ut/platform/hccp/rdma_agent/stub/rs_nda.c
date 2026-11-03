@@ -12,30 +12,30 @@
 #include "ra_rs_comm.h"
 #include "rs_nda.h"
 
-int RsNdaGetDirectFlag(unsigned int phyId, unsigned int rdevIndex, int *directFlag)
+int RsNdaGetDirectFlag(unsigned int phyId, unsigned int rdevIndex, int* directFlag)
 {
     *directFlag = DIRECT_FLAG_PCIE;
     return 0;
 }
 
-int RsNdaCqCreate(unsigned int phyId, unsigned int rdevIndex, struct NdaCqInitAttr *attr,  struct NdaCqInfo *info,
-    void **ibvCqExt)
+int RsNdaCqCreate(
+    unsigned int phyId, unsigned int rdevIndex, struct NdaCqInitAttr* attr, struct NdaCqInfo* info, void** ibvCqExt)
 {
     return 0;
 }
 
-int RsNdaCqDestroy(unsigned int phyId, unsigned int rdevIndex, void *ibvCqExt)
+int RsNdaCqDestroy(unsigned int phyId, unsigned int rdevIndex, void* ibvCqExt) { return 0; }
+
+int RsNdaQpCreate(
+    unsigned int phyId, unsigned int rdevIndex, struct NdaQpInitAttr* attr, struct NdaQpInfo* info,
+    struct RsQpResp* qpResp)
 {
     return 0;
 }
 
-int RsNdaQpCreate(unsigned int phyId, unsigned int rdevIndex, struct NdaQpInitAttr *attr,
-    struct NdaQpInfo *info, struct RsQpResp *qpResp)
-{
-    return 0;
-}
+int RsNdaQpDestroy(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn) { return 0; }
 
-int RsNdaQpDestroy(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn)
+int RsGetQpHyperFeature(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn, struct HyperFeature* hyperFeature)
 {
     return 0;
 }

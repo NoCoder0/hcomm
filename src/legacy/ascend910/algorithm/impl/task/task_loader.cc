@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "log.h"
 #include "transport_pub.h"
@@ -15,7 +15,8 @@
 
 namespace hccl {
 TaskLoader::TaskLoader(const s32 deviceLogicId, const HcclDispatcher dispatcher)
-    : deviceLogicId_(deviceLogicId), dispatcher_(dispatcher)
+    : deviceLogicId_(deviceLogicId),
+      dispatcher_(dispatcher)
 {}
 TaskLoader::~TaskLoader()
 {
@@ -25,7 +26,7 @@ TaskLoader::~TaskLoader()
     }
 }
 
-void TaskLoader::Prepare(Stream *stream, SubCommInfo level0CommInfo)
+void TaskLoader::Prepare(Stream* stream, SubCommInfo level0CommInfo)
 {
     // 参数保存
     stream_ = stream;
@@ -67,14 +68,14 @@ void TaskLoader::NotifyStart()
     std::unique_lock<std::mutex> lock(startMtx_);
     startReady = true; // 设置标志位为 true.
     startCv_.notify_one();
-    workflowMode_ = GetWorkflowMode();  // 每次唤醒前更新下
+    workflowMode_ = GetWorkflowMode(); // 每次唤醒前更新下
     HCCL_INFO("[TaskLoader] NotifyStart");
 }
 
 void TaskLoader::WaitStart()
 {
     std::unique_lock<std::mutex> lock(startMtx_);
-    while (!startReady) {     // 假设标志位不为 true, 则等待...
+    while (!startReady) {    // 假设标志位不为 true, 则等待...
         startCv_.wait(lock); // 当前线程被堵塞, 当标志位变为 true 之后,
     }
     startReady = false;
@@ -98,17 +99,17 @@ void TaskLoader::WaitDone()
     doneReady = false;
 }
 
-HcclResult TaskLoader::ExecuteTransPortTaskInfo(TaskLogicInfo &info)
+HcclResult TaskLoader::ExecuteTransPortTaskInfo(TaskLogicInfo& info)
 {
     u32 index = info.taskLogicCmd.index;
 
     std::shared_ptr<Transport> destTransport = nullptr;
     if (commInfo_.virtualLinks.size() <= index) {
-        HCCL_ERROR("[ExecuteTransPortTaskInfo]index[%u] is bigger than vlink size[%llu]", index,
+        HCCL_ERROR(
+            "[ExecuteTransPortTaskInfo]index[%u] is bigger than vlink size[%llu]", index,
             commInfo_.virtualLinks.size());
     } else if (commInfo_.links.size() <= index) {
-        HCCL_ERROR("[ExecuteTransPortTaskInfo]index[%u] is bigger than link size[%llu]", index,
-            commInfo_.links.size());
+        HCCL_ERROR("[ExecuteTransPortTaskInfo]index[%u] is bigger than link size[%llu]", index, commInfo_.links.size());
     } else {
         destTransport = commInfo_.links[index];
     }
@@ -141,36 +142,31 @@ HcclResult TaskLoader::ExecuteTransPortTaskInfo(TaskLogicInfo &info)
     return HCCL_SUCCESS;
 }
 
-HcclResult TaskLoader::ExecuteDispatcherTaskInfo(TaskLogicInfo &info)
+HcclResult TaskLoader::ExecuteDispatcherTaskInfo(TaskLogicInfo& info)
 {
     switch (info.taskFuncType) {
         case TaskLogicFuncType::DISPATCHER_SIGNALWAIT_TYPE:
-            HcclSignalWait(dispatcher_,
-                info.taskLogicPara.dispatcherTaskLogicPara.signalWait.signal,
-                *stream_,
+            HcclSignalWait(
+                dispatcher_, info.taskLogicPara.dispatcherTaskLogicPara.signalWait.signal, *stream_,
                 info.taskLogicPara.dispatcherTaskLogicPara.signalWait.userRank,
                 info.taskLogicPara.dispatcherTaskLogicPara.signalWait.remoteRank,
-                info.taskLogicPara.dispatcherTaskLogicPara.signalWait.stage,
-                true);
+                info.taskLogicPara.dispatcherTaskLogicPara.signalWait.stage, true);
             break;
         case TaskLogicFuncType::DISPATCHER_SIGNALRECORD_TYPE:
-            HcclSignalRecord(dispatcher_,
-                info.taskLogicPara.dispatcherTaskLogicPara.signalRecord.signal,
-                *stream_,
+            HcclSignalRecord(
+                dispatcher_, info.taskLogicPara.dispatcherTaskLogicPara.signalRecord.signal, *stream_,
                 info.taskLogicPara.dispatcherTaskLogicPara.signalRecord.userRank,
                 info.taskLogicPara.dispatcherTaskLogicPara.signalRecord.offset,
-                info.taskLogicPara.dispatcherTaskLogicPara.signalRecord.stage,
-                true, INVALID_U64);
+                info.taskLogicPara.dispatcherTaskLogicPara.signalRecord.stage, true, INVALID_U64);
             break;
         case TaskLogicFuncType::DISPATCHER_MEMCPYASYNC_TYPE:
-            HcclMemcpyAsync(dispatcher_,
-                info.taskLogicPara.dispatcherTaskLogicPara.memAsync.dst,
+            HcclMemcpyAsync(
+                dispatcher_, info.taskLogicPara.dispatcherTaskLogicPara.memAsync.dst,
                 info.taskLogicPara.dispatcherTaskLogicPara.memAsync.destMax,
                 info.taskLogicPara.dispatcherTaskLogicPara.memAsync.src,
                 info.taskLogicPara.dispatcherTaskLogicPara.memAsync.count,
-                info.taskLogicPara.dispatcherTaskLogicPara.memAsync.kind,
-                *stream_,
-                INVALID_VALUE_RANKID, LinkType::LINK_ONCHIP);
+                info.taskLogicPara.dispatcherTaskLogicPara.memAsync.kind, *stream_, INVALID_VALUE_RANKID,
+                LinkType::LINK_ONCHIP);
             break;
         default:
             HCCL_ERROR("[TaskLoader][ExecuteDispatcherTaskInfo]Invalid taskFuncType[%d]", info.taskFuncType);
@@ -179,7 +175,7 @@ HcclResult TaskLoader::ExecuteDispatcherTaskInfo(TaskLogicInfo &info)
     return HCCL_SUCCESS;
 }
 
-HcclResult TaskLoader::ExecuteTaskLogicPara(TaskLogicInfo &info)
+HcclResult TaskLoader::ExecuteTaskLogicPara(TaskLogicInfo& info)
 {
     if (info.taskLogicCmd.taskLogicType == TaskLogicType::TRANSPORT_TYPE) {
         CHK_RET(ExecuteTransPortTaskInfo(info));
@@ -203,7 +199,7 @@ HcclResult TaskLoader::ExecuteService()
 
 HcclResult TaskLoader::ThreadExecuteFn()
 {
-    //给当前线程添加名字
+    // 给当前线程添加名字
     SetThreadName("Hccl_TaskLoader");
 
     threadId_ = SalGetTid();
@@ -243,4 +239,4 @@ HcclResult TaskLoader::ClearTagCommInfo()
     return HCCL_SUCCESS;
 }
 
-}  // namespace hccl
+} // namespace hccl

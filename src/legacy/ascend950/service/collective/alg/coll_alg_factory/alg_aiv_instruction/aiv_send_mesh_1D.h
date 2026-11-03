@@ -12,17 +12,14 @@
 
 using namespace AscendC;
 
-template<typename T>
-// todo 简化参数
-class AivSendMesh1D : public AivCommBase { //单核、多核都能运行
+template <typename T>
+class AivSendMesh1D : public AivCommBase { // 单核、多核都能运行
 public:
-
-    __aicore__ inline AivSendMesh1D() {
-    }
+    __aicore__ inline AivSendMesh1D() {}
 
     __aicore__ inline void InitCoreInfo(uint64_t currDataCount)
     {
-        coreIndex = block_idx;  // 每个核在当前coreNumPerRank里面的排序
+        coreIndex = block_idx; // 每个核在当前coreNumPerRank里面的排序
 
         // 发送数据的编排
         uint64_t dataPerCore = currDataCount / coreNumPerRank; // 数据量很少的时候，dataPerCore为0
@@ -46,7 +43,7 @@ public:
             return;
         }
 
-        CpGM2GM((__gm__ T *)sendOutputOffset, (__gm__ T *)sendInputOffset, sendCurCount);
+        CpGM2GM((__gm__ T*)sendOutputOffset, (__gm__ T*)sendInputOffset, sendCurCount);
         PipeBarrier<PIPE_ALL>();
 
         uint64_t flag_offset = block_idx;
@@ -83,7 +80,7 @@ public:
     uint64_t sendCurCount;
 };
 
-template<typename T>
+template <typename T>
 __aicore__ inline void AivSendV2Mesh1D(EXTERN_KERNEL_ARGS_DEF_V2)
 {
     AivSendMesh1D<T> op;

@@ -15,33 +15,22 @@
 #define private public
 #define protected public
 #include "hccl_common_v2.h"
-#include "preempt_port_manager.h"
+#include "preempt_port_manager_v2.h"
+#include "socket.h"
 #undef private
 #undef protected
-
 
 using namespace Hccl;
 using namespace std;
 
 class HcclPreemptPortManagerV2Test : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "HcclPreemptPortManagerV2Test SetUP" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "HcclPreemptPortManagerV2Test TearDown" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "HcclPreemptPortManagerV2Test SetUP" << std::endl; }
+    static void TearDownTestCase() { std::cout << "HcclPreemptPortManagerV2Test TearDown" << std::endl; }
     // Some expensive resource shared by all tests.
-    virtual void SetUp()
-    {
-    }
+    virtual void SetUp() {}
 
-    virtual void TearDown()
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() { GlobalMockObject::verify(); }
 
     PreemptPortManager& ppm = PreemptPortManager::GetInstance(0);
     PreemptPortManager& ppm1 = PreemptPortManager::GetInstance(-1);
@@ -51,7 +40,7 @@ protected:
 TEST_F(HcclPreemptPortManagerV2Test, St_GetRangeStr_When_InputValue_Expect_NO_THROW)
 {
     // when
-    std::vector<SocketPortRange> portRange ;
+    std::vector<SocketPortRange> portRange;
     SocketPortRange range = {50000, 50000};
     portRange.push_back(range);
 
@@ -68,14 +57,14 @@ TEST_F(HcclPreemptPortManagerV2Test, St_ListenPreempt_When_InputValue_Expect_NO_
     // then
     IpAddress remoteIp{"10.10.10.10"};
     IpAddress localIp{"10.10.10.01"};
-    std::vector<SocketPortRange> portRangeList ;
+    std::vector<SocketPortRange> portRangeList;
     SocketPortRange range = {50000, 50005};
     portRangeList.push_back(range);
     u32 usePort = 50000;
     SocketHandle socketHandle;
     std::string tag = "test";
-    std::shared_ptr<Socket> listenSocket = std::make_shared<Socket>(socketHandle, localIp, 0, remoteIp, tag,
-        SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    std::shared_ptr<Socket> listenSocket = std::make_shared<Socket>(
+        socketHandle, localIp, 0, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
 
     // check
     EXPECT_NO_THROW(ppm.ListenPreempt(listenSocket, portRangeList, usePort));
@@ -84,7 +73,7 @@ TEST_F(HcclPreemptPortManagerV2Test, St_ListenPreempt_When_InputValue_Expect_NO_
 TEST_F(HcclPreemptPortManagerV2Test, St_PreemptPortInRange_When_Exist_IP_Expect_Use_Occupied)
 {
     // when
-    MOCKER_CPP(&Socket::Listen, bool(Socket::*)(u32 &port)).stubs().with(mockcpp::any()).will(returnValue(true));
+    MOCKER_CPP(&Socket::Listen, bool(Socket::*)(u32 & port)).stubs().with(mockcpp::any()).will(returnValue(true));
     MOCKER_CPP(&IpAddress::InitBinaryAddr).stubs().with(mockcpp::any()).will(ignoreReturnValue());
 
     // then
@@ -95,12 +84,12 @@ TEST_F(HcclPreemptPortManagerV2Test, St_PreemptPortInRange_When_Exist_IP_Expect_
     portRangeList.push_back(range);
     SocketHandle socketHandle;
     std::string tag = "test";
-    std::shared_ptr<Socket> listenSocket = std::make_shared<Socket>(socketHandle, localIp, 0, remoteIp, tag,
-        SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    std::shared_ptr<Socket> listenSocket = std::make_shared<Socket>(
+        socketHandle, localIp, 0, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
     u32 usePort = 0;
 
     // check
-    IpPortRef hostPortRef ;
+    IpPortRef hostPortRef;
     hostPortRef.insert({localIp.GetIpStr().c_str(), std::make_pair(50000, Referenced())});
     ppm.preemptSockets_[HrtNetworkMode::PEER] = hostPortRef;
     EXPECT_NO_THROW(ppm.PreemptPortInRange(listenSocket, HrtNetworkMode::PEER, portRangeList, usePort));
@@ -110,25 +99,25 @@ TEST_F(HcclPreemptPortManagerV2Test, St_PreemptPortInRange_When_Exist_IP_Expect_
 TEST_F(HcclPreemptPortManagerV2Test, St_PreemptPortInRange_When_New_IP_Expect_HCCL_E_PARA)
 {
     // when
-    MOCKER_CPP(&Socket::Listen, bool(Socket::*)(u32 &port)).stubs().with(mockcpp::any()).will(returnValue(false));
+    MOCKER_CPP(&Socket::Listen, bool(Socket::*)(u32 & port)).stubs().with(mockcpp::any()).will(returnValue(false));
     MOCKER_CPP(&IpAddress::InitBinaryAddr).stubs().with(mockcpp::any()).will(ignoreReturnValue());
 
     // then
     IpAddress remoteIp{"10.10.10.10"};
-    IpAddress  localIp{"10.10.10.01"};
+    IpAddress localIp{"10.10.10.01"};
     std::vector<SocketPortRange> portRange;
     SocketPortRange range = {50000, 50005};
     portRange.push_back(range);
     SocketHandle socketHandle;
     std::string tag = "test";
-    std::shared_ptr<Socket> listenSocket = std::make_shared<Socket>(socketHandle, localIp, 0, remoteIp, tag,
-        SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    std::shared_ptr<Socket> listenSocket = std::make_shared<Socket>(
+        socketHandle, localIp, 0, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
     u32 usePort = 0;
 
     // check
     ppm.preemptSockets_[HrtNetworkMode::PEER] = IpPortRef();
-    EXPECT_THROW(ppm.PreemptPortInRange(listenSocket, HrtNetworkMode::PEER, portRange, usePort), InvalidParamsException);
-    
+    EXPECT_THROW(
+        ppm.PreemptPortInRange(listenSocket, HrtNetworkMode::PEER, portRange, usePort), InvalidParamsException);
 }
 
 TEST_F(HcclPreemptPortManagerV2Test, St_IsAlreadyListening_When_Ref_0_Expect_false)
@@ -161,11 +150,11 @@ TEST_F(HcclPreemptPortManagerV2Test, St_ReleasePreempt_When_InputValue_Expect_NO
 
     // then
     IpAddress remoteIp{"10.10.10.10"};
-    IpAddress  localIp{"10.10.10.1"};
+    IpAddress localIp{"10.10.10.1"};
     SocketHandle socketHandle;
     std::string tag = "test";
-    std::shared_ptr<Socket> listenSocket = std::make_shared<Socket>(socketHandle, localIp, 0, remoteIp, tag,
-        SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    std::shared_ptr<Socket> listenSocket = std::make_shared<Socket>(
+        socketHandle, localIp, 5000, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
 
     IpPortRef hostPortRef;
     Referenced ref;
@@ -182,14 +171,14 @@ TEST_F(HcclPreemptPortManagerV2Test, St_ReleasePreempt_When_Ref_Count_2_Expect_N
     // when
     MOCKER_CPP(&PreemptPortManager::IsAlreadyListening).stubs().with(mockcpp::any()).will(returnValue(true));
     MOCKER_CPP(&IpAddress::InitBinaryAddr).stubs().with(mockcpp::any()).will(ignoreReturnValue());
-    
+
     // then
     IpAddress remoteIp{"10.10.10.10"};
-    IpAddress  localIp{"10.10.10.1"};
+    IpAddress localIp{"10.10.10.1"};
     SocketHandle socketHandle;
     std::string tag = "test";
-    std::shared_ptr<Socket> listenSocket = std::make_shared<Socket>(socketHandle, localIp, 0, remoteIp, tag,
-        SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    std::shared_ptr<Socket> listenSocket = std::make_shared<Socket>(
+        socketHandle, localIp, 5000, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
 
     IpPortRef hostPortRef;
     Referenced ref;
@@ -198,7 +187,8 @@ TEST_F(HcclPreemptPortManagerV2Test, St_ReleasePreempt_When_Ref_Count_2_Expect_N
 
     // check
     EXPECT_NO_THROW(ppm.ReleasePreempt(hostPortRef, listenSocket, HrtNetworkMode::PEER));
-    Referenced &outRef = hostPortRef[localIp.GetIpStr().c_str()].second;
+    auto it = hostPortRef.equal_range(localIp.GetIpStr().c_str());
+    Referenced& outRef = it.first->second.second;
     EXPECT_EQ(outRef.refCount, 1);
 }
 
@@ -210,11 +200,11 @@ TEST_F(HcclPreemptPortManagerV2Test, St_ReleasePreempt_When_Ref_Count_ERROR_Expe
 
     // then
     IpAddress remoteIp{"10.10.10.10"};
-    IpAddress  localIp{"10.10.10.1"};
+    IpAddress localIp{"10.10.10.1"};
     SocketHandle socketHandle;
     std::string tag = "test";
-    std::shared_ptr<Socket> listenSocket = std::make_shared<Socket>(socketHandle, localIp, 0, remoteIp, tag,
-        SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+    std::shared_ptr<Socket> listenSocket = std::make_shared<Socket>(
+        socketHandle, localIp, 5000, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
 
     IpPortRef hostPortRef;
     Referenced ref;
@@ -233,12 +223,12 @@ TEST_F(HcclPreemptPortManagerV2Test, St_Release_When_InputValue_Expect_NO_THROW)
 
     // then
     IpAddress remoteIp{"10.10.10.10"};
-    IpAddress  localIp{"10.10.10.1"};
+    IpAddress localIp{"10.10.10.1"};
     SocketHandle socketHandle;
     std::string tag = "test";
-    std::shared_ptr<Socket> listenSocket = std::make_shared<Socket>(socketHandle, localIp, 0, remoteIp, tag,
-        SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
-    
+    std::shared_ptr<Socket> listenSocket = std::make_shared<Socket>(
+        socketHandle, localIp, 0, remoteIp, tag, SocketRole::SERVER, NicType::DEVICE_NIC_TYPE);
+
     // check
     EXPECT_NO_THROW(ppm.Release(listenSocket));
 }

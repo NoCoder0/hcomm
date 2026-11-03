@@ -22,7 +22,7 @@
 
 #define PROCESS_RS_SIGN_LENGTH 49
 #define PROCESS_RS_RESV_LENGTH 4
-#define EXP_DEVNUM             2
+#define EXP_DEVNUM 2
 
 struct RsMrRegInfo {
     unsigned int phyId;
@@ -78,18 +78,18 @@ extern "C" {
  * rs_open
  * flag: bit0: 0 = RC, 1= UD
  */
-#define MS_PER_SECOND_F   1000.0
-#define US_PER_MS_F   1000.0
-#define MS_PER_SECOND_I   1000
+#define MS_PER_SECOND_F 1000.0
+#define US_PER_MS_F 1000.0
+#define MS_PER_SECOND_I 1000
 #define RS_EXPECT_TIME_MAX 200.0 // ms
 
-#define RS_GID_SEQ_NUM             4
-#define RS_GID_SEQ_ZERO            0
-#define RS_GID_SEQ_ONE             1
-#define RS_GID_SEQ_TWO             2
-#define RS_GID_SEQ_THREE           3
+#define RS_GID_SEQ_NUM 4
+#define RS_GID_SEQ_ZERO 0
+#define RS_GID_SEQ_ONE 1
+#define RS_GID_SEQ_TWO 2
+#define RS_GID_SEQ_THREE 3
 
-#define RS_ATTRI_VISI_DEF __attribute__ ((visibility ("default")))
+#define RS_ATTRI_VISI_DEF __attribute__((visibility("default")))
 
 RS_ATTRI_VISI_DEF int RsSetTsqpDepth(unsigned int phyId, unsigned int rdevIndex, unsigned int tempDepth,
     unsigned int *qpNum);
@@ -97,17 +97,16 @@ RS_ATTRI_VISI_DEF int RsGetTsqpDepth(unsigned int phyId, unsigned int rdevIndex,
     unsigned int *qpNum);
 RS_ATTRI_VISI_DEF int RsQpCreate(unsigned int phyId, unsigned int rdevIndex, struct RsQpNorm qpNorm,
     struct RsQpResp *qpResp);
-RS_ATTRI_VISI_DEF int RsQpCreateWithAttrs(unsigned int phyId, unsigned int rdevIndex,
-    struct RsQpNormWithAttrs *qpNorm, struct RsQpRespWithAttrs *qpResp);
+RS_ATTRI_VISI_DEF int RsQpCreateWithAttrs(unsigned int phyId, unsigned int rdevIndex, struct RsQpNormWithAttrs *qpNorm,
+    struct RsQpRespWithAttrs *qpResp);
 RS_ATTRI_VISI_DEF int RsQpDestroy(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn);
 RS_ATTRI_VISI_DEF int RsQpDestroyWithoutCQ(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn);
-RS_ATTRI_VISI_DEF int RsTypicalQpModify(unsigned int phyId, unsigned int rdevIndex,
-    struct TypicalQp localQpInfo, struct TypicalQp remoteQpInfo, struct TypicalQpAttr *qpAttr);
+RS_ATTRI_VISI_DEF int RsTypicalQpModify(unsigned int phyId, unsigned int rdevIndex, struct TypicalQp localQpInfo,
+    struct TypicalQp remoteQpInfo, struct TypicalQpAttr *qpAttr);
 RS_ATTRI_VISI_DEF int RsTypicalCqCreate(unsigned int phyId, unsigned int rdevIndex, unsigned int cqDepth,
     unsigned int *cqn);
 RS_ATTRI_VISI_DEF int RsTypicalCqDestroy(unsigned int phyId, unsigned int rdevIndex, unsigned int cqn);
-RS_ATTRI_VISI_DEF int RsQpBatchModify(unsigned int phyId, unsigned int rdevIndex,
-    int status, int qpn[], int qpnNum);
+RS_ATTRI_VISI_DEF int RsQpBatchModify(unsigned int phyId, unsigned int rdevIndex, int status, int qpn[], int qpnNum);
 RS_ATTRI_VISI_DEF int RsSetQpLbValue(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn, int lbValue);
 RS_ATTRI_VISI_DEF int RsGetQpLbValue(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn, int *lbValue);
 RS_ATTRI_VISI_DEF int RsQpConnectAsync(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn, int fd);
@@ -121,14 +120,14 @@ enum RsQpStatus {
     RS_QP_STATUS_PAUSE = 5,
 };
 
-#define RS_IS_EXP       0
-#define RS_NOT_EXP      1
+#define RS_IS_EXP 0
+#define RS_NOT_EXP 1
 
 enum RsAccessFlags {
-    RS_ACCESS_LOCAL_WRITE  = 1,
+    RS_ACCESS_LOCAL_WRITE = 1,
     RS_ACCESS_REMOTE_WRITE = (1 << 1),
-    RS_ACCESS_REMOTE_READ  = (1 << 2UL),
-    RS_ACCESS_REDUCE       = (1 << 8),
+    RS_ACCESS_REMOTE_READ = (1 << 2UL),
+    RS_ACCESS_REDUCE = (1 << 8),
 };
 
 struct RsInitConfig {
@@ -160,38 +159,37 @@ RS_ATTRI_VISI_DEF int RsMrReg(unsigned int phyId, unsigned int rdevIndex, unsign
     struct RdmaMrRegInfo *mrRegInfo);
 RS_ATTRI_VISI_DEF int RsMrDereg(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn, char *addr);
 
-RS_ATTRI_VISI_DEF int RsRegisterMr(unsigned int phyId, unsigned int rdevIndex,
-    struct RdmaMrRegInfo *mrRegInfo, void **mrHandle);
-RS_ATTRI_VISI_DEF int RsTypicalRegisterMrV1(unsigned int phyId, unsigned int rdevIndex,
-    struct RdmaMrRegInfo *mrRegInfo, void **mrHandle);
-RS_ATTRI_VISI_DEF int RsTypicalRegisterMr(unsigned int phyId, unsigned int rdevIndex,
-    struct RdmaMrRegInfo *mrRegInfo, void **mrHandle);
+RS_ATTRI_VISI_DEF int RsRegisterMr(unsigned int phyId, unsigned int rdevIndex, struct RdmaMrRegInfo *mrRegInfo,
+    void **mrHandle);
+RS_ATTRI_VISI_DEF int RsTypicalRegisterMrV1(unsigned int phyId, unsigned int rdevIndex, struct RdmaMrRegInfo *mrRegInfo,
+    void **mrHandle);
+RS_ATTRI_VISI_DEF int RsTypicalRegisterMr(unsigned int phyId, unsigned int rdevIndex, struct RdmaMrRegInfo *mrRegInfo,
+    void **mrHandle);
 RS_ATTRI_VISI_DEF int RsRemapMr(unsigned int phyId, unsigned int rdevIndex, struct MemRemapInfo memList[],
     unsigned int memNum);
 RS_ATTRI_VISI_DEF int RsTypicalDeregisterMr(unsigned int phyId, unsigned int devIndex, unsigned long long addr);
 RS_ATTRI_VISI_DEF int RsDeregisterMr(unsigned int phyId, unsigned int rdevIndex, void *mrHandle);
 
 enum RsSendFlags {
-    RS_SEND_FENCE  = 1 << 0,
+    RS_SEND_FENCE = 1 << 0,
     RS_SEND_SIGNALED = 1 << 1,
     RS_SEND_SOLICITED = 1 << 2,
-    RS_SEND_INLINE  = 1 << 3,
+    RS_SEND_INLINE = 1 << 3,
 };
 RS_ATTRI_VISI_DEF int RsSendWr(unsigned int phyId, unsigned int rdevIndex, uint32_t qpn, struct SendWr *wr,
     struct SendWrRsp *wrRsp);
-RS_ATTRI_VISI_DEF int RsSendWrlist(struct RsWrlistBaseInfo baseInfo, struct WrInfo *wrList,
-    unsigned int sendNum, struct SendWrRsp *wrRsp, unsigned int *completeNum);
+RS_ATTRI_VISI_DEF int RsSendWrlist(struct RsWrlistBaseInfo baseInfo, struct WrInfo *wrList, unsigned int sendNum,
+    struct SendWrRsp *wrRsp, unsigned int *completeNum);
 
-RS_ATTRI_VISI_DEF int RsRecvWrlist(struct RsWrlistBaseInfo baseInfo, struct RecvWrlistData *wr,
-    unsigned int recvNum, unsigned int *completeNum);
+RS_ATTRI_VISI_DEF int RsRecvWrlist(struct RsWrlistBaseInfo baseInfo, struct RecvWrlistData *wr, unsigned int recvNum,
+    unsigned int *completeNum);
 
 RS_ATTRI_VISI_DEF int RsGetNotifyMrInfo(unsigned int phyId, unsigned int rdevIndex, struct MrInfoT *info);
 RS_ATTRI_VISI_DEF int RsSetHostPid(uint32_t phyId, pid_t hostPid, const char *pidSign);
 
 RS_ATTRI_VISI_DEF int RsInit(struct RsInitConfig *cfg);
 RS_ATTRI_VISI_DEF int RsGetTlsEnable(unsigned int phyId, bool *tlsEnable);
-RS_ATTRI_VISI_DEF int RsGetHccnCfg(unsigned int phyId, enum HccnCfgKey key, char *value,
-    unsigned int *valueLen);
+RS_ATTRI_VISI_DEF int RsGetHccnCfg(struct RaInfo *info, enum HccnCfgKey key, char *value, unsigned int *valueLen);
 RS_ATTRI_VISI_DEF int RsBindHostpid(unsigned int chipId, pid_t pid);
 RS_ATTRI_VISI_DEF int RsDeinit(struct RsInitConfig *cfg);
 
@@ -199,9 +197,10 @@ RS_ATTRI_VISI_DEF int RsSocketInit(const unsigned int *vnicIp, unsigned int num)
 RS_ATTRI_VISI_DEF int RsSocketDeinit(struct rdev rdevInfo);
 
 RS_ATTRI_VISI_DEF int RsRdevInit(struct rdev rdevInfo, unsigned int notifyType, unsigned int *rdevIndex);
-RS_ATTRI_VISI_DEF int RsRdevInitWithBackup(struct rdev rdevInfo, struct rdev backupRdevInfo,
-    unsigned int notifyType, unsigned int *rdevIndex);
+RS_ATTRI_VISI_DEF int RsRdevInitWithBackup(struct rdev rdevInfo, struct rdev backupRdevInfo, unsigned int notifyType,
+    unsigned int *rdevIndex);
 RS_ATTRI_VISI_DEF int RsRdevGetPortStatus(unsigned int phyId, unsigned int rdevIndex, enum PortStatus *status);
+RS_ATTRI_VISI_DEF int RsRdevGetAttr(unsigned int phyId, unsigned int rdevIndex, struct RdevAttr *attr);
 RS_ATTRI_VISI_DEF int RsGetLbMax(unsigned int phyId, unsigned int rdevIndex, int *lbMax);
 RS_ATTRI_VISI_DEF int RsRdevDeinit(unsigned int phyId, unsigned int notifyType, unsigned int rdevIndex);
 
@@ -211,42 +210,39 @@ RS_ATTRI_VISI_DEF int RsEpollCtlMod(const void *fdHandle, enum RaEpollEvent even
 RS_ATTRI_VISI_DEF int RsEpollCtlDel(int fd);
 RS_ATTRI_VISI_DEF void RsSetTcpRecvCallback(const void *callback);
 RS_ATTRI_VISI_DEF int RsCreateEventHandle(int *eventHandle);
-RS_ATTRI_VISI_DEF int RsCtlEventHandle(int eventHandle, const void *fdHandle, int opcode,
-    enum RaEpollEvent event);
-RS_ATTRI_VISI_DEF int RsWaitEventHandle(int eventHandle, struct SocketEventInfoT *eventInfos,
-    int timeout, unsigned int maxevents, unsigned int *eventsNum);
+RS_ATTRI_VISI_DEF int RsCtlEventHandle(int eventHandle, const void *fdHandle, int opcode, enum RaEpollEvent event);
+RS_ATTRI_VISI_DEF int RsWaitEventHandle(int eventHandle, struct SocketEventInfoT *eventInfos, int timeout,
+    unsigned int maxevents, unsigned int *eventsNum);
 RS_ATTRI_VISI_DEF int RsDestroyEventHandle(int *eventHandle);
 /* ++++++++++++++++++++++++++++++Epoll API end++++++++++++++++++++++++++++++++++ */
 
 /* ++++++++++++++++++++++++++++++Socket API++++++++++++++++++++++++++++++++++ */
 #define RS_SOCK_PORT_DEF 16666
 RS_ATTRI_VISI_DEF int RsSocketListenStart(struct SocketListenInfo conn[], uint32_t num);
+RS_ATTRI_VISI_DEF int RsSocketListenStartV2(struct SocketListenInfoV2 conn[], uint32_t num);
 RS_ATTRI_VISI_DEF int RsSocketListenStop(struct SocketListenInfo conn[], uint32_t num);
 
 RS_ATTRI_VISI_DEF int RsSocketBatchConnect(struct SocketConnectInfo conn[], uint32_t num);
+RS_ATTRI_VISI_DEF int RsSocketBatchConnectV2(struct SocketConnectInfoV2 conn[], uint32_t num);
 RS_ATTRI_VISI_DEF int RsSocketBatchAbort(struct SocketConnectInfo conn[], uint32_t num);
 
-RS_ATTRI_VISI_DEF int RsSocketGetClientSocketErrInfo(struct SocketConnectInfo conn[],
-    struct SocketErrInfo err[], unsigned int num);
-RS_ATTRI_VISI_DEF int RsSocketGetServerSocketErrInfo(struct SocketListenInfo conn[],
-    struct ServerSocketErrInfo err[], unsigned int num);
+RS_ATTRI_VISI_DEF int RsSocketGetClientSocketErrInfo(struct SocketConnectInfo conn[], struct SocketErrInfo err[],
+    unsigned int num);
+RS_ATTRI_VISI_DEF int RsSocketGetServerSocketErrInfo(struct SocketListenInfo conn[], struct ServerSocketErrInfo err[],
+    unsigned int num);
 
 RS_ATTRI_VISI_DEF void RsGetCurTime(struct timeval *time);
 RS_ATTRI_VISI_DEF void HccpTimeInterval(struct timeval *endTime, struct timeval *startTime, float *msec);
 RS_ATTRI_VISI_DEF int RsSocketWhiteListSwitch(unsigned int phyId, unsigned int enable);
-RS_ATTRI_VISI_DEF int RsSocketWhiteListAdd(struct rdev rdevInfo, struct SocketWlistInfoT whiteList[],
-    unsigned int num);
-RS_ATTRI_VISI_DEF int RsSocketWhiteListDel(struct rdev rdevInfo, struct SocketWlistInfoT whiteList[],
-    unsigned int num);
-RS_ATTRI_VISI_DEF int RsSocketAcceptCreditAdd(struct SocketListenInfo conn[], uint32_t num,
-    unsigned int creditLimit);
+RS_ATTRI_VISI_DEF int RsSocketWhiteListAdd(struct rdev rdevInfo, struct SocketWlistInfoT whiteList[], unsigned int num);
+RS_ATTRI_VISI_DEF int RsSocketWhiteListDel(struct rdev rdevInfo, struct SocketWlistInfoT whiteList[], unsigned int num);
+RS_ATTRI_VISI_DEF int RsSocketAcceptCreditAdd(struct SocketListenInfo conn[], uint32_t num, unsigned int creditLimit);
 RS_ATTRI_VISI_DEF int RsGetIfnum(unsigned int phyId, bool isAll, unsigned int *num);
 RS_ATTRI_VISI_DEF int RsPeerGetIfnum(unsigned int phyId, unsigned int *num);
 RS_ATTRI_VISI_DEF int RsGetIfaddrs(struct IfaddrInfo ifaddrInfos[], unsigned int *num, unsigned int phyId);
-RS_ATTRI_VISI_DEF int RsGetIfaddrsV2(struct InterfaceInfo interfaceInfos[], unsigned int *num,
-    unsigned int phyId, bool isAll);
-RS_ATTRI_VISI_DEF int RsPeerGetIfaddrs(struct InterfaceInfo interfaceInfos[], unsigned int *num,
-    unsigned int phyId);
+RS_ATTRI_VISI_DEF int RsGetIfaddrsV2(struct InterfaceInfo interfaceInfos[], unsigned int *num, unsigned int phyId,
+    bool isAll);
+RS_ATTRI_VISI_DEF int RsPeerGetIfaddrs(struct InterfaceInfo interfaceInfos[], unsigned int *num, unsigned int phyId);
 RS_ATTRI_VISI_DEF int RsGetVnicIp(unsigned int phyId, unsigned int *vnicIp);
 RS_ATTRI_VISI_DEF int RsGetInterfaceVersion(unsigned int opcode, unsigned int *version);
 RS_ATTRI_VISI_DEF int RsGetVnicIpInfos(unsigned int phyId, enum IdType type, unsigned int ids[], unsigned int num,
@@ -270,7 +266,7 @@ enum ProductType {
     PRODUCT_TYPE_910B,
     PRODUCT_TYPE_910_93,
     PRODUCT_TYPE_950,
-    PRODUCT_TYPE_910_96,
+    PRODUCT_TYPE_960,
     PRODUCT_TYPE_350,
     PRODUCT_TYPE_OTHERS,
 };
@@ -293,8 +289,8 @@ RS_ATTRI_VISI_DEF int RsNotifyCfgSet(unsigned int phyId, unsigned long long va, 
 RS_ATTRI_VISI_DEF int RsNotifyCfgGet(unsigned int phyId, unsigned long long *va, unsigned long long *size);
 RS_ATTRI_VISI_DEF void RsHeartbeatAlivePrint(struct RsPthreadInfo *pthreadInfo);
 
-RS_ATTRI_VISI_DEF int RsGetQpContext(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn, void** qp,
-                                        void** sendCq, void** recvCq);
+RS_ATTRI_VISI_DEF int RsGetQpContext(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn, void **qp,
+    void **sendCq, void **recvCq);
 RS_ATTRI_VISI_DEF int RsGetQpStatus(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn,
     struct RsQpStatusInfo *qpInfo);
 
@@ -303,8 +299,8 @@ int rsGetDevIDByLocalDevID(unsigned int chipId, unsigned int *phyId);
 
 RS_ATTRI_VISI_DEF int RsCqCreate(unsigned int phyId, unsigned int rdevIndex, struct CqAttr *attr);
 RS_ATTRI_VISI_DEF int RsCqDestroy(unsigned int phyId, unsigned int rdevIndex, struct CqAttr *attr);
-RS_ATTRI_VISI_DEF int RsNormalQpCreate(unsigned int phyId, unsigned int rdevIndex,
-    struct ibv_qp_init_attr *qpInitAttr, struct RsQpResp *qpResp, void **qp);
+RS_ATTRI_VISI_DEF int RsNormalQpCreate(unsigned int phyId, unsigned int rdevIndex, struct ibv_qp_init_attr *qpInitAttr,
+    struct RsQpResp *qpResp, void **qp);
 RS_ATTRI_VISI_DEF int RsNormalQpDestroy(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn);
 RS_ATTRI_VISI_DEF int RsSetQpAttrQos(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn,
     struct QosAttr *attr);
@@ -312,28 +308,27 @@ RS_ATTRI_VISI_DEF int RsSetQpAttrTimeout(unsigned int phyId, unsigned int rdevIn
     unsigned int *timeout);
 RS_ATTRI_VISI_DEF int RsSetQpAttrRetryCnt(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn,
     unsigned int *retryCnt);
-RS_ATTRI_VISI_DEF int RsCreateCompChannel(unsigned int phyId, unsigned int rdevIndex, void** compChannel);
-RS_ATTRI_VISI_DEF int RsDestroyCompChannel(void* compChannel);
+RS_ATTRI_VISI_DEF int RsCreateCompChannel(unsigned int phyId, unsigned int rdevIndex, void **compChannel);
+RS_ATTRI_VISI_DEF int RsDestroyCompChannel(void *compChannel);
 RS_ATTRI_VISI_DEF int RsGetCqeErrInfo(struct CqeErrInfo *info);
 RS_ATTRI_VISI_DEF int RsCreateSrq(unsigned int phyId, unsigned int rdevIndex, struct SrqAttr *attr);
 RS_ATTRI_VISI_DEF int RsDestroySrq(unsigned int phyId, unsigned int rdevIndex, struct SrqAttr *attr);
 RS_ATTRI_VISI_DEF int RsGetLiteSupport(unsigned int phyId, unsigned int rdevIndex, int *supportLite);
-RS_ATTRI_VISI_DEF int RsGetLiteRdevCap(
-    unsigned int phyId, unsigned int rdevIndex, struct LiteRdevCapResp *resp);
-RS_ATTRI_VISI_DEF int RsGetLiteQpCqAttr(
-    unsigned int phyId, unsigned int rdevIndex, unsigned int qpn, struct LiteQpCqAttrResp *resp);
-RS_ATTRI_VISI_DEF int RsGetLiteQpAttr(
-    unsigned int phyId, unsigned int rdevIndex, unsigned int qpn, struct LiteQpAttrResp *resp);
+RS_ATTRI_VISI_DEF int RsGetLiteRdevCap(unsigned int phyId, unsigned int rdevIndex, struct LiteRdevCapResp *resp);
+RS_ATTRI_VISI_DEF int RsGetLiteQpCqAttr(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn,
+    struct LiteQpCqAttrResp *resp);
+RS_ATTRI_VISI_DEF int RsGetLiteQpAttr(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn,
+    struct LiteQpAttrResp *resp);
 RS_ATTRI_VISI_DEF int RsGetLiteCqAttr(unsigned int phyId, unsigned int rdevIndex, unsigned int cqn,
     struct rdma_lite_device_cq_attr *deviceCqAttr);
-RS_ATTRI_VISI_DEF int RsQpCreateWithCQWithAttrs(unsigned int phyId, unsigned int rdevIndex,
-    unsigned int sendCqn, unsigned int recvCqn,
-    struct RsQpNormWithAttrs *qpNorm, struct RsQpRespWithAttrs *qpResp);
-RS_ATTRI_VISI_DEF int RsGetLiteConnectedInfo(
-    unsigned int phyId, unsigned int rdevIndex, unsigned int qpn, struct LiteConnectedInfoResp *resp);
-RS_ATTRI_VISI_DEF int RsGetLiteMemAttr(
-    unsigned int phyId, unsigned int rdevIndex, unsigned int qpn, struct LiteMemAttrResp *resp);
+RS_ATTRI_VISI_DEF int RsQpCreateWithCQWithAttrs(unsigned int phyId, unsigned int rdevIndex, unsigned int sendCqn,
+    unsigned int recvCqn, struct RsQpNormWithAttrs *qpNorm, struct RsQpRespWithAttrs *qpResp);
+RS_ATTRI_VISI_DEF int RsGetLiteConnectedInfo(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn,
+    struct LiteConnectedInfoResp *resp);
+RS_ATTRI_VISI_DEF int RsGetLiteMemAttr(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn,
+    struct LiteMemAttrResp *resp);
 RS_ATTRI_VISI_DEF void RsSetCtx(unsigned int phyId);
+RS_ATTRI_VISI_DEF void RsSetDebugConfig(uint64_t debugConfig);
 RS_ATTRI_VISI_DEF int RsGetCqeErrInfoNum(unsigned int phyId, unsigned int rdevIdx, unsigned int *num);
 RS_ATTRI_VISI_DEF int RsGetCqeErrInfoList(unsigned int phyId, unsigned int rdevIdx, struct CqeErrInfo *info,
     unsigned int *num);
@@ -346,25 +341,22 @@ static inline bool RsIsTlvSupported(void)
 {
     enum ProductType productType;
     productType = RsGetProductType(0); // Ensure that RsGetProductType has been called at least once
-    return (productType == PRODUCT_TYPE_910B || productType == PRODUCT_TYPE_910_93 ||
-        productType == PRODUCT_TYPE_950 || productType == PRODUCT_TYPE_910_96 ||
-        productType == PRODUCT_TYPE_350);
+    return (productType == PRODUCT_TYPE_910B || productType == PRODUCT_TYPE_910_93 || productType == PRODUCT_TYPE_950 ||
+            productType == PRODUCT_TYPE_960 || productType == PRODUCT_TYPE_350);
 }
 
 static inline bool RsIsRdmaSupported(void)
 {
     enum ProductType productType;
     productType = RsGetProductType(0);
-    return (productType == PRODUCT_TYPE_910B || productType == PRODUCT_TYPE_910_93 ||
-        productType == PRODUCT_TYPE_910);
+    return (productType == PRODUCT_TYPE_910B || productType == PRODUCT_TYPE_910_93 || productType == PRODUCT_TYPE_910);
 }
 
 static inline bool RsIsUdmaSupported(void)
 {
     enum ProductType productType;
     productType = RsGetProductType(0);
-    return (productType == PRODUCT_TYPE_950 || productType == PRODUCT_TYPE_910_96 ||
-        productType == PRODUCT_TYPE_350);
+    return (productType == PRODUCT_TYPE_950 || productType == PRODUCT_TYPE_960 || productType == PRODUCT_TYPE_350);
 }
 
 static inline bool RsIsCustomInterfaceSupported(void)
@@ -373,6 +365,15 @@ static inline bool RsIsCustomInterfaceSupported(void)
     productType = RsGetProductType(0);
     return (productType != PRODUCT_TYPE_310p);
 }
+
+static inline bool RsIsClientIpCheckSupported(void)
+{
+    enum ProductType productType;
+    productType = RsGetProductType(0);
+    return (productType == PRODUCT_TYPE_310p || productType == PRODUCT_TYPE_910 || productType == PRODUCT_TYPE_910B ||
+            productType == PRODUCT_TYPE_910_93);
+}
+
 #ifdef __cplusplus
 }
 #endif

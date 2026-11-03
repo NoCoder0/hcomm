@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
@@ -9,23 +9,36 @@
 # -----------------------------------------------------------------------------------------------------------
 
 set(src_list
+    comm_addr_logger.cc
     orion_adpt_utils.cc
     hccp_tlv_hdc_mgr.cc
     eid_info_mgr.cc
     ${HCOMM_DIR}/src/legacy/ascend950/unified_platform/common/tp_qos.cc
     tp_mgr.cc
     dlurma_function.cc
-    hccl_next_dl.cc
+    hccl_dl.cc
+    opbase_adpt.cc
+    dev_type_utils.cc
 )
 
-if(TARGET hcomm)
-    target_sources(hcomm PRIVATE
+if(TARGET hcomm_base_obj)
+    target_sources(hcomm_base_obj PRIVATE
         ${src_list}
     )
-    target_include_directories(hcomm PRIVATE
+    target_include_directories(hcomm_base_obj PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/device
     )
 endif()
 
+if(TARGET ccl_kernel)
+    target_sources(ccl_kernel PRIVATE
+        opbase_adpt.cc
+    )
+    target_include_directories(ccl_kernel PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+endif()
+
+add_subdirectory(debug)
 add_subdirectory(device)

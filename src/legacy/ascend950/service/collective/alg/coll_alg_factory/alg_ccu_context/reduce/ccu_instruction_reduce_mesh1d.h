@@ -24,12 +24,15 @@ namespace Hccl {
 // 为ReduceMesh1D实现的CCUIns、CCUCtxArg与CCUTaskArg
 class CcuCtxArgReduceMesh1D : public CcuCtxArg {
 public:
-    explicit CcuCtxArgReduceMesh1D(const std::vector<uint64_t> &dimSize, uint32_t rankId, 
-                                            uint32_t rootId, const CollAlgOperator &op,
-                                            const std::vector<std::vector<RankId>> &tempVTopo)
-        : dimSize_(dimSize), rankId_(rankId), rootId_(rootId), op_(op), tempVTopo_(tempVTopo) 
-    {
-    }
+    explicit CcuCtxArgReduceMesh1D(
+        const std::vector<uint64_t>& dimSize, uint32_t rankId, uint32_t rootId, const CollAlgOperator& op,
+        const std::vector<std::vector<RankId>>& tempVTopo)
+        : dimSize_(dimSize),
+          rankId_(rankId),
+          rootId_(rootId),
+          op_(op),
+          tempVTopo_(tempVTopo)
+    {}
     CcuCtxSignature GetCtxSignature() const override
     {
         CcuCtxSignature signature;
@@ -46,16 +49,22 @@ public:
 
 class CcuTaskArgReduceMesh1D : public CcuTaskArg {
 public:
-    explicit CcuTaskArgReduceMesh1D(uint64_t inputAddr, uint64_t outputAddr, uint64_t token,
-                                                uint64_t inputSliceStride, uint64_t outputSliceStride, uint64_t repeatNum,
-                                                uint64_t inputRepeatStride, uint64_t outputRepeatStride,
-                                                uint64_t normalSliceSize, uint64_t lastSliceSize, uint64_t repeatNumVar)
-        : inputAddr_(inputAddr), outputAddr_(outputAddr), token_(token), inputSliceStride_(inputSliceStride),
-          outputSliceStride_(outputSliceStride), repeatNum_(repeatNum), inputRepeatStride_(inputRepeatStride),
-          outputRepeatStride_(outputRepeatStride), normalSliceSize_(normalSliceSize), lastSliceSize_(lastSliceSize),
+    explicit CcuTaskArgReduceMesh1D(
+        uint64_t inputAddr, uint64_t outputAddr, uint64_t token, uint64_t inputSliceStride, uint64_t outputSliceStride,
+        uint64_t repeatNum, uint64_t inputRepeatStride, uint64_t outputRepeatStride, uint64_t normalSliceSize,
+        uint64_t lastSliceSize, uint64_t repeatNumVar)
+        : inputAddr_(inputAddr),
+          outputAddr_(outputAddr),
+          token_(token),
+          inputSliceStride_(inputSliceStride),
+          outputSliceStride_(outputSliceStride),
+          repeatNum_(repeatNum),
+          inputRepeatStride_(inputRepeatStride),
+          outputRepeatStride_(outputRepeatStride),
+          normalSliceSize_(normalSliceSize),
+          lastSliceSize_(lastSliceSize),
           repeatNumVar_(repeatNumVar)
-    {
-    }
+    {}
 
     uint64_t inputAddr_;
     uint64_t outputAddr_;
@@ -72,37 +81,35 @@ public:
 
 class CcuInstructionReduceMesh1D : public CcuInstruction {
 public:
-    CcuInstructionReduceMesh1D() : CcuInstruction()
-    {
-    }
+    CcuInstructionReduceMesh1D() : CcuInstruction() {}
 
-    void Init(uint32_t rankId, uint32_t rootId, const CollAlgOperator &op,
-              const std::vector<std::vector<RankId>> &tempVTopo, uint64_t inputAddr, uint64_t outputAddr,
-              uint64_t token, uint64_t inputSliceStride, uint64_t outputSliceStride, uint64_t repeatNum,
-              uint64_t inputRepeatStride, uint64_t outputRepeatStride, uint64_t normalSliceSize, uint64_t lastSliceSize,
-              uint64_t repeatNumVar)
+    void Init(
+        uint32_t rankId, uint32_t rootId, const CollAlgOperator& op, const std::vector<std::vector<RankId>>& tempVTopo,
+        uint64_t inputAddr, uint64_t outputAddr, uint64_t token, uint64_t inputSliceStride, uint64_t outputSliceStride,
+        uint64_t repeatNum, uint64_t inputRepeatStride, uint64_t outputRepeatStride, uint64_t normalSliceSize,
+        uint64_t lastSliceSize, uint64_t repeatNumVar)
     {
         u32 maxDimNum = 1;
         if (tempVTopo.size() != maxDimNum) {
-            THROW<InvalidParamsException>(StringFormat(
-                "[CcuInstructionReduceMesh1D] tempVTopo size is not 1, size is [%zu].", tempVTopo.size()));
+            THROW<InvalidParamsException>(
+                StringFormat("[CcuInstructionReduceMesh1D] tempVTopo size is not 1, size is [%zu].", tempVTopo.size()));
         }
         dimSize_.push_back(tempVTopo[0].size());
         rankId_ = rankId;
         rootId_ = rootId;
-        repeatNum_          = repeatNum;
-        op_                 = op;
-        tempVTopo_          = tempVTopo;
-        inputAddr_          = inputAddr;
-        outputAddr_         = outputAddr;
-        inputSliceStride_   = inputSliceStride;
-        outputSliceStride_  = outputSliceStride;
-        inputRepeatStride_  = inputRepeatStride;
+        repeatNum_ = repeatNum;
+        op_ = op;
+        tempVTopo_ = tempVTopo;
+        inputAddr_ = inputAddr;
+        outputAddr_ = outputAddr;
+        inputSliceStride_ = inputSliceStride;
+        outputSliceStride_ = outputSliceStride;
+        inputRepeatStride_ = inputRepeatStride;
         outputRepeatStride_ = outputRepeatStride;
-        normalSliceSize_    = normalSliceSize;
-        lastSliceSize_      = lastSliceSize;
-        repeatNumVar_       = repeatNumVar;
-        token_              = token;
+        normalSliceSize_ = normalSliceSize;
+        lastSliceSize_ = lastSliceSize;
+        repeatNumVar_ = repeatNumVar;
+        token_ = token;
         return;
     }
 
@@ -117,10 +124,7 @@ public:
         return StringFormat("CcuInstructionReduceMesh1D rankId [%u], instType[%d]", rankId_, instType_);
     }
 
-    void SetInstType(CcuInstType instType) 
-    { 
-        instType_ = instType; 
-    }
+    void SetInstType(CcuInstType instType) { instType_ = instType; }
 
     std::unique_ptr<CcuCtxArg> GetCtxArg() const override
     {
@@ -138,22 +142,22 @@ public:
 
 private:
     CcuInstType instType_ = CcuInstType::CCU_REDUCE_MESH_1D_DIRECT;
-    std::vector<uint64_t>            dimSize_;
-    uint32_t                         rankId_{0};
-    uint32_t                         rootId_{0};
-    CollAlgOperator                  op_;
-    uint64_t                         token_{0};
+    std::vector<uint64_t> dimSize_;
+    uint32_t rankId_{0};
+    uint32_t rootId_{0};
+    CollAlgOperator op_;
+    uint64_t token_{0};
     std::vector<std::vector<RankId>> tempVTopo_;
-    uint64_t                         repeatNum_{0};
-    uint64_t                         inputAddr_{0};
-    uint64_t                         outputAddr_{0};
-    uint64_t                         normalSliceSize_{0};
-    uint64_t                         inputSliceStride_{0};
-    uint64_t                         outputSliceStride_{0};
-    uint64_t                         inputRepeatStride_{0};
-    uint64_t                         outputRepeatStride_{0};
-    uint64_t                         lastSliceSize_{0};
-    uint64_t                         repeatNumVar_{0};
+    uint64_t repeatNum_{0};
+    uint64_t inputAddr_{0};
+    uint64_t outputAddr_{0};
+    uint64_t normalSliceSize_{0};
+    uint64_t inputSliceStride_{0};
+    uint64_t outputSliceStride_{0};
+    uint64_t inputRepeatStride_{0};
+    uint64_t outputRepeatStride_{0};
+    uint64_t lastSliceSize_{0};
+    uint64_t repeatNumVar_{0};
 };
 
 } // namespace Hccl

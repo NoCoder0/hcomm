@@ -15,15 +15,15 @@
 
 namespace Hccl {
 class DevUbConnection::UbCiUpdater {
-
 public:
-    explicit UbCiUpdater(DevUbConnection *devUbConn);
+    explicit UbCiUpdater(DevUbConnection* devUbConn);
 
     void UpdateCi() const;
     void SaveCi();
+
 private:
     u32 ciVal{0};
-    DevUbConnection *devUbConnPtr;
+    DevUbConnection* devUbConnPtr;
 };
 
 } // namespace Hccl

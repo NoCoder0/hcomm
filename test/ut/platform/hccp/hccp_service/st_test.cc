@@ -18,23 +18,12 @@ extern "C" {
 
 using namespace std;
 
-class Hccp : public testing::Test
-{
+class Hccp : public testing::Test {
 protected:
-   static void SetUpTestCase()
-    {
-        std::cout << "\033[36m--RoCE Hccp SetUP--\033[0m" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "\033[36m--RoCE Hccp TearDown--\033[0m" << std::endl;
-    }
-    virtual void SetUp()
-    {
-    }
-    virtual void TearDown()
-    {
-    }
+    static void SetUpTestCase() { std::cout << "\033[36m--RoCE Hccp SetUP--\033[0m" << std::endl; }
+    static void TearDownTestCase() { std::cout << "\033[36m--RoCE Hccp TearDown--\033[0m" << std::endl; }
+    virtual void SetUp() {}
+    virtual void TearDown() {}
 };
 
 TEST_M(Hccp, TcNormal);

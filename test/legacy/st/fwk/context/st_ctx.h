@@ -32,7 +32,4 @@ ThreadContext* GetCurrentThreadContext();
 
 void SetCurrentThreadContext(ThreadContext* ctx);
 
-
-
-
-#endif //HCCL_V2_STEST_ST_CTX_H
+#endif // HCCL_V2_STEST_ST_CTX_H

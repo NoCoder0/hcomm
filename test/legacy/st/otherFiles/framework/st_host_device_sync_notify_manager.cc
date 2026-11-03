@@ -19,22 +19,16 @@ using namespace Hccl;
 
 class HostDeviceSyncNotifyManagerTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "HostDeviceSyncNotifyManagerTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "HostDeviceSyncNotifyManagerTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "HostDeviceSyncNotifyManagerTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "HostDeviceSyncNotifyManagerTest TearDown" << std::endl; }
 
     virtual void SetUp()
     {
         MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-        MOCKER(HrtNotifyCreate).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
+        MOCKER(HrtNotifyCreate).stubs().will(returnValue((void*)(fakeNotifyHandleAddr)));
         MOCKER(HrtGetNotifyID).stubs().will(returnValue(fakeNotifyId));
-        MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(1)));
+        MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().will(returnValue(static_cast<DevId>(1)));
         std::cout << "A Test case in HostDeviceSyncNotifyManagerTest SetUp" << std::endl;
     }
 
@@ -46,5 +40,5 @@ protected:
 
 private:
     u64 fakeNotifyHandleAddr = 100;
-    u32 fakeNotifyId         = 1;
+    u32 fakeNotifyId = 1;
 };

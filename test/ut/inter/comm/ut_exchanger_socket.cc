@@ -32,9 +32,7 @@
 using namespace std;
 using namespace hccl;
 
-
-
-HcclResult stub_GetRaResourceInfo_exchangerSocketTest(NetworkManager* that, RaResourceInfo &raResourceInfo)
+HcclResult stub_GetRaResourceInfo_exchangerSocketTest(NetworkManager* that, RaResourceInfo& raResourceInfo)
 {
     static bool initialized = false;
     static RaResourceInfo fake_raResourceInfo;
@@ -52,13 +50,14 @@ HcclResult stub_GetRaResourceInfo_exchangerSocketTest(NetworkManager* that, RaRe
     return HCCL_SUCCESS;
 }
 
-s32 stub_exchangerSocketTest_hrtRaSocketNonBlockSendHB(const FdHandle fdHandle, const void *data, u64 size, u64 *sent_size)
+s32 stub_exchangerSocketTest_hrtRaSocketNonBlockSendHB(
+    const FdHandle fdHandle, const void* data, u64 size, u64* sent_size)
 {
     *sent_size = size;
     return 0;
 }
 
-32 stub_exchangerSocketTest_hrtRaSocketNonBlockRecvHB(const FdHandle fdHandle, void *data, u64 size, u64 *recvSize)
+32 stub_exchangerSocketTest_hrtRaSocketNonBlockRecvHB(const FdHandle fdHandle, void* data, u64 size, u64* recvSize)
 {
     static u32 count = 0;
     if (count++ % 5 != 0) {
@@ -164,55 +163,26 @@ void get_ranks_8server_1dev_exchangerSocketTest(std::vector<RankInfo>& rank_vect
     return;
 }
 
-class ExchangerSocketTest : public testing::Test
-{
+class ExchangerSocketTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "\033[36m--ExchangerSocket SetUP--\033[0m" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "\033[36m--ExchangerSocket TearDown--\033[0m" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "\033[36m--ExchangerSocket SetUP--\033[0m" << std::endl; }
+    static void TearDownTestCase() { std::cout << "\033[36m--ExchangerSocket TearDown--\033[0m" << std::endl; }
     virtual void SetUp()
     {
-        MOCKER(hrtRaSocketWhiteListAdd)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
-        MOCKER(hrtRaSocketWhiteListDel)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
-        MOCKER(hrtRaSocketBatchConnect)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
-        MOCKER(hrtRaBlockGetSockets)
-        .stubs()
-        .will(invoke(stub_exchangerSocketTest_hrtRaBlockGetSockets));
-        MOCKER(hrtRaSocketBatchClose)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
-        MOCKER(hrtRaSocketNonBlockSend)
-        .stubs()
-        .will(invoke(stub_exchangerSocketTest_hrtRaSocketNonBlockSendHB));
-        MOCKER(hrtRaSocketNonBlockRecv)
-        .stubs()
-        .will(invoke(stub_exchangerSocketTest_hrtRaSocketNonBlockRecvHB));
+        MOCKER(hrtRaSocketWhiteListAdd).stubs().will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtRaSocketWhiteListDel).stubs().will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtRaSocketBatchConnect).stubs().will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtRaBlockGetSockets).stubs().will(invoke(stub_exchangerSocketTest_hrtRaBlockGetSockets));
+        MOCKER(hrtRaSocketBatchClose).stubs().will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtRaSocketNonBlockSend).stubs().will(invoke(stub_exchangerSocketTest_hrtRaSocketNonBlockSendHB));
+        MOCKER(hrtRaSocketNonBlockRecv).stubs().will(invoke(stub_exchangerSocketTest_hrtRaSocketNonBlockRecvHB));
 
-        MOCKER_CPP(&NetworkManager::GetRaResourceInfo)
-        .stubs()
-        .will(invoke(stub_GetRaResourceInfo_exchangerSocketTest));
+        MOCKER_CPP(&NetworkManager::GetRaResourceInfo).stubs().will(invoke(stub_GetRaResourceInfo_exchangerSocketTest));
         s32 portNum = -1;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
         std::cout << "A Test SetUP" << std::endl;
     }
-    virtual void TearDown()
-    {
-        std::cout << "A Test TearDown" << std::endl;
-    }
+    virtual void TearDown() { std::cout << "A Test TearDown" << std::endl; }
 };
 
 TEST_F(ExchangerSocketTest, ut_ExchangerSocket_init)
@@ -232,16 +202,16 @@ TEST_F(ExchangerSocketTest, ut_ExchangerSocket_init)
     get_ranks_8server_1dev_exchangerSocketTest(rankVector);
     std::map<u32, NetworkInfo> rankIpMap;
     bool isHaveCpuRank_;
-    for (auto &rank : userRanks) {
-            for (auto &rankInfo : rankVector) {
-                if (rankInfo.userRank == rank) {
-                    NetworkInfo info;
-                    info.ip = rankInfo.hostIp;
-                    info.port = HOST_PARA_BASE_PORT + rankInfo.devicePhyId;
-                    rankIpMap.insert(std::make_pair(rank, info));
-                    break;
-                }
+    for (auto& rank : userRanks) {
+        for (auto& rankInfo : rankVector) {
+            if (rankInfo.userRank == rank) {
+                NetworkInfo info;
+                info.ip = rankInfo.hostIp;
+                info.port = HOST_PARA_BASE_PORT + rankInfo.devicePhyId;
+                rankIpMap.insert(std::make_pair(rank, info));
+                break;
             }
+        }
     }
     ExchangerSocket Socket(identifier, userRank, userRankSize, deviceIds, userRanks, tag, rankIpMap);
     HcclResult ret = Socket.Init();

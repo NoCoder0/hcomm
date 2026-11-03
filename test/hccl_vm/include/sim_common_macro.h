@@ -17,23 +17,24 @@
 #define UNLIKELY(x) __builtin_expect(!!(x), 0)
 
 /* 检查函数返回值, 并返回指定错误码 */
-#define HCCLVM_CHK_RET(call)                                                                    \
-    do {                                                                                        \
-        auto hcclRet = call;                                                                    \
-        if (UNLIKELY(hcclRet != 0)) {                                                           \
-            HCCL_VM_INFO("call trace: hcclRet -> {}", static_cast<int>(hcclRet));               \
-            return hcclRet;                                                                     \
-        }                                                                                       \
+#define HCCLVM_CHK_RET(call)                                                      \
+    do {                                                                          \
+        auto hcclRet = call;                                                      \
+        if (UNLIKELY(hcclRet != 0)) {                                             \
+            HCCL_VM_INFO("call trace: hcclRet -> {}", static_cast<int>(hcclRet)); \
+            return hcclRet;                                                       \
+        }                                                                         \
     } while (0)
 
 /* 检查指针, 若指针为NULL, 则记录日志, 并返回错误 */
-#define HCCLVM_CHK_PTR(ptr)                                                                           \
-    do {                                                                                              \
-        if (UNLIKELY((ptr) == nullptr)) {                                                             \
-            HCCL_VM_INFO("errNo[0x{:x}], ptr [{}] is nullptr, return HCCL_E_PTR",                     \
-                            static_cast<unsigned int>(HCCL_SIM_E_PTR), #ptr);                                                    \
-            return HCCL_SIM_E_PTR;                                                                    \
-        }                                                                                             \
+#define HCCLVM_CHK_PTR(ptr)                                                                                         \
+    do {                                                                                                            \
+        if (UNLIKELY((ptr) == nullptr)) {                                                                           \
+            HCCL_VM_INFO(                                                                                           \
+                "errNo[0x{:x}], ptr [{}] is nullptr, return HCCL_E_PTR", static_cast<unsigned int>(HCCL_SIM_E_PTR), \
+                #ptr);                                                                                              \
+            return HCCL_SIM_E_PTR;                                                                                  \
+        }                                                                                                           \
     } while (0)
 
-#endif //SIM_COMMON_MACRO_H
+#endif // SIM_COMMON_MACRO_H

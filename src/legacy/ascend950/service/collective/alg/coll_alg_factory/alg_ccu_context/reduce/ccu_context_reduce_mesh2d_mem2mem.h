@@ -19,28 +19,26 @@
 #include "ccu_assist.h"
 
 namespace Hccl {
-constexpr int      INPUT_XN_ID   = 1;
-constexpr int      TOKEN_XN_ID   = 2;
-constexpr int      CKE_IDX_0     = 0;
-constexpr int      CKE_IDX_1     = 1;
-constexpr int      CKE_IDX_2     = 2;
-constexpr int      CKE_IDX_3     = 3;
-constexpr int      CKE_IDX_4     = 4;
-constexpr uint64_t CCU_MS_SIZE   = 4096;
+constexpr int INPUT_XN_ID = 1;
+constexpr int TOKEN_XN_ID = 2;
+constexpr int CKE_IDX_0 = 0;
+constexpr int CKE_IDX_1 = 1;
+constexpr int CKE_IDX_2 = 2;
+constexpr int CKE_IDX_3 = 3;
+constexpr int CKE_IDX_4 = 4;
+constexpr uint64_t CCU_MS_SIZE = 4096;
 constexpr uint64_t LOCAL_COPY_MS = 8;
-constexpr int      X_AXIS_ID     = 0;
-constexpr int      Y_AXIS_ID     = 1;
+constexpr int X_AXIS_ID = 0;
+constexpr int Y_AXIS_ID = 1;
 
 class CcuContextReduceMeshMem2Mem2D : public CcuContextAlgBase {
 public:
-    CcuContextReduceMeshMem2Mem2D(const CcuCtxArg &arg, const std::vector<CcuTransport *> &transports,
-                                  const CcuTransportGroup &group);
-    ~CcuContextReduceMeshMem2Mem2D() override
-    {
-    }
+    CcuContextReduceMeshMem2Mem2D(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
+    ~CcuContextReduceMeshMem2Mem2D() override {}
 
-    void                  Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    void Algorithm() override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
 
 private:
     void InitResources();
@@ -53,37 +51,37 @@ private:
     std::vector<uint64_t> CalMeshChunkSlice(uint64_t dataSize, uint64_t sliceNum); // for mesh-chunk
 
     std::vector<uint64_t> dimSize_;
-    uint32_t              axisId_{0}; // 0 : X轴， 1 : Y轴
+    uint32_t axisId_{0}; // 0 : X轴， 1 : Y轴
 
-    std::vector<uint32_t> dimId_;        // 本rank所在行或列的编号
-    uint32_t              localId_{0};   // 本chip所在行或列的编号
-    uint32_t              localSize_{0}; // 本rank所在行或列的总rank数
+    std::vector<uint32_t> dimId_; // 本rank所在行或列的编号
+    uint32_t localId_{0};         // 本chip所在行或列的编号
+    uint32_t localSize_{0};       // 本rank所在行或列的总rank数
 
-    std::vector<uint32_t>         rootDimId_; // root所在行或列的编号
-    uint32_t                      rootId_{0}; // 当rankid == rootid时，为root节点 则跳过write操作
-    DataType                      dataType_;
-    DataType                      outputDataType_;
-    ReduceOp                      reduceOp_;
+    std::vector<uint32_t> rootDimId_; // root所在行或列的编号
+    uint32_t rootId_{0};              // 当rankid == rootid时，为root节点 则跳过write操作
+    DataType dataType_;
+    DataType outputDataType_;
+    ReduceOp reduceOp_;
     std::vector<CcuRep::Variable> input_;
-    CcuRep::Variable              output_;
+    CcuRep::Variable output_;
     std::vector<CcuRep::Variable> token_;
-    CcuRep::Variable              xAxisSize_;
-    CcuRep::Variable              yAxisSize_;
-    CcuRep::Variable              yAxisOffset_;
-    CcuRep::MaskSignal            locMask_;
+    CcuRep::Variable xAxisSize_;
+    CcuRep::Variable yAxisSize_;
+    CcuRep::Variable yAxisOffset_;
+    CcuRep::MaskSignal locMask_;
 
     GroupOpSize xAxisGroupOpSize_;
     GroupOpSize yAxisGroupOpSize_;
     GroupOpSize curGoSize_; // for loop-group local copy
     // variables for mesh-chunk
-    std::vector<CcuRep::Variable> xChunkSize_; // for xsliceszie
-    std::vector<CcuRep::Variable> yChunkSize_; // for ysliceszie
+    std::vector<CcuRep::Variable> xChunkSize_; // for x slice size
+    std::vector<CcuRep::Variable> yChunkSize_; // for y slice size
     std::vector<CcuRep::Variable> chunkSize_;  // for current axis
-    CcuRep::Variable              chunkOffset_;
+    CcuRep::Variable chunkOffset_;
 
     // 跨轴同步信号
-    std::string        localAxisSignalName_;
-    std::string        anotherAxisSignalName_;
+    std::string localAxisSignalName_;
+    std::string anotherAxisSignalName_;
     CcuRep::MaskSignal localAxisSignal_;
     CcuRep::MaskSignal anotherAxisSignal_;
 };

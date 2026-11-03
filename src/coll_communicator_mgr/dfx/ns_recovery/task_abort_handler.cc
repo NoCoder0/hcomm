@@ -1,23 +1,24 @@
 /**
- * Copyright (c) 2026 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "task_abort_handler.h"
 #include <algorithm>
+#include <mutex>
 #include "log.h"
 #include "coll_comm.h"
-#include "ccu_device_pub.h"
+#include "comm_engine/ccu/ccu_device_pub.h"
 
 namespace hccl {
 using HcclUs = std::chrono::steady_clock::time_point;
-static std::mutex vecMutex;
 
-int32_t ProcessTaskAbortPre(const std::vector<CollComm *> &commVector, const std::chrono::seconds &localtimeout)
+int32_t ProcessTaskAbortPre(const std::vector<CollComm*>& commVector, const std::chrono::seconds& localtimeout)
 {
     HcclResult ret = HCCL_SUCCESS;
     bool isUseTimeOut = localtimeout != std::chrono::seconds(0);
@@ -36,15 +37,16 @@ int32_t ProcessTaskAbortPre(const std::vector<CollComm *> &commVector, const std
         }
         HCCL_INFO("[NsRecovery]finish suspend success");
         if (isUseTimeOut) {
-            CHK_PRT_RET(elapsed > localtimeout, HCCL_ERROR("[NsRecovery][suspend] NsRecovery suspend timeOut"),
+            CHK_PRT_RET(
+                elapsed > localtimeout, HCCL_ERROR("[NsRecovery][suspend] NsRecovery suspend timeOut"),
                 static_cast<int>(TaskAbortResult::TASK_ABORT_TIMEOUT));
         }
     }
     return static_cast<int>(TaskAbortResult::TASK_ABORT_SUCCESS);
 }
 
-int32_t ProcessTaskAbortPost(const std::vector<CollComm *> &commVector, int32_t deviceLogicId,
-                             const std::chrono::seconds &localtimeout) 
+int32_t ProcessTaskAbortPost(
+    const std::vector<CollComm*>& commVector, int32_t deviceLogicId, const std::chrono::seconds& localtimeout)
 {
     HcclResult ret = HCCL_SUCCESS;
     bool isUseTimeOut = localtimeout != std::chrono::seconds(0);
@@ -68,24 +70,33 @@ int32_t ProcessTaskAbortPost(const std::vector<CollComm *> &commVector, int32_t 
         }
         HCCL_INFO("[NsRecovery][Callback] finish clean success");
         if (isUseTimeOut) {
-            CHK_PRT_RET(elapsed > localtimeout, HCCL_ERROR("[NsRecovery][Callback] NsRecovery Clean timeout"),
+            CHK_PRT_RET(
+                elapsed > localtimeout, HCCL_ERROR("[NsRecovery][Callback] NsRecovery Clean timeout"),
                 static_cast<int>(TaskAbortResult::TASK_ABORT_TIMEOUT));
         }
     }
     if (hcomm::CcuIsInited(deviceLogicId)) {
         CHK_RET(hcomm::CcuSetTaskKillDone(deviceLogicId));
+        // Align with TaskException: clear residual CCU CKE after TaskKillDone (device-level, all IO dies).
+        for (uint8_t dieId = 0; dieId < hcomm::CCU_MAX_IODIE_NUM; ++dieId) {
+            CHK_RET(hcomm::CcuCleanDieCkes(deviceLogicId, dieId));
+        }
     } else {
-        HCCL_INFO("[NsRecovery][Callback] CCU not inited, skip CcuSetTaskKillDone, deviceLogicId[%d]", deviceLogicId);
+        HCCL_INFO(
+            "[NsRecovery][Callback] CCU not inited, skip CcuSetTaskKillDone/CcuCleanDieCkes, deviceLogicId[%d]",
+            deviceLogicId);
     }
     return static_cast<int>(TaskAbortResult::TASK_ABORT_SUCCESS);
 }
 
-int32_t ProcessTaskAbortHandleCallback(int32_t deviceLogicId, aclrtDeviceTaskAbortStage stage, 
-    uint32_t timeout, void* args)
+int32_t
+ProcessTaskAbortHandleCallback(int32_t deviceLogicId, aclrtDeviceTaskAbortStage stage, uint32_t timeout, void* args)
 {
     HcclUs startut = std::chrono::steady_clock::now();
     CHK_PTR_NULL(args);
-    auto &commVector = *(static_cast<std::vector<CollComm *> *>(args));
+    auto* handler = static_cast<HcclTaskAbortHandler*>(args);
+    std::lock_guard<std::mutex> lock(handler->vecMutex_);
+    auto& commVector = handler->commVector_;
     HCCL_INFO("[NsRecovery][Callback] ProcessTaskAbortHandleCallback start!");
     const std::chrono::seconds localtimeout = std::chrono::seconds(timeout);
 
@@ -97,7 +108,7 @@ int32_t ProcessTaskAbortHandleCallback(int32_t deviceLogicId, aclrtDeviceTaskAbo
     } else if (stage == aclrtDeviceTaskAbortStage::ACL_RT_DEVICE_TASK_ABORT_POST) {
         auto result = ProcessTaskAbortPost(commVector, deviceLogicId, localtimeout);
         if (result != static_cast<int>(TaskAbortResult::TASK_ABORT_SUCCESS)) {
-          return result;
+            return result;
         }
     }
     HcclUs endut = std::chrono::steady_clock::now();
@@ -109,7 +120,7 @@ int32_t ProcessTaskAbortHandleCallback(int32_t deviceLogicId, aclrtDeviceTaskAbo
 HcclTaskAbortHandler::HcclTaskAbortHandler()
 {
     std::string name = "HCOMM";
-    Hccl::HrtDeviceAbortRegCallBack(ProcessTaskAbortHandleCallback, static_cast<void *>(&commVector_), name);
+    Hccl::HrtDeviceAbortRegCallBack(ProcessTaskAbortHandleCallback, static_cast<void*>(this), name);
 }
 
 HcclTaskAbortHandler::~HcclTaskAbortHandler()
@@ -118,32 +129,26 @@ HcclTaskAbortHandler::~HcclTaskAbortHandler()
     Hccl::HrtDeviceAbortRegCallBack(nullptr, nullptr, name);
 }
 
-HcclTaskAbortHandler &HcclTaskAbortHandler::GetInstance()
+HcclResult HcclTaskAbortHandler::Register(CollComm* communicator)
 {
-    static HcclTaskAbortHandler handler;
-    return handler;
-}
-
-HcclResult HcclTaskAbortHandler::Register(CollComm *communicator)
-{
-    std::lock_guard<std::mutex> lock(vecMutex);
+    std::lock_guard<std::mutex> lock(vecMutex_);
     commVector_.push_back(communicator);
-    HCCL_INFO("HcclTaskAbortHandler::Register success, commVector_ size is [%lu]", commVector_.size());
+    HCCL_INFO("HcclTaskAbortHandler::Register success, commVector_ size is [%zu]", commVector_.size());
 
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclTaskAbortHandler::UnRegister(CollComm *communicator)
+HcclResult HcclTaskAbortHandler::UnRegister(CollComm* communicator)
 {
-    std::lock_guard<std::mutex> lock(vecMutex);
-    HCCL_INFO("HcclTaskAbortHandler::UnRegister Begin, commVector_ size is [%lu]", commVector_.size());
+    std::lock_guard<std::mutex> lock(vecMutex_);
+    HCCL_INFO("HcclTaskAbortHandler::UnRegister Begin, commVector_ size is [%zu]", commVector_.size());
     auto it = std::find(commVector_.begin(), commVector_.end(), communicator);
     if (it != commVector_.end()) {
         commVector_.erase(it);
     } else {
         HCCL_WARNING("HcclTaskAbortHandler::UnRegister, comm not found.");
     }
-    HCCL_INFO("HcclTaskAbortHandler::UnRegister finish, commVector_ size is [%lu]", commVector_.size());
+    HCCL_INFO("HcclTaskAbortHandler::UnRegister finish, commVector_ size is [%zu]", commVector_.size());
     return HCCL_SUCCESS;
 }
-}
+} // namespace hccl

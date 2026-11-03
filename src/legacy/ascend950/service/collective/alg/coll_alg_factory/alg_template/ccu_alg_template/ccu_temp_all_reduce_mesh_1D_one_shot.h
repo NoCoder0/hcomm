@@ -19,7 +19,7 @@
 #include "hccl/base.h"
 #include "types/types.h"
 #include "string_util.h"
-#include "env_config.h"
+#include "env_config_v2.h"
 #include "data_type.h"
 #include "ccu_alg_template_base.h"
 #include "ccu_instruction_all_reduce_mesh1d.h"
@@ -27,12 +27,11 @@
 
 namespace Hccl {
 
-
 class CcuTempAllReduceMesh1DOneShot : public CcuAlgTemplateBase {
 public:
-    explicit CcuTempAllReduceMesh1DOneShot(const RankId virtualRank, const u32 tempRankSize,
-                                   const std::vector<std::vector<RankId>> &tempVTopo,
-                                   const std::map<RankId, u32>            &tempVirtRankMap);
+    explicit CcuTempAllReduceMesh1DOneShot(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~CcuTempAllReduceMesh1DOneShot() override;
 
     std::string Describe() const override
@@ -40,17 +39,18 @@ public:
         return StringFormat("Template of CcuTempAllReduceMesh1DOneShot tempRankSize [%u].", tempRankSize_);
     }
 
-    HcclResult Run(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec, const BuffInfo &buffInfo,
-                         const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues) override;
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
-    HcclResult CalcSliceInfo(const AllignInfo &allignInfo, const u64 dataSize, RankSliceInfo &sliceInfoVec) override;
+    HcclResult
+    Run(const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, const BuffInfo& buffInfo,
+        const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues) override;
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
+    HcclResult CalcSliceInfo(const AllignInfo& allignInfo, const u64 dataSize, RankSliceInfo& sliceInfoVec) override;
     // init reduceInfo
-    void InitReduceInfo(const ReduceOp &reduceOp, const DataType &dataType);
+    void InitReduceInfo(const ReduceOp& reduceOp, const DataType& dataType);
 
 private:
-    HcclResult CalcInputOutputAddr(const TempFuncs &tempFuncs, uint64_t &inputAddr, uint64_t &outputAddr);
-    HcclResult PrepareLinks(const ResLinks &tempLinks, std::vector<LinkData> &links) const;
-    HcclResult PrepareRankGroup(RankGroup &rankGroup);
+    HcclResult CalcInputOutputAddr(const TempFuncs& tempFuncs, uint64_t& inputAddr, uint64_t& outputAddr);
+    HcclResult PrepareLinks(const ResLinks& tempLinks, std::vector<LinkData>& links) const;
+    HcclResult PrepareRankGroup(RankGroup& rankGroup);
 
 private:
     ReduceOp reduceOp_;

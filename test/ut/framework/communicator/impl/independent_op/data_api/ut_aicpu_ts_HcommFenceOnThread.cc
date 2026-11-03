@@ -35,13 +35,9 @@ using namespace hccl;
  * 该测试类用于验证HcommFenceOnThread接口的功能，包括：
  * - 测试正常情况下在线程上执行Fence操作
  */
-class UtAicpuTsHcommFenceOnThread : public testing::Test
-{
+class UtAicpuTsHcommFenceOnThread : public testing::Test {
 protected:
-    virtual void TearDown() override
-    {
-        GlobalMockObject::verify();
-    }
+    virtual void TearDown() override { GlobalMockObject::verify(); }
 
     AicpuTsThread threadOnDevice{StreamType::STREAM_TYPE_DEVICE, 0, NotifyLoadType::DEVICE_NOTIFY};
     ThreadHandle thread = reinterpret_cast<ThreadHandle>(&threadOnDevice);

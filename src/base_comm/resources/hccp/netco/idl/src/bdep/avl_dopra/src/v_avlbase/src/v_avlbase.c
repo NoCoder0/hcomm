@@ -26,8 +26,8 @@ void VosAvlRotateRight(AVLBASE_NODE_S **ppstSubTree)
     }
 
     (*ppstSubTree)->sLHeight = pstLeftSon->sRHeight;
-    pstLeftSon->pstParent    = (*ppstSubTree)->pstParent;
-    pstLeftSon->pstRight     = *ppstSubTree;
+    pstLeftSon->pstParent = (*ppstSubTree)->pstParent;
+    pstLeftSon->pstRight = *ppstSubTree;
     pstLeftSon->pstRight->pstParent = pstLeftSon;
     pstLeftSon->sRHeight = (1 + VOS_V2_AVL_MAX((*ppstSubTree)->sRHeight, (*ppstSubTree)->sLHeight));
 
@@ -52,8 +52,8 @@ void VosAvlRotateLeft(AVLBASE_NODE_S **ppstSubTree)
     }
 
     (*ppstSubTree)->sRHeight = pstRightSon->sLHeight;
-    pstRightSon->pstParent   = (*ppstSubTree)->pstParent;
-    pstRightSon->pstLeft     = *ppstSubTree;
+    pstRightSon->pstParent = (*ppstSubTree)->pstParent;
+    pstRightSon->pstLeft = *ppstSubTree;
     pstRightSon->pstLeft->pstParent = pstRightSon;
     pstRightSon->sLHeight = (1 + VOS_V2_AVL_MAX((*ppstSubTree)->sRHeight, (*ppstSubTree)->sLHeight));
 
@@ -66,12 +66,12 @@ void VosAvlUpdateSwapNode(AVLBASE_TREE_S *pstTree, AVLBASE_NODE_S *pstSwapNode, 
 {
     /* move swap pstNode to its new position                                  */
     pstSwapNode->pstParent = pstBaseNode->pstParent;
-    pstSwapNode->pstRight  = pstBaseNode->pstRight;
-    pstSwapNode->pstLeft   = pstBaseNode->pstLeft;
-    pstSwapNode->sRHeight  = pstBaseNode->sRHeight;
-    pstSwapNode->sLHeight  = pstBaseNode->sLHeight;
+    pstSwapNode->pstRight = pstBaseNode->pstRight;
+    pstSwapNode->pstLeft = pstBaseNode->pstLeft;
+    pstSwapNode->sRHeight = pstBaseNode->sRHeight;
+    pstSwapNode->sLHeight = pstBaseNode->sLHeight;
     pstSwapNode->pstRight->pstParent = pstSwapNode;
-    pstSwapNode->pstLeft->pstParent  = pstSwapNode;
+    pstSwapNode->pstLeft->pstParent = pstSwapNode;
 
     if (pstBaseNode->pstParent == AVL_NULL_PTR) {
         /* pstNode is at root of pstTree                                      */
@@ -99,8 +99,8 @@ void VosAvlMoveNodeToNewPos(AVLBASE_NODE_S *pstNode, AVLBASE_NODE_S *pstNewParen
     AVLBASE_NODE_S *pstNewRightSon)
 {
     pstNode->pstParent = pstNewParent;
-    pstNode->pstLeft   = pstNewLeftSon;
-    pstNode->pstRight  = pstNewRightSon;
+    pstNode->pstLeft = pstNewLeftSon;
+    pstNode->pstRight = pstNewRightSon;
     pstNode->sLHeight = 0;
     pstNode->sRHeight = 0;
 
@@ -224,7 +224,7 @@ void VosAvlRebalance(AVLBASE_NODE_S **ppstSubTree)
 }
 
 /*******************************************************************************
- Description  : AVL_Balance_Tree will Reblance the tree starting at the
+ Description  : AVL_Balance_Tree will Rebalance the tree starting at the
                 supplied node and ending at the root of the tree.
  Input        : pstTree    - pointer to the AVL tree
                 pstNode    - pointer to the node to start from where to
@@ -269,7 +269,7 @@ AVLBASE_NODE_S *VosAVLSearchReplaceNodeInRTree(AVLBASE_TREE_S *pstTree, AVLBASE_
     AVLBASE_NODE_S *pstReplaceNode;
 
     if (pstNode->pstRight->pstLeft == AVL_NULL_PTR) {
-        /* can replace pstNode with right-son(since it has no leftson) */
+        /* can replace pstNode with right-son(since it has no left son) */
         pstReplaceNode = pstNode->pstRight;
         pstReplaceNode->pstLeft = pstNode->pstLeft;
         pstReplaceNode->pstLeft->pstParent = pstReplaceNode;
@@ -288,7 +288,7 @@ AVLBASE_NODE_S *VosAvlSearchReplaceNodeInLTree(AVLBASE_TREE_S *pstTree, AVLBASE_
     AVLBASE_NODE_S *pstReplaceNode;
 
     if (pstNode->pstLeft->pstRight == AVL_NULL_PTR) {
-        /* can replace pstNode with left-son(since it has no rightson) */
+        /* can replace pstNode with left-son(since it has no right son) */
         pstReplaceNode = pstNode->pstLeft;
         pstReplaceNode->pstRight = pstNode->pstRight;
         pstReplaceNode->pstRight->pstParent = pstReplaceNode;
@@ -321,8 +321,7 @@ AVLBASE_NODE_S *VosAvlDeleteCheck(AVLBASE_TREE_S *pstTree, AVLBASE_NODE_S *pstNo
 {
     AVLBASE_NODE_S *pstReplaceNode;
 
-    if ((pstNode->pstLeft == AVL_NULL_PTR) &&
-        (pstNode->pstRight == AVL_NULL_PTR)) {
+    if ((pstNode->pstLeft == AVL_NULL_PTR) && (pstNode->pstRight == AVL_NULL_PTR)) {
         /* barren pstNode (no children), so just delete it                    */
         pstReplaceNode = AVL_NULL_PTR;
 
@@ -370,10 +369,10 @@ void VosAvlDelete(AVLBASE_NODE_S *pstBaseNode, AVLBASE_TREE_S *pstBaseTree)
 
     /* reset deleted pstNode                                                  */
     pstBaseNode->pstParent = AVL_NULL_PTR;
-    pstBaseNode->pstRight  = AVL_NULL_PTR;
-    pstBaseNode->pstLeft   = AVL_NULL_PTR;
-    pstBaseNode->sRHeight  = -1;
-    pstBaseNode->sLHeight  = -1;
+    pstBaseNode->pstRight = AVL_NULL_PTR;
+    pstBaseNode->pstLeft = AVL_NULL_PTR;
+    pstBaseNode->sRHeight = -1;
+    pstBaseNode->sLHeight = -1;
 
     if (pstReplaceNode != AVL_NULL_PTR) {
         /* fix-up parent pointer of replacement pstNode, and calculate new    */
@@ -390,7 +389,7 @@ void VosAvlDelete(AVLBASE_NODE_S *pstBaseNode, AVLBASE_TREE_S *pstBaseTree)
             pstParentNode->sRHeight = sNewHeight;
         } else {
             /* pstNode is left son of parent                                  */
-            pstParentNode->pstLeft  = pstReplaceNode;
+            pstParentNode->pstLeft = pstReplaceNode;
             pstParentNode->sLHeight = sNewHeight;
         }
 

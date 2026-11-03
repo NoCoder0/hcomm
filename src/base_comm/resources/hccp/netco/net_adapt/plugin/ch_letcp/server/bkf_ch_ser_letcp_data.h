@@ -78,9 +78,10 @@ typedef struct tagBkfChSerLetcpMsgHead {
     uint8_t data[0];
 } BkfChSerLetcpMsgHead;
 #define BKF_CH_SER_LETCP_MSG_SIGN (0xa189)
-#define BKF_CH_SER_LETCP_APP_DATA_2CH_MSG_HEAD(appData) \
-    (((uintptr_t)(appData) >= sizeof(BkfChSerLetcpMsgHead)) ? \
-        (BkfChSerLetcpMsgHead*)((uint8_t*)(appData) - sizeof(BkfChSerLetcpMsgHead)) : VOS_NULL)
+#define BKF_CH_SER_LETCP_APP_DATA_2CH_MSG_HEAD(appData)                                                                \
+    (((uintptr_t)(appData) >= sizeof(BkfChSerLetcpMsgHead))                                                            \
+            ? (BkfChSerLetcpMsgHead *)((uint8_t *)(appData) - sizeof(BkfChSerLetcpMsgHead))                            \
+            : VOS_NULL)
 
 /* func */
 BkfChSer *BkfChSerLetcpDataInit(BkfChSerInitArg *arg);
@@ -103,7 +104,7 @@ BkfChSerConnId *BkfChSerLetcpGetFirstConnId(BkfChSer *ch, BkfChSerLetcpLsn *lsn,
 BkfChSerConnId *BkfChSerLetcpGetNextConnId(BkfChSer *ch, BkfChSerLetcpLsn *lsn, void **itorInOut);
 
 uint32_t BkfChSerLetcpStartConnOnceTmrWriteErr(BkfChSer *ch, BkfChSerConnId *connId, F_BKF_TMR_TIMEOUT_PROC proc,
-                                              uint32_t intervalMs);
+    uint32_t intervalMs);
 void BkfChSerLetcpStopConnTmrWriteErr(BkfChSer *ch, BkfChSerConnId *connId);
 
 BkfChSerLetcpMsgHead *BkfChSerLetcpMsgMalloc(BkfChSer *ch, int32_t dataBufLen);
@@ -118,4 +119,3 @@ void BkfChSerLetcpStopTmrReListen(BkfChSer *ch, BkfChSerLetcpLsn *lsn);
 #endif
 
 #endif
-

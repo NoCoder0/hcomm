@@ -23,20 +23,22 @@
 #include "rs_nda.h"
 #include "tc_ut_rs_nda.h"
 
-#define rs_nda_ut_msg(fmt, args...)	fprintf(stderr, "\t>>>>> " fmt, ##args)
+#define rs_nda_ut_msg(fmt, args...) fprintf(stderr, "\t>>>>> " fmt, ##args)
 
-extern __thread struct rs_cb *gRsCb;
-extern int RsQueryRdevCb(unsigned int phyId, unsigned int rdevIndex, struct RsRdevCb **rdevCb);
-extern int RsNdaQpCreateEx(struct RsQpCb *qpCb, struct ibv_qp_init_attr_extend *qpInitAttrEx, struct NdaQpInfo *info);
-extern int RsGetNdaPcieDbCb(struct RsNdaCb *ndaCb, uint64_t hva, struct NdaPcieDbCb **ndaDbCb);
-extern int RsGetNdaUbDbCb(struct RsNdaCb *ndaCb, uint64_t guidL, uint64_t guidH, struct NdaUbDbCb **ndaDbCb);
-extern int RsNdaCqCreateEx(struct RsRdevCb *rdevCb, struct ibv_cq_init_attr_extend *cqInitAttrEx,
-    struct NdaCqInfo *info, void **ibvCqExt);
-extern void *RsNdaUbAlloc(size_t size);
-extern void *RsNdaDbMmap(struct doorbell_map_desc *desc);
-extern int RsNdaDbUnmap(void *ptr, struct doorbell_map_desc *desc);
+extern __thread struct rs_cb* gRsCb;
+extern struct ibv_context_extend* RsIbvOpenExtend(struct ibv_context* context);
+extern int RsIbvQueryDeviceExtend(struct ibv_context_extend* context, struct ibv_device_attr_extend* extDevAttr);
+extern int RsQueryRdevCb(unsigned int phyId, unsigned int rdevIndex, struct RsRdevCb** rdevCb);
+extern int RsNdaQpCreateEx(struct RsQpCb* qpCb, struct ibv_qp_init_attr_extend* qpInitAttrEx, struct NdaQpInfo* info);
+extern int RsGetNdaPcieDbCb(struct RsNdaCb* ndaCb, uint64_t hva, struct NdaPcieDbCb** ndaDbCb);
+extern int RsGetNdaUbDbCb(struct RsNdaCb* ndaCb, uint64_t guidL, uint64_t guidH, struct NdaUbDbCb** ndaDbCb);
+extern int RsNdaCqCreateEx(
+    struct RsRdevCb* rdevCb, struct ibv_cq_init_attr_extend* cqInitAttrEx, struct NdaCqInfo* info, void** ibvCqExt);
+extern void* RsNdaUbAlloc(size_t size);
+extern void* RsNdaDbMmap(struct doorbell_map_desc* desc);
+extern int RsNdaDbUnmap(void* ptr, struct doorbell_map_desc* desc);
 
-int RsQueryRdevCbNdaStub(unsigned int phyId, unsigned int rdevIndex, struct RsRdevCb **rdevCb)
+int RsQueryRdevCbNdaStub(unsigned int phyId, unsigned int rdevIndex, struct RsRdevCb** rdevCb)
 {
     static struct RsRdevCb ndaRdevCb = {0};
     ndaRdevCb.rsCb = gRsCb;
@@ -45,15 +47,53 @@ int RsQueryRdevCbNdaStub(unsigned int phyId, unsigned int rdevIndex, struct RsRd
     return 0;
 }
 
-int DlDrvMemGetAttributeStub(DVdeviceptr vptr, struct DVattribute *attr)
+static struct ibv_context_extend gNdaIbCtxEx;
+static uint32_t gNdaExtDevCap;
+static int gNdaDirectFlag;
+
+int RsQueryRdevCbNdaExtStub(unsigned int phyId, unsigned int rdevIndex, struct RsRdevCb** rdevCb)
+{
+    static struct RsRdevCb ndaRdevCb = {0};
+    ndaRdevCb.rsCb = gRsCb;
+    ndaRdevCb.ibCtxEx = &gNdaIbCtxEx;
+    ndaRdevCb.extDevCap = gNdaExtDevCap;
+    ndaRdevCb.directFlag = gNdaDirectFlag;
+    *rdevCb = &ndaRdevCb;
+    return 0;
+}
+
+static struct ibv_context_extend gStubIbCtxEx;
+static struct ibv_device_attr_extend gStubExtDevAttr;
+static int gStubQueryRet;
+
+struct ibv_context_extend* RsIbvOpenExtendStub(struct ibv_context* context)
+{
+    (void)context;
+    return &gStubIbCtxEx;
+}
+
+struct ibv_context_extend* RsIbvOpenExtendNullStub(struct ibv_context* context)
+{
+    (void)context;
+    return NULL;
+}
+
+int RsIbvQueryDeviceExtendStub(struct ibv_context_extend* context, struct ibv_device_attr_extend* extDevAttr)
+{
+    (void)context;
+    *extDevAttr = gStubExtDevAttr;
+    return gStubQueryRet;
+}
+
+int DlDrvMemGetAttributeStub(DVdeviceptr vptr, struct DVattribute* attr)
 {
     attr->memType = DV_MEM_LOCK_DEV;
     return 0;
 }
 
-int DlHalHostRegisterStub(void *srcPtr, UINT64 size, UINT32 flag, UINT32 devId, void **dstPtr)
+int DlHalHostRegisterStub(void* srcPtr, UINT64 size, UINT32 flag, UINT32 devId, void** dstPtr)
 {
-    static void *sDstPtr = NULL;
+    static void* sDstPtr = NULL;
     if (dstPtr == NULL) {
         return -1;
     }
@@ -62,9 +102,9 @@ int DlHalHostRegisterStub(void *srcPtr, UINT64 size, UINT32 flag, UINT32 devId, 
     return 0;
 }
 
-int DlHalHostUnRegisterExStub(void *srcPtr, UINT32 devId)
+int DlHalHostUnRegisterExStub(void* srcPtr, UINT32 devId)
 {
-    uint64_t alignHva = AlignDown((uint64_t)1, RA_RS_4K_PAGE_SIZE);
+    uint64_t alignHva = RaRsAlignDown((uint64_t)1, RA_RS_4K_PAGE_SIZE);
 
     if ((uint64_t)(uintptr_t)srcPtr == alignHva) {
         return 0;
@@ -87,6 +127,82 @@ void TcRsNdaGetDirectFlag()
     ret = RsNdaGetDirectFlag(phyId, rdevIndex, &directFlag);
     EXPECT_INT_EQ(ret, 0);
     mocker_clean();
+}
+
+void TcRsNdaGetDirectFlagExt()
+{
+    unsigned int rdevIndex = 0;
+    unsigned int phyId = 0;
+    int directFlag = 0;
+    int ret = 0;
+
+    // extDevCap 含 NDA 位 -> 返回 directFlag
+    mocker_clean();
+    gNdaExtDevCap = IBV_EXTEND_DEV_NDA;
+    gNdaDirectFlag = DIRECT_FLAG_UB;
+    mocker_invoke(RsQueryRdevCb, RsQueryRdevCbNdaExtStub, 1);
+    ret = RsNdaGetDirectFlag(phyId, rdevIndex, &directFlag);
+    EXPECT_INT_EQ(ret, 0);
+    EXPECT_INT_EQ(directFlag, DIRECT_FLAG_UB);
+    mocker_clean();
+
+    // extDevCap 不含 NDA 位 -> 返回 NOTSUPP
+    mocker_clean();
+    gNdaExtDevCap = 0;
+    gNdaDirectFlag = DIRECT_FLAG_UB;
+    mocker_invoke(RsQueryRdevCb, RsQueryRdevCbNdaExtStub, 1);
+    ret = RsNdaGetDirectFlag(phyId, rdevIndex, &directFlag);
+    EXPECT_INT_EQ(ret, 0);
+    EXPECT_INT_EQ(directFlag, DIRECT_FLAG_NOTSUPP);
+    mocker_clean();
+}
+
+void TcRsInitNdaCb()
+{
+    struct RsRdevCb rdevCb = {0};
+    int ret = 0;
+
+    // 查询成功 -> extDevCap == extDevAttr.ext_cap
+    gRsCb = calloc(1, sizeof(struct rs_cb));
+    rdevCb.rsCb = gRsCb;
+    gStubExtDevAttr.ext_cap = IBV_EXTEND_DEV_NDA | IBV_EXTEND_DEV_NDR;
+    gStubQueryRet = 0;
+    mocker_clean();
+    mocker_invoke(RsIbvOpenExtend, RsIbvOpenExtendStub, 1);
+    mocker_invoke(RsIbvQueryDeviceExtend, RsIbvQueryDeviceExtendStub, 1);
+    ret = RsInitNdaCb(&rdevCb);
+    EXPECT_INT_EQ(ret, 0);
+    EXPECT_INT_EQ((int)rdevCb.extDevCap, (int)gStubExtDevAttr.ext_cap);
+    mocker_clean();
+    free(gRsCb);
+
+    // 查询失败 -> extDevCap == 0
+    memset(&rdevCb, 0, sizeof(rdevCb));
+    gRsCb = calloc(1, sizeof(struct rs_cb));
+    rdevCb.rsCb = gRsCb;
+    gStubQueryRet = -1;
+    mocker_clean();
+    mocker_invoke(RsIbvOpenExtend, RsIbvOpenExtendStub, 1);
+    mocker_invoke(RsIbvQueryDeviceExtend, RsIbvQueryDeviceExtendStub, 1);
+    ret = RsInitNdaCb(&rdevCb);
+    EXPECT_INT_EQ(ret, 0);
+    EXPECT_INT_EQ((int)rdevCb.extDevCap, 0);
+    mocker_clean();
+    free(gRsCb);
+
+    // ibCtxEx == NULL -> 返回 0 且 extDevCap == 0
+    memset(&rdevCb, 0, sizeof(rdevCb));
+    gRsCb = calloc(1, sizeof(struct rs_cb));
+    rdevCb.rsCb = gRsCb;
+    mocker_clean();
+    mocker_invoke(RsIbvOpenExtend, RsIbvOpenExtendNullStub, 1);
+    ret = RsInitNdaCb(&rdevCb);
+    EXPECT_INT_EQ(ret, 0);
+    EXPECT_INT_EQ((int)rdevCb.extDevCap, 0);
+    mocker_clean();
+    free(gRsCb);
+
+    gRsCb = NULL;
 }
 
 void TcRsNdaQpCreateFailed()
@@ -196,15 +312,15 @@ void TcRsNdaQpCreateEx()
     mocker(RsDrvQpInfoRelated, 1, -1);
     ret = RsNdaQpCreateEx(&qpCb, &qpInitAttrEx, &info);
     EXPECT_INT_EQ(ret, -1);
-    mocker_clean(); 
+    mocker_clean();
 }
 
 void TcRsNdaUbAllocFailed()
 {
-    struct RsNdaCb *ndaCbCur = NULL;
+    struct RsNdaCb* ndaCbCur = NULL;
     struct RsNdaCb ndaCb = {0};
     size_t size = 32;
-    void *ptr = NULL;
+    void* ptr = NULL;
 
     gRsCb = malloc(sizeof(struct rs_cb));
     memset(gRsCb, 0, sizeof(struct rs_cb));
@@ -212,7 +328,7 @@ void TcRsNdaUbAllocFailed()
     ptr = RsNdaUbAlloc(size);
     EXPECT_ADDR_EQ(ptr, NULL);
 
-    ndaCbCur = (struct RsNdaCb *)gRsCb->ndaCb;
+    ndaCbCur = (struct RsNdaCb*)gRsCb->ndaCb;
     ndaCbCur->ndaOps.alloc = malloc;
     ptr = RsNdaUbAlloc(size);
     EXPECT_ADDR_EQ(ptr, NULL);
@@ -250,18 +366,18 @@ void TcRsNdaUbAllocFailed()
 void TcRsNdaDbMmapHostVa()
 {
     struct doorbell_map_desc desc = {0};
-    struct RsNdaCb *ndaCbCur = NULL;
+    struct RsNdaCb* ndaCbCur = NULL;
     struct RsNdaCb ndaCb = {0};
-    void *ptr = NULL;
+    void* ptr = NULL;
     int ret = 0;
 
     desc.hva = 1;
     desc.type = DB_MAP_MODE_HOST_VA;
     gRsCb = malloc(sizeof(struct rs_cb));
     memset(gRsCb, 0, sizeof(struct rs_cb));
-    gRsCb->ndaCb = (void *)&ndaCb;
+    gRsCb->ndaCb = (void*)&ndaCb;
 
-    ndaCbCur = (struct RsNdaCb *)gRsCb->ndaCb;
+    ndaCbCur = (struct RsNdaCb*)gRsCb->ndaCb;
     RS_INIT_LIST_HEAD(&ndaCbCur->ndaPcieCb.ndaDbList);
     mocker_clean();
     mocker(DlDrvDeviceGetIndexByPhyId, 10, -1);
@@ -272,8 +388,9 @@ void TcRsNdaDbMmapHostVa()
 
     // build up NdaDbCb
     mocker(DlDrvDeviceGetIndexByPhyId, 10, 0);
-    mocker_invoke_p5("DlHalHostRegister", "DlHalHostRegisterStub",
-        (stub_fn_t)DlHalHostRegister, (stub_fn_t)DlHalHostRegisterStub, 10);
+    mocker_invoke_p5(
+        "DlHalHostRegister", "DlHalHostRegisterStub", (stub_fn_t)DlHalHostRegister, (stub_fn_t)DlHalHostRegisterStub,
+        10);
     ptr = RsNdaDbMmap(&desc);
     EXPECT_ADDR_NE(ptr, NULL);
     ptr = NULL;
@@ -283,8 +400,9 @@ void TcRsNdaDbMmapHostVa()
     mocker_clean();
 
     mocker(DlDrvDeviceGetIndexByPhyId, 10, 0);
-    mocker_invoke_p5("DlHalHostRegister", "DlHalHostRegisterStub",
-        (stub_fn_t)DlHalHostRegister, (stub_fn_t)DlHalHostRegisterStub, 10);
+    mocker_invoke_p5(
+        "DlHalHostRegister", "DlHalHostRegisterStub", (stub_fn_t)DlHalHostRegister, (stub_fn_t)DlHalHostRegisterStub,
+        10);
     mocker_invoke(DlHalHostUnRegisterEx, DlHalHostUnRegisterExStub, 10);
     ret = RsNdaDbUnmap(ptr, &desc);
     EXPECT_INT_EQ(ret, 0);
@@ -310,9 +428,9 @@ void TcRsNdaDbMmapHostVa()
 void TcRsNdaDbMmapUbRes()
 {
     struct doorbell_map_desc desc = {0};
-    struct RsNdaCb *ndaCbCur = NULL;
+    struct RsNdaCb* ndaCbCur = NULL;
     struct RsNdaCb ndaCb = {0};
-    void *ptr = NULL;
+    void* ptr = NULL;
     int ret = 0;
 
     desc.ub_res.guid_h = 1;
@@ -323,7 +441,7 @@ void TcRsNdaDbMmapUbRes()
     memset(gRsCb, 0, sizeof(struct rs_cb));
     gRsCb->ndaCb = &ndaCb;
 
-    ndaCbCur = (struct RsNdaCb *)gRsCb->ndaCb;
+    ndaCbCur = (struct RsNdaCb*)gRsCb->ndaCb;
     RS_INIT_LIST_HEAD(&ndaCbCur->ndaUbCb.ndaDbList);
     mocker_clean();
     mocker(DlDrvDeviceGetIndexByPhyId, 10, -1);
@@ -379,7 +497,7 @@ void TcRsNdaCqCreateFailed()
     struct NdaCqInfo info = {0};
     unsigned int rdevIndex = 0;
     unsigned int phyId = 0;
-    void *ibvCqExt = NULL;
+    void* ibvCqExt = NULL;
     int ret = 0;
 
     struct RsNdaCb ndaCb = {0};
@@ -420,7 +538,7 @@ void TcRsNdaCqCreate()
     struct rdev rdevInfo = {0};
     unsigned int rdevIndex = 0;
     unsigned int phyId = 0;
-    void *ibvCqExt = NULL;
+    void* ibvCqExt = NULL;
     int ret = 0;
 
     struct NdaOps ops = {0};
@@ -451,4 +569,21 @@ void TcRsNdaCqCreate()
 
     ret = RsDeinit(&cfg);
     EXPECT_INT_EQ(ret, 0);
+}
+
+void TcRsNdaAlignDownWithMixedTypeAlign()
+{
+    int alignInt = (int)RA_RS_4K_PAGE_SIZE;
+    unsigned int alignUint = (unsigned int)RA_RS_4K_PAGE_SIZE;
+    uint64_t addr = 0x100001234ULL;
+
+    uint64_t r1 = RaRsAlignDown(addr, alignInt);
+    uint64_t r2 = RaRsAlignDown(addr, alignUint);
+    EXPECT_LONG_EQ((long)r1, (long)r2);
+    EXPECT_LONG_EQ((long)r1, (long)0x100001000ULL);
+
+    uint64_t up1 = RaRsAlignUp(addr, alignInt);
+    uint64_t up2 = RaRsAlignUp(addr, alignUint);
+    EXPECT_LONG_EQ((long)up1, (long)up2);
+    EXPECT_LONG_EQ((long)up1, (long)0x100002000ULL);
 }

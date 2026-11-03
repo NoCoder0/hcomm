@@ -13,7 +13,7 @@ using namespace std;
 
 namespace checker {
 
-void SingleRankTaskQueues::AppendTask(Stream *stream, std::shared_ptr<TaskStub> task)
+void SingleRankTaskQueues::AppendTask(Stream* stream, std::shared_ptr<TaskStub> task)
 {
     if (taskQueues.size() < (stream->id() + 1)) {
         taskQueues.resize(stream->id() + 1);
@@ -44,20 +44,14 @@ std::shared_ptr<TaskStub> SingleRankTaskQueues::GetTask(QId queId, u32 pos) cons
     return taskQueues.at(queId).at(pos);
 }
 
-u32 SingleRankTaskQueues::GetQueTaskNum(QId queId) const
-{
-    return taskQueues.at(queId).size();
-}
+u32 SingleRankTaskQueues::GetQueTaskNum(QId queId) const { return taskQueues.at(queId).size(); }
 
 std::vector<std::shared_ptr<TaskStub>> SingleRankTaskQueues::GetQueTasks(QId queId) const
 {
     return taskQueues.at(queId);
 }
 
-std::vector<std::shared_ptr<TaskStub>> &SingleRankTaskQueues::operator[](QId queId)
-{
-    return taskQueues.at(queId);
-}
+std::vector<std::shared_ptr<TaskStub>>& SingleRankTaskQueues::operator[](QId queId) { return taskQueues.at(queId); }
 
 void AllRankTaskQueues::Clear()
 {
@@ -70,19 +64,13 @@ void AllRankTaskQueues::Clear()
     return;
 }
 
-SingleRankTaskQueues *AllRankTaskQueues::operator[](RankId rankId)
-{
-    return rank2TaskQueues.at(rankId);
-}
+SingleRankTaskQueues* AllRankTaskQueues::operator[](RankId rankId) { return rank2TaskQueues.at(rankId); }
 
-SingleRankTaskQueues *AllRankTaskQueues::GetRankTaskQues(RankId rankId) const
-{
-    return rank2TaskQueues.at(rankId);
-}
+SingleRankTaskQueues* AllRankTaskQueues::GetRankTaskQues(RankId rankId) const { return rank2TaskQueues.at(rankId); }
 
 TaskQueueStub* TaskQueueStub::Global()
 {
-    static TaskQueueStub *taskQueue = new TaskQueueStub();
+    static TaskQueueStub* taskQueue = new TaskQueueStub();
     return taskQueue;
 }
 
@@ -92,18 +80,12 @@ void TaskQueueStub::Reset()
     return;
 }
 
-AllRankTaskQueues& TaskQueueStub::GetAllRankTasks()
-{
-    return allRankTaskQueues;
-}
+AllRankTaskQueues& TaskQueueStub::GetAllRankTasks() { return allRankTaskQueues; }
 
-u32 TaskQueueStub::GetRankSize() const
-{
-    return allRankTaskQueues.rankSize;
-}
+u32 TaskQueueStub::GetRankSize() const { return allRankTaskQueues.rankSize; }
 
-SingleRankTaskQueues *TaskQueueStub::GetTaskQueueOfRank(RankId rankId) const
+SingleRankTaskQueues* TaskQueueStub::GetTaskQueueOfRank(RankId rankId) const
 {
     return allRankTaskQueues.GetRankTaskQues(rankId);
 }
-}
+} // namespace checker

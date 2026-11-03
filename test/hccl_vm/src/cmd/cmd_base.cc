@@ -11,16 +11,19 @@
 #include "cmd_base.h"
 
 namespace HcclSim {
-auto& CommandRegistry::GetCreators() {
+auto& CommandRegistry::GetCreators()
+{
     static std::vector<std::pair<std::string, CommandCreator>> creators;
     return creators;
 }
 
-void CommandRegistry::RegisteCommand(const std::string& name, CommandCreator creator) {
+void CommandRegistry::RegisteCommand(const std::string& name, CommandCreator creator)
+{
     GetCreators().emplace_back(name, std::move(creator));
 }
 
-std::vector<std::unique_ptr<CommandBase>> CommandRegistry::CreateAll() {
+std::vector<std::unique_ptr<CommandBase>> CommandRegistry::CreateAll()
+{
     std::vector<std::unique_ptr<CommandBase>> commands;
     commands.reserve(GetCreators().size());
     for (const auto& [name, creator] : GetCreators()) {
@@ -28,4 +31,4 @@ std::vector<std::unique_ptr<CommandBase>> CommandRegistry::CreateAll() {
     }
     return commands;
 }
-}
+} // namespace HcclSim

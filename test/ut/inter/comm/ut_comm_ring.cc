@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -34,17 +34,10 @@
 using namespace std;
 using namespace hccl;
 
-class CommRingTest : public testing::Test
-{
+class CommRingTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "\033[36m--CommRingTest SetUP--\033[0m" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "\033[36m--CommRingTest TearDown--\033[0m" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "\033[36m--CommRingTest SetUP--\033[0m" << std::endl; }
+    static void TearDownTestCase() { std::cout << "\033[36m--CommRingTest TearDown--\033[0m" << std::endl; }
     // Some expensive resource shared by all tests.
     virtual void SetUp()
     {
@@ -52,14 +45,11 @@ protected:
         TsdOpen(1, 2);
         std::cout << "A Test SetUP" << std::endl;
         MOCKER(hrtRaGetSingleSocketVnicIpInfo)
-        .stubs()
-        .with(mockcpp::any())
-        .will(invoke(stub_hrtRaGetSingleSocketVnicIpInfo));
-        s32 portNum = -1;
-        MOCKER(hrtGetHccsPortNum)
             .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+            .with(mockcpp::any())
+            .will(invoke(stub_hrtRaGetSingleSocketVnicIpInfo));
+        s32 portNum = -1;
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
     }
     virtual void TearDown()
     {
@@ -69,8 +59,7 @@ protected:
     }
 };
 
-typedef struct innerpara_struct
-{
+typedef struct innerpara_struct {
     std::string collectiveId;
     u32 userRank;
     u32 user_rank_size;
@@ -83,22 +72,22 @@ typedef struct innerpara_struct
     std::string tag;
     HcclDispatcher dispatcher;
     std::unique_ptr<NotifyPool> notifyPool;
-    IntraExchanger *exchanger;
+    IntraExchanger* exchanger;
     std::vector<RankInfo> para_vector;
     DeviceMem inputMem;
     DeviceMem outputMem;
     std::shared_ptr<CommRing> comm_ring;
 } innerpara_t;
 
-HcclDispatcher get_ring_dispatcher(s32 devid, std::shared_ptr<hccl::ProfilerManager> &profilerManager)
+HcclDispatcher get_ring_dispatcher(s32 devid, std::shared_ptr<hccl::ProfilerManager>& profilerManager)
 {
     HcclResult ret = HCCL_SUCCESS;
     ret = hrtSetDevice(devid);
     EXPECT_EQ(ret, HCCL_SUCCESS);
-     // 创建dispatcher
+    // 创建dispatcher
     DevType chipType = DevType::DEV_TYPE_910;
 
-    void *dispatcher = nullptr;
+    void* dispatcher = nullptr;
     ret = HcclDispatcherInit(DispatcherType::DISPATCHER_NORMAL, devid, &dispatcher);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_NE(dispatcher, nullptr);
@@ -125,40 +114,31 @@ void* comm_ring_task_handle(void* para)
     s32 rt_ret = 0;
 
     ret = hrtSetDevice(para_info->devicePhyId);
-	EXPECT_EQ(ret, HCCL_SUCCESS);
+    EXPECT_EQ(ret, HCCL_SUCCESS);
     RankConsistentcyChecker::GetInstance().ClearCheckInfo();
     ret = HcclNetInit(NICDeployment::NIC_DEPLOYMENT_DEVICE, para_info->devicePhyId, para_info->devicePhyId, false);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     HcclNetDevCtx portCtx;
-    ret = HcclNetOpenDev(&portCtx, NicType::VNIC_TYPE, para_info->devicePhyId, para_info->devicePhyId, HcclIpAddress(para_info->devicePhyId));
+    ret = HcclNetOpenDev(
+        &portCtx, NicType::VNIC_TYPE, para_info->devicePhyId, para_info->devicePhyId,
+        HcclIpAddress(para_info->devicePhyId));
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     std::map<HcclIpAddress, HcclNetDevCtx> netDevCtxMap;
     netDevCtxMap.insert(make_pair(HcclIpAddress(para_info->devicePhyId), portCtx));
 
     IntraExchanger exchanger{};
-    ret = CreateIntraExchanger(para_info->collectiveId, portCtx,
-        para_info->devicePhyId, para_info->devicePhyId, para_info->userRank, para_info->user_rank_size, 
-        para_info->device_ids, para_info->user_ranks,
-        true, exchanger);
+    ret = CreateIntraExchanger(
+        para_info->collectiveId, portCtx, para_info->devicePhyId, para_info->devicePhyId, para_info->userRank,
+        para_info->user_rank_size, para_info->device_ids, para_info->user_ranks, true, exchanger);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     TopoType topoFlag = TopoType::TOPO_TYPE_8P_RING;
-    para_info->comm_ring.reset(new CommRing(para_info->collectiveId,
-                                para_info->userRank,
-                                para_info->user_rank_size,
-                                para_info->rank,
-                                para_info->rank_size,
-                                topoFlag,
-                                para_info->dispatcher, para_info->notifyPool,
-                                netDevCtxMap,
-                                exchanger,
-                                para_info->para_vector,
-                                para_info->inputMem,
-                                para_info->outputMem,
-                                false,
-                                para_info->tag));
+    para_info->comm_ring.reset(new CommRing(
+        para_info->collectiveId, para_info->userRank, para_info->user_rank_size, para_info->rank, para_info->rank_size,
+        topoFlag, para_info->dispatcher, para_info->notifyPool, netDevCtxMap, exchanger, para_info->para_vector,
+        para_info->inputMem, para_info->outputMem, false, para_info->tag));
     ret = para_info->notifyPool->RegisterOp(para_info->tag);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
@@ -484,9 +464,9 @@ TEST_F(CommRingTest, ut_comminter_get_sockets_per_link)
 {
     // 补充覆盖率
     MOCKER(GetWorkflowMode)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE));
 
     setenv("HCCL_RDMA_QP_PORT_CONFIG_PATH", "/tmp/", 1);
     setenv("HCCL_RDMA_QPS_PER_CONNECTION", "5", 1);
@@ -501,7 +481,9 @@ TEST_F(CommRingTest, ut_comminter_get_sockets_per_link)
 
     TopoType topoFlag = TopoType::TOPO_TYPE_8P_RING;
     std::map<HcclIpAddress, HcclNetDevCtx> netDevCtxMap;
-    CommRing comm_ring(rootInfo, 0, 1, 0, 1, topoFlag, dispatcher, nullptr, netDevCtxMap, exchanger, para_vector, DeviceMem(), DeviceMem(), true);
+    CommRing comm_ring(
+        rootInfo, 0, 1, 0, 1, topoFlag, dispatcher, nullptr, netDevCtxMap, exchanger, para_vector, DeviceMem(),
+        DeviceMem(), true);
     comm_ring.GetSocketsPerLink();
 
     unsetenv("HCCL_RDMA_QP_PORT_CONFIG_PATH");

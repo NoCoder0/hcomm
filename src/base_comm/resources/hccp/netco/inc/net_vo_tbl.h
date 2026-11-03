@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef NET_VO_TBL_H
 #define NET_VO_TBL_H
 
@@ -41,7 +40,7 @@ enum {
 #define NET_TBL_KEY_LEN_IS_VALID(len) (((uint16_t)(len) != 0) && ((uint16_t)(len) <= NET_TBL_KEY_LEN_MAX))
 /* val 长度用uint16_t标识，最长为uint16_t最大值 */
 
-typedef uint32_t(*F_NET_TBL_CONVERT)(void *from, void *to);
+typedef uint32_t (*F_NET_TBL_CONVERT)(void *from, void *to);
 
 const char *NetTblTypeGetStr(uint16_t typeId);
 
@@ -50,4 +49,3 @@ const char *NetTblTypeGetStr(uint16_t typeId);
 #endif
 
 #endif
-

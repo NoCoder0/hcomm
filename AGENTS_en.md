@@ -1,6 +1,6 @@
 # HCOMM Agent Rules
 
-This file serves as the main entry point for AI Agent governance of the HCOMM repository. It is intended for AI programming tools that support the AGENTS.md standard. If a subdirectory has its own `AGENTS.md`, that file supplements this one. In case of conflicts, follow the user's explicit requirements first, and then the rules in the nearest subdirectory.
+This file serves as the main entry point for AI Agent governance of the HCOMM repository. It is intended for AI programming tools that support the AGENTS.md standard. If a subdirectory has its own `AGENTS.md`, the nearer file supplements this one. In case of conflicts, follow the user's explicit requirements first, and then the rules in the nearest subdirectory.
 
 > This file provides only the **essential hard constraints and entry points**. Detailed content is progressively disclosed through links. Before modifying code, read the architecture constraints in Section 3.
 
@@ -52,9 +52,9 @@ Dependency direction is top-down: `coll_comm_ops` (hccl) → `coll_communicator_
 | Layer | Header Files | Audience |
 |------|------|------|
 | L2-comm | `include/hccl/hccl_comm.h` | AI framework layer (communication domain creation) |
-| L2-res-rank_graph | `include/hccl/hccl_res.h`, `include/hccl/hccl_rank_graph.h` | Operator developers (topology query, resource acquisition) |
+| L2-res-rank_graph | `include/hccl/hccl_res.h`, `include/hccl/hccl_channel.h`, `include/hccl/hccl_rank_graph.h` | Operator developers (topology query, resource acquisition) |
 | L3-prim | `include/hcomm_primitives.h` | Operator or communication library developers (data transfer and synchronization) |
-| L3-res | `include/hcomm_res.h`, `include/hcomm_res_defs.h` | Communication library developers (device, channel, and memory resources) |
+| L3-res | `include/hcomm_res.h`, `include/hcomm_res_defs.h`, `include/hcomm_channel.h` | Communication library developers (device, channel, and memory resources) |
 | CCU | `include/ccu/` (`ccu_primitives.hpp`, `ccu_res.h`, `ccu_launch.h`) | CCU operator developers |
 
 Changes to `include/` must be backward compatible. `pkg_inc/` is for inter-package use between HCOMM, HCCL, GE, and so on, and is not externally stable. For the complete API layer relationships, see [Section 3.3 of the Architecture Overview (Chinese)](./docs/zh/architecture/architecture-brief.md).
@@ -75,9 +75,9 @@ Output: `build_out/cann-hcomm_<version>_linux-<arch>.run`. For a complete list o
 ## 5. Coding Standards
 
 - Naming: Classes and functions use PascalCase; member variables use `camelCase_` (lower camelCase with a trailing underscore); constants and macros use `UPPER_SNAKE_CASE`.
-- Style: Follow the `.clang-format` in the root directory (120 columns, 4 spaces, pointer right-aligned, K&R braces). Use C++14.
+- Style: Follow the `.clang-format` in the root directory (120 columns, 4 spaces, pointer left-aligned, K&R braces). Use C++17.
 - Static warnings: Code must pass CANN static check requirements (verified during the CI codecheck stage) and compile without warnings.
-- pre-commit: clang-format v16 + OAT compliance check. New source files must include the CANN-2.0 license header.
+- pre-commit: clang-format v18.1.8 + OAT compliance check. New source files must include the CANN-2.0 license header.
 
 References: [CANN Coding Standards](https://gitcode.com/cann/community/tree/master/contributor/coding-standards), [CANN CI Guide](https://gitcode.com/cann/community/blob/master/contributor/repository/ci-guide.md), [pre-commit Guide](./docs/en/build/pre-commit-guide.md), `.clang-format`, `OAT.xml`.
 

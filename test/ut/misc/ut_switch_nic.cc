@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -26,22 +26,15 @@
 using namespace std;
 using namespace hccl;
 
-class SwitchNicTest : public testing::Test
-{
+class SwitchNicTest : public testing::Test {
 protected:
     static void SetUpTestCase()
     {
         DlRaFunction::GetInstance().DlRaFunctionInit();
         cout << "\033[36m--SwitchNicTest SetUP--\033[0m" << endl;
     }
-    static void TearDownTestCase()
-    {
-        cout << "\033[36m--SwitchNicTest TearDown--\033[0m" << endl;
-    }
-    virtual void SetUp()
-    {
-        cout << "A Test SetUP" << endl;
-    }
+    static void TearDownTestCase() { cout << "\033[36m--SwitchNicTest TearDown--\033[0m" << endl; }
+    virtual void SetUp() { cout << "A Test SetUP" << endl; }
     virtual void TearDown()
     {
         GlobalMockObject::verify();
@@ -49,7 +42,7 @@ protected:
     }
 };
 
-static void TestConstructParam_SurperPod(HcclCommParams &params, RankTable_t &rankTable)
+static void TestConstructParam_SurperPod(HcclCommParams& params, RankTable_t& rankTable)
 {
     string commId = "comm ";
     memcpy_s(params.id.internal, HCCL_ROOT_INFO_BYTES, commId.c_str(), commId.length() + 1);
@@ -86,9 +79,9 @@ TEST_F(SwitchNicTest, ut_hcclSwitchNic_test)
     hcclComm comm;
     comm.communicator_ = make_unique<HcclCommunicator>();
     HcclComm commoPtr = &comm;
-    MOCKER_CPP(&HcclCommunicator::SwitchNic, HcclResult(HcclCommunicator:: *)(uint32_t, uint32_t *, bool *))
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::SwitchNic, HcclResult(HcclCommunicator::*)(uint32_t, uint32_t*, bool*))
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
 
     uint32_t nRanks = 1;
     uint32_t ranks[1] = {0};
@@ -105,28 +98,20 @@ TEST_F(SwitchNicTest, ut_HcclCommunicator_SwitchNicTimeout)
     TestConstructParam_SurperPod(params, rankTable);
     unique_ptr<HcclCommunicator> communicator(new (nothrow) HcclCommunicator());
 
-    MOCKER_CPP(&HcclCommunicator::InitRaResource)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommunicator::InitRaResource).stubs().will(returnValue(HCCL_SUCCESS));
 
     communicator->Init(params, rankTable);
 
-    MOCKER_CPP(&HcclCommunicator::IsEnableBackupLink)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER_CPP(&HcclCommunicator::IsEnableBackupLink).stubs().will(returnValue(true));
 
-    MOCKER(GetExternalInputHcclLinkTimeOut)
-    .stubs()
-    .will(returnValue(0));
+    MOCKER(GetExternalInputHcclLinkTimeOut).stubs().will(returnValue(0));
 
     MachinePara machinePara;
     std::chrono::milliseconds timeout;
-    std::shared_ptr<Transport> link(new Transport(new (std::nothrow) TransportIbverbs(
-        nullptr, nullptr, machinePara, timeout)));
+    std::shared_ptr<Transport> link(
+        new Transport(new (std::nothrow) TransportIbverbs(nullptr, nullptr, machinePara, timeout)));
 
-    MOCKER_CPP(&Transport::Resume)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&Transport::Resume).stubs().will(returnValue(HCCL_SUCCESS));
 
     AlgResourceResponse resourceResponse;
     resourceResponse.opTransportResponse.resize(COMM_LEVEL_RESERVED);
@@ -172,22 +157,23 @@ TEST_F(SwitchNicTest, ut_HcclCommunicator_GetSwitchRanks)
     unique_ptr<HcclCommunicator> communicator(new (nothrow) HcclCommunicator());
     communicator->userRankSize_ = 1;
 
-    u32 switchRankNum{ 0 };
+    u32 switchRankNum{0};
     u32 switchRankList[AICPU_MAX_RANK_NUM]{};
     bool switchUseBackup[AICPU_MAX_RANK_NUM] = {};
-    u32 nicStatusNum{ 0 };
+    u32 nicStatusNum{0};
     u8 remoteRankNicStatus[AICPU_MAX_RANK_NUM]{};
     bool needCheckDefaultNic;
     bool needCheckBackupNic;
 
-    ret = communicator->GetSwitchRanks(switchRankList, switchUseBackup, switchRankNum, remoteRankNicStatus,
-        nicStatusNum, needCheckDefaultNic, needCheckBackupNic);
+    ret = communicator->GetSwitchRanks(
+        switchRankList, switchUseBackup, switchRankNum, remoteRankNicStatus, nicStatusNum, needCheckDefaultNic,
+        needCheckBackupNic);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
     GlobalMockObject::verify();
 }
 
-HcclResult GetChangeLinkInfo(AicpuHdc *This, shared_ptr<HDCommunicate> h2dTransfer, ChangeLinkInfo &changeLinkInfo)
+HcclResult GetChangeLinkInfo(AicpuHdc* This, shared_ptr<HDCommunicate> h2dTransfer, ChangeLinkInfo& changeLinkInfo)
 {
     changeLinkInfo.remoteRankNum = 1;
     changeLinkInfo.remoteRankList[0] = 1;
@@ -198,19 +184,13 @@ HcclResult GetChangeLinkInfo(AicpuHdc *This, shared_ptr<HDCommunicate> h2dTransf
 
 TEST_F(SwitchNicTest, ut_hcclCommAicpu_SwitchNic)
 {
-    hccl::HcclCommAicpu *hcclCommAicpu = new hccl::HcclCommAicpu;
+    hccl::HcclCommAicpu* hcclCommAicpu = new hccl::HcclCommAicpu;
 
-    MOCKER_CPP(&AicpuHdc::GetOpExecChangeLink)
-    .stubs()
-    .will(invoke(GetChangeLinkInfo));
+    MOCKER_CPP(&AicpuHdc::GetOpExecChangeLink).stubs().will(invoke(GetChangeLinkInfo));
 
-    MOCKER_CPP(&HcclCommAicpu::SwitchNicWaitHandleCommand)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommAicpu::SwitchNicWaitHandleCommand).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcclCommAicpu::SwitchNicWaitResult)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommAicpu::SwitchNicWaitResult).stubs().will(returnValue(HCCL_SUCCESS));
 
     AlgResourceResponse resourceResponse;
     resourceResponse.opTransportResponse.resize(COMM_LEVEL_RESERVED);
@@ -224,7 +204,7 @@ TEST_F(SwitchNicTest, ut_hcclCommAicpu_SwitchNic)
     hcclCommAicpu->resMap_.emplace("test1", resourceResponse);
 
     LINK backupLink;
-    DispatcherPub *dispatcher = new (std::nothrow) DispatcherPub(0);
+    DispatcherPub* dispatcher = new (std::nothrow) DispatcherPub(0);
     TransportPara para;
     std::unique_ptr<NotifyPool> notifyPool = nullptr;
     notifyPool.reset(new (std::nothrow) NotifyPool());
@@ -232,12 +212,8 @@ TEST_F(SwitchNicTest, ut_hcclCommAicpu_SwitchNic)
     para.timeout = std::chrono::seconds(300);
     TransportDeviceP2pData transDevP2pData;
     TransportDeviceIbverbsData transDevIbverbsData;
-    backupLink.reset(new Transport(TransportType::TRANS_TYPE_IBV_EXP,
-        para,
-        dispatcher,
-        notifyPool,
-        machinePara,
-        transDevP2pData,
+    backupLink.reset(new Transport(
+        TransportType::TRANS_TYPE_IBV_EXP, para, dispatcher, notifyPool, machinePara, transDevP2pData,
         transDevIbverbsData));
     vector<LINK> linkRes;
     linkRes.emplace_back(backupLink);
@@ -256,12 +232,12 @@ TEST_F(SwitchNicTest, ut_hcclCommAicpu_SwitchNic)
     GlobalMockObject::verify();
 }
 
-HcclResult GetHandleCmdSuccess(AicpuHdc *This, shared_ptr<HDCommunicate> h2dTransfer, KfcCommand &cmd)
+HcclResult GetHandleCmdSuccess(AicpuHdc* This, shared_ptr<HDCommunicate> h2dTransfer, KfcCommand& cmd)
 {
     cmd = KfcCommand::kWaitSwitchNic;
     return HCCL_SUCCESS;
 }
-HcclResult GetHandleCmdNone(AicpuHdc *This, shared_ptr<HDCommunicate> h2dTransfer, KfcCommand &cmd)
+HcclResult GetHandleCmdNone(AicpuHdc* This, shared_ptr<HDCommunicate> h2dTransfer, KfcCommand& cmd)
 {
     cmd = KfcCommand::kNone;
     return HCCL_SUCCESS;
@@ -269,7 +245,7 @@ HcclResult GetHandleCmdNone(AicpuHdc *This, shared_ptr<HDCommunicate> h2dTransfe
 
 TEST_F(SwitchNicTest, ut_hcclCommAicpu_SwitchNic_WaitHandleCommand)
 {
-    hccl::HcclCommAicpu *hcclCommAicpu = new hccl::HcclCommAicpu;
+    hccl::HcclCommAicpu* hcclCommAicpu = new hccl::HcclCommAicpu;
     AlgResourceResponse resourceResponse;
     resourceResponse.opTransportResponse.resize(COMM_LEVEL_RESERVED);
     resourceResponse.opTransportResponse[COMM_LEVEL0].resize(2);
@@ -284,21 +260,15 @@ TEST_F(SwitchNicTest, ut_hcclCommAicpu_SwitchNic_WaitHandleCommand)
     std::unordered_map<std::string, OpCommTransport> reservedLinks;
     reservedLinks.emplace("test1", resourceResponse.opTransportResponse);
 
-    MOCKER_CPP(&AicpuHdc::GetOpExecCtrlCmd)
-    .stubs()
-    .will(invoke(GetHandleCmdSuccess));
+    MOCKER_CPP(&AicpuHdc::GetOpExecCtrlCmd).stubs().will(invoke(GetHandleCmdSuccess));
 
     HcclResult ret = hcclCommAicpu->SwitchNicWaitHandleCommand(reservedLinks);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     GlobalMockObject::verify();
 
-    MOCKER_CPP(&AicpuHdc::GetOpExecCtrlCmd)
-    .stubs()
-    .will(invoke(GetHandleCmdNone));
+    MOCKER_CPP(&AicpuHdc::GetOpExecCtrlCmd).stubs().will(invoke(GetHandleCmdNone));
 
-    MOCKER_CPP(&HcclCommAicpu::HcclGetWaitRetryCmdTimeout)
-    .stubs()
-    .will(returnValue(0));
+    MOCKER_CPP(&HcclCommAicpu::HcclGetWaitRetryCmdTimeout).stubs().will(returnValue(0));
 
     ret = hcclCommAicpu->SwitchNicWaitHandleCommand(reservedLinks);
     EXPECT_EQ(ret, HCCL_E_TIMEOUT);
@@ -307,19 +277,19 @@ TEST_F(SwitchNicTest, ut_hcclCommAicpu_SwitchNic_WaitHandleCommand)
     delete hcclCommAicpu;
 }
 
-HcclResult GetResultCmdSuccess(AicpuHdc *This, shared_ptr<HDCommunicate> h2dTransfer, KfcCommand &cmd)
+HcclResult GetResultCmdSuccess(AicpuHdc* This, shared_ptr<HDCommunicate> h2dTransfer, KfcCommand& cmd)
 {
     cmd = KfcCommand::kAllSwitched;
     return HCCL_SUCCESS;
 }
 
-HcclResult GetResultCmdFail(AicpuHdc *This, shared_ptr<HDCommunicate> h2dTransfer, KfcCommand &cmd)
+HcclResult GetResultCmdFail(AicpuHdc* This, shared_ptr<HDCommunicate> h2dTransfer, KfcCommand& cmd)
 {
     cmd = KfcCommand::kSwitchFail;
     return HCCL_SUCCESS;
 }
 
-HcclResult GetResultCmdNone(AicpuHdc *This, shared_ptr<HDCommunicate> h2dTransfer, KfcCommand &cmd)
+HcclResult GetResultCmdNone(AicpuHdc* This, shared_ptr<HDCommunicate> h2dTransfer, KfcCommand& cmd)
 {
     cmd = KfcCommand::kNone;
     return HCCL_SUCCESS;
@@ -327,7 +297,7 @@ HcclResult GetResultCmdNone(AicpuHdc *This, shared_ptr<HDCommunicate> h2dTransfe
 
 TEST_F(SwitchNicTest, ut_hcclCommAicpu_SwitchNic_WaitResult)
 {
-    hccl::HcclCommAicpu *hcclCommAicpu = new hccl::HcclCommAicpu;
+    hccl::HcclCommAicpu* hcclCommAicpu = new hccl::HcclCommAicpu;
 
     AlgResourceResponse resourceResponse;
     resourceResponse.opTransportResponse.resize(COMM_LEVEL_RESERVED);
@@ -343,29 +313,21 @@ TEST_F(SwitchNicTest, ut_hcclCommAicpu_SwitchNic_WaitResult)
     std::unordered_map<std::string, OpCommTransport> reservedLinks;
     reservedLinks.emplace("test1", resourceResponse.opTransportResponse);
 
-    MOCKER_CPP(&AicpuHdc::GetOpExecCtrlCmd)
-    .stubs()
-    .will(invoke(GetResultCmdSuccess));
+    MOCKER_CPP(&AicpuHdc::GetOpExecCtrlCmd).stubs().will(invoke(GetResultCmdSuccess));
 
     HcclResult ret = hcclCommAicpu->SwitchNicWaitResult(reservedLinks);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     GlobalMockObject::verify();
 
-    MOCKER_CPP(&AicpuHdc::GetOpExecCtrlCmd)
-    .stubs()
-    .will(invoke(GetResultCmdFail));
+    MOCKER_CPP(&AicpuHdc::GetOpExecCtrlCmd).stubs().will(invoke(GetResultCmdFail));
 
     ret = hcclCommAicpu->SwitchNicWaitResult(reservedLinks);
     EXPECT_EQ(ret, HCCL_E_INTERNAL);
     GlobalMockObject::verify();
 
-    MOCKER_CPP(&AicpuHdc::GetOpExecCtrlCmd)
-    .stubs()
-    .will(invoke(GetResultCmdNone));
+    MOCKER_CPP(&AicpuHdc::GetOpExecCtrlCmd).stubs().will(invoke(GetResultCmdNone));
 
-    MOCKER(GetExternalInputHcclLinkTimeOut)
-    .stubs()
-    .will(returnValue(0));
+    MOCKER(GetExternalInputHcclLinkTimeOut).stubs().will(returnValue(0));
 
     ret = hcclCommAicpu->SwitchNicWaitResult(reservedLinks);
     EXPECT_EQ(ret, HCCL_E_TIMEOUT);
@@ -375,14 +337,14 @@ TEST_F(SwitchNicTest, ut_hcclCommAicpu_SwitchNic_WaitResult)
 }
 
 hccl::HcclCommAicpu g_commForTest;
-HcclResult AicpuGetCommAll_stub(std::vector<std::pair<std::string, hccl::HcclCommAicpu *>> &aicpuCommInfo)
+HcclResult AicpuGetCommAll_stub(std::vector<std::pair<std::string, hccl::HcclCommAicpu*>>& aicpuCommInfo)
 {
     g_commForTest.InitCommInfoStatus(true);
     aicpuCommInfo.push_back(std::make_pair("group1", &g_commForTest));
     return HCCL_SUCCESS;
 }
 
-HcclResult BackGroundGetCmd_stub(hccl::HcclCommAicpu*This, KfcCommand &cmd)
+HcclResult BackGroundGetCmd_stub(hccl::HcclCommAicpu* This, KfcCommand& cmd)
 {
     cmd = KfcCommand::kSwitchNic;
     return HCCL_SUCCESS;
@@ -390,23 +352,15 @@ HcclResult BackGroundGetCmd_stub(hccl::HcclCommAicpu*This, KfcCommand &cmd)
 
 TEST_F(SwitchNicTest, ut_ExecutorTracer_HandleSwitchNic)
 {
-    AicpuComContext *ctx = AicpuGetComContext();
+    AicpuComContext* ctx = AicpuGetComContext();
     ctx->isStopLaunch = false;
     KfcCommand kCmd = KfcCommand::kDestroyComm;
     memset_s(&kCmd, sizeof(KfcCommand), 0, sizeof(KfcCommand));
     KfcExecStatus response;
     memset_s(&response, sizeof(KfcExecStatus), 0, sizeof(KfcExecStatus));
-    MOCKER(AicpuHcclProcess::AicpuGetCommAll)
-        .stubs()
-        .will(invoke(AicpuGetCommAll_stub));
-    MOCKER_CPP(&HcclCommAicpu::BackGroundGetCmd)
-        .stubs()
-        .will(invoke(BackGroundGetCmd_stub));
-    MOCKER_CPP(&HcclCommAicpu::SwitchNic)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&HcclCommAicpu::ResponseBackGroundStatus)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER(AicpuHcclProcess::AicpuGetCommAll).stubs().will(invoke(AicpuGetCommAll_stub));
+    MOCKER_CPP(&HcclCommAicpu::BackGroundGetCmd).stubs().will(invoke(BackGroundGetCmd_stub));
+    MOCKER_CPP(&HcclCommAicpu::SwitchNic).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcclCommAicpu::ResponseBackGroundStatus).stubs().will(returnValue(HCCL_SUCCESS));
     dfx_tracer::ExecutorTracer::HandleSwitchNic(ctx);
 }

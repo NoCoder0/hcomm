@@ -28,21 +28,16 @@
 #include "hccl_types.h"
 #include "adapter_rts.h"
 #include "hcom_common.h"
-#include "env_config/env_config.h"
+#include "env_config/env_config_v2.h"
 
 #undef private
 #undef protected
 
 using namespace Hccl;
 
-
-
 class CcuConnTest : public testing::Test {
-protected:    
-    static void SetUpTestCase()
-    {
-        std::cout << "CcuConnTest tests set up." << std::endl;
-    }
+protected:
+    static void SetUpTestCase() { std::cout << "CcuConnTest tests set up." << std::endl; }
 
     static void TearDownTestCase()
     {
@@ -61,10 +56,10 @@ protected:
         GlobalMockObject::verify();
         std::cout << "A Test case in CcuConnTest TearDown" << std::endl;
     }
-
 };
 
-pair<unique_ptr<hcomm::CcuConnection>, vector<unique_ptr<hcomm::CcuJetty>>> MockMakeCcuConnection(hcomm::TpProtocol tpProtocol)
+pair<unique_ptr<hcomm::CcuConnection>, vector<unique_ptr<hcomm::CcuJetty>>>
+MockMakeCcuConnection(hcomm::TpProtocol tpProtocol)
 {
     constexpr uint64_t fakeMemAddr = 0x12345678;
 
@@ -83,9 +78,9 @@ pair<unique_ptr<hcomm::CcuConnection>, vector<unique_ptr<hcomm::CcuJetty>>> Mock
     hcomm::CcuChannelInfo channelInfo;
     channelInfo.channelId = 1;
     channelInfo.dieId = 1;
-    
+
     vector<unique_ptr<hcomm::CcuJetty>> ccuJettys;
-    vector<hcomm::CcuJetty *> ccuJettyPtrs;
+    vector<hcomm::CcuJetty*> ccuJettyPtrs;
     for (uint32_t i = 0; i < 2; i++) {
         hcomm::CcuJettyInfo jettyInfo;
         jettyInfo.jettyCtxId = 1 + i;
@@ -111,6 +106,21 @@ pair<unique_ptr<hcomm::CcuConnection>, vector<unique_ptr<hcomm::CcuJetty>>> Mock
     return {std::move(connection), std::move(ccuJettys)};
 }
 
+#define SETUP_CCU_JETTY_MOCKS()                                                                 \
+    do {                                                                                        \
+        MOCKER(HcclGetThreadDeviceId).stubs().will(returnValue(0));                             \
+        MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().will(returnValue(static_cast<s32>(0)));    \
+        void* rdmaHandle = reinterpret_cast<void*>(0x300);                                      \
+        MOCKER_CPP(&Hccl::RdmaHandleManager::GetByIp).stubs().will(returnValue(rdmaHandle));    \
+        MOCKER_CPP(&Hccl::RdmaHandleManager::IsHandleValid).stubs().will(returnValue(true));    \
+        MOCKER_CPP(&Hccl::RdmaHandleManager::GetJfcHandle)                                      \
+            .stubs()                                                                            \
+            .will(returnValue(static_cast<Hccl::JfcHandle>(0x400ULL)));                         \
+        MOCKER_CPP(&Hccl::RdmaHandleManager::GetTokenIdInfo)                                    \
+            .stubs()                                                                            \
+            .will(returnValue(std::make_pair(static_cast<Hccl::TokenIdHandle>(0x500ULL), 0U))); \
+    } while (0)
+
 TEST_F(CcuConnTest, Ut_GetStatus_When_CreateAndImportJettySuccess_Expect_Return_Connected)
 {
     auto resPair = MockMakeCcuConnection(hcomm::TpProtocol::RTP);
@@ -122,7 +132,10 @@ TEST_F(CcuConnTest, Ut_GetStatus_When_CreateAndImportJettySuccess_Expect_Return_
     connection->Describe(testDfxMsg);
     GlobalMockObject::verify();
 
-    MOCKER(HrtRaGetTpAttrAsync).stubs().will(returnValue(HcclResult::HCCL_E_NOT_SUPPORT)).then(returnValue(HcclResult::HCCL_E_INTERNAL));
+    MOCKER(HrtRaGetTpAttrAsync)
+        .stubs()
+        .will(returnValue(HcclResult::HCCL_E_NOT_SUPPORT))
+        .then(returnValue(HcclResult::HCCL_E_INTERNAL));
     ret = connection->Describe(testDfxMsg);
     EXPECT_NE(ret, HcclResult::HCCL_SUCCESS);
     ret = connection->Describe(testDfxMsg);
@@ -183,7 +196,9 @@ TEST_F(CcuConnTest, Ut_GetTaTimeOut_RTP_UsesCalcTaTimeout)
     connection->tpAttrInfo_.tpAttr.at = 2;
     connection->tpAttrInfo_.tpAttr.retryTimesInit = 1;
 
-    MOCKER_CPP(&hcomm::TpMgr::CalcTaTimeout).stubs().will(returnValue(static_cast<uint8_t>(24)));
+    MOCKER_CPP(static_cast<uint8_t (*)(hcomm::TpProtocol, uint8_t, uint32_t)>(&hcomm::TpMgr::CalcTaTimeout))
+        .stubs()
+        .will(returnValue(static_cast<uint8_t>(24)));
 
     HcclResult ret = connection->GetTaTimeOut();
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
@@ -204,7 +219,9 @@ TEST_F(CcuConnTest, Ut_UpdateInitStatus_TP_ATTR_GETTING_State_Transitions)
     connection->tpAttrInfo_.tpAttr.at = 2;
 
     MOCKER_CPP(&hcomm::TpMgr::GetTpAttr).stubs().will(returnValue(HcclResult::HCCL_SUCCESS));
-    MOCKER_CPP(&hcomm::TpMgr::CalcTaTimeout).stubs().will(returnValue(static_cast<uint8_t>(16)));
+    MOCKER_CPP(static_cast<uint8_t (*)(hcomm::TpProtocol, uint8_t, uint32_t)>(&hcomm::TpMgr::CalcTaTimeout))
+        .stubs()
+        .will(returnValue(static_cast<uint8_t>(16)));
     MOCKER_CPP(&hcomm::CcuJetty::CreateJetty).stubs().will(returnValue(HcclResult::HCCL_SUCCESS));
 
     HcclResult ret = connection->UpdateInitStatus();
@@ -218,7 +235,7 @@ TEST_F(CcuConnTest, Ut_UpdateInitStatus_TP_ATTR_GETTING_State_Transitions)
     GlobalMockObject::verify();
 }
 
-HcclResult StubTpMgrGetTpInfoWithMappedPriority(hcomm::TpMgr *, const hcomm::GetTpInfoParam &, hcomm::TpInfo &tpInfo)
+HcclResult StubTpMgrGetTpInfoWithMappedPriority(hcomm::TpMgr*, const hcomm::GetTpInfoParam&, hcomm::TpInfo& tpInfo)
 {
     tpInfo.tpHandle = 0x4321ULL;
     tpInfo.hasMappedJettyPriority = true;
@@ -237,17 +254,7 @@ TEST_F(CcuConnTest, Ut_CcuJetty_SetMappedJettyPriority_When_NotCreated_SetsQos)
     jettyInfo.sqBufSize = 1024;
     jettyInfo.sqDepth = 4;
 
-    MOCKER(HcclGetThreadDeviceId).stubs().will(returnValue(0));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<s32>(0)));
-    void *rdmaHandle = reinterpret_cast<void *>(0x300);
-    MOCKER_CPP(&Hccl::RdmaHandleManager::GetByIp).stubs().will(returnValue(rdmaHandle));
-    MOCKER_CPP(&Hccl::RdmaHandleManager::IsHandleValid).stubs().will(returnValue(true));
-    MOCKER_CPP(&Hccl::RdmaHandleManager::GetJfcHandle)
-        .stubs()
-        .will(returnValue(static_cast<Hccl::JfcHandle>(0x400ULL)));
-    MOCKER_CPP(&Hccl::RdmaHandleManager::GetTokenIdInfo)
-        .stubs()
-        .will(returnValue(std::make_pair(static_cast<Hccl::TokenIdHandle>(0x500ULL), 0U)));
+    SETUP_CCU_JETTY_MOCKS();
 
     hcomm::CcuJetty jetty(locAddrIp, jettyInfo);
     ASSERT_EQ(jetty.Init(), HcclResult::HCCL_SUCCESS);
@@ -266,17 +273,7 @@ TEST_F(CcuConnTest, Ut_CcuJetty_SetMappedJettyPriority_When_Conflict_Expect_Inte
     jettyInfo.sqBufSize = 512;
     jettyInfo.sqDepth = 4;
 
-    MOCKER(HcclGetThreadDeviceId).stubs().will(returnValue(0));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<s32>(0)));
-    void *rdmaHandle = reinterpret_cast<void *>(0x300);
-    MOCKER_CPP(&Hccl::RdmaHandleManager::GetByIp).stubs().will(returnValue(rdmaHandle));
-    MOCKER_CPP(&Hccl::RdmaHandleManager::IsHandleValid).stubs().will(returnValue(true));
-    MOCKER_CPP(&Hccl::RdmaHandleManager::GetJfcHandle)
-        .stubs()
-        .will(returnValue(static_cast<Hccl::JfcHandle>(0x400ULL)));
-    MOCKER_CPP(&Hccl::RdmaHandleManager::GetTokenIdInfo)
-        .stubs()
-        .will(returnValue(std::make_pair(static_cast<Hccl::TokenIdHandle>(0x500ULL), 0U)));
+    SETUP_CCU_JETTY_MOCKS();
 
     hcomm::CcuJetty jetty(locAddrIp, jettyInfo);
     ASSERT_EQ(jetty.Init(), HcclResult::HCCL_SUCCESS);
@@ -290,13 +287,15 @@ TEST_F(CcuConnTest, Ut_UpdateInitStatus_WithMappedPriority_SetsJettyQos)
 {
     auto resPair = MockMakeCcuConnection(hcomm::TpProtocol::RTP);
     auto connection = resPair.first.get();
-    auto &jetty = *resPair.second.front();
+    auto& jetty = *resPair.second.front();
     connection->tpProtocol_ = hcomm::TpProtocol::RTP;
     connection->innerStatus_ = hcomm::CcuConnection::InnerStatus::INIT;
 
     MOCKER_CPP(&hcomm::TpMgr::GetTpInfo).stubs().will(invoke(StubTpMgrGetTpInfoWithMappedPriority));
     MOCKER_CPP(&hcomm::TpMgr::GetTpAttr).stubs().will(returnValue(HcclResult::HCCL_SUCCESS));
-    MOCKER_CPP(&hcomm::TpMgr::CalcTaTimeout).stubs().will(returnValue(static_cast<uint8_t>(16)));
+    MOCKER_CPP(static_cast<uint8_t (*)(hcomm::TpProtocol, uint8_t, uint32_t)>(&hcomm::TpMgr::CalcTaTimeout))
+        .stubs()
+        .will(returnValue(static_cast<uint8_t>(16)));
     MOCKER_CPP(&hcomm::CcuJetty::CreateJetty).stubs().will(returnValue(HcclResult::HCCL_SUCCESS));
 
     HcclResult ret = connection->UpdateInitStatus();
@@ -309,7 +308,7 @@ TEST_F(CcuConnTest, Ut_UpdateInitStatus_WithMappedPriority_SetsJettyQos)
 
 hcomm::GetTpInfoParam gCapturedConnTpParam{};
 
-HcclResult StubTpMgrGetTpInfoCaptureParam(hcomm::TpMgr *, const hcomm::GetTpInfoParam &param, hcomm::TpInfo &tpInfo)
+HcclResult StubTpMgrGetTpInfoCaptureParam(hcomm::TpMgr*, const hcomm::GetTpInfoParam& param, hcomm::TpInfo& tpInfo)
 {
     gCapturedConnTpParam = param;
     tpInfo.tpHandle = 0x4321ULL;
@@ -333,4 +332,43 @@ TEST_F(CcuConnTest, Ut_MakeGetTpInfoParam_When_QosAboveSeven_Expect_ClampsToDefa
     EXPECT_EQ(gCapturedConnTpParam.qos, static_cast<uint32_t>(::EnvConfig::UB_QOS_DEFAULT));
 
     GlobalMockObject::verify();
+}
+
+// ==================== 对端声明jetty数量校验（防超大内存申请） ====================
+
+TEST_F(CcuConnTest, Ut_Deserialize_When_JettySizeMismatch_Expect_E_PARA)
+{
+    auto resPair = MockMakeCcuConnection(hcomm::TpProtocol::RTP);
+    auto connection = resPair.first.get();
+    connection->status_ = hcomm::CcuConnStatus::EXCHANGEABLE;
+
+    // 本地jettyNum_为2，对端声明数量写为3，Deserialize应在校验处直接拒绝
+    Hccl::BinaryStream dtoStream;
+    dtoStream << connection->ccuBufAddr_;
+    dtoStream << connection->ccuBufSize_;
+    dtoStream << connection->ccuBufTokenId_;
+    dtoStream << connection->ccuBufTokenValue_;
+    uint32_t wrongJettySize = 3;
+    dtoStream << wrongJettySize;
+    std::vector<char> dtoData{};
+    dtoStream.Dump(dtoData);
+
+    EXPECT_EQ(connection->Deserialize(dtoData), HcclResult::HCCL_E_PARA);
+    EXPECT_TRUE(connection->importJettyCtxs_.empty());
+}
+
+TEST_F(CcuConnTest, Ut_Deserialize_When_JettySizeEqual_Expect_SUCCESS)
+{
+    auto resPair = MockMakeCcuConnection(hcomm::TpProtocol::RTP);
+    auto connection = resPair.first.get();
+    connection->status_ = hcomm::CcuConnStatus::EXCHANGEABLE;
+
+    // 本端序列化的jetty数量与本地jettyNum_一致，Deserialize应正常解包
+    std::vector<char> dtoData{};
+    ASSERT_EQ(connection->Serialize(dtoData), HcclResult::HCCL_SUCCESS);
+    EXPECT_EQ(connection->Deserialize(dtoData), HcclResult::HCCL_SUCCESS);
+    EXPECT_EQ(connection->rmtCcuBufAddr_, connection->ccuBufAddr_);
+    EXPECT_EQ(connection->rmtCcuBufTokenId_, connection->ccuBufTokenId_);
+    EXPECT_EQ(connection->rmtCcuBufTokenValue_, connection->ccuBufTokenValue_);
+    EXPECT_EQ(connection->importJettyCtxs_.size(), connection->jettyNum_);
 }

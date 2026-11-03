@@ -13,10 +13,10 @@
 
 #include <stdio.h>
 
-#define RS_TEST_MEM_SIZE  32
-#define RS_TEST_MEM_PAGE_SIZE  4096
+#define RS_TEST_MEM_SIZE 32
+#define RS_TEST_MEM_PAGE_SIZE 4096
 
-#define rs_ut_msg(fmt, args...)	fprintf(stderr, "\t>>>>> " fmt, ##args)
+#define rs_ut_msg(fmt, args...) fprintf(stderr, "\t>>>>> " fmt, ##args)
 
 void TcRsAbnormal();
 void TcRsAbnormal2();
@@ -165,6 +165,7 @@ void TcDlHalSetClearUserConfig();
 
 void TcRsTypicalRegisterMr();
 void TcRsTypicalQpModify();
+void TcRsGetQpHyperFeature();
 
 void Tcrs_ssl_get_cert();
 void tc_rs_ssl_X509_store_init();

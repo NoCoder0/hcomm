@@ -10,10 +10,7 @@
 
 #include "net_slog.h"
 
-struct nslb_slog_api_ops g_nslb_slog_api_ops = {
-    .DlogRecord  = NULL,
-    .CheckLogLevel   = NULL
-};
+struct nslb_slog_api_ops g_nslb_slog_api_ops = {.DlogRecord = NULL, .CheckLogLevel = NULL};
 
 static void *g_slog_api_handle = NULL;
 
@@ -39,15 +36,14 @@ int NetCoCloseSlogSo(void)
 
 int NetCoSlogApiInit(void)
 {
-    g_nslb_slog_api_ops.DlogRecord = (void (*)(int moduleId, int level, const char *fmt, ...))
-        dlsym(g_slog_api_handle, "DlogRecord");
+    g_nslb_slog_api_ops.DlogRecord = (void (*)(int moduleId, int level, const char *fmt, ...))dlsym(g_slog_api_handle,
+        "DlogRecord");
     if (g_nslb_slog_api_ops.DlogRecord == NULL) {
         printf("DlogRecord is NULL!");
         return -1;
     }
 
-    g_nslb_slog_api_ops.CheckLogLevel = (int (*)(int moduleId, int logLevel))
-        dlsym(g_slog_api_handle, "CheckLogLevel");
+    g_nslb_slog_api_ops.CheckLogLevel = (int (*)(int moduleId, int logLevel))dlsym(g_slog_api_handle, "CheckLogLevel");
     if (g_nslb_slog_api_ops.CheckLogLevel == NULL) {
         printf("CheckLogLevel is NULL!");
         return -1;

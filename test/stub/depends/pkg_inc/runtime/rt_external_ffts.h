@@ -20,35 +20,34 @@ extern "C" {
 #endif
 
 #pragma pack(push)
-#pragma pack (1)
+#pragma pack(1)
 
 // context desc addr type
-#define RT_FFTS_PLUS_CTX_DESC_ADDR_TYPE_HOST   (0x0U)
+#define RT_FFTS_PLUS_CTX_DESC_ADDR_TYPE_HOST (0x0U)
 #define RT_FFTS_PLUS_CTX_DESC_ADDR_TYPE_DEVICE (0x1U)
 
 typedef struct tagFftsPlusDumpInfo {
-    const void *loadDumpInfo;
-    const void *unloadDumpInfo;
+    const void* loadDumpInfo;
+    const void* unloadDumpInfo;
     uint32_t loadDumpInfolen;
     uint32_t unloadDumpInfolen;
 } rtFftsPlusDumpInfo_t;
 
 typedef struct tagFftsPlusTaskInfo {
-    const rtFftsPlusSqe_t *fftsPlusSqe;
-    const void *descBuf;                   // include total context
-    size_t      descBufLen;                // the length of descBuf
+    const rtFftsPlusSqe_t* fftsPlusSqe;
+    const void* descBuf;                   // include total context
+    size_t descBufLen;                     // the length of descBuf
     rtFftsPlusDumpInfo_t fftsPlusDumpInfo; // used only in the dynamic shape
     uint32_t descAddrType;                 // 0:host addr 1:device addr
     uint32_t argsHandleInfoNum;
-    void **argsHandleInfoPtr;
+    void** argsHandleInfoPtr;
 } rtFftsPlusTaskInfo_t;
 
 #pragma pack(pop)
 
-RTS_API rtError_t rtFftsPlusTaskLaunch(rtFftsPlusTaskInfo_t *fftsPlusTaskInfo, rtStream_t stm);
+RTS_API rtError_t rtFftsPlusTaskLaunch(rtFftsPlusTaskInfo_t* fftsPlusTaskInfo, rtStream_t stm);
 
-RTS_API rtError_t rtFftsPlusTaskLaunchWithFlag(rtFftsPlusTaskInfo_t *fftsPlusTaskInfo, rtStream_t stm,
-                                               uint32_t flag);
+RTS_API rtError_t rtFftsPlusTaskLaunchWithFlag(rtFftsPlusTaskInfo_t* fftsPlusTaskInfo, rtStream_t stm, uint32_t flag);
 
 #if defined(__cplusplus) && !defined(COMPILE_OMG_PACKAGE)
 }

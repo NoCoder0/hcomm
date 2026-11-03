@@ -8,6 +8,7 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
+#include "config_log.h"
 #include "hccp_dl.h"
 #include "hccp_tlv.h"
 #include "dl_ccu_function.h"
@@ -29,26 +30,26 @@ struct RsCcuOps gCcuOps = {
 STATIC int RsCcuDeviceApiInit(void)
 {
 #ifndef CA_CONFIG_LLT
-    gCcuOps.rsCcuInit = (int (*)(void)) HccpDlsym(gCcuApiHandle, "ccu_init");
+    gCcuOps.rsCcuInit = (int (*)(void))HccpDlsym(gCcuApiHandle, "ccu_init");
     DL_API_RET_IS_NULL_CHECK(gCcuOps.rsCcuInit, "ccu_init");
 
-    gCcuOps.rsCcuUninit = (int (*)(void)) HccpDlsym(gCcuApiHandle, "ccu_uninit");
+    gCcuOps.rsCcuUninit = (int (*)(void))HccpDlsym(gCcuApiHandle, "ccu_uninit");
     DL_API_RET_IS_NULL_CHECK(gCcuOps.rsCcuUninit, "ccu_uninit");
 
-    gCcuOps.rsCcuCustomChannel = (int (*)(const struct channel_info_in *in, struct channel_info_out *out))
-        HccpDlsym(gCcuApiHandle, "ccu_custom_channel");
+    gCcuOps.rsCcuCustomChannel = (int (*)(const struct channel_info_in *in,
+        struct channel_info_out *out))HccpDlsym(gCcuApiHandle, "ccu_custom_channel");
     DL_API_RET_IS_NULL_CHECK(gCcuOps.rsCcuCustomChannel, "ccu_custom_channel");
 
-    gCcuOps.rsCcuGetCqeBaseAddr = (unsigned long long (*)(unsigned int dieId))
-        HccpDlsym(gCcuApiHandle, "ccu_get_cqe_base_addr");
+    gCcuOps.rsCcuGetCqeBaseAddr = (unsigned long long (*)(unsigned int dieId))HccpDlsym(gCcuApiHandle,
+        "ccu_get_cqe_base_addr");
     DL_API_RET_IS_NULL_CHECK(gCcuOps.rsCcuGetCqeBaseAddr, "ccu_get_cqe_base_addr");
 
     gCcuOps.rsCcuGetMemInfo = (int (*)(unsigned int dieId, unsigned long long memTypeBitmap,
-        struct ccu_mem_rsp *rsp)) HccpDlsym(gCcuApiHandle, "ccu_get_mem_info");
+        struct ccu_mem_rsp *rsp))HccpDlsym(gCcuApiHandle, "ccu_get_mem_info");
     DL_API_RET_IS_NULL_CHECK(gCcuOps.rsCcuGetMemInfo, "ccu_get_mem_info");
 
-    gCcuOps.rsCcuTlvRequest = (int (*)(struct ccu_tlv_request_info *tlvRequestInfo)) 
-        HccpDlsym(gCcuApiHandle, "ccu_tlv_request");
+    gCcuOps.rsCcuTlvRequest = (int (*)(struct ccu_tlv_request_info *tlvRequestInfo))HccpDlsym(gCcuApiHandle,
+        "ccu_tlv_request");
     DL_API_RET_IS_NULL_INFO(gCcuOps.rsCcuTlvRequest, "ccu_tlv_request");
 #endif
     return 0;
@@ -86,8 +87,11 @@ int RsCcuApiInit(void)
     int ret;
 
     ret = RsOpenCcuSo();
-    CHK_PRT_RETURN(ret, hccp_err("HccpDlopen[libccu-user-drv.so] failed! ret=[%d],"\
-    "Please check ccu driver has been installed", ret), ret);
+    CHK_PRT_RETURN(ret,
+        hccp_err("HccpDlopen[libccu-user-drv.so] failed! ret=[%d],"
+                 "Please check ccu driver has been installed",
+            ret),
+        ret);
 
     ret = RsCcuDeviceApiInit();
     if (ret != 0) {
@@ -150,7 +154,7 @@ int RsCcuUninit(void)
     return gCcuOps.rsCcuUninit();
 }
 
-int RsCcuGetMemInfo(char *dataIn, char* dataOut, unsigned int *bufferSize)
+int RsCcuGetMemInfo(char *dataIn, char *dataOut, unsigned int *bufferSize)
 {
     struct ccu_mem_rsp *rsp = (struct ccu_mem_rsp *)dataOut;
     struct CcuMemReq *memReq = (struct CcuMemReq *)dataIn;
@@ -165,23 +169,27 @@ int RsCcuGetMemInfo(char *dataIn, char* dataOut, unsigned int *bufferSize)
     return gCcuOps.rsCcuGetMemInfo(memReq->udieIdx, memReq->memTypeBitmap, rsp);
 }
 
-bool isCcuTlvReqExist() {
+bool isCcuTlvReqExist(void)
+{
     if (gCcuApiHandle == NULL || gCcuOps.rsCcuTlvRequest == NULL) {
 #ifndef CA_CONFIG_LLT
-        hccp_info("g_ccu_api_handle is NULL or rsCcuTlvRequest is NULL");
+        hccp_info_rma("g_ccu_api_handle is NULL or rsCcuTlvRequest is NULL");
         return false;
 #endif
     }
     return true;
 }
 
-int RsCcuTlvRequest(unsigned int type, char *dataIn, char *dataOut, unsigned int dataInlength, unsigned int *dataOutLength) {
+int RsCcuTlvRequest(unsigned int type, char *dataIn, char *dataOut, unsigned int dataInlength,
+    unsigned int *dataOutLength, unsigned int dataOutMaxLength)
+{
     int ret = 0;
     struct ccu_tlv_request_info tlvRequestInfo = {
         .ccuMsg = type,
         .dataIn = dataIn,
         .dataInLength = dataInlength,
         .dataOut = dataOut,
+        .dataOutMaxLength = dataOutMaxLength,
     };
     ret = gCcuOps.rsCcuTlvRequest(&tlvRequestInfo);
     *dataOutLength = tlvRequestInfo.dataOutLength;

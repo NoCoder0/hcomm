@@ -8,9 +8,9 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-#include<time.h>
-#include<sys/time.h>
-#include<unistd.h>
+#include <time.h>
+#include <sys/time.h>
+#include <unistd.h>
 #include "vos_base.h"
 #include "vos_typdef.h"
 #include "vos_errno.h"
@@ -56,4 +56,3 @@ uint32_t VOS_SystimeGet(VOS_SYSTM_S *pstSystime)
 #ifdef __cplusplus
 }
 #endif
-

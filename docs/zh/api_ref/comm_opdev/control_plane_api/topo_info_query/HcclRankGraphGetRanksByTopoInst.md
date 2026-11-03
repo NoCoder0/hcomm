@@ -2,9 +2,21 @@
 
 ## 产品支持情况
 
-- Ascend 950PR/Ascend 950DT：支持
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：不支持
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：不支持
+<!-- npu="950" id1 -->
+- Ascend 950PR&950DT系列产品：支持
+<!-- end id1 -->
+<!-- npu="A3" id2 -->
+- Atlas A3系列产品：不支持
+<!-- end id2 -->
+<!-- npu="910b" id3 -->
+- Atlas A2系列产品：不支持
+<!-- end id3 -->
+<!-- npu="910" id4 -->
+- Atlas训练系列产品：不支持
+<!-- end id4 -->
+<!-- npu="310p" id5 -->
+- Atlas推理系列产品：不支持
+<!-- end id5 -->
 
 ## 功能说明
 
@@ -33,17 +45,22 @@ HcclResult HcclRankGraphGetRanksByTopoInst(HcclComm comm, uint32_t netLayer, uin
 ## 约束说明
 
 - 返回的内存由库内管理，调用者严禁释放。
-- 应及时复制返回数据，同一通信域重复调用可能使前次结果失效。
+- 返回结果为通信域内按参数缓存的只读数据。每次调用返回的结果不再变化；同一通信域内后续调用（无论参数是否相同）不会使已返回的结果失效。各通信域独立缓存，互不影响。
+- comm必须为有效的通信域句柄（由通信域创建接口获得，调用期间保持有效）。禁止传入空指针、野指针或已销毁的句柄。
+- 指针仅在快照恢复重建或通信域销毁时失效，且快照恢复/销毁不得与查询并发。
+- 不得修改返回的内存；跨线程使用前无需深拷贝。
+- 线程安全：在Ascend 950PR&950DT系列产品上，同一通信域多线程并发调用本接口是安全的；Atlas A2系列与Atlas A3系列产品不支持多线程并发调用。
+- 通信域销毁（HcclCommDestroy）不得与本接口并发，销毁前须确保所有查询线程已结束对该通信域的所有调用。
 
 ## 调用示例
 
 ```c
  //8卡通信域，同一个8p Mesh
 HcclComm comm;
-uint32_t netlayer = 0;
+uint32_t netLayer = 0;
 uint32_t topoInstId = 0;
 uint32_t *ranks;
 uint32_t rankNum;
-HcclRankGraphGetRanksByTopoInst( comm, netLayer, topoInstId,  &ranks, &rankNum )
+HcclRankGraphGetRanksByTopoInst(comm, netLayer, topoInstId, &ranks, &rankNum);
  // ranks = [0,1,2,…,7],  rankNum=8
 ```

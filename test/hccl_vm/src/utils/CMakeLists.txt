@@ -1,3 +1,4 @@
+# -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2026 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
@@ -5,39 +6,37 @@
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
 
-# --- log library (sim_log.cc + sim_yaml_config.cc + sim_common.cpp) ---
-add_library(log STATIC sim_log.cc sim_yaml_config.cc sim_common_api.cc)
+# --- log library (共享日志后端源清单：模式解析/真库转发/device 转换器) ---
+add_library(log STATIC ${HCCLVM_LOG_SOURCES})
 
 target_include_directories(log PUBLIC
         ${CMAKE_SOURCE_DIR}/include
+        ${ASCEND_CANN_PACKAGE_PATH}/include
+        ${ASCEND_CANN_PACKAGE_PATH}/include/hccl
         ${CMAKE_SOURCE_DIR}/third_party
         ${CMAKE_SOURCE_DIR}/third_party/nlohmann_json
         ${CMAKE_SOURCE_DIR}/third_party/yaml-cpp/include
+        ${CMAKE_SOURCE_DIR}/third_party/spdlog
 )
 
 target_include_directories(log PRIVATE
+        ${ASCEND_CANN_PACKAGE_PATH}/include
+        ${ASCEND_CANN_PACKAGE_PATH}/include/hccl
         ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc
         ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc/runtime
         ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc/profiling
         ${YAMLCPP_INCLUDE_DIR}
 )
 
-target_compile_definitions(log PRIVATE HAVE_YAML_CPP)
+target_compile_definitions(log PUBLIC HAVE_YAML_CPP)
 
-target_compile_options(log PRIVATE
-        -fPIC
-        -std=c++14
-        -Werror
-        -fno-common
-        -fno-strict-aliasing
-        -pipe
-        -O0
-        -g
-        -D_GLIBCXX_USE_CXX11_ABI=0
-)
+hcclvm_apply_common_flags(log)
 
 target_link_libraries(log PRIVATE yaml-cpp::yaml-cpp)
+# cann 模式经 dlopen/dlsym 解析 CANN 日志真库：dl 依赖需向消费方传递。
+target_link_libraries(log PUBLIC ${CMAKE_DL_LIBS})
 
 if(TARGET third_party_yaml_cpp)
     add_dependencies(log third_party_yaml_cpp)
@@ -46,20 +45,11 @@ endif()
 # --- loader library (from sim_loader.cc, migrated from src/loader) ---
 add_library(loader STATIC sim_loader.cc)
 
-target_compile_options(loader PRIVATE
-    -fPIC
-    -g
-    -O0
-    -D_GLIBCXX_USE_CXX11_ABI=0
-)
+hcclvm_apply_common_flags(loader)
 
 target_include_directories(loader PRIVATE
-    ${ASCEND_CANN_PACKAGE_PATH}/x86_64-linux/pkg_inc/hcomm/ccu
-    ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc/asc/hccl/internal/hcomm/pkg_inc/hcomm/ccu
     ${PROJECT_SOURCE_DIR}/include
-    ${PROJECT_SOURCE_DIR}/include/runnerdb
     ${PROJECT_SOURCE_DIR}/include/store
-    ${PROJECT_SOURCE_DIR}/include
 
     ${HCCL_VM_SRC}
     ${THRID_PARTY_DIR}/nlohmann_json
@@ -67,7 +57,7 @@ target_include_directories(loader PRIVATE
     ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc
     ${ASCEND_CANN_PACKAGE_PATH}/include
     ${ASCEND_CANN_PACKAGE_PATH}/include/hccl
-    ${ASCEND_CANN_PACKAGE_PATH}/x86_64-linux/include/toolchain
+    ${ASCEND_CANN_PACKAGE_PATH}/${CANN_ARCH_DIR}/include/toolchain
 
     ${ASCEND_CANN_PACKAGE_PATH}/include/driver
     ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc/trace
@@ -76,10 +66,16 @@ target_include_directories(loader PRIVATE
     ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc/runtime/runtime
     ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc/runtime/runtime/rts
 )
+if(NOT BUILD_LEVEL1_ONLY)
+    target_include_directories(loader PRIVATE
+        ${HCOMM_CODE_ROOT}/src/base_comm/resources/ccu/ccu_microcode
+    )
+endif()
 
 target_link_libraries(loader PRIVATE
     log
-    runnerdb
+    runtime_state
+    operation_data
     rt
 )
 

@@ -1,29 +1,12 @@
- /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- * 
- * The code snippet comes from Openharmony project.
- * 
- * Copyright (c) Huawei Technologies Co., Ltd. 2014-2020. All rights reserved.
- * Licensed under Mulan PSL v2.
- * You can use this software according to the terms and conditions of the Mulan PSL v2.
- * You may obtain a copy of Mulan PSL v2 at:
- *          http://license.coscl.org.cn/MulanPSL2
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
- * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
- * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
- * See the Mulan PSL v2 for more details.
- * Description: The user of this secure c library should include this header file in you source code.
- *              This header file declare all supported API prototype of the library,
- *              such as memcpy_s, strcpy_s, wcscpy_s,strcat_s, strncat_s, sprintf_s, scanf_s, and so on.
- * Author: lishunda
- * Create: 2014-02-25
- */
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef SECUREC_H_5D13A042_DC3F_4ED9_A8D1_882811274C27
 #define SECUREC_H_5D13A042_DC3F_4ED9_A8D1_882811274C27
@@ -51,8 +34,8 @@
 #endif
 
 /* Define error code */
-#if defined(SECUREC_NEED_ERRNO_TYPE) || !defined(__STDC_WANT_LIB_EXT1__) || \
-    (defined(__STDC_WANT_LIB_EXT1__) && (!__STDC_WANT_LIB_EXT1__))
+#if defined(SECUREC_NEED_ERRNO_TYPE) || !defined(__STDC_WANT_LIB_EXT1__) \
+    || (defined(__STDC_WANT_LIB_EXT1__) && (!__STDC_WANT_LIB_EXT1__))
 #ifndef SECUREC_DEFINED_ERRNO_TYPE
 #define SECUREC_DEFINED_ERRNO_TYPE
 /* Just check whether macrodefinition exists. */
@@ -84,7 +67,7 @@ typedef int errno_t;
 
 #ifndef ERANGE_AND_RESET
 /* Once the error is detected, the dest buffer must be reset! Value is 34 or 128 */
-#define ERANGE_AND_RESET  162
+#define ERANGE_AND_RESET 162
 #endif
 
 #ifndef EOVERLAP_AND_RESET
@@ -121,7 +104,7 @@ extern "C" {
  * Parameter: verNumber - to store version number (for example value is 0x500 | 0xa)
  * Return:   version string
  */
-SECUREC_API const char *GetHwSecureCVersion(unsigned short *verNumber);
+SECUREC_API const char* GetHwSecureCVersion(unsigned short* verNumber);
 
 #if SECUREC_ENABLE_MEMSET
 /*
@@ -133,11 +116,11 @@ SECUREC_API const char *GetHwSecureCVersion(unsigned short *verNumber);
  * Parameter: count - copies count bytes of value to dest
  * Return:    EOK if there was no runtime-constraint violation
  */
-SECUREC_API errno_t memset_s(void *dest, size_t destMax, int c, size_t count);
+SECUREC_API errno_t memset_s(void* dest, size_t destMax, int c, size_t count);
 #endif
 
 #ifndef SECUREC_ONLY_DECLARE_MEMSET
-#define SECUREC_ONLY_DECLARE_MEMSET     0
+#define SECUREC_ONLY_DECLARE_MEMSET 0
 #endif
 
 #if !SECUREC_ONLY_DECLARE_MEMSET
@@ -152,7 +135,7 @@ SECUREC_API errno_t memset_s(void *dest, size_t destMax, int c, size_t count);
  * Parameter: count - copies count bytes from the src
  * Return:    EOK if there was no runtime-constraint violation
  */
-SECUREC_API errno_t memmove_s(void *dest, size_t destMax, const void *src, size_t count);
+SECUREC_API errno_t memmove_s(void* dest, size_t destMax, const void* src, size_t count);
 #endif
 
 #if SECUREC_ENABLE_MEMCPY
@@ -165,7 +148,7 @@ SECUREC_API errno_t memmove_s(void *dest, size_t destMax, const void *src, size_
  * Parameter: count - copies count bytes from the  src
  * Return:    EOK if there was no runtime-constraint violation
  */
-SECUREC_API errno_t memcpy_s(void *dest, size_t destMax, const void *src, size_t count);
+SECUREC_API errno_t memcpy_s(void* dest, size_t destMax, const void* src, size_t count);
 #endif
 
 #if SECUREC_ENABLE_STRCPY
@@ -177,7 +160,7 @@ SECUREC_API errno_t memcpy_s(void *dest, size_t destMax, const void *src, size_t
  * Parameter: strSrc - source address.
  * Return:    EOK if there was no runtime-constraint violation
  */
-SECUREC_API errno_t strcpy_s(char *strDest, size_t destMax, const char *strSrc);
+SECUREC_API errno_t strcpy_s(char* strDest, size_t destMax, const char* strSrc);
 #endif
 
 #if SECUREC_ENABLE_STRNCPY
@@ -190,7 +173,7 @@ SECUREC_API errno_t strcpy_s(char *strDest, size_t destMax, const char *strSrc);
  * Parameter: count - copies count characters from the src
  * Return:    EOK if there was no runtime-constraint violation
  */
-SECUREC_API errno_t strncpy_s(char *strDest, size_t destMax, const char *strSrc, size_t count);
+SECUREC_API errno_t strncpy_s(char* strDest, size_t destMax, const char* strSrc, size_t count);
 #endif
 
 #if SECUREC_ENABLE_STRCAT
@@ -202,7 +185,7 @@ SECUREC_API errno_t strncpy_s(char *strDest, size_t destMax, const char *strSrc,
  * Parameter: strSrc - source address.
  * Return:    EOK if there was no runtime-constraint violation
  */
-SECUREC_API errno_t strcat_s(char *strDest, size_t destMax, const char *strSrc);
+SECUREC_API errno_t strcat_s(char* strDest, size_t destMax, const char* strSrc);
 #endif
 
 #if SECUREC_ENABLE_STRNCAT
@@ -216,7 +199,7 @@ SECUREC_API errno_t strcat_s(char *strDest, size_t destMax, const char *strSrc);
  * Parameter: count - copies count characters from the src
  * Return:    EOK if there was no runtime-constraint violation
  */
-SECUREC_API errno_t strncat_s(char *strDest, size_t destMax, const char *strSrc, size_t count);
+SECUREC_API errno_t strncat_s(char* strDest, size_t destMax, const char* strSrc, size_t count);
 #endif
 
 #if SECUREC_ENABLE_VSPRINTF
@@ -230,8 +213,7 @@ SECUREC_API errno_t strncat_s(char *strDest, size_t destMax, const char *strSrc,
  * Return:    the number of characters printed(not including the terminating null byte '\0'),
  * If an error occurred Return: -1.
  */
-SECUREC_API int vsprintf_s(char *strDest, size_t destMax, const char *format,
-                           va_list argList) SECUREC_ATTRIBUTE(3, 0);
+SECUREC_API int vsprintf_s(char* strDest, size_t destMax, const char* format, va_list argList) SECUREC_ATTRIBUTE(3, 0);
 #endif
 
 #if SECUREC_ENABLE_SPRINTF
@@ -243,8 +225,8 @@ SECUREC_API int vsprintf_s(char *strDest, size_t destMax, const char *format,
  * Parameter: format - format string
  * Return:    the number of characters printed(not including the terminating null byte '\0'),
  * If an error occurred Return: -1.
-*/
-SECUREC_API int sprintf_s(char *strDest, size_t destMax, const char *format, ...) SECUREC_ATTRIBUTE(3, 4);
+ */
+SECUREC_API int sprintf_s(char* strDest, size_t destMax, const char* format, ...) SECUREC_ATTRIBUTE(3, 4);
 #endif
 
 #if SECUREC_ENABLE_VSNPRINTF
@@ -259,8 +241,8 @@ SECUREC_API int sprintf_s(char *strDest, size_t destMax, const char *format, ...
  * Return:    the number of characters printed(not including the terminating null byte '\0'),
  * If an error occurred Return: -1.Pay special attention to returning -1 when truncation occurs.
  */
-SECUREC_API int vsnprintf_s(char *strDest, size_t destMax, size_t count, const char *format,
-                            va_list argList) SECUREC_ATTRIBUTE(4, 0);
+SECUREC_API int vsnprintf_s(char* strDest, size_t destMax, size_t count, const char* format, va_list argList)
+    SECUREC_ATTRIBUTE(4, 0);
 #endif
 
 #if SECUREC_ENABLE_SNPRINTF
@@ -274,8 +256,8 @@ SECUREC_API int vsnprintf_s(char *strDest, size_t destMax, size_t count, const c
  * Return:    the number of characters printed(not including the terminating null byte '\0'),
  * If an error occurred Return: -1.Pay special attention to returning -1 when truncation occurs.
  */
-SECUREC_API int snprintf_s(char *strDest, size_t destMax, size_t count, const char *format,
-                           ...) SECUREC_ATTRIBUTE(4, 5);
+SECUREC_API int snprintf_s(char* strDest, size_t destMax, size_t count, const char* format, ...)
+    SECUREC_ATTRIBUTE(4, 5);
 #endif
 
 #if SECUREC_SNPRINTF_TRUNCATED
@@ -288,9 +270,9 @@ SECUREC_API int snprintf_s(char *strDest, size_t destMax, size_t count, const ch
  * Parameter: argList - instead of  a variable  number of arguments
  * Return:    the number of characters printed(not including the terminating null byte '\0'),
  * If an error occurred Return: -1.Pay special attention to returning destMax - 1 when truncation occurs
-*/
-SECUREC_API int vsnprintf_truncated_s(char *strDest, size_t destMax, const char *format,
-                                      va_list argList) SECUREC_ATTRIBUTE(3, 0);
+ */
+SECUREC_API int vsnprintf_truncated_s(char* strDest, size_t destMax, const char* format, va_list argList)
+    SECUREC_ATTRIBUTE(3, 0);
 
 /*
  * Description: The snprintf_truncated_s function is equivalent to the snprintf_s function except
@@ -301,8 +283,7 @@ SECUREC_API int vsnprintf_truncated_s(char *strDest, size_t destMax, const char 
  * Return:    the number of characters printed(not including the terminating null byte '\0'),
  * If an error occurred Return: -1.Pay special attention to returning destMax - 1 when truncation occurs.
  */
-SECUREC_API int snprintf_truncated_s(char *strDest, size_t destMax,
-                                     const char *format, ...) SECUREC_ATTRIBUTE(3, 4);
+SECUREC_API int snprintf_truncated_s(char* strDest, size_t destMax, const char* format, ...) SECUREC_ATTRIBUTE(3, 4);
 #endif
 
 #if SECUREC_ENABLE_SCANF
@@ -312,7 +293,7 @@ SECUREC_API int snprintf_truncated_s(char *strDest, size_t destMax,
  * Parameter: format - format string
  * Return:    the number of input items assigned, If an error occurred Return: -1.
  */
-SECUREC_API int scanf_s(const char *format, ...);
+SECUREC_API int scanf_s(const char* format, ...);
 #endif
 
 #if SECUREC_ENABLE_VSCANF
@@ -322,7 +303,7 @@ SECUREC_API int scanf_s(const char *format, ...);
  * Parameter: argList - instead of a variable number of arguments
  * Return:    the number of input items assigned, If an error occurred Return: -1.
  */
-SECUREC_API int vscanf_s(const char *format, va_list argList);
+SECUREC_API int vscanf_s(const char* format, va_list argList);
 #endif
 
 #if SECUREC_ENABLE_SSCANF
@@ -333,7 +314,7 @@ SECUREC_API int vscanf_s(const char *format, va_list argList);
  * Parameter: format - format string
  * Return:    the number of input items assigned, If an error occurred Return: -1.
  */
-SECUREC_API int sscanf_s(const char *buffer, const char *format, ...);
+SECUREC_API int sscanf_s(const char* buffer, const char* format, ...);
 #endif
 
 #if SECUREC_ENABLE_VSSCANF
@@ -345,7 +326,7 @@ SECUREC_API int sscanf_s(const char *buffer, const char *format, ...);
  * Parameter: argList - instead of a variable number of arguments
  * Return:    the number of input items assigned, If an error occurred Return: -1.
  */
-SECUREC_API int vsscanf_s(const char *buffer, const char *format, va_list argList);
+SECUREC_API int vsscanf_s(const char* buffer, const char* format, va_list argList);
 #endif
 
 #if SECUREC_ENABLE_FSCANF
@@ -356,7 +337,7 @@ SECUREC_API int vsscanf_s(const char *buffer, const char *format, va_list argLis
  * Parameter: format - format string
  * Return:    the number of input items assigned, If an error occurred Return: -1.
  */
-SECUREC_API int fscanf_s(FILE *stream, const char *format, ...);
+SECUREC_API int fscanf_s(FILE* stream, const char* format, ...);
 #endif
 
 #if SECUREC_ENABLE_VFSCANF
@@ -368,7 +349,7 @@ SECUREC_API int fscanf_s(FILE *stream, const char *format, ...);
  * Parameter: argList - instead of a variable number of arguments
  * Return:    the number of input items assigned, If an error occurred Return: -1.
  */
-SECUREC_API int vfscanf_s(FILE *stream, const char *format, va_list argList);
+SECUREC_API int vfscanf_s(FILE* stream, const char* format, va_list argList);
 #endif
 
 #if SECUREC_ENABLE_STRTOK
@@ -384,7 +365,7 @@ SECUREC_API int vfscanf_s(FILE *stream, const char *format, va_list argList);
  * In subsequent calls, the strtoken is set to NULL, and the context set is the same as the previous call,
  * return NULL if the *context string length is equal 0, otherwise return *context.
  */
-SECUREC_API char *strtok_s(char *strToken, const char *strDelimit, char **context);
+SECUREC_API char* strtok_s(char* strToken, const char* strDelimit, char** context);
 #endif
 
 #if SECUREC_ENABLE_GETS && !SECUREC_IN_KERNEL
@@ -395,7 +376,7 @@ SECUREC_API char *strtok_s(char *strToken, const char *strDelimit, char **contex
  * Parameter: destMax - The maximum length of destination buffer(including the terminating null character)
  * Return:    buffer if there was no runtime-constraint violation,If an error occurred Return: NULL.
  */
-SECUREC_API char *gets_s(char *buffer, size_t destMax);
+SECUREC_API char* gets_s(char* buffer, size_t destMax);
 #endif
 
 #if SECUREC_ENABLE_WCHAR_FUNC
@@ -409,7 +390,7 @@ SECUREC_API char *gets_s(char *buffer, size_t destMax);
  * Parameter: count - copies count wide characters from the  src
  * Return:    EOK if there was no runtime-constraint violation
  */
-SECUREC_API errno_t wmemcpy_s(wchar_t *dest, size_t destMax, const wchar_t *src, size_t count);
+SECUREC_API errno_t wmemcpy_s(wchar_t* dest, size_t destMax, const wchar_t* src, size_t count);
 #endif
 
 #if SECUREC_ENABLE_MEMMOVE
@@ -422,7 +403,7 @@ SECUREC_API errno_t wmemcpy_s(wchar_t *dest, size_t destMax, const wchar_t *src,
  * Parameter: count - copies count wide characters from the  src
  * Return:    EOK if there was no runtime-constraint violation
  */
-SECUREC_API errno_t wmemmove_s(wchar_t *dest, size_t destMax, const wchar_t *src, size_t count);
+SECUREC_API errno_t wmemmove_s(wchar_t* dest, size_t destMax, const wchar_t* src, size_t count);
 #endif
 
 #if SECUREC_ENABLE_STRCPY
@@ -434,7 +415,7 @@ SECUREC_API errno_t wmemmove_s(wchar_t *dest, size_t destMax, const wchar_t *src
  * Parameter: strSrc - source address.
  * Return:    EOK if there was no runtime-constraint violation
  */
-SECUREC_API errno_t wcscpy_s(wchar_t *strDest, size_t destMax, const wchar_t *strSrc);
+SECUREC_API errno_t wcscpy_s(wchar_t* strDest, size_t destMax, const wchar_t* strSrc);
 #endif
 
 #if SECUREC_ENABLE_STRNCPY
@@ -447,7 +428,7 @@ SECUREC_API errno_t wcscpy_s(wchar_t *strDest, size_t destMax, const wchar_t *st
  * Parameter: count - copies count wide characters from the src
  * Return:    EOK if there was no runtime-constraint violation
  */
-SECUREC_API errno_t wcsncpy_s(wchar_t *strDest, size_t destMax, const wchar_t *strSrc, size_t count);
+SECUREC_API errno_t wcsncpy_s(wchar_t* strDest, size_t destMax, const wchar_t* strSrc, size_t count);
 #endif
 
 #if SECUREC_ENABLE_STRCAT
@@ -459,7 +440,7 @@ SECUREC_API errno_t wcsncpy_s(wchar_t *strDest, size_t destMax, const wchar_t *s
  * Parameter: strSrc - source address.
  * Return:    EOK if there was no runtime-constraint violation
  */
-SECUREC_API errno_t wcscat_s(wchar_t *strDest, size_t destMax, const wchar_t *strSrc);
+SECUREC_API errno_t wcscat_s(wchar_t* strDest, size_t destMax, const wchar_t* strSrc);
 #endif
 
 #if SECUREC_ENABLE_STRNCAT
@@ -473,7 +454,7 @@ SECUREC_API errno_t wcscat_s(wchar_t *strDest, size_t destMax, const wchar_t *st
  * Parameter: count - copies count wide characters from the  src
  * Return:    EOK if there was no runtime-constraint violation
  */
-SECUREC_API errno_t wcsncat_s(wchar_t *strDest, size_t destMax, const wchar_t *strSrc, size_t count);
+SECUREC_API errno_t wcsncat_s(wchar_t* strDest, size_t destMax, const wchar_t* strSrc, size_t count);
 #endif
 
 #if SECUREC_ENABLE_STRTOK
@@ -485,7 +466,7 @@ SECUREC_API errno_t wcsncat_s(wchar_t *strDest, size_t destMax, const wchar_t *s
  * Return:    a pointer to the first character of a token, or a null pointer if there is no token
  * or there is a runtime-constraint violation.
  */
-SECUREC_API wchar_t *wcstok_s(wchar_t *strToken, const wchar_t *strDelimit, wchar_t **context);
+SECUREC_API wchar_t* wcstok_s(wchar_t* strToken, const wchar_t* strDelimit, wchar_t** context);
 #endif
 
 #if SECUREC_ENABLE_VSPRINTF
@@ -498,7 +479,7 @@ SECUREC_API wchar_t *wcstok_s(wchar_t *strToken, const wchar_t *strDelimit, wcha
  * Return:    the number of characters printed(not including the terminating null wide character),
  * If an error occurred Return: -1.
  */
-SECUREC_API int vswprintf_s(wchar_t *strDest, size_t destMax, const wchar_t *format, va_list argList);
+SECUREC_API int vswprintf_s(wchar_t* strDest, size_t destMax, const wchar_t* format, va_list argList);
 #endif
 
 #if SECUREC_ENABLE_SPRINTF
@@ -510,7 +491,7 @@ SECUREC_API int vswprintf_s(wchar_t *strDest, size_t destMax, const wchar_t *for
  * Return:    the number of characters printed(not including the terminating null wide character),
  * If an error occurred Return: -1.
  */
-SECUREC_API int swprintf_s(wchar_t *strDest, size_t destMax, const wchar_t *format, ...);
+SECUREC_API int swprintf_s(wchar_t* strDest, size_t destMax, const wchar_t* format, ...);
 #endif
 
 #if SECUREC_ENABLE_FSCANF
@@ -520,7 +501,7 @@ SECUREC_API int swprintf_s(wchar_t *strDest, size_t destMax, const wchar_t *form
  * Parameter: format - format string
  * Return:    the number of input items assigned, If an error occurred Return: -1.
  */
-SECUREC_API int fwscanf_s(FILE *stream, const wchar_t *format, ...);
+SECUREC_API int fwscanf_s(FILE* stream, const wchar_t* format, ...);
 #endif
 
 #if SECUREC_ENABLE_VFSCANF
@@ -531,7 +512,7 @@ SECUREC_API int fwscanf_s(FILE *stream, const wchar_t *format, ...);
  * Parameter: argList - instead of  a variable number of arguments
  * Return:    the number of input items assigned, If an error occurred Return: -1.
  */
-SECUREC_API int vfwscanf_s(FILE *stream, const wchar_t *format, va_list argList);
+SECUREC_API int vfwscanf_s(FILE* stream, const wchar_t* format, va_list argList);
 #endif
 
 #if SECUREC_ENABLE_SCANF
@@ -540,7 +521,7 @@ SECUREC_API int vfwscanf_s(FILE *stream, const wchar_t *format, va_list argList)
  * Parameter: format - format string
  * Return:    the number of input items assigned, If an error occurred Return: -1.
  */
-SECUREC_API int wscanf_s(const wchar_t *format, ...);
+SECUREC_API int wscanf_s(const wchar_t* format, ...);
 #endif
 
 #if SECUREC_ENABLE_VSCANF
@@ -550,7 +531,7 @@ SECUREC_API int wscanf_s(const wchar_t *format, ...);
  * Parameter: argList - instead of  a variable number of arguments
  * Return:    the number of input items assigned, If an error occurred Return: -1.
  */
-SECUREC_API int vwscanf_s(const wchar_t *format, va_list argList);
+SECUREC_API int vwscanf_s(const wchar_t* format, va_list argList);
 #endif
 
 #if SECUREC_ENABLE_SSCANF
@@ -560,7 +541,7 @@ SECUREC_API int vwscanf_s(const wchar_t *format, va_list argList);
  * Parameter: format - format string
  * Return:    the number of input items assigned, If an error occurred Return: -1.
  */
-SECUREC_API int swscanf_s(const wchar_t *buffer, const wchar_t *format, ...);
+SECUREC_API int swscanf_s(const wchar_t* buffer, const wchar_t* format, ...);
 #endif
 
 #if SECUREC_ENABLE_VSSCANF
@@ -571,64 +552,64 @@ SECUREC_API int swscanf_s(const wchar_t *buffer, const wchar_t *format, ...);
  * Parameter: argList - instead of  a variable number of arguments
  * Return:    the number of input items assigned, If an error occurred Return: -1.
  */
-SECUREC_API int vswscanf_s(const wchar_t *buffer, const wchar_t *format, va_list argList);
+SECUREC_API int vswscanf_s(const wchar_t* buffer, const wchar_t* format, va_list argList);
 #endif
 #endif /* SECUREC_ENABLE_WCHAR_FUNC */
 #endif
 
 /* Those functions are used by macro,must declare hare, also for without function declaration warning */
-extern errno_t strncpy_error(char *strDest, size_t destMax, const char *strSrc, size_t count);
-extern errno_t strcpy_error(char *strDest, size_t destMax, const char *strSrc);
+extern errno_t strncpy_error(char* strDest, size_t destMax, const char* strSrc, size_t count);
+extern errno_t strcpy_error(char* strDest, size_t destMax, const char* strSrc);
 
 #if SECUREC_WITH_PERFORMANCE_ADDONS
 /* Those functions are used by macro */
-extern errno_t memset_sOptAsm(void *dest, size_t destMax, int c, size_t count);
-extern errno_t memset_sOptTc(void *dest, size_t destMax, int c, size_t count);
-extern errno_t memcpy_sOptAsm(void *dest, size_t destMax, const void *src, size_t count);
-extern errno_t memcpy_sOptTc(void *dest, size_t destMax, const void *src, size_t count);
+extern errno_t memset_sOptAsm(void* dest, size_t destMax, int c, size_t count);
+extern errno_t memset_sOptTc(void* dest, size_t destMax, int c, size_t count);
+extern errno_t memcpy_sOptAsm(void* dest, size_t destMax, const void* src, size_t count);
+extern errno_t memcpy_sOptTc(void* dest, size_t destMax, const void* src, size_t count);
 
 /* The strcpy_sp is a macro, not a function in performance optimization mode. */
-#define strcpy_sp(dest, destMax, src)  ((__builtin_constant_p((destMax)) && \
-    __builtin_constant_p((src))) ?  \
-    SECUREC_STRCPY_SM((dest), (destMax), (src)) : \
-    strcpy_s((dest), (destMax), (src)))
+#define strcpy_sp(dest, destMax, src)                                                                                 \
+    ((__builtin_constant_p((destMax)) && __builtin_constant_p((src))) ? SECUREC_STRCPY_SM((dest), (destMax), (src)) : \
+                                                                        strcpy_s((dest), (destMax), (src)))
 
 /* The strncpy_sp is a macro, not a function in performance optimization mode. */
-#define strncpy_sp(dest, destMax, src, count)  ((__builtin_constant_p((count)) && \
-    __builtin_constant_p((destMax)) && \
-    __builtin_constant_p((src))) ?  \
-    SECUREC_STRNCPY_SM((dest), (destMax), (src), (count)) : \
-    strncpy_s((dest), (destMax), (src), (count)))
+#define strncpy_sp(dest, destMax, src, count)                                                            \
+    ((__builtin_constant_p((count)) && __builtin_constant_p((destMax)) && __builtin_constant_p((src))) ? \
+         SECUREC_STRNCPY_SM((dest), (destMax), (src), (count)) :                                         \
+         strncpy_s((dest), (destMax), (src), (count)))
 
 /* The strcat_sp is a macro, not a function in performance optimization mode. */
-#define strcat_sp(dest, destMax, src) ((__builtin_constant_p((destMax)) && \
-    __builtin_constant_p((src))) ?  \
-    SECUREC_STRCAT_SM((dest), (destMax), (src)) : \
-    strcat_s((dest), (destMax), (src)))
+#define strcat_sp(dest, destMax, src)                                                                                 \
+    ((__builtin_constant_p((destMax)) && __builtin_constant_p((src))) ? SECUREC_STRCAT_SM((dest), (destMax), (src)) : \
+                                                                        strcat_s((dest), (destMax), (src)))
 
 /* The strncat_sp is a macro, not a function in performance optimization mode. */
-#define strncat_sp(dest, destMax, src, count) ((__builtin_constant_p((count)) &&  \
-    __builtin_constant_p((destMax)) && \
-    __builtin_constant_p((src))) ?  \
-    SECUREC_STRNCAT_SM((dest), (destMax), (src), (count)) : \
-    strncat_s((dest), (destMax), (src), (count)))
+#define strncat_sp(dest, destMax, src, count)                                                            \
+    ((__builtin_constant_p((count)) && __builtin_constant_p((destMax)) && __builtin_constant_p((src))) ? \
+         SECUREC_STRNCAT_SM((dest), (destMax), (src), (count)) :                                         \
+         strncat_s((dest), (destMax), (src), (count)))
 
 /* The memcpy_sp is a macro, not a function in performance optimization mode. */
-#define memcpy_sp(dest, destMax, src, count)  (__builtin_constant_p((count)) ? \
-    (SECUREC_MEMCPY_SM((dest), (destMax), (src), (count))) : \
-    (__builtin_constant_p((destMax)) ? \
-    (((size_t)(destMax) > 0 && \
-    (((unsigned long long)(destMax) & (unsigned long long)(-2)) < SECUREC_MEM_MAX_LEN)) ? \
-    memcpy_sOptTc((dest), (destMax), (src), (count)) : ERANGE) : \
-    memcpy_sOptAsm((dest), (destMax), (src), (count))))
+#define memcpy_sp(dest, destMax, src, count)                                                             \
+    (__builtin_constant_p((count)) ?                                                                     \
+         (SECUREC_MEMCPY_SM((dest), (destMax), (src), (count))) :                                        \
+         (__builtin_constant_p((destMax)) ?                                                              \
+              (((size_t)(destMax) > 0                                                                    \
+                && (((unsigned long long)(destMax) & (unsigned long long)(-2)) < SECUREC_MEM_MAX_LEN)) ? \
+                   memcpy_sOptTc((dest), (destMax), (src), (count)) :                                    \
+                   ERANGE) :                                                                             \
+              memcpy_sOptAsm((dest), (destMax), (src), (count))))
 
 /* The memset_sp is a macro, not a function in performance optimization mode. */
-#define memset_sp(dest, destMax, c, count)  (__builtin_constant_p((count)) ? \
-    (SECUREC_MEMSET_SM((dest), (destMax), (c), (count))) : \
-    (__builtin_constant_p((destMax)) ? \
-    (((((unsigned long long)(destMax) & (unsigned long long)(-2)) < SECUREC_MEM_MAX_LEN)) ? \
-    memset_sOptTc((dest), (destMax), (c), (count)) : ERANGE) : \
-    memset_sOptAsm((dest), (destMax), (c), (count))))
+#define memset_sp(dest, destMax, c, count)                                                            \
+    (__builtin_constant_p((count)) ?                                                                  \
+         (SECUREC_MEMSET_SM((dest), (destMax), (c), (count))) :                                       \
+         (__builtin_constant_p((destMax)) ?                                                           \
+              (((((unsigned long long)(destMax) & (unsigned long long)(-2)) < SECUREC_MEM_MAX_LEN)) ? \
+                   memset_sOptTc((dest), (destMax), (c), (count)) :                                   \
+                   ERANGE) :                                                                          \
+              memset_sOptAsm((dest), (destMax), (c), (count))))
 
 #endif
 
@@ -636,4 +617,3 @@ extern errno_t memcpy_sOptTc(void *dest, size_t destMax, const void *src, size_t
 }
 #endif
 #endif
-

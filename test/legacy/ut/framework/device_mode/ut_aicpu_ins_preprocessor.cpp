@@ -11,6 +11,7 @@
 #include "gtest/gtest.h"
 #include <mockcpp/mokc.h>
 #include <mockcpp/mockcpp.hpp>
+#include "test_mock_setup.h"
 #define private public
 #define protected public
 #include "coll_service_device_mode.h"
@@ -27,26 +28,13 @@ using namespace std;
 
 class AicpuInsPreprocessorTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CommunicatorImplTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CommunicatorImplTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CommunicatorImplTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CommunicatorImplTest TearDown" << std::endl; }
 
     virtual void SetUp()
     {
-        MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-        MOCKER(HrtNotifyCreate).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
-        MOCKER(HrtNotifyCreateWithFlag).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
-        MOCKER(HrtGetNotifyID).stubs().will(returnValue(fakeNotifyId));
-        MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(fakeDevPhyId)));
-        MOCKER(HrtIpcSetNotifyName).stubs().with(mockcpp::any(), outBoundP(fakeName, sizeof(fakeName)), mockcpp::any());
-        MOCKER(HrtNotifyGetOffset).stubs().will(returnValue(fakeOffset));
-        MOCKER(HrtGetDeviceType).stubs().will(returnValue(DevType(DevType::DEV_TYPE_950)));
+        SETUP_COMM_NOTIFY_MOCKS();
         std::cout << "A Test case in CommunicatorImplTest SetUP" << std::endl;
     }
 
@@ -92,8 +80,8 @@ TEST_F(AicpuInsPreprocessorTest, should_no_throw_when_calling_allocInterRankNoti
     CommunicatorImpl comm;
     comm.InitNotifyManager();
     AicpuInsPreprocessor aicpuInsPreprocessor(&comm);
-    BasePortType                   portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
-    LinkData                       linkData(portType, 0, 1, 0, 1);
+    BasePortType portType(PortDeploymentType::P2P, ConnectProtoType::PCIE);
+    LinkData linkData(portType, 0, 1, 0, 1);
     std::vector<LinkData> links;
     links.push_back(linkData);
     EXPECT_NO_THROW(aicpuInsPreprocessor.AllocInterRankNotifies(links));
@@ -106,7 +94,7 @@ TEST_F(AicpuInsPreprocessorTest, should_no_throw_when_calling_batchBuildTranspor
     MOCKER_CPP(&MemTransportManager::BatchBuildOffloadTransports).stubs().with(mockcpp::any(), mockcpp::any());
     MOCKER_CPP(&MemTransportManager::IsAllOpbasedTransportReady).stubs().with().will(returnValue(true));
     MOCKER_CPP(&MemTransportManager::IsAllOffloadTransportReady).stubs().with(mockcpp::any()).will(returnValue(true));
-    
+
     CommunicatorImpl comm;
     comm.InitMemTransportManager();
     comm.InitRmaConnManager();
@@ -125,7 +113,10 @@ TEST_F(AicpuInsPreprocessorTest, should_no_throw_when_calling_batchBuildTranspor
 
 TEST_F(AicpuInsPreprocessorTest, should_no_throw_when_calling_packResAndCopyToDev)
 {
-    MOCKER_CPP(&AicpuInsPreprocessor::PackOpData).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(std::vector<char>{'1'}));
+    MOCKER_CPP(&AicpuInsPreprocessor::PackOpData)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(returnValue(std::vector<char>{'1'}));
     MOCKER(HrtMemcpy).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any());
 
     CommunicatorImpl comm;
@@ -150,12 +141,12 @@ TEST_F(AicpuInsPreprocessorTest, test_AllocAlltoallVOpMem)
     comm.id = "testTag";
     std::shared_ptr<Buffer> buffer = DevBuffer::Create(0x100, 10);
     std::shared_ptr<Buffer> buffer1 = DevBuffer::Create(0x100, 10);
-    comm.dataBufferManager      = std::make_unique<DataBufManager>();
+    comm.dataBufferManager = std::make_unique<DataBufManager>();
     comm.dataBufferManager->Register("testTag", BufferType::SCRATCH, buffer);
-    comm.rankGraph            = std::make_unique<RankGraph>(0);
+    comm.rankGraph = std::make_unique<RankGraph>(0);
     comm.connLocalNotifyManager = std::make_unique<ConnLocalNotifyManager>(&comm);
     comm.connLocalCntNotifyManager = std::make_unique<ConnLocalCntNotifyManager>(&comm);
-    comm.rmaConnectionManager   = std::make_unique<RmaConnManager>(comm);
+    comm.rmaConnectionManager = std::make_unique<RmaConnManager>(comm);
     comm.currentCollOperator = std::make_unique<CollOperator>();
     comm.currentCollOperator->opTag = "testTag";
     comm.currentCollOperator->opMode = OpMode::OFFLOAD;
@@ -163,16 +154,16 @@ TEST_F(AicpuInsPreprocessorTest, test_AllocAlltoallVOpMem)
     comm.currentCollOperator->inputMem = DevBuffer::Create(0x100, 10);
     comm.currentCollOperator->outputMem = DevBuffer::Create(0x100, 10);
     comm.currentCollOperator->scratchMem = DevBuffer::Create(0x100, 10);
-    
+
     s32 rankId = 0;
     s32 localId = 0;
     IpAddress inputAddr(0);
-    std::set<string> ports={"0/1"};
+    std::set<string> ports = {"0/1"};
     std::set<LinkProtocol> protocols = {LinkProtocol::UB_CTP};
     DeviceId deviceId = 0;
     shared_ptr<NetInstance::Peer> peer0 = std::make_shared<NetInstance::Peer>(rankId, localId, localId, deviceId);
-    shared_ptr<NetInstance::ConnInterface> connInterface =
-        std::make_shared<NetInstance::ConnInterface>(inputAddr, ports, AddrPosition::HOST, LinkType::PEER2PEER, protocols);
+    shared_ptr<NetInstance::ConnInterface> connInterface = std::make_shared<NetInstance::ConnInterface>(
+        inputAddr, ports, AddrPosition::HOST, LinkType::PEER2PEER, protocols);
     peer0->AddConnInterface(0, connInterface);
     comm.rankGraph->AddPeer(peer0);
     comm.localRmaBufManager = std::make_unique<LocalRmaBufManager>(comm);
@@ -185,10 +176,10 @@ TEST_F(AicpuInsPreprocessorTest, test_AllocAlltoallVOpMem)
     for (u32 i = 0; i < comm.rankSize; i++) {
         sendCounts[i] = count * (i + 1);
         recvCounts[i] = count * (0 + 1);
-        sendDispls[i] = count * i * (i+1) / 2;
+        sendDispls[i] = count * i * (i + 1) / 2;
         recvDispls[i] = count * (0 + 1) * i;
     }
-    
+
     CollOperator op;
     op.opTag = "testTag";
     op.opType = OpType::ALLTOALLV;
@@ -221,4 +212,3 @@ TEST_F(AicpuInsPreprocessorTest, should_no_throw_when_calling_setAicpuResExisted
     aicpuInsPreprocessor.aicpuResExistedMap["test"] = true;
     EXPECT_NO_THROW(aicpuInsPreprocessor.SetAicpuResExisted("test"));
 }
-

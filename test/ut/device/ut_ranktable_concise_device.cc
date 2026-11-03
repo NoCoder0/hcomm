@@ -20,18 +20,9 @@ using namespace hccl;
 
 class TopoinfoRanktableConciseTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "TopoinfoRanktableConciseTest SetUP" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "TopoinfoRanktableConciseTest TearDown" << std::endl;
-    }
-    virtual void SetUp()
-    {
-        std::cout << "TopoinfoRanktableConciseTest Test SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "TopoinfoRanktableConciseTest SetUP" << std::endl; }
+    static void TearDownTestCase() { std::cout << "TopoinfoRanktableConciseTest TearDown" << std::endl; }
+    virtual void SetUp() { std::cout << "TopoinfoRanktableConciseTest Test SetUP" << std::endl; }
     virtual void TearDown()
     {
         GlobalMockObject::verify();

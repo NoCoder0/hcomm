@@ -13,17 +13,14 @@
 #include "ra_hdc_lite.h"
 
 struct RaRsVerbsOps {
-    int (*qpCreateWithCQWithAttrs)(unsigned int phyId, unsigned int rdevIndex,
-        unsigned int sendCqn, unsigned int recvCqn,
-        struct RsQpNormWithAttrs *qpNorm, struct RsQpRespWithAttrs *qpResp);
-    int (*typicalCqCreate)(unsigned int phyId, unsigned int rdevIndex, unsigned int cqDepth,
-        unsigned int *cqn);
+    int (*qpCreateWithCQWithAttrs)(unsigned int phyId, unsigned int rdevIndex, unsigned int sendCqn,
+        unsigned int recvCqn, struct RsQpNormWithAttrs *qpNorm, struct RsQpRespWithAttrs *qpResp);
+    int (*typicalCqCreate)(unsigned int phyId, unsigned int rdevIndex, unsigned int cqDepth, unsigned int *cqn);
     int (*typicalCqDestroy)(unsigned int phyId, unsigned int rdevIndex, unsigned int cqn);
     int (*getLiteCqAttr)(unsigned int phyId, unsigned int rdevIndex, unsigned int cqn,
         struct rdma_lite_device_cq_attr *deviceCqAttr);
     int (*qpDestroyWithoutCQ)(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn);
-    int (*getLiteQpAttr)(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn,
-        struct LiteQpAttrResp *resp);
+    int (*getLiteQpAttr)(unsigned int phyId, unsigned int rdevIndex, unsigned int qpn, struct LiteQpAttrResp *resp);
 };
 
 int RaRsQpCreateWithCQWithAttrs(char *inBuf, char *outBuf, int *outLen, int *opResult, int rcvBufLen);

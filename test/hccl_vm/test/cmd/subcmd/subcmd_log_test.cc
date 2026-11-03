@@ -18,7 +18,8 @@ using namespace HcclSim;
 
 class LogCommandTest : public testing::Test {
 protected:
-    void SetUp() override {
+    void SetUp() override
+    {
         app_ = std::make_unique<CLI::App>("test");
         cmd_ = std::make_unique<LogCommand>();
     }
@@ -26,23 +27,24 @@ protected:
     std::unique_ptr<LogCommand> cmd_;
 };
 
-TEST_F(LogCommandTest, StaticName_ShouldReturnLog) {
-    EXPECT_EQ(LogCommand::StaticName(), "log");
-}
+TEST_F(LogCommandTest, StaticName_ShouldReturnLog) { EXPECT_EQ(LogCommand::StaticName(), "log"); }
 
-TEST_F(LogCommandTest, Setup_RegistersLogSubcommand) {
+TEST_F(LogCommandTest, Setup_RegistersLogSubcommand)
+{
     cmd_->Setup(*app_);
     EXPECT_NE(app_->get_subcommand("log"), nullptr);
 }
 
-TEST_F(LogCommandTest, Setup_HasAllLevelOptions) {
+TEST_F(LogCommandTest, Setup_HasAllLevelOptions)
+{
     cmd_->Setup(*app_);
     auto sub = app_->get_subcommand("log");
     ASSERT_NE(sub, nullptr);
     EXPECT_GE(sub->get_options().size(), 3u);
 }
 
-TEST_F(LogCommandTest, Setup_OptionExclusions_LevelExcludesConsoleAndFile) {
+TEST_F(LogCommandTest, Setup_OptionExclusions_LevelExcludesConsoleAndFile)
+{
     cmd_->Setup(*app_);
     auto sub = app_->get_subcommand("log");
     ASSERT_NE(sub, nullptr);
@@ -55,7 +57,8 @@ TEST_F(LogCommandTest, Setup_OptionExclusions_LevelExcludesConsoleAndFile) {
     }
 }
 
-TEST_F(LogCommandTest, Setup_OptionExclusions_ConsoleExcludesLevel) {
+TEST_F(LogCommandTest, Setup_OptionExclusions_ConsoleExcludesLevel)
+{
     cmd_->Setup(*app_);
     auto sub = app_->get_subcommand("log");
     ASSERT_NE(sub, nullptr);
@@ -66,7 +69,8 @@ TEST_F(LogCommandTest, Setup_OptionExclusions_ConsoleExcludesLevel) {
     }
 }
 
-TEST_F(LogCommandTest, Setup_OptionExclusions_FileExcludesLevel) {
+TEST_F(LogCommandTest, Setup_OptionExclusions_FileExcludesLevel)
+{
     cmd_->Setup(*app_);
     auto sub = app_->get_subcommand("log");
     ASSERT_NE(sub, nullptr);
@@ -77,7 +81,8 @@ TEST_F(LogCommandTest, Setup_OptionExclusions_FileExcludesLevel) {
     }
 }
 
-TEST_F(LogCommandTest, LevelMap_ContainsExpectedKeys) {
+TEST_F(LogCommandTest, LevelMap_ContainsExpectedKeys)
+{
     cmd_->Setup(*app_);
     auto sub = app_->get_subcommand("log");
     ASSERT_NE(sub, nullptr);
@@ -85,22 +90,26 @@ TEST_F(LogCommandTest, LevelMap_ContainsExpectedKeys) {
     ASSERT_NE(levelOpt, nullptr);
 }
 
-TEST_F(LogCommandTest, Parse_LevelInfo_TriggersCallback) {
+TEST_F(LogCommandTest, Parse_LevelInfo_TriggersCallback)
+{
     cmd_->Setup(*app_);
     EXPECT_NO_THROW(app_->parse("test log -l info", true));
 }
 
-TEST_F(LogCommandTest, Parse_ConsoleLevelDebug_TriggersCallback) {
+TEST_F(LogCommandTest, Parse_ConsoleLevelDebug_TriggersCallback)
+{
     cmd_->Setup(*app_);
     EXPECT_NO_THROW(app_->parse("test log --console-level debug", true));
 }
 
-TEST_F(LogCommandTest, Parse_FileLevelError_TriggersCallback) {
+TEST_F(LogCommandTest, Parse_FileLevelError_TriggersCallback)
+{
     cmd_->Setup(*app_);
     EXPECT_NO_THROW(app_->parse("test log --file-level error", true));
 }
 
-TEST_F(LogCommandTest, Parse_InvalidLevel_Throws) {
+TEST_F(LogCommandTest, Parse_InvalidLevel_Throws)
+{
     cmd_->Setup(*app_);
     try {
         app_->parse("test log -l invalid_level", true);
@@ -114,12 +123,14 @@ TEST_F(LogCommandTest, Parse_InvalidLevel_Throws) {
     }
 }
 
-TEST_F(LogCommandTest, Parse_LevelAndConsoleLevel_ExclusionThrows) {
+TEST_F(LogCommandTest, Parse_LevelAndConsoleLevel_ExclusionThrows)
+{
     cmd_->Setup(*app_);
     EXPECT_THROW(app_->parse("test log -l info --console-level debug", true), CLI::ExcludesError);
 }
 
-TEST_F(LogCommandTest, LevelMap_AllEntries) {
+TEST_F(LogCommandTest, LevelMap_AllEntries)
+{
     // Verify all 8 level name entries are accepted by the CheckedTransformer
     cmd_->Setup(*app_);
     auto sub = app_->get_subcommand("log");

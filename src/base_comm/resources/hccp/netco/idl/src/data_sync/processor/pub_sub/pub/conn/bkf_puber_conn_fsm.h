@@ -26,4 +26,3 @@ uint32_t BkfPuberConnFsmProc(BkfPuberConn *conn, uint8_t evtId, void *param);
 #endif
 
 #endif
-

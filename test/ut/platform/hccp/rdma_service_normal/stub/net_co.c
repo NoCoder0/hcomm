@@ -13,23 +13,14 @@
 
 #define STUB_NET_CO_PROCED (1987)
 
-void *NetCoInitFactory(int epollfd, NetCoIpPortArg ipPortArg)
-{
-    return NULL;
-}
+void* NetCoInitFactory(int epollfd, NetCoIpPortArg ipPortArg) { return NULL; }
 
-void NetCoDestruct(void *co)
+void NetCoDestruct(void* co)
 {
     co = NULL;
     return;
 }
 
-unsigned int NetCoFdEventDispatch(void *co, int fd, unsigned int curEvents)
-{
-    return STUB_NET_CO_PROCED;
-}
+unsigned int NetCoFdEventDispatch(void* co, int fd, unsigned int curEvents) { return STUB_NET_CO_PROCED; }
 
-int NetCoTblAddUpd(void *netco_handle, unsigned int type, char *data, unsigned int data_len)
-{
-    return 0;
-}
+int NetCoTblAddUpd(void* netco_handle, unsigned int type, char* data, unsigned int data_len) { return 0; }

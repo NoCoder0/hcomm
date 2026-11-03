@@ -57,11 +57,11 @@ flowchart TD
 
 | 任务类型 | 说明 | 核心字段 |
 |---|---|---|
-| `TRANS_MEM` | 内存数据搬运 | `srcRankId`, `srcOffset`<br>`dstRankId`, `dstOffset`<br>`len`, `type` |
+| `TRANS_MEM` | 内存数据搬运 | `srcDeviceId`, `srcOffset`<br>`dstDeviceId`, `dstOffset`<br>`len`, `type` |
 | `BATCH_TRANS_MEM` | 批量内存数据搬运，一个节点内包含多组 `(src -> dst)` 搬运关系 | `srcs[]`<br>`dsts[]` |
-| `REDUCE` | 数据规约 | `srcRankId`, `srcOffset`<br>`dstRankId`, `dstOffset`<br>`type`, `dataCount`, `dataType`, `reduceOp` |
+| `REDUCE` | 数据规约 | `srcDeviceId`, `srcOffset`<br>`dstDeviceId`, `dstOffset`<br>`type`, `dataCount`, `dataType`, `reduceOp` |
 | `BATCH_REDUCE` | 批量数据规约，一个节点内包含多组 `(src -> dst)` 规约关系 | `srcs[][]`<br>`dsts[]`<br>`dataType`, `reduceOp` |
-| `RECORD` / `WAIT` | 同步任务，分别表示发出同步信号和等待同步信号 | `srcRankId`（发出方）<br>`dstRankId`（等待方）<br>`notifyId` |
+| `RECORD` / `WAIT` | 同步任务，分别表示发出同步信号和等待同步信号 | `srcDeviceId`（发出方）<br>`dstDeviceId`（等待方）<br>`notifyId` |
 
 除上述真实执行任务外，任务图中还会补充 `START` / `END` 两类虚拟边界节点。它们不对应实际的数据搬运或计算动作，主要用于表达主图、子图和 Loop 结构的边界。
 
@@ -105,7 +105,7 @@ AICPU 模式下，任务图通常由 `RECORD`、`WAIT` 和 `TRANS_MEM` 这几类
 flowchart LR
     subgraph R0["rank0"]
         direction TB
-        subgraph R0S0["stream0 主流"]
+        subgraph R0S0["算子主流（streamId 由 opDetails.streamId 指定）"]
             direction LR
             R0REC0["RECORD\nnotifyId=101"] --> R0WAI1S0["WAIT\nnotifyId=101"]
         end
@@ -117,7 +117,7 @@ flowchart LR
 
     subgraph R1["rank1"]
         direction TB
-        subgraph R1S0["stream0 主流"]
+        subgraph R1S0["算子主流（streamId 由 opDetails.streamId 指定）"]
             direction LR
             R1REC6["RECORD\nnotifyId=106"] --> R1WAI7["WAIT\nnotifyId=107"]
         end
@@ -245,14 +245,14 @@ MemSlice = { rankId, type, offset, len }
 
 ### 4.2 从流（slave stream）结构校验
 
-从流用于执行算子的辅助任务，例如数据预搬运。在HCCL编程模型中主流通过同步任务 `RECORD -> WAIT` 触发从流，从流完成后，再通过另一组同步任务通知主流，所以从流必须满足固定的首尾结构：首任务为 `WAIT` && 末任务为 `RECORD`
+从流用于执行算子的辅助任务，例如数据预搬运。当前算子的主流由 `opDetails.streamId` 指定，不再假定为 `stream0`。在HCCL编程模型中主流通过同步任务 `RECORD -> WAIT` 触发从流，从流完成后，再通过另一组同步任务通知主流，所以从流必须满足固定的首尾结构：首任务为 `WAIT` && 末任务为 `RECORD`
 
 下图为一个错误示例，标红的节点都是违规节点：
 ```mermaid
 flowchart LR
     START(["start"])
 
-    subgraph MAIN["rank0 / stream0（主流）"]
+    subgraph MAIN["rank0 / 算子主流（streamId 由 opDetails.streamId 指定）"]
         M0["TRANS_MEM"]
         M1["RECORD\nnotifyId=10\n触发从流"]
         M2["WAIT\nnotifyId=11\n等待从流完成"]

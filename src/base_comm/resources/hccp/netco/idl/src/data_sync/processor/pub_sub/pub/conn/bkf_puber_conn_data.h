@@ -41,7 +41,7 @@ enum {
     BKF_PUBER_CONN_EVT_CNT
 };
 
-#define BKF_PUBER_CONN_NEED_DELETE          100
+#define BKF_PUBER_CONN_NEED_DELETE 100
 
 struct TagBkfPuberConnMng {
     BkfPuberInitArg *argInit;
@@ -59,12 +59,12 @@ struct TagBkfPuberConnMng {
 typedef struct {
     BkfPuberConnMng *connMng;
     AVLL_NODE avlNode;
-    BkfChSerConnId *connId;     /* key */
+    BkfChSerConnId *connId; /* key */
     char suberName[BKF_TLV_NAME_LEN_MAX + 1];
     BkfBufq *rcvDataBuf;
     BkfBufq *lastSendLeftDataBuf;
     BkfJobId *jobId;
-    uint8_t lockDel : 1;          /* 防止conn处理过程中删除，后续处理跑飞 */
+    uint8_t lockDel : 1; /* 防止conn处理过程中删除，后续处理跑飞 */
     uint8_t rsv1 : 7;
     uint8_t pad1[3];
     BkfTmrId *tmrId;
@@ -80,8 +80,7 @@ typedef struct {
 BkfPuberConnMng *BkfPuberConnDataInit(BkfPuberInitArg *arg, BkfPuberTableTypeMng *tableTypeMng);
 void BkfPuberConnDataUninit(BkfPuberConnMng *connMng);
 BkfPuberConn *BkfPuberConnAdd(BkfPuberConnMng *connMng, BkfChSerConnId *connId,
-                               F_BKF_PUBER_SESS_TRIG_SCHED_SELF trigSchedSess,
-                               F_BKF_PUBER_SESS_TRIG_SLOW_SCHED_SELF trigSlowSchedSess);
+    F_BKF_PUBER_SESS_TRIG_SCHED_SELF trigSchedSess, F_BKF_PUBER_SESS_TRIG_SLOW_SCHED_SELF trigSlowSchedSess);
 void BkfPuberConnDel(BkfPuberConn *conn, BOOL ntfCh);
 void BkfPuberConnDelAll(BkfPuberConnMng *connMng);
 BkfPuberConn *BkfPuberConnFind(BkfPuberConnMng *connMng, BkfChSerConnId *connId);
@@ -114,4 +113,3 @@ static inline BOOL BkfPuberConnIsLockDel(BkfPuberConn *conn)
 #endif
 
 #endif
-

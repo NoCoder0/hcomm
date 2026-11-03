@@ -20,6 +20,7 @@
 #include "internal_exception.h"
 #include "hccp_async.h"
 #include "ub_memory_transport.h"
+#include "adapter_error_manager_pub.h"
 using namespace Hccl;
 
 namespace {
@@ -28,8 +29,8 @@ constexpr u32 kGetTpAttrVersion = 2U;
 
 static uint8_t gCapturedJettyPriority = 0U;
 
-int StubRaCtxQpCreateCapturePriority(void *ctxHandle, struct QpCreateAttr *attr, struct QpCreateInfo *info,
-    void **qpHandle)
+int StubRaCtxQpCreateCapturePriority(
+    void* ctxHandle, struct QpCreateAttr* attr, struct QpCreateInfo* info, void** qpHandle)
 {
     (void)ctxHandle;
     (void)info;
@@ -45,8 +46,8 @@ int StubRaCtxQpCreateCapturePriority(void *ctxHandle, struct QpCreateAttr *attr,
 
 static uint32_t gCapturedUboeFlag = 0U;
 
-int StubRaGetTpInfoListAsyncCaptureUboe(void *ctxHandle, struct GetTpCfg *cfg, struct HccpTpInfo infoList[],
-    unsigned int *num, void **reqHandle)
+int StubRaGetTpInfoListAsyncCaptureUboe(
+    void* ctxHandle, struct GetTpCfg* cfg, struct HccpTpInfo infoList[], unsigned int* num, void** reqHandle)
 {
     (void)ctxHandle;
     (void)infoList;
@@ -57,15 +58,14 @@ int StubRaGetTpInfoListAsyncCaptureUboe(void *ctxHandle, struct GetTpCfg *cfg, s
         *num = 1U;
     }
     if (reqHandle != nullptr) {
-        *reqHandle = reinterpret_cast<void *>(0x12345678ULL);
+        *reqHandle = reinterpret_cast<void*>(0x12345678ULL);
     }
     return 0;
 }
 
 static uint32_t gCapturedCqDepth = 0U;
 
-int StubRaNdaCqCreateCaptureCqe(void *rdmaHandle, struct NdaCqInitAttr *attr, struct NdaCqInfo *info,
-    void **cqHandle)
+int StubRaNdaCqCreateCaptureCqe(void* rdmaHandle, struct NdaCqInitAttr* attr, struct NdaCqInfo* info, void** cqHandle)
 {
     (void)rdmaHandle;
     (void)info;
@@ -79,24 +79,24 @@ int StubRaNdaCqCreateCaptureCqe(void *rdmaHandle, struct NdaCqInitAttr *attr, st
     return 0;
 }
 
+static std::string gCapturedErrorCode;
+static std::vector<std::string> gCapturedValues;
+void StubRptInputErrCapture(std::string errorCode, std::vector<std::string> keys, std::vector<std::string> values)
+{
+    (void)keys;
+    gCapturedErrorCode = errorCode;
+    gCapturedValues = values;
+}
+
 } // namespace
 
 class AdapterHccpTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AdapterHccp tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AdapterHccp tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AdapterHccp tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AdapterHccp tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in AdapterHccp SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in AdapterHccp SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -106,13 +106,22 @@ protected:
 
     SocketHandle fakeSocHandle = (SocketHandle)0x123;
     FdHandle fakeFdHandle = (FdHandle)0x200;
-    void *fakeData = (void *)0x100;
+    void* fakeData = (void*)0x100;
 };
 
 TEST_F(AdapterHccpTest, RaTlvInit_ok)
 {
     // Given
-    MOCKER(RaTlvInit).stubs().will(returnValue(0));
+    MOCKER(RaTlvInit)
+        .stubs()
+        .with(mockcpp::any())
+        .will(invoke(+[](struct TlvInitInfo*, unsigned int*, void** tlvHandle) {
+            static char fakeTlvHandle;
+            if (tlvHandle != nullptr) {
+                *tlvHandle = &fakeTlvHandle;
+            }
+            return 0;
+        }));
     HRaTlvInitConfig config;
     config.mode = HrtNetworkMode::HDC;
     config.phyId = 0;
@@ -155,7 +164,7 @@ TEST_F(AdapterHccpTest, RaTlvRequest_nok)
     // when
 
     // then
-    EXPECT_THROW(HrtRaTlvRequest(tlv_handle, 1, 1), NetworkApiException);
+    EXPECT_EQ(HrtRaTlvRequest(tlv_handle, 1, 1), HcclResult::HCCL_E_NETWORK);
 }
 
 TEST_F(AdapterHccpTest, RaTlvRequestForCustomChannel_ok)
@@ -180,7 +189,8 @@ TEST_F(AdapterHccpTest, RaTlvRequestForCustomChannel_tlvHandleNull)
     // when
 
     // then
-    EXPECT_THROW(HrtRaTlvRequestForCustomChannel(nullptr, MSG_TYPE_CCU_DISPATCH_CMD, inBuff, outBuff), NullPtrException);
+    EXPECT_THROW(
+        HrtRaTlvRequestForCustomChannel(nullptr, MSG_TYPE_CCU_DISPATCH_CMD, inBuff, outBuff), NullPtrException);
 }
 
 TEST_F(AdapterHccpTest, RaTlvRequestForCustomChannel_customInNull)
@@ -192,7 +202,8 @@ TEST_F(AdapterHccpTest, RaTlvRequestForCustomChannel_customInNull)
     // when
 
     // then
-    EXPECT_THROW(HrtRaTlvRequestForCustomChannel(tlv_handle, MSG_TYPE_CCU_DISPATCH_CMD, nullptr, outBuff), NullPtrException);
+    EXPECT_THROW(
+        HrtRaTlvRequestForCustomChannel(tlv_handle, MSG_TYPE_CCU_DISPATCH_CMD, nullptr, outBuff), NullPtrException);
 }
 
 TEST_F(AdapterHccpTest, RaTlvRequestForCustomChannel_customOutNull)
@@ -204,7 +215,8 @@ TEST_F(AdapterHccpTest, RaTlvRequestForCustomChannel_customOutNull)
     // when
 
     // then
-    EXPECT_THROW(HrtRaTlvRequestForCustomChannel(tlv_handle, MSG_TYPE_CCU_DISPATCH_CMD, inBuff, nullptr), NullPtrException);
+    EXPECT_THROW(
+        HrtRaTlvRequestForCustomChannel(tlv_handle, MSG_TYPE_CCU_DISPATCH_CMD, inBuff, nullptr), NullPtrException);
 }
 
 TEST_F(AdapterHccpTest, RaTlvRequestForCustomChannel_nok)
@@ -218,7 +230,8 @@ TEST_F(AdapterHccpTest, RaTlvRequestForCustomChannel_nok)
     // when
 
     // then
-    EXPECT_THROW(HrtRaTlvRequestForCustomChannel(tlv_handle, MSG_TYPE_CCU_DISPATCH_CMD, inBuff, outBuff), NetworkApiException);
+    EXPECT_THROW(
+        HrtRaTlvRequestForCustomChannel(tlv_handle, MSG_TYPE_CCU_DISPATCH_CMD, inBuff, outBuff), NetworkApiException);
 }
 
 TEST_F(AdapterHccpTest, RaTlvDeInit_ok)
@@ -239,7 +252,7 @@ TEST_F(AdapterHccpTest, RaTlvDeInit_nok)
     void* tlv_handle;
 
     // when
-    
+
     // then
     EXPECT_THROW(HrtRaTlvDeInit(tlv_handle), NetworkApiException);
 }
@@ -352,23 +365,27 @@ TEST_F(AdapterHccpTest, hrtRaSocketListenOneStart_again)
 
     SocketHandle socketHandle = nullptr;
 
-
     RaSocketListenParam listenInfo(socketHandle, 0, IpAddress());
     // when
 
     // then
-    EXPECT_THROW(HrtRaSocketListenOneStart(listenInfo,  HrtNetworkMode::HDC), NetworkApiException);
+    EXPECT_THROW(HrtRaSocketListenOneStart(listenInfo, HrtNetworkMode::HDC), NetworkApiException);
 }
 
-TEST_F(AdapterHccpTest, Ut_HrtRaSocketTryListenOneStart_When_InValid_IP_Expect_Throw_Exception)
+TEST_F(AdapterHccpTest, Ut_HrtRaSocketTryListenOneStart_When_InValid_IP_Expect_RptEI0016)
 {
+    gCapturedErrorCode.clear();
     MOCKER(RaSocketListenStart).stubs().will(returnValue(SOCK_EADDRNOTAVAIL));
+    MOCKER(RptInputErr).stubs().will(invoke(StubRptInputErrCapture));
 
     SocketHandle socketHandle = nullptr;
-
     RaSocketListenParam listenInfo(socketHandle, 0, IpAddress());
 
+    testing::internal::CaptureStdout();
     EXPECT_THROW(HrtRaSocketTryListenOneStart(listenInfo, HrtNetworkMode::HDC), NetworkApiException);
+    const std::string log = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(gCapturedErrorCode, "EI0016");
+    EXPECT_NE(log.find("[InitGroupStage][RanktableCheck]"), std::string::npos);
 }
 
 TEST_F(AdapterHccpTest, Ut_HrtRaSocketNonBlockSendHeart_When_Input_normal_Expect_Return_Success)
@@ -377,7 +394,9 @@ TEST_F(AdapterHccpTest, Ut_HrtRaSocketNonBlockSendHeart_When_Input_normal_Expect
     u64 sendSizeStub = 123;
     u64 fd = 0;
     SocketHandle socketHandle = &fd;
-    MOCKER(RaSocketSend).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any(), outBoundP(&sendSizeStub, sizeof(sendSizeStub)))
+    MOCKER(RaSocketSend)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), outBoundP(&sendSizeStub, sizeof(sendSizeStub)))
         .will(returnValue(0));
 
     u64 sentSize = 0;
@@ -392,7 +411,9 @@ TEST_F(AdapterHccpTest, Ut_HrtRaSocketNonBlockRecvHeart_When_Input_normal_Expect
     u64 recvSizeStub = 123;
     u64 fd = 0;
     SocketHandle socketHandle = &fd;
-    MOCKER(RaSocketRecv).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any(), outBoundP(&recvSizeStub, sizeof(recvSizeStub)))
+    MOCKER(RaSocketRecv)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), outBoundP(&recvSizeStub, sizeof(recvSizeStub)))
         .will(returnValue(0));
 
     u64 recvedSize = 0;
@@ -404,8 +425,8 @@ TEST_F(AdapterHccpTest, Ut_HrtRaSocketNonBlockRecvHeart_When_Input_normal_Expect
 TEST_F(AdapterHccpTest, HrtRaSocketInit_OK)
 {
     // Given
-    u32         *num          = new u32[2];
-    SocketHandle socketHandle = static_cast<void *>(num);
+    u32* num = new u32[2];
+    SocketHandle socketHandle = static_cast<void*>(num);
     MOCKER(RaSocketInit)
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), outBoundP(&socketHandle, sizeof(socketHandle)))
@@ -422,8 +443,8 @@ TEST_F(AdapterHccpTest, HrtRaSocketInit_OK)
 TEST_F(AdapterHccpTest, HrtRaSocketInit_NOK)
 {
     // Given
-    u32         *num          = new u32[2];
-    SocketHandle socketHandle = static_cast<void *>(num);
+    u32* num = new u32[2];
+    SocketHandle socketHandle = static_cast<void*>(num);
     MOCKER(RaSocketInit)
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), outBoundP(&socketHandle, sizeof(socketHandle)))
@@ -439,8 +460,8 @@ TEST_F(AdapterHccpTest, HrtRaSocketInit_NOK)
 TEST_F(AdapterHccpTest, HrtHrtRaRdmaInit_NOK)
 {
     // Given
-    u32       *num        = new u32[1];
-    RdmaHandle rdmaHandle = static_cast<void *>(num);
+    u32* num = new u32[1];
+    RdmaHandle rdmaHandle = static_cast<void*>(num);
     MOCKER(RaRdevInit)
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), outBoundP(&rdmaHandle, sizeof(rdmaHandle)))
@@ -456,8 +477,8 @@ TEST_F(AdapterHccpTest, HrtHrtRaRdmaInit_NOK)
 TEST_F(AdapterHccpTest, HrtHrtRaRdmaInit_return_HCCP_ELINKDOWN_NOK)
 {
     // Given
-    u32       *num        = new u32[1];
-    RdmaHandle rdmaHandle = static_cast<void *>(num);
+    u32* num = new u32[1];
+    RdmaHandle rdmaHandle = static_cast<void*>(num);
     MOCKER(RaRdevInit)
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), outBoundP(&rdmaHandle, sizeof(rdmaHandle)))
@@ -466,15 +487,55 @@ TEST_F(AdapterHccpTest, HrtHrtRaRdmaInit_return_HCCP_ELINKDOWN_NOK)
     struct RaInterface rdevInfo;
     // when
 
+    gCapturedErrorCode.clear();
+    MOCKER(RptInputErr).stubs().will(invoke(StubRptInputErrCapture));
+    testing::internal::CaptureStdout();
     EXPECT_THROW(HrtRaRdmaInit(HrtNetworkMode::HDC, rdevInfo), NetworkApiException);
+    const std::string log = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(gCapturedErrorCode, "EI0009");
+    EXPECT_NE(log.find("[InitGroupStage][RunFailed]"), std::string::npos);
+    EXPECT_NE(log.find("transport init error"), std::string::npos);
     delete[] num;
+}
+
+TEST_F(AdapterHccpTest, HrtRaRdmaInit_InvalidIps_ReportsEI0014)
+{
+    gCapturedErrorCode.clear();
+    MOCKER(RaRdevInit).stubs().will(returnValue(HCCP_EINVALIDIPS));
+    MOCKER(RptInputErr).stubs().will(invoke(StubRptInputErrCapture));
+    RaInterface interface{0, IpAddress("192.168.1.1", AF_INET)};
+
+    testing::internal::CaptureStdout();
+    EXPECT_THROW(HrtRaRdmaInit(HrtNetworkMode::HDC, interface), NetworkApiException);
+    const std::string log = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(gCapturedErrorCode, "EI0014");
+    EXPECT_NE(log.find("[InitGroupStage][RanktableCheck]"), std::string::npos);
+    EXPECT_NE(log.find("in the ranktable is inconsistent"), std::string::npos);
+}
+
+TEST_F(AdapterHccpTest, HrtRaRdmaInitProbe_InvalidIps_ReportsEI0014)
+{
+    gCapturedErrorCode.clear();
+    MOCKER(RaRdevInit).stubs().will(returnValue(HCCP_EINVALIDIPS));
+    MOCKER(RptInputErr).stubs().will(invoke(StubRptInputErrCapture));
+    RaInterface interface{0, IpAddress("192.168.1.1", AF_INET)};
+    RdmaHandle rdmaHandle = nullptr;
+
+    testing::internal::CaptureStdout();
+    const s32 ret = HrtRaRdmaInit(HrtNetworkMode::PEER, interface, rdmaHandle);
+    const std::string log = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(ret, HCCP_EINVALIDIPS);
+    EXPECT_EQ(gCapturedErrorCode, "EI0014");
+    EXPECT_NE(log.find("[InitGroupStage][RanktableCheck]"), std::string::npos);
 }
 
 TEST_F(AdapterHccpTest, HrtRaQpCreate_NOK)
 {
     // Given
-    u32     *num        = new u32[1];
-    QpHandle connHandle = static_cast<void *>(num);
+    u32* num = new u32[1];
+    QpHandle connHandle = static_cast<void*>(num);
     MOCKER(RaQpCreate)
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), outBoundP(&connHandle, sizeof(connHandle)))
@@ -504,7 +565,7 @@ TEST_F(AdapterHccpTest, HrtRaMrReg_deReg_NOK)
     // Given
     MOCKER(RaMrReg).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(1));
 
-    QpHandle       qpHandle;
+    QpHandle qpHandle;
     struct RaMrInfo mrInfo;
     // when
 
@@ -535,8 +596,8 @@ TEST_F(AdapterHccpTest, HrtRaUbCtxDestroy_ok)
 
 TEST_F(AdapterHccpTest, HrtRaUbLocalMemReg_ok)
 {
-    uint64_t fakeAddr       = 0;
-    uint64_t fakeSize       = 0;
+    uint64_t fakeAddr = 0;
+    uint64_t fakeSize = 0;
     uint32_t fakeTokenValue = 0;
     uint64_t fakeTokenIdHandle = 0;
 
@@ -552,8 +613,8 @@ TEST_F(AdapterHccpTest, HrtRaUbLocalMemReg_ok)
 TEST_F(AdapterHccpTest, Ut_RaUbLocalMemRegAsync_When_Normal_Input_Expect_No_Throw)
 {
     RdmaHandle handle = reinterpret_cast<RdmaHandle>(0x123);
-    uint64_t fakeAddr       = 0;
-    uint64_t fakeSize       = 0;
+    uint64_t fakeAddr = 0;
+    uint64_t fakeSize = 0;
     uint32_t fakeTokenValue = 0;
     uint64_t fakeTokenIdHandle = 0;
     HrtRaUbLocMemRegParam inParam(fakeAddr, fakeSize, fakeTokenValue, fakeTokenIdHandle);
@@ -566,7 +627,7 @@ TEST_F(AdapterHccpTest, Ut_RaUbLocalMemRegAsync_When_Normal_Input_Expect_No_Thro
 
     vector<char_t> out;
     out.resize(sizeof(struct MrRegInfoT));
-    struct MrRegInfoT *info = reinterpret_cast<struct MrRegInfoT *>(out.data());
+    struct MrRegInfoT* info = reinterpret_cast<struct MrRegInfoT*>(out.data());
     memcpy_s(info->out.key.value, HRT_UB_MEM_KEY_MAX_LEN, fakeKey, HRT_UB_MEM_KEY_MAX_LEN);
     info->out.key.size = 4;
     info->out.ub.tokenId = fakeTokenId;
@@ -586,7 +647,7 @@ TEST_F(AdapterHccpTest, HrtRaUbRemoteMemImport_ok)
     uint8_t value[128];
     RdmaHandle handle = reinterpret_cast<RdmaHandle>(0x123);
     HrtRaUbRemMemImportedOutParam result = HrtRaUbRemoteMemImport(handle, value, 128, 0);
- 
+
     EXPECT_EQ(0, result.targetSegVa);
 }
 
@@ -631,10 +692,26 @@ TEST_F(AdapterHccpTest, HrtRaUbCreateJetty_ok)
     EXPECT_EQ(0, result4.jettyVa);
 }
 
-TEST_F(AdapterHccpTest, HrtRaUbDestroyJetty_ok)
+TEST_F(AdapterHccpTest, HrtRaUbCreateJetty_ResourceExhausted_ReportsEI0007)
 {
-    HrtRaUbDestroyJetty(0);
+    gCapturedErrorCode.clear();
+    gCapturedValues.clear();
+    MOCKER(RaCtxQpCreate).stubs().will(returnValue(ROCE_ENOSPC));
+    MOCKER(RptInputErr).stubs().will(invoke(StubRptInputErrCapture));
+    RdmaHandle handle = reinterpret_cast<RdmaHandle>(0x123);
+    HrtRaUbCreateJettyParam inParam{100, 100, 100, 100, HrtJettyMode::HOST_OPBASE, 0, 100, 100, 100, 100};
+
+    testing::internal::CaptureStdout();
+    EXPECT_THROW(HrtRaUbCreateJetty(handle, inParam), NetworkApiException);
+    const std::string log = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(gCapturedErrorCode, "EI0007");
+    EXPECT_EQ(gCapturedValues, (std::vector<std::string>{"jetty", "CreateJetty"}));
+    EXPECT_NE(log.find("[InitChannelStage][Resource]"), std::string::npos);
+    EXPECT_NE(log.find("jetty resources are exhausted"), std::string::npos);
 }
+
+TEST_F(AdapterHccpTest, HrtRaUbDestroyJetty_ok) { HrtRaUbDestroyJetty(0); }
 
 TEST_F(AdapterHccpTest, RaUbTpImportJetty_throw)
 {
@@ -650,28 +727,21 @@ TEST_F(AdapterHccpTest, HrtRaUbUnimportJetty_ok)
     HrtRaUbUnimportJetty(handle, 0);
 }
 
-TEST_F(AdapterHccpTest, HrtRaUbJettyBind_ok)
-{
-    HrtRaUbJettyBind(0, 0);
-}
+TEST_F(AdapterHccpTest, HrtRaUbJettyBind_ok) { HrtRaUbJettyBind(0, 0); }
 
-TEST_F(AdapterHccpTest, HrtRaUbJettyUnbind_ok)
-{
-    HrtRaUbJettyUnbind(0);
-}
+TEST_F(AdapterHccpTest, HrtRaUbJettyUnbind_ok) { HrtRaUbJettyUnbind(0); }
 
 TEST_F(AdapterHccpTest, HrtRaUbPostSend_ok)
 {
     HrtRaUbSendWrReqParam in;
-    in.inlineFlag                 = true;
-    in.inlineReduceFlag           = true;
-    in.opcode                     = HrtUbSendWrOpCode::WRITE_WITH_NOTIFY;
-    in.reduceOp                   = ReduceOp::SUM;
-    in.dataType                   = DataType::INT8;
+    in.inlineFlag = true;
+    in.inlineReduceFlag = true;
+    in.opcode = HrtUbSendWrOpCode::WRITE_WITH_NOTIFY;
+    in.reduceOp = ReduceOp::SUM;
+    in.dataType = DataType::INT8;
     HrtRaUbSendWrRespParam result = HrtRaUbPostSend(0, in);
     EXPECT_EQ(0, result.dieId);
 }
-
 
 TEST_F(AdapterHccpTest, HrtGetHosIf_nok_ra_get_ifnum_error)
 {
@@ -689,7 +759,6 @@ TEST_F(AdapterHccpTest, HrtGetHosIf_nok_ra_get_ifnum_zero)
 
 TEST_F(AdapterHccpTest, HrtGetHosIf_nok_ra_get_ifaddrs_error)
 {
-
     unsigned int fakeNum = 1;
     MOCKER(RaGetIfnum).stubs().with(mockcpp::any(), outBoundP(&fakeNum, sizeof(fakeNum))).will(returnValue(0));
     MOCKER(RaGetIfaddrs).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(1));
@@ -702,14 +771,14 @@ TEST_F(AdapterHccpTest, HrtGetHosIf_ok)
     unsigned int fakeNum = 1;
     MOCKER(RaGetIfnum).stubs().with(mockcpp::any(), outBoundP(&fakeNum, sizeof(fakeNum))).will(returnValue(0));
 
-    IpAddress             addr(1);
+    IpAddress addr(1);
     struct InterfaceInfo ifAddrInfos[1];
-    char                  stub_ifname[256] = {};
-    stub_ifname[0]                         = 'a';
+    char stub_ifname[256] = {};
+    stub_ifname[0] = 'a';
     memcpy_s(&ifAddrInfos[0].ifname, 256, &stub_ifname, 256);
     ifAddrInfos[0].ifaddr.ip.addr = addr.GetBinaryAddress().addr;
-    ifAddrInfos[0].family    = addr.GetFamily();
-    ifAddrInfos[0].scopeId  = addr.GetScopeID();
+    ifAddrInfos[0].family = addr.GetFamily();
+    ifAddrInfos[0].scopeId = addr.GetScopeID();
 
     MOCKER(RaGetIfaddrs)
         .stubs()
@@ -724,12 +793,10 @@ TEST_F(AdapterHccpTest, HrtGetHosIf_ok)
     EXPECT_EQ(1, hostIfs[0].second.GetBinaryAddress().addr.s_addr);
 }
 
-
-
 TEST_F(AdapterHccpTest, HrtGetDeviceIp_nok)
 {
-    u32  devPhyId = 0;
-    auto hostIfs  = HrtGetDeviceIp(devPhyId);
+    u32 devPhyId = 0;
+    auto hostIfs = HrtGetDeviceIp(devPhyId);
     EXPECT_EQ(true, hostIfs.empty());
 
     HrtGetDeviceIp(devPhyId);
@@ -762,7 +829,6 @@ TEST_F(AdapterHccpTest, HrtGetDeviceIp_ok)
     EXPECT_EQ(1, deviceIps[0].GetBinaryAddress().addr.s_addr);
 }
 
-
 TEST_F(AdapterHccpTest, HrtRaUbPostNops_exception)
 {
     MOCKER(RaBatchSendWr).stubs().with(mockcpp::any()).will(returnValue(1));
@@ -776,25 +842,27 @@ TEST_F(AdapterHccpTest, RaUbUpdateCi_exception)
     EXPECT_THROW(RaUbUpdateCi(jettyHandle, 100), NetworkApiException);
 }
 
-TEST_F(AdapterHccpTest, RaGetAsyncReqResult_exception)
+TEST_F(AdapterHccpTest, ut_HrtRaGetAsyncReqResult_When_ReqHandleZero_Expect_ReturnInvalidPara)
 {
     RequestHandle reqHandle = 0;
-    HrtRaGetAsyncReqResult(reqHandle);
+    const ReqHandleResult result = HrtRaGetAsyncReqResult(reqHandle);
+    EXPECT_EQ(result, ReqHandleResult::INVALID_PARA);
+    GlobalMockObject::verify();
 }
- 
+
 TEST_F(AdapterHccpTest, RaUbLocalMemUnregAsync_exception)
 {
     RdmaHandle rdmaHandle = reinterpret_cast<RdmaHandle>(0x123);
     LocMemHandle lmemHandle;
     RaUbLocalMemUnregAsync(rdmaHandle, lmemHandle);
 }
- 
+
 TEST_F(AdapterHccpTest, RaUbDestroyJettyAsync_exception)
 {
     void* jettyHandle = reinterpret_cast<void*>(0x123);
     RequestHandle result = RaUbDestroyJettyAsync(jettyHandle);
 }
- 
+
 TEST_F(AdapterHccpTest, RaUbUnimportJettyAsync_exception)
 {
     void* targetJettyHandle = reinterpret_cast<void*>(0x123);
@@ -805,25 +873,335 @@ TEST_F(AdapterHccpTest, RaGetAsyncReqResult_return_others_eagain)
 {
     MOCKER(RaGetAsyncReqResult).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(OTHERS_EAGAIN));
     RequestHandle reqHandle = 12;
-    HrtRaGetAsyncReqResult(reqHandle);
+    const ReqHandleResult result = HrtRaGetAsyncReqResult(reqHandle);
+    EXPECT_EQ(result, ReqHandleResult::NOT_COMPLETED);
     GlobalMockObject::verify();
 }
 
 TEST_F(AdapterHccpTest, RaGetAsyncReqResult_return_error)
 {
-    MOCKER(RaGetAsyncReqResult).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(OTHERS_EAGAIN+1));
+    struct AsyncReqResult fakeResult = {12345, 0x1234};
+    MOCKER(RaGetAsyncReqResult)
+        .stubs()
+        .with(mockcpp::any(), outBoundP(&fakeResult, sizeof(fakeResult)))
+        .will(returnValue(OTHERS_EAGAIN + 1));
     RequestHandle reqHandle = 12;
+    testing::internal::CaptureStdout();
     EXPECT_THROW(HrtRaGetAsyncReqResult(reqHandle), NetworkApiException);
+    const std::string log = testing::internal::GetCapturedStdout();
+    EXPECT_NE(log.find("interfaceOpCode[4660]"), std::string::npos);
     GlobalMockObject::verify();
 }
 
 TEST_F(AdapterHccpTest, RaGetAsyncReqResult_return_zero_result_error)
 {
-    int fakeResult = 12345;
-    MOCKER(RaGetAsyncReqResult).stubs().with(mockcpp::any(), outBoundP(&fakeResult)).will(returnValue(0));
+    struct AsyncReqResult fakeResult = {12345, 0x1234};
+    MOCKER(RaGetAsyncReqResult)
+        .stubs()
+        .with(mockcpp::any(), outBoundP(&fakeResult, sizeof(fakeResult)))
+        .will(returnValue(0));
     RequestHandle reqHandle = 12;
+
+    testing::internal::CaptureStdout();
     EXPECT_THROW(HrtRaGetAsyncReqResult(reqHandle), NetworkApiException);
+    const std::string log = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(log.find("interfaceOpCode[4660]"), std::string::npos);
     GlobalMockObject::verify();
+}
+
+TEST_F(AdapterHccpTest, HrtRaGetAsyncReqResult_ResourceExhausted_ReportsEI0007)
+{
+    gCapturedErrorCode.clear();
+    gCapturedValues.clear();
+    AsyncReqResult fakeResult = {ROCE_ENOSPC, HCCP_OP_CTX_QP_CREATE};
+    MOCKER(RaGetAsyncReqResult)
+        .stubs()
+        .with(mockcpp::any(), outBoundP(&fakeResult, sizeof(fakeResult)))
+        .will(returnValue(0));
+    MOCKER(RptInputErr).stubs().will(invoke(StubRptInputErrCapture));
+    RequestHandle reqHandle = 12;
+
+    testing::internal::CaptureStdout();
+    EXPECT_THROW(HrtRaGetAsyncReqResult(reqHandle), NetworkApiException);
+    const std::string log = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(gCapturedErrorCode, "EI0007");
+    EXPECT_EQ(gCapturedValues, (std::vector<std::string>{"jetty", "CreateJettyAsync"}));
+    EXPECT_NE(log.find("[InitChannelStage][Resource]"), std::string::npos);
+    EXPECT_NE(log.find("jetty resources are exhausted"), std::string::npos);
+}
+
+TEST_F(AdapterHccpTest, ut_HrtRaGetAsyncReqResult_When_ReqResultSockEagain_Expect_ReturnSockEAgain)
+{
+    struct AsyncReqResult fakeResult = {SOCK_EAGAIN, 0};
+    MOCKER(RaGetAsyncReqResult)
+        .stubs()
+        .with(mockcpp::any(), outBoundP(&fakeResult, sizeof(fakeResult)))
+        .will(returnValue(0));
+    RequestHandle reqHandle = 12;
+
+    const ReqHandleResult result = HrtRaGetAsyncReqResult(reqHandle);
+
+    EXPECT_EQ(result, ReqHandleResult::SOCK_E_AGAIN);
+    GlobalMockObject::verify();
+}
+
+TEST_F(AdapterHccpTest, ut_HrtRaGetAsyncReqResult_When_ReqResultOk_Expect_ReturnCompleted)
+{
+    struct AsyncReqResult fakeResult = {0, 0};
+    MOCKER(RaGetAsyncReqResult)
+        .stubs()
+        .with(mockcpp::any(), outBoundP(&fakeResult, sizeof(fakeResult)))
+        .will(returnValue(0));
+    RequestHandle reqHandle = 12;
+
+    const ReqHandleResult result = HrtRaGetAsyncReqResult(reqHandle);
+
+    EXPECT_EQ(result, ReqHandleResult::COMPLETED);
+    EXPECT_EQ(reqHandle, 0U);
+    GlobalMockObject::verify();
+}
+
+TEST_F(AdapterHccpTest, HrtRaUbCreateJetty_DevMemExhausted_ReportsEI0011)
+{
+    gCapturedErrorCode.clear();
+    gCapturedValues.clear();
+    MOCKER(RaCtxQpCreate).stubs().will(returnValue(ROCE_ENOMEM));
+    MOCKER(RptInputErr).stubs().will(invoke(StubRptInputErrCapture));
+    RdmaHandle handle = reinterpret_cast<RdmaHandle>(0x123);
+    HrtRaUbCreateJettyParam inParam{100, 100, 100, 100, HrtJettyMode::HOST_OPBASE, 0, 100, 100, 100, 100};
+
+    testing::internal::CaptureStdout();
+    EXPECT_THROW(HrtRaUbCreateJetty(handle, inParam), NetworkApiException);
+    const std::string log = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(gCapturedErrorCode, "EI0011");
+    EXPECT_EQ(gCapturedValues, (std::vector<std::string>{"16384~2097152"}));
+    EXPECT_NE(log.find("insufficient memory"), std::string::npos);
+}
+
+TEST_F(AdapterHccpTest, HrtRaUbCreateJfc_ResourceExhausted_ReportsEI0007)
+{
+    gCapturedErrorCode.clear();
+    gCapturedValues.clear();
+    MOCKER(RaCtxCqCreate).stubs().will(returnValue(ROCE_ENOSPC));
+    MOCKER(RptInputErr).stubs().will(invoke(StubRptInputErrCapture));
+    RdmaHandle handle = reinterpret_cast<RdmaHandle>(0x123);
+    struct Hccl::CqCreateInfo cqInfo;
+
+    testing::internal::CaptureStdout();
+    try {
+        HrtRaUbCreateJfc(handle, cqInfo, HrtUbJfcMode::NORMAL);
+        FAIL() << "expected NetworkApiException";
+    } catch (const NetworkApiException& e) {
+        EXPECT_NE(std::string(e.what()).find("ret["), std::string::npos);
+    }
+    const std::string log = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(gCapturedErrorCode, "EI0007");
+    EXPECT_EQ(gCapturedValues, (std::vector<std::string>{"jfc", "CreateJfc"}));
+    EXPECT_NE(log.find("jfc resources are exhausted"), std::string::npos);
+}
+
+TEST_F(AdapterHccpTest, HrtRaUbCreateJfc_DevMemExhausted_ReportsEI0011)
+{
+    gCapturedErrorCode.clear();
+    gCapturedValues.clear();
+    MOCKER(RaCtxCqCreate).stubs().will(returnValue(ROCE_ENOMEM));
+    MOCKER(RptInputErr).stubs().will(invoke(StubRptInputErrCapture));
+    RdmaHandle handle = reinterpret_cast<RdmaHandle>(0x123);
+    struct Hccl::CqCreateInfo cqInfo;
+
+    testing::internal::CaptureStdout();
+    try {
+        HrtRaUbCreateJfc(handle, cqInfo, HrtUbJfcMode::NORMAL);
+        FAIL() << "expected NetworkApiException";
+    } catch (const NetworkApiException& e) {
+        EXPECT_NE(std::string(e.what()).find("ret["), std::string::npos);
+    }
+    const std::string log = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(gCapturedErrorCode, "EI0011");
+    EXPECT_EQ(gCapturedValues, (std::vector<std::string>{"4096~2097152"}));
+    EXPECT_NE(log.find("insufficient memory"), std::string::npos);
+}
+
+TEST_F(AdapterHccpTest, HrtRaUbLocalMemReg_ResourceExhausted_ReportsEI0007)
+{
+    gCapturedErrorCode.clear();
+    gCapturedValues.clear();
+    MOCKER(RaCtxLmemRegister).stubs().will(returnValue(ROCE_ENOSPC));
+    MOCKER(RptInputErr).stubs().will(invoke(StubRptInputErrCapture));
+    RdmaHandle handle = reinterpret_cast<RdmaHandle>(0x123);
+    HrtRaUbLocMemRegParam inParam(0, 0, 0, 0);
+
+    testing::internal::CaptureStdout();
+    try {
+        HrtRaUbLocalMemReg(handle, inParam);
+        FAIL() << "expected NetworkApiException";
+    } catch (const NetworkApiException& e) {
+        EXPECT_NE(std::string(e.what()).find("ret["), std::string::npos);
+    }
+    const std::string log = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(gCapturedErrorCode, "EI0007");
+    EXPECT_EQ(gCapturedValues, (std::vector<std::string>{"segment", "RegisterSeg"}));
+    EXPECT_NE(log.find("segment resources are exhausted"), std::string::npos);
+}
+
+TEST_F(AdapterHccpTest, HrtRaUbLocalMemReg_DevMemExhausted_ReportsEI0011)
+{
+    gCapturedErrorCode.clear();
+    gCapturedValues.clear();
+    MOCKER(RaCtxLmemRegister).stubs().will(returnValue(ROCE_ENOMEM));
+    MOCKER(RptInputErr).stubs().will(invoke(StubRptInputErrCapture));
+    RdmaHandle handle = reinterpret_cast<RdmaHandle>(0x123);
+    HrtRaUbLocMemRegParam inParam(0, 0, 0, 0);
+
+    testing::internal::CaptureStdout();
+    try {
+        HrtRaUbLocalMemReg(handle, inParam);
+        FAIL() << "expected NetworkApiException";
+    } catch (const NetworkApiException& e) {
+        EXPECT_NE(std::string(e.what()).find("ret["), std::string::npos);
+    }
+    const std::string log = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(gCapturedErrorCode, "EI0011");
+    EXPECT_EQ(gCapturedValues, (std::vector<std::string>{"N/A"}));
+    EXPECT_NE(log.find("insufficient memory"), std::string::npos);
+}
+
+TEST_F(AdapterHccpTest, RaUbAllocTokenIdHandle_ResourceExhausted_ReportsEI0007)
+{
+    gCapturedErrorCode.clear();
+    gCapturedValues.clear();
+    MOCKER(RaCtxTokenIdAlloc).stubs().will(returnValue(ROCE_ENOSPC));
+    MOCKER(RptInputErr).stubs().will(invoke(StubRptInputErrCapture));
+    RdmaHandle handle = reinterpret_cast<RdmaHandle>(0x123);
+
+    testing::internal::CaptureStdout();
+    try {
+        RaUbAllocTokenIdHandle(handle);
+        FAIL() << "expected NetworkApiException";
+    } catch (const NetworkApiException& e) {
+        EXPECT_NE(std::string(e.what()).find("ret["), std::string::npos);
+    }
+    const std::string log = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(gCapturedErrorCode, "EI0007");
+    EXPECT_EQ(gCapturedValues, (std::vector<std::string>{"token id", "AllocTokenId"}));
+    EXPECT_NE(log.find("token id resources are exhausted"), std::string::npos);
+}
+
+TEST_F(AdapterHccpTest, RaUbGetTpInfo_ResourceExhausted_ReportsEI0007)
+{
+    gCapturedErrorCode.clear();
+    gCapturedValues.clear();
+    MOCKER(RaCtxGetTpInfoList).stubs().will(returnValue(ROCE_ENOSPC));
+    MOCKER(RptInputErr).stubs().will(invoke(StubRptInputErrCapture));
+    RdmaHandle handle = reinterpret_cast<RdmaHandle>(0x123);
+    IpAddress locAddr("8.0.0.1");
+    IpAddress rmtAddr("8.0.0.2");
+    RaUbGetTpInfoParam param{locAddr, rmtAddr, TpProtocol::TP};
+    vector<char_t> out;
+    uint32_t num = 0U;
+
+    testing::internal::CaptureStdout();
+    EXPECT_THROW(RaUbGetTpInfo(handle, param, out, num), NetworkApiException);
+    const std::string log = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(gCapturedErrorCode, "EI0007");
+    EXPECT_EQ(gCapturedValues, (std::vector<std::string>{"tp", "GetTpList"}));
+    EXPECT_NE(log.find("tp resources are exhausted"), std::string::npos);
+}
+
+TEST_F(AdapterHccpTest, HrtRaGetAsyncReqResult_QpImportResourceExhausted_ReportsEI0007)
+{
+    gCapturedErrorCode.clear();
+    gCapturedValues.clear();
+    AsyncReqResult fakeResult = {ROCE_ENOSPC, HCCP_OP_CTX_QP_IMPORT};
+    MOCKER(RaGetAsyncReqResult)
+        .stubs()
+        .with(mockcpp::any(), outBoundP(&fakeResult, sizeof(fakeResult)))
+        .will(returnValue(0));
+    MOCKER(RptInputErr).stubs().will(invoke(StubRptInputErrCapture));
+    RequestHandle reqHandle = 12;
+
+    testing::internal::CaptureStdout();
+    EXPECT_THROW(HrtRaGetAsyncReqResult(reqHandle), NetworkApiException);
+    const std::string log = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(gCapturedErrorCode, "EI0007");
+    EXPECT_EQ(gCapturedValues, (std::vector<std::string>{"jetty", "ImportJettyAsync"}));
+    EXPECT_NE(log.find("ImportJettyAsync failed"), std::string::npos);
+    EXPECT_NE(log.find("jetty resources are exhausted"), std::string::npos);
+}
+
+TEST_F(AdapterHccpTest, HrtRaGetAsyncReqResult_LmemRegResourceExhausted_ReportsEI0007)
+{
+    gCapturedErrorCode.clear();
+    gCapturedValues.clear();
+    AsyncReqResult fakeResult = {ROCE_ENOSPC, HCCP_OP_LMEM_REG};
+    MOCKER(RaGetAsyncReqResult)
+        .stubs()
+        .with(mockcpp::any(), outBoundP(&fakeResult, sizeof(fakeResult)))
+        .will(returnValue(0));
+    MOCKER(RptInputErr).stubs().will(invoke(StubRptInputErrCapture));
+    RequestHandle reqHandle = 12;
+
+    testing::internal::CaptureStdout();
+    EXPECT_THROW(HrtRaGetAsyncReqResult(reqHandle), NetworkApiException);
+    const std::string log = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(gCapturedErrorCode, "EI0007");
+    EXPECT_EQ(gCapturedValues, (std::vector<std::string>{"segment", "RegisterSegAsync"}));
+    EXPECT_NE(log.find("RegisterSegAsync failed"), std::string::npos);
+    EXPECT_NE(log.find("segment resources are exhausted"), std::string::npos);
+}
+
+TEST_F(AdapterHccpTest, HrtRaGetAsyncReqResult_TpInfoListResourceExhausted_ReportsEI0007)
+{
+    gCapturedErrorCode.clear();
+    gCapturedValues.clear();
+    AsyncReqResult fakeResult = {ROCE_ENOSPC, HCCP_OP_GET_TP_INFO_LIST};
+    MOCKER(RaGetAsyncReqResult)
+        .stubs()
+        .with(mockcpp::any(), outBoundP(&fakeResult, sizeof(fakeResult)))
+        .will(returnValue(0));
+    MOCKER(RptInputErr).stubs().will(invoke(StubRptInputErrCapture));
+    RequestHandle reqHandle = 12;
+
+    testing::internal::CaptureStdout();
+    EXPECT_THROW(HrtRaGetAsyncReqResult(reqHandle), NetworkApiException);
+    const std::string log = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(gCapturedErrorCode, "EI0007");
+    EXPECT_EQ(gCapturedValues, (std::vector<std::string>{"tp", "GetTpListAsync"}));
+    EXPECT_NE(log.find("GetTpListAsync failed"), std::string::npos);
+    EXPECT_NE(log.find("tp resources are exhausted"), std::string::npos);
+}
+
+TEST_F(AdapterHccpTest, HrtRaGetAsyncReqResult_DevMemExhausted_ReportsEI0011)
+{
+    gCapturedErrorCode.clear();
+    gCapturedValues.clear();
+    AsyncReqResult fakeResult = {ROCE_ENOMEM, HCCP_OP_CTX_QP_IMPORT};
+    MOCKER(RaGetAsyncReqResult)
+        .stubs()
+        .with(mockcpp::any(), outBoundP(&fakeResult, sizeof(fakeResult)))
+        .will(returnValue(0));
+    MOCKER(RptInputErr).stubs().will(invoke(StubRptInputErrCapture));
+    RequestHandle reqHandle = 12;
+
+    testing::internal::CaptureStdout();
+    EXPECT_THROW(HrtRaGetAsyncReqResult(reqHandle), NetworkApiException);
+    const std::string log = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(gCapturedErrorCode, "EI0011");
+    EXPECT_EQ(gCapturedValues, (std::vector<std::string>{"N/A"}));
+    EXPECT_NE(log.find("insufficient memory"), std::string::npos);
 }
 
 TEST_F(AdapterHccpTest, RaBlockGetSocket_return_err)
@@ -845,7 +1223,8 @@ TEST_F(AdapterHccpTest, RaBlockGetSocket_return_err)
 TEST_F(AdapterHccpTest, RaGetOneSocket_return_err_2)
 {
     u32 connectedNum = 2;
-    MOCKER(RaGetSockets).stubs()
+    MOCKER(RaGetSockets)
+        .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), outBoundP(&connectedNum))
         .will(returnValue(0));
 
@@ -862,9 +1241,7 @@ TEST_F(AdapterHccpTest, RaGetOneSocket_return_err_2)
 
 TEST_F(AdapterHccpTest, RaSocketCloseOneAsync_return_ok)
 {
-    MOCKER(RaSocketBatchCloseAsync).stubs()
-        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
-        .will(returnValue(0));
+    MOCKER(RaSocketBatchCloseAsync).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(0));
 
     SocketHandle socketHandle = nullptr;
     FdHandle fdHandle = nullptr;
@@ -875,9 +1252,7 @@ TEST_F(AdapterHccpTest, RaSocketCloseOneAsync_return_ok)
 
 TEST_F(AdapterHccpTest, RaSocketListenOneStopAsync_return_ok)
 {
-    MOCKER(RaSocketListenStopAsync).stubs()
-        .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
-        .will(returnValue(0));
+    MOCKER(RaSocketListenStopAsync).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any()).will(returnValue(0));
 
     SocketHandle socketHandle = nullptr;
     unsigned int port = 100;
@@ -897,14 +1272,15 @@ TEST_F(AdapterHccpTest, RaUbAllocTokenIdHandle_ok)
 TEST_F(AdapterHccpTest, RaUbFreeTokenIdHandle_exception)
 {
     MOCKER(RaCtxTokenIdFree).stubs().with(mockcpp::any()).will(returnValue(1));
-    RdmaHandle handle = (void *)0x1234;
+    RdmaHandle handle = (void*)0x1234;
     TokenIdHandle tokenIdHandle = 1234;
     EXPECT_THROW(RaUbFreeTokenIdHandle(handle, tokenIdHandle), NetworkApiException);
 }
 
 void MockRaSocketRecv(int ret, unsigned long long recvSize)
 {
-    MOCKER(RaSocketRecv).stubs()
+    MOCKER(RaSocketRecv)
+        .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), outBoundP(&recvSize, sizeof(recvSize)))
         .will(returnValue(ret));
 }
@@ -938,21 +1314,30 @@ TEST_F(AdapterHccpTest, Ut_HrtRaSocketBlockRecv_When_RecvSizeZero_Expect_Throw_N
 
 TEST_F(AdapterHccpTest, Ut_HrtRaSocketBlockRecv_When_SockClosed_Expect_Throw_NetworkApiException)
 {
+    gCapturedErrorCode.clear();
     MockRaSocketRecv(SOCK_ESOCKCLOSED, 0);
     MockEnvLinkTimeoutGet(1);
+    MOCKER(RptInputErr).stubs().will(invoke(StubRptInputErrCapture));
+    testing::internal::CaptureStdout();
     EXPECT_THROW(HrtRaSocketBlockRecv(fakeFdHandle, fakeData, 100), NetworkApiException);
+    const std::string log = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(gCapturedErrorCode, "EI0015");
+    EXPECT_NE(log.find("[InitGroupStage][RanktableDetect]"), std::string::npos);
 }
 
 TEST_F(AdapterHccpTest, Ut_HrtRaSocketBlockRecv_When_SockClose_Expect_Throw_NetworkApiException)
 {
+    gCapturedErrorCode.clear();
     MockRaSocketRecv(SOCK_CLOSE, 0);
     MockEnvLinkTimeoutGet(1);
+    MOCKER(RptInputErr).stubs().will(invoke(StubRptInputErrCapture));
     EXPECT_THROW(HrtRaSocketBlockRecv(fakeFdHandle, fakeData, 100), NetworkApiException);
+    EXPECT_EQ(gCapturedErrorCode, "EI0015");
 }
 
 TEST_F(AdapterHccpTest, Ut_HrtRaSocketBlockRecv_When_Timeout_Expect_Throw_NetworkApiException)
 {
-    MockRaSocketRecv(1, 0); // 模拟一直接收不到数据
+    MockRaSocketRecv(1, 0);   // 模拟一直接收不到数据
     MockEnvLinkTimeoutGet(0); // 超时时间设为0
     EXPECT_THROW(HrtRaSocketBlockRecv(fakeFdHandle, fakeData, 100), NetworkApiException);
 }
@@ -971,25 +1356,25 @@ TEST_F(AdapterHccpTest, ut_HrtRaSocketWhiteListDel_With_Enormous_WhiteList)
 
 TEST_F(AdapterHccpTest, Ut_HraGetRtpEnable_When_RTP_Equals_1_Expect_Return_True)
 {
-    DevBaseAttr out {};
+    DevBaseAttr out{};
     out.ub.priorityInfo[0].tpType.bs.rtp = 1;
-    MOCKER(RaGetDevBaseAttr).stubs()
-        .with(mockcpp::any(), outBoundP(&out, sizeof(out)))
-        .will(returnValue(0));
-    RdmaHandle handle = (void *)0x1234;
+    MOCKER(RaGetDevBaseAttr).stubs().with(mockcpp::any(), outBoundP(&out, sizeof(out))).will(returnValue(0));
+    RdmaHandle handle = (void*)0x1234;
 
-    EXPECT_EQ(HraGetRtpEnable(handle), true);
+    bool rtpEnable = false;
+    EXPECT_EQ(HraGetRtpEnable(handle, rtpEnable), HcclResult::HCCL_SUCCESS);
+    EXPECT_EQ(rtpEnable, true);
 }
 
 TEST_F(AdapterHccpTest, Ut_HraGetRtpEnable_When_RTP_Equals_0_Expect_Return_False)
 {
-    DevBaseAttr out {};
-    MOCKER(RaGetDevBaseAttr).stubs()
-        .with(mockcpp::any(), outBoundP(&out, sizeof(out)))
-        .will(returnValue(0));
-    RdmaHandle handle = (void *)0x1234;
+    DevBaseAttr out{};
+    MOCKER(RaGetDevBaseAttr).stubs().with(mockcpp::any(), outBoundP(&out, sizeof(out))).will(returnValue(0));
+    RdmaHandle handle = (void*)0x1234;
 
-    EXPECT_EQ(HraGetRtpEnable(handle), false);
+    bool rtpEnable = true;
+    EXPECT_EQ(HraGetRtpEnable(handle, rtpEnable), HcclResult::HCCL_SUCCESS);
+    EXPECT_EQ(rtpEnable, false);
 }
 
 TEST_F(AdapterHccpTest, Ut_HrtRaGetTlsStatus_When_InfoIsNull_Expect_ReturnPtrError)
@@ -1004,7 +1389,7 @@ TEST_F(AdapterHccpTest, Ut_HrtRaGetTlsStatus_When_InfoIsNull_Expect_ReturnPtrErr
 
 TEST_F(AdapterHccpTest, Ut_HrtRaGetTlsStatus_When_InterfaceVersionQueryFails_Expect_ReturnNotSupportAndUnknown)
 {
-    RaInfo info {};
+    RaInfo info{};
     info.phyId = 0;
     TlsStatus tlsStatus = TlsStatus::DISABLE;
 
@@ -1018,12 +1403,13 @@ TEST_F(AdapterHccpTest, Ut_HrtRaGetTlsStatus_When_InterfaceVersionQueryFails_Exp
 
 TEST_F(AdapterHccpTest, Ut_HrtRaGetTlsStatus_When_InterfaceVersionTooLow_Expect_ReturnNotSupportAndUnknown)
 {
-    RaInfo info {};
+    RaInfo info{};
     info.phyId = 0;
     TlsStatus tlsStatus = TlsStatus::DISABLE;
     u32 lowVersion = 0;
 
-    MOCKER(RaGetInterfaceVersion).stubs()
+    MOCKER(RaGetInterfaceVersion)
+        .stubs()
         .with(mockcpp::any(), mockcpp::any(), outBoundP(&lowVersion, sizeof(lowVersion)))
         .will(returnValue(0));
 
@@ -1035,12 +1421,13 @@ TEST_F(AdapterHccpTest, Ut_HrtRaGetTlsStatus_When_InterfaceVersionTooLow_Expect_
 
 TEST_F(AdapterHccpTest, Ut_HrtRaGetTlsStatus_When_RaGetTlsEnableFails_Expect_ReturnNetworkErrorAndDisable)
 {
-    RaInfo info {};
+    RaInfo info{};
     info.phyId = 0;
     TlsStatus tlsStatus = TlsStatus::UNKNOWN;
     u32 supportVersion = 1;
 
-    MOCKER(RaGetInterfaceVersion).stubs()
+    MOCKER(RaGetInterfaceVersion)
+        .stubs()
         .with(mockcpp::any(), mockcpp::any(), outBoundP(&supportVersion, sizeof(supportVersion)))
         .will(returnValue(0));
     MOCKER(RaGetTlsEnable).stubs().will(returnValue(-1));
@@ -1053,18 +1440,17 @@ TEST_F(AdapterHccpTest, Ut_HrtRaGetTlsStatus_When_RaGetTlsEnableFails_Expect_Ret
 
 TEST_F(AdapterHccpTest, Ut_HrtRaGetTlsStatus_When_TlsEnableIsTrue_Expect_ReturnSuccessAndEnable)
 {
-    RaInfo info {};
+    RaInfo info{};
     info.phyId = 0;
     TlsStatus tlsStatus = TlsStatus::UNKNOWN;
     u32 supportVersion = 1;
     bool tlsEnable = true;
 
-    MOCKER(RaGetInterfaceVersion).stubs()
+    MOCKER(RaGetInterfaceVersion)
+        .stubs()
         .with(mockcpp::any(), mockcpp::any(), outBoundP(&supportVersion, sizeof(supportVersion)))
         .will(returnValue(0));
-    MOCKER(RaGetTlsEnable).stubs()
-        .with(mockcpp::any(), outBoundP(&tlsEnable, sizeof(tlsEnable)))
-        .will(returnValue(0));
+    MOCKER(RaGetTlsEnable).stubs().with(mockcpp::any(), outBoundP(&tlsEnable, sizeof(tlsEnable))).will(returnValue(0));
 
     HcclResult ret = HrtRaGetTlsStatus(&info, tlsStatus);
 
@@ -1074,25 +1460,23 @@ TEST_F(AdapterHccpTest, Ut_HrtRaGetTlsStatus_When_TlsEnableIsTrue_Expect_ReturnS
 
 TEST_F(AdapterHccpTest, Ut_HrtRaGetTlsStatus_When_TlsEnableIsFalse_Expect_ReturnSuccessAndDisable)
 {
-    RaInfo info {};
+    RaInfo info{};
     info.phyId = 0;
     TlsStatus tlsStatus = TlsStatus::UNKNOWN;
     u32 supportVersion = 1;
     bool tlsEnable = false;
 
-    MOCKER(RaGetInterfaceVersion).stubs()
+    MOCKER(RaGetInterfaceVersion)
+        .stubs()
         .with(mockcpp::any(), mockcpp::any(), outBoundP(&supportVersion, sizeof(supportVersion)))
         .will(returnValue(0));
-    MOCKER(RaGetTlsEnable).stubs()
-        .with(mockcpp::any(), outBoundP(&tlsEnable, sizeof(tlsEnable)))
-        .will(returnValue(0));
+    MOCKER(RaGetTlsEnable).stubs().with(mockcpp::any(), outBoundP(&tlsEnable, sizeof(tlsEnable))).will(returnValue(0));
 
     HcclResult ret = HrtRaGetTlsStatus(&info, tlsStatus);
 
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(tlsStatus, TlsStatus::DISABLE);
 }
-
 
 TEST_F(AdapterHccpTest, HrtRaGetEidByIp_ok)
 {
@@ -1144,7 +1528,9 @@ TEST_F(AdapterHccpTest, HrtRaGetEidByIp_count_mismatch_returns_internal)
 
     MOCKER(RaGetEidByIp)
         .stubs()
-        .with(mockcpp::any(), mockcpp::any(), outBoundP(fakeEid, sizeof(fakeEid)), outBoundP(&returnedNum, sizeof(returnedNum)))
+        .with(
+            mockcpp::any(), mockcpp::any(), outBoundP(fakeEid, sizeof(fakeEid)),
+            outBoundP(&returnedNum, sizeof(returnedNum)))
         .will(returnValue(0));
 
     HcclResult ret = HrtRaGetEidByIp(handle, ipV4AddrList, eidAddrList);
@@ -1181,7 +1567,7 @@ TEST_F(AdapterHccpTest, ut_HrtGetUboeFlagEnable_VersionEnough_Expect_Success)
         .will(returnValue(0));
 
     HcclResult ret = HrtGetUboeFlagEnable(devPhyId);
-    
+
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
 
@@ -1193,9 +1579,9 @@ TEST_F(AdapterHccpTest, ut_HrtGetUboeFlagEnable_When_VersionNotEnough_Expect_Not
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), outBoundP(&mock_version, sizeof(s32)))
         .will(returnValue(0));
-    
+
     HcclResult ret = HrtGetUboeFlagEnable(devPhyId);
-    
+
     EXPECT_EQ(ret, HCCL_E_NOT_SUPPORT);
 }
 
@@ -1212,7 +1598,7 @@ TEST_F(AdapterHccpTest, ut_HrtCheckUboeSupported_When_DevFeatureBitSet_Expect_Tr
     u32 devFeature = 1 << UBOE_DEV_FLAG_RIGHT_SHIFT;
     bool result = HrtCheckUboeSupported(devFeature);
     EXPECT_TRUE(result);
-    
+
     // 测试其他位也有值的情况
     devFeature = (1 << UBOE_DEV_FLAG_RIGHT_SHIFT) | 0xFFFF;
     result = HrtCheckUboeSupported(devFeature);
@@ -1224,7 +1610,7 @@ TEST_F(AdapterHccpTest, ut_HrtCheckUboeSupported_When_DevFeatureBitNotSet_Expect
     u32 devFeature = 0;
     bool result = HrtCheckUboeSupported(devFeature);
     EXPECT_FALSE(result);
-    
+
     // 测试只有其他位被设置，但UBOE位未设置
     devFeature = 0xFFFFFFFF & ~(1 << UBOE_DEV_FLAG_RIGHT_SHIFT);
     result = HrtCheckUboeSupported(devFeature);
@@ -1247,8 +1633,11 @@ TEST_F(AdapterHccpTest, ut_HrtRaUbCreateJetty_When_QosSet_Expect_PriorityMapped)
 
 TEST_F(AdapterHccpTest, ut_HrtRaSetTpAttrAsync_When_RaSetOk_Expect_Success)
 {
-    int reqResult = 0;
-    MOCKER(RaGetAsyncReqResult).stubs().with(mockcpp::any(), outBoundP(&reqResult, sizeof(reqResult))).will(returnValue(0));
+    struct AsyncReqResult reqResult = {0, 0};
+    MOCKER(RaGetAsyncReqResult)
+        .stubs()
+        .with(mockcpp::any(), outBoundP(&reqResult, sizeof(reqResult)))
+        .will(returnValue(0));
 
     RdmaHandle handle = reinterpret_cast<RdmaHandle>(0x123);
     TpAttr attr{};
@@ -1257,20 +1646,23 @@ TEST_F(AdapterHccpTest, ut_HrtRaSetTpAttrAsync_When_RaSetOk_Expect_Success)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
 
-TEST_F(AdapterHccpTest, ut_HrtRaSetTpAttrAsync_When_RaSetFails_Expect_Throw)
+TEST_F(AdapterHccpTest, ut_HrtRaSetTpAttrAsync_When_RaSetFails_Expect_E_NETWORK)
 {
     MOCKER(RaSetTpAttrAsync).stubs().will(returnValue(-1));
 
     RdmaHandle handle = reinterpret_cast<RdmaHandle>(0x123);
     TpAttr attr{};
     RequestHandle reqHandle = 0;
-    EXPECT_THROW(HrtRaSetTpAttrAsync(handle, 0x100ULL, 0x1U, attr, reqHandle), NetworkApiException);
+    EXPECT_EQ(HrtRaSetTpAttrAsync(handle, 0x100ULL, 0x1U, attr, reqHandle), HCCL_E_NETWORK);
 }
 
 TEST_F(AdapterHccpTest, ut_HrtRaSetTpAttrAsync_When_AsyncUnexpected_Expect_Internal)
 {
-    int reqResult = SOCK_EAGAIN;
-    MOCKER(RaGetAsyncReqResult).stubs().with(mockcpp::any(), outBoundP(&reqResult, sizeof(reqResult))).will(returnValue(0));
+    struct AsyncReqResult reqResult = {SOCK_EAGAIN, 0};
+    MOCKER(RaGetAsyncReqResult)
+        .stubs()
+        .with(mockcpp::any(), outBoundP(&reqResult, sizeof(reqResult)))
+        .will(returnValue(0));
 
     RdmaHandle handle = reinterpret_cast<RdmaHandle>(0x123);
     TpAttr attr{};
@@ -1286,8 +1678,11 @@ TEST_F(AdapterHccpTest, ut_HrtRaGetTpAttrAsync_When_VersionOk_Expect_Success)
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), outBoundP(&tpAttrVersion, sizeof(tpAttrVersion)))
         .will(returnValue(0));
-    int reqResult = 0;
-    MOCKER(RaGetAsyncReqResult).stubs().with(mockcpp::any(), outBoundP(&reqResult, sizeof(reqResult))).will(returnValue(0));
+    struct AsyncReqResult reqResult = {0, 0};
+    MOCKER(RaGetAsyncReqResult)
+        .stubs()
+        .with(mockcpp::any(), outBoundP(&reqResult, sizeof(reqResult)))
+        .will(returnValue(0));
 
     RdmaHandle handle = reinterpret_cast<RdmaHandle>(0x123);
     uint32_t attrBitmap = 0U;
@@ -1338,7 +1733,7 @@ TEST_F(AdapterHccpTest, ut_HrtRaGetTpAttrAsync_When_RaGetTpAttrAsyncFails_Expect
     uint32_t attrBitmap = 0U;
     TpAttr attr{};
     RequestHandle reqHandle = 0;
-    EXPECT_THROW(HrtRaGetTpAttrAsync(0U, handle, 0x100ULL, attrBitmap, attr, reqHandle), NetworkApiException);
+    EXPECT_EQ(HrtRaGetTpAttrAsync(0U, handle, 0x100ULL, attrBitmap, attr, reqHandle), HcclResult::HCCL_E_NETWORK);
 }
 
 TEST_F(AdapterHccpTest, ut_RaUbGetTpInfoAsync_When_UboeProtocol_Expect_UboeFlagSet)
@@ -1383,7 +1778,7 @@ TEST_F(AdapterHccpTest, ut_HrtRaNdaCqCreate_When_IndepUbMode_Expect_UbnacDepth)
     NdaCqInfo cqInfo;
     CqHandle cqHandle = nullptr;
 
-    HcclResult ret = HrtRaNdaCqCreate(rdmaHandle, &ndaOps, QBUF_DMA_MODE_INDEP_UB, &cqInfo, &cqHandle);
+    HcclResult ret = HrtRaNdaCqCreate(rdmaHandle, &ndaOps, QBUF_DMA_MODE_INDEP_UB, 0, &cqInfo, &cqHandle);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
 
@@ -1398,6 +1793,36 @@ TEST_F(AdapterHccpTest, ut_HrtRaNdaCqCreate_When_DefaultMode_Expect_XscdvDepth)
     NdaCqInfo cqInfo;
     CqHandle cqHandle = nullptr;
 
-    HcclResult ret = HrtRaNdaCqCreate(rdmaHandle, &ndaOps, QBUF_DMA_MODE_DEFAULT, &cqInfo, &cqHandle);
+    HcclResult ret = HrtRaNdaCqCreate(rdmaHandle, &ndaOps, QBUF_DMA_MODE_DEFAULT, 0, &cqInfo, &cqHandle);
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+}
+
+TEST_F(AdapterHccpTest, HrtRaBlockGetOneSocket_return_ok)
+{
+    u32 connectedNum = 1;
+    MOCKER(RaGetSockets)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), outBoundP(&connectedNum))
+        .will(returnValue(0));
+
+    SocketHandle socketHandle = nullptr;
+    IpAddress ipAddr = IpAddress("127.0.0.1");
+    std::string tag = "test";
+    FdHandle fdHandle = nullptr;
+    RaSocketGetParam param(socketHandle, ipAddr, tag, fdHandle);
+
+    RaSocketFdHandleParam result = HrtRaBlockGetOneSocket(0, param, 10);
+}
+
+TEST_F(AdapterHccpTest, HrtRaWaitEventHandle_return_ok)
+{
+    MOCKER(RaWaitEventHandle)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
+        .will(returnValue(0));
+
+    std::vector<SocketEventInfo> eventInfos(1);
+    u32 eventsNum = 0;
+    HcclResult ret = HrtRaWaitEventHandle(0, eventInfos, 100, 1, eventsNum);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }

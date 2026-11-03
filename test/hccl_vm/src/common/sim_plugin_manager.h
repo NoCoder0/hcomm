@@ -28,9 +28,12 @@ public:
     // 注册插件 同时通过LoadPlugins加载
     HcclSim::HcclVmResult RegisterPlugin(const std::string& pluginTag);
 
-    HcclSim::HcclVmResult SendMessageToPlugin(const std::string& pluginTag, const std::string& action, const nlohmann::json& payload = nlohmann::json::object());
+    HcclSim::HcclVmResult SendMessageToPlugin(
+        const std::string& pluginTag, const std::string& action,
+        const nlohmann::json& payload = nlohmann::json::object());
     // 广播给所有运行中的插件
-    HcclSim::HcclVmResult BroadcastToAllPlugin(const std::string& action, const nlohmann::json& payload = nlohmann::json::object());
+    HcclSim::HcclVmResult
+    BroadcastToAllPlugin(const std::string& action, const nlohmann::json& payload = nlohmann::json::object());
 
     // 获取已加载的插件状态
     std::vector<std::string> GetPluginStatus() const;
@@ -49,6 +52,9 @@ public:
 private:
     HcclPluginManager();
     ~HcclPluginManager();
+
+    void AddInstallRecordToDB(const std::string& pluginTag);
+    void RemoveInstallRecordFromDB(const std::string& pluginTag);
 
     void MonitorThread();
     std::atomic<bool> m_monitorThreadStop{false};

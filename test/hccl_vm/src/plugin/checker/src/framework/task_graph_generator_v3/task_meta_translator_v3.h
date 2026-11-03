@@ -12,6 +12,7 @@
 #define CHECKER_TASK_GRAPH_GENERATOR_V3_TASK_META_TRANSLATOR_V3_H
 
 #include <map>
+#include <limits>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -23,50 +24,55 @@
 
 namespace HcclSim {
 namespace TaskGraphGeneratorV3 {
-class TaskMetaTranslatorV3 {
-public:
-    TaskMetaTranslatorV3() = default;
-    ~TaskMetaTranslatorV3() = default;
+    class TaskMetaTranslatorV3 {
+    public:
+        TaskMetaTranslatorV3() = default;
+        ~TaskMetaTranslatorV3() = default;
 
-    TaskMetaTranslatorV3(TaskMetaTranslatorV3 &&) = default;
-    TaskMetaTranslatorV3 &operator=(TaskMetaTranslatorV3 &&) = default;
-    TaskMetaTranslatorV3(const TaskMetaTranslatorV3 &) = delete;
-    TaskMetaTranslatorV3 &operator=(const TaskMetaTranslatorV3 &) = delete;
+        TaskMetaTranslatorV3(TaskMetaTranslatorV3&&) = default;
+        TaskMetaTranslatorV3& operator=(TaskMetaTranslatorV3&&) = default;
+        TaskMetaTranslatorV3(const TaskMetaTranslatorV3&) = delete;
+        TaskMetaTranslatorV3& operator=(const TaskMetaTranslatorV3&) = delete;
 
-    HcclResult Translate(StorageManager &storage);
-    void Reset();
+        HcclResult Translate(
+            StorageManager& storage, OperatorId operatorId, const std::string& commName = {},
+            uint64_t commHash = std::numeric_limits<uint64_t>::max(), uint32_t opIter = 0);
+        void Reset();
+        const std::vector<uint32_t>& GetNodeSourceIndices() const { return nodeSourceIndices_; }
 
-    const std::vector<std::unique_ptr<TaskNode>> &GetNodes() const { return nodes_; }
-    const AllRankNodeQueues &GetTaskQueues() const { return taskQueues_; }
-    std::vector<std::unique_ptr<TaskNode>> TakeNodes();
-    AllRankNodeQueues TakeTaskQueues();
+        const std::vector<std::unique_ptr<TaskNode>>& GetNodes() const { return nodes_; }
+        const AllRankNodeQueues& GetTaskQueues() const { return taskQueues_; }
+        std::vector<std::unique_ptr<TaskNode>> TakeNodes();
+        AllRankNodeQueues TakeTaskQueues();
 
-private:
-    struct CcuMissionKey {
-        RankId rankId{INVALID_RANK_ID};
-        uint8_t dieId{0};
-        uint8_t missionId{0};
+    private:
+        struct CcuMissionKey {
+            DeviceId deviceId{INVALID_DEVICE_ID};
+            uint8_t dieId{0};
+            uint8_t missionId{0};
 
-        bool operator<(const CcuMissionKey &rhs) const
-        {
-            if (rankId != rhs.rankId) {
-                return rankId < rhs.rankId;
+            bool operator<(const CcuMissionKey& rhs) const
+            {
+                if (deviceId != rhs.deviceId) {
+                    return deviceId < rhs.deviceId;
+                }
+                if (dieId != rhs.dieId) {
+                    return dieId < rhs.dieId;
+                }
+                return missionId < rhs.missionId;
             }
-            if (dieId != rhs.dieId) {
-                return dieId < rhs.dieId;
-            }
-            return missionId < rhs.missionId;
-        }
+        };
+
+        HcclResult TranslateOneTaskMeta(
+            const HcclTaskMetaData& taskMeta, StorageManager& storage, uint32_t taskIndex, OperatorId operatorId,
+            const std::string& commName, uint64_t commHash, uint32_t opIter, NodeId& nodeId);
+        HcclResult AddTaskNode(const TaskPosition& position, std::unique_ptr<TaskNode> node, NodeId& nodeId);
+
+        std::vector<std::unique_ptr<TaskNode>> nodes_;
+        AllRankNodeQueues taskQueues_;
+        std::vector<uint32_t> nodeSourceIndices_;
+        std::map<CcuMissionKey, NodeId> ccuMissionNodes_;
     };
-
-    HcclResult TranslateOneTaskMeta(const HcclTaskMetaData &taskMeta, StorageManager &storage, uint32_t taskIndex,
-        NodeId &nodeId);
-    HcclResult AddTaskNode(const TaskPosition &position, std::unique_ptr<TaskNode> node, NodeId &nodeId);
-
-    std::vector<std::unique_ptr<TaskNode>> nodes_;
-    AllRankNodeQueues taskQueues_;
-    std::map<CcuMissionKey, NodeId> ccuMissionNodes_;
-};
 } // namespace TaskGraphGeneratorV3
 } // namespace HcclSim
 

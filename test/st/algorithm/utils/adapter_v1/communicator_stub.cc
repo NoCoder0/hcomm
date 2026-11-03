@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "base.h"
 #include "checker.h"
@@ -33,24 +33,23 @@ namespace hccl {
 std::string g_algName;
 static std::mutex g_hcomInitMutex;
 
-std::map<LinkTypeInServer, LinkType> LinkTypeInServer2LinkType = {
-    {LinkTypeInServer::HCCS_TYPE, LinkType::LINK_HCCS},
-    {LinkTypeInServer::PXI_TYPE, LinkType::LINK_PCIE},
-    {LinkTypeInServer::SIO_TYPE, LinkType::LINK_SIO},
-    {LinkTypeInServer::HCCS_SW_TYPE, LinkType::LINK_HCCS_SW},
-    {LinkTypeInServer::RESERVED_LINK_TYPE, LinkType::LINK_RESERVED}};
+std::map<LinkTypeInServer, LinkType> LinkTypeInServer2LinkType
+    = {{LinkTypeInServer::HCCS_TYPE, LinkType::LINK_HCCS},
+       {LinkTypeInServer::PXI_TYPE, LinkType::LINK_PCIE},
+       {LinkTypeInServer::SIO_TYPE, LinkType::LINK_SIO},
+       {LinkTypeInServer::HCCS_SW_TYPE, LinkType::LINK_HCCS_SW},
+       {LinkTypeInServer::RESERVED_LINK_TYPE, LinkType::LINK_RESERVED}};
 
-const std::unordered_set<std::string> g_aiv_rdma_executors = {
-    "AllReduceMidCountAivRdmaExecutor",
-    "AllReduceSmallCountAivRdmaExecutor"
-};
+const std::unordered_set<std::string> g_aiv_rdma_executors
+    = {"AllReduceMidCountAivRdmaExecutor", "AllReduceSmallCountAivRdmaExecutor"};
 
-void CalcInputOutputSize(const OpParam &opParam, u32 ranksize, u64 &inputSize, u64 &outputSize, RankId myRank)
+void CalcInputOutputSize(const OpParam& opParam, u32 ranksize, u64& inputSize, u64& outputSize, RankId myRank)
 {
     u32 unitSize = 0;
-    if (!IsAllToAllSeries(g_HcclCMDType2CheckerOpType[opParam.opType]) && opParam.opType != HcclCMDType::HCCL_CMD_BATCH_SEND_RECV &&
-        opParam.opType != HcclCMDType::HCCL_CMD_REDUCE_SCATTER_V &&
-        opParam.opType != HcclCMDType::HCCL_CMD_ALLGATHER_V) {
+    if (!IsAllToAllSeries(g_HcclCMDType2CheckerOpType[opParam.opType])
+        && opParam.opType != HcclCMDType::HCCL_CMD_BATCH_SEND_RECV
+        && opParam.opType != HcclCMDType::HCCL_CMD_REDUCE_SCATTER_V
+        && opParam.opType != HcclCMDType::HCCL_CMD_ALLGATHER_V) {
         unitSize = SIZE_TABLE[opParam.DataDes.dataType];
     }
 
@@ -84,17 +83,17 @@ void CalcInputOutputSize(const OpParam &opParam, u32 ranksize, u64 &inputSize, u
     } else if (opParam.opType == HcclCMDType::HCCL_CMD_ALLTOALL || opParam.opType == HcclCMDType::HCCL_CMD_ALLTOALLVC) {
         u64 curSendOffset = 0;
         u64 curRecvOffset = 0;
-        void *sendCountMatrix = opParam.All2AllDataDes.sendCountMatrix;
+        void* sendCountMatrix = opParam.All2AllDataDes.sendCountMatrix;
         // 对于AllToAllV/AllToAllVC来说，当前checker还不支持不均匀的数据收发，每个rank收发的数据量是一样的，
         // 所以这边以rank0来计算即可
         RankId curRank = 0;
         // sendCountMatrix[i * ranksize + j] 代表rank i发送到rank j的count参数
         for (u32 j = 0; j < ranksize; j++) {
-            u64 curSendCounts = *(static_cast<const u64 *>(sendCountMatrix) + curRank * ranksize + j);
+            u64 curSendCounts = *(static_cast<const u64*>(sendCountMatrix) + curRank * ranksize + j);
             u64 curSendLength = curSendCounts * SIZE_TABLE[opParam.All2AllDataDes.sendType];
             curSendOffset += curSendLength;
 
-            u64 curRecvCounts = *(static_cast<const u64 *>(sendCountMatrix) + curRank + ranksize * j);
+            u64 curRecvCounts = *(static_cast<const u64*>(sendCountMatrix) + curRank + ranksize * j);
             u64 curRecvLength = curRecvCounts * SIZE_TABLE[opParam.All2AllDataDes.recvType];
             curRecvOffset += curRecvLength;
         }
@@ -107,11 +106,11 @@ void CalcInputOutputSize(const OpParam &opParam, u32 ranksize, u64 &inputSize, u
         u64 curSendOffset = 0;
         u64 curRecvOffset = 0;
         for (u32 i = 0; i < ranksize; i++) {
-            u64 curSendCounts = *(static_cast<const u64 *>(sendCounts) + i);
+            u64 curSendCounts = *(static_cast<const u64*>(sendCounts) + i);
             u64 curSendLength = curSendCounts * SIZE_TABLE[opParam.All2AllDataDes.sendType];
             curSendOffset += curSendLength;
 
-            u64 curRecvCounts = *(static_cast<const u64 *>(recvCounts) + i);
+            u64 curRecvCounts = *(static_cast<const u64*>(recvCounts) + i);
             u64 curRecvLength = curRecvCounts * SIZE_TABLE[opParam.All2AllDataDes.recvType];
             curRecvOffset += curRecvLength;
         }
@@ -133,26 +132,26 @@ void CalcInputOutputSize(const OpParam &opParam, u32 ranksize, u64 &inputSize, u
         void* counts = opParam.VDataDes.counts;
         inputSize = 0;
         for (u32 i = 0; i < ranksize; i++) {
-            u64 curCounts = *(static_cast<const u64 *>(counts) + i);
+            u64 curCounts = *(static_cast<const u64*>(counts) + i);
             u64 curLength = curCounts * SIZE_TABLE[opParam.VDataDes.dataType];
             inputSize += curLength;
         }
-        outputSize = static_cast<const u64 *>(counts)[myRank] * SIZE_TABLE[opParam.VDataDes.dataType];
+        outputSize = static_cast<const u64*>(counts)[myRank] * SIZE_TABLE[opParam.VDataDes.dataType];
     } else if (opParam.opType == HcclCMDType::HCCL_CMD_ALLGATHER_V) {
         void* counts = opParam.VDataDes.counts;
         outputSize = 0;
         for (u32 i = 0; i < ranksize; i++) {
-            u64 curCounts = *(static_cast<const u64 *>(counts) + i);
+            u64 curCounts = *(static_cast<const u64*>(counts) + i);
             u64 curLength = curCounts * SIZE_TABLE[opParam.VDataDes.dataType];
             outputSize += curLength;
         }
-        inputSize = static_cast<const u64 *>(counts)[myRank] * SIZE_TABLE[opParam.VDataDes.dataType];
+        inputSize = static_cast<const u64*>(counts)[myRank] * SIZE_TABLE[opParam.VDataDes.dataType];
     }
     return;
 }
 
-HcclResult HcclCommunicator::CreateNotifies(u32 notifyNum, vector<shared_ptr<LocalNotify>> &NotifysM2S,
-    vector<shared_ptr<LocalNotify>> &NotifysS2M)
+HcclResult HcclCommunicator::CreateNotifies(
+    u32 notifyNum, vector<shared_ptr<LocalNotify>>& NotifysM2S, vector<shared_ptr<LocalNotify>>& NotifysS2M)
 {
     u32 signalNum = notifyNum >> 1;
 
@@ -186,17 +185,18 @@ LinkType HcclCommunicator::GetLinkType(TransportType transportType, u32 localRan
     return linkType;
 }
 
-HcclResult HcclCommunicator::CreateTransport(OpCommTransport &algResRequest, RankId rankId, OpCommTransport &algRespond,
-    const bool &isZeroCopy, const HcclCMDType &opType)
+HcclResult HcclCommunicator::CreateTransport(
+    OpCommTransport& algResRequest, RankId rankId, OpCommTransport& algRespond, const bool& isZeroCopy,
+    const HcclCMDType& opType)
 {
     MachinePara machine;
     TransportPara transportPara;
     DevType devType;
     CHK_RET(hrtGetDeviceType(devType));
     for (u32 levelIdx = 0; levelIdx < algResRequest.size(); levelIdx++) {
-        for (auto &singleSubCommTransport : algResRequest[levelIdx]) {
+        for (auto& singleSubCommTransport : algResRequest[levelIdx]) {
             machine.supportDataReceivedAck = singleSubCommTransport.supportDataReceivedAck;
-            for (auto &transportRequest : singleSubCommTransport.transportRequests) {
+            for (auto& transportRequest : singleSubCommTransport.transportRequests) {
                 TransportType transportType;
                 if (transportRequest.isUsedRdma) {
                     transportType = TransportType::TRANS_TYPE_IBV_EXP;
@@ -210,21 +210,27 @@ HcclResult HcclCommunicator::CreateTransport(OpCommTransport &algResRequest, Ran
                         transportRequest.inputMemType = TransportMemType::PARAM_INPUT;
                     }
                     if (transportRequest.outputMemType != TransportMemType::RESERVED) {
-                        transportRequest.outputMemType = opType == HcclCMDType::HCCL_CMD_BROADCAST ? TransportMemType::PARAM_INPUT : TransportMemType::PARAM_OUTPUT;
+                        transportRequest.outputMemType = opType == HcclCMDType::HCCL_CMD_BROADCAST ?
+                                                             TransportMemType::PARAM_INPUT :
+                                                             TransportMemType::PARAM_OUTPUT;
                     }
                 }
 
                 machine.localUserrank = transportRequest.localUserRank;
                 machine.remoteUserrank = transportRequest.remoteUserRank;
                 machine.notifyNum = transportRequest.notifyNum;
-                LinkType linkType = GetLinkType(transportType, transportRequest.localUserRank, transportRequest.remoteUserRank);
+                LinkType linkType
+                    = GetLinkType(transportType, transportRequest.localUserRank, transportRequest.remoteUserRank);
 
                 auto iterTransportType = CreatedLinksDict_.find(transportType);
                 if (iterTransportType != CreatedLinksDict_.end()
-                        && iterTransportType->second.find(transportRequest.localUserRank) != iterTransportType->second.end()
-                        && iterTransportType->second[transportRequest.localUserRank].find(transportRequest.remoteUserRank) != iterTransportType->second[transportRequest.localUserRank].end()) {
+                    && iterTransportType->second.find(transportRequest.localUserRank) != iterTransportType->second.end()
+                    && iterTransportType->second[transportRequest.localUserRank].find(transportRequest.remoteUserRank)
+                           != iterTransportType->second[transportRequest.localUserRank].end()) {
                     if (transportRequest.isValid) {
-                        std::shared_ptr<Transport> link = iterTransportType->second[transportRequest.localUserRank][transportRequest.remoteUserRank];
+                        std::shared_ptr<Transport> link
+                            = iterTransportType
+                                  ->second[transportRequest.localUserRank][transportRequest.remoteUserRank];
                         singleSubCommTransport.links.push_back(link);
                     } else {
                         singleSubCommTransport.links.push_back(nullptr);
@@ -233,7 +239,8 @@ HcclResult HcclCommunicator::CreateTransport(OpCommTransport &algResRequest, Ran
                 }
 
                 std::shared_ptr<Transport> link(new Transport(transportType, transportPara, machine, linkType));
-                CreatedLinksDict_[transportType][transportRequest.localUserRank][transportRequest.remoteUserRank] = link;
+                CreatedLinksDict_[transportType][transportRequest.localUserRank][transportRequest.remoteUserRank]
+                    = link;
                 if (transportRequest.isValid) {
                     singleSubCommTransport.links.push_back(link);
 
@@ -270,8 +277,8 @@ HcclResult HcclCommunicator::CreateStream(u32 streamNum, vector<Stream>& streams
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclCommunicator::RefreshMemLayoutAndGetMemResponse(const OpParam &opParam, AlgResourceRequest &resRequest,
-    AlgResourceResponse &algResResponse, RankId rankId)
+HcclResult HcclCommunicator::RefreshMemLayoutAndGetMemResponse(
+    const OpParam& opParam, AlgResourceRequest& resRequest, AlgResourceResponse& algResResponse, RankId rankId)
 {
     u64 inputCCLSize = cclBufferManager_.GetInCCLbufferSize();
     u64 outputCCLSize = cclBufferManager_.GetOutCCLbufferSize();
@@ -282,12 +289,18 @@ HcclResult HcclCommunicator::RefreshMemLayoutAndGetMemResponse(const OpParam &op
     u32 serverId = RankInfoRecorder::Global()->rankId2serverId[rankId];
     u32 phyrankId = RankInfoRecorder::Global()->rankId2phyId[rankId];
 
-    void* inputCCLMemPtr = MemLayout::Global()->allSuperPodLayout[superPodId][serverId][phyrankId][BufferType::INPUT_CCL].startAddr;
-    void* outputCCLMemPtr = MemLayout::Global()->allSuperPodLayout[superPodId][serverId][phyrankId][BufferType::OUTPUT_CCL].startAddr;
-    void* scracthMemPtr = MemLayout::Global()->allSuperPodLayout[superPodId][serverId][phyrankId][BufferType::SCRATCH].startAddr;
-    void* inputAIVMemPtr = MemLayout::Global()->allSuperPodLayout[superPodId][serverId][phyrankId][BufferType::INPUT_AIV].startAddr;
-    void* outputAIVMemPtr = MemLayout::Global()->allSuperPodLayout[superPodId][serverId][phyrankId][BufferType::OUTPUT_AIV].startAddr;
-    void* aivCommInfoMemPtr = MemLayout::Global()->allSuperPodLayout[superPodId][serverId][phyrankId][BufferType::AIV_COMMINFO].startAddr;
+    void* inputCCLMemPtr
+        = MemLayout::Global()->allSuperPodLayout[superPodId][serverId][phyrankId][BufferType::INPUT_CCL].startAddr;
+    void* outputCCLMemPtr
+        = MemLayout::Global()->allSuperPodLayout[superPodId][serverId][phyrankId][BufferType::OUTPUT_CCL].startAddr;
+    void* scracthMemPtr
+        = MemLayout::Global()->allSuperPodLayout[superPodId][serverId][phyrankId][BufferType::SCRATCH].startAddr;
+    void* inputAIVMemPtr
+        = MemLayout::Global()->allSuperPodLayout[superPodId][serverId][phyrankId][BufferType::INPUT_AIV].startAddr;
+    void* outputAIVMemPtr
+        = MemLayout::Global()->allSuperPodLayout[superPodId][serverId][phyrankId][BufferType::OUTPUT_AIV].startAddr;
+    void* aivCommInfoMemPtr
+        = MemLayout::Global()->allSuperPodLayout[superPodId][serverId][phyrankId][BufferType::AIV_COMMINFO].startAddr;
 
     u64 inputSize = 0;
     u64 outputSize = 0;
@@ -307,26 +320,31 @@ HcclResult HcclCommunicator::RefreshMemLayoutAndGetMemResponse(const OpParam &op
         MemLayout::Global()->MemAlloc((u64)aivCommInfoMemPtr, AIV_COMM_INFO_SIZE);
     }
 
-    CHK_RET(MemLayout::Global()->SetBufferAddrAndLen(BufferType::INPUT,(char_t*)opParam.inputPtr, inputSize));
+    CHK_RET(MemLayout::Global()->SetBufferAddrAndLen(BufferType::INPUT, (char_t*)opParam.inputPtr, inputSize));
     if (opParam.inputPtr != opParam.outputPtr) {
         CHK_RET(MemLayout::Global()->SetBufferAddrAndLen(BufferType::OUTPUT, (char_t*)opParam.outputPtr, outputSize));
     }
     CHK_RET(MemLayout::Global()->SetBufferAddrAndLen(BufferType::INPUT_CCL, (char_t*)inputCCLMemPtr, inputCCLSize));
     CHK_RET(MemLayout::Global()->SetBufferAddrAndLen(BufferType::OUTPUT_CCL, (char_t*)outputCCLMemPtr, outputCCLSize));
-    CHK_RET(MemLayout::Global()->SetBufferAddrAndLen(BufferType::SCRATCH, (char_t*)scracthMemPtr, resRequest.scratchMemSize));
+    CHK_RET(MemLayout::Global()->SetBufferAddrAndLen(
+        BufferType::SCRATCH, (char_t*)scracthMemPtr, resRequest.scratchMemSize));
     if (AIV_COMM_BUFFER_BITMASK & resRequest.aivBufferRequest) {
-        CHK_RET(MemLayout::Global()->SetBufferAddrAndLen(BufferType::INPUT_AIV, (char_t*)inputAIVMemPtr, AIV_DATA_SIZE));
-        CHK_RET(MemLayout::Global()->SetBufferAddrAndLen(BufferType::OUTPUT_AIV, (char_t*)outputAIVMemPtr, AIV_FLAG_SIZE));
+        CHK_RET(
+            MemLayout::Global()->SetBufferAddrAndLen(BufferType::INPUT_AIV, (char_t*)inputAIVMemPtr, AIV_DATA_SIZE));
+        CHK_RET(
+            MemLayout::Global()->SetBufferAddrAndLen(BufferType::OUTPUT_AIV, (char_t*)outputAIVMemPtr, AIV_FLAG_SIZE));
     }
     if (AIV_COMM_INFO_BUFFER_BITMASK & resRequest.aivBufferRequest) {
-        CHK_RET(MemLayout::Global()->SetBufferAddrAndLen(BufferType::AIV_COMMINFO, (char_t*)aivCommInfoMemPtr, AIV_COMM_INFO_SIZE));
+        CHK_RET(MemLayout::Global()->SetBufferAddrAndLen(
+            BufferType::AIV_COMMINFO, (char_t*)aivCommInfoMemPtr, AIV_COMM_INFO_SIZE));
     }
 
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclCommunicator::AllocAlgResource(const std::string &newTag, const OpParam &opParam,
-    AlgResourceRequest &resRequest, AlgResourceResponse &algResResponse)
+HcclResult HcclCommunicator::AllocAlgResource(
+    const std::string& newTag, const OpParam& opParam, AlgResourceRequest& resRequest,
+    AlgResourceResponse& algResResponse)
 {
     // 校验streamNum、noitfyNum、scratchMemSize是否为异常值
     u32 u32ShiftNum = 31;
@@ -349,19 +367,30 @@ HcclResult HcclCommunicator::AllocAlgResource(const std::string &newTag, const O
     RankId rankId = RankInfoRecorder::Global()->GetRankId();
     CHK_RET(CreateStream(resRequest.streamNum, algResResponse.slaveStreams));
     CHK_RET(CreateNotifies(resRequest.notifyNum, algResResponse.notifiesMain, algResResponse.notifiesAux));
-    CHK_RET(CreateTransport(resRequest.opTransport, rankId, algResResponse.opTransportResponse, opParam.isZeroCopy, opParam.opType));
+    CHK_RET(CreateTransport(
+        resRequest.opTransport, rankId, algResResponse.opTransportResponse, opParam.isZeroCopy, opParam.opType));
     CHK_RET(RefreshMemLayoutAndGetMemResponse(opParam, resRequest, algResResponse, rankId));
 
     return HCCL_SUCCESS;
 }
 
 HcclCommunicator::HcclCommunicator()
-    : dispatcher_(nullptr), vDispatcher_(nullptr), userRank_(INVALID_VALUE_RANKID), realUserRank_(INVALID_VALUE_RANKID),
-      userRankSize_(INVALID_VALUE_RANKSIZE), deviceLogicId_(-1), hcomGroupNicInit_(false),
-      deviceType_(DevType::DEV_TYPE_COUNT), commHandle_(nullptr), commWorkMode_(WorkMode::HCCL_MODE_NORMAL),
-      meshAggregationRankSize_(0), ranktableCrc_(0), profilingInitiated_(false), cclBufferManager_(CCLBufferManager()),
+    : dispatcher_(nullptr),
+      vDispatcher_(nullptr),
+      userRank_(INVALID_VALUE_RANKID),
+      realUserRank_(INVALID_VALUE_RANKID),
+      userRankSize_(INVALID_VALUE_RANKSIZE),
+      deviceLogicId_(-1),
+      hcomGroupNicInit_(false),
+      deviceType_(DevType::DEV_TYPE_COUNT),
+      commHandle_(nullptr),
+      commWorkMode_(WorkMode::HCCL_MODE_NORMAL),
+      meshAggregationRankSize_(0),
+      ranktableCrc_(0),
+      profilingInitiated_(false),
+      cclBufferManager_(CCLBufferManager()),
       devicePhyId_(INVALID_UINT)
-{ }
+{}
 
 HcclCommunicator::~HcclCommunicator()
 {
@@ -372,7 +401,6 @@ HcclCommunicator::~HcclCommunicator()
     }
 
     resMap_.clear();
-
 
     if (dispatcher_ != nullptr) {
         HcclDispatcherDestroy(dispatcher_);
@@ -386,7 +414,7 @@ HcclCommunicator::~HcclCommunicator()
     HCCL_DEBUG("~HcclCommunicator success");
 }
 
-HcclResult HcclCommunicator::InitCommParams(HcclCommParams &params)
+HcclResult HcclCommunicator::InitCommParams(HcclCommParams& params)
 {
 #ifndef CCL_KERNEL_AICPU
     commHandle_ = params.commHandle;
@@ -406,17 +434,12 @@ HcclResult HcclCommunicator::InitCommParams(HcclCommParams &params)
 
     HCCL_DEBUG(
         " userRank_: %u realUserRank_: %u userRankSize_: %u deviceLogicId_: %u deviceType_: %u commWorkMode_: %u.",
-        userRank_,
-        realUserRank_,
-        userRankSize_,
-        deviceLogicId_,
-        deviceType_,
-        commWorkMode_);
+        userRank_, realUserRank_, userRankSize_, deviceLogicId_, deviceType_, commWorkMode_);
 #endif
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclCommunicator::InitRankInfo(const RankTable_t &rankTable)
+HcclResult HcclCommunicator::InitRankInfo(const RankTable_t& rankTable)
 {
     deviceLogicId_ = attrCollector_.GetDeviceLogicId();
     return HCCL_SUCCESS;
@@ -461,11 +484,12 @@ HcclResult HcclCommunicator::InitPara()
 void HcclCommunicator::GetAlgoConfigMap()
 {
     for (u32 opType = 0; opType < static_cast<u32>(HcclCMDType::HCCL_CMD_MAX); opType++) {
-        algoConfigMap_[static_cast<HcclCMDType>(opType)] = GetExternalInputHcclAlgoConfig(static_cast<HcclCMDType>(opType));
+        algoConfigMap_[static_cast<HcclCMDType>(opType)]
+            = GetExternalInputHcclAlgoConfig(static_cast<HcclCMDType>(opType));
     }
 }
 
-HcclResult HcclCommunicator::Init(HcclCommParams &params, const RankTable_t &rankTable)
+HcclResult HcclCommunicator::Init(HcclCommParams& params, const RankTable_t& rankTable)
 {
 #ifndef CCL_KERNEL_AICPU
     CHK_RET(InitCommParams(params));
@@ -473,7 +497,7 @@ HcclResult HcclCommunicator::Init(HcclCommParams &params, const RankTable_t &ran
     CHK_RET(attrCollector_.Init(params, rankTable, algoConfigMap_));
     CHK_RET(InitRankInfo(rankTable));
 
-/*--------------加锁区--------------*/
+    /*--------------加锁区--------------*/
     std::unique_lock<std::mutex> lock(g_hcomInitMutex);
 
     attrCollector_.GenCollectiveId(params, rankTable);
@@ -481,18 +505,21 @@ HcclResult HcclCommunicator::Init(HcclCommParams &params, const RankTable_t &ran
 
     // 初始化参数(需要放置在ranktable解析之后)
     HcclResult ret = InitPara();
-    CHK_PRT_RET(ret != HCCL_SUCCESS,
-        HCCL_ERROR("[HcclCommunicator][Init]errNo[0x%016llx] collectiveid[%s] parameter initialization failed",
-        HCCL_ERROR_CODE(ret), params.id.internal), ret);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[HcclCommunicator][Init]errNo[0x%016llx] collectiveid[%s] parameter initialization failed",
+            HCCL_ERROR_CODE(ret), params.id.internal),
+        ret);
     lock.unlock();
-/*--------------加锁区--------------*/
+    /*--------------加锁区--------------*/
     cclBufferManager_.CreateCommCCLbuffer();
 
 #endif
     return HCCL_SUCCESS;
 }
 
-void HcclCommunicator::GenAllGatherResultForAllToAllV(OpParam &opParam, void* result)
+void HcclCommunicator::GenAllGatherResultForAllToAllV(OpParam& opParam, void* result)
 {
     std::vector<u64> vctSendLength(userRankSize_, 0);
     std::vector<u64> vctSendOffset(userRankSize_, 0);
@@ -507,23 +534,19 @@ void HcclCommunicator::GenAllGatherResultForAllToAllV(OpParam &opParam, void* re
     void* rdispls = opParam.All2AllDataDes.rdispls;
 
     for (u32 i = 0; i < userRankSize_; i++) {
-        vctSendLength[i] = *(static_cast<const u64 *>(sendCounts) + i) * SIZE_TABLE[sendType];
-        vctSendOffset[i] = *(static_cast<const u64 *>(sdispls) + i) * SIZE_TABLE[sendType];
-        vctRecvLength[i] = *(static_cast<const u64 *>(recvCounts) + i) * SIZE_TABLE[recvType];
-        vctRecvOffset[i] = *(static_cast<const u64 *>(rdispls) + i) * SIZE_TABLE[recvType];
+        vctSendLength[i] = *(static_cast<const u64*>(sendCounts) + i) * SIZE_TABLE[sendType];
+        vctSendOffset[i] = *(static_cast<const u64*>(sdispls) + i) * SIZE_TABLE[sendType];
+        vctRecvLength[i] = *(static_cast<const u64*>(recvCounts) + i) * SIZE_TABLE[recvType];
+        vctRecvOffset[i] = *(static_cast<const u64*>(rdispls) + i) * SIZE_TABLE[recvType];
     }
 
     u64 stepSize = (u64)sizeof(u64) * userRankSize_;
 
     for (u32 i = 0; i < userRankSize_; i++) {
-        memcpy_s(static_cast<u8 *>(result) + stepSize * 4 * i,
-            stepSize, vctSendLength.data(), stepSize);
-        memcpy_s(static_cast<u8 *>(result) + stepSize * 4 * i + stepSize,
-            stepSize, vctSendOffset.data(), stepSize);
-        memcpy_s(static_cast<u8 *>(result) + stepSize * 4 * i + stepSize * 2,
-            stepSize, vctRecvLength.data(), stepSize);
-        memcpy_s(static_cast<u8 *>(result) + stepSize * 4 * i + stepSize * 3,
-            stepSize, vctRecvOffset.data(), stepSize);
+        memcpy_s(static_cast<u8*>(result) + stepSize * 4 * i, stepSize, vctSendLength.data(), stepSize);
+        memcpy_s(static_cast<u8*>(result) + stepSize * 4 * i + stepSize, stepSize, vctSendOffset.data(), stepSize);
+        memcpy_s(static_cast<u8*>(result) + stepSize * 4 * i + stepSize * 2, stepSize, vctRecvLength.data(), stepSize);
+        memcpy_s(static_cast<u8*>(result) + stepSize * 4 * i + stepSize * 3, stepSize, vctRecvOffset.data(), stepSize);
     }
 
     return;
@@ -535,13 +558,13 @@ HcclResult HcclCommunicator::SetAlgOpContext(AlgOpContext algOpContext)
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclCommunicator::GetAivTag(std::string algName, bool isCapture, s32 &aivTag)
+HcclResult HcclCommunicator::GetAivTag(std::string algName, bool isCapture, s32& aivTag)
 {
     s32 aivTagNum = 1;
     if (g_aiv_rdma_executors.find(algName) != g_aiv_rdma_executors.end()) {
         aivTagNum = 2;
     }
-    
+
     bool useOpbaseFlag = (GetWorkflowMode() == HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE && !isCapture);
     if (useOpbaseFlag) {
         aivTag = aivOpbaseTag_;
@@ -553,14 +576,15 @@ HcclResult HcclCommunicator::GetAivTag(std::string algName, bool isCapture, s32 
     return HCCL_SUCCESS;
 }
 
-HcclResult HcclCommunicator::ExecOp(HcclCMDType opType, OpParam &opParam, bool isRunning, string givenAlgName, u32 aiCoreLimit)
+HcclResult
+HcclCommunicator::ExecOp(HcclCMDType opType, OpParam& opParam, bool isRunning, string givenAlgName, u32 aiCoreLimit)
 {
 #ifndef CCL_KERNEL_AICPU
     std::unique_ptr<CollAlgOperator> algOperator = implAlg_->GetAlgOperator(opType);
     CHK_SMART_PTR_NULL(algOperator);
 
     if (opType == HcclCMDType::HCCL_CMD_ALLTOALLV) {
-        AlltoAllOperator* alltoAllOperator = dynamic_cast<AlltoAllOperator *>(algOperator.get());
+        AlltoAllOperator* alltoAllOperator = dynamic_cast<AlltoAllOperator*>(algOperator.get());
         u64 allGatherRetSize = (u64)sizeof(u64) * userRankSize_ * 4 * userRankSize_;
         HostMem hostCollectBuffer = HostMem::alloc(allGatherRetSize);
         CHK_PTR_NULL(hostCollectBuffer.ptr());
@@ -613,7 +637,7 @@ HcclResult HcclCommunicator::ExecOp(HcclCMDType opType, OpParam &opParam, bool i
         CHK_RET(algOperator->Orchestrate(algName, opParam, resMap_[newTag]));
     }
     AivSuperKernelArgs aivSuperKernelArgs;
-    //std::string name = "ReduceScatterMeshAivExecutor";
+    // std::string name = "ReduceScatterMeshAivExecutor";
     CHK_RET(algOperator->GetAivExecParam(algName, opParam, resMap_[newTag], aivSuperKernelArgs));
 
     AdjInfo nslbAdjInfo = {};
@@ -622,4 +646,4 @@ HcclResult HcclCommunicator::ExecOp(HcclCMDType opType, OpParam &opParam, bool i
     return HCCL_SUCCESS;
 }
 
-}
+} // namespace hccl

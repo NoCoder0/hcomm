@@ -22,17 +22,18 @@
 #define RS_QP_ATTR_MAX_SEND_SGE 8
 #define RS_QP_ATTR_GID_LEN 16
 #define RS_MAX_RD_ATOMIC_NUM 128
-#define RS_QP_TX_DEPTH_PEER_ONLINE 4096 // host RDMA adapt
+#define RS_QP_TX_DEPTH_PEER_ONLINE 4096     // host RDMA adapt
 #define RS_MAX_RD_ATOMIC_NUM_PEER_ONLINE 16 // host RDMA adapt
 #define RS_BUF_SIZE 2048
-#define RS_PORT_DEF     1
+#define RS_PORT_DEF 1
 
-#define RS_QP_PARA_CHECK(phyId) do { \
-    if ((phyId) >= RS_MAX_DEV_NUM) { \
-        hccp_err("rs qp param error ! physical_id:%d", phyId); \
-        return (-EINVAL); \
-    } \
-} while (0)
+#define RS_QP_PARA_CHECK(phyId)                                                                                        \
+    do {                                                                                                               \
+        if ((phyId) >= RS_MAX_DEV_NUM) {                                                                               \
+            hccp_err("rs qp param error ! physical_id:%d", phyId);                                                     \
+            return (-EINVAL);                                                                                          \
+        }                                                                                                              \
+    } while (0)
 
 enum RsCmdOpcode {
     RS_CMD_QP_INFO = 0x12345678,
@@ -41,7 +42,7 @@ enum RsCmdOpcode {
 };
 
 struct RsMrInfo {
-    uint32_t cmd;    /* MUST be the first element */
+    uint32_t cmd; /* MUST be the first element */
 
     uint32_t rkey;
     uint64_t addr;
@@ -78,6 +79,7 @@ struct RsRdevCb {
 
     struct ibv_context_extend *ibCtxEx;
     int directFlag;
+    uint32_t extDevCap;
 
     struct RsListHead qpList;
     struct RsListHead typicalMrList;

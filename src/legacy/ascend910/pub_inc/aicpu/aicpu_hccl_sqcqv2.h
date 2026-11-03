@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef __AICPU_HCCL_SQCQV2_H__
 #define __AICPU_HCCL_SQCQV2_H__
@@ -138,18 +138,21 @@ struct rtStarsEventSqeV2_t {
 };
 #pragma pack(pop)
 
-extern void AddOneNotifyWaitSqeV2(uint16_t streamId, uint16_t taskId, u64 notifyId, const uint8_t *sqeIn,
-    uint8_t *sqeType, const dfx::DfxTimeOutConfig &dfxTimeOutConfig);
-extern void AddOneRecordSqeV2(uint16_t streamId, uint16_t taskId, u64 notifyId, const uint8_t *sqeIn, uint8_t *sqeType);
-extern void AddOneWriteValueRecordSqeV2(uint16_t streamId, uint16_t taskId, u64 notifyWRAddr, const uint8_t *sqeIn,
-    uint8_t *sqeType);
-extern void AddOneMemcpySqeV2(uint16_t streamId, uint16_t taskId, const void *src, uint32_t length,
-    const aclDataType runtimeDataType, aclrtReduceKind rtReduceOp, const void *dst, uint32_t partId, uint32_t ssid,
-    uint32_t devId, u64 overflowAddr, uint8_t linkType, const uint8_t *sqeIn, uint8_t *sqeType, uint32_t hcclQos);
-extern void AddOneEventResetSqeV2(uint16_t streamId, int32_t eventId, uint16_t taskId, int64_t phyChipId,
-    int64_t phyDieId, u64 addr, const uint8_t *sqeIn, uint8_t *sqeType);
-extern void AddOneEventRecordSqeV2(uint16_t streamId, int32_t eventId, uint16_t taskId, const uint8_t *sqeIn,
-    uint8_t *sqeType);
-extern void AddOneEventWaitSqeV2(uint16_t streamId, int32_t eventId, uint16_t taskId, const uint8_t *sqeIn,
-    uint8_t *sqeType);
+extern void AddOneNotifyWaitSqeV2(
+    uint16_t streamId, uint16_t taskId, u64 notifyId, const uint8_t* sqeIn, uint8_t* sqeType,
+    const dfx::DfxTimeOutConfig& dfxTimeOutConfig);
+extern void AddOneRecordSqeV2(uint16_t streamId, uint16_t taskId, u64 notifyId, const uint8_t* sqeIn, uint8_t* sqeType);
+extern void AddOneWriteValueRecordSqeV2(
+    uint16_t streamId, uint16_t taskId, u64 notifyWRAddr, const uint8_t* sqeIn, uint8_t* sqeType);
+extern void AddOneMemcpySqeV2(
+    uint16_t streamId, uint16_t taskId, const void* src, uint32_t length, const aclDataType runtimeDataType,
+    aclrtReduceKind rtReduceOp, const void* dst, uint32_t partId, uint32_t ssid, uint32_t devId, u64 overflowAddr,
+    uint8_t linkType, const uint8_t* sqeIn, uint8_t* sqeType, uint32_t hcclQos);
+extern void AddOneEventResetSqeV2(
+    uint16_t streamId, int32_t eventId, uint16_t taskId, int64_t phyChipId, int64_t phyDieId, u64 addr,
+    const uint8_t* sqeIn, uint8_t* sqeType);
+extern void
+AddOneEventRecordSqeV2(uint16_t streamId, int32_t eventId, uint16_t taskId, const uint8_t* sqeIn, uint8_t* sqeType);
+extern void
+AddOneEventWaitSqeV2(uint16_t streamId, int32_t eventId, uint16_t taskId, const uint8_t* sqeIn, uint8_t* sqeType);
 #endif // __AICPU_HCCL_SQCQV2_HPP__

@@ -11,8 +11,5 @@
 #include "alg_common_interface.h"
 
 namespace Hccl {
-bool IsAicpuMode()
-{
-    return false;
-}
-}
+bool IsAicpuMode() { return false; }
+} // namespace Hccl

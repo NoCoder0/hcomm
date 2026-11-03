@@ -1,3 +1,13 @@
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "coll_gen_json.h"
 
 #include <fstream>
@@ -49,7 +59,7 @@ HcclResult InitGenRankTableJsonV1(TopoMeta& topoMeta, std::string& rankTableStri
     const char* dieNum = std::getenv("HCCL_IODIE_NUM");
     if (dieNum != nullptr) {
         std::string value(dieNum);
-        if (value == "2" ) {
+        if (value == "2") {
             for (u32 i = 0; i < rankNum; ++i) {
                 json rank;
                 rank["rank_id"] = i;
@@ -71,7 +81,8 @@ HcclResult InitGenRankTableJsonV1(TopoMeta& topoMeta, std::string& rankTableStri
                     if (i == j) {
                         continue;
                     }
-                    if ((topoMeta[0][0][i] / 8 != topoMeta[0][0][j] / 8) && (topoMeta[0][0][i] % 8 != topoMeta[0][0][j] % 8)) {
+                    if ((topoMeta[0][0][i] / 8 != topoMeta[0][0][j] / 8)
+                        && (topoMeta[0][0][i] % 8 != topoMeta[0][0][j] % 8)) {
                         continue;
                     }
                     addr["addr_type"] = "IPV4";
@@ -85,10 +96,11 @@ HcclResult InitGenRankTableJsonV1(TopoMeta& topoMeta, std::string& rankTableStri
                     addr["plane_id"] = "planeA";
                     addr_list.push_back(addr);
                     g_devId2Ip2DieIdAndFuncId[topoMeta[0][0][i]][IpAddress(tmpAddr)] = std::pair<uint32_t, uint32_t>(
-                        g_devId2PortId2DieId[topoMeta[0][0][i]][strPorts], g_devId2PortId2funcId[topoMeta[0][0][i]][strPorts]);
+                        g_devId2PortId2DieId[topoMeta[0][0][i]][strPorts],
+                        g_devId2PortId2funcId[topoMeta[0][0][i]][strPorts]);
 
                     for (u32 k = 0; k < g_devId2EidInfo[topoMeta[0][0][i]].size(); k++) {
-                        if ( g_devId2EidInfo[topoMeta[0][0][i]][k].portId == strPorts) {
+                        if (g_devId2EidInfo[topoMeta[0][0][i]][k].portId == strPorts) {
                             g_devId2EidInfo[topoMeta[0][0][i]][k].ipAddress = IpAddress(tmpAddr);
                         }
                     }
@@ -136,7 +148,7 @@ HcclResult InitGenRankTableJsonV1(TopoMeta& topoMeta, std::string& rankTableStri
                     g_devId2PortId2DieId[i][strPorts], g_devId2PortId2funcId[i][strPorts]);
 
                 for (u32 k = 0; k < g_devId2EidInfo[i].size(); k++) {
-                    if ( g_devId2EidInfo[i][k].portId == strPorts) {
+                    if (g_devId2EidInfo[i][k].portId == strPorts) {
                         g_devId2EidInfo[i][k].ipAddress = IpAddress(tmpAddr);
                     }
                 }
@@ -154,11 +166,10 @@ HcclResult InitGenRankTableJsonV1(TopoMeta& topoMeta, std::string& rankTableStri
     oss << rankTableJson.dump(4);
     rankTableString = oss.str();
 
-
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult GenRankNetHFNode(TopoMeta &topoMeta, u32 superPodIdx, u32 serverIdx, u32 rankIdx, u32 rankNum, json &level)
+HcclResult GenRankNetHFNode(TopoMeta& topoMeta, u32 superPodIdx, u32 serverIdx, u32 rankIdx, u32 rankNum, json& level)
 {
     json addr_list = json::array();
     json addr;
@@ -189,7 +200,7 @@ HcclResult GenRankNetHFNode(TopoMeta &topoMeta, u32 superPodIdx, u32 serverIdx, 
         } else {
             addr["plane_id"] = "plane1";
         }
-        
+
         addr_list.push_back(addr);
         g_devId2Ip2DieIdAndFuncId[uRankId][IpAddress(tmpAddr)] = std::pair<uint32_t, uint32_t>(
             g_devId2PortId2DieId[uRankId][strPorts], g_devId2PortId2funcId[uRankId][strPorts]);
@@ -226,8 +237,7 @@ HcclResult InitGenRankTableJsonHF(TopoMeta& topoMeta, std::string& rankTableStri
 
                 json levelList = json::array();
                 json level0;
-                if (GenRankNetHFNode(topoMeta, i, j, k, topoMeta[i][j].size(), level0) !=
-                    HcclResult::HCCL_SUCCESS) {
+                if (GenRankNetHFNode(topoMeta, i, j, k, topoMeta[i][j].size(), level0) != HcclResult::HCCL_SUCCESS) {
                     HCCL_ERROR("Failed to gen netlayer0 node! rankid: %d", topoMeta[i][j][k]);
                     continue;
                 }
@@ -246,9 +256,9 @@ HcclResult InitGenRankTableJsonHF(TopoMeta& topoMeta, std::string& rankTableStri
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InitGenTopoJsonV1(std::string &topoFileName, bool is1DTopo)
+HcclResult InitGenTopoJsonV1(std::string& topoFileName, bool is1DTopo)
 {
-    u32 rankSizeNum = 64;    // 需要更大ranksize时，需要修改该值 = 64，最大支持64
+    u32 rankSizeNum = 64; // 需要更大ranksize时，需要修改该值 = 64，最大支持64
 
     json topoJson;
     topoJson["version"] = "2.0";
@@ -291,8 +301,7 @@ HcclResult InitGenTopoJsonV1(std::string &topoFileName, bool is1DTopo)
                     {"local_a_ports", {u_addr}},
                     {"local_b", vDeviceId},
                     {"local_b_ports", {v_addr}},
-                    {"position", "DEVICE"}
-                });
+                    {"position", "DEVICE"}});
                 AddEidInfo(uDeviceId, u_addr, 0);
                 AddEidInfo(vDeviceId, v_addr, 0);
                 g_uvDevice2Port[uDeviceId][vDeviceId] = u_addr;
@@ -326,8 +335,7 @@ HcclResult InitGenTopoJsonV1(std::string &topoFileName, bool is1DTopo)
                         {"local_a_ports", {u_addr}},
                         {"local_b", vDeviceId},
                         {"local_b_ports", {v_addr}},
-                        {"position", "DEVICE"}
-                    });
+                        {"position", "DEVICE"}});
 
                     AddEidInfo(uDeviceId, u_addr, 1);
                     AddEidInfo(vDeviceId, v_addr, 1);
@@ -361,9 +369,9 @@ HcclResult InitGenTopoJsonV1(std::string &topoFileName, bool is1DTopo)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InitGenTopoJsonHF(std::string &topoFileName, bool is1DTopo)
+HcclResult InitGenTopoJsonHF(std::string& topoFileName, bool is1DTopo)
 {
-    u32 rankSizeNum = 16;  // 需要更大ranksize时，需要修改该值 = 64，最大支持64
+    u32 rankSizeNum = 16; // 需要更大ranksize时，需要修改该值 = 64，最大支持64
 
     json topoJson;
     topoJson["version"] = "2.0";
@@ -397,7 +405,8 @@ HcclResult InitGenTopoJsonHF(std::string &topoFileName, bool is1DTopo)
                 u32 uDeviceId = row * 8 + colSrc;
                 u32 vDeviceId = row * 8 + colDst;
 
-                edge_list.push_back(json{{"net_layer", 0},
+                edge_list.push_back(json{
+                    {"net_layer", 0},
                     {"link_type", "PEER2PEER"},
                     {"topo_type", "1DMESH"},
                     {"topo_instance_id", 0},
@@ -428,7 +437,8 @@ HcclResult InitGenTopoJsonHF(std::string &topoFileName, bool is1DTopo)
             u32 uDeviceId = colSrc;
             u32 vDeviceId = colDst + 8;
 
-            edge_list.push_back(json{{"net_layer", 0},
+            edge_list.push_back(json{
+                {"net_layer", 0},
                 {"link_type", "PEER2PEER"},
                 {"topo_type", "1DMESH"},
                 {"topo_instance_id", 0},
@@ -449,7 +459,7 @@ HcclResult InitGenTopoJsonHF(std::string &topoFileName, bool is1DTopo)
     topoJson["edge_count"] = edge_list.size();
     topoJson["edge_list"] = edge_list;
 
-    const char *value = std::getenv("TOPO_PATH_NAME");
+    const char* value = std::getenv("TOPO_PATH_NAME");
     if (value != nullptr) {
         std::string prefix(value);
         topoFileName = prefix + "_topo.json";
@@ -468,8 +478,8 @@ HcclResult InitGenTopoJsonHF(std::string &topoFileName, bool is1DTopo)
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult GenRankNetLayer0Node(
-    TopoMeta &topoMeta, u32 superPodIdx, u32 serverIdx, u32 rankIdx, u32 rankNum, json &level)
+HcclResult
+GenRankNetLayer0Node(TopoMeta& topoMeta, u32 superPodIdx, u32 serverIdx, u32 rankIdx, u32 rankNum, json& level)
 {
     json addr_list = json::array();
     json addr;
@@ -508,7 +518,7 @@ HcclResult GenRankNetLayer0Node(
                 g_devId2EidInfo[uRankId][k].ipAddress = IpAddress(tmpAddr);
                 HrtDevEidInfo eidInfo;
                 eidInfo.ipAddress = IpAddress(tmpAddr);
-                g_devId2EidInfo[uRankId].push_back(eidInfo);  // 上面的eid有可能被覆盖，冗余加入个新的
+                g_devId2EidInfo[uRankId].push_back(eidInfo); // 上面的eid有可能被覆盖，冗余加入个新的
             }
         }
     }
@@ -516,8 +526,8 @@ HcclResult GenRankNetLayer0Node(
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult GenRankNetLayer1Node(
-    TopoMeta &topoMeta, u32 superPodIdx, u32 serverIdx, u32 localId, u32 rankNum, json &level)
+HcclResult
+GenRankNetLayer1Node(TopoMeta& topoMeta, u32 superPodIdx, u32 serverIdx, u32 localId, u32 rankNum, json& level)
 {
     level["net_layer"] = 1;
     level["net_instance_id"] = "az0";
@@ -534,15 +544,15 @@ HcclResult GenRankNetLayer1Node(
     addr["ports"] = {"0/7"};
     addr_list.push_back(addr);
 
-    g_devId2Ip2DieIdAndFuncId[rankId][IpAddress(tmpAddr)] = std::pair<uint32_t, uint32_t>(
-        g_devId2PortId2DieId[rankId]["0/7"], g_devId2PortId2funcId[rankId]["0/7"]);
+    g_devId2Ip2DieIdAndFuncId[rankId][IpAddress(tmpAddr)]
+        = std::pair<uint32_t, uint32_t>(g_devId2PortId2DieId[rankId]["0/7"], g_devId2PortId2funcId[rankId]["0/7"]);
 
     for (u32 k = 0; k < g_devId2EidInfo[rankId].size(); k++) {
         if (g_devId2EidInfo[rankId][k].portId == "0/7") {
             g_devId2EidInfo[rankId][k].ipAddress = IpAddress(tmpAddr);
         }
     }
-    
+
     json addr_die1;
     addr_die1["addr_type"] = "IPV4";
     string tmpAddr_die1 = "192.168.68.";
@@ -551,9 +561,9 @@ HcclResult GenRankNetLayer1Node(
     addr_die1["ports"] = {"1/7"};
     addr_die1["plane_id"] = "plane" + std::to_string(localId * 2 + 1);
     addr_list.push_back(addr_die1);
-    
-    g_devId2Ip2DieIdAndFuncId[rankId][IpAddress(tmpAddr_die1)] = std::pair<uint32_t, uint32_t>(
-        g_devId2PortId2DieId[rankId]["1/7"], g_devId2PortId2funcId[rankId]["1/7"]);
+
+    g_devId2Ip2DieIdAndFuncId[rankId][IpAddress(tmpAddr_die1)]
+        = std::pair<uint32_t, uint32_t>(g_devId2PortId2DieId[rankId]["1/7"], g_devId2PortId2funcId[rankId]["1/7"]);
 
     for (u32 k = 0; k < g_devId2EidInfo[rankId].size(); k++) {
         if (g_devId2EidInfo[rankId][k].portId == "1/7") {
@@ -561,13 +571,12 @@ HcclResult GenRankNetLayer1Node(
         }
     }
 
-
     level["rank_addr_list"] = addr_list;
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult GenRankNetLayer2Node(
-    TopoMeta &topoMeta, u32 superPodIdx, u32 serverIdx, u32 localId, u32 rankNum, json &level)
+HcclResult
+GenRankNetLayer2Node(TopoMeta& topoMeta, u32 superPodIdx, u32 serverIdx, u32 localId, u32 rankNum, json& level)
 {
     level["net_layer"] = 2;
     level["net_instance_id"] = "superpod_0";
@@ -589,13 +598,13 @@ HcclResult GenRankNetLayer2Node(
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InitGenRankTableJson(TopoMeta &topoMeta, const CheckerOpParam& param, std::string &rankTableString)
+HcclResult InitGenRankTableJson(TopoMeta& topoMeta, const CheckerOpParam& param, std::string& rankTableString)
 {
     if (param.devtype == CheckerDevType::DEV_TYPE_HF) {
         InitGenRankTableJsonHF(topoMeta, rankTableString);
         return HCCL_SUCCESS;
     }
-    if(param.devtype != CheckerDevType::DEV_TYPE_950) {
+    if (param.devtype != CheckerDevType::DEV_TYPE_950) {
         return InitGenRankTableJsonV1(topoMeta, rankTableString);
     }
     u32 serverNum = GetServerNumFormTopoMeta(topoMeta);
@@ -619,8 +628,8 @@ HcclResult InitGenRankTableJson(TopoMeta &topoMeta, const CheckerOpParam& param,
 
                 json levelList = json::array();
                 json level0;
-                if (GenRankNetLayer0Node(topoMeta, i, j, k, topoMeta[i][j].size(), level0) !=
-                    HcclResult::HCCL_SUCCESS) {
+                if (GenRankNetLayer0Node(topoMeta, i, j, k, topoMeta[i][j].size(), level0)
+                    != HcclResult::HCCL_SUCCESS) {
                     HCCL_ERROR("Failed to gen netlayer0 node! rankid: %d", topoMeta[i][j][k]);
                     continue;
                 }
@@ -633,8 +642,8 @@ HcclResult InitGenRankTableJson(TopoMeta &topoMeta, const CheckerOpParam& param,
                 }
 
                 json level1;
-                if (GenRankNetLayer1Node(topoMeta, i, j, k, topoMeta[i][j].size(), level1) !=
-                    HcclResult::HCCL_SUCCESS) {
+                if (GenRankNetLayer1Node(topoMeta, i, j, k, topoMeta[i][j].size(), level1)
+                    != HcclResult::HCCL_SUCCESS) {
                     HCCL_ERROR("Failed to gen netlayer1 node! rankid: %d", topoMeta[i][j][k]);
                     continue;
                 }
@@ -654,16 +663,16 @@ HcclResult InitGenRankTableJson(TopoMeta &topoMeta, const CheckerOpParam& param,
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult InitGenTopoJson(std::string &topoFileName, const CheckerOpParam& param, bool is1DTopo)
+HcclResult InitGenTopoJson(std::string& topoFileName, const CheckerOpParam& param, bool is1DTopo)
 {
     if (param.devtype == CheckerDevType::DEV_TYPE_HF) {
         InitGenTopoJsonHF(topoFileName, is1DTopo);
         return HCCL_SUCCESS;
     }
-    if(param.devtype !=  CheckerDevType::DEV_TYPE_950) {
+    if (param.devtype != CheckerDevType::DEV_TYPE_950) {
         return InitGenTopoJsonV1(topoFileName, is1DTopo);
     }
-    u32 rankSizeNum = 64;  // 需要更大ranksize时，需要修改该值 = 64，最大支持64
+    u32 rankSizeNum = 64; // 需要更大ranksize时，需要修改该值 = 64，最大支持64
 
     json topoJson;
     topoJson["version"] = "2.0";
@@ -698,7 +707,8 @@ HcclResult InitGenTopoJson(std::string &topoFileName, const CheckerOpParam& para
                 u32 uDeviceId = row * 8 + colSrc;
                 u32 vDeviceId = row * 8 + colDst;
 
-                edge_list.push_back(json{{"net_layer", 0},
+                edge_list.push_back(json{
+                    {"net_layer", 0},
                     {"link_type", "PEER2PEER"},
                     {"protocols", {"UB_CTP"}},
                     {"local_a", uDeviceId},
@@ -731,7 +741,8 @@ HcclResult InitGenTopoJson(std::string &topoFileName, const CheckerOpParam& para
                     u32 uDeviceId = rowSrc * 8 + col;
                     u32 vDeviceId = rowDst * 8 + col;
 
-                    edge_list.push_back(json{{"net_layer", 0},
+                    edge_list.push_back(json{
+                        {"net_layer", 0},
                         {"link_type", "PEER2PEER"},
                         {"protocols", {"UB_CTP"}},
                         {"local_a", uDeviceId},
@@ -753,7 +764,8 @@ HcclResult InitGenTopoJson(std::string &topoFileName, const CheckerOpParam& para
         for (u32 col = 0; col < 8; col++) {
             u32 uDeviceId = row * 8 + col;
             std::string u_addr = "0/7";
-            edge_list.push_back(json{{"net_layer", 1},
+            edge_list.push_back(json{
+                {"net_layer", 1},
                 {"link_type", "PEER2NET"},
                 {"protocols", {"UB_CTP"}},
                 {"local_a", uDeviceId},
@@ -761,9 +773,10 @@ HcclResult InitGenTopoJson(std::string &topoFileName, const CheckerOpParam& para
                 {"position", "DEVICE"}});
 
             AddEidInfo(uDeviceId, u_addr, 0);
-            
+
             std::string u_addr_die1 = "1/7";
-            edge_list.push_back(json{{"net_layer", 1},
+            edge_list.push_back(json{
+                {"net_layer", 1},
                 {"link_type", "PEER2NET"},
                 {"protocols", {"UB_CTP"}},
                 {"local_a", uDeviceId},
@@ -778,7 +791,8 @@ HcclResult InitGenTopoJson(std::string &topoFileName, const CheckerOpParam& para
         for (u32 col = 0; col < 8; col++) {
             u32 uDeviceId = row * 8 + col;
             std::string u_addr = "0/8";
-            edge_list.push_back(json{{"net_layer", 2},
+            edge_list.push_back(json{
+                {"net_layer", 2},
                 {"link_type", "PEER2NET"},
                 {"protocols", {"UB_CTP"}},
                 {"local_a", uDeviceId},
@@ -791,7 +805,7 @@ HcclResult InitGenTopoJson(std::string &topoFileName, const CheckerOpParam& para
     topoJson["edge_count"] = edge_list.size();
     topoJson["edge_list"] = edge_list;
 
-    const char *value = std::getenv("TOPO_PATH_NAME");
+    const char* value = std::getenv("TOPO_PATH_NAME");
     if (value != nullptr) {
         std::string prefix(value);
         topoFileName = prefix + "_topo.json";
@@ -810,4 +824,4 @@ HcclResult InitGenTopoJson(std::string &topoFileName, const CheckerOpParam& para
     return HcclResult::HCCL_SUCCESS;
 }
 
-}  // namespace Hccl
+} // namespace Hccl

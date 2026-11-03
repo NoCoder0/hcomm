@@ -16,10 +16,7 @@ extern "C" {
 #endif
 #endif
 
-STATIC const int32_t g_BkfFibo[] = { 1, 1, 2, 3, 5,
-                                   8, 13, 21, 34, 55,
-                                   89, 144, 233, 377, 610,
-                                   988, 1596 };
+STATIC const int32_t g_BkfFibo[] = {1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 988, 1596};
 
 int32_t BkfFibo32Get(int32_t idx)
 {
@@ -89,4 +86,3 @@ int32_t BkfFibo32GetPrevValid(int32_t *itorInOut, int32_t max)
 }
 #endif
 #endif
-

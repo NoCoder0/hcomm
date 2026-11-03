@@ -9,131 +9,87 @@
  */
 
 #include "ccu_rep_loopgroup_bundle_v1.h"
-#include "ccu_assist_v1.h"
-#include "ccu_microcode_v1.h"
+#include "ccu_ins_generator_base.h"
+#include "ccu_api_exception.h"
 #include "string_util.h"
 
 namespace hcomm {
 namespace CcuRep {
 
-CcuRepLoopGroupBundle::CcuRepLoopGroupBundle(const CcuLoopGroupConfig &config,
-                                             const Variable &parallelVar, const Variable &offsetVar)
-    : config_(config), parallelVar_(parallelVar), offsetVar_(offsetVar)
-{
-    type = CcuRepType::LOOPGROUP;
-}
+    using namespace Hccl;
 
-CcuRepLoopGroupBundle::CcuRepLoopGroupBundle(const Variable &parallelVar, const Variable &offsetVar)
-    : parallelVar_(parallelVar), offsetVar_(offsetVar), isGroupVarBased_(true)
-{
-    type = CcuRepType::LOOPGROUP;
-}
+    CcuRepLoopGroupBundle::CcuRepLoopGroupBundle(
+        CcuInsGeneratorBase* insGenPtr, const CcuLoopGroupCfg& config, const Variable& parallelVar,
+        const Variable& offsetVar)
+        : insGenPtr_(insGenPtr),
+          config_(config),
+          parallelVar_(parallelVar),
+          offsetVar_(offsetVar)
+    {
+        type = CcuRepType::LOOPGROUP;
+    }
 
-void CcuRepLoopGroupBundle::AddLoop(const LoopEntry &entry)
-{
-    loops_.push_back(entry);
-}
+    CcuRepLoopGroupBundle::CcuRepLoopGroupBundle(
+        CcuInsGeneratorBase* insGenPtr, const Variable& parallelVar, const Variable& offsetVar)
+        : insGenPtr_(insGenPtr),
+          config_{},
+          parallelVar_(parallelVar),
+          offsetVar_(offsetVar),
+          layout_(Layout::PackedVar)
+    {
+        type = CcuRepType::LOOPGROUP;
+    }
 
-uint16_t CcuRepLoopGroupBundle::LoopGroupInstrOffsetInBundle() const
-{
-    uint16_t loopCount = static_cast<uint16_t>(loops_.size());
-    uint16_t varBasedLoopCount = 0;
-    for (const auto &loop : loops_) {
-        if (loop.isVarBased) {
-            varBasedLoopCount++;
+    void CcuRepLoopGroupBundle::AddLoop(const LoopEntry& entry) { loops_.push_back(entry); }
+
+    uint16_t CcuRepLoopGroupBundle::LoopGroupInstrOffsetInBundle() const
+    {
+        uint16_t loopCount = static_cast<uint16_t>(loops_.size());
+        uint16_t varBasedLoopCount = 0;
+        for (const auto& loop : loops_) {
+            if (loop.layout != Layout::Config) {
+                varBasedLoopCount++;
+            }
         }
+        constexpr uint16_t kVarBasedLoopInstrCount = 2;
+        constexpr uint16_t kConfigLayoutExtraInstrCount = 2;
+        return (loopCount - varBasedLoopCount) + (varBasedLoopCount * kVarBasedLoopInstrCount)
+               + (layout_ != Layout::Config ? 0 : kConfigLayoutExtraInstrCount);
     }
-    return (loopCount - varBasedLoopCount)
-         + (varBasedLoopCount * 2)
-         + (isGroupVarBased_ ? 0 : 2);
-}
 
-uint16_t CcuRepLoopGroupBundle::GetStartLoopInstrId() const
-{
-    return instrId + LoopGroupInstrOffsetInBundle() + 3;
-}
+    uint16_t CcuRepLoopGroupBundle::GetStartLoopInstrId() const { return instrId + LoopGroupInstrOffsetInBundle() + 3; }
 
-uint16_t CcuRepLoopGroupBundle::InstrCount()
-{
-    uint16_t loopCount = static_cast<uint16_t>(loops_.size());
-    instrCount = LoopGroupInstrOffsetInBundle()
-               + 1
-               + 2
-               + loopCount
-               + 1;
-    return instrCount;
-}
+    uint16_t CcuRepLoopGroupBundle::InstrCount()
+    {
+        instrCount = insGenPtr_->CcuRepLoopGroupBundleInstrCount(this);
+        return instrCount;
+    }
 
-bool CcuRepLoopGroupBundle::Translate(CcuInstr *&instr, uint16_t &instrId, const TransDep &dep)
-{
-    for (const auto &loop : loops_) {
-        if (!loop.repLoopBlock->Translated()) {
-            return false;
+    bool
+    CcuRepLoopGroupBundle::Translate(CcuKernel* ccuKernel, CcuInstr*& instr, uint16_t& instrId, const TransDep& dep)
+    {
+        for (const auto& loop : loops_) {
+            if (!loop.repLoopBlock->Translated()) {
+                return false;
+            }
         }
+
+        this->instrId = instrId;
+        translated = true;
+
+        CHK_PRT_THROW(
+            insGenPtr_->CcuRepLoopGroupBundleTranslate(ccuKernel, instr, instrId, this, dep)
+                != HcclResult::HCCL_SUCCESS,
+            HCCL_ERROR("[CcuRepLoopGroupBundle][Translate] failed to translate for instrId[%u]", instrId),
+            Hccl::CcuApiException, "CcuRepLoopGroupBundle translate failed");
+
+        return translated;
     }
 
-    this->instrId = instrId;
-    translated = true;
-
-    // 1. Assign loopParam for each loop
-    for (const auto &loop : loops_) {
-        if (!loop.isVarBased) {
-            uint64_t lpImm = GetLoopParam(loop.executor.Id(), loop.config.addrOffset, loop.config.iterNum);
-            LoadImdToXnInstr(instr++, loop.loopParamVar.Id(), lpImm);
-            instrId++;
-        } else {
-            uint64_t ctxImm = static_cast<uint64_t>(loop.executor.Id()) << 45;
-            LoadImdToXnInstr(instr++, dep.reserveXnId, ctxImm);
-            instrId++;
-            LoadXXInstr(instr++, loop.loopParamVar.Id(), loop.loopParamVar.Id(), dep.reserveXnId);
-            instrId++;
-        }
+    std::string CcuRepLoopGroupBundle::Describe()
+    {
+        return Hccl::StringFormat("LoopGroupBundle[loops=%zu, totalLoopNum=%lu]", loops_.size(), totalLoopNum_);
     }
-
-    // 2-3. Assign parallelParam & offsetParam (skip var-based group — registers already set)
-    if (!isGroupVarBased_) {
-        uint64_t parallelImm = GetParallelParam(config_.cloneNum, repeatLoopIdx_, totalLoopNum_);
-        LoadImdToXnInstr(instr++, parallelVar_.Id(), parallelImm);
-        instrId++;
-
-        uint64_t offsetImm = ::hcomm::CcuRep::GetOffsetParam(config_.addrOffset, config_.ccuBufferOffset, config_.eventOffset);
-        LoadImdToXnInstr(instr++, offsetVar_.Id(), offsetImm);
-        instrId++;
-    }
-
-    // 4. LoopGroupInstr — startLoopInstrId = instrId + 3
-    LoopGroupInstr(instr++, instrId + 3, parallelVar_.Id(), offsetVar_.Id(), 0);
-    instrId++;
-
-    // 5. Jump (skip over LoopInstr region)
-    uint16_t loopCount = static_cast<uint16_t>(loops_.size());
-    uint16_t jumpTargetInstrId = instrId + 2 + loopCount + 1;
-    LoadImdToXnInstr(instr++, dep.reserveXnId, jumpTargetInstrId);
-    instrId++;
-    JumpInstr(instr++, dep.reserveXnId, dep.reserveXnId, 1);
-    instrId++;
-
-    // 6. LoopInstr for each loop
-    for (const auto &loop : loops_) {
-        const auto &block = loop.repLoopBlock;
-        LoopInstr(instr++, block->StartInstrId(),
-                  block->StartInstrId() + block->InstrCount() - 1,
-                  loop.loopParamVar.Id());
-        instrId++;
-    }
-
-    // 7. NOP (JumpLabel target)
-    LoadImdToXnInstr(instr++, dep.reserveXnId, 0);
-    instrId++;
-
-    return translated;
-}
-
-std::string CcuRepLoopGroupBundle::Describe()
-{
-    return Hccl::StringFormat("LoopGroupBundle[loops=%zu, totalLoopNum=%lu]",
-                              loops_.size(), totalLoopNum_);
-}
 
 }; // namespace CcuRep
 }; // namespace hcomm

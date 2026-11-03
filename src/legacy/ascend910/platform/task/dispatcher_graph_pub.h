@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef HCCL_DISPATCHER_FFTS_PUB_H
 #define HCCL_DISPATCHER_FFTS_PUB_H
@@ -42,54 +42,64 @@ using FftsSdmaSqeHeader = union {
     } bit;
 };
 
-
 class DispatcherGraph : public DispatcherPub {
 public:
     explicit DispatcherGraph(const s32 deviceLogicId);
     ~DispatcherGraph() override;
 
-    HcclResult SignalRecord(HcclRtNotify signal, hccl::Stream &stream, u32 userRank, u64 offset = INVALID_U64,
+    HcclResult SignalRecord(
+        HcclRtNotify signal, hccl::Stream& stream, u32 userRank, u64 offset = INVALID_U64,
         s32 stage = INVALID_VALUE_STAGE, bool inchip = false, u64 signalAddr = INVALID_U64,
         u32 notifyId = INVALID_UINT) override;
-    HcclResult SignalWait(HcclRtNotify signal, hccl::Stream &stream, u32 userRank, u32 remoteUserRank,
-        s32 stage = INVALID_VALUE_STAGE, bool inchip = false, u32 notifyId = INVALID_UINT,
-        u32 timeOut = NOTIFY_INVALID_WAIT_TIME) override;
-    HcclResult MemcpyAsync(hccl::DeviceMem &dst, const hccl::DeviceMem &src, hccl::Stream &stream,
+    HcclResult SignalWait(
+        HcclRtNotify signal, hccl::Stream& stream, u32 userRank, u32 remoteUserRank, s32 stage = INVALID_VALUE_STAGE,
+        bool inchip = false, u32 notifyId = INVALID_UINT, u32 timeOut = NOTIFY_INVALID_WAIT_TIME) override;
+    HcclResult MemcpyAsync(
+        hccl::DeviceMem& dst, const hccl::DeviceMem& src, hccl::Stream& stream,
         u32 remoteUserRank = INVALID_VALUE_RANKID, hccl::LinkType inLinkType = hccl::LinkType::LINK_ONCHIP) override;
-    HcclResult ReduceAsync(const void *src, void *dst, u64 dataCount, const HcclDataType datatype, HcclReduceOp redOp,
-        Stream &stream, HcclReduceType reduceType = HcclReduceType::HCCL_TBE_REDUCE) override;
-    HcclResult InlineReduceAsync(const void *src, u64 dataCount, const HcclDataType datatype, HcclReduceOp redOp,
-        Stream &stream, void *dst, u32 remoteUserRank = INVALID_VALUE_RANKID,
-        hccl::LinkType inLinkType = hccl::LinkType::LINK_ONCHIP) override;
-    HcclResult RdmaSend(u32 dbindex, u64 dbinfo, const struct SendWr &wr, hccl::Stream &stream,
+    HcclResult ReduceAsync(
+        const void* src, void* dst, u64 dataCount, const HcclDataType datatype, HcclReduceOp redOp, Stream& stream,
+        HcclReduceType reduceType = HcclReduceType::HCCL_TBE_REDUCE) override;
+    HcclResult InlineReduceAsync(
+        const void* src, u64 dataCount, const HcclDataType datatype, HcclReduceOp redOp, Stream& stream, void* dst,
+        u32 remoteUserRank = INVALID_VALUE_RANKID, hccl::LinkType inLinkType = hccl::LinkType::LINK_ONCHIP) override;
+    HcclResult RdmaSend(
+        u32 dbindex, u64 dbinfo, const struct SendWr& wr, hccl::Stream& stream,
         u32 remoteUserRank = INVALID_VALUE_RANKID, bool isCapture = false) override;
-    HcclResult RdmaSend(u32 dbindex, u64 dbinfo, const struct SendWr &wr, hccl::Stream &stream, u32 userRank,
-        u64 offset, bool isCapture = false) override;
+    HcclResult RdmaSend(
+        u32 dbindex, u64 dbinfo, const struct SendWr& wr, hccl::Stream& stream, u32 userRank, u64 offset,
+        bool isCapture = false) override;
 
-    HcclResult ResetGraphCtx(bool enableCache, const std::string &key, bool useGraphConstructorV2 = false) override;
-    HcclResult LaunchTasksEx(Stream &stream, std::vector<Stream> &subStreams) override;
+    HcclResult ResetGraphCtx(bool enableCache, const std::string& key, bool useGraphConstructorV2 = false) override;
+    HcclResult LaunchTasksEx(Stream& stream, std::vector<Stream>& subStreams) override;
     void SetNormalMode() override;
-	HcclResult SetMultiQpMode(bool multiQpMode) override;
-    virtual HcclResult SignalRecord(Stream &stream, u64 notifyId) override;
-    virtual HcclResult SignalWait(Stream &stream, u32 notifyId, u32 timeOut) override;
+    HcclResult SetMultiQpMode(bool multiQpMode) override;
+    virtual HcclResult SignalRecord(Stream& stream, u64 notifyId) override;
+    virtual HcclResult SignalWait(Stream& stream, u32 notifyId, u32 timeOut) override;
 
 private:
-    HcclResult TbeReduceAsync(const void *src1, const void *src2, u64 count, const HcclDataType dataType,
-        HcclReduceOp redOp, Stream &stream, const void *dst);
-    HcclResult VectorReduce(const void *src1, const void *src2, u64 count, const HcclDataType dataType,
-        HcclReduceOp redOp, Stream &stream, const void *dst);
-    HcclResult VectorReduceLoop(const void *src1, const void *src2, u64 count, const HcclDataType dataType,
-        HcclReduceOp redOp, Stream &stream, const void *dst);
-    HcclResult TailVectorReduce(const void *tailSrc1, const void *tailSrc2, u64 tailCount, const HcclDataType dataType,
-        HcclReduceOp redOp, Stream &stream, void *tailDst);
-    __inline__ __attribute__((always_inline)) HcclResult SignalTaskParaSave(HcclRtNotify signal, Stream &stream,
-        u32 userRank, u32 remoteUserRank, u64 offset, s32 stage, TaskType taskType, uint64_t beginTime, u32 ctxIdx);
-    HcclResult SetGraphTailVectorReduceDescSdma(void *devMem, const void *tailSrc, u64 count,
-        const HcclDataType dataType, HcclReduceOp redOp, Stream &stream);
-    HcclResult SetGraphDescVectorReduce(const void *src, const void *dst, int count, void *addrListDevMemPtr,
-        void *funcAddr, uint32_t numBlocks, const HcclDataType dataType, HcclReduceOp redOp, Stream &stream);
-    HcclResult GetNotifyDfxInfo(HcclRtNotify signal, u32 userRank, u64 &offset, u32 &remoteUserRank, u64 &notifyID);
-    void *fftsCtxsPtr;
+    HcclResult TbeReduceAsync(
+        const void* src1, const void* src2, u64 count, const HcclDataType dataType, HcclReduceOp redOp, Stream& stream,
+        const void* dst);
+    HcclResult VectorReduce(
+        const void* src1, const void* src2, u64 count, const HcclDataType dataType, HcclReduceOp redOp, Stream& stream,
+        const void* dst);
+    HcclResult VectorReduceLoop(
+        const void* src1, const void* src2, u64 count, const HcclDataType dataType, HcclReduceOp redOp, Stream& stream,
+        const void* dst);
+    HcclResult TailVectorReduce(
+        const void* tailSrc1, const void* tailSrc2, u64 tailCount, const HcclDataType dataType, HcclReduceOp redOp,
+        Stream& stream, void* tailDst);
+    __inline__ __attribute__((always_inline)) HcclResult SignalTaskParaSave(
+        HcclRtNotify signal, Stream& stream, u32 userRank, u32 remoteUserRank, u64 offset, s32 stage, TaskType taskType,
+        uint64_t beginTime, u32 ctxIdx);
+    HcclResult SetGraphTailVectorReduceDescSdma(
+        void* devMem, const void* tailSrc, u64 count, const HcclDataType dataType, HcclReduceOp redOp, Stream& stream);
+    HcclResult SetGraphDescVectorReduce(
+        const void* src, const void* dst, int count, void* addrListDevMemPtr, void* funcAddr, uint32_t numBlocks,
+        const HcclDataType dataType, HcclReduceOp redOp, Stream& stream);
+    HcclResult GetNotifyDfxInfo(HcclRtNotify signal, u32 userRank, u64& offset, u32& remoteUserRank, u64& notifyID);
+    void* fftsCtxsPtr;
     bool disableFfts_;
     bool multiQpMode_;
 };

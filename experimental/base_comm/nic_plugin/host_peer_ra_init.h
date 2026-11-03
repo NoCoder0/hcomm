@@ -15,7 +15,7 @@
 #include "hccl/hccl_types.h"
 
 namespace hcomm_experimental {
-HcclResult InitHostPeerRaOnce(uint32_t hostResourceId, const char *logPrefix);
+HcclResult InitHostPeerRaOnce(uint32_t hostResourceId, const char* logPrefix);
 }
 
 #endif // HCOMM_EXPERIMENTAL_HOST_PEER_RA_INIT_H

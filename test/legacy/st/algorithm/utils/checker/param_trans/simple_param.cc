@@ -1,8 +1,11 @@
-/*
- * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
- * Description: 参数转换头文件，用于对接可视化工具及命令行工具
- * Author: yinding
- * Create: 2025-01-15
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
  */
 
 #include "simple_param.h"
@@ -12,8 +15,6 @@
 #ifndef HCCL_ALG_ANALYZER_DAVID
 using namespace hccl;
 #endif
-
-using namespace Hccl;
 
 namespace checker {
 
@@ -70,8 +71,9 @@ std::vector<u64> GenerateSendCountMatrix(u64 count, u32 rankSize)
     return sendCountMatrix;
 }
 
-void GenAllToAllVParams(u32 rankSize, u64 count, std::vector<u64>& sendCounts, std::vector<u64>& sdispls,
-                        std::vector<u64>& recvCounts, std::vector<u64>& rdispls)
+void GenAllToAllVParams(
+    u32 rankSize, u64 count, std::vector<u64>& sendCounts, std::vector<u64>& sdispls, std::vector<u64>& recvCounts,
+    std::vector<u64>& rdispls)
 {
     u64 sendDisplacement = 0;
     u64 recvDisplacement = 0;
@@ -96,8 +98,8 @@ HcclResult GenTestOpParams(u32 rankSize, const SimpleParam& uiParam, CheckerOpPa
     testOpParam.devtype = uiParam.devtype;
     testOpParam.is310P3V = uiParam.is310P3V;
 
-    if (uiParam.opType == CheckerOpType::BROADCAST || uiParam.opType == CheckerOpType::REDUCE ||
-        uiParam.opType == CheckerOpType::GATHER || uiParam.opType == CheckerOpType::SCATTER) {
+    if (uiParam.opType == CheckerOpType::BROADCAST || uiParam.opType == CheckerOpType::REDUCE
+        || uiParam.opType == CheckerOpType::GATHER || uiParam.opType == CheckerOpType::SCATTER) {
         testOpParam.root = uiParam.root;
     }
 
@@ -118,13 +120,13 @@ HcclResult GenTestOpParams(u32 rankSize, const SimpleParam& uiParam, CheckerOpPa
         testOpParam.All2AllDataDes.recvType = uiParam.dataType;
     } else if (testOpParam.opType == CheckerOpType::ALLTOALLV) {
         u64 count = uiParam.count / rankSize;
-        GenAllToAllVParams(rankSize, count, testOpParam.All2AllDataDes.sendCounts,
-            testOpParam.All2AllDataDes.sdispls,
+        GenAllToAllVParams(
+            rankSize, count, testOpParam.All2AllDataDes.sendCounts, testOpParam.All2AllDataDes.sdispls,
             testOpParam.All2AllDataDes.recvCounts, testOpParam.All2AllDataDes.rdispls);
         testOpParam.All2AllDataDes.sendType = uiParam.dataType;
         testOpParam.All2AllDataDes.recvType = uiParam.dataType;
-    } else if (testOpParam.opType == CheckerOpType::ALLGATHER_V ||
-               testOpParam.opType == CheckerOpType::REDUCE_SCATTER_V) {
+    } else if (
+        testOpParam.opType == CheckerOpType::ALLGATHER_V || testOpParam.opType == CheckerOpType::REDUCE_SCATTER_V) {
         u64 displacement = 0;
         for (u32 i = 0; i < rankSize; i++) {
             testOpParam.VDataDes.counts.push_back(uiParam.count);
@@ -144,4 +146,4 @@ HcclResult GenTestOpParams(u32 rankSize, const SimpleParam& uiParam, CheckerOpPa
     return HCCL_SUCCESS;
 }
 
-} // namespace hccl
+} // namespace checker

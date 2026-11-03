@@ -9,7 +9,7 @@ AICPU通信算子应根据实际物理拓扑选择通信算法，例如：
 
 AICPU通信算法选择示意图如下所示：
 
-<img src="figures/algo_select_new.png" alt="AICPU通信算法选择示意图" width="280">
+![](./figures/algo_select_new.png)
 
 > [!NOTE]说明
 >

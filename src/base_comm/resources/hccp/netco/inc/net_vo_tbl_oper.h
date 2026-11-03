@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef NET_VO_TBL_OPER_H
 #define NET_VO_TBL_OPER_H
 
@@ -130,4 +129,3 @@ char *NetTblOperatorValGetStr(NetTblOperatorVal *val, uint8_t *buf, int32_t bufL
 #endif
 
 #endif
-

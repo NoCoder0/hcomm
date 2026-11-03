@@ -32,7 +32,7 @@
 
 using namespace Hccl;
 
-static int memcpy_stub(void *dest, int dest_max, const void *src, int count)
+static int memcpy_stub(void* dest, int dest_max, const void* src, int count)
 {
     memcpy(dest, src, count);
     return 0;
@@ -40,20 +40,17 @@ static int memcpy_stub(void *dest, int dest_max, const void *src, int count)
 
 class UbTransportLiteImplTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "UbTransportLiteImplTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "UbTransportLiteImplTest tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "UbTransportLiteImplTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "UbTransportLiteImplTest tests tear down." << std::endl; }
 
     virtual void SetUp()
     {
         MOCKER(HrtGetDeviceType).stubs().will(returnValue((DevType)DevType::DEV_TYPE_910A2));
-        MOCKER_CPP(&RtsqBase::QuerySqBaseAddr).stubs().with(mockcpp::any()).will(returnValue(reinterpret_cast<u64>(&mockSq)));
+        MOCKER_CPP(&RtsqBase::QuerySqBaseAddr)
+            .stubs()
+            .with(mockcpp::any())
+            .will(returnValue(reinterpret_cast<u64>(&mockSq)));
         MOCKER_CPP(&RtsqBase::QuerySqStatusByType).stubs().with(mockcpp::any()).will(returnValue(0));
         MOCKER_CPP(&RtsqBase::ConfigSqStatusByType).stubs();
         std::cout << "A Test case in UbTransportLiteImplTest SetUP" << std::endl;
@@ -64,7 +61,7 @@ protected:
         std::cout << "A Test case in UbTransportLiteImplTest TearDown" << std::endl;
         GlobalMockObject::verify();
     }
-    u8  mockSq[AC_SQE_SIZE * AC_SQE_MAX_CNT]{0};
+    u8 mockSq[AC_SQE_SIZE * AC_SQE_MAX_CNT]{0};
 };
 
 std::vector<char> GetNotifyUniqueId(u32 notifyId, u32 devPhyId)
@@ -91,16 +88,16 @@ std::vector<char> GetRmtBufferUniqueId(u64 addr, u64 size, u32 tokenId, u32 toke
 
 std::vector<char> GetConnUniqueId()
 {
-    u32  dieId           = 0;
-    u32  funcId          = 0;
-    u32  jettyId         = 0;
-    u32  jfcPollMode     = 0;     // 待修改，0代表STARS POLL，1代表software Poll
+    u32 dieId = 0;
+    u32 funcId = 0;
+    u32 jettyId = 0;
+    u32 jfcPollMode = 0;          // 待修改，0代表STARS POLL，1代表software Poll
     bool dwqeCacheLocked = false; // 待修改，该jetty是否支持dwqeCachedLocked，默认不支持
-    u64  dbAddr          = 0x100;
-    u64  sqVa            = 0x100;
-    u32  sqDepth         = 100;
-    u32  tpn             = 100;
-    Eid  rmtEid;
+    u64 dbAddr = 0x100;
+    u64 sqVa = 0x100;
+    u32 sqDepth = 100;
+    u32 tpn = 100;
+    Eid rmtEid;
 
     BinaryStream binaryStream;
     binaryStream << dieId;
@@ -132,13 +129,13 @@ std::vector<char> BuildUbTransportLiteUniqueId()
 
     auto rmtBuffer0 = GetRmtBufferUniqueId(300, 200, 3, 3);
     auto rmtBuffer1 = GetRmtBufferUniqueId(300, 200, 4, 4);
-    u32  bufferBum  = 2;
+    u32 bufferBum = 2;
 
-    auto conn0   = GetConnUniqueId();
-    u32  connNum = 1;
+    auto conn0 = GetConnUniqueId();
+    u32 connNum = 1;
 
     BinaryStream binaryStream;
-    u32          type = (u32)TransportType::UB;
+    u32 type = (u32)TransportType::UB;
     binaryStream << type;
     binaryStream << notifyNum;
     binaryStream << bufferBum;
@@ -176,14 +173,14 @@ TEST_F(UbTransportLiteImplTest, construct_test)
     std::vector<char> liteData = BuildUbTransportLiteUniqueId();
 
     RmaConnLite rmaConnLite;
-    RmaConnLite *connLite =  &rmaConnLite;
+    RmaConnLite* connLite = &rmaConnLite;
     MOCKER_CPP(&UbConnLiteMgr::Get).stubs().will(returnValue(connLite));
     MOCKER_CPP(&MirrorTaskManager::AddTaskInfo).stubs().with(mockcpp::any());
     LinkData linkData(BasePortType(PortDeploymentType::DEV_NET, ConnectProtoType::UB), 0, 1, 0, 1);
     MirrorTaskManager mirrorTaskMgr(0, &GlobalMirrorTasks::Instance(), true);
     auto transportCallback = MemTransportCallback(linkData, mirrorTaskMgr);
     MemTransportLite transportLite(liteData, transportCallback);
-    auto &ubTransportLite = *(dynamic_cast<UbTransportLiteImpl *>(transportLite.impl.get()));
+    auto& ubTransportLite = *(dynamic_cast<UbTransportLiteImpl*>(transportLite.impl.get()));
     transportLite.Describe();
 
     std::cout << ubTransportLite.Describe() << std::endl;
@@ -198,7 +195,7 @@ TEST_F(UbTransportLiteImplTest, construct_test)
     std::cout << ubTransportLite.rmtBufferVec[1].Describe() << std::endl;
 
     u32 fakeStreamId = 1;
-    u32 fakeSqId     = 1;
+    u32 fakeSqId = 1;
     u32 fakedevPhyId = 1;
     BinaryStream liteBinaryStream;
     liteBinaryStream << fakeStreamId;
@@ -208,9 +205,11 @@ TEST_F(UbTransportLiteImplTest, construct_test)
     liteBinaryStream.Dump(uniqueId);
 
     StreamLite stream(uniqueId);
-    RtsqA5     rtsq(fakedevPhyId, fakeStreamId, fakeSqId);
-    stream.rtsq = std::make_unique<RtsqA5>(rtsq);
-    MOCKER_CPP_VIRTUAL(rtsq, &RtsqA5::SdmaCopy).stubs().with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any());
+    stream.rtsq = std::make_unique<RtsqA5>(fakedevPhyId, fakeStreamId, fakeSqId);
+    RtsqA5& rtsq = *static_cast<RtsqA5*>(stream.rtsq.get());
+    MOCKER_CPP_VIRTUAL(rtsq, &RtsqA5::SdmaCopy)
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any());
 
     MOCKER_CPP(&UbTransportLiteImpl::BuildNotifyWaitTask).stubs();
     MOCKER_CPP(&UbTransportLiteImpl::BuildUbDbSendTask).stubs();
@@ -234,7 +233,7 @@ TEST_F(UbTransportLiteImplTest, construct_test)
     localRmaBufferVec.push_back(locBuffer);
     vector<Buffer> rmtBufferVec;
     rmtBufferVec.push_back(rmtBuffer);
-    vector<BaseTransportLiteImpl::TransferOp>  transferOpVec;
+    vector<BaseTransportLiteImpl::TransferOp> transferOpVec;
     transferOpVec.push_back({TransferType::READ, {DataType::INVALID, ReduceOp::INVALID}});
     transferOpVec.push_back({TransferType::READ, {DataType::INT8, ReduceOp::MAX}});
     transferOpVec.push_back({TransferType::WRITE, {DataType::INVALID, ReduceOp::INVALID}});

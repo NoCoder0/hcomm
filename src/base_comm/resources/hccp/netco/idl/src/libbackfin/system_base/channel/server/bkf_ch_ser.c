@@ -73,9 +73,8 @@ BkfChSerMng *BkfChSerInit(BkfChSerMngInitArg *arg)
     uint32_t len;
 
     argIsInvalid = (arg == VOS_NULL) || (arg->name == VOS_NULL) || (arg->memMng == VOS_NULL) ||
-                   (arg->disp == VOS_NULL) || (arg->logCnt == VOS_NULL) ||
-                   (arg->pfm == VOS_NULL) || (arg->xMap == VOS_NULL) || (arg->tmrMng == VOS_NULL) ||
-                   (arg->jobMng == VOS_NULL);
+                   (arg->disp == VOS_NULL) || (arg->logCnt == VOS_NULL) || (arg->pfm == VOS_NULL) ||
+                   (arg->xMap == VOS_NULL) || (arg->tmrMng == VOS_NULL) || (arg->jobMng == VOS_NULL);
     if (argIsInvalid) {
         goto error;
     }
@@ -90,8 +89,7 @@ BkfChSerMng *BkfChSerInit(BkfChSerMngInitArg *arg)
     chMng->log = arg->log;
 
     VOS_AVLL_INIT_TREE(chMng->typeSet, (AVLL_COMPARE)BkfUCharCmp,
-                       BKF_OFFSET(BkfChSerType, vTbl) + BKF_OFFSET(BkfChSerTypeVTbl, typeId),
-                       BKF_OFFSET(BkfChSerType, avlNode));
+        BKF_OFFSET(BkfChSerType, vTbl) + BKF_OFFSET(BkfChSerTypeVTbl, typeId), BKF_OFFSET(BkfChSerType, avlNode));
     chMng->name = BkfStrNew(arg->memMng, "%s_ch_ser", arg->name);
     if (chMng->name == VOS_NULL) {
         BKF_ASSERT(0);
@@ -132,8 +130,8 @@ uint32_t BkfChSerSetSelfCid(BkfChSerMng *chMng, uint32_t selfCid)
     if (chMng == VOS_NULL) {
         return BKF_ERR;
     }
-    BKF_LOG_DEBUG(BKF_LOG_HND, "chMng(%#x), selfCid(%#x)/hasSetSelfCid(%u)\n", BKF_MASK_ADDR(chMng),
-                  selfCid, chMng->hasSetSelfCid);
+    BKF_LOG_DEBUG(BKF_LOG_HND, "chMng(%#x), selfCid(%#x)/hasSetSelfCid(%u)\n", BKF_MASK_ADDR(chMng), selfCid,
+        chMng->hasSetSelfCid);
     if (chMng->hasSetSelfCid) {
         return BKF_ERR;
     }
@@ -141,8 +139,7 @@ uint32_t BkfChSerSetSelfCid(BkfChSerMng *chMng, uint32_t selfCid)
     chMng->hasSetSelfCid = VOS_TRUE;
     chMng->selfCid = selfCid;
     ret = BKF_OK;
-    for (chType = BkfChSerGetFirstType(chMng, &itor); chType != VOS_NULL;
-         chType = BkfChSerGetNextType(chMng, &itor)) {
+    for (chType = BkfChSerGetFirstType(chMng, &itor); chType != VOS_NULL; chType = BkfChSerGetNextType(chMng, &itor)) {
         if (chType->vTbl.setSelfCid != VOS_NULL) {
             ret |= chType->vTbl.setSelfCid(chType->ch, selfCid);
         }
@@ -160,8 +157,7 @@ uint32_t BkfChSerSetCera(BkfChSerMng *chMng, BkfCera *cera)
     uint32_t ret = BKF_OK;
     uint8_t buf[BKF_1K / 8];
     BKF_LOG_DEBUG(BKF_LOG_HND, "chMng(%#x), cera %s\n", BKF_MASK_ADDR(chMng), BkfCeraGetStr(cera, buf, sizeof(buf)));
-    for (chType = BkfChSerGetFirstType(chMng, &itor); chType != VOS_NULL;
-         chType = BkfChSerGetNextType(chMng, &itor)) {
+    for (chType = BkfChSerGetFirstType(chMng, &itor); chType != VOS_NULL; chType = BkfChSerGetNextType(chMng, &itor)) {
         if (chType->vTbl.setCera != VOS_NULL) {
             ret |= chType->vTbl.setCera(chType->ch, cera);
         }
@@ -178,8 +174,7 @@ uint32_t BkfChSerUnSetCera(BkfChSerMng *chMng)
     void *itor = VOS_NULL;
     uint32_t ret = BKF_OK;
     BKF_LOG_DEBUG(BKF_LOG_HND, "chMng(%#x)\n", BKF_MASK_ADDR(chMng));
-    for (chType = BkfChSerGetFirstType(chMng, &itor); chType != VOS_NULL;
-         chType = BkfChSerGetNextType(chMng, &itor)) {
+    for (chType = BkfChSerGetFirstType(chMng, &itor); chType != VOS_NULL; chType = BkfChSerGetNextType(chMng, &itor)) {
         if (chType->vTbl.unSetCera != VOS_NULL) {
             ret |= chType->vTbl.unSetCera(chType->ch);
         }
@@ -193,16 +188,16 @@ uint32_t BkfChSerRegType(BkfChSerMng *chMng, BkfChSerTypeVTbl *vTbl)
     BkfChSerType *chType = VOS_NULL;
     uint32_t ret;
 
-    argIsInvalid = (chMng == VOS_NULL) || (vTbl == VOS_NULL) || (vTbl->name == VOS_NULL) ||
-                   (vTbl->init == VOS_NULL) || (vTbl->uninit == VOS_NULL) || (vTbl->enable == VOS_NULL) ||
-                   (vTbl->listen == VOS_NULL) || (vTbl->unlisten == VOS_NULL) || (vTbl->mallocDataBuf == VOS_NULL) ||
+    argIsInvalid = (chMng == VOS_NULL) || (vTbl == VOS_NULL) || (vTbl->name == VOS_NULL) || (vTbl->init == VOS_NULL) ||
+                   (vTbl->uninit == VOS_NULL) || (vTbl->enable == VOS_NULL) || (vTbl->listen == VOS_NULL) ||
+                   (vTbl->unlisten == VOS_NULL) || (vTbl->mallocDataBuf == VOS_NULL) ||
                    (vTbl->freeDataBuf == VOS_NULL) || (vTbl->write == VOS_NULL) || (vTbl->close == VOS_NULL);
     if (argIsInvalid) {
         return BKF_ERR;
     }
 
-    BKF_LOG_DEBUG(BKF_LOG_HND, "chMng(%#x)/type(%u, %s), vTbl(%#x) enable %u\n", BKF_MASK_ADDR(chMng),
-                  vTbl->typeId, vTbl->name, BKF_MASK_ADDR(vTbl), chMng->hasEnable);
+    BKF_LOG_DEBUG(BKF_LOG_HND, "chMng(%#x)/type(%u, %s), vTbl(%#x) enable %u\n", BKF_MASK_ADDR(chMng), vTbl->typeId,
+        vTbl->name, BKF_MASK_ADDR(vTbl), chMng->hasEnable);
 
     chType = BkfChSerAddType(chMng, vTbl);
     if (chType == VOS_NULL) {
@@ -238,7 +233,7 @@ uint32_t BkfChSerEnable(BkfChSerMng *chMng, BkfChSerEnableArg *arg)
         return BKF_ERR;
     }
     BKF_LOG_DEBUG(BKF_LOG_HND, "chMng(%#x), arg(%#x), hasEnable(%u)\n", BKF_MASK_ADDR(chMng), BKF_MASK_ADDR(arg),
-                  chMng->hasEnable);
+        chMng->hasEnable);
 
     if (chMng->hasEnable) {
         return BKF_ERR;
@@ -246,8 +241,7 @@ uint32_t BkfChSerEnable(BkfChSerMng *chMng, BkfChSerEnableArg *arg)
     chMng->hasEnable = VOS_TRUE;
 
     ret = BKF_OK;
-    for (chType = BkfChSerGetFirstType(chMng, &itor); chType != VOS_NULL;
-         chType = BkfChSerGetNextType(chMng, &itor)) {
+    for (chType = BkfChSerGetFirstType(chMng, &itor); chType != VOS_NULL; chType = BkfChSerGetNextType(chMng, &itor)) {
         ret |= chType->vTbl.enable(chType->ch, arg);
     }
     return ret;
@@ -264,7 +258,7 @@ uint32_t BkfChSerListen(BkfChSerMng *chMng, BkfUrl *urlSelf)
         return BKF_ERR;
     }
     BKF_LOG_DEBUG(BKF_LOG_HND, "chMng(%#x), urlSelf(%s)\n", BKF_MASK_ADDR(chMng),
-                  BkfUrlGetStr(urlSelf, buf, sizeof(buf)));
+        BkfUrlGetStr(urlSelf, buf, sizeof(buf)));
 
     chType = BkfChSerFindType(chMng, urlSelf->type);
     if (chType == VOS_NULL) {
@@ -285,7 +279,7 @@ void BkfChSerUnlisten(BkfChSerMng *chMng, BkfUrl *urlSelf)
         return;
     }
     BKF_LOG_DEBUG(BKF_LOG_HND, "chMng(%#x), urlSelf(%s)\n", BKF_MASK_ADDR(chMng),
-                  BkfUrlGetStr(urlSelf, buf, sizeof(buf)));
+        BkfUrlGetStr(urlSelf, buf, sizeof(buf)));
 
     chType = BkfChSerFindType(chMng, urlSelf->type);
     if (chType == VOS_NULL) {
@@ -384,7 +378,6 @@ int32_t BkfChSerWrite(BkfChSerMng *chMng, BkfChSerConnId *connId, void *dataBuf,
     return chType->vTbl.write(connId, dataBuf, dataLen);
 }
 
-
 void BkfChSerClose(BkfChSerMng *chMng, BkfChSerConnId *connId)
 {
     BkfChSerType *chType = VOS_NULL;
@@ -410,8 +403,7 @@ STATIC BkfChSerType *BkfChSerAddType(BkfChSerMng *chMng, BkfChSerTypeVTbl *vTbl)
 {
     BkfChSerType *chType = VOS_NULL;
     uint32_t len;
-    BkfChSerInitArg arg = { .base = &chMng->argInit,
-                            .name = vTbl->name };
+    BkfChSerInitArg arg = {.base = &chMng->argInit, .name = vTbl->name};
     BOOL insOk = VOS_FALSE;
 
     len = sizeof(BkfChSerType);
@@ -467,8 +459,7 @@ STATIC void BkfChSerDelAllType(BkfChSerMng *chMng)
     BkfChSerType *chType = VOS_NULL;
     void *itor = VOS_NULL;
 
-    for (chType = BkfChSerGetFirstType(chMng, &itor); chType != VOS_NULL;
-         chType = BkfChSerGetNextType(chMng, &itor)) {
+    for (chType = BkfChSerGetFirstType(chMng, &itor); chType != VOS_NULL; chType = BkfChSerGetNextType(chMng, &itor)) {
         BkfChSerDelType(chMng, chType);
     }
     return;
@@ -482,7 +473,7 @@ STATIC BkfChSerType *BkfChSerFindType(BkfChSerMng *chMng, uint8_t typeId)
     uint8_t hashIdx = BKF_CH_SER_GET_TYPE_HASH_IDX(typeId);
     chType = chMng->typeCache[hashIdx];
     hit = (chType != VOS_NULL) && (chType->vTbl.typeId == typeId);
-    if (hit)  {
+    if (hit) {
         return chType;
     }
 #endif
@@ -530,4 +521,3 @@ STATIC BkfChSerType *BkfChSerGetNextType(BkfChSerMng *chMng, void **itorInOut)
 }
 #endif
 #endif
-

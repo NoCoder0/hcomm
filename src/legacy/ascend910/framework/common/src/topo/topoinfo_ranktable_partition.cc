@@ -17,18 +17,16 @@
 
 namespace hccl {
 
-TopoinfoRanktablePartition::TopoinfoRanktablePartition(hccl::HcclCommParams &globalParams,
-    hccl::RankTable_t &globalRankTable)
-    : globalParams_(globalParams), globalRankTable_(globalRankTable)
-{
-}
+TopoinfoRanktablePartition::TopoinfoRanktablePartition(
+    hccl::HcclCommParams& globalParams, hccl::RankTable_t& globalRankTable)
+    : globalParams_(globalParams),
+      globalRankTable_(globalRankTable)
+{}
 
-TopoinfoRanktablePartition::~TopoinfoRanktablePartition()
-{
-}
+TopoinfoRanktablePartition::~TopoinfoRanktablePartition() {}
 
-HcclResult TopoinfoRanktablePartition::GenerateSubRankTable(const uint32_t rankNum, const uint32_t *rankIds,
-    hccl::RankTable_t &subRankTable)
+HcclResult TopoinfoRanktablePartition::GenerateSubRankTable(
+    const uint32_t rankNum, const uint32_t* rankIds, hccl::RankTable_t& subRankTable)
 {
     subRankTable.nicDeploy = globalRankTable_.nicDeploy;
     std::unordered_map<uint32_t, size_t> rankInfoMap;
@@ -45,15 +43,19 @@ HcclResult TopoinfoRanktablePartition::GenerateSubRankTable(const uint32_t rankN
         uint32_t rankId = rankIds[i];
         CHK_PRT_RET(
             rankIdSet.find(rankId) != rankIdSet.end(),
-            HCCL_ERROR("[TopoinfoRanktablePartition][GenerateSubRankTable]errNo[0x%016llx], " \
-                "duplicated rankId[%u] in rankIds.", HCCL_ERROR_CODE(HCCL_E_PARA), rankId),
+            HCCL_ERROR(
+                "[TopoinfoRanktablePartition][GenerateSubRankTable]errNo[0x%016llx], "
+                "duplicated rankId[%u] in rankIds.",
+                HCCL_ERROR_CODE(HCCL_E_PARA), rankId),
             HCCL_E_PARA);
 
         auto iter = rankInfoMap.find(rankId);
         CHK_PRT_RET(
             iter == rankInfoMap.end(),
-            HCCL_ERROR("[TopoinfoRanktablePartition][GenerateSubRankTable]errNo[0x%016llx], " \
-                "fail to find target rank[%u] in the global communicator.", HCCL_ERROR_CODE(HCCL_E_PARA), rankId),
+            HCCL_ERROR(
+                "[TopoinfoRanktablePartition][GenerateSubRankTable]errNo[0x%016llx], "
+                "fail to find target rank[%u] in the global communicator.",
+                HCCL_ERROR_CODE(HCCL_E_PARA), rankId),
             HCCL_E_PARA);
 
         hccl::RankInfo_t rankInfo = globalRankTable_.rankList[iter->second];
@@ -69,8 +71,8 @@ HcclResult TopoinfoRanktablePartition::GenerateSubRankTable(const uint32_t rankN
             subRankTable.deviceNum++;
         }
         HCCL_INFO(
-            "[TopoinfoRanktablePartition][GenerateSubRankTable]" \
-            "Pick rank[%u] from global comm as rank[%u] in sub comm, " \
+            "[TopoinfoRanktablePartition][GenerateSubRankTable]"
+            "Pick rank[%u] from global comm as rank[%u] in sub comm, "
             "severId[%s], serverIdx[%u], superPodId[%s], superDeviceId[%u], devicePhyId[%d].",
             rankId, i, rankInfo.serverId.c_str(), rankInfo.serverIdx, rankInfo.superPodId.c_str(),
             rankInfo.superDeviceId, rankInfo.deviceInfo.devicePhyId);
@@ -83,14 +85,14 @@ HcclResult TopoinfoRanktablePartition::GenerateSubRankTable(const uint32_t rankN
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoinfoRanktablePartition::GenerateSubSuperPodId(hccl::RankTable_t &subRankTable)
+HcclResult TopoinfoRanktablePartition::GenerateSubSuperPodId(hccl::RankTable_t& subRankTable)
 {
     std::map<std::string, std::vector<RankInfo_t*>> podGroupClusters;
     for (auto& rankInfo : subRankTable.rankList) {
         podGroupClusters[rankInfo.originalSuperPodId].emplace_back(&rankInfo);
     }
     std::set<std::string> superPodIdSet;
-    std::map<std::string, std::pair<u32, u32>> superPodIdRanges; // ¼ÇÂ¼Ã¿¸öÂß¼­³¬½ÚµãµÄrank id·¶Î§
+    std::map<std::string, std::pair<u32, u32>> superPodIdRanges; // è®°å½•æ¯ä¸ªé€»è¾‘è¶…èŠ‚ç‚¹çš„rank idèŒƒå›´
     for (auto& subCluster : podGroupClusters) {
         auto& subClusterInfo = subCluster.second;
         if (subClusterInfo.size() <= 1) {
@@ -99,31 +101,32 @@ HcclResult TopoinfoRanktablePartition::GenerateSubSuperPodId(hccl::RankTable_t &
         u32 groupId = 0;
         superPodIdSet.insert(subCluster.first);
         RankInfo_t preRank = *(subClusterInfo[0]);
-        superPodIdRanges[preRank.superPodId] = {preRank.rankId, preRank.rankId}; // ³õÊ¼»¯·¶Î§
+        superPodIdRanges[preRank.superPodId] = {preRank.rankId, preRank.rankId}; // åˆå§‹åŒ–èŒƒå›´
         for (u32 i = 1; i < subClusterInfo.size(); ++i) {
             RankInfo_t& curRank = *(subClusterInfo[i]);
-            // µ±Ç°µÄcurRankºÍÉÏÒ»¸öpreRankµÄrankId²»Á¬Ğø£¬·ÖÅäĞÂµÄÂß¼­³¬½ÚµãID
+            // å½“å‰çš„curRankå’Œä¸Šä¸€ä¸ªpreRankçš„rankIdä¸è¿ç»­ï¼Œåˆ†é…æ–°çš„é€»è¾‘è¶…èŠ‚ç‚¹ID
             if (curRank.rankId != preRank.rankId + 1) {
                 std::string newSuperPodId = curRank.originalSuperPodId + "_HCCLSPLIT_" + std::to_string(groupId);
                 curRank.superPodId = newSuperPodId;
                 groupId++;
-                superPodIdRanges[curRank.superPodId] = {curRank.rankId, curRank.rankId}; // ³õÊ¼»¯ĞÂµÄ·¶Î§
+                superPodIdRanges[curRank.superPodId] = {curRank.rankId, curRank.rankId}; // åˆå§‹åŒ–æ–°çš„èŒƒå›´
             } else {
-                // Í¬Ò»¸ösubÍ¨ĞÅÓòÁ½¸örankÔ­Ê¼Âß¼­³¬½ÚµãÊÇÒ»ÖÂµÄ
-                // rankIdÁ¬Ğø ÉÏÒ»¸örankµÄsuperPodId¿ÉÄÜÒÑ¾­ÖØĞÂ·ÖÅä£¬ĞèÒª¸üĞÂµ±Ç°superPodIdÎªÉÏÒ»¸örankµÄ
+                // åŒä¸€ä¸ªsubé€šä¿¡åŸŸä¸¤ä¸ªrankåŸå§‹é€»è¾‘è¶…èŠ‚ç‚¹æ˜¯ä¸€è‡´çš„
+                // rankIdè¿ç»­ ä¸Šä¸€ä¸ªrankçš„superPodIdå¯èƒ½å·²ç»é‡æ–°åˆ†é…ï¼Œéœ€è¦æ›´æ–°å½“å‰superPodIdä¸ºä¸Šä¸€ä¸ªrankçš„
                 curRank.superPodId = preRank.superPodId;
-                superPodIdRanges[curRank.superPodId].second = curRank.rankId; // ¸üĞÂ×î´órank id
+                superPodIdRanges[curRank.superPodId].second = curRank.rankId; // æ›´æ–°æœ€å¤§rank id
             }
             superPodIdSet.insert(curRank.superPodId);
             preRank = curRank;
         }
     }
-    // ´òÓ¡Ã¿¸öÂß¼­³¬½ÚµãµÄrank id·¶Î§£¬Ö»´òÓ¡°üº¬_HCCLSPLIT_µÄÂß¼­³¬½Úµã
+    // æ‰“å°æ¯ä¸ªé€»è¾‘è¶…èŠ‚ç‚¹çš„rank idèŒƒå›´ï¼Œåªæ‰“å°åŒ…å«_HCCLSPLIT_çš„é€»è¾‘è¶…èŠ‚ç‚¹
     for (const auto& entry : superPodIdRanges) {
         auto superPodId = entry.first;
         if (superPodId.find("_HCCLSPLIT_") != std::string::npos) {
             auto range = entry.second;
-            HCCL_RUN_INFO("[TopoinfoRanktablePartition][%s]Split superPod, ID[%s], rank range[%u, %u]", __func__,
+            HCCL_RUN_INFO(
+                "[TopoinfoRanktablePartition][%s]Split superPod, ID[%s], rank range[%u, %u]", __func__,
                 superPodId.c_str(), range.first, range.second);
         }
     }
@@ -131,8 +134,8 @@ HcclResult TopoinfoRanktablePartition::GenerateSubSuperPodId(hccl::RankTable_t &
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoinfoRanktablePartition::GenerateSubParams(const hccl::RankTable_t &subRankTable,
-    const uint32_t subCommRankId, hccl::HcclCommParams &subParams)
+HcclResult TopoinfoRanktablePartition::GenerateSubParams(
+    const hccl::RankTable_t& subRankTable, const uint32_t subCommRankId, hccl::HcclCommParams& subParams)
 {
     subParams.rank = subCommRankId;
     subParams.userRank = subRankTable.rankList[subCommRankId].rankId;
@@ -144,7 +147,7 @@ HcclResult TopoinfoRanktablePartition::GenerateSubParams(const hccl::RankTable_t
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoinfoRanktablePartition::GetRankTableStr(const hccl::RankTable_t &subRankTable, std::string &rankTableStr)
+HcclResult TopoinfoRanktablePartition::GetRankTableStr(const hccl::RankTable_t& subRankTable, std::string& rankTableStr)
 {
     nlohmann::json basicJson;
     HcclResult ret = Struct2JsonRankTable(subRankTable, globalParams_.deviceType, basicJson);
@@ -153,8 +156,8 @@ HcclResult TopoinfoRanktablePartition::GetRankTableStr(const hccl::RankTable_t &
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoinfoRanktablePartition::TransformRankInfo(const RankTable_t &clusterInfo,
-    nlohmann::json &perRankJson, u32 rankIndex)
+HcclResult TopoinfoRanktablePartition::TransformRankInfo(
+    const RankTable_t& clusterInfo, nlohmann::json& perRankJson, u32 rankIndex)
 {
     auto rankInfo = clusterInfo.rankList[rankIndex];
     perRankJson[PROP_HOST_IP] = std::string(rankInfo.hostIp.GetReadableIP());
@@ -169,15 +172,14 @@ HcclResult TopoinfoRanktablePartition::TransformRankInfo(const RankTable_t &clus
     if (rankInfo.deviceInfo.deviceIp.size() != 0 && !rankInfo.deviceInfo.deviceIp[0].IsInvalid()) {
         perRankJson[PROP_DEV_IP] = std::string(rankInfo.deviceInfo.deviceIp[0].GetReadableIP());
     }
-    if (clusterInfo.nicDeploy == NICDeployment::NIC_DEPLOYMENT_DEVICE &&
-        rankInfo.deviceInfo.backupDeviceIp.size() != 0 && !rankInfo.deviceInfo.backupDeviceIp[0].IsInvalid()) {
+    if (clusterInfo.nicDeploy == NICDeployment::NIC_DEPLOYMENT_DEVICE && rankInfo.deviceInfo.backupDeviceIp.size() != 0
+        && !rankInfo.deviceInfo.backupDeviceIp[0].IsInvalid()) {
         perRankJson[PROP_BACKUP_DEV_IP] = std::string(rankInfo.deviceInfo.backupDeviceIp[0].GetReadableIP());
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoinfoRanktablePartition::TransformServerList(const RankTable_t &clusterInfo,
-    nlohmann::json &rankListJson)
+HcclResult TopoinfoRanktablePartition::TransformServerList(const RankTable_t& clusterInfo, nlohmann::json& rankListJson)
 {
     for (size_t i = 0; i < clusterInfo.rankList.size(); i++) {
         nlohmann::json perRankJson;
@@ -188,8 +190,8 @@ HcclResult TopoinfoRanktablePartition::TransformServerList(const RankTable_t &cl
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoinfoRanktablePartition::Struct2JsonRankTable(const RankTable_t &clusterInfo, const DevType deviceType,
-    nlohmann::json& ClusterJson)
+HcclResult TopoinfoRanktablePartition::Struct2JsonRankTable(
+    const RankTable_t& clusterInfo, const DevType deviceType, nlohmann::json& ClusterJson)
 {
     ClusterJson[PROP_SERVER_COUNT] = std::to_string(clusterInfo.serverNum);
     ClusterJson[PROP_SUPER_POD_NUM] = std::to_string(clusterInfo.superPodNum);
@@ -209,4 +211,4 @@ HcclResult TopoinfoRanktablePartition::Struct2JsonRankTable(const RankTable_t &c
 
     return HCCL_SUCCESS;
 }
-}  // namespace hccl
+} // namespace hccl

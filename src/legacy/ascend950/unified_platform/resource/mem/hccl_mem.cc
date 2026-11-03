@@ -11,27 +11,19 @@
 #include "hccl_mem.h"
 #include "hccl_mem_v2.h"
 
-HcclResult HcclMemReg(HcclNetDev netDev, const HcclMem *mem, HcclBuf *buf)
-{
-    return HcclMemRegV2(netDev, mem, buf);
-}
+HcclResult HcclMemReg(HcclNetDev netDev, const HcclMem* mem, HcclBuf* buf) { return HcclMemRegV2(netDev, mem, buf); }
 
-HcclResult HcclMemDereg(const HcclBuf *buf)
-{
-    return HcclMemDeregV2(buf);
-}
+HcclResult HcclMemDereg(const HcclBuf* buf) { return HcclMemDeregV2(buf); }
 
-HcclResult HcclMemExport(HcclBuf *buf, char **outDesc, uint64_t *outDescLen)
+HcclResult HcclMemExport(HcclBuf* buf, char** outDesc, uint64_t* outDescLen)
 {
     return HcclMemExportV2(buf, outDesc, outDescLen);
 }
 
-HcclResult HcclMemImport(const char *description, uint32_t descLen, bool isRemote, HcclBuf *outBuf, HcclNetDevCtx netDevCtx)
+HcclResult
+HcclMemImport(const char* description, uint32_t descLen, bool isRemote, HcclBuf* outBuf, HcclNetDevCtx netDevCtx)
 {
     return HcclMemImportV2(description, descLen, isRemote, outBuf, netDevCtx);
 }
 
-HcclResult HcclMemClose(HcclBuf *buf)
-{
-    return HcclMemCloseV2(buf);
-}
+HcclResult HcclMemClose(HcclBuf* buf) { return HcclMemCloseV2(buf); }

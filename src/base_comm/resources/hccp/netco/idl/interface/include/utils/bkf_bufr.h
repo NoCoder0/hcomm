@@ -49,7 +49,8 @@ BOOL BkfBufrIsEmpty(BkfBufr *bufr);
 
 char *BkfBufrGetStr(BkfBufr *bufr, uint8_t *buf, int32_t bufLen);
 /* 如果lastLen接近bufr的缓冲长度，而bufr不停往里填数据，很容易导致数据被覆写而获取失败 */
-int32_t BkfBufrDbgPeekLastFirst(BkfBufr *bufr, int32_t lastLen, uint8_t *outBuf, int32_t outBufLen, BkfBufrDbgPeekItor *itor);
+int32_t BkfBufrDbgPeekLastFirst(BkfBufr *bufr, int32_t lastLen, uint8_t *outBuf, int32_t outBufLen,
+    BkfBufrDbgPeekItor *itor);
 int32_t BkfBufrDbgPeekLastNext(BkfBufr *bufr, uint8_t *outBuf, int32_t outBufLen, BkfBufrDbgPeekItor *itor);
 
 #pragma pack()
@@ -61,4 +62,3 @@ int32_t BkfBufrDbgPeekLastNext(BkfBufr *bufr, uint8_t *outBuf, int32_t outBufLen
 #endif
 
 #endif
-

@@ -12,33 +12,29 @@
 #include "comm_topo_desc.h"
 
 namespace hccl {
-CommTopoDesc &CommTopoDesc::GetInstance()
+CommTopoDesc& CommTopoDesc::GetInstance()
 {
     static CommTopoDesc commTopoDesc;
     return commTopoDesc;
 }
 
-CommTopoDesc::CommTopoDesc()
-{
-}
+CommTopoDesc::CommTopoDesc() {}
 
-CommTopoDesc::~CommTopoDesc()
-{
-}
+CommTopoDesc::~CommTopoDesc() {}
 
-void CommTopoDesc::SaveRankSize(std::string &str, uint32_t rankSize)
+void CommTopoDesc::SaveRankSize(std::string& str, uint32_t rankSize)
 {
     std::unique_lock<std::mutex> topoDescLock(lock_);
     rankSizeMap_[str] = rankSize;
 }
 
-void CommTopoDesc::SaveL0TopoType(std::string &str, CommTopo topoType)
+void CommTopoDesc::SaveL0TopoType(std::string& str, CommTopo topoType)
 {
     std::unique_lock<std::mutex> topoDescLock(lock_);
     l0TopoTypeMap_[str] = topoType;
 }
 
-HcclResult CommTopoDesc::GetRankSize(std::string &str, uint32_t *rankSize)
+HcclResult CommTopoDesc::GetRankSize(std::string& str, uint32_t* rankSize)
 {
     std::unique_lock<std::mutex> topoDescLock(lock_);
     auto it = rankSizeMap_.find(str);
@@ -51,7 +47,7 @@ HcclResult CommTopoDesc::GetRankSize(std::string &str, uint32_t *rankSize)
     }
 }
 
-HcclResult CommTopoDesc::GetL0TopoType(std::string &str, CommTopo *topoType)
+HcclResult CommTopoDesc::GetL0TopoType(std::string& str, CommTopo* topoType)
 {
     std::unique_lock<std::mutex> topoDescLock(lock_);
     auto it = l0TopoTypeMap_.find(str);
@@ -63,4 +59,4 @@ HcclResult CommTopoDesc::GetL0TopoType(std::string &str, CommTopo *topoType)
         return HCCL_E_PARA;
     }
 }
-}
+} // namespace hccl

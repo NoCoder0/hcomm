@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "topoinfo_ranktableOffline.h"
 
@@ -25,17 +25,16 @@
 
 using namespace hccl;
 
-TopoinfoRanktableOffline::TopoinfoRanktableOffline(const std::string &rankTableM)
-    : TopoInfoRanktableParser(rankTableM, "0"), deviceNumPerServer_(0), curServerDeviceNum_(0)
-{
-}
+TopoinfoRanktableOffline::TopoinfoRanktableOffline(const std::string& rankTableM)
+    : TopoInfoRanktableParser(rankTableM, "0"),
+      deviceNumPerServer_(0),
+      curServerDeviceNum_(0)
+{}
 
-TopoinfoRanktableOffline::~TopoinfoRanktableOffline()
-{
-}
+TopoinfoRanktableOffline::~TopoinfoRanktableOffline() {}
 
-HcclResult TopoinfoRanktableOffline::GetSingleRank(const nlohmann::json &ranksObj, u32 objIndex,
-    RankTable_t &clusterInfo, u32 &serverIdx, std::string &nodeId)
+HcclResult TopoinfoRanktableOffline::GetSingleRank(
+    const nlohmann::json& ranksObj, u32 objIndex, RankTable_t& clusterInfo, u32& serverIdx, std::string& nodeId)
 {
     RankInfo_t rankInfo;
 
@@ -43,8 +42,9 @@ HcclResult TopoinfoRanktableOffline::GetSingleRank(const nlohmann::json &ranksOb
     std::string rankInfoStr;
     CHK_RET(GetJsonArrayMemberProperty(ranksObj, objIndex, "rank_id", rankInfoStr, false));
     if (SalStrToULong(rankInfoStr, HCCL_BASE_DECIMAL, rankInfo.rankId) != HCCL_SUCCESS) {
-        HCCL_ERROR("[Get][SingleRank]errNo[0x%016llx] rankid[%s] is invalid",
-            HCOM_ERROR_CODE(HCCL_E_PARA), rankInfoStr.c_str());
+        HCCL_ERROR(
+            "[Get][SingleRank]errNo[0x%016llx] rankid[%s] is invalid", HCOM_ERROR_CODE(HCCL_E_PARA),
+            rankInfoStr.c_str());
         return HCCL_E_PARA;
     }
     // 获取item_id, -1表示 host
@@ -67,14 +67,13 @@ HcclResult TopoinfoRanktableOffline::GetSingleRank(const nlohmann::json &ranksOb
     rankInfo.localRank = objIndex;
     rankInfo.serverIdx = serverIdx;
     clusterInfo.rankList.push_back(rankInfo);
-    HCCL_INFO("[%s.json]->rankId[%u], serverIdx[%u]", fileName_.c_str(),
-        rankInfo.rankId, rankInfo.serverIdx);
+    HCCL_INFO("[%s.json]->rankId[%u], serverIdx[%u]", fileName_.c_str(), rankInfo.rankId, rankInfo.serverIdx);
 
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoinfoRanktableOffline::GetSingleNode(const nlohmann::json &NodeListObj, u32 objIndex,
-    RankTable_t &clusterInfo, u32 &serverIdx)
+HcclResult TopoinfoRanktableOffline::GetSingleNode(
+    const nlohmann::json& NodeListObj, u32 objIndex, RankTable_t& clusterInfo, u32& serverIdx)
 {
     // 获取信息
     nlohmann::json Ranks;
@@ -97,7 +96,7 @@ HcclResult TopoinfoRanktableOffline::GetSingleNode(const nlohmann::json &NodeLis
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoinfoRanktableOffline::GetRanktableInfo(RankTable_t &clusterInfo)
+HcclResult TopoinfoRanktableOffline::GetRanktableInfo(RankTable_t& clusterInfo)
 {
     // 清空list
     clusterInfo.rankList.clear();
@@ -121,7 +120,8 @@ HcclResult TopoinfoRanktableOffline::GetRanktableInfo(RankTable_t &clusterInfo)
         if (index == 0) {
             deviceNumPerServer_ = curServerDeviceNum_;
         } else if (curServerDeviceNum_ != deviceNumPerServer_) {
-            HCCL_ERROR("[GetRanktableInfo] device num is diff.first node device num:[%d] cur node device num:[%d]",
+            HCCL_ERROR(
+                "[GetRanktableInfo] device num is diff.first node device num:[%d] cur node device num:[%d]",
                 curServerDeviceNum_, deviceNumPerServer_);
             return HCCL_E_PARA;
         }
@@ -134,12 +134,14 @@ HcclResult TopoinfoRanktableOffline::GetRanktableInfo(RankTable_t &clusterInfo)
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoinfoRanktableOffline::ParserClusterInfo(hccl::RankTable_t &rankTable)
+HcclResult TopoinfoRanktableOffline::ParserClusterInfo(hccl::RankTable_t& rankTable)
 {
     // 获取ranktable info信息
     CHK_RET(GetRanktableInfo(rankTable));
-    std::sort(rankTable.rankList.begin(), rankTable.rankList.end(),
-        [&](const RankInfo_t &a, const RankInfo_t &b) -> bool {return a.rankId < b.rankId;});
+    std::sort(
+        rankTable.rankList.begin(), rankTable.rankList.end(), [&](const RankInfo_t& a, const RankInfo_t& b) -> bool {
+            return a.rankId < b.rankId;
+        });
 
     // 校验ranktable是否正确
     CHK_RET(CheckRankListInfo(rankTable.rankList));
@@ -155,7 +157,7 @@ HcclResult TopoinfoRanktableOffline::Init()
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoinfoRanktableOffline::GetClusterInfo(RankTable_t &clusterInfo)
+HcclResult TopoinfoRanktableOffline::GetClusterInfo(RankTable_t& clusterInfo)
 {
     // 获取rankInfo
     clusterInfo.deviceNum = rankTable_.deviceNum;
@@ -165,7 +167,7 @@ HcclResult TopoinfoRanktableOffline::GetClusterInfo(RankTable_t &clusterInfo)
     return HCCL_SUCCESS;
 }
 
-HcclResult TopoinfoRanktableOffline::GetDeviceNumPerServer(s32 &deviceNum)
+HcclResult TopoinfoRanktableOffline::GetDeviceNumPerServer(s32& deviceNum)
 {
     deviceNum = deviceNumPerServer_;
     return HCCL_SUCCESS;

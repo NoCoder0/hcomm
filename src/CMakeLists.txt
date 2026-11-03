@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
@@ -60,15 +60,6 @@ target_include_directories(hccl_headers INTERFACE
     $<INSTALL_INTERFACE:include/hccl/external/hccl>
 )
 
-# 获取 src/legacy/ascend950 所有子目录，用于设置头文件搜索路径
-set(LEGACY_ASCEND950_INCLUDE_LIST)
-FILE(GLOB_RECURSE LEGACY_DIRS LIST_DIRECTORIES TRUE ${HCOMM_DIR}/src/legacy/ascend950)
-foreach(dir ${LEGACY_DIRS})
-    if((IS_DIRECTORY ${dir}) AND (${dir} MATCHES "src/legacy/ascend950"))
-        list(APPEND LEGACY_ASCEND950_INCLUDE_LIST ${dir}) 
-    endif()
-endforeach()
-
 # 将子目录添加到构建过程
 add_subdirectory(legacy)            # 包含 ascend910 和 ascend950
 add_subdirectory(base_comm)         # 基础通信组件
@@ -78,4 +69,16 @@ add_subdirectory(coll_communicator_mgr) # 集合通信组件
 # 注意：aicpu_custom 依赖 ccl_kernel 的源文件列表，因此需要在其后定义
 if(PRODUCT_SIDE STREQUAL "device")
     include(legacy/ascend910/framework/aicpu_custom.cmake)
+endif()
+
+# 临时修改，后面做base_comm和hcomm二进制分离
+if (TARGET hcomm AND TARGET hcomm_base_obj)
+    target_link_libraries(hcomm hcomm_base_obj)
+    add_dependencies(hcomm hcomm_base_obj)
+endif()
+
+# coll_comm source is compile-isolated via hcomm_coll_comm_obj and then linked into hcomm (base_comm internal directory -I shrunk to obj whitelist)
+if (TARGET hcomm AND TARGET hcomm_coll_comm_obj)
+    target_link_libraries(hcomm hcomm_coll_comm_obj)
+    add_dependencies(hcomm hcomm_coll_comm_obj)
 endif()

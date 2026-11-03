@@ -21,19 +21,19 @@ namespace Hccl {
 
 class CcuContextReduceScatterVMeshMem2Mem1D : public CcuContextAlgBase {
 public:
-    CcuContextReduceScatterVMeshMem2Mem1D(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                              const CcuTransportGroup &group);
+    CcuContextReduceScatterVMeshMem2Mem1D(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
     ~CcuContextReduceScatterVMeshMem2Mem1D() override {}
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
 
 protected:
-    void CollectAllRanksSlice(std::vector<CcuRep::Memory>& tmpSrc,
-    std::vector<CcuRep::Memory>& tmpDst, const CcuRep::MaskSignal &locMask);
+    void CollectAllRanksSlice(
+        std::vector<CcuRep::Memory>& tmpSrc, std::vector<CcuRep::Memory>& tmpDst, const CcuRep::MaskSignal& locMask);
     void InitResources();
-    void PrepareReduceScatterVData(std::vector<CcuRep::Memory>& reduceScatterVSrc,
-        std::vector<CcuRep::Memory>& reduceScatterVDst);
+    void PrepareReduceScatterVData(
+        std::vector<CcuRep::Memory>& reduceScatterVSrc, std::vector<CcuRep::Memory>& reduceScatterVDst);
 
 private:
     DataType dataType_;

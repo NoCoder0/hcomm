@@ -1,3 +1,4 @@
+# -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2026 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
@@ -5,6 +6,7 @@
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
 
 cmake_minimum_required(VERSION 3.14)
 
@@ -18,7 +20,6 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/include/store
-    ${CMAKE_SOURCE_DIR}/include/runnerdb
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/src/store
     ${CMAKE_SOURCE_DIR}/src/utils
@@ -26,11 +27,11 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/src/common
     ${CMAKE_SOURCE_DIR}/src/plugin
     ${CMAKE_SOURCE_DIR}/src/plugin/checker/header/external
-    ${ASCEND_CANN_PACKAGE_PATH}/x86_64-linux/pkg_inc/hcomm/ccu
-    ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc/asc/hccl/internal/hcomm/pkg_inc/hcomm/ccu
     ${HOME}
-    ${CMAKE_BINARY_DIR}/_deps/yaml-cpp-src/include
+    ${YAMLCPP_INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/third_party
+
+    ${HCOMM_CODE_ROOT}/src/base_comm/resources/ccu/ccu_microcode
 )
 
 link_directories(
@@ -39,6 +40,7 @@ link_directories(
 
 add_executable(test_hccl_plugin_manager
     ${HOME}/ut_hccl_plugin_manager_test.cc
+    ${HOME}/cmd_base_utils_stub.cc
     ${CMAKE_SOURCE_DIR}/src/plugin/hccl_plugin_manager.cc
     ${CMAKE_SOURCE_DIR}/src/plugin/hccl_plugin.cc
     ${CMAKE_SOURCE_DIR}/src/utils/sim_log.cc
@@ -46,6 +48,7 @@ add_executable(test_hccl_plugin_manager
 target_link_libraries(test_hccl_plugin_manager PRIVATE
     gtest
     gtest_main
+    store
     log
     pthread
     dl

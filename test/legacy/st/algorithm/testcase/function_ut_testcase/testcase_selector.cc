@@ -1,3 +1,13 @@
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "gtest/gtest.h"
 #include <mockcpp/mokc.h>
 #include <mockcpp/mockcpp.hpp>
@@ -29,15 +39,9 @@ using namespace std;
 
 class SelectorTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "SelectorTest test case set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "SelectorTest test case set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "SelectorTest test case tear down" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "SelectorTest test case tear down" << std::endl; }
 
     virtual void SetUp()
     {
@@ -56,7 +60,12 @@ protected:
 
     void SetAlgoEnv(std::string algo)
     {
-        EnvConfig::GetInstance().algoCfg.hcclAlgoConfig.value = SetHcclAlgoConfig(algo);
+        std::map<OpType, std::vector<HcclAlgoType>> algoConfig;
+        if (SetHcclAlgoConfig(algo, algoConfig) != HcclResult::HCCL_SUCCESS) {
+            std::cout << "SetHcclAlgoConfig failed for algo[" << algo << "]" << std::endl;
+            return;
+        }
+        EnvConfig::GetInstance().algoCfg.hcclAlgoConfig.value = algoConfig;
     }
 
     CollAlgOperator GetDefaultAlgOp(OpType opType, DataType dataType = DataType::FP16, u64 dataCount = 1024)
@@ -71,8 +80,8 @@ protected:
         collAlgOp.outputMem = DevBuffer::Create(0x2000000, dataSize);
         collAlgOp.scratchMem = DevBuffer::Create(0x3000000, dataSize);
 
-        if (opType == OpType::ALLREDUCE || opType == OpType::REDUCESCATTER || opType == OpType::REDUCESCATTERV ||
-            opType == OpType::REDUCE) {
+        if (opType == OpType::ALLREDUCE || opType == OpType::REDUCESCATTER || opType == OpType::REDUCESCATTERV
+            || opType == OpType::REDUCE) {
             collAlgOp.reduceOp = ReduceOp::SUM;
         }
         return collAlgOp;
@@ -83,8 +92,8 @@ protected:
         std::string localPath = "../test/legacy/st/algorithm/testcase/function_ut_testcase/common_files";
         std::string ciPath = "../test/legacy/st/algorithm/testcase/function_ut_testcase/common_files";
 
-        char buffer[PATH_MAX + 1];  // 使用堆上 buffer, 避免 malloc 和 free 操作
-        char *res = realpath(localPath.data(), buffer);
+        char buffer[PATH_MAX + 1]; // 使用堆上 buffer, 避免 malloc 和 free 操作
+        char* res = realpath(localPath.data(), buffer);
         std::string realRankTableFilePath;
         if (res) {
             return localPath;
@@ -93,8 +102,9 @@ protected:
         }
     }
 
-    void InitCollAlgComponent(std::shared_ptr<CollAlgComponent> &component, std::unique_ptr<RankGraph> &rankGraph,
-        const std::string &rankTablePath, const std::string &topoPath, uint32_t rankSize)
+    void InitCollAlgComponent(
+        std::shared_ptr<CollAlgComponent>& component, std::unique_ptr<RankGraph>& rankGraph,
+        const std::string& rankTablePath, const std::string& topoPath, uint32_t rankSize)
     {
         if (component != nullptr) {
             return;
@@ -117,10 +127,8 @@ protected:
 
     void InitCollAlgComponents()
     {
-        InitCollAlgComponent(collAlgComponent1d16p_,
-            rankGraph1d16p_,
-            "/1d_16p_mesh_topo/ranktable.json",
-            "/1d_16p_mesh_topo/topo.json",
+        InitCollAlgComponent(
+            collAlgComponent1d16p_, rankGraph1d16p_, "/1d_16p_mesh_topo/ranktable.json", "/1d_16p_mesh_topo/topo.json",
             16);
         EXPECT_NE(collAlgComponent1d16p_, nullptr);
 
@@ -129,7 +137,8 @@ protected:
         EXPECT_NE(collAlgComponent1d2p_, nullptr);
 
         InitCollAlgComponent(
-            collAlgComponent2d2x2p_, rankGraph2d2x2p_, "/2d_2+2p_mesh_topo/ranktable.json", "/2d_2+2p_mesh_topo/topo.json", 4);
+            collAlgComponent2d2x2p_, rankGraph2d2x2p_, "/2d_2+2p_mesh_topo/ranktable.json",
+            "/2d_2+2p_mesh_topo/topo.json", 4);
         EXPECT_NE(collAlgComponent2d2x2p_, nullptr);
 
         InitCollAlgComponent(
@@ -137,7 +146,8 @@ protected:
         EXPECT_NE(collAlgComponent2pClos_, nullptr);
 
         InitCollAlgComponent(
-            collAlgComponent1d2pMeshClos_, rankGraph1d2pMeshClos_, "/1d_2p_mesh_clos_topo/ranktable.json", "/1d_2p_mesh_clos_topo/topo.json", 2);
+            collAlgComponent1d2pMeshClos_, rankGraph1d2pMeshClos_, "/1d_2p_mesh_clos_topo/ranktable.json",
+            "/1d_2p_mesh_clos_topo/topo.json", 2);
         EXPECT_NE(collAlgComponent1d2pMeshClos_, nullptr);
     }
 
@@ -160,28 +170,13 @@ TEST_F(SelectorTest, SelectorTest)
     // ========================
     // 可配置参数区域
     // ========================
-    std::vector<OpType> opTypes = {
-        OpType::ALLREDUCE,
-        OpType::ALLGATHER,
-        OpType::REDUCESCATTER,
-        OpType::BROADCAST,
-        OpType::ALLTOALL,
-        OpType::ALLTOALLV,
-        OpType::ALLGATHERV,
-        OpType::REDUCESCATTERV,
-        OpType::REDUCE,
-        OpType::SCATTER,
-        OpType::BATCHSENDRECV,
-        OpType::ALLTOALLVC
-    };
+    std::vector<OpType> opTypes = {OpType::ALLREDUCE, OpType::ALLGATHER, OpType::REDUCESCATTER, OpType::BROADCAST,
+                                   OpType::ALLTOALL,  OpType::ALLTOALLV, OpType::ALLGATHERV,    OpType::REDUCESCATTERV,
+                                   OpType::REDUCE,    OpType::SCATTER,   OpType::BATCHSENDRECV, OpType::ALLTOALLVC};
 
-    std::vector<AcceleratorState> accStates = {
-        AcceleratorState::CCU_MS,
-        AcceleratorState::CCU_SCHED,
-        AcceleratorState::AIV,
-        AcceleratorState::CCU_FALLBACK,
-        AcceleratorState::AICPU_TS
-    };
+    std::vector<AcceleratorState> accStates
+        = {AcceleratorState::CCU_MS, AcceleratorState::CCU_SCHED, AcceleratorState::AIV, AcceleratorState::CCU_FALLBACK,
+           AcceleratorState::AICPU_TS};
 
     // 保持原来的 topoComponents 结构不变，避免对不上的问题
     std::vector<std::pair<std::string, std::shared_ptr<CollAlgComponent>>> topoComponents = {
@@ -198,11 +193,7 @@ TEST_F(SelectorTest, SelectorTest)
         // DataType::INT64
     };
 
-    std::vector<u64> dataCounts = {
-        1024,
-        1024 * 1024,
-        1024 * 1024 * 1024
-    };
+    std::vector<u64> dataCounts = {1024, 1024 * 1024, 1024 * 1024 * 1024};
 
     // ========================
     // 测试逻辑
@@ -216,26 +207,21 @@ TEST_F(SelectorTest, SelectorTest)
                 collAlgParams.opExecuteConfig.accState = accState;
                 for (auto dataType : dataTypes) {
                     for (auto dataCount : dataCounts) {
-                        std::cout << "Testing: topo=" << topoName
-                                  << ", accState=" << accState.Describe()
-                                  << ", opType=" << opType.Describe()
-                                  << ", dataType=" << dataType.Describe()
+                        std::cout << "Testing: topo=" << topoName << ", accState=" << accState.Describe()
+                                  << ", opType=" << opType.Describe() << ", dataType=" << dataType.Describe()
                                   << ", dataCount=" << dataCount << std::endl;
 
                         CollAlgOperator collAlgOp = GetDefaultAlgOp(opType, dataType, dataCount);
                         std::string algName = "";
-                        EXPECT_NO_THROW(component->ExecAlgSelect(
-                            collAlgOp, collAlgParams, algName, collAlgParams.opExecuteConfig));
+                        EXPECT_NO_THROW(
+                            component->ExecAlgSelect(collAlgOp, collAlgParams, algName, collAlgParams.opExecuteConfig));
 
                         if (algName.empty()) {
                             algName = "FAILED";
                         }
-                        std::cout << "CCH res: ," << topoName
-                                  << ", " << opType.Describe()
-                                  << ", " << accState.Describe()
-                                  << ", " << dataType.Describe()
-                                  << ", " << dataCount
-                                  << ", " << algName << std::endl;
+                        std::cout << "CCH res: ," << topoName << ", " << opType.Describe() << ", "
+                                  << accState.Describe() << ", " << dataType.Describe() << ", " << dataCount << ", "
+                                  << algName << std::endl;
                     }
                 }
             }
@@ -289,7 +275,7 @@ TEST_F(SelectorTest, SelectorMc2Test2D)
 
 TEST_F(SelectorTest, TestAutoSelectorCcuSchedule_1D_2P)
 {
-    RankGraph *virtTopo = rankGraph1d2p_.get();
+    RankGraph* virtTopo = rankGraph1d2p_.get();
     u32 rankSize = 2;
     ExecuteSelector selector = ExecuteSelector().SetVirtualTopo(virtTopo).SetMyRank(0).SetRankSize(rankSize);
 
@@ -377,7 +363,7 @@ TEST_F(SelectorTest, TestAutoSelectorCcuSchedule_1D_2P)
 
 TEST_F(SelectorTest, TestAutoSelectorCcuSchedule_2D_2x2P)
 {
-    RankGraph *virtTopo = rankGraph2d2x2p_.get();
+    RankGraph* virtTopo = rankGraph2d2x2p_.get();
     u32 rankSize = 4;
     ExecuteSelector selector = ExecuteSelector().SetVirtualTopo(virtTopo).SetMyRank(0).SetRankSize(rankSize);
 
@@ -463,7 +449,7 @@ TEST_F(SelectorTest, TestAutoSelectorCcuSchedule_2D_2x2P)
 
 TEST_F(SelectorTest, TestAutoSelectorCcuMS_1D_2P)
 {
-    RankGraph *virtTopo = rankGraph1d2p_.get();
+    RankGraph* virtTopo = rankGraph1d2p_.get();
     u32 rankSize = 2;
     ExecuteSelector selector = ExecuteSelector().SetVirtualTopo(virtTopo).SetMyRank(0).SetRankSize(rankSize);
 
@@ -551,7 +537,7 @@ TEST_F(SelectorTest, TestAutoSelectorCcuMS_1D_2P)
 
 TEST_F(SelectorTest, TestAutoSelectorCcuMS_Clos)
 {
-    RankGraph *virtTopo = rankGraph2pClos_.get();
+    RankGraph* virtTopo = rankGraph2pClos_.get();
     u32 rankSize = 2;
     ExecuteSelector selector = ExecuteSelector().SetVirtualTopo(virtTopo).SetMyRank(0).SetRankSize(rankSize);
 

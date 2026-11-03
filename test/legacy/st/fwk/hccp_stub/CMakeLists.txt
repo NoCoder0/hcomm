@@ -7,6 +7,7 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
+
 target_include_directories(hccl_st_fwk PRIVATE
         ${TOP_DIR}/drivers/network/inc/network/
         ${TOP_DIR}/inc/external

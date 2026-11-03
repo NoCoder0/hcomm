@@ -58,24 +58,24 @@ BKF_STATIC_ASSERT(BKF_GET_ARY_COUNT(g_BkfPuberConnFsmEvtStrTbl) == BKF_PUBER_CON
 const BkfFsmProcItem g_BkfPuberConnFsm[][BKF_PUBER_CONN_EVT_CNT] = {
     /* BKF_PUBER_CONN_STATE_WAIT_HELLO */
     {
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberConnProcHello) }, /* BKF_PUBER_CONN_EVT_HELLO */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE) },     /* BKF_PUBER_CONN_EVT_UNDERLAY_UNBLOCK */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE) }, /* BKF_PUBER_CONN_EVT_JOB */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE) }, /* BKF_PUBER_CONN_EVT_TMR */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberConnProcHello)},   /* BKF_PUBER_CONN_EVT_HELLO */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IGNORE)},     /* BKF_PUBER_CONN_EVT_UNDERLAY_UNBLOCK */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE)}, /* BKF_PUBER_CONN_EVT_JOB */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE)}, /* BKF_PUBER_CONN_EVT_TMR */
     },
     /* BKF_PUBER_CONN_STATE_WAIT_SEND_HELLO_ACK */
     {
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE) },        /* BKF_PUBER_CONN_EVT_HELLO */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberConnTry2SendHelloAck) }, /* BKF_PUBER_CONN_EVT_UNDERLAY_UNBLOCK */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberConnTry2SendHelloAck) }, /* BKF_PUBER_CONN_EVT_JOB */
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE) },        /* BKF_PUBER_CONN_EVT_TMR */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE)},      /* BKF_PUBER_CONN_EVT_HELLO */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberConnTry2SendHelloAck)}, /* BKF_PUBER_CONN_EVT_UNDERLAY_UNBLOCK */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberConnTry2SendHelloAck)}, /* BKF_PUBER_CONN_EVT_JOB */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE)},      /* BKF_PUBER_CONN_EVT_TMR */
     },
     /* BKF_PUBER_CONN_STATE_CONN */
     {
-        { BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE) },    /* BKF_PUBER_CONN_EVT_HELLO */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberConnJobSchedSess) }, /* BKF_PUBER_CONN_EVT_UNDERLAY_UNBLOCK ，快调度优先 */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberConnJobSchedSess) }, /* BKF_PUBER_CONN_EVT_JOB */
-        { BKF_FSM_BUILD_PROC_ITEM(BkfPuberConnTmrSchedSess) }, /* BKF_PUBER_CONN_EVT_TMR */
+        {BKF_FSM_BUILD_PROC_ITEM(BKF_FSM_PROC_IMPOSSIBLE)},  /* BKF_PUBER_CONN_EVT_HELLO */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberConnJobSchedSess)}, /* BKF_PUBER_CONN_EVT_UNDERLAY_UNBLOCK ，快调度优先 */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberConnJobSchedSess)}, /* BKF_PUBER_CONN_EVT_JOB */
+        {BKF_FSM_BUILD_PROC_ITEM(BkfPuberConnTmrSchedSess)}, /* BKF_PUBER_CONN_EVT_TMR */
     },
 };
 BKF_STATIC_ASSERT(BKF_GET_ARY_COUNT(g_BkfPuberConnFsm) == BKF_PUBER_CONN_STATE_CNT);
@@ -91,7 +91,7 @@ BkfFsmTmpl *BkfPuberConnFsmTmplInit(BkfPuberConnMng *connMng)
         return VOS_NULL;
     }
 
-    BkfFsmTmplInitArg arg = { 0 };
+    BkfFsmTmplInitArg arg = {0};
     arg.name = tempName;
     arg.dbgOn = connMng->argInit->dbgOn;
     arg.memMng = connMng->argInit->memMng;
@@ -102,7 +102,7 @@ BkfFsmTmpl *BkfPuberConnFsmTmplInit(BkfPuberConnMng *connMng)
     arg.evtCnt = BKF_PUBER_CONN_EVT_CNT;
     arg.stateStrTbl = g_BkfPuberConnFsmStateStrTbl;
     arg.evtStrTbl = g_BkfPuberConnFsmEvtStrTbl;
-    arg.stateEvtProcItemMtrx = (const BkfFsmProcItem*)g_BkfPuberConnFsm;
+    arg.stateEvtProcItemMtrx = (const BkfFsmProcItem *)g_BkfPuberConnFsm;
     arg.getAppDataStrOrNull = VOS_NULL;
     return BkfFsmTmplInit(&arg);
 }
@@ -112,18 +112,19 @@ uint32_t BkfPuberConnFsmProc(BkfPuberConn *conn, uint8_t evtId, void *param)
     BkfPuberConnMng *connMng = conn->connMng;
     uint32_t ret = BKF_FSM_DISPATCH(&conn->fsm, evtId, conn, param, VOS_NULL);
     if ((ret == BKF_PUBER_CONN_NEED_DELETE) || (ret == BKF_FSM_DISPATCH_RET_IMPOSSIBLE)) {
-        BKF_LOG_WARN(BKF_LOG_HND, "conn(%#x)/evtId(%u, %s), ret(%u), 2del conn\n", BKF_MASK_ADDR(conn),
-                     evtId, BkfFsmTmplGetEvtStr(connMng->connFsmTmpl, evtId), ret);
+        BKF_LOG_WARN(BKF_LOG_HND, "conn(%#x)/evtId(%u, %s), ret(%u), 2del conn\n", BKF_MASK_ADDR(conn), evtId,
+            BkfFsmTmplGetEvtStr(connMng->connFsmTmpl, evtId), ret);
         return BKF_PUBER_CONN_NEED_DELETE;
     }
 
-    BKF_LOG_DEBUG(BKF_LOG_HND, "conn(%#x)/evtId(%u, %s), ret(%u)\n", BKF_MASK_ADDR(conn),
-                  evtId, BkfFsmTmplGetEvtStr(connMng->connFsmTmpl, evtId), ret);
+    BKF_LOG_DEBUG(BKF_LOG_HND, "conn(%#x)/evtId(%u, %s), ret(%u)\n", BKF_MASK_ADDR(conn), evtId,
+        BkfFsmTmplGetEvtStr(connMng->connFsmTmpl, evtId), ret);
     return ret;
 }
 
 BOOL BkfPuberMaySchedSess(void *puberConn)
 {
+    (void)puberConn;
     return VOS_TRUE; /* 可测试性考虑 */
 }
 
@@ -132,8 +133,9 @@ BOOL BkfPuberMaySchedSess(void *puberConn)
 #if BKF_BLOCK("私有函数定义")
 STATIC uint32_t BkfPuberConnProcHello(BkfPuberConn *conn, BkfMsgDecoder *decoder, void *unused2)
 {
+    (void)unused2;
     BkfPuberConnMng *connMng = conn->connMng;
-    BkfWrapMsgHello hello = { 0 };
+    BkfWrapMsgHello hello = {0};
     uint8_t urlStr[BKF_URL_STR_LEN_MAX];
     uint32_t ret = BkfPuberConnParseHello(conn, decoder, &hello);
     ret |= BkfPuberConnChkHello(conn, &hello);
@@ -165,8 +167,7 @@ STATIC uint32_t BkfPuberConnProcHello(BkfPuberConn *conn, BkfMsgDecoder *decoder
         uint8_t cliStr[BKF_URL_STR_LEN_MAX];
         uint8_t lsnUrl[BKF_URL_STR_LEN_MAX];
         BKF_LOG_DEBUG(BKF_LOG_HND, "onConnect App: localUrl %s, cliUrl %s cliLsnUrl %s\n",
-            BkfUrlGetStr(&conn->localUrl, urlStr, sizeof(urlStr)),
-            BkfUrlGetStr(&conn->cliUrl, cliStr, sizeof(cliStr)),
+            BkfUrlGetStr(&conn->localUrl, urlStr, sizeof(urlStr)), BkfUrlGetStr(&conn->cliUrl, cliStr, sizeof(cliStr)),
             BkfUrlGetStr(&conn->cliLsnUrl, lsnUrl, sizeof(lsnUrl)));
         connMng->argInit->onConnect(connMng->argInit->cookie, &conn->localUrl, &conn->cliUrl, &conn->cliLsnUrl);
     }
@@ -177,8 +178,10 @@ STATIC uint32_t BkfPuberConnProcHello(BkfPuberConn *conn, BkfMsgDecoder *decoder
 
 STATIC uint32_t BkfPuberConnTry2SendHelloAck(BkfPuberConn *conn, void *unused1, void *unused2)
 {
+    (void)unused1;
+    (void)unused2;
     uint8_t *sendBuf = VOS_NULL;
-    BkfMsgCoder coder = { { 0 }, 0 };
+    BkfMsgCoder coder = {};
     BkfPuberConnInitSendBufAndCoder(conn, &sendBuf, &coder);
     if (sendBuf == VOS_NULL) {
         return BKF_ERR; /* 等待解阻塞 */
@@ -208,14 +211,18 @@ STATIC uint32_t BkfPuberConnTry2SendHelloAck(BkfPuberConn *conn, void *unused1, 
 
 STATIC uint32_t BkfPuberConnJobSchedSess(BkfPuberConn *conn, void *unused1, void *unused2)
 {
+    (void)unused1;
+    (void)unused2;
     /* 尽力发送，直到阻塞、发完或者错误。对于第一种情况，底层会上报解阻塞以继续发送 */
     return BkfPuberConnDoSchedSess(conn, VOS_FALSE, VOS_NULL);
 }
 
 STATIC uint32_t BkfPuberConnTmrSchedSess(BkfPuberConn *conn, void *unused1, void *unused2)
 {
+    (void)unused1;
+    (void)unused2;
     BkfPuberConnMng *connMng = conn->connMng;
-    BkfPuberSessSlowSchedCtx ctx = { 0 };
+    BkfPuberSessSlowSchedCtx ctx = {0};
 
     /* 控制发送，直到阻塞、发完、让权或者错误 */
     if (connMng->argInit->verifyMayAccelerate(connMng->argInit->cookie)) {
@@ -239,7 +246,7 @@ STATIC void BkfPuberConnInitSendBufAndCoder(BkfPuberConn *conn, uint8_t **sendBu
     if (*sendBuf != VOS_NULL) {
         BkfDcSliceVTbl *sliceVTbl = BKF_DC_GET_SLICE_VTBL(connMng->argInit->dc);
         (void)BkfMsgCodeInit(coder, connMng->argInit->name, *sendBuf, BKF_CH_SER_MALLOC_DATA_BUF_LEN_MAX,
-                              sliceVTbl->keyLen, sliceVTbl->keyCodec, sliceVTbl->keyGetStrOrNull, BKF_LOG_HND);
+            sliceVTbl->keyLen, sliceVTbl->keyCodec, sliceVTbl->keyGetStrOrNull, BKF_LOG_HND);
     }
 }
 
@@ -307,18 +314,18 @@ STATIC uint32_t BkfPuberConnWriteLastLeftData(BkfPuberConn *conn)
         if (writeLen == dataLen) {
             (void)BkfBufqDe(conn->lastSendLeftDataBuf, writeLen);
             sendBuf = VOS_NULL;
-            continue;                           /* 继续从缓冲中读取数据&发送 */
+            continue; /* 继续从缓冲中读取数据&发送 */
         }
 
         if ((writeLen >= 0) && (writeLen < dataLen)) {
             (void)BkfBufqDe(conn->lastSendLeftDataBuf, writeLen);
             BkfChSerFreeDataBuf(connMng->argInit->chMng, conn->connId, sendBuf);
             sendBuf = VOS_NULL;
-            return BKF_ERR;                     /* 无法发送更多 */
+            return BKF_ERR; /* 无法发送更多 */
         }
 
         BKF_ASSERT(0);
-        return BKF_PUBER_CONN_NEED_DELETE;      /* 异常保护，进行删除 */
+        return BKF_PUBER_CONN_NEED_DELETE; /* 异常保护，进行删除 */
     }
 
     BkfBufqUninit(conn->lastSendLeftDataBuf);
@@ -332,7 +339,7 @@ STATIC uint32_t BkfPuberConnWriteLastLeftData(BkfPuberConn *conn)
 3. connNeedDel: 外部删除conn
 */
 static inline uint32_t BkfPuberConnProcSessSchedRetSndBufNotEnough(BkfPuberConn *conn, uint8_t **sendBuf,
-                                                                   BkfMsgCoder *coder)
+    BkfMsgCoder *coder)
 {
     return BkfPuberConnWriteSendBufByCoder(conn, sendBuf, coder);
 }
@@ -363,7 +370,7 @@ static inline uint32_t BkfPuberConnProcSessSchedRetFatalErr(BkfPuberConn *conn, 
 3. connNeedDel: 外部删除conn
 */
 static inline uint32_t BkfPuberConnProcSessSchedRetYield(BkfPuberConn *conn, uint8_t **sendBuf, BkfMsgCoder *coder,
-                                                         BOOL isSlowSched)
+    BOOL isSlowSched)
 {
     BkfPuberConnMng *connMng = conn->connMng;
     if (!isSlowSched) { /* 只有慢调度才会返回yield */
@@ -377,8 +384,8 @@ static inline uint32_t BkfPuberConnProcSessSchedRetYield(BkfPuberConn *conn, uin
     return (ret == BKF_OK) ? BKF_PUBER_SESS_SCHED_YIELD : ret;
 }
 
-STATIC uint32_t BkfPuberConnProcSessSchedRet(BkfPuberConn *conn, uint8_t **sendBuf, BkfMsgCoder *coder, BOOL isSlowSched,
-                                             uint32_t retSchedSess)
+STATIC uint32_t BkfPuberConnProcSessSchedRet(BkfPuberConn *conn, uint8_t **sendBuf, BkfMsgCoder *coder,
+    BOOL isSlowSched, uint32_t retSchedSess)
 {
     switch (retSchedSess) {
         case BKF_PUBER_SESS_SEND_BUF_NOT_ENOUGH: {
@@ -410,7 +417,7 @@ STATIC uint32_t BkfPuberConnDoSchedSess(BkfPuberConn *conn, BOOL isSlowSched, vo
 
     BkfPuberConnMng *connMng = conn->connMng;
     uint8_t *sendBuf = VOS_NULL;
-    BkfMsgCoder coder = { { 0 }, 0 };
+    BkfMsgCoder coder = {};
     do {
         BOOL isFastSchedInTest = !isSlowSched && !BkfPuberMaySchedSess(conn);
         if (isFastSchedInTest) {
@@ -448,4 +455,3 @@ STATIC uint32_t BkfPuberConnDoSchedSess(BkfPuberConn *conn, BOOL isSlowSched, vo
 #ifdef __cplusplus
 }
 #endif
-

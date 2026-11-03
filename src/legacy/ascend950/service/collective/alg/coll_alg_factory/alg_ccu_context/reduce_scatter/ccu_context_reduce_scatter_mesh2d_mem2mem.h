@@ -22,20 +22,19 @@ namespace Hccl {
 
 class CcuContextReduceScatterMeshMem2Mem2D : public CcuContextAlgBase {
 public:
-    CcuContextReduceScatterMeshMem2Mem2D(const CcuCtxArg &arg, 
-    					 const std::vector<CcuTransport*> &transports,
-                                  	 const CcuTransportGroup &group);
+    CcuContextReduceScatterMeshMem2Mem2D(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
     ~CcuContextReduceScatterMeshMem2Mem2D() override {}
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
 
 protected:
     void InitResources();
 
 private:
-    void CreateLocalCopyLoop();                                         // for loop-group local copy 
-    void LocalCopyByLoopGroup(CcuRep::Memory dst, CcuRep::Memory src);  // for loop-group local copy
+    void CreateLocalCopyLoop();                                                    // for loop-group local copy
+    void LocalCopyByLoopGroup(CcuRep::Memory dst, CcuRep::Memory src);             // for loop-group local copy
     std::vector<uint64_t> CalMeshChunkSlice(uint64_t dataSize, uint64_t sliceNum); // for mesh-chunk
     void PreSync();
     void PostSync(uint32_t signalIndex);
@@ -65,7 +64,7 @@ private:
     CcuRep::Variable yAxisOffset_;
     GroupOpSize xAxisGroupOpSize_;
     GroupOpSize yAxisGroupOpSize_;
-    GroupOpSize curGoSize_;                 // for loop-group local copy
+    GroupOpSize curGoSize_; // for loop-group local copy
 
     // For mesh-chunk
     std::vector<CcuRep::Variable> xlocalSlice_;
@@ -77,11 +76,11 @@ private:
     CcuRep::Variable strideSize_;
 
     // 跨轴同步信号
-    std::string localAxisSignalName_;       // 由 axisId_ 初始化
-    std::string anotherAxisSignalName_;     // 由 axisId_ 初始化
+    std::string localAxisSignalName_;   // 由 axisId_ 初始化
+    std::string anotherAxisSignalName_; // 由 axisId_ 初始化
     CcuRep::MaskSignal localAxisSignal_;
     CcuRep::MaskSignal anotherAxisSignal_;
 }; // class CcuContextReduceScatterMeshMem2Mem2D
-}  // namespace Hccl
+} // namespace Hccl
 
 #endif // HCCLV2_CCU_CONTEXT_REDUCE_SCATTER_MESH_2D_MEM2MEM_H_

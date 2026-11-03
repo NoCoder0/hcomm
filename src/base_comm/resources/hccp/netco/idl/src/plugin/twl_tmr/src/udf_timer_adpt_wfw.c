@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #include <stdbool.h>
 #include <sys/epoll.h>
 #include "securec.h"
@@ -34,13 +33,13 @@ typedef struct {
     /* BKF初始化信息 */
     void *appHandle;
     uint32_t appCid;
-    BkfMemMng *memMng;           /* 内存管理库句柄 */
-    WfwMux *mux;                 /* 多路复用句柄 */
-    unsigned char dbgSwitch;     /* （必选参数）是否开启诊断 */
-    unsigned char pad[3];        /* （填充参数）无需设置 */
-    BkfDisp *disp;               /* （必选参数）诊断显示库句柄 */
-    BkfLogCnt *logCnt;           /* （必选参数）logCnt库句柄 */
-    BkfLog *log;                 /* （必选参数）日志库句柄 */
+    BkfMemMng *memMng;       /* 内存管理库句柄 */
+    WfwMux *mux;             /* 多路复用句柄 */
+    unsigned char dbgSwitch; /* （必选参数）是否开启诊断 */
+    unsigned char pad[3];    /* （填充参数）无需设置 */
+    BkfDisp *disp;           /* （必选参数）诊断显示库句柄 */
+    BkfLogCnt *logCnt;       /* （必选参数）logCnt库句柄 */
+    BkfLog *log;             /* （必选参数）日志库句柄 */
     char name[UDF_TWL_TMR_NAME_LEN];
 
     /* Timer内部信息 */
@@ -75,16 +74,18 @@ void BkfAdptTimerFdEventProc(int fd, uint32_t curEvents, void *cookieAttachFd)
 /* 适配Twl_timer -> BKF 注册timer fd回调 */
 uint32_t BkfAdptTwlTimerEpollCtl(void *appHandle, uint32_t cid, int fd, UdfTimerFdParams *timerFdParam)
 {
+    (void)cid;
+    (void)fd;
     if ((appHandle == NULL) || (timerFdParam == NULL)) {
         return 0;
     }
 
     BkfTwlAdpCtrl *adptCtrl = (BkfTwlAdpCtrl *)appHandle;
     adptCtrl->timerFdProc = timerFdParam->timerFdProc;
-    adptCtrl->timerEventParam =  timerFdParam->timerEventParam;
+    adptCtrl->timerEventParam = timerFdParam->timerEventParam;
     if (timerFdParam->operate == EPOLL_CTL_ADD) {
         return (uint32_t)WfwMuxAttachFd(adptCtrl->mux, timerFdParam->event.data.fd, timerFdParam->event.events,
-                                         BkfAdptTimerFdEventProc, adptCtrl, NULL);
+            BkfAdptTimerFdEventProc, adptCtrl, NULL);
     } else if (timerFdParam->operate == EPOLL_CTL_DEL) {
         return (uint32_t)WfwMuxDetachFd(adptCtrl->mux, timerFdParam->event.data.fd);
     } else {
@@ -92,7 +93,7 @@ uint32_t BkfAdptTwlTimerEpollCtl(void *appHandle, uint32_t cid, int fd, UdfTimer
     }
 }
 
-void *BkfAdptTwlTimerMalloc(void *handle, size_t size,  const char *name, uint32_t line)
+void *BkfAdptTwlTimerMalloc(void *handle, size_t size, const char *name, uint32_t line)
 {
     if (handle == NULL) {
         return NULL;
@@ -106,7 +107,7 @@ void *BkfAdptTwlTimerMalloc(void *handle, size_t size,  const char *name, uint32
     return BkfMalloc(adptCtrl->memMng, size, name, line);
 }
 
-void BkfAdptTwlTimerFree(void *handle, void *ptr,  const char *name, uint32_t line)
+void BkfAdptTwlTimerFree(void *handle, void *ptr, const char *name, uint32_t line)
 {
     if (handle == NULL) {
         return;
@@ -144,7 +145,7 @@ bool BkfAdptCheckInitArg(BkfTwlTmrInitArg *initArg)
 }
 
 /* 适配BKF -> Twl_timer 初始化时间轮定时器 */
-void* BkfAdptTwlTimerInit(BkfTwlTmrInitArg *initArg)
+void *BkfAdptTwlTimerInit(BkfTwlTmrInitArg *initArg)
 {
     if (!BkfAdptCheckInitArg(initArg)) {
         return NULL;
@@ -157,7 +158,7 @@ void* BkfAdptTwlTimerInit(BkfTwlTmrInitArg *initArg)
     }
     (void)memset_s(adptCtrl, sizeof(BkfTwlAdpCtrl), 0, sizeof(BkfTwlAdpCtrl));
     adptCtrl->magicNum = BKF_ADPT_TWL_CTL_MAGIC;
-    adptCtrl->memMng =  initArg->memMng;
+    adptCtrl->memMng = initArg->memMng;
     adptCtrl->mux = initArg->mux;
     adptCtrl->appHandle = initArg->appHandle;
     adptCtrl->appCid = initArg->appCid;
@@ -165,31 +166,31 @@ void* BkfAdptTwlTimerInit(BkfTwlTmrInitArg *initArg)
     adptCtrl->disp = initArg->disp;
     adptCtrl->logCnt = initArg->logCnt;
     adptCtrl->log = initArg->log;
-	(void)memcpy_s(adptCtrl->name, UDF_TWL_TMR_NAME_LEN, initArg->name, BKF_TWL_TMR_NAME_LEN);
-	adptCtrl->name[UDF_TWL_TMR_NAME_LEN - 1] = '\0';
- 
+    (void)memcpy_s(adptCtrl->name, UDF_TWL_TMR_NAME_LEN, initArg->name, BKF_TWL_TMR_NAME_LEN);
+    adptCtrl->name[UDF_TWL_TMR_NAME_LEN - 1] = '\0';
+
     UdfTimerInitParam innerInit;
     (void)memset_s(&innerInit, sizeof(UdfTimerInitParam), 0, sizeof(UdfTimerInitParam));
-    innerInit.appHandle = (void*)adptCtrl;
+    innerInit.appHandle = (void *)adptCtrl;
     innerInit.appCid = initArg->appCid;
-    innerInit.memHandle = (void*)adptCtrl;
+    innerInit.memHandle = (void *)adptCtrl;
     innerInit.epollCtlCB = BkfAdptTwlTimerEpollCtl;
     innerInit.freeCB = BkfAdptTwlTimerFree;
     innerInit.mallocCB = BkfAdptTwlTimerMalloc;
-	(void)memcpy_s(innerInit.timerInstName, UDF_TWL_TMR_NAME_LEN, adptCtrl->name, UDF_TWL_TMR_NAME_LEN);
-	innerInit.timerInstName[UDF_TWL_TMR_NAME_LEN - 1] = '\0';
+    (void)memcpy_s(innerInit.timerInstName, UDF_TWL_TMR_NAME_LEN, adptCtrl->name, UDF_TWL_TMR_NAME_LEN);
+    innerInit.timerInstName[UDF_TWL_TMR_NAME_LEN - 1] = '\0';
 
     uint32_t ret = UdfTwlTimerCreate(&innerInit, &adptCtrl->timerHandle);
-    if  (ret != 0) {
+    if (ret != 0) {
         BkfFree(initArg->memMng, adptCtrl, TIMER_FNAME, TIMER_FLINE);
-        adptCtrl  = NULL;
+        adptCtrl = NULL;
     }
 
     return (BkfTwlTmrHandle)adptCtrl;
 }
 
-void* BkfAdptTwlTimerStartTimer(BkfTwlTmrHandle twlWfwAdapt, F_BKF_TMR_TIMEOUT_PROC proc, UdfTimerMode tmrMode,
-                                uint32_t intervalMs, void *param)
+void *BkfAdptTwlTimerStartTimer(BkfTwlTmrHandle twlWfwAdapt, F_BKF_TMR_TIMEOUT_PROC proc, UdfTimerMode tmrMode,
+    uint32_t intervalMs, void *param)
 {
     if (twlWfwAdapt == NULL) {
         return NULL;
@@ -218,14 +219,14 @@ void* BkfAdptTwlTimerStartTimer(BkfTwlTmrHandle twlWfwAdapt, F_BKF_TMR_TIMEOUT_P
     return timerId;
 }
 
-void* BkfAdptTwlTimerStartLoopTimer(BkfTwlTmrHandle twlWfwAdapt, F_BKF_TMR_TIMEOUT_PROC proc,
-                                    uint32_t intervalMs, void *param)
+void *BkfAdptTwlTimerStartLoopTimer(BkfTwlTmrHandle twlWfwAdapt, F_BKF_TMR_TIMEOUT_PROC proc, uint32_t intervalMs,
+    void *param)
 {
     return BkfAdptTwlTimerStartTimer(twlWfwAdapt, proc, UDF_TIMER_MODE_PERIOD, intervalMs, param);
 }
 
-void* BkfAdptTwlTimerStartOnceTimer(BkfTwlTmrHandle twlWfwAdapt, F_BKF_TMR_TIMEOUT_PROC proc,
-                                    uint32_t intervalMs, void *param)
+void *BkfAdptTwlTimerStartOnceTimer(BkfTwlTmrHandle twlWfwAdapt, F_BKF_TMR_TIMEOUT_PROC proc, uint32_t intervalMs,
+    void *param)
 {
     return BkfAdptTwlTimerStartTimer(twlWfwAdapt, proc, UDF_TIMER_MODE_ONE_SHOT, intervalMs, param);
 }
@@ -254,8 +255,8 @@ uint32_t BkfAdptTwlTimerRefreshTimer(BkfTwlTmrHandle twlWfwAdapt, BkfTmrId *time
     if (adptCtrl->magicNum != BKF_ADPT_TWL_CTL_MAGIC) {
         return -1;
     }
-    BKF_LOG_DEBUG(adptCtrl->log, "BkfTwlTimer RefreshTimer: newIntervalMs = %u,  timerId = 0x%x.\n",
-        newIntervalMs,  BKF_MASK_ADDR(timerId));
+    BKF_LOG_DEBUG(adptCtrl->log, "BkfTwlTimer RefreshTimer: newIntervalMs = %u,  timerId = 0x%x.\n", newIntervalMs,
+        BKF_MASK_ADDR(timerId));
 
     if (timerId == NULL) {
         return -1;
@@ -264,7 +265,7 @@ uint32_t BkfAdptTwlTimerRefreshTimer(BkfTwlTmrHandle twlWfwAdapt, BkfTmrId *time
     return UdfTimerInstResize((UdfTmrInstHandle)timerId, newIntervalMs);
 }
 
-void* BkfAdptTwlTimerGetTimerUsrData(BkfTwlTmrHandle twlWfwAdapt, BkfTmrId *timerId)
+void *BkfAdptTwlTimerGetTimerUsrData(BkfTwlTmrHandle twlWfwAdapt, BkfTmrId *timerId)
 {
     if (twlWfwAdapt == NULL) {
         return NULL;
@@ -283,7 +284,7 @@ void* BkfAdptTwlTimerGetTimerUsrData(BkfTwlTmrHandle twlWfwAdapt, BkfTmrId *time
 }
 
 /* 构造BKF BkfTmrMng，挂接相关的虚接口 */
-BkfTmrMng* BkfAdptTwlTimerInitTmrMng(BkfTwlTmrHandle twlWfwAdapt)
+BkfTmrMng *BkfAdptTwlTimerInitTmrMng(BkfTwlTmrHandle twlWfwAdapt)
 {
     if (twlWfwAdapt == NULL) {
         return NULL;
@@ -297,8 +298,8 @@ BkfTmrMng* BkfAdptTwlTimerInitTmrMng(BkfTwlTmrHandle twlWfwAdapt)
 
     BkfITmr iTmr;
     iTmr.name = adptCtrl->name;
-    iTmr.memMng =  adptCtrl->memMng;
-    iTmr.cookie  = adptCtrl;
+    iTmr.memMng = adptCtrl->memMng;
+    iTmr.cookie = adptCtrl;
     iTmr.startLoop = BkfAdptTwlTimerStartLoopTimer;
     iTmr.startOnce = BkfAdptTwlTimerStartOnceTimer;
     iTmr.stop = BkfAdptTwlTimerStopTimer;

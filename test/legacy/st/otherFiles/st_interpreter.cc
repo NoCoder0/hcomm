@@ -16,7 +16,7 @@
 #include "interpreter.h"
 #include "communicator_impl.h"
 #include "stream_manager.h"
-#include "local_notify.h"
+#include "local_notify_v2.h"
 #include "coll_service_device_mode.h"
 #include "ccu_instruction_all_gather_mesh1d.h"
 #include "aicpu_res_package_helper.h"
@@ -66,55 +66,29 @@ public:
         currentCollOperator->opTag = tag;
     }
 
-    DataBufManager &GetDataBufferManager() const override
-    {
-        return *dataBufferManager.get();
-    }
+    DataBufManager& GetDataBufferManager() const override { return *dataBufferManager.get(); }
 
-    LocalRmaBufManager &GetLocalRmaBufManager() const override
-    {
-        return *localRmaBufManager.get();
-    }
+    LocalRmaBufManager& GetLocalRmaBufManager() const override { return *localRmaBufManager.get(); }
 
-    RemoteRmaBufManager &GetRemoteRmaBufManager() const override
-    {
-        return *remoteRmaBufManager.get();
-    }
+    RemoteRmaBufManager& GetRemoteRmaBufManager() const override { return *remoteRmaBufManager.get(); }
 
-    QueueNotifyManager &GetAicpuQueueNotifyManager() const override
-    {
-        return *aicpuQueueNotifyManager_.get();
-    }
+    QueueNotifyManager& GetAicpuQueueNotifyManager() const override { return *aicpuQueueNotifyManager_.get(); }
 
-    QueueNotifyManager &GetCcuQueueNotifyManager() const override
-    {
-        return *ccuQueueNotifyManager_.get();
-    }
+    QueueNotifyManager& GetCcuQueueNotifyManager() const override { return *ccuQueueNotifyManager_.get(); }
 
-    QueueWaitGroupCntNotifyManager &GetQueueWaitGroupCntNotifyManager() const override
+    QueueWaitGroupCntNotifyManager& GetQueueWaitGroupCntNotifyManager() const override
     {
         return *queueWaitGroupCntNotifyManager.get();
     }
 
-    QueueBcastPostCntNotifyManager &GetBcastPostCntNotifyManager() const override
+    QueueBcastPostCntNotifyManager& GetBcastPostCntNotifyManager() const override
     {
         return *queueBcastPostCntNotifyManager.get();
     }
 
-    RmaConnManager &GetRmaConnManager() const override
-    {
-        return *rmaConnectionManager.get();
-    }
+    RmaConnManager& GetRmaConnManager() const override { return *rmaConnectionManager.get(); }
 
-    CollOperator *GetCurrentCollOperator() const override
-    {
-        return currentCollOperator.get();
-    }
-
-    NotifyFixedValue *GetNotifyFixedValue() const override
-    {
-        return notifyFixedValue.get();
-    }
+    CollOperator* GetCurrentCollOperator() const override { return currentCollOperator.get(); }
 
 private:
     unique_ptr<DataBufManager> dataBufferManager;
@@ -129,20 +103,13 @@ private:
     unique_ptr<RmaConnManager> rmaConnectionManager;
     unique_ptr<CollServiceBase> collService;
     unique_ptr<CollOperator> currentCollOperator;
-    unique_ptr<NotifyFixedValue> notifyFixedValue;
 };
 
 class InterpreterTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "InterpreterTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "InterpreterTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "InterpreterTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "InterpreterTest TearDown" << std::endl; }
 
     virtual void SetUp()
     {
@@ -171,7 +138,7 @@ CollOpParams GetCollOpParamsStub()
 {
     CollOpParams collOpParams;
     collOpParams.opType = OpType::SEND;
-    collOpParams.dataType = DataType::INT8;  // sizeof(int8) = 1
+    collOpParams.dataType = DataType::INT8; // sizeof(int8) = 1
     collOpParams.reduceOp = ReduceOp::SUM;
     collOpParams.dstRank = 1;
     collOpParams.sendBuf = nullptr;
@@ -181,11 +148,10 @@ CollOpParams GetCollOpParamsStub()
     collOpParams.staticAddr = true;
     collOpParams.staticShape = true;
     collOpParams.outputDataType = DataType::INT8;
-    
+
     collOpParams.dstRank = 0;
     return collOpParams;
 }
-
 
 TEST_F(InterpreterTest, St_Submit_When_input_Expect_NO_THROW)
 {
@@ -199,10 +165,10 @@ TEST_F(InterpreterTest, St_Submit_When_input_Expect_NO_THROW)
     MOCKER_CPP(&CcuConnection::ReleaseConnRes).stubs().will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
     MOCKER(HrtMemcpy).stubs();
     MOCKER(&GetStreamCaptureInfo).stubs().will(returnValue(HCCL_SUCCESS));
-    void *ptr = nullptr;
+    void* ptr = nullptr;
     MOCKER(HrtStreamCreateWithFlags).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(ptr));
     MOCKER(HrtGetStreamId).stubs().will(returnValue(0));
-    
+
     auto insQueue = make_shared<InsQueue>();
     insQueue->Append(std::move(std::make_unique<CcuInstructionAllGatherMesh1D>()));
     auto ccuInsGroup = std::make_unique<CcuInsGroup>();
@@ -239,7 +205,7 @@ TEST_F(InterpreterTest, St_Submit_When_input_Expect_NO_THROW)
     collAlgOp.opType = OpType::ALLTOALL;
     collAlgOp.dataType = DataType::INT8;
     collAlgOp.dataCount = 4;
- 
+
     uint32_t rankId = 2;
     uint32_t rankSize = 4;
     std::vector<uint32_t> dimSize = {2, 2};
@@ -257,7 +223,7 @@ TEST_F(InterpreterTest, St_Submit_When_input_Expect_NO_THROW)
     CcuContextAlltoAllMesh2D ctx0(ctxArg0, transports0, transportGroup0);
     CcuTaskArgAlltoAllMesh2D taskArg0(0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
     ctx0.GeneArgs(taskArg0);
-    
+
     CtxMgrImp::GetInstance(0).ctxGroupMap_[0].ctxs.push_back(std::make_unique<CcuContextAlltoAllMesh2D>(ctx0));
     CtxMgrImp::GetInstance(0).ctxGroupMap_[0].ctxs.push_back(std::make_unique<CcuContextAlltoAllMesh2D>(ctx0));
 

@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef HCCL_TASK_LOGIC_INFO_PUB_H
 #define HCCL_TASK_LOGIC_INFO_PUB_H
@@ -18,41 +18,33 @@
 #include "adapter_rts_common.h"
 
 namespace hccl {
-enum class UserMemType {
-    INPUT_MEM,
-    OUTPUT_MEM,
-    MEM_RESERVED
-};
+enum class UserMemType { INPUT_MEM, OUTPUT_MEM, MEM_RESERVED };
 
 struct TxMemoryInfo {
     UserMemType dstMemType;
     u64 dstOffset;
-    const void *src;
+    const void* src;
     u64 len;
 };
 
 struct RxMemoryInfo {
     UserMemType srcMemType;
     u64 srcOffset;
-    void *dst;
+    void* dst;
     u64 len;
 };
 
 struct RxWithReduceMemoryInfo {
     UserMemType recvSrcMemType;
     u64 recvSrcOffset;
-    void *recvDst;
+    void* recvDst;
     u64 recvLen;
-    void *reduceSrc;
-    void *reduceDst;
+    void* reduceSrc;
+    void* reduceDst;
     u64 reduceDataCount;
 };
 
-enum class TaskLogicType {
-    TRANSPORT_TYPE,
-    DISPATCHER_TYPE,
-    TYPE_RESERVED
-};
+enum class TaskLogicType { TRANSPORT_TYPE, DISPATCHER_TYPE, TYPE_RESERVED };
 
 enum class TaskLogicFuncType {
     TRANSPORT_TXACK_TYPE, /* transport task type */
@@ -69,11 +61,11 @@ enum class TaskLogicFuncType {
 };
 
 struct ParaTxAck {
-    void *stream;
+    void* stream;
 };
 
 struct ParaRxAck {
-    void *stream;
+    void* stream;
 };
 
 struct ParaTxAsync {
@@ -85,42 +77,42 @@ struct ParaRxAsync {
 };
 
 struct ParaTxDataSignal {
-    void *stream;
+    void* stream;
 };
 
 struct ParaRxDataSignal {
-    void *stream;
+    void* stream;
 };
 
 struct ParaSignalWait {
-    void *signal;
+    void* signal;
     u32 userRank;
     u32 remoteRank;
     s32 stage;
 };
 
 struct ParaSignalRecord {
-    void *signal;
+    void* signal;
     u32 userRank;
     u64 offset;
     s32 stage;
 };
 
 struct ParaMemAsync {
-    void *dst;
+    void* dst;
     uint64_t destMax;
-    void *src;
+    void* src;
     u64 count;
     HcclRtMemcpyKind kind;
 };
 
 struct TaskLogicCmdInfo {
     TaskLogicType taskLogicType; /* logic task 操作类型：0: transport, 1: dispatcher */
-    u32 index; /* 对应vtransport、vdispatcher的index信息 */
+    u32 index;                   /* 对应vtransport、vdispatcher的index信息 */
 };
 
 struct TaskLogicInfo {
-    TaskLogicCmdInfo taskLogicCmd; /* logic task 操作类型 */
+    TaskLogicCmdInfo taskLogicCmd;  /* logic task 操作类型 */
     TaskLogicFuncType taskFuncType; /* logic task 具体执行方法 */
     union {
         union {
@@ -140,16 +132,19 @@ struct TaskLogicInfo {
     ParaRxAsync rxAsync;
     TaskLogicInfo() {};
     TaskLogicInfo(u32 index, TaskLogicType taskLogicType, TaskLogicFuncType funcType);
-    TaskLogicInfo(u32 index, TaskLogicType taskLogicType, TaskLogicFuncType funcType,
-        std::vector<TxMemoryInfo> &txMems);
-    TaskLogicInfo(u32 index, TaskLogicType taskLogicType, TaskLogicFuncType funcType,
-        std::vector<RxMemoryInfo> &rxMems);
-    TaskLogicInfo(u32 index, TaskLogicType taskLogicType, TaskLogicFuncType funcType, void *signal, u32 userRank,
+    TaskLogicInfo(
+        u32 index, TaskLogicType taskLogicType, TaskLogicFuncType funcType, std::vector<TxMemoryInfo>& txMems);
+    TaskLogicInfo(
+        u32 index, TaskLogicType taskLogicType, TaskLogicFuncType funcType, std::vector<RxMemoryInfo>& rxMems);
+    TaskLogicInfo(
+        u32 index, TaskLogicType taskLogicType, TaskLogicFuncType funcType, void* signal, u32 userRank,
         u32 remoteUserRank, s32 stage);
-    TaskLogicInfo(u32 index, TaskLogicType taskLogicType, TaskLogicFuncType funcType, void *signal, u32 userRank,
-        u64 offset, s32 stage);
-    TaskLogicInfo(u32 index, TaskLogicType taskLogicType, TaskLogicFuncType funcType, void *dst, uint64_t destMax,
-        void *src, u64 count, HcclRtMemcpyKind kind);
+    TaskLogicInfo(
+        u32 index, TaskLogicType taskLogicType, TaskLogicFuncType funcType, void* signal, u32 userRank, u64 offset,
+        s32 stage);
+    TaskLogicInfo(
+        u32 index, TaskLogicType taskLogicType, TaskLogicFuncType funcType, void* dst, uint64_t destMax, void* src,
+        u64 count, HcclRtMemcpyKind kind);
 };
-}  // namespace hccl
+} // namespace hccl
 #endif /* HCCL_TASK_LOGIC_INFO_PUB_H */

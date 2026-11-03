@@ -20,27 +20,17 @@
 using namespace Hccl;
 class AicpuBufferTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AicpuBuffer tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AicpuBuffer tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AicpuBuffer tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AicpuBuffer tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in AicpuBuffer SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in AicpuBuffer SetUP" << std::endl; }
 
     virtual void TearDown()
     {
         GlobalMockObject::verify();
         std::cout << "A Test case in AicpuBuffer TearDown" << std::endl;
     }
-
 };
 
 TEST_F(AicpuBufferTest, test_rma_buffer_lite)

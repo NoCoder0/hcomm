@@ -19,9 +19,9 @@ namespace Hccl {
 
 class InsTempGatherNHR : public InsAlgTemplateBase {
 public:
-    explicit InsTempGatherNHR(const RankId virtualRank, const u32 tempRankSize,
-                                   const std::vector<std::vector<RankId>> &tempVTopo,
-                                   const std::map<RankId, u32>            &tempVirtRankMap);
+    explicit InsTempGatherNHR(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~InsTempGatherNHR() override;
 
     std::string Describe() const override
@@ -29,24 +29,33 @@ public:
         return StringFormat("Template of Gather NHR with tempRankSize [%u].", tempRankSize_);
     }
 
-    HcclResult Run(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec, const BuffInfo &buffInfo,
-                         const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues) override;
-    HcclResult CalcSliceInfo(const AllignInfo &allignInfo, const u64 dataSize, RankSliceInfo &sliceInfoVec) override;
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
-    HcclResult GetScatterStepInfo(u32 step, u32 nSteps, AicpuNHRStepInfo &stepInfo) const;
+    HcclResult
+    Run(const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, const BuffInfo& buffInfo,
+        const ResLinks& tempLinks, std::vector<InsQuePtr>& tempInsQues) override;
+    HcclResult CalcSliceInfo(const AllignInfo& allignInfo, const u64 dataSize, RankSliceInfo& sliceInfoVec) override;
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
+    HcclResult GetScatterStepInfo(u32 step, u32 nSteps, AicpuNHRStepInfo& stepInfo) const;
     uint64_t GetExpandedMode() const;
+
 private:
-    HcclResult PreCopy(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec,
-        std::vector<InsQuePtr> &tempInsQues);
-    HcclResult PostCopy(const TempFuncs &tempFuncs, const RankSliceInfo &sliceInfoVec,
-        std::vector<InsQuePtr> &tempInsQues);
+    HcclResult
+    PreCopy(const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, std::vector<InsQuePtr>& tempInsQues);
+    HcclResult
+    PostCopy(const TempFuncs& tempFuncs, const RankSliceInfo& sliceInfoVec, std::vector<InsQuePtr>& tempInsQues);
 
-    HcclResult BatchTxRx(AicpuNHRStepInfo &stepInfo, const ResLinks &tempLinks, InsQuePtr &queue, const RankSliceInfo &sliceInfoVec);
-    HcclResult BatchSend(AicpuNHRStepInfo &stepInfo, const ResLinks &tempLinks, InsQuePtr &queue, const RankSliceInfo &sliceInfoVec, BufferType memType, u32 memOffset) const;
-    HcclResult BatchRecv(AicpuNHRStepInfo &stepInfo, const ResLinks &tempLinks, InsQuePtr &queue, const RankSliceInfo &sliceInfoVec, BufferType memType, u32 memOffset) const;
-    HcclResult BatchSR(AicpuNHRStepInfo &stepInfo, const ResLinks &tempLinks, InsQuePtr &queue, const RankSliceInfo &sliceInfoVec, BufferType memType, u32 memOffset) const;
+    HcclResult BatchTxRx(
+        AicpuNHRStepInfo& stepInfo, const ResLinks& tempLinks, InsQuePtr& queue, const RankSliceInfo& sliceInfoVec);
+    HcclResult BatchSend(
+        AicpuNHRStepInfo& stepInfo, const ResLinks& tempLinks, InsQuePtr& queue, const RankSliceInfo& sliceInfoVec,
+        BufferType memType, u32 memOffset) const;
+    HcclResult BatchRecv(
+        AicpuNHRStepInfo& stepInfo, const ResLinks& tempLinks, InsQuePtr& queue, const RankSliceInfo& sliceInfoVec,
+        BufferType memType, u32 memOffset) const;
+    HcclResult BatchSR(
+        AicpuNHRStepInfo& stepInfo, const ResLinks& tempLinks, InsQuePtr& queue, const RankSliceInfo& sliceInfoVec,
+        BufferType memType, u32 memOffset) const;
 
-    HcclResult GetGatherStepInfo(std::vector<AicpuNHRStepInfo> &nhrSteps) const;
+    HcclResult GetGatherStepInfo(std::vector<AicpuNHRStepInfo>& nhrSteps) const;
 
     // 主要搬运所用的Buffer
     BufferType mainBufferType_;

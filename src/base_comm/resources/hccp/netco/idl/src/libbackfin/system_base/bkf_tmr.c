@@ -35,8 +35,8 @@ BkfTmrMng *BkfTmrInit(BkfITmr *ITmr)
     uint32_t len;
     int32_t err;
 
-    if ((ITmr == VOS_NULL) || (ITmr->name == VOS_NULL) || (ITmr->memMng == VOS_NULL) ||
-        (ITmr->startOnce == VOS_NULL) || (ITmr->startLoop == VOS_NULL) || (ITmr->stop == VOS_NULL)) {
+    if ((ITmr == VOS_NULL) || (ITmr->name == VOS_NULL) || (ITmr->memMng == VOS_NULL) || (ITmr->startOnce == VOS_NULL) ||
+        (ITmr->startLoop == VOS_NULL) || (ITmr->stop == VOS_NULL)) {
         goto error;
     }
 
@@ -140,4 +140,3 @@ uint32_t BkfTmrGetRemainTime(BkfTmrMng *tmrMng, BkfTmrId *tmrId)
 }
 #endif
 #endif
-

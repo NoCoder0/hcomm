@@ -29,15 +29,14 @@ typedef struct TagNetCoIpPortArg {
     unsigned short listenPort;
 } NetCoIpPortArg;
 
-__attribute__ ((visibility ("default"))) void *NetCoInitFactory(int epollfd, NetCoIpPortArg ipPortArg);
+__attribute__((visibility("default"))) void *NetCoInitFactory(int epollfd, NetCoIpPortArg ipPortArg);
 
-__attribute__ ((visibility ("default"))) void NetCoDestruct(void *co);
+__attribute__((visibility("default"))) void NetCoDestruct(void *co);
 
-__attribute__ ((visibility ("default"))) unsigned int NetCoFdEventDispatch(void *co, int fd, unsigned int curEvents);
+__attribute__((visibility("default"))) unsigned int NetCoFdEventDispatch(void *co, int fd, unsigned int curEvents);
 
-__attribute__ ((visibility ("default"))) int NetCoTblAddUpd(void *netcoHandle, unsigned int type, char *data,
+__attribute__((visibility("default"))) int NetCoTblAddUpd(void *netcoHandle, unsigned int type, char *data,
     unsigned int data_len);
-
 
 #ifdef __cplusplus
 }

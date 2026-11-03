@@ -2,9 +2,21 @@
 
 ## 产品支持情况
 
-- Ascend 950PR/Ascend 950DT：支持
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：支持
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：支持
+<!-- npu="950" id1 -->
+- Ascend 950PR&950DT系列产品：支持
+<!-- end id1 -->
+<!-- npu="A3" id2 -->
+- Atlas A3系列产品：支持
+<!-- end id2 -->
+<!-- npu="910b" id3 -->
+- Atlas A2系列产品：支持
+<!-- end id3 -->
+<!-- npu="910" id4 -->
+- Atlas训练系列产品：不支持
+<!-- end id4 -->
+<!-- npu="310p" id5 -->
+- Atlas推理系列产品：不支持
+<!-- end id5 -->
 
 ## 功能说明
 
@@ -30,23 +42,28 @@ int32_t：接口成功返回0，其他失败。
 ## 超时机制说明
 
 1. **默认超时时间**
-   - 默认超时时间通过[HcommSetNotifyWaitTimeOut](../communication_operations/HcommSetNotifyWaitTimeOut.md)接口设置
-   - 如果未设置，AICPU_TS模式下，Device侧默认超时时间为1836秒，Host侧默认超时时间为1836+50秒
+   - 默认超时时间通过[HcommSetNotifyWaitTimeOut](../communication_operations/HcommSetNotifyWaitTimeOut.md)接口设置。
+   - 如果未设置，AICPU_TS模式下，Device侧默认超时时间为1836秒，Host侧默认超时时间为1836+27秒。
 
 2. **超时生效条件**
-   - 已设置的超时时间将应用于本接口的等待操作
-   - 设置为0表示永久等待，不超时
-   - 设置大于0表示具体的超时时间（单位：秒）
+   - 已设置的超时时间将原样应用于本接口的等待操作，不再追加默认偏移量。
+   - 设置为0表示永久等待，不超时。
+   - 设置大于0表示具体的超时时间（单位：秒）。
 
 3. **非AICPU_TS模式特殊处理**
-   - 在非AICPU_TS模式下，如果未手动设置默认超时时间，系统会自动在默认值基础上增加50秒的偏移量作为安全缓冲
+   - 在非AICPU_TS模式下，如果未手动设置默认超时时间，系统会自动在默认值基础上增加27秒的偏移量作为安全缓冲。
 
 ## 约束说明
 
 - 该接口需要配合[HcommThreadNotifyRecordOnThread](./HcommThreadNotifyRecordOnThread.md)使用。
-- 在Ascend 950PR/Ascend 950DT上，支持AICPU_TS模式在Device侧调用，也支持在Host CPU侧调用。
-- AICPU_TS模式下，在Host侧和Device侧调用该接口前，如需设置超时时间，需要各自调用[HcommSetNotifyWaitTimeOut](../communication_operations/HcommSetNotifyWaitTimeOut.md)设置，不调用设置接口则默认超时时间为1836秒（Host侧默认为1836+50秒）。
-- 针对Ascend 950PR/Ascend 950DT的AICPU_TS模式，`notifyIdx`必须小于本端Thread的Notify数量，且Thread创建时的`notifyNumPerThread`需大于0。
+<!-- npu="950" id6 -->
+- 在Ascend 950PR&950DT系列产品上，支持AICPU_TS模式在Device侧调用，也支持在Host CPU侧调用。
+<!-- end id6 -->
+- AICPU_TS模式下，在Host侧和Device侧调用该接口前，如需设置超时时间，需要各自调用[HcommSetNotifyWaitTimeOut](../communication_operations/HcommSetNotifyWaitTimeOut.md)设置，不调用设置接口则默认超时时间为1836秒（Host侧默认为1836+27秒）。
+<!-- npu="950" id7 -->
+- 针对Ascend 950PR&950DT系列产品的AICPU_TS模式，`notifyIdx`必须小于本端Thread的Notify数量，且Thread创建时的`notifyNumPerThread`需大于0。
+<!-- end id7 -->
+- 同一个`ThreadHandle`不支持多线程并发访问。
 
 ## 调用示例
 
@@ -71,8 +88,8 @@ HcommThreadNotifyRecordOnThread(threads[0], threads[1], notifyIdx);
 // 使用默认超时时间等待同步信号（无需手动传入超时参数）
 HcommThreadNotifyWaitOnThreadWithDefaultTimeout(threads[1], notifyIdx);
 ```
-
-在Ascend 950PR/Ascend 950DT上，该函数需要编译到Device侧使用：
+<!-- npu="950" id8 -->
+在Ascend 950PR&950DT系列产品上，该函数需要编译到Device侧使用：
 
 ```c
 HcclComm comm;
@@ -96,6 +113,7 @@ HcommThreadNotifyRecordOnThread(threads[0], threads[1], notifyIdx);
 // 使用默认超时时间等待同步信号（无需手动传入超时参数）
 HcommThreadNotifyWaitOnThreadWithDefaultTimeout(threads[1], notifyIdx);
 ```
+<!-- end id8 -->
 
 ## 相关接口
 

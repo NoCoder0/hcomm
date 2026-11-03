@@ -29,20 +29,11 @@ using namespace std;
 
 class OneSidedComponentLiteTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "OneSidedComponentLiteTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "OneSidedComponentLiteTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "OneSidedComponentLiteTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "OneSidedComponentLiteTest TearDown" << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in OneSidedComponentLiteTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in OneSidedComponentLiteTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -57,8 +48,7 @@ TEST_F(OneSidedComponentLiteTest, test_Orchestrate_should_failed)
     MemTransportLiteMgr transportLiteMgr{nullptr};
     CollAlgInfo collAlgInfo{OpMode::OPBASE, "tag"};
     RmtDataBufferMgr rmtDataBufferMgr{&transportLiteMgr, &collAlgInfo};
-    OneSidedComponentLite oneSidedComponentLite{0, 1, DevType::DEV_TYPE_950, 0, &connectedLinkMgr,
-    &rmtDataBufferMgr};
+    OneSidedComponentLite oneSidedComponentLite{0, 1, DevType::DEV_TYPE_950, 0, &connectedLinkMgr, &rmtDataBufferMgr};
 
     HcclAicpuOpLite aiCpuOpLite{};
     std::shared_ptr<InsQueue> insQueue = std::make_shared<InsQueue>();
@@ -71,8 +61,7 @@ TEST_F(OneSidedComponentLiteTest, test_Orchestrate_should_success)
     MemTransportLiteMgr transportLiteMgr{nullptr};
     CollAlgInfo collAlgInfo{OpMode::OPBASE, "tag"};
     RmtDataBufferMgr rmtDataBufferMgr{&transportLiteMgr, &collAlgInfo};
-    OneSidedComponentLite oneSidedComponentLite{0, 1, DevType::DEV_TYPE_950, 0, &connectedLinkMgr,
-    &rmtDataBufferMgr};
+    OneSidedComponentLite oneSidedComponentLite{0, 1, DevType::DEV_TYPE_950, 0, &connectedLinkMgr, &rmtDataBufferMgr};
 
     std::shared_ptr<InsQueue> insQueue = std::make_shared<InsQueue>();
     HcclAicpuOpLite aiCpuOpLite{};

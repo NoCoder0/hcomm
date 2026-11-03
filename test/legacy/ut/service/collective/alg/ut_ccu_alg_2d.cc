@@ -38,7 +38,7 @@
 #include "ccu_transport.h"
 #include "ccu_device_manager.h"
 #include "ccu_component.h"
-#include "ccu_res_specs.h"
+#include "ccu_res_specs_legacy.h"
 #include "ccu_rep.h"
 #include "ccu_ctx.h"
 #include "ccu_rep_translator.h"
@@ -56,41 +56,56 @@ using namespace CcuRep;
 // using namespace Ccu;
 class CcuMesh2DTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CcuMesh1DTest set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CcuMesh1DTest set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CcuMesh1DTest tear down" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CcuMesh1DTest tear down" << std::endl; }
 
-    virtual void SetUp() {
+    virtual void SetUp()
+    {
         JfcHandle jfcHandle = 1;
         MOCKER(HrtRaUbCreateJfc).defaults().will(returnValue(jfcHandle));
         std::cout << "A Test case in CcuMesh1DTest SetUP" << std::endl;
     }
 
-    virtual void TearDown () {
+    virtual void TearDown()
+    {
         GlobalMockObject::verify();
 
         std::cout << "A Test case in CcuMesh1DTest TearDown" << std::endl;
     }
 };
 
-HcclResult GetCcuRmaBufferStub(const int32_t deviceLogicId, const uint8_t dieId,
-    std::shared_ptr<LocalUbRmaBuffer>& ccuRmaBuffer);
+HcclResult
+GetCcuRmaBufferStub(const int32_t deviceLogicId, const uint8_t dieId, std::shared_ptr<LocalUbRmaBuffer>& ccuRmaBuffer);
 
 void MockDoOnce();
 
 HcclResult AllocChannelStub(
-    const int32_t deviceLogicId, const uint8_t dieId, const ChannelPara channelPara, ChannelInfo &channelInfo);
-HcclResult AllocCkeStub(
-    const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo> &ckeInfos);
-HcclResult AllocXnStub(
-    const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo> &xnInfos);
+    const int32_t deviceLogicId, const uint8_t dieId, const ChannelPara channelPara, ChannelInfo& channelInfo);
+HcclResult
+AllocCkeStub(const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo>& ckeInfos);
+HcclResult
+AllocXnStub(const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo>& xnInfos);
 
+void MockDoOnce() {}
+
+HcclResult
+AllocCkeStub(const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo>& ckeInfos)
+{
+    ckeInfos.clear();
+    ResInfo ckeInfo(0, num);
+    ckeInfos.push_back(ckeInfo);
+    return HcclResult::HCCL_SUCCESS;
+}
+
+HcclResult
+AllocXnStub(const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo>& xnInfos)
+{
+    xnInfos.clear();
+    ResInfo xnInfo(0, num);
+    xnInfos.push_back(xnInfo);
+    return HcclResult::HCCL_SUCCESS;
+}
 
 TEST_F(CcuMesh2DTest, CCU_A2A_Mesh_template)
 {
@@ -101,8 +116,8 @@ TEST_F(CcuMesh2DTest, CCU_A2A_Mesh_template)
     std::map<RankId, u32> tempVirtRankMap = {{0, 0}, {1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5}, {6, 6}, {7, 7}};
 
     // 开始执行
-    std::shared_ptr<CcuTempAlltoAllMesh2D> algoTemplate =
-        std::make_shared<CcuTempAlltoAllMesh2D>(myRank, rankSize, tempVTopo, tempVirtRankMap);
+    std::shared_ptr<CcuTempAlltoAllMesh2D> algoTemplate
+        = std::make_shared<CcuTempAlltoAllMesh2D>(myRank, rankSize, tempVTopo, tempVirtRankMap);
 
     // 结果验证
     EXPECT_NE(algoTemplate, nullptr);
@@ -116,8 +131,8 @@ TEST_F(CcuMesh2DTest, CCU_A2A_Mesh_CalcRes)
     std::map<RankId, u32> tempVirtRankMap = {{0, 0}, {1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5}, {6, 6}, {7, 7}};
     u32 rankSize = tempVirtRankMap.size();
 
-    std::shared_ptr<CcuTempAlltoAllMesh2D> algoTemplate =
-        std::make_shared<CcuTempAlltoAllMesh2D>(myRank, rankSize, tempVTopo, tempVirtRankMap);
+    std::shared_ptr<CcuTempAlltoAllMesh2D> algoTemplate
+        = std::make_shared<CcuTempAlltoAllMesh2D>(myRank, rankSize, tempVTopo, tempVirtRankMap);
 
     AlgTempResReq tempResReq;
 
@@ -127,7 +142,7 @@ TEST_F(CcuMesh2DTest, CCU_A2A_Mesh_CalcRes)
     // 结果验证
     EXPECT_EQ(tempResReq.queNum, 1);
     EXPECT_EQ(tempResReq.queNotifys.size(), 0);
-    std::vector<RankId> expextedLinkPeers = {1,2,3,4};
+    std::vector<RankId> expextedLinkPeers = {1, 2, 3, 4};
     EXPECT_EQ(tempResReq.links.size(), expextedLinkPeers.size());
     for (RankId rank : expextedLinkPeers) {
         EXPECT_EQ(tempResReq.links.count(rank), 1);
@@ -142,8 +157,8 @@ TEST_F(CcuMesh2DTest, CCU_A2A_Mesh_template_run)
     std::map<RankId, u32> tempVirtRankMap = {{0, 0}, {1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5}, {6, 6}, {7, 7}};
     u32 rankSize = tempVirtRankMap.size();
 
-    std::shared_ptr<CcuTempAlltoAllMesh2D> algoTemplate =
-        std::make_shared<CcuTempAlltoAllMesh2D>(myRank, rankSize, tempVTopo, tempVirtRankMap);
+    std::shared_ptr<CcuTempAlltoAllMesh2D> algoTemplate
+        = std::make_shared<CcuTempAlltoAllMesh2D>(myRank, rankSize, tempVTopo, tempVirtRankMap);
 
     u64 sliceSize = 1024;
     RankSliceInfo sliceInfoVec;
@@ -153,16 +168,16 @@ TEST_F(CcuMesh2DTest, CCU_A2A_Mesh_template_run)
     collAlgOp.dataCount = 64;
     uint64_t dataSize = collAlgOp.dataCount * 2;
     collAlgOp.inputMem = DevBuffer::Create(0x1000000, dataSize);
-    collAlgOp.outputMem = DevBuffer::Create(0x2000000, dataSize*rankSize);
-    collAlgOp.scratchMem = DevBuffer::Create(0x3000000, dataSize*rankSize);
+    collAlgOp.outputMem = DevBuffer::Create(0x2000000, dataSize * rankSize);
+    collAlgOp.scratchMem = DevBuffer::Create(0x3000000, dataSize * rankSize);
 
     algoTemplate->SetCollOp(collAlgOp);
 
     TempFuncs tempFuncs;
-    tempFuncs.opMode              = OpMode::OPBASE;
+    tempFuncs.opMode = OpMode::OPBASE;
     tempFuncs.enableCounterNotify = false;
-    tempFuncs.isForepart          = true; // Usr Buff to CCL Buff required
-    tempFuncs.isBottom            = true; // CCL Buff to Usr Buff required
+    tempFuncs.isForepart = true; // Usr Buff to CCL Buff required
+    tempFuncs.isBottom = true;   // CCL Buff to Usr Buff required
 
     BuffInfo buffInfo;
     ResLinks tempLinks;
@@ -186,7 +201,7 @@ TEST_F(CcuMesh2DTest, CCU_A2A_Mesh_template_run)
     std::vector<InsQuePtr> tempInsQues;
     tempInsQues.push_back(std::make_shared<InsQueue>());
     ASSERT_EQ(algoTemplate->Run(tempFuncs, sliceInfoVec, buffInfo, tempLinks, tempInsQues), HcclResult::HCCL_SUCCESS);
-    for(auto insQue : tempInsQues) {
+    for (auto insQue : tempInsQues) {
         for (auto iter = insQue->Iter(); iter.HasNext(); ++iter) {
             std::cout << iter->Describe() << std::endl;
         }
@@ -202,8 +217,8 @@ TEST_F(CcuMesh2DTest, CCU_A2A_Mesh_sole_executor)
 
     RankId myRank = 0;
     u32 rankSize = 4;
-    std::unique_ptr<InsAlltoAllSoleExecutor<TopoMatchConcurrMesh, CcuTempAlltoAllMesh2D>>
-        algoExecutor(new InsAlltoAllSoleExecutor<TopoMatchConcurrMesh, CcuTempAlltoAllMesh2D>);
+    std::unique_ptr<InsAlltoAllSoleExecutor<TopoMatchConcurrMesh, CcuTempAlltoAllMesh2D>> algoExecutor(
+        new InsAlltoAllSoleExecutor<TopoMatchConcurrMesh, CcuTempAlltoAllMesh2D>);
 
     algoExecutor->SetMyRank(myRank);
     algoExecutor->SetRankSize(rankSize);
@@ -220,8 +235,8 @@ TEST_F(CcuMesh2DTest, CCU_A2A_Mesh_sole_executor)
     collAlgOp.all2AllDataDes.recvCount = 64;
     uint64_t dataSize = collAlgOp.dataCount * 2;
     collAlgOp.inputMem = DevBuffer::Create(0x1000000, dataSize);
-    collAlgOp.outputMem = DevBuffer::Create(0x2000000, dataSize*rankSize);
-    collAlgOp.scratchMem = DevBuffer::Create(0x3000000, dataSize*rankSize);
+    collAlgOp.outputMem = DevBuffer::Create(0x2000000, dataSize * rankSize);
+    collAlgOp.scratchMem = DevBuffer::Create(0x3000000, dataSize * rankSize);
 
     CollAlgParams collAlgParams;
     collAlgParams.opMode = OpMode::OPBASE;
@@ -229,8 +244,8 @@ TEST_F(CcuMesh2DTest, CCU_A2A_Mesh_sole_executor)
 
     CollAlgResReq resReq;
     auto ret = algoExecutor->CalcRes(&virtTopo, resReq);
-    EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);     // check return
-    EXPECT_EQ(resReq.primQueueNum, 2);       // check required sub queue num
+    EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS); // check return
+    EXPECT_EQ(resReq.primQueueNum, 2);        // check required sub queue num
 
     std::shared_ptr<InsQueue> insQue(new InsQueue);
 
@@ -240,7 +255,7 @@ TEST_F(CcuMesh2DTest, CCU_A2A_Mesh_sole_executor)
 
     ret = algoExecutor->Orchestrate(&virtTopo, collAlgOp, collAlgParams, insQue);
 
-    EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);  // check return
+    EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS); // check return
     EXPECT_EQ(insQue->SizeOfSlaves(), 0);
 
     for (auto iter = insQue->Iter(); iter.HasNext(); ++iter) {
@@ -249,7 +264,7 @@ TEST_F(CcuMesh2DTest, CCU_A2A_Mesh_sole_executor)
 }
 
 HcclResult CtxMgrAllocCkeStubAlg(
-    const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo> &ckeInfos)
+    const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo>& ckeInfos)
 {
     ckeInfos.clear();
     ResInfo ckeInfo(0, num);
@@ -257,7 +272,7 @@ HcclResult CtxMgrAllocCkeStubAlg(
     return HcclResult::HCCL_SUCCESS;
 }
 HcclResult CtxMgrAllocXnStubAlg(
-    const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo> &xnInfos)
+    const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, std::vector<ResInfo>& xnInfos)
 {
     xnInfos.clear();
     ResInfo xnInfo(0, num);
@@ -265,15 +280,14 @@ HcclResult CtxMgrAllocXnStubAlg(
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CtxMgrAllocResHandleStubAlg(
-    const int32_t deviceLogicId, const CcuResReq resReq, CcuResHandle &handle)
+HcclResult CtxMgrAllocResHandleStubAlg(const int32_t deviceLogicId, const CcuResReq resReq, CcuResHandle& handle)
 {
     handle = reinterpret_cast<CcuResHandle>(0x100);
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CtxMgrGetResourceStubAlg(
-    const int32_t deviceLogicId, const CcuResHandle handle, CcuResRepository &ccuResRepo)
+HcclResult
+CtxMgrGetResourceStubAlg(const int32_t deviceLogicId, const CcuResHandle handle, CcuResRepository& ccuResRepo)
 {
     ccuResRepo.blockMs[0].resize(1);
     ccuResRepo.blockMs[0][0].startId = 0;
@@ -296,6 +310,13 @@ HcclResult CtxMgrGetResourceStubAlg(
     ccuResRepo.blockCke[1][0].startId = 0;
     ccuResRepo.blockCke[1][0].num = 64;
 
+    ccuResRepo.legacyBlockCke[0].resize(1);
+    ccuResRepo.legacyBlockCke[0][0].startId = 0;
+    ccuResRepo.legacyBlockCke[0][0].num = 64;
+    ccuResRepo.legacyBlockCke[1].resize(1);
+    ccuResRepo.legacyBlockCke[1][0].startId = 0;
+    ccuResRepo.legacyBlockCke[1][0].num = 64;
+
     ccuResRepo.blockLoopEngine[0].resize(1);
     ccuResRepo.blockLoopEngine[0][0].startId = 0;
     ccuResRepo.blockLoopEngine[0][0].num = 64;
@@ -310,12 +331,33 @@ HcclResult CtxMgrGetResourceStubAlg(
     ccuResRepo.gsa[1][0].startId = 0;
     ccuResRepo.gsa[1][0].num = 100;
 
+    ccuResRepo.blockGsa[0].resize(1);
+    ccuResRepo.blockGsa[0][0].startId = 0;
+    ccuResRepo.blockGsa[0][0].num = 100;
+    ccuResRepo.blockGsa[1].resize(1);
+    ccuResRepo.blockGsa[1][0].startId = 0;
+    ccuResRepo.blockGsa[1][0].num = 100;
+
     ccuResRepo.xn[0].resize(1);
     ccuResRepo.xn[0][0].startId = 1024;
     ccuResRepo.xn[0][0].num = 1536;
     ccuResRepo.xn[1].resize(1);
     ccuResRepo.xn[1][0].startId = 1024;
     ccuResRepo.xn[1][0].num = 1536;
+
+    ccuResRepo.blockXn[0].resize(1);
+    ccuResRepo.blockXn[0][0].startId = 1024;
+    ccuResRepo.blockXn[0][0].num = 1536;
+    ccuResRepo.blockXn[1].resize(1);
+    ccuResRepo.blockXn[1][0].startId = 1024;
+    ccuResRepo.blockXn[1][0].num = 1536;
+
+    ccuResRepo.legacyBlockXn[0].resize(1);
+    ccuResRepo.legacyBlockXn[0][0].startId = 1024;
+    ccuResRepo.legacyBlockXn[0][0].num = 1536;
+    ccuResRepo.legacyBlockXn[1].resize(1);
+    ccuResRepo.legacyBlockXn[1][0].startId = 1024;
+    ccuResRepo.legacyBlockXn[1][0].num = 1536;
 
     ccuResRepo.mission.mission[0].resize(1);
     ccuResRepo.mission.mission[0][0].startId = 0;
@@ -327,41 +369,36 @@ HcclResult CtxMgrGetResourceStubAlg(
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CtxMgrReleaseResHandleStubAlg(
-    const int32_t deviceLogicId, const CcuResHandle handle)
+HcclResult CtxMgrReleaseResHandleStubAlg(const int32_t deviceLogicId, const CcuResHandle handle)
 {
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CtxMgrAllocInsStubAlg(
-    const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, ResInfo &insInfo)
+HcclResult CtxMgrAllocInsStubAlg(const int32_t deviceLogicId, const uint8_t dieId, const uint32_t num, ResInfo& insInfo)
 {
     insInfo = ResInfo(0, num);
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CtxMgrReleaseInsStubAlg(
-    const int32_t deviceLogicId, const uint8_t dieId, ResInfo &insInfo)
+HcclResult CtxMgrReleaseInsStubAlg(const int32_t deviceLogicId, const uint8_t dieId, ResInfo& insInfo)
 {
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CtxMgrGetMissionKeyStubAlg(
-    const int32_t deviceLogicId, const uint8_t dieId, uint32_t &missionKey)
+HcclResult CtxMgrGetMissionKeyStubAlg(const int32_t deviceLogicId, const uint8_t dieId, uint32_t& missionKey)
 {
     missionKey = 0xFF;
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CtxMgrGetInstructionNumStubAlg(
-    const int32_t deviceLogicId, const uint8_t dieId, uint32_t &instrNum)
+HcclResult CtxMgrGetInstructionNumStubAlg(const int32_t deviceLogicId, const uint8_t dieId, uint32_t& instrNum)
 {
     instrNum = 0xFF;
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CcuResourceMangerGetLoopChannelIdStub(const int32_t deviceLogicId, const uint8_t srcDieId, const uint8_t dstDieId,
-    uint32_t &channIdx)
+HcclResult CcuResourceMangerGetLoopChannelIdStub(
+    const int32_t deviceLogicId, const uint8_t srcDieId, const uint8_t dstDieId, uint32_t& channIdx)
 {
     if (dstDieId == 0) {
         channIdx = 126;
@@ -370,11 +407,11 @@ HcclResult CcuResourceMangerGetLoopChannelIdStub(const int32_t deviceLogicId, co
     }
     return HcclResult::HCCL_SUCCESS;
 }
- 
+
 TEST_F(CcuMesh2DTest, CCU_A2A_Mesh_sole_context)
 {
-	MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-	MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(0)));
+    MOCKER(HrtGetDevice).stubs().will(returnValue(0));
+    MOCKER(HrtGetDevicePhyIdByUserDevId).stubs().will(returnValue(static_cast<DevId>(0)));
     MOCKER(CcuDeviceManager::ReleaseCke).stubs().will(returnValue(HcclResult::HCCL_SUCCESS));
     MOCKER_CPP(&CcuTransportGroup::CheckTransports).stubs().with(mockcpp::any()).will(returnValue(true));
     MOCKER_CPP(&CcuTransportGroup::CheckTransportCntCke).stubs().will(returnValue(HcclResult::HCCL_SUCCESS));
@@ -383,8 +420,12 @@ TEST_F(CcuMesh2DTest, CCU_A2A_Mesh_sole_context)
     MOCKER_CPP(&CcuConnection::ReleaseConnRes).stubs().will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
     MOCKER(CcuDeviceManager::AllocCke).stubs().will(invoke(CtxMgrAllocCkeStubAlg));
     MOCKER(CcuDeviceManager::AllocXn).stubs().will(invoke(CtxMgrAllocXnStubAlg));
-    MOCKER_CPP(&CcuDeviceManager::GetCcuResourceSpaceTokenInfoForLocal).stubs().will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
-    MOCKER_CPP(&CcuDeviceManager::GetCcuResourceSpaceTokenInfo).stubs().will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
+    MOCKER_CPP(&CcuDeviceManager::GetCcuResourceSpaceTokenInfoForLocal)
+        .stubs()
+        .will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
+    MOCKER_CPP(&CcuDeviceManager::GetCcuResourceSpaceTokenInfo)
+        .stubs()
+        .will(returnValue((HcclResult)HcclResult::HCCL_SUCCESS));
     MOCKER(CcuDeviceManager::AllocResHandle).stubs().will(invoke(CtxMgrAllocResHandleStubAlg));
     MOCKER(CcuDeviceManager::GetResource).stubs().will(invoke(CtxMgrGetResourceStubAlg));
     MOCKER(CcuDeviceManager::ReleaseResHandle).stubs().will(invoke(CtxMgrReleaseResHandleStubAlg));
@@ -395,11 +436,10 @@ TEST_F(CcuMesh2DTest, CCU_A2A_Mesh_sole_context)
 
     MOCKER(HrtMemcpy).stubs();
 
-
     MOCKER(CcuDeviceManager::AllocCke).stubs().will(invoke(AllocCkeStub));
     MOCKER(CcuDeviceManager::AllocXn).stubs().will(invoke(AllocXnStub));
     MOCKER(HrtGetDeviceType).stubs().will(returnValue((DevType)DevType::DEV_TYPE_950));
-    MOCKER(CcuDeviceManager::GetLoopChannelId).stubs().will(invoke(CcuResourceMangerGetLoopChannelIdStub)); 
+    MOCKER(CcuDeviceManager::GetLoopChannelId).stubs().will(invoke(CcuResourceMangerGetLoopChannelIdStub));
     MOCKER(&CcuDeviceManager::GetXnBaseAddr)
         .stubs()
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any())
@@ -410,12 +450,12 @@ TEST_F(CcuMesh2DTest, CCU_A2A_Mesh_sole_context)
         .with(mockcpp::any(), mockcpp::any(), mockcpp::any(), mockcpp::any())
         .will(returnValue(HcclResult::HCCL_SUCCESS));
     MockDoOnce();
- 
+
     CollAlgOperator collAlgOp;
     collAlgOp.opType = OpType::ALLTOALL;
     collAlgOp.dataType = DataType::INT8;
     collAlgOp.dataCount = 4;
- 
+
     uint32_t rankId = 2;
     uint32_t rankSize = 4;
     std::vector<uint32_t> dimSize = {2, 2};
@@ -440,18 +480,19 @@ TEST_F(CcuMesh2DTest, CCU_A2A_Mesh_sole_context)
                 BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
                 LinkData linkData(portType, 0, 1, 0, 1);
                 CcuChannelInfo channelInfo;
-                vector<CcuJetty *> ccuJettys;
-                auto c = std::make_unique<CcuConnection>(linkData.GetLocalAddr(), linkData.GetRemoteAddr(), channelInfo, ccuJettys);
+                vector<CcuJetty*> ccuJettys;
+                auto c = std::make_unique<CcuConnection>(
+                    linkData.GetLocalAddr(), linkData.GetRemoteAddr(), channelInfo, ccuJettys);
                 CcuTransport::CclBufferInfo locCclBufInfo;
                 c->channelInfo_.channelId = i;
                 c->dieId = axisId;
                 std::shared_ptr<CcuTransport> t = std::make_shared<CcuTransport>(nullptr, std::move(c), locCclBufInfo);
                 t->dieId = axisId;
-                t->AppendRes(4,3);
+                t->AppendRes(4, 3);
                 t->SetCntCke(cntCke0);
                 t->rmtRes.cntCkes = {1128, 1129, 1130, 1131};
                 t->rmtRes.xns = {1024 + rankId, 1024 + rankSize + rankId, 1024 + rankSize * 2 + rankId};
-                transportInstances0.push_back(t);   // ???
+                transportInstances0.push_back(t); // ???
                 transports0.push_back(t.get());
             }
         }
@@ -472,18 +513,19 @@ TEST_F(CcuMesh2DTest, CCU_A2A_Mesh_sole_context)
                 BasePortType portType(PortDeploymentType::DEV_NET, ConnectProtoType::UB);
                 LinkData linkData(portType, 0, 1, 0, 1);
                 CcuChannelInfo channelInfo;
-                vector<CcuJetty *> ccuJettys;
-                auto c = std::make_unique<CcuConnection>(linkData.GetLocalAddr(), linkData.GetRemoteAddr(), channelInfo, ccuJettys);
+                vector<CcuJetty*> ccuJettys;
+                auto c = std::make_unique<CcuConnection>(
+                    linkData.GetLocalAddr(), linkData.GetRemoteAddr(), channelInfo, ccuJettys);
                 CcuTransport::CclBufferInfo locCclBufInfo;
                 c->channelInfo_.channelId = i;
                 c->dieId = axisId;
                 std::shared_ptr<CcuTransport> t = std::make_shared<CcuTransport>(nullptr, std::move(c), locCclBufInfo);
                 t->dieId = axisId;
-                t->AppendRes(4,3);
+                t->AppendRes(4, 3);
                 t->SetCntCke(cntCke1);
                 t->rmtRes.cntCkes = {1128, 1129, 1130, 1131};
                 t->rmtRes.xns = {1024 + rankId, 1024 + rankSize + rankId, 1024 + rankSize * 2 + rankId};
-                transportInstances1.push_back(t);   // ???
+                transportInstances1.push_back(t); // ???
                 transports1.push_back(t.get());
             }
         }
@@ -500,7 +542,7 @@ TEST_F(CcuMesh2DTest, CCU_A2A_Mesh_sole_context)
         CcuResPack resPack;
         EXPECT_EQ(CcuCtxMgr::AllocRes(deviceLogicId, ctxGroup, resPack), HCCL_SUCCESS);
 
-        // 注册指令      
+        // 注册指令
         InsExeQue::ExtInsExeEntity entity;
         entity.ctxGroup = std::move(ctxGroup);
         InsExeQue::ExtInsExeEntityId entityId = 0;

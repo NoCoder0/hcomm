@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef ALL_GATHER_GRAPH_PIPELINE_PUB_H
 #define ALL_GATHER_GRAPH_PIPELINE_PUB_H
@@ -20,10 +20,11 @@ public:
     explicit AllGatherGraphPipeline(const HcclDispatcher dispatcher);
     ~AllGatherGraphPipeline() override;
 
-    HcclResult Prepare(HcomCollOpInfo *opInfo, u32 userRank, u64 &count, DeviceMem &inputMem, DeviceMem &outputMem,
-        SubCommInfo &level0CommInfo, SubCommInfo &level1CommInfo, Stream &mainStream, std::vector<Stream> &subStream,
-        std::vector<std::shared_ptr<LocalNotify>> &notifyMain,
-        std::vector<std::shared_ptr<LocalNotify>> &notifySub) override;
+    HcclResult Prepare(
+        HcomCollOpInfo* opInfo, u32 userRank, u64& count, DeviceMem& inputMem, DeviceMem& outputMem,
+        SubCommInfo& level0CommInfo, SubCommInfo& level1CommInfo, Stream& mainStream, std::vector<Stream>& subStream,
+        std::vector<std::shared_ptr<LocalNotify>>& notifyMain,
+        std::vector<std::shared_ptr<LocalNotify>>& notifySub) override;
 
     HcclResult RunAsync() override;
 
@@ -34,12 +35,12 @@ private:
     HcclResult MainWaitSub();
     HcclResult SubRecordMain();
 
-    HcomCollOpInfo *opInfo_ = nullptr;
+    HcomCollOpInfo* opInfo_ = nullptr;
     u64 memSliceCount_ = 0;
     u32 userRank_ = 0;
 
-    void *usrInMemAddr_ = nullptr;
-    void *usrOutMemAddr_ = nullptr;
+    void* usrInMemAddr_ = nullptr;
+    void* usrOutMemAddr_ = nullptr;
     std::vector<DeviceMem> dmaMem_;
 
     std::vector<Stream> subStream_;
@@ -55,6 +56,6 @@ private:
     std::vector<LINK> intraLinks_;
     std::vector<LINK> interLinks_;
 };
-}  // namespace hccl
+} // namespace hccl
 
 #endif /* ALL_GATHER_GRAPH_PIPELINE_PUB_H */

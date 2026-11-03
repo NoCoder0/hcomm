@@ -50,9 +50,10 @@ struct tagBkfFsmTmpl {
 /* fsm */
 #define BKF_FSM_SIGN 0xa8
 
-#define BKF_FSM_GET_APP_DATA_STR(fsm, buf, bufLen)         \
-    ((fsm)->tmpl->argInit.getAppDataStrOrNull != VOS_NULL) ? \
-        (fsm)->tmpl->argInit.getAppDataStrOrNull((fsm), (buf), (bufLen)) : "-"
+#define BKF_FSM_GET_APP_DATA_STR(fsm, buf, bufLen)                                                                     \
+    ((fsm)->tmpl->argInit.getAppDataStrOrNull != VOS_NULL)                                                             \
+        ? (fsm)->tmpl->argInit.getAppDataStrOrNull((fsm), (buf), (bufLen))                                             \
+        : "-"
 
 struct tagBkfFsmStatInfo {
     uint64_t dispatchTotalCnt;
@@ -67,12 +68,13 @@ struct tagBkfFsmStatInfo {
     uint32_t chgStateOkCnt;
     uint32_t stateTransCnt[0]; /* 占位符 */
 };
-#define BKF_FSM_INC_STAT(fsm, statField) do { \
-    ((fsm)->tmpl->statField)++;               \
-    if ((fsm)->statInfo != VOS_NULL) {        \
-        ((fsm)->statInfo->statField)++;       \
-    }                                         \
-} while (0)
+#define BKF_FSM_INC_STAT(fsm, statField)                                                                               \
+    do {                                                                                                               \
+        ((fsm)->tmpl->statField)++;                                                                                    \
+        if ((fsm)->statInfo != VOS_NULL) {                                                                             \
+            ((fsm)->statInfo->statField)++;                                                                            \
+        }                                                                                                              \
+    } while (0)
 
 STATIC void BkfFsmTmplInitDisp(BkfFsmTmpl *fsmTmpl);
 STATIC void BkfFsmTmplUninitDisp(BkfFsmTmpl *fsmTmpl);
@@ -87,8 +89,8 @@ BkfFsmTmpl *BkfFsmTmplInit(BkfFsmTmplInitArg *arg)
     BkfFsmTmpl *fsmTmpl = VOS_NULL;
     uint32_t len;
 
-    argIsValid = (arg != VOS_NULL) && (arg->name != VOS_NULL) && (arg->memMng != VOS_NULL) &&
-                 (arg->disp != VOS_NULL) && (arg->stateStrTbl != VOS_NULL) && (arg->evtStrTbl != VOS_NULL) &&
+    argIsValid = (arg != VOS_NULL) && (arg->name != VOS_NULL) && (arg->memMng != VOS_NULL) && (arg->disp != VOS_NULL) &&
+                 (arg->stateStrTbl != VOS_NULL) && (arg->evtStrTbl != VOS_NULL) &&
                  (arg->stateEvtProcItemMtrx != VOS_NULL);
     if (!argIsValid) {
         goto error;
@@ -144,7 +146,7 @@ const char *BkfFsmTmplGetStateStr(BkfFsmTmpl *fsmTmpl, uint8_t state)
         return "STATE_fsmTmpl_invalid";
     }
 
-    stateStr = (char*)fsmTmpl->argInit.stateStrTbl[state];
+    stateStr = (char *)fsmTmpl->argInit.stateStrTbl[state];
     outputStr = VOS_StrStr(stateStr, findStr);
     return (outputStr != VOS_NULL) ? outputStr : stateStr;
 }
@@ -162,11 +164,10 @@ const char *BkfFsmTmplGetEvtStr(BkfFsmTmpl *fsmTmpl, uint8_t evt)
         return "EVT_fsmTmpl_invalid";
     }
 
-    evtStr = (char*)fsmTmpl->argInit.evtStrTbl[evt];
+    evtStr = (char *)fsmTmpl->argInit.evtStrTbl[evt];
     outputStr = VOS_StrStr(evtStr, findStr);
     return (outputStr != VOS_NULL) ? outputStr : evtStr;
 }
-
 
 uint32_t BkfFsmInit(BkfFsm *fsm, BkfFsmTmpl *fsmTmpl)
 {
@@ -193,8 +194,8 @@ uint32_t BkfFsmInit(BkfFsm *fsm, BkfFsmTmpl *fsmTmpl)
     BKF_SIGN_SET(fsm->sign, BKF_FSM_SIGN);
 
     fsmTmpl->fsmCnt++;
-    BKF_LOG_DEBUG(BKF_LOG_HND, "fsm(%#x)/appData(%s), init ok\n",
-                  BKF_MASK_ADDR(fsm), BKF_FSM_GET_APP_DATA_STR(fsm, buf, sizeof(buf)));
+    BKF_LOG_DEBUG(BKF_LOG_HND, "fsm(%#x)/appData(%s), init ok\n", BKF_MASK_ADDR(fsm),
+        BKF_FSM_GET_APP_DATA_STR(fsm, buf, sizeof(buf)));
     return BKF_OK;
 
 error:
@@ -211,8 +212,8 @@ void BkfFsmUninit(BkfFsm *fsm)
         return;
     }
     fsmTmpl = fsm->tmpl;
-    BKF_LOG_DEBUG(BKF_LOG_HND, "fsm(%#x)/appData(%s), 2uninit\n",
-                  BKF_MASK_ADDR(fsm), BKF_FSM_GET_APP_DATA_STR(fsm, buf, sizeof(buf)));
+    BKF_LOG_DEBUG(BKF_LOG_HND, "fsm(%#x)/appData(%s), 2uninit\n", BKF_MASK_ADDR(fsm),
+        BKF_FSM_GET_APP_DATA_STR(fsm, buf, sizeof(buf)));
 
     fsm->tmpl->fsmCnt--;
     if (fsm->statInfo != VOS_NULL) {
@@ -234,16 +235,14 @@ uint32_t BkfFsmDispatchChkParam(BkfFsm *fsm, uint8_t evt)
     BKF_FSM_INC_STAT(fsm, dispatchTotalCnt);
 
     if (!BKF_FSM_STATE_IS_VALID(fsmTmpl, fsm->state)) {
-        BKF_LOG_ERROR(BKF_LOG_HND, "fsm(%#x)/appData(%s), fsm cur state(%u/[0, %u)) is invalid\n",
-                      BKF_MASK_ADDR(fsm), BKF_FSM_GET_APP_DATA_STR(fsm, buf, sizeof(buf)),
-                      fsm->state, fsmTmpl->argInit.stateCnt);
+        BKF_LOG_ERROR(BKF_LOG_HND, "fsm(%#x)/appData(%s), fsm cur state(%u/[0, %u)) is invalid\n", BKF_MASK_ADDR(fsm),
+            BKF_FSM_GET_APP_DATA_STR(fsm, buf, sizeof(buf)), fsm->state, fsmTmpl->argInit.stateCnt);
         BKF_FSM_INC_STAT(fsm, dispatchFsmCurStateNgCnt);
         return BKF_ERR;
     }
     if (!BKF_FSM_EVT_IS_VALID(fsmTmpl, evt)) {
-        BKF_LOG_ERROR(BKF_LOG_HND, "fsm(%#x)/appData(%s), input evt(%u/[0, %u)) is invalid\n",
-                      BKF_MASK_ADDR(fsm), BKF_FSM_GET_APP_DATA_STR(fsm, buf, sizeof(buf)),
-                      evt, fsmTmpl->argInit.evtCnt);
+        BKF_LOG_ERROR(BKF_LOG_HND, "fsm(%#x)/appData(%s), input evt(%u/[0, %u)) is invalid\n", BKF_MASK_ADDR(fsm),
+            BKF_FSM_GET_APP_DATA_STR(fsm, buf, sizeof(buf)), evt, fsmTmpl->argInit.evtCnt);
         BKF_FSM_INC_STAT(fsm, dispatchInputEvtNgCnt);
         return BKF_ERR;
     }
@@ -263,19 +262,16 @@ uint32_t BkfFsmDispatch(BkfFsm *fsm, uint8_t evt, void *dispatchParam1, void *di
     }
     fsmTmpl = fsm->tmpl;
 
-    procItem = (BkfFsmProcItem*)BKF_GET_ARY_SIM_MTRX_ITEM(fsmTmpl->argInit.stateEvtProcItemMtrx,
-                                                          fsmTmpl->argInit.evtCnt, fsm->state, evt);
+    procItem = (BkfFsmProcItem *)BKF_GET_ARY_SIM_MTRX_ITEM(fsmTmpl->argInit.stateEvtProcItemMtrx,
+        fsmTmpl->argInit.evtCnt, fsm->state, evt);
     BKF_LOG_DEBUG(BKF_LOG_HND, "before_dispatch: fsm(%#x)/appData(%s), state(%u/%s)/evt(%u/%s)/proc(%#x/%s)\n",
-                  BKF_MASK_ADDR(fsm), BKF_FSM_GET_APP_DATA_STR(fsm, buf, sizeof(buf)),
-                  fsm->state, BkfFsmTmplGetStateStr(fsmTmpl, fsm->state),
-                  evt, BkfFsmTmplGetEvtStr(fsmTmpl, evt),
-                  BKF_MASK_ADDR(procItem->proc), procItem->procStr);
+        BKF_MASK_ADDR(fsm), BKF_FSM_GET_APP_DATA_STR(fsm, buf, sizeof(buf)), fsm->state,
+        BkfFsmTmplGetStateStr(fsmTmpl, fsm->state), evt, BkfFsmTmplGetEvtStr(fsmTmpl, evt),
+        BKF_MASK_ADDR(procItem->proc), procItem->procStr);
     if (procItem->proc == BKF_FSM_PROC_IMPOSSIBLE) {
-        BKF_LOG_ERROR(BKF_LOG_HND, "fsm(%#x)/appData(%s), state(%u/%s)/evt(%u/%s)/proc(%u/%s)\n",
-                      BKF_MASK_ADDR(fsm), BKF_FSM_GET_APP_DATA_STR(fsm, buf, sizeof(buf)),
-                      fsm->state, BkfFsmTmplGetStateStr(fsmTmpl, fsm->state),
-                      evt, BkfFsmTmplGetEvtStr(fsmTmpl, evt),
-                      BKF_MASK_ADDR(procItem->proc), procItem->procStr);
+        BKF_LOG_ERROR(BKF_LOG_HND, "fsm(%#x)/appData(%s), state(%u/%s)/evt(%u/%s)/proc(%u/%s)\n", BKF_MASK_ADDR(fsm),
+            BKF_FSM_GET_APP_DATA_STR(fsm, buf, sizeof(buf)), fsm->state, BkfFsmTmplGetStateStr(fsmTmpl, fsm->state),
+            evt, BkfFsmTmplGetEvtStr(fsmTmpl, evt), BKF_MASK_ADDR(procItem->proc), procItem->procStr);
         BKF_FSM_INC_STAT(fsm, dispatchProcImpossibleCnt);
         return BKF_FSM_DISPATCH_RET_IMPOSSIBLE;
     }
@@ -314,21 +310,19 @@ uint32_t BkfFsmChgState(BkfFsm *fsm, uint8_t newState)
     BKF_FSM_INC_STAT(fsm, chgStateTotalCnt);
 
     if (!BKF_FSM_STATE_IS_VALID(fsmTmpl, newState)) {
-        BKF_LOG_ERROR(BKF_LOG_HND, "fsm(%#x)/appData(%s), new state(%u/[0, %u)) is invalid\n",
-                      BKF_MASK_ADDR(fsm), BKF_FSM_GET_APP_DATA_STR(fsm, buf, sizeof(buf)),
-                      fsm->state, newState);
+        BKF_LOG_ERROR(BKF_LOG_HND, "fsm(%#x)/appData(%s), new state(%u/[0, %u)) is invalid\n", BKF_MASK_ADDR(fsm),
+            BKF_FSM_GET_APP_DATA_STR(fsm, buf, sizeof(buf)), fsm->state, newState);
         BKF_FSM_INC_STAT(fsm, chgStateNewStateInvalidCnt);
         return BKF_ERR;
     }
 
-    BKF_LOG_DEBUG(BKF_LOG_HND, "fsm(%#x)/appData(%s), state(%u, %s) -> (%u, %s), chg_ok\n",
-                  BKF_MASK_ADDR(fsm), BKF_FSM_GET_APP_DATA_STR(fsm, buf, sizeof(buf)),
-                  fsm->state, BkfFsmTmplGetStateStr(fsmTmpl, fsm->state),
-                  newState, BkfFsmTmplGetStateStr(fsmTmpl, newState));
+    BKF_LOG_DEBUG(BKF_LOG_HND, "fsm(%#x)/appData(%s), state(%u, %s) -> (%u, %s), chg_ok\n", BKF_MASK_ADDR(fsm),
+        BKF_FSM_GET_APP_DATA_STR(fsm, buf, sizeof(buf)), fsm->state, BkfFsmTmplGetStateStr(fsmTmpl, fsm->state),
+        newState, BkfFsmTmplGetStateStr(fsmTmpl, newState));
     BKF_FSM_INC_STAT(fsm, chgStateOkCnt);
     if ((fsm->statInfo != VOS_NULL) && BKF_FSM_STATE_IS_VALID(fsmTmpl, fsm->state)) {
-        stateTransCnt = BKF_GET_ARY_SIM_MTRX_ITEM(fsm->statInfo->stateTransCnt, fsmTmpl->argInit.stateCnt,
-                                                  fsm->state, newState);
+        stateTransCnt = BKF_GET_ARY_SIM_MTRX_ITEM(fsm->statInfo->stateTransCnt, fsmTmpl->argInit.stateCnt, fsm->state,
+            newState);
         (*stateTransCnt)++;
     }
     BkfFsmStateChgSpy(fsm, newState);
@@ -338,6 +332,8 @@ uint32_t BkfFsmChgState(BkfFsm *fsm, uint8_t newState)
 
 void BkfFsmStateChgSpy(BkfFsm *fsm, uint8_t newState)
 {
+    (void)fsm;
+    (void)newState;
 }
 
 const char *BkfFsmGetStateStr(BkfFsm *fsm)
@@ -366,12 +362,13 @@ char *BkfFsmGetStrChkParam(BkfFsm *fsm, uint8_t *buf, int32_t bufLen)
         return "buf_invalid";
     }
     if (!BKF_SIGN_IS_VALID(fsm->sign, BKF_FSM_SIGN)) {
-        ret = snprintf_truncated_s((char *)buf, (uint32_t)bufLen, "sign(%#x, %#x), not equ, ng", fsm->sign, BKF_FSM_SIGN);
+        ret = snprintf_truncated_s((char *)buf, (uint32_t)bufLen, "sign(%#x, %#x), not equ, ng", fsm->sign,
+            BKF_FSM_SIGN);
         if (ret < 0) {
             goto error;
         }
 
-        return (char*)buf;
+        return (char *)buf;
     }
     if (fsmTmpl == VOS_NULL) {
         ret = snprintf_truncated_s((char *)buf, (uint32_t)bufLen, "tmpl(%#x), null & ng", BKF_MASK_ADDR(fsmTmpl));
@@ -379,7 +376,7 @@ char *BkfFsmGetStrChkParam(BkfFsm *fsm, uint8_t *buf, int32_t bufLen)
             goto error;
         }
 
-        return (char*)buf;
+        return (char *)buf;
     }
 
     return VOS_NULL;
@@ -395,8 +392,8 @@ int32_t BkfFsmAppendStateTransInfoStrGetTitle(BkfFsmTmpl *fsmTmpl, uint8_t *buf,
     int32_t usedLen = 0;
 
     for (stateTo = 0; stateTo < fsmTmpl->argInit.stateCnt; stateTo++) {
-        ret = snprintf_truncated_s((char *)buf + usedLen, (uint32_t)bufLen - usedLen, "State%-3u: %s\n",
-                                   stateTo, BkfFsmTmplGetStateStr(fsmTmpl, stateTo));
+        ret = snprintf_truncated_s((char *)buf + usedLen, (uint32_t)bufLen - usedLen, "State%-3u: %s\n", stateTo,
+            BkfFsmTmplGetStateStr(fsmTmpl, stateTo));
         if (ret < 0) {
             return ret;
         }
@@ -460,7 +457,7 @@ int32_t BkfFsmAppendStateTransInfoStr(BkfFsm *fsm, uint8_t *buf, int32_t bufLen)
 
         for (stateTo = 0; stateTo < fsmTmpl->argInit.stateCnt; stateTo++) {
             stateTransCnt = BKF_GET_ARY_SIM_MTRX_ITEM(fsm->statInfo->stateTransCnt, fsmTmpl->argInit.stateCnt,
-                                                      stateFrom, stateTo);
+                stateFrom, stateTo);
             /* 注意，由于输出缓冲大小，需要控制输出字符数，因此，stateTransCnt不和title对齐。 */
             ret = snprintf_truncated_s((char *)buf + usedLen, (uint32_t)bufLen - usedLen, "|%-8u", *stateTransCnt);
             if (ret < 0) {
@@ -487,11 +484,11 @@ int32_t BkfFsmAppendDispatchStatInfoStr(BkfFsm *fsm, uint8_t *buf, int32_t bufLe
     int32_t ret;
 
     ret = snprintf_truncated_s((char *)buf + usedLen, (uint32_t)bufLen - usedLen,
-                               "===dispatchStatInfo===\n"
-                               "TotalCnt(%" VOS_PRIu64 ")\n"
-                               "ProcRetOkCnt(%" VOS_PRIu64 ")\n"
-                               "ProcIgnoreCnt(%" VOS_PRIu64 ")\n",
-                               info->dispatchTotalCnt, info->dispatchProcRetOkCnt, info->dispatchProcIgnoreCnt);
+        "===dispatchStatInfo===\n"
+        "TotalCnt(%" VOS_PRIu64 ")\n"
+        "ProcRetOkCnt(%" VOS_PRIu64 ")\n"
+        "ProcIgnoreCnt(%" VOS_PRIu64 ")\n",
+        info->dispatchTotalCnt, info->dispatchProcRetOkCnt, info->dispatchProcIgnoreCnt);
     if (ret < 0) {
         return ret;
     }
@@ -499,7 +496,7 @@ int32_t BkfFsmAppendDispatchStatInfoStr(BkfFsm *fsm, uint8_t *buf, int32_t bufLe
 
     if (info->dispatchFsmCurStateNgCnt > 0) {
         ret = snprintf_truncated_s((char *)buf + usedLen, (uint32_t)bufLen - usedLen,
-                                   "FsmCurStateNgCnt(%" VOS_PRIu64 ")\n", info->dispatchFsmCurStateNgCnt);
+            "FsmCurStateNgCnt(%" VOS_PRIu64 ")\n", info->dispatchFsmCurStateNgCnt);
         if (ret < 0) {
             return ret;
         }
@@ -507,7 +504,7 @@ int32_t BkfFsmAppendDispatchStatInfoStr(BkfFsm *fsm, uint8_t *buf, int32_t bufLe
     }
     if (info->dispatchInputEvtNgCnt > 0) {
         ret = snprintf_truncated_s((char *)buf + usedLen, (uint32_t)bufLen - usedLen,
-                                   "InputEvtNgCnt(%" VOS_PRIu64 ")\n", info->dispatchInputEvtNgCnt);
+            "InputEvtNgCnt(%" VOS_PRIu64 ")\n", info->dispatchInputEvtNgCnt);
         if (ret < 0) {
             return ret;
         }
@@ -515,7 +512,7 @@ int32_t BkfFsmAppendDispatchStatInfoStr(BkfFsm *fsm, uint8_t *buf, int32_t bufLe
     }
     if (info->dispatchProcImpossibleCnt > 0) {
         ret = snprintf_truncated_s((char *)buf + usedLen, (uint32_t)bufLen - usedLen,
-                                   "ProcImpossibleCnt(%" VOS_PRIu64 ")\n", info->dispatchProcImpossibleCnt);
+            "ProcImpossibleCnt(%" VOS_PRIu64 ")\n", info->dispatchProcImpossibleCnt);
         if (ret < 0) {
             return ret;
         }
@@ -523,7 +520,7 @@ int32_t BkfFsmAppendDispatchStatInfoStr(BkfFsm *fsm, uint8_t *buf, int32_t bufLe
     }
     if (info->dispatchProcRetNOkCnt > 0) {
         ret = snprintf_truncated_s((char *)buf + usedLen, (uint32_t)bufLen - usedLen,
-                                   "ProcRetNOkCnt(%" VOS_PRIu64 ")\n", info->dispatchProcRetNOkCnt);
+            "ProcRetNOkCnt(%" VOS_PRIu64 ")\n", info->dispatchProcRetNOkCnt);
         if (ret < 0) {
             return ret;
         }
@@ -545,11 +542,11 @@ int32_t BkfFsmAppendStatInfoStr(BkfFsm *fsm, uint8_t *buf, int32_t bufLen)
     usedLen += ret;
 
     ret = snprintf_truncated_s((char *)buf + usedLen, (uint32_t)bufLen - usedLen,
-                               "===chgStateStatInfo===\n"
-                               "TotalCnt(%u)\n"
-                               "OkCnt(%u)\n"
-                               "NewStateInvalidCnt(%u)\n",
-                               info->chgStateTotalCnt, info->chgStateOkCnt, info->chgStateNewStateInvalidCnt);
+        "===chgStateStatInfo===\n"
+        "TotalCnt(%u)\n"
+        "OkCnt(%u)\n"
+        "NewStateInvalidCnt(%u)\n",
+        info->chgStateTotalCnt, info->chgStateOkCnt, info->chgStateNewStateInvalidCnt);
     if (ret < 0) {
         return ret;
     }
@@ -577,8 +574,8 @@ char *BkfFsmGetStr(BkfFsm *fsm, uint8_t *buf, int32_t bufLen)
     fsmTmpl = fsm->tmpl;
 
     ret = snprintf_truncated_s((char *)buf, (uint32_t)bufLen, "sign(%#x)/state(%u, %s), tmpl(%#x, %s)/statInfo(%#x)\n",
-                               fsm->sign, fsm->state, BkfFsmTmplGetStateStr(fsmTmpl, fsm->state),
-                               BKF_MASK_ADDR(fsmTmpl), fsmTmpl->name, BKF_MASK_ADDR(fsm->statInfo));
+        fsm->sign, fsm->state, BkfFsmTmplGetStateStr(fsmTmpl, fsm->state), BKF_MASK_ADDR(fsmTmpl), fsmTmpl->name,
+        BKF_MASK_ADDR(fsm->statInfo));
     if (ret < 0) {
         goto error;
     }
@@ -591,7 +588,7 @@ char *BkfFsmGetStr(BkfFsm *fsm, uint8_t *buf, int32_t bufLen)
         }
     }
 
-    return (char*)buf;
+    return (char *)buf;
 
 error:
 
@@ -611,29 +608,29 @@ void BkfFsmTmplDisp(BkfFsmTmpl *fsmTmpl)
     BKF_DISP_PRINTF(disp, "===argInit===\n");
     BKF_DISP_PRINTF(disp, "name(%s)/dbgOn(%u)\n", fsmTmpl->name, fsmTmpl->argInit.dbgOn);
     BKF_DISP_PRINTF(disp, "memMng(%#x)/disp(%#x)/log(%#x)\n", BKF_MASK_ADDR(fsmTmpl->argInit.memMng),
-                    BKF_MASK_ADDR(fsmTmpl->argInit.disp), BKF_MASK_ADDR(fsmTmpl->argInit.log));
+        BKF_MASK_ADDR(fsmTmpl->argInit.disp), BKF_MASK_ADDR(fsmTmpl->argInit.log));
     BKF_DISP_PRINTF(disp, "stateCnt(%u)/stateInit(%u, %s), stateStrTbl(%#x)\n", fsmTmpl->argInit.stateCnt,
-                    fsmTmpl->argInit.stateInit, BkfFsmTmplGetStateStr(fsmTmpl, fsmTmpl->argInit.stateInit),
-                    BKF_MASK_ADDR(fsmTmpl->argInit.stateStrTbl));
+        fsmTmpl->argInit.stateInit, BkfFsmTmplGetStateStr(fsmTmpl, fsmTmpl->argInit.stateInit),
+        BKF_MASK_ADDR(fsmTmpl->argInit.stateStrTbl));
     BKF_DISP_PRINTF(disp, "evtCnt(%u)/evtStrTbl(%#x)\n", fsmTmpl->argInit.evtCnt,
-                    BKF_MASK_ADDR(fsmTmpl->argInit.evtStrTbl));
+        BKF_MASK_ADDR(fsmTmpl->argInit.evtStrTbl));
     BKF_DISP_PRINTF(disp, "stateEvtProcItemMtrx(%#x)\n", BKF_MASK_ADDR(fsmTmpl->argInit.stateEvtProcItemMtrx));
     BKF_DISP_PRINTF(disp, "getAppDataStrOrNull(%#x)\n", BKF_MASK_ADDR(fsmTmpl->argInit.getAppDataStrOrNull));
     BKF_DISP_PRINTF(disp, "===runTimeInfo===\n");
     BKF_DISP_PRINTF(disp, "log(%#x)\n", BKF_MASK_ADDR(fsmTmpl->log));
     BKF_DISP_PRINTF(disp, "fsmCnt(%d)\n", fsmTmpl->fsmCnt);
     BKF_DISP_PRINTF(disp, "---dispatchCntInfo---\n");
-    BKF_DISP_PRINTF(disp, "dispatchTotalCnt(%" VOS_PRIu64 ")",            fsmTmpl->dispatchTotalCnt);
-    BKF_DISP_PRINTF(disp, "dispatchFsmCurStateNgCnt(%" VOS_PRIu64 ")\n",  fsmTmpl->dispatchFsmCurStateNgCnt);
-    BKF_DISP_PRINTF(disp, "dispatchInputEvtNgCnt(%" VOS_PRIu64 ")\n",     fsmTmpl->dispatchInputEvtNgCnt);
+    BKF_DISP_PRINTF(disp, "dispatchTotalCnt(%" VOS_PRIu64 ")", fsmTmpl->dispatchTotalCnt);
+    BKF_DISP_PRINTF(disp, "dispatchFsmCurStateNgCnt(%" VOS_PRIu64 ")\n", fsmTmpl->dispatchFsmCurStateNgCnt);
+    BKF_DISP_PRINTF(disp, "dispatchInputEvtNgCnt(%" VOS_PRIu64 ")\n", fsmTmpl->dispatchInputEvtNgCnt);
     BKF_DISP_PRINTF(disp, "dispatchProcImpossibleCnt(%" VOS_PRIu64 ")\n", fsmTmpl->dispatchProcImpossibleCnt);
-    BKF_DISP_PRINTF(disp, "dispatchProcIgnoreCnt(%" VOS_PRIu64 ")\n",     fsmTmpl->dispatchProcIgnoreCnt);
-    BKF_DISP_PRINTF(disp, "dispatchProcRetOkCnt(%" VOS_PRIu64 ")\n",      fsmTmpl->dispatchProcRetOkCnt);
-    BKF_DISP_PRINTF(disp, "dispatchProcRetNOkCnt(%" VOS_PRIu64 ")\n",     fsmTmpl->dispatchProcRetNOkCnt);
+    BKF_DISP_PRINTF(disp, "dispatchProcIgnoreCnt(%" VOS_PRIu64 ")\n", fsmTmpl->dispatchProcIgnoreCnt);
+    BKF_DISP_PRINTF(disp, "dispatchProcRetOkCnt(%" VOS_PRIu64 ")\n", fsmTmpl->dispatchProcRetOkCnt);
+    BKF_DISP_PRINTF(disp, "dispatchProcRetNOkCnt(%" VOS_PRIu64 ")\n", fsmTmpl->dispatchProcRetNOkCnt);
     BKF_DISP_PRINTF(disp, "---chgStateCntInfo---\n");
-    BKF_DISP_PRINTF(disp, "chgStateTotalCnt(%" VOS_PRIu64 ")\n",           fsmTmpl->chgStateTotalCnt);
+    BKF_DISP_PRINTF(disp, "chgStateTotalCnt(%" VOS_PRIu64 ")\n", fsmTmpl->chgStateTotalCnt);
     BKF_DISP_PRINTF(disp, "chgStateNewStateInvalidCnt(%" VOS_PRIu64 ")\n", fsmTmpl->chgStateNewStateInvalidCnt);
-    BKF_DISP_PRINTF(disp, "chgStateOkCnt(%" VOS_PRIu64 ")\n",              fsmTmpl->chgStateOkCnt);
+    BKF_DISP_PRINTF(disp, "chgStateOkCnt(%" VOS_PRIu64 ")\n", fsmTmpl->chgStateOkCnt);
     return;
 }
 
@@ -664,4 +661,3 @@ STATIC void BkfFsmTmplUninitDisp(BkfFsmTmpl *fsmTmpl)
 }
 #endif
 #endif
-

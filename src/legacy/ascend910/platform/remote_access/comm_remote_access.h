@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef COMM_REMOTE_ACCESS_H
 #define COMM_REMOTE_ACCESS_H
@@ -42,11 +42,12 @@ struct LinkStatus_t {
 
 class CommRemoteAccess {
 public:
-    explicit CommRemoteAccess(u32 rank, u32 devicePhyId, const std::map<u32, std::vector<HcclIpAddress>>& rankInfo,
+    explicit CommRemoteAccess(
+        u32 rank, u32 devicePhyId, const std::map<u32, std::vector<HcclIpAddress>>& rankInfo,
         const std::vector<MemRegisterAddr>& addrInfos);
     ~CommRemoteAccess();
     HcclResult Init();
-    std::shared_ptr<TransportRemoteAccess> &GetTransportByRank(const u32 dstRank);
+    std::shared_ptr<TransportRemoteAccess>& GetTransportByRank(const u32 dstRank);
 
 private:
     HcclResult RescoucePrepare();
@@ -63,26 +64,27 @@ private:
     HcclResult CreateInterServerLinks();
     HcclResult DealSuccRasocket(s32 sockRet, const u32 role, const struct SocketInfoT tmpConn[], const u32 num);
     void PrintErrorConnection(const u32 role, const u32 num);
-    HcclResult PrintErrorConnectionInfo(const std::map<HcclIpAddress, LinkStatus_t> &linkStatusMap, u32 role);
-    HcclResult GetDstRank(std::map<u32, std::vector<HcclIpAddress>>& dstMap, const HcclIpAddress &dstIp, u32 &dstRank);
-    HcclResult CreateInterThread(const u32 role, const SocketInfoT &socketInfo);
-    HcclResult InitDestTransport(const ErrContext &error_context, u32 role, const HcclIpAddress &nicIp,
-        const u32 dstRank, const std::string &threadStr, FdHandle socketFdHandle, u32 *getThreadStatus);
-    HcclResult GetNicByHandle(const SocketHandle socketHandle, HcclIpAddress &nicIp);
-    HcclResult SetAccessPara(u32 role, const HcclIpAddress &nicIp, u32 dstRank, FdHandle socketFdhandle,
-        RemoteAccessPara &accessPara);
+    HcclResult PrintErrorConnectionInfo(const std::map<HcclIpAddress, LinkStatus_t>& linkStatusMap, u32 role);
+    HcclResult GetDstRank(std::map<u32, std::vector<HcclIpAddress>>& dstMap, const HcclIpAddress& dstIp, u32& dstRank);
+    HcclResult CreateInterThread(const u32 role, const SocketInfoT& socketInfo);
+    HcclResult InitDestTransport(
+        const ErrContext& error_context, u32 role, const HcclIpAddress& nicIp, const u32 dstRank,
+        const std::string& threadStr, FdHandle socketFdHandle, u32* getThreadStatus);
+    HcclResult GetNicByHandle(const SocketHandle socketHandle, HcclIpAddress& nicIp);
+    HcclResult SetAccessPara(
+        u32 role, const HcclIpAddress& nicIp, u32 dstRank, FdHandle socketFdhandle, RemoteAccessPara& accessPara);
     HcclResult DeleteSocketWhiteList();
 
     std::shared_ptr<TransportRemoteAccess> transportDummy_;
     std::multimap<u32, std::shared_ptr<TransportRemoteAccess>> remoteTransportMap_;
 
-    u32 rank_;  // 当前通信域的rank
+    u32 rank_; // 当前通信域的rank
     s32 deviceLogicId_;
     u32 devicePhyId_;
-    u32 rankSize_;  // 当前通信域的ranksize
+    u32 rankSize_;                // 当前通信域的ranksize
     NICDeployment nicDeployment_; // 网卡部署位置 0:host 1:device
 
-    std::map<u32, std::vector<HcclIpAddress>> rankInfo_;  // rank 与 ip 地址的 map
+    std::map<u32, std::vector<HcclIpAddress>> rankInfo_; // rank 与 ip 地址的 map
     std::vector<MemRegisterAddr> addrInfos_;
     std::vector<struct SocketWlistInfoT> wlistInfosVec_;
     std::map<u32, std::vector<HcclIpAddress>> dstInterServerMap_;
@@ -95,8 +97,8 @@ private:
     std::map<HcclIpAddress, LinkStatus_t> clientLinkStatus_;
     std::map<HcclIpAddress, LinkStatus_t> serverLinkStatus_;
 
-    std::vector<SocketInfoT> raSockets_; // 保存建链成功的socket, 用于创建transport实例
-    std::vector<std::unique_ptr<std::thread>> linkThreads_;  // 建链所需线程
+    std::vector<SocketInfoT> raSockets_;                    // 保存建链成功的socket, 用于创建transport实例
+    std::vector<std::unique_ptr<std::thread>> linkThreads_; // 建链所需线程
     u32 threadsApplyNum_;                                   // 线程使用计数器
     HcclDispatcher dispatcher_;
     std::unique_ptr<NotifyPool> notifyPool_;
@@ -104,6 +106,6 @@ private:
     std::mutex remoteTransportMapLock_;
     HcclWorkflowMode workflowMode_{HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE};
 };
-}
+} // namespace hccl
 
-#endif  // COMM_REMOTE_ACCESS_H
+#endif // COMM_REMOTE_ACCESS_H

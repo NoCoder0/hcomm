@@ -1,12 +1,13 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include <mockcpp/mokc.h>
 #include <mockcpp/mockcpp.hpp>
 #include <vector>
@@ -26,20 +27,15 @@ using namespace hccl;
 
 class AllToAllVCTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "AllToAllVCTest set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "AllToAllVCTest set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "AllToAllVCTest tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "AllToAllVCTest tear down." << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
     }
 
@@ -376,9 +372,12 @@ TEST_F(AllToAllVCTest, alltoallvc_test_910_93_offload_RunAlltoAllDirectFullmesh)
 
 TEST_F(AllToAllVCTest, alltoallvc_test_91093_offload_AlltoAllMeshAivFor91093Executor)
 {
-    MOCKER(ExecuteKernelLaunch, HcclResult(const AivOpArgs&, const AivTopoArgs&,
-    const AivResourceArgs&, const AivAlgArgs&, const ExtraArgsV2&,
-    AivProfilingInfo&)).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(
+        ExecuteKernelLaunch, HcclResult(
+                                 const AivOpArgs&, const AivTopoArgs&, const AivResourceArgs&, const AivAlgArgs&,
+                                 const ExtraArgsV2&, AivProfilingInfo&))
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
     MOCKER(GetExternalInputHcclAivMode).stubs().will(returnValue(true));
     MOCKER_CPP(&AlltoAllOperator::IsSatisfyAlltoAllAivCondition).stubs().will(returnValue(true));
     RankTable_For_LLT gen;
@@ -435,7 +434,7 @@ TEST_F(AllToAllVCTest, RunAlltoAllVPipelineFor91093)
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 2, 1, 7);
     setenv("HCCL_BUFFSIZE", "1", 1);
- 
+
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLTOALLVC;
     checkerOpParam.tag = "AllToAll";
@@ -446,7 +445,7 @@ TEST_F(AllToAllVCTest, RunAlltoAllVPipelineFor91093)
     checkerOpParam.All2AllDataDes.sendCountMatrix = GenerateSendCountMatrix(100, rankNum);
     checkerOpParam.All2AllDataDes.sendType = CheckerDataType::DATA_TYPE_INT8;
     checkerOpParam.All2AllDataDes.recvType = CheckerDataType::DATA_TYPE_INT8;
- 
+
     Checker checker;
     HcclResult ret;
     ret = checker.Check(checkerOpParam, topoMeta);

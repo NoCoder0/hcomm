@@ -22,19 +22,18 @@ static inline void RS_INIT_LIST_HEAD(struct RsListHead *list)
     list->prev = list;
 }
 
-#define RS_LIST_GET_HEAD_ENTRY(pos, n, head, member, type) do { \
-    (pos) = list_entry((head)->next, type, member);             \
-    (n) = list_entry((pos)->member.next, type, member);         \
-} while (0)
+#define RS_LIST_GET_HEAD_ENTRY(pos, n, head, member, type)                                                             \
+    do {                                                                                                               \
+        (pos) = list_entry((head)->next, type, member);                                                                \
+        (n) = list_entry((pos)->member.next, type, member);                                                            \
+    } while (0)
 
 static inline bool RsListEmpty(struct RsListHead *head)
 {
     return head->next == head;
 }
 
-static inline void __rs_list_add(struct RsListHead *xnew,
-                                 struct RsListHead *prev,
-                                 struct RsListHead *next)
+static inline void __rs_list_add(struct RsListHead *xnew, struct RsListHead *prev, struct RsListHead *next)
 {
     next->prev = xnew;
     xnew->next = next;

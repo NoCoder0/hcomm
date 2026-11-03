@@ -17,11 +17,11 @@ constexpr int CKE_IDX_0 = 0;
 constexpr int CKE_IDX_1 = 1;
 constexpr int CKE_IDX_2 = 2;
 
-CcuContextAllToAllMesh1D::CcuContextAllToAllMesh1D(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                                                     const CcuTransportGroup &group)
+CcuContextAllToAllMesh1D::CcuContextAllToAllMesh1D(
+    const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group)
     : CcuContextAlgBase(arg, transports, group)
 {
-    const CcuCtxArgAllToAllMesh1D *ctxArg = dynamic_cast<const CcuCtxArgAllToAllMesh1D *>(&arg);
+    const CcuCtxArgAllToAllMesh1D* ctxArg = dynamic_cast<const CcuCtxArgAllToAllMesh1D*>(&arg);
     if (ctxArg == nullptr) {
         THROW<NullPtrException>(StringFormat("CcuContextAllToAllMesh1D::ctxArg ptr is null"));
     }
@@ -45,20 +45,20 @@ void CcuContextAllToAllMesh1D::Algorithm()
             input_.push_back(CreateVariable());
             output_.push_back(CreateVariable());
             token_.push_back(CreateVariable());
-        }
-        else { // 非本地，使用远端Variable
-            CHK_PRT_RET(transports[transportId] == nullptr,
-                HCCL_ERROR("[CcuContextAllToAllMesh1D] Algorithm transport ptr is null"),);
+        } else { // 非本地，使用远端Variable
+            CHK_PRT_RET(
+                transports[transportId] == nullptr,
+                HCCL_ERROR("[CcuContextAllToAllMesh1D] Algorithm transport ptr is null"), );
             input_.push_back(CreateVariable((*transports[transportId]), CKE_IDX_0));
             output_.push_back(CreateVariable((*transports[transportId]), CKE_IDX_1));
             token_.push_back(CreateVariable((*transports[transportId]), CKE_IDX_2));
             transportId++;
         }
     }
-    sliceSize_   = CreateVariable();
-    srcStride_   = CreateVariable();
-    srcOffset_   = CreateVariable();
-    dstOffset_   = CreateVariable();
+    sliceSize_ = CreateVariable();
+    srcStride_ = CreateVariable();
+    srcOffset_ = CreateVariable();
+    dstOffset_ = CreateVariable();
     groupOpSize_ = CreateGroupOpSize();
 
     // 从SQE load args，本rank需要的input、output地址等信息
@@ -66,15 +66,15 @@ void CcuContextAllToAllMesh1D::Algorithm()
     Load(input_[rankId_]);
     Load(output_[rankId_]);
     Load(token_[rankId_]);
-    Load(sliceSize_);  // 本轮传输的分片大小
+    Load(sliceSize_); // 本轮传输的分片大小
     Load(srcStride_); // 单片数据大小
     Load(srcOffset_);
     Load(dstOffset_);
     Load(groupOpSize_);
 
     // 前同步。交换信息，将本Rank load的in\out等地址信息写到所有对端的对应Variable中，并同步
-    uint16_t selfBit = 1 << rankId_;  // 本rank的mask
-    uint16_t allBit  = ((1 << rankSize_) - 1) & (~(1 << rankId_));
+    uint16_t selfBit = 1 << rankId_; // 本rank的mask
+    uint16_t allBit = ((1 << rankSize_) - 1) & (~(1 << rankId_));
 
     srcOffset_ += input_[rankId_];
 
@@ -138,26 +138,29 @@ void CcuContextAllToAllMesh1D::Algorithm()
     return;
 }
 
-std::vector<uint64_t> CcuContextAllToAllMesh1D::GeneArgs(const CcuTaskArg &arg)
+std::vector<uint64_t> CcuContextAllToAllMesh1D::GeneArgs(const CcuTaskArg& arg)
 {
-    const CcuTaskArgAllToAllMesh1D *taskArg = dynamic_cast<const CcuTaskArgAllToAllMesh1D *>(&arg);
+    const CcuTaskArgAllToAllMesh1D* taskArg = dynamic_cast<const CcuTaskArgAllToAllMesh1D*>(&arg);
     if (taskArg == nullptr) {
         THROW<NullPtrException>(StringFormat("CcuContextAllToAllMesh1D::taskArg ptr is null"));
     }
-    uint64_t inputAddr  = taskArg->inputAddr;
+    uint64_t inputAddr = taskArg->inputAddr;
     uint64_t outputAddr = taskArg->outputAddr;
-    uint64_t tokenInfo  = taskArg->token;
+    uint64_t tokenInfo = taskArg->token;
 
     uint64_t srcStride = taskArg->srcStride;
     uint64_t srcOffset = taskArg->srcOffset;
     uint64_t dstOffset = taskArg->dstOffset;
 
     uint64_t sliceSize = taskArg->sliceSize;
-    auto     goSize    = CalGoSize(sliceSize);
-    HCCL_INFO("[AllToAllAlgo] inputAddr[%llu], outputAddr[%llu], sliceSize[%llu], srcStride[%llu], srcOffset[%llu], dstOffset[%llu].",
+    auto goSize = CalGoSize(sliceSize);
+    HCCL_INFO(
+        "[AllToAllAlgo] inputAddr[%llu], outputAddr[%llu], sliceSize[%llu], srcStride[%llu], srcOffset[%llu], "
+        "dstOffset[%llu].",
         inputAddr, outputAddr, sliceSize, srcStride, srcOffset, dstOffset);
 
-    return {inputAddr, outputAddr, tokenInfo, sliceSize, srcStride, srcOffset, dstOffset, goSize[0], goSize[1], goSize[2], goSize[3]};
+    return {inputAddr, outputAddr, tokenInfo, sliceSize, srcStride, srcOffset,
+            dstOffset, goSize[0],  goSize[1], goSize[2], goSize[3]};
 }
 
-}
+} // namespace Hccl

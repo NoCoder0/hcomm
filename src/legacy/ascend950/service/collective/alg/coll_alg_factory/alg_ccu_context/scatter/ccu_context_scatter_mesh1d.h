@@ -22,11 +22,11 @@ namespace Hccl {
 
 class CcuContextScatterMesh1D : public CcuContextAlgBase {
 public:
-    CcuContextScatterMesh1D(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                              const CcuTransportGroup &group);
+    CcuContextScatterMesh1D(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
 
 private:
     void InitResource();
@@ -39,22 +39,22 @@ private:
     uint16_t selfBit_{0};
     uint16_t allBit_{0};
 
-    CcuRep::Variable              input_;
+    CcuRep::Variable input_;
     std::vector<CcuRep::Variable> output_;
     std::vector<CcuRep::Variable> token_;
-    CcuRep::Variable              currentRankSliceInputOffset_;
-    CcuRep::Variable              currentRankSliceOutputOffset_;
-    CcuRep::Variable              inputRepeatStride_;
-    CcuRep::Variable              outputRepeatStride_;
-    CcuRep::Variable              normalSliceSize_;
-    CcuRep::Variable              lastSliceSize_;
-    CcuRep::Variable              repeatNumVar_;
-    CcuRep::Variable              flag_;
-    std::vector<CcuRep::Memory>   localMem_;
-    std::vector<CcuRep::Memory>   remoteMem_;
+    CcuRep::Variable currentRankSliceInputOffset_;
+    CcuRep::Variable currentRankSliceOutputOffset_;
+    CcuRep::Variable inputRepeatStride_;
+    CcuRep::Variable outputRepeatStride_;
+    CcuRep::Variable normalSliceSize_;
+    CcuRep::Variable lastSliceSize_;
+    CcuRep::Variable repeatNumVar_;
+    CcuRep::Variable flag_;
+    std::vector<CcuRep::Memory> localMem_;
+    std::vector<CcuRep::Memory> remoteMem_;
 
     CcuRep::MaskSignal localSignal_;
-    GroupOpSize        groupOpSize_;
+    GroupOpSize groupOpSize_;
 };
 } // namespace Hccl
 

@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef BIFROST_CNCOI_TABLE_H
 
 #define BIFROST_CNCOI_TABLE_H
@@ -22,9 +21,8 @@ extern "C" {
 #pragma pack(4)
 
 #define BIFROST_CNCOI_TABLE_TYPE_COMMINFO 100
-int32_t BifrostCncoiComminfoKeyCmp(const BifrostCncoiComminfoKeyT *key1Input,
-    const BifrostCncoiComminfoKeyT *key2InDs);
-char* BifrostCncoiComminfoKeyGetStr(const BifrostCncoiComminfoKeyT *key, uint8_t *buf, int32_t bufLen);
+int32_t BifrostCncoiComminfoKeyCmp(const BifrostCncoiComminfoKeyT *key1Input, const BifrostCncoiComminfoKeyT *key2InDs);
+char *BifrostCncoiComminfoKeyGetStr(const BifrostCncoiComminfoKeyT *key, uint8_t *buf, int32_t bufLen);
 
 #define BIFROST_CNCOI_TABLE_TYPE_OPERATOR 101
 int32_t BifrostCncoiOperatorKeyCmp(const BifrostCncoiOperatorKeyT *key1Input, const BifrostCncoiOperatorKeyT *key2InDs);
@@ -42,14 +40,11 @@ char *BifrostCncoiRankKeyGetStr(const BifrostCncoiRankKeyT *key, uint8_t *buf, i
 #define BIFROST_CNCOI_TABLE_TYPE_RANK_DISTRIBUTE 104
 int32_t BifrostCncoiRankDistributeKeyCmp(const BifrostCncoiRankDistributeKeyT *key1Input,
     const BifrostCncoiRankDistributeKeyT *key2InDs);
-char *BifrostCncoiRankDistributeKeyGetStr(const BifrostCncoiRankDistributeKeyT *key, uint8_t *buf,
-    int32_t bufLen);
+char *BifrostCncoiRankDistributeKeyGetStr(const BifrostCncoiRankDistributeKeyT *key, uint8_t *buf, int32_t bufLen);
 
 #define BIFROST_CNCOI_TABLE_TYPE_ROOT_RANK 105
-int32_t BifrostCncoiRootRankKeyCmp(const BifrostCncoiRootRankKeyT *key1Input,
-    const BifrostCncoiRootRankKeyT *key2InDs);
+int32_t BifrostCncoiRootRankKeyCmp(const BifrostCncoiRootRankKeyT *key1Input, const BifrostCncoiRootRankKeyT *key2InDs);
 char *BifrostCncoiRootRankKeyGetStr(const BifrostCncoiRootRankKeyT *key, uint8_t *buf, int32_t bufLen);
-
 
 #pragma pack()
 
@@ -58,4 +53,3 @@ char *BifrostCncoiRootRankKeyGetStr(const BifrostCncoiRootRankKeyT *key, uint8_t
 #endif
 
 #endif
-

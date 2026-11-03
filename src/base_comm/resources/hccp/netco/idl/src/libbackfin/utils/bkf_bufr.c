@@ -33,9 +33,9 @@ struct tagBkfBufr {
     uint8_t *guard;
 };
 
-#define BKF_BUFR_LEN_IS_VALID(bufr) \
-    (((bufr)->bufLen > 0) && ((bufr)->startIdx >= 0) && ((bufr)->startIdx <= (bufr)->bufLen) \
-    && ((bufr)->usedLen >= 0) && ((bufr)->usedLen <= (bufr)->bufLen))
+#define BKF_BUFR_LEN_IS_VALID(bufr)                                                                                    \
+    (((bufr)->bufLen > 0) && ((bufr)->startIdx >= 0) && ((bufr)->startIdx <= (bufr)->bufLen) &&                        \
+        ((bufr)->usedLen >= 0) && ((bufr)->usedLen <= (bufr)->bufLen))
 
 #pragma pack()
 
@@ -342,15 +342,14 @@ char *BkfBufrGetStr(BkfBufr *bufr, uint8_t *buf, int32_t bufLen)
         return "info_buf_len_ng";
     }
 
-    (void)snprintf_truncated_s((char*)buf, bufLen,
-                               "bufr(%#x), memMng(%#x), bufLen(%d)/startIdx(%d)/usedLen(%d), "
-                               "validPutTotalLen(%"VOS_PRIu64")/overwriteLen(%"VOS_PRIu64")/"
-                               "getTotalLen(%"VOS_PRIu64"), buf(%#x)/guard(%#x, %#x)",
-                               BKF_MASK_ADDR(bufr), BKF_MASK_ADDR(bufr->memMng),
-                               bufr->bufLen, bufr->startIdx, bufr->usedLen,
-                               bufr->validPutTotalLen, bufr->overwriteLen, bufr->getTotalLen,
-                               BKF_MASK_ADDR(bufr->buf), BKF_MASK_ADDR(bufr->guard), *bufr->guard);
-    return (char*)buf;
+    (void)snprintf_truncated_s((char *)buf, bufLen,
+        "bufr(%#x), memMng(%#x), bufLen(%d)/startIdx(%d)/usedLen(%d), "
+        "validPutTotalLen(%" VOS_PRIu64 ")/overwriteLen(%" VOS_PRIu64 ")/"
+        "getTotalLen(%" VOS_PRIu64 "), buf(%#x)/guard(%#x, %#x)",
+        BKF_MASK_ADDR(bufr), BKF_MASK_ADDR(bufr->memMng), bufr->bufLen, bufr->startIdx, bufr->usedLen,
+        bufr->validPutTotalLen, bufr->overwriteLen, bufr->getTotalLen, BKF_MASK_ADDR(bufr->buf),
+        BKF_MASK_ADDR(bufr->guard), *bufr->guard);
+    return (char *)buf;
 }
 
 STATIC int32_t BkfBufrDbgPeekLast(BkfBufr *bufr, uint8_t *outBuf, int32_t outBufLen, BkfBufrDbgPeekItor *itor)
@@ -397,12 +396,12 @@ STATIC int32_t BkfBufrDbgPeekLast(BkfBufr *bufr, uint8_t *outBuf, int32_t outBuf
 
     return getLen;
 }
-int32_t BkfBufrDbgPeekLastFirst(BkfBufr *bufr, int32_t lastLen, uint8_t *outBuf, int32_t outBufLen, BkfBufrDbgPeekItor *itor)
+int32_t BkfBufrDbgPeekLastFirst(BkfBufr *bufr, int32_t lastLen, uint8_t *outBuf, int32_t outBufLen,
+    BkfBufrDbgPeekItor *itor)
 {
     BOOL argIsInvalid = VOS_FALSE;
 
-    argIsInvalid = (bufr == VOS_NULL) || (lastLen < 0) ||
-                   (outBuf == VOS_NULL) || (outBufLen < 0) || (itor == VOS_NULL);
+    argIsInvalid = (bufr == VOS_NULL) || (lastLen < 0) || (outBuf == VOS_NULL) || (outBufLen < 0) || (itor == VOS_NULL);
     if (argIsInvalid) {
         return -1;
     }
@@ -426,8 +425,8 @@ int32_t BkfBufrDbgPeekLastNext(BkfBufr *bufr, uint8_t *outBuf, int32_t outBufLen
 {
     BOOL argIsInvalid = VOS_FALSE;
 
-    argIsInvalid = (bufr == VOS_NULL) || (outBuf == VOS_NULL) || (outBufLen < 0) ||
-                   (itor == VOS_NULL) || (itor->peekLeftLen < 0);
+    argIsInvalid = (bufr == VOS_NULL) || (outBuf == VOS_NULL) || (outBufLen < 0) || (itor == VOS_NULL) ||
+                   (itor->peekLeftLen < 0);
     if (argIsInvalid) {
         return -1;
     }
@@ -482,4 +481,3 @@ uint32_t BkfBufrResize(BkfBufr *bufr, int32_t newBufLen)
 }
 #endif
 #endif
-

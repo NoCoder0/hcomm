@@ -20,8 +20,9 @@ namespace Hccl {
 
 class AivTempAllReduceMesh1DTwoShot : public AivAlgTemplateBase {
 public:
-    explicit AivTempAllReduceMesh1DTwoShot(const RankId virtualRank, const u32 tempRankSize,
-        const std::vector<std::vector<RankId>> &tempVTopo, const std::map<RankId, u32> &tempVirtRankMap);
+    explicit AivTempAllReduceMesh1DTwoShot(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~AivTempAllReduceMesh1DTwoShot() override;
 
     std::string Describe() const override
@@ -29,13 +30,14 @@ public:
         return StringFormat("Instruction based Template of allreduce mesh 1D with tempRankSize [%u].", tempRankSize_);
     }
 
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
     u32 CalcScratchMultiple(BufferType inBuffType, BufferType outBuffType) override;
-    HcclResult GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &templateDataParams, 
-        const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues) override;
-    HcclResult CalNumBlocks(u32& numBlocks, u64 dataSize, u32 numBlocksLimit) override; 
+    HcclResult GenExtIns(
+        const TempFuncs& tempFuncs, const TemplateDataParams& templateDataParams, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues) override;
+    HcclResult CalNumBlocks(u32& numBlocks, u64 dataSize, u32 numBlocksLimit) override;
 };
 
-}  // namespace Hccl
+} // namespace Hccl
 
-#endif  // AIV_TEMP_ALL_REDUCE_MESH_1D
+#endif // AIV_TEMP_ALL_REDUCE_MESH_1D

@@ -11,13 +11,14 @@
 #include "gtest/gtest.h"
 #include <mockcpp/mokc.h>
 #include <mockcpp/mockcpp.hpp>
+#include "test_mock_setup.h"
 #include "stub_communicator_impl_trans_mgr.h"
 
 #define private public
 #define protected public
 
-#include "hccl_one_sided_conn.h"
-#include "hccl_one_sided_service.h"
+#include "hccl_one_sided_conn_v2.h"
+#include "hccl_one_sided_service_v2.h"
 #include "rdma_handle_manager.h"
 #include "hccl_mem_v2.h"
 
@@ -27,30 +28,17 @@
 #include <memory>
 
 using namespace Hccl;
-using LocalRdmaRmaBufferMgr = RmaBufferMgr<BufferKey<uintptr_t, u64>, std::shared_ptr<LocalUbRmaBuffer>>;
+using LocalRdmaRmaBufferMgr = hcomm::RmaBufferMgr<BufferKey<uintptr_t, u64>, std::shared_ptr<LocalUbRmaBuffer>>;
 class HcclOneSidedConnTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "HcclOneSidedConnTest SetUP" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "HcclOneSidedConnTest SetUP" << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "HcclOneSidedConnTest TearDown" << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "HcclOneSidedConnTest TearDown" << std::endl; }
 
     virtual void SetUp()
     {
         std::cout << "A Test case in HcclOneSidedConnTest SetUp" << std::endl;
-        MOCKER(HrtGetDevice).stubs().will(returnValue(0));
-        MOCKER(HrtNotifyCreate).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
-        MOCKER(HrtNotifyCreateWithFlag).stubs().will(returnValue((void *)(fakeNotifyHandleAddr)));
-        MOCKER(HrtGetNotifyID).stubs().will(returnValue(fakeNotifyId));
-        MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(fakeDevPhyId)));
-        MOCKER(HrtIpcSetNotifyName).stubs().with(mockcpp::any(), outBoundP(fakeName, sizeof(fakeName)), mockcpp::any());
-        MOCKER(HrtNotifyGetOffset).stubs().will(returnValue(fakeOffset));
-        MOCKER(HrtGetDeviceType).stubs().will(returnValue(DevType(DevType::DEV_TYPE_950)));
+        SETUP_COMM_NOTIFY_MOCKS();
         MOCKER(GetUbToken).stubs().will(returnValue(1));
     }
 
@@ -70,35 +58,35 @@ protected:
 
 TEST_F(HcclOneSidedConnTest, EnableMemAccess_MemoryOverlap)
 {
-   void *rdmaHandle = (void *)0x100;
+    void* rdmaHandle = (void*)0x100;
     MOCKER_CPP(&RdmaHandleManager::Get).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(rdmaHandle));
     CommunicatorImpl com;
     BasePortType basePortType(PortDeploymentType::P2P, ConnectProtoType::UB);
     LinkData linkData(basePortType, 0, 1, 0, 1);
     HcclOneSidedConn conn(&com, linkData);
- 
+
     // 创建一个HcclMemDesc对象，描述一个内存段
     HcclBuf hcclBuf;
-    int *addr1 = new int;
+    int* addr1 = new int;
     std::shared_ptr<Buffer> localBufferPtr
         = make_shared<Buffer>(reinterpret_cast<uintptr_t>(addr1), sizeof(int), HcclMemType::HCCL_MEM_TYPE_DEVICE);
     std::shared_ptr<LocalUbRmaBuffer> localUbRmaBuffer = make_shared<LocalUbRmaBuffer>(localBufferPtr);
-    hcclBuf.handle = reinterpret_cast<void *>(localUbRmaBuffer.get());
+    hcclBuf.handle = reinterpret_cast<void*>(localUbRmaBuffer.get());
     hcclBuf.len = sizeof(int);
     hcclBuf.addr = addr1;
     RmaMemDesc rmaDesc1;
-    char    *desc    = static_cast<char *>(rmaDesc1.memDesc);
+    char* desc = static_cast<char*>(rmaDesc1.memDesc);
     uint64_t descLen = 0;
     HcclMemExportV2(&hcclBuf, &desc, &descLen);
     HcclMemDesc desc1;
     const size_t bufferSize = 512;
     const size_t copySize = sizeof(RmaMemDesc);
     memcpy_s(desc1.desc, bufferSize, &rmaDesc1, copySize);
- 
+
     // 第一次调用EnableMemAccess，成功添加
     HcclMem mem1;
     mem1.type = HcclMemType::HCCL_MEM_TYPE_DEVICE;
- 
+
     EXPECT_NO_THROW(conn.EnableMemAccess(desc1, mem1));
     EXPECT_NO_THROW(conn.DisableMemAccess(desc1));
     delete addr1;
@@ -106,7 +94,7 @@ TEST_F(HcclOneSidedConnTest, EnableMemAccess_MemoryOverlap)
 
 TEST_F(HcclOneSidedConnTest, DisableMemAccess_BufferNotFound)
 {
-    void *rdmaHandle = (void *)0x100;
+    void* rdmaHandle = (void*)0x100;
     MOCKER_CPP(&RdmaHandleManager::Get).stubs().with(mockcpp::any(), mockcpp::any()).will(returnValue(rdmaHandle));
     CommunicatorImpl com;
     BasePortType basePortType(PortDeploymentType::P2P, ConnectProtoType::UB);

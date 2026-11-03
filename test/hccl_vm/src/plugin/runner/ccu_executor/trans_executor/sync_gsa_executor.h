@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: ccu executor -- sync gsa
  * Author: caiyifan
  */
@@ -22,7 +25,8 @@
 
 class SyncGsaExecutor : public CcuExecutorBase {
 public:
-    explicit SyncGsaExecutor(int streamId, int rankId, int dieId, const hcomm::CcuRep::CcuInstr &instr, CcuSimulator *ccuSimulator)
+    explicit SyncGsaExecutor(
+        int streamId, int rankId, int dieId, const hcomm::CcuRep::CcuInstr& instr, CcuSimulator* ccuSimulator)
         : CcuExecutorBase(streamId, rankId, dieId, instr, ccuSimulator)
     {}
     SyncGsaExecutor() = default;
@@ -30,8 +34,9 @@ public:
 
     void Parser() override;
     void Run() override;
-    void Process(CcuResourceManager &ccuResMgr) override;
+    void Process(CcuResourceManager& ccuResMgr) override;
     std::string Describe() override;
+    CcuTrace::CcuInstrTraceDetail CollectTraceDetail() override;
 
 private:
     uint16_t rmtGSAId_{0};
@@ -44,6 +49,6 @@ private:
     uint16_t setCKEMask_{0};
     uint16_t waitCKEId_{0};
     uint16_t waitCKEMask_{0};
-}; 
+};
 
 #endif // HCCL_SIM_SYNC_GSA_EXECUTOR_H

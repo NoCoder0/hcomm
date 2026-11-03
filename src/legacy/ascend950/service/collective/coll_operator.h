@@ -23,18 +23,18 @@
 #include "const_val.h"
 namespace Hccl {
 using BaseCollOperator = struct BaseCollOperatorDef {
-    OpMode   opMode{OpMode::INVALID};
-    OpType   opType{OpType::DEBUGCASE};  //A5的类型
-    u32      oldOpType{0}; // A3的类型
+    OpMode opMode{OpMode::INVALID};
+    OpType opType{OpType::DEBUGCASE}; // A5的类型
+    u32 oldOpType{0};                 // A3的类型
     ReduceOp reduceOp{ReduceOp::INVALID};
     u32 oldReduceOp{0}; // A3的类型
     DataType dataType{DataType::INVALID};
-    u32     oldDataType{0}; // 仅用于A3的场景
+    u32 oldDataType{0};                         // 仅用于A3的场景
     DataType outputDataType{DataType::INVALID}; // 低精度场景，存在指定输出数据类型
-    u64      dataCount{0};
-    u32      root{0};
-    u32      numBlocksLimit{0};
-    RankId   sendRecvRemoteRank{0};
+    u64 dataCount{0};
+    u32 root{0};
+    u32 numBlocksLimit{0};
+    RankId sendRecvRemoteRank{0};
     u64 inputAddr{0};
     u64 inputSize{0};
     u64 outputAddr{0};
@@ -78,11 +78,12 @@ using BaseCollOperator = struct BaseCollOperatorDef {
         } batchSendRecvDataDes;
     };
     // 使用初始化列表
-    BaseCollOperatorDef() : opMode(), opType(), reduceOp(), dataType(), dataCount(0), root(0), sendRecvRemoteRank() {
-    // 显式初始化 union 的默认成员
+    BaseCollOperatorDef() : opMode(), opType(), reduceOp(), dataType(), dataCount(0), root(0), sendRecvRemoteRank()
+    {
+        // 显式初始化 union 的默认成员
         dataDes = {0, DataType::INVALID, 0}; // 假设 dataDes 是默认使用的成员
     }
-    Buffer *GetBuffer(const BufferType type)
+    Buffer* GetBuffer(const BufferType type)
     {
         if (type == BufferType::INPUT) {
             return inputMem.get();
@@ -99,33 +100,33 @@ using BaseCollOperator = struct BaseCollOperatorDef {
 using CollAlgOperator = BaseCollOperator;
 
 using CollOperator = struct CollOperatorDef : public BaseCollOperator {
-    std::string             opTag;
-    bool                    staticAddr{false};
-    bool                    staticShape{false};
-    RankId                  myRank{INVALID_RANKID};
-    std::vector<char>       GetUniqueId() const;
-    static CollOperatorDef         GetPackedData(std::vector<char> &byteVector);
+    std::string opTag;
+    bool staticAddr{false};
+    bool staticShape{false};
+    RankId myRank{INVALID_RANKID};
+    std::vector<char> GetUniqueId() const;
+    static CollOperatorDef GetPackedData(std::vector<char>& byteVector);
 };
 
-std::string MemBufferDesc(const BaseCollOperator &collOp);
-std::string OpDesc(const BaseCollOperator &collOp);
-std::string DescReduceScatter(const BaseCollOperator &collOp);
-std::string DescAllreduce(const BaseCollOperator &collOp);
-std::string DescAllgather(const BaseCollOperator &collOp);
-std::string DescScatter(const BaseCollOperator &collOp);
-std::string DescAlltoall(const BaseCollOperator &collOp);
-std::string DescAlltoallV(const BaseCollOperator &collOp);
-std::string DescAlltoallVC(const BaseCollOperator &collOp);
-std::string DescSend(const BaseCollOperator &collOp);
-std::string DescRecv(const BaseCollOperator &collOp);
-std::string DescReduce(const BaseCollOperator &collOp);
-std::string DescBroadcast(const BaseCollOperator &collOp);
-std::string DescBatchSendRecv(const BaseCollOperator &collOp);
-std::string DescHalfAlltoAllV(const BaseCollOperator &collOp);
-std::string DescReduceScatterV(const BaseCollOperator &collOp);
-std::string DescAllGatherV(const BaseCollOperator &collOp);
+std::string MemBufferDesc(const BaseCollOperator& collOp);
+std::string OpDesc(const BaseCollOperator& collOp);
+std::string DescReduceScatter(const BaseCollOperator& collOp);
+std::string DescAllreduce(const BaseCollOperator& collOp);
+std::string DescAllgather(const BaseCollOperator& collOp);
+std::string DescScatter(const BaseCollOperator& collOp);
+std::string DescAlltoall(const BaseCollOperator& collOp);
+std::string DescAlltoallV(const BaseCollOperator& collOp);
+std::string DescAlltoallVC(const BaseCollOperator& collOp);
+std::string DescSend(const BaseCollOperator& collOp);
+std::string DescRecv(const BaseCollOperator& collOp);
+std::string DescReduce(const BaseCollOperator& collOp);
+std::string DescBroadcast(const BaseCollOperator& collOp);
+std::string DescBatchSendRecv(const BaseCollOperator& collOp);
+std::string DescHalfAlltoAllV(const BaseCollOperator& collOp);
+std::string DescReduceScatterV(const BaseCollOperator& collOp);
+std::string DescAllGatherV(const BaseCollOperator& collOp);
 
-std::string CollOpToString(const BaseCollOperator &collOp);
+std::string CollOpToString(const BaseCollOperator& collOp);
 
 } // namespace Hccl
 

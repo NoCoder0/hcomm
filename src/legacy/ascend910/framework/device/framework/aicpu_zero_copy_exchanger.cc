@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "aicpu_zero_copy_exchanger.h"
 #include "ascend_hal.h"
@@ -15,30 +15,36 @@
 namespace hccl {
 ZeroCopyAddressMgr AicpuZeroCopyExchanger::globalAddrMgr_;
 
-AicpuZeroCopyExchanger::AicpuZeroCopyExchanger(u32 rank, u32 rankSize, const HcclOpResParam *resParam,
-    std::function<bool()> needStop, u32 timeoutSec, u32 deviceNumPerAggregation, u32 taskMonitorInterval)
-    : rankId_(rank), rankSize_(rankSize), resParam_(resParam), needStop_(needStop), timeoutSec_(timeoutSec), deviceNumPerAggregation_(deviceNumPerAggregation),
-    taskMonitorInterval_(taskMonitorInterval)
+AicpuZeroCopyExchanger::AicpuZeroCopyExchanger(
+    u32 rank, u32 rankSize, const HcclOpResParam* resParam, std::function<bool()> needStop, u32 timeoutSec,
+    u32 deviceNumPerAggregation, u32 taskMonitorInterval)
+    : rankId_(rank),
+      rankSize_(rankSize),
+      resParam_(resParam),
+      needStop_(needStop),
+      timeoutSec_(timeoutSec),
+      deviceNumPerAggregation_(deviceNumPerAggregation),
+      taskMonitorInterval_(taskMonitorInterval)
 {
     HCCL_INFO("Construct AicpuZeroCopyExchanger complete.");
 }
 
-AicpuZeroCopyExchanger::~AicpuZeroCopyExchanger()
-{
-}
+AicpuZeroCopyExchanger::~AicpuZeroCopyExchanger() {}
 
-HcclResult AicpuZeroCopyExchanger::ExchangeAddress(const std::string &tag, void *localInput, void *localOutput, AlgResourceResponse *algResResponse)
+HcclResult AicpuZeroCopyExchanger::ExchangeAddress(
+    const std::string& tag, void* localInput, void* localOutput, AlgResourceResponse* algResResponse)
 {
     if (localInput == nullptr || localOutput == nullptr || algResResponse == nullptr) {
         HCCL_ERROR("[AicpuZeroCopyExchanger][ExchangeAddress] Invalid input params, maybe nullptr");
         return HCCL_E_PARA;
     }
 
-    CHK_PRT_RET(needStop_ == nullptr,
-        HCCL_ERROR("[AicpuZeroCopyExchanger][ExchangeAddress] needStop function is nullptr"),
+    CHK_PRT_RET(
+        needStop_ == nullptr, HCCL_ERROR("[AicpuZeroCopyExchanger][ExchangeAddress] needStop function is nullptr"),
         HCCL_E_PARA);
     HcclUs startut = TIME_NOW();
-    HCCL_INFO("[AicpuZeroCopyExchanger][ExchangeAddress] rank[%u] input[%p] output[%p]", rankId_, localInput, localOutput);
+    HCCL_INFO(
+        "[AicpuZeroCopyExchanger][ExchangeAddress] rank[%u] input[%p] output[%p]", rankId_, localInput, localOutput);
     CHK_RET(PrepareTagRes(tag, algResResponse->opTransportResponse));
     CHK_PTR_NULL(current_);
 
@@ -63,14 +69,17 @@ HcclResult AicpuZeroCopyExchanger::ExchangeAddress(const std::string &tag, void 
         std::string endInfo;
         const int kLogMessageBufferSize = 100;
         endInfo.reserve(kLogMessageBufferSize);
-        endInfo = "task time: " + std::to_string(timeVal) + " us," +
-            "taskMonitor" + std::to_string(taskMonitorInterval_ * MS_TO_US) + " us";
+        endInfo = "task time: " + std::to_string(timeVal) + " us," + "taskMonitor"
+                  + std::to_string(taskMonitorInterval_ * MS_TO_US) + " us";
         HCCL_RUN_INFO("[ExchangeAddress] %s, %s", tag.c_str(), endInfo.c_str());
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult AicpuZeroCopyExchanger::PrepareRemoteUserMemRanges(const uint64_t inputSize, const uint64_t outputSize, std::vector<OpUnfoldMemRange>& userInputMemRanges, std::vector<OpUnfoldMemRange>& userOutputMemRanges) const {
+HcclResult AicpuZeroCopyExchanger::PrepareRemoteUserMemRanges(
+    const uint64_t inputSize, const uint64_t outputSize, std::vector<OpUnfoldMemRange>& userInputMemRanges,
+    std::vector<OpUnfoldMemRange>& userOutputMemRanges) const
+{
     // 注意: 不能直接使用inAddrs_和outAddrs_, 保存的是remote ranks' user input/output memory在远端的virtual addr
     // 需要使用current_->links中的input/output memory, 才是remote ranks' user input/output memory在本端的virtual addr
 
@@ -83,12 +92,18 @@ HcclResult AicpuZeroCopyExchanger::PrepareRemoteUserMemRanges(const uint64_t inp
 
         // 对端在通信域内的rank id
         const uint32_t remoteRank = curLink->GetRemoteRank();
-        CHK_PRT_RET(remoteRank >= rankSize, HCCL_ERROR("[AicpuZeroCopyExchanger][PrepareRemoteUserMemRanges] remoteRank %u >= rankSize %u", remoteRank, rankSize), HCCL_E_INTERNAL);
+        CHK_PRT_RET(
+            remoteRank >= rankSize,
+            HCCL_ERROR(
+                "[AicpuZeroCopyExchanger][PrepareRemoteUserMemRanges] remoteRank %u >= rankSize %u", remoteRank,
+                rankSize),
+            HCCL_E_INTERNAL);
 
-        HCCL_INFO("[AicpuZeroCopyExchanger][PrepareRemoteUserMemRanges] prepare memory range of remote rank %u", remoteRank);
+        HCCL_INFO(
+            "[AicpuZeroCopyExchanger][PrepareRemoteUserMemRanges] prepare memory range of remote rank %u", remoteRank);
 
         // 获取remote user input memory addr
-        void *remoteUserInputBaseAddr = nullptr;
+        void* remoteUserInputBaseAddr = nullptr;
         CHK_RET(curLink->GetRemoteMem(UserMemType::INPUT_MEM, &remoteUserInputBaseAddr));
         CHK_PTR_NULL(remoteUserInputBaseAddr);
 
@@ -99,7 +114,7 @@ HcclResult AicpuZeroCopyExchanger::PrepareRemoteUserMemRanges(const uint64_t inp
         remoteInputMemRange.memSize = inputSize;
 
         // 获取remote user output memory addr
-        void *remoteUserOutputBaseAddr = nullptr;
+        void* remoteUserOutputBaseAddr = nullptr;
         CHK_RET(curLink->GetRemoteMem(UserMemType::OUTPUT_MEM, &remoteUserOutputBaseAddr));
         CHK_PTR_NULL(remoteUserOutputBaseAddr);
 
@@ -122,7 +137,8 @@ bool AicpuZeroCopyExchanger::IsAllIpcAddressValid()
     }
 
     for (auto rank : current_->remoteRanks) {
-        CHK_PRT_RET(resParam_->zeroCopyIpcPtrs[rank % deviceNumPerAggregation_] == 0,
+        CHK_PRT_RET(
+            resParam_->zeroCopyIpcPtrs[rank % deviceNumPerAggregation_] == 0,
             HCCL_ERROR("[AicpuZeroCopyExchanger][IsAllIpcAddressValid] rank %u ipc addrs is nullptr", rank), false);
     }
 
@@ -131,15 +147,14 @@ bool AicpuZeroCopyExchanger::IsAllIpcAddressValid()
 
 bool AicpuZeroCopyExchanger::IsSupportZeroCopyLinkType(LinkType linkType)
 {
-    return linkType == LinkType::LINK_HCCS
-           || linkType == LinkType::LINK_SIO
-           || linkType == LinkType::LINK_HCCS_SW;
+    return linkType == LinkType::LINK_HCCS || linkType == LinkType::LINK_SIO || linkType == LinkType::LINK_HCCS_SW;
 }
 
-HcclResult AicpuZeroCopyExchanger::TryToRead(FlagData &data, u64 &in, u64 &out)
+HcclResult AicpuZeroCopyExchanger::TryToRead(FlagData& data, u64& in, u64& out)
 {
     u64 flag = data.flag;
-    CHK_PRT_RET(flag != INVALID_DATA && flag != VALID_DATA,
+    CHK_PRT_RET(
+        flag != INVALID_DATA && flag != VALID_DATA,
         HCCL_ERROR("[AicpuZeroCopyExchanger][TryToRead] flag is [%lu] corruption", flag), HCCL_E_INTERNAL);
 
     // 必须是有效的才能读
@@ -165,20 +180,20 @@ HcclResult AicpuZeroCopyExchanger::TryToRead(FlagData &data, u64 &in, u64 &out)
     return HCCL_SUCCESS;
 }
 
-HcclResult AicpuZeroCopyExchanger::GetRemoteRanks(TagRes &tagRes, OpCommTransport &opTransportResponse)
+HcclResult AicpuZeroCopyExchanger::GetRemoteRanks(TagRes& tagRes, OpCommTransport& opTransportResponse)
 {
-    CHK_PRT_RET(opTransportResponse.size() == 0,
-        HCCL_ERROR("[AicpuZeroCopyExchanger][GetRemoteRanks] opTransportResponse size is 0"),
-        HCCL_E_PARA);
+    CHK_PRT_RET(
+        opTransportResponse.size() == 0,
+        HCCL_ERROR("[AicpuZeroCopyExchanger][GetRemoteRanks] opTransportResponse size is 0"), HCCL_E_PARA);
     // 先清空已有的数据
     tagRes.remoteRanks.clear();
     tagRes.links.clear();
- 
-    for (auto &singleSubCommTransport : opTransportResponse[COMM_LEVEL0]) {
+
+    for (auto& singleSubCommTransport : opTransportResponse[COMM_LEVEL0]) {
         for (u64 i = 0; i < singleSubCommTransport.links.size(); ++i) {
             LINK link = singleSubCommTransport.links[i];
-            if (link == nullptr || !singleSubCommTransport.transportRequests[i].isValid ||
-                !IsSupportZeroCopyLinkType(link->GetLinkType())) {
+            if (link == nullptr || !singleSubCommTransport.transportRequests[i].isValid
+                || !IsSupportZeroCopyLinkType(link->GetLinkType())) {
                 // 无效或者不支持的链路
                 continue;
             }
@@ -186,19 +201,22 @@ HcclResult AicpuZeroCopyExchanger::GetRemoteRanks(TagRes &tagRes, OpCommTranspor
             tagRes.links.emplace_back(link);
         }
     }
- 
+
     // 校验交换地址的buffer长度是足够，目前是固定使用16个
     u32 maxDeviceNum;
     CHK_RET(GetMaxDevNum(maxDeviceNum));
     u64 actualUseLen = maxDeviceNum * sizeof(FlagData);
-    CHK_PRT_RET(actualUseLen > ZERO_COPY_IPC_BUFFER_LENGTH,
-        HCCL_ERROR("[AicpuZeroCopyExchanger][GetRemoteRanks] invalid ipc buffer length [%lu] max [%lu]", actualUseLen, ZERO_COPY_IPC_BUFFER_LENGTH),
+    CHK_PRT_RET(
+        actualUseLen > ZERO_COPY_IPC_BUFFER_LENGTH,
+        HCCL_ERROR(
+            "[AicpuZeroCopyExchanger][GetRemoteRanks] invalid ipc buffer length [%lu] max [%lu]", actualUseLen,
+            ZERO_COPY_IPC_BUFFER_LENGTH),
         HCCL_E_PARA);
 
     return HCCL_SUCCESS;
 }
 
-HcclResult AicpuZeroCopyExchanger::PrepareTagRes(const std::string &tag, OpCommTransport &opTransportResponse)
+HcclResult AicpuZeroCopyExchanger::PrepareTagRes(const std::string& tag, OpCommTransport& opTransportResponse)
 {
     // 清理一下当前正在使用的tag资源
     current_ = nullptr;
@@ -228,7 +246,8 @@ HcclResult AicpuZeroCopyExchanger::PrepareTagRes(const std::string &tag, OpCommT
     // 准备batch sdma的输入输出地址
     int index = 0;
     for (auto remoteRank : current_->remoteRanks) {
-        FlagData *datas = reinterpret_cast<FlagData *>(resParam_->zeroCopyIpcPtrs[remoteRank % deviceNumPerAggregation_]);
+        FlagData* datas
+            = reinterpret_cast<FlagData*>(resParam_->zeroCopyIpcPtrs[remoteRank % deviceNumPerAggregation_]);
         current_->remotePtrs[index] = &datas[rankId_ % deviceNumPerAggregation_];
         current_->selfPtrs[index] = &current_->selfData[index];
         current_->rankIds[index] = remoteRank;
@@ -247,27 +266,38 @@ HcclResult AicpuZeroCopyExchanger::GetRemoteAddr()
     auto startTime = std::chrono::steady_clock::now();
     auto timeout = std::chrono::seconds(timeoutSec_);
     while (doneRanks.size() < current_->remoteRanks.size()) {
-        CHK_PRT_RET(needStop_(), HCCL_ERROR("AicpuZeroCopyExchanger][GetRemoteAddr] we need stop now"), HCCL_E_SUSPENDING);
+        CHK_PRT_RET(
+            needStop_(), HCCL_ERROR("AicpuZeroCopyExchanger][GetRemoteAddr] we need stop now"), HCCL_E_SUSPENDING);
         for (auto remoteRank : current_->remoteRanks) {
-            CHK_PRT_RET(((std::chrono::steady_clock::now() - startTime) > timeout && timeoutSec_ != 0),
-                HCCL_ERROR("[AicpuZeroCopyExchanger][GetRemoteAddr] get remote addr timeout [%ld s], %s",
-                timeout, DumpLinkInfo(doneRanks).c_str()), HCCL_E_TIMEOUT);
+            CHK_PRT_RET(
+                ((std::chrono::steady_clock::now() - startTime) > timeout && timeoutSec_ != 0),
+                HCCL_ERROR(
+                    "[AicpuZeroCopyExchanger][GetRemoteAddr] get remote addr timeout [%ld s], %s", timeout,
+                    DumpLinkInfo(doneRanks).c_str()),
+                HCCL_E_TIMEOUT);
 
             if (doneRanks.find(remoteRank) != doneRanks.end()) {
                 continue;
             }
 
-            FlagData *datas = reinterpret_cast<FlagData *>(resParam_->zeroCopyIpcPtrs[rankId_ % deviceNumPerAggregation_]);
-            ret = TryToRead(datas[remoteRank % deviceNumPerAggregation_], inAddrs_[remoteRank % deviceNumPerAggregation_], outAddrs_[remoteRank % deviceNumPerAggregation_]);
+            FlagData* datas
+                = reinterpret_cast<FlagData*>(resParam_->zeroCopyIpcPtrs[rankId_ % deviceNumPerAggregation_]);
+            ret = TryToRead(
+                datas[remoteRank % deviceNumPerAggregation_], inAddrs_[remoteRank % deviceNumPerAggregation_],
+                outAddrs_[remoteRank % deviceNumPerAggregation_]);
             if (ret == HCCL_E_AGAIN) {
                 continue;
             } else if (ret == HCCL_SUCCESS) {
-                HCCL_INFO("[AicpuZeroCopyExchanger][GetRemoteAddr] success read from rank[%u], remoteInput[0x%lx] remoteOutput[0x%lx]",
-                    remoteRank, inAddrs_[remoteRank % deviceNumPerAggregation_], outAddrs_[remoteRank % deviceNumPerAggregation_]);
+                HCCL_INFO(
+                    "[AicpuZeroCopyExchanger][GetRemoteAddr] success read from rank[%u], remoteInput[0x%lx] "
+                    "remoteOutput[0x%lx]",
+                    remoteRank, inAddrs_[remoteRank % deviceNumPerAggregation_],
+                    outAddrs_[remoteRank % deviceNumPerAggregation_]);
                 doneRanks.insert(remoteRank);
             } else {
-                HCCL_ERROR("[AicpuZeroCopyExchanger][GetRemoteAddr] failed read from rank[%u] ipcPtr[%p] data[%p]",
-                    remoteRank, datas, &datas[remoteRank % deviceNumPerAggregation_]);
+                HCCL_ERROR(
+                    "[AicpuZeroCopyExchanger][GetRemoteAddr] failed read from rank[%u] ipcPtr[%p] data[%p]", remoteRank,
+                    datas, &datas[remoteRank % deviceNumPerAggregation_]);
                 return ret;
             }
         }
@@ -276,7 +306,7 @@ HcclResult AicpuZeroCopyExchanger::GetRemoteAddr()
     return HCCL_SUCCESS;
 }
 
-HcclResult AicpuZeroCopyExchanger::BatchSetLocalAddrToRemote(void *in, void *out)
+HcclResult AicpuZeroCopyExchanger::BatchSetLocalAddrToRemote(void* in, void* out)
 {
     CHK_PTR_NULL(in);
     CHK_PTR_NULL(out);
@@ -287,23 +317,37 @@ HcclResult AicpuZeroCopyExchanger::BatchSetLocalAddrToRemote(void *in, void *out
     auto timeout = std::chrono::seconds(timeoutSec_);
     std::set<u32> doneRanks;
     while (true) {
-        CHK_PRT_RET(needStop_(), HCCL_ERROR("AicpuZeroCopyExchanger][BatchSetLocalAddrToRemote] we need stop now"), HCCL_E_SUSPENDING);
+        CHK_PRT_RET(
+            needStop_(), HCCL_ERROR("AicpuZeroCopyExchanger][BatchSetLocalAddrToRemote] we need stop now"),
+            HCCL_E_SUSPENDING);
 
-        CHK_PRT_RET(((std::chrono::steady_clock::now() - startTime) > timeout && timeoutSec_ != 0),
-            HCCL_ERROR("[AicpuZeroCopyExchanger][BatchSetLocalAddrToRemote] Set to remote addr timeout [%ld s], %s", timeout,
-            DumpLinkInfo(doneRanks).c_str()), HCCL_E_TIMEOUT);
+        CHK_PRT_RET(
+            ((std::chrono::steady_clock::now() - startTime) > timeout && timeoutSec_ != 0),
+            HCCL_ERROR(
+                "[AicpuZeroCopyExchanger][BatchSetLocalAddrToRemote] Set to remote addr timeout [%ld s], %s", timeout,
+                DumpLinkInfo(doneRanks).c_str()),
+            HCCL_E_TIMEOUT);
 
-        DVresult ret = halSdmaBatchCopy(current_->selfPtrs.data(), current_->remotePtrs.data(), current_->sizes.data(), peerCount);
-        CHK_PRT_RET(ret != 0, HCCL_ERROR("[[AicpuZeroCopyExchanger][BatchSetLocalAddrToRemote] Batch get remote " \
-            "failed, ret[%u]", ret), HCCL_E_INTERNAL);
+        DVresult ret = halSdmaBatchCopy(
+            current_->selfPtrs.data(), current_->remotePtrs.data(), current_->sizes.data(), peerCount);
+        CHK_PRT_RET(
+            ret != 0,
+            HCCL_ERROR(
+                "[AicpuZeroCopyExchanger][BatchSetLocalAddrToRemote] sdma batch copy "
+                "failed, ret[%u]",
+                ret),
+            HCCL_E_INTERNAL);
 
         size_t readyCount = 0;
         for (u64 i = 0; i < peerCount; ++i) {
-            FlagData *data = reinterpret_cast<FlagData *>(current_->selfPtrs[i]);
+            FlagData* data = reinterpret_cast<FlagData*>(current_->selfPtrs[i]);
             u64 flag = data->flag;
-            CHK_PRT_RET(flag != INVALID_DATA && flag != VALID_DATA,
-                HCCL_ERROR("[AicpuZeroCopyExchanger][BatchSetLocalAddrToRemote] rank[%lu]'s flag is [%lu] corruption", current_->rankIds[i],
-                flag), HCCL_E_INTERNAL);
+            CHK_PRT_RET(
+                flag != INVALID_DATA && flag != VALID_DATA,
+                HCCL_ERROR(
+                    "[AicpuZeroCopyExchanger][BatchSetLocalAddrToRemote] rank[%lu]'s flag is [%lu] corruption",
+                    current_->rankIds[i], flag),
+                HCCL_E_INTERNAL);
 
             if (flag != INVALID_DATA) {
                 break;
@@ -319,9 +363,15 @@ HcclResult AicpuZeroCopyExchanger::BatchSetLocalAddrToRemote(void *in, void *out
             continue;
         }
 
-        ret = halSdmaBatchCopy(current_->remotePtrs.data(), current_->selfPtrs.data(), current_->sizes.data(), peerCount);
-        CHK_PRT_RET(ret != 0, HCCL_ERROR("[[AicpuZeroCopyExchanger][BatchSetLocalAddrToRemote] Batch get remote " \
-            "failed, ret[%u]", ret), HCCL_E_INTERNAL);
+        ret = halSdmaBatchCopy(
+            current_->remotePtrs.data(), current_->selfPtrs.data(), current_->sizes.data(), peerCount);
+        CHK_PRT_RET(
+            ret != 0,
+            HCCL_ERROR(
+                "[AicpuZeroCopyExchanger][BatchSetLocalAddrToRemote] sdma batch copy "
+                "failed, ret[%u]",
+                ret),
+            HCCL_E_INTERNAL);
         break;
     }
 
@@ -330,11 +380,12 @@ HcclResult AicpuZeroCopyExchanger::BatchSetLocalAddrToRemote(void *in, void *out
 
 HcclResult AicpuZeroCopyExchanger::UpdateTransportAddress()
 {
-    u32 *head = reinterpret_cast<u32 *>(resParam_->zeroCopyHeadPtr);
-    u32 *tail = reinterpret_cast<u32 *>(resParam_->zeroCopyTailPtr);
-    ZeroCopyRingBufferItem *ringBuffer = reinterpret_cast<ZeroCopyRingBufferItem *>(resParam_->zeroCopyRingBuffer);
+    u32* head = reinterpret_cast<u32*>(resParam_->zeroCopyHeadPtr);
+    u32* tail = reinterpret_cast<u32*>(resParam_->zeroCopyTailPtr);
+    ZeroCopyRingBufferItem* ringBuffer = reinterpret_cast<ZeroCopyRingBufferItem*>(resParam_->zeroCopyRingBuffer);
 
-    CHK_PRT_RET(head == nullptr || tail == nullptr || ringBuffer == nullptr,
+    CHK_PRT_RET(
+        head == nullptr || tail == nullptr || ringBuffer == nullptr,
         HCCL_ERROR("[AicpuZeroCopyExchanger][UpdateTransportAddress] ring buffer ptr is nullptr"), HCCL_E_INTERNAL);
 
     // RingBuffer中有东西，所以先去处理一下，更新一下mgr的值
@@ -349,33 +400,50 @@ HcclResult AicpuZeroCopyExchanger::UpdateTransportAddress()
 
         // remote in addr
         LocalIpc2RemoteAddr inMapAddr;
-        CHK_RET(globalAddrMgr_.GetLocalIpc2RemoteAddr(devicePhyId, reinterpret_cast<void *>(inAddrs_[remoteRank % deviceNumPerAggregation_]), inMapAddr));
-        remoteIns[remoteRank % deviceNumPerAggregation_] = inMapAddr.localIpcAddr + (inAddrs_[remoteRank % deviceNumPerAggregation_] - inMapAddr.remoteAddr);
-        CHK_PRT_RET(!globalAddrMgr_.IsActivateCommMemoryAddr(reinterpret_cast<void *>(remoteIns[remoteRank % deviceNumPerAggregation_]), 1),
-            HCCL_ERROR("[AicpuZeroCopyExchanger][UpdateTransportAddress] rank[%u] ptr[0x%lx] is not activate", remoteRank, remoteIns[remoteRank % deviceNumPerAggregation_]),
+        CHK_RET(globalAddrMgr_.GetLocalIpc2RemoteAddr(
+            devicePhyId, reinterpret_cast<void*>(inAddrs_[remoteRank % deviceNumPerAggregation_]), inMapAddr));
+        remoteIns[remoteRank % deviceNumPerAggregation_]
+            = inMapAddr.localIpcAddr + (inAddrs_[remoteRank % deviceNumPerAggregation_] - inMapAddr.remoteAddr);
+        CHK_PRT_RET(
+            !globalAddrMgr_.IsActivateCommMemoryAddr(
+                reinterpret_cast<void*>(remoteIns[remoteRank % deviceNumPerAggregation_]), 1),
+            HCCL_ERROR(
+                "[AicpuZeroCopyExchanger][UpdateTransportAddress] rank[%u] ptr[0x%lx] is not activate", remoteRank,
+                remoteIns[remoteRank % deviceNumPerAggregation_]),
             HCCL_E_PARA);
 
         // remote out addr
         LocalIpc2RemoteAddr outMapAddr;
-        CHK_RET(globalAddrMgr_.GetLocalIpc2RemoteAddr(devicePhyId, reinterpret_cast<void *>(outAddrs_[remoteRank % deviceNumPerAggregation_]), outMapAddr));
-        remoteOuts[remoteRank % deviceNumPerAggregation_] = outMapAddr.localIpcAddr + (outAddrs_[remoteRank % deviceNumPerAggregation_] - outMapAddr.remoteAddr);
-        CHK_PRT_RET(!globalAddrMgr_.IsActivateCommMemoryAddr(reinterpret_cast<void *>(remoteOuts[remoteRank % deviceNumPerAggregation_]), 1),
-            HCCL_ERROR("[AicpuZeroCopyExchanger][UpdateTransportAddress] rank[%u] ptr[0x%lx] is not activate", remoteRank, remoteOuts[remoteRank % deviceNumPerAggregation_]),
+        CHK_RET(globalAddrMgr_.GetLocalIpc2RemoteAddr(
+            devicePhyId, reinterpret_cast<void*>(outAddrs_[remoteRank % deviceNumPerAggregation_]), outMapAddr));
+        remoteOuts[remoteRank % deviceNumPerAggregation_]
+            = outMapAddr.localIpcAddr + (outAddrs_[remoteRank % deviceNumPerAggregation_] - outMapAddr.remoteAddr);
+        CHK_PRT_RET(
+            !globalAddrMgr_.IsActivateCommMemoryAddr(
+                reinterpret_cast<void*>(remoteOuts[remoteRank % deviceNumPerAggregation_]), 1),
+            HCCL_ERROR(
+                "[AicpuZeroCopyExchanger][UpdateTransportAddress] rank[%u] ptr[0x%lx] is not activate", remoteRank,
+                remoteOuts[remoteRank % deviceNumPerAggregation_]),
             HCCL_E_PARA);
 
-        HCCL_INFO("[AicpuZeroCopyExchanger][UpdateTransportAddress] remoteRank[%u] localInBase[0x%lx] remoteInBase[0x%lx] "
-            "remoteIn [0x%lx] localOutBase [0x%lx] remoteOutBase [0x%lx] remoteOut [0x%lx]", remoteRank, inMapAddr.localIpcAddr,
-            inMapAddr.remoteAddr, remoteIns[remoteRank % deviceNumPerAggregation_], outMapAddr.localIpcAddr, outMapAddr.remoteAddr, remoteOuts[remoteRank % deviceNumPerAggregation_]);
+        HCCL_INFO(
+            "[AicpuZeroCopyExchanger][UpdateTransportAddress] remoteRank[%u] localInBase[0x%lx] remoteInBase[0x%lx] "
+            "remoteIn [0x%lx] localOutBase [0x%lx] remoteOutBase [0x%lx] remoteOut [0x%lx]",
+            remoteRank, inMapAddr.localIpcAddr, inMapAddr.remoteAddr, remoteIns[remoteRank % deviceNumPerAggregation_],
+            outMapAddr.localIpcAddr, outMapAddr.remoteAddr, remoteOuts[remoteRank % deviceNumPerAggregation_]);
     }
 
     // 因此同一个对端可能有多条p2p链路
-    for (auto &link : current_->links) {
+    for (auto& link : current_->links) {
         u32 remoteRank = link->GetRemoteRank();
-        void *remoteIn = reinterpret_cast<void *>(remoteIns[remoteRank % deviceNumPerAggregation_]);
-        void *remoteOut = reinterpret_cast<void *>(remoteOuts[remoteRank % deviceNumPerAggregation_]);
+        void* remoteIn = reinterpret_cast<void*>(remoteIns[remoteRank % deviceNumPerAggregation_]);
+        void* remoteOut = reinterpret_cast<void*>(remoteOuts[remoteRank % deviceNumPerAggregation_]);
 
-        CHK_PRT_RET(remoteIn == nullptr || remoteOut == nullptr,
-            HCCL_ERROR("[AicpuZeroCopyExchanger][UpdateTransportAddress] remoteRank in[%p] out[%p] is invalid", remoteIn, remoteOut),
+        CHK_PRT_RET(
+            remoteIn == nullptr || remoteOut == nullptr,
+            HCCL_ERROR(
+                "[AicpuZeroCopyExchanger][UpdateTransportAddress] remoteRank in[%p] out[%p] is invalid", remoteIn,
+                remoteOut),
             HCCL_E_INTERNAL);
         CHK_RET(link->UpdateRemoteAddr(remoteIn, remoteOut));
     }
@@ -383,8 +451,8 @@ HcclResult AicpuZeroCopyExchanger::UpdateTransportAddress()
     return HCCL_SUCCESS;
 }
 
- std::string AicpuZeroCopyExchanger::DumpLinkInfo(std::set<u32> &doneRanks)
- {
+std::string AicpuZeroCopyExchanger::DumpLinkInfo(std::set<u32>& doneRanks)
+{
     std::string msg = "Expect:[";
     for (auto remoteRank : current_->remoteRanks) {
         msg += std::to_string(remoteRank) + " ";
@@ -397,6 +465,6 @@ HcclResult AicpuZeroCopyExchanger::UpdateTransportAddress()
     msg += "]";
 
     return msg;
- }
-
 }
+
+} // namespace hccl

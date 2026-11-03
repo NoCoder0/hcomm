@@ -11,7 +11,7 @@
 #ifndef NET_ADP_U_API_H
 #define NET_ADP_U_API_H
 
-#define NETADP_ATTRI_VISI_DEF __attribute__ ((visibility ("default")))
+#define NETADP_ATTRI_VISI_DEF __attribute__((visibility("default")))
 
 NETADP_ATTRI_VISI_DEF int net_adapt_init(void);
 NETADP_ATTRI_VISI_DEF void net_adapt_uninit(void);

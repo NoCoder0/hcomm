@@ -1,3 +1,26 @@
+# -----------------------------------------------------------------------------------------------------------
+# Copyright (c) 2026 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
+
+# 日志级别定义(各段通用):
+#   0-trace 1-debug 2-info 3-warn 4-error 5-critical 6-off
+#
+# 后端由环境变量 HCCL_VM_LOG_MODE 选择:
+#   stub(默认) 各段配置即 spdlog 的控制台/文件级别, 行为与既有版本一致。
+#   cann       本文件完全不参与。host/checker/runner 复用真实 CANN 日志库及其环境配置。
+#              初始化时绑定写入入口，并从环境变量缓存模块阈值，在参数求值/格式化前过滤。
+#              host 通过前置过滤后直接调用真库；阈值快照运行中不自动刷新。
+#              device 使用已有 spdlog 仿真 CANN 文本, 只写 <CANN日志根>/run/device-<Device主键>/。
+#              仿真只读 ASCEND_GLOBAL_LOG_LEVEL/ASCEND_MODULE_LOG_LEVEL；不修改 CANN 配置。
+#              日志根优先 ASCEND_PROCESS_LOG_PATH, 其次 ASCEND_WORK_PATH/log,
+#              未设置时为当前用户家目录下 ascend/log。
+#
 hccl_vm:
     console_level: 2
     file_level: 1
@@ -37,3 +60,15 @@ checker:
     file_base_name: app_log
     file_suffix: .log
     enable_compress: false
+
+# 拓扑生成脚本(generate_cluster_topo.sh/generate_server_topo.sh/allocate_eid.sh)日志配置
+# console_level: 脚本控制台日志级别, 与C++日志级别定义一致:
+#   0-trace 1-debug 2-info 3-warn 4-error 5-critical 6-off
+#   debug(1): 输出全部日志(含逐server/逐die/逐端口明细)
+#   info(2):  输出步骤与汇总信息(默认)
+#   warn(3):  仅输出警告与错误
+#   error(4): 仅输出错误
+#   off(6):   不输出任何日志
+script:
+    console_level: 2
+

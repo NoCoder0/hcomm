@@ -29,38 +29,46 @@
 #include "rs_ping_urma.h"
 #include "tc_ut_rs_ping_urma.h"
 
-extern int RsGetPingCb(struct RaRsDevInfo *rdev, struct RsPingCtxCb **pingCb);
-extern int RsPingUrmaPollRcq(struct RsPingCtxCb *pingCb, int *polledCnt, struct timeval *timestamp2);
-extern void RsPongUrmaHandleSend(struct RsPingCtxCb *pingCb, int polledCnt, struct timeval *timestamp2);
-extern void RsPongUrmaPollRcq(struct RsPingCtxCb *pingCb);
-extern int RsPingUrmaPollScq(struct RsPingCtxCb *pingCb, struct RsPingTargetInfo  *target);
-extern struct RsPingPongOps *RsPingUrmaGetOps(void);
-extern struct RsPingPongDfx  *RsPingUrmaGetDfx(void);
-extern int RsPingCommonImportJetty(urma_context_t *urmaCtx, struct PingQpInfo *target,
-    urma_target_jetty_t **importTjetty);
-extern int RsPongJettyPostSend(struct RsPingCtxCb *pingCb, urma_cr_t *cr, struct timeval *timestamp2);
-extern int RsPingCommonJfrPostRecv(struct RsPingLocalJettyCb *jettyCb);
-extern int RsPongJettyResolveResponsePacket(struct RsPingCtxCb *pingCb, uint32_t sgeIdx, struct timeval *timestamp4);
-extern int RsPingUrmaFindTargetNode(struct RsPingCtxCb *pingCb, struct PingQpInfo *target,
-    struct RsPingTargetInfo  **node);
-extern int RsPingCommonPollSendJfc(struct RsPingLocalJettyCb *jettyCb);
-extern int RsPongJettyFindAllocTargetNode(struct RsPingCtxCb *pingCb, struct PingQpInfo *target,
-    struct RsPongTargetInfo **node);
-extern int RsPongJettyFindTargetNode(struct RsPingCtxCb *pingCb, struct PingQpInfo *target,
-    struct RsPongTargetInfo **node);
-extern int RsGetJettyInfo(struct PingQpInfo *qpInfo, urma_jetty_id_t *jettyId, urma_eid_t *eid);
-extern int RsPingUrmaPostSend(struct RsPingCtxCb *pingCb, struct RsPingTargetInfo *target);
-extern void RsPingUrmaResetRecvBuffer(struct RsPingCtxCb *pingCb);
+extern int RsGetPingCb(struct RaRsDevInfo* rdev, struct RsPingCtxCb** pingCb);
+extern int RsPingUrmaPollRcq(struct RsPingCtxCb* pingCb, int* polledCnt, struct timeval* timestamp2);
+extern void RsPongUrmaHandleSend(struct RsPingCtxCb* pingCb, int polledCnt, struct timeval* timestamp2);
+extern void RsPongUrmaPollRcq(struct RsPingCtxCb* pingCb);
+extern int RsPingUrmaPollScq(struct RsPingCtxCb* pingCb, struct RsPingTargetInfo* target);
+extern struct RsPingPongOps* RsPingUrmaGetOps(void);
+extern struct RsPingPongDfx* RsPingUrmaGetDfx(void);
+extern int
+RsPingCommonImportJetty(urma_context_t* urmaCtx, struct PingQpInfo* target, urma_target_jetty_t** importTjetty);
+extern int
+RsPingCommonInitJettyWithAttr(struct RsPingCtxCb* pingCb, union PingQpAttr* attr, struct RsPingLocalJettyCb* jettyCb);
+extern int RsPingCommonInitJfce(struct RsPingCtxCb* pingCb, struct RsPingLocalJettyCb* jettyCb);
+extern int RsPingCommonInitSendJfcWithAttr(
+    struct rs_cb* rscb, struct RsPingCtxCb* pingCb, union PingQpAttr* attr, struct RsPingLocalJettyCb* jettyCb);
+extern int
+RsPingCommonInitRecvJfcWithAttr(struct RsPingCtxCb* pingCb, union PingQpAttr* attr, struct RsPingLocalJettyCb* jettyCb);
+extern int RsPongJettyPostSend(struct RsPingCtxCb* pingCb, urma_cr_t* cr, struct timeval* timestamp2);
+extern int RsPingCommonJfrPostRecv(struct RsPingLocalJettyCb* jettyCb);
+extern int RsPongJettyResolveResponsePacket(struct RsPingCtxCb* pingCb, uint32_t sgeIdx, struct timeval* timestamp4);
+extern int
+RsPingUrmaFindTargetNode(struct RsPingCtxCb* pingCb, struct PingQpInfo* target, struct RsPingTargetInfo** node);
+extern int RsPingCommonPollSendJfc(struct RsPingLocalJettyCb* jettyCb);
+extern int
+RsPongJettyFindAllocTargetNode(struct RsPingCtxCb* pingCb, struct PingQpInfo* target, struct RsPongTargetInfo** node);
+extern int
+RsPongJettyFindTargetNode(struct RsPingCtxCb* pingCb, struct PingQpInfo* target, struct RsPongTargetInfo** node);
+extern int RsGetJettyInfo(struct PingQpInfo* qpInfo, urma_jetty_id_t* jettyId, urma_eid_t* eid);
+extern int RsPingUrmaPostSend(struct RsPingCtxCb* pingCb, struct RsPingTargetInfo* target);
+extern void RsPingUrmaResetRecvBuffer(struct RsPingCtxCb* pingCb);
+extern int RsPingCommonInitSegCb(struct rs_cb* rscb, struct RsPingCtxCb* pingCb, struct RsPingSegCb* segCb);
 
 urma_jfc_t gTmpJfc;
 static struct rs_cb gTmpRsCb;
 static struct RsPingCtxCb gTmpPingCb;
-static struct RsPingTargetInfo  gTmpTarget;
-static struct RsPingTargetInfo  gTmpTarget1;
+static struct RsPingTargetInfo gTmpTarget;
+static struct RsPingTargetInfo gTmpTarget1;
 
 #define TEST_SGE_LIST_LEN 1024
 
-int RsGetRsCbUrmaStub(unsigned int phyId, struct rs_cb **rsCb)
+int RsGetRsCbUrmaStub(unsigned int phyId, struct rs_cb** rsCb)
 {
     *rsCb = &gTmpRsCb;
     (*rsCb)->pingCb.pingPongOps = RsPingUrmaGetOps();
@@ -68,7 +76,7 @@ int RsGetRsCbUrmaStub(unsigned int phyId, struct rs_cb **rsCb)
     return 0;
 }
 
-int RsGetPingCbUrmaStub(struct RaRsDevInfo *rdev, struct RsPingCtxCb **pingCb)
+int RsGetPingCbUrmaStub(struct RaRsDevInfo* rdev, struct RsPingCtxCb** pingCb)
 {
     *pingCb = &gTmpPingCb;
     (*pingCb)->pingPongOps = RsPingUrmaGetOps();
@@ -76,7 +84,7 @@ int RsGetPingCbUrmaStub(struct RaRsDevInfo *rdev, struct RsPingCtxCb **pingCb)
     return 0;
 }
 
-int RsGetPingCbUrmaStub1(struct RaRsDevInfo *rdev, struct RsPingCtxCb **pingCb)
+int RsGetPingCbUrmaStub1(struct RaRsDevInfo* rdev, struct RsPingCtxCb** pingCb)
 {
     *pingCb = &gTmpRsCb.pingCb;
     (*pingCb)->pingPongOps = RsPingUrmaGetOps();
@@ -84,42 +92,40 @@ int RsGetPingCbUrmaStub1(struct RaRsDevInfo *rdev, struct RsPingCtxCb **pingCb)
     return 0;
 }
 
-int RsUrmaPollJfcStubPing0(urma_jfc_t *jfc, int crCnt, urma_cr_t *cr)
+int RsUrmaPollJfcStubPing0(urma_jfc_t* jfc, int crCnt, urma_cr_t* cr)
 {
     cr->status = URMA_CR_LOC_LEN_ERR;
     return 1;
 }
 
-int RsUrmaPollJfcStubPing1(urma_jfc_t *jfc, int crCnt, urma_cr_t *cr)
+int RsUrmaPollJfcStubPing1(urma_jfc_t* jfc, int crCnt, urma_cr_t* cr)
 {
     cr->status = URMA_CR_SUCCESS;
     return 1;
 }
 
-int RsUrmaWaitJfcStub(urma_jfce_t *jfce, uint32_t jfcCnt, int timeOut, urma_jfc_t *jfc[])
+int RsUrmaWaitJfcStub(urma_jfce_t* jfce, uint32_t jfcCnt, int timeOut, urma_jfc_t* jfc[])
 {
     *jfc = &gTmpJfc;
     return 1;
 }
 
-int RsPingUrmaFindTargetNodeStub(struct RsPingCtxCb *pingCb, struct PingQpInfo *target,
-    struct RsPingTargetInfo  **node)
+int RsPingUrmaFindTargetNodeStub(struct RsPingCtxCb* pingCb, struct PingQpInfo* target, struct RsPingTargetInfo** node)
 {
     *node = &gTmpTarget;
 
     return -ENODEV;
 }
 
-int RsPingUrmaFindTargetNodeStub1(struct RsPingCtxCb *pingCb, struct PingQpInfo *target,
-    struct RsPingTargetInfo  **node)
+int RsPingUrmaFindTargetNodeStub1(struct RsPingCtxCb* pingCb, struct PingQpInfo* target, struct RsPingTargetInfo** node)
 {
     *node = &gTmpTarget1;
 
     return 0;
 }
 
-int RsPongJettyFindAllocTargetNodeStub(struct RsPingCtxCb *pingCb, struct PingQpInfo *target,
-    struct RsPongTargetInfo **node)
+int RsPongJettyFindAllocTargetNodeStub(
+    struct RsPingCtxCb* pingCb, struct PingQpInfo* target, struct RsPongTargetInfo** node)
 {
     static struct RsPongTargetInfo tmpNode = {0};
 
@@ -128,15 +134,14 @@ int RsPongJettyFindAllocTargetNodeStub(struct RsPingCtxCb *pingCb, struct PingQp
     return 0;
 }
 
-int RsPongJettyFindTargetNodeStub(struct RsPingCtxCb *pingCb, struct PingQpInfo *target,
-    struct RsPongTargetInfo **node)
+int RsPongJettyFindTargetNodeStub(struct RsPingCtxCb* pingCb, struct PingQpInfo* target, struct RsPongTargetInfo** node)
 {
     *node = NULL;
     return -19;
 }
 
-int RsPongJettyFindTargetNodeStub2(struct RsPingCtxCb *pingCb, struct PingQpInfo *target,
-    struct RsPongTargetInfo **node)
+int RsPongJettyFindTargetNodeStub2(
+    struct RsPingCtxCb* pingCb, struct PingQpInfo* target, struct RsPongTargetInfo** node)
 {
     *node = calloc(1, sizeof(struct RsPongTargetInfo));
     RS_INIT_LIST_HEAD(&(*node)->list);
@@ -147,7 +152,7 @@ void TcRsPingInitDeinitUrma()
 {
     struct ibv_comp_channel clientChannel = {0};
     struct ibv_comp_channel serverChannel = {0};
-    struct PingTargetInfo  target = {0};
+    struct PingTargetInfo target = {0};
     struct PingInitAttr attr = {0};
     struct PingInitInfo info = {0};
     struct RaRsDevInfo rdev = {0};
@@ -181,7 +186,7 @@ void TcRsPingInitDeinitUrma()
 
 void TcRsPingTargetAddDelUrma()
 {
-    struct PingTargetInfo  target = {0};
+    struct PingTargetInfo target = {0};
     struct RaRsDevInfo rdev = {0};
     unsigned int num = 1;
     int ret = 0;
@@ -191,7 +196,7 @@ void TcRsPingTargetAddDelUrma()
     mocker_invoke(RsGetPingCb, RsGetPingCbUrmaStub, 2);
     ret = RsPingTargetAdd(&rdev, &target);
     EXPECT_INT_EQ(ret, 0);
-    ret = RsPingTargetDel(&rdev, (struct PingTargetCommInfo *)&target, &num);
+    ret = RsPingTargetDel(&rdev, (struct PingTargetCommInfo*)&target, &num);
     EXPECT_INT_EQ(ret, 0);
     mocker_clean();
 
@@ -212,18 +217,18 @@ void TcRsPingTargetAddDelUrma()
     gTmpPingCb.taskStatus = RS_PING_TASK_RESET;
     mocker_invoke(RsGetPingCb, RsGetPingCbUrmaStub, 1);
     mocker(RsPingUrmaFindTargetNode, 1, -1);
-    ret = RsPingTargetDel(&rdev, (struct PingTargetCommInfo *)&target, &num);
+    ret = RsPingTargetDel(&rdev, (struct PingTargetCommInfo*)&target, &num);
     EXPECT_INT_EQ(ret, -1);
     mocker_clean();
 }
 
 void TcRsPingUrmaPostSend()
 {
-    struct RsPingTargetInfo  target = {0};
+    struct RsPingTargetInfo target = {0};
     struct RsPingCtxCb pingCb = {0};
     urma_jetty_t serverJetty = {0};
     urma_jetty_t clientJetty = {0};
-    void *addr = malloc(256);
+    void* addr = malloc(256);
     urma_sge_t sge = {0};
     int ret = 0;
 
@@ -237,6 +242,12 @@ void TcRsPingUrmaPostSend()
     pingCb.pingJetty.jetty = &clientJetty;
     ret = RsPingUrmaPostSend(&pingCb, &target);
     EXPECT_INT_EQ(ret, 0);
+
+    mocker(RsUrmaPostJettySendWr, 1, -1);
+    ret = RsPingUrmaPostSend(&pingCb, &target);
+    EXPECT_INT_EQ(ret, -1);
+    mocker_clean();
+
     free(addr);
     addr = NULL;
     free(target.payloadBuffer);
@@ -302,7 +313,7 @@ void TcRsPingClientPollCqUrma()
 
 void TcRsPingUrmaPollScq()
 {
-    struct RsPingTargetInfo  target = {0};
+    struct RsPingTargetInfo target = {0};
     struct RsPingCtxCb pingCb = {0};
     int ret = 0;
 
@@ -416,8 +427,8 @@ void TcRsPingServerPostSendUrma()
 {
     struct RsPingCtxCb pingCb = {0};
     struct timeval timestamp2 = {0};
-    void *sendAddr = malloc(TEST_SGE_LIST_LEN);
-    void *recvAddr = malloc(TEST_SGE_LIST_LEN);
+    void* sendAddr = malloc(TEST_SGE_LIST_LEN);
+    void* recvAddr = malloc(TEST_SGE_LIST_LEN);
     urma_cr_t cr = {0};
     int ret = 0;
 
@@ -429,12 +440,12 @@ void TcRsPingServerPostSendUrma()
 
     cr.user_ctx = 0;
     cr.completion_len = 16;
-    pingCb.pingJetty.recvSegCb.sgeList  = calloc(1, sizeof(urma_sge_t));
+    pingCb.pingJetty.recvSegCb.sgeList = calloc(1, sizeof(urma_sge_t));
     pingCb.pingJetty.recvSegCb.sgeNum = 1;
-    pingCb.pongJetty.sendSegCb.sgeList  = calloc(1, sizeof(urma_sge_t));
+    pingCb.pongJetty.sendSegCb.sgeList = calloc(1, sizeof(urma_sge_t));
     pingCb.pongJetty.sendSegCb.sgeNum = 1;
-    pingCb.pongJetty.sendSegCb.sgeList ->addr = (uintptr_t)sendAddr;
-    pingCb.pongJetty.sendSegCb.sgeList ->len = TEST_SGE_LIST_LEN;
+    pingCb.pongJetty.sendSegCb.sgeList->addr = (uintptr_t)sendAddr;
+    pingCb.pongJetty.sendSegCb.sgeList->len = TEST_SGE_LIST_LEN;
     pingCb.pingJetty.recvSegCb.sgeList->addr = (uintptr_t)recvAddr;
     pingCb.pingJetty.recvSegCb.sgeList->len = TEST_SGE_LIST_LEN;
     mocker(RsPingCommonPollSendJfc, 1, 0);
@@ -457,8 +468,8 @@ void TcRsPingServerPostSendUrma()
     EXPECT_INT_EQ(ret, 0);
     mocker_clean();
 
-    free(pingCb.pongJetty.sendSegCb.sgeList );
-    pingCb.pongJetty.sendSegCb.sgeList  = NULL;
+    free(pingCb.pongJetty.sendSegCb.sgeList);
+    pingCb.pongJetty.sendSegCb.sgeList = NULL;
     free(pingCb.pingJetty.recvSegCb.sgeList);
     pingCb.pingJetty.recvSegCb.sgeList = NULL;
     free(recvAddr);
@@ -469,7 +480,7 @@ void TcRsPingServerPostSendUrma()
 
 void TcRsPongJettyFindAllocTargetNode()
 {
-    struct RsPongTargetInfo *node = NULL;
+    struct RsPongTargetInfo* node = NULL;
     struct RsPingCtxCb pingCb = {0};
     struct PingQpInfo target = {0};
     int ret = 0;
@@ -496,12 +507,12 @@ void TcRsPingCommonPollSendJfc()
     int ret = 0;
 
     mocker(RsUrmaPollJfc, 1, -1);
-    ret = RsPingCommonPollSendJfc((struct RsPingLocalJettyCb *)&qpCb);
+    ret = RsPingCommonPollSendJfc((struct RsPingLocalJettyCb*)&qpCb);
     EXPECT_INT_EQ(ret, 0);
     mocker_clean();
 
     mocker(RsUrmaPollJfc, 1, 1);
-    ret = RsPingCommonPollSendJfc((struct RsPingLocalJettyCb *)&qpCb);
+    ret = RsPingCommonPollSendJfc((struct RsPingLocalJettyCb*)&qpCb);
     EXPECT_INT_EQ(ret, 0);
     mocker_clean();
 }
@@ -509,7 +520,7 @@ void TcRsPingCommonPollSendJfc()
 void TcRsPongJettyFindTargetNode()
 {
     struct RsPongTargetInfo stubNode = {0};
-    struct RsPongTargetInfo *node = NULL;
+    struct RsPongTargetInfo* node = NULL;
     struct RsPingCtxCb pingCb = {0};
     struct PingQpInfo target = {0};
     int ret = 0;
@@ -527,13 +538,13 @@ void TcRsPongJettyResolveResponsePacket()
 {
     struct RsPingCtxCb pingCb = {0};
     struct timeval timestamp4 = {0};
-    void *recvAddr = calloc(1, TEST_SGE_LIST_LEN);
+    void* recvAddr = calloc(1, TEST_SGE_LIST_LEN);
     uint32_t sgeIdx = 0;
     int ret = 0;
 
-    pingCb.pongJetty.recvSegCb.sgeList  = calloc(1, sizeof(urma_sge_t));
-    pingCb.pongJetty.recvSegCb.sgeList ->addr = (uintptr_t)recvAddr;
-    pingCb.pongJetty.recvSegCb.sgeList ->len = TEST_SGE_LIST_LEN;
+    pingCb.pongJetty.recvSegCb.sgeList = calloc(1, sizeof(urma_sge_t));
+    pingCb.pongJetty.recvSegCb.sgeList->addr = (uintptr_t)recvAddr;
+    pingCb.pongJetty.recvSegCb.sgeList->len = TEST_SGE_LIST_LEN;
     pingCb.taskId = 1;
 
     ret = RsPongJettyResolveResponsePacket(&pingCb, sgeIdx, &timestamp4);
@@ -564,16 +575,70 @@ void TcRsPongJettyResolveResponsePacket()
     EXPECT_INT_EQ(ret, 0);
     mocker_clean();
 
+    gTmpTarget1.resultSummary.rttMin = 20;
+    gTmpTarget1.resultSummary.rttMax = 4;
+    gTmpTarget1.resultSummary.rttAvg = 0;
+    gTmpTarget1.resultSummary.recvCnt = 0;
+    gTmpTarget1.resultSummary.timeoutCnt = 0;
+    gTmpTarget1.resultSummary.taskId = 0;
+    gTmpTarget1.resultSummary.taskAttr.timeoutInterval = 12;
+    mocker(RsPingGetTripTime, 1, 11);
+    mocker_invoke(RsPingUrmaFindTargetNode, RsPingUrmaFindTargetNodeStub1, 1);
+    ret = RsPongJettyResolveResponsePacket(&pingCb, sgeIdx, &timestamp4);
+    EXPECT_INT_EQ(ret, 0);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.rttMin, 11);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.rttMax, 11);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.rttAvg, 11);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.recvCnt, 1);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.timeoutCnt, 0);
+    mocker_clean();
+
+    gTmpTarget1.resultSummary.rttMin = 11;
+    gTmpTarget1.resultSummary.rttMax = 11;
+    gTmpTarget1.resultSummary.rttAvg = 11;
+    gTmpTarget1.resultSummary.recvCnt = 1;
+    gTmpTarget1.resultSummary.timeoutCnt = 0;
+    gTmpTarget1.resultSummary.taskId = 0;
+    gTmpTarget1.resultSummary.taskAttr.timeoutInterval = 12;
+    mocker(RsPingGetTripTime, 1, 5);
+    mocker_invoke(RsPingUrmaFindTargetNode, RsPingUrmaFindTargetNodeStub1, 1);
+    ret = RsPongJettyResolveResponsePacket(&pingCb, sgeIdx, &timestamp4);
+    EXPECT_INT_EQ(ret, 0);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.rttMin, 5);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.rttMax, 11);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.rttAvg, 8);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.recvCnt, 2);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.timeoutCnt, 0);
+    mocker_clean();
+
+    gTmpTarget1.resultSummary.rttMin = 20;
+    gTmpTarget1.resultSummary.rttMax = 4;
+    gTmpTarget1.resultSummary.rttAvg = 0;
+    gTmpTarget1.resultSummary.recvCnt = 0;
+    gTmpTarget1.resultSummary.timeoutCnt = 0;
+    gTmpTarget1.resultSummary.taskId = 0;
+    gTmpTarget1.resultSummary.taskAttr.timeoutInterval = 1;
+    mocker(RsPingGetTripTime, 1, 2000);
+    mocker_invoke(RsPingUrmaFindTargetNode, RsPingUrmaFindTargetNodeStub1, 1);
+    ret = RsPongJettyResolveResponsePacket(&pingCb, sgeIdx, &timestamp4);
+    EXPECT_INT_EQ(ret, 0);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.rttMin, 20);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.rttMax, 4);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.rttAvg, 0);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.recvCnt, 1);
+    EXPECT_INT_EQ(gTmpTarget1.resultSummary.timeoutCnt, 1);
+    mocker_clean();
+
     pthread_mutex_destroy(&gTmpTarget1.tripMutex);
-    free(pingCb.pongJetty.recvSegCb.sgeList );
-    pingCb.pongJetty.recvSegCb.sgeList  = NULL;
+    free(pingCb.pongJetty.recvSegCb.sgeList);
+    pingCb.pongJetty.recvSegCb.sgeList = NULL;
     free(recvAddr);
     recvAddr = NULL;
 }
 
 void TcRsPingCommonImportJetty()
 {
-    urma_target_jetty_t *importTjetty = NULL;
+    urma_target_jetty_t* importTjetty = NULL;
     struct PingQpInfo target = {0};
     urma_context_t urmaCtx = {0};
     int ret = 0;
@@ -584,6 +649,53 @@ void TcRsPingCommonImportJetty()
     mocker_clean();
     free(importTjetty);
     importTjetty = NULL;
+
+    mocker(RsGetJettyInfo, 1, 0);
+    mocker(RsUrmaImportJetty, 1, NULL);
+    errno = 0;
+    ret = RsPingCommonImportJetty(&urmaCtx, &target, &importTjetty);
+    EXPECT_INT_EQ(-EOPENSRC, ret);
+    mocker_clean();
+}
+
+void TcRsPingCommonInitJettyCreateJfrFail()
+{
+    struct RsPingCtxCb pingCb = {0};
+    union PingQpAttr attr = {0};
+    struct RsPingLocalJettyCb jettyCb = {0};
+    urma_jfc_t jfc = {0};
+    urma_context_t urmaCtx = {0};
+    int ret = 0;
+
+    pingCb.udevCb.urmaCtx = &urmaCtx;
+    jettyCb.sendJfc.jfc = &jfc;
+    jettyCb.recvJfc.jfc = &jfc;
+
+    mocker(RsUrmaCreateJfr, 1, NULL);
+    errno = 0;
+    ret = RsPingCommonInitJettyWithAttr(&pingCb, &attr, &jettyCb);
+    EXPECT_INT_EQ(-EOPENSRC, ret);
+    mocker_clean();
+}
+
+void TcRsPingCommonInitJettyCreateJettyFail()
+{
+    struct RsPingCtxCb pingCb = {0};
+    union PingQpAttr attr = {0};
+    struct RsPingLocalJettyCb jettyCb = {0};
+    urma_jfc_t jfc = {0};
+    urma_context_t urmaCtx = {0};
+    int ret = 0;
+
+    pingCb.udevCb.urmaCtx = &urmaCtx;
+    jettyCb.sendJfc.jfc = &jfc;
+    jettyCb.recvJfc.jfc = &jfc;
+
+    mocker(RsUrmaCreateJetty, 1, NULL);
+    errno = 0;
+    ret = RsPingCommonInitJettyWithAttr(&pingCb, &attr, &jettyCb);
+    EXPECT_INT_EQ(-EOPENSRC, ret);
+    mocker_clean();
 }
 
 void TcRsPingUrmaResetRecvBuffer()
@@ -600,7 +712,61 @@ void TcRsPingCommonJfrPostRecv()
     int ret = 0;
 
     jettyCb.recvSegCb.sgeNum = 1;
-    jettyCb.recvSegCb.sgeList  = &sge;
+    jettyCb.recvSegCb.sgeList = &sge;
     ret = RsPingCommonJfrPostRecv(&jettyCb);
     EXPECT_INT_EQ(ret, 0);
+
+    mocker(RsUrmaPostJettyRecvWr, 1, -1);
+    ret = RsPingCommonJfrPostRecv(&jettyCb);
+    EXPECT_INT_EQ(ret, -1);
+    mocker_clean();
+}
+
+void TcRsPingCommonInitSegCbFail()
+{
+    struct rs_cb rscb = {0};
+    struct RsPingCtxCb pingCb = {0};
+    struct RsPingSegCb segCb = {0};
+    int ret = 0;
+
+    segCb.len = 1;
+    rscb.grpId = 0;
+    pingCb.logicDevid = 0;
+
+    mocker(pthread_mutex_init, 1, 0);
+    mocker(DlHalBuffAllocAlignEx, 1, 0);
+    mocker(RsUrmaRegisterSeg, 1, NULL);
+    mocker(DlHalBuffFree, 1, 0);
+    mocker(pthread_mutex_destroy, 1, 0);
+    ret = RsPingCommonInitSegCb(&rscb, &pingCb, &segCb);
+    EXPECT_INT_NE(0, ret);
+    mocker_clean();
+}
+
+void TcRsPingCommonInitLocalJettyFail()
+{
+    struct RsPingCtxCb pingCb = {0};
+    union PingQpAttr attr = {0};
+    struct RsPingLocalJettyCb jettyCb = {0};
+    urma_context_t urmaCtx = {0};
+    urma_jfce_t jfce = {0};
+    int ret = 0;
+
+    pingCb.udevCb.urmaCtx = &urmaCtx;
+
+    mocker(RsUrmaCreateJfce, 1, NULL);
+    ret = RsPingCommonInitJfce(&pingCb, &jettyCb);
+    EXPECT_INT_NE(0, ret);
+    mocker_clean();
+
+    jettyCb.jfce = &jfce;
+    mocker(RsUrmaCreateJfc, 1, NULL);
+    ret = RsPingCommonInitSendJfcWithAttr(NULL, &pingCb, &attr, &jettyCb);
+    EXPECT_INT_NE(0, ret);
+    mocker_clean();
+
+    mocker(RsUrmaCreateJfc, 1, NULL);
+    ret = RsPingCommonInitRecvJfcWithAttr(&pingCb, &attr, &jettyCb);
+    EXPECT_INT_NE(0, ret);
+    mocker_clean();
 }

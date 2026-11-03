@@ -1,28 +1,12 @@
- /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- * 
- * The code snippet comes from Ascend project.
- * 
- * Copyright 2021 Huawei Technologies Co., Ltd
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef CCE_RUNTIME_RT_EXTERNAL_STARS_DEFINE_H
 #define CCE_RUNTIME_RT_EXTERNAL_STARS_DEFINE_H
@@ -34,7 +18,7 @@ extern "C" {
 #endif
 
 #pragma pack(push)
-#pragma pack (1)
+#pragma pack(1)
 
 typedef struct tagStarsSqeHeader {
     uint8_t type : 6;
@@ -54,8 +38,8 @@ typedef struct tagStarsSqeHeader {
 } rtStarsSqeHeader_t;
 
 typedef struct tagRtStarsCommonSqe {
-    rtStarsSqeHeader_t sqeHeader;  // word 0-1
-    uint32_t commandCustom[14];       // word 2-15 is custom define by command.
+    rtStarsSqeHeader_t sqeHeader; // word 0-1
+    uint32_t commandCustom[14];   // word 2-15 is custom define by command.
 } rtStarsCommonSqe_t;
 
 typedef struct tagStarsDsaSqe {
@@ -91,9 +75,9 @@ typedef struct tagStarsDsaSqe {
 
 // ffts+ type
 typedef enum tagFftsPlusType {
-    RT_FFTS_PLUS_TYPE_RES1 = 2,   // Reserved
-    RT_FFTS_PLUS_TYPE_RES2 = 3,   // Reserved
-    RT_FFTS_PLUS_TYPE = 4,        // FFTS+ mode
+    RT_FFTS_PLUS_TYPE_RES1 = 2, // Reserved
+    RT_FFTS_PLUS_TYPE_RES2 = 3, // Reserved
+    RT_FFTS_PLUS_TYPE = 4,      // FFTS+ mode
 } rtFftsPlusType_t;
 
 typedef struct tagStarsFftsPlusHeader {
@@ -127,31 +111,31 @@ typedef struct tagFftsPlusSqe {
     uint16_t reserved2 : 5;
     // 12-15 bytes
     uint16_t sqeIndex;
-    uint8_t  kernelCredit;
-    uint8_t  subType;
+    uint8_t kernelCredit;
+    uint8_t subType;
     // 16-23 bytes
     uint32_t stackPhyBaseL;
     uint32_t stackPhyBaseH;
     // 24-31 bytes
-    uint16_t  totalContextNum;
-    uint16_t  readyContextNum;
-    uint16_t  preloadContextNum;
-    uint16_t  timeout;
+    uint16_t totalContextNum;
+    uint16_t readyContextNum;
+    uint16_t preloadContextNum;
+    uint16_t timeout;
     // 32-35 bytes
-    uint16_t  reserved6;
-    uint16_t  prefetchOstNum : 5;
-    uint16_t  reserved9 : 3;
-    uint16_t  cmaintOstNum : 5;
-    uint16_t  reserved10 : 3;
+    uint16_t reserved6;
+    uint16_t prefetchOstNum : 5;
+    uint16_t reserved9 : 3;
+    uint16_t cmaintOstNum : 5;
+    uint16_t reserved10 : 3;
     // 36-39 bytes
-    uint16_t  aicPrefetchLower : 5;
-    uint16_t  reserved11 : 3;
-    uint16_t  aicPrefetchUpper : 5;
-    uint16_t  reserved12 : 3;
-    uint16_t  aivPrefetchLower : 5;
-    uint16_t  reserved13 : 3;
-    uint16_t  aivPrefetchUpper : 5;
-    uint16_t  reserved14 : 3;
+    uint16_t aicPrefetchLower : 5;
+    uint16_t reserved11 : 3;
+    uint16_t aicPrefetchUpper : 5;
+    uint16_t reserved12 : 3;
+    uint16_t aivPrefetchLower : 5;
+    uint16_t reserved13 : 3;
+    uint16_t aivPrefetchUpper : 5;
+    uint16_t reserved14 : 3;
     // 40-47 bytes
     uint32_t contextAddressBaseL;
     uint32_t contextAddressBaseH : 17;
@@ -162,29 +146,29 @@ typedef struct tagFftsPlusSqe {
 } rtFftsPlusSqe_t;
 
 typedef enum {
-    WRITE_VALUE_SIZE_TYPE_INVALID  = 0U,
-    WRITE_VALUE_SIZE_TYPE_8BIT     = 1U,
-    WRITE_VALUE_SIZE_TYPE_16BIT    = 2U,
-    WRITE_VALUE_SIZE_TYPE_32BIT    = 3U,
-    WRITE_VALUE_SIZE_TYPE_64BIT    = 4U,
-    WRITE_VALUE_SIZE_TYPE_128BIT   = 5U,
-    WRITE_VALUE_SIZE_TYPE_256BIT   = 6U,
+    WRITE_VALUE_SIZE_TYPE_INVALID = 0U,
+    WRITE_VALUE_SIZE_TYPE_8BIT = 1U,
+    WRITE_VALUE_SIZE_TYPE_16BIT = 2U,
+    WRITE_VALUE_SIZE_TYPE_32BIT = 3U,
+    WRITE_VALUE_SIZE_TYPE_64BIT = 4U,
+    WRITE_VALUE_SIZE_TYPE_128BIT = 5U,
+    WRITE_VALUE_SIZE_TYPE_256BIT = 6U,
     WRITE_VALUE_SIZE_TYPE_BUFF
 } rtWriteValueSizeType_t;
 
 typedef struct tagWriteValueInfo {
-    uint64_t addr;  /* must va, addr must be aligned based on the data width specified by awsize.
-                     * For example, when the bit width is 64 bits, the lower three bits of write_addr should be 0.
-                     */
+    uint64_t addr; /* must va, addr must be aligned based on the data width specified by awsize.
+                    * For example, when the bit width is 64 bits, the lower three bits of write_addr should be 0.
+                    */
     rtWriteValueSizeType_t size;
-    uint8_t *value;
+    uint8_t* value;
 } rtWriteValueInfo_t;
 
 typedef struct tagCmoTaskInfo {
-    uint8_t  qos;
-    uint8_t  partId;
-    uint8_t  pmg;
-    uint8_t  reserved;
+    uint8_t qos;
+    uint8_t partId;
+    uint8_t pmg;
+    uint8_t reserved;
     uint16_t cmoType;
     uint16_t opCode; // 6: Preload; 7: Prewriteback; 8: invalid; 9: flush;
     uint16_t numInner;
@@ -209,9 +193,9 @@ typedef struct tagBarrierTaskInfo {
 
 typedef enum tagRtCmoType {
     RT_CMO_PREFETCH = 6, // Preload
-    RT_CMO_WRITEBACK, // Prewriteback
-    RT_CMO_INVALID, // invalid
-    RT_CMO_FLUSH, // flush
+    RT_CMO_WRITEBACK,    // Prewriteback
+    RT_CMO_INVALID,      // invalid
+    RT_CMO_FLUSH,        // flush
     RT_CMO_RESERVED,
 } rtCmoOpCode_t;
 

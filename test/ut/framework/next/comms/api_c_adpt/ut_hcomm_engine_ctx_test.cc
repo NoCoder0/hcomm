@@ -9,15 +9,12 @@
  */
 
 #include "../../ut_hcomm_base.h"
+#include "comm_engine/engine_ctx/engine_ctx_pub.h"
 
 class TestHcommEngineCtx : public TestHcommCAdptBase {
 public:
-    void SetUp() override {
-        TestHcommCAdptBase::SetUp();
-    }
-    void TearDown() override {
-        TestHcommCAdptBase::TearDown();
-    }
+    void SetUp() override { TestHcommCAdptBase::SetUp(); }
+    void TearDown() override { TestHcommCAdptBase::TearDown(); }
 };
 
 TEST_F(TestHcommEngineCtx, Ut_TestHcommEngineCtxCreate_When_CPUEngine_Return_HCCL_Success)

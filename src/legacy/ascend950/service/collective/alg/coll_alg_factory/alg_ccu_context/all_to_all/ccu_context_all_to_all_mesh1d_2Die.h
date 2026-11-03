@@ -22,12 +22,13 @@ namespace Hccl {
 
 class CcuContextAllToAllMesh1D2Die : public CcuContextAlgBase {
 public:
-    CcuContextAllToAllMesh1D2Die(const CcuCtxArg &arg, const std::vector<CcuTransport*> &transports,
-                              const CcuTransportGroup &group);
+    CcuContextAllToAllMesh1D2Die(
+        const CcuCtxArg& arg, const std::vector<CcuTransport*>& transports, const CcuTransportGroup& group);
     ~CcuContextAllToAllMesh1D2Die() override {}
 
     void Algorithm() override;
-    std::vector<uint64_t> GeneArgs(const CcuTaskArg &arg) override;
+    std::vector<uint64_t> GeneArgs(const CcuTaskArg& arg) override;
+
 private:
     uint16_t virRankSize{0};
     uint64_t logicRankSize{0};
@@ -36,14 +37,14 @@ private:
     std::vector<CcuRep::Variable> input_;
     std::vector<CcuRep::Variable> output_;
     std::vector<CcuRep::Variable> token_;
-    bool withMyRank_ = true;  // 发数据是否包含本rank
+    bool withMyRank_ = true; // 发数据是否包含本rank
     std::vector<RankId> rankGroup_;
     CcuRep::Variable sliceSize_;
     CcuRep::Variable inputSliceStride_;
     CcuRep::Variable outputoffset_;
     CcuRep::Variable outBuffBaseOff_;
     GroupOpSize groupOpSize_;
-    uint32_t signalNum_{0}; //需要使用的signal数量
+    uint32_t signalNum_{0}; // 需要使用的signal数量
     uint16_t bitNumPerCKE_{0};
     void CreateLocalCopyLoop();
     void LocalCopyByLoopGroup(CcuRep::Memory dst, CcuRep::Memory src);

@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
@@ -29,31 +29,17 @@ using namespace hccl;
 
 class MC2Allgather_UT : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "MC2Allgather_UT SetUP" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-        std::cout << "MC2Allgather_UT TearDown" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "MC2Allgather_UT SetUP" << std::endl; }
+    static void TearDownTestCase() { std::cout << "MC2Allgather_UT TearDown" << std::endl; }
     // Some expensive resource shared by all tests.
     virtual void SetUp()
     {
         s32 portNum = 7;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
         g_stubDevType = DevType::DEV_TYPE_910B;
         MockGetSendRecvCnt();
-        MOCKER(halGetDeviceInfo)
-            .stubs()
-            .with(mockcpp::any())
-            .will(invoke(StubhalGetDeviceInfo));
-        MOCKER(QuerySqStatusByType)
-            .stubs()
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(halGetDeviceInfo).stubs().with(mockcpp::any()).will(invoke(StubhalGetDeviceInfo));
+        MOCKER(QuerySqStatusByType).stubs().will(returnValue(HCCL_SUCCESS));
         DlHalFunction::GetInstance().DlHalFunctionInit();
         hrtSetDevice(0);
         set_chip_type_stub(0, static_cast<s32>(DevType::DEV_TYPE_910B));
@@ -67,22 +53,22 @@ protected:
     }
 };
 
-#define init_kfc_args(initTask)                                                             \
-    StubHccCommRes commRes;                                                                    \
-    HccCommResParamTask paramTask = commRes.StubHccCommResParamTask();                         \
-    AicpuKfcRpcServer::RpcMsgBody msgBody;                                                        \
-    (void)memset_s(&msgBody, sizeof(msgBody), 0, sizeof(msgBody));                             \
-    paramTask.mc2WorkSpace.workSpace = uint64_t(&msgBody);                                     \
-                                                                                               \
-    std::shared_ptr<hccl::HDCommunicate> h2dTransfer;                                          \
-    std::shared_ptr<hccl::HDCommunicate> d2hTransfer;                                          \
-    h2dTransfer.reset(new (std::nothrow) hccl::HDCommunicate(0, HCCL_HDC_TYPE_H2D, sizeof(KfcExecControl)));           \
-    d2hTransfer.reset(new (std::nothrow) hccl::HDCommunicate(0, HCCL_HDC_TYPE_D2H, sizeof(KfcExecStatus)));           \
-    h2dTransfer->InitHost();                                                                   \
-    d2hTransfer->InitHost();                                                                   \
-    paramTask.kfcControlTransferH2DParams = h2dTransfer->GetCommunicateParams();               \
-    paramTask.kfcStatusTransferD2HParams = d2hTransfer->GetCommunicateParams();                \
-    paramTask.config.retryEnable = 0;                                                          \
+#define init_kfc_args(initTask)                                                                              \
+    StubHccCommRes commRes;                                                                                  \
+    HccCommResParamTask paramTask = commRes.StubHccCommResParamTask();                                       \
+    AicpuKfcRpcServer::RpcMsgBody msgBody;                                                                   \
+    (void)memset_s(&msgBody, sizeof(msgBody), 0, sizeof(msgBody));                                           \
+    paramTask.mc2WorkSpace.workSpace = uint64_t(&msgBody);                                                   \
+                                                                                                             \
+    std::shared_ptr<hccl::HDCommunicate> h2dTransfer;                                                        \
+    std::shared_ptr<hccl::HDCommunicate> d2hTransfer;                                                        \
+    h2dTransfer.reset(new (std::nothrow) hccl::HDCommunicate(0, HCCL_HDC_TYPE_H2D, sizeof(KfcExecControl))); \
+    d2hTransfer.reset(new (std::nothrow) hccl::HDCommunicate(0, HCCL_HDC_TYPE_D2H, sizeof(KfcExecStatus)));  \
+    h2dTransfer->InitHost();                                                                                 \
+    d2hTransfer->InitHost();                                                                                 \
+    paramTask.kfcControlTransferH2DParams = h2dTransfer->GetCommunicateParams();                             \
+    paramTask.kfcStatusTransferD2HParams = d2hTransfer->GetCommunicateParams();                              \
+    paramTask.config.retryEnable = 0;                                                                        \
     initTask.context = uint64_t(&paramTask);
 
 TEST_F(MC2Allgather_UT, allgather_fp16)
@@ -103,7 +89,7 @@ TEST_F(MC2Allgather_UT, allgather_fp16)
     tilingData.preparePosition = TASK_PREPARE_HOST;
 
     KFCTask kfcTask;
-    u64* a = (u64*)malloc(1024*1024);
+    u64* a = (u64*)malloc(1024 * 1024);
     kfcTask.inputA = uint64_t(a);
     kfcTask.outputC = uint64_t(a);
     kfcTask.commOut = uint64_t(a);
@@ -111,9 +97,7 @@ TEST_F(MC2Allgather_UT, allgather_fp16)
     kfcTask.context = uint64_t(&paramTask);
     kfcTask.tilingData = uint64_t(&tilingData);
 
-    MOCKER(memcpy_s)
-    .stubs()
-    .will(returnValue(EOK));
+    MOCKER(memcpy_s).stubs().will(returnValue(EOK));
 
     StubSqeBuffer sqeBufferStub;
     EXPECT_EQ(0, RunAicpuRpcSrvLaunch(&kfcTask));
@@ -138,7 +122,7 @@ TEST_F(MC2Allgather_UT, allgather_bf16)
     tilingData.preparePosition = TASK_PREPARE_HOST;
 
     KFCTask kfcTask;
-    u64* a = (u64*)malloc(1024*1024);
+    u64* a = (u64*)malloc(1024 * 1024);
     kfcTask.inputA = uint64_t(a);
     kfcTask.outputC = uint64_t(a);
     kfcTask.commOut = uint64_t(a);
@@ -146,9 +130,7 @@ TEST_F(MC2Allgather_UT, allgather_bf16)
     kfcTask.context = uint64_t(&paramTask);
     kfcTask.tilingData = uint64_t(&tilingData);
 
-    MOCKER(memcpy_s)
-    .stubs()
-    .will(returnValue(EOK));
+    MOCKER(memcpy_s).stubs().will(returnValue(EOK));
 
     StubSqeBuffer sqeBufferStub;
     EXPECT_EQ(0, RunAicpuRpcSrvLaunch(&kfcTask));
@@ -173,7 +155,7 @@ TEST_F(MC2Allgather_UT, allgather_fp16LargeData)
     tilingData.preparePosition = TASK_PREPARE_HOST;
 
     KFCTask kfcTask;
-    u64* a = (u64*)malloc(1024*1024);
+    u64* a = (u64*)malloc(1024 * 1024);
     kfcTask.inputA = uint64_t(a);
     kfcTask.outputC = uint64_t(a);
     kfcTask.commOut = uint64_t(a);
@@ -181,9 +163,7 @@ TEST_F(MC2Allgather_UT, allgather_fp16LargeData)
     kfcTask.context = uint64_t(&paramTask);
     kfcTask.tilingData = uint64_t(&tilingData);
 
-    MOCKER(memcpy_s)
-    .stubs()
-    .will(returnValue(EOK));
+    MOCKER(memcpy_s).stubs().will(returnValue(EOK));
 
     StubSqeBuffer sqeBufferStub;
     EXPECT_EQ(0, RunAicpuRpcSrvLaunch(&kfcTask));
@@ -213,7 +193,7 @@ TEST_F(MC2Allgather_UT, allgather_doublering)
     tilingData.preparePosition = TASK_PREPARE_HOST;
 
     KFCTask kfcTask;
-    u64* a = (u64*)malloc(1024*1024);
+    u64* a = (u64*)malloc(1024 * 1024);
     kfcTask.inputA = uint64_t(a);
     kfcTask.outputC = uint64_t(a);
     kfcTask.commOut = uint64_t(a);
@@ -221,9 +201,7 @@ TEST_F(MC2Allgather_UT, allgather_doublering)
     kfcTask.context = uint64_t(&paramTask);
     kfcTask.tilingData = uint64_t(&tilingData);
 
-    MOCKER(memcpy_s)
-    .stubs()
-    .will(returnValue(EOK));
+    MOCKER(memcpy_s).stubs().will(returnValue(EOK));
 
     StubSqeBuffer sqeBufferStub;
     EXPECT_EQ(0, RunAicpuRpcSrvLaunch(&kfcTask));
@@ -247,7 +225,7 @@ TEST_F(MC2Allgather_UT, allgather_chipTypeDc)
     tilingData.waitPolicy = 1;
 
     KFCTask kfcTask;
-    u64* a = (u64*)malloc(1024*1024);
+    u64* a = (u64*)malloc(1024 * 1024);
     kfcTask.inputA = uint64_t(a);
     kfcTask.outputC = uint64_t(a);
     kfcTask.commOut = uint64_t(a);
@@ -255,7 +233,7 @@ TEST_F(MC2Allgather_UT, allgather_chipTypeDc)
     kfcTask.context = uint64_t(&paramTask);
     kfcTask.tilingData = uint64_t(&tilingData);
 
-    AicpuComContext *ctx = AicpuGetComContext();
+    AicpuComContext* ctx = AicpuGetComContext();
     ctx->devType = DevType::DEV_TYPE_310P1;
 
     StubSqeBuffer sqeBufferStub;
@@ -281,7 +259,7 @@ TEST_F(MC2Allgather_UT, allgather_hcclKfcTaskHcclOnlyExe)
     tilingData.taskType = HCCL_KFC_TASK_HCCL_ONLY_EXE;
 
     KFCTask kfcTask;
-    u64* a = (u64*)malloc(1024*1024);
+    u64* a = (u64*)malloc(1024 * 1024);
     kfcTask.inputA = uint64_t(a);
     kfcTask.outputC = uint64_t(a);
     kfcTask.commOut = uint64_t(a);
@@ -307,16 +285,16 @@ TEST_F(MC2Allgather_UT, allgather_mc2Api)
     tilingData.taskType = HCCL_KFC_TASK_HCC_RES_INIT;
 
     KFCTask kfcTask;
-    u64* a = (u64*)malloc(1024*1024);
+    u64* a = (u64*)malloc(1024 * 1024);
     kfcTask.context = uint64_t(&paramTask);
     kfcTask.tilingData = uint64_t(&tilingData);
 
-    AicpuComContext *ctx = AicpuGetComContext();
+    AicpuComContext* ctx = AicpuGetComContext();
     u64 newAddr = ctx->workSpaceAddr;
     if (newAddr & 0x1ff) {
         newAddr = (newAddr & (~((uint64_t)0x1ff))) + 0x200;
     }
-    HcclMsgAreaForTest *hcclMsgArea = reinterpret_cast<HcclMsgAreaForTest *>(newAddr);
+    HcclMsgAreaForTest* hcclMsgArea = reinterpret_cast<HcclMsgAreaForTest*>(newAddr);
     (void)memset_s(hcclMsgArea, sizeof(HcclMsgAreaForTest), 0, sizeof(HcclMsgAreaForTest));
     // commit
     hcclMsgArea->sendMsgList[0].commType = HCCL_CMD_ALLGATHER;
@@ -330,7 +308,7 @@ TEST_F(MC2Allgather_UT, allgather_mc2Api)
     hcclMsgArea->sendMsgList[1].commType = HCCL_CMD_FINALIZE;
     hcclMsgArea->sendMsgList[1].valid = HCCL_MSG_VALID_MASK;
     hcclMsgArea->sendMsgList[1].xorCheck = GenXorStub(&(hcclMsgArea->sendMsgList[1]));
-    
+
     StubSqeBuffer sqeBufferStub;
     EXPECT_EQ(0, RunAicpuRpcSrvLaunch(&kfcTask));
     EXPECT_EQ(1, ctx->msgPosForKernel);
@@ -350,16 +328,16 @@ TEST_F(MC2Allgather_UT, allgather_mc2Api_turn2)
     tilingData.preparePosition = TASK_PREPARE_KERNEL;
 
     KFCTask kfcTask;
-    u64* a = (u64*)malloc(1024*1024);
+    u64* a = (u64*)malloc(1024 * 1024);
     kfcTask.context = uint64_t(&paramTask);
     kfcTask.tilingData = uint64_t(&tilingData);
 
-    AicpuComContext *ctx = AicpuGetComContext();
+    AicpuComContext* ctx = AicpuGetComContext();
     u64 newAddr = ctx->workSpaceAddr;
     if (newAddr & 0x1ff) {
         newAddr = (newAddr & (~((uint64_t)0x1ff))) + 0x200;
     }
-    HcclMsgAreaForTest *hcclMsgArea = reinterpret_cast<HcclMsgAreaForTest *>(newAddr);
+    HcclMsgAreaForTest* hcclMsgArea = reinterpret_cast<HcclMsgAreaForTest*>(newAddr);
     (void)memset_s(hcclMsgArea, sizeof(HcclMsgAreaForTest), 0, sizeof(HcclMsgAreaForTest));
     // commit 1
     hcclMsgArea->sendMsgList[0].commType = HCCL_CMD_ALLGATHER;
@@ -381,7 +359,7 @@ TEST_F(MC2Allgather_UT, allgather_mc2Api_turn2)
     hcclMsgArea->sendMsgList[2].commType = HCCL_CMD_FINALIZE;
     hcclMsgArea->sendMsgList[2].valid = HCCL_MSG_VALID_MASK;
     hcclMsgArea->sendMsgList[2].xorCheck = GenXorStub(&(hcclMsgArea->sendMsgList[2]));
-    
+
     StubSqeBuffer sqeBufferStub;
     EXPECT_EQ(0, RunAicpuRpcSrvLaunch(&kfcTask));
     EXPECT_EQ(2, ctx->msgPosForKernel);
@@ -401,16 +379,16 @@ TEST_F(MC2Allgather_UT, allgather_mc2Api_repeat)
     tilingData.preparePosition = TASK_PREPARE_KERNEL;
 
     KFCTask kfcTask;
-    u64* a = (u64*)malloc(1024*1024);
+    u64* a = (u64*)malloc(1024 * 1024);
     kfcTask.context = uint64_t(&paramTask);
     kfcTask.tilingData = uint64_t(&tilingData);
 
-    AicpuComContext *ctx = AicpuGetComContext();
+    AicpuComContext* ctx = AicpuGetComContext();
     u64 newAddr = ctx->workSpaceAddr;
     if (newAddr & 0x1ff) {
         newAddr = (newAddr & (~((uint64_t)0x1ff))) + 0x200;
     }
-    HcclMsgAreaForTest *hcclMsgArea = reinterpret_cast<HcclMsgAreaForTest *>(newAddr);
+    HcclMsgAreaForTest* hcclMsgArea = reinterpret_cast<HcclMsgAreaForTest*>(newAddr);
     (void)memset_s(hcclMsgArea, sizeof(HcclMsgAreaForTest), 0, sizeof(HcclMsgAreaForTest));
     // commit
     hcclMsgArea->sendMsgList[0].commType = HCCL_CMD_ALLGATHER;
@@ -424,7 +402,7 @@ TEST_F(MC2Allgather_UT, allgather_mc2Api_repeat)
     hcclMsgArea->sendMsgList[1].commType = HCCL_CMD_FINALIZE;
     hcclMsgArea->sendMsgList[1].valid = HCCL_MSG_VALID_MASK;
     hcclMsgArea->sendMsgList[1].xorCheck = GenXorStub(&(hcclMsgArea->sendMsgList[1]));
-    
+
     StubSqeBuffer sqeBufferStub;
     EXPECT_EQ(0, RunAicpuRpcSrvLaunch(&kfcTask));
     EXPECT_EQ(1, ctx->msgPosForKernel);
@@ -444,16 +422,16 @@ TEST_F(MC2Allgather_UT, allgather_mc2Api_combine)
     tilingData.preparePosition = TASK_PREPARE_KERNEL;
 
     KFCTask kfcTask;
-    u64* a = (u64*)malloc(1024*1024);
+    u64* a = (u64*)malloc(1024 * 1024);
     kfcTask.context = uint64_t(&paramTask);
     kfcTask.tilingData = uint64_t(&tilingData);
 
-    AicpuComContext *ctx = AicpuGetComContext();
+    AicpuComContext* ctx = AicpuGetComContext();
     u64 newAddr = ctx->workSpaceAddr;
     if (newAddr & 0x1ff) {
         newAddr = (newAddr & (~((uint64_t)0x1ff))) + 0x200;
     }
-    HcclMsgAreaForTest *hcclMsgArea = reinterpret_cast<HcclMsgAreaForTest *>(newAddr);
+    HcclMsgAreaForTest* hcclMsgArea = reinterpret_cast<HcclMsgAreaForTest*>(newAddr);
     (void)memset_s(hcclMsgArea, sizeof(HcclMsgAreaForTest), 0, sizeof(HcclMsgAreaForTest));
     // commit 1
     hcclMsgArea->sendMsgList[0].commType = HCCL_CMD_ALLREDUCE;
@@ -485,7 +463,7 @@ TEST_F(MC2Allgather_UT, allgather_mc2Api_combine)
     hcclMsgArea->sendMsgList[3].commType = HCCL_CMD_FINALIZE;
     hcclMsgArea->sendMsgList[3].valid = HCCL_MSG_VALID_MASK;
     hcclMsgArea->sendMsgList[3].xorCheck = GenXorStub(&(hcclMsgArea->sendMsgList[3]));
-    
+
     StubSqeBuffer sqeBufferStub;
     EXPECT_EQ(0, RunAicpuRpcSrvLaunch(&kfcTask));
     EXPECT_EQ(3, ctx->msgPosForKernel);

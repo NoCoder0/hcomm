@@ -1,4 +1,5 @@
 #!/bin/bash
+# -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2026 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
@@ -6,21 +7,115 @@
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
 
 set -e
+
+# 脚本所在目录的绝对路径（在任何 cd 之前计算，保证后续函数能找到 asset 目录下的工具脚本）
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# ==========================================
+# 辅助函数: 原地解密并解压 AICPU 算子包
+# ==========================================
+# 从 ascen_package_load.ini 解析指定包的 package_path
+function parse_ini_package_path() {
+    # $1 = ini 路径
+    # $2 = 要查询的包名（如 aicpu_hccl.tar.gz）
+    local INI="$1"
+    local NAME="$2"
+    awk -v name="$NAME" '
+        BEGIN { cur_name=""; cur_path="" }
+        /^name:/        { cur_name=substr($0, 6); cur_path="" }
+        /^package_path:/{ cur_path=substr($0, 14) }
+        cur_name == name && cur_path != "" { print cur_path; exit }
+    ' "$INI"
+}
+
+# 对指定 tar.gz 包调用 ci_img_headler.py 解密（有头剥头、无头直接拷出），
+# 然后解压到指定目标目录（--strip-components=1 去掉 aicpu_kernels_device/ 前缀）
+function decrypt_and_extract() {
+    # $1 = 源 tar.gz 路径（可能带头也可能裸）
+    # $2 = 解压目标目录（工具目录）
+    local SRC="$1"
+    local DEST_DIR="$2"
+    if [ ! -f "$SRC" ]; then
+        echo "错误: 找不到源文件 $SRC"
+        return 1
+    fi
+
+    local HEADLER="$SCRIPT_DIR/third_party/cann-cmake/scripts/signtool/image_extract/ci_img_headler.py"
+    if [ ! -f "$HEADLER" ]; then
+        echo "错误: 找不到 $HEADLER，请先执行 bash build.sh --full 构建以拉取 cann-cmake 第三方依赖"
+        return 1
+    fi
+
+    # 创建解密临时文件（在 /tmp 下，避免对只读 CANN 目录的写需求）
+    local RAW_TMP
+    RAW_TMP="$(mktemp /tmp/.aich_raw.XXXXXX)" || true
+    if [ -z "$RAW_TMP" ] || [ ! -f "$RAW_TMP" ]; then
+        echo "错误: mktemp 创建临时文件失败"
+        return 1
+    fi
+
+    echo "解密 $(basename "$SRC") -> $(basename "$RAW_TMP")"
+    python3 "$HEADLER" -img "$SRC" -raw "$RAW_TMP" --rcvr
+
+    # 创建目标目录
+    if ! mkdir -p "$DEST_DIR"; then
+        rm -f "$RAW_TMP"
+        echo "错误: 创建目标目录 $DEST_DIR 失败"
+        return 1
+    fi
+
+    echo "解压 $(basename "$RAW_TMP") 到 $DEST_DIR (--strip-components=1)"
+    if ! tar -zxf "$RAW_TMP" -C "$DEST_DIR" --strip-components=1; then
+        rm -f "$RAW_TMP"
+        echo "错误: 解压到 $DEST_DIR 失败"
+        return 1
+    fi
+
+    rm -f "$RAW_TMP"
+    return 0
+}
+
+# 部署单个 aicpu 算子包：从 CANN 安装目录读取 tarball，解密解压到指定目录
+function deploy_aicpu_kernel_pkg() {
+    local PKG_NAME="$1"
+    local ASCEND_INSTALL_PATH="$2"
+    local INI_PATH="$3"
+    local DEST_DIR="$4"
+    local SUB_PATH
+    SUB_PATH=$(parse_ini_package_path "$INI_PATH" "$PKG_NAME")
+    if [ -z "$SUB_PATH" ]; then
+        echo "错误: $INI_PATH 中找不到 $PKG_NAME 的 package_path"
+        return 1
+    fi
+    local SRC="$ASCEND_INSTALL_PATH/$SUB_PATH/$PKG_NAME"
+    decrypt_and_extract "$SRC" "$DEST_DIR"
+}
 
 function usage() {
   echo "Usage:"
   echo "  sh build_pkg.sh [-h | --help]"
   echo "                  [--install <hccl|hcomm>]"
+  echo "                  [--full]"
   echo "                  [--tool_path <PATH>]"
   echo ""
   echo "Options:"
   echo "    -h, --help     Print usage"
   echo "    --install <hccl|hcomm>"
-  echo "                   Specify which component to build/install, default: both"
+  echo "                   Build/install the specified component, then decrypt+extract"
+  echo "                   its aicpu kernel tarball to \$HCCL_VM_PATH/hccl_vm_install/lib/aarch64/"
+  echo "    --full         Build/install both hccl and hcomm, then decrypt+extract both"
+  echo "                   aicpu kernel tarballs to \$HCCL_VM_PATH/hccl_vm_install/lib/aarch64/"
+  echo "                   (equivalent to \"--install hccl\" followed by \"--install hcomm\")"
   echo "    --tool_path <PATH>"
   echo "                   Set HCCL_VM_PATH, default: current directory"
+  echo ""
+  echo "Default (no option): only decrypt+extract aicpu_hccl.tar.gz and aicpu_hcomm.tar.gz"
+  echo "                     (from CANN install root, per ascend_package_load.ini)"
+  echo "                     to \$HCCL_VM_PATH/hccl_vm_install/lib/aarch64/."
+  echo "                     No build/install is performed."
   echo ""
 }
 
@@ -29,8 +124,10 @@ function usage() {
 # ==========================================
 
 # 1.默认值
-BUILD_HCCL=true
-BUILD_HCOMM=true
+# MODE 四态：deploy_only / install_hccl / install_hcomm / full
+MODE=deploy_only
+BUILD_HCCL=false
+BUILD_HCOMM=false
 TOOL_PATH=""
 
 # 2.解析命令行参数
@@ -42,9 +139,11 @@ while [[ $# -gt 0 ]]; do
             ;;
         --install)
             if [ "$2" == "hccl" ]; then
+                MODE=install_hccl
                 BUILD_HCCL=true
                 BUILD_HCOMM=false
             elif [ "$2" == "hcomm" ]; then
+                MODE=install_hcomm
                 BUILD_HCCL=false
                 BUILD_HCOMM=true
             else
@@ -52,6 +151,12 @@ while [[ $# -gt 0 ]]; do
                 exit 1
             fi
             shift 2
+            ;;
+        --full)
+            MODE=full
+            BUILD_HCCL=true
+            BUILD_HCOMM=true
+            shift
             ;;
         --tool_path)
             if [ -n "$2" ]; then
@@ -87,21 +192,29 @@ if [ -z "$ASCEND_HOME_PATH" ]; then
     exit 1
 fi
 
-# 5.校验并获取 hccl 代码目录
+# 4.校验并获取 hccl 代码目录
 if [ "$BUILD_HCCL" = true ] && [ -z "$HCCL_CODE_HOME" ]; then
     echo "错误: 环境变量 HCCL_CODE_HOME 未设置"
     exit 1
 fi
 
-# 6.校验并获取 hcomm 代码目录
+# 5.校验并获取 hcomm 代码目录
 if [ "$BUILD_HCOMM" = true ] && [ -z "$HCOMM_CODE_HOME" ]; then
     echo "错误: 环境变量 HCOMM_CODE_HOME 未设置"
     exit 1
 fi
 
-# 5.获得CANN安装目录: ASCEND_INSTALL_PATH
+# 6.获得CANN安装目录: ASCEND_INSTALL_PATH
 ASCEND_INSTALL_PATH=$(dirname "$ASCEND_HOME_PATH")
 
+MACHINE_ARCH=$(uname -m)
+if [ "$MACHINE_ARCH" = "aarch64" ] || [ "$MACHINE_ARCH" = "arm64" ]; then
+    CANN_ARCH_DIR="aarch64-linux"
+else
+    CANN_ARCH_DIR="x86_64-linux"
+fi
+
+echo "CANN_ARCH_DIR: $CANN_ARCH_DIR (processor: $MACHINE_ARCH)"
 echo "--- 环境变量解析成功 ---"
 echo "HCCL_VM_PATH: $HCCL_VM_PATH"
 echo "ASCEND_INSTALL_PATH: $ASCEND_INSTALL_PATH"
@@ -113,6 +226,7 @@ if [ "$BUILD_HCOMM" = true ]; then
     echo "HCOMM_CODE_HOME: $HCOMM_CODE_HOME"
 fi
 echo "构建配置:"
+echo "  - MODE: $MODE"
 echo "  - HCCL: $BUILD_HCCL"
 echo "  - HCOMM: $BUILD_HCOMM"
 echo "--------------------------"
@@ -120,9 +234,6 @@ echo "--------------------------"
 # ==========================================
 # 第二步：构建并安装 HCOMM
 # ==========================================
-
-# 关闭 Linux 系统对 Python 的保护锁，解决 pip 装包时报错
-sudo rm -f /usr/lib/python3.*/EXTERNALLY-MANAGED
 
 if [ "$BUILD_HCOMM" = true ]; then
     echo "正在开始构建 HCOMM..."
@@ -132,7 +243,7 @@ if [ "$BUILD_HCOMM" = true ]; then
     if [ $? -eq 0 ]; then
         echo "HCOMM 构建成功，准备安装..."
         # 自动匹配版本号run包
-        CANN_HCOMM_PACKAGE=$(ls -t "$HCOMM_CODE_HOME"/build_out/cann-hcomm_*_linux-x86_64.run | head -n 1)
+        CANN_HCOMM_PACKAGE=$(ls -t "$HCOMM_CODE_HOME"/build_out/cann-hcomm_*_linux-${MACHINE_ARCH}.run | head -n 1)
         
         # 检查是否找到安装包
         if [ ! -f "$CANN_HCOMM_PACKAGE" ]; then
@@ -141,7 +252,7 @@ if [ "$BUILD_HCOMM" = true ]; then
         fi
         
         echo "找到安装包: $CANN_HCOMM_PACKAGE"
-        yes y | "$CANN_HCOMM_PACKAGE" --full --install-path="$ASCEND_INSTALL_PATH"
+        yes y | "$CANN_HCOMM_PACKAGE" --full --pylocal --install-path="$ASCEND_INSTALL_PATH"
     else
         echo "错误: HCOMM 构建失败"
         exit 1
@@ -161,7 +272,7 @@ if [ "$BUILD_HCCL" = true ]; then
     if [ $? -eq 0 ]; then
         echo "HCCL 构建成功，准备安装..."
         # 自动匹配版本号run包
-        CANN_HCCL_PACKAGE=$(ls -t "$HCCL_CODE_HOME"/build_out/cann-hccl_*_linux-x86_64.run | head -n 1)
+        CANN_HCCL_PACKAGE=$(ls -t "$HCCL_CODE_HOME"/build_out/cann-hccl_*_linux-${MACHINE_ARCH}.run | head -n 1)
         
         # 检查是否找到安装包
         if [ ! -f "$CANN_HCCL_PACKAGE" ]; then
@@ -170,7 +281,7 @@ if [ "$BUILD_HCCL" = true ]; then
         fi
         
         echo "找到安装包: $CANN_HCCL_PACKAGE"
-        yes y | "$CANN_HCCL_PACKAGE" --full --install-path="$ASCEND_INSTALL_PATH"
+        yes y | "$CANN_HCCL_PACKAGE" --full --pylocal --install-path="$ASCEND_INSTALL_PATH"
     else
         echo "错误: HCCL 构建失败"
         exit 1
@@ -180,67 +291,35 @@ else
 fi
 
 # ==========================================
-# 第四步：拷贝驱动依赖库文件
-# ==========================================
-echo "正在拷贝驱动依赖库文件..."
-
-# 1.定义源路径和目标路径
-SOURCE_DIR="$ASCEND_INSTALL_PATH/cann/x86_64-linux/devlib/device"
-TARGET_DIR="$HCCL_VM_PATH/hccl_vm_install/lib/aarch64"
-
-# 2.检查目标目录是否存在，不存在则创建
-if [ ! -d "$TARGET_DIR" ]; then
-    echo "目录 $TARGET_DIR 不存在，正在创建..."
-    mkdir -p "$TARGET_DIR"
-fi
-
-# 3.拷贝指定的动态库文件 (libascend_hal.so, libc_sec.so, libmmpa.so)
-# 使用 -f 确保覆盖，-v 显示拷贝过程
-if [ -d "$SOURCE_DIR" ]; then
-    cp -fv "$SOURCE_DIR/libascend_hal.so" "$SOURCE_DIR/libc_sec.so" "$SOURCE_DIR/libmmpa.so" "$TARGET_DIR/"
-else
-    echo "错误: 源目录 $SOURCE_DIR 不存在，请检查 CANN 是否正确安装。"
-    exit 1
-fi
-
-# ==========================================
-# 第五步：拷贝并解压 aicpu 相关的 tar.gz 包
+# 第四步：从 CANN 安装目录解签名并解压 aicpu 包
 # ==========================================
 echo "正在处理 aicpu 相关的构建产物..."
 
-# 1. 定义源文件路径
-HCCL_AICPU_TAR=$(find "$HCCL_CODE_HOME" -name "aicpu_hccl.tar.gz" -type f | head -n 1)
-HCOMM_AICPU_TAR=$(find "$HCOMM_CODE_HOME" -name "aicpu_hcomm.tar.gz" -type f | head -n 1)
+INI_PATH="$ASCEND_HOME_PATH/conf/ascend_package_load.ini"
+if [ ! -f "$INI_PATH" ]; then
+    echo "错误: 找不到 $INI_PATH"
+    exit 1
+fi
 
-# 2.确保目标目录存在
-mkdir -p "$TARGET_DIR"
+# AICPU 算子解压目标目录
+AICPU_DEPLOY_DIR="$HCCL_VM_PATH/hccl_vm_install/lib/aarch64"
 
-# 3.拷贝并立即解压 - aicpu_hccl.tar.gz
-if [ "$BUILD_HCCL" = true ]; then
-    if [ -f "$HCCL_AICPU_TAR" ]; then
-        echo "正在解压 aicpu_hccl.tar.gz..."
-        tar -zxvf "$HCCL_AICPU_TAR" -C "$TARGET_DIR" --strip-components=1
-    else
-        echo "警告: aicpu_hccl.tar.gz 未找到 $HCCL_AICPU_TAR"
-        exit 1
-    fi
+# 默认模式和 install 模式都要从 CANN 根解压，解压到工具目录
+if [ "$BUILD_HCCL" = true ] || [ "$MODE" = "deploy_only" ]; then
+    echo "部署 aicpu_hccl.tar.gz -> $AICPU_DEPLOY_DIR"
+    deploy_aicpu_kernel_pkg "aicpu_hccl.tar.gz" "$ASCEND_HOME_PATH" "$INI_PATH" "$AICPU_DEPLOY_DIR"
 else
     echo "跳过 aicpu_hccl.tar.gz 处理..."
 fi
 
-# 4.拷贝并立即解压 - aicpu_hcomm.tar.gz
-if [ "$BUILD_HCOMM" = true ]; then
-    if [ -f "$HCOMM_AICPU_TAR" ]; then
-        echo "正在解压 aicpu_hcomm.tar.gz..."
-        tar -zxvf "$HCOMM_AICPU_TAR" -C "$TARGET_DIR" --strip-components=1
-    else
-        echo "警告: aicpu_hccl.tar.gz 未找到 $HCOMM_AICPU_TAR"
-        exit 1
-    fi
+if [ "$BUILD_HCOMM" = true ] || [ "$MODE" = "deploy_only" ]; then
+    echo "部署 aicpu_hcomm.tar.gz -> $AICPU_DEPLOY_DIR"
+    deploy_aicpu_kernel_pkg "aicpu_hcomm.tar.gz" "$ASCEND_HOME_PATH" "$INI_PATH" "$AICPU_DEPLOY_DIR"
 else
     echo "跳过 aicpu_hcomm.tar.gz 处理..."
 fi
 
-sudo chmod -R 755 "$TARGET_DIR"
+# 确保当前用户可以读写目录内容，并保留必要的执行权限
+chmod -R u+rwX "$AICPU_DEPLOY_DIR"
 
 echo "所有任务均已执行完成！"

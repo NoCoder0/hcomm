@@ -46,7 +46,7 @@
 #include "ranktable/v80_rank_table.h"
 #include "hcom_op_utils.h"
 #include "hcom_ops_kernel_info_store.h"
-#include "external/ge/ge_api_types.h" // ge对内options
+#include "external/ge/ge_api_types.h"  // ge对内options
 #include "framework/common/ge_types.h" // ge对外options
 #include "graph/ge_local_context.h"
 #include "hcom_pub.h"
@@ -73,33 +73,22 @@
 using namespace std;
 using namespace hccl;
 
-class HcomGraphOptimizerTest : public testing::Test
-{
+class HcomGraphOptimizerTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "\033[36m--HcomGraphOptimizerTest SetUP--\033[0m" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-
-        std::cout << "\033[36m--HcomGraphOptimizerTest TearDown--\033[0m" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "\033[36m--HcomGraphOptimizerTest SetUP--\033[0m" << std::endl; }
+    static void TearDownTestCase() { std::cout << "\033[36m--HcomGraphOptimizerTest TearDown--\033[0m" << std::endl; }
     // Some expensive resource shared by all tests.
     virtual void SetUp()
     {
         s32 portNum = 7;
-        MOCKER(hrtGetHccsPortNum)
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
+        MOCKER_CPP(&HcomGraphOptimizer::SetSuperKernelScopeAttr)
             .stubs()
-            .with(mockcpp::any(), outBound(portNum))
+            .with(mockcpp::any())
             .will(returnValue(HCCL_SUCCESS));
-        MOCKER_CPP(&HcomGraphOptimizer::SetSuperKernelScopeAttr).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
         std::cout << "A Test SetUP" << std::endl;
     }
-    virtual void TearDown()
-    {
-        std::cout << "A Test TearDown" << std::endl;
-    }
+    virtual void TearDown() { std::cout << "A Test TearDown" << std::endl; }
 };
 
 TEST_F(HcomGraphOptimizerTest, ut_optimize_graphprepare_SetHcomOpParallelLabel)
@@ -107,21 +96,19 @@ TEST_F(HcomGraphOptimizerTest, ut_optimize_graphprepare_SetHcomOpParallelLabel)
     ge ::Status ret;
     ge ::Status ge_ret;
     bool bRet;
-    std::map<std::string,std::string> options;
+    std::map<std::string, std::string> options;
     ge::ComputeGraph graph("test_graph");
     std::map<string, GraphOptimizerPtr> graphOptimizers;
     ge::OpDescPtr opDescPtr = nullptr;
 
     // 未设置 rank table：失败
-    options.insert(pair<string,string> (ge::OPTION_EXEC_RANK_TABLE_FILE,"rank_table.json"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_RANK_TABLE_FILE, "rank_table.json"));
     // 实验室场景 设置 rank id
-    options.insert(pair<string,string> (ge::OPTION_EXEC_DEPLOY_MODE,"0"));
-    options.insert(pair<string,string> (ge::OPTION_EXEC_RANK_ID,"1"));
-    options.insert(pair<string,string> (ge::OPTION_EXEC_PROFILING_MODE,"0"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_DEPLOY_MODE, "0"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_RANK_ID, "1"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_PROFILING_MODE, "0"));
 
-    MOCKER(HcomInitByFile)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomInitByFile).stubs().will(returnValue(HCCL_SUCCESS));
     // 实验室场景 hcom_init成功：成功
     ret = Initialize(options);
     EXPECT_EQ(ret, ge::SUCCESS);
@@ -155,18 +142,15 @@ TEST_F(HcomGraphOptimizerTest, ut_optimize_graphprepare_SetHcomOpParallelLabel)
 TEST_F(HcomGraphOptimizerTest, ut_Initialize_to_Finalize)
 {
     ge ::Status ret;
-    std::map<std::string,std::string> options;
-
+    std::map<std::string, std::string> options;
 
     // 未设置 rank table：失败
-    options.insert(pair<string,string> (ge::OPTION_EXEC_RANK_TABLE_FILE,"rank_table.json"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_RANK_TABLE_FILE, "rank_table.json"));
     // 实验室场景 设置 rank id
-    options.insert(pair<string,string> (ge::OPTION_EXEC_DEPLOY_MODE,"0"));
-    options.insert(pair<string,string> (ge::OPTION_EXEC_RANK_ID,"1"));
-    options.insert(pair<string,string> (ge::OPTION_EXEC_PROFILING_MODE,"0"));
-    MOCKER(HcomInitByFile)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_DEPLOY_MODE, "0"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_RANK_ID, "1"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_PROFILING_MODE, "0"));
+    MOCKER(HcomInitByFile).stubs().will(returnValue(HCCL_SUCCESS));
     // 实验室场景 hcom_init成功：成功
     ret = Initialize(options);
     EXPECT_EQ(ret, ge::SUCCESS);
@@ -180,9 +164,7 @@ TEST_F(HcomGraphOptimizerTest, ut_Initialize_to_Finalize)
     ge_ret = graphOptimizers.at(HCCL_GRAPH_OPTIMIZER_NAME)->Initialize(options, nullptr);
     EXPECT_EQ(ge_ret, ge::SUCCESS);
 
-    MOCKER_CPP(&HcomAllReduceFusion::GetFusionOps)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomAllReduceFusion::GetFusionOps).stubs().will(returnValue(HCCL_SUCCESS));
 
     ge::GraphOptimizerAttribute attrs;
     ge_ret = graphOptimizers.at(HCCL_GRAPH_OPTIMIZER_NAME)->GetAttributes(attrs);
@@ -225,18 +207,13 @@ TEST_F(HcomGraphOptimizerTest, ut_Initialize_to_Finalize)
     EXPECT_EQ(ge_ret, ge::SUCCESS);
     u64 streamNumber = 4;
     MOCKER(HcomGetWorkspaceSubStreamNum)
-    .stubs()
-    .with(mockcpp::any(), outBound(streamNumber))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(streamNumber))
+        .will(returnValue(HCCL_SUCCESS));
     u32 rankSize = 8;
-    MOCKER(HcomGetRankSize)
-    .stubs()
-    .with(mockcpp::any(), outBound(&rankSize))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomGetRankSize).stubs().with(mockcpp::any(), outBound(&rankSize)).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcomGraphOptimizer::GetTaskNumAndCheckForceUnknown)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomGraphOptimizer::GetTaskNumAndCheckForceUnknown).stubs().will(returnValue(HCCL_SUCCESS));
 
     ge_ret = graphOptimizers.at(HCCL_GRAPH_OPTIMIZER_NAME)->OptimizeFusedGraph(*graph);
     EXPECT_EQ(ge_ret, ge::SUCCESS);
@@ -246,9 +223,7 @@ TEST_F(HcomGraphOptimizerTest, ut_Initialize_to_Finalize)
     ge_ret = graphOptimizers.at(HCCL_GRAPH_OPTIMIZER_NAME)->Finalize();
     EXPECT_EQ(ge_ret, ge::SUCCESS);
 
-    MOCKER(HcomDestroy)
-    .expects(atMost(1))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomDestroy).expects(atMost(1)).will(returnValue(HCCL_SUCCESS));
     ret = Finalize();
     EXPECT_EQ(ret, ge::SUCCESS);
     GlobalMockObject::verify();
@@ -256,31 +231,21 @@ TEST_F(HcomGraphOptimizerTest, ut_Initialize_to_Finalize)
 
 TEST_F(HcomGraphOptimizerTest, ut_Initialize_to_Finalize_51)
 {
-
     ge ::Status ret;
-    std::map<std::string,std::string> options;
-
+    std::map<std::string, std::string> options;
 
     // 未设置 rank table：失败
-    options.insert(pair<string,string> (ge::OPTION_EXEC_RANK_TABLE_FILE,"rank_table.json"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_RANK_TABLE_FILE, "rank_table.json"));
     // 实验室场景 设置 rank id
-    options.insert(pair<string,string> (ge::OPTION_EXEC_DEPLOY_MODE,"0"));
-    options.insert(pair<string,string> (ge::OPTION_EXEC_RANK_ID,"1"));
-    options.insert(pair<string,string> (ge::OPTION_EXEC_PROFILING_MODE,"0"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_DEPLOY_MODE, "0"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_RANK_ID, "1"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_PROFILING_MODE, "0"));
     u32 numHccsLink = 0;
-    MOCKER(HcomInitByFile)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(HcomGetHccsLinkNum)
-    .stubs()
-    .with(mockcpp::any(), outBound(numHccsLink))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomInitByFile).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomGetHccsLinkNum).stubs().with(mockcpp::any(), outBound(numHccsLink)).will(returnValue(HCCL_SUCCESS));
 
     u32 rankSize = 2;
-    MOCKER(HcomGetRankSize)
-    .stubs()
-    .with(mockcpp::any(), outBoundP(&rankSize))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomGetRankSize).stubs().with(mockcpp::any(), outBoundP(&rankSize)).will(returnValue(HCCL_SUCCESS));
 
     // 实验室场景 hcom_init成功：成功
     ret = Initialize(options);
@@ -295,9 +260,7 @@ TEST_F(HcomGraphOptimizerTest, ut_Initialize_to_Finalize_51)
     ge_ret = graphOptimizers.at(HCCL_GRAPH_OPTIMIZER_NAME)->Initialize(options, nullptr);
     EXPECT_EQ(ge_ret, ge::SUCCESS);
 
-    MOCKER_CPP(&HcomAllReduceFusion::GetFusionOps)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomAllReduceFusion::GetFusionOps).stubs().will(returnValue(HCCL_SUCCESS));
 
     ge::GraphOptimizerAttribute attrs;
     ge_ret = graphOptimizers.at(HCCL_GRAPH_OPTIMIZER_NAME)->GetAttributes(attrs);
@@ -340,19 +303,14 @@ TEST_F(HcomGraphOptimizerTest, ut_Initialize_to_Finalize_51)
     EXPECT_EQ(ge_ret, ge::SUCCESS);
     u64 streamNumber = 4;
     MOCKER(HcomGetWorkspaceSubStreamNum)
-    .stubs()
-    .with(mockcpp::any(), outBound(streamNumber))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(streamNumber))
+        .will(returnValue(HCCL_SUCCESS));
 
     DevType type610 = DevType::DEV_TYPE_310P1;
-    MOCKER(GetOffDeviceTypeWithoutDev)
-    .stubs()
-    .with(outBound(type610))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(GetOffDeviceTypeWithoutDev).stubs().with(outBound(type610)).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcomGraphOptimizer::GetTaskNumAndCheckForceUnknown)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomGraphOptimizer::GetTaskNumAndCheckForceUnknown).stubs().will(returnValue(HCCL_SUCCESS));
 
     ge_ret = graphOptimizers.at(HCCL_GRAPH_OPTIMIZER_NAME)->OptimizeFusedGraph(*graph);
     EXPECT_EQ(ge_ret, ge::SUCCESS);
@@ -362,15 +320,13 @@ TEST_F(HcomGraphOptimizerTest, ut_Initialize_to_Finalize_51)
     ge_ret = graphOptimizers.at(HCCL_GRAPH_OPTIMIZER_NAME)->Finalize();
     EXPECT_EQ(ge_ret, ge::SUCCESS);
 
-    MOCKER(HcomDestroy)
-    .expects(atMost(1))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomDestroy).expects(atMost(1)).will(returnValue(HCCL_SUCCESS));
     ret = Finalize();
     EXPECT_EQ(ret, ge::SUCCESS);
     GlobalMockObject::verify();
 }
 
-HcclResult GetOffDeviceTypeWithoutDevMockA2(DevType &devType)
+HcclResult GetOffDeviceTypeWithoutDevMockA2(DevType& devType)
 {
     devType = DevType::DEV_TYPE_910B;
     HCCL_DEBUG("[offline] Get devtype[%u]....", devType);
@@ -392,13 +348,13 @@ TEST_F(HcomGraphOptimizerTest, ut_OptimizeFusedGraph_GetDeterministic)
     GlobalMockObject::verify();
 }
 
-HcclResult stub_GetAllInputsTensorMemSize(const ge::OpDescPtr &opDescPtr, uint64_t &tensorSize)
+HcclResult stub_GetAllInputsTensorMemSize(const ge::OpDescPtr& opDescPtr, uint64_t& tensorSize)
 {
     tensorSize = 2048 * 1024 * 1024;
     return HCCL_SUCCESS;
 }
 
-HcclResult stub_HcomGetCCLBufferAvailableSize(u64 &size)
+HcclResult stub_HcomGetCCLBufferAvailableSize(u64& size)
 {
     size = 1024 * 1024;
     return HCCL_SUCCESS;
@@ -426,7 +382,7 @@ TEST_F(HcomGraphOptimizerTest, ut_GetFusionOpInfo)
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(fusionOps.size(), 1);
     EXPECT_EQ(fusionOps["hccl_world_group"].size(), 0);
-    //EXPECT_EQ(fusionOps["hccl_world_group"][HCOMALLREDUCE_ATTR_FUSION_ID_DEFAULT].size(), 1);
+    // EXPECT_EQ(fusionOps["hccl_world_group"][HCOMALLREDUCE_ATTR_FUSION_ID_DEFAULT].size(), 1);
 
     tempStr = "test_group";
     ge::AttrUtils::SetStr(ops[2]->GetOpDesc(), "group", tempStr);
@@ -434,7 +390,7 @@ TEST_F(HcomGraphOptimizerTest, ut_GetFusionOpInfo)
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(fusionOps.size(), 3);
     EXPECT_EQ(fusionOps["test_group"].size(), 0);
-    //EXPECT_EQ(fusionOps["test_group"][HCOMALLREDUCE_ATTR_FUSION_ID_DEFAULT].size(), 1);
+    // EXPECT_EQ(fusionOps["test_group"][HCOMALLREDUCE_ATTR_FUSION_ID_DEFAULT].size(), 1);
 
     tempStr = "test_group";
     ge::AttrUtils::SetStr(ops[3]->GetOpDesc(), "group", tempStr);
@@ -444,7 +400,7 @@ TEST_F(HcomGraphOptimizerTest, ut_GetFusionOpInfo)
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(fusionOps.size(), 5);
     EXPECT_EQ(fusionOps["test_group"].size(), 0);
-    //EXPECT_EQ(fusionOps["test_group"][0].size(), 1);
+    // EXPECT_EQ(fusionOps["test_group"][0].size(), 1);
 
     tempStr = HCCL_WORLD_GROUP;
     ge::AttrUtils::SetStr(ops[4]->GetOpDesc(), "group", tempStr);
@@ -454,7 +410,7 @@ TEST_F(HcomGraphOptimizerTest, ut_GetFusionOpInfo)
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(fusionOps.size(), 5);
     EXPECT_EQ(fusionOps["hccl_world_group"].size(), 0);
-    //EXPECT_EQ(fusionOps["hccl_world_group"][HCOMALLREDUCE_ATTR_FUSION_ID_DEFAULT].size(), 1);
+    // EXPECT_EQ(fusionOps["hccl_world_group"][HCOMALLREDUCE_ATTR_FUSION_ID_DEFAULT].size(), 1);
 
     tempStr = HCCL_WORLD_GROUP;
     ge::AttrUtils::SetStr(ops[5]->GetOpDesc(), "group", tempStr);
@@ -464,7 +420,7 @@ TEST_F(HcomGraphOptimizerTest, ut_GetFusionOpInfo)
     EXPECT_EQ(ret, HCCL_E_PARA);
     EXPECT_EQ(fusionOps.size(), 5);
     EXPECT_EQ(fusionOps["hccl_world_group"].size(), 0);
-    //EXPECT_EQ(fusionOps["hccl_world_group"][HCOMALLREDUCE_ATTR_FUSION_ID_DEFAULT].size(), 1);
+    // EXPECT_EQ(fusionOps["hccl_world_group"][HCOMALLREDUCE_ATTR_FUSION_ID_DEFAULT].size(), 1);
 
     tempStr = "test_group";
     ge::AttrUtils::SetStr(ops[6]->GetOpDesc(), "group", tempStr);
@@ -485,14 +441,9 @@ TEST_F(HcomGraphOptimizerTest, ut_GetFusionOpInfo)
     // EXPECT_EQ(fusionOps.size(), 1);
     // GlobalMockObject::verify();
 
-    MOCKER(HcomGetCCLBufferAvailableSize)
-    .stubs()
-    .with(mockcpp::any())
-    .will(invoke(stub_HcomGetCCLBufferAvailableSize));
+    MOCKER(HcomGetCCLBufferAvailableSize).stubs().with(mockcpp::any()).will(invoke(stub_HcomGetCCLBufferAvailableSize));
 
-    MOCKER(&HcomOpUtils::GetAllInputsTensorMemSize)
-    .stubs()
-    .will(invoke(stub_GetAllInputsTensorMemSize));
+    MOCKER(&HcomOpUtils::GetAllInputsTensorMemSize).stubs().will(invoke(stub_GetAllInputsTensorMemSize));
 
     FusionInfos fusionOpsTemp;
     ret = fusionHcomAllReduceOp.GetFusionOpsSlices(fusionOps, fusionOpsTemp);
@@ -527,13 +478,11 @@ TEST_F(HcomGraphOptimizerTest, ut_FuseOps)
     segments.push_back(1);
     segments.push_back(2);
     MOCKER(HcomGetSplitStrategy)
-    .stubs()
-    .with(mockcpp::any(), mockcpp::any(), outBound(segments))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), outBound(segments))
+        .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcomAllReduceFusion::RunFusionOps)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomAllReduceFusion::RunFusionOps).stubs().will(returnValue(HCCL_SUCCESS));
     ret = fusionHcomAllReduceOp.FuseOps(graph, fusionOps["hccl_world_group"]);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     GlobalMockObject::verify();
@@ -551,15 +500,15 @@ TEST_F(HcomGraphOptimizerTest, ut_GetFusionStrategy)
     u32 segmentNum = 0;
     std::vector<u32> segmentIndex;
 
-    u32 segment_num = 2;      // fused to 2 allreduce node
+    u32 segment_num = 2; // fused to 2 allreduce node
     std::vector<u32> segments;
     bool configured = false;
     segments.push_back(1);
     segments.push_back(2);
     MOCKER(HcomGetSplitStrategy)
-    .stubs()
-    .with(mockcpp::any(), mockcpp::any(), outBound(segments), outBound(configured))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), mockcpp::any(), outBound(segments), outBound(configured))
+        .will(returnValue(HCCL_SUCCESS));
     std::string group = HCCL_WORLD_GROUP;
     int64_t fusionid = HCOM_ATTR_FUSION_ID_DEFAULT;
     ge::AttrUtils::HasAttr(nodeGroup, "DUMMY_SET_TRUE_GROUP");
@@ -567,7 +516,7 @@ TEST_F(HcomGraphOptimizerTest, ut_GetFusionStrategy)
     EXPECT_EQ(bRet, true);
     bRet = ge::AttrUtils::SetInt(nodeFusionId, "fusion_id", fusionid);
     EXPECT_EQ(bRet, true);
-    //FusionInfo option("hccl_world_group", HCOMALLREDUCE_ATTR_FUSION_ID_DEFAULT);
+    // FusionInfo option("hccl_world_group", HCOMALLREDUCE_ATTR_FUSION_ID_DEFAULT);
     ret = fusionHcomAllReduceOp.GetFusionStrategy(graph, fusionOps, segmentNum, segmentIndex);
     EXPECT_EQ(segmentNum, segment_num);
     EXPECT_EQ(segmentIndex[0], segments[0]);
@@ -611,9 +560,9 @@ TEST_F(HcomGraphOptimizerTest, ut_GetNodeUnknownShapeInfo_unknown)
     bool bUnknownShapeNodeStatus = false;
 
     MOCKER(&ge::NodeUtils::GetNodeUnknownShapeStatus)
-    .stubs()
-    .with(mockcpp::any(), outBound(is_unknown))
-    .will(returnValue(ge::GRAPH_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(is_unknown))
+        .will(returnValue(ge::GRAPH_SUCCESS));
 
     ret = fusionHcomAllReduceOp.GetNodeUnknownShapeInfo(fusionOps[0], bUnknownShapeNodeStatus);
     EXPECT_EQ(bUnknownShapeNodeStatus, true);
@@ -630,8 +579,8 @@ TEST_F(HcomGraphOptimizerTest, ut_GetNodeUnknownShapeInfo_unknown)
 
 class NodeTest : public ge::Node {
 public:
-    NodeTest(){;};
-    ~NodeTest(){;};
+    NodeTest() { ; };
+    ~NodeTest() { ; };
 };
 
 TEST_F(HcomGraphOptimizerTest, ut_RunFusionOps)
@@ -668,7 +617,7 @@ TEST_F(HcomGraphOptimizerTest, ut_RunFusionOps)
     InOps[0]->GetOutDataAnchor(0)->LinkTo(fusionOps[0]->GetInDataAnchor(0));
     // InOps[0]->GetOutDataAnchor(0)->LinkTo(fusionOps[0]->GetInControlAnchor());
     // InOps[1]->GetOutControlAnchor()->LinkTo(fusionOps[1]->GetInControlAnchor());
-    //InOps[1]->GetOutDataAnchor(0)->LinkTo(fusionOps[1]->GetInDataAnchor(0));
+    // InOps[1]->GetOutDataAnchor(0)->LinkTo(fusionOps[1]->GetInDataAnchor(0));
     InOps[1]->GetOutDataAnchor(0)->LinkTo(fusionOps[1]->GetInControlAnchor());
     // InOps[2]->GetOutControlAnchor()->LinkTo(fusionOps[2]->GetInControlAnchor());
     InOps[2]->GetOutDataAnchor(0)->LinkTo(fusionOps[2]->GetInDataAnchor(0));
@@ -682,7 +631,7 @@ TEST_F(HcomGraphOptimizerTest, ut_RunFusionOps)
     fusionOps[1]->GetOutDataAnchor(0)->LinkTo(OutOps[1]->GetInControlAnchor());
     // fusionOps[2]->GetOutControlAnchor()->LinkTo(OutOps[2]->GetInControlAnchor());
     fusionOps[2]->GetOutDataAnchor(0)->LinkTo(OutOps[2]->GetInDataAnchor(0));
-    //fusionOps[2]->GetOutDataAnchor(0)->LinkTo(OutOps[2]->GetInControlAnchor());
+    // fusionOps[2]->GetOutDataAnchor(0)->LinkTo(OutOps[2]->GetInControlAnchor());
 
     u32 segmentNum = 2;
     std::vector<u32> segmentIndex;
@@ -692,7 +641,6 @@ TEST_F(HcomGraphOptimizerTest, ut_RunFusionOps)
     ret = fusionHcomAllReduceOp.RunFusionOps(graph, fusionOps, segmentNum, segmentIndex);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
-
 
 TEST_F(HcomGraphOptimizerTest, ut_RunFusionOps_have_duplication)
 {
@@ -746,8 +694,6 @@ TEST_F(HcomGraphOptimizerTest, ut_RunFusionOps_have_duplication)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
 
-
-
 TEST_F(HcomGraphOptimizerTest, ut_RunFusionOps_bcast)
 {
     HcclResult ret;
@@ -782,7 +728,7 @@ TEST_F(HcomGraphOptimizerTest, ut_RunFusionOps_bcast)
     InOps[0]->GetOutDataAnchor(0)->LinkTo(fusionOps[0]->GetInDataAnchor(0));
     // InOps[0]->GetOutDataAnchor(0)->LinkTo(fusionOps[0]->GetInControlAnchor());
     // InOps[1]->GetOutControlAnchor()->LinkTo(fusionOps[1]->GetInControlAnchor());
-    //InOps[1]->GetOutDataAnchor(0)->LinkTo(fusionOps[1]->GetInDataAnchor(0));
+    // InOps[1]->GetOutDataAnchor(0)->LinkTo(fusionOps[1]->GetInDataAnchor(0));
     InOps[1]->GetOutDataAnchor(0)->LinkTo(fusionOps[1]->GetInControlAnchor());
     // InOps[2]->GetOutControlAnchor()->LinkTo(fusionOps[2]->GetInControlAnchor());
     InOps[2]->GetOutDataAnchor(0)->LinkTo(fusionOps[2]->GetInDataAnchor(0));
@@ -796,7 +742,7 @@ TEST_F(HcomGraphOptimizerTest, ut_RunFusionOps_bcast)
     fusionOps[1]->GetOutDataAnchor(0)->LinkTo(OutOps[1]->GetInControlAnchor());
     // fusionOps[2]->GetOutControlAnchor()->LinkTo(OutOps[2]->GetInControlAnchor());
     fusionOps[2]->GetOutDataAnchor(0)->LinkTo(OutOps[2]->GetInDataAnchor(0));
-    //fusionOps[2]->GetOutDataAnchor(0)->LinkTo(OutOps[2]->GetInControlAnchor());
+    // fusionOps[2]->GetOutDataAnchor(0)->LinkTo(OutOps[2]->GetInControlAnchor());
 
     u32 segmentNum = 2;
     std::vector<u32> segmentIndex;
@@ -807,33 +753,19 @@ TEST_F(HcomGraphOptimizerTest, ut_RunFusionOps_bcast)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
 
-class HvdGraphOptimizerTest : public testing::Test
-{
+class HvdGraphOptimizerTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "\033[36m--HvdGraphOptimizerTest SetUP--\033[0m" << std::endl;
-    }
-    static void TearDownTestCase()
-    {
-
-        std::cout << "\033[36m--HvdGraphOptimizerTest TearDown--\033[0m" << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "\033[36m--HvdGraphOptimizerTest SetUP--\033[0m" << std::endl; }
+    static void TearDownTestCase() { std::cout << "\033[36m--HvdGraphOptimizerTest TearDown--\033[0m" << std::endl; }
     // Some expensive resource shared by all tests.
     virtual void SetUp()
     {
         s32 portNum = 7;
-        MOCKER(hrtGetHccsPortNum)
-            .stubs()
-            .with(mockcpp::any(), outBound(portNum))
-            .will(returnValue(HCCL_SUCCESS));
+        MOCKER(hrtGetHccsPortNum).stubs().with(mockcpp::any(), outBound(portNum)).will(returnValue(HCCL_SUCCESS));
 
         std::cout << "A Test SetUP" << std::endl;
     }
-    virtual void TearDown()
-    {
-        std::cout << "A Test TearDown" << std::endl;
-    }
+    virtual void TearDown() { std::cout << "A Test TearDown" << std::endl; }
 };
 
 TEST_F(HvdGraphOptimizerTest, ut_HvdGetSplitStrategy)
@@ -909,19 +841,16 @@ TEST_F(HvdGraphOptimizerTest, ut_HvdRunFusionOps)
 TEST_F(HcomGraphOptimizerTest, ut_HcomReduceScatter_OptimizeFusedGraph)
 {
     ge ::Status ret;
-    std::map<std::string,std::string> options;
-
+    std::map<std::string, std::string> options;
 
     // 未设置 rank table：失败
-    options.insert(pair<string,string> (ge::OPTION_EXEC_RANK_TABLE_FILE,"rank_table.json"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_RANK_TABLE_FILE, "rank_table.json"));
     // 实验室场景 设置 rank id
-    options.insert(pair<string,string> (ge::OPTION_EXEC_DEPLOY_MODE,"0"));
-    options.insert(pair<string,string> (ge::OPTION_EXEC_RANK_ID,"1"));
-    options.insert(pair<string,string> (ge::OPTION_EXEC_PROFILING_MODE,"0"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_DEPLOY_MODE, "0"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_RANK_ID, "1"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_PROFILING_MODE, "0"));
 
-    MOCKER(HcomInitByFile)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomInitByFile).stubs().will(returnValue(HCCL_SUCCESS));
     ret = Initialize(options);
     EXPECT_EQ(ret, ge::SUCCESS);
 
@@ -958,17 +887,12 @@ TEST_F(HcomGraphOptimizerTest, ut_HcomReduceScatter_OptimizeFusedGraph)
     EXPECT_EQ(ge_ret, ge::SUCCESS);
     u64 streamNumber = 4;
     MOCKER(HcomGetWorkspaceSubStreamNum)
-    .stubs()
-    .with(mockcpp::any(), outBound(streamNumber))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(streamNumber))
+        .will(returnValue(HCCL_SUCCESS));
     u32 rankSize = 8;
-    MOCKER(HcomGetRankSize)
-    .stubs()
-    .with(mockcpp::any(), outBound(&rankSize))
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&HcomGraphOptimizer::GetTaskNumAndCheckForceUnknown)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomGetRankSize).stubs().with(mockcpp::any(), outBound(&rankSize)).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomGraphOptimizer::GetTaskNumAndCheckForceUnknown).stubs().will(returnValue(HCCL_SUCCESS));
 
     ge_ret = graphOptimizers.at(HCCL_GRAPH_OPTIMIZER_NAME)->OptimizeFusedGraph(*graph);
     EXPECT_EQ(ge_ret, ge::SUCCESS);
@@ -984,19 +908,16 @@ TEST_F(HcomGraphOptimizerTest, ut_HcomReduceScatter_OptimizeFusedGraph)
 TEST_F(HcomGraphOptimizerTest, ut_HcomAllGather_OptimizeFusedGraph)
 {
     ge ::Status ret;
-    std::map<std::string,std::string> options;
-
+    std::map<std::string, std::string> options;
 
     // 未设置 rank table：失败
-    options.insert(pair<string,string> (ge::OPTION_EXEC_RANK_TABLE_FILE,"rank_table.json"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_RANK_TABLE_FILE, "rank_table.json"));
     // 实验室场景 设置 rank id
-    options.insert(pair<string,string> (ge::OPTION_EXEC_DEPLOY_MODE,"0"));
-    options.insert(pair<string,string> (ge::OPTION_EXEC_RANK_ID,"1"));
-    options.insert(pair<string,string> (ge::OPTION_EXEC_PROFILING_MODE,"0"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_DEPLOY_MODE, "0"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_RANK_ID, "1"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_PROFILING_MODE, "0"));
 
-    MOCKER(HcomInitByFile)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomInitByFile).stubs().will(returnValue(HCCL_SUCCESS));
     ret = Initialize(options);
     EXPECT_EQ(ret, ge::SUCCESS);
 
@@ -1033,20 +954,13 @@ TEST_F(HcomGraphOptimizerTest, ut_HcomAllGather_OptimizeFusedGraph)
     EXPECT_EQ(ge_ret, ge::SUCCESS);
     u64 streamNumber = 4;
     MOCKER(HcomGetWorkspaceSubStreamNum)
-    .stubs()
-    .with(mockcpp::any(), outBound(streamNumber))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(streamNumber))
+        .will(returnValue(HCCL_SUCCESS));
     u32 rankSize = 8;
-    MOCKER(HcomGetRankSize)
-    .stubs()
-    .with(mockcpp::any(), outBound(&rankSize))
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(HcomGetDeviceType)
-    .stubs()
-    .will(returnValue(DevType::DEV_TYPE_310P3));
-    MOCKER_CPP(&HcomGraphOptimizer::GetTaskNumAndCheckForceUnknown)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomGetRankSize).stubs().with(mockcpp::any(), outBound(&rankSize)).will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomGetDeviceType).stubs().will(returnValue(DevType::DEV_TYPE_310P3));
+    MOCKER_CPP(&HcomGraphOptimizer::GetTaskNumAndCheckForceUnknown).stubs().will(returnValue(HCCL_SUCCESS));
 
     ge_ret = graphOptimizers.at(HCCL_GRAPH_OPTIMIZER_NAME)->OptimizeFusedGraph(*graph);
     EXPECT_EQ(ge_ret, ge::SUCCESS);
@@ -1062,19 +976,16 @@ TEST_F(HcomGraphOptimizerTest, ut_HcomAllGather_OptimizeFusedGraph)
 TEST_F(HcomGraphOptimizerTest, ut_HcomRemoteRead_OptimizeFusedGraph)
 {
     ge ::Status ret;
-    std::map<std::string,std::string> options;
-
+    std::map<std::string, std::string> options;
 
     // 未设置 rank table：失败
-    options.insert(pair<string,string> (ge::OPTION_EXEC_RANK_TABLE_FILE,"rank_table.json"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_RANK_TABLE_FILE, "rank_table.json"));
     // 实验室场景 设置 rank id
-    options.insert(pair<string,string> (ge::OPTION_EXEC_DEPLOY_MODE,"0"));
-    options.insert(pair<string,string> (ge::OPTION_EXEC_RANK_ID,"1"));
-    options.insert(pair<string,string> (ge::OPTION_EXEC_PROFILING_MODE,"0"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_DEPLOY_MODE, "0"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_RANK_ID, "1"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_PROFILING_MODE, "0"));
 
-    MOCKER(HcomInitByFile)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomInitByFile).stubs().will(returnValue(HCCL_SUCCESS));
     ret = Initialize(options);
     EXPECT_EQ(ret, ge::SUCCESS);
 
@@ -1111,14 +1022,11 @@ TEST_F(HcomGraphOptimizerTest, ut_HcomRemoteRead_OptimizeFusedGraph)
     EXPECT_EQ(ge_ret, ge::SUCCESS);
     u64 streamNumber = 4;
     MOCKER(HcomGetWorkspaceSubStreamNum)
-    .stubs()
-    .with(mockcpp::any(), outBound(streamNumber))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(streamNumber))
+        .will(returnValue(HCCL_SUCCESS));
     u32 rankSize = 8;
-    MOCKER(HcomGetRankSize)
-    .stubs()
-    .with(mockcpp::any(), outBound(&rankSize))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomGetRankSize).stubs().with(mockcpp::any(), outBound(&rankSize)).will(returnValue(HCCL_SUCCESS));
     ge_ret = graphOptimizers.at(HCCL_GRAPH_OPTIMIZER_NAME)->OptimizeFusedGraph(*graph);
     EXPECT_EQ(ge_ret, ge::SUCCESS);
     ge_ret = graphOptimizers.at(HCCL_GRAPH_OPTIMIZER_NAME)->OptimizeWholeGraph(*graph);
@@ -1133,19 +1041,16 @@ TEST_F(HcomGraphOptimizerTest, ut_HcomRemoteRead_OptimizeFusedGraph)
 TEST_F(HcomGraphOptimizerTest, ut_HcomReveive_OptimizeFusedGraph)
 {
     ge ::Status ret;
-    std::map<std::string,std::string> options;
-
+    std::map<std::string, std::string> options;
 
     // 未设置 rank table：失败
-    options.insert(pair<string,string> (ge::OPTION_EXEC_RANK_TABLE_FILE,"rank_table.json"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_RANK_TABLE_FILE, "rank_table.json"));
     // 实验室场景 设置 rank id
-    options.insert(pair<string,string> (ge::OPTION_EXEC_DEPLOY_MODE,"0"));
-    options.insert(pair<string,string> (ge::OPTION_EXEC_RANK_ID,"1"));
-    options.insert(pair<string,string> (ge::OPTION_EXEC_PROFILING_MODE,"0"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_DEPLOY_MODE, "0"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_RANK_ID, "1"));
+    options.insert(pair<string, string>(ge::OPTION_EXEC_PROFILING_MODE, "0"));
 
-    MOCKER(HcomInitByFile)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomInitByFile).stubs().will(returnValue(HCCL_SUCCESS));
     ret = Initialize(options);
     EXPECT_EQ(ret, ge::SUCCESS);
 
@@ -1182,14 +1087,11 @@ TEST_F(HcomGraphOptimizerTest, ut_HcomReveive_OptimizeFusedGraph)
     EXPECT_EQ(ge_ret, ge::SUCCESS);
     u64 streamNumber = 4;
     MOCKER(HcomGetWorkspaceSubStreamNum)
-    .stubs()
-    .with(mockcpp::any(), outBound(streamNumber))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(streamNumber))
+        .will(returnValue(HCCL_SUCCESS));
     u32 rankSize = 8;
-    MOCKER(HcomGetRankSize)
-    .stubs()
-    .with(mockcpp::any(), outBound(&rankSize))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomGetRankSize).stubs().with(mockcpp::any(), outBound(&rankSize)).will(returnValue(HCCL_SUCCESS));
     ge::AttrUtils::HasAttr(*descPtr0, "DUMMY_SET_TRUE_DTYPE");
     ge::AttrUtils::HasAttr(*descPtr0, "DUMMY_SET_TRUE_SHAPE");
     ge_ret = graphOptimizers.at(HCCL_GRAPH_OPTIMIZER_NAME)->OptimizeFusedGraph(*graph);
@@ -1207,9 +1109,9 @@ TEST_F(HcomGraphOptimizerTest, ut_OriginalGraphShapeTypeCfg)
 {
     ge::Status ge_ret;
     MOCKER(&ge::NodeUtils::GetNodeUnknownShapeStatus)
-    .stubs()
-    .with(mockcpp::any(), outBound(true))
-    .will(returnValue(ge::GRAPH_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(true))
+        .will(returnValue(ge::GRAPH_SUCCESS));
     HcomGraphOptimizer graphOptimizer;
     ge::ComputeGraphPtr graph = std::make_shared<ge::ComputeGraph>("test_graph");
     const string type = "HcomAllReduce";
@@ -1221,7 +1123,7 @@ TEST_F(HcomGraphOptimizerTest, ut_OriginalGraphShapeTypeCfg)
     GlobalMockObject::verify();
 }
 
-ge::graphStatus GetOption1(ge::GEContext *that, const std::string &optionExec, std::string &dumpDebugValue)
+ge::graphStatus GetOption1(ge::GEContext* that, const std::string& optionExec, std::string& dumpDebugValue)
 {
     return ge::GRAPH_FAILED;
 }
@@ -1238,13 +1140,11 @@ TEST_F(HcomGraphOptimizerTest, ut_SetUnknownShapAttr)
     graph->AddNode(opPtr_);
 
     MOCKER(&ge::NodeUtils::GetNodeUnknownShapeStatus)
-    .stubs()
-    .with(mockcpp::any(), outBound(false))
-    .will(returnValue(ge::GRAPH_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(false))
+        .will(returnValue(ge::GRAPH_SUCCESS));
 
-    MOCKER_CPP(&ge::GEContext::GetOption)
-    .stubs()
-    .will(invoke(GetOption1));
+    MOCKER_CPP(&ge::GEContext::GetOption).stubs().will(invoke(GetOption1));
 
     ret = graphOptimizer.SetUnknownShapeAttr(*graph, true);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -1254,9 +1154,7 @@ TEST_F(HcomGraphOptimizerTest, ut_SetUnknownShapAttr)
     ret = graphOptimizer.SetUnknownShapeAttr(*graph, true);
     EXPECT_EQ(ret, HCCL_SUCCESS);
 
-    MOCKER(HcomGetDeviceType)
-    .stubs()
-    .will(returnValue(DevType::DEV_TYPE_310P3));
+    MOCKER(HcomGetDeviceType).stubs().will(returnValue(DevType::DEV_TYPE_310P3));
 
     ret = graphOptimizer.SetUnknownShapeAttr(*graph, true);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -1275,13 +1173,11 @@ TEST_F(HcomGraphOptimizerTest, ut_SetUnknownShapAttr_AlltoAllv)
     graph->AddNode(opPtr_);
 
     MOCKER(&ge::NodeUtils::GetNodeUnknownShapeStatus)
-    .stubs()
-    .with(mockcpp::any(), outBound(false))
-    .will(returnValue(ge::GRAPH_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(false))
+        .will(returnValue(ge::GRAPH_SUCCESS));
 
-    MOCKER_CPP(&ge::GEContext::GetOption)
-    .stubs()
-    .will(invoke(GetOption1));
+    MOCKER_CPP(&ge::GEContext::GetOption).stubs().will(invoke(GetOption1));
 
     ret = graphOptimizer.SetUnknownShapeAttr(*graph, true);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -1358,14 +1254,11 @@ TEST_F(HcomGraphOptimizerTest, ut_FuseOps_Bcast)
     nodeVec_0.push_back(ops[2]);
     fusionOps["hccl_world_group"] = nodeVec_0;
 
-
-    MOCKER_CPP(&HcomBroadcastFusion::RunFusionOps)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomBroadcastFusion::RunFusionOps).stubs().will(returnValue(HCCL_SUCCESS));
     ret = fusionHcomBroadcastOp.FuseOps(graph, nodeVec_0);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     GlobalMockObject::verify();
-	ge::AttrUtils::SetStr(ops[0]->GetOpDesc(), "group", "hccl_world_group");
+    ge::AttrUtils::SetStr(ops[0]->GetOpDesc(), "group", "hccl_world_group");
 }
 
 TEST_F(HcomGraphOptimizerTest, ut_RunFusionOps_reduce)
@@ -1402,7 +1295,7 @@ TEST_F(HcomGraphOptimizerTest, ut_RunFusionOps_reduce)
     InOps[0]->GetOutDataAnchor(0)->LinkTo(fusionOps[0]->GetInDataAnchor(0));
     // InOps[0]->GetOutDataAnchor(0)->LinkTo(fusionOps[0]->GetInControlAnchor());
     // InOps[1]->GetOutControlAnchor()->LinkTo(fusionOps[1]->GetInControlAnchor());
-    //InOps[1]->GetOutDataAnchor(0)->LinkTo(fusionOps[1]->GetInDataAnchor(0));
+    // InOps[1]->GetOutDataAnchor(0)->LinkTo(fusionOps[1]->GetInDataAnchor(0));
     InOps[1]->GetOutDataAnchor(0)->LinkTo(fusionOps[1]->GetInControlAnchor());
     // InOps[2]->GetOutControlAnchor()->LinkTo(fusionOps[2]->GetInControlAnchor());
     InOps[2]->GetOutDataAnchor(0)->LinkTo(fusionOps[2]->GetInDataAnchor(0));
@@ -1416,7 +1309,7 @@ TEST_F(HcomGraphOptimizerTest, ut_RunFusionOps_reduce)
     fusionOps[1]->GetOutDataAnchor(0)->LinkTo(OutOps[1]->GetInControlAnchor());
     // fusionOps[2]->GetOutControlAnchor()->LinkTo(OutOps[2]->GetInControlAnchor());
     fusionOps[2]->GetOutDataAnchor(0)->LinkTo(OutOps[2]->GetInDataAnchor(0));
-    //fusionOps[2]->GetOutDataAnchor(0)->LinkTo(OutOps[2]->GetInControlAnchor());
+    // fusionOps[2]->GetOutDataAnchor(0)->LinkTo(OutOps[2]->GetInControlAnchor());
 
     ret = fusionHcomReduceOp.RunFusionOpsReduce(graph, fusionOps);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -1459,7 +1352,7 @@ TEST_F(HcomGraphOptimizerTest, ut_GetFusionOpInfo_Reduce)
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(fusionOps.size(), 1);
     EXPECT_EQ(fusionOps["hccl_world_group"].size(), 0);
-    //EXPECT_EQ(fusionOps["hccl_world_group"][2].size(), 1);
+    // EXPECT_EQ(fusionOps["hccl_world_group"][2].size(), 1);
 
     ge::AttrUtils::SetStr(ops[2]->GetOpDesc(), "group", tempStr);
     ge::AttrUtils::SetInt(ops[2]->GetOpDesc(), "fusion_id", 3);
@@ -1485,14 +1378,9 @@ TEST_F(HcomGraphOptimizerTest, ut_GetFusionOpInfo_Reduce)
     ge::AttrUtils::SetStr(ops[0]->GetOpDesc(), "group", "hccl_world_group");
     ge::AttrUtils::SetInt(ops[1]->GetOpDesc(), "fusion_id", -1);
 
-    MOCKER(HcomGetCCLBufferAvailableSize)
-    .stubs()
-    .with(mockcpp::any())
-    .will(invoke(stub_HcomGetCCLBufferAvailableSize));
+    MOCKER(HcomGetCCLBufferAvailableSize).stubs().with(mockcpp::any()).will(invoke(stub_HcomGetCCLBufferAvailableSize));
 
-    MOCKER(&HcomOpUtils::GetAllInputsTensorMemSize)
-    .stubs()
-    .will(invoke(stub_GetAllInputsTensorMemSize));
+    MOCKER(&HcomOpUtils::GetAllInputsTensorMemSize).stubs().will(invoke(stub_GetAllInputsTensorMemSize));
 
     FusionInfos fusionOpsTemp;
     ret = fusionHcomReduceOp.GetFusionOpsSlices(fusionOps, fusionOpsTemp);
@@ -1512,14 +1400,11 @@ TEST_F(HcomGraphOptimizerTest, ut_FuseOps_Reduce)
     nodeVec_0.push_back(ops[2]);
     fusionOps["hccl_world_group"] = nodeVec_0;
 
-
-    MOCKER_CPP(&HcomReduceFusion::RunFusionOpsReduce)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomReduceFusion::RunFusionOpsReduce).stubs().will(returnValue(HCCL_SUCCESS));
     ret = fusionHcomReduceOp.FuseOps(graph, nodeVec_0);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     GlobalMockObject::verify();
-	ge::AttrUtils::SetStr(ops[0]->GetOpDesc(), "group", "hccl_world_group");
+    ge::AttrUtils::SetStr(ops[0]->GetOpDesc(), "group", "hccl_world_group");
 }
 
 TEST_F(HcomGraphOptimizerTest, ut_GetFusionSegments_1)
@@ -1534,15 +1419,15 @@ TEST_F(HcomGraphOptimizerTest, ut_GetFusionSegments_1)
     nodes.push_back(ops[5]);
     nodes.push_back(ops[6]);
 
-    uint64_t inputTensorSize = 200*1024*1024;
+    uint64_t inputTensorSize = 200 * 1024 * 1024;
     MOCKER(&HcomOpUtils::GetAllInputsTensorOriginSize)
-    .stubs()
-    .with(mockcpp::any(), outBound(inputTensorSize))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(inputTensorSize))
+        .will(returnValue(HCCL_SUCCESS));
 
     std::vector<uint32_t> segmentIndex;
     HcomBroadcastFusion fusionHcomBroadcastOp;
-    fusionHcomBroadcastOp.fusionTensorSizeLimit_ = 500*1024*1024;
+    fusionHcomBroadcastOp.fusionTensorSizeLimit_ = 500 * 1024 * 1024;
     HcclResult ret = fusionHcomBroadcastOp.GetFusionSegments(nodes, segmentIndex);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(segmentIndex.size(), 4);
@@ -1561,15 +1446,15 @@ TEST_F(HcomGraphOptimizerTest, ut_GetFusionSegments_2)
     nodes.push_back(ops[1]);
     nodes.push_back(ops[2]);
 
-    uint64_t inputTensorSize = 500*1024*1024;
+    uint64_t inputTensorSize = 500 * 1024 * 1024;
     MOCKER(&HcomOpUtils::GetAllInputsTensorOriginSize)
-    .stubs()
-    .with(mockcpp::any(), outBound(inputTensorSize))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(inputTensorSize))
+        .will(returnValue(HCCL_SUCCESS));
 
     std::vector<uint32_t> segmentIndex;
     HcomBroadcastFusion fusionHcomBroadcastOp;
-    fusionHcomBroadcastOp.fusionTensorSizeLimit_ = 500*1024*1024;
+    fusionHcomBroadcastOp.fusionTensorSizeLimit_ = 500 * 1024 * 1024;
     HcclResult ret = fusionHcomBroadcastOp.GetFusionSegments(nodes, segmentIndex);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     EXPECT_EQ(segmentIndex.size(), 3);
@@ -1579,7 +1464,7 @@ TEST_F(HcomGraphOptimizerTest, ut_GetFusionSegments_2)
     GlobalMockObject::verify();
 }
 
-HcclResult GetOffDeviceTypeWithoutDevMock(DevType &devType)
+HcclResult GetOffDeviceTypeWithoutDevMock(DevType& devType)
 {
     devType = DevType::DEV_TYPE_310P3;
     HCCL_DEBUG("[offline] Get devtype[%u]....", devType);
@@ -1604,33 +1489,24 @@ TEST_F(HcomGraphOptimizerTest, ut_OptimizeFusedGraph_allreduce)
     EXPECT_NE(addedNodePtr1, nullptr);
 
     u64 streamNumber = 4;
-    char *group = "127.0.0.1%eth0_60000_0_1698475280390992";
+    char* group = "127.0.0.1%eth0_60000_0_1698475280390992";
     MOCKER(HcomGetWorkspaceSubStreamNum)
-    .stubs()
-    .with(mockcpp::any(), outBound(streamNumber))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(streamNumber))
+        .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcomGraphOptimizer::GetTaskNumAndCheckForceUnknown)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomGraphOptimizer::GetTaskNumAndCheckForceUnknown).stubs().will(returnValue(HCCL_SUCCESS));
 
     u32 rankSize = 8;
-    MOCKER(HcomGetRankSize)
-    .stubs()
-    .with(mockcpp::any(), outBound(&rankSize))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomGetRankSize).stubs().with(mockcpp::any(), outBound(&rankSize)).will(returnValue(HCCL_SUCCESS));
 
     HcomGraphOptimizer graphOptimizer;
     ge::Status ge_ret = graphOptimizer.OptimizeFusedGraph(*graph);
     EXPECT_EQ(ge_ret, ge::SUCCESS);
 
-    MOCKER(IsOfflineCompilation)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER(IsOfflineCompilation).stubs().will(returnValue(true));
 
-    MOCKER(GetOffDeviceTypeWithoutDev)
-    .stubs()
-    .will(invoke(GetOffDeviceTypeWithoutDevMock));
+    MOCKER(GetOffDeviceTypeWithoutDev).stubs().will(invoke(GetOffDeviceTypeWithoutDevMock));
     ge_ret = graphOptimizer.OptimizeFusedGraph(*graph);
 
     GlobalMockObject::verify();
@@ -1655,15 +1531,12 @@ TEST_F(HcomGraphOptimizerTest, ut_OptimizeFusedGraph_broadcast)
 
     u64 streamNumber = 4;
     MOCKER(HcomGetWorkspaceSubStreamNum)
-    .stubs()
-    .with(mockcpp::any(), outBound(streamNumber))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(streamNumber))
+        .will(returnValue(HCCL_SUCCESS));
 
     u32 rankSize = 8;
-    MOCKER(HcomGetRankSize)
-    .stubs()
-    .with(mockcpp::any(), outBound(&rankSize))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomGetRankSize).stubs().with(mockcpp::any(), outBound(&rankSize)).will(returnValue(HCCL_SUCCESS));
 
     HcomGraphOptimizer graphOptimizer;
     ge::Status ge_ret = graphOptimizer.OptimizeFusedGraph(*graph);
@@ -1691,20 +1564,17 @@ TEST_F(HcomGraphOptimizerTest, ut_OptimizeFusedGraph_broadcast_unknown)
 
     u64 streamNumber = 4;
     MOCKER(HcomGetWorkspaceSubStreamNum)
-    .stubs()
-    .with(mockcpp::any(), outBound(streamNumber))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(streamNumber))
+        .will(returnValue(HCCL_SUCCESS));
 
     u32 rankSize = 8;
-    MOCKER(HcomGetRankSize)
-    .stubs()
-    .with(mockcpp::any(), outBound(&rankSize))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomGetRankSize).stubs().with(mockcpp::any(), outBound(&rankSize)).will(returnValue(HCCL_SUCCESS));
 
     MOCKER(&ge::NodeUtils::GetNodeUnknownShapeStatus)
-    .stubs()
-    .with(mockcpp::any(), outBound(true))
-    .will(returnValue(ge::GRAPH_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(true))
+        .will(returnValue(ge::GRAPH_SUCCESS));
 
     HcomGraphOptimizer graphOptimizer;
     ge::Status ge_ret = graphOptimizer.OptimizeFusedGraph(*graph);
@@ -1748,25 +1618,17 @@ TEST_F(HcomGraphOptimizerTest, ut_GetFusionOpInfo_Reduce_by_comm_pytorch)
     ge::AttrUtils::SetInt(ops[0]->GetOpDesc(), "fusion_id", 2);
     ge::AttrUtils::SetInt(ops[0]->GetOpDesc(), "fusion", 2);
     ge::AttrUtils::SetInt(ops[0]->GetOpDesc(), "root_rank", 0);
-    MOCKER(HcclCommGraphGetIdentifier)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcclCommGraphGetIdentifier).stubs().will(returnValue(HCCL_SUCCESS));
     ret = fusionHcomReduceOp.GetFusionOpInfo(ops[0], fusionOps);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ge::AttrUtils::HasAttr(ops[0]->GetOpDesc(), "DUMMY_SET_FALSE_COMM");
 
-    MOCKER(HcomGetCCLBufferAvailableSize)
-    .stubs()
-    .with(mockcpp::any())
-    .will(invoke(stub_HcomGetCCLBufferAvailableSize));
+    MOCKER(HcomGetCCLBufferAvailableSize).stubs().with(mockcpp::any()).will(invoke(stub_HcomGetCCLBufferAvailableSize));
 
-    MOCKER(&HcomOpUtils::GetAllInputsTensorMemSize)
-    .stubs()
-    .will(invoke(stub_GetAllInputsTensorMemSize));
+    MOCKER(&HcomOpUtils::GetAllInputsTensorMemSize).stubs().will(invoke(stub_GetAllInputsTensorMemSize));
 
     FusionInfos fusionOpsTemp;
     ret = fusionHcomReduceOp.GetFusionOpsSlices(fusionOps, fusionOpsTemp);
-
 }
 
 TEST_F(HcomGraphOptimizerTest, ut_GetFusionOpInfo_AllReduce_by_comm_pytorch)
@@ -1787,21 +1649,14 @@ TEST_F(HcomGraphOptimizerTest, ut_GetFusionOpInfo_AllReduce_by_comm_pytorch)
     ge::AttrUtils::SetInt(ops[0]->GetOpDesc(), "fusion_id", 2);
     ge::AttrUtils::SetInt(ops[0]->GetOpDesc(), "fusion", 2);
     ge::AttrUtils::SetInt(ops[0]->GetOpDesc(), "root_rank", 0);
-    MOCKER(HcclCommGraphGetIdentifier)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcclCommGraphGetIdentifier).stubs().will(returnValue(HCCL_SUCCESS));
     ret = fusionHcomAllReduceOp.GetFusionOpInfo(ops[0], fusionOps);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ge::AttrUtils::HasAttr(ops[0]->GetOpDesc(), "DUMMY_SET_FALSE_COMM");
 
-    MOCKER(HcomGetCCLBufferAvailableSize)
-    .stubs()
-    .with(mockcpp::any())
-    .will(invoke(stub_HcomGetCCLBufferAvailableSize));
+    MOCKER(HcomGetCCLBufferAvailableSize).stubs().with(mockcpp::any()).will(invoke(stub_HcomGetCCLBufferAvailableSize));
 
-    MOCKER(&HcomOpUtils::GetAllInputsTensorMemSize)
-    .stubs()
-    .will(invoke(stub_GetAllInputsTensorMemSize));
+    MOCKER(&HcomOpUtils::GetAllInputsTensorMemSize).stubs().will(invoke(stub_GetAllInputsTensorMemSize));
 
     FusionInfos fusionOpsTemp;
     ret = fusionHcomAllReduceOp.GetFusionOpsSlices(fusionOps, fusionOpsTemp);
@@ -1832,9 +1687,7 @@ TEST_F(HcomGraphOptimizerTest, ut_FuseOps_AllReduce_by_comm_pytorch)
     nodeVec_0.push_back(ops[2]);
     fusionOps["hccl_world_group"] = nodeVec_0;
 
-    MOCKER_CPP(&HcomAllReduceFusion::RunFusionOpsReduce)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomAllReduceFusion::RunFusionOpsReduce).stubs().will(returnValue(HCCL_SUCCESS));
     ret = fusionHcomAllReduceOp.FuseOps(graph, fusionOps["hccl_world_group"]);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ge::AttrUtils::HasAttr(ops[0]->GetOpDesc(), "DUMMY_SET_FALSE_COMM");
@@ -1905,9 +1758,7 @@ TEST_F(HcomGraphOptimizerTest, ut_GetFusionOpInfo_Bcast_by_comm_pytorch1)
     ge::AttrUtils::SetInt(ops[0]->GetOpDesc(), "fusion_id", 2);
     ge::AttrUtils::SetInt(ops[0]->GetOpDesc(), "fusion", 2);
     ge::AttrUtils::SetInt(ops[0]->GetOpDesc(), "root_rank", 0);
-    MOCKER(HcclCommGraphGetIdentifier)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcclCommGraphGetIdentifier).stubs().will(returnValue(HCCL_SUCCESS));
     ret = fusionHcomBroadcastOp.GetFusionOpInfo(ops[0], fusionOps);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ge::AttrUtils::HasAttr(ops[0]->GetOpDesc(), "DUMMY_SET_FALSE_COMM");
@@ -1930,9 +1781,7 @@ TEST_F(HcomGraphOptimizerTest, ut_GetFusionOpInfo_Bcast_by_comm_pytorch2)
     ge::AttrUtils::SetInt(ops[0]->GetOpDesc(), "fusion_id", 2);
     ge::AttrUtils::SetInt(ops[0]->GetOpDesc(), "fusion", 2);
     ge::AttrUtils::SetInt(ops[0]->GetOpDesc(), "root_rank", 0);
-    MOCKER(HcclCommGraphGetIdentifier)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcclCommGraphGetIdentifier).stubs().will(returnValue(HCCL_SUCCESS));
     ret = fusionHcomBroadcastOp.GetFusionOpInfo(ops[0], fusionOps);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     ge::AttrUtils::HasAttr(ops[0]->GetOpDesc(), "DUMMY_SET_FALSE_COMM");
@@ -1993,37 +1842,25 @@ TEST_F(HcomGraphOptimizerTest, ut_HcomCalcOpRunningParam_by_comm_pytorch)
     ge::AttrUtils::HasAttr(ops[0].GetOpDesc(), "DUMMY_SET_TRUE_COMM");
     ge::AttrUtils::HasAttr(ops[0].GetOpDesc(), "comm");
     ge::AttrUtils::SetInt(ops[0].GetOpDesc(), "comm", 645678156);
-    MOCKER(HcclCommGraphGetWorkspaceSubStreamNum)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
-    MOCKER(HcclCommGraphGetAllReduceScratchSize)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcclCommGraphGetWorkspaceSubStreamNum).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcclCommGraphGetAllReduceScratchSize).stubs().will(returnValue(HCCL_SUCCESS));
 
     ge::AttrUtils::SetInt(ops[0].GetOpDesc(), "used_stream_num", streamNum);
-    MOCKER_CPP(&HcomGraphOptimizer::GetOriginalGraphShapeTypeFromDesc)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomGraphOptimizer::GetOriginalGraphShapeTypeFromDesc).stubs().will(returnValue(HCCL_SUCCESS));
 
     u32 shapeType = ORIGINAL_GRAPH_UNKNOWNSHAPE_TYPE;
 
     MOCKER_CPP_VIRTUAL(hcomGraphOptimizer, &HcomGraphOptimizer::SetOpOutputMemSize)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcomGraphOptimizer::GetTaskNumAndCheckForceUnknown)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomGraphOptimizer::GetTaskNumAndCheckForceUnknown).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcomGraphOptimizer::SetOpAtomicInputIndex)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomGraphOptimizer::SetOpAtomicInputIndex).stubs().will(returnValue(HCCL_SUCCESS));
 
     ge::AttrUtils::HasAttr(ops[0].GetOpDesc(), "DUMMY_SET_FALSE_COMM");
 
-    MOCKER_CPP(&HcomGraphOptimizer::GetLookupUpdateWorkspace)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomGraphOptimizer::GetLookupUpdateWorkspace).stubs().will(returnValue(HCCL_SUCCESS));
     const string coll_type = HCCL_KERNEL_OP_TYPE_ALLREDUCE;
     ops[0].GetOpDesc()->SetType(coll_type);
     ret = hcomGraphOptimizer.HcomCalcOpRunningParam(ops[0], false);
@@ -2085,13 +1922,9 @@ TEST_F(HcomGraphOptimizerTest, utGetDeviceAndServerNum)
     s32 serverNum = 2;
     bool multiModuleDiffDeviceNumMode = false;
 
-    MOCKER(GetClusterInfoAndDeviceNum)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(GetClusterInfoAndDeviceNum).stubs().will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(IsOfflineCompilation)
-    .stubs()
-    .will(returnValue(true));
+    MOCKER(IsOfflineCompilation).stubs().will(returnValue(true));
 
     ret = ops.GetDeviceAndServerNum(node, deviceNumPerServer, serverNum, multiModuleDiffDeviceNumMode);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -2100,42 +1933,29 @@ TEST_F(HcomGraphOptimizerTest, utGetDeviceAndServerNum)
 
 TEST_F(HcomGraphOptimizerTest, utCalculateSegmentIndex)
 {
-    nlohmann::json rank_table =
-    {
-        {"status", "completed"},
-        {"version", "1.0"},
-        {"server_count", "1"},
-        {
-            "server_list",
-            {
-                {
-                    {"server_id", "10.0.0.10"},
-                    {"host_nic_ip", "192.168.0.12:0,192.168.1.12:199"},
-                    {
-                        "device",
-                        {
-                            {   {"rank_id", "0"},
-                                {"device_id", "0"},
-                                {"device_ip", "192.168.0.12,192.168.1.12"}
+    nlohmann::json rank_table
+        = {{"status", "completed"},
+           {"version", "1.0"},
+           {"server_count", "1"},
+           {"server_list",
+            {{
+                {"server_id", "10.0.0.10"},
+                {"host_nic_ip", "192.168.0.12:0,192.168.1.12:199"},
+                {"device",
+                 {
+                     {{"rank_id", "0"}, {"device_id", "0"}, {"device_ip", "192.168.0.12,192.168.1.12"}
 
-                            },
-                        }
-                    },
-                }
-            }
-        }
-    };
+                     },
+                 }},
+            }}}};
 
     char file_name_t[] = "./ut_hcom_get_new_rank_info_muti_ip.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -2159,8 +1979,10 @@ TEST_F(HcomGraphOptimizerTest, utCalculateSegmentIndex)
     nlohmann::json root;
     root[0]["modelhash"] = "001";
     root[0]["modelgraphid"] = 1;
-    root[0]["modelvalue"]["gradientSize"] = {16384000,4000,67108864,16384,150994944,16384,2359296,1024,3538944,1024,2654208,1536,1843200,768,139392,384};
-    root[0]["modelvalue"]["gradientTime"] = {9833418590329,15080,100303,86064,408791,246415,634287,686785,103,564542,100,1686982,117497,3490117,202901,117711};
+    root[0]["modelvalue"]["gradientSize"] = {16384000, 4000, 67108864, 16384, 150994944, 16384, 2359296, 1024,
+                                             3538944,  1024, 2654208,  1536,  1843200,   768,   139392,  384};
+    root[0]["modelvalue"]["gradientTime"] = {9833418590329, 15080,  100303, 86064,   408791, 246415,  634287, 686785,
+                                             103,           564542, 100,    1686982, 117497, 3490117, 202901, 117711};
     fstream jFile;
     jFile.open(fusionPath, std::ios::out | std::ios::trunc);
     jFile.close();
@@ -2201,34 +2023,26 @@ TEST_F(HcomGraphOptimizerTest, utCalculateSegmentIndexFromHomeExport)
     HcomAllReduceFusion ops;
 
     MOCKER(HcomOpUtils::CreateFusionConfigVersion)
-    .stubs()
-    .with(outBound(fusionSocVersion))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(outBound(fusionSocVersion))
+        .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcomAllReduceFusion::GetPathFromDefault)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomAllReduceFusion::GetPathFromDefault).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     MOCKER_CPP(&HcomAllReduceFusion::GetInformationFromLibrary)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
     ret = ops.CalculateSegmentIndex(fusionHash, tensorFusionLimit, segmentIndex);
     EXPECT_EQ(ret, HCCL_SUCCESS);
     GlobalMockObject::verify();
 }
 
-ge::graphStatus FakeGetOption1(ge::GEThreadLocalContext *that, const std::string &optionExec, std::string &dumpDebugValue)
+ge::graphStatus
+FakeGetOption1(ge::GEThreadLocalContext* that, const std::string& optionExec, std::string& dumpDebugValue)
 {
-    nlohmann::json group_list =
-    {
-        {
-            {"group_name", "aa"},
-            {"group_rank_list", {0, 1}}
-        }
-    };
+    nlohmann::json group_list = {{{"group_name", "aa"}, {"group_rank_list", {0, 1}}}};
     if (optionExec == ge::OPTION_EXEC_HCOM_GROUPLIST) {
         dumpDebugValue = group_list.dump();
     }
@@ -2246,20 +2060,16 @@ TEST_F(HcomGraphOptimizerTest, ut_offlinebuild_calcSubStreamNum)
     std::string curGroup = "aa";
     ge::AttrUtils::SetStr(nodeptr->GetOpDesc(), "group", curGroup);
 
-    MOCKER_CPP(&ge::GEThreadLocalContext::GetOption)
-    .stubs()
-    .will(invoke(FakeGetOption1));
+    MOCKER_CPP(&ge::GEThreadLocalContext::GetOption).stubs().will(invoke(FakeGetOption1));
 
-    MOCKER(&ge::AttrUtils::SetInt)
-    .stubs()
-    .will(returnValue(false));
+    MOCKER(&ge::AttrUtils::SetInt).stubs().will(returnValue(false));
 
     ret = graphOptimizer.HcomCalcOpRunningParam(*nodeptr, false);
 
     MOCKER_CPP(&HcomGraphOptimizer::CalAndSetOpWorkerSpaceForKnowShape)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any())
+        .will(returnValue(HCCL_SUCCESS));
 
     type = HCCL_KERNEL_OP_TYPE_BROADCAST;
     std::string nodeName = "ALL_GATHER_NO_CALCULATION";
@@ -2279,33 +2089,33 @@ struct OpInfo {
 
 HcclResult CreateNodePtr(OpInfo& opInfo, ge::ComputeGraph& graph)
 {
-    ge::OpDescPtr opDescPtr =
-        std::make_shared<ge::OpDesc>(opInfo.opName.first.c_str(), opInfo.opName.second.c_str());
+    ge::OpDescPtr opDescPtr = std::make_shared<ge::OpDesc>(opInfo.opName.first.c_str(), opInfo.opName.second.c_str());
     EXPECT_NE(opDescPtr, nullptr);
     opDescPtr->SetName(opInfo.opName.first.c_str());
 
     for (auto& it : opInfo.attrInt) {
         bool bErr = ge::AttrUtils::SetInt(opDescPtr, it.first.c_str(), it.second);
-        CHK_PRT_RET(!bErr, HCCL_ERROR("node[%s] set attr: %s failed", \
-            opInfo.opName.first.c_str(), it.first.c_str()), HCCL_E_INTERNAL);
+        CHK_PRT_RET(
+            !bErr, HCCL_ERROR("node[%s] set attr: %s failed", opInfo.opName.first.c_str(), it.first.c_str()),
+            HCCL_E_INTERNAL);
     }
     for (auto& it : opInfo.attrStr) {
         bool bErr = ge::AttrUtils::SetStr(opDescPtr, it.first.c_str(), it.second.c_str());
-        CHK_PRT_RET(!bErr, HCCL_ERROR("node[%s] set attr: %s failed", \
-            opInfo.opName.first.c_str(), it.first.c_str()), HCCL_E_INTERNAL);
+        CHK_PRT_RET(
+            !bErr, HCCL_ERROR("node[%s] set attr: %s failed", opInfo.opName.first.c_str(), it.first.c_str()),
+            HCCL_E_INTERNAL);
     }
 
     opInfo.nodePtr = graph.AddNode(opDescPtr);
-    CHK_PRT_RET((opInfo.nodePtr == nullptr), HCCL_ERROR("[Create]node[%s] failed",
-        opInfo.opName.first.c_str()), HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        (opInfo.nodePtr == nullptr), HCCL_ERROR("[Create]node[%s] failed", opInfo.opName.first.c_str()),
+        HCCL_E_INTERNAL);
     return HCCL_SUCCESS;
 }
 
 TEST_F(HcomGraphOptimizerTest, ut_FuseHcomAlltoAllVCNode)
 {
-    MOCKER_CPP(&HcomAlltoAllVCFusion::RunFusionOpsAlltoAllVC)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomAlltoAllVCFusion::RunFusionOpsAlltoAllVC).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret;
     ge::ComputeGraphPtr graph = std::make_shared<ge::ComputeGraph>("test_graph");
@@ -2333,9 +2143,7 @@ TEST_F(HcomGraphOptimizerTest, ut_FuseHcomAlltoAllVCNode)
 
 TEST_F(HcomGraphOptimizerTest, ut_RunFusionOpsAlltoAllVC)
 {
-    MOCKER_CPP(&HcomAlltoAllVCFusion::AddOpsEdge)
-    .stubs()
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomAlltoAllVCFusion::AddOpsEdge).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret;
     ge::ComputeGraphPtr graph = std::make_shared<ge::ComputeGraph>("test_graph");
@@ -2374,9 +2182,7 @@ TEST_F(HcomGraphOptimizerTest, ut_RunFusionOpsAlltoAllVC)
 
 TEST_F(HcomGraphOptimizerTest, ut_FuseHcomAllGatherNode)
 {
-    MOCKER_CPP(&HcomAllGatherFusion::RunFusionOpsAllGather)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomAllGatherFusion::RunFusionOpsAllGather).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret;
     ge::ComputeGraphPtr graph = std::make_shared<ge::ComputeGraph>("test_graph");
@@ -2408,9 +2214,7 @@ TEST_F(HcomGraphOptimizerTest, ut_FuseHcomAllGatherNode)
 
 TEST_F(HcomGraphOptimizerTest, ut_RunFusionOpsAllGather)
 {
-    MOCKER_CPP(&HcomAllGatherFusion::AddOpsEdge)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomAllGatherFusion::AddOpsEdge).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret;
     ge::ComputeGraphPtr graph = std::make_shared<ge::ComputeGraph>("test_graph");
@@ -2447,12 +2251,9 @@ TEST_F(HcomGraphOptimizerTest, ut_RunFusionOpsAllGather)
     GlobalMockObject::verify();
 }
 
-
 TEST_F(HcomGraphOptimizerTest, ut_FuseHcomReduceScatterNode)
 {
-    MOCKER_CPP(&HcomReduceScatterFusion::RunFusionOpsReduceScatter)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomReduceScatterFusion::RunFusionOpsReduceScatter).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret;
     ge::ComputeGraphPtr graph = std::make_shared<ge::ComputeGraph>("test_graph");
@@ -2461,7 +2262,8 @@ TEST_F(HcomGraphOptimizerTest, ut_FuseHcomReduceScatterNode)
     for (u32 i = 0; i < reducescatterNum; i++) {
         // reducescatter
         OpInfo reducescatterOpInfo;
-        reducescatterOpInfo.opName = std::make_pair("ReduceScatter_" + std::to_string(i), HCCL_KERNEL_OP_TYPE_REDUCESCATTER);
+        reducescatterOpInfo.opName
+            = std::make_pair("ReduceScatter_" + std::to_string(i), HCCL_KERNEL_OP_TYPE_REDUCESCATTER);
         reducescatterOpInfo.attrStr.push_back(std::make_pair("reduction", "sum"));
         reducescatterOpInfo.attrInt.push_back(std::make_pair("rank_size", 2));
         reducescatterOpInfo.attrInt.push_back(std::make_pair("fusion", 2));
@@ -2483,9 +2285,7 @@ TEST_F(HcomGraphOptimizerTest, ut_FuseHcomReduceScatterNode)
 
 TEST_F(HcomGraphOptimizerTest, ut_FuseHcomReduceScatterNode1)
 {
-    MOCKER_CPP(&HcomReduceScatterFusion::RunFusionOpsReduceScatter)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomReduceScatterFusion::RunFusionOpsReduceScatter).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret;
     ge::ComputeGraphPtr graph = std::make_shared<ge::ComputeGraph>("test_graph");
@@ -2494,7 +2294,8 @@ TEST_F(HcomGraphOptimizerTest, ut_FuseHcomReduceScatterNode1)
     for (u32 i = 0; i < reducescatterNum; i++) {
         // reducescatter
         OpInfo reducescatterOpInfo;
-        reducescatterOpInfo.opName = std::make_pair("ReduceScatter_" + std::to_string(i), HCCL_KERNEL_OP_TYPE_REDUCESCATTER);
+        reducescatterOpInfo.opName
+            = std::make_pair("ReduceScatter_" + std::to_string(i), HCCL_KERNEL_OP_TYPE_REDUCESCATTER);
         reducescatterOpInfo.attrStr.push_back(std::make_pair("reduction", "sum"));
         reducescatterOpInfo.attrInt.push_back(std::make_pair("rank_size", 2));
         reducescatterOpInfo.attrInt.push_back(std::make_pair("fusion", 2));
@@ -2507,14 +2308,9 @@ TEST_F(HcomGraphOptimizerTest, ut_FuseHcomReduceScatterNode1)
         reducescatterOpInfo.nodePtr->GetOpDesc()->SetType(HCCL_KERNEL_OP_TYPE_REDUCESCATTER);
     }
 
-    MOCKER(HcomGetCCLBufferAvailableSize)
-    .stubs()
-    .with(mockcpp::any())
-    .will(invoke(stub_HcomGetCCLBufferAvailableSize));
+    MOCKER(HcomGetCCLBufferAvailableSize).stubs().with(mockcpp::any()).will(invoke(stub_HcomGetCCLBufferAvailableSize));
 
-    MOCKER(&HcomOpUtils::GetAllInputsTensorMemSize)
-    .stubs()
-    .will(invoke(stub_GetAllInputsTensorMemSize));
+    MOCKER(&HcomOpUtils::GetAllInputsTensorMemSize).stubs().will(invoke(stub_GetAllInputsTensorMemSize));
 
     HcomFusionOptimizer graphOptimizer;
     ge::Status ge_ret = graphOptimizer.FuseHcomReduceScatterNode(*graph);
@@ -2524,9 +2320,7 @@ TEST_F(HcomGraphOptimizerTest, ut_FuseHcomReduceScatterNode1)
 
 TEST_F(HcomGraphOptimizerTest, ut_FuseHcomReduceNode1)
 {
-    MOCKER_CPP(&HcomReduceScatterFusion::RunFusionOpsReduce)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomReduceScatterFusion::RunFusionOpsReduce).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret;
     ge::ComputeGraphPtr graph = std::make_shared<ge::ComputeGraph>("test_graph");
@@ -2555,9 +2349,7 @@ TEST_F(HcomGraphOptimizerTest, ut_FuseHcomReduceNode1)
 
 TEST_F(HcomGraphOptimizerTest, ut_FuseHcomReduceNode2)
 {
-    MOCKER_CPP(&HcomReduceScatterFusion::RunFusionOpsReduce)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomReduceScatterFusion::RunFusionOpsReduce).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret;
     ge::ComputeGraphPtr graph = std::make_shared<ge::ComputeGraph>("test_graph");
@@ -2585,9 +2377,7 @@ TEST_F(HcomGraphOptimizerTest, ut_FuseHcomReduceNode2)
 
 TEST_F(HcomGraphOptimizerTest, ut_RunFusionReduceScatter)
 {
-    MOCKER_CPP(&HcomReduceScatterFusion::AddOpsEdge)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomReduceScatterFusion::AddOpsEdge).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret;
     ge::ComputeGraphPtr graph = std::make_shared<ge::ComputeGraph>("test_graph");
@@ -2624,33 +2414,35 @@ TEST_F(HcomGraphOptimizerTest, ut_RunFusionReduceScatter)
     GlobalMockObject::verify();
 }
 
-HcclResult GetReduceScatterVCountsStub(const ge::Node& node, std::vector<int64_t> &sendCounts){
+HcclResult GetReduceScatterVCountsStub(const ge::Node& node, std::vector<int64_t>& sendCounts)
+{
     sendCounts.push_back(1);
     sendCounts.push_back(2);
     sendCounts.push_back(3);
     sendCounts.push_back(4);
     return HCCL_SUCCESS;
 }
- 
-HcclResult GetDeviceTypeA2Stub(const char *group, DevType &deviceType) {
+
+HcclResult GetDeviceTypeA2Stub(const char* group, DevType& deviceType)
+{
     deviceType = DevType::DEV_TYPE_910B;
-    return HCCL_SUCCESS;      
+    return HCCL_SUCCESS;
 }
 
-HcclResult stub_GetOpWorkspaceMemSize(HcomGraphOptimizer* that, ge::Node& node, const std::string &sCollectiveType,
-    u64 &opMemSize)
+HcclResult
+stub_GetOpWorkspaceMemSize(HcomGraphOptimizer* that, ge::Node& node, const std::string& sCollectiveType, u64& opMemSize)
 {
     opMemSize = 2048 * 1024 * 1024;
     return HCCL_SUCCESS;
 }
 
-ge::graphStatus GetOption2(ge::GEContext *that, const std::string &optionExec, std::string &dumpDebugValue)
+ge::graphStatus GetOption2(ge::GEContext* that, const std::string& optionExec, std::string& dumpDebugValue)
 {
     dumpDebugValue = "1";
     return ge::GRAPH_SUCCESS;
 }
 
-ge::graphStatus GetOption3(ge::GEContext *that, const std::string &optionExec, std::string &dumpDebugValue)
+ge::graphStatus GetOption3(ge::GEContext* that, const std::string& optionExec, std::string& dumpDebugValue)
 {
     dumpDebugValue = "2";
     return ge::GRAPH_SUCCESS;
@@ -2669,36 +2461,30 @@ TEST_F(HcomGraphOptimizerTest, ut_SetknownShapAttr)
     graph->AddNode(opPtr_);
 
     MOCKER(&ge::NodeUtils::GetNodeUnknownShapeStatus)
-    .stubs()
-    .with(mockcpp::any(), outBound(false))
-    .will(returnValue(ge::GRAPH_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(false))
+        .will(returnValue(ge::GRAPH_SUCCESS));
 
-    MOCKER(&HcomOpUtils::GetAllInputsTensorMemSize)
-    .stubs()
-    .will(invoke(stub_GetAllInputsTensorMemSize));
+    MOCKER(&HcomOpUtils::GetAllInputsTensorMemSize).stubs().will(invoke(stub_GetAllInputsTensorMemSize));
 
-    MOCKER(&HcomGraphOptimizer::GetOpWorkspaceMemSize,
-    HcclResult(HcomGraphOptimizer::*)(ge::Node& node, const std::string &sCollectiveType,
-    u64 &opMemSize))
-    .stubs()
-    .will(invoke(stub_GetOpWorkspaceMemSize));
+    MOCKER(
+        &HcomGraphOptimizer::GetOpWorkspaceMemSize,
+        HcclResult(HcomGraphOptimizer::*)(ge::Node & node, const std::string& sCollectiveType, u64& opMemSize))
+        .stubs()
+        .will(invoke(stub_GetOpWorkspaceMemSize));
 
-    MOCKER_CPP(&ge::GEContext::GetOption)
-    .stubs()
-    .will(invoke(GetOption2));
+    MOCKER_CPP(&ge::GEContext::GetOption).stubs().will(invoke(GetOption2));
 
     ret = graphOptimizer.SetUnknownShapeAttr(*graph, true);
 
-    MOCKER_CPP(&ge::GEContext::GetOption)
-    .stubs()
-    .will(invoke(GetOption3));
+    MOCKER_CPP(&ge::GEContext::GetOption).stubs().will(invoke(GetOption3));
     ret = graphOptimizer.SetUnknownShapeAttr(*graph, true);
     GlobalMockObject::verify();
 }
 
 HcclResult stub_GetVectorFromTensorGraphOptimizer(const ge::GeTensor* tensor, std::vector<int64_t>& vector)
 {
-    vector.resize(4*4);
+    vector.resize(4 * 4);
     return HCCL_SUCCESS;
 }
 const std::vector<HcclAlgoType> GetExternalInputHcclAlgoConfig_stub()
@@ -2721,37 +2507,23 @@ TEST_F(HcomGraphOptimizerTest, ut_getAlltoAllvcStagedScratchMemSize)
     u32 rankSize = 4;
 
     MOCKER(GetExternalInputHcclAlgoConfig)
-    .stubs()
-    .with(mockcpp::any())
-    .will(invoke(GetExternalInputHcclAlgoConfig_stub));
+        .stubs()
+        .with(mockcpp::any())
+        .will(invoke(GetExternalInputHcclAlgoConfig_stub));
 
-    MOCKER(&HcomOpUtils::GetVectorFromTensor)
-    .stubs()
-    .will(invoke(stub_GetVectorFromTensorGraphOptimizer));
+    MOCKER(&HcomOpUtils::GetVectorFromTensor).stubs().will(invoke(stub_GetVectorFromTensorGraphOptimizer));
 
     std::vector<int64_t> sendCountMatrix(16, 1);
     ge::AttrUtils::SetListInt(nodeptr->GetOpDesc(), "send_count_matrix", sendCountMatrix);
     u32 rankId = 0;
 
-    MOCKER(HcomGetRankId)
-    .stubs()
-    .with(mockcpp::any(), outBound(&rankId))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomGetRankId).stubs().with(mockcpp::any(), outBound(&rankId)).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(HcomGetRankSize)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomGetRankSize).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(&HcomOpUtils::CheckAlltoAllvcRank)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(&HcomOpUtils::CheckAlltoAllvcRank).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER(HcomGetAlltoAllvcStagedWorkSpaceMemSize)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(HcomGetAlltoAllvcStagedWorkSpaceMemSize).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret = KernelInfo.GetOpWorkspaceMemSize(*nodeptr, HCCL_KERNEL_OP_TYPE_ALLTOALLVC, opMemSize);
     EXPECT_EQ(ret, HCCL_SUCCESS);
@@ -2771,21 +2543,13 @@ TEST_F(HcomGraphOptimizerTest, ut_getAlltoAllCountsDispl_sendCountMatrix)
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
 
-
 std::string optionExecTest = "Ascend910";
-ge::graphStatus TaskNumGetOption_1(ge::GEThreadLocalContext *that, const std::string &optionExec, std::string &dumpDebugValue)
+ge::graphStatus
+TaskNumGetOption_1(ge::GEThreadLocalContext* that, const std::string& optionExec, std::string& dumpDebugValue)
 {
-    nlohmann::json group_list =
-    {
-        {
-            {"group_name", "aa"},
-            {"group_rank_list", {0, 1}}
-        },
-        {
-            {"group_name", "off_group_rank_list"},
-            {"group_rank_list", {0, 1, 2, 3, 4, 5, 6, 7}}
-        }
-    };
+    nlohmann::json group_list
+        = {{{"group_name", "aa"}, {"group_rank_list", {0, 1}}},
+           {{"group_name", "off_group_rank_list"}, {"group_rank_list", {0, 1, 2, 3, 4, 5, 6, 7}}}};
     if (optionExec == ge::OPTION_EXEC_HCOM_GROUPLIST) {
         dumpDebugValue = group_list.dump();
     } else if (optionExec == ge::OPTION_EXEC_HCOM_RANK_MAPPING) {
@@ -2819,13 +2583,10 @@ TEST_F(HcomGraphOptimizerTest, ut_CalcOpTaskNum_1server_1)
     char file_name_t[] = "./llt/ace/comop/hccl/stub/workspace/ut_task_num_one_server_hcom_test.json";
     std::ofstream outfile(file_name_t, std::ios::out | std::ios::trunc | std::ios::binary);
 
-    if (outfile.is_open())
-    {
+    if (outfile.is_open()) {
         outfile << std::setw(1) << rank_table << std::endl;
         HCCL_INFO("open %s success", file_name_t);
-    }
-    else
-    {
+    } else {
         HCCL_ERROR("open %s failed", file_name_t);
     }
 
@@ -2840,14 +2601,9 @@ TEST_F(HcomGraphOptimizerTest, ut_CalcOpTaskNum_1server_1)
 
     DevType deviceType = DevType::DEV_TYPE_910;
 
-    MOCKER(hrtGetDeviceType)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(hrtGetDeviceType).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&ge::GEThreadLocalContext::GetOption)
-    .stubs()
-    .will(invoke(TaskNumGetOption_1));
+    MOCKER_CPP(&ge::GEThreadLocalContext::GetOption).stubs().will(invoke(TaskNumGetOption_1));
 
     char* rank_table_file = "./llt/ace/comop/hccl/stub/workspace/ut_task_num_one_server_hcom_test.json";
     char* rank_ID = "0";
@@ -2919,9 +2675,7 @@ TEST_F(HcomGraphOptimizerTest, ut_CalcOpTaskNum_1server_1)
 
 TEST_F(HcomGraphOptimizerTest, ut_HcomOptimizeOriginalGraph)
 {
-    MOCKER_CPP(&HcomAllGatherFusion::RunFusionOpsAllGather)
-        .stubs()
-        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomAllGatherFusion::RunFusionOpsAllGather).stubs().will(returnValue(HCCL_SUCCESS));
 
     HcclResult ret;
     ge::ComputeGraphPtr graph = std::make_shared<ge::ComputeGraph>("test_graph");
@@ -2964,14 +2718,11 @@ TEST_F(HcomGraphOptimizerTest, ut_CalAndSetOpWorkerSpaceForKnowShape)
 {
     u32 shapeType = ORIGINAL_GRAPH_KNOWNSHAPE_TYPE;
     MOCKER_CPP(&HcomGraphOptimizer::GetOriginalGraphShapeTypeFromDesc)
-    .stubs()
-    .with(mockcpp::any(), outBound(shapeType))
-    .will(returnValue(HCCL_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(shapeType))
+        .will(returnValue(HCCL_SUCCESS));
 
-    MOCKER_CPP(&HcomGraphOptimizer::GetOpWorkspaceMemSize)
-    .stubs()
-    .with(mockcpp::any())
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&HcomGraphOptimizer::GetOpWorkspaceMemSize).stubs().with(mockcpp::any()).will(returnValue(HCCL_SUCCESS));
 
     ge::NodePtr nodeptr(new NodeTest);
     HcomOpUtils hcomKernelInfo;
@@ -2987,9 +2738,9 @@ TEST_F(HcomGraphOptimizerTest, ut_OptimizeOriginalGraphDynamicGraphNoSuperkernel
 {
     ge::Status ge_ret;
     MOCKER(&ge::NodeUtils::GetNodeUnknownShapeStatus)
-    .stubs()
-    .with(mockcpp::any(), outBound(true))
-    .will(returnValue(ge::GRAPH_SUCCESS));
+        .stubs()
+        .with(mockcpp::any(), outBound(true))
+        .will(returnValue(ge::GRAPH_SUCCESS));
 
     HcomGraphOptimizer graphOptimizer;
     ge::ComputeGraphPtr graph = std::make_shared<ge::ComputeGraph>("test_graph");
@@ -3007,10 +2758,7 @@ TEST_F(HcomGraphOptimizerTest, ut_GetStreamNumOfflineComp_ErrorTest)
 {
     HcclResult ret;
     DevType deviceType = DevType::DEV_TYPE_910_93;
-    MOCKER(GetOffDeviceTypeWithoutDev)
-    .stubs()
-    .with(outBound(deviceType))
-    .will(returnValue(HCCL_SUCCESS));
+    MOCKER(GetOffDeviceTypeWithoutDev).stubs().with(outBound(deviceType)).will(returnValue(HCCL_SUCCESS));
 
     std::string sCollectiveType = "TEST";
     std::string curGroup = "HCCL_WORLD_GROUP";

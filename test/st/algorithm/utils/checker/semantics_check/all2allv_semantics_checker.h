@@ -16,8 +16,8 @@
 
 namespace checker {
 
-HcclResult TaskCheckAll2AllVSemantics(std::map<RankId, RankMemorySemantics> &allRankMemSemantics,
-                                      CheckerOpParam &opParam);
+HcclResult
+TaskCheckAll2AllVSemantics(std::map<RankId, RankMemorySemantics>& allRankMemSemantics, CheckerOpParam& opParam);
 
 }
 

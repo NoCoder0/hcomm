@@ -20,7 +20,7 @@
 
 namespace checker {
 
-void GenSendOffsetForOneRank(CheckerOpParam &opParam, u32 rankSize, RankId targetRank, std::vector<u64> &sendOffsets)
+void GenSendOffsetForOneRank(CheckerOpParam& opParam, u32 rankSize, RankId targetRank, std::vector<u64>& sendOffsets)
 {
     for (RankId srcRank = 0; srcRank < rankSize; srcRank++) {
         u64 offset = 0;
@@ -34,8 +34,8 @@ void GenSendOffsetForOneRank(CheckerOpParam &opParam, u32 rankSize, RankId targe
     return;
 }
 
-HcclResult TaskCheckAll2AllSemantics(std::map<RankId, RankMemorySemantics> &allRankMemSemantics,
-                                     CheckerOpParam &opParam)
+HcclResult
+TaskCheckAll2AllSemantics(std::map<RankId, RankMemorySemantics>& allRankMemSemantics, CheckerOpParam& opParam)
 {
     u32 rankSize = allRankMemSemantics.size();
 
@@ -51,15 +51,17 @@ HcclResult TaskCheckAll2AllSemantics(std::map<RankId, RankMemorySemantics> &allR
         std::vector<u64> sendOffsets;
         GenSendOffsetForOneRank(opParam, rankSize, rankId, sendOffsets);
 
-        u64    totalSize   = 0;
-        RankId curRankId   = 0;
-        u64    curDataSize = 0;
-        for (auto &ele : allRankMemSemantics[rankId][BufferType::OUTPUT]) {
+        u64 totalSize = 0;
+        RankId curRankId = 0;
+        u64 curDataSize = 0;
+        for (auto& ele : allRankMemSemantics[rankId][BufferType::OUTPUT]) {
             if (ele.startAddr != totalSize) {
                 DataDumper::Global()->AddMissingSemantic(rankId, BufferType::OUTPUT, totalSize);
                 DataDumper::Global()->SetResultStatus(gui::ResultStatus::CHECK_FAILED_MISSING_SEMANTIC);
-                DUMP_AND_ERROR("[rankId:%u]Missing buffer semantic: "
-                    "expected startAddr is %llu, while cur buffer semantic startAddr is %llu, cur buffer semantic is %s",
+                DUMP_AND_ERROR(
+                    "[rankId:%u]Missing buffer semantic: "
+                    "expected startAddr is %llu, while cur buffer semantic startAddr is %llu, cur buffer semantic is "
+                    "%s",
                     rankId, totalSize, ele.startAddr, ele.Describe().c_str());
                 return HcclResult::HCCL_E_PARA;
             }
@@ -67,31 +69,38 @@ HcclResult TaskCheckAll2AllSemantics(std::map<RankId, RankMemorySemantics> &allR
             if (ele.srcBufs.size() != 1) {
                 DataDumper::Global()->MarkInvalidSemantic(rankId, BufferType::OUTPUT, ele);
                 DataDumper::Global()->SetResultStatus(gui::ResultStatus::CHECK_FAILED_UNEXPECTED_SEMANTIC);
-                DUMP_AND_ERROR("[rankId:%u]Cur buffer semantic should not be reduce, which mean srcBufs size should be 1, "
-                    "while cur buffer semantic is %s", rankId, ele.Describe().c_str());
+                DUMP_AND_ERROR(
+                    "[rankId:%u]Cur buffer semantic should not be reduce, which mean srcBufs size should be 1, "
+                    "while cur buffer semantic is %s",
+                    rankId, ele.Describe().c_str());
                 return HcclResult::HCCL_E_PARA;
             }
 
             if (ele.srcBufs.begin()->rankId != curRankId) {
                 DataDumper::Global()->MarkInvalidSemantic(rankId, BufferType::OUTPUT, ele);
                 DataDumper::Global()->SetResultStatus(gui::ResultStatus::CHECK_FAILED_UNEXPECTED_SEMANTIC);
-                DUMP_AND_ERROR("[rankId:%u]Cur buffer semantic should come from rank %u, while it come from rank %u, "
-                    "cur buffer semantic is %s", rankId, curRankId, ele.srcBufs.begin()->rankId, ele.Describe().c_str());
+                DUMP_AND_ERROR(
+                    "[rankId:%u]Cur buffer semantic should come from rank %u, while it come from rank %u, "
+                    "cur buffer semantic is %s",
+                    rankId, curRankId, ele.srcBufs.begin()->rankId, ele.Describe().c_str());
                 return HcclResult::HCCL_E_PARA;
             }
 
             if (ele.srcBufs.begin()->bufType != BufferType::INPUT) {
                 DataDumper::Global()->MarkInvalidSemantic(rankId, BufferType::OUTPUT, ele);
                 DataDumper::Global()->SetResultStatus(gui::ResultStatus::CHECK_FAILED_UNEXPECTED_SEMANTIC);
-                DUMP_AND_ERROR("[rankId:%u]Cur buffer semantic srcBufs bufType is not INPUT, cur buffer semantic is %s",
-                    rankId, ele.Describe().c_str());
+                DUMP_AND_ERROR(
+                    "[rankId:%u]Cur buffer semantic srcBufs bufType is not INPUT, cur buffer semantic is %s", rankId,
+                    ele.Describe().c_str());
                 return HcclResult::HCCL_E_PARA;
             }
 
             if (ele.srcBufs.begin()->srcAddr != sendOffsets[curRankId] + curDataSize) {
                 DataDumper::Global()->MarkInvalidSemantic(rankId, BufferType::OUTPUT, ele);
                 DataDumper::Global()->SetResultStatus(gui::ResultStatus::CHECK_FAILED_UNEXPECTED_SEMANTIC);
-                DUMP_AND_ERROR("[rankId:%u]Cur buffer semantic srcBufs srcAddr should be %llu, while it is %llu, cur buffer semantic is %s",
+                DUMP_AND_ERROR(
+                    "[rankId:%u]Cur buffer semantic srcBufs srcAddr should be %llu, while it is %llu, cur buffer "
+                    "semantic is %s",
                     rankId, sendOffsets[curRankId] + curDataSize, ele.srcBufs.begin()->srcAddr, ele.Describe().c_str());
                 return HcclResult::HCCL_E_PARA;
             }
@@ -105,8 +114,9 @@ HcclResult TaskCheckAll2AllSemantics(std::map<RankId, RankMemorySemantics> &allR
             } else if (curDataSize > recvDataSizeFromCurRank) {
                 DataDumper::Global()->MarkInvalidSemantic(rankId, BufferType::OUTPUT, ele);
                 DataDumper::Global()->SetResultStatus(gui::ResultStatus::CHECK_FAILED_UNEXPECTED_SEMANTIC);
-                DUMP_AND_ERROR("[rankId:%u]Accumulated semantic size from rank %u is %llu, greater than expected %llu",
-                    rankId, curRankId, curDataSize, recvDataSizeFromCurRank);
+                DUMP_AND_ERROR(
+                    "[rankId:%u]Accumulated semantic size from rank %u is %llu, greater than expected %llu", rankId,
+                    curRankId, curDataSize, recvDataSizeFromCurRank);
                 return HcclResult::HCCL_E_PARA;
             }
             totalSize += ele.size;
@@ -115,7 +125,8 @@ HcclResult TaskCheckAll2AllSemantics(std::map<RankId, RankMemorySemantics> &allR
         if (curRankId != rankSize) {
             DataDumper::Global()->AddMissingSemantic(rankId, BufferType::OUTPUT, totalSize);
             DataDumper::Global()->SetResultStatus(gui::ResultStatus::CHECK_FAILED_MISSING_SEMANTIC);
-            DUMP_AND_ERROR("[rankId:%u]Missing buffer semantics in tail: already checked total size is %llu, "
+            DUMP_AND_ERROR(
+                "[rankId:%u]Missing buffer semantics in tail: already checked total size is %llu, "
                 "accumulated semantic size from rank %u is %llu, while rankSize is %u",
                 rankId, totalSize, curRankId, curDataSize, rankSize);
             return HcclResult::HCCL_E_PARA;
@@ -124,6 +135,5 @@ HcclResult TaskCheckAll2AllSemantics(std::map<RankId, RankMemorySemantics> &allR
 
     return HcclResult::HCCL_SUCCESS;
 }
-
 
 } // namespace checker

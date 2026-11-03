@@ -40,10 +40,10 @@ void BkfPuberConnDispSummary(BkfPuberConnMng *connMng, BkfDisp *disp)
 {
     BKF_DISP_PRINTF(disp, "----conn----\n");
     BKF_DISP_PRINTF(disp, "name(%s/%d)/connCnt(%d)\n", connMng->name, BkfStrGetMemUsedLen(connMng->name),
-                    BkfPuberConnDispGetConnCnt(connMng));
+        BkfPuberConnDispGetConnCnt(connMng));
     BKF_DISP_PRINTF(disp, "tableTypeMng(%#x)/chMng(%#x)/connFsmTmpl(%#x)/connCntSaved(%d)\n",
-                    BKF_MASK_ADDR(connMng->tableTypeMng), BKF_MASK_ADDR(connMng->argInit->chMng),
-                    BKF_MASK_ADDR(connMng->connFsmTmpl), connMng->connCnt);
+        BKF_MASK_ADDR(connMng->tableTypeMng), BKF_MASK_ADDR(connMng->argInit->chMng),
+        BKF_MASK_ADDR(connMng->connFsmTmpl), connMng->connCnt);
     BkfDispTempCtx sessCtx;
     BKF_DISP_TEMP_CTX_INIT(&sessCtx);
 
@@ -56,7 +56,7 @@ void BkfPuberConnDispSummary(BkfPuberConnMng *connMng, BkfDisp *disp)
 }
 
 STATIC BkfPuberConnDispConnCtx *BkfPuberConnDispGetConnAndCtx(BkfPuberConnMng *connMng, BkfPuberConn **conn,
-                                                                BOOL *isNewConn, BkfDispTempCtx *lastSessCtx)
+    BOOL *isNewConn, BkfDispTempCtx *lastSessCtx)
 {
     *conn = VOS_NULL;
     *isNewConn = VOS_FALSE;
@@ -87,7 +87,7 @@ void BkfPuberConnDispConnAndSess(BkfPuberConnMng *connMng)
     BkfPuberConn *conn = VOS_NULL;
     BOOL isNewConn = VOS_FALSE;
     BkfDispTempCtx lastSessCtx = {{0}};
-    BkfPuberConnDispConnCtx curConnCtx = { 0 };
+    BkfPuberConnDispConnCtx curConnCtx = {0};
     BkfPuberConnDispConnCtx *lastConnCtx = BkfPuberConnDispGetConnAndCtx(connMng, &conn, &isNewConn, &lastSessCtx);
     if (lastConnCtx == VOS_NULL) {
         BkfPuberConnDispSummary(connMng, disp);
@@ -104,14 +104,14 @@ void BkfPuberConnDispConnAndSess(BkfPuberConnMng *connMng)
     BkfDispTempCtx curSessCtx;
     BKF_DISP_TEMP_CTX_INIT(&curSessCtx);
     if (isNewConn) {
-        BKF_DISP_PRINTF(disp, "conn[%d], connId(%#x)/suber(%s)/state(%u, %s), rcv_sendBuf(%#x, %d/%#x, %d), "
-                        "jobId(%#x)/tmrId(%#x), lockDel(%u), slowSchedItor(%d), sessMng(%#x)\n",
-                        curConnCtx.connCnt, BKF_MASK_ADDR(conn->connId), conn->suberName,
-                        BKF_FSM_GET_STATE(&conn->fsm), BkfFsmGetStateStr(&conn->fsm),
-                        BKF_MASK_ADDR(conn->rcvDataBuf), BkfBufqGetUsedLen(conn->rcvDataBuf),
-                        BKF_MASK_ADDR(conn->lastSendLeftDataBuf), BkfBufqGetUsedLen(conn->lastSendLeftDataBuf),
-                        BKF_MASK_ADDR(conn->jobId), BKF_MASK_ADDR(conn->tmrId),
-                        conn->lockDel, conn->slowSchedGenProcCntItor, BKF_MASK_ADDR(conn->sessMng));
+        BKF_DISP_PRINTF(disp,
+            "conn[%d], connId(%#x)/suber(%s)/state(%u, %s), rcv_sendBuf(%#x, %d/%#x, %d), "
+            "jobId(%#x)/tmrId(%#x), lockDel(%u), slowSchedItor(%d), sessMng(%#x)\n",
+            curConnCtx.connCnt, BKF_MASK_ADDR(conn->connId), conn->suberName, BKF_FSM_GET_STATE(&conn->fsm),
+            BkfFsmGetStateStr(&conn->fsm), BKF_MASK_ADDR(conn->rcvDataBuf), BkfBufqGetUsedLen(conn->rcvDataBuf),
+            BKF_MASK_ADDR(conn->lastSendLeftDataBuf), BkfBufqGetUsedLen(conn->lastSendLeftDataBuf),
+            BKF_MASK_ADDR(conn->jobId), BKF_MASK_ADDR(conn->tmrId), conn->lockDel, conn->slowSchedGenProcCntItor,
+            BKF_MASK_ADDR(conn->sessMng));
         BKF_DISP_PRINTF(disp, "--------\n");
         curConnCtx.connCnt++;
         curConnCtx.sessCtxUsedLen = BkfPuberSessDispSess(conn->sessMng, disp, VOS_NULL, &curSessCtx);
@@ -139,7 +139,7 @@ STATIC void BkfPuberConnDispOneConnFsm(BkfPuberConn *conn, BkfPuberConnDispConnC
 void BkfPuberConnDispConnFsm(BkfPuberConnMng *connMng)
 {
     BkfDisp *disp = connMng->argInit->disp;
-    BkfPuberConnDispConnCtx curConnCtx = { 0 };
+    BkfPuberConnDispConnCtx curConnCtx = {0};
     BkfPuberConn *conn = VOS_NULL;
 
     BkfPuberConnDispConnCtx *lastConnCtx = BKF_DISP_GET_LAST_CTX(disp, VOS_NULL);
@@ -159,7 +159,7 @@ void BkfPuberConnDispConnFsm(BkfPuberConnMng *connMng)
 }
 
 STATIC void BkfPuberConnDispConnAndOneSessFsm(BkfPuberConn *conn, BOOL isNewConn, BkfDispTempCtx *lastSessCtx,
-                                                BkfPuberConnDispConnCtx *curConnCtx)
+    BkfPuberConnDispConnCtx *curConnCtx)
 {
     BkfPuberConnMng *connMng = conn->connMng;
     BkfDisp *disp = connMng->argInit->disp;
@@ -185,7 +185,7 @@ void BkfPuberConnDispSessFsm(BkfPuberConnMng *connMng)
     BkfPuberConn *conn = VOS_NULL;
     BOOL isNewConn = VOS_FALSE;
     BkfDispTempCtx lastSessCtx = {{0}};
-    BkfPuberConnDispConnCtx curConnCtx = { 0 };
+    BkfPuberConnDispConnCtx curConnCtx = {0};
     BkfPuberConnDispConnCtx *lastConnCtx = BkfPuberConnDispGetConnAndCtx(connMng, &conn, &isNewConn, &lastSessCtx);
     if (lastConnCtx != VOS_NULL) {
         curConnCtx = *lastConnCtx;
@@ -240,10 +240,8 @@ void BkfPuberConnDispInit(BkfPuberConnMng *connMng)
     (void)BKF_DISP_REG_FUNC(disp, BkfPuberConnDispConnFsm, "disp puber conn fsm info", objName, 0);
     (void)BKF_DISP_REG_FUNC(disp, BkfPuberConnDispSessFsm, "disp puber sess fsm info", objName, 0);
 
-    (void)BKF_DISP_REG_FUNC(disp, BkfPuberConnDispCloseBatchTimeout,
-        "puber sess close timeout chk", objName, 0);
-    (void)BKF_DISP_REG_FUNC(disp, BkfPuberConnDispSessBatchTimeoutTest,
-        "puber sess timeout chk test", objName, 0);
+    (void)BKF_DISP_REG_FUNC(disp, BkfPuberConnDispCloseBatchTimeout, "puber sess close timeout chk", objName, 0);
+    (void)BKF_DISP_REG_FUNC(disp, BkfPuberConnDispSessBatchTimeoutTest, "puber sess timeout chk test", objName, 0);
     connMng->dispInitOk = VOS_TRUE;
 }
 
@@ -257,4 +255,3 @@ void BkfPuberConnDispUninit(BkfPuberConnMng *connMng)
 #ifdef __cplusplus
 }
 #endif
-

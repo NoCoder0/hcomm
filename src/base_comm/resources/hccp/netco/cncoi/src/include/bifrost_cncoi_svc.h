@@ -8,11 +8,9 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef BIFROST_CNCOI_SVC_H
 
 #define BIFROST_CNCOI_SVC_H
-
 
 #if __cplusplus
 extern "C" {
@@ -28,4 +26,3 @@ extern "C" {
 #endif
 
 #endif
-

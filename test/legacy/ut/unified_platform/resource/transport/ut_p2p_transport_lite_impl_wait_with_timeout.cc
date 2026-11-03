@@ -25,10 +25,7 @@ using namespace Hccl;
 
 class P2PTransportLiteImplWaitWithTimeoutTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "P2PTransportLiteImplWaitWithTimeoutTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "P2PTransportLiteImplWaitWithTimeoutTest tests set up." << std::endl; }
 
     static void TearDownTestCase()
     {
@@ -38,8 +35,14 @@ protected:
     virtual void SetUp()
     {
         MOCKER(HrtGetDeviceType).stubs().will(returnValue((DevType)DevType::DEV_TYPE_910A2));
-        MOCKER_CPP(&RtsqBase::QuerySqBaseAddr).stubs().with(mockcpp::any()).will(returnValue(reinterpret_cast<u64>(&mockSq)));
-        MOCKER_CPP(&RtsqBase::QuerySqDepth).stubs().with(mockcpp::any()).will(returnValue(static_cast<u32>(AC_SQE_MAX_CNT)));
+        MOCKER_CPP(&RtsqBase::QuerySqBaseAddr)
+            .stubs()
+            .with(mockcpp::any())
+            .will(returnValue(reinterpret_cast<u64>(&mockSq)));
+        MOCKER_CPP(&RtsqBase::QuerySqDepth)
+            .stubs()
+            .with(mockcpp::any())
+            .will(returnValue(static_cast<u32>(AC_SQE_MAX_CNT)));
         MOCKER_CPP(&RtsqBase::QuerySqStatusByType).stubs().with(mockcpp::any()).will(returnValue(static_cast<u32>(0)));
         MOCKER_CPP(&RtsqBase::ConfigSqStatusByType).stubs();
         std::cout << "A Test case in P2PTransportLiteImplWaitWithTimeoutTest SetUp" << std::endl;
@@ -61,13 +64,45 @@ protected:
         return result;
     }
 
-    u8  mockSq[64];
+    // 按 P2PTransportLiteImpl 构造函数的解析格式序列化(参照生产端 P2PTransport::GetUniqueId)：
+    // [type][notifyNum][bufferNum][notifyUniqueIds][rmtNotifyUniqueIds][rmtBufferUniqueIds]。
+    std::vector<char> BuildP2PTransportUniqueId(u32 devPhyId)
+    {
+        u32 transportType = 0; // 构造函数读后未使用
+        u32 notifyNum = 1;
+        u32 bufferNum = 0; // bufferNum=0 时 ParseRmtBufferVec 直接返回，无需远端 buffer 数据
+        std::vector<char> notifyUniqueId = GetNotifyUniqueId(0, devPhyId);
+        // 远端 notify DTO，字段与 RmtP2PNotifyLite(addr/size/id) 对应
+        BinaryStream rmtNotifyStream;
+        u64 fakeAddr = 0x1000;
+        u64 fakeSize = 0x100;
+        u32 fakeNotifyId = 0;
+        rmtNotifyStream << fakeAddr;
+        rmtNotifyStream << fakeSize;
+        rmtNotifyStream << fakeNotifyId;
+        std::vector<char> rmtNotifyUniqueId;
+        rmtNotifyStream.Dump(rmtNotifyUniqueId);
+        std::vector<char> rmtBufferUniqueId;
+
+        BinaryStream binaryStream;
+        binaryStream << transportType;
+        binaryStream << notifyNum;
+        binaryStream << bufferNum;
+        binaryStream << notifyUniqueId;
+        binaryStream << rmtNotifyUniqueId;
+        binaryStream << rmtBufferUniqueId;
+        std::vector<char> p2pUniqueId;
+        binaryStream.Dump(p2pUniqueId);
+        return p2pUniqueId;
+    }
+
+    u8 mockSq[64];
 };
 
 TEST_F(P2PTransportLiteImplWaitWithTimeoutTest, P2PTransportLiteImpl_WaitWithTimeout_Normal_Success)
 {
     u32 fakeStreamId = 1;
-    u32 fakeSqId     = 1;
+    u32 fakeSqId = 1;
     u32 fakeDevPhyId = 1;
 
     BinaryStream liteBinaryStream;
@@ -78,22 +113,16 @@ TEST_F(P2PTransportLiteImplWaitWithTimeoutTest, P2PTransportLiteImpl_WaitWithTim
     liteBinaryStream.Dump(uniqueId);
 
     StreamLite stream(uniqueId);
-    RtsqA5     rtsq(fakeDevPhyId, fakeStreamId, fakeSqId);
-    stream.rtsq = std::make_unique<RtsqA5>(rtsq);
+    stream.rtsq = std::make_unique<RtsqA5>(fakeDevPhyId, fakeStreamId, fakeSqId);
+    RtsqA5& rtsq = *static_cast<RtsqA5*>(stream.rtsq.get());
 
-    std::vector<char> notifyUniqueId = GetNotifyUniqueId(0, fakeDevPhyId);
-    BinaryStream binaryStream;
-    u32 notifyNum = 2;
-    u32 bufferNum = 2;
-    u32 connNum = 1;
-    binaryStream << notifyNum;
-    binaryStream << bufferNum;
-    binaryStream << connNum;
-    binaryStream << notifyUniqueId;
-    std::vector<char> p2pUniqueId;
-    binaryStream.Dump(p2pUniqueId);
+    std::vector<char> p2pUniqueId = BuildP2PTransportUniqueId(fakeDevPhyId);
 
-    auto callback = [](u32 streamId, u32 taskId, const Hccl::TaskParam &taskParam) { (void)streamId; (void)taskId; (void)taskParam; };
+    auto callback = [](u32 streamId, u32 taskId, const Hccl::TaskParam& taskParam) {
+        (void)streamId;
+        (void)taskId;
+        (void)taskParam;
+    };
     P2PTransportLiteImpl transportLite(p2pUniqueId, callback);
 
     u32 timeout = 1800;
@@ -103,7 +132,7 @@ TEST_F(P2PTransportLiteImplWaitWithTimeoutTest, P2PTransportLiteImpl_WaitWithTim
 TEST_F(P2PTransportLiteImplWaitWithTimeoutTest, P2PTransportLiteImpl_WaitWithTimeout_ZeroTimeout_Success)
 {
     u32 fakeStreamId = 1;
-    u32 fakeSqId     = 1;
+    u32 fakeSqId = 1;
     u32 fakeDevPhyId = 1;
 
     BinaryStream liteBinaryStream;
@@ -114,22 +143,16 @@ TEST_F(P2PTransportLiteImplWaitWithTimeoutTest, P2PTransportLiteImpl_WaitWithTim
     liteBinaryStream.Dump(uniqueId);
 
     StreamLite stream(uniqueId);
-    RtsqA5     rtsq(fakeDevPhyId, fakeStreamId, fakeSqId);
-    stream.rtsq = std::make_unique<RtsqA5>(rtsq);
+    stream.rtsq = std::make_unique<RtsqA5>(fakeDevPhyId, fakeStreamId, fakeSqId);
+    RtsqA5& rtsq = *static_cast<RtsqA5*>(stream.rtsq.get());
 
-    std::vector<char> notifyUniqueId = GetNotifyUniqueId(0, fakeDevPhyId);
-    BinaryStream binaryStream;
-    u32 notifyNum = 2;
-    u32 bufferNum = 2;
-    u32 connNum = 1;
-    binaryStream << notifyNum;
-    binaryStream << bufferNum;
-    binaryStream << connNum;
-    binaryStream << notifyUniqueId;
-    std::vector<char> p2pUniqueId;
-    binaryStream.Dump(p2pUniqueId);
+    std::vector<char> p2pUniqueId = BuildP2PTransportUniqueId(fakeDevPhyId);
 
-    auto callback = [](u32 streamId, u32 taskId, const Hccl::TaskParam &taskParam) { (void)streamId; (void)taskId; (void)taskParam; };
+    auto callback = [](u32 streamId, u32 taskId, const Hccl::TaskParam& taskParam) {
+        (void)streamId;
+        (void)taskId;
+        (void)taskParam;
+    };
     P2PTransportLiteImpl transportLite(p2pUniqueId, callback);
 
     u32 timeout = 0;
@@ -139,7 +162,7 @@ TEST_F(P2PTransportLiteImplWaitWithTimeoutTest, P2PTransportLiteImpl_WaitWithTim
 TEST_F(P2PTransportLiteImplWaitWithTimeoutTest, P2PTransportLiteImpl_WaitWithTimeout_MaxTimeout_Success)
 {
     u32 fakeStreamId = 1;
-    u32 fakeSqId     = 1;
+    u32 fakeSqId = 1;
     u32 fakeDevPhyId = 1;
 
     BinaryStream liteBinaryStream;
@@ -150,22 +173,16 @@ TEST_F(P2PTransportLiteImplWaitWithTimeoutTest, P2PTransportLiteImpl_WaitWithTim
     liteBinaryStream.Dump(uniqueId);
 
     StreamLite stream(uniqueId);
-    RtsqA5     rtsq(fakeDevPhyId, fakeStreamId, fakeSqId);
-    stream.rtsq = std::make_unique<RtsqA5>(rtsq);
+    stream.rtsq = std::make_unique<RtsqA5>(fakeDevPhyId, fakeStreamId, fakeSqId);
+    RtsqA5& rtsq = *static_cast<RtsqA5*>(stream.rtsq.get());
 
-    std::vector<char> notifyUniqueId = GetNotifyUniqueId(0, fakeDevPhyId);
-    BinaryStream binaryStream;
-    u32 notifyNum = 2;
-    u32 bufferNum = 2;
-    u32 connNum = 1;
-    binaryStream << notifyNum;
-    binaryStream << bufferNum;
-    binaryStream << connNum;
-    binaryStream << notifyUniqueId;
-    std::vector<char> p2pUniqueId;
-    binaryStream.Dump(p2pUniqueId);
+    std::vector<char> p2pUniqueId = BuildP2PTransportUniqueId(fakeDevPhyId);
 
-    auto callback = [](u32 streamId, u32 taskId, const Hccl::TaskParam &taskParam) { (void)streamId; (void)taskId; (void)taskParam; };
+    auto callback = [](u32 streamId, u32 taskId, const Hccl::TaskParam& taskParam) {
+        (void)streamId;
+        (void)taskId;
+        (void)taskParam;
+    };
     P2PTransportLiteImpl transportLite(p2pUniqueId, callback);
 
     u32 timeout = 0xFFFFFFFF;

@@ -6,6 +6,9 @@
  * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+/**
  * Description: ccu executor resource manager
  * Author: xx
  */
@@ -36,7 +39,7 @@ public:
 private:
     uint32_t rankSize_{0};
     uint32_t streamSize_{0};
-    friend DeviceResourceManager;                  // 声明资源管理类为友元类
+    friend DeviceResourceManager; // 声明资源管理类为友元类
     // notify资源<rankId, streamId>
     std::vector<std::vector<StreamNotify>> notifyResources_;
 };

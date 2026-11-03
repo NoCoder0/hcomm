@@ -12,16 +12,14 @@
 
 using namespace AscendC;
 
-template<typename T>
-class AivRecvMesh1D : public AivCommBase { //单核、多核都能运行
+template <typename T>
+class AivRecvMesh1D : public AivCommBase { // 单核、多核都能运行
 public:
-
-    __aicore__ inline AivRecvMesh1D() {
-    }
+    __aicore__ inline AivRecvMesh1D() {}
 
     __aicore__ inline void InitCoreInfo(uint64_t currDataCount)
     {
-        coreIndex = block_idx;  // 每个核在当前coreNumPerRank里面的排序
+        coreIndex = block_idx; // 每个核在当前coreNumPerRank里面的排序
 
         // 发送数据的编排
         uint64_t dataPerCore = currDataCount / coreNumPerRank; // 数据量很少的时候，dataPerCore为0
@@ -47,7 +45,7 @@ public:
         uint64_t flag_offset = block_idx;
         WaitFlag(targetRank, flag_offset, curTag);
 
-        CpGM2GM((__gm__ T *)recvOutputOffset, (__gm__ T *)recvInputOffset, recvCurCount);
+        CpGM2GM((__gm__ T*)recvOutputOffset, (__gm__ T*)recvInputOffset, recvCurCount);
         PipeBarrier<PIPE_ALL>(); // 核内自己的同步
     }
 
@@ -81,7 +79,7 @@ public:
     uint64_t recvCurCount;
 };
 
-template<typename T>
+template <typename T>
 __aicore__ inline void AivRecvV2Mesh1D(EXTERN_KERNEL_ARGS_DEF_V2)
 {
     AivRecvMesh1D<T> op;

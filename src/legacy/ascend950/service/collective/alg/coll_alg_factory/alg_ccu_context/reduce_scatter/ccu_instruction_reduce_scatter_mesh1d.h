@@ -24,9 +24,14 @@ namespace Hccl {
 // 为ReduceScatterMesh1D实现的CCUIns、CCUCtxArg与CCUTaskArg
 class CcuCtxArgReduceScatterMesh1D : public CcuCtxArg {
 public:
-    explicit CcuCtxArgReduceScatterMesh1D(const std::vector<uint64_t> &dSize, uint32_t rId, const CollAlgOperator &op,
-        const std::vector<std::vector<RankId>> &tempVTopo) :
-            dimSize_(dSize), rankId_(rId), op_(op), tempVTopo_(tempVTopo) {}
+    explicit CcuCtxArgReduceScatterMesh1D(
+        const std::vector<uint64_t>& dSize, uint32_t rId, const CollAlgOperator& op,
+        const std::vector<std::vector<RankId>>& tempVTopo)
+        : dimSize_(dSize),
+          rankId_(rId),
+          op_(op),
+          tempVTopo_(tempVTopo)
+    {}
     CcuCtxSignature GetCtxSignature() const override
     {
         CcuCtxSignature signature;
@@ -41,9 +46,14 @@ public:
 
 class CcuTaskArgReduceScatterMesh1D : public CcuTaskArg {
 public:
-    explicit CcuTaskArgReduceScatterMesh1D(uint64_t inputAddr, uint64_t outputAddr, uint64_t sliceSize, uint64_t offset,
-        uint64_t token) :
-        inputAddr_(inputAddr), outputAddr_(outputAddr), sliceSize_(sliceSize), offset_(offset), token_(token) {}
+    explicit CcuTaskArgReduceScatterMesh1D(
+        uint64_t inputAddr, uint64_t outputAddr, uint64_t sliceSize, uint64_t offset, uint64_t token)
+        : inputAddr_(inputAddr),
+          outputAddr_(outputAddr),
+          sliceSize_(sliceSize),
+          offset_(offset),
+          token_(token)
+    {}
 
     uint64_t inputAddr_;
     uint64_t outputAddr_;
@@ -54,12 +64,11 @@ public:
 
 class CcuInstructionReduceScatterMesh1D : public CcuInstruction {
 public:
-    CcuInstructionReduceScatterMesh1D() : CcuInstruction()
-    {
-    }
+    CcuInstructionReduceScatterMesh1D() : CcuInstruction() {}
 
-    void Init(uint32_t rankId, uint64_t inputAddr, uint64_t outputAddr, uint64_t sliceSize, uint64_t offset,
-        uint64_t token, CollAlgOperator &op, std::vector<std::vector<RankId>> &tempVTopo)
+    void Init(
+        uint32_t rankId, uint64_t inputAddr, uint64_t outputAddr, uint64_t sliceSize, uint64_t offset, uint64_t token,
+        CollAlgOperator& op, std::vector<std::vector<RankId>>& tempVTopo)
     {
         u32 maxDimNum = 1;
         if (tempVTopo.size() != maxDimNum) {
@@ -67,14 +76,14 @@ public:
                 "[CcuInstructionReduceScatterMesh1D] tempVTopo size is not 1, size is [%zu].", tempVTopo.size()));
         }
         dimSize_.push_back(tempVTopo[0].size());
-        rankId_     = rankId;
-        inputAddr_  = inputAddr;
+        rankId_ = rankId;
+        inputAddr_ = inputAddr;
         outputAddr_ = outputAddr;
-        sliceSize_  = sliceSize;
-        token_      = token;
-        offset_     = offset;
-        op_         = op;
-        tempVTopo_  = tempVTopo;
+        sliceSize_ = sliceSize;
+        token_ = token;
+        offset_ = offset;
+        op_ = op;
+        tempVTopo_ = tempVTopo;
         return;
     }
 
@@ -86,7 +95,8 @@ public:
 
     std::string Describe() const override
     {
-        return StringFormat("CcuInstructionReduceScatterMesh1D rankId [%u], instType[%s]", rankId_, instType_.Describe().c_str());
+        return StringFormat(
+            "CcuInstructionReduceScatterMesh1D rankId [%u], instType[%s]", rankId_, instType_.Describe().c_str());
     }
 
     std::unique_ptr<CcuCtxArg> GetCtxArg() const override
@@ -94,10 +104,7 @@ public:
         return std::make_unique<CcuCtxArgReduceScatterMesh1D>(dimSize_, rankId_, op_, tempVTopo_);
     }
 
-    void SetInstType(CcuInstType instType) 
-    { 
-        instType_ = instType; 
-    }
+    void SetInstType(CcuInstType instType) { instType_ = instType; }
 
     std::unique_ptr<CcuTaskArg> GetTaskArg() const override
     {
@@ -117,5 +124,5 @@ private:
     std::vector<std::vector<RankId>> tempVTopo_;
 };
 
-}
+} // namespace Hccl
 #endif // HCCLV2_CCU_INSTRUCTION_REDUCE_SCATTER_MESH_1D_H_

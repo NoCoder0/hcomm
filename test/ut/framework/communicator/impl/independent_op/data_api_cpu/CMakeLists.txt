@@ -7,8 +7,10 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
+
 set(src_to_test_list
     main.cc
+    ut_cpu_HcommThreadNotifyRecordOnThread.cc
     ut_cpu_HcommChannelNotifyRecordOnThread.cc
     ut_cpu_HcommChannelNotifyWaitOnThread.cc
     ut_cpu_HcommWriteNbiOnThread.cc
@@ -26,6 +28,8 @@ add_executable(hcomm_utest_api_data_cpu ${src_to_test_list})
 #头文件搜索路径
 target_include_directories(hcomm_utest_api_data_cpu PRIVATE
     ${UT_COMMON_INCLUDE_LIST}
+    # ut_cpu_HcommFenceOnThread.cc 直接 mock FlushManager
+    ${HCCL_CODE_ROOT}/src/base_comm/resources/flush
 )
 
 target_compile_definitions(hcomm_utest_api_data_cpu PRIVATE
@@ -51,7 +55,7 @@ target_link_libraries(hcomm_utest_api_data_cpu PRIVATE
     -pthread
     hccl_llt
     -Wl,--whole-archive
-    -Wl,--no-whole-archi
+    -Wl,--no-whole-archive
     -lgcov
     -lrt
     -ldl

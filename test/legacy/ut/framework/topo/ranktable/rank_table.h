@@ -292,7 +292,7 @@ const std::string RankTable4p = R"(
 }
 )";
 
-const std::string  Topo1Ser8Dev = R"(
+const std::string Topo1Ser8Dev = R"(
     {
   "version": "2.0",
   "peer_count": 4,
@@ -527,6 +527,5 @@ void DelRankTableFile4p();
 void GenTopoFile();
 
 void DelTopoFile();
-
 
 #endif

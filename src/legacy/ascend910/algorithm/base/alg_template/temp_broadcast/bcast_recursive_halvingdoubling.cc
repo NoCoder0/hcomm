@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "bcast_recursive_halvingdoubling.h"
 #include <cmath>
@@ -14,26 +14,26 @@
 
 namespace hccl {
 BcastRecursiveHalvingDoubling::BcastRecursiveHalvingDoubling(const HcclDispatcher dispatcher)
-    : RecursiveHalvingDoublingBase(dispatcher), hasData_(false)
-{
-}
+    : RecursiveHalvingDoublingBase(dispatcher),
+      hasData_(false)
+{}
 
-BcastRecursiveHalvingDoubling::~BcastRecursiveHalvingDoubling()
-{
-}
+BcastRecursiveHalvingDoubling::~BcastRecursiveHalvingDoubling() {}
 
 // recursiveHD broadcast算法主入口
-HcclResult BcastRecursiveHalvingDoubling::RunAsync(const u32 rank, const u32 rankSize,
-                                                   const std::vector<std::shared_ptr<Transport> > &links)
+HcclResult BcastRecursiveHalvingDoubling::RunAsync(
+    const u32 rank, const u32 rankSize, const std::vector<std::shared_ptr<Transport>>& links)
 {
     CHK_SMART_PTR_NULL(dispatcher_);
     CHK_PTR_NULL(stream_.ptr());
-    CHK_PRT_RET(!inputMem_, HCCL_ERROR("[BcastRecursiveHalvingDoubling][RunAsync]rank[%u] run_async inputmem is null",
-        rank), HCCL_E_PTR);
+    CHK_PRT_RET(
+        !inputMem_, HCCL_ERROR("[BcastRecursiveHalvingDoubling][RunAsync]rank[%u] run_async inputmem is null", rank),
+        HCCL_E_PTR);
 
-    HCCL_INFO("BcastRecursiveHalvingDoubling run: rank[%u] rootRank[%u] totalrank[%u]"\
-        " inputMem[%p] outputMem[%p] count[%llu]", \
-              rank, root_, rankSize, inputMem_.ptr(), outputMem_.ptr(), count_);
+    HCCL_INFO(
+        "BcastRecursiveHalvingDoubling run: rank[%u] rootRank[%u] totalrank[%u]"
+        " inputMem[%p] outputMem[%p] count[%llu]",
+        rank, root_, rankSize, inputMem_.ptr(), outputMem_.ptr(), count_);
 
     if (rankSize == 1) {
         return HCCL_SUCCESS;
@@ -43,18 +43,24 @@ HcclResult BcastRecursiveHalvingDoubling::RunAsync(const u32 rank, const u32 ran
         hasData_ = true;
     }
 
-    CHK_PRT_RET(links.size() < rankSize,
-        HCCL_ERROR("[BcastRecursiveHalvingDoubling][RunAsync]rank[%u] linksize[%llu] is less than rankSize[%u]",
-        rank, links.size(), rankSize), HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        links.size() < rankSize,
+        HCCL_ERROR(
+            "[BcastRecursiveHalvingDoubling][RunAsync]rank[%u] linksize[%llu] is less than rankSize[%u]", rank,
+            links.size(), rankSize),
+        HCCL_E_INTERNAL);
 
     // 计算recursive算法第一部分相关参数
     HcclResult ret = CalcPartOneSizeAndBlockSize(rankSize);
-    CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[BcastRecursiveHalvingDoubling][RunAsync]rank[%u] Calculate "\
-        "Par1Size[%u] And BlockSize[%u] Failed! rankSize[%u]", rank, part1Size_, blockSize_,
-        rankSize), ret);
+    CHK_PRT_RET(
+        ret != HCCL_SUCCESS,
+        HCCL_ERROR(
+            "[BcastRecursiveHalvingDoubling][RunAsync]rank[%u] Calculate "
+            "Par1Size[%u] And BlockSize[%u] Failed! rankSize[%u]",
+            rank, part1Size_, blockSize_, rankSize),
+        ret);
 
-    HCCL_DEBUG("rank[%u] BroadcastInBlock... blockSize_[%u], part1Size_[%u]", \
-        rank, blockSize_, part1Size_);
+    HCCL_DEBUG("rank[%u] BroadcastInBlock... blockSize_[%u], part1Size_[%u]", rank, blockSize_, part1Size_);
 
     // 先进行block内部的bcast
     CHK_RET(BroadcastInBlock(rank, links));
@@ -71,13 +77,14 @@ HcclResult BcastRecursiveHalvingDoubling::RunAsync(const u32 rank, const u32 ran
     return HCCL_SUCCESS;
 }
 
-HcclResult BcastRecursiveHalvingDoubling::ReceiveData(const u32 destRank,
-                                                      const std::vector<std::shared_ptr<Transport> > &links)
+HcclResult
+BcastRecursiveHalvingDoubling::ReceiveData(const u32 destRank, const std::vector<std::shared_ptr<Transport>>& links)
 {
     if (destRank < links.size()) {
         if (links[destRank] == nullptr) {
-            HCCL_ERROR("[Receive][Data]errNo[0x%016llx] links[destRank[%u]] ptr is NULL, return HCCL_E_PTR",
-                       HCCL_ERROR_CODE(HCCL_E_PTR), destRank);
+            HCCL_ERROR(
+                "[Receive][Data]errNo[0x%016llx] links[destRank[%u]] ptr is NULL, return HCCL_E_PTR",
+                HCCL_ERROR_CODE(HCCL_E_PTR), destRank);
             return HCCL_E_PTR;
         }
         HcclResult ret = links[destRank]->TxAck(stream_);
@@ -87,23 +94,24 @@ HcclResult BcastRecursiveHalvingDoubling::ReceiveData(const u32 destRank,
 
         u64 dataBytes = count_ * DataUnitSize(dataType_);
         DeviceMem rcvMem = inputMem_.range(baseOffset_, dataBytes);
-        HCCL_DEBUG("rx async from dstrank[%u] with rcvMem[%p] inputmem's offset[%llu] size[%llu]", \
-            destRank, rcvMem.ptr(), baseOffset_, dataBytes);
+        HCCL_DEBUG(
+            "rx async from dstrank[%u] with rcvMem[%p] inputmem's offset[%llu] size[%llu]", destRank, rcvMem.ptr(),
+            baseOffset_, dataBytes);
 
         ret = ExecuteRxSync(links[destRank], UserMemType::INPUT_MEM, baseOffset_, rcvMem.ptr(), dataBytes, stream_);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Receive][Data]rx sync from rank[%u] failed",
-            destRank), ret);
+        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Receive][Data]rx sync from rank[%u] failed", destRank), ret);
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult BcastRecursiveHalvingDoubling::SendData(const u32 destRank,
-                                                   const std::vector<std::shared_ptr<Transport> > &links)
+HcclResult
+BcastRecursiveHalvingDoubling::SendData(const u32 destRank, const std::vector<std::shared_ptr<Transport>>& links)
 {
     if (destRank < links.size()) {
         if (links[destRank] == nullptr) {
-            HCCL_ERROR("[Send][Data]errNo[0x%016llx] links[destRank[%u]] ptr is NULL, return HCCL_E_PTR",
-                       HCCL_ERROR_CODE(HCCL_E_PTR), destRank);
+            HCCL_ERROR(
+                "[Send][Data]errNo[0x%016llx] links[destRank[%u]] ptr is NULL, return HCCL_E_PTR",
+                HCCL_ERROR_CODE(HCCL_E_PTR), destRank);
             return HCCL_E_PTR;
         }
         HcclResult ret = links[destRank]->TxAck(stream_);
@@ -113,12 +121,12 @@ HcclResult BcastRecursiveHalvingDoubling::SendData(const u32 destRank,
 
         u64 dataBytes = count_ * DataUnitSize(dataType_);
         DeviceMem sendMem = inputMem_.range(baseOffset_, dataBytes);
-        HCCL_DEBUG("tx async to dstrank[%u] from sendMem[%p] inputmem's offset[%llu] size[%llu]", \
-            destRank, sendMem.ptr(), baseOffset_, dataBytes);
+        HCCL_DEBUG(
+            "tx async to dstrank[%u] from sendMem[%p] inputmem's offset[%llu] size[%llu]", destRank, sendMem.ptr(),
+            baseOffset_, dataBytes);
 
         ret = ExecuteTxSync(links[destRank], UserMemType::INPUT_MEM, baseOffset_, sendMem.ptr(), dataBytes, stream_);
-        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Send][Data]tx sync to rank[%u] failed", destRank),
-            ret);
+        CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[Send][Data]tx sync to rank[%u] failed", destRank), ret);
     }
     return HCCL_SUCCESS;
 }
@@ -132,15 +140,15 @@ u32 BcastRecursiveHalvingDoubling::GetRankIndexReal(const u32 rankInBlock) const
             res = rankInBlock * 2;                                         // 乘2计算block内part1的rank范围
             return res;
         } else {
-            res = part1Size_ / 2 + rankInBlock;                            // 除2加rankInBlock计算真实的rank值
+            res = part1Size_ / 2 + rankInBlock; // 除2加rankInBlock计算真实的rank值
             return res;
         }
     } else {
-        if (rankInBlock < part1Size_ / 2) {                                // 除2计算block内part1的rank范围
-            res = rankInBlock * 2 + 1;                                     // 乘2加1计算计算真实的rank值
+        if (rankInBlock < part1Size_ / 2) { // 除2计算block内part1的rank范围
+            res = rankInBlock * 2 + 1;      // 乘2加1计算计算真实的rank值
             return res;
         } else {
-            res = part1Size_ / 2 + rankInBlock;                            // 除2加rankInBlock计算真实的rank值
+            res = part1Size_ / 2 + rankInBlock; // 除2加rankInBlock计算真实的rank值
             return res;
         }
     }
@@ -151,26 +159,26 @@ u32 BcastRecursiveHalvingDoubling::GetRankIndexInBlock(const u32 rank) const
     // root在第一部分，并且root是偶数rank，或者root在第二部分
     if ((root_ < part1Size_ && (root_ % 2) == 0) || root_ >= part1Size_) { // 模2判断奇偶性
         // rank在第一部分，并且本rank是偶数rank，除以2就为在block内的index
-        if (rank < part1Size_ && rank % 2 == 0) {                          // 模2判断奇偶性
-            return rank / 2;                                               // 除2计算block内rank值
-        } else if (rank < part1Size_ && rank % 2 == 1) {                   // 模2判断奇偶性，奇数的话不在block内
+        if (rank < part1Size_ && rank % 2 == 0) {        // 模2判断奇偶性
+            return rank / 2;                             // 除2计算block内rank值
+        } else if (rank < part1Size_ && rank % 2 == 1) { // 模2判断奇偶性，奇数的话不在block内
             return INVALID_VALUE_RANKID;
         } else {
-            return rank - part1Size_ / 2;                                  // 除2计算block内part1的rank范围
+            return rank - part1Size_ / 2; // 除2计算block内part1的rank范围
         }
-    } else { // root在第一部分属于奇数rank
-        if (rank < part1Size_ && rank % 2 == 0) {                          // 模2判断奇偶性，偶数rank不在block内
+    } else {                                      // root在第一部分属于奇数rank
+        if (rank < part1Size_ && rank % 2 == 0) { // 模2判断奇偶性，偶数rank不在block内
             return INVALID_VALUE_RANKID;
-        } else if (rank < part1Size_ && rank % 2 == 1) {                   // 模2判断奇偶性，为奇计算block内rank号
-            return (rank - 1) / 2;                                         // 通过减1再除2得到block内rank号
+        } else if (rank < part1Size_ && rank % 2 == 1) { // 模2判断奇偶性，为奇计算block内rank号
+            return (rank - 1) / 2;                       // 通过减1再除2得到block内rank号
         } else {
-            return rank - part1Size_ / 2;                                  // 除2计算block内part1的rank范围
+            return rank - part1Size_ / 2; // 除2计算block内part1的rank范围
         }
     }
 }
 
-HcclResult BcastRecursiveHalvingDoubling::BroadcastInBlock(const u32 rank,
-    const std::vector<std::shared_ptr<Transport> > &links)
+HcclResult
+BcastRecursiveHalvingDoubling::BroadcastInBlock(const u32 rank, const std::vector<std::shared_ptr<Transport>>& links)
 {
     u32 rankInBlock = GetRankIndexInBlock(rank);
     if (rankInBlock == INVALID_VALUE_RANKID) { // 非block内的节点，不做操作
@@ -186,17 +194,23 @@ HcclResult BcastRecursiveHalvingDoubling::BroadcastInBlock(const u32 rank,
 
         HcclResult ret = HCCL_SUCCESS;
         // 本rank在第round轮需要接收数据
-        if (((rankInBlock & andOprand) == (rootInBlock & andOprand)) && (rank != root_) &&
-                !hasData_) {
-            HCCL_DEBUG("rank[%u] receive memsize[%llu] from rank[%u] in round[%u]",  \
-                rank, DataUnitSize(dataType_)*count_, peerRankReal, i);
+        if (((rankInBlock & andOprand) == (rootInBlock & andOprand)) && (rank != root_) && !hasData_) {
+            HCCL_DEBUG(
+                "rank[%u] receive memsize[%llu] from rank[%u] in round[%u]", rank, DataUnitSize(dataType_) * count_,
+                peerRankReal, i);
             ret = ReceiveData(peerRankReal, links);
-            CHK_PRT_RET(ret != HCCL_SUCCESS, HCCL_ERROR("[BcastRecursiveHalvingDoubling][BroadcastInBlock]rank[%u] "\
-                "Receive Data from rank[%u] failed.", rank, peerRankReal), ret);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR(
+                    "[BcastRecursiveHalvingDoubling][BroadcastInBlock]rank[%u] "
+                    "Receive Data from rank[%u] failed.",
+                    rank, peerRankReal),
+                ret);
             hasData_ = true;
             if (peerRankReal < links.size()) {
                 ret = links[peerRankReal]->RxWaitDone(stream_);
-                CHK_PRT_RET(ret != HCCL_SUCCESS,
+                CHK_PRT_RET(
+                    ret != HCCL_SUCCESS,
                     HCCL_ERROR("[BcastRecursiveHalvingDoubling][BroadcastInBlock]RxWaitDone failed"), ret);
             }
             continue;
@@ -204,92 +218,118 @@ HcclResult BcastRecursiveHalvingDoubling::BroadcastInBlock(const u32 rank,
 
         // 需要向目的rank发送数据，前提是收到数据后(root 节点每轮都发)
         if (hasData_) {
-            HCCL_DEBUG("rank[%u] send mem[%llu] to rank[%u] in round:%u", \
-                       rank, DataUnitSize(dataType_)*count_, peerRankReal, i);
+            HCCL_DEBUG(
+                "rank[%u] send mem[%llu] to rank[%u] in round:%u", rank, DataUnitSize(dataType_) * count_, peerRankReal,
+                i);
             ret = SendData(peerRankReal, links);
-            CHK_PRT_RET(ret != HCCL_SUCCESS,
-                HCCL_ERROR("[BcastRecursiveHalvingDoubling][BroadcastInBlock]rank[%u] Send "\
-                    "Data to rank[%u] failed.", rank, peerRankReal), ret);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS,
+                HCCL_ERROR(
+                    "[BcastRecursiveHalvingDoubling][BroadcastInBlock]rank[%u] Send "
+                    "Data to rank[%u] failed.",
+                    rank, peerRankReal),
+                ret);
         }
         if (peerRankReal < links.size()) {
             ret = links[peerRankReal]->TxWaitDone(stream_);
-            CHK_PRT_RET(ret != HCCL_SUCCESS,
-                HCCL_ERROR("[BcastRecursiveHalvingDoubling][BroadcastInBlock]TxWaitDone failed"), ret);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS, HCCL_ERROR("[BcastRecursiveHalvingDoubling][BroadcastInBlock]TxWaitDone failed"),
+                ret);
         }
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult BcastRecursiveHalvingDoubling::EvenNumberRankProcess(const u32 rank,
-    const std::vector<std::shared_ptr<Transport> > &links)
+HcclResult BcastRecursiveHalvingDoubling::EvenNumberRankProcess(
+    const u32 rank, const std::vector<std::shared_ptr<Transport>>& links)
 {
     HcclResult ret;
     if (root_ % 2 == 0 || root_ >= part1Size_) { // 模2是否为0判断rank_奇偶性
-        HCCL_DEBUG("rank[%u] stream[%p] send memsize[%llu] to rank[%u]",  \
-            rank, stream_.ptr(), DataUnitSize(dataType_)*count_, rank + 1);
+        HCCL_DEBUG(
+            "rank[%u] stream[%p] send memsize[%llu] to rank[%u]", rank, stream_.ptr(), DataUnitSize(dataType_) * count_,
+            rank + 1);
         // 该rank需要向第一部分的后续奇数rank发送数据
         ret = SendData(rank + 1, links);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[BcastRecursiveHalvingDoubling][RunAsync]rank[%u] stream[%p] Send data to "\
-                "Rank[%u] failed", rank, stream_.ptr(), rank + 1), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[BcastRecursiveHalvingDoubling][RunAsync]rank[%u] stream[%p] Send data to "
+                "Rank[%u] failed",
+                rank, stream_.ptr(), rank + 1),
+            ret);
         if (rank + 1 < links.size()) {
             ret = links[rank + 1]->TxWaitDone(stream_);
-            CHK_PRT_RET(ret != HCCL_SUCCESS,
-                HCCL_ERROR("[BcastRecursiveHalvingDoubling][RunAsync]TxWaitDone failed"), ret);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS, HCCL_ERROR("[BcastRecursiveHalvingDoubling][RunAsync]TxWaitDone failed"), ret);
         }
     } else {
-        HCCL_DEBUG("rank[%u] stream[%p] receive memsize[%llu] from rank[%u]",  \
-            rank, stream_.ptr(), DataUnitSize(dataType_)*count_, rank + 1);
+        HCCL_DEBUG(
+            "rank[%u] stream[%p] receive memsize[%llu] from rank[%u]", rank, stream_.ptr(),
+            DataUnitSize(dataType_) * count_, rank + 1);
 
         // root为奇数，本rank为偶数，需要从邻接的奇数rank接收数据
         ret = ReceiveData(rank + 1, links);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[BcastRecursiveHalvingDoubling][RunAsync]rank[%u] stream[%p] Receive data "\
-                "from Rank[%u] failed", rank, stream_.ptr(), rank + 1), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[BcastRecursiveHalvingDoubling][RunAsync]rank[%u] stream[%p] Receive data "
+                "from Rank[%u] failed",
+                rank, stream_.ptr(), rank + 1),
+            ret);
         if (rank + 1 < links.size()) {
             ret = links[rank + 1]->RxWaitDone(stream_);
-            CHK_PRT_RET(ret != HCCL_SUCCESS,
-                HCCL_ERROR("[BcastRecursiveHalvingDoubling][RunAsync]RxWaitDone failed"), ret);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS, HCCL_ERROR("[BcastRecursiveHalvingDoubling][RunAsync]RxWaitDone failed"), ret);
         }
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult BcastRecursiveHalvingDoubling::OddNumberRankProcess(const u32 rank,
-    const std::vector<std::shared_ptr<Transport> > &links)
+HcclResult BcastRecursiveHalvingDoubling::OddNumberRankProcess(
+    const u32 rank, const std::vector<std::shared_ptr<Transport>>& links)
 {
     HcclResult ret;
-    if (root_ % 2 == 0 || root_ >= part1Size_) {  // 模2是否为0判断rank_奇偶性
-        HCCL_DEBUG("rank[%u]  stream[%p] receive memsize[%llu] from rank[%u]",  \
-            rank, stream_.ptr(), DataUnitSize(dataType_)*count_, rank - 1);
+    if (root_ % 2 == 0 || root_ >= part1Size_) { // 模2是否为0判断rank_奇偶性
+        HCCL_DEBUG(
+            "rank[%u] stream[%p] receive memsize[%llu] from rank[%u]", rank, stream_.ptr(),
+            DataUnitSize(dataType_) * count_, rank - 1);
 
         // root是偶数节点，rank从前面邻接的偶数节点接收数据
         ret = ReceiveData(rank - 1, links);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[BcastRecursiveHalvingDoubling][RunAsync]rank[%u] stream[%p] Receive data "\
-                "from Rank[%u] failed", rank, stream_.ptr(), rank - 1), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[BcastRecursiveHalvingDoubling][RunAsync]rank[%u] stream[%p] Receive data "
+                "from Rank[%u] failed",
+                rank, stream_.ptr(), rank - 1),
+            ret);
         if (rank - 1 < links.size()) {
             ret = links[rank - 1]->RxWaitDone(stream_);
-            CHK_PRT_RET(ret != HCCL_SUCCESS,
-                HCCL_ERROR("[BcastRecursiveHalvingDoubling][RunAsync]RxWaitDone failed"), ret);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS, HCCL_ERROR("[BcastRecursiveHalvingDoubling][RunAsync]RxWaitDone failed"), ret);
         }
     } else {
-        HCCL_DEBUG("rank[%u] stream[%p] send memsize[%llu] to rank[%u]", \
-            rank, stream_.ptr(), DataUnitSize(dataType_)*count_, rank - 1);
+        HCCL_DEBUG(
+            "rank[%u] stream[%p] send memsize[%llu] to rank[%u]", rank, stream_.ptr(), DataUnitSize(dataType_) * count_,
+            rank - 1);
         ret = SendData(rank - 1, links);
-        CHK_PRT_RET(ret != HCCL_SUCCESS,
-            HCCL_ERROR("[BcastRecursiveHalvingDoubling][RunAsync]rank[%u] stream[%p] Send data to "\
-                "Rank[%u] failed", rank, stream_.ptr(), rank - 1), ret);
+        CHK_PRT_RET(
+            ret != HCCL_SUCCESS,
+            HCCL_ERROR(
+                "[BcastRecursiveHalvingDoubling][RunAsync]rank[%u] stream[%p] Send data to "
+                "Rank[%u] failed",
+                rank, stream_.ptr(), rank - 1),
+            ret);
         if (rank - 1 < links.size()) {
             ret = links[rank - 1]->TxWaitDone(stream_);
-            CHK_PRT_RET(ret != HCCL_SUCCESS,
-                HCCL_ERROR("[BcastRecursiveHalvingDoubling][RunAsync]TxWaitDone failed"), ret);
+            CHK_PRT_RET(
+                ret != HCCL_SUCCESS, HCCL_ERROR("[BcastRecursiveHalvingDoubling][RunAsync]TxWaitDone failed"), ret);
         }
     }
     return HCCL_SUCCESS;
 }
-HcclResult BcastRecursiveHalvingDoubling::GetNslbAdjInfo(const u32 rank, const u32 rankSize,
-                                                         const std::vector<LINK> &links, AdjInfo& nslbAdjInfo)
+HcclResult BcastRecursiveHalvingDoubling::GetNslbAdjInfo(
+    const u32 rank, const u32 rankSize, const std::vector<LINK>& links, AdjInfo& nslbAdjInfo)
 {
     u32 nslbRound = 0;
     u32 base = 1;
@@ -308,7 +348,8 @@ HcclResult BcastRecursiveHalvingDoubling::GetNslbAdjInfo(const u32 rank, const u
     if (rank < nslbPart1Size && (rank % NSLBDP_BCAST_MOLD2) == 0) {
         rankInBlock = rank / NSLBDP_BCAST_MOLD2; // 直接除以2即为本rank的在block内的排序
     } else {
-        rankInBlock = rank - nslbPart1Size / NSLBDP_BCAST_MOLD2; // 通过rank减去part1除2的大小即不处于第一部分的block内rank号
+        rankInBlock
+            = rank - nslbPart1Size / NSLBDP_BCAST_MOLD2; // 通过rank减去part1除2的大小即不处于第一部分的block内rank号
     }
     // 2的次幂场景下处理流程
     if (nslbPart1Size == 0) {
@@ -331,7 +372,7 @@ HcclResult BcastRecursiveHalvingDoubling::GetNslbAdjInfo(const u32 rank, const u
                 continue;
             }
             if (begin) {
-                NslbDpAdjInfo adjInfoStep = {0};
+                NslbDpAdjInfo adjInfoStep = {};
                 u32 remoteuserRank = links[peerRankInBlock]->GetRemoteRank();
                 adjInfoStep.dstLocalRankId = remoteuserRank;
                 adjInfoStep.phaseId = step + 1;
@@ -346,7 +387,7 @@ HcclResult BcastRecursiveHalvingDoubling::GetNslbAdjInfo(const u32 rank, const u
     if (rank < nslbPart1Size && rank % NSLBDP_BCAST_MOLD2 == 1) {
         u32 peerRank = rank - 1;
         if (peerRank < links.size()) {
-            NslbDpAdjInfo adjInfoStep = {0};
+            NslbDpAdjInfo adjInfoStep = {};
             adjInfoStep.dstLocalRankId = links[peerRank]->GetRemoteRank();
             adjInfoStep.phaseId = 1;
             adjInfoStep.rev = 0;
@@ -361,9 +402,10 @@ HcclResult BcastRecursiveHalvingDoubling::GetNslbAdjInfo(const u32 rank, const u
     std::vector<LINK>::const_iterator iter = links.begin();
     subLinks.resize(nslbBlockSize);
     for (u32 i = 0; i < rankSize; i++) {
-        if (i < nslbPart1Size && (i % NSLBDP_BCAST_MOLD2) == 1) {   // 模2余1代表当前rank在part1的奇数位置上，不参与block内的建链
+        if (i < nslbPart1Size
+            && (i % NSLBDP_BCAST_MOLD2) == 1) { // 模2余1代表当前rank在part1的奇数位置上，不参与block内的建链
             continue;
-        } else if (i < nslbPart1Size && (i % NSLBDP_BCAST_MOLD2) == 0) {  // 模2余0代表当前rank在part1的偶数位置上
+        } else if (i < nslbPart1Size && (i % NSLBDP_BCAST_MOLD2) == 0) { // 模2余0代表当前rank在part1的偶数位置上
             std::vector<LINK>::const_iterator niter = std::next(iter, i);
             if (niter != links.end()) {
                 subLinks[i / NSLBDP_BCAST_MOLD2] = *niter;
@@ -371,7 +413,7 @@ HcclResult BcastRecursiveHalvingDoubling::GetNslbAdjInfo(const u32 rank, const u
         } else {
             std::vector<LINK>::const_iterator niter = std::next(iter, i);
             if (niter != links.end()) {
-                subLinks[i - nslbPart1Size / NSLBDP_BCAST_MOLD2] = *niter; 
+                subLinks[i - nslbPart1Size / NSLBDP_BCAST_MOLD2] = *niter;
             }
         }
     }
@@ -384,7 +426,7 @@ HcclResult BcastRecursiveHalvingDoubling::GetNslbAdjInfo(const u32 rank, const u
     for (u32 step = 0; step < stepNum; step++) {
         u32 peerRankBitmask = 1 << (stepNum - step - 1);
         u32 peerRank = rankInBlock ^ peerRankBitmask;
-        NslbDpAdjInfo adjInfoStep = {0};
+        NslbDpAdjInfo adjInfoStep = {};
         if (subLinks[peerRank] == nullptr) {
             continue;
         }
@@ -397,7 +439,7 @@ HcclResult BcastRecursiveHalvingDoubling::GetNslbAdjInfo(const u32 rank, const u
     nslbAdjInfo.dstRankNum = nslbAdjInfo.nsAdjInfo.size();
     HCCL_DEBUG("[BcastRecursiveHalvingDoubling]dstRankNum is %u", nslbAdjInfo.dstRankNum);
 
-    if(nslbAdjInfo.nsAdjInfo.size() == 0) {
+    if (nslbAdjInfo.nsAdjInfo.size() == 0) {
         return HCCL_SUCCESS;
     }
     // 上面处理完成后，紧接着处理合并部分的偶数rank同步到奇数rank增加phaseId
@@ -405,17 +447,17 @@ HcclResult BcastRecursiveHalvingDoubling::GetNslbAdjInfo(const u32 rank, const u
         u32 peerRank = rank + 1;
         uint16_t phaseSize = nslbAdjInfo.nsAdjInfo.size();
         if (peerRank < links.size()) {
-                NslbDpAdjInfo adjInfoStep = {0};
-                adjInfoStep.dstLocalRankId = links[peerRank]->GetRemoteRank();
-                adjInfoStep.phaseId = nslbAdjInfo.nsAdjInfo[phaseSize - 1].phaseId + 1;
-                adjInfoStep.rev = 0;
-                HCCL_INFO("Scatter-nslb: peerRank[%u]", peerRank);
-                nslbAdjInfo.nsAdjInfo.push_back(adjInfoStep);
-                nslbAdjInfo.dstRankNum = nslbAdjInfo.nsAdjInfo.size();
+            NslbDpAdjInfo adjInfoStep = {};
+            adjInfoStep.dstLocalRankId = links[peerRank]->GetRemoteRank();
+            adjInfoStep.phaseId = nslbAdjInfo.nsAdjInfo[phaseSize - 1].phaseId + 1;
+            adjInfoStep.rev = 0;
+            HCCL_INFO("Scatter-nslb: peerRank[%u]", peerRank);
+            nslbAdjInfo.nsAdjInfo.push_back(adjInfoStep);
+            nslbAdjInfo.dstRankNum = nslbAdjInfo.nsAdjInfo.size();
         }
         return HCCL_SUCCESS;
     }
     return HCCL_SUCCESS;
 }
 REGISTER_TEMPLATE(TemplateType::TEMPLATE_BROADCAST_RECURSIVE_HD, BcastRecursiveHalvingDoubling);
-}  // namespace hccl
+} // namespace hccl

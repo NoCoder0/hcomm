@@ -18,21 +18,30 @@
 
 #define STREAM_CLOEXEC "e"
 
-#define IBV_CONFIG_DIR "/home/unilsw/share/ccl_it6/out/cloud/host/obj/THIRD_PARTY_LIBS/rmda_core/rdma-core-17.1/build/etc/libibverbs.d"
-#define RS_CONF_DIR "/home/unilsw/share/ccl_it6/out/cloud/host/obj/THIRD_PARTY_LIBS/rmda_core/rdma-core-17.1/build/etc/rdma/rsocket"
-#define IWPM_CONFIG_FILE "/home/unilsw/share/ccl_it6/out/cloud/host/obj/THIRD_PARTY_LIBS/rmda_core/rdma-core-17.1/build/etc/iwpmd.conf"
+#define IBV_CONFIG_DIR \
+    "/home/unilsw/share/ccl_it6/out/cloud/host/obj/THIRD_PARTY_LIBS/rmda_core/rdma-core-17.1/build/etc/libibverbs.d"
+#define RS_CONF_DIR \
+    "/home/unilsw/share/ccl_it6/out/cloud/host/obj/THIRD_PARTY_LIBS/rmda_core/rdma-core-17.1/build/etc/rdma/rsocket"
+#define IWPM_CONFIG_FILE \
+    "/home/unilsw/share/ccl_it6/out/cloud/host/obj/THIRD_PARTY_LIBS/rmda_core/rdma-core-17.1/build/etc/iwpmd.conf"
 
-#define SRP_DEAMON_CONFIG_FILE "/home/unilsw/share/ccl_it6/out/cloud/host/obj/THIRD_PARTY_LIBS/rmda_core/rdma-core-17.1/build/etc/srp_daemon.conf"
+#define SRP_DEAMON_CONFIG_FILE                                                                           \
+    "/home/unilsw/share/ccl_it6/out/cloud/host/obj/THIRD_PARTY_LIBS/rmda_core/rdma-core-17.1/build/etc/" \
+    "srp_daemon.conf"
 #define SRP_DEAMON_LOCK_PREFIX "/usr/local/var/run/srp_daemon"
 
-#define ACM_CONF_DIR "/home/unilsw/share/ccl_it6/out/cloud/host/obj/THIRD_PARTY_LIBS/rmda_core/rdma-core-17.1/build/etc/rdma"
-#define IBACM_LIB_PATH "/home/unilsw/share/ccl_it6/out/cloud/host/obj/THIRD_PARTY_LIBS/rmda_core/rdma-core-17.1/build/lib/ibacm"
-#define IBACM_BIN_PATH "/home/unilsw/share/ccl_it6/out/cloud/host/obj/THIRD_PARTY_LIBS/rmda_core/rdma-core-17.1/build/bin"
+#define ACM_CONF_DIR \
+    "/home/unilsw/share/ccl_it6/out/cloud/host/obj/THIRD_PARTY_LIBS/rmda_core/rdma-core-17.1/build/etc/rdma"
+#define IBACM_LIB_PATH \
+    "/home/unilsw/share/ccl_it6/out/cloud/host/obj/THIRD_PARTY_LIBS/rmda_core/rdma-core-17.1/build/lib/ibacm"
+#define IBACM_BIN_PATH \
+    "/home/unilsw/share/ccl_it6/out/cloud/host/obj/THIRD_PARTY_LIBS/rmda_core/rdma-core-17.1/build/bin"
 #define IBACM_PID_FILE "/usr/local/var/run/ibacm.pid"
 #define IBACM_PORT_FILE "/usr/local/var/run/ibacm.port"
 #define IBACM_LOG_FILE "/usr/local/var/log/ibacm.log"
 
-#define VERBS_PROVIDER_DIR "/home/unilsw/share/ccl_it6/out/cloud/host/obj/THIRD_PARTY_LIBS/rmda_core/rdma-core-17.1/build/lib"
+#define VERBS_PROVIDER_DIR \
+    "/home/unilsw/share/ccl_it6/out/cloud/host/obj/THIRD_PARTY_LIBS/rmda_core/rdma-core-17.1/build/lib"
 #define VERBS_PROVIDER_SUFFIX "-rdmav17.so"
 #define IBVERBS_PABI_VERSION 17
 
@@ -48,11 +57,11 @@
 #define SIZEOF_LONG 8
 
 #if 3 == 3
-# define HAVE_LIBNL3 1
+#define HAVE_LIBNL3 1
 #elif 3 == 1
-# define HAVE_LIBNL1 1
+#define HAVE_LIBNL1 1
 #elif 3 == 0
-# define NRESOLVE_NEIGH 1
+#define NRESOLVE_NEIGH 1
 #endif
 
 #endif

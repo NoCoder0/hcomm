@@ -1,28 +1,12 @@
- /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- * 
- * The code snippet comes from Cann project.
- * 
- * Copyright 2012-2019 Huawei Technologies Co., Ltd
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef ASCEND_HAL_BASE_H
 #define ASCEND_HAL_BASE_H
@@ -35,10 +19,10 @@ extern "C" {
 #endif
 
 typedef drvError_t hdcError_t;
-typedef void *HDC_CLIENT;
-typedef void *HDC_SESSION;
-typedef void *HDC_SERVER;
-typedef void *HDC_EPOLL;
+typedef void* HDC_CLIENT;
+typedef void* HDC_SESSION;
+typedef void* HDC_SERVER;
+typedef void* HDC_EPOLL;
 
 #define HDC_EPOLL_CTL_ADD 0
 #define HDC_EPOLL_CTL_DEL 1
@@ -62,16 +46,13 @@ struct drvHdcEvent {
 /**< The HDC interface is dead and blocked by default. Set HDC_FLAG_NOWAIT to be non-blocked */
 /**< Set HDC_FLAG_WAIT_TIMEOUT to timeout after blocking for a period of time. HDC_FLAG_WAIT_TIMEOUT */
 /**< takes precedence over HDC_FLAG_NOWAIT */
-#define HDC_FLAG_NOWAIT (0x1 << 0)        /**< Occupy bit0 */
-#define HDC_FLAG_WAIT_TIMEOUT (0x1 << 1)  /**< Occupy bit1 */
-#define HDC_FLAG_MAP_VA32BIT (0x1 << 1)   /**< Use low 32bit memory */
-#define HDC_FLAG_MAP_HUGE (0x1 << 2)      /**< Using large pages */
+#define HDC_FLAG_NOWAIT (0x1 << 0)       /**< Occupy bit0 */
+#define HDC_FLAG_WAIT_TIMEOUT (0x1 << 1) /**< Occupy bit1 */
+#define HDC_FLAG_MAP_VA32BIT (0x1 << 1)  /**< Use low 32bit memory */
+#define HDC_FLAG_MAP_HUGE (0x1 << 2)     /**< Using large pages */
 
 /* 通信类型 */
-enum halHdcTransType {
-    HDC_TRANS_USE_SOCKET = 0,
-    HDC_TRANS_USE_PCIE = 1
-};
+enum halHdcTransType { HDC_TRANS_USE_SOCKET = 0, HDC_TRANS_USE_PCIE = 1 };
 
 enum drvHdcServiceType {
     HDC_SERVICE_TYPE_DMP = 0,
@@ -89,11 +70,11 @@ enum drvHdcServiceType {
     HDC_SERVICE_TYPE_IDE_FILE_TRANS = 12,
     HDC_SERVICE_TYPE_DUMP = 13,
     HDC_SERVICE_TYPE_USER3 = 14, /* used by user */
-    HDC_SERVICE_TYPE_DVPP = 15, /* support multiple processes */
+    HDC_SERVICE_TYPE_DVPP = 15,  /* support multiple processes */
     HDC_SERVICE_TYPE_QUEUE = 16, /* support multiple processes */
     HDC_SERVICE_TYPE_UPGRADE = 17,
     HDC_SERVICE_TYPE_RDMA_V2 = 18, /* support multiple processes */
-    HDC_SERVICE_TYPE_TEST = 19, /* support multiple processes */
+    HDC_SERVICE_TYPE_TEST = 19,    /* support multiple processes */
     HDC_SERVICE_TYPE_KMS = 20,
     HDC_SERVICE_TYPE_USER_START = 64,
     HDC_SERVICE_TYPE_USER_END = 127,
@@ -112,16 +93,9 @@ enum drvHdcSessionAttr {
     HDC_SESSION_ATTR_MAX
 };
 
-enum drvHdcServerAttr {
-    HDC_SERVER_ATTR_DEV_ID = 0,
-    HDC_SERVER_ATTR_MAX
-};
+enum drvHdcServerAttr { HDC_SERVER_ATTR_DEV_ID = 0, HDC_SERVER_ATTR_MAX };
 
-enum drvHdcChanType {
-    HDC_CHAN_TYPE_SOCKET = 0,
-    HDC_CHAN_TYPE_PCIE,
-    HDC_CHAN_TYPE_MAX
-};
+enum drvHdcChanType { HDC_CHAN_TYPE_SOCKET = 0, HDC_CHAN_TYPE_PCIE, HDC_CHAN_TYPE_MAX };
 
 enum drvHdcMemType {
     HDC_MEM_TYPE_TX_DATA = 0,
@@ -134,8 +108,8 @@ enum drvHdcMemType {
 };
 
 enum drvHdcSessionCloseType {
-    HDC_SESSION_CLOSE_FLAG_NORMAL = 0,  /* close session with notify remote */
-    HDC_SESSION_CLOSE_FLAG_LOCAL = 1,   /* close session without notify remote */
+    HDC_SESSION_CLOSE_FLAG_NORMAL = 0, /* close session with notify remote */
+    HDC_SESSION_CLOSE_FLAG_LOCAL = 1,  /* close session without notify remote */
     HDC_SESSION_CLOSE_FLAG_MAX
 };
 
@@ -181,7 +155,7 @@ struct drvHdcCapacity {
 };
 
 struct drvHdcMsgBuf {
-    char *pBuf;
+    char* pBuf;
     int len;
 };
 

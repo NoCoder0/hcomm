@@ -1,12 +1,13 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include <mockcpp/mokc.h>
 #include <mockcpp/mockcpp.hpp>
 #include <vector>
@@ -22,35 +23,25 @@
 #include "hccl_aiv.h"
 #include "checker.h"
 #include "dispatcher.h"
-
 using namespace hccl;
 using namespace checker;
 
 std::vector<string> allReduceAlgName = {
-    "AllReduceMeshOneshotLoopExecutor",
-    "AllReduceMeshAivSmallCountExecutor",
-    "AllReduceMeshOpbaseLoopExecutor",
-    "AllReduceMeshOpbasePipelineExecutor",
-    "AllReduceMeshSmallCountExecutor",
-    "AllReduceRingExecutor",
+    "AllReduceMeshOneshotLoopExecutor",    "AllReduceMeshAivSmallCountExecutor", "AllReduceMeshOpbaseLoopExecutor",
+    "AllReduceMeshOpbasePipelineExecutor", "AllReduceMeshSmallCountExecutor",    "AllReduceRingExecutor",
 };
 
 class AllReduceTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "CheckOpSemanticsTest set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "CheckOpSemanticsTest set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "CheckOpSemanticsTest tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "CheckOpSemanticsTest tear down." << std::endl; }
 
     virtual void SetUp()
     {
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        std::string caseName = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
+        std::string caseName
+            = "analysis_result_" + std::string(test_info->test_case_name()) + "_" + std::string(test_info->name());
         Checker::SetDumpFileName(caseName);
         MOCKER(ExecuteKernelLaunch).stubs().will(returnValue(HCCL_SUCCESS));
     }
@@ -201,7 +192,7 @@ TEST_F(AllReduceTest, allreduce_AllReduceReduceBcast)
 
     Checker checker;
     HcclResult ret;
-    checker.CloseRankMemCheck();    // AllReduceReduceBcast算法以mesh方式做原子Reduce操作，导致内存冲突检测误报
+    checker.CloseRankMemCheck(); // AllReduceReduceBcast算法以mesh方式做原子Reduce操作，导致内存冲突检测误报
     ret = checker.Check(checkerOpParam, topoMeta);
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 }
@@ -330,7 +321,7 @@ TEST_F(AllReduceTest, allreduce_910A_offload_AllReduceMeshExecutor)
 {
     RankTable_For_LLT gen;
     TopoMeta topoMeta;
-    gen.GenTopoMeta(topoMeta, 1, 1, 4);  // 等下改成8，看看会不会报错
+    gen.GenTopoMeta(topoMeta, 1, 1, 4); // 等下改成8，看看会不会报错
 
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLREDUCE;
@@ -374,7 +365,7 @@ TEST_F(AllReduceTest, allreduce_910A_offload_AllReduceRingExecutor_NSLB)
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 3, 8);
     setenv("HCCL_ALGO", "level0:ring;level1:H-D_R", 1);
- 
+
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLREDUCE;
     checkerOpParam.tag = "AllReduce";
@@ -394,7 +385,7 @@ TEST_F(AllReduceTest, allreduce_910A_offload_AllReduceRingExecutor_NSLB)
 TEST_F(AllReduceTest, allreduce_910A_offload_AllReduceComm)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{2, 5}, {0, 1, 2}}};
+    TopoMeta topoMeta{{{2, 5}, {0, 1, 2}}};
 
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLREDUCE;
@@ -456,7 +447,7 @@ TEST_F(AllReduceTest, allreduce_910A_opbase_AllReduceRingExecutor)
 TEST_F(AllReduceTest, allreduce_910A_opbase_AllReduceComm)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{2, 5}, {0, 1, 2}}};
+    TopoMeta topoMeta{{{2, 5}, {0, 1, 2}}};
 
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLREDUCE;
@@ -683,7 +674,7 @@ TEST_F(AllReduceTest, allreduce_910_93_AllReduceRingFor91093Executor_NHR_tbe)
     checkerOpParam.opMode = CheckerOpMode::OPBASE;
     checkerOpParam.reduceType = CheckerReduceOp::REDUCE_SUM;
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_910_93;
-    checkerOpParam.DataDes.count = 4*1024*1024;
+    checkerOpParam.DataDes.count = 4 * 1024 * 1024;
     checkerOpParam.DataDes.dataType = CheckerDataType::DATA_TYPE_INT64;
     checkerOpParam.algName = "AllReduceFastDoubleRingFor91093Executor";
     Checker checker;
@@ -705,7 +696,7 @@ TEST_F(AllReduceTest, allreduce_910_93_AllReduceRingFor91093Executor_NHR)
     checkerOpParam.opMode = CheckerOpMode::OPBASE;
     checkerOpParam.reduceType = CheckerReduceOp::REDUCE_SUM;
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_910_93;
-    checkerOpParam.DataDes.count = 4*1024*1024;
+    checkerOpParam.DataDes.count = 4 * 1024 * 1024;
     checkerOpParam.DataDes.dataType = CheckerDataType::DATA_TYPE_FP32;
     checkerOpParam.algName = "AllReduceRingFor91093Executor";
     Checker checker;
@@ -1138,9 +1129,9 @@ TEST_F(AllReduceTest, allreduce_ax_4server_16p)
 TEST_F(AllReduceTest, allreduce_superpod_asym_gcd)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0, 1, 2}, {0, 1, 2}}, {{0, 1, 2}, {0, 1, 2}}, {{0, 1, 2}, {0, 1, 2}, {0, 1, 2}, {0, 1, 2}}};
+    TopoMeta topoMeta{{{0, 1, 2}, {0, 1, 2}}, {{0, 1, 2}, {0, 1, 2}}, {{0, 1, 2}, {0, 1, 2}, {0, 1, 2}, {0, 1, 2}}};
 
-    CheckerOpParam  checkerOpParam;
+    CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLREDUCE;
     checkerOpParam.tag = "AllReduce";
     checkerOpParam.opMode = CheckerOpMode::OPBASE;
@@ -1158,9 +1149,10 @@ TEST_F(AllReduceTest, allreduce_superpod_asym_gcd)
 TEST_F(AllReduceTest, allreduce_superpod_asym_gcd_graph)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0, 1, 2}, {0, 1, 2}, {0, 1, 2}}, {{0, 1, 2}, {0, 1, 2}, {0, 1, 2}, {0, 1, 2}, {0, 1, 2}, {0, 1, 2}}};
+    TopoMeta topoMeta{
+        {{0, 1, 2}, {0, 1, 2}, {0, 1, 2}}, {{0, 1, 2}, {0, 1, 2}, {0, 1, 2}, {0, 1, 2}, {0, 1, 2}, {0, 1, 2}}};
 
-    CheckerOpParam  checkerOpParam;
+    CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLREDUCE;
     checkerOpParam.tag = "AllReduce";
     checkerOpParam.opMode = CheckerOpMode::OFFLOAD;
@@ -1590,7 +1582,7 @@ TEST_F(AllReduceTest, allreduce_A2_2Server_offload_AllReduceMeshGraphPipelineExe
     checkerOpParam.opType = CheckerOpType::ALLREDUCE;
     checkerOpParam.tag = "AllReduce";
     checkerOpParam.opMode = CheckerOpMode::OFFLOAD;
-    checkerOpParam.reduceType =CheckerReduceOp::REDUCE_SUM;
+    checkerOpParam.reduceType = CheckerReduceOp::REDUCE_SUM;
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_910B;
     checkerOpParam.DataDes.count = 1024;
     checkerOpParam.DataDes.dataType = CheckerDataType::DATA_TYPE_INT8;
@@ -1614,7 +1606,7 @@ TEST_F(AllReduceTest, allreduce_A2_2Server_offload_per7_AllReduceMeshGraphPipeli
     checkerOpParam.opType = CheckerOpType::ALLREDUCE;
     checkerOpParam.tag = "AllReduce";
     checkerOpParam.opMode = CheckerOpMode::OFFLOAD;
-    checkerOpParam.reduceType =CheckerReduceOp::REDUCE_SUM;
+    checkerOpParam.reduceType = CheckerReduceOp::REDUCE_SUM;
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_910B;
     checkerOpParam.DataDes.count = 1024;
     checkerOpParam.DataDes.dataType = CheckerDataType::DATA_TYPE_INT8;
@@ -1638,7 +1630,7 @@ TEST_F(AllReduceTest, allreduce_A2_3Server_offload_AllReduceMeshGraphPipelineExe
     checkerOpParam.opType = CheckerOpType::ALLREDUCE;
     checkerOpParam.tag = "AllReduce";
     checkerOpParam.opMode = CheckerOpMode::OFFLOAD;
-    checkerOpParam.reduceType =CheckerReduceOp::REDUCE_SUM;
+    checkerOpParam.reduceType = CheckerReduceOp::REDUCE_SUM;
     checkerOpParam.devtype = CheckerDevType::DEV_TYPE_910B;
     checkerOpParam.DataDes.count = 1024;
     checkerOpParam.DataDes.dataType = CheckerDataType::DATA_TYPE_INT8;
@@ -1675,7 +1667,7 @@ TEST_F(AllReduceTest, allreduce_A2_1Server8Rank_order_preserved)
 TEST_F(AllReduceTest, allreduce_A2_1Server16Rank_order_preserved)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}}};
+    TopoMeta topoMeta{{{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}}};
 
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLREDUCE;
@@ -1695,7 +1687,7 @@ TEST_F(AllReduceTest, allreduce_A2_1Server16Rank_order_preserved)
 TEST_F(AllReduceTest, allreduce_A2_1Server2Rank_mesh_opbase)
 {
     RankTable_For_LLT gen;
-    TopoMeta topoMeta {{{0,1}}};
+    TopoMeta topoMeta{{{0, 1}}};
 
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLREDUCE;
@@ -1862,7 +1854,7 @@ TEST_F(AllReduceTest, all_reduce_executor_deter_big_count_not_power_of_two_intra
 
 TEST_F(AllReduceTest, all_reduce_executor_deter_big_count_ax)
 {
-    TopoMeta topoMeta {{{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}}};
+    TopoMeta topoMeta{{{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}}};
     setenv("HCCL_DETERMINISTIC", "true", 1);
     setenv("HCCL_ALGO", "level0:NA;level1:ring", 1);
     CheckerOpParam checkerOpParam;
@@ -1888,7 +1880,7 @@ TEST_F(AllReduceTest, all_reduce_executor_deter_very_big_count)
 
 TEST_F(AllReduceTest, allreduce_A2_1Server16Rank_midcount_deterministic)
 {
-    TopoMeta topoMeta {{{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}}};
+    TopoMeta topoMeta{{{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}}};
     setenv("HCCL_DETERMINISTIC", "true", 1);
 
     CheckerOpParam checkerOpParam;
@@ -1954,7 +1946,7 @@ TEST_F(AllReduceTest, AllReduceOrderPreservedFor91093Executor1)
     RankTable_For_LLT gen;
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 1, 8);
-    //setenv("HCCL_DETERMINISTIC", "STRICT", 1);
+    // setenv("HCCL_DETERMINISTIC", "STRICT", 1);
     setenv("HCCL_OP_EXPANSION_MODE", "AI_CPU", 1);
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLREDUCE;
@@ -1978,7 +1970,7 @@ TEST_F(AllReduceTest, AllReduceOrderPreservedFor91093Executor2)
     RankTable_For_LLT gen;
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 1, 4, 4);
-    //setenv("HCCL_DETERMINISTIC", "STRICT", 1);
+    // setenv("HCCL_DETERMINISTIC", "STRICT", 1);
     setenv("HCCL_OP_EXPANSION_MODE", "AI_CPU", 1);
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLREDUCE;
@@ -2002,7 +1994,7 @@ TEST_F(AllReduceTest, AllReduceOrderPreservedFor91093Executor3)
     RankTable_For_LLT gen;
     TopoMeta topoMeta;
     gen.GenTopoMeta(topoMeta, 2, 2, 8);
-    //setenv("HCCL_DETERMINISTIC", "STRICT", 1);
+    // setenv("HCCL_DETERMINISTIC", "STRICT", 1);
     setenv("HCCL_OP_EXPANSION_MODE", "AI_CPU", 1);
     CheckerOpParam checkerOpParam;
     checkerOpParam.opType = CheckerOpType::ALLREDUCE;
@@ -2177,4 +2169,3 @@ TEST_F(AllReduceTest, allreduce_order_preserved_multi_node_16server_single_rank_
     ret = checker.Check(checkerOpParam, topoMeta);
     EXPECT_EQ(ret, HcclResult::HCCL_SUCCESS);
 }
-

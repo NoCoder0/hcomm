@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "broadcast_nhr_oneshot.h"
 #include <cmath>
@@ -14,20 +14,20 @@
 
 namespace hccl {
 BroadcastNHROneshot::BroadcastNHROneshot(const HcclDispatcher dispatcher)
-    : NHRBase(dispatcher), localBaseOffset_(0), isForAllReduce_(false)
-{
-}
+    : NHRBase(dispatcher),
+      localBaseOffset_(0),
+      isForAllReduce_(false)
+{}
 
-BroadcastNHROneshot::~BroadcastNHROneshot()
-{
-}
+BroadcastNHROneshot::~BroadcastNHROneshot() {}
 
-HcclResult BroadcastNHROneshot::RunAsync(const u32 rank, const u32 rankSize, const std::vector<LINK> &links)
+HcclResult BroadcastNHROneshot::RunAsync(const u32 rank, const u32 rankSize, const std::vector<LINK>& links)
 {
     // 基本的检查
     CHK_RET(SimpleCheck(rank, rankSize, links));
-    HCCL_INFO("[BroadcastNHROneshot][RunAsync] rank[%u] ranksize[%u] inputMem[%p] outputMem[%p] count[%llu]",
-        rank, rankSize, inputMem_.ptr(), outputMem_.ptr(), count_);
+    HCCL_INFO(
+        "[BroadcastNHROneshot][RunAsync] rank[%u] ranksize[%u] inputMem[%p] outputMem[%p] count[%llu]", rank, rankSize,
+        inputMem_.ptr(), outputMem_.ptr(), count_);
 
     u32 unitSize = DataUnitSize(dataType_);
     CHK_PRT_RET(unitSize == 0, HCCL_ERROR("[BroadcastNHROneshot][RunAsync] unitSize is zero"), HCCL_E_INTERNAL);
@@ -56,30 +56,37 @@ HcclResult BroadcastNHROneshot::RunAsync(const u32 rank, const u32 rankSize, con
     return HCCL_SUCCESS;
 }
 
-HcclResult BroadcastNHROneshot::RunAsyncForAllReduce(const u32 rank, const u32 rankSize, const std::vector<LINK> &links)
+HcclResult BroadcastNHROneshot::RunAsyncForAllReduce(const u32 rank, const u32 rankSize, const std::vector<LINK>& links)
 {
     isForAllReduce_ = true;
     return RunAsync(rank, rankSize, links);
 }
 
-HcclResult BroadcastNHROneshot::SimpleCheck(const u32 rank, const u32 rankSize, const std::vector<LINK> &links)
+HcclResult BroadcastNHROneshot::SimpleCheck(const u32 rank, const u32 rankSize, const std::vector<LINK>& links)
 {
     // 判断stream, dispatcher是否为空
     CHK_SMART_PTR_NULL(dispatcher_);
     CHK_PTR_NULL(stream_.ptr());
 
     // 检查memory
-    CHK_PRT_RET(!outputMem_ || !inputMem_,
+    CHK_PRT_RET(
+        !outputMem_ || !inputMem_,
         HCCL_ERROR("[BroadcastNHROneshot][SimpleCheck] rank[%u] inputmem or outputmem is null", rank), HCCL_E_PTR);
 
     // 判断links数量是否正确
-    CHK_PRT_RET(links.size() < rankSize, HCCL_ERROR("[BroadcastNHROneshot][SimpleCheck] rank[%u] link size[%llu] is "
-        "less than rank size[%u]", rank, links.size(), rankSize), HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        links.size() < rankSize,
+        HCCL_ERROR(
+            "[BroadcastNHROneshot][SimpleCheck] rank[%u] link size[%llu] is "
+            "less than rank size[%u]",
+            rank, links.size(), rankSize),
+        HCCL_E_INTERNAL);
     return HCCL_SUCCESS;
 }
 
-HcclResult BroadcastNHROneshot::SdmaRx(LINK &linkLeft, LINK &linkRight, InterServerAlgoStep &stepInfo, 
-    const std::vector<LINK> &links)
+HcclResult BroadcastNHROneshot::SdmaRx(
+    LINK& linkLeft, LINK& linkRight, [[maybe_unused]] InterServerAlgoStep& stepInfo,
+    [[maybe_unused]] const std::vector<LINK>& links)
 {
     u64 totalSize = count_ * SIZE_TABLE[dataType_];
     DeviceMem srcMem = outputMem_.range(localBaseOffset_, totalSize);
@@ -89,11 +96,12 @@ HcclResult BroadcastNHROneshot::SdmaRx(LINK &linkLeft, LINK &linkRight, InterSer
     }
     if (linkLeft != nullptr) {
         CHK_RET(linkLeft->RxAck(stream_));
-        void *srcMemPtr = nullptr;
+        void* srcMemPtr = nullptr;
         CHK_RET(linkLeft->GetRemoteMem(UserMemType::OUTPUT_MEM, &srcMemPtr));
-        DeviceMem srcMemLeft(static_cast<s8 *>(srcMemPtr) + baseOffset_, totalSize);
-        CHK_RET(HcclD2DMemcpyAsync(dispatcher_, srcMem, srcMemLeft, stream_, linkLeft->GetRemoteRank(), // Memecpy
-                    linkLeft->GetLinkType()));
+        DeviceMem srcMemLeft(static_cast<s8*>(srcMemPtr) + baseOffset_, totalSize);
+        CHK_RET(HcclD2DMemcpyAsync(
+            dispatcher_, srcMem, srcMemLeft, stream_, linkLeft->GetRemoteRank(), // Memecpy
+            linkLeft->GetLinkType()));
         CHK_RET(linkLeft->TxDataSignal(stream_));
     }
     if (linkRight != nullptr) {
@@ -102,8 +110,9 @@ HcclResult BroadcastNHROneshot::SdmaRx(LINK &linkLeft, LINK &linkRight, InterSer
     return HCCL_SUCCESS;
 }
 
-HcclResult BroadcastNHROneshot::RdmaTxRx(LINK &linkLeft, LINK &linkRight, InterServerAlgoStep &stepInfo, 
-    const std::vector<LINK> &links)
+HcclResult BroadcastNHROneshot::RdmaTxRx(
+    LINK& linkLeft, LINK& linkRight, [[maybe_unused]] InterServerAlgoStep& stepInfo,
+    [[maybe_unused]] const std::vector<LINK>& links)
 {
     u64 totalSize = count_ * SIZE_TABLE[dataType_];
     DeviceMem srcMem = outputMem_.range(localBaseOffset_, totalSize);
@@ -125,20 +134,21 @@ HcclResult BroadcastNHROneshot::RdmaTxRx(LINK &linkLeft, LINK &linkRight, InterS
     return HCCL_SUCCESS;
 }
 
-HcclResult BroadcastNHROneshot::RunBroadcastNHROneshot(u32 rank, u32 rankSize, const std::vector<LINK> &links)
+HcclResult BroadcastNHROneshot::RunBroadcastNHROneshot(u32 rank, u32 rankSize, const std::vector<LINK>& links)
 {
     // 计算通信步数
     u32 nSteps = GetStepNumInterServer(rankSize);
-    HCCL_DEBUG("[BroadcastNHROneshot][RunBroadcastNHROneshot] rank[%u] rankSize[%u] nSteps[%u]",
-        rank, rankSize, nSteps);
+    HCCL_DEBUG(
+        "[BroadcastNHROneshot][RunBroadcastNHROneshot] rank[%u] rankSize[%u] nSteps[%u]", rank, rankSize, nSteps);
 
     // 逐步编排任务
     for (u32 step = 0; step < nSteps; step++) {
         InterServerAlgoStep stepInfo;
         GetStepInfo(step, nSteps, rank, rankSize, stepInfo);
 
-        HCCL_DEBUG("[BroadcastNHROneshot][RunBroadcastNHROneshot] recvFrom[%u] sendTo[%u] step[%u]",
-            stepInfo.fromRank, stepInfo.toRank, step);
+        HCCL_DEBUG(
+            "[BroadcastNHROneshot][RunBroadcastNHROneshot] recvFrom[%u] sendTo[%u] step[%u]", stepInfo.fromRank,
+            stepInfo.toRank, step);
 
         LINK linkLeft;
         LINK linkRight;
@@ -151,8 +161,8 @@ HcclResult BroadcastNHROneshot::RunBroadcastNHROneshot(u32 rank, u32 rankSize, c
             CHK_SMART_PTR_NULL(linkLeft);
         }
 
-        if ((linkRight != nullptr && linkRight->IsSpInlineReduce()) || 
-            (linkLeft != nullptr && linkLeft->IsSpInlineReduce())) {
+        if ((linkRight != nullptr && linkRight->IsSpInlineReduce())
+            || (linkLeft != nullptr && linkLeft->IsSpInlineReduce())) {
             CHK_RET(SdmaRx(linkLeft, linkRight, stepInfo, links));
         } else {
             CHK_RET(RdmaTxRx(linkLeft, linkRight, stepInfo, links));
@@ -162,7 +172,7 @@ HcclResult BroadcastNHROneshot::RunBroadcastNHROneshot(u32 rank, u32 rankSize, c
 }
 
 // NHR每步的算法描述原理函数
-HcclResult BroadcastNHROneshot::GetStepInfo(u32 step, u32 nSteps, u32 rank, u32 rankSize, InterServerAlgoStep &stepInfo)
+HcclResult BroadcastNHROneshot::GetStepInfo(u32 step, u32 nSteps, u32 rank, u32 rankSize, InterServerAlgoStep& stepInfo)
 {
     stepInfo.txSliceIdxs.clear();
     stepInfo.rxSliceIdxs.clear();
@@ -194,4 +204,4 @@ HcclResult BroadcastNHROneshot::GetStepInfo(u32 step, u32 nSteps, u32 rank, u32 
 }
 
 REGISTER_TEMPLATE(TemplateType::TEMPLATE_BROADCAST_NHR_ONESHOT, BroadcastNHROneshot);
-}  // namespace hccl
+} // namespace hccl

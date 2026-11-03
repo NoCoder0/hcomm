@@ -17,7 +17,7 @@
 
 namespace Hccl {
 
-struct SubStageArgs{
+struct SubStageArgs {
     BufferType inType;
     BufferType outType;
     u64 inbaseOff;
@@ -26,32 +26,36 @@ struct SubStageArgs{
 
 class InsTempAllReduceMesh2DTwoShot : public InsAlgTemplateBase {
 public:
-    explicit InsTempAllReduceMesh2DTwoShot(const RankId virtualRank, const u32 tempRankSize,
-        const std::vector<std::vector<RankId>> &tempVTopo, const std::map<RankId, u32> &tempVirtRankMap);
+    explicit InsTempAllReduceMesh2DTwoShot(
+        const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+        const std::map<RankId, u32>& tempVirtRankMap);
     ~InsTempAllReduceMesh2DTwoShot() override;
 
     std::string Describe() const override
     {
         return StringFormat("Template of all reduce 1D mesh with tempRankSize [%u].", tempRankSize_);
     }
-    HcclResult GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &tempAlgParams, const ResLinks &tempLinks,
-        std::vector<InsQuePtr> &tempInsQues);
-    HcclResult CalcRes(AlgTempResReq &tempResReq) override;
+    HcclResult GenExtIns(
+        const TempFuncs& tempFuncs, const TemplateDataParams& tempAlgParams, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues);
+    HcclResult CalcRes(AlgTempResReq& tempResReq) override;
     u32 CalcScratchMultiple(BufferType input, BufferType output) const;
 
 private:
-    std::vector<std::tuple<QId, QId, u32>> CreateQueNotifiesRequest(
-        u32 queueNum, u32 pairNum, QId masterIdX, QId masterIdY) const;
-    HcclResult BuildSlice(const std::vector<RankId> &rankInfo, const u64 dataSize, const u64 chunkSize,
-        RankSliceInfo &sliceInfoVec) const;
-    HcclResult RunReduceScatter(SubStageArgs& subparams,
-        const RankSliceInfo &sliceInfoVec, const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues,
-        const std::vector<RankId> &rankInfo) const;
-    HcclResult RunAllgather(SubStageArgs& subparams,
-        const RankSliceInfo &sliceInfoVec, const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues,
-        const std::vector<RankId> &rankInfo) const;
-    HcclResult InitInnerParams(const TempFuncs &tempFuncs,
-    const TemplateDataParams &tempAlgParams, const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues);
+    std::vector<std::tuple<QId, QId, u32>>
+    CreateQueNotifiesRequest(u32 queueNum, u32 pairNum, QId masterIdX, QId masterIdY) const;
+    HcclResult BuildSlice(
+        const std::vector<RankId>& rankInfo, const u64 dataSize, const u64 chunkSize,
+        RankSliceInfo& sliceInfoVec) const;
+    HcclResult RunReduceScatter(
+        SubStageArgs& subparams, const RankSliceInfo& sliceInfoVec, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues, const std::vector<RankId>& rankInfo) const;
+    HcclResult RunAllgather(
+        SubStageArgs& subparams, const RankSliceInfo& sliceInfoVec, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues, const std::vector<RankId>& rankInfo) const;
+    HcclResult InitInnerParams(
+        const TempFuncs& tempFuncs, const TemplateDataParams& tempAlgParams, const ResLinks& tempLinks,
+        std::vector<InsQuePtr>& tempInsQues);
 
     RankSliceInfo XsliceInfoVec_;
     RankSliceInfo YsliceInfoVec_;
@@ -70,6 +74,6 @@ private:
     u64 XDataSizeS2_{0};
 };
 
-}  // namespace Hccl
+} // namespace Hccl
 
-#endif  // !HCCLV2_INS_TEMP_ALL_REDUCE_2D_MESH_TWO_SHOT
+#endif // !HCCLV2_INS_TEMP_ALL_REDUCE_2D_MESH_TWO_SHOT

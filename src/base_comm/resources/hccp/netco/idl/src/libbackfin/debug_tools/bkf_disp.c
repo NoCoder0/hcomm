@@ -112,11 +112,12 @@ struct tagBkfDisp {
     /* stat */
     uint32_t statCnt[BKF_DISP_CNT_MAX];
 };
-#define BKF_DISP_INC_CNT(disp, whichCnt) do {                                             \
-    if (((disp) != VOS_NULL) && ((whichCnt) < BKF_DISP_CNT_MAX)) { \
-        (disp)->statCnt[(whichCnt)]++;                                                     \
-    }                                                                                     \
-} while (0)
+#define BKF_DISP_INC_CNT(disp, whichCnt)                                                                               \
+    do {                                                                                                               \
+        if (((disp) != VOS_NULL) && ((whichCnt) < BKF_DISP_CNT_MAX)) {                                                 \
+            (disp)->statCnt[(whichCnt)]++;                                                                             \
+        }                                                                                                              \
+    } while (0)
 
 /* func */
 #define BKF_DISP_FUNC_PARAM_CNT 5
@@ -135,7 +136,7 @@ typedef struct tagBkfDispFunc {
 
     /* stat */
     uint32_t appCallCnt; /* app调用此函数的次数 */
-    uint32_t funcCbCnt; /* 函数被回调的次数。app一次调用中，cb会被多次执行 */
+    uint32_t funcCbCnt;  /* 函数被回调的次数。app一次调用中，cb会被多次执行 */
     char funcName[0];
 } BkfDispFunc;
 
@@ -156,7 +157,6 @@ typedef struct tagBkfDispObj {
     char objName[0];
 } BkfDispObj;
 
-
 #define BKF_DISP_APP_CALL_ONCE_FUNC_CB_TIME_MAX (BKF_1K * 100)
 #define BKF_DISP_OUT_BUF_RSV_LEN_FOR_LAST_PROMPT (100)
 #define BKF_DISP_APP_CALL_FIRST_TIME(ctx) ((ctx)->ctx1Len <= 0)
@@ -167,7 +167,7 @@ STATIC BOOL BkfDispFuncRealParam2Num(char *realParamStr, uintptr_t *outVal);
 
 /* data op */
 STATIC BkfDispFunc *BkfDispAddFunc(BkfDisp *disp, char *funcName, F_BKF_DISP_FUNC funcAddr, const char *funcHelpInfo,
-                                     uint8_t funcLvl, uint8_t funcParamCnt, char **funcFormalParam);
+    uint8_t funcLvl, uint8_t funcParamCnt, char **funcFormalParam);
 STATIC void BkfDispDelFunc(BkfDisp *disp, BkfDispFunc *dispFunc);
 STATIC void BkfDispDelAllFunc(BkfDisp *disp);
 STATIC BkfDispFunc *BkfDispFindFunc(BkfDisp *disp, char *funcName);
@@ -180,8 +180,7 @@ STATIC void BkfDispDelFuncObjName(BkfDisp *disp, BkfDispFuncObjName *funcObjName
 STATIC void BkfDispDelFuncAllObjName(BkfDisp *disp, BkfDispFunc *dispFunc);
 STATIC BkfDispFuncObjName *BkfDispFindFuncObjName(BkfDisp *disp, BkfDispFunc *dispFunc, char *objName);
 STATIC BkfDispFuncObjName *BkfDispFindNextFuncObjName(BkfDisp *disp, BkfDispFunc *dispFunc, char *objName);
-STATIC BkfDispFuncObjName *BkfDispGetFirstFuncObjNameOfFunc(BkfDisp *disp, BkfDispFunc *dispFunc,
-                                                              void **itorOutOrNull);
+STATIC BkfDispFuncObjName *BkfDispGetFirstFuncObjNameOfFunc(BkfDisp *disp, BkfDispFunc *dispFunc, void **itorOutOrNull);
 STATIC BkfDispFuncObjName *BkfDispGetNextFuncObjNameOfFunc(BkfDisp *disp, BkfDispFunc *dispFunc, void **itorInOut);
 STATIC BkfDispFuncObjName *BkfDispGetFirstFuncObjNameOfObj(BkfDisp *disp, BkfDispObj *dispObj, void **itorOutOrNull);
 STATIC BkfDispFuncObjName *BkfDispGetNextFuncObjNameOfObj(BkfDisp *disp, BkfDispObj *dispObj, void **itorInOut);
@@ -203,15 +202,15 @@ STATIC void BkfDispUninitSelfDispFunc(BkfDisp *disp);
 
 #if BKF_BLOCK("表")
 #pragma pack(4)
-typedef uint32_t(*F_BKF_DISP_FUNC_REAL_PARAM_STR_2VAL)(char *realParamStr, uintptr_t *outVal);
+typedef uint32_t (*F_BKF_DISP_FUNC_REAL_PARAM_STR_2VAL)(char *realParamStr, uintptr_t *outVal);
 typedef struct tagBkfDispFuncParamType {
     const char *formalParamPrefix;
     F_BKF_DISP_FUNC_REAL_PARAM_STR_2VAL realParamStr2Val;
 } BkfDispFuncParamType;
 
 const BkfDispFuncParamType g_BkfDispFuncParamType[] = {
-    { "pc", BkfDispFuncRealParam2Str },
-    { "uni", BkfDispFuncRealParam2Num },
+    {"pc", BkfDispFuncRealParam2Str},
+    {"uni", BkfDispFuncRealParam2Num},
 };
 
 const char *g_BkfDispStatStrTbl[] = {
@@ -292,10 +291,10 @@ BkfDisp *BkfDispInit(BkfDispInitArg *arg)
     disp->name = BkfStrNew(arg->memMng, "%s_disp", arg->name);
     disp->argInit.name = disp->name;
     BKF_DL_INIT(&disp->funcSetByTime);
-    VOS_AVLL_INIT_TREE(disp->funcSet, (AVLL_COMPARE)VOS_StrCmp,
-                       BKF_OFFSET(BkfDispFunc, funcName[0]), BKF_OFFSET(BkfDispFunc, avlNode));
-    VOS_AVLL_INIT_TREE(disp->objSet, (AVLL_COMPARE)VOS_StrCmp,
-                       BKF_OFFSET(BkfDispObj, objName[0]), BKF_OFFSET(BkfDispObj, avlNode));
+    VOS_AVLL_INIT_TREE(disp->funcSet, (AVLL_COMPARE)VOS_StrCmp, BKF_OFFSET(BkfDispFunc, funcName[0]),
+        BKF_OFFSET(BkfDispFunc, avlNode));
+    VOS_AVLL_INIT_TREE(disp->objSet, (AVLL_COMPARE)VOS_StrCmp, BKF_OFFSET(BkfDispObj, objName[0]),
+        BKF_OFFSET(BkfDispObj, avlNode));
     BkfDispInitSelfDispFunc(disp);
 
     return disp;
@@ -401,9 +400,9 @@ void BkfDispUnregObj(BkfDisp *disp, char *objName)
 }
 
 STATIC uint32_t BkfDispRegFuncChkParam(BkfDisp *disp, char *funcName, F_BKF_DISP_FUNC funcAddr,
-                                       const char *funcHelpInfo, uint8_t funcLvl, char *funcMayProcObjName,
-                                       uint8_t funcParamCnt, BkfDispObj **findDispObj)
+    const char *funcHelpInfo, uint8_t funcLvl, char *funcMayProcObjName, uint8_t funcParamCnt, BkfDispObj **findDispObj)
 {
+    (void)funcLvl;
     BkfDispObj *dispObj = VOS_NULL;
 
     if (disp == VOS_NULL) {
@@ -456,9 +455,8 @@ STATIC BOOL BkfDispRegFuncFormalParamIsValid(const char *formalParam)
 {
     return (BkfDispGetFuncFormalParamType(formalParam) != VOS_NULL);
 }
-STATIC uint32_t BkfDispRegFuncAddFunc(BkfDisp *disp, char *funcName, F_BKF_DISP_FUNC funcAddr,
-                                      const char *funcHelpInfo, uint8_t funcLvl, BkfDispObj *dispObj,
-                                      uint8_t funcParamCnt, char **formalParam)
+STATIC uint32_t BkfDispRegFuncAddFunc(BkfDisp *disp, char *funcName, F_BKF_DISP_FUNC funcAddr, const char *funcHelpInfo,
+    uint8_t funcLvl, BkfDispObj *dispObj, uint8_t funcParamCnt, char **formalParam)
 {
     BkfDispFunc *dispFunc = VOS_NULL;
     BkfDispFuncObjName *funcObjName = VOS_NULL;
@@ -483,17 +481,17 @@ STATIC uint32_t BkfDispRegFuncAddFunc(BkfDisp *disp, char *funcName, F_BKF_DISP_
     return BKF_OK;
 }
 uint32_t BkfDispRegFunc(BkfDisp *disp, char *funcName, F_BKF_DISP_FUNC funcAddr, const char *funcHelpInfo,
-                        uint8_t funcLvl, char *funcMayProcObjName, uint8_t funcParamCnt, ...)
+    uint8_t funcLvl, char *funcMayProcObjName, uint8_t funcParamCnt, ...)
 {
     BkfDispObj *dispObj = VOS_NULL;
     uint32_t ret;
     va_list va;
     uint32_t i;
-    char *formalParam[BKF_DISP_FUNC_PARAM_CNT] = { VOS_NULL };
+    char *formalParam[BKF_DISP_FUNC_PARAM_CNT] = {VOS_NULL};
     BOOL formalParamIsValid = VOS_TRUE;
 
-    ret = BkfDispRegFuncChkParam(disp, funcName, funcAddr, funcHelpInfo,
-                                   funcLvl, funcMayProcObjName, funcParamCnt, &dispObj);
+    ret = BkfDispRegFuncChkParam(disp, funcName, funcAddr, funcHelpInfo, funcLvl, funcMayProcObjName, funcParamCnt,
+        &dispObj);
     if (ret != BKF_OK) {
         BKF_DISP_INC_CNT(disp, ret);
         return ret;
@@ -519,8 +517,7 @@ uint32_t BkfDispRegFunc(BkfDisp *disp, char *funcName, F_BKF_DISP_FUNC funcAddr,
         return BKF_ERR;
     }
 
-    ret = BkfDispRegFuncAddFunc(disp, funcName, funcAddr, funcHelpInfo,
-                                  funcLvl, dispObj, funcParamCnt, formalParam);
+    ret = BkfDispRegFuncAddFunc(disp, funcName, funcAddr, funcHelpInfo, funcLvl, dispObj, funcParamCnt, formalParam);
     if (ret != BKF_OK) {
         BKF_DISP_INC_CNT(disp, ret);
         return ret;
@@ -531,7 +528,7 @@ uint32_t BkfDispRegFunc(BkfDisp *disp, char *funcName, F_BKF_DISP_FUNC funcAddr,
 }
 
 STATIC uint32_t BkfDispProcChkParam(BkfDisp *disp, char **inStr, uint8_t inStrCnt, char *outStrBuf,
-                                    int32_t outStrBufLen, BkfDispProcCtx *ctx)
+    int32_t outStrBufLen, BkfDispProcCtx *ctx)
 {
     uint8_t i;
 
@@ -569,6 +566,7 @@ STATIC uint32_t BkfDispProcChkParam(BkfDisp *disp, char **inStr, uint8_t inStrCn
 }
 STATIC BkfDispFunc *BkfDispProcParseDispFunc(BkfDisp *disp, char **inStr, uint8_t inStrCnt)
 {
+    (void)inStrCnt;
     char *funcName = VOS_NULL;
     BkfDispFunc *dispFunc = VOS_NULL;
 
@@ -576,15 +574,16 @@ STATIC BkfDispFunc *BkfDispProcParseDispFunc(BkfDisp *disp, char **inStr, uint8_
     dispFunc = BkfDispFindFunc(disp, funcName);
     if ((dispFunc == VOS_NULL) || !BKF_DISP_FUNC_MAY_USE(disp, dispFunc)) {
         BKF_DISP_INC_CNT(disp, BKF_DISP_CNT_PROC_NO_VALID_FUNC_FIND);
-        BKF_DISP_PRINTF(disp, "[%s(^)], no valid func find, BkfDispHelp for help\n", funcName);
+        BKF_DISP_PRINTF(disp, "[%s(^)], no valid func found, BkfDispHelp for help\n", funcName);
         return VOS_NULL;
     }
 
     return dispFunc;
 }
-STATIC uint32_t BkfDispProcParseFuncOneParam(BkfDisp *disp, BkfDispFunc *dispFunc, uint8_t paramIdx,
-                                             char *realParamStr, uintptr_t *realParamVal)
+STATIC uint32_t BkfDispProcParseFuncOneParam(BkfDisp *disp, BkfDispFunc *dispFunc, uint8_t paramIdx, char *realParamStr,
+    uintptr_t *realParamVal)
 {
+    (void)disp;
     BkfDispFuncParamType *paramType = VOS_NULL;
     BOOL str2ValSucc = VOS_FALSE;
 
@@ -601,7 +600,7 @@ STATIC uint32_t BkfDispProcParseFuncOneParam(BkfDisp *disp, BkfDispFunc *dispFun
     return BKF_OK;
 }
 STATIC uint32_t BkfDispProcParseFuncParam(BkfDisp *disp, char **inStr, uint8_t inStrCnt, BkfDispFunc *dispFunc,
-                                          uintptr_t *realParamVal, uint8_t realParamValCnt)
+    uintptr_t *realParamVal, uint8_t realParamValCnt)
 {
     uint8_t i;
     uint8_t j;
@@ -667,6 +666,7 @@ STATIC BkfDispObj *BkfDispProcParseDispObj(BkfDisp *disp, char **inStr, uint8_t 
 STATIC void BkfDispProcCallFuncForPara(BkfDisp *disp, BkfDispFunc *dispFunc, uintptr_t *realParamVal,
     BkfDispObj *dispObj)
 {
+    (void)disp;
     switch (dispFunc->funcParamCnt) {
         case 0: {
             dispFunc->funcAddr(dispObj->objAddr);
@@ -680,18 +680,18 @@ STATIC void BkfDispProcCallFuncForPara(BkfDisp *disp, BkfDispFunc *dispFunc, uin
             dispFunc->funcAddr(dispObj->objAddr, realParamVal[0], realParamVal[1]);
             break;
         }
-        case 3: { /* 3 param */
+        case 3: {                                                                                    /* 3 param */
             dispFunc->funcAddr(dispObj->objAddr, realParamVal[0], realParamVal[1], realParamVal[2]); /* param 2 */
             break;
         }
-        case 4: { /* 4 param */
+        case 4: {                                                                                   /* 4 param */
             dispFunc->funcAddr(dispObj->objAddr, realParamVal[0], realParamVal[1], realParamVal[2], /* param 2 */
-                               realParamVal[3]); /* param 3 */
+                realParamVal[3]);                                                                   /* param 3 */
             break;
         }
-        case 5: { /* 5 param */
+        case 5: {                                                                                   /* 5 param */
             dispFunc->funcAddr(dispObj->objAddr, realParamVal[0], realParamVal[1], realParamVal[2], /* param 2 */
-                               realParamVal[3], realParamVal[4]); /* param 3, 4 */
+                realParamVal[3], realParamVal[4]);                                                  /* param 3, 4 */
             break;
         }
         default: {
@@ -703,8 +703,9 @@ STATIC void BkfDispProcCallFuncForPara(BkfDisp *disp, BkfDispFunc *dispFunc, uin
     return;
 }
 STATIC void BkfDispProcCallFunc(BkfDisp *disp, BkfDispFunc *dispFunc, uintptr_t *realParamVal, uint8_t realParamValCnt,
-                                  BkfDispObj *dispObj)
+    BkfDispObj *dispObj)
 {
+    (void)realParamValCnt;
     int32_t i;
     BOOL lastCtxNotUse = VOS_FALSE;
     BOOL maybeDeadLoop = VOS_FALSE;
@@ -766,11 +767,11 @@ STATIC uint32_t BkfDispProcFillRet(BkfDisp *disp)
     }
 }
 uint32_t BkfDispProc(BkfDisp *disp, char **inStr, uint8_t inStrCnt, char *outStrBuf, int32_t outStrBufLen,
-                    BkfDispProcCtx *ctx)
+    BkfDispProcCtx *ctx)
 {
     uint32_t ret;
     BkfDispFunc *dispFunc = VOS_NULL;
-    uintptr_t realParamVal[BKF_DISP_FUNC_PARAM_CNT] = { 0 };
+    uintptr_t realParamVal[BKF_DISP_FUNC_PARAM_CNT] = {0};
     BkfDispObj *dispObj = VOS_NULL;
 
     if (disp == VOS_NULL) {
@@ -853,7 +854,7 @@ STATIC void BkfDispWrite2OutBuf(BkfDisp *disp, char *buf, uint32_t len)
         return;
     }
     writeLen = snprintf_truncated_s(&disp->outStrBuf[0] + disp->prinfTotalLen, mayWriteLen, "%s", buf);
-    if (writeLen < (int32_t)len)  {
+    if (writeLen < (int32_t)len) {
         disp->outStrBufNotEnough = VOS_TRUE;
         BkfDispRollbackPrintfLen(disp);
         return;
@@ -862,7 +863,7 @@ STATIC void BkfDispWrite2OutBuf(BkfDisp *disp, char *buf, uint32_t len)
 }
 void BkfDispPrintf(BkfDisp *disp, const char *fmt, ...)
 {
-    char buf[BKF_DISP_PRINTF_BUF_LEN_MAX] = { 0 };
+    char buf[BKF_DISP_PRINTF_BUF_LEN_MAX] = {0};
     uint32_t ret;
     va_list va;
     errno_t err;
@@ -952,6 +953,7 @@ void BkfDispSaveCtx(BkfDisp *disp, void *ctx1, int32_t ctx1Len, void *ctx2OrNull
 
 STATIC uint32_t BkfDispGetLastCtxChkParam(BkfDisp *disp, void *ctx2OrNull)
 {
+    (void)ctx2OrNull;
     if (disp == VOS_NULL) {
         return BKF_ERR;
     }
@@ -993,7 +995,7 @@ void *BkfDispGetLastCtx(BkfDisp *disp, void *ctx2OrNull)
 
 void BkfDispSave3Num(BkfDisp *disp, int32_t val1, int32_t val2, int32_t val3)
 {
-    int32_t val[3] = { val1, val2, val3 };
+    int32_t val[3] = {val1, val2, val3};
 
     BKF_DISP_SAVE_CTX(disp, val, sizeof(val), VOS_NULL, 0);
 }
@@ -1036,13 +1038,13 @@ uint32_t BkfDispInitTempCtx(BkfDispTempCtx *tempCtx)
 
 STATIC void BkfDispTestOneNoArgFuncWithObj(BkfDisp *disp, BkfDispFunc *dispFunc, BkfDispObj *dispObj)
 {
-    char inStrFuncName[BKF_1K / 2] = { 0 };
-    char inStrObjName[BKF_1K / 2] = { 0 };
-    char *inStr[2] = { inStrFuncName, inStrObjName };
+    char inStrFuncName[BKF_1K / 2] = {0};
+    char inStrObjName[BKF_1K / 2] = {0};
+    char *inStr[2] = {inStrFuncName, inStrObjName};
     int32_t err;
     uint32_t ret;
-    char outStrBuf[BKF_1K * 3] = { 0 };
-    BkfDispProcCtx ctx = { 0 };
+    char outStrBuf[BKF_1K * 3] = {0};
+    BkfDispProcCtx ctx = {0};
 
     do {
         err = snprintf_truncated_s(inStrFuncName, sizeof(inStrFuncName), "%s", dispFunc->funcName);
@@ -1084,6 +1086,8 @@ STATIC void BkfDispTestNoArgFunc(BkfDisp *disp)
 }
 void BkfDispTestFunc(BkfDisp *disp, char *funcName, char *objName, uint8_t funcParamCnt, ...)
 {
+    (void)funcName;
+    (void)funcParamCnt;
     if ((disp == VOS_NULL) || (objName == VOS_NULL)) {
         return;
     }
@@ -1118,7 +1122,7 @@ STATIC BOOL BkfDispFuncRealParam2Num(char *realParamStr, uintptr_t *outVal)
 
 /* data op */
 STATIC BkfDispFunc *BkfDispAddFunc(BkfDisp *disp, char *funcName, F_BKF_DISP_FUNC funcAddr, const char *funcHelpInfo,
-                                     uint8_t funcLvl, uint8_t funcParamCnt, char **funcFormalParam)
+    uint8_t funcLvl, uint8_t funcParamCnt, char **funcFormalParam)
 {
     BkfDispFunc *dispFunc = VOS_NULL;
     uint32_t strLen;
@@ -1134,8 +1138,8 @@ STATIC BkfDispFunc *BkfDispAddFunc(BkfDisp *disp, char *funcName, F_BKF_DISP_FUN
         goto error;
     }
     (void)memset_s(dispFunc, len, 0, len);
-    VOS_AVLL_INIT_TREE(dispFunc->funcObjNameSet, (AVLL_COMPARE)VOS_StrCmp,
-                       BKF_OFFSET(BkfDispFuncObjName, objName[0]), BKF_OFFSET(BkfDispFuncObjName, avlNode));
+    VOS_AVLL_INIT_TREE(dispFunc->funcObjNameSet, (AVLL_COMPARE)VOS_StrCmp, BKF_OFFSET(BkfDispFuncObjName, objName[0]),
+        BKF_OFFSET(BkfDispFuncObjName, avlNode));
     ret = snprintf_truncated_s(dispFunc->funcName, strLen + 1, "%s", funcName);
     if (ret < 0) {
         goto error;
@@ -1310,6 +1314,7 @@ STATIC void BkfDispDelFuncAllObjName(BkfDisp *disp, BkfDispFunc *dispFunc)
 
 STATIC BkfDispFuncObjName *BkfDispFindFuncObjName(BkfDisp *disp, BkfDispFunc *dispFunc, char *objName)
 {
+    (void)disp;
     BkfDispFuncObjName *funcObjName = VOS_NULL;
 
     funcObjName = VOS_AVLL_FIND(dispFunc->funcObjNameSet, objName);
@@ -1318,27 +1323,29 @@ STATIC BkfDispFuncObjName *BkfDispFindFuncObjName(BkfDisp *disp, BkfDispFunc *di
 
 STATIC BkfDispFuncObjName *BkfDispFindNextFuncObjName(BkfDisp *disp, BkfDispFunc *dispFunc, char *objName)
 {
+    (void)disp;
     BkfDispFuncObjName *funcObjName = VOS_NULL;
 
     funcObjName = VOS_AVLL_FIND_NEXT(dispFunc->funcObjNameSet, objName);
     return funcObjName;
 }
 
-STATIC BkfDispFuncObjName *BkfDispGetFirstFuncObjNameOfFunc(BkfDisp *disp, BkfDispFunc *dispFunc,
-                                                              void **itorOutOrNull)
+STATIC BkfDispFuncObjName *BkfDispGetFirstFuncObjNameOfFunc(BkfDisp *disp, BkfDispFunc *dispFunc, void **itorOutOrNull)
 {
+    (void)disp;
     BkfDispFuncObjName *funcObjName = VOS_NULL;
 
     funcObjName = VOS_AVLL_FIRST(dispFunc->funcObjNameSet);
     if (itorOutOrNull != VOS_NULL) {
-        *itorOutOrNull = (funcObjName != VOS_NULL) ?
-                            VOS_AVLL_NEXT(dispFunc->funcObjNameSet, funcObjName->avlNode) : VOS_NULL;
+        *itorOutOrNull = (funcObjName != VOS_NULL) ? VOS_AVLL_NEXT(dispFunc->funcObjNameSet, funcObjName->avlNode)
+                                                   : VOS_NULL;
     }
     return funcObjName;
 }
 
 STATIC BkfDispFuncObjName *BkfDispGetNextFuncObjNameOfFunc(BkfDisp *disp, BkfDispFunc *dispFunc, void **itorInOut)
 {
+    (void)disp;
     BkfDispFuncObjName *funcObjName = VOS_NULL;
 
     funcObjName = (*itorInOut);
@@ -1348,6 +1355,7 @@ STATIC BkfDispFuncObjName *BkfDispGetNextFuncObjNameOfFunc(BkfDisp *disp, BkfDis
 
 STATIC BkfDispFuncObjName *BkfDispGetFirstFuncObjNameOfObj(BkfDisp *disp, BkfDispObj *dispObj, void **itorOutOrNull)
 {
+    (void)disp;
     BkfDlNode *tempNode = VOS_NULL;
     BkfDispFuncObjName *funcObjName = VOS_NULL;
 
@@ -1368,6 +1376,7 @@ STATIC BkfDispFuncObjName *BkfDispGetFirstFuncObjNameOfObj(BkfDisp *disp, BkfDis
 
 STATIC BkfDispFuncObjName *BkfDispGetNextFuncObjNameOfObj(BkfDisp *disp, BkfDispObj *dispObj, void **itorInOut)
 {
+    (void)disp;
     BkfDlNode *tempNode = VOS_NULL;
     BkfDispFuncObjName *funcObjName = VOS_NULL;
 
@@ -1440,8 +1449,7 @@ STATIC void BkfDispDelAllObj(BkfDisp *disp)
     BkfDispObj *dispObj = VOS_NULL;
     void *itor = VOS_NULL;
 
-    for (dispObj = BkfDispGetFirstObj(disp, &itor); dispObj != VOS_NULL;
-         dispObj = BkfDispGetNextObj(disp, &itor)) {
+    for (dispObj = BkfDispGetFirstObj(disp, &itor); dispObj != VOS_NULL; dispObj = BkfDispGetNextObj(disp, &itor)) {
         BkfDispDelObj(disp, dispObj);
     }
     return;
@@ -1498,7 +1506,7 @@ STATIC void BkfDispOneFunc(BkfDisp *disp, BkfDispFunc *dispFunc, int32_t mayUseD
         }
     }
     BKF_DISP_PRINTF(disp, ") --- %s, (%d/%u/%u)\n", dispFunc->funcHelpInfo, funcObjNameCnt, dispFunc->appCallCnt,
-                    dispFunc->funcCbCnt);
+        dispFunc->funcCbCnt);
 
     return;
 }
@@ -1557,8 +1565,7 @@ STATIC int32_t BkfDispGetDispObjCnt(BkfDisp *disp)
     void *itor = VOS_NULL;
     int32_t dispObjCnt = 0;
 
-    for (dispObj = BkfDispGetFirstObj(disp, &itor); dispObj != VOS_NULL;
-         dispObj = BkfDispGetNextObj(disp, &itor)) {
+    for (dispObj = BkfDispGetFirstObj(disp, &itor); dispObj != VOS_NULL; dispObj = BkfDispGetNextObj(disp, &itor)) {
         dispObjCnt++;
     }
     return dispObjCnt;
@@ -1618,22 +1625,22 @@ void BkfDispSelf(BkfDisp *disp)
 
     BKF_DISP_PRINTF(disp, "%s\n", disp->name);
     BKF_DISP_PRINTF(disp, "mayProcFuncLvl(%u)\n", disp->argInit.mayProcFuncLvl);
-    BKF_DISP_PRINTF(disp, "%d/%d func(s), %d/%d func obj name(s)\n",
-                    mayUseDispFuncCnt, dispFuncCnt, mayUseFuncObjNameCnt, funcObjNameCnt);
+    BKF_DISP_PRINTF(disp, "%d/%d func(s), %d/%d func obj name(s)\n", mayUseDispFuncCnt, dispFuncCnt,
+        mayUseFuncObjNameCnt, funcObjNameCnt);
     BKF_DISP_PRINTF(disp, "%d obj(s)\n", dispObjCnt);
 
     memDispFunc = (int64_t)sizeof(BkfDispFunc) * dispFuncCnt;
     memFuncObjName = (int64_t)sizeof(BkfDispFuncObjName) * funcObjNameCnt;
     memDispObj = (int64_t)sizeof(BkfDispObj) * dispObjCnt;
     memTotal = (int64_t)sizeof(*disp) + memDispFunc + memFuncObjName + memDispObj;
-    BKF_DISP_PRINTF(disp, "memTotal       : ^%-10"VOS_PRId64"\n", memTotal);
-    BKF_DISP_PRINTF(disp, "memHandle      :  %-10"VOS_PRId64"\n", sizeof(*disp));
-    BKF_DISP_PRINTF(disp, "memDispFunc    : ^%-10"VOS_PRId64" = %d^ * %d\n",
-                    memDispFunc, sizeof(BkfDispFunc), funcObjNameCnt);
-    BKF_DISP_PRINTF(disp, "memFuncObjName : ^%-10"VOS_PRId64" = %d^ * %d\n",
-                    memFuncObjName, sizeof(BkfDispFuncObjName), funcObjNameCnt);
-    BKF_DISP_PRINTF(disp, "memDispObj     : ^%-10"VOS_PRId64" = %d^ * %d\n",
-                    memDispObj, sizeof(BkfDispObj), dispObjCnt);
+    BKF_DISP_PRINTF(disp, "memTotal       : ^%-10" VOS_PRId64 "\n", memTotal);
+    BKF_DISP_PRINTF(disp, "memHandle      :  %-10" VOS_PRId64 "\n", sizeof(*disp));
+    BKF_DISP_PRINTF(disp, "memDispFunc    : ^%-10" VOS_PRId64 " = %d^ * %d\n", memDispFunc, sizeof(BkfDispFunc),
+        funcObjNameCnt);
+    BKF_DISP_PRINTF(disp, "memFuncObjName : ^%-10" VOS_PRId64 " = %d^ * %d\n", memFuncObjName,
+        sizeof(BkfDispFuncObjName), funcObjNameCnt);
+    BKF_DISP_PRINTF(disp, "memDispObj     : ^%-10" VOS_PRId64 " = %d^ * %d\n", memDispObj, sizeof(BkfDispObj),
+        dispObjCnt);
 }
 
 void BkfDispFuncObjNameFunc(BkfDisp *disp, char *funcName)
@@ -1652,7 +1659,7 @@ void BkfDispFuncObjNameFunc(BkfDisp *disp, char *funcName)
     /* func */
     dispFunc = BkfDispFindFunc(disp, funcName);
     if ((dispFunc == VOS_NULL) || !BKF_DISP_FUNC_MAY_USE(disp, dispFunc)) {
-        BKF_DISP_PRINTF(disp, "%s, func not find\n", funcName);
+        BKF_DISP_PRINTF(disp, "%s, func not found\n", funcName);
         return;
     }
 
@@ -1740,9 +1747,9 @@ typedef struct tagBkfDispMemStatCtx {
 void BkfDispMemMng(BkfDisp *disp)
 {
     BkfDispMemStatCtx *last = VOS_NULL;
-    BkfDispMemStatCtx cur = { 0 };
+    BkfDispMemStatCtx cur = {0};
     char *statStr = VOS_NULL;
-    BkfMemStatKey key = { 0 };
+    BkfMemStatKey key = {0};
     int32_t cnt = 0;
     errno_t err;
     uint8_t buf[BKF_1K];
@@ -1871,8 +1878,7 @@ STATIC void BkfDispInitSelfDispFunc(BkfDisp *disp)
     (void)BKF_DISP_REG_FUNC(disp, BkfDispAllObj, "disp all obj(s)", objName, 0);
     (void)BKF_DISP_REG_FUNC(disp, BkfDispStatNotZero, "disp not zero stat info", objName, 0);
     (void)BKF_DISP_REG_FUNC(disp, BkfDispMemMng, "disp mem mng info", objName, 0);
-    (void)BKF_DISP_REG_TEST_FUNC(disp, BkfDispTest1, "disp test", objName, BKF_NUM2,
-                                 "pcNumStr", "uniNum");
+    (void)BKF_DISP_REG_TEST_FUNC(disp, BkfDispTest1, "disp test", objName, BKF_NUM2, "pcNumStr", "uniNum");
     (void)BKF_DISP_REG_TEST_FUNC(disp, BkfDispTestNotGetCtx, "disp test", objName, 0);
     (void)BKF_DISP_REG_TEST_FUNC(disp, BkfDispTestDeadloop, "disp test", objName, 0);
     (void)BKF_DISP_REG_TEST_FUNC(disp, BkfDispTestNotSaveCtxBeforeOutBufNotEnough, "disp test", objName, 0);
@@ -1893,4 +1899,3 @@ STATIC void BkfDispUninitSelfDispFunc(BkfDisp *disp)
 }
 #endif
 #endif
-

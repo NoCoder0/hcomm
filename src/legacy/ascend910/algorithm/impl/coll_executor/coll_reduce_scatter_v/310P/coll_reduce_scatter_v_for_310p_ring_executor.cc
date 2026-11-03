@@ -1,20 +1,20 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "coll_reduce_scatter_v_for_310p_ring_executor.h"
 
 #include <algorithm>
 
 namespace hccl {
-CollReduceScatterVFor310PRingExecutor::CollReduceScatterVFor310PRingExecutor(const HcclDispatcher dispatcher,
-    std::unique_ptr<TopoMatcher> &topoMatcher)
+CollReduceScatterVFor310PRingExecutor::CollReduceScatterVFor310PRingExecutor(
+    const HcclDispatcher dispatcher, std::unique_ptr<TopoMatcher>& topoMatcher)
     : CollReduceScatterVExecutor(dispatcher, topoMatcher)
 {
     DMAReduceFlag_ = true;
@@ -36,8 +36,8 @@ HcclResult CollReduceScatterVFor310PRingExecutor::CalcCommInfo(std::vector<Level
     return HCCL_SUCCESS;
 }
 
-HcclResult CollReduceScatterVFor310PRingExecutor::CalcTransportMemType(TransportMemType &inputType,
-    TransportMemType &outputType)
+HcclResult CollReduceScatterVFor310PRingExecutor::CalcTransportMemType(
+    TransportMemType& inputType, TransportMemType& outputType) const
 {
     if (workflowMode_ == HcclWorkflowMode::HCCL_WORKFLOW_MODE_OP_BASE) {
         inputType = TransportMemType::CCL_INPUT;
@@ -46,14 +46,14 @@ HcclResult CollReduceScatterVFor310PRingExecutor::CalcTransportMemType(Transport
         inputType = TransportMemType::PARAM_INPUT;
         outputType = TransportMemType::PARAM_OUTPUT;
     }
-    HCCL_INFO("[CollReduceScatterVFor310PRingExecutor][CalcTransportMemType] tag[%s] inputType[%d], outputType[%d]",
+    HCCL_INFO(
+        "[CollReduceScatterVFor310PRingExecutor][CalcTransportMemType] tag[%s] inputType[%d], outputType[%d]",
         tag_.c_str(), inputType, outputType);
     return HCCL_SUCCESS;
 }
 
-HcclResult CollReduceScatterVFor310PRingExecutor::CalcLevel0CommInfo(TransportMemType inputType,
-    TransportMemType outputType,
-    std::vector<LevelNSubCommTransport>& opTransport)
+HcclResult CollReduceScatterVFor310PRingExecutor::CalcLevel0CommInfo(
+    TransportMemType inputType, TransportMemType outputType, std::vector<LevelNSubCommTransport>& opTransport)
 {
     HCCL_INFO("[CollReduceScatterVFor310PRingExecutor][CalcLevel0CommInfo]tag[%s] start", tag_.c_str());
     CommParaInfo commParaInfo(COMM_LEVEL0, CommType::COMM_TAG_RING_INNER);
@@ -62,9 +62,9 @@ HcclResult CollReduceScatterVFor310PRingExecutor::CalcLevel0CommInfo(TransportMe
     return HCCL_SUCCESS;
 }
 
-HcclResult CollReduceScatterVFor310PRingExecutor::CalcCurCountsAndCurDispls(const u64 maxTotalCount,
-    std::vector<u64> &countsLeft, std::vector<u64> &displs, std::vector<u64> &curCounts, std::vector<u64> &curDispls,
-    bool &finished)
+HcclResult CollReduceScatterVFor310PRingExecutor::CalcCurCountsAndCurDispls(
+    const u64 maxTotalCount, std::vector<u64>& countsLeft, std::vector<u64>& displs, std::vector<u64>& curCounts,
+    std::vector<u64>& curDispls, bool& finished)
 {
     curCounts = std::vector<u64>(countsLeft.size(), 0);
     curDispls = std::vector<u64>(displs.size(), 0);
@@ -74,11 +74,11 @@ HcclResult CollReduceScatterVFor310PRingExecutor::CalcCurCountsAndCurDispls(cons
     std::copy(displs.begin(), displs.end(), curDispls.begin());
 
     // 分配本轮的counts，如果CCLbuffer空间还没完全利用，则再进行分配
-    while (allocatableCount > 0)
-    {
+    while (allocatableCount > 0) {
         // 计算现在还有几个rank还有数据需要去通信(countsLeft不为0)
-        const auto nonZeroCount =
-            std::count_if(countsLeft.begin(), countsLeft.end(), [](const u64 count) { return count != 0; });
+        const auto nonZeroCount = std::count_if(countsLeft.begin(), countsLeft.end(), [](const u64 count) {
+            return count != 0;
+        });
         if (nonZeroCount == 0) {
             finished = true;
             break;
@@ -95,16 +95,16 @@ HcclResult CollReduceScatterVFor310PRingExecutor::CalcCurCountsAndCurDispls(cons
                 curCounts[i] += curCount;
                 countsLeft[i] -= curCount;
                 displs[i] += curCount;
-            }            
+            }
         }
     }
     return HCCL_SUCCESS;
 }
 
-HcclResult CollReduceScatterVFor310PRingExecutor::KernelRun(const OpParam &param, ExecMem &execMem)
+HcclResult CollReduceScatterVFor310PRingExecutor::KernelRun(const OpParam& param, ExecMem& execMem)
 {
     HCCL_CONFIG_INFO(HCCL_ALG, "[CollReduceScatterVFor310PRingExecutor][KernelRun] 310p aiv ReduceScatterV start");
-    const auto *displsPtr = static_cast<const u64*>(param.VDataDes.displs);
+    const auto* displsPtr = static_cast<const u64*>(param.VDataDes.displs);
     HcclDataType dataType = param.VDataDes.dataType;
     const u32 unitSize = SIZE_TABLE[dataType];
 
@@ -112,8 +112,8 @@ HcclResult CollReduceScatterVFor310PRingExecutor::KernelRun(const OpParam &param
     SubCommInfo outerCommInfo = GetSubCommInfo(COMM_LEVEL0, COMM_INDEX_0);
     const u32 level0RankSize = outerCommInfo.localRankSize;
 
-    bool isInlineReduce = IsSupportSDMAReduce(execMem.inputMem.ptr(), execMem.outputMem.ptr(), dataType,
-        param.reduceType);
+    bool isInlineReduce
+        = IsSupportSDMAReduce(execMem.inputMem.ptr(), execMem.outputMem.ptr(), dataType, param.reduceType);
 
     u64 reduceAttr = 0;
     if (isInlineReduce) {
@@ -136,33 +136,35 @@ HcclResult CollReduceScatterVFor310PRingExecutor::KernelRun(const OpParam &param
         slice.offset = displace * unitSize;
         slice.size = counts[rank] * unitSize;
         dataSlices.emplace_back(slice);
-        
+
         slice.offset = displsPtr[rank] * unitSize;
         outputSlices.emplace_back(std::move(slice));
-    
+
         displace += counts[rank];
     }
-    
+
     // opInfo这里主要填对inputPtr和outputPtr就好
-    HcomCollOpInfo opInfo = {"", execMem.inputPtr, execMem.outputPtr, 0, dataType, 0, param.reduceType};
-    HcomCollOpInfo *opInfoPtr = nullptr;
+    HcomCollOpInfo opInfo = {"", execMem.inputPtr, execMem.outputPtr, 0, dataType, 0, param.reduceType, 0};
+    HcomCollOpInfo* opInfoPtr = nullptr;
     if (DMAReduceFlag_) {
         opInfoPtr = &opInfo;
     }
 
     std::vector<u32> rankOrder(level0RankSize, 0);
-    std::unique_ptr<AlgTemplateBase> tempAlg = AlgTemplateRegistry::Instance().GetAlgTemplate(
-        TemplateType::TEMPLATE_REDUCESCATTER_RING_DIRECT, dispatcher_);
+    std::unique_ptr<AlgTemplateBase> tempAlg
+        = AlgTemplateRegistry::Instance().GetAlgTemplate(TemplateType::TEMPLATE_REDUCESCATTER_RING_DIRECT, dispatcher_);
     CHK_SMART_PTR_NULL(tempAlg);
-    CHK_RET(tempAlg->Prepare(reduceAttr, opInfoPtr, topoAttr_.userRank, algResResp_->slaveStreams,
-                        algResResp_->notifiesMain, algResResp_->notifiesAux, rankOrder, outputSlices, true));
+    CHK_RET(tempAlg->Prepare(
+        reduceAttr, opInfoPtr, topoAttr_.userRank, algResResp_->slaveStreams, algResResp_->notifiesMain,
+        algResResp_->notifiesAux, rankOrder, outputSlices, true));
 
-    CHK_RET(tempAlg->Prepare(execMem.inputMem, execMem.outputMem, execMem.outputMem, execMem.count,
-        dataType, param.stream, param.reduceType, 0, dataSlices));
+    CHK_RET(tempAlg->Prepare(
+        execMem.inputMem, execMem.outputMem, execMem.outputMem, execMem.count, dataType, param.stream, param.reduceType,
+        0, dataSlices));
 
     CHK_RET(tempAlg->RegisterProfiler(
-        (outerCommInfo.localRankSize << PROF_RANKSIZE_OFFSET_OF_PLANEID) + outerCommInfo.localRank,
-        PROF_STAGE_0, HCCL_EXEC_STEP_NOT_SET, param.stream));
+        (outerCommInfo.localRankSize << PROF_RANKSIZE_OFFSET_OF_PLANEID) + outerCommInfo.localRank, PROF_STAGE_0,
+        HCCL_EXEC_STEP_NOT_SET, param.stream));
 
     // 执行Ring算法
     CHK_RET(RunTemplate(tempAlg, outerCommInfo));

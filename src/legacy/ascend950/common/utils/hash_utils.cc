@@ -14,7 +14,7 @@ namespace Hccl {
 
 std::size_t HashCombine(std::initializer_list<std::size_t> hashItem)
 {
-    std::size_t res     = 17;
+    std::size_t res = 17;
     std::size_t padding = 31;
     for (auto begin = hashItem.begin(); begin != hashItem.end(); ++begin) {
         res = padding * res + (*begin);

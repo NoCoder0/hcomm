@@ -21,7 +21,9 @@ set(hccl_utest_device_src_list
     ut_launch_aicpu.cc
     ut_hccl_aicpu_interface.cc
     ut_topoinfo_detect_device.cc
+    ut_a3_thread_profiling.cc
 
+    ${HCCL_CODE_ROOT}/src/legacy/ascend910/framework/hcom/hcom_device_profiling.cc
     ${HCCL_CODE_ROOT}/src/legacy/ascend910/common/stream/stream_utils_aicpu.cc
     ${HCCL_CODE_ROOT}/src/legacy/ascend910/common/debug/profiling/plugin_runner_device.cc
     ${HCCL_CODE_ROOT}/src/legacy/ascend910/framework/common/src/config/env_config_aicpu.cc
@@ -34,10 +36,11 @@ set(hccl_utest_device_src_list
     ${HCCL_CODE_ROOT}/src/legacy/ascend910/algorithm/impl/hccl_alg_device.cc
     ${HCCL_CODE_ROOT}/src/legacy/ascend910/framework/common/src/topo/topo_device/topoinfo_ranktableConcise_device.cc
     ${HCCL_CODE_ROOT}/src/legacy/ascend910/framework/common/src/topo/topo_device/topoinfo_detect_device.cc
+    ${HCCL_CODE_ROOT}/src/legacy/ascend910/framework/common/src/topo/topo_device/topoinfo_ranktableParser_device.cc
+    ${HCCL_CODE_ROOT}/src/legacy/ascend910/framework/common/src/topo/topo_device/topoinfo_ranktable_partition_device.cc
+    ${HCCL_CODE_ROOT}/src/legacy/ascend910/framework/common/src/topo/topo_device/topoinfo_ranktableStandard_device.cc
     ${HCCL_CODE_ROOT}/src/legacy/ascend910/algorithm/impl/coll_executor/coll_all_to_all/coll_all_to_all_executor_aicpu.cc
     ${HCCL_CODE_ROOT}/src/base_comm/resources/comm_engine_res/threads/device/aicpu_thread_kernel.cc
-    ${HCCL_CODE_ROOT}/src/base_comm/resources/comm_engine_res/threads/device/aicpu_thread_process.cc
-    ${HCCL_CODE_ROOT}/src/legacy/ascend910/framework/device/framework/aicpu_one_side_service.cc
     ${HCCL_CODE_ROOT}/src/legacy/ascend910/framework/device/hccl_aicpu_interface.cc
     ${HCCL_CODE_ROOT}/src/legacy/ascend910/common/launch_aicpu/launch_aicpu.cc
     ${HCCL_CODE_ROOT}/src/legacy/ascend910/platform/common/adapter/adapter_rts.cc
@@ -45,16 +48,27 @@ set(hccl_utest_device_src_list
 
 add_executable(hccl_utest_device ${hccl_utest_device_src_list})
 
+# 在本目录按源文件启用 AICPU 分支，覆盖真实 profiling 入口。
+set_source_files_properties(
+    ut_a3_thread_profiling.cc
+    ${HCCL_CODE_ROOT}/src/legacy/ascend910/framework/hcom/hcom_device_profiling.cc
+    PROPERTIES COMPILE_DEFINITIONS CCL_KERNEL_AICPU
+)
+
 target_include_directories(hccl_utest_device PRIVATE
     ${UT_COMMON_INCLUDE_LIST}
     ${HCCL_CODE_ROOT}/src/legacy/ascend910/framework/communicator/impl/independent_op/resource/device/
     ${HCCL_CODE_ROOT}/src/legacy/ascend910/framework/communicator/impl/independent_op/resource/engine/
     ${HCCL_CODE_ROOT}/src/legacy/ascend910/framework/communicator/impl/independent_op/device/
     ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/common/
+    ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/api_c_adpt/
     ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/communicator
     ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/communicator/device/
-    ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_engine_reses/notify/
-    ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_engine_reses/
+    ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/communicator/group_schedule_mgr
+    ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/communicator/op_group_queue_mgr
+    ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/communicator/device/resource_mgr/local/my_rank/comm_engine_reses
+    ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/communicator/device/c_adpt
+    ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_engine/
     ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_mems/
     ${HCCL_CODE_ROOT}/src/base_comm/resources/comm_engine_res/launch/
     ${HCCL_CODE_ROOT}/src/base_comm/resources/comm_engine_res/threads/device/
@@ -84,7 +98,7 @@ target_link_libraries(hccl_utest_device PRIVATE
     -pthread
     hccl_llt
     -Wl,--whole-archive
-    -Wl,--no-whole-archi
+    -Wl,--no-whole-archive
     -lgcov
     -lrt
     -ldl
@@ -104,10 +118,12 @@ target_include_directories(hccl_utest_launch_aicpu_fw PRIVATE
     ${HCCL_CODE_ROOT}/src/legacy/ascend910/framework/communicator/impl/independent_op/resource/device/
     ${HCCL_CODE_ROOT}/src/legacy/ascend910/framework/communicator/impl/independent_op/device/
     ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/common/
+    ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/api_c_adpt/
     ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/communicator
     ${HCCL_CODE_ROOT}/src/coll_communicator/communicator/device/
-    ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_engine_reses/notify/
-    ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_engine_reses/
+    ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/communicator/group_schedule_mgr
+    ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/communicator/op_group_queue_mgr
+    ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_engine/
     ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/resource_mgr/local/my_rank/comm_mems/
     ${HCCL_CODE_ROOT}/src/base_comm/resources/comm_engine_res/launch/
     ${HCCL_CODE_ROOT}/src/base_comm/resources/comm_engine_res/threads/device/
@@ -137,7 +153,7 @@ target_link_libraries(hccl_utest_launch_aicpu_fw PRIVATE
     -pthread
     hccl_llt
     -Wl,--whole-archive
-    -Wl,--no-whole-archi
+    -Wl,--no-whole-archive
     -lgcov
     -lrt
     -ldl

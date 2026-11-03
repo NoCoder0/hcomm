@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #ifndef SIMPO_MULTI_LAYER_COMMON_BUILDER_H
 #define SIMPO_MULTI_LAYER_COMMON_BUILDER_H
 
@@ -22,7 +21,7 @@ extern "C" {
 #define SIMPO_INLINE inline __attribute__((always_inline))
 #endif
 
-#define SIMPO_BUILD_OK 0            /* 操作成功 */
+#define SIMPO_BUILD_OK 0              /* 操作成功 */
 #define SIMPO_BUILD_INVAL (-1)        /* 非法输入，如数组传入NULL */
 #define SIMPO_BUILD_NOMATCH (-2)      /* 序列化操作不匹配 */
 #define SIMPO_BUILD_REPEATED_ADD (-3) /* 字段重复添加 */
@@ -38,80 +37,88 @@ extern "C" {
 
 #define SIMPO_BUILD_LENGTH_SIZE 4
 
-#define SIMPO_TRANS_WORD(x) do { \
-    (x) = SIMPO_SWAP_2(x); \
-} while (0)
+#define SIMPO_TRANS_WORD(x)                                                                                            \
+    do {                                                                                                               \
+        (x) = SIMPO_SWAP_2(x);                                                                                         \
+    } while (0)
 
-#define SIMPO_TRANS_DWORD(x) do { \
-    (x) = SIMPO_SWAP_4(x); \
-} while (0)
+#define SIMPO_TRANS_DWORD(x)                                                                                           \
+    do {                                                                                                               \
+        (x) = SIMPO_SWAP_4(x);                                                                                         \
+    } while (0)
 
-#define SIMPO_TRANS_QWORD(x) do { \
-    (x) = SIMPO_SWAP_8(x); \
-} while (0)
+#define SIMPO_TRANS_QWORD(x)                                                                                           \
+    do {                                                                                                               \
+        (x) = SIMPO_SWAP_8(x);                                                                                         \
+    } while (0)
 
-#define SIMPO_TRANS_FLOAT(x) do { \
-    (x) = FloatTransToLe(x); \
-} while (0)
+#define SIMPO_TRANS_FLOAT(x)                                                                                           \
+    do {                                                                                                               \
+        (x) = FloatTransToLe(x);                                                                                       \
+    } while (0)
 
-#define SIMPO_TRANS_DOUBLE(x) do { \
-    (x) = DoubleTransToLe(x); \
-} while (0)
+#define SIMPO_TRANS_DOUBLE(x)                                                                                          \
+    do {                                                                                                               \
+        (x) = DoubleTransToLe(x);                                                                                      \
+    } while (0)
 
-#define SIMPO_TRANS_VALUE_DOUBLE(x) DoubleTransToLe(*(double*)(x))
+#define SIMPO_TRANS_VALUE_DOUBLE(x) DoubleTransToLe(*(double *)(x))
 
-#define SIMPO_TRANS_VALUE_FLOAT(x) FloatTransToLe(*(float*)(x))
+#define SIMPO_TRANS_VALUE_FLOAT(x) FloatTransToLe(*(float *)(x))
 
-#define SIMPO_TRANS_VALUE_8(x) SIMPO_SWAP_8(*(uint64_t*)(x))
+#define SIMPO_TRANS_VALUE_8(x) SIMPO_SWAP_8(*(uint64_t *)(x))
 
-#define SIMPO_TRANS_VALUE_4(x) SIMPO_SWAP_4(*(uint32_t*)(x))
+#define SIMPO_TRANS_VALUE_4(x) SIMPO_SWAP_4(*(uint32_t *)(x))
 
-#define SIMPO_TRANS_VALUE_2(x) SIMPO_SWAP_2(*(uint16_t*)(x))
+#define SIMPO_TRANS_VALUE_2(x) SIMPO_SWAP_2(*(uint16_t *)(x))
 
-#define SIMPO_TRANS_VALUE_1(x) *((uint8_t*)(x))
+#define SIMPO_TRANS_VALUE_1(x) *((uint8_t *)(x))
 
 #define SIMPO_TABLE_LENGTH_SIZE 4
 
 /* 反序列化用宏, 数组是否为定长 */
 #define SIMPO_MULTI_CHECK_VEC_IS_FIXED(length) (((length) & (1 << 24)) != 0)
 
-#define SIMPO_OPER_INIT(builder, index) do { \
-    if ((builder)->errorCode != SIMPO_BUILD_OK) { \
-        return (builder)->errorCode; \
-    } \
-    (builder)->id[(index)] = -1; \
-} while (0)
+#define SIMPO_OPER_INIT(builder, index)                                                                                \
+    do {                                                                                                               \
+        if ((builder)->errorCode != SIMPO_BUILD_OK) {                                                                  \
+            return (builder)->errorCode;                                                                               \
+        }                                                                                                              \
+        (builder)->id[(index)] = -1;                                                                                   \
+    } while (0)
 
-#define SIMPO_CHECK_OPER_ORDER(builder, index, oper, _id) do { \
-    if (((builder)->errorCode == SIMPO_BUILD_OK) && ((builder)->id[(index)] + 1) != (_id)) { \
-        (builder)->errorCode = SIMPO_BUILD_ORDER_ERR; \
-        (builder)->errorOperName = #oper; \
-        return (builder)->errorCode; \
-    } \
-    (builder)->id[(index)] = (_id); \
-} while (0)
+#define SIMPO_CHECK_OPER_ORDER(builder, index, oper, _id)                                                              \
+    do {                                                                                                               \
+        if (((builder)->errorCode == SIMPO_BUILD_OK) && ((builder)->id[(index)] + 1) != (_id)) {                       \
+            (builder)->errorCode = SIMPO_BUILD_ORDER_ERR;                                                              \
+            (builder)->errorOperName = #oper;                                                                          \
+            return (builder)->errorCode;                                                                               \
+        }                                                                                                              \
+        (builder)->id[(index)] = (_id);                                                                                \
+    } while (0)
 
-#define SIMPO_CHECK_OPER_END(builder, index, oper, _id) do { \
-    if (((builder)->errorCode == SIMPO_BUILD_OK) && (((builder)->id[(index)]) != (_id))) { \
-        (builder)->errorCode = SIMPO_BUILD_ORDER_MISS; \
-        (builder)->errorOperName = #oper; \
-        return (builder)->errorCode; \
-    } \
-} while (0)
+#define SIMPO_CHECK_OPER_END(builder, index, oper, _id)                                                                \
+    do {                                                                                                               \
+        if (((builder)->errorCode == SIMPO_BUILD_OK) && (((builder)->id[(index)]) != (_id))) {                         \
+            (builder)->errorCode = SIMPO_BUILD_ORDER_MISS;                                                             \
+            (builder)->errorOperName = #oper;                                                                          \
+            return (builder)->errorCode;                                                                               \
+        }                                                                                                              \
+    } while (0)
 
 typedef struct tagSimpoBuilder {
-    int32_t errorCode;                  /* 错误码 */
-    uint32_t temp;                      /* 字节对齐 */
-    uint8_t *curWriteAddr;              /* 当前写的位置 */
-    uint8_t *bufferEnd;                 /* buffer终点 */
-    uint8_t *tempWriteAddr[SIMPO_BUILD_MAX_STACK_LEN];  /* 暂存上一层写的位置 */
+    int32_t errorCode;                                 /* 错误码 */
+    uint32_t temp;                                     /* 字节对齐 */
+    uint8_t *curWriteAddr;                             /* 当前写的位置 */
+    uint8_t *bufferEnd;                                /* buffer终点 */
+    uint8_t *tempWriteAddr[SIMPO_BUILD_MAX_STACK_LEN]; /* 暂存上一层写的位置 */
     uint32_t cnt[SIMPO_BUILD_MAX_STACK_LEN];
     int32_t id[SIMPO_BUILD_MAX_STACK_LEN];
     char *errorOperName;
-    uint8_t *buffer;                    /* buffer长度 */
+    uint8_t *buffer; /* buffer长度 */
     uint8_t *structVecLengthAddr;
     uint32_t structVecLength;
-    uint32_t bufferLen;                 /* 待写入的buffer */
+    uint32_t bufferLen; /* 待写入的buffer */
     uint32_t msgHead;
     uint32_t isBigEndian;
     uint32_t dopraEndian;
@@ -128,18 +135,20 @@ typedef struct {
 typedef SimpoBuilder SimpoBuilderT;
 
 #if (VOS_BYTE_ORDER == VOS_BIG_ENDIAN)
-    #define SET_FIXED_LENGTH_VEC_HEAD(head, _length, _sameLength) do { \
-        ((SimpoLengthFlagU*)(head))->length = (_length); \
-        ((SimpoLengthFlagU*)(head))->flag[0] = 1; \
-        ((SimpoLengthFlagU*)(head))->sameLegth = (_sameLength); \
+#define SET_FIXED_LENGTH_VEC_HEAD(head, _length, _sameLength)                                                          \
+    do {                                                                                                               \
+        ((SimpoLengthFlagU *)(head))->length = (_length);                                                              \
+        ((SimpoLengthFlagU *)(head))->flag[0] = 1;                                                                     \
+        ((SimpoLengthFlagU *)(head))->sameLegth = (_sameLength);                                                       \
     } while (0)
 #else /* VOS_BYTE_ORDER == VOS_LITTLE_ENDIAN */
-    #define SET_FIXED_LENGTH_VEC_HEAD(head, _length, _sameLength) do { \
-        ((SimpoLengthFlagU*)(head))->length = (_length); \
-        ((SimpoLengthFlagU*)(head))->flag[SIMPO_BUILD_FIXED_LENGTH_VEC_FLAG] = 1; \
-        ((SimpoLengthFlagU*)(head))->sameLegth = (_sameLength); \
+#define SET_FIXED_LENGTH_VEC_HEAD(head, _length, _sameLength)                                                          \
+    do {                                                                                                               \
+        ((SimpoLengthFlagU *)(head))->length = (_length);                                                              \
+        ((SimpoLengthFlagU *)(head))->flag[SIMPO_BUILD_FIXED_LENGTH_VEC_FLAG] = 1;                                     \
+        ((SimpoLengthFlagU *)(head))->sameLegth = (_sameLength);                                                       \
     } while (0)
-#endif  /* VOS_BYTE_ORDER */
+#endif /* VOS_BYTE_ORDER */
 
 __attribute__((unused)) static const char *SimpoBuilderErrnoStr(int32_t err)
 {
@@ -147,8 +156,8 @@ __attribute__((unused)) static const char *SimpoBuilderErrnoStr(int32_t err)
         return "unknow";
     }
     err *= -1;
-    const char *strs[] = {"ok", "inval param", "opear not match", "field repeated add",
-        "no memory", "add field order error", "add field order miss"};
+    const char *strs[] = {"ok", "inval param", "opear not match", "field repeated add", "no memory",
+        "add field order error", "add field order miss"};
     return strs[err];
 }
 
@@ -160,7 +169,9 @@ __attribute__((unused)) static SimpoBuilderT *SimpoBuilderInit(void)
     }
     (void)memset_s(builder, sizeof(SimpoBuilderT), 0, sizeof(SimpoBuilderT));
     builder->isBigEndian = g_uiSimpoEndianIsBig;
-    *(((uint8_t*)&(builder->msgHead)) + 3) = ((g_uiSimpoEndianIsBig != 0) ? 1 : 0); /* 第3个字节表示消息来自大端或小端 */
+    const uint8_t kEndianFlagByteOffset = 3;
+    *(((uint8_t *)&(builder->msgHead)) +
+        kEndianFlagByteOffset) = ((g_uiSimpoEndianIsBig != 0) ? 1 : 0); /* 第3个字节表示消息来自大端或小端 */
 #if (VOS_BYTE_ORDER == VOS_BIG_ENDIAN)
     builder->dopraEndian = 1;
 #else

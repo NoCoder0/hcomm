@@ -18,7 +18,8 @@ using namespace HcclSim;
 
 class PluginCommandTest : public testing::Test {
 protected:
-    void SetUp() override {
+    void SetUp() override
+    {
         app_ = std::make_unique<CLI::App>("test");
         cmd_ = std::make_unique<PluginCommand>();
     }
@@ -26,51 +27,56 @@ protected:
     std::unique_ptr<PluginCommand> cmd_;
 };
 
-TEST_F(PluginCommandTest, StaticName_ShouldReturnPlugin) {
-    EXPECT_EQ(PluginCommand::StaticName(), "plugin");
-}
+TEST_F(PluginCommandTest, StaticName_ShouldReturnPlugin) { EXPECT_EQ(PluginCommand::StaticName(), "plugin"); }
 
-TEST_F(PluginCommandTest, Setup_RegistersPluginSubcommand) {
+TEST_F(PluginCommandTest, Setup_RegistersPluginSubcommand)
+{
     cmd_->Setup(*app_);
     EXPECT_NE(app_->get_subcommand("plugin"), nullptr);
 }
 
-TEST_F(PluginCommandTest, Setup_RequiresSubcommand) {
+TEST_F(PluginCommandTest, Setup_RequiresSubcommand)
+{
     cmd_->Setup(*app_);
     auto sub = app_->get_subcommand("plugin");
     ASSERT_NE(sub, nullptr);
     EXPECT_GT(sub->get_require_subcommand_min(), 0u);
 }
 
-TEST_F(PluginCommandTest, Setup_RegistersInstallSubcommand) {
+TEST_F(PluginCommandTest, Setup_RegistersInstallSubcommand)
+{
     cmd_->Setup(*app_);
     auto plugin = app_->get_subcommand("plugin");
     ASSERT_NE(plugin, nullptr);
     EXPECT_NE(plugin->get_subcommand("install"), nullptr);
 }
 
-TEST_F(PluginCommandTest, Setup_RegistersUninstallSubcommand) {
+TEST_F(PluginCommandTest, Setup_RegistersUninstallSubcommand)
+{
     cmd_->Setup(*app_);
     auto plugin = app_->get_subcommand("plugin");
     ASSERT_NE(plugin, nullptr);
     EXPECT_NE(plugin->get_subcommand("uninstall"), nullptr);
 }
 
-TEST_F(PluginCommandTest, Setup_RegistersRunSubcommand) {
+TEST_F(PluginCommandTest, Setup_RegistersRunSubcommand)
+{
     cmd_->Setup(*app_);
     auto plugin = app_->get_subcommand("plugin");
     ASSERT_NE(plugin, nullptr);
     EXPECT_NE(plugin->get_subcommand("run"), nullptr);
 }
 
-TEST_F(PluginCommandTest, Setup_RegistersListSubcommand) {
+TEST_F(PluginCommandTest, Setup_RegistersListSubcommand)
+{
     cmd_->Setup(*app_);
     auto plugin = app_->get_subcommand("plugin");
     ASSERT_NE(plugin, nullptr);
     EXPECT_NE(plugin->get_subcommand("list"), nullptr);
 }
 
-TEST_F(PluginCommandTest, Setup_InstallHasNameOption) {
+TEST_F(PluginCommandTest, Setup_InstallHasNameOption)
+{
     cmd_->Setup(*app_);
     auto plugin = app_->get_subcommand("plugin");
     ASSERT_NE(plugin, nullptr);
@@ -79,7 +85,8 @@ TEST_F(PluginCommandTest, Setup_InstallHasNameOption) {
     EXPECT_GE(inst->get_options().size(), 1u);
 }
 
-TEST_F(PluginCommandTest, Setup_UninstallHasNameOptionWithValidator) {
+TEST_F(PluginCommandTest, Setup_UninstallHasNameOptionWithValidator)
+{
     cmd_->Setup(*app_);
     auto plugin = app_->get_subcommand("plugin");
     ASSERT_NE(plugin, nullptr);
@@ -87,7 +94,7 @@ TEST_F(PluginCommandTest, Setup_UninstallHasNameOptionWithValidator) {
     ASSERT_NE(uninst, nullptr);
     EXPECT_GE(uninst->get_options().size(), 1u);
     CLI::Option* opt = nullptr;
-    try { 
+    try {
         opt = uninst->get_option("name");
     } catch (const CLI::OptionNotFound& e) {
         std::cerr << "Option 'name' not found: " << e.what() << "\n";
@@ -96,7 +103,8 @@ TEST_F(PluginCommandTest, Setup_UninstallHasNameOptionWithValidator) {
     EXPECT_NE(opt->get_validator(), nullptr);
 }
 
-TEST_F(PluginCommandTest, Setup_RunHasNameOptionWithValidator) {
+TEST_F(PluginCommandTest, Setup_RunHasNameOptionWithValidator)
+{
     cmd_->Setup(*app_);
     auto plugin = app_->get_subcommand("plugin");
     ASSERT_NE(plugin, nullptr);
@@ -104,7 +112,7 @@ TEST_F(PluginCommandTest, Setup_RunHasNameOptionWithValidator) {
     ASSERT_NE(runCmd, nullptr);
     EXPECT_GE(runCmd->get_options().size(), 1u);
     CLI::Option* opt = nullptr;
-    try { 
+    try {
         opt = runCmd->get_option("name");
     } catch (const CLI::OptionNotFound& e) {
         std::cerr << "Option 'name' not found: " << e.what() << "\n";
@@ -113,22 +121,26 @@ TEST_F(PluginCommandTest, Setup_RunHasNameOptionWithValidator) {
     EXPECT_NE(opt->get_validator(), nullptr);
 }
 
-TEST_F(PluginCommandTest, Parse_PluginList_TriggersCallback) {
+TEST_F(PluginCommandTest, Parse_PluginList_TriggersCallback)
+{
     cmd_->Setup(*app_);
     EXPECT_NO_THROW(app_->parse("test plugin list", true));
 }
 
-TEST_F(PluginCommandTest, Parse_InstallTriggersCallback) {
+TEST_F(PluginCommandTest, Parse_InstallTriggersCallback)
+{
     cmd_->Setup(*app_);
-    EXPECT_NO_THROW(app_->parse("test plugin install foo_plugin.so", true));
+    EXPECT_NO_THROW(app_->parse("test plugin install @foo_plugin", true));
 }
 
-TEST_F(PluginCommandTest, Parse_UninstallValidName_TriggersCallback) {
+TEST_F(PluginCommandTest, Parse_UninstallValidName_TriggersCallback)
+{
     cmd_->Setup(*app_);
     EXPECT_NO_THROW(app_->parse("test plugin uninstall @myplugin", true));
 }
 
-TEST_F(PluginCommandTest, Parse_RunValidName_TriggersCallback) {
+TEST_F(PluginCommandTest, Parse_RunValidName_TriggersCallback)
+{
     cmd_->Setup(*app_);
     try {
         app_->parse("test plugin run @myplugin", true);
@@ -139,7 +151,8 @@ TEST_F(PluginCommandTest, Parse_RunValidName_TriggersCallback) {
     }
 }
 
-TEST_F(PluginCommandTest, Parse_PluginNoSubcommand_Throws) {
+TEST_F(PluginCommandTest, Parse_PluginNoSubcommand_Throws)
+{
     cmd_->Setup(*app_);
     EXPECT_THROW(app_->parse("test plugin", true), CLI::RequiredError);
 }

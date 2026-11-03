@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #ifndef HCCL_NET_DEV_H
 #define HCCL_NET_DEV_H
@@ -26,7 +26,7 @@ extern "C" {
  * @param[out] netDev 返回的网络设备句柄
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclNetDevOpen(const HcclNetDevInfos *info, HcclNetDev *netDev);
+extern HcclResult HcclNetDevOpen(const HcclNetDevInfos* info, HcclNetDev* netDev);
 
 /**
  * @brief 关闭网络设备
@@ -41,7 +41,7 @@ extern HcclResult HcclNetDevClose(HcclNetDev netDev);
  * @param[out] addr 返回的地址信息结构
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclNetDevGetAddr(HcclNetDev netDev, HcclAddress *addr);
+extern HcclResult HcclNetDevGetAddr(const HcclNetDev netDev, HcclAddress* addr);
 
 /**
  * @brief 通过设备物理ID获取总线地址
@@ -49,7 +49,7 @@ extern HcclResult HcclNetDevGetAddr(HcclNetDev netDev, HcclAddress *addr);
  * @param[out] busAddr 返回的总线地址信息
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclNetDevGetBusAddr(HcclDeviceId dstDevId, HcclAddress *busAddr);
+extern HcclResult HcclNetDevGetBusAddr(HcclDeviceId dstDevId, HcclAddress* busAddr);
 /**
  * @brief 通过设备物理ID获取nic地址
  * @param[in] devicePhyId 设备物理ID
@@ -57,7 +57,7 @@ extern HcclResult HcclNetDevGetBusAddr(HcclDeviceId dstDevId, HcclAddress *busAd
  * @param[out] addrNum 返回的地址数量
  * @return 执行状态码 HcclResult
  */
-extern HcclResult HcclNetDevGetNicAddr(int32_t devicePhyId, HcclAddress **addr, uint32_t *addrNum);
+extern HcclResult HcclNetDevGetNicAddr(int32_t devicePhyId, HcclAddress** addr, uint32_t* addrNum);
 
 #ifdef __cplusplus
 }

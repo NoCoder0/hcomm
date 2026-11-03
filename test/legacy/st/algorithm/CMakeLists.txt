@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2025 Huawei Technologies Co., Ltd.
-# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
@@ -40,8 +40,8 @@ set(HCOMM_CODE_LEGACY      ${HCOMM_ROOT_PATH}/src/legacy/ascend950)
 set(HCOMM_LEGACY_FRAMEWORK ${HCOMM_CODE_LEGACY}/framework)
 set(HCOMM_LEGACY_PLATFORM  ${HCOMM_CODE_LEGACY}/unified_platform)
 set(HCOMM_LEGACY_SERVICE   ${HCOMM_CODE_LEGACY}/service/collective)
+set(HCOMM_RANK_GRAPH       ${HCOMM_ROOT_PATH}/src/coll_communicator_mgr/rank_graph)
 
-set(PROTOC_PROGRAM     ${HOST_PROTOC_PATH}/protoc)
 add_cann_third_party(gtest)
 
 # Include List
@@ -70,14 +70,13 @@ set(legacy_framework_include_list
     ${HCOMM_LEGACY_FRAMEWORK}/entrance
     ${HCOMM_LEGACY_FRAMEWORK}/env_config
     ${HCOMM_LEGACY_FRAMEWORK}/topo
-    ${HCOMM_LEGACY_FRAMEWORK}/topo/new_topo_builder/phy_topo
-    ${HCOMM_LEGACY_FRAMEWORK}/topo/new_topo_builder/rank_graph
-    ${HCOMM_LEGACY_FRAMEWORK}/topo/new_topo_builder/common
-    ${HCOMM_LEGACY_FRAMEWORK}/topo/new_topo_builder/rank_table_info
-    ${HCOMM_LEGACY_FRAMEWORK}/topo/new_topo_builder/rank_graph_builder
-    ${HCOMM_LEGACY_FRAMEWORK}/topo/new_topo_builder/topo_info
-    ${HCOMM_LEGACY_FRAMEWORK}/topo/new_topo_builder/phy_topo_builder
-    ${HCOMM_LEGACY_FRAMEWORK}/topo/new_topo_builder/phy_topo_builder
+    ${HCOMM_RANK_GRAPH}/phy_topo
+    ${HCOMM_RANK_GRAPH}/rank_graph
+    ${HCOMM_RANK_GRAPH}/common
+    ${HCOMM_RANK_GRAPH}/rank_table_info
+    ${HCOMM_RANK_GRAPH}/rank_graph_builder
+    ${HCOMM_RANK_GRAPH}/topo_info
+    ${HCOMM_RANK_GRAPH}/phy_topo_builder
 
     ${HCOMM_LEGACY_FRAMEWORK}/resource_manager/transport/aicpu
     ${HCOMM_LEGACY_FRAMEWORK}/resource_manager/buffer/aicpu
@@ -97,6 +96,8 @@ set(legacy_framework_include_list
 
     ${HCOMM_LEGACY_FRAMEWORK}/communicator
     ${HCOMM_LEGACY_FRAMEWORK}/communicator/aicpu
+    # HostDpu 共享类型头（dpu_types.h 等）已收敛到 base_comm 的 legacy_dpu_thread 目录，ST 侧须显式补该路径
+    ${HCOMM_ROOT_PATH}/src/base_comm/resources/comm_engine_res/threads/cpu_thread/legacy_dpu_thread
     ${HCOMM_LEGACY_FRAMEWORK}/dfx/common
     ${HCOMM_LEGACY_FRAMEWORK}/dfx/aicpu
     ${HCOMM_LEGACY_FRAMEWORK}/dfx/aicpu/common
@@ -117,7 +118,6 @@ set(legacy_platform_include_list
     ${HCOMM_LEGACY_PLATFORM}/pub_inc
     ${HCOMM_LEGACY_PLATFORM}/pub_inc/ccu
     ${HCOMM_LEGACY_PLATFORM}/pub_inc/resource
-    ${HCOMM_LEGACY_PLATFORM}/pub_inc/resource/net_dev
     ${HCOMM_LEGACY_PLATFORM}/pub_inc/resource/transport
 
     # 平台层CCU实现头文件路径
@@ -201,6 +201,7 @@ set(legacy_service_include_list
 )
 
 set(legacy_common_include_list
+    ${HCOMM_ROOT_PATH}/src/base_comm/common
     ${HCOMM_CODE_LEGACY}/common
     ${HCOMM_CODE_LEGACY}/common/types
     ${HCOMM_CODE_LEGACY}/common/utils
@@ -240,6 +241,10 @@ include_directories(
     ${HCOMM_ROOT_PATH}/include/hcomm
     ${HCOMM_ROOT_PATH}/pkg_inc
     ${HCOMM_ROOT_PATH}/pkg_inc/legacy
+    ${HCOMM_ROOT_PATH}/src/base_comm/dfx
+    ${HCOMM_ROOT_PATH}/src/base_comm/dfx/aicpu
+    ${HCOMM_ROOT_PATH}/src/base_comm/dfx/aicpu/common
+    ${HCOMM_ROOT_PATH}/src/base_comm/resources/comm_engine_res/threads
 )
 
 add_subdirectory(testcase)

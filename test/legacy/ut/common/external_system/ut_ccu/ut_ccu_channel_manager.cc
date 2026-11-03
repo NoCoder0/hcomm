@@ -14,26 +14,17 @@
 #include "channel_manager.h"
 #include "pfe_manager.h"
 #include "local_jetty_context_manager.h"
-#include "env_config.h"
+#include "env_config_v2.h"
 using namespace Hccl;
 using namespace Ccu;
 
 class ChannelManagerTest : public ::testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "ChannelManagerTest tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "ChannelManagerTest tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "ChannelManagerTest tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "ChannelManagerTest tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in ChannelManagerTest SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in ChannelManagerTest SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -44,7 +35,8 @@ protected:
     struct ChannelData channelData_;
 };
 
-TEST(ChannelManagerTest, Initialize) {
+TEST(ChannelManagerTest, Initialize)
+{
     ChannelManager cm;
 
     // 检查totalChannelNum_是否被正确设置
@@ -65,7 +57,8 @@ TEST(ChannelManagerTest, Initialize) {
     }
 }
 
-TEST(ChannelManagerTest, TestChannelCreate_PFECreateFailed) {
+TEST(ChannelManagerTest, TestChannelCreate_PFECreateFailed)
+{
     ChannelManager channelManager;
     // 模拟PFEManager::PfeCreate返回未使用的PFE信息
     CfgBasePara para;
@@ -79,7 +72,8 @@ TEST(ChannelManagerTest, TestChannelCreate_PFECreateFailed) {
     EXPECT_EQ(info.id, INVILD_U8);
 }
 
-TEST(ChannelManagerTest, TestChannelCreate_ChannelCreateFailed) {
+TEST(ChannelManagerTest, TestChannelCreate_ChannelCreateFailed)
+{
     ChannelManager channelManager;
     // 模拟PFEManager::PfeCreate返回使用的PFE信息
     CfgBasePara para;
@@ -97,7 +91,8 @@ TEST(ChannelManagerTest, TestChannelCreate_ChannelCreateFailed) {
     EXPECT_EQ(info.id, INVILD_U8);
 }
 
-TEST(ChannelManagerTest, TestChannelCreate_JettyCtxCreateFailed) {
+TEST(ChannelManagerTest, TestChannelCreate_JettyCtxCreateFailed)
+{
     ChannelManager channelManager;
     // 模拟PFEManager::PfeCreate返回使用的PFE信息
     CfgBasePara para;
@@ -118,7 +113,8 @@ TEST(ChannelManagerTest, TestChannelCreate_JettyCtxCreateFailed) {
     EXPECT_EQ(info.id, INVILD_U8);
 }
 
-TEST(ChannelManagerTest, TestChannelCreate_Success) {
+TEST(ChannelManagerTest, TestChannelCreate_Success)
+{
     ChannelManager channelManager;
     // 模拟PFEManager::PfeCreate返回使用的PFE信息
     CfgBasePara para;
@@ -138,7 +134,8 @@ TEST(ChannelManagerTest, TestChannelCreate_Success) {
     EXPECT_NE(info.id, 0xFF);
 }
 
-TEST(ChannelManagerTest, ConfigChannelDataTest) {
+TEST(ChannelManagerTest, ConfigChannelDataTest)
+{
     ChannelManager channelManager;
     struct ChannelCfg cfg;
     // 设置cfg的值
@@ -147,14 +144,13 @@ TEST(ChannelManagerTest, ConfigChannelDataTest) {
     cfg.basePara.phyDeviceId = 1;
     cfg.id = 1;
 
-
     // 调用待测试函数 channelManager.ConfigChannelData(cfg);
 
     // 验证结果
-
 }
 
-TEST(ChannelManagerTest, TestChannelConfig) {
+TEST(ChannelManagerTest, TestChannelConfig)
+{
     ChannelManager channelManager;
     // Arrange
     ChannelCfg cfg;
@@ -168,7 +164,8 @@ TEST(ChannelManagerTest, TestChannelConfig) {
     EXPECT_EQ(result, HcclResult::HCCL_E_PARA);
 }
 
-TEST(ChannelManagerTest, TestChannelConfigCheckFail) {
+TEST(ChannelManagerTest, TestChannelConfigCheckFail)
+{
     ChannelManager channelManager;
     // Arrange
     ChannelCfg cfg;
@@ -182,7 +179,8 @@ TEST(ChannelManagerTest, TestChannelConfigCheckFail) {
     EXPECT_EQ(result, HcclResult::HCCL_E_PARA);
 }
 
-TEST(ChannelManagerTest, ChannelDestroy_ValidInput_ChannelUsed) {
+TEST(ChannelManagerTest, ChannelDestroy_ValidInput_ChannelUsed)
+{
     ChannelManager channelManager;
     // 假设ioDie和channelId都在有效范围内，且通道已被使用
     uint8_t ioDie = 0;
@@ -193,7 +191,8 @@ TEST(ChannelManagerTest, ChannelDestroy_ValidInput_ChannelUsed) {
     EXPECT_FALSE(channelManager.channelInfo_[ioDie][channelId].isUsed);
 }
 
-TEST(ChannelManagerTest, ChannelDestroy_ValidInput_ChannelNotUsed) {
+TEST(ChannelManagerTest, ChannelDestroy_ValidInput_ChannelNotUsed)
+{
     ChannelManager channelManager;
     // 假设ioDie和channelId都在有效范围内，但通道未被使用
     uint8_t ioDie = 0;
@@ -203,7 +202,8 @@ TEST(ChannelManagerTest, ChannelDestroy_ValidInput_ChannelNotUsed) {
     EXPECT_EQ(result, HcclResult::HCCL_E_PARA);
 }
 
-TEST(ChannelManagerTest, ChannelDestroy_InvalidIoDie) {
+TEST(ChannelManagerTest, ChannelDestroy_InvalidIoDie)
+{
     ChannelManager channelManager;
     // 假设ioDie不在有效范围内
     uint8_t ioDie = MAX_CCU_IODIE_NUM;
@@ -212,7 +212,8 @@ TEST(ChannelManagerTest, ChannelDestroy_InvalidIoDie) {
     EXPECT_EQ(result, HcclResult::HCCL_E_PARA);
 }
 
-TEST(ChannelManagerTest, ChannelDestroy_InvalidChannelId) {
+TEST(ChannelManagerTest, ChannelDestroy_InvalidChannelId)
+{
     ChannelManager channelManager;
     // 假设channelId不在有效范围内
     uint8_t ioDie = 1;

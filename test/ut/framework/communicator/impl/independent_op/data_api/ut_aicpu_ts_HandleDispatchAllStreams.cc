@@ -14,18 +14,11 @@ using namespace hccl;
 
 extern HcclResult HandleDispatchAllStreams();
 
-class UtAicpuTsHandleDispatchAllStreams : public UtAicpuTsBase
-{
+class UtAicpuTsHandleDispatchAllStreams : public UtAicpuTsBase {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "UtAicpuTsHandleDispatchAllStreams tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "UtAicpuTsHandleDispatchAllStreams tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "UtAicpuTsHandleDispatchAllStreams tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "UtAicpuTsHandleDispatchAllStreams tests tear down." << std::endl; }
 
     virtual void SetUp() override
     {

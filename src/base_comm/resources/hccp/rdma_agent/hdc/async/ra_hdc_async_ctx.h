@@ -76,7 +76,7 @@ union OpCtxQpDestroyBatchData {
     struct {
         unsigned int phyId;
         unsigned int devIndex;
-        unsigned int ids[HCCP_MAX_QP_DESTROY_BATCH_NUM]; 
+        unsigned int ids[HCCP_MAX_QP_DESTROY_BATCH_NUM];
         unsigned int num;
         unsigned int rsvd[4U];
     } txData;
@@ -92,16 +92,23 @@ struct RaResponseEidList {
     unsigned int *num;
 };
 
-int RaHdcGetEidByIpAsync(struct RaCtxHandle *ctxHandle, struct IpInfo ip[], union HccpEid eid[],
-    unsigned int *num, void **reqHandle);
+struct RaResponseIpList {
+    struct IpInfo *ipList;
+    unsigned int *num;
+};
+
+int RaHdcGetEidByIpAsync(struct RaCtxHandle *ctxHandle, struct IpInfo ip[], union HccpEid eid[], unsigned int *num,
+    void **reqHandle);
 void RaHdcAsyncHandleGetEidByIp(struct RaRequestHandle *reqHandle);
+int RaHdcGetIpByEidAsync(struct RaCtxHandle *ctxHandle, union HccpEid eid[], struct IpInfo ip[], unsigned int *num,
+    void **reqHandle);
+void RaHdcAsyncHandleGetIpByEid(struct RaRequestHandle *reqHandle);
 int RaHdcCtxLmemRegisterAsync(struct RaCtxHandle *ctxHandle, struct MrRegInfoT *lmemInfo,
     struct RaLmemHandle *lmemHandle, void **reqHandle);
 void RaHdcAsyncHandleLmemRegister(struct RaRequestHandle *reqHandle);
-int RaHdcCtxLmemUnregisterAsync(struct RaCtxHandle *ctxHandle, struct RaLmemHandle *lmemHandle,
-    void **reqHandle);
-int RaHdcCtxQpCreateAsync(struct RaCtxHandle *ctxHandle, struct QpCreateAttr *attr,
-	struct QpCreateInfo *info, struct RaCtxQpHandle *qpHandle, void **reqHandle);
+int RaHdcCtxLmemUnregisterAsync(struct RaCtxHandle *ctxHandle, struct RaLmemHandle *lmemHandle, void **reqHandle);
+int RaHdcCtxQpCreateAsync(struct RaCtxHandle *ctxHandle, struct QpCreateAttr *attr, struct QpCreateInfo *info,
+    struct RaCtxQpHandle *qpHandle, void **reqHandle);
 void RaHdcAsyncHandleQpCreate(struct RaRequestHandle *reqHandle);
 int RaHdcCtxQpDestroyAsync(struct RaCtxQpHandle *qpHandle, void **reqHandle);
 int RaHdcCtxQpImportAsync(struct RaCtxHandle *ctxHandle, struct QpImportInfoT *info,
@@ -111,12 +118,11 @@ int RaHdcCtxQpUnimportAsync(struct RaCtxRemQpHandle *remQpHandle, void **reqHand
 int RaHdcGetTpInfoListAsync(struct RaCtxHandle *ctxHandle, struct GetTpCfg *cfg, struct HccpTpInfo infoList[],
     unsigned int *num, void **reqHandle);
 void RaHdcAsyncHandleTpInfoList(struct RaRequestHandle *reqHandle);
-int RaHdcGetTpAttrAsync(struct RaCtxHandle *ctxHandle, uint64_t tpHandle, uint32_t *attrBitmap,
-    struct TpAttr *attr, void **reqHandle);
+int RaHdcGetTpAttrAsync(struct RaCtxHandle *ctxHandle, uint64_t tpHandle, uint32_t *attrBitmap, struct TpAttr *attr,
+    void **reqHandle);
 void RaHdcAsyncHandleGetTpAttr(struct RaRequestHandle *reqHandle);
-int RaHdcSetTpAttrAsync(struct RaCtxHandle *ctxHandle, uint64_t tpHandle, uint32_t attrBitmap,
-    struct TpAttr *attr, void **reqHandle);
-int RaHdcCtxQpDestroyBatchAsync(struct RaCtxHandle *ctxHandle, void *qpHandle[],
-    unsigned int *num, void **reqHandle);
+int RaHdcSetTpAttrAsync(struct RaCtxHandle *ctxHandle, uint64_t tpHandle, uint32_t attrBitmap, struct TpAttr *attr,
+    void **reqHandle);
+int RaHdcCtxQpDestroyBatchAsync(struct RaCtxHandle *ctxHandle, void *qpHandle[], unsigned int *num, void **reqHandle);
 void RaHdcAsyncHandleQpDestroyBatch(struct RaRequestHandle *reqHandle);
 #endif // RA_HDC_ASYNC_CTX_H

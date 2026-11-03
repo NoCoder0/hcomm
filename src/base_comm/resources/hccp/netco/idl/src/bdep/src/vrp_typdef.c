@@ -8,8 +8,7 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
-#include"vrp_typdef.h"
+#include "vrp_typdef.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,8 +28,8 @@ BDEP_STATIC_ASSERT(sizeof(uint64_t) == 8);
 
 BDEP_STATIC_ASSERT(sizeof(BOOL) == 4);
 
-BDEP_STATIC_ASSERT(sizeof(intptr_t) == sizeof(void*));
-BDEP_STATIC_ASSERT(sizeof(uintptr_t) == sizeof(void*));
+BDEP_STATIC_ASSERT(sizeof(intptr_t) == sizeof(void *));
+BDEP_STATIC_ASSERT(sizeof(uintptr_t) == sizeof(void *));
 
 BDEP_STATIC_ASSERT(sizeof(unsigned char) == 1);
 
@@ -40,9 +39,9 @@ void vrp_typedef_func_foo123_(void)
 
 void vrp_typedef_func_bar456_(uint32_t i)
 {
+    (void)i;
 }
 
 #ifdef __cplusplus
 }
 #endif
-

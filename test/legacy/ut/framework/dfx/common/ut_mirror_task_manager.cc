@@ -23,20 +23,11 @@ using namespace Hccl;
 
 class MirrorTaskManagerTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "MirrorTaskManager tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "MirrorTaskManager tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "MirrorTaskManager tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "MirrorTaskManager tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-        std::cout << "A Test case in MirrorTaskManager SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in MirrorTaskManager SetUP" << std::endl; }
 
     virtual void TearDown()
     {
@@ -47,17 +38,15 @@ protected:
 
 TEST_F(MirrorTaskManagerTest, MirrorTaskManager_AddTaskInfo_1)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     MirrorTaskManager mirrorTaskManager(0, &globalMirrorTasks, 0);
-    for (auto &taskMap : globalMirrorTasks.taskMaps_) {
+    for (auto& taskMap : globalMirrorTasks.taskMaps_) {
         taskMap.clear();
     }
-    TaskParam taskParam = {TaskParamType::TASK_NOTIFY_RECORD,
-        std::chrono::high_resolution_clock::now().time_since_epoch().count(),
-        std::chrono::high_resolution_clock::now().time_since_epoch().count(),
-        0,
-        0};
+    TaskParam taskParam
+        = {TaskParamType::TASK_NOTIFY_RECORD, std::chrono::high_resolution_clock::now().time_since_epoch().count(),
+           std::chrono::high_resolution_clock::now().time_since_epoch().count(), 0, 0};
 
     CollOperator op;
     std::shared_ptr<DfxOpInfo> dfxOpInfo = std::make_shared<DfxOpInfo>();
@@ -80,7 +69,7 @@ TEST_F(MirrorTaskManagerTest, MirrorTaskManager_AddTaskInfo_1)
 
 TEST_F(MirrorTaskManagerTest, MirrorTaskManager_AddTaskInfo_2)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     MirrorTaskManager mirrorTaskManager(0, &globalMirrorTasks, 0);
 
@@ -90,7 +79,7 @@ TEST_F(MirrorTaskManagerTest, MirrorTaskManager_AddTaskInfo_2)
 
 TEST_F(MirrorTaskManagerTest, MirrorTaskManager_GetQueue_1)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     MirrorTaskManager mirrorTaskManager(0, &globalMirrorTasks, 0);
 
@@ -99,17 +88,18 @@ TEST_F(MirrorTaskManagerTest, MirrorTaskManager_GetQueue_1)
 
 TEST_F(MirrorTaskManagerTest, MirrorTaskManager_Iterator_1)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     MirrorTaskManager mirrorTaskManager(0, &globalMirrorTasks, 0);
-    for (auto &taskMap : globalMirrorTasks.taskMaps_) {
+    for (auto& taskMap : globalMirrorTasks.taskMaps_) {
         taskMap.clear();
     }
     // 初始化TaskParam
-    TaskParam taskParam = {.taskType = TaskParamType::TASK_NOTIFY_RECORD,
-        .beginTime = 0,
-        .endTime = 0,
-        .taskPara = {.Notify = {.notifyID = 123, .value = 456}}};
+    TaskParam taskParam
+        = {.taskType = TaskParamType::TASK_NOTIFY_RECORD,
+           .beginTime = 0,
+           .endTime = 0,
+           .taskPara = {.Notify = {.notifyID = 123, .value = 456}}};
     // 初始化dfxOpInfo
     std::shared_ptr<DfxOpInfo> dfxOpInfo = std::make_shared<DfxOpInfo>();
     CollOperator op;
@@ -127,10 +117,9 @@ TEST_F(MirrorTaskManagerTest, MirrorTaskManager_Iterator_1)
 
     // 枚举所有streamId
     for (auto queueIter = mirrorTaskManager.Begin(); queueIter != mirrorTaskManager.End(); queueIter++) {
-
         // 获取对应streamId和任务队列的指针
         auto streamId = queueIter->first;
-        Queue<std::unique_ptr<TaskInfo>> *taskInfoQueue = queueIter->second.queue;
+        Queue<std::unique_ptr<TaskInfo>>* taskInfoQueue = queueIter->second.queue;
 
         // 枚举所有任务信息
         for (auto taskInfoIter = taskInfoQueue->Begin(); *taskInfoIter != *taskInfoQueue->End(); (*taskInfoIter)++) {
@@ -141,17 +130,18 @@ TEST_F(MirrorTaskManagerTest, MirrorTaskManager_Iterator_1)
 
 TEST_F(MirrorTaskManagerTest, MirrorTaskManager_Iterator_2)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     MirrorTaskManager mirrorTaskManager(0, &globalMirrorTasks, 0);
-    for (auto &taskMap : globalMirrorTasks.taskMaps_) {
+    for (auto& taskMap : globalMirrorTasks.taskMaps_) {
         taskMap.clear();
     }
     // 初始化TaskParam
-    TaskParam taskParam = {.taskType = TaskParamType::TASK_NOTIFY_RECORD,
-        .beginTime = 0,
-        .endTime = 0,
-        .taskPara = {.Notify = {.notifyID = 123, .value = 456}}};
+    TaskParam taskParam
+        = {.taskType = TaskParamType::TASK_NOTIFY_RECORD,
+           .beginTime = 0,
+           .endTime = 0,
+           .taskPara = {.Notify = {.notifyID = 123, .value = 456}}};
     // 初始化dfxOpInfo
     std::shared_ptr<DfxOpInfo> dfxOpInfo = std::make_shared<DfxOpInfo>();
     CollOperator op;
@@ -172,7 +162,7 @@ TEST_F(MirrorTaskManagerTest, MirrorTaskManager_Iterator_2)
 
     mirrorTaskManager.AddTaskInfo(std::move(taskInfo1));
     mirrorTaskManager.GetQueue(3)->PopFront();
-    for(int i = 0; i < 10000; i++) {
+    for (int i = 0; i < 10000; i++) {
         auto taskInfo = std::make_unique<TaskInfo>(0, 1, i, taskParam, dfxOpInfo);
         mirrorTaskManager.AddTaskInfo(std::move(taskInfo));
     }
@@ -180,11 +170,10 @@ TEST_F(MirrorTaskManagerTest, MirrorTaskManager_Iterator_2)
 
     // 枚举所有streamId
     for (auto queueIter = mirrorTaskManager.Begin(); queueIter != mirrorTaskManager.End(); queueIter++) {
-
         // 获取对应streamId和任务队列的指针
         auto streamId = queueIter->first;
-        std::cout<<"streamId"<<streamId<<std::endl;
-        Queue<std::unique_ptr<TaskInfo>> *taskInfoQueue = queueIter->second.queue;
+        std::cout << "streamId" << streamId << std::endl;
+        Queue<std::unique_ptr<TaskInfo>>* taskInfoQueue = queueIter->second.queue;
 
         // 枚举所有任务信息
         int32_t cnt = 0;
@@ -213,7 +202,7 @@ TEST_F(MirrorTaskManagerTest, MirrorTaskManager_Iterator_2)
 
 TEST_F(MirrorTaskManagerTest, MirrorTaskManager_RegFullyCallBack_1)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
 
     MirrorTaskManager mirrorTaskManager(0, &globalMirrorTasks, 0);
 
@@ -222,29 +211,30 @@ TEST_F(MirrorTaskManagerTest, MirrorTaskManager_RegFullyCallBack_1)
     std::function<void()> testCallBack = [&]() {
         callBackCalled = true;
     };
-    
+
     // 注册回调
     mirrorTaskManager.RegFullyCallBack(testCallBack);
 }
 
 TEST_F(MirrorTaskManagerTest, Ut_GetCurrDfxOpInfo_When_DefaultConstructed_Expect_ReturnNullptr)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
     MirrorTaskManager mirrorTaskManager(0, &globalMirrorTasks, 0);
     EXPECT_EQ(mirrorTaskManager.GetCurrDfxOpInfo(), nullptr);
 }
 
 TEST_F(MirrorTaskManagerTest, Ut_GetQueueType_When_CurrDfxOpInfoNullptr_Expect_ReturnCircularQueue)
 {
-    GlobalMirrorTasks &globalMirrorTasks = GlobalMirrorTasks::Instance();
-    for (auto &taskMap : globalMirrorTasks.taskMaps_) {
+    GlobalMirrorTasks& globalMirrorTasks = GlobalMirrorTasks::Instance();
+    for (auto& taskMap : globalMirrorTasks.taskMaps_) {
         taskMap.clear();
     }
     MirrorTaskManager mirrorTaskManager(0, &globalMirrorTasks, 0);
-    TaskParam taskParam = {.taskType = TaskParamType::TASK_NOTIFY_RECORD,
-        .beginTime = 0,
-        .endTime = 0,
-        .taskPara = {.Notify = {.notifyID = 123, .value = 456}}};
+    TaskParam taskParam
+        = {.taskType = TaskParamType::TASK_NOTIFY_RECORD,
+           .beginTime = 0,
+           .endTime = 0,
+           .taskPara = {.Notify = {.notifyID = 123, .value = 456}}};
     std::unique_ptr<TaskInfo> taskInfo = std::make_unique<TaskInfo>(0, 0, 0, taskParam, nullptr);
     EXPECT_NO_THROW(mirrorTaskManager.AddTaskInfo(std::move(taskInfo)));
     EXPECT_EQ(mirrorTaskManager.GetQueueType(), QueueType::Circular_Queue);

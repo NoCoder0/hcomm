@@ -1,3 +1,13 @@
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "gtest/gtest.h"
 #include "../../hccl_api_base_test.h"
 #include "hccl/hccl_res.h"
@@ -17,25 +27,38 @@
 #include "hccl/hccl_types.h"
 #include "hccp.h"
 #include "my_rank.h"
+#include "aiv_urma_channel.h"
+#include "aicpu_ts_urma_channel.h"
+#include "endpoint_pair/channel/channel_process_pub.h"
+#include "endpoint_pair/channel/channel_c_adpt_pub.h"
+#include "endpoint_pair/channel/dfx/channel_dfx_pub.h"
+#include "coll_comm_res_c_adpt.h"
+#include "hcomm_c_adpt.h"
+#include "channel_config.h"
+#include "hccl/hccl_channel.h"
+#include "host_multi_qp_config.h"
+#include "shared_jetty_channel_pool.h"
 
 #define private public
 
 using namespace hccl;
 using namespace hcomm;
 
-HcclResult ProcessUbChannelDesc(const HcclChannelDesc &channelDesc, const HcclChannelDesc &channelDescFinal,
-    const hcclComm *hcclComm);
-HcclResult ProcessHcclResPackReq(const HcclChannelDesc &channelDesc, HcclChannelDesc &channelDescFinal,
-    hcclComm *hcclComm);
+HcclResult ProcessUbChannelDesc(
+    const HcclChannelDesc& channelDesc, const HcclChannelDesc& channelDescFinal, const hcclComm* hcclComm);
+HcclResult
+ProcessHcclResPackReq(const HcclChannelDesc& channelDesc, HcclChannelDesc& channelDescFinal, hcclComm* hcclComm);
+HcclResult CheckCcuChannelProtocol(
+    const CommEngine engine, const std::vector<HcclChannelDesc>& channelDescs, const std::string& commTag);
 
-static int StubRaGetHccnCfgRoceQosDscp(struct RaInfo *info, enum HccnCfgKey key, char *value, unsigned int *valueLen)
+static int StubRaGetHccnCfgRoceQosDscp(struct RaInfo* info, enum HccnCfgKey key, char* value, unsigned int* valueLen)
 {
     (void)info;
     (void)key;
     if (value == nullptr || valueLen == nullptr) {
         return -1;
     }
-    const char *cfg = "0:33,1:20,4:50,6:70";
+    const char* cfg = "0:33,1:20,4:50,6:70";
     const unsigned int len = static_cast<unsigned int>(std::strlen(cfg));
     if (*valueLen < len) {
         return -1;
@@ -45,29 +68,89 @@ static int StubRaGetHccnCfgRoceQosDscp(struct RaInfo *info, enum HccnCfgKey key,
     return 0;
 }
 
+namespace {
+
+constexpr s32 HOST_MULTI_QP_DEVICE_LOGIC_ID = 6;
+constexpr u32 HOST_MULTI_QP_DEVICE_PHY_ID = 3U;
+u32 g_hostMultiQpQpCount = 0U;
+
+HcclResult StubGetDeviceForHostMultiQp(s32* deviceLogicId)
+{
+    *deviceLogicId = HOST_MULTI_QP_DEVICE_LOGIC_ID;
+    return HCCL_SUCCESS;
+}
+
+HcclResult StubGetDevicePhyIdForHostMultiQp(u32 deviceLogicId, u32& devicePhyId, bool isRefresh)
+{
+    EXPECT_EQ(deviceLogicId, static_cast<u32>(HOST_MULTI_QP_DEVICE_LOGIC_ID));
+    EXPECT_FALSE(isRefresh);
+    devicePhyId = HOST_MULTI_QP_DEVICE_PHY_ID;
+    return HCCL_SUCCESS;
+}
+
+uint32_t StubGetHostMultiQpCount(hccl::HostMultiQpConfig*, uint32_t devicePhyId)
+{
+    return devicePhyId == HOST_MULTI_QP_DEVICE_PHY_ID ? g_hostMultiQpQpCount : 0U;
+}
+
+} // namespace
+
 static HcclMemHandle g_userMemHandle = reinterpret_cast<HcclMemHandle>(0x1111);
 static HcclMemHandle g_symMemHandle = reinterpret_cast<HcclMemHandle>(0x2222);
+static const std::string g_symMemTag = "__hccl_sym_win__ut";
 static ChannelHandle g_testChannel = static_cast<ChannelHandle>(0x3333);
+static void* g_testDevChannelEntity = reinterpret_cast<void*>(0x5678);
 // UT stub state, used in single-threaded test execution and reset in SetUp.
-static HcclChannelDesc g_capturedChannelDesc {};
+static HcclChannelDesc g_capturedChannelDesc{};
 static std::vector<HcclMemHandle> g_capturedMemHandles;
+static bool g_remoteHasSymMemTag = false;
 
-HcclResult StubRegisterPendingSymmetricMemHandles(std::vector<HcclMemHandle> &memHandles)
+void StubSetRemoteTags(const std::vector<std::string>& remoteMemTags)
+{
+    g_remoteHasSymMemTag = false;
+    for (const std::string& memTag : remoteMemTags) {
+        if (memTag == g_symMemTag) {
+            g_remoteHasSymMemTag = true;
+            break;
+        }
+    }
+}
+
+void StubFillSymHandles(std::vector<HcclMemHandle>& memHandles)
 {
     memHandles.clear();
-    memHandles.emplace_back(g_symMemHandle);
+    if (!g_remoteHasSymMemTag) {
+        memHandles.emplace_back(g_symMemHandle);
+    }
+}
+
+void MockRemoteMems(uint32_t& remoteMemNum, CommMem*& remoteMems, const std::vector<std::string>& remoteMemTags)
+{
+    MOCKER_CPP(
+        &MyRank::ChannelGetRemoteMems,
+        HcclResult(MyRank::*)(ChannelHandle, uint32_t*, CommMem**, std::vector<std::string>&) const)
+        .expects(once())
+        .with(mockcpp::any(), outBoundP(&remoteMemNum), outBoundP(&remoteMems), outBound(remoteMemTags))
+        .will(returnValue(HCCL_SUCCESS));
+}
+
+HcclResult StubQueryExistingChannels(
+    MyRank* self, CommEngine engine, const HcclChannelDesc* channelDescs, uint32_t channelNum, ChannelHandle* channels)
+{
+    (void)self;
+    (void)engine;
+    (void)channelDescs;
+    for (uint32_t idx = 0; idx < channelNum; ++idx) {
+        channels[idx] = g_testChannel;
+    }
     return HCCL_SUCCESS;
 }
 
-HcclResult StubRegisterPendingSymmetricMemHandlesEmpty(std::vector<HcclMemHandle> &memHandles)
+HcclResult StubCreateChannelsCapture(
+    MyRank* self, CommEngine engine, const std::string& commTag, const HcclChannelDesc* channelDescs,
+    uint32_t channelNum, ChannelHandle* channels)
 {
-    memHandles.clear();
-    return HCCL_SUCCESS;
-}
-
-HcclResult StubCreateChannelsCapture(CommEngine engine, const std::string &commTag,
-    const HcclChannelDesc* channelDescs, uint32_t channelNum, ChannelHandle *channels)
-{
+    (void)self;
     (void)engine;
     (void)commTag;
     if (channelNum > 0) {
@@ -81,11 +164,32 @@ HcclResult StubCreateChannelsCapture(CommEngine engine, const std::string &commT
     return HCCL_SUCCESS;
 }
 
-HcclResult StubChannelGetRemoteMems(ChannelHandle channel, uint32_t *memNum, CommMem **remoteMems, char ***memTags)
+HcclResult StubChannelBuildDeviceEntity(ChannelHandle channelHandle, uint64_t* devChannelEntity)
 {
-    static CommMem remoteMem {};
+    EXPECT_EQ(channelHandle, g_testChannel);
+    *devChannelEntity = reinterpret_cast<uint64_t>(g_testDevChannelEntity);
+    return HCCL_SUCCESS;
+}
+
+HcclResult StubChannelGet(ChannelHandle channelHandle, void** channel)
+{
+    EXPECT_EQ(channelHandle, g_testChannel);
+    *channel = reinterpret_cast<void*>(g_testChannel);
+    return HCCL_SUCCESS;
+}
+
+HcclResult StubBuildChannelEntityToDevice(AivUrmaChannel* self, void** devChannelEntity)
+{
+    EXPECT_EQ(reinterpret_cast<ChannelHandle>(self), g_testChannel);
+    *devChannelEntity = g_testDevChannelEntity;
+    return HCCL_SUCCESS;
+}
+
+HcclResult StubChannelGetRemoteMems(ChannelHandle channel, uint32_t* memNum, CommMem** remoteMems, char*** memTags)
+{
+    static CommMem remoteMem{};
     static char memTag[] = "__hccl_sym_win__ut";
-    static char *tagList[] = {memTag};
+    static char* tagList[] = {memTag};
     remoteMem.type = COMM_MEM_TYPE_DEVICE;
     remoteMem.addr = reinterpret_cast<void*>(0x4444);
     remoteMem.size = 0x1000;
@@ -96,7 +200,7 @@ HcclResult StubChannelGetRemoteMems(ChannelHandle channel, uint32_t *memNum, Com
     return HCCL_SUCCESS;
 }
 
-HcclResult StubUpdateSymmetricRemoteMem(uint32_t remoteRank, const CommMem *remoteMems, char **memTags, uint32_t memNum)
+HcclResult StubUpdateSymmetricRemoteMem(uint32_t remoteRank, const CommMem* remoteMems, char** memTags, uint32_t memNum)
 {
     (void)remoteRank;
     (void)remoteMems;
@@ -105,31 +209,47 @@ HcclResult StubUpdateSymmetricRemoteMem(uint32_t remoteRank, const CommMem *remo
     return HCCL_SUCCESS;
 }
 
+static uint32_t g_sharedJettyGetStatusCallCount = 0;
+static int32_t StubHcommChannelGetStatus(const ChannelHandle* channelList, uint32_t listNum, int32_t* statusList)
+{
+    (void)channelList;
+    g_sharedJettyGetStatusCallCount++;
+    if (g_sharedJettyGetStatusCallCount == 1) {
+        for (uint32_t i = 0; i < listNum; ++i) {
+            statusList[i] = static_cast<int32_t>(hcomm::HCOMM_CHANNEL_STATUS_CONNECTING);
+        }
+        return static_cast<int32_t>(HCCL_E_AGAIN);
+    }
+    for (uint32_t i = 0; i < listNum; ++i) {
+        statusList[i] = static_cast<int32_t>(hcomm::HCOMM_CHANNEL_STATUS_READY);
+    }
+    return 0;
+}
+
 class HcclChannelDescTest : public testing::Test {
 public:
     void SetUp() override
     {
         g_capturedChannelDesc = {};
         g_capturedMemHandles.clear();
-        const char *fakeA5SocName = "Ascend950PR_958b";
+        g_remoteHasSymMemTag = false;
+        g_testChannel = static_cast<ChannelHandle>(0x3333);
+        const char* fakeA5SocName = "Ascend950PR_958b";
         MOCKER(aclrtGetSocName).stubs().will(returnValue(fakeA5SocName));
         MOCKER(&HcclCommDfx::ReportKernel).stubs().will(returnValue(HCCL_SUCCESS));
         SetUpCommAndGraph(hcclCommPtr, rankGraphV2, comm, ret);
         EXPECT_EQ(ret, HCCL_SUCCESS);
     }
-    void TearDown() override
-    {
-        GlobalMockObject::verify();
-    }
-protected: 
-    void SetUpCommAndGraph(std::shared_ptr < hccl::hcclComm > &hcclCommPtr, 
-        std::shared_ptr < Hccl::RankGraph > &rankGraphV2, void* &comm, HcclResult &ret) 
+    void TearDown() override { GlobalMockObject::verify(); }
+
+protected:
+    void SetUpCommAndGraph(
+        std::shared_ptr<hccl::hcclComm>& hcclCommPtr, std::shared_ptr<Hccl::RankGraph>& rankGraphV2, void*& comm,
+        HcclResult& ret)
     {
         MOCKER(hrtGetDeviceType).stubs().with(outBound(DevType::DEV_TYPE_950)).will(returnValue(HCCL_SUCCESS));
 
-        bool isDeviceSide {
-            false
-        };
+        bool isDeviceSide{false};
         MOCKER(GetRunSideIsDevice).stubs().with(outBound(isDeviceSide)).will(returnValue(HCCL_SUCCESS));
         MOCKER(IsSupportHCCLV2).stubs().will(returnValue(true));
         setenv("HCCL_INDEPENDENT_OP", "1", 1);
@@ -150,16 +270,16 @@ protected:
         hcclCommPtr = std::make_shared<hccl::hcclComm>(1, 1, commName);
         HcclCommConfig config;
         UtInitHcclCommConfig(config);
-        config.hcclOpExpansionMode = 1; // 非CCU模式，避免拉起CCU平台层
+        config.hcclOpExpansionMode = 1;           // 非CCU模式，避免拉起CCU平台层
         config.hcclRdmaTrafficClass = 0xFFFFFFFF; // 不配置RDMA Traffic Class
-        config.hcclRdmaServiceLevel = 0xFFFFFFFF; // 不配置RDMA Service Level 
-        unsetenv("HCCL_DFS_CONFIG");      
+        config.hcclRdmaServiceLevel = 0xFFFFFFFF; // 不配置RDMA Service Level
+        unsetenv("HCCL_DFS_CONFIG");
         ret = hcclCommPtr->InitCollComm(commV2, rankGraphV2.get(), rank, cclBuffer, commName, &config);
         CollComm* collComm = hcclCommPtr->GetCollComm();
         comm = static_cast<HcclComm>(hcclCommPtr.get());
     }
 
-    void GetChannelDesc(std::vector<HcclChannelDesc> &channelDesc)
+    void GetChannelDesc(std::vector<HcclChannelDesc>& channelDesc)
     {
         HcclChannelDescInit(channelDesc.data(), 1);
         channelDesc[0].remoteRank = 2;
@@ -172,10 +292,11 @@ protected:
         channelDesc[0].roceAttr.sl = 3;
     }
 
-    void InitRoceChannelDesc(HcclChannelDesc &channelDesc) const
+    void InitRoceChannelDesc(HcclChannelDesc& channelDesc) const
     {
         ASSERT_EQ(HcclChannelDescInit(&channelDesc, 1), HCCL_SUCCESS);
         channelDesc.channelProtocol = COMM_PROTOCOL_ROCE;
+        channelDesc.remoteEndpoint.protocol = COMM_PROTOCOL_ROCE; // CheckRoceAttr 以 remoteEndpoint.protocol 判定
         channelDesc.roceAttr.queueNum = 3;
         channelDesc.roceAttr.retryCnt = 3;
         channelDesc.roceAttr.retryInterval = 20;
@@ -183,8 +304,39 @@ protected:
         channelDesc.localEndpoint.loc.device.devPhyId = 0U;
     }
 
+    void InitSymMemChannelDesc(HcclChannelDesc& channelDesc) const
+    {
+        ASSERT_EQ(HcclChannelDescInit(&channelDesc, 1), HCCL_SUCCESS);
+        channelDesc.remoteRank = 2;
+        channelDesc.channelProtocol = COMM_PROTOCOL_UBOE;
+        channelDesc.notifyNum = 1;
+        channelDesc.memHandles = &g_userMemHandle;
+        channelDesc.memHandleNum = 1;
+        channelDesc.localEndpoint.protocol = COMM_PROTOCOL_UBOE;
+        channelDesc.localEndpoint.loc.locType = ENDPOINT_LOC_TYPE_DEVICE;
+        channelDesc.localEndpoint.commAddr.type = COMM_ADDR_TYPE_IP_V4;
+        channelDesc.remoteEndpoint.protocol = COMM_PROTOCOL_UBOE;
+        channelDesc.remoteEndpoint.loc.locType = ENDPOINT_LOC_TYPE_DEVICE;
+        channelDesc.remoteEndpoint.commAddr.type = COMM_ADDR_TYPE_IP_V4;
+    }
+
+    void MockConsumedPendingSymMem()
+    {
+        MOCKER(&hcomm::ClusterMonitor::RegisterToClusterMonitor).stubs().will(returnValue(HCCL_SUCCESS));
+        MOCKER_CPP(&CollComm::RegisterPendingSymmetricMemHandles).expects(once()).will(returnValue(HCCL_SUCCESS));
+    }
+
     void ExpectRoceSlTcInHcommChannelDesc(uint32_t hcclQos, uint8_t expectSl, uint8_t expectTc)
     {
+        // ApplyRoceQosCompatToSlTc：hrtGetDevice(userDevId) → aclrtGetPhyDevIdByUserDevId → 查 HCCN
+        s32 userDevId = 0;
+        s32 phyDevId = 0;
+        MOCKER(hrtGetDevice).stubs().with(outBoundP(&userDevId)).will(returnValue(HCCL_SUCCESS));
+        MOCKER(aclrtGetPhyDevIdByUserDevId)
+            .stubs()
+            .with(mockcpp::any(), outBoundP(&phyDevId))
+            .will(returnValue(ACL_SUCCESS));
+
         hcclCommPtr->GetCollComm()->GetCommConfig().SetConfigHcclQos(hcclQos);
 
         HcclChannelDesc in{};
@@ -195,15 +347,63 @@ protected:
         ret = ProcessHcclResPackReq(in, out, hcclCommPtr.get());
         ASSERT_EQ(ret, HCCL_SUCCESS);
 
-        const HcommChannelDesc hcommDesc = MyRankUtils::ChannelDescHccl2Hcomm(
-            out, hcclCommPtr->GetCollComm()->GetCommConfig());
+        HcommChannelDesc hcommDesc
+            = MyRankUtils::ChannelDescHccl2Hcomm(out, hcclCommPtr->GetCollComm()->GetCommConfig());
+        ASSERT_EQ(CheckRoceAttr(hcommDesc, ENDPOINT_LOC_TYPE_HOST, nullptr), HCCL_SUCCESS);
         EXPECT_EQ(hcommDesc.roceAttr.sl, expectSl) << "hcclQos=" << hcclQos;
         EXPECT_EQ(hcommDesc.roceAttr.tc, expectTc) << "hcclQos=" << hcclQos;
     }
 
+protected:
+    // 共享 jetty 用例公共逻辑：仅协议和 tag 不同，提取消除重复代码
+    void DoSharedJettyAcquireTest(CommProtocol protocol, const char* tag)
+    {
+        HcclChannelConfig config = nullptr;
+        ASSERT_EQ(HcclChannelConfigCreate(&config), HCCL_SUCCESS);
+        ASSERT_EQ(HcclChannelConfigSetInt(config, HCCL_CHANNEL_CONFIG_TYPE_IS_SHARED_QUEUE, 1), HCCL_SUCCESS);
+        ASSERT_EQ(HcclChannelConfigSetStr(config, HCCL_CHANNEL_CONFIG_TYPE_SHARED_QUEUE_TAG, tag), HCCL_SUCCESS);
+
+        std::vector<HcclChannelDesc> channelDesc(1);
+        std::vector<ChannelHandle> channels(1);
+        ASSERT_EQ(HcclChannelDescInit(channelDesc.data(), 1), HCCL_SUCCESS);
+        channelDesc[0].remoteRank = 2;
+        channelDesc[0].channelProtocol = protocol;
+        channelDesc[0].notifyNum = 1;
+        channelDesc[0].localEndpoint.protocol = protocol;
+        channelDesc[0].localEndpoint.loc.locType = ENDPOINT_LOC_TYPE_DEVICE;
+        channelDesc[0].localEndpoint.loc.device.devPhyId = 0U;
+        channelDesc[0].localEndpoint.commAddr.type = COMM_ADDR_TYPE_IP_V4;
+        channelDesc[0].localEndpoint.commAddr.addr.s_addr = 0x01000001U;
+        channelDesc[0].remoteEndpoint.protocol = protocol;
+        channelDesc[0].remoteEndpoint.loc.locType = ENDPOINT_LOC_TYPE_DEVICE;
+        channelDesc[0].remoteEndpoint.loc.device.devPhyId = 1U;
+        channelDesc[0].remoteEndpoint.commAddr.type = COMM_ADDR_TYPE_IP_V4;
+        channelDesc[0].remoteEndpoint.commAddr.addr.s_addr = 0x02000002U;
+
+        MOCKER(&hcomm::ClusterMonitor::RegisterToClusterMonitor).stubs().will(returnValue(HCCL_SUCCESS));
+        MOCKER_CPP(&MyRank::GetOpExpansionMode).stubs().will(returnValue(0u));
+        MOCKER_CPP(&EndpointMgr::GetWithTag).stubs().will(returnValue(HCCL_SUCCESS));
+        MOCKER_CPP(&MyRank::PrepareMemHandles).stubs().will(returnValue(HCCL_SUCCESS));
+        MOCKER_CPP(&MyRank::BatchCreateSockets).stubs().will(returnValue(HCCL_SUCCESS));
+        MOCKER(HcommChannelCreateWithConfig).stubs().will(returnValue(0));
+        g_sharedJettyGetStatusCallCount = 0;
+        MOCKER(HcommChannelGetStatus).stubs().will(invoke(StubHcommChannelGetStatus));
+        MOCKER_CPP(&Hccl::EnvSocketConfig::GetLinkTimeOut).stubs().will(returnValue(static_cast<s32>(5)));
+        MOCKER_CPP(&MyRank::BatchExchangeAndCheckConsistency).stubs().will(returnValue(HCCL_SUCCESS));
+
+        ret = HcclChannelAcquireWithConfig(
+            comm, CommEngine::COMM_ENGINE_AIV, channelDesc.data(), 1, config, channels.data());
+        EXPECT_EQ(ret, HCCL_SUCCESS);
+
+        // 清理共享 jetty 池中本 MyRank 的条目，避免 MyRank 析构时以 null handle 调用真实 HcommChannelDestroy
+        MOCKER(HcommChannelDestroy).stubs().will(returnValue(0));
+        (void)SharedJettyChannelPool::GetInstance().DestroyAllByMyRank(hcclCommPtr->GetCollComm()->GetMyRank());
+        HcclChannelConfigDestroy(config);
+    }
+
 private:
-    std::shared_ptr<hccl::hcclComm>hcclCommPtr;
-    std::shared_ptr<Hccl::RankGraph>rankGraphV2;
+    std::shared_ptr<hccl::hcclComm> hcclCommPtr;
+    std::shared_ptr<Hccl::RankGraph> rankGraphV2;
     void* comm;
     HcclResult ret;
 };
@@ -217,6 +417,52 @@ TEST_F(HcclChannelDescTest, Ut_ProcessRoceChannelDesc_When_IsCommunicatorV2_Is_T
     MOCKER(HcommDpuChannelRegisterDfx).stubs().will(returnValue(0));
     ret = HcclChannelAcquire(comm, CommEngine::COMM_ENGINE_CPU, channelDesc.data(), 1, channels.data());
     EXPECT_EQ(ret, HCCL_SUCCESS);
+}
+
+// PrepareV2ChannelAcquire: 刷新device失败时返回错误码，不继续建链
+TEST_F(HcclChannelDescTest, Ut_HcclChannelAcquire_When_GetDeviceRefreshFails_Expect_RuntimeError)
+{
+    std::vector<HcclChannelDesc> channelDesc(1);
+    std::vector<ChannelHandle> channels(1);
+    GetChannelDesc(channelDesc);
+    MOCKER(hrtGetDeviceRefresh).stubs().will(returnValue(HCCL_E_RUNTIME));
+    ret = HcclChannelAcquire(comm, CommEngine::COMM_ENGINE_CPU, channelDesc.data(), 1, channels.data());
+    EXPECT_EQ(ret, HCCL_E_RUNTIME);
+}
+
+TEST_F(HcclChannelDescTest, Ut_ProcessRoceChannelDesc_When_HostQpCountAvailable_Expect_HostCountPreferred)
+{
+    auto& portConfig = const_cast<Hccl::MultiQpSrcPortConfig&>(
+        Hccl::EnvConfig::GetInstance().GetRdmaConfig().GetMultiQpSrcPortConfig());
+    portConfig.ipPairToPorts.clear();
+    portConfig.ipPairToPorts["1.0.0.0,2.0.0.0"] = {10001, 10002, 10003};
+    g_hostMultiQpQpCount = 4U;
+    MOCKER(hrtGetDevice).stubs().will(invoke(StubGetDeviceForHostMultiQp));
+    MOCKER(hrtGetDevicePhyIdByIndex).stubs().will(invoke(StubGetDevicePhyIdForHostMultiQp));
+    MOCKER_CPP(&hccl::HostMultiQpConfig::GetQpCount).stubs().will(invoke(StubGetHostMultiQpCount));
+
+    auto resolveQueueNum = [this](uint32_t requestedQueueNum) {
+        HcclChannelDesc input{};
+        HcclChannelDesc output{};
+        InitRoceChannelDesc(input);
+        EXPECT_EQ(HcclChannelDescInit(&output, 1), HCCL_SUCCESS);
+        input.roceAttr.queueNum = requestedQueueNum;
+        input.localEndpoint.loc.locType = ENDPOINT_LOC_TYPE_HOST;
+        input.localEndpoint.commAddr.type = COMM_ADDR_TYPE_IP_V4;
+        input.localEndpoint.commAddr.addr = Hccl::IpAddress("1.0.0.0").GetBinaryAddress().addr;
+        input.remoteEndpoint.commAddr.type = COMM_ADDR_TYPE_IP_V4;
+        input.remoteEndpoint.commAddr.addr = Hccl::IpAddress("2.0.0.0").GetBinaryAddress().addr;
+        EXPECT_EQ(ProcessHcclResPackReq(input, output, hcclCommPtr.get()), HCCL_SUCCESS);
+        return output.roceAttr.queueNum;
+    };
+
+    EXPECT_EQ(resolveQueueNum(7U), 7U);
+    EXPECT_EQ(resolveQueueNum(INVALID_UINT), 4U);
+
+    g_hostMultiQpQpCount = 0U;
+    EXPECT_EQ(resolveQueueNum(INVALID_UINT), 3U);
+
+    portConfig.ipPairToPorts.clear();
 }
 
 TEST_F(HcclChannelDescTest, Ut_ProcessRoceChannelDesc_When_TcIsInvaild_ReturnHCCLEPARA)
@@ -274,6 +520,7 @@ TEST_F(HcclChannelDescTest, Ut_HcclChannelAcquire_When_Notifynum_Exceeds_Return_
     GetChannelDesc(channelDesc);
     channelDesc[0].notifyNum = 65;
     MOCKER(&hcomm::ClusterMonitor::RegisterToClusterMonitor).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&MyRank::QueryChannels).expects(never());
 
     ret = HcclChannelAcquire(comm, CommEngine::COMM_ENGINE_AICPU_TS, channelDesc.data(), 1, channels.data());
     EXPECT_EQ(ret, HCCL_E_PARA);
@@ -284,10 +531,12 @@ TEST_F(HcclChannelDescTest, Ut_HcclChannelAcquire_When_BuildConnection_Fails_Ret
     std::vector<HcclChannelDesc> channelDesc(1);
     std::vector<ChannelHandle> channels(1);
     GetChannelDesc(channelDesc);
-    
+
     // Mock BuildConnection 失败
-    MOCKER(&HostCpuRoceChannel::BuildConnection).stubs().will(returnValue(HCCL_E_NETWORK));
-    
+    // BuildConnection 已收口为基类虚步骤,虚成员指针非真实地址,需借实例虚表挂钩
+    HostCpuRoceChannel vtblProbe(reinterpret_cast<EndpointHandle>(0x1), HcommChannelDesc{});
+    MOCKER_CPP_VIRTUAL(vtblProbe, &HostCpuRoceChannel::BuildConnection).stubs().will(returnValue(HCCL_E_NETWORK));
+
     ret = HcclChannelAcquire(comm, CommEngine::COMM_ENGINE_AICPU_TS, channelDesc.data(), 1, channels.data());
     EXPECT_EQ(ret, HCCL_E_PTR);
 }
@@ -297,12 +546,13 @@ TEST_F(HcclChannelDescTest, Ut_HcclChannelAcquire_When_IbvPostRecv_Fails_Return_
     std::vector<HcclChannelDesc> channelDesc(1);
     std::vector<ChannelHandle> channels(1);
     GetChannelDesc(channelDesc);
-    
+
     // Mock BuildConnection 成功
-    MOCKER(&HostCpuRoceChannel::BuildConnection).stubs().will(returnValue(HCCL_SUCCESS));
+    HostCpuRoceChannel vtblProbe(reinterpret_cast<EndpointHandle>(0x1), HcommChannelDesc{});
+    MOCKER_CPP_VIRTUAL(vtblProbe, &HostCpuRoceChannel::BuildConnection).stubs().will(returnValue(HCCL_SUCCESS));
     // Mock IbvPostRecv 失败
     MOCKER(&HostCpuRoceChannel::IbvPostRecv).stubs().will(returnValue(HCCL_E_INTERNAL));
-    
+
     ret = HcclChannelAcquire(comm, CommEngine::COMM_ENGINE_AICPU_TS, channelDesc.data(), 1, channels.data());
     EXPECT_EQ(ret, HCCL_E_PTR);
 }
@@ -337,7 +587,7 @@ TEST_F(HcclChannelDescTest, Ut_ProcessUbChannelDesc_When_UbcCtp_QosUnset_UsesCom
     HcclChannelDesc out{};
     ASSERT_EQ(HcclChannelDescInit(&in, 1), HCCL_SUCCESS);
     ASSERT_EQ(HcclChannelDescInit(&out, 1), HCCL_SUCCESS);
-    in.channelProtocol = COMM_PROTOCOL_UBC_CTP;
+    in.channelProtocol = COMM_PROTOCOL_UB_CTP;
     ret = ProcessUbChannelDesc(in, out, hcclCommPtr.get());
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
@@ -365,7 +615,7 @@ TEST_F(HcclChannelDescTest, Ut_ProcessUbChannelDesc_When_UbcCtp_Valid_Expect_Suc
     HcclChannelDesc out{};
     ASSERT_EQ(HcclChannelDescInit(&in, 1), HCCL_SUCCESS);
     ASSERT_EQ(HcclChannelDescInit(&out, 1), HCCL_SUCCESS);
-    in.channelProtocol = COMM_PROTOCOL_UBC_CTP;
+    in.channelProtocol = COMM_PROTOCOL_UB_CTP;
     ret = ProcessUbChannelDesc(in, out, hcclCommPtr.get());
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
@@ -384,23 +634,200 @@ TEST_F(HcclChannelDescTest, Ut_ProcessUbChannelDesc_When_Uboe_QosUnset_UsesCommH
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
 
-TEST_F(HcclChannelDescTest, Ut_HcclChannelAcquire_When_AicpuUrma_AppendSymmetricMemHandle)
+// ProcessHcclChannelDesc 的 UB_MEM/HCCS 分支仅做 pathMode 拷贝，不依赖 hcclComm，
+// 使用轻量 fixture 避免重型通信域初始化，便于在无设备环境独立运行。
+class ProcessHcclChannelDescTest : public testing::Test {
+protected:
+    HcclResult ret{HCCL_SUCCESS};
+};
+
+TEST_F(ProcessHcclChannelDescTest, Ut_ProcessHcclChannelDesc_When_UbMem_CopiesPathMode)
+{
+    HcclChannelDesc in{};
+    HcclChannelDesc out{};
+    ASSERT_EQ(HcclChannelDescInit(&in, 1), HCCL_SUCCESS);
+    ASSERT_EQ(HcclChannelDescInit(&out, 1), HCCL_SUCCESS);
+    in.channelProtocol = COMM_PROTOCOL_UB_MEM;
+    in.ubMemAttr.pathMode = 2u;
+
+    ret = ProcessHcclChannelDesc(in, out, nullptr);
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+    EXPECT_EQ(out.channelProtocol, COMM_PROTOCOL_UB_MEM);
+    EXPECT_EQ(out.ubMemAttr.pathMode, 2u);
+}
+
+TEST_F(ProcessHcclChannelDescTest, Ut_ProcessHcclChannelDesc_When_UbMem_PathModeZero_CopiesZero)
+{
+    HcclChannelDesc in{};
+    HcclChannelDesc out{};
+    ASSERT_EQ(HcclChannelDescInit(&in, 1), HCCL_SUCCESS);
+    ASSERT_EQ(HcclChannelDescInit(&out, 1), HCCL_SUCCESS);
+    in.channelProtocol = COMM_PROTOCOL_UB_MEM;
+    in.ubMemAttr.pathMode = 0u;
+
+    ret = ProcessHcclChannelDesc(in, out, nullptr);
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+    EXPECT_EQ(out.ubMemAttr.pathMode, 0u);
+}
+
+TEST_F(ProcessHcclChannelDescTest, Ut_ProcessHcclChannelDesc_When_Hccs_DoesNotCopyUnion)
+{
+    HcclChannelDesc in{};
+    HcclChannelDesc out{};
+    ASSERT_EQ(HcclChannelDescInit(&in, 1), HCCL_SUCCESS);
+    ASSERT_EQ(HcclChannelDescInit(&out, 1), HCCL_SUCCESS);
+    in.channelProtocol = COMM_PROTOCOL_HCCS;
+    in.ubMemAttr.pathMode = 1u;
+
+    ret = ProcessHcclChannelDesc(in, out, nullptr);
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+    EXPECT_EQ(out.channelProtocol, COMM_PROTOCOL_HCCS);
+    EXPECT_EQ(out.ubMemAttr.pathMode, 0xFFu);
+}
+
+// CheckCcuChannelProtocol 不依赖 hcclComm/设备，使用轻量 fixture 独立运行
+class CheckCcuChannelProtocolTest : public testing::Test {
+protected:
+    HcclResult ret{HCCL_SUCCESS};
+};
+
+TEST_F(CheckCcuChannelProtocolTest, Ut_CheckCcuChannelProtocol_When_CcuUbRtp_Expect_NotSupport)
+{
+    HcclChannelDesc desc{};
+    ASSERT_EQ(HcclChannelDescInit(&desc, 1), HCCL_SUCCESS);
+    desc.channelProtocol = COMM_PROTOCOL_UB_RTP;
+
+    ret = CheckCcuChannelProtocol(CommEngine::COMM_ENGINE_CCU, {desc}, "ut_group");
+    EXPECT_EQ(ret, HCCL_E_NOT_SUPPORT);
+}
+
+TEST_F(CheckCcuChannelProtocolTest, Ut_CheckCcuChannelProtocol_When_CcuUbCtp_Expect_Success)
+{
+    HcclChannelDesc desc{};
+    ASSERT_EQ(HcclChannelDescInit(&desc, 1), HCCL_SUCCESS);
+    desc.channelProtocol = COMM_PROTOCOL_UB_CTP;
+
+    ret = CheckCcuChannelProtocol(CommEngine::COMM_ENGINE_CCU, {desc}, "ut_group");
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+}
+
+TEST_F(CheckCcuChannelProtocolTest, Ut_CheckCcuChannelProtocol_When_NonCcuUbRtp_Expect_Success)
+{
+    HcclChannelDesc desc{};
+    ASSERT_EQ(HcclChannelDescInit(&desc, 1), HCCL_SUCCESS);
+    desc.channelProtocol = COMM_PROTOCOL_UB_RTP;
+
+    ret = CheckCcuChannelProtocol(CommEngine::COMM_ENGINE_AIV, {desc}, "ut_group");
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+}
+
+TEST_F(CheckCcuChannelProtocolTest, Ut_CheckCcuChannelProtocol_When_MixedDescs_Expect_NotSupport)
+{
+    HcclChannelDesc ubCtpDesc{};
+    HcclChannelDesc ubRtpDesc{};
+    ASSERT_EQ(HcclChannelDescInit(&ubCtpDesc, 1), HCCL_SUCCESS);
+    ASSERT_EQ(HcclChannelDescInit(&ubRtpDesc, 1), HCCL_SUCCESS);
+    ubCtpDesc.channelProtocol = COMM_PROTOCOL_UB_CTP;
+    ubRtpDesc.channelProtocol = COMM_PROTOCOL_UB_RTP;
+
+    ret = CheckCcuChannelProtocol(CommEngine::COMM_ENGINE_CCU, {ubCtpDesc, ubRtpDesc}, "ut_group");
+    EXPECT_EQ(ret, HCCL_E_NOT_SUPPORT);
+}
+
+TEST_F(CheckCcuChannelProtocolTest, Ut_CheckCcuChannelProtocol_When_CcuUbcTp_Expect_Success)
+{
+    HcclChannelDesc desc{};
+    ASSERT_EQ(HcclChannelDescInit(&desc, 1), HCCL_SUCCESS);
+    desc.channelProtocol = COMM_PROTOCOL_UBC_TP;
+
+    ret = CheckCcuChannelProtocol(CommEngine::COMM_ENGINE_CCU, {desc}, "ut_group");
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+}
+
+TEST_F(CheckCcuChannelProtocolTest, Ut_CheckCcuChannelProtocol_When_CcuRoce_Expect_NotSupport)
+{
+    HcclChannelDesc desc{};
+    ASSERT_EQ(HcclChannelDescInit(&desc, 1), HCCL_SUCCESS);
+    desc.channelProtocol = COMM_PROTOCOL_ROCE;
+
+    ret = CheckCcuChannelProtocol(CommEngine::COMM_ENGINE_CCU, {desc}, "ut_group");
+    EXPECT_EQ(ret, HCCL_E_NOT_SUPPORT);
+}
+
+TEST_F(HcclChannelDescTest, Ut_HcclChannelAcquire_When_CcuUbRtp_Expect_NotSupport)
+{
+    HcclChannelDesc channelDesc{};
+    ASSERT_EQ(HcclChannelDescInit(&channelDesc, 1), HCCL_SUCCESS);
+    channelDesc.remoteRank = 2;
+    channelDesc.channelProtocol = COMM_PROTOCOL_UB_RTP;
+
+    // CCU+UB_RTP 在入口即被拦截，不应触达建链
+    MOCKER_CPP(&MyRank::CreateChannels).expects(never());
+
+    ChannelHandle outputChannel = 0;
+    ret = HcclChannelAcquire(comm, CommEngine::COMM_ENGINE_CCU, &channelDesc, 1, &outputChannel);
+    EXPECT_EQ(ret, HCCL_E_NOT_SUPPORT);
+}
+
+TEST_F(HcclChannelDescTest, Ut_HcclChannelAcquire_When_PendingConsumed_AppendHistoricalSymmetricMemHandle)
 {
     std::vector<HcclChannelDesc> channelDesc(1);
     std::vector<ChannelHandle> channels(1);
-    ASSERT_EQ(HcclChannelDescInit(channelDesc.data(), 1), HCCL_SUCCESS);
-    channelDesc[0].remoteRank = 2;
-    channelDesc[0].channelProtocol = COMM_PROTOCOL_UBOE;
-    channelDesc[0].notifyNum = 1;
-    channelDesc[0].memHandles = &g_userMemHandle;
-    channelDesc[0].memHandleNum = 1;
+    hcomm::AicpuTsUrmaChannel aicpuChannel(reinterpret_cast<EndpointHandle>(0x1), HcommChannelDesc{});
+    g_testChannel = reinterpret_cast<ChannelHandle>(&aicpuChannel);
+    InitSymMemChannelDesc(channelDesc[0]);
 
-    MOCKER(&hcomm::ClusterMonitor::RegisterToClusterMonitor).stubs().will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&CollComm::RegisterPendingSymmetricMemHandles).expects(once()).will(returnValue(HCCL_SUCCESS));
-    MOCKER_CPP(&MyRank::CreateChannels).stubs().will(returnValue(HCCL_SUCCESS));
+    MockConsumedPendingSymMem();
+    MOCKER_CPP(&CollComm::GetAllRegisteredSymMemHandles)
+        .expects(once())
+        .with(processWith(StubFillSymHandles))
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&MyRank::QueryChannels).expects(once()).will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&MyRank::CreateChannels).stubs().will(invoke(StubCreateChannelsCapture));
+    uint32_t remoteMemNum = 1;
+    CommMem remoteMem{};
+    CommMem* remoteMems = &remoteMem;
+    const std::vector<std::string> remoteMemTags{g_symMemTag};
+    MockRemoteMems(remoteMemNum, remoteMems, remoteMemTags);
+    MOCKER_CPP(&CollComm::UpdateSymmetricRemoteMem).expects(once()).will(returnValue(HCCL_SUCCESS));
 
     ret = HcclChannelAcquire(comm, CommEngine::COMM_ENGINE_AICPU, channelDesc.data(), 1, channels.data());
     EXPECT_EQ(ret, HCCL_SUCCESS);
+    ASSERT_EQ(g_capturedMemHandles.size(), 2U);
+    EXPECT_EQ(g_capturedMemHandles[0], g_userMemHandle);
+    EXPECT_EQ(g_capturedMemHandles[1], g_symMemHandle);
+}
+
+TEST_F(HcclChannelDescTest, Ut_HcclChannelAcquire_When_ExistingChannelHasSymmetricTag_NotAppendHandle)
+{
+    std::vector<HcclChannelDesc> channelDesc(1);
+    std::vector<ChannelHandle> channels(1);
+    InitSymMemChannelDesc(channelDesc[0]);
+
+    MockConsumedPendingSymMem();
+    MOCKER_CPP(&CollComm::GetAllRegisteredSymMemHandles)
+        .expects(once())
+        .with(processWith(StubFillSymHandles))
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&CollComm::GetRemoteMissingSymMemHandles)
+        .expects(once())
+        .with(processWith(StubSetRemoteTags), processWith(StubFillSymHandles))
+        .will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&MyRank::QueryChannels).expects(once()).will(invoke(StubQueryExistingChannels));
+    uint32_t remoteMemNum = 1;
+    CommMem remoteMem{};
+    CommMem* remoteMems = &remoteMem;
+    const std::vector<std::string> remoteMemTags{g_symMemTag};
+    MockRemoteMems(remoteMemNum, remoteMems, remoteMemTags);
+    MOCKER_CPP(&MyRank::CreateChannels).stubs().will(invoke(StubCreateChannelsCapture));
+    MOCKER_CPP(&CollComm::UpdateSymmetricRemoteMem).expects(never());
+
+    ret = HcclChannelAcquire(comm, CommEngine::COMM_ENGINE_AICPU, channelDesc.data(), 1, channels.data());
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+    EXPECT_EQ(channels[0], g_testChannel);
+    // PrepareMemHandles 只转换原始用户句柄；远端已有 symmetric tag，不追加 symmetric 句柄。
+    ASSERT_EQ(g_capturedMemHandles.size(), 1U);
+    EXPECT_EQ(g_capturedMemHandles[0], g_userMemHandle);
 }
 
 TEST_F(HcclChannelDescTest, Ut_HcclChannelAcquire_When_CpuUrma_NotAppendSymmetricMemHandle)
@@ -422,10 +849,38 @@ TEST_F(HcclChannelDescTest, Ut_HcclChannelAcquire_When_CpuUrma_NotAppendSymmetri
     EXPECT_EQ(ret, HCCL_SUCCESS);
 }
 
+TEST_F(HcclChannelDescTest, Ut_HcclChannelAcquire_When_AivUbRtp_ConvertsHostHandleToDeviceEntity)
+{
+    HcclChannelDesc channelDesc{};
+    ASSERT_EQ(HcclChannelDescInit(&channelDesc, 1), HCCL_SUCCESS);
+    channelDesc.remoteRank = 2;
+    channelDesc.channelProtocol = COMM_PROTOCOL_UB_RTP;
+
+    hcomm::AivUrmaChannel channel(reinterpret_cast<EndpointHandle>(0x1), HcommChannelDesc{});
+    g_testChannel = reinterpret_cast<ChannelHandle>(&channel);
+
+    MOCKER(&hcomm::ClusterMonitor::RegisterToClusterMonitor).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&MyRank::CreateChannels).stubs().will(invoke(StubCreateChannelsCapture));
+    MOCKER_CPP(&hcomm::ChannelProcess::ChannelBuildDeviceEntity)
+        .expects(once())
+        .will(invoke(StubChannelBuildDeviceEntity));
+    MOCKER_CPP(&hcomm::ChannelProcess::RegisterChannelD2HMap).expects(once()).will(returnValue(HCCL_SUCCESS));
+
+    ChannelHandle outputChannel = 0;
+    ret = HcclChannelAcquire(comm, CommEngine::COMM_ENGINE_AIV, &channelDesc, 1, &outputChannel);
+    EXPECT_EQ(ret, HCCL_SUCCESS);
+    EXPECT_EQ(outputChannel, static_cast<ChannelHandle>(reinterpret_cast<uintptr_t>(g_testDevChannelEntity)));
+}
+
 TEST_F(HcclChannelDescTest, Ut_ProcessRoceChannelDesc_When_HcclQosUnset_UsesRdmaEnvSlTc)
 {
-    // EnvRdmaConfig 默认 SL=4、TC=132（CI 中 setenv 晚于 EnvConfig 解析时不生效）
-    ExpectRoceSlTcInHcommChannelDesc(HCCL_COMM_QOS_CONFIG_NOT_SET, 4U, 132U);
+    // hcclQos 未配置时 SL/TC 取自 EnvRdmaConfig；EnvConfig 为进程级单例、解析时机随用例执行顺序变化
+    // （先于本 fixture setenv 则为默认 4/132，晚于则为 env 注入 2/120），故期望值与实现同源读取，保证
+    // 用例在全量/单跑两种顺序下稳定。
+    const auto& rdmaCfg = Hccl::EnvConfig::GetInstance().GetRdmaConfig();
+    ExpectRoceSlTcInHcommChannelDesc(
+        HCCL_COMM_QOS_CONFIG_NOT_SET, static_cast<uint8_t>(rdmaCfg.GetRdmaServerLevel()),
+        static_cast<uint8_t>(rdmaCfg.GetRdmaTrafficClass()));
 }
 
 TEST_F(HcclChannelDescTest, Ut_ProcessRoceChannelDesc_When_HcclQos1_MapsSlAndTcFromHccn)
@@ -444,4 +899,200 @@ TEST_F(HcclChannelDescTest, Ut_ProcessRoceChannelDesc_When_HcclQos6_MapsSlAndTcF
 {
     MOCKER(RaGetHccnCfg).stubs().will(invoke(StubRaGetHccnCfgRoceQosDscp));
     ExpectRoceSlTcInHcommChannelDesc(6U, 6U, static_cast<uint8_t>(70U << 2U));
+}
+
+TEST_F(HcclChannelDescTest, Ut_HcclChannelQuery_When_CommNull_Expect_E_PTR)
+{
+    std::vector<HcclChannelDesc> channelDesc(1);
+    std::vector<ChannelHandle> channels(1);
+    GetChannelDesc(channelDesc);
+    EXPECT_EQ(
+        HcclChannelQuery(nullptr, CommEngine::COMM_ENGINE_CCU, channelDesc.data(), 1, channels.data()), HCCL_E_PTR);
+}
+
+TEST_F(HcclChannelDescTest, Ut_HcclChannelQuery_When_DescsNull_Expect_E_PTR)
+{
+    std::vector<ChannelHandle> channels(1);
+    EXPECT_EQ(HcclChannelQuery(comm, CommEngine::COMM_ENGINE_CCU, nullptr, 1, channels.data()), HCCL_E_PTR);
+}
+
+TEST_F(HcclChannelDescTest, Ut_HcclChannelQuery_When_ChannelsNull_Expect_E_PTR)
+{
+    std::vector<HcclChannelDesc> channelDesc(1);
+    GetChannelDesc(channelDesc);
+    EXPECT_EQ(HcclChannelQuery(comm, CommEngine::COMM_ENGINE_CCU, channelDesc.data(), 1, nullptr), HCCL_E_PTR);
+}
+
+TEST_F(HcclChannelDescTest, Ut_HcclChannelQuery_When_NumZero_Expect_E_PARA)
+{
+    std::vector<HcclChannelDesc> channelDesc(1);
+    std::vector<ChannelHandle> channels(1);
+    GetChannelDesc(channelDesc);
+    EXPECT_EQ(HcclChannelQuery(comm, CommEngine::COMM_ENGINE_CCU, channelDesc.data(), 0, channels.data()), HCCL_E_PARA);
+}
+
+TEST_F(HcclChannelDescTest, Ut_HcclChannelQuery_When_LegacyComm_Expect_NOT_SUPPORT)
+{
+    MOCKER_CPP(&hccl::hcclComm::IsCommunicatorV2).stubs().will(returnValue(false));
+    std::vector<HcclChannelDesc> channelDesc(1);
+    std::vector<ChannelHandle> channels(1);
+    GetChannelDesc(channelDesc);
+    EXPECT_EQ(
+        HcclChannelQuery(comm, CommEngine::COMM_ENGINE_CCU, channelDesc.data(), 1, channels.data()),
+        HCCL_E_NOT_SUPPORT);
+}
+
+TEST_F(HcclChannelDescTest, Ut_HcclChannelQuery_When_Normal_Expect_SUCCESS)
+{
+    MOCKER_CPP(&MyRank::GetOpExpansionMode).stubs().will(returnValue(0u));
+    MOCKER_CPP(&MyRank::QueryChannels).stubs().will(returnValue(HCCL_SUCCESS));
+    std::vector<HcclChannelDesc> channelDesc(1);
+    std::vector<ChannelHandle> channels(1);
+    GetChannelDesc(channelDesc);
+    EXPECT_EQ(
+        HcclChannelQuery(comm, CommEngine::COMM_ENGINE_CCU, channelDesc.data(), 1, channels.data()), HCCL_SUCCESS);
+}
+
+TEST_F(HcclChannelDescTest, Ut_HcclChannelQuery_When_MyRankFailed_Expect_ErrorPropagated)
+{
+    MOCKER_CPP(&MyRank::GetOpExpansionMode).stubs().will(returnValue(0u));
+    MOCKER_CPP(&MyRank::QueryChannels).stubs().will(returnValue(HCCL_E_INTERNAL));
+    std::vector<HcclChannelDesc> channelDesc(1);
+    std::vector<ChannelHandle> channels(1);
+    GetChannelDesc(channelDesc);
+    EXPECT_EQ(
+        HcclChannelQuery(comm, CommEngine::COMM_ENGINE_CCU, channelDesc.data(), 1, channels.data()), HCCL_E_INTERNAL);
+}
+
+TEST_F(HcclChannelDescTest, Ut_HcclChannelDestroy_When_CommNull_Expect_E_PTR)
+{
+    ChannelHandle channels[1] = {g_testChannel};
+    EXPECT_EQ(HcclChannelDestroy(nullptr, channels, 1), HCCL_E_PTR);
+}
+
+TEST_F(HcclChannelDescTest, Ut_HcclChannelDestroy_When_ChannelsNull_Expect_E_PTR)
+{
+    EXPECT_EQ(HcclChannelDestroy(comm, nullptr, 1), HCCL_E_PTR);
+}
+
+TEST_F(HcclChannelDescTest, Ut_HcclChannelDestroy_When_NumZero_Expect_E_PARA)
+{
+    ChannelHandle channels[1] = {g_testChannel};
+    EXPECT_EQ(HcclChannelDestroy(comm, channels, 0), HCCL_E_PARA);
+}
+
+TEST_F(HcclChannelDescTest, Ut_HcclChannelDestroy_When_LegacyComm_Expect_NOT_SUPPORT)
+{
+    MOCKER_CPP(&hccl::hcclComm::IsCommunicatorV2).stubs().will(returnValue(false));
+    ChannelHandle channels[1] = {g_testChannel};
+    EXPECT_EQ(HcclChannelDestroy(comm, channels, 1), HCCL_E_NOT_SUPPORT);
+}
+
+TEST_F(HcclChannelDescTest, Ut_HcclChannelDestroy_When_Normal_Expect_SUCCESS)
+{
+    MOCKER_CPP(&MyRank::DestroyChannels).stubs().will(returnValue(HCCL_SUCCESS));
+    ChannelHandle channels[1] = {g_testChannel};
+    EXPECT_EQ(HcclChannelDestroy(comm, channels, 1), HCCL_SUCCESS);
+}
+
+TEST_F(HcclChannelDescTest, Ut_HcclChannelDestroy_When_MyRankFailed_Expect_ErrorPropagated)
+{
+    MOCKER_CPP(&MyRank::DestroyChannels).stubs().will(returnValue(HCCL_E_INTERNAL));
+    ChannelHandle channels[1] = {g_testChannel};
+    EXPECT_EQ(HcclChannelDestroy(comm, channels, 1), HCCL_E_INTERNAL);
+}
+
+// 适配层: GetCollComm 返回 nullptr 时 Query 返回 E_PTR
+TEST_F(HcclChannelDescTest, Ut_HcclChannelQuery_When_CollCommNull_Expect_E_PTR)
+{
+    MOCKER_CPP(&hccl::hcclComm::GetCollComm).stubs().will(returnValue(static_cast<hccl::CollComm*>(nullptr)));
+    std::vector<HcclChannelDesc> channelDesc(1);
+    std::vector<ChannelHandle> channels(1);
+    GetChannelDesc(channelDesc);
+    EXPECT_EQ(HcclChannelQuery(comm, CommEngine::COMM_ENGINE_CCU, channelDesc.data(), 1, channels.data()), HCCL_E_PTR);
+}
+
+// 适配层: channelNum 超过上限(1024*1024)时返回 E_PARA
+TEST_F(HcclChannelDescTest, Ut_HcclChannelQuery_When_NumExceedsMax_Expect_E_PARA)
+{
+    std::vector<HcclChannelDesc> channelDesc(1);
+    std::vector<ChannelHandle> channels(1);
+    GetChannelDesc(channelDesc);
+    EXPECT_EQ(
+        HcclChannelQuery(comm, CommEngine::COMM_ENGINE_CCU, channelDesc.data(), 1024 * 1024 + 1, channels.data()),
+        HCCL_E_PARA);
+}
+
+TEST_F(HcclChannelDescTest, Ut_HcclChannelDestroy_When_NumExceedsMax_Expect_E_PARA)
+{
+    ChannelHandle channels[1] = {g_testChannel};
+    EXPECT_EQ(HcclChannelDestroy(comm, channels, 1024 * 1024 + 1), HCCL_E_PARA);
+}
+
+// 适配层: channelDesc 的 magicWord 非法时, ProcessHcclResPackReq 失败并透传 E_PARA
+TEST_F(HcclChannelDescTest, Ut_HcclChannelQuery_When_DescMagicWordInvalid_Expect_E_PARA)
+{
+    std::vector<HcclChannelDesc> channelDesc(1);
+    std::vector<ChannelHandle> channels(1);
+    GetChannelDesc(channelDesc);
+    channelDesc[0].header.magicWord = 0xDEADBEEF;
+    EXPECT_EQ(HcclChannelQuery(comm, CommEngine::COMM_ENGINE_CCU, channelDesc.data(), 1, channels.data()), HCCL_E_PARA);
+}
+
+// 共享 jetty 路径覆盖：CreateSharedJettyChannelsForGroup（line 997/1000）与
+// WaitForSharedJettyChannelsReady（line 1256）通过 HcclChannelAcquireWithConfig 公共 API 触发。
+// 参数化封装：UB_CTP 与 UB_RTP 用例仅协议和 tag 不同，提取公共逻辑消除重复代码。
+TEST_F(HcclChannelDescTest, Ut_HcclChannelAcquireWithConfig_When_SharedJetty_Expect_Success)
+{
+    DoSharedJettyAcquireTest(COMM_PROTOCOL_UB_CTP, "ut_sj_4900");
+}
+
+// 共享 jetty 支持 UB_RTP(UBG) 协议：门控放行 + AivUrmaChannel 路径
+TEST_F(HcclChannelDescTest, Ut_HcclChannelAcquireWithConfig_When_SharedJetty_UbRtp_Expect_Success)
+{
+    DoSharedJettyAcquireTest(COMM_PROTOCOL_UB_RTP, "ut_sj_ubrtp");
+}
+
+// 适配层: 共享 jetty 路径下 commTag（identifier）长度超过 HCOMM_CHANNEL_NAME_MAX_LEN(191) 时返回 HCCL_E_PARA
+// 覆盖 CreateSharedJettyChannelsForGroup（line 998-1002）新增的超长 channelName 校验错误路径
+TEST_F(HcclChannelDescTest, Ut_HcclChannelAcquireWithConfig_When_SharedJettyChannelNameTooLong_Expect_E_PARA)
+{
+    // identifier_ 为 const 成员，构造后通过 const_cast 注入超长值以触发校验
+    const std::string longIdentifier(HCOMM_CHANNEL_NAME_MAX_LEN + 1, 'x');
+    const_cast<std::string&>(hcclCommPtr->identifier_) = longIdentifier;
+    comm = static_cast<HcclComm>(hcclCommPtr.get());
+
+    HcclChannelConfig config = nullptr;
+    ASSERT_EQ(HcclChannelConfigCreate(&config), HCCL_SUCCESS);
+    ASSERT_EQ(HcclChannelConfigSetInt(config, HCCL_CHANNEL_CONFIG_TYPE_IS_SHARED_QUEUE, 1), HCCL_SUCCESS);
+    ASSERT_EQ(HcclChannelConfigSetStr(config, HCCL_CHANNEL_CONFIG_TYPE_SHARED_QUEUE_TAG, "ut_sj_long"), HCCL_SUCCESS);
+
+    std::vector<HcclChannelDesc> channelDesc(1);
+    std::vector<ChannelHandle> channels(1);
+    ASSERT_EQ(HcclChannelDescInit(channelDesc.data(), 1), HCCL_SUCCESS);
+    channelDesc[0].remoteRank = 2;
+    channelDesc[0].channelProtocol = COMM_PROTOCOL_UB_CTP;
+    channelDesc[0].notifyNum = 1;
+    channelDesc[0].localEndpoint.protocol = COMM_PROTOCOL_UB_CTP;
+    channelDesc[0].localEndpoint.loc.locType = ENDPOINT_LOC_TYPE_DEVICE;
+    channelDesc[0].localEndpoint.loc.device.devPhyId = 0U;
+    channelDesc[0].localEndpoint.commAddr.type = COMM_ADDR_TYPE_IP_V4;
+    channelDesc[0].localEndpoint.commAddr.addr.s_addr = 0x01000001U;
+    channelDesc[0].remoteEndpoint.protocol = COMM_PROTOCOL_UB_CTP;
+    channelDesc[0].remoteEndpoint.loc.locType = ENDPOINT_LOC_TYPE_DEVICE;
+    channelDesc[0].remoteEndpoint.loc.device.devPhyId = 1U;
+    channelDesc[0].remoteEndpoint.commAddr.type = COMM_ADDR_TYPE_IP_V4;
+    channelDesc[0].remoteEndpoint.commAddr.addr.s_addr = 0x02000002U;
+
+    // 仅需打通到 CreateSharedJettyChannelsForGroup 的前置依赖：校验在该函数入口即返回，无需后续建链/交换 mock
+    MOCKER(&hcomm::ClusterMonitor::RegisterToClusterMonitor).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&MyRank::GetOpExpansionMode).stubs().will(returnValue(0u));
+    MOCKER_CPP(&EndpointMgr::GetWithTag).stubs().will(returnValue(HCCL_SUCCESS));
+    MOCKER_CPP(&MyRank::PrepareMemHandles).stubs().will(returnValue(HCCL_SUCCESS));
+
+    ret = HcclChannelAcquireWithConfig(
+        comm, CommEngine::COMM_ENGINE_AIV, channelDesc.data(), 1, config, channels.data());
+    EXPECT_EQ(ret, HCCL_E_PARA);
+
+    HcclChannelConfigDestroy(config);
 }

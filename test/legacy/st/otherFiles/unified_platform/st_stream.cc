@@ -11,6 +11,7 @@
 #define private public
 #include "gtest/gtest.h"
 #include <mockcpp/mockcpp.hpp>
+#include "test_mock_setup.h"
 #include "stream.h"
 #include "null_ptr_exception.h"
 #undef private
@@ -18,45 +19,23 @@
 using namespace Hccl;
 class StreamTest : public testing::Test {
 protected:
-    static void SetUpTestCase()
-    {
-        std::cout << "Stream tests set up." << std::endl;
-    }
+    static void SetUpTestCase() { std::cout << "Stream tests set up." << std::endl; }
 
-    static void TearDownTestCase()
-    {
-        std::cout << "Stream tests tear down." << std::endl;
-    }
+    static void TearDownTestCase() { std::cout << "Stream tests tear down." << std::endl; }
 
-    virtual void SetUp()
-    {
-
-        std::cout << "A Test case in Stream SetUP" << std::endl;
-    }
+    virtual void SetUp() { std::cout << "A Test case in Stream SetUP" << std::endl; }
 
     virtual void TearDown()
     {
         GlobalMockObject::verify();
         std::cout << "A Test case in Stream TearDown" << std::endl;
     }
-
 };
 
 TEST_F(StreamTest, Stream_selfownded_false)
 {
     GlobalMockObject::verify();
-    void* fakePtr      = (void *)1;
-    u32        fakeId       = 1;
-    s32        fakeDevLogId = 1;
-    s32        fakeDevPhyId = 1;
-    u32        fakeSqId     = 2;
-    u64        fakeStmMode  = 3;
-    MOCKER(HrtGetStreamId).stubs().will(returnValue(fakeId));
-    MOCKER(HrtGetDevice).stubs().will(returnValue(fakeDevLogId));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(fakeDevPhyId)));
-    MOCKER(HrtStreamCreateWithFlags).stubs().will(returnValue(fakePtr));
-    MOCKER(HrtStreamGetSqId).stubs().will(returnValue(fakeSqId));
-    MOCKER(HrtStreamDestroy).stubs();
+    SETUP_STREAM_TEST();
 
     Stream stream(fakePtr);
     stream.SetStmMode(fakeStmMode);
@@ -71,18 +50,7 @@ TEST_F(StreamTest, Stream_selfownded_false)
 
 TEST_F(StreamTest, stream_dev_used_false)
 {
-    void* fakePtr      = (void *)1;
-    u32        fakeId       = 1;
-    s32        fakeDevLogId = 1;
-    s32        fakeDevPhyId = 1;
-    u32        fakeSqId     = 2;
-    u64        fakeStmMode  = 3;
-    MOCKER(HrtGetStreamId).stubs().will(returnValue(fakeId));
-    MOCKER(HrtGetDevice).stubs().will(returnValue(fakeDevLogId));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(fakeDevPhyId)));
-    MOCKER(HrtStreamCreateWithFlags).stubs().will(returnValue(fakePtr));
-    MOCKER(HrtStreamGetSqId).stubs().will(returnValue(fakeSqId));
-    MOCKER(HrtStreamDestroy).stubs();
+    SETUP_STREAM_TEST();
 
     Stream stream(false);
 
@@ -97,18 +65,7 @@ TEST_F(StreamTest, stream_dev_used_false)
 
 TEST_F(StreamTest, stream_dev_used_true)
 {
-    void* fakePtr      = (void *)1;
-    u32        fakeId       = 1;
-    s32        fakeDevLogId = 1;
-    s32        fakeDevPhyId = 1;
-    u32        fakeSqId     = 2;
-    u64        fakeStmMode  = 3;
-    MOCKER(HrtGetStreamId).stubs().will(returnValue(fakeId));
-    MOCKER(HrtGetDevice).stubs().will(returnValue(fakeDevLogId));
-    MOCKER(HrtGetDevicePhyIdByIndex).stubs().will(returnValue(static_cast<DevId>(fakeDevPhyId)));
-    MOCKER(HrtStreamCreateWithFlags).stubs().will(returnValue(fakePtr));
-    MOCKER(HrtStreamGetSqId).stubs().will(returnValue(fakeSqId));
-    MOCKER(HrtStreamDestroy).stubs();
+    SETUP_STREAM_TEST();
 
     Stream stream(true);
 

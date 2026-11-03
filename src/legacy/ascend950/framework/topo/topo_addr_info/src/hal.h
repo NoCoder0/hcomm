@@ -7,6 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #ifndef __HAL_H__
 #define __HAL_H__
 
@@ -14,50 +15,49 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif 
-
+#endif
 
 #define DCMI_URMA_EID_SIZE (16)
 #define MAX_EID_NUM (32)
 #define MAX_NPU_COUNT (64)
 
-typedef union dcmi_urma_eid{
+typedef union dcmi_urma_eid {
     unsigned char raw[DCMI_URMA_EID_SIZE];
     struct {
         unsigned long subnet_prefix;
         unsigned long interface_id;
-    }in6;
-}dcmi_urma_eid_t;
+    } in6;
+} dcmi_urma_eid_t;
 
 typedef struct dcmi_urma_eid_info {
     dcmi_urma_eid_t eid;
     unsigned int eid_index;
-}dcmi_urma_eid_info_t;
+} dcmi_urma_eid_info_t;
 
 #define MAX_EID_PER_UE (32)
 typedef struct {
     dcmi_urma_eid_info_t eidList[MAX_EID_PER_UE];
     unsigned int eidNum;
-}UBEntity;
+} UBEntity;
 
 #define MAX_UE_PER_NPU (8)
 typedef struct {
     UBEntity ueList[MAX_UE_PER_NPU];
     unsigned int ueNum;
-}UEList;
+} UEList;
 
-int HalGetUBEntityList(int phyId, UEList *ueList);
+int HalGetUBEntityList(int phyId, UEList* ueList);
 
 struct dcmi_pcie_info_all {
-unsigned int venderid; //厂商ID
-unsigned int subvenderid; //厂商子ID
-unsigned int deviceid; //设备ID
-unsigned int subdeviceid; //设备子ID
-int domain; //pcie domain
-unsigned int bdf_busid; //BDF（Bus，Device，Function）中的总线ID
-unsigned int bdf_deviceid; //BDF（Bus，Device，Function）中的设备ID
-unsigned int bdf_funcid; //BDF（Bus，Device，Function）中的功能ID
-unsigned char reserve[32];
+    unsigned int venderid;     // 厂商ID
+    unsigned int subvenderid;  // 厂商子ID
+    unsigned int deviceid;     // 设备ID
+    unsigned int subdeviceid;  // 设备子ID
+    int domain;                // pcie domain
+    unsigned int bdf_busid;    // BDF（Bus，Device，Function）中的总线ID
+    unsigned int bdf_deviceid; // BDF（Bus，Device，Function）中的设备ID
+    unsigned int bdf_funcid;   // BDF（Bus，Device，Function）中的功能ID
+    unsigned char reserve[32];
 };
 
 struct dcmi_spod_info {
@@ -70,6 +70,7 @@ struct dcmi_spod_info {
     unsigned int reserve[6];
 };
 
+#define MAIN_BOARD_INVALID (0)
 #define MAIN_BOARD_ID_CARD_NOMESH (0x68)
 #define MAIN_BOARD_ID_CARD_2PMESH (0x6a)
 #define MAIN_BOARD_ID_CARD_4PMESH (0x6c)
@@ -78,16 +79,24 @@ struct dcmi_spod_info {
 #define MAIN_BOARD_ID_SERVER_8PMESH_UBOE (0x27)
 #define MAIN_BOARD_ID_SERVER_8PMESH_NOSP (0x29)
 #define MAIN_BOARD_ID_SERVER_8PMESH_NOSP_UBOE (0x2B)
-#define MAIN_BOARD_ID_SERVER_16PMESH (0x44)
-#define MAIN_BOARD_ID_SERVER_UBX (0x44)
-#define MAIN_BOARD_ID_POD         (0x07)
-#define MAIN_BOARD_ID_POD_2D      (0x03)
-
+#define MAIN_BOARD_ID_SERVER_350L (0x44)
+#define MAIN_BOARD_ID_SERVER_550EL_100 (0x46)
+#define MAIN_BOARD_ID_SERVER_550EL_200 (0x48)
+#define MAIN_BOARD_ID_POD (0x07)
+#define MAIN_BOARD_ID_POD_2D (0x03)
+#define MAIN_BOARD_ID_POD_FLEX (0x2D)
+#define MAIN_BOARD_ID_POD_FLEX_RTP (0x2F)
 
 /* 定义拓扑类型 */
-#define TOPO_TYPE_IGNORE (99)      // 忽略该拓扑类型
-#define TOPO_TYPE_SERVER_8P (0)    // 普通服务
-#define TOPO_TYPE_SERVER_16FM (3)  // 两个服务器组16p fullmesh
+#define TOPO_TYPE_IGNORE (99)     // 忽略该拓扑类型
+#define TOPO_TYPE_SERVER_8P (0)   // 普通服务
+#define TOPO_TYPE_SERVER_16FM (3) // 两个服务器组16p fullmesh
+
+#ifdef OPEN_HCCL_TEST
+#define STATIC
+#else
+#define STATIC static
+#endif
 
 int hal_get_eid_list_by_phy_id(int phyId, dcmi_urma_eid_info_t* eidList, size_t* eidCnt);
 
@@ -97,19 +106,47 @@ int hal_get_device_pcie_info(int phyId, struct dcmi_pcie_info_all* pcieInfo);
 
 int hal_get_spod_info(int phyId, struct dcmi_spod_info* spodInfo);
 
-int hal_get_npu_count();
+/* 本进程可见设备个数。配了 ASCEND_RT_VISIBLE_DEVICES 时为其列出的设备数，未配时为驱动真实设备数；
+   该个数同时就是本进程 userId 的取值范围上界。失败返回 -1，0 表示无可见设备 */
+int hal_get_visible_device_count();
+
+/* userId → phyId */
+int hal_get_phyid_from_userdevid(int userDevId, int* phyId);
+
+/* userId → logicId */
+int hal_get_logicid_from_userdevid(int userDevId, unsigned int* logicId);
 
 int hal_get_logicid_from_phyid(unsigned int phyId, unsigned int* logicId);
 
+/* DCMI 驱动拓扑类型，DCMI_TOPO_TYPE_UB 表示网卡与 NPU 亲和，枚举值需与驱动侧保持一致 */
+typedef enum {
+    DCMI_TOPO_TYPE_SELF = 0,
+    DCMI_TOPO_TYPE_SYS,
+    DCMI_TOPO_TYPE_PHB,
+    DCMI_TOPO_TYPE_HCCS,
+    DCMI_TOPO_TYPE_PXB,
+    DCMI_TOPO_TYPE_PIX,
+    DCMI_TOPO_TYPE_SIO,
+    DCMI_TOPO_TYPE_HCCS_SW,
+    DCMI_TOPO_TYPE_UB,
+    DCMI_TOPO_TYPE_BUTT,
+    DCMI_TOPO_TYPE_MAX
+} DCMI_TOPO_TYPE;
+
+/* nic_name_len不包含终止符长度 */
+int hal_get_topo_info_by_device_id_and_nic_name(int dev_id, char* nic_name, int nic_name_len, int* topo_type);
+
+int hal_get_userdevid_by_phyid(int phyId, int* userDevId);
+
 int get_server_id(char* server_id, size_t buf_size);
 
-int hal_get_driver_install_path(char *value_buf, size_t buf_size);
+int hal_get_driver_install_path(char* value_buf, size_t buf_size);
 
 /**
  * 添加一层适配，便于测试
  */
-void *hal_dlopen(const char *filename, int flag);
-void *hal_dlsym(void *handle, const char *symbol);
+void* hal_dlopen(const char* filename, int flag);
+void* hal_dlsym(void* handle, const char* symbol);
 
 #ifdef __cplusplus
 }

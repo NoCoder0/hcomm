@@ -23,5 +23,4 @@ void GenWhiteListFile();
 
 void DelWhiteListFile();
 
-
 #endif

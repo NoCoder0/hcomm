@@ -7,6 +7,7 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # -----------------------------------------------------------------------------------------------------------
+
 set(src_to_test_list
     main.cc
     # ut_hccl_independent_rank_graph.cc
@@ -16,6 +17,7 @@ set(src_to_test_list
     ${HCCL_CODE_ROOT}/test/ut/framework/communicator/hccl_api_base_test.cc
     ut_hccl_independent_op_mem.cc
     ut_thread_manager.cc
+    ut_order_launch_thread_mgr.cc
 )
 
 add_executable(hccl_utest_framework_independent_op ${src_to_test_list})
@@ -48,7 +50,7 @@ target_link_libraries(hccl_utest_framework_independent_op PRIVATE
     -pthread
     hccl_llt
     -Wl,--whole-archive
-    -Wl,--no-whole-archi
+    -Wl,--no-whole-archive
     -lgcov
     -lrt
     -ldl

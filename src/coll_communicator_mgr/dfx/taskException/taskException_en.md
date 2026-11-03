@@ -27,11 +27,18 @@ taskException/
 │   ├── hcclCommTaskException.h              # TaskExceptionHost / TaskExceptionHostManager class declarations
 │   ├── hcclCommTaskException.cc             # Host-side general exception handling implementation + callback registration management
 │   ├── ccuTaskException.h                   # CcuTaskException class declaration
-│   ├── ccuTaskException.cc                  # CCU task exception handling implementation (instruction parsing, register reading, error information generation)
-│   └── ccu_error_info_v1.h                  # CCU error information data structure definitions (CcuErrorInfo, CcuLoopContext, CcuMissionContext, and so on)
+│   └── ccuTaskException.cc                  # CCU task exception handling implementation (instruction parsing, register reading, error information generation)
 └── aicpu/                                   # AICPU-side exception handling
     ├── hcclCommTaskExceptionLite.h          # HcclCommTaskExceptionLite class declaration
     └── hcclCommTaskExceptionLite.cc         # AICPU-side exception detection, CQE parsing, and error reporting implementation
+```
+
+```text
+ccu_dfx/ (located at base_comm/resources/ccu/ccu_dfx/)
+├── ccu_error_info_v1.h                  # Ascend 950 error information data structure definitions (CcuErrorInfo, CcuLoopContext, CcuMissionContext, etc.)
+├── ccu_error_info_v2.h                  # Ascend 960 error information data structure definitions (CcuLoopContextV2, CcuMissionContextV2)
+├── ccu_dfx_schema.h                     # V1/V2 schema dispatch interface declarations (CcuVersionOps, GetCcuOps)
+└── ccu_dfx_schema.cc                    # V1/V2 schema dispatch implementation (selects decode/print implementation by device type 950->V1 / 960->V2)
 ```
 
 ### File Relationships
@@ -40,7 +47,10 @@ taskException/
 |------|------|----------|
 | `hcclCommTaskException.h/.cc` | Host-side main entry point, registers Runtime exception callbacks, distributes to general or CCU exception handling | Depends on `ccuTaskException.h` for CCU type exception handling; depends on `global_mirror_tasks.h` for finding TaskInfo; obtains ErrorMessageReport from the AICPU side through callbacks |
 | `ccuTaskException.h/.cc` | CCU task exception-specific handling, parses CcuRep instruction representation, reads hardware registers | Depends on data structures in `ccu_error_info_v1.h`; depends on `ccu_kernel_mgr.h` for CcuRepContext; depends on `ccu_urma_channel.h` for channel information |
-| `ccu_error_info_v1.h` | CCU error information data structure definitions | Referenced by `ccuTaskException.h/.cc`; depends on `ccu_rep_type_v1.h` for the CcuRepType enum definition |
+| `ccu_error_info_v1.h` (located at `base_comm/resources/ccu/ccu_dfx/`) | Ascend 950 error information data structure definitions (CcuErrorInfo, CcuLoopContext, CcuMissionContext, etc.) | Referenced by `ccuTaskException.h/.cc`; depends on `ccu_rep_type_v1.h` for the CcuRepType enum definition |
+| `ccu_error_info_v2.h` (located at `base_comm/resources/ccu/ccu_dfx/`) | Ascend 960 error information data structure definitions (CcuLoopContextV2, CcuMissionContextV2) | Referenced by `ccuTaskException.h`; zero external dependencies |
+| `ccu_dfx_schema.h` (located at `base_comm/resources/ccu/ccu_dfx/`) | V1/V2 schema dispatch interface declarations, defines CcuMissionInfo/CcuLoopInfo semantic output structures and CcuVersionOps dispatch table entry, declares GetCcuOps entry | Depends on `hccl_types.h` for HcclResult; implemented by `ccu_dfx_schema.cc` and referenced by `ccuTaskException.cc` (GetCcuOps called by ProcessCcuException / PrintPanicLogInfo / DecodeRawMissionInfo / FetchAndDecodeLoopInfo) |
+| `ccu_dfx_schema.cc` (located at `base_comm/resources/ccu/ccu_dfx/`) | V1/V2 schema dispatch implementation, selects corresponding Mission/Loop context decode and CCUM DFX register print implementation by device type (950->V1 / 960->V2) | Depends on `ccu_dfx_schema.h` interface; depends on `ccu_error_info_v1.h` for CcuMissionContext / CcuLoopContext; depends on `ccu_error_info_v2.h` for CcuMissionContextV2 / CcuLoopContextV2; depends on `adapter_rts_common.h` for hrtGetDeviceType to obtain device type |
 | `hcclCommTaskExceptionLite.h/.cc` | AICPU-side daemon thread, detects CQE exceptions and reports to Host | Depends on `coll_comm_aicpu.h` for the AICPU communication domain; depends on `error_message_v2.h` for organizing ErrorMessageReport and reporting to the Host through HDC |
 
 ### TaskException File Interaction
@@ -136,7 +146,7 @@ sequenceDiagram
     Note right of CollComm: Register AICPU exception callback
 
     CollComm->>TaskExceptionHost: Register
-    Note right of TaskExceptionHost: Write to CommRegisterMap_. The first comm registration calls aclrtSetExceptionInfoCallback.
+    Note right of TaskExceptionHost: Write to CommRegisterMap_. The first comm registration calls aclrtExceptionInfoCallbackRegister.
 
     hcomm_c_adpt->>HcclCommDfx: GetMirrorTaskManager
     HcclCommDfx-->>hcomm_c_adpt: mirrorTaskManager
@@ -404,12 +414,13 @@ sequenceDiagram
     alt LOOPGROUP
         CcuTaskException->>CcuTaskException: GenErrorInfoLoopGroup
         Note right of CcuTaskException: Parse LoopGroup→traverse Loop→GenErrorInfoLoop
-    else LOC_WAIT_EVENT/LOC_WAIT_NOTIFY
+    else LOC_WAIT_EVENT
         CcuTaskException->>CcuTaskException: GenErrorInfoByRepType
-        Note right of CcuTaskException: Check CKE expected value vs actual value
-    else Other Rep
+        CcuTaskException->>CcuTaskException: Backtrack dependency Rep by mask bit
+        Note right of CcuTaskException: Check CKE expected value vs actual value<br/>backtrack dependency Rep by unset bit
+    else Other Rep (incl. LOC_WAIT_NOTIFY)
         CcuTaskException->>CcuTaskException: GenErrorInfoByRepType
-        Note right of CcuTaskException: HANDLER_MAP dispatches to Read/Write and other handlers
+        Note right of CcuTaskException: HANDLER_MAP dispatches to Read/Write/Notify and other handlers
     end
 
     CcuTaskException->>CcuTaskException: PrintCcuErrorLog
@@ -461,11 +472,11 @@ classDiagram
     class CcuTaskException {
         +ProcessCcuException(rtExceptionInfo_t*, TaskInfo) void$
         -InitChannelMap(s32, u64) HcclResult$
-        -GetCcuErrorMsg(deviceId, missionStatus, ParaCcu, vector~CcuErrorInfo~&) HcclResult$
+        -GetCcuErrorMsg(deviceId, missionStatus, TaskInfo, vector~CcuErrorInfo~&) HcclResult$
         -GenErrorInfoByRepType(ErrorInfoBase, CcuRepBase*, vector~CcuErrorInfo~&) void$
         -GenErrorInfoLoop(ErrorInfoBase, CcuRepContext&, vector~CcuErrorInfo~&) HcclResult$
         -GenErrorInfoLoopGroup(ErrorInfoBase, CcuRepBase*, CcuRepContext&, vector~CcuErrorInfo~&) HcclResult$
-        -GenStatusInfo(ErrorInfoBase, vector~CcuErrorInfo~&) void$
+        -GenStatusInfo(ErrorInfoBase, TaskInfo, vector~CcuErrorInfo~&) void$
         -PrintCcuErrorInfo(...) void$
         -PrintCcuErrorLog(...) void$
         -PrintCcuUbRegisters(...) HcclResult$
@@ -569,8 +580,8 @@ classDiagram
 | Interface | Type | Parameters | Return Value | Description |
 |------|------|------|--------|----------|
 | `GetInstance(s32)` | Public static | [in] deviceLogicID | `TaskExceptionHost*` | Gets the exception handler for the specified device. Supports up to 65 devices. |
-| `Register(u64)` | Public | [in] commHandle | `HcclResult` | Writes commHandle to CommRegisterMap_. The first comm registration calls `aclrtSetExceptionInfoCallback(ProcessCallback)` to register the exception callback with RTS. |
-| `UnRegister(u64)` | Public | [in] commHandle | `HcclResult` | Removes commHandle from CommRegisterMap_. When the last comm is unregistered, sets the callback to nullptr. |
+| `Register(u64)` | Public | [in] commHandle | `HcclResult` | Writes commHandle to CommRegisterMap_. The first comm registration calls `aclrtExceptionInfoCallbackRegister(ProcessCallback)` to register the exception callback with RTS. |
+| `UnRegister(u64)` | Public | [in] commHandle | `HcclResult` | Removes commHandle from CommRegisterMap_. When the last comm is unregistered, calls `aclrtExceptionInfoCallbackUnregister(ProcessCallback)` to unregister the callback with RTS. |
 | `ProcessCallback(rtExceptionInfo_t*)` | Public static | [in] exceptionInfo | void | Runtime exception callback entry point. Obtains the handler through GetInstance and forwards to Process. |
 | `HandleAicpuErrorReport(rtExceptionInfo_t*, const ErrorMessageReport&, const TaskInfo&)` | Private | [in] exceptionInfo, [in] errorMessage, [in] taskInfo | void | Handles errors already reported by the AICPU side: prints BaseInfo/ParaInfo/GroupInfo/OpDataInfo, calls PrintUbDfxInfo, ReportErrorMsg. When ubCqeStatus is non-zero, calls GetAicpuCqeErrInfo. |
 | `HandleHostErrorReport(rtExceptionInfo_t*, const TaskInfo&)` | Private | [in] exceptionInfo, [in] taskInfo | void | Host-side independent exception handling: prints preceding task context for TASK_NOTIFY_WAIT and reports EI0002, prints cluster monitoring error info. |
@@ -589,7 +600,8 @@ classDiagram
 |------|------|------|--------|----------|
 | `ProcessCcuException(const rtExceptionInfo_t*, const TaskInfo&)` | Public static | [in] exceptionInfo, [in] taskInfo | void | Main entry point for CCU task exception handling: initializes channel mapping, traverses Missions, prints errors and registers, cleans up TaskKill status. |
 | `InitChannelMap(s32, u64)` | Private static | [in] deviceId, [in] ccuKernelHandle | `HcclResult` | Initializes the global channelId→channelHandle mapping `g_channelIdToHandle`. |
-| `GetCcuErrorMsg(int32_t, uint16_t, const ParaCcu&, vector<CcuErrorInfo>&)` | Private static | [in] deviceId, [in] missionStatus, [in] ccuTaskParam, [out] errorInfo | `HcclResult` | Core method for obtaining CCU error information: reads MissionContext, finds the exception Rep, dispatches to different GenErrorInfo methods. |
+| `GetCcuErrorMsg(int32_t, uint16_t, const TaskInfo&, vector<CcuErrorInfo>&)` | Private static | [in] deviceId, [in] missionStatus, [in] taskInfo, [out] errorInfo | `HcclResult` | Core method for obtaining CCU error information: reads MissionContext, finds the exception Rep, dispatches to different GenErrorInfo methods. |
+| `GenStatusInfo(const ErrorInfoBase&, const TaskInfo&, vector<CcuErrorInfo>&)` | Private static | [in] baseInfo, [in] taskInfo, [out] errorInfo | void | Generate status error info; EI0002 branch fills group_rank_content via GetGroupRankInfo(taskInfo) (contains hcclUdi) |
 | `GenErrorInfoByRepType(const ErrorInfoBase&, shared_ptr<CcuRepBase>, vector<CcuErrorInfo>&)` | Private static | [in] baseInfo, [in] repBase, [out] errorInfo | void | Dispatches to the corresponding GenErrorInfo method based on CcuRepType (uses HANDLER_MAP function table). |
 | `GenErrorInfoLoop(const ErrorInfoBase&, CcuRepContext&, vector<CcuErrorInfo>&)` | Private static | [in] baseInfo, [in] ctx, [out] errorInfo | `HcclResult` | Parses Loop type exceptions: reads LoopContext registers, recursively parses Reps within the Loop. |
 | `GenErrorInfoLoopGroup(const ErrorInfoBase&, shared_ptr<CcuRepBase>, CcuRepContext&, vector<CcuErrorInfo>&)` | Private static | [in] baseInfo, [in] repBase, [in] ctx, [out] errorInfo | `HcclResult` | Parses LoopGroup type exceptions: expands all Loops and parses them individually. |
@@ -623,7 +635,7 @@ classDiagram
 | `PrintCommTaskException(CollCommAicpu*)` | Public | [in] aicpuComm | `HcclResult` | Prints Task exception information for all threads in the specified communication domain. |
 | `PrintTaskExceptionBySqeId(CollCommAicpu*, u32, u32)` | Private | [in] aicpuComm, [in] sqId, [in] sqeId | `HcclResult` | Prints Task exception information for the specified sqId/sqeId: BaseInfo/ParaInfo, EID, GroupInfo, OpData/TaskContext. |
 | `PrintTaskContextInfo(CollCommAicpu*, u32, u32)` | Private | [in] aicpuComm, [in] sqId, [in] taskId | `HcclResult` | Prints up to 50 preceding task context entries before the exception task (printed in segments by opIndex). |
-| `CollectTaskContext(CollCommAicpu*, u32, u32, vector<shared_ptr<TaskInfo>>&)` | Private | [in] aicpuComm, [in] sqId, [in] taskId, [out] taskContext | `HcclResult` | Collects up to 50 task entries before the exception task from the MirrorTaskManagerLite queue. |
+| `CollectTaskContext(CollCommAicpu*, u32, u32, vector<TaskInfo*>&)` | Private | [in] aicpuComm, [in] sqId, [in] taskId, [out] taskContext | `HcclResult` | Collects up to 50 task entries before the exception task from the MirrorTaskManagerLite queue. |
 | `PrintEid(const TaskInfo&)` | Private | [in] taskInfo | void | Prints localEid and remoteEid for UB type tasks. |
 | `GetGroupInfo(CollCommAicpu*)` | Private | [in] aicpuComm | string | Gets the group/rankSize/localRank information of the communication domain. |
 | `GetSqeId(uint16_t, uint16_t)` | Private | [in] taskId, [in] streamId | `u32` | Combines taskId and streamId into sqeId. |

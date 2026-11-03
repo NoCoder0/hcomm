@@ -15,17 +15,15 @@
 
 namespace Hccl {
 
-AivTempAllReduceMesh1DOneShot::AivTempAllReduceMesh1DOneShot(const RankId virtualRank, const u32 tempRankSize,
-    const std::vector<std::vector<RankId>> &tempVTopo, const std::map<RankId, u32> &tempVirtRankMap)
+AivTempAllReduceMesh1DOneShot::AivTempAllReduceMesh1DOneShot(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
     : AivAlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap)
-{
-}
+{}
 
-AivTempAllReduceMesh1DOneShot::~AivTempAllReduceMesh1DOneShot()
-{
-}
+AivTempAllReduceMesh1DOneShot::~AivTempAllReduceMesh1DOneShot() {}
 
-HcclResult AivTempAllReduceMesh1DOneShot::CalcRes(AlgTempResReq &tempResReq)
+HcclResult AivTempAllReduceMesh1DOneShot::CalcRes(AlgTempResReq& tempResReq)
 {
     tempResReq.queNum = 1;
     tempResReq.streamNum = tempResReq.queNum;
@@ -36,15 +34,15 @@ HcclResult AivTempAllReduceMesh1DOneShot::CalcRes(AlgTempResReq &tempResReq)
 
 u32 AivTempAllReduceMesh1DOneShot::CalcScratchMultiple(BufferType inBuffType, BufferType outBuffType)
 {
-    (void) inBuffType;
-    (void) outBuffType;
+    (void)inBuffType;
+    (void)outBuffType;
 
     return tempRankSize_;
 }
 
 HcclResult AivTempAllReduceMesh1DOneShot::CalNumBlocks(u32& numBlocks, u64 dataSize, u32 numBlocksLimit)
-{   
-    (void) dataSize;
+{
+    (void)dataSize;
     if (numBlocksLimit >= (tempRankSize_ + 1)) {
         numBlocks = tempRankSize_ + 1;
     } else {
@@ -54,19 +52,20 @@ HcclResult AivTempAllReduceMesh1DOneShot::CalNumBlocks(u32& numBlocks, u64 dataS
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult AivTempAllReduceMesh1DOneShot::GenExtIns(const TempFuncs &tempFuncs, const TemplateDataParams &templateDataParams, 
-    const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues)
+HcclResult AivTempAllReduceMesh1DOneShot::GenExtIns(
+    const TempFuncs& tempFuncs, const TemplateDataParams& templateDataParams, const ResLinks& tempLinks,
+    std::vector<InsQuePtr>& tempInsQues)
 {
     HCCL_INFO("[AivTempAllReduceMesh1DOneShot] GenExtIns start");
-    CHK_PRT_RET(tempInsQues.empty(),
-        HCCL_ERROR("[AivTempAllReduceMesh1DOneShot] empty queue"), HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        tempInsQues.empty(), HCCL_ERROR("[AivTempAllReduceMesh1DOneShot] empty queue"), HcclResult::HCCL_E_INTERNAL);
     CHK_PTR_NULL(tempInsQues[0]);
     std::vector<LinkData> allLinks;
     for (auto iter = tempLinks.begin(); iter != tempLinks.end(); ++iter) {
         allLinks.emplace_back(iter->second.at(0));
     }
 
-    IncSliceId();  // 自动增长sliceId，传入aivTag
+    IncSliceId(); // 自动增长sliceId，传入aivTag
 
     AivOpArgs aivScatterArgs;
     aivScatterArgs.cmdType = HcclCMDType::HCCL_CMD_ALLREDUCE;
@@ -78,25 +77,25 @@ HcclResult AivTempAllReduceMesh1DOneShot::GenExtIns(const TempFuncs &tempFuncs, 
     aivScatterArgs.dataType = dataType_;
     aivScatterArgs.op = reduceOp_;
     aivScatterArgs.root = root_;
-    aivScatterArgs.aivTag = sliceId_;  // 传入aivTag，Lauch时重新组装为aivTag
+    aivScatterArgs.aivTag = sliceId_; // 传入aivTag，Launch时重新组装为aivTag
     aivScatterArgs.isOpBase = (tempFuncs.opMode == OpMode::OPBASE);
     aivScatterArgs.xRankSize = tempVTopo_[0].size();
     aivScatterArgs.yRankSize = 0;
     aivScatterArgs.zRankSize = 0;
     CalNumBlocks(aivScatterArgs.numBlocks, templateDataParams.sliceSize, op_.numBlocksLimit);
-    HCCL_INFO("[AivTempAllReduceMesh1DOneShot] Actually use core num[%u]",aivScatterArgs.numBlocks);
-    for (u32 i = 0; i < tempVTopo_[0].size(); i++){
+    HCCL_INFO("[AivTempAllReduceMesh1DOneShot] Actually use core num[%u]", aivScatterArgs.numBlocks);
+    for (u32 i = 0; i < tempVTopo_[0].size(); i++) {
         aivScatterArgs.topo_[i] = tempVTopo_[0][i];
     }
-    if (tempVTopo_.size() > 1){
+    if (tempVTopo_.size() > 1) {
         aivScatterArgs.yRankSize = tempVTopo_[1].size();
-        for (u32 i = 0; i < tempVTopo_[1].size(); i++){
+        for (u32 i = 0; i < tempVTopo_[1].size(); i++) {
             aivScatterArgs.topo_[TOPO_LEN_Y_OFFSET + i] = tempVTopo_[1][i];
         }
     }
-    if (tempVTopo_.size() == MAX_DIM_NUM){
+    if (tempVTopo_.size() == MAX_DIM_NUM) {
         aivScatterArgs.zRankSize = tempVTopo_[MAX_DIM_NUM - 1].size();
-        for (u32 i = 0; i < tempVTopo_[MAX_DIM_NUM - 1].size(); i++){
+        for (u32 i = 0; i < tempVTopo_[MAX_DIM_NUM - 1].size(); i++) {
             aivScatterArgs.topo_[TOPO_LEN_Z_OFFSET + i] = tempVTopo_[MAX_DIM_NUM - 1][i];
         }
     }
@@ -115,4 +114,4 @@ HcclResult AivTempAllReduceMesh1DOneShot::GenExtIns(const TempFuncs &tempFuncs, 
     return HcclResult::HCCL_SUCCESS;
 }
 
-}  // namespace Hccl
+} // namespace Hccl

@@ -1,7 +1,20 @@
+# -----------------------------------------------------------------------------------------------------------
+# Copyright (c) 2025 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
+# -----------------------------------------------------------------------------------------------------------
+
 ## 源代码路径加入到该文件中
 target_sources(hccl_v2_utest
         PUBLIC
         ${HCCL_V2_CODE_ROOT}/unified_platform/external_system/orion_adapter_rts.cc
+        ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/rank_graph/rank_graph_builder/rank_graph_builder_bridge.cc
+        ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/rank_graph/rank_graph_builder/rank_graph_builder_provider.cc
+        ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/rank_info_detect/root_info_detect_bridge.cc
 
         ${HCCL_V2_CODE_ROOT}/framework/communicator/communicator_impl.cc
         ${HCCL_V2_CODE_ROOT}/framework/communicator/hccl_communicator.cc
@@ -73,11 +86,13 @@ target_sources(hccl_v2_utest
         ${HCCL_V2_CODE_ROOT}/framework/resource_manager/notify/host_device_sync_notify_manager.cc
 
         ${HCCL_V2_CODE_ROOT}/framework/env_config/env_func.cc
-        ${HCCL_V2_CODE_ROOT}/framework/env_config/base_config.cc
+        ${HCCL_V2_CODE_ROOT}/framework/env_config/base_config_legacy.cc
         ${HCCL_V2_CODE_ROOT}/framework/env_config/env_config.cc
 
+        ${HCOMM_DIR}/src/base_comm/common/debug/plf_debug_config.cc
+
         ${HCCL_V2_CODE_ROOT}/framework/misc/json_parser/json_parser.cc
-        ${HCCL_V2_CODE_ROOT}/framework/misc/whitelist/whitelist.cc
+        ${HCOMM_DIR}/src/coll_communicator_mgr/rank_info_detect/whitelist.cc
         ${HCCL_V2_CODE_ROOT}/framework/misc/mask_event/mask_event.cc
 
         ${HCCL_V2_CODE_ROOT}/framework/resource_manager/transport/ub_memory_transport_mgr.cc
@@ -93,6 +108,7 @@ target_sources(hccl_v2_utest
         ${HCCL_V2_CODE_ROOT}/unified_platform/common/hccp_peer_manager.cc
         ${HCCL_V2_CODE_ROOT}/unified_platform/common/dev_capability.cc
         ${HCCL_V2_CODE_ROOT}/unified_platform/common/dlprof_func.cc
+        ${HCCL_CODE_ROOT}/src/base_comm/common/hccl_dl.cc
         ${HCCL_V2_CODE_ROOT}/unified_platform/common/tp_manager.cc
         ${HCCL_V2_CODE_ROOT}/unified_platform/common/tp_qos.cc
         
@@ -116,7 +132,6 @@ target_sources(hccl_v2_utest
         ${HCCL_V2_CODE_ROOT}/unified_platform/resource/connection/aicpu/rma_conn_lite.cc
         ${HCCL_V2_CODE_ROOT}/unified_platform/resource/connection/aicpu/ub_conn_lite.cc
         ${HCCL_V2_CODE_ROOT}/unified_platform/resource/connection/aicpu/ub_conn_lite_mgr.cc
-        ${HCCL_V2_CODE_ROOT}/unified_platform/resource/connection/aicpu/rdma_conn_lite_v2.cc
 
         ${HCCL_V2_CODE_ROOT}/unified_platform/resource/connection/ub_ci_updater/ub_ci_updater.cc
 
@@ -129,7 +144,6 @@ target_sources(hccl_v2_utest
         ${HCCL_V2_CODE_ROOT}/unified_platform/resource/buffer/local_rdma_rma_buffer.cc
         ${HCCL_V2_CODE_ROOT}/unified_platform/resource/buffer/local_ub_rma_buffer.cc
         ${HCCL_V2_CODE_ROOT}/unified_platform/resource/buffer/remote_rma_buffer.cc
-        ${HCCL_V2_CODE_ROOT}/unified_platform/resource/buffer/notify_fixed_value.cc
         ${HCCL_V2_CODE_ROOT}/unified_platform/resource/buffer/host_buffer.cc
         ${HCCL_V2_CODE_ROOT}/unified_platform/resource/buffer/dev_buffer.cc
 
@@ -155,7 +169,6 @@ target_sources(hccl_v2_utest
         ${HCCL_V2_CODE_ROOT}/unified_platform/resource/stream/aicpu/stream_lite.cc
         ${HCCL_V2_CODE_ROOT}/unified_platform/resource/stream/aicpu/hccl_sqe.cc
         ${HCCL_V2_CODE_ROOT}/unified_platform/resource/stream/aicpu/sqe_mgr.cc
-        ${HCCL_V2_CODE_ROOT}/unified_platform/resource/stream/aicpu/hccl_sqe_v82.cc
 
         ${HCCL_V2_CODE_ROOT}/unified_platform/resource/transport/base_mem_transport.cc
         ${HCCL_V2_CODE_ROOT}/unified_platform/resource/transport/p2p_transport.cc
@@ -165,7 +178,6 @@ target_sources(hccl_v2_utest
         ${HCCL_V2_CODE_ROOT}/unified_platform/resource/transport/aicpu/mem_transport_lite.cc
         ${HCCL_V2_CODE_ROOT}/unified_platform/resource/transport/aicpu/ub_transport_lite_impl.cc
         ${HCCL_V2_CODE_ROOT}/unified_platform/resource/transport/aicpu/p2p_transport_lite_impl.cc
-        ${HCCL_V2_CODE_ROOT}/unified_platform/resource/transport/aicpu/roce_transport_lite_impl.cc
 
         ${HCCL_V2_CODE_ROOT}/unified_platform/ccu/ccu_device/ccu_device_manager.cpp
         ${HCCL_V2_CODE_ROOT}/unified_platform/ccu/ccu_device/ccu_res_specs.cpp
@@ -199,27 +211,28 @@ target_sources(hccl_v2_utest
         ${HCCL_V2_CODE_ROOT}/framework/ccu/ccu_manager/ccu_jetty_mgr.cpp
         ${HCCL_V2_CODE_ROOT}/unified_platform/trace/trace.cc
 
-        ${HCCL_V2_CODE_ROOT}/framework/topo/new_topo_builder/phy_topo/phy_topo.cc
-        ${HCCL_V2_CODE_ROOT}/framework/topo/new_topo_builder/phy_topo_builder/phy_topo_builder.cc
-        ${HCCL_V2_CODE_ROOT}/framework/topo/new_topo_builder/rank_table_info/changed_rank_info.cc
+        ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/rank_graph/common/conn_interface.cc
+        ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/rank_graph/phy_topo/phy_topo.cc
+        ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/rank_graph/phy_topo_builder/phy_topo_builder.cc
+        ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/rank_graph/rank_table_info/changed_rank_info.cc
         ${HCCL_V2_CODE_ROOT}/framework/communicator/diff_rank_updater.cc
 
-        ${HCCL_V2_CODE_ROOT}/framework/topo/new_topo_builder/rank_table_info/new_rank_info.cc
-        ${HCCL_V2_CODE_ROOT}/framework/topo/new_topo_builder/rank_table_info/rank_level_info.cc
-        ${HCCL_V2_CODE_ROOT}/framework/topo/new_topo_builder/rank_table_info/rank_table_info.cc
-        ${HCCL_V2_CODE_ROOT}/framework/topo/new_topo_builder/rank_table_info/control_plane.cc
-        ${HCCL_V2_CODE_ROOT}/framework/topo/new_topo_builder/rank_table_info/address_info.cc
+        ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/rank_graph/rank_table_info/new_rank_info.cc
+        ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/rank_graph/rank_table_info/rank_level_info.cc
+        ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/rank_graph/rank_table_info/rank_table_info.cc
+        ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/rank_graph/rank_table_info/control_plane.cc
+        ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/rank_graph/rank_table_info/address_info.cc
 
-        ${HCCL_V2_CODE_ROOT}/framework/topo/new_topo_builder/topo_info/edge_info.cc
-        ${HCCL_V2_CODE_ROOT}/framework/topo/new_topo_builder/topo_info/peer_info.cc
-        ${HCCL_V2_CODE_ROOT}/framework/topo/new_topo_builder/topo_info/topo_info.cc
+        ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/rank_graph/topo_info/edge_info.cc
+        ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/rank_graph/topo_info/peer_info.cc
+        ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/rank_graph/topo_info/topo_info.cc
         
-        ${HCCL_V2_CODE_ROOT}/framework/topo/new_topo_builder/rank_graph/rank_graph.cc
-        ${HCCL_V2_CODE_ROOT}/framework/topo/new_topo_builder/rank_graph/net_instance.cc
-        ${HCCL_V2_CODE_ROOT}/framework/topo/new_topo_builder/rank_graph_builder/rank_graph_builder.cc
-        ${HCCL_V2_CODE_ROOT}/framework/topo/new_topo_builder/rank_graph_builder/detour_service.cc
-        ${HCCL_V2_CODE_ROOT}/framework/topo/new_topo_builder/rank_graph_builder/updater_for_64_plus_1.cc
-        ${HCCL_V2_CODE_ROOT}/framework/topo/new_topo_builder/rank_graph_builder/detour_rules.cc
+        ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/rank_graph/rank_graph/rank_graph.cc
+        ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/rank_graph/rank_graph/net_instance.cc
+        ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/rank_graph/rank_graph_builder/rank_graph_builder.cc
+        ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/rank_graph/rank_graph_builder/detour_service.cc
+        ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/rank_graph/rank_graph_builder/updater_for_64_plus_1.cc
+        ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/rank_graph/rank_graph_builder/detour_rules.cc
 
         ${HCCL_V2_CODE_ROOT}/framework/topo/virtual_topo.cc
 
@@ -260,6 +273,8 @@ target_sources(hccl_v2_utest
         ${HCCL_V2_CODE_ROOT}/framework/dfx/aicpu/profiling/profiling_handler_lite.cc
         ${HCCL_V2_CODE_ROOT}/framework/dfx/aicpu/profiling/profiling_command_handle_lite.cc
         ${HCCL_V2_CODE_ROOT}/framework/dfx/aicpu/profiling/profiling_reporter_lite.cc
+        ${HCCL_CODE_ROOT}/src/base_comm/dfx/aicpu/dfx_profiling_handler_lite.cc
+        ${HCCL_CODE_ROOT}/src/coll_communicator_mgr/dfx/profiling/aicpu/dfx_profiling_command_handle_lite.cc
         ${HCCL_V2_CODE_ROOT}/framework/dfx/profiling/profiling_handler.cc
         ${HCCL_V2_CODE_ROOT}/framework/dfx/profiling/profiling_reporter.cc
         ${HCCL_V2_CODE_ROOT}/framework/dfx/profiling/dlprof_function.cc
@@ -284,18 +299,10 @@ target_sources(hccl_v2_utest
         ${HCCL_V2_CODE_ROOT}/unified_platform/resource/mem/hccl_mem_v2.cc
         ${HCCL_V2_CODE_ROOT}/unified_platform/resource/mem/local_ub_rma_buffer_manager.cc
 
-        ${HCCL_V2_CODE_ROOT}/framework/topo/rank_info_detect/bootstrap_ip.cc
         ${HCCL_V2_CODE_ROOT}/framework/topo/rank_info_detect/preempt_port_manager.cc
-        ${HCCL_V2_CODE_ROOT}/framework/topo/rank_info_detect/rank_info_detect_client.cc
-        ${HCCL_V2_CODE_ROOT}/framework/topo/rank_info_detect/rank_info_detect_service.cc
-        ${HCCL_V2_CODE_ROOT}/framework/topo/rank_info_detect/rank_info_detect.cc
-        ${HCCL_V2_CODE_ROOT}/framework/topo/rank_info_detect/rank_info_dispatcher.cc
-        ${HCCL_V2_CODE_ROOT}/framework/topo/rank_info_detect/socket_agent.cc
 
         ${HCCL_V2_CODE_ROOT}/framework/topo/topo_addr_info/src/eid_util.c
         ${HCCL_V2_CODE_ROOT}/framework/topo/topo_addr_info/src/hal.c
-        ${HCCL_V2_CODE_ROOT}/framework/topo/topo_addr_info/src/host_rdma.c
-        ${HCCL_V2_CODE_ROOT}/framework/topo/topo_addr_info/src/pcie_nic.c
         ${HCCL_V2_CODE_ROOT}/framework/topo/topo_addr_info/src/product_card.c
         ${HCCL_V2_CODE_ROOT}/framework/topo/topo_addr_info/src/product_server.c
         ${HCCL_V2_CODE_ROOT}/framework/topo/topo_addr_info/src/product_pod.c
@@ -310,4 +317,5 @@ target_sources(hccl_v2_utest
         ${HCCL_V2_CODE_ROOT}/framework/resource_manager/notify/ccu_stream_sync_notify_manager.cc
         ${HCCL_V2_CODE_ROOT}/unified_platform/common/orion_adapter_hal.cc
         ${HCCL_V2_CODE_ROOT}/unified_platform/common/dlhal_function_v2.cc
+        ${HCCL_CODE_ROOT}/src/base_comm/common/debug/aicpu_task_utils.cc
 )

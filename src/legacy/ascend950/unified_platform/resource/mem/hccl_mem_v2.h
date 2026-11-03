@@ -19,12 +19,13 @@
 extern "C" {
 #endif // __cplusplus
 
-HcclResult HcclMemRegV2(HcclNetDev netDev, const HcclMem *mem, HcclBuf *buf);
-HcclResult HcclMemDeregV2(const HcclBuf *buf);
-HcclResult HcclMemExportV2(HcclBuf *buf, char **outDesc, uint64_t *outDescLen);
-HcclResult HcclMemImportV2(const char *description, uint64_t descLen,bool isRemote, HcclBuf *outBuf, HcclNetDev netDev);
-HcclResult HcclMemCloseV2(HcclBuf *buf);
+HcclResult HcclMemRegV2(HcclNetDev netDev, const HcclMem* mem, HcclBuf* buf);
+HcclResult HcclMemDeregV2(const HcclBuf* buf);
+HcclResult HcclMemExportV2(HcclBuf* buf, char** outDesc, uint64_t* outDescLen);
+HcclResult
+HcclMemImportV2(const char* description, uint64_t descLen, bool isRemote, HcclBuf* outBuf, HcclNetDev netDev);
+HcclResult HcclMemCloseV2(HcclBuf* buf);
 #ifdef __cplusplus
 }
 #endif // __cplusplus
-#endif  // HCCL_MEM_V2_H 
+#endif // HCCL_MEM_V2_H

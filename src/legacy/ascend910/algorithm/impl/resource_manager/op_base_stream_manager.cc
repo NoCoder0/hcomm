@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
 
 #include "op_base_stream_manager.h"
 
@@ -66,18 +66,19 @@ std::vector<Stream> OpBaseStreamManager::AllocSlaves(const StreamType streamType
         HCCL_ERROR("[OpBaseStreamManager][AllocSlaves]master not found, alloc slave stream failed.");
         return std::vector<Stream>();
     }
-    std::vector<Stream> *slavesPtr;
+    std::vector<Stream>* slavesPtr;
     slavesPtr = (streamType == StreamType::STREAM_TYPE_ONLINE) ? &slaves_ : &slaveDevices_;
     if (slavesPtr->capacity() < num) {
-        HCCL_ERROR("[OpBaseStreamManager][AllocSlaves]request number[%u] exceed max substream num[%u], alloc failed.",
-            num, slavesPtr->capacity());
+        HCCL_ERROR(
+            "[OpBaseStreamManager][AllocSlaves]request number[%u] exceed max substream num[%u], alloc failed.", num,
+            slavesPtr->capacity());
         return std::vector<Stream>();
     }
     std::unique_lock<std::mutex> slaveLock(slavesMutex_);
     if (slavesPtr->size() < num) {
-        HCCL_INFO("[OpBaseStreamManager][AllocSlaves]expanding slave streams, original size[%u], target size[%u].",
-            slavesPtr->size(),
-            num);
+        HCCL_INFO(
+            "[OpBaseStreamManager][AllocSlaves]expanding slave streams, original size[%u], target size[%u].",
+            slavesPtr->size(), num);
         for (u32 i = slavesPtr->size(); i < num; i++) {
             slavesPtr->emplace_back(Stream(streamType));
             if (!(*slavesPtr)[i].ptr()) {
@@ -98,20 +99,22 @@ std::vector<Stream> OpBaseStreamManager::AllocSlaves(const StreamType streamType
     return std::vector<Stream>(slavesPtr->begin(), slavesPtr->begin() + num);
 }
 
-HcclResult OpBaseStreamManager::SetSlaveMode(Stream &slave)
+HcclResult OpBaseStreamManager::SetSlaveMode(Stream& slave)
 {
     if (master_) {
         uint64_t streamMode = 0;
         HcclResult ret = HCCL_SUCCESS;
         ret = master_.GetMode(&streamMode);
         if (ret != HCCL_SUCCESS) {
-            HCCL_ERROR("[OpBaseStreamManager][SetSlaveMode]errNo[0x%016llx], get master stream mode failed.",
+            HCCL_ERROR(
+                "[OpBaseStreamManager][SetSlaveMode]errNo[0x%016llx], get master stream mode failed.",
                 HCCL_ERROR_CODE(ret));
             return ret;
         }
         ret = slave.SetMode(streamMode);
         if (ret != HCCL_SUCCESS) {
-            HCCL_ERROR("[OpBaseStreamManager][SetSlaveMode]errNo[0x%016llx], set slave stream mode failed.",
+            HCCL_ERROR(
+                "[OpBaseStreamManager][SetSlaveMode]errNo[0x%016llx], set slave stream mode failed.",
                 HCCL_ERROR_CODE(ret));
             return ret;
         }
@@ -137,4 +140,4 @@ HcclResult OpBaseStreamManager::ClearSlaves()
     return HCCL_SUCCESS;
 }
 
-}  // namespace hccl
+} // namespace hccl

@@ -24,43 +24,40 @@ namespace Hccl {
 static CcuInstRegister<CcuContextReduceScatterVMesh1D>
     g_registrarReduceScatterV(CcuInstType::CCU_REDUCE_SCATTER_V_MESH_1D_DIRECT);
 
-CcuTempReduceScatterVMesh1D::CcuTempReduceScatterVMesh1D(const RankId virtualRank, const u32 tempRankSize,
-                                                         const std::vector<std::vector<RankId>> &tempVTopo,
-                                                         const std::map<RankId, u32>            &tempVirtRankMap)
+CcuTempReduceScatterVMesh1D::CcuTempReduceScatterVMesh1D(
+    const RankId virtualRank, const u32 tempRankSize, const std::vector<std::vector<RankId>>& tempVTopo,
+    const std::map<RankId, u32>& tempVirtRankMap)
     : CcuAlgTemplateBase(virtualRank, tempRankSize, tempVTopo, tempVirtRankMap)
-{
-}
+{}
 
-CcuTempReduceScatterVMesh1D::~CcuTempReduceScatterVMesh1D()
-{
-}
+CcuTempReduceScatterVMesh1D::~CcuTempReduceScatterVMesh1D() {}
 
-void CcuTempReduceScatterVMesh1D::InitReduceInfo(const ReduceOp &reduceOp, const DataType &dataType)
+void CcuTempReduceScatterVMesh1D::InitReduceInfo(const ReduceOp& reduceOp, const DataType& dataType)
 {
     reduceOp_ = reduceOp;
     dataType_ = dataType;
 }
 
-HcclResult CcuTempReduceScatterVMesh1D::CalcRes(AlgTempResReq &tempResReq)
+HcclResult CcuTempReduceScatterVMesh1D::CalcRes(AlgTempResReq& tempResReq)
 {
-    tempResReq.queNum    = 1;
+    tempResReq.queNum = 1;
     tempResReq.streamNum = tempResReq.queNum;
     HCCL_INFO("[CalcRes] tempResReq.queNum[%u]", tempResReq.queNum);
     CHK_RET(CalcResLinksMesh(myRank_, tempRankSize_, tempVTopo_, linkNumBtwPeers_, tempResReq));
     return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CcuTempReduceScatterVMesh1D::GenExtIns(const TempFuncs          &tempFuncs,
-                                                  const TemplateDataParams &templateDataParams,
-                                                  const ResLinks &tempLinks, std::vector<InsQuePtr> &tempInsQues)
+HcclResult CcuTempReduceScatterVMesh1D::GenExtIns(
+    const TempFuncs& tempFuncs, const TemplateDataParams& templateDataParams, const ResLinks& tempLinks,
+    std::vector<InsQuePtr>& tempInsQues)
 {
-    CHK_PRT_RET(tempInsQues.empty(),
-        HCCL_ERROR("[CcuTempReduceScatterVMesh1D] empty queue"), HcclResult::HCCL_E_INTERNAL);
+    CHK_PRT_RET(
+        tempInsQues.empty(), HCCL_ERROR("[CcuTempReduceScatterVMesh1D] empty queue"), HcclResult::HCCL_E_INTERNAL);
     CHK_PTR_NULL(tempInsQues[0]);
-    opMode_   = tempFuncs.opMode;
+    opMode_ = tempFuncs.opMode;
     buffInfo_ = templateDataParams.buffInfo;
     CcuInstructionReduceScatterVMesh1D ccuIns;
-    std::vector<uint64_t>              dimSize;
+    std::vector<uint64_t> dimSize;
     dimSize.push_back(tempRankSize_);
 
     uint64_t inputAddr
@@ -68,19 +65,21 @@ HcclResult CcuTempReduceScatterVMesh1D::GenExtIns(const TempFuncs          &temp
     uint64_t outputAddr
         = BufferTypeToAddr(templateDataParams.buffInfo.outBuffType) + templateDataParams.buffInfo.outBuffBaseOff;
 
-    uint64_t mySliceSize         = templateDataParams.sliceSize;
-    uint64_t mySliceInputOffset  = templateDataParams.inputSliceStride;
+    uint64_t mySliceSize = templateDataParams.sliceSize;
+    uint64_t mySliceInputOffset = templateDataParams.inputSliceStride;
 
     uint64_t token;
     CHK_RET(GetToken(op_, token));
 
-    ccuIns.Init(static_cast<uint32_t>(myRank_), inputAddr, outputAddr, mySliceSize, mySliceInputOffset, token, op_, tempVTopo_);
-    HCCL_INFO("[CcuTempReduceScatterVMesh1D] Run Init: myRank_[%d], dimSize[%llu], inputAddr[%llu],"
-              "outputAddr[%llu], mySliceSize[%llu], mySliceInputOffset[%llu]",
-              myRank_, dimSize[0], inputAddr, outputAddr, mySliceSize, mySliceInputOffset);
+    ccuIns.Init(
+        static_cast<uint32_t>(myRank_), inputAddr, outputAddr, mySliceSize, mySliceInputOffset, token, op_, tempVTopo_);
+    HCCL_INFO(
+        "[CcuTempReduceScatterVMesh1D] Run Init: myRank_[%d], dimSize[%llu], inputAddr[%llu],"
+        "outputAddr[%llu], mySliceSize[%llu], mySliceInputOffset[%llu]",
+        myRank_, dimSize[0], inputAddr, outputAddr, mySliceSize, mySliceInputOffset);
 
     std::vector<LinkData> links;
-    for (auto &pair : tempLinks) {
+    for (auto& pair : tempLinks) {
         if (pair.second.empty()) {
             continue;
         }
@@ -90,7 +89,7 @@ HcclResult CcuTempReduceScatterVMesh1D::GenExtIns(const TempFuncs          &temp
     ccuIns.SetLinks(links);
 
     RankGroup rankGroup;
-    for (auto &peer : tempVTopo_[0]) {
+    for (auto& peer : tempVTopo_[0]) {
         rankGroup.AddRank(peer);
     }
     ccuIns.SetRankGroup(rankGroup);

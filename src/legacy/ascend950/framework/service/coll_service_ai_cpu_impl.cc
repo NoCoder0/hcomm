@@ -1,32 +1,34 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- */
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
 #include "coll_service_ai_cpu_impl.h"
 #include <memory>
 #include "communicator_impl.h"
 #include "internal_exception.h"
-#include "env_config.h"
+#include "env_config_v2.h"
 #include "stl_util.h"
 #include "stream_utils.h"
 
 #include "aicpu_res_package_helper.h"
 #include "alg_topo_package_helper.h"
-#include "dlprof_function.h"
+#include "dlprof_function_v2.h"
 #include "task_exception_handler.h"
 #include "exception_util.h"
 #include "runtime_api_exception.h"
 
 namespace Hccl {
 
-template <class T, class U> u16 CalcFieldOffset(T *target, U *base)
+template <class T, class U>
+u16 CalcFieldOffset(T* target, U* base)
 {
-    return static_cast<u16>(reinterpret_cast<const char *>(target) - reinterpret_cast<const char *>(base));
+    return static_cast<u16>(reinterpret_cast<const char*>(target) - reinterpret_cast<const char*>(base));
 }
 
 void CollServiceAiCpuImpl::Init()
@@ -35,7 +37,7 @@ void CollServiceAiCpuImpl::Init()
     AddOpCounterMems();
 }
 
-static std::string GetTagKey(CollOperator &op, std::string algName, u32 bsrRemoteRanksHashValue)
+static std::string GetTagKey(CollOperator& op, std::string algName, u32 bsrRemoteRanksHashValue)
 {
     std::string tmp{};
     tmp = (op.opMode == OpMode::OPBASE) ? algName : op.opTag;
@@ -47,27 +49,33 @@ static std::string GetTagKey(CollOperator &op, std::string algName, u32 bsrRemot
     return tmp;
 }
 
-DevBuffer *CollServiceAiCpuImpl::OpBasedCollProcess(CollOperator &op, const std::string &algName)
+DevBuffer* CollServiceAiCpuImpl::OpBasedCollProcess(CollOperator& op, const std::string& algName)
 {
     auto req = comm->GetCollAlgComponent()->GetCollAlgOpReq(op, algName);
-    HCCL_INFO("CollServiceAiCpuImpl::OpBasedCollProcess GetCollAlgOpReq OrchestMode::INSTRUCTION, algName %s",
-               req.algName.c_str());
+    HCCL_INFO(
+        "CollServiceAiCpuImpl::OpBasedCollProcess GetCollAlgOpReq OrchestMode::INSTRUCTION, algName %s",
+        req.algName.c_str());
 
-    for (auto &it : req.resReq.levelRankPairs) {
+    for (auto& it : req.resReq.levelRankPairs) {
         HCCL_INFO("CollServiceAiCpuImpl::level=%u, rank=%d", it.first, it.second);
     }
 
     HCCL_INFO("CollServiceAiCpuImpl::OpBasedCollProcess req.resReq.primQueueNum =%u", req.resReq.primQueueNum);
-    HCCL_INFO("CollServiceAiCpuImpl::OpBasedCollProcess req.resReq.queueNotifys size =%zu",req.resReq.queueNotifys.size());
-    HCCL_INFO("CollServiceAiCpuImpl::OpBasedCollProcess req.resReq.localBcastPostCntNotify size =%zu",req.resReq.localBcastPostCntNotify.size());
-    HCCL_INFO("CollServiceAiCpuImpl::OpBasedCollProcess req.resReq.localWaitGroupCntNotify size =%zu",req.resReq.localWaitGroupCntNotify.size());
+    HCCL_INFO(
+        "CollServiceAiCpuImpl::OpBasedCollProcess req.resReq.queueNotifys size =%zu", req.resReq.queueNotifys.size());
+    HCCL_INFO(
+        "CollServiceAiCpuImpl::OpBasedCollProcess req.resReq.localBcastPostCntNotify size =%zu",
+        req.resReq.localBcastPostCntNotify.size());
+    HCCL_INFO(
+        "CollServiceAiCpuImpl::OpBasedCollProcess req.resReq.localWaitGroupCntNotify size =%zu",
+        req.resReq.localWaitGroupCntNotify.size());
 
     AllocWorkStream(req.resReq.primQueueNum);
     AllocQueueNotify(req.resReq.queueNotifys);
     AllocBcastPostCntNotify(req.resReq.localBcastPostCntNotify);
     AllocWaitGroupCntNotify(req.resReq.localWaitGroupCntNotify);
 
-    HCCL_INFO("CollServiceAiCpuImpl::OpBasedCollProcess req.resReq.links size =%zu",req.resReq.links.size());
+    HCCL_INFO("CollServiceAiCpuImpl::OpBasedCollProcess req.resReq.links size =%zu", req.resReq.links.size());
     HCCL_INFO("CollServiceAiCpuImpl::OpBasedCollProcess op.opTag %s", op.opTag.c_str());
 
     RegisterCclBuffer(req.resReq.links);
@@ -101,35 +109,38 @@ DevBuffer *CollServiceAiCpuImpl::OpBasedCollProcess(CollOperator &op, const std:
         return it->second.get();
     }
 
-    auto                  buffer = PackOpData(op.opTag, req);
+    auto buffer = PackOpData(op.opTag, req);
     shared_ptr<DevBuffer> devMem = make_shared<DevBuffer>(buffer.size()); // 申请device内存
-    TRY_CATCH_THROW(InternalException, StringFormat("HrtMemcpy to device memory failed, size[%zu]", buffer.size()),
-        HrtMemcpy(reinterpret_cast<void *>(devMem->GetAddr()), devMem->GetSize(), buffer.data(), buffer.size(),
-              RT_MEMCPY_HOST_TO_DEVICE)); // H2D拷贝，将资源拷贝到device内存
+    TRY_CATCH_THROW(
+        InternalException, StringFormat("HrtMemcpy to device memory failed, size[%zu]", buffer.size()),
+        HrtMemcpy(
+            reinterpret_cast<void*>(devMem->GetAddr()), devMem->GetSize(), buffer.data(), buffer.size(),
+            RT_MEMCPY_HOST_TO_DEVICE)); // H2D拷贝，将资源拷贝到device内存
 
     collOpLoadedMap[curTagKey] = devMem;
     return devMem.get();
 }
 
-void CollServiceAiCpuImpl::LoadWithOpBasedModeNoRegister(CollOperator &op)
+void CollServiceAiCpuImpl::LoadWithOpBasedModeNoRegister(CollOperator& op)
 {
     RegisterOpbasedLocalRmaBuf(op.opTag);
 
     comm->GetAicpuStreamManager().AllocFreeStream();
-    Stream *lanchStream = comm->GetAicpuStreamManager().GetFreeStream();
+    Stream* lanchStream = comm->GetAicpuStreamManager().GetFreeStream();
     comm->GetAicpuStreamManager().AclGraphCaptureFreeStream(comm->GetStreamManager().opbase->GetMaster());
-    DevBuffer *mem = nullptr;
+    DevBuffer* mem = nullptr;
     comm->SetCommStatus(CommStatus::COMM_BUILDING);
     mem = OpBasedCollProcess(op, comm->GetCurAlgName());
     std::vector<Stream*>& stream_pointers = comm->GetAicpuStreamManager().GetStreams();
-    comm->ReportHcclMC2Info(*lanchStream, *comm->GetStreamManager().opbase->GetMaster(), stream_pointers); // 上报MC2信息
+    comm->ReportHcclMC2Info(
+        *lanchStream, *comm->GetStreamManager().opbase->GetMaster(), stream_pointers); // 上报MC2信息
     AllocOpMem(op);
 
     SaveMirrorDfxOpInfo();
     AicpuKernelEntranceLaunch(*comm->GetStreamManager().opbase->GetMaster(), op, comm->GetCurAlgName(), mem);
 }
 
-void CollServiceAiCpuImpl::LoadWithOpBasedMode(CollOperator &op, unique_ptr<Stream> stream)
+void CollServiceAiCpuImpl::LoadWithOpBasedMode(CollOperator& op, unique_ptr<Stream> stream)
 {
     RegisterOpBufToBufMgr(op);
     RegisterOpbasedStream(std::move(stream));
@@ -137,14 +148,14 @@ void CollServiceAiCpuImpl::LoadWithOpBasedMode(CollOperator &op, unique_ptr<Stre
     LoadWithOpBasedModeNoRegister(op);
 }
 
-void CollServiceAiCpuImpl::LoadWithOffloadModeNoRegister(CollOperator &op)
+void CollServiceAiCpuImpl::LoadWithOffloadModeNoRegister(CollOperator& op)
 {
     RegisterOffloadLocalRmaBuf(op.opTag);
 
     // 将通讯域设置为transport建链中状态
     comm->SetCommStatus(CommStatus::COMM_BUILDING);
 
-    DevBuffer *mem = nullptr;
+    DevBuffer* mem = nullptr;
     mem = OpBasedCollProcess(op, comm->GetCurAlgName());
     AllocOpMem(op);
 
@@ -152,7 +163,7 @@ void CollServiceAiCpuImpl::LoadWithOffloadModeNoRegister(CollOperator &op)
     AicpuKernelEntranceLaunch(*comm->GetStreamManager().offload->GetMaster(op.opTag), op, comm->GetCurAlgName(), mem);
 }
 
-void CollServiceAiCpuImpl::LoadWithOffloadMode(CollOperator &op, std::unique_ptr<Stream> stream)
+void CollServiceAiCpuImpl::LoadWithOffloadMode(CollOperator& op, std::unique_ptr<Stream> stream)
 {
     RegisterOpBufToBufMgr(op);
     RegisterOffloadMasterStream(op.opTag, std::move(stream));
@@ -160,24 +171,25 @@ void CollServiceAiCpuImpl::LoadWithOffloadMode(CollOperator &op, std::unique_ptr
     LoadWithOffloadModeNoRegister(op);
 }
 
-HcclResult CollServiceAiCpuImpl::AllocCollOpResourceNoRegister(CollOperator &op, const std::string &opAlgTag, void **addr)
+HcclResult
+CollServiceAiCpuImpl::AllocCollOpResourceNoRegister(CollOperator& op, const std::string& opAlgTag, void** addr)
 {
     RegisterOpbasedLocalRmaBuf(op.opTag);
     comm->GetAicpuStreamManager().AllocFreeStream();
-    DevBuffer *mem = nullptr;
+    DevBuffer* mem = nullptr;
     comm->SetCommStatus(CommStatus::COMM_BUILDING);
     mem = OpBasedCollProcess(op, comm->GetCurAlgName());
     CHK_RET(AicpuMc2CommResourcePrepare(op, comm->GetCurAlgName(), mem, opAlgTag, addr));
     return HCCL_SUCCESS;
 }
 
-HcclResult CollServiceAiCpuImpl::AllocCollOpResource(CollOperator &op, const std::string &opAlgTag, void **addr)
+HcclResult CollServiceAiCpuImpl::AllocCollOpResource(CollOperator& op, const std::string& opAlgTag, void** addr)
 {
     auto iter = aicpuMc2CommResourceMap_.find(opAlgTag);
     if (iter != aicpuMc2CommResourceMap_.end()) {
         HCCL_INFO("[AllocCollOpResource] has existed comm %s, return for %p.", opAlgTag.c_str(), addr);
         shared_ptr<DevBuffer> oldDevBuf = iter->second;
-        *addr = reinterpret_cast<void *>(oldDevBuf->GetAddr());
+        *addr = reinterpret_cast<void*>(oldDevBuf->GetAddr());
         return HCCL_SUCCESS;
     }
     RegisterOpBufToBufMgr(op);
@@ -185,24 +197,32 @@ HcclResult CollServiceAiCpuImpl::AllocCollOpResource(CollOperator &op, const std
     return HCCL_SUCCESS;
 }
 
-HcclResult CollServiceAiCpuImpl::AicpuMc2CommResourcePrepare(const CollOperator &op, const string &algName,
-                                             const DevBuffer *mem, const std::string &opAlgTag, void **addr)
+HcclResult CollServiceAiCpuImpl::AicpuMc2CommResourcePrepare(
+    const CollOperator& op, const string& algName, const DevBuffer* mem, const std::string& opAlgTag, void** addr)
 {
-    HCCL_INFO("CollServiceAiCpuImpl::AicpuMc2CommResourcePrepare entry, algName: %s, opAlgTag: %s", algName.c_str(), opAlgTag.c_str());
+    HCCL_INFO(
+        "CollServiceAiCpuImpl::AicpuMc2CommResourcePrepare entry, algName: %s, opAlgTag: %s", algName.c_str(),
+        opAlgTag.c_str());
     HcclKernelLaunchParam param{};
     s32 ret = strcpy_s(param.kernel.algName, sizeof(param.kernel.algName), algName.data());
     if (ret != EOK) {
-        HCCL_ERROR("CollServiceAiCpuImpl::AicpuMc2CommResourcePrepare, strcpy_s algName failed! ret: %d, algName: %s", ret, algName.c_str());
+        HCCL_ERROR(
+            "CollServiceAiCpuImpl::AicpuMc2CommResourcePrepare, strcpy_s algName failed! ret: %d, algName: %s", ret,
+            algName.c_str());
         return HCCL_E_INTERNAL;
     }
 
     ret = strcpy_s(param.kernel.opTag, sizeof(param.kernel.opTag), op.opTag.data());
     if (ret != EOK) {
-        HCCL_ERROR("CollServiceAiCpuImpl::AicpuMc2CommResourcePrepare, strcpy_s opTag failed! ret: %d, op.opTag: %s", ret, op.opTag.c_str());
+        HCCL_ERROR(
+            "CollServiceAiCpuImpl::AicpuMc2CommResourcePrepare, strcpy_s opTag failed! ret: %d, op.opTag: %s", ret,
+            op.opTag.c_str());
         return HCCL_E_INTERNAL;
     }
 
-    HCCL_INFO("CollServiceAiCpuImpl::AicpuMc2CommResourcePrepare param.kernel.algName: %s, op.opTag: %s", param.kernel.algName, op.opTag.c_str());
+    HCCL_INFO(
+        "CollServiceAiCpuImpl::AicpuMc2CommResourcePrepare param.kernel.algName: %s, op.opTag: %s",
+        param.kernel.algName, op.opTag.c_str());
     param.kernel.binaryResAddr = mem->GetAddr();
     param.kernel.binaryResSize = mem->GetSize();
 
@@ -212,29 +232,31 @@ HcclResult CollServiceAiCpuImpl::AicpuMc2CommResourcePrepare(const CollOperator 
     comm->GetStreamManager().ResetSlaveIndex(0);
 
     shared_ptr<DevBuffer> newDevMem = make_shared<DevBuffer>(sizeof(HcclKernelParamLite));
-    HrtMemcpy(reinterpret_cast<void *>(newDevMem->GetAddr()), sizeof(HcclKernelParamLite), 
-            reinterpret_cast<void *>(&param.kernel), sizeof(HcclKernelParamLite),
-            RT_MEMCPY_HOST_TO_DEVICE);
+    HrtMemcpy(
+        reinterpret_cast<void*>(newDevMem->GetAddr()), sizeof(HcclKernelParamLite), static_cast<void*>(&param.kernel),
+        sizeof(HcclKernelParamLite), RT_MEMCPY_HOST_TO_DEVICE);
     aicpuMc2CommResourceMap_.insert(make_pair(opAlgTag, newDevMem));
-    *addr = reinterpret_cast<void *>(newDevMem->GetAddr());
-    HCCL_INFO("CollServiceAiCpuImpl::AicpuMc2CommResourcePrepare alloc %s kernel param success, set addr %p value is %p", opAlgTag.c_str(), addr, *addr);
+    *addr = reinterpret_cast<void*>(newDevMem->GetAddr());
+    HCCL_INFO(
+        "CollServiceAiCpuImpl::AicpuMc2CommResourcePrepare alloc %s kernel param success, set addr %p value is %p",
+        opAlgTag.c_str(), addr, *addr);
     return HCCL_SUCCESS;
 }
 
-
-void InitAicpuLocBufLite(HcclAicpuLocBufLite &lite, u64 addr, u64 size, const string &desc)
+void InitAicpuLocBufLite(HcclAicpuLocBufLite& lite, u64 addr, u64 size, const string& desc)
 {
-    auto tokenPair  = HrtUbDevQueryToken(addr, size);
-    lite.addr       = addr;
-    lite.size       = size;
-    lite.tokenId    = tokenPair.first;
+    auto tokenPair = HrtUbDevQueryToken(addr, size);
+    lite.addr = addr;
+    lite.size = size;
+    lite.tokenId = tokenPair.first;
     lite.tokenValue = tokenPair.second;
     HCCL_INFO("InitAicpuLocBufLite %s, addr=0x%llx, size=0x%llx", desc.c_str(), addr, size);
 }
 
-void CollServiceAiCpuImpl::SetOpbaseBufferParam(HcclKernelLaunchParam &param, CommunicatorImpl *comm, CollOperator &op) const
+void CollServiceAiCpuImpl::SetOpbaseBufferParam(
+    HcclKernelLaunchParam& param, CommunicatorImpl* comm, CollOperator& op) const
 {
-    auto buffer                          = comm->GetCclBuffer();
+    auto buffer = comm->GetCclBuffer();
     param.kernel.comm.opBaseScratch.addr = buffer->GetAddr();
     param.kernel.comm.opBaseScratch.size = buffer->GetSize();
     InitAicpuLocBufLite(param.kernel.comm.opBaseScratch, buffer->GetAddr(), buffer->GetSize(), "opBaseScratch");
@@ -250,7 +272,8 @@ void CollServiceAiCpuImpl::SetOpbaseBufferParam(HcclKernelLaunchParam &param, Co
         param.kernel.comm.opBaseScratch.addr, param.kernel.comm.opBaseScratch.size);
 }
 
-void CollServiceAiCpuImpl::SetOffloadBufferParam(HcclKernelLaunchParam &param, CommunicatorImpl *comm, CollOperator &op) const
+void CollServiceAiCpuImpl::SetOffloadBufferParam(
+    HcclKernelLaunchParam& param, const CommunicatorImpl* comm, CollOperator& op) const
 {
     HCCL_INFO("SetOffloadBufferParam");
     auto offloadInput = comm->GetDataBufferManager().Get(op.opTag, BufferType::INPUT);
@@ -269,16 +292,16 @@ void CollServiceAiCpuImpl::SetOffloadBufferParam(HcclKernelLaunchParam &param, C
     }
 }
 
-void CollServiceAiCpuImpl::SetHcclKernelLaunchParam(HcclKernelLaunchParam &param, CommunicatorImpl *comm, bool isLaunch)
+void CollServiceAiCpuImpl::SetHcclKernelLaunchParam(HcclKernelLaunchParam& param, CommunicatorImpl* comm, bool isLaunch)
 {
     CollOperator op = *comm->GetCurrentCollOperator();
 
-    param.kernel.comm.idIndex  = comm->GetIdIndex();
-    param.kernel.comm.myRank   = comm->GetMyRank();
+    param.kernel.comm.idIndex = comm->GetIdIndex();
+    param.kernel.comm.myRank = comm->GetMyRank();
     param.kernel.comm.rankSize = comm->GetRankSize();
-    param.kernel.comm.devType  = comm->GetDevType();
+    param.kernel.comm.devType = comm->GetDevType();
     param.kernel.comm.devPhyId = comm->GetDevicePhyId();
-    param.kernel.comm.opIndex_  = comm->GetOpIndex();
+    param.kernel.comm.opIndex_ = comm->GetOpIndex();
     param.kernel.comm.opCounterAddr = static_cast<u64>(counterBuf->GetAddr());
     auto ret = strcpy_s(param.kernel.comm.commId, sizeof(param.kernel.comm.commId), comm->GetId().data());
     if (ret != EOK) {
@@ -291,12 +314,12 @@ void CollServiceAiCpuImpl::SetHcclKernelLaunchParam(HcclKernelLaunchParam &param
         SetOffloadBufferParam(param, comm, op);
     }
 
-    param.kernel.op.algOperator.opMode    = op.opMode;
-    param.kernel.op.algOperator.opType    = op.opType;
-    param.kernel.op.algOperator.reduceOp  = op.reduceOp;
-    param.kernel.op.algOperator.dataType  = op.dataType;
+    param.kernel.op.algOperator.opMode = op.opMode;
+    param.kernel.op.algOperator.opType = op.opType;
+    param.kernel.op.algOperator.reduceOp = op.reduceOp;
+    param.kernel.op.algOperator.dataType = op.dataType;
     param.kernel.op.algOperator.dataCount = op.dataCount;
-    param.kernel.op.algOperator.root      = op.root;
+    param.kernel.op.algOperator.root = op.root;
     HcclResult hcclRet = HCCL_SUCCESS;
     if (op.opType == OpType::ALLTOALL && isLaunch) {
         param.kernel.op.algOperator.all2AllDataDes = op.all2AllDataDes;
@@ -311,19 +334,21 @@ void CollServiceAiCpuImpl::SetHcclKernelLaunchParam(HcclKernelLaunchParam &param
     }
     if (hcclRet != HCCL_SUCCESS) {
         HCCL_ERROR("[CollServiceAiCpuImpl][SetHcclKernelLaunchParam] fill op data failed!");
-        THROW<InternalException>(StringFormat("CollServiceAiCpuImpl::SetHcclKernelLaunchParam, fill op data failed! ret [%d]", hcclRet));
+        THROW<InternalException>(
+            StringFormat("CollServiceAiCpuImpl::SetHcclKernelLaunchParam, fill op data failed! ret [%d]", hcclRet));
     }
     param.kernel.op.sendRecvRemoteRank = op.sendRecvRemoteRank;
-    Stream *streamPtr = nullptr;
-    if(op.opMode == OpMode::OPBASE) {
+    Stream* streamPtr = nullptr;
+    if (op.opMode == OpMode::OPBASE) {
         streamPtr = comm->GetStreamManager().opbase->GetMaster();
     } else {
         streamPtr = comm->GetStreamManager().offload->GetMaster(op.opTag);
     }
     if (streamPtr != nullptr) {
-        param.kernel.op.userStreamId = streamPtr -> GetId();
+        param.kernel.op.userStreamId = streamPtr->GetId();
     } else {
-        HCCL_WARNING("CollServiceAiCpuImpl::%s userStream is nullptr, userStreamId id in kernel param is invalid.", __func__);
+        HCCL_WARNING(
+            "CollServiceAiCpuImpl::%s userStream is nullptr, userStreamId id in kernel param is invalid.", __func__);
     }
     param.kernel.kfcControlTransferH2DParams = comm->GetKfcControlTransferH2D().GetCommunicateParams();
     param.kernel.kfcControlTransferD2HParams = comm->GetKfcStatusTransferD2H().GetCommunicateParams();
@@ -331,34 +356,39 @@ void CollServiceAiCpuImpl::SetHcclKernelLaunchParam(HcclKernelLaunchParam &param
     SetDeviceEnvConfigParam(param);
 }
 
-void CollServiceAiCpuImpl::SetDeviceEnvConfigParam(HcclKernelLaunchParam &param) const
+void CollServiceAiCpuImpl::SetDeviceEnvConfigParam(HcclKernelLaunchParam& param) const
 {
     param.kernel.envConfig.hcclExecTimeout = EnvConfig::GetInstance().GetRtsConfig().GetExecTimeOut();
-    param.kernel.envConfig.taskExceptionEnable = EnvConfig::GetInstance().GetLogConfig().GetDfsConfig().taskExceptionEnable;
+    param.kernel.envConfig.taskExceptionEnable
+        = EnvConfig::GetInstance().GetLogConfig().GetDfsConfig().taskExceptionEnable;
 }
 
-void CollServiceAiCpuImpl::AicpuKernelEntranceLaunch(Stream &stream, const CollOperator &op, const string &algName,
-                                             const DevBuffer *mem)
+void CollServiceAiCpuImpl::AicpuKernelEntranceLaunch(
+    Stream& stream, const CollOperator& op, const string& algName, const DevBuffer* mem)
 {
     HcclKernelLaunchParam param;
 
     s32 ret = strcpy_s(param.kernel.algName, sizeof(param.kernel.algName), algName.data());
     if (ret != EOK) {
-        THROW<InternalException>(StringFormat("CollServiceAiCpuImpl::AicpuKernelEntranceLaunch, strcpy_s algName failed! ret[%d]", ret));
+        THROW<InternalException>(
+            StringFormat("CollServiceAiCpuImpl::AicpuKernelEntranceLaunch, strcpy_s algName failed! ret[%d]", ret));
     }
 
     ret = strcpy_s(param.kernel.opTag, sizeof(param.kernel.opTag), op.opTag.data());
     if (ret != EOK) {
-        THROW<InternalException>(StringFormat("CollServiceAiCpuImpl::AicpuKernelEntranceLaunch, strcpy_s opTag failed! ret[%d]", ret));
+        THROW<InternalException>(
+            StringFormat("CollServiceAiCpuImpl::AicpuKernelEntranceLaunch, strcpy_s opTag failed! ret[%d]", ret));
     }
 
     ret = strcpy_s(param.kernel.tagKey, sizeof(param.kernel.tagKey), curTagKey.data());
     if (ret != EOK) {
-        THROW<InternalException>(StringFormat("CollServiceAiCpuImpl::AicpuKernelEntranceLaunch, strcpy_s tagKey failed! ret[%d]", ret));
+        THROW<InternalException>(
+            StringFormat("CollServiceAiCpuImpl::AicpuKernelEntranceLaunch, strcpy_s tagKey failed! ret[%d]", ret));
     }
 
-    HCCL_INFO("CollServiceAiCpuImpl::AicpuKernelEntranceLaunch param.kernel.algName: %s, op.opTag %s", param.kernel.algName,
-               op.opTag.c_str());
+    HCCL_INFO(
+        "CollServiceAiCpuImpl::AicpuKernelEntranceLaunch param.kernel.algName: %s, op.opTag %s", param.kernel.algName,
+        op.opTag.c_str());
 
     param.kernel.binaryResAddr = mem->GetAddr();
     param.kernel.binaryResSize = mem->GetSize();
@@ -370,33 +400,40 @@ void CollServiceAiCpuImpl::AicpuKernelEntranceLaunch(Stream &stream, const CollO
     comm->GetStreamManager().ResetSlaveIndex(0);
 }
 
-void CollServiceAiCpuImpl::AicpuKernelLaunch(HcclKernelLaunchParam &param, Stream &stream, OpMode opMode)
+void CollServiceAiCpuImpl::AicpuKernelLaunch(HcclKernelLaunchParam& param, Stream& stream, OpMode opMode)
 {
     param.kernel.op.userStreamId = stream.GetId();
     aclrtLaunchKernelCfg cfg;
-	aclrtLaunchKernelAttr attr;
-	attr.id = ACL_RT_LAUNCH_KERNEL_ATTR_TIMEOUT;
-	auto timeoutCheck         = EnvConfig::GetInstance().GetRtsConfig().GetExecTimeOut();
-	attr.value.timeout = static_cast<u16>((timeoutCheck == 0) ? timeoutCheck : (timeoutCheck + 30)); // aicpu kernal超时时间: X+30s
-	cfg.numAttrs = 1;
-	cfg.attrs = &attr;
-    TRY_CATCH_THROW(InternalException, std::string("HrtMemcpy kernelParamBuf failed"),
-        HrtMemcpy(reinterpret_cast<void *>(kernelParamBuf_.get()->GetAddr()), sizeof(HcclKernelParamLite), 
-            reinterpret_cast<void *>(&param), sizeof(HcclKernelParamLite), RT_MEMCPY_HOST_TO_HOST));
-    
+    aclrtLaunchKernelAttr attr;
+    attr.id = ACL_RT_LAUNCH_KERNEL_ATTR_TIMEOUT;
+    auto timeoutCheck = EnvConfig::GetInstance().GetRtsConfig().GetExecTimeOut();
+    attr.value.timeout
+        = static_cast<u16>((timeoutCheck == 0) ? timeoutCheck : (timeoutCheck + 30)); // aicpu kernel超时时间: X+30s
+    cfg.numAttrs = 1;
+    cfg.attrs = &attr;
+    TRY_CATCH_THROW(
+        InternalException, std::string("HrtMemcpy kernelParamBuf failed"),
+        HrtMemcpy(
+            reinterpret_cast<void*>(kernelParamBuf_.get()->GetAddr()), sizeof(HcclKernelParamLite), &param,
+            sizeof(HcclKernelParamLite), RT_MEMCPY_HOST_TO_HOST));
+
     HCCL_INFO("[CollServiceAiCpuImpl][%s] args timeout[%u]s", __func__, attr.value.timeout);
 
     AddPostToUserStream(stream);
-    TaskParam taskParam {};
+    TaskParam taskParam{};
     taskParam.beginTime = DlProfFunction::GetInstance().dlMsprofSysCycleTime();
 
-    HCCL_INFO("[CollServiceAiCpuImpl::AicpuKernelLaunch] RegisterGetAicpuTaskExceptionCallBack streamId[%u], devLogicId[%u]", 
-              stream.GetId(), comm->GetDeviceLogicId());
-    auto getAicpuTaskExceptionCallBack = [this]() {return this->comm->GetAicpuTaskException();};
-    Hccl::RegisterGetAicpuTaskExceptionCallBackV2(stream.GetId(), comm->GetDeviceLogicId(), getAicpuTaskExceptionCallBack);
+    HCCL_INFO(
+        "[CollServiceAiCpuImpl::AicpuKernelLaunch] RegisterGetAicpuTaskExceptionCallBack streamId[%u], devLogicId[%u]",
+        stream.GetId(), comm->GetDeviceLogicId());
+    auto getAicpuTaskExceptionCallBack = [this]() {
+        return this->comm->GetAicpuTaskException();
+    };
+    Hccl::RegisterGetAicpuTaskExceptionCallBackV2(
+        stream.GetId(), comm->GetDeviceLogicId(), getAicpuTaskExceptionCallBack);
 
-    HCCL_INFO("[CollServiceAiCpuImpl][%s] param.soName: %s, param.kernelName: %s",
-              __func__, param.soName, param.kernelName);
+    HCCL_INFO(
+        "[CollServiceAiCpuImpl][%s] param.soName: %s, param.kernelName: %s", __func__, param.soName, param.kernelName);
     const aclrtFuncHandle funcHandle = comm->GetAicpuKernelFuncHandle(param.kernelName);
 
     bool isCapture = false;
@@ -405,7 +442,7 @@ void CollServiceAiCpuImpl::AicpuKernelLaunch(HcclKernelLaunchParam &param, Strea
         RuntimeApiException,
         StringFormat("[CollServiceAiCpuImpl][%s] GetStreamCaptureInfo fail, streamId[%u]", __func__, stream.GetId()),
         GetStreamCaptureInfo(stream.GetPtr(), rtModel, isCapture));
-    Stream *mStreamPtr = nullptr;
+    Stream* mStreamPtr = nullptr;
     if (opMode == OpMode::OPBASE || isCapture) {
         comm->GetAicpuStreamManager().AllocFreeStream();
         mStreamPtr = comm->GetAicpuStreamManager().GetFreeStream();
@@ -417,10 +454,13 @@ void CollServiceAiCpuImpl::AicpuKernelLaunch(HcclKernelLaunchParam &param, Strea
 
     std::string mode = (opMode == OpMode::OPBASE) ? "OPBASE" : "OFFLOAD";
     constexpr u32 numBlocks = 1;
-    HrtAicpuLaunchKernelWithHostArgs(funcHandle, numBlocks, mStream.GetPtr(), &cfg,
-			reinterpret_cast<void *>(kernelParamBuf_.get()->GetAddr()), sizeof(HcclKernelParamLite) + dynamicDataSize);
-    HCCL_INFO("[AicpuKernelLauncher][AicpuKernelLaunch] param.kernel.algName: %s, %s mode, %s"
-                "HrtAicpuLaunchKernelWithHostArgs end!", param.kernel.algName, mode.c_str(), mStream.Describe().c_str());
+    HrtAicpuLaunchKernelWithHostArgs(
+        funcHandle, numBlocks, mStream.GetPtr(), &cfg, reinterpret_cast<void*>(kernelParamBuf_.get()->GetAddr()),
+        sizeof(HcclKernelParamLite) + dynamicDataSize);
+    HCCL_INFO(
+        "[AicpuKernelLauncher][AicpuKernelLaunch] param.kernel.algName: %s, %s mode, %s "
+        "HrtAicpuLaunchKernelWithHostArgs end!",
+        param.kernel.algName, mode.c_str(), mStream.Describe().c_str());
     taskParam.taskType = TaskParamType::TASK_AICPU_KERNEL;
     taskParam.endTime = DlProfFunction::GetInstance().dlMsprofSysCycleTime();
 
@@ -432,19 +472,20 @@ constexpr u8 QUEUE_NOTIFY_POST_QID_POS = 0;
 constexpr u8 QUEUE_NOTIFY_WAIT_QID_POS = 1;
 constexpr u8 QUEUE_NOTIFY_TOPIC_ID_POS = 2;
 
-void CollServiceAiCpuImpl::AllocQueueNotify(std::vector<std::tuple<QId, QId, u32>> &queueNotifyReq) const
+void CollServiceAiCpuImpl::AllocQueueNotify(std::vector<std::tuple<QId, QId, u32>>& queueNotifyReq) const
 {
-    QueueNotifyManager &queueNotifyMgr = comm->GetAicpuQueueNotifyManager();
+    QueueNotifyManager& queueNotifyMgr = comm->GetAicpuQueueNotifyManager();
 
     std::for_each(queueNotifyReq.begin(), queueNotifyReq.end(), [&queueNotifyMgr](auto item) {
-        queueNotifyMgr.ApplyFor(std::get<QUEUE_NOTIFY_POST_QID_POS>(item), std::get<QUEUE_NOTIFY_WAIT_QID_POS>(item),
-                                std::get<QUEUE_NOTIFY_TOPIC_ID_POS>(item));
+        queueNotifyMgr.ApplyFor(
+            std::get<QUEUE_NOTIFY_POST_QID_POS>(item), std::get<QUEUE_NOTIFY_WAIT_QID_POS>(item),
+            std::get<QUEUE_NOTIFY_TOPIC_ID_POS>(item));
     });
 }
 
-void CollServiceAiCpuImpl::AllocBcastPostCntNotify(std::vector<std::pair<QId, u32>> &bcastPostCntNotifyReq) const
+void CollServiceAiCpuImpl::AllocBcastPostCntNotify(std::vector<std::pair<QId, u32>>& bcastPostCntNotifyReq) const
 {
-    QueueBcastPostCntNotifyManager &bcastPostCntNotifyMgr = comm->GetBcastPostCntNotifyManager();
+    QueueBcastPostCntNotifyManager& bcastPostCntNotifyMgr = comm->GetBcastPostCntNotifyManager();
 
     std::for_each(bcastPostCntNotifyReq.begin(), bcastPostCntNotifyReq.end(), [&bcastPostCntNotifyMgr](auto item) {
         bcastPostCntNotifyMgr.ApplyFor(item.first, item.second);
@@ -452,9 +493,9 @@ void CollServiceAiCpuImpl::AllocBcastPostCntNotify(std::vector<std::pair<QId, u3
     });
 }
 
-void CollServiceAiCpuImpl::AllocWaitGroupCntNotify(std::vector<std::pair<QId, u32>> &waitGroupCntNotifyReq) const
+void CollServiceAiCpuImpl::AllocWaitGroupCntNotify(std::vector<std::pair<QId, u32>>& waitGroupCntNotifyReq) const
 {
-    QueueWaitGroupCntNotifyManager &waitGroupCntNotifyMgr = comm->GetQueueWaitGroupCntNotifyManager();
+    QueueWaitGroupCntNotifyManager& waitGroupCntNotifyMgr = comm->GetQueueWaitGroupCntNotifyManager();
 
     std::for_each(waitGroupCntNotifyReq.begin(), waitGroupCntNotifyReq.end(), [&waitGroupCntNotifyMgr](auto item) {
         waitGroupCntNotifyMgr.ApplyFor(item.first, item.second);
@@ -462,35 +503,37 @@ void CollServiceAiCpuImpl::AllocWaitGroupCntNotify(std::vector<std::pair<QId, u3
     });
 }
 
-void CollServiceAiCpuImpl::AddPostToUserStream(const Stream &stream)
+void CollServiceAiCpuImpl::AddPostToUserStream(const Stream& stream)
 {
-    TaskParam taskParam {};
+    TaskParam taskParam{};
     taskParam.beginTime = DlProfFunction::GetInstance().dlMsprofSysCycleTime();
 
     auto postNotify = comm->GetHostDeviceSyncNotifyManager().GetDeviceWaitNotify();
-    HCCL_INFO("[CollServiceAiCpuImpl][AddPostToUserStream] notify id[%u] DevPhyId[%u], streamId[%u]", 
-        postNotify->GetId(), postNotify->GetDevPhyId(), stream.GetId());
+    HCCL_INFO(
+        "[CollServiceAiCpuImpl][AddPostToUserStream] notify id[%u] DevPhyId[%u], streamId[%u]", postNotify->GetId(),
+        postNotify->GetDevPhyId(), stream.GetId());
     postNotify->Post(stream);
 
     taskParam.taskType = TaskParamType::TASK_NOTIFY_RECORD;
     taskParam.endTime = DlProfFunction::GetInstance().dlMsprofSysCycleTime();
     taskParam.taskPara.Notify.notifyID = postNotify->GetId();
     taskParam.taskPara.Notify.value = 1;
- 
+
     SaveDfxTaskInfo(taskParam, -1, stream.IsMaster());
 }
 
-void CollServiceAiCpuImpl::AddWaitToUserStream(const Stream &stream)
+void CollServiceAiCpuImpl::AddWaitToUserStream(const Stream& stream)
 {
-    TaskParam taskParam {};
+    TaskParam taskParam{};
     taskParam.beginTime = DlProfFunction::GetInstance().dlMsprofSysCycleTime();
 
     auto waitNotify = comm->GetHostDeviceSyncNotifyManager().GetHostWaitNotify();
-    HCCL_INFO("[CollServiceAiCpuImpl][AddWaitToUserStream] notify id[%u] DevPhyId[%u], streamId[%u]",
-        waitNotify->GetId(), waitNotify->GetDevPhyId(), stream.GetId());
+    HCCL_INFO(
+        "[CollServiceAiCpuImpl][AddWaitToUserStream] notify id[%u] DevPhyId[%u], streamId[%u]", waitNotify->GetId(),
+        waitNotify->GetDevPhyId(), stream.GetId());
 
     auto timeoutCheck = EnvConfig::GetInstance().GetRtsConfig().GetExecTimeOut();
-    u32 timeout = (timeoutCheck == 0) ? timeoutCheck : (timeoutCheck + 50);   // 主流notifywait超时时间: X+50s
+    u32 timeout = (timeoutCheck == 0) ? timeoutCheck : (timeoutCheck + 50); // 主流notifywait超时时间: X+50s
     HCCL_INFO("[CollServiceAiCpuImpl][%s] notify wait timeout[%u]s", __func__, timeout);
     waitNotify->Wait(stream, timeout);
 
@@ -506,26 +549,24 @@ void CollServiceAiCpuImpl::AllocWorkStream(u32 primQueueNum) const
     comm->GetAicpuStreamManager().AllocStreams(primQueueNum);
 }
 
-CollServiceAiCpuImpl::CollServiceAiCpuImpl(CommunicatorImpl *comm) : CollServiceBase(comm)
-{
-}
+CollServiceAiCpuImpl::CollServiceAiCpuImpl(CommunicatorImpl* comm) : CollServiceBase(comm) {}
 
-void CollServiceAiCpuImpl::AllocNotifies(const vector<LinkData> &links)
+void CollServiceAiCpuImpl::AllocNotifies(const vector<LinkData>& links)
 {
     vector<LinkData> pendingLinks;
-    for (auto &link : links) {
+    for (auto& link : links) {
         if (Contain(availableLinks, link)) {
             continue;
         }
         pendingLinks.emplace_back(link);
     }
-    HCCL_INFO("CollServiceAiCpuImpl::AllocNotifies links size %zu, pendingLinks size %zu", links.size(), pendingLinks.size());
+    HCCL_INFO(
+        "CollServiceAiCpuImpl::AllocNotifies links size %zu, pendingLinks size %zu", links.size(), pendingLinks.size());
     if (pendingLinks.empty()) {
         return;
     }
 
-    for (auto &link : pendingLinks) {
-        // 待修改: 申请数量
+    for (auto& link : pendingLinks) {
         comm->GetConnLocalNotifyManager().ApplyFor(link.GetRemoteRankId(), link);
     }
     HCCL_INFO("[CollServiceAiCpuImpl][AllocNotifies] end");
@@ -533,7 +574,7 @@ void CollServiceAiCpuImpl::AllocNotifies(const vector<LinkData> &links)
     availableLinks.insert(pendingLinks.begin(), pendingLinks.end());
 }
 
-void CollServiceAiCpuImpl::AllocOpMem(const CollOperator &op)
+void CollServiceAiCpuImpl::AllocOpMem(const CollOperator& op)
 {
     dynamicDataSize = CalcOpDynamicDataSize(op, op.opType, comm->GetRankSize());
     u64 kernelParamSize = sizeof(HcclKernelParamLite) + dynamicDataSize;
@@ -541,7 +582,8 @@ void CollServiceAiCpuImpl::AllocOpMem(const CollOperator &op)
         kernelParamBuf_ = make_shared<HostBuffer>(KERNEL_PARAM_BUF_SIZE);
         if (kernelParamBuf_ == nullptr) {
             HCCL_ERROR("[CollServiceAiCpuImpl][AllocOpMem] Alloc kernelParamBuf failed !");
-            THROW<InternalException>(StringFormat("[CollServiceAiCpuImpl][AllocOpMem] Alloc kernelParamBuf failed len"));
+            THROW<InternalException>(
+                StringFormat("[CollServiceAiCpuImpl][AllocOpMem] Alloc kernelParamBuf failed len"));
         }
     }
 
@@ -549,18 +591,20 @@ void CollServiceAiCpuImpl::AllocOpMem(const CollOperator &op)
         kernelParamBuf_ = make_shared<HostBuffer>(kernelParamSize);
         if (kernelParamBuf_ == nullptr) {
             HCCL_ERROR("[CollServiceAiCpuImpl][AllocOpMem] Alloc kernelParamBuf len[%llu] failed !", kernelParamSize);
-            THROW<InternalException>(StringFormat("[CollServiceAiCpuImpl][AllocOpMem] Alloc kernelParamBuf failed len[%llu]", kernelParamSize));
+            THROW<InternalException>(StringFormat(
+                "[CollServiceAiCpuImpl][AllocOpMem] Alloc kernelParamBuf failed len[%llu]", kernelParamSize));
         }
     }
     HCCL_INFO("[AllocOpMem] op.opType[%d]", op.opType);
 }
 
-u64 CollServiceAiCpuImpl::CalcOpDynamicDataSize(const CollOperator &op, const OpType &opType, const u32 &rankSize) const
+u64 CollServiceAiCpuImpl::CalcOpDynamicDataSize(const CollOperator& op, const OpType& opType, const u32& rankSize) const
 {
     u64 dynamicDataSize = 0ULL;
     switch (opType) {
         case OpType::BATCHSENDRECV:
-            dynamicDataSize = sizeof(struct BatchSendRecvDataDes) + op.batchSendRecvDataDes.itemNum * sizeof(HcclSendRecvItem);
+            dynamicDataSize
+                = sizeof(struct BatchSendRecvDataDes) + op.batchSendRecvDataDes.itemNum * sizeof(HcclSendRecvItem);
             break;
         case OpType::ALLTOALLV:
             dynamicDataSize = sizeof(struct AllToAllvDataDes) + rankSize * ALLTOALL_INFO_SIZE * sizeof(u64);
@@ -575,38 +619,54 @@ u64 CollServiceAiCpuImpl::CalcOpDynamicDataSize(const CollOperator &op, const Op
     return dynamicDataSize;
 }
 
-// 功能说明：根据输入的LinkData信息，恢复Tansport对象
+// 功能说明：根据输入的LinkData信息，恢复Transport对象
 // 输入说明：vector<LinkData> &links：linkData数据
-void CollServiceAiCpuImpl::RecoverTransport(vector<LinkData> &links, vector<std::pair<LinkGroup, u32>> linkGroupPair) // communicatorLinkData
+HcclResult CollServiceAiCpuImpl::RecoverTransport(
+    vector<LinkData>& links, [[maybe_unused]] vector<std::pair<LinkGroup, u32>> linkGroupPair) // communicatorLinkData
 {
-    HCCL_INFO("[CollServiceAiCpuImpl][RecoverTransport] start");
-    RegisterCclBuffer(links);
-    // 创建TransPort所需的Socket
-    comm->GetSocketManager().BatchCreateSockets(links);
- 
-    // 创建TransPort所需的RmaConnection
-    auto connBuilderPair = connectionsBuilders.emplace(comm->GetId(),
-        make_unique<ConnectionsBuilder>(*comm));
-    connBuilderPair.first->second->BatchBuild(comm->GetId(), links);
-    // 创建TransPort所需的Notify资源
-    AllocNotifies(links);
-    // 重新构造TransPort
-    auto op = comm->GetCurrentCollOperator();
-    if (op->opMode == OpMode::OPBASE) {
-        comm->GetMemTransportManager()->BatchRecoverOpbasedTransports(links);
-    } else if (op->opMode == OpMode::OFFLOAD) {
-        comm->GetMemTransportManager()->BatchRecoverOffloadTransports(op->opTag, links);
+    try {
+        HCCL_INFO("[CollServiceAiCpuImpl][RecoverTransport] start");
+        RegisterCclBuffer(links);
+        // 创建TransPort所需的Socket
+        comm->GetSocketManager().BatchCreateSockets(links);
+
+        // 创建TransPort所需的RmaConnection
+        auto connBuilderPair = connectionsBuilders.emplace(comm->GetId(), make_unique<ConnectionsBuilder>(*comm));
+        connBuilderPair.first->second->BatchBuild(comm->GetId(), links);
+        // 创建TransPort所需的Notify资源
+        AllocNotifies(links);
+        // 重新构造TransPort
+        auto op = comm->GetCurrentCollOperator();
+        if (op->opMode == OpMode::OPBASE) {
+            comm->GetMemTransportManager()->BatchRecoverOpbasedTransports(links);
+        } else if (op->opMode == OpMode::OFFLOAD) {
+            comm->GetMemTransportManager()->BatchRecoverOffloadTransports(op->opTag, links);
+        }
+
+        HCCL_INFO("[CollServiceAiCpuImpl][RecoverTransport] RecoverTransport success!");
+    } catch (HcclException& e) {
+        HCCL_ERROR("Exception occurred: %s", e.what());
+        auto backTraces = e.GetBackTraceStrings();
+        std::for_each(backTraces.begin(), backTraces.end(), [](string item) {
+            HCCL_INFO("backTraces item: %s", item.c_str());
+        });
+        return e.GetErrorCode();
+    } catch (std::exception& e) {
+        HCCL_ERROR("Exception occurred: %s", e.what());
+        return HcclResult::HCCL_E_INTERNAL;
+    } catch (...) {
+        HCCL_ERROR("Unknown error occurs!");
+        return HcclResult::HCCL_E_INTERNAL;
     }
- 
-    HCCL_INFO("[CollServiceAiCpuImpl][RecoverTransport] RecoverTransport success!");
-    return;
+    return HcclResult::HCCL_SUCCESS;
 }
 
-HcclResult CollServiceAiCpuImpl::GetSnapShotDynamicBuf(CollOperator &op,BinaryStream &buf)
+HcclResult CollServiceAiCpuImpl::GetSnapShotDynamicBuf(CollOperator& op, BinaryStream& buf)
 {
     auto req = comm->GetCollAlgComponent()->GetCollAlgOpReq(op, comm->GetCurAlgName());
-    HCCL_INFO("CollServiceAiCpuImpl::GetSnapShotDynamicBuf GetCollAlgOpReq OrchestMode::INSTRUCTION, algName %s",
-              req.algName.c_str());
+    HCCL_INFO(
+        "CollServiceAiCpuImpl::GetSnapShotDynamicBuf GetCollAlgOpReq OrchestMode::INSTRUCTION, algName %s",
+        req.algName.c_str());
     buf << req.resReq.levelRankPairs.size();
     HCCL_INFO("LeveRankPairs size is %zu", req.resReq.levelRankPairs.size());
     for (auto levelRankPair : req.resReq.levelRankPairs) {
@@ -620,7 +680,7 @@ HcclResult CollServiceAiCpuImpl::GetSnapShotDynamicBuf(CollOperator &op,BinarySt
     return HcclResult::HCCL_SUCCESS;
 }
 
-static void SetModuleDataName(ModuleData &module, const std::string &name)
+static void SetModuleDataName(ModuleData& module, const std::string& name)
 {
     int ret = strcpy_s(module.name, sizeof(module.name), name.c_str());
     if (ret != 0) {
@@ -628,7 +688,7 @@ static void SetModuleDataName(ModuleData &module, const std::string &name)
     }
 }
 
-std::vector<char> CollServiceAiCpuImpl::PackOpData(const std::string &opTag, const CollAlgOpReq &req) const
+std::vector<char> CollServiceAiCpuImpl::PackOpData(const std::string& opTag, const CollAlgOpReq& req) const
 {
     std::vector<ModuleData> dataVec;
     dataVec.resize(AicpuResMgrType::__COUNT__);
@@ -689,15 +749,16 @@ std::vector<char> CollServiceAiCpuImpl::PackOpData(const std::string &opTag, con
     return helper.GetPackedData(dataVec);
 }
 
-void CollServiceAiCpuImpl::SaveDfxTaskInfo(const TaskParam &taskParam, const RankId remoteRankId, const bool isMaster) const
+void CollServiceAiCpuImpl::SaveDfxTaskInfo(
+    const TaskParam& taskParam, const RankId remoteRankId, const bool isMaster) const
 {
     u32 taskId;
     u32 streamId;
     HrtGetTaskIdAndStreamID(taskId, streamId);
- 
-    std::unique_ptr<TaskInfo> taskInfo = std::make_unique<TaskInfo>(streamId, taskId, remoteRankId, taskParam,
-        comm->GetMirrorTaskManager().GetCurrDfxOpInfo(), isMaster);
- 
+
+    std::unique_ptr<TaskInfo> taskInfo = std::make_unique<TaskInfo>(
+        streamId, taskId, remoteRankId, taskParam, comm->GetMirrorTaskManager().GetCurrDfxOpInfo(), isMaster);
+
     comm->GetMirrorTaskManager().AddTaskInfo(std::move(taskInfo));
 }
 
@@ -705,8 +766,10 @@ void CollServiceAiCpuImpl::Resume()
 {
     // 从connectionsBuilder中获取linkData vector
     auto it = connectionsBuilders.find(comm->GetId());
-    if(it == connectionsBuilders.end()) {
-        HCCL_WARNING("[NsRecovery][Resume] CollServiceAiCpuImpl::Resume, cannot find connectionsBuilder, maybe no op has been loaded before, commId[%s].",
+    if (it == connectionsBuilders.end()) {
+        HCCL_WARNING(
+            "[NsRecovery][Resume] CollServiceAiCpuImpl::Resume, cannot find connectionsBuilder, maybe no op has been "
+            "loaded before, commId[%s].",
             comm->GetId().c_str());
         return;
     }
@@ -730,11 +793,14 @@ void CollServiceAiCpuImpl::Resume()
     // 将通信域打包
     auto buffer = PackAllTransportData();
     HCCL_INFO("[NsRecovery][Resume] CollServiceAiCpuImpl::Resume, PackAllTransportData end.");
-    
+
     shared_ptr<DevBuffer> devMem = make_shared<DevBuffer>(buffer.size()); // 申请device内存
-    HCCL_INFO("[NsRecovery][Resume] devMem->GetAddr(): 0x%llx, devMem->GetSize(): %llu", devMem->GetAddr(), devMem->GetSize());
-    HrtMemcpy(reinterpret_cast<void *>(devMem->GetAddr()), devMem->GetSize(), buffer.data(), buffer.size(),
-              RT_MEMCPY_HOST_TO_DEVICE); // H2D拷贝，将资源拷贝到device内存
+    HCCL_INFO(
+        "[NsRecovery][Resume] devMem->GetAddr(): 0x%llx, devMem->GetSize(): %llu", devMem->GetAddr(),
+        devMem->GetSize());
+    HrtMemcpy(
+        reinterpret_cast<void*>(devMem->GetAddr()), devMem->GetSize(), buffer.data(), buffer.size(),
+        RT_MEMCPY_HOST_TO_DEVICE); // H2D拷贝，将资源拷贝到device内存
 
     // 组新增的kernelLaunch命令、将打包数据下发到AICPU侧
     auto op = comm->GetCurrentCollOperator();
@@ -750,7 +816,7 @@ void CollServiceAiCpuImpl::Resume()
     }
 }
 
-void CollServiceAiCpuImpl::AicpuUpdateCommLaunch(Stream &stream, const DevBuffer *mem)
+void CollServiceAiCpuImpl::AicpuUpdateCommLaunch(Stream& stream, const DevBuffer* mem)
 {
     HcclKernelLaunchParam param;
 
@@ -761,7 +827,8 @@ void CollServiceAiCpuImpl::AicpuUpdateCommLaunch(Stream &stream, const DevBuffer
 
     s32 ret = strcpy_s(param.kernelName, sizeof(param.kernelName), "HcclUpdateCommKernelEntrance");
     if (ret != EOK) {
-        THROW<InternalException>(StringFormat("CollServiceAiCpuImpl::AicpuUpdateCommLaunch, strcpy_s kernelName failed! ret[%d]", ret));
+        THROW<InternalException>(
+            StringFormat("CollServiceAiCpuImpl::AicpuUpdateCommLaunch, strcpy_s kernelName failed! ret[%d]", ret));
     }
     auto op = comm->GetCurrentCollOperator();
     AicpuKernelLaunch(param, stream, op->opMode);
@@ -772,7 +839,7 @@ std::vector<char> CollServiceAiCpuImpl::PackAllTransportData() const
 {
     std::vector<ModuleData> dataVec;
     dataVec.resize(AicpuResMgrType::__COUNT__);
- 
+
     AicpuResMgrType resType = AicpuResMgrType::TRANSPORT;
     SetModuleDataName(dataVec[resType], "MemTransportManager");
     dataVec[resType].data = comm->GetMemTransportManager()->GetPackedAllTransportData();
@@ -782,21 +849,23 @@ std::vector<char> CollServiceAiCpuImpl::PackAllTransportData() const
     return helper.GetPackedData(dataVec);
 }
 
-void CollServiceAiCpuImpl::ReLoadWithOpBasedMode(CollOperator &op)
+HcclResult CollServiceAiCpuImpl::ReLoadWithOpBasedMode(CollOperator& op)
 {
     HCCL_INFO("[CollServiceAiCpuImpl::%s] start.", __func__);
     LoadWithOpBasedModeNoRegister(op);
     HCCL_INFO("[CollServiceAiCpuImpl::%s] end.", __func__);
+    return HcclResult::HCCL_SUCCESS;
 }
- 
-void CollServiceAiCpuImpl::ReLoadWithOffloadMode(CollOperator &op)
+
+HcclResult CollServiceAiCpuImpl::ReLoadWithOffloadMode(CollOperator& op)
 {
     HCCL_INFO("[CollServiceAiCpuImpl::%s] start.", __func__);
     LoadWithOffloadModeNoRegister(op);
     HCCL_INFO("[CollServiceAiCpuImpl::%s] end.", __func__);
+    return HcclResult::HCCL_SUCCESS;
 }
 
-void CollServiceAiCpuImpl::AllocQueueNotify(const InsQueue &insQueue)
+void CollServiceAiCpuImpl::AllocQueueNotify([[maybe_unused]] const InsQueue& insQueue)
 {
     // 重写基类接口，AICPU下不支持InsQueue传参
     THROW<InternalException>(
@@ -804,32 +873,33 @@ void CollServiceAiCpuImpl::AllocQueueNotify(const InsQueue &insQueue)
         "u32>> &queueNotifyReq) Instead.");
 }
 
-void CollServiceAiCpuImpl::AllocQNotifyForSingleQ(const InsQueue &insQueue) const
+void CollServiceAiCpuImpl::AllocQNotifyForSingleQ([[maybe_unused]] const InsQueue& insQueue) const
 {
     THROW<InternalException>("AllocQNotifyForSingleQ is not support in AiCpu mode");
 }
 
-
-HcclResult CollServiceAiCpuImpl::ClearOpLoadedInfo(const std::string &opTag)
+HcclResult CollServiceAiCpuImpl::ClearOpLoadedInfo(const std::string& opTag)
 {
     if (collOpLoadedMap.find(opTag) == collOpLoadedMap.end()) {
-        HCCL_WARNING("[LocalRmaBufManager::%s] opTag[%s] Cannot find Transport in collOpLoadedMap.", __func__, opTag.c_str());
+        HCCL_WARNING(
+            "[LocalRmaBufManager::%s] opTag[%s] Cannot find Transport in collOpLoadedMap.", __func__, opTag.c_str());
         return HCCL_SUCCESS;
     }
     collOpLoadedMap.erase(opTag);
     return HCCL_SUCCESS;
 }
 
-u32 CollServiceAiCpuImpl::GetRemoteRankIdsHashValue(const CollOperator &op) const
+u32 CollServiceAiCpuImpl::GetRemoteRankIdsHashValue(const CollOperator& op) const
 {
     vector<RankId> tempRankIds;
-    HcclSendRecvItem* itemPtr = reinterpret_cast<HcclSendRecvItem *>(op.batchSendRecvDataDes.sendRecvItemsPtr);
+    HcclSendRecvItem* itemPtr = reinterpret_cast<HcclSendRecvItem*>(op.batchSendRecvDataDes.sendRecvItemsPtr);
     u32 itemNum = op.batchSendRecvDataDes.itemNum;
     CHK_PTR_NULL(itemPtr);
     for (u32 i = 0; i < itemNum; i++) {
         u32 remoteRankId = (itemPtr + i)->remoteRank;
         tempRankIds.push_back(remoteRankId);
-        HCCL_INFO("[CollServiceAiCpuImpl][GetRemoteRankIdsHashValue] insert remoteUserRank[%u] to vector", remoteRankId);
+        HCCL_INFO(
+            "[CollServiceAiCpuImpl][GetRemoteRankIdsHashValue] insert remoteUserRank[%u] to vector", remoteRankId);
     }
     std::sort(tempRankIds.begin(), tempRankIds.end());
 
@@ -841,73 +911,77 @@ u32 CollServiceAiCpuImpl::GetRemoteRankIdsHashValue(const CollOperator &op) cons
     return seed;
 }
 
-HcclResult CollServiceAiCpuImpl::FillBatchSendRecvData (const CollOperator &op)
+HcclResult CollServiceAiCpuImpl::FillBatchSendRecvData(const CollOperator& op)
 {
     if (dynamicDataSize == 0) {
         HCCL_ERROR("CollServiceAiCpuImpl::FillBatchSendRecvData dynamicDataSize is 0");
-        THROW<InternalException>(StringFormat("CollServiceAiCpuImpl::FillBatchSendRecvData dynamicDataSize is 0"));
-        return HCCL_E_PARA;
+        return HcclResult::HCCL_E_INTERNAL;
     }
     Buffer dynamicDataMem = kernelParamBuf_.get()->Range(sizeof(struct HcclKernelParamLite), dynamicDataSize);
-    struct BatchSendRecvDataDes *batchSendRecvDataPtr = reinterpret_cast<struct BatchSendRecvDataDes *>(dynamicDataMem.GetAddr());
+    struct BatchSendRecvDataDes* batchSendRecvDataPtr
+        = reinterpret_cast<struct BatchSendRecvDataDes*>(dynamicDataMem.GetAddr());
     batchSendRecvDataPtr->itemNum = op.batchSendRecvDataDes.itemNum;
     for (u32 i = 0; i < op.batchSendRecvDataDes.itemNum; i++) {
-        CHK_PTR_NULL(static_cast<HcclSendRecvItem *>(op.batchSendRecvDataDes.sendRecvItemsPtr) + i);
-        batchSendRecvDataPtr->batchSendRecvItem[i] = *(static_cast<HcclSendRecvItem *>(op.batchSendRecvDataDes.sendRecvItemsPtr) + i);
-        HCCL_INFO("[CollServiceAiCpuImpl][FillBatchSendRecvData] alloc batchSendRecvItem remoteRank[%u]", batchSendRecvDataPtr->batchSendRecvItem[i].remoteRank);
+        CHK_PTR_NULL(static_cast<HcclSendRecvItem*>(op.batchSendRecvDataDes.sendRecvItemsPtr) + i);
+        batchSendRecvDataPtr->batchSendRecvItem[i]
+            = *(static_cast<HcclSendRecvItem*>(op.batchSendRecvDataDes.sendRecvItemsPtr) + i);
+        HCCL_INFO(
+            "[CollServiceAiCpuImpl][FillBatchSendRecvData] alloc batchSendRecvItem remoteRank[%u]",
+            batchSendRecvDataPtr->batchSendRecvItem[i].remoteRank);
     }
 
     return HCCL_SUCCESS;
 }
 
-HcclResult CollServiceAiCpuImpl::FillAllToAllvData (const CollOperator &op)
+HcclResult CollServiceAiCpuImpl::FillAllToAllvData(const CollOperator& op)
 {
     if (dynamicDataSize == 0) {
         HCCL_ERROR("CollServiceAiCpuImpl::FillAllToAllvData dynamicDataSize is 0");
-        THROW<InternalException>(StringFormat("CollServiceAiCpuImpl::FillAllToAllvData dynamicDataSize is 0"));
-        return HCCL_E_PARA;
+        return HcclResult::HCCL_E_INTERNAL;
     }
     Buffer dynamicDataMem = kernelParamBuf_.get()->Range(sizeof(struct HcclKernelParamLite), dynamicDataSize);
-    struct AllToAllvDataDes *alltoallvDataPtr = reinterpret_cast<struct AllToAllvDataDes *>(dynamicDataMem.GetAddr());
+    struct AllToAllvDataDes* alltoallvDataPtr = reinterpret_cast<struct AllToAllvDataDes*>(dynamicDataMem.GetAddr());
     alltoallvDataPtr->sendType = static_cast<u8>(op.all2AllVDataDes.sendType);
     alltoallvDataPtr->recvType = static_cast<u8>(op.all2AllVDataDes.recvType);
     u32 rankSize = comm->GetRankSize();
-    u64 *sendCountsPtr = static_cast<u64 *>(alltoallvDataPtr->sendRecvInfos);
-    u64 *recvCountsPtr = sendCountsPtr + rankSize;
-    u64 *sdisplsPtr = recvCountsPtr + rankSize;
-    u64 *rdisplsPtr = sdisplsPtr + rankSize;
+    u64* sendCountsPtr = static_cast<u64*>(alltoallvDataPtr->sendRecvInfos);
+    u64* recvCountsPtr = sendCountsPtr + rankSize;
+    u64* sdisplsPtr = recvCountsPtr + rankSize;
+    u64* rdisplsPtr = sdisplsPtr + rankSize;
     for (u32 i = 0; i < rankSize; i++) {
-        CHK_PTR_NULL(static_cast<const u64 *>(op.all2AllVDataDes.sendCounts) + i);
-        sendCountsPtr[i] = *(static_cast<const u64 *>(op.all2AllVDataDes.sendCounts) + i);
-        CHK_PTR_NULL(static_cast<const u64 *>(op.all2AllVDataDes.recvCounts) + i);
-        recvCountsPtr[i] = *(static_cast<const u64 *>(op.all2AllVDataDes.recvCounts) + i);
-        CHK_PTR_NULL(static_cast<const u64 *>(op.all2AllVDataDes.sdispls) + i);
-        sdisplsPtr[i] = *(static_cast<const u64 *>(op.all2AllVDataDes.sdispls) + i);
-        CHK_PTR_NULL(static_cast<const u64 *>(op.all2AllVDataDes.rdispls) + i);
-        rdisplsPtr[i] = *(static_cast<const u64 *>(op.all2AllVDataDes.rdispls) + i);
-        HCCL_INFO("[CollServiceAiCpuImpl][FillAllToAllvData] sendCounts[%llu], recvCounts[%llu], sdispls[%llu], rdispls[%llu]",
+        CHK_PTR_NULL(static_cast<const u64*>(op.all2AllVDataDes.sendCounts) + i);
+        sendCountsPtr[i] = *(static_cast<const u64*>(op.all2AllVDataDes.sendCounts) + i);
+        CHK_PTR_NULL(static_cast<const u64*>(op.all2AllVDataDes.recvCounts) + i);
+        recvCountsPtr[i] = *(static_cast<const u64*>(op.all2AllVDataDes.recvCounts) + i);
+        CHK_PTR_NULL(static_cast<const u64*>(op.all2AllVDataDes.sdispls) + i);
+        sdisplsPtr[i] = *(static_cast<const u64*>(op.all2AllVDataDes.sdispls) + i);
+        CHK_PTR_NULL(static_cast<const u64*>(op.all2AllVDataDes.rdispls) + i);
+        rdisplsPtr[i] = *(static_cast<const u64*>(op.all2AllVDataDes.rdispls) + i);
+        HCCL_INFO(
+            "[CollServiceAiCpuImpl][FillAllToAllvData] sendCounts[%llu], recvCounts[%llu], sdispls[%llu], "
+            "rdispls[%llu]",
             sendCountsPtr[i], recvCountsPtr[i], sdisplsPtr[i], rdisplsPtr[i]);
     }
-    HCCL_INFO("[CollServiceAiCpuImpl][FillAllToAllvData] fill alltoallv data success, alltoallvDataPtr[%p]", alltoallvDataPtr);
+    HCCL_INFO(
+        "[CollServiceAiCpuImpl][FillAllToAllvData] fill alltoallv data success, alltoallvDataPtr[%p]",
+        alltoallvDataPtr);
     return HCCL_SUCCESS;
 }
 
-HcclResult CollServiceAiCpuImpl::FillAllToAllvcData (const CollOperator &op)
+HcclResult CollServiceAiCpuImpl::FillAllToAllvcData(const CollOperator& op)
 {
     if (dynamicDataSize == 0) {
         HCCL_ERROR("CollServiceAiCpuImpl::FillAllToAllvcData dynamicDataSize is 0");
-        THROW<InternalException>(StringFormat("CollServiceAiCpuImpl::FillAllToAllvcData dynamicDataSize is 0"));
-        return HCCL_E_PARA;
+        return HcclResult::HCCL_E_INTERNAL;
     }
     Buffer dynamicDataMem = kernelParamBuf_.get()->Range(sizeof(struct HcclKernelParamLite), dynamicDataSize);
-    struct AllToAllvcDataDes *alltoallvcDataPtr = reinterpret_cast<struct AllToAllvcDataDes *>(dynamicDataMem.GetAddr());
+    struct AllToAllvcDataDes* alltoallvcDataPtr = reinterpret_cast<struct AllToAllvcDataDes*>(dynamicDataMem.GetAddr());
     alltoallvcDataPtr->sendType = static_cast<u8>(op.all2AllVCDataDes.sendType);
     alltoallvcDataPtr->recvType = static_cast<u8>(op.all2AllVCDataDes.recvType);
     u32 rankSize = comm->GetRankSize();
-    for (u64 i = 0; i < rankSize * rankSize; i++)
-    {
-        CHK_PTR_NULL(static_cast<const u64 *>(op.all2AllVCDataDes.sendCountMatrix) + i);
-        alltoallvcDataPtr->sendCountMatrix[i] = *(static_cast<const u64 *>(op.all2AllVCDataDes.sendCountMatrix) + i);
+    for (u64 i = 0; i < rankSize * rankSize; i++) {
+        CHK_PTR_NULL(static_cast<const u64*>(op.all2AllVCDataDes.sendCountMatrix) + i);
+        alltoallvcDataPtr->sendCountMatrix[i] = *(static_cast<const u64*>(op.all2AllVCDataDes.sendCountMatrix) + i);
     }
     return HCCL_SUCCESS;
 }

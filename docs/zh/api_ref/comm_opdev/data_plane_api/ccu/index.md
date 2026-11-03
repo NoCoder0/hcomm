@@ -42,3 +42,4 @@
   - [Loop](./execution_control/Loop.md)
   - [LoopGroup](./execution_control/LoopGroup.md)
   - [Func](./execution_control/Func.md)
+  - [CallFunc](./execution_control/CallFunc.md)

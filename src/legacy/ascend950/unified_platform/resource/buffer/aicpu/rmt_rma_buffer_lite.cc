@@ -7,6 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
+
 #include "rmt_rma_buffer_lite.h"
 #include "string_util.h"
 #include "log.h"
@@ -17,13 +18,20 @@ RmtRmaBufferLite::RmtRmaBufferLite(u64 addr, u64 size) : type_(RmaType::IPC), ad
 }
 
 RmtRmaBufferLite::RmtRmaBufferLite(u64 addr, u64 size, u32 rkey)
-    : type_(RmaType::RDMA), addr_(addr), size_(size), rkey_(rkey)
+    : type_(RmaType::RDMA),
+      addr_(addr),
+      size_(size),
+      rkey_(rkey)
 {
     HCCL_INFO("RmtRmaBufferLite::RmtRmaBufferLite:%s", Describe().c_str());
 }
 
 RmtRmaBufferLite::RmtRmaBufferLite(u64 addr, u64 size, u32 tokenId, u32 tokenValue)
-    : type_(RmaType::UB), addr_(addr), size_(size), tokenId_(tokenId), tokenValue_(tokenValue)
+    : type_(RmaType::UB),
+      addr_(addr),
+      size_(size),
+      tokenId_(tokenId),
+      tokenValue_(tokenValue)
 {
     HCCL_INFO("RmtRmaBufferLite::RmtRmaBufferLite:%s", Describe().c_str());
 }
@@ -35,7 +43,7 @@ RmtRmaBufSliceLite RmtRmaBufferLite::GetRmtRmaBufSliceLite(u64 offset, u64 slice
 
 std::string RmtRmaBufferLite::Describe() const
 {
-    return StringFormat("RmtRmaBufferLite[type=%s, addr=0x%llx, size=0x%x, rkey=%u]",
-                        type_.Describe().c_str(), addr_, size_, rkey_);
+    return StringFormat(
+        "RmtRmaBufferLite[type=%s, addr=0x%llx, size=0x%x, rkey=%u]", type_.Describe().c_str(), addr_, size_, rkey_);
 }
 } // namespace Hccl

@@ -38,9 +38,9 @@ extern "C" {
 #define BKF_CH_CLI_LETCP_KA_CNT (3)
 #define BKF_CH_CLI_LETCP_MAX_BUF (32 * 1024)
 
-#define BKF_CLI_LETCPSTATE_INIT         0
+#define BKF_CLI_LETCPSTATE_INIT 0
 #define BKF_CLI_LETCPSTATE_ESTABLISHING 1
-#define BKF_CLI_LETCPSTATE_ESTABLISHED  2
+#define BKF_CLI_LETCPSTATE_ESTABLISHED 2
 
 #define BKF_CH_CLI_LETCP_WRITE_ERR_RETRY_INTVL (1001)
 
@@ -98,8 +98,8 @@ static inline uint32_t BkfChCliLetcpSoftDel(BkfChCliConnId *connId)
 
 uint32_t BkfChCliLetcpStartConnTmrWriteErr(BkfChCliConnId *connId)
 {
-    return BkfChCliLetcpStartConnOnceTmrWriteErr(connId, (F_BKF_TMR_TIMEOUT_PROC) BkfChCliLetcpOnConnTmrWriteErrTO,
-                                                  BKF_CH_CLI_LETCP_WRITE_ERR_RETRY_INTVL);
+    return BkfChCliLetcpStartConnOnceTmrWriteErr(connId, (F_BKF_TMR_TIMEOUT_PROC)BkfChCliLetcpOnConnTmrWriteErrTO,
+        BKF_CH_CLI_LETCP_WRITE_ERR_RETRY_INTVL);
 }
 
 #endif
@@ -108,6 +108,7 @@ uint32_t BkfChCliLetcpStartConnTmrWriteErr(BkfChCliConnId *connId)
 /* func */
 uint32_t BkfChCliLetcpBuildVTbl(char *name, BkfChCliTypeVTbl *cliVTbl, uint32_t nameLen)
 {
+    (void)nameLen;
     if ((name == VOS_NULL) || (cliVTbl == VOS_NULL)) {
         return BKF_ERR;
     }
@@ -135,8 +136,8 @@ uint32_t BkfChCliLetcpBuildVTbl(char *name, BkfChCliTypeVTbl *cliVTbl, uint32_t 
 STATIC BkfChCli *BkfChCliLetcpInit(BkfChCliInitArg *arg)
 {
     BOOL argIsInvalid = (arg == VOS_NULL) || (arg->base == VOS_NULL) || (arg->base->memMng == VOS_NULL) ||
-                   (arg->base->disp == VOS_NULL) || (arg->base->mux == VOS_NULL) || (arg->base->tmrMng == VOS_NULL) ||
-                   (arg->name == VOS_NULL);
+                        (arg->base->disp == VOS_NULL) || (arg->base->mux == VOS_NULL) ||
+                        (arg->base->tmrMng == VOS_NULL) || (arg->name == VOS_NULL);
     if (argIsInvalid) {
         return VOS_NULL;
     }
@@ -172,8 +173,8 @@ STATIC uint32_t BkfChCliLetcpEnable(BkfChCli *ch, BkfChCliEnableArg *arg)
     if (argIsInvalid) {
         return BKF_ERR;
     }
-    BKF_LOG_INFO(BKF_LOG_HND, "ch(%#x), arg(%#x)/hasEnable(%u)\n", BKF_MASK_ADDR(ch),
-                 BKF_MASK_ADDR(arg), ch->hasEnable);
+    BKF_LOG_INFO(BKF_LOG_HND, "ch(%#x), arg(%#x)/hasEnable(%u)\n", BKF_MASK_ADDR(ch), BKF_MASK_ADDR(arg),
+        ch->hasEnable);
 
     if (ch->hasEnable) {
         return BKF_ERR;
@@ -232,9 +233,9 @@ STATIC void BkfChCliLetcpDisconn(BkfChCli *ch, BkfChCliConnId *connId)
     BKF_RETURNvoid_IF(ch == VOS_NULL);
     BKF_RETURNvoid_IF(connId == VOS_NULL);
     BKF_RETURNvoid_IF(connId->ch == VOS_NULL);
-    BKF_LOG_INFO(BKF_LOG_HND, "ch(%#x)/serUrl(%s)/localUrl(%s), fd %d, conndId %#x\n", BKF_MASK_ADDR(ch),
-                 BkfUrlGetStr(&connId->keyUrlSer, buf, sizeof(buf)),
-                 BkfUrlGetStr(&connId->keyUrlCli, buf2, sizeof(buf2)), connId->connFd, BKF_MASK_ADDR(connId));
+    BKF_LOG_INFO(BKF_LOG_HND, "ch(%#x)/serUrl(%s)/localUrl(%s), fd %d, connId %#x\n", BKF_MASK_ADDR(ch),
+        BkfUrlGetStr(&connId->keyUrlSer, buf, sizeof(buf)), BkfUrlGetStr(&connId->keyUrlCli, buf2, sizeof(buf2)),
+        connId->connFd, BKF_MASK_ADDR(connId));
 
     BkfChCliLetcpDelOneConn(connId);
     return;
@@ -280,9 +281,9 @@ STATIC int32_t BkfChCliLetcpRead(BkfChCliConnId *connId, void *dataBuf, int32_t 
     uint8_t buf[BKF_1K / 8];
     uint8_t buf2[BKF_1K / 8];
 
-    BKF_LOG_INFO(BKF_LOG_HND, "LetcpRead serUrl(%s)/localUrl(%s), conndId %#x\n",
-                 BkfUrlGetStr(&connId->keyUrlSer, buf, sizeof(buf)),
-                 BkfUrlGetStr(&connId->keyUrlCli, buf2, sizeof(buf2)), BKF_MASK_ADDR(connId));
+    BKF_LOG_INFO(BKF_LOG_HND, "LetcpRead serUrl(%s)/localUrl(%s), connId %#x\n",
+        BkfUrlGetStr(&connId->keyUrlSer, buf, sizeof(buf)), BkfUrlGetStr(&connId->keyUrlCli, buf2, sizeof(buf2)),
+        BKF_MASK_ADDR(connId));
     int32_t ret = recv(connId->connFd, dataBuf, bufLen, 0);
     if (ret == 0) { /* 上层判断断开依赖事件通知，不依赖读返回0 */
         BKF_LOG_WARN(BKF_LOG_HND, "fd(%d), ret(%d), ng\n", connId->connFd, ret);
@@ -298,9 +299,9 @@ STATIC int32_t BkfChCliLetcpSend(BkfChCliConnId *connId, void *dataBuf, int32_t 
     uint8_t buf[BKF_1K / 8];
     uint8_t buf2[BKF_1K / 8];
 
-    BKF_LOG_INFO(BKF_LOG_HND, "LetcpSend serUrl(%s)/localUrl(%s), conndId %#x\n",
-                 BkfUrlGetStr(&connId->keyUrlSer, buf, sizeof(buf)),
-                 BkfUrlGetStr(&connId->keyUrlCli, buf2, sizeof(buf2)), BKF_MASK_ADDR(connId));
+    BKF_LOG_INFO(BKF_LOG_HND, "LetcpSend serUrl(%s)/localUrl(%s), connId %#x\n",
+        BkfUrlGetStr(&connId->keyUrlSer, buf, sizeof(buf)), BkfUrlGetStr(&connId->keyUrlCli, buf2, sizeof(buf2)),
+        BKF_MASK_ADDR(connId));
     int32_t ret = send(connId->connFd, dataBuf, dataLen, 0);
     if (ret == 0) { /* 上层判断断开依赖事件通知，不依赖写返回0 */
         BKF_LOG_WARN(BKF_LOG_HND, "fd(%d), ret(%d), ng\n", connId->connFd, ret);
@@ -353,8 +354,8 @@ void BkfChCliLetcpProcConnFdEpollout(BkfChCliConnId *connId)
     }
     BkfChCliLetcpAttachConnFd(connId, EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLOUT | EPOLLET);
     BKF_LOG_INFO(BKF_LOG_HND, "ProcConnFdEpollout_ connId(%#x), Fd(%d)/serurl(%s) cliurl(%s)\n", BKF_MASK_ADDR(connId),
-                 connId->connFd, BkfUrlGetStr(&connId->keyUrlSer, buf, sizeof(buf)),
-                 BkfUrlGetStr(&connId->keyUrlCli, buf2, sizeof(buf2)));
+        connId->connFd, BkfUrlGetStr(&connId->keyUrlSer, buf, sizeof(buf)),
+        BkfUrlGetStr(&connId->keyUrlCli, buf2, sizeof(buf2)));
     connId->tcpState = BKF_CLI_LETCPSTATE_ESTABLISHED;
     if (ch->argEnable.onUnblock) {
         ch->argEnable.onUnblock(ch->argEnable.cookie, connId);
@@ -365,6 +366,7 @@ void BkfChCliLetcpProcConnFdEpollout(BkfChCliConnId *connId)
 /* on msg */
 STATIC void BkfChCliLetcpOnConnFdEvents(int32_t fd, uint32_t curEvents, BkfChCliConnId *connId)
 {
+    (void)fd;
     uint8_t buf[BKF_1K / 8];
     uint8_t buf2[BKF_1K / 8];
     if ((connId == VOS_NULL) || (!BKF_SIGN_IS_VALID(connId->sign, BKF_CH_CLI_LETCP_CONN_ID_SIGN))) {
@@ -372,9 +374,9 @@ STATIC void BkfChCliLetcpOnConnFdEvents(int32_t fd, uint32_t curEvents, BkfChCli
         return;
     }
     BkfChCli *ch = connId->ch;
-    BKF_LOG_DEBUG(BKF_LOG_HND, "fd(%d), keyUrlSer(%s) cliurl(%s)/curEvents(%#x)\n",
-                  connId->connFd, BkfUrlGetStr(&connId->keyUrlSer, buf, sizeof(buf)),
-                  BkfUrlGetStr(&connId->keyUrlCli, buf2, sizeof(buf2)), curEvents);
+    BKF_LOG_DEBUG(BKF_LOG_HND, "fd(%d), keyUrlSer(%s) cliurl(%s)/curEvents(%#x)\n", connId->connFd,
+        BkfUrlGetStr(&connId->keyUrlSer, buf, sizeof(buf)), BkfUrlGetStr(&connId->keyUrlCli, buf2, sizeof(buf2)),
+        curEvents);
 
     if (BKF_BIT_TEST(curEvents, EPOLLERR | EPOLLHUP)) {
         BkfChCliLetcpProcConnFdSerDisc(connId);
@@ -391,6 +393,7 @@ STATIC void BkfChCliLetcpOnConnFdEvents(int32_t fd, uint32_t curEvents, BkfChCli
 
 STATIC uint32_t BkfChCliLetcpOnConnTmrWriteErrTO(BkfChCliConnId *connId, void *paramTmrLibUnknown)
 {
+    (void)paramTmrLibUnknown;
     connId->tmrIdWriteErr = VOS_NULL;
     BkfChCliLetcpTry2WriteMore(connId);
     return BKF_OK;
@@ -426,13 +429,13 @@ void BkfChCliLetcpCloseFd(BkfChCliConnId *connId)
 
 static inline uint32_t BkfChCliLetcpBind(BkfChCliConnId *connId, BkfUrl *urlCli)
 {
-    struct sockaddr_in stAddr = { 0 };
+    struct sockaddr_in stAddr = {0};
     stAddr.sin_family = AF_INET;
     stAddr.sin_addr.s_addr = VOS_HTONL(urlCli->ip.addrH);
     stAddr.sin_port = VOS_HTONS(urlCli->ip.port);
     BkfChCli *ch = connId->ch;
-    BKF_LOG_INFO(BKF_LOG_HND, "ChCliLetcpBind:fd(%d), cli addr %x, port %u\n",
-                 connId->connFd, urlCli->ip.addrH, urlCli->ip.port);
+    BKF_LOG_INFO(BKF_LOG_HND, "ChCliLetcpBind:fd(%d), cli addr %x, port %u\n", connId->connFd, urlCli->ip.addrH,
+        urlCli->ip.port);
 
     int32_t ret = bind(connId->connFd, (struct sockaddr *)&stAddr, sizeof(stAddr));
     return ret == VOS_ERROR ? BKF_ERR : BKF_OK;
@@ -445,13 +448,13 @@ STATIC uint32_t BkfChCliLetcpAttachConnFd(BkfChCliConnId *connId, uint32_t event
     // 判断Fd是否附加到mux上，没有附加，执行WfwMuxAttachFd，并修改标识符；已经附加，执行WfwMuxReattachFd，并重新附加到mux上
     if (!connId->connFdAttachOk) {
         ret = WfwMuxAttachFd(ch->argInit.base->mux, connId->connFd, events,
-                              (F_WFW_MUX_FD_PROC)BkfChCliLetcpOnConnFdEvents, connId, VOS_NULL);
+            (F_WFW_MUX_FD_PROC)BkfChCliLetcpOnConnFdEvents, connId, VOS_NULL);
         if (ret == 0) {
             connId->connFdAttachOk = VOS_TRUE;
         }
     } else {
         ret = WfwMuxReattachFd(ch->argInit.base->mux, connId->connFd, events,
-                                (F_WFW_MUX_FD_PROC)BkfChCliLetcpOnConnFdEvents, connId, VOS_NULL);
+            (F_WFW_MUX_FD_PROC)BkfChCliLetcpOnConnFdEvents, connId, VOS_NULL);
     }
 
     if (ret < 0) {
@@ -564,14 +567,14 @@ STATIC uint32_t BkfChCliLetcpConnect(BkfChCliConnId *connId)
             return BKF_ERR;
         }
     }
-    struct sockaddr_in stAddr = { 0 };
+    struct sockaddr_in stAddr = {0};
     stAddr.sin_family = AF_INET;
     stAddr.sin_addr.s_addr = VOS_HTONL(urlSer->ip.addrH);
     stAddr.sin_port = VOS_HTONS(urlSer->ip.port);
     int32_t ret = connect(connId->connFd, (struct sockaddr *)&stAddr, sizeof(stAddr));
     if (ret < 0 && errno != EINPROGRESS) {
         BKF_LOG_WARN(BKF_LOG_HND, "Connect to server fail, urlSer(%s), fd(%d), ret(%d)/errno(%d), ng\n",
-                     BkfUrlGetStr(urlSer, buf, sizeof(buf)), connId->connFd, ret, errno);
+            BkfUrlGetStr(urlSer, buf, sizeof(buf)), connId->connFd, ret, errno);
         return BKF_ERR;
     }
 
@@ -579,10 +582,9 @@ STATIC uint32_t BkfChCliLetcpConnect(BkfChCliConnId *connId)
         connId->tcpState = BKF_CLI_LETCPSTATE_ESTABLISHED;
     }
     BKF_LOG_INFO(BKF_LOG_HND, "Connect to server success, urlSer(%s), fd(%d) ret %d\n",
-                 BkfUrlGetStr(urlSer, buf, sizeof(buf)), connId->connFd, ret);
+        BkfUrlGetStr(urlSer, buf, sizeof(buf)), connId->connFd, ret);
     return BKF_OK;
 }
-
 
 STATIC void BkfChCliLetcpDelConnFd(BkfChCliConnId *connId)
 {
@@ -612,14 +614,14 @@ STATIC uint32_t BkfChCliLetcpConnToSer(BkfChCliConnId *connId)
     uint8_t buf[BKF_1K / 8];
     uint8_t buf2[BKF_1K / 8];
 
-    BKF_LOG_INFO(BKF_LOG_HND, "ConnToSer serUrl(%s)/localUrl(%s), conndId %#x\n",
-                 BkfUrlGetStr(&connId->keyUrlSer, buf, sizeof(buf)),
-                 BkfUrlGetStr(&connId->keyUrlCli, buf2, sizeof(buf2)), BKF_MASK_ADDR(connId));
+    BKF_LOG_INFO(BKF_LOG_HND, "ConnToSer serUrl(%s)/localUrl(%s), connId %#x\n",
+        BkfUrlGetStr(&connId->keyUrlSer, buf, sizeof(buf)), BkfUrlGetStr(&connId->keyUrlCli, buf2, sizeof(buf2)),
+        BKF_MASK_ADDR(connId));
 
     if (BkfChCliLetcpNewConnFd(connId) != BKF_OK) {
         return BKF_ERR;
     }
-     /* 设置非阻塞,可以删除     */
+    /* 设置非阻塞,可以删除     */
     if (BkfChCliLetcpSetFdNonBlock(connId) != BKF_OK) {
         return BKF_ERR;
     }
@@ -679,7 +681,7 @@ STATIC void BkfChCliLetcpDelAllConn(BkfChCli *ch)
     BkfChCliConnId *connId = VOS_NULL;
     for (connId = BkfChCliLetcpGetFirstConnId(ch, &itor); connId != VOS_NULL;
          connId = BkfChCliLetcpGetNextConnId(ch, &itor)) {
-         /* uninit ch, need block mod */
+        /* uninit ch, need block mod */
         BkfChCliLetcpSetFdBlock(connId->connFd);
         BkfChCliLetcpDelOneConn(connId);
     }
@@ -693,8 +695,8 @@ STATIC void BkfChCliLetcpProcConnFdSerDisc(BkfChCliConnId *connId)
     uint8_t buf[BKF_1K / 8];
     uint8_t buf2[BKF_1K / 8];
     BKF_LOG_INFO(BKF_LOG_HND, "ConnFdSerDisconnect connId(%#x), Fd(%d)/serurl(%s) cliurl(%s)\n", BKF_MASK_ADDR(connId),
-                 connId->connFd, BkfUrlGetStr(&connId->keyUrlSer, buf, sizeof(buf)),
-                 BkfUrlGetStr(&connId->keyUrlCli, buf2, sizeof(buf2)));
+        connId->connFd, BkfUrlGetStr(&connId->keyUrlSer, buf, sizeof(buf)),
+        BkfUrlGetStr(&connId->keyUrlCli, buf2, sizeof(buf2)));
 
     connId->lockDel = VOS_TRUE;
     (void)BkfChCliLetcpSoftDel(connId);
@@ -717,8 +719,8 @@ STATIC void BkfChCliLetcpProcConnFdSerData(BkfChCliConnId *connId)
 
     BkfChCli *ch = connId->ch;
     BKF_LOG_INFO(BKF_LOG_HND, "ConnFdSerData connId(%#x), Fd(%d)/serurl(%s) cliurl(%s)\n", BKF_MASK_ADDR(connId),
-                 connId->connFd, BkfUrlGetStr(&connId->keyUrlSer, buf, sizeof(buf)),
-                 BkfUrlGetStr(&connId->keyUrlCli, buf2, sizeof(buf2)));
+        connId->connFd, BkfUrlGetStr(&connId->keyUrlSer, buf, sizeof(buf)),
+        BkfUrlGetStr(&connId->keyUrlCli, buf2, sizeof(buf2)));
     connId->tcpState = BKF_CLI_LETCPSTATE_ESTABLISHED;
     connId->lockDel = VOS_TRUE;
     if (ch->argEnable.onRcvDataEvent) {
@@ -743,4 +745,3 @@ STATIC void BkfChCliLetcpTry2WriteMore(BkfChCliConnId *connId)
 #ifdef __cplusplus
 }
 #endif
-

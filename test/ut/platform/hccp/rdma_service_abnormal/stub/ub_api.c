@@ -1,35 +1,11 @@
- /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
- * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
- * CANN Open Software License Agreement Version 2.0 (the "License").
- * Please refer to the License for details. You may not use this file except in compliance with the License.
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
- * See LICENSE in the root of the software repository for the full text of the License.
- *
- * The code snippet comes from OpenEuler project.
- *
- * Copyright (c) 2025 Huawei Technologies Co., Ltd. All rights reserved.
- *
- * 				The MIT License
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+/**
+ * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
  */
 
 #include <config.h>
@@ -51,10 +27,7 @@
  * @param[in] [Required] conf: urma init attr, a random uasid will be assigned when conf is null.
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_init(urma_init_attr_t *conf)
-{
-	return 0;
-}
+urma_status_t urma_init(urma_init_attr_t* conf) { return 0; }
 
 /**
  * get eid by ip info
@@ -63,31 +36,35 @@ urma_status_t urma_init(urma_init_attr_t *conf)
  * @param[out] eid: device's eid;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_get_eid_by_ip(const urma_context_t *ctx, const urma_net_addr_t *net_addr, urma_eid_t *eid)
+urma_status_t urma_get_eid_by_ip(const urma_context_t* ctx, const urma_net_addr_t* net_addr, urma_eid_t* eid)
 {
-	return 0;
+    return 0;
+}
+
+urma_status_t urma_get_ip_by_eid(const urma_context_t* ctx, const urma_eid_t* eid, urma_net_addr_t* net_addr)
+{
+    return 0;
 }
 
 /**
  * Un-init urma environment, it will free uasid.
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_uninit(void)
-{
-	return 0;
-}
+urma_status_t urma_uninit(void) { return 0; }
+
+uint64_t urma_get_abi_version(void) { return (1ULL << 32); }
 
 /* Device Manage API */
- /**
+/**
  *  Get device list.
  * @param[out] num_devices: number of urma device;
  * Return: pointer array of urma_device; NULL means no device returned;
  * Note: urma_free_device_list() needs to be called to free memory;
  */
-urma_device_t **urma_get_device_list(int *num_devices)
+urma_device_t** urma_get_device_list(int* num_devices)
 {
-	urma_device_t *urma_device = calloc(*num_devices, sizeof(urma_device_t));
-	return &urma_device;
+    urma_device_t* urma_device = calloc(*num_devices, sizeof(urma_device_t));
+    return &urma_device;
 }
 
 /**
@@ -96,36 +73,36 @@ urma_device_t **urma_get_device_list(int *num_devices)
                          Can be called after using urma_device list;
 * Return: void;
 */
-void urma_free_device_list(urma_device_t **device_list)
+void urma_free_device_list(urma_device_t** device_list)
 {
-	free(device_list);
-	device_list = NULL;
-	return;
+    free(device_list);
+    device_list = NULL;
+    return;
 }
 
 /**
-*  Get eid list.
-* @param[in] [Required] dev: device pointer
-* @param[out] cnt: Return the number of valid eids;
-* Return: If it succeeds, it will return the eid_info array pointer, and the number of elements
-* is cnt; if it fails, it will return NULL; it will be released by the user calling
-*/
-urma_eid_info_t *urma_get_eid_list(urma_device_t *dev, uint32_t *cnt)
+ *  Get eid list.
+ * @param[in] [Required] dev: device pointer
+ * @param[out] cnt: Return the number of valid eids;
+ * Return: If it succeeds, it will return the eid_info array pointer, and the number of elements
+ * is cnt; if it fails, it will return NULL; it will be released by the user calling
+ */
+urma_eid_info_t* urma_get_eid_list(urma_device_t* dev, uint32_t* cnt)
 {
-	urma_eid_info_t *urma_eid_info = calloc(*cnt, sizeof(urma_eid_info_t));
-	return urma_eid_info;
+    urma_eid_info_t* urma_eid_info = calloc(*cnt, sizeof(urma_eid_info_t));
+    return urma_eid_info;
 }
 
 /**
-*  free eid list.
-* @param[in] [Required] eid_list: The eid array pointer to be released
-* Return: void;
-*/
-void urma_free_eid_list(urma_eid_info_t *eid_list)
+ *  free eid list.
+ * @param[in] [Required] eid_list: The eid array pointer to be released
+ * Return: void;
+ */
+void urma_free_eid_list(urma_eid_info_t* eid_list)
 {
-	free(eid_list);
-	eid_list = NULL;
-	return;
+    free(eid_list);
+    eid_list = NULL;
+    return;
 }
 
 /**
@@ -133,22 +110,22 @@ void urma_free_eid_list(urma_eid_info_t *eid_list)
  * @param[in] [Required] dev_name: device's name;
  * Return: urma_device; NULL means no device returned;
  */
-urma_device_t *urma_get_device_by_name(char *dev_name)
+urma_device_t* urma_get_device_by_name(char* dev_name)
 {
-	urma_device_t *urma_device = calloc(1, sizeof(urma_device_t));
-	return urma_device;
+    urma_device_t* urma_device = calloc(1, sizeof(urma_device_t));
+    return urma_device;
 }
 
- /**
+/**
  *  Get device by device eid.
  * @param[in] [Required] eid: device's eid;
  * @param[in] [Required] type: device's transport type;
  * Return: urma_device; NULL means no device returned;
  */
-urma_device_t *urma_get_device_by_eid(urma_eid_t eid, urma_transport_type_t type)
+urma_device_t* urma_get_device_by_eid(urma_eid_t eid, urma_transport_type_t type)
 {
-	urma_device_t *urma_device = calloc(1, sizeof(urma_device_t));
-	return urma_device;
+    urma_device_t* urma_device = calloc(1, sizeof(urma_device_t));
+    return urma_device;
 }
 
 /**
@@ -157,20 +134,11 @@ urma_device_t *urma_get_device_by_eid(urma_eid_t eid, urma_transport_type_t type
  * @param[out] dev_attr: Return device attributes, user needs to allocate and free the memory;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_query_device(urma_device_t *dev, urma_device_attr_t *dev_attr)
-{
-	return 0;
-}
+urma_status_t urma_query_device(urma_device_t* dev, urma_device_attr_t* dev_attr) { return 0; }
 
-urma_status_t urma_get_smac(const urma_context_t *ctx, uint8_t *mac)
-{
-	return 0;
-}
+urma_status_t urma_get_smac(const urma_context_t* ctx, uint8_t* mac) { return 0; }
 
-urma_status_t urma_get_dmac(const urma_context_t *ctx, const urma_net_addr_t *netaddr, uint8_t *mac)
-{
-	return 0;
-}
+urma_status_t urma_get_dmac(const urma_context_t* ctx, const urma_net_addr_t* netaddr, uint8_t* mac) { return 0; }
 
 /**
  * Create an urma context on the urma device.
@@ -178,10 +146,10 @@ urma_status_t urma_get_dmac(const urma_context_t *ctx, const urma_net_addr_t *ne
  * @param[in] [Required] eid_index: device's eid index.
  * Return urma context pointer on success, NULL on error.
  */
-urma_context_t *urma_create_context(urma_device_t *dev, uint32_t eid_index)
+urma_context_t* urma_create_context(urma_device_t* dev, uint32_t eid_index)
 {
-	urma_context_t *urma_context = calloc(1, sizeof(urma_context_t));
-	return  urma_context;
+    urma_context_t* urma_context = calloc(1, sizeof(urma_context_t));
+    return urma_context;
 }
 
 /**
@@ -189,11 +157,11 @@ urma_context_t *urma_create_context(urma_device_t *dev, uint32_t eid_index)
  * @param[in] [Required] ctx: handle of the created context.
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_delete_context(urma_context_t *ctx)
+urma_status_t urma_delete_context(urma_context_t* ctx)
 {
-	free(ctx);
-	ctx = NULL;
-	return 0;
+    free(ctx);
+    ctx = NULL;
+    return 0;
 }
 
 /**
@@ -202,10 +170,10 @@ urma_status_t urma_delete_context(urma_context_t *ctx)
  * @param[in] [Required] jfc_cfg: configuration including: depth, flag, jfce, user context;
  * Return: the handle of created jfc, not NULL on success; NULL on error
  */
-urma_jfc_t *urma_create_jfc(urma_context_t *ctx, urma_jfc_cfg_t *jfc_cfg)
+urma_jfc_t* urma_create_jfc(urma_context_t* ctx, urma_jfc_cfg_t* jfc_cfg)
 {
-	urma_jfc_t *urma_jfc = calloc(1, sizeof(urma_jfc_t));
-	return urma_jfc;
+    urma_jfc_t* urma_jfc = calloc(1, sizeof(urma_jfc_t));
+    return urma_jfc;
 }
 
 /**
@@ -214,21 +182,18 @@ urma_jfc_t *urma_create_jfc(urma_context_t *ctx, urma_jfc_cfg_t *jfc_cfg)
  * @param[in] [Required] attr: attributes to be modified;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_modify_jfc(urma_jfc_t *jfc, urma_jfc_attr_t *attr)
-{
-	return 0;
-}
+urma_status_t urma_modify_jfc(urma_jfc_t* jfc, urma_jfc_attr_t* attr) { return 0; }
 
 /**
  * Delete the created jfc.
  * @param[in] [Required] jfc: handle of the created jfc;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_delete_jfc(urma_jfc_t *jfc)
+urma_status_t urma_delete_jfc(urma_jfc_t* jfc)
 {
-	free(jfc);
-	jfc = NULL;
-	return 0;
+    free(jfc);
+    jfc = NULL;
+    return 0;
 }
 
 /**
@@ -237,10 +202,10 @@ urma_status_t urma_delete_jfc(urma_jfc_t *jfc)
  * @param[in] [Required] jfs_cfg: address to pu the jfs config;
  * Return: the handle of created jfs, not NULL on success, NULL on error
  */
-urma_jfs_t *urma_create_jfs(urma_context_t *ctx, urma_jfs_cfg_t *jfs_cfg)
+urma_jfs_t* urma_create_jfs(urma_context_t* ctx, urma_jfs_cfg_t* jfs_cfg)
 {
-	urma_jfs_t *urma_jfs = calloc(1, sizeof(urma_jfs_t));
-	return urma_jfs;
+    urma_jfs_t* urma_jfs = calloc(1, sizeof(urma_jfs_t));
+    return urma_jfs;
 }
 
 /**
@@ -249,10 +214,7 @@ urma_jfs_t *urma_create_jfs(urma_context_t *ctx, urma_jfs_cfg_t *jfs_cfg)
  * @param[in] [Required] attr: attributes to be modified;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_modify_jfs(urma_jfs_t *jfs, urma_jfs_attr_t *attr)
-{
-	return 0;
-}
+urma_status_t urma_modify_jfs(urma_jfs_t* jfs, urma_jfs_attr_t* attr) { return 0; }
 
 /**
  * Query a jetty for send (jfs).
@@ -261,21 +223,18 @@ urma_status_t urma_modify_jfs(urma_jfs_t *jfs, urma_jfs_attr_t *attr)
  * @param[out] [Required] attr: attributes of jfs;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_query_jfs(urma_jfs_t *jfs, urma_jfs_cfg_t *cfg, urma_jfs_attr_t *attr)
-{
-	return 0;
-}
+urma_status_t urma_query_jfs(urma_jfs_t* jfs, urma_jfs_cfg_t* cfg, urma_jfs_attr_t* attr) { return 0; }
 
 /**
  * Delete the created jfs.
  * @param[in] [Required] jfs: the jfs created before;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_delete_jfs(urma_jfs_t *jfs)
+urma_status_t urma_delete_jfs(urma_jfs_t* jfs)
 {
-	free(jfs);
-	jfs = NULL;
-	return 0;
+    free(jfs);
+    jfs = NULL;
+    return 0;
 }
 
 /**
@@ -287,21 +246,18 @@ urma_status_t urma_delete_jfs(urma_jfs_t *jfs)
  * @param[out] [Required] cr: Address for storing CR;
  * Return: the number of CR returned, 0 means no CR returned, -1 on error
  */
-int urma_flush_jfs(urma_jfs_t *jfs, int cr_cnt, urma_cr_t *cr)
-{
-	return 0;
-}
+int urma_flush_jfs(urma_jfs_t* jfs, int cr_cnt, urma_cr_t* cr) { return 0; }
 
- /**
+/**
  * Create a jetty for receive (jfr).
  * @param[in] [Required] ctx: the urma context created before;
  * @param[in] [Required] jfr_cfg: address to put the jfr config;
  * Return: the handle of created jfr, not NULL on success, NULL on error
  */
-urma_jfr_t *urma_create_jfr(urma_context_t *ctx, urma_jfr_cfg_t *jfr_cfg)
+urma_jfr_t* urma_create_jfr(urma_context_t* ctx, urma_jfr_cfg_t* jfr_cfg)
 {
-	urma_jfr_t *urma_jfr = calloc(1, sizeof(urma_jfr_t));
-	return urma_jfr;
+    urma_jfr_t* urma_jfr = calloc(1, sizeof(urma_jfr_t));
+    return urma_jfr;
 }
 
 /**
@@ -310,10 +266,7 @@ urma_jfr_t *urma_create_jfr(urma_context_t *ctx, urma_jfr_cfg_t *jfr_cfg)
  * @param[in] [Required] attr: attributes to be modified;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_modify_jfr(urma_jfr_t *jfr, urma_jfr_attr_t *attr)
-{
-	return 0;
-}
+urma_status_t urma_modify_jfr(urma_jfr_t* jfr, urma_jfr_attr_t* attr) { return 0; }
 
 /**
  * Query a jetty for recv(jfr).
@@ -322,21 +275,18 @@ urma_status_t urma_modify_jfr(urma_jfr_t *jfr, urma_jfr_attr_t *attr)
  * @param[out] [Required] attr: attributes of jfr;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_query_jfr(urma_jfr_t *jfr, urma_jfr_cfg_t *cfg, urma_jfr_attr_t *attr)
-{
-	return 0;
-}
+urma_status_t urma_query_jfr(urma_jfr_t* jfr, urma_jfr_cfg_t* cfg, urma_jfr_attr_t* attr) { return 0; }
 
 /**
  * Delete the created jfr.
  * @param[in] [Required] jfr: the jfr created before;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_delete_jfr(urma_jfr_t *jfr)
+urma_status_t urma_delete_jfr(urma_jfr_t* jfr)
 {
-	free(jfr);
-	jfr = NULL;
-	return 0;
+    free(jfr);
+    jfr = NULL;
+    return 0;
 }
 
 /**
@@ -347,10 +297,10 @@ urma_status_t urma_delete_jfr(urma_jfr_t *jfr)
  * @param[in] [Required] token_value: token to put into output jetty/protection table;
  * Return: the address of target jfr, not NULL on success, NULL on error
  */
-urma_target_jetty_t *urma_import_jfr(urma_context_t *ctx, urma_rjfr_t *rjfr, urma_token_t *token_value)
+urma_target_jetty_t* urma_import_jfr(urma_context_t* ctx, urma_rjfr_t* rjfr, urma_token_t* token_value)
 {
-	urma_target_jetty_t *urma_target_jetty = calloc(1, sizeof(urma_target_jetty_t));
-	return urma_target_jetty;
+    urma_target_jetty_t* urma_target_jetty = calloc(1, sizeof(urma_target_jetty_t));
+    return urma_target_jetty;
 }
 
 /**
@@ -358,11 +308,11 @@ urma_target_jetty_t *urma_import_jfr(urma_context_t *ctx, urma_rjfr_t *rjfr, urm
  * @param[in] [Required] target_jfr: the target jfr to unimport;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_unimport_jfr(urma_target_jetty_t *target_jfr)
+urma_status_t urma_unimport_jfr(urma_target_jetty_t* target_jfr)
 {
-	free(target_jfr);
-	target_jfr = NULL;
-	return 0;
+    free(target_jfr);
+    target_jfr = NULL;
+    return 0;
 }
 
 /**
@@ -371,10 +321,7 @@ urma_status_t urma_unimport_jfr(urma_target_jetty_t *target_jfr)
  * @param[in] [Required] tjfr: target jfr information including full qualified jfr id;
  * Return: 0 on success, URMA_EEXIST if the jfr has been advised, other value on error
  */
-urma_status_t urma_advise_jfr(urma_jfs_t *jfs, urma_target_jetty_t *tjfr)
-{
-	return 0;
-}
+urma_status_t urma_advise_jfr(urma_jfs_t* jfs, urma_target_jetty_t* tjfr) { return 0; }
 
 /**
  *  Async API for urma_advise_jfr
@@ -387,10 +334,10 @@ urma_status_t urma_advise_jfr(urma_jfs_t *jfs, urma_target_jetty_t *tjfr)
  * Note: User must define callback function to handle result,
  *  as the async respone will call the cb_func and pass the result to it.
  */
-urma_status_t urma_advise_jfr_async(urma_jfs_t *jfs, urma_target_jetty_t *tjfr,
-    urma_advise_async_cb_func cb_fun, void *cb_arg)
+urma_status_t
+urma_advise_jfr_async(urma_jfs_t* jfs, urma_target_jetty_t* tjfr, urma_advise_async_cb_func cb_fun, void* cb_arg)
 {
-	return 0;
+    return 0;
 }
 
 /**
@@ -399,10 +346,7 @@ urma_status_t urma_advise_jfr_async(urma_jfs_t *jfs, urma_target_jetty_t *tjfr,
  * @param[in] [Required] tjfr: target jfr information including full qualified jfr id;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_unadvise_jfr(urma_jfs_t *jfs, urma_target_jetty_t *tjfr)
-{
-	return 0;
-}
+urma_status_t urma_unadvise_jfr(urma_jfs_t* jfs, urma_target_jetty_t* tjfr) { return 0; }
 
 /**
  ******************** Beginning of URMA JETTY APIs ***************************
@@ -414,10 +358,10 @@ urma_status_t urma_unadvise_jfr(urma_jfs_t *jfs, urma_target_jetty_t *tjfr)
  * @param[in] [Required] jetty_cfg: pointer of the jetty config;
  * Return: the handle of created jetty, not NULL on success, NULL on error
  */
-urma_jetty_t *urma_create_jetty(urma_context_t *ctx, urma_jetty_cfg_t *jetty_cfg)
+urma_jetty_t* urma_create_jetty(urma_context_t* ctx, urma_jetty_cfg_t* jetty_cfg)
 {
-	urma_jetty_t *urma_jetty = calloc(1, sizeof(urma_jetty_t));
-	return urma_jetty;
+    urma_jetty_t* urma_jetty = calloc(1, sizeof(urma_jetty_t));
+    return urma_jetty;
 }
 
 /**
@@ -426,10 +370,7 @@ urma_jetty_t *urma_create_jetty(urma_context_t *ctx, urma_jetty_cfg_t *jetty_cfg
  * @param[in] [Required] attr: attributes to be modified;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_modify_jetty(urma_jetty_t *jetty, urma_jetty_attr_t *attr)
-{
-	return 0;
-}
+urma_status_t urma_modify_jetty(urma_jetty_t* jetty, urma_jetty_attr_t* attr) { return 0; }
 
 /**
  * Query jetty attributes.
@@ -438,21 +379,18 @@ urma_status_t urma_modify_jetty(urma_jetty_t *jetty, urma_jetty_attr_t *attr)
  * @param[out] [Required] attr: attributes to query;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_query_jetty(urma_jetty_t *jetty, urma_jetty_cfg_t *cfg, urma_jetty_attr_t *attr)
-{
-	return 0;
-}
+urma_status_t urma_query_jetty(urma_jetty_t* jetty, urma_jetty_cfg_t* cfg, urma_jetty_attr_t* attr) { return 0; }
 
 /**
  * Delete the created jetty.
  * @param[in] [Required] jetty: the jetty created before;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_delete_jetty(urma_jetty_t *jetty)
+urma_status_t urma_delete_jetty(urma_jetty_t* jetty)
 {
-	free(jetty);
-	jetty = NULL;
-	return 0;
+    free(jetty);
+    jetty = NULL;
+    return 0;
 }
 
 /**
@@ -463,11 +401,10 @@ urma_status_t urma_delete_jetty(urma_jetty_t *jetty)
  * @param[in] [Required] token_value: token to put into output jetty protection table;
  * Return: the address of target jetty, not NULL on success, NULL on error
  */
-urma_target_jetty_t *urma_import_jetty(urma_context_t *ctx, urma_rjetty_t *rjetty,
-    urma_token_t *token_value)
+urma_target_jetty_t* urma_import_jetty(urma_context_t* ctx, urma_rjetty_t* rjetty, urma_token_t* token_value)
 {
-	urma_target_jetty_t *urma_target_jetty = calloc(1, sizeof(urma_target_jetty_t));
-	return urma_target_jetty;
+    urma_target_jetty_t* urma_target_jetty = calloc(1, sizeof(urma_target_jetty_t));
+    return urma_target_jetty;
 }
 
 /**
@@ -475,11 +412,11 @@ urma_target_jetty_t *urma_import_jetty(urma_context_t *ctx, urma_rjetty_t *rjett
  * @param[in] [Required] tjetty: the target jetty to unimport;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_unimport_jetty(urma_target_jetty_t *tjetty)
+urma_status_t urma_unimport_jetty(urma_target_jetty_t* tjetty)
 {
-	free(tjetty);
-	tjetty = NULL;
-	return 0;
+    free(tjetty);
+    tjetty = NULL;
+    return 0;
 }
 
 /**
@@ -490,10 +427,7 @@ urma_status_t urma_unimport_jetty(urma_target_jetty_t *tjetty)
  * Note: A local jetty can be advised with several remote jetties. A connectionless jetty is free to call the adivse API
  */
 /* todo: available after implementing URMA_TM_RM(IB_RC) */
-urma_status_t urma_advise_jetty(urma_jetty_t *jetty, urma_target_jetty_t *tjetty)
-{
-	return 0;
-}
+urma_status_t urma_advise_jetty(urma_jetty_t* jetty, urma_target_jetty_t* tjetty) { return 0; }
 
 /**
  *  Async API for urma_advise_jetty
@@ -507,10 +441,10 @@ urma_status_t urma_advise_jetty(urma_jetty_t *jetty, urma_target_jetty_t *tjetty
  *  as the async respone will call the cb_func and pass the result to it.
  */
 /* todo: available after implementing URMA_TM_RM(IB_RC) */
-urma_status_t urma_advise_jetty_async(urma_jetty_t *jfs, urma_target_jetty_t *tjetty,
-    urma_advise_async_cb_func cb_fun, void *cb_arg)
+urma_status_t
+urma_advise_jetty_async(urma_jetty_t* jfs, urma_target_jetty_t* tjetty, urma_advise_async_cb_func cb_fun, void* cb_arg)
 {
-	return 0;
+    return 0;
 }
 
 /**
@@ -520,10 +454,7 @@ urma_status_t urma_advise_jetty_async(urma_jetty_t *jfs, urma_target_jetty_t *tj
  * Return: 0 on success, other value on error
  */
 /* todo: available after implementing URMA_TM_RM(IB_RC) */
-urma_status_t urma_unadvise_jetty(urma_jetty_t *jetty, urma_target_jetty_t *tjetty)
-{
-	return 0;
-}
+urma_status_t urma_unadvise_jetty(urma_jetty_t* jetty, urma_target_jetty_t* tjetty) { return 0; }
 
 /**
  *  Bind jetty: construct the transport channel between local jetty and remote jetty.
@@ -532,20 +463,14 @@ urma_status_t urma_unadvise_jetty(urma_jetty_t *jetty, urma_target_jetty_t *tjet
  * Return: 0 on success, URMA_EEXIST if the jetty has been binded, other value on error
  * Note: A local jetty can be binded with only one remote jetty. Only supported by jetty under URMA_TM_RC.
  */
-urma_status_t urma_bind_jetty(urma_jetty_t *jetty, urma_target_jetty_t *tjetty)
-{
-	return 0;
-}
+urma_status_t urma_bind_jetty(urma_jetty_t* jetty, urma_target_jetty_t* tjetty) { return 0; }
 
 /**
  *  Unbind jetty: deconstruct the transport channel between local jetty and remote jetty.
  * @param[in] [Required] jetty: local jetty to deconstruct the transport channel;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_unbind_jetty(urma_jetty_t *jetty)
-{
-	return 0;
-}
+urma_status_t urma_unbind_jetty(urma_jetty_t* jetty) { return 0; }
 
 /**
  * Poll the CRs for all the WRs that posted to Jetty, but are not completed.
@@ -556,10 +481,7 @@ urma_status_t urma_unbind_jetty(urma_jetty_t *jetty)
  * @param[out] [Required] cr: Address for storing CR;
  * Return: the number of CR returned, 0 means no CR returned, -1 on error
  */
-int urma_flush_jetty(urma_jetty_t *jetty, int cr_cnt, urma_cr_t *cr)
-{
-	return 0;
-}
+int urma_flush_jetty(urma_jetty_t* jetty, int cr_cnt, urma_cr_t* cr) { return 0; }
 
 /**
  ******************** Beginning of URMA JETTY GROUP APIs ***************************
@@ -571,10 +493,10 @@ int urma_flush_jetty(urma_jetty_t *jetty, int cr_cnt, urma_cr_t *cr)
  * @param[in] [Required] cfg: pointer of the jetty group config;
  * Return: the handle of created jetty group, not NULL on success, NULL on error
  */
-urma_jetty_grp_t *urma_create_jetty_grp(urma_context_t *ctx, urma_jetty_grp_cfg_t *cfg)
+urma_jetty_grp_t* urma_create_jetty_grp(urma_context_t* ctx, urma_jetty_grp_cfg_t* cfg)
 {
-	urma_jetty_grp_t *urma_jetty_grp = calloc(1, sizeof(urma_jetty_grp_t));
-	return urma_jetty_grp;
+    urma_jetty_grp_t* urma_jetty_grp = calloc(1, sizeof(urma_jetty_grp_t));
+    return urma_jetty_grp;
 }
 
 /**
@@ -582,11 +504,11 @@ urma_jetty_grp_t *urma_create_jetty_grp(urma_context_t *ctx, urma_jetty_grp_cfg_
  * @param[in] [Required] jetty_grp: the Jetty group created before;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_delete_jetty_grp(urma_jetty_grp_t *jetty_grp)
+urma_status_t urma_delete_jetty_grp(urma_jetty_grp_t* jetty_grp)
 {
-	free(jetty_grp);
-	jetty_grp = NULL;
-	return 0;
+    free(jetty_grp);
+    jetty_grp = NULL;
+    return 0;
 }
 
 /**
@@ -594,10 +516,10 @@ urma_status_t urma_delete_jetty_grp(urma_jetty_grp_t *jetty_grp)
  * @param[in] [Required] ctx: the urma context created before;
  * Return: the address of created jfce, not NULL on success, NULL on error
  */
-urma_jfce_t *urma_create_jfce(urma_context_t *ctx)
+urma_jfce_t* urma_create_jfce(urma_context_t* ctx)
 {
-	urma_jfce_t *urma_jfce = calloc(1, sizeof(urma_jfce_t));
-	return urma_jfce;
+    urma_jfce_t* urma_jfce = calloc(1, sizeof(urma_jfce_t));
+    return urma_jfce;
 }
 
 /**
@@ -605,11 +527,11 @@ urma_jfce_t *urma_create_jfce(urma_context_t *ctx)
  * @param[in] [Required] jfce: the jfce to be deleted;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_delete_jfce(urma_jfce_t *jfce)
+urma_status_t urma_delete_jfce(urma_jfce_t* jfce)
 {
-	free(jfce);
-	jfce = NULL;
-	return 0;
+    free(jfce);
+    jfce = NULL;
+    return 0;
 }
 
 /**
@@ -618,30 +540,24 @@ urma_status_t urma_delete_jfce(urma_jfce_t *jfce)
  * @param[out] [Required] event: the address to put event
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_get_async_event(urma_context_t *ctx, urma_async_event_t *event)
-{
-	return 0;
-}
+urma_status_t urma_get_async_event(urma_context_t* ctx, urma_async_event_t* event) { return 0; }
 
 /**
  *  Ack asyn event.
  * @param[in] [Required] event: the address to ack event;
  * Return: void
  */
-void urma_ack_async_event(urma_async_event_t *event)
-{
-	return;
-}
+void urma_ack_async_event(urma_async_event_t* event) { return; }
 
 /**
  *  Request to assign a token id. token id is used to register the segment with the protection table.
  * @param[in] [Required] ctx: specifies the urma context.
  * Return: pointer to key id on success, NULL on error.
  */
-urma_token_id_t *urma_alloc_token_id(urma_context_t *ctx)
+urma_token_id_t* urma_alloc_token_id(urma_context_t* ctx)
 {
-	urma_token_id_t *urma_token_id = calloc(1, sizeof(urma_token_id_t));
-	return urma_token_id;
+    urma_token_id_t* urma_token_id = calloc(1, sizeof(urma_token_id_t));
+    return urma_token_id;
 }
 
 /**
@@ -649,11 +565,11 @@ urma_token_id_t *urma_alloc_token_id(urma_context_t *ctx)
  * @param[in] [Required] token_id: Specifies the token id to be released.
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_free_token_id(urma_token_id_t *token_id)
+urma_status_t urma_free_token_id(urma_token_id_t* token_id)
 {
-	free(token_id);
-	token_id = NULL;
-	return 0;
+    free(token_id);
+    token_id = NULL;
+    return 0;
 }
 
 /**
@@ -664,11 +580,11 @@ urma_status_t urma_free_token_id(urma_token_id_t *token_id)
  * Note: in current IB provider, all segments to be registerred must use a common jfc,
  * And the immedidate data wrote from clients is polled from this common jfc.
  */
-urma_target_seg_t *urma_register_seg(urma_context_t *ctx, urma_seg_cfg_t *seg_cfg)
+urma_target_seg_t* urma_register_seg(urma_context_t* ctx, urma_seg_cfg_t* seg_cfg)
 {
-	urma_target_seg_t *urma_target_seg = calloc(1, sizeof(urma_target_seg_t));
-	urma_target_seg->token_id = seg_cfg->token_id;
-	return urma_target_seg;
+    urma_target_seg_t* urma_target_seg = calloc(1, sizeof(urma_target_seg_t));
+    urma_target_seg->token_id = seg_cfg->token_id;
+    return urma_target_seg;
 }
 
 /**
@@ -676,11 +592,11 @@ urma_target_seg_t *urma_register_seg(urma_context_t *ctx, urma_seg_cfg_t *seg_cf
  * @param[in] [Required] target_seg: target segment to be unregistered;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_unregister_seg(urma_target_seg_t *target_seg)
+urma_status_t urma_unregister_seg(urma_target_seg_t* target_seg)
 {
-	free(target_seg);
-	target_seg = NULL;
-	return 0;
+    free(target_seg);
+    target_seg = NULL;
+    return 0;
 }
 
 /**
@@ -692,11 +608,11 @@ urma_status_t urma_unregister_seg(urma_target_seg_t *target_seg)
  * @param[in] [Required] flag: flag to indicate the import attribute of memory segment;
  * Return: pointer to target segment on success, NULL on error
  */
-urma_target_seg_t *urma_import_seg(urma_context_t *ctx, urma_seg_t *seg,
-    urma_token_t *token_value, uint64_t addr, urma_import_seg_flag_t flag)
+urma_target_seg_t* urma_import_seg(
+    urma_context_t* ctx, urma_seg_t* seg, urma_token_t* token_value, uint64_t addr, urma_import_seg_flag_t flag)
 {
-	urma_target_seg_t *urma_target_seg = calloc(1, sizeof(urma_target_seg_t));
-	return urma_target_seg;
+    urma_target_seg_t* urma_target_seg = calloc(1, sizeof(urma_target_seg_t));
+    return urma_target_seg;
 }
 
 /**
@@ -704,11 +620,11 @@ urma_target_seg_t *urma_import_seg(urma_context_t *ctx, urma_seg_t *seg,
  * @param[in] [Required] tseg: the address of the target segment to unimport;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_unimport_seg(urma_target_seg_t *tseg)
+urma_status_t urma_unimport_seg(urma_target_seg_t* tseg)
 {
-	free(tseg);
-	tseg = NULL;
-	return 0;
+    free(tseg);
+    tseg = NULL;
+    return 0;
 }
 
 /**
@@ -718,10 +634,7 @@ urma_status_t urma_unimport_seg(urma_target_seg_t *tseg)
  * @param[in] bad_wr: the first of failure request.
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_post_jetty_send_wr(urma_jetty_t *jetty, urma_jfs_wr_t *wr, urma_jfs_wr_t **bad_wr)
-{
-	return 0;
-}
+urma_status_t urma_post_jetty_send_wr(urma_jetty_t* jetty, urma_jfs_wr_t* wr, urma_jfs_wr_t** bad_wr) { return 0; }
 
 /**
  * post a request to recv data.
@@ -730,10 +643,7 @@ urma_status_t urma_post_jetty_send_wr(urma_jetty_t *jetty, urma_jfs_wr_t *wr, ur
  * @param[in] bad_wr: the first of failure request.
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_post_jetty_recv_wr(urma_jetty_t *jetty, urma_jfr_wr_t *wr, urma_jfr_wr_t **bad_wr)
-{
-	return 0;
-}
+urma_status_t urma_post_jetty_recv_wr(urma_jetty_t* jetty, urma_jfr_wr_t* wr, urma_jfr_wr_t** bad_wr) { return 0; }
 
 /**
  *  Poll jfc to get completion record.
@@ -743,10 +653,7 @@ urma_status_t urma_post_jetty_recv_wr(urma_jetty_t *jetty, urma_jfr_wr_t *wr, ur
  * Return: the number of completion record returned, 0 means no completion record returned, less than 0 on error
  * Note that: at most 16 completion records can be polled for RDMA device
  */
-int urma_poll_jfc(urma_jfc_t *jfc, int cr_cnt, urma_cr_t *cr)
-{
-	return 0;
-}
+int urma_poll_jfc(urma_jfc_t* jfc, int cr_cnt, urma_cr_t* cr) { return 0; }
 
 /**
  *  Arm jfc with interrupt mode.
@@ -754,10 +661,7 @@ int urma_poll_jfc(urma_jfc_t *jfc, int cr_cnt, urma_cr_t *cr)
  * @param[in] solicited_only: indicate it will trigger event only for packets with solicited flag.
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_rearm_jfc(urma_jfc_t *jfc, bool solicited_only)
-{
-	return 0;
-}
+urma_status_t urma_rearm_jfc(urma_jfc_t* jfc, bool solicited_only) { return 0; }
 
 /**
  *  Wait jfce for event of any completion message is generated.
@@ -771,11 +675,7 @@ urma_status_t urma_rearm_jfc(urma_jfc_t *jfc, bool solicited_only)
  * Note: Repeatedly calling this API without calling [urma_poll_jfc] may lead to
  *       incorrect number of jfc in IP provider. This error is controllable.
  */
-int urma_wait_jfc(urma_jfce_t *jfce, uint32_t jfc_cnt, int time_out,
-    urma_jfc_t *jfc[])
-{
-	return 0;
-}
+int urma_wait_jfc(urma_jfce_t* jfce, uint32_t jfc_cnt, int time_out, urma_jfc_t* jfc[]) { return 0; }
 
 /**
  *  Confirm that a JFC generated event has been processed.
@@ -784,10 +684,7 @@ int urma_wait_jfc(urma_jfce_t *jfce, uint32_t jfc_cnt, int time_out,
  * @param[in] jfc_cnt: number of elements in the array
  * Return: void
  */
-void urma_ack_jfc(urma_jfc_t *jfc[], uint32_t nevents[], uint32_t jfc_cnt)
-{
-	return;
-}
+void urma_ack_jfc(urma_jfc_t* jfc[], uint32_t nevents[], uint32_t jfc_cnt) { return; }
 
 /**
  * User defined control of the context.
@@ -797,10 +694,7 @@ void urma_ack_jfc(urma_jfc_t *jfc[], uint32_t nevents[], uint32_t jfc_cnt)
  * Return: 0 on success, other value on error
  * Note: This API only supports UB hardware currently.
  */
-urma_status_t urma_user_ctl(urma_context_t *ctx, urma_user_ctl_in_t *in, urma_user_ctl_out_t *out)
-{
-	return 0;
-}
+urma_status_t urma_user_ctl(urma_context_t* ctx, urma_user_ctl_in_t* in, urma_user_ctl_out_t* out) { return 0; }
 
 /**
  * get available tp list from control plane.
@@ -811,11 +705,10 @@ urma_status_t urma_user_ctl(urma_context_t *ctx, urma_user_ctl_in_t *in, urma_us
  * @param[out] [Required] tp_list: tp list to get, the buffer is allocated by user;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_get_tp_list(urma_context_t *ctx, urma_get_tp_cfg_t *cfg, uint32_t *tp_cnt,
-    urma_tp_info_t *tp_list)
+urma_status_t urma_get_tp_list(urma_context_t* ctx, urma_get_tp_cfg_t* cfg, uint32_t* tp_cnt, urma_tp_info_t* tp_list)
 {
-	*tp_cnt = 1;
-	return 0;
+    *tp_cnt = 1;
+    return 0;
 }
 
 /**
@@ -827,11 +720,11 @@ urma_status_t urma_get_tp_list(urma_context_t *ctx, urma_get_tp_cfg_t *cfg, uint
  * @param[in] [Required] cfg: tp active configuration to exchange with target;
  * Return: the address of target jetty, not NULL on success, NULL on error
  */
-urma_target_jetty_t *urma_import_jetty_ex(urma_context_t *ctx, urma_rjetty_t *rjetty,
-    urma_token_t *token_value, urma_import_jetty_ex_cfg_t *cfg)
+urma_target_jetty_t* urma_import_jetty_ex(
+    urma_context_t* ctx, urma_rjetty_t* rjetty, urma_token_t* token_value, urma_import_jetty_ex_cfg_t* cfg)
 {
-	urma_target_jetty_t *urma_target_jetty = calloc(1, sizeof(urma_target_jetty_t));
-	return urma_target_jetty;
+    urma_target_jetty_t* urma_target_jetty = calloc(1, sizeof(urma_target_jetty_t));
+    return urma_target_jetty;
 }
 
 /**
@@ -844,17 +737,17 @@ urma_target_jetty_t *urma_import_jetty_ex(urma_context_t *ctx, urma_rjetty_t *rj
  * If delete error happens(except invalid parameter), stop at the first failed
  * jetty and return, these jetty before the failed jetty will be deleted normally.
  */
-urma_status_t urma_delete_jetty_batch(urma_jetty_t **jetty_arr, int jetty_num, urma_jetty_t **bad_jetty)
+urma_status_t urma_delete_jetty_batch(urma_jetty_t** jetty_arr, int jetty_num, urma_jetty_t** bad_jetty)
 {
-	unsigned int i = 0;
-	for (i = 0; i < jetty_num; ++i) {
-		if (jetty_arr[i] !=NULL) {
-			free(jetty_arr[i]);
-			jetty_arr[i] = NULL;
-		}
-	}
-	*bad_jetty = NULL;
-	return 0;
+    unsigned int i = 0;
+    for (i = 0; i < jetty_num; ++i) {
+        if (jetty_arr[i] != NULL) {
+            free(jetty_arr[i]);
+            jetty_arr[i] = NULL;
+        }
+    }
+    *bad_jetty = NULL;
+    return 0;
 }
 
 /**
@@ -867,18 +760,18 @@ urma_status_t urma_delete_jetty_batch(urma_jetty_t **jetty_arr, int jetty_num, u
  * If delete error happens(except invalid parameter), stop at the first failed
  * jfr and return, these jfr before the failed jfr will be deleted normally.
  */
-urma_status_t urma_delete_jfr_batch(urma_jfr_t **jfr_arr, int jfr_num, urma_jfr_t **bad_jfr)
+urma_status_t urma_delete_jfr_batch(urma_jfr_t** jfr_arr, int jfr_num, urma_jfr_t** bad_jfr)
 {
-	unsigned int i = 0;
-	for (i = 0; i < jfr_num; ++i) {
-		if (jfr_arr[i] != NULL) {
-			free(jfr_arr[i]);
-			jfr_arr[i] = NULL;
-		}
-	}
+    unsigned int i = 0;
+    for (i = 0; i < jfr_num; ++i) {
+        if (jfr_arr[i] != NULL) {
+            free(jfr_arr[i]);
+            jfr_arr[i] = NULL;
+        }
+    }
 
-	*bad_jfr = NULL;
-	return 0;
+    *bad_jfr = NULL;
+    return 0;
 }
 
 /**
@@ -894,10 +787,11 @@ urma_status_t urma_delete_jfr_batch(urma_jfr_t **jfr_arr, int jfr_num, urma_jfr_
  * @param[out] [Required] tp_attr: tp attribution values to get;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_get_tp_attr(const urma_context_t *ctx, const uint64_t tp_handle,
-    uint8_t *tp_attr_cnt, uint32_t *tp_attr_bitmap, urma_tp_attr_value_t *tp_attr)
+urma_status_t urma_get_tp_attr(
+    const urma_context_t* ctx, const uint64_t tp_handle, uint8_t* tp_attr_cnt, uint32_t* tp_attr_bitmap,
+    urma_tp_attr_value_t* tp_attr)
 {
-	return 0;
+    return 0;
 }
 
 /**
@@ -913,10 +807,11 @@ urma_status_t urma_get_tp_attr(const urma_context_t *ctx, const uint64_t tp_hand
  * @param[in] [Required] tp_attr: tp attribution values to set;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_set_tp_attr(const urma_context_t *ctx, const uint64_t tp_handle,
-    const uint8_t tp_attr_cnt, const uint32_t tp_attr_bitmap, const urma_tp_attr_value_t *tp_attr)
+urma_status_t urma_set_tp_attr(
+    const urma_context_t* ctx, const uint64_t tp_handle, const uint8_t tp_attr_cnt, const uint32_t tp_attr_bitmap,
+    const urma_tp_attr_value_t* tp_attr)
 {
-	return 0;
+    return 0;
 }
 
 /**
@@ -926,10 +821,10 @@ urma_status_t urma_set_tp_attr(const urma_context_t *ctx, const uint64_t tp_hand
  * @param[out] [Required] jetty: handle of the allocated jetty;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_alloc_jetty(urma_context_t *urma_ctx, urma_jetty_cfg_t *cfg, urma_jetty_t **jetty)
+urma_status_t urma_alloc_jetty(urma_context_t* urma_ctx, urma_jetty_cfg_t* cfg, urma_jetty_t** jetty)
 {
-	*jetty = calloc(1, sizeof(urma_jetty_t));
-	return 0;
+    *jetty = calloc(1, sizeof(urma_jetty_t));
+    return 0;
 }
 
 /**
@@ -940,20 +835,14 @@ urma_status_t urma_alloc_jetty(urma_context_t *urma_ctx, urma_jetty_cfg_t *cfg, 
  * @param[in] [Required] buf: the buffer to store the value;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_set_jetty_opt(urma_jetty_t *jetty, uint64_t opt, void *buf, uint32_t len)
-{
-	return 0;
-}
+urma_status_t urma_set_jetty_opt(urma_jetty_t* jetty, uint64_t opt, void* buf, uint32_t len) { return 0; }
 
 /**
  * Active the allocated jetty.
  * @param[in] [Required] jetty: handle of the allocated jetty;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_active_jetty(urma_jetty_t *jetty)
-{
-	return 0;
-}
+urma_status_t urma_active_jetty(urma_jetty_t* jetty) { return 0; }
 
 /**
  * Get the opt of jetty.
@@ -963,20 +852,14 @@ urma_status_t urma_active_jetty(urma_jetty_t *jetty)
  * @param[out] [Required] buf: the buffer to store the value;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_get_jetty_opt(urma_jetty_t *jetty, uint64_t opt, void *buf, uint32_t len)
-{
-	return 0;
-}
+urma_status_t urma_get_jetty_opt(urma_jetty_t* jetty, uint64_t opt, void* buf, uint32_t len) { return 0; }
 
 /**
  * Deactive the actived jetty.
  * @param[in] [Required] jetty: handle of the allocated jetty;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_deactive_jetty(urma_jetty_t *jetty)
-{
-	return 0;
-}
+urma_status_t urma_deactive_jetty(urma_jetty_t* jetty) { return 0; }
 
 /**
  * Free the allocated jetty.
@@ -984,11 +867,11 @@ urma_status_t urma_deactive_jetty(urma_jetty_t *jetty)
  * After free, the jfc pointer is no longer allowed to be accessed.
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_free_jetty(urma_jetty_t *jetty)
+urma_status_t urma_free_jetty(urma_jetty_t* jetty)
 {
-	free(jetty);
-	jetty = NULL;
-	return 0;
+    free(jetty);
+    jetty = NULL;
+    return 0;
 }
 
 /**
@@ -998,10 +881,10 @@ urma_status_t urma_free_jetty(urma_jetty_t *jetty)
  * @param[out] [Required] jfc: handle of the allocated jfc;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_alloc_jfc(urma_context_t *urma_ctx, urma_jfc_cfg_t *cfg, urma_jfc_t **jfc)
+urma_status_t urma_alloc_jfc(urma_context_t* urma_ctx, urma_jfc_cfg_t* cfg, urma_jfc_t** jfc)
 {
-	*jfc = calloc(1, sizeof(urma_jfc_t));
-	return 0;
+    *jfc = calloc(1, sizeof(urma_jfc_t));
+    return 0;
 }
 
 /**
@@ -1012,20 +895,14 @@ urma_status_t urma_alloc_jfc(urma_context_t *urma_ctx, urma_jfc_cfg_t *cfg, urma
  * @param[in] [Required] buf: the buffer containing the value to set;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_set_jfc_opt(urma_jfc_t *jfc, uint64_t opt, void *buf, uint32_t len)
-{
-	return 0;
-}
+urma_status_t urma_set_jfc_opt(urma_jfc_t* jfc, uint64_t opt, void* buf, uint32_t len) { return 0; }
 
 /**
  * Active the allocated jfc.
  * @param[in] [Required] jfc: the jfc allocated before;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_active_jfc(urma_jfc_t *jfc)
-{
-	return 0;
-}
+urma_status_t urma_active_jfc(urma_jfc_t* jfc) { return 0; }
 
 /**
  * Get the opt of jfc.
@@ -1035,20 +912,14 @@ urma_status_t urma_active_jfc(urma_jfc_t *jfc)
  * @param[out] [Required] buf: the buffer to store the value;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_get_jfc_opt(urma_jfc_t *jfc, uint64_t opt, void *buf, uint32_t len)
-{
-	return 0;
-}
+urma_status_t urma_get_jfc_opt(urma_jfc_t* jfc, uint64_t opt, void* buf, uint32_t len) { return 0; }
 
 /**
  * Deactive the created jfc.
  * @param[in] [Required] jfc: the jfc actived before;
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_deactive_jfc(urma_jfc_t *jfc)
-{
-	return 0;
-}
+urma_status_t urma_deactive_jfc(urma_jfc_t* jfc) { return 0; }
 
 /**
  * Free the created jfc.
@@ -1056,11 +927,11 @@ urma_status_t urma_deactive_jfc(urma_jfc_t *jfc)
  * After free, the jfc pointer is no longer allowed to be accessed.
  * Return: 0 on success, other value on error
  */
-urma_status_t urma_free_jfc(urma_jfc_t *jfc)
+urma_status_t urma_free_jfc(urma_jfc_t* jfc)
 {
-	free(jfc);
-	jfc = NULL;
-	return 0;
+    free(jfc);
+    jfc = NULL;
+    return 0;
 }
 
 /**
@@ -1073,11 +944,11 @@ urma_status_t urma_free_jfc(urma_jfc_t *jfc)
  * If delete error happens(except invalid parameter), stop at the first failed
  * jfc and return, these jfc before the failed jfc will be deleted normally.
  */
-urma_status_t urma_delete_jfc_batch(urma_jfc_t **jfc_arr, int jfc_num, urma_jfc_t **bad_jfc)
+urma_status_t urma_delete_jfc_batch(urma_jfc_t** jfc_arr, int jfc_num, urma_jfc_t** bad_jfc)
 {
-	int i;
-	for (i = 0; i < jfc_num; i++) {
-		(void)urma_free_jfc(jfc_arr[i]);
-	}
-	return 0;
+    int i;
+    for (i = 0; i < jfc_num; i++) {
+        (void)urma_free_jfc(jfc_arr[i]);
+    }
+    return 0;
 }

@@ -1,3 +1,4 @@
+# -----------------------------------------------------------------------------------------------------------
 # Copyright (c) 2026 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
@@ -5,14 +6,7 @@
 # THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
-
-cmake_minimum_required(VERSION 3.10)
-
-project(checker_lib LANGUAGES CXX)
-
-set(CMAKE_CXX_STANDARD 14)
-
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# -----------------------------------------------------------------------------------------------------------
 
 # 创建checker.bin
 add_executable(checker
@@ -23,29 +17,24 @@ add_subdirectory(src)
 
 # 如果需要暴露头文件目录
 target_include_directories(checker PUBLIC
-    ${ASCEND_CANN_PACKAGE_PATH}/x86_64-linux/include
-    ${ASCEND_CANN_PACKAGE_PATH}/x86_64-linux/pkg_inc
-    ${ASCEND_CANN_PACKAGE_PATH}/x86_64-linux/pkg_inc/hccl
-    ${ASCEND_CANN_PACKAGE_PATH}/x86_64-linux/pkg_inc/hcomm/ccu
-    ${ASCEND_CANN_PACKAGE_PATH}/pkg_inc/asc/hccl/internal/hcomm/pkg_inc/hcomm/ccu
+    ${ASCEND_CANN_PACKAGE_PATH}/${CANN_ARCH_DIR}/include
+    ${ASCEND_CANN_PACKAGE_PATH}/${CANN_ARCH_DIR}/pkg_inc
+    ${ASCEND_CANN_PACKAGE_PATH}/${CANN_ARCH_DIR}/pkg_inc/hccl
+
+    ${HCCLVM_CCU_MICROCODE_DIR}
+
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/src/checker
     ${CMAKE_CURRENT_SOURCE_DIR}/src/framework
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/framework/mem_conflict_check
     ${CMAKE_CURRENT_SOURCE_DIR}/src/framework/semantics_check
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/framework/singletask_check
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/framework/task_graph_generator
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/framework/task_graph_generator_v3
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils
     ${CMAKE_CURRENT_SOURCE_DIR}/src/dfx
 
     ${CMAKE_CURRENT_SOURCE_DIR}/header/external
     ${CMAKE_CURRENT_SOURCE_DIR}/header/internal
 
-    # hcomm仓头文件
-    ${CMAKE_CURRENT_SOURCE_DIR}/../hcomm/pkg_inc
-
     ${CMAKE_SOURCE_DIR}/include
-    ${CMAKE_SOURCE_DIR}/include/runnerdb
     ${CMAKE_SOURCE_DIR}/third_party
     ${CMAKE_SOURCE_DIR}/third_party/nlohmann_json
 )
@@ -54,33 +43,35 @@ target_sources(checker PRIVATE
     ${HCCL_VM_INCLUDE}/sim_log.h
 )
 
-target_link_libraries(checker PRIVATE 
+target_link_libraries(checker PRIVATE
+    -Wl,--start-group
     log
     loader
-    runnerdb
-    modeldb
+    runtime_state
+    operation_data
+
     store
     common
-    ${ASCEND_CANN_PACKAGE_PATH}/x86_64-linux/lib64/libc_sec.so
+    -Wl,--end-group
+    ${ASCEND_CANN_PACKAGE_PATH}/${CANN_ARCH_DIR}/lib64/libc_sec.a
     pthread
     yaml-cpp::yaml-cpp
-    sqlite3
 )
 
 set_target_properties(checker PROPERTIES POSITION_INDEPENDENT_CODE ON)
+set_target_properties(checker PROPERTIES
+    INSTALL_RPATH "$ORIGIN/../../lib/${CMAKE_SYSTEM_PROCESSOR}"
+    BUILD_RPATH "$ORIGIN")
 
-target_compile_options(checker PRIVATE -g)
+hcclvm_apply_common_flags(checker)
 
-target_compile_options(checker PRIVATE
-       -std=c++14
-       -fno-common
-       -Werror
-       -fno-strict-aliasing
-       -pipe
-       -O0
-       -g
-       -D_GLIBCXX_USE_CXX11_ABI=0
-)
+# checker 是计算密集目标（大图可达性闭包、内存冲突扫描），公共 flags 里固定的 -O0 会显著拖慢。
+# GCC 以命令行中最后出现的 -O 为准（hcclvm_apply_common_flags 已加 -O0），故此处追加的级别覆盖它；
+# 只影响 checker，不动其它 target（runner/store 等保持原样）。可用
+#   -DHCCLVM_CHECKER_OPT_LEVEL=-O2 / -O3 / -O0
+# 覆盖，便于 A/B 对比与回退。
+set(HCCLVM_CHECKER_OPT_LEVEL "-O2" CACHE STRING "Optimization level for the checker target")
+target_compile_options(checker PRIVATE ${HCCLVM_CHECKER_OPT_LEVEL})
 
 install(TARGETS checker
     DESTINATION "plugin/checker"
@@ -93,11 +84,10 @@ install(TARGETS checker
 
 install(FILES "manifest.json"
     DESTINATION "plugin/checker"
-    # 文件的权限 (755)
     PERMISSIONS
-        OWNER_READ OWNER_WRITE OWNER_EXECUTE
-        GROUP_READ GROUP_EXECUTE
-        WORLD_READ WORLD_EXECUTE
+        OWNER_READ OWNER_WRITE
+        GROUP_READ
+        WORLD_READ
 )
 
 # 日志染色: 模块 tag
